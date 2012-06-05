@@ -1,0 +1,47 @@
+################################################################################
+#
+# CMake File for MPACT
+#
+# Description: CMake build script for creating main executable. Adds target
+#              for main executable.
+#
+# Author: Brendan Kochunas
+#   Date: 04/22/2011
+#
+################################################################################
+
+INCLUDE(TribitsLibraryMacros)
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
+
+#Library for utility code
+TRIBITS_ADD_LIBRARY(MPACT_Utils STATIC
+    SOURCES
+      IntrType.f90
+      Times.f90
+      BinaryTrees.f90
+      MortonOrdering.f90
+      ExceptionHandler.f90
+      Allocs.f90
+      ParallelEnv.f90
+      IO_Strings.f90
+      FileType_Base.f90
+      FileType_Fortran.f90
+      FileType_Log.f90
+      FileType_Input.f90
+      IOutil.f90
+      CommandLineProcessor.f90
+      Geom_Points.f90
+      Geom_Line.f90
+      Geom_Plane.f90
+      Geom_CircCyl.f90
+      Geom_Box.f90
+      Geom.f90
+      ExpTables.f90
+      BLAS1.f90
+      BLAS2.f90
+      BLAS3.f90
+      BLAS.f90
+      MatrixTypes.f90
+      LinearSolverTypes.f90
+      StochasticSampling.f90
+)
