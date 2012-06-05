@@ -43,7 +43,7 @@ MODULE ParallelEnv
   IMPLICIT NONE
   PRIVATE
   
-#ifdef MPI
+#ifdef HAVE_MPI
   INCLUDE 'mpif.h' 
 #endif
 
@@ -229,7 +229,7 @@ MODULE ParallelEnv
           localalloc=.TRUE.
         ENDIF
         
-#ifdef MPI
+#ifdef HAVE_MPI
         CALL MPI_Initialized(isinit,mpierr)
         IF(mpierr /= MPI_SUCCESS) CALL eParEnv%raiseError(modName//'::'// &
           myName//' - call to MPI_Initialized returned an error!')
@@ -239,7 +239,7 @@ MODULE ParallelEnv
 
         !Set the communicator
         IF(isinit == 0) THEN
-#ifdef MPI
+#ifdef HAVE_MPI
           CALL MPI_Init(mpierr)
           IF(mpierr /= MPI_SUCCESS) CALL eParEnv%raiseError(modName//'::'// &
             myName//' - call to MPI_Init returned an error!')
@@ -252,7 +252,7 @@ MODULE ParallelEnv
         ENDIF
       
         !Get Information about the communicator
-#ifdef MPI
+#ifdef HAVE_MPI
         CALL MPI_Comm_size(myPE%comm,myPE%nproc,mpierr)
         IF(mpierr /= MPI_SUCCESS) CALL eParEnv%raiseError(modName//'::'// &
           myName//' - call to MPI_Comm_size returned an error!')
@@ -279,7 +279,7 @@ MODULE ParallelEnv
       LOGICAL(SBK) :: localalloc
       
       IF(myPE%initstat) THEN
-#ifdef MPI
+#ifdef HAVE_MPI
         localalloc=.FALSE.
         IF(.NOT.ASSOCIATED(eParEnv)) THEN
           ALLOCATE(eParEnv)
@@ -304,7 +304,7 @@ MODULE ParallelEnv
 !> @brief Wrapper routine calls MPI_Barrier
     SUBROUTINE barrier_MPI_Env_type(myPE)
       CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
-#ifdef MPI
+#ifdef HAVE_MPI
       IF(myPE%initstat) CALL MPI_Barrier(myPE%comm,mpierr)
 #endif
     ENDSUBROUTINE barrier_MPI_Env_type
@@ -323,7 +323,7 @@ MODULE ParallelEnv
       INTEGER(SIK),INTENT(IN) :: n
       REAL(SRK),INTENT(INOUT) :: x(*)
       REAL(SRK) :: rbuf(n)
-#ifdef MPI
+#ifdef HAVE_MPI
       IF(myPE%initstat) THEN
 #ifdef DBL
         CALL MPI_Allreduce(x,rbuf,n,MPI_DOUBLE_PRECISION,MPI_SUM, &
@@ -346,7 +346,7 @@ MODULE ParallelEnv
 !-------------------------------------------------------------------------------
 !> @brief Wrapper routine calls MPI_Finalize
     SUBROUTINE finalize_MPI_Env_type()
-#ifdef MPI
+#ifdef HAVE_MPI
       CALL MPI_Finalize(mpierr)
 #endif
     ENDSUBROUTINE finalize_MPI_Env_type
@@ -400,7 +400,7 @@ MODULE ParallelEnv
       INTEGER(SIK) :: icolor,ikey,ngrp,subcomm,nerror
       LOGICAL(SBK) :: localalloc
 
-#ifdef MPI
+#ifdef HAVE_MPI
       localalloc=.FALSE.
       IF(.NOT.ASSOCIATED(eParEnv)) THEN
         ALLOCATE(eParEnv)

@@ -641,12 +641,12 @@ MODULE ExceptionHandler
 !> @brief Stops execution based on value of stopmode
 !> @param stopmode boolean to indicate whether or not to stop execution
     SUBROUTINE exceptionStop(stopmode)
-#ifdef MPI
+#ifdef HAVE_MPI
       INCLUDE 'mpif.h'
       INTEGER(SIK) :: ierr
 #endif
       LOGICAL(SBK),INTENT(IN) :: stopmode
-#ifdef MPI
+#ifdef HAVE_MPI
       IF(stopmode) CALL MPI_Abort(MPI_COMM_WORLD,666,ierr)
 #else
       IF(stopmode) STOP 666
