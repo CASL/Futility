@@ -10,6 +10,6 @@
 #
 ################################################################################
 INCLUDE(TribitsSubPackageMacros)
-TRIBITS_SUBPACKAGE(Utils)
+TRIBITS_SUBPACKAGE(MPACT_Utils)
 ADD_SUBDIRECTORY(src)
 TRIBITS_SUBPACKAGE_POSTPROCESS()
