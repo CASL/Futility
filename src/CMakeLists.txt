@@ -5,8 +5,8 @@
 # Description: CMake build script for creating main executable. Adds target
 #              for main executable.
 #
-# Author: Brendan Kochunas
-#   Date: 04/22/2011
+# Author: Derek Lax, Brendan Kochunas
+#   Date: 06/05/2012
 #
 ################################################################################
 
