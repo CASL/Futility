@@ -11,4 +11,4 @@
 #
 ################################################################################
 INCLUDE(MPACT_CreateUnitTest)
-MPACT_CreateUnitTest(testLinearSolver 0)
+MPACT_CreateUnitTest(testLinearSolver)

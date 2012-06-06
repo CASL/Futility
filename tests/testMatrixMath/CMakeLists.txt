@@ -11,4 +11,4 @@
 #
 ################################################################################
 INCLUDE(MPACT_CreateUnitTest)
-MPACT_CreateUnitTest(testMatrixMath 0)
+MPACT_CreateUnitTest(testMatrixMath)

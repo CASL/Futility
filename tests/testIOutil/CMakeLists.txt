@@ -11,4 +11,4 @@
 #
 ################################################################################
 INCLUDE(MPACT_CreateUnitTest)
-MPACT_CreateUnitTest(testIOutil 0)
+MPACT_CreateUnitTest(testIOutil)

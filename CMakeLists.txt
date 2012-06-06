@@ -2,11 +2,11 @@
 #
 # CMake File for MPACT
 #
-# Description: CMake build script for creating main executable. Adds target
-#              for main executable.
+# Description: Sets up the Utils subpackage.
+#             
 #
 # Author: Derek Lax, Brendan Kochunas
-#   Date: 06/04/2012
+#   Date: 06/05/2012
 #
 ################################################################################
 INCLUDE(TribitsSubPackageMacros)

@@ -11,4 +11,4 @@
 #
 ################################################################################
 INCLUDE(MPACT_CreateUnitTest)
-MPACT_CreateUnitTest(testAllocs 0)
+MPACT_CreateUnitTest(testAllocs)
