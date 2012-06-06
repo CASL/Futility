@@ -2,8 +2,8 @@
 #
 # CMake File for MPACT
 #
-# Description: CMake build script for creating main executable. Adds target
-#              for main executable.
+# Description: CMake script to add the MPACT_Utils library.
+#              
 #
 # Author: Derek Lax, Brendan Kochunas
 #   Date: 06/05/2012
