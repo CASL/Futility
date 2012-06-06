@@ -739,6 +739,7 @@ MODULE MortonOrdering
           !Determine the level in the tree with at least npart domains
           !Skip the bottom-most level because this is level is likely
           !incomplete and is handled by the 1-to-1 mapping check previously.
+          ndlevel=0
           DO ilevel=1,maxLevels-1
             !Get the total number of domains at each level
             ndlevel=thisZTreeNode%getNDomains(ilevel)
