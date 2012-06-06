@@ -11,5 +11,7 @@
 ################################################################################
 INCLUDE(TribitsSubPackageMacros)
 TRIBITS_SUBPACKAGE(MPACT_Utils)
+TRIBITS_PACKAGE_DEF()
+TRIBITS_ADD_TEST_DIRECTORIES(tests)
 ADD_SUBDIRECTORY(src)
 TRIBITS_SUBPACKAGE_POSTPROCESS()
