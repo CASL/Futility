@@ -14,20 +14,20 @@
 # The tests at the beginning of the list have the least dependencies and the
 # the tests at the end have the most dependencies.
 # 
-SET(UNIT_TEST_NAMES      
+SET(UNIT_TEST_NAMES
+    testSelectedKinds
+    testTimes
+    testBinaryTrees
+    testSpaceFillingCurve
+    testExceptionHandler      
     testAllocs
-    testBinaryTrees     
+    testExpTables
+    testStochasticSampler
+    testParallelEnv
+    testIOutil
     testCmdLineProc
-    testExceptionHandler
-    testExpTables     
-    testGeom
-    testIOutil    
     testLinearSolver
     testMatrixMath
-    testSelectedKinds
-    testSpaceFillingCurve
-    testStochasticSampler 
-    testTimes
 )
 FOREACH(test ${UNIT_TEST_NAMES})
     ADD_SUBDIRECTORY(${test})
