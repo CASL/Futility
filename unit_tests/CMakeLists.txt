@@ -27,8 +27,8 @@ SET(UNIT_TEST_NAMES
     testParallelEnv
     testIOutil
     testCmdLineProc
-    testLinearSolver
     testMatrixMath
+    testLinearSolver
 )
 FOREACH(test ${UNIT_TEST_NAMES})
     ADD_SUBDIRECTORY(${test})
