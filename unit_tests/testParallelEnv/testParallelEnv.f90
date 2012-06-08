@@ -314,7 +314,6 @@ PROGRAM testParallelEnv
 !    CALL testPE3%world%barrier()
 !  ENDIF
 #else
-  CALL eParEnv%setStopOnError(.FALSE.)
   !Test every line of isInit
   IF(testPE%isInit()) THEN
     WRITE(*,*) 'CALL testPE%isInit() world%isInit() FAILED!'
@@ -369,7 +368,7 @@ PROGRAM testParallelEnv
   ENDIF
   CALL testPE%clear()
   
-  CALL testPE%initialize(0,0,0,0,0)
+  CALL testPE%initialize(0,1,1,1,1)
   IF(.NOT.testPE%isInit() .OR. testPE%world%comm /= 1 .OR. &
      testPE%world%nproc /=1 .OR. testPE%world%rank /= 0 .OR. &
      .NOT.testPE%world%master .OR. .NOT.testPE%energy%master .OR. &
