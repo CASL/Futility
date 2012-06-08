@@ -17,6 +17,7 @@
 SET(UNIT_TEST_NAMES
     testSelectedKinds
     testTimes
+    testGeom
     testBinaryTrees
     testSpaceFillingCurve
     testExceptionHandler      
