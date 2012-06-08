@@ -246,13 +246,13 @@ PROGRAM testParallelEnv
   FLUSH(OUTPUT_UNIT)
   CALL MPI_Barrier(MPI_COMM_WORLD,mpierr)
   CALL eParEnv%setStopOnError(.FALSE.)
-  !CALL eParEnv%setQuietMode(.TRUE.)
-  !CALL testPE%initialize(MPI_COMM_WORLD,0,0,0,0)
-  CALL testPE%initialize(MPI_COMM_WORLD,mysize,1,1,1)
-  CALL testPE%world%barrier()
-  WRITE(OUTPUT_UNIT,*) myrank,testPE%space%rank,testPE%energy%rank,testPE%angle%rank
-  FLUSH(OUTPUT_UNIT)
-  CALL testPE%world%barrier()
+  CALL eParEnv%setQuietMode(.TRUE.)
+  CALL testPE%initialize(MPI_COMM_WORLD,0,0,0,0)
+  !CALL testPE%initialize(MPI_COMM_WORLD,mysize,1,1,1)
+  !CALL testPE%world%barrier()
+  !WRITE(OUTPUT_UNIT,*) myrank,testPE%space%rank,testPE%energy%rank,testPE%angle%rank
+  !FLUSH(OUTPUT_UNIT)
+  !CALL testPE%world%barrier()
 !  CALL MPI_Reduce(testPE%world%rank,tmp,1,MPI_INTEGER,MPI_SUM,0,testPE%space%comm,mpierr)
 !  CALL testPE%world%barrier()
 !  IF(testPE%space%master) WRITE(OUTPUT_UNIT,*) 'SPACE REDUCE Check:',myrank,tmp

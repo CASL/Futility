@@ -120,6 +120,8 @@ MODULE ParallelEnv
   TYPE :: ParallelEnvType
     !> The environment for the entire program world
     TYPE(MPI_EnvType) :: world
+    !> The environment for the entire program world
+    TYPE(MPI_EnvType) :: CartGridWorld
     !> The environment for the group owning each energy domain
     TYPE(MPI_EnvType),POINTER :: energy => NULL()
     !> The environment for the group owning each spatial domain
@@ -389,25 +391,28 @@ MODULE ParallelEnv
 !
 !-------------------------------------------------------------------------------
 !> @brief Initializes an OpenMP environment type object.
-    SUBROUTINE init_ParEnvType(myPE,icomm,nspace,nenergy,nangle,nthreads)
-      CHARACTER(LEN=15),PARAMETER :: myName='init_ParEnvType'
+    SUBROUTINE init_ParEnvType(myPE,commWorld,nspace,nenergy,nangle,nthreads)
+      CHARACTER(LEN=*),PARAMETER :: myName='init_ParEnvType'
+      LOGICAL(SBK),DIMENSION(3),PARAMETER :: isPeriodic=(/.FALSE.,.FALSE.,.FALSE./)
       CLASS(ParallelEnvType),INTENT(INOUT) :: myPE
-      INTEGER(SIK),INTENT(IN) :: icomm
+      INTEGER(SIK),INTENT(IN) :: commWorld
       INTEGER(SIK),INTENT(IN) :: nspace
       INTEGER(SIK),INTENT(IN) :: nangle
       INTEGER(SIK),INTENT(IN) :: nenergy
       INTEGER(SIK),INTENT(IN) :: nthreads
-      INTEGER(SIK) :: icolor,ikey,ngrp,subcomm,nerror
-      LOGICAL(SBK) :: localalloc
-
-#ifdef HAVE_MPI
+      CHARACTER(LEN=12) :: smpierr
+      INTEGER(SIK) :: nerror,tmpcomm,commDims(3)
+      LOGICAL(SBK) :: localalloc,activeCommDim(3)
+      
       localalloc=.FALSE.
       IF(.NOT.ASSOCIATED(eParEnv)) THEN
         ALLOCATE(eParEnv)
         localalloc=.TRUE.
       ENDIF
       nerror=eParEnv%getCounter(EXCEPTION_ERROR)
-      CALL myPE%world%initialize(icomm)
+      CALL myPE%world%initialize(commWorld)
+      
+
       IF(nspace < 1) CALL eParEnv%raiseError(modName//'::'//myName// &
         ' - input nspace is less than 1!')
       IF(nangle < 1) CALL eParEnv%raiseError(modName//'::'//myName// &
@@ -416,81 +421,88 @@ MODULE ParallelEnv
         ' - input nenergy is less than 1!')
       IF(nthreads < 1) CALL eParEnv%raiseError(modName//'::'//myName// &
         ' - input nthreads is less than 1!')
-!      IF(nenergy*nspace*nangle /= myPE%world%nproc) &
-!        CALL eParEnv%raiseError(modName//'::'//myName//' - Number of '// &
-!          'processors specified does not equal number of available processors!')
-!      IF(nspace > 0) THEN
-!        IF(nenergy*nangle /= myPE%world%nproc/nspace) &
-!          CALL eParEnv%raiseError(modName//'::'//myName//' - Number of '// &
-!            'processors per spatial domain does not equal number of '// &
-!              'available processors in a spatial domain!')
-!      ENDIF
-!      IF(nspace > 0 .AND. nangle > 0) THEN
-!        IF(nangle /= myPE%world%nproc/(nspace*nenergy)) &
-!           CALL eParEnv%raiseError(modName//'::'//myName//' - Number of '// &
-!            'processors per energy domain does not equal number of '// & 
-!              'available processors in an energy domain!')
-!      ENDIF
+      IF(nenergy*nspace*nangle > myPE%world%nproc) &
+        CALL eParEnv%raiseError(modName//'::'//myName//' - Number of '// &
+          'available MPI processes is insufficient to hold grid!')
+      IF(nenergy*nspace*nangle < myPE%world%nproc) &
+        CALL eParEnv%raiseWarning(modName//'::'//myName//' - Number of '// &
+          'available MPI processes is more than grid size, '// &
+            'some processes will not be used!')
+      
       IF(nerror == eParEnv%getCounter(EXCEPTION_ERROR)) THEN
-        !Setup Communicator for Spatial Decomposition
-        IF(.NOT.ASSOCIATED(myPE%space)) ALLOCATE(myPE%space)
-        IF(.NOT.myPE%space%initstat) THEN
-          ngrp=myPE%world%nproc/nspace
-          icolor=MOD(myPE%world%rank,ngrp)+1
-          ikey=myPE%world%rank/ngrp+1
-          CALL MPI_Comm_split(myPE%world%comm,icolor,ikey,subcomm,mpierr)
-          IF(mpierr /= MPI_SUCCESS) CALL eParEnv%raiseError(modName//'::'//myName// &
-            ' - MPI_Comm_split returned an error when creating space comm!')
-          CALL myPE%space%initialize(subcomm)
-        ENDIF
+        commDims(1)=nspace
+        commDims(2)=nangle
+        commDims(3)=nenergy
         
-        !Setup Communicator for Energy Decomposition
-        IF(.NOT.ASSOCIATED(myPE%energy)) ALLOCATE(myPE%energy)
-        IF(.NOT.myPE%energy%initstat) THEN
-          ngrp=myPE%world%nproc/nenergy
-          icolor=MOD(myPE%world%rank,ngrp)+1
-          ikey=myPE%world%rank/ngrp+1
-          CALL MPI_Comm_split(myPE%world%comm,icolor,ikey,subcomm,mpierr)
-          IF(mpierr /= MPI_SUCCESS) CALL eParEnv%raiseError(modName//'::'//myName// &
-            ' - MPI_Comm_split returned an error when creating angle comm!')
-          CALL myPE%energy%initialize(subcomm)
-        ENDIF
+#ifdef HAVE_MPI
+        !Create Virtual Cartesian Grid Topology from communicator
+        CALL MPI_Cart_create(myPE%world%comm,3,commDims,isPeriodic,.TRUE., &
+          tmpcomm,mpierr)
         
-        !Setup Communicator for Angular Decomposition
-        IF(.NOT.ASSOCIATED(myPE%angle)) ALLOCATE(myPE%angle)
-        IF(.NOT.myPE%angle%initstat) THEN
-          !ngrp=myPE%world%nproc/nangle
-          !icolor=MOD(myPE%world%rank,ngrp)+1
-          !ikey=myPE%world%rank/ngrp+1
-          icolor=myPE%space%rank
-          ikey=MOD(myPE%world%rank,myPE%space%nproc)+1
-          CALL MPI_Comm_split(myPE%world%comm,icolor,ikey,subcomm,mpierr)
-          IF(mpierr /= MPI_SUCCESS) CALL eParEnv%raiseError(modName//'::'//myName// &
-            ' - MPI_Comm_split returned an error when creating angle comm!')
-          CALL myPE%angle%initialize(subcomm)
-        ENDIF
-        
-        !Setup Ray decomposition
-        IF(.NOT.ASSOCIATED(myPE%ray)) THEN
+        IF(mpierr == MPI_SUCCESS .AND. tmpcomm /= MPI_COMM_NULL) THEN
+          !Setup MPI Env object for the virtual topology
+          CALL myPE%CartGridWorld%initialize(tmpcomm)
+          
+          !Setup Communicator for Spatial Decomposition
+          activeCommDim=.FALSE.
+          activeCommDim(1)=.TRUE.
+          CALL MPI_Cart_sub(myPE%CartGridWorld%comm,activeCommDim,tmpcomm,mpierr)
+          IF(mpierr == MPI_SUCCESS) THEN
+            ALLOCATE(myPE%space)
+            CALL myPE%space%initialize(tmpcomm)
+          ELSE
+            WRITE(smpierr,'(i12)') mpierr; smpierr=ADJUSTL(smpierr)
+            CALL eParEnv%raiseError(modName//'::'//myName// &
+              ' - Unexpected error creating MPI communicator for spatial '// &
+                'decomp., mpierr='//TRIM(smpierr)//'!')
+          ENDIF
+          
+          !Setup Communicator for Angular Decomposition
+          activeCommDim(1)=.FALSE.
+          activeCommDim(2)=.TRUE.
+          CALL MPI_Cart_sub(myPE%CartGridWorld%comm,activeCommDim,tmpcomm,mpierr)
+          IF(mpierr == MPI_SUCCESS) THEN
+            ALLOCATE(myPE%angle)
+            CALL myPE%angle%initialize(tmpcomm)
+          ELSE
+            WRITE(smpierr,'(i12)') mpierr; smpierr=ADJUSTL(smpierr)
+            CALL eParEnv%raiseError(modName//'::'//myName// &
+              ' - Unexpected error creating MPI communicator for angular '// &
+                'decomp., mpierr='//TRIM(smpierr)//'!')
+          ENDIF
+          
+          !Setup Communicator for Energy Decomposition
+          activeCommDim(2)=.FALSE.
+          activeCommDim(3)=.TRUE.
+          CALL MPI_Cart_sub(myPE%CartGridWorld%comm,activeCommDim,tmpcomm,mpierr)
+          IF(mpierr == MPI_SUCCESS) THEN
+            ALLOCATE(myPE%energy)
+            CALL myPE%energy%initialize(tmpcomm)
+          ELSE
+            WRITE(smpierr,'(i12)') mpierr; smpierr=ADJUSTL(smpierr)
+            CALL eParEnv%raiseError(modName//'::'//myName// &
+              ' - Unexpected error creating MPI communicator for energy '// &
+                'decomp., mpierr='//TRIM(smpierr)//'!')
+          ENDIF
+          
+          !Setup Ray decomposition
           ALLOCATE(myPE%ray); CALL myPE%ray%initialize(nthreads)
+        ELSE
+          WRITE(smpierr,'(i12)') mpierr; smpierr=ADJUSTL(smpierr)
+          CALL eParEnv%raiseError(modName//'::'//myName// &
+            ' - MPI error when trying to create cartesian grid  '// &
+              'virtual topology, mpierr='//TRIM(smpierr)//'!')
         ENDIF
-      ENDIF
-      IF(localalloc) DEALLOCATE(eParEnv)
 #else
-      CALL myPE%world%initialize(icomm)
-      IF(.NOT.ASSOCIATED(myPE%space)) THEN
+        CALL myPE%world%initialize(commWorld)
         ALLOCATE(myPE%space); myPE%space=myPE%world
-      ENDIF
-      IF(.NOT.ASSOCIATED(myPE%angle)) THEN
         ALLOCATE(myPE%angle); myPE%angle=myPE%world
-      ENDIF
-      IF(.NOT.ASSOCIATED(myPE%energy)) THEN
         ALLOCATE(myPE%energy); myPE%energy=myPE%world
-      ENDIF
-      IF(.NOT.ASSOCIATED(myPE%ray)) THEN
         ALLOCATE(myPE%ray); CALL myPE%ray%initialize(nthreads)
-      ENDIF
 #endif
+      ENDIF
+      
+      IF(localalloc) DEALLOCATE(eParEnv)
     ENDSUBROUTINE init_ParEnvType
 !
 !-------------------------------------------------------------------------------
