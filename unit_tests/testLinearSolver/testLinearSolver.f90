@@ -24,6 +24,7 @@ PROGRAM testLinearSolver
   USE ParallelEnv
   IMPLICIT NONE
   
+  TYPE(MPI_EnvType) :: mpiTestEnv
   TYPE(ExceptionHandlerType),POINTER :: e
 
   !Configure exception handler for test
@@ -31,6 +32,7 @@ PROGRAM testLinearSolver
   CALL e%setStopOnError(.FALSE.)
   CALL e%setQuietMode(.TRUE.)
   eLinearSolverType => e
+  CALL mpiTestEnv%initialize(0)
 
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING LINEAR SOLVERS...'
@@ -50,6 +52,7 @@ PROGRAM testLinearSolver
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING LINEAR SOLVERS PASSED!'
   WRITE(*,*) '==================================================='
+  CALL mpiTestEnv%finalize()
 !
 !===============================================================================
 CONTAINS
