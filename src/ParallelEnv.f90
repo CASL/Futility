@@ -327,13 +327,13 @@ MODULE ParallelEnv
 #ifdef HAVE_MPI
       REAL(SRK) :: rbuf(n)
       IF(myPE%initstat) THEN
-  #ifdef DBL
+#ifdef DBL
         CALL MPI_Allreduce(x,rbuf,n,MPI_DOUBLE_PRECISION,MPI_SUM, &
           myPE%comm,mpierr)
-  #else
+#else
         CALL MPI_Allreduce(x,rbuf,n,MPI_SINGLE_PRECISION,MPI_SUM, &
           myPE%comm,mpierr)  
-  #endif
+#endif
         IF(mpierr /= MPI_SUCCESS) THEN
           CALL eParEnv%raiseError(modName//'::'// &
             myName//' - call to MPI_Allreduce returned an error!')
