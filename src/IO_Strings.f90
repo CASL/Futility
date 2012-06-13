@@ -419,27 +419,29 @@ CONTAINS
 !> error value.
     PURE SUBROUTINE getField(i,string,field,ierrout)
       INTEGER(SIK),INTENT(IN) :: i
-      CHARACTER(LEN=*),INTENT(INOUT) :: string
+      CHARACTER(LEN=*),INTENT(IN) :: string
       CHARACTER(LEN=*),INTENT(OUT) :: field
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierrout
       INTEGER(SIK) :: j,ioerr,nf
+      CHARACTER(LEN=LEN(string)) :: temp
                  
       field=''
-      nf=nFields(string)
+      temp=string
+      nf=nFields(temp)
       IF(0 < i .AND. i <= nf) THEN
         !The fortran READ(*,*) parses at the '/' character
         !we don't want this to occur. We only want it to parse for '*'
         !and ' ' characters. So if slashes are present we treat things
         !differently.
-        IF(strmatch(string,FSLASH)) THEN
+        IF(strmatch(temp,FSLASH)) THEN
           !Temporarily change the FSLASH character to a BSLASH character
           !to get correct parsing behavior
-          CALL strrep(string,FSLASH,BSLASH)
-          READ(string,*,IOSTAT=ioerr) (field,j=1,i)
-          CALL strrep(string,BSLASH,FSLASH)
+          CALL strrep(temp,FSLASH,BSLASH)
+          READ(temp,*,IOSTAT=ioerr) (field,j=1,i)
+          CALL strrep(temp,BSLASH,FSLASH)
           CALL strrep(field,BSLASH,FSLASH)
         ELSE
-          READ(string,*,IOSTAT=ioerr) (field,j=1,i)
+          READ(temp,*,IOSTAT=ioerr) (field,j=1,i)
         ENDIF
         IF(ioerr /= 0) field=''
         IF(PRESENT(ierrout)) ierrout=ioerr
