@@ -256,7 +256,7 @@ MODULE FileType_Log
       ELSE
         !Write message to log file
         IF(file%isOpen()) THEN
-          WRITE(file%getUnitNo(),'(11x,a)',IOSTAT=ioerr) TRIM(mesg)
+          WRITE(file%getUnitNo(),'(12x,a)',IOSTAT=ioerr) TRIM(mesg)
           IF(ioerr /= 0) THEN
             WRITE(emesg,'(a,i4)') 'Error writing message to log file! IOSTAT=' &
               ,ioerr
@@ -265,7 +265,7 @@ MODULE FileType_Log
         ENDIF
         !Write message to prompt
         IF(echostat) THEN
-          WRITE(OUTPUT_UNIT,'(11x,a)',IOSTAT=ioerr) TRIM(mesg)
+          WRITE(OUTPUT_UNIT,'(12x,a)',IOSTAT=ioerr) TRIM(mesg)
           IF(ioerr /= 0) THEN
             WRITE(emesg,'(a,i4)') 'Error writing message to prompt! IOSTAT=' &
               ,ioerr
