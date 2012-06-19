@@ -172,6 +172,8 @@ CONTAINS
    !test Direct
       ALLOCATE(LinearSolverType_Direct :: thisLS)
       !Bad input
+      MPIEnv_uninit => NULL()
+      OMPEnv_uninit => NULL()
       CALL thisLS%init(-1,MPIEnv_uninit,OMPEnv_uninit)
       CALL thisLS%init(1,MPIEnv_uninit,OMPEnv_uninit,'testTimer')
       ALLOCATE(MPIEnv_uninit,OMPEnv_uninit)
