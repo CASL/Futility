@@ -370,8 +370,8 @@ MODULE Geom_Points
           WRITE(cstring,FMT='(a,100('//fmt_string//',a))',IOSTAT=ioerr) &
             '(',(p%coord(i),',',i=1,p%dim-1),p%coord(p%dim),')'
         ELSE
-         WRITE(cstring,'(a,100(es21.14,a))',IOSTAT=ioerr) &
-           '(',(p%coord(i),',',i=1,p%dim-1),p%coord(p%dim),')'
+          WRITE(cstring,'(a,100(es21.14,a))',IOSTAT=ioerr) &
+            '(',(p%coord(i),',',i=1,p%dim-1),p%coord(p%dim),')'
         ENDIF
         IF(ioerr /= 0) cstring=''
       ENDIF

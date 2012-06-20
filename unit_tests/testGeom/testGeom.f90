@@ -29,10 +29,11 @@ PROGRAM testGeom
   TYPE(CircleType) :: circle1,circles(2)
   TYPE(CylinderType) :: cylinder1,cylinders(2)
   TYPE(OBBType) :: box,boxs(2)
-  INTEGER(SIK) :: ldim(2),i
+  INTEGER(SIK) :: ldim(2),i,ioerr
   REAL(SRK) :: d,s(2),mu1,mu2,mu1s(2),mu2s(2)
   REAL(SRK) :: e_2d(2),e_3d(3),u1_2d(2),u2_2d(2),u3_2d(2)
   REAL(SRK) :: u1_3d(3),u2_3d(3),u3_3d(3)
+  CHARACTER(LEN=MAX_COORD_STR_LEN) :: tempstr
   
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING GEOM...'
@@ -122,9 +123,16 @@ PROGRAM testGeom
       IF(TRIM(point%getCoordString()) /= '( 1.70000000000000E+00, '// &
         '1.80000000000000E+00, 1.90000000000000E+00, '// &
           '1.00000000000000E+00)' .OR. TRIM(point%getCoordString( &
-            'f6.3')) /= '( 1.700, 1.800, 1.900, 1.000)' .OR. &
-              LEN_TRIM(point%getCoordString('i6')) /= 0 .OR. &
-                LEN_TRIM(point2%getCoordString()) /= 0) THEN
+            'f6.3')) /= '( 1.700, 1.800, 1.900, 1.000)') THEN
+        WRITE(*,*) 'CALL point%getCoordString(...)) FAILED!'
+        STOP 666
+      ENDIF
+#ifdef DEBUG
+      IF(LEN_TRIM(point%getCoordString('i6')) /= 0 .OR. &
+           LEN_TRIM(point2%getCoordString()) /= 0) THEN
+#else
+      IF(LEN_TRIM(point2%getCoordString()) /= 0) THEN
+#endif
         WRITE(*,*) 'CALL point%getCoordString(...)) FAILED!'
         STOP 666
       ELSE
