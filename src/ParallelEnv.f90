@@ -85,6 +85,9 @@ MODULE ParallelEnv
       !> @copybrief ParallelEnv::allReduce_MPI_Env_type
       !> @copydetails  ParallelEnv::allReduce_MPI_Env_type
       PROCEDURE,PASS :: allReduce => allReduce_MPI_Env_type
+      !> @copybrief ParallelEnv::gather_MPI_Env_type
+      !> @copydetails  ParallelEnv::gather_MPI_Env_type
+      PROCEDURE,PASS :: gather => gather_MPI_Env_type
       !> @copybrief ParallelEnv::finalize_MPI_Env_type
       !> @copydetails  ParallelEnv::finalize_MPI_Env_type
       PROCEDURE,NOPASS :: finalize => finalize_MPI_Env_type
@@ -344,6 +347,52 @@ MODULE ParallelEnv
       ENDIF
 #endif
     ENDSUBROUTINE allReduce_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief GATHER routine calls MPI_GATHER
+!> @param myPE the MPI parallel environment
+!> @param nSend the number of data elements to send
+!> @param xSend the data to send
+!> @param nRecv the number of data elements to receive (just works for receive processor)
+!> @param xRecv the data to receive
+!> @param rankRecv the rank of processor to receive the data
+!>
+!> This routine only performs a sum operation and only for reals.
+!>
+    SUBROUTINE gather_MPI_Env_type(myPE,nSend,xSend,nRecv,xRecv,rankRecv)
+      CHARACTER(LEN=*),PARAMETER :: myName='gather_MPI_Env_type'
+      CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
+      INTEGER(SIK),INTENT(IN) :: nSend
+      REAL(SRK),INTENT(IN) :: xSend(*)
+      INTEGER(SIK),INTENT(IN) :: nRecv
+      REAL(SRK),INTENT(INOUT) :: xRecv(*)
+      INTEGER(SIK),INTENT(IN) :: rankRecv
+
+#ifdef HAVE_MPI
+      REAL(SRK) :: rbuf(nRecv)
+      IF(myPE%initstat) THEN
+        IF(0 <= rankRecv .AND. rankRecv <= myPE%nproc-1) THEN
+#ifdef DBL
+          CALL MPI_Gather(xSend,nSend,MPI_DOUBLE_PRECISION,rbuf,nRecv, &
+            MPI_DOUBLE_PRECISION,rankRecv,myPE%comm,mpierr)
+#else
+          CALL MPI_Gather(xSend,nSend,MPI_SINGLE_PRECISION,rbuf,nRecv, &
+            MPI_SINGLE_PRECISION,rankRecv,myPE%comm,mpierr)
+#endif
+          IF(mpierr /= MPI_SUCCESS) THEN
+            CALL eParEnv%raiseError(modName//'::'// &
+              myName//' - call to MPI_Gather returned an error!')
+          ELSE
+            !Copy the result to the output argument
+            CALL BLAS_copy(nRecv,rbuf,1,xRecv,1)
+          ENDIF
+        ELSE
+          CALL eParEnv%raiseError(modName//'::'// &
+            myName//' - The rank of receivc processor is out of range!')
+        ENDIF
+      ENDIF
+#endif
+    ENDSUBROUTINE gather_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
 !> @brief Wrapper routine calls MPI_Finalize
