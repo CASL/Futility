@@ -85,6 +85,9 @@ MODULE ParallelEnv
       !> @copybrief ParallelEnv::allReduce_MPI_Env_type
       !> @copydetails  ParallelEnv::allReduce_MPI_Env_type
       PROCEDURE,PASS :: allReduce => allReduce_MPI_Env_type
+      !> @copybrief ParallelEnv::trueForAll_MPI_Env_type
+      !> @copydetails  ParallelEnv::trueForAll_MPI_Env_type
+      PROCEDURE,PASS :: trueForAll => trueForAll_MPI_Env_type
       !> @copybrief ParallelEnv::finalize_MPI_Env_type
       !> @copydetails  ParallelEnv::finalize_MPI_Env_type
       PROCEDURE,NOPASS :: finalize => finalize_MPI_Env_type
@@ -312,7 +315,8 @@ MODULE ParallelEnv
     ENDSUBROUTINE barrier_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
-!> @brief Wrapper routine calls MPI_Allreduce
+!> @brief Wrapper routine calls MPI_Allreduce and performs a sum of operation
+!> for a real array.
 !> @param myPE the MPI parallel environment 
 !> @param n the number of data elements to commincate
 !> @param x the partial sum to be returned as the total sum
@@ -344,6 +348,34 @@ MODULE ParallelEnv
       ENDIF
 #endif
     ENDSUBROUTINE allReduce_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine calls MPI_Allreduce and performs a logical and
+!> operation for a scalar logical.
+!> @param myPE the MPI parallel environment 
+!> @param n the number of data elements to commincate
+!> @param x the partial sum to be returned as the total sum
+!>
+!> This routine only performs a sum operation and only for reals.
+!>
+    SUBROUTINE trueForAll_MPI_Env_type(myPE,lstat)
+      CHARACTER(LEN=*),PARAMETER :: myName='trueForAll_MPI_Env_type'
+      CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
+      LOGICAL(SBK),INTENT(INOUT) :: lstat
+#ifdef HAVE_MPI
+      LOGICAL(SBK) :: lrbuf
+      IF(myPE%initstat) THEN
+        CALL MPI_Allreduce(lstat,lrbuf,1,MPI_LOGICAL,MPI_LAND, &
+          myPE%comm,mpierr)
+        IF(mpierr /= MPI_SUCCESS) THEN
+          CALL eParEnv%raiseError(modName//'::'// &
+            myName//' - call to MPI_Allreduce returned an error!')
+        ELSE
+          lstat=lrbuf
+        ENDIF
+      ENDIF
+#endif
+    ENDSUBROUTINE trueForAll_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
 !> @brief Wrapper routine calls MPI_Finalize
