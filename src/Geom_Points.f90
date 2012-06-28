@@ -472,8 +472,8 @@ MODULE Geom_Points
               
               !IF((d .APPROXEQ. searchPoint1%sortval) .OR. &
               !  (d .APPROXEQ. searchPoint2%sortval)) THEN
-              IF((ABS(d-searchPoint1%sortval) <= 2._SRK*EPSREAL) .OR. &
-                 (ABS(d-searchPoint2%sortval) <= 2._SRK*EPSREAL)) THEN
+              IF((ABS(d-searchPoint1%sortval) <= 10._SRK*EPSREAL) .OR. &
+                 (ABS(d-searchPoint2%sortval) <= 10._SRK*EPSREAL)) THEN
                 !Do not allow for points that are approximately equal to existing
                 !points in the list.
                 !
