@@ -556,6 +556,7 @@ MODULE FileType_Fortran
       CHARACTER(LEN=3) :: padvar
       INTEGER(SIK) :: reclval
       LOGICAL(SBK) :: localalloc
+      LOGICAL(SBK) :: fileExists
       
       localalloc=.FALSE.
       IF(.NOT.ASSOCIATED(file%e)) THEN
@@ -614,12 +615,21 @@ MODULE FileType_Fortran
           !is UNFORMATTED.
           IF(file%isDirect()) THEN
             IF(file%isFormatted()) THEN
-              !Omit the POSITION clause, and include the PAD clause
-              OPEN(UNIT=file%unitno,STATUS=TRIM(statusvar),PAD=TRIM(padvar), &
-                ACCESS=TRIM(accessvar),FORM=TRIM(formvar),RECL=reclval, &
-                  ACTION=TRIM(actionvar),FILE=TRIM(file%getFilePath())// &
+              IF(statusvar == 'OLD') &
+                INQUIRE(FILE=TRIM(file%getFilePath())// &
                     TRIM(file%getFileName())//TRIM(file%getFileExt()), &
-                      IOSTAT=ioerr)
+                    EXIST=fileExists)
+              IF(fileExists) THEN  
+                !Omit the POSITION clause, and include the PAD clause
+                OPEN(UNIT=file%unitno,STATUS=TRIM(statusvar),PAD=TRIM(padvar), &
+                  ACCESS=TRIM(accessvar),FORM=TRIM(formvar),RECL=reclval, &
+                    ACTION=TRIM(actionvar),FILE=TRIM(file%getFilePath())// &
+                      TRIM(file%getFileName())//TRIM(file%getFileExt()), &
+                        IOSTAT=ioerr)
+              ELSE
+                WRITE(emesg,'(a,i4,a)') 'Error opening file (UNIT=', &
+                  file%unitno,'). File does not exist.'
+              ENDIF
             ELSE
               !Omit the POSITION clause, and the PAD clause
               OPEN(UNIT=file%unitno,STATUS=TRIM(statusvar),RECL=reclval, &
