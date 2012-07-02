@@ -14,7 +14,7 @@ INCLUDE(TribitsLibraryMacros)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
 
 #Library for utility code
-TRIBITS_ADD_LIBRARY(Utils STATIC
+TRIBITS_ADD_LIBRARY(Utils
     SOURCES
       IntrType.f90
       Times.f90
