@@ -481,6 +481,16 @@ MODULE Geom_Points
                 !should be use SQRT(dim)*EPSREAL instead of EPSREAL for the
                 !tolerance. We use a value of 2 since this caputes SQRT(3) and
                 !we don't really expect higher dimensions.
+                !
+                !However, in practice this was determined to be too small of a
+                !tolerance. It appears there are some cases where the approxeq is
+                !satisfied for 2 of the 3 dimensions and because the surface and
+                !line segment are nearly parallel the floating point error in the
+                !3rd dimension will be significantly larger.
+                !
+                !A new factor of 10 was arbitrarily chosen and may need to be updated
+                !again if other degenerate cases are still encountered to not be
+                !be correctly identified. 
                 linsert=.FALSE.
               ELSEIF(searchPoint1%sortval < d .AND. d < searchPoint2%sortval) THEN
                 thisPoint%next => searchPoint2
