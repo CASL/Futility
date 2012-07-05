@@ -58,7 +58,7 @@ MODULE FileType_Base
   PUBLIC :: clear_base_file
   
   !> The maximum allowable length for the path to a file.
-  INTEGER(SIK),PARAMETER :: MAX_PATH_LENGTH=132
+  INTEGER(SIK),PARAMETER :: MAX_PATH_LENGTH=256
   !> The maximum allowable length for a file name
   !> (with extension, excludes path)
   INTEGER(SIK),PARAMETER :: MAX_FNAME_LENGTH=64
