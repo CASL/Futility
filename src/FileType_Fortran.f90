@@ -646,8 +646,10 @@ MODULE FileType_Fortran
           ENDIF
           
           IF(ioerr /= 0) THEN
-            WRITE(emesg,'(a,i4,a,i4)') 'Error opening file (UNIT=', &
-              file%unitno,') IOSTAT=',ioerr
+            WRITE(emesg,'(a,i4,a,i4)') 'Error opening file "'// &
+              TRIM(file%getFilePath())//TRIM(file%getFileName())// &
+                TRIM(file%getFileExt())//'" (UNIT=',file%unitno, &
+                  ') IOSTAT=',ioerr
             CALL file%e%raiseError(modName//'::'//myName//' - '//emesg)
           ELSE
             CALL file%setOpenStat(.TRUE.)
