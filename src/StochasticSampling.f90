@@ -59,25 +59,32 @@ MODULE StochasticSampling
   PUBLIC :: StochasticManagerType
   PUBLIC :: StochasticSamplingType
   
+  !> Maximum length for the name of a random number generator
+  INTEGER(SIK),PARAMETER :: MAX_RNG_NAME_LEN=8
+  
   !> Pi
   REAL(SRK),PARAMETER,PRIVATE :: PI=3.141592653589793_SRK
-
-  TYPE,PRIVATE :: RNGdataType
+  
+  !> Add description
+  TYPE :: RNGdataType
     !> Random Number Data
-    INTEGER(SLK) :: RNmult
+    INTEGER(SLK) :: RNmult=-1
     !> Random Number Additive Term
-    INTEGER(SLK) :: RNadd
-    !> log2 of Modulus, must be <64
-    INTEGER(SIK) :: RNlog2mod
+    INTEGER(SLK) :: RNadd=-1
+    !> log2 of Modulus, must be < 64
+    INTEGER(SIK) :: RNlog2mod=-1
     !> Random Number Stride
-    INTEGER(SLK) :: RNstride
+    INTEGER(SLK) :: RNstride=-1
     !> Random Number Initial Seed
-    INTEGER(SLK) :: RNseed0
+    INTEGER(SLK) :: RNseed0=-1
     !> Random Number Name
-    CHARACTER(len=8) :: name
+    CHARACTER(LEN=MAX_RNG_NAME_LEN) :: name=''
   ENDTYPE
   
+  !> Add description
   INTEGER(SIK),PRIVATE,PARAMETER :: nRN=4
+  
+  !> Add description
   TYPE(RNGdataType),PRIVATE,PARAMETER :: generators(nRN)=(/ &
            RNGdataType(              5_SLK**19, 0_SLK, 48, 152917_SLK, 5_SLK**19, 'mcnp std'),  &
            RNGdataType(9219741426499971445_SLK, 1_SLK, 63, 152917_SLK, 1_SLK,     'LEcuyer1'),  &
@@ -85,19 +92,20 @@ MODULE StochasticSampling
            RNGdataType(3249286849523012805_SLK, 1_SLK, 63, 152917_SLK, 1_SLK,     'LEcuyer3') /)
   !                           mult              add  log2mod  stride   seed0        name
   
+  !> Add description
   TYPE :: StochasticManagerType
     !> Initialization status 
     LOGICAL(SBK) :: isInit=.FALSE.
     !> Random Number type
-    INTEGER(SIK) :: RNtype
+    INTEGER(SIK) :: RNtype=-1
     !> Current Seed
-    INTEGER(SLK) :: RNseed
+    INTEGER(SLK) :: RNseed=-1
     !> Random Number stride
-    INTEGER(SLK) :: RNskip
+    INTEGER(SLK) :: RNskip=-1
     !> Number of RNGs created
     INTEGER(SLK) :: counter=0
-   
-    !> List of type bound procedures
+!
+!List of type bound procedures
     CONTAINS
       !> @copybrief StochasticManager::init_Manager
       !> @copydetails StochasticManager::init_Manager
@@ -109,26 +117,27 @@ MODULE StochasticSampling
       !> @copydetails StochasticManager::genSampler_Manager
       PROCEDURE,PASS :: generateSampler => genSampler_Manager
   ENDTYPE StochasticManagerType
-
+  
+  !> Add description
   TYPE :: StochasticSamplingType
     !> Initialization status 
     LOGICAL(SBK) :: isInit=.FALSE.
     !> Random Number Seed
-    INTEGER(SLK) :: RNseed
+    INTEGER(SLK) :: RNseed=-1
     !> Random Number Data
-    INTEGER(SLK) :: RNmult
+    INTEGER(SLK) :: RNmult=-1
     !> Random Number Additive Term
-    INTEGER(SLK) :: RNadd
+    INTEGER(SLK) :: RNadd=-1
     !> Random Number Mask
-    INTEGER(SLK) :: RNmask
+    INTEGER(SLK) :: RNmask=-1
     !> Random Number Mod
-    INTEGER(SLK) :: RNmod
+    INTEGER(SLK) :: RNmod=-1
     !> Random Number Normilization
-    REAL(SDK) :: RNnorm
+    REAL(SDK) :: RNnorm=-1
     !> Random Number Count
     INTEGER(SLK) :: counter=0
-    
-    !> List of type bound procedures
+!
+!List of type bound procedures
     CONTAINS
       !> @copybrief StochasticSampling::init_Sampler
       !> @copydetails StochasticSampling::init_Sampler
@@ -192,10 +201,9 @@ MODULE StochasticSampling
       !> @copybrief StochasticSampling::pwlreject_Sampler
       !> @copydetails StochasticSampling::pwlreject_Sampler
       PROCEDURE,PASS :: pwlrejection => pwlreject_Sampler
-
   ENDTYPE StochasticSamplingType
   
-  CONTAINS
+CONTAINS
 !
 !-------------------------------------------------------------------------------
 !> @brief Constructor for a stochastic manager
@@ -212,6 +220,7 @@ MODULE StochasticSampling
 !> CALL manager%initialize(1)
 !> CALL manager%initialize(seed0=19073486328125_SLK)
 !> @endcode
+!>
     PURE SUBROUTINE init_Manager(manager,rngtype,seed0)
       CLASS(StochasticManagerType),INTENT(INOUT) :: manager
       INTEGER(SIK),INTENT(IN),OPTIONAL :: rngtype
@@ -228,6 +237,27 @@ MODULE StochasticSampling
     ENDSUBROUTINE init_Manager
 !
 !-------------------------------------------------------------------------------
+!> @brief Routine clears the data in a stochastic manager type variable
+!> @param manager the type variable to clear
+!>
+    ELEMENTAL SUBROUTINE clear_Manager(manager)
+      CLASS(StochasticManagerType),INTENT(INOUT) :: manager
+      manager%RNseed=-1
+      manager%isInit=.FALSE.
+    ENDSUBROUTINE clear_Manager
+!
+!-------------------------------------------------------------------------------
+!> @brief Routine generates a stochastic sampler type using the stochastic manager
+!> @param manager the type variable to initialize
+!> @param sampler the type variable to initialize
+!>
+    PURE SUBROUTINE genSampler_Manager(manager,sampler)
+      CLASS(StochasticManagerType),INTENT(IN) :: manager
+      CLASS(StochasticSamplingType),INTENT(INOUT) :: sampler
+      CALL sampler%init(generators(manager%RNtype),manager%RNseed)
+    ENDSUBROUTINE genSampler_Manager
+!
+!-------------------------------------------------------------------------------
 !> @brief Constructor for a stochastic sampler
 !> @param sampler the variable to initialize
 !> @param seed0 is the initial seed
@@ -239,6 +269,7 @@ MODULE StochasticSampling
 !> TYPE(StochasticSampler) :: sampler
 !> CALL sampler%initialize(19073486328125_SLK)
 !> @endcode
+!>
     PURE SUBROUTINE init_Sampler(sampler,RNGdata,seed0)
       CLASS(StochasticSamplingType),INTENT(INOUT) :: sampler
       TYPE(RNGdataType),INTENT(IN) :: RNGdata
@@ -255,56 +286,29 @@ MODULE StochasticSampling
       
       sampler%isInit=.TRUE.
       sampler%counter=0
-      
     ENDSUBROUTINE init_Sampler
-!
-!-------------------------------------------------------------------------------
-!> @brief Routine clears the data in a stochastic manager type variable
-!> @param manager the type variable to clear
-    ELEMENTAL SUBROUTINE clear_Manager(manager)
-      CLASS(StochasticManagerType),INTENT(INOUT) :: manager
-
-      manager%RNseed=-1
-      
-      manager%isInit=.FALSE.
-      
-    ENDSUBROUTINE clear_Manager
 !
 !-------------------------------------------------------------------------------
 !> @brief Routine clears the data in a stochastic sampler type variable
 !> @param sampler the type variable to clear
+!>
     ELEMENTAL SUBROUTINE clear_Sampler(sampler)
       CLASS(StochasticSamplingType),INTENT(INOUT) :: sampler
-
       sampler%RNseed=-1
-      
       sampler%isInit=.FALSE.
-      
     ENDSUBROUTINE clear_Sampler
-!
-!-------------------------------------------------------------------------------
-!> @brief Routine generates a stochastic sampler type using the stochastic manager
-!> @param manager the type variable to initialize
-!> @param sampler the type variable to initialize
-    PURE SUBROUTINE genSampler_Manager(manager,sampler)
-      CLASS(StochasticManagerType),INTENT(IN) :: manager
-      CLASS(StochasticSamplingType),INTENT(INOUT) :: sampler
-
-      CALL sampler%init(generators(manager%RNtype),manager%RNseed)
-      
-    ENDSUBROUTINE genSampler_Manager
 !
 !-------------------------------------------------------------------------------
 !> @brief Routine returns the next random number for the stochastic sampler
 !> @param sampler the type variable to sample from
+!>
     FUNCTION rng_Sampler(sampler) RESULT(rang)
       CLASS(StochasticSamplingType),INTENT(INOUT) :: sampler
       REAL(SDK) :: rang
-
-      sampler%RNseed=IAND(IAND(sampler%RNmult*sampler%RNseed,sampler%RNmask)+sampler%RNadd, sampler%RNmask)
+      sampler%RNseed=IAND(IAND(sampler%RNmult*sampler%RNseed,sampler%RNmask)+ &
+        sampler%RNadd,sampler%RNmask)
       rang=sampler%RNseed*sampler%RNnorm
       sampler%counter=sampler%counter+1
-      
     ENDFUNCTION rng_Sampler
 !
 !-------------------------------------------------------------------------------
@@ -313,12 +317,12 @@ MODULE StochasticSampling
 !> @param sampler the type variable to sample from
 !> @param xmin the minimum value in the uniform distribution
 !> @param xmax the maximum value in the uniform distribution
+!>
     FUNCTION unif_Sampler(sampler,xmin,xmax) RESULT(rang)
       CLASS(StochasticSamplingType),INTENT(INOUT) :: sampler
       REAL(SDK),INTENT(IN) :: xmin
       REAL(SDK),INTENT(IN) :: xmax
       REAL(SDK) :: rang
-
       rang=xmin+(xmax-xmin)*sampler%rng()
     ENDFUNCTION unif_Sampler
 !
@@ -327,6 +331,7 @@ MODULE StochasticSampling
 !> the coefficient a
 !> @param sampler the type variable to sample from
 !> @param a is the coefficient of the exponential f(x)=a*EXP(-a*x)
+!>
     FUNCTION exp_Sampler(sampler,a) RESULT(rang)
       CLASS(StochasticSamplingType),INTENT(INOUT) :: sampler
       REAL(SDK),INTENT(IN) :: a
@@ -341,13 +346,13 @@ MODULE StochasticSampling
 !> @param sampler the type variable to sample from
 !> @param mu is the mean value
 !> @param sigma is the standard deviation
+!>
     FUNCTION norm_Sampler(sampler,mu,sigma) RESULT(rang)
       CLASS(StochasticSamplingType),INTENT(INOUT) :: sampler
       REAL(SDK),INTENT(IN) :: mu
       REAL(SDK),INTENT(IN) :: sigma
       REAL(SDK) :: rn1,rn2
       REAL(SDK) :: rang
-      
       rn1=-LOG(sampler%rng())
       rn2=COS(2.0_SDK*PI*sampler%rng())
       rang=mu+sigma*SQRT(2.0_SDK*rn1)*rn2
@@ -359,12 +364,12 @@ MODULE StochasticSampling
 !> @param sampler the type variable to sample from
 !> @param mu is the mean value
 !> @param sigma is the standard deviation
+!>
     FUNCTION lognorm_Sampler(sampler,mu,sigma) RESULT(rang)
       CLASS(StochasticSamplingType),INTENT(INOUT) :: sampler
       REAL(SDK),INTENT(IN) :: mu
       REAL(SDK),INTENT(IN) :: sigma
       REAL(SDK) :: rang
-      
       rang=EXP(sampler%normal(mu,sigma))
     ENDFUNCTION lognorm_Sampler
 !
@@ -373,6 +378,7 @@ MODULE StochasticSampling
 !> the temperature T
 !> @param sampler the type variable to sample from
 !> @param T is the temperature
+!>
     FUNCTION maxw_Sampler(sampler,T) RESULT(rang)
       CLASS(StochasticSamplingType),INTENT(INOUT) :: sampler
       REAL(SDK),INTENT(IN) :: T
@@ -391,13 +397,13 @@ MODULE StochasticSampling
 !> @param sampler the type variable to sample from
 !> @param a is the coefficient of the Watt fission spectrum
 !> @param b is the coefficient of the Watt fission spectrum
+!>
     FUNCTION watt_Sampler(sampler,a,b) RESULT(rang)
       CLASS(StochasticSamplingType),INTENT(INOUT) :: sampler
       REAL(SDK),INTENT(IN) :: a
       REAL(SDK),INTENT(IN) :: b
       REAL(SDK) :: w, a2b
       REAL(SDK) :: rang
-
       a2b=a**2*b
       w=sampler%maxwellian(a)
       rang=w+0.25_SDK*a2b+sampler%uniform(-1.0_SDK,1.0_SDK)*SQRT(a2b*w)
@@ -408,12 +414,12 @@ MODULE StochasticSampling
 !> the coefficient theta
 !> @param sampler the type variable to sample from
 !> @param thata is the coefficient of the Evaporation spectrum
+!>
     FUNCTION evap_Sampler(sampler,theta) RESULT(rang)
       CLASS(StochasticSamplingType),INTENT(INOUT) :: sampler
       REAL(SDK),INTENT(IN) :: theta
       REAL(SDK) :: rn1
       REAL(SDK) :: rang
-
       rn1=sampler%rng()
       rang=-theta*LOG(rn1*sampler%rng())
     ENDFUNCTION evap_Sampler
@@ -423,6 +429,7 @@ MODULE StochasticSampling
 !>                components y
 !> @param sampler the type variable to sample from
 !> @param y is a vector of the values of the histogram
+!>
     FUNCTION nhist_Sampler(sampler,y) RESULT(rang)
       CLASS(StochasticSamplingType),INTENT(INOUT) :: sampler
       REAL(SDK),INTENT(IN) :: y(:)
@@ -431,15 +438,12 @@ MODULE StochasticSampling
       INTEGER(SIK) :: n
       
       n=SIZE(y,DIM=1)
-      
       rn1=sampler%rng()
-      
       sum=0.0_SDK
       DO rang=1,n
         sum=sum+y(rang)
         IF (rn1 <sum) EXIT
       ENDDO
-
     ENDFUNCTION nhist_Sampler
 !
 !-------------------------------------------------------------------------------
@@ -447,13 +451,12 @@ MODULE StochasticSampling
 !>        histogram with components y
 !> @param sampler the type variable to sample from
 !> @param y is a vector of the values of the histogram
+!>
     FUNCTION uhist_Sampler(sampler,y) RESULT(rang)
       CLASS(StochasticSamplingType),INTENT(INOUT) :: sampler
       REAL(SDK),INTENT(IN) :: y(:)
       INTEGER(SIK) :: rang
-      
       rang=sampler%histogram(y/SUM(y))
-
     ENDFUNCTION uhist_Sampler
 !
 !-------------------------------------------------------------------------------
@@ -462,17 +465,15 @@ MODULE StochasticSampling
 !> @param sampler the type variable to sample from
 !> @param y is a vector of the values of the histogram
 !> @param x is a vector of the bounds of y
+!>
     FUNCTION nchist_Sampler(sampler,y,x) RESULT(rang)
       CLASS(StochasticSamplingType),INTENT(INOUT) :: sampler
       REAL(SDK),INTENT(IN) :: y(:)
       REAL(SDK),INTENT(IN) :: x(:)
       REAL(SDK) :: rang
       INTEGER(SIK) :: interval
-      
       interval=sampler%histogram(y)
-
       rang=sampler%uniform(x(interval),x(interval+1))
-      
     ENDFUNCTION nchist_Sampler
 !
 !-------------------------------------------------------------------------------
@@ -481,6 +482,7 @@ MODULE StochasticSampling
 !> @param sampler the type variable to sample from
 !> @param y is a vector of the values of the histogram
 !> @param x is a vector of the bounds of y
+!>
     FUNCTION uchist_Sampler(sampler,y,x) RESULT(rang)
       CLASS(StochasticSamplingType),INTENT(INOUT) :: sampler
       REAL(SDK),INTENT(IN) :: y(:)
@@ -497,6 +499,7 @@ MODULE StochasticSampling
 !> @param sampler the type variable to sample from
 !> @param y is a vector of the y values of the piece-wise linear function
 !> @param x is a vector of the x values of the piece-wise linear function
+!>
     FUNCTION npwl_Sampler(sampler,y,x) RESULT(rang)
       CLASS(StochasticSamplingType),INTENT(INOUT) :: sampler
       REAL(SDK),INTENT(IN) :: y(:)
@@ -521,7 +524,6 @@ MODULE StochasticSampling
       ELSE
         rang=x(i)+(x(i+1)-x(i))*SQRT(rn2)
       ENDIF
-      
     ENDFUNCTION npwl_Sampler
 !
 !-------------------------------------------------------------------------------
@@ -530,6 +532,7 @@ MODULE StochasticSampling
 !> @param sampler the type variable to sample from
 !> @param y is a vector of the y values of the piece-wise linear function
 !> @param x is a vector of the x values of the piece-wise linear function
+!>
     FUNCTION upwl_Sampler(sampler,y,x) RESULT(rang)
       CLASS(StochasticSamplingType),INTENT(INOUT) :: sampler
       REAL(SDK),INTENT(IN) :: y(:)
@@ -544,9 +547,7 @@ MODULE StochasticSampling
       DO i=1,n
         sum=sum+(y(i)+y(i+1))/2*(x(i+1)-x(i))
       ENDDO
-      
       rang=sampler%pwlinear(y/sum,x)
-      
     ENDFUNCTION upwl_Sampler
 !
 !-------------------------------------------------------------------------------
@@ -557,6 +558,7 @@ MODULE StochasticSampling
 !> @param xmin is the minimum value of x
 !> @param xmax is the maximum value of x
 !> @param ymax is the maximum value of func in the range xmin to xmax
+!>
     FUNCTION reject_Sampler(sampler,func,xmin,xmax,ymax) RESULT(rang)
       CLASS(StochasticSamplingType),INTENT(INOUT) :: sampler
       REAL(SDK),INTENT(IN) :: xmin
@@ -587,7 +589,8 @@ MODULE StochasticSampling
 !> @param xmax is the maximum value of x
 !> @param ymax is the maximum value of func in the range xmin to xmax
 !> @param arg is a vector of arguments that gets passed to func
-FUNCTION rejectarg_Sampler(sampler,func,xmin,xmax,ymax,arg) RESULT(rang)
+!>
+    FUNCTION rejectarg_Sampler(sampler,func,xmin,xmax,ymax,arg) RESULT(rang)
       CLASS(StochasticSamplingType),INTENT(INOUT) :: sampler
       REAL(SDK),INTENT(IN) :: xmin
       REAL(SDK),INTENT(IN) :: xmax
@@ -621,6 +624,7 @@ FUNCTION rejectarg_Sampler(sampler,func,xmin,xmax,ymax,arg) RESULT(rang)
 !>          bounding func.  It is important to note that if c is present the pwl
 !>          function is assumed to be normalized, if it is not present the pwl
 !>          function is not scaled and used as is
+!>
     FUNCTION pwlreject_Sampler(sampler,func,yval,xval,c) RESULT(rang)
       CLASS(StochasticSamplingType),INTENT(INOUT) :: sampler
       REAL(SDK),INTENT(IN) :: yval(:)
@@ -664,4 +668,5 @@ FUNCTION rejectarg_Sampler(sampler,func,xmin,xmax,ymax,arg) RESULT(rang)
         IF (sampler%uniform(0.0_SDK,mult*g)<=func(rang)) RETURN
       ENDDO
     ENDFUNCTION pwlreject_Sampler
+!
 ENDMODULE StochasticSampling
