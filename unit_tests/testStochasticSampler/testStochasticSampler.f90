@@ -24,6 +24,7 @@ PROGRAM testStochasticSampler
   
   TYPE(StochasticManagerType) :: RNGManager
   TYPE(StochasticSamplingType) :: myRNG
+  TYPE(StochasticSamplingType) :: myRNG2
   REAL(SDK),ALLOCATABLE ::  y(:), z(:)
   INTEGER(SIK),ALLOCATABLE :: iii(:)
   REAL(SDK) :: mean, stdev, x
@@ -59,6 +60,13 @@ PROGRAM testStochasticSampler
   ENDIF
 
   CALL TestRNG()
+  
+  CALL RNGManager%generatesampler(myRNG2)
+  WRITE(*,*) "RNG 2 Preskip: ", myRNG2%rng()
+  CALL myRNG2%clear()
+  CALL RNGManager%generatesampler(myRNG2,myRNG%counter)
+  WRITE(*,*) "RNG 1:         ", myRNG%rng()
+  WRITE(*,*) "RNG 2 Skipped: ", myRNG2%rng()
     
   n=1e6
 

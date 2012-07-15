@@ -251,10 +251,16 @@ CONTAINS
 !> @param manager the type variable to initialize
 !> @param sampler the type variable to initialize
 !>
-    PURE SUBROUTINE genSampler_Manager(manager,sampler)
+    PURE SUBROUTINE genSampler_Manager(manager,sampler,skip)
       CLASS(StochasticManagerType),INTENT(IN) :: manager
       CLASS(StochasticSamplingType),INTENT(INOUT) :: sampler
-      CALL sampler%init(generators(manager%RNtype),manager%RNseed)
+      INTEGER(SLK),INTENT(IN),OPTIONAL :: skip
+      
+      IF(PRESENT(skip)) THEN
+        CALL sampler%init(generators(manager%RNtype),manager%RNseed,skip)
+      ELSE
+        CALL sampler%init(generators(manager%RNtype),manager%RNseed)
+      ENDIF
     ENDSUBROUTINE genSampler_Manager
 !
 !-------------------------------------------------------------------------------
@@ -270,13 +276,17 @@ CONTAINS
 !> CALL sampler%initialize(19073486328125_SLK)
 !> @endcode
 !>
-    PURE SUBROUTINE init_Sampler(sampler,RNGdata,seed0)
+    PURE SUBROUTINE init_Sampler(sampler,RNGdata,seed0,skip)
       CLASS(StochasticSamplingType),INTENT(INOUT) :: sampler
       TYPE(RNGdataType),INTENT(IN) :: RNGdata
-      INTEGER(SLK),INTENT(IN) :: seed0
+      INTEGER(SLK),INTENT(IN),OPTIONAL :: seed0
+      INTEGER(SLK),INTENT(IN),OPTIONAL :: skip
       
+      sampler%RNseed=RNGdata%RNseed0
       ! Add checks for constraints on seed0
-      sampler%RNseed=seed0
+      IF(PRESENT(seed0)) sampler%RNseed=seed0
+      
+      IF(PRESENT(skip)) sampler%RNseed=RNskip(RNGdata,sampler%RNseed,skip)
       
       sampler%RNmult=RNGdata%RNmult
       sampler%RNadd=RNGdata%RNadd
@@ -668,5 +678,58 @@ CONTAINS
         IF (sampler%uniform(0.0_SDK,mult*g)<=func(rang)) RETURN
       ENDDO
     ENDFUNCTION pwlreject_Sampler
+!
+!-------------------------------------------------------------------------------
+!> @brief Routine returns a random number from an arbitrary function func using
+!>        rejection sampling which is bound by a piece-wise linear function
+!> @param sampler the type variable to sample from
+!> @param func is the function which is sampled
+!> @param yval is the y components of a piece-wise linear function bounding func
+!> @param xval is the x components of a piece-wise linear function bounding func
+!> @param c is an optional scalar which scales the piece-wise linear fucntion
+!>          bounding func.  It is important to note that if c is present the pwl
+!>          function is assumed to be normalized, if it is not present the pwl
+!>          function is not scaled and used as is
+!>
+    PURE FUNCTION RNskip(RNGdata,seed0,skip) RESULT(newseed)
+      TYPE(RNGdataType),INTENT(IN) :: RNGdata
+      INTEGER(SLK),INTENT(IN) :: seed0
+      INTEGER(SLK),INTENT(IN) :: skip
+      ! Local Variables
+      INTEGER(SLK) :: newseed
+      INTEGER(SLK) :: nskip, gen, g, inc, c, gp, rn, period, mask
+      
+      mask=ISHFT(NOT(0_SLK),RNGdata%RNlog2mod-64)
+      IF( RNGdata%RNadd==0 ) THEN
+        period=ISHFT(1_SLK,RNGdata%RNlog2mod-2)
+      ELSE
+        period=ISHFT(1_SLK,RNGdata%RNlog2mod)
+      ENDIF
+      
+      nskip=skip
+      DO WHILE (nskip<0_SLK)
+        nskip=nskip+period
+      ENDDO
+      
+      nskip=IAND(nskip,mask)
+      gen=1
+      g=RNGdata%RNmult
+      inc=0
+      c=RNGdata%RNadd
+      DO WHILE(nskip>0_SLK)
+        IF(BTEST(nskip,0))  THEN
+          gen=IAND(gen*g,mask)
+          inc=IAND(inc*g,mask)
+          inc=IAND(inc+c,mask)
+        ENDIF
+        gp=IAND(g+1,mask)
+        g=IAND(g*g,mask)
+        c=IAND(gp*c,mask)
+        nskip=ISHFT(nskip,-1)
+      ENDDO
+      rn=IAND(gen*seed0,mask)
+      rn=IAND(rn+inc,mask)
+      newseed=rn
+    ENDFUNCTION RNskip
 !
 ENDMODULE StochasticSampling
