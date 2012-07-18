@@ -111,6 +111,7 @@ MODULE IO_Strings
   PUBLIC :: nmatchstr
   PUBLIC :: strrep
   PUBLIC :: stripComment
+  PUBLIC :: ReplaceChar
       
   !> Character representing a space symbol
   CHARACTER(LEN=1),PARAMETER :: BLANK=" "
@@ -620,4 +621,21 @@ CONTAINS
     ENDSUBROUTINE SlashRep
 !> @}
 !
+
+!
+!-------------------------------------------------------------------------------
+!> @brief Public routine replaces any character in a string with another 
+!> character      
+    PURE SUBROUTINE ReplaceChar(string,find,replace)
+      CHARACTER(LEN=*),INTENT(INOUT) :: string
+      CHARACTER(LEN=1),INTENT(IN) :: find
+      CHARACTER(LEN=1),INTENT(IN) :: replace
+      INTEGER(SIK) :: i
+      
+      DO i=1,LEN_TRIM(string)                              
+        IF(string(i:i) .EQ. find(1:1)) string(i:i)=replace(1:1)
+      ENDDO
+
+    ENDSUBROUTINE ReplaceChar
+ 
 ENDMODULE IO_Strings
