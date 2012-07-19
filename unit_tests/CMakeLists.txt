@@ -26,6 +26,7 @@ SET(UNIT_TEST_NAMES
     testStochasticSampler
     testParallelEnv
     testIOutil
+    testVTKFiles
     testCmdLineProc
     testMatrixMath
     testLinearSolver

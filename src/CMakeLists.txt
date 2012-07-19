@@ -28,6 +28,7 @@ TRIBITS_ADD_LIBRARY(Utils
       FileType_Fortran.f90
       FileType_Log.f90
       FileType_Input.f90
+      VTKFiles.f90
       IOutil.f90
       CommandLineProcessor.f90
       Geom_Points.f90
