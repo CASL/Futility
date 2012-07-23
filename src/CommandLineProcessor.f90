@@ -139,7 +139,7 @@ MODULE CommandLineProcessor
   PUBLIC :: CmdLineProcType
   
   !> Name of the module to be used in exception reporting
-  CHARACTER(LEN=20),PARAMETER :: modName='COMMANDLINEPROCESSOR'
+  CHARACTER(LEN=*),PARAMETER :: modName='COMMANDLINEPROCESSOR'
   
   !> Maximum length for any one argument on the command line
   INTEGER(SIK),PARAMETER :: MAX_ARG_STRING_LENGTH=1024
@@ -231,7 +231,7 @@ MODULE CommandLineProcessor
 !> Raises a warning if the name is too long and will be truncated.
 !>
     SUBROUTINE setExecName(clp,execname)
-      CHARACTER(LEN=11),PARAMETER :: myName='setExecName'
+      CHARACTER(LEN=*),PARAMETER :: myName='setExecName'
       CLASS(CmdLineProcType),INTENT(INOUT) :: clp
       CHARACTER(LEN=*) :: execname
       TYPE(ExceptionHandlerType) :: e
@@ -267,7 +267,7 @@ MODULE CommandLineProcessor
 !> @param usagestr the string with the usage syntax
 !>
     SUBROUTINE defineUsage(clp,usagestr)
-      CHARACTER(LEN=11),PARAMETER :: myName='defineUsage'
+      CHARACTER(LEN=*),PARAMETER :: myName='defineUsage'
       CLASS(CmdLineProcType),INTENT(INOUT) :: clp
       CHARACTER(LEN=*),INTENT(IN) :: usagestr
       TYPE(ExceptionHandlerType) :: e
@@ -290,7 +290,7 @@ MODULE CommandLineProcessor
 !> @param n the number of command line options accepted by the executable
 !>
     SUBROUTINE setNumOpts(clp,n)
-      CHARACTER(LEN=10),PARAMETER :: myName='setNumOpts'
+      CHARACTER(LEN=*),PARAMETER :: myName='setNumOpts'
       CLASS(CmdLineProcType),INTENT(INOUT) :: clp
       INTEGER(SIK),INTENT(IN) :: n
       LOGICAL(SBK) :: localalloc
@@ -335,7 +335,7 @@ MODULE CommandLineProcessor
 !> @param description string describing the command line option
 !>
     SUBROUTINE defineOpt(clp,iopt,name,description)
-      CHARACTER(LEN=9),PARAMETER :: myName='defineOpt'
+      CHARACTER(LEN=*),PARAMETER :: myName='defineOpt'
       CLASS(CmdLineProcType),INTENT(INOUT) :: clp
       INTEGER(SIK),INTENT(IN) :: iopt
       CHARACTER(LEN=*),INTENT(IN) :: name,description
@@ -378,7 +378,7 @@ MODULE CommandLineProcessor
 !> @param clp command line processor object
 !>
     SUBROUTINE clearOpts(clp)
-      CHARACTER(LEN=9),PARAMETER :: myName='clearOpts'
+      CHARACTER(LEN=*),PARAMETER :: myName='clearOpts'
       CLASS(CmdLineProcType),INTENT(INOUT) :: clp
       TYPE(ExceptionHandlerType) :: e
       IF(ASSOCIATED(clp%opts)) THEN
@@ -406,7 +406,7 @@ MODULE CommandLineProcessor
 !> different command line.
 !>
     SUBROUTINE setCmdLine(clp,iline)
-      CHARACTER(LEN=10),PARAMETER :: myName='setCmdLine'
+      CHARACTER(LEN=*),PARAMETER :: myName='setCmdLine'
       CLASS(CmdLineProcType),INTENT(INOUT) :: clp
       CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: iline
       CHARACTER(LEN=MAX_ARG_STRING_LENGTH) :: cmdline
@@ -460,7 +460,7 @@ MODULE CommandLineProcessor
 !> @param clp command line processor object
 !>
     PURE SUBROUTINE clearCmdLine(clp)
-      CHARACTER(LEN=12),PARAMETER :: myName='clearCmdLine'
+      CHARACTER(LEN=*),PARAMETER :: myName='clearCmdLine'
       CLASS(CmdLineProcType),INTENT(INOUT) :: clp
       IF(ASSOCIATED(clp%CmdLineArgs)) THEN
         DEALLOCATE(clp%CmdLineArgs)
@@ -475,7 +475,7 @@ MODULE CommandLineProcessor
 !> @param argout output, a string with the ith output argument
 !>
     SUBROUTINE getCmdArg(clp,iarg,argout)
-      CHARACTER(LEN=9),PARAMETER :: myName='getCmdArg'
+      CHARACTER(LEN=*),PARAMETER :: myName='getCmdArg'
       CLASS(CmdLineProcType),INTENT(INOUT) :: clp
       INTEGER(SIK),INTENT(IN) :: iarg
       CHARACTER(LEN=*),INTENT(OUT) :: argout

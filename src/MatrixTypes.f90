@@ -264,7 +264,7 @@ MODULE MatrixTypes
   TYPE(ExceptionHandlerType),POINTER,SAVE :: eMatrixType => NULL()
   
   !> Name of module
-  CHARACTER(LEN=17),PARAMETER :: modName='MATRIXTYPES'
+  CHARACTER(LEN=*),PARAMETER :: modName='MATRIXTYPES'
 !
 !===============================================================================
   CONTAINS
@@ -283,7 +283,7 @@ MODULE MatrixTypes
 !> provided by MatrixTypes.  It will not run sucessfully without this argument.
 !>
     SUBROUTINE init_SparseMatrixType(matrix,n,m)
-      CHARACTER(LEN=21),PARAMETER :: myName='init_SparseMatrixType'
+      CHARACTER(LEN=*),PARAMETER :: myName='init_SparseMatrixType'
       CLASS(SparseMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: n
       INTEGER(SIK),OPTIONAL,INTENT(IN) :: m
@@ -334,7 +334,7 @@ MODULE MatrixTypes
 !> @param m integer-based logical defining whether or not the matrix is symmetric
 !>
     SUBROUTINE init_DenseSquareMatrixType(matrix,n,m)
-      CHARACTER(LEN=26),PARAMETER :: myName='init_DenseSquareMatrixType'
+      CHARACTER(LEN=*),PARAMETER :: myName='init_DenseSquareMatrixType'
       CLASS(DenseSquareMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: n
       INTEGER(SIK),OPTIONAL,INTENT(IN) :: m
@@ -379,7 +379,7 @@ MODULE MatrixTypes
 !> @param m integer-based logical defining whether or not the matrix is symmetric
 !>
     SUBROUTINE init_TriDiagMatrixType(matrix,n,m)
-      CHARACTER(LEN=22),PARAMETER :: myName='init_TriDiagMatrixType'
+      CHARACTER(LEN=*),PARAMETER :: myName='init_TriDiagMatrixType'
       CLASS(TriDiagMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: n
       INTEGER(SIK),OPTIONAL,INTENT(IN) :: m
@@ -424,7 +424,7 @@ MODULE MatrixTypes
 !> @param m the number of columns. Listed as optional, but is not
 !>
     SUBROUTINE init_DenseRectMatrixType(matrix,n,m)
-      CHARACTER(LEN=24),PARAMETER :: myName='init_DenseRectMatrixType'
+      CHARACTER(LEN=*),PARAMETER :: myName='init_DenseRectMatrixType'
       CLASS(DenseRectMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: n
       INTEGER(SIK),OPTIONAL,INTENT(IN) :: m

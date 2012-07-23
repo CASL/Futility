@@ -113,30 +113,30 @@ MODULE IO_Strings
   PUBLIC :: stripComment
       
   !> Character representing a space symbol
-  CHARACTER(LEN=1),PARAMETER :: BLANK=" "
+  CHARACTER(LEN=*),PARAMETER :: BLANK=" "
   !> Character representing a comment symbol
-  CHARACTER(LEN=1),PARAMETER :: BANG="!"
+  CHARACTER(LEN=*),PARAMETER :: BANG="!"
   !> Character representing a period
-  CHARACTER(LEN=1),PARAMETER :: DOT="."
+  CHARACTER(LEN=*),PARAMETER :: DOT="."
   !> Character representing a forward slash
-  CHARACTER(LEN=1),PARAMETER :: FSLASH="/"
+  CHARACTER(LEN=*),PARAMETER :: FSLASH="/"
   !> Character representing a backward slash
-  CHARACTER(LEN=1),PARAMETER :: BSLASH="\"
+  CHARACTER(LEN=*),PARAMETER :: BSLASH="\"
   !> Character representing a colon
-  CHARACTER(LEN=1),PARAMETER :: COLON=":"
+  CHARACTER(LEN=*),PARAMETER :: COLON=":"
   !"This is needed for doxygen to parse correctly
 #ifdef WIN32
   !> The slash symbol used by the file system
   !> (BLASH for Windows, FSLASH for everything else)
-  CHARACTER(LEN=1),PARAMETER :: SLASH=BSLASH
+  CHARACTER(LEN=*),PARAMETER :: SLASH=BSLASH
 #else
   !> The slash symbol used by the file system
   !> (BLASH for Windows, FSLASH for everything else)
-  CHARACTER(LEN=1),PARAMETER :: SLASH=FSLASH
+  CHARACTER(LEN=*),PARAMETER :: SLASH=FSLASH
 #endif
   
   !> Module Name for exception handler
-  CHARACTER(LEN=10),PARAMETER :: modName='IO_STRINGS'
+  CHARACTER(LEN=*),PARAMETER :: modName='IO_STRINGS'
       
   !> @brief Generic interface to get the parts of the path-file name.
   !>

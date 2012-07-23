@@ -164,7 +164,7 @@ MODULE LinearSolverTypes
   TYPE(ExceptionHandlerType),POINTER,SAVE :: eLinearSolverType => NULL()
   
   !> Name of module
-  CHARACTER(LEN=17),PARAMETER :: modName='LINEARSOLVERTYPES'
+  CHARACTER(LEN=*),PARAMETER :: modName='LINEARSOLVERTYPES'
 !
 !===============================================================================
   CONTAINS
@@ -336,7 +336,7 @@ MODULE LinearSolverTypes
 !> This routine solves the linear system directly
 !>
     SUBROUTINE solve_LinearSolverType_Direct(solver)
-      CHARACTER(LEN=28),PARAMETER :: myName='solve_LinearSolverType_Direct'
+      CHARACTER(LEN=*),PARAMETER :: myName='solve_LinearSolverType_Direct'
       CLASS(LinearSolverType_Direct),INTENT(INOUT) :: solver
       LOGICAL(SBK) :: localalloc
       
@@ -403,7 +403,7 @@ MODULE LinearSolverTypes
 !> This routine solves the linear system iteratively
 !>
     SUBROUTINE solve_LinearSolverType_Iterative(solver)
-      CHARACTER(LEN=32),PARAMETER :: myName='solve_LinearSolverType_Iterative'
+      CHARACTER(LEN=*),PARAMETER :: myName='solve_LinearSolverType_Iterative'
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
       LOGICAL(SBK) :: localalloc
       !Error checking of subroutine input
@@ -492,7 +492,7 @@ MODULE LinearSolverTypes
 !> need to checked before solving. This subroutine checks these information, and
 !> it will be used for both direct solve subroutine and iterative subroutine.
     SUBROUTINE solve_checkInput(solver)
-      CHARACTER(LEN=16),PARAMETER :: myName='solve_checkInput'
+      CHARACTER(LEN=*),PARAMETER :: myName='solve_checkInput'
       CLASS(LinearSolverType_Base),INTENT(INOUT) :: solver
 
       LOGICAL(SBK) :: localalloc
@@ -573,7 +573,7 @@ MODULE LinearSolverTypes
 !>
     SUBROUTINE setConv_LinearSolverType_Iterative(solver,normType_in,convTol_in, &
                                                   maxIters_in)
-      CHARACTER(LEN=34),PARAMETER :: myName='setConv_LinearSolverType_Iterative'
+      CHARACTER(LEN=*),PARAMETER :: myName='setConv_LinearSolverType_Iterative'
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
       INTEGER(SIK),INTENT(IN) :: normType_in
       REAL(SRK),INTENT(IN) :: convTol_in
@@ -820,7 +820,7 @@ MODULE LinearSolverTypes
 !> the solution might be not accurate; and a warnning will be given.
 !> 
     SUBROUTINE DecomposePLU_TriDiag(solver)
-      CHARACTER(LEN=20),PARAMETER :: myName='decomposePLU_TriDiag'
+      CHARACTER(LEN=*),PARAMETER :: myName='decomposePLU_TriDiag'
       CLASS(LinearSolverType_Base),INTENT(INOUT) :: solver
 
       INTEGER(SIK) :: i

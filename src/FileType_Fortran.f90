@@ -92,7 +92,7 @@ MODULE FileType_Fortran
   PUBLIC :: backspace_fortran_file
   
   !> Module name for error messages
-  CHARACTER(LEN=16),PARAMETER :: modName='FILETYPE_FORTRAN'
+  CHARACTER(LEN=*),PARAMETER :: modName='FILETYPE_FORTRAN'
   !> Scratch variable for exception messages of this module
   CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: emesg
   !> Scratch variable for IOSTAT values
@@ -203,7 +203,7 @@ MODULE FileType_Fortran
 !> the value 'REPLACE'. It is made public for use by other extended types.
     SUBROUTINE init_fortran_file(fileobj,unit,file,status,access,form, &
                                  position,action,pad,recl)
-      CHARACTER(LEN=17),PARAMETER :: myName='INIT_FORTRAN_FILE'
+      CHARACTER(LEN=*),PARAMETER :: myName='INIT_FORTRAN_FILE'
       CLASS(FortranFileType),INTENT(INOUT) :: fileobj
       INTEGER(SIK),INTENT(IN) :: unit
       CHARACTER(LEN=*),INTENT(IN) :: file
@@ -547,7 +547,7 @@ MODULE FileType_Fortran
 !>
 !> The various options for the open statement are assigned by the init routine.
     SUBROUTINE open_fortran_file(file)
-      CHARACTER(LEN=17),PARAMETER :: myName='OPEN_FORTRAN_FILE'
+      CHARACTER(LEN=*),PARAMETER :: myName='OPEN_FORTRAN_FILE'
       CLASS(FortranFileType),INTENT(INOUT) :: file
       CHARACTER(LEN=7) :: statusvar
       CHARACTER(LEN=10) :: accessvar
@@ -669,7 +669,7 @@ MODULE FileType_Fortran
 !>
 !> File will not be deleted when closed.
     SUBROUTINE close_fortran_file(file)
-      CHARACTER(LEN=18),PARAMETER :: myName='CLOSE_FORTRAN_FILE'
+      CHARACTER(LEN=*),PARAMETER :: myName='CLOSE_FORTRAN_FILE'
       CLASS(FortranFileType),INTENT(INOUT) :: file
       LOGICAL(SBK) :: localalloc
       
@@ -706,7 +706,7 @@ MODULE FileType_Fortran
 !>
 !> Tries to delete the file regardless fo whether or not it is open.
     SUBROUTINE delete_fortran_file(file)
-      CHARACTER(LEN=19),PARAMETER :: myName='DELETE_FORTRAN_FILE'
+      CHARACTER(LEN=*),PARAMETER :: myName='DELETE_FORTRAN_FILE'
       CLASS(FortranFileType),INTENT(INOUT) :: file
       LOGICAL(SBK) :: localalloc
       
@@ -754,7 +754,7 @@ MODULE FileType_Fortran
 !> @brief Use rewind on a fortran file object.
 !> @param file Fortran file object
     SUBROUTINE rewind_fortran_file(file)
-      CHARACTER(LEN=19),PARAMETER :: myName='REWIND_FORTRAN_FILE'
+      CHARACTER(LEN=*),PARAMETER :: myName='REWIND_FORTRAN_FILE'
       CLASS(FortranFileType),INTENT(INOUT) :: file
       LOGICAL(SBK) :: localalloc
       
@@ -788,7 +788,7 @@ MODULE FileType_Fortran
 !> @brief Use backspace on a fortran file object.
 !> @param file Fortran file object
     SUBROUTINE backspace_fortran_file(file)
-      CHARACTER(LEN=22),PARAMETER :: myName='BACKSPACE_FORTRAN_FILE'
+      CHARACTER(LEN=*),PARAMETER :: myName='BACKSPACE_FORTRAN_FILE'
       CLASS(FortranFileType),INTENT(INOUT) :: file
       LOGICAL(SBK) :: localalloc
       

@@ -105,7 +105,7 @@ MODULE VTKFiles
   ENDINTERFACE
 
   !> Module name for error messages
-  CHARACTER(LEN=8),PARAMETER :: modName='VTKFILES'
+  CHARACTER(LEN=*),PARAMETER :: modName='VTKFILES'
   
   !> Enumeration for the VTK Dataset type STRUCTURED_POINTS
   INTEGER(SIK),PARAMETER :: VTK_STRUCTURED_POINTS=1
@@ -404,7 +404,7 @@ MODULE VTKFiles
 !> that other tools may have varying support for VTK legacy files.
 !>
     SUBROUTINE writeMesh_VTKLegFileType(myVTKFile,vtkMesh)
-      CHARACTER(LEN=24),PARAMETER :: myName='writeMesh_VTKLegFileType'
+      CHARACTER(LEN=*),PARAMETER :: myName='writeMesh_VTKLegFileType'
       CLASS(VTKLegFileType),INTENT(INOUT) :: myVTKFile
       TYPE(VTKMeshType),INTENT(IN) :: vtkMesh
       CHARACTER(LEN=256) :: aline,sint
@@ -610,7 +610,7 @@ MODULE VTKFiles
 !> amount of data is not consistent should be done.
 !>
     SUBROUTINE writeScalarData_VTKLegFileType(myVTKFile,vtkData)
-      CHARACTER(LEN=30),PARAMETER :: myName='writeScalarData_VTKLegFileType'
+      CHARACTER(LEN=*),PARAMETER :: myName='writeScalarData_VTKLegFileType'
       CLASS(VTKLegFileType),INTENT(INOUT) :: myVTKFile
       TYPE(VTKDataType),INTENT(IN) :: vtkData
       INTEGER(SIK) :: funit,i,istp

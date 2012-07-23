@@ -84,7 +84,7 @@ MODULE FileType_Log
   PUBLIC :: LogFileType
   
   !> Module name for error messages
-  CHARACTER(LEN=12),PARAMETER :: modName='FILETYPE_LOG'
+  CHARACTER(LEN=*),PARAMETER :: modName='FILETYPE_LOG'
   !> Scratch variable for exception messages of this module
   CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: emesg
   !> Scratch variable for IOSTAT values
@@ -211,7 +211,7 @@ MODULE FileType_Log
 !>        prompt as well. This overrides the echo status of the file object.
 !> 
     SUBROUTINE message_log_file(file,mesg,timestamp,echo)
-      CHARACTER(LEN=16),PARAMETER :: myName='MESSAGE_LOG_FILE'
+      CHARACTER(LEN=*),PARAMETER :: myName='MESSAGE_LOG_FILE'
       CLASS(LogFileType),INTENT(INOUT) :: file
       CHARACTER(LEN=*),INTENT(IN) :: mesg
       LOGICAL(SBK),OPTIONAL,INTENT(IN) :: timestamp

@@ -65,7 +65,7 @@ MODULE FileType_Base
   !> The maximum allowable length for the extension to a file
   INTEGER(SIK),PARAMETER :: MAX_FEXT_LENGTH=16
   
-  CHARACTER(LEN=14),PARAMETER :: modName='FILETYPE_BASE'
+  CHARACTER(LEN=*),PARAMETER :: modName='FILETYPE_BASE'
   
   !> @brief Base derived type for a file object
   !>
@@ -160,7 +160,7 @@ MODULE FileType_Base
 !>
 !> Cannot be done when the file is open.
     SUBROUTINE setFilePath_file(file,pathstr)
-      CHARACTER(LEN=20),PARAMETER :: myName='setFilePath_file'
+      CHARACTER(LEN=*),PARAMETER :: myName='setFilePath_file'
       CLASS(BaseFileType),INTENT(INOUT) :: file
       CHARACTER(LEN=*),INTENT(IN) :: pathstr
       LOGICAL(SBK) :: localalloc
@@ -186,7 +186,7 @@ MODULE FileType_Base
 !>
 !> Cannot be done when the file is open.
     SUBROUTINE setFileName_file(file,namestr)
-      CHARACTER(LEN=16),PARAMETER :: myName='setFileName_file'
+      CHARACTER(LEN=*),PARAMETER :: myName='setFileName_file'
       CLASS(BaseFileType),INTENT(INOUT) :: file
       CHARACTER(LEN=*),INTENT(IN) :: namestr
       LOGICAL(SBK) :: localalloc
@@ -212,7 +212,7 @@ MODULE FileType_Base
 !>
 !> Cannot be done when the file is open.
     SUBROUTINE setFileExt_file(file,extstr)
-      CHARACTER(LEN=15),PARAMETER :: myName='setFileExt_file'
+      CHARACTER(LEN=*),PARAMETER :: myName='setFileExt_file'
       CLASS(BaseFileType),INTENT(INOUT) :: file
       CHARACTER(LEN=*),INTENT(IN) :: extstr
       LOGICAL(SBK) :: localalloc
@@ -252,7 +252,7 @@ MODULE FileType_Base
 !> character. If there is no '.' character in the file name then the extension
 !> is an empty string.
     SUBROUTINE getFileParts_file(file,path,fname,ext)
-      CHARACTER(LEN=17),PARAMETER :: myName='getFileParts_file'
+      CHARACTER(LEN=*),PARAMETER :: myName='getFileParts_file'
       CLASS(BaseFileType),INTENT(INOUT) :: file
       CHARACTER(LEN=*),INTENT(OUT) :: path
       CHARACTER(LEN=*),INTENT(OUT) :: fname
@@ -358,7 +358,7 @@ MODULE FileType_Base
 !> 
 !> Cannot be changed if the file is closed.
     SUBROUTINE setEOFstat_file(file,bool)
-      CHARACTER(LEN=15),PARAMETER :: myName='setEOFstat_file'
+      CHARACTER(LEN=*),PARAMETER :: myName='setEOFstat_file'
       CLASS(BaseFileType),INTENT(INOUT) :: file
       LOGICAL(SBK),INTENT(IN) :: bool
       TYPE(ExceptionHandlerType) :: e
@@ -394,7 +394,7 @@ MODULE FileType_Base
 !>
 !> Cannot be changed if the file is open.
     SUBROUTINE setReadStat_file(file,bool)
-      CHARACTER(LEN=16),PARAMETER :: myName='setReadStat_file'
+      CHARACTER(LEN=*),PARAMETER :: myName='setReadStat_file'
       CLASS(BaseFileType),INTENT(INOUT) :: file
       LOGICAL(SBK),INTENT(IN) :: bool
       TYPE(ExceptionHandlerType) :: e
@@ -418,7 +418,7 @@ MODULE FileType_Base
 !>
 !> Cannot be changed if the file is open.
     SUBROUTINE setWriteStat_file(file,bool)
-      CHARACTER(LEN=17),PARAMETER :: myName='setWriteStat_file'
+      CHARACTER(LEN=*),PARAMETER :: myName='setWriteStat_file'
       CLASS(BaseFileType),INTENT(INOUT) :: file
       LOGICAL(SBK),INTENT(IN) :: bool
       TYPE(ExceptionHandlerType) :: e

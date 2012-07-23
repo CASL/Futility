@@ -151,7 +151,7 @@ MODULE ParallelEnv
   INTEGER(SIK) :: mpierr
   
   !> Module name
-  CHARACTER(LEN=11),PARAMETER :: modName='PARALLELENV'
+  CHARACTER(LEN=*),PARAMETER :: modName='PARALLELENV'
   
   !> Exception Handler for the module
   TYPE(ExceptionHandlerType),POINTER,SAVE :: eParEnv => NULL()
@@ -221,7 +221,7 @@ MODULE ParallelEnv
 !-------------------------------------------------------------------------------
 !> @brief Initializes an MPI environment type object.
     SUBROUTINE init_MPI_Env_type(myPE,icomm)
-      CHARACTER(LEN=17),PARAMETER :: myName='init_MPI_Env_type'
+      CHARACTER(LEN=*),PARAMETER :: myName='init_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
       INTEGER(SIK),INTENT(IN) :: icomm
       INTEGER(SIK) :: isinit
@@ -279,7 +279,7 @@ MODULE ParallelEnv
 !>
 !> If the communicator is not MPI_COMM_WORLD then it is also freed.
     SUBROUTINE clear_MPI_Env_type(myPE)
-      CHARACTER(LEN=18),PARAMETER :: myName='clear_MPI_Env_type'
+      CHARACTER(LEN=*),PARAMETER :: myName='clear_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
       LOGICAL(SBK) :: localalloc
       

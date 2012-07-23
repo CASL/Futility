@@ -87,7 +87,7 @@ MODULE FileType_Input
   INTEGER(SIK),PARAMETER :: MAX_INPUT_FILE_LINE_LEN=256
   
   !> Module name for error messages
-  CHARACTER(LEN=14),PARAMETER :: modName='FILETYPE_INPUT'
+  CHARACTER(LEN=*),PARAMETER :: modName='FILETYPE_INPUT'
   !> Scratch variable for IOSTAT values
   INTEGER(SIK) :: ioerr
   !> Format for reading from input file
@@ -228,7 +228,7 @@ MODULE FileType_Input
 !> @param file input file object
 !> @returns oneline a character of length MAX_INPUT_FILE_LINE_LEN
     FUNCTION read_oneline_inp_file(file) RESULT(oneline)
-      CHARACTER(LEN=21),PARAMETER :: myName='READ_ONELINE_INP_FILE'
+      CHARACTER(LEN=*),PARAMETER :: myName='READ_ONELINE_INP_FILE'
       CLASS(InputFileType),INTENT(INOUT) :: file
       CHARACTER(LEN=MAX_INPUT_FILE_LINE_LEN) :: oneline
       CHARACTER(LEN=4) :: sioerr,sunit
@@ -296,7 +296,7 @@ MODULE FileType_Input
 !> @param file the input file object
 !> @param iunit the unit number to use for the echo file.
     SUBROUTINE setEchoUnit_inp_file(file,iunit)
-      CHARACTER(LEN=20),PARAMETER :: myName='SETECHOUNIT_INP_FILE'
+      CHARACTER(LEN=*),PARAMETER :: myName='SETECHOUNIT_INP_FILE'
       CLASS(InputFileType),INTENT(INOUT) :: file
       INTEGER(SIK),INTENT(IN) :: iunit
       LOGICAL(SBK) :: localalloc

@@ -142,7 +142,7 @@ MODULE ExpTables
   ENDTYPE ExpTableType
   
   !> Module name
-  CHARACTER(LEN=9),PARAMETER :: modName='EXPTABLES'
+  CHARACTER(LEN=*),PARAMETER :: modName='EXPTABLES'
   
   !> Exponent table object used outside of this modular
   TYPE(ExpTableType),SAVE,TARGET :: exptTbl
@@ -215,7 +215,7 @@ MODULE ExpTables
 !>
     SUBROUTINE init_ExpTable(myET,userTableType,userMinVal,userMaxVal, &
       userNIntervals,userErr)
-      CHARACTER(LEN=15),PARAMETER :: myName="init_ExpTable"
+      CHARACTER(LEN=*),PARAMETER :: myName="init_ExpTable"
       CLASS(ExpTableType),INTENT(INOUT) :: myET
       INTEGER(SIK),OPTIONAL,INTENT(IN) :: userTableType
       INTEGER(SIK),OPTIONAL,INTENT(IN) :: userMinVal
