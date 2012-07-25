@@ -325,7 +325,7 @@ MODULE ParallelEnv
 !>
     SUBROUTINE allReduce_MPI_Env_type(myPE,n,x)
       CHARACTER(LEN=*),PARAMETER :: myName='allReduce_MPI_Env_type'
-      CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
       INTEGER(SIK),INTENT(IN) :: n
       REAL(SRK),INTENT(INOUT) :: x(*)
 #ifdef HAVE_MPI
