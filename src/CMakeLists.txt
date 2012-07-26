@@ -17,6 +17,7 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
 TRIBITS_ADD_LIBRARY(Utils
     SOURCES
       IntrType.f90
+      Strings.f90
       Times.f90
       BinaryTrees.f90
       MortonOrdering.f90

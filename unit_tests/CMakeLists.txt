@@ -16,6 +16,7 @@
 # 
 SET(UNIT_TEST_NAMES
     testSelectedKinds
+    testStrings
     testTimes
     testGeom
     testBinaryTrees
