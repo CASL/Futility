@@ -23,11 +23,14 @@
 !>
 !> The following intrinsic Fortran functions can also be used with the 
 !> @c StringType
-!>  - @c LEN
-!>  - @c LEN_TRIM
-!>  - @c TRIM
-!>  - @c ADJUSTL
-!>  - @c ADJUSTR
+!>  - @ref Strings::LEN_StringType "LEN": @copybrief Strings::LEN_StringType
+!>  - @ref Strings::LEN_TRIM_StringType "LEN_TRIM": @copybrief Strings::LEN_TRIM_StringType
+!>  - @ref Strings::TRIM_StringType "TRIM": @copybrief Strings::TRIM_StringType
+!>  - @ref Strings::ADJUSTL_StringType "ADJUSTL": @copybrief Strings::ADJUSTL_StringType
+!>  - @ref Strings::ADJUSTR_StringType "ADJUSTR": @copybrief Strings::ADJUSTR_StringType
+!>
+!> @par Module Dependencies
+!>  - @ref IntrType "IntrType": @copybrief IntrType
 !>
 !> @par EXAMPLE
 !> @code
