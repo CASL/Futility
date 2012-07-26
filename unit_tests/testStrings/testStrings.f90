@@ -22,7 +22,7 @@ PROGRAM testStrings
   
   CHARACTER(LEN=10) :: char10
   CHARACTER(LEN=20) :: char20
-  TYPE(StringType) :: testString
+  TYPE(StringType) :: testString,testString2
   
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING STRINGS...'
@@ -74,7 +74,6 @@ PROGRAM testStrings
     WRITE(*,*) 'TRIM(testString) (uninit) FAILED!'
     STOP 666
   ENDIF
-  WRITE(*,*) '  Passed: testString=''          '''
 !
 !Test assigning a zero length character to a string
   testString=TRIM(char10)
@@ -94,7 +93,6 @@ PROGRAM testStrings
     WRITE(*,*) 'TRIM(testString) (uninit) FAILED!'
     STOP 666
   ENDIF
-  WRITE(*,*) '  Passed: testString='''''
 !
 !Test assigning a non-empty character to a string from a constant
   testString='constant'
@@ -114,7 +112,6 @@ PROGRAM testStrings
     WRITE(*,*) 'TRIM(testString) (=''constant'') FAILED!'
     STOP 666
   ENDIF
-  WRITE(*,*) '  Passed: testString=''constant'''
 !
 !Test assigning a non-empty character to a string from a variable
   char10='variable'
@@ -135,7 +132,6 @@ PROGRAM testStrings
     WRITE(*,*) 'TRIM(testString) (=variable) FAILED!'
     STOP 666
   ENDIF
-  WRITE(*,*) '  Passed: testString=variable'
 !  
 !Test assigning a string to a character
   char10='-'
@@ -150,7 +146,7 @@ PROGRAM testStrings
     WRITE(*,*) 'char20=testString FAILED!'
     STOP 666
   ENDIF
-  WRITE(*,*) '  Passed: variable=testString'
+  WRITE(*,*) '  Passed: ASSIGNMENT(=)'
 !
 !Test ADJUSTL and ADJUSTR
   char10='  -'
@@ -167,6 +163,52 @@ PROGRAM testStrings
   ELSE
     WRITE(*,*) '  Passed: ADJUSTR(testString)'
   ENDIF
+!
+!Test // operator
+  IF('"'//testString /= '"  -       ') THEN
+    WRITE(*,*) '''"''//testString FAILED!'
+    STOP 666
+  ENDIF
+  IF(testString//'"' /= '  -       "') THEN
+    WRITE(*,*) 'testString//''"'' FAILED!'
+    STOP 666
+  ENDIF
+  IF(testString//testString /= '  -         -       ') THEN
+    WRITE(*,*) 'testString//testString FAILED!'
+    STOP 666
+  ENDIF
+  WRITE(*,*) '  Passed: OPERATOR(//)'
+!
+!Test == operator
+  testString2=ADJUSTL(char10)
+  IF(.NOT.(testString == char10)) THEN
+    WRITE(*,*) 'testString == char10 FAILED!'
+    STOP 666
+  ENDIF
+  IF(char10 == testString2) THEN
+    WRITE(*,*) 'char10 == testString2 FAILED!'
+    STOP 666
+  ENDIF
+  IF(testString == testString2) THEN
+    WRITE(*,*) 'testString == testString2 FAILED!'
+    STOP 666
+  ENDIF
+  WRITE(*,*) '  Passed: OPERATOR(==)'
+!
+!Test /= operator
+  IF(testString /= char10) THEN
+    WRITE(*,*) 'testString /= char10 FAILED!'
+    STOP 666
+  ENDIF
+  IF(.NOT.(char10 /= testString2)) THEN
+    WRITE(*,*) 'char10 /= testString2 FAILED!'
+    STOP 666
+  ENDIF
+  IF(.NOT.(testString /= testString2)) THEN
+    WRITE(*,*) 'testString /= testString2 FAILED!'
+    STOP 666
+  ENDIF
+  WRITE(*,*) '  Passed: OPERATOR(/=)'
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING STRINGS PASSED!'
   WRITE(*,*) '==================================================='

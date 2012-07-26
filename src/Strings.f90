@@ -18,10 +18,16 @@
 !> @brief Module for specifying a type for arbitrary length strings
 !> 
 !> This module defines a type for a string which can be an arbitrary length.
-!> It then provides overloaded assignment operators and intrinsic functions so
+!> It then provides overloaded operators and intrinsic functions so
 !> that it can be used almost exactly like a Fortran @c CHARACTER type variable.
 !>
-!> The following intrinsic Fortran functions can also be used with the 
+!> The following operators have been overloaded for use with @c StringType
+!>  - @c ASSIGNMENT(=)
+!>  - @c OPERATOR(//)
+!>  - @c OPERATOR(==)
+!>  - @c OPERATOR(/=)
+!>
+!> The following intrinsic Fortran functions have been overloaded for use with
 !> @c StringType
 !>  - @ref Strings::LEN_StringType "LEN": @copybrief Strings::LEN_StringType
 !>  - @ref Strings::LEN_TRIM_StringType "LEN_TRIM": @copybrief Strings::LEN_TRIM_StringType
@@ -92,12 +98,15 @@ MODULE Strings
 !
 ! List of Public items
   PUBLIC :: StringType
-  PUBLIC :: ASSIGNMENT(=)
   PUBLIC :: LEN
   PUBLIC :: LEN_TRIM
   PUBLIC :: TRIM
   PUBLIC :: ADJUSTL
   PUBLIC :: ADJUSTR
+  PUBLIC :: ASSIGNMENT(=)
+  PUBLIC :: OPERATOR(//)
+  PUBLIC :: OPERATOR(==)
+  PUBLIC :: OPERATOR(/=)
   
   !> Derived type for an arbitrary length string
   TYPE :: StringType
@@ -119,18 +128,6 @@ MODULE Strings
       !> @copydetails Strings::length_StringType
       PROCEDURE,PASS :: sPrint => sPrint_StringType
   ENDTYPE StringType
-
-  !> @brief Overloads the assignment operator.
-  !>
-  !> This is so string types can be assigned to characters and vice-versa
-  INTERFACE ASSIGNMENT(=)
-    !> @copybrief Strings::assign_char_to_StringType
-    !> @copydetails Strings::assign_char_to_StringType
-    MODULE PROCEDURE assign_char_to_StringType
-    !> @copybrief Strings::assign_StringType_to_char
-    !> @copydetails Strings::assign_StringType_to_char
-    MODULE PROCEDURE assign_StringType_to_char
-  ENDINTERFACE
   
   !> @brief Overloads the Fortran intrinsic procedure LEN() so a 
   !> a string type argument may be passed.
@@ -170,6 +167,60 @@ MODULE Strings
     !> @copybrief Strings::ADJUSTR_StringType
     !> @copydetails Strings::ADJUSTR_StringType
     MODULE PROCEDURE ADJUSTR_StringType
+  ENDINTERFACE
+  
+  !> @brief Overloads the assignment operator.
+  !>
+  !> This is so string types can be assigned to characters and vice-versa
+  INTERFACE ASSIGNMENT(=)
+    !> @copybrief Strings::assign_char_to_StringType
+    !> @copydetails Strings::assign_char_to_StringType
+    MODULE PROCEDURE assign_char_to_StringType
+    !> @copybrief Strings::assign_StringType_to_char
+    !> @copydetails Strings::assign_StringType_to_char
+    MODULE PROCEDURE assign_StringType_to_char
+  ENDINTERFACE
+  
+  !> @brief Overloads the Fortran intrinsic operator for concatenating
+  !> character strings.
+  INTERFACE OPERATOR(//)
+    !> @copybrief Strings::concatenate_char_onto_StringType
+    !> @copydetails Strings::concatenate_char_onto_StringType
+    MODULE PROCEDURE concatenate_char_onto_StringType
+    !> @copybrief Strings::concatenate_StringType_onto_char
+    !> @copydetails Strings::concatenate_StringType_onto_char
+    MODULE PROCEDURE concatenate_StringType_onto_char
+    !> @copybrief Strings::concatenate_StringType_onto_StringType
+    !> @copydetails Strings::concatenate_StringType_onto_StringType
+    MODULE PROCEDURE concatenate_StringType_onto_StringType
+  ENDINTERFACE
+  
+  !> @brief Overloads the Fortran intrinsic operator for comparing
+  !> two variables to see if they are equal
+  INTERFACE OPERATOR(==)
+    !> @copybrief Strings::equalto_char_StringType
+    !> @copydetails Strings::equalto_char_StringType
+    MODULE PROCEDURE equalto_char_StringType
+    !> @copybrief Strings::equalto_StringType_char
+    !> @copydetails Strings::equalto_StringType_char
+    MODULE PROCEDURE equalto_StringType_char
+    !> @copybrief Strings::equalto_StringType_StringType
+    !> @copydetails Strings::equalto_StringType_StringType
+    MODULE PROCEDURE equalto_StringType_StringType
+  ENDINTERFACE
+  
+  !> @brief Overloads the Fortran intrinsic operator for comparing
+  !> two variables to see if they are not equal
+  INTERFACE OPERATOR(/=)
+    !> @copybrief Strings::notequalto_char_StringType
+    !> @copydetails Strings::notequalto_char_StringType
+    MODULE PROCEDURE notequalto_char_StringType
+    !> @copybrief Strings::notequalto_StringType_char
+    !> @copydetails Strings::notequalto_StringType_char
+    MODULE PROCEDURE notequalto_StringType_char
+    !> @copybrief Strings::notequalto_StringType_StringType
+    !> @copydetails Strings::notequalto_StringType_StringType
+    MODULE PROCEDURE notequalto_StringType_StringType
   ENDINTERFACE
 !
 !===============================================================================
@@ -214,7 +265,7 @@ MODULE Strings
     PURE FUNCTION sPrint_StringType(thisStr) RESULT(s)
       CLASS(StringType),INTENT(IN) :: thisStr
       CHARACTER(LEN=thisStr%n) :: s
-      INTEGER(SIK) :: i,n
+      INTEGER(SIK) :: i
       s=''
       IF(thisStr%n > 0) THEN
         DO i=1,thisStr%n
@@ -235,7 +286,7 @@ MODULE Strings
     PURE FUNCTION TRIM_StringType(thisStr) RESULT(s)
       CLASS(StringType),INTENT(IN) :: thisStr
       CHARACTER(LEN=thisStr%ntrim) :: s
-      INTEGER(SIK) :: i,n
+      INTEGER(SIK) :: i
       s=''
       IF(thisStr%ntrim > 0) THEN
         DO i=1,thisStr%ntrim
@@ -318,5 +369,155 @@ MODULE Strings
         ENDDO
       ENDIF
     ENDSUBROUTINE assign_char_to_StringType
+!
+!-------------------------------------------------------------------------------
+!> @brief Assigns the contents of an intrinsic character type variable to a
+!> @c StringType.
+!> @param thisStr the string object
+!> @param s the length of the string
+!>
+!> The intent is that this will overload the assignment operator so a
+!> @c CHARACTER type can be assigned to a @c StringType.
+!>
+    PURE FUNCTION concatenate_StringType_onto_char(s,thisStr) RESULT(newstring)
+      CHARACTER(LEN=*),INTENT(IN) :: s  
+      CLASS(StringType),INTENT(IN) :: thisStr
+      CHARACTER(LEN=thisStr%n+LEN(s)) :: newstring
+      newstring=s//thisStr%sPrint()
+    ENDFUNCTION concatenate_StringType_onto_char
+!
+!-------------------------------------------------------------------------------
+!> @brief Assigns the contents of an intrinsic character type variable to a
+!> @c StringType.
+!> @param thisStr the string object
+!> @param s the length of the string
+!>
+!> The intent is that this will overload the assignment operator so a
+!> @c CHARACTER type can be assigned to a @c StringType.
+!>
+    PURE FUNCTION concatenate_char_onto_StringType(thisStr,s) RESULT(newstring)
+      CLASS(StringType),INTENT(IN) :: thisStr
+      CHARACTER(LEN=*),INTENT(IN) :: s
+      CHARACTER(LEN=thisStr%n+LEN(s)) :: newstring
+      newstring=thisStr%sPrint()//s
+    ENDFUNCTION concatenate_char_onto_StringType
+!
+!-------------------------------------------------------------------------------
+!> @brief Assigns the contents of an intrinsic character type variable to a
+!> @c StringType.
+!> @param thisStr the string object
+!> @param s the length of the string
+!>
+!> The intent is that this will overload the assignment operator so a
+!> @c CHARACTER type can be assigned to a @c StringType.
+!>
+    PURE FUNCTION concatenate_StringType_onto_StringType(s1,s2) RESULT(s)
+      CLASS(StringType),INTENT(IN) :: s1
+      CLASS(StringType),INTENT(IN) :: s2
+      CHARACTER(LEN=s1%n+s2%n) :: s
+      s=s1%sPrint()//s2%sPrint()
+    ENDFUNCTION concatenate_StringType_onto_StringType
+!
+!-------------------------------------------------------------------------------
+!> @brief Performs an equal to operation of a @c CHARACTER and a
+!> @c StringType.
+!> @param s a @c CHARACTER type
+!> @param thisStr a @c StringType object
+!> @returns bool the result of the == operation
+!>
+!> The intent is that this will overload the == operator so a
+!> @c CHARACTER type can compared with a @c StringType.
+!>
+    PURE FUNCTION equalto_char_StringType(s,thisStr) RESULT(bool)
+      CHARACTER(LEN=*),INTENT(IN) :: s
+      CLASS(StringType),INTENT(IN) :: thisStr
+      LOGICAL(SBK) :: bool
+      bool=(s == thisStr%sPrint())
+    ENDFUNCTION equalto_char_StringType
+!
+!-------------------------------------------------------------------------------
+!> @brief Performs an equal to operation of a @c CHARACTER and a
+!> @c StringType.
+!> @param thisStr a @c StringType object
+!> @param s a @c CHARACTER type
+!> @returns bool the result of the == operation
+!>
+!> The intent is that this will overload the == operator so a
+!> @c CHARACTER type can compared with a @c StringType.
+!>
+    PURE FUNCTION equalto_StringType_char(thisStr,s) RESULT(bool)
+      CLASS(StringType),INTENT(IN) :: thisStr
+      CHARACTER(LEN=*),INTENT(IN) :: s
+      LOGICAL(SBK) :: bool
+      bool=(s == thisStr%sPrint())
+    ENDFUNCTION equalto_StringType_char
+!
+!-------------------------------------------------------------------------------
+!> @brief Performs an equal to operation of a @c StringType and a
+!> @c StringType.
+!> @param s1 a @c StringType object
+!> @param s2 another @c StringType object
+!> @returns bool the result of the == operation
+!>
+!> The intent is that this will overload the == operator so a
+!> @c StringType type can compared with a @c StringType.
+!>
+    PURE FUNCTION equalto_StringType_StringType(s1,s2) RESULT(bool)
+      CLASS(StringType),INTENT(IN) :: s1
+      CLASS(StringType),INTENT(IN) :: s2
+      LOGICAL(SBK) :: bool
+      bool=(s1%sPrint() == s2%sPrint())
+    ENDFUNCTION equalto_StringType_StringType
+!
+!-------------------------------------------------------------------------------
+!> @brief Performs a not equal to operation of a @c CHARACTER and a
+!> @c StringType.
+!> @param s a @c CHARACTER type
+!> @param thisStr a @c StringType object
+!> @returns bool the result of the /= operation
+!>
+!> The intent is that this will overload the /= operator so a
+!> @c CHARACTER type can compared with a @c StringType.
+!>
+    PURE FUNCTION notequalto_char_StringType(s,thisStr) RESULT(bool)
+      CHARACTER(LEN=*),INTENT(IN) :: s
+      CLASS(StringType),INTENT(IN) :: thisStr
+      LOGICAL(SBK) :: bool
+      bool=(s /= thisStr%sPrint())
+    ENDFUNCTION notequalto_char_StringType
+!
+!-------------------------------------------------------------------------------
+!> @brief Performs a not equal to operation of a @c CHARACTER and a
+!> @c StringType.
+!> @param thisStr a @c StringType object
+!> @param s a @c CHARACTER type
+!> @returns bool the result of the /= operation
+!>
+!> The intent is that this will overload the /= operator so a
+!> @c CHARACTER type can compared with a @c StringType.
+!>
+    PURE FUNCTION notequalto_StringType_char(thisStr,s) RESULT(bool)
+      CLASS(StringType),INTENT(IN) :: thisStr
+      CHARACTER(LEN=*),INTENT(IN) :: s
+      LOGICAL(SBK) :: bool
+      bool=(s /= thisStr%sPrint())
+    ENDFUNCTION notequalto_StringType_char
+!
+!-------------------------------------------------------------------------------
+!> @brief Performs a not equal to operation of a @c StringType and a
+!> @c StringType.
+!> @param s1 a @c StringType object
+!> @param s2 another @c StringType object
+!> @returns bool the result of the /= operation
+!>
+!> The intent is that this will overload the /= operator so a
+!> @c StringType type can compared with a @c StringType.
+!>
+    PURE FUNCTION notequalto_StringType_StringType(s1,s2) RESULT(bool)
+      CLASS(StringType),INTENT(IN) :: s1
+      CLASS(StringType),INTENT(IN) :: s2
+      LOGICAL(SBK) :: bool
+      bool=(s1%sPrint() /= s2%sPrint())
+    ENDFUNCTION notequalto_StringType_StringType
 !
 ENDMODULE Strings
