@@ -34,6 +34,7 @@
 !>  - @ref Strings::TRIM_StringType "TRIM": @copybrief Strings::TRIM_StringType
 !>  - @ref Strings::ADJUSTL_StringType "ADJUSTL": @copybrief Strings::ADJUSTL_StringType
 !>  - @ref Strings::ADJUSTR_StringType "ADJUSTR": @copybrief Strings::ADJUSTR_StringType
+!>  - @c INDEX
 !>
 !> @par Module Dependencies
 !>  - @ref IntrType "IntrType": @copybrief IntrType
@@ -103,6 +104,7 @@ MODULE Strings
   PUBLIC :: TRIM
   PUBLIC :: ADJUSTL
   PUBLIC :: ADJUSTR
+  PUBLIC :: INDEX
   PUBLIC :: ASSIGNMENT(=)
   PUBLIC :: OPERATOR(//)
   PUBLIC :: OPERATOR(==)
@@ -129,7 +131,7 @@ MODULE Strings
       PROCEDURE,PASS :: sPrint => sPrint_StringType
   ENDTYPE StringType
   
-  !> @brief Overloads the Fortran intrinsic procedure LEN() so a 
+  !> @brief Overloads the Fortran intrinsic procedure LEN() so
   !> a string type argument may be passed.
   INTERFACE LEN
     !> @copybrief Strings::LEN_StringType
@@ -137,7 +139,7 @@ MODULE Strings
     MODULE PROCEDURE LEN_StringType
   ENDINTERFACE
   
-  !> @brief Overloads the Fortran intrinsic procedure LEN_TRIM() so a 
+  !> @brief Overloads the Fortran intrinsic procedure LEN_TRIM() so
   !> a string type argument may be passed.
   INTERFACE LEN_TRIM
     !> @copybrief Strings::LEN_TRIM_StringType
@@ -145,7 +147,7 @@ MODULE Strings
     MODULE PROCEDURE LEN_TRIM_StringType
   ENDINTERFACE
   
-  !> @brief Overloads the Fortran intrinsic procedure TRIM() so a 
+  !> @brief Overloads the Fortran intrinsic procedure TRIM() so
   !> a string type argument may be passed.
   INTERFACE TRIM
     !> @copybrief Strings::TRIM_StringType
@@ -153,7 +155,7 @@ MODULE Strings
     MODULE PROCEDURE TRIM_StringType
   ENDINTERFACE
   
-  !> @brief Overloads the Fortran intrinsic procedure ADJUSTL() so a 
+  !> @brief Overloads the Fortran intrinsic procedure ADJUSTL() so 
   !> a string type argument may be passed.
   INTERFACE ADJUSTL
     !> @copybrief Strings::ADJUSTL_StringType
@@ -161,12 +163,26 @@ MODULE Strings
     MODULE PROCEDURE ADJUSTL_StringType
   ENDINTERFACE
   
-  !> @brief Overloads the Fortran intrinsic procedure ADJUSTR() so a 
+  !> @brief Overloads the Fortran intrinsic procedure ADJUSTR() so 
   !> a string type argument may be passed.
   INTERFACE ADJUSTR
     !> @copybrief Strings::ADJUSTR_StringType
     !> @copydetails Strings::ADJUSTR_StringType
     MODULE PROCEDURE ADJUSTR_StringType
+  ENDINTERFACE
+  
+  !> @brief Overloads the Fortran intrinsic procedure INDEX() so
+  !> string type arguments may be passed.
+  INTERFACE INDEX
+    !> @copybrief Strings::INDEX_StringType_char
+    !> @copydetails Strings::INDEX_StringType_char
+    MODULE PROCEDURE INDEX_StringType_char
+    !> @copybrief Strings::INDEX_char_StringType
+    !> @copydetails Strings::INDEX_char_StringType
+    MODULE PROCEDURE INDEX_char_StringType
+    !> @copybrief Strings::INDEX_StringType_StringType
+    !> @copydetails Strings::INDEX_StringType_StringType
+    MODULE PROCEDURE INDEX_StringType_StringType
   ENDINTERFACE
   
   !> @brief Overloads the assignment operator.
@@ -324,6 +340,78 @@ MODULE Strings
       CHARACTER(LEN=thisStr%n) :: s
       s=ADJUSTR(thisStr%sPrint())
     ENDFUNCTION ADJUSTR_StringType
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns the starting position of a @c CHARACTER substring within a 
+!> @c StringType string.
+!> @param string the @c StringType object in which @c substring is located
+!> @param substring the @c CHARACTER string to locate within @c string
+!> @param back a logical indicating whether or not to return the position of
+!>        the first or last instance of the @c substring within @c string
+!> @returns ipos the position in @c string of the @c substring
+!>
+!> The intent is that this behaves exactly the same way as the intrinsic
+!> function @c INDEX does for character variables.
+!>
+    ELEMENTAL FUNCTION INDEX_StringType_char(string,substring,back) RESULT(ipos)
+      CLASS(StringType),INTENT(IN) :: string
+      CHARACTER(LEN=*),INTENT(IN) :: substring
+      LOGICAL,INTENT(IN),OPTIONAL :: back
+      INTEGER :: ipos
+      IF(PRESENT(back)) THEN
+        ipos=INDEX(string%sPrint(),substring,back)
+      ELSE
+        ipos=INDEX(string%sPrint(),substring)
+      ENDIF
+    ENDFUNCTION INDEX_StringType_char
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns the starting position of a @c StringType substring within a 
+!> @c CHARACTER string.
+!> @param string the @c CHARACTER string in which @c substring is located
+!> @param substring the @c StringType object to locate within @c string
+!> @param back a logical indicating whether or not to return the position of
+!>        the first or last instance of the @c substring within @c string
+!> @returns ipos the position in @c string of the @c substring
+!>
+!> The intent is that this behaves exactly the same way as the intrinsic
+!> function @c INDEX does for character variables.
+!>
+    ELEMENTAL FUNCTION INDEX_char_StringType(string,substring,back) RESULT(ipos)
+      CHARACTER(LEN=*),INTENT(IN) :: string  
+      CLASS(StringType),INTENT(IN) :: substring
+      LOGICAL,INTENT(IN),OPTIONAL :: back
+      INTEGER :: ipos
+      IF(PRESENT(back)) THEN
+        ipos=INDEX(string,substring%sPrint(),back)
+      ELSE
+        ipos=INDEX(string,substring%sPrint())
+      ENDIF
+    ENDFUNCTION INDEX_char_StringType
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns the starting position of a @c StringType substring within a 
+!> @c StringType string.
+!> @param string the @c StringType object in which @c substring is located
+!> @param substring the @c StringType object to locate within @c string
+!> @param back a logical indicating whether or not to return the position of
+!>        the first or last instance of the @c substring within @c string
+!> @returns ipos the position in @c string of the @c substring
+!>
+!> The intent is that this behaves exactly the same way as the intrinsic
+!> function @c INDEX does for character variables.
+!>
+    ELEMENTAL FUNCTION INDEX_StringType_StringType(string,substring,back) RESULT(ipos)
+      CLASS(StringType),INTENT(IN) :: string
+      CLASS(StringType),INTENT(IN) :: substring
+      LOGICAL,INTENT(IN),OPTIONAL :: back
+      INTEGER :: ipos
+      IF(PRESENT(back)) THEN
+        ipos=INDEX(string%sPrint(),substring%sPrint(),back)
+      ELSE
+        ipos=INDEX(string%sPrint(),substring%sPrint())
+      ENDIF
+    ENDFUNCTION INDEX_StringType_StringType
 !
 !-------------------------------------------------------------------------------
 !> @brief Assigns the contents of a string to an intrinsic character type

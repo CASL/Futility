@@ -164,7 +164,39 @@ PROGRAM testStrings
     WRITE(*,*) '  Passed: ADJUSTR(testString)'
   ENDIF
 !
+!Test INDEX 
+  char10='  - -'
+  testString=char10
+  testString2='-'
+  IF(INDEX(testString,'-') /= 3) THEN
+    WRITE(*,*) 'INDEX(testString,''-'') FAILED!'
+    STOP 666
+  ENDIF
+  IF(INDEX(testString,'-',.TRUE.) /= 5) THEN
+    WRITE(*,*) 'INDEX(testString,''-'',.TRUE.) FAILED!'
+    STOP 666
+  ENDIF
+  IF(INDEX(char10,testString2) /= 3) THEN
+    WRITE(*,*) 'INDEX(char10,testString2) FAILED!'
+    STOP 666
+  ENDIF
+  IF(INDEX(char10,testString2,.TRUE.) /= 5) THEN
+    WRITE(*,*) 'INDEX(char10,testString2,.TRUE.) FAILED!'
+    STOP 666
+  ENDIF
+  IF(INDEX(testString,testString2) /= 3) THEN
+    WRITE(*,*) 'INDEX(testString,testString2) FAILED!'
+    STOP 666
+  ENDIF
+  IF(INDEX(testString,testString2,.TRUE.) /= 5) THEN
+    WRITE(*,*) 'INDEX(testString,testString2,.TRUE.) FAILED!'
+    STOP 666
+  ENDIF
+  WRITE(*,*) '  Passed: INDEX(...)'
+!
 !Test // operator
+  char10='  -'
+  testString=char10
   IF('"'//testString /= '"  -       ') THEN
     WRITE(*,*) '''"''//testString FAILED!'
     STOP 666
