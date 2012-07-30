@@ -23,6 +23,7 @@ SET(UNIT_TEST_NAMES
     testSpaceFillingCurve
     testExceptionHandler      
     testAllocs
+    testParameterLists
     testExpTables
     testStochasticSampler
     testParallelEnv
