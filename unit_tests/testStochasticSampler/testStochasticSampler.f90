@@ -40,12 +40,9 @@ PROGRAM testStochasticSampler
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING STOCHASTIC SAMPLER...'
   WRITE(*,*) '==================================================='
-  WRITE(*,*) '==================================================='
-  WRITE(*,*) 'TESTING STOCHASTIC SAMPLER PASSED!'
-  WRITE(*,*) '==================================================='
   
-  STOP
   ! Test Manager Init
+  CALL myRNG%init(3)
   ! Test Initialize
   IF (.NOT. myRNG%isInit) THEN
     WRITE(*,*) 'RNG did not initialize.  Test FAILED!'
@@ -58,13 +55,18 @@ PROGRAM testStochasticSampler
 
   CALL TestRNG()
   
-!  CALL RNGManager%generatesampler(myRNG2)
-!  WRITE(*,*) "RNG 2 Preskip: ", myRNG2%rng()
-!  CALL myRNG2%clear()
-!  CALL RNGManager%generatesampler(myRNG2,myRNG%counter)
-!  WRITE(*,*) "RNG 1:         ", myRNG%rng()
-!  WRITE(*,*) "RNG 2 Skipped: ", myRNG2%rng()
-    
+  CALL myRNG2%init(3)
+  WRITE(*,*) "RNG 2 Preskip: ", myRNG2%rng()
+  CALL myRNG2%clear()
+  CALL myRNG2%init(3,skip=myRNG%counter)
+  IF (.NOT. (myRNG%rng()==myRNG2%rng())) THEN
+    WRITE(*,*) 'RNG did not skip ahead properly.  Test FAILED!'
+    STOP 666
+  ENDIF
+  WRITE(*,*) "RNG 1:         ", myRNG%rng()
+  WRITE(*,*) "RNG 2 Skipped: ", myRNG2%rng()
+  CALL myRNG2%clear()
+  
   n=1e6
 
   mean=0.0

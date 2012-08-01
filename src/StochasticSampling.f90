@@ -191,11 +191,15 @@ CONTAINS
 !> CALL sampler%initialize(19073486328125_SLK)
 !> @endcode
 !>
-    PURE SUBROUTINE init_Sampler(sampler,RNGdata,seed0,skip)
+    PURE SUBROUTINE init_Sampler(sampler,RNGid,seed0,skip)
       CLASS(StochasticSamplingType),INTENT(INOUT) :: sampler
-      TYPE(RNGdataType),INTENT(IN) :: RNGdata
+      INTEGER(SIK),INTENT(IN) :: RNGid
       INTEGER(SLK),INTENT(IN),OPTIONAL :: seed0
       INTEGER(SLK),INTENT(IN),OPTIONAL :: skip
+      
+      TYPE(RNGdataType) :: RNGdata
+      
+      RNGdata=generators(RNGid)
       
       sampler%RNseed=RNGdata%RNseed0
       ! Add checks for constraints on seed0
