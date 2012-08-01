@@ -91,33 +91,7 @@ MODULE StochasticSampling
            RNGdataType(2806196910506780709_SLK, 1_SLK, 63, 152917_SLK, 1_SLK,     'LEcuyer2'),  &
            RNGdataType(3249286849523012805_SLK, 1_SLK, 63, 152917_SLK, 1_SLK,     'LEcuyer3') /)
   !                           mult              add  log2mod  stride   seed0        name
-  
-  !> Add description
-  TYPE :: StochasticManagerType
-    !> Initialization status 
-    LOGICAL(SBK) :: isInit=.FALSE.
-    !> Random Number type
-    INTEGER(SIK) :: RNtype=-1
-    !> Current Seed
-    INTEGER(SLK) :: RNseed=-1
-    !> Random Number stride
-    INTEGER(SLK) :: RNskip=-1
-    !> Number of RNGs created
-    INTEGER(SLK) :: counter=0
-!
-!List of type bound procedures
-    CONTAINS
-      !> @copybrief StochasticManager::init_Manager
-      !> @copydetails StochasticManager::init_Manager
-      PROCEDURE,PASS :: init => init_Manager
-      !> @copybrief StochasticManager::clear_Manager
-      !> @copydetails StochasticManager::clear_Manager
-      PROCEDURE,PASS :: clear => clear_Manager
-      !> @copybrief StochasticManager::genSampler_Manager
-      !> @copydetails StochasticManager::genSampler_Manager
-      PROCEDURE,PASS :: generateSampler => genSampler_Manager
-  ENDTYPE StochasticManagerType
-  
+    
   !> Add description
   TYPE :: StochasticSamplingType
     !> Initialization status 
@@ -204,64 +178,6 @@ MODULE StochasticSampling
   ENDTYPE StochasticSamplingType
   
 CONTAINS
-!
-!-------------------------------------------------------------------------------
-!> @brief Constructor for a stochastic manager
-!> @param manager the variable to initialize
-!> @param seed0 is the initial seed
-!>
-!> There are essentially only a few ways to use this routine. If it is not
-!> called in this way then the routine will return the manager uninitialized.
-!>
-!> @code
-!> TYPE(StochasticManager) :: manager
-!> CALL manager%initialize()
-!> CALL manager%initialize(1,19073486328125_SLK)
-!> CALL manager%initialize(1)
-!> CALL manager%initialize(seed0=19073486328125_SLK)
-!> @endcode
-!>
-    PURE SUBROUTINE init_Manager(manager,rngtype,seed0)
-      CLASS(StochasticManagerType),INTENT(INOUT) :: manager
-      INTEGER(SIK),INTENT(IN),OPTIONAL :: rngtype
-      INTEGER(SLK),INTENT(IN),OPTIONAL :: seed0
-     
-      manager%RNtype=1_SIK
-      IF(PRESENT(rngtype)) manager%RNtype=rngtype
-      ! Add checks for constraints on seed0
-      manager%RNseed=generators(manager%RNtype)%RNseed0
-      IF(PRESENT(seed0)) manager%RNseed=seed0
-     
-      manager%isInit=.TRUE.
-     
-    ENDSUBROUTINE init_Manager
-!
-!-------------------------------------------------------------------------------
-!> @brief Routine clears the data in a stochastic manager type variable
-!> @param manager the type variable to clear
-!>
-    ELEMENTAL SUBROUTINE clear_Manager(manager)
-      CLASS(StochasticManagerType),INTENT(INOUT) :: manager
-      manager%RNseed=-1
-      manager%isInit=.FALSE.
-    ENDSUBROUTINE clear_Manager
-!
-!-------------------------------------------------------------------------------
-!> @brief Routine generates a stochastic sampler type using the stochastic manager
-!> @param manager the type variable to initialize
-!> @param sampler the type variable to initialize
-!>
-    PURE SUBROUTINE genSampler_Manager(manager,sampler,skip)
-      CLASS(StochasticManagerType),INTENT(IN) :: manager
-      CLASS(StochasticSamplingType),INTENT(INOUT) :: sampler
-      INTEGER(SLK),INTENT(IN),OPTIONAL :: skip
-      
-      IF(PRESENT(skip)) THEN
-        CALL sampler%init(generators(manager%RNtype),manager%RNseed,skip)
-      ELSE
-        CALL sampler%init(generators(manager%RNtype),manager%RNseed)
-      ENDIF
-    ENDSUBROUTINE genSampler_Manager
 !
 !-------------------------------------------------------------------------------
 !> @brief Constructor for a stochastic sampler
