@@ -56,7 +56,6 @@ MODULE StochasticSampling
   PRIVATE
 !
 ! List of public members
-  PUBLIC :: StochasticManagerType
   PUBLIC :: StochasticSamplingType
   
   !> Maximum length for the name of a random number generator
