@@ -19,6 +19,7 @@ PROGRAM testParameterLists
   
   USE ISO_FORTRAN_ENV
   USE IntrType
+  USE Strings
   USE ExceptionHandler
   USE ParameterLists
   IMPLICIT NONE
@@ -208,7 +209,11 @@ PROGRAM testParameterLists
   WRITE(*,*) '  Passed: CALL testParam%get(...) (List)'
   
   !Test set
-  testList(2)=testList(1)
+  !testList(2)=testList(1) GNU does not like this, seems to use the intrinsic assignment
+  !                        rather than the overloaded assignment and produces a run
+  !                        time error in memcopy instead of calling assign_ParamType.
+  testParam2=testList(1)
+  testList(2)=testParam2
   testList(2)%pdat%name='testSSK2'
   eParams => NULL()
   CALL someParam%set('testPL',testList,'A second list')
@@ -285,8 +290,6 @@ PROGRAM testParameterLists
   CALL testList2(1)%clear()
   CALL testList2(2)%clear()
   CALL testList2(3)%clear()
-  
-  CALL e%setQuietMode(.FALSE.)
   
   !test add routines
   eParams => NULL()

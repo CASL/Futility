@@ -51,6 +51,7 @@ MODULE ParameterLists
   PUBLIC :: ParamType
   PUBLIC :: ParamListType
   PUBLIC :: ASSIGNMENT(=)
+  PUBLIC :: assign_ParamType
   
   CHARACTER(LEN=*),PARAMETER :: modName='PARAMETERLISTS'
   
@@ -174,10 +175,12 @@ MODULE ParameterLists
             ENDIF
           ELSE
             !Search for thisname within the list
-            DO i=1,SIZE(thisParam%plList)
-              CALL thisParam%plList(i)%getParam(TRIM(thisname),param)
-              IF(ASSOCIATED(param)) EXIT !Found it, stop searching
-            ENDDO
+            IF(ALLOCATED(thisParam%plList)) THEN
+              DO i=1,SIZE(thisParam%plList)
+                CALL thisParam%plList(i)%getParam(TRIM(thisname),param)
+                IF(ASSOCIATED(param)) EXIT !Found it, stop searching
+              ENDDO
+            ENDIF
           ENDIF
         CLASS DEFAULT
           IF(ASSOCIATED(thisParam%pdat)) THEN
