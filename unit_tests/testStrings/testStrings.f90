@@ -146,6 +146,14 @@ PROGRAM testStrings
     WRITE(*,*) 'char20=testString FAILED!'
     STOP 666
   ENDIF
+!
+!Test assigning a string to a string
+  testString2='testString2'
+  testString2=testString
+  IF(testString2%sPrint() /= 'testString1') THEN
+    WRITE(*,*) 'testString2=testString FAILED!'
+    STOP 666
+  ENDIF
   WRITE(*,*) '  Passed: ASSIGNMENT(=)'
 !
 !Test ADJUSTL and ADJUSTR
