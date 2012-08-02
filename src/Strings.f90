@@ -195,6 +195,9 @@ MODULE Strings
     !> @copybrief Strings::assign_StringType_to_char
     !> @copydetails Strings::assign_StringType_to_char
     MODULE PROCEDURE assign_StringType_to_char
+    !> @copybrief Strings::assign_StringType_to_StringType
+    !> @copydetails Strings::assign_StringType_to_StringType
+    MODULE PROCEDURE assign_StringType_to_StringType
   ENDINTERFACE
   
   !> @brief Overloads the Fortran intrinsic operator for concatenating
@@ -416,7 +419,7 @@ MODULE Strings
 !-------------------------------------------------------------------------------
 !> @brief Assigns the contents of a string to an intrinsic character type
 !> variable.
-!> @param s the length of the string
+!> @param s the character string
 !> @param thisStr the string object
 !>
 !> The intent is that this will overload the assignment operator so a
@@ -432,7 +435,7 @@ MODULE Strings
 !> @brief Assigns the contents of an intrinsic character type variable to a
 !> @c StringType.
 !> @param thisStr the string object
-!> @param s the length of the string
+!> @param s the character string
 !>
 !> The intent is that this will overload the assignment operator so a
 !> @c CHARACTER type can be assigned to a @c StringType.
@@ -459,13 +462,46 @@ MODULE Strings
     ENDSUBROUTINE assign_char_to_StringType
 !
 !-------------------------------------------------------------------------------
-!> @brief Assigns the contents of an intrinsic character type variable to a
+!> @brief Assigns the contents of a @c StringType variable to a @c StringType.
+!> @param thisStr the string object
+!> @param s another string object
+!>
+!> The intent is that this will overload the assignment operator so a
+!> @c Stringtype can be assigned to a @c StringType. This is used instead
+!> of the intrinsic operation because I think there are some issues with
+!> the allocatable component.
+!>
+    PURE SUBROUTINE assign_StringType_to_StringType(thisStr,s)
+      CLASS(StringType),INTENT(INOUT) :: thisStr
+      CLASS(StringType),INTENT(IN) :: s
+      INTEGER(SIK) :: i
+      
+      IF(thisStr%n > 0) THEN
+        DEALLOCATE(thisStr%s)
+        thisStr%n=0
+        thisStr%ntrim=0
+      ENDIF
+      
+      IF(s%n > 0) THEN
+        thisStr%n=s%n
+        thisStr%ntrim=s%ntrim
+        ALLOCATE(thisStr%s(thisStr%n))
+        DO i=1,thisStr%n
+          thisStr%s(i)=s%s(i)
+        ENDDO
+      ENDIF
+    ENDSUBROUTINE assign_StringType_to_StringType
+!
+!-------------------------------------------------------------------------------
+!> @brief Concatenates an intrinsic character type variable with a
 !> @c StringType.
 !> @param thisStr the string object
 !> @param s the length of the string
+!> @returns newstring a character string that is a concatenation of a
+!> @c StringType and character string
 !>
-!> The intent is that this will overload the assignment operator so a
-!> @c CHARACTER type can be assigned to a @c StringType.
+!> The intent is that this will overload the // operator so a
+!> @c CHARACTER type can be concatenated with a @c StringType.
 !>
     PURE FUNCTION concatenate_StringType_onto_char(s,thisStr) RESULT(newstring)
       CHARACTER(LEN=*),INTENT(IN) :: s  
@@ -475,13 +511,15 @@ MODULE Strings
     ENDFUNCTION concatenate_StringType_onto_char
 !
 !-------------------------------------------------------------------------------
-!> @brief Assigns the contents of an intrinsic character type variable to a
+!> @brief Concatenates an intrinsic character type variable with a
 !> @c StringType.
-!> @param thisStr the string object
 !> @param s the length of the string
+!> @param thisStr the string object
+!> @returns newstring a character string that is a concatenation of a
+!> @c StringType and character string
 !>
-!> The intent is that this will overload the assignment operator so a
-!> @c CHARACTER type can be assigned to a @c StringType.
+!> The intent is that this will overload the // operator so a
+!> @c CHARACTER type can be concatenated with a @c StringType.
 !>
     PURE FUNCTION concatenate_char_onto_StringType(thisStr,s) RESULT(newstring)
       CLASS(StringType),INTENT(IN) :: thisStr
@@ -491,13 +529,14 @@ MODULE Strings
     ENDFUNCTION concatenate_char_onto_StringType
 !
 !-------------------------------------------------------------------------------
-!> @brief Assigns the contents of an intrinsic character type variable to a
-!> @c StringType.
-!> @param thisStr the string object
-!> @param s the length of the string
+!> @brief Concatenates a @c StringType type variable with a @c StringType.
+!> @param s1 the string object
+!> @param s2 the string object
+!> @returns newstring a character string that is a concatenation of a
+!> two @c StringTypes
 !>
-!> The intent is that this will overload the assignment operator so a
-!> @c CHARACTER type can be assigned to a @c StringType.
+!> The intent is that this will overload the // operator so a
+!> @c StringType can be concatenated with a @c StringType.
 !>
     PURE FUNCTION concatenate_StringType_onto_StringType(s1,s2) RESULT(s)
       CLASS(StringType),INTENT(IN) :: s1
