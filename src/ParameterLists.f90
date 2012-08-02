@@ -41,6 +41,7 @@ MODULE ParameterLists
   USE IntrType
   USE Strings
   USE ExceptionHandler
+  USE IO_Strings
   
   IMPLICIT NONE
   PRIVATE !Default private for module contents
@@ -67,9 +68,6 @@ MODULE ParameterLists
       PROCEDURE,PASS,PRIVATE :: initParamList => init_ParamType_List
       PROCEDURE,PASS,PRIVATE :: initSSK => init_ParamType_SSK
       GENERIC :: init => initParamList,initSSK
-      PROCEDURE,PASS,PRIVATE :: addParamList => add_ParamType_List
-      PROCEDURE,PASS,PRIVATE :: addParamSSK => add_ParamType_SSK
-      GENERIC :: add => addParamList,addParamSSK
       PROCEDURE,PASS,PRIVATE :: setParamList => set_ParamType_List
       PROCEDURE,PASS,PRIVATE :: setSSK => set_ParamType_SSK
       GENERIC :: set => setParamList,setSSK
@@ -77,6 +75,10 @@ MODULE ParameterLists
       PROCEDURE,PASS,PRIVATE :: getParamList => get_ParamType_List
       PROCEDURE,PASS,PRIVATE :: getSSK => get_ParamType_SSK
       GENERIC :: get => getParam,getParamList,getSSK
+      PROCEDURE,PASS,PRIVATE :: addParam => add_ParamType
+      PROCEDURE,PASS,PRIVATE :: addParamList => add_ParamType_List
+      PROCEDURE,PASS,PRIVATE :: addParamSSK => add_ParamType_SSK
+      GENERIC :: add => addParam,addParamList,addParamSSK
       PROCEDURE,PASS :: edit => edit_ParamType
       PROCEDURE,PASS :: clear => clear_ParamType
   ENDTYPE ParamType
@@ -129,7 +131,6 @@ MODULE ParameterLists
               CALL thisParam%init(p%name%sPrint(),p%plList, &
                 p%description%sPrint())
           ENDSELECT
-         
         CLASS DEFAULT
           CALL eParams%raiseError(modName//'::'//myName// &
             ' - cannot assign parameter data to a type extension of ParamType!')
@@ -142,8 +143,9 @@ MODULE ParameterLists
       CLASS(ParamType),INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       CLASS(ParamType),POINTER,INTENT(INOUT) :: param
-      CHARACTER(LEN=LEN(name)) :: thisname,nextname
+      CHARACTER(LEN=LEN(name)) :: thisname,nextname,pname
       INTEGER(SIK) :: ipos,i
+      CLASS(ParamType),POINTER :: tmpParam
       
       ipos=INDEX(name,'->')
       thisname=name
@@ -152,13 +154,19 @@ MODULE ParameterLists
         thisname=ADJUSTL(name(1:ipos-1))
         nextname=ADJUSTL(name(ipos+2:LEN(name)))
       ENDIF
+      pname=''
       
       param => NULL()
       SELECTTYPE(thisParam)
         TYPE IS(ParamListType)
           IF(LEN_TRIM(nextname) > 0) THEN
+            !Set names to upper case for matching
+            IF(LEN(pname) >= LEN_TRIM(thisParam%name)) pname=thisParam%name
+            CALL toUPPER(pname)
+            CALL toUPPER(thisname)
+            
             !Search the list for nextname (thisname must match parameter name)
-            IF(thisParam%name == TRIM(thisname)) THEN
+            IF(TRIM(pname) == TRIM(thisname)) THEN
               DO i=1,SIZE(thisParam%plList)
                 CALL thisParam%plList(i)%getParam(TRIM(nextname),param)
                 IF(ASSOCIATED(param)) EXIT !Found it, stop searching
@@ -173,16 +181,162 @@ MODULE ParameterLists
           ENDIF
         CLASS DEFAULT
           IF(ASSOCIATED(thisParam%pdat)) THEN
-            IF(thisParam%pdat%name == TRIM(name)) THEN
+            !Set names to upper case for matching
+            IF(LEN(pname) >= LEN_TRIM(thisParam%pdat%name)) &
+              pname=thisParam%pdat%name
+            CALL toUPPER(pname)
+            CALL toUPPER(thisname)
+            IF(TRIM(pname) == TRIM(thisname)) THEN
               !Found the match
-              param => thisParam%pdat
+              tmpParam => thisParam%pdat
+              IF(LEN_TRIM(nextname) > 0) THEN
+                CALL tmpParam%getParam(name,param)
+              ELSE
+                param => tmpParam
+                NULLIFY(tmpParam)
+              ENDIF
             ELSE
               !Search 1-level down
-              CALL thisParam%pdat%getParam(name,param)
+              CALL thisParam%pdat%getParam(thisname,param)
+              IF(ASSOCIATED(param) .AND. LEN_TRIM(nextname) > 0) THEN
+                tmpParam => param
+                param => NULL()
+                CALL tmpParam%getParam(nextname,param)
+              ENDIF
             ENDIF
           ENDIF
       ENDSELECT
     ENDSUBROUTINE get_ParamType
+!
+!-------------------------------------------------------------------------------
+    RECURSIVE SUBROUTINE add_ParamType(thisParam,name,newParam)
+      CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType'
+      CLASS(ParamType),INTENT(INOUT) :: thisParam
+      CHARACTER(LEN=*),INTENT(IN) :: name
+      CLASS(ParamType),INTENT(IN) :: newParam
+      CHARACTER(LEN=LEN(name)) :: nextname,pname
+      LOGICAL(SBK) :: localalloc
+      INTEGER(SIK) :: ipos,i,np
+      TYPE(ParamType),ALLOCATABLE :: tmpList(:)
+      CLASS(ParamType),POINTER :: tmpParam
+      
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eParams)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eParams)
+      ENDIF
+      
+      SELECTTYPE(thisParam)
+        TYPE IS(ParamType)
+          IF(ASSOCIATED(thisParam%pdat)) THEN
+            CALL add_ParamType(thisParam%pdat,name,newParam)
+          ELSE
+            !thisParam is not initialized
+            IF(LEN_TRIM(name) > 0) THEN
+              !Create a new list on thisParam
+              ALLOCATE(ParamListType :: thisParam%pdat)
+              thisParam%pdat%datatype='TYPE(ParamListType)'
+              
+              !Determine the name for the list and the next name
+              ipos=INDEX(name,'->')
+              IF(ipos > 0) THEN
+                thisParam%pdat%name=TRIM(ADJUSTL(name(1:ipos-1)))
+                nextname=ADJUSTL(name(ipos+2:LEN(name)))
+              ELSE
+                thisParam%pdat%name=TRIM(ADJUSTL(name))
+                nextname=''
+              ENDIF
+              CALL add_ParamType(thisParam%pdat,TRIM(nextname),newParam)
+            ELSE
+              !assign newParam to thisParam
+              CALL assign_ParamType(thisParam,newParam)
+            ENDIF
+          ENDIF
+        TYPE IS(ParamListType)
+          !Search for the parameter with name
+          NULLIFY(tmpParam)
+          IF(LEN_TRIM(name) > 0) THEN
+            !Check if the name matches this list
+            pname=thisParam%name
+            nextname=name
+            CALL toUPPER(nextname)
+            CALL toUPPER(pname)
+            IF(TRIM(pname) == TRIM(nextname)) THEN
+              !The name refers to the list in thisParam
+              CALL add_ParamType(thisParam,'',newParam)
+            ELSE
+              !Search within this list
+              CALL thisParam%getParam(name,tmpParam)
+              IF(ASSOCIATED(tmpParam)) THEN
+                !Found parameter with matching name
+                CALL add_ParamType(tmpParam,'',newParam)
+              ELSE
+                !Create a new entry in the list for the new parameter
+                IF(ALLOCATED(thisParam%plList)) THEN
+                  np=SIZE(thisParam%plList)
+              
+                  !Copy the parameter list to a temporary
+                  ALLOCATE(tmpList(np))
+                  DO i=1,np
+                    CALL assign_ParamType(tmpList(i),thisParam%plList(i))
+                    CALL thisParam%plList(i)%clear()
+                  ENDDO
+              
+                  !Reallocate the parameter list and copy everything back
+                  DEALLOCATE(thisParam%plList)
+                  ALLOCATE(thisParam%plList(np+1))
+                  DO i=1,np
+                    CALL assign_ParamType(thisParam%plList(i),tmpList(i))
+                    CALL tmpList(i)%clear()
+                  ENDDO
+                  DEALLOCATE(tmpList)
+                  i=np+1
+                ELSE
+                  !Allocate the list to 1 element
+                  ALLOCATE(thisParam%plList(1))
+                  i=1
+                ENDIF
+            
+                !Make recursive call to add the parameter in the new empty parameter
+                CALL add_ParamType(thisParam%plList(i),name,newParam)
+              ENDIF
+            ENDIF
+          ELSE
+            !Create a new entry in the list for the new parameter
+            IF(ALLOCATED(thisParam%plList)) THEN
+              np=SIZE(thisParam%plList)
+              
+              !Copy the parameter list to a temporary
+              ALLOCATE(tmpList(np))
+              DO i=1,np
+                CALL assign_ParamType(tmpList(i),thisParam%plList(i))
+                CALL thisParam%plList(i)%clear()
+              ENDDO
+              
+              !Reallocate the parameter list and copy everything back
+              DEALLOCATE(thisParam%plList)
+              ALLOCATE(thisParam%plList(np+1))
+              DO i=1,np
+                CALL assign_ParamType(thisParam%plList(i),tmpList(i))
+                CALL tmpList(i)%clear()
+              ENDDO
+              DEALLOCATE(tmpList)
+              i=np+1
+            ELSE
+              !Allocate the list to 1 element
+              ALLOCATE(thisParam%plList(1))
+              i=1
+            ENDIF
+            
+            !Make recursive call to add the parameter in the new empty parameter
+            CALL add_ParamType(thisParam%plList(i),name,newParam)
+          ENDIF
+        CLASS DEFAULT
+          CALL eParams%raiseError(modName//'::'//myName// &
+            ' - cannot add parameter to type "'//thisParam%datatype//'"!')
+      ENDSELECT
+      IF(localalloc) DEALLOCATE(eParams)  
+    ENDSUBROUTINE add_ParamType
 !
 !-------------------------------------------------------------------------------
     RECURSIVE SUBROUTINE edit_ParamType(thisParam,funit,indent)
@@ -263,8 +417,13 @@ MODULE ParameterLists
         i=1
         IF(PRESENT(indent)) i=i+indent
         WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') &
-        thisParam%dataType//' :: '//thisParam%name//'='
+        IF(LEN_TRIM(thisParam%description) == 0) THEN
+          WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') &
+            thisParam%dataType//' :: '//thisParam%name//'='
+        ELSE
+          WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') thisParam%dataType// &
+            ' :: '//thisParam%name//'= !'//thisParam%description
+        ENDIF
         
         DO j=1,SIZE(thisParam%plList)
           IF(ASSOCIATED(thisParam%plList(j)%pdat)) &
@@ -426,16 +585,17 @@ MODULE ParameterLists
     ENDSUBROUTINE get_ParamType_List
 !
 !-------------------------------------------------------------------------------
-    RECURSIVE SUBROUTINE add_ParamType_List(thisParam,name,param,description)
-      CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SSK'
+    SUBROUTINE add_ParamType_List(thisParam,name,param,description)
+      CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_List'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       TYPE(ParamType),INTENT(IN) :: param(:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      CHARACTER(LEN=LEN(name)) :: thisname,nextname
-      LOGICAL(SBK) :: lfound,localalloc
-      INTEGER(SIK) :: ipos,i,nold
-      TYPE(ParamType),ALLOCATABLE :: tmpList(:)
+      CHARACTER(LEN=LEN(name)) :: prevname,thisname
+      LOGICAL(SBK) :: localalloc
+      INTEGER(SIK) :: ipos
+      TYPE(ParamType) :: newParam
+      CLASS(ParamType),POINTER :: tmpParam
       
       localalloc=.FALSE.
       IF(.NOT.ASSOCIATED(eParams)) THEN
@@ -443,82 +603,34 @@ MODULE ParameterLists
         ALLOCATE(eParams)
       ENDIF
       
-!      ipos=INDEX(name,'->')
-!      thisname=name
-!      nextname=''
-!      IF(ipos > 0) THEN
-!        thisname=name(1:ipos-1)
-!        nextname=name(ipos+2:LEN(name))
-!      ENDIF
-!      
-!      SELECTTYPE(thisParam)
-!        TYPE IS(ParamListType) !thisParam is a parameter list
-!          
-!          IF(LEN_TRIM(nextname) > 0) THEN
-!            !Search the list to match the name
-!            lfound=.FALSE.
-!            DO i=1,SIZE(thisParam%plList)
-!              IF(thisParam%plList(i)%name == TRIM(thisname)) THEN
-!                !Found the match, proceed down one level
-!                lfound=.TRUE.
-!                IF(PRESENT(description)) THEN
-!                  CALL add_ParamType_List(thisParam%plList(i),nextname, &
-!                    param,description)
-!                ELSE
-!                  CALL add_ParamType_List(thisParam%plList(i),nextname,param)
-!                ENDIF
-!                EXIT
-!              ENDIF
-!            ENDDO
-!            
-!            IF(.NOT.lfound) THEN
-!              !The containing list does not exist, so add it and proceed
-!              ALLOCATE(tmpList(1))
-!              CALL add_ParamType_List(thisParam,thisname,tmpList)
-!              IF(PRESENT(description)) THEN
-!                CALL add_ParamType_List(thisParam,nextname,param,description)
-!              ELSE
-!                CALL add_ParamType_List(thisParam,nextname,param)
-!              ENDIF
-!            ENDIF
-!          ELSE
-!!
-!!Add the parameter at this level
-!            !Reallocate list
-!            nold=SIZE(thisParam%plList)
-!            CALL MOVE_ALLOC(thisParam%plList,tmpList)
-!            ALLOCATE(thisParam%plList(nold+1))
-!            
-!            !Assign old data
-!            DO i=1,nold
-!              thisParam%plList(i)=tmpList(i)
-!            ENDDO
-!            
-!            !Assign new parameter
-!            IF(PRESENT(description)) THEN
-!              CALL init_ParamType_List(thisParam%plList(nold+1), &
-!                thisname,param,description)
-!            ELSE
-!              CALL init_ParamType_List(thisParam%plList(nold+1), &
-!                thisname,param)
-!            ENDIF
-!          ENDIF
-!        TYPE IS(ParamType)
-!!
-!!All data is in pdat at this level, call this routine again for pdat
-!          IF(ASSOCIATED(thisParam%pdat)) THEN
-!            IF(PRESENT(description)) THEN
-!              CALL add_ParamType_List(thisParam%pdat,name,param,description)
-!            ELSE
-!              CALL add_ParamType_List(thisParam%pdat,name,param)
-!            ENDIF
-!          ENDIF
-!        CLASS DEFAULT
-!          CALL eParams%raiseError(modName//'::'//myName// &
-!            ' - parameter type data mismatch! Parameter type is '// &
-!              thisParam%pdat%dataType//' and needs to be TYPE(ParamListType)!')
-!      ENDSELECT
-!      IF(localalloc) DEALLOCATE(eParams)
+      !Search for the name to make sure it does not exist
+      CALL get_ParamType(thisParam,name,tmpParam)
+      
+      IF(.NOT.ASSOCIATED(tmpParam)) THEN
+        prevname=''
+        thisname=ADJUSTL(name)
+        ipos=INDEX(name,'->',.TRUE.)
+        IF(ipos > 0) THEN
+          prevname=ADJUSTL(name(1:ipos-1))
+          thisname=ADJUSTL(name(ipos+2:LEN(name)))
+        ENDIF
+      
+        !Initialize the new parameter
+        IF(PRESENT(description)) THEN
+          CALL init_ParamType_List(newParam,thisname,param,description)
+        ELSE
+          CALL init_ParamType_List(newParam,thisname,param)
+        ENDIF
+        
+        !Add the new parameter to thisParam
+        CALL add_ParamType(thisParam,prevname,newParam)
+        CALL newParam%clear()
+      ELSE
+        CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name "'//TRIM(name)// &
+            '" already exists! Use set method or full parameter list path!')
+      ENDIF
+      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE add_ParamType_List
 !
 !-------------------------------------------------------------------------------
@@ -570,8 +682,14 @@ MODULE ParameterLists
       i=1
       IF(PRESENT(indent)) i=i+indent
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
-      WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,f9.6)') &
-        thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val
+      IF(LEN_TRIM(thisParam%description) == 0) THEN
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g13.7)') &
+          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val
+      ELSE
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g13.7,a)') &
+          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val, &
+            ' !'//thisParam%description
+      ENDIF
     ENDSUBROUTINE edit_ParamType_SSK
 !
 !-------------------------------------------------------------------------------
@@ -679,16 +797,17 @@ MODULE ParameterLists
     ENDSUBROUTINE set_ParamType_SSK
 !
 !-------------------------------------------------------------------------------
-    RECURSIVE SUBROUTINE add_ParamType_SSK(thisParam,name,param,description)
+    SUBROUTINE add_ParamType_SSK(thisParam,name,param,description)
       CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SSK'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       REAL(SSK),INTENT(IN) :: param
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      CHARACTER(LEN=LEN(name)) :: thisname,nextname
-      LOGICAL(SBK) :: localalloc,lfound
-      INTEGER(SIK) :: ipos,i,nold
-      TYPE(ParamType),ALLOCATABLE :: tmpList(:)
+      CHARACTER(LEN=LEN(name)) :: prevname,thisname
+      LOGICAL(SBK) :: localalloc
+      INTEGER(SIK) :: ipos
+      TYPE(ParamType) :: newParam
+      CLASS(ParamType),POINTER :: tmpParam
       
       localalloc=.FALSE.
       IF(.NOT.ASSOCIATED(eParams)) THEN
@@ -696,87 +815,33 @@ MODULE ParameterLists
         ALLOCATE(eParams)
       ENDIF
       
-      ipos=INDEX(name,'->')
-      thisname=name
-      nextname=''
-      IF(ipos > 0) THEN
-        thisname=name(1:ipos-1)
-        nextname=name(ipos+2:LEN(name))
-      ENDIF
+      !Search for the name to make sure it does not exist
+      CALL get_ParamType(thisParam,name,tmpParam)
       
-      SELECTTYPE(thisParam)
-        TYPE IS(ParamListType) !thisParam is a parameter list
-          
-          IF(LEN_TRIM(nextname) > 0) THEN
-            !Search the list to match the name
-            lfound=.FALSE.
-            DO i=1,SIZE(thisParam%plList)
-              IF(thisParam%plList(i)%name == TRIM(thisname)) THEN
-                !Found the match, proceed down one level
-                lfound=.TRUE.
-                IF(PRESENT(description)) THEN
-                  CALL add_ParamType_SSK(thisParam%plList(i),nextname, &
-                    param,description)
-                ELSE
-                  CALL add_ParamType_SSK(thisParam%plList(i),nextname,param)
-                ENDIF
-                EXIT
-              ENDIF
-            ENDDO
-            
-            IF(.NOT.lfound) THEN
-              !The containing list does not exist, so add it and proceed
-              ALLOCATE(tmpList(1))
-              CALL add_ParamType_List(thisParam,thisname,tmpList)
-              IF(PRESENT(description)) THEN
-                CALL add_ParamType_SSK(thisParam,nextname,param,description)
-              ELSE
-                CALL add_ParamType_SSK(thisParam,nextname,param)
-              ENDIF
-            ENDIF
-          ELSE
-!
-!Add the parameter at this level
-            !Reallocate list
-            nold=SIZE(thisParam%plList)
-            CALL MOVE_ALLOC(thisParam%plList,tmpList)
-            ALLOCATE(thisParam%plList(nold+1))
-            
-            !Assign old data
-            DO i=1,nold
-              thisParam%plList(i)=tmpList(i)
-            ENDDO
-            
-            !Check that there is not a duplicate name
-            
-            
-            !Assign new parameter
-            IF(PRESENT(description)) THEN
-              CALL init_ParamType_SSK(thisParam%plList(nold+1), &
-                thisname,param,description)
-            ELSE
-              CALL init_ParamType_SSK(thisParam%plList(nold+1), &
-                thisname,param)
-            ENDIF
-          ENDIF
-        TYPE IS(ParamType)
-!
-!All data is in pdat at this level, call this routine again for pdat
-          IF(ASSOCIATED(thisParam%pdat)) THEN
-            IF(PRESENT(description)) THEN
-              CALL add_ParamType_SSK(thisParam%pdat,name,param,description)
-            ELSE
-              CALL add_ParamType_SSK(thisParam%pdat,name,param)
-            ENDIF
-          ELSE
-            CALL eParams%raiseError(modName//'::'//myName// &
-              ' - parameter is not initialized! Use init method!')
-          ENDIF
-        CLASS DEFAULT
-          CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter data type mismatch! Parameter type is '// &
-              thisParam%pdat%dataType//' and needs to be TYPE(ParamListType)!')
-      ENDSELECT
+      IF(.NOT.ASSOCIATED(tmpParam)) THEN
+        prevname=''
+        thisname=ADJUSTL(name)
+        ipos=INDEX(name,'->',.TRUE.)
+        IF(ipos > 0) THEN
+          prevname=ADJUSTL(name(1:ipos-1))
+          thisname=ADJUSTL(name(ipos+2:LEN(name)))
+        ENDIF
+      
+        !Initialize the new parameter
+        IF(PRESENT(description)) THEN
+          CALL init_ParamType_SSK(newParam,thisname,param,description)
+        ELSE
+          CALL init_ParamType_SSK(newParam,thisname,param)
+        ENDIF
+        
+        !Add the new parameter to thisParam
+        CALL add_ParamType(thisParam,prevname,newParam)
+        CALL newParam%clear()
+      ELSE
+        CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name "'//TRIM(name)// &
+            '" already exists! Use set method or full parameter list path!')
+      ENDIF
       IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE add_ParamType_SSK
 !
