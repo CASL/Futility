@@ -82,7 +82,7 @@ MODULE IntrType
   PRIVATE !Default private for module contents
 !
 ! List of Public items
-  PUBLIC :: SBK,SNK,SLK,SIK,SHK,SSK,SDK,SRK
+  PUBLIC :: SBK,SNK,SLK,SIK,SSK,SDK,SRK
   PUBLIC :: EPSS
   PUBLIC :: EPSD
   PUBLIC :: EPSREAL
@@ -100,9 +100,6 @@ MODULE IntrType
   !>
   !> Means the range of integers in -10^(N_LONG_ORDER) to +10^(N_LONG_ORDER)
   INTEGER,PARAMETER :: N_LONG_ORDER=18
-  
-  !> @brief Significant digits for half precision.
-  INTEGER,PARAMETER :: N_HLF_DIGITS=3
   
   !> @brief Significant digits for single precision.
   INTEGER,PARAMETER :: N_SGL_DIGITS=6
@@ -128,14 +125,6 @@ MODULE IntrType
   !> The selected integer kind ensuring integers up to 10^(N_INT_ORDER)
   !> SIK is also an acronym for Selected Long integer Kind.
   INTEGER,PARAMETER :: SLK=SELECTED_INT_KIND(N_LONG_ORDER)
-  
-  !> @brief REAL kind for half precision (16-bit)
-  !>
-  !> The selected real kind ensuring N_HLF_DIGITS precision on a given 
-  !> machine. SHK is now an acronym for Selected Half Kind; the number
-  !> of bytes of memory occupied by a half precision floating point
-  !> variable.
-  INTEGER,PARAMETER :: SHK=SELECTED_REAL_KIND(N_HLF_DIGITS)
   
   !> @brief REAL kind for single precision (32-bit)
   !>
