@@ -174,7 +174,7 @@ PROGRAM testParameterLists
     WRITE(*,*) 'CALL testParam%init(...) %name (List) FAILED!'
     STOP 666
   ENDIF
-  IF(testParam%pdat%datatype /= 'TYPE(ParamListType)') THEN
+  IF(testParam%pdat%datatype /= 'TYPE(ParamType_List)') THEN
     WRITE(*,*) 'CALL testParam%init(...) %datatype (List) FAILED!'
     STOP 666
   ENDIF
@@ -205,6 +205,7 @@ PROGRAM testParameterLists
   CALL testParam%get('testPL',testList2)
   CALL testParam2%get('testPL',testList2)
   CALL testParam%get('testError',testList2)
+  CALL testParam%get('->testError',testList2)
   CALL someParam%get('testError',testList2)
   WRITE(*,*) '  Passed: CALL testParam%get(...) (List)'
   
@@ -235,7 +236,7 @@ PROGRAM testParameterLists
   ENDIF
   CALL testParam%set('testPL',testList2)
   CALL someParam%set('testPL',testList2)
-  CALL testParam2%set('testPL',testList)
+  CALL testParam2%set('testSSK',testList)
   CALL someParam%set('testError',testList)
   CALL testParam%set('testError',testList)
   WRITE(*,*) '  Passed: CALL testParam%set(...) (List)'
@@ -273,7 +274,7 @@ PROGRAM testParameterLists
     WRITE(*,*) 'ASSIGNMENT(=) %name (List) FAILED!'
     STOP 666
   ENDIF
-  IF(testParam2%pdat%datatype /= 'TYPE(ParamListType)') THEN
+  IF(testParam2%pdat%datatype /= 'TYPE(ParamType_List)') THEN
     WRITE(*,*) 'ASSIGNMENT(=) %datatype (List) FAILED!'
     STOP 666
   ENDIF
@@ -328,7 +329,24 @@ PROGRAM testParameterLists
   
   
   !test remove
-  
+  CALL testParam%edit(OUTPUT_UNIT)
+  eParams => NULL()
+  CALL testParam%remove('testSSK3')
+  eParams => e
+  CALL testParam%edit(OUTPUT_UNIT)
+  CALL testParam%remove('->error')
+  CALL testParam%remove('testSSK')
+  CALL testParam%edit(OUTPUT_UNIT)
+  CALL testParam%remove('testPL2->testSSK2')
+  CALL testParam%edit(OUTPUT_UNIT)
+  CALL testParam%remove('testPL2')
+  CALL testParam%edit(OUTPUT_UNIT)
+  CALL testParam%remove('testPL2')
+  CALL testParam%edit(OUTPUT_UNIT)
+  CALL testParam%remove('testPL->testSSK2')
+  CALL testParam%edit(OUTPUT_UNIT)
+  CALL testParam%remove('testPL->testSSK2')
+  CALL testParam%remove('testPL2->testSSK2')
   
   !Clean-up variables
   CALL testParam2%clear()
