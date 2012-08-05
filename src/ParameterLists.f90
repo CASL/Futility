@@ -169,6 +169,9 @@ MODULE ParameterLists
       !> @copybrief ParameterLists::remove_ParamType
       !> @copydoc ParameterLists::remove_ParamType
       PROCEDURE,PASS :: remove => remove_ParamType
+      !> @copybrief ParameterLists::validate_ParamType
+      !> @copydoc ParameterLists::validate_ParamType
+      PROCEDURE,PASS :: validate => validate_ParamType
       !> @copybrief ParameterLists::edit_ParamType
       !> @copydoc ParameterLists::edit_ParamType
       PROCEDURE,PASS :: edit => edit_ParamType
@@ -253,8 +256,16 @@ MODULE ParameterLists
               CALL thisParam%init(p%name%sPrint(),p%val, &
                 p%description%sPrint())
             TYPE IS(ParamType_List)
-              CALL thisParam%init(p%name%sPrint(),p%plList, &
-                p%description%sPrint())
+              IF(ALLOCATED(p%plList)) THEN
+                CALL thisParam%init(p%name%sPrint(),p%plList, &
+                  p%description%sPrint())
+              ELSE
+                !Allocate an empty list
+                ALLOCATE(ParamType_List :: thisParam%pdat)
+                thisParam%pdat%dataType='TYPE(ParamType_List)'
+                thisParam%pdat%name=p%name
+                thisParam%pdat%description=p%description
+              ENDIF
           ENDSELECT
         CLASS DEFAULT
           CALL eParams%raiseError(modName//'::'//myName// &
@@ -392,7 +403,7 @@ MODULE ParameterLists
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       CLASS(ParamType),INTENT(IN) :: newParam
-      CHARACTER(LEN=LEN(name)) :: nextname,pname
+      CHARACTER(LEN=LEN(name)) :: thisname,nextname,pname
       LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos,i,np
       TYPE(ParamType),ALLOCATABLE :: tmpList(:)
@@ -431,23 +442,30 @@ MODULE ParameterLists
             ENDIF
           ENDIF
         TYPE IS(ParamType_List)
-          !Search for the parameter with name
-          NULLIFY(tmpParam)
           IF(LEN_TRIM(name) > 0) THEN
             !Check if the name matches this list
-            pname=thisParam%name
-            nextname=name
-            CALL toUPPER(nextname)
-            CALL toUPPER(pname)
-            IF(TRIM(pname) == TRIM(nextname)) THEN
-              !The name refers to the list in thisParam
-              CALL add_ParamType(thisParam,'',newParam)
+            ipos=INDEX(name,'->')
+            IF(ipos > 0) THEN
+              thisname=TRIM(ADJUSTL(name(1:ipos-1)))
+              nextname=ADJUSTL(name(ipos+2:LEN(name)))
             ELSE
-              !Search within this list
-              CALL thisParam%getParam(name,tmpParam)
+              thisname=TRIM(ADJUSTL(name))
+              nextname=''
+            ENDIF
+            
+            pname=thisParam%name
+            CALL toUPPER(thisname)
+            CALL toUPPER(pname)
+            IF(TRIM(pname) == TRIM(thisname)) THEN
+              !The name refers to the list in thisParam
+              CALL add_ParamType(thisParam,TRIM(nextname),newParam)
+            ELSE
+              !Search for thisname within this list
+              NULLIFY(tmpParam)
+              CALL thisParam%getParam(TRIM(thisname),tmpParam)
               IF(ASSOCIATED(tmpParam)) THEN
                 !Found parameter with matching name
-                CALL add_ParamType(tmpParam,'',newParam)
+                CALL add_ParamType(tmpParam,TRIM(nextname),newParam)
               ELSE
                 !Create a new entry in the list for the new parameter
                 IF(ALLOCATED(thisParam%plList)) THEN
@@ -698,6 +716,273 @@ MODULE ParameterLists
     ENDSUBROUTINE clear_ParamType
 !
 !-------------------------------------------------------------------------------
+!> @brief Searches a parameter for a set of required parameters and determines
+!> if all the required parameters are present and of the correct type.
+!> @param thisParam the parameter to validate against reqParams
+!> @param reqParams the set of required parameters that must appear in 
+!>        @c thisParam
+!> @param prefix a prefix path for the parameter's full path name
+!> @returns isValid logical indicating that all the required parameters exist
+!>          in @c thisParam and are of the correct type. 
+!>
+    RECURSIVE FUNCTION validateReq_ParamType(thisParam,reqParams,prefix) &
+      RESULT(isValid)
+      CHARACTER(LEN=*),PARAMETER :: myName='validateReq_ParamType'
+      CLASS(ParamType),INTENT(INOUT) :: thisParam
+      CLASS(ParamType),INTENT(IN) :: reqParams
+      CHARACTER(LEN=*),INTENT(IN) :: prefix
+      LOGICAL(SBK) :: isValid
+      INTEGER(SIK) :: i,ntrue
+      CLASS(ParamType),POINTER :: tmpParam
+      
+      isValid=.FALSE.
+!
+!Loop over all required params in reqParams and search thisParam for
+!each parameter and check type
+      SELECTTYPE(p=>reqParams)
+        TYPE IS(ParamType)
+          !Call validate on the required parameter's value
+          IF(ASSOCIATED(p%pdat)) &
+            isValid=validateReq_ParamType(thisParam,p%pdat,prefix)
+        TYPE IS(ParamType_List)
+          !Loop over all parameters in the list and check each
+          IF(ALLOCATED(p%plList)) THEN
+            ntrue=0
+            DO i=1,SIZE(p%plList)
+              IF(validateReq_ParamType(thisParam,p%plList(i), &
+                prefix//p%name//'->')) ntrue=ntrue+1
+            ENDDO
+            IF(ntrue == SIZE(p%plList)) isValid=.TRUE.
+          ELSE
+            !The required list is not allocated, which means we do not
+            !check any of it's possible subparameters, but we must at least
+            !check that the list exists
+            CALL thisParam%getParam(prefix//p%name,tmpParam)
+            IF(.NOT.ASSOCIATED(tmpParam)) THEN
+              CALL eParams%raiseError(modName//'::'//myName// &
+                ' - Failed to locate required parameter "'//prefix// &
+                  p%name//'"!')
+            ELSE
+              IF(SAME_TYPE_AS(tmpParam,p)) THEN
+                isValid=.TRUE.
+              ELSE
+                CALL eParams%raiseError(modName//'::'//myName// &
+                  ' - Required parameter "'//prefix//p%name//'" has type "'// &
+                    tmpParam%dataType//'" and must be type "'//p%dataType//'"!')
+              ENDIF
+            ENDIF
+          ENDIF
+        CLASS DEFAULT
+          !This is a meaningful parameter so search thisParam for the
+          !required parameter's name and check its type
+          CALL thisParam%getParam(prefix//p%name,tmpParam)
+          IF(.NOT.ASSOCIATED(tmpParam)) THEN
+            CALL eParams%raiseError(modName//'::'//myName// &
+              ' - Failed to locate required parameter "'//prefix//p%name//'"!')
+          ELSE
+            IF(SAME_TYPE_AS(tmpParam,p)) THEN
+              isValid=.TRUE.
+            ELSE
+              CALL eParams%raiseError(modName//'::'//myName// &
+                ' - Required parameter "'//prefix//p%name//'" has type "'// &
+                  tmpParam%dataType//'" and must be type "'//p%dataType//'"!')
+            ENDIF
+          ENDIF
+      ENDSELECT
+    ENDFUNCTION validateReq_ParamType
+!
+!-------------------------------------------------------------------------------
+!> @brief Searches a parameter for a set of optional parameters when an optional
+!> parameter is present is also checks the type. If an optional parameter
+!> is not present or has the wrong type it is reset with the default value.
+!> @param thisParam
+!> @param optParams
+!> @param prefix
+!>
+   RECURSIVE SUBROUTINE validateOpt_Paramtype(thisParam,optParams,prefix)
+      CHARACTER(LEN=*),PARAMETER :: myName='validateOpt_Paramtype'
+      CLASS(ParamType),INTENT(INOUT) :: thisParam
+      CLASS(ParamType),INTENT(IN) :: optParams
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
+      INTEGER(SIK) :: i,nprefix
+      CLASS(ParamType),POINTER :: tmpParam
+      
+      nprefix=LEN(prefix)
+      IF('->' == prefix(LEN(prefix)-1:LEN(prefix))) &
+        nprefix=LEN(prefix)-2
+!
+!Loop over all optional params in optParams and search thisParam for
+!each parameter and check type
+      SELECTTYPE(p=>optParams)
+        TYPE IS(ParamType)
+          !Call validate on the required parameter's value
+          IF(ASSOCIATED(p%pdat)) &
+            CALL validateOpt_Paramtype(thisParam,p%pdat,prefix)
+        TYPE IS(ParamType_List)
+          !Loop over all parameters in the list and check each
+          IF(ALLOCATED(p%plList)) THEN
+            DO i=1,SIZE(p%plList)
+              CALL validateOpt_Paramtype(thisParam,p%plList(i), &
+                prefix//p%name//'->')
+            ENDDO
+          ELSE
+            !The optional list is not allocated, which means we do not
+            !have any default values for it's possible subparameters, but we
+            !must at least check that the list exists
+            CALL thisParam%getParam(prefix//p%name,tmpParam)
+            IF(.NOT.ASSOCIATED(tmpParam)) THEN
+              CALL eParams%raiseWarning(modName//'::'//myName// &
+                ' - Failed to locate optional parameter "'//prefix// &
+                  p%name//'"!')
+              CALL eParams%raiseInformation(modName//'::'//myName// &
+                ' - Optional parameter "'//prefix//p%name// &
+                  '" is being added with no default value!')
+              
+              CALL add_ParamType(thisParam,prefix(1:nprefix),p)
+            ELSE
+              IF(.NOT.SAME_TYPE_AS(tmpParam,p)) THEN
+                CALL eParams%raiseWarning(modName//'::'//myName// &
+                  ' - Optional parameter "'//prefix//p%name//'" has type "'// &
+                    tmpParam%dataType//'" and should be type "'//p%dataType// &
+                      '"!')
+                CALL eParams%raiseInformation(modName//'::'//myName// &
+                  ' - Optional parameter "'//prefix//p%name// &
+                    '" has no default value so it will remain unset!')
+                CALL remove_ParamType(thisParam,prefix//p%name)
+                CALL add_ParamType(thisParam,prefix(1:nprefix),p)
+              ENDIF
+            ENDIF
+          ENDIF
+        CLASS DEFAULT
+          !This is a meaningful parameter so search thisParam for the
+          !optional parameter's name and check its type
+          CALL thisParam%getParam(prefix//p%name,tmpParam)
+          IF(.NOT.ASSOCIATED(tmpParam)) THEN
+            CALL eParams%raiseWarning(modName//'::'//myName// &
+              ' - Failed to locate optional parameter "'//prefix//p%name//'"!')
+            CALL eParams%raiseInformation(modName//'::'//myName// &
+              ' - Optional parameter "'//prefix//p%name// &
+                '" is being added with default value.')
+            CALL add_ParamType(thisParam,prefix(1:nprefix),p)
+          ELSE
+            IF(.NOT.SAME_TYPE_AS(tmpParam,p)) THEN
+              CALL eParams%raiseWarning(modName//'::'//myName// &
+                ' - Optional parameter "'//prefix//p%name//'" has type "'// &
+                  tmpParam%dataType//'" and should be type "'//p%dataType//'"!')
+              CALL eParams%raiseInformation(modName//'::'//myName// &
+                ' - Optional parameter "'//prefix//p%name// &
+                  '" is being overriden with default value.')
+              CALL remove_ParamType(thisParam,prefix//p%name)
+              CALL add_ParamType(thisParam,prefix(1:nprefix),p)
+            ENDIF
+          ENDIF
+      ENDSELECT
+   ENDSUBROUTINE validateOpt_Paramtype
+!
+!-------------------------------------------------------------------------------
+!> @brief Compares a list to another list and reports any extra parameters
+!> that are in the first list and not the second list.
+!> @param thisParam
+!> @param optParams
+!> @param prefix
+!>
+    SUBROUTINE checkExtras_Paramtype(thisParam,reqParams,optParams,prefix)
+      CHARACTER(LEN=*),PARAMETER :: myName='checkExtras_Paramtype'
+      CLASS(ParamType),INTENT(INOUT) :: thisParam
+      CLASS(ParamType),INTENT(IN) :: reqParams
+      CLASS(ParamType),INTENT(IN) :: optParams
+      CHARACTER(LEN=*),INTENT(IN) :: prefix
+      INTEGER(SIK) :: i
+      CLASS(ParamType),POINTER :: tmpParam
+      
+      SELECTTYPE(p=>thisParam)
+        TYPE IS(ParamType)
+          !Call check on the thisParam's value
+          IF(ASSOCIATED(p%pdat)) &
+            CALL checkExtras_Paramtype(p%pdat,reqParams,optParams,prefix)
+        TYPE IS(ParamType_List)
+          !Check that the list exists in reqParams
+          CALL reqParams%getParam(prefix//p%name,tmpParam)
+          IF(ASSOCIATED(tmpParam)) THEN
+            SELECTTYPE(tmpParam); TYPE IS(ParamType_List)
+              IF(ALLOCATED(tmpParam%plList)) THEN
+                !The list in reqParams is allocated so check if the
+                !subparameters in this list are extraneous
+                IF(ALLOCATED(p%plList)) THEN
+                  DO i=1,SIZE(p%plList)
+                    CALL checkExtras_Paramtype(p%plList(i),reqParams, &
+                      optParams,prefix//p%name//'->')
+                  ENDDO
+                ENDIF
+              ENDIF
+            ENDSELECT
+          ELSE
+            !Check the optional list
+            CALL optParams%get(prefix//p%name,tmpParam)
+            IF(ASSOCIATED(tmpParam)) THEN
+              SELECTTYPE(tmpParam); TYPE IS(ParamType_List)
+                IF(ALLOCATED(tmpParam%plList)) THEN
+                  !The list in optParams is allocated so check if the
+                  !subparameters in this list are extraneous
+                  IF(ALLOCATED(p%plList)) THEN
+                    DO i=1,SIZE(p%plList)
+                      CALL checkExtras_Paramtype(p%plList(i),reqParams, &
+                        optParams,prefix//p%name//'->')
+                    ENDDO
+                  ENDIF
+                ENDIF
+              ENDSELECT
+            ELSE
+              CALL eParams%raiseWarning(modName//'::'//myName// &
+                ' - Possible extraneous parameter "'//prefix//p%name// &
+                  '" is not present in the reference list!')
+            ENDIF
+          ENDIF
+        CLASS DEFAULT
+          !This is a meaningful parameter so search reqParams and optParams for
+          !the parameter's name and warn if it is not present
+          CALL reqParams%getParam(prefix//p%name,tmpParam)
+          IF(.NOT.ASSOCIATED(tmpParam)) &
+            CALL optParams%get(prefix//p%name,tmpParam)
+          IF(.NOT.ASSOCIATED(tmpParam)) &
+            CALL eParams%raiseWarning(modName//'::'//myName// &
+              ' - Possible extraneous parameter "'//prefix//p%name// &
+                '" is not present in the reference list!')
+      ENDSELECT
+    ENDSUBROUTINE checkExtras_Paramtype
+!
+!-------------------------------------------------------------------------------
+!> @brief 
+!> @param thisParam
+!> @param reqParams
+!> @param optParams
+!>
+    SUBROUTINE validate_Paramtype(thisParam,reqParams,optParams)
+      CLASS(ParamType),INTENT(INOUT) :: thisParam
+      CLASS(ParamType),INTENT(IN) :: reqParams
+      CLASS(ParamType),INTENT(IN),OPTIONAL :: optParams
+      LOGICAL(SBK) :: isValid,localalloc
+      TYPE(ParamType) :: nullParam
+      
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eParams)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eParams)
+      ENDIF
+      
+      isValid=validateReq_ParamType(thisParam,reqParams,'')
+      IF(isValid) THEN
+        IF(PRESENT(optParams)) THEN
+          CALL validateOpt_Paramtype(thisParam,optParams,'')
+          CALL checkExtras_Paramtype(thisParam,reqParams,optParams,'')
+        ELSE
+          CALL checkExtras_Paramtype(thisParam,reqParams,nullParam,'')
+        ENDIF
+      ENDIF
+      IF(localalloc) DEALLOCATE(eParams)
+    ENDSUBROUTINE validate_Paramtype
+!
+!-------------------------------------------------------------------------------
 !> @brief Initializes a ParamType object as a parameter list
 !> @param thisParam the parameter to initialize
 !> @param name the name of the parameter
@@ -766,7 +1051,7 @@ MODULE ParameterLists
       CHARACTER(LEN=12) :: fmt
       INTEGER(SIK) :: i,j
       
-      IF(ALLOCATED(thisParam%plList)) THEN
+      IF(LEN_TRIM(thisParam%name) > 0) THEN
         i=1
         IF(PRESENT(indent)) i=i+indent
         WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
@@ -777,7 +1062,8 @@ MODULE ParameterLists
           WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') thisParam%dataType// &
             ' :: '//thisParam%name//'= !'//thisParam%description
         ENDIF
-        
+      ENDIF
+      IF(ALLOCATED(thisParam%plList)) THEN  
         DO j=1,SIZE(thisParam%plList)
           IF(ASSOCIATED(thisParam%plList(j)%pdat)) &
             CALL thisParam%plList(j)%pdat%edit(funit,i+3)

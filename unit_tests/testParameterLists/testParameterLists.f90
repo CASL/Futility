@@ -293,6 +293,7 @@ PROGRAM testParameterLists
   CALL testList2(3)%clear()
   
   !test add routines
+  CALL e%setQuietMode(.FALSE.)
   eParams => NULL()
   CALL testParam%add('testSSK',6.0_SSK)
   CALL testParam%edit(OUTPUT_UNIT)
@@ -351,6 +352,18 @@ PROGRAM testParameterLists
   !Clean-up variables
   CALL testParam2%clear()
   CALL testParam%clear()
+  
+  !Setup reference list
+  CALL testParam2%add('TestReq->p1',0.0_SSK)
+  CALL testParam2%add('TestReq->p2',0.1_SSK)
+  CALL testParam2%add('TestReq->sublist1->p1',1.0_SSK)
+  CALL testParam2%add('TestReq->sublist1->p3',1.1_SSK)
+  CALL testParam2%add('TestReq->sublist1->sublist2->p2',2.0_SSK)
+  CALL testParam2%add('TestReq->sublist1->sublist2->sublist3->null',-1.0_SSK)
+  CALL testParam2%remove('TestReq->sublist1->sublist2->sublist3->null')
+  CALL testParam2%add('TestReq->p4',0.2_SSK)
+  CALL testParam2%edit(OUTPUT_UNIT)
+  
   
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING PARAMETERLISTS PASSED!'
