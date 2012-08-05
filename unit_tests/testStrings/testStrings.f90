@@ -104,7 +104,6 @@ PROGRAM testStrings
     WRITE(*,*) 'testString%sPrint(12,0) (=''constant'') FAILED!'
     STOP 666
   ENDIF
-  WRITE(*,*) testString%sPrint(1,1)
   IF(testString%sPrint(1,1) /= 'c        ') THEN
     WRITE(*,*) 'testString%sPrint(12,0) (=''constant'') FAILED!'
     STOP 666
