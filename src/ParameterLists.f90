@@ -886,7 +886,7 @@ MODULE ParameterLists
 !> @param optParams
 !> @param prefix
 !>
-    SUBROUTINE checkExtras_Paramtype(thisParam,reqParams,optParams,prefix)
+    RECURSIVE SUBROUTINE checkExtras_Paramtype(thisParam,reqParams,optParams,prefix)
       CHARACTER(LEN=*),PARAMETER :: myName='checkExtras_Paramtype'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CLASS(ParamType),INTENT(IN) :: reqParams
