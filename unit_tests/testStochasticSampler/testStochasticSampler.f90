@@ -310,6 +310,7 @@ PROGRAM testStochasticSampler
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING STOCHASTIC SAMPLER PASSED!'
   WRITE(*,*) '==================================================='
+  CALL MPIEnv%finalize()
 !
 !===============================================================================
   CONTAINS
