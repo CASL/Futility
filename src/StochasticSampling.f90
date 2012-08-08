@@ -245,10 +245,12 @@ CONTAINS
       
       IF (PRESENT(skip)) myskip=skip
       
+      ! Reduced the number of bits for period where add is non-zero to prevent
+      ! overflow of the period
       IF( RNGdata%RNadd==0 ) THEN
         period=ISHFT(1_SLK,RNGdata%RNlog2mod-2)
       ELSE
-        period=ISHFT(1_SLK,RNGdata%RNlog2mod)
+        period=ISHFT(1_SLK,RNGdata%RNlog2mod-1)
       ENDIF
 
       myskip=myskip+INT(mpirank,SLK)*INT(period/INT(nproc,SLK),SLK)+ &

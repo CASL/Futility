@@ -306,7 +306,7 @@ PROGRAM testStochasticSampler
   WRITE(*,*) "MEAN TRUE: ", 10.0_SDK/3.0_SDK
   WRITE(*,*) "SDEV:      ", SQRT(stdev/n-mean**2)
   WRITE(*,*) "SDEV TRUE: ", 5.0_SDK/SQRT(18.0_SDK)
-    
+  
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING STOCHASTIC SAMPLER PASSED!'
   WRITE(*,*) '==================================================='
