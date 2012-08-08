@@ -100,6 +100,22 @@ PROGRAM testStrings
     WRITE(*,*) 'testString%sPrint() (=''constant'') FAILED!'
     STOP 666
   ENDIF
+  IF(testString%sPrint(12,0) /= '        ') THEN
+    WRITE(*,*) 'testString%sPrint(12,0) (=''constant'') FAILED!'
+    STOP 666
+  ENDIF
+  IF(testString%sPrint(1,1) /= 'c        ') THEN
+    WRITE(*,*) 'testString%sPrint(12,0) (=''constant'') FAILED!'
+    STOP 666
+  ENDIF
+  IF(testString%sPrint(2,3) /= 'on       ') THEN
+    WRITE(*,*) 'testString%sPrint(12,0) (=''constant'') FAILED!'
+    STOP 666
+  ENDIF
+  IF(testString%sPrint(-1,100) /= 'constant') THEN
+    WRITE(*,*) 'testString%sPrint(12,0) (=''constant'') FAILED!'
+    STOP 666
+  ENDIF
   IF(LEN(testString) /= 8) THEN
     WRITE(*,*) 'LEN(testString) (=''constant'') FAILED!'
     STOP 666

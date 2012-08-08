@@ -281,14 +281,22 @@ MODULE Strings
 !>
 !> This routine basically converts a @c StringType to a @c CHARACTER type.
 !>
-    PURE FUNCTION sPrint_StringType(thisStr) RESULT(s)
+    PURE FUNCTION sPrint_StringType(thisStr,stt,stp) RESULT(s)
       CLASS(StringType),INTENT(IN) :: thisStr
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: stt
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: stp
       CHARACTER(LEN=thisStr%n) :: s
-      INTEGER(SIK) :: i
+      INTEGER(SIK) :: i,istt,istp,j
       s=''
       IF(thisStr%n > 0) THEN
-        DO i=1,thisStr%n
-          s(i:i)=thisStr%s(i)
+        istt=1
+        IF(PRESENT(stt)) istt=MAX(1,stt)
+        istp=thisStr%n
+        IF(PRESENT(stp)) istp=MIN(thisStr%n,stp)
+        j=0
+        DO i=istt,istp
+          j=j+1
+          s(j:j)=thisStr%s(i)
         ENDDO
       ENDIF
     ENDFUNCTION sPrint_StringType
