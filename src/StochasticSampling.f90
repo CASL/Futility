@@ -51,11 +51,13 @@
 MODULE StochasticSampling
 
   USE IntrType
+  USE ParallelEnv
   USE ExceptionHandler
   IMPLICIT NONE
   PRIVATE
 !
 ! List of public members
+  PUBLIC :: eStochasticSampler
   PUBLIC :: StochasticSamplingType
   
   !> Maximum length for the name of a random number generator
@@ -174,7 +176,13 @@ MODULE StochasticSampling
       !> @copybrief StochasticSampling::pwlreject_Sampler
       !> @copydetails StochasticSampling::pwlreject_Sampler
       PROCEDURE,PASS :: pwlrejection => pwlreject_Sampler
-  ENDTYPE StochasticSamplingType
+    ENDTYPE StochasticSamplingType
+
+    !> Exception Handler for use in MatrixTypes
+  TYPE(ExceptionHandlerType),POINTER,SAVE :: eStochasticSampler => NULL()
+  
+  !> Name of module
+  CHARACTER(LEN=*),PARAMETER :: modName='STOCHASTICSAMPLER'
   
 CONTAINS
 !
@@ -191,21 +199,68 @@ CONTAINS
 !> CALL sampler%initialize(19073486328125_SLK)
 !> @endcode
 !>
-    PURE SUBROUTINE init_Sampler(sampler,RNGid,seed0,skip)
+    SUBROUTINE init_Sampler(sampler,RNGid,seed0,skip,MPIparallelEnv,OMPparallelEnv)
       CLASS(StochasticSamplingType),INTENT(INOUT) :: sampler
       INTEGER(SIK),INTENT(IN) :: RNGid
       INTEGER(SLK),INTENT(IN),OPTIONAL :: seed0
       INTEGER(SLK),INTENT(IN),OPTIONAL :: skip
+      TYPE(MPI_EnvType),POINTER,INTENT(IN),OPTIONAL :: MPIparallelEnv
+      TYPE(OMP_EnvType),POINTER,INTENT(IN),OPTIONAL :: OMPparallelEnv
       
+      CHARACTER(LEN=*),PARAMETER :: myName='init_Sampler'
       TYPE(RNGdataType) :: RNGdata
+      INTEGER(SIK) :: mpirank, omprank, nproc, nthread
+      INTEGER(SLK) :: myskip, period
+      
+      mpirank=0_SIK
+      omprank=0_SIK
+      nproc=1_SIK
+      nthread=1_SIK
+      myskip=0_SLK
       
       RNGdata=generators(RNGid)
+
+      IF(.NOT.ASSOCIATED(eStochasticSampler)) THEN
+        ALLOCATE(eStochasticSampler)
+      ENDIF
+
+      IF (PRESENT(MPIparallelEnv)) THEN
+        IF (MPIparallelEnv%isInit()) THEN
+          mpirank=MPIparallelEnv%rank
+          nproc=MPIparallelEnv%nproc
+        ELSE
+          CALL eStochasticSampler%raiseWarning(modName//'::'//myName// &
+            ' - MPI Env is not initialized, and will not be used.')
+        ENDIF
+      ENDIF
+      IF (PRESENT(OMPparallelEnv)) THEN
+        IF (OMPparallelEnv%isInit()) THEN
+          omprank=OMPparallelEnv%rank
+          nthread=OMPparallelEnv%nthread
+        ELSE
+          CALL eStochasticSampler%raiseWarning(modName//'::'//myName// &
+            ' - OMP Env is not initialized, and will not be used.')
+        ENDIF
+      ENDIF
+      
+      IF (PRESENT(skip)) myskip=skip
+      
+      IF( RNGdata%RNadd==0 ) THEN
+        period=ISHFT(1_SLK,RNGdata%RNlog2mod-2)
+      ELSE
+        period=ISHFT(1_SLK,RNGdata%RNlog2mod)
+      ENDIF
+
+      myskip=myskip+INT(mpirank,SLK)*INT(period/INT(nproc,SLK),SLK)+ &
+              INT(omprank,SLK)*INT(period/INT(nproc*nthread,SLK),SLK)
       
       sampler%RNseed=RNGdata%RNseed0
       ! Add checks for constraints on seed0
       IF(PRESENT(seed0)) sampler%RNseed=seed0
       
-      IF(PRESENT(skip)) sampler%RNseed=RNskip(RNGdata,sampler%RNseed,skip)
+      IF (myskip/=0_SLK) THEN
+        sampler%RNseed=RNskip(RNGdata,sampler%RNseed,myskip)
+      ENDIF
       
       sampler%RNmult=RNGdata%RNmult
       sampler%RNadd=RNGdata%RNadd

@@ -19,11 +19,15 @@ PROGRAM testStochasticSampler
       
   USE IntrType
   USE StochasticSampling
+  USE ParallelEnv
   USE ISO_FORTRAN_ENV
   IMPLICIT NONE
   
   TYPE(StochasticSamplingType) :: myRNG
   TYPE(StochasticSamplingType) :: myRNG2
+  TYPE(StochasticSamplingType) :: myRNG3
+  TYPE(MPI_EnvType),POINTER :: MPIEnv
+  TYPE(OMP_EnvType),POINTER :: OMPEnv
   REAL(SDK),ALLOCATABLE ::  y(:), z(:)
   INTEGER(SIK),ALLOCATABLE :: iii(:)
   REAL(SDK) :: mean, stdev, x
@@ -66,6 +70,41 @@ PROGRAM testStochasticSampler
   WRITE(*,*) "RNG 1:         ", myRNG%rng()
   WRITE(*,*) "RNG 2 Skipped: ", myRNG2%rng()
   CALL myRNG2%clear()
+
+  ! Set up parallel environment for initialization test
+  !   Initialize null MPI env then sets it to appear as 100 processors and of rank 20
+  ALLOCATE(MPIEnv)
+  CALL MPIEnv%initialize(1)
+  MPIEnv%nproc=100
+  MPIEnv%rank=22
+
+  CALL myRNG2%init(3,MPIparallelEnv=MPIEnv)
+  WRITE(*,*) "RNG 2 MPI Skipping: ", myRNG2%rng()
+
+  ! Set up parallel environment for initialization test
+  !   Initialize null MPI env then sets it to appear as 10 processors and of rank 2
+  ALLOCATE(MPIEnv)
+  CALL MPIEnv%initialize(1)
+  MPIEnv%nproc=10
+  MPIEnv%rank=2
+  ! Set up parallel environment for initialization test
+  !   Initialize null MPI env then sets it to appear as 10 processors and of rank 2
+  ALLOCATE(OMPEnv)
+  CALL OMPEnv%initialize(1)
+  OMPEnv%nthread=10
+  OMPEnv%rank=2
+  CALL myRNG3%init(3,MPIparallelEnv=MPIEnv,OMPparallelEnv=OMPEnv)
+  WRITE(*,*) "RNG 3 MPI Skipping: ", myRNG3%rng()
+  
+  IF(myRNG2%RNseed/=myRNG3%RNseed) THEN
+    WRITE(*,*) 'RNG Parallel Decomposition: test FAILED!'
+    STOP 666
+  ELSE
+    WRITE(*,*) 'RNG Parallel Decomposition TEST PASSED!'    
+  ENDIF
+  
+  CALL myRNG2%clear()
+  CALL myRNG3%clear()
   
   n=1e6
 
