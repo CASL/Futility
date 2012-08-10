@@ -40,6 +40,15 @@ PROGRAM testStochasticSampler
       REAL(SDK) :: linear
     ENDFUNCTION
   ENDINTERFACE
+
+  INTERFACE
+    FUNCTION lineararg(x,arg)
+      IMPORT :: SDK
+      REAL(SDK),INTENT(IN) :: x
+      REAL(SDK),INTENT(IN) :: arg(:)
+      REAL(SDK) :: lineararg
+    ENDFUNCTION
+  ENDINTERFACE
   
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING STOCHASTIC SAMPLER...'
@@ -191,6 +200,7 @@ PROGRAM testStochasticSampler
 
   CALL TestMaxwellian()
   CALL TestWatt()
+  CALL TestEvap()
 
   WRITE(*,*)
   WRITE(*,*) "Test Normalized Histogram"
@@ -244,7 +254,7 @@ PROGRAM testStochasticSampler
   mean=0.0
   stdev=0.0
   DO i=1,n
-    x=myRNG%conthistogram(y,z)
+    x=myRNG%unnormconthistogram(y,z)
     mean=mean+x
     stdev=stdev+x**2
   ENDDO
@@ -401,12 +411,29 @@ PROGRAM testStochasticSampler
     ENDSUBROUTINE TestWatt
 !
 !-------------------------------------------------------------------------------
-    FUNCTION lineararg(x,coef) RESULT(y)
-      REAL(SDK),INTENT(IN) :: x
-      REAL(SDK),INTENT(IN) :: coef(:)
-      REAL(SDK) :: y
-      y=coef(1)*x+coef(2)
-    ENDFUNCTION lineararg
+    SUBROUTINE TestEvap
+      INTEGER(SLK) :: i,n, inicount
+      REAL(SDK) :: x, mean, stdev, theta
+      
+      n=1e6
+      
+      WRITE(*,*)
+      WRITE(*,*) "Test Evaporation"
+      theta=0.8_SDK
+      
+      mean=0.0
+      stdev=0.0
+      DO i=1,n
+        x=myRNG%evaporation(theta)
+        mean=mean+x/n
+        stdev=stdev+x**2/n
+      ENDDO
+      WRITE(*,*) "COUNT:  ", myRNG%counter
+      WRITE(*,*) "MEAN:      ", mean
+      WRITE(*,*) "MEAN TRUE: "
+      WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
+      WRITE(*,*) "SDEV TRUE: "
+    ENDSUBROUTINE TestEvap
 !
 ENDPROGRAM testStochasticSampler
 
@@ -417,3 +444,12 @@ FUNCTION linear(x) RESULT(y)
       
   y=x
 ENDFUNCTION
+!
+!-------------------------------------------------------------------------------
+FUNCTION lineararg(x,arg) RESULT(y)
+  USE IntrType
+  REAL(SDK),INTENT(IN) :: x
+  REAL(SDK),INTENT(IN) :: arg(:)
+  REAL(SDK) :: y
+  y=arg(1)*x+arg(2)
+ENDFUNCTION lineararg
