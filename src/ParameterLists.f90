@@ -143,6 +143,9 @@ MODULE ParameterLists
       !> @copybrief ParameterLists::init_ParamType_SLK
       !> @copydoc ParameterLists::init_ParamType_SLK
       PROCEDURE,PASS,PRIVATE :: initSLK => init_ParamType_SLK
+      !> @copybrief ParameterLists::init_ParamType_SBK
+      !> @copydoc ParameterLists::init_ParamType_SBK
+      PROCEDURE,PASS,PRIVATE :: initSBK => init_ParamType_SBK
       !> @copybrief ParameterLists::init_ParamType_STR
       !> @copydoc ParameterLists::init_ParamType_STR
       PROCEDURE,PASS,PRIVATE :: initSTR => init_ParamType_STR
@@ -160,7 +163,7 @@ MODULE ParameterLists
       !PROCEDURE,PASS,PRIVATE :: initSLKa1 => init_ParamType_SLK_a1
       !> Generic type bound interface for all @c init operations
       GENERIC :: init => initParamList,initSSK,initSDK,initSNK,initSLK, &
-                 initSTR !,initSSKa1,initSDKa1,initSNKa1,initSLKa1
+                 initSBK,initSTR !,initSSKa1,initSDKa1,initSNKa1,initSLKa1
       !> @copybrief ParameterLists::set_ParamType_List
       !> @copydoc ParameterLists::set_ParamType_List
       PROCEDURE,PASS,PRIVATE :: setParamList => set_ParamType_List
@@ -176,6 +179,9 @@ MODULE ParameterLists
       !> @copybrief ParameterLists::set_ParamType_SLK
       !> @copydoc ParameterLists::set_ParamType_SLK
       PROCEDURE,PASS,PRIVATE :: setSLK => set_ParamType_SLK
+      !> @copybrief ParameterLists::set_ParamType_SBK
+      !> @copydoc ParameterLists::set_ParamType_SBK
+      PROCEDURE,PASS,PRIVATE :: setSBK => set_ParamType_SBK
       !> @copybrief ParameterLists::set_ParamType_STR
       !> @copydoc ParameterLists::set_ParamType_STR
       PROCEDURE,PASS,PRIVATE :: setSTR => set_ParamType_STR
@@ -193,7 +199,7 @@ MODULE ParameterLists
       !PROCEDURE,PASS,PRIVATE :: setSLKa1 => set_ParamType_SLK_a1
       !> Generic type bound interface for all @c set operations
       GENERIC :: set => setParamList,setSSK,setSDK,setSNK,setSLK, &
-                 setSTR !,setSSKa1,setSDKa1,setSNKa1,setSLKa1
+                 setSBK,setSTR !,setSSKa1,setSDKa1,setSNKa1,setSLKa1
       !> @copybrief ParameterLists::get_ParamType
       !> @copydoc ParameterLists::get_ParamType
       PROCEDURE,PASS,PRIVATE :: getParam => get_ParamType
@@ -212,6 +218,9 @@ MODULE ParameterLists
       !> @copybrief ParameterLists::get_ParamType_SLK
       !> @copydoc ParameterLists::get_ParamType_SLK
       PROCEDURE,PASS,PRIVATE :: getSLK => get_ParamType_SLK
+      !> @copybrief ParameterLists::get_ParamType_SBK
+      !> @copydoc ParameterLists::get_ParamType_SBK
+      PROCEDURE,PASS,PRIVATE :: getSBK => get_ParamType_SBK
       !> @copybrief ParameterLists::get_ParamType_STR
       !> @copydoc ParameterLists::get_ParamType_STR
       PROCEDURE,PASS,PRIVATE :: getSTR => get_ParamType_STR
@@ -229,7 +238,7 @@ MODULE ParameterLists
       !PROCEDURE,PASS,PRIVATE :: getSLKa1 => get_ParamType_SLK_a1
       !> Generic type bound interface for all @c get operations
       GENERIC :: get => getParam,getParamList,getSSK,getSDK,getSNK, &
-                 getSLK,getSTR !,getSSKa1,getSDKa1,getSNKa1,getSLKa1
+                 getSLK,getSBK,getSTR !,getSSKa1,getSDKa1,getSNKa1,getSLKa1
       !> @copybrief ParameterLists::add_ParamType
       !> @copydoc ParameterLists::add_ParamType
       PROCEDURE,PASS,PRIVATE :: addParam => add_ParamType
@@ -238,35 +247,38 @@ MODULE ParameterLists
       PROCEDURE,PASS,PRIVATE :: addList => add_ParamType_List
       !> @copybrief ParameterLists::add_ParamType_SSK
       !> @copydoc ParameterLists::add_ParamType_SSK
-      PROCEDURE,PASS,PRIVATE :: addParamSSK => add_ParamType_SSK
+      PROCEDURE,PASS,PRIVATE :: addSSK => add_ParamType_SSK
       !> @copybrief ParameterLists::add_ParamType_SDK
       !> @copydoc ParameterLists::add_ParamType_SDK
-      PROCEDURE,PASS,PRIVATE :: addParamSDK => add_ParamType_SDK
+      PROCEDURE,PASS,PRIVATE :: addSDK => add_ParamType_SDK
       !> @copybrief ParameterLists::add_ParamType_SNK
       !> @copydoc ParameterLists::add_ParamType_SNK
-      PROCEDURE,PASS,PRIVATE :: addParamSNK => add_ParamType_SNK
+      PROCEDURE,PASS,PRIVATE :: addSNK => add_ParamType_SNK
       !> @copybrief ParameterLists::add_ParamType_SLK
       !> @copydoc ParameterLists::add_ParamType_SLK
-      PROCEDURE,PASS,PRIVATE :: addParamSLK => add_ParamType_SLK
+      PROCEDURE,PASS,PRIVATE :: addSLK => add_ParamType_SLK
+      !> @copybrief ParameterLists::add_ParamType_SBK
+      !> @copydoc ParameterLists::add_ParamType_SBK
+      PROCEDURE,PASS,PRIVATE :: addSBK => add_ParamType_SBK
       !> @copybrief ParameterLists::add_ParamType_STR
       !> @copydoc ParameterLists::add_ParamType_STR
-      PROCEDURE,PASS,PRIVATE :: addParamSTR => add_ParamType_STR
+      PROCEDURE,PASS,PRIVATE :: addSTR => add_ParamType_STR
       !!> @copybrief ParameterLists::add_ParamType_SSK_a1
       !!> @copydoc ParameterLists::add_ParamType_SSK_a1
-      !PROCEDURE,PASS,PRIVATE :: addParamSSKa1 => add_ParamType_SSK_a1
+      !PROCEDURE,PASS,PRIVATE :: addSSKa1 => add_ParamType_SSK_a1
       !!> @copybrief ParameterLists::add_ParamType_SDK_a1
       !!> @copydoc ParameterLists::add_ParamType_SDK_a1
-      !PROCEDURE,PASS,PRIVATE :: addParamSDKa1 => add_ParamType_SDK_a1
+      !PROCEDURE,PASS,PRIVATE :: addSDKa1 => add_ParamType_SDK_a1
       !!> @copybrief ParameterLists::add_ParamType_SNK_a1
       !!> @copydoc ParameterLists::add_ParamType_SNK_a1
-      !PROCEDURE,PASS,PRIVATE :: addParamSNKa1 => add_ParamType_SNK_a1
+      !PROCEDURE,PASS,PRIVATE :: addSNKa1 => add_ParamType_SNK_a1
       !!> @copybrief ParameterLists::add_ParamType_SLK_a1
       !!> @copydoc ParameterLists::add_ParamType_SLK_a1
-      !PROCEDURE,PASS,PRIVATE :: addParamSLKa1 => add_ParamType_SLK_a1
+      !PROCEDURE,PASS,PRIVATE :: addSLKa1 => add_ParamType_SLK_a1
       !> Generic type bound interface for all @c add operations
-      GENERIC :: add => addParam,addParamList,addParamSSK,addParamSDK, &
-         addParamSNK,addParamSLK,addParamSTR !,addParamSSKa1,addParamSDKa1, &
-         !addParamSNKa1,addParamSLKa1
+      GENERIC :: add => addParam,addList,addSSK,addSDK, &
+         addSNK,addSLK,addSBK,addSTR !,addSSKa1,addSDKa1, &
+         !addSNKa1,addSLKa1
       !> @copybrief ParameterLists::remove_ParamType
       !> @copydoc ParameterLists::remove_ParamType
       PROCEDURE,PASS :: remove => remove_ParamType
@@ -359,6 +371,22 @@ MODULE ParameterLists
       !> @copydoc ParameterLists::clear_ParamType_SLK
       PROCEDURE,PASS :: clear => clear_ParamType_SLK
   ENDTYPE ParamType_SLK
+
+  !> @brief Extended type of a ParamType for defining a parameter that
+  !> is a logical scalar
+  TYPE,EXTENDS(ParamType) :: ParamType_SBK
+    !> The value of the parameter
+    LOGICAL(SBK) :: val=.FALSE.
+!
+!List of type bound procedures
+    CONTAINS
+      !> @copybrief ParameterLists::edit_ParamType_SBK
+      !> @copydoc ParameterLists::edit_ParamType_SBK
+      PROCEDURE,PASS :: edit => edit_ParamType_SBK
+      !> @copybrief ParameterLists::clear_ParamType_SBK
+      !> @copydoc ParameterLists::clear_ParamType_SBK
+      PROCEDURE,PASS :: clear => clear_ParamType_SBK
+  ENDTYPE ParamType_SBK
 
   !> @brief Extended type of a ParamType for defining a parameter that
   !> is a string derived type
@@ -2627,7 +2655,7 @@ MODULE ParameterLists
 !> then this lists are created in the process of adding the new parameter.
 !> If @c thisParam is not initialized and @c name does not contain a "->"
 !> symbol then this routine behaves equivalently to 
-!> @ref ParameterLists::init_ParamType_SLK "initSSK".
+!> @ref ParameterLists::init_ParamType_SLK "initSLK".
 !> 
     SUBROUTINE add_ParamType_SLK(thisParam,name,param,description)
       CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SLK'
@@ -2676,6 +2704,281 @@ MODULE ParameterLists
       ENDIF
       IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE add_ParamType_SLK
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes a ParamType object as a logical
+!> @param thisParam the parameter to initialize
+!> @param name the name of the parameter
+!> @param param a scalar logical
+!> @param description an optional description for this parameter
+!> 
+!> This routine is not recursive, so it is like setting a scalar parameter.
+!> Therefore the name cannot contain the "->" symbol to indicate access to a 
+!> sub-list. @c thisParam must not already be inititalized.
+!>
+    SUBROUTINE init_ParamType_SBK(thisParam,name,param,description)
+      CHARACTER(LEN=*),PARAMETER :: myName='init_ParamType_SBK'
+      CLASS(ParamType),INTENT(INOUT) :: thisParam
+      LOGICAL(SBK),INTENT(IN) :: param
+      CHARACTER(LEN=*),INTENT(IN) :: name
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+      LOGICAL(SBK) :: localalloc
+      INTEGER(SIK) :: ipos
+      
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eParams)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eParams)
+      ENDIF
+      
+      IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
+        !Check that '->' character is not in name
+        ipos=INDEX(name,'->')
+        IF(ipos == 0) THEN
+          ALLOCATE(ParamType_SBK :: thisParam%pdat)
+          thisParam%pdat%name=TRIM(name)
+          IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+          thisParam%pdat%dataType='LOGICAL(SBK)'
+          SELECTTYPE(p=>thisParam%pdat)
+            TYPE IS(ParamType_SBK); p%val=param
+          ENDSELECT
+        ELSE
+          CALL eParams%raiseError(modName//'::'//myName// &
+            ' - "->" symbol is not allowed in name!')
+        ENDIF
+      ELSE
+        CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter is already initialized! Use set method!')
+      ENDIF
+      IF(localalloc) DEALLOCATE(eParams)
+    ENDSUBROUTINE init_ParamType_SBK
+!
+!-------------------------------------------------------------------------------
+!> @brief Edits a scalar logical valued parameter
+!> @param thisParam the scalar logical valued parameter to edit
+!> @param funit the unit number to edit the parameter to
+!> @param indent optional indicates the number of blank spaces to precede the
+!>        beginning of text to edit.
+!>
+!> The formatted write uses the "general" edit descriptor so that 7 digits (one
+!> more than the significant number in a logical) are always
+!> printed if the number is very large in absolute value engineering format
+!> is used otherwise floating point form is used to write the value.
+!>
+    SUBROUTINE edit_ParamType_SBK(thisParam,funit,indent)
+      CLASS(ParamType_SBK),INTENT(IN) :: thisParam
+      INTEGER(SIK),INTENT(IN) :: funit
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+      CHARACTER(LEN=12) :: fmt
+      INTEGER(SIK) :: i
+      
+      i=1
+      IF(PRESENT(indent)) i=i+indent
+      WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
+      IF(LEN_TRIM(thisParam%description) == 0) THEN
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,l2)') &
+          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val
+      ELSE
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,l2,a)') &
+          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val, &
+            ' !'//thisParam%description
+      ENDIF
+    ENDSUBROUTINE edit_ParamType_SBK
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears a scalar logical valued parameter
+!> @param thisParam the scalar logical valued parameter to clear
+!> 
+    SUBROUTINE clear_ParamType_SBK(thisParam)
+      CLASS(ParamType_SBK),INTENT(INOUT) :: thisParam
+      thisParam%val=.FALSE.
+      thisParam%name=''
+      thisParam%dataType=''
+      thisParam%description=''
+    ENDSUBROUTINE clear_ParamType_SBK
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the value of an existing scalar logical valued 
+!> parameter to a new value.
+!> @param thisParam the parameter in which an existing parameter with name 
+!>        matching @c name will be to set the new value of @c param
+!> @param name the name of an existing parameter to set the value of
+!> @param param the new value to set for the parameter
+!> @param description an optional new description for the parameter identified
+!>        by @c name
+!>
+!> If a parameter with @c name is not found an error is produced. If the
+!> parameter with @c name is not a scalar logical valued parameter
+!> then an error is produced.
+!>
+    SUBROUTINE set_ParamType_SBK(thisParam,name,param,description)
+      CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SBK'
+      CLASS(ParamType),INTENT(INOUT) :: thisParam
+      CHARACTER(LEN=*),INTENT(IN) :: name
+      LOGICAL(SBK),INTENT(IN) :: param
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+      LOGICAL(SBK) :: localalloc
+      CLASS(ParamType),POINTER :: tmpParam
+      
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eParams)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eParams)
+      ENDIF
+      
+      SELECTTYPE(thisParam)
+        TYPE IS(ParamType_SBK)
+          IF(thisParam%name == TRIM(name)) THEN
+            thisParam%val=param
+            IF(PRESENT(description)) thisParam%description=TRIM(description)
+          ELSE
+            CALL eParams%raiseError(modName//'::'//myName// &
+              ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+                '" but name is "'//thisParam%name//'"!')
+          ENDIF
+        CLASS DEFAULT
+          !Search for the parameter name
+          CALL thisParam%getParam(name,tmpParam)
+          IF(ASSOCIATED(tmpParam)) THEN
+            !Parameter was found
+            SELECTTYPE(p=>tmpParam)
+              TYPE IS(ParamType_SBK)
+                p%val=param
+                IF(PRESENT(description)) p%description=TRIM(description)
+              CLASS DEFAULT
+                CALL eParams%raiseError(modName//'::'//myName// &
+                  ' - parameter data type mismatch! Parameter type is '// &
+                    tmpParam%dataType//' and must be INTEGER(SSK)!')
+            ENDSELECT
+          ELSE
+            CALL eParams%raiseError(modName//'::'//myName// &
+              ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+                thisParam%name//'"!')
+          ENDIF
+      ENDSELECT
+      IF(localalloc) DEALLOCATE(eParams)
+    ENDSUBROUTINE set_ParamType_SBK
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the scalar logical value for a specified parameter
+!> @param thisParam the parameter in which an existing parameter with name 
+!>        matching @c name will have it's value returned
+!> @param name the name of the parameter to return the value of
+!> @param val the current value of the parameter with @c name
+!> 
+!> If a parameter with @c name is not found an error is produced. If the 
+!> parameter with @c name is not a scalar logical valued parameter
+!> then an error is produced.
+!>
+    SUBROUTINE get_ParamType_SBK(thisParam,name,val)
+      CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SBK'
+      CLASS(ParamType),INTENT(IN) :: thisParam
+      CHARACTER(LEN=*),INTENT(IN) :: name
+      LOGICAL(SBK),INTENT(INOUT) :: val
+      LOGICAL(SBK) :: localalloc
+      CLASS(ParamType),POINTER :: tmpParam
+      
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eParams)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eParams)
+      ENDIF
+      
+      SELECTTYPE(thisParam)
+        TYPE IS(ParamType_SBK)
+          IF(thisParam%name == TRIM(name)) THEN
+            val=thisParam%val
+          ELSE
+            CALL eParams%raiseError(modName//'::'//myName// &
+              ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+                thisParam%name//'"!')
+          ENDIF
+        CLASS DEFAULT
+          !Search for the parameter name
+          CALL thisParam%getParam(name,tmpParam)
+          IF(ASSOCIATED(tmpParam)) THEN
+            !Parameter was found
+            SELECTTYPE(p=>tmpParam)
+              TYPE IS(ParamType_SBK)
+                val=p%val
+              CLASS DEFAULT
+                CALL eParams%raiseError(modName//'::'//myName// &
+                  ' - parameter data type mismatch! Parameter type is '// &
+                    tmpParam%dataType//' and must be LOGICAL(SBK)!')
+            ENDSELECT
+          ELSE
+            CALL eParams%raiseError(modName//'::'//myName// &
+              ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+                thisParam%name//'"!')
+          ENDIF
+      ENDSELECT
+      IF(localalloc) DEALLOCATE(eParams)
+    ENDSUBROUTINE get_ParamType_SBK
+!
+!-------------------------------------------------------------------------------
+!> @brief Adds a new scalar logical valued parameter to a set of
+!> parameters
+!> @param thisParam the set of parameters to which a new parameter will be added
+!> @param name the location and name of the new parameter
+!> @param param the logical value of the new parameter
+!> @param description an optional input for a description of the new parameter
+!> 
+!> This routine creates a new parameter within @c thisParam with @c name.
+!> @c name may contain a full or partial path to the new parameter. If @c name 
+!> can be matched to an existing parameter in @c thisParam an error is produced
+!> If @c name contains a full path for which intermediate lists do not exist
+!> then this lists are created in the process of adding the new parameter.
+!> If @c thisParam is not initialized and @c name does not contain a "->"
+!> symbol then this routine behaves equivalently to 
+!> @ref ParameterLists::init_ParamType_SBK "initSBK".
+!> 
+    SUBROUTINE add_ParamType_SBK(thisParam,name,param,description)
+      CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SBK'
+      CLASS(ParamType),INTENT(INOUT) :: thisParam
+      CHARACTER(LEN=*),INTENT(IN) :: name
+      LOGICAL(SBK),INTENT(IN) :: param
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+      CHARACTER(LEN=LEN(name)) :: prevname,thisname
+      LOGICAL(SBK) :: localalloc
+      INTEGER(SIK) :: ipos
+      TYPE(ParamType) :: newParam
+      CLASS(ParamType),POINTER :: tmpParam
+      
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eParams)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eParams)
+      ENDIF
+      
+      !Search for the name to make sure it does not exist
+      CALL get_ParamType(thisParam,name,tmpParam)
+      
+      IF(.NOT.ASSOCIATED(tmpParam)) THEN
+        prevname=''
+        thisname=ADJUSTL(name)
+        ipos=INDEX(name,'->',.TRUE.)
+        IF(ipos > 0) THEN
+          prevname=ADJUSTL(name(1:ipos-1))
+          thisname=ADJUSTL(name(ipos+2:LEN(name)))
+        ENDIF
+      
+        !Initialize the new parameter
+        IF(PRESENT(description)) THEN
+          CALL init_ParamType_SBK(newParam,thisname,param,description)
+        ELSE
+          CALL init_ParamType_SBK(newParam,thisname,param)
+        ENDIF
+        
+        !Add the new parameter to thisParam
+        CALL add_ParamType(thisParam,prevname,newParam)
+        CALL newParam%clear()
+      ELSE
+        CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name "'//TRIM(name)// &
+            '" already exists! Use set method or full parameter list path!')
+      ENDIF
+      IF(localalloc) DEALLOCATE(eParams)
+    ENDSUBROUTINE add_ParamType_SBK
 !
 !-------------------------------------------------------------------------------
 !> @brief Initializes a ParamType object as a string derived type
@@ -4008,7 +4311,7 @@ MODULE ParameterLists
 !!> then this lists are created in the process of adding the new parameter.
 !!> If @c thisParam is not initialized and @c name does not contain a "->"
 !!> symbol then this routine behaves equivalently to 
-!!> @ref ParameterLists::init_ParamType_SLK "initSSK".
+!!> @ref ParameterLists::init_ParamType_SLK "initSLK".
 !!> 
 !    SUBROUTINE add_ParamType_SLK_a1(thisParam,name,param,description)
 !      CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SLK'
