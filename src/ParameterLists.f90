@@ -134,16 +134,22 @@ MODULE ParameterLists
       !> @copybrief ParameterLists::init_ParamType_SSK
       !> @copydoc ParameterLists::init_ParamType_SSK
       PROCEDURE,PASS,PRIVATE :: initSSK => init_ParamType_SSK
+      !> @copybrief ParameterLists::init_ParamType_SDK
+      !> @copydoc ParameterLists::init_ParamType_SDK
+      PROCEDURE,PASS,PRIVATE :: initSDK => init_ParamType_SDK
       !> Generic type bound interface for all @c init operations
-      GENERIC :: init => initParamList,initSSK
+      GENERIC :: init => initParamList,initSSK,initSDK
       !> @copybrief ParameterLists::set_ParamType_List
       !> @copydoc ParameterLists::set_ParamType_List
       PROCEDURE,PASS,PRIVATE :: setParamList => set_ParamType_List
       !> @copybrief ParameterLists::set_ParamType_SSK
       !> @copydoc ParameterLists::set_ParamType_SSK
       PROCEDURE,PASS,PRIVATE :: setSSK => set_ParamType_SSK
+      !> @copybrief ParameterLists::set_ParamType_SDK
+      !> @copydoc ParameterLists::set_ParamType_SDK
+      PROCEDURE,PASS,PRIVATE :: setSDK => set_ParamType_SDK
       !> Generic type bound interface for all @c set operations
-      GENERIC :: set => setParamList,setSSK
+      GENERIC :: set => setParamList,setSSK,setSDK
       !> @copybrief ParameterLists::get_ParamType
       !> @copydoc ParameterLists::get_ParamType
       PROCEDURE,PASS,PRIVATE :: getParam => get_ParamType
@@ -153,19 +159,25 @@ MODULE ParameterLists
       !> @copybrief ParameterLists::get_ParamType_SSK
       !> @copydoc ParameterLists::get_ParamType_SSK
       PROCEDURE,PASS,PRIVATE :: getSSK => get_ParamType_SSK
+      !> @copybrief ParameterLists::get_ParamType_SDK
+      !> @copydoc ParameterLists::get_ParamType_SDK
+      PROCEDURE,PASS,PRIVATE :: getSDK => get_ParamType_SDK
       !> Generic type bound interface for all @c get operations
-      GENERIC :: get => getParam,getParamList,getSSK
+      GENERIC :: get => getParam,getParamList,getSSK,getSDK
       !> @copybrief ParameterLists::add_ParamType
       !> @copydoc ParameterLists::add_ParamType
       PROCEDURE,PASS,PRIVATE :: addParam => add_ParamType
       !> @copybrief ParameterLists::add_ParamType_List
       !> @copydoc ParameterLists::add_ParamType_List
-      PROCEDURE,PASS,PRIVATE :: addParamList => add_ParamType_List
+      PROCEDURE,PASS,PRIVATE :: addList => add_ParamType_List
       !> @copybrief ParameterLists::add_ParamType_SSK
       !> @copydoc ParameterLists::add_ParamType_SSK
-      PROCEDURE,PASS,PRIVATE :: addParamSSK => add_ParamType_SSK
+      PROCEDURE,PASS,PRIVATE :: addSSK => add_ParamType_SSK
+      !> @copybrief ParameterLists::add_ParamType_SDK
+      !> @copydoc ParameterLists::add_ParamType_SDK
+      PROCEDURE,PASS,PRIVATE :: addSDK => add_ParamType_SDK
       !> Generic type bound interface for all @c add operations
-      GENERIC :: add => addParam,addParamList,addParamSSK
+      GENERIC :: add => addParam,addList,addSSK,addSDK
       !> @copybrief ParameterLists::remove_ParamType
       !> @copydoc ParameterLists::remove_ParamType
       PROCEDURE,PASS :: remove => remove_ParamType
@@ -210,6 +222,22 @@ MODULE ParameterLists
       !> @copydoc ParameterLists::clear_ParamType_SSK
       PROCEDURE,PASS :: clear => clear_ParamType_SSK
   ENDTYPE ParamType_SSK
+  
+  !> @brief Extended type of a ParamType for defining a parameter that
+  !> is a double precision real scalar
+  TYPE,EXTENDS(ParamType) :: ParamType_SDK
+    !> The value of the parameter
+    REAL(SDK) :: val=0.0_SDK
+!
+!List of type bound procedures
+    CONTAINS
+      !> @copybrief ParameterLists::edit_ParamType_SDK
+      !> @copydoc ParameterLists::edit_ParamType_SDK
+      PROCEDURE,PASS :: edit => edit_ParamType_SDK
+      !> @copybrief ParameterLists::clear_ParamType_SDK
+      !> @copydoc ParameterLists::clear_ParamType_SDK
+      PROCEDURE,PASS :: clear => clear_ParamType_SDK
+  ENDTYPE ParamType_SDK
   
   !> Generic interface adds a procedure to overload the intrinsic assignment
   !> operator with the given procedure
@@ -1596,5 +1624,280 @@ MODULE ParameterLists
       ENDIF
       IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE add_ParamType_SSK
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes a ParamType object as a scalar double precision real
+!> @param thisParam the parameter to initialize
+!> @param name the name of the parameter
+!> @param param a scalar double precision real
+!> @param description an optional description for this parameter
+!> 
+!> This routine is not recursive, so it is like setting a scalar parameter.
+!> Therefore the name cannot contain the "->" symbol to indicate access to a 
+!> sub-list. @c thisParam must not already be inititalized.
+!>
+    SUBROUTINE init_ParamType_SDK(thisParam,name,param,description)
+      CHARACTER(LEN=*),PARAMETER :: myName='init_ParamType_SDK'
+      CLASS(ParamType),INTENT(INOUT) :: thisParam
+      REAL(SDK) :: param
+      CHARACTER(LEN=*),INTENT(IN) :: name
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+      LOGICAL(SBK) :: localalloc
+      INTEGER(SIK) :: ipos
+      
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eParams)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eParams)
+      ENDIF
+      
+      IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
+        !Check that '->' character is not in name
+        ipos=INDEX(name,'->')
+        IF(ipos == 0) THEN
+          ALLOCATE(ParamType_SDK :: thisParam%pdat)
+          thisParam%pdat%name=TRIM(name)
+          IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+          thisParam%pdat%dataType='REAL(SDK)'
+          SELECTTYPE(p=>thisParam%pdat)
+            TYPE IS(ParamType_SDK); p%val=param
+          ENDSELECT
+        ELSE
+          CALL eParams%raiseError(modName//'::'//myName// &
+            ' - "->" symbol is not allowed in name!')
+        ENDIF
+      ELSE
+        CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter is already initialized! Use set method!')
+      ENDIF
+      IF(localalloc) DEALLOCATE(eParams)
+    ENDSUBROUTINE init_ParamType_SDK
+!
+!-------------------------------------------------------------------------------
+!> @brief Edits a scalar double precision real valued parameter
+!> @param thisParam the scalar double precision real valued parameter to edit
+!> @param funit the unit number to edit the parameter to
+!> @param indent optional indicates the number of blank spaces to precede the
+!>        beginning of text to edit.
+!>
+!> The formatted write uses the "general" edit descriptor so that 7 digits (one
+!> more than the significant number in a double precision real) are always
+!> printed if the number is very large in absolute value engineering format
+!> is used otherwise floating point form is used to write the value.
+!>
+    SUBROUTINE edit_ParamType_SDK(thisParam,funit,indent)
+      CLASS(ParamType_SDK),INTENT(IN) :: thisParam
+      INTEGER(SIK),INTENT(IN) :: funit
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+      CHARACTER(LEN=12) :: fmt
+      INTEGER(SIK) :: i
+      
+      i=1
+      IF(PRESENT(indent)) i=i+indent
+      WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
+      IF(LEN_TRIM(thisParam%description) == 0) THEN
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g23.16)') &
+          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val
+      ELSE
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g23.16,a)') &
+          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val, &
+            ' !'//thisParam%description
+      ENDIF
+    ENDSUBROUTINE edit_ParamType_SDK
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears a scalar double precision real valued parameter
+!> @param thisParam the scalar double precision real valued parameter to clear
+!> 
+    SUBROUTINE clear_ParamType_SDK(thisParam)
+      CLASS(ParamType_SDK),INTENT(INOUT) :: thisParam
+      thisParam%val=0.0_SDK
+      thisParam%name=''
+      thisParam%dataType=''
+      thisParam%description=''
+    ENDSUBROUTINE clear_ParamType_SDK
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the value of an existing scalar double precision real valued 
+!> parameter to a new value.
+!> @param thisParam the parameter in which an existing parameter with name 
+!>        matching @c name will be to set the new value of @c param
+!> @param name the name of an existing parameter to set the value of
+!> @param param the new value to set for the parameter
+!> @param description an optional new description for the parameter identified
+!>        by @c name
+!>
+!> If a parameter with @c name is not found an error is produced. If the
+!> parameter with @c name is not a scalar double precision real valued parameter
+!> then an error is produced.
+!>
+    SUBROUTINE set_ParamType_SDK(thisParam,name,param,description)
+      CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SDK'
+      CLASS(ParamType),INTENT(INOUT) :: thisParam
+      CHARACTER(LEN=*),INTENT(IN) :: name
+      REAL(SDK),INTENT(IN) :: param
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+      LOGICAL(SBK) :: localalloc
+      CLASS(ParamType),POINTER :: tmpParam
+      
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eParams)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eParams)
+      ENDIF
+      
+      SELECTTYPE(thisParam)
+        TYPE IS(ParamType_SDK)
+          IF(thisParam%name == TRIM(name)) THEN
+            thisParam%val=param
+            IF(PRESENT(description)) thisParam%description=TRIM(description)
+          ELSE
+            CALL eParams%raiseError(modName//'::'//myName// &
+              ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+                '" but name is "'//thisParam%name//'"!')
+          ENDIF
+        CLASS DEFAULT
+          !Search for the parameter name
+          CALL thisParam%getParam(name,tmpParam)
+          IF(ASSOCIATED(tmpParam)) THEN
+            !Parameter was found
+            SELECTTYPE(p=>tmpParam)
+              TYPE IS(ParamType_SDK)
+                p%val=param
+                IF(PRESENT(description)) p%description=TRIM(description)
+              CLASS DEFAULT
+                CALL eParams%raiseError(modName//'::'//myName// &
+                  ' - parameter data type mismatch! Parameter type is '// &
+                    tmpParam%dataType//' and must be REAL(SDK)!')
+            ENDSELECT
+          ELSE
+            CALL eParams%raiseError(modName//'::'//myName// &
+              ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+                thisParam%name//'"!')
+          ENDIF
+      ENDSELECT
+      IF(localalloc) DEALLOCATE(eParams)
+    ENDSUBROUTINE set_ParamType_SDK
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the scalar double precision real value for a specified parameter
+!> @param thisParam the parameter in which an existing parameter with name 
+!>        matching @c name will have it's value returned
+!> @param name the name of the parameter to return the value of
+!> @param val the current value of the parameter with @c name
+!> 
+!> If a parameter with @c name is not found an error is produced. If the 
+!> parameter with @c name is not a scalar double precision real valued parameter
+!> then an error is produced.
+!>
+    SUBROUTINE get_ParamType_SDK(thisParam,name,val)
+      CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SDK'
+      CLASS(ParamType),INTENT(IN) :: thisParam
+      CHARACTER(LEN=*),INTENT(IN) :: name
+      REAL(SDK),INTENT(INOUT) :: val
+      LOGICAL(SBK) :: localalloc
+      CLASS(ParamType),POINTER :: tmpParam
+      
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eParams)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eParams)
+      ENDIF
+      
+      SELECTTYPE(thisParam)
+        TYPE IS(ParamType_SDK)
+          IF(thisParam%name == TRIM(name)) THEN
+            val=thisParam%val
+          ELSE
+            CALL eParams%raiseError(modName//'::'//myName// &
+              ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+                thisParam%name//'"!')
+          ENDIF
+        CLASS DEFAULT
+          !Search for the parameter name
+          CALL thisParam%getParam(name,tmpParam)
+          IF(ASSOCIATED(tmpParam)) THEN
+            !Parameter was found
+            SELECTTYPE(p=>tmpParam)
+              TYPE IS(ParamType_SDK)
+                val=p%val
+              CLASS DEFAULT
+                CALL eParams%raiseError(modName//'::'//myName// &
+                  ' - parameter data type mismatch! Parameter type is '// &
+                    tmpParam%dataType//' and must be REAL(SDK)!')
+            ENDSELECT
+          ELSE
+            CALL eParams%raiseError(modName//'::'//myName// &
+              ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+                thisParam%name//'"!')
+          ENDIF
+      ENDSELECT
+      IF(localalloc) DEALLOCATE(eParams)
+    ENDSUBROUTINE get_ParamType_SDK
+!
+!-------------------------------------------------------------------------------
+!> @brief Adds a new scalar double precision real valued parameter to a set of
+!> parameters
+!> @param thisParam the set of parameters to which a new parameter will be added
+!> @param name the location and name of the new parameter
+!> @param param the double precision real value of the new parameter
+!> @param description an optional input for a description of the new parameter
+!> 
+!> This routine creates a new parameter within @c thisParam with @c name.
+!> @c name may contain a full or partial path to the new parameter. If @c name 
+!> can be matched to an existing parameter in @c thisParam an error is produced
+!> If @c name contains a full path for which intermediate lists do not exist
+!> then this lists are created in the process of adding the new parameter.
+!> If @c thisParam is not initialized and @c name does not contain a "->"
+!> symbol then this routine behaves equivalently to 
+!> @ref ParameterLists::init_ParamType_SDK "initSDK".
+!> 
+    SUBROUTINE add_ParamType_SDK(thisParam,name,param,description)
+      CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SDK'
+      CLASS(ParamType),INTENT(INOUT) :: thisParam
+      CHARACTER(LEN=*),INTENT(IN) :: name
+      REAL(SDK),INTENT(IN) :: param
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+      CHARACTER(LEN=LEN(name)) :: prevname,thisname
+      LOGICAL(SBK) :: localalloc
+      INTEGER(SIK) :: ipos
+      TYPE(ParamType) :: newParam
+      CLASS(ParamType),POINTER :: tmpParam
+      
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eParams)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eParams)
+      ENDIF
+      
+      !Search for the name to make sure it does not exist
+      CALL get_ParamType(thisParam,name,tmpParam)
+      
+      IF(.NOT.ASSOCIATED(tmpParam)) THEN
+        prevname=''
+        thisname=ADJUSTL(name)
+        ipos=INDEX(name,'->',.TRUE.)
+        IF(ipos > 0) THEN
+          prevname=ADJUSTL(name(1:ipos-1))
+          thisname=ADJUSTL(name(ipos+2:LEN(name)))
+        ENDIF
+      
+        !Initialize the new parameter
+        IF(PRESENT(description)) THEN
+          CALL init_ParamType_SDK(newParam,thisname,param,description)
+        ELSE
+          CALL init_ParamType_SDK(newParam,thisname,param)
+        ENDIF
+        
+        !Add the new parameter to thisParam
+        CALL add_ParamType(thisParam,prevname,newParam)
+        CALL newParam%clear()
+      ELSE
+        CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name "'//TRIM(name)// &
+            '" already exists! Use set method or full parameter list path!')
+      ENDIF
+      IF(localalloc) DEALLOCATE(eParams)
+    ENDSUBROUTINE add_ParamType_SDK
 !
 ENDMODULE ParameterLists
