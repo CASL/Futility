@@ -235,7 +235,7 @@ MODULE ParameterLists
       PROCEDURE,PASS,PRIVATE :: addParam => add_ParamType
       !> @copybrief ParameterLists::add_ParamType_List
       !> @copydoc ParameterLists::add_ParamType_List
-      PROCEDURE,PASS,PRIVATE :: addParamList => add_ParamType_List
+      PROCEDURE,PASS,PRIVATE :: addList => add_ParamType_List
       !> @copybrief ParameterLists::add_ParamType_SSK
       !> @copydoc ParameterLists::add_ParamType_SSK
       PROCEDURE,PASS,PRIVATE :: addParamSSK => add_ParamType_SSK
@@ -1923,10 +1923,10 @@ MODULE ParameterLists
       IF(PRESENT(indent)) i=i+indent
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
       IF(LEN_TRIM(thisParam%description) == 0) THEN
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g13.7)') &
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g23.16)') &
           thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val
       ELSE
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g13.7,a)') &
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g23.16,a)') &
           thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val, &
             ' !'//thisParam%description
       ENDIF
@@ -1995,7 +1995,7 @@ MODULE ParameterLists
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
-                    tmpParam%dataType//' and must be REAL(SSK)!')
+                    tmpParam%dataType//' and must be REAL(SDK)!')
             ENDSELECT
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
