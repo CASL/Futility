@@ -523,6 +523,9 @@ MODULE ParameterLists
             TYPE IS(ParamType_SLK)
               CALL thisParam%init(p%name%sPrint(),p%val, &
                 p%description%sPrint())
+            TYPE IS(ParamType_SBK)
+              CALL thisParam%init(p%name%sPrint(),p%val, &
+                p%description%sPrint())
             TYPE IS(ParamType_STR)
               CALL thisParam%init(p%name%sPrint(),p%val, &
                 p%description%sPrint())
@@ -2185,12 +2188,12 @@ MODULE ParameterLists
         !Check that '->' character is not in name
         ipos=INDEX(name,'->')
         IF(ipos == 0) THEN
-          ALLOCATE(ParamType_SDK :: thisParam%pdat)
+          ALLOCATE(ParamType_SNK :: thisParam%pdat)
           thisParam%pdat%name=TRIM(name)
           IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
           thisParam%pdat%dataType='INTEGER(SNK)'
           SELECTTYPE(p=>thisParam%pdat)
-            TYPE IS(ParamType_SDK); p%val=param
+            TYPE IS(ParamType_SNK); p%val=param
           ENDSELECT
         ELSE
           CALL eParams%raiseError(modName//'::'//myName// &
@@ -2321,7 +2324,7 @@ MODULE ParameterLists
 !> then an error is produced.
 !>
     SUBROUTINE get_ParamType_SNK(thisParam,name,val)
-      CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SDK'
+      CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SNK'
       CLASS(ParamType),INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       INTEGER(SNK),INTENT(INOUT) :: val
@@ -3063,7 +3066,7 @@ MODULE ParameterLists
 !> 
     SUBROUTINE clear_ParamType_STR(thisParam)
       CLASS(ParamType_STR),INTENT(INOUT) :: thisParam
-      !thisParam%val=0.0_S         !Not sure how to clear this since it doesn't have a clear routine!
+      thisParam%val=''         !Not sure how to clear this since it doesn't have a clear routine!
       thisParam%name=''
       thisParam%dataType=''
       thisParam%description=''

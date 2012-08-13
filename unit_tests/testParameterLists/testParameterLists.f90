@@ -29,6 +29,7 @@ PROGRAM testParameterLists
   INTEGER(SNK) :: valsnk
   INTEGER(SLK) :: valslk
   LOGICAL(SBK) :: valsbk
+  TYPE(StringType) :: valstr
   TYPE(ExceptionHandlerType),POINTER :: e
   
   TYPE(ParamType) :: testParam,testParam2,testList(5),testList2(3)
@@ -55,17 +56,21 @@ PROGRAM testParameterLists
   WRITE(*,*) 'TESTING Scalar SDK PARAMETERLISTS...'
   CALL testSDK()
   !Test the scalar SNK parameter list
-  !WRITE(*,*) '---------------------------------------------------'
-  !WRITE(*,*) 'TESTING Scalar SNK PARAMETERLISTS...'
-  !CALL testSNK()
-  !!Test the scalar SLK parameter list
-  !WRITE(*,*) '---------------------------------------------------'
-  !WRITE(*,*) 'TESTING Scalar SLK PARAMETERLISTS...'
-  !CALL testSLK()
-  !!Test the scalar SBK parameter list
-  !WRITE(*,*) '---------------------------------------------------'
-  !WRITE(*,*) 'TESTING Scalar SBK PARAMETERLISTS...'
-  !CALL testSBK()
+  WRITE(*,*) '---------------------------------------------------'
+  WRITE(*,*) 'TESTING Scalar SNK PARAMETERLISTS...'
+  CALL testSNK()
+  !Test the scalar SLK parameter list
+  WRITE(*,*) '---------------------------------------------------'
+  WRITE(*,*) 'TESTING Scalar SLK PARAMETERLISTS...'
+  CALL testSLK()
+  !Test the scalar SBK parameter list
+  WRITE(*,*) '---------------------------------------------------'
+  WRITE(*,*) 'TESTING Scalar SBK PARAMETERLISTS...'
+  CALL testSBK()
+  !Test the scalar SBK parameter list
+  WRITE(*,*) '---------------------------------------------------'
+  WRITE(*,*) 'TESTING Scalar SBK PARAMETERLISTS...'
+  CALL testSTR()
   
   CALL testClear()
   
@@ -909,6 +914,135 @@ PROGRAM testParameterLists
     CALL testClear()
     
   ENDSUBROUTINE testSBK
+!
+!Test STR support
+  SUBROUTINE testSTR()
+    
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSTR'
+    valstr='''testing'''
+    !test init
+    CALL testParam%init('testError->testSTR',valstr,'The value is testing')
+    eParams => NULL()
+    CALL testParam%init('testSTR',valstr,'The value is testing')
+    IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
+      WRITE(*,*) 'CALL testParam%init(...) %pdat StringType (STR) FAILED!'
+      STOP 666
+    ENDIF
+    IF(testParam%pdat%name /= 'testSTR') THEN
+      WRITE(*,*) 'CALL testParam%init(...) %name StringType (STR) FAILED!'
+      STOP 666
+    ENDIF
+    IF(testParam%pdat%datatype /= 'TYPE(StringType)') THEN
+      WRITE(*,*) 'CALL testParam%init(...) %datatype StringType (STR) FAILED!'
+      STOP 666
+    ENDIF
+    IF(testParam%pdat%description /= 'The value is testing') THEN
+      WRITE(*,*) 'CALL testParam%init(...) %description StringType (STR) FAILED!'
+      STOP 666
+    ENDIF
+    CALL testParam%edit(OUTPUT_UNIT,0) !test edit
+    eParams => e
+    CALL testParam%init('testError',valstr)
+    WRITE(*,*) '  Passed: CALL testParam%init(...) StringType (STR)'
+  
+    !test get
+    eParams => NULL()
+    CALL testParam%get('testSTR',someParam)
+    IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
+      WRITE(*,*) 'CALL testParam%get(''testSTR'',someParam) FAILED!'
+      STOP 666
+    ENDIF
+    CALL someParam%get('testSTR',valstr)
+    IF(valstr /= '''testing''') THEN
+      WRITE(*,*) 'CALL someParam%get(''testSTR'',valstr) FAILED!'
+      STOP 666
+    ENDIF
+    valstr='test again'
+    CALL testParam%get('testSTR',valstr)
+    IF(valstr /= '''testing''') THEN
+      WRITE(*,*) 'CALL testParam%get(''testSTR'',valstr) FAILED!'
+      STOP 666
+    ENDIF
+    eParams => e
+    CALL testParam2%get('testSTR',valstr)
+    CALL testParam%get('testError',valstr)
+    CALL someParam%get('testError',valstr)
+    WRITE(*,*) '  Passed: CALL testParam%get(...) StringType (STR)'
+  
+    !test set
+    eParams => NULL()
+    !For strings, they must be stored in a string type first, then passed in.
+    valstr='another test'
+    CALL someParam%set('testSTR',valstr,'The value is another test')
+    !Clear the variable to confirm it gets set.
+    valstr=''
+    CALL testParam%get('testSTR',valstr)
+    IF(valstr /= 'another test' .OR. someParam%description /= 'The value is another test') THEN
+      WRITE(*,*) 'someParam%set(''testSTR'',''another test'',''The value is another test'') FAILED!'
+      STOP 666
+    ENDIF
+    valstr='a different test'
+    CALL testParam%set('testSTR',valstr,'The value is ''a different test''')
+    valstr=''
+    CALL testParam%get('testSTR',valstr)
+    IF(valstr /= 'a different test' .OR. someParam%description /= 'The value is ''a different test''') THEN
+      WRITE(*,*) 'testParam%set(''testSTR'',''a different test'') FAILED!'
+      STOP 666
+    ENDIF
+    eParams => e
+    CALL testParam2%set('testSTR',valstr)
+    CALL someParam%set('testError',valstr)
+    CALL testParam%set('testError',valstr)
+    WRITE(*,*) '  Passed: CALL testParam%set(...) StringType (STR)'
+  
+    !Test clear
+    eParams => NULL()
+    CALL testParam%clear()
+    IF(LEN(testParam%name%sPrint()) /= 0) THEN
+      WRITE(*,*) 'CALL testParam%clear() %name StringType (STR) FAILED!'
+      STOP 666
+    ENDIF
+    IF(LEN(testParam%datatype%sPrint()) /= 0) THEN
+      WRITE(*,*) 'CALL testParam%clear() %datatype StringType (STR) FAILED!'
+      STOP 666
+    ENDIF
+    IF(LEN(testParam%description%sPrint()) /= 0) THEN
+      WRITE(*,*) 'CALL testParam%clear() %description StringType (STR) FAILED!'
+      STOP 666
+    ENDIF
+    IF(ASSOCIATED(testParam%pdat)) THEN
+      WRITE(*,*) 'CALL testParam%clear() %pdat StringType (STR) FAILED!'
+      STOP 666
+    ENDIF
+    eParams => e
+    WRITE(*,*) '  Passed: CALL testParam%clear() StringType (STR)'
+  
+    !test assignment
+    eParams => NULL()
+    valstr='assignment test'
+    CALL testParam%init('testSTR',valstr)
+    testParam2=testparam
+    IF(.NOT.ASSOCIATED(testParam2%pdat)) THEN
+      WRITE(*,*) 'ASSIGNMENT(=) %pdat StringType (STR) FAILED!'
+      STOP 666
+    ENDIF
+    IF(testParam2%pdat%name /= 'testSTR') THEN
+      WRITE(*,*) 'ASSIGNMENT(=) %name StringType (STR) FAILED!'
+      STOP 666
+    ENDIF
+    IF(testParam2%pdat%datatype /= 'TYPE(StringType)') THEN
+      WRITE(*,*) 'ASSIGNMENT(=) %datatype StringType (STR) FAILED!'
+      STOP 666
+    ENDIF
+    eParams => e
+    CALL testParam%get('testSTR',someParam)
+    someParam=testParam
+    WRITE(*,*) '  Passed: ASSIGNMENT(=) StringType (STR)'
+    !Clear the variables for the next call
+    CALL testClear()
+    
+  ENDSUBROUTINE testSTR
 
 !
 ENDPROGRAM testParameterLists
