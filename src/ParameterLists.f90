@@ -155,15 +155,15 @@ MODULE ParameterLists
       !> @copybrief ParameterLists::init_ParamType_SDK_a1
       !> @copydoc ParameterLists::init_ParamType_SDK_a1
       PROCEDURE,PASS,PRIVATE :: initSDKa1 => init_ParamType_SDK_a1
-      !!> @copybrief ParameterLists::init_ParamType_SNK_a1
-      !!> @copydoc ParameterLists::init_ParamType_SNK_a1
-      !PROCEDURE,PASS,PRIVATE :: initSNKa1 => init_ParamType_SNK_a1
-      !!> @copybrief ParameterLists::init_ParamType_SLK_a1
-      !!> @copydoc ParameterLists::init_ParamType_SLK_a1
-      !PROCEDURE,PASS,PRIVATE :: initSLKa1 => init_ParamType_SLK_a1
+      !> @copybrief ParameterLists::init_ParamType_SNK_a1
+      !> @copydoc ParameterLists::init_ParamType_SNK_a1
+      PROCEDURE,PASS,PRIVATE :: initSNKa1 => init_ParamType_SNK_a1
+      !> @copybrief ParameterLists::init_ParamType_SLK_a1
+      !> @copydoc ParameterLists::init_ParamType_SLK_a1
+      PROCEDURE,PASS,PRIVATE :: initSLKa1 => init_ParamType_SLK_a1
       !> Generic type bound interface for all @c init operations
       GENERIC :: init => initParamList,initSSK,initSDK,initSNK,initSLK, &
-                 initSBK,initSTR,initSSKa1,initSDKa1 !,initSNKa1,initSLKa1
+                 initSBK,initSTR,initSSKa1,initSDKa1,initSNKa1,initSLKa1
       !> @copybrief ParameterLists::set_ParamType_List
       !> @copydoc ParameterLists::set_ParamType_List
       PROCEDURE,PASS,PRIVATE :: setParamList => set_ParamType_List
@@ -191,15 +191,15 @@ MODULE ParameterLists
       !> @copybrief ParameterLists::set_ParamType_SDK_a1
       !> @copydoc ParameterLists::set_ParamType_SDK_a1
       PROCEDURE,PASS,PRIVATE :: setSDKa1 => set_ParamType_SDK_a1
-      !!> @copybrief ParameterLists::set_ParamType_SNK_a1
-      !!> @copydoc ParameterLists::set_ParamType_SNK_a1
-      !PROCEDURE,PASS,PRIVATE :: setSNKa1 => set_ParamType_SNK_a1
-      !!> @copybrief ParameterLists::set_ParamType_SLK_a1
-      !!> @copydoc ParameterLists::set_ParamType_SLK_a1
-      !PROCEDURE,PASS,PRIVATE :: setSLKa1 => set_ParamType_SLK_a1
+      !> @copybrief ParameterLists::set_ParamType_SNK_a1
+      !> @copydoc ParameterLists::set_ParamType_SNK_a1
+      PROCEDURE,PASS,PRIVATE :: setSNKa1 => set_ParamType_SNK_a1
+      !> @copybrief ParameterLists::set_ParamType_SLK_a1
+      !> @copydoc ParameterLists::set_ParamType_SLK_a1
+      PROCEDURE,PASS,PRIVATE :: setSLKa1 => set_ParamType_SLK_a1
       !> Generic type bound interface for all @c set operations
       GENERIC :: set => setParamList,setSSK,setSDK,setSNK,setSLK, &
-                 setSBK,setSTR,setSSKa1,setSDKa1 !,setSNKa1,setSLKa1
+                 setSBK,setSTR,setSSKa1,setSDKa1,setSNKa1,setSLKa1
       !> @copybrief ParameterLists::get_ParamType
       !> @copydoc ParameterLists::get_ParamType
       PROCEDURE,PASS,PRIVATE :: getParam => get_ParamType
@@ -230,15 +230,15 @@ MODULE ParameterLists
       !> @copybrief ParameterLists::get_ParamType_SDK_a1
       !> @copydoc ParameterLists::get_ParamType_SDK_a1
       PROCEDURE,PASS,PRIVATE :: getSDKa1 => get_ParamType_SDK_a1
-      !!> @copybrief ParameterLists::get_ParamType_SNK_a1
-      !!> @copydoc ParameterLists::get_ParamType_SNK_a1
-      !PROCEDURE,PASS,PRIVATE :: getSNKa1 => get_ParamType_SNK_a1
-      !!> @copybrief ParameterLists::get_ParamType_SLK_a1
-      !!> @copydoc ParameterLists::get_ParamType_SLK_a1
-      !PROCEDURE,PASS,PRIVATE :: getSLKa1 => get_ParamType_SLK_a1
+      !> @copybrief ParameterLists::get_ParamType_SNK_a1
+      !> @copydoc ParameterLists::get_ParamType_SNK_a1
+      PROCEDURE,PASS,PRIVATE :: getSNKa1 => get_ParamType_SNK_a1
+      !> @copybrief ParameterLists::get_ParamType_SLK_a1
+      !> @copydoc ParameterLists::get_ParamType_SLK_a1
+      PROCEDURE,PASS,PRIVATE :: getSLKa1 => get_ParamType_SLK_a1
       !> Generic type bound interface for all @c get operations
       GENERIC :: get => getParam,getParamList,getSSK,getSDK,getSNK, &
-                 getSLK,getSBK,getSTR,getSSKa1,getSDKa1 !,getSNKa1,getSLKa1
+                 getSLK,getSBK,getSTR,getSSKa1,getSDKa1,getSNKa1,getSLKa1
       !> @copybrief ParameterLists::add_ParamType
       !> @copydoc ParameterLists::add_ParamType
       PROCEDURE,PASS,PRIVATE :: addParam => add_ParamType
@@ -269,16 +269,16 @@ MODULE ParameterLists
       !> @copybrief ParameterLists::add_ParamType_SDK_a1
       !> @copydoc ParameterLists::add_ParamType_SDK_a1
       PROCEDURE,PASS,PRIVATE :: addSDKa1 => add_ParamType_SDK_a1
-      !!> @copybrief ParameterLists::add_ParamType_SNK_a1
-      !!> @copydoc ParameterLists::add_ParamType_SNK_a1
-      !PROCEDURE,PASS,PRIVATE :: addSNKa1 => add_ParamType_SNK_a1
-      !!> @copybrief ParameterLists::add_ParamType_SLK_a1
-      !!> @copydoc ParameterLists::add_ParamType_SLK_a1
-      !PROCEDURE,PASS,PRIVATE :: addSLKa1 => add_ParamType_SLK_a1
+      !> @copybrief ParameterLists::add_ParamType_SNK_a1
+      !> @copydoc ParameterLists::add_ParamType_SNK_a1
+      PROCEDURE,PASS,PRIVATE :: addSNKa1 => add_ParamType_SNK_a1
+      !> @copybrief ParameterLists::add_ParamType_SLK_a1
+      !> @copydoc ParameterLists::add_ParamType_SLK_a1
+      PROCEDURE,PASS,PRIVATE :: addSLKa1 => add_ParamType_SLK_a1
       !> Generic type bound interface for all @c add operations
       GENERIC :: add => addParam,addList,addSSK,addSDK, &
-         addSNK,addSLK,addSBK,addSTR,addSSKa1,addSDKa1 !, &
-         !addSNKa1,addSLKa1
+         addSNK,addSLK,addSBK,addSTR,addSSKa1,addSDKa1, &
+         addSNKa1,addSLKa1
       !> @copybrief ParameterLists::remove_ParamType
       !> @copydoc ParameterLists::remove_ParamType
       PROCEDURE,PASS :: remove => remove_ParamType
@@ -438,37 +438,37 @@ MODULE ParameterLists
       PROCEDURE,PASS :: clear => clear_ParamType_SDK_a1
   ENDTYPE ParamType_SDK_a1
   
-!  !> @brief Extended type of a ParamType for defining a parameter that
-!  !> is a single precision integer scalar
-!  TYPE,EXTENDS(ParamType) :: ParamType_SNK_a1
-!    !> The value of the parameter
-!    INTEGER(SNK),ALLOCATABLE :: val(:)
-!!
-!!List of type bound procedures
-!    CONTAINS
-!      !> @copybrief ParameterLists::edit_ParamType_SNK_a1
-!      !> @copydoc ParameterLists::edit_ParamType_SNK_a1
-!      PROCEDURE,PASS :: edit => edit_ParamType_SNK_a1
-!      !> @copybrief ParameterLists::clear_ParamType_SNK_a1
-!      !> @copydoc ParameterLists::clear_ParamType_SNK_a1
-!      PROCEDURE,PASS :: clear => clear_ParamType_SNK_a1
-!  ENDTYPE ParamType_SNK_a1
-!  
-!  !> @brief Extended type of a ParamType for defining a parameter that
-!  !> is a double precision integer scalar
-!  TYPE,EXTENDS(ParamType) :: ParamType_SLK_a1
-!    !> The value of the parameter
-!    INTEGER(SLK),ALLOCATABLE :: val(:)
-!!
-!!List of type bound procedures
-!    CONTAINS
-!      !> @copybrief ParameterLists::edit_ParamType_SLK_a1
-!      !> @copydoc ParameterLists::edit_ParamType_SLK_a1
-!      PROCEDURE,PASS :: edit => edit_ParamType_SLK_a1
-!      !> @copybrief ParameterLists::clear_ParamType_SLK_a1
-!      !> @copydoc ParameterLists::clear_ParamType_SLK_a1
-!      PROCEDURE,PASS :: clear => clear_ParamType_SLK_a1
-!  ENDTYPE ParamType_SLK_a1
+  !> @brief Extended type of a ParamType for defining a parameter that
+  !> is a single precision integer scalar
+  TYPE,EXTENDS(ParamType) :: ParamType_SNK_a1
+    !> The value of the parameter
+    INTEGER(SNK),ALLOCATABLE :: val(:)
+!
+!List of type bound procedures
+    CONTAINS
+      !> @copybrief ParameterLists::edit_ParamType_SNK_a1
+      !> @copydoc ParameterLists::edit_ParamType_SNK_a1
+      PROCEDURE,PASS :: edit => edit_ParamType_SNK_a1
+      !> @copybrief ParameterLists::clear_ParamType_SNK_a1
+      !> @copydoc ParameterLists::clear_ParamType_SNK_a1
+      PROCEDURE,PASS :: clear => clear_ParamType_SNK_a1
+  ENDTYPE ParamType_SNK_a1
+  
+  !> @brief Extended type of a ParamType for defining a parameter that
+  !> is a double precision integer scalar
+  TYPE,EXTENDS(ParamType) :: ParamType_SLK_a1
+    !> The value of the parameter
+    INTEGER(SLK),ALLOCATABLE :: val(:)
+!
+!List of type bound procedures
+    CONTAINS
+      !> @copybrief ParameterLists::edit_ParamType_SLK_a1
+      !> @copydoc ParameterLists::edit_ParamType_SLK_a1
+      PROCEDURE,PASS :: edit => edit_ParamType_SLK_a1
+      !> @copybrief ParameterLists::clear_ParamType_SLK_a1
+      !> @copydoc ParameterLists::clear_ParamType_SLK_a1
+      PROCEDURE,PASS :: clear => clear_ParamType_SLK_a1
+  ENDTYPE ParamType_SLK_a1
 
   !> Generic interface adds a procedure to overload the intrinsic assignment
   !> operator with the given procedure
@@ -535,12 +535,12 @@ MODULE ParameterLists
             TYPE IS(ParamType_SDK_a1)
               CALL thisParam%init(p%name%sPrint(),p%val, &
                 p%description%sPrint())
-            !TYPE IS(ParamType_SNK_a1)
-            !  CALL thisParam%init(p%name%sPrint(),p%val, &
-            !    p%description%sPrint())
-            !TYPE IS(ParamType_SLK_a1)
-            !  CALL thisParam%init(p%name%sPrint(),p%val, &
-            !    p%description%sPrint())
+            TYPE IS(ParamType_SNK_a1)
+              CALL thisParam%init(p%name%sPrint(),p%val, &
+                p%description%sPrint())
+            TYPE IS(ParamType_SLK_a1)
+              CALL thisParam%init(p%name%sPrint(),p%val, &
+                p%description%sPrint())
             TYPE IS(ParamType_List)
               IF(ALLOCATED(p%plList)) THEN
                 CALL thisParam%init(p%name%sPrint(),p%plList, &
@@ -3269,7 +3269,7 @@ MODULE ParameterLists
 !> sub-list. @c thisParam must not already be inititalized.
 !>
     SUBROUTINE init_ParamType_SSK_a1(thisParam,name,param,description)
-      CHARACTER(LEN=*),PARAMETER :: myName='init_ParamType_SSK'
+      CHARACTER(LEN=*),PARAMETER :: myName='init_ParamType_SSK_a1'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       REAL(SSK),INTENT(IN) :: param(:)
       CHARACTER(LEN=*),INTENT(IN) :: name
@@ -3374,7 +3374,7 @@ MODULE ParameterLists
 !> then an error is produced.
 !>
     SUBROUTINE set_ParamType_SSK_a1(thisParam,name,param,description)
-      CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SSK'
+      CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SSK_a1'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       REAL(SSK),INTENT(IN) :: param(:)
@@ -3441,7 +3441,7 @@ MODULE ParameterLists
 !> then an error is produced.
 !>
     SUBROUTINE get_ParamType_SSK_a1(thisParam,name,val)
-      CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SSK'
+      CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SSK_a1'
       CLASS(ParamType),INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: val(:)
@@ -3511,7 +3511,7 @@ MODULE ParameterLists
 !> @ref ParameterLists::init_ParamType_SSK "initSSK".
 !> 
     SUBROUTINE add_ParamType_SSK_a1(thisParam,name,param,description)
-      CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SSK'
+      CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SSK_a1'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       REAL(SSK),INTENT(IN) :: param(:)
@@ -3570,7 +3570,7 @@ MODULE ParameterLists
 !> sub-list. @c thisParam must not already be inititalized.
 !>
     SUBROUTINE init_ParamType_SDK_a1(thisParam,name,param,description)
-      CHARACTER(LEN=*),PARAMETER :: myName='init_ParamType_SDK'
+      CHARACTER(LEN=*),PARAMETER :: myName='init_ParamType_SDK_a1'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       REAL(SDK),INTENT(IN) :: param(:)
       CHARACTER(LEN=*),INTENT(IN) :: name
@@ -3675,7 +3675,7 @@ MODULE ParameterLists
 !> then an error is produced.
 !>
     SUBROUTINE set_ParamType_SDK_a1(thisParam,name,param,description)
-      CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SDK'
+      CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SDK_a1'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       REAL(SDK),INTENT(IN) :: param(:)
@@ -3742,7 +3742,7 @@ MODULE ParameterLists
 !> then an error is produced.
 !>
     SUBROUTINE get_ParamType_SDK_a1(thisParam,name,val)
-      CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SDK'
+      CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SDK_a1'
       CLASS(ParamType),INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: val(:)
@@ -3812,7 +3812,7 @@ MODULE ParameterLists
 !> @ref ParameterLists::init_ParamType_SDK "initSDK".
 !> 
     SUBROUTINE add_ParamType_SDK_a1(thisParam,name,param,description)
-      CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SDK'
+      CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SDK_a1'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       REAL(SDK),INTENT(IN) :: param(:)
@@ -3859,557 +3859,604 @@ MODULE ParameterLists
       IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE add_ParamType_SDK_a1
 !
-!!-------------------------------------------------------------------------------
-!!> @brief Initializes a ParamType object as a one dimensional array of 32-bit integer
-!!> @param thisParam the parameter to initialize
-!!> @param name the name of the parameter
-!!> @param param a one dimensional array of 32-bit integer
-!!> @param description an optional description for this parameter
-!!> 
-!!> This routine is not recursive, so it is like setting a one dimensional array of parameter.
-!!> Therefore the name cannot contain the "->" symbol to indicate access to a 
-!!> sub-list. @c thisParam must not already be inititalized.
-!!>
-!    SUBROUTINE init_ParamType_SNK_a1(thisParam,name,param,description)
-!      CHARACTER(LEN=*),PARAMETER :: myName='init_ParamType_SNK'
-!      CLASS(ParamType),INTENT(INOUT) :: thisParam
-!      INTEGER(SNK),INTENT(IN) :: param
-!      CHARACTER(LEN=*),INTENT(IN) :: name
-!      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-!      LOGICAL(SBK) :: localalloc
-!      INTEGER(SIK) :: ipos
-!      
-!      localalloc=.FALSE.
-!      IF(.NOT.ASSOCIATED(eParams)) THEN
-!        localalloc=.TRUE.
-!        ALLOCATE(eParams)
-!      ENDIF
-!      
-!      IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
-!        !Check that '->' character is not in name
-!        ipos=INDEX(name,'->')
-!        IF(ipos == 0) THEN
-!          ALLOCATE(ParamType_SDK_a1 :: thisParam%pdat)
-!          thisParam%pdat%name=TRIM(name)
-!          IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
-!          thisParam%pdat%dataType='INTEGER(SNK)'
-!          SELECTTYPE(p=>thisParam%pdat)
-!            TYPE IS(ParamType_SDK_a1); p%val=param
-!          ENDSELECT
-!        ELSE
-!          CALL eParams%raiseError(modName//'::'//myName// &
-!            ' - "->" symbol is not allowed in name!')
-!        ENDIF
-!      ELSE
-!        CALL eParams%raiseError(modName//'::'//myName// &
-!          ' - parameter is already initialized! Use set method!')
-!      ENDIF
-!      IF(localalloc) DEALLOCATE(eParams)
-!    ENDSUBROUTINE init_ParamType_SNK_a1
-!!
-!!-------------------------------------------------------------------------------
-!!> @brief Edits a one dimensional array of 32-bit integer valued parameter
-!!> @param thisParam the one dimensional array of 32-bit integer valued parameter to edit
-!!> @param funit the unit number to edit the parameter to
-!!> @param indent optional indicates the number of blank spaces to precede the
-!!>        beginning of text to edit.
-!!>
-!!> The formatted write uses the "general" edit descriptor so that 7 digits (one
-!!> more than the significant number in a 32-bit integer) are always
-!!> printed if the number is very large in absolute value engineering format
-!!> is used otherwise floating point form is used to write the value.
-!!>
-!    SUBROUTINE edit_ParamType_SNK_a1(thisParam,funit,indent)
-!      CLASS(ParamType_SNK_a1),INTENT(IN) :: thisParam
-!      INTEGER(SIK),INTENT(IN) :: funit
-!      INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
-!      CHARACTER(LEN=12) :: fmt
-!      INTEGER(SIK) :: i
-!      
-!      i=1
-!      IF(PRESENT(indent)) i=i+indent
-!      WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
-!      IF(LEN_TRIM(thisParam%description) == 0) THEN
-!        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g13.7)') &
-!          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val
-!      ELSE
-!        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g13.7,a)') &
-!          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val, &
-!            ' !'//thisParam%description
-!      ENDIF
-!    ENDSUBROUTINE edit_ParamType_SNK_a1
-!!
-!!-------------------------------------------------------------------------------
-!!> @brief Clears a one dimensional array of 32-bit integer valued parameter
-!!> @param thisParam the one dimensional array of 32-bit integer valued parameter to clear
-!!> 
-!    SUBROUTINE clear_ParamType_SNK_a1(thisParam)
-!      CLASS(ParamType_SNK_a1),INTENT(INOUT) :: thisParam
-!      DEALLOCATE(thisParam%val)
-!      thisParam%name=''
-!      thisParam%dataType=''
-!      thisParam%description=''
-!    ENDSUBROUTINE clear_ParamType_SNK_a1
-!!
-!!-------------------------------------------------------------------------------
-!!> @brief Sets the value of an existing one dimensional array of 32-bit integer valued 
-!!> parameter to a new value.
-!!> @param thisParam the parameter in which an existing parameter with name 
-!!>        matching @c name will be to set the new value of @c param
-!!> @param name the name of an existing parameter to set the value of
-!!> @param param the new value to set for the parameter
-!!> @param description an optional new description for the parameter identified
-!!>        by @c name
-!!>
-!!> If a parameter with @c name is not found an error is produced. If the
-!!> parameter with @c name is not a one dimensional array of 32-bit integer valued parameter
-!!> then an error is produced.
-!!>
-!    SUBROUTINE set_ParamType_SNK_a1(thisParam,name,param,description)
-!      CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SNK'
-!      CLASS(ParamType),INTENT(INOUT) :: thisParam
-!      CHARACTER(LEN=*),INTENT(IN) :: name
-!      INTEGER(SNK),INTENT(IN) :: param
-!      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-!      LOGICAL(SBK) :: localalloc
-!      CLASS(ParamType),POINTER :: tmpParam
-!      
-!      localalloc=.FALSE.
-!      IF(.NOT.ASSOCIATED(eParams)) THEN
-!        localalloc=.TRUE.
-!        ALLOCATE(eParams)
-!      ENDIF
-!      
-!      SELECTTYPE(thisParam)
-!        TYPE IS(ParamType_SNK_a1)
-!          IF(thisParam%name == TRIM(name)) THEN
-!            thisParam%val=param
-!            IF(PRESENT(description)) thisParam%description=TRIM(description)
-!          ELSE
-!            CALL eParams%raiseError(modName//'::'//myName// &
-!              ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
-!                '" but name is "'//thisParam%name//'"!')
-!          ENDIF
-!        CLASS DEFAULT
-!          !Search for the parameter name
-!          CALL thisParam%getParam(name,tmpParam)
-!          IF(ASSOCIATED(tmpParam)) THEN
-!            !Parameter was found
-!            SELECTTYPE(p=>tmpParam)
-!              TYPE IS(ParamType_SNK_a1)
-!                p%val=param
-!                IF(PRESENT(description)) p%description=TRIM(description)
-!              CLASS DEFAULT
-!                CALL eParams%raiseError(modName//'::'//myName// &
-!                  ' - parameter data type mismatch! Parameter type is '// &
-!                    tmpParam%dataType//' and must be INTEGER(SNK)!')
-!            ENDSELECT
-!          ELSE
-!            CALL eParams%raiseError(modName//'::'//myName// &
-!              ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-!                thisParam%name//'"!')
-!          ENDIF
-!      ENDSELECT
-!      IF(localalloc) DEALLOCATE(eParams)
-!    ENDSUBROUTINE set_ParamType_SNK_a1
-!!
-!!-------------------------------------------------------------------------------
-!!> @brief Gets the one dimensional array of 32-bit integer value for a specified parameter
-!!> @param thisParam the parameter in which an existing parameter with name 
-!!>        matching @c name will have it's value returned
-!!> @param name the name of the parameter to return the value of
-!!> @param val the current value of the parameter with @c name
-!!> 
-!!> If a parameter with @c name is not found an error is produced. If the 
-!!> parameter with @c name is not a one dimensional array of 32-bit integer valued parameter
-!!> then an error is produced.
-!!>
-!    SUBROUTINE get_ParamType_SNK_a1(thisParam,name,val)
-!      CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SDK'
-!      CLASS(ParamType),INTENT(IN) :: thisParam
-!      CHARACTER(LEN=*),INTENT(IN) :: name
-!      INTEGER(SNK),INTENT(INOUT) :: val
-!      LOGICAL(SBK) :: localalloc
-!      CLASS(ParamType),POINTER :: tmpParam
-!      
-!      localalloc=.FALSE.
-!      IF(.NOT.ASSOCIATED(eParams)) THEN
-!        localalloc=.TRUE.
-!        ALLOCATE(eParams)
-!      ENDIF
-!      
-!      SELECTTYPE(thisParam)
-!        TYPE IS(ParamType_SNK_a1)
-!          IF(thisParam%name == TRIM(name)) THEN
-!            val=thisParam%val
-!          ELSE
-!            CALL eParams%raiseError(modName//'::'//myName// &
-!              ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
-!                thisParam%name//'"!')
-!          ENDIF
-!        CLASS DEFAULT
-!          !Search for the parameter name
-!          CALL thisParam%getParam(name,tmpParam)
-!          IF(ASSOCIATED(tmpParam)) THEN
-!            !Parameter was found
-!            SELECTTYPE(p=>tmpParam)
-!              TYPE IS(ParamType_SNK_a1)
-!                val=p%val
-!              CLASS DEFAULT
-!                CALL eParams%raiseError(modName//'::'//myName// &
-!                  ' - parameter data type mismatch! Parameter type is '// &
-!                    tmpParam%dataType//' and must be INTEGER(SNK)!')
-!            ENDSELECT
-!          ELSE
-!            CALL eParams%raiseError(modName//'::'//myName// &
-!              ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-!                thisParam%name//'"!')
-!          ENDIF
-!      ENDSELECT
-!      IF(localalloc) DEALLOCATE(eParams)
-!    ENDSUBROUTINE get_ParamType_SNK_a1
-!!
-!!-------------------------------------------------------------------------------
-!!> @brief Adds a new one dimensional array of 32-bit integer valued parameter to a set of
-!!> parameters
-!!> @param thisParam the set of parameters to which a new parameter will be added
-!!> @param name the location and name of the new parameter
-!!> @param param the 32-bit integer value of the new parameter
-!!> @param description an optional input for a description of the new parameter
-!!> 
-!!> This routine creates a new parameter within @c thisParam with @c name.
-!!> @c name may contain a full or partial path to the new parameter. If @c name 
-!!> can be matched to an existing parameter in @c thisParam an error is produced
-!!> If @c name contains a full path for which intermediate lists do not exist
-!!> then this lists are created in the process of adding the new parameter.
-!!> If @c thisParam is not initialized and @c name does not contain a "->"
-!!> symbol then this routine behaves equivalently to 
-!!> @ref ParameterLists::init_ParamType_SNK "initSNK".
-!!> 
-!    SUBROUTINE add_ParamType_SNK_a1(thisParam,name,param,description)
-!      CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SNK'
-!      CLASS(ParamType),INTENT(INOUT) :: thisParam
-!      CHARACTER(LEN=*),INTENT(IN) :: name
-!      INTEGER(SNK),INTENT(IN) :: param
-!      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-!      CHARACTER(LEN=LEN(name)) :: prevname,thisname
-!      LOGICAL(SBK) :: localalloc
-!      INTEGER(SIK) :: ipos
-!      TYPE(ParamType) :: newParam
-!      CLASS(ParamType),POINTER :: tmpParam
-!      
-!      localalloc=.FALSE.
-!      IF(.NOT.ASSOCIATED(eParams)) THEN
-!        localalloc=.TRUE.
-!        ALLOCATE(eParams)
-!      ENDIF
-!      
-!      !Search for the name to make sure it does not exist
-!      CALL get_ParamType(thisParam,name,tmpParam)
-!      
-!      IF(.NOT.ASSOCIATED(tmpParam)) THEN
-!        prevname=''
-!        thisname=ADJUSTL(name)
-!        ipos=INDEX(name,'->',.TRUE.)
-!        IF(ipos > 0) THEN
-!          prevname=ADJUSTL(name(1:ipos-1))
-!          thisname=ADJUSTL(name(ipos+2:LEN(name)))
-!        ENDIF
-!      
-!        !Initialize the new parameter
-!        IF(PRESENT(description)) THEN
-!          CALL init_ParamType_SNK_a1(newParam,thisname,param,description)
-!        ELSE
-!          CALL init_ParamType_SNK_a1(newParam,thisname,param)
-!        ENDIF
-!        
-!        !Add the new parameter to thisParam
-!        CALL add_ParamType(thisParam,prevname,newParam)
-!        CALL newParam%clear()
-!      ELSE
-!        CALL eParams%raiseError(modName//'::'//myName// &
-!          ' - parameter name "'//TRIM(name)// &
-!            '" already exists! Use set method or full parameter list path!')
-!      ENDIF
-!      IF(localalloc) DEALLOCATE(eParams)
-!    ENDSUBROUTINE add_ParamType_SNK_a1
-!!
-!!-------------------------------------------------------------------------------
-!!> @brief Initializes a ParamType object as a one dimensional array of 64-bit integer
-!!> @param thisParam the parameter to initialize
-!!> @param name the name of the parameter
-!!> @param param a one dimensional array of 64-bit integer
-!!> @param description an optional description for this parameter
-!!> 
-!!> This routine is not recursive, so it is like setting a one dimensional array of parameter.
-!!> Therefore the name cannot contain the "->" symbol to indicate access to a 
-!!> sub-list. @c thisParam must not already be inititalized.
-!!>
-!    SUBROUTINE init_ParamType_SLK_a1(thisParam,name,param,description)
-!      CHARACTER(LEN=*),PARAMETER :: myName='init_ParamType_SLK'
-!      CLASS(ParamType),INTENT(INOUT) :: thisParam
-!      INTEGER(SLK),INTENT(IN) :: param(:)
-!      CHARACTER(LEN=*),INTENT(IN) :: name
-!      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-!      LOGICAL(SBK) :: localalloc
-!      INTEGER(SIK) :: ipos
-!      
-!      localalloc=.FALSE.
-!      IF(.NOT.ASSOCIATED(eParams)) THEN
-!        localalloc=.TRUE.
-!        ALLOCATE(eParams)
-!      ENDIF
-!      
-!      IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
-!        !Check that '->' character is not in name
-!        ipos=INDEX(name,'->')
-!        IF(ipos == 0) THEN
-!          ALLOCATE(ParamType_SLK_a1 :: thisParam%pdat)
-!          thisParam%pdat%name=TRIM(name)
-!          IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
-!          thisParam%pdat%dataType='INTEGER(SLK)'
-!          SELECTTYPE(p=>thisParam%pdat)
-!            TYPE IS(ParamType_SLK_a1)
-!              ALLOCATE(p%val(SIZE(param)))
-!              p%val=param
-!          ENDSELECT
-!        ELSE
-!          CALL eParams%raiseError(modName//'::'//myName// &
-!            ' - "->" symbol is not allowed in name!')
-!        ENDIF
-!      ELSE
-!        CALL eParams%raiseError(modName//'::'//myName// &
-!          ' - parameter is already initialized! Use set method!')
-!      ENDIF
-!      IF(localalloc) DEALLOCATE(eParams)
-!    ENDSUBROUTINE init_ParamType_SLK_a1
-!!
-!!-------------------------------------------------------------------------------
-!!> @brief Edits a one dimensional array of 64-bit integer valued parameter
-!!> @param thisParam the one dimensional array of 64-bit integer valued parameter to edit
-!!> @param funit the unit number to edit the parameter to
-!!> @param indent optional indicates the number of blank spaces to precede the
-!!>        beginning of text to edit.
-!!>
-!!> The formatted write uses the "general" edit descriptor so that 7 digits (one
-!!> more than the significant number in a 64-bit integer) are always
-!!> printed if the number is very large in absolute value engineering format
-!!> is used otherwise floating point form is used to write the value.
-!!>
-!    SUBROUTINE edit_ParamType_SLK_a1(thisParam,funit,indent)
-!      CLASS(ParamType_SLK_a1),INTENT(IN) :: thisParam
-!      INTEGER(SIK),INTENT(IN) :: funit
-!      INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
-!      CHARACTER(LEN=12) :: fmt
-!      INTEGER(SIK) :: i
-!      
-!      i=1
-!      IF(PRESENT(indent)) i=i+indent
-!      WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
-!      IF(LEN_TRIM(thisParam%description) == 0) THEN
-!        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g13.7)') &
-!          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val
-!      ELSE
-!        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g13.7,a)') &
-!          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val, &
-!            ' !'//thisParam%description
-!      ENDIF
-!    ENDSUBROUTINE edit_ParamType_SLK_a1
-!!
-!!-------------------------------------------------------------------------------
-!!> @brief Clears a one dimensional array of 64-bit integer valued parameter
-!!> @param thisParam the one dimensional array of 64-bit integer valued parameter to clear
-!!> 
-!    SUBROUTINE clear_ParamType_SLK_a1(thisParam)
-!      CLASS(ParamType_SLK_a1),INTENT(INOUT) :: thisParam
-!      DEALLOCATE(thisParam%val)
-!      thisParam%name=''
-!      thisParam%dataType=''
-!      thisParam%description=''
-!    ENDSUBROUTINE clear_ParamType_SLK_a1
-!!
-!!-------------------------------------------------------------------------------
-!!> @brief Sets the value of an existing one dimensional array of 64-bit integer valued 
-!!> parameter to a new value.
-!!> @param thisParam the parameter in which an existing parameter with name 
-!!>        matching @c name will be to set the new value of @c param
-!!> @param name the name of an existing parameter to set the value of
-!!> @param param the new value to set for the parameter
-!!> @param description an optional new description for the parameter identified
-!!>        by @c name
-!!>
-!!> If a parameter with @c name is not found an error is produced. If the
-!!> parameter with @c name is not a one dimensional array of 64-bit integer valued parameter
-!!> then an error is produced.
-!!>
-!    SUBROUTINE set_ParamType_SLK_a1(thisParam,name,param,description)
-!      CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SLK'
-!      CLASS(ParamType),INTENT(INOUT) :: thisParam
-!      CHARACTER(LEN=*),INTENT(IN) :: name
-!      INTEGER(SLK),INTENT(IN) :: param(:)
-!      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-!      LOGICAL(SBK) :: localalloc
-!      CLASS(ParamType),POINTER :: tmpParam
-!      
-!      localalloc=.FALSE.
-!      IF(.NOT.ASSOCIATED(eParams)) THEN
-!        localalloc=.TRUE.
-!        ALLOCATE(eParams)
-!      ENDIF
-!      
-!      SELECTTYPE(thisParam)
-!        TYPE IS(ParamType_SLK_a1)
-!          IF(thisParam%name == TRIM(name)) THEN
-!            thisParam%val=param
-!            IF(PRESENT(description)) thisParam%description=TRIM(description)
-!          ELSE
-!            CALL eParams%raiseError(modName//'::'//myName// &
-!              ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
-!                '" but name is "'//thisParam%name//'"!')
-!          ENDIF
-!        CLASS DEFAULT
-!          !Search for the parameter name
-!          CALL thisParam%getParam(name,tmpParam)
-!          IF(ASSOCIATED(tmpParam)) THEN
-!            !Parameter was found
-!            SELECTTYPE(p=>tmpParam)
-!              TYPE IS(ParamType_SLK_a1)
-!                ALLOCATE(p%val(SIZE(param)))
-!                p%val=param
-!                IF(PRESENT(description)) p%description=TRIM(description)
-!              CLASS DEFAULT
-!                CALL eParams%raiseError(modName//'::'//myName// &
-!                  ' - parameter data type mismatch! Parameter type is '// &
-!                    tmpParam%dataType//' and must be INTEGER(SLK)!')
-!            ENDSELECT
-!          ELSE
-!            CALL eParams%raiseError(modName//'::'//myName// &
-!              ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-!                thisParam%name//'"!')
-!          ENDIF
-!      ENDSELECT
-!      IF(localalloc) DEALLOCATE(eParams)
-!    ENDSUBROUTINE set_ParamType_SLK_a1
-!!
-!!-------------------------------------------------------------------------------
-!!> @brief Gets the one dimensional array of 64-bit integer value for a specified parameter
-!!> @param thisParam the parameter in which an existing parameter with name 
-!!>        matching @c name will have it's value returned
-!!> @param name the name of the parameter to return the value of
-!!> @param val the current value of the parameter with @c name
-!!> 
-!!> If a parameter with @c name is not found an error is produced. If the 
-!!> parameter with @c name is not a one dimensional array of 64-bit integer valued parameter
-!!> then an error is produced.
-!!>
-!    SUBROUTINE get_ParamType_SLK_a1(thisParam,name,val)
-!      CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SLK'
-!      CLASS(ParamType),INTENT(IN) :: thisParam
-!      CHARACTER(LEN=*),INTENT(IN) :: name
-!      INTEGER(SLK),INTENT(INOUT) :: val
-!      LOGICAL(SBK) :: localalloc
-!      CLASS(ParamType),POINTER :: tmpParam
-!      
-!      localalloc=.FALSE.
-!      IF(.NOT.ASSOCIATED(eParams)) THEN
-!        localalloc=.TRUE.
-!        ALLOCATE(eParams)
-!      ENDIF
-!      
-!      SELECTTYPE(thisParam)
-!        TYPE IS(ParamType_SLK)
-!          IF(thisParam%name == TRIM(name)) THEN
-!            val=thisParam%val
-!          ELSE
-!            CALL eParams%raiseError(modName//'::'//myName// &
-!              ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
-!                thisParam%name//'"!')
-!          ENDIF
-!        CLASS DEFAULT
-!          !Search for the parameter name
-!          CALL thisParam%getParam(name,tmpParam)
-!          IF(ASSOCIATED(tmpParam)) THEN
-!            !Parameter was found
-!            SELECTTYPE(p=>tmpParam)
-!              TYPE IS(ParamType_SLK)
-!                val=p%val
-!              CLASS DEFAULT
-!                CALL eParams%raiseError(modName//'::'//myName// &
-!                  ' - parameter data type mismatch! Parameter type is '// &
-!                    tmpParam%dataType//' and must be INTEGER(SLK)!')
-!            ENDSELECT
-!          ELSE
-!            CALL eParams%raiseError(modName//'::'//myName// &
-!              ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-!                thisParam%name//'"!')
-!          ENDIF
-!      ENDSELECT
-!      IF(localalloc) DEALLOCATE(eParams)
-!    ENDSUBROUTINE get_ParamType_SLK_a1
-!!
-!!-------------------------------------------------------------------------------
-!!> @brief Adds a new one dimensional array of 64-bit integer valued parameter to a set of
-!!> parameters
-!!> @param thisParam the set of parameters to which a new parameter will be added
-!!> @param name the location and name of the new parameter
-!!> @param param the 64-bit integer value of the new parameter
-!!> @param description an optional input for a description of the new parameter
-!!> 
-!!> This routine creates a new parameter within @c thisParam with @c name.
-!!> @c name may contain a full or partial path to the new parameter. If @c name 
-!!> can be matched to an existing parameter in @c thisParam an error is produced
-!!> If @c name contains a full path for which intermediate lists do not exist
-!!> then this lists are created in the process of adding the new parameter.
-!!> If @c thisParam is not initialized and @c name does not contain a "->"
-!!> symbol then this routine behaves equivalently to 
-!!> @ref ParameterLists::init_ParamType_SLK "initSLK".
-!!> 
-!    SUBROUTINE add_ParamType_SLK_a1(thisParam,name,param,description)
-!      CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SLK'
-!      CLASS(ParamType),INTENT(INOUT) :: thisParam
-!      CHARACTER(LEN=*),INTENT(IN) :: name
-!      INTEGER(SLK),INTENT(IN) :: param
-!      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-!      CHARACTER(LEN=LEN(name)) :: prevname,thisname
-!      LOGICAL(SBK) :: localalloc
-!      INTEGER(SIK) :: ipos
-!      TYPE(ParamType) :: newParam
-!      CLASS(ParamType),POINTER :: tmpParam
-!      
-!      localalloc=.FALSE.
-!      IF(.NOT.ASSOCIATED(eParams)) THEN
-!        localalloc=.TRUE.
-!        ALLOCATE(eParams)
-!      ENDIF
-!      
-!      !Search for the name to make sure it does not exist
-!      CALL get_ParamType(thisParam,name,tmpParam)
-!      
-!      IF(.NOT.ASSOCIATED(tmpParam)) THEN
-!        prevname=''
-!        thisname=ADJUSTL(name)
-!        ipos=INDEX(name,'->',.TRUE.)
-!        IF(ipos > 0) THEN
-!          prevname=ADJUSTL(name(1:ipos-1))
-!          thisname=ADJUSTL(name(ipos+2:LEN(name)))
-!        ENDIF
-!      
-!        !Initialize the new parameter
-!        IF(PRESENT(description)) THEN
-!          CALL init_ParamType_SLK(newParam,thisname,param,description)
-!        ELSE
-!          CALL init_ParamType_SLK(newParam,thisname,param)
-!        ENDIF
-!        
-!        !Add the new parameter to thisParam
-!        CALL add_ParamType(thisParam,prevname,newParam)
-!        CALL newParam%clear()
-!      ELSE
-!        CALL eParams%raiseError(modName//'::'//myName// &
-!          ' - parameter name "'//TRIM(name)// &
-!            '" already exists! Use set method or full parameter list path!')
-!      ENDIF
-!      IF(localalloc) DEALLOCATE(eParams)
-!    ENDSUBROUTINE add_ParamType_SLK_a1
-!    
+!-------------------------------------------------------------------------------
+!> @brief Initializes a ParamType object as a one dimensional array of 32-bit integer
+!> @param thisParam the parameter to initialize
+!> @param name the name of the parameter
+!> @param param a one dimensional array of 32-bit integer
+!> @param description an optional description for this parameter
+!> 
+!> This routine is not recursive, so it is like setting a one dimensional array of parameter.
+!> Therefore the name cannot contain the "->" symbol to indicate access to a 
+!> sub-list. @c thisParam must not already be inititalized.
+!>
+    SUBROUTINE init_ParamType_SNK_a1(thisParam,name,param,description)
+      CHARACTER(LEN=*),PARAMETER :: myName='init_ParamType_SNK_a1'
+      CLASS(ParamType),INTENT(INOUT) :: thisParam
+      INTEGER(SNK),INTENT(IN) :: param(:)
+      CHARACTER(LEN=*),INTENT(IN) :: name
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+      LOGICAL(SBK) :: localalloc
+      INTEGER(SIK) :: ipos
+      
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eParams)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eParams)
+      ENDIF
+      
+      IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
+        !Check that '->' character is not in name
+        ipos=INDEX(name,'->')
+        IF(ipos == 0) THEN
+          ALLOCATE(ParamType_SNK_a1 :: thisParam%pdat)
+          thisParam%pdat%name=TRIM(name)
+          IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+          thisParam%pdat%dataType='INTEGER(SNK)'
+          SELECTTYPE(p=>thisParam%pdat)
+            TYPE IS(ParamType_SNK_a1)
+              ALLOCATE(p%val(SIZE(param)))
+              p%val=param
+          ENDSELECT
+        ELSE
+          CALL eParams%raiseError(modName//'::'//myName// &
+            ' - "->" symbol is not allowed in name!')
+        ENDIF
+      ELSE
+        CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter is already initialized! Use set method!')
+      ENDIF
+      IF(localalloc) DEALLOCATE(eParams)
+    ENDSUBROUTINE init_ParamType_SNK_a1
+!
+!-------------------------------------------------------------------------------
+!> @brief Edits a one dimensional array of 32-bit integer valued parameter
+!> @param thisParam the one dimensional array of 32-bit integer valued parameter to edit
+!> @param funit the unit number to edit the parameter to
+!> @param indent optional indicates the number of blank spaces to precede the
+!>        beginning of text to edit.
+!>
+!> The formatted write uses the "general" edit descriptor so that 7 digits (one
+!> more than the significant number in a 32-bit integer) are always
+!> printed if the number is very large in absolute value engineering format
+!> is used otherwise floating point form is used to write the value.
+!>
+    SUBROUTINE edit_ParamType_SNK_a1(thisParam,funit,indent)
+      CLASS(ParamType_SNK_a1),INTENT(IN) :: thisParam
+      INTEGER(SIK),INTENT(IN) :: funit
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+      CHARACTER(LEN=12) :: fmt,fmt2
+      INTEGER(SIK) :: i,j,k
+      
+      i=1
+      j=5
+      IF(PRESENT(indent)) i=i+indent
+      WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
+      IF(LEN_TRIM(thisParam%description) == 0) THEN
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g13.7)') &
+          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val(1)
+      ELSE
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g13.7,a)') &
+          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val(1), &
+            ' !'//thisParam%description
+      ENDIF
+      j=j+LEN(thisParam%dataType)+LEN(thisParam%name)
+      WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
+      DO k=2,SIZE(thisParam%val)
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,g13.7)') &
+          thisParam%val(k)
+      ENDDO
+    ENDSUBROUTINE edit_ParamType_SNK_a1
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears a one dimensional array of 32-bit integer valued parameter
+!> @param thisParam the one dimensional array of 32-bit integer valued parameter to clear
+!> 
+    SUBROUTINE clear_ParamType_SNK_a1(thisParam)
+      CLASS(ParamType_SNK_a1),INTENT(INOUT) :: thisParam
+      DEALLOCATE(thisParam%val)
+      thisParam%name=''
+      thisParam%dataType=''
+      thisParam%description=''
+    ENDSUBROUTINE clear_ParamType_SNK_a1
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the value of an existing one dimensional array of 32-bit integer valued 
+!> parameter to a new value.
+!> @param thisParam the parameter in which an existing parameter with name 
+!>        matching @c name will be to set the new value of @c param
+!> @param name the name of an existing parameter to set the value of
+!> @param param the new value to set for the parameter
+!> @param description an optional new description for the parameter identified
+!>        by @c name
+!>
+!> If a parameter with @c name is not found an error is produced. If the
+!> parameter with @c name is not a one dimensional array of 32-bit integer valued parameter
+!> then an error is produced.
+!>
+    SUBROUTINE set_ParamType_SNK_a1(thisParam,name,param,description)
+      CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SNK_a1'
+      CLASS(ParamType),INTENT(INOUT) :: thisParam
+      CHARACTER(LEN=*),INTENT(IN) :: name
+      INTEGER(SNK),INTENT(IN) :: param(:)
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+      LOGICAL(SBK) :: localalloc
+      CLASS(ParamType),POINTER :: tmpParam
+      
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eParams)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eParams)
+      ENDIF
+      
+      SELECTTYPE(thisParam)
+        TYPE IS(ParamType_SNK_a1)
+          IF(thisParam%name == TRIM(name)) THEN
+            IF(SIZE(thisParam%val) /= SIZE(param)) THEN
+              DEALLOCATE(thisParam%val)
+              ALLOCATE(thisParam%val(SIZE(param)))
+            ENDIF
+            thisParam%val=param
+            IF(PRESENT(description)) thisParam%description=TRIM(description)
+          ELSE
+            CALL eParams%raiseError(modName//'::'//myName// &
+              ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+                '" but name is "'//thisParam%name//'"!')
+          ENDIF
+        CLASS DEFAULT
+          !Search for the parameter name
+          CALL thisParam%getParam(name,tmpParam)
+          IF(ASSOCIATED(tmpParam)) THEN
+            !Parameter was found
+            SELECTTYPE(p=>tmpParam)
+              TYPE IS(ParamType_SNK_a1)
+                IF(SIZE(p%val) /= SIZE(param)) THEN
+                  DEALLOCATE(p%val)
+                  ALLOCATE(p%val(SIZE(param)))
+                ENDIF
+                p%val=param
+                IF(PRESENT(description)) p%description=TRIM(description)
+              CLASS DEFAULT
+                CALL eParams%raiseError(modName//'::'//myName// &
+                  ' - parameter data type mismatch! Parameter type is '// &
+                    tmpParam%dataType//' and must be INTEGER(SNK)!')
+            ENDSELECT
+          ELSE
+            CALL eParams%raiseError(modName//'::'//myName// &
+              ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+                thisParam%name//'"!')
+          ENDIF
+      ENDSELECT
+      IF(localalloc) DEALLOCATE(eParams)
+    ENDSUBROUTINE set_ParamType_SNK_a1
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the one dimensional array of 32-bit integer value for a specified parameter
+!> @param thisParam the parameter in which an existing parameter with name 
+!>        matching @c name will have it's value returned
+!> @param name the name of the parameter to return the value of
+!> @param val the current value of the parameter with @c name
+!> 
+!> If a parameter with @c name is not found an error is produced. If the 
+!> parameter with @c name is not a one dimensional array of 32-bit integer valued parameter
+!> then an error is produced.
+!>
+    SUBROUTINE get_ParamType_SNK_a1(thisParam,name,val)
+      CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SNK_a1'
+      CLASS(ParamType),INTENT(IN) :: thisParam
+      CHARACTER(LEN=*),INTENT(IN) :: name
+      INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: val(:)
+      LOGICAL(SBK) :: localalloc
+      CLASS(ParamType),POINTER :: tmpParam
+      
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eParams)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eParams)
+      ENDIF
+      
+      SELECTTYPE(thisParam)
+        TYPE IS(ParamType_SNK_a1)
+          IF(thisParam%name == TRIM(name)) THEN
+            IF(SIZE(thisParam%val) /= SIZE(val)) THEN
+              DEALLOCATE(val)
+              ALLOCATE(val(SIZE(thisParam%val)))
+            ENDIF
+            val=thisParam%val
+          ELSE
+            CALL eParams%raiseError(modName//'::'//myName// &
+              ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+                thisParam%name//'"!')
+          ENDIF
+        CLASS DEFAULT
+          !Search for the parameter name
+          CALL thisParam%getParam(name,tmpParam)
+          IF(ASSOCIATED(tmpParam)) THEN
+            !Parameter was found
+            SELECTTYPE(p=>tmpParam)
+              TYPE IS(ParamType_SNK_a1)
+                IF(SIZE(p%val) /= SIZE(val)) THEN
+                  DEALLOCATE(val)
+                  ALLOCATE(val(SIZE(p%val)))
+                ENDIF
+                val=p%val
+              CLASS DEFAULT
+                CALL eParams%raiseError(modName//'::'//myName// &
+                  ' - parameter data type mismatch! Parameter type is '// &
+                    tmpParam%dataType//' and must be INTEGER(SNK)!')
+            ENDSELECT
+          ELSE
+            CALL eParams%raiseError(modName//'::'//myName// &
+              ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+                thisParam%name//'"!')
+          ENDIF
+      ENDSELECT
+      IF(localalloc) DEALLOCATE(eParams)
+    ENDSUBROUTINE get_ParamType_SNK_a1
+!
+!-------------------------------------------------------------------------------
+!> @brief Adds a new one dimensional array of 32-bit integer valued parameter to a set of
+!> parameters
+!> @param thisParam the set of parameters to which a new parameter will be added
+!> @param name the location and name of the new parameter
+!> @param param the 32-bit integer value of the new parameter
+!> @param description an optional input for a description of the new parameter
+!> 
+!> This routine creates a new parameter within @c thisParam with @c name.
+!> @c name may contain a full or partial path to the new parameter. If @c name 
+!> can be matched to an existing parameter in @c thisParam an error is produced
+!> If @c name contains a full path for which intermediate lists do not exist
+!> then this lists are created in the process of adding the new parameter.
+!> If @c thisParam is not initialized and @c name does not contain a "->"
+!> symbol then this routine behaves equivalently to 
+!> @ref ParameterLists::init_ParamType_SNK "initSNK".
+!> 
+    SUBROUTINE add_ParamType_SNK_a1(thisParam,name,param,description)
+      CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SNK_a1'
+      CLASS(ParamType),INTENT(INOUT) :: thisParam
+      CHARACTER(LEN=*),INTENT(IN) :: name
+      INTEGER(SNK),INTENT(IN) :: param(:)
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+      CHARACTER(LEN=LEN(name)) :: prevname,thisname
+      LOGICAL(SBK) :: localalloc
+      INTEGER(SIK) :: ipos
+      TYPE(ParamType) :: newParam
+      CLASS(ParamType),POINTER :: tmpParam
+      
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eParams)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eParams)
+      ENDIF
+      
+      !Search for the name to make sure it does not exist
+      CALL get_ParamType(thisParam,name,tmpParam)
+      
+      IF(.NOT.ASSOCIATED(tmpParam)) THEN
+        prevname=''
+        thisname=ADJUSTL(name)
+        ipos=INDEX(name,'->',.TRUE.)
+        IF(ipos > 0) THEN
+          prevname=ADJUSTL(name(1:ipos-1))
+          thisname=ADJUSTL(name(ipos+2:LEN(name)))
+        ENDIF
+      
+        !Initialize the new parameter
+        IF(PRESENT(description)) THEN
+          CALL init_ParamType_SNK_a1(newParam,thisname,param,description)
+        ELSE
+          CALL init_ParamType_SNK_a1(newParam,thisname,param)
+        ENDIF
+        
+        !Add the new parameter to thisParam
+        CALL add_ParamType(thisParam,prevname,newParam)
+        CALL newParam%clear()
+      ELSE
+        CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name "'//TRIM(name)// &
+            '" already exists! Use set method or full parameter list path!')
+      ENDIF
+      IF(localalloc) DEALLOCATE(eParams)
+    ENDSUBROUTINE add_ParamType_SNK_a1
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes a ParamType object as a one dimensional array of 64-bit integer
+!> @param thisParam the parameter to initialize
+!> @param name the name of the parameter
+!> @param param a one dimensional array of 64-bit integer
+!> @param description an optional description for this parameter
+!> 
+!> This routine is not recursive, so it is like setting a one dimensional array of parameter.
+!> Therefore the name cannot contain the "->" symbol to indicate access to a 
+!> sub-list. @c thisParam must not already be inititalized.
+!>
+    SUBROUTINE init_ParamType_SLK_a1(thisParam,name,param,description)
+      CHARACTER(LEN=*),PARAMETER :: myName='init_ParamType_SLK_a1'
+      CLASS(ParamType),INTENT(INOUT) :: thisParam
+      INTEGER(SLK),INTENT(IN) :: param(:)
+      CHARACTER(LEN=*),INTENT(IN) :: name
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+      LOGICAL(SBK) :: localalloc
+      INTEGER(SIK) :: ipos
+      
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eParams)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eParams)
+      ENDIF
+      
+      IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
+        !Check that '->' character is not in name
+        ipos=INDEX(name,'->')
+        IF(ipos == 0) THEN
+          ALLOCATE(ParamType_SLK_a1 :: thisParam%pdat)
+          thisParam%pdat%name=TRIM(name)
+          IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+          thisParam%pdat%dataType='INTEGER(SLK)'
+          SELECTTYPE(p=>thisParam%pdat)
+            TYPE IS(ParamType_SLK_a1)
+              ALLOCATE(p%val(SIZE(param)))
+              p%val=param
+          ENDSELECT
+        ELSE
+          CALL eParams%raiseError(modName//'::'//myName// &
+            ' - "->" symbol is not allowed in name!')
+        ENDIF
+      ELSE
+        CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter is already initialized! Use set method!')
+      ENDIF
+      IF(localalloc) DEALLOCATE(eParams)
+    ENDSUBROUTINE init_ParamType_SLK_a1
+!
+!-------------------------------------------------------------------------------
+!> @brief Edits a one dimensional array of 64-bit integer valued parameter
+!> @param thisParam the one dimensional array of 64-bit integer valued parameter to edit
+!> @param funit the unit number to edit the parameter to
+!> @param indent optional indicates the number of blank spaces to precede the
+!>        beginning of text to edit.
+!>
+!> The formatted write uses the "general" edit descriptor so that 7 digits (one
+!> more than the significant number in a 64-bit integer) are always
+!> printed if the number is very large in absolute value engineering format
+!> is used otherwise floating point form is used to write the value.
+!>
+    SUBROUTINE edit_ParamType_SLK_a1(thisParam,funit,indent)
+      CLASS(ParamType_SLK_a1),INTENT(IN) :: thisParam
+      INTEGER(SIK),INTENT(IN) :: funit
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+      CHARACTER(LEN=12) :: fmt,fmt2
+      INTEGER(SIK) :: i,j,k
+      
+      i=1
+      j=5
+      IF(PRESENT(indent)) i=i+indent
+      WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
+      IF(LEN_TRIM(thisParam%description) == 0) THEN
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g20.14)') &
+          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val(1)
+      ELSE
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g20.14,a)') &
+          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val(1), &
+            ' !'//thisParam%description
+      ENDIF
+      j=j+LEN(thisParam%dataType)+LEN(thisParam%name)
+      WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
+      DO k=2,SIZE(thisParam%val)
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,g20.14)') &
+          thisParam%val(k)
+      ENDDO
+    ENDSUBROUTINE edit_ParamType_SLK_a1
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears a one dimensional array of 64-bit integer valued parameter
+!> @param thisParam the one dimensional array of 64-bit integer valued parameter to clear
+!> 
+    SUBROUTINE clear_ParamType_SLK_a1(thisParam)
+      CLASS(ParamType_SLK_a1),INTENT(INOUT) :: thisParam
+      DEALLOCATE(thisParam%val)
+      thisParam%name=''
+      thisParam%dataType=''
+      thisParam%description=''
+    ENDSUBROUTINE clear_ParamType_SLK_a1
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the value of an existing one dimensional array of 64-bit integer valued 
+!> parameter to a new value.
+!> @param thisParam the parameter in which an existing parameter with name 
+!>        matching @c name will be to set the new value of @c param
+!> @param name the name of an existing parameter to set the value of
+!> @param param the new value to set for the parameter
+!> @param description an optional new description for the parameter identified
+!>        by @c name
+!>
+!> If a parameter with @c name is not found an error is produced. If the
+!> parameter with @c name is not a one dimensional array of 64-bit integer valued parameter
+!> then an error is produced.
+!>
+    SUBROUTINE set_ParamType_SLK_a1(thisParam,name,param,description)
+      CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SLK_a1'
+      CLASS(ParamType),INTENT(INOUT) :: thisParam
+      CHARACTER(LEN=*),INTENT(IN) :: name
+      INTEGER(SLK),INTENT(IN) :: param(:)
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+      LOGICAL(SBK) :: localalloc
+      CLASS(ParamType),POINTER :: tmpParam
+      
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eParams)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eParams)
+      ENDIF
+      
+      SELECTTYPE(thisParam)
+        TYPE IS(ParamType_SLK_a1)
+          IF(thisParam%name == TRIM(name)) THEN
+            IF(SIZE(thisParam%val) /= SIZE(param)) THEN
+              DEALLOCATE(thisParam%val)
+              ALLOCATE(thisParam%val(SIZE(param)))
+            ENDIF
+            thisParam%val=param
+            IF(PRESENT(description)) thisParam%description=TRIM(description)
+          ELSE
+            CALL eParams%raiseError(modName//'::'//myName// &
+              ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+                '" but name is "'//thisParam%name//'"!')
+          ENDIF
+        CLASS DEFAULT
+          !Search for the parameter name
+          CALL thisParam%getParam(name,tmpParam)
+          IF(ASSOCIATED(tmpParam)) THEN
+            !Parameter was found
+            SELECTTYPE(p=>tmpParam)
+              TYPE IS(ParamType_SLK_a1)
+                IF(SIZE(p%val) /= SIZE(param)) THEN
+                  DEALLOCATE(p%val)
+                  ALLOCATE(p%val(SIZE(param)))
+                ENDIF
+                p%val=param
+                IF(PRESENT(description)) p%description=TRIM(description)
+              CLASS DEFAULT
+                CALL eParams%raiseError(modName//'::'//myName// &
+                  ' - parameter data type mismatch! Parameter type is '// &
+                    tmpParam%dataType//' and must be INTEGER(SLK)!')
+            ENDSELECT
+          ELSE
+            CALL eParams%raiseError(modName//'::'//myName// &
+              ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+                thisParam%name//'"!')
+          ENDIF
+      ENDSELECT
+      IF(localalloc) DEALLOCATE(eParams)
+    ENDSUBROUTINE set_ParamType_SLK_a1
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the one dimensional array of 64-bit integer value for a specified parameter
+!> @param thisParam the parameter in which an existing parameter with name 
+!>        matching @c name will have it's value returned
+!> @param name the name of the parameter to return the value of
+!> @param val the current value of the parameter with @c name
+!> 
+!> If a parameter with @c name is not found an error is produced. If the 
+!> parameter with @c name is not a one dimensional array of 64-bit integer valued parameter
+!> then an error is produced.
+!>
+    SUBROUTINE get_ParamType_SLK_a1(thisParam,name,val)
+      CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SLK_a1'
+      CLASS(ParamType),INTENT(IN) :: thisParam
+      CHARACTER(LEN=*),INTENT(IN) :: name
+      INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: val(:)
+      LOGICAL(SBK) :: localalloc
+      CLASS(ParamType),POINTER :: tmpParam
+      
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eParams)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eParams)
+      ENDIF
+      
+      SELECTTYPE(thisParam)
+        TYPE IS(ParamType_SLK_a1)
+          IF(thisParam%name == TRIM(name)) THEN
+            IF(SIZE(thisParam%val) /= SIZE(val)) THEN
+              DEALLOCATE(val)
+              ALLOCATE(val(SIZE(thisParam%val)))
+            ENDIF
+            val=thisParam%val
+          ELSE
+            CALL eParams%raiseError(modName//'::'//myName// &
+              ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+                thisParam%name//'"!')
+          ENDIF
+        CLASS DEFAULT
+          !Search for the parameter name
+          CALL thisParam%getParam(name,tmpParam)
+          IF(ASSOCIATED(tmpParam)) THEN
+            !Parameter was found
+            SELECTTYPE(p=>tmpParam)
+              TYPE IS(ParamType_SLK_a1)
+                IF(SIZE(p%val) /= SIZE(val)) THEN
+                  DEALLOCATE(val)
+                  ALLOCATE(val(SIZE(p%val)))
+                ENDIF
+                val=p%val
+              CLASS DEFAULT
+                CALL eParams%raiseError(modName//'::'//myName// &
+                  ' - parameter data type mismatch! Parameter type is '// &
+                    tmpParam%dataType//' and must be INTEGER(SLK)!')
+            ENDSELECT
+          ELSE
+            CALL eParams%raiseError(modName//'::'//myName// &
+              ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+                thisParam%name//'"!')
+          ENDIF
+      ENDSELECT
+      IF(localalloc) DEALLOCATE(eParams)
+    ENDSUBROUTINE get_ParamType_SLK_a1
+!
+!-------------------------------------------------------------------------------
+!> @brief Adds a new one dimensional array of 64-bit integer valued parameter to a set of
+!> parameters
+!> @param thisParam the set of parameters to which a new parameter will be added
+!> @param name the location and name of the new parameter
+!> @param param the 64-bit integer value of the new parameter
+!> @param description an optional input for a description of the new parameter
+!> 
+!> This routine creates a new parameter within @c thisParam with @c name.
+!> @c name may contain a full or partial path to the new parameter. If @c name 
+!> can be matched to an existing parameter in @c thisParam an error is produced
+!> If @c name contains a full path for which intermediate lists do not exist
+!> then this lists are created in the process of adding the new parameter.
+!> If @c thisParam is not initialized and @c name does not contain a "->"
+!> symbol then this routine behaves equivalently to 
+!> @ref ParameterLists::init_ParamType_SLK "initSLK".
+!> 
+    SUBROUTINE add_ParamType_SLK_a1(thisParam,name,param,description)
+      CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SLK_a1'
+      CLASS(ParamType),INTENT(INOUT) :: thisParam
+      CHARACTER(LEN=*),INTENT(IN) :: name
+      INTEGER(SLK),INTENT(IN) :: param(:)
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+      CHARACTER(LEN=LEN(name)) :: prevname,thisname
+      LOGICAL(SBK) :: localalloc
+      INTEGER(SIK) :: ipos
+      TYPE(ParamType) :: newParam
+      CLASS(ParamType),POINTER :: tmpParam
+      
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eParams)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eParams)
+      ENDIF
+      
+      !Search for the name to make sure it does not exist
+      CALL get_ParamType(thisParam,name,tmpParam)
+      
+      IF(.NOT.ASSOCIATED(tmpParam)) THEN
+        prevname=''
+        thisname=ADJUSTL(name)
+        ipos=INDEX(name,'->',.TRUE.)
+        IF(ipos > 0) THEN
+          prevname=ADJUSTL(name(1:ipos-1))
+          thisname=ADJUSTL(name(ipos+2:LEN(name)))
+        ENDIF
+      
+        !Initialize the new parameter
+        IF(PRESENT(description)) THEN
+          CALL init_ParamType_SLK_a1(newParam,thisname,param,description)
+        ELSE
+          CALL init_ParamType_SLK_a1(newParam,thisname,param)
+        ENDIF
+        
+        !Add the new parameter to thisParam
+        CALL add_ParamType(thisParam,prevname,newParam)
+        CALL newParam%clear()
+      ELSE
+        CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name "'//TRIM(name)// &
+            '" already exists! Use set method or full parameter list path!')
+      ENDIF
+      IF(localalloc) DEALLOCATE(eParams)
+    ENDSUBROUTINE add_ParamType_SLK_a1
+    
 ENDMODULE ParameterLists
