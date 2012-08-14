@@ -44,7 +44,7 @@ PROGRAM testParameterLists
   INTEGER(SLK),ALLOCATABLE :: valslk3a(:,:,:)
   TYPE(ExceptionHandlerType),POINTER :: e
   
-  TYPE(ParamType) :: testParam,testParam2,testList(5),testList2(3)
+  TYPE(ParamType) :: testParam,testParam2,testParam3,testList(5),testList2(3)
   CLASS(ParamType),POINTER :: someParam
   
   WRITE(*,*) '==================================================='
@@ -431,15 +431,61 @@ PROGRAM testParameterLists
   CALL testParam2%clear()
   CALL testParam%clear()
   
-  !Setup reference list
+  !Setup reference list and test validation subroutines
   CALL testParam2%add('TestReq->p1',0.0_SSK)
+  !test the null case for both params.
+  CALL testParam2%validate(testParam,testParam3)
+  testParam3=testParam2
+  eParams => NULL()
+  !test the null param, but existing optional param
+  CALL testParam2%validate(testParam,testParam3)
+  eParams => e
+  testParam=testParam2
+  CALL testParam3%clear()
+  !test existing params with null optional params
+  CALL testParam%validate(testParam2,testParam3)
   CALL testParam2%add('TestReq->p2',0.1_SSK)
+  !test only existing params, no optional params
+  CALL testParam%validate(testParam2)
+  testParam=testParam2
+  !trying to test actual optional params
+  CALL testParam2%validate(testParam,testParam3)
   CALL testParam2%add('TestReq->sublist1->p1',1.0_SSK)
   CALL testParam2%add('TestReq->sublist1->p3',1.1_SSK)
+  CALL testParam3%add('TestReq->sublist1->p1',1.0_SSK)
+  CALL testParam3%add('TestReq->sublist1->p3',1.1_SSK)
+  testParam=testParam2
+  CALL testParam%validate(testParam2,testParam3)
+  CALL testParam3%clear()
+  CALL testParam%clear()
   CALL testParam2%add('TestReq->sublist1->sublist2->p2',2.0_SSK)
   CALL testParam2%add('TestReq->sublist1->sublist2->sublist3->null',-1.0_SSK)
+  testParam=testParam2
+  CALL testParam2%remove('TestReq->sublist1->sublist2->sublist3->null')
+  CALL testParam3%add('TestReq->sublist1->sublist2->sublist3->null',-1.0_SSK)
+  CALL testParam3%add('TestReq->sublist1->sublist2->sublist3->opt',-2.0_SSK)
+  !a legitimate optional set, I think.
+  CALL testParam%validate(testParam2,testParam3)
+  CALL testParam%validate(testParam2)
+  CALL testParam%add('TestReq->sublist1->sublist2->sublist3->opt2',4.0_SSK)
+  !different type for optional input
+  CALL testParam%add('TestReq->sublist1->sublist2->sublist3->opt3',5.0_SDK)
+  CALL testParam3%add('TestReq->sublist1->sublist2->sublist3->opt3',5.0_SSK)
+  CALL testParam3%add('TestReq->sublist1->sublist2->sublist3->opt4',5.0_SDK)
+  CALL testParam%add('TestReq->sublist1->sublist2->sublist3->opt4',5.0_SSK)
+  !different type for required input
+  CALL testParam%add('TestReq->sublist1->sublist2->sublist3->p5',7.1_SDK)
+  CALL testParam2%add('TestReq->sublist1->sublist2->sublist3->p5',7.1_SSK)
+  CALL testParam2%add('TestReq->sublist1->sublist2->sublist3->p7',0.1_SDK)
+  CALL testParam%add('TestReq->sublist1->sublist2->sublist3->p7',0.1_SSK)
+  CALL testParam%add('TestReq->p6',6.0_SSK)
+  CALL testParam2%add('TestReq->p6',6_SNK)
+  CALL testParam%validate(testParam2,testParam3)
+  CALL testParam%validate(testParam2)
   CALL testParam2%remove('TestReq->sublist1->sublist2->sublist3->null')
   CALL testParam2%add('TestReq->p4',0.2_SSK)
+  CALL testParam%validate(testParam2,testParam3)
+  CALL testParam%validate(testParam2)
   CALL testParam2%edit(OUTPUT_UNIT)
 
   WRITE(*,*) '==================================================='
