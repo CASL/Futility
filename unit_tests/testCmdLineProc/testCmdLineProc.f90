@@ -176,6 +176,7 @@ PROGRAM testCmdLineProc
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING COMMAND LINE PROCESSOR PASSED!'
   WRITE(*,*) '==================================================='
+  DEALLOCATE(e)
 ENDPROGRAM testCmdLineProc
 
 SUBROUTINE testProcArgs(tclp)

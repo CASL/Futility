@@ -729,6 +729,7 @@ PROGRAM testSpaceFillingCurve
     WRITE(*,*) 'CALL testZTree%partition(5,4,istt,istp) FAILED!'
     STOP 666
   ENDIF
+  CALL testZTree%clear()
   WRITE(*,*) '---------------------------------------------------'
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING SPACE FILLING CURVES PASSED!'

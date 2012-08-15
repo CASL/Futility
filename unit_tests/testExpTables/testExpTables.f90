@@ -209,6 +209,7 @@ PROGRAM testExpTables
     ans=testET2(i)%EXPT(x)
     err(i)=ans-(1._SRK-EXP(x))
   ENDDO
+  CALL testET2(5)%clear()
   IF(ANY(ABS(err) > 1e-6_SRK)) THEN
     WRITE(*,*) 'tableET%EXPT(x) FAILED!'
     STOP 666

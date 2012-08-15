@@ -321,6 +321,9 @@ PROGRAM testStochasticSampler
   WRITE(*,*) 'TESTING STOCHASTIC SAMPLER PASSED!'
   WRITE(*,*) '==================================================='
   CALL MPIEnv%finalize()
+  CALL myRNG%clear()
+  DEALLOCATE(MPIEnv)
+  DEALLOCATE(OMPEnv)
 !
 !===============================================================================
   CONTAINS
