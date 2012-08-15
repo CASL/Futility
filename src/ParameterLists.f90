@@ -1266,8 +1266,9 @@ MODULE ParameterLists
     ENDSUBROUTINE clear_ParamType
 !
 !-------------------------------------------------------------------------------
-!> @brief Searches a parameter for a set of required parameters and determines
-!> if all the required parameters are present and of the correct type.
+!> @brief Searches a parameter (thisParam) for a set of required parameters 
+!> (reqParams) and determines if all the required parameters are present and 
+!> of the correct type.
 !> @param thisParam the parameter to validate against reqParams
 !> @param reqParams the set of required parameters that must appear in 
 !>        @c thisParam
@@ -1342,12 +1343,14 @@ MODULE ParameterLists
     ENDFUNCTION validateReq_ParamType
 !
 !-------------------------------------------------------------------------------
-!> @brief Searches a parameter for a set of optional parameters when an optional
-!> parameter is present is also checks the type. If an optional parameter
-!> is not present or has the wrong type it is reset with the default value.
-!> @param thisParam
-!> @param optParams
-!> @param prefix
+!> @brief Searches a parameter (thisParam) for a set of optional parameters 
+!> (optParams) when an optional parameter is present. It also checks the type. 
+!> If an optional parameter is not present or has the wrong type it is reset 
+!> with the default value.
+!> @param thisParam the parameter to validate against reqParams
+!> @param optParams the set of optional parameters that must appear in 
+!>        @c thisParam
+!> @param prefix a prefix path for the parameter's full path name
 !>
    RECURSIVE SUBROUTINE validateOpt_Paramtype(thisParam,optParams,prefix)
       CHARACTER(LEN=*),PARAMETER :: myName='validateOpt_Paramtype'
@@ -1432,11 +1435,15 @@ MODULE ParameterLists
    ENDSUBROUTINE validateOpt_Paramtype
 !
 !-------------------------------------------------------------------------------
-!> @brief Compares a list to another list and reports any extra parameters
-!> that are in the first list and not the second list.
-!> @param thisParam
-!> @param optParams
-!> @param prefix
+!> @brief Compares a parameter list to another parameter list and reports any 
+!> extra parameters that are in the first list and not the second list or the 
+!> third (optional) list.
+!> @param thisParam the parameter in which to check for extra parameters
+!> @param reqParams the set of required parameters that must appear in 
+!>        @c thisParam
+!> @param optParams the set of optional parameters that must appear in 
+!>        @c thisParam
+!> @param prefix a prefix path for the parameter's full path name
 !>
     RECURSIVE SUBROUTINE checkExtras_Paramtype(thisParam,reqParams,optParams,prefix)
       CHARACTER(LEN=*),PARAMETER :: myName='checkExtras_Paramtype'
