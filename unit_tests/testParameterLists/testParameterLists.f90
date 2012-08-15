@@ -491,6 +491,7 @@ PROGRAM testParameterLists
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING PARAMETERLISTS PASSED!'
   WRITE(*,*) '==================================================='  
+  CALL testClear()
 !
 !===============================================================================
   CONTAINS
@@ -758,6 +759,7 @@ PROGRAM testParameterLists
     
     CALL testParam%clear()
     CALL testParam2%clear()
+    CALL testParam3%clear()
     CALL testList(1)%clear()
     CALL testList(2)%clear()
     CALL testList(3)%clear()
