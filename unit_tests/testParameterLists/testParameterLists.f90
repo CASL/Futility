@@ -338,6 +338,19 @@ PROGRAM testParameterLists
   CALL testParam2%edit(OUTPUT_UNIT)
   eParams => e
   CALL testParam2%add('List2',testList2,'Empty list')
+  !Clearing the allocated variables
+  DEALLOCATE(valssk1a)
+  DEALLOCATE(valsdk1a)
+  DEALLOCATE(valsnk1a)
+  DEALLOCATE(valslk1a)
+  DEALLOCATE(valssk2a)
+  DEALLOCATE(valsdk2a)
+  DEALLOCATE(valsnk2a)
+  DEALLOCATE(valslk2a)
+  DEALLOCATE(valssk3a)
+  DEALLOCATE(valsdk3a)
+  DEALLOCATE(valsnk3a)
+  DEALLOCATE(valslk3a)
   
   WRITE(*,*) '---------------------------------------------------'
   WRITE(*,*) 'TESTING Remove Routines...'
@@ -471,13 +484,13 @@ PROGRAM testParameterLists
   !different type for optional input
   CALL testParam%add('TestReq->sublist1->sublist2->sublist3->opt3',5.0_SDK)
   CALL testParam3%add('TestReq->sublist1->sublist2->sublist3->opt3',5.0_SSK)
-  CALL testParam3%add('TestReq->sublist1->sublist2->sublist3->opt4',5.0_SDK)
+  CALL testParam3%add('TestReq->sublist1->sublist2->sublist3->opt4',5.1_SSK)
   CALL testParam%add('TestReq->sublist1->sublist2->sublist3->opt4',5.0_SSK)
   !different type for required input
   CALL testParam%add('TestReq->sublist1->sublist2->sublist3->p5',7.1_SDK)
   CALL testParam2%add('TestReq->sublist1->sublist2->sublist3->p5',7.1_SSK)
-  CALL testParam2%add('TestReq->sublist1->sublist2->sublist3->p7',0.1_SDK)
-  CALL testParam%add('TestReq->sublist1->sublist2->sublist3->p7',0.1_SSK)
+  CALL testParam2%add('TestReq->sublist1->sublist2->sublist3->p7',0.1_SSK)
+  CALL testParam%add('TestReq->sublist1->sublist2->sublist3->p7',0.2_SSK)
   CALL testParam%add('TestReq->p6',6.0_SSK)
   CALL testParam2%add('TestReq->p6',6_SNK)
   CALL testParam%validate(testParam2,testParam3)
@@ -491,6 +504,7 @@ PROGRAM testParameterLists
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING PARAMETERLISTS PASSED!'
   WRITE(*,*) '==================================================='  
+  CALL testClear()
 !
 !===============================================================================
   CONTAINS
@@ -758,6 +772,7 @@ PROGRAM testParameterLists
     
     CALL testParam%clear()
     CALL testParam2%clear()
+    CALL testParam3%clear()
     CALL testList(1)%clear()
     CALL testList(2)%clear()
     CALL testList(3)%clear()

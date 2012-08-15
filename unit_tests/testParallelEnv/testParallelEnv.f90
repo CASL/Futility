@@ -415,4 +415,5 @@ PROGRAM testParallelEnv
   CALL MPI_Barrier(MPI_COMM_WORLD,mpierr)
 #endif
   CALL testMPI%finalize()
+  DEALLOCATE(eParEnv)
 ENDPROGRAM testParallelEnv

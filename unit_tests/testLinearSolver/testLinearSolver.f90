@@ -53,6 +53,7 @@ PROGRAM testLinearSolver
   WRITE(*,*) 'TESTING LINEAR SOLVERS PASSED!'
   WRITE(*,*) '==================================================='
   CALL mpiTestEnv%finalize()
+  DEALLOCATE(e)
 !
 !===============================================================================
 CONTAINS
