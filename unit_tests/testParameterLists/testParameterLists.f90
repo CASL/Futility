@@ -471,13 +471,13 @@ PROGRAM testParameterLists
   !different type for optional input
   CALL testParam%add('TestReq->sublist1->sublist2->sublist3->opt3',5.0_SDK)
   CALL testParam3%add('TestReq->sublist1->sublist2->sublist3->opt3',5.0_SSK)
-  CALL testParam3%add('TestReq->sublist1->sublist2->sublist3->opt4',5.0_SDK)
+  CALL testParam3%add('TestReq->sublist1->sublist2->sublist3->opt4',5.1_SSK)
   CALL testParam%add('TestReq->sublist1->sublist2->sublist3->opt4',5.0_SSK)
   !different type for required input
   CALL testParam%add('TestReq->sublist1->sublist2->sublist3->p5',7.1_SDK)
   CALL testParam2%add('TestReq->sublist1->sublist2->sublist3->p5',7.1_SSK)
-  CALL testParam2%add('TestReq->sublist1->sublist2->sublist3->p7',0.1_SDK)
-  CALL testParam%add('TestReq->sublist1->sublist2->sublist3->p7',0.1_SSK)
+  CALL testParam2%add('TestReq->sublist1->sublist2->sublist3->p7',0.1_SSK)
+  CALL testParam%add('TestReq->sublist1->sublist2->sublist3->p7',0.2_SSK)
   CALL testParam%add('TestReq->p6',6.0_SSK)
   CALL testParam2%add('TestReq->p6',6_SNK)
   CALL testParam%validate(testParam2,testParam3)

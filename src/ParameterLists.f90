@@ -1361,13 +1361,6 @@ MODULE ParameterLists
       IF(nprefix > 1) THEN
         IF('->' == prefix(LEN(prefix)-1:LEN(prefix)) ) &
           nprefix=LEN(prefix)-2
-      ELSE
-        SELECTTYPE(p=>optParams)
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-              ' - Optional parameter "'//prefix//p%name//'" has a prefix '// &
-                ' length of 0. The optional parameter may be empty!')
-        ENDSELECT
       ENDIF
 !
 !Loop over all optional params in optParams and search thisParam for
