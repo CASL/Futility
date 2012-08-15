@@ -338,6 +338,19 @@ PROGRAM testParameterLists
   CALL testParam2%edit(OUTPUT_UNIT)
   eParams => e
   CALL testParam2%add('List2',testList2,'Empty list')
+  !Clearing the allocated variables
+  DEALLOCATE(valssk1a)
+  DEALLOCATE(valsdk1a)
+  DEALLOCATE(valsnk1a)
+  DEALLOCATE(valslk1a)
+  DEALLOCATE(valssk2a)
+  DEALLOCATE(valsdk2a)
+  DEALLOCATE(valsnk2a)
+  DEALLOCATE(valslk2a)
+  DEALLOCATE(valssk3a)
+  DEALLOCATE(valsdk3a)
+  DEALLOCATE(valsnk3a)
+  DEALLOCATE(valslk3a)
   
   WRITE(*,*) '---------------------------------------------------'
   WRITE(*,*) 'TESTING Remove Routines...'
