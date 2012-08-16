@@ -175,7 +175,8 @@ MODULE StochasticSampling
       PROCEDURE,PASS :: rejectionarg => rejectarg_Sampler
       !> @copybrief StochasticSampling::pwlreject_Sampler
       !> @copydetails StochasticSampling::pwlreject_Sampler
-      PROCEDURE,PASS :: pwlrejection => pwlreject_Sampler
+!       Implemented but buggy
+!      PROCEDURE,PASS :: pwlrejection => pwlreject_Sampler
     ENDTYPE StochasticSamplingType
 
     !> Exception Handler for use in MatrixTypes
@@ -598,62 +599,64 @@ CONTAINS
         IF (sampler%uniform(0.0_SDK,ymax)<=func(rang,arg)) RETURN
       ENDDO
     ENDFUNCTION rejectarg_Sampler
+!!
+!!-------------------------------------------------------------------------------
+!!> @brief Routine returns a random number from an arbitrary function func using
+!!>        rejection sampling which is bound by a piece-wise linear function
+!!> @param sampler the type variable to sample from
+!!> @param func is the function which is sampled
+!!> @param yval is the y components of a piece-wise linear function bounding func
+!!> @param xval is the x components of a piece-wise linear function bounding func
+!!> @param c is an optional scalar which scales the piece-wise linear fucntion
+!!>          bounding func.  It is important to note that if c is present the pwl
+!!>          function is assumed to be normalized, if it is not present the pwl
+!!>          function is not scaled and used as is
+!!>
+!*** this function is commented out because it is buggy and isn't a needed feature right now
+!    FUNCTION pwlreject_Sampler(sampler,func,yval,xval,c) RESULT(rang)
+!      CLASS(StochasticSamplingType),INTENT(INOUT) :: sampler
+!      REAL(SDK),INTENT(IN) :: yval(:)
+!      REAL(SDK),INTENT(IN) :: xval(:)
+!      REAL(SDK),INTENT(IN),OPTIONAL :: c
+!      REAL(SDK) :: rang
+!      REAL(SDK) :: g, mult
+!      REAL(SDK),ALLOCATABLE :: yscaled(:)
+!      INTEGER(SIK) :: i,n
+!      
+!      INTERFACE
+!        FUNCTION func(x)
+!          IMPORT :: SDK
+!          REAL(SDK),INTENT(IN) :: x
+!          REAL(SDK) :: func
+!        ENDFUNCTION
+!      ENDINTERFACE
+!      
+!      n=SIZE(xval,DIM=1)-1
+!      ALLOCATE(yscaled(n+1))
+!      
+!      IF (PRESENT(c)) THEN
+!        mult=c
+!        yscaled=yval
+!      ELSE
+!        mult=0.0_SDK
+!        DO i=1,n
+!          mult=mult+(yval(i)+yval(i+1))/2*(xval(i+1)-xval(i))
+!        ENDDO
+!        yscaled=yval/mult
+!      ENDIF
 !
-!-------------------------------------------------------------------------------
-!> @brief Routine returns a random number from an arbitrary function func using
-!>        rejection sampling which is bound by a piece-wise linear function
-!> @param sampler the type variable to sample from
-!> @param func is the function which is sampled
-!> @param yval is the y components of a piece-wise linear function bounding func
-!> @param xval is the x components of a piece-wise linear function bounding func
-!> @param c is an optional scalar which scales the piece-wise linear fucntion
-!>          bounding func.  It is important to note that if c is present the pwl
-!>          function is assumed to be normalized, if it is not present the pwl
-!>          function is not scaled and used as is
-!>
-    FUNCTION pwlreject_Sampler(sampler,func,yval,xval,c) RESULT(rang)
-      CLASS(StochasticSamplingType),INTENT(INOUT) :: sampler
-      REAL(SDK),INTENT(IN) :: yval(:)
-      REAL(SDK),INTENT(IN) :: xval(:)
-      REAL(SDK),INTENT(IN),OPTIONAL :: c
-      REAL(SDK) :: rang
-      REAL(SDK) :: g, mult
-      REAL(SDK),ALLOCATABLE :: yscaled(:)
-      INTEGER(SIK) :: i,n
-      
-      INTERFACE
-        FUNCTION func(x)
-          IMPORT :: SDK
-          REAL(SDK),INTENT(IN) :: x
-          REAL(SDK) :: func
-        ENDFUNCTION
-      ENDINTERFACE
-      
-      n=SIZE(xval,DIM=1)-1
-      ALLOCATE(yscaled(n+1))
-      
-      IF (PRESENT(c)) THEN
-        mult=c
-        yscaled=yval
-      ELSE
-        mult=0.0_SDK
-        DO i=1,n
-          mult=mult+(yval(i)+yval(i+1))/2*(xval(i+1)-xval(i))
-        ENDDO
-        yscaled=yval/mult
-      ENDIF
-
-      DO
-        rang=sampler%pwlinear(yscaled,xval)
-        DO i=1,n
-          IF (xval(i) <= rang) then
-            g=(yscaled(i)-yscaled(i-1))/(xval(i)-xval(i-1))*(rang-xval(i-1))+yscaled(i-1)
-            EXIT
-          ENDIF
-        ENDDO
-        IF (sampler%uniform(0.0_SDK,mult*g)<=func(rang)) RETURN
-      ENDDO
-    ENDFUNCTION pwlreject_Sampler
+!      DO
+!        rang=sampler%pwlinear(yscaled,xval)
+!        DO i=1,n
+!          IF (xval(i) >= rang) then
+!            g=(yscaled(i)-yscaled(i-1))/(xval(i)-xval(i-1))*(rang-xval(i-1))+yscaled(i-1)
+!            EXIT
+!          ENDIF
+!        ENDDO
+!        write(*,*) sampler%uniform(0.0_SDK,mult*g)
+!        IF (sampler%uniform(0.0_SDK,mult*g)<=func(rang)) RETURN
+!      ENDDO
+!    ENDFUNCTION pwlreject_Sampler
 !
 !-------------------------------------------------------------------------------
 !> @brief Routine returns a random number from an arbitrary function func using

@@ -49,6 +49,14 @@ PROGRAM testStochasticSampler
       REAL(SDK) :: lineararg
     ENDFUNCTION
   ENDINTERFACE
+
+  INTERFACE
+    FUNCTION quadfunc(x)
+      IMPORT :: SDK
+      REAL(SDK),INTENT(IN) :: x
+      REAL(SDK) :: quadfunc
+    ENDFUNCTION
+  ENDINTERFACE
   
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING STOCHASTIC SAMPLER...'
@@ -317,6 +325,22 @@ PROGRAM testStochasticSampler
   WRITE(*,*) "SDEV:      ", SQRT(stdev/n-mean**2)
   WRITE(*,*) "SDEV TRUE: ", 5.0_SDK/SQRT(18.0_SDK)
   
+  WRITE(*,*)
+  WRITE(*,*) "Test Rejection Sampling with function arguments"
+  mean=0.0
+  stdev=0.0
+  DO i=1,n
+    x=myRNG%rejectionarg(lineararg,0.0_SDK,2.0_SDK,7.0_SDK,(/2.0_SDK,1.0_SDK/))
+    mean=mean+x
+    stdev=stdev+x**2
+  ENDDO
+  WRITE(*,*) "COUNT:  ", myRNG%counter
+  mean=mean/n
+  WRITE(*,*) "MEAN:      ", mean
+  WRITE(*,*) "MEAN TRUE: "
+  WRITE(*,*) "SDEV:      ", SQRT(stdev/n-mean**2)
+  WRITE(*,*) "SDEV TRUE: "
+
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING STOCHASTIC SAMPLER PASSED!'
   WRITE(*,*) '==================================================='
@@ -439,7 +463,8 @@ PROGRAM testStochasticSampler
     ENDSUBROUTINE TestEvap
 !
 ENDPROGRAM testStochasticSampler
-
+!
+!-------------------------------------------------------------------------------
 FUNCTION linear(x) RESULT(y)
   USE IntrType
   REAL(SDK),INTENT(IN) :: x
@@ -456,3 +481,12 @@ FUNCTION lineararg(x,arg) RESULT(y)
   REAL(SDK) :: y
   y=arg(1)*x+arg(2)
 ENDFUNCTION lineararg
+!
+!-------------------------------------------------------------------------------
+FUNCTION quadfunc(x) RESULT(y)
+  USE IntrType
+  REAL(SDK),INTENT(IN) :: x
+  REAL(SDK) :: y
+      
+  y=x**2+x+1.0_SDK
+ENDFUNCTION
