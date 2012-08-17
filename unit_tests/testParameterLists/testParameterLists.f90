@@ -552,7 +552,7 @@ PROGRAM testParameterLists
   CALL testParam%add('TestReq->p1',0.2_SSK)
   CALL testParam%validate(testParam2,testParam3)
   !Trying to test the optional stuff.  Need to have valid reqparams.
-  CALL testParam3%add('TestOpt->p2->2far->veryfar->veryveryfar',1_SLK)
+  CALL testParam3%add('TestOpt->p2->2far->veryfar->veryveryfar',3.0_SDK)
   CALL testParam%validate(testParam2,testParam3)
   CALL testParam3%remove('TestOpt->p2->2far->veryfar->veryveryfar')
   CALL testParam%validate(testParam2,testParam3)
