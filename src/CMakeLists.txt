@@ -45,6 +45,7 @@ TRIBITS_ADD_LIBRARY(Utils
       BLAS3.f90
       BLAS.f90
       MatrixTypes.f90
+      VectorTypes.f90
       LinearSolverTypes.f90
       StochasticSampling.f90
 )
