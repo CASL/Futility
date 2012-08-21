@@ -221,6 +221,9 @@ MODULE VTKFiles
       !> @copybrief VTKFiles::removeCells_VTKMeshType
       !> @copydetails VTKFiles::removeCells_VTKMeshType
       PROCEDURE,PASS :: removeCells => removeCells_VTKMeshType
+      !> @copybrief VTKFiles::clear_VTKMeshType
+      !> @copydetails VTKFiles::clear_VTKMeshType
+      PROCEDURE,PASS :: clear => clear_VTKMeshType
   ENDTYPE VTKMeshType
   
   !> Type for representing data that can be written on a VTK mesh
@@ -241,6 +244,12 @@ MODULE VTKFiles
     INTEGER(SIK) :: dataSetType=0
     !> The data values to be written
     REAL(SRK),ALLOCATABLE :: dataList(:)
+!
+!List of type-bound procedures (methods) for the VTK Mesh type
+    CONTAINS
+      !> @copybrief VTKFiles::clear_VTKDataType
+      !> @copydetails VTKFiles::clear_VTKDataType
+      PROCEDURE,PASS :: clear => clear_VTKDataType
   ENDTYPE VTKDataType
   
   
@@ -375,9 +384,6 @@ MODULE VTKFiles
 !> @brief Clears the VTK Mesh object.
 !> @param myVTKMesh the VTK mesh object
 !>
-!> At present this is not a public routine. Although it should probably be made
-!> type-bound.
-!>
     SUBROUTINE clear_VTKMeshType(myVTKMesh)
       CLASS(VTKMeshType),INTENT(INOUT) :: myVTKMesh
       myVTKMesh%isInit=.FALSE.
@@ -391,6 +397,21 @@ MODULE VTKFiles
       IF(ALLOCATED(myVTKMesh%y)) DEALLOCATE(myVTKMesh%y)
       IF(ALLOCATED(myVTKMesh%z)) DEALLOCATE(myVTKMesh%z)
     ENDSUBROUTINE clear_VTKMeshType
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears the VTK Data object.
+!> @param myVTKData the VTK Data object
+!>
+    SUBROUTINE clear_VTKDataType(myVTKData)
+      CLASS(VTKDataType),INTENT(INOUT) :: myVTKData
+      
+      myVTKData%isInit=.FALSE.
+      myVTKData%varname=''
+      myVTKData%vtkDataFormat=''
+      myVTKData%isCellData=.FALSE.
+      myVTKData%dataSetType=0
+      IF(ALLOCATED(myVTKData%dataList)) DEALLOCATE(myVTKData%dataList)
+    ENDSUBROUTINE clear_VTKDataType
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a VTK mesh to VTK Legacy file

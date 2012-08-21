@@ -53,6 +53,7 @@ PROGRAM testMatrixMath
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING MATRIX MATH PASSED!'
   WRITE(*,*) '==================================================='
+  DEALLOCATE(e)
 !
 !===============================================================================
   CONTAINS
@@ -1753,7 +1754,12 @@ PROGRAM testMatrixMath
           STOP 666
       ENDSELECT
       WRITE(*,*) '  Passed: CALL BLAS_matmult(...) A=DR B=DR C=DR'
-      
+      CALL cmat%clear()
+      DEALLOCATE(cmat)
+      CALL bmat%clear()
+      DEALLOCATE(bmat)
+      CALL thisMtrx%clear()
+      DEALLOCATE(thisMtrx)
     ENDSUBROUTINE  testMatrixMultRect
 !
 !-------------------------------------------------------------------------------
