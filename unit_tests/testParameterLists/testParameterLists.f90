@@ -579,6 +579,7 @@ PROGRAM testParameterLists
   WRITE(*,*) 'TESTING PARAMETERLISTS PASSED!'
   WRITE(*,*) '==================================================='  
   CALL testClear()
+  DEALLOCATE(e)
 !
 !===============================================================================
   CONTAINS
