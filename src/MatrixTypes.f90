@@ -82,6 +82,8 @@ MODULE MatrixTypes
   PUBLIC :: DenseRectMatrixType
   PUBLIC :: TriDiagMatrixType
   PUBLIC :: SparseMatrixType
+  PUBLIC :: PETScSparseMatrixType
+  PUBLIC :: PETScDenseMatrixType
   PUBLIC :: BLAS_matvec
   PUBLIC :: BLAS_matmult
   
@@ -143,6 +145,46 @@ MODULE MatrixTypes
     !> The number of columns
     INTEGER(SIK) :: m=0
   ENDTYPE RectMatrixType
+  
+  !> @brief The extended type for sparse PETSc matrices
+  TYPE,ABSTRACT,EXTENDS(MatrixType) :: PETScSparseMatrixType
+    !Mat :: A
+!
+!List of Type Bound Procedures
+    CONTAINS
+      !> @copybrief MatrixTypes::clear_PETScSparseMatrixType
+      !> @copydetails MatrixTypes::clear_PETScSparseMatrixType
+      PROCEDURE,PASS :: clear => clear_PETScSparseMatrixType
+      !> @copybrief MatrixTypes::init_PETScSparseMatrixType
+      !> @copydetails MatrixTypes::init_PETScSparseMatrixType
+      PROCEDURE,PASS :: init => init_PETScSparseMatrixType
+      !> @copybrief MatrixTypes::set_PETScSparseMatrixType
+      !> @copydetails MatrixTypes::set_PETScSparseMatrixType
+      PROCEDURE,PASS :: set => set_PETScSparseMatrixType
+      !> @copybrief MatrixTypes::get_PETScSparseMatrixType
+      !> @copydetails MatrixTypes::get_PETScSparseMatrixType
+      PROCEDURE,PASS :: get => get_PETScSparseMatrixType
+  ENDTYPE PETScSparseMatrixType
+  
+  !> @brief The extended type for dense PETSc matrices
+  TYPE,ABSTRACT,EXTENDS(MatrixType) :: PETScDenseMatrixType
+    !Mat :: A
+!
+!List of Type Bound Procedures
+    CONTAINS
+      !> @copybrief MatrixTypes::clear_PETScDenseMatrixType
+      !> @copydetails MatrixTypes::clear_PETScDenseMatrixType
+      PROCEDURE,PASS :: clear => clear_PETScDenseMatrixType
+      !> @copybrief MatrixTypes::init_PETScDenseMatrixType
+      !> @copydetails MatrixTypes::init_PETScDenseMatrixType
+      PROCEDURE,PASS :: init => init_PETScDenseMatrixType
+      !> @copybrief MatrixTypes::set_PETScDenseMatrixType
+      !> @copydetails MatrixTypes::set_PETScDenseMatrixType
+      PROCEDURE,PASS :: set => set_PETScDenseMatrixType
+      !> @copybrief MatrixTypes::get_PETScDenseMatrixType
+      !> @copydetails MatrixTypes::get_PETScDenseMatrixType
+      PROCEDURE,PASS :: get => get_PETScDenseMatrixType
+  ENDTYPE PETScDenseMatrixType
   
   !> @brief The extended type for dense square matrices
   !> 
@@ -464,6 +506,92 @@ MODULE MatrixTypes
     ENDSUBROUTINE init_DenseRectMatrixType
 !
 !-------------------------------------------------------------------------------
+!> @brief Initializes the PETSc sparse matrix
+!> @param declares the matrix type to act on
+!> @param n the number of rows
+!> @param m integer-based logical defining whether or not the matrix is symmetric
+!>
+    SUBROUTINE init_PETScSparseMatrixType(matrix,n,m)
+      CHARACTER(LEN=*),PARAMETER :: myName='init_PETScSparseMatrixType'
+      CLASS(PETScSparseMatrixType),INTENT(INOUT) :: matrix
+      INTEGER(SIK),INTENT(IN) :: n
+      INTEGER(SIK),OPTIONAL,INTENT(IN) :: m
+      LOGICAL(SBK) :: localalloc
+      !Error checking of subroutine input
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eMatrixType)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eMatrixType)
+      ENDIF
+      IF(PRESENT(m)) THEN
+        IF(.NOT. matrix%isInit) THEN
+          IF(n < 1) THEN
+            CALL eMatrixType%raiseError('Incorrect input to '// &
+              modName//'::'//myName//' - Number of rows (n) must be '// &
+                'greater than 0!')
+          ELSE
+            matrix%isInit=.TRUE.
+            matrix%n=n
+            !CALL dmallocA(matrix%a,n,n)
+            ! insert MatCreate(...) as necessary with appropriate option for 
+            ! sparse matrices
+          ENDIF
+        ELSE
+          CALL eMatrixType%raiseError('Incorrect call to '// &
+            modName//'::'//myName//' - MatrixType already initialized')
+        ENDIF
+      ELSE
+        CALL eMatrixType%raiseError('Incorrect input to '// &
+            modName//'::'//myName//' - Number of columns (m) must be '// &
+              'provided!')
+      ENDIF
+      IF(localalloc) DEALLOCATE(eMatrixType)
+    ENDSUBROUTINE init_PETScSparseMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes the PETSc sparse matrix
+!> @param declares the matrix type to act on
+!> @param n the number of rows
+!> @param m integer-based logical defining whether or not the matrix is symmetric
+!>
+    SUBROUTINE init_PETScDenseMatrixType(matrix,n,m)
+      CHARACTER(LEN=*),PARAMETER :: myName='init_PETScDenseMatrixType'
+      CLASS(PETScDenseMatrixType),INTENT(INOUT) :: matrix
+      INTEGER(SIK),INTENT(IN) :: n
+      INTEGER(SIK),OPTIONAL,INTENT(IN) :: m
+      LOGICAL(SBK) :: localalloc
+      !Error checking of subroutine input
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eMatrixType)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eMatrixType)
+      ENDIF
+      IF(PRESENT(m)) THEN
+        IF(.NOT. matrix%isInit) THEN
+          IF(n < 1) THEN
+            CALL eMatrixType%raiseError('Incorrect input to '// &
+              modName//'::'//myName//' - Number of rows (n) must be '// &
+                'greater than 0!')
+          ELSE
+            matrix%isInit=.TRUE.
+            matrix%n=n
+            !CALL dmallocA(matrix%a,n,n)
+            ! insert MatCreate(...) as necessary with appropriate option for 
+            ! dense matrices
+          ENDIF
+        ELSE
+          CALL eMatrixType%raiseError('Incorrect call to '// &
+            modName//'::'//myName//' - MatrixType already initialized')
+        ENDIF
+      ELSE
+        CALL eMatrixType%raiseError('Incorrect input to '// &
+            modName//'::'//myName//' - Number of columns (m) must be '// &
+              'provided!')
+      ENDIF
+      IF(localalloc) DEALLOCATE(eMatrixType)
+    ENDSUBROUTINE init_PETScDenseMatrixType
+!
+!-------------------------------------------------------------------------------
 !> @brief Clears the sparse matrix
 !> @param matrix the matrix type to act on
 !>
@@ -515,6 +643,30 @@ MODULE MatrixTypes
       matrix%m=0
       IF(ALLOCATED(matrix%a)) CALL demallocA(matrix%a)
     ENDSUBROUTINE clear_DenseRectMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears the PETSc sparse matrix
+!> @param matrix the matrix type to act on
+!>
+    SUBROUTINE clear_PETScSparseMatrixType(matrix)
+      CLASS(PETScSparseMatrixType),INTENT(INOUT) :: matrix
+      matrix%isInit=.FALSE.
+      matrix%n=0
+      !IF(ALLOCATED(matrix%a)) CALL demallocA(matrix%a)
+      ! insert MatDestroy(...)
+    ENDSUBROUTINE clear_PETScSparseMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears the PETSc dense matrix
+!> @param matrix the matrix type to act on
+!>
+    SUBROUTINE clear_PETScDenseMatrixType(matrix)
+      CLASS(PETScDenseMatrixType),INTENT(INOUT) :: matrix
+      matrix%isInit=.FALSE.
+      matrix%n=0
+      !IF(ALLOCATED(matrix%a)) CALL demallocA(matrix%a)
+      ! insert MatDestroy(...)
+    ENDSUBROUTINE clear_PETScDenseMatrixType
 !
 !-------------------------------------------------------------------------------
 !> @brief Sets the values in the sparse matrix
@@ -661,6 +813,48 @@ MODULE MatrixTypes
     ENDSUBROUTINE set_shape_SparseMatrixType
 !
 !-------------------------------------------------------------------------------
+!> @brief Sets the values in the PETSc sparse matrix
+!> @param declares the matrix type to act on
+!> @param i the ith location in the matrix
+!> @param j the jth location in the matrix
+!> @param setval the value to be set
+!>
+    PURE SUBROUTINE set_PETScSparseMatrixType(matrix,i,j,setval)
+      CLASS(PETScSparseMatrixType),INTENT(INOUT) :: matrix
+      INTEGER(SIK),INTENT(IN) :: i
+      INTEGER(SIK),INTENT(IN) :: j
+      REAL(SRK),INTENT(IN) :: setval
+      IF(matrix%isInit) THEN
+        IF(((j <= matrix%n) .AND. (i <= matrix%n)) & 
+          .AND. ((j > 0) .AND. (i > 0))) THEN
+          !matrix%a(i,j)=setval
+          ! insert MatSetValues(...)
+        ENDIF
+      ENDIF
+    ENDSUBROUTINE set_PETScSparseMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the values in the PETSc sparse matrix
+!> @param declares the matrix type to act on
+!> @param i the ith location in the matrix
+!> @param j the jth location in the matrix
+!> @param setval the value to be set
+!>
+    PURE SUBROUTINE set_PETScDenseMatrixType(matrix,i,j,setval)
+      CLASS(PETScDenseMatrixType),INTENT(INOUT) :: matrix
+      INTEGER(SIK),INTENT(IN) :: i
+      INTEGER(SIK),INTENT(IN) :: j
+      REAL(SRK),INTENT(IN) :: setval
+      IF(matrix%isInit) THEN
+        IF(((j <= matrix%n) .AND. (i <= matrix%n)) & 
+          .AND. ((j > 0) .AND. (i > 0))) THEN
+          !matrix%a(i,j)=setval
+          ! insert MatSetValues(...)
+        ENDIF
+      ENDIF
+    ENDSUBROUTINE set_PETScDenseMatrixType
+!
+!-------------------------------------------------------------------------------
 !> @brief Gets the values in the sparse matrix - presently untested
 !> @param matrix the matrix type to act on
 !> @param i the ith location in the matrix
@@ -695,6 +889,56 @@ MODULE MatrixTypes
         ENDIF
       ENDIF
     ENDFUNCTION get_SparseMatrixtype
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the values in the PETSc sparse matrix - presently untested
+!> @param declare the matrix type to act on
+!> @param i the ith location in the matrix
+!> @param j the jth location in the matrix
+!>
+!> This routine gets the values of the sparse matrix.  If the (i,j) location is 
+!> out of bounds, then -1051.0 (an arbitrarily chosen key) is returned.
+!>
+    FUNCTION get_PETScSparseMatrixType(matrix,i,j) RESULT(aij)
+      CLASS(PETScSparseMatrixType),INTENT(INOUT) :: matrix
+      INTEGER(SIK),INTENT(IN) :: i
+      INTEGER(SIK),INTENT(IN) :: j
+      REAL(SRK) :: aij
+      
+      IF(matrix%isInit) THEN
+        IF((i <= matrix%n) .AND. ((j > 0) .AND. (i > 0))) THEN
+          !aij=matrix%a(ja_index)
+          ! insert MatGetValues(...)
+        ELSE
+          aij=-1051._SRK
+        ENDIF
+      ENDIF
+    ENDFUNCTION get_PETScSparseMatrixtype
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the values in the PETSc dense matrix - presently untested
+!> @param declare the matrix type to act on
+!> @param i the ith location in the matrix
+!> @param j the jth location in the matrix
+!>
+!> This routine gets the values of the sparse matrix.  If the (i,j) location is 
+!> out of bounds, then -1051.0 (an arbitrarily chosen key) is returned.
+!>
+    FUNCTION get_PETScDenseMatrixType(matrix,i,j) RESULT(aij)
+      CLASS(PETScDenseMatrixType),INTENT(INOUT) :: matrix
+      INTEGER(SIK),INTENT(IN) :: i
+      INTEGER(SIK),INTENT(IN) :: j
+      REAL(SRK) :: aij
+      
+      IF(matrix%isInit) THEN
+        IF((i <= matrix%n) .AND. ((j > 0) .AND. (i > 0))) THEN
+          !aij=matrix%a(ja_index)
+          ! insert MatGetValues(...)
+        ELSE
+          aij=-1051._SRK
+        ENDIF
+      ENDIF
+    ENDFUNCTION get_PETScDenseMatrixtype
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine provides an interface to matrix vector multiplication for
