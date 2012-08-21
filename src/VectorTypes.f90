@@ -46,6 +46,12 @@ MODULE VectorTypes
   USE ExceptionHandler
   USE Allocs
   IMPLICIT NONE
+
+#ifdef HAVE_PETSC
+#include <finclude/petscsys.h>
+#include <finclude/petscvec.h>
+#endif
+
   PRIVATE
 !
 ! List of public members
@@ -91,7 +97,7 @@ MODULE VectorTypes
   
   !> Explicitly defines the interface for the set routine of all vector types
   ABSTRACT INTERFACE
-    PURE SUBROUTINE int_vector_set_sub(vector,i,setval)
+    SUBROUTINE int_vector_set_sub(vector,i,setval)
       IMPORT :: SIK,SRK,VectorType
       CLASS(VectorType),INTENT(INOUT) :: vector
       INTEGER(SIK),INTENT(IN) :: i
@@ -122,11 +128,14 @@ MODULE VectorTypes
       !> @copydetails VectorTypes::set_RealVectorType
       PROCEDURE,PASS :: set => set_RealVectorType
   ENDTYPE RealVectorType
-  
-  !> @brief The extended type for dense rectangular matrices
+
+
+  !> @brief The extended type for PETSc vectors
   TYPE,EXTENDS(VectorType) :: PETScVectorType
     !> The values of the vector
-    !Vec :: b
+#ifdef HAVE_PETSC
+    Vec :: b
+#endif
 !
 !List of Type Bound Procedures
     CONTAINS 
@@ -143,6 +152,7 @@ MODULE VectorTypes
       !> @copydetails VectorTypes::get_PETScVectorType
       PROCEDURE,PASS :: get => get_PETScVectorType
   ENDTYPE PETScVectorType
+
   
   !> Exception Handler for use in VectorTypes
   TYPE(ExceptionHandlerType),POINTER,SAVE :: eVectorType => NULL()
@@ -196,6 +206,9 @@ MODULE VectorTypes
       CLASS(PETScVectorType),INTENT(INOUT) :: vector
       INTEGER(SIK),INTENT(IN) :: n
       LOGICAL(SBK) :: localalloc
+#ifdef HAVE_PETSC
+      PetscErrorCode  :: ierr
+      
       !Error checking of subroutine input
       localalloc=.FALSE.
       IF(.NOT.ASSOCIATED(eVectorType)) THEN
@@ -210,14 +223,18 @@ MODULE VectorTypes
         ELSE
           vector%isInit=.TRUE.
           vector%n=n
-          !CALL dmallocA(vector%b,n)
-          ! insert PETSc VecCreate(...) statements as appropriate
+          ! will need to change MPI_COMM_WORLD
+          CALL VecCreate(MPI_COMM_WORLD,vector%b,ierr)
+          CALL VecSetSizes(vector%b,PETSC_DECIDE,vector%n,ierr)
+          CALL VecSetType(vector%b,VECMPI,ierr)
+          CALL VecSetFromOptions(vector%b,ierr)
         ENDIF
       ELSE
         CALL eVectorType%raiseError('Incorrect call to '// &
           modName//'::'//myName//' - VectorType already initialized')
       ENDIF
       IF(localalloc) DEALLOCATE(eVectorType)
+#endif
     ENDSUBROUTINE init_PETScVectorType
 !
 !-------------------------------------------------------------------------------
@@ -237,10 +254,12 @@ MODULE VectorTypes
 !>
     SUBROUTINE clear_PETScVectorType(vector)
       CLASS(PETScVectorType),INTENT(INOUT) :: vector
+#ifdef HAVE_PETSC
+      PetscErrorCode  :: ierr
       vector%isInit=.FALSE.
       vector%n=0
-      !IF(ALLOCATED(vector%b)) CALL demallocA(vector%b)
-      ! insert PETSc VecDestroy(...) statements as appropriate
+      CALL VecDestroy(vector%b,ierr)
+#endif
     ENDSUBROUTINE clear_PETScVectorType
 !
 !-------------------------------------------------------------------------------
@@ -249,7 +268,7 @@ MODULE VectorTypes
 !> @param i the ith location in the vector
 !> @param setval the value to be set
 !>
-    PURE SUBROUTINE set_RealVectorType(vector,i,setval)
+    SUBROUTINE set_RealVectorType(vector,i,setval)
       CLASS(RealVectorType),INTENT(INOUT) :: vector
       INTEGER(SIK),INTENT(IN) :: i
       REAL(SRK),INTENT(IN) :: setval
@@ -266,16 +285,18 @@ MODULE VectorTypes
 !> @param i the ith location in the vector
 !> @param setval the value to be set
 !>
-    PURE SUBROUTINE set_PETScVectorType(vector,i,setval)
+    SUBROUTINE set_PETScVectorType(vector,i,setval)
       CLASS(PETScVectorType),INTENT(INOUT) :: vector
       INTEGER(SIK),INTENT(IN) :: i
       REAL(SRK),INTENT(IN) :: setval
+#ifdef HAVE_PETSC
+      PetscErrorCode  :: ierr
       IF(vector%isInit) THEN
         IF((i <= vector%n) .AND. (i > 0)) THEN
-          !vector%b(i)=setval
-          ! insert PETSc SetVecValues(...) as appropriate
+          CALL VecSetValues(vector%b,1,i-1,setval,INSERT_VALUES,ierr)
         ENDIF
       ENDIF
+#endif
     ENDSUBROUTINE set_PETScVectorType
 !
 !-------------------------------------------------------------------------------
@@ -290,15 +311,16 @@ MODULE VectorTypes
       CLASS(PETScVectorType),INTENT(INOUT) :: vector
       INTEGER(SIK),INTENT(IN) :: i
       REAL(SRK) :: getval
-      
+#ifdef HAVE_PETSC
+      PetscErrorCode  :: ierr
       IF(vector%isInit) THEN
         IF((i <= vector%n) .AND. (i > 0)) THEN
-          !IF(found) getval=vector%b(i)
-          ! insert PETSc VecGetValues(...) as appropriate.
+          CALL VecGetValues(vector%b,1,i-1,getval,ierr)
         ELSE
           getval=-1051._SRK
         ENDIF
       ENDIF
+#endif
     ENDFUNCTION get_PETScVectorType
 !
 ENDMODULE VectorTypes

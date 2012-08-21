@@ -71,6 +71,12 @@ MODULE MatrixTypes
   USE BLAS2,           ONLY: BLAS2_matvec => BLAS_matvec
   USE BLAS3,           ONLY: BLAS3_matmult => BLAS_matmat
   IMPLICIT NONE
+
+#ifdef HAVE_PETSC
+#include <finclude/petscsys.h>
+#include <finclude/petscmat.h>
+#endif
+
   PRIVATE
 !
 ! List of public members
@@ -961,6 +967,8 @@ MODULE MatrixTypes
       
       CHARACTER(LEN=1) :: t
       
+#ifndef HAVE_PETSC
+      
       IF(thisMatrix%isInit) THEN
         t='n'
         IF(PRESENT(trans)) t=trans
@@ -1010,6 +1018,9 @@ MODULE MatrixTypes
             ENDIF
         ENDSELECT
       ENDIF
+      
+#endif
+
     ENDSUBROUTINE matvec_MatrixType
 !
 !-------------------------------------------------------------------------------
@@ -1038,7 +1049,9 @@ MODULE MatrixTypes
       
       CHARACTER(LEN=1) :: tA
       CHARACTER(LEN=1) :: tB
-      
+
+#ifndef HAVE_PETSC
+
       IF(A%isInit) THEN
         tA='n'
         IF(PRESENT(transA)) tA=transA
@@ -1187,6 +1200,9 @@ MODULE MatrixTypes
             ! NOT SUPPORTED
         ENDSELECT         
       ENDIF
+      
+#endif
+  
     ENDSUBROUTINE matmult_MatrixType
 !
 ENDMODULE MatrixTypes
