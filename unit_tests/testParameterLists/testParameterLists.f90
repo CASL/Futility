@@ -555,25 +555,25 @@ PROGRAM testParameterLists
   CALL testParam%add('TestReq->p1',0.2_SSK)
   CALL testParam%validate(testParam2,testParam3)
   !Trying to test the optional stuff.  Need to have valid reqparams.
-  CALL testParam%edit(OUTPUT_UNIT)
   CALL testParam3%add('TestOpt->p2->2far->veryfar->veryveryfar',3.0_SDK)
   CALL testParam%validate(testParam2,testParam3)
   CALL testParam3%remove('TestOpt->p2->2far->veryfar->veryveryfar')
-  CALL testParam%edit(OUTPUT_UNIT)
-  CALL testParam3%edit(OUTPUT_UNIT)
   CALL testParam%validate(testParam2,testParam3)
+  WRITE(*,*) '--------------------------------------------------'
   CALL testParam%edit(OUTPUT_UNIT)
+  CALL testParam%remove('TestOpt->p2->2far->veryfar')
   CALL testParam%add('TestOpt->p2->2far->veryfar',3.0_SSK)
+  WRITE(*,*) '--------------------------------------------------'
   CALL testParam%edit(OUTPUT_UNIT)
   CALL testParam%validate(testParam2,testParam3)
-  CALL testParam3%add('TestOpt->p2->2far->veryfar',3.0_SDK)
+  WRITE(*,*) '--------------------------------------------------'
+  CALL testParam%edit(OUTPUT_UNIT)
+  CALL testParam%remove('TestOpt->p2->2far->veryfar')
+  WRITE(*,*) '--------------------------------------------------'
+  CALL testParam%edit(OUTPUT_UNIT)
   CALL testParam%validate(testParam2,testParam3)
-  CALL testParam%add('TestOpt->p2->2far',.TRUE.)
-  CALL testParam%validate(testParam2,testParam3)
-  CALL testParam%add('TestOpt->p1',1_SNK)
-  CALL testParam%validate(testParam2,testParam3)
-  CALL testParam%add('TestOpt',1_SNK)
-  CALL testParam%validate(testParam2,testParam3)
+  WRITE(*,*) '--------------------------------------------------'
+  CALL testParam%edit(OUTPUT_UNIT)
   
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING PARAMETERLISTS PASSED!'
