@@ -75,6 +75,7 @@ MODULE MatrixTypes
 #ifdef HAVE_PETSC
 #include <finclude/petscsys.h>
 #include <finclude/petscmat.h>
+#include <finclude/petscvec.h>
 #endif
 
   PRIVATE
@@ -131,7 +132,7 @@ MODULE MatrixTypes
   
   !> Explicitly defines the interface for the set routine of all matrix types
   ABSTRACT INTERFACE
-    PURE SUBROUTINE int_matrix_set_sub(matrix,i,j,setval)
+    SUBROUTINE int_matrix_set_sub(matrix,i,j,setval)
       IMPORT :: SIK,SRK,MatrixType
       CLASS(MatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
@@ -544,9 +545,6 @@ MODULE MatrixTypes
           ELSE
             matrix%isInit=.TRUE.
             matrix%n=n
-            !CALL dmallocA(matrix%a,n,n)
-            ! insert MatCreate(...) as necessary with appropriate option for 
-            ! sparse matrices
             CALL MatCreate(MPI_COMM_WORLD,matrix%a,ierr)
             CALL MatSetSizes(matrix%a,PETSC_DECIDE,PETSC_DECIDE,matrix%n,matrix%n,ierr)
             CALL MatSetType(matrix%a,MATMPIAIJ,ierr)
@@ -577,6 +575,8 @@ MODULE MatrixTypes
       INTEGER(SIK),INTENT(IN) :: n
       INTEGER(SIK),OPTIONAL,INTENT(IN) :: m
       LOGICAL(SBK) :: localalloc
+#ifdef HAVE_PETSC
+      PetscErrorCode  :: ierr
       !Error checking of subroutine input
       localalloc=.FALSE.
       IF(.NOT.ASSOCIATED(eMatrixType)) THEN
@@ -592,9 +592,10 @@ MODULE MatrixTypes
           ELSE
             matrix%isInit=.TRUE.
             matrix%n=n
-            !CALL dmallocA(matrix%a,n,n)
-            ! insert MatCreate(...) as necessary with appropriate option for 
-            ! dense matrices
+            CALL MatCreate(MPI_COMM_WORLD,matrix%a,ierr)
+            CALL MatSetSizes(matrix%a,PETSC_DECIDE,PETSC_DECIDE,matrix%n,matrix%n,ierr)
+            CALL MatSetType(matrix%a,MATMPIDENSE,ierr)
+            CALL MatSetUp(matrix%a,ierr)
           ENDIF
         ELSE
           CALL eMatrixType%raiseError('Incorrect call to '// &
@@ -606,6 +607,7 @@ MODULE MatrixTypes
               'provided!')
       ENDIF
       IF(localalloc) DEALLOCATE(eMatrixType)
+#endif
     ENDSUBROUTINE init_PETScDenseSquareMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -667,10 +669,12 @@ MODULE MatrixTypes
 !>
     SUBROUTINE clear_PETScSparseMatrixType(matrix)
       CLASS(PETScSparseMatrixType),INTENT(INOUT) :: matrix
+#ifdef HAVE_PETSC
+      PetscErrorCode  :: ierr
       matrix%isInit=.FALSE.
       matrix%n=0
-      !IF(ALLOCATED(matrix%a)) CALL demallocA(matrix%a)
-      ! insert MatDestroy(...)
+      CALL MatDestroy(matrix%a,ierr)
+#endif
     ENDSUBROUTINE clear_PETScSparseMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -679,10 +683,12 @@ MODULE MatrixTypes
 !>
     SUBROUTINE clear_PETScDenseSquareMatrixType(matrix)
       CLASS(PETScDenseSquareMatrixType),INTENT(INOUT) :: matrix
+#ifdef HAVE_PETSC
+      PetscErrorCode  :: ierr
       matrix%isInit=.FALSE.
       matrix%n=0
-      !IF(ALLOCATED(matrix%a)) CALL demallocA(matrix%a)
-      ! insert MatDestroy(...)
+      CALL MatDestroy(matrix%a,ierr)
+#endif
     ENDSUBROUTINE clear_PETScDenseSquareMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -695,7 +701,7 @@ MODULE MatrixTypes
 !> This routine sets the values of the sparse matrix.  It can only be used
 !> If setShape has previously been applied to the same sparse matrix.
 !>
-    PURE SUBROUTINE set_SparseMatrixType(matrix,i,j,setval)
+    SUBROUTINE set_SparseMatrixType(matrix,i,j,setval)
       CLASS(SparseMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
@@ -726,7 +732,7 @@ MODULE MatrixTypes
 !> @param j the jth location in the matrix
 !> @param setval the value to be set
 !>
-    PURE SUBROUTINE set_DenseSquareMatrixType(matrix,i,j,setval)
+    SUBROUTINE set_DenseSquareMatrixType(matrix,i,j,setval)
       CLASS(DenseSquareMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
@@ -747,7 +753,7 @@ MODULE MatrixTypes
 !> @param j the jth location in the matrix
 !> @param setval the value to be set
 !>
-    PURE SUBROUTINE set_TriDiagMatrixType(matrix,i,j,setval)
+    SUBROUTINE set_TriDiagMatrixType(matrix,i,j,setval)
       CLASS(TriDiagMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
@@ -776,7 +782,7 @@ MODULE MatrixTypes
 !> @param j the jth location in the matrix
 !> @param setval the value to be set
 !>
-    PURE SUBROUTINE set_DenseRectMatrixType(matrix,i,j,setval)
+    SUBROUTINE set_DenseRectMatrixType(matrix,i,j,setval)
       CLASS(DenseRectMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
@@ -799,7 +805,7 @@ MODULE MatrixTypes
 !> The matrix must be supplied in row-major order, any entries not in this form
 !> will be ignored.
 !> 
-    PURE SUBROUTINE set_shape_SparseMatrixType(matrix,i,j,setval)
+    SUBROUTINE set_shape_SparseMatrixType(matrix,i,j,setval)
       CLASS(SparseMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
@@ -836,18 +842,20 @@ MODULE MatrixTypes
 !> @param j the jth location in the matrix
 !> @param setval the value to be set
 !>
-    PURE SUBROUTINE set_PETScSparseMatrixType(matrix,i,j,setval)
+    SUBROUTINE set_PETScSparseMatrixType(matrix,i,j,setval)
       CLASS(PETScSparseMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(IN) :: setval
+#ifdef HAVE_PETSC
+      PetscErrorCode  :: ierr
       IF(matrix%isInit) THEN
         IF(((j <= matrix%n) .AND. (i <= matrix%n)) & 
           .AND. ((j > 0) .AND. (i > 0))) THEN
-          !matrix%a(i,j)=setval
-          ! insert MatSetValues(...)
+          CALL MatSetValues(matrix%a,1,i-1,1,j-1,setval,INSERT_VALUES,ierr)
         ENDIF
       ENDIF
+#endif
     ENDSUBROUTINE set_PETScSparseMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -857,18 +865,20 @@ MODULE MatrixTypes
 !> @param j the jth location in the matrix
 !> @param setval the value to be set
 !>
-    PURE SUBROUTINE set_PETScDenseSquareMatrixType(matrix,i,j,setval)
+    SUBROUTINE set_PETScDenseSquareMatrixType(matrix,i,j,setval)
       CLASS(PETScDenseSquareMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(IN) :: setval
+#ifdef HAVE_PETSC
+      PetscErrorCode  :: ierr
       IF(matrix%isInit) THEN
         IF(((j <= matrix%n) .AND. (i <= matrix%n)) & 
           .AND. ((j > 0) .AND. (i > 0))) THEN
-          !matrix%a(i,j)=setval
-          ! insert MatSetValues(...)
+          CALL MatSetValues(matrix%a,1,i-1,1,j-1,setval,INSERT_VALUES,ierr)
         ENDIF
       ENDIF
+#endif
     ENDSUBROUTINE set_PETScDenseSquareMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -921,15 +931,17 @@ MODULE MatrixTypes
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK) :: aij
+#ifdef HAVE_PETSC
+      PetscErrorCode  :: ierr
       
       IF(matrix%isInit) THEN
         IF((i <= matrix%n) .AND. ((j > 0) .AND. (i > 0))) THEN
-          !aij=matrix%a(ja_index)
-          ! insert MatGetValues(...)
+          CALL MatGetValues(matrix%a,1,i-1,1,j-1,aij,INSERT_VALUES,ierr)
         ELSE
           aij=-1051._SRK
         ENDIF
       ENDIF
+#endif
     ENDFUNCTION get_PETScSparseMatrixtype
 !
 !-------------------------------------------------------------------------------
@@ -946,15 +958,17 @@ MODULE MatrixTypes
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK) :: aij
+#ifdef HAVE_PETSC
+      PetscErrorCode  :: ierr
       
       IF(matrix%isInit) THEN
         IF((i <= matrix%n) .AND. ((j > 0) .AND. (i > 0))) THEN
-          !aij=matrix%a(ja_index)
-          ! insert MatGetValues(...)
+          CALL MatGetValues(matrix%a,1,i-1,1,j-1,aij,INSERT_VALUES,ierr)
         ELSE
           aij=-1051._SRK
         ENDIF
       ENDIF
+#endif
     ENDFUNCTION get_PETScDenseSquareMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -968,7 +982,7 @@ MODULE MatrixTypes
 !> @param beta the scalar used to scale @c y
 !> @param y the vector to add to the product of @c A and @c x
 !>
-    PURE SUBROUTINE matvec_MatrixType(thisMatrix,trans,alpha,x,beta,y)
+    SUBROUTINE matvec_MatrixType(thisMatrix,trans,alpha,x,beta,y)
       CLASS(MatrixType),INTENT(IN) :: thisMatrix
       CHARACTER(LEN=1),OPTIONAL,INTENT(IN) :: trans
       REAL(SRK),INTENT(IN),OPTIONAL :: alpha
@@ -1049,7 +1063,7 @@ MODULE MatrixTypes
 !>        transpose of @c B
 !> @param beta the scalar used to scale @c C
 !>
-    PURE SUBROUTINE matmult_MatrixType(A,B,C,alpha,beta,transA,transB)
+    SUBROUTINE matmult_MatrixType(A,B,C,alpha,beta,transA,transB)
       CLASS(MatrixType),INTENT(IN) :: A
       CLASS(MatrixType),INTENT(IN) :: B
       CLASS(MatrixType),INTENT(INOUT) :: C
