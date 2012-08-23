@@ -81,7 +81,7 @@ MODULE Geom_Points
   TYPE :: LinkedListPointType
     !> A sorting value for a comparison operation. This is most likely the 
     !> distance to a reference point.
-    REAL(SRK) :: sortval
+    REAL(SRK) :: sortval=0.0_SRK
     !> The point type for this record in the list
     TYPE(PointType):: p
     !> The next record in the list.

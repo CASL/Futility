@@ -533,6 +533,8 @@ PROGRAM testParameterLists
   !Test param 2 is the required values, test param 3 is the optional
   !Test param is the list being checked.
   !Checks all the extras...
+  CALL eParams%SetQuietMode(.TRUE.)
+  CALL testParam%edit(OUTPUT_UNIT)
   CALL testParam2%add('TestReq->p1',0.2_SSK)
   CALL testParam3%add('TestOpt->p1',.TRUE.)
   CALL testParam%add('TestOther->p1',.TRUE.)
@@ -546,29 +548,38 @@ PROGRAM testParameterLists
   CALL testParam%add('TestReq->p2->2far',6_SLK)
   CALL testParam%validate(testParam2,testParam3)
   CALL testParam%add('TestReq->p2->2far->veryfar',8_SLK)
+  CALL testParam%edit(OUTPUT_UNIT)
   CALL testParam%validate(testParam2,testParam3)
   CALL testParam2%remove('TestReq->p2')
   CALL testParam%validate(testParam2,testParam3)
   CALL testParam%add('TestReq->p1',0.2_SSK)
   CALL testParam%validate(testParam2,testParam3)
   !Trying to test the optional stuff.  Need to have valid reqparams.
-  CALL testParam3%add('TestOpt->p2->2far->veryfar->veryveryfar',1_SLK)
+  CALL testParam3%add('TestOpt->p2->2far->veryfar->veryveryfar',3.0_SDK)
   CALL testParam%validate(testParam2,testParam3)
   CALL testParam3%remove('TestOpt->p2->2far->veryfar->veryveryfar')
   CALL testParam%validate(testParam2,testParam3)
-  CALL testParam%add('TestOpt->p2->2far->veryfar',3.0_SDK)
+  WRITE(*,*) '--------------------------------------------------'
+  CALL testParam%edit(OUTPUT_UNIT)
+  CALL testParam%remove('TestOpt->p2->2far->veryfar')
+  CALL testParam%add('TestOpt->p2->2far->veryfar',3.0_SSK)
+  WRITE(*,*) '--------------------------------------------------'
+  CALL testParam%edit(OUTPUT_UNIT)
   CALL testParam%validate(testParam2,testParam3)
-  CALL testParam%add('TestOpt->p2->2far',.TRUE.)
+  WRITE(*,*) '--------------------------------------------------'
+  CALL testParam%edit(OUTPUT_UNIT)
+  CALL testParam%remove('TestOpt->p2->2far->veryfar')
+  WRITE(*,*) '--------------------------------------------------'
+  CALL testParam%edit(OUTPUT_UNIT)
   CALL testParam%validate(testParam2,testParam3)
-  CALL testParam%add('TestOpt->p1',1_SNK)
-  CALL testParam%validate(testParam2,testParam3)
-  CALL testParam%add('TestOpt',1_SNK)
-  CALL testParam%validate(testParam2,testParam3)
+  WRITE(*,*) '--------------------------------------------------'
+  CALL testParam%edit(OUTPUT_UNIT)
   
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING PARAMETERLISTS PASSED!'
   WRITE(*,*) '==================================================='  
   CALL testClear()
+  DEALLOCATE(e)
 !
 !===============================================================================
   CONTAINS

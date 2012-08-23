@@ -428,6 +428,10 @@ PROGRAM testVTKFiles
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING VTKFILES PASSED!'
   WRITE(*,*) '==================================================='
+  DEALLOCATE(e)
+  CALL testVTKMesh%clear()
+  CALL testVTKMesh2%clear()
+  CALL testVTKData%clear()
 !
 !===============================================================================
   CONTAINS
@@ -489,7 +493,6 @@ PROGRAM testVTKFiles
 !-------------------------------------------------------------------------------
     SUBROUTINE SetupTest4_Mesh()
       INTEGER(SIK) :: i,j
-      REAL(SRK) :: x
       !Initialize a VTK mesh by hand
       testVTKMesh%numPoints=800
       testVTKMesh%dims=testVTKMesh%numPoints
@@ -521,7 +524,6 @@ PROGRAM testVTKFiles
 !-------------------------------------------------------------------------------
     SUBROUTINE SetupTest5_Mesh()
       INTEGER(SIK) :: i,j
-      REAL(SRK) :: x
       !Initialize a VTK mesh by hand
       testVTKMesh%numPoints=800
       testVTKMesh%dims=testVTKMesh%numPoints
@@ -554,8 +556,6 @@ PROGRAM testVTKFiles
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE SetupTest6_Mesh()
-      INTEGER(SIK) :: i,j
-      REAL(SRK) :: x
       !Initialize a VTK mesh by hand
       testVTKMesh%numPoints=24
       testVTKMesh%dims=testVTKMesh%numPoints

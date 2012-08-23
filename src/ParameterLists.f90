@@ -918,7 +918,7 @@ MODULE ParameterLists
                 IF(ASSOCIATED(param) .AND. LEN_TRIM(nextname) > 0) THEN
                   tmpParam => param
                   param => NULL()
-                  CALL tmpParam%getParam(nextname,param)
+                  CALL tmpParam%getParam(name,param)
                 ENDIF
               ENDIF
             ENDIF
