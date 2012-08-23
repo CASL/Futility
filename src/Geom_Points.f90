@@ -178,22 +178,22 @@ MODULE Geom_Points
 !>
 !> @code
 !> TYPE(PointType) :: p
-!> CALL p%initialize(COORD=(/0.0,0.0,0.0,0.0/))
+!> CALL p%init(COORD=(/0.0,0.0,0.0,0.0/))
 !> @endcode
 !>
 !> @code
 !> TYPE(PointType) :: p
-!> CALL p%initialize(DIM=1,X=0.0)
+!> CALL p%init(DIM=1,X=0.0)
 !> @endcode
 !>
 !> @code
 !> TYPE(PointType) :: p
-!> CALL p%initialize(DIM=2,X=0.0,Y=0.0)
+!> CALL p%init(DIM=2,X=0.0,Y=0.0)
 !> @endcode
 !>
 !> @code
 !> TYPE(PointType) :: p
-!> CALL p%initialize(DIM=3,X=0.0,Y=0.0,Z=0.0)
+!> CALL p%init(DIM=3,X=0.0,Y=0.0,Z=0.0)
 !> @endcode
     PURE SUBROUTINE init_PointType(p,DIM,X,Y,Z,coord)
       CLASS(PointType),INTENT(INOUT) :: p
