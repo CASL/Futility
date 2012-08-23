@@ -139,204 +139,263 @@ PROGRAM testParameterLists
   
   CALL e%setQuietMode(.FALSE.)
   eParams => NULL()
+  !Testing addition of SSK routine
   CALL testParam%add('testSSK',6.0_SSK)
   CALL testParam%edit(OUTPUT_UNIT)
   eParams => e
-  CALL testParam%add('testSSK',7.0_SSK)
+  !Testing addition of SSK routine, error for already existing parameter
+  CALL testParam%add('testSSK',9.0_SSK)
+  !Testing addition of SSK routine, error for not a parameter list
   CALL testParam%add('testSSK2',7.0_SSK)
+  CALL testParam%edit(OUTPUT_UNIT)
   CALL testParam%clear()
+  !Testing addition of SSK routine to parameter list
   CALL testParam%add('testPL->testSSK',7.0_SSK)
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of multiple SSK parameters to parameter list
   CALL testParam%add('testPL->testSSK2',8.0_SSK)
   CALL testParam%edit(OUTPUT_UNIT)
   eParams => NULL()
+  !Testing addition of SDK routine to parameter list
   CALL testParam%add('testPL->testSDK',1.0_SDK)
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of SNK routine to parameter list
   CALL testParam%add('testPL->testSNK',2_SNK)
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of SLK routine to parameter list
   CALL testParam%add('testPL->testSLK',3_SLK)
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of SBK routine to parameter list
   CALL testParam%add('testPL->testSBK',.TRUE.)
   CALL testParam%edit(OUTPUT_UNIT)
   valstr='string1'
+  !Testing addition of STR routine to parameter list
   CALL testParam%add('testPL->testSTR',valstr)
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of 1-D array SSK routine to parameter list
   IF(ALLOCATED(valssk1a)) DEALLOCATE(valssk1a)
   ALLOCATE(valssk1a(2))
   valssk1a=1.5_SSK
   CALL testParam%add('testPL->testSSK1a',valssk1a)
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of 1-D array SDK routine to parameter list
   IF(ALLOCATED(valsdk1a)) DEALLOCATE(valsdk1a)
   ALLOCATE(valsdk1a(2))
   valsdk1a=2.5_SDK
   CALL testParam%add('testPL->testSDK1a',valsdk1a)
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of 1-D array SNK routine to parameter list
   IF(ALLOCATED(valsnk1a)) DEALLOCATE(valsnk1a)
   ALLOCATE(valsnk1a(2))
   valsnk1a=-2_SNK
   CALL testParam%add('testPL->testSNK1a',valsnk1a)
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of 1-D array SLK routine to parameter list
   IF(ALLOCATED(valslk1a)) DEALLOCATE(valslk1a)
   ALLOCATE(valslk1a(2))
   valslk1a=-4_SLK
   CALL testParam%add('testPL->testSLK1a',valslk1a)
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of 2-D array SSK routine to parameter list
   IF(ALLOCATED(valssk2a)) DEALLOCATE(valssk2a)
   ALLOCATE(valssk2a(2,2))
   valssk2a=1.5_SSK
   CALL testParam%add('testPL->testSSK2a',valssk2a)
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of 2-D array SDK routine to parameter list
   IF(ALLOCATED(valsdk2a)) DEALLOCATE(valsdk2a)
   ALLOCATE(valsdk2a(2,2))
   valsdk2a=2.5_SDK
   CALL testParam%add('testPL->testSDK2a',valsdk2a)
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of 2-D array SNK routine to parameter list
   IF(ALLOCATED(valsnk2a)) DEALLOCATE(valsnk2a)
   ALLOCATE(valsnk2a(2,2))
   valsnk2a=-2_SNK
   CALL testParam%add('testPL->testSNK2a',valsnk2a)
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of 2-D array SLK routine to parameter list
   IF(ALLOCATED(valslk2a)) DEALLOCATE(valslk2a)
   ALLOCATE(valslk2a(2,2))
   valslk2a=-4_SLK
   CALL testParam%add('testPL->testSLK2a',valslk2a)
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of 3-D array SSK routine to parameter list
   IF(ALLOCATED(valssk3a)) DEALLOCATE(valssk3a)
   ALLOCATE(valssk3a(2,2,2))
   valssk3a=1.5_SSK
   CALL testParam%add('testPL->testSSK3a',valssk3a)
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of 3-D array SDK routine to parameter list
   IF(ALLOCATED(valsdk3a)) DEALLOCATE(valsdk3a)
   ALLOCATE(valsdk3a(2,2,2))
   valsdk3a=2.5_SDK
   CALL testParam%add('testPL->testSDK3a',valsdk3a)
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of 3-D array SNK routine to parameter list
   IF(ALLOCATED(valsnk3a)) DEALLOCATE(valsnk3a)
   ALLOCATE(valsnk3a(2,2,2))
   valsnk3a=-2_SNK
   CALL testParam%add('testPL->testSNK3a',valsnk3a)
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of 3-D array SLK routine to parameter list
   IF(ALLOCATED(valslk3a)) DEALLOCATE(valslk3a)
   ALLOCATE(valslk3a(2,2,2))
   valslk3a=-4_SLK
   CALL testParam%add('testPL->testSLK3a',valslk3a)
   CALL testParam%edit(OUTPUT_UNIT)
   eParams => e
+  !Testing addition of SSK routine to parameter list, error for already existing parameter
+  CALL testParam%add('testPL->testSSK',7.0_SSK)
+  CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of SDK routine to parameter list, error for already existing parameter
   CALL testParam%add('testPL->testSDK',2.0_SDK)
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of SNK routine to parameter list, error for already existing parameter
   CALL testParam%add('testPL->testSNK',3_SNK)
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of SNK routine to parameter list, error for already existing parameter
   CALL testParam%add('testPL->testSLK',4_SLK)
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of SBK routine to parameter list, error for already existing parameter
   CALL testParam%add('testPL->testSBK',.FALSE.)
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of STR routine to parameter list, error for already existing parameter
   valstr='string2'
   CALL testParam%add('testPL->testSTR',valstr)
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of 1-D array SSK routine to parameter list, error for already existing parameter
   valssk1a=10.5_SSK
   CALL testParam%add('testPL->testSSK1a',valssk1a)
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of 1-D array SDK routine to parameter list, error for already existing parameter
   valsdk1a=20.5_SDK
   CALL testParam%add('testPL->testSDK1a',valsdk1a)
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of 1-D array SNK routine to parameter list, error for already existing parameter
   valsnk1a=-6_SNK
   CALL testParam%add('testPL->testSNK1a',valsnk1a)
   CALL testParam%edit(OUTPUT_UNIT)
-  valslk1a=-60_SNK
+  !Testing addition of 1-D array SLK routine to parameter list, error for already existing parameter
+  valslk1a=-60_SLK
   CALL testParam%add('testPL->testSLK1a',valslk1a)
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of 2-D array SSK routine to parameter list, error for already existing parameter
   valssk2a=10.5_SSK
   CALL testParam%add('testPL->testSSK2a',valssk2a)
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of 2-D array SDK routine to parameter list, error for already existing parameter
   valsdk2a=20.5_SDK
   CALL testParam%add('testPL->testSDK2a',valsdk2a)
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of 2-D array SNK routine to parameter list, error for already existing parameter
   valsnk2a=-6_SNK
   CALL testParam%add('testPL->testSNK2a',valsnk2a)
   CALL testParam%edit(OUTPUT_UNIT)
-  valslk2a=-60_SNK
+  !Testing addition of 2-D array SLK routine to parameter list, error for already existing parameter
+  valslk2a=-60_SLK
   CALL testParam%add('testPL->testSLK2a',valslk2a)
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of 3-D array SSK routine to parameter list, error for already existing parameter
   valssk3a=10.5_SSK
   CALL testParam%add('testPL->testSSK3a',valssk3a)
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of 3-D array SDK routine to parameter list, error for already existing parameter
   valsdk3a=20.5_SDK
   CALL testParam%add('testPL->testSDK3a',valsdk3a)
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of 3-D array SNK routine to parameter list, error for already existing parameter
   valsnk3a=-6_SNK
   CALL testParam%add('testPL->testSNK3a',valsnk3a)
   CALL testParam%edit(OUTPUT_UNIT)
-  valslk3a=-60_SNK
+  !Testing addition of 3-D array SLK routine to parameter list, error for already existing parameter
+  valslk3a=-60_SLK
   CALL testParam%add('testPL->testSLK3a',valslk3a)
   CALL testParam%edit(OUTPUT_UNIT)
-  CALL testParam%add('testSSK',9.0_SSK)
+  !Testing addition of SSK routine to parameter list with description
   CALL testParam%add('testPL2->testSSK',9.0_SSK,'Creates a new sublist')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of SSK routine to parameter list with description, error for already existing parameter
   CALL testParam%add('testPL2->testSSK',9.0_SSK,'Creates a new sublist')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of SDK routine to parameter list with description
   CALL testParam%add('testPL2->testSDK',2.0_SDK,'Creates a new sublist')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of SNK routine to parameter list with description
   CALL testParam%add('testPL2->testSNK',3_SNK,'Creates a new sublist')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of SLK routine to parameter list with description
   CALL testParam%add('testPL2->testSLK',4_SLK,'Creates a new sublist')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of SBK routine to parameter list with description
   CALL testParam%add('testPL2->testSBK',.FALSE.,'Creates a new sublist')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of STR routine to parameter list with description
   valstr='string3'
   CALL testParam%add('testPL2->testSTR',valstr,'Creates a new sublist')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of 1-D array SSK routine to parameter list with description
   valssk1a=2.5_SSK
   CALL testParam%add('testPL2->testSSK1a',valssk1a,'Creates a new sublist')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of 1-D array SDK routine to parameter list with description
   valsdk1a=4.5_SDK
   CALL testParam%add('testPL2->testSDK1a',valsdk1a,'Creates a new sublist')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of 1-D array SNK routine to parameter list with description
   valsnk1a=123_SNK
   CALL testParam%add('testPL2->testSNK1a',valsnk1a,'Creates a new sublist')
   CALL testParam%edit(OUTPUT_UNIT)
-  valslk1a=-1230_SNK
+  !Testing addition of 1-D array SLK routine to parameter list with description
+  valslk1a=-1230_SLK
   CALL testParam%add('testPL2->testSLK1a',valslk1a,'Creates a new sublist')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of 2-D array SSK routine to parameter list with description
   valssk2a=2.5_SSK
   CALL testParam%add('testPL2->testSSK2a',valssk2a,'Creates a new sublist')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of 2-D array SDK routine to parameter list with description
   valsdk2a=4.5_SDK
   CALL testParam%add('testPL2->testSDK2a',valsdk2a,'Creates a new sublist')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of 2-D array SNK routine to parameter list with description
   valsnk2a=123_SNK
   CALL testParam%add('testPL2->testSNK2a',valsnk2a,'Creates a new sublist')
   CALL testParam%edit(OUTPUT_UNIT)
-  valslk2a=-1230_SNK
+  !Testing addition of 2-D array SLK routine to parameter list with description
+  valslk2a=-1230_SLK
   CALL testParam%add('testPL2->testSLK2a',valslk2a,'Creates a new sublist')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of 3-D array SSK routine to parameter list with description
   valssk3a=2.5_SSK
   CALL testParam%add('testPL2->testSSK3a',valssk3a,'Creates a new sublist')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of 3-D array SDK routine to parameter list with description
   valsdk3a=4.5_SDK
   CALL testParam%add('testPL2->testSDK3a',valsdk3a,'Creates a new sublist')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of 3-D array SNK routine to parameter list with description
   valsnk3a=123_SNK
   CALL testParam%add('testPL2->testSNK3a',valsnk3a,'Creates a new sublist')
   CALL testParam%edit(OUTPUT_UNIT)
-  valslk3a=-1230_SNK
+  !Testing addition of 3-D array SLK routine to parameter list with description
+  valslk3a=-1230_SLK
   CALL testParam%add('testPL2->testSLK3a',valslk3a,'Creates a new sublist')
   CALL testParam%edit(OUTPUT_UNIT)
-  CALL testParam%add('testPL2->testSSK2',-10.0e5_SSK)
-  CALL testParam%edit(OUTPUT_UNIT)
-  CALL testParam%add('testPL->testPL2->testSSK',11.0)
-  CALL testParam%edit(OUTPUT_UNIT)
-  CALL testParam%add('testPL->testPL2->testSSK3',11.0e6_SSK)
-  CALL testParam%edit(OUTPUT_UNIT)
   eParams => NULL()
+  !Testing the local exception handler while adding a parameter to another parameter
   CALL testParam2%add('testPL3->sublist1',testParam)
   CALL testParam2%edit(OUTPUT_UNIT)
   
-  
+  !Testing the clear routine
   CALL testParam2%clear()
+  !Testing adding an empty parameter list
   CALL testParam2%add('testList->List1',testList)
+  !Testing adding an empty parameter list with a description
   CALL testParam2%add('List2',testList2,'Empty list')
   CALL testParam2%edit(OUTPUT_UNIT)
   eParams => e
+  !Testing adding an empty parameter list with a description with exception handler
   CALL testParam2%add('List2',testList2,'Empty list')
   !Clearing the allocated variables
   DEALLOCATE(valssk1a)
@@ -357,184 +416,213 @@ PROGRAM testParameterLists
   !test remove
   CALL testParam%edit(OUTPUT_UNIT)
   eParams => NULL()
+  !Testing removal of parameter that doesn't exist
   CALL testParam%remove('testSSK3')
   eParams => e
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing removal of parameter that is erroneous, need to have a value before '->'
   CALL testParam%remove('->error')
+  !Testing the SSK removal routine
   CALL testParam%remove('testSSK')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the SSK removal routine in a parameter list (with description)
   CALL testParam%remove('testPL2->testSSK2')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the SDK removal routine in a parameter list (with description)
   CALL testParam%remove('testPL2->testSDK')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the SNK removal routine in a parameter list (with description)
   CALL testParam%remove('testPL2->testSNK')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the SLK removal routine in a parameter list (with description)
   CALL testParam%remove('testPL2->testSLK')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the SBK removal routine in a parameter list (with description)
   CALL testParam%remove('testPL2->testSBK')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the STR removal routine in a parameter list (with description)
   CALL testParam%remove('testPL2->testSTR')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the 1-D array SSK removal routine in a parameter list (with description)
   CALL testParam%remove('testPL2->testSSK1a')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the 1-D array SDK removal routine in a parameter list (with description)
   CALL testParam%remove('testPL2->testSDK1a')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the 1-D array SNK removal routine in a parameter list (with description)
   CALL testParam%remove('testPL2->testSNK1a')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the 1-D array SLK removal routine in a parameter list (with description)
   CALL testParam%remove('testPL2->testSLK1a')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the 2-D array SSK removal routine in a parameter list (with description)
   CALL testParam%remove('testPL2->testSSK2a')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the 2-D array SDK removal routine in a parameter list (with description)
   CALL testParam%remove('testPL2->testSDK2a')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the 2-D array SNK removal routine in a parameter list (with description)
   CALL testParam%remove('testPL2->testSNK2a')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the 2-D array SLK removal routine in a parameter list (with description)
   CALL testParam%remove('testPL2->testSLK2a')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the 3-D array SSK removal routine in a parameter list (with description)
   CALL testParam%remove('testPL2->testSSK3a')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the 3-D array SDK removal routine in a parameter list (with description)
   CALL testParam%remove('testPL2->testSDK3a')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the 3-D array SNK removal routine in a parameter list (with description)
   CALL testParam%remove('testPL2->testSNK3a')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the 3-D array SLK removal routine in a parameter list (with description)
   CALL testParam%remove('testPL2->testSLK3a')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the parameter list removal routine
   CALL testParam%remove('testPL2')
   CALL testParam%edit(OUTPUT_UNIT)
-  CALL testParam%remove('testPL2')
-  CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the SSK removal routine in a parameter list 
   CALL testParam%remove('testPL->testSSK2')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the SDK removal routine in a parameter list 
   CALL testParam%remove('testPL->testSDK')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the SNK removal routine in a parameter list 
   CALL testParam%remove('testPL->testSNK')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the SLK removal routine in a parameter list 
   CALL testParam%remove('testPL->testSLK')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the SBK removal routine in a parameter list 
+  CALL testParam%remove('testPL->testSBK')
+  CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the STR removal routine in a parameter list 
   CALL testParam%remove('testPL->testSTR')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the 1-D array SSK removal routine in a parameter list 
   CALL testParam%remove('testPL->testSSK1a')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the 1-D array SDK removal routine in a parameter list 
   CALL testParam%remove('testPL->testSDK1a')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the 1-D array SNK removal routine in a parameter list 
   CALL testParam%remove('testPL->testSNK1a')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the 1-D array SLK removal routine in a parameter list 
   CALL testParam%remove('testPL->testSLK1a')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the 2-D array SSK removal routine in a parameter list 
   CALL testParam%remove('testPL->testSSK2a')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the 2-D array SDK removal routine in a parameter list 
   CALL testParam%remove('testPL->testSDK2a')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the 2-D array SNK removal routine in a parameter list 
   CALL testParam%remove('testPL->testSNK2a')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the 2-D array SLK removal routine in a parameter list 
   CALL testParam%remove('testPL->testSLK2a')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the 3-D array SSK removal routine in a parameter list 
   CALL testParam%remove('testPL->testSSK3a')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the 3-D array SDK removal routine in a parameter list 
   CALL testParam%remove('testPL->testSDK3a')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the 3-D array SNK removal routine in a parameter list 
   CALL testParam%remove('testPL->testSNK3a')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the 3-D array SLK removal routine in a parameter list 
   CALL testParam%remove('testPL->testSLK3a')
   CALL testParam%edit(OUTPUT_UNIT)
-  CALL testParam%remove('testPL->testSSK2')
-  CALL testParam%remove('testPL2->testSSK2')
   
   !Clean-up variables
   CALL testParam2%clear()
   CALL testParam%clear()
   
   !Setup reference list and test validation subroutines
-  CALL testParam2%add('TestReq->p1',0.0_SSK)
+  CALL testParam%add('TestReq->p1',0.0_SSK)
   !test the null case for both params.
-  CALL testParam2%validate(testParam,testParam3)
-  testParam3=testParam2
+  CALL testParam%validate(testParam2,testParam3)
+  !Testing the assignment operation
+  testParam3=testParam
   eParams => NULL()
-  !test the null param, but existing optional param
-  CALL testParam2%validate(testParam,testParam3)
+  !test the null required param, but existing optional param
+  CALL testParam%validate(testParam2,testParam3)
   eParams => e
-  testParam=testParam2
+  testParam2=testParam
   CALL testParam3%clear()
-  !test existing params with null optional params
+  !test existing required params with null optional params
   CALL testParam%validate(testParam2,testParam3)
   CALL testParam2%add('TestReq->p2',0.1_SSK)
-  !test only existing params, no optional params
+  !test only required params, no optional params
   CALL testParam%validate(testParam2)
+  !Clear the test param, and test against an existing req param list
+  CALL testParam%clear()
+  CALL testParam%validate(testParam2)
+  !Setting the test param to have all the required params
+  !This allows for optional params to be tested
   testParam=testParam2
-  !trying to test actual optional params
-  CALL testParam2%validate(testParam,testParam3)
-  CALL testParam2%add('TestReq->sublist1->p1',1.0_SSK)
-  CALL testParam2%validate(testParam,testParam3)
-  CALL testParam2%add('TestReq->sublist1->p3',1.1_SSK)
-  CALL testParam2%validate(testParam,testParam3)
-  CALL testParam3%add('TestReq->sublist1->p1',1.0_SSK)
-  CALL testParam2%validate(testParam,testParam3)
-  CALL testParam3%add('TestReq->sublist1->p3',1.1_SSK)
-  CALL testParam2%validate(testParam,testParam3)
-  testParam=testParam2
+  
+  !Testing required params
+  
+  !Adding an extra parameter to the test list
+  CALL testParam%add('TestReq->sublist1->p3',1.1_SSK)
   CALL testParam%validate(testParam2,testParam3)
+  !Adding the same extra parameter to the optional list
+  CALL testParam3%add('TestReq->sublist1->p3',1.1_SSK)
+  CALL testParam%validate(testParam2,testParam3)
+  !Making sure the req param has all the test param data
+  testParam2=testParam
+  !Clearing the options for now
   CALL testParam3%clear()
   CALL testParam%clear()
-  CALL testParam2%add('TestReq->sublist1->sublist2->p2',2.0_SSK)
-  CALL testParam%validate(testParam2,testParam3)
   CALL testParam2%add('TestReq->sublist1->sublist2->sublist3->null',-1.0_SSK)
-  CALL testParam%validate(testParam2,testParam3)
+  CALL testParam%validate(testParam2)
   testParam=testParam2
   CALL testParam2%remove('TestReq->sublist1->sublist2->sublist3->null')
-  CALL testParam%validate(testParam2,testParam3)
+  CALL testParam%validate(testParam2)
   CALL testParam3%add('TestReq->sublist1->sublist2->sublist3->null',-1.0_SSK)
   CALL testParam%validate(testParam2,testParam3)
   CALL testParam3%add('TestReq->sublist1->sublist2->sublist3->opt',-2.0_SSK)
-  !a legitimate optional set, I think.
+  !!a legitimate optional set, I think.
   CALL testParam%validate(testParam2,testParam3)
-  CALL testParam%validate(testParam2)
   CALL testParam%add('TestReq->sublist1->sublist2->sublist3->opt2',4.0_SSK)
   CALL testParam%validate(testParam2,testParam3)
-  CALL testParam%validate(testParam2)
-  !different type for optional input
+  !!different type for optional input
   CALL testParam%add('TestReq->sublist1->sublist2->sublist3->opt3',5.0_SDK)
   CALL testParam%validate(testParam2,testParam3)
-  CALL testParam%validate(testParam2)
   CALL testParam3%add('TestReq->sublist1->sublist2->sublist3->opt3',5.0_SSK)
   CALL testParam%validate(testParam2,testParam3)
-  CALL testParam%validate(testParam2)
   CALL testParam3%add('TestReq->sublist1->sublist2->sublist3->opt4',5.1_SSK)
   CALL testParam%validate(testParam2,testParam3)
-  CALL testParam%validate(testParam2)
   CALL testParam%add('TestReq->sublist1->sublist2->sublist3->opt4',5.0_SSK)
   CALL testParam%validate(testParam2,testParam3)
-  CALL testParam%validate(testParam2)
   !different type for required input
   CALL testParam%add('TestReq->sublist1->sublist2->sublist3->p5',7.1_SDK)
   CALL testParam%validate(testParam2,testParam3)
-  CALL testParam%validate(testParam2)
   CALL testParam2%add('TestReq->sublist1->sublist2->sublist3->p5',7.1_SSK)
   CALL testParam%validate(testParam2,testParam3)
-  CALL testParam%validate(testParam2)
   CALL testParam2%add('TestReq->sublist1->sublist2->sublist3->p7',0.1_SSK)
   CALL testParam%validate(testParam2,testParam3)
-  CALL testParam%validate(testParam2)
+  CALL testParam%remove('TestReq->sublist1->sublist2->sublist3->p5')
+  CALL testParam%add('TestReq->sublist1->sublist2->sublist3->p5',7.1_SSK)
   CALL testParam%add('TestReq->sublist1->sublist2->sublist3->p7',0.2_SSK)
   CALL testParam%validate(testParam2,testParam3)
-  CALL testParam%validate(testParam2)
   !Different types
   CALL testParam%add('TestReq->p6',6.0_SSK)
   CALL testParam%validate(testParam2,testParam3)
-  CALL testParam%validate(testParam2)
   CALL testParam2%add('TestReq->p6',6_SNK)
   CALL testParam%validate(testParam2,testParam3)
-  CALL testParam%validate(testParam2)
   CALL testParam2%remove('TestReq->sublist1->sublist2->sublist3->null')
   CALL testParam2%add('TestReq->p4',0.2_SSK)
   CALL testParam%validate(testParam2,testParam3)
-  CALL testParam%validate(testParam2)
-  CALL testParam2%edit(OUTPUT_UNIT)
   CALL testClear()
   !Test param 2 is the required values, test param 3 is the optional
   !Test param is the list being checked.
   !Checks all the extras...
   CALL eParams%SetQuietMode(.TRUE.)
-  CALL testParam%edit(OUTPUT_UNIT)
   CALL testParam2%add('TestReq->p1',0.2_SSK)
   CALL testParam3%add('TestOpt->p1',.TRUE.)
   CALL testParam%add('TestOther->p1',.TRUE.)
@@ -548,7 +636,6 @@ PROGRAM testParameterLists
   CALL testParam%add('TestReq->p2->2far',6_SLK)
   CALL testParam%validate(testParam2,testParam3)
   CALL testParam%add('TestReq->p2->2far->veryfar',8_SLK)
-  CALL testParam%edit(OUTPUT_UNIT)
   CALL testParam%validate(testParam2,testParam3)
   CALL testParam2%remove('TestReq->p2')
   CALL testParam%validate(testParam2,testParam3)
@@ -560,20 +647,16 @@ PROGRAM testParameterLists
   CALL testParam3%remove('TestOpt->p2->2far->veryfar->veryveryfar')
   CALL testParam%validate(testParam2,testParam3)
   WRITE(*,*) '--------------------------------------------------'
-  CALL testParam%edit(OUTPUT_UNIT)
   CALL testParam%remove('TestOpt->p2->2far->veryfar')
   CALL testParam%add('TestOpt->p2->2far->veryfar',3.0_SSK)
   WRITE(*,*) '--------------------------------------------------'
-  CALL testParam%edit(OUTPUT_UNIT)
   CALL testParam%validate(testParam2,testParam3)
   WRITE(*,*) '--------------------------------------------------'
-  CALL testParam%edit(OUTPUT_UNIT)
   CALL testParam%remove('TestOpt->p2->2far->veryfar')
   WRITE(*,*) '--------------------------------------------------'
-  CALL testParam%edit(OUTPUT_UNIT)
   CALL testParam%validate(testParam2,testParam3)
   WRITE(*,*) '--------------------------------------------------'
-  CALL testParam%edit(OUTPUT_UNIT)
+  
   
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING PARAMETERLISTS PASSED!'
