@@ -564,9 +564,6 @@ PROGRAM testParameterLists
   !Setting the test param to have all the required params
   !This allows for optional params to be tested
   testParam=testParam2
-  
-  !Testing required params
-  
   !Adding an extra parameter to the test list
   CALL testParam%add('TestReq->sublist1->p3',1.1_SSK)
   CALL testParam%validate(testParam2,testParam3)
@@ -579,45 +576,20 @@ PROGRAM testParameterLists
   CALL testParam3%clear()
   CALL testParam%clear()
   CALL testParam2%add('TestReq->sublist1->sublist2->sublist3->null',-1.0_SSK)
-  CALL testParam%validate(testParam2)
+  !Making sure the test param has all the required params
   testParam=testParam2
-  CALL testParam2%remove('TestReq->sublist1->sublist2->sublist3->null')
+  !Valid Req parameters, covering the line for checkExtras_Paramtype w/o optional params (line 1538)
   CALL testParam%validate(testParam2)
-  CALL testParam3%add('TestReq->sublist1->sublist2->sublist3->null',-1.0_SSK)
-  CALL testParam%validate(testParam2,testParam3)
-  CALL testParam3%add('TestReq->sublist1->sublist2->sublist3->opt',-2.0_SSK)
-  !!a legitimate optional set, I think.
-  CALL testParam%validate(testParam2,testParam3)
-  CALL testParam%add('TestReq->sublist1->sublist2->sublist3->opt2',4.0_SSK)
-  CALL testParam%validate(testParam2,testParam3)
-  !!different type for optional input
+  !Valid Req parameters, covering different parameter type for optional input (lines 1424-1431)
   CALL testParam%add('TestReq->sublist1->sublist2->sublist3->opt3',5.0_SDK)
   CALL testParam%validate(testParam2,testParam3)
   CALL testParam3%add('TestReq->sublist1->sublist2->sublist3->opt3',5.0_SSK)
   CALL testParam%validate(testParam2,testParam3)
-  CALL testParam3%add('TestReq->sublist1->sublist2->sublist3->opt4',5.1_SSK)
-  CALL testParam%validate(testParam2,testParam3)
-  CALL testParam%add('TestReq->sublist1->sublist2->sublist3->opt4',5.0_SSK)
-  CALL testParam%validate(testParam2,testParam3)
-  !different type for required input
-  CALL testParam%add('TestReq->sublist1->sublist2->sublist3->p5',7.1_SDK)
-  CALL testParam%validate(testParam2,testParam3)
-  CALL testParam2%add('TestReq->sublist1->sublist2->sublist3->p5',7.1_SSK)
-  CALL testParam%validate(testParam2,testParam3)
-  CALL testParam2%add('TestReq->sublist1->sublist2->sublist3->p7',0.1_SSK)
-  CALL testParam%validate(testParam2,testParam3)
-  CALL testParam%remove('TestReq->sublist1->sublist2->sublist3->p5')
-  CALL testParam%add('TestReq->sublist1->sublist2->sublist3->p5',7.1_SSK)
-  CALL testParam%add('TestReq->sublist1->sublist2->sublist3->p7',0.2_SSK)
-  CALL testParam%validate(testParam2,testParam3)
-  !Different types
+  !Finds a meaningful REQ parameter, returns an associated parameter of a different type (lines 1337-1340)
   CALL testParam%add('TestReq->p6',6.0_SSK)
-  CALL testParam%validate(testParam2,testParam3)
   CALL testParam2%add('TestReq->p6',6_SNK)
   CALL testParam%validate(testParam2,testParam3)
-  CALL testParam2%remove('TestReq->sublist1->sublist2->sublist3->null')
-  CALL testParam2%add('TestReq->p4',0.2_SSK)
-  CALL testParam%validate(testParam2,testParam3)
+  !
   CALL testClear()
   !Test param 2 is the required values, test param 3 is the optional
   !Test param is the list being checked.
@@ -626,34 +598,31 @@ PROGRAM testParameterLists
   CALL testParam2%add('TestReq->p1',0.2_SSK)
   CALL testParam3%add('TestOpt->p1',.TRUE.)
   CALL testParam%add('TestOther->p1',.TRUE.)
-  CALL testParam%validate(testParam2,testParam3)
-  !Trying to test the required stuff.
   CALL testParam%remove('TestOther')
   CALL testParam2%add('TestReq->p2->2far->veryfar',7._SDK)
-  CALL testParam%validate(testParam2,testParam3)
   CALL testParam2%remove('TestReq->p2->2far->veryfar')
+  !Test param for an existing parameter list, but the pointer isn't associated (lines 1313-1315)
   CALL testParam%validate(testParam2,testParam3)
+  !Since an empty req param list exists, add a SLK parameter to test param 
+  !so they aren't the same type  (lines 1319-1323)
   CALL testParam%add('TestReq->p2->2far',6_SLK)
   CALL testParam%validate(testParam2,testParam3)
-  CALL testParam%add('TestReq->p2->2far->veryfar',8_SLK)
-  CALL testParam%validate(testParam2,testParam3)
+  !Remove the extra required parameters and add TestRq->p1 so the validate req params is true
   CALL testParam2%remove('TestReq->p2')
-  CALL testParam%validate(testParam2,testParam3)
   CALL testParam%add('TestReq->p1',0.2_SSK)
-  CALL testParam%validate(testParam2,testParam3)
-  !Trying to test the optional stuff.  Need to have valid reqparams.
+  !Setting up an optional param that has a parameter list but no associated pointer
   CALL testParam3%add('TestOpt->p2->2far->veryfar->veryveryfar',3.0_SDK)
-  CALL testParam%validate(testParam2,testParam3)
   CALL testParam3%remove('TestOpt->p2->2far->veryfar->veryveryfar')
-  CALL testParam%validate(testParam2,testParam3)
   WRITE(*,*) '--------------------------------------------------'
   CALL testParam%remove('TestOpt->p2->2far->veryfar')
   CALL testParam%add('TestOpt->p2->2far->veryfar',3.0_SSK)
   WRITE(*,*) '--------------------------------------------------'
+  !Testing an optional param list against a parameter type (lines 1400-1410)
   CALL testParam%validate(testParam2,testParam3)
   WRITE(*,*) '--------------------------------------------------'
   CALL testParam%remove('TestOpt->p2->2far->veryfar')
   WRITE(*,*) '--------------------------------------------------'
+  !Testing an unassociated test param from the remove statement above (lines 1388-1396)
   CALL testParam%validate(testParam2,testParam3)
   WRITE(*,*) '--------------------------------------------------'
   

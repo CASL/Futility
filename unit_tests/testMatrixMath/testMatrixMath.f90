@@ -1367,6 +1367,9 @@ PROGRAM testMatrixMath
           STOP 666
       ENDSELECT
       WRITE(*,*) '  Passed: CALL BLAS_matmult(...) A=DS B=DR C=DR'
+      CALL thisMtrx%clear()
+      CALL bmat%clear()
+      CALL cmat%clear()
       
     ENDSUBROUTINE  testMatrixMultSquare
     
