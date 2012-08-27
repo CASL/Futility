@@ -46,6 +46,12 @@ MODULE LinearSolverTypes
   USE MatrixTypes
   USE BLAS
   IMPLICIT NONE
+  
+#ifdef HAVE_PETSC
+#include <finclude/petsc.h>
+#define IS IS
+#endif
+
   PRIVATE
 !
 ! List of public members
@@ -90,6 +96,11 @@ MODULE LinearSolverTypes
     !> 0 : Normal
     !> -1: Unsuccessful exit
     INTEGER(SIK) :: info
+
+#ifdef HAVE_PETSC
+    KSP :: ksp
+#endif
+
   !
   !List of Type Bound Procedures
     CONTAINS
@@ -188,6 +199,10 @@ MODULE LinearSolverTypes
       TYPE(OMP_EnvType),POINTER,INTENT(IN),OPTIONAL :: OMPparallelEnv
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: timerName
       LOGICAL(SBK) :: localalloc
+#ifdef HAVE_PETSC
+      PetscErrorCode  :: ierr
+#endif
+      
       !Error checking of subroutine input
       localalloc=.FALSE.
       IF(.NOT.ASSOCIATED(eLinearSolverType)) THEN
@@ -223,6 +238,22 @@ MODULE LinearSolverTypes
                     ' - OMP Env is not associated, and will not be used.')
               ENDIF
             ENDIF
+            
+            
+#ifdef HAVE_PETSC
+            CALL KSPCreate(solver%MPIparallelEnv,solver%ksp,ierr)
+            CALL KSPSetOperators(solver%ksp,solver%a,solver%a,DIFFERENT_NONZERO_PATTERN,ierr)
+            CALL KSPSetFromOptions(solver%ksp,ierr)
+            
+            !set solver type
+            SELECTCASE(solver%solverMethod)
+              ! several other possibilities:
+              ! KSPCGS, KSPFBCGS, GSPGRMRES, KSPFGMRES
+              CASE(1) ! BCGS
+                CALL KSPSetType(solver%ksp,KSPBCGS,ierr)
+            ENDSELECT
+#endif
+
             solver%solverMethod=solverMethod
             solver%isInit=.TRUE.
             
@@ -269,6 +300,7 @@ MODULE LinearSolverTypes
         CALL solver%M%clear()
         DEALLOCATE(solver%M)
       ENDIF
+
       !No timer clear function-just call toc instead
       CALL solver%SolveTime%toc()
       solver%isDecomposed=.FALSE.
@@ -282,7 +314,10 @@ MODULE LinearSolverTypes
 !>
     SUBROUTINE clear_LinearSolverType_Iterative(solver)
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
-      
+#ifdef HAVE_PETSC
+      PetscErrorCode  :: ierr
+#endif
+
       !%A, %X are operated outside of the object, so not matter if solver is
       !initialized, clear it.
       solver%isInit=.FALSE.
@@ -299,6 +334,11 @@ MODULE LinearSolverTypes
         CALL solver%M%clear()
         DEALLOCATE(solver%M)
       ENDIF
+      
+#ifdef HAVE_PETSC
+      CALL KSPDestroy(solver%ksp,ierr)
+#endif 
+
       !No timer clear function-just call toc instead
       CALL solver%SolveTime%toc()
       solver%isDecomposed=.FALSE.
@@ -406,6 +446,10 @@ MODULE LinearSolverTypes
       CHARACTER(LEN=*),PARAMETER :: myName='solve_LinearSolverType_Iterative'
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
       LOGICAL(SBK) :: localalloc
+#ifdef HAVE_PETSC
+      PetscErrorCode  :: ierr
+#endif
+
       !Error checking of subroutine input
       localalloc=.FALSE.
       IF(.NOT.ASSOCIATED(eLinearSolverType)) THEN
@@ -452,8 +496,19 @@ MODULE LinearSolverTypes
 
                 IF(solver%info == 0) &
                   CALL eLinearSolverType%raiseWarning(modName//'::'// &
-                    myName//'- BiCGSTAT method for dense rectangular system '// &
+                    myName//'- BiCGSTAB method for dense rectangular system '// &
                       'is not implemented, CGNR method is used instead.')
+
+#ifdef HAVE_PETSC                      
+              TYPE IS(PETScDenseSquareMatrixType)
+                CALL KSPSolve(solver%ksp,solver%b,solver%x,ierr)
+#endif
+
+#ifdef HAVE_PETSC
+              TYPE IS(PETScSparseMatrixType)
+                CALL KSPSolve(solver%ksp,solver%b,solver%x,ierr)
+#endif
+                
             ENDSELECT
           CASE(2) !CGNR
             SELECTTYPE(A=>solver%A)
@@ -474,6 +529,15 @@ MODULE LinearSolverTypes
                   CALL eLinearSolverType%raiseWarning(modName//'::'// &
                   myName//'- CGNR method for sparse system '// &
                     'is not implemented, BiCGSTAB method is used instead.')
+#ifdef HAVE_PETSC                    
+              TYPE IS(PETScDenseSquareMatrixType)
+                CALL KSPSolve(solver%ksp,solver%b,solver%x,ierr)
+#endif
+
+#ifdef HAVE_PETSC
+              TYPE IS(PETScSparseMatrixType)
+                CALL KSPSolve(solver%ksp,solver%b,solver%x,ierr)
+#endif
 
               CLASS DEFAULT
                 CALL solveCGNR(solver)
@@ -578,10 +642,22 @@ MODULE LinearSolverTypes
       INTEGER(SIK),INTENT(IN) :: normType_in
       REAL(SRK),INTENT(IN) :: convTol_in
       INTEGER(SIK),INTENT(IN) :: maxIters_in
+#ifdef HAVE_PETSC
+      PetscErrorCode  :: ierr
+      PetscInt  :: maxits
+      PetscReal :: rtol,abstol,dtol=PETSC_DEFAULT_DOUBLE_PRECISION
+#endif
 
       INTEGER(SIK) :: normType,maxIters
       REAL(SRK) :: convTol
       LOGICAL(SBK) :: localalloc
+      
+#ifdef HAVE_PETSC
+      ! set variables
+      maxits=maxIters_in
+      rtol=convTol_in
+      abstol=convTol_in
+#endif
 
       localalloc=.FALSE.
       IF(.NOT.ASSOCIATED(eLinearSolverType)) THEN
@@ -615,6 +691,9 @@ MODULE LinearSolverTypes
         solver%normType=normType
         solver%convTol=convTol
         solver%maxIters=maxIters
+#ifdef HAVE_PETSC
+        CALL KSPSetTolerances(solver%ksp,rtol,abstol,dtol,maxits,ierr)
+#endif
       ENDIF
       IF(localalloc) DEALLOCATE(eLinearSolverType)
     ENDSUBROUTINE setConv_LinearSolverType_Iterative
