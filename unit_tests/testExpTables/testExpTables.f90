@@ -232,6 +232,9 @@ PROGRAM testExpTables
   WRITE(*,*) '==================================================='
   CALL ErrCheck()
   CALL perftest()
+  DO i=1,5
+    CALL testET2(i)%clear()
+  ENDDO
 !
 !===============================================================================
 CONTAINS
