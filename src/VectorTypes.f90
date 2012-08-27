@@ -48,8 +48,8 @@ MODULE VectorTypes
   IMPLICIT NONE
 
 #ifdef HAVE_PETSC
-#include <finclude/petscsys.h>
-#include <finclude/petscvec.h>
+#include <finclude/petsc.h>
+#define IS IS
 #endif
 
   PRIVATE
