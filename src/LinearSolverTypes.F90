@@ -245,12 +245,14 @@ MODULE LinearSolverTypes
             CALL KSPSetOperators(solver%ksp,solver%a,solver%a,DIFFERENT_NONZERO_PATTERN,ierr)
             CALL KSPSetFromOptions(solver%ksp,ierr)
             
-            !set solver type
+            !set iterative solver type
             SELECTCASE(solver%solverMethod)
-              ! several other possibilities:
-              ! KSPCGS, KSPFBCGS, GSPGRMRES, KSPFGMRES
               CASE(1) ! BCGS
                 CALL KSPSetType(solver%ksp,KSPBCGS,ierr)
+              CASE(2) ! CGNR
+                CALL KSPSetType(solver%ksp,KSPCGNE,ierr)
+              CASE(3) ! GMRES
+                CALL KSPSetType(solver%ksp,KSPGMRES,ierr)
             ENDSELECT
 #endif
 
@@ -502,9 +504,7 @@ MODULE LinearSolverTypes
 #ifdef HAVE_PETSC                      
               TYPE IS(PETScDenseSquareMatrixType)
                 CALL KSPSolve(solver%ksp,solver%b,solver%x,ierr)
-#endif
 
-#ifdef HAVE_PETSC
               TYPE IS(PETScSparseMatrixType)
                 CALL KSPSolve(solver%ksp,solver%b,solver%x,ierr)
 #endif
@@ -532,15 +532,24 @@ MODULE LinearSolverTypes
 #ifdef HAVE_PETSC                    
               TYPE IS(PETScDenseSquareMatrixType)
                 CALL KSPSolve(solver%ksp,solver%b,solver%x,ierr)
-#endif
 
-#ifdef HAVE_PETSC
               TYPE IS(PETScSparseMatrixType)
                 CALL KSPSolve(solver%ksp,solver%b,solver%x,ierr)
 #endif
-
               CLASS DEFAULT
                 CALL solveCGNR(solver)
+            
+            ENDSELECT
+            
+          CASE(3) !GMRES
+            SELECTTYPE(A=>solver%A)
+#ifdef HAVE_PETSC                    
+              TYPE IS(PETScDenseSquareMatrixType)
+                CALL KSPSolve(solver%ksp,solver%b,solver%x,ierr)
+
+              TYPE IS(PETScSparseMatrixType)
+                CALL KSPSolve(solver%ksp,solver%b,solver%x,ierr)
+#endif  
             ENDSELECT
         ENDSELECT
         CALL solver%SolveTime%toc()
