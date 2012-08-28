@@ -20,6 +20,7 @@ PROGRAM testMatrixMath
   USE IntrType
   USE ExceptionHandler
   USE BLAS
+  USE VectorTypes
   IMPLICIT NONE
   
   TYPE(ExceptionHandlerType),POINTER :: e
@@ -50,6 +51,9 @@ PROGRAM testMatrixMath
   WRITE(*,*) 'TESTING MATRIX TYPES'
   CALL testMatrixTypes()
   
+  WRITE(*,*) 'TESTING VECTOR TYPES'
+  CALL testVectorTypes()
+  
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING MATRIX MATH PASSED!'
   WRITE(*,*) '==================================================='
@@ -57,6 +61,48 @@ PROGRAM testMatrixMath
 !
 !===============================================================================
   CONTAINS
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testVectorTypes()
+      CLASS(VectorType),ALLOCATABLE :: thisVector
+
+!Test for real vectors      
+      ALLOCATE(RealVectorType :: thisVector)
+      SELECTTYPE(thisVector)
+        TYPE IS(RealVectorType)
+          !test clear
+          !make vector without using untested init
+          thisVector%isInit=.TRUE.
+          thisVector%n=100
+          ALLOCATE(thisVector%b(100))
+      ENDSELECT
+        
+      !clear it
+      CALL thisVector%clear()
+        
+      SELECTTYPE(thisVector)
+        TYPE IS(RealVectorType)
+          !check for success
+          IF((thisVector%isInit).OR.(thisVector%n /= 0)) THEN
+            WRITE(*,*) 'CALL realvec%clear() FAILED!'
+            STOP 666
+          ENDIF
+          IF(ALLOCATED(thisVector%b)) THEN
+            WRITE(*,*) 'CALL realvec%clear() FAILED!'
+            STOP 666
+          ENDIF
+          WRITE(*,*) '  Passed: CALL realvec%clear()'
+      ENDSELECT
+ 
+ 
+!Test for PETSc vectors
+      ALLOCATE(PETScVectorType :: thisVector)
+      CALL thisVector%clear()
+      WRITE(*,*) '  Passed: CALL petscvec%clear(...)'
+      
+    ENDSUBROUTINE testVectorTypes
+      
+    
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testMatrixTypes()
@@ -72,7 +118,7 @@ PROGRAM testMatrixMath
         TYPE IS(SparseMatrixType)
 !Test for sparse matrices
           !test clear
-          !make matrix w/iut using untested init
+          !make matrix w/out using untested init
           thisMatrix%isInit=.TRUE.
           thisMatrix%n=100
           thisMatrix%nnz=100
