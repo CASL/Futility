@@ -93,6 +93,7 @@ PROGRAM testMatrixMath
           ENDIF
           WRITE(*,*) '  Passed: CALL realvec%clear()'
       ENDSELECT
+      DEALLOCATE(thisVector)
  
  
 !Test for PETSc vectors
