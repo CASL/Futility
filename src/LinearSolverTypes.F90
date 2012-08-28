@@ -243,6 +243,10 @@ MODULE LinearSolverTypes
             
             
 #ifdef HAVE_PETSC
+            !initialize PETSc environment
+            CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
+            
+            !create and initialize KSP
             CALL KSPCreate(solver%MPIparallelEnv,solver%ksp,ierr)
             CALL KSPSetOperators(solver%ksp,solver%a,solver%a,DIFFERENT_NONZERO_PATTERN,ierr)
             CALL KSPSetFromOptions(solver%ksp,ierr)
@@ -334,6 +338,7 @@ MODULE LinearSolverTypes
       solver%info=0
       IF(ASSOCIATED(solver%A)) NULLIFY(solver%A)
       IF(ASSOCIATED(solver%X)) NULLIFY(solver%X)
+!      IF(ASSOCIATED(solver%b)) NULLIFY(solver%b)
       IF(ALLOCATED(solver%b)) CALL demallocA(solver%b)
       IF(ALLOCATED(solver%M)) THEN
         CALL solver%M%clear()
@@ -342,6 +347,7 @@ MODULE LinearSolverTypes
       
 #ifdef HAVE_PETSC
       CALL KSPDestroy(solver%ksp,ierr)
+      CALL PETSCFinalize(ierr)
 #endif 
 
       !No timer clear function-just call toc instead
@@ -464,6 +470,8 @@ MODULE LinearSolverTypes
       CALL solve_checkInput(solver)
       IF(solver%info == 0) THEN
         IF(.NOT. solver%hasX0) THEN
+!         will need loop to set initial X
+!         solver%X%set(i,1.0_SRK)???
           solver%X=1.0_SRK
           solver%hasX0=.TRUE.
           CALL eLinearSolverType%raiseWarning(modName//'::'// &
@@ -632,6 +640,7 @@ MODULE LinearSolverTypes
     SUBROUTINE setX0_LinearSolverType_Iterative(solver,X0)
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
       REAL(SRK),POINTER,INTENT(IN) :: X0(:)
+!     CLASS(VectorType),INTENT(IN) :: X0(:)
       IF(solver%isInit) THEN
         solver%X => X0
         solver%hasX0=.TRUE.
