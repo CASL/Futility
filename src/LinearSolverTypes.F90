@@ -49,7 +49,7 @@ MODULE LinearSolverTypes
   
 #ifdef HAVE_PETSC
 #include <finclude/petsc.h>
-#define IS IS
+#define IS IS !petscisdef.h defines the keyword IS, and it needs to be reset
 #endif
 
   PRIVATE
@@ -84,8 +84,10 @@ MODULE LinearSolverTypes
     CLASS(MatrixType),POINTER :: A
     !> Right-hand side vector, b
     REAL(SRK),ALLOCATABLE :: b(:)
+!    CLASS(VectorType),POINTER :: b
     !> Pointer to solution vector, x
     REAL(SRK),POINTER :: X(:)
+!    CLASS(VectorType),POINTER :: X
     !> Timer to measure solution time
     TYPE(TimerType) :: SolveTime
     !> Status of the decomposition of A
@@ -296,6 +298,7 @@ MODULE LinearSolverTypes
       solver%info=0
       IF(ASSOCIATED(solver%A)) NULLIFY(solver%A)
       IF(ASSOCIATED(solver%X)) NULLIFY(solver%X)
+!      IF(ASSOCIATED(solver%b)) NULLIFY(solver%b)
       IF(ALLOCATED(solver%b)) CALL demallocA(solver%b)
       IF(ALLOCATED(solver%IPIV)) CALL demallocA(solver%IPIV)
       IF(ALLOCATED(solver%M)) THEN

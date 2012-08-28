@@ -49,7 +49,7 @@ MODULE VectorTypes
 
 #ifdef HAVE_PETSC
 #include <finclude/petsc.h>
-#define IS IS
+#define IS IS !petscisdef.h defines the keyword IS, and it needs to be reset
 #endif
 
   PRIVATE
