@@ -31,6 +31,7 @@ PROGRAM testStochasticSampler
   REAL(SDK),ALLOCATABLE ::  y(:), z(:)
   INTEGER(SIK),ALLOCATABLE :: iii(:)
   REAL(SDK) :: mean, stdev, x
+  INTEGER(SLK) :: firstten(11)
   INTEGER :: i,j,n
   
   INTERFACE
@@ -73,6 +74,27 @@ PROGRAM testStochasticSampler
     WRITE(*,*) 'RNG did not initialize properly.  Test FAILED!'
     STOP 666
   ENDIF
+  
+  firstten(1)=1_SLK
+  firstten(2)=2806196910506780710_SLK
+  firstten(3)=6924308458965941631_SLK
+  firstten(4)=7093833571386932060_SLK
+  firstten(5)=4133560638274335821_SLK
+  firstten(6)= 678653069250352930_SLK
+  firstten(7)= 682142755826100203_SLK
+  firstten(8)=8445772606699617528_SLK
+  firstten(9)=4656810573858967513_SLK
+  firstten(10)=5251754594274751070_SLK
+  firstten(11)=2039497501229545367_SLK
+  
+  DO i=1,11
+    IF(.NOT. (myRNG%RNseed==firstten(i))) THEN
+      WRITE(*,*) 'RNG did not reproduce first 10 random numbers.  Test FAILED!'
+      STOP 666
+    ENDIF
+    x=myRNG%rng()
+  ENDDO
+  WRITE(*,*) 'RNG reproduced first 10 random numbers.  Test PASSED!'
 
   CALL TestRNG()
   
