@@ -153,7 +153,7 @@ MODULE MatrixTypes
   ENDTYPE RectMatrixType
   
   !> @brief The extended type for sparse PETSc matrices
-  TYPE,ABSTRACT,EXTENDS(MatrixType) :: PETScSparseMatrixType
+  TYPE,ABSTRACT,EXTENDS(SquareMatrixType) :: PETScSparseMatrixType
 #ifdef HAVE_PETSC
     Mat :: A
 #endif
@@ -175,7 +175,7 @@ MODULE MatrixTypes
   ENDTYPE PETScSparseMatrixType
   
   !> @brief The extended type for dense PETSc matrices
-  TYPE,ABSTRACT,EXTENDS(MatrixType) :: PETScDenseSquareMatrixType
+  TYPE,ABSTRACT,EXTENDS(SquareMatrixType) :: PETScDenseSquareMatrixType
 #ifdef HAVE_PETSC
     Mat :: A
 #endif
@@ -672,6 +672,7 @@ MODULE MatrixTypes
       PetscErrorCode  :: ierr
       matrix%isInit=.FALSE.
       matrix%n=0
+      matrix%isSymmetric=.FALSE.
       CALL MatDestroy(matrix%a,ierr)
 #endif
     ENDSUBROUTINE clear_PETScSparseMatrixType
@@ -686,6 +687,7 @@ MODULE MatrixTypes
       PetscErrorCode  :: ierr
       matrix%isInit=.FALSE.
       matrix%n=0
+      matrix%isSymmetric=.FALSE.
       CALL MatDestroy(matrix%a,ierr)
 #endif
     ENDSUBROUTINE clear_PETScDenseSquareMatrixType
@@ -852,6 +854,9 @@ MODULE MatrixTypes
         IF(((j <= matrix%n) .AND. (i <= matrix%n)) & 
           .AND. ((j > 0) .AND. (i > 0))) THEN
           CALL MatSetValues(matrix%a,1,i-1,1,j-1,setval,INSERT_VALUES,ierr)
+          IF(matrix%isSymmetric) THEN
+            CALL MatSetValues(matrix%a,1,j-1,1,i-1,setval,INSERT_VALUES,ierr)
+          ENDIF
         ENDIF
       ENDIF
 #endif
@@ -875,6 +880,9 @@ MODULE MatrixTypes
         IF(((j <= matrix%n) .AND. (i <= matrix%n)) & 
           .AND. ((j > 0) .AND. (i > 0))) THEN
           CALL MatSetValues(matrix%a,1,i-1,1,j-1,setval,INSERT_VALUES,ierr)
+          IF(matrix%isSymmetric) THEN
+            CALL MatSetValues(matrix%a,1,j-1,1,i-1,setval,INSERT_VALUES,ierr)
+          ENDIF
         ENDIF
       ENDIF
 #endif
