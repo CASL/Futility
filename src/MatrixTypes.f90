@@ -153,7 +153,7 @@ MODULE MatrixTypes
   ENDTYPE RectMatrixType
   
   !> @brief The extended type for sparse PETSc matrices
-  TYPE,ABSTRACT,EXTENDS(SquareMatrixType) :: PETScSparseMatrixType
+  TYPE,EXTENDS(SquareMatrixType) :: PETScSparseMatrixType
 #ifdef HAVE_PETSC
     Mat :: A
 #endif
@@ -175,7 +175,7 @@ MODULE MatrixTypes
   ENDTYPE PETScSparseMatrixType
   
   !> @brief The extended type for dense PETSc matrices
-  TYPE,ABSTRACT,EXTENDS(SquareMatrixType) :: PETScDenseSquareMatrixType
+  TYPE,EXTENDS(SquareMatrixType) :: PETScDenseSquareMatrixType
 #ifdef HAVE_PETSC
     Mat :: A
 #endif
@@ -591,6 +591,11 @@ MODULE MatrixTypes
           ELSE
             matrix%isInit=.TRUE.
             matrix%n=n
+            IF(m == 0) THEN
+              matrix%isSymmetric=.FALSE.
+            ELSE
+              matrix%isSymmetric=.TRUE.
+            ENDIF
             CALL MatCreate(MPI_COMM_WORLD,matrix%a,ierr)
             CALL MatSetSizes(matrix%a,PETSC_DECIDE,PETSC_DECIDE,matrix%n,matrix%n,ierr)
             CALL MatSetType(matrix%a,MATMPIDENSE,ierr)
@@ -857,6 +862,8 @@ MODULE MatrixTypes
           IF(matrix%isSymmetric) THEN
             CALL MatSetValues(matrix%a,1,j-1,1,i-1,setval,INSERT_VALUES,ierr)
           ENDIF
+          CALL MatAssemblyBegin(matrix%a,ierr)
+          CALL MatAssemblyEnd(matrix%a,ierr)
         ENDIF
       ENDIF
 #endif
@@ -881,8 +888,10 @@ MODULE MatrixTypes
           .AND. ((j > 0) .AND. (i > 0))) THEN
           CALL MatSetValues(matrix%a,1,i-1,1,j-1,setval,INSERT_VALUES,ierr)
           IF(matrix%isSymmetric) THEN
-            CALL MatSetValues(matrix%a,1,j-1,1,i-1,setval,INSERT_VALUES,ierr)
+            CALL MatSetValues(matrix%a,1,j-1,1,i-1,setval,INSERT_VALUES,ierr)  
           ENDIF
+          CALL MatAssemblyBegin(matrix%a,ierr)
+          CALL MatAssemblyEnd(matrix%a,ierr)
         ENDIF
       ENDIF
 #endif
@@ -947,7 +956,7 @@ MODULE MatrixTypes
 #ifdef HAVE_PETSC
       IF(matrix%isInit) THEN
         IF((i <= matrix%n) .AND. ((j > 0) .AND. (i > 0))) THEN
-          CALL MatGetValues(matrix%a,1,i-1,1,j-1,aij,INSERT_VALUES,ierr)
+          CALL MatGetValues(matrix%a,1,i-1,1,j-1,aij,ierr)
         ELSE
           aij=-1051._SRK
         ENDIF
@@ -978,7 +987,7 @@ MODULE MatrixTypes
 #ifdef HAVE_PETSC
       IF(matrix%isInit) THEN
         IF((i <= matrix%n) .AND. ((j > 0) .AND. (i > 0))) THEN
-          CALL MatGetValues(matrix%a,1,i-1,1,j-1,aij,INSERT_VALUES,ierr)
+          CALL MatGetValues(matrix%a,1,i-1,1,j-1,aij,ierr)
         ELSE
           aij=-1051._SRK
         ENDIF

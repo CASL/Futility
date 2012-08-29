@@ -297,6 +297,8 @@ MODULE VectorTypes
       IF(vector%isInit) THEN
         IF((i <= vector%n) .AND. (i > 0)) THEN
           CALL VecSetValues(vector%b,1,i-1,setval,INSERT_VALUES,ierr)
+          CALL VecAssemblyBegin(vector%b,ierr)
+          CALL VecAssemblyEnd(vector%b,ierr)
         ENDIF
       ENDIF
 #endif
