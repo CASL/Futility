@@ -23,7 +23,15 @@ PROGRAM testMatrixMath
   USE VectorTypes
   IMPLICIT NONE
   
+#ifdef HAVE_PETSC
+#include <finclude/petsc.h>
+#define IS IS !petscisdef.h defines the keyword IS, and it needs to be reset
+#endif
+  
   TYPE(ExceptionHandlerType),POINTER :: e
+#ifdef HAVE_PETSC
+  PetscErrorCode  :: ierr
+#endif
   
 
   !Configure exception handler for test
@@ -65,7 +73,7 @@ PROGRAM testMatrixMath
 !-------------------------------------------------------------------------------
     SUBROUTINE testVectorTypes()
       CLASS(VectorType),ALLOCATABLE :: thisVector
-      INTEGER(SIK) :: i
+      INTEGER(SIK) :: i,vecsize
       REAL(SRK) :: dummy
 
 !Test for real vectors      
@@ -229,7 +237,7 @@ PROGRAM testMatrixMath
             STOP 666
           ENDIF
       ENDSELECT
-      !test with out of bounds i,j, make sure no crash.
+      !test with out of bounds, make sure no crash.
       SELECTTYPE(thisVector)
         TYPE IS(RealVectorType)
           dummy=thisVector%get(8)
@@ -258,10 +266,210 @@ PROGRAM testMatrixMath
       
       DEALLOCATE(thisVector)
  
-!Test for PETSc vectors
-!      ALLOCATE(PETScVectorType :: thisVector)
-!      CALL thisVector%clear()
-!      WRITE(*,*) '  Passed: CALL petscvec%clear(...)'
+!Test for PETSc vectors (if necessary)
+#ifdef HAVE_PETSC    
+
+      CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
+      
+      !Perform test of clear function
+      !make vector without using untested init
+      ALLOCATE(PETScVectorType :: thisVector)
+      SELECTTYPE(thisVector)
+        TYPE IS(PetscVectorType)
+          thisVector%isInit=.TRUE.
+          thisVector%n=100
+          CALL VecCreate(MPI_COMM_WORLD,thisVector%b,ierr)
+          CALL VecSetSizes(thisVector%b,PETSC_DECIDE,thisVector%n,ierr)
+          CALL VecSetType(thisVector%b,VECMPI,ierr)
+          CALL VecSetFromOptions(thisVector%b,ierr)
+      ENDSELECT
+        
+      !clear it
+      CALL thisVector%clear()
+        
+      SELECTTYPE(thisVector)
+        TYPE IS(PETScVectorType)
+          !check for success
+          IF((thisVector%isInit).OR.(thisVector%n /= 0)) THEN
+            WRITE(*,*) 'CALL petscvec%clear() FAILED!'
+            STOP 666
+          ENDIF
+          !check if pointer for b is null
+          !if not, clear did not destroy it
+          IF(thisVector%b /= PETSC_NULL_REAL) THEN
+            WRITE(*,*) 'CALL petscvec%clear() FAILED!'
+            STOP 666
+          ENDIF
+          WRITE(*,*) '  Passed: CALL petscvec%clear()'
+      ENDSELECT
+      
+      !Perform test of init function
+      !first check intended init path (m provided)
+      eVectorType => NULL()
+      CALL thisVector%init(10)
+      eVectorType => e
+      SELECTTYPE(thisVector)
+        TYPE IS(PETScVectorType)
+          !check for success
+          IF((.NOT.thisVector%isInit).AND.(thisVector%n /= 10)) THEN
+            WRITE(*,*) 'CALL petscvec%init(...) FAILED!'
+            STOP 666
+          ENDIF
+          CALL VecGetSize(thisVector%b,i,ierr)
+          IF(i /= 10) THEN
+            WRITE(*,*) 'CALL petscvec%init(...) FAILED!'
+            STOP 666
+          ENDIF
+      ENDSELECT  
+      CALL thisVector%clear()
+        
+      !now check init without m being provided
+      CALL thisVector%init(-10) !expect exception
+      IF(thisVector%isInit) THEN
+        WRITE(*,*) 'CALL petscvec%init(...) FAILED!'
+        STOP 666
+      ENDIF
+      CALL thisVector%clear()
+        
+      !init it twice so on 2nd init, isInit==.TRUE.
+      CALL thisVector%init(10)
+      SELECTTYPE(thisVector)
+        TYPE IS(PETScVectorType); thisVector%n=1
+      ENDSELECT
+      CALL thisVector%init(10)
+      SELECTTYPE(thisVector)
+        TYPE IS(PETScVectorType)
+          IF(thisVector%n/=1) THEN !n/=1 implies it was changed, and thus fail
+            WRITE(*,*) 'CALL petscvec%init(...) FAILED!' !expect exception
+            STOP 666
+          ENDIF
+      ENDSELECT
+     !init with n<1
+      CALL thisVector%clear()
+      CALL thisVector%init(-1) !expect exception
+      IF(thisVector%isInit) THEN
+        WRITE(*,*) 'CALL petscvec%init(...) FAILED!'
+        STOP 666
+      ENDIF
+      CALL thisVector%clear()
+      !n<1, and m not provided
+      CALL thisVector%init(-1) !expect exception
+      IF(thisVector%isInit) THEN
+        WRITE(*,*) 'CALL petscvec%init(...) FAILED!'
+        STOP 666
+      ENDIF
+      CALL thisVector%clear()
+      !init with m<1
+      CALL thisVector%clear()
+      CALL thisVector%init(-10) !expect exception
+      IF(thisVector%isInit) THEN
+        WRITE(*,*) 'CALL petscvec%init(...) FAILED!'
+        STOP 666
+      ENDIF
+      CALL thisVector%clear()
+      WRITE(*,*) '  Passed: CALL petscvec%init(...)'
+      
+      !Perform test of set function
+      !use set to update the values
+      CALL thisVector%init(6)
+      CALL thisVector%set(1,1._SRK)
+      CALL thisVector%set(2,2._SRK)
+      CALL thisVector%set(3,3._SRK)
+      CALL thisVector%set(4,4._SRK)
+      CALL thisVector%set(5,5._SRK)
+      CALL thisVector%set(6,6._SRK)
+      SELECTTYPE(thisVector)
+        TYPE IS(PETScVectorType)
+          !now compare actual values with expected
+          DO i=1,6
+            CALL VecGetValues(thisVector%b,1,i-1,dummy,ierr)
+            IF(dummy /= i) THEN
+              WRITE(*,*) 'CALL petscvec%set(...) FAILED!'
+              STOP 666
+            ENDIF
+          ENDDO
+      ENDSELECT
+      
+      !set uninit matrix.
+      CALL thisVector%clear()
+      CALL thisVector%set(1,1._SRK) !since isInit=.FALSE. expect no change
+      
+      !pass out-of bounds i and j
+      CALL thisVector%clear()
+      CALL thisVector%init(6)   
+      CALL thisVector%set(-1,1._SRK)
+      CALL thisVector%set(7,1._SRK)
+
+      CALL thisVector%clear()
+      CALL thisVector%init(6)
+        
+      SELECTTYPE(thisVector)
+        TYPE IS(PETScVectorType)
+          CALL VecGetSize(thisVector%b,vecsize,ierr)
+          DO i=1,vecsize
+            CALL VecGetValues(thisVector%b,1,i-1,dummy,ierr)
+            IF(dummy == 1._SRK) THEN
+              WRITE(*,*) 'CALL petscvec%set(...) FAILED!'
+              STOP 666
+            ENDIF
+          ENDDO
+          WRITE(*,*) '  Passed: CALL petscvec%set(...)'
+      ENDSELECT
+      
+      !Perform test of get function
+      ![1 5 8 9 3 7 2]
+      CALL thisVector%clear()
+      CALL thisVector%init(7)
+      SELECTTYPE(thisVector)
+        TYPE IS(PETScVectorType)
+          CALL thisVector%set(1,1._SRK)
+          CALL thisVector%set(2,5._SRK)
+          CALL thisVector%set(3,8._SRK)
+          CALL thisVector%set(4,9._SRK)
+          CALL thisVector%set(5,3._SRK)
+          CALL thisVector%set(6,7._SRK)
+          CALL thisVector%set(7,2._SRK)
+          IF((thisVector%get(1) /= 1._SRK) .OR. &
+             (thisVector%get(2) /= 5._SRK) .OR. &
+             (thisVector%get(3) /= 8._SRK) .OR. &
+             (thisVector%get(4) /= 9._SRK) .OR. &
+             (thisVector%get(5) /= 3._SRK) .OR. &
+             (thisVector%get(6) /= 7._SRK) .OR. &
+             (thisVector%get(7) /= 2._SRK)) THEN
+            WRITE(*,*) 'CALL petscvec%get(...) FAILED!' 
+            STOP 666
+          ENDIF
+      ENDSELECT
+      !test with out of bounds, make sure no crash.
+      SELECTTYPE(thisVector)
+        TYPE IS(PETScVectorType)
+          dummy=thisVector%get(8)
+          IF(dummy /= -1051._SRK) THEN
+            WRITE(*,*) 'CALL petscvec%get(...) FAILED!'
+            STOP 666
+          ENDIF
+          dummy=thisVector%get(-1)
+          IF(dummy/=-1051._SRK) THEN
+            WRITE(*,*) 'CALL petscvec%get(...) FAILED!'
+            STOP 666
+          ENDIF
+      ENDSELECT
+      !test get with uninit, make sure no crash.
+      CALL thisVector%clear()
+      SELECTTYPE(thisVector)
+        TYPE IS(PETScVectorType)      
+          dummy=thisVector%get(1)
+          IF(dummy /= 0.0_SRK) THEN
+            WRITE(*,*) 'CALL petscvec%get(...) FAILED!'
+            STOP 666
+          ENDIF
+      ENDSELECT
+      CALL thisVector%clear()
+      WRITE(*,*) '  Passed: CALL petscvec%get(...)'
+      
+      DEALLOCATE(thisVector)
+      CALL PETScFinalize(ierr)
+#endif
       
     ENDSUBROUTINE testVectorTypes
       
