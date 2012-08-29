@@ -70,7 +70,7 @@ MODULE VectorTypes
 !List of Type Bound Procedures
     CONTAINS
       !> Deferred routine for clearing the vector
-      PROCEDURE(int_vector_sub),DEFERRED,PASS :: clear
+      PROCEDURE(int_vector_clear_sub),DEFERRED,PASS :: clear
       !> Deferred routine for initializing the vector
       PROCEDURE(int_vector_init_sub),DEFERRED,PASS :: init
       !> Deferred routine for setting vector values
@@ -80,10 +80,10 @@ MODULE VectorTypes
 !List of Abstract Interfaces
   !> Explicitly defines the interface for the clear routine of all vector types
   ABSTRACT INTERFACE
-    SUBROUTINE int_vector_sub(vector)
+    SUBROUTINE int_vector_clear_sub(vector)
       IMPORT :: VectorType
       CLASS(VectorType),INTENT(INOUT) :: vector
-    ENDSUBROUTINE int_vector_sub
+    ENDSUBROUTINE int_vector_clear_sub
   ENDINTERFACE
   
   !> Explicitly defines the interface for the init routine of all vector types
@@ -127,6 +127,9 @@ MODULE VectorTypes
       !> @copybrief VectorTypes::set_RealVectorType
       !> @copydetails VectorTypes::set_RealVectorType
       PROCEDURE,PASS :: set => set_RealVectorType
+      !> @copybrief VectorTypes::get_RealVectorType
+      !> @copydetails VectorTypes::get_RealVectorType
+      PROCEDURE,PASS :: get => get_RealVectorType
   ENDTYPE RealVectorType
 
 
@@ -300,6 +303,29 @@ MODULE VectorTypes
     ENDSUBROUTINE set_PETScVectorType
 !
 !-------------------------------------------------------------------------------
+!> @brief Gets the values in the real vector
+!> @param declares the vector type to act on
+!> @param i the ith location in the vector
+!>
+!> This routine gets the values of the real vector.  If the location is out of
+!> bounds, then -1051.0 is returned (-1051.0 is an arbitrarily chosen key).
+!>
+    FUNCTION get_RealVectorType(vector,i) RESULT(getval)
+      CLASS(RealVectorType),INTENT(INOUT) :: vector
+      INTEGER(SIK),INTENT(IN) :: i
+      REAL(SRK) :: getval
+      
+      getval=0.0_SRK
+      IF(vector%isInit) THEN
+        IF((i <= vector%n) .AND. (i > 0)) THEN
+          getval=vector%b(i)
+        ELSE
+          getval=-1051._SRK
+        ENDIF
+      ENDIF
+    ENDFUNCTION get_RealVectorType
+!
+!-------------------------------------------------------------------------------
 !> @brief Gets the values in the PETSc vector - presently untested
 !> @param declares the vector type to act on
 !> @param i the ith location in the vector
@@ -313,6 +339,11 @@ MODULE VectorTypes
       REAL(SRK) :: getval
 #ifdef HAVE_PETSC
       PetscErrorCode  :: ierr
+#endif
+
+      getval=0.0_SRK
+      
+#ifdef HAVE_PETSC
       IF(vector%isInit) THEN
         IF((i <= vector%n) .AND. (i > 0)) THEN
           CALL VecGetValues(vector%b,1,i-1,getval,ierr)

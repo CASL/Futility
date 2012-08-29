@@ -940,7 +940,11 @@ MODULE MatrixTypes
       REAL(SRK) :: aij
 #ifdef HAVE_PETSC
       PetscErrorCode  :: ierr
+#endif
+  
+      aij=0.0_SRK
       
+#ifdef HAVE_PETSC
       IF(matrix%isInit) THEN
         IF((i <= matrix%n) .AND. ((j > 0) .AND. (i > 0))) THEN
           CALL MatGetValues(matrix%a,1,i-1,1,j-1,aij,INSERT_VALUES,ierr)
@@ -967,7 +971,11 @@ MODULE MatrixTypes
       REAL(SRK) :: aij
 #ifdef HAVE_PETSC
       PetscErrorCode  :: ierr
+#endif
+
+      aij=0.0_SRK
       
+#ifdef HAVE_PETSC
       IF(matrix%isInit) THEN
         IF((i <= matrix%n) .AND. ((j > 0) .AND. (i > 0))) THEN
           CALL MatGetValues(matrix%a,1,i-1,1,j-1,aij,INSERT_VALUES,ierr)

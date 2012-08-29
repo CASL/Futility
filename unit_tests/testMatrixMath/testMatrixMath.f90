@@ -66,9 +66,10 @@ PROGRAM testMatrixMath
     SUBROUTINE testVectorTypes()
       CLASS(VectorType),ALLOCATABLE :: thisVector
       INTEGER(SIK) :: i
+      REAL(SRK) :: dummy
 
 !Test for real vectors      
-      !test clear
+      !Perform test of clear function
       !make vector without using untested init
       ALLOCATE(RealVectorType :: thisVector)
       SELECTTYPE(thisVector)
@@ -95,7 +96,7 @@ PROGRAM testMatrixMath
           WRITE(*,*) '  Passed: CALL realvec%clear()'
       ENDSELECT
       
-      !check init
+      !Perform test of init function
       !first check intended init path (m provided)
       eVectorType => NULL()
       CALL thisVector%init(10)
@@ -160,6 +161,7 @@ PROGRAM testMatrixMath
       CALL thisVector%clear()
       WRITE(*,*) '  Passed: CALL realvec%init(...)'
       
+      !Perform test of set function
       !use set to update the values
       CALL thisVector%init(6)
       CALL thisVector%set(1,1._SRK)
@@ -202,6 +204,58 @@ PROGRAM testMatrixMath
           ENDDO
           WRITE(*,*) '  Passed: CALL realvec%set(...)'
       ENDSELECT
+      
+      !Perform test of get function
+      ![1 5 8 9 3 7 2]
+      CALL thisVector%clear()
+      CALL thisVector%init(7)
+      SELECTTYPE(thisVector)
+        TYPE IS(RealVectorType)
+          CALL thisVector%set(1,1._SRK)
+          CALL thisVector%set(2,5._SRK)
+          CALL thisVector%set(3,8._SRK)
+          CALL thisVector%set(4,9._SRK)
+          CALL thisVector%set(5,3._SRK)
+          CALL thisVector%set(6,7._SRK)
+          CALL thisVector%set(7,2._SRK)
+          IF((thisVector%get(1) /= 1._SRK) .OR. &
+             (thisVector%get(2) /= 5._SRK) .OR. &
+             (thisVector%get(3) /= 8._SRK) .OR. &
+             (thisVector%get(4) /= 9._SRK) .OR. &
+             (thisVector%get(5) /= 3._SRK) .OR. &
+             (thisVector%get(6) /= 7._SRK) .OR. &
+             (thisVector%get(7) /= 2._SRK)) THEN
+            WRITE(*,*) 'CALL realvec%get(...) FAILED!' 
+            STOP 666
+          ENDIF
+      ENDSELECT
+      !test with out of bounds i,j, make sure no crash.
+      SELECTTYPE(thisVector)
+        TYPE IS(RealVectorType)
+          dummy=thisVector%get(8)
+          IF(dummy /= -1051._SRK) THEN
+            WRITE(*,*) 'CALL realvec%get(...) FAILED!'
+            STOP 666
+          ENDIF
+          dummy=thisVector%get(-1)
+          IF(dummy/=-1051._SRK) THEN
+            WRITE(*,*) 'CALL realvec%get(...) FAILED!'
+            STOP 666
+          ENDIF
+      ENDSELECT
+      !test get with uninit, make sure no crash.
+      CALL thisVector%clear()
+      SELECTTYPE(thisVector)
+        TYPE IS(RealVectorType)      
+          dummy=thisVector%get(1)
+          IF(dummy /= 0.0_SRK) THEN
+            WRITE(*,*) 'CALL realvec%get(...) FAILED!'
+            STOP 666
+          ENDIF
+      ENDSELECT
+      CALL thisVector%clear()
+      WRITE(*,*) '  Passed: CALL realvec%get(...)'
+      
       DEALLOCATE(thisVector)
  
 !Test for PETSc vectors
