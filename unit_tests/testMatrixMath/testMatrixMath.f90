@@ -65,13 +65,14 @@ PROGRAM testMatrixMath
 !-------------------------------------------------------------------------------
     SUBROUTINE testVectorTypes()
       CLASS(VectorType),ALLOCATABLE :: thisVector
+      INTEGER(SIK) :: i
 
 !Test for real vectors      
+      !test clear
+      !make vector without using untested init
       ALLOCATE(RealVectorType :: thisVector)
       SELECTTYPE(thisVector)
         TYPE IS(RealVectorType)
-          !test clear
-          !make vector without using untested init
           thisVector%isInit=.TRUE.
           thisVector%n=100
           ALLOCATE(thisVector%b(100))
@@ -93,13 +94,120 @@ PROGRAM testMatrixMath
           ENDIF
           WRITE(*,*) '  Passed: CALL realvec%clear()'
       ENDSELECT
+      
+      !check init
+      !first check intended init path (m provided)
+      eVectorType => NULL()
+      CALL thisVector%init(10)
+      eVectorType => e
+      SELECTTYPE(thisVector)
+        TYPE IS(RealVectorType)
+          !check for success
+          IF((.NOT.thisVector%isInit).AND.(thisVector%n /= 10)) THEN
+            WRITE(*,*) 'CALL realvec%init(...) FAILED!'
+            STOP 666
+          ENDIF
+          IF((SIZE(thisVector%b) /= 10)) THEN
+            WRITE(*,*) 'CALL realvec%init(...) FAILED!'
+            STOP 666
+          ENDIF
+      ENDSELECT  
+      CALL thisVector%clear()
+        
+      !now check init without m being provided
+      CALL thisVector%init(-10) !expect exception
+      IF(thisVector%isInit) THEN
+        WRITE(*,*) 'CALL realvec%init(...) FAILED!'
+        STOP 666
+      ENDIF
+      CALL thisVector%clear()
+        
+      !init it twice so on 2nd init, isInit==.TRUE.
+      CALL thisVector%init(10)
+      SELECTTYPE(thisVector)
+        TYPE IS(RealVectorType); thisVector%n=1
+      ENDSELECT
+      CALL thisVector%init(10)
+      SELECTTYPE(thisVector)
+        TYPE IS(RealVectorType)
+          IF(thisVector%n/=1) THEN !n/=1 implies it was changed, and thus fail
+            WRITE(*,*) 'CALL realvec%init(...) FAILED!' !expect exception
+            STOP 666
+          ENDIF
+      ENDSELECT
+     !init with n<1
+      CALL thisVector%clear()
+      CALL thisVector%init(-1) !expect exception
+      IF(thisVector%isInit) THEN
+        WRITE(*,*) 'CALL realvec%init(...) FAILED!'
+        STOP 666
+      ENDIF
+      CALL thisVector%clear()
+      !n<1, and m not provided
+      CALL thisVector%init(-1) !expect exception
+      IF(thisVector%isInit) THEN
+        WRITE(*,*) 'CALL realvec%init(...) FAILED!'
+        STOP 666
+      ENDIF
+      CALL thisVector%clear()
+      !init with m<1
+      CALL thisVector%clear()
+      CALL thisVector%init(-10) !expect exception
+      IF(thisVector%isInit) THEN
+        WRITE(*,*) 'CALL realvec%init(...) FAILED!'
+        STOP 666
+      ENDIF
+      CALL thisVector%clear()
+      WRITE(*,*) '  Passed: CALL realvec%init(...)'
+      
+      !use set to update the values
+      CALL thisVector%init(6)
+      CALL thisVector%set(1,1._SRK)
+      CALL thisVector%set(2,2._SRK)
+      CALL thisVector%set(3,3._SRK)
+      CALL thisVector%set(4,4._SRK)
+      CALL thisVector%set(5,5._SRK)
+      CALL thisVector%set(6,6._SRK)
+      SELECTTYPE(thisVector)
+        TYPE IS(RealVectorType)
+          !now compare actual values with expected
+          DO i=1,6
+            IF((thisVector%b(i) /= i)) THEN
+              WRITE(*,*) 'CALL realvec%set(...) FAILED!'
+              STOP 666
+            ENDIF
+          ENDDO
+      ENDSELECT
+      
+      !set uninit matrix.
+      CALL thisVector%clear()
+      CALL thisVector%set(1,1._SRK) !since isInit=.FALSE. expect no change
+      
+      !pass out-of bounds i and j
+      CALL thisVector%clear()
+      CALL thisVector%init(6)   
+      CALL thisVector%set(-1,1._SRK)
+      CALL thisVector%set(7,1._SRK)
+
+      CALL thisVector%clear()
+      CALL thisVector%init(6)
+        
+      SELECTTYPE(thisVector)
+        TYPE IS(RealVectorType)
+          DO i=1,SIZE(thisVector%b)
+            IF(thisVector%b(i) == 1._SRK) THEN
+              WRITE(*,*) 'CALL realvec%set(...) FAILED!'
+              STOP 666
+            ENDIF
+          ENDDO
+          WRITE(*,*) '  Passed: CALL realvec%set(...)'
+      ENDSELECT
       DEALLOCATE(thisVector)
  
- 
 !Test for PETSc vectors
-      ALLOCATE(PETScVectorType :: thisVector)
-      CALL thisVector%clear()
-      WRITE(*,*) '  Passed: CALL petscvec%clear(...)'
+!      ALLOCATE(PETScVectorType :: thisVector)
+!      CALL thisVector%clear()
+!      WRITE(*,*) '  Passed: CALL petscvec%clear(...)'
       
     ENDSUBROUTINE testVectorTypes
       
