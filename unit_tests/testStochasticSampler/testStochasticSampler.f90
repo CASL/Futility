@@ -145,93 +145,15 @@ PROGRAM testStochasticSampler
   CALL myRNG2%clear()
   CALL myRNG3%clear()
   
-  n=1e6
-
-  mean=0.0
-  stdev=0.0
-  DO i=1,n
-    x=myRNG%rng()
-    mean=mean+x
-    stdev=stdev+x**2
-  ENDDO
-  
-  WRITE(*,*) "Test RNG"
-  WRITE(*,*) "COUNT:  ", myRNG%counter
-  mean=mean/n
-  WRITE(*,*) "MEAN:      ", mean
-  WRITE(*,*) "MEAN TRUE: ", 0.5_SDK
-  WRITE(*,*) "SDEV:      ", SQRT(stdev/n-mean**2)
-  WRITE(*,*) "SDEV TRUE: ", 1.0/SQRT(12.0)
-  
-  WRITE(*,*)
-  WRITE(*,*) "Test Uniform"
-  mean=0.0
-  stdev=0.0
-  DO i=1,n
-    x=myRNG%uniform(-8.0_SDK,9.0_SDK)
-    mean=mean+x
-    stdev=stdev+x**2
-  ENDDO
-  WRITE(*,*) "COUNT:  ", myRNG%counter
-  mean=mean/n
-  WRITE(*,*) "MEAN:      ", mean
-  WRITE(*,*) "MEAN TRUE: ", (9.0_SDK+ (-8.0_SDK))/2.0_SDK
-  WRITE(*,*) "SDEV:      ", SQRT(stdev/n-mean**2)
-  WRITE(*,*) "SDEV TRUE: ", (9.0_SDK- (-8.0_SDK))/SQRT(12.0)
-  
- WRITE(*,*)
-  WRITE(*,*) "Test Exponential"
-  mean=0.0
-  stdev=0.0
-  DO i=1,n
-    x=myRNG%exponential(2.0_SDK)
-    mean=mean+x
-    stdev=stdev+x**2
-  ENDDO
-  WRITE(*,*) "COUNT:  ", myRNG%counter
-  mean=mean/n
-  WRITE(*,*) "MEAN:      ", mean
-  WRITE(*,*) "MEAN TRUE: ", 1.0_SDK/2.0_SDK
-  WRITE(*,*) "SDEV:      ", SQRT(stdev/n-mean**2)
-  WRITE(*,*) "SDEV TRUE: ", 1.0_SDK/2.0_SDK
-  
-  WRITE(*,*)
-  WRITE(*,*) "Test Normal"
-  mean=0.0
-  stdev=0.0
-  DO i=1,n
-    x=myRNG%normal(2.0_SDK,0.5_SDK)
-    mean=mean+x
-    stdev=stdev+x**2
-  ENDDO
-  WRITE(*,*) "COUNT:  ", myRNG%counter
-  mean=mean/n
-  WRITE(*,*) "MEAN:      ", mean
-  WRITE(*,*) "MEAN TRUE: ", 2.0_SDK
-  WRITE(*,*) "SDEV:      ", SQRT(stdev/n-mean**2)
-  WRITE(*,*) "SDEV TRUE: ", 0.5_SDK
-
-  
-  WRITE(*,*)
-  WRITE(*,*) "Test Log-Normal"
-  mean=0.0
-  stdev=0.0
-  DO i=1,n
-    x=myRNG%lognormal(2.0_SDK,0.5_SDK)
-    mean=mean+x
-    stdev=stdev+x**2
-  ENDDO
-  WRITE(*,*) "COUNT:  ", myRNG%counter
-  mean=mean/n
-  WRITE(*,*) "MEAN:      ", mean
-  WRITE(*,*) "MEAN TRUE: ", EXP(2.0_SDK+0.5_SDK**2/2.0_SDK)
-  WRITE(*,*) "SDEV:      ", SQRT(stdev/n-mean**2)
-  WRITE(*,*) "SDEV TRUE: ", SQRT((EXP(0.5_SDK**2)-1.0_SDK)*EXP(2.0_SDK*2.0_SDK+0.5_SDK**2))
-
+  CALL TestUniform()
+  CALL TestExp()
+  CALL TestNormal()
   CALL TestMaxwellian()
   CALL TestWatt()
   CALL TestEvap()
 
+  n=1e6
+  
   WRITE(*,*)
   WRITE(*,*) "Test Normalized Histogram"
   ALLOCATE(y(5))
@@ -244,7 +166,7 @@ PROGRAM testStochasticSampler
   ENDDO
   WRITE(*,*) "COUNT:  ", myRNG%counter
   DO i=1,5
-    WRITE(*,*) "           ", REAL(iii(i))/REAL(n)
+    WRITE(*,*) "           ", REAL(iii(i))/REAL(n,SDK)
   ENDDO
 
   WRITE(*,*)
@@ -257,7 +179,7 @@ PROGRAM testStochasticSampler
   ENDDO
   WRITE(*,*) "COUNT:  ", myRNG%counter
   DO i=1,5
-    WRITE(*,*) "           ", REAL(iii(i))/REAL(n)
+    WRITE(*,*) "           ", REAL(iii(i))/REAL(n,SDK)
   ENDDO
 
   WRITE(*,*)
@@ -269,29 +191,27 @@ PROGRAM testStochasticSampler
   stdev=0.0
   DO i=1,n
     x=myRNG%conthistogram(y,z)
-    mean=mean+x
-    stdev=stdev+x**2
+    mean=mean+x/REAL(n,SDK)
+    stdev=stdev+x**2/REAL(n,SDK)
   ENDDO
   WRITE(*,*) "COUNT:  ", myRNG%counter
-  mean=mean/n
   WRITE(*,*) "MEAN:      ", mean
-  WRITE(*,*) "SDEV:      ", SQRT(stdev/n-mean**2)
+  WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
 
   WRITE(*,*)
-  WRITE(*,*) "Test Unormalized Continuous Histogram"
+  WRITE(*,*) "Test Unnormalized Continuous Histogram"
   y=2.0*y
   z=(/ 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 /)
   mean=0.0
   stdev=0.0
   DO i=1,n
     x=myRNG%unnormconthistogram(y,z)
-    mean=mean+x
-    stdev=stdev+x**2
+    mean=mean+x/REAL(n,SDK)
+    stdev=stdev+x**2/REAL(n,SDK)
   ENDDO
   WRITE(*,*) "COUNT:  ", myRNG%counter
-  mean=mean/n
   WRITE(*,*) "MEAN:      ", mean
-  WRITE(*,*) "SDEV:      ", SQRT(stdev/n-mean**2)
+  WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
 
   WRITE(*,*)
   WRITE(*,*) "Test Normalized Piece-wise Linear"
@@ -303,14 +223,13 @@ PROGRAM testStochasticSampler
   stdev=0.0
   DO i=1,n
     x=myRNG%pwlinear(y,z)
-    mean=mean+x
-    stdev=stdev+x**2
+    mean=mean+x/REAL(n,SDK)
+    stdev=stdev+x**2/REAL(n,SDK)
   ENDDO
   WRITE(*,*) "COUNT:  ", myRNG%counter
-  mean=mean/n
   WRITE(*,*) "MEAN:      ", mean
   WRITE(*,*) "MEAN TRUE: ", 1.0_SDK
-  WRITE(*,*) "SDEV:      ", SQRT(stdev/n-mean**2)
+  WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
   WRITE(*,*) "SDEV TRUE: ", 1.0_SDK/SQRT(6.0_SDK)
 
   WRITE(*,*)
@@ -321,14 +240,13 @@ PROGRAM testStochasticSampler
   stdev=0.0
   DO i=1,n
     x=myRNG%unnormpwlinear(y,z)
-    mean=mean+x
-    stdev=stdev+x**2
+    mean=mean+x/REAL(n,SDK)
+    stdev=stdev+x**2/REAL(n,SDK)
   ENDDO
   WRITE(*,*) "COUNT:  ", myRNG%counter
-  mean=mean/n
   WRITE(*,*) "MEAN:      ", mean
   WRITE(*,*) "MEAN TRUE: ", 4.0_SDK/3.0_SDK
-  WRITE(*,*) "SDEV:      ", SQRT(stdev/n-mean**2)
+  WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
   WRITE(*,*) "SDEV TRUE: ", SQRT(7.0_SDK)/SQRT(18.0_SDK)
 
   WRITE(*,*)
@@ -337,14 +255,13 @@ PROGRAM testStochasticSampler
   stdev=0.0
   DO i=1,n
     x=myRNG%rejection(linear,0.0_SDK,5.0_SDK,7.0_SDK)
-    mean=mean+x
-    stdev=stdev+x**2
+    mean=mean+x/REAL(n,SDK)
+    stdev=stdev+x**2/REAL(n,SDK)
   ENDDO
   WRITE(*,*) "COUNT:  ", myRNG%counter
-  mean=mean/n
   WRITE(*,*) "MEAN:      ", mean
   WRITE(*,*) "MEAN TRUE: ", 10.0_SDK/3.0_SDK
-  WRITE(*,*) "SDEV:      ", SQRT(stdev/n-mean**2)
+  WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
   WRITE(*,*) "SDEV TRUE: ", 5.0_SDK/SQRT(18.0_SDK)
   
   WRITE(*,*)
@@ -353,15 +270,14 @@ PROGRAM testStochasticSampler
   stdev=0.0
   DO i=1,n
     x=myRNG%rejectionarg(lineararg,0.0_SDK,2.0_SDK,7.0_SDK,(/2.0_SDK,1.0_SDK/))
-    mean=mean+x
-    stdev=stdev+x**2
+    mean=mean+x/REAL(n,SDK)
+    stdev=stdev+x**2/REAL(n,SDK)
   ENDDO
   WRITE(*,*) "COUNT:  ", myRNG%counter
-  mean=mean/n
   WRITE(*,*) "MEAN:      ", mean
-  WRITE(*,*) "MEAN TRUE: "
-  WRITE(*,*) "SDEV:      ", SQRT(stdev/n-mean**2)
-  WRITE(*,*) "SDEV TRUE: "
+  WRITE(*,*) "MEAN TRUE: ", 11.0_SDK/9.0_SDK
+  WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
+  WRITE(*,*) "SDEV TRUE: ", SQRT(23.0_SDK)/9.0_SDK
 
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING STOCHASTIC SAMPLER PASSED!'
@@ -381,15 +297,15 @@ PROGRAM testStochasticSampler
       
       WRITE(*,*) 'TESTING RNG'
       
-      n=100000000
+      n=1e8
       
       inicount=myRNG%counter
       mean=0.0
       stdev=0.0
       DO i=1,n
         x=myRNG%rng()
-        mean=mean+x/REAL(n)
-        stdev=stdev+x**2/REAL(n)
+        mean=mean+x/REAL(n,SDK)
+        stdev=stdev+x**2/REAL(n,SDK)
       ENDDO
 
       IF (myRNG%counter-inicount /= n) THEN
@@ -397,12 +313,12 @@ PROGRAM testStochasticSampler
         STOP 666
       ENDIF
       
-      IF (ABS(mean-0.5_SDK)>1.0_SDK/SQRT(REAL(n))) THEN
+      IF (ABS(mean-0.5_SDK)>1.0_SDK/SQRT(REAL(n,SDK))) THEN
         WRITE(*,*) 'RNG mean DOes not meet criteria: RNG test FAILED!'
         STOP 666
       ENDIF
       
-      IF (ABS(SQRT(stdev-mean**2)-1.0_SDK/SQRT(12.0_SDK))>1.0_SDK/SQRT(REAL(n))) THEN
+      IF (ABS(SQRT(stdev-mean**2)-1.0_SDK/SQRT(12.0_SDK))>1.0_SDK/SQRT(REAL(n,SDK))) THEN
         WRITE(*,*) 'RNG standard deviation DOes not meet criteria: RNG test FAILED!'
         STOP 666
       ELSE
@@ -411,10 +327,105 @@ PROGRAM testStochasticSampler
     ENDSUBROUTINE TestRNG
 !
 !-------------------------------------------------------------------------------
+    SUBROUTINE TestUniform
+      INTEGER(SLK) :: i,n,inicount
+      REAL(SDK) :: x,mean,stdev
+
+      n=1e6
+
+      mean=0.0
+      stdev=0.0
+      DO i=1,n
+        x=myRNG%rng()
+        mean=mean+x/REAL(n,SDK)
+        stdev=stdev+x**2/REAL(n,SDK)
+      ENDDO
+      
+      WRITE(*,*) "Test RNG"
+      WRITE(*,*) "COUNT:  ", myRNG%counter
+      WRITE(*,*) "MEAN:      ", mean
+      WRITE(*,*) "MEAN TRUE: ", 0.5_SDK
+      WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
+      WRITE(*,*) "SDEV TRUE: ", 1.0/SQRT(12.0)
+  
+      WRITE(*,*)
+      WRITE(*,*) "Test Uniform"
+      mean=0.0
+      stdev=0.0
+      DO i=1,n
+        x=myRNG%uniform(-8.0_SDK,9.0_SDK)
+        mean=mean+x/REAL(n,SDK)
+        stdev=stdev+x**2/REAL(n,SDK)
+      ENDDO
+      WRITE(*,*) "COUNT:  ", myRNG%counter
+      WRITE(*,*) "MEAN:      ", mean
+      WRITE(*,*) "MEAN TRUE: ", (9.0_SDK+ (-8.0_SDK))/2.0_SDK
+      WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
+      WRITE(*,*) "SDEV TRUE: ", (9.0_SDK- (-8.0_SDK))/SQRT(12.0)
+    ENDSUBROUTINE TestUniform
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE TestExp
+      INTEGER(SLK) :: i,n,inicount
+      REAL(SDK) :: x,mean,stdev
+      n=1e6
+      WRITE(*,*)
+      WRITE(*,*) "Test Exponential"
+      mean=0.0
+      stdev=0.0
+      DO i=1,n
+        x=myRNG%exponential(2.0_SDK)
+        mean=mean+x/REAL(n,SDK)
+        stdev=stdev+x**2/REAL(n,SDK)
+      ENDDO
+      WRITE(*,*) "COUNT:  ", myRNG%counter
+      WRITE(*,*) "MEAN:      ", mean
+      WRITE(*,*) "MEAN TRUE: ", 1.0_SDK/2.0_SDK
+      WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
+      WRITE(*,*) "SDEV TRUE: ", 1.0_SDK/2.0_SDK
+    ENDSUBROUTINE TestExp
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE TestNormal
+      INTEGER(SLK) :: i,n,inicount
+      REAL(SDK) :: x,mean,stdev
+      n=1e6
+      WRITE(*,*)
+      WRITE(*,*) "Test Normal"
+      mean=0.0
+      stdev=0.0
+      DO i=1,n
+        x=myRNG%normal(2.0_SDK,0.5_SDK)
+        mean=mean+x/REAL(n,SDK)
+        stdev=stdev+x**2/REAL(n,SDK)
+      ENDDO
+      WRITE(*,*) "COUNT:  ", myRNG%counter
+      WRITE(*,*) "MEAN:      ", mean
+      WRITE(*,*) "MEAN TRUE: ", 2.0_SDK
+      WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
+      WRITE(*,*) "SDEV TRUE: ", 0.5_SDK
+    
+      WRITE(*,*)
+      WRITE(*,*) "Test Log-Normal"
+      mean=0.0
+      stdev=0.0
+      DO i=1,n
+        x=myRNG%lognormal(2.0_SDK,0.5_SDK)
+        mean=mean+x/REAL(n,SDK)
+        stdev=stdev+x**2/REAL(n,SDK)
+      ENDDO
+      WRITE(*,*) "COUNT:  ", myRNG%counter
+      WRITE(*,*) "MEAN:      ", mean
+      WRITE(*,*) "MEAN TRUE: ", EXP(2.0_SDK+0.5_SDK**2/2.0_SDK)
+      WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
+      WRITE(*,*) "SDEV TRUE: ", SQRT((EXP(0.5_SDK**2)-1.0_SDK)*EXP(2.0_SDK*2.0_SDK+0.5_SDK**2))
+    ENDSUBROUTINE TestNormal
+!
+!-------------------------------------------------------------------------------   
     SUBROUTINE TestMaxwellian
       INTEGER(SLK) :: i,n,inicount
       REAL(SDK) :: x,mean,stdev,T
-      n=1000000
+      n=1e6
       WRITE(*,*)
       WRITE(*,*) "Test Maxwellian"
       T=600.0_SDK
@@ -422,8 +433,8 @@ PROGRAM testStochasticSampler
       stdev=0.0
       DO i=1,n
         x=myRNG%maxwellian(T)
-        mean=mean+x/n
-        stdev=stdev+x**2/n
+        mean=mean+x/REAL(n,SDK)
+        stdev=stdev+x**2/REAL(n,SDK)
       ENDDO
       WRITE(*,*) "COUNT:  ", myRNG%counter
       WRITE(*,*) "MEAN:      ", mean
@@ -448,8 +459,8 @@ PROGRAM testStochasticSampler
       stdev=0.0
       DO i=1,n
         x=myRNG%watt(a,b)
-        mean=mean+x/n
-        stdev=stdev+x**2/n
+        mean=mean+x/REAL(n,SDK)
+        stdev=stdev+x**2/REAL(n,SDK)
       ENDDO
       WRITE(*,*) "COUNT:  ", myRNG%counter
       WRITE(*,*) "MEAN:      ", mean
@@ -474,14 +485,14 @@ PROGRAM testStochasticSampler
       stdev=0.0
       DO i=1,n
         x=myRNG%evaporation(theta)
-        mean=mean+x/n
-        stdev=stdev+x**2/n
+        mean=mean+x/REAL(n,SDK)
+        stdev=stdev+x**2/REAL(n,SDK)
       ENDDO
       WRITE(*,*) "COUNT:  ", myRNG%counter
       WRITE(*,*) "MEAN:      ", mean
-      WRITE(*,*) "MEAN TRUE: "
+      WRITE(*,*) "MEAN TRUE: ", 8.0_SDK/5.0_SDK
       WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
-      WRITE(*,*) "SDEV TRUE: "
+      WRITE(*,*) "SDEV TRUE: ", SQRT(32.0_SDK)/5.0_SDK
     ENDSUBROUTINE TestEvap
 !
 ENDPROGRAM testStochasticSampler
