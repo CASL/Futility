@@ -74,7 +74,7 @@ MODULE MatrixTypes
 
 #ifdef HAVE_PETSC
 #include <finclude/petsc.h>
-#define IS IS
+#define IS IS !petscisdef.h defines the keyword IS, and it needs to be reset
 #endif
 
   PRIVATE
@@ -153,7 +153,7 @@ MODULE MatrixTypes
   ENDTYPE RectMatrixType
   
   !> @brief The extended type for sparse PETSc matrices
-  TYPE,ABSTRACT,EXTENDS(MatrixType) :: PETScSparseMatrixType
+  TYPE,EXTENDS(SquareMatrixType) :: PETScSparseMatrixType
 #ifdef HAVE_PETSC
     Mat :: A
 #endif
@@ -175,7 +175,7 @@ MODULE MatrixTypes
   ENDTYPE PETScSparseMatrixType
   
   !> @brief The extended type for dense PETSc matrices
-  TYPE,ABSTRACT,EXTENDS(MatrixType) :: PETScDenseSquareMatrixType
+  TYPE,EXTENDS(SquareMatrixType) :: PETScDenseSquareMatrixType
 #ifdef HAVE_PETSC
     Mat :: A
 #endif
@@ -544,6 +544,11 @@ MODULE MatrixTypes
           ELSE
             matrix%isInit=.TRUE.
             matrix%n=n
+			IF(m == 0) THEN
+              matrix%isSymmetric=.FALSE.
+            ELSE
+              matrix%isSymmetric=.TRUE.
+            ENDIF
             CALL MatCreate(MPI_COMM_WORLD,matrix%a,ierr)
             CALL MatSetSizes(matrix%a,PETSC_DECIDE,PETSC_DECIDE,matrix%n,matrix%n,ierr)
             CALL MatSetType(matrix%a,MATMPIAIJ,ierr)
@@ -591,6 +596,11 @@ MODULE MatrixTypes
           ELSE
             matrix%isInit=.TRUE.
             matrix%n=n
+            IF(m == 0) THEN
+              matrix%isSymmetric=.FALSE.
+            ELSE
+              matrix%isSymmetric=.TRUE.
+            ENDIF
             CALL MatCreate(MPI_COMM_WORLD,matrix%a,ierr)
             CALL MatSetSizes(matrix%a,PETSC_DECIDE,PETSC_DECIDE,matrix%n,matrix%n,ierr)
             CALL MatSetType(matrix%a,MATMPIDENSE,ierr)
@@ -672,6 +682,7 @@ MODULE MatrixTypes
       PetscErrorCode  :: ierr
       matrix%isInit=.FALSE.
       matrix%n=0
+      matrix%isSymmetric=.FALSE.
       CALL MatDestroy(matrix%a,ierr)
 #endif
     ENDSUBROUTINE clear_PETScSparseMatrixType
@@ -686,6 +697,7 @@ MODULE MatrixTypes
       PetscErrorCode  :: ierr
       matrix%isInit=.FALSE.
       matrix%n=0
+      matrix%isSymmetric=.FALSE.
       CALL MatDestroy(matrix%a,ierr)
 #endif
     ENDSUBROUTINE clear_PETScDenseSquareMatrixType
@@ -852,6 +864,11 @@ MODULE MatrixTypes
         IF(((j <= matrix%n) .AND. (i <= matrix%n)) & 
           .AND. ((j > 0) .AND. (i > 0))) THEN
           CALL MatSetValues(matrix%a,1,i-1,1,j-1,setval,INSERT_VALUES,ierr)
+          IF(matrix%isSymmetric) THEN
+            CALL MatSetValues(matrix%a,1,j-1,1,i-1,setval,INSERT_VALUES,ierr)
+          ENDIF
+          CALL MatAssemblyBegin(matrix%a,ierr)
+          CALL MatAssemblyEnd(matrix%a,ierr)
         ENDIF
       ENDIF
 #endif
@@ -875,6 +892,11 @@ MODULE MatrixTypes
         IF(((j <= matrix%n) .AND. (i <= matrix%n)) & 
           .AND. ((j > 0) .AND. (i > 0))) THEN
           CALL MatSetValues(matrix%a,1,i-1,1,j-1,setval,INSERT_VALUES,ierr)
+          IF(matrix%isSymmetric) THEN
+            CALL MatSetValues(matrix%a,1,j-1,1,i-1,setval,INSERT_VALUES,ierr)  
+          ENDIF
+          CALL MatAssemblyBegin(matrix%a,ierr)
+          CALL MatAssemblyEnd(matrix%a,ierr)
         ENDIF
       ENDIF
 #endif
@@ -932,10 +954,14 @@ MODULE MatrixTypes
       REAL(SRK) :: aij
 #ifdef HAVE_PETSC
       PetscErrorCode  :: ierr
+#endif
+  
+      aij=0.0_SRK
       
+#ifdef HAVE_PETSC
       IF(matrix%isInit) THEN
         IF((i <= matrix%n) .AND. ((j > 0) .AND. (i > 0))) THEN
-          CALL MatGetValues(matrix%a,1,i-1,1,j-1,aij,INSERT_VALUES,ierr)
+          CALL MatGetValues(matrix%a,1,i-1,1,j-1,aij,ierr)
         ELSE
           aij=-1051._SRK
         ENDIF
@@ -959,10 +985,14 @@ MODULE MatrixTypes
       REAL(SRK) :: aij
 #ifdef HAVE_PETSC
       PetscErrorCode  :: ierr
+#endif
+
+      aij=0.0_SRK
       
+#ifdef HAVE_PETSC
       IF(matrix%isInit) THEN
         IF((i <= matrix%n) .AND. ((j > 0) .AND. (i > 0))) THEN
-          CALL MatGetValues(matrix%a,1,i-1,1,j-1,aij,INSERT_VALUES,ierr)
+          CALL MatGetValues(matrix%a,1,i-1,1,j-1,aij,ierr)
         ELSE
           aij=-1051._SRK
         ENDIF

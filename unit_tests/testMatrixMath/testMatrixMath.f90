@@ -20,16 +20,28 @@ PROGRAM testMatrixMath
   USE IntrType
   USE ExceptionHandler
   USE BLAS
+  USE VectorTypes
   IMPLICIT NONE
+  
+#ifdef HAVE_PETSC
+#include <finclude/petsc.h>
+#define IS IS !petscisdef.h defines the keyword IS, and it needs to be reset
+ 
+  PetscErrorCode  :: ierr
+  
+#endif
   
   TYPE(ExceptionHandlerType),POINTER :: e
   
-
   !Configure exception handler for test
   ALLOCATE(e)
   CALL e%setStopOnError(.FALSE.)
   CALL e%setQuietMode(.TRUE.)
   eMatrixType => e
+  
+#ifdef HAVE_PETSC    
+      CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
+#endif
 
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING MATRIX MATH...'
@@ -50,29 +62,445 @@ PROGRAM testMatrixMath
   WRITE(*,*) 'TESTING MATRIX TYPES'
   CALL testMatrixTypes()
   
+  WRITE(*,*) 'TESTING VECTOR TYPES'
+  CALL testVectorTypes()
+  
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING MATRIX MATH PASSED!'
   WRITE(*,*) '==================================================='
   DEALLOCATE(e)
+  
+#ifdef HAVE_PETSC    
+      CALL PetscFinalize(ierr)
+#endif
 !
 !===============================================================================
   CONTAINS
 !
 !-------------------------------------------------------------------------------
+    SUBROUTINE testVectorTypes()
+      CLASS(VectorType),ALLOCATABLE :: thisVector
+      INTEGER(SIK) :: i,vecsize
+      REAL(SRK) :: dummy
+
+!Test for real vectors      
+      !Perform test of clear function
+      !make vector without using untested init
+      ALLOCATE(RealVectorType :: thisVector)
+      SELECTTYPE(thisVector)
+        TYPE IS(RealVectorType)
+          thisVector%isInit=.TRUE.
+          thisVector%n=100
+          ALLOCATE(thisVector%b(100))
+      ENDSELECT
+        
+      !clear it
+      CALL thisVector%clear()
+        
+      SELECTTYPE(thisVector)
+        TYPE IS(RealVectorType)
+          !check for success
+          IF((thisVector%isInit).OR.(thisVector%n /= 0)) THEN
+            WRITE(*,*) 'CALL realvec%clear() FAILED!'
+            STOP 666
+          ENDIF
+          IF(ALLOCATED(thisVector%b)) THEN
+            WRITE(*,*) 'CALL realvec%clear() FAILED!'
+            STOP 666
+          ENDIF
+          WRITE(*,*) '  Passed: CALL realvec%clear()'
+      ENDSELECT
+      
+      !Perform test of init function
+      !first check intended init path (m provided)
+      eVectorType => NULL()
+      CALL thisVector%init(10)
+      eVectorType => e
+      SELECTTYPE(thisVector)
+        TYPE IS(RealVectorType)
+          !check for success
+          IF((.NOT.thisVector%isInit).AND.(thisVector%n /= 10)) THEN
+            WRITE(*,*) 'CALL realvec%init(...) FAILED!'
+            STOP 666
+          ENDIF
+          IF((SIZE(thisVector%b) /= 10)) THEN
+            WRITE(*,*) 'CALL realvec%init(...) FAILED!'
+            STOP 666
+          ENDIF
+      ENDSELECT  
+      CALL thisVector%clear()
+        
+      !now check init without m being provided
+      CALL thisVector%init(-10) !expect exception
+      IF(thisVector%isInit) THEN
+        WRITE(*,*) 'CALL realvec%init(...) FAILED!'
+        STOP 666
+      ENDIF
+      CALL thisVector%clear()
+        
+      !init it twice so on 2nd init, isInit==.TRUE.
+      CALL thisVector%init(10)
+      SELECTTYPE(thisVector)
+        TYPE IS(RealVectorType); thisVector%n=1
+      ENDSELECT
+      CALL thisVector%init(10)
+      SELECTTYPE(thisVector)
+        TYPE IS(RealVectorType)
+          IF(thisVector%n/=1) THEN !n/=1 implies it was changed, and thus fail
+            WRITE(*,*) 'CALL realvec%init(...) FAILED!' !expect exception
+            STOP 666
+          ENDIF
+      ENDSELECT
+     !init with n<1
+      CALL thisVector%clear()
+      CALL thisVector%init(-1) !expect exception
+      IF(thisVector%isInit) THEN
+        WRITE(*,*) 'CALL realvec%init(...) FAILED!'
+        STOP 666
+      ENDIF
+      CALL thisVector%clear()
+      !n<1, and m not provided
+      CALL thisVector%init(-1) !expect exception
+      IF(thisVector%isInit) THEN
+        WRITE(*,*) 'CALL realvec%init(...) FAILED!'
+        STOP 666
+      ENDIF
+      CALL thisVector%clear()
+      !init with m<1
+      CALL thisVector%clear()
+      CALL thisVector%init(-10) !expect exception
+      IF(thisVector%isInit) THEN
+        WRITE(*,*) 'CALL realvec%init(...) FAILED!'
+        STOP 666
+      ENDIF
+      CALL thisVector%clear()
+      WRITE(*,*) '  Passed: CALL realvec%init(...)'
+      
+      !Perform test of set function
+      !use set to update the values
+      CALL thisVector%init(6)
+      CALL thisVector%set(1,1._SRK)
+      CALL thisVector%set(2,2._SRK)
+      CALL thisVector%set(3,3._SRK)
+      CALL thisVector%set(4,4._SRK)
+      CALL thisVector%set(5,5._SRK)
+      CALL thisVector%set(6,6._SRK)
+      SELECTTYPE(thisVector)
+        TYPE IS(RealVectorType)
+          !now compare actual values with expected
+          DO i=1,6
+            IF((thisVector%b(i) /= i)) THEN
+              WRITE(*,*) 'CALL realvec%set(...) FAILED!'
+              STOP 666
+            ENDIF
+          ENDDO
+      ENDSELECT
+      
+      !set uninit matrix.
+      CALL thisVector%clear()
+      CALL thisVector%set(1,1._SRK) !since isInit=.FALSE. expect no change
+      
+      !pass out-of bounds i and j
+      CALL thisVector%clear()
+      CALL thisVector%init(6)   
+      CALL thisVector%set(-1,1._SRK)
+      CALL thisVector%set(7,1._SRK)
+
+      CALL thisVector%clear()
+      CALL thisVector%init(6)
+        
+      SELECTTYPE(thisVector)
+        TYPE IS(RealVectorType)
+          DO i=1,SIZE(thisVector%b)
+            IF(thisVector%b(i) == 1._SRK) THEN
+              WRITE(*,*) 'CALL realvec%set(...) FAILED!'
+              STOP 666
+            ENDIF
+          ENDDO
+          WRITE(*,*) '  Passed: CALL realvec%set(...)'
+      ENDSELECT
+      
+      !Perform test of get function
+      ![1 5 8 9 3 7 2]
+      CALL thisVector%clear()
+      CALL thisVector%init(7)
+      SELECTTYPE(thisVector)
+        TYPE IS(RealVectorType)
+          CALL thisVector%set(1,1._SRK)
+          CALL thisVector%set(2,5._SRK)
+          CALL thisVector%set(3,8._SRK)
+          CALL thisVector%set(4,9._SRK)
+          CALL thisVector%set(5,3._SRK)
+          CALL thisVector%set(6,7._SRK)
+          CALL thisVector%set(7,2._SRK)
+          IF((thisVector%get(1) /= 1._SRK) .OR. &
+             (thisVector%get(2) /= 5._SRK) .OR. &
+             (thisVector%get(3) /= 8._SRK) .OR. &
+             (thisVector%get(4) /= 9._SRK) .OR. &
+             (thisVector%get(5) /= 3._SRK) .OR. &
+             (thisVector%get(6) /= 7._SRK) .OR. &
+             (thisVector%get(7) /= 2._SRK)) THEN
+            WRITE(*,*) 'CALL realvec%get(...) FAILED!' 
+            STOP 666
+          ENDIF
+      ENDSELECT
+      !test with out of bounds, make sure no crash.
+      SELECTTYPE(thisVector)
+        TYPE IS(RealVectorType)
+          dummy=thisVector%get(8)
+          IF(dummy /= -1051._SRK) THEN
+            WRITE(*,*) 'CALL realvec%get(...) FAILED!'
+            STOP 666
+          ENDIF
+          dummy=thisVector%get(-1)
+          IF(dummy/=-1051._SRK) THEN
+            WRITE(*,*) 'CALL realvec%get(...) FAILED!'
+            STOP 666
+          ENDIF
+      ENDSELECT
+      !test get with uninit, make sure no crash.
+      CALL thisVector%clear()
+      SELECTTYPE(thisVector)
+        TYPE IS(RealVectorType)      
+          dummy=thisVector%get(1)
+          IF(dummy /= 0.0_SRK) THEN
+            WRITE(*,*) 'CALL realvec%get(...) FAILED!'
+            STOP 666
+          ENDIF
+      ENDSELECT
+      CALL thisVector%clear()
+      WRITE(*,*) '  Passed: CALL realvec%get(...)'
+      
+      DEALLOCATE(thisVector)
+ 
+!Test for PETSc vectors (if necessary)
+#ifdef HAVE_PETSC    
+
+!      CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
+      
+      !Perform test of clear function
+      !make vector without using untested init
+      ALLOCATE(PETScVectorType :: thisVector)
+      SELECTTYPE(thisVector)
+        TYPE IS(PetscVectorType)
+          thisVector%isInit=.TRUE.
+          thisVector%n=100
+          CALL VecCreate(MPI_COMM_WORLD,thisVector%b,ierr)
+          CALL VecSetSizes(thisVector%b,PETSC_DECIDE,thisVector%n,ierr)
+          CALL VecSetType(thisVector%b,VECMPI,ierr)
+          CALL VecSetFromOptions(thisVector%b,ierr)
+      ENDSELECT
+        
+      !clear it
+      CALL thisVector%clear()
+        
+      SELECTTYPE(thisVector)
+        TYPE IS(PETScVectorType)
+          !check for success
+          IF((thisVector%isInit).OR.(thisVector%n /= 0)) THEN
+            WRITE(*,*) 'CALL petscvec%clear() FAILED!'
+            STOP 666
+          ENDIF
+          !check if pointer for b is null
+          !if not, clear did not destroy it
+          IF(thisVector%b /= PETSC_NULL_REAL) THEN
+            WRITE(*,*) 'CALL petscvec%clear() FAILED!'
+            STOP 666
+          ENDIF
+          WRITE(*,*) '  Passed: CALL petscvec%clear()'
+      ENDSELECT
+      
+      !Perform test of init function
+      !first check intended init path (m provided)
+      eVectorType => NULL()
+      CALL thisVector%init(10)
+      eVectorType => e
+      SELECTTYPE(thisVector)
+        TYPE IS(PETScVectorType)
+          !check for success
+          IF((.NOT.thisVector%isInit).AND.(thisVector%n /= 10)) THEN
+            WRITE(*,*) 'CALL petscvec%init(...) FAILED!'
+            STOP 666
+          ENDIF
+          CALL VecGetSize(thisVector%b,i,ierr)
+          IF(i /= 10) THEN
+            WRITE(*,*) 'CALL petscvec%init(...) FAILED!'
+            STOP 666
+          ENDIF
+      ENDSELECT  
+      CALL thisVector%clear()
+        
+      !now check init without m being provided
+      CALL thisVector%init(-10) !expect exception
+      IF(thisVector%isInit) THEN
+        WRITE(*,*) 'CALL petscvec%init(...) FAILED!'
+        STOP 666
+      ENDIF
+      CALL thisVector%clear()
+        
+      !init it twice so on 2nd init, isInit==.TRUE.
+      CALL thisVector%init(10)
+      SELECTTYPE(thisVector)
+        TYPE IS(PETScVectorType); thisVector%n=1
+      ENDSELECT
+      CALL thisVector%init(10)
+      SELECTTYPE(thisVector)
+        TYPE IS(PETScVectorType)
+          IF(thisVector%n/=1) THEN !n/=1 implies it was changed, and thus fail
+            WRITE(*,*) 'CALL petscvec%init(...) FAILED!' !expect exception
+            STOP 666
+          ENDIF
+      ENDSELECT
+     !init with n<1
+      CALL thisVector%clear()
+      CALL thisVector%init(-1) !expect exception
+      IF(thisVector%isInit) THEN
+        WRITE(*,*) 'CALL petscvec%init(...) FAILED!'
+        STOP 666
+      ENDIF
+      CALL thisVector%clear()
+      !n<1, and m not provided
+      CALL thisVector%init(-1) !expect exception
+      IF(thisVector%isInit) THEN
+        WRITE(*,*) 'CALL petscvec%init(...) FAILED!'
+        STOP 666
+      ENDIF
+      CALL thisVector%clear()
+      !init with m<1
+      CALL thisVector%clear()
+      CALL thisVector%init(-10) !expect exception
+      IF(thisVector%isInit) THEN
+        WRITE(*,*) 'CALL petscvec%init(...) FAILED!'
+        STOP 666
+      ENDIF
+      CALL thisVector%clear()
+      WRITE(*,*) '  Passed: CALL petscvec%init(...)'
+      
+      !Perform test of set function
+      !use set to update the values
+      CALL thisVector%init(6)
+      CALL thisVector%set(1,1._SRK)
+      CALL thisVector%set(2,2._SRK)
+      CALL thisVector%set(3,3._SRK)
+      CALL thisVector%set(4,4._SRK)
+      CALL thisVector%set(5,5._SRK)
+      CALL thisVector%set(6,6._SRK)
+      SELECTTYPE(thisVector)
+        TYPE IS(PETScVectorType)
+          !now compare actual values with expected
+          DO i=1,6
+            CALL VecGetValues(thisVector%b,1,i-1,dummy,ierr)
+            IF(dummy /= i) THEN
+              WRITE(*,*) 'CALL petscvec%set(...) FAILED!'
+              STOP 666
+            ENDIF
+          ENDDO
+      ENDSELECT
+      
+      !set uninit matrix.
+      CALL thisVector%clear()
+      CALL thisVector%set(1,1._SRK) !since isInit=.FALSE. expect no change
+      
+      !pass out-of bounds i and j
+      CALL thisVector%clear()
+      CALL thisVector%init(6)   
+      CALL thisVector%set(-1,1._SRK)
+      CALL thisVector%set(7,1._SRK)
+
+      CALL thisVector%clear()
+      CALL thisVector%init(6)
+        
+      SELECTTYPE(thisVector)
+        TYPE IS(PETScVectorType)
+          CALL VecGetSize(thisVector%b,vecsize,ierr)
+          DO i=1,vecsize
+            CALL VecGetValues(thisVector%b,1,i-1,dummy,ierr)
+            IF(dummy == 1._SRK) THEN
+              WRITE(*,*) 'CALL petscvec%set(...) FAILED!'
+              STOP 666
+            ENDIF
+          ENDDO
+          WRITE(*,*) '  Passed: CALL petscvec%set(...)'
+      ENDSELECT
+      
+      !Perform test of get function
+      ![1 5 8 9 3 7 2]
+      CALL thisVector%clear()
+      CALL thisVector%init(7)
+      SELECTTYPE(thisVector)
+        TYPE IS(PETScVectorType)
+          CALL thisVector%set(1,1._SRK)
+          CALL thisVector%set(2,5._SRK)
+          CALL thisVector%set(3,8._SRK)
+          CALL thisVector%set(4,9._SRK)
+          CALL thisVector%set(5,3._SRK)
+          CALL thisVector%set(6,7._SRK)
+          CALL thisVector%set(7,2._SRK)
+          IF((thisVector%get(1) /= 1._SRK) .OR. &
+             (thisVector%get(2) /= 5._SRK) .OR. &
+             (thisVector%get(3) /= 8._SRK) .OR. &
+             (thisVector%get(4) /= 9._SRK) .OR. &
+             (thisVector%get(5) /= 3._SRK) .OR. &
+             (thisVector%get(6) /= 7._SRK) .OR. &
+             (thisVector%get(7) /= 2._SRK)) THEN
+            WRITE(*,*) 'CALL petscvec%get(...) FAILED!' 
+            STOP 666
+          ENDIF
+      ENDSELECT
+      !test with out of bounds, make sure no crash.
+      SELECTTYPE(thisVector)
+        TYPE IS(PETScVectorType)
+          dummy=thisVector%get(8)
+          IF(dummy /= -1051._SRK) THEN
+            WRITE(*,*) 'CALL petscvec%get(...) FAILED!'
+            STOP 666
+          ENDIF
+          dummy=thisVector%get(-1)
+          IF(dummy/=-1051._SRK) THEN
+            WRITE(*,*) 'CALL petscvec%get(...) FAILED!'
+            STOP 666
+          ENDIF
+      ENDSELECT
+      !test get with uninit, make sure no crash.
+      CALL thisVector%clear()
+      SELECTTYPE(thisVector)
+        TYPE IS(PETScVectorType)      
+          dummy=thisVector%get(1)
+          IF(dummy /= 0.0_SRK) THEN
+            WRITE(*,*) 'CALL petscvec%get(...) FAILED!'
+            STOP 666
+          ENDIF
+      ENDSELECT
+      CALL thisVector%clear()
+      WRITE(*,*) '  Passed: CALL petscvec%get(...)'
+      
+      DEALLOCATE(thisVector)
+!      CALL PETScFinalize(ierr)
+#endif
+      
+    ENDSUBROUTINE testVectorTypes
+      
+    
+!
+!-------------------------------------------------------------------------------
     SUBROUTINE testMatrixTypes()
       CLASS(MatrixType),ALLOCATABLE :: thisMatrix
       INTEGER(SIK) :: i
+      INTEGER(SIK) :: matsize1,matsize2
       INTEGER(SIK) :: ia_vals(4)
       INTEGER(SIK) :: ja_vals(6)
       REAL(SRK) :: a_vals(6),x(3),y(3)
       REAL(SRK) :: dummy
+#ifdef HAVE_PETSC
+      PetscErrorCode  :: ierr
+#endif
       
       ALLOCATE(SparseMatrixType :: thisMatrix)
       SELECTTYPE(thisMatrix)
         TYPE IS(SparseMatrixType)
 !Test for sparse matrices
           !test clear
-          !make matrix w/iut using untested init
+          !make matrix w/out using untested init
           thisMatrix%isInit=.TRUE.
           thisMatrix%n=100
           thisMatrix%nnz=100
@@ -985,6 +1413,473 @@ PROGRAM testMatrixMath
       !no crash? good
       CALL thisMatrix%clear()
       WRITE(*,*) '  Passed: CALL denserect%set(...)'
+      DEALLOCATE(thisMatrix)
+      
+!Test for PETSc matrices (if necessary)
+#ifdef HAVE_PETSC  
+
+!Test for PETSc sparsematrices 
+      ALLOCATE(PETScSparseMatrixType :: thisMatrix)
+      SELECTTYPE(thisMatrix)
+        TYPE IS(PETScSparseMatrixType)
+          !test clear
+          !make matrix w/out using untested init
+          thisMatrix%isInit=.TRUE.
+          thisMatrix%n=10
+          thisMatrix%isSymmetric=.TRUE.
+          CALL MatCreate(MPI_COMM_WORLD,thisMatrix%a,ierr)
+          CALL MatSetSizes(thisMatrix%a,PETSC_DECIDE,PETSC_DECIDE, &
+                                        thisMatrix%n,thisMatrix%n,ierr)
+          CALL MatSetType(thisMatrix%a,MATMPIAIJ,ierr)
+          CALL MatSetUp(thisMatrix%a,ierr)
+      ENDSELECT
+      CALL thisMatrix%clear()
+      SELECTTYPE(thisMatrix)
+        TYPE IS(PETScSparseMatrixType)
+          IF(((thisMatrix%isInit).OR.(thisMatrix%n /= 0)) &
+              .OR.((thisMatrix%isSymmetric))) THEN
+            WRITE(*,*) 'CALL petscsparse%clear() FAILED!'
+            STOP 666
+          ENDIF
+          IF(thisMatrix%a /= PETSC_NULL_REAL) THEN
+            WRITE(*,*) 'CALL petscsparse%clear() FAILED!'
+            STOP 666
+          ENDIF
+          WRITE(*,*) '  Passed: CALL petscsparse%clear()'
+      ENDSELECT
+      !check init
+      !first check intended init paths
+      eMatrixType => NULL()
+      CALL thisMatrix%init(10,0) !n=10, not symmetric
+      eMatrixType => e
+      SELECTTYPE(thisMatrix)
+        TYPE IS(PETScSparseMatrixType)
+          IF(((.NOT. thisMatrix%isInit).OR.(thisMatrix%n /= 10)) &
+              .OR.(thisMatrix%isSymmetric)) THEN
+            WRITE(*,*) 'CALL petscsparse%init(...) FAILED!'
+            STOP 666
+          ENDIF
+          CALL MatGetSize(thisMatrix%a,matsize1,matsize2,ierr)
+          IF((matsize1 /= 10) .OR. (matsize2 /= 10)) THEN
+            WRITE(*,*) 'CALL petscsparse%init(...) FAILED!'
+            STOP 666
+          ENDIF
+      ENDSELECT  
+      CALL thisMatrix%clear()
+      CALL thisMatrix%init(10,1) !n=10, symmetric
+      SELECTTYPE(thisMatrix)
+        TYPE IS(PETScSparseMatrixType)
+          IF(((.NOT. thisMatrix%isInit).OR.(thisMatrix%n /= 10)) &
+              .OR.(.NOT. thisMatrix%isSymmetric)) THEN
+            WRITE(*,*) 'CALL petscsparse%init(...) FAILED!'
+            STOP 666
+          ENDIF
+      ENDSELECT
+      !test w/out 2nd param being provided
+      CALL thisMatrix%clear()
+      CALL thisMatrix%init(10) !expect exception
+      IF(thisMatrix%isInit) THEN 
+        WRITE(*,*) 'CALL petscdensesquare%init(...) FAILED!'
+        STOP 666
+      ENDIF
+      CALL thisMatrix%clear()
+      !test with double init (isInit==true on 2nd try)
+      CALL thisMatrix%init(10,1) !n=10, symmetric
+      SELECTTYPE(thisMatrix)
+        TYPE IS(PETScSparseMatrixType); thisMatrix%isSymmetric=.FALSE.
+      ENDSELECT
+      CALL thisMatrix%init(10,10) !n=10, symmetric
+      SELECTTYPE(thisMatrix)
+        TYPE IS(PETScSparseMatrixType)
+          IF(thisMatrix%isSymmetric) THEN
+            WRITE(*,*) 'CALL petscsparse%init(...) FAILED!'
+            STOP 666
+          ENDIF
+      ENDSELECT
+      CALL thisMatrix%clear()
+      !test with n<1
+      CALL thisMatrix%init(-1,100) !expect exception
+      IF(thisMatrix%isInit) THEN
+        WRITE(*,*) 'CALL petscsparse%init(...) FAILED!'
+        STOP 666
+      ENDIF
+      CALL thisMatrix%clear()
+      !test with n<1 and no second parameter
+      CALL thisMatrix%init(-1) !expect exception
+      IF(thisMatrix%isInit) THEN
+        WRITE(*,*) 'CALL petscsparse%init(...) FAILED!'
+        STOP 666
+      ENDIF
+      CALL thisMatrix%clear()
+      WRITE(*,*) '  Passed: CALL petscsparse%init(...)'
+      
+      !check set
+      !test normal use case (symmetric and nonsymmetric)
+      !want to build:
+      ![1 2]
+      ![2 3]
+      CALL thisMatrix%init(2,1)  !symmetric
+      CALL thisMatrix%set(1,1,1._SRK)
+      CALL thisMatrix%set(1,2,2._SRK)
+      CALL thisMatrix%set(2,2,3._SRK)
+      SELECTTYPE(thisMatrix)
+        TYPE IS(PETScSparseMatrixType)
+          CALL MatGetValues(thisMatrix%a,1,0,1,0,dummy,ierr)
+          IF(dummy/=1._SRK)THEN
+            WRITE(*,*) 'CALL petscsparse%set(...) FAILED!'
+            STOP 666
+          ENDIF
+          CALL MatGetValues(thisMatrix%a,1,0,1,1,dummy,ierr)
+          IF(dummy/=2._SRK)THEN
+            WRITE(*,*) 'CALL petscsparse%set(...) FAILED!'
+            STOP 666
+          ENDIF
+          CALL MatGetValues(thisMatrix%a,1,1,1,1,dummy,ierr)
+          IF(dummy/=3._SRK)THEN
+            WRITE(*,*) 'CALL petscsparse%set(...) FAILED!'
+            STOP 666
+          ENDIF
+      ENDSELECT
+      CALL thisMatrix%clear()
+      
+      CALL thisMatrix%init(2,0)  !nonsymmetric
+      CALL thisMatrix%set(1,1,1._SRK)
+      CALL thisMatrix%set(1,2,2._SRK)
+      CALL thisMatrix%set(2,1,2._SRK)
+      CALL thisMatrix%set(2,2,3._SRK)
+      SELECTTYPE(thisMatrix)
+        TYPE IS(PETScSparseMatrixType)
+          CALL MatGetValues(thisMatrix%a,1,0,1,0,dummy,ierr)
+          IF(dummy/=1._SRK)THEN
+            WRITE(*,*) 'CALL petscsparse%set(...) FAILED!'
+            STOP 666
+          ENDIF
+          CALL MatGetValues(thisMatrix%a,1,0,1,1,dummy,ierr)
+          IF(dummy/=2._SRK)THEN
+            WRITE(*,*) 'CALL petscsparse%set(...) FAILED!'
+            STOP 666
+          ENDIF
+          CALL MatGetValues(thisMatrix%a,1,1,1,0,dummy,ierr)
+          IF(dummy/=2._SRK)THEN
+            WRITE(*,*) 'CALL petscsparse%set(...) FAILED!'
+            STOP 666
+          ENDIF
+          CALL MatGetValues(thisMatrix%a,1,1,1,1,dummy,ierr)
+          IF(dummy/=3._SRK)THEN
+            WRITE(*,*) 'CALL petscsparse%set(...) FAILED!'
+            STOP 666
+          ENDIF
+      ENDSELECT    
+      !check matrix that hasnt been init, i,j out of bounds
+      CALL thisMatrix%clear()
+      CALL thisMatrix%set(1,1,1._SRK) 
+      CALL thisMatrix%clear()
+      CALL thisMatrix%init(2,0)
+      CALL thisMatrix%set(-1,1,1._SRK)
+      CALL thisMatrix%set(1,-1,1._SRK)
+      CALL thisMatrix%set(5,1,1._SRK)
+      CALL thisMatrix%set(1,5,1._SRK)
+      !no crash? good
+      WRITE(*,*) '  Passed: CALL petscsparse%set(...)'
+      
+      !Perform test of functionality of get function
+      ![1 0 2]
+      ![0 0 3]
+      ![4 5 6]
+      CALL thisMatrix%clear()
+      CALL thisMatrix%init(3,0) !non-symmetric
+      SELECTTYPE(thisMatrix)
+        TYPE IS(PETScSparseMatrixType)
+          CALL thisMatrix%set(1,1,1._SRK)
+          CALL thisMatrix%set(1,3,2._SRK)
+          CALL thisMatrix%set(2,3,3._SRK)
+          CALL thisMatrix%set(3,1,4._SRK)
+          CALL thisMatrix%set(3,2,5._SRK)
+          CALL thisMatrix%set(3,3,6._SRK)
+          CALL MatGetValues(thisMatrix%a,1,0,1,0,dummy,ierr)
+          IF(((thisMatrix%get(1,1) /= 1._SRK)  .OR. &
+              (thisMatrix%get(2,1) /= 0._SRK)) .OR. &
+              (thisMatrix%get(3,1) /= 4._SRK)) THEN
+            WRITE(*,*) 'CALL petscsparse%get(...) FAILED!' !column one check
+            STOP 666
+          ELSEIF(((thisMatrix%get(1,2) /= 0._SRK)  .OR. &
+                  (thisMatrix%get(2,2) /= 0._SRK)) .OR. &
+                  (thisMatrix%get(3,2) /= 5._SRK)) THEN
+            WRITE(*,*) 'CALL petscsparse%get(...) FAILED!' !column two check
+            STOP 666
+          ELSEIF(((thisMatrix%get(1,3) /= 2._SRK)  .OR. &
+                  (thisMatrix%get(2,3) /= 3._SRK)) .OR. &
+                  (thisMatrix%get(3,3) /= 6._SRK)) THEN
+            WRITE(*,*) 'CALL petscsparse%get(...) FAILED!' !column three check
+            STOP 666
+          ENDIF
+      ENDSELECT
+      !test with out of bounds i,j, make sure no crash.
+      SELECTTYPE(thisMatrix)
+        TYPE IS(PETScSparseMatrixType)
+          dummy=thisMatrix%get(4,2)
+          IF(dummy /= -1051._SRK) THEN
+            WRITE(*,*) 'CALL petscsparse%get(...) FAILED!' 
+            STOP 666
+          ENDIF
+          dummy=thisMatrix%get(-1,2)
+          IF(dummy/=-1051._SRK) THEN
+            WRITE(*,*) 'CALL petscsparse%get(...) FAILED!' 
+            STOP 666
+          ENDIF
+          dummy=thisMatrix%get(2,-1)
+          IF(dummy/=-1051._SRK) THEN
+            WRITE(*,*) 'CALL petscsparse%get(...) FAILED!' 
+            STOP 666
+          ENDIF
+      ENDSELECT
+      !test get with uninit, make sure no crash.
+      CALL thisMatrix%clear()
+      SELECTTYPE(thisMatrix)
+        TYPE IS(PETScSparseMatrixType)      
+          dummy=thisMatrix%get(1,1)
+          IF(dummy /= 0.0_SRK) THEN
+            WRITE(*,*) 'CALL petscsparse%get(...) FAILED!'
+            STOP 666
+          ENDIF
+      ENDSELECT
+      CALL thisMatrix%clear()
+      WRITE(*,*) '  Passed: CALL petscsparse%get(...)'
+      
+      DEALLOCATE(thisMatrix)
+
+!Test for PETSc dense square matrices        
+      ALLOCATE(PETScDenseSquareMatrixType :: thisMatrix)
+      SELECTTYPE(thisMatrix)
+        TYPE IS(PETScDenseSquareMatrixType)
+          !test clear
+          !make matrix w/out using untested init
+          thisMatrix%isInit=.TRUE.
+          thisMatrix%n=10
+          thisMatrix%isSymmetric=.TRUE.
+          CALL MatCreate(MPI_COMM_WORLD,thisMatrix%a,ierr)
+          CALL MatSetSizes(thisMatrix%a,PETSC_DECIDE,PETSC_DECIDE, &
+                                        thisMatrix%n,thisMatrix%n,ierr)
+          CALL MatSetType(thisMatrix%a,MATMPIDENSE,ierr)
+          CALL MatSetUp(thisMatrix%a,ierr)
+      ENDSELECT
+      CALL thisMatrix%clear()
+      SELECTTYPE(thisMatrix)
+        TYPE IS(PETScDenseSquareMatrixType)
+          IF(((thisMatrix%isInit).OR.(thisMatrix%n /= 0)) &
+              .OR.((thisMatrix%isSymmetric))) THEN
+            WRITE(*,*) 'CALL petscdensesquare%clear() FAILED!'
+            STOP 666
+          ENDIF
+          IF(thisMatrix%a /= PETSC_NULL_REAL) THEN
+            WRITE(*,*) 'CALL petscdensesquare%clear() FAILED!'
+            STOP 666
+          ENDIF
+          WRITE(*,*) '  Passed: CALL petscdensesquare%clear()'
+      ENDSELECT
+      !check init
+      !first check intended init paths
+      eMatrixType => NULL()
+      CALL thisMatrix%init(10,0) !n=10, not symmetric
+      eMatrixType => e
+      SELECTTYPE(thisMatrix)
+        TYPE IS(PETScDenseSquareMatrixType)
+          IF(((.NOT. thisMatrix%isInit).OR.(thisMatrix%n /= 10)) &
+              .OR.(thisMatrix%isSymmetric)) THEN
+            WRITE(*,*) 'CALL petscdensesquare%init(...) FAILED!'
+            STOP 666
+          ENDIF
+          CALL MatGetSize(thisMatrix%a,matsize1,matsize2,ierr)
+          IF((matsize1 /= 10) .OR. (matsize2 /= 10)) THEN
+            WRITE(*,*) 'CALL petscdensesquare%init(...) FAILED!'
+            STOP 666
+          ENDIF
+      ENDSELECT  
+      CALL thisMatrix%clear()
+      CALL thisMatrix%init(10,10) !n=10, symmetric
+      SELECTTYPE(thisMatrix)
+        TYPE IS(PETScDenseSquareMatrixType)
+          IF(((.NOT. thisMatrix%isInit).OR.(thisMatrix%n /= 10)) &
+              .OR.(.NOT. thisMatrix%isSymmetric)) THEN
+            WRITE(*,*) 'CALL petscdensesquare%init(...) FAILED!'
+            STOP 666
+          ENDIF
+      ENDSELECT
+      !test w/out 2nd param being provided
+      CALL thisMatrix%clear()
+      CALL thisMatrix%init(10) !expect exception
+      IF(thisMatrix%isInit) THEN 
+        WRITE(*,*) 'CALL petscdensesquare%init(...) FAILED!'
+        STOP 666
+      ENDIF
+      CALL thisMatrix%clear()
+      !test with double init (isInit==true on 2nd try)
+      CALL thisMatrix%init(10,10) !n=10, symmetric
+      SELECTTYPE(thisMatrix)
+        TYPE IS(PETScDenseSquareMatrixType); thisMatrix%isSymmetric=.FALSE.
+      ENDSELECT
+      CALL thisMatrix%init(10,10) !n=10, symmetric
+      SELECTTYPE(thisMatrix)
+        TYPE IS(PETScDenseSquareMatrixType)
+          IF(thisMatrix%isSymmetric) THEN
+            WRITE(*,*) 'CALL petscdensesquare%init(...) FAILED!'
+            STOP 666
+          ENDIF
+      ENDSELECT
+      CALL thisMatrix%clear()
+      !test with n<1
+      CALL thisMatrix%init(-1,100) !expect exception
+      IF(thisMatrix%isInit) THEN
+        WRITE(*,*) 'CALL petscdensesquare%init(...) FAILED!'
+        STOP 666
+      ENDIF
+      CALL thisMatrix%clear()
+      !test with n<1 and no second parameter
+      CALL thisMatrix%init(-1) !expect exception
+      IF(thisMatrix%isInit) THEN
+        WRITE(*,*) 'CALL petscdensesquare%init(...) FAILED!'
+        STOP 666
+      ENDIF
+      CALL thisMatrix%clear()
+      WRITE(*,*) '  Passed: CALL petscdensesquare%init(...)'
+      
+      !check set
+      !test normal use case (symmetric and nonsymmetric)
+      !want to build:
+      ![1 2]
+      ![2 3]
+      CALL thisMatrix%init(2,1)  !symmetric
+      CALL thisMatrix%set(1,1,1._SRK)
+      CALL thisMatrix%set(1,2,2._SRK)
+      CALL thisMatrix%set(2,2,3._SRK)
+      SELECTTYPE(thisMatrix)
+        TYPE IS(PETScDenseSquareMatrixType)
+          CALL MatGetValues(thisMatrix%a,1,0,1,0,dummy,ierr)
+          IF(dummy/=1._SRK)THEN
+            WRITE(*,*) 'CALL petscdensesquare%set(...) FAILED!'
+            STOP 666
+          ENDIF
+          CALL MatGetValues(thisMatrix%a,1,0,1,1,dummy,ierr)
+          IF(dummy/=2._SRK)THEN
+            WRITE(*,*) 'CALL petscdensesquare%set(...) FAILED!'
+            STOP 666
+          ENDIF
+          CALL MatGetValues(thisMatrix%a,1,1,1,1,dummy,ierr)
+          IF(dummy/=3._SRK)THEN
+            WRITE(*,*) 'CALL petscdensesquare%set(...) FAILED!'
+            STOP 666
+          ENDIF
+      ENDSELECT
+      CALL thisMatrix%clear()
+      
+      CALL thisMatrix%init(2,0)  !nonsymmetric
+      CALL thisMatrix%set(1,1,1._SRK)
+      CALL thisMatrix%set(1,2,2._SRK)
+      CALL thisMatrix%set(2,1,2._SRK)
+      CALL thisMatrix%set(2,2,3._SRK)
+      SELECTTYPE(thisMatrix)
+        TYPE IS(PETScDenseSquareMatrixType)
+          CALL MatGetValues(thisMatrix%a,1,0,1,0,dummy,ierr)
+          IF(dummy/=1._SRK)THEN
+            WRITE(*,*) 'CALL petscdensesquare%set(...) FAILED!'
+            STOP 666
+          ENDIF
+          CALL MatGetValues(thisMatrix%a,1,0,1,1,dummy,ierr)
+          IF(dummy/=2._SRK)THEN
+            WRITE(*,*) 'CALL petscdensesquare%set(...) FAILED!'
+            STOP 666
+          ENDIF
+          CALL MatGetValues(thisMatrix%a,1,1,1,0,dummy,ierr)
+          IF(dummy/=2._SRK)THEN
+            WRITE(*,*) 'CALL petscdensesquare%set(...) FAILED!'
+            STOP 666
+          ENDIF
+          CALL MatGetValues(thisMatrix%a,1,1,1,1,dummy,ierr)
+          IF(dummy/=3._SRK)THEN
+            WRITE(*,*) 'CALL petscdensesquare%set(...) FAILED!'
+            STOP 666
+          ENDIF
+      ENDSELECT    
+      !check matrix that hasnt been init, i,j out of bounds
+      CALL thisMatrix%clear()
+      CALL thisMatrix%set(1,1,1._SRK) 
+      CALL thisMatrix%clear()
+      CALL thisMatrix%init(2,0)
+      CALL thisMatrix%set(-1,1,1._SRK)
+      CALL thisMatrix%set(1,-1,1._SRK)
+      CALL thisMatrix%set(5,1,1._SRK)
+      CALL thisMatrix%set(1,5,1._SRK)
+      !no crash? good
+      WRITE(*,*) '  Passed: CALL petscdensesquare%set(...)'
+      
+      !Perform test of functionality of get function
+      ![1 0 2]
+      ![0 0 3]
+      ![4 5 6]
+      CALL thisMatrix%clear()
+      CALL thisMatrix%init(3,0) !non-symmetric
+      SELECTTYPE(thisMatrix)
+        TYPE IS(PETScDenseSquareMatrixType)
+          CALL thisMatrix%set(1,1,1._SRK)
+          CALL thisMatrix%set(1,3,2._SRK)
+          CALL thisMatrix%set(2,3,3._SRK)
+          CALL thisMatrix%set(3,1,4._SRK)
+          CALL thisMatrix%set(3,2,5._SRK)
+          CALL thisMatrix%set(3,3,6._SRK)
+          CALL MatGetValues(thisMatrix%a,1,0,1,0,dummy,ierr)
+          IF(((thisMatrix%get(1,1) /= 1._SRK)  .OR. &
+              (thisMatrix%get(2,1) /= 0._SRK)) .OR. &
+              (thisMatrix%get(3,1) /= 4._SRK)) THEN
+            WRITE(*,*) 'CALL petscdensesquare%get(...) FAILED!' !column one check
+            STOP 666
+          ELSEIF(((thisMatrix%get(1,2) /= 0._SRK)  .OR. &
+                  (thisMatrix%get(2,2) /= 0._SRK)) .OR. &
+                  (thisMatrix%get(3,2) /= 5._SRK)) THEN
+            WRITE(*,*) 'CALL petscdensesquare%get(...) FAILED!' !column two check
+            STOP 666
+          ELSEIF(((thisMatrix%get(1,3) /= 2._SRK)  .OR. &
+                  (thisMatrix%get(2,3) /= 3._SRK)) .OR. &
+                  (thisMatrix%get(3,3) /= 6._SRK)) THEN
+            WRITE(*,*) 'CALL petscdensesquare%get(...) FAILED!' !column three check
+            STOP 666
+          ENDIF
+      ENDSELECT
+      !test with out of bounds i,j, make sure no crash.
+      SELECTTYPE(thisMatrix)
+        TYPE IS(PETScDenseSquareMatrixType)
+          dummy=thisMatrix%get(4,2)
+          IF(dummy /= -1051._SRK) THEN
+            WRITE(*,*) 'CALL petscdensesquare%get(...) FAILED!' 
+            STOP 666
+          ENDIF
+          dummy=thisMatrix%get(-1,2)
+          IF(dummy/=-1051._SRK) THEN
+            WRITE(*,*) 'CALL petscdensesquare%get(...) FAILED!' 
+            STOP 666
+          ENDIF
+          dummy=thisMatrix%get(2,-1)
+          IF(dummy/=-1051._SRK) THEN
+            WRITE(*,*) 'CALL petscdensesquare%get(...) FAILED!' 
+            STOP 666
+          ENDIF
+      ENDSELECT
+      !test get with uninit, make sure no crash.
+      CALL thisMatrix%clear()
+      SELECTTYPE(thisMatrix)
+        TYPE IS(PETScDenseSquareMatrixType)      
+          dummy=thisMatrix%get(1,1)
+          IF(dummy /= 0.0_SRK) THEN
+            WRITE(*,*) 'CALL petscdensesquare%get(...) FAILED!'
+            STOP 666
+          ENDIF
+      ENDSELECT
+      CALL thisMatrix%clear()
+      WRITE(*,*) '  Passed: CALL petscdensesquare%get(...)'
+      
+      DEALLOCATE(thisMatrix)
+
+#endif
+
     ENDSUBROUTINE testMatrixTypes
 !
 !-------------------------------------------------------------------------------

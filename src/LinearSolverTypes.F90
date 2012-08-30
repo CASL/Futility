@@ -49,7 +49,7 @@ MODULE LinearSolverTypes
   
 #ifdef HAVE_PETSC
 #include <finclude/petsc.h>
-#define IS IS
+#define IS IS !petscisdef.h defines the keyword IS, and it needs to be reset
 #endif
 
   PRIVATE
@@ -84,8 +84,10 @@ MODULE LinearSolverTypes
     CLASS(MatrixType),POINTER :: A
     !> Right-hand side vector, b
     REAL(SRK),ALLOCATABLE :: b(:)
+!    CLASS(VectorType),POINTER :: b
     !> Pointer to solution vector, x
     REAL(SRK),POINTER :: X(:)
+!    CLASS(VectorType),POINTER :: X
     !> Timer to measure solution time
     TYPE(TimerType) :: SolveTime
     !> Status of the decomposition of A
@@ -241,16 +243,22 @@ MODULE LinearSolverTypes
             
             
 #ifdef HAVE_PETSC
+            !initialize PETSc environment
+            CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
+            
+            !create and initialize KSP
             CALL KSPCreate(solver%MPIparallelEnv,solver%ksp,ierr)
             CALL KSPSetOperators(solver%ksp,solver%a,solver%a,DIFFERENT_NONZERO_PATTERN,ierr)
             CALL KSPSetFromOptions(solver%ksp,ierr)
             
-            !set solver type
+            !set iterative solver type
             SELECTCASE(solver%solverMethod)
-              ! several other possibilities:
-              ! KSPCGS, KSPFBCGS, GSPGRMRES, KSPFGMRES
               CASE(1) ! BCGS
                 CALL KSPSetType(solver%ksp,KSPBCGS,ierr)
+              CASE(2) ! CGNR
+                CALL KSPSetType(solver%ksp,KSPCGNE,ierr)
+              CASE(3) ! GMRES
+                CALL KSPSetType(solver%ksp,KSPGMRES,ierr)
             ENDSELECT
 #endif
 
@@ -294,6 +302,7 @@ MODULE LinearSolverTypes
       solver%info=0
       IF(ASSOCIATED(solver%A)) NULLIFY(solver%A)
       IF(ASSOCIATED(solver%X)) NULLIFY(solver%X)
+!      IF(ASSOCIATED(solver%b)) NULLIFY(solver%b)
       IF(ALLOCATED(solver%b)) CALL demallocA(solver%b)
       IF(ALLOCATED(solver%IPIV)) CALL demallocA(solver%IPIV)
       IF(ALLOCATED(solver%M)) THEN
@@ -329,6 +338,7 @@ MODULE LinearSolverTypes
       solver%info=0
       IF(ASSOCIATED(solver%A)) NULLIFY(solver%A)
       IF(ASSOCIATED(solver%X)) NULLIFY(solver%X)
+!      IF(ASSOCIATED(solver%b)) NULLIFY(solver%b)
       IF(ALLOCATED(solver%b)) CALL demallocA(solver%b)
       IF(ALLOCATED(solver%M)) THEN
         CALL solver%M%clear()
@@ -337,6 +347,7 @@ MODULE LinearSolverTypes
       
 #ifdef HAVE_PETSC
       CALL KSPDestroy(solver%ksp,ierr)
+      CALL PETSCFinalize(ierr)
 #endif 
 
       !No timer clear function-just call toc instead
@@ -459,6 +470,8 @@ MODULE LinearSolverTypes
       CALL solve_checkInput(solver)
       IF(solver%info == 0) THEN
         IF(.NOT. solver%hasX0) THEN
+!         will need loop to set initial X
+!         solver%X%set(i,1.0_SRK)???
           solver%X=1.0_SRK
           solver%hasX0=.TRUE.
           CALL eLinearSolverType%raiseWarning(modName//'::'// &
@@ -502,9 +515,7 @@ MODULE LinearSolverTypes
 #ifdef HAVE_PETSC                      
               TYPE IS(PETScDenseSquareMatrixType)
                 CALL KSPSolve(solver%ksp,solver%b,solver%x,ierr)
-#endif
 
-#ifdef HAVE_PETSC
               TYPE IS(PETScSparseMatrixType)
                 CALL KSPSolve(solver%ksp,solver%b,solver%x,ierr)
 #endif
@@ -532,15 +543,24 @@ MODULE LinearSolverTypes
 #ifdef HAVE_PETSC                    
               TYPE IS(PETScDenseSquareMatrixType)
                 CALL KSPSolve(solver%ksp,solver%b,solver%x,ierr)
-#endif
 
-#ifdef HAVE_PETSC
               TYPE IS(PETScSparseMatrixType)
                 CALL KSPSolve(solver%ksp,solver%b,solver%x,ierr)
 #endif
-
               CLASS DEFAULT
                 CALL solveCGNR(solver)
+            
+            ENDSELECT
+            
+          CASE(3) !GMRES
+            SELECTTYPE(A=>solver%A)
+#ifdef HAVE_PETSC                    
+              TYPE IS(PETScDenseSquareMatrixType)
+                CALL KSPSolve(solver%ksp,solver%b,solver%x,ierr)
+
+              TYPE IS(PETScSparseMatrixType)
+                CALL KSPSolve(solver%ksp,solver%b,solver%x,ierr)
+#endif  
             ENDSELECT
         ENDSELECT
         CALL solver%SolveTime%toc()
@@ -620,6 +640,7 @@ MODULE LinearSolverTypes
     SUBROUTINE setX0_LinearSolverType_Iterative(solver,X0)
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
       REAL(SRK),POINTER,INTENT(IN) :: X0(:)
+!     CLASS(VectorType),INTENT(IN) :: X0(:)
       IF(solver%isInit) THEN
         solver%X => X0
         solver%hasX0=.TRUE.
