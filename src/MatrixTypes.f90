@@ -544,6 +544,11 @@ MODULE MatrixTypes
           ELSE
             matrix%isInit=.TRUE.
             matrix%n=n
+			IF(m == 0) THEN
+              matrix%isSymmetric=.FALSE.
+            ELSE
+              matrix%isSymmetric=.TRUE.
+            ENDIF
             CALL MatCreate(MPI_COMM_WORLD,matrix%a,ierr)
             CALL MatSetSizes(matrix%a,PETSC_DECIDE,PETSC_DECIDE,matrix%n,matrix%n,ierr)
             CALL MatSetType(matrix%a,MATMPIAIJ,ierr)
