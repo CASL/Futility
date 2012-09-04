@@ -34,6 +34,7 @@ PROGRAM testParameterLists
   REAL(SDK),ALLOCATABLE :: valsdk1a(:)
   INTEGER(SNK),ALLOCATABLE :: valsnk1a(:)
   INTEGER(SLK),ALLOCATABLE :: valslk1a(:)
+  LOGICAL(SBK),ALLOCATABLE :: valsbk1a(:)
   REAL(SSK),ALLOCATABLE :: valssk2a(:,:)
   REAL(SDK),ALLOCATABLE :: valsdk2a(:,:)
   INTEGER(SNK),ALLOCATABLE :: valsnk2a(:,:)
@@ -98,6 +99,10 @@ PROGRAM testParameterLists
   WRITE(*,*) '---------------------------------------------------'
   WRITE(*,*) 'TESTING One-Dimensional Array SLK PARAMETERLISTS...'
   CALL testSLK1a()
+  !Test the 1-D array of SBK parameter list
+  WRITE(*,*) '---------------------------------------------------'
+  WRITE(*,*) 'TESTING One-Dimensional Array SBK PARAMETERLISTS...'
+  CALL testSBK1a()
   !Test the 2-D array of SSK parameter list
   WRITE(*,*) '---------------------------------------------------'
   WRITE(*,*) 'TESTING Two-Dimensional Array SSK PARAMETERLISTS...'
@@ -196,6 +201,12 @@ PROGRAM testParameterLists
   valslk1a=-4_SLK
   CALL testParam%add('testPL->testSLK1a',valslk1a)
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of 1-D array SBK routine to parameter list
+  IF(ALLOCATED(valsbk1a)) DEALLOCATE(valsbk1a)
+  ALLOCATE(valsbk1a(2))
+  valsbk1a=.TRUE.
+  CALL testParam%add('testPL->testSBK1a',valsbk1a)
+  CALL testParam%edit(OUTPUT_UNIT)
   !Testing addition of 2-D array SSK routine to parameter list
   IF(ALLOCATED(valssk2a)) DEALLOCATE(valssk2a)
   ALLOCATE(valssk2a(2,2))
@@ -280,6 +291,10 @@ PROGRAM testParameterLists
   valslk1a=-60_SLK
   CALL testParam%add('testPL->testSLK1a',valslk1a)
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of 1-D array SBK routine to parameter list, error for already existing parameter
+  valsbk1a=.FALSE.
+  CALL testParam%add('testPL->testSBK1a',valsbk1a)
+  CALL testParam%edit(OUTPUT_UNIT)
   !Testing addition of 2-D array SSK routine to parameter list, error for already existing parameter
   valssk2a=10.5_SSK
   CALL testParam%add('testPL->testSSK2a',valssk2a)
@@ -350,6 +365,10 @@ PROGRAM testParameterLists
   valslk1a=-1230_SLK
   CALL testParam%add('testPL2->testSLK1a',valslk1a,'Creates a new sublist')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of 1-D array SBK routine to parameter list with description
+  valsbk1a=.FALSE.
+  CALL testParam%add('testPL2->testSBK1a',valsbk1a,'Creates a new sublist')
+  CALL testParam%edit(OUTPUT_UNIT)
   !Testing addition of 2-D array SSK routine to parameter list with description
   valssk2a=2.5_SSK
   CALL testParam%add('testPL2->testSSK2a',valssk2a,'Creates a new sublist')
@@ -402,6 +421,7 @@ PROGRAM testParameterLists
   DEALLOCATE(valsdk1a)
   DEALLOCATE(valsnk1a)
   DEALLOCATE(valslk1a)
+  DEALLOCATE(valsbk1a)
   DEALLOCATE(valssk2a)
   DEALLOCATE(valsdk2a)
   DEALLOCATE(valsnk2a)
@@ -454,6 +474,9 @@ PROGRAM testParameterLists
   CALL testParam%edit(OUTPUT_UNIT)
   !Testing the 1-D array SLK removal routine in a parameter list (with description)
   CALL testParam%remove('testPL2->testSLK1a')
+  CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the 1-D array SBK removal routine in a parameter list (with description)
+  CALL testParam%remove('testPL2->testSBK1a')
   CALL testParam%edit(OUTPUT_UNIT)
   !Testing the 2-D array SSK removal routine in a parameter list (with description)
   CALL testParam%remove('testPL2->testSSK2a')
@@ -511,6 +534,9 @@ PROGRAM testParameterLists
   CALL testParam%edit(OUTPUT_UNIT)
   !Testing the 1-D array SLK removal routine in a parameter list 
   CALL testParam%remove('testPL->testSLK1a')
+  CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the 1-D array SBK removal routine in a parameter list 
+  CALL testParam%remove('testPL->testSBK1a')
   CALL testParam%edit(OUTPUT_UNIT)
   !Testing the 2-D array SSK removal routine in a parameter list 
   CALL testParam%remove('testPL->testSSK2a')
@@ -2152,6 +2178,165 @@ PROGRAM testParameterLists
     CALL testClear()
     
   ENDSUBROUTINE testSLK1a
+!
+!Test 1-D Array SBK support
+  SUBROUTINE testSBK1a()
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSBK1a'
+    ALLOCATE(valsbk1a(2))
+    valsbk1a(1)=.TRUE.
+    valsbk1a(2)=.FALSE.
+    !test init
+    CALL testParam%init('testError->testSBK1a',valsbk1a,'The values .TRUE. & .FALSE.')
+    eParams => NULL()
+    CALL testParam%init('testSBK1a',valsbk1a,'The values .TRUE. & .FALSE.')
+    IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
+      WRITE(*,*) 'CALL testParam%init(...) %pdat (SBK) 1-D FAILED!'
+      STOP 666
+    ENDIF
+    IF(testParam%pdat%name /= 'testSBK1a') THEN
+      WRITE(*,*) 'CALL testParam%init(...) %name (SBK) 1-D FAILED!'
+      STOP 666
+    ENDIF
+    IF(testParam%pdat%datatype /= 'LOGICAL(SBK)') THEN
+      WRITE(*,*) 'CALL testParam%init(...) %datatype (SBK) 1-D FAILED!'
+      STOP 666
+    ENDIF
+    IF(testParam%pdat%description /= 'The values .TRUE. & .FALSE.') THEN
+      WRITE(*,*) 'CALL testParam%init(...) %description (SBK) 1-D FAILED!'
+      STOP 666
+    ENDIF
+    CALL testParam%edit(OUTPUT_UNIT,0) !test edit
+    eParams => e
+    CALL testParam%init('testError',valsbk1a)
+    WRITE(*,*) '  Passed: CALL testParam%init(...) (SBK) 1-D'
+  
+    !test get
+    eParams => NULL()
+    CALL testParam%get('testSBK1a',someParam)
+    IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
+      WRITE(*,*) 'CALL testParam%get(''testSBK1a'',someParam) FAILED!'
+      STOP 666
+    ENDIF
+    !Test same size
+    CALL someParam%get('testSBK1a',valsbk1a)
+    IF(.NOT.valsbk1a(1) .OR. valsbk1a(2)) THEN
+      WRITE(*,*) 'CALL someParam%get(''testSBK1a'',valsbk1a) FAILED!'
+      STOP 666
+    ENDIF
+    !Test different size size
+    DEALLOCATE(valsbk1a)
+    ALLOCATE(valsbk1a(1))
+    CALL someParam%get('testSBK1a',valsbk1a)
+    IF(.NOT.valsbk1a(1) .OR. valsbk1a(2)) THEN
+      WRITE(*,*) 'CALL someParam%get(''testSBK1a'',valsbk1a) FAILED!'
+      STOP 666
+    ENDIF
+    valsbk1a=.FALSE.
+    CALL testParam%get('testSBK1a',valsbk1a)
+    IF(.NOT.valsbk1a(1) .OR. valsbk1a(2)) THEN
+      WRITE(*,*) 'CALL testParam%get(''testSBK1a'',valsbk1a) FAILED!'
+      STOP 666
+    ENDIF
+    eParams => e
+    CALL testParam2%get('testSBK1a',valsbk1a)
+    CALL testParam%get('testError',valsbk1a)
+    CALL someParam%get('testError',valsbk1a)
+    WRITE(*,*) '  Passed: CALL testParam%get(...) (SBK) 1-D'
+  
+    !test set
+    eParams => NULL()
+    !
+    CALL someParam%set('testSBK1a',(/.FALSE.,.TRUE./),'The values .FALSE. and .TRUE.')
+    CALL testParam%get('testSBK1a',valsbk1a)
+    IF(valsbk1a(1) .OR. .NOT.valsbk1a(2) .OR. &
+        someParam%description /= 'The values .FALSE. and .TRUE.') THEN
+      WRITE(*,*) 'someParam%set(''testSBK1a'',(/.FALSE.,.TRUE./),''The values .FALSE. and .TRUE.'') FAILED!'
+      STOP 666
+    ENDIF
+    !Different size for test param
+    CALL testParam%set('testSBK1a',(/.TRUE./),'The value .TRUE.')
+    CALL testParam%get('testSBK1a',valsbk1a)
+    IF(.NOT.valsbk1a(1) .OR. SIZE(valsbk1a) /= 1_SIK .OR. &
+        someParam%description /= 'The value .TRUE.') THEN
+      WRITE(*,*) 'testParam%set(''testSBK1a'',.TRUE.) FAILED!'
+      STOP 666
+    ENDIF
+    !Different size for some param
+    CALL someParam%set('testSBK1a',(/.FALSE.,.TRUE.,.TRUE./),'The values .FALSE.,.TRUE., and .TRUE.')
+    CALL testParam%get('testSBK1a',valsbk1a)
+    IF(valsbk1a(1) .OR. .NOT.valsbk1a(2) .OR. &
+        .NOT.valsbk1a(3) .OR. SIZE(valsbk1a) /= 3_SIK .OR. &
+          someParam%description /= 'The values .FALSE.,.TRUE., and .TRUE.') THEN
+      WRITE(*,*) 'someParam%set(''testSBK1a'',(/.FALSE.,.TRUE.,.TRUE./),'// &
+        '''The values .FALSE.,.TRUE., and .TRUE.'') FAILED!'
+      STOP 666
+    ENDIF
+    !Same size for test param
+    CALL testParam%set('testSBK1a',(/.TRUE.,.TRUE.,.FALSE./),'The values .TRUE.,.TRUE., and .FALSE.')
+    CALL testParam%get('testSBK1a',valsbk1a)
+    IF(.NOT.valsbk1a(1) .OR. .NOT.valsbk1a(2) .OR. &
+        valsbk1a(3) .OR. SIZE(valsbk1a) /= 3_SIK .OR. &
+          someParam%description /= 'The values .TRUE.,.TRUE., and .FALSE.') THEN
+      WRITE(*,*) 'testParam%set(''testSBK1a'',(/.TRUE.,.TRUE.,.FALSE./),'// &
+       '''The values .TRUE.,.TRUE., and .FALSE.'') FAILED!'
+      STOP 666
+    ENDIF
+    
+    eParams => e
+    CALL testParam2%set('testSBK1a',valsbk1a)
+    CALL someParam%set('testError',valsbk1a)
+    CALL testParam%set('testError',valsbk1a)
+    WRITE(*,*) '  Passed: CALL testParam%set(...) (SBK) 1-D'
+  
+    !Test clear
+    eParams => NULL()
+    CALL testParam%clear()
+    IF(LEN(testParam%name%sPrint()) /= 0) THEN
+      WRITE(*,*) 'CALL testParam%clear() %name (SBK) 1-D FAILED!'
+      STOP 666
+    ENDIF
+    IF(LEN(testParam%datatype%sPrint()) /= 0) THEN
+      WRITE(*,*) 'CALL testParam%clear() %datatype (SBK) 1-D FAILED!'
+      STOP 666
+    ENDIF
+    IF(LEN(testParam%description%sPrint()) /= 0) THEN
+      WRITE(*,*) 'CALL testParam%clear() %description (SBK) 1-D FAILED!'
+      STOP 666
+    ENDIF
+    IF(ASSOCIATED(testParam%pdat)) THEN
+      WRITE(*,*) 'CALL testParam%clear() %pdat (SBK) 1-D FAILED!'
+      STOP 666
+    ENDIF
+
+    
+    eParams => e
+    WRITE(*,*) '  Passed: CALL testParam%clear() (SBK) 1-D'
+  
+    !test assignment
+    eParams => NULL()
+    CALL testParam%init('testSBK1a',(/.TRUE./))
+    testParam2=testparam
+    IF(.NOT.ASSOCIATED(testParam2%pdat)) THEN
+      WRITE(*,*) 'ASSIGNMENT(=) %pdat (SBK) 1-D FAILED!'
+      STOP 666
+    ENDIF
+    IF(testParam2%pdat%name /= 'testSBK1a') THEN
+      WRITE(*,*) 'ASSIGNMENT(=) %name (SBK) 1-D FAILED!'
+      STOP 666
+    ENDIF
+    IF(testParam2%pdat%datatype /= 'LOGICAL(SBK)') THEN
+      WRITE(*,*) 'ASSIGNMENT(=) %datatype (SBK) 1-D FAILED!'
+      STOP 666
+    ENDIF
+    eParams => e
+    CALL testParam%get('testSBK1a',someParam)
+    someParam=testParam
+    WRITE(*,*) '  Passed: ASSIGNMENT(=) (SBK) 1-D'
+    !Clear the variables
+    CALL testClear()
+    
+  ENDSUBROUTINE testSBK1a
 !
 !Test 2-D Array SSK support
   SUBROUTINE testSSK2a()
