@@ -232,6 +232,16 @@ MODULE FileType_Fortran
         localalloc=.TRUE.
       ENDIF
       
+      !Initialize data
+      statusval=''
+      accessval=''
+      formval=''
+      actionval=''
+      padval=''
+      fpath=''
+      fname=''
+      fext=''
+      
       oldcnt=fileobj%e%getCounter(EXCEPTION_ERROR)
       
       IF(fileobj%initstat) THEN
