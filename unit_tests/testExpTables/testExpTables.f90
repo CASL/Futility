@@ -235,6 +235,7 @@ PROGRAM testExpTables
   DO i=1,5
     CALL testET2(i)%clear()
   ENDDO
+  CALL bitEXP()
 !
 !===============================================================================
 CONTAINS
@@ -377,5 +378,289 @@ CONTAINS
       WRITE(*,*) ' Performance measurements completed'
 #endif
     ENDSUBROUTINE perftest
+!
+!-------------------------------------------------------------------------------
+!This routine is here to test the performance and feasability of calculating 
+!the function EXP(x) based on bitwise comparison and operations to see if there
+!is any noticable speedup.
+    SUBROUTINE bitEXP()
+      REAL(SSK) :: x,y
+      INTEGER(SNK) :: xint,yint
+      EQUIVALENCE(x,xint)
+      EQUIVALENCE(y,yint)
+      INTEGER(SIK) :: xfixed,neval,nval,i
+      !REAL(SSK),ALLOCATABLE :: ans(:),xval(:)
+      REAL(SSK) :: ans,xval,logvals(18),xinitial
+      
+      !Set test input for number of evaluations and number of values to evaluate
+      !neval=1
+      !nval=1
+
+      !Setup test input
+      !ALLOCATE(ans(1:nval))
+      !ALLOCATE(xval(1:nval))
+      !CALL RANDOM_NUMBER(xval)
+      !xval=xval*(-10._SSK)
+      
+      logvals(1)=LOG(2**8._SSK)
+      logvals(2)=LOG(2**4._SSK)
+      logvals(3)=LOG(2**2._SSK)
+      logvals(4)=LOG(2**1._SSK)
+      logvals(5)=LOG(1.5_SSK)
+      logvals(6)=LOG(1.25_SSK)
+      logvals(7)=LOG(1.125_SSK)
+      logvals(8)=LOG(1.0625_SSK)
+      logvals(9)=LOG(1.03125_SSK)
+      logvals(10)=LOG(1.015625_SSK)
+      logvals(11)=LOG(1.0078125_SSK)
+      logvals(12)=LOG(1.00390625_SSK)
+      logvals(13)=LOG(1.001953125_SSK)
+      logvals(14)=LOG(1.0009765625_SSK)
+      logvals(15)=LOG(1.00048828125_SSK)
+      logvals(16)=LOG(1.000244140625_SSK)
+      logvals(17)=LOG(1.0001220703125_SSK)
+      logvals(18)=LOG(1.00006103515625_SSK)
+      
+      x=-10._SSK
+      xinitial=x
+      y=4.54E-5_SSK
+      WRITE(*,*) 'x=',x,'y=',y,'EXP(x)=',EXP(xinitial)
+      WRITE(*,*) 'Printing X...'
+      CALL printBit(xint)
+      WRITE(*,*) 'Printing Y...'
+      CALL printBit(yint)
+      
+      x=-4.0_SSK
+      xinitial=x
+      y=1.0_SSK
+      WRITE(*,*) 'x=',x,'y=',y,'EXP(x)=',EXP(xinitial)
+      WRITE(*,*) 'Printing X...'
+      CALL printBit(xint)
+      WRITE(*,*) 'Printing Y...'
+      CALL printBit(yint)
+      
+      !LOG(2**8) check (2^4)
+      DO i=1,4
+        IF(x <= -logvals(i)) THEN
+          x=x+logvals(i); yint=IBCLR(yint,27-i)
+        ENDIF
+        WRITE(*,*) 'x=',x,'y=',y,'EXP(x)=',EXP(xinitial)
+        WRITE(*,*) 'Printing X...'
+        CALL printBit(xint)
+        WRITE(*,*) 'Printing Y...'
+        CALL printBit(yint)
+      ENDDO
+      !!LOG(2**4) check (2^3)
+      !IF(x <= -logvals(2)) THEN
+      !  x=x+logvals(2); yint=IBCLR(yint,25)
+      !ENDIF
+      !WRITE(*,*) 'x=',x,'y=',y,'EXP(x)=',EXP(xinitial)
+      !WRITE(*,*) 'Printing X...'
+      !CALL printBit(xint)
+      !WRITE(*,*) 'Printing Y...'
+      !CALL printBit(yint)
+      !!LOG(2**2) check (2^2)
+      !IF(x <= -logvals(3)) THEN
+      !  x=x+logvals(3); yint=IBCLR(yint,24)
+      !ENDIF
+      !WRITE(*,*) 'x=',x,'y=',y,'EXP(x)=',EXP(xinitial)
+      !WRITE(*,*) 'Printing X...'
+      !CALL printBit(xint)
+      !WRITE(*,*) 'Printing Y...'
+      !CALL printBit(yint)
+      !!LOG(2**1) check (2^1)
+      !IF(x <= -logvals(4)) THEN
+      !  x=x+logvals(4); yint=IBCLR(yint,23)
+      !ENDIF
+      !WRITE(*,*) 'x=',x,'y=',y,'EXP(x)=',EXP(xinitial)
+      !WRITE(*,*) 'Printing X...'
+      !CALL printBit(xint)
+      !WRITE(*,*) 'Printing Y...'
+      !CALL printBit(yint)
+      !Set the first bit in the mantissa to one, so we have something to shift circularly
+      !yint=IBSET(yint,22)
+      !LOG(1.5) check (1+2^-1)
+      DO i=5,18
+        IF(x <= -logvals(i)) THEN
+          x=x+logvals(i); yint=IBSET(yint,28-i)
+        ENDIF
+        WRITE(*,*) 'x=',x,'y=',y,'EXP(x)=',EXP(xinitial)
+        WRITE(*,*) 'Printing X...'
+        CALL printBit(xint)
+        WRITE(*,*) 'Printing Y...'
+        CALL printBit(yint)
+      ENDDO
+      !!LOG(1.25) check (1+2^-2)
+      !IF(x <= -logvals(6)) THEN
+      !  x=x+logvals(6); yint=IBSET(yint,21)
+      !ENDIF
+      !WRITE(*,*) 'x=',x,'y=',y,'EXP(x)=',EXP(xinitial)
+      !WRITE(*,*) 'Printing X...'
+      !CALL printBit(xint)
+      !WRITE(*,*) 'Printing Y...'
+      !CALL printBit(yint)
+      !!LOG(1.125) check (1+2^-3)
+      !IF(x <= -logvals(7)) THEN
+      !  x=x+logvals(7); yint=IBSET(yint,20)
+      !ENDIF
+      !WRITE(*,*) 'x=',x,'y=',y,'EXP(x)=',EXP(xinitial)
+      !WRITE(*,*) 'Printing X...'
+      !CALL printBit(xint)
+      !WRITE(*,*) 'Printing Y...'
+      !CALL printBit(yint)
+      !!LOG(1.0625) check (1+2^-4)
+      !IF(x <= -logvals(8)) THEN
+      !  x=x+logvals(8); yint=IBSET(yint,19)
+      !ENDIF
+      !WRITE(*,*) 'x=',x,'y=',y,'EXP(x)=',EXP(xinitial)
+      !WRITE(*,*) 'Printing X...'
+      !CALL printBit(xint)
+      !WRITE(*,*) 'Printing Y...'
+      !CALL printBit(yint)
+      !!LOG(1.03125) check (1+2^-5)
+      !IF(x <= -logvals(9)) THEN
+      !  x=x+logvals(9); yint=IBSET(yint,18)
+      !ENDIF
+      !WRITE(*,*) 'x=',x,'y=',y,'EXP(x)=',EXP(xinitial)
+      !WRITE(*,*) 'Printing X...'
+      !CALL printBit(xint)
+      !WRITE(*,*) 'Printing Y...'
+      !CALL printBit(yint)
+      !!LOG(1.015625) check (1+2^-6)
+      !IF(x <= -logvals(10)) THEN
+      !  x=x+logvals(10); yint=IBSET(yint,17)
+      !ENDIF
+      !WRITE(*,*) 'x=',x,'y=',y,'EXP(x)=',EXP(xinitial)
+      !WRITE(*,*) 'Printing X...'
+      !CALL printBit(xint)
+      !WRITE(*,*) 'Printing Y...'
+      !CALL printBit(yint)
+      !!LOG(1.0078125) check (1+2^-7)
+      !IF(x <= -logvals(11)) THEN
+      !  x=x+logvals(11); yint=IBSET(yint,16)
+      !ENDIF
+      !WRITE(*,*) 'x=',x,'y=',y,'EXP(x)=',EXP(xinitial)
+      !WRITE(*,*) 'Printing X...'
+      !CALL printBit(xint)
+      !WRITE(*,*) 'Printing Y...'
+      !CALL printBit(yint)
+      !!LOG(1.00390625) check (1+2^-8)
+      !IF(x <= -logvals(12)) THEN
+      !  x=x+logvals(12); yint=IBSET(yint,15)
+      !ENDIF
+      !WRITE(*,*) 'x=',x,'y=',y,'EXP(x)=',EXP(xinitial)
+      !WRITE(*,*) 'Printing X...'
+      !CALL printBit(xint)
+      !WRITE(*,*) 'Printing Y...'
+      !CALL printBit(yint)
+      !!LOG(1.001953125) check (1+2^-9)
+      !IF(x <= -logvals(13)) THEN
+      !  x=x+logvals(13); yint=IBSET(yint,14)
+      !ENDIF
+      !WRITE(*,*) 'x=',x,'y=',y,'EXP(x)=',EXP(xinitial)
+      !WRITE(*,*) 'Printing X...'
+      !CALL printBit(xint)
+      !WRITE(*,*) 'Printing Y...'
+      !CALL printBit(yint)
+      !!LOG(1.0009765625) check (1+2^-10)
+      !IF(x <= -logvals(14)) THEN
+      !  x=x+logvals(14); yint=IBSET(yint,13)
+      !ENDIF
+      !WRITE(*,*) 'x=',x,'y=',y,'EXP(x)=',EXP(xinitial)
+      !WRITE(*,*) 'Printing X...'
+      !CALL printBit(xint)
+      !WRITE(*,*) 'Printing Y...'
+      !CALL printBit(yint)
+      !!LOG(1.00048828125) check (1+2^-11)
+      !IF(x <= -logvals(15)) THEN
+      !  x=x+logvals(15); yint=IBSET(yint,12)
+      !ENDIF
+      !WRITE(*,*) 'x=',x,'y=',y,'EXP(x)=',EXP(xinitial)
+      !WRITE(*,*) 'Printing X...'
+      !CALL printBit(xint)
+      !WRITE(*,*) 'Printing Y...'
+      !CALL printBit(yint)
+      !!LOG(1.000244140625) check (1+2^-12)
+      !IF(x <= -logvals(16)) THEN
+      !  x=x+logvals(16); yint=IBSET(yint,11)
+      !ENDIF
+      !WRITE(*,*) 'x=',x,'y=',y,'EXP(x)=',EXP(xinitial)
+      !WRITE(*,*) 'Printing X...'
+      !CALL printBit(xint)
+      !WRITE(*,*) 'Printing Y...'
+      !CALL printBit(yint)
+      !!LOG(1.0001220703125) check (1+2^-13)
+      !IF(x <= -logvals(17)) THEN
+      !  x=x+logvals(17); yint=IBSET(yint,10)
+      !ENDIF
+      !WRITE(*,*) 'x=',x,'y=',y,'EXP(x)=',EXP(xinitial)
+      !WRITE(*,*) 'Printing X...'
+      !CALL printBit(xint)
+      !WRITE(*,*) 'Printing Y...'
+      !CALL printBit(yint)
+      !!LOG(1.00006103515625) check (1+2^-14)
+      !IF(x <= -logvals(18)) THEN
+      !  x=x+logvals(18); yint=IBSET(yint,9)
+      !ENDIF
+      !WRITE(*,*) 'x=',x,'y=',y,'EXP(x)=',EXP(xinitial)
+      !WRITE(*,*) 'Printing X...'
+      !CALL printBit(xint)
+      !WRITE(*,*) 'Printing Y...'
+      !CALL printBit(yint)
+      !!adjust the exponent
+      !yint=IBSET(yint,30)
+      !WRITE(*,*) 'x=',x,'y=',y,'EXP(x)=',EXP(xinitial)
+      !WRITE(*,*) 'Printing X...'
+      !CALL printBit(xint)
+      !WRITE(*,*) 'Printing Y...'
+      !CALL printBit(yint)
+      !!Multiple by 2, using bit set.
+      !xint=IBSET(xint,23)
+      !WRITE(*,*) 'x=',x,'y=',y,'EXP(x)=',EXP(x)
+      !CALL printBit(xint)
+      !!Set x to 1._SSK
+      !x=0.0_SSK
+      !WRITE(*,*) 'x=',x,'y=',y,'EXP(x)=',EXP(x)
+      !CALL printBit(xint)
+      !DO i=1,10
+      !  !Add 1._SSK to x
+      !  x=x-1.0_SSK
+      !  WRITE(*,*) 'x=',x,'y=',y,'EXP(x)=',EXP(x)
+      !  CALL printBit(xint)
+      !ENDDO
+      
+      !DO i=1,neval
+      !  
+      !ENDDO
+      
+      
+    ENDSUBROUTINE bitEXP
+!
+!-------------------------------------------------------------------------------
+!Functionalizing the Bit Printing I'll probably need mulitple times.
+!Prints the bit number from 31-0 for 32-bit values, prints the s,x,m
+!notation for IEEE-754 single precision reals, and then prints the bits in the
+!corresponding order.  (Haven't expanded this to take into account endian-ness)
+!
+!The integer specified by the input should be "equivalenced" (shares the same 
+!memory location with) a single precision real number.  Bit-wise operations are
+!only available through integers.
+!
+    SUBROUTINE printBit(int)
+      INTEGER(SNK),INTENT(INOUT) :: int
+      INTEGER(SIK) :: i,bprint(32)
+      LOGICAL(SBK) :: flag(32)
+      
+      bprint=0_SIK
+      DO i=1,32
+        !Apparently, there is a zero bit, who knew.
+        flag(i)=BTEST(int,i-1)
+        IF(flag(i)) bprint(i)=1_SIK
+      ENDDO
+      WRITE(*,*) '      10987654321098765432109876543210'
+      WRITE(*,*) '      sxxxxxxxxmmmmmmmmmmmmmmmmmmmmmmm'
+      WRITE(*,'(a,32i1)') '       ',(bprint(i),i=32,1,-1)
+      WRITE(*,*) '--------------------------------------'
+    ENDSUBROUTINE printBit
 !
 ENDPROGRAM testExpTables
