@@ -87,6 +87,7 @@ MODULE IntrType
   PUBLIC :: EPSD
   PUBLIC :: EPSREAL
   PUBLIC :: OPERATOR(.APPROXEQ.)
+  PUBLIC :: SOFTEQ
 !
 ! Variables
   !> @name Private Variables
@@ -194,6 +195,15 @@ MODULE IntrType
     !> @copybrief IntrType::approxeq_double
     MODULE PROCEDURE approxeq_double
   ENDINTERFACE
+  !>
+  !> @brief Interface for the operator for "softt equivalence" for intrinsic
+  !> types
+  INTERFACE SOFTEQ
+    !> @copybrief IntrType::softeq_single
+    MODULE PROCEDURE softeq_single
+    !> @copybrief IntrType::softeq_double
+    MODULE PROCEDURE softeq_double
+  ENDINTERFACE
 !
 !===============================================================================
   CONTAINS
@@ -223,5 +233,34 @@ MODULE IntrType
       LOGICAL(SBK) :: bool
       bool=(ABS(r1 - r2) <= EPSD)
     ENDFUNCTION approxeq_double
-
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation when comparing two single precision reals
+!> with SOFTEQ
+!> @param r1 a single precision real number
+!> @param r2 a single precision real number
+!> @param tol a single precision real number
+!> @returns @c bool result of comparison
+    ELEMENTAL FUNCTION softeq_single(r1,r2,tol) RESULT(bool)
+      REAL(SSK),INTENT(IN) :: r1
+      REAL(SSK),INTENT(IN) :: r2
+      REAL(SSK),INTENT(IN) :: tol
+      LOGICAL(SBK) :: bool
+      bool=(ABS(r1 - r2) <= tol)
+    ENDFUNCTION softeq_single
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation when comparing two double precision reals
+!> with SOFTEQ
+!> @param r1 a double precision real number
+!> @param r2 a double precision real number
+!> @param tol a double precision real number
+!> @returns @c bool result of comparison
+    ELEMENTAL FUNCTION softeq_double(r1,r2,tol) RESULT(bool)
+      REAL(SDK),INTENT(IN) :: r1
+      REAL(SDK),INTENT(IN) :: r2
+      REAL(SDK),INTENT(IN) :: tol
+      LOGICAL(SBK) :: bool
+      bool=(ABS(r1 - r2) <= tol)
+    ENDFUNCTION softeq_double
 ENDMODULE IntrType

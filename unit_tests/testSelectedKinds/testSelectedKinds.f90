@@ -70,6 +70,21 @@ PROGRAM testSelectedKinds
   ELSE
     WRITE(*,*) '  Passed: .APPROXEQ. (SINGLE PRECISION)'
   ENDIF
+  ! Test SOFTEQ
+  IF(.NOT.(SOFTEQ(1.0000001_SDK,1._SDK,1.0E-6_SDK)) .OR. &
+          (SOFTEQ(1.0000011_SDK,1._SDK,1.0E-6_SDK))) THEN
+    WRITE(*,*) 'SOFTEQ (DOUBLE PRECISION) FAILED!'
+    STOP 666
+  ELSE
+    WRITE(*,*) '  Passed: SOFTEQ (DOUBLE PRECISION)'
+  ENDIF
+  IF(.NOT.(SOFTEQ(1.00001_SSK,1._SSK,1.0E-4_SSK)) .OR. &
+          (SOFTEQ(1.00011_SSK,1._SSK,1.0E-4_SSK))) THEN
+    WRITE(*,*) 'SOFTEQ (SINGLE PRECISION) FAILED!'
+    STOP 666
+  ELSE
+    WRITE(*,*) '  Passed: SOFTEQ (SINGLE PRECISION)'
+  ENDIF
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING SELECTED KINDS PASSED!'
   WRITE(*,*) '==================================================='
