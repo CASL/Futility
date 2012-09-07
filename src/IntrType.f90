@@ -214,6 +214,7 @@ MODULE IntrType
 !> @param r1 a single precision real number
 !> @param r2 a single precision real number
 !> @returns @c bool result of comparison
+!>
     ELEMENTAL FUNCTION approxeq_single(r1,r2) RESULT(bool)
       REAL(SSK),INTENT(IN) :: r1
       REAL(SSK),INTENT(IN) :: r2
@@ -227,6 +228,7 @@ MODULE IntrType
 !> @param r1 a double precision real number
 !> @param r2 a double precision real number
 !> @returns @c bool result of comparison
+!>
     ELEMENTAL FUNCTION approxeq_double(r1,r2) RESULT(bool)
       REAL(SDK),INTENT(IN) :: r1
       REAL(SDK),INTENT(IN) :: r2
@@ -241,6 +243,7 @@ MODULE IntrType
 !> @param r2 a single precision real number
 !> @param tol a single precision real number
 !> @returns @c bool result of comparison
+!>
     ELEMENTAL FUNCTION softeq_single(r1,r2,tol) RESULT(bool)
       REAL(SSK),INTENT(IN) :: r1
       REAL(SSK),INTENT(IN) :: r2
@@ -256,6 +259,7 @@ MODULE IntrType
 !> @param r2 a double precision real number
 !> @param tol a double precision real number
 !> @returns @c bool result of comparison
+!>
     ELEMENTAL FUNCTION softeq_double(r1,r2,tol) RESULT(bool)
       REAL(SDK),INTENT(IN) :: r1
       REAL(SDK),INTENT(IN) :: r2
@@ -263,4 +267,5 @@ MODULE IntrType
       LOGICAL(SBK) :: bool
       bool=(ABS(r1 - r2) <= tol)
     ENDFUNCTION softeq_double
+!
 ENDMODULE IntrType
