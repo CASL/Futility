@@ -663,7 +663,6 @@ PROGRAM testParameterLists
   CONTAINS
 !
 !-------------------------------------------------------------------------------
-!
 !Test SSK support
   SUBROUTINE testSSK()
     ALLOCATE(testParam2%pdat)
@@ -785,6 +784,7 @@ PROGRAM testParameterLists
     
   ENDSUBROUTINE testSSK
 !
+!-------------------------------------------------------------------------------
 !Test ParamList support
   SUBROUTINE testParamListType()
     !Carry over from testSSK
@@ -917,10 +917,10 @@ PROGRAM testParameterLists
     WRITE(*,*) '  Passed: ASSIGNMENT(=) (List)'
   
     CALL testClear()
-    
   ENDSUBROUTINE testParamListType
-  
-  !Clear all the test variables
+!
+!-------------------------------------------------------------------------------
+!Clear all the test variables
   SUBROUTINE testClear()
     
     CALL testParam%clear()
@@ -937,6 +937,7 @@ PROGRAM testParameterLists
   
   ENDSUBROUTINE testClear
 !
+!-------------------------------------------------------------------------------
 !Test SDK support
   SUBROUTINE testSDK()
     ALLOCATE(testParam2%pdat)
@@ -1058,6 +1059,7 @@ PROGRAM testParameterLists
     
   ENDSUBROUTINE testSDK
 !
+!-------------------------------------------------------------------------------
 !Test SNK support
   SUBROUTINE testSNK()
     ALLOCATE(testParam2%pdat)
@@ -1179,6 +1181,7 @@ PROGRAM testParameterLists
     
   ENDSUBROUTINE testSNK
 !
+!-------------------------------------------------------------------------------
 !Test SLK support
   SUBROUTINE testSLK()
     ALLOCATE(testParam2%pdat)
@@ -1300,6 +1303,7 @@ PROGRAM testParameterLists
     
   ENDSUBROUTINE testSLK
 !
+!-------------------------------------------------------------------------------
 !Test SBK support
   SUBROUTINE testSBK()
     ALLOCATE(testParam2%pdat)
@@ -1421,7 +1425,8 @@ PROGRAM testParameterLists
     
   ENDSUBROUTINE testSBK
 !
-!Test STR support
+!-------------------------------------------------------------------------------
+!Test StringType support
   SUBROUTINE testSTR()
     
     ALLOCATE(testParam2%pdat)
@@ -1550,6 +1555,7 @@ PROGRAM testParameterLists
     
   ENDSUBROUTINE testSTR
 !
+!-------------------------------------------------------------------------------
 !Test 1-D Array SSK support
   SUBROUTINE testSSK1a()
     ALLOCATE(testParam2%pdat)
@@ -1708,6 +1714,7 @@ PROGRAM testParameterLists
     
   ENDSUBROUTINE testSSK1a
 !
+!-------------------------------------------------------------------------------
 !Test 1-D Array SDK support
   SUBROUTINE testSDK1a()
     ALLOCATE(testParam2%pdat)
@@ -1865,6 +1872,7 @@ PROGRAM testParameterLists
     
   ENDSUBROUTINE testSDK1a
 !
+!-------------------------------------------------------------------------------
 !Test 1-D Array SNK support
   SUBROUTINE testSNK1a()
     ALLOCATE(testParam2%pdat)
@@ -2022,6 +2030,7 @@ PROGRAM testParameterLists
     
   ENDSUBROUTINE testSNK1a
 !
+!-------------------------------------------------------------------------------
 !Test 1-D Array SLK support
   SUBROUTINE testSLK1a()
     ALLOCATE(testParam2%pdat)
@@ -2179,6 +2188,7 @@ PROGRAM testParameterLists
     
   ENDSUBROUTINE testSLK1a
 !
+!-------------------------------------------------------------------------------
 !Test 1-D Array SBK support
   SUBROUTINE testSBK1a()
     ALLOCATE(testParam2%pdat)
@@ -2338,6 +2348,7 @@ PROGRAM testParameterLists
     
   ENDSUBROUTINE testSBK1a
 !
+!-------------------------------------------------------------------------------
 !Test 2-D Array SSK support
   SUBROUTINE testSSK2a()
     ALLOCATE(testParam2%pdat)
@@ -2513,6 +2524,7 @@ PROGRAM testParameterLists
     
   ENDSUBROUTINE testSSK2a
 !
+!-------------------------------------------------------------------------------
 !Test 2-D Array SDK support
   SUBROUTINE testSDK2a()
     ALLOCATE(testParam2%pdat)
@@ -2689,6 +2701,7 @@ PROGRAM testParameterLists
     
   ENDSUBROUTINE testSDK2a
 !
+!-------------------------------------------------------------------------------
 !Test 2-D Array SNK support
   SUBROUTINE testSNK2a()
     ALLOCATE(testParam2%pdat)
@@ -2863,6 +2876,7 @@ PROGRAM testParameterLists
     
   ENDSUBROUTINE testSNK2a
 !
+!-------------------------------------------------------------------------------
 !Test 2-D Array SLK support
   SUBROUTINE testSLK2a()
     ALLOCATE(testParam2%pdat)
@@ -3038,6 +3052,7 @@ PROGRAM testParameterLists
     
   ENDSUBROUTINE testSLK2a
 !
+!-------------------------------------------------------------------------------
 !Test 3-D Array SSK support
   SUBROUTINE testSSK3a()
     ALLOCATE(testParam2%pdat)
@@ -3223,6 +3238,7 @@ PROGRAM testParameterLists
     
   ENDSUBROUTINE testSSK3a
 !
+!-------------------------------------------------------------------------------
 !Test 3-D Array SDK support
   SUBROUTINE testSDK3a()
     ALLOCATE(testParam2%pdat)
@@ -3408,6 +3424,7 @@ PROGRAM testParameterLists
     
   ENDSUBROUTINE testSDK3a
 !
+!-------------------------------------------------------------------------------
 !Test 3-D Array SNK support
   SUBROUTINE testSNK3a()
     ALLOCATE(testParam2%pdat)
@@ -3592,6 +3609,7 @@ PROGRAM testParameterLists
     
   ENDSUBROUTINE testSNK3a
 !
+!-------------------------------------------------------------------------------
 !Test 3-D Array SLK support
   SUBROUTINE testSLK3a()
     ALLOCATE(testParam2%pdat)

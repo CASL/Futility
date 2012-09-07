@@ -1382,8 +1382,8 @@ MODULE ParameterLists
 !>        @c thisParam
 !> @param prefix a prefix path for the parameter's full path name
 !>
-   RECURSIVE SUBROUTINE validateOpt_Paramtype(thisParam,optParams,prefix)
-      CHARACTER(LEN=*),PARAMETER :: myName='validateOpt_Paramtype'
+   RECURSIVE SUBROUTINE validateOpt_ParamType(thisParam,optParams,prefix)
+      CHARACTER(LEN=*),PARAMETER :: myName='validateOpt_ParamType'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CLASS(ParamType),INTENT(IN) :: optParams
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
@@ -1462,7 +1462,7 @@ MODULE ParameterLists
             ENDIF
           ENDIF
       ENDSELECT
-   ENDSUBROUTINE validateOpt_Paramtype
+   ENDSUBROUTINE validateOpt_ParamType
 !
 !-------------------------------------------------------------------------------
 !> @brief Compares a parameter list to another parameter list and reports any 
