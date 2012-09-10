@@ -174,7 +174,7 @@ PROGRAM testVectorTypes
           !now compare actual values with expected
           DO i=1,6
             IF((thisVector%b(i) /= i)) THEN
-              WRITE(*,*) 'CALL realvec%set(...) FAILED!'
+              WRITE(*,*) 'CALL realvec%setone(...) FAILED!'
               STOP 666
             ENDIF
           ENDDO
@@ -197,11 +197,43 @@ PROGRAM testVectorTypes
         TYPE IS(RealVectorType)
           DO i=1,SIZE(thisVector%b)
             IF(thisVector%b(i) == 1._SRK) THEN
-              WRITE(*,*) 'CALL realvec%set(...) FAILED!'
+              WRITE(*,*) 'CALL realvec%setone(...) FAILED!'
               STOP 666
             ENDIF
           ENDDO
-          WRITE(*,*) '  Passed: CALL realvec%set(...)'
+          WRITE(*,*) '  Passed: CALL realvec%setone(...)'
+      ENDSELECT
+      
+      !Perform test of set function
+      !use set to update all values at once
+      CALL thisVector%init(6)
+      CALL thisVector%set(10._SRK)
+      SELECTTYPE(thisVector)
+        TYPE IS(RealVectorType)
+          !now compare actual values with expected
+          DO i=1,6
+            IF((thisVector%b(i) /= 10._SRK)) THEN
+              WRITE(*,*) 'CALL realvec%setall(...) FAILED!'
+              STOP 666
+            ENDIF
+          ENDDO
+      ENDSELECT
+      
+      !set uninit matrix.
+      CALL thisVector%clear()
+      CALL thisVector%set(1._SRK) !since isInit=.FALSE. expect no change
+      
+      CALL thisVector%init(6)
+        
+      SELECTTYPE(thisVector)
+        TYPE IS(RealVectorType)
+          DO i=1,SIZE(thisVector%b)
+            IF(thisVector%b(i) == 1._SRK) THEN
+              WRITE(*,*) 'CALL realvec%setall(...) FAILED!'
+              STOP 666
+            ENDIF
+          ENDDO
+          WRITE(*,*) '  Passed: CALL realvec%setall(...)'
       ENDSELECT
       
       !Perform test of get function
@@ -375,7 +407,7 @@ PROGRAM testVectorTypes
           DO i=1,6
             CALL VecGetValues(thisVector%b,1,i-1,dummy,ierr)
             IF(dummy /= i) THEN
-              WRITE(*,*) 'CALL petscvec%set(...) FAILED!'
+              WRITE(*,*) 'CALL petscvec%setone(...) FAILED!'
               STOP 666
             ENDIF
           ENDDO
@@ -400,11 +432,43 @@ PROGRAM testVectorTypes
           DO i=1,vecsize
             CALL VecGetValues(thisVector%b,1,i-1,dummy,ierr)
             IF(dummy == 1._SRK) THEN
-              WRITE(*,*) 'CALL petscvec%set(...) FAILED!'
+              WRITE(*,*) 'CALL petscvec%setone(...) FAILED!'
               STOP 666
             ENDIF
           ENDDO
-          WRITE(*,*) '  Passed: CALL petscvec%set(...)'
+          WRITE(*,*) '  Passed: CALL petscvec%setone(...)'
+      ENDSELECT
+      
+      !Perform test of set function
+      !use set to update all values at once
+      CALL thisVector%init(6)
+      CALL thisVector%set(10._SRK)
+      SELECTTYPE(thisVector)
+        TYPE IS(PETScVectorType)
+          !now compare actual values with expected
+          DO i=1,6
+            IF((thisVector%b(i) /= 10._SRK)) THEN
+              WRITE(*,*) 'CALL petscvec%setall(...) FAILED!'
+              STOP 666
+            ENDIF
+          ENDDO
+      ENDSELECT
+      
+      !set uninit matrix.
+      CALL thisVector%clear()
+      CALL thisVector%set(1._SRK) !since isInit=.FALSE. expect no change
+      
+      CALL thisVector%init(6)
+        
+      SELECTTYPE(thisVector)
+        TYPE IS(PETScVectorType)
+          DO i=1,SIZE(thisVector%b)
+            IF(thisVector%b(i) == 1._SRK) THEN
+              WRITE(*,*) 'CALL petscvec%setall(...) FAILED!'
+              STOP 666
+            ENDIF
+          ENDDO
+          WRITE(*,*) '  Passed: CALL petscvec%setall(...)'
       ENDSELECT
       
       !Perform test of get function
