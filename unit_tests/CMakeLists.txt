@@ -31,6 +31,9 @@ SET(UNIT_TEST_NAMES
     testVTKFiles
     testCmdLineProc
     testMatrixMath
+    testBLAS
+    testMatrixTypes
+    testVectorTypes
     testLinearSolver
 )
 FOREACH(test ${UNIT_TEST_NAMES})
