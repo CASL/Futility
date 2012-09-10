@@ -30,7 +30,6 @@ SET(UNIT_TEST_NAMES
     testParameterLists
     testVTKFiles
     testCmdLineProc
-    testMatrixMath
     testBLAS
     testMatrixTypes
     testVectorTypes
