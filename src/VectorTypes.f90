@@ -45,6 +45,15 @@ MODULE VectorTypes
   USE IntrType
   USE ExceptionHandler
   USE Allocs
+  USE BLAS1,           ONLY: BLAS1_asum  => BLAS_asum,  &
+                             BLAS1_axpy  => BLAS_axpy,  &
+                             BLAS1_copy  => BLAS_copy,  &
+                             BLAS1_dot   => BLAS_dot,   &
+                             BLAS1_iamax => BLAS_iamax, &
+                             BLAS1_iamin => BLAS_iamin, &
+                             BLAS1_nrm2  => BLAS_nrm2,  &
+                             BLAS1_scal  => BLAS_scal,  &
+                             BLAS1_swap  => BLAS_swap  
   IMPLICIT NONE
 
 #ifdef HAVE_PETSC
@@ -172,7 +181,84 @@ MODULE VectorTypes
       !> @copydetails VectorTypes::get_PETScVectorType
       PROCEDURE,PASS :: get => get_PETScVectorType
   ENDTYPE PETScVectorType
-
+  
+  !> @brief Adds to the @ref BLAS1::BLAS_asum "BLAS_asum" interface so that
+  !> the vector types defined in this module are also supported.
+  INTERFACE BLAS_asum
+    !> @copybrief VectorTypes::asum_VectorType
+    !> @copydetails VectorTypes::asum_VectorType
+    MODULE PROCEDURE asum_VectorType
+  ENDINTERFACE BLAS_asum
+  
+  !> @brief Adds to the @ref BLAS1::BLAS_axpy "BLAS_axpy" interface so that
+  !> the vector types defined in this module are also supported.
+  INTERFACE BLAS_axpy
+    !> @copybrief VectorTypes::axpy_scalar_VectorType
+    !> @copydetails VectorTypes::axpy_scalar_VectorType
+    MODULE PROCEDURE axpy_scalar_VectorType
+    !> @copybrief VectorTypes::axpy_vector_VectorType
+    !> @copydetails VectorTypes::axpy_vector_VectorType
+    MODULE PROCEDURE axpy_vector_VectorType
+  ENDINTERFACE BLAS_axpy
+  
+  !> @brief Adds to the @ref BLAS1::BLAS_copy "BLAS_copy" interface so that
+  !> the vector types defined in this module are also supported.
+  INTERFACE BLAS_copy
+    !> @copybrief VectorTypes::copy_VectorType
+    !> @copydetails VectorTypes::copy_VectorType
+    MODULE PROCEDURE copy_VectorType
+  ENDINTERFACE BLAS_copy
+  
+  !> @brief Adds to the @ref BLAS1::BLAS_dot "BLAS_dot" interface so that
+  !> the vector types defined in this module are also supported.
+  INTERFACE BLAS_dot
+    !> @copybrief VectorTypes::dot_VectorType
+    !> @copydetails VectorTypes::dot_VectorType
+    MODULE PROCEDURE dot_VectorType
+  ENDINTERFACE BLAS_dot
+  
+  !> @brief Adds to the @ref BLAS1::BLAS_iamax "BLAS_iamax" interface so that
+  !> the vector types defined in this module are also supported.
+  INTERFACE BLAS_iamax
+    !> @copybrief VectorTypes::iamax_VectorType
+    !> @copydetails VectorTypes::iamax_VectorType
+    MODULE PROCEDURE iamax_VectorType
+  ENDINTERFACE BLAS_iamax
+  
+  !> @brief Adds to the @ref BLAS1::BLAS_iamin "BLAS_iamin" interface so that
+  !> the vector types defined in this module are also supported.
+  INTERFACE BLAS_iamin
+    !> @copybrief VectorTypes::iamin_VectorType
+    !> @copydetails VectorTypes::iamin_VectorType
+    MODULE PROCEDURE iamin_VectorType
+  ENDINTERFACE BLAS_iamin
+  
+  !> @brief Adds to the @ref BLAS1::BLAS_nrm2 "BLAS_nrm2" interface so that
+  !> the vector types defined in this module are also supported.
+  INTERFACE BLAS_nrm2
+    !> @copybrief VectorTypes::nrm2_VectorType
+    !> @copydetails VectorTypes::nrm2_VectorType
+    MODULE PROCEDURE nrm2_VectorType
+  ENDINTERFACE BLAS_nrm2
+  
+  !> @brief Adds to the @ref BLAS1::BLAS_scal "BLAS_scal" interface so that
+  !> the vector types defined in this module are also supported.
+  INTERFACE BLAS_scal
+    !> @copybrief VectorTypes::scal_scalar_VectorType
+    !> @copydetails VectorTypes::scal_scalar_VectorType
+    MODULE PROCEDURE scal_scalar_VectorType
+    !> @copybrief VectorTypes::scal_vector_VectorType
+    !> @copydetails VectorTypes::scal_vector_VectorType
+    MODULE PROCEDURE scal_vector_VectorType
+  ENDINTERFACE BLAS_scal
+  
+  !> @brief Adds to the @ref BLAS1::BLAS_swap "BLAS_swap" interface so that
+  !> the vector types defined in this module are also supported.
+  INTERFACE BLAS_swap
+    !> @copybrief VectorTypes::swap_VectorType
+    !> @copydetails VectorTypes::swap_VectorType
+    MODULE PROCEDURE swap_VectorType
+  ENDINTERFACE BLAS_swap 
   
   !> Exception Handler for use in VectorTypes
   TYPE(ExceptionHandlerType),POINTER,SAVE :: eVectorType => NULL()
@@ -404,4 +490,354 @@ MODULE VectorTypes
 #endif
     ENDFUNCTION get_PETScVectorType
 !
+!-------------------------------------------------------------------------------
+!> @brief Function provides an interface to vector absolute value summation
+!> of a vector (x).          
+!> @param thisVector derived vector type
+!> @param n the size of the vector @c x
+!> @param incx the increment to use when looping over elements in @c x
+!> @return r the sum of the absolute values of @c x
+!>
+    FUNCTION asum_VectorType(thisVector,n,incx) RESULT(r)
+      CLASS(VectorType),INTENT(IN)     :: thisVector
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: n
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
+      REAL(SRK) :: r
+      
+      SELECTTYPE(thisVector); TYPE IS(RealVectorType)
+        IF(PRESENT(n) .AND. PRESENT(incx)) THEN
+          r = BLAS1_asum(n,thisVector%b,incx)
+        ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
+          r = BLAS1_asum(n,thisVector%b)
+        ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx)) THEN
+          r = BLAS1_asum(thisVector%b,incx)
+        ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
+          r = BLAS1_asum(thisVector%b)
+        ENDIF
+      ENDSELECT
+            
+    ENDFUNCTION asum_VectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Subroutine provides an interface to compute the result of a vector (y)
+!> plus a vector (x) times a scalar (a).
+!> @param thisVector derived vector type
+!> @param newVector resulting derived vector type
+!> @param a the constant to multiply with @c x
+!> @param n the size of the vectors @c x and @c y
+!> @param incx the increment to use when looping over elements in @c x
+!> @param incy the increment to use when looping over elements in @c y
+!>
+    SUBROUTINE axpy_scalar_VectorType(thisVector,newVector,a,n,incx,incy)
+      CLASS(VectorType),INTENT(IN)     :: thisVector
+      CLASS(VectorType),INTENT(INOUT)  :: newVector
+      REAL(SRK),INTENT(IN):: a
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: n
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: incy
+      
+      SELECTTYPE(thisVector); TYPE IS(RealVectorType)
+        SELECTTYPE(newVector); TYPE IS(RealVectorType)
+          IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
+            CALL BLAS1_axpy(n,a,thisVector%b,incx,newVector%b,incy)
+          ELSEIF(PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+            CALL BLAS1_axpy(n,a,thisVector%b,newVector%b,incx)
+          ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+            CALL BLAS1_axpy(n,a,thisVector%b,newVector%b)
+          ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+            CALL BLAS1_axpy(a,thisVector%b,newVector%b)
+          ENDIF
+        ENDSELECT
+      ENDSELECT
+
+    ENDSUBROUTINE axpy_scalar_VectorType    
+!
+!-------------------------------------------------------------------------------
+!> @brief Subroutine provides an interface to compute the result of a vector (y)
+!> plus a vector (x) times a vector (aVector).
+!> @param thisVector derived vector type
+!> @param newVector resulting derived vector type
+!> @param a the constant to multiply with @c x
+!> @param n the size of the vectors @c x and @c y
+!> @param incx the increment to use when looping over elements in @c x
+!> @param incy the increment to use when looping over elements in @c y
+!>
+    SUBROUTINE axpy_vector_VectorType(thisVector,newVector,aVector,n,incx,incy)
+      CLASS(VectorType),INTENT(IN)     :: thisVector
+      CLASS(VectorType),INTENT(INOUT)  :: newVector
+      CLASS(VectorType),INTENT(IN)     :: aVector
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: n
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: incy
+      
+      SELECTTYPE(thisVector); TYPE IS(RealVectorType)
+        SELECTTYPE(newVector); TYPE IS(RealVectorType)
+          SELECTTYPE(aVector); TYPE IS(RealVectorType)
+            IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
+              CALL BLAS1_axpy(n,aVector%b,thisVector%b,incx,newVector%b,incy)
+            ELSEIF(PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+              CALL BLAS1_axpy(n,aVector%b,thisVector%b,newVector%b,incx)
+            ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+              CALL BLAS1_axpy(n,aVector%b,thisVector%b,newVector%b)
+            ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+              CALL BLAS1_axpy(aVector%b,thisVector%b,newVector%b)
+            ENDIF
+          ENDSELECT
+        ENDSELECT
+      ENDSELECT
+
+    ENDSUBROUTINE axpy_vector_VectorType    
+!
+!-------------------------------------------------------------------------------
+!> @brief Subroutine provides an interface to copy a vector (x) to another
+!> vector (y).
+!> @param x derived vector type
+!> @param y resulting derived vector type
+!> @param n the size of the vectors @c x and @c y
+!> @param incx the increment to use when looping over elements in @c x
+!> @param incy the increment to use when looping over elements in @c y
+!>
+    SUBROUTINE copy_VectorType(thisVector,newVector,n,incx,incy)
+      CLASS(VectorType),INTENT(IN)     :: thisVector
+      CLASS(VectorType),INTENT(INOUT)  :: newVector
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: n
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: incy
+      
+      SELECTTYPE(thisVector); TYPE IS(RealVectorType)
+        SELECTTYPE(newVector); TYPE IS(RealVectorType)
+          IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
+            CALL BLAS1_copy(n,thisVector%b,incx,newVector%b,incy)
+          ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
+            CALL BLAS1_copy(thisVector%b,incx,newVector%b,incy)
+          ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+            CALL BLAS1_copy(n,thisVector%b,newVector%b,incx)
+          ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+            CALL BLAS1_copy(thisVector%b,newVector%b,incx)
+          ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+            CALL BLAS1_copy(n,thisVector%b,newVector%b)
+          ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+            CALL BLAS1_copy(thisVector%b,newVector%b)
+          ENDIF
+        ENDSELECT
+      ENDSELECT
+
+    ENDSUBROUTINE copy_VectorType 
+!
+!-------------------------------------------------------------------------------
+!> @brief Subroutine provides an interface to compute dot product of two 
+!> vectors (x and y).
+!> @param thisVector derived vector type.
+!> @param thatVector derived vector type.
+!> @param n the size of the vectors @c x and @c y
+!> @param incx the increment to use when looping over elements in @c x
+!> @param incy the increment to use when looping over elements in @c y
+!> @return r the dot product of @c x and @c y
+!>
+    FUNCTION dot_VectorType(thisVector,thatVector,n,incx,incy)  RESULT(r)
+      CLASS(VectorType),INTENT(IN)     :: thisVector
+      CLASS(VectorType),INTENT(IN)     :: thatVector
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: n
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: incy
+      REAL(SRK) :: r
+      
+      SELECTTYPE(thisVector); TYPE IS(RealVectorType)
+        SELECTTYPE(thatVector); TYPE IS(RealVectorType)
+          IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
+            r = BLAS1_dot(n,thisVector%b,incx,thatVector%b,incy)
+          ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
+            r = BLAS1_dot(thisVector%b,incx,thatVector%b,incy)
+          ELSEIF(PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+            r = BLAS1_dot(n,thisVector%b,thatVector%b,incx)
+          ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+            r = BLAS1_dot(n,thisVector%b,thatVector%b)
+          ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+            r = BLAS1_dot(thisVector%b,thatVector%b,incx)
+          ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+            r = BLAS1_dot(thisVector%b,thatVector%b)
+          ENDIF
+        ENDSELECT
+      ENDSELECT
+
+    ENDFUNCTION dot_VectorType 
+!
+!-------------------------------------------------------------------------------
+!> @brief Subroutine provides an interface to compute the absolute maximum of a 
+!> vector (x).
+!> @param thisVector derived vector type.
+!> @param n the size of the vectors @c x
+!> @param incx the increment to use when looping over elements in @c x
+!> @return imax index of the absolute max of @c y
+!>
+    FUNCTION iamax_VectorType(thisVector,n,incx)  RESULT(imax)
+      CLASS(VectorType),INTENT(IN) :: thisVector
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: n
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
+      REAL(SRK) :: imax
+      
+      SELECTTYPE(thisVector); TYPE IS(RealVectorType)
+        IF(PRESENT(n) .AND. PRESENT(incx)) THEN
+          imax = BLAS1_iamax(n,thisVector%b,incx)
+        ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx)) THEN
+          imax = BLAS1_iamax(thisVector%b,incx)
+        ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
+          imax = BLAS1_iamax(n,thisVector%b)
+        ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
+          imax = BLAS1_iamax(thisVector%b)
+        ENDIF
+      ENDSELECT
+
+    ENDFUNCTION iamax_VectorType  
+!
+!-------------------------------------------------------------------------------
+!> @brief Subroutine provides an interface to compute the absolute minimum of a 
+!> vector (x).
+!> @param thisVector derived vector type.
+!> @param n the size of the vectors @c x
+!> @param incx the increment to use when looping over elements in @c x
+!> @return imin index of the absolute min of @c x
+!>
+
+    FUNCTION iamin_VectorType(thisVector,n,incx)  RESULT(imin)
+      CLASS(VectorType),INTENT(IN) :: thisVector
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: n
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
+      REAL(SRK) :: imin
+      
+      SELECTTYPE(thisVector); TYPE IS(RealVectorType)
+        IF(PRESENT(n) .AND. PRESENT(incx)) THEN
+          imin = BLAS1_iamin(n,thisVector%b,incx)
+        ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx)) THEN
+          imin = BLAS1_iamin(thisVector%b,incx)
+        ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
+          imin = BLAS1_iamin(n,thisVector%b)
+        ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
+          imin = BLAS1_iamin(thisVector%b)
+        ENDIF
+      ENDSELECT
+
+    ENDFUNCTION iamin_VectorType    
+!
+!-------------------------------------------------------------------------------
+!> @brief Subroutine provides an interface to compute the 2-norm of a 
+!> vector (x).
+!> @param thisVector derived vector type
+!> @param n the size of the vectors @c x
+!> @param incx the increment to use when looping over elements in @c x
+!> @return norm2 the 2-norm of @c x
+!>
+    FUNCTION nrm2_VectorType(thisVector,n,incx)  RESULT(norm2)
+      CLASS(VectorType),INTENT(IN) :: thisVector
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: n
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
+      REAL(SRK) :: norm2
+      
+      SELECTTYPE(thisVector); TYPE IS(RealVectorType)
+        IF(PRESENT(n) .AND. PRESENT(incx)) THEN
+          norm2 = BLAS1_nrm2(n,thisVector%b,incx)
+        ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx)) THEN
+          norm2 = BLAS1_nrm2(thisVector%b,incx)
+        ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
+          norm2 = BLAS1_nrm2(n,thisVector%b)
+        ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
+          norm2 = BLAS1_nrm2(thisVector%b)
+        ENDIF
+      ENDSELECT
+
+    ENDFUNCTION nrm2_VectorType    
+!
+!-------------------------------------------------------------------------------
+!> @brief Subroutine provides an interface to scale a vector (x) by a 
+!> scalar (a).
+!> @param thisVector derived vector type
+!> @param a the constant to multiply with @c x
+!> @param n the size of the vectors @c x
+!> @param incx the increment to use when looping over elements in @c x
+!>
+    SUBROUTINE scal_scalar_VectorType(thisVector,a,n,incx)
+      CLASS(VectorType),INTENT(INOUT) :: thisVector
+      REAL(SRK),INTENT(IN) :: a
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: n
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
+      
+      SELECTTYPE(thisVector); TYPE IS(RealVectorType)
+        IF(PRESENT(n) .AND. PRESENT(incx)) THEN
+          CALL BLAS1_scal(n,a,thisVector%b,incx)
+        ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx)) THEN
+          CALL BLAS1_scal(a,thisVector%b,incx)
+        ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
+          CALL BLAS1_scal(n,a,thisVector%b)
+        ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
+          CALL BLAS1_scal(a,thisVector%b)
+        ENDIF
+      ENDSELECT
+
+    ENDSUBROUTINE scal_scalar_VectorType 
+!
+!-------------------------------------------------------------------------------
+!> @brief Subroutine provides an interface to scale a vector (x) by another
+!> vector (aVector).
+!> @param thisVector derived vector type
+!> @param a the constant to multiply with @c x
+!> @param n the size of the vectors @c x
+!> @param incx the increment to use when looping over elements in @c x
+!>
+    SUBROUTINE scal_vector_VectorType(thisVector,aVector,n,incx)
+      CLASS(VectorType),INTENT(INOUT) :: thisVector
+      CLASS(VectorType),INTENT(IN) :: aVector
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: n
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
+      
+      SELECTTYPE(thisVector); TYPE IS(RealVectorType)
+        SELECTTYPE(aVector); TYPE IS(RealVectorType)
+          IF(PRESENT(n) .AND. PRESENT(incx)) THEN
+            CALL BLAS1_scal(n,aVector%b,thisVector%b,incx)
+          ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx)) THEN
+            CALL BLAS1_scal(aVector%b,thisVector%b,incx)
+          ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
+            CALL BLAS1_scal(n,aVector%b,thisVector%b)
+          ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
+            CALL BLAS1_scal(aVector%b,thisVector%b)
+          ENDIF
+        ENDSELECT
+      ENDSELECT
+
+    ENDSUBROUTINE scal_vector_VectorType      
+!
+!-------------------------------------------------------------------------------
+!> @brief Subroutine swaps a vector @c x with a vector @c y
+!> @param thisVector derived vector type
+!> @param thatVector derived vector type
+!> @param n the size of the vectors @c x and @c y
+!> @param incx the increment to use when looping over elements in @c x
+!> @param incy the increment to use when looping over elements in @c y
+!>
+    SUBROUTINE swap_VectorType(thisVector,thatVector,n,incx,incy)
+      CLASS(VectorType),INTENT(INOUT) :: thisVector
+      CLASS(VectorType),INTENT(INOUT) :: thatVector
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: n
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: incy
+      
+      SELECTTYPE(thisVector); TYPE IS(RealVectorType)
+        SELECTTYPE(thatVector); TYPE IS(RealVectorType)
+          IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
+            CALL BLAS1_swap(n,thisVector%b,incx,thatVector%b,incy)
+          ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
+            CALL BLAS1_swap(thisVector%b,incx,thatVector%b,incy)
+          ELSEIF(PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+            CALL BLAS1_swap(n,thisVector%b,thatVector%b,incx)
+          ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+            CALL BLAS1_swap(thisVector%b,thatVector%b,incx)
+          ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+            CALL BLAS1_swap(n,thisVector%b,thatVector%b)
+          ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+            CALL BLAS1_swap(thisVector%b,thatVector%b)
+          ENDIF
+        ENDSELECT
+      ENDSELECT
+
+    ENDSUBROUTINE swap_VectorType  
+
 ENDMODULE VectorTypes

@@ -70,6 +70,7 @@ MODULE MatrixTypes
   USE Allocs
   USE BLAS2,           ONLY: BLAS2_matvec => BLAS_matvec
   USE BLAS3,           ONLY: BLAS3_matmult => BLAS_matmat
+  USE VectorTypes
   IMPLICIT NONE
 
 #ifdef HAVE_PETSC
@@ -302,6 +303,9 @@ MODULE MatrixTypes
     !> @copybrief MatrixTypes::matvec_MatrixType
     !> @copydetails MatrixTypes::matvec_MatrixType
     MODULE PROCEDURE matvec_MatrixType
+    !> @copybrief MatrixTypes::matvec_MatrixTypeVectorType
+    !> @copydetails MatrixTypes::matvec_MatrixTypeVectorType
+    MODULE PROCEDURE matvec_MatrixTypeVectorType
   ENDINTERFACE BLAS_matvec
 
   !> @brief Adds to the @ref BLAS3::BLAS_matmult "BLAS_matmat" interface so that
@@ -1072,6 +1076,82 @@ MODULE MatrixTypes
       ENDIF
 
     ENDSUBROUTINE matvec_MatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief Subroutine provides an interface to matrix vector multiplication for
+!> the MatrixType.
+!> @param trans single character input indicating whether or not to use the 
+!>        transpose of @c A              
+!> @param thisMatrix derived matrix type.
+!> @param alpha the scalar used to scale @c x
+!> @param x the vector to multiply with @c A
+!> @param beta the scalar used to scale @c y
+!> @param y the vector to add to the product of @c A and @c x
+!>
+    SUBROUTINE matvec_MatrixTypeVectorType(thisMatrix,trans,alpha,x,beta,y)
+      CLASS(MatrixType),INTENT(IN) :: thisMatrix
+      CLASS(VectorType),INTENT(IN) :: x
+      CHARACTER(LEN=1),OPTIONAL,INTENT(IN) :: trans
+      REAL(SRK),INTENT(IN),OPTIONAL :: alpha
+      REAL(SRK),INTENT(IN),OPTIONAL :: beta
+      REAL(SRK),INTENT(INOUT) :: y(:)
+      
+      CHARACTER(LEN=1) :: t
+      
+      IF(thisMatrix%isInit) THEN
+        t='n'
+        IF(PRESENT(trans)) t=trans
+        
+        SELECTTYPE(x)
+          TYPE IS(RealVectorType)
+            SELECTTYPE(thisMatrix)
+              TYPE IS(DenseSquareMatrixType)
+                IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
+                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+                    alpha,thisMatrix%a,thisMatrix%n,x%b,1,beta,y,1)
+                ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+                    alpha,thisMatrix%a,thisMatrix%n,x%b,1,y,1)
+                ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
+                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+                    thisMatrix%a,thisMatrix%n,x%b,1,beta,y,1)
+                ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+                    thisMatrix%a,thisMatrix%n,x%b,1,y,1)
+                ENDIF
+              TYPE IS(DenseRectMatrixType)
+                IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
+                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
+                    alpha,thisMatrix%a,thisMatrix%n,x%b,1,beta,y,1)
+                ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
+                    alpha,thisMatrix%a,thisMatrix%n,x%b,1,y,1)
+                ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
+                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
+                    thisMatrix%a,thisMatrix%n,x%b,1,beta,y,1)
+                ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
+                    thisMatrix%a,thisMatrix%n,x%b,1,y,1)
+                ENDIF
+              TYPE IS(SparseMatrixType)
+                IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
+                  CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
+                    thisMatrix%ja,thisMatrix%a,alpha,x%b,beta,y)
+                ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+                  CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
+                    thisMatrix%ja,thisMatrix%a,alpha,x%b,y)
+                ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
+                  CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
+                    thisMatrix%ja,thisMatrix%a,x%b,beta,y)
+                ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+                  CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
+                    thisMatrix%ja,thisMatrix%a,x%b,y)
+                ENDIF
+            ENDSELECT
+        ENDSELECT
+      ENDIF
+
+    ENDSUBROUTINE matvec_MatrixTypeVectorType
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine provides an interface to matrix matrix multiplication for
