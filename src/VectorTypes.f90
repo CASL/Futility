@@ -82,10 +82,13 @@ MODULE VectorTypes
       PROCEDURE(int_vector_clear_sub),DEFERRED,PASS :: clear
       !> Deferred routine for initializing the vector
       PROCEDURE(int_vector_init_sub),DEFERRED,PASS :: init
-      !> Deferred routine for setting vector values
+      !> Deferred routine for setting one vector value
       PROCEDURE(int_vector_setone_sub),DEFERRED,PASS :: setone
+      !> Deferred routine for setting all vector values
       PROCEDURE(int_vector_setall_sub),DEFERRED,PASS :: setall
       GENERIC :: set => setone,setall
+      !> Deferred routine for getting vector values
+      PROCEDURE(int_vector_get_sub),DEFERRED,PASS :: get
   ENDTYPE VectorType    
 !
 !List of Abstract Interfaces
@@ -123,6 +126,16 @@ MODULE VectorTypes
       CLASS(VectorType),INTENT(INOUT) :: vector
       REAL(SRK),INTENT(IN) :: setval
     ENDSUBROUTINE int_vector_setall_sub
+  ENDINTERFACE
+  
+  !> Explicitly defines the interface for the get routine of all vector types
+  ABSTRACT INTERFACE
+    FUNCTION int_vector_get_sub(vector,i) RESULT(getval)
+      IMPORT :: SIK,SRK,VectorType
+      CLASS(VectorType),INTENT(INOUT) :: vector
+      INTEGER(SIK),INTENT(IN) :: i
+      REAL(SRK) :: getval
+    ENDFUNCTION int_vector_get_sub
   ENDINTERFACE
   
   !> @brief The extended type for real vector
@@ -428,10 +441,13 @@ MODULE VectorTypes
     SUBROUTINE setall_PETScVectorType(vector,setval)
       CLASS(PETScVectorType),INTENT(INOUT) :: vector
       REAL(SRK),INTENT(IN) :: setval
+      INTEGER(SIK) :: i
 #ifdef HAVE_PETSC
       PetscErrorCode  :: ierr
       IF(vector%isInit) THEN
-        CALL VecSetValues(vector%b,vector%n,0,setval,INSERT_VALUES,ierr)
+        DO i=1,vector%n
+          CALL VecSetValue(vector%b,i-1,setval,INSERT_VALUES,ierr)
+        ENDDO
         CALL VecAssemblyBegin(vector%b,ierr)
         CALL VecAssemblyEnd(vector%b,ierr)
       ENDIF

@@ -447,7 +447,7 @@ PROGRAM testVectorTypes
         TYPE IS(PETScVectorType)
           !now compare actual values with expected
           DO i=1,6
-            IF((thisVector%b(i) /= 10._SRK)) THEN
+            IF((thisVector%get(i) /= 10._SRK)) THEN
               WRITE(*,*) 'CALL petscvec%setall(...) FAILED!'
               STOP 666
             ENDIF
@@ -462,8 +462,8 @@ PROGRAM testVectorTypes
         
       SELECTTYPE(thisVector)
         TYPE IS(PETScVectorType)
-          DO i=1,SIZE(thisVector%b)
-            IF(thisVector%b(i) == 1._SRK) THEN
+          DO i=1,thisVector%n
+            IF(thisVector%get(i) == 1._SRK) THEN
               WRITE(*,*) 'CALL petscvec%setall(...) FAILED!'
               STOP 666
             ENDIF
