@@ -74,7 +74,9 @@ MODULE VectorTypes
       !> Deferred routine for initializing the vector
       PROCEDURE(int_vector_init_sub),DEFERRED,PASS :: init
       !> Deferred routine for setting vector values
-      PROCEDURE(int_vector_set_sub),DEFERRED,PASS :: set
+      PROCEDURE(int_vector_setone_sub),DEFERRED,PASS :: setone
+      PROCEDURE(int_vector_setall_sub),DEFERRED,PASS :: setall
+      GENERIC :: set => setone,setall
   ENDTYPE VectorType    
 !
 !List of Abstract Interfaces
@@ -95,14 +97,23 @@ MODULE VectorTypes
     ENDSUBROUTINE int_vector_init_sub
   ENDINTERFACE
   
-  !> Explicitly defines the interface for the set routine of all vector types
+  !> Explicitly defines the interface for the set one routine of all vector types
   ABSTRACT INTERFACE
-    SUBROUTINE int_vector_set_sub(vector,i,setval)
+    SUBROUTINE int_vector_setone_sub(vector,i,setval)
       IMPORT :: SIK,SRK,VectorType
       CLASS(VectorType),INTENT(INOUT) :: vector
       INTEGER(SIK),INTENT(IN) :: i
       REAL(SRK),INTENT(IN) :: setval
-    ENDSUBROUTINE int_vector_set_sub
+    ENDSUBROUTINE int_vector_setone_sub
+  ENDINTERFACE
+  
+  !> Explicitly defines the interface for the set all routine of all vector types
+  ABSTRACT INTERFACE
+    SUBROUTINE int_vector_setall_sub(vector,setval)
+      IMPORT :: SIK,SRK,VectorType
+      CLASS(VectorType),INTENT(INOUT) :: vector
+      REAL(SRK),INTENT(IN) :: setval
+    ENDSUBROUTINE int_vector_setall_sub
   ENDINTERFACE
   
   !> @brief The extended type for real vector
@@ -124,9 +135,12 @@ MODULE VectorTypes
       !> @copybrief VectorTypes::init_RealVectorType
       !> @copydetails VectorTypes::init_RealVectorType
       PROCEDURE,PASS :: init => init_RealVectorType
-      !> @copybrief VectorTypes::set_RealVectorType
-      !> @copydetails VectorTypes::set_RealVectorType
-      PROCEDURE,PASS :: set => set_RealVectorType
+      !> @copybrief VectorTypes::setone_RealVectorType
+      !> @copydetails VectorTypes::setone_RealVectorType
+      PROCEDURE,PASS :: setone => setone_RealVectorType
+      !> @copybrief VectorTypes::setall_RealVectorType
+      !> @copydetails VectorTypes::setall_RealVectorType
+      PROCEDURE,PASS :: setall => setall_RealVectorType
       !> @copybrief VectorTypes::get_RealVectorType
       !> @copydetails VectorTypes::get_RealVectorType
       PROCEDURE,PASS :: get => get_RealVectorType
@@ -148,9 +162,12 @@ MODULE VectorTypes
       !> @copybrief VectorTypes::init_PETScVectorType
       !> @copydetails VectorTypes::init_PETScVectorType
       PROCEDURE,PASS :: init => init_PETScVectorType
-      !> @copybrief VectorTypes::set_PETScVectorType
-      !> @copydetails VectorTypes::set_PETScVectorType
-      PROCEDURE,PASS :: set => set_PETScVectorType
+      !> @copybrief VectorTypes::setone_PETScVectorType
+      !> @copydetails VectorTypes::setone_PETScVectorType
+      PROCEDURE,PASS :: setone => setone_PETScVectorType
+      !> @copybrief VectorTypes::setall_PETScVectorType
+      !> @copydetails VectorTypes::setall_PETScVectorType
+      PROCEDURE,PASS :: setall => setall_PETScVectorType
       !> @copybrief VectorTypes::get_PETScVectorType
       !> @copydetails VectorTypes::get_PETScVectorType
       PROCEDURE,PASS :: get => get_PETScVectorType
@@ -271,7 +288,7 @@ MODULE VectorTypes
 !> @param i the ith location in the vector
 !> @param setval the value to be set
 !>
-    SUBROUTINE set_RealVectorType(vector,i,setval)
+    SUBROUTINE setone_RealVectorType(vector,i,setval)
       CLASS(RealVectorType),INTENT(INOUT) :: vector
       INTEGER(SIK),INTENT(IN) :: i
       REAL(SRK),INTENT(IN) :: setval
@@ -280,7 +297,7 @@ MODULE VectorTypes
           vector%b(i)=setval
         ENDIF
       ENDIF
-    ENDSUBROUTINE set_RealVectorType
+    ENDSUBROUTINE setone_RealVectorType
 !
 !-------------------------------------------------------------------------------
 !> @brief Sets the values in the real vector
@@ -288,7 +305,7 @@ MODULE VectorTypes
 !> @param i the ith location in the vector
 !> @param setval the value to be set
 !>
-    SUBROUTINE set_PETScVectorType(vector,i,setval)
+    SUBROUTINE setone_PETScVectorType(vector,i,setval)
       CLASS(PETScVectorType),INTENT(INOUT) :: vector
       INTEGER(SIK),INTENT(IN) :: i
       REAL(SRK),INTENT(IN) :: setval
@@ -296,13 +313,44 @@ MODULE VectorTypes
       PetscErrorCode  :: ierr
       IF(vector%isInit) THEN
         IF((i <= vector%n) .AND. (i > 0)) THEN
-          CALL VecSetValues(vector%b,1,i-1,setval,INSERT_VALUES,ierr)
+          CALL VecSetValue(vector%b,i-1,setval,INSERT_VALUES,ierr)
           CALL VecAssemblyBegin(vector%b,ierr)
           CALL VecAssemblyEnd(vector%b,ierr)
         ENDIF
       ENDIF
 #endif
-    ENDSUBROUTINE set_PETScVectorType
+    ENDSUBROUTINE setone_PETScVectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the values in the real vector
+!> @param declare the vector type to act on
+!> @param setval the value to be set
+!>
+    SUBROUTINE setall_RealVectorType(vector,setval)
+      CLASS(RealVectorType),INTENT(INOUT) :: vector
+      REAL(SRK),INTENT(IN) :: setval
+      IF(vector%isInit) THEN
+          vector%b=setval
+      ENDIF
+    ENDSUBROUTINE setall_RealVectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the values in the real vector
+!> @param declare the vector type to act on
+!> @param setval the value to be set
+!>
+    SUBROUTINE setall_PETScVectorType(vector,setval)
+      CLASS(PETScVectorType),INTENT(INOUT) :: vector
+      REAL(SRK),INTENT(IN) :: setval
+#ifdef HAVE_PETSC
+      PetscErrorCode  :: ierr
+      IF(vector%isInit) THEN
+        CALL VecSetValues(vector%b,vector%n,0,setval,INSERT_VALUES,ierr)
+        CALL VecAssemblyBegin(vector%b,ierr)
+        CALL VecAssemblyEnd(vector%b,ierr)
+      ENDIF
+#endif
+    ENDSUBROUTINE setall_PETScVectorType
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the values in the real vector
