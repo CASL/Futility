@@ -26,9 +26,7 @@ PROGRAM testMatrixTypes
 #ifdef HAVE_PETSC
 #include <finclude/petsc.h>
 #define IS IS !petscisdef.h defines the keyword IS, and it needs to be reset
- 
   PetscErrorCode  :: ierr
-  
 #endif
   
   TYPE(ExceptionHandlerType),POINTER :: e
@@ -64,6 +62,7 @@ PROGRAM testMatrixTypes
 !-------------------------------------------------------------------------------
     SUBROUTINE testMatrix()
       CLASS(MatrixType),ALLOCATABLE :: thisMatrix
+      CLASS(VectorType),ALLOCATABLE :: xVector, yVector
       INTEGER(SIK) :: i
       INTEGER(SIK) :: matsize1,matsize2
       INTEGER(SIK) :: ia_vals(4)
@@ -75,6 +74,11 @@ PROGRAM testMatrixTypes
 #endif
       
       ALLOCATE(SparseMatrixType :: thisMatrix)
+      ALLOCATE(RealVectorType :: xVector)
+      ALLOCATE(RealVectorType :: yVector)
+      CALL xVector%init(3)
+      CALL yVector%init(3)
+      
       SELECTTYPE(thisMatrix)
         TYPE IS(SparseMatrixType)
 !Test for sparse matrices
@@ -340,10 +344,27 @@ PROGRAM testMatrixTypes
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,X=x,Y=y) -sparse FAILED!"
         STOP 666
       ENDIF
+      CALL xVector%set(1.0_SRK)
+      CALL yVector%set(1.0_SRK)
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xVector,Y=yVector)
+      IF((.NOT.((yVector%get(1) .APPROXEQ. 4._SRK) .AND. &
+                (yVector%get(2) .APPROXEQ. 4._SRK) .AND. &
+                (yVector%get(3) .APPROXEQ. 16._SRK)))) THEN
+        WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xVector,Y=yVector) -sparse FAILED!"
+        STOP 666
+      ENDIF
       y=1.0_SRK
       CALL BLAS_matvec(THISMATRIX=thisMatrix,X=x,BETA=2.0_SRK,Y=y)
       IF(ANY(.NOT.(y .APPROXEQ. (/5._SRK,5._SRK,17._SRK/)))) THEN
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,X=x,BETA=2.0_SRK,Y=y) -sparse FAILED!"
+        STOP 666
+      ENDIF
+      CALL yVector%set(1.0_SRK)
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xVector,BETA=2.0_SRK,Y=yVector)
+      IF((.NOT.((yVector%get(1) .APPROXEQ. 5._SRK) .AND. &
+                (yVector%get(2) .APPROXEQ. 5._SRK) .AND. &
+                (yVector%get(3) .APPROXEQ. 17._SRK)))) THEN
+        WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xVector,BETA=2.0_SRK,Y=yVector) -sparse FAILED!"
         STOP 666
       ENDIF
       y=1.0_SRK
@@ -352,10 +373,26 @@ PROGRAM testMatrixTypes
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=x,Y=y) -sparse FAILED!"
         STOP 666
       ENDIF
+      CALL yVector%set(1.0_SRK)
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xVector,Y=yVector)
+      IF((.NOT.((yVector%get(1) .APPROXEQ. 7._SRK) .AND. &
+                (yVector%get(2) .APPROXEQ. 7._SRK) .AND. &
+                (yVector%get(3) .APPROXEQ. 31._SRK)))) THEN
+        WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xVector,Y=yVector) -sparse FAILED!"
+        STOP 666
+      ENDIF
       y=1.0_SRK
       CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=x,BETA=2.0_SRK,Y=y)
       IF(ANY(.NOT.(y .APPROXEQ. (/8._SRK,8._SRK,32._SRK/)))) THEN
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=x,BETA=2.0_SRK,Y=y) -sparse FAILED!"
+        STOP 666
+      ENDIF
+      CALL yVector%set(1.0_SRK)
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xVector,BETA=2.0_SRK,Y=yVector)
+      IF((.NOT.((yVector%get(1) .APPROXEQ. 8._SRK) .AND. &
+                (yVector%get(2) .APPROXEQ. 8._SRK) .AND. &
+                (yVector%get(3) .APPROXEQ. 32._SRK)))) THEN
+        WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xVector,BETA=2.0_SRK,Y=yVector) -sparse FAILED!"
         STOP 666
       ENDIF
       WRITE(*,*) '  Passed: CALL BLAS_matvec(...) sparse-matrix'
@@ -596,10 +633,27 @@ PROGRAM testMatrixTypes
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,X=x,Y=y) -densesq FAILED!"
         STOP 666
       ENDIF
+      CALL xVector%set(1.0_SRK)
+      CALL yVector%set(1.0_SRK)
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xVector,Y=yVector)
+      IF((.NOT.((yVector%get(1) .APPROXEQ. 4._SRK) .AND. &
+                (yVector%get(2) .APPROXEQ. 6._SRK) .AND. &
+                (yVector%get(3) .APPROXEQ. 1._SRK)))) THEN
+        WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xVector,Y=yVector) -densesq FAILED!"
+        STOP 666
+      ENDIF
       y=1.0_SRK
       CALL BLAS_matvec(THISMATRIX=thisMatrix,trans='t',X=x,Y=y)
       IF(ANY(.NOT.(y .APPROXEQ. (/4._SRK,6._SRK,1._SRK/)))) THEN
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,X=x,Y=y) -densesq FAILED!"
+        STOP 666
+      ENDIF
+      CALL yVector%set(1.0_SRK)
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,trans='t',X=xVector,Y=yVector)
+      IF((.NOT.((yVector%get(1) .APPROXEQ. 4._SRK) .AND. &
+                (yVector%get(2) .APPROXEQ. 6._SRK) .AND. &
+                (yVector%get(3) .APPROXEQ. 1._SRK)))) THEN
+        WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xVector,Y=yVector) -densesq FAILED!"
         STOP 666
       ENDIF
       y=1.0_SRK
@@ -608,10 +662,26 @@ PROGRAM testMatrixTypes
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,X=x,BETA=2.0_SRK,Y=y) -densesq FAILED!"
         STOP 666
       ENDIF
+      CALL yVector%set(1.0_SRK)
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xVector,BETA=2.0_SRK,Y=yVector)
+      IF((.NOT.((yVector%get(1) .APPROXEQ. 5._SRK) .AND. &
+                (yVector%get(2) .APPROXEQ. 7._SRK) .AND. &
+                (yVector%get(3) .APPROXEQ. 1._SRK)))) THEN
+        WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xVector,BETA=2.0_SRK,Y=yVector) -densesq FAILED!"
+        STOP 666
+      ENDIF
       y=1.0_SRK
       CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=x,Y=y)
       IF(ANY(.NOT.(y .APPROXEQ. (/7._SRK,11._SRK,1._SRK/)))) THEN
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=x,Y=y) -densesq FAILED!"
+        STOP 666
+      ENDIF
+      CALL yVector%set(1.0_SRK)
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xVector,Y=yVector)
+      IF((.NOT.((yVector%get(1) .APPROXEQ. 7._SRK) .AND. &
+                (yVector%get(2) .APPROXEQ. 11._SRK) .AND. &
+                (yVector%get(3) .APPROXEQ. 1._SRK)))) THEN
+        WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xVector,Y=yVector) -densesq FAILED!"
         STOP 666
       ENDIF
       y=1.0_SRK
@@ -620,11 +690,27 @@ PROGRAM testMatrixTypes
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=x,BETA=2.0_SRK,Y=y) -densesq FAILED!"
         STOP 666
       ENDIF
+      CALL yVector%set(1.0_SRK)
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xVector,BETA=2.0_SRK,Y=yVector)
+      IF((.NOT.((yVector%get(1) .APPROXEQ. 8._SRK) .AND. &
+                (yVector%get(2) .APPROXEQ. 12._SRK) .AND. &
+                (yVector%get(3) .APPROXEQ. 1._SRK)))) THEN
+        WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xVector,BETA=2.0_SRK,Y=yVector) -densesq FAILED!"
+        STOP 666
+      ENDIF
       CALL thisMatrix%clear()
       y=2._SRK
       CALL BLAS_matvec(THISMATRIX=thisMatrix,X=x,BETA=2.0_SRK,Y=y) !Error check uninit
       IF(ANY(.NOT.(y .APPROXEQ. (/2._SRK,2._SRK,2._SRK/)))) THEN
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=x,BETA=2.0_SRK,Y=y) -densesq FAILED!"
+        STOP 666
+      ENDIF
+      CALL yVector%set(2._SRK)
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xVector,BETA=2.0_SRK,Y=yVector) !Error check uninit
+      IF((.NOT.((yVector%get(1) .APPROXEQ. 2._SRK) .AND. &
+                (yVector%get(2) .APPROXEQ. 2._SRK) .AND. &
+                (yVector%get(3) .APPROXEQ. 2._SRK)))) THEN
+        WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xVector,BETA=2.0_SRK,Y=yVector) -densesq FAILED!"
         STOP 666
       ENDIF
       WRITE(*,*) '  Passed: CALL BLAS_matvec(...) densesq-matrix'
@@ -673,6 +759,13 @@ PROGRAM testMatrixTypes
       ENDSELECT
       CALL BLAS_matvec(THISMATRIX=thisMatrix,X=x,Y=y) !Error check unsupported type
       IF(ANY(.NOT.(y .APPROXEQ. (/2._SRK,2._SRK,2._SRK/)))) THEN
+        WRITE(*,*) "CALL BLAS_matvec(...) -tridiag FAILED!"
+        STOP 666
+      ENDIF
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xVector,Y=yVector) !Error check unsupported type
+      IF((.NOT.((yVector%get(1) .APPROXEQ. 2._SRK) .AND. &
+                (yVector%get(2) .APPROXEQ. 2._SRK) .AND. &
+                (yVector%get(3) .APPROXEQ. 2._SRK)))) THEN
         WRITE(*,*) "CALL BLAS_matvec(...) -tridiag FAILED!"
         STOP 666
       ENDIF
@@ -952,10 +1045,27 @@ PROGRAM testMatrixTypes
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,X=x,Y=y) -denserect FAILED!"
         STOP 666
       ENDIF
+      CALL xVector%set(1.0_SRK)
+      CALL yVector%set(1.0_SRK)
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xVector,Y=yVector)
+      IF((.NOT.((yVector%get(1) .APPROXEQ. 7._SRK) .AND. &
+                (yVector%get(2) .APPROXEQ. 16._SRK) .AND. &
+                (yVector%get(3) .APPROXEQ. 1._SRK)))) THEN
+        WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xVector,Y=yVector) -denserect FAILED!"
+        STOP 666
+      ENDIF
       y=1.0_SRK
       CALL BLAS_matvec(THISMATRIX=thisMatrix,trans='t',X=x,Y=y)
       IF(ANY(.NOT.(y .APPROXEQ. (/6._SRK,8._SRK,10._SRK/)))) THEN
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,X=x,Y=y) -denserect FAILED!"
+        STOP 666
+      ENDIF
+      CALL yVector%set(1.0_SRK)
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,trans='t',X=xVector,Y=yVector)
+      IF((.NOT.((yVector%get(1) .APPROXEQ. 6._SRK) .AND. &
+                (yVector%get(2) .APPROXEQ. 8._SRK) .AND. &
+                (yVector%get(3) .APPROXEQ. 10._SRK)))) THEN
+        WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xVector,Y=yVector) -denserect FAILED!"
         STOP 666
       ENDIF
       y=1.0_SRK
@@ -964,16 +1074,40 @@ PROGRAM testMatrixTypes
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,X=x,BETA=2.0_SRK,Y=y) -denserect FAILED!"
         STOP 666
       ENDIF
+      CALL yVector%set(1.0_SRK)
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xVector,BETA=2.0_SRK,Y=yVector)
+      IF((.NOT.((yVector%get(1) .APPROXEQ. 8._SRK) .AND. &
+                (yVector%get(2) .APPROXEQ. 17._SRK) .AND. &
+                (yVector%get(3) .APPROXEQ. 1._SRK)))) THEN
+        WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xVector,BETA=2.0_SRK,Y=yVector) -denserect FAILED!"
+        STOP 666
+      ENDIF
       y=1.0_SRK
       CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=x,Y=y)
       IF(ANY(.NOT.(y .APPROXEQ. (/13._SRK,31._SRK,1._SRK/)))) THEN
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=x,Y=y) -denserect FAILED!"
         STOP 666
       ENDIF
+      CALL yVector%set(1.0_SRK)
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xVector,Y=yVector)
+      IF((.NOT.((yVector%get(1) .APPROXEQ. 13._SRK) .AND. &
+                (yVector%get(2) .APPROXEQ. 31._SRK) .AND. &
+                (yVector%get(3) .APPROXEQ. 1._SRK)))) THEN
+        WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xVector,Y=yVector) -denserect FAILED!"
+        STOP 666
+      ENDIF
       y=1.0_SRK
       CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=x,BETA=2.0_SRK,Y=y)
       IF(ANY(.NOT.(y .APPROXEQ. (/14._SRK,32._SRK,1._SRK/)))) THEN
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=x,BETA=2.0_SRK,Y=y) -denserect FAILED!"
+        STOP 666
+      ENDIF
+      CALL yVector%set(1.0_SRK)
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xVector,BETA=2.0_SRK,Y=yVector)
+      IF((.NOT.((yVector%get(1) .APPROXEQ. 14._SRK) .AND. &
+                (yVector%get(2) .APPROXEQ. 32._SRK) .AND. &
+                (yVector%get(3) .APPROXEQ. 1._SRK)))) THEN
+        WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xVector,BETA=2.0_SRK,Y=yVector) -denserect FAILED!"
         STOP 666
       ENDIF
       WRITE(*,*) '  Passed: CALL BLAS_matvec(...) denserect-matrix'
