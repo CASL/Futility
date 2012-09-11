@@ -32,11 +32,12 @@
 !>
 !>   CALL vector%init(36)
 !>   CALL vector%set(1,10._SRK)
+!>   value=vector%get(1)
 !>   CALL vector%clear()
 !> ENDPROGRAM ExampleVector
 !> @endcode
 !>
-!> @author Shane Stimpson (adapted from MatrixTypes)
+!> @author Shane Stimpson
 !>   @date 08/20/2012
 !>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
@@ -68,6 +69,15 @@ MODULE VectorTypes
   PUBLIC :: VectorType
   PUBLIC :: RealVectorType
   PUBLIC :: PETScVectorType
+  PUBLIC :: BLAS_asum
+  PUBLIC :: BLAS_axpy
+  PUBLIC :: BLAS_copy
+  PUBLIC :: BLAS_dot
+  PUBLIC :: BLAS_iamax
+  PUBLIC :: BLAS_iamin
+  PUBLIC :: BLAS_nrm2
+  PUBLIC :: BLAS_scal
+  PUBLIC :: BLAS_swap
   
   !> @brief the base vector type
   TYPE,ABSTRACT :: VectorType
@@ -558,6 +568,8 @@ MODULE VectorTypes
             CALL BLAS1_axpy(n,a,thisVector%b,incx,newVector%b,incy)
           ELSEIF(PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
             CALL BLAS1_axpy(n,a,thisVector%b,newVector%b,incx)
+          ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
+            CALL BLAS1_axpy(n,a,thisVector%b,newVector%b,incy)
           ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
             CALL BLAS1_axpy(n,a,thisVector%b,newVector%b)
           ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
@@ -593,6 +605,8 @@ MODULE VectorTypes
               CALL BLAS1_axpy(n,aVector%b,thisVector%b,incx,newVector%b,incy)
             ELSEIF(PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
               CALL BLAS1_axpy(n,aVector%b,thisVector%b,newVector%b,incx)
+            ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
+              CALL BLAS1_axpy(n,aVector%b,thisVector%b,newVector%b,incy)
             ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
               CALL BLAS1_axpy(n,aVector%b,thisVector%b,newVector%b)
             ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
@@ -626,10 +640,14 @@ MODULE VectorTypes
             CALL BLAS1_copy(n,thisVector%b,incx,newVector%b,incy)
           ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
             CALL BLAS1_copy(thisVector%b,incx,newVector%b,incy)
-          ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+          ELSEIF(PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
             CALL BLAS1_copy(n,thisVector%b,newVector%b,incx)
+          ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
+            CALL BLAS1_copy(n,thisVector%b,newVector%b,incy)
           ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
             CALL BLAS1_copy(thisVector%b,newVector%b,incx)
+          ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
+            CALL BLAS1_copy(thisVector%b,newVector%b,incy)
           ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
             CALL BLAS1_copy(n,thisVector%b,newVector%b)
           ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
@@ -666,10 +684,14 @@ MODULE VectorTypes
             r = BLAS1_dot(thisVector%b,incx,thatVector%b,incy)
           ELSEIF(PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
             r = BLAS1_dot(n,thisVector%b,thatVector%b,incx)
+          ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
+            r = BLAS1_dot(n,thisVector%b,thatVector%b,incy)
           ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
             r = BLAS1_dot(n,thisVector%b,thatVector%b)
           ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
             r = BLAS1_dot(thisVector%b,thatVector%b,incx)
+          ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
+            r = BLAS1_dot(thisVector%b,thatVector%b,incy)
           ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
             r = BLAS1_dot(thisVector%b,thatVector%b)
           ENDIF
@@ -679,8 +701,8 @@ MODULE VectorTypes
     ENDFUNCTION dot_VectorType 
 !
 !-------------------------------------------------------------------------------
-!> @brief Subroutine provides an interface to compute the absolute maximum of a 
-!> vector (x).
+!> @brief Subroutine provides an interface to compute the inex of the absolute 
+!> maximum of a vector (x).
 !> @param thisVector derived vector type.
 !> @param n the size of the vectors @c x
 !> @param incx the increment to use when looping over elements in @c x
@@ -690,7 +712,7 @@ MODULE VectorTypes
       CLASS(VectorType),INTENT(IN) :: thisVector
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
-      REAL(SRK) :: imax
+      INTEGER(SIK) :: imax
       
       SELECTTYPE(thisVector); TYPE IS(RealVectorType)
         IF(PRESENT(n) .AND. PRESENT(incx)) THEN
@@ -707,8 +729,8 @@ MODULE VectorTypes
     ENDFUNCTION iamax_VectorType  
 !
 !-------------------------------------------------------------------------------
-!> @brief Subroutine provides an interface to compute the absolute minimum of a 
-!> vector (x).
+!> @brief Subroutine provides an interface to compute the index of the absolute 
+!> minimum of a vector (x).
 !> @param thisVector derived vector type.
 !> @param n the size of the vectors @c x
 !> @param incx the increment to use when looping over elements in @c x
@@ -719,7 +741,7 @@ MODULE VectorTypes
       CLASS(VectorType),INTENT(IN) :: thisVector
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
-      REAL(SRK) :: imin
+      INTEGER(SIK) :: imin
       
       SELECTTYPE(thisVector); TYPE IS(RealVectorType)
         IF(PRESENT(n) .AND. PRESENT(incx)) THEN
@@ -844,8 +866,12 @@ MODULE VectorTypes
             CALL BLAS1_swap(thisVector%b,incx,thatVector%b,incy)
           ELSEIF(PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
             CALL BLAS1_swap(n,thisVector%b,thatVector%b,incx)
+          ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
+            CALL BLAS1_swap(n,thisVector%b,thatVector%b,incy)
           ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
             CALL BLAS1_swap(thisVector%b,thatVector%b,incx)
+          ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
+            CALL BLAS1_swap(thisVector%b,thatVector%b,incy)
           ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
             CALL BLAS1_swap(n,thisVector%b,thatVector%b)
           ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN

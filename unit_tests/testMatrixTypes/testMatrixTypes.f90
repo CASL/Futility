@@ -20,7 +20,6 @@ PROGRAM testMatrixTypes
   USE IntrType
   USE ExceptionHandler
   USE BLAS
-  USE VectorTypes
   IMPLICIT NONE
   
 #ifdef HAVE_PETSC
