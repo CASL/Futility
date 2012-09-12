@@ -1094,7 +1094,7 @@ MODULE MatrixTypes
       CHARACTER(LEN=1),OPTIONAL,INTENT(IN) :: trans
       REAL(SRK),INTENT(IN),OPTIONAL :: alpha
       REAL(SRK),INTENT(IN),OPTIONAL :: beta
-      REAL(SRK),INTENT(INOUT) :: y(:)
+      CLASS(VectorType),INTENT(INOUT) :: y
       
       CHARACTER(LEN=1) :: t
       
@@ -1102,52 +1102,53 @@ MODULE MatrixTypes
         t='n'
         IF(PRESENT(trans)) t=trans
         
-        SELECTTYPE(x)
-          TYPE IS(RealVectorType)
+        SELECTTYPE(x); TYPE IS(RealVectorType)
+          SELECTTYPE(y); TYPE IS(RealVectorType)
             SELECTTYPE(thisMatrix)
               TYPE IS(DenseSquareMatrixType)
                 IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
                   CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-                    alpha,thisMatrix%a,thisMatrix%n,x%b,1,beta,y,1)
+                    alpha,thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
                 ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
                   CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-                    alpha,thisMatrix%a,thisMatrix%n,x%b,1,y,1)
+                    alpha,thisMatrix%a,thisMatrix%n,x%b,1,y%b,1)
                 ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
                   CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-                    thisMatrix%a,thisMatrix%n,x%b,1,beta,y,1)
+                    thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
                 ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
                   CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-                    thisMatrix%a,thisMatrix%n,x%b,1,y,1)
+                    thisMatrix%a,thisMatrix%n,x%b,1,y%b,1)
                 ENDIF
               TYPE IS(DenseRectMatrixType)
                 IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
                   CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
-                    alpha,thisMatrix%a,thisMatrix%n,x%b,1,beta,y,1)
+                    alpha,thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
                 ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
                   CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
-                    alpha,thisMatrix%a,thisMatrix%n,x%b,1,y,1)
+                    alpha,thisMatrix%a,thisMatrix%n,x%b,1,y%b,1)
                 ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
                   CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
-                    thisMatrix%a,thisMatrix%n,x%b,1,beta,y,1)
+                    thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
                 ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
                   CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
-                    thisMatrix%a,thisMatrix%n,x%b,1,y,1)
+                    thisMatrix%a,thisMatrix%n,x%b,1,y%b,1)
                 ENDIF
               TYPE IS(SparseMatrixType)
                 IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
                   CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
-                    thisMatrix%ja,thisMatrix%a,alpha,x%b,beta,y)
+                    thisMatrix%ja,thisMatrix%a,alpha,x%b,beta,y%b)
                 ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
                   CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
-                    thisMatrix%ja,thisMatrix%a,alpha,x%b,y)
+                    thisMatrix%ja,thisMatrix%a,alpha,x%b,y%b)
                 ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
                   CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
-                    thisMatrix%ja,thisMatrix%a,x%b,beta,y)
+                    thisMatrix%ja,thisMatrix%a,x%b,beta,y%b)
                 ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
                   CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
-                    thisMatrix%ja,thisMatrix%a,x%b,y)
+                    thisMatrix%ja,thisMatrix%a,x%b,y%b)
                 ENDIF
             ENDSELECT
+          ENDSELECT
         ENDSELECT
       ENDIF
 

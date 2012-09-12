@@ -20,7 +20,6 @@ PROGRAM testVectorTypes
   USE IntrType
   USE ExceptionHandler
   USE BLAS
-  USE VectorTypes
   IMPLICIT NONE
   
 #ifdef HAVE_PETSC
@@ -48,6 +47,8 @@ PROGRAM testVectorTypes
   WRITE(*,*) '==================================================='
   
   CALL testVector()
+  
+  CALL testBLAS1Interface()
   
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING VECTOR TYPES PASSED!'
@@ -291,8 +292,6 @@ PROGRAM testVectorTypes
  
 !Test for PETSc vectors (if necessary)
 #ifdef HAVE_PETSC    
-
-!      CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
       
       !Perform test of clear function
       !make vector without using untested init
@@ -523,8 +522,667 @@ PROGRAM testVectorTypes
       WRITE(*,*) '  Passed: CALL petscvec%get(...)'
       
       DEALLOCATE(thisVector)
-!      CALL PETScFinalize(ierr)
 #endif
       
     ENDSUBROUTINE testVector
+!
+!-------------------------------------------------------------------------------  
+    SUBROUTINE testBLAS1Interface()
+    
+    CLASS(VectorType),ALLOCATABLE :: xVector, yVector, aVector
+    REAL(SRK) :: r, a
+    INTEGER(SIK) :: r_index
+
+    ALLOCATE(RealVectorType :: xVector)
+    ALLOCATE(RealVectorType :: yVector)
+    ALLOCATE(RealVectorType :: aVector)
+    CALL xVector%init(3)
+    CALL yVector%init(3)
+    CALL aVector%init(3)
+    
+    !Test BLAS_asum (absolute value summation)
+    CALL xVector%set(1, 5.0_SRK)
+    CALL xVector%set(2,-2.0_SRK)
+    CALL xVector%set(3, 7.0_SRK)
+    r=0.0_SRK
+    r = BLAS_asum(THISVECTOR=xVector,N=xVector%n,INCX=1)
+    IF(.NOT.(r .APPROXEQ. 14.0_SRK)) THEN
+      WRITE(*,*) "CALL BLAS_asum(THISVECTOR=xVector,N=xVector%n,INCX=1) FAILED!"
+      STOP 666
+    ENDIF
+    r=0.0_SRK
+    r = BLAS_asum(THISVECTOR=xVector,INCX=1)
+    IF(.NOT.(r .APPROXEQ. 14.0_SRK)) THEN
+      WRITE(*,*) "CALL BLAS_asum(THISVECTOR=xVector,INCX=1) FAILED!"
+      STOP 666
+    ENDIF
+    r=0.0_SRK
+    r = BLAS_asum(THISVECTOR=xVector,N=xVector%n)
+    IF(.NOT.(r .APPROXEQ. 14.0_SRK)) THEN
+      WRITE(*,*) "CALL BLAS_asum(THISVECTOR=xVector,N=xVector%n) FAILED!"
+      STOP 666
+    ENDIF
+    r=0.0_SRK
+    r = BLAS_asum(THISVECTOR=xVector)
+    IF(.NOT.(r .APPROXEQ. 14.0_SRK)) THEN
+      WRITE(*,*) "CALL BLAS_asum(THISVECTOR=xVector) FAILED!"
+      STOP 666
+    ENDIF
+    WRITE(*,*) '  Passed: CALL BLAS_asum(...)'
+    
+    !Test BLAS_axpy (y=y+ax) [scalar a]
+    a = 5
+    CALL xVector%set(1, 5.0_SRK)
+    CALL xVector%set(2,-2.0_SRK)
+    CALL xVector%set(3, 7.0_SRK)
+    CALL yVector%set(1, 3.0_SRK)
+    CALL yVector%set(2, 5.0_SRK)
+    CALL yVector%set(3, 1.0_SRK)
+    CALL BLAS_axpy(THISVECTOR=xVector,NEWVECTOR=yVector,A=a,N=xVector%n,INCX=1,INCY=1)
+    IF((.NOT.((yVector%get(1) .APPROXEQ. 28._SRK) .AND. &
+              (yVector%get(2) .APPROXEQ. -5._SRK) .AND. &
+              (yVector%get(3) .APPROXEQ. 36._SRK)))) THEN
+      WRITE(*,*) "CALL BLAS_axpy(THISVECTOR=xVector,NEWVECTOR=yVector,A=a,N=xVector%n,INCX=1,INCY=1) -scalar_a FAILED!"
+      STOP 666
+    ENDIF
+    CALL yVector%set(1,3.0_SRK)
+    CALL yVector%set(2,5.0_SRK)
+    CALL yVector%set(3,1.0_SRK)
+    CALL BLAS_axpy(THISVECTOR=xVector,NEWVECTOR=yVector,A=a,N=xVector%n,INCX=1)
+    IF((.NOT.((yVector%get(1) .APPROXEQ. 28._SRK) .AND. &
+              (yVector%get(2) .APPROXEQ. -5._SRK) .AND. &
+              (yVector%get(3) .APPROXEQ. 36._SRK)))) THEN
+      WRITE(*,*) "CALL BLAS_axpy(THISVECTOR=xVector,NEWVECTOR=yVector,A=a,N=xVector%n,INCX=1) -scalar_a FAILED!"
+      STOP 666
+    ENDIF
+    CALL yVector%set(1,3.0_SRK)
+    CALL yVector%set(2,5.0_SRK)
+    CALL yVector%set(3,1.0_SRK)
+    CALL BLAS_axpy(THISVECTOR=xVector,NEWVECTOR=yVector,A=a,N=xVector%n,INCY=1)
+    IF((.NOT.((yVector%get(1) .APPROXEQ. 28._SRK) .AND. &
+              (yVector%get(2) .APPROXEQ. -5._SRK) .AND. &
+              (yVector%get(3) .APPROXEQ. 36._SRK)))) THEN
+      WRITE(*,*) "CALL BLAS_axpy(THISVECTOR=xVector,NEWVECTOR=yVector,A=a,N=xVector%n,INCY=1) -scalar_a FAILED!"
+      STOP 666
+    ENDIF
+    CALL yVector%set(1,3.0_SRK)
+    CALL yVector%set(2,5.0_SRK)
+    CALL yVector%set(3,1.0_SRK)
+    CALL BLAS_axpy(THISVECTOR=xVector,NEWVECTOR=yVector,A=a,N=xVector%n)
+    IF((.NOT.((yVector%get(1) .APPROXEQ. 28._SRK) .AND. &
+              (yVector%get(2) .APPROXEQ. -5._SRK) .AND. &
+              (yVector%get(3) .APPROXEQ. 36._SRK)))) THEN
+      WRITE(*,*) "CALL BLAS_axpy(THISVECTOR=xVector,NEWVECTOR=yVector,A=a,N=xVector%n) -scalar_a FAILED!"
+      STOP 666
+    ENDIF
+    CALL yVector%set(1,3.0_SRK)
+    CALL yVector%set(2,5.0_SRK)
+    CALL yVector%set(3,1.0_SRK)
+    CALL BLAS_axpy(THISVECTOR=xVector,NEWVECTOR=yVector,A=a)
+    IF((.NOT.((yVector%get(1) .APPROXEQ. 28._SRK) .AND. &
+              (yVector%get(2) .APPROXEQ. -5._SRK) .AND. &
+              (yVector%get(3) .APPROXEQ. 36._SRK)))) THEN
+      WRITE(*,*) "CALL BLAS_axpy(THISVECTOR=xVector,NEWVECTOR=yVector,A=a) -scalar_a FAILED!"
+      STOP 666
+    ENDIF
+    WRITE(*,*) '  Passed: CALL BLAS_axpy(...) -scalar_a'
+    
+    !Test BLAS_axpy (y=y+ax) [vector a]
+    a = 3
+    CALL xVector%set(1,5.0_SRK)
+    CALL xVector%set(2,-2.0_SRK)
+    CALL xVector%set(3,7.0_SRK)
+    CALL yVector%set(1,3.0_SRK)
+    CALL yVector%set(2,5.0_SRK)
+    CALL yVector%set(3,1.0_SRK)
+    CALL aVector%set(1,6.0_SRK)
+    CALL aVector%set(2,4.0_SRK)
+    CALL aVector%set(3,2.0_SRK)
+    CALL BLAS_axpy(THISVECTOR=xVector,NEWVECTOR=yVector,AVECTOR=aVector,N=xVector%n,INCX=1,INCY=1)
+    IF((.NOT.((yVector%get(1) .APPROXEQ. 33._SRK) .AND. &
+              (yVector%get(2) .APPROXEQ. -3._SRK) .AND. &
+              (yVector%get(3) .APPROXEQ. 15._SRK)))) THEN
+      WRITE(*,*) "CALL BLAS_axpy(THISVECTOR=xVector,NEWVECTOR=yVector,AVECTOR=aVector,N=xVector%n,INCX=1,INCY=1) -vector_a FAILED!"
+      STOP 666
+    ENDIF
+    CALL yVector%set(1,3.0_SRK)
+    CALL yVector%set(2,5.0_SRK)
+    CALL yVector%set(3,1.0_SRK)
+    CALL BLAS_axpy(THISVECTOR=xVector,NEWVECTOR=yVector,AVECTOR=aVector,N=xVector%n,INCX=1)
+    IF((.NOT.((yVector%get(1) .APPROXEQ. 33._SRK) .AND. &
+              (yVector%get(2) .APPROXEQ. -3._SRK) .AND. &
+              (yVector%get(3) .APPROXEQ. 15._SRK)))) THEN
+      WRITE(*,*) "CALL BLAS_axpy(THISVECTOR=xVector,NEWVECTOR=yVector,AVECTOR=aVector,N=xVector%n,INCX=1) -vector_a FAILED!"
+      STOP 666
+    ENDIF
+    CALL yVector%set(1,3.0_SRK)
+    CALL yVector%set(2,5.0_SRK)
+    CALL yVector%set(3,1.0_SRK)
+    CALL BLAS_axpy(THISVECTOR=xVector,NEWVECTOR=yVector,AVECTOR=aVector,N=xVector%n,INCY=1)
+    IF((.NOT.((yVector%get(1) .APPROXEQ. 33._SRK) .AND. &
+              (yVector%get(2) .APPROXEQ. -3._SRK) .AND. &
+              (yVector%get(3) .APPROXEQ. 15._SRK)))) THEN
+      WRITE(*,*) "CALL BLAS_axpy(THISVECTOR=xVector,NEWVECTOR=yVector,AVECTOR=aVector,N=xVector%n,INCY=1) -vector_a FAILED!"
+      STOP 666
+    ENDIF
+    CALL yVector%set(1,3.0_SRK)
+    CALL yVector%set(2,5.0_SRK)
+    CALL yVector%set(3,1.0_SRK)
+    CALL BLAS_axpy(THISVECTOR=xVector,NEWVECTOR=yVector,AVECTOR=aVector,N=xVector%n)
+    IF((.NOT.((yVector%get(1) .APPROXEQ. 33._SRK) .AND. &
+              (yVector%get(2) .APPROXEQ. -3._SRK) .AND. &
+              (yVector%get(3) .APPROXEQ. 15._SRK)))) THEN
+      WRITE(*,*) "CALL BLAS_axpy(THISVECTOR=xVector,NEWVECTOR=yVector,AVECTOR=aVector,N=xVector%n) -vector_a FAILED!"
+      STOP 666
+    ENDIF
+    CALL yVector%set(1,3.0_SRK)
+    CALL yVector%set(2,5.0_SRK)
+    CALL yVector%set(3,1.0_SRK)
+    CALL BLAS_axpy(THISVECTOR=xVector,NEWVECTOR=yVector,AVECTOR=aVector)
+    IF((.NOT.((yVector%get(1) .APPROXEQ. 33._SRK) .AND. &
+              (yVector%get(2) .APPROXEQ. -3._SRK) .AND. &
+              (yVector%get(3) .APPROXEQ. 15._SRK)))) THEN
+      WRITE(*,*) "CALL BLAS_axpy(THISVECTOR=xVector,NEWVECTOR=yVector,AVECTOR=aVector) -vector_a FAILED!"
+      STOP 666
+    ENDIF
+    WRITE(*,*) '  Passed: CALL BLAS_axpy(...) -vector_a'
+    
+    !Test BLAS_copy
+    CALL xVector%set(1,1.0_SRK)
+    CALL xVector%set(2,3.0_SRK)
+    CALL xVector%set(3,7.0_SRK)
+    CALL yVector%set(0.0_SRK)
+    CALL BLAS_copy(THISVECTOR=xVector,NEWVECTOR=yVector,N=xVector%n,INCX=1,INCY=1)
+    IF((.NOT.((yVector%get(1) .APPROXEQ. 1.0_SRK) .AND. &
+              (yVector%get(2) .APPROXEQ. 3.0_SRK) .AND. &
+              (yVector%get(3) .APPROXEQ. 7.0_SRK)))) THEN
+      WRITE(*,*) "CALL BLAS_copy(THISVECTOR=xVector,NEWVECTOR=yVector,N=xVector%n,INCX=1,INCY=1) FAILED!"
+      STOP 666
+    ENDIF
+    CALL yVector%set(0.0_SRK)
+    CALL BLAS_copy(THISVECTOR=xVector,NEWVECTOR=yVector,INCX=1,INCY=1)
+    IF((.NOT.((yVector%get(1) .APPROXEQ. 1.0_SRK) .AND. &
+              (yVector%get(2) .APPROXEQ. 3.0_SRK) .AND. &
+              (yVector%get(3) .APPROXEQ. 7.0_SRK)))) THEN
+      WRITE(*,*) "CALL BLAS_copy(THISVECTOR=xVector,NEWVECTOR=yVector,INCX=1,INCY=1) FAILED!"
+      STOP 666
+    ENDIF
+    CALL yVector%set(0.0_SRK)
+    CALL BLAS_copy(THISVECTOR=xVector,NEWVECTOR=yVector,N=xVector%n,INCX=1)
+    IF((.NOT.((yVector%get(1) .APPROXEQ. 1.0_SRK) .AND. &
+              (yVector%get(2) .APPROXEQ. 3.0_SRK) .AND. &
+              (yVector%get(3) .APPROXEQ. 7.0_SRK)))) THEN
+      WRITE(*,*) "CALL BLAS_copy(THISVECTOR=xVector,NEWVECTOR=yVector,N=xVector%n,INCX=1) FAILED!"
+      STOP 666
+    ENDIF
+    CALL yVector%set(0.0_SRK)
+    CALL BLAS_copy(THISVECTOR=xVector,NEWVECTOR=yVector,N=xVector%n,INCY=1)
+    IF((.NOT.((yVector%get(1) .APPROXEQ. 1.0_SRK) .AND. &
+              (yVector%get(2) .APPROXEQ. 3.0_SRK) .AND. &
+              (yVector%get(3) .APPROXEQ. 7.0_SRK)))) THEN
+      WRITE(*,*) "CALL BLAS_copy(THISVECTOR=xVector,NEWVECTOR=yVector,N=xVector%n,INCY=1) FAILED!"
+      STOP 666
+    ENDIF
+    CALL yVector%set(0.0_SRK)
+    CALL BLAS_copy(THISVECTOR=xVector,NEWVECTOR=yVector,INCX=1)
+    IF((.NOT.((yVector%get(1) .APPROXEQ. 1.0_SRK) .AND. &
+              (yVector%get(2) .APPROXEQ. 3.0_SRK) .AND. &
+              (yVector%get(3) .APPROXEQ. 7.0_SRK)))) THEN
+      WRITE(*,*) "CALL BLAS_copy(THISVECTOR=xVector,NEWVECTOR=yVector,INCX=1) FAILED!"
+      STOP 666
+    ENDIF
+    CALL yVector%set(0.0_SRK)
+    CALL BLAS_copy(THISVECTOR=xVector,NEWVECTOR=yVector,INCY=1)
+    IF((.NOT.((yVector%get(1) .APPROXEQ. 1.0_SRK) .AND. &
+              (yVector%get(2) .APPROXEQ. 3.0_SRK) .AND. &
+              (yVector%get(3) .APPROXEQ. 7.0_SRK)))) THEN
+      WRITE(*,*) "CALL BLAS_copy(THISVECTOR=xVector,NEWVECTOR=yVector,INCY=1) FAILED!"
+      STOP 666
+    ENDIF
+    CALL yVector%set(0.0_SRK)
+    CALL BLAS_copy(THISVECTOR=xVector,NEWVECTOR=yVector,N=xVector%n)
+    IF((.NOT.((yVector%get(1) .APPROXEQ. 1.0_SRK) .AND. &
+              (yVector%get(2) .APPROXEQ. 3.0_SRK) .AND. &
+              (yVector%get(3) .APPROXEQ. 7.0_SRK)))) THEN
+      WRITE(*,*) "CALL BLAS_copy(THISVECTOR=xVector,NEWVECTOR=yVector,N=xVector%n) FAILED!"
+      STOP 666
+    ENDIF
+    CALL yVector%set(0.0_SRK)
+    CALL BLAS_copy(THISVECTOR=xVector,NEWVECTOR=yVector)
+    IF((.NOT.((yVector%get(1) .APPROXEQ. 1.0_SRK) .AND. &
+              (yVector%get(2) .APPROXEQ. 3.0_SRK) .AND. &
+              (yVector%get(3) .APPROXEQ. 7.0_SRK)))) THEN
+      WRITE(*,*) "CALL BLAS_copy(THISVECTOR=xVector,NEWVECTOR=yVector) FAILED!"
+      STOP 666
+    ENDIF
+    WRITE(*,*) '  Passed: CALL BLAS_copy(...)'
+    
+    !Test BLAS_dot
+    CALL xVector%set(1,1.0_SRK)
+    CALL xVector%set(2,3.0_SRK)
+    CALL xVector%set(3,7.0_SRK)
+    CALL yVector%set(1,2.0_SRK)
+    CALL yVector%set(2,4.0_SRK)
+    CALL yVector%set(3,6.0_SRK)
+    r=0.0_SRK
+    r = BLAS_dot(THISVECTOR=xVector,THATVECTOR=yVector,N=xVector%n,INCX=1,INCY=1)
+    IF(.NOT.(r .APPROXEQ. 56.0_SRK)) THEN
+      WRITE(*,*) "CALL BLAS_dot(THISVECTOR=xVector,THATVECTOR=yVector,N=xVector%n,INCX=1,INCY=1) FAILED!"
+      STOP 666
+    ENDIF
+    r=0.0_SRK
+    r = BLAS_dot(THISVECTOR=xVector,THATVECTOR=yVector,INCX=1,INCY=1)
+    IF(.NOT.(r .APPROXEQ. 56.0_SRK)) THEN
+      WRITE(*,*) "CALL BLAS_dot(THISVECTOR=xVector,THATVECTOR=yVector,INCX=1,INCY=1) FAILED!"
+      STOP 666
+    ENDIF
+    r=0.0_SRK
+    r = BLAS_dot(THISVECTOR=xVector,THATVECTOR=yVector,N=xVector%n,INCX=1)
+    IF(.NOT.(r .APPROXEQ. 56.0_SRK)) THEN
+      WRITE(*,*) "CALL BLAS_dot(THISVECTOR=xVector,THATVECTOR=yVector,N=xVector%n,INCX=1) FAILED!"
+      STOP 666
+    ENDIF
+    r=0.0_SRK
+    r = BLAS_dot(THISVECTOR=xVector,THATVECTOR=yVector,N=xVector%n,INCY=1)
+    IF(.NOT.(r .APPROXEQ. 56.0_SRK)) THEN
+      WRITE(*,*) "CALL BLAS_dot(THISVECTOR=xVector,THATVECTOR=yVector,N=xVector%n,INCY=1) FAILED!"
+      STOP 666
+    ENDIF
+    r=0.0_SRK
+    r = BLAS_dot(THISVECTOR=xVector,THATVECTOR=yVector,N=xVector%n)
+    IF(.NOT.(r .APPROXEQ. 56.0_SRK)) THEN
+      WRITE(*,*) "CALL BLAS_dot(THISVECTOR=xVector,THATVECTOR=yVector,N=xVector%n) FAILED!"
+      STOP 666
+    ENDIF
+    r=0.0_SRK
+    r = BLAS_dot(THISVECTOR=xVector,THATVECTOR=yVector,INCX=1)
+    IF(.NOT.(r .APPROXEQ. 56.0_SRK)) THEN
+      WRITE(*,*) "CALL BLAS_dot(THISVECTOR=xVector,THATVECTOR=yVector,INCX=1) FAILED!"
+      STOP 666
+    ENDIF
+    r=0.0_SRK
+    r = BLAS_dot(THISVECTOR=xVector,THATVECTOR=yVector,INCY=1)
+    IF(.NOT.(r .APPROXEQ. 56.0_SRK)) THEN
+      WRITE(*,*) "CALL BLAS_dot(THISVECTOR=xVector,THATVECTOR=yVector,INCY=1) FAILED!"
+      STOP 666
+    ENDIF
+    r=0.0_SRK
+    r = BLAS_dot(THISVECTOR=xVector,THATVECTOR=yVector)
+    IF(.NOT.(r .APPROXEQ. 56.0_SRK)) THEN
+      WRITE(*,*) "CALL BLAS_dot(THISVECTOR=xVector,THATVECTOR=yVector) FAILED!"
+      STOP 666
+    ENDIF
+    WRITE(*,*) '  Passed: CALL BLAS_dot(...)'
+    
+    !Test BLAS_iamax
+    ! first test with all positive values
+    CALL xVector%set(1,12.0_SRK)
+    CALL xVector%set(2, 3.0_SRK)
+    CALL xVector%set(3,17.0_SRK)
+    r_index = 0_SIK
+    r_index = BLAS_iamax(THISVECTOR=xVector,N=xVector%n,INCX=1)
+    IF(r_index /= 3_SIK) THEN
+      WRITE(*,*) "CALL BLAS_iamax(THISVECTOR=xVector,N=xVector%n,INCX=1) FAILED!"
+      STOP 666
+    ENDIF
+    r_index = 0_SIK
+    r_index = BLAS_iamax(THISVECTOR=xVector,INCX=1)
+    IF(r_index /= 3_SIK) THEN
+      WRITE(*,*) "CALL BLAS_iamax(THISVECTOR=xVector,INCX=1) FAILED!"
+      STOP 666
+    ENDIF
+    r_index = 0_SIK
+    r_index = BLAS_iamax(THISVECTOR=xVector,N=xVector%n)
+    IF(r_index /= 3_SIK) THEN
+      WRITE(*,*) "CALL BLAS_iamax(THISVECTOR=xVector,N=xVector%n) FAILED!"
+      STOP 666
+    ENDIF
+    r_index = 0_SIK
+    r_index = BLAS_iamax(THISVECTOR=xVector)
+    IF(r_index /= 3_SIK) THEN
+      WRITE(*,*) "CALL BLAS_iamax(THISVECTOR=xVector) FAILED!"
+      STOP 666
+    ENDIF
+    ! next test with a negative value
+    CALL xVector%set(1, 12.0_SRK)
+    CALL xVector%set(2,-30.0_SRK)
+    CALL xVector%set(3, 17.0_SRK)
+    r_index = 0_SIK
+    r_index = BLAS_iamax(THISVECTOR=xVector,N=xVector%n,INCX=1)
+    IF(r_index /= 2_SIK) THEN
+      WRITE(*,*) "CALL BLAS_iamax(THISVECTOR=xVector,N=xVector%n,INCX=1) FAILED!"
+      STOP 666
+    ENDIF
+    r_index = 0_SIK
+    r_index = BLAS_iamax(THISVECTOR=xVector,INCX=1)
+    IF(r_index /= 2_SIK) THEN
+      WRITE(*,*) "CALL BLAS_iamax(THISVECTOR=xVector,INCX=1) FAILED!"
+      STOP 666
+    ENDIF
+    r_index = 0_SIK
+    r_index = BLAS_iamax(THISVECTOR=xVector,N=xVector%n)
+    IF(r_index /= 2_SIK) THEN
+      WRITE(*,*) "CALL BLAS_iamax(THISVECTOR=xVector,N=xVector%n) FAILED!"
+      STOP 666
+    ENDIF
+    r_index = 0_SIK
+    r_index = BLAS_iamax(THISVECTOR=xVector)
+    IF(r_index /= 2_SIK) THEN
+      WRITE(*,*) "CALL BLAS_iamax(THISVECTOR=xVector) FAILED!"
+      STOP 666
+    ENDIF
+    WRITE(*,*) '  Passed: CALL BLAS_iamax(...)'
+    
+    !Test BLAS_iamin
+    ! first test with all positive values
+    CALL xVector%set(1,12.0_SRK)
+    CALL xVector%set(2, 3.0_SRK)
+    CALL xVector%set(3,17.0_SRK)
+    r_index = 0_SIK
+    r_index = BLAS_iamin(THISVECTOR=xVector,N=xVector%n,INCX=1)
+    IF(r_index /= 2_SIK) THEN
+      WRITE(*,*) "CALL BLAS_iamin(THISVECTOR=xVector,N=xVector%n,INCX=1) FAILED!"
+      STOP 666
+    ENDIF
+    r_index = 0_SIK
+    r_index = BLAS_iamin(THISVECTOR=xVector,INCX=1)
+    IF(r_index /= 2_SIK) THEN
+      WRITE(*,*) "CALL BLAS_iamin(THISVECTOR=xVector,INCX=1) FAILED!"
+      STOP 666
+    ENDIF
+    r_index = 0_SIK
+    r_index = BLAS_iamin(THISVECTOR=xVector,N=xVector%n)
+    IF(r_index /= 2_SIK) THEN
+      WRITE(*,*) "CALL BLAS_iamin(THISVECTOR=xVector,N=xVector%n) FAILED!"
+      STOP 666
+    ENDIF
+    r_index = 0_SIK
+    r_index = BLAS_iamin(THISVECTOR=xVector)
+    IF(r_index /= 2_SIK) THEN
+      WRITE(*,*) "CALL BLAS_iamin(THISVECTOR=xVector) FAILED!"
+      STOP 666
+    ENDIF
+    ! next test with a negative value
+    CALL xVector%set(1, 12.0_SRK)
+    CALL xVector%set(2,-30.0_SRK)
+    CALL xVector%set(3, 17.0_SRK)
+    r_index = 0_SIK
+    r_index = BLAS_iamin(THISVECTOR=xVector,N=xVector%n,INCX=1)
+    IF(r_index /= 1_SIK) THEN
+      WRITE(*,*) "CALL BLAS_iamin(THISVECTOR=xVector,N=xVector%n,INCX=1) FAILED!"
+      STOP 666
+    ENDIF
+    r_index = 0_SIK
+    r_index = BLAS_iamin(THISVECTOR=xVector,INCX=1)
+    IF(r_index /= 1_SIK) THEN
+      WRITE(*,*) "CALL BLAS_iamin(THISVECTOR=xVector,INCX=1) FAILED!"
+      STOP 666
+    ENDIF
+    r_index = 0_SIK
+    r_index = BLAS_iamin(THISVECTOR=xVector,N=xVector%n)
+    IF(r_index /= 1_SIK) THEN
+      WRITE(*,*) "CALL BLAS_iamin(THISVECTOR=xVector,N=xVector%n) FAILED!"
+      STOP 666
+    ENDIF
+    r_index = 0_SIK
+    r_index = BLAS_iamin(THISVECTOR=xVector)
+    IF(r_index /= 1_SIK) THEN
+      WRITE(*,*) "CALL BLAS_iamin(THISVECTOR=xVector) FAILED!"
+      STOP 666
+    ENDIF
+    WRITE(*,*) '  Passed: CALL BLAS_iamin(...)'
+    
+    !Test BLAS_nrm2
+    CALL xVector%set(1,0.0_SRK)
+    CALL xVector%set(2,3.0_SRK)
+    CALL xVector%set(3,4.0_SRK)
+    r = 0.0_SRK
+    r = BLAS_nrm2(THISVECTOR=xVector,N=xVector%n,INCX=1)
+    IF(.NOT.(r .APPROXEQ. 5._SRK)) THEN
+      WRITE(*,*) "CALL BLAS_nrm2(THISVECTOR=xVector,N=xVector%n,INCX=1) FAILED!"
+      STOP 666
+    ENDIF
+    r = 0.0_SRK
+    r = BLAS_nrm2(THISVECTOR=xVector,INCX=1)
+    IF(.NOT.(r .APPROXEQ. 5._SRK)) THEN
+      WRITE(*,*) "CALL BLAS_nrm2(THISVECTOR=xVector,INCX=1) FAILED!"
+      STOP 666
+    ENDIF
+    r = 0.0_SRK
+    r = BLAS_nrm2(THISVECTOR=xVector,N=xVector%n)
+    IF(.NOT.(r .APPROXEQ. 5._SRK)) THEN
+      WRITE(*,*) "CALL BLAS_nrm2(THISVECTOR=xVector,N=xVector%n) FAILED!"
+      STOP 666
+    ENDIF
+    r = 0.0_SRK
+    r = BLAS_nrm2(THISVECTOR=xVector)
+    IF(.NOT.(r .APPROXEQ. 5._SRK)) THEN
+      WRITE(*,*) "CALL BLAS_nrm2(THISVECTOR=xVector) FAILED!"
+      STOP 666
+    ENDIF
+    WRITE(*,*) '  Passed: CALL BLAS_nrm2(...)'
+    
+    !Test BLAS_scal [scalar a]
+    a = 3
+    CALL xVector%set(1,1.0_SRK)
+    CALL xVector%set(2,3.0_SRK)
+    CALL xVector%set(3,5.0_SRK)
+    CALL BLAS_scal(THISVECTOR=xVector,A=a,N=xVector%n,INCX=1)
+    IF((.NOT.((xVector%get(1) .APPROXEQ.  3._SRK) .AND. &
+              (xVector%get(2) .APPROXEQ.  9._SRK) .AND. &
+              (xVector%get(3) .APPROXEQ. 15._SRK)))) THEN
+      WRITE(*,*) "CALL BLAS_scal(THISVECTOR=xVector,A=a,N=xVector%n,INCX=1) -scalar_a FAILED!"
+      STOP 666
+    ENDIF
+    CALL xVector%set(1,1.0_SRK)
+    CALL xVector%set(2,3.0_SRK)
+    CALL xVector%set(3,5.0_SRK)
+    CALL BLAS_scal(THISVECTOR=xVector,A=a,INCX=1)
+    IF((.NOT.((xVector%get(1) .APPROXEQ.  3._SRK) .AND. &
+              (xVector%get(2) .APPROXEQ.  9._SRK) .AND. &
+              (xVector%get(3) .APPROXEQ. 15._SRK)))) THEN
+      WRITE(*,*) "CALL BLAS_scal(THISVECTOR=xVector,A=a,INCX=1) -scalar_a FAILED!"
+      STOP 666
+    ENDIF
+    CALL xVector%set(1,1.0_SRK)
+    CALL xVector%set(2,3.0_SRK)
+    CALL xVector%set(3,5.0_SRK)
+    CALL BLAS_scal(THISVECTOR=xVector,A=a,N=xVector%n)
+    IF((.NOT.((xVector%get(1) .APPROXEQ.  3._SRK) .AND. &
+              (xVector%get(2) .APPROXEQ.  9._SRK) .AND. &
+              (xVector%get(3) .APPROXEQ. 15._SRK)))) THEN
+      WRITE(*,*) "CALL BLAS_scal(THISVECTOR=xVector,A=a,N=xVector%n) -scalar_a FAILED!"
+      STOP 666
+    ENDIF
+    CALL xVector%set(1,1.0_SRK)
+    CALL xVector%set(2,3.0_SRK)
+    CALL xVector%set(3,5.0_SRK)
+    CALL BLAS_scal(THISVECTOR=xVector,A=a)
+    IF((.NOT.((xVector%get(1) .APPROXEQ.  3._SRK) .AND. &
+              (xVector%get(2) .APPROXEQ.  9._SRK) .AND. &
+              (xVector%get(3) .APPROXEQ. 15._SRK)))) THEN
+      WRITE(*,*) "CALL BLAS_scal(THISVECTOR=xVector,A=a) -scalar_a FAILED!"
+      STOP 666
+    ENDIF
+    WRITE(*,*) '  Passed: CALL BLAS_scal(...) -scalar_a'
+    
+    !Test BLAS_scal [vector a]
+    CALL aVector%set(1,2.0_SRK)
+    CALL aVector%set(2,4.0_SRK)
+    CALL aVector%set(3,1.0_SRK)
+    CALL xVector%set(1,1.0_SRK)
+    CALL xVector%set(2,3.0_SRK)
+    CALL xVector%set(3,5.0_SRK)
+    CALL BLAS_scal(THISVECTOR=xVector,AVECTOR=aVector,N=xVector%n,INCX=1)
+    IF((.NOT.((xVector%get(1) .APPROXEQ.  2._SRK) .AND. &
+              (xVector%get(2) .APPROXEQ. 12._SRK) .AND. &
+              (xVector%get(3) .APPROXEQ.  5._SRK)))) THEN
+      WRITE(*,*) "CALL BLAS_scal(THISVECTOR=xVector,AVECTOR=aVector,N=xVector%n,INCX=1) -vector_a FAILED!"
+      WRITE(*,*) xVector%get(1),xVector%get(2),xVector%get(3)
+      STOP 666
+    ENDIF
+    CALL xVector%set(1,1.0_SRK)
+    CALL xVector%set(2,3.0_SRK)
+    CALL xVector%set(3,5.0_SRK)
+    CALL BLAS_scal(THISVECTOR=xVector,AVECTOR=aVector,INCX=1)
+    IF((.NOT.((xVector%get(1) .APPROXEQ.  2._SRK) .AND. &
+              (xVector%get(2) .APPROXEQ. 12._SRK) .AND. &
+              (xVector%get(3) .APPROXEQ.  5._SRK)))) THEN
+      WRITE(*,*) "CALL BLAS_scal(THISVECTOR=xVector,AVECTOR=aVector,INCX=1) -vector_a FAILED!"
+      STOP 666
+    ENDIF
+    CALL xVector%set(1,1.0_SRK)
+    CALL xVector%set(2,3.0_SRK)
+    CALL xVector%set(3,5.0_SRK)
+    CALL BLAS_scal(THISVECTOR=xVector,AVECTOR=aVector,N=xVector%n)
+    IF((.NOT.((xVector%get(1) .APPROXEQ.  2._SRK) .AND. &
+              (xVector%get(2) .APPROXEQ. 12._SRK) .AND. &
+              (xVector%get(3) .APPROXEQ.  5._SRK)))) THEN
+      WRITE(*,*) "CALL BLAS_scal(THISVECTOR=xVector,AVECTOR=aVector,N=xVector%n) -vector_a FAILED!"
+      STOP 666
+    ENDIF
+    CALL xVector%set(1,1.0_SRK)
+    CALL xVector%set(2,3.0_SRK)
+    CALL xVector%set(3,5.0_SRK)
+    CALL BLAS_scal(THISVECTOR=xVector,AVECTOR=aVector)
+    IF((.NOT.((xVector%get(1) .APPROXEQ.  2._SRK) .AND. &
+              (xVector%get(2) .APPROXEQ. 12._SRK) .AND. &
+              (xVector%get(3) .APPROXEQ.  5._SRK)))) THEN
+      WRITE(*,*) "CALL BLAS_scal(THISVECTOR=xVector,AVECTOR=aVector) -vector_a FAILED!"
+      STOP 666
+    ENDIF
+    WRITE(*,*) '  Passed: CALL BLAS_scal(...) -vector_a'
+    
+    !Test BLAS_swap
+    CALL xVector%set(1,1.0_SRK)
+    CALL xVector%set(2,3.0_SRK)
+    CALL xVector%set(3,5.0_SRK)
+    CALL yVector%set(1,2.0_SRK)
+    CALL yVector%set(2,4.0_SRK)
+    CALL yVector%set(3,6.0_SRK)
+    CALL BLAS_swap(THISVECTOR=xVector,THATVECTOR=yVector,N=xVector%n,INCX=1,INCY=1)
+    IF((.NOT.((xVector%get(1) .APPROXEQ. 2._SRK) .AND. &
+              (xVector%get(2) .APPROXEQ. 4._SRK) .AND. &
+              (xVector%get(3) .APPROXEQ. 6._SRK) .AND. &
+              (yVector%get(1) .APPROXEQ. 1._SRK) .AND. &
+              (yVector%get(2) .APPROXEQ. 3._SRK) .AND. &
+              (yVector%get(3) .APPROXEQ. 5._SRK)))) THEN
+      WRITE(*,*) "CALL BLAS_swap(THISVECTOR=xVector,THATVECTOR=yVector,N=xVector%n,INCX=1,INCY=1) FAILED!"
+      STOP 666
+    ENDIF
+    CALL xVector%set(1,1.0_SRK)
+    CALL xVector%set(2,3.0_SRK)
+    CALL xVector%set(3,5.0_SRK)
+    CALL yVector%set(1,2.0_SRK)
+    CALL yVector%set(2,4.0_SRK)
+    CALL yVector%set(3,6.0_SRK)
+    CALL BLAS_swap(THISVECTOR=xVector,THATVECTOR=yVector,INCX=1,INCY=1)
+    IF((.NOT.((xVector%get(1) .APPROXEQ. 2._SRK) .AND. &
+              (xVector%get(2) .APPROXEQ. 4._SRK) .AND. &
+              (xVector%get(3) .APPROXEQ. 6._SRK) .AND. &
+              (yVector%get(1) .APPROXEQ. 1._SRK) .AND. &
+              (yVector%get(2) .APPROXEQ. 3._SRK) .AND. &
+              (yVector%get(3) .APPROXEQ. 5._SRK)))) THEN
+      WRITE(*,*) "CALL BLAS_swap(THISVECTOR=xVector,THATVECTOR=yVector,INCX=1,INCY=1) FAILED!"
+      STOP 666
+    ENDIF
+    CALL xVector%set(1,1.0_SRK)
+    CALL xVector%set(2,3.0_SRK)
+    CALL xVector%set(3,5.0_SRK)
+    CALL yVector%set(1,2.0_SRK)
+    CALL yVector%set(2,4.0_SRK)
+    CALL yVector%set(3,6.0_SRK)
+    CALL BLAS_swap(THISVECTOR=xVector,THATVECTOR=yVector,N=xVector%n,INCX=1)
+    IF((.NOT.((xVector%get(1) .APPROXEQ. 2._SRK) .AND. &
+              (xVector%get(2) .APPROXEQ. 4._SRK) .AND. &
+              (xVector%get(3) .APPROXEQ. 6._SRK) .AND. &
+              (yVector%get(1) .APPROXEQ. 1._SRK) .AND. &
+              (yVector%get(2) .APPROXEQ. 3._SRK) .AND. &
+              (yVector%get(3) .APPROXEQ. 5._SRK)))) THEN
+      WRITE(*,*) "CALL BLAS_swap(THISVECTOR=xVector,THATVECTOR=yVector,N=xVector%n,INCX=1) FAILED!"
+      STOP 666
+    ENDIF
+    CALL xVector%set(1,1.0_SRK)
+    CALL xVector%set(2,3.0_SRK)
+    CALL xVector%set(3,5.0_SRK)
+    CALL yVector%set(1,2.0_SRK)
+    CALL yVector%set(2,4.0_SRK)
+    CALL yVector%set(3,6.0_SRK)
+    CALL BLAS_swap(THISVECTOR=xVector,THATVECTOR=yVector,N=xVector%n,INCY=1)
+    IF((.NOT.((xVector%get(1) .APPROXEQ. 2._SRK) .AND. &
+              (xVector%get(2) .APPROXEQ. 4._SRK) .AND. &
+              (xVector%get(3) .APPROXEQ. 6._SRK) .AND. &
+              (yVector%get(1) .APPROXEQ. 1._SRK) .AND. &
+              (yVector%get(2) .APPROXEQ. 3._SRK) .AND. &
+              (yVector%get(3) .APPROXEQ. 5._SRK)))) THEN
+      WRITE(*,*) "CALL BLAS_swap(THISVECTOR=xVector,THATVECTOR=yVector,N=xVector%n,INCY=1) FAILED!"
+      STOP 666
+    ENDIF
+    CALL xVector%set(1,1.0_SRK)
+    CALL xVector%set(2,3.0_SRK)
+    CALL xVector%set(3,5.0_SRK)
+    CALL yVector%set(1,2.0_SRK)
+    CALL yVector%set(2,4.0_SRK)
+    CALL yVector%set(3,6.0_SRK)
+    CALL BLAS_swap(THISVECTOR=xVector,THATVECTOR=yVector,INCX=1)
+    IF((.NOT.((xVector%get(1) .APPROXEQ. 2._SRK) .AND. &
+              (xVector%get(2) .APPROXEQ. 4._SRK) .AND. &
+              (xVector%get(3) .APPROXEQ. 6._SRK) .AND. &
+              (yVector%get(1) .APPROXEQ. 1._SRK) .AND. &
+              (yVector%get(2) .APPROXEQ. 3._SRK) .AND. &
+              (yVector%get(3) .APPROXEQ. 5._SRK)))) THEN
+      WRITE(*,*) "CALL BLAS_swap(THISVECTOR=xVector,THATVECTOR=yVector,INCX=1) FAILED!"
+      STOP 666
+    ENDIF
+    CALL xVector%set(1,1.0_SRK)
+    CALL xVector%set(2,3.0_SRK)
+    CALL xVector%set(3,5.0_SRK)
+    CALL yVector%set(1,2.0_SRK)
+    CALL yVector%set(2,4.0_SRK)
+    CALL yVector%set(3,6.0_SRK)
+    CALL BLAS_swap(THISVECTOR=xVector,THATVECTOR=yVector,INCY=1)
+    IF((.NOT.((xVector%get(1) .APPROXEQ. 2._SRK) .AND. &
+              (xVector%get(2) .APPROXEQ. 4._SRK) .AND. &
+              (xVector%get(3) .APPROXEQ. 6._SRK) .AND. &
+              (yVector%get(1) .APPROXEQ. 1._SRK) .AND. &
+              (yVector%get(2) .APPROXEQ. 3._SRK) .AND. &
+              (yVector%get(3) .APPROXEQ. 5._SRK)))) THEN
+      WRITE(*,*) "CALL BLAS_swap(THISVECTOR=xVector,THATVECTOR=yVector,INCY=1) FAILED!"
+      STOP 666
+    ENDIF
+    CALL xVector%set(1,1.0_SRK)
+    CALL xVector%set(2,3.0_SRK)
+    CALL xVector%set(3,5.0_SRK)
+    CALL yVector%set(1,2.0_SRK)
+    CALL yVector%set(2,4.0_SRK)
+    CALL yVector%set(3,6.0_SRK)
+    CALL BLAS_swap(THISVECTOR=xVector,THATVECTOR=yVector,N=xVector%n)
+    IF((.NOT.((xVector%get(1) .APPROXEQ. 2._SRK) .AND. &
+              (xVector%get(2) .APPROXEQ. 4._SRK) .AND. &
+              (xVector%get(3) .APPROXEQ. 6._SRK) .AND. &
+              (yVector%get(1) .APPROXEQ. 1._SRK) .AND. &
+              (yVector%get(2) .APPROXEQ. 3._SRK) .AND. &
+              (yVector%get(3) .APPROXEQ. 5._SRK)))) THEN
+      WRITE(*,*) "CALL BLAS_swap(THISVECTOR=xVector,THATVECTOR=yVector,N=xVector%n) FAILED!"
+      STOP 666
+    ENDIF
+    CALL xVector%set(1,1.0_SRK)
+    CALL xVector%set(2,3.0_SRK)
+    CALL xVector%set(3,5.0_SRK)
+    CALL yVector%set(1,2.0_SRK)
+    CALL yVector%set(2,4.0_SRK)
+    CALL yVector%set(3,6.0_SRK)
+    CALL BLAS_swap(THISVECTOR=xVector,THATVECTOR=yVector)
+    IF((.NOT.((xVector%get(1) .APPROXEQ. 2._SRK) .AND. &
+              (xVector%get(2) .APPROXEQ. 4._SRK) .AND. &
+              (xVector%get(3) .APPROXEQ. 6._SRK) .AND. &
+              (yVector%get(1) .APPROXEQ. 1._SRK) .AND. &
+              (yVector%get(2) .APPROXEQ. 3._SRK) .AND. &
+              (yVector%get(3) .APPROXEQ. 5._SRK)))) THEN
+      WRITE(*,*) "CALL BLAS_swap(THISVECTOR=xVector,THATVECTOR=yVector) FAILED!"
+      STOP 666
+    ENDIF
+    WRITE(*,*) '  Passed: CALL BLAS_swap(...)'
+    
+    ENDSUBROUTINE testBLAS1Interface
 ENDPROGRAM testVectorTypes
