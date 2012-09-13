@@ -381,6 +381,7 @@ PROGRAM testVTKFiles
   DEALLOCATE(zref)
   CALL SetupTest14_Mesh()
   testVTKMesh=testVTKMesh+testVTKMesh2
+  CALL testVTKMesh%cleanupPoints()
   CALL testVTKFile%initialize(666,'testVTK14.vtk',STATUS='testVTK14')
   CALL testVTKFile%writeMesh(testVTKMesh)
   ALLOCATE(xref(12))
