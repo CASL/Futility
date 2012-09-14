@@ -578,7 +578,7 @@ MODULE ExceptionHandler
 !> @param mesg an informative message about the exception
     SUBROUTINE exceptionMessage(eCode,isQuiet,isLogActive,logUnit,mesg)
       INTEGER(SIK),INTENT(IN) :: eCode
-      LOGICAL(SBK) :: isQuiet
+      LOGICAL(SBK),INTENT(INOUT) :: isQuiet
       LOGICAL(SBK),INTENT(IN) :: isLogActive
       INTEGER(SIK),INTENT(IN) :: logUnit
       CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH),INTENT(INOUT) :: mesg
