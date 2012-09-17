@@ -26,6 +26,12 @@ PROGRAM testLinearSolver
   
   TYPE(MPI_EnvType) :: mpiTestEnv
   TYPE(ExceptionHandlerType),POINTER :: e
+  
+#ifdef HAVE_PETSC
+#include <finclude/petsc.h>
+#define IS IS !petscisdef.h defines the keyword IS, and it needs to be reset
+  PetscErrorCode  :: ierr
+#endif
 
   !Configure exception handler for test
   ALLOCATE(e)
@@ -33,6 +39,10 @@ PROGRAM testLinearSolver
   CALL e%setQuietMode(.TRUE.)
   eLinearSolverType => e
   CALL mpiTestEnv%initialize(0)
+  
+#ifdef HAVE_PETSC    
+  CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
+#endif
 
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING LINEAR SOLVERS...'
@@ -52,8 +62,12 @@ PROGRAM testLinearSolver
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING LINEAR SOLVERS PASSED!'
   WRITE(*,*) '==================================================='
+#ifdef HAVE_PETSC    
+  CALL PetscFinalize(ierr)
+#endif
   CALL mpiTestEnv%finalize()
   DEALLOCATE(e)
+  
 !
 !===============================================================================
 CONTAINS

@@ -243,23 +243,26 @@ MODULE LinearSolverTypes
             
             
 #ifdef HAVE_PETSC
-            !initialize PETSc environment
-            CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
-            
-            !create and initialize KSP
-            CALL KSPCreate(solver%MPIparallelEnv,solver%ksp,ierr)
-            CALL KSPSetOperators(solver%ksp,solver%a,solver%a,DIFFERENT_NONZERO_PATTERN,ierr)
-            CALL KSPSetFromOptions(solver%ksp,ierr)
-            
-            !set iterative solver type
-            SELECTCASE(solver%solverMethod)
-              CASE(1) ! BCGS
-                CALL KSPSetType(solver%ksp,KSPBCGS,ierr)
-              CASE(2) ! CGNR
-                CALL KSPSetType(solver%ksp,KSPCGNE,ierr)
-              CASE(3) ! GMRES
-                CALL KSPSetType(solver%ksp,KSPGMRES,ierr)
-            ENDSELECT
+            IF (solver%hasA) THEN
+              SELECTTYPE(A => solver%A)
+                TYPE IS(PETScMatrixType)
+                  !create and initialize KSP
+                  !CALL KSPCreate(solver%MPIparallelEnv,solver%ksp,ierr)
+                  CALL KSPCreate(MPI_COMM_WORLD,solver%ksp,ierr)
+                  CALL KSPSetOperators(solver%ksp,A,A,DIFFERENT_NONZERO_PATTERN,ierr)
+                  CALL KSPSetFromOptions(solver%ksp,ierr)
+                  
+                  !set iterative solver type
+                  SELECTCASE(solver%solverMethod)
+                    CASE(1) ! BCGS
+                      CALL KSPSetType(solver%ksp,KSPBCGS,ierr)
+                    CASE(2) ! CGNR
+                      CALL KSPSetType(solver%ksp,KSPCGNE,ierr)
+                    CASE(3) ! GMRES
+                      CALL KSPSetType(solver%ksp,KSPGMRES,ierr)
+                  ENDSELECT
+              ENDSELECT
+            ENDIF
 #endif
 
             solver%solverMethod=solverMethod
@@ -347,7 +350,6 @@ MODULE LinearSolverTypes
       
 #ifdef HAVE_PETSC
       CALL KSPDestroy(solver%ksp,ierr)
-      CALL PETSCFinalize(ierr)
 #endif 
 
       !No timer clear function-just call toc instead
@@ -513,10 +515,7 @@ MODULE LinearSolverTypes
                       'is not implemented, CGNR method is used instead.')
 
 #ifdef HAVE_PETSC                      
-              TYPE IS(PETScDenseSquareMatrixType)
-                CALL KSPSolve(solver%ksp,solver%b,solver%x,ierr)
-
-              TYPE IS(PETScSparseMatrixType)
+              TYPE IS(PETScMatrixType)
                 CALL KSPSolve(solver%ksp,solver%b,solver%x,ierr)
 #endif
                 
@@ -541,10 +540,7 @@ MODULE LinearSolverTypes
                   myName//'- CGNR method for sparse system '// &
                     'is not implemented, BiCGSTAB method is used instead.')
 #ifdef HAVE_PETSC                    
-              TYPE IS(PETScDenseSquareMatrixType)
-                CALL KSPSolve(solver%ksp,solver%b,solver%x,ierr)
-
-              TYPE IS(PETScSparseMatrixType)
+              TYPE IS(PETScMatrixType)
                 CALL KSPSolve(solver%ksp,solver%b,solver%x,ierr)
 #endif
               CLASS DEFAULT
@@ -555,10 +551,7 @@ MODULE LinearSolverTypes
           CASE(3) !GMRES
             SELECTTYPE(A=>solver%A)
 #ifdef HAVE_PETSC                    
-              TYPE IS(PETScDenseSquareMatrixType)
-                CALL KSPSolve(solver%ksp,solver%b,solver%x,ierr)
-
-              TYPE IS(PETScSparseMatrixType)
+              TYPE IS(PETScMatrixType)
                 CALL KSPSolve(solver%ksp,solver%b,solver%x,ierr)
 #endif  
             ENDSELECT
@@ -713,7 +706,7 @@ MODULE LinearSolverTypes
         solver%convTol=convTol
         solver%maxIters=maxIters
 #ifdef HAVE_PETSC
-        CALL KSPSetTolerances(solver%ksp,rtol,abstol,dtol,maxits,ierr)
+!        CALL KSPSetTolerances(solver%ksp,rtol,abstol,dtol,maxits,ierr)
 #endif
       ENDIF
       IF(localalloc) DEALLOCATE(eLinearSolverType)
