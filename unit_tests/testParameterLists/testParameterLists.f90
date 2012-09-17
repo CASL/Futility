@@ -35,6 +35,7 @@ PROGRAM testParameterLists
   INTEGER(SNK),ALLOCATABLE :: valsnk1a(:)
   INTEGER(SLK),ALLOCATABLE :: valslk1a(:)
   LOGICAL(SBK),ALLOCATABLE :: valsbk1a(:)
+  TYPE(StringType),ALLOCATABLE :: valstr1a(:)
   REAL(SSK),ALLOCATABLE :: valssk2a(:,:)
   REAL(SDK),ALLOCATABLE :: valsdk2a(:,:)
   INTEGER(SNK),ALLOCATABLE :: valsnk2a(:,:)
@@ -81,7 +82,7 @@ PROGRAM testParameterLists
   CALL testSBK()
   !Test the scalar SBK parameter list
   WRITE(*,*) '---------------------------------------------------'
-  WRITE(*,*) 'TESTING Scalar SBK PARAMETERLISTS...'
+  WRITE(*,*) 'TESTING Scalar STR PARAMETERLISTS...'
   CALL testSTR()
   !Test the 1-D array of SSK parameter list
   WRITE(*,*) '---------------------------------------------------'
@@ -103,6 +104,10 @@ PROGRAM testParameterLists
   WRITE(*,*) '---------------------------------------------------'
   WRITE(*,*) 'TESTING One-Dimensional Array SBK PARAMETERLISTS...'
   CALL testSBK1a()
+  !Test the 1-D array of STR parameter list
+  WRITE(*,*) '---------------------------------------------------'
+  WRITE(*,*) 'TESTING One-Dimensional Array STR PARAMETERLISTS...'
+  CALL testSTR1a()
   !Test the 2-D array of SSK parameter list
   WRITE(*,*) '---------------------------------------------------'
   WRITE(*,*) 'TESTING Two-Dimensional Array SSK PARAMETERLISTS...'
@@ -207,6 +212,13 @@ PROGRAM testParameterLists
   valsbk1a=.TRUE.
   CALL testParam%add('testPL->testSBK1a',valsbk1a)
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of 1-D array STR routine to parameter list
+  IF(ALLOCATED(valstr1a)) DEALLOCATE(valstr1a)
+  ALLOCATE(valstr1a(2))
+  valstr1a(1)='stringarray1'
+  valstr1a(2)='stringarray2'
+  CALL testParam%add('testPL->testSTR1a',valstr1a)
+  CALL testParam%edit(OUTPUT_UNIT)
   !Testing addition of 2-D array SSK routine to parameter list
   IF(ALLOCATED(valssk2a)) DEALLOCATE(valssk2a)
   ALLOCATE(valssk2a(2,2))
@@ -295,6 +307,11 @@ PROGRAM testParameterLists
   valsbk1a=.FALSE.
   CALL testParam%add('testPL->testSBK1a',valsbk1a)
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of 1-D array STR routine to parameter list, error for already existing parameter
+  valstr1a(1)='another stringarray1'
+  valstr1a(2)='another stringarray2'
+  CALL testParam%add('testPL->testSTR1a',valstr1a)
+  CALL testParam%edit(OUTPUT_UNIT)
   !Testing addition of 2-D array SSK routine to parameter list, error for already existing parameter
   valssk2a=10.5_SSK
   CALL testParam%add('testPL->testSSK2a',valssk2a)
@@ -369,6 +386,11 @@ PROGRAM testParameterLists
   valsbk1a=.FALSE.
   CALL testParam%add('testPL2->testSBK1a',valsbk1a,'Creates a new sublist')
   CALL testParam%edit(OUTPUT_UNIT)
+  !Testing addition of 1-D array STR routine to parameter list with description
+  valstr1a(1)='yet another stringarray1'
+  valstr1a(2)='yet another stringarray2'
+  CALL testParam%add('testPL2->testSTR1a',valstr1a,'Creates a new sublist')
+  CALL testParam%edit(OUTPUT_UNIT)
   !Testing addition of 2-D array SSK routine to parameter list with description
   valssk2a=2.5_SSK
   CALL testParam%add('testPL2->testSSK2a',valssk2a,'Creates a new sublist')
@@ -422,6 +444,7 @@ PROGRAM testParameterLists
   DEALLOCATE(valsnk1a)
   DEALLOCATE(valslk1a)
   DEALLOCATE(valsbk1a)
+  DEALLOCATE(valstr1a)
   DEALLOCATE(valssk2a)
   DEALLOCATE(valsdk2a)
   DEALLOCATE(valsnk2a)
@@ -477,6 +500,9 @@ PROGRAM testParameterLists
   CALL testParam%edit(OUTPUT_UNIT)
   !Testing the 1-D array SBK removal routine in a parameter list (with description)
   CALL testParam%remove('testPL2->testSBK1a')
+  CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the 1-D array STR removal routine in a parameter list (with description)
+  CALL testParam%remove('testPL2->testSTR1a')
   CALL testParam%edit(OUTPUT_UNIT)
   !Testing the 2-D array SSK removal routine in a parameter list (with description)
   CALL testParam%remove('testPL2->testSSK2a')
@@ -537,6 +563,9 @@ PROGRAM testParameterLists
   CALL testParam%edit(OUTPUT_UNIT)
   !Testing the 1-D array SBK removal routine in a parameter list 
   CALL testParam%remove('testPL->testSBK1a')
+  CALL testParam%edit(OUTPUT_UNIT)
+  !Testing the 1-D array STR removal routine in a parameter list 
+  CALL testParam%remove('testPL->testSTR1a')
   CALL testParam%edit(OUTPUT_UNIT)
   !Testing the 2-D array SSK removal routine in a parameter list 
   CALL testParam%remove('testPL->testSSK2a')
@@ -2347,6 +2376,209 @@ PROGRAM testParameterLists
     CALL testClear()
     
   ENDSUBROUTINE testSBK1a
+!
+!-------------------------------------------------------------------------------
+!Test 1-D array StringType support
+  SUBROUTINE testSTR1a()
+    
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSTR1a'
+    ALLOCATE(valstr1a(2))
+    valstr1a(1)='''testing'''
+    valstr1a(2)='more testing'
+    !test init
+    CALL testParam%init('testError->testSTR1a',valstr1a,'The value is testing and more testing')
+    eParams => NULL()
+    CALL testParam%init('testSTR1a',valstr1a,'The value is testing and more testing')
+    IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
+      WRITE(*,*) 'CALL testParam%init(...) %pdat StringType (STR) 1-D FAILED!'
+      STOP 666
+    ENDIF
+    IF(testParam%pdat%name /= 'testSTR1a') THEN
+      WRITE(*,*) 'CALL testParam%init(...) %name StringType (STR) 1-D FAILED!'
+      STOP 666
+    ENDIF
+    IF(testParam%pdat%datatype /= 'TYPE(StringType)') THEN
+      WRITE(*,*) 'CALL testParam%init(...) %datatype StringType (STR) 1-D FAILED!'
+      STOP 666
+    ENDIF
+    IF(testParam%pdat%description /= 'The value is testing and more testing') THEN
+      WRITE(*,*) 'CALL testParam%init(...) %description StringType (STR) 1-D FAILED!'
+      STOP 666
+    ENDIF
+    CALL testParam%edit(OUTPUT_UNIT,0) !test edit
+    eParams => e
+    CALL testParam%init('testError',valstr1a)
+    WRITE(*,*) '  Passed: CALL testParam%init(...) StringType (STR)'
+  
+    !test get
+    eParams => NULL()
+    CALL testParam%get('testSTR1a',someParam)
+    IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
+      WRITE(*,*) 'CALL testParam%get(''testSTR1a'',someParam) FAILED!'
+      STOP 666
+    ENDIF
+    !Test same size
+    CALL someParam%get('testSTR1a',valstr1a)
+    IF(valstr1a(1) /= '''testing''' .OR. valstr1a(2) /= 'more testing' .OR. &
+        SIZE(valstr1a) /= 2_SIK) THEN
+      WRITE(*,*) 'CALL someParam%get(''testSTR1a'',valstr1a) FAILED!'
+      STOP 666
+    ENDIF
+    !Test different size size
+    DEALLOCATE(valstr1a)
+    ALLOCATE(valstr1a(1))
+    valstr1a(1)=''
+    CALL someParam%get('testSTR1a',valstr1a)
+    IF(valstr1a(1) /= '''testing''' .OR. valstr1a(2) /= 'more testing' .OR. &
+        SIZE(valstr1a) /= 2_SIK) THEN
+      WRITE(*,*) 'CALL testParam%get(''testSTR1a'',valstr1a) FAILED!'
+      STOP 666
+    ENDIF
+    DEALLOCATE(valstr1a)
+    ALLOCATE(valstr1a(10))
+    !valstr1a(1)='test again'
+    !valstr1a(2)='test again'
+    CALL testParam%get('testSTR1a',valstr1a)
+    IF(valstr1a(1) /= '''testing''' .OR. valstr1a(2) /= 'more testing' .OR. &
+        SIZE(valstr1a) /= 2_SIK) THEN
+      WRITE(*,*) 'CALL testParam%get(''testSTR1a'',valstr1a) FAILED!'
+      STOP 666
+    ENDIF
+    
+    eParams => e
+    CALL testParam2%get('testSTR1a',valstr1a)
+    CALL testParam%get('testError',valstr1a)
+    CALL someParam%get('testError',valstr1a)
+    WRITE(*,*) '  Passed: CALL testParam%get(...) StringType (STR)'
+  
+    !test set
+    eParams => NULL()
+    !For strings, they must be stored in a string type first, then passed in.
+    valstr1a(1)='another test'
+    valstr1a(2)='one more test'
+    CALL someParam%set('testSTR1a',valstr1a,'The value is another test and one more test')
+    !Clear the variable to confirm it gets set.
+    valstr1a(1)=''
+    valstr1a(2)=''
+    CALL testParam%get('testSTR1a',valstr1a)
+    IF(valstr1a(1) /= 'another test' .OR. valstr1a(2) /= 'one more test' .OR.  &
+        SIZE(valstr1a) /= 2_SIK .OR. &
+        someParam%description /= 'The value is another test and one more test') THEN
+      WRITE(*,*) 'someParam%set(''testSTR1a'',''valstr1a,'// &
+        ' The value is another test and one more test'') FAILED!'
+      STOP 666
+    ENDIF
+    !Different size for test param
+    DEALLOCATE(valstr1a)
+    ALLOCATE(valstr1a(1))
+    valstr1a(1)='a different size test'
+    CALL testParam%set('testSTR1a',valstr1a,'The value is a different size test')
+    DEALLOCATE(valstr1a)
+    ALLOCATE(valstr1a(2))
+    valstr1a(1)=''
+    valstr1a(2)=''
+    CALL testParam%get('testSTR1a',valstr1a)
+    IF(valstr1a(1) /= 'a different size test' .OR. SIZE(valstr1a) /= 1_SIK .OR. &
+        someParam%description /= 'The value is a different size test') THEN
+      WRITE(*,*) 'someParam%set(''testSTR1a'',''valstr1a,'// &
+        ' The value is a different size test'') FAILED!'
+      STOP 666
+    ENDIF
+    !Different size for some param
+    DEALLOCATE(valstr1a)
+    ALLOCATE(valstr1a(3))
+    valstr1a(1)='a same but different test'
+    valstr1a(2)='a same but different test'
+    valstr1a(3)='a same but different test'
+    CALL someParam%set('testSTR1a',valstr1a,'The value is a same but different test')
+    !Clear the variable to confirm it gets set.
+    DEALLOCATE(valstr1a)
+    ALLOCATE(valstr1a(2))
+    valstr1a(1)=''
+    valstr1a(2)=''
+    CALL testParam%get('testSTR1a',valstr1a)
+    IF(valstr1a(1) /= 'a same but different test' .OR. &
+         valstr1a(2) /= 'a same but different test' .OR. &
+           valstr1a(3) /= 'a same but different test' .OR. &
+             SIZE(valstr1a) /= 3_SIK .OR. &
+               someParam%description /= 'The value is a same but different test') THEN
+      WRITE(*,*) 'someParam%set(''testSTR1a'',''valstr1a,'// &
+        ' The value is a same but different test'') FAILED!'
+      STOP 666
+    ENDIF
+    !Same size for test param
+    valstr1a(1)='a different but same test'
+    valstr1a(2)='a different but same test'
+    valstr1a(3)='a different but same test'
+    CALL testParam%set('testSTR1a',valstr1a,'The value is a different but same test')
+    valstr1a(1)=''
+    valstr1a(2)=''
+    valstr1a(3)=''
+    CALL testParam%get('testSTR1a',valstr1a)
+    IF(valstr1a(1) /= 'a different but same test' .OR. &
+         valstr1a(2) /= 'a different but same test' .OR. &
+           valstr1a(3) /= 'a different but same test' .OR. &
+             SIZE(valstr1a) /= 3_SIK .OR. &
+               someParam%description /= 'The value is a different but same test') THEN
+      WRITE(*,*) 'testParam%set(''testSTR1a'',''a different but same test'') FAILED!'
+      STOP 666
+    ENDIF
+    eParams => e
+    CALL testParam2%set('testSTR1a',valstr1a)
+    CALL someParam%set('testError',valstr1a)
+    CALL testParam%set('testError',valstr1a)
+    WRITE(*,*) '  Passed: CALL testParam%set(...) StringType (STR)'
+    
+    !Test clear
+    eParams => NULL()
+    CALL testParam%clear()
+    IF(LEN(testParam%name%sPrint()) /= 0) THEN
+      WRITE(*,*) 'CALL testParam%clear() %name StringType (STR) 1-D FAILED!'
+      STOP 666
+    ENDIF
+    IF(LEN(testParam%datatype%sPrint()) /= 0) THEN
+      WRITE(*,*) 'CALL testParam%clear() %datatype StringType (STR) 1-D FAILED!'
+      STOP 666
+    ENDIF
+    IF(LEN(testParam%description%sPrint()) /= 0) THEN
+      WRITE(*,*) 'CALL testParam%clear() %description StringType (STR) 1-D FAILED!'
+      STOP 666
+    ENDIF
+    IF(ASSOCIATED(testParam%pdat)) THEN
+      WRITE(*,*) 'CALL testParam%clear() %pdat StringType (STR) 1-D FAILED!'
+      STOP 666
+    ENDIF
+    eParams => e
+    WRITE(*,*) '  Passed: CALL testParam%clear() StringType (STR)'
+  
+    !test assignment
+    eParams => NULL()
+    valstr1a(1)='assignment test'
+    valstr1a(2)='assignment test'
+    valstr1a(3)='assignment test'
+    CALL testParam%init('testSTR1a',valstr1a)
+    testParam2=testparam
+    IF(.NOT.ASSOCIATED(testParam2%pdat)) THEN
+      WRITE(*,*) 'ASSIGNMENT(=) %pdat StringType (STR) 1-D FAILED!'
+      STOP 666
+    ENDIF
+    IF(testParam2%pdat%name /= 'testSTR1a') THEN
+      WRITE(*,*) 'ASSIGNMENT(=) %name StringType (STR) 1-D FAILED!'
+      STOP 666
+    ENDIF
+    IF(testParam2%pdat%datatype /= 'TYPE(StringType)') THEN
+      WRITE(*,*) 'ASSIGNMENT(=) %datatype StringType (STR) 1-D FAILED!'
+      STOP 666
+    ENDIF
+    eParams => e
+    CALL testParam%get('testSTR1a',someParam)
+    someParam=testParam
+    WRITE(*,*) '  Passed: ASSIGNMENT(=) StringType (STR)'
+    !Clear the variables for the next call
+    CALL testClear()
+    
+  ENDSUBROUTINE testSTR1a
 !
 !-------------------------------------------------------------------------------
 !Test 2-D Array SSK support
