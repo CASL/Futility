@@ -84,6 +84,7 @@ PROGRAM testParameterLists
   WRITE(*,*) '---------------------------------------------------'
   WRITE(*,*) 'TESTING Scalar STR PARAMETERLISTS...'
   CALL testSTR()
+  CALL testCHAR()
   !Test the 1-D array of SSK parameter list
   WRITE(*,*) '---------------------------------------------------'
   WRITE(*,*) 'TESTING One-Dimensional Array SSK PARAMETERLISTS...'
@@ -1583,6 +1584,86 @@ PROGRAM testParameterLists
     CALL testClear()
     
   ENDSUBROUTINE testSTR
+!
+!-------------------------------------------------------------------------------
+!Test Character/StringType support
+  SUBROUTINE testCHAR()
+    
+    CHARACTER(LEN=100) :: valchar
+  
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSTR'
+    CALL testParam%init('testError->testSTR','''testing''','The value is testing')
+    eParams => NULL()
+    CALL testParam%init('testSTR','''testing''','The value is testing')
+    IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
+      WRITE(*,*) 'CALL testParam%init(...) %pdat StringType (CHAR) FAILED!'
+      STOP 666
+    ENDIF
+    IF(testParam%pdat%name /= 'testSTR') THEN
+      WRITE(*,*) 'CALL testParam%init(...) %name StringType (CHAR) FAILED!'
+      STOP 666
+    ENDIF
+    IF(testParam%pdat%datatype /= 'TYPE(StringType)') THEN
+      WRITE(*,*) 'CALL testParam%init(...) %datatype StringType (CHAR) FAILED!'
+      STOP 666
+    ENDIF
+    IF(testParam%pdat%description /= 'The value is testing') THEN
+      WRITE(*,*) 'CALL testParam%init(...) %description StringType (CHAR) FAILED!'
+      STOP 666
+    ENDIF
+    eParams => e
+    CALL testParam%init('testSTR','''testing''')
+    WRITE(*,*) '  Passed: CALL testParam%init(...) StringType (CHAR)'
+  
+    !test get
+    eParams => NULL()
+    valchar='test again'
+    CALL testParam%get('testSTR',valchar)
+    IF(TRIM(valchar) /= '''testing''') THEN
+      WRITE(*,*) 'CALL testParam%get(''testSTR'',valchar) FAILED!'
+      STOP 666
+    ENDIF
+    eParams => e
+    WRITE(*,*) '  Passed: CALL testParam%get(...) StringType (CHAR)'
+  
+    !test set
+    eParams => NULL()
+    !For strings, they must be stored in a string type first, then passed in.
+    CALL testParam%set('testSTR','another test','The value is another test')
+    !Clear the variable to confirm it gets set.
+    valchar=''
+    CALL testParam%get('testSTR',valchar)
+    IF(valchar /= 'another test' .OR. testParam%pdat%description /= 'The value is another test') THEN
+      WRITE(*,*) 'testParam%set(''testSTR'',''another test'',''The value is another test'') FAILED!'
+      STOP 666
+    ENDIF
+    CALL testParam%set('testSTR','a different test')
+    CALL testParam%get('testSTR',valchar)
+    IF(TRIM(valchar) /= 'a different test') THEN
+      WRITE(*,*) 'testParam%set(''testSTR'',''a different test'') FAILED!'
+      STOP 666
+    ENDIF
+    eParams => e
+    WRITE(*,*) '  Passed: CALL testParam%set(...) StringType (CHAR)'
+    
+    CALL testParam%clear()
+    CALL testParam%add('testSTR','last test','actually second to last')
+    CALL testParam%get('testSTR',valchar)
+    IF(TRIM(valchar) /= 'last test') THEN
+      WRITE(*,*) 'testParam%set(''testSTR'',''last test'') FAILED!'
+      STOP 666
+    ENDIF
+    CALL testParam%clear()
+    CALL testParam%add('testSTR','seriously last test')
+    CALL testParam%get('testSTR',valchar)
+    IF(TRIM(valchar) /= 'seriously last test') THEN
+      WRITE(*,*) 'testParam%set(''testSTR'',''seriously last test'') FAILED!'
+      STOP 666
+    ENDIF
+    WRITE(*,*) '  Passed: CALL testParam%add(...) StringType (CHAR)'
+    CALL testClear()
+  ENDSUBROUTINE testCHAR
 !
 !-------------------------------------------------------------------------------
 !Test 1-D Array SSK support

@@ -153,6 +153,9 @@ MODULE ParameterLists
       !> @copybrief ParameterLists::init_ParamType_STR
       !> @copydoc ParameterLists::init_ParamType_STR
       PROCEDURE,PASS,PRIVATE :: initSTR => init_ParamType_STR
+      !> @copybrief ParameterLists::init_ParamType_CHAR
+      !> @copydoc ParameterLists::init_ParamType_CHAR
+      PROCEDURE,PASS,PRIVATE :: initCHAR => init_ParamType_CHAR
       !> @copybrief ParameterLists::init_ParamType_SSK_a1
       !> @copydoc ParameterLists::init_ParamType_SSK_a1
       PROCEDURE,PASS,PRIVATE :: initSSKa1 => init_ParamType_SSK_a1
@@ -197,8 +200,8 @@ MODULE ParameterLists
       PROCEDURE,PASS,PRIVATE :: initSLKa3 => init_ParamType_SLK_a3
       !> Generic type bound interface for all @c init operations
       GENERIC :: init => initParamList,initSSK,initSDK,initSNK,initSLK, &
-                 initSBK,initSTR,initSSKa1,initSDKa1,initSNKa1,initSLKa1, &
-                 initSBKa1,initSTRa1,initSSKa2,initSDKa2,initSNKa2, &
+                 initSBK,initSTR,initCHAR,initSSKa1,initSDKa1,initSNKa1, &
+                 initSLKa1,initSBKa1,initSTRa1,initSSKa2,initSDKa2,initSNKa2, &
                  initSLKa2,initSSKa3,initSDKa3,initSNKa3,initSLKa3
       !> @copybrief ParameterLists::set_ParamType_List
       !> @copydoc ParameterLists::set_ParamType_List
@@ -221,6 +224,9 @@ MODULE ParameterLists
       !> @copybrief ParameterLists::set_ParamType_STR
       !> @copydoc ParameterLists::set_ParamType_STR
       PROCEDURE,PASS,PRIVATE :: setSTR => set_ParamType_STR
+      !> @copybrief ParameterLists::set_ParamType_CHAR
+      !> @copydoc ParameterLists::set_ParamType_CHAR
+      PROCEDURE,PASS,PRIVATE :: setCHAR => set_ParamType_CHAR
       !> @copybrief ParameterLists::set_ParamType_SSK_a1
       !> @copydoc ParameterLists::set_ParamType_SSK_a1
       PROCEDURE,PASS,PRIVATE :: setSSKa1 => set_ParamType_SSK_a1
@@ -265,8 +271,8 @@ MODULE ParameterLists
       PROCEDURE,PASS,PRIVATE :: setSLKa3 => set_ParamType_SLK_a3
       !> Generic type bound interface for all @c set operations
       GENERIC :: set => setParamList,setSSK,setSDK,setSNK,setSLK, &
-                 setSBK,setSTR,setSSKa1,setSDKa1,setSNKa1,setSLKa1, &
-                 setSBKa1,setSTRa1,setSSKa2,setSDKa2,setSNKa2, &
+                 setSBK,setSTR,setCHAR,setSSKa1,setSDKa1,setSNKa1, &
+                 setSLKa1,setSBKa1,setSTRa1,setSSKa2,setSDKa2,setSNKa2, &
                  setSLKa2,setSSKa3,setSDKa3,setSNKa3,setSLKa3
       !> @copybrief ParameterLists::get_ParamType
       !> @copydoc ParameterLists::get_ParamType
@@ -292,6 +298,9 @@ MODULE ParameterLists
       !> @copybrief ParameterLists::get_ParamType_STR
       !> @copydoc ParameterLists::get_ParamType_STR
       PROCEDURE,PASS,PRIVATE :: getSTR => get_ParamType_STR
+      !> @copybrief ParameterLists::get_ParamType_CHAR
+      !> @copydoc ParameterLists::get_ParamType_CHAR
+      PROCEDURE,PASS,PRIVATE :: getCHAR => get_ParamType_CHAR
       !> @copybrief ParameterLists::get_ParamType_SSK_a1
       !> @copydoc ParameterLists::get_ParamType_SSK_a1
       PROCEDURE,PASS,PRIVATE :: getSSKa1 => get_ParamType_SSK_a1
@@ -336,7 +345,7 @@ MODULE ParameterLists
       PROCEDURE,PASS,PRIVATE :: getSLKa3 => get_ParamType_SLK_a3
       !> Generic type bound interface for all @c get operations
       GENERIC :: get => getParam,getParamList,getSSK,getSDK,getSNK, &
-                 getSLK,getSBK,getSTR,getSSKa1,getSDKa1,getSNKa1, &
+                 getSLK,getSBK,getSTR,getCHAR,getSSKa1,getSDKa1,getSNKa1, &
                  getSBKa1,getSLKa1,getSTRa1,getSSKa2,getSDKa2, &
                  getSNKa2,getSLKa2,getSSKa3,getSDKa3,getSNKa3,getSLKa3
       !> @copybrief ParameterLists::add_ParamType
@@ -363,6 +372,9 @@ MODULE ParameterLists
       !> @copybrief ParameterLists::add_ParamType_STR
       !> @copydoc ParameterLists::add_ParamType_STR
       PROCEDURE,PASS,PRIVATE :: addSTR => add_ParamType_STR
+      !> @copybrief ParameterLists::add_ParamType_CHAR
+      !> @copydoc ParameterLists::add_ParamType_CHAR
+      PROCEDURE,PASS,PRIVATE :: addCHAR => add_ParamType_CHAR
       !> @copybrief ParameterLists::add_ParamType_SSK_a1
       !> @copydoc ParameterLists::add_ParamType_SSK_a1
       PROCEDURE,PASS,PRIVATE :: addSSKa1 => add_ParamType_SSK_a1
@@ -407,7 +419,7 @@ MODULE ParameterLists
       PROCEDURE,PASS,PRIVATE :: addSLKa3 => add_ParamType_SLK_a3
       !> Generic type bound interface for all @c add operations
       GENERIC :: add => addParam,addList,addSSK,addSDK, &
-         addSNK,addSLK,addSBK,addSTR,addSSKa1,addSDKa1, &
+         addSNK,addSLK,addSBK,addSTR,addCHAR,addSSKa1,addSDKa1, &
          addSNKa1,addSLKa1,addSBKa1,addSTRa1,addSSKa2,addSDKa2, &
          addSNKa2,addSLKa2,addSSKa3,addSDKa3,addSNKa3,addSLKa3
       !> @copybrief ParameterLists::remove_ParamType
@@ -3586,6 +3598,100 @@ MODULE ParameterLists
       ENDIF
       IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE add_ParamType_STR
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper for init_ParamType_STR to pass a character string instead of
+!> a string type
+!> @param thisParam the parameter to initialize
+!> @param name the name of the parameter
+!> @param param a character type
+!> @param description an optional description for this parameter
+!>
+    SUBROUTINE init_ParamType_CHAR(thisParam,name,param,description)
+      CLASS(ParamType),INTENT(INOUT) :: thisParam
+      CHARACTER(LEN=*),INTENT(IN) :: param
+      CHARACTER(LEN=*),INTENT(IN) :: name
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+      TYPE(StringType) :: s
+      
+      s=param
+      IF(PRESENT(description)) THEN
+        CALL init_ParamType_STR(thisParam,name,s,description)
+      ELSE
+        CALL init_ParamType_STR(thisParam,name,s)
+      ENDIF
+      s=''
+    ENDSUBROUTINE init_ParamType_CHAR
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper for set_ParamType_STR to pass a character string instead of
+!> a string type
+!> @param thisParam the parameter in which an existing parameter with name 
+!>        matching @c name will be to set the new value of @c param
+!> @param name the name of an existing parameter to set the value of
+!> @param param the new value to set for the parameter
+!> @param description an optional new description for the parameter identified
+!>        by @c name
+!>
+    SUBROUTINE set_ParamType_CHAR(thisParam,name,param,description)
+      CLASS(ParamType),INTENT(INOUT) :: thisParam
+      CHARACTER(LEN=*),INTENT(IN) :: name
+      CHARACTER(LEN=*),INTENT(IN) :: param
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+      TYPE(StringType) :: s
+      
+      s=param
+      IF(PRESENT(description)) THEN
+        CALL set_ParamType_STR(thisParam,name,s,description)
+      ELSE
+        CALL set_ParamType_STR(thisParam,name,s)
+      ENDIF
+      s=''
+    ENDSUBROUTINE set_ParamType_CHAR
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper for set_ParamType_STR to pass a character string instead of
+!> a string type
+!> @param thisParam the set of parameters to which a new parameter will be added
+!> @param name the location and name of the new parameter
+!> @param param the new character string parameter
+!> @param description an optional input for a description of the new parameter
+!>
+    SUBROUTINE add_ParamType_CHAR(thisParam,name,param,description)
+      CLASS(ParamType),INTENT(INOUT) :: thisParam
+      CHARACTER(LEN=*),INTENT(IN) :: name
+      CHARACTER(LEN=*),INTENT(IN) :: param
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+      TYPE(StringType) :: s
+      
+      s=param
+      IF(PRESENT(description)) THEN
+        CALL add_ParamType_STR(thisParam,name,s,description)
+      ELSE
+        CALL add_ParamType_STR(thisParam,name,s)
+      ENDIF
+      s=''
+    ENDSUBROUTINE add_ParamType_CHAR
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper for get_ParamType_STR to pass a character string instead of
+!> a string type
+!> @param thisParam the parameter in which an existing parameter with name 
+!>        matching @c name will have it's value returned
+!> @param name the name of the parameter to return the value of
+!> @param val the current value of the parameter with @c name
+!>
+    SUBROUTINE get_ParamType_CHAR(thisParam,name,val)
+      CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_STR'
+      CLASS(ParamType),INTENT(IN) :: thisParam
+      CHARACTER(LEN=*),INTENT(IN) :: name
+      CHARACTER(LEN=*),INTENT(INOUT) :: val
+      TYPE(StringType) :: s
+      
+      CALL get_ParamType_STR(thisParam,name,s)
+      val=s
+      s=''
+    ENDSUBROUTINE get_ParamType_CHAR
 !1111111111111111111111111111111111111111111111111111111111111111111111111111111
 !        One Dimensional Arrays    
 !1111111111111111111111111111111111111111111111111111111111111111111111111111111
