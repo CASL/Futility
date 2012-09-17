@@ -106,7 +106,7 @@ MODULE MatrixTypes
       !> Deferred routine for clearing the matrix
       PROCEDURE(int_matrix_sub),DEFERRED,PASS :: clear
       !> Deferred routine for initializing the matrix
-      PROCEDURE,PASS :: init_param => init_MatrixParam
+      PROCEDURE(int_matrix_init_param_sub),DEFERRED,PASS :: init_param
       !> Deferred routine for initializing the matrix
       PROCEDURE(int_matrix_init_exp_sub),DEFERRED,PASS :: init_exp
       GENERIC :: init => init_param,init_exp
@@ -180,6 +180,9 @@ MODULE MatrixTypes
       PROCEDURE,PASS :: clear => clear_PETScMatrixType
       !> @copybrief MatrixTypes::init_PETScMatrixType
       !> @copydetails MatrixTypes::init_PETScMatrixType
+      PROCEDURE,PASS :: init_param => init_PETScMatrixParam
+      !> @copybrief MatrixTypes::init_PETScMatrixType
+      !> @copydetails MatrixTypes::init_PETScMatrixType
       PROCEDURE,PASS :: init_exp => init_PETScMatrixType
       !> @copybrief MatrixTypes::set_PETScMatrixType
       !> @copydetails MatrixTypes::set_PETScMatrixType
@@ -205,6 +208,9 @@ MODULE MatrixTypes
       !> @copybrief MatrixTypes::clear_DenseSquareMatrixType
       !> @copydetails MatrixTypes::clear_DenseSquareMatrixType
       PROCEDURE,PASS :: clear => clear_DenseSquareMatrixType
+      !> @copybrief MatrixTypes::clear_DenseSquareMatrixType
+      !> @copydetails MatrixTypes::clear_DenseSquareMatrixType
+      PROCEDURE,PASS :: init_param => init_DenseSquareMatrixParam
       !> @copybrief MatrixTypes::init_DenseSquareMatrixType
       !> @copydetails MatrixTypes::init_DenseSquareMatrixType
       PROCEDURE,PASS :: init_exp => init_DenseSquareMatrixType
@@ -220,9 +226,12 @@ MODULE MatrixTypes
 !
 !List of Type Bound Procedures
     CONTAINS 
-      !> @copybrief MatrixTypes::clear_SparseMatrixType
-      !> @copydetails MatrixTypes::clear_SparseMatrixType
+      !> @copybrief MatrixTypes::clear_DenseRectMatrixType
+      !> @copydetails MatrixTypes::clear_DenseRectMatrixType
       PROCEDURE,PASS :: clear => clear_DenseRectMatrixType
+      !> @copybrief MatrixTypes::init_DenseRectMatrixType
+      !> @copydetails MatrixTypes::init_DenseRectMatrixType
+      PROCEDURE,PASS :: init_param => init_DenseRectMatrixParam
       !> @copybrief MatrixTypes::init_DenseRectMatrixType
       !> @copydetails MatrixTypes::init_DenseRectMatrixType
       PROCEDURE,PASS :: init_exp => init_DenseRectMatrixType
@@ -242,6 +251,9 @@ MODULE MatrixTypes
       !> @copybrief MatrixTypes::clear_TriDiagMatrixType
       !> @copydetails MatrixTypes::clear_TriDiagMatrixType
       PROCEDURE,PASS :: clear => clear_TriDiagMatrixType
+      !> @copybrief MatrixTypes::init_TriDiagMatrixType
+      !> @copydetails MatrixTypes::init_TriDiagMatrixType
+      PROCEDURE,PASS :: init_param => init_TriDiagMatrixParam
       !> @copybrief MatrixTypes::init_TriDiagMatrixType
       !> @copydetails MatrixTypes::init_TriDiagMatrixType
       PROCEDURE,PASS :: init_exp => init_TriDiagMatrixType
@@ -275,6 +287,9 @@ MODULE MatrixTypes
       !> @copybrief MatrixTypes::clear_SparseMatrixType
       !> @copydetails MatrixTypes::clear_SparseMatrixType
       PROCEDURE,PASS :: clear => clear_SparseMatrixType
+      !> @copybrief MatrixTypes::init_SparseMatrixType
+      !> @copydetails MatrixTypes::init_SparseMatrixType
+      PROCEDURE,PASS :: init_param => init_SparseMatrixParam
       !> @copybrief MatrixTypes::init_SparseMatrixType
       !> @copydetails MatrixTypes::init_SparseMatrixType
       PROCEDURE,PASS :: init_exp => init_SparseMatrixType
@@ -322,9 +337,97 @@ MODULE MatrixTypes
 !> @param matrix the matrix type to act on
 !> @param pList the parameter list
 !>
-    SUBROUTINE init_MatrixParam(matrix,pList)
+    SUBROUTINE init_SparseMatrixParam(matrix,pList)
       CHARACTER(LEN=*),PARAMETER :: myName='init_MatrixParam'
-      CLASS(MatrixType),INTENT(INOUT) :: matrix
+      CLASS(SparseMatrixType),INTENT(INOUT) :: matrix
+      CLASS(ParamType),INTENT(IN) :: pList
+      
+      INTEGER(SIK) :: n, m, mattype
+      
+      ! Pull Data From Parameter List
+      CALL pList%get('n',n)
+      CALL pList%get('m',m)
+      mattype=0
+      
+      ! initializes matrix based on type of matrix
+      CALL matrix%init(n,m,mattype)
+      
+    ENDSUBROUTINE init_SparseMatrixParam
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes Matrix Type with a Parameter List
+!> @param matrix the matrix type to act on
+!> @param pList the parameter list
+!>
+    SUBROUTINE init_TriDiagMatrixParam(matrix,pList)
+      CHARACTER(LEN=*),PARAMETER :: myName='init_MatrixParam'
+      CLASS(TriDiagMatrixType),INTENT(INOUT) :: matrix
+      CLASS(ParamType),INTENT(IN) :: pList
+      
+      INTEGER(SIK) :: n, m, mattype
+      
+      ! Pull Data From Parameter List
+      CALL pList%get('n',n)
+      CALL pList%get('m',m)
+      mattype=0
+      
+      ! initializes matrix based on type of matrix
+      CALL matrix%init(n,m,mattype)
+      
+    ENDSUBROUTINE init_TriDiagMatrixParam
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes Matrix Type with a Parameter List
+!> @param matrix the matrix type to act on
+!> @param pList the parameter list
+!>
+    SUBROUTINE init_DenseRectMatrixParam(matrix,pList)
+      CHARACTER(LEN=*),PARAMETER :: myName='init_MatrixParam'
+      CLASS(DenseRectMatrixType),INTENT(INOUT) :: matrix
+      CLASS(ParamType),INTENT(IN) :: pList
+      
+      INTEGER(SIK) :: n, m, mattype
+      
+      ! Pull Data From Parameter List
+      CALL pList%get('n',n)
+      CALL pList%get('m',m)
+      mattype=0
+      
+      ! initializes matrix based on type of matrix
+      CALL matrix%init(n,m,mattype)
+      
+    ENDSUBROUTINE init_DenseRectMatrixParam
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes Matrix Type with a Parameter List
+!> @param matrix the matrix type to act on
+!> @param pList the parameter list
+!>
+    SUBROUTINE init_DenseSquareMatrixParam(matrix,pList)
+      CHARACTER(LEN=*),PARAMETER :: myName='init_MatrixParam'
+      CLASS(DenseSquareMatrixType),INTENT(INOUT) :: matrix
+      CLASS(ParamType),INTENT(IN) :: pList
+      
+      INTEGER(SIK) :: n, m, mattype
+      
+      ! Pull Data From Parameter List
+      CALL pList%get('n',n)
+      CALL pList%get('m',m)
+      mattype=0
+      
+      ! initializes matrix based on type of matrix
+      CALL matrix%init(n,m,mattype)
+      
+    ENDSUBROUTINE init_DenseSquareMatrixParam
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes Matrix Type with a Parameter List
+!> @param matrix the matrix type to act on
+!> @param pList the parameter list
+!>
+    SUBROUTINE init_PETScMatrixParam(matrix,pList)
+      CHARACTER(LEN=*),PARAMETER :: myName='init_MatrixParam'
+      CLASS(PETScMatrixType),INTENT(INOUT) :: matrix
       CLASS(ParamType),INTENT(IN) :: pList
       
       INTEGER(SIK) :: n, m, mattype
@@ -341,7 +444,8 @@ MODULE MatrixTypes
       ! initializes matrix based on type of matrix
       CALL matrix%init(n,m,mattype)
       
-    ENDSUBROUTINE init_MatrixParam
+    ENDSUBROUTINE init_PETScMatrixParam
+
 !
 !-------------------------------------------------------------------------------
 !> @brief Initializes Sparse Matrix Type
