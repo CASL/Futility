@@ -176,13 +176,17 @@ CONTAINS
       MPIEnv_uninit => NULL()
       OMPEnv_uninit => NULL()
       CALL thisLS%init(-1,MPIEnv_uninit,OMPEnv_uninit)
+      CALL thisLS%clear()
       CALL thisLS%init(1,MPIEnv_uninit,OMPEnv_uninit,'testTimer')
+      CALL thisLS%clear()
       ALLOCATE(MPIEnv_uninit,OMPEnv_uninit)
       CALL thisLS%init(1,MPIEnv_uninit,OMPEnv_uninit,'testTimer')
-      CALL thisLS%init(2,MPIEnv,OMPEnv,'testTimer')
-      CALL thisLS%init(2,MPIEnv,OMPEnv,'testTimer')
-
       CALL thisLS%clear()
+      CALL thisLS%init(2,MPIEnv,OMPEnv,'testTimer')
+      CALL thisLS%clear()
+      CALL thisLS%init(2,MPIEnv,OMPEnv,'testTimer')
+      CALL thisLS%clear()
+
       !first test a correct use case, with timer name
       CALL thisLS%init(1,MPIEnv,OMPEnv,'testTimer')
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Direct)

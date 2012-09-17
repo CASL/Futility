@@ -531,6 +531,8 @@ MODULE VTKFiles
                 WRITE(funit,'(a)') ''
               CASE(VTK_UNSTRUCTURED_GRID)
                 !Write a mesh that is an unstructured grid
+                !Clean-up redundant points
+                CALL myVTKFile%mesh%cleanupPoints()
                 WRITE(funit,'(a)') 'DATASET UNSTRUCTURED_GRID'
                 WRITE(sint,'(i64)') myVTKFile%mesh%numPoints; sint=ADJUSTL(sint)
                 WRITE(funit,'(a)') 'POINTS '//TRIM(sint)//' float'
@@ -948,10 +950,15 @@ MODULE VTKFiles
      INTEGER(SIK),INTENT(IN) :: n
      REAL(SRK),INTENT(INOUT) :: array(n)
      INTEGER(SIK),INTENT(INOUT) :: pointList(n)
-     REAL(SRK) :: rightArray(n/2)
-     REAL(SRK) :: leftArray(n-(n/2))
-     INTEGER(SIK) :: leftPoints(n-(n/2)),rightPoints(n/2)
+     REAL(SRK),ALLOCATABLE :: rightArray(:)
+     REAL(SRK),ALLOCATABLE :: leftArray(:)
+     INTEGER(SIK),ALLOCATABLE :: leftPoints(:),rightPoints(:)
      INTEGER(SIK) :: nr,nl,i
+     
+     CALL dmallocA(rightArray,n/2)
+     CALL dmallocA(leftArray, n-(n/2))
+     CALL dmallocA(leftPoints,n-(n/2))
+     CALL dmallocA(rightPoints,n/2)
      IF(n > 1) THEN
        nr=n/2
        nl=n-nr
@@ -1367,8 +1374,6 @@ MODULE VTKFiles
     newMesh%nodeList(1:SIZE(mesh1conv%nodeList))=mesh1conv%nodeList
     newMesh%nodeList(SIZE(mesh1conv%nodeList)+1:)=mesh2conv%nodeList+ &
                                                   mesh1conv%numPoints
-    !Clean-up redundant points
-    CALL newMesh%cleanupPoints()
   ENDFUNCTION addMesh_VTKMesh
 !
 ENDMODULE VTKFiles
