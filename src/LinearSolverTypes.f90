@@ -44,6 +44,7 @@ MODULE LinearSolverTypes
   USE ParallelEnv
   USE Times
   USE MatrixTypes
+  USE ParameterLists
   USE BLAS
   IMPLICIT NONE
   
@@ -749,6 +750,7 @@ MODULE LinearSolverTypes
 !>
     SUBROUTINE DecomposeBiCGSTAB_DenseSquare(solver)
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
+      TYPE(ParamType) :: pList
 
       INTEGER(SIK) :: i
       solver%isDecomposed=.FALSE.
@@ -757,7 +759,9 @@ MODULE LinearSolverTypes
         DEALLOCATE(solver%M)
       ENDIF
       ALLOCATE(DenseSquareMatrixType :: solver%M)
-      CALL solver%M%init(solver%A%n,0)
+      CALL pList%add('PL->n',solver%A%n)
+      CALL pList%add('PL->m',0_SNK)
+      CALL solver%M%init(pList)
       DO i=1,solver%M%n
         CALL solver%M%set(i,i,1.0_SRK)
       ENDDO
@@ -915,6 +919,7 @@ MODULE LinearSolverTypes
     SUBROUTINE DecomposePLU_TriDiag(solver)
       CHARACTER(LEN=*),PARAMETER :: myName='decomposePLU_TriDiag'
       CLASS(LinearSolverType_Base),INTENT(INOUT) :: solver
+      TYPE(ParamType) :: pList
 
       INTEGER(SIK) :: i
       REAL(SRK) :: t
@@ -952,7 +957,9 @@ MODULE LinearSolverTypes
             RETURN
           ENDIF
 
-          CALL solver%M%init(A%n,0)
+          CALL pList%add('PL->n',A%n)
+          CALL pList%add('PL->m',0_SNK)
+          CALL solver%M%init(pList)
           SELECTTYPE(M => solver%M); TYPE IS(TriDiagMatrixType)
             M%a(2,1)=1.0_SRK/A%a(2,1)
             DO i=1,A%n-1
@@ -1142,6 +1149,7 @@ MODULE LinearSolverTypes
 !>
     SUBROUTINE DecomposePLU_DenseSquare(solver)
       CLASS(LinearSolverType_Direct),INTENT(INOUT) :: solver
+      TYPE(ParamType) :: pList
 
       REAL(SRK) :: t
       INTEGER(SIK) :: N,i,irow
@@ -1164,7 +1172,9 @@ MODULE LinearSolverTypes
       ENDIF
       CALL dmallocA(solver%IPIV,solver%A%n)
 
-      CALL solver%M%init(solver%A%n,0)
+      CALL pList%add('PL->n',solver%A%n)
+      CALL pList%add('PL->m',0_SNK)
+      CALL solver%M%init(pList)
       SELECTTYPE(M => solver%M); TYPE IS(DenseSquareMatrixType)
         SELECTTYPE(A => solver%A); TYPE IS(DenseSquareMatrixType)
           M=A

@@ -22,10 +22,12 @@ PROGRAM testLinearSolver
   USE LinearSolverTypes
   USE MatrixTypes
   USE ParallelEnv
+  USE ParameterLists
   IMPLICIT NONE
   
   TYPE(MPI_EnvType) :: mpiTestEnv
   TYPE(ExceptionHandlerType),POINTER :: e
+  TYPE(ParamType) :: pList
   
 #ifdef HAVE_PETSC
 #include <finclude/petsc.h>
@@ -89,7 +91,10 @@ CONTAINS
       ALLOCATE(LinearSolverType_Direct :: thisLS)
 
       ALLOCATE(DenseSquareMatrixType :: thisA)
-      CALL thisA%init(2,1) !2x2, symmetric
+      CALL pList%clear()
+      CALL pList%add('PL->n',2_SNK)
+      CALL pList%add('PL->m',1_SNK)
+      CALL thisA%init(pList) !2x2, symmetric
       ALLOCATE(thisX(2))
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Direct)
         !first build one by hand to test clear
@@ -103,7 +108,10 @@ CONTAINS
         ALLOCATE(thisLS%b(2))
         ALLOCATE(thisLS%IPIV(2))
         ALLOCATE(DenseSquareMatrixType :: thisLS%M)
-        CALL thisLS%M%init(10,10)
+        CALL pList%clear()
+        CALL pList%add('PL->n',10_SNK)
+        CALL pList%add('PL->m',10_SNK)
+        CALL thisLS%M%init(pList)
         thisLS%hasA=.TRUE.
         thisLS%hasB=.TRUE.
         thisLS%isDecomposed=.TRUE.
@@ -128,7 +136,10 @@ CONTAINS
     !test Iterative
       ALLOCATE(LinearSolverType_Iterative :: thisLS)
       ALLOCATE(DenseSquareMatrixType :: thisA)
-      CALL thisA%init(2,1) !2x2, symmetric
+      CALL pList%clear()
+      CALL pList%add('PL->n',2_SNK)
+      CALL pList%add('PL->m',1_SNK)
+      CALL thisA%init(pList) !2x2, symmetric
       ALLOCATE(thisX(2))
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
         !first build one by hand to test clear
@@ -144,7 +155,10 @@ CONTAINS
         thisLS%isDecomposed=.TRUE.
         ALLOCATE(thisLS%b(2))
         ALLOCATE(DenseSquareMatrixType :: thisLS%M)
-        CALL thisLS%M%init(10,10)
+        CALL pList%clear()
+        CALL pList%add('PL->n',10_SNK)
+        CALL pList%add('PL->m',10_SNK)
+        CALL thisLS%M%init(pList)
         thisLS%normType=2
         thisLS%maxIters=2
         thisLS%iters=2
@@ -282,7 +296,10 @@ CONTAINS
       ALLOCATE(LinearSolverType_Direct :: thisLS)
       CALL thisLS%init(1,MPIEnv,OMPEnv,'testTimer')
       ALLOCATE(DenseSquareMatrixType :: thisLS%M)
-      CALL thisLS%M%init(10,10)
+      CALL pList%clear()
+      CALL pList%add('PL->n',10_SNK)
+      CALL pList%add('PL->m',10_SNK)
+      CALL thisLS%M%init(pList)
       thisLS%isDecomposed=.TRUE.
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Direct)
         ALLOCATE(thisLS%IPIV(10))
@@ -303,7 +320,10 @@ CONTAINS
       ALLOCATE(LinearSolverType_Iterative :: thisLS)
       CALL thisLS%init(1,MPIEnv,OMPEnv,'testTimer')
       ALLOCATE(DenseSquareMatrixType :: thisLS%M)
-      CALL thisLS%M%init(10,10)
+      CALL pList%clear()
+      CALL pList%add('PL->n',10_SNK)
+      CALL pList%add('PL->m',10_SNK)
+      CALL thisLS%M%init(pList)
       thisLS%isDecomposed=.TRUE.
       CALL thisLS%updatedA()
       !Check
@@ -344,7 +364,10 @@ CONTAINS
       ALLOCATE(DenseSquareMatrixType :: thisA)
       thisLS%A => thisA
       CALL thisLS%solve()
-      CALL thisA%init(3,0)
+      CALL pList%clear()
+      CALL pList%add('PL->n',3_SNK)
+      CALL pList%add('PL->m',0_SNK)
+      CALL thisA%init(pList)
       ALLOCATE(thisX(4))
       thisLS%X => thisX
       CALL thisLS%solve()
@@ -354,7 +377,10 @@ CONTAINS
       DEALLOCATE(thisA)
       ALLOCATE(DenseRectMatrixType :: thisA)
       thisLS%A => thisA
-      CALL thisA%init(3,7)
+      CALL pList%clear()
+      CALL pList%add('PL->n',3_SNK)
+      CALL pList%add('PL->m',7_SNK)
+      CALL thisA%init(pList)
       CALL thisLS%solve()
       CALL thisA%clear()
       DEALLOCATE(thisA)
@@ -365,7 +391,10 @@ CONTAINS
       ALLOCATE(DenseSquareMatrixType :: thisA)
 
       !Singular dense matrix
-      CALL thisA%init(3,0)
+      CALL pList%clear()
+      CALL pList%add('PL->n',3_SNK)
+      CALL pList%add('PL->m',0_SNK)
+      CALL thisA%init(pList)
       !A=[1 2 3]  b=[6]   x=[*]
       !  [1 3 2]    [6]     [*]
       !  [1 3 2]    [6]     [*]
@@ -400,7 +429,10 @@ CONTAINS
       CALL thisLS%init(1,MPIEnv,OMPEnv,'testTimer')
       !Set A
       ALLOCATE(DenseSquareMatrixType :: thisA)
-      CALL thisA%init(4,0)
+      CALL pList%clear()
+      CALL pList%add('PL->n',4_SNK)
+      CALL pList%add('PL->m',0_SNK)
+      CALL thisA%init(pList)
       !A=[1 2 3 4]  b=[10]   x=[1]
       !  [1 3 2 3]    [9]      [1]
       !  [3 2 3 1]    [9]      [1]
@@ -451,7 +483,10 @@ CONTAINS
       !A=[ 4 -1  0]
       !  [-1  4 -1]
       !  [ 0 -1  4]
-      CALL thisA%init(3,1)
+      CALL pList%clear()
+      CALL pList%add('PL->n',3_SNK)
+      CALL pList%add('PL->m',1_SNK)
+      CALL thisA%init(pList)
       CALL thisA%set(1,1,4._SRK)
       CALL thisA%set(1,2,-1._SRK)
       CALL thisA%set(2,2,4._SRK)
@@ -509,7 +544,10 @@ CONTAINS
       !get result, the details will be test in CGNR
       CALL thisLS%init(1,MPIEnv,OMPEnv)
       ALLOCATE(SparseMatrixType :: thisA)
-      CALL thisA%init(9,33)
+      CALL pList%clear()
+      CALL pList%add('PL->n',9_SNK)
+      CALL pList%add('PL->m',33_SNK)
+      CALL thisA%init(pList)
       SELECTTYPE(thisA); TYPE IS(SparseMatrixType)
         CALL thisA%setShape(1,1,4.0_SRK)
         CALL thisA%setShape(1,2,-1.0_SRK)
@@ -570,7 +608,10 @@ CONTAINS
       !   [1 2]    [2]
       !   [1 3]    [2]
       ALLOCATE(DenseRectMatrixType :: thisA)
-      CALL thisA%init(3,2)
+      CALL pList%clear()
+      CALL pList%add('PL->n',3_SNK)
+      CALL pList%add('PL->m',2_SNK)
+      CALL thisA%init(pList)
       CALL thisA%set(1,1,1._SRK)
       CALL thisA%set(1,2,1._SRK)
       CALL thisA%set(2,1,1._SRK)
@@ -607,7 +648,10 @@ CONTAINS
       !  [2 5 -2]    [6]      [*]
       !  [1 0 1 ]    [4]      [*]
       !Set A
-      CALL thisA%init(3,0)
+      CALL pList%clear()
+      CALL pList%add('PL->n',3_SNK)
+      CALL pList%add('PL->m',0_SNK)
+      CALL thisA%init(pList)
       CALL thisA%set(1,1,1._SRK)
       CALL thisA%set(1,2,0._SRK)
       CALL thisA%set(1,3,1._SRK)
@@ -642,7 +686,10 @@ CONTAINS
       !  [2 5 -2]    [6]      [2]
       !  [3 6 9 ]    [42]     [3]
       !Set A
-      CALL thisA%init(3,0)
+      CALL pList%clear()
+      CALL pList%add('PL->n',3_SNK)
+      CALL pList%add('PL->m',0_SNK)
+      CALL thisA%init(pList)
       CALL thisA%set(1,1,1._SRK)
       CALL thisA%set(1,2,0._SRK)
       CALL thisA%set(1,3,1._SRK)
@@ -719,7 +766,10 @@ CONTAINS
       !A=[ 4 -1  0]
       !  [-1  4 -1]
       !  [ 0  0  0]
-      CALL thisA%init(3,1)
+      CALL pList%clear()
+      CALL pList%add('PL->n',3_SNK)
+      CALL pList%add('PL->m',1_SNK)
+      CALL thisA%init(pList)
       CALL thisA%set(1,1,4._SRK)
       CALL thisA%set(1,2,-1._SRK)
       CALL thisA%set(2,2,4._SRK)
@@ -747,7 +797,10 @@ CONTAINS
       !A=[ 4 -1  0]
       !  [-1  4 -1]
       !  [ 0 -1  4]
-      CALL thisA%init(3,1)
+      CALL pList%clear()
+      CALL pList%add('PL->n',3_SNK)
+      CALL pList%add('PL->m',1_SNK)
+      CALL thisA%init(pList)
       CALL thisA%set(1,1,4._SRK)
       CALL thisA%set(1,2,-1._SRK)
       CALL thisA%set(2,2,4._SRK)
@@ -808,7 +861,10 @@ CONTAINS
       !A=[ O.5  -1    0]
       !  [-1   0.5   -1]
       !  [ 0    -1  0.5]
-      CALL thisA%init(3,1)  !symmetric
+      CALL pList%clear()
+      CALL pList%add('PL->n',3_SNK)
+      CALL pList%add('PL->m',1_SNK)
+      CALL thisA%init(pList)  !symmetric
       CALL thisA%set(1,1,0.5_SRK)
       CALL thisA%set(1,2,-1._SRK)
       CALL thisA%set(2,2,0.5_SRK)
@@ -830,7 +886,10 @@ CONTAINS
       !get result, the details will be test in CGNR
       CALL thisLS%init(1,MPIEnv,OMPEnv)
       ALLOCATE(SparseMatrixType :: thisA)
-      CALL thisA%init(9,33)
+      CALL pList%clear()
+      CALL pList%add('PL->n',9_SNK)
+      CALL pList%add('PL->m',33_SNK)
+      CALL thisA%init(pList)
       SELECTTYPE(thisA); TYPE IS(SparseMatrixType)
         CALL thisA%setShape(1,1,4.0_SRK)
         CALL thisA%setShape(1,2,-1.0_SRK)
@@ -890,7 +949,10 @@ CONTAINS
       !   [1 2]    [2]
       !   [1 3]    [2]
       ALLOCATE(DenseRectMatrixType :: thisA)
-      CALL thisA%init(3,2)
+      CALL pList%clear()
+      CALL pList%add('PL->n',3_SNK)
+      CALL pList%add('PL->m',2_SNK)
+      CALL thisA%init(pList)
       CALL thisA%set(1,1,1._SRK)
       CALL thisA%set(1,2,1._SRK)
       CALL thisA%set(2,1,1._SRK)
@@ -1001,7 +1063,10 @@ CONTAINS
       !Correct input
       CALL thisLS%init(1,MPIEnv,OMPEnv)
       ALLOCATE(SparseMatrixType :: thisA)
-      CALL thisA%init(9,33)
+      CALL pList%clear()
+      CALL pList%add('PL->n',9_SNK)
+      CALL pList%add('PL->m',33_SNK)
+      CALL thisA%init(pList)
       !A =  4    -1     0    -1     0     0     0     0     0
       !    -1     4    -1     0    -1     0     0     0     0
       !     0    -1     4     0     0    -1     0     0     0
@@ -1097,7 +1162,10 @@ CONTAINS
       CALL thisLS%init(1,MPIEnv,OMPEnv,'testTimer') !1 for BiCGSTAB
       ALLOCATE(SparseMatrixType :: thisA)
       CALL thisA%clear()
-      CALL thisA%init(9,33)
+      CALL pList%clear()
+      CALL pList%add('PL->n',9_SNK)
+      CALL pList%add('PL->m',33_SNK)
+      CALL thisA%init(pList)
       !A =  4    -1     0    -1     0     0     0     0     0
       !    -1     4    -1     0    -1     0     0     0     0
       !     0    -1     4     0     0    -1     0     0     0
@@ -1193,7 +1261,10 @@ CONTAINS
       CALL thisLS%init(1,MPIEnv,OMPEnv,'testTimer') !1 for BiCGSTAB
       !build thisA
       ALLOCATE(DenseSquareMatrixType :: thisA)
-      CALL thisA%init(9,1) !9x9, symmetric.
+      CALL pList%clear()
+      CALL pList%add('PL->n',9_SNK)
+      CALL pList%add('PL->m',1_SNK)
+      CALL thisA%init(pList) !9x9, symmetric.
       DO i=1,9
         CALL thisA%set(i,i,4.0_SRK)
         IF((i < 9).AND.((i /= 3).AND.(i /= 6))) THEN
@@ -1273,7 +1344,10 @@ CONTAINS
       !A=[ 4 -1  0]
       !  [-1  4 -1]
       !  [ 0 -1  4]
-      CALL thisA%init(3,1)
+      CALL pList%clear()
+      CALL pList%add('PL->n',3_SNK)
+      CALL pList%add('PL->m',1_SNK)
+      CALL thisA%init(pList)
       CALL thisA%set(1,1,4._SRK)
       CALL thisA%set(1,2,-1._SRK)
       CALL thisA%set(2,2,4._SRK)
@@ -1301,7 +1375,10 @@ CONTAINS
       !   [1 2]    [2]
       !   [1 3]    [2]
       ALLOCATE(DenseRectMatrixType :: thisA)
-      CALL thisA%init(3,2)
+      CALL pList%clear()
+      CALL pList%add('PL->n',3_SNK)
+      CALL pList%add('PL->m',2_SNK)
+      CALL thisA%init(pList)
       CALL thisA%set(1,1,1._SRK)
       CALL thisA%set(1,2,1._SRK)
       CALL thisA%set(2,1,1._SRK)
@@ -1339,7 +1416,10 @@ CONTAINS
       !   [1 2 3]     [3]
       !set A
       ALLOCATE(DenseRectMatrixType :: thisA)
-      CALL thisA%init(2,3)
+      CALL pList%clear()
+      CALL pList%add('PL->n',2_SNK)
+      CALL pList%add('PL->m',3_SNK)
+      CALL thisA%init(pList)
       CALL thisA%set(1,1,1._SRK)
       CALL thisA%set(1,2,1._SRK)
       CALL thisA%set(1,3,1._SRK)
@@ -1376,7 +1456,10 @@ CONTAINS
       !   [1 2]    [2]
       !   [1 3]    [2]
       ALLOCATE(DenseRectMatrixType :: thisA)
-      CALL thisA%init(3,2)
+      CALL pList%clear()
+      CALL pList%add('PL->n',3_SNK)
+      CALL pList%add('PL->m',2_SNK)
+      CALL thisA%init(pList)
       CALL thisA%set(1,1,1._SRK)
       CALL thisA%set(1,2,1._SRK)
       CALL thisA%set(2,1,1._SRK)
@@ -1415,7 +1498,10 @@ CONTAINS
       !A=[ 4 -1  0]
       !  [-1  4 -1]
       !  [ 0 -1  4]
-      CALL thisA%init(3,1)
+      CALL pList%clear()
+      CALL pList%add('PL->n',3_SNK)
+      CALL pList%add('PL->m',1_SNK)
+      CALL thisA%init(pList)
       CALL thisA%set(1,1,4._SRK)
       CALL thisA%set(1,2,-1._SRK)
       CALL thisA%set(2,2,4._SRK)
@@ -1450,7 +1536,10 @@ CONTAINS
       !A=[ 4 -1  0]
       !  [-1  4 -1]
       !  [ 0 -1  4]
-      CALL thisA%init(3,7)
+      CALL pList%clear()
+      CALL pList%add('PL->n',3_SNK)
+      CALL pList%add('PL->m',7_SNK)
+      CALL thisA%init(pList)
       SELECTTYPE(thisA); TYPE IS(SparseMatrixType)
         CALL thisA%setShape(1,1,4._SRK)
         CALL thisA%setShape(1,2,-1._SRK)
@@ -1491,7 +1580,10 @@ CONTAINS
       !A=[ 4 -1  0]
       !  [-1  4 -1]
       !  [ 0 -1  4]
-      CALL thisA%init(3,1)
+      CALL pList%clear()
+      CALL pList%add('PL->n',3_SNK)
+      CALL pList%add('PL->m',1_SNK)
+      CALL thisA%init(pList)
       CALL thisA%set(1,1,4._SRK)
       CALL thisA%set(1,2,-1._SRK)
       CALL thisA%set(2,2,4._SRK)
