@@ -196,7 +196,7 @@ PROGRAM testMatrixTypes
       CALL pList%add('testPL->m',10_SNK)
       CALL pList%validate(pList,optList)
       eMatrixType => NULL()
-      CALL thisMatrix%init(pList)
+      CALL thisMatrix%init_param(pList)
       eMatrixType => e
       SELECTTYPE(thisMatrix)
         TYPE IS(SparseMatrixType)
@@ -219,7 +219,7 @@ PROGRAM testMatrixTypes
       !now check init without m being provided
       CALL pList%add('testPL->n',10_SNK)
       CALL pList%validate(pList,optList)
-      CALL thisMatrix%init(pList) !expect exception
+      CALL thisMatrix%init_param(pList) !expect exception
       IF(thisMatrix%isInit) THEN
         WRITE(*,*) 'CALL sparse%init(...) FAILED!'
         STOP 666
@@ -227,11 +227,11 @@ PROGRAM testMatrixTypes
       CALL thisMatrix%clear()
         
       !init it twice so on 2nd init, isInit==.TRUE.
-      CALL thisMatrix%init(pList)
+      CALL thisMatrix%init_param(pList)
       SELECTTYPE(thisMatrix)
         TYPE IS(SparseMatrixType); thisMatrix%nnz=1
       ENDSELECT
-      CALL thisMatrix%init(pList)
+      CALL thisMatrix%init_param(pList)
       SELECTTYPE(thisMatrix)
         TYPE IS(SparseMatrixType)
           IF(thisMatrix%nnz/=1) THEN !nnz/=1 implies it was changed, and thus fail
@@ -245,7 +245,7 @@ PROGRAM testMatrixTypes
       CALL pList%add('testPL->n',-1_SNK)
       CALL pList%add('testPL->m',10_SNK)
       CALL pList%validate(pList,optList)
-      CALL thisMatrix%init(pList) !expect exception
+      CALL thisMatrix%init_param(pList) !expect exception
       IF(thisMatrix%isInit) THEN
         WRITE(*,*) 'CALL sparse%init(...) FAILED!'
         STOP 666
@@ -255,7 +255,7 @@ PROGRAM testMatrixTypes
       !n<1, and m not provided
       CALL pList%add('testPL->n',-1_SNK)
       CALL pList%validate(pList,optList)
-      CALL thisMatrix%init(pList) !expect exception
+      CALL thisMatrix%init_param(pList) !expect exception
       IF(thisMatrix%isInit) THEN
         WRITE(*,*) 'CALL sparse%init(...) FAILED!'
         STOP 666
@@ -704,7 +704,7 @@ PROGRAM testMatrixTypes
       CALL pList%add('testPL->m',0_SNK)
       CALL pList%validate(pList,optList)
       eMatrixType => NULL()
-      CALL thisMatrix%init(pList) !n=10, not symmetric
+      CALL thisMatrix%init_param(pList) !n=10, not symmetric
       eMatrixType => e
       SELECTTYPE(thisMatrix)
         TYPE IS(DenseSquareMatrixType)
@@ -724,7 +724,7 @@ PROGRAM testMatrixTypes
       CALL pList%add('testPL->n',10_SNK)
       CALL pList%add('testPL->m',10_SNK)
       CALL pList%validate(pList,optList)
-      CALL thisMatrix%init(pList) !n=10, symmetric
+      CALL thisMatrix%init_param(pList) !n=10, symmetric
       SELECTTYPE(thisMatrix)
         TYPE IS(DenseSquareMatrixType)
           IF(((.NOT. thisMatrix%isInit).OR.(thisMatrix%n /= 10)) &
@@ -739,11 +739,11 @@ PROGRAM testMatrixTypes
       CALL pList%add('testPL->n',10_SNK)
       CALL pList%add('testPL->m',10_SNK)
       CALL pList%validate(pList,optList)
-      CALL thisMatrix%init(pList) !n=10, symmetric
+      CALL thisMatrix%init_param(pList) !n=10, symmetric
       SELECTTYPE(thisMatrix)
         TYPE IS(DenseSquareMatrixType); thisMatrix%isSymmetric=.FALSE.
       ENDSELECT
-      CALL thisMatrix%init(pList) !n=10, symmetric
+      CALL thisMatrix%init_param(pList) !n=10, symmetric
       SELECTTYPE(thisMatrix)
         TYPE IS(DenseSquareMatrixType)
           IF(thisMatrix%isSymmetric) THEN
@@ -1027,7 +1027,7 @@ PROGRAM testMatrixTypes
       CALL pList%add('testPL->m',0_SNK)
       CALL pList%validate(pList,optList)
       eMatrixType => NULL()
-      CALL thisMatrix%init(pList) !n=10, not symmetric
+      CALL thisMatrix%init_param(pList) !n=10, not symmetric
       eMatrixType => e
       SELECTTYPE(thisMatrix)
         TYPE IS(TriDiagMatrixType)
@@ -1047,7 +1047,7 @@ PROGRAM testMatrixTypes
       CALL pList%add('testPL->n',10_SNK)
       CALL pList%add('testPL->m',10_SNK)
       CALL pList%validate(pList,optList)
-      CALL thisMatrix%init(pList) !n=10, symmetric
+      CALL thisMatrix%init_param(pList) !n=10, symmetric
       SELECTTYPE(thisMatrix)
         TYPE IS(TriDiagMatrixType)
           IF(((.NOT. thisMatrix%isInit).OR.(thisMatrix%n /= 10)) &
@@ -1062,11 +1062,11 @@ PROGRAM testMatrixTypes
       CALL pList%add('testPL->n',10_SNK)
       CALL pList%add('testPL->m',10_SNK)
       CALL pList%validate(pList,optList)
-      CALL thisMatrix%init(pList) !n=10, symmetric
+      CALL thisMatrix%init_param(pList) !n=10, symmetric
       SELECTTYPE(thisMatrix)
         TYPE IS(TriDiagMatrixType); thisMatrix%isSymmetric=.FALSE.
       ENDSELECT
-      CALL thisMatrix%init(pList) !n=10, symmetric
+      CALL thisMatrix%init_param(pList) !n=10, symmetric
       SELECTTYPE(thisMatrix)
         TYPE IS(TriDiagMatrixType)
           IF(thisMatrix%isSymmetric) THEN
@@ -1080,7 +1080,7 @@ PROGRAM testMatrixTypes
       CALL pList%add('testPL->n',-1_SNK)
       CALL pList%add('testPL->m',100_SNK)
       CALL pList%validate(pList,optList)
-      CALL thisMatrix%init(pList) !expect exception
+      CALL thisMatrix%init_param(pList) !expect exception
       IF(thisMatrix%isInit) THEN
         WRITE(*,*) 'CALL tridiag%init(...) FAILED!'
         STOP 666
@@ -1272,7 +1272,7 @@ PROGRAM testMatrixTypes
       CALL pList%add('testPL->m',15_SNK)
       CALL pList%validate(pList,optList)
       eMatrixType => NULL()
-      CALL thisMatrix%init(pList)
+      CALL thisMatrix%init_param(pList)
       eMatrixType => e
       SELECTTYPE(thisMatrix)
         TYPE IS(DenseRectMatrixType)
@@ -1289,11 +1289,11 @@ PROGRAM testMatrixTypes
       ENDSELECT
       CALL thisMatrix%clear()
       !test with double init (isInit==true on 2nd try)
-      CALL thisMatrix%init(pList)
+      CALL thisMatrix%init_param(pList)
       SELECTTYPE(thisMatrix)
         TYPE IS(DenseRectMatrixType); thisMatrix%m=1
       ENDSELECT
-      CALL thisMatrix%init(pList)
+      CALL thisMatrix%init_param(pList)
       SELECTTYPE(thisMatrix)
         TYPE IS(DenseRectMatrixType)
           IF(thisMatrix%m /= 1) THEN
@@ -1307,7 +1307,7 @@ PROGRAM testMatrixTypes
       CALL pList%add('testPL->n',-1_SNK)
       CALL pList%add('testPL->m',10_SNK)
       CALL pList%validate(pList,optList)
-      CALL thisMatrix%init(pList) !expect exception
+      CALL thisMatrix%init_param(pList) !expect exception
       IF(thisMatrix%isInit) THEN
         WRITE(*,*) 'CALL denserect%init(...) FAILED!'
         STOP 666
@@ -1318,7 +1318,7 @@ PROGRAM testMatrixTypes
       CALL pList%add('testPL->n',10_SNK)
       CALL pList%add('testPL->m',-1_SNK)
       CALL pList%validate(pList,optList)
-      CALL thisMatrix%init(pList) !expect exception
+      CALL thisMatrix%init_param(pList) !expect exception
       IF(thisMatrix%isInit) THEN
         WRITE(*,*) 'CALL denserect%init(...) FAILED!'
         STOP 666
@@ -1550,7 +1550,7 @@ PROGRAM testMatrixTypes
       CALL pList%add('testPL->m',0_SNK)
       CALL pList%validate(pList,optList)
       eMatrixType => NULL()
-      CALL thisMatrix%init(pList) !n=10, not symmetric (0), sparse (0)
+      CALL thisMatrix%init_param(pList) !n=10, not symmetric (0), sparse (0)
       eMatrixType => e
       SELECTTYPE(thisMatrix)
         TYPE IS(PETScMatrixType)
@@ -1571,7 +1571,7 @@ PROGRAM testMatrixTypes
       CALL pList%add('testPL->m',1_SNK)
       CALL pList%add('testPL->mattype',0_SNK)
       CALL pList%validate(pList,optList)
-      CALL thisMatrix%init(pList) !n=10, symmetric (1), sparse (0)
+      CALL thisMatrix%init_param(pList) !n=10, symmetric (1), sparse (0)
       SELECTTYPE(thisMatrix)
         TYPE IS(PETScMatrixType)
           IF(((.NOT. thisMatrix%isInit).OR.(thisMatrix%n /= 10)) &
@@ -1587,11 +1587,11 @@ PROGRAM testMatrixTypes
       CALL pList%add('testPL->m',1_SNK)
       CALL pList%add('testPL->mattype',0_SNK)
       CALL pList%validate(pList,optList)
-      CALL thisMatrix%init(pList) !n=10, symmetric (1), sparse (0)
+      CALL thisMatrix%init_param(pList) !n=10, symmetric (1), sparse (0)
       SELECTTYPE(thisMatrix)
         TYPE IS(PETScMatrixType); thisMatrix%isSymmetric=.FALSE.
       ENDSELECT
-      CALL thisMatrix%init(pList) !n=10, symmetric (1), sparse (0)
+      CALL thisMatrix%init_param(pList) !n=10, symmetric (1), sparse (0)
       SELECTTYPE(thisMatrix)
         TYPE IS(PETScMatrixType)
           IF(thisMatrix%isSymmetric) THEN
@@ -1606,7 +1606,7 @@ PROGRAM testMatrixTypes
       CALL pList%add('testPL->m',100_SNK)
       CALL pList%add('testPL->mattype',0_SNK)
       CALL pList%validate(pList,optList)
-      CALL thisMatrix%init(pList) !expect exception
+      CALL thisMatrix%init_param(pList) !expect exception
       IF(thisMatrix%isInit) THEN
         WRITE(*,*) 'CALL petscsparse%init(...) FAILED!'
         STOP 666

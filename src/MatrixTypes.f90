@@ -108,8 +108,7 @@ MODULE MatrixTypes
       !> Deferred routine for initializing the matrix
       PROCEDURE(int_matrix_init_param_sub),DEFERRED,PASS :: init_param
       !> Deferred routine for initializing the matrix
-      PROCEDURE(int_matrix_init_exp_sub),DEFERRED,PASS :: init_exp
-      GENERIC :: init => init_param,init_exp
+      PROCEDURE(int_matrix_init_exp_sub),DEFERRED,PASS :: init
       !> Deferred routine for setting matrix values
       PROCEDURE(int_matrix_set_sub),DEFERRED,PASS :: set
   ENDTYPE MatrixType    
@@ -183,7 +182,7 @@ MODULE MatrixTypes
       PROCEDURE,PASS :: init_param => init_PETScMatrixParam
       !> @copybrief MatrixTypes::init_PETScMatrixType
       !> @copydetails MatrixTypes::init_PETScMatrixType
-      PROCEDURE,PASS :: init_exp => init_PETScMatrixType
+      PROCEDURE,PASS :: init => init_PETScMatrixType
       !> @copybrief MatrixTypes::set_PETScMatrixType
       !> @copydetails MatrixTypes::set_PETScMatrixType
       PROCEDURE,PASS :: set => set_PETScMatrixType
@@ -213,7 +212,7 @@ MODULE MatrixTypes
       PROCEDURE,PASS :: init_param => init_DenseSquareMatrixParam
       !> @copybrief MatrixTypes::init_DenseSquareMatrixType
       !> @copydetails MatrixTypes::init_DenseSquareMatrixType
-      PROCEDURE,PASS :: init_exp => init_DenseSquareMatrixType
+      PROCEDURE,PASS :: init => init_DenseSquareMatrixType
       !> @copybrief MatrixTypes::set_DenseSquareMatrixType
       !> @copydetails MatrixTypes::set_DenseSquareMatrixType
       PROCEDURE,PASS :: set => set_DenseSquareMatrixType
@@ -234,7 +233,7 @@ MODULE MatrixTypes
       PROCEDURE,PASS :: init_param => init_DenseRectMatrixParam
       !> @copybrief MatrixTypes::init_DenseRectMatrixType
       !> @copydetails MatrixTypes::init_DenseRectMatrixType
-      PROCEDURE,PASS :: init_exp => init_DenseRectMatrixType
+      PROCEDURE,PASS :: init => init_DenseRectMatrixType
       !> @copybrief MatrixTypes::set_DenseRectMatrixType
       !> @copydetails MatrixTypes::set_DenseRectMatrixType
       PROCEDURE,PASS :: set => set_DenseRectMatrixType
@@ -256,7 +255,7 @@ MODULE MatrixTypes
       PROCEDURE,PASS :: init_param => init_TriDiagMatrixParam
       !> @copybrief MatrixTypes::init_TriDiagMatrixType
       !> @copydetails MatrixTypes::init_TriDiagMatrixType
-      PROCEDURE,PASS :: init_exp => init_TriDiagMatrixType
+      PROCEDURE,PASS :: init => init_TriDiagMatrixType
       !> @copybrief MatrixTypes::set_TriDiagMatrixType
       !> @copydetails MatrixTypes::set_TriDiagMatrixType
       PROCEDURE,PASS :: set => set_TriDiagMatrixType
@@ -292,7 +291,7 @@ MODULE MatrixTypes
       PROCEDURE,PASS :: init_param => init_SparseMatrixParam
       !> @copybrief MatrixTypes::init_SparseMatrixType
       !> @copydetails MatrixTypes::init_SparseMatrixType
-      PROCEDURE,PASS :: init_exp => init_SparseMatrixType
+      PROCEDURE,PASS :: init => init_SparseMatrixType
       !> @copybrief MatrixTypes::set_SparseMatrixType
       !> @copydetails MatrixTypes::set_SparseMatrixType
       PROCEDURE,PASS :: set => set_SparseMatrixType
