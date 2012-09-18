@@ -2576,6 +2576,7 @@ PROGRAM testParameterLists
     someParam=testParam
     WRITE(*,*) '  Passed: ASSIGNMENT(=) StringType (STR)'
     !Clear the variables for the next call
+    DEALLOCATE(valstr1a)
     CALL testClear()
     
   ENDSUBROUTINE testSTR1a
