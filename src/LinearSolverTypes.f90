@@ -44,6 +44,7 @@ MODULE LinearSolverTypes
   USE ParallelEnv
   USE Times
   USE MatrixTypes
+  USE ParameterLists
   USE BLAS
   IMPLICIT NONE
   
@@ -243,23 +244,26 @@ MODULE LinearSolverTypes
             
             
 #ifdef HAVE_PETSC
-            !initialize PETSc environment
-            CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
-            
-            !create and initialize KSP
-            CALL KSPCreate(solver%MPIparallelEnv,solver%ksp,ierr)
-            CALL KSPSetOperators(solver%ksp,solver%a,solver%a,DIFFERENT_NONZERO_PATTERN,ierr)
-            CALL KSPSetFromOptions(solver%ksp,ierr)
-            
-            !set iterative solver type
-            SELECTCASE(solver%solverMethod)
-              CASE(1) ! BCGS
-                CALL KSPSetType(solver%ksp,KSPBCGS,ierr)
-              CASE(2) ! CGNR
-                CALL KSPSetType(solver%ksp,KSPCGNE,ierr)
-              CASE(3) ! GMRES
-                CALL KSPSetType(solver%ksp,KSPGMRES,ierr)
-            ENDSELECT
+            IF (solver%hasA) THEN
+              SELECTTYPE(A => solver%A)
+                TYPE IS(PETScMatrixType)
+                  !create and initialize KSP
+                  !CALL KSPCreate(solver%MPIparallelEnv,solver%ksp,ierr)
+                  CALL KSPCreate(MPI_COMM_WORLD,solver%ksp,ierr)
+                  CALL KSPSetOperators(solver%ksp,A,A,DIFFERENT_NONZERO_PATTERN,ierr)
+                  CALL KSPSetFromOptions(solver%ksp,ierr)
+                  
+                  !set iterative solver type
+                  SELECTCASE(solver%solverMethod)
+                    CASE(1) ! BCGS
+                      CALL KSPSetType(solver%ksp,KSPBCGS,ierr)
+                    CASE(2) ! CGNR
+                      CALL KSPSetType(solver%ksp,KSPCGNE,ierr)
+                    CASE(3) ! GMRES
+                      CALL KSPSetType(solver%ksp,KSPGMRES,ierr)
+                  ENDSELECT
+              ENDSELECT
+            ENDIF
 #endif
 
             solver%solverMethod=solverMethod
@@ -347,7 +351,6 @@ MODULE LinearSolverTypes
       
 #ifdef HAVE_PETSC
       CALL KSPDestroy(solver%ksp,ierr)
-      CALL PETSCFinalize(ierr)
 #endif 
 
       !No timer clear function-just call toc instead
@@ -513,10 +516,7 @@ MODULE LinearSolverTypes
                       'is not implemented, CGNR method is used instead.')
 
 #ifdef HAVE_PETSC                      
-              TYPE IS(PETScDenseSquareMatrixType)
-                CALL KSPSolve(solver%ksp,solver%b,solver%x,ierr)
-
-              TYPE IS(PETScSparseMatrixType)
+              TYPE IS(PETScMatrixType)
                 CALL KSPSolve(solver%ksp,solver%b,solver%x,ierr)
 #endif
                 
@@ -541,10 +541,7 @@ MODULE LinearSolverTypes
                   myName//'- CGNR method for sparse system '// &
                     'is not implemented, BiCGSTAB method is used instead.')
 #ifdef HAVE_PETSC                    
-              TYPE IS(PETScDenseSquareMatrixType)
-                CALL KSPSolve(solver%ksp,solver%b,solver%x,ierr)
-
-              TYPE IS(PETScSparseMatrixType)
+              TYPE IS(PETScMatrixType)
                 CALL KSPSolve(solver%ksp,solver%b,solver%x,ierr)
 #endif
               CLASS DEFAULT
@@ -555,10 +552,7 @@ MODULE LinearSolverTypes
           CASE(3) !GMRES
             SELECTTYPE(A=>solver%A)
 #ifdef HAVE_PETSC                    
-              TYPE IS(PETScDenseSquareMatrixType)
-                CALL KSPSolve(solver%ksp,solver%b,solver%x,ierr)
-
-              TYPE IS(PETScSparseMatrixType)
+              TYPE IS(PETScMatrixType)
                 CALL KSPSolve(solver%ksp,solver%b,solver%x,ierr)
 #endif  
             ENDSELECT
@@ -713,7 +707,7 @@ MODULE LinearSolverTypes
         solver%convTol=convTol
         solver%maxIters=maxIters
 #ifdef HAVE_PETSC
-        CALL KSPSetTolerances(solver%ksp,rtol,abstol,dtol,maxits,ierr)
+!        CALL KSPSetTolerances(solver%ksp,rtol,abstol,dtol,maxits,ierr)
 #endif
       ENDIF
       IF(localalloc) DEALLOCATE(eLinearSolverType)
@@ -756,6 +750,7 @@ MODULE LinearSolverTypes
 !>
     SUBROUTINE DecomposeBiCGSTAB_DenseSquare(solver)
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
+      TYPE(ParamType) :: pList
 
       INTEGER(SIK) :: i
       solver%isDecomposed=.FALSE.
@@ -764,7 +759,9 @@ MODULE LinearSolverTypes
         DEALLOCATE(solver%M)
       ENDIF
       ALLOCATE(DenseSquareMatrixType :: solver%M)
-      CALL solver%M%init(solver%A%n,0)
+      CALL pList%add('PL->n',solver%A%n)
+      CALL pList%add('PL->m',0_SNK)
+      CALL solver%M%init(pList)
       DO i=1,solver%M%n
         CALL solver%M%set(i,i,1.0_SRK)
       ENDDO
@@ -922,6 +919,7 @@ MODULE LinearSolverTypes
     SUBROUTINE DecomposePLU_TriDiag(solver)
       CHARACTER(LEN=*),PARAMETER :: myName='decomposePLU_TriDiag'
       CLASS(LinearSolverType_Base),INTENT(INOUT) :: solver
+      TYPE(ParamType) :: pList
 
       INTEGER(SIK) :: i
       REAL(SRK) :: t
@@ -959,7 +957,9 @@ MODULE LinearSolverTypes
             RETURN
           ENDIF
 
-          CALL solver%M%init(A%n,0)
+          CALL pList%add('PL->n',A%n)
+          CALL pList%add('PL->m',0_SNK)
+          CALL solver%M%init(pList)
           SELECTTYPE(M => solver%M); TYPE IS(TriDiagMatrixType)
             M%a(2,1)=1.0_SRK/A%a(2,1)
             DO i=1,A%n-1
@@ -1149,6 +1149,7 @@ MODULE LinearSolverTypes
 !>
     SUBROUTINE DecomposePLU_DenseSquare(solver)
       CLASS(LinearSolverType_Direct),INTENT(INOUT) :: solver
+      TYPE(ParamType) :: pList
 
       REAL(SRK) :: t
       INTEGER(SIK) :: N,i,irow
@@ -1171,7 +1172,9 @@ MODULE LinearSolverTypes
       ENDIF
       CALL dmallocA(solver%IPIV,solver%A%n)
 
-      CALL solver%M%init(solver%A%n,0)
+      CALL pList%add('PL->n',solver%A%n)
+      CALL pList%add('PL->m',0_SNK)
+      CALL solver%M%init(pList)
       SELECTTYPE(M => solver%M); TYPE IS(DenseSquareMatrixType)
         SELECTTYPE(A => solver%A); TYPE IS(DenseSquareMatrixType)
           M=A
