@@ -45,8 +45,15 @@ MODULE ParallelEnv
   
 #ifdef HAVE_MPI
   INCLUDE 'mpif.h' 
+  INTEGER,PARAMETER :: PE_COMM_SELF=MPI_COMM_SELF
+  INTEGER,PARAMETER :: PE_COMM_WORLD=MPI_COMM_WORLD
+#else
+  INTEGER,PARAMETER :: PE_COMM_SELF=1
+  INTEGER,PARAMETER :: PE_COMM_WORLD=0
 #endif
 
+  PUBLIC :: PE_COMM_SELF
+  PUBLIC :: PE_COMM_WORLD
   PUBLIC :: MPI_EnvType
   PUBLIC :: OMP_EnvType
   PUBLIC :: ParallelEnvType
@@ -290,7 +297,7 @@ MODULE ParallelEnv
           ALLOCATE(eParEnv)
           localalloc=.TRUE.
         ENDIF
-        IF(myPE%comm /= MPI_COMM_WORLD) THEN
+        IF(myPE%comm /= MPI_COMM_WORLD .AND. myPE%comm /= MPI_COMM_SELF) THEN
           CALL MPI_Comm_free(myPE%comm,mpierr) !I think this is collective
           IF(mpierr /= MPI_SUCCESS) CALL eParEnv%raiseError(modName//'::'// &
             myName//' - call to MPI_Comm_free returned an error!')
