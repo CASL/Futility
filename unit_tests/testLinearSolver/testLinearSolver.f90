@@ -40,7 +40,7 @@ PROGRAM testLinearSolver
   CALL e%setStopOnError(.FALSE.)
   CALL e%setQuietMode(.TRUE.)
   eLinearSolverType => e
-  CALL mpiTestEnv%initialize(0)
+  CALL mpiTestEnv%initialize(PE_COMM_SELF)
   
 #ifdef HAVE_PETSC    
   CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
