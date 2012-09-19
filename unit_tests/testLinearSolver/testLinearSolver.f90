@@ -84,7 +84,7 @@ CONTAINS
 
       !initialize supporting variables
       ALLOCATE(MPIEnv,OMPEnv)
-      CALL MPIEnv%initialize(0)
+      CALL MPIEnv%initialize(PE_COMM_SELF)
       CALL OMPEnv%initialize(1)
 
     !test Direct
@@ -196,7 +196,7 @@ CONTAINS
 
       !initialize supporting variables
       ALLOCATE(MPIEnv,OMPEnv)
-      CALL MPIEnv%initialize(0)
+      CALL MPIEnv%initialize(PE_COMM_SELF)
       CALL OMPEnv%initialize(1)
    !test Direct
       ALLOCATE(LinearSolverType_Direct :: thisLS)
@@ -290,7 +290,7 @@ CONTAINS
 
       !initialize supporting variables
       ALLOCATE(MPIEnv,OMPEnv)
-      CALL MPIEnv%initialize(0)
+      CALL MPIEnv%initialize(PE_COMM_SELF)
       CALL OMPEnv%initialize(1)
     !test Direct
       ALLOCATE(LinearSolverType_Direct :: thisLS)
@@ -351,7 +351,7 @@ CONTAINS
 
       !initialize supporting variables
       ALLOCATE(MPIEnv,OMPEnv)
-      CALL MPIEnv%initialize(0)
+      CALL MPIEnv%initialize(PE_COMM_SELF)
       CALL OMPEnv%initialize(1)
       ALLOCATE(LinearSolverType_Direct :: thisLS)
       !Bad input, this part is just tested here.
@@ -997,7 +997,7 @@ CONTAINS
 
       !initialize supporting variables
       ALLOCATE(MPIEnv,OMPEnv)
-      CALL MPIEnv%initialize(0)
+      CALL MPIEnv%initialize(PE_COMM_SELF)
       CALL OMPEnv%initialize(1)
       ALLOCATE(LinearSolverType_Iterative :: thisLS)
     !Test setX0
@@ -1153,7 +1153,7 @@ CONTAINS
 
       !initialize supporting variables
       ALLOCATE(MPIEnv,OMPEnv)
-      CALL MPIEnv%initialize(0)
+      CALL MPIEnv%initialize(PE_COMM_SELF)
       CALL OMPEnv%initialize(1)
       ALLOCATE(LinearSolverType_Iterative :: thisLS)
 
