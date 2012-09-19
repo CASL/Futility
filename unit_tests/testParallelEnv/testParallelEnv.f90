@@ -122,13 +122,13 @@ PROGRAM testParallelEnv
   ENDIF
 #else
   WRITE(OUTPUT_UNIT,*) '  WARNING: EXECUTABLE NOT COMPILED FOR MPI'
-  CALL testMPI%initialize(PE_COMM_SELF)
+  CALL testMPI%initialize(0)
   IF(testMPI%comm /= 1 .OR. testMPI%nproc /= 1 .OR. testMPI%rank /= 0 &
      .OR. .NOT.testMPI%master .OR. .NOT.testMPI%isInit()) THEN
-    WRITE(OUTPUT_UNIT,*) 'CALL testMPI%initialize(PE_COMM_SELF) FAILED!'
+    WRITE(OUTPUT_UNIT,*) 'CALL testMPI%initialize(0) FAILED!'
     STOP 666
   ELSE
-    WRITE(OUTPUT_UNIT,*) '  Passed: CALL testMPI%initialize(PE_COMM_SELF)'
+    WRITE(OUTPUT_UNIT,*) '  Passed: CALL testMPI%initialize(0)'
   ENDIF
 #endif
   CALL testMPI%barrier()
@@ -319,7 +319,7 @@ PROGRAM testParallelEnv
     WRITE(*,*) 'CALL testPE%isInit() world%isInit() FAILED!'
     STOP 666
   ENDIF
-  CALL testPE%world%initialize(PE_COMM_SELF)
+  CALL testPE%world%initialize(0)
   IF(testPE%isInit()) THEN
     WRITE(*,*) 'CALL testPE%isInit() ASSOCIATED(space) FAILED!'
     STOP 666
@@ -329,7 +329,7 @@ PROGRAM testParallelEnv
     WRITE(*,*) 'CALL testPE%isInit() space%isInit() FAILED!'
     STOP 666
   ENDIF
-  CALL testPE%space%initialize(PE_COMM_SELF)
+  CALL testPE%space%initialize(0)
   IF(testPE%isInit()) THEN
     WRITE(*,*) 'CALL testPE%isInit() ASSOCIATED(angle) FAILED!'
     STOP 666
@@ -339,7 +339,7 @@ PROGRAM testParallelEnv
     WRITE(*,*) 'CALL testPE%isInit() angle%isInit() FAILED!'
     STOP 666
   ENDIF
-  CALL testPE%angle%initialize(PE_COMM_SELF)
+  CALL testPE%angle%initialize(0)
   IF(testPE%isInit()) THEN
     WRITE(*,*) 'CALL testPE%isInit() ASSOCIATED(energy) FAILED!'
     STOP 666
@@ -349,7 +349,7 @@ PROGRAM testParallelEnv
     WRITE(*,*) 'CALL testPE%isInit() energy%isInit() FAILED!'
     STOP 666
   ENDIF
-  CALL testPE%energy%initialize(PE_COMM_SELF)
+  CALL testPE%energy%initialize(0)
   IF(testPE%isInit()) THEN
     WRITE(*,*) 'CALL testPE%isInit() ASSOCIATED(ray) FAILED!'
     STOP 666
