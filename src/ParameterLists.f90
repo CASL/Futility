@@ -5257,12 +5257,15 @@ MODULE ParameterLists
       INTEGER(SIK),INTENT(IN) :: funit
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
       CHARACTER(LEN=12) :: fmt,fmt2
+      !Compiler problem for gnu-4.6.3.  It is fixed in gnu-4.7.0.
+      !CHARACTER(LEN=MAXVAL(LEN(thisParam%val))) :: tmpstr(SIZE(thisParam%val))
       INTEGER(SIK) :: i,j,k
       
       i=1
       j=5
       IF(PRESENT(indent)) i=i+indent
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
+      !tmpstr(1)=thisParam%val(1)%sPrint()
       IF(LEN_TRIM(thisParam%description) == 0) THEN
         WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,a)') &
           thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val(1)%sPrint()
@@ -5274,6 +5277,7 @@ MODULE ParameterLists
       j=j+LEN(thisParam%dataType)+LEN(thisParam%name)
       WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
       DO k=2,SIZE(thisParam%val)
+        !tmpstr(k)=thisParam%val(k)%sPrint()
         WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,a)') &
           thisParam%val(k)%sPrint()
       ENDDO
