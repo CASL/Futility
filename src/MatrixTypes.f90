@@ -94,6 +94,9 @@ MODULE MatrixTypes
   PUBLIC :: BLAS_matvec
   PUBLIC :: BLAS_matmult
   
+  !> set enumeration scheme for matrix types
+  INTEGER(SIK),PUBLIC :: SPARSE=0,TRIDIAG=1,DENSESQUARE=2,DENSERECT=3
+  
   !> @brief the base matrix type
   TYPE,ABSTRACT :: MatrixType
     !> Initialization status 
@@ -155,6 +158,12 @@ MODULE MatrixTypes
   
   !> @brief The extended type for PETSc matrices
   TYPE,EXTENDS(SquareMatrixType) :: PETScMatrixType
+   
+    !> whether sparse or dense
+    INTEGER(SIK) :: SparseDense
+    !> assembly status
+    LOGICAL(SBK) :: isAssembled=.FALSE.
+    
 #ifdef HAVE_PETSC
     Mat :: A
 #endif
@@ -538,6 +547,7 @@ MODULE MatrixTypes
         ELSE
           matrix%isInit=.TRUE.
           matrix%n=n
+          matrix%isAssembled=.FALSE.
           IF(m == 0) THEN
             matrix%isSymmetric=.FALSE.
           ELSE
@@ -546,9 +556,10 @@ MODULE MatrixTypes
           CALL MatCreate(MPI_COMM_WORLD,matrix%a,ierr)
           CALL MatSetSizes(matrix%a,PETSC_DECIDE,PETSC_DECIDE,matrix%n,matrix%n,ierr)
           IF (PRESENT(mattype)) THEN
-            IF (mattype == 0) THEN     ! sparse matrix
+            SparseDense = mattype !for now
+            IF (SparseDense == 0) THEN     ! sparse matrix
               CALL MatSetType(matrix%a,MATMPIAIJ,ierr)
-            ELSEIF (mattype == 1) THEN ! dense matrix
+            ELSEIF (SparseDense == 1) THEN ! dense matrix
               CALL MatSetType(matrix%a,MATMPIDENSE,ierr)
             ENDIF
           ELSE
@@ -567,273 +578,6 @@ MODULE MatrixTypes
 #endif
       
     ENDSUBROUTINE init_PETScMatrixParam
-
-!
-!-------------------------------------------------------------------------------
-!> @brief Initializes Sparse Matrix Type
-!> @param matrix the matrix type to act on
-!> @param n the number of rows
-!> @param m the number of columns
-!> @param mattype the matrix type (only used for PETSc matrices)
-!> @param num_entries (optional) the number of non-zero elements in the matrix
-!>
-!> This routine initializes the data spaces for the sparse matrices. 
-!> Knowing the number of values a priori significantly reduces CSR init
-!> overhead because it removes unnecessary allocs, copies, and deallocations.
-!> This parameter is listed as optional only for compliance with the interface
-!> provided by MatrixTypes.  It will not run sucessfully without this argument.
-!>
-    SUBROUTINE init_SparseMatrixType(matrix,n,m,mattype)
-      CHARACTER(LEN=*),PARAMETER :: myName='init_SparseMatrixType'
-      CLASS(SparseMatrixType),INTENT(INOUT) :: matrix
-      INTEGER(SIK),INTENT(IN) :: n
-      INTEGER(SIK),OPTIONAL,INTENT(IN) :: m
-      INTEGER(SIK),OPTIONAL,INTENT(IN) :: mattype
-      LOGICAL(SBK) :: localalloc
-      !Error checking of subroutine input
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eMatrixType)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eMatrixType)
-      ENDIF
-      IF(PRESENT(m)) THEN
-        IF(.NOT. matrix%isInit) THEN
-          IF((n < 1).OR.(m < 1))  THEN
-            CALL eMatrixType%raiseError('Incorrect input to '// &
-            modName//'::'//myName//' - Input parameters must be '// &
-              'greater than 1!')
-          ELSE
-            matrix%isInit=.TRUE.
-            matrix%n=n
-            matrix%nnz=m
-            matrix%jCount=0
-            matrix%iPrev=0
-            matrix%jPrev=0
-            !regardless of sparsity, SIZE(ia)=n+1
-            CALL dmallocA(matrix%ia,n+1)
-            CALL dmallocA(matrix%a,m)
-            CALL dmallocA(matrix%ja,m)
-            !last entry of ia is known in advanced
-            !this is per the intel MKL format
-            matrix%ia(n+1)=m+1
-          ENDIF
-        ELSE
-          CALL eMatrixType%raiseError('Incorrect call to '// &
-            modName//'::'//myName//' - MatrixType already initialized')
-        ENDIF
-      ELSE
-        CALL eMatrixType%raiseError('Incorrect input to '// &
-            modName//'::'//myName//' - Number of values (m) must be'// &
-              ' provided!')
-      ENDIF
-      IF(localalloc) DEALLOCATE(eMatrixType)
-    ENDSUBROUTINE init_SparseMatrixType
-!
-!-------------------------------------------------------------------------------
-!> @brief Initializes the dense square matrix
-!> @param matrix the matrix type to act on
-!> @param n the number of rows
-!> @param m integer-based logical defining whether or not the matrix is symmetric
-!> @param mattype the matrix type (only used for PETSc matrices)
-!>
-    SUBROUTINE init_DenseSquareMatrixType(matrix,n,m,mattype)
-      CHARACTER(LEN=*),PARAMETER :: myName='init_DenseSquareMatrixType'
-      CLASS(DenseSquareMatrixType),INTENT(INOUT) :: matrix
-      INTEGER(SIK),INTENT(IN) :: n
-      INTEGER(SIK),OPTIONAL,INTENT(IN) :: m
-      INTEGER(SIK),OPTIONAL,INTENT(IN) :: mattype
-      LOGICAL(SBK) :: localalloc
-      !Error checking of subroutine input
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eMatrixType)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eMatrixType)
-      ENDIF
-      IF(PRESENT(m)) THEN
-        IF(.NOT. matrix%isInit) THEN
-          IF(n < 1) THEN
-            CALL eMatrixType%raiseError('Incorrect input to '// &
-              modName//'::'//myName//' - Number of rows (n) must be '// &
-                'greater than 1!')
-          ELSE
-            matrix%isInit=.TRUE.
-            matrix%n=n
-            IF(m == 0) THEN
-              matrix%isSymmetric=.FALSE.
-            ELSE
-              matrix%isSymmetric=.TRUE.
-            ENDIF
-            CALL dmallocA(matrix%a,n,n)
-          ENDIF
-        ELSE
-          CALL eMatrixType%raiseError('Incorrect call to '// &
-            modName//'::'//myName//' - MatrixType already initialized')
-        ENDIF
-      ELSE
-        CALL eMatrixType%raiseError('Incorrect input to '// &
-            modName//'::'//myName//' - isSymmetric must be provided!')
-      ENDIF
-      IF(localalloc) DEALLOCATE(eMatrixType)
-    ENDSUBROUTINE init_DenseSquareMatrixType
-!
-!-------------------------------------------------------------------------------
-!> @brief Initializes the tridiagonal square matrix
-!> @param matrix the matrix type to act on
-!> @param n the number of rows
-!> @param m integer-based logical defining whether or not the matrix is symmetric
-!> @param mattype the matrix type (only used for PETSc matrices)
-!>
-    SUBROUTINE init_TriDiagMatrixType(matrix,n,m,mattype)
-      CHARACTER(LEN=*),PARAMETER :: myName='init_TriDiagMatrixType'
-      CLASS(TriDiagMatrixType),INTENT(INOUT) :: matrix
-      INTEGER(SIK),INTENT(IN) :: n
-      INTEGER(SIK),OPTIONAL,INTENT(IN) :: m
-      INTEGER(SIK),OPTIONAL,INTENT(IN) :: mattype
-      LOGICAL(SBK) :: localalloc
-      !Error checking of subroutine input
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eMatrixType)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eMatrixType)
-      ENDIF
-      IF(PRESENT(m)) THEN
-        IF(.NOT. matrix%isInit) THEN
-          IF(n < 1) THEN
-            CALL eMatrixType%raiseError('Incorrect input to '// &
-              modName//'::'//myName//' - Number of rows (n) must be '// &
-                'greater than 1!')
-          ELSE
-            matrix%isInit=.TRUE.
-            matrix%n=n
-            IF(m == 0) THEN
-              matrix%isSymmetric=.FALSE.
-            ELSE
-              matrix%isSymmetric=.TRUE.
-            ENDIF
-            CALL dmallocA(matrix%a,3,n)
-          ENDIF
-        ELSE
-          CALL eMatrixType%raiseError('Incorrect call to '// &
-            modName//'::'//myName//' - MatrixType already initialized')
-        ENDIF
-      ELSE
-        CALL eMatrixType%raiseError('Incorrect input to '// &
-            modName//'::'//myName//' - isSymmetric must be provided!')
-      ENDIF
-      IF(localalloc) DEALLOCATE(eMatrixType)
-    ENDSUBROUTINE init_TriDiagMatrixType
-!
-!-------------------------------------------------------------------------------
-!> @brief Initializes the dense rectangular matrix
-!> @param matrix the matrix type to act on
-!> @param n the number of rows
-!> @param m the number of columns. Listed as optional, but is not
-!> @param mattype the matrix type (only used for PETSc matrices)
-!>
-    SUBROUTINE init_DenseRectMatrixType(matrix,n,m,mattype)
-      CHARACTER(LEN=*),PARAMETER :: myName='init_DenseRectMatrixType'
-      CLASS(DenseRectMatrixType),INTENT(INOUT) :: matrix
-      INTEGER(SIK),INTENT(IN) :: n
-      INTEGER(SIK),OPTIONAL,INTENT(IN) :: m
-      INTEGER(SIK),OPTIONAL,INTENT(IN) :: mattype
-      LOGICAL(SBK) :: localalloc
-      !Error checking of subroutine input
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eMatrixType)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eMatrixType)
-      ENDIF
-      IF(PRESENT(m)) THEN
-        IF(.NOT. matrix%isInit) THEN
-          IF(n < 1) THEN
-            CALL eMatrixType%raiseError('Incorrect input to '// &
-              modName//'::'//myName//' - Number of rows (n) must'// &
-                ' be greater than 1!')
-          ELSEIF(m < 1) THEN
-            CALL eMatrixType%raiseError('Incorrect input to '// &
-              modName//'::'//myName//' - Number of columns (m) must'// &
-                ' be greater than 1!')
-          ELSE
-            matrix%isInit=.TRUE.
-            matrix%n=n
-            matrix%m=m
-            CALL dmallocA(matrix%a,n,m)
-          ENDIF
-        ELSE
-          CALL eMatrixType%raiseError('Incorrect call to '// &
-            modName//'::'//myName//' - MatrixType already initialized')
-        ENDIF
-      ELSE
-        CALL eMatrixType%raiseError('Incorrect input to '// &
-            modName//'::'//myName//' - Number of columns (m) must be '// &
-              'provided!')
-      ENDIF
-      IF(localalloc) DEALLOCATE(eMatrixType)
-    ENDSUBROUTINE init_DenseRectMatrixType
-!
-!-------------------------------------------------------------------------------
-!> @brief Initializes the PETSc matrix
-!> @param declares the matrix type to act on
-!> @param n the number of rows
-!> @param m integer-based logical defining whether or not the matrix is symmetric
-!> @param mattype the matrix type (only used for PETSc matrices)
-!>
-    SUBROUTINE init_PETScMatrixType(matrix,n,m,mattype)
-      CHARACTER(LEN=*),PARAMETER :: myName='init_PETScSparseMatrixType'
-      CLASS(PETScMatrixType),INTENT(INOUT) :: matrix
-      INTEGER(SIK),INTENT(IN) :: n
-      INTEGER(SIK),OPTIONAL,INTENT(IN) :: m
-      INTEGER(SIK),OPTIONAL,INTENT(IN) :: mattype
-      LOGICAL(SBK) :: localalloc
-#ifdef HAVE_PETSC
-      PetscErrorCode  :: ierr
-      !Error checking of subroutine input
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eMatrixType)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eMatrixType)
-      ENDIF
-      IF(PRESENT(m)) THEN
-        IF(.NOT. matrix%isInit) THEN
-          IF(n < 1) THEN
-            CALL eMatrixType%raiseError('Incorrect input to '// &
-              modName//'::'//myName//' - Number of rows (n) must be '// &
-                'greater than 0!')
-          ELSE
-            matrix%isInit=.TRUE.
-            matrix%n=n
-            IF(m == 0) THEN
-              matrix%isSymmetric=.FALSE.
-            ELSE
-              matrix%isSymmetric=.TRUE.
-            ENDIF
-            CALL MatCreate(MPI_COMM_WORLD,matrix%a,ierr)
-            CALL MatSetSizes(matrix%a,PETSC_DECIDE,PETSC_DECIDE,matrix%n,matrix%n,ierr)
-            IF (PRESENT(mattype)) THEN
-              IF (mattype == 0) THEN     ! sparse matrix
-                CALL MatSetType(matrix%a,MATMPIAIJ,ierr)
-              ELSEIF (mattype == 1) THEN ! dense matrix
-                CALL MatSetType(matrix%a,MATMPIDENSE,ierr)
-              ENDIF
-            ELSE
-              CALL eMatrixType%raiseError('Incorrect input to '// &
-              modName//'::'//myName//' - Matrix type (mattype) must '// &
-              'be provided!')
-            ENDIF
-            CALL MatSetUp(matrix%a,ierr)
-          ENDIF
-        ELSE
-          CALL eMatrixType%raiseError('Incorrect call to '// &
-            modName//'::'//myName//' - MatrixType already initialized')
-        ENDIF
-      ELSE
-        CALL eMatrixType%raiseError('Incorrect input to '// &
-            modName//'::'//myName//' - Number of columns (m) must be '// &
-              'provided!')
-      ENDIF
-      IF(localalloc) DEALLOCATE(eMatrixType)
-#endif
-    ENDSUBROUTINE init_PETScMatrixType
 !
 !-------------------------------------------------------------------------------
 !> @brief Clears the sparse matrix
@@ -898,6 +642,7 @@ MODULE MatrixTypes
       PetscErrorCode  :: ierr
       matrix%isInit=.FALSE.
       matrix%n=0
+      matrix%isAssembled=.FALSE.
       matrix%isSymmetric=.FALSE.
       CALL MatDestroy(matrix%a,ierr)
 #endif
@@ -1068,8 +813,7 @@ MODULE MatrixTypes
           IF(matrix%isSymmetric) THEN
             CALL MatSetValues(matrix%a,1,j-1,1,i-1,setval,INSERT_VALUES,ierr)
           ENDIF
-          CALL MatAssemblyBegin(matrix%a,ierr)
-          CALL MatAssemblyEnd(matrix%a,ierr)
+          matrix%isAssembled=.FALSE.
         ENDIF
       ENDIF
 #endif
@@ -1127,11 +871,15 @@ MODULE MatrixTypes
       REAL(SRK) :: aij
 #ifdef HAVE_PETSC
       PetscErrorCode  :: ierr
-#endif
-  
-      aij=0.0_SRK
       
-#ifdef HAVE_PETSC
+      ! assemble matrix if necessary
+      IF (.NOT.(matrix%isAssembled))
+        CALL MatAssemblyBegin(matrix%a,ierr)
+        CALL MatAssemblyEnd(matrix%a,ierr)
+        matrix%isAssembled=.FALSE.
+      ENDIF
+      
+      aij=0.0_SRK
       IF(matrix%isInit) THEN
         IF((i <= matrix%n) .AND. ((j > 0) .AND. (i > 0))) THEN
           CALL MatGetValues(matrix%a,1,i-1,1,j-1,aij,ierr)

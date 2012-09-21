@@ -65,7 +65,14 @@ MODULE LinearSolverTypes
   !> Number of direct solver solution methodologies - for error checking
   INTEGER(SIK),PARAMETER :: MAX_DIRECT_SOLVER_METHODS=2
   !> Number of iterative solver solution methodologies - for error checking
-  INTEGER(SIK),PARAMETER :: MAX_IT_SOLVER_METHODS=2
+  INTEGER(SIK),PARAMETER :: MAX_IT_SOLVER_METHODS=3
+  !> set enumeration scheme for TPLs
+  INTEGER(SIK),PUBLIC :: PETSC=0,TRILINOS=1,MKL=2,NATIVE=3
+  !> set enumeration scheme for iterative solver methods
+  INTEGER(SIK),PUBLIC :: BICGSTAB=1,CGNR=2,GMRES=3
+  !> set enumeration scheme for direct solver methods
+  INTEGER(SIK),PUBLIC :: GE=1,LU=2
+
   
   !> @brief the base linear solver type
   TYPE,ABSTRACT :: LinearSolverType_Base
@@ -74,21 +81,19 @@ MODULE LinearSolverTypes
     !> Integer flag for the solution methodology desired
     INTEGER(SIK) :: solverMethod=-1
     !> Pointer to the distributed memory parallel environment
-    TYPE(MPI_EnvType),POINTER :: MPIparallelEnv => NULL()
+    TYPE(MPI_EnvType) :: MPIparallelEnv
     !> Pointer to the shared memory parallel environment
-    TYPE(OMP_EnvType),POINTER :: OMPparallelEnv => NULL()
+    TYPE(OMP_EnvType) :: OMPparallelEnv
     !> Initialization status of A
     LOGICAL(SBK) :: hasA=.FALSE.
     !> Initialization status of b
     LOGICAL(SBK) :: hasB=.FALSE.
     !> Pointer to the MatrixType A
-    CLASS(MatrixType),POINTER :: A
+    CLASS(MatrixType),ALLOCATABLE :: A
     !> Right-hand side vector, b
-    REAL(SRK),ALLOCATABLE :: b(:)
-!    CLASS(VectorType),POINTER :: b
+    CLASS(VectorType),ALLOCATABLE :: b
     !> Pointer to solution vector, x
-    REAL(SRK),POINTER :: X(:)
-!    CLASS(VectorType),POINTER :: X
+    CLASS(VectorType),ALLOCATABLE :: X
     !> Timer to measure solution time
     TYPE(TimerType) :: SolveTime
     !> Status of the decomposition of A
@@ -182,9 +187,12 @@ MODULE LinearSolverTypes
 !
 !===============================================================================
   CONTAINS
+  
 !
 !-------------------------------------------------------------------------------
-!> @brief Initializes the Direct Linear Solver Type
+!> @brief Initializes the Linear Solver Type with a parameter list
+!> @param pList the parameter list
+!>
 !> @param solver The linear solver to act on
 !> @param solverMethod The integer flag for which type of solution scheme to use
 !> @param MPIparallelEnv The MPI environment description
@@ -193,18 +201,31 @@ MODULE LinearSolverTypes
 !>
 !> This routine initializes the data spaces for the direct linear solver. 
 !>
-    SUBROUTINE init_LinearSolverType_Base(solver,solverMethod, &
-                  MPIparallelEnv,OMPparallelEnv,timerName)
+    SUBROUTINE init_LinearSolverType_Base(solver,pList)
       CHARACTER(LEN=*),PARAMETER :: myName='init_LinearSolverType_Base'
       CLASS(LinearSolverType_Base),INTENT(INOUT) :: solver
-      INTEGER(SIK),INTENT(IN) :: solverMethod
-      TYPE(MPI_EnvType),POINTER,INTENT(IN),OPTIONAL :: MPIparallelEnv
-      TYPE(OMP_EnvType),POINTER,INTENT(IN),OPTIONAL :: OMPparallelEnv
-      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: timerName
+      TYPE(ParamType),INTENT(IN) :: pList
+      
+      INTEGER(SIK) :: matrixType, TPLType
+      INTEGER(SIK) :: solverMethod
+      INTEGER(SIK) :: numberMPI, numberOMP
+      CHARACTER(LEN=256) :: timerName
       LOGICAL(SBK) :: localalloc
 #ifdef HAVE_PETSC
       PetscErrorCode  :: ierr
 #endif
+
+      !Pull data from the parameter list
+      CALL pList%get('matrixType',matrixType)
+      CALL pList%get('TPLType',TPLType)
+      CALL pList%get('solverMethod',solverMethod)
+      CALL pList%get('numberMPI',numberMPI)
+      CALL pList%get('numberOMP',numberOMP)
+      CALL pList%get('timerName',timerName)
+      
+      !Initialize parallel environments based on input
+      CALL solver%MPIparallelEnv%initialize(numberMPI)
+      CALL solver%OMPparallelEnv%initialize(numberOMP)
       
       !Error checking of subroutine input
       localalloc=.FALSE.
@@ -212,78 +233,123 @@ MODULE LinearSolverTypes
         localalloc=.TRUE.
         ALLOCATE(eLinearSolverType)
       ENDIF
+      
       IF(.NOT. solver%isInit) THEN
-        IF((solverMethod > 0) .AND. &
-          (solverMethod <= MAX_DIRECT_SOLVER_METHODS)) THEN
-            IF(PRESENT(MPIparallelEnv)) THEN
-              IF(ASSOCIATED(MPIparallelEnv)) THEN
-                IF(MPIparallelEnv%isInit()) THEN
-                  solver%MPIparallelEnv => MPIparallelEnv
-                ELSE
-                  CALL eLinearSolverType%raiseWarning(modName//'::'//myName// &
-                    ' - MPI Env is not initialized, and will not be used.')
-                ENDIF
-              ELSE
-                CALL eLinearSolverType%raiseWarning(modName//'::'//myName// &
-                    ' - MPI Env is not associated, and will not be used.')
-              ENDIF
-            ENDIF
-            IF(PRESENT(OMPparallelEnv)) THEN
-              IF(ASSOCIATED(OMPparallelEnv)) THEN
-                IF(OMPparallelEnv%isInit()) THEN
-                  solver%OMPparallelEnv => OMPparallelEnv
-                ELSE
-                  CALL eLinearSolverType%raiseWarning(modName//'::'//myName// &
-                    ' - OMP Env is not initialized, and will not be used.')
-                ENDIF
-              ELSE
-                CALL eLinearSolverType%raiseWarning(modName//'::'//myName// &
-                    ' - OMP Env is not associated, and will not be used.')
-              ENDIF
-            ENDIF
-            
-            
+         
+        ! go through solver hierarchy to determine TPLType
+        IF (TPLType==0) THEN ! PETSc
 #ifdef HAVE_PETSC
-            IF (solver%hasA) THEN
-              SELECTTYPE(A => solver%A)
-                TYPE IS(PETScMatrixType)
-                  !create and initialize KSP
-                  !CALL KSPCreate(solver%MPIparallelEnv,solver%ksp,ierr)
-                  CALL KSPCreate(MPI_COMM_WORLD,solver%ksp,ierr)
-                  CALL KSPSetOperators(solver%ksp,A,A,DIFFERENT_NONZERO_PATTERN,ierr)
-                  CALL KSPSetFromOptions(solver%ksp,ierr)
-                  
-                  !set iterative solver type
-                  SELECTCASE(solver%solverMethod)
-                    CASE(1) ! BCGS
-                      CALL KSPSetType(solver%ksp,KSPBCGS,ierr)
-                    CASE(2) ! CGNR
-                      CALL KSPSetType(solver%ksp,KSPCGNE,ierr)
-                    CASE(3) ! GMRES
-                      CALL KSPSetType(solver%ksp,KSPGMRES,ierr)
-                  ENDSELECT
-              ENDSELECT
-            ENDIF
+          ! switch matrixType if PETSc not available
+          IF     (matrixType==0) THEN ! sparse
+            matrixType=4 ! PETSc sparse
+          ELSEIF (matrixType==2) THEN ! dense
+            matrixType=5 ! PETSc dense
+          ENDIF
+#else
+          ! we don't have PETSc, so switch to next option (Trilinos)
+          ! maybe throw a notification
+          TPLType=1
 #endif
+        ENDIF
+        IF (TPLType==1) THEN ! Trilinos
+#ifndef HAVE_TRILINOS
+          ! we don't have Trilinos, so switch to next option (MKL)
+          TPLType=2
+#endif
+        ENDIF
+        IF (TPLType==2) THEN ! MKL
+#ifndef HAVE_MKL
+          ! we don't have MKL, so switch to next option (native)
+          TPLType=3
+#endif
+        ENDIF
 
+        ! allocate matrix (A)
+        IF (.NOT.ALLOCATED(solver%A)) THEN
+          IF     (matrixType==0) THEN ! Sparse
+            ALLOCATE(SparseMatrixType :: solver%A)
+          ELSEIF (matrixType==1) THEN ! TriDiag 
+            ALLOCATE(TriDiagMatrixType :: solver%A)
+          ELSEIF (matrixType==2) THEN ! DenseSquare
+            ALLOCATE(DenseSquareMatrixType :: solver%A)
+          ELSEIF (matrixType==3) THEN ! DenseRect
+            ALLOCATE(DenseRectMatrixType :: solver%A)
+          ELSEIF (matrixType==4) THEN ! PETSc Sparse
+            ALLOCATE(PETScMatrixType :: solver%A)
+            SELECTTYPE(A => solver%A); TYPE IS(PETScMatrixType)
+              A%SparseDense=0  ! sparse
+            ENDSELECT
+          ELSEIF (matrixType==5) THEN ! PETSc Dense
+            ALLOCATE(PETScMatrixType :: solver%A)
+            SELECTTYPE(A => solver%A); TYPE IS(PETScMatrixType)
+              A%SparseDense=1  ! dense
+            ENDSELECT
+          ENDIF
+        ELSE
+          ! throw exception
+        ENDIF
+        ! allocate vectors (X and b)
+        IF (matrixType==4 .OR. matrixType==5) THEN
+          ALLOCATE(PETScVectorType :: solver%X)
+          ALLOCATE(PETScVectorType :: solver%b)
+        ELSE
+          ALLOCATE(RealVectorType :: solver%X)
+          ALLOCATE(RealVectorType :: solver%b)
+        ENDIF
+      
+        ! direct solver
+        SELECTTYPE(solver); TYPE IS(LinearSolverType_Direct)
+          IF((solverMethod > 0) .AND. &
+             (solverMethod <= MAX_DIRECT_SOLVER_METHODS)) THEN         
+            !assign values to solver
+            CALL solver%SolveTime%setTimerName(timerName)   
             solver%solverMethod=solverMethod
             solver%isInit=.TRUE.
-            
-            !do nothing in this function for hasA, hasB, A, b, X
-            IF(PRESENT(timerName)) THEN
-              CALL solver%SolveTime%setTimerName(timerName)
-            ELSE !give default name
-              CALL solver%SolveTime%setTimerName('LinearSolver Timer')
+          ELSE
+            CALL eLinearSolverType%raiseError('Incorrect call to '// &
+              modName//'::'//myName//' - invalid value of solverMethod')
+          ENDIF
+        ENDSELECT
+        
+        ! iterative solver
+        SELECTTYPE(solver); TYPE IS(LinearSolverType_Iterative)
+          IF((solverMethod > 0) .AND. &
+             (solverMethod <= MAX_IT_SOLVER_METHODS)) THEN         
+              
+#ifdef HAVE_PETSC
+            IF (matrixType==4 .OR. matrixType==5) THEN ! PETSc
+                !create and initialize KSP
+                CALL KSPCreate(MPI_COMM_WORLD,solver%ksp,ierr)
+                CALL KSPSetOperators(solver%ksp,solver%A,solver%A,DIFFERENT_NONZERO_PATTERN,ierr)
+                CALL KSPSetFromOptions(solver%ksp,ierr)
+                
+                !set iterative solver type
+                SELECTCASE(solverMethod)
+                  CASE(1) ! BCGS
+                    CALL KSPSetType(solver%ksp,KSPBCGS,ierr)
+                  CASE(2) ! CGNR
+                    CALL KSPSetType(solver%ksp,KSPCGNE,ierr)
+                  CASE(3) ! GMRES
+                    CALL KSPSetType(solver%ksp,KSPGMRES,ierr)
+                ENDSELECT
             ENDIF
-        ELSE
-          CALL eLinearSolverType%raiseError('Incorrect call to '// &
-            modName//'::'//myName//' - invalid value of solverMethod')
-        ENDIF
+#endif
+            !assign values to solver
+            CALL solver%SolveTime%setTimerName(timerName)   
+            solver%solverMethod=solverMethod
+            solver%isInit=.TRUE.
+          ELSE
+            CALL eLinearSolverType%raiseError('Incorrect call to '// &
+              modName//'::'//myName//' - invalid value of solverMethod')
+          ENDIF
+        ENDSELECT
       ELSE
         CALL eLinearSolverType%raiseError('Incorrect call to '// &
           modName//'::'//myName//' - LinearSolverType already initialized')
       ENDIF
+      
       IF(localalloc) DEALLOCATE(eLinearSolverType)
+      
     ENDSUBROUTINE init_LinearSolverType_Base
 !
 !-------------------------------------------------------------------------------
@@ -295,19 +361,16 @@ MODULE LinearSolverTypes
     SUBROUTINE clear_LinearSolverType_Direct(solver)
       CLASS(LinearSolverType_Direct),INTENT(INOUT) :: solver
 
-      !%A, %X are operated outside of the object, so not matter if solver is
-      !initialized, clear it.
       solver%isInit=.FALSE.
       solver%solverMethod=-1
-      solver%MPIparallelEnv => NULL()
-      solver%OMPparallelEnv => NULL()
       solver%hasA=.FALSE.
       solver%hasB=.FALSE.
       solver%info=0
-      IF(ASSOCIATED(solver%A)) NULLIFY(solver%A)
-      IF(ASSOCIATED(solver%X)) NULLIFY(solver%X)
-!      IF(ASSOCIATED(solver%b)) NULLIFY(solver%b)
-      IF(ALLOCATED(solver%b)) CALL demallocA(solver%b)
+      CALL solver%MPIparallelEnv%clear()
+      CALL solver%OMPparallelEnv%clear()
+      IF(ALLOCATED(solver%A)) DEALLOCATE(solver%A)
+      IF(ALLOCATED(solver%X)) DEALLOCATE(solver%X)
+      IF(ALLOCATED(solver%b)) DEALLOCATE(solver%b)
       IF(ALLOCATED(solver%IPIV)) CALL demallocA(solver%IPIV)
       IF(ALLOCATED(solver%M)) THEN
         CALL solver%M%clear()
@@ -331,19 +394,16 @@ MODULE LinearSolverTypes
       PetscErrorCode  :: ierr
 #endif
 
-      !%A, %X are operated outside of the object, so not matter if solver is
-      !initialized, clear it.
       solver%isInit=.FALSE.
       solver%solverMethod=-1
-      solver%MPIparallelEnv => NULL()
-      solver%OMPparallelEnv => NULL()
       solver%hasA=.FALSE.
       solver%hasB=.FALSE.
       solver%info=0
-      IF(ASSOCIATED(solver%A)) NULLIFY(solver%A)
-      IF(ASSOCIATED(solver%X)) NULLIFY(solver%X)
-!      IF(ASSOCIATED(solver%b)) NULLIFY(solver%b)
-      IF(ALLOCATED(solver%b)) CALL demallocA(solver%b)
+      CALL solver%MPIparallelEnv%clear()
+      CALL solver%OMPparallelEnv%clear()
+      IF(ALLOCATED(solver%A)) DEALLOCATE(solver%A)
+      IF(ALLOCATED(solver%X)) DEALLOCATE(solver%X)
+      IF(ALLOCATED(solver%b)) DEALLOCATE(solver%b)
       IF(ALLOCATED(solver%M)) THEN
         CALL solver%M%clear()
         DEALLOCATE(solver%M)
@@ -473,9 +533,9 @@ MODULE LinearSolverTypes
       CALL solve_checkInput(solver)
       IF(solver%info == 0) THEN
         IF(.NOT. solver%hasX0) THEN
-!         will need loop to set initial X
-!         solver%X%set(i,1.0_SRK)???
-          solver%X=1.0_SRK
+          SELECTTYPE(X => solver%X); TYPE IS(RealVectorType)
+            CALL X%set(1.0_SRK)
+          ENDSELECT
           solver%hasX0=.TRUE.
           CALL eLinearSolverType%raiseWarning(modName//'::'// &
             myName//'- Initial X0 is set to 1.')
@@ -517,6 +577,14 @@ MODULE LinearSolverTypes
 
 #ifdef HAVE_PETSC                      
               TYPE IS(PETScMatrixType)
+                ! assemble matrix if necessary
+                IF (.NOT.(A%isAssembled))
+                  CALL MatAssemblyBegin(A,ierr)
+                  CALL MatAssemblyEnd(A,ierr)
+                  A%isAssembled=.FALSE.
+                ENDIF
+                
+                ! solve
                 CALL KSPSolve(solver%ksp,solver%b,solver%x,ierr)
 #endif
                 
@@ -542,6 +610,14 @@ MODULE LinearSolverTypes
                     'is not implemented, BiCGSTAB method is used instead.')
 #ifdef HAVE_PETSC                    
               TYPE IS(PETScMatrixType)
+                ! assemble matrix if necessary
+                IF (.NOT.(A%isAssembled))
+                  CALL MatAssemblyBegin(A,ierr)
+                  CALL MatAssemblyEnd(A,ierr)
+                  A%isAssembled=.FALSE.
+                ENDIF
+                
+                ! solve
                 CALL KSPSolve(solver%ksp,solver%b,solver%x,ierr)
 #endif
               CLASS DEFAULT
@@ -553,6 +629,14 @@ MODULE LinearSolverTypes
             SELECTTYPE(A=>solver%A)
 #ifdef HAVE_PETSC                    
               TYPE IS(PETScMatrixType)
+                ! assemble matrix if necessary
+                IF (.NOT.(A%isAssembled))
+                  CALL MatAssemblyBegin(A,ierr)
+                  CALL MatAssemblyEnd(A,ierr)
+                  A%isAssembled=.FALSE.
+                ENDIF
+                
+                ! solve
                 CALL KSPSolve(solver%ksp,solver%b,solver%x,ierr)
 #endif  
             ENDSELECT
@@ -582,12 +666,12 @@ MODULE LinearSolverTypes
       ENDIF
       solver%info=-1
       IF(solver%isInit) THEN
-        IF(ASSOCIATED(solver%A)) THEN
-          IF(ASSOCIATED(solver%X)) THEN
+        IF(ALLOCATED(solver%A)) THEN
+          IF(ALLOCATED(solver%X)) THEN
             IF(ALLOCATED(solver%b)) THEN
               SELECTTYPE(A=>solver%A)
                 TYPE IS(DenseRectMatrixType)
-                  IF(A%n /= SIZE(solver%b) .OR. A%m /= SIZE(solver%X) &
+                  IF(A%n /= solver%b%n .OR. A%m /= solver%X%n &
                     .OR. A%n < 1 .OR. A%m < 1) THEN
                     CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
                       '  - The size of the matrix and vector do not comform!')
@@ -595,7 +679,7 @@ MODULE LinearSolverTypes
                     solver%info=0
                   ENDIF
                 CLASS DEFAULT
-                  IF(A%n /= SIZE(solver%b) .OR. A%n /= SIZE(solver%X) &
+                  IF(A%n /= solver%b%n .OR. A%n /= solver%X%n &
                     .OR. A%n < 1) THEN
                     CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
                       '  - The size of the matrix and vector do not comform!')
@@ -634,9 +718,11 @@ MODULE LinearSolverTypes
     SUBROUTINE setX0_LinearSolverType_Iterative(solver,X0)
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
       REAL(SRK),POINTER,INTENT(IN) :: X0(:)
-!     CLASS(VectorType),INTENT(IN) :: X0(:)
+
       IF(solver%isInit) THEN
-        solver%X => X0
+        SELECTTYPE(X => solver%X); TYPE IS(RealVectorType)
+          X%b=X0
+        ENDSELECT
         solver%hasX0=.TRUE.
       ENDIF
     ENDSUBROUTINE setX0_LinearSolverType_Iterative
@@ -707,7 +793,7 @@ MODULE LinearSolverTypes
         solver%convTol=convTol
         solver%maxIters=maxIters
 #ifdef HAVE_PETSC
-!        CALL KSPSetTolerances(solver%ksp,rtol,abstol,dtol,maxits,ierr)
+        CALL KSPSetTolerances(solver%ksp,rtol,abstol,dtol,maxits,ierr)
 #endif
       ENDIF
       IF(localalloc) DEALLOCATE(eLinearSolverType)
@@ -722,20 +808,24 @@ MODULE LinearSolverTypes
 !>   
     SUBROUTINE getResidual_LinearSolverType_Iterative(solver,resid)
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
-      REAL(SRK),INTENT(OUT) :: resid(:)
+      TYPE(RealVectorType),INTENT(OUT) :: resid
       !input check
-      IF(solver%isInit .AND. ALLOCATED(solver%b) .AND. ASSOCIATED(solver%A) &
-        .AND. ASSOCIATED(solver%X) .AND. SIZE(resid) > 0) THEN
+      IF(solver%isInit .AND. ALLOCATED(solver%b) .AND. ALLOCATED(solver%A) &
+        .AND. ALLOCATED(solver%X) .AND. resid%n > 0) THEN
         !Written assuming A is not decomposed.  Which is accurate, the correct solve
         !function will contain the decomposed A.
-        IF(SIZE(resid) == SIZE(solver%b)) THEN
+        IF(resid%n == solver%b%n) THEN
 #ifdef HAVE_MKL
           !not yet implemented
-          resid=-solver%b
+          SELECTTYPE(b => solver%b); TYPE IS(RealVectorType)
+            resid%b=-b%b
+          ENDSELECT
           CALL BLAS_matvec(THISMATRIX=solver%A,X=solver%X,Y=resid)
 #else
           !perform calculations using the BLAS system (intrinsic to MPACT or TPL, defined by #HAVE_BLAS)
-          resid=-solver%b
+          SELECTTYPE(b => solver%b); TYPE IS(RealVectorType)
+            resid%b=-b%b
+          ENDSELECT
           CALL BLAS_matvec(THISMATRIX=solver%A,X=solver%X,Y=resid)
 #endif
         ENDIF
@@ -779,67 +869,80 @@ MODULE LinearSolverTypes
 
       REAL(SRK),PARAMETER :: one=1.0_SRK,zero=0.0_SRK
       REAL(SRK):: calpha,crho,comega,crhod,cbeta,pts,ptt
-      REAL(SRK),DIMENSION(solver%A%n) :: vr,vr0,vs,vv,vp,vy,vz,vt
+      TYPE(RealVectorType) :: vr,vr0,vs,vv,vp,vy,vz,vt
       INTEGER(SIK) :: i,n,iterations
 
+      CALL vr%init(solver%A%n)
+      CALL vr0%init(solver%A%n)
+      CALL vs%init(solver%A%n)
+      CALL vv%init(solver%A%n)
+      CALL vp%init(solver%A%n)
+      CALL vy%init(solver%A%n)
+      CALL vz%init(solver%A%n)
+      CALL vt%init(solver%A%n)
+      
       n=solver%A%n
       calpha=one
       crho=one
       comega=one
-      vp=zero
+      CALL vp%set(zero)
       ! temporarily USE p to store A*x to compute p
       CALL BLAS_matvec(THISMATRIX=solver%A,X=solver%X,Y=vp)
       ! r and r0
-      vr0=solver%b-vp
-      vr=vr0
-      vp=zero
-      vv=zero
+      SELECTTYPE(b => solver%b); TYPE IS(RealVectorType)
+        vr0%b=b%b-vp%b
+      ENDSELECT
+      vr%b=vr0%b
+      CALL vp%set(zero)
+      CALL vv%set(zero)
       
       !get L_norm
-      CALL LNorm(vr0,solver%normType,solver%residual)
+      CALL LNorm(vr0%b,solver%normType,solver%residual)
       !Iterate on solution
       DO iterations=1_SIK,solver%maxIters
         crhod=crho
-        crho=BLAS_dot(n,vr0,vr)
+        crho=BLAS_dot(vr0,vr,n)
         cbeta=crho*calpha/(crhod*comega)
-        vp=vr+cbeta*(vp-comega*vv)
+        vp%b=vr%b+cbeta*(vp%b-comega*vv%b)
 
         ! y_j=inv(M)*p_j, store in y
-        vy=zero
+        CALL vy%set(zero)
         IF(ALLOCATED(solver%M)) THEN
           SELECTTYPE(M => solver%M); TYPE IS(DenseSquareMatrixType)
-            CALL MinvMult_dense(M,vp,vy)
+            CALL MinvMult_dense(M,vp%b,vy%b)
           ENDSELECT
         ELSE
-          vy=vp
+          vy%b=vp%b
         ENDIF
-        vv=zero
+        CALL vv%set(zero)
         CALL BLAS_matvec(THISMATRIX=solver%A,X=vy,Y=vv)
-        calpha=crho/BLAS_dot(n,vr0,vv)
+        calpha=crho/BLAS_dot(vr0,vv,n)
 
-        vs=vr-calpha*vv
-        vz=zero
+        vs%b=vr%b-calpha*vv%b
+        CALL vz%set(zero)
         IF(ALLOCATED(solver%M)) THEN
           SELECTTYPE(M => solver%M); TYPE IS(DenseSquareMatrixType)
-            CALL MinvMult_dense(M,vs,vz)
+            CALL MinvMult_dense(M,vs%b,vz%b)
           ENDSELECT
         ELSE
-          vz=vs
+          vz%b=vs%b
         ENDIF
-        vt=zero
+        CALL vt%set(zero)
         CALL BLAS_matvec(THISMATRIX=solver%A,X=vz,Y=vt)
         comega=BLAS_dot(vs,vt)/BLAS_dot(vt,vt)
-        solver%X=solver%X+calpha*vy+comega*vz
-        vr=vs-comega*vt
+        SELECTTYPE(X => solver%X); TYPE IS(RealVectorType)
+          X%b=X%b+calpha*vy%b+comega*vz%b
+        ENDSELECT
+        vr%b=vs%b-comega*vt%b
         !get L_norm
-        CALL LNorm(vr,solver%normType,solver%residual)
+        CALL LNorm(vr%b,solver%normType,solver%residual)
         !check convergence
         IF(solver%residual<=solver%convTol) EXIT
       ENDDO
       solver%iters=iterations
       solver%info=0
     ENDSUBROUTINE solveBiCGSTAB
-!
+
 !-------------------------------------------------------------------------------
 !> @brief Factorizes a sparse solver%A with ILU method and stores this in
 !>  solver%M
@@ -906,7 +1009,7 @@ MODULE LinearSolverTypes
         solver%isDecomposed=.TRUE.
       ENDSELECT
     ENDSUBROUTINE DecomposeILU_Sparse
-!
+
 !-------------------------------------------------------------------------------
 !> @brief Factorizes a TriDiag solver%A with the PLU method and stores the
 !> result in solver%M.
@@ -987,7 +1090,7 @@ MODULE LinearSolverTypes
       IF(localalloc) DEALLOCATE(eLinearSolverType)
     ENDSUBROUTINE DecomposePLU_TriDiag
 
-!
+
 !-------------------------------------------------------------------------------
 !> @brief Solves a sparse system using forward and backward substitution, given M
 !> @param M The resultant ILU factorization of A, inverted.
@@ -1063,21 +1166,23 @@ MODULE LinearSolverTypes
       solver%info=-1
       IF(solver%isDecomposed) THEN
         SELECTTYPE(M => solver%M); TYPE IS(TriDiagMatrixType)
-          n=M%n
-          !LUx=b,Ux=y, Ly=b
-          !find y (Ly=b), y is stored in X to save space
-          solver%X(1)=solver%b(1)
-          DO i=2,n
-            solver%X(i)=solver%b(i)-M%a(1,i)*solver%X(i-1)
-          ENDDO
-          !find x with backward substitution (Ux=y)
-          solver%X(n)=solver%X(n)*M%a(2,n)
-          Xprev=solver%X(n)
-          DO i=(n-1),1,-1
-            solver%X(i)=(solver%X(i)-M%a(3,i)*Xprev)*M%a(2,i)
-            Xprev=solver%X(i)
-          ENDDO
-          solver%info=0
+          SELECTTYPE(X => solver%X); TYPE IS(RealVectorType)
+            n=M%n
+            !LUx=b,Ux=y, Ly=b
+            !find y (Ly=b), y is stored in X to save space
+            CALL X%set(1,solver%b%get(1))
+            DO i=2,n
+              CALL X%set(i,solver%b%get(i)-M%a(1,i)*X%get(i-1))
+            ENDDO
+            !find x with backward substitution (Ux=y)
+            CALL X%set(n,X%get(n)*M%a(2,n))
+            Xprev=X%get(n)
+            DO i=(n-1),1,-1
+              CALL X%set(i,(X%get(i)-M%a(3,i)*Xprev)*M%a(2,i))
+              Xprev=X%get(i)
+            ENDDO
+            solver%info=0
+          ENDSELECT
         ENDSELECT
       ENDIF
     ENDSUBROUTINE solvePLU_TriDiag
@@ -1095,7 +1200,9 @@ MODULE LinearSolverTypes
       REAL(SRK) :: t,thisb(solver%A%n)
       INTEGER(SIK) :: N,i,irow,icol,IPIV(solver%A%n)
 
-      thisb=solver%b
+      SELECTTYPE(b => solver%b); TYPE IS(RealVectorType)
+        thisb=b%b
+      ENDSELECT
       SELECTTYPE(A => solver%A); TYPE IS(DenseSquareMatrixType)
         thisa=A%A
       ENDSELECT
@@ -1130,13 +1237,17 @@ MODULE LinearSolverTypes
 
       !Perform backward substitution
       IF(thisa(N,N) .APPROXEQ. 0._SRK) RETURN
-      solver%X(N)=thisb(N)/thisa(N,N)
+      SELECTTYPE(X => solver%X); TYPE IS(RealVectorType)
+        CALL X%set(N,thisb(N)/thisa(N,N))
+      ENDSELECT
       DO irow=N-1,1,-1
         t=0._SRK
         DO icol=irow+1,N
-          t=t+thisa(irow,icol)*solver%X(icol)
+          t=t+thisa(irow,icol)*solver%X%get(icol)
         ENDDO
-        solver%X(irow)=(thisb(irow)-t)/thisa(irow,irow)
+         SELECTTYPE(X => solver%X); TYPE IS(RealVectorType)
+           CALL X%set(irow,(thisb(irow)-t)/thisa(irow,irow))
+         ENDSELECT
       ENDDO
       solver%info=0
     ENDSUBROUTINE solveGE_DenseSquare
@@ -1237,7 +1348,9 @@ MODULE LinearSolverTypes
       
       solver%info=-1
       IF(solver%isDecomposed) THEN
-        thisb=solver%b
+        SELECTTYPE(b => solver%b); TYPE IS(RealVectorType)
+          thisb=b%b
+        ENDSELECT
         N=solver%A%n
         !Permutate right hand side
         DO irow=1,N
@@ -1268,7 +1381,9 @@ MODULE LinearSolverTypes
             thisb(irow)=(thisx(irow)-t)/M%A(irow,irow)
           ENDDO
         ENDSELECT
-        solver%X=thisb
+        SELECTTYPE(X => solver%X); TYPE IS(RealVectorType)
+          X%b=thisb
+        ENDSELECT
         solver%info=0
       ENDIF
       IF(localalloc) DEALLOCATE(eLinearSolverType)
@@ -1352,7 +1467,7 @@ MODULE LinearSolverTypes
 
       INTEGER(SIK) :: M,N,i,maxIters
       REAL(SRK) :: alpha,beta,error,z0_dot,z1_dot,convTol
-      REAL(SRK),ALLOCATABLE :: z(:),w(:),r(:),p(:),b(:)
+      TYPE(RealVectorType) :: z,w,r,p,b
       
       N=solver%A%n
       M=N
@@ -1367,28 +1482,39 @@ MODULE LinearSolverTypes
         convTol=solver%convTol
       ENDSELECT
       IF(N >= M) THEN
-        ALLOCATE(r(N),w(N),b(N),z(M),p(M))
-        r=0._SRK
-        z=0._SRK
-        b=solver%b
+        CALL r%init(N)
+        CALL w%init(N)
+        CALL b%init(N)
+        CALL z%init(M)
+        CALL p%init(M)
+        CALL r%set(0._SRK)
+        CALL z%set(0._SRK)
+        
+        SELECTTYPE(vecb => solver%b); TYPE IS(RealVectorType)
+            b%b=vecb%b
+        ENDSELECT
+        
         CALL BLAS_matvec(THISMATRIX=solver%A,X=solver%X,Y=r)
-        r=b-r
+        r%b=b%b-r%b
+        
         CALL BLAS_matvec(THISMATRIX=solver%A,trans='t',X=r,Y=z)
-        p=z
+        p%b=z%b
         z0_dot=BLAS_dot(z,z)
         DO i=1,maxIters
-          w=0._SRK
+          CALL w%set(0._SRK)
           CALL BLAS_matvec(THISMATRIX=solver%A,X=p,Y=w)
           alpha=z0_dot/BLAS_dot(w,w)
-          solver%X=solver%X+alpha*p
-          r=r-alpha*w
+          SELECTTYPE(X => solver%X); TYPE IS(RealVectorType)
+            X%b=X%b+alpha*p%b
+          ENDSELECT
+          r%b=r%b-alpha*w%b
           error=BLAS_dot(r,r)
           IF(error < convTol) EXIT
-          z=0._SRK
+          CALL z%set(0._SRK)
           CALL BLAS_matvec(THISMATRIX=solver%A,TRANS='t',X=r,Y=z)
           z1_dot=BLAS_dot(z,z)
           beta=z1_dot/z0_dot
-          p=z+beta*p
+          p%b=z%b+beta*p%b
           z0_dot=z1_dot
         ENDDO
         solver%info=0
@@ -1396,7 +1522,11 @@ MODULE LinearSolverTypes
           solver%iters=i
           solver%residual=error
         ENDSELECT
-        DEALLOCATE(r,w,z,p,b)
+        CALL r%clear()
+        CALL w%clear()
+        CALL b%clear()
+        CALL z%clear()
+        CALL p%clear()
       ENDIF
     ENDSUBROUTINE
 !
@@ -1435,5 +1565,5 @@ MODULE LinearSolverTypes
           norm=norm**(1._SRK/L)
       ENDSELECT
     ENDSUBROUTINE LNorm
-!
+
 ENDMODULE LinearSolverTypes
