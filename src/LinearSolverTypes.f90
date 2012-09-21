@@ -224,9 +224,9 @@ MODULE LinearSolverTypes
       CALL pList%get('timerName',timerName)
       
       !Initialize parallel environments based on input
-      CALL solver%MPIparallelEnv%initialize(numberMPI)
-      CALL solver%OMPparallelEnv%initialize(numberOMP)
-      
+      IF (numberMPI>0) CALL solver%MPIparallelEnv%initialize(numberMPI)
+      IF (numberOMP>0) CALL solver%OMPparallelEnv%initialize(numberOMP)
+
       !Error checking of subroutine input
       localalloc=.FALSE.
       IF(.NOT.ASSOCIATED(eLinearSolverType)) THEN
