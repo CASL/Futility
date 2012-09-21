@@ -971,6 +971,10 @@ MODULE VTKFiles
        CALL merger(nl,nr,n,leftPoints,rightPoints,leftArray,rightArray, &
          array,pointList)
      ENDIF
+     CALL demallocA(rightArray)
+     CALL demallocA(leftArray)
+     CALL demallocA(leftPoints)
+     CALL demallocA(rightPoints)
    ENDSUBROUTINE mergeSort
 !
 !-------------------------------------------------------------------------------
