@@ -555,17 +555,11 @@ MODULE MatrixTypes
           ENDIF
           CALL MatCreate(MPI_COMM_WORLD,matrix%a,ierr)
           CALL MatSetSizes(matrix%a,PETSC_DECIDE,PETSC_DECIDE,matrix%n,matrix%n,ierr)
-          IF (PRESENT(mattype)) THEN
-            SparseDense = mattype !for now
-            IF (SparseDense == 0) THEN     ! sparse matrix
-              CALL MatSetType(matrix%a,MATMPIAIJ,ierr)
-            ELSEIF (SparseDense == 1) THEN ! dense matrix
-              CALL MatSetType(matrix%a,MATMPIDENSE,ierr)
-            ENDIF
-          ELSE
-            CALL eMatrixType%raiseError('Incorrect input to '// &
-            modName//'::'//myName//' - Matrix type (mattype) must '// &
-            'be provided!')
+          matrix%SparseDense = mattype !for now
+          IF (matrix%SparseDense == 0) THEN     ! sparse matrix
+            CALL MatSetType(matrix%a,MATMPIAIJ,ierr)
+          ELSEIF (matrix%SparseDense == 1) THEN ! dense matrix
+            CALL MatSetType(matrix%a,MATMPIDENSE,ierr)
           ENDIF
           CALL MatSetUp(matrix%a,ierr)
         ENDIF
@@ -872,15 +866,15 @@ MODULE MatrixTypes
 #ifdef HAVE_PETSC
       PetscErrorCode  :: ierr
       
-      ! assemble matrix if necessary
-      IF (.NOT.(matrix%isAssembled))
-        CALL MatAssemblyBegin(matrix%a,ierr)
-        CALL MatAssemblyEnd(matrix%a,ierr)
-        matrix%isAssembled=.FALSE.
-      ENDIF
-      
       aij=0.0_SRK
       IF(matrix%isInit) THEN
+        ! assemble matrix if necessary
+        IF (.NOT.(matrix%isAssembled)) THEN
+          CALL MatAssemblyBegin(matrix%a,ierr)
+          CALL MatAssemblyEnd(matrix%a,ierr)
+          matrix%isAssembled=.FALSE.
+        ENDIF
+      
         IF((i <= matrix%n) .AND. ((j > 0) .AND. (i > 0))) THEN
           CALL MatGetValues(matrix%a,1,i-1,1,j-1,aij,ierr)
         ELSE

@@ -30,6 +30,14 @@ PROGRAM testLinearSolver
   TYPE(MPI_EnvType) :: mpiTestEnv
   TYPE(ParamType) :: pList, optListLS
   
+#ifdef HAVE_PETSC
+#include <finclude/petsc.h>
+#define IS IS !petscisdef.h defines the keyword IS, and it needs to be reset
+  PetscErrorCode  :: ierr
+  
+  CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
+#endif
+
   !> set up default parameter list
   CALL optListLS%clear()
   CALL optListLS%add('PL->matrixType',SPARSE)
@@ -38,14 +46,6 @@ PROGRAM testLinearSolver
   CALL optListLS%add('PL->numberMPI',PE_COMM_SELF)
   CALL optListLS%add('PL->numberOMP',1_SNK)
   CALL optListLS%add('PL->timerName','LinearSolver Timer')
-  
-#ifdef HAVE_PETSC
-#include <finclude/petsc.h>
-#define IS IS !petscisdef.h defines the keyword IS, and it needs to be reset
-  PetscErrorCode  :: ierr
-  
-  CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
-#endif
 
   !Configure exception handler for test
   ALLOCATE(e)
@@ -75,9 +75,9 @@ PROGRAM testLinearSolver
   
 #ifdef HAVE_PETSC    
   CALL PetscFinalize(ierr)
-#endif
-
+#else
   CALL mpiTestEnv%finalize()
+#endif
   
   DEALLOCATE(e)
   

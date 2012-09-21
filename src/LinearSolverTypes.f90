@@ -80,6 +80,8 @@ MODULE LinearSolverTypes
     LOGICAL(SBK) :: isInit=.FALSE.
     !> Integer flag for the solution methodology desired
     INTEGER(SIK) :: solverMethod=-1
+    !> Integer flag for the solution methodology desired
+    INTEGER(SIK) :: TPLType=-1
     !> Pointer to the distributed memory parallel environment
     TYPE(MPI_EnvType) :: MPIparallelEnv
     !> Pointer to the shared memory parallel environment
@@ -304,6 +306,7 @@ MODULE LinearSolverTypes
             !assign values to solver
             CALL solver%SolveTime%setTimerName(timerName)   
             solver%solverMethod=solverMethod
+            solver%TPLType=TPLType
             solver%isInit=.TRUE.
           ELSE
             CALL eLinearSolverType%raiseError('Incorrect call to '// &
@@ -337,6 +340,7 @@ MODULE LinearSolverTypes
             !assign values to solver
             CALL solver%SolveTime%setTimerName(timerName)   
             solver%solverMethod=solverMethod
+            solver%TPLType=TPLType
             solver%isInit=.TRUE.
           ELSE
             CALL eLinearSolverType%raiseError('Incorrect call to '// &
@@ -578,7 +582,7 @@ MODULE LinearSolverTypes
 #ifdef HAVE_PETSC                      
               TYPE IS(PETScMatrixType)
                 ! assemble matrix if necessary
-                IF (.NOT.(A%isAssembled))
+                IF (.NOT.(A%isAssembled)) THEN
                   CALL MatAssemblyBegin(A,ierr)
                   CALL MatAssemblyEnd(A,ierr)
                   A%isAssembled=.FALSE.
@@ -611,7 +615,7 @@ MODULE LinearSolverTypes
 #ifdef HAVE_PETSC                    
               TYPE IS(PETScMatrixType)
                 ! assemble matrix if necessary
-                IF (.NOT.(A%isAssembled))
+                IF (.NOT.(A%isAssembled)) THEN
                   CALL MatAssemblyBegin(A,ierr)
                   CALL MatAssemblyEnd(A,ierr)
                   A%isAssembled=.FALSE.
@@ -630,7 +634,7 @@ MODULE LinearSolverTypes
 #ifdef HAVE_PETSC                    
               TYPE IS(PETScMatrixType)
                 ! assemble matrix if necessary
-                IF (.NOT.(A%isAssembled))
+                IF (.NOT.(A%isAssembled)) THEN
                   CALL MatAssemblyBegin(A,ierr)
                   CALL MatAssemblyEnd(A,ierr)
                   A%isAssembled=.FALSE.
@@ -793,7 +797,9 @@ MODULE LinearSolverTypes
         solver%convTol=convTol
         solver%maxIters=maxIters
 #ifdef HAVE_PETSC
-        CALL KSPSetTolerances(solver%ksp,rtol,abstol,dtol,maxits,ierr)
+        IF (solver%TPLType == PETSC) THEN
+          CALL KSPSetTolerances(solver%ksp,rtol,abstol,dtol,maxits,ierr)
+        ENDIF
 #endif
       ENDIF
       IF(localalloc) DEALLOCATE(eLinearSolverType)

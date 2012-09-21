@@ -1261,6 +1261,7 @@ PROGRAM testMatrixTypes
       CALL pList%clear()
       CALL pList%add('testPL->n',10_SNK)
       CALL pList%add('testPL->m',0_SNK)
+      CALL pList%add('testPL->mattype',0_SNK) ! sparse
       CALL pList%validate(pList,optList)
       eMatrixType => NULL()
       CALL thisMatrix%init(pList) !n=10, not symmetric (0), sparse (0)
@@ -1342,16 +1343,28 @@ PROGRAM testMatrixTypes
       CALL thisMatrix%set(2,2,3._SRK)
       SELECTTYPE(thisMatrix)
         TYPE IS(PETScMatrixType)
+          ! manually assemble
+          CALL MatAssemblyBegin(thisMatrix%a,ierr)
+          CALL MatAssemblyEnd(thisMatrix%a,ierr)
+          thisMatrix%isAssembled=.TRUE.
           CALL MatGetValues(thisMatrix%a,1,0,1,0,dummy,ierr)
           IF(dummy/=1._SRK)THEN
             WRITE(*,*) 'CALL petscsparse%set(...) FAILED!'
             STOP 666
           ENDIF
+          ! manually assemble
+          CALL MatAssemblyBegin(thisMatrix%a,ierr)
+          CALL MatAssemblyEnd(thisMatrix%a,ierr)
+          thisMatrix%isAssembled=.TRUE.
           CALL MatGetValues(thisMatrix%a,1,0,1,1,dummy,ierr)
           IF(dummy/=2._SRK)THEN
             WRITE(*,*) 'CALL petscsparse%set(...) FAILED!'
             STOP 666
           ENDIF
+          ! manually assemble
+          CALL MatAssemblyBegin(thisMatrix%a,ierr)
+          CALL MatAssemblyEnd(thisMatrix%a,ierr)
+          thisMatrix%isAssembled=.TRUE.
           CALL MatGetValues(thisMatrix%a,1,1,1,1,dummy,ierr)
           IF(dummy/=3._SRK)THEN
             WRITE(*,*) 'CALL petscsparse%set(...) FAILED!'
@@ -1371,21 +1384,37 @@ PROGRAM testMatrixTypes
       CALL thisMatrix%set(2,2,3._SRK)
       SELECTTYPE(thisMatrix)
         TYPE IS(PETScMatrixType)
+          ! manually assemble
+          CALL MatAssemblyBegin(thisMatrix%a,ierr)
+          CALL MatAssemblyEnd(thisMatrix%a,ierr)
+          thisMatrix%isAssembled=.TRUE.
           CALL MatGetValues(thisMatrix%a,1,0,1,0,dummy,ierr)
           IF(dummy/=1._SRK)THEN
             WRITE(*,*) 'CALL petscsparse%set(...) FAILED!'
             STOP 666
           ENDIF
+          ! manually assemble
+          CALL MatAssemblyBegin(thisMatrix%a,ierr)
+          CALL MatAssemblyEnd(thisMatrix%a,ierr)
+          thisMatrix%isAssembled=.TRUE.
           CALL MatGetValues(thisMatrix%a,1,0,1,1,dummy,ierr)
           IF(dummy/=2._SRK)THEN
             WRITE(*,*) 'CALL petscsparse%set(...) FAILED!'
             STOP 666
           ENDIF
+          ! manually assemble
+          CALL MatAssemblyBegin(thisMatrix%a,ierr)
+          CALL MatAssemblyEnd(thisMatrix%a,ierr)
+          thisMatrix%isAssembled=.TRUE.
           CALL MatGetValues(thisMatrix%a,1,1,1,0,dummy,ierr)
           IF(dummy/=2._SRK)THEN
             WRITE(*,*) 'CALL petscsparse%set(...) FAILED!'
             STOP 666
           ENDIF
+          ! manually assemble
+          CALL MatAssemblyBegin(thisMatrix%a,ierr)
+          CALL MatAssemblyEnd(thisMatrix%a,ierr)
+          thisMatrix%isAssembled=.TRUE.
           CALL MatGetValues(thisMatrix%a,1,1,1,1,dummy,ierr)
           IF(dummy/=3._SRK)THEN
             WRITE(*,*) 'CALL petscsparse%set(...) FAILED!'
@@ -1422,7 +1451,6 @@ PROGRAM testMatrixTypes
           CALL thisMatrix%set(3,1,4._SRK)
           CALL thisMatrix%set(3,2,5._SRK)
           CALL thisMatrix%set(3,3,6._SRK)
-          CALL MatGetValues(thisMatrix%a,1,0,1,0,dummy,ierr)
           IF(((thisMatrix%get(1,1) /= 1._SRK)  .OR. &
               (thisMatrix%get(2,1) /= 0._SRK)) .OR. &
               (thisMatrix%get(3,1) /= 4._SRK)) THEN
@@ -1494,14 +1522,14 @@ PROGRAM testMatrixTypes
         TYPE IS(PETScMatrixType)
           IF(((thisMatrix%isInit).OR.(thisMatrix%n /= 0)) &
               .OR.((thisMatrix%isSymmetric))) THEN
-            WRITE(*,*) 'CALL petscdensesquare%clear() FAILED!'
+            WRITE(*,*) 'CALL petscdense%clear() FAILED!'
             STOP 666
           ENDIF
           IF(thisMatrix%a /= PETSC_NULL_REAL) THEN
-            WRITE(*,*) 'CALL petscdensesquare%clear() FAILED!'
+            WRITE(*,*) 'CALL petscdense%clear() FAILED!'
             STOP 666
           ENDIF
-          WRITE(*,*) '  Passed: CALL petscdensesquare%clear()'
+          WRITE(*,*) '  Passed: CALL petscdense%clear()'
       ENDSELECT
       !check init
       ! build optional list for validation
@@ -1512,6 +1540,7 @@ PROGRAM testMatrixTypes
       CALL pList%clear()
       CALL pList%add('testPL->n',10_SNK)
       CALL pList%add('testPL->m',0_SNK)
+      CALL pList%add('testPL->mattype',1_SNK) ! dense
       CALL pList%validate(pList,optList)
       eMatrixType => NULL()
       CALL thisMatrix%init(pList) !n=10, not symmetric (0), sparse (0)
@@ -1520,12 +1549,12 @@ PROGRAM testMatrixTypes
         TYPE IS(PETScMatrixType)
           IF(((.NOT. thisMatrix%isInit).OR.(thisMatrix%n /= 10)) &
               .OR.(thisMatrix%isSymmetric)) THEN
-            WRITE(*,*) 'CALL petscsparse%init(...) FAILED!'
+            WRITE(*,*) 'CALL petscdense%init(...) FAILED!'
             STOP 666
           ENDIF
           CALL MatGetSize(thisMatrix%a,matsize1,matsize2,ierr)
           IF((matsize1 /= 10) .OR. (matsize2 /= 10)) THEN
-            WRITE(*,*) 'CALL petscsparse%init(...) FAILED!'
+            WRITE(*,*) 'CALL petscdense%init(...) FAILED!'
             STOP 666
           ENDIF
       ENDSELECT  
@@ -1540,7 +1569,7 @@ PROGRAM testMatrixTypes
         TYPE IS(PETScMatrixType)
           IF(((.NOT. thisMatrix%isInit).OR.(thisMatrix%n /= 10)) &
               .OR.(.NOT. thisMatrix%isSymmetric)) THEN
-            WRITE(*,*) 'CALL petscsparse%init(...) FAILED!'
+            WRITE(*,*) 'CALL petscdense%init(...) FAILED!'
             STOP 666
           ENDIF
       ENDSELECT
@@ -1559,12 +1588,12 @@ PROGRAM testMatrixTypes
       SELECTTYPE(thisMatrix)
         TYPE IS(PETScMatrixType)
           IF(thisMatrix%isSymmetric) THEN
-            WRITE(*,*) 'CALL petscsparse%init(...) FAILED!'
+            WRITE(*,*) 'CALL petscdense%init(...) FAILED!'
             STOP 666
           ENDIF
       ENDSELECT
       CALL thisMatrix%clear()
-      WRITE(*,*) '  Passed: CALL petscdensesquare%init(...)'
+      WRITE(*,*) '  Passed: CALL petscdense%init(...)'
       
       !check set
       !test normal use case (symmetric and nonsymmetric)
@@ -1581,19 +1610,31 @@ PROGRAM testMatrixTypes
       CALL thisMatrix%set(2,2,3._SRK)
       SELECTTYPE(thisMatrix)
         TYPE IS(PETScMatrixType)
+          ! manually assemble 
+          CALL MatAssemblyBegin(thisMatrix%a,ierr)
+          CALL MatAssemblyEnd(thisMatrix%a,ierr)
+          thisMatrix%isAssembled=.FALSE.
           CALL MatGetValues(thisMatrix%a,1,0,1,0,dummy,ierr)
           IF(dummy/=1._SRK)THEN
-            WRITE(*,*) 'CALL petscdensesquare%set(...) FAILED!'
+            WRITE(*,*) 'CALL petscdense%set(...) FAILED!'
             STOP 666
           ENDIF
+          ! manually assemble 
+          CALL MatAssemblyBegin(thisMatrix%a,ierr)
+          CALL MatAssemblyEnd(thisMatrix%a,ierr)
+          thisMatrix%isAssembled=.FALSE.
           CALL MatGetValues(thisMatrix%a,1,0,1,1,dummy,ierr)
           IF(dummy/=2._SRK)THEN
-            WRITE(*,*) 'CALL petscdensesquare%set(...) FAILED!'
+            WRITE(*,*) 'CALL petscdense%set(...) FAILED!'
             STOP 666
           ENDIF
+          ! manually assemble 
+          CALL MatAssemblyBegin(thisMatrix%a,ierr)
+          CALL MatAssemblyEnd(thisMatrix%a,ierr)
+          thisMatrix%isAssembled=.FALSE.
           CALL MatGetValues(thisMatrix%a,1,1,1,1,dummy,ierr)
           IF(dummy/=3._SRK)THEN
-            WRITE(*,*) 'CALL petscdensesquare%set(...) FAILED!'
+            WRITE(*,*) 'CALL petscdense%set(...) FAILED!'
             STOP 666
           ENDIF
       ENDSELECT
@@ -1610,24 +1651,40 @@ PROGRAM testMatrixTypes
       CALL thisMatrix%set(2,2,3._SRK)
       SELECTTYPE(thisMatrix)
         TYPE IS(PETScMatrixType)
+          ! manually assemble 
+          CALL MatAssemblyBegin(thisMatrix%a,ierr)
+          CALL MatAssemblyEnd(thisMatrix%a,ierr)
+          thisMatrix%isAssembled=.FALSE.
           CALL MatGetValues(thisMatrix%a,1,0,1,0,dummy,ierr)
           IF(dummy/=1._SRK)THEN
-            WRITE(*,*) 'CALL petscdensesquare%set(...) FAILED!'
+            WRITE(*,*) 'CALL petscdense%set(...) FAILED!'
             STOP 666
           ENDIF
+          ! manually assemble 
+          CALL MatAssemblyBegin(thisMatrix%a,ierr)
+          CALL MatAssemblyEnd(thisMatrix%a,ierr)
+          thisMatrix%isAssembled=.FALSE.
           CALL MatGetValues(thisMatrix%a,1,0,1,1,dummy,ierr)
           IF(dummy/=2._SRK)THEN
-            WRITE(*,*) 'CALL petscdensesquare%set(...) FAILED!'
+            WRITE(*,*) 'CALL petscdense%set(...) FAILED!'
             STOP 666
           ENDIF
+          ! manually assemble 
+          CALL MatAssemblyBegin(thisMatrix%a,ierr)
+          CALL MatAssemblyEnd(thisMatrix%a,ierr)
+          thisMatrix%isAssembled=.FALSE.
           CALL MatGetValues(thisMatrix%a,1,1,1,0,dummy,ierr)
           IF(dummy/=2._SRK)THEN
-            WRITE(*,*) 'CALL petscdensesquare%set(...) FAILED!'
+            WRITE(*,*) 'CALL petscdense%set(...) FAILED!'
             STOP 666
           ENDIF
+          ! manually assemble 
+          CALL MatAssemblyBegin(thisMatrix%a,ierr)
+          CALL MatAssemblyEnd(thisMatrix%a,ierr)
+          thisMatrix%isAssembled=.FALSE.
           CALL MatGetValues(thisMatrix%a,1,1,1,1,dummy,ierr)
           IF(dummy/=3._SRK)THEN
-            WRITE(*,*) 'CALL petscdensesquare%set(...) FAILED!'
+            WRITE(*,*) 'CALL petscdense%set(...) FAILED!'
             STOP 666
           ENDIF
       ENDSELECT    
@@ -1645,7 +1702,7 @@ PROGRAM testMatrixTypes
       CALL thisMatrix%set(5,1,1._SRK)
       CALL thisMatrix%set(1,5,1._SRK)
       !no crash? good
-      WRITE(*,*) '  Passed: CALL petscdensesquare%set(...)'
+      WRITE(*,*) '  Passed: CALL petscdense%set(...)'
       
       !Perform test of functionality of get function
       ![1 0 2]
@@ -1665,21 +1722,20 @@ PROGRAM testMatrixTypes
           CALL thisMatrix%set(3,1,4._SRK)
           CALL thisMatrix%set(3,2,5._SRK)
           CALL thisMatrix%set(3,3,6._SRK)
-          CALL MatGetValues(thisMatrix%a,1,0,1,0,dummy,ierr)
           IF(((thisMatrix%get(1,1) /= 1._SRK)  .OR. &
               (thisMatrix%get(2,1) /= 0._SRK)) .OR. &
               (thisMatrix%get(3,1) /= 4._SRK)) THEN
-            WRITE(*,*) 'CALL petscdensesquare%get(...) FAILED!' !column one check
+            WRITE(*,*) 'CALL petscdense%get(...) FAILED!' !column one check
             STOP 666
           ELSEIF(((thisMatrix%get(1,2) /= 0._SRK)  .OR. &
                   (thisMatrix%get(2,2) /= 0._SRK)) .OR. &
                   (thisMatrix%get(3,2) /= 5._SRK)) THEN
-            WRITE(*,*) 'CALL petscdensesquare%get(...) FAILED!' !column two check
+            WRITE(*,*) 'CALL petscdense%get(...) FAILED!' !column two check
             STOP 666
           ELSEIF(((thisMatrix%get(1,3) /= 2._SRK)  .OR. &
                   (thisMatrix%get(2,3) /= 3._SRK)) .OR. &
                   (thisMatrix%get(3,3) /= 6._SRK)) THEN
-            WRITE(*,*) 'CALL petscdensesquare%get(...) FAILED!' !column three check
+            WRITE(*,*) 'CALL petscdense%get(...) FAILED!' !column three check
             STOP 666
           ENDIF
       ENDSELECT
