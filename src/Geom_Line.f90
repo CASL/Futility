@@ -194,6 +194,7 @@ MODULE Geom_Line
 !> @returns @c p the point of intersection (if it exists)
 !> @note a return code is assigned to p%dim indicating the type of
 !> intersection.
+!>   -4: would intersect if segments were infinite
 !>   -3: there is no intersection (disjoint)
 !>   -2: the line segments overlap
 !>  > 0: success; an intersection point was found
@@ -227,7 +228,7 @@ MODULE Geom_Line
           p%coord(1)=p%coord(1)+s*u(1)
           p%coord(2)=p%coord(2)+s*u(2)
         ELSE
-          p%dim=-3 !would intersect if segments were infinite
+          p%dim=-4 !would intersect if segments were infinite
         ENDIF
       ENDIF
     ENDFUNCTION intersect_lines2D
