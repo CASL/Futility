@@ -72,6 +72,13 @@
 !> @par
 !> (08/30/2011) - Brendan Kochunas
 !>   - Added operator .APPROXEQ. for "approximately equal"
+!> @par
+!> (09/06/2012) - Ben Collins
+!>   - Added function SOFTEQ for "soft equalivalence"
+!> @par
+!> (09/24/2011) - Brendan Kochunas
+!>   - Added operator .APPROXLE. and .APPROXGE. for "approximately less/greater than"
+
 !>
 !> @todo
 !> - Add support for Fortran 2003 C-interoperable types.
@@ -87,6 +94,8 @@ MODULE IntrType
   PUBLIC :: EPSD
   PUBLIC :: EPSREAL
   PUBLIC :: OPERATOR(.APPROXEQ.)
+  PUBLIC :: OPERATOR(.APPROXLE.)
+  PUBLIC :: OPERATOR(.APPROXGE.)
   PUBLIC :: SOFTEQ
 !
 ! Variables
@@ -196,6 +205,24 @@ MODULE IntrType
     MODULE PROCEDURE approxeq_double
   ENDINTERFACE
   !>
+  !> @brief Interface for the operator for "approximately less than" for intrinsic
+  !> types
+  INTERFACE OPERATOR(.APPROXLE.)
+    !> @copybrief IntrType::approxle_single
+    MODULE PROCEDURE approxle_single
+    !> @copybrief IntrType::approxle_double
+    MODULE PROCEDURE approxle_double
+  ENDINTERFACE
+  !>
+  !> @brief Interface for the operator for "approximately greater than" for intrinsic
+  !> types
+  INTERFACE OPERATOR(.APPROXGE.)
+    !> @copybrief IntrType::approxge_single
+    MODULE PROCEDURE approxge_single
+    !> @copybrief IntrType::approxge_double
+    MODULE PROCEDURE approxge_double
+  ENDINTERFACE
+  !>
   !> @brief Interface for the operator for "softt equivalence" for intrinsic
   !> types
   INTERFACE SOFTEQ
@@ -235,6 +262,62 @@ MODULE IntrType
       LOGICAL(SBK) :: bool
       bool=(ABS(r1 - r2) <= EPSD)
     ENDFUNCTION approxeq_double
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation when comparing two single precision reals
+!> with .APPROXLE.
+!> @param r1 a single precision real number
+!> @param r2 a single precision real number
+!> @returns @c bool result of comparison
+!>
+    ELEMENTAL FUNCTION approxle_single(r1,r2) RESULT(bool)
+      REAL(SSK),INTENT(IN) :: r1
+      REAL(SSK),INTENT(IN) :: r2
+      LOGICAL(SBK) :: bool
+      bool=(r1 <= r2+EPSS)
+    ENDFUNCTION approxle_single
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation when comparing two double precision reals
+!> with .APPROXLE.
+!> @param r1 a double precision real number
+!> @param r2 a double precision real number
+!> @returns @c bool result of comparison
+!>
+    ELEMENTAL FUNCTION approxle_double(r1,r2) RESULT(bool)
+      REAL(SDK),INTENT(IN) :: r1
+      REAL(SDK),INTENT(IN) :: r2
+      LOGICAL(SBK) :: bool
+      bool=(r1 <= r2+EPSD)
+    ENDFUNCTION approxle_double
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation when comparing two single precision reals
+!> with .APPROXGE.
+!> @param r1 a single precision real number
+!> @param r2 a single precision real number
+!> @returns @c bool result of comparison
+!>
+    ELEMENTAL FUNCTION approxge_single(r1,r2) RESULT(bool)
+      REAL(SSK),INTENT(IN) :: r1
+      REAL(SSK),INTENT(IN) :: r2
+      LOGICAL(SBK) :: bool
+      bool=(r1+EPSS >= r2)
+    ENDFUNCTION approxge_single
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation when comparing two double precision reals
+!> with .APPROXGE.
+!> @param r1 a double precision real number
+!> @param r2 a double precision real number
+!> @returns @c bool result of comparison
+!>
+    ELEMENTAL FUNCTION approxge_double(r1,r2) RESULT(bool)
+      REAL(SDK),INTENT(IN) :: r1
+      REAL(SDK),INTENT(IN) :: r2
+      LOGICAL(SBK) :: bool
+      bool=(r1+EPSD >= r2)
+    ENDFUNCTION approxge_double
 !
 !-------------------------------------------------------------------------------
 !> @brief Defines the operation when comparing two single precision reals
