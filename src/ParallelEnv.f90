@@ -255,7 +255,12 @@ MODULE ParallelEnv
           CALL MPI_Init(mpierr)
           IF(mpierr /= MPI_SUCCESS) CALL eParEnv%raiseError(modName//'::'// &
             myName//' - call to MPI_Init returned an error!')
+          
+          !Default communicator is MPI_COMM_WORLD if MPI was not initialized
+          !Set communicator to MPI_COMM_SELF though if this was passed 
+          !explicitly.
           myPE%comm=MPI_COMM_WORLD
+          IF(icomm == MPI_COMM_SELF) myPE%comm=MPI_COMM_SELF
 #else
           myPE%comm=1
 #endif
