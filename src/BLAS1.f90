@@ -2185,8 +2185,8 @@ MODULE BLAS1
         sum2=0.0_SDK
         rscale=1.0_SDK
         IF(x(1) /= 0.0_SDK) THEN
-            rscale=1.0_SDK/ABS(x(1))
-            sum2=1.0_SDK
+          rscale=1.0_SDK/ABS(x(1))
+          sum2=1.0_SDK
         ENDIF
         DO i=1+incx,1+(n-1)*incx,incx
           IF(x(i) /= 0.0_SDK) THEN
