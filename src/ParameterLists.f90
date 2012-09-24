@@ -1604,7 +1604,12 @@ MODULE ParameterLists
         ALLOCATE(eParams)
       ENDIF
       
-      isValid=validateReq_ParamType(thisParam,reqParams,'')
+      !Assume the list is valid, check it only if the required parameter
+      !list is not empty.
+      isValid=.TRUE.
+      IF(ASSOCIATED(reqParams%pdat)) &
+        isValid=validateReq_ParamType(thisParam,reqParams,'')
+      
       IF(isValid) THEN
         IF(PRESENT(optParams)) THEN
           CALL validateOpt_Paramtype(thisParam,optParams,'')
