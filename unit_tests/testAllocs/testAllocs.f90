@@ -46,20 +46,20 @@ PROGRAM testAllocs
   
   CALL eAllocs%setStopOnError(.FALSE.)
   CALL eAllocs%setQuietMode(.TRUE.)
-  CALL testTOOBIGP
-  CALL testTOOBIGA
+  CALL testTOOBIGP()
+  CALL testTOOBIGA()
   CALL eAllocs%setStopOnError(.TRUE.)
   
-  CALL testBOOLP
-  CALL testBOOLA
-  CALL testINTP
-  CALL testINTA
-  CALL testLONGINTP
-  CALL testLONGINTA
-  CALL testSINGLEP
-  CALL testSINGLEA
-  CALL testDOUBLEP
-  CALL testDOUBLEA
+  CALL testBOOLP()
+  CALL testBOOLA()
+  CALL testINTP()
+  CALL testINTA()
+  CALL testLONGINTP()
+  CALL testLONGINTA()
+  CALL testSINGLEP()
+  CALL testSINGLEA()
+  CALL testDOUBLEP()
+  CALL testDOUBLEA()
   
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING ALLOCS PASSED!'
@@ -82,6 +82,8 @@ PROGRAM testAllocs
       LOGICAL(SBK),POINTER :: bool6(:,:,:,:,:,:)
       LOGICAL(SBK),POINTER :: bool7(:,:,:,:,:,:,:)
       REAL(SRK) :: nbytes0
+
+      NULLIFY(bool1,bool2,bool3,bool4,bool5,bool6,bool7)
 
       WRITE(*,*) 'TESTING ALLOCS FOR LOGICAL (BOOLEAN) POINTER TYPES'
   !
@@ -1151,14 +1153,16 @@ PROGRAM testAllocs
       INTEGER(SNK),POINTER :: int_6(:,:,:,:,:,:)
       INTEGER(SNK),POINTER :: int_7(:,:,:,:,:,:,:)
       REAL(SRK) :: nbytes0
-
+      
+      NULLIFY(int_1,int_2,int_3,int_4,int_5,int_6,int_7)
+      
       WRITE(*,*) 'TESTING ALLOCS FOR INTEGER POINTER TYPES'
 !
 ! rank 1 variable
       CALL dmallocP(int_1,-10)
       CALL dmallocP(int_1,10)
       IF( (.NOT.ASSOCIATED(int_1)) .OR. ANY(int_1 /= 0) .OR. &
-          (UBOUND(int_1,1) /= 10) .OR. (LBOUND(int_1,1) /= 1) ) THEN
+          (UBOUND(int_1,DIM=1) /= 10) .OR. (LBOUND(int_1,DIM=1) /= 1) ) THEN
         WRITE(*,*) 'CALL dmallocP(int_1,10) FAILED!'
         STOP 666
       ELSE
@@ -2215,7 +2219,9 @@ PROGRAM testAllocs
       INTEGER(SLK),POINTER :: lint6(:,:,:,:,:,:)
       INTEGER(SLK),POINTER :: lint7(:,:,:,:,:,:,:)
       REAL(SRK) :: nbytes0
-
+      
+      NULLIFY(lint1,lint2,lint3,lint4,lint5,lint6,lint7)
+      
       WRITE(*,*) 'TESTING ALLOCS FOR LONG INTEGER TYPES'
 !
 ! rank 1 variable
@@ -3285,7 +3291,9 @@ PROGRAM testAllocs
       REAL(SSK),POINTER :: sgl6(:,:,:,:,:,:)
       REAL(SSK),POINTER :: sgl7(:,:,:,:,:,:,:)
       REAL(SRK) :: nbytes0
-
+      
+      NULLIFY(sgl1,sgl2,sgl3,sgl3,sgl4,sgl5,sgl6,sgl7)
+      
       WRITE(*,*) 'TESTING ALLOCS FOR SINGLE PRECISION REAL POINTER TYPES'
 !
 ! rank 1 variable
@@ -4355,7 +4363,9 @@ PROGRAM testAllocs
       REAL(SDK),POINTER :: dbl6(:,:,:,:,:,:)
       REAL(SDK),POINTER :: dbl7(:,:,:,:,:,:,:)
       REAL(SRK) :: nbytes0
-
+      
+      NULLIFY(dbl1,dbl2,dbl3,dbl4,dbl5,dbl6,dbl7)
+      
       WRITE(*,*) 'TESTING ALLOCS FOR DOUBLE PRECISION REAL POINTER TYPES'
 !
 ! rank 1 variable
@@ -5452,6 +5462,11 @@ PROGRAM testAllocs
       REAL(SDK),POINTER :: d6tb(:,:,:,:,:,:)
       REAL(SDK),POINTER :: d7tb(:,:,:,:,:,:,:)
       
+      NULLIFY(i2tb,i3tb,i4tb,i5tb,i6tb,i7tb)
+      NULLIFY(l2tb,l3tb,l4tb,l5tb,l6tb,l7tb)
+      NULLIFY(b2tb,b3tb,b4tb,b5tb,b6tb,b7tb)
+      NULLIFY(s2tb,s3tb,s4tb,s5tb,s6tb,s7tb)
+      NULLIFY(d2tb,d3tb,d4tb,d5tb,d6tb,d7tb)
       
       WRITE(*,*) 'TESTING ALLOCS FOR ERROR CATCHING WITH POINTERS'
       
