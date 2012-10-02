@@ -59,7 +59,7 @@ MODULE VectorTypes
 
 #ifdef HAVE_PETSC
 #include <finclude/petsc.h>
-#define IS IS !petscisdef.h defines the keyword IS, and it needs to be reset
+#undef IS
 #endif
 
   PRIVATE
@@ -185,6 +185,7 @@ MODULE VectorTypes
 #ifdef HAVE_PETSC
     Vec :: b
 #endif
+    LOGICAL(SBK) :: isAssembled
 !
 !List of Type Bound Procedures
     CONTAINS 
@@ -501,12 +502,15 @@ MODULE VectorTypes
       REAL(SRK) :: getval
 #ifdef HAVE_PETSC
       PetscErrorCode  :: ierr
-#endif
 
       getval=0.0_SRK
-      
-#ifdef HAVE_PETSC
       IF(vector%isInit) THEN
+        ! assemble matrix if necessary
+        IF (.NOT.(vector%isAssembled)) THEN
+          CALL VecAssemblyBegin(vector%b,ierr)
+          CALL VecAssemblyEnd(vector%b,ierr)
+          vector%isAssembled=.TRUE.
+        ENDIF
         IF((i <= vector%n) .AND. (i > 0)) THEN
           CALL VecGetValues(vector%b,1,i-1,getval,ierr)
         ELSE
@@ -529,7 +533,7 @@ MODULE VectorTypes
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
       REAL(SRK) :: r
-      
+
       SELECTTYPE(thisVector); TYPE IS(RealVectorType)
         IF(PRESENT(n) .AND. PRESENT(incx)) THEN
           r = BLAS1_asum(n,thisVector%b,incx)

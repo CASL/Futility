@@ -76,7 +76,7 @@ MODULE MatrixTypes
 
 #ifdef HAVE_PETSC
 #include <finclude/petsc.h>
-#define IS IS !petscisdef.h defines the keyword IS, and it needs to be reset
+#undef IS
 #endif
 
   PRIVATE
@@ -870,9 +870,9 @@ MODULE MatrixTypes
       IF(matrix%isInit) THEN
         ! assemble matrix if necessary
         IF (.NOT.(matrix%isAssembled)) THEN
-          CALL MatAssemblyBegin(matrix%a,ierr)
-          CALL MatAssemblyEnd(matrix%a,ierr)
-          matrix%isAssembled=.FALSE.
+          CALL MatAssemblyBegin(matrix%a,MAT_FINAL_ASSEMBLY,ierr)
+          CALL MatAssemblyEnd(matrix%a,MAT_FINAL_ASSEMBLY,ierr)
+          matrix%isAssembled=.TRUE.
         ENDIF
       
         IF((i <= matrix%n) .AND. ((j > 0) .AND. (i > 0))) THEN

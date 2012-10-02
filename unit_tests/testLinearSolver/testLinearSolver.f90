@@ -32,7 +32,7 @@ PROGRAM testLinearSolver
   
 #ifdef HAVE_PETSC
 #include <finclude/petsc.h>
-#define IS IS !petscisdef.h defines the keyword IS, and it needs to be reset
+#undef IS
   PetscErrorCode  :: ierr
   
   CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
