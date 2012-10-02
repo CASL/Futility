@@ -94,6 +94,9 @@ MODULE IntrType
   PUBLIC :: EPSD
   PUBLIC :: EPSREAL
   PUBLIC :: OPERATOR(.APPROXEQ.)
+  PUBLIC :: OPERATOR(.APPROXEQF.)
+  PUBLIC :: OPERATOR(.APPROXEQA.)
+  PUBLIC :: OPERATOR(.APPROXEQR.)
   PUBLIC :: OPERATOR(.APPROXLE.)
   PUBLIC :: OPERATOR(.APPROXGE.)
   PUBLIC :: SOFTEQ
@@ -197,14 +200,41 @@ MODULE IntrType
 #endif
   
   !> @brief Interface for the operator for "approximately equals" for intrinsic
-  !> types
+  !> real kinds. Compares significant decimal digits
   INTERFACE OPERATOR(.APPROXEQ.)
     !> @copybrief IntrType::approxeq_single
     MODULE PROCEDURE approxeq_single
     !> @copybrief IntrType::approxeq_double
     MODULE PROCEDURE approxeq_double
   ENDINTERFACE
-  !>
+
+  !> @brief Interface for the operator for "approximately equals" for intrinsic
+  !> real kinds. Performs absolute comparison to EPSREAL
+  INTERFACE OPERATOR(.APPROXEQA.)
+    !> @copybrief IntrType::approxeq_abs_single
+    MODULE PROCEDURE approxeq_abs_single
+    !> @copybrief IntrType::approxeq_abs_double
+    MODULE PROCEDURE approxeq_abs_double
+  ENDINTERFACE
+  
+  !> @brief Interface for the operator for "approximately equals" for intrinsic
+  !> real kinds. Performs relative comparison to EPSREAL
+  INTERFACE OPERATOR(.APPROXEQR.)
+    !> @copybrief IntrType::approxeq_rel_single
+    MODULE PROCEDURE approxeq_rel_single
+    !> @copybrief IntrType::approxeq_rel_double
+    MODULE PROCEDURE approxeq_rel_double
+  ENDINTERFACE
+    
+  !> @brief Interface for the operator for "approximately equals" for intrinsic
+  !> real kinds. Performs bitwise comparison allowing for 10 nearest floats.
+  INTERFACE OPERATOR(.APPROXEQF.)
+    !> @copybrief IntrType::approxeq_ulp_single
+    MODULE PROCEDURE approxeq_ulp_single
+    !> @copybrief IntrType::approxeq_ulp_double
+    MODULE PROCEDURE approxeq_ulp_double
+  ENDINTERFACE
+  
   !> @brief Interface for the operator for "approximately less than" for intrinsic
   !> types
   INTERFACE OPERATOR(.APPROXLE.)
@@ -213,7 +243,7 @@ MODULE IntrType
     !> @copybrief IntrType::approxle_double
     MODULE PROCEDURE approxle_double
   ENDINTERFACE
-  !>
+  
   !> @brief Interface for the operator for "approximately greater than" for intrinsic
   !> types
   INTERFACE OPERATOR(.APPROXGE.)
@@ -222,7 +252,7 @@ MODULE IntrType
     !> @copybrief IntrType::approxge_double
     MODULE PROCEDURE approxge_double
   ENDINTERFACE
-  !>
+  
   !> @brief Interface for the operator for "softt equivalence" for intrinsic
   !> types
   INTERFACE SOFTEQ
@@ -238,30 +268,256 @@ MODULE IntrType
 !-------------------------------------------------------------------------------
 !> @brief Defines the operation when comparing two single precision reals
 !> with .APPROXEQ.
-!> @param r1 a single precision real number
-!> @param r2 a single precision real number
-!> @returns @c bool result of comparison
+!> @param a
+!> @param b
+!> @returns bool logical indicating if a and b are approximately equal
 !>
-    ELEMENTAL FUNCTION approxeq_single(r1,r2) RESULT(bool)
-      REAL(SSK),INTENT(IN) :: r1
-      REAL(SSK),INTENT(IN) :: r2
+!> In this module single precision numbers are defined as having 6 digits of
+!> precision. This function defines "approximately equals to" such that the
+!> numbers are allowed to by vary exactly 1.0 or less in the 6th significant 
+!> digit.
+!>
+!> This function works by "printing" the first 14 digits of a real
+!> and doing a string comparison to insure that the first 5 digits and the 
+!> exponent agree exactly and the 6th and 7th digit are then converted to
+!> an integer and their absolute difference must then be less than or equal
+!> to 10.
+!>
+    ELEMENTAL FUNCTION approxeq_single(a,b) RESULT(bool)
+      REAL(SSK),INTENT(IN) :: a,b
       LOGICAL(SBK) :: bool
-      bool=(ABS(r1 - r2) <= EPSS)
+      CHARACTER(LEN=13) :: aString,bString
+      CHARACTER(LEN=7) :: expString
+      INTEGER(SNK) :: intA_left,intB_left,intA_exp,intB_exp,diffExp
+      INTEGER(SLK) :: intA_right,intB_right
+      REAL(SSK) :: tol
+      
+      !Convert to character variable
+      WRITE(aString,'(es13.6E2)') a
+      WRITE(bString,'(es13.6E2)') b
+      
+      !First digit that is left of decimal
+      READ(aString(1:2),'(i2)') intA_left
+      READ(bString(1:2),'(i2)') intB_left
+      
+      IF(intA_left == 0 .OR. intB_left == 0) THEN
+        !Special case for 0, use absolute comparison
+        bool=(ABS(a-b) <= EPSS)
+      ELSE
+        !Conver exponent and numbers right of decimal to integers
+        READ(aString(4:9),'(i6)') intA_right
+        READ(bString(4:9),'(i6)') intB_right
+        READ(aString(11:13),'(i4)') intA_exp
+        READ(bString(11:13),'(i4)') intB_exp
+        diffExp=ABS(intA_exp-intB_exp)
+        
+        IF(diffExp < 2) THEN
+          IF(diffExp == 0 .AND. intA_left == intB_left) THEN
+            !exponents are the same and left of decimal numbers are same,
+            !so compare sig figs to the right of the decimal
+            bool=(ABS(intA_right-intB_right) < 15)
+          ELSE
+            !Exponent or number may have rolled over (e.g. 1.0 and 0.9)
+            !Compute tolerance based on larger exponent
+            WRITE(expString,'(a,sp,i3.2)') '1.0e',(MAX(intA_exp,intB_exp)-5)
+            READ(expString,*) tol
+            bool=(ABS(a-b) <= tol)
+          ENDIF
+        ELSE
+          bool=.FALSE.
+        ENDIF
+      ENDIF
     ENDFUNCTION approxeq_single
 !
 !-------------------------------------------------------------------------------
 !> @brief Defines the operation when comparing two double precision reals
 !> with .APPROXEQ.
-!> @param r1 a double precision real number
-!> @param r2 a double precision real number
-!> @returns @c bool result of comparison
+!> @param a
+!> @param b
+!> @returns bool logical indicating if a and b are approximately equal
 !>
-    ELEMENTAL FUNCTION approxeq_double(r1,r2) RESULT(bool)
-      REAL(SDK),INTENT(IN) :: r1
-      REAL(SDK),INTENT(IN) :: r2
+!> In this module double precision numbers are defined as having 15 digits of
+!> precision. This function defines "approximately equals to" such that the
+!> numbers are allowed to by vary exactly 1.0 or less in the 15th significant 
+!> digit.
+!>
+!> This function works by "printing" the first 16 digits of a real
+!> and doing a string comparison to insure that the first 14 digits and the 
+!> exponent agree exactly and the 15th and 16th digit are then converted to
+!> an integer and their absolute difference must then be less than or equal
+!> to 10.
+!>
+    ELEMENTAL FUNCTION approxeq_double(a,b) RESULT(bool)
+      REAL(SDK),INTENT(IN) :: a,b
       LOGICAL(SBK) :: bool
-      bool=(ABS(r1 - r2) <= EPSD)
+      CHARACTER(LEN=23) :: aString,bString
+      CHARACTER(LEN=8) :: expString
+      INTEGER(SNK) :: intA_left,intB_left,intA_exp,intB_exp,diffExp
+      INTEGER(SLK) :: intA_right,intB_right
+      REAL(SDK) :: tol
+      
+      !Convert to character variable
+      WRITE(aString,'(es23.15E3)') a
+      WRITE(bString,'(es23.15E3)') b
+      
+      !First digit that is left of decimal
+      READ(aString(1:2),'(i2)') intA_left
+      READ(bString(1:2),'(i2)') intB_left
+      
+      IF(intA_left == 0 .OR. intB_left == 0) THEN
+        !Special case for 0, use absolute comparison
+        bool=(ABS(a-b) <= EPSD)
+      ELSE
+        !Conver exponent and numbers right of decimal to integers
+        READ(aString(4:18),'(i15)') intA_right
+        READ(bString(4:18),'(i15)') intB_right
+        READ(aString(20:23),'(i4)') intA_exp
+        READ(bString(20:23),'(i4)') intB_exp
+        diffExp=ABS(intA_exp-intB_exp)
+      
+        IF(diffExp < 2) THEN
+          IF(diffExp == 0 .AND. intA_left == intB_left) THEN
+            !exponents are the same and left of decimal numbers are same,
+            !so compare sig figs to the right of the decimal
+            bool=(ABS(intA_right-intB_right) < 15)
+          ELSE
+            !Exponent or number may have rolled over (e.g. 1.0 and 0.9)
+            !Compute tolerance based on larger exponent
+            WRITE(expString,'(a,sp,i4.3)') '1.0d',(MAX(intA_exp,intB_exp)-14)
+            READ(expString,*) tol
+            bool=(ABS(a-b) <= tol)
+          ENDIF
+        ELSE
+          bool=.FALSE.
+        ENDIF
+      ENDIF
     ENDFUNCTION approxeq_double
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing an absolute comparison of two
+!> single precision reals with .APPROXEQA.
+!> @param a
+!> @param b
+!> @returns bool logical indicating if a and b are approximately equal
+!>
+!> This routine just does a simple absolute comparison using an epsilon that is
+!> a compile time constant. It should be used whenever possible because it has
+!> the least overhead. However, it is not appropriate to use when @c a and @c b
+!> are either very large or very small.
+!>
+    ELEMENTAL FUNCTION approxeq_abs_single(a,b) RESULT(bool)
+      REAL(SSK),INTENT(IN) :: a,b
+      LOGICAL(SBK) :: bool
+      bool=(ABS(a-b) <= EPSS)
+    ENDFUNCTION approxeq_abs_single
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing an absolute comparison of two
+!> double precision reals with .APPROXEQA.
+!> @param a
+!> @param b
+!> @returns bool logical indicating if a and b are approximately equal
+!>
+!> This routine just does a simple absolute comparison using an epsilon that is
+!> a compile time constant. It should be used whenever possible because it has
+!> the least overhead. However, it is not appropriate to use when @c a and @c b
+!> are either very large or very small.
+!>
+    ELEMENTAL FUNCTION approxeq_abs_double(a,b) RESULT(bool)
+      REAL(SDK),INTENT(IN) :: a,b
+      LOGICAL(SBK) :: bool
+      bool=(ABS(a-b) <= EPSD)
+    ENDFUNCTION approxeq_abs_double
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing a relative comparison of two
+!> single precision reals with .APPROXEQA.
+!> @param a
+!> @param b
+!> @returns bool logical indicating if a and b are approximately equal
+!>
+!> This performs a relative comparison by scaling the default epsilon value to
+!> the size of the larger of the two. It should be used when @c and @b are of
+!> the same magnitude and very large or very small. If either @c a or @c b is
+!> zero (exactly) then this routine is equivalent to an absolute comparison.
+!>
+    ELEMENTAL FUNCTION approxeq_rel_single(a,b) RESULT(bool)
+      REAL(SSK),INTENT(IN) :: a,b
+      LOGICAL(SBK) :: bool
+      REAL(SSK) :: eps
+      eps=MAX(ABS(a),ABS(b))*EPSS
+      IF(a == 0.0_SSK .OR. b == 0.0_SSK) eps=EPSS
+      bool=(ABS(a-b) <= eps)
+    ENDFUNCTION approxeq_rel_single
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing a relative comparison of two
+!> double precision reals with .APPROXEQR.
+!> @param a
+!> @param b
+!> @returns bool logical indicating if a and b are approximately equal
+!>
+!> This performs a relative comparison by scaling the default epsilon value to
+!> the size of the larger of the two. It should be used when @c and @b are of
+!> the same magnitude and very large or very small. If either @c a or @c b is
+!> zero (exactly) then this routine is equivalent to an absolute comparison.
+!>
+    ELEMENTAL FUNCTION approxeq_rel_double(a,b) RESULT(bool)
+      REAL(SDK),INTENT(IN) :: a,b
+      LOGICAL(SBK) :: bool
+      REAL(SDK) :: eps
+      eps=MAX(ABS(a),ABS(b))*EPSD
+      IF(a == 0.0_SDK .OR. b == 0.0_SDK) eps=EPSD
+      bool=(ABS(a-b) <= eps)
+    ENDFUNCTION approxeq_rel_double
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing a comparison of two single
+!> precision reals on the floating point number line with .APPROXEQF.
+!> @param a
+!> @param b
+!> @returns bool logical indicating if a and b are approximately equal
+!>
+!> This performs a comparison of the binary representation of the two reals
+!> to compare the binary units in the last place (ULP). If the two reals differ
+!> on the floating point number line by 10 or less representable floating point
+!> reals then they are considered equal. In theory, this is the most appropriate
+!> comparison to use, but will break down near zero.
+!>
+    ELEMENTAL FUNCTION approxeq_ulp_single(a,b) RESULT(bool)
+      REAL(SSK),INTENT(IN) :: a,b
+      LOGICAL(SBK) :: bool
+      IF(a == 0.0_SSK .OR. b == 0.0_SSK .OR. (a > 0._SSK .AND. b < 0._SSK) &
+                                        .OR. (a < 0._SSK .AND. b > 0._SSK)) THEN
+        bool=approxeq_abs_single(a,b)
+      ELSE
+        bool=(ABS(TRANSFER(a,1_SNK)-TRANSFER(b,1_SNK)) <= 10_SNK)
+      ENDIF
+    ENDFUNCTION approxeq_ulp_single
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing a comparison of two double
+!> precision reals on the floating point number line with .APPROXEQF.
+!> @param a
+!> @param b
+!> @returns bool logical indicating if a and b are approximately equal
+!>
+!> This performs a comparison of the binary representation of the two reals
+!> to compare the binary units in the last place (ULP). If the two reals differ
+!> on the floating point number line by 10 or less representable floating point
+!> reals then they are considered equal. In theory, this is the most appropriate
+!> comparison to use, but will break down near zero.
+!>
+    ELEMENTAL FUNCTION approxeq_ulp_double(a,b) RESULT(bool)
+      REAL(SDK),INTENT(IN) :: a,b
+      LOGICAL(SBK) :: bool
+      IF(a == 0.0_SDK .OR. b == 0.0_SDK .OR. (a > 0._SDK .AND. b < 0._SDK) &
+                                        .OR. (a < 0._SDK .AND. b > 0._SDK)) THEN
+        bool=approxeq_abs_double(a,b)
+      ELSE
+        bool=(ABS(TRANSFER(a,1_SLK)-TRANSFER(b,1_SLK)) <= 10_SLK)
+      ENDIF
+    ENDFUNCTION approxeq_ulp_double
 !
 !-------------------------------------------------------------------------------
 !> @brief Defines the operation when comparing two single precision reals
