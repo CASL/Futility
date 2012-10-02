@@ -991,7 +991,7 @@ MODULE LinearSolverTypes
           DO ik=M%ia(i),uptr(i)-1
             k=M%ja(ik)
             kk=uptr(k)
-            IF(kk == 0 .OR.(M%a(kk) .APPROXEQ. 0._SRK)) THEN
+            IF(kk == 0 .OR.(M%a(kk) .APPROXEQA. 0._SRK)) THEN
               CALL M%clear()
               DEALLOCATE(solver%M)
               RETURN
@@ -1060,7 +1060,7 @@ MODULE LinearSolverTypes
           IF(ABS(A%a(2,A%n))<ABS(A%a(1,A%n))) diagDom=.FALSE.
 
           !If the first diagonal coefficient is zero, return
-          IF(A%a(2,1) .APPROXEQ. 0._SRK) THEN
+          IF(A%a(2,1) .APPROXEQA. 0._SRK) THEN
             CALL solver%M%clear()
             DEALLOCATE(solver%M)
             RETURN
@@ -1076,7 +1076,7 @@ MODULE LinearSolverTypes
               M%a(3,i)=A%a(3,i)
               t=A%a(2,i+1)-M%a(1,i+1)*M%a(3,i)
               !If failed, return.
-              IF(t .APPROXEQ. 0._SRK) THEN
+              IF(t .APPROXEQA. 0._SRK) THEN
                 CALL M%clear()
                 DEALLOCATE(solver%M)
                 RETURN
@@ -1242,7 +1242,7 @@ MODULE LinearSolverTypes
       ENDDO
 
       !Perform backward substitution
-      IF(thisa(N,N) .APPROXEQ. 0._SRK) RETURN
+      IF(thisa(N,N) .APPROXEQA. 0._SRK) RETURN
       SELECTTYPE(X => solver%X); TYPE IS(RealVectorType)
         CALL X%set(N,thisb(N)/thisa(N,N))
       ENDSELECT
@@ -1314,7 +1314,7 @@ MODULE LinearSolverTypes
               ENDIF
             ENDDO
 
-            IF(t .APPROXEQ. 0._SRK) RETURN
+            IF(t .APPROXEQA. 0._SRK) RETURN
             !if it differs from the current row, interchange the two rows.
             IF(solver%IPIV(i) /= i) THEN
               CALL BLAS_swap(N,M%A(solver%IPIV(i):N,1),N,M%A(i:N,1),N)
@@ -1326,7 +1326,7 @@ MODULE LinearSolverTypes
               CALL BLAS_axpy(N-i,-M%A(irow,i),M%A(i:N,i+1),N,M%A(irow:N,i+1),N)
             ENDDO
           ENDDO
-          IF(M%A(N,N) .APPROXEQ. 0._SRK) RETURN
+          IF(M%A(N,N) .APPROXEQA. 0._SRK) RETURN
           solver%info=0
           solver%isDecomposed=.TRUE.
       ENDSELECT
