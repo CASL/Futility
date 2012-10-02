@@ -766,7 +766,7 @@ MODULE VTKFiles
         i=1
         j=0
         DO WHILE(i < thisVTKMesh%numPoints)
-          DO WHILE(thisVTKMesh%x(j+1) .APPROXEQ. thisVTKMesh%x(i))
+          DO WHILE(thisVTKMesh%x(j+1) .APPROXEQA. thisVTKMesh%x(i))
             j=j+1
             IF(j == thisVTKMesh%numPoints) EXIT
           ENDDO
@@ -796,8 +796,8 @@ MODULE VTKFiles
         i=1
         j=0
         DO WHILE(i < thisVTKMesh%numPoints)
-          DO WHILE((thisVTKMesh%x(j+1) .APPROXEQ. thisVTKMesh%x(i)) .AND. &
-                    (thisVTKMesh%y(j+1) .APPROXEQ. thisVTKMesh%y(i)))
+          DO WHILE((thisVTKMesh%x(j+1) .APPROXEQA. thisVTKMesh%x(i)) .AND. &
+                    (thisVTKMesh%y(j+1) .APPROXEQA. thisVTKMesh%y(i)))
             j=j+1
             IF(j==thisVTKMesh%numPoints) EXIT
           ENDDO
@@ -840,8 +840,8 @@ MODULE VTKFiles
           uniqPoints=uniqPoints+1
           i=i+1
           IF(i > thisVTKMesh%numPoints) EXIT
-          DO WHILE((thisVTKMesh%x(i) .APPROXEQ. x) .AND. &
-            (thisVTKMesh%y(i) .APPROXEQ. y))
+          DO WHILE((thisVTKMesh%x(i) .APPROXEQA. x) .AND. &
+            (thisVTKMesh%y(i) .APPROXEQA. y))
             IF(ABS(z-thisVTKMesh%z(i)) <= 2._SRK*EPSREAL) THEN
               isRedundant(i)=.TRUE.
             ELSE
