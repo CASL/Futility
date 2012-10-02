@@ -142,7 +142,7 @@ MODULE Geom_Plane
         d=plane%n(1)*u(1)+plane%n(2)*u(2)+plane%n(3)*u(3)
         n=-(plane%n(1)*w(1)+plane%n(2)*w(2)+plane%n(3)*w(3))
         IF(ABS(d) < EPSREAL) THEN
-          IF(n .APPROXEQ. 0._SRK) THEN
+          IF(n .APPROXEQA. 0._SRK) THEN
             point%dim=-2 !collinear
           ELSE
             point%dim=-3 !parallel
