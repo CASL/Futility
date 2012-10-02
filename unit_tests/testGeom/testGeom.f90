@@ -402,7 +402,7 @@ PROGRAM testGeom
         WRITE(*,*) '  Passed: PointType OPERATOR(/=)'
       ENDIF
       point2%coord(4)=0.80000000000001_SRK
-      IF(.NOT.(point .APPROXEQ. point2) .OR. (point .APPROXEQ. point3)) THEN
+      IF(.NOT.(point .APPROXEQA. point2) .OR. (point .APPROXEQA. point3)) THEN
         WRITE(*,*) 'PointType OPERATOR(.APPROXEQ.) FAILED!'
         STOP 666
       ELSE
@@ -510,7 +510,7 @@ PROGRAM testGeom
       points2(2)%coord(1)=0.50000000000002_SRK
       points3(1)%coord(1)=0.50000000000001_SRK
       points3(2)%coord(1)=0.50000000000001_SRK
-      IF(ANY(.NOT.(points .APPROXEQ. points3)) .OR. ANY(points2 .APPROXEQ. points)) THEN
+      IF(ANY(.NOT.(points .APPROXEQA. points3)) .OR. ANY(points2 .APPROXEQA. points)) THEN
         WRITE(*,*) 'PointType Array OPERATOR(.APPROXEQ.) FAILED!'
         STOP 666
       ELSE

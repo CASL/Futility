@@ -131,7 +131,7 @@ MODULE Geom_CircCyl
       TYPE(PointType),INTENT(IN) :: q
       REAL(SRK),INTENT(IN) :: r
       CALL cyl%clear()
-      IF(p%dim == 3 .AND. .NOT.(p .APPROXEQ. q)  .AND. r > zero) THEN
+      IF(p%dim == 3 .AND. .NOT.(p .APPROXEQA. q)  .AND. r > zero) THEN
         CALL cyl%axis%set(p,q)
         cyl%r=r
       ENDIF
@@ -188,7 +188,7 @@ MODULE Geom_CircCyl
             !Disjoint
             p1%dim=-2
             p2%dim=-2
-          ELSEIF(discr .APPROXEQ. zero) THEN
+          ELSEIF(discr .APPROXEQA. zero) THEN
             !Tangent
             p1%dim=-3
             p2%dim=-3
@@ -334,7 +334,7 @@ MODULE Geom_CircCyl
           
           IF(ABS(a) < EPSREAL) THEN
 !Segment A->B is parallel to P->Q
-            IF(c .APPROXEQ. zero) THEN
+            IF(c .APPROXEQA. zero) THEN
               !Segment is on the cylinder surface
               p1%dim=-4
               p2%dim=-4
@@ -369,7 +369,7 @@ MODULE Geom_CircCyl
 !Segment A->B is not parallel to P->Q
             b=dd*uw-ud*wd
             discr=b*b-a*c
-            IF(discr .APPROXEQ. zero) THEN
+            IF(discr .APPROXEQA. zero) THEN
               !Line is tangent
               p1%dim=-7
               p2%dim=-7

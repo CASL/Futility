@@ -779,7 +779,7 @@ MODULE MortonOrdering
               
               !Check if there is sufficient work yet over the given domains
               lenoughWork=(avgNperP < REAL(ipstp-ipstt+1,SRK) .OR. &
-                (avgNperP .APPROXEQ. REAL(ipstp-ipstt+1,SRK)))
+                (avgNperP .APPROXEQA. REAL(ipstp-ipstt+1,SRK)))
               
               !Increment to the next partition if we have enough work for it,
               !or if there are an equal # of partitions and nodes remaining

@@ -51,7 +51,7 @@ MODULE Geom_Points
   PUBLIC :: OPERATOR(-)
   PUBLIC :: OPERATOR(==)
   PUBLIC :: OPERATOR(/=)
-  PUBLIC :: OPERATOR(.APPROXEQ.)
+  PUBLIC :: OPERATOR(.APPROXEQA.)
   
   INTEGER(SIK),PARAMETER :: MAX_COORD_STR_LEN=128
   
@@ -149,10 +149,10 @@ MODULE Geom_Points
   ENDINTERFACE
   
   !> @brief Generic interface for 'is approximately equal to' operator 
-  !> (.APPROXEQ.)
+  !> (.APPROXEQA.)
   !>
   !> Adds 'is approximately equal to' capability for point types
-  INTERFACE OPERATOR(.APPROXEQ.)
+  INTERFACE OPERATOR(.APPROXEQA.)
     !> @copybrief GeomPoints::approxequal_PointType
     !> @copydetails GeomPoints::approxequal_PointType
     MODULE PROCEDURE approxequal_PointType
@@ -335,7 +335,7 @@ MODULE Geom_Points
 !
 !-------------------------------------------------------------------------------
 !> @brief Defines the 'approximately equal to' operation between two points
-!> e.g. p0.APPROXEQ.p1
+!> e.g. p0 .APPROXEQA. p1
 !> @param p0 the first point
 !> @param p1 the second point
 !> @returns @c bool the boolean result of the operation
@@ -346,7 +346,7 @@ MODULE Geom_Points
       LOGICAL(SBK) :: bool
       bool=.FALSE.
       IF(p0%dim == p1%dim .AND. p0%dim > 0) &
-        bool=ALL(p0%coord .APPROXEQ. p1%coord)
+        bool=ALL(p0%coord .APPROXEQA. p1%coord)
     ENDFUNCTION approxequal_PointType
 !
 !-------------------------------------------------------------------------------
@@ -470,8 +470,8 @@ MODULE Geom_Points
             DO WHILE(linsert)
               searchPoint2 => searchPoint1%next
               
-              !IF((d .APPROXEQ. searchPoint1%sortval) .OR. &
-              !  (d .APPROXEQ. searchPoint2%sortval)) THEN
+              !IF((d .APPROXEQA. searchPoint1%sortval) .OR. &
+              !  (d .APPROXEQA. searchPoint2%sortval)) THEN
               IF((ABS(d-searchPoint1%sortval) <= 10._SRK*EPSREAL) .OR. &
                  (ABS(d-searchPoint2%sortval) <= 10._SRK*EPSREAL)) THEN
                 !Do not allow for points that are approximately equal to existing

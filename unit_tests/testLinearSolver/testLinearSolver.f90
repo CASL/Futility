@@ -1946,8 +1946,8 @@ CONTAINS
       CALL thisLS%solve()
       
       SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
-        IF(.NOT.((X%get(1) .APPROXEQ. 2._SRK/3._SRK) &
-           .AND. (X%get(2) .APPROXEQ. 0.5_SRK))) THEN
+        IF(.NOT.(SOFTEQ(X%get(1),2._SRK/3._SRK,1.0E-13_SRK) &
+           .AND. SOFTEQ(X%get(2),0.5_SRK,1.0E-13_SRK))) THEN
           WRITE(*,*)'CALL Iterative%solve() FAILED!'
           STOP 666
         ENDIF

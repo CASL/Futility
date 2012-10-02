@@ -121,12 +121,12 @@ MODULE Geom_Box
             !Renormalize the vectors
             magn1=u1(1)*u1(1)+u1(2)*u1(2)
             magn2=u2(1)*u2(1)+u2(2)*u2(2)
-            IF(.NOT.(magn1 .APPROXEQ. 1._SRK) .AND. magn1 /= 0.0_SRK) THEN
+            IF(.NOT.(magn1 .APPROXEQA. 1._SRK) .AND. magn1 /= 0.0_SRK) THEN
               r=1._SRK/SQRT(magn1)
               u1(1)=u1(1)*r
               u1(2)=u1(2)*r
             ENDIF
-            IF(.NOT.(magn2 .APPROXEQ. 1._SRK) .AND. magn2 /= 0.0_SRK) THEN
+            IF(.NOT.(magn2 .APPROXEQA. 1._SRK) .AND. magn2 /= 0.0_SRK) THEN
               r=1._SRK/SQRT(magn2)
               u2(1)=u2(1)*r
               u2(2)=u2(2)*r
@@ -164,13 +164,13 @@ MODULE Geom_Box
             !Renormalize the vectors
             magn1=u1(1)*u1(1)+u1(2)*u1(2)+u1(3)*u1(3)
             magn2=u2(1)*u2(1)+u2(2)*u2(2)+u2(3)*u2(3)
-            IF(.NOT.(magn1 .APPROXEQ. 1._SRK) .AND. magn1 /= 0.0_SRK) THEN
+            IF(.NOT.(magn1 .APPROXEQA. 1._SRK) .AND. magn1 /= 0.0_SRK) THEN
               r=1._SRK/SQRT(magn1)
               u1(1)=u1(1)*r
               u1(2)=u1(2)*r
               u1(3)=u1(3)*r
             ENDIF
-            IF(.NOT.(magn2 .APPROXEQ. 1._SRK) .AND. magn2 /= 0.0_SRK) THEN
+            IF(.NOT.(magn2 .APPROXEQA. 1._SRK) .AND. magn2 /= 0.0_SRK) THEN
               r=1._SRK/SQRT(magn2)
               u2(1)=u2(1)*r
               u2(2)=u2(2)*r
@@ -187,7 +187,7 @@ MODULE Geom_Box
               u3(2)=u3_in(2)
               u3(3)=u3_in(3)
               magn3=u3(1)*u3(1)+u3(2)*u3(2)+u3(3)*u3(3)
-              IF(.NOT.(magn3 .APPROXEQ. 1._SRK) .AND. magn3 /= 0.0_SRK) THEN
+              IF(.NOT.(magn3 .APPROXEQA. 1._SRK) .AND. magn3 /= 0.0_SRK) THEN
                 r=1._SRK/SQRT(magn3)
                 u3(1)=u3(1)*r
                 u3(2)=u3(2)*r
@@ -201,7 +201,7 @@ MODULE Geom_Box
               u3(2)=u1(3)*u2(1)-u1(1)*u2(3)
               u3(3)=u1(1)*u2(2)-u1(2)*u2(1)
               magn3=u3(1)*u3(1)+u3(2)*u3(2)+u3(3)*u3(3)
-              IF(.NOT.(magn3 .APPROXEQ. 1._SRK) .AND. magn3 /= 0.0_SRK) THEN
+              IF(.NOT.(magn3 .APPROXEQA. 1._SRK) .AND. magn3 /= 0.0_SRK) THEN
                 r=1._SRK/SQRT(magn3)
                 u3(1)=u3(1)*r
                 u3(2)=u3(2)*r
