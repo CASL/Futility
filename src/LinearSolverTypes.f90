@@ -1011,7 +1011,14 @@ MODULE LinearSolverTypes
       ALLOCATE(s(m+1))
       ALLOCATE(g(m+1))
       ALLOCATE(y(m+1))
-            
+      v(:,:)=0._SRK
+      R(:,:)=0._SRK
+      w(:)=0._SRK
+      c(:)=0._SRK
+      s(:)=0._SRK
+      g(:)=0._SRK
+      y(:)=0._SRK
+
       CALL solver%getResidual(u)
       CALL LNorm(u%b,2_SIK,beta)
       tol=solver%convTol*beta
@@ -1019,7 +1026,6 @@ MODULE LinearSolverTypes
       v(:,1)=-u%b/beta
       h=beta
       phibar=beta
-      
       !Iterate on solution
       DO it=1_SIK,m
         CALL BLAS_matvec(THISMATRIX=solver%A,X=v(:,it),BETA=0.0_SRK,Y=w)
@@ -1033,6 +1039,7 @@ MODULE LinearSolverTypes
           t=c(k-1)*h-s(k-1)*t
         ENDDO
         CALL LNorm(w,2_SIK,h)
+        WRITE(*,*) "h = ", h
         IF (h>0.0_SRK) THEN
           v(:,it+1)=w/h
         ELSE
@@ -1049,6 +1056,7 @@ MODULE LinearSolverTypes
         R(it,it)=temp
         g(it)=c(it)*phibar
         phibar=-s(it)*phibar
+        !WRITE(*,*) it, phibar
         IF(ABS(phibar)<=tol) EXIT
       ENDDO
       
