@@ -835,8 +835,7 @@ MODULE LinearSolverTypes
 #ifdef HAVE_PETSC
         IF (solver%TPLType == PETSC) THEN
           CALL KSPSetTolerances(solver%ksp,rtol,abstol,dtol,maxits,ierr)
-          CALL KSPSetRestart(nrst)
-          ENDIF
+          CALL KSPGMRESSetRestart(nrst,ierr)
         ENDIF
 #endif
       ENDIF
