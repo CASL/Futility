@@ -561,23 +561,27 @@ MODULE VectorTypes
     SUBROUTINE axpy_scalar_VectorType(thisVector,newVector,a,n,incx,incy)
       CLASS(VectorType),INTENT(IN)     :: thisVector
       CLASS(VectorType),INTENT(INOUT)  :: newVector
-      REAL(SRK),INTENT(IN):: a
+      REAL(SRK),INTENT(IN),OPTIONAL :: a
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incy
       
+      REAL(SRK) :: alpha=1.
+      
+      IF (PRESENT(a)) alpha=a
+      
       SELECTTYPE(thisVector); TYPE IS(RealVectorType)
         SELECTTYPE(newVector); TYPE IS(RealVectorType)
           IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
-            CALL BLAS1_axpy(n,a,thisVector%b,incx,newVector%b,incy)
+            CALL BLAS1_axpy(n,alpha,thisVector%b,incx,newVector%b,incy)
           ELSEIF(PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-            CALL BLAS1_axpy(n,a,thisVector%b,newVector%b,incx)
+            CALL BLAS1_axpy(n,alpha,thisVector%b,newVector%b,incx)
           ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
-            CALL BLAS1_axpy(n,a,thisVector%b,newVector%b,incy)
+            CALL BLAS1_axpy(n,alpha,thisVector%b,newVector%b,incy)
           ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-            CALL BLAS1_axpy(n,a,thisVector%b,newVector%b)
+            CALL BLAS1_axpy(n,alpha,thisVector%b,newVector%b)
           ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-            CALL BLAS1_axpy(a,thisVector%b,newVector%b)
+            CALL BLAS1_axpy(alpha,thisVector%b,newVector%b)
           ENDIF
         ENDSELECT
       ENDSELECT
