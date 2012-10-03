@@ -1365,8 +1365,7 @@ PROGRAM testMatrixTypes
           ENDIF
       ENDSELECT
       CALL thisMatrix%clear()
-      WRITE(*,*) 2
-      
+     
       CALL pList%clear()
       CALL pList%add('testPL->n',2_SNK)
       CALL pList%add('testPL->m',0_SNK)
