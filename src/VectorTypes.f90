@@ -185,7 +185,10 @@ MODULE VectorTypes
 #ifdef HAVE_PETSC
     Vec :: b
 #endif
-    LOGICAL(SBK) :: isAssembled
+    !> creation status
+    LOGICAL(SBK) :: isCreated=.FALSE.
+    !> assembly status
+    LOGICAL(SBK) :: isAssembled=.FALSE.
 !
 !List of Type Bound Procedures
     CONTAINS 
@@ -354,7 +357,10 @@ MODULE VectorTypes
           vector%isInit=.TRUE.
           vector%n=n
           ! will need to change MPI_COMM_WORLD
-          CALL VecCreate(MPI_COMM_WORLD,vector%b,ierr)
+          IF(.NOT.vector%isCreated) THEN
+            CALL VecCreate(MPI_COMM_WORLD,vector%b,ierr)
+            vector%isCreated=.TRUE.
+          ENDIF
           CALL VecSetSizes(vector%b,PETSC_DECIDE,vector%n,ierr)
           CALL VecSetType(vector%b,VECMPI,ierr)
           CALL VecSetFromOptions(vector%b,ierr)
@@ -387,6 +393,8 @@ MODULE VectorTypes
 #ifdef HAVE_PETSC
       PetscErrorCode  :: ierr
       vector%isInit=.FALSE.
+      vector%isAssembled=.FALSE.
+      vector%isCreated=.FALSE.
       vector%n=0
       CALL VecDestroy(vector%b,ierr)
 #endif

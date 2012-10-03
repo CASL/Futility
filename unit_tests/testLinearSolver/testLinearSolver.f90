@@ -1293,6 +1293,11 @@ CONTAINS
       REAL(SRK),ALLOCATABLE :: resid_soln(:)
       TYPE(RealVectorType) :: resid
       INTEGER(SIK) :: i
+#ifdef HAVE_PETSC
+      PetscReal :: rtol,abstol,dtol
+      PetscInt  :: maxits,restart
+      PetscErrorCode :: ierr
+#endif
 
       ALLOCATE(LinearSolverType_Iterative :: thisLS)
       
@@ -1332,6 +1337,43 @@ CONTAINS
       DEALLOCATE(thisX2)
       CALL thisLS%clear()
       WRITE(*,*) '  Passed: CALL Iterative%setX0(...)'
+  
+#ifdef HAVE_PETSC
+      ! initialize linear system
+      CALL pList%clear()
+      CALL pList%add('PL->matrixType',SPARSE)
+      CALL pList%add('PL->TPLType',PETSC)
+      CALL pList%add('PL->solverMethod',BICGSTAB)
+      CALL pList%add('PL->numberMPI',PE_COMM_SELF)
+      CALL pList%add('PL->numberOMP',1_SNK)
+      CALL pList%add('PL->timerName','testTimer')
+      CALL pList%validate(pList,optListLS)
+      CALL thisLS%init(pList)
+      
+      ! initialize vector X
+      CALL thisLS%X%init(2)
+      SELECTTYPE(X => thisLS%X); TYPE IS(PETScVectorType)
+        CALL X%set(1,0._SRK)
+        CALL X%set(2,0._SRK)
+      ENDSELECT
+      
+      ! initialize X0
+      ALLOCATE(thisX2(3))
+      thisX2=(/1._SRK,2._SRK,3._SRK/)
+      
+      !test case that is expected to work, thisX has already been allocated
+      SELECTTYPE(thisLS); TYPE IS (LinearSolverType_Iterative)
+        CALL thisLS%setX0(thisX2)
+        IF(.NOT. (ALLOCATED(thisLS%X) .AND. ASSOCIATED(thisX2) &
+           .AND.  thisLS%hasX0)) THEN
+          WRITE(*,*) 'CALL PETScIterative%setX0(...) FAILED!'
+          STOP 666
+        ENDIF
+      ENDSELECT
+      DEALLOCATE(thisX2)
+      CALL thisLS%clear()
+      WRITE(*,*) '  Passed: CALL PETScIterative%setX0(...)'
+#endif
       
     !Test setConv
       !Bad input
@@ -1369,6 +1411,49 @@ CONTAINS
       ENDSELECT
       CALL thisLS%clear()
       WRITE(*,*) '  Passed: CALL Iterative%setConv(...)'
+ 
+#ifdef HAVE_PETSC
+      !Test setConv
+      !Bad input
+      ! initialize linear system
+      CALL pList%clear()
+      CALL pList%add('PL->matrixType',SPARSE)
+      CALL pList%add('PL->TPLType',PETSC)
+      CALL pList%add('PL->solverMethod',GMRES) ! GMRES to test nrestart
+      CALL pList%add('PL->numberMPI',PE_COMM_SELF)
+      CALL pList%add('PL->numberOMP',1_SNK)
+      CALL pList%add('PL->timerName','testTimer')
+      CALL pList%validate(pList,optListLS)
+      CALL thisLS%init(pList)
+      
+      SELECTTYPE(thisLS); TYPE IS (LinearSolverType_Iterative)
+        CALL thisLS%setConv(-2,-0.1_SRK,-1,-1)
+        CALL thisLS%setConv(-2,1.1_SRK,-1,-1)
+        !Check if default value is used
+        CALL KSPGetTolerances(thisLS%ksp,rtol,abstol,dtol,maxits,ierr)
+        CALL KSPGMRESGetRestart(thisLS%ksp,restart,ierr)
+        IF(maxits /= 1000_SIK .OR. rtol /= 0.001_SRK &
+           .OR. abstol /= 0.001_SRK .OR. restart /= 30_SIK) THEN
+          WRITE(*,*) 'CALL PETScIterative%setConv(...) FAILED!'
+          STOP 666
+        ENDIF
+      ENDSELECT
+      
+      !Correct input
+      SELECTTYPE(thisLS); TYPE IS (LinearSolverType_Iterative)
+        CALL thisLS%setConv(1_SIK,0.01_SRK,100_SIK,10_SIK)
+        CALL KSPGetTolerances(thisLS%ksp,rtol,abstol,dtol,maxits,ierr)
+        CALL KSPGMRESGetRestart(thisLS%ksp,restart,ierr)
+        IF(maxits /= 100_SIK .OR. rtol /= 0.01_SRK &
+           .OR. abstol /= 0.01_SRK .OR. restart /= 10_SIK) THEN
+           WRITE(*,*) maxits,rtol,abstol,restart
+          WRITE(*,*) 'CALL PETScIterative%setConv(...) FAILED2!'
+          STOP 666
+        ENDIF
+      ENDSELECT
+      CALL thisLS%clear()
+      WRITE(*,*) '  Passed: CALL PETScIterative%setConv(...)'
+#endif
       
     !Test getResidual
       !Bad input
@@ -1720,6 +1805,7 @@ CONTAINS
       ENDIF
       CALL thisLS%A%clear()
       CALL thisLS%clear()
+      DEALLOCATE(thisB)
       
       ! TriDiagonal matrix, it will go to LU method
       
@@ -1832,10 +1918,229 @@ CONTAINS
       
       DEALLOCATE(thisX)
       CALL thisLS%clear()
-      DEALLOCATE(thisLS)
-      
       WRITE(*,*)'  Passed: CALL Iterative%solver() BICGSTAB'
       
+#ifdef HAVE_PETSC
+      !The PETSC sparse matrix type
+      ! initialize linear system
+      CALL pList%clear()
+      CALL pList%add('PL->matrixType',SPARSE)
+      CALL pList%add('PL->TPLType',PETSC)
+      CALL pList%add('PL->solverMethod',BICGSTAB)
+      CALL pList%add('PL->numberMPI',PE_COMM_SELF)
+      CALL pList%add('PL->numberOMP',1_SNK)
+      CALL pList%add('PL->timerName','testTimer')
+      CALL pList%validate(pList,optListLS)
+      CALL thisLS%init(pList)
+      
+      ! initialize matrix A
+      CALL pList%clear()
+      CALL pList%add('PL->n',9_SNK)
+      CALL pList%add('PL->m',0_SNK)
+      CALL pList%add('PL->mattype',0_SNK)
+      CALL thisLS%A%init(pList)
+      
+      !A =  4    -1     0    -1     0     0     0     0     0
+      !    -1     4    -1     0    -1     0     0     0     0
+      !     0    -1     4     0     0    -1     0     0     0
+      !    -1     0     0     4    -1     0    -1     0     0
+      !     0    -1     0    -1     4    -1     0    -1     0
+      !     0     0    -1     0    -1     4     0     0    -1
+      !     0     0     0    -1     0     0     4    -1     0
+      !     0     0     0     0    -1     0    -1     4    -1
+      !     0     0     0     0     0    -1     0    -1     4
+      SELECTTYPE(A => thisLS%A); TYPE IS(PETScMatrixType)
+          CALL A%set(1,1, 4.0_SRK)
+          CALL A%set(1,2,-1.0_SRK)
+          CALL A%set(1,4,-1.0_SRK)
+          CALL A%set(2,1,-1.0_SRK)
+          CALL A%set(2,2, 4.0_SRK)
+          CALL A%set(2,3,-1.0_SRK)
+          CALL A%set(2,5,-1.0_SRK)
+          CALL A%set(3,2,-1.0_SRK)
+          CALL A%set(3,3, 4.0_SRK)
+          CALL A%set(3,6,-1.0_SRK)
+          CALL A%set(4,1,-1.0_SRK)
+          CALL A%set(4,4, 4.0_SRK)
+          CALL A%set(4,5,-1.0_SRK)
+          CALL A%set(4,7,-1.0_SRK)
+          CALL A%set(5,2,-1.0_SRK)
+          CALL A%set(5,4,-1.0_SRK)
+          CALL A%set(5,5, 4.0_SRK)
+          CALL A%set(5,6,-1.0_SRK)
+          CALL A%set(5,8,-1.0_SRK)
+          CALL A%set(6,3,-1.0_SRK)
+          CALL A%set(6,5,-1.0_SRK)
+          CALL A%set(6,6, 4.0_SRK)
+          CALL A%set(6,9,-1.0_SRK)
+          CALL A%set(7,4,-1.0_SRK)
+          CALL A%set(7,7, 4.0_SRK)
+          CALL A%set(7,8,-1.0_SRK)
+          CALL A%set(8,5,-1.0_SRK)
+          CALL A%set(8,7,-1.0_SRK)
+          CALL A%set(8,8, 4.0_SRK)
+          CALL A%set(8,9,-1.0_SRK)
+          CALL A%set(9,6,-1.0_SRK)
+          CALL A%set(9,8,-1.0_SRK)
+          CALL A%set(9,9, 4.0_SRK)
+      ENDSELECT
+      
+      ! build X0 and set it to 1.0s
+      ALLOCATE(thisX(9))
+      thisX=1.0_SRK
+      
+      ! initialize vector X
+      CALL thisLS%X%init(9)
+      
+      SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
+          CALL thisLS%setX0(thisX)
+      ENDSELECT
+
+      ! build b and set it
+      CALL thisLS%b%init(9)
+      SELECTTYPE(b => thisLS%b); TYPE IS(PETScVectorType)
+        CALL b%set(1.0_SRK)
+      ENDSELECT
+
+      !set iterations and convergence information and build/set M
+      SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
+        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1000_SIK,30_SIK)
+      ENDSELECT
+      
+      !solve it
+      CALL thisLS%solve()
+      
+      !Store expected solution (from MATLAB) in B
+      ALLOCATE(thisB(9))
+      thisB(1)=0.6875_SRK
+      thisB(2)=0.875_SRK
+      thisB(3)=0.6875_SRK
+      thisB(4)=0.875_SRK
+      thisB(5)=1.125_SRK
+      thisB(6)=0.875_SRK
+      thisB(7)=0.6875_SRK
+      thisB(8)=0.875_SRK
+      thisB(9)=0.6875_SRK
+      !multiply by 10,000 so we can match first five places.
+      thisB=10000.0_SRK*thisB
+      match=.TRUE.
+      DO i=1,SIZE(thisB)
+        SELECTTYPE(X => thisLS%X); TYPE IS(PETScVectorType)
+          IF(NINT(thisB(i)) /= NINT(10000.0_SRK*X%get(i))) THEN
+            match=.FALSE.
+            EXIT
+          ENDIF
+        ENDSELECT
+      ENDDO
+      IF(.NOT. match) THEN
+        WRITE(*,*) 'CALL PETScIterative%solve() -BICGSTAB FAILED!'
+        STOP 666
+      ENDIF
+      
+      DEALLOCATE(thisB)
+      CALL thisLS%A%clear()
+      CALL thisLS%clear()
+      
+      !test with A being densesquare
+      ! initialize linear system
+      CALL pList%clear()
+      CALL pList%add('PL->matrixType',DENSESQUARE)
+      CALL pList%add('PL->TPLType',PETSC)
+      CALL pList%add('PL->solverMethod',BICGSTAB)
+      CALL pList%add('PL->numberMPI',PE_COMM_SELF)
+      CALL pList%add('PL->numberOMP',1_SNK)
+      CALL pList%add('PL->timerName','testTimer')
+      CALL pList%validate(pList,optListLS)
+      CALL thisLS%init(pList)
+      
+      ! initialize matrix A
+      CALL pList%clear()
+      CALL pList%add('PL->n',9_SNK)
+      CALL pList%add('PL->m',1_SNK)
+      CALL thisLS%A%init(pList) !9x9, symmetric.
+      DO i=1,9
+        SELECTTYPE(A => thisLS%A); TYPE IS(PETScMatrixType)
+          CALL A%set(i,i,4.0_SRK)
+          IF((i < 9).AND.((i /= 3).AND.(i /= 6))) THEN
+            CALL A%set(i,i+1,-1.0_SRK)
+          ENDIF
+          IF(i < 7) THEN
+            CALL A%set(i,i+3,-1.0_SRK)
+          ENDIF
+        ENDSELECT
+      ENDDO
+      
+      !initialize vector X
+      CALL thisLS%X%init(9)
+      
+      !build X0 and set it to 1.0s
+      ALLOCATE(thisX(9))
+      thisX=1.0_SRK
+      SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
+        CALL thisLS%setX0(thisX)
+      ENDSELECT
+      
+      !build b and set it
+      CALL thisLS%b%init(9)
+      SELECTTYPE(b => thisLS%b); TYPE IS(PETScVectorType)
+        CALL b%set(1.0_SRK)
+      ENDSELECT
+      
+      !set iterations and convergence information and build/set M
+      SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
+        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1000_SIK,30_SIK)
+      ENDSELECT
+      
+      !solve
+      CALL thisLS%solve()
+      ALLOCATE(thisB(9))
+      thisB(1)=0.6875_SRK
+      thisB(2)=0.875_SRK
+      thisB(3)=0.6875_SRK
+      thisB(4)=0.875_SRK
+      thisB(5)=1.125_SRK
+      thisB(6)=0.875_SRK
+      thisB(7)=0.6875_SRK
+      thisB(8)=0.875_SRK
+      thisB(9)=0.6875_SRK
+      thisB=thisB*10000._SRK
+      match=.TRUE.
+      DO i=1,SIZE(thisB)
+        SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
+          IF(NINT(thisB(i)) /= NINT(10000.0_SRK*X%get(i))) THEN
+            match=.FALSE.
+            EXIT
+          ENDIF
+        ENDSELECT
+      ENDDO
+      IF(.NOT. match) THEN
+        WRITE(*,*) 'CALL PETSCIterative%solve() -BiCGSTAB FAILED!'
+        STOP 666
+      ENDIF
+      !test to see how it performs with an already decomposed M
+      !reset X to 1.0s
+      match=.TRUE.
+      DO i=1,SIZE(thisB)
+        SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
+          CALL X%set(1.0_SRK)
+          CALL thisLS%solve()
+          IF(NINT(thisB(i)) /= NINT(10000.0_SRK*X%get(i))) THEN
+            match=.FALSE.
+            EXIT
+          ENDIF
+        ENDSELECT
+      ENDDO
+      IF(.NOT. match) THEN
+        WRITE(*,*) 'CALL PETSCIterative%solve() -BiCGSTAB FAILED!'
+        STOP 666
+      ENDIF
+      WRITE(*,*)'  Passed: CALL PETScIterative%solver() BICGSTAB'
+      CALL thisLS%clear()
+      DEALLOCATE(thisB)
+#endif
+ 
+      DEALLOCATE(thisLS)
+
     ENDSUBROUTINE testIterativeSolve_BICGSTAB
 !
 !-------------------------------------------------------------------------------
@@ -2148,10 +2453,139 @@ CONTAINS
       ENDIF
       
       CALL thisLS%clear()
-      DEALLOCATE(thisLS)
-      
+
       WRITE(*,*)'  Passed: CALL Iterative%solver() CGNR'
       
+#ifdef HAVE_PETSC
+      ! DenseSquare matrix
+      ! initialize linear system
+      CALL pList%clear()
+      CALL pList%add('PL->matrixType',DENSESQUARE)
+      CALL pList%add('PL->TPLType',PETSC)
+      CALL pList%add('PL->solverMethod',CGNR)
+      CALL pList%add('PL->numberMPI',PE_COMM_SELF)
+      CALL pList%add('PL->numberOMP',1_SNK)
+      CALL pList%add('PL->timerName','testTimer')
+      CALL pList%validate(pList,optListLS)
+      CALL thisLS%init(pList)
+      
+      !A=[ 4 -1  0]
+      !  [-1  4 -1]
+      !  [ 0 -1  4]
+      ! initialize matrix A
+      CALL pList%clear()
+      CALL pList%add('PL->n',3_SNK)
+      CALL pList%add('PL->m',1_SNK)
+      CALL thisLS%A%init(pList)
+      SELECTTYPE(A => thisLS%A); TYPE IS(PETScMatrixType)
+        CALL A%set(1,1,4._SRK)
+        CALL A%set(1,2,-1._SRK)
+        CALL A%set(2,2,4._SRK)
+        CALL A%set(2,3,-1._SRK)
+        CALL A%set(3,3,4._SRK)
+      ENDSELECT
+
+      ! initialize vector b
+      CALL thisLS%b%init(3)
+      SELECTTYPE(b => thisLS%b); TYPE IS(PETScVectorType)
+        CALL b%set(1,1._SRK)
+        CALL b%set(2,2._SRK)
+        CALL b%set(3,3._SRK)
+      ENDSELECT
+      
+      ! initialize vector X
+      CALL thisLS%X%init(3)
+
+      !set iterations and convergence information and
+      SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
+          CALL thisLS%setConv(2_SIK,1.0E-13_SRK,1000_SIK,30_SIK)
+      ENDSELECT
+      
+      CALL thisLS%solve()
+      
+      !Check X
+      SELECTTYPE(X => thisLS%X); TYPE IS(PETScVectorType)
+        IF(.NOT. ((X%get(1) .APPROXEQ. 0.46428571428571430_SRK) &
+           .AND.  (X%get(2) .APPROXEQ. 0.85714285714285721_SRK) &
+           .AND.  (X%get(3) .APPROXEQ. 0.96428571428571430_SRK) &
+           .AND.   thisLS%info == 0)) THEN
+          WRITE(*,*) 'CALL PETScIterative%solve() -CGNR method FAILED!'
+          STOP 666
+        ENDIF
+      ENDSELECT
+
+      CALL thisLS%clear()
+
+      ! Sparse matrix
+      ! initialize linear system
+      CALL pList%clear()
+      CALL pList%add('PL->matrixType',SPARSE)
+      CALL pList%add('PL->TPLType',PETSC)
+      CALL pList%add('PL->solverMethod',CGNR)
+      CALL pList%add('PL->numberMPI',PE_COMM_SELF)
+      CALL pList%add('PL->numberOMP',1_SNK)
+      CALL pList%add('PL->timerName','testTimer')
+      CALL pList%validate(pList,optListLS)
+      CALL thisLS%init(pList)
+
+      !A=[ 4 -1  0]
+      !  [-1  4 -1]
+      !  [ 0 -1  4]
+      CALL pList%clear()
+      CALL pList%add('PL->n',3_SNK)
+      CALL pList%add('PL->m',7_SNK)
+      CALL thisLS%A%init(pList)
+      SELECTTYPE(A => thisLS%A); TYPE IS(PETScMatrixType)
+        CALL A%set(1,1, 4._SRK)
+        CALL A%set(1,2,-1._SRK)
+        CALL A%set(2,1,-1._SRK)
+        CALL A%set(2,2, 4._SRK)
+        CALL A%set(2,3,-1._SRK)
+        CALL A%set(3,2,-1._SRK)
+        CALL A%set(3,3, 4._SRK)
+      ENDSELECT
+     
+      ! initialize vector b
+      CALL thisLS%b%init(3)
+      SELECTTYPE(b => thisLS%b); TYPE IS(PETScVectorType)
+        CALL b%set(1,1._SRK)
+        CALL b%set(2,2._SRK)
+        CALL b%set(3,3._SRK)
+      ENDSELECT
+
+      ! initialize X0
+      ALLOCATE(thisX(3))
+      thisX=0._SRK
+      
+      ! initialize vector X
+      CALL thisLS%X%init(3)
+      
+      !set iterations and convergence information and
+      SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
+        CALL thisLS%setX0(thisX)
+        CALL thisLS%setConv(2_SIK,1.0E-13_SRK,1000_SIK,30_SIK)
+      ENDSELECT
+      
+      !Check X
+      CALL thisLS%solve()
+      SELECTTYPE(X => thisLS%X); TYPE IS(PETScVectorType)
+        IF(.NOT. ((X%get(1) .APPROXEQ. 0.46428571428571430_SRK) &
+           .AND.  (X%get(2) .APPROXEQ. 0.85714285714285721_SRK) &
+           .AND.  (X%get(3) .APPROXEQ. 0.96428571428571430_SRK) &
+           .AND.   thisLS%info == 0)) THEN
+          WRITE(*,*) 'CALL PETScIterative%solve() -CGNR method FAILED!'
+          STOP 666
+        ENDIF
+      ENDSELECT
+      
+      DEALLOCATE(thisX)
+      CALL thisLS%clear()
+
+      WRITE(*,*)'  Passed: CALL PETScIterative%solver() CGNR'
+#endif
+
+      DEALLOCATE(thisLS)
+
     ENDSUBROUTINE testIterativeSolve_CGNR
 !
 !-------------------------------------------------------------------------------
@@ -2164,7 +2598,7 @@ CONTAINS
 
       ALLOCATE(LinearSolverType_Iterative :: thisLS)
 
-    !With BiCGSTAB
+      !With GMRES
       !The sparse matrix type
       
       ! initialize linear system
@@ -2277,7 +2711,7 @@ CONTAINS
         ENDSELECT
       ENDDO
       IF(.NOT. match) THEN
-        WRITE(*,*) 'CALL Iterative%solve() -BICGSTAB FAILED!'
+        WRITE(*,*) 'CALL Iterative%solve() -GMRES FAILED!'
         STOP 666
       ENDIF
       
@@ -2490,10 +2924,233 @@ CONTAINS
         WRITE(*,*) 'CALL Iterative%solve() -GMRES method FAILED!'
         STOP 666
       ENDIF
-      
-      DEALLOCATE(thisX)
+     
+      DEALLOCATE(thisB)
       CALL thisLS%clear()
       WRITE(*,*)'  Passed: CALL Iterative%solver() GMRES'
+      
+#ifdef HAVE_PETSC
+      !With GMRES
+      !The sparse matrix type
+      
+      ! initialize linear system
+      CALL pList%clear()
+      CALL pList%add('PL->matrixType',SPARSE)
+      CALL pList%add('PL->TPLType',PETSC)
+      CALL pList%add('PL->solverMethod',GMRES)
+      CALL pList%add('PL->numberMPI',PE_COMM_SELF)
+      CALL pList%add('PL->numberOMP',1_SNK)
+      CALL pList%add('PL->timerName','testTimer')
+      CALL pList%validate(pList,optListLS)
+      CALL thisLS%init(pList)
+      
+      ! initialize matrix A
+      CALL pList%clear()
+      CALL pList%add('PL->n',9_SNK)
+      CALL pList%add('PL->m',33_SNK)
+      CALL thisLS%A%init(pList)
+      
+      !A =  4    -1     0    -1     0     0     0     0     0
+      !    -1     4    -1     0    -1     0     0     0     0
+      !     0    -1     4     0     0    -1     0     0     0
+      !    -1     0     0     4    -1     0    -1     0     0
+      !     0    -1     0    -1     4    -1     0    -1     0
+      !     0     0    -1     0    -1     4     0     0    -1
+      !     0     0     0    -1     0     0     4    -1     0
+      !     0     0     0     0    -1     0    -1     4    -1
+      !     0     0     0     0     0    -1     0    -1     4
+      SELECTTYPE(A => thisLS%A); TYPE IS(PETSCMatrixType)
+          CALL A%set(1,1, 4.0_SRK)
+          CALL A%set(1,2,-1.0_SRK)
+          CALL A%set(1,4,-1.0_SRK)
+          CALL A%set(2,1,-1.0_SRK)
+          CALL A%set(2,2, 4.0_SRK)
+          CALL A%set(2,3,-1.0_SRK)
+          CALL A%set(2,5,-1.0_SRK)
+          CALL A%set(3,2,-1.0_SRK)
+          CALL A%set(3,3, 4.0_SRK)
+          CALL A%set(3,6,-1.0_SRK)
+          CALL A%set(4,1,-1.0_SRK)
+          CALL A%set(4,4, 4.0_SRK)
+          CALL A%set(4,5,-1.0_SRK)
+          CALL A%set(4,7,-1.0_SRK)
+          CALL A%set(5,2,-1.0_SRK)
+          CALL A%set(5,4,-1.0_SRK)
+          CALL A%set(5,5, 4.0_SRK)
+          CALL A%set(5,6,-1.0_SRK)
+          CALL A%set(5,8,-1.0_SRK)
+          CALL A%set(6,3,-1.0_SRK)
+          CALL A%set(6,5,-1.0_SRK)
+          CALL A%set(6,6, 4.0_SRK)
+          CALL A%set(6,9,-1.0_SRK)
+          CALL A%set(7,4,-1.0_SRK)
+          CALL A%set(7,7, 4.0_SRK)
+          CALL A%set(7,8,-1.0_SRK)
+          CALL A%set(8,5,-1.0_SRK)
+          CALL A%set(8,7,-1.0_SRK)
+          CALL A%set(8,8, 4.0_SRK)
+          CALL A%set(8,9,-1.0_SRK)
+          CALL A%set(9,6,-1.0_SRK)
+          CALL A%set(9,8,-1.0_SRK)
+          CALL A%set(9,9, 4.0_SRK)
+      ENDSELECT
+      
+      ! build X0 and set it to 1.0s
+      ALLOCATE(thisX(9))
+      thisX=1.0_SRK
+      
+      ! initialize vector X
+      CALL thisLS%X%init(9)
+      
+      SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
+          CALL thisLS%setX0(thisX)
+      ENDSELECT
+
+      ! build b and set it
+      CALL thisLS%b%init(9)
+      SELECTTYPE(b => thisLS%b); TYPE IS(PETScVectorType)
+        CALL b%set(1.0_SRK)
+      ENDSELECT
+
+      !set iterations and convergence information and build/set M
+      SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
+        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1000_SIK,30_SIK)
+      ENDSELECT
+      
+      !solve it
+      CALL thisLS%solve()
+      
+      !Store expected solution (from MATLAB) in B
+      ALLOCATE(thisB(9))
+      thisB(1)=0.6875_SRK
+      thisB(2)=0.875_SRK
+      thisB(3)=0.6875_SRK
+      thisB(4)=0.875_SRK
+      thisB(5)=1.125_SRK
+      thisB(6)=0.875_SRK
+      thisB(7)=0.6875_SRK
+      thisB(8)=0.875_SRK
+      thisB(9)=0.6875_SRK
+      !multiply by 10,000 so we can match first five places.
+      thisB=10000.0_SRK*thisB
+      match=.TRUE.
+      DO i=1,SIZE(thisB)
+        SELECTTYPE(X => thisLS%X); TYPE IS(PETScVectorType)
+          IF(NINT(thisB(i)) /= NINT(10000.0_SRK*X%get(i))) THEN
+            match=.FALSE.
+            EXIT
+          ENDIF
+        ENDSELECT
+      ENDDO
+      IF(.NOT. match) THEN
+        WRITE(*,*) 'CALL PETScIterative%solve() -BICGSTAB FAILED!'
+        STOP 666
+      ENDIF
+      
+      DEALLOCATE(thisB)
+      CALL thisLS%A%clear()
+      CALL thisLS%clear()
+      
+    !test with A being densesquare
+    
+      ! initialize linear system
+      CALL pList%clear()
+      CALL pList%add('PL->matrixType',DENSESQUARE)
+      CALL pList%add('PL->TPLType',PETSC)
+      CALL pList%add('PL->solverMethod',GMRES)
+      CALL pList%add('PL->numberMPI',PE_COMM_SELF)
+      CALL pList%add('PL->numberOMP',1_SNK)
+      CALL pList%add('PL->timerName','testTimer')
+      CALL pList%validate(pList,optListLS)
+      CALL thisLS%init(pList)
+      
+      ! initialize matrix A
+      CALL pList%clear()
+      CALL pList%add('PL->n',9_SNK)
+      CALL pList%add('PL->m',1_SNK)
+      CALL thisLS%A%init(pList) !9x9, symmetric.
+      DO i=1,9
+        SELECTTYPE(A => thisLS%A); TYPE IS(PETScMatrixType)
+          CALL A%set(i,i,4.0_SRK)
+          IF((i < 9).AND.((i /= 3).AND.(i /= 6))) THEN
+            CALL A%set(i,i+1,-1.0_SRK)
+          ENDIF
+          IF(i < 7) THEN
+            CALL A%set(i,i+3,-1.0_SRK)
+          ENDIF
+        ENDSELECT
+      ENDDO
+      
+      !initialize vector X
+      CALL thisLS%X%init(9)
+      
+      !build X0 and set it to 1.0s
+      ALLOCATE(thisX(9))
+      thisX=1.0_SRK
+      SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
+        CALL thisLS%setX0(thisX)
+      ENDSELECT
+      
+      !build b and set it
+      CALL thisLS%b%init(9)
+      SELECTTYPE(b => thisLS%b); TYPE IS(PETScVectorType)
+        CALL b%set(1.0_SRK)
+      ENDSELECT
+      
+      !set iterations and convergence information and build/set M
+      SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
+        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1000_SIK,30_SIK)
+      ENDSELECT
+      
+      !solve
+      CALL thisLS%solve()
+      ALLOCATE(thisB(9))
+      thisB(1)=0.6875_SRK
+      thisB(2)=0.875_SRK
+      thisB(3)=0.6875_SRK
+      thisB(4)=0.875_SRK
+      thisB(5)=1.125_SRK
+      thisB(6)=0.875_SRK
+      thisB(7)=0.6875_SRK
+      thisB(8)=0.875_SRK
+      thisB(9)=0.6875_SRK
+      thisB=thisB*10000._SRK
+      match=.TRUE.
+      DO i=1,SIZE(thisB)
+        SELECTTYPE(X => thisLS%X); TYPE IS(PETScVectorType)
+          IF(NINT(thisB(i)) /= NINT(10000.0_SRK*X%get(i))) THEN
+            match=.FALSE.
+            EXIT
+          ENDIF
+        ENDSELECT
+      ENDDO
+      IF(.NOT. match) THEN
+        WRITE(*,*) 'CALL PETScIterative%solve() - GMRES FAILED!'
+        STOP 666
+      ENDIF
+      !test to see how it performs with an already decomposed M
+      !reset X to 1.0s
+      match=.TRUE.
+      DO i=1,SIZE(thisB)
+        SELECTTYPE(X => thisLS%X); TYPE IS(PETScVectorType)
+          CALL X%set(1.0_SRK)
+          CALL thisLS%solve()
+          IF(NINT(thisB(i)) /= NINT(10000.0_SRK*X%get(i))) THEN
+            match=.FALSE.
+            EXIT
+          ENDIF
+        ENDSELECT
+      ENDDO
+      IF(.NOT. match) THEN
+        WRITE(*,*) 'CALL PETScIterative%solve() - GMRES FAILED!'
+        STOP 666
+      ENDIF
+      CALL thisLS%A%clear()
+            
+      WRITE(*,*)'  Passed: CALL PETScIterative%solver() GMRES'
+#endif
+      CALL thisLS%clear()
+      DEALLOCATE(thisX)
       
     ENDSUBROUTINE testIterativeSolve_GMRES
 !

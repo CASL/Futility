@@ -86,10 +86,8 @@ MODULE LinearSolverTypes
     TYPE(MPI_EnvType) :: MPIparallelEnv
     !> Pointer to the shared memory parallel environment
     TYPE(OMP_EnvType) :: OMPparallelEnv
-    !> Initialization status of A
-    LOGICAL(SBK) :: hasA=.FALSE.
-    !> Initialization status of b
-    LOGICAL(SBK) :: hasB=.FALSE.
+    !> Initialization status of X (only needed for PETSc)
+    LOGICAL(SBK) :: hasX=.FALSE.
     !> Pointer to the MatrixType A
     CLASS(MatrixType),ALLOCATABLE :: A
     !> Right-hand side vector, b
@@ -323,20 +321,45 @@ MODULE LinearSolverTypes
               
 #ifdef HAVE_PETSC
             IF (matrixType==4 .OR. matrixType==5) THEN ! PETSc
-                !create and initialize KSP
-                CALL KSPCreate(MPI_COMM_WORLD,solver%ksp,ierr)
-                CALL KSPSetOperators(solver%ksp,solver%A,solver%A,DIFFERENT_NONZERO_PATTERN,ierr)
-                CALL KSPSetFromOptions(solver%ksp,ierr)
-                
-                !set iterative solver type
-                SELECTCASE(solverMethod)
-                  CASE(1) ! BCGS
-                    CALL KSPSetType(solver%ksp,KSPBCGS,ierr)
-                  CASE(2) ! CGNR
-                    CALL KSPSetType(solver%ksp,KSPCGNE,ierr)
-                  CASE(3) ! GMRES
-                    CALL KSPSetType(solver%ksp,KSPGMRES,ierr)
-                ENDSELECT
+              ! create and assemble matrix
+              SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
+                IF (.NOT.A%isCreated) THEN
+                  CALL MatCreate(solver%MPIparallelEnv%comm,A%a,ierr)
+                  A%isCreated=.TRUE.
+                ENDIF
+                IF (matrixType==4) THEN ! Sparse
+                  A%SparseDense=0
+                ELSEIF (matrixType==5) THEN ! Dense
+                  A%SparseDense=1
+                ENDIF
+              ENDSELECT
+              ! create source vector
+              SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
+                IF (.NOT.b%isCreated) THEN
+                  CALL VecCreate(solver%MPIparallelEnv%comm,b%b,ierr)
+                  b%isCreated=.TRUE.
+                ENDIF
+              ENDSELECT
+              ! create solution vector
+              SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
+                IF (.NOT.X%isCreated) THEN
+                  CALL VecCreate(solver%MPIparallelEnv%comm,X%b,ierr)
+                  X%isCreated=.TRUE.
+                ENDIF
+              ENDSELECT
+              !create and initialize KSP
+              CALL KSPCreate(solver%MPIparallelEnv%comm,solver%ksp,ierr)
+              
+              !set iterative solver type
+              SELECTCASE(solverMethod)
+                CASE(1) ! BCGS
+                  CALL KSPSetType(solver%ksp,KSPBCGS,ierr)
+                CASE(2) ! CGNR
+                  CALL KSPSetType(solver%ksp,KSPCGNE,ierr)
+                CASE(3) ! GMRES
+                  CALL KSPSetType(solver%ksp,KSPGMRES,ierr)
+              ENDSELECT
+              
             ENDIF
 #endif
             !assign values to solver
@@ -369,8 +392,7 @@ MODULE LinearSolverTypes
 
       solver%isInit=.FALSE.
       solver%solverMethod=-1
-      solver%hasA=.FALSE.
-      solver%hasB=.FALSE.
+      solver%hasX=.FALSE.
       solver%info=0
       CALL solver%MPIparallelEnv%clear()
       CALL solver%OMPparallelEnv%clear()
@@ -402,8 +424,7 @@ MODULE LinearSolverTypes
 
       solver%isInit=.FALSE.
       solver%solverMethod=-1
-      solver%hasA=.FALSE.
-      solver%hasB=.FALSE.
+      solver%hasX=.FALSE.
       solver%info=0
       CALL solver%MPIparallelEnv%clear()
       CALL solver%OMPparallelEnv%clear()
@@ -585,13 +606,32 @@ MODULE LinearSolverTypes
               TYPE IS(PETScMatrixType)
                 ! assemble matrix if necessary
                 IF (.NOT.(A%isAssembled)) THEN
-                  CALL MatAssemblyBegin(A,ierr)
-                  CALL MatAssemblyEnd(A,ierr)
+                  CALL MatAssemblyBegin(A%a,MAT_FINAL_ASSEMBLY,ierr)
+                  CALL MatAssemblyEnd(A%a,MAT_FINAL_ASSEMBLY,ierr)
                   A%isAssembled=.FALSE.
                 ENDIF
                 
+                ! assemble source vector if necessary
+                SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
+                  IF (.NOT.(b%isAssembled)) THEN
+                    CALL VecAssemblyBegin(b%b,ierr)
+                    CALL VecAssemblyEnd(b%b,ierr)
+                    b%isAssembled=.FALSE.
+                  ENDIF
+                ENDSELECT
+                
+                SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
+                  CALL KSPSetOperators(solver%ksp,A%a,A%a,DIFFERENT_NONZERO_PATTERN,ierr)
+                ENDSELECT
+                CALL KSPSetFromOptions(solver%ksp,ierr)
+                
                 ! solve
-                CALL KSPSolve(solver%ksp,solver%b,solver%x,ierr)
+                SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
+                  SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
+                    CALL KSPSolve(solver%ksp,b%b,x%b,ierr)
+                    IF(ierr==0) solver%info=0
+                  ENDSELECT
+                ENDSELECT
 #endif
                 
             ENDSELECT
@@ -618,13 +658,32 @@ MODULE LinearSolverTypes
               TYPE IS(PETScMatrixType)
                 ! assemble matrix if necessary
                 IF (.NOT.(A%isAssembled)) THEN
-                  CALL MatAssemblyBegin(A,ierr)
-                  CALL MatAssemblyEnd(A,ierr)
+                  CALL MatAssemblyBegin(A%a,MAT_FINAL_ASSEMBLY,ierr)
+                  CALL MatAssemblyEnd(A%a,MAT_FINAL_ASSEMBLY,ierr)
                   A%isAssembled=.FALSE.
                 ENDIF
                 
+                ! assemble source vector if necessary
+                SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
+                  IF (.NOT.(b%isAssembled)) THEN
+                    CALL VecAssemblyBegin(b%b,ierr)
+                    CALL VecAssemblyEnd(b%b,ierr)
+                    b%isAssembled=.FALSE.
+                  ENDIF
+                ENDSELECT
+                
+                SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
+                  CALL KSPSetOperators(solver%ksp,A%a,A%a,DIFFERENT_NONZERO_PATTERN,ierr)
+                ENDSELECT
+                CALL KSPSetFromOptions(solver%ksp,ierr)
+                
                 ! solve
-                CALL KSPSolve(solver%ksp,solver%b,solver%x,ierr)
+                SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
+                  SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
+                    CALL KSPSolve(solver%ksp,b%b,x%b,ierr)
+                    IF(ierr==0) solver%info=0
+                  ENDSELECT
+                ENDSELECT
 #endif
               CLASS DEFAULT
                 CALL solveCGNR(solver)
@@ -658,13 +717,32 @@ MODULE LinearSolverTypes
               TYPE IS(PETScMatrixType)
                 ! assemble matrix if necessary
                 IF (.NOT.(A%isAssembled)) THEN
-                  CALL MatAssemblyBegin(A,ierr)
-                  CALL MatAssemblyEnd(A,ierr)
+                  CALL MatAssemblyBegin(A%a,MAT_FINAL_ASSEMBLY,ierr)
+                  CALL MatAssemblyEnd(A%a,MAT_FINAL_ASSEMBLY,ierr)
                   A%isAssembled=.FALSE.
                 ENDIF
                 
+                ! assemble source vector if necessary
+                SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
+                  IF (.NOT.(b%isAssembled)) THEN
+                    CALL VecAssemblyBegin(b%b,ierr)
+                    CALL VecAssemblyEnd(b%b,ierr)
+                    b%isAssembled=.FALSE.
+                  ENDIF
+                ENDSELECT
+                
+                SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
+                  CALL KSPSetOperators(solver%ksp,A%a,A%a,DIFFERENT_NONZERO_PATTERN,ierr)
+                ENDSELECT
+                CALL KSPSetFromOptions(solver%ksp,ierr)
+
                 ! solve
-                CALL KSPSolve(solver%ksp,solver%b,solver%x,ierr)
+                SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
+                  SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
+                    CALL KSPSolve(solver%ksp,b%b,x%b,ierr)
+                    IF(ierr==0) solver%info=0
+                  ENDSELECT
+                ENDSELECT
 #endif  
               CLASS DEFAULT
                 CALL solveGMRES(solver)
@@ -747,10 +825,16 @@ MODULE LinearSolverTypes
     SUBROUTINE setX0_LinearSolverType_Iterative(solver,X0)
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
       REAL(SRK),POINTER,INTENT(IN) :: X0(:)
+      INTEGER(SIK) :: i
 
       IF(solver%isInit) THEN
         SELECTTYPE(X => solver%X); TYPE IS(RealVectorType)
           X%b=X0
+        ENDSELECT
+        SELECTTYPE(X => solver%X); TYPE IS(PETScVectorType)
+          DO i=1,solver%X%n
+            CALL X%set(i,X0(i))
+          ENDDO
         ENDSELECT
         solver%hasX0=.TRUE.
       ENDIF
@@ -773,7 +857,7 @@ MODULE LinearSolverTypes
       INTEGER(SIK),INTENT(IN) :: normType_in
       REAL(SRK),INTENT(IN) :: convTol_in
       INTEGER(SIK),INTENT(IN) :: maxIters_in
-      INTEGER(SIK),INTENT(IN) :: nRestart_in
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: nRestart_in
 #ifdef HAVE_PETSC
       PetscErrorCode  :: ierr
       PetscInt  :: maxits,nrst
@@ -783,14 +867,6 @@ MODULE LinearSolverTypes
       INTEGER(SIK) :: normType,maxIters,nRestart
       REAL(SRK) :: convTol
       LOGICAL(SBK) :: localalloc
-      
-#ifdef HAVE_PETSC
-      ! set variables
-      maxits=maxIters_in
-      rtol=convTol_in
-      abstol=convTol_in
-      nrst=nRestart_in
-#endif
 
       localalloc=.FALSE.
       IF(.NOT.ASSOCIATED(eLinearSolverType)) THEN
@@ -821,7 +897,7 @@ MODULE LinearSolverTypes
             'than 1. Default value is used!')
         maxIters=1000
       ENDIF
-      IF(nRestart <= 1) THEN
+      IF(nRestart <= 1 .OR. .NOT.PRESENT(nRestart_in)) THEN
         CALL eLinearSolverType%raiseWarning(modName//'::'// &
           myName//' - Incorrect input, nRestart should not be less '// &
             'than 1. Default value is used!')
@@ -834,8 +910,12 @@ MODULE LinearSolverTypes
         solver%nRestart=nRestart
 #ifdef HAVE_PETSC
         IF (solver%TPLType == PETSC) THEN
+          rtol=convTol
+          abstol=convTol
+          maxits=maxIters
+          nrst=nRestart
           CALL KSPSetTolerances(solver%ksp,rtol,abstol,dtol,maxits,ierr)
-          CALL KSPGMRESSetRestart(nrst,ierr)
+          IF (PRESENT(nRestart_in)) CALL KSPGMRESSetRestart(solver%ksp,nrst,ierr)
         ENDIF
 #endif
       ENDIF
@@ -1038,7 +1118,7 @@ MODULE LinearSolverTypes
           t=c(k-1)*h-s(k-1)*t
         ENDDO
         CALL LNorm(w,2_SIK,h)
-        WRITE(*,*) "h = ", h
+        !WRITE(*,*) "h = ", h
         IF (h>0.0_SRK) THEN
           v(:,it+1)=w/h
         ELSE
