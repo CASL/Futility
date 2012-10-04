@@ -24,7 +24,7 @@ PROGRAM testVectorTypes
   
 #ifdef HAVE_PETSC
 #include <finclude/petsc.h>
-#define IS IS !petscisdef.h defines the keyword IS, and it needs to be reset
+#undef IS
  
   PetscErrorCode  :: ierr
   
@@ -402,6 +402,11 @@ PROGRAM testVectorTypes
       CALL thisVector%set(6,6._SRK)
       SELECTTYPE(thisVector)
         TYPE IS(PETScVectorType)
+          ! manually assemble vector
+          CALL VecAssemblyBegin(thisVector%b,ierr)
+          CALL VecAssemblyEnd(thisVector%b,ierr)
+          thisVector%isAssembled=.TRUE.
+          
           !now compare actual values with expected
           DO i=1,6
             CALL VecGetValues(thisVector%b,1,i-1,dummy,ierr)
@@ -427,6 +432,11 @@ PROGRAM testVectorTypes
         
       SELECTTYPE(thisVector)
         TYPE IS(PETScVectorType)
+          ! manually assemble vector
+          CALL VecAssemblyBegin(thisVector%b,ierr)
+          CALL VecAssemblyEnd(thisVector%b,ierr)
+          thisVector%isAssembled=.TRUE.
+          
           CALL VecGetSize(thisVector%b,vecsize,ierr)
           DO i=1,vecsize
             CALL VecGetValues(thisVector%b,1,i-1,dummy,ierr)
@@ -461,6 +471,11 @@ PROGRAM testVectorTypes
         
       SELECTTYPE(thisVector)
         TYPE IS(PETScVectorType)
+          ! manually assemble vector
+          CALL VecAssemblyBegin(thisVector%b,ierr)
+          CALL VecAssemblyEnd(thisVector%b,ierr)
+          thisVector%isAssembled=.TRUE.
+          
           DO i=1,thisVector%n
             IF(thisVector%get(i) == 1._SRK) THEN
               WRITE(*,*) 'CALL petscvec%setall(...) FAILED!'

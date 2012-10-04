@@ -26,7 +26,7 @@ PROGRAM testMatrixTypes
   
 #ifdef HAVE_PETSC
 #include <finclude/petsc.h>
-#define IS IS !petscisdef.h defines the keyword IS, and it needs to be reset
+#undef IS
   PetscErrorCode  :: ierr
 #endif
   
@@ -1344,27 +1344,20 @@ PROGRAM testMatrixTypes
       SELECTTYPE(thisMatrix)
         TYPE IS(PETScMatrixType)
           ! manually assemble
-          CALL MatAssemblyBegin(thisMatrix%a,ierr)
-          CALL MatAssemblyEnd(thisMatrix%a,ierr)
+          CALL MatAssemblyBegin(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
+          CALL MatAssemblyEnd(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
           thisMatrix%isAssembled=.TRUE.
+          
           CALL MatGetValues(thisMatrix%a,1,0,1,0,dummy,ierr)
           IF(dummy/=1._SRK)THEN
             WRITE(*,*) 'CALL petscsparse%set(...) FAILED!'
             STOP 666
           ENDIF
-          ! manually assemble
-          CALL MatAssemblyBegin(thisMatrix%a,ierr)
-          CALL MatAssemblyEnd(thisMatrix%a,ierr)
-          thisMatrix%isAssembled=.TRUE.
           CALL MatGetValues(thisMatrix%a,1,0,1,1,dummy,ierr)
           IF(dummy/=2._SRK)THEN
             WRITE(*,*) 'CALL petscsparse%set(...) FAILED!'
             STOP 666
           ENDIF
-          ! manually assemble
-          CALL MatAssemblyBegin(thisMatrix%a,ierr)
-          CALL MatAssemblyEnd(thisMatrix%a,ierr)
-          thisMatrix%isAssembled=.TRUE.
           CALL MatGetValues(thisMatrix%a,1,1,1,1,dummy,ierr)
           IF(dummy/=3._SRK)THEN
             WRITE(*,*) 'CALL petscsparse%set(...) FAILED!'
@@ -1372,7 +1365,7 @@ PROGRAM testMatrixTypes
           ENDIF
       ENDSELECT
       CALL thisMatrix%clear()
-
+     
       CALL pList%clear()
       CALL pList%add('testPL->n',2_SNK)
       CALL pList%add('testPL->m',0_SNK)
@@ -1385,36 +1378,25 @@ PROGRAM testMatrixTypes
       SELECTTYPE(thisMatrix)
         TYPE IS(PETScMatrixType)
           ! manually assemble
-          CALL MatAssemblyBegin(thisMatrix%a,ierr)
-          CALL MatAssemblyEnd(thisMatrix%a,ierr)
+          CALL MatAssemblyBegin(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
+          CALL MatAssemblyEnd(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
           thisMatrix%isAssembled=.TRUE.
+          
           CALL MatGetValues(thisMatrix%a,1,0,1,0,dummy,ierr)
           IF(dummy/=1._SRK)THEN
             WRITE(*,*) 'CALL petscsparse%set(...) FAILED!'
             STOP 666
           ENDIF
-          ! manually assemble
-          CALL MatAssemblyBegin(thisMatrix%a,ierr)
-          CALL MatAssemblyEnd(thisMatrix%a,ierr)
-          thisMatrix%isAssembled=.TRUE.
           CALL MatGetValues(thisMatrix%a,1,0,1,1,dummy,ierr)
           IF(dummy/=2._SRK)THEN
             WRITE(*,*) 'CALL petscsparse%set(...) FAILED!'
             STOP 666
           ENDIF
-          ! manually assemble
-          CALL MatAssemblyBegin(thisMatrix%a,ierr)
-          CALL MatAssemblyEnd(thisMatrix%a,ierr)
-          thisMatrix%isAssembled=.TRUE.
           CALL MatGetValues(thisMatrix%a,1,1,1,0,dummy,ierr)
           IF(dummy/=2._SRK)THEN
             WRITE(*,*) 'CALL petscsparse%set(...) FAILED!'
             STOP 666
           ENDIF
-          ! manually assemble
-          CALL MatAssemblyBegin(thisMatrix%a,ierr)
-          CALL MatAssemblyEnd(thisMatrix%a,ierr)
-          thisMatrix%isAssembled=.TRUE.
           CALL MatGetValues(thisMatrix%a,1,1,1,1,dummy,ierr)
           IF(dummy/=3._SRK)THEN
             WRITE(*,*) 'CALL petscsparse%set(...) FAILED!'
@@ -1610,28 +1592,21 @@ PROGRAM testMatrixTypes
       CALL thisMatrix%set(2,2,3._SRK)
       SELECTTYPE(thisMatrix)
         TYPE IS(PETScMatrixType)
-          ! manually assemble 
-          CALL MatAssemblyBegin(thisMatrix%a,ierr)
-          CALL MatAssemblyEnd(thisMatrix%a,ierr)
-          thisMatrix%isAssembled=.FALSE.
+          ! manually assemble
+          CALL MatAssemblyBegin(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
+          CALL MatAssemblyEnd(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
+          thisMatrix%isAssembled=.TRUE.
+          
           CALL MatGetValues(thisMatrix%a,1,0,1,0,dummy,ierr)
           IF(dummy/=1._SRK)THEN
             WRITE(*,*) 'CALL petscdense%set(...) FAILED!'
             STOP 666
           ENDIF
-          ! manually assemble 
-          CALL MatAssemblyBegin(thisMatrix%a,ierr)
-          CALL MatAssemblyEnd(thisMatrix%a,ierr)
-          thisMatrix%isAssembled=.FALSE.
           CALL MatGetValues(thisMatrix%a,1,0,1,1,dummy,ierr)
           IF(dummy/=2._SRK)THEN
             WRITE(*,*) 'CALL petscdense%set(...) FAILED!'
             STOP 666
           ENDIF
-          ! manually assemble 
-          CALL MatAssemblyBegin(thisMatrix%a,ierr)
-          CALL MatAssemblyEnd(thisMatrix%a,ierr)
-          thisMatrix%isAssembled=.FALSE.
           CALL MatGetValues(thisMatrix%a,1,1,1,1,dummy,ierr)
           IF(dummy/=3._SRK)THEN
             WRITE(*,*) 'CALL petscdense%set(...) FAILED!'
@@ -1651,37 +1626,26 @@ PROGRAM testMatrixTypes
       CALL thisMatrix%set(2,2,3._SRK)
       SELECTTYPE(thisMatrix)
         TYPE IS(PETScMatrixType)
-          ! manually assemble 
-          CALL MatAssemblyBegin(thisMatrix%a,ierr)
-          CALL MatAssemblyEnd(thisMatrix%a,ierr)
-          thisMatrix%isAssembled=.FALSE.
+          ! manually assemble
+          CALL MatAssemblyBegin(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
+          CALL MatAssemblyEnd(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
+          thisMatrix%isAssembled=.TRUE.
+          
           CALL MatGetValues(thisMatrix%a,1,0,1,0,dummy,ierr)
           IF(dummy/=1._SRK)THEN
             WRITE(*,*) 'CALL petscdense%set(...) FAILED!'
             STOP 666
           ENDIF
-          ! manually assemble 
-          CALL MatAssemblyBegin(thisMatrix%a,ierr)
-          CALL MatAssemblyEnd(thisMatrix%a,ierr)
-          thisMatrix%isAssembled=.FALSE.
           CALL MatGetValues(thisMatrix%a,1,0,1,1,dummy,ierr)
           IF(dummy/=2._SRK)THEN
             WRITE(*,*) 'CALL petscdense%set(...) FAILED!'
             STOP 666
           ENDIF
-          ! manually assemble 
-          CALL MatAssemblyBegin(thisMatrix%a,ierr)
-          CALL MatAssemblyEnd(thisMatrix%a,ierr)
-          thisMatrix%isAssembled=.FALSE.
           CALL MatGetValues(thisMatrix%a,1,1,1,0,dummy,ierr)
           IF(dummy/=2._SRK)THEN
             WRITE(*,*) 'CALL petscdense%set(...) FAILED!'
             STOP 666
           ENDIF
-          ! manually assemble 
-          CALL MatAssemblyBegin(thisMatrix%a,ierr)
-          CALL MatAssemblyEnd(thisMatrix%a,ierr)
-          thisMatrix%isAssembled=.FALSE.
           CALL MatGetValues(thisMatrix%a,1,1,1,1,dummy,ierr)
           IF(dummy/=3._SRK)THEN
             WRITE(*,*) 'CALL petscdense%set(...) FAILED!'

@@ -76,7 +76,7 @@ MODULE MatrixTypes
 
 #ifdef HAVE_PETSC
 #include <finclude/petsc.h>
-#define IS IS !petscisdef.h defines the keyword IS, and it needs to be reset
+#undef IS
 #endif
 
   PRIVATE
@@ -161,6 +161,8 @@ MODULE MatrixTypes
    
     !> whether sparse or dense
     INTEGER(SIK) :: SparseDense
+    !> creation status
+    LOGICAL(SBK) :: isCreated=.FALSE.
     !> assembly status
     LOGICAL(SBK) :: isAssembled=.FALSE.
     
@@ -518,7 +520,7 @@ MODULE MatrixTypes
       CHARACTER(LEN=*),PARAMETER :: myName='init_PETScMatrixParam'
       CLASS(PETScMatrixType),INTENT(INOUT) :: matrix
       CLASS(ParamType),INTENT(IN) :: pList
-      INTEGER(SIK) :: n, m, mattype
+      INTEGER(SIK) :: n, m, mattype=0
       LOGICAL(SBK) :: localalloc
       
 #ifdef HAVE_PETSC
@@ -527,10 +529,6 @@ MODULE MatrixTypes
       ! Pull Data From Parameter List
       CALL pList%get('n',n)
       CALL pList%get('m',m)
-      SELECTTYPE(matrix); TYPE IS(PETScMatrixType)
-        CALL pList%get('mattype',mattype)
-      ENDSELECT
-      mattype=0
       
       !Error checking of subroutine input
       localalloc=.FALSE.
@@ -553,9 +551,11 @@ MODULE MatrixTypes
           ELSE
             matrix%isSymmetric=.TRUE.
           ENDIF
-          CALL MatCreate(MPI_COMM_WORLD,matrix%a,ierr)
+          IF(.NOT.matrix%isCreated) THEN
+            CALL MatCreate(MPI_COMM_WORLD,matrix%a,ierr)
+            matrix%isCreated=.TRUE.
+          ENDIF
           CALL MatSetSizes(matrix%a,PETSC_DECIDE,PETSC_DECIDE,matrix%n,matrix%n,ierr)
-          matrix%SparseDense = mattype !for now
           IF (matrix%SparseDense == 0) THEN     ! sparse matrix
             CALL MatSetType(matrix%a,MATMPIAIJ,ierr)
           ELSEIF (matrix%SparseDense == 1) THEN ! dense matrix
@@ -637,6 +637,7 @@ MODULE MatrixTypes
       matrix%isInit=.FALSE.
       matrix%n=0
       matrix%isAssembled=.FALSE.
+      matrix%isCreated=.FALSE.
       matrix%isSymmetric=.FALSE.
       CALL MatDestroy(matrix%a,ierr)
 #endif
@@ -870,9 +871,9 @@ MODULE MatrixTypes
       IF(matrix%isInit) THEN
         ! assemble matrix if necessary
         IF (.NOT.(matrix%isAssembled)) THEN
-          CALL MatAssemblyBegin(matrix%a,ierr)
-          CALL MatAssemblyEnd(matrix%a,ierr)
-          matrix%isAssembled=.FALSE.
+          CALL MatAssemblyBegin(matrix%a,MAT_FINAL_ASSEMBLY,ierr)
+          CALL MatAssemblyEnd(matrix%a,MAT_FINAL_ASSEMBLY,ierr)
+          matrix%isAssembled=.TRUE.
         ENDIF
       
         IF((i <= matrix%n) .AND. ((j > 0) .AND. (i > 0))) THEN

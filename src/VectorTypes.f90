@@ -59,7 +59,7 @@ MODULE VectorTypes
 
 #ifdef HAVE_PETSC
 #include <finclude/petsc.h>
-#define IS IS !petscisdef.h defines the keyword IS, and it needs to be reset
+#undef IS
 #endif
 
   PRIVATE
@@ -185,6 +185,10 @@ MODULE VectorTypes
 #ifdef HAVE_PETSC
     Vec :: b
 #endif
+    !> creation status
+    LOGICAL(SBK) :: isCreated=.FALSE.
+    !> assembly status
+    LOGICAL(SBK) :: isAssembled=.FALSE.
 !
 !List of Type Bound Procedures
     CONTAINS 
@@ -353,7 +357,10 @@ MODULE VectorTypes
           vector%isInit=.TRUE.
           vector%n=n
           ! will need to change MPI_COMM_WORLD
-          CALL VecCreate(MPI_COMM_WORLD,vector%b,ierr)
+          IF(.NOT.vector%isCreated) THEN
+            CALL VecCreate(MPI_COMM_WORLD,vector%b,ierr)
+            vector%isCreated=.TRUE.
+          ENDIF
           CALL VecSetSizes(vector%b,PETSC_DECIDE,vector%n,ierr)
           CALL VecSetType(vector%b,VECMPI,ierr)
           CALL VecSetFromOptions(vector%b,ierr)
@@ -386,6 +393,8 @@ MODULE VectorTypes
 #ifdef HAVE_PETSC
       PetscErrorCode  :: ierr
       vector%isInit=.FALSE.
+      vector%isAssembled=.FALSE.
+      vector%isCreated=.FALSE.
       vector%n=0
       CALL VecDestroy(vector%b,ierr)
 #endif
@@ -501,12 +510,15 @@ MODULE VectorTypes
       REAL(SRK) :: getval
 #ifdef HAVE_PETSC
       PetscErrorCode  :: ierr
-#endif
 
       getval=0.0_SRK
-      
-#ifdef HAVE_PETSC
       IF(vector%isInit) THEN
+        ! assemble matrix if necessary
+        IF (.NOT.(vector%isAssembled)) THEN
+          CALL VecAssemblyBegin(vector%b,ierr)
+          CALL VecAssemblyEnd(vector%b,ierr)
+          vector%isAssembled=.TRUE.
+        ENDIF
         IF((i <= vector%n) .AND. (i > 0)) THEN
           CALL VecGetValues(vector%b,1,i-1,getval,ierr)
         ELSE
@@ -529,7 +541,7 @@ MODULE VectorTypes
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
       REAL(SRK) :: r
-      
+
       SELECTTYPE(thisVector); TYPE IS(RealVectorType)
         IF(PRESENT(n) .AND. PRESENT(incx)) THEN
           r = BLAS1_asum(n,thisVector%b,incx)
@@ -557,23 +569,27 @@ MODULE VectorTypes
     SUBROUTINE axpy_scalar_VectorType(thisVector,newVector,a,n,incx,incy)
       CLASS(VectorType),INTENT(IN)     :: thisVector
       CLASS(VectorType),INTENT(INOUT)  :: newVector
-      REAL(SRK),INTENT(IN):: a
+      REAL(SRK),INTENT(IN),OPTIONAL :: a
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incy
       
+      REAL(SRK) :: alpha=1.
+      
+      IF (PRESENT(a)) alpha=a
+      
       SELECTTYPE(thisVector); TYPE IS(RealVectorType)
         SELECTTYPE(newVector); TYPE IS(RealVectorType)
           IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
-            CALL BLAS1_axpy(n,a,thisVector%b,incx,newVector%b,incy)
+            CALL BLAS1_axpy(n,alpha,thisVector%b,incx,newVector%b,incy)
           ELSEIF(PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-            CALL BLAS1_axpy(n,a,thisVector%b,newVector%b,incx)
+            CALL BLAS1_axpy(n,alpha,thisVector%b,newVector%b,incx)
           ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
-            CALL BLAS1_axpy(n,a,thisVector%b,newVector%b,incy)
+            CALL BLAS1_axpy(n,alpha,thisVector%b,newVector%b,incy)
           ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-            CALL BLAS1_axpy(n,a,thisVector%b,newVector%b)
+            CALL BLAS1_axpy(n,alpha,thisVector%b,newVector%b)
           ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-            CALL BLAS1_axpy(a,thisVector%b,newVector%b)
+            CALL BLAS1_axpy(alpha,thisVector%b,newVector%b)
           ENDIF
         ENDSELECT
       ENDSELECT
