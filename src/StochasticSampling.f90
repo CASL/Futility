@@ -282,6 +282,13 @@ CONTAINS
     ELEMENTAL SUBROUTINE clear_Sampler(sampler)
       CLASS(StochasticSamplingType),INTENT(INOUT) :: sampler
       sampler%RNseed=-1
+      sampler%RNseed=-1
+      sampler%RNmult=-1
+      sampler%RNadd=-1
+      sampler%RNmask=-1
+      sampler%RNmod=-1
+      sampler%RNnorm=-1
+      sampler%counter=0
       sampler%isInit=.FALSE.
     ENDSUBROUTINE clear_Sampler
 !
