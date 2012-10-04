@@ -20,6 +20,7 @@ PROGRAM testExpTables
   USE Allocs
   USE ExceptionHandler
   USE ExpTables
+  USE ParameterLists
   IMPLICIT NONE
   
   TYPE(ExceptionHandlerType),TARGET :: e
