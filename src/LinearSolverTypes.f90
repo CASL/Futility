@@ -1406,21 +1406,23 @@ MODULE LinearSolverTypes
       IF(solver%isDecomposed) THEN
         SELECTTYPE(M => solver%M); TYPE IS(TriDiagMatrixType)
           SELECTTYPE(X => solver%X); TYPE IS(RealVectorType)
-            n=M%n
-            !LUx=b,Ux=y, Ly=b
-            !find y (Ly=b), y is stored in X to save space
-            CALL X%set(1,solver%b%get(1))
-            DO i=2,n
-              CALL X%set(i,solver%b%get(i)-M%a(1,i)*X%get(i-1))
-            ENDDO
-            !find x with backward substitution (Ux=y)
-            CALL X%set(n,X%get(n)*M%a(2,n))
-            Xprev=X%get(n)
-            DO i=(n-1),1,-1
-              CALL X%set(i,(X%get(i)-M%a(3,i)*Xprev)*M%a(2,i))
-              Xprev=X%get(i)
-            ENDDO
-            solver%info=0
+            SELECTTYPE(b => solver%b); TYPE IS(RealVectorType)
+              n=M%n
+              !LUx=b,Ux=y, Ly=b
+              !find y (Ly=b), y is stored in X to save space
+              CALL X%set(1,b%get(1))
+              DO i=2,n
+                CALL X%set(i,b%get(i)-M%a(1,i)*X%get(i-1))
+              ENDDO
+              !find x with backward substitution (Ux=y)
+              CALL X%set(n,X%get(n)*M%a(2,n))
+              Xprev=X%get(n)
+              DO i=(n-1),1,-1
+                CALL X%set(i,(X%get(i)-M%a(3,i)*Xprev)*M%a(2,i))
+                Xprev=X%get(i)
+              ENDDO
+              solver%info=0
+            ENDSELECT
           ENDSELECT
         ENDSELECT
       ENDIF
@@ -1482,7 +1484,9 @@ MODULE LinearSolverTypes
       DO irow=N-1,1,-1
         t=0._SRK
         DO icol=irow+1,N
-          t=t+thisa(irow,icol)*solver%X%get(icol)
+          SELECTTYPE(X => solver%X); TYPE IS(RealVectorType)
+             t=t+thisa(irow,icol)*X%get(icol)
+           ENDSELECT
         ENDDO
          SELECTTYPE(X => solver%X); TYPE IS(RealVectorType)
            CALL X%set(irow,(thisb(irow)-t)/thisa(irow,irow))
