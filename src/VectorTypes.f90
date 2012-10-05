@@ -922,22 +922,32 @@ MODULE VectorTypes
 !> @return r the sum of the absolute values of @c x
 !>
     FUNCTION asum_VectorType(thisVector,n,incx) RESULT(r)
-      CLASS(VectorType),INTENT(IN)     :: thisVector
+      CLASS(VectorType),INTENT(INOUT)     :: thisVector
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
+      REAL(SRK),ALLOCATABLE :: tmpthis(:)
       REAL(SRK) :: r
 
       SELECTTYPE(thisVector); TYPE IS(RealVectorType)
-        IF(PRESENT(n) .AND. PRESENT(incx)) THEN
-          r = BLAS1_asum(n,thisVector%b,incx)
-        ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
-          r = BLAS1_asum(n,thisVector%b)
-        ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx)) THEN
-          r = BLAS1_asum(thisVector%b,incx)
-        ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
-          r = BLAS1_asum(thisVector%b)
-        ENDIF
+        ALLOCATE(tmpthis(thisVector%n))
+        tmpthis=thisVector%get()
       ENDSELECT
+      
+      SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
+        ALLOCATE(tmpthis(thisVector%n))
+        tmpthis=thisVector%get()
+      ENDSELECT
+      
+      IF(PRESENT(n) .AND. PRESENT(incx)) THEN
+        r = BLAS1_asum(n,tmpthis,incx)
+      ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
+        r = BLAS1_asum(n,tmpthis)
+      ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx)) THEN
+        r = BLAS1_asum(tmpthis,incx)
+      ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
+        r = BLAS1_asum(tmpthis)
+      ENDIF
+      DEALLOCATE(tmpthis)
             
     ENDFUNCTION asum_VectorType
 !
@@ -952,33 +962,58 @@ MODULE VectorTypes
 !> @param incy the increment to use when looping over elements in @c y
 !>
     SUBROUTINE axpy_scalar_VectorType(thisVector,newVector,a,n,incx,incy)
-      CLASS(VectorType),INTENT(IN)     :: thisVector
+      CLASS(VectorType),INTENT(INOUT)  :: thisVector
       CLASS(VectorType),INTENT(INOUT)  :: newVector
       REAL(SRK),INTENT(IN),OPTIONAL :: a
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incy
-      
+      REAL(SRK),ALLOCATABLE :: tmpthis(:),tmpnew(:)
       REAL(SRK) :: alpha=1.
       
       IF (PRESENT(a)) alpha=a
       
       SELECTTYPE(thisVector); TYPE IS(RealVectorType)
         SELECTTYPE(newVector); TYPE IS(RealVectorType)
-          IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
-            CALL BLAS1_axpy(n,alpha,thisVector%b,incx,newVector%b,incy)
-          ELSEIF(PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-            CALL BLAS1_axpy(n,alpha,thisVector%b,newVector%b,incx)
-          ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
-            CALL BLAS1_axpy(n,alpha,thisVector%b,newVector%b,incy)
-          ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-            CALL BLAS1_axpy(n,alpha,thisVector%b,newVector%b)
-          ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-            CALL BLAS1_axpy(alpha,thisVector%b,newVector%b)
-          ENDIF
+          ALLOCATE(tmpthis(thisVector%n))
+          ALLOCATE(tmpnew(newVector%n))
+          tmpthis=thisVector%get()
+          tmpnew=newVector%get()
         ENDSELECT
       ENDSELECT
-
+      
+      SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
+        SELECTTYPE(newVector); TYPE IS(PETScVectorType)
+          ALLOCATE(tmpthis(thisVector%n))
+          ALLOCATE(tmpnew(newVector%n))
+          tmpthis=thisVector%get()
+          tmpnew=newVector%get()
+        ENDSELECT
+      ENDSELECT
+      
+      IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
+        CALL BLAS1_axpy(n,alpha,tmpthis,incx,tmpnew,incy)
+      ELSEIF(PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+        CALL BLAS1_axpy(n,alpha,tmpthis,tmpnew,incx)
+      ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
+        CALL BLAS1_axpy(n,alpha,tmpthis,tmpnew,incy)
+      ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+        CALL BLAS1_axpy(n,alpha,tmpthis,tmpnew)
+      ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+        CALL BLAS1_axpy(alpha,tmpthis,tmpnew)
+      ENDIF
+      
+      SELECTTYPE(newVector); TYPE IS(RealVectorType)
+        CALL newVector%set(tmpnew)
+      ENDSELECT
+      
+      SELECTTYPE(newVector); TYPE IS(PETScVectorType)
+        CALL newVector%set(tmpnew)
+      ENDSELECT
+      
+      DEALLOCATE(tmpthis)
+      DEALLOCATE(tmpnew)
+      
     ENDSUBROUTINE axpy_scalar_VectorType    
 !
 !-------------------------------------------------------------------------------
@@ -992,30 +1027,63 @@ MODULE VectorTypes
 !> @param incy the increment to use when looping over elements in @c y
 !>
     SUBROUTINE axpy_vector_VectorType(thisVector,newVector,aVector,n,incx,incy)
-      CLASS(VectorType),INTENT(IN)     :: thisVector
+      CLASS(VectorType),INTENT(INOUT)  :: thisVector
       CLASS(VectorType),INTENT(INOUT)  :: newVector
-      CLASS(VectorType),INTENT(IN)     :: aVector
+      CLASS(VectorType),INTENT(INOUT)  :: aVector
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incy
+      REAL(SRK),ALLOCATABLE :: tmpthis(:),tmpnew(:),tmpa(:)
       
       SELECTTYPE(thisVector); TYPE IS(RealVectorType)
         SELECTTYPE(newVector); TYPE IS(RealVectorType)
           SELECTTYPE(aVector); TYPE IS(RealVectorType)
-            IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
-              CALL BLAS1_axpy(n,aVector%b,thisVector%b,incx,newVector%b,incy)
-            ELSEIF(PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-              CALL BLAS1_axpy(n,aVector%b,thisVector%b,newVector%b,incx)
-            ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
-              CALL BLAS1_axpy(n,aVector%b,thisVector%b,newVector%b,incy)
-            ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-              CALL BLAS1_axpy(n,aVector%b,thisVector%b,newVector%b)
-            ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-              CALL BLAS1_axpy(aVector%b,thisVector%b,newVector%b)
-            ENDIF
+            ALLOCATE(tmpthis(thisVector%n))
+            ALLOCATE(tmpnew(newVector%n))
+            ALLOCATE(tmpa(aVector%n))
+            tmpthis=thisVector%get()
+            tmpnew=newVector%get()
+            tmpa=aVector%get()
           ENDSELECT
         ENDSELECT
       ENDSELECT
+      
+      SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
+        SELECTTYPE(newVector); TYPE IS(PETScVectorType)
+          SELECTTYPE(aVector); TYPE IS(PETScVectorType)
+            ALLOCATE(tmpthis(thisVector%n))
+            ALLOCATE(tmpnew(newVector%n))
+            ALLOCATE(tmpa(aVector%n))
+            tmpthis=thisVector%get()
+            tmpnew=newVector%get()
+            tmpa=aVector%get()
+          ENDSELECT
+        ENDSELECT
+      ENDSELECT
+
+      IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
+        CALL BLAS1_axpy(n,tmpa,tmpthis,incx,tmpnew,incy)
+      ELSEIF(PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+        CALL BLAS1_axpy(n,tmpa,tmpthis,tmpnew,incx)
+      ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
+        CALL BLAS1_axpy(n,tmpa,tmpthis,tmpnew,incy)
+      ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+        CALL BLAS1_axpy(n,tmpa,tmpthis,tmpnew)
+      ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+        CALL BLAS1_axpy(tmpa,tmpthis,tmpnew)
+      ENDIF
+      
+      SELECTTYPE(newVector); TYPE IS(RealVectorType)
+        CALL newVector%set(tmpnew)
+      ENDSELECT
+      
+      SELECTTYPE(newVector); TYPE IS(PETScVectorType)
+        CALL newVector%set(tmpnew)
+      ENDSELECT
+      
+      DEALLOCATE(tmpthis)
+      DEALLOCATE(tmpnew)
+      DEALLOCATE(tmpa)
 
     ENDSUBROUTINE axpy_vector_VectorType    
 !
@@ -1029,33 +1097,59 @@ MODULE VectorTypes
 !> @param incy the increment to use when looping over elements in @c y
 !>
     SUBROUTINE copy_VectorType(thisVector,newVector,n,incx,incy)
-      CLASS(VectorType),INTENT(IN)     :: thisVector
+      CLASS(VectorType),INTENT(INOUT)  :: thisVector
       CLASS(VectorType),INTENT(INOUT)  :: newVector
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incy
+      REAL(SRK),ALLOCATABLE :: tmpthis(:),tmpnew(:)
       
       SELECTTYPE(thisVector); TYPE IS(RealVectorType)
         SELECTTYPE(newVector); TYPE IS(RealVectorType)
-          IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
-            CALL BLAS1_copy(n,thisVector%b,incx,newVector%b,incy)
-          ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
-            CALL BLAS1_copy(thisVector%b,incx,newVector%b,incy)
-          ELSEIF(PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-            CALL BLAS1_copy(n,thisVector%b,newVector%b,incx)
-          ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
-            CALL BLAS1_copy(n,thisVector%b,newVector%b,incy)
-          ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-            CALL BLAS1_copy(thisVector%b,newVector%b,incx)
-          ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
-            CALL BLAS1_copy(thisVector%b,newVector%b,incy)
-          ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-            CALL BLAS1_copy(n,thisVector%b,newVector%b)
-          ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-            CALL BLAS1_copy(thisVector%b,newVector%b)
-          ENDIF
+          ALLOCATE(tmpthis(thisVector%n))
+          ALLOCATE(tmpnew(newVector%n))
+          tmpthis=thisVector%get()
+          tmpnew=newVector%get()
         ENDSELECT
       ENDSELECT
+      
+      SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
+        SELECTTYPE(newVector); TYPE IS(PETScVectorType)
+          ALLOCATE(tmpthis(thisVector%n))
+          ALLOCATE(tmpnew(newVector%n))
+          tmpthis=thisVector%get()
+          tmpnew=newVector%get()
+        ENDSELECT
+      ENDSELECT
+
+      IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
+        CALL BLAS1_copy(n,tmpthis,incx,tmpnew,incy)
+      ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
+        CALL BLAS1_copy(tmpthis,incx,tmpnew,incy)
+      ELSEIF(PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+        CALL BLAS1_copy(n,tmpthis,tmpnew,incx)
+      ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
+        CALL BLAS1_copy(n,tmpthis,tmpnew,incy)
+      ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+        CALL BLAS1_copy(tmpthis,tmpnew,incx)
+      ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
+        CALL BLAS1_copy(tmpthis,tmpnew,incy)
+      ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+        CALL BLAS1_copy(n,tmpthis,tmpnew)
+      ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+        CALL BLAS1_copy(tmpthis,tmpnew)
+      ENDIF
+      
+      SELECTTYPE(newVector); TYPE IS(RealVectorType)
+        CALL newVector%set(tmpnew)
+      ENDSELECT
+      
+      SELECTTYPE(newVector); TYPE IS(PETScVectorType)
+        CALL newVector%set(tmpnew)
+      ENDSELECT
+      
+      DEALLOCATE(tmpthis)
+      DEALLOCATE(tmpnew)
 
     ENDSUBROUTINE copy_VectorType 
 !
@@ -1070,34 +1164,51 @@ MODULE VectorTypes
 !> @return r the dot product of @c x and @c y
 !>
     FUNCTION dot_VectorType(thisVector,thatVector,n,incx,incy)  RESULT(r)
-      CLASS(VectorType),INTENT(IN)     :: thisVector
-      CLASS(VectorType),INTENT(IN)     :: thatVector
+      CLASS(VectorType),INTENT(INOUT)     :: thisVector
+      CLASS(VectorType),INTENT(INOUT)     :: thatVector
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incy
+      REAL(SRK),ALLOCATABLE :: tmpthis(:),tmpthat(:)
       REAL(SRK) :: r
       
       SELECTTYPE(thisVector); TYPE IS(RealVectorType)
         SELECTTYPE(thatVector); TYPE IS(RealVectorType)
-          IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
-            r = BLAS1_dot(n,thisVector%b,incx,thatVector%b,incy)
-          ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
-            r = BLAS1_dot(thisVector%b,incx,thatVector%b,incy)
-          ELSEIF(PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-            r = BLAS1_dot(n,thisVector%b,thatVector%b,incx)
-          ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
-            r = BLAS1_dot(n,thisVector%b,thatVector%b,incy)
-          ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-            r = BLAS1_dot(n,thisVector%b,thatVector%b)
-          ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-            r = BLAS1_dot(thisVector%b,thatVector%b,incx)
-          ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
-            r = BLAS1_dot(thisVector%b,thatVector%b,incy)
-          ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-            r = BLAS1_dot(thisVector%b,thatVector%b)
-          ENDIF
+          ALLOCATE(tmpthis(thisVector%n))
+          ALLOCATE(tmpthat(thatVector%n))
+          tmpthis=thisVector%get()
+          tmpthat=thatVector%get()
         ENDSELECT
       ENDSELECT
+      
+      SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
+        SELECTTYPE(thatVector); TYPE IS(PETScVectorType)
+          ALLOCATE(tmpthis(thisVector%n))
+          ALLOCATE(tmpthat(thatVector%n))
+          tmpthis=thisVector%get()
+          tmpthat=thatVector%get()
+        ENDSELECT
+      ENDSELECT
+      
+      IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
+        r = BLAS1_dot(n,tmpthis,incx,tmpthat,incy)
+      ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
+        r = BLAS1_dot(tmpthis,incx,tmpthat,incy)
+      ELSEIF(PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+        r = BLAS1_dot(n,tmpthis,tmpthat,incx)
+      ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
+        r = BLAS1_dot(n,tmpthis,tmpthat,incy)
+      ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+        r = BLAS1_dot(n,tmpthis,tmpthat)
+      ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+        r = BLAS1_dot(tmpthis,tmpthat,incx)
+      ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
+        r = BLAS1_dot(tmpthis,tmpthat,incy)
+      ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+        r = BLAS1_dot(tmpthis,tmpthat)
+      ENDIF
+      DEALLOCATE(tmpthis)
+      DEALLOCATE(tmpthat)
 
     ENDFUNCTION dot_VectorType 
 !
@@ -1110,22 +1221,32 @@ MODULE VectorTypes
 !> @return imax index of the absolute max of @c y
 !>
     FUNCTION iamax_VectorType(thisVector,n,incx)  RESULT(imax)
-      CLASS(VectorType),INTENT(IN) :: thisVector
+      CLASS(VectorType),INTENT(INOUT) :: thisVector
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
+      REAL(SRK),ALLOCATABLE :: tmpthis(:)
       INTEGER(SIK) :: imax
       
       SELECTTYPE(thisVector); TYPE IS(RealVectorType)
-        IF(PRESENT(n) .AND. PRESENT(incx)) THEN
-          imax = BLAS1_iamax(n,thisVector%b,incx)
-        ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx)) THEN
-          imax = BLAS1_iamax(thisVector%b,incx)
-        ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
-          imax = BLAS1_iamax(n,thisVector%b)
-        ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
-          imax = BLAS1_iamax(thisVector%b)
-        ENDIF
+        ALLOCATE(tmpthis(thisVector%n))
+        tmpthis=thisVector%get()
       ENDSELECT
+      
+      SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
+        ALLOCATE(tmpthis(thisVector%n))
+        tmpthis=thisVector%get()
+      ENDSELECT
+
+      IF(PRESENT(n) .AND. PRESENT(incx)) THEN
+        imax = BLAS1_iamax(n,tmpthis,incx)
+      ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx)) THEN
+        imax = BLAS1_iamax(tmpthis,incx)
+      ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
+        imax = BLAS1_iamax(n,tmpthis)
+      ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
+        imax = BLAS1_iamax(tmpthis)
+      ENDIF
+      DEALLOCATE(tmpthis)
 
     ENDFUNCTION iamax_VectorType  
 !
@@ -1139,22 +1260,33 @@ MODULE VectorTypes
 !>
 
     FUNCTION iamin_VectorType(thisVector,n,incx)  RESULT(imin)
-      CLASS(VectorType),INTENT(IN) :: thisVector
+      CLASS(VectorType),INTENT(INOUT) :: thisVector
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
+      REAL(SRK),ALLOCATABLE :: tmpthis(:)
       INTEGER(SIK) :: imin
       
       SELECTTYPE(thisVector); TYPE IS(RealVectorType)
-        IF(PRESENT(n) .AND. PRESENT(incx)) THEN
-          imin = BLAS1_iamin(n,thisVector%b,incx)
-        ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx)) THEN
-          imin = BLAS1_iamin(thisVector%b,incx)
-        ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
-          imin = BLAS1_iamin(n,thisVector%b)
-        ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
-          imin = BLAS1_iamin(thisVector%b)
-        ENDIF
+        ALLOCATE(tmpthis(thisVector%n))
+        tmpthis=thisVector%get()
       ENDSELECT
+      
+      SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
+        ALLOCATE(tmpthis(thisVector%n))
+        tmpthis=thisVector%get()
+      ENDSELECT
+      
+      IF(PRESENT(n) .AND. PRESENT(incx)) THEN
+        imin = BLAS1_iamin(n,tmpthis,incx)
+      ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx)) THEN
+        imin = BLAS1_iamin(tmpthis,incx)
+      ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
+        imin = BLAS1_iamin(n,tmpthis)
+      ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
+        imin = BLAS1_iamin(tmpthis)
+      ENDIF
+      DEALLOCATE(tmpthis)
+      
 
     ENDFUNCTION iamin_VectorType    
 !
@@ -1167,22 +1299,32 @@ MODULE VectorTypes
 !> @return norm2 the 2-norm of @c x
 !>
     FUNCTION nrm2_VectorType(thisVector,n,incx)  RESULT(norm2)
-      CLASS(VectorType),INTENT(IN) :: thisVector
+      CLASS(VectorType),INTENT(INOUT) :: thisVector
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
+      REAL(SRK),ALLOCATABLE :: tmpthis(:)
       REAL(SRK) :: norm2
       
       SELECTTYPE(thisVector); TYPE IS(RealVectorType)
-        IF(PRESENT(n) .AND. PRESENT(incx)) THEN
-          norm2 = BLAS1_nrm2(n,thisVector%b,incx)
-        ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx)) THEN
-          norm2 = BLAS1_nrm2(thisVector%b,incx)
-        ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
-          norm2 = BLAS1_nrm2(n,thisVector%b)
-        ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
-          norm2 = BLAS1_nrm2(thisVector%b)
-        ENDIF
+        ALLOCATE(tmpthis(thisVector%n))
+        tmpthis=thisVector%get()
       ENDSELECT
+      
+      SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
+        ALLOCATE(tmpthis(thisVector%n))
+        tmpthis=thisVector%get()
+      ENDSELECT
+      
+      IF(PRESENT(n) .AND. PRESENT(incx)) THEN
+        norm2 = BLAS1_nrm2(n,tmpthis,incx)
+      ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx)) THEN
+        norm2 = BLAS1_nrm2(tmpthis,incx)
+      ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
+        norm2 = BLAS1_nrm2(n,tmpthis)
+      ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
+        norm2 = BLAS1_nrm2(tmpthis)
+      ENDIF
+      DEALLOCATE(tmpthis)
 
     ENDFUNCTION nrm2_VectorType    
 !
@@ -1199,18 +1341,37 @@ MODULE VectorTypes
       REAL(SRK),INTENT(IN) :: a
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
+      REAL(SRK),ALLOCATABLE :: tmpthis(:)
       
       SELECTTYPE(thisVector); TYPE IS(RealVectorType)
-        IF(PRESENT(n) .AND. PRESENT(incx)) THEN
-          CALL BLAS1_scal(n,a,thisVector%b,incx)
-        ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx)) THEN
-          CALL BLAS1_scal(a,thisVector%b,incx)
-        ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
-          CALL BLAS1_scal(n,a,thisVector%b)
-        ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
-          CALL BLAS1_scal(a,thisVector%b)
-        ENDIF
+        ALLOCATE(tmpthis(thisVector%n))
+        tmpthis=thisVector%get()
       ENDSELECT
+      
+      SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
+        ALLOCATE(tmpthis(thisVector%n))
+        tmpthis=thisVector%get()
+      ENDSELECT
+      
+      IF(PRESENT(n) .AND. PRESENT(incx)) THEN
+        CALL BLAS1_scal(n,a,tmpthis,incx)
+      ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx)) THEN
+        CALL BLAS1_scal(a,tmpthis,incx)
+      ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
+        CALL BLAS1_scal(n,a,tmpthis)
+      ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
+        CALL BLAS1_scal(a,tmpthis)
+      ENDIF
+      
+      SELECTTYPE(thisVector); TYPE IS(RealVectorType)
+        CALL thisVector%set(tmpthis)
+      ENDSELECT
+      
+      SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
+        CALL thisVector%set(tmpthis)
+      ENDSELECT
+      
+      DEALLOCATE(tmpthis)
 
     ENDSUBROUTINE scal_scalar_VectorType 
 !
@@ -1224,23 +1385,49 @@ MODULE VectorTypes
 !>
     SUBROUTINE scal_vector_VectorType(thisVector,aVector,n,incx)
       CLASS(VectorType),INTENT(INOUT) :: thisVector
-      CLASS(VectorType),INTENT(IN) :: aVector
+      CLASS(VectorType),INTENT(INOUT) :: aVector
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
+      REAL(SRK),ALLOCATABLE :: tmpthis(:),tmpa(:)
       
       SELECTTYPE(thisVector); TYPE IS(RealVectorType)
         SELECTTYPE(aVector); TYPE IS(RealVectorType)
-          IF(PRESENT(n) .AND. PRESENT(incx)) THEN
-            CALL BLAS1_scal(n,aVector%b,thisVector%b,incx)
-          ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx)) THEN
-            CALL BLAS1_scal(aVector%b,thisVector%b,incx)
-          ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
-            CALL BLAS1_scal(n,aVector%b,thisVector%b)
-          ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
-            CALL BLAS1_scal(aVector%b,thisVector%b)
-          ENDIF
+          ALLOCATE(tmpthis(thisVector%n))
+          ALLOCATE(tmpa(aVector%n))
+          tmpthis=thisVector%get()
+          tmpa=aVector%get()
         ENDSELECT
       ENDSELECT
+      
+      SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
+        SELECTTYPE(aVector); TYPE IS(PETScVectorType)
+          ALLOCATE(tmpthis(thisVector%n))
+          ALLOCATE(tmpa(aVector%n))
+          tmpthis=thisVector%get()
+          tmpa=aVector%get()
+        ENDSELECT
+      ENDSELECT
+      
+      IF(PRESENT(n) .AND. PRESENT(incx)) THEN
+        CALL BLAS1_scal(n,tmpa,tmpthis,incx)
+      ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx)) THEN
+        CALL BLAS1_scal(tmpa,tmpthis,incx)
+      ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
+        CALL BLAS1_scal(n,tmpa,tmpthis)
+      ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
+        CALL BLAS1_scal(tmpa,tmpthis)
+      ENDIF
+      
+      SELECTTYPE(thisVector); TYPE IS(RealVectorType)
+        CALL thisVector%set(tmpthis)
+      ENDSELECT
+      
+      SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
+        CALL thisVector%set(tmpthis)
+      ENDSELECT
+      
+      DEALLOCATE(tmpthis)
+      DEALLOCATE(tmpa)
 
     ENDSUBROUTINE scal_vector_VectorType      
 !
@@ -1258,28 +1445,60 @@ MODULE VectorTypes
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incy
+      REAL(SRK),ALLOCATABLE :: tmpthis(:),tmpthat(:)
+      
+      SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
+        SELECTTYPE(thatVector); TYPE IS(PETScVectorType)
+          ALLOCATE(tmpthis(thisVector%n))
+          ALLOCATE(tmpthat(thatVector%n))
+          tmpthis=thisVector%get()
+          tmpthat=thatVector%get()
+        ENDSELECT
+      ENDSELECT
       
       SELECTTYPE(thisVector); TYPE IS(RealVectorType)
         SELECTTYPE(thatVector); TYPE IS(RealVectorType)
-          IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
-            CALL BLAS1_swap(n,thisVector%b,incx,thatVector%b,incy)
-          ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
-            CALL BLAS1_swap(thisVector%b,incx,thatVector%b,incy)
-          ELSEIF(PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-            CALL BLAS1_swap(n,thisVector%b,thatVector%b,incx)
-          ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
-            CALL BLAS1_swap(n,thisVector%b,thatVector%b,incy)
-          ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-            CALL BLAS1_swap(thisVector%b,thatVector%b,incx)
-          ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
-            CALL BLAS1_swap(thisVector%b,thatVector%b,incy)
-          ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-            CALL BLAS1_swap(n,thisVector%b,thatVector%b)
-          ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-            CALL BLAS1_swap(thisVector%b,thatVector%b)
-          ENDIF
+          ALLOCATE(tmpthis(thisVector%n))
+          ALLOCATE(tmpthat(thatVector%n))
+          tmpthis=thisVector%get()
+          tmpthat=thatVector%get()
         ENDSELECT
       ENDSELECT
+      
+      IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
+        CALL BLAS1_swap(n,tmpthis,incx,tmpthat,incy)
+      ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
+        CALL BLAS1_swap(tmpthis,incx,tmpthat,incy)
+      ELSEIF(PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+        CALL BLAS1_swap(n,tmpthis,tmpthat,incx)
+      ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
+        CALL BLAS1_swap(n,tmpthis,tmpthat,incy)
+      ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+        CALL BLAS1_swap(tmpthis,tmpthat,incx)
+      ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
+        CALL BLAS1_swap(tmpthis,tmpthat,incy)
+      ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+        CALL BLAS1_swap(n,tmpthis,tmpthat)
+      ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+        CALL BLAS1_swap(tmpthis,tmpthat)
+      ENDIF
+      
+      SELECTTYPE(thisVector); TYPE IS(RealVectorType)
+        SELECTTYPE(thatVector); TYPE IS(RealVectorType)
+          CALL thisVector%set(tmpthis)
+          CALL thatVector%set(tmpthat)
+        ENDSELECT
+      ENDSELECT
+      
+      SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
+        SELECTTYPE(thatVector); TYPE IS(PETScVectorType)
+          CALL thisVector%set(tmpthis)
+          CALL thatVector%set(tmpthat)
+        ENDSELECT
+      ENDSELECT
+      
+      DEALLOCATE(tmpthis)
+      DEALLOCATE(tmpthat)
 
     ENDSUBROUTINE swap_VectorType  
 
