@@ -217,24 +217,9 @@ MODULE ExpTables
 !
 !-------------------------------------------------------------------------------
 !> @brief Initialization method for ExpTableType object
-!> @parma myET Exponential table type object
-!> @param userTableType Index to specify the type of exponent table
-!> @param userMinVal The minimum value of the range of the table
-!> @param userMaxVal The maximum value of the range of the table
-!> @param userNIntervals The number of intervals
-!> @param userErr User expected error
+!> @param myET Exponential table type object
+!> @param PL The parameter list used to initialize the ExpTable object.
 !>
-    !SUBROUTINE init_ExpTable(myET,userTableType,userMinVal,userMaxVal, &
-    !  userNIntervals,userErr)
-    !  CHARACTER(LEN=*),PARAMETER :: myName="init_ExpTable"
-    !  CLASS(ExpTableType),INTENT(INOUT) :: myET
-    !  INTEGER(SIK),OPTIONAL,INTENT(IN) :: userTableType
-    !  INTEGER(SIK),OPTIONAL,INTENT(IN) :: userMinVal
-    !  INTEGER(SIK),OPTIONAL,INTENT(IN) :: userMaxVal
-    !  INTEGER(SIK),OPTIONAL,INTENT(IN) :: userNIntervals
-    !  REAL(SRK),OPTIONAL,INTENT(IN) :: userErr
-    !  LOGICAL(SBK),OPTIONAL,INTENT(IN) :: userErrFlag
-      
     SUBROUTINE init_ExpTable(myET,PL)
       CHARACTER(LEN=*),PARAMETER :: myName="init_ExpTable"
       CLASS(ExpTableType),INTENT(INOUT) :: myET
@@ -243,7 +228,8 @@ MODULE ExpTables
       LOGICAL(SBK) :: localalloc,ErrFlag
       INTEGER(SIK) :: nerror,i,tableType,nintervals
       REAL(SRK) :: x,x2rd,tableErr,x1,x2,x3,y1,y2,y3,rdx2
-      INTEGER(SIK) :: minVal,maxVal,minTable,maxTable
+      REAL(SRK) :: minVal,maxVal
+      INTEGER(SIK) :: minTable,maxTable
       TYPE(ParamType) :: tmpList
       
       localalloc=.FALSE.
@@ -276,14 +262,14 @@ MODULE ExpTables
         !Default value for minVal and maxVal
         CALL tmpList%get('ExpTables -> minval',minVal)
         CALL tmpList%get('ExpTables -> maxval',maxVal)
-        IF(minVal >= 0) THEN
+        IF(minVal >= 0_SRK) THEN
           CALL eExpTable%raiseWarning(modName//'::'//myName// &
             ' - Minimum value of the range of the table is not negative!'// &
               ' Using default table type!')
           !Get Default param
           CALL optParamsExpTables%get('ExpTables -> minval',minVal)
         ENDIF
-        IF(maxVal > 0) THEN
+        IF(maxVal > 0_SRK) THEN
           CALL eExpTable%raiseWarning(modName//'::'//myName// &
             ' - Maximum value of the range of the table is positive!'// &
               ' Using default table type!')
@@ -304,7 +290,7 @@ MODULE ExpTables
           CALL optParamsExpTables%get('ExpTables -> nintervals',nintervals)
         ENDIF
         !Check the ErrFlag to see if we need to recalculate nintervals
-        CALL tmpList%get('ExpTables -> errorFlag',ErrFlag)
+        CALL tmpList%get('ExpTables -> errorflag',ErrFlag)
         !Overwrite nintervals using the error
         IF(ErrFlag) THEN
           !Get the error to recalculate the nintervals
@@ -550,29 +536,20 @@ MODULE ExpTables
       
 !
 !Set names for required parameters
-      !Fixed Source solver has no required parameters
-    !  INTEGER(SIK),OPTIONAL,INTENT(IN) :: userTableType
-    !  INTEGER(SIK),OPTIONAL,INTENT(IN) :: userMinVal
-    !  INTEGER(SIK),OPTIONAL,INTENT(IN) :: userMaxVal
-    !  INTEGER(SIK),OPTIONAL,INTENT(IN) :: userNIntervals
-    !  REAL(SRK),OPTIONAL,INTENT(IN) :: userErr
-    !  LOGICAL(SBK),OPTIONAL,INTENT(IN) :: uesrErrFlag
-    !!Default value for table type
-        !tableType=SINGLE_LEVEL_EXP_TABLE
-    !
+
 !
 !Set defaults for optional parameters
-      CALL optParamsExpTables%add('ExpTables -> tabletype',SINGLE_LEVEL_EXP_TABLE, &
+      CALL optParamsExpTables%add('ExpTables -> tabletype',LINEAR_EXP_TABLE, &
         'The default ExpTable is just a single level lookup table.')
-      CALL optParamsExpTables%add('ExpTables -> minval',-10, &
+      CALL optParamsExpTables%add('ExpTables -> minval',-10._SRK, &
         'The default minimum value in the exponential table.')
-      CALL optParamsExpTables%add('ExpTables -> maxval',0, &
+      CALL optParamsExpTables%add('ExpTables -> maxval',0._SRK, &
         'The default maximum value in the exponential table.')
       CALL optParamsExpTables%add('ExpTables -> nintervals',1000, &
         'The default value for the number of intervals in the exponential table.')
       CALL optParamsExpTables%add('ExpTables -> error',0.0005_SRK, &
         'The default value for the error in the exponential table.')
-      CALL optParamsExpTables%add('ExpTables -> errorFlag',.FALSE., &
+      CALL optParamsExpTables%add('ExpTables -> errorflag',.FALSE., &
         'The default value for the error in the exponential table.')
       
       

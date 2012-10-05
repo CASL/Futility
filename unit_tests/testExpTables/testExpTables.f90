@@ -62,7 +62,7 @@ PROGRAM testExpTables
   CALL testET1%clear()
   CALL testET1%initialize(PL)
   CALL PL%set('ExpTables -> nintervals',100)
-  CALL PL%add('ExpTables -> errorFlag',.TRUE.)
+  CALL PL%add('ExpTables -> errorflag',.TRUE.)
   CALL testET1%clear()
   CALL testET1%initialize(PL)
   CALL PL%add('ExpTables -> error',0.005_SRK)
@@ -78,7 +78,7 @@ PROGRAM testExpTables
   x=testET1%maxVal-0.5_SRK*testET1%dx
   ans=testET1%EXPT(x)
   
-  CALL PL%set('ExpTables -> errorFlag',.FALSE.)
+  CALL PL%set('ExpTables -> errorflag',.FALSE.)
   CALL PL%remove('ExpTables -> error')
   x=-1.234567891012_SRK
   DO i=1,5
