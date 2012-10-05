@@ -608,7 +608,7 @@ MODULE LinearSolverTypes
                 IF (.NOT.(A%isAssembled)) THEN
                   CALL MatAssemblyBegin(A%a,MAT_FINAL_ASSEMBLY,ierr)
                   CALL MatAssemblyEnd(A%a,MAT_FINAL_ASSEMBLY,ierr)
-                  A%isAssembled=.FALSE.
+                  A%isAssembled=.TRUE.
                 ENDIF
                 
                 ! assemble source vector if necessary
@@ -616,7 +616,16 @@ MODULE LinearSolverTypes
                   IF (.NOT.(b%isAssembled)) THEN
                     CALL VecAssemblyBegin(b%b,ierr)
                     CALL VecAssemblyEnd(b%b,ierr)
-                    b%isAssembled=.FALSE.
+                    b%isAssembled=.TRUE.
+                  ENDIF
+                ENDSELECT
+                
+                ! assemble solution vector if necessary
+                SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
+                  IF (.NOT.(X%isAssembled)) THEN
+                    CALL VecAssemblyBegin(X%b,ierr)
+                    CALL VecAssemblyEnd(X%b,ierr)
+                    X%isAssembled=.TRUE.
                   ENDIF
                 ENDSELECT
                 
@@ -660,7 +669,7 @@ MODULE LinearSolverTypes
                 IF (.NOT.(A%isAssembled)) THEN
                   CALL MatAssemblyBegin(A%a,MAT_FINAL_ASSEMBLY,ierr)
                   CALL MatAssemblyEnd(A%a,MAT_FINAL_ASSEMBLY,ierr)
-                  A%isAssembled=.FALSE.
+                  A%isAssembled=.TRUE.
                 ENDIF
                 
                 ! assemble source vector if necessary
@@ -668,7 +677,16 @@ MODULE LinearSolverTypes
                   IF (.NOT.(b%isAssembled)) THEN
                     CALL VecAssemblyBegin(b%b,ierr)
                     CALL VecAssemblyEnd(b%b,ierr)
-                    b%isAssembled=.FALSE.
+                    b%isAssembled=.TRUE.
+                  ENDIF
+                ENDSELECT
+                
+                ! assemble solution vector if necessary
+                SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
+                  IF (.NOT.(X%isAssembled)) THEN
+                    CALL VecAssemblyBegin(X%b,ierr)
+                    CALL VecAssemblyEnd(X%b,ierr)
+                    X%isAssembled=.TRUE.
                   ENDIF
                 ENDSELECT
                 
@@ -719,7 +737,7 @@ MODULE LinearSolverTypes
                 IF (.NOT.(A%isAssembled)) THEN
                   CALL MatAssemblyBegin(A%a,MAT_FINAL_ASSEMBLY,ierr)
                   CALL MatAssemblyEnd(A%a,MAT_FINAL_ASSEMBLY,ierr)
-                  A%isAssembled=.FALSE.
+                  A%isAssembled=.TRUE.
                 ENDIF
                 
                 ! assemble source vector if necessary
@@ -727,7 +745,16 @@ MODULE LinearSolverTypes
                   IF (.NOT.(b%isAssembled)) THEN
                     CALL VecAssemblyBegin(b%b,ierr)
                     CALL VecAssemblyEnd(b%b,ierr)
-                    b%isAssembled=.FALSE.
+                    b%isAssembled=.TRUE.
+                  ENDIF
+                ENDSELECT
+                
+                ! assemble solution vector if necessary
+                SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
+                  IF (.NOT.(X%isAssembled)) THEN
+                    CALL VecAssemblyBegin(X%b,ierr)
+                    CALL VecAssemblyEnd(X%b,ierr)
+                    X%isAssembled=.TRUE.
                   ENDIF
                 ENDSELECT
                 

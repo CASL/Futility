@@ -93,12 +93,23 @@ MODULE VectorTypes
       !> Deferred routine for initializing the vector
       PROCEDURE(int_vector_init_sub),DEFERRED,PASS :: init
       !> Deferred routine for setting one vector value
-      PROCEDURE(int_vector_setone_sub),DEFERRED,PASS :: setone
-      !> Deferred routine for setting all vector values
-      PROCEDURE(int_vector_setall_sub),DEFERRED,PASS :: setall
-      GENERIC :: set => setone,setall
-      !> Deferred routine for getting vector values
-      PROCEDURE(int_vector_get_sub),DEFERRED,PASS :: get
+      PROCEDURE(int_vector_setOne_sub),DEFERRED,PASS :: setOne
+      !> Deferred routine for setting all vector values with scalar
+      PROCEDURE(int_vector_setAll_scalar_sub),DEFERRED,PASS :: setAll_scalar
+      !> Deferred routine for setting all vector values with array
+      PROCEDURE(int_vector_setAll_array_sub),DEFERRED,PASS :: setAll_array
+      !> Deferred routine for setting all vector values with scalar
+      PROCEDURE(int_vector_setRange_scalar_sub),DEFERRED,PASS :: setRange_scalar
+      !> Deferred routine for setting all vector values with array
+      PROCEDURE(int_vector_setRange_array_sub),DEFERRED,PASS :: setRange_array
+      GENERIC :: set => setOne,setAll_scalar,setAll_array,setRange_scalar,setRange_array
+      !> Deferred routine for getting vector value
+      PROCEDURE(int_vector_getOne_sub),DEFERRED,PASS :: getOne
+      !> Deferred routine for getting all vector values
+      PROCEDURE(int_vector_getAll_sub),DEFERRED,PASS :: getAll
+      !> Deferred routine for getting a range of vector values
+      PROCEDURE(int_vector_getRange_sub),DEFERRED,PASS :: getRange
+      GENERIC :: get => getOne,getAll,getRange
   ENDTYPE VectorType    
 !
 !List of Abstract Interfaces
@@ -121,31 +132,79 @@ MODULE VectorTypes
   
   !> Explicitly defines the interface for the set one routine of all vector types
   ABSTRACT INTERFACE
-    SUBROUTINE int_vector_setone_sub(vector,i,setval)
+    SUBROUTINE int_vector_setOne_sub(vector,i,setval)
       IMPORT :: SIK,SRK,VectorType
       CLASS(VectorType),INTENT(INOUT) :: vector
       INTEGER(SIK),INTENT(IN) :: i
       REAL(SRK),INTENT(IN) :: setval
-    ENDSUBROUTINE int_vector_setone_sub
+    ENDSUBROUTINE int_vector_setOne_sub
   ENDINTERFACE
   
-  !> Explicitly defines the interface for the set all routine of all vector types
+  !> Explicitly defines the interface for the set all (scalar) routine of all vector types
   ABSTRACT INTERFACE
-    SUBROUTINE int_vector_setall_sub(vector,setval)
+    SUBROUTINE int_vector_setAll_scalar_sub(vector,setval)
       IMPORT :: SIK,SRK,VectorType
       CLASS(VectorType),INTENT(INOUT) :: vector
       REAL(SRK),INTENT(IN) :: setval
-    ENDSUBROUTINE int_vector_setall_sub
+    ENDSUBROUTINE int_vector_setAll_scalar_sub
   ENDINTERFACE
   
-  !> Explicitly defines the interface for the get routine of all vector types
+  !> Explicitly defines the interface for the set all (array) routine of all vector types
   ABSTRACT INTERFACE
-    FUNCTION int_vector_get_sub(vector,i) RESULT(getval)
+    SUBROUTINE int_vector_setAll_array_sub(vector,setval)
+      IMPORT :: SIK,SRK,VectorType
+      CLASS(VectorType),INTENT(INOUT) :: vector
+      REAL(SRK),INTENT(IN) :: setval(:)
+    ENDSUBROUTINE int_vector_setAll_array_sub
+  ENDINTERFACE
+  
+  !> Explicitly defines the interface for the set range (scalar) routine of all vector types
+  ABSTRACT INTERFACE
+    SUBROUTINE int_vector_setRange_scalar_sub(vector,istt,istp,setval)
+      IMPORT :: SIK,SRK,VectorType
+      CLASS(VectorType),INTENT(INOUT) :: vector
+      INTEGER(SIK),INTENT(IN) :: istt,istp
+      REAL(SRK),INTENT(IN) :: setval
+    ENDSUBROUTINE int_vector_setRange_scalar_sub
+  ENDINTERFACE
+  
+  !> Explicitly defines the interface for the set range (array) routine of all vector types
+  ABSTRACT INTERFACE
+    SUBROUTINE int_vector_setRange_array_sub(vector,istt,istp,setval)
+      IMPORT :: SIK,SRK,VectorType
+      CLASS(VectorType),INTENT(INOUT) :: vector
+      INTEGER(SIK),INTENT(IN) :: istt,istp
+      REAL(SRK),INTENT(IN) :: setval(:)
+    ENDSUBROUTINE int_vector_setRange_array_sub
+  ENDINTERFACE
+  
+  !> Explicitly defines the interface for the get (scalar) routine of all vector types
+  ABSTRACT INTERFACE
+    FUNCTION int_vector_getOne_sub(vector,i) RESULT(getval)
       IMPORT :: SIK,SRK,VectorType
       CLASS(VectorType),INTENT(INOUT) :: vector
       INTEGER(SIK),INTENT(IN) :: i
       REAL(SRK) :: getval
-    ENDFUNCTION int_vector_get_sub
+    ENDFUNCTION int_vector_getOne_sub
+  ENDINTERFACE
+  
+  !> Explicitly defines the interface for the get (scalar) routine of all vector types
+  ABSTRACT INTERFACE
+    FUNCTION int_vector_getAll_sub(vector) RESULT(getval)
+      IMPORT :: SRK,VectorType
+      CLASS(VectorType),INTENT(INOUT) :: vector
+      REAL(SRK),ALLOCATABLE :: getval(:)
+    ENDFUNCTION int_vector_getAll_sub
+  ENDINTERFACE
+  
+  !> Explicitly defines the interface for the get (scalar) routine of all vector types
+  ABSTRACT INTERFACE
+    FUNCTION int_vector_getRange_sub(vector,istt,istp) RESULT(getval)
+      IMPORT :: SIK,SRK,VectorType
+      CLASS(VectorType),INTENT(INOUT) :: vector
+      INTEGER(SIK),INTENT(IN) :: istt,istp
+      REAL(SRK),ALLOCATABLE :: getval(:)
+    ENDFUNCTION int_vector_getRange_sub
   ENDINTERFACE
   
   !> @brief The extended type for real vector
@@ -167,15 +226,30 @@ MODULE VectorTypes
       !> @copybrief VectorTypes::init_RealVectorType
       !> @copydetails VectorTypes::init_RealVectorType
       PROCEDURE,PASS :: init => init_RealVectorType
-      !> @copybrief VectorTypes::setone_RealVectorType
-      !> @copydetails VectorTypes::setone_RealVectorType
-      PROCEDURE,PASS :: setone => setone_RealVectorType
-      !> @copybrief VectorTypes::setall_RealVectorType
-      !> @copydetails VectorTypes::setall_RealVectorType
-      PROCEDURE,PASS :: setall => setall_RealVectorType
-      !> @copybrief VectorTypes::get_RealVectorType
-      !> @copydetails VectorTypes::get_RealVectorType
-      PROCEDURE,PASS :: get => get_RealVectorType
+      !> @copybrief VectorTypes::setOne_RealVectorType
+      !> @copydetails VectorTypes::setOne_RealVectorType
+      PROCEDURE,PASS :: setOne => setOne_RealVectorType
+      !> @copybrief VectorTypes::setAll_scalar_RealVectorType
+      !> @copydetails VectorTypes::setAll_scalar_RealVectorType
+      PROCEDURE,PASS :: setAll_scalar => setAll_scalar_RealVectorType
+      !> @copybrief VectorTypes::setAll_array_RealVectorType
+      !> @copydetails VectorTypes::setAll_array_RealVectorType
+      PROCEDURE,PASS :: setAll_array => setAll_array_RealVectorType
+      !> @copybrief VectorTypes::setRange_scalar_RealVectorType
+      !> @copydetails VectorTypes::setRange_scalar_RealVectorType
+      PROCEDURE,PASS :: setRange_scalar => setRange_scalar_RealVectorType
+      !> @copybrief VectorTypes::setRange_array_RealVectorType
+      !> @copydetails VectorTypes::setRange_array_RealVectorType
+      PROCEDURE,PASS :: setRange_array => setRange_array_RealVectorType
+      !> @copybrief VectorTypes::getOne_RealVectorType
+      !> @copydetails VectorTypes::getOne_RealVectorType
+      PROCEDURE,PASS :: getOne => getOne_RealVectorType
+      !> @copybrief VectorTypes::getAll_RealVectorType
+      !> @copydetails VectorTypes::getAll_RealVectorType
+      PROCEDURE,PASS :: getAll => getAll_RealVectorType
+      !> @copybrief VectorTypes::getRange_RealVectorType
+      !> @copydetails VectorTypes::getRange_RealVectorType
+      PROCEDURE,PASS :: getRange => getRange_RealVectorType
   ENDTYPE RealVectorType
 
 
@@ -198,15 +272,30 @@ MODULE VectorTypes
       !> @copybrief VectorTypes::init_PETScVectorType
       !> @copydetails VectorTypes::init_PETScVectorType
       PROCEDURE,PASS :: init => init_PETScVectorType
-      !> @copybrief VectorTypes::setone_PETScVectorType
-      !> @copydetails VectorTypes::setone_PETScVectorType
-      PROCEDURE,PASS :: setone => setone_PETScVectorType
-      !> @copybrief VectorTypes::setall_PETScVectorType
-      !> @copydetails VectorTypes::setall_PETScVectorType
-      PROCEDURE,PASS :: setall => setall_PETScVectorType
-      !> @copybrief VectorTypes::get_PETScVectorType
-      !> @copydetails VectorTypes::get_PETScVectorType
-      PROCEDURE,PASS :: get => get_PETScVectorType
+      !> @copybrief VectorTypes::setOne_PETScVectorType
+      !> @copydetails VectorTypes::setOne_PETScVectorType
+      PROCEDURE,PASS :: setOne => setOne_PETScVectorType
+      !> @copybrief VectorTypes::setAll_scalar_PETScVectorType
+      !> @copydetails VectorTypes::setAll_scalar_PETScVectorType
+      PROCEDURE,PASS :: setAll_scalar => setAll_scalar_PETScVectorType
+      !> @copybrief VectorTypes::setAll_array_PETScVectorType
+      !> @copydetails VectorTypes::setAll_array_PETScVectorType
+      PROCEDURE,PASS :: setAll_array => setAll_array_PETScVectorType
+      !> @copybrief VectorTypes::setRange_scalar_PETScVectorType
+      !> @copydetails VectorTypes::setRange_scalar_PETScVectorType
+      PROCEDURE,PASS :: setRange_scalar => setRange_scalar_PETScVectorType
+      !> @copybrief VectorTypes::setRange_array_PETScVectorType
+      !> @copydetails VectorTypes::setRange_array_PETScVectorType
+      PROCEDURE,PASS :: setRange_array => setRange_array_PETScVectorType
+      !> @copybrief VectorTypes::getOne_PETScVectorType
+      !> @copydetails VectorTypes::getOne_PETScVectorType
+      PROCEDURE,PASS :: getOne => getOne_PETScVectorType
+      !> @copybrief VectorTypes::getAll_PETScVectorType
+      !> @copydetails VectorTypes::getAll_PETScVectorType
+      PROCEDURE,PASS :: getAll => getAll_PETScVectorType
+      !> @copybrief VectorTypes::getRange_PETScVectorType
+      !> @copydetails VectorTypes::getRange_PETScVectorType
+      PROCEDURE,PASS :: getRange => getRange_PETScVectorType
   ENDTYPE PETScVectorType
   
   !> @brief Adds to the @ref BLAS1::BLAS_asum "BLAS_asum" interface so that
@@ -406,7 +495,7 @@ MODULE VectorTypes
 !> @param i the ith location in the vector
 !> @param setval the value to be set
 !>
-    SUBROUTINE setone_RealVectorType(vector,i,setval)
+    SUBROUTINE setOne_RealVectorType(vector,i,setval)
       CLASS(RealVectorType),INTENT(INOUT) :: vector
       INTEGER(SIK),INTENT(IN) :: i
       REAL(SRK),INTENT(IN) :: setval
@@ -415,7 +504,7 @@ MODULE VectorTypes
           vector%b(i)=setval
         ENDIF
       ENDIF
-    ENDSUBROUTINE setone_RealVectorType
+    ENDSUBROUTINE setOne_RealVectorType
 !
 !-------------------------------------------------------------------------------
 !> @brief Sets the values in the real vector
@@ -423,7 +512,7 @@ MODULE VectorTypes
 !> @param i the ith location in the vector
 !> @param setval the value to be set
 !>
-    SUBROUTINE setone_PETScVectorType(vector,i,setval)
+    SUBROUTINE setOne_PETScVectorType(vector,i,setval)
       CLASS(PETScVectorType),INTENT(INOUT) :: vector
       INTEGER(SIK),INTENT(IN) :: i
       REAL(SRK),INTENT(IN) :: setval
@@ -436,28 +525,29 @@ MODULE VectorTypes
           CALL VecAssemblyEnd(vector%b,ierr)
         ENDIF
       ENDIF
+      vector%isAssembled=.FALSE.
 #endif
-    ENDSUBROUTINE setone_PETScVectorType
+    ENDSUBROUTINE setOne_PETScVectorType
 !
 !-------------------------------------------------------------------------------
 !> @brief Sets the values in the real vector
 !> @param declare the vector type to act on
 !> @param setval the value to be set
 !>
-    SUBROUTINE setall_RealVectorType(vector,setval)
+    SUBROUTINE setAll_scalar_RealVectorType(vector,setval)
       CLASS(RealVectorType),INTENT(INOUT) :: vector
       REAL(SRK),INTENT(IN) :: setval
       IF(vector%isInit) THEN
           vector%b=setval
       ENDIF
-    ENDSUBROUTINE setall_RealVectorType
+    ENDSUBROUTINE setAll_scalar_RealVectorType
 !
 !-------------------------------------------------------------------------------
 !> @brief Sets the values in the real vector
 !> @param declare the vector type to act on
 !> @param setval the value to be set
 !>
-    SUBROUTINE setall_PETScVectorType(vector,setval)
+    SUBROUTINE setAll_scalar_PETScVectorType(vector,setval)
       CLASS(PETScVectorType),INTENT(INOUT) :: vector
       REAL(SRK),INTENT(IN) :: setval
       INTEGER(SIK) :: i
@@ -467,11 +557,119 @@ MODULE VectorTypes
         DO i=1,vector%n
           CALL VecSetValue(vector%b,i-1,setval,INSERT_VALUES,ierr)
         ENDDO
-        CALL VecAssemblyBegin(vector%b,ierr)
-        CALL VecAssemblyEnd(vector%b,ierr)
       ENDIF
+      vector%isAssembled=.FALSE.
 #endif
-    ENDSUBROUTINE setall_PETScVectorType
+    ENDSUBROUTINE setAll_scalar_PETScVectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the values in the real vector
+!> @param declare the vector type to act on
+!> @param setval the value to be set
+!>
+    SUBROUTINE setAll_array_RealVectorType(vector,setval)
+      CLASS(RealVectorType),INTENT(INOUT) :: vector
+      REAL(SRK),INTENT(IN) :: setval(:)
+      IF(vector%isInit) THEN
+          vector%b=setval
+      ENDIF
+    ENDSUBROUTINE setAll_array_RealVectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the values in the real vector
+!> @param declare the vector type to act on
+!> @param setval the value to be set
+!>
+    SUBROUTINE setAll_array_PETScVectorType(vector,setval)
+      CLASS(PETScVectorType),INTENT(INOUT) :: vector
+      REAL(SRK),INTENT(IN) :: setval(:)
+      INTEGER(SIK) :: i
+#ifdef HAVE_PETSC
+      PetscErrorCode  :: ierr
+      IF(vector%isInit) THEN
+        DO i=1,vector%n
+          CALL VecSetValue(vector%b,i-1,setval(i),INSERT_VALUES,ierr)
+        ENDDO
+      ENDIF
+      vector%isAssembled=.FALSE.
+#endif
+    ENDSUBROUTINE setAll_array_PETScVectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the values in the real vector
+!> @param declare the vector type to act on
+!> @param setval the value to be set
+!>
+    SUBROUTINE setRange_scalar_RealVectorType(vector,istt,istp,setval)
+      CLASS(RealVectorType),INTENT(INOUT) :: vector
+      REAL(SRK),INTENT(IN) :: setval
+      INTEGER(SIK),INTENT(IN) :: istt,istp
+      IF(vector%isInit) THEN
+        vector%b(istt:istp)=setval
+      ENDIF
+    ENDSUBROUTINE setRange_scalar_RealVectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the values in the real vector
+!> @param declare the vector type to act on
+!> @param setval the value to be set
+!>
+    SUBROUTINE setRange_scalar_PETScVectorType(vector,istt,istp,setval)
+      CLASS(PETScVectorType),INTENT(INOUT) :: vector
+      REAL(SRK),INTENT(IN) :: setval
+      INTEGER(SIK),INTENT(IN) :: istt,istp
+      INTEGER(SIK) :: i
+#ifdef HAVE_PETSC
+      PetscErrorCode  :: ierr
+      IF(vector%isInit) THEN
+        DO i=istt,istp
+          CALL VecSetValue(vector%b,i-1,setval,INSERT_VALUES,ierr)
+        ENDDO
+      ENDIF
+      vector%isAssembled=.FALSE.
+#endif
+    ENDSUBROUTINE setRange_scalar_PETScVectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the values in the real vector
+!> @param declare the vector type to act on
+!> @param setval the value to be set
+!>
+    SUBROUTINE setRange_array_RealVectorType(vector,istt,istp,setval)
+      CLASS(RealVectorType),INTENT(INOUT) :: vector
+      REAL(SRK),INTENT(IN) :: setval(:)
+      INTEGER(SIK),INTENT(IN) :: istt,istp
+      IF(vector%isInit) THEN
+        IF((istt <= vector%n) .AND. (istt > 0) .AND. &
+           (istp <= vector%n) .AND. (istp > 0)) THEN
+          vector%b(istt:istp)=setval
+        ENDIF
+      ENDIF
+    ENDSUBROUTINE setRange_array_RealVectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the values in the real vector
+!> @param declare the vector type to act on
+!> @param setval the value to be set
+!>
+    SUBROUTINE setRange_array_PETScVectorType(vector,istt,istp,setval)
+      CLASS(PETScVectorType),INTENT(INOUT) :: vector
+      REAL(SRK),INTENT(IN) :: setval(:)
+      INTEGER(SIK),INTENT(IN) :: istt,istp
+      INTEGER(SIK) :: i
+#ifdef HAVE_PETSC
+      PetscErrorCode  :: ierr
+      IF(vector%isInit) THEN
+        IF((istt <= vector%n) .AND. (istt > 0) .AND. &
+           (istp <= vector%n) .AND. (istp > 0)) THEN
+          DO i=istt,istp
+            CALL VecSetValue(vector%b,i-1,setval(i-istt+1),INSERT_VALUES,ierr)
+          ENDDO
+        ENDIF
+      ENDIF
+      vector%isAssembled=.FALSE.
+#endif
+    ENDSUBROUTINE setRange_array_PETScVectorType
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the values in the real vector
@@ -481,7 +679,7 @@ MODULE VectorTypes
 !> This routine gets the values of the real vector.  If the location is out of
 !> bounds, then -1051.0 is returned (-1051.0 is an arbitrarily chosen key).
 !>
-    FUNCTION get_RealVectorType(vector,i) RESULT(getval)
+    FUNCTION getOne_RealVectorType(vector,i) RESULT(getval)
       CLASS(RealVectorType),INTENT(INOUT) :: vector
       INTEGER(SIK),INTENT(IN) :: i
       REAL(SRK) :: getval
@@ -494,7 +692,7 @@ MODULE VectorTypes
           getval=-1051._SRK
         ENDIF
       ENDIF
-    ENDFUNCTION get_RealVectorType
+    ENDFUNCTION getOne_RealVectorType
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the values in the PETSc vector - presently untested
@@ -504,7 +702,7 @@ MODULE VectorTypes
 !> This routine gets the values of the PETSc vector.  If the location is out of
 !> bounds, then -1051.0 is returned (-1051.0 is an arbitrarily chosen key).
 !>
-    FUNCTION get_PETScVectorType(vector,i) RESULT(getval)
+    FUNCTION getOne_PETScVectorType(vector,i) RESULT(getval)
       CLASS(PETScVectorType),INTENT(INOUT) :: vector
       INTEGER(SIK),INTENT(IN) :: i
       REAL(SRK) :: getval
@@ -526,7 +724,138 @@ MODULE VectorTypes
         ENDIF
       ENDIF
 #endif
-    ENDFUNCTION get_PETScVectorType
+    ENDFUNCTION getOne_PETScVectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the values in the real vector
+!> @param declares the vector type to act on
+!> @param i the ith location in the vector
+!>
+!> This routine gets the values of the real vector.  If the location is out of
+!> bounds, then -1051.0 is returned (-1051.0 is an arbitrarily chosen key).
+!>
+    FUNCTION getAll_RealVectorType(vector) RESULT(getval)
+      CLASS(RealVectorType),INTENT(INOUT) :: vector
+      REAL(SRK),ALLOCATABLE :: getval(:)
+      
+      IF(vector%isInit) THEN
+        ALLOCATE(getval(vector%n))
+        getval=vector%b
+      ELSE
+        ALLOCATE(getval(1))
+        getval=-1051._SRK
+      ENDIF
+    ENDFUNCTION getAll_RealVectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the values in the PETSc vector - presently untested
+!> @param declares the vector type to act on
+!> @param i the ith location in the vector
+!>
+!> This routine gets the values of the PETSc vector.  If the location is out of
+!> bounds, then -1051.0 is returned (-1051.0 is an arbitrarily chosen key).
+!>
+    FUNCTION getAll_PETScVectorType(vector) RESULT(getval)
+      CLASS(PETScVectorType),INTENT(INOUT) :: vector
+      INTEGER(SIK) :: i
+      REAL(SRK),ALLOCATABLE :: getval(:)
+#ifdef HAVE_PETSC
+      PetscErrorCode  :: ierr
+      
+      IF(vector%isInit) THEN
+        ALLOCATE(getval(vector%n))
+        ! assemble matrix if necessary
+        IF (.NOT.(vector%isAssembled)) THEN
+          CALL VecAssemblyBegin(vector%b,ierr)
+          CALL VecAssemblyEnd(vector%b,ierr)
+          vector%isAssembled=.TRUE.
+        ENDIF
+        DO i=1,vector%n
+          CALL VecGetValues(vector%b,1,i-1,getval(i),ierr)
+        ENDDO
+      ELSE
+        ALLOCATE(getval(1))
+        getval=-1051._SRK
+      ENDIF
+#endif
+    ENDFUNCTION getAll_PETScVectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the values in the real vector
+!> @param declares the vector type to act on
+!> @param i the ith location in the vector
+!>
+!> This routine gets the values of the real vector.  If the location is out of
+!> bounds, then -1051.0 is returned (-1051.0 is an arbitrarily chosen key).
+!>
+    FUNCTION getRange_RealVectorType(vector,istt,istp) RESULT(getval)
+      CLASS(RealVectorType),INTENT(INOUT) :: vector
+      INTEGER(SIK),INTENT(IN) :: istt,istp
+      REAL(SRK),ALLOCATABLE :: getval(:)
+      
+      IF(vector%isInit) THEN
+        IF((istt <= vector%n) .AND. (istt > 0) .AND. &
+             (istp <= vector%n) .AND. (istp > 0)) THEN
+          ALLOCATE(getval(istp-istt+1))
+          getval=vector%b(istt:istp)
+        ELSE
+          ALLOCATE(getval(1))
+          getval=-1051._SRK
+        ENDIF
+      ELSE
+        IF((istt > 0) .AND. (istp > 0) .AND. istp>istt) THEN
+          ALLOCATE(getval(istp-istt+1))
+          getval=-1051._SRK
+        ELSE
+          ALLOCATE(getval(1))
+          getval=-1051._SRK
+        ENDIF
+      ENDIF
+
+    ENDFUNCTION getRange_RealVectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the values in the PETSc vector
+!> @param declares the vector type to act on
+!> @param i the ith location in the vector
+!>
+!> This routine gets the values of the PETSc vector.  If the location is out of
+!> bounds, then -1051.0 is returned (-1051.0 is an arbitrarily chosen key).
+!>
+    FUNCTION getRange_PETScVectorType(vector,istt,istp) RESULT(getval)
+      CLASS(PETScVectorType),INTENT(INOUT) :: vector
+      INTEGER(SIK),INTENT(IN) :: istt,istp
+      INTEGER(SIK) :: i
+      REAL(SRK),ALLOCATABLE :: getval(:)
+#ifdef HAVE_PETSC
+      PetscErrorCode  :: ierr
+
+      IF((istt <= vector%n) .AND. (istt > 0) .AND. &
+           (istp <= vector%n) .AND. (istp > 0)) THEN
+        ALLOCATE(getval(istp-istt+1))
+        getval=0.0_SRK
+        ! assemble matrix if necessary
+        IF (.NOT.(vector%isAssembled)) THEN
+          CALL VecAssemblyBegin(vector%b,ierr)
+          CALL VecAssemblyEnd(vector%b,ierr)
+          vector%isAssembled=.TRUE.
+        ENDIF
+        IF(vector%isInit) THEN
+          DO i=istt,istp
+            CALL VecGetValues(vector%b,1,i-1,getval(i-istt+1),ierr)
+          ENDDO
+        ENDIF
+      ELSE
+        IF((istt > 0) .AND. (istp > 0) .AND. istp>istt) THEN
+          ALLOCATE(getval(istp-istt+1))
+          getval=-1051._SRK
+        ELSE
+          ALLOCATE(getval(1))
+          getval=-1051._SRK
+        ENDIF
+      ENDIF
+#endif
+    ENDFUNCTION getRange_PETScVectorType
 !
 !-------------------------------------------------------------------------------
 !> @brief Function provides an interface to vector absolute value summation
