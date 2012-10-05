@@ -973,9 +973,9 @@ CONTAINS
       
       ! check X
       SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
-        IF(.NOT.((thisLS%X%get(1) .APPROXEQ. 3._SRK) &
-           .AND. (thisLS%X%get(2) .APPROXEQ. 2._SRK) &
-           .AND. (thisLS%X%get(3) .APPROXEQ. 1._SRK) &
+        IF(.NOT.((X%get(1) .APPROXEQ. 3._SRK) &
+           .AND. (X%get(2) .APPROXEQ. 2._SRK) &
+           .AND. (X%get(3) .APPROXEQ. 1._SRK) &
            .AND. (thisLS%info == 0))) THEN
           WRITE(*,*) 'CALL Direct%solve() -LU method FAILED!'
           STOP 666
