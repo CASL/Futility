@@ -313,12 +313,12 @@ PROGRAM testStochasticSampler
         STOP 666
       ENDIF
       
-      IF (ABS(mean-0.5_SDK)>1.0_SDK/SQRT(REAL(n,SDK))) THEN
+      IF (ABS(mean-0.5_SDK)>5.0_SDK/SQRT(REAL(n,SDK))) THEN
         WRITE(*,*) 'RNG mean DOes not meet criteria: RNG test FAILED!'
         STOP 666
       ENDIF
       
-      IF (ABS(SQRT(stdev-mean**2)-1.0_SDK/SQRT(12.0_SDK))>1.0_SDK/SQRT(REAL(n,SDK))) THEN
+      IF (ABS(SQRT(stdev-mean**2)-1.0_SDK/SQRT(12.0_SDK))>5.0_SDK/SQRT(REAL(n,SDK))) THEN
         WRITE(*,*) 'RNG standard deviation DOes not meet criteria: RNG test FAILED!'
         STOP 666
       ELSE
@@ -347,6 +347,11 @@ PROGRAM testStochasticSampler
       WRITE(*,*) "MEAN TRUE: ", 0.5_SDK
       WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
       WRITE(*,*) "SDEV TRUE: ", 1.0/SQRT(12.0)
+      
+      IF (ABS(mean/0.5_SDK-1.0_SDK)>5.0_SDK/SQRT(REAL(n,SDK))) THEN
+        WRITE(*,*) "RNG does not meet acceptance criterial.  Test FAILED"
+        STOP 666
+      ENDIF
   
       WRITE(*,*)
       WRITE(*,*) "Test Uniform"
@@ -362,7 +367,12 @@ PROGRAM testStochasticSampler
       WRITE(*,*) "MEAN TRUE: ", (9.0_SDK+ (-8.0_SDK))/2.0_SDK
       WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
       WRITE(*,*) "SDEV TRUE: ", (9.0_SDK- (-8.0_SDK))/SQRT(12.0)
-    ENDSUBROUTINE TestUniform
+
+      IF (ABS(mean/((9.0_SDK+ (-8.0_SDK))/2.0_SDK)-1.0_SDK)>5.0_SDK/SQRT(REAL(n,SDK))) THEN
+        WRITE(*,*) "Uniform does not meet acceptance criterial.  Test FAILED"
+        STOP 666
+      ENDIF
+      ENDSUBROUTINE TestUniform
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE TestExp
@@ -383,6 +393,10 @@ PROGRAM testStochasticSampler
       WRITE(*,*) "MEAN TRUE: ", 1.0_SDK/2.0_SDK
       WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
       WRITE(*,*) "SDEV TRUE: ", 1.0_SDK/2.0_SDK
+      IF (ABS(mean/(1.0_SDK/2.0_SDK)-1.0_SDK)>5.0_SDK/SQRT(REAL(n,SDK))) THEN
+        WRITE(*,*) "Exponential does not meet acceptance criterial.  Test FAILED"
+        STOP 666
+      ENDIF
     ENDSUBROUTINE TestExp
 !
 !-------------------------------------------------------------------------------
@@ -404,6 +418,10 @@ PROGRAM testStochasticSampler
       WRITE(*,*) "MEAN TRUE: ", 2.0_SDK
       WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
       WRITE(*,*) "SDEV TRUE: ", 0.5_SDK
+      IF (ABS(mean/2.0_SDK-1.0_SDK)>5.0_SDK/SQRT(REAL(n,SDK))) THEN
+        WRITE(*,*) "Normal does not meet acceptance criterial.  Test FAILED"
+        STOP 666
+      ENDIF
     
       WRITE(*,*)
       WRITE(*,*) "Test Log-Normal"
@@ -419,6 +437,11 @@ PROGRAM testStochasticSampler
       WRITE(*,*) "MEAN TRUE: ", EXP(2.0_SDK+0.5_SDK**2/2.0_SDK)
       WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
       WRITE(*,*) "SDEV TRUE: ", SQRT((EXP(0.5_SDK**2)-1.0_SDK)*EXP(2.0_SDK*2.0_SDK+0.5_SDK**2))
+      IF (ABS(mean/(EXP(2.0_SDK+0.5_SDK**2/2.0_SDK))-1.0_SDK)>5.0_SDK/SQRT(REAL(n,SDK))) THEN
+        WRITE(*,*) "Log-Normal does not meet acceptance criterial.  Test FAILED"
+        STOP 666
+      ENDIF
+
     ENDSUBROUTINE TestNormal
 !
 !-------------------------------------------------------------------------------   
@@ -441,6 +464,11 @@ PROGRAM testStochasticSampler
       WRITE(*,*) "MEAN TRUE: ", 3.0_SDK/2.0_SDK*T
       WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
       WRITE(*,*) "SDEV TRUE: ", SQRT(3.0_SDK/2.0_SDK)*T
+      IF (ABS(mean/(3.0_SDK/2.0_SDK*T)-1.0_SDK)/(3.0_SDK/2.0_SDK*T)>5.0_SDK/SQRT(REAL(n,SDK))) THEN
+        WRITE(*,*) "Maxwellian does not meet acceptance criterial.  Test FAILED"
+        STOP 666
+      ENDIF
+
     ENDSUBROUTINE TestMaxwellian
 !
 !-------------------------------------------------------------------------------
@@ -468,6 +496,11 @@ PROGRAM testStochasticSampler
       WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
       WRITE(*,*) "SDEV TRUE: ", SQRT((a**2*(-36.0*SQRT(a**3*b)+a*SQRT(b)*(12.0+a*b)* &
             (4.0*SQRT(a)+a**1.5*b-SQRT(b)*SQRT(a**3*b))))/SQRT(a**3*b))/(2.0*SQRT(2.0))
+      IF (ABS(mean/(a**2.5*SQRT(b)*(6.0_SDK+a*b)/(4.0_SDK*SQRT(a**3*b)))-1.0_SDK)>5.0_SDK/SQRT(REAL(n,SDK))) THEN
+        WRITE(*,*) "Watt does not meet acceptance criterial.  Test FAILED"
+        STOP 666
+      ENDIF
+
     ENDSUBROUTINE TestWatt
 !
 !-------------------------------------------------------------------------------
@@ -493,6 +526,11 @@ PROGRAM testStochasticSampler
       WRITE(*,*) "MEAN TRUE: ", 8.0_SDK/5.0_SDK
       WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
       WRITE(*,*) "SDEV TRUE: ", SQRT(32.0_SDK)/5.0_SDK
+      IF (ABS(mean/(8.0_SDK/5.0_SDK)-1.0_SDK)>5.0_SDK/SQRT(REAL(n,SDK))) THEN
+        WRITE(*,*) "Evaporation does not meet acceptance criterial.  Test FAILED"
+        STOP 666
+      ENDIF
+      
     ENDSUBROUTINE TestEvap
 !
 ENDPROGRAM testStochasticSampler
