@@ -93,12 +93,23 @@ MODULE VectorTypes
       !> Deferred routine for initializing the vector
       PROCEDURE(int_vector_init_sub),DEFERRED,PASS :: init
       !> Deferred routine for setting one vector value
-      PROCEDURE(int_vector_setone_sub),DEFERRED,PASS :: setone
-      !> Deferred routine for setting all vector values
-      PROCEDURE(int_vector_setall_sub),DEFERRED,PASS :: setall
-      GENERIC :: set => setone,setall
-      !> Deferred routine for getting vector values
-      PROCEDURE(int_vector_get_sub),DEFERRED,PASS :: get
+      PROCEDURE(int_vector_setOne_sub),DEFERRED,PASS :: setOne
+      !> Deferred routine for setting all vector values with scalar
+      PROCEDURE(int_vector_setAll_scalar_sub),DEFERRED,PASS :: setAll_scalar
+      !> Deferred routine for setting all vector values with array
+      PROCEDURE(int_vector_setAll_array_sub),DEFERRED,PASS :: setAll_array
+      !> Deferred routine for setting all vector values with scalar
+      PROCEDURE(int_vector_setRange_scalar_sub),DEFERRED,PASS :: setRange_scalar
+      !> Deferred routine for setting all vector values with array
+      PROCEDURE(int_vector_setRange_array_sub),DEFERRED,PASS :: setRange_array
+      GENERIC :: set => setOne,setAll_scalar,setAll_array,setRange_scalar,setRange_array
+      !> Deferred routine for getting vector value
+      PROCEDURE(int_vector_getOne_sub),DEFERRED,PASS :: getOne
+      !> Deferred routine for getting all vector values
+      PROCEDURE(int_vector_getAll_sub),DEFERRED,PASS :: getAll
+      !> Deferred routine for getting a range of vector values
+      PROCEDURE(int_vector_getRange_sub),DEFERRED,PASS :: getRange
+      GENERIC :: get => getOne,getAll,getRange
   ENDTYPE VectorType    
 !
 !List of Abstract Interfaces
@@ -121,31 +132,79 @@ MODULE VectorTypes
   
   !> Explicitly defines the interface for the set one routine of all vector types
   ABSTRACT INTERFACE
-    SUBROUTINE int_vector_setone_sub(vector,i,setval)
+    SUBROUTINE int_vector_setOne_sub(vector,i,setval)
       IMPORT :: SIK,SRK,VectorType
       CLASS(VectorType),INTENT(INOUT) :: vector
       INTEGER(SIK),INTENT(IN) :: i
       REAL(SRK),INTENT(IN) :: setval
-    ENDSUBROUTINE int_vector_setone_sub
+    ENDSUBROUTINE int_vector_setOne_sub
   ENDINTERFACE
   
-  !> Explicitly defines the interface for the set all routine of all vector types
+  !> Explicitly defines the interface for the set all (scalar) routine of all vector types
   ABSTRACT INTERFACE
-    SUBROUTINE int_vector_setall_sub(vector,setval)
+    SUBROUTINE int_vector_setAll_scalar_sub(vector,setval)
       IMPORT :: SIK,SRK,VectorType
       CLASS(VectorType),INTENT(INOUT) :: vector
       REAL(SRK),INTENT(IN) :: setval
-    ENDSUBROUTINE int_vector_setall_sub
+    ENDSUBROUTINE int_vector_setAll_scalar_sub
   ENDINTERFACE
   
-  !> Explicitly defines the interface for the get routine of all vector types
+  !> Explicitly defines the interface for the set all (array) routine of all vector types
   ABSTRACT INTERFACE
-    FUNCTION int_vector_get_sub(vector,i) RESULT(getval)
+    SUBROUTINE int_vector_setAll_array_sub(vector,setval)
+      IMPORT :: SIK,SRK,VectorType
+      CLASS(VectorType),INTENT(INOUT) :: vector
+      REAL(SRK),INTENT(IN) :: setval(:)
+    ENDSUBROUTINE int_vector_setAll_array_sub
+  ENDINTERFACE
+  
+  !> Explicitly defines the interface for the set range (scalar) routine of all vector types
+  ABSTRACT INTERFACE
+    SUBROUTINE int_vector_setRange_scalar_sub(vector,istt,istp,setval)
+      IMPORT :: SIK,SRK,VectorType
+      CLASS(VectorType),INTENT(INOUT) :: vector
+      INTEGER(SIK),INTENT(IN) :: istt,istp
+      REAL(SRK),INTENT(IN) :: setval
+    ENDSUBROUTINE int_vector_setRange_scalar_sub
+  ENDINTERFACE
+  
+  !> Explicitly defines the interface for the set range (array) routine of all vector types
+  ABSTRACT INTERFACE
+    SUBROUTINE int_vector_setRange_array_sub(vector,istt,istp,setval)
+      IMPORT :: SIK,SRK,VectorType
+      CLASS(VectorType),INTENT(INOUT) :: vector
+      INTEGER(SIK),INTENT(IN) :: istt,istp
+      REAL(SRK),INTENT(IN) :: setval(:)
+    ENDSUBROUTINE int_vector_setRange_array_sub
+  ENDINTERFACE
+  
+  !> Explicitly defines the interface for the get (scalar) routine of all vector types
+  ABSTRACT INTERFACE
+    FUNCTION int_vector_getOne_sub(vector,i) RESULT(getval)
       IMPORT :: SIK,SRK,VectorType
       CLASS(VectorType),INTENT(INOUT) :: vector
       INTEGER(SIK),INTENT(IN) :: i
       REAL(SRK) :: getval
-    ENDFUNCTION int_vector_get_sub
+    ENDFUNCTION int_vector_getOne_sub
+  ENDINTERFACE
+  
+  !> Explicitly defines the interface for the get (scalar) routine of all vector types
+  ABSTRACT INTERFACE
+    FUNCTION int_vector_getAll_sub(vector) RESULT(getval)
+      IMPORT :: SRK,VectorType
+      CLASS(VectorType),INTENT(INOUT) :: vector
+      REAL(SRK),ALLOCATABLE :: getval(:)
+    ENDFUNCTION int_vector_getAll_sub
+  ENDINTERFACE
+  
+  !> Explicitly defines the interface for the get (scalar) routine of all vector types
+  ABSTRACT INTERFACE
+    FUNCTION int_vector_getRange_sub(vector,istt,istp) RESULT(getval)
+      IMPORT :: SIK,SRK,VectorType
+      CLASS(VectorType),INTENT(INOUT) :: vector
+      INTEGER(SIK),INTENT(IN) :: istt,istp
+      REAL(SRK),ALLOCATABLE :: getval(:)
+    ENDFUNCTION int_vector_getRange_sub
   ENDINTERFACE
   
   !> @brief The extended type for real vector
@@ -167,15 +226,30 @@ MODULE VectorTypes
       !> @copybrief VectorTypes::init_RealVectorType
       !> @copydetails VectorTypes::init_RealVectorType
       PROCEDURE,PASS :: init => init_RealVectorType
-      !> @copybrief VectorTypes::setone_RealVectorType
-      !> @copydetails VectorTypes::setone_RealVectorType
-      PROCEDURE,PASS :: setone => setone_RealVectorType
-      !> @copybrief VectorTypes::setall_RealVectorType
-      !> @copydetails VectorTypes::setall_RealVectorType
-      PROCEDURE,PASS :: setall => setall_RealVectorType
-      !> @copybrief VectorTypes::get_RealVectorType
-      !> @copydetails VectorTypes::get_RealVectorType
-      PROCEDURE,PASS :: get => get_RealVectorType
+      !> @copybrief VectorTypes::setOne_RealVectorType
+      !> @copydetails VectorTypes::setOne_RealVectorType
+      PROCEDURE,PASS :: setOne => setOne_RealVectorType
+      !> @copybrief VectorTypes::setAll_scalar_RealVectorType
+      !> @copydetails VectorTypes::setAll_scalar_RealVectorType
+      PROCEDURE,PASS :: setAll_scalar => setAll_scalar_RealVectorType
+      !> @copybrief VectorTypes::setAll_array_RealVectorType
+      !> @copydetails VectorTypes::setAll_array_RealVectorType
+      PROCEDURE,PASS :: setAll_array => setAll_array_RealVectorType
+      !> @copybrief VectorTypes::setRange_scalar_RealVectorType
+      !> @copydetails VectorTypes::setRange_scalar_RealVectorType
+      PROCEDURE,PASS :: setRange_scalar => setRange_scalar_RealVectorType
+      !> @copybrief VectorTypes::setRange_array_RealVectorType
+      !> @copydetails VectorTypes::setRange_array_RealVectorType
+      PROCEDURE,PASS :: setRange_array => setRange_array_RealVectorType
+      !> @copybrief VectorTypes::getOne_RealVectorType
+      !> @copydetails VectorTypes::getOne_RealVectorType
+      PROCEDURE,PASS :: getOne => getOne_RealVectorType
+      !> @copybrief VectorTypes::getAll_RealVectorType
+      !> @copydetails VectorTypes::getAll_RealVectorType
+      PROCEDURE,PASS :: getAll => getAll_RealVectorType
+      !> @copybrief VectorTypes::getRange_RealVectorType
+      !> @copydetails VectorTypes::getRange_RealVectorType
+      PROCEDURE,PASS :: getRange => getRange_RealVectorType
   ENDTYPE RealVectorType
 
 
@@ -198,15 +272,30 @@ MODULE VectorTypes
       !> @copybrief VectorTypes::init_PETScVectorType
       !> @copydetails VectorTypes::init_PETScVectorType
       PROCEDURE,PASS :: init => init_PETScVectorType
-      !> @copybrief VectorTypes::setone_PETScVectorType
-      !> @copydetails VectorTypes::setone_PETScVectorType
-      PROCEDURE,PASS :: setone => setone_PETScVectorType
-      !> @copybrief VectorTypes::setall_PETScVectorType
-      !> @copydetails VectorTypes::setall_PETScVectorType
-      PROCEDURE,PASS :: setall => setall_PETScVectorType
-      !> @copybrief VectorTypes::get_PETScVectorType
-      !> @copydetails VectorTypes::get_PETScVectorType
-      PROCEDURE,PASS :: get => get_PETScVectorType
+      !> @copybrief VectorTypes::setOne_PETScVectorType
+      !> @copydetails VectorTypes::setOne_PETScVectorType
+      PROCEDURE,PASS :: setOne => setOne_PETScVectorType
+      !> @copybrief VectorTypes::setAll_scalar_PETScVectorType
+      !> @copydetails VectorTypes::setAll_scalar_PETScVectorType
+      PROCEDURE,PASS :: setAll_scalar => setAll_scalar_PETScVectorType
+      !> @copybrief VectorTypes::setAll_array_PETScVectorType
+      !> @copydetails VectorTypes::setAll_array_PETScVectorType
+      PROCEDURE,PASS :: setAll_array => setAll_array_PETScVectorType
+      !> @copybrief VectorTypes::setRange_scalar_PETScVectorType
+      !> @copydetails VectorTypes::setRange_scalar_PETScVectorType
+      PROCEDURE,PASS :: setRange_scalar => setRange_scalar_PETScVectorType
+      !> @copybrief VectorTypes::setRange_array_PETScVectorType
+      !> @copydetails VectorTypes::setRange_array_PETScVectorType
+      PROCEDURE,PASS :: setRange_array => setRange_array_PETScVectorType
+      !> @copybrief VectorTypes::getOne_PETScVectorType
+      !> @copydetails VectorTypes::getOne_PETScVectorType
+      PROCEDURE,PASS :: getOne => getOne_PETScVectorType
+      !> @copybrief VectorTypes::getAll_PETScVectorType
+      !> @copydetails VectorTypes::getAll_PETScVectorType
+      PROCEDURE,PASS :: getAll => getAll_PETScVectorType
+      !> @copybrief VectorTypes::getRange_PETScVectorType
+      !> @copydetails VectorTypes::getRange_PETScVectorType
+      PROCEDURE,PASS :: getRange => getRange_PETScVectorType
   ENDTYPE PETScVectorType
   
   !> @brief Adds to the @ref BLAS1::BLAS_asum "BLAS_asum" interface so that
@@ -330,7 +419,7 @@ MODULE VectorTypes
     ENDSUBROUTINE init_RealVectorType
 !
 !-------------------------------------------------------------------------------
-!> @brief Initializes the real vector
+!> @brief Initializes the PETSc vector
 !> @param declares the vector type to act on
 !> @param n the number of rows
 !>
@@ -370,6 +459,9 @@ MODULE VectorTypes
           modName//'::'//myName//' - VectorType already initialized')
       ENDIF
       IF(localalloc) DEALLOCATE(eVectorType)
+#else
+      CALL eVectorType%raiseError('Incorrect call to '// &
+              modName//'::'//myName//' - PETSc not enabled')
 #endif
     ENDSUBROUTINE init_PETScVectorType
 !
@@ -378,6 +470,7 @@ MODULE VectorTypes
 !> @param declares the vector type to act on
 !>
     SUBROUTINE clear_RealVectorType(vector)
+      CHARACTER(LEN=*),PARAMETER :: myName='clear_RealVectorType'
       CLASS(RealVectorType),INTENT(INOUT) :: vector
       vector%isInit=.FALSE.
       vector%n=0
@@ -389,6 +482,7 @@ MODULE VectorTypes
 !> @param declares the vector type to act on
 !>
     SUBROUTINE clear_PETScVectorType(vector)
+      CHARACTER(LEN=*),PARAMETER :: myName='clear_PETScVectorType'
       CLASS(PETScVectorType),INTENT(INOUT) :: vector
 #ifdef HAVE_PETSC
       PetscErrorCode  :: ierr
@@ -397,16 +491,20 @@ MODULE VectorTypes
       vector%isCreated=.FALSE.
       vector%n=0
       CALL VecDestroy(vector%b,ierr)
+#else
+      CALL eVectorType%raiseError('Incorrect call to '// &
+              modName//'::'//myName//' - PETSc not enabled')
 #endif
     ENDSUBROUTINE clear_PETScVectorType
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets the values in the real vector
-!> @param declare the vector type to act on
+!> @brief Sets one value in the real vector
+!> @param declares the vector type to act on
 !> @param i the ith location in the vector
 !> @param setval the value to be set
 !>
-    SUBROUTINE setone_RealVectorType(vector,i,setval)
+    SUBROUTINE setOne_RealVectorType(vector,i,setval)
+      CHARACTER(LEN=*),PARAMETER :: myName='setOne_RealVectorType'
       CLASS(RealVectorType),INTENT(INOUT) :: vector
       INTEGER(SIK),INTENT(IN) :: i
       REAL(SRK),INTENT(IN) :: setval
@@ -415,15 +513,16 @@ MODULE VectorTypes
           vector%b(i)=setval
         ENDIF
       ENDIF
-    ENDSUBROUTINE setone_RealVectorType
+    ENDSUBROUTINE setOne_RealVectorType
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets the values in the real vector
-!> @param declare the vector type to act on
+!> @brief Sets one value in the real vector
+!> @param declares the vector type to act on
 !> @param i the ith location in the vector
 !> @param setval the value to be set
 !>
-    SUBROUTINE setone_PETScVectorType(vector,i,setval)
+    SUBROUTINE setOne_PETScVectorType(vector,i,setval)
+      CHARACTER(LEN=*),PARAMETER :: myName='setOne_PETScVectorType'
       CLASS(PETScVectorType),INTENT(INOUT) :: vector
       INTEGER(SIK),INTENT(IN) :: i
       REAL(SRK),INTENT(IN) :: setval
@@ -436,28 +535,34 @@ MODULE VectorTypes
           CALL VecAssemblyEnd(vector%b,ierr)
         ENDIF
       ENDIF
+      vector%isAssembled=.FALSE.
+#else
+      CALL eVectorType%raiseError('Incorrect call to '// &
+              modName//'::'//myName//' - PETSc not enabled')
 #endif
-    ENDSUBROUTINE setone_PETScVectorType
+    ENDSUBROUTINE setOne_PETScVectorType
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets the values in the real vector
-!> @param declare the vector type to act on
-!> @param setval the value to be set
+!> @brief Sets all values in the real vector with a scalar value
+!> @param declares the vector type to act on
+!> @param setval the scalar value to be set
 !>
-    SUBROUTINE setall_RealVectorType(vector,setval)
+    SUBROUTINE setAll_scalar_RealVectorType(vector,setval)
+      CHARACTER(LEN=*),PARAMETER :: myName='setAll_scalar_RealVectorType'
       CLASS(RealVectorType),INTENT(INOUT) :: vector
       REAL(SRK),INTENT(IN) :: setval
       IF(vector%isInit) THEN
           vector%b=setval
       ENDIF
-    ENDSUBROUTINE setall_RealVectorType
+    ENDSUBROUTINE setAll_scalar_RealVectorType
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets the values in the real vector
+!> @brief Sets all values in the PETSc vector with a scalar value
 !> @param declare the vector type to act on
-!> @param setval the value to be set
+!> @param setval the scalar value to be set
 !>
-    SUBROUTINE setall_PETScVectorType(vector,setval)
+    SUBROUTINE setAll_scalar_PETScVectorType(vector,setval)
+      CHARACTER(LEN=*),PARAMETER :: myName='setAll_scalar_PETScVectorType'
       CLASS(PETScVectorType),INTENT(INOUT) :: vector
       REAL(SRK),INTENT(IN) :: setval
       INTEGER(SIK) :: i
@@ -467,21 +572,156 @@ MODULE VectorTypes
         DO i=1,vector%n
           CALL VecSetValue(vector%b,i-1,setval,INSERT_VALUES,ierr)
         ENDDO
-        CALL VecAssemblyBegin(vector%b,ierr)
-        CALL VecAssemblyEnd(vector%b,ierr)
       ENDIF
+      vector%isAssembled=.FALSE.
+#else
+      CALL eVectorType%raiseError('Incorrect call to '// &
+              modName//'::'//myName//' - PETSc not enabled')
 #endif
-    ENDSUBROUTINE setall_PETScVectorType
+    ENDSUBROUTINE setAll_scalar_PETScVectorType
 !
 !-------------------------------------------------------------------------------
-!> @brief Gets the values in the real vector
+!> @brief Sets all the values in the real vector
+!> @param declare the vector type to act on
+!> @param setval the array of values to be set
+!>
+    SUBROUTINE setAll_array_RealVectorType(vector,setval)
+      CHARACTER(LEN=*),PARAMETER :: myName='setAll_array_RealVectorType'
+      CLASS(RealVectorType),INTENT(INOUT) :: vector
+      REAL(SRK),INTENT(IN) :: setval(:)
+      IF(vector%isInit .AND. SIZE(setval)==vector%n) THEN
+        vector%b=setval
+      ENDIF
+    ENDSUBROUTINE setAll_array_RealVectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets all the values in the PETSc vector with an array of values
+!> @param declare the vector type to act on
+!> @param setval the array of values to be set
+!>
+    SUBROUTINE setAll_array_PETScVectorType(vector,setval)
+      CHARACTER(LEN=*),PARAMETER :: myName='setAll_array_PETScVectorType'
+      CLASS(PETScVectorType),INTENT(INOUT) :: vector
+      REAL(SRK),INTENT(IN) :: setval(:)
+      INTEGER(SIK) :: i
+#ifdef HAVE_PETSC
+      PetscErrorCode  :: ierr
+      IF(vector%isInit .AND. SIZE(setval)==vector%n) THEN
+        DO i=1,vector%n
+          CALL VecSetValue(vector%b,i-1,setval(i),INSERT_VALUES,ierr)
+        ENDDO
+      ENDIF
+      vector%isAssembled=.FALSE.
+#else
+      CALL eVectorType%raiseError('Incorrect call to '// &
+              modName//'::'//myName//' - PETSc not enabled')
+#endif
+    ENDSUBROUTINE setAll_array_PETScVectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets a range of values in the real vector with a scalar value 
+!> @param declare the vector type to act on
+!> @param setval the scalar value to be set
+!> @param istt the starting point of the range
+!> @param istp the stopping point in the range
+!>
+    SUBROUTINE setRange_scalar_RealVectorType(vector,istt,istp,setval)
+      CHARACTER(LEN=*),PARAMETER :: myName='setRange_scalar_RealVectorType'
+      CLASS(RealVectorType),INTENT(INOUT) :: vector
+      REAL(SRK),INTENT(IN) :: setval
+      INTEGER(SIK),INTENT(IN) :: istt,istp
+      IF(vector%isInit) THEN
+        vector%b(istt:istp)=setval
+      ENDIF
+    ENDSUBROUTINE setRange_scalar_RealVectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets a range of values in the PETSc vector with a scalar value 
+!> @param declare the vector type to act on
+!> @param setval the scalar value to be set
+!> @param istt the starting point of the range
+!> @param istp the stopping point in the range
+!>
+    SUBROUTINE setRange_scalar_PETScVectorType(vector,istt,istp,setval)
+      CHARACTER(LEN=*),PARAMETER :: myName='setRange_scalar_PETScVectorType'
+      CLASS(PETScVectorType),INTENT(INOUT) :: vector
+      REAL(SRK),INTENT(IN) :: setval
+      INTEGER(SIK),INTENT(IN) :: istt,istp
+      INTEGER(SIK) :: i
+#ifdef HAVE_PETSC
+      PetscErrorCode  :: ierr
+      IF(vector%isInit) THEN
+        DO i=istt,istp
+          CALL VecSetValue(vector%b,i-1,setval,INSERT_VALUES,ierr)
+        ENDDO
+      ENDIF
+      vector%isAssembled=.FALSE.
+#else
+      CALL eVectorType%raiseError('Incorrect call to '// &
+              modName//'::'//myName//' - PETSc not enabled')
+#endif
+    ENDSUBROUTINE setRange_scalar_PETScVectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets a range of values in the real vector with an array of values 
+!> @param declare the vector type to act on
+!> @param setval the scalar value to be set
+!> @param istt the starting point of the range
+!> @param istp the stopping point in the range
+!>
+    SUBROUTINE setRange_array_RealVectorType(vector,istt,istp,setval)
+      CHARACTER(LEN=*),PARAMETER :: myName='setRange_array_RealVectorType'
+      CLASS(RealVectorType),INTENT(INOUT) :: vector
+      REAL(SRK),INTENT(IN) :: setval(:)
+      INTEGER(SIK),INTENT(IN) :: istt,istp
+      IF(vector%isInit) THEN
+        IF((istt <= vector%n) .AND. (istt > 0) .AND. &
+           (istp <= vector%n) .AND. (istp > 0)) THEN
+          vector%b(istt:istp)=setval
+        ENDIF
+      ENDIF
+    ENDSUBROUTINE setRange_array_RealVectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets a range of values in the PETSc vector with an array of values 
+!> @param declare the vector type to act on
+!> @param setval the scalar value to be set
+!> @param istt the starting point of the range
+!> @param istp the stopping point in the range
+!>
+    SUBROUTINE setRange_array_PETScVectorType(vector,istt,istp,setval)
+      CHARACTER(LEN=*),PARAMETER :: myName='setRange_array_PETScVectorType'
+      CLASS(PETScVectorType),INTENT(INOUT) :: vector
+      REAL(SRK),INTENT(IN) :: setval(:)
+      INTEGER(SIK),INTENT(IN) :: istt,istp
+      INTEGER(SIK) :: i
+#ifdef HAVE_PETSC
+      PetscErrorCode  :: ierr
+      IF(vector%isInit) THEN
+        IF((istt <= vector%n) .AND. (istt > 0) .AND. &
+           (istp <= vector%n) .AND. (istp > 0)) THEN
+          DO i=istt,istp
+            CALL VecSetValue(vector%b,i-1,setval(i-istt+1),INSERT_VALUES,ierr)
+          ENDDO
+        ENDIF
+      ENDIF
+      vector%isAssembled=.FALSE.
+#else
+      CALL eVectorType%raiseError('Incorrect call to '// &
+              modName//'::'//myName//' - PETSc not enabled')
+#endif
+    ENDSUBROUTINE setRange_array_PETScVectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets one value in the real vector
 !> @param declares the vector type to act on
 !> @param i the ith location in the vector
 !>
 !> This routine gets the values of the real vector.  If the location is out of
 !> bounds, then -1051.0 is returned (-1051.0 is an arbitrarily chosen key).
 !>
-    FUNCTION get_RealVectorType(vector,i) RESULT(getval)
+    FUNCTION getOne_RealVectorType(vector,i) RESULT(getval)
+      CHARACTER(LEN=*),PARAMETER :: myName='getOne_RealVectorType'
       CLASS(RealVectorType),INTENT(INOUT) :: vector
       INTEGER(SIK),INTENT(IN) :: i
       REAL(SRK) :: getval
@@ -494,17 +734,18 @@ MODULE VectorTypes
           getval=-1051._SRK
         ENDIF
       ENDIF
-    ENDFUNCTION get_RealVectorType
+    ENDFUNCTION getOne_RealVectorType
 !
 !-------------------------------------------------------------------------------
-!> @brief Gets the values in the PETSc vector - presently untested
+!> @brief Gets one values in the PETSc vector
 !> @param declares the vector type to act on
 !> @param i the ith location in the vector
 !>
 !> This routine gets the values of the PETSc vector.  If the location is out of
 !> bounds, then -1051.0 is returned (-1051.0 is an arbitrarily chosen key).
 !>
-    FUNCTION get_PETScVectorType(vector,i) RESULT(getval)
+    FUNCTION getOne_PETScVectorType(vector,i) RESULT(getval)
+      CHARACTER(LEN=*),PARAMETER :: myName='getOne_PETScVectorType'
       CLASS(PETScVectorType),INTENT(INOUT) :: vector
       INTEGER(SIK),INTENT(IN) :: i
       REAL(SRK) :: getval
@@ -525,8 +766,152 @@ MODULE VectorTypes
           getval=-1051._SRK
         ENDIF
       ENDIF
+#else
+      CALL eVectorType%raiseError('Incorrect call to '// &
+              modName//'::'//myName//' - PETSc not enabled')
 #endif
-    ENDFUNCTION get_PETScVectorType
+    ENDFUNCTION getOne_PETScVectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets all values in the real vector
+!> @param declares the vector type to act on
+!>
+!> This routine gets the values of the real vector.  If the location is out of
+!> bounds, then -1051.0 is returned (-1051.0 is an arbitrarily chosen key).
+!>
+    FUNCTION getAll_RealVectorType(vector) RESULT(getval)
+      CHARACTER(LEN=*),PARAMETER :: myName='getAll_RealVectorType'
+      CLASS(RealVectorType),INTENT(INOUT) :: vector
+      REAL(SRK),ALLOCATABLE :: getval(:)
+      
+      IF(vector%isInit) THEN
+        ALLOCATE(getval(vector%n))
+        getval=vector%b
+      ELSE
+        ALLOCATE(getval(1))
+        getval=-1051._SRK
+      ENDIF
+    ENDFUNCTION getAll_RealVectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets all values in the PETSc vector
+!> @param declares the vector type to act on
+!>
+!> This routine gets the values of the PETSc vector.  If the location is out of
+!> bounds, then -1051.0 is returned (-1051.0 is an arbitrarily chosen key).
+!>
+    FUNCTION getAll_PETScVectorType(vector) RESULT(getval)
+      CHARACTER(LEN=*),PARAMETER :: myName='getAll_PETScVectorType'
+      CLASS(PETScVectorType),INTENT(INOUT) :: vector
+      INTEGER(SIK) :: i
+      REAL(SRK),ALLOCATABLE :: getval(:)
+#ifdef HAVE_PETSC
+      PetscErrorCode  :: ierr
+      
+      IF(vector%isInit) THEN
+        ALLOCATE(getval(vector%n))
+        ! assemble matrix if necessary
+        IF (.NOT.(vector%isAssembled)) THEN
+          CALL VecAssemblyBegin(vector%b,ierr)
+          CALL VecAssemblyEnd(vector%b,ierr)
+          vector%isAssembled=.TRUE.
+        ENDIF
+        DO i=1,vector%n
+          CALL VecGetValues(vector%b,1,i-1,getval(i),ierr)
+        ENDDO
+      ELSE
+        ALLOCATE(getval(1))
+        getval=-1051._SRK
+      ENDIF
+#else
+      CALL eVectorType%raiseError('Incorrect call to '// &
+              modName//'::'//myName//' - PETSc not enabled')
+#endif
+    ENDFUNCTION getAll_PETScVectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets a range of values in the real vector
+!> @param declares the vector type to act on
+!> @param istt the starting point of the range
+!> @param istp the stopping point in the range
+!>
+!> This routine gets the values of the real vector.  If the location is out of
+!> bounds, then -1051.0 is returned (-1051.0 is an arbitrarily chosen key).
+!>
+    FUNCTION getRange_RealVectorType(vector,istt,istp) RESULT(getval)
+      CHARACTER(LEN=*),PARAMETER :: myName='getRange_RealVectorType'
+      CLASS(RealVectorType),INTENT(INOUT) :: vector
+      INTEGER(SIK),INTENT(IN) :: istt,istp
+      REAL(SRK),ALLOCATABLE :: getval(:)
+      
+      IF(vector%isInit) THEN
+        IF((istt <= vector%n) .AND. (istt > 0) .AND. &
+             (istp <= vector%n) .AND. (istp > 0)) THEN
+          ALLOCATE(getval(istp-istt+1))
+          getval=vector%b(istt:istp)
+        ELSE
+          ALLOCATE(getval(1))
+          getval=-1051._SRK
+        ENDIF
+      ELSE
+        IF((istt > 0) .AND. (istp > 0) .AND. istp>istt) THEN
+          ALLOCATE(getval(istp-istt+1))
+          getval=-1051._SRK
+        ELSE
+          ALLOCATE(getval(1))
+          getval=-1051._SRK
+        ENDIF
+      ENDIF
+
+    ENDFUNCTION getRange_RealVectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets a range of  values in the PETSc vector
+!> @param declares the vector type to act on
+!> @param istt the starting point of the range
+!> @param istp the stopping point in the range
+!>
+!> This routine gets the values of the PETSc vector.  If the location is out of
+!> bounds, then -1051.0 is returned (-1051.0 is an arbitrarily chosen key).
+!>
+    FUNCTION getRange_PETScVectorType(vector,istt,istp) RESULT(getval)
+      CHARACTER(LEN=*),PARAMETER :: myName='getRange_PETScVectorType'
+      CLASS(PETScVectorType),INTENT(INOUT) :: vector
+      INTEGER(SIK),INTENT(IN) :: istt,istp
+      INTEGER(SIK) :: i
+      REAL(SRK),ALLOCATABLE :: getval(:)
+#ifdef HAVE_PETSC
+      PetscErrorCode  :: ierr
+
+      IF((istt <= vector%n) .AND. (istt > 0) .AND. &
+           (istp <= vector%n) .AND. (istp > 0)) THEN
+        ALLOCATE(getval(istp-istt+1))
+        getval=0.0_SRK
+        ! assemble matrix if necessary
+        IF (.NOT.(vector%isAssembled)) THEN
+          CALL VecAssemblyBegin(vector%b,ierr)
+          CALL VecAssemblyEnd(vector%b,ierr)
+          vector%isAssembled=.TRUE.
+        ENDIF
+        IF(vector%isInit) THEN
+          DO i=istt,istp
+            CALL VecGetValues(vector%b,1,i-1,getval(i-istt+1),ierr)
+          ENDDO
+        ENDIF
+      ELSE
+        IF((istt > 0) .AND. (istp > 0) .AND. istp>istt) THEN
+          ALLOCATE(getval(istp-istt+1))
+          getval=-1051._SRK
+        ELSE
+          ALLOCATE(getval(1))
+          getval=-1051._SRK
+        ENDIF
+      ENDIF
+#else
+      CALL eVectorType%raiseError('Incorrect call to '// &
+              modName//'::'//myName//' - PETSc not enabled')
+#endif
+    ENDFUNCTION getRange_PETScVectorType
 !
 !-------------------------------------------------------------------------------
 !> @brief Function provides an interface to vector absolute value summation
@@ -537,22 +922,32 @@ MODULE VectorTypes
 !> @return r the sum of the absolute values of @c x
 !>
     FUNCTION asum_VectorType(thisVector,n,incx) RESULT(r)
-      CLASS(VectorType),INTENT(IN)     :: thisVector
+      CLASS(VectorType),INTENT(INOUT)     :: thisVector
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
+      REAL(SRK),ALLOCATABLE :: tmpthis(:)
       REAL(SRK) :: r
 
       SELECTTYPE(thisVector); TYPE IS(RealVectorType)
-        IF(PRESENT(n) .AND. PRESENT(incx)) THEN
-          r = BLAS1_asum(n,thisVector%b,incx)
-        ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
-          r = BLAS1_asum(n,thisVector%b)
-        ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx)) THEN
-          r = BLAS1_asum(thisVector%b,incx)
-        ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
-          r = BLAS1_asum(thisVector%b)
-        ENDIF
+        ALLOCATE(tmpthis(thisVector%n))
+        tmpthis=thisVector%get()
       ENDSELECT
+      
+      SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
+        ALLOCATE(tmpthis(thisVector%n))
+        tmpthis=thisVector%get()
+      ENDSELECT
+      
+      IF(PRESENT(n) .AND. PRESENT(incx)) THEN
+        r = BLAS1_asum(n,tmpthis,incx)
+      ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
+        r = BLAS1_asum(n,tmpthis)
+      ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx)) THEN
+        r = BLAS1_asum(tmpthis,incx)
+      ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
+        r = BLAS1_asum(tmpthis)
+      ENDIF
+      DEALLOCATE(tmpthis)
             
     ENDFUNCTION asum_VectorType
 !
@@ -567,33 +962,58 @@ MODULE VectorTypes
 !> @param incy the increment to use when looping over elements in @c y
 !>
     SUBROUTINE axpy_scalar_VectorType(thisVector,newVector,a,n,incx,incy)
-      CLASS(VectorType),INTENT(IN)     :: thisVector
+      CLASS(VectorType),INTENT(INOUT)  :: thisVector
       CLASS(VectorType),INTENT(INOUT)  :: newVector
       REAL(SRK),INTENT(IN),OPTIONAL :: a
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incy
-      
+      REAL(SRK),ALLOCATABLE :: tmpthis(:),tmpnew(:)
       REAL(SRK) :: alpha=1.
       
       IF (PRESENT(a)) alpha=a
       
       SELECTTYPE(thisVector); TYPE IS(RealVectorType)
         SELECTTYPE(newVector); TYPE IS(RealVectorType)
-          IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
-            CALL BLAS1_axpy(n,alpha,thisVector%b,incx,newVector%b,incy)
-          ELSEIF(PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-            CALL BLAS1_axpy(n,alpha,thisVector%b,newVector%b,incx)
-          ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
-            CALL BLAS1_axpy(n,alpha,thisVector%b,newVector%b,incy)
-          ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-            CALL BLAS1_axpy(n,alpha,thisVector%b,newVector%b)
-          ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-            CALL BLAS1_axpy(alpha,thisVector%b,newVector%b)
-          ENDIF
+          ALLOCATE(tmpthis(thisVector%n))
+          ALLOCATE(tmpnew(newVector%n))
+          tmpthis=thisVector%get()
+          tmpnew=newVector%get()
         ENDSELECT
       ENDSELECT
-
+      
+      SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
+        SELECTTYPE(newVector); TYPE IS(PETScVectorType)
+          ALLOCATE(tmpthis(thisVector%n))
+          ALLOCATE(tmpnew(newVector%n))
+          tmpthis=thisVector%get()
+          tmpnew=newVector%get()
+        ENDSELECT
+      ENDSELECT
+      
+      IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
+        CALL BLAS1_axpy(n,alpha,tmpthis,incx,tmpnew,incy)
+      ELSEIF(PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+        CALL BLAS1_axpy(n,alpha,tmpthis,tmpnew,incx)
+      ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
+        CALL BLAS1_axpy(n,alpha,tmpthis,tmpnew,incy)
+      ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+        CALL BLAS1_axpy(n,alpha,tmpthis,tmpnew)
+      ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+        CALL BLAS1_axpy(alpha,tmpthis,tmpnew)
+      ENDIF
+      
+      SELECTTYPE(newVector); TYPE IS(RealVectorType)
+        CALL newVector%set(tmpnew)
+      ENDSELECT
+      
+      SELECTTYPE(newVector); TYPE IS(PETScVectorType)
+        CALL newVector%set(tmpnew)
+      ENDSELECT
+      
+      DEALLOCATE(tmpthis)
+      DEALLOCATE(tmpnew)
+      
     ENDSUBROUTINE axpy_scalar_VectorType    
 !
 !-------------------------------------------------------------------------------
@@ -607,30 +1027,63 @@ MODULE VectorTypes
 !> @param incy the increment to use when looping over elements in @c y
 !>
     SUBROUTINE axpy_vector_VectorType(thisVector,newVector,aVector,n,incx,incy)
-      CLASS(VectorType),INTENT(IN)     :: thisVector
+      CLASS(VectorType),INTENT(INOUT)  :: thisVector
       CLASS(VectorType),INTENT(INOUT)  :: newVector
-      CLASS(VectorType),INTENT(IN)     :: aVector
+      CLASS(VectorType),INTENT(INOUT)  :: aVector
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incy
+      REAL(SRK),ALLOCATABLE :: tmpthis(:),tmpnew(:),tmpa(:)
       
       SELECTTYPE(thisVector); TYPE IS(RealVectorType)
         SELECTTYPE(newVector); TYPE IS(RealVectorType)
           SELECTTYPE(aVector); TYPE IS(RealVectorType)
-            IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
-              CALL BLAS1_axpy(n,aVector%b,thisVector%b,incx,newVector%b,incy)
-            ELSEIF(PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-              CALL BLAS1_axpy(n,aVector%b,thisVector%b,newVector%b,incx)
-            ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
-              CALL BLAS1_axpy(n,aVector%b,thisVector%b,newVector%b,incy)
-            ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-              CALL BLAS1_axpy(n,aVector%b,thisVector%b,newVector%b)
-            ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-              CALL BLAS1_axpy(aVector%b,thisVector%b,newVector%b)
-            ENDIF
+            ALLOCATE(tmpthis(thisVector%n))
+            ALLOCATE(tmpnew(newVector%n))
+            ALLOCATE(tmpa(aVector%n))
+            tmpthis=thisVector%get()
+            tmpnew=newVector%get()
+            tmpa=aVector%get()
           ENDSELECT
         ENDSELECT
       ENDSELECT
+      
+      SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
+        SELECTTYPE(newVector); TYPE IS(PETScVectorType)
+          SELECTTYPE(aVector); TYPE IS(PETScVectorType)
+            ALLOCATE(tmpthis(thisVector%n))
+            ALLOCATE(tmpnew(newVector%n))
+            ALLOCATE(tmpa(aVector%n))
+            tmpthis=thisVector%get()
+            tmpnew=newVector%get()
+            tmpa=aVector%get()
+          ENDSELECT
+        ENDSELECT
+      ENDSELECT
+
+      IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
+        CALL BLAS1_axpy(n,tmpa,tmpthis,incx,tmpnew,incy)
+      ELSEIF(PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+        CALL BLAS1_axpy(n,tmpa,tmpthis,tmpnew,incx)
+      ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
+        CALL BLAS1_axpy(n,tmpa,tmpthis,tmpnew,incy)
+      ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+        CALL BLAS1_axpy(n,tmpa,tmpthis,tmpnew)
+      ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+        CALL BLAS1_axpy(tmpa,tmpthis,tmpnew)
+      ENDIF
+      
+      SELECTTYPE(newVector); TYPE IS(RealVectorType)
+        CALL newVector%set(tmpnew)
+      ENDSELECT
+      
+      SELECTTYPE(newVector); TYPE IS(PETScVectorType)
+        CALL newVector%set(tmpnew)
+      ENDSELECT
+      
+      DEALLOCATE(tmpthis)
+      DEALLOCATE(tmpnew)
+      DEALLOCATE(tmpa)
 
     ENDSUBROUTINE axpy_vector_VectorType    
 !
@@ -644,33 +1097,59 @@ MODULE VectorTypes
 !> @param incy the increment to use when looping over elements in @c y
 !>
     SUBROUTINE copy_VectorType(thisVector,newVector,n,incx,incy)
-      CLASS(VectorType),INTENT(IN)     :: thisVector
+      CLASS(VectorType),INTENT(INOUT)  :: thisVector
       CLASS(VectorType),INTENT(INOUT)  :: newVector
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incy
+      REAL(SRK),ALLOCATABLE :: tmpthis(:),tmpnew(:)
       
       SELECTTYPE(thisVector); TYPE IS(RealVectorType)
         SELECTTYPE(newVector); TYPE IS(RealVectorType)
-          IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
-            CALL BLAS1_copy(n,thisVector%b,incx,newVector%b,incy)
-          ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
-            CALL BLAS1_copy(thisVector%b,incx,newVector%b,incy)
-          ELSEIF(PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-            CALL BLAS1_copy(n,thisVector%b,newVector%b,incx)
-          ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
-            CALL BLAS1_copy(n,thisVector%b,newVector%b,incy)
-          ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-            CALL BLAS1_copy(thisVector%b,newVector%b,incx)
-          ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
-            CALL BLAS1_copy(thisVector%b,newVector%b,incy)
-          ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-            CALL BLAS1_copy(n,thisVector%b,newVector%b)
-          ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-            CALL BLAS1_copy(thisVector%b,newVector%b)
-          ENDIF
+          ALLOCATE(tmpthis(thisVector%n))
+          ALLOCATE(tmpnew(newVector%n))
+          tmpthis=thisVector%get()
+          tmpnew=newVector%get()
         ENDSELECT
       ENDSELECT
+      
+      SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
+        SELECTTYPE(newVector); TYPE IS(PETScVectorType)
+          ALLOCATE(tmpthis(thisVector%n))
+          ALLOCATE(tmpnew(newVector%n))
+          tmpthis=thisVector%get()
+          tmpnew=newVector%get()
+        ENDSELECT
+      ENDSELECT
+
+      IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
+        CALL BLAS1_copy(n,tmpthis,incx,tmpnew,incy)
+      ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
+        CALL BLAS1_copy(tmpthis,incx,tmpnew,incy)
+      ELSEIF(PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+        CALL BLAS1_copy(n,tmpthis,tmpnew,incx)
+      ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
+        CALL BLAS1_copy(n,tmpthis,tmpnew,incy)
+      ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+        CALL BLAS1_copy(tmpthis,tmpnew,incx)
+      ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
+        CALL BLAS1_copy(tmpthis,tmpnew,incy)
+      ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+        CALL BLAS1_copy(n,tmpthis,tmpnew)
+      ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+        CALL BLAS1_copy(tmpthis,tmpnew)
+      ENDIF
+      
+      SELECTTYPE(newVector); TYPE IS(RealVectorType)
+        CALL newVector%set(tmpnew)
+      ENDSELECT
+      
+      SELECTTYPE(newVector); TYPE IS(PETScVectorType)
+        CALL newVector%set(tmpnew)
+      ENDSELECT
+      
+      DEALLOCATE(tmpthis)
+      DEALLOCATE(tmpnew)
 
     ENDSUBROUTINE copy_VectorType 
 !
@@ -685,34 +1164,51 @@ MODULE VectorTypes
 !> @return r the dot product of @c x and @c y
 !>
     FUNCTION dot_VectorType(thisVector,thatVector,n,incx,incy)  RESULT(r)
-      CLASS(VectorType),INTENT(IN)     :: thisVector
-      CLASS(VectorType),INTENT(IN)     :: thatVector
+      CLASS(VectorType),INTENT(INOUT)     :: thisVector
+      CLASS(VectorType),INTENT(INOUT)     :: thatVector
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incy
+      REAL(SRK),ALLOCATABLE :: tmpthis(:),tmpthat(:)
       REAL(SRK) :: r
       
       SELECTTYPE(thisVector); TYPE IS(RealVectorType)
         SELECTTYPE(thatVector); TYPE IS(RealVectorType)
-          IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
-            r = BLAS1_dot(n,thisVector%b,incx,thatVector%b,incy)
-          ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
-            r = BLAS1_dot(thisVector%b,incx,thatVector%b,incy)
-          ELSEIF(PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-            r = BLAS1_dot(n,thisVector%b,thatVector%b,incx)
-          ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
-            r = BLAS1_dot(n,thisVector%b,thatVector%b,incy)
-          ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-            r = BLAS1_dot(n,thisVector%b,thatVector%b)
-          ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-            r = BLAS1_dot(thisVector%b,thatVector%b,incx)
-          ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
-            r = BLAS1_dot(thisVector%b,thatVector%b,incy)
-          ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-            r = BLAS1_dot(thisVector%b,thatVector%b)
-          ENDIF
+          ALLOCATE(tmpthis(thisVector%n))
+          ALLOCATE(tmpthat(thatVector%n))
+          tmpthis=thisVector%get()
+          tmpthat=thatVector%get()
         ENDSELECT
       ENDSELECT
+      
+      SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
+        SELECTTYPE(thatVector); TYPE IS(PETScVectorType)
+          ALLOCATE(tmpthis(thisVector%n))
+          ALLOCATE(tmpthat(thatVector%n))
+          tmpthis=thisVector%get()
+          tmpthat=thatVector%get()
+        ENDSELECT
+      ENDSELECT
+      
+      IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
+        r = BLAS1_dot(n,tmpthis,incx,tmpthat,incy)
+      ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
+        r = BLAS1_dot(tmpthis,incx,tmpthat,incy)
+      ELSEIF(PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+        r = BLAS1_dot(n,tmpthis,tmpthat,incx)
+      ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
+        r = BLAS1_dot(n,tmpthis,tmpthat,incy)
+      ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+        r = BLAS1_dot(n,tmpthis,tmpthat)
+      ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+        r = BLAS1_dot(tmpthis,tmpthat,incx)
+      ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
+        r = BLAS1_dot(tmpthis,tmpthat,incy)
+      ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+        r = BLAS1_dot(tmpthis,tmpthat)
+      ENDIF
+      DEALLOCATE(tmpthis)
+      DEALLOCATE(tmpthat)
 
     ENDFUNCTION dot_VectorType 
 !
@@ -725,22 +1221,32 @@ MODULE VectorTypes
 !> @return imax index of the absolute max of @c y
 !>
     FUNCTION iamax_VectorType(thisVector,n,incx)  RESULT(imax)
-      CLASS(VectorType),INTENT(IN) :: thisVector
+      CLASS(VectorType),INTENT(INOUT) :: thisVector
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
+      REAL(SRK),ALLOCATABLE :: tmpthis(:)
       INTEGER(SIK) :: imax
       
       SELECTTYPE(thisVector); TYPE IS(RealVectorType)
-        IF(PRESENT(n) .AND. PRESENT(incx)) THEN
-          imax = BLAS1_iamax(n,thisVector%b,incx)
-        ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx)) THEN
-          imax = BLAS1_iamax(thisVector%b,incx)
-        ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
-          imax = BLAS1_iamax(n,thisVector%b)
-        ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
-          imax = BLAS1_iamax(thisVector%b)
-        ENDIF
+        ALLOCATE(tmpthis(thisVector%n))
+        tmpthis=thisVector%get()
       ENDSELECT
+      
+      SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
+        ALLOCATE(tmpthis(thisVector%n))
+        tmpthis=thisVector%get()
+      ENDSELECT
+
+      IF(PRESENT(n) .AND. PRESENT(incx)) THEN
+        imax = BLAS1_iamax(n,tmpthis,incx)
+      ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx)) THEN
+        imax = BLAS1_iamax(tmpthis,incx)
+      ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
+        imax = BLAS1_iamax(n,tmpthis)
+      ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
+        imax = BLAS1_iamax(tmpthis)
+      ENDIF
+      DEALLOCATE(tmpthis)
 
     ENDFUNCTION iamax_VectorType  
 !
@@ -754,22 +1260,33 @@ MODULE VectorTypes
 !>
 
     FUNCTION iamin_VectorType(thisVector,n,incx)  RESULT(imin)
-      CLASS(VectorType),INTENT(IN) :: thisVector
+      CLASS(VectorType),INTENT(INOUT) :: thisVector
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
+      REAL(SRK),ALLOCATABLE :: tmpthis(:)
       INTEGER(SIK) :: imin
       
       SELECTTYPE(thisVector); TYPE IS(RealVectorType)
-        IF(PRESENT(n) .AND. PRESENT(incx)) THEN
-          imin = BLAS1_iamin(n,thisVector%b,incx)
-        ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx)) THEN
-          imin = BLAS1_iamin(thisVector%b,incx)
-        ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
-          imin = BLAS1_iamin(n,thisVector%b)
-        ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
-          imin = BLAS1_iamin(thisVector%b)
-        ENDIF
+        ALLOCATE(tmpthis(thisVector%n))
+        tmpthis=thisVector%get()
       ENDSELECT
+      
+      SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
+        ALLOCATE(tmpthis(thisVector%n))
+        tmpthis=thisVector%get()
+      ENDSELECT
+      
+      IF(PRESENT(n) .AND. PRESENT(incx)) THEN
+        imin = BLAS1_iamin(n,tmpthis,incx)
+      ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx)) THEN
+        imin = BLAS1_iamin(tmpthis,incx)
+      ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
+        imin = BLAS1_iamin(n,tmpthis)
+      ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
+        imin = BLAS1_iamin(tmpthis)
+      ENDIF
+      DEALLOCATE(tmpthis)
+      
 
     ENDFUNCTION iamin_VectorType    
 !
@@ -782,22 +1299,32 @@ MODULE VectorTypes
 !> @return norm2 the 2-norm of @c x
 !>
     FUNCTION nrm2_VectorType(thisVector,n,incx)  RESULT(norm2)
-      CLASS(VectorType),INTENT(IN) :: thisVector
+      CLASS(VectorType),INTENT(INOUT) :: thisVector
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
+      REAL(SRK),ALLOCATABLE :: tmpthis(:)
       REAL(SRK) :: norm2
       
       SELECTTYPE(thisVector); TYPE IS(RealVectorType)
-        IF(PRESENT(n) .AND. PRESENT(incx)) THEN
-          norm2 = BLAS1_nrm2(n,thisVector%b,incx)
-        ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx)) THEN
-          norm2 = BLAS1_nrm2(thisVector%b,incx)
-        ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
-          norm2 = BLAS1_nrm2(n,thisVector%b)
-        ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
-          norm2 = BLAS1_nrm2(thisVector%b)
-        ENDIF
+        ALLOCATE(tmpthis(thisVector%n))
+        tmpthis=thisVector%get()
       ENDSELECT
+      
+      SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
+        ALLOCATE(tmpthis(thisVector%n))
+        tmpthis=thisVector%get()
+      ENDSELECT
+      
+      IF(PRESENT(n) .AND. PRESENT(incx)) THEN
+        norm2 = BLAS1_nrm2(n,tmpthis,incx)
+      ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx)) THEN
+        norm2 = BLAS1_nrm2(tmpthis,incx)
+      ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
+        norm2 = BLAS1_nrm2(n,tmpthis)
+      ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
+        norm2 = BLAS1_nrm2(tmpthis)
+      ENDIF
+      DEALLOCATE(tmpthis)
 
     ENDFUNCTION nrm2_VectorType    
 !
@@ -814,18 +1341,37 @@ MODULE VectorTypes
       REAL(SRK),INTENT(IN) :: a
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
+      REAL(SRK),ALLOCATABLE :: tmpthis(:)
       
       SELECTTYPE(thisVector); TYPE IS(RealVectorType)
-        IF(PRESENT(n) .AND. PRESENT(incx)) THEN
-          CALL BLAS1_scal(n,a,thisVector%b,incx)
-        ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx)) THEN
-          CALL BLAS1_scal(a,thisVector%b,incx)
-        ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
-          CALL BLAS1_scal(n,a,thisVector%b)
-        ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
-          CALL BLAS1_scal(a,thisVector%b)
-        ENDIF
+        ALLOCATE(tmpthis(thisVector%n))
+        tmpthis=thisVector%get()
       ENDSELECT
+      
+      SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
+        ALLOCATE(tmpthis(thisVector%n))
+        tmpthis=thisVector%get()
+      ENDSELECT
+      
+      IF(PRESENT(n) .AND. PRESENT(incx)) THEN
+        CALL BLAS1_scal(n,a,tmpthis,incx)
+      ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx)) THEN
+        CALL BLAS1_scal(a,tmpthis,incx)
+      ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
+        CALL BLAS1_scal(n,a,tmpthis)
+      ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
+        CALL BLAS1_scal(a,tmpthis)
+      ENDIF
+      
+      SELECTTYPE(thisVector); TYPE IS(RealVectorType)
+        CALL thisVector%set(tmpthis)
+      ENDSELECT
+      
+      SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
+        CALL thisVector%set(tmpthis)
+      ENDSELECT
+      
+      DEALLOCATE(tmpthis)
 
     ENDSUBROUTINE scal_scalar_VectorType 
 !
@@ -839,23 +1385,49 @@ MODULE VectorTypes
 !>
     SUBROUTINE scal_vector_VectorType(thisVector,aVector,n,incx)
       CLASS(VectorType),INTENT(INOUT) :: thisVector
-      CLASS(VectorType),INTENT(IN) :: aVector
+      CLASS(VectorType),INTENT(INOUT) :: aVector
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
+      REAL(SRK),ALLOCATABLE :: tmpthis(:),tmpa(:)
       
       SELECTTYPE(thisVector); TYPE IS(RealVectorType)
         SELECTTYPE(aVector); TYPE IS(RealVectorType)
-          IF(PRESENT(n) .AND. PRESENT(incx)) THEN
-            CALL BLAS1_scal(n,aVector%b,thisVector%b,incx)
-          ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx)) THEN
-            CALL BLAS1_scal(aVector%b,thisVector%b,incx)
-          ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
-            CALL BLAS1_scal(n,aVector%b,thisVector%b)
-          ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
-            CALL BLAS1_scal(aVector%b,thisVector%b)
-          ENDIF
+          ALLOCATE(tmpthis(thisVector%n))
+          ALLOCATE(tmpa(aVector%n))
+          tmpthis=thisVector%get()
+          tmpa=aVector%get()
         ENDSELECT
       ENDSELECT
+      
+      SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
+        SELECTTYPE(aVector); TYPE IS(PETScVectorType)
+          ALLOCATE(tmpthis(thisVector%n))
+          ALLOCATE(tmpa(aVector%n))
+          tmpthis=thisVector%get()
+          tmpa=aVector%get()
+        ENDSELECT
+      ENDSELECT
+      
+      IF(PRESENT(n) .AND. PRESENT(incx)) THEN
+        CALL BLAS1_scal(n,tmpa,tmpthis,incx)
+      ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx)) THEN
+        CALL BLAS1_scal(tmpa,tmpthis,incx)
+      ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
+        CALL BLAS1_scal(n,tmpa,tmpthis)
+      ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
+        CALL BLAS1_scal(tmpa,tmpthis)
+      ENDIF
+      
+      SELECTTYPE(thisVector); TYPE IS(RealVectorType)
+        CALL thisVector%set(tmpthis)
+      ENDSELECT
+      
+      SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
+        CALL thisVector%set(tmpthis)
+      ENDSELECT
+      
+      DEALLOCATE(tmpthis)
+      DEALLOCATE(tmpa)
 
     ENDSUBROUTINE scal_vector_VectorType      
 !
@@ -873,28 +1445,60 @@ MODULE VectorTypes
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incy
+      REAL(SRK),ALLOCATABLE :: tmpthis(:),tmpthat(:)
+      
+      SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
+        SELECTTYPE(thatVector); TYPE IS(PETScVectorType)
+          ALLOCATE(tmpthis(thisVector%n))
+          ALLOCATE(tmpthat(thatVector%n))
+          tmpthis=thisVector%get()
+          tmpthat=thatVector%get()
+        ENDSELECT
+      ENDSELECT
       
       SELECTTYPE(thisVector); TYPE IS(RealVectorType)
         SELECTTYPE(thatVector); TYPE IS(RealVectorType)
-          IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
-            CALL BLAS1_swap(n,thisVector%b,incx,thatVector%b,incy)
-          ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
-            CALL BLAS1_swap(thisVector%b,incx,thatVector%b,incy)
-          ELSEIF(PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-            CALL BLAS1_swap(n,thisVector%b,thatVector%b,incx)
-          ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
-            CALL BLAS1_swap(n,thisVector%b,thatVector%b,incy)
-          ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-            CALL BLAS1_swap(thisVector%b,thatVector%b,incx)
-          ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
-            CALL BLAS1_swap(thisVector%b,thatVector%b,incy)
-          ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-            CALL BLAS1_swap(n,thisVector%b,thatVector%b)
-          ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
-            CALL BLAS1_swap(thisVector%b,thatVector%b)
-          ENDIF
+          ALLOCATE(tmpthis(thisVector%n))
+          ALLOCATE(tmpthat(thatVector%n))
+          tmpthis=thisVector%get()
+          tmpthat=thatVector%get()
         ENDSELECT
       ENDSELECT
+      
+      IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
+        CALL BLAS1_swap(n,tmpthis,incx,tmpthat,incy)
+      ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
+        CALL BLAS1_swap(tmpthis,incx,tmpthat,incy)
+      ELSEIF(PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+        CALL BLAS1_swap(n,tmpthis,tmpthat,incx)
+      ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
+        CALL BLAS1_swap(n,tmpthis,tmpthat,incy)
+      ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+        CALL BLAS1_swap(tmpthis,tmpthat,incx)
+      ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. PRESENT(incy)) THEN
+        CALL BLAS1_swap(tmpthis,tmpthat,incy)
+      ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+        CALL BLAS1_swap(n,tmpthis,tmpthat)
+      ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
+        CALL BLAS1_swap(tmpthis,tmpthat)
+      ENDIF
+      
+      SELECTTYPE(thisVector); TYPE IS(RealVectorType)
+        SELECTTYPE(thatVector); TYPE IS(RealVectorType)
+          CALL thisVector%set(tmpthis)
+          CALL thatVector%set(tmpthat)
+        ENDSELECT
+      ENDSELECT
+      
+      SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
+        SELECTTYPE(thatVector); TYPE IS(PETScVectorType)
+          CALL thisVector%set(tmpthis)
+          CALL thatVector%set(tmpthat)
+        ENDSELECT
+      ENDSELECT
+      
+      DEALLOCATE(tmpthis)
+      DEALLOCATE(tmpthat)
 
     ENDSUBROUTINE swap_VectorType  
 
