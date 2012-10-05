@@ -1383,7 +1383,7 @@ MODULE LinearSolverTypes
 !> Minv is stored as a dense matrix.
 !> 
     SUBROUTINE MinvMult_Dense(Minv,b,x)
-        TYPE(DenseSquareMatrixType),INTENT(IN) :: Minv
+        TYPE(DenseSquareMatrixType),INTENT(INOUT) :: Minv
         REAL(SRK),INTENT(IN) :: b(:)
         REAL(SRK),INTENT(INOUT) :: x(:)
         x=0._SRK
