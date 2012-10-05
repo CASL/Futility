@@ -1685,7 +1685,7 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%init(...) %name (SSK) 1-D FAILED!'
       STOP 666
     ENDIF
-    IF(testParam%pdat%datatype /= 'REAL(SSK)') THEN
+    IF(testParam%pdat%datatype /= '1-D ARRAY REAL(SSK)') THEN
       WRITE(*,*) 'CALL testParam%init(...) %datatype (SSK) 1-D FAILED!'
       STOP 666
     ENDIF
@@ -1801,7 +1801,7 @@ PROGRAM testParameterLists
   
     !test assignment
     eParams => NULL()
-    CALL testParam%init('testSSK1a',4.0_SSK)
+    CALL testParam%init('testSSK1a',(/4.0_SSK/))
     testParam2=testparam
     IF(.NOT.ASSOCIATED(testParam2%pdat)) THEN
       WRITE(*,*) 'ASSIGNMENT(=) %pdat (SSK) 1-D FAILED!'
@@ -1811,7 +1811,7 @@ PROGRAM testParameterLists
       WRITE(*,*) 'ASSIGNMENT(=) %name (SSK) 1-D FAILED!'
       STOP 666
     ENDIF
-    IF(testParam2%pdat%datatype /= 'REAL(SSK)') THEN
+    IF(testParam2%pdat%datatype /= '1-D ARRAY REAL(SSK)') THEN
       WRITE(*,*) 'ASSIGNMENT(=) %datatype (SSK) 1-D FAILED!'
       STOP 666
     ENDIF
@@ -1844,7 +1844,7 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%init(...) %name (SDK) 1-D FAILED!'
       STOP 666
     ENDIF
-    IF(testParam%pdat%datatype /= 'REAL(SDK)') THEN
+    IF(testParam%pdat%datatype /= '1-D ARRAY REAL(SDK)') THEN
       WRITE(*,*) 'CALL testParam%init(...) %datatype (SDK) 1-D FAILED!'
       STOP 666
     ENDIF
@@ -1959,7 +1959,7 @@ PROGRAM testParameterLists
   
     !test assignment
     eParams => NULL()
-    CALL testParam%init('testSDK1a',4.0_SDK)
+    CALL testParam%init('testSDK1a',(/4.0_SDK/))
     testParam2=testparam
     IF(.NOT.ASSOCIATED(testParam2%pdat)) THEN
       WRITE(*,*) 'ASSIGNMENT(=) %pdat (SDK) 1-D FAILED!'
@@ -1969,7 +1969,7 @@ PROGRAM testParameterLists
       WRITE(*,*) 'ASSIGNMENT(=) %name (SDK) 1-D FAILED!'
       STOP 666
     ENDIF
-    IF(testParam2%pdat%datatype /= 'REAL(SDK)') THEN
+    IF(testParam2%pdat%datatype /= '1-D ARRAY REAL(SDK)') THEN
       WRITE(*,*) 'ASSIGNMENT(=) %datatype (SDK) 1-D FAILED!'
       STOP 666
     ENDIF
@@ -2002,7 +2002,7 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%init(...) %name (SNK) 1-D FAILED!'
       STOP 666
     ENDIF
-    IF(testParam%pdat%datatype /= 'INTEGER(SNK)') THEN
+    IF(testParam%pdat%datatype /= '1-D ARRAY INTEGER(SNK)') THEN
       WRITE(*,*) 'CALL testParam%init(...) %datatype (SNK) 1-D FAILED!'
       STOP 666
     ENDIF
@@ -2117,7 +2117,7 @@ PROGRAM testParameterLists
   
     !test assignment
     eParams => NULL()
-    CALL testParam%init('testSNK1a',4_SNK)
+    CALL testParam%init('testSNK1a',(/4_SNK/))
     testParam2=testparam
     IF(.NOT.ASSOCIATED(testParam2%pdat)) THEN
       WRITE(*,*) 'ASSIGNMENT(=) %pdat (SNK) 1-D FAILED!'
@@ -2127,7 +2127,7 @@ PROGRAM testParameterLists
       WRITE(*,*) 'ASSIGNMENT(=) %name (SNK) 1-D FAILED!'
       STOP 666
     ENDIF
-    IF(testParam2%pdat%datatype /= 'INTEGER(SNK)') THEN
+    IF(testParam2%pdat%datatype /= '1-D ARRAY INTEGER(SNK)') THEN
       WRITE(*,*) 'ASSIGNMENT(=) %datatype (SNK) 1-D FAILED!'
       STOP 666
     ENDIF
@@ -2160,7 +2160,7 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%init(...) %name (SLK) 1-D FAILED!'
       STOP 666
     ENDIF
-    IF(testParam%pdat%datatype /= 'INTEGER(SLK)') THEN
+    IF(testParam%pdat%datatype /= '1-D ARRAY INTEGER(SLK)') THEN
       WRITE(*,*) 'CALL testParam%init(...) %datatype (SLK) 1-D FAILED!'
       STOP 666
     ENDIF
@@ -2275,7 +2275,7 @@ PROGRAM testParameterLists
   
     !test assignment
     eParams => NULL()
-    CALL testParam%init('testSLK1a',4_SLK)
+    CALL testParam%init('testSLK1a',(/4_SLK/))
     testParam2=testparam
     IF(.NOT.ASSOCIATED(testParam2%pdat)) THEN
       WRITE(*,*) 'ASSIGNMENT(=) %pdat (SLK) 1-D FAILED!'
@@ -2285,7 +2285,7 @@ PROGRAM testParameterLists
       WRITE(*,*) 'ASSIGNMENT(=) %name (SLK) 1-D FAILED!'
       STOP 666
     ENDIF
-    IF(testParam2%pdat%datatype /= 'INTEGER(SLK)') THEN
+    IF(testParam2%pdat%datatype /= '1-D ARRAY INTEGER(SLK)') THEN
       WRITE(*,*) 'ASSIGNMENT(=) %datatype (SLK) 1-D FAILED!'
       STOP 666
     ENDIF
@@ -2318,7 +2318,7 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%init(...) %name (SBK) 1-D FAILED!'
       STOP 666
     ENDIF
-    IF(testParam%pdat%datatype /= 'LOGICAL(SBK)') THEN
+    IF(testParam%pdat%datatype /= '1-D ARRAY LOGICAL(SBK)') THEN
       WRITE(*,*) 'CALL testParam%init(...) %datatype (SBK) 1-D FAILED!'
       STOP 666
     ENDIF
@@ -2445,7 +2445,7 @@ PROGRAM testParameterLists
       WRITE(*,*) 'ASSIGNMENT(=) %name (SBK) 1-D FAILED!'
       STOP 666
     ENDIF
-    IF(testParam2%pdat%datatype /= 'LOGICAL(SBK)') THEN
+    IF(testParam2%pdat%datatype /= '1-D ARRAY LOGICAL(SBK)') THEN
       WRITE(*,*) 'ASSIGNMENT(=) %datatype (SBK) 1-D FAILED!'
       STOP 666
     ENDIF
@@ -2479,7 +2479,7 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%init(...) %name StringType (STR) 1-D FAILED!'
       STOP 666
     ENDIF
-    IF(testParam%pdat%datatype /= 'TYPE(StringType)') THEN
+    IF(testParam%pdat%datatype /= '1-D ARRAY TYPE(StringType)') THEN
       WRITE(*,*) 'CALL testParam%init(...) %datatype StringType (STR) 1-D FAILED!'
       STOP 666
     ENDIF
@@ -2648,7 +2648,7 @@ PROGRAM testParameterLists
       WRITE(*,*) 'ASSIGNMENT(=) %name StringType (STR) 1-D FAILED!'
       STOP 666
     ENDIF
-    IF(testParam2%pdat%datatype /= 'TYPE(StringType)') THEN
+    IF(testParam2%pdat%datatype /= '1-D ARRAY TYPE(StringType)') THEN
       WRITE(*,*) 'ASSIGNMENT(=) %datatype StringType (STR) 1-D FAILED!'
       STOP 666
     ENDIF
@@ -2684,7 +2684,7 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%init(...) %name (SSK) 2-D FAILED!'
       STOP 666
     ENDIF
-    IF(testParam%pdat%datatype /= 'REAL(SSK)') THEN
+    IF(testParam%pdat%datatype /= '2-D ARRAY REAL(SSK)') THEN
       WRITE(*,*) 'CALL testParam%init(...) %datatype (SSK) 2-D FAILED!'
       STOP 666
     ENDIF
@@ -2825,7 +2825,7 @@ PROGRAM testParameterLists
       WRITE(*,*) 'ASSIGNMENT(=) %name (SSK) 2-D FAILED!'
       STOP 666
     ENDIF
-    IF(testParam2%pdat%datatype /= 'REAL(SSK)') THEN
+    IF(testParam2%pdat%datatype /= '2-D ARRAY REAL(SSK)') THEN
       WRITE(*,*) 'ASSIGNMENT(=) %datatype (SSK) 2-D FAILED!'
       STOP 666
     ENDIF
@@ -2860,7 +2860,7 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%init(...) %name (SDK) 2-D FAILED!'
       STOP 666
     ENDIF
-    IF(testParam%pdat%datatype /= 'REAL(SDK)') THEN
+    IF(testParam%pdat%datatype /= '2-D ARRAY REAL(SDK)') THEN
       WRITE(*,*) 'CALL testParam%init(...) %datatype (SDK) 2-D FAILED!'
       STOP 666
     ENDIF
@@ -3002,7 +3002,7 @@ PROGRAM testParameterLists
       WRITE(*,*) 'ASSIGNMENT(=) %name (SDK) 2-D FAILED!'
       STOP 666
     ENDIF
-    IF(testParam2%pdat%datatype /= 'REAL(SDK)') THEN
+    IF(testParam2%pdat%datatype /= '2-D ARRAY REAL(SDK)') THEN
       WRITE(*,*) 'ASSIGNMENT(=) %datatype (SDK) 2-D FAILED!'
       STOP 666
     ENDIF
@@ -3037,7 +3037,7 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%init(...) %name (SNK) 2-D FAILED!'
       STOP 666
     ENDIF
-    IF(testParam%pdat%datatype /= 'INTEGER(SNK)') THEN
+    IF(testParam%pdat%datatype /= '2-D ARRAY INTEGER(SNK)') THEN
       WRITE(*,*) 'CALL testParam%init(...) %datatype (SNK) 2-D FAILED!'
       STOP 666
     ENDIF
@@ -3177,7 +3177,7 @@ PROGRAM testParameterLists
       WRITE(*,*) 'ASSIGNMENT(=) %name (SNK) 2-D FAILED!'
       STOP 666
     ENDIF
-    IF(testParam2%pdat%datatype /= 'INTEGER(SNK)') THEN
+    IF(testParam2%pdat%datatype /= '2-D ARRAY INTEGER(SNK)') THEN
       WRITE(*,*) 'ASSIGNMENT(=) %datatype (SNK) 2-D FAILED!'
       STOP 666
     ENDIF
@@ -3212,7 +3212,7 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%init(...) %name (SLK) 2-D FAILED!'
       STOP 666
     ENDIF
-    IF(testParam%pdat%datatype /= 'INTEGER(SLK)') THEN
+    IF(testParam%pdat%datatype /= '2-D ARRAY INTEGER(SLK)') THEN
       WRITE(*,*) 'CALL testParam%init(...) %datatype (SLK) 2-D FAILED!'
       STOP 666
     ENDIF
@@ -3353,7 +3353,7 @@ PROGRAM testParameterLists
       WRITE(*,*) 'ASSIGNMENT(=) %name (SLK) 2-D FAILED!'
       STOP 666
     ENDIF
-    IF(testParam2%pdat%datatype /= 'INTEGER(SLK)') THEN
+    IF(testParam2%pdat%datatype /= '2-D ARRAY INTEGER(SLK)') THEN
       WRITE(*,*) 'ASSIGNMENT(=) %datatype (SLK) 2-D FAILED!'
       STOP 666
     ENDIF
@@ -3388,7 +3388,7 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%init(...) %name (SSK) 3-D FAILED!'
       STOP 666
     ENDIF
-    IF(testParam%pdat%datatype /= 'REAL(SSK)') THEN
+    IF(testParam%pdat%datatype /= '3-D ARRAY REAL(SSK)') THEN
       WRITE(*,*) 'CALL testParam%init(...) %datatype (SSK) 3-D FAILED!'
       STOP 666
     ENDIF
@@ -3539,7 +3539,7 @@ PROGRAM testParameterLists
       WRITE(*,*) 'ASSIGNMENT(=) %name (SSK) 3-D FAILED!'
       STOP 666
     ENDIF
-    IF(testParam2%pdat%datatype /= 'REAL(SSK)') THEN
+    IF(testParam2%pdat%datatype /= '3-D ARRAY REAL(SSK)') THEN
       WRITE(*,*) 'ASSIGNMENT(=) %datatype (SSK) 3-D FAILED!'
       STOP 666
     ENDIF
@@ -3574,7 +3574,7 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%init(...) %name (SDK) 3-D FAILED!'
       STOP 666
     ENDIF
-    IF(testParam%pdat%datatype /= 'REAL(SDK)') THEN
+    IF(testParam%pdat%datatype /= '3-D ARRAY REAL(SDK)') THEN
       WRITE(*,*) 'CALL testParam%init(...) %datatype (SDK) 3-D FAILED!'
       STOP 666
     ENDIF
@@ -3725,7 +3725,7 @@ PROGRAM testParameterLists
       WRITE(*,*) 'ASSIGNMENT(=) %name (SDK) 3-D FAILED!'
       STOP 666
     ENDIF
-    IF(testParam2%pdat%datatype /= 'REAL(SDK)') THEN
+    IF(testParam2%pdat%datatype /= '3-D ARRAY REAL(SDK)') THEN
       WRITE(*,*) 'ASSIGNMENT(=) %datatype (SDK) 3-D FAILED!'
       STOP 666
     ENDIF
@@ -3760,7 +3760,7 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%init(...) %name (SNK) 3-D FAILED!'
       STOP 666
     ENDIF
-    IF(testParam%pdat%datatype /= 'INTEGER(SNK)') THEN
+    IF(testParam%pdat%datatype /= '3-D ARRAY INTEGER(SNK)') THEN
       WRITE(*,*) 'CALL testParam%init(...) %datatype (SNK) 3-D FAILED!'
       STOP 666
     ENDIF
@@ -3910,7 +3910,7 @@ PROGRAM testParameterLists
       WRITE(*,*) 'ASSIGNMENT(=) %name (SNK) 3-D FAILED!'
       STOP 666
     ENDIF
-    IF(testParam2%pdat%datatype /= 'INTEGER(SNK)') THEN
+    IF(testParam2%pdat%datatype /= '3-D ARRAY INTEGER(SNK)') THEN
       WRITE(*,*) 'ASSIGNMENT(=) %datatype (SNK) 3-D FAILED!'
       STOP 666
     ENDIF
@@ -3945,7 +3945,7 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%init(...) %name (SLK) 3-D FAILED!'
       STOP 666
     ENDIF
-    IF(testParam%pdat%datatype /= 'INTEGER(SLK)') THEN
+    IF(testParam%pdat%datatype /= '3-D ARRAY INTEGER(SLK)') THEN
       WRITE(*,*) 'CALL testParam%init(...) %datatype (SLK) 3-D FAILED!'
       STOP 666
     ENDIF
@@ -4096,7 +4096,7 @@ PROGRAM testParameterLists
       WRITE(*,*) 'ASSIGNMENT(=) %name (SLK) 3-D FAILED!'
       STOP 666
     ENDIF
-    IF(testParam2%pdat%datatype /= 'INTEGER(SLK)') THEN
+    IF(testParam2%pdat%datatype /= '3-D ARRAY INTEGER(SLK)') THEN
       WRITE(*,*) 'ASSIGNMENT(=) %datatype (SLK) 3-D FAILED!'
       STOP 666
     ENDIF
