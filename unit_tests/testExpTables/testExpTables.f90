@@ -30,6 +30,7 @@ PROGRAM testExpTables
   INTEGER(SIK) :: i
   CHARACTER(LEN=6) :: istr
   TYPE(ExpTableType),SAVE :: testET1,testET2(5)
+  TYPE(ParamType),SAVE :: PL
 
   eExpTable => e
   WRITE(*,*) '==================================================='
@@ -40,21 +41,49 @@ PROGRAM testExpTables
   CALL e%setStopOnError(.FALSE.)
   CALL e%setQuietMode(.TRUE.)
   !Error checking
-  CALL testET1%initialize()
+  CALL PL%clear()
+  CALL testET1%initialize(PL)
+  CALL PL%add('ExpTables -> tabletype',0)
   CALL testET1%clear()
-  CALL testET1%initialize(0,0)
-  CALL testET1%initialize(0,0,0,-1)
-  CALL testET1%initialize(2,-10,0,100,1e-5_SRK)
-  CALL testET1%initialize(2,-10,0,100,1e-5_SRK)
+  CALL testET1%initialize(PL)
+  CALL PL%set('ExpTables -> tabletype',2)
+  CALL PL%add('ExpTables -> minval',1)
+  CALL testET1%clear()
+  CALL testET1%initialize(PL)
+  CALL PL%set('ExpTables -> minval',-10)
+  CALL PL%add('ExpTables -> maxval',1)
+  CALL testET1%clear()
+  CALL testET1%initialize(PL)
+  CALL PL%set('ExpTables -> maxval',-10)
+  CALL testET1%clear()
+  CALL testET1%initialize(PL)
+  CALL PL%set('ExpTables -> maxval',0)
+  CALL PL%add('ExpTables -> nintervals',-1)
+  CALL testET1%clear()
+  CALL testET1%initialize(PL)
+  CALL PL%set('ExpTables -> nintervals',100)
+  CALL PL%add('ExpTables -> errorFlag',.TRUE.)
+  CALL testET1%clear()
+  CALL testET1%initialize(PL)
+  CALL PL%add('ExpTables -> error',0.005_SRK)
+  CALL testET1%clear()
+  CALL testET1%initialize(PL)
+  CALL testET1%initialize(PL)
   CALL testET1%clear()
   !For the coverage
-  CALL testET1%initialize(5,-10,0,1000,1e-7_SRK)
+  CALL PL%set('ExpTables -> tabletype',5)
+  CALL PL%set('ExpTables -> nintervals',1000)
+  CALL PL%set('ExpTables -> error',1e-7_SRK)
+  CALL testET1%initialize(PL)
   x=testET1%maxVal-0.5_SRK*testET1%dx
   ans=testET1%EXPT(x)
-
+  
+  CALL PL%set('ExpTables -> errorFlag',.FALSE.)
+  CALL PL%remove('ExpTables -> error')
   x=-1.234567891012_SRK
   DO i=1,5
-    CALL testET2(i)%initialize(i,-10,0,1000)
+    CALL PL%set('ExpTables -> tabletype',i)
+    CALL testET2(i)%initialize(PL)
     ans=EXPT(testET2(i),x)
     err(i)=ans-(1._SRK-exp(x))
   ENDDO
@@ -203,9 +232,13 @@ PROGRAM testExpTables
   WRITE(*,*) '  Passed: CALL testET2(5)%initialize(...) ORDER2'
   
   err(:)=0.0_SRK
+  CALL PL%set('ExpTables -> nintervals',100)
+  CALL PL%set('ExpTables -> errorFlag',.TRUE.)
+  CALL PL%add('ExpTables -> error',9.99e-7_SRK)
   DO i=1,5
     CALL testET2(i)%clear()
-    CALL testET2(i)%initialize(i,-10,0,100,9.99e-7_SRK)
+    CALL PL%set('ExpTables -> tabletype',i)
+    CALL testET2(i)%initialize(PL)
     WRITE(*,*) getMemUsageChar()
     ans=testET2(i)%EXPT(x)
     err(i)=ans-(1._SRK-EXP(x))
@@ -246,21 +279,25 @@ CONTAINS
 !> compare to the analytic expressions for verification.
     SUBROUTINE ErrCheck()
       REAL(SRK) :: x(1000),ans(1000),err_input,err_result(1000),maxerr,dx
-      INTEGER(SIK) :: nloops,j,i,ntype,nintervals(6),itype,maxi
+      INTEGER(SIK) :: nloops,j,i,ntype,nintervals,itype,maxi
       TYPE(ExpTableType) :: testET
       
       ntype=5_SIK
-      nintervals(1)=1_SIK
-      DO i=2,6
-        nintervals(i)=nintervals(i-1)*10_SIK
-      ENDDO
+      
+      !DO i=2,6
+      !  nintervals(i)=nintervals(i-1)*10_SIK
+      !ENDDO
       WRITE(*,*)
       WRITE(*,*) '+------------+------------+---------------+'
       WRITE(*,*) '| Table Type | nIntervals | Max Table Err |'
       WRITE(*,*) '+------------+------------+---------------+'
       DO itype=2,5 !ntype
+        nintervals=1_SIK
         DO j=2,6
-          CALL testET%initialize(itype,-10,0,nintervals(j))
+          nintervals=nintervals*10
+          CALL PL%set('ExpTables -> tabletype',itype)
+          CALL PL%set('ExpTables -> nintervals',nintervals)
+          CALL testET%initialize(PL)
           x(1)=0.0_SRK
           IF(itype/=3) THEN
             dx=testET%dx/1000._SRK
