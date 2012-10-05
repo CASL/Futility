@@ -419,7 +419,7 @@ MODULE VectorTypes
     ENDSUBROUTINE init_RealVectorType
 !
 !-------------------------------------------------------------------------------
-!> @brief Initializes the real vector
+!> @brief Initializes the PETSc vector
 !> @param declares the vector type to act on
 !> @param n the number of rows
 !>
@@ -459,6 +459,9 @@ MODULE VectorTypes
           modName//'::'//myName//' - VectorType already initialized')
       ENDIF
       IF(localalloc) DEALLOCATE(eVectorType)
+#else
+      CALL eVectorType%raiseError('Incorrect call to '// &
+              modName//'::'//myName//' - PETSc not enabled')
 #endif
     ENDSUBROUTINE init_PETScVectorType
 !
@@ -467,6 +470,7 @@ MODULE VectorTypes
 !> @param declares the vector type to act on
 !>
     SUBROUTINE clear_RealVectorType(vector)
+      CHARACTER(LEN=*),PARAMETER :: myName='clear_RealVectorType'
       CLASS(RealVectorType),INTENT(INOUT) :: vector
       vector%isInit=.FALSE.
       vector%n=0
@@ -478,6 +482,7 @@ MODULE VectorTypes
 !> @param declares the vector type to act on
 !>
     SUBROUTINE clear_PETScVectorType(vector)
+      CHARACTER(LEN=*),PARAMETER :: myName='clear_PETScVectorType'
       CLASS(PETScVectorType),INTENT(INOUT) :: vector
 #ifdef HAVE_PETSC
       PetscErrorCode  :: ierr
@@ -486,16 +491,20 @@ MODULE VectorTypes
       vector%isCreated=.FALSE.
       vector%n=0
       CALL VecDestroy(vector%b,ierr)
+#else
+      CALL eVectorType%raiseError('Incorrect call to '// &
+              modName//'::'//myName//' - PETSc not enabled')
 #endif
     ENDSUBROUTINE clear_PETScVectorType
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets the values in the real vector
-!> @param declare the vector type to act on
+!> @brief Sets one value in the real vector
+!> @param declares the vector type to act on
 !> @param i the ith location in the vector
 !> @param setval the value to be set
 !>
     SUBROUTINE setOne_RealVectorType(vector,i,setval)
+      CHARACTER(LEN=*),PARAMETER :: myName='setOne_RealVectorType'
       CLASS(RealVectorType),INTENT(INOUT) :: vector
       INTEGER(SIK),INTENT(IN) :: i
       REAL(SRK),INTENT(IN) :: setval
@@ -507,12 +516,13 @@ MODULE VectorTypes
     ENDSUBROUTINE setOne_RealVectorType
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets the values in the real vector
-!> @param declare the vector type to act on
+!> @brief Sets one value in the real vector
+!> @param declares the vector type to act on
 !> @param i the ith location in the vector
 !> @param setval the value to be set
 !>
     SUBROUTINE setOne_PETScVectorType(vector,i,setval)
+      CHARACTER(LEN=*),PARAMETER :: myName='setOne_PETScVectorType'
       CLASS(PETScVectorType),INTENT(INOUT) :: vector
       INTEGER(SIK),INTENT(IN) :: i
       REAL(SRK),INTENT(IN) :: setval
@@ -526,15 +536,19 @@ MODULE VectorTypes
         ENDIF
       ENDIF
       vector%isAssembled=.FALSE.
+#else
+      CALL eVectorType%raiseError('Incorrect call to '// &
+              modName//'::'//myName//' - PETSc not enabled')
 #endif
     ENDSUBROUTINE setOne_PETScVectorType
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets the values in the real vector
-!> @param declare the vector type to act on
-!> @param setval the value to be set
+!> @brief Sets all values in the real vector with a scalar value
+!> @param declares the vector type to act on
+!> @param setval the scalar value to be set
 !>
     SUBROUTINE setAll_scalar_RealVectorType(vector,setval)
+      CHARACTER(LEN=*),PARAMETER :: myName='setAll_scalar_RealVectorType'
       CLASS(RealVectorType),INTENT(INOUT) :: vector
       REAL(SRK),INTENT(IN) :: setval
       IF(vector%isInit) THEN
@@ -543,11 +557,12 @@ MODULE VectorTypes
     ENDSUBROUTINE setAll_scalar_RealVectorType
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets the values in the real vector
+!> @brief Sets all values in the PETSc vector with a scalar value
 !> @param declare the vector type to act on
-!> @param setval the value to be set
+!> @param setval the scalar value to be set
 !>
     SUBROUTINE setAll_scalar_PETScVectorType(vector,setval)
+      CHARACTER(LEN=*),PARAMETER :: myName='setAll_scalar_PETScVectorType'
       CLASS(PETScVectorType),INTENT(INOUT) :: vector
       REAL(SRK),INTENT(IN) :: setval
       INTEGER(SIK) :: i
@@ -559,48 +574,59 @@ MODULE VectorTypes
         ENDDO
       ENDIF
       vector%isAssembled=.FALSE.
+#else
+      CALL eVectorType%raiseError('Incorrect call to '// &
+              modName//'::'//myName//' - PETSc not enabled')
 #endif
     ENDSUBROUTINE setAll_scalar_PETScVectorType
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets the values in the real vector
+!> @brief Sets all the values in the real vector
 !> @param declare the vector type to act on
-!> @param setval the value to be set
+!> @param setval the array of values to be set
 !>
     SUBROUTINE setAll_array_RealVectorType(vector,setval)
+      CHARACTER(LEN=*),PARAMETER :: myName='setAll_array_RealVectorType'
       CLASS(RealVectorType),INTENT(INOUT) :: vector
       REAL(SRK),INTENT(IN) :: setval(:)
-      IF(vector%isInit) THEN
-          vector%b=setval
+      IF(vector%isInit .AND. SIZE(setval)==vector%n) THEN
+        vector%b=setval
       ENDIF
     ENDSUBROUTINE setAll_array_RealVectorType
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets the values in the real vector
+!> @brief Sets all the values in the PETSc vector with an array of values
 !> @param declare the vector type to act on
-!> @param setval the value to be set
+!> @param setval the array of values to be set
 !>
     SUBROUTINE setAll_array_PETScVectorType(vector,setval)
+      CHARACTER(LEN=*),PARAMETER :: myName='setAll_array_PETScVectorType'
       CLASS(PETScVectorType),INTENT(INOUT) :: vector
       REAL(SRK),INTENT(IN) :: setval(:)
       INTEGER(SIK) :: i
 #ifdef HAVE_PETSC
       PetscErrorCode  :: ierr
-      IF(vector%isInit) THEN
+      IF(vector%isInit .AND. SIZE(setval)==vector%n) THEN
         DO i=1,vector%n
           CALL VecSetValue(vector%b,i-1,setval(i),INSERT_VALUES,ierr)
         ENDDO
       ENDIF
       vector%isAssembled=.FALSE.
+#else
+      CALL eVectorType%raiseError('Incorrect call to '// &
+              modName//'::'//myName//' - PETSc not enabled')
 #endif
     ENDSUBROUTINE setAll_array_PETScVectorType
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets the values in the real vector
+!> @brief Sets a range of values in the real vector with a scalar value 
 !> @param declare the vector type to act on
-!> @param setval the value to be set
+!> @param setval the scalar value to be set
+!> @param istt the starting point of the range
+!> @param istp the stopping point in the range
 !>
     SUBROUTINE setRange_scalar_RealVectorType(vector,istt,istp,setval)
+      CHARACTER(LEN=*),PARAMETER :: myName='setRange_scalar_RealVectorType'
       CLASS(RealVectorType),INTENT(INOUT) :: vector
       REAL(SRK),INTENT(IN) :: setval
       INTEGER(SIK),INTENT(IN) :: istt,istp
@@ -610,11 +636,14 @@ MODULE VectorTypes
     ENDSUBROUTINE setRange_scalar_RealVectorType
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets the values in the real vector
+!> @brief Sets a range of values in the PETSc vector with a scalar value 
 !> @param declare the vector type to act on
-!> @param setval the value to be set
+!> @param setval the scalar value to be set
+!> @param istt the starting point of the range
+!> @param istp the stopping point in the range
 !>
     SUBROUTINE setRange_scalar_PETScVectorType(vector,istt,istp,setval)
+      CHARACTER(LEN=*),PARAMETER :: myName='setRange_scalar_PETScVectorType'
       CLASS(PETScVectorType),INTENT(INOUT) :: vector
       REAL(SRK),INTENT(IN) :: setval
       INTEGER(SIK),INTENT(IN) :: istt,istp
@@ -627,15 +656,21 @@ MODULE VectorTypes
         ENDDO
       ENDIF
       vector%isAssembled=.FALSE.
+#else
+      CALL eVectorType%raiseError('Incorrect call to '// &
+              modName//'::'//myName//' - PETSc not enabled')
 #endif
     ENDSUBROUTINE setRange_scalar_PETScVectorType
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets the values in the real vector
+!> @brief Sets a range of values in the real vector with an array of values 
 !> @param declare the vector type to act on
-!> @param setval the value to be set
+!> @param setval the scalar value to be set
+!> @param istt the starting point of the range
+!> @param istp the stopping point in the range
 !>
     SUBROUTINE setRange_array_RealVectorType(vector,istt,istp,setval)
+      CHARACTER(LEN=*),PARAMETER :: myName='setRange_array_RealVectorType'
       CLASS(RealVectorType),INTENT(INOUT) :: vector
       REAL(SRK),INTENT(IN) :: setval(:)
       INTEGER(SIK),INTENT(IN) :: istt,istp
@@ -648,11 +683,14 @@ MODULE VectorTypes
     ENDSUBROUTINE setRange_array_RealVectorType
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets the values in the real vector
+!> @brief Sets a range of values in the PETSc vector with an array of values 
 !> @param declare the vector type to act on
-!> @param setval the value to be set
+!> @param setval the scalar value to be set
+!> @param istt the starting point of the range
+!> @param istp the stopping point in the range
 !>
     SUBROUTINE setRange_array_PETScVectorType(vector,istt,istp,setval)
+      CHARACTER(LEN=*),PARAMETER :: myName='setRange_array_PETScVectorType'
       CLASS(PETScVectorType),INTENT(INOUT) :: vector
       REAL(SRK),INTENT(IN) :: setval(:)
       INTEGER(SIK),INTENT(IN) :: istt,istp
@@ -668,11 +706,14 @@ MODULE VectorTypes
         ENDIF
       ENDIF
       vector%isAssembled=.FALSE.
+#else
+      CALL eVectorType%raiseError('Incorrect call to '// &
+              modName//'::'//myName//' - PETSc not enabled')
 #endif
     ENDSUBROUTINE setRange_array_PETScVectorType
 !
 !-------------------------------------------------------------------------------
-!> @brief Gets the values in the real vector
+!> @brief Gets one value in the real vector
 !> @param declares the vector type to act on
 !> @param i the ith location in the vector
 !>
@@ -680,6 +721,7 @@ MODULE VectorTypes
 !> bounds, then -1051.0 is returned (-1051.0 is an arbitrarily chosen key).
 !>
     FUNCTION getOne_RealVectorType(vector,i) RESULT(getval)
+      CHARACTER(LEN=*),PARAMETER :: myName='getOne_RealVectorType'
       CLASS(RealVectorType),INTENT(INOUT) :: vector
       INTEGER(SIK),INTENT(IN) :: i
       REAL(SRK) :: getval
@@ -695,7 +737,7 @@ MODULE VectorTypes
     ENDFUNCTION getOne_RealVectorType
 !
 !-------------------------------------------------------------------------------
-!> @brief Gets the values in the PETSc vector - presently untested
+!> @brief Gets one values in the PETSc vector
 !> @param declares the vector type to act on
 !> @param i the ith location in the vector
 !>
@@ -703,6 +745,7 @@ MODULE VectorTypes
 !> bounds, then -1051.0 is returned (-1051.0 is an arbitrarily chosen key).
 !>
     FUNCTION getOne_PETScVectorType(vector,i) RESULT(getval)
+      CHARACTER(LEN=*),PARAMETER :: myName='getOne_PETScVectorType'
       CLASS(PETScVectorType),INTENT(INOUT) :: vector
       INTEGER(SIK),INTENT(IN) :: i
       REAL(SRK) :: getval
@@ -723,18 +766,21 @@ MODULE VectorTypes
           getval=-1051._SRK
         ENDIF
       ENDIF
+#else
+      CALL eVectorType%raiseError('Incorrect call to '// &
+              modName//'::'//myName//' - PETSc not enabled')
 #endif
     ENDFUNCTION getOne_PETScVectorType
 !
 !-------------------------------------------------------------------------------
-!> @brief Gets the values in the real vector
+!> @brief Gets all values in the real vector
 !> @param declares the vector type to act on
-!> @param i the ith location in the vector
 !>
 !> This routine gets the values of the real vector.  If the location is out of
 !> bounds, then -1051.0 is returned (-1051.0 is an arbitrarily chosen key).
 !>
     FUNCTION getAll_RealVectorType(vector) RESULT(getval)
+      CHARACTER(LEN=*),PARAMETER :: myName='getAll_RealVectorType'
       CLASS(RealVectorType),INTENT(INOUT) :: vector
       REAL(SRK),ALLOCATABLE :: getval(:)
       
@@ -748,14 +794,14 @@ MODULE VectorTypes
     ENDFUNCTION getAll_RealVectorType
 !
 !-------------------------------------------------------------------------------
-!> @brief Gets the values in the PETSc vector - presently untested
+!> @brief Gets all values in the PETSc vector
 !> @param declares the vector type to act on
-!> @param i the ith location in the vector
 !>
 !> This routine gets the values of the PETSc vector.  If the location is out of
 !> bounds, then -1051.0 is returned (-1051.0 is an arbitrarily chosen key).
 !>
     FUNCTION getAll_PETScVectorType(vector) RESULT(getval)
+      CHARACTER(LEN=*),PARAMETER :: myName='getAll_PETScVectorType'
       CLASS(PETScVectorType),INTENT(INOUT) :: vector
       INTEGER(SIK) :: i
       REAL(SRK),ALLOCATABLE :: getval(:)
@@ -777,18 +823,23 @@ MODULE VectorTypes
         ALLOCATE(getval(1))
         getval=-1051._SRK
       ENDIF
+#else
+      CALL eVectorType%raiseError('Incorrect call to '// &
+              modName//'::'//myName//' - PETSc not enabled')
 #endif
     ENDFUNCTION getAll_PETScVectorType
 !
 !-------------------------------------------------------------------------------
-!> @brief Gets the values in the real vector
+!> @brief Gets a range of values in the real vector
 !> @param declares the vector type to act on
-!> @param i the ith location in the vector
+!> @param istt the starting point of the range
+!> @param istp the stopping point in the range
 !>
 !> This routine gets the values of the real vector.  If the location is out of
 !> bounds, then -1051.0 is returned (-1051.0 is an arbitrarily chosen key).
 !>
     FUNCTION getRange_RealVectorType(vector,istt,istp) RESULT(getval)
+      CHARACTER(LEN=*),PARAMETER :: myName='getRange_RealVectorType'
       CLASS(RealVectorType),INTENT(INOUT) :: vector
       INTEGER(SIK),INTENT(IN) :: istt,istp
       REAL(SRK),ALLOCATABLE :: getval(:)
@@ -815,14 +866,16 @@ MODULE VectorTypes
     ENDFUNCTION getRange_RealVectorType
 !
 !-------------------------------------------------------------------------------
-!> @brief Gets the values in the PETSc vector
+!> @brief Gets a range of  values in the PETSc vector
 !> @param declares the vector type to act on
-!> @param i the ith location in the vector
+!> @param istt the starting point of the range
+!> @param istp the stopping point in the range
 !>
 !> This routine gets the values of the PETSc vector.  If the location is out of
 !> bounds, then -1051.0 is returned (-1051.0 is an arbitrarily chosen key).
 !>
     FUNCTION getRange_PETScVectorType(vector,istt,istp) RESULT(getval)
+      CHARACTER(LEN=*),PARAMETER :: myName='getRange_PETScVectorType'
       CLASS(PETScVectorType),INTENT(INOUT) :: vector
       INTEGER(SIK),INTENT(IN) :: istt,istp
       INTEGER(SIK) :: i
@@ -854,6 +907,9 @@ MODULE VectorTypes
           getval=-1051._SRK
         ENDIF
       ENDIF
+#else
+      CALL eVectorType%raiseError('Incorrect call to '// &
+              modName//'::'//myName//' - PETSc not enabled')
 #endif
     ENDFUNCTION getRange_PETScVectorType
 !
