@@ -452,7 +452,8 @@ CONTAINS
 !-------------------------------------------------------------------------------
     SUBROUTINE testDirectSolve()
       CLASS(LinearSolverType_Base),ALLOCATABLE :: thisLS
-
+      REAL(SRK),ALLOCATABLE :: dummyvec(:)
+      
       ALLOCATE(LinearSolverType_Direct :: thisLS)
      
       ! Unspecified check
@@ -596,10 +597,13 @@ CONTAINS
       
       !Check the result
       SELECTTYPE (X=>thisLS%X); TYPE IS(RealVectorType)
-        IF(.NOT.((X%get(1) .APPROXEQ. 1._SRK) &
-           .AND. (X%get(2) .APPROXEQ. 1._SRK) &
-           .AND. (X%get(3) .APPROXEQ. 1._SRK) &
-           .AND. (X%get(4) .APPROXEQ. 1._SRK) &
+        IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+        ALLOCATE(dummyvec(X%n))
+        CALL X%get(dummyvec)
+        IF(.NOT.((dummyvec(1) .APPROXEQ. 1._SRK) &
+           .AND. (dummyvec(2) .APPROXEQ. 1._SRK) &
+           .AND. (dummyvec(3) .APPROXEQ. 1._SRK) &
+           .AND. (dummyvec(4) .APPROXEQ. 1._SRK) &
            .AND. (thisLS%info == 0) )) THEN
           WRITE(*,*) 'CALL Direct%solve() -LU method FAILED!'
           STOP 666
@@ -673,9 +677,12 @@ CONTAINS
       
       !Check X
       SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
-        IF(.NOT. ((X%get(1) .APPROXEQ. 0.46428571428571430_SRK) &
-           .AND.  (X%get(2) .APPROXEQ. 0.85714285714285721_SRK) &
-           .AND.  (X%get(3) .APPROXEQ. 0.96428571428571430_SRK) &
+        IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+        ALLOCATE(dummyvec(X%n))
+        CALL X%get(dummyvec)
+        IF(.NOT. ((dummyvec(1) .APPROXEQ. 0.46428571428571430_SRK) &
+           .AND.  (dummyvec(2) .APPROXEQ. 0.85714285714285721_SRK) &
+           .AND.  (dummyvec(3) .APPROXEQ. 0.96428571428571430_SRK) &
            .AND.   thisLS%info == 0)) THEN
           WRITE(*,*) 'CALL Direct%solve() -LU method FAILED!'
           STOP 666
@@ -687,9 +694,12 @@ CONTAINS
       SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
         CALL X%set(1.0_SRK)
         CALL thisLS%solve()
-        IF(.NOT. ((X%get(1) .APPROXEQ. 0.46428571428571430_SRK) &
-           .AND.  (X%get(2) .APPROXEQ. 0.85714285714285721_SRK) &
-           .AND.  (X%get(3) .APPROXEQ. 0.96428571428571430_SRK) &
+        IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+        ALLOCATE(dummyvec(X%n))
+        CALL X%get(dummyvec)
+        IF(.NOT. ((dummyvec(1) .APPROXEQ. 0.46428571428571430_SRK) &
+           .AND.  (dummyvec(2) .APPROXEQ. 0.85714285714285721_SRK) &
+           .AND.  (dummyvec(3) .APPROXEQ. 0.96428571428571430_SRK) &
            .AND.   thisLS%isDecomposed)) THEN
           WRITE(*,*) 'CALL Direct%solve() -LU method FAILED!'
           STOP 666
@@ -953,9 +963,12 @@ CONTAINS
       
       ! check X
       SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
-        IF(.NOT.((X%get(1) .APPROXEQ. 1._SRK) &
-           .AND. (X%get(2) .APPROXEQ. 2._SRK) &
-           .AND. (X%get(3) .APPROXEQ. 3._SRK) &
+        IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+        ALLOCATE(dummyvec(X%n))
+        CALL X%get(dummyvec)
+        IF(.NOT.((dummyvec(1) .APPROXEQ. 1._SRK) &
+           .AND. (dummyvec(2) .APPROXEQ. 2._SRK) &
+           .AND. (dummyvec(3) .APPROXEQ. 3._SRK) &
            .AND. (thisLS%info == 0))) THEN
           WRITE(*,*) 'CALL Direct%solve() -LU method FAILED!'
           STOP 666
@@ -973,9 +986,12 @@ CONTAINS
       
       ! check X
       SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
-        IF(.NOT.((X%get(1) .APPROXEQ. 3._SRK) &
-           .AND. (X%get(2) .APPROXEQ. 2._SRK) &
-           .AND. (X%get(3) .APPROXEQ. 1._SRK) &
+        IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+        ALLOCATE(dummyvec(X%n))
+        CALL X%get(dummyvec)
+        IF(.NOT.((dummyvec(1) .APPROXEQ. 3._SRK) &
+           .AND. (dummyvec(2) .APPROXEQ. 2._SRK) &
+           .AND. (dummyvec(3) .APPROXEQ. 1._SRK) &
            .AND. (thisLS%info == 0))) THEN
           WRITE(*,*) 'CALL Direct%solve() -LU method FAILED!'
           STOP 666
@@ -1091,9 +1107,12 @@ CONTAINS
       
       !Check X
       SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
-        IF(.NOT. ((X%get(1) .APPROXEQ. 0.46428571428571430_SRK) &
-           .AND.  (X%get(2) .APPROXEQ. 0.85714285714285721_SRK) &
-           .AND.  (X%get(3) .APPROXEQ. 0.96428571428571430_SRK) &
+        IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+        ALLOCATE(dummyvec(X%n))
+        CALL X%get(dummyvec)
+        IF(.NOT. ((dummyvec(1) .APPROXEQ. 0.46428571428571430_SRK) &
+           .AND.  (dummyvec(2) .APPROXEQ. 0.85714285714285721_SRK) &
+           .AND.  (dummyvec(3) .APPROXEQ. 0.96428571428571430_SRK) &
            .AND.   thisLS%info == 0)) THEN
           WRITE(*,*) 'CALL Direct%solve() -LU method FAILED!'
           STOP 666
@@ -1104,9 +1123,10 @@ CONTAINS
       SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
         CALL X%set(1.0_SRK)
         CALL thisLS%solve()
-        IF(.NOT. ((X%get(1) .APPROXEQ. 0.46428571428571430_SRK) &
-           .AND.  (X%get(2) .APPROXEQ. 0.85714285714285721_SRK) &
-           .AND.  (X%get(3) .APPROXEQ. 0.96428571428571430_SRK) &
+        CALL X%get(dummyvec)
+        IF(.NOT. ((dummyvec(1) .APPROXEQ. 0.46428571428571430_SRK) &
+           .AND.  (dummyvec(2) .APPROXEQ. 0.85714285714285721_SRK) &
+           .AND.  (dummyvec(3) .APPROXEQ. 0.96428571428571430_SRK) &
            .AND.   thisLS%isDecomposed)) THEN
           WRITE(*,*) 'CALL Direct%solve() -LU method FAILED!'
           STOP 666
@@ -1290,7 +1310,7 @@ CONTAINS
     SUBROUTINE testIterativeOthers()
       CLASS(LinearSolverType_Base),ALLOCATABLE :: thisLS
       REAL(SRK),POINTER :: thisX(:),thisX2(:)
-      REAL(SRK),ALLOCATABLE :: resid_soln(:)
+      REAL(SRK),ALLOCATABLE :: resid_soln(:),dummyvec(:)
       TYPE(RealVectorType) :: resid
       INTEGER(SIK) :: i
 #ifdef HAVE_PETSC
@@ -1565,7 +1585,10 @@ CONTAINS
       ENDSELECT
       
       DO i=1,resid%n
-        IF(.NOT.(resid%get(i) .APPROXEQ. resid_soln(i))) THEN
+        IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+        ALLOCATE(dummyvec(resid%n))
+        CALL resid%get(dummyvec)
+        IF(.NOT.(dummyvec(i) .APPROXEQ. resid_soln(i))) THEN
           WRITE(*,*) 'CALL Iterative%getResidual(...) FAILED!'
           STOP 666
         ENDIF
@@ -1581,7 +1604,7 @@ CONTAINS
 !-------------------------------------------------------------------------------
     SUBROUTINE testIterativeSolve_BICGSTAB()
       CLASS(LinearSolverType_Base),ALLOCATABLE :: thisLS
-      REAL(SRK),ALLOCATABLE :: thisB(:)
+      REAL(SRK),ALLOCATABLE :: thisB(:),dummyvec(:)
       REAL(SRK),POINTER :: thisX(:)
       INTEGER(SIK) :: i
       LOGICAL(SBK) :: match
@@ -1694,7 +1717,10 @@ CONTAINS
       match=.TRUE.
       DO i=1,SIZE(thisB)
         SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
-          IF(NINT(thisB(i)) /= NINT(10000.0_SRK*X%get(i))) THEN
+          IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+          ALLOCATE(dummyvec(X%n))
+          CALL X%get(dummyvec)
+          IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
             match=.FALSE.
             EXIT
           ENDIF
@@ -1776,7 +1802,10 @@ CONTAINS
       match=.TRUE.
       DO i=1,SIZE(thisB)
         SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
-          IF(NINT(thisB(i)) /= NINT(10000.0_SRK*X%get(i))) THEN
+          IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+          ALLOCATE(dummyvec(X%n))
+          CALL X%get(dummyvec)
+          IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
             match=.FALSE.
             EXIT
           ENDIF
@@ -1793,7 +1822,10 @@ CONTAINS
         SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
           CALL X%set(1.0_SRK)
           CALL thisLS%solve()
-          IF(NINT(thisB(i)) /= NINT(10000.0_SRK*X%get(i))) THEN
+          IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+          ALLOCATE(dummyvec(X%n))
+          CALL X%get(dummyvec)
+          IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
             match=.FALSE.
             EXIT
           ENDIF
@@ -2026,7 +2058,10 @@ CONTAINS
       match=.TRUE.
       DO i=1,SIZE(thisB)
         SELECTTYPE(X => thisLS%X); TYPE IS(PETScVectorType)
-          IF(NINT(thisB(i)) /= NINT(10000.0_SRK*X%get(i))) THEN
+          IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+          ALLOCATE(dummyvec(X%n))
+          CALL X%get(dummyvec)
+          IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
             match=.FALSE.
             EXIT
           ENDIF
@@ -2107,7 +2142,10 @@ CONTAINS
       match=.TRUE.
       DO i=1,SIZE(thisB)
         SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
-          IF(NINT(thisB(i)) /= NINT(10000.0_SRK*X%get(i))) THEN
+          IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+          ALLOCATE(dummyvec(X%n))
+          CALL X%get(dummyvec)
+          IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
             match=.FALSE.
             EXIT
           ENDIF
@@ -2124,7 +2162,10 @@ CONTAINS
         SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
           CALL X%set(1.0_SRK)
           CALL thisLS%solve()
-          IF(NINT(thisB(i)) /= NINT(10000.0_SRK*X%get(i))) THEN
+          IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+          ALLOCATE(dummyvec(X%n))
+          CALL X%get(dummyvec)
+          IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
             match=.FALSE.
             EXIT
           ENDIF
@@ -2146,7 +2187,7 @@ CONTAINS
 !-------------------------------------------------------------------------------
     SUBROUTINE testIterativeSolve_CGNR()
       CLASS(LinearSolverType_Base),ALLOCATABLE :: thisLS
-      REAL(SRK),ALLOCATABLE :: thisB(:)
+      REAL(SRK),ALLOCATABLE :: thisB(:),dummyvec(:)
       REAL(SRK),POINTER :: thisX(:)
       INTEGER(SIK) :: i
       LOGICAL(SBK) :: match
@@ -2269,8 +2310,11 @@ CONTAINS
       CALL thisLS%solve()
       
       SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
-        IF(.NOT.(SOFTEQ(X%get(1),2._SRK/3._SRK,1.0E-13_SRK) &
-           .AND. SOFTEQ(X%get(2),0.5_SRK,1.0E-13_SRK))) THEN
+        IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+        ALLOCATE(dummyvec(X%n))
+        CALL X%get(dummyvec)
+        IF(.NOT.(SOFTEQ(dummyvec(1),2._SRK/3._SRK,1.0E-13_SRK) &
+           .AND. SOFTEQ(dummyvec(2),0.5_SRK,1.0E-13_SRK))) THEN
           WRITE(*,*)'CALL Iterative%solve() FAILED!'
           STOP 666
         ENDIF
@@ -2328,9 +2372,12 @@ CONTAINS
       
       !Check X
       SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
-        IF(.NOT. ((X%get(1) .APPROXEQ. 0.46428571428571430_SRK) &
-           .AND.  (X%get(2) .APPROXEQ. 0.85714285714285721_SRK) &
-           .AND.  (X%get(3) .APPROXEQ. 0.96428571428571430_SRK) &
+        IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+        ALLOCATE(dummyvec(X%n))
+        CALL X%get(dummyvec)
+        IF(.NOT. ((dummyvec(1) .APPROXEQ. 0.46428571428571430_SRK) &
+           .AND.  (dummyvec(2) .APPROXEQ. 0.85714285714285721_SRK) &
+           .AND.  (dummyvec(3) .APPROXEQ. 0.96428571428571430_SRK) &
            .AND.   thisLS%info == 0)) THEN
           WRITE(*,*) 'CALL Iterative%solve() -CGNR method FAILED!'
           STOP 666
@@ -2393,9 +2440,12 @@ CONTAINS
       !Check X
       CALL thisLS%solve()
       SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
-        IF(.NOT. ((X%get(1) .APPROXEQ. 0.46428571428571430_SRK) &
-           .AND.  (X%get(2) .APPROXEQ. 0.85714285714285721_SRK) &
-           .AND.  (X%get(3) .APPROXEQ. 0.96428571428571430_SRK) &
+        IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+        ALLOCATE(dummyvec(X%n))
+        CALL X%get(dummyvec)
+        IF(.NOT. ((dummyvec(1) .APPROXEQ. 0.46428571428571430_SRK) &
+           .AND.  (dummyvec(2) .APPROXEQ. 0.85714285714285721_SRK) &
+           .AND.  (dummyvec(3) .APPROXEQ. 0.96428571428571430_SRK) &
            .AND.   thisLS%info == 0)) THEN
           WRITE(*,*) 'CALL Iterative%solve() -CGNR method FAILED!'
           STOP 666
@@ -2505,9 +2555,12 @@ CONTAINS
       
       !Check X
       SELECTTYPE(X => thisLS%X); TYPE IS(PETScVectorType)
-        IF(.NOT. ((X%get(1) .APPROXEQ. 0.46428571428571430_SRK) &
-           .AND.  (X%get(2) .APPROXEQ. 0.85714285714285721_SRK) &
-           .AND.  (X%get(3) .APPROXEQ. 0.96428571428571430_SRK) &
+        IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+        ALLOCATE(dummyvec(X%n))
+        CALL X%get(dummyvec)
+        IF(.NOT. ((dummyvec(1) .APPROXEQ. 0.46428571428571430_SRK) &
+           .AND.  (dummyvec(2) .APPROXEQ. 0.85714285714285721_SRK) &
+           .AND.  (dummyvec(3) .APPROXEQ. 0.96428571428571430_SRK) &
            .AND.   thisLS%info == 0)) THEN
           WRITE(*,*) 'CALL PETScIterative%solve() -CGNR method FAILED!'
           STOP 666
@@ -2569,9 +2622,12 @@ CONTAINS
       !Check X
       CALL thisLS%solve()
       SELECTTYPE(X => thisLS%X); TYPE IS(PETScVectorType)
-        IF(.NOT. ((X%get(1) .APPROXEQ. 0.46428571428571430_SRK) &
-           .AND.  (X%get(2) .APPROXEQ. 0.85714285714285721_SRK) &
-           .AND.  (X%get(3) .APPROXEQ. 0.96428571428571430_SRK) &
+        IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+        ALLOCATE(dummyvec(X%n))
+        CALL X%get(dummyvec)
+        IF(.NOT. ((dummyvec(1) .APPROXEQ. 0.46428571428571430_SRK) &
+           .AND.  (dummyvec(2) .APPROXEQ. 0.85714285714285721_SRK) &
+           .AND.  (dummyvec(3) .APPROXEQ. 0.96428571428571430_SRK) &
            .AND.   thisLS%info == 0)) THEN
           WRITE(*,*) 'CALL PETScIterative%solve() -CGNR method FAILED!'
           STOP 666
@@ -2591,7 +2647,7 @@ CONTAINS
 !-------------------------------------------------------------------------------
     SUBROUTINE testIterativeSolve_GMRES()
       CLASS(LinearSolverType_Base),ALLOCATABLE :: thisLS
-      REAL(SRK),ALLOCATABLE :: thisB(:)
+      REAL(SRK),ALLOCATABLE :: thisB(:),dummyvec(:)
       REAL(SRK),POINTER :: thisX(:)
       INTEGER(SIK) :: i
       LOGICAL(SBK) :: match
@@ -2704,7 +2760,10 @@ CONTAINS
       match=.TRUE.
       DO i=1,SIZE(thisB)
         SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
-          IF(NINT(thisB(i)) /= NINT(10000.0_SRK*X%get(i))) THEN
+          IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+          ALLOCATE(dummyvec(X%n))
+          CALL X%get(dummyvec)
+          IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
             match=.FALSE.
             EXIT
           ENDIF
@@ -2786,7 +2845,10 @@ CONTAINS
       match=.TRUE.
       DO i=1,SIZE(thisB)
         SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
-          IF(NINT(thisB(i)) /= NINT(10000.0_SRK*X%get(i))) THEN
+          IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+          ALLOCATE(dummyvec(X%n))
+          CALL X%get(dummyvec)
+          IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
             match=.FALSE.
             EXIT
           ENDIF
@@ -2803,7 +2865,10 @@ CONTAINS
         SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
           CALL X%set(1.0_SRK)
           CALL thisLS%solve()
-          IF(NINT(thisB(i)) /= NINT(10000.0_SRK*X%get(i))) THEN
+          IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+          ALLOCATE(dummyvec(X%n))
+          CALL X%get(dummyvec)
+          IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
             match=.FALSE.
             EXIT
           ENDIF
@@ -3036,7 +3101,10 @@ CONTAINS
       match=.TRUE.
       DO i=1,SIZE(thisB)
         SELECTTYPE(X => thisLS%X); TYPE IS(PETScVectorType)
-          IF(NINT(thisB(i)) /= NINT(10000.0_SRK*X%get(i))) THEN
+          IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+          ALLOCATE(dummyvec(X%n))
+          CALL X%get(dummyvec)
+          IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
             match=.FALSE.
             EXIT
           ENDIF
@@ -3118,7 +3186,10 @@ CONTAINS
       match=.TRUE.
       DO i=1,SIZE(thisB)
         SELECTTYPE(X => thisLS%X); TYPE IS(PETScVectorType)
-          IF(NINT(thisB(i)) /= NINT(10000.0_SRK*X%get(i))) THEN
+          IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+          ALLOCATE(dummyvec(X%n))
+          CALL X%get(dummyvec)
+          IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
             match=.FALSE.
             EXIT
           ENDIF
@@ -3135,7 +3206,10 @@ CONTAINS
         SELECTTYPE(X => thisLS%X); TYPE IS(PETScVectorType)
           CALL X%set(1.0_SRK)
           CALL thisLS%solve()
-          IF(NINT(thisB(i)) /= NINT(10000.0_SRK*X%get(i))) THEN
+          IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+          ALLOCATE(dummyvec(X%n))
+          CALL X%get(dummyvec)
+          IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
             match=.FALSE.
             EXIT
           ENDIF
