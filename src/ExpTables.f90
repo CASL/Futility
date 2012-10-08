@@ -52,6 +52,7 @@
 !>  - @ref IntrType "IntrType": @copybrief IntrType
 !>  - @ref ExceptionHandler "ExceptionHandler": @copybrief ExceptionHandler
 !>  - @ref Allocs "Allocs": @copybrief Allocs
+!>  - @ref ParameterLists "ParameterLists": @copybrief ParameterLists
 !>
 !> @author Zhouyu Liu and Brendan Kochunas
 !>   @date 01/13/2012
@@ -166,7 +167,7 @@ MODULE ExpTables
 !
 !-------------------------------------------------------------------------------
 !> @brief Exponential function
-!> @parma myET Exponential table type object
+!> @param myET Exponential table type object
 !> @param x The variable
 !> @param ans The return value
 !>
@@ -195,7 +196,7 @@ MODULE ExpTables
 !
 !-------------------------------------------------------------------------------
 !> @brief Clears a exponent table type object
-!> @parma myET Exponential table type object
+!> @param myET Exponential table type object
 !>
     SUBROUTINE clear_ExpTable(myET)
       CLASS(ExpTableType),INTENT(INOUT) :: myET
@@ -219,6 +220,18 @@ MODULE ExpTables
 !> @brief Initialization method for ExpTableType object
 !> @param myET Exponential table type object
 !> @param PL The parameter list used to initialize the ExpTable object.
+!> @page ParamList Description of Parameter List
+!> @param reqParamsExpTables This parameter list is null.
+!> @param optParamsExpTables
+!>   - <TT><'ExpTables -> tabletype'></TT> - Takes an integer as an input. The 
+!>   integer is an enumeration specifying which table will be generated.  The
+!>   options are: EXACT_EXP_TABLE, SINGLE_LEVEL_EXP_TABLE, TWO_LEVEL_EXP_TABLE,
+!>   LINEAR_EXP_TABLE, and ORDER2_EXP_TABLE.  The default value is LINEAR_EXP_TABLE.
+!>   - <TT><'ExpTables -> minval'></TT> - 
+!>   - <TT><'ExpTables -> maxval'></TT> - 
+!>   - <TT><'ExpTables -> nintervals'></TT> - 
+!>   - <TT><'ExpTables -> error'></TT> - 
+!>   - <TT><'ExpTables -> errorflag'></TT> - 
 !>
     SUBROUTINE init_ExpTable(myET,PL)
       CHARACTER(LEN=*),PARAMETER :: myName="init_ExpTable"
@@ -540,7 +553,7 @@ MODULE ExpTables
 !
 !Set defaults for optional parameters
       CALL optParamsExpTables%add('ExpTables -> tabletype',LINEAR_EXP_TABLE, &
-        'The default ExpTable is just a single level lookup table.')
+        'The default ExpTable is just a linear level lookup table.')
       CALL optParamsExpTables%add('ExpTables -> minval',-10._SRK, &
         'The default minimum value in the exponential table.')
       CALL optParamsExpTables%add('ExpTables -> maxval',0._SRK, &
