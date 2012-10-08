@@ -657,8 +657,9 @@ MODULE LinearSolverTypes
                   ENDSELECT
                 ENDSELECT
 #else
-                CALL eLinearSolverType%raiseError('Incorrect call to '// &
-                  modName//'::'//myName//' - PETSc not enabled.')
+                CALL eLinearSolverType%raiseFatalError('Incorrect call to '// &
+                   modName//'::'//myName//' - PETSc not enabled.  You will'// &
+                   'need to recompile with PETSc enabled to use this feature.')
 #endif
                 
             ENDSELECT
@@ -723,8 +724,9 @@ MODULE LinearSolverTypes
                   ENDSELECT
                 ENDSELECT
 #else
-                CALL eLinearSolverType%raiseError('Incorrect call to '// &
-                  modName//'::'//myName//' - PETSc not enabled.')
+                CALL eLinearSolverType%raiseFatalError('Incorrect call to '// &
+                   modName//'::'//myName//' - PETSc not enabled.  You will'// &
+                   'need to recompile with PETSc enabled to use this feature.')
 #endif
               CLASS DEFAULT
                 CALL solveCGNR(solver)
@@ -795,8 +797,9 @@ MODULE LinearSolverTypes
                   ENDSELECT
                 ENDSELECT
 #else
-                CALL eLinearSolverType%raiseError('Incorrect call to '// &
-                  modName//'::'//myName//' - PETSc not enabled.')
+                CALL eLinearSolverType%raiseFatalError('Incorrect call to '// &
+                   modName//'::'//myName//' - PETSc not enabled.  You will'// &
+                   'need to recompile with PETSc enabled to use this feature.')
 #endif  
               CLASS DEFAULT
                 CALL solveGMRES(solver)
@@ -972,8 +975,9 @@ MODULE LinearSolverTypes
           CALL KSPSetTolerances(solver%ksp,rtol,abstol,dtol,maxits,ierr)
           IF(PRESENT(nRestart_in)) CALL KSPGMRESSetRestart(solver%ksp,nrst,ierr)
 #else
-          CALL eLinearSolverType%raiseError('Incorrect call to '// &
-            modName//'::'//myName//' - PETSc not enabled.')
+          CALL eLinearSolverType%raiseFatalError('Incorrect call to '// &
+             modName//'::'//myName//' - PETSc not enabled.  You will'// &
+             'need to recompile with PETSc enabled to use this feature.')
 #endif
         ENDIF
       ENDIF
@@ -1433,7 +1437,7 @@ MODULE LinearSolverTypes
     SUBROUTINE solvePLU_TriDiag(solver)
       CLASS(LinearSolverType_Base),INTENT(INOUT) :: solver
       INTEGER(SIK) :: n,i
-      REAL(SRK) :: Xprev
+      REAL(SRK) :: Xprev,tmpxval,tmpbval
 
       solver%info=-1
       IF(solver%isDecomposed) THEN
@@ -1443,16 +1447,21 @@ MODULE LinearSolverTypes
               n=M%n
               !LUx=b,Ux=y, Ly=b
               !find y (Ly=b), y is stored in X to save space
-              CALL X%set(1,b%get(1))
+              CALL b%get(1,tmpbval)
+              CALL X%set(1,tmpbval)
               DO i=2,n
-                CALL X%set(i,b%get(i)-M%a(1,i)*X%get(i-1))
+                CALL X%get((i-1),tmpxval)
+                CALL b%get(i,tmpbval)
+                CALL X%set(i,tmpbval-M%a(1,i)*tmpxval)
               ENDDO
               !find x with backward substitution (Ux=y)
-              CALL X%set(n,X%get(n)*M%a(2,n))
-              Xprev=X%get(n)
+              CALL X%get(n,tmpxval)
+              CALL X%set(n,tmpxval*M%a(2,n))
+              CALL X%get(n,Xprev)
               DO i=(n-1),1,-1
-                CALL X%set(i,(X%get(i)-M%a(3,i)*Xprev)*M%a(2,i))
-                Xprev=X%get(i)
+                CALL X%get(i,tmpxval)
+                CALL X%set(i,(tmpxval-M%a(3,i)*Xprev)*M%a(2,i))
+                CALL X%get(i,Xprev)
               ENDDO
               solver%info=0
             ENDSELECT
@@ -1471,7 +1480,7 @@ MODULE LinearSolverTypes
       CLASS(LinearSolverType_Direct),INTENT(INOUT) :: solver
       
       REAL(SRK) :: thisa(solver%A%n,solver%A%n)
-      REAL(SRK) :: t,thisb(solver%A%n)
+      REAL(SRK) :: t,thisb(solver%A%n),tmpxval
       INTEGER(SIK) :: N,i,irow,icol,IPIV(solver%A%n)
 
       SELECTTYPE(b => solver%b); TYPE IS(RealVectorType)
@@ -1519,7 +1528,8 @@ MODULE LinearSolverTypes
         t=0._SRK
         DO icol=irow+1,N
           SELECTTYPE(X => solver%X); TYPE IS(RealVectorType)
-             t=t+thisa(irow,icol)*X%get(icol)
+            CALL X%get(icol,tmpxval)  
+            t=t+thisa(irow,icol)*tmpxval
            ENDSELECT
         ENDDO
          SELECTTYPE(X => solver%X); TYPE IS(RealVectorType)
