@@ -76,7 +76,7 @@ MODULE MatrixTypes
 
 #ifdef HAVE_PETSC
 #include <finclude/petsc.h>
-#define IS IS !petscisdef.h defines the keyword IS, and it needs to be reset
+#undef IS
 #endif
 
   PRIVATE
@@ -161,6 +161,8 @@ MODULE MatrixTypes
    
     !> whether sparse or dense
     INTEGER(SIK) :: SparseDense
+    !> creation status
+    LOGICAL(SBK) :: isCreated=.FALSE.
     !> assembly status
     LOGICAL(SBK) :: isAssembled=.FALSE.
     
@@ -179,6 +181,9 @@ MODULE MatrixTypes
       !> @copybrief MatrixTypes::set_PETScMatrixType
       !> @copydetails MatrixTypes::set_PETScMatrixType
       PROCEDURE,PASS :: set => set_PETScMatrixType
+      !> @copybrief MatrixTypes::set_PETScMatrixType
+      !> @copydetails MatrixTypes::set_PETScMatrixType
+      PROCEDURE,PASS :: setShape => set_PETScMatrixType
       !> @copybrief MatrixTypes::get_PETScMatrixType
       !> @copydetails MatrixTypes::get_PETScMatrixType
       PROCEDURE,PASS :: get => get_PETScMatrixType
@@ -518,26 +523,24 @@ MODULE MatrixTypes
       CHARACTER(LEN=*),PARAMETER :: myName='init_PETScMatrixParam'
       CLASS(PETScMatrixType),INTENT(INOUT) :: matrix
       CLASS(ParamType),INTENT(IN) :: pList
-      INTEGER(SIK) :: n, m, mattype
+      INTEGER(SIK) :: n, m, mattype=0
       LOGICAL(SBK) :: localalloc
       
 #ifdef HAVE_PETSC
       PetscErrorCode  :: ierr
-      
-      ! Pull Data From Parameter List
-      CALL pList%get('n',n)
-      CALL pList%get('m',m)
-      SELECTTYPE(matrix); TYPE IS(PETScMatrixType)
-        CALL pList%get('mattype',mattype)
-      ENDSELECT
-      mattype=0
-      
+#endif
+
       !Error checking of subroutine input
       localalloc=.FALSE.
       IF(.NOT.ASSOCIATED(eMatrixType)) THEN
         localalloc=.TRUE.
         ALLOCATE(eMatrixType)
       ENDIF
+      
+#ifdef HAVE_PETSC
+      ! Pull Data From Parameter List
+      CALL pList%get('n',n)
+      CALL pList%get('m',m)
 
       IF(.NOT. matrix%isInit) THEN
         IF(n < 1) THEN
@@ -553,9 +556,11 @@ MODULE MatrixTypes
           ELSE
             matrix%isSymmetric=.TRUE.
           ENDIF
-          CALL MatCreate(MPI_COMM_WORLD,matrix%a,ierr)
+          IF(.NOT.matrix%isCreated) THEN
+            CALL MatCreate(MPI_COMM_WORLD,matrix%a,ierr)
+            matrix%isCreated=.TRUE.
+          ENDIF
           CALL MatSetSizes(matrix%a,PETSC_DECIDE,PETSC_DECIDE,matrix%n,matrix%n,ierr)
-          matrix%SparseDense = mattype !for now
           IF (matrix%SparseDense == 0) THEN     ! sparse matrix
             CALL MatSetType(matrix%a,MATMPIAIJ,ierr)
           ELSEIF (matrix%SparseDense == 1) THEN ! dense matrix
@@ -567,9 +572,12 @@ MODULE MatrixTypes
         CALL eMatrixType%raiseError('Incorrect call to '// &
           modName//'::'//myName//' - MatrixType already initialized')
       ENDIF
-
-      IF(localalloc) DEALLOCATE(eMatrixType)
+#else
+      CALL eMatrixType%raiseFatalError('Incorrect call to '// &
+              modName//'::'//myName//' - PETSc not enabled.  You will'// &
+              'need to recompile with PETSc enabled to use this feature.')
 #endif
+      IF(localalloc) DEALLOCATE(eMatrixType)
       
     ENDSUBROUTINE init_PETScMatrixParam
 !
@@ -578,6 +586,7 @@ MODULE MatrixTypes
 !> @param matrix the matrix type to act on
 !>
     SUBROUTINE clear_SparseMatrixType(matrix)
+      CHARACTER(LEN=*),PARAMETER :: myName='clear_SparseMatrixType'
       CLASS(SparseMatrixType),INTENT(INOUT) :: matrix
       matrix%isInit=.FALSE.
       matrix%n=0
@@ -595,6 +604,7 @@ MODULE MatrixTypes
 !> @param matrix the matrix type to act on
 !>
     SUBROUTINE clear_DenseSquareMatrixType(matrix)
+      CHARACTER(LEN=*),PARAMETER :: myName='clear_DenseSquareMatrixType'
       CLASS(DenseSquareMatrixType),INTENT(INOUT) :: matrix
       matrix%isInit=.FALSE.
       matrix%n=0
@@ -607,6 +617,7 @@ MODULE MatrixTypes
 !> @param matrix the matrix type to act on
 !>
     SUBROUTINE clear_TriDiagMatrixType(matrix)
+      CHARACTER(LEN=*),PARAMETER :: myName='clear_TriDiagMatrixType'
       CLASS(TriDiagMatrixType),INTENT(INOUT) :: matrix
       matrix%isInit=.FALSE.
       matrix%n=0
@@ -619,6 +630,7 @@ MODULE MatrixTypes
 !> @param matrix the matrix type to act on
 !>
     SUBROUTINE clear_DenseRectMatrixType(matrix)
+      CHARACTER(LEN=*),PARAMETER :: myName='clear_DenseRectMatrixType'
       CLASS(DenseRectMatrixType),INTENT(INOUT) :: matrix
       matrix%isInit=.FALSE.
       matrix%n=0
@@ -631,15 +643,34 @@ MODULE MatrixTypes
 !> @param matrix the matrix type to act on
 !>
     SUBROUTINE clear_PETScMatrixType(matrix)
+      CHARACTER(LEN=*),PARAMETER :: myName='clear_PETScMatrixType'
       CLASS(PETScMatrixType),INTENT(INOUT) :: matrix
+      LOGICAL(SBK) :: localalloc
 #ifdef HAVE_PETSC
       PetscErrorCode  :: ierr
+#endif
+
+      !Error checking of subroutine input
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eMatrixType)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eMatrixType)
+      ENDIF
+      
+#ifdef HAVE_PETSC
       matrix%isInit=.FALSE.
       matrix%n=0
       matrix%isAssembled=.FALSE.
+      matrix%isCreated=.FALSE.
       matrix%isSymmetric=.FALSE.
       CALL MatDestroy(matrix%a,ierr)
+#else
+      CALL eMatrixType%raiseFatalError('Incorrect call to '// &
+              modName//'::'//myName//' - PETSc not enabled.  You will'// &
+              'need to recompile with PETSc enabled to use this feature.')
 #endif
+      IF(localalloc) DEALLOCATE(eMatrixType)
+      
     ENDSUBROUTINE clear_PETScMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -653,6 +684,7 @@ MODULE MatrixTypes
 !> If setShape has previously been applied to the same sparse matrix.
 !>
     SUBROUTINE set_SparseMatrixType(matrix,i,j,setval)
+      CHARACTER(LEN=*),PARAMETER :: myName='set_SparseMatrixType'
       CLASS(SparseMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
@@ -684,6 +716,7 @@ MODULE MatrixTypes
 !> @param setval the value to be set
 !>
     SUBROUTINE set_DenseSquareMatrixType(matrix,i,j,setval)
+      CHARACTER(LEN=*),PARAMETER :: myName='set_DenseSquareMatrixType'
       CLASS(DenseSquareMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
@@ -705,6 +738,7 @@ MODULE MatrixTypes
 !> @param setval the value to be set
 !>
     SUBROUTINE set_TriDiagMatrixType(matrix,i,j,setval)
+      CHARACTER(LEN=*),PARAMETER :: myName='set_TriDiagMatrixType'
       CLASS(TriDiagMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
@@ -734,6 +768,7 @@ MODULE MatrixTypes
 !> @param setval the value to be set
 !>
     SUBROUTINE set_DenseRectMatrixType(matrix,i,j,setval)
+      CHARACTER(LEN=*),PARAMETER :: myName='set_DenseRectMatrixType'
       CLASS(DenseRectMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
@@ -757,6 +792,7 @@ MODULE MatrixTypes
 !> will be ignored.
 !> 
     SUBROUTINE set_shape_SparseMatrixType(matrix,i,j,setval)
+      CHARACTER(LEN=*),PARAMETER :: myName='set_shape_SparseMatrixType'
       CLASS(SparseMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
@@ -794,12 +830,24 @@ MODULE MatrixTypes
 !> @param setval the value to be set
 !>
     SUBROUTINE set_PETScMatrixType(matrix,i,j,setval)
+      CHARACTER(LEN=*),PARAMETER :: myName='set_PETScMatrixType'
       CLASS(PETScMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(IN) :: setval
+      LOGICAL(SBK) :: localalloc
 #ifdef HAVE_PETSC
       PetscErrorCode  :: ierr
+#endif
+
+      !Error checking of subroutine input
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eMatrixType)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eMatrixType)
+      ENDIF
+      
+#ifdef HAVE_PETSC
       IF(matrix%isInit) THEN
         IF(((j <= matrix%n) .AND. (i <= matrix%n)) & 
           .AND. ((j > 0) .AND. (i > 0))) THEN
@@ -810,7 +858,12 @@ MODULE MatrixTypes
           matrix%isAssembled=.FALSE.
         ENDIF
       ENDIF
+#else
+      CALL eMatrixType%raiseFatalError('Incorrect call to '// &
+              modName//'::'//myName//' - PETSc not enabled.  You will'// &
+              'need to recompile with PETSc enabled to use this feature.')
 #endif
+      IF(localalloc) DEALLOCATE(eMatrixType)
     ENDSUBROUTINE set_PETScMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -823,13 +876,14 @@ MODULE MatrixTypes
 !> is not present, then 0.0 is returned.  If the (i,j) location is out of
 !> bounds, then -1051.0 is returned (-1051.0 is an arbitrarily chosen key).
 !>
-    FUNCTION get_SparseMatrixType(matrix,i,j) RESULT(aij)
+    SUBROUTINE get_SparseMatrixType(matrix,i,j,aij)
+      CHARACTER(LEN=*),PARAMETER :: myName='get_SparseMatrixType'
       CLASS(SparseMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       INTEGER(SIK) :: ja_index
       LOGICAL(SBK) :: found_ja
-      REAL(SRK) :: aij
+      REAL(SRK),INTENT(INOUT) :: aij
       
       aij=0.0_SRK
       IF(matrix%isInit) THEN
@@ -847,7 +901,7 @@ MODULE MatrixTypes
           aij=-1051._SRK
         ENDIF
       ENDIF
-    ENDFUNCTION get_SparseMatrixtype
+    ENDSUBROUTINE get_SparseMatrixtype
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the values in the PETSc matrix - presently untested
@@ -858,21 +912,32 @@ MODULE MatrixTypes
 !> This routine gets the values of the sparse matrix.  If the (i,j) location is 
 !> out of bounds, then -1051.0 (an arbitrarily chosen key) is returned.
 !>
-    FUNCTION get_PETScMatrixType(matrix,i,j) RESULT(aij)
+    SUBROUTINE get_PETScMatrixType(matrix,i,j,aij)
+      CHARACTER(LEN=*),PARAMETER :: myName='get_PETScMatrixType'
       CLASS(PETScMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
-      REAL(SRK) :: aij
+      REAL(SRK),INTENT(INOUT) :: aij
+      LOGICAL(SBK) :: localalloc
 #ifdef HAVE_PETSC
       PetscErrorCode  :: ierr
+#endif
+
+      !Error checking of subroutine input
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eMatrixType)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eMatrixType)
+      ENDIF
       
+#ifdef HAVE_PETSC
       aij=0.0_SRK
       IF(matrix%isInit) THEN
         ! assemble matrix if necessary
         IF (.NOT.(matrix%isAssembled)) THEN
-          CALL MatAssemblyBegin(matrix%a,ierr)
-          CALL MatAssemblyEnd(matrix%a,ierr)
-          matrix%isAssembled=.FALSE.
+          CALL MatAssemblyBegin(matrix%a,MAT_FINAL_ASSEMBLY,ierr)
+          CALL MatAssemblyEnd(matrix%a,MAT_FINAL_ASSEMBLY,ierr)
+          matrix%isAssembled=.TRUE.
         ENDIF
       
         IF((i <= matrix%n) .AND. ((j > 0) .AND. (i > 0))) THEN
@@ -881,8 +946,13 @@ MODULE MatrixTypes
           aij=-1051._SRK
         ENDIF
       ENDIF
+#else
+      CALL eMatrixType%raiseFatalError('Incorrect call to '// &
+              modName//'::'//myName//' - PETSc not enabled.  You will'// &
+              'need to recompile with PETSc enabled to use this feature.')
 #endif
-    ENDFUNCTION get_PETScMatrixtype
+      IF(localalloc) DEALLOCATE(eMatrixType)
+    ENDSUBROUTINE get_PETScMatrixtype
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine provides an interface to matrix vector multiplication for
@@ -896,14 +966,25 @@ MODULE MatrixTypes
 !> @param y the vector to add to the product of @c A and @c x
 !>
     SUBROUTINE matvec_MatrixType(thisMatrix,trans,alpha,x,beta,y)
-      CLASS(MatrixType),INTENT(IN) :: thisMatrix
+      CHARACTER(LEN=*),PARAMETER :: myName='matvec_MatrixType'
+      CLASS(MatrixType),INTENT(INOUT) :: thisMatrix
       CHARACTER(LEN=1),OPTIONAL,INTENT(IN) :: trans
       REAL(SRK),INTENT(IN),OPTIONAL :: alpha
       REAL(SRK),INTENT(IN) :: x(:)
       REAL(SRK),INTENT(IN),OPTIONAL :: beta
       REAL(SRK),INTENT(INOUT) :: y(:)
+      REAL(SRK),ALLOCATABLE :: tmpmat(:,:)
+      INTEGER(SIK) :: i,j
+      LOGICAL(SBK) :: localalloc
       
       CHARACTER(LEN=1) :: t
+
+      !Error checking of subroutine input
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eMatrixType)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eMatrixType)
+      ENDIF
       
       IF(thisMatrix%isInit) THEN
         t='n'
@@ -952,9 +1033,39 @@ MODULE MatrixTypes
               CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
                 thisMatrix%ja,thisMatrix%a,x,y)
             ENDIF
+          TYPE IS(PETScMatrixType)
+#ifdef HAVE_PETSC
+            ALLOCATE(tmpmat(thisMatrix%n,thisMatrix%n))
+            ! stuff into temporary matrix
+            DO i=1,thisMatrix%n
+              DO j=1,thisMatrix%n
+                CALL thisMatrix%get(i,j,tmpmat(i,j))
+              ENDDO
+            ENDDO
+          
+            IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
+              CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+                alpha,tmpmat,thisMatrix%n,x,1,beta,y,1)
+            ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+              CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+                alpha,tmpmat,thisMatrix%n,x,1,y,1)
+            ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
+              CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+                tmpmat,thisMatrix%n,x,1,beta,y,1)
+            ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+              CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+                tmpmat,thisMatrix%n,x,1,y,1)
+            ENDIF
+            DEALLOCATE(tmpmat)
+#else
+            CALL eMatrixType%raiseFatalError('Incorrect call to '// &
+               modName//'::'//myName//' - PETSc not enabled.  You will'// &
+               'need to recompile with PETSc enabled to use this feature.')
+#endif
         ENDSELECT
       ENDIF
-
+      
+      IF(localalloc) DEALLOCATE(eMatrixType)
     ENDSUBROUTINE matvec_MatrixType
 !
 !-------------------------------------------------------------------------------
@@ -969,14 +1080,25 @@ MODULE MatrixTypes
 !> @param y the vector to add to the product of @c A and @c x
 !>
     SUBROUTINE matvec_MatrixTypeVectorType(thisMatrix,trans,alpha,x,beta,y)
-      CLASS(MatrixType),INTENT(IN) :: thisMatrix
-      CLASS(VectorType),INTENT(IN) :: x
+    CHARACTER(LEN=*),PARAMETER :: myName='matvec_MatrixTypeVectorType'
+      CLASS(MatrixType),INTENT(INOUT) :: thisMatrix
+      CLASS(VectorType),INTENT(INOUT) :: x
       CHARACTER(LEN=1),OPTIONAL,INTENT(IN) :: trans
       REAL(SRK),INTENT(IN),OPTIONAL :: alpha
       REAL(SRK),INTENT(IN),OPTIONAL :: beta
       CLASS(VectorType),INTENT(INOUT) :: y
+      REAL(SRK),ALLOCATABLE :: tmpmat(:,:),tmpvec(:),tmpy(:)
+      INTEGER(SIK) :: i,j
+      LOGICAL(SBK) :: localalloc
       
       CHARACTER(LEN=1) :: t
+      
+      !Error checking of subroutine input
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eMatrixType)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eMatrixType)
+      ENDIF
       
       IF(thisMatrix%isInit) THEN
         t='n'
@@ -1030,8 +1152,90 @@ MODULE MatrixTypes
             ENDSELECT
           ENDSELECT
         ENDSELECT
+        
+        SELECTTYPE(x); TYPE IS(PETScVectorType)
+          SELECTTYPE(y); TYPE IS(PETScVectorType)
+            SELECTTYPE(thisMatrix); TYPE IS(PETScMatrixType)
+#ifdef HAVE_PETSC
+                ALLOCATE(tmpmat(thisMatrix%n,thisMatrix%n))
+                ALLOCATE(tmpvec(x%n))
+                ALLOCATE(tmpy(x%n))
+                ! stuff into temporary matrix
+                DO i=1,thisMatrix%n
+                  DO j=1,thisMatrix%n
+                    CALL thisMatrix%get(i,j,tmpmat(i,j))
+                  ENDDO
+                ENDDO
+                ! stuff into temporary vector
+                CALL x%get(tmpvec)
+                CALL y%get(tmpy)
+                IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
+                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+                    alpha,tmpmat,thisMatrix%n,tmpvec,1,beta,tmpy,1)
+                ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+                    alpha,tmpmat,thisMatrix%n,tmpvec,1,tmpy,1)
+                ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
+                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+                    tmpmat,thisMatrix%n,tmpvec,1,beta,tmpy,1)
+                ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+                    tmpmat,thisMatrix%n,tmpvec,1,tmpy,1)
+                ENDIF
+                ! set into return vector
+                CALL y%set(tmpy)
+#else
+                CALL eMatrixType%raiseFatalError('Incorrect call to '// &
+                   modName//'::'//myName//' - PETSc not enabled.  You will'// &
+                   'need to recompile with PETSc enabled to use this feature.')
+#endif
+            ENDSELECT
+          ENDSELECT
+        ENDSELECT
+        
+        SELECTTYPE(x); TYPE IS(RealVectorType)
+          SELECTTYPE(y); TYPE IS(RealVectorType)
+            SELECTTYPE(thisMatrix); TYPE IS(PETScMatrixType)
+#ifdef HAVE_PETSC
+                ALLOCATE(tmpmat(thisMatrix%n,thisMatrix%n))
+                ALLOCATE(tmpvec(x%n))
+                ALLOCATE(tmpy(x%n))
+                ! stuff into temporary matrix
+                DO i=1,thisMatrix%n
+                  DO j=1,thisMatrix%n
+                    CALL thisMatrix%get(i,j,tmpmat(i,j))
+                  ENDDO
+                ENDDO
+                ! stuff into temporary vector
+                CALL x%get(tmpvec)
+                CALL y%get(tmpy)
+                IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
+                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+                    alpha,tmpmat,thisMatrix%n,tmpvec,1,beta,tmpy,1)
+                ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+                    alpha,tmpmat,thisMatrix%n,tmpvec,1,tmpy,1)
+                ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
+                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+                    tmpmat,thisMatrix%n,tmpvec,1,beta,tmpy,1)
+                ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+                    tmpmat,thisMatrix%n,tmpvec,1,tmpy,1)
+                ENDIF
+                ! set into return vector
+                CALL y%set(tmpy)
+#else 
+                CALL eMatrixType%raiseFatalError('Incorrect call to '// &
+                   modName//'::'//myName//' - PETSc not enabled.  You will'// &
+                   'need to recompile with PETSc enabled to use this feature.')
+#endif
+            ENDSELECT
+          ENDSELECT
+        ENDSELECT
+        
       ENDIF
 
+      IF(localalloc) DEALLOCATE(eMatrixType)
     ENDSUBROUTINE matvec_MatrixTypeVectorType
 !
 !-------------------------------------------------------------------------------
@@ -1050,16 +1254,27 @@ MODULE MatrixTypes
 !> @param beta the scalar used to scale @c C
 !>
     SUBROUTINE matmult_MatrixType(A,B,C,alpha,beta,transA,transB)
-      CLASS(MatrixType),INTENT(IN) :: A
-      CLASS(MatrixType),INTENT(IN) :: B
+      CHARACTER(LEN=*),PARAMETER :: myName='matmult_MatrixType'
+      CLASS(MatrixType),INTENT(INOUT) :: A
+      CLASS(MatrixType),INTENT(INOUT) :: B
       CLASS(MatrixType),INTENT(INOUT) :: C
       REAL(SRK),INTENT(IN),OPTIONAL :: alpha
       REAL(SRK),INTENT(IN),OPTIONAL :: beta
+      REAL(SRK),ALLOCATABLE :: tmpA(:,:),tmpB(:,:),tmpC(:,:)
+      INTEGER(SIK) :: i,j
       CHARACTER(LEN=1),OPTIONAL,INTENT(IN) :: transA
       CHARACTER(LEN=1),OPTIONAL,INTENT(IN) :: transB
+      LOGICAL(SBK) :: localalloc
       
       CHARACTER(LEN=1) :: tA
       CHARACTER(LEN=1) :: tB
+      
+      !Error checking of subroutine input
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eMatrixType)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eMatrixType)
+      ENDIF
 
       IF(A%isInit) THEN
         tA='n'
@@ -1207,9 +1422,66 @@ MODULE MatrixTypes
             ENDSELECT
           TYPE IS(SparseMatrixType)
             ! NOT SUPPORTED
+          TYPE IS(PETScMatrixType)
+            SELECTTYPE(B)
+              TYPE IS(PETScMatrixType)
+                SELECTTYPE(C)
+                  TYPE IS(PETScMatrixType)
+#ifdef HAVE_PETSC
+                    ALLOCATE(tmpA(A%n,A%n))
+                    ALLOCATE(tmpB(B%n,B%n))
+                    ALLOCATE(tmpC(C%n,C%n))
+                    tmpA=0._SRK
+                    tmpB=0._SRK
+                    tmpC=0._SRK
+                    DO i=1,A%n
+                      DO j=1,A%n
+                        CALL A%get(i,j,tmpA(i,j))
+                      ENDDO
+                    ENDDO
+                    DO i=1,B%n
+                      DO j=1,B%n
+                        CALL B%get(i,j,tmpB(i,j))
+                      ENDDO
+                    ENDDO
+                    DO i=1,B%n
+                      DO j=1,B%n
+                        CALL C%get(i,j,tmpC(i,j))
+                      ENDDO
+                    ENDDO
+                    ! A: Square   B: Square  C: Square
+                    IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
+                      CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,alpha,tmpA,tmpB,beta,tmpC)
+                    ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+                      CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,alpha,tmpA,tmpB,tmpC)
+                    ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
+                      CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,tmpA,tmpB,beta,tmpC)
+                    ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+                      CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,tmpA,tmpB,tmpC)
+                    ENDIF
+                    
+                    ! put into return matrix
+                    DO i=1,C%n
+                      DO j=1,C%n
+                        CALL C%set(i,j,tmpC(i,j))
+                      ENDDO
+                    ENDDO
+                    
+                    DEALLOCATE(tmpA)
+                    DEALLOCATE(tmpB)
+                    DEALLOCATE(tmpC)
+#else
+                    CALL eMatrixType%raiseFatalError('Incorrect call to '// &
+                       modName//'::'//myName//' - PETSc not enabled.  You will'// &
+                       'need to recompile with PETSc enabled to use this feature.')
+#endif
+                    
+                ENDSELECT
+            ENDSELECT
         ENDSELECT         
       ENDIF
   
+      IF(localalloc) DEALLOCATE(eMatrixType)
     ENDSUBROUTINE matmult_MatrixType
 !
 ENDMODULE MatrixTypes

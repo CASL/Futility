@@ -50,7 +50,7 @@ MODULE LinearSolverTypes
   
 #ifdef HAVE_PETSC
 #include <finclude/petsc.h>
-#define IS IS !petscisdef.h defines the keyword IS, and it needs to be reset
+#undef IS !petscisdef.h defines the keyword IS, and it needs to be reset
 #endif
 
   PRIVATE
@@ -67,11 +67,11 @@ MODULE LinearSolverTypes
   !> Number of iterative solver solution methodologies - for error checking
   INTEGER(SIK),PARAMETER :: MAX_IT_SOLVER_METHODS=3
   !> set enumeration scheme for TPLs
-  INTEGER(SIK),PUBLIC :: PETSC=0,TRILINOS=1,MKL=2,NATIVE=3
+  INTEGER(SIK),PARAMETER,PUBLIC :: PETSC=0,TRILINOS=1,MKL=2,NATIVE=3
   !> set enumeration scheme for iterative solver methods
-  INTEGER(SIK),PUBLIC :: BICGSTAB=1,CGNR=2,GMRES=3
+  INTEGER(SIK),PARAMETER,PUBLIC :: BICGSTAB=1,CGNR=2,GMRES=3
   !> set enumeration scheme for direct solver methods
-  INTEGER(SIK),PUBLIC :: GE=1,LU=2
+  INTEGER(SIK),PARAMETER,PUBLIC :: GE=1,LU=2
 
   
   !> @brief the base linear solver type
@@ -86,10 +86,8 @@ MODULE LinearSolverTypes
     TYPE(MPI_EnvType) :: MPIparallelEnv
     !> Pointer to the shared memory parallel environment
     TYPE(OMP_EnvType) :: OMPparallelEnv
-    !> Initialization status of A
-    LOGICAL(SBK) :: hasA=.FALSE.
-    !> Initialization status of b
-    LOGICAL(SBK) :: hasB=.FALSE.
+    !> Initialization status of X (only needed for PETSc)
+    LOGICAL(SBK) :: hasX=.FALSE.
     !> Pointer to the MatrixType A
     CLASS(MatrixType),ALLOCATABLE :: A
     !> Right-hand side vector, b
@@ -120,7 +118,7 @@ MODULE LinearSolverTypes
       PROCEDURE(int_linearsolver_sub),DEFERRED,PASS :: clear
       !> Deferred routine for solving the linear system
       PROCEDURE(int_linearsolver_sub),DEFERRED,PASS :: solve
-      !> Routine for updating status of M and isDecomposed when A has been changed
+      !> Routine for updating status of M and isDecomposed when A has changed
       PROCEDURE,PASS :: updatedA
   ENDTYPE LinearSolverType_Base
   
@@ -155,6 +153,8 @@ MODULE LinearSolverTypes
     INTEGER(SIK) :: normType=2_SIK
     !> Maximum number of iterations to perform
     INTEGER(SIK) :: maxIters=1000_SIK
+    !> Number of iterations before restart for GMRES
+    INTEGER(SIK) :: nRestart=30_SIK
     !> Actual iterations performed
     INTEGER(SIK) :: iters=0_SIK
     !> Tolerance for successful convergence
@@ -226,8 +226,8 @@ MODULE LinearSolverTypes
       CALL pList%get('timerName',timerName)
       
       !Initialize parallel environments based on input
-      IF (numberMPI>0) CALL solver%MPIparallelEnv%initialize(numberMPI)
-      IF (numberOMP>0) CALL solver%OMPparallelEnv%initialize(numberOMP)
+      IF(numberMPI>0) CALL solver%MPIparallelEnv%initialize(numberMPI)
+      IF(numberOMP>0) CALL solver%OMPparallelEnv%initialize(numberOMP)
 
       !Error checking of subroutine input
       localalloc=.FALSE.
@@ -239,49 +239,59 @@ MODULE LinearSolverTypes
       IF(.NOT. solver%isInit) THEN
          
         ! go through solver hierarchy to determine TPLType
-        IF (TPLType==0) THEN ! PETSc
+        IF(TPLType==PETSC) THEN ! PETSc
 #ifdef HAVE_PETSC
           ! switch matrixType if PETSc not available
-          IF     (matrixType==0) THEN ! sparse
+          IF(matrixType==SPARSE) THEN ! sparse
             matrixType=4 ! PETSc sparse
-          ELSEIF (matrixType==2) THEN ! dense
+          ELSEIF(matrixType==DENSESQUARE) THEN ! dense
             matrixType=5 ! PETSc dense
           ENDIF
 #else
-          ! we don't have PETSc, so switch to next option (Trilinos)
-          ! maybe throw a notification
-          TPLType=1
+          TPLType=TRILINOS
+          CALL eLinearSolverType%raiseWarning(modName//'::'// &
+                    myName//'- PETSc is not enabled, TRILINOS will be '// &
+                      'used instead.')
+          
 #endif
         ENDIF
-        IF (TPLType==1) THEN ! Trilinos
-#ifndef HAVE_TRILINOS
+        IF(TPLType==TRILINOS) THEN ! Trilinos
+#ifdef HAVE_TRILINOS
+#else
           ! we don't have Trilinos, so switch to next option (MKL)
-          TPLType=2
+          TPLType=MKL
+          CALL eLinearSolverType%raiseWarning(modName//'::'// &
+                    myName//'- TRILINOS is not enabled, MKL will be '// &
+                      'used instead.')
 #endif
         ENDIF
-        IF (TPLType==2) THEN ! MKL
-#ifndef HAVE_MKL
+        IF(TPLType==MKL) THEN ! MKL
+#ifdef HAVE_MKL
+#else
           ! we don't have MKL, so switch to next option (native)
-          TPLType=3
+          TPLType=NATIVE
+          CALL eLinearSolverType%raiseWarning(modName//'::'// &
+                    myName//'- TRILINOS is not enabled, MKL will be '// &
+                      'used instead.')
 #endif
         ENDIF
 
         ! allocate matrix (A)
-        IF (.NOT.ALLOCATED(solver%A)) THEN
-          IF     (matrixType==0) THEN ! Sparse
+        IF(.NOT.ALLOCATED(solver%A)) THEN
+          IF(matrixType==0) THEN ! Sparse
             ALLOCATE(SparseMatrixType :: solver%A)
-          ELSEIF (matrixType==1) THEN ! TriDiag 
+          ELSEIF(matrixType==1) THEN ! TriDiag 
             ALLOCATE(TriDiagMatrixType :: solver%A)
-          ELSEIF (matrixType==2) THEN ! DenseSquare
+          ELSEIF(matrixType==2) THEN ! DenseSquare
             ALLOCATE(DenseSquareMatrixType :: solver%A)
-          ELSEIF (matrixType==3) THEN ! DenseRect
+          ELSEIF(matrixType==3) THEN ! DenseRect
             ALLOCATE(DenseRectMatrixType :: solver%A)
-          ELSEIF (matrixType==4) THEN ! PETSc Sparse
+          ELSEIF(matrixType==4) THEN ! PETSc Sparse
             ALLOCATE(PETScMatrixType :: solver%A)
             SELECTTYPE(A => solver%A); TYPE IS(PETScMatrixType)
               A%SparseDense=0  ! sparse
             ENDSELECT
-          ELSEIF (matrixType==5) THEN ! PETSc Dense
+          ELSEIF(matrixType==5) THEN ! PETSc Dense
             ALLOCATE(PETScMatrixType :: solver%A)
             SELECTTYPE(A => solver%A); TYPE IS(PETScMatrixType)
               A%SparseDense=1  ! dense
@@ -291,7 +301,7 @@ MODULE LinearSolverTypes
           ! throw exception
         ENDIF
         ! allocate vectors (X and b)
-        IF (matrixType==4 .OR. matrixType==5) THEN
+        IF(matrixType==4 .OR. matrixType==5) THEN
           ALLOCATE(PETScVectorType :: solver%X)
           ALLOCATE(PETScVectorType :: solver%b)
         ELSE
@@ -319,24 +329,53 @@ MODULE LinearSolverTypes
           IF((solverMethod > 0) .AND. &
              (solverMethod <= MAX_IT_SOLVER_METHODS)) THEN         
               
+
+            IF(matrixType==4 .OR. matrixType==5) THEN ! PETSc
 #ifdef HAVE_PETSC
-            IF (matrixType==4 .OR. matrixType==5) THEN ! PETSc
-                !create and initialize KSP
-                CALL KSPCreate(MPI_COMM_WORLD,solver%ksp,ierr)
-                CALL KSPSetOperators(solver%ksp,solver%A,solver%A,DIFFERENT_NONZERO_PATTERN,ierr)
-                CALL KSPSetFromOptions(solver%ksp,ierr)
-                
-                !set iterative solver type
-                SELECTCASE(solverMethod)
-                  CASE(1) ! BCGS
-                    CALL KSPSetType(solver%ksp,KSPBCGS,ierr)
-                  CASE(2) ! CGNR
-                    CALL KSPSetType(solver%ksp,KSPCGNE,ierr)
-                  CASE(3) ! GMRES
-                    CALL KSPSetType(solver%ksp,KSPGMRES,ierr)
-                ENDSELECT
+              ! create and assemble matrix
+              SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
+                IF(.NOT.A%isCreated) THEN
+                  CALL MatCreate(solver%MPIparallelEnv%comm,A%a,ierr)
+                  A%isCreated=.TRUE.
+                ENDIF
+                IF(matrixType==4) THEN ! Sparse
+                  A%SparseDense=0
+                ELSEIF(matrixType==5) THEN ! Dense
+                  A%SparseDense=1
+                ENDIF
+              ENDSELECT
+              ! create source vector
+              SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
+                IF(.NOT.b%isCreated) THEN
+                  CALL VecCreate(solver%MPIparallelEnv%comm,b%b,ierr)
+                  b%isCreated=.TRUE.
+                ENDIF
+              ENDSELECT
+              ! create solution vector
+              SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
+                IF(.NOT.X%isCreated) THEN
+                  CALL VecCreate(solver%MPIparallelEnv%comm,X%b,ierr)
+                  X%isCreated=.TRUE.
+                ENDIF
+              ENDSELECT
+              !create and initialize KSP
+              CALL KSPCreate(solver%MPIparallelEnv%comm,solver%ksp,ierr)
+              
+              !set iterative solver type
+              SELECTCASE(solverMethod)
+                CASE(1) ! BCGS
+                  CALL KSPSetType(solver%ksp,KSPBCGS,ierr)
+                CASE(2) ! CGNR
+                  CALL KSPSetType(solver%ksp,KSPCGNE,ierr)
+                CASE(3) ! GMRES
+                  CALL KSPSetType(solver%ksp,KSPGMRES,ierr)
+              ENDSELECT
+#else
+              CALL eLinearSolverType%raiseError('Incorrect call to '// &
+                modName//'::'//myName//' - invalid value of solverMethod')
+#endif 
             ENDIF
-#endif
+
             !assign values to solver
             CALL solver%SolveTime%setTimerName(timerName)   
             solver%solverMethod=solverMethod
@@ -367,8 +406,7 @@ MODULE LinearSolverTypes
 
       solver%isInit=.FALSE.
       solver%solverMethod=-1
-      solver%hasA=.FALSE.
-      solver%hasB=.FALSE.
+      solver%hasX=.FALSE.
       solver%info=0
       CALL solver%MPIparallelEnv%clear()
       CALL solver%OMPparallelEnv%clear()
@@ -400,8 +438,7 @@ MODULE LinearSolverTypes
 
       solver%isInit=.FALSE.
       solver%solverMethod=-1
-      solver%hasA=.FALSE.
-      solver%hasB=.FALSE.
+      solver%hasX=.FALSE.
       solver%info=0
       CALL solver%MPIparallelEnv%clear()
       CALL solver%OMPparallelEnv%clear()
@@ -547,7 +584,7 @@ MODULE LinearSolverTypes
         CALL solver%SolveTime%tic()
         solver%info=-1
         SELECTCASE(solver%solverMethod)
-          CASE(1) !BiCGSTAB
+          CASE(BICGSTAB)
             !need two type structures to deal with DenseRectMatrixType
             SELECTTYPE(A=>solver%A)
               TYPE IS(DenseSquareMatrixType)
@@ -578,22 +615,55 @@ MODULE LinearSolverTypes
                   CALL eLinearSolverType%raiseWarning(modName//'::'// &
                     myName//'- BiCGSTAB method for dense rectangular system '// &
                       'is not implemented, CGNR method is used instead.')
-
-#ifdef HAVE_PETSC                      
+                   
               TYPE IS(PETScMatrixType)
+#ifdef HAVE_PETSC   
                 ! assemble matrix if necessary
-                IF (.NOT.(A%isAssembled)) THEN
-                  CALL MatAssemblyBegin(A,ierr)
-                  CALL MatAssemblyEnd(A,ierr)
-                  A%isAssembled=.FALSE.
+                IF(.NOT.(A%isAssembled)) THEN
+                  CALL MatAssemblyBegin(A%a,MAT_FINAL_ASSEMBLY,ierr)
+                  CALL MatAssemblyEnd(A%a,MAT_FINAL_ASSEMBLY,ierr)
+                  A%isAssembled=.TRUE.
                 ENDIF
                 
+                ! assemble source vector if necessary
+                SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
+                  IF(.NOT.(b%isAssembled)) THEN
+                    CALL VecAssemblyBegin(b%b,ierr)
+                    CALL VecAssemblyEnd(b%b,ierr)
+                    b%isAssembled=.TRUE.
+                  ENDIF
+                ENDSELECT
+                
+                ! assemble solution vector if necessary
+                SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
+                  IF(.NOT.(X%isAssembled)) THEN
+                    CALL VecAssemblyBegin(X%b,ierr)
+                    CALL VecAssemblyEnd(X%b,ierr)
+                    X%isAssembled=.TRUE.
+                  ENDIF
+                ENDSELECT
+                
+                SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
+                  CALL KSPSetOperators(solver%ksp,A%a,A%a, &
+                    DIFFERENT_NONZERO_PATTERN,ierr)
+                ENDSELECT
+                CALL KSPSetFromOptions(solver%ksp,ierr)
+                
                 ! solve
-                CALL KSPSolve(solver%ksp,solver%b,solver%x,ierr)
+                SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
+                  SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
+                    CALL KSPSolve(solver%ksp,b%b,x%b,ierr)
+                    IF(ierr==0) solver%info=0
+                  ENDSELECT
+                ENDSELECT
+#else
+                CALL eLinearSolverType%raiseFatalError('Incorrect call to '// &
+                   modName//'::'//myName//' - PETSc not enabled.  You will'// &
+                   'need to recompile with PETSc enabled to use this feature.')
 #endif
                 
             ENDSELECT
-          CASE(2) !CGNR
+          CASE(CGNR)
             SELECTTYPE(A=>solver%A)
               TYPE IS(TriDiagMatrixType)
                 !If the coefficient matrix is tridiagonal PLU method will be
@@ -612,37 +682,127 @@ MODULE LinearSolverTypes
                   CALL eLinearSolverType%raiseWarning(modName//'::'// &
                   myName//'- CGNR method for sparse system '// &
                     'is not implemented, BiCGSTAB method is used instead.')
-#ifdef HAVE_PETSC                    
+                 
               TYPE IS(PETScMatrixType)
+#ifdef HAVE_PETSC   
                 ! assemble matrix if necessary
-                IF (.NOT.(A%isAssembled)) THEN
-                  CALL MatAssemblyBegin(A,ierr)
-                  CALL MatAssemblyEnd(A,ierr)
-                  A%isAssembled=.FALSE.
+                IF(.NOT.(A%isAssembled)) THEN
+                  CALL MatAssemblyBegin(A%a,MAT_FINAL_ASSEMBLY,ierr)
+                  CALL MatAssemblyEnd(A%a,MAT_FINAL_ASSEMBLY,ierr)
+                  A%isAssembled=.TRUE.
                 ENDIF
                 
+                ! assemble source vector if necessary
+                SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
+                  IF(.NOT.(b%isAssembled)) THEN
+                    CALL VecAssemblyBegin(b%b,ierr)
+                    CALL VecAssemblyEnd(b%b,ierr)
+                    b%isAssembled=.TRUE.
+                  ENDIF
+                ENDSELECT
+                
+                ! assemble solution vector if necessary
+                SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
+                  IF(.NOT.(X%isAssembled)) THEN
+                    CALL VecAssemblyBegin(X%b,ierr)
+                    CALL VecAssemblyEnd(X%b,ierr)
+                    X%isAssembled=.TRUE.
+                  ENDIF
+                ENDSELECT
+                
+                SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
+                  CALL KSPSetOperators(solver%ksp,A%a,A%a, &
+                    DIFFERENT_NONZERO_PATTERN,ierr)
+                ENDSELECT
+                CALL KSPSetFromOptions(solver%ksp,ierr)
+                
                 ! solve
-                CALL KSPSolve(solver%ksp,solver%b,solver%x,ierr)
+                SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
+                  SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
+                    CALL KSPSolve(solver%ksp,b%b,x%b,ierr)
+                    IF(ierr==0) solver%info=0
+                  ENDSELECT
+                ENDSELECT
+#else
+                CALL eLinearSolverType%raiseFatalError('Incorrect call to '// &
+                   modName//'::'//myName//' - PETSc not enabled.  You will'// &
+                   'need to recompile with PETSc enabled to use this feature.')
 #endif
               CLASS DEFAULT
                 CALL solveCGNR(solver)
             
             ENDSELECT
             
-          CASE(3) !GMRES
+          CASE(GMRES)
             SELECTTYPE(A=>solver%A)
-#ifdef HAVE_PETSC                    
+              TYPE IS(TriDiagMatrixType)
+                !If the coefficient matrix is tridiagonal PLU method will be
+                !used instead.
+                IF(.NOT.solver%isDecomposed) &
+                  CALL DecomposePLU_TriDiag(solver)
+                CALL solvePLU_TriDiag(solver)
+
+                IF(solver%info == 0) &
+                  CALL eLinearSolverType%raiseWarning(modName//'::'// &
+                  myName//'- GMRES method for tridiagonal system '// &
+                    'is not implemented, PLU method is used instead.')
+              TYPE IS(DenseRectMatrixType)
+                !If the coefficient matrix is a rectangular matrix, CGNR method
+                !will be used instead.
+                CALL solveCGNR(solver)
+
+                IF(solver%info == 0) &
+                  CALL eLinearSolverType%raiseWarning(modName//'::'// &
+                    myName//'- GMRES method for dense rectangular system '// &
+                      'is not implemented, CGNR method is used instead.')
+
               TYPE IS(PETScMatrixType)
+#ifdef HAVE_PETSC 
                 ! assemble matrix if necessary
-                IF (.NOT.(A%isAssembled)) THEN
-                  CALL MatAssemblyBegin(A,ierr)
-                  CALL MatAssemblyEnd(A,ierr)
-                  A%isAssembled=.FALSE.
+                IF(.NOT.(A%isAssembled)) THEN
+                  CALL MatAssemblyBegin(A%a,MAT_FINAL_ASSEMBLY,ierr)
+                  CALL MatAssemblyEnd(A%a,MAT_FINAL_ASSEMBLY,ierr)
+                  A%isAssembled=.TRUE.
                 ENDIF
                 
+                ! assemble source vector if necessary
+                SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
+                  IF(.NOT.(b%isAssembled)) THEN
+                    CALL VecAssemblyBegin(b%b,ierr)
+                    CALL VecAssemblyEnd(b%b,ierr)
+                    b%isAssembled=.TRUE.
+                  ENDIF
+                ENDSELECT
+                
+                ! assemble solution vector if necessary
+                SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
+                  IF(.NOT.(X%isAssembled)) THEN
+                    CALL VecAssemblyBegin(X%b,ierr)
+                    CALL VecAssemblyEnd(X%b,ierr)
+                    X%isAssembled=.TRUE.
+                  ENDIF
+                ENDSELECT
+                
+                SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
+                  CALL KSPSetOperators(solver%ksp,A%a,A%a, &
+                    DIFFERENT_NONZERO_PATTERN,ierr)
+                ENDSELECT
+                CALL KSPSetFromOptions(solver%ksp,ierr)
+
                 ! solve
-                CALL KSPSolve(solver%ksp,solver%b,solver%x,ierr)
+                SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
+                  SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
+                    CALL KSPSolve(solver%ksp,b%b,x%b,ierr)
+                    IF(ierr==0) solver%info=0
+                  ENDSELECT
+                ENDSELECT
+#else
+                CALL eLinearSolverType%raiseFatalError('Incorrect call to '// &
+                   modName//'::'//myName//' - PETSc not enabled.  You will'// &
+                   'need to recompile with PETSc enabled to use this feature.')
 #endif  
+              CLASS DEFAULT
+                CALL solveGMRES(solver)
             ENDSELECT
         ENDSELECT
         CALL solver%SolveTime%toc()
@@ -722,10 +882,16 @@ MODULE LinearSolverTypes
     SUBROUTINE setX0_LinearSolverType_Iterative(solver,X0)
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
       REAL(SRK),POINTER,INTENT(IN) :: X0(:)
+      INTEGER(SIK) :: i
 
       IF(solver%isInit) THEN
         SELECTTYPE(X => solver%X); TYPE IS(RealVectorType)
           X%b=X0
+        ENDSELECT
+        SELECTTYPE(X => solver%X); TYPE IS(PETScVectorType)
+          DO i=1,solver%X%n
+            CALL X%set(i,X0(i))
+          ENDDO
         ENDSELECT
         solver%hasX0=.TRUE.
       ENDIF
@@ -737,32 +903,27 @@ MODULE LinearSolverTypes
 !> @param normType An integer representing the convergence check norm
 !> @param convTol A value representing the convergence behavior
 !> @param maxIters The maximum number of iterations to perform
+!> @param nRestart The number of iterations before GMRES restarts
 !>
 !> This subroutine sets the convergence criterion for the iterative solver. 
 !>
-    SUBROUTINE setConv_LinearSolverType_Iterative(solver,normType_in,convTol_in, &
-                                                  maxIters_in)
+    SUBROUTINE setConv_LinearSolverType_Iterative(solver,normType_in,  &
+                                             convTol_in,maxIters_in,nRestart_in)
       CHARACTER(LEN=*),PARAMETER :: myName='setConv_LinearSolverType_Iterative'
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
       INTEGER(SIK),INTENT(IN) :: normType_in
       REAL(SRK),INTENT(IN) :: convTol_in
       INTEGER(SIK),INTENT(IN) :: maxIters_in
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: nRestart_in
 #ifdef HAVE_PETSC
       PetscErrorCode  :: ierr
-      PetscInt  :: maxits
+      PetscInt  :: maxits,nrst
       PetscReal :: rtol,abstol,dtol=PETSC_DEFAULT_DOUBLE_PRECISION
 #endif
 
-      INTEGER(SIK) :: normType,maxIters
+      INTEGER(SIK) :: normType,maxIters,nRestart
       REAL(SRK) :: convTol
       LOGICAL(SBK) :: localalloc
-      
-#ifdef HAVE_PETSC
-      ! set variables
-      maxits=maxIters_in
-      rtol=convTol_in
-      abstol=convTol_in
-#endif
 
       localalloc=.FALSE.
       IF(.NOT.ASSOCIATED(eLinearSolverType)) THEN
@@ -774,6 +935,7 @@ MODULE LinearSolverTypes
       normType=normType_in
       convTol=convTol_in
       maxIters=maxIters_in
+      nRestart=nRestart_in
       IF(normType <= -2) THEN
         CALL eLinearSolverType%raiseWarning(modName//'::'// &
           myName//' - Incorrect input, normType should not be less '// &
@@ -792,15 +954,32 @@ MODULE LinearSolverTypes
             'than 1. Default value is used!')
         maxIters=1000
       ENDIF
+      IF(nRestart <= 1 .OR. .NOT.PRESENT(nRestart_in)) THEN
+        CALL eLinearSolverType%raiseWarning(modName//'::'// &
+          myName//' - Incorrect input, nRestart should not be less '// &
+            'than 1. Default value is used!')
+        nRestart=30
+      ENDIF
       IF(solver%isInit) THEN
         solver%normType=normType
         solver%convTol=convTol
         solver%maxIters=maxIters
+        solver%nRestart=nRestart
+
+        IF(solver%TPLType == PETSC) THEN
 #ifdef HAVE_PETSC
-        IF (solver%TPLType == PETSC) THEN
+          rtol=convTol
+          abstol=convTol
+          maxits=maxIters
+          nrst=nRestart
           CALL KSPSetTolerances(solver%ksp,rtol,abstol,dtol,maxits,ierr)
-        ENDIF
+          IF(PRESENT(nRestart_in)) CALL KSPGMRESSetRestart(solver%ksp,nrst,ierr)
+#else
+          CALL eLinearSolverType%raiseFatalError('Incorrect call to '// &
+             modName//'::'//myName//' - PETSc not enabled.  You will'// &
+             'need to recompile with PETSc enabled to use this feature.')
 #endif
+        ENDIF
       ENDIF
       IF(localalloc) DEALLOCATE(eLinearSolverType)
     ENDSUBROUTINE setConv_LinearSolverType_Iterative
@@ -814,12 +993,12 @@ MODULE LinearSolverTypes
 !>   
     SUBROUTINE getResidual_LinearSolverType_Iterative(solver,resid)
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
-      TYPE(RealVectorType),INTENT(OUT) :: resid
+      TYPE(RealVectorType),INTENT(INOUT) :: resid
       !input check
       IF(solver%isInit .AND. ALLOCATED(solver%b) .AND. ALLOCATED(solver%A) &
         .AND. ALLOCATED(solver%X) .AND. resid%n > 0) THEN
-        !Written assuming A is not decomposed.  Which is accurate, the correct solve
-        !function will contain the decomposed A.
+        !Written assuming A is not decomposed.  Which is accurate, the correct
+        !solve function will contain the decomposed A.
         IF(resid%n == solver%b%n) THEN
 #ifdef HAVE_MKL
           !not yet implemented
@@ -828,7 +1007,8 @@ MODULE LinearSolverTypes
           ENDSELECT
           CALL BLAS_matvec(THISMATRIX=solver%A,X=solver%X,Y=resid)
 #else
-          !perform calculations using the BLAS system (intrinsic to MPACT or TPL, defined by #HAVE_BLAS)
+          !perform calculations using the BLAS system (intrinsic to MPACT or 
+          !TPL, defined by #HAVE_BLAS)
           SELECTTYPE(b => solver%b); TYPE IS(RealVectorType)
             resid%b=-b%b
           ENDSELECT
@@ -948,13 +1128,102 @@ MODULE LinearSolverTypes
       solver%iters=iterations
       solver%info=0
     ENDSUBROUTINE solveBiCGSTAB
+!
+!-------------------------------------------------------------------------------
+!> @brief Solves the Iterative Linear System using the GMRES method
+!> @param solver The linear solver to act on
+!>
+!> This subroutine solves the Iterative Linear System using the GMRES method
+!>
+    SUBROUTINE solveGMRES(solver)
+      CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
 
+      REAL(SRK)  :: beta, h, t, phibar, temp, tol
+      REAL(SRK),ALLOCATABLE :: v(:,:), R(:,:), w(:), c(:), s(:), g(:), y(:)
+      TYPE(RealVectorType) :: u
+      INTEGER(SIK) :: i,j,k,m,n,it
+      
+      n=solver%A%n
+      m=MIN(solver%nRestart,n)
+      CALL u%init(n)
+      ALLOCATE(v(n,m+1))
+      ALLOCATE(R(m+1,m+1))
+      ALLOCATE(w(n))
+      ALLOCATE(c(m+1))
+      ALLOCATE(s(m+1))
+      ALLOCATE(g(m+1))
+      ALLOCATE(y(m+1))
+      v(:,:)=0._SRK
+      R(:,:)=0._SRK
+      w(:)=0._SRK
+      c(:)=0._SRK
+      s(:)=0._SRK
+      g(:)=0._SRK
+      y(:)=0._SRK
+
+      CALL solver%getResidual(u)
+      CALL LNorm(u%b,2_SIK,beta)
+      tol=solver%convTol*beta
+      
+      v(:,1)=-u%b/beta
+      h=beta
+      phibar=beta
+      !Iterate on solution
+      DO it=1_SIK,m
+        CALL BLAS_matvec(THISMATRIX=solver%A,X=v(:,it),BETA=0.0_SRK,Y=w)
+        h=BLAS_dot(w,v(:,1))
+        w=w-h*v(:,1)
+        t=h
+        DO k=2,it
+          h=BLAS_DOT(w,v(:,k))
+          w=w-h*v(:,k)
+          R(k-1,it)=c(k-1)*t+s(k-1)*h
+          t=c(k-1)*h-s(k-1)*t
+        ENDDO
+        CALL LNorm(w,2_SIK,h)
+        !WRITE(*,*) "h = ", h
+        IF(h>0.0_SRK) THEN
+          v(:,it+1)=w/h
+        ELSE
+          v(:,it+1)=0.0_SRK*w
+        ENDIF
+        !Set up next Given's rotation
+        IF(t>=0.0_SRK) THEN
+          temp=SQRT(t*t+h*h)
+        ELSE
+          temp=-SQRT(t*t+h*h)
+        ENDIF
+        c(it)=t/temp
+        s(it)=h/temp
+        R(it,it)=temp
+        g(it)=c(it)*phibar
+        phibar=-s(it)*phibar
+        !WRITE(*,*) it, phibar
+        IF(ABS(phibar)<=tol) EXIT
+      ENDDO
+      
+      DO j=it,1_SIK,-1_SIK
+        temp=0.0_SRK
+        DO k=j+1_SIK,it
+          temp=temp+R(j,k)*y(k)
+        ENDDO
+        y(j)=(g(j)-temp)/R(j,j)
+      ENDDO
+      
+      CALL BLAS_matvec(v(:,1:it),y(1:it),0.0_SRK,u%b)
+      CALL BLAS_axpy(u,solver%x)
+      CALL solver%getResidual(u)
+      CALL LNorm(u%b,2_SIK,beta)
+      solver%iters=it
+      solver%info=0
+    ENDSUBROUTINE solveGMRES
+!
 !-------------------------------------------------------------------------------
 !> @brief Factorizes a sparse solver%A with ILU method and stores this in
 !>  solver%M
 !> @param solver The linear solver object
 !>
-!> This subroutine factorizes A with ILU method and stores the result in solver%M
+!> This subroutine factorizes A with ILU method and stores result in solver%M
 !> 
     SUBROUTINE DecomposeILU_Sparse(solver)
       CLASS(LinearSolverType_Base),INTENT(INOUT) :: solver
@@ -991,7 +1260,7 @@ MODULE LinearSolverTypes
           DO ik=M%ia(i),uptr(i)-1
             k=M%ja(ik)
             kk=uptr(k)
-            IF(kk == 0 .OR.(M%a(kk) .APPROXEQ. 0._SRK)) THEN
+            IF(kk == 0 .OR.(M%a(kk) .APPROXEQA. 0._SRK)) THEN
               CALL M%clear()
               DEALLOCATE(solver%M)
               RETURN
@@ -1060,7 +1329,7 @@ MODULE LinearSolverTypes
           IF(ABS(A%a(2,A%n))<ABS(A%a(1,A%n))) diagDom=.FALSE.
 
           !If the first diagonal coefficient is zero, return
-          IF(A%a(2,1) .APPROXEQ. 0._SRK) THEN
+          IF(A%a(2,1) .APPROXEQA. 0._SRK) THEN
             CALL solver%M%clear()
             DEALLOCATE(solver%M)
             RETURN
@@ -1076,7 +1345,7 @@ MODULE LinearSolverTypes
               M%a(3,i)=A%a(3,i)
               t=A%a(2,i+1)-M%a(1,i+1)*M%a(3,i)
               !If failed, return.
-              IF(t .APPROXEQ. 0._SRK) THEN
+              IF(t .APPROXEQA. 0._SRK) THEN
                 CALL M%clear()
                 DEALLOCATE(solver%M)
                 RETURN
@@ -1098,13 +1367,13 @@ MODULE LinearSolverTypes
 
 
 !-------------------------------------------------------------------------------
-!> @brief Solves a sparse system using forward and backward substitution, given M
+!> @brief Solves a sparse system using forward and backward substitution
 !> @param M The resultant ILU factorization of A, inverted.
 !> @param b the RHS vector
 !> @param x the output vector, x=inv(M)*b
 !>
-!> This subroutine applies the inverse of a matrix M to a vector b and returns x.
-!> It assumes that M is stored in the Compressed Sparse Row (CSR) format, and
+!> This subroutine applies the inverse of a matrix M to a vector b and returns 
+!> x. It assumes that M is stored in the Compressed Sparse Row (CSR) format, and
 !> that M is actually stored as LU.
 !> 
     SUBROUTINE MinvMult_Sparse(M,b,x)       
@@ -1146,11 +1415,11 @@ MODULE LinearSolverTypes
 !> @param b the RHS vector
 !> @param x the output vector, x=inv(M)*b
 !>
-!> This subroutine applies the inverse of a matrix M to a vector b and returns x.
-!> Minv is stored as a dense matrix.
+!> This subroutine applies the inverse of a matrix M to a vector b and returns 
+!> x. Minv is stored as a dense matrix.
 !> 
     SUBROUTINE MinvMult_Dense(Minv,b,x)
-        TYPE(DenseSquareMatrixType),INTENT(IN) :: Minv
+        TYPE(DenseSquareMatrixType),INTENT(INOUT) :: Minv
         REAL(SRK),INTENT(IN) :: b(:)
         REAL(SRK),INTENT(INOUT) :: x(:)
         x=0._SRK
@@ -1159,7 +1428,8 @@ MODULE LinearSolverTypes
 !
 !-------------------------------------------------------------------------------
 !> @brief Solve a tridiagonal system on a tridiag matrix using G.E.
-!> @param solver The LinearSolverType object, previously decomposed with PLU method.
+!> @param solver The LinearSolverType object, previously decomposed with PLU 
+!> method.
 !>
 !> This routine assumes that the tridiagonal matrix has already been decomposed
 !> in to its PLU parts, with LU stored in M.
@@ -1167,27 +1437,34 @@ MODULE LinearSolverTypes
     SUBROUTINE solvePLU_TriDiag(solver)
       CLASS(LinearSolverType_Base),INTENT(INOUT) :: solver
       INTEGER(SIK) :: n,i
-      REAL(SRK) :: Xprev
+      REAL(SRK) :: Xprev,tmpxval,tmpbval
 
       solver%info=-1
       IF(solver%isDecomposed) THEN
         SELECTTYPE(M => solver%M); TYPE IS(TriDiagMatrixType)
           SELECTTYPE(X => solver%X); TYPE IS(RealVectorType)
-            n=M%n
-            !LUx=b,Ux=y, Ly=b
-            !find y (Ly=b), y is stored in X to save space
-            CALL X%set(1,solver%b%get(1))
-            DO i=2,n
-              CALL X%set(i,solver%b%get(i)-M%a(1,i)*X%get(i-1))
-            ENDDO
-            !find x with backward substitution (Ux=y)
-            CALL X%set(n,X%get(n)*M%a(2,n))
-            Xprev=X%get(n)
-            DO i=(n-1),1,-1
-              CALL X%set(i,(X%get(i)-M%a(3,i)*Xprev)*M%a(2,i))
-              Xprev=X%get(i)
-            ENDDO
-            solver%info=0
+            SELECTTYPE(b => solver%b); TYPE IS(RealVectorType)
+              n=M%n
+              !LUx=b,Ux=y, Ly=b
+              !find y (Ly=b), y is stored in X to save space
+              CALL b%get(1,tmpbval)
+              CALL X%set(1,tmpbval)
+              DO i=2,n
+                CALL X%get((i-1),tmpxval)
+                CALL b%get(i,tmpbval)
+                CALL X%set(i,tmpbval-M%a(1,i)*tmpxval)
+              ENDDO
+              !find x with backward substitution (Ux=y)
+              CALL X%get(n,tmpxval)
+              CALL X%set(n,tmpxval*M%a(2,n))
+              CALL X%get(n,Xprev)
+              DO i=(n-1),1,-1
+                CALL X%get(i,tmpxval)
+                CALL X%set(i,(tmpxval-M%a(3,i)*Xprev)*M%a(2,i))
+                CALL X%get(i,Xprev)
+              ENDDO
+              solver%info=0
+            ENDSELECT
           ENDSELECT
         ENDSELECT
       ENDIF
@@ -1203,7 +1480,7 @@ MODULE LinearSolverTypes
       CLASS(LinearSolverType_Direct),INTENT(INOUT) :: solver
       
       REAL(SRK) :: thisa(solver%A%n,solver%A%n)
-      REAL(SRK) :: t,thisb(solver%A%n)
+      REAL(SRK) :: t,thisb(solver%A%n),tmpxval
       INTEGER(SIK) :: N,i,irow,icol,IPIV(solver%A%n)
 
       SELECTTYPE(b => solver%b); TYPE IS(RealVectorType)
@@ -1236,20 +1513,24 @@ MODULE LinearSolverTypes
         !Perform forward substitution
         DO irow=i+1,N
           thisa(irow,i)=thisa(irow,i)/thisa(i,i)
-          CALL BLAS_axpy(N-i,-thisa(irow,i),thisa(i:N,i+1),N,thisa(irow:N,i+1),N)
+          CALL BLAS_axpy(N-i,-thisa(irow,i),thisa(i:N,i+1),N, &
+            thisa(irow:N,i+1),N)
           thisb(irow)=thisb(irow)-thisa(irow,i)*thisb(i)
         ENDDO
       ENDDO
 
       !Perform backward substitution
-      IF(thisa(N,N) .APPROXEQ. 0._SRK) RETURN
+      IF(thisa(N,N) .APPROXEQA. 0._SRK) RETURN
       SELECTTYPE(X => solver%X); TYPE IS(RealVectorType)
         CALL X%set(N,thisb(N)/thisa(N,N))
       ENDSELECT
       DO irow=N-1,1,-1
         t=0._SRK
         DO icol=irow+1,N
-          t=t+thisa(irow,icol)*solver%X%get(icol)
+          SELECTTYPE(X => solver%X); TYPE IS(RealVectorType)
+            CALL X%get(icol,tmpxval)  
+            t=t+thisa(irow,icol)*tmpxval
+           ENDSELECT
         ENDDO
          SELECTTYPE(X => solver%X); TYPE IS(RealVectorType)
            CALL X%set(irow,(thisb(irow)-t)/thisa(irow,irow))
@@ -1314,7 +1595,7 @@ MODULE LinearSolverTypes
               ENDIF
             ENDDO
 
-            IF(t .APPROXEQ. 0._SRK) RETURN
+            IF(t .APPROXEQA. 0._SRK) RETURN
             !if it differs from the current row, interchange the two rows.
             IF(solver%IPIV(i) /= i) THEN
               CALL BLAS_swap(N,M%A(solver%IPIV(i):N,1),N,M%A(i:N,1),N)
@@ -1326,7 +1607,7 @@ MODULE LinearSolverTypes
               CALL BLAS_axpy(N-i,-M%A(irow,i),M%A(i:N,i+1),N,M%A(irow:N,i+1),N)
             ENDDO
           ENDDO
-          IF(M%A(N,N) .APPROXEQ. 0._SRK) RETURN
+          IF(M%A(N,N) .APPROXEQA. 0._SRK) RETURN
           solver%info=0
           solver%isDecomposed=.TRUE.
       ENDSELECT
@@ -1399,9 +1680,9 @@ MODULE LinearSolverTypes
 !> @brief Solve the sparse linear system
 !> @param solver The linear solver object
 !>
-!> This routine solves the sparse linear system by two method. If the MKL library
-!> could be found, the PLU method will be called. If it is not found, hard coded
-!> CGNR method will be used instead.
+!> This routine solves the sparse linear system by two method. If the MKL 
+!> library could be found, the PLU method will be called. If it is not found, 
+!> hard coded CGNR method will be used instead.
 !>
     SUBROUTINE solvePLU_Sparse(solver)
       CLASS(LinearSolverType_Base),INTENT(INOUT) :: solver

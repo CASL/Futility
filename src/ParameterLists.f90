@@ -3735,7 +3735,7 @@ MODULE ParameterLists
           ALLOCATE(ParamType_SSK_a1 :: thisParam%pdat)
           thisParam%pdat%name=TRIM(name)
           IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
-          thisParam%pdat%dataType='REAL(SSK)'
+          thisParam%pdat%dataType='1-D ARRAY REAL(SSK)'
           SELECTTYPE(p=>thisParam%pdat)
             TYPE IS(ParamType_SSK_a1)
               ALLOCATE(p%val(SIZE(param)))
@@ -3863,7 +3863,7 @@ MODULE ParameterLists
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
-                    tmpParam%dataType//' and must be REAL(SSK)!')
+                    tmpParam%dataType//' and must be 1-D ARRAY REAL(SSK)!')
             ENDSELECT
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
@@ -3927,7 +3927,7 @@ MODULE ParameterLists
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
-                    tmpParam%dataType//' and must be REAL(SSK)!')
+                    tmpParam%dataType//' and must be 1-D ARRAY REAL(SSK)!')
             ENDSELECT
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
@@ -4036,7 +4036,7 @@ MODULE ParameterLists
           ALLOCATE(ParamType_SDK_a1 :: thisParam%pdat)
           thisParam%pdat%name=TRIM(name)
           IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
-          thisParam%pdat%dataType='REAL(SDK)'
+          thisParam%pdat%dataType='1-D ARRAY REAL(SDK)'
           SELECTTYPE(p=>thisParam%pdat)
             TYPE IS(ParamType_SDK_a1)
               ALLOCATE(p%val(SIZE(param)))
@@ -4164,7 +4164,7 @@ MODULE ParameterLists
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
-                    tmpParam%dataType//' and must be REAL(SSK)!')
+                    tmpParam%dataType//' and must be 1-D ARRAY REAL(SDK)!')
             ENDSELECT
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
@@ -4228,7 +4228,7 @@ MODULE ParameterLists
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
-                    tmpParam%dataType//' and must be REAL(SDK)!')
+                    tmpParam%dataType//' and must be 1-D ARRAY REAL(SDK)!')
             ENDSELECT
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
@@ -4337,7 +4337,7 @@ MODULE ParameterLists
           ALLOCATE(ParamType_SNK_a1 :: thisParam%pdat)
           thisParam%pdat%name=TRIM(name)
           IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
-          thisParam%pdat%dataType='INTEGER(SNK)'
+          thisParam%pdat%dataType='1-D ARRAY INTEGER(SNK)'
           SELECTTYPE(p=>thisParam%pdat)
             TYPE IS(ParamType_SNK_a1)
               ALLOCATE(p%val(SIZE(param)))
@@ -4464,7 +4464,7 @@ MODULE ParameterLists
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
-                    tmpParam%dataType//' and must be INTEGER(SNK)!')
+                    tmpParam%dataType//' and must be 1-D ARRAY INTEGER(SNK)!')
             ENDSELECT
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
@@ -4528,7 +4528,7 @@ MODULE ParameterLists
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
-                    tmpParam%dataType//' and must be INTEGER(SNK)!')
+                    tmpParam%dataType//' and must be 1-D ARRAY INTEGER(SNK)!')
             ENDSELECT
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
@@ -4637,7 +4637,7 @@ MODULE ParameterLists
           ALLOCATE(ParamType_SLK_a1 :: thisParam%pdat)
           thisParam%pdat%name=TRIM(name)
           IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
-          thisParam%pdat%dataType='INTEGER(SLK)'
+          thisParam%pdat%dataType='1-D ARRAY INTEGER(SLK)'
           SELECTTYPE(p=>thisParam%pdat)
             TYPE IS(ParamType_SLK_a1)
               ALLOCATE(p%val(SIZE(param)))
@@ -4764,7 +4764,7 @@ MODULE ParameterLists
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
-                    tmpParam%dataType//' and must be INTEGER(SLK)!')
+                    tmpParam%dataType//' and must be 1-D ARRAY INTEGER(SLK)!')
             ENDSELECT
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
@@ -4828,7 +4828,7 @@ MODULE ParameterLists
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
-                    tmpParam%dataType//' and must be INTEGER(SLK)!')
+                    tmpParam%dataType//' and must be 1-D ARRAY INTEGER(SLK)!')
             ENDSELECT
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
@@ -4937,7 +4937,7 @@ MODULE ParameterLists
           ALLOCATE(ParamType_SBK_a1 :: thisParam%pdat)
           thisParam%pdat%name=TRIM(name)
           IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
-          thisParam%pdat%dataType='LOGICAL(SBK)'
+          thisParam%pdat%dataType='1-D ARRAY LOGICAL(SBK)'
           SELECTTYPE(p=>thisParam%pdat)
             TYPE IS(ParamType_SBK_a1)
               ALLOCATE(p%val(SIZE(param)))
@@ -5060,7 +5060,7 @@ MODULE ParameterLists
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
-                    tmpParam%dataType//' and must be LOGICAL(SBK)!')
+                    tmpParam%dataType//' and must be 1-D ARRAY LOGICAL(SBK)!')
             ENDSELECT
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
@@ -5124,7 +5124,7 @@ MODULE ParameterLists
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
-                    tmpParam%dataType//' and must be LOGICAL(SBK)!')
+                    tmpParam%dataType//' and must be 1-D ARRAY LOGICAL(SBK)!')
             ENDSELECT
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
@@ -5233,7 +5233,7 @@ MODULE ParameterLists
           ALLOCATE(ParamType_STR_a1 :: thisParam%pdat)
           thisParam%pdat%name=TRIM(name)
           IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
-          thisParam%pdat%dataType='TYPE(StringType)'
+          thisParam%pdat%dataType='1-D ARRAY TYPE(StringType)'
           SELECTTYPE(p=>thisParam%pdat)
             TYPE IS(ParamType_STR_a1)
               ALLOCATE(p%val(SIZE(param)))
@@ -5362,7 +5362,7 @@ MODULE ParameterLists
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
-                    tmpParam%dataType//' and must be TYPE(StringType)!')
+                    tmpParam%dataType//' and must be 1-D ARRAY TYPE(StringType)!')
             ENDSELECT
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
@@ -5426,7 +5426,7 @@ MODULE ParameterLists
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
-                    tmpParam%dataType//' and must be TYPE(StringType)!')
+                    tmpParam%dataType//' and must be 1-D ARRAY TYPE(StringType)!')
             ENDSELECT
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
@@ -5539,7 +5539,7 @@ MODULE ParameterLists
           ALLOCATE(ParamType_SSK_a2 :: thisParam%pdat)
           thisParam%pdat%name=TRIM(name)
           IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
-          thisParam%pdat%dataType='REAL(SSK)'
+          thisParam%pdat%dataType='2-D ARRAY REAL(SSK)'
           SELECTTYPE(p=>thisParam%pdat)
             TYPE IS(ParamType_SSK_a2)
               ALLOCATE(p%val(SIZE(param,1),SIZE(param,2)))
@@ -5669,7 +5669,7 @@ MODULE ParameterLists
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
-                    tmpParam%dataType//' and must be REAL(SSK)!')
+                    tmpParam%dataType//' and must be 2-D ARRAY REAL(SSK)!')
             ENDSELECT
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
@@ -5735,7 +5735,7 @@ MODULE ParameterLists
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
-                    tmpParam%dataType//' and must be REAL(SSK)!')
+                    tmpParam%dataType//' and must be 2-D ARRAY REAL(SSK)!')
             ENDSELECT
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
@@ -5844,7 +5844,7 @@ MODULE ParameterLists
           ALLOCATE(ParamType_SDK_a2 :: thisParam%pdat)
           thisParam%pdat%name=TRIM(name)
           IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
-          thisParam%pdat%dataType='REAL(SDK)'
+          thisParam%pdat%dataType='2-D ARRAY REAL(SDK)'
           SELECTTYPE(p=>thisParam%pdat)
             TYPE IS(ParamType_SDK_a2)
               ALLOCATE(p%val(SIZE(param,1),SIZE(param,2)))
@@ -5973,7 +5973,7 @@ MODULE ParameterLists
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
-                    tmpParam%dataType//' and must be REAL(SSK)!')
+                    tmpParam%dataType//' and must be 2-D ARRAY REAL(SDK)!')
             ENDSELECT
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
@@ -6039,7 +6039,7 @@ MODULE ParameterLists
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
-                    tmpParam%dataType//' and must be REAL(SDK)!')
+                    tmpParam%dataType//' and must be 2-D ARRAY REAL(SDK)!')
             ENDSELECT
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
@@ -6148,7 +6148,7 @@ MODULE ParameterLists
           ALLOCATE(ParamType_SNK_a2 :: thisParam%pdat)
           thisParam%pdat%name=TRIM(name)
           IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
-          thisParam%pdat%dataType='INTEGER(SNK)'
+          thisParam%pdat%dataType='2-D ARRAY INTEGER(SNK)'
           SELECTTYPE(p=>thisParam%pdat)
             TYPE IS(ParamType_SNK_a2)
               ALLOCATE(p%val(SIZE(param,1),SIZE(param,2)))
@@ -6277,7 +6277,7 @@ MODULE ParameterLists
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
-                    tmpParam%dataType//' and must be INTEGER(SNK)!')
+                    tmpParam%dataType//' and must be 2-D ARRAY INTEGER(SNK)!')
             ENDSELECT
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
@@ -6343,7 +6343,7 @@ MODULE ParameterLists
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
-                    tmpParam%dataType//' and must be INTEGER(SNK)!')
+                    tmpParam%dataType//' and must be 2-D ARRAY INTEGER(SNK)!')
             ENDSELECT
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
@@ -6452,7 +6452,7 @@ MODULE ParameterLists
           ALLOCATE(ParamType_SLK_a2 :: thisParam%pdat)
           thisParam%pdat%name=TRIM(name)
           IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
-          thisParam%pdat%dataType='INTEGER(SLK)'
+          thisParam%pdat%dataType='2-D ARRAY INTEGER(SLK)'
           SELECTTYPE(p=>thisParam%pdat)
             TYPE IS(ParamType_SLK_a2)
               ALLOCATE(p%val(SIZE(param,1),SIZE(param,2)))
@@ -6581,7 +6581,7 @@ MODULE ParameterLists
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
-                    tmpParam%dataType//' and must be INTEGER(SLK)!')
+                    tmpParam%dataType//' and must be 2-D ARRAY INTEGER(SLK)!')
             ENDSELECT
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
@@ -6647,7 +6647,7 @@ MODULE ParameterLists
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
-                    tmpParam%dataType//' and must be INTEGER(SLK)!')
+                    tmpParam%dataType//' and must be 2-D ARRAY INTEGER(SLK)!')
             ENDSELECT
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
@@ -6760,7 +6760,7 @@ MODULE ParameterLists
           ALLOCATE(ParamType_SSK_a3 :: thisParam%pdat)
           thisParam%pdat%name=TRIM(name)
           IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
-          thisParam%pdat%dataType='REAL(SSK)'
+          thisParam%pdat%dataType='3-D ARRAY REAL(SSK)'
           SELECTTYPE(p=>thisParam%pdat)
             TYPE IS(ParamType_SSK_a3)
               ALLOCATE(p%val(SIZE(param,1),SIZE(param,2),SIZE(param,3)))
@@ -6894,7 +6894,7 @@ MODULE ParameterLists
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
-                    tmpParam%dataType//' and must be REAL(SSK)!')
+                    tmpParam%dataType//' and must be 3-D ARRAY REAL(SSK)!')
             ENDSELECT
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
@@ -6963,7 +6963,7 @@ MODULE ParameterLists
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
-                    tmpParam%dataType//' and must be REAL(SSK)!')
+                    tmpParam%dataType//' and must be 3-D ARRAY REAL(SSK)!')
             ENDSELECT
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
@@ -7072,7 +7072,7 @@ MODULE ParameterLists
           ALLOCATE(ParamType_SDK_a3 :: thisParam%pdat)
           thisParam%pdat%name=TRIM(name)
           IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
-          thisParam%pdat%dataType='REAL(SDK)'
+          thisParam%pdat%dataType='3-D ARRAY REAL(SDK)'
           SELECTTYPE(p=>thisParam%pdat)
             TYPE IS(ParamType_SDK_a3)
               ALLOCATE(p%val(SIZE(param,1),SIZE(param,2),SIZE(param,3)))
@@ -7205,7 +7205,7 @@ MODULE ParameterLists
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
-                    tmpParam%dataType//' and must be REAL(SSK)!')
+                    tmpParam%dataType//' and must be 3-D ARRAY REAL(SDK)!')
             ENDSELECT
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
@@ -7273,7 +7273,7 @@ MODULE ParameterLists
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
-                    tmpParam%dataType//' and must be REAL(SDK)!')
+                    tmpParam%dataType//' and must be 3-D ARRAY REAL(SDK)!')
             ENDSELECT
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
@@ -7382,7 +7382,7 @@ MODULE ParameterLists
           ALLOCATE(ParamType_SNK_a3 :: thisParam%pdat)
           thisParam%pdat%name=TRIM(name)
           IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
-          thisParam%pdat%dataType='INTEGER(SNK)'
+          thisParam%pdat%dataType='3-D ARRAY INTEGER(SNK)'
           SELECTTYPE(p=>thisParam%pdat)
             TYPE IS(ParamType_SNK_a3)
               ALLOCATE(p%val(SIZE(param,1),SIZE(param,2),SIZE(param,3)))
@@ -7515,7 +7515,7 @@ MODULE ParameterLists
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
-                    tmpParam%dataType//' and must be INTEGER(SNK)!')
+                    tmpParam%dataType//' and must be 3-D ARRAY INTEGER(SNK)!')
             ENDSELECT
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
@@ -7584,7 +7584,7 @@ MODULE ParameterLists
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
-                    tmpParam%dataType//' and must be INTEGER(SNK)!')
+                    tmpParam%dataType//' and must be 3-D ARRAY INTEGER(SNK)!')
             ENDSELECT
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
@@ -7693,7 +7693,7 @@ MODULE ParameterLists
           ALLOCATE(ParamType_SLK_a3 :: thisParam%pdat)
           thisParam%pdat%name=TRIM(name)
           IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
-          thisParam%pdat%dataType='INTEGER(SLK)'
+          thisParam%pdat%dataType='3-D ARRAY INTEGER(SLK)'
           SELECTTYPE(p=>thisParam%pdat)
             TYPE IS(ParamType_SLK_a3)
               ALLOCATE(p%val(SIZE(param,1),SIZE(param,2),SIZE(param,3)))
@@ -7826,7 +7826,7 @@ MODULE ParameterLists
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
-                    tmpParam%dataType//' and must be INTEGER(SLK)!')
+                    tmpParam%dataType//' and must be 3-D ARRAY INTEGER(SLK)!')
             ENDSELECT
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
@@ -7895,7 +7895,7 @@ MODULE ParameterLists
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
-                    tmpParam%dataType//' and must be INTEGER(SLK)!')
+                    tmpParam%dataType//' and must be 3-D ARRAY INTEGER(SLK)!')
             ENDSELECT
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
