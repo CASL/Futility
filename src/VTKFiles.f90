@@ -602,7 +602,8 @@ MODULE VTKFiles
               CASE DEFAULT
                 CALL myVTKFile%e%raiseError(modName//'::'//myName// &
                   ' - VTK DATASET type is not recognized!')
-            ENDSELECT  
+            ENDSELECT
+            FLUSH(funit)
           ELSE
             CALL myVTKFile%e%raiseError(modName//'::'//myName// &
               ' - VTK Mesh is not initialized!')
@@ -693,6 +694,7 @@ MODULE VTKFiles
                       ' - Writing of "'//TRIM(vtkData%vtkDataFormat)// &
                         '" data not yet supported!')
                 ENDSELECT
+                FLUSH(funit)
               ELSE
                 CALL myVTKFile%e%raiseError(modName//'::'//myName// &
                 ' - dataSetType is not yet supported!')
