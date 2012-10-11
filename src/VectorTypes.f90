@@ -415,7 +415,6 @@ MODULE VectorTypes
           thisVector%isInit=.TRUE.
           thisVector%n=n
           CALL dmallocA(thisVector%b,n)
-          CALL thisVector%set(0._SRK)
         ENDIF
       ELSE
         CALL eVectorType%raiseError('Incorrect call to '// &
