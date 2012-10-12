@@ -1631,8 +1631,8 @@ PROGRAM testGeom
       u3_2d=(/-1._SRK,1._SRK/)
       CALL box%set(point,e_2d,u1_2d,u2_2d,u3_2d)
       IF(box%p0 /= point .OR. ANY(box%e(1:2) /= e_2d) &
-        .OR. ANY(box%u(1:2,1) /= u1_2d/SQRT(2._SRK)) &
-          .OR. ANY(box%u(1:2,2) /= u2_2d/SQRT(2._SRK))) THEN
+        .OR. .NOT.(ALL(box%u(1:2,1) .APPROXEQ. u1_2d/SQRT(2._SRK))) &
+          .OR. .NOT.(ALL(box%u(1:2,2) .APPROXEQ. u2_2d/SQRT(2._SRK)))) THEN
         WRITE(*,*) 'CALL box%set(...) FAILED!'
         STOP 666
       ENDIF
