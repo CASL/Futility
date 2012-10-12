@@ -29,7 +29,7 @@ PROGRAM testVectorTypes
   PetscErrorCode  :: ierr
   
 #endif
-  
+  INTEGER(SIK) :: iverr
   TYPE(ExceptionHandlerType),POINTER :: e
   
   !Configure exception handler for test
@@ -56,7 +56,7 @@ PROGRAM testVectorTypes
   DEALLOCATE(e)
   
 #ifdef HAVE_PETSC    
-      CALL PetscFinalize(ierr)
+  CALL PetscFinalize(ierr)
 #endif
 !
 !===============================================================================
@@ -405,13 +405,13 @@ PROGRAM testVectorTypes
       !test with out of bounds, make sure no crash.
       SELECTTYPE(thisVector)
         TYPE IS(RealVectorType)
-          CALL thisVector%get(8,dummy)
-          IF(dummy /= -1051._SRK) THEN
+          CALL thisVector%get(8,dummy,iverr)
+          IF(iverr /= -2) THEN
             WRITE(*,*) 'CALL realvec%getOne(...) FAILED!'
             STOP 666
           ENDIF
-          CALL thisVector%get(-1,dummy)
-          IF(dummy/=-1051._SRK) THEN
+          CALL thisVector%get(-1,dummy,iverr)
+          IF(iverr /= -2) THEN
             WRITE(*,*) 'CALL realvec%getOne(...) FAILED!'
             STOP 666
           ENDIF
@@ -420,8 +420,8 @@ PROGRAM testVectorTypes
       CALL thisVector%clear()
       SELECTTYPE(thisVector)
         TYPE IS(RealVectorType)      
-          CALL thisVector%get(1,dummy)
-          IF(dummy /= 0.0_SRK) THEN
+          CALL thisVector%get(1,dummy,iverr)
+          IF(iverr /= -1) THEN
             WRITE(*,*) 'CALL realvec%getOne(...) FAILED!'
             STOP 666
           ENDIF
@@ -459,8 +459,8 @@ PROGRAM testVectorTypes
       testvec=0._SRK
       SELECTTYPE(thisVector)
         TYPE IS(RealVectorType)    
-          CALL thisVector%get(testvec)
-          IF(testvec(1)/=-1051._SRK) THEN
+          CALL thisVector%get(testvec,iverr)
+          IF(iverr /= -1) THEN
             WRITE(*,*) 'CALL realvec%getAll(...) FAILED!'
             STOP 666
           ENDIF
@@ -494,9 +494,9 @@ PROGRAM testVectorTypes
       testvec=0._SRK
       SELECTTYPE(thisVector)
         TYPE IS(RealVectorType)      
-          CALL thisVector%get(5,7,testvec)
+          CALL thisVector%get(5,7,testvec,iverr)
           DO i=1,3
-            IF(testvec(i) /=-1051.0_SRK) THEN
+            IF(iverr /= -1) THEN
               WRITE(*,*) 'CALL realvec%getRange(...) FAILED2!'
               STOP 666
             ENDIF
@@ -886,13 +886,13 @@ PROGRAM testVectorTypes
       !test with out of bounds, make sure no crash.
       SELECTTYPE(thisVector)
         TYPE IS(PETScVectorType)
-          CALL thisVector%get(8,dummy)
-          IF(dummy /= -1051._SRK) THEN
+          CALL thisVector%get(8,dummy,iverr)
+          IF(iverr /= -2) THEN
             WRITE(*,*) 'CALL petscvec%getOne(...) FAILED!'
             STOP 666
           ENDIF
           CALL thisVector%get(-1,dummy)
-          IF(dummy/=-1051._SRK) THEN
+          IF(iverr /= -2) THEN
             WRITE(*,*) 'CALL petscvec%getOne(...) FAILED!'
             STOP 666
           ENDIF
@@ -901,8 +901,8 @@ PROGRAM testVectorTypes
       CALL thisVector%clear()
       SELECTTYPE(thisVector)
         TYPE IS(PETScVectorType)      
-          CALL thisVector%get(1,dummy)
-          IF(dummy /= 0.0_SRK) THEN
+          CALL thisVector%get(1,dummy,iverr)
+          IF(iverr /= -1) THEN
             WRITE(*,*) 'CALL petscvec%getOne(...) FAILED!'
             STOP 666
           ENDIF
@@ -941,8 +941,8 @@ PROGRAM testVectorTypes
       CALL thisVector%clear()
       SELECTTYPE(thisVector)
         TYPE IS(PETScVectorType)      
-          CALL thisVector%get(testvec)
-          IF(testvec(1)/=-1051.0_SRK) THEN
+          CALL thisVector%get(testvec,iverr)
+          IF(iverr /= -1) THEN
             WRITE(*,*) 'CALL petscvec%getAll(...) FAILED!'
             STOP 666
           ENDIF
@@ -976,13 +976,13 @@ PROGRAM testVectorTypes
       !test with out of bounds, make sure no crash.
       SELECTTYPE(thisVector)
         TYPE IS(PETScVectorType)
-          CALL thisVector%get(2,8,testvec)
-          IF(testvec(1)/= -1051._SRK) THEN
+          CALL thisVector%get(2,8,testvec,iverr)
+          IF(iverr /= -2) THEN
             WRITE(*,*) 'CALL petscvec%getRange(...) FAILED!'
             STOP 666
           ENDIF
-          CALL thisVector%get(-1,2,testvec)
-          IF(testvec(1)/=-1051._SRK) THEN
+          CALL thisVector%get(-1,2,testvec,iverr)
+          IF(iverr /= -2) THEN
             WRITE(*,*) 'CALL petscvec%getRange(...) FAILED!'
             STOP 666
           ENDIF
@@ -991,8 +991,8 @@ PROGRAM testVectorTypes
       CALL thisVector%clear()
       SELECTTYPE(thisVector)
         TYPE IS(PETScVectorType)      
-          CALL thisVector%get(1,3,testvec)
-          IF(testvec(1)/=-1051._SRK) THEN
+          CALL thisVector%get(1,3,testvec,iverr)
+          IF(iverr /= -1) THEN
             WRITE(*,*) 'CALL petscvec%getRange(...) FAILED!'
             STOP 666
           ENDIF
@@ -1899,7 +1899,7 @@ PROGRAM testVectorTypes
     CALL xVector%set(1,1.0_SRK)
     CALL xVector%set(2,3.0_SRK)
     CALL xVector%set(3,7.0_SRK)
-    CALL yVector%set(0.0_SRK)
+    CALL yVector%set(0.0_SRK,iverr)
     CALL BLAS_copy(THISVECTOR=xVector,NEWVECTOR=yVector,N=xVector%n,INCX=1,INCY=1)
     IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
     ALLOCATE(dummyvec(yVector%n))
@@ -1952,7 +1952,7 @@ PROGRAM testVectorTypes
     IF((.NOT.((dummyvec(1) .APPROXEQ. 1.0_SRK) .AND. &
               (dummyvec(2) .APPROXEQ. 3.0_SRK) .AND. &
               (dummyvec(3) .APPROXEQ. 7.0_SRK)))) THEN
-      WRITE(*,*) "CALL BLAS_copy(THISVECTOR=xVector,NEWVECTOR=yVector,INCY=1) [PETSC] FAILED!"
+      WRITE(*,*) "CALL BLAS_copy(THISVECTOR=xVector,NEWVECTOR=yVector,INCY=1) [PETSC] FAILED!" 
       STOP 666
     ENDIF
     CALL yVector%set(0.0_SRK)
