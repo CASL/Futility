@@ -220,6 +220,7 @@ MODULE ExpTables
 !> @brief Initialization method for ExpTableType object
 !> @param myET Exponential table type object
 !> @param PL The parameter list used to initialize the ExpTable object.
+!>
 !> @page ParamList Description of Parameter List
 !> @param reqParamsExpTables This parameter list is null.
 !> @param optParamsExpTables
