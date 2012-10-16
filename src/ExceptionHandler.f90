@@ -241,7 +241,7 @@ MODULE ExceptionHandler
   !> @brief Default target for other exception handlers
   !>
   !> Singleton object. May or may not be used.
-  TYPE(ExceptionHandlerType),TARGET :: eDefault  
+  TYPE(ExceptionHandlerType),TARGET,SAVE :: eDefault
 !
 !===============================================================================      
   CONTAINS
