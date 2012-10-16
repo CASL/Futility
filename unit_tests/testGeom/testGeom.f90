@@ -1920,10 +1920,10 @@ PROGRAM testGeom
       CALL points2%clear()
       CALL points3%clear()
       CALL boxs%intersectLine(lines,points2,points3)
-      IF(NOT(ANY(points2(1)%coord .APPROXEQ. (/0._SRK,2._SRK/))) &
-        .OR. NOT(ANY(points3(1)%coord .APPROXEQ. (/0._SRK,4._SRK/))) &
-        .OR. NOT(ANY(points2(2)%coord .APPROXEQ. (/0._SRK,2._SRK/))) &
-        .OR. NOT(ANY(points3(2)%coord .APPROXEQ. (/0._SRK,4._SRK/)))) THEN
+      IF(.NOT.(ANY(points2(1)%coord .APPROXEQ. (/0._SRK,2._SRK/))) &
+        .OR. .NOT.(ANY(points3(1)%coord .APPROXEQ. (/0._SRK,4._SRK/))) &
+        .OR. .NOT.(ANY(points2(2)%coord .APPROXEQ. (/0._SRK,2._SRK/))) &
+        .OR. .NOT.(ANY(points3(2)%coord .APPROXEQ. (/0._SRK,4._SRK/)))) THEN
         WRITE(*,*) 'CALL box%intersectLine(...) FAILED! 2D'
         STOP 666
       ELSE
