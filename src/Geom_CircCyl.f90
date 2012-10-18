@@ -184,7 +184,7 @@ MODULE Geom_CircCyl
         ELSE
           a=u(1)*u(1)+u(2)*u(2)
           discr=b*b-a*c
-          IF(discr < zero) THEN
+          IF(discr < -EPSREAL) THEN
             !Disjoint
             p1%dim=-2
             p2%dim=-2
@@ -311,7 +311,7 @@ MODULE Geom_CircCyl
         !Dot(d,d), length of P->Q
         dd=d(1)*d(1)+d(2)*d(2)+d(3)*d(3)
         
-        IF(wd < zero .AND. wd+ud < zero) THEN
+        IF(wd < -EPSREAL .AND. wd+ud < -EPSREAL) THEN
           !The line segment is totally outside the P-surface
           p1%dim=-2
           p2%dim=-2

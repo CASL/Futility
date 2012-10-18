@@ -281,7 +281,7 @@ MODULE VTKFiles
       PROCEDURE,PASS :: writeScalarData => writeScalarData_VTKLegFileType
   ENDTYPE VTKLegFileType
   
-  TYPE(ExceptionHandlerType),POINTER :: eVTK => NULL()
+  TYPE(ExceptionHandlerType),POINTER,SAVE :: eVTK => NULL()
 !
 !===============================================================================
   CONTAINS
