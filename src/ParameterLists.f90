@@ -101,7 +101,7 @@ MODULE ParameterLists
   CHARACTER(LEN=*),PARAMETER :: modName='PARAMETERLISTS'
   
   !> Exception handler for the module
-  TYPE(ExceptionHandlerType),POINTER :: eParams => NULL()
+  TYPE(ExceptionHandlerType),POINTER,SAVE :: eParams => NULL()
   
   !> @brief Derived type for a parameter object
   !>

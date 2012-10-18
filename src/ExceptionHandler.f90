@@ -126,7 +126,6 @@ MODULE ExceptionHandler
   PRIVATE !Default private for module contents
 !
 ! List of Public items
-  PUBLIC :: ExceptionHandlerType
   PUBLIC :: EXCEPTION_OK
   PUBLIC :: EXCEPTION_INFORMATION
   PUBLIC :: EXCEPTION_WARNING
@@ -135,6 +134,8 @@ MODULE ExceptionHandler
   PUBLIC :: EXCEPTION_FAILURE
   PUBLIC :: EXCEPTION_SIZE
   PUBLIC :: EXCEPTION_MAX_MESG_LENGTH
+  PUBLIC :: ExceptionHandlerType
+  PUBLIC :: eDefault
 
   !> An enumeration for defining an OK condition
   INTEGER(SIK),PARAMETER :: EXCEPTION_OK=0
@@ -236,6 +237,11 @@ MODULE ExceptionHandler
       !> @copydetails ExceptionHandler::raiseFailure
       PROCEDURE,PASS :: raiseFailure
   ENDTYPE ExceptionHandlerType
+  
+  !> @brief Default target for other exception handlers
+  !>
+  !> Singleton object. May or may not be used.
+  TYPE(ExceptionHandlerType),TARGET,SAVE :: eDefault
 !
 !===============================================================================      
   CONTAINS
