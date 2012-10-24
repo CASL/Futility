@@ -32,6 +32,7 @@
 !> @endcode
 !>
 !> @author Brendan Kochunas
+!> @author Ben Collins
 !>    @date 03/15/2012
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE BLAS2
@@ -51,7 +52,7 @@ MODULE BLAS2
   !> y <- alpha*A*x+beta*y
   !> y <- alpha*A^T*x+beta*y
   !> x <- A*x
-  !> x <- A^T*x
+  !> x <- A^T*x    
   !>
   !> Simplified interfaces are also provided so that dimension information
   !> is optional as is @c alpha and @c beta.  If these inputs are excluded, a different
@@ -3490,5 +3491,355 @@ MODULE BLAS2
       IF(nnz == SIZE(ja) .AND. SIZE(y) == n .AND. SIZE(ia) == n+1) &
         CALL dcsrmv_noALPHABETA(n,nnz,ia,ja,aa,x,y)
     ENDSUBROUTINE dcsrmv_noALPHABETANNNZ
+!
+!-------------------------------------------------------------------------------
+!> @brief Subroutine solves a triangular matrix linear system.
+!> @param uplo single character input indicating if an upper (U) or lower (L) 
+!>        maxtrix is stored in @c A
+!> @param trans single character input indicating whether or not to use the 
+!>        transpose of @c A
+!> @param diag single character input indicating whether or not a unity
+!>        diagonal is used
+!> @param n the size of the dimension of @c A (number of rows and columns)
+!> @param A the single-precision matrix multiply with @c x
+!> @param lda the size of the leading (first) dimension of @c A
+!> @param x the single-precision vector to multiply with @c A
+!> @param incx the increment to use when looping over elements in @c x
+!>
+!> If an external BLAS library is available at link time then that library
+!> routine that gets called, otherwise the supplied code is used. It is based on
+!> the code available on http://netlib.org/blas/strsv.f but has some minor
+!> modifications. The error checking is somewhat different.
+!>
+    PURE SUBROUTINE strsv_all(uplo,trans,diag,n,a,lda,x,incx)
+      CHARACTER(LEN=1),INTENT(IN) :: uplo
+      CHARACTER(LEN=1),INTENT(IN) :: trans
+      CHARACTER(LEN=1),INTENT(IN) :: diag
+      INTEGER(SIK),INTENT(IN) :: n
+      INTEGER(SIK),INTENT(IN) :: lda
+      REAL(SSK),INTENT(IN) :: a(lda,*)
+      REAL(SSK),INTENT(INOUT) :: x(*)
+      INTEGER(SIK),INTENT(IN) :: incx
+
+#ifdef HAVE_BLAS
+      INTERFACE
+        PURE SUBROUTINE strsv(uplo,trans,diag,n,a,lda,x,incx)
+          CHARACTER(LEN=1),INTENT(IN) :: uplo
+          CHARACTER(LEN=1),INTENT(IN) :: trans
+          CHARACTER(LEN=1),INTENT(IN) :: diag
+          INTEGER(SIK),INTENT(IN) :: n
+          INTEGER(SIK),INTENT(IN) :: lda
+          REAL(SSK),INTENT(IN) :: a(lda,*)
+          REAL(SSK),INTENT(INOUT) :: x(*)
+          INTEGER(SIK),INTENT(IN) :: incx
+        ENDSUBROUTINE sgemv
+      ENDINTERFACE
+      CALL strsv(uplo,trans,diag,n,a,lda,x,incx)
+#else
+      LOGICAL(SBK) :: ltrans, nounit
+      INTEGER(SIK) :: i,ix,j,jx,kx
+      REAL(SSK) :: temp
+      REAL(SSK),PARAMETER :: ZERO=0.0_SSK
+      INTRINSIC MAX
+    
+      IF(n > 0 .AND. incx /= 0 .AND. lda<MAX(1,N) .AND. &
+          (trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
+            trans == 'n' .OR. trans == 'N') .AND. &
+          (uplo == 'u' .OR. uplo == 'U' .OR. uplo == 'l' .OR. uplo == 'L') .AND. &
+          (diag == 't' .OR. diag == 'T' .OR. diag == 'n' .OR. diag == 'N')) THEN
+
+        IF (diag == 'n' .OR. diag == 'N') nounit=.TRUE.
+ 
+        IF (incx<=0) THEN
+            kx = 1 - (n-1)*incx
+        ELSEIF (incx/=1) THEN
+            kx = 1
+        END IF
+
+        IF (trans == 'n' .OR. trans == 'N') THEN  ! Form  x := inv( A )*x.
+          IF (uplo == 'u' .OR. uplo == 'U') THEN  ! Upper triangular
+            IF (incx.EQ.1) THEN
+              DO j = n,1,-1
+                IF (x(j)/=ZERO) THEN
+                  IF (nounit) x(j)=x(j)/a(j,j)
+                  temp=x(j)
+                  DO i=j-1,1,-1
+                    x(i)=x(i)-temp*a(i,j)
+                  ENDDO
+                ENDIF
+              ENDDO
+            ELSE
+              jx=kx+(n-1)*incx
+              DO J=n,1,-1
+                IF (x(jx)/=ZERO) THEN
+                  IF (nounit) x(jx)=x(jx)/a(j,j)
+                  temp=x(jx)
+                  ix=jx
+                  DO i=j-1,1,-1
+                    ix=ix-incx
+                    x(ix)=x(ix)-temp*a(i,j)
+                  ENDDO
+                ENDIF
+                jx=jx-incx
+              ENDDO
+            ENDIF
+          ELSE  ! Lower Triangular
+            IF (incx==1) THEN
+              DO j=1,n
+                IF (x(j)/=ZERO) THEN
+                  IF (nounit) x(j)=x(j)/a(j,j)
+                  temp=x(j)
+                  DO i=j+1,n
+                    x(i)=x(i)-temp*a(i,j)
+                  ENDDO
+                ENDIF
+              ENDDO
+            ELSE
+              jx=kx
+              DO j=1,n
+                IF (x(jx)/=ZERO) THEN
+                  IF (nounit) x(jx)=x(jx)/a(j,j)
+                  temp=x(jx)
+                  ix=jx
+                  DO i=j+1,n
+                    ix=ix+incx
+                    x(ix)=x(ix)-temp*a(i,j)
+                  ENDDO
+                ENDIF
+                jx=jx+incx
+              ENDDO
+            ENDIF
+          ENDIF
+        ELSE  ! Form  x := inv( A**T )*x.
+          IF (uplo == 'u' .OR. uplo == 'U') THEN
+            IF (incx==1) THEN
+              DO j=1,n
+                temp=x(j)
+                DO i=1,j - 1
+                  temp=temp-a(i,j)*x(i)
+                ENDDO
+                IF (nounit) temp=temp/a(j,j)
+                x(j)=temp
+              ENDDO
+            ELSE
+              jx=kx
+              DO j=1,n
+                temp=x(jx)
+                ix=kx
+                DO i=1,j-1
+                  temp=temp-a(i,j)*x(ix)
+                  ix=ix+incx
+                ENDDO
+                IF (nounit) temp=temp/a(j,j)
+                x(jx)=temp
+                jx=jx+incx
+              ENDDO
+            ENDIF
+          ELSE  ! Lower Triangular
+            IF (incx==1) THEN
+              DO j=n,1,-1
+                temp=x(j)
+                DO i=n,j + 1,-1
+                  temp=temp-a(i,j)*x(i)
+                ENDDO
+                IF (nounit) temp=temp/a(j,j)
+                x(j)=temp
+              ENDDO
+            ELSE
+              kx=kx+(n-1)*incx
+              jx=kx
+              DO j=n,1,-1
+                temp=x(jx)
+                ix=kx
+                DO i=n,j+1,-1
+                  temp=temp-a(i,j)*x(ix)
+                  ix=ix-incx
+                ENDDO
+                IF (nounit) temp=temp/a(j,j)
+                x(jx)=temp
+                jx=jx-incx
+              ENDDO
+            ENDIF
+          ENDIF
+        ENDIF
+      ENDIF
+
+#endif
+    ENDSUBROUTINE strsv_all
+!
+!-------------------------------------------------------------------------------
+!> @brief Subroutine solves a triangular matrix linear system.
+!> @param uplo single character input indicating if an upper (U) or lower (L) 
+!>        maxtrix is stored in @c A
+!> @param trans single character input indicating whether or not to use the 
+!>        transpose of @c A
+!> @param diag single character input indicating whether or not a unity
+!>        diagonal is used
+!> @param n the size of the dimension of @c A (number of rows and columns)
+!> @param A the double-precision matrix multiply with @c x
+!> @param lda the size of the leading (first) dimension of @c A
+!> @param x the double-precision vector to multiply with @c A
+!> @param incx the increment to use when looping over elements in @c x
+!>
+!> If an external BLAS library is available at link time then that library
+!> routine that gets called, otherwise the supplied code is used. It is based on
+!> the code available on http://netlib.org/blas/strsv.f but has some minor
+!> modifications. The error checking is somewhat different.
+!>
+    PURE SUBROUTINE dtrsv_all(uplo,trans,diag,n,a,lda,x,incx)
+      CHARACTER(LEN=1),INTENT(IN) :: uplo
+      CHARACTER(LEN=1),INTENT(IN) :: trans
+      CHARACTER(LEN=1),INTENT(IN) :: diag
+      INTEGER(SIK),INTENT(IN) :: n
+      INTEGER(SIK),INTENT(IN) :: lda
+      REAL(SDK),INTENT(IN) :: a(lda,*)
+      REAL(SDK),INTENT(INOUT) :: x(*)
+      INTEGER(SIK),INTENT(IN) :: incx
+
+#ifdef HAVE_BLAS
+      INTERFACE
+        PURE SUBROUTINE dtrsv(uplo,trans,diag,n,a,lda,x,incx)
+          CHARACTER(LEN=1),INTENT(IN) :: uplo
+          CHARACTER(LEN=1),INTENT(IN) :: trans
+          CHARACTER(LEN=1),INTENT(IN) :: diag
+          INTEGER(SIK),INTENT(IN) :: n
+          INTEGER(SIK),INTENT(IN) :: lda
+          REAL(SDK),INTENT(IN) :: a(lda,*)
+          REAL(SDK),INTENT(INOUT) :: x(*)
+          INTEGER(SIK),INTENT(IN) :: incx
+        ENDSUBROUTINE dtrsv
+      ENDINTERFACE
+      CALL dtrsv(uplo,trans,diag,n,a,lda,x,incx)
+#else
+      LOGICAL(SBK) :: ltrans, nounit
+      INTEGER(SIK) :: i,ix,j,jx,kx
+      REAL(SDK) :: temp
+      REAL(SDK),PARAMETER :: ZERO=0.0_SSK
+      INTRINSIC MAX
+    
+      IF(n > 0 .AND. incx /= 0 .AND. lda<MAX(1,N) .AND. &
+          (trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
+            trans == 'n' .OR. trans == 'N') .AND. &
+          (uplo == 'u' .OR. uplo == 'U' .OR. uplo == 'l' .OR. uplo == 'L') .AND. &
+          (diag == 't' .OR. diag == 'T' .OR. diag == 'n' .OR. diag == 'N')) THEN
+
+        IF (diag == 'n' .OR. diag == 'N') nounit=.TRUE.
+ 
+        IF (incx<=0) THEN
+            kx = 1 - (n-1)*incx
+        ELSEIF (incx/=1) THEN
+            kx = 1
+        END IF
+
+        IF (trans == 'n' .OR. trans == 'N') THEN  ! Form  x := inv( A )*x.
+          IF (uplo == 'u' .OR. uplo == 'U') THEN  ! Upper triangular
+            IF (incx.EQ.1) THEN
+              DO j = n,1,-1
+                IF (x(j)/=ZERO) THEN
+                  IF (nounit) x(j)=x(j)/a(j,j)
+                  temp=x(j)
+                  DO i=j-1,1,-1
+                    x(i)=x(i)-temp*a(i,j)
+                  ENDDO
+                ENDIF
+              ENDDO
+            ELSE
+              jx=kx+(n-1)*incx
+              DO J=n,1,-1
+                IF (x(jx)/=ZERO) THEN
+                  IF (nounit) x(jx)=x(jx)/a(j,j)
+                  temp=x(jx)
+                  ix=jx
+                  DO i=j-1,1,-1
+                    ix=ix-incx
+                    x(ix)=x(ix)-temp*a(i,j)
+                  ENDDO
+                ENDIF
+                jx=jx-incx
+              ENDDO
+            ENDIF
+          ELSE  ! Lower Triangular
+            IF (incx==1) THEN
+              DO j=1,n
+                IF (x(j)/=ZERO) THEN
+                  IF (nounit) x(j)=x(j)/a(j,j)
+                  temp=x(j)
+                  DO i=j+1,n
+                    x(i)=x(i)-temp*a(i,j)
+                  ENDDO
+                ENDIF
+              ENDDO
+            ELSE
+              jx=kx
+              DO j=1,n
+                IF (x(jx)/=ZERO) THEN
+                  IF (nounit) x(jx)=x(jx)/a(j,j)
+                  temp=x(jx)
+                  ix=jx
+                  DO i=j+1,n
+                    ix=ix+incx
+                    x(ix)=x(ix)-temp*a(i,j)
+                  ENDDO
+                ENDIF
+                jx=jx+incx
+              ENDDO
+            ENDIF
+          ENDIF
+        ELSE  ! Form  x := inv( A**T )*x.
+          IF (uplo == 'u' .OR. uplo == 'U') THEN
+            IF (incx==1) THEN
+              DO j=1,n
+                temp=x(j)
+                DO i=1,j - 1
+                  temp=temp-a(i,j)*x(i)
+                ENDDO
+                IF (nounit) temp=temp/a(j,j)
+                x(j)=temp
+              ENDDO
+            ELSE
+              jx=kx
+              DO j=1,n
+                temp=x(jx)
+                ix=kx
+                DO i=1,j-1
+                  temp=temp-a(i,j)*x(ix)
+                  ix=ix+incx
+                ENDDO
+                IF (nounit) temp=temp/a(j,j)
+                x(jx)=temp
+                jx=jx+incx
+              ENDDO
+            ENDIF
+          ELSE  ! Lower Triangular
+            IF (incx==1) THEN
+              DO j=n,1,-1
+                temp=x(j)
+                DO i=n,j + 1,-1
+                  temp=temp-a(i,j)*x(i)
+                ENDDO
+                IF (nounit) temp=temp/a(j,j)
+                x(j)=temp
+              ENDDO
+            ELSE
+              kx=kx+(n-1)*incx
+              jx=kx
+              DO j=n,1,-1
+                temp=x(jx)
+                ix=kx
+                DO i=n,j+1,-1
+                  temp=temp-a(i,j)*x(ix)
+                  ix=ix-incx
+                ENDDO
+                IF (nounit) temp=temp/a(j,j)
+                x(jx)=temp
+                jx=jx-incx
+              ENDDO
+            ENDIF
+          ENDIF
+        ENDIF
+      ENDIF
+
+#endif
+    ENDSUBROUTINE dtrsv_all
 !
 ENDMODULE BLAS2
