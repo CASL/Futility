@@ -690,12 +690,25 @@ MODULE VectorTypes
     SUBROUTINE clear_PETScVectorType(thisVector)
       CLASS(PETScVectorType),INTENT(INOUT) :: thisVector
       
+#ifdef HAVE_PETSC
       thisVector%isInit=.FALSE.
       thisVector%isAssembled=.FALSE.
       thisVector%isCreated=.FALSE.
       thisVector%n=0
-#ifdef HAVE_PETSC
+
       CALL VecDestroy(thisVector%b,iperr)
+#else
+      CHARACTER(LEN=*),PARAMETER :: myName='setOne_PETScVectorType'
+      LOGICAL(SBK) :: localalloc
+      
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eVectorType)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eVectorType)
+      ENDIF
+      CALL eVectorType%raiseFatalError('Incorrect call to '// &
+         modName//'::'//myName//' - PETSc not enabled.  You will'// &
+         'need to recompile with PETSc enabled to use this feature.')
 #endif
     ENDSUBROUTINE clear_PETScVectorType
 !
