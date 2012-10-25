@@ -128,11 +128,11 @@ PROGRAM testMatrixTypes
           
       !check init 
       ! build optional list for validation
-      CALL optList%add('testPL->m',-1_SNK)
+      CALL optList%add('testPL->nnz',-1_SNK)
       
       ! build parameter list
       CALL pList%add('testPL->n',10_SNK)
-      CALL pList%add('testPL->m',10_SNK)
+      CALL pList%add('testPL->nnz',10_SNK)
       CALL pList%validate(pList,optList)
       eMatrixType => NULL()
       CALL thisMatrix%init(pList)
@@ -182,7 +182,7 @@ PROGRAM testMatrixTypes
       CALL thisMatrix%clear()
       CALL pList%clear()
       CALL pList%add('testPL->n',-1_SNK)
-      CALL pList%add('testPL->m',10_SNK)
+      CALL pList%add('testPL->nnz',10_SNK)
       CALL pList%validate(pList,optList)
       CALL thisMatrix%init(pList) !expect exception
       IF(thisMatrix%isInit) THEN
@@ -203,7 +203,7 @@ PROGRAM testMatrixTypes
       CALL pList%clear()
       !init with m<1
       CALL pList%add('testPL->n',10_SNK)
-      CALL pList%add('testPL->m',-10_SNK)
+      CALL pList%add('testPL->nnz',-10_SNK)
       CALL pList%validate(pList,optList)
       CALL thisMatrix%init(pList) !expect exception
       IF(thisMatrix%isInit) THEN
@@ -232,12 +232,12 @@ PROGRAM testMatrixTypes
       
       ! build optional list for validation
       CALL optList%clear()
-      CALL optList%add('testPL->m',-1_SNK)
+      CALL optList%add('testPL->nnz',-1_SNK)
       
       ! build parameter list
       CALL pList%clear()
       CALL pList%add('testPL->n',3_SNK)
-      CALL pList%add('testPL->m',6_SNK)
+      CALL pList%add('testPL->nnz',6_SNK)
       CALL pList%validate(pList,optList)
       CALL thisMatrix%clear()
       CALL thisMatrix%init(pList)
@@ -468,7 +468,7 @@ PROGRAM testMatrixTypes
       !i,j not in pre-defined shape
       CALL pList%clear()
       CALL pList%add('testPL->n',3_SNK)
-      CALL pList%add('testPL->m',6_SNK)
+      CALL pList%add('testPL->nnz',6_SNK)
       CALL thisMatrix%clear()
       CALL thisMatrix%init(pList)
       WRITE(*,*) 4
@@ -593,7 +593,7 @@ PROGRAM testMatrixTypes
       ENDSELECT
       !check init     
       ! build optional list for validation
-      CALL optList%set('testPL->m',0_SNK)
+      CALL optList%add('testPL->m',0_SNK)
       
       CALL pList%clear()
       CALL pList%add('testPL->n',10_SNK)

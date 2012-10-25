@@ -724,7 +724,7 @@ CONTAINS
       ! initialize matrix A
       CALL pList%clear()
       CALL pList%add('PL->n',9_SNK)
-      CALL pList%add('PL->m',33_SNK)
+      CALL pList%add('PL->nnz',33_SNK)
       CALL thisLS%A%init(pList)
       SELECTTYPE(A=>thisLS%A); TYPE IS(SparseMatrixType)
         CALL A%setShape(1,1, 4.0_SRK)
@@ -1192,7 +1192,7 @@ CONTAINS
       ! initialize matrix A
       CALL pList%clear()
       CALL pList%add('PL->n', 9_SNK)
-      CALL pList%add('PL->m',33_SNK)
+      CALL pList%add('PL->nnz',33_SNK)
       CALL thisLS%A%init(pList)
       SELECTTYPE(A => thisLS%A); TYPE IS(SparseMatrixType)
         CALL A%setShape(1,1, 4.0_SRK)
@@ -1516,7 +1516,7 @@ CONTAINS
       CALL thisLS%init(pList)
       CALL pList%clear()
       CALL pList%add('PL->n',9_SNK)
-      CALL pList%add('PL->m',33_SNK)
+      CALL pList%add('PL->nnz',33_SNK)
       CALL thisLS%A%init(pList)
       !A =  4    -1     0    -1     0     0     0     0     0
       !    -1     4    -1     0    -1     0     0     0     0
@@ -1628,7 +1628,7 @@ CONTAINS
       ! initialize matrix A
       CALL pList%clear()
       CALL pList%add('PL->n',9_SNK)
-      CALL pList%add('PL->m',33_SNK)
+      CALL pList%add('PL->nnz',33_SNK)
       CALL thisLS%A%init(pList)
       
       !A =  4    -1     0    -1     0     0     0     0     0
@@ -1968,7 +1968,7 @@ CONTAINS
       ! initialize matrix A
       CALL pList%clear()
       CALL pList%add('PL->n',9_SNK)
-      CALL pList%add('PL->m',0_SNK)
+      CALL pList%add('PL->nnz',0_SNK)
       CALL pList%add('PL->mattype',0_SNK)
       CALL thisLS%A%init(pList)
       
@@ -2404,7 +2404,7 @@ CONTAINS
       !  [ 0 -1  4]
       CALL pList%clear()
       CALL pList%add('PL->n',3_SNK)
-      CALL pList%add('PL->m',7_SNK)
+      CALL pList%add('PL->nnz',7_SNK)
       CALL thisLS%A%init(pList)
       SELECTTYPE(A => thisLS%A); TYPE IS(SparseMatrixType)
         CALL A%setShape(1,1, 4._SRK)
@@ -2586,7 +2586,7 @@ CONTAINS
       !  [ 0 -1  4]
       CALL pList%clear()
       CALL pList%add('PL->n',3_SNK)
-      CALL pList%add('PL->m',7_SNK)
+      CALL pList%add('PL->nnz',7_SNK)
       CALL thisLS%A%init(pList)
       SELECTTYPE(A => thisLS%A); TYPE IS(PETScMatrixType)
         CALL A%set(1,1, 4._SRK)
@@ -2671,7 +2671,7 @@ CONTAINS
       ! initialize matrix A
       CALL pList%clear()
       CALL pList%add('PL->n',9_SNK)
-      CALL pList%add('PL->m',33_SNK)
+      CALL pList%add('PL->nnz',33_SNK)
       CALL thisLS%A%init(pList)
       
       !A =  4    -1     0    -1     0     0     0     0     0
@@ -3012,7 +3012,7 @@ CONTAINS
       ! initialize matrix A
       CALL pList%clear()
       CALL pList%add('PL->n',9_SNK)
-      CALL pList%add('PL->m',33_SNK)
+      CALL pList%add('PL->nnz',33_SNK)
       CALL thisLS%A%init(pList)
       
       !A =  4    -1     0    -1     0     0     0     0     0
