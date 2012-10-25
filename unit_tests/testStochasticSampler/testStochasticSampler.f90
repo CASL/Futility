@@ -426,7 +426,8 @@ PROGRAM testStochasticSampler
       WRITE(*,*)
       WRITE(*,*) "Test Normalized Histogram"
       y=(/ 0.2, 0.4, 0.1, 0.05, 0.25 /)
-      
+      mean=0.0_SDK
+      stdev=0.0_SDK
       iii=0.0_SDK
       DO i=1,n
         j=myRNG%histogram(y)
@@ -463,6 +464,8 @@ PROGRAM testStochasticSampler
       
       y=(/ 0.2, 0.4, 0.1, 0.05, 0.25 /)
       iii=0
+      mean=0.0_SDK
+      stdev=0.0_SDK
       DO i=1,n
         j=myRNG%unnormhistogram(y)
         iii(j)=iii(j)+1
@@ -497,8 +500,8 @@ PROGRAM testStochasticSampler
       WRITE(*,*) "Test Normalized Continuous Histogram"
       y=(/ 0.2, 0.4, 0.1, 0.05, 0.25 /)
       z=(/ 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 /)
-      mean=0.0
-      stdev=0.0
+      mean=0.0_SDK
+      stdev=0.0_SDK
       DO i=1,n
         x=myRNG%conthistogram(y,z)
         mean=mean+x/REAL(n,SDK)
