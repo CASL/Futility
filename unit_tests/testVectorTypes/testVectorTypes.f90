@@ -170,12 +170,12 @@ PROGRAM testVectorTypes
       CALL thisVector%set(3,3._SRK)
       CALL thisVector%set(4,4._SRK)
       CALL thisVector%set(5,5._SRK)
-      CALL thisVector%set(6,6._SRK)
+      CALL thisVector%set(6,6._SRK,iverr)
       SELECTTYPE(thisVector)
         TYPE IS(RealVectorType)
           !now compare actual values with expected
           DO i=1,6
-            IF((thisVector%b(i) /= i)) THEN
+            IF((thisVector%b(i) /= i) .AND. iverr /= 0) THEN
               WRITE(*,*) 'CALL realvec%setOne(...) FAILED!'
               STOP 666
             ENDIF
@@ -184,13 +184,34 @@ PROGRAM testVectorTypes
       
       !set uninit matrix.
       CALL thisVector%clear()
-      CALL thisVector%set(1,1._SRK) !since isInit=.FALSE. expect no change
+      SELECTTYPE(thisVector)
+        TYPE IS(RealVectorType)
+          CALL thisVector%set(1,1._SRK,iverr) !since isInit=.FALSE. expect no change
+          IF(iverr /= -1) THEN ! -1 means not initialized
+            WRITE(*,*) 'CALL realvec%setOne(...) FAILED!'
+            STOP 666
+          ENDIF
+      ENDSELECT
       
       !pass out-of bounds i and j
       CALL thisVector%clear()
       CALL thisVector%init(6)   
-      CALL thisVector%set(-1,1._SRK)
-      CALL thisVector%set(7,1._SRK)
+      CALL thisVector%set(-1,1._SRK,iverr)
+      SELECTTYPE(thisVector)
+        TYPE IS(RealVectorType)
+          IF(iverr /= -2) THEN ! -2 means out of bounds
+            WRITE(*,*) 'CALL realvec%setOne(...) FAILED!'
+            STOP 666
+          ENDIF
+      ENDSELECT
+      CALL thisVector%set(7,1._SRK,iverr)
+      SELECTTYPE(thisVector)
+        TYPE IS(RealVectorType)
+          IF(iverr /= -2) THEN ! -2 means out of bounds
+            WRITE(*,*) 'CALL realvec%setOne(...) FAILED!'
+            STOP 666
+          ENDIF      
+      ENDSELECT
 
       CALL thisVector%clear()
       CALL thisVector%init(6)
@@ -209,12 +230,12 @@ PROGRAM testVectorTypes
       !Perform test of set function
       !use set to update all values at once (scalar)
       CALL thisVector%init(6)
-      CALL thisVector%set(10._SRK)
+      CALL thisVector%set(10._SRK,iverr)
       SELECTTYPE(thisVector)
         TYPE IS(RealVectorType)
           !now compare actual values with expected
           DO i=1,6
-            IF((thisVector%b(i) /= 10._SRK)) THEN
+            IF((thisVector%b(i) /= 10._SRK .AND. iverr /= 0)) THEN
               WRITE(*,*) 'CALL realvec%setAll_scalar(...) FAILED!'
               STOP 666
             ENDIF
@@ -223,7 +244,14 @@ PROGRAM testVectorTypes
       
       !set uninit
       CALL thisVector%clear()
-      CALL thisVector%set(1._SRK) !since isInit=.FALSE. expect no change
+      CALL thisVector%set(1._SRK,iverr) !since isInit=.FALSE. expect no change
+      SELECTTYPE(thisVector)
+        TYPE IS(RealVectorType)
+          IF(iverr /= -1) THEN ! -1 means not initialized
+            WRITE(*,*) 'CALL realvec%setAll_scalar(...) FAILED!'
+            STOP 666
+          ENDIF
+      ENDSELECT
       
       CALL thisVector%init(6)
         
@@ -249,12 +277,12 @@ PROGRAM testVectorTypes
       testvec(4)=8._SRK
       testvec(5)=10._SRK
       testvec(6)=12._SRK
-      CALL thisVector%set(testvec)
+      CALL thisVector%set(testvec,iverr)
       SELECTTYPE(thisVector)
         TYPE IS(RealVectorType)
           !now compare actual values with expected
           DO i=1,6
-            IF((thisVector%b(i) /= testvec(i))) THEN
+            IF((thisVector%b(i) /= testvec(i)) .AND. iverr /= 0) THEN
               WRITE(*,*) 'CALL realvec%setAll_array(...) FAILED!'
               STOP 666
             ENDIF
@@ -269,8 +297,29 @@ PROGRAM testVectorTypes
       testvec2(4)=7._SRK
       testvec2(5)=9._SRK
       testvec2(6)=11._SRK
-      CALL thisVector%set(testvec2) !since isInit=.FALSE. expect no change
+      CALL thisVector%set(testvec2,iverr) !since isInit=.FALSE. expect no change
+      SELECTTYPE(thisVector)
+        TYPE IS(RealVectorType)
+          IF(iverr /= -1) THEN ! -1 means not initialized
+            WRITE(*,*) 'CALL realvec%setAll_array(...) FAILED!'
+            STOP 666
+          ENDIF
+      ENDSELECT
       
+      !set unequal size
+      CALL thisVector%clear()
+      CALL thisVector%init(7)
+      CALL thisVector%set(testvec2,iverr)
+      SELECTTYPE(thisVector)
+        TYPE IS(RealVectorType)
+          IF(iverr /= -3) THEN ! -3 means testvec2 and thisVector not equal sizes
+            WRITE(*,*) 'CALL realvec%setAll_array(...) FAILED!'
+            STOP 666
+          ENDIF
+      ENDSELECT
+      
+      
+      CALL thisVector%clear()
       CALL thisVector%init(6)
         
       SELECTTYPE(thisVector)
@@ -287,18 +336,18 @@ PROGRAM testVectorTypes
       !Perform test of set function
       !use set to update all values at once (scalar)
       CALL thisVector%init(6)
-      CALL thisVector%set(4,6,10._SRK)
+      CALL thisVector%set(4,6,10._SRK,iverr)
       SELECTTYPE(thisVector)
         TYPE IS(RealVectorType)
           !now compare actual values with expected
           DO i=1,3
-            IF((thisVector%b(i) /= 0._SRK)) THEN
+            IF((thisVector%b(i) /= 0._SRK) .AND. iverr /= 0) THEN
               WRITE(*,*) 'CALL realvec%setRange_scalar(...) FAILED!'
               STOP 666
             ENDIF
           ENDDO
           DO i=4,6
-            IF((thisVector%b(i) /= 10._SRK)) THEN
+            IF((thisVector%b(i) /= 10._SRK) .AND. iverr /= 0) THEN
               WRITE(*,*) 'CALL realvec%setRange_scalar(...) FAILED!'
               STOP 666
             ENDIF
@@ -307,12 +356,41 @@ PROGRAM testVectorTypes
       
       !set uninit
       CALL thisVector%clear()
-      CALL thisVector%set(4,6,1._SRK) !since isInit=.FALSE. expect no change
+      CALL thisVector%set(4,6,1._SRK,iverr) !since isInit=.FALSE. expect no change
+      SELECTTYPE(thisVector)
+        TYPE IS(RealVectorType)
+          IF(iverr /= -1) THEN ! -1 means not initialized
+            WRITE(*,*) 'CALL realvec%setRange_scalar(...) FAILED!'
+            STOP 666
+          ENDIF
+      ENDSELECT
+      
+      !set out of bounds
+      CALL thisVector%clear()
+      CALL thisVector%init(6)
+      CALL thisVector%set(5,7,1._SRK,iverr) !since isInit=.FALSE. expect no change
+      SELECTTYPE(thisVector)
+        TYPE IS(RealVectorType)
+          IF(iverr /= -2) THEN ! -2  means out of bounds
+            WRITE(*,*) 'CALL realvec%setRange_scalar(...) FAILED!'
+            STOP 666
+          ENDIF
+      ENDSELECT
+      CALL thisVector%clear()
+      CALL thisVector%init(6)
+      CALL thisVector%set(0,3,1._SRK,iverr) !since isInit=.FALSE. expect no change
+      SELECTTYPE(thisVector)
+        TYPE IS(RealVectorType)
+          IF(iverr /= -2) THEN ! -1 means out of bounds
+            WRITE(*,*) 'CALL realvec%setRange_scalar(...) FAILED!'
+            STOP 666
+          ENDIF
+      ENDSELECT
       
       CALL thisVector%init(6)
         
       SELECTTYPE(thisVector)
-        TYPE IS(RealVectorType)
+        TYPE IS(RealVectorType) 
           DO i=1,SIZE(thisVector%b)
             IF(thisVector%b(i) == 1._SRK) THEN
               WRITE(*,*) 'CALL realvec%setRange_scalar(...) FAILED!'
@@ -331,18 +409,18 @@ PROGRAM testVectorTypes
       testvec(1)=2._SRK
       testvec(2)=4._SRK
       testvec(3)=6._SRK
-      CALL thisVector%set(4,6,testvec)
+      CALL thisVector%set(4,6,testvec,iverr)
       SELECTTYPE(thisVector)
         TYPE IS(RealVectorType)
           !now compare actual values with expected
           DO i=1,3
-            IF((thisVector%b(i) /= 0._SRK)) THEN
+            IF((thisVector%b(i) /= 0._SRK) .AND. iverr /= 0) THEN
               WRITE(*,*) 'CALL realvec%setRange_array(...) FAILED!'
               STOP 666
             ENDIF
           ENDDO
           DO i=4,6
-            IF((thisVector%b(i) /= testvec(i-3))) THEN
+            IF((thisVector%b(i) /= testvec(i-3)) .AND. iverr /= 0) THEN
               WRITE(*,*) 'CALL realvec%setRange_array(...) FAILED!'
               STOP 666
             ENDIF
@@ -354,7 +432,47 @@ PROGRAM testVectorTypes
       testvec2(1)=1._SRK
       testvec2(2)=3._SRK
       testvec2(3)=5._SRK
-      CALL thisVector%set(4,6,testvec2) !since isInit=.FALSE. expect no change
+      SELECTTYPE(thisVector)
+        TYPE IS(RealVectorType)
+          CALL thisVector%set(4,6,testvec2,iverr) !since isInit=.FALSE. expect no change
+          IF(iverr /= -1) THEN ! -1 means not initialized
+            WRITE(*,*) 'CALL realvec%setRange_array(...) FAILED!'
+            STOP 666
+          ENDIF
+      ENDSELECT
+      
+      CALL thisVector%clear()
+      CALL thisVector%init(6)
+      SELECTTYPE(thisVector)
+        TYPE IS(RealVectorType)
+          CALL thisVector%set(5,7,testvec2,iverr)
+          IF(iverr /= -2) THEN ! -2 means out of bounds
+            WRITE(*,*) 'CALL realvec%setRange_array(...) FAILED!'
+            STOP 666
+          ENDIF
+      ENDSELECT
+      
+      CALL thisVector%clear()
+      CALL thisVector%init(6)
+      SELECTTYPE(thisVector)
+        TYPE IS(RealVectorType)
+          CALL thisVector%set(0,2,testvec2,iverr) 
+          IF(iverr /= -2) THEN ! -2 means out of bounds
+            WRITE(*,*) 'CALL realvec%setRange_array(...) FAILED!'
+            STOP 666
+          ENDIF
+      ENDSELECT
+      
+      CALL thisVector%clear()
+      CALL thisVector%init(6)
+      SELECTTYPE(thisVector)
+        TYPE IS(RealVectorType)
+          CALL thisVector%set(2,6,testvec2,iverr) 
+          IF(iverr /= -3) THEN ! -3 testvec2 and range not equal
+            WRITE(*,*) 'CALL realvec%setRange_array(...) FAILED!'
+            STOP 666
+          ENDIF
+      ENDSELECT
       
       CALL thisVector%init(6)
         
@@ -390,14 +508,15 @@ PROGRAM testVectorTypes
           CALL thisVector%set(7,2._SRK)
           IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
           ALLOCATE(dummyvec(thisVector%n))
-          CALL thisVector%get(dummyvec)
+          CALL thisVector%get(dummyvec,iverr)
           IF((dummyvec(1) /= 1._SRK) .OR. &
              (dummyvec(2) /= 5._SRK) .OR. &
              (dummyvec(3) /= 8._SRK) .OR. &
              (dummyvec(4) /= 9._SRK) .OR. &
              (dummyvec(5) /= 3._SRK) .OR. &
              (dummyvec(6) /= 7._SRK) .OR. &
-             (dummyvec(7) /= 2._SRK)) THEN
+             (dummyvec(7) /= 2._SRK) .OR. &
+             iverr /= 0) THEN
             WRITE(*,*) 'CALL realvec%getOne(...) FAILED!' 
             STOP 666
           ENDIF
@@ -442,14 +561,15 @@ PROGRAM testVectorTypes
           CALL thisVector%set(5,3._SRK)
           CALL thisVector%set(6,7._SRK)
           CALL thisVector%set(7,2._SRK)
-          CALL thisVector%get(testvec)
+          CALL thisVector%get(testvec,iverr)
           IF((testvec(1) /= 1._SRK) .OR. &
              (testvec(2) /= 5._SRK) .OR. &
              (testvec(3) /= 8._SRK) .OR. &
              (testvec(4) /= 9._SRK) .OR. &
              (testvec(5) /= 3._SRK) .OR. &
              (testvec(6) /= 7._SRK) .OR. &
-             (testvec(7) /= 2._SRK)) THEN
+             (testvec(7) /= 2._SRK) .OR. &
+             iverr /= 0) THEN
             WRITE(*,*) 'CALL realvec%getAll(...) FAILED!' 
             STOP 666
           ENDIF
@@ -481,10 +601,11 @@ PROGRAM testVectorTypes
           CALL thisVector%set(5,3._SRK)
           CALL thisVector%set(6,7._SRK)
           CALL thisVector%set(7,2._SRK)
-          CALL thisVector%get(5,7,testvec)
+          CALL thisVector%get(5,7,testvec,iverr)
           IF((testvec(1) /= 3._SRK) .OR. &
              (testvec(2) /= 7._SRK) .OR. &
-             (testvec(3) /= 2._SRK)) THEN
+             (testvec(3) /= 2._SRK) .OR. &
+             iverr /= 0) THEN
             WRITE(*,*) 'CALL realvec%getRange(...) FAILED1!' 
             STOP 666
           ENDIF
@@ -614,7 +735,7 @@ PROGRAM testVectorTypes
       CALL thisVector%set(3,3._SRK)
       CALL thisVector%set(4,4._SRK)
       CALL thisVector%set(5,5._SRK)
-      CALL thisVector%set(6,6._SRK)
+      CALL thisVector%set(6,6._SRK,iverr)
       SELECTTYPE(thisVector)
         TYPE IS(PETScVectorType)
           ! manually assemble vector
@@ -625,7 +746,7 @@ PROGRAM testVectorTypes
           !now compare actual values with expected
           DO i=1,6
             CALL VecGetValues(thisVector%b,1,i-1,dummy,ierr)
-            IF(dummy /= i) THEN
+            IF(dummy /= i .AND. iverr /= 0) THEN
               WRITE(*,*) 'CALL petscvec%setOne(...) FAILED!'
               STOP 666
             ENDIF
@@ -634,13 +755,25 @@ PROGRAM testVectorTypes
       
       !set uninit matrix.
       CALL thisVector%clear()
-      CALL thisVector%set(1,1._SRK) !since isInit=.FALSE. expect no change
+      CALL thisVector%set(1,1._SRK,iverr) !since isInit=.FALSE. expect no change
+      IF(iverr /= -1) THEN
+        WRITE(*,*) 'CALL petscvec%setOne(...) FAILED!'
+        STOP 666
+      ENDIF
       
       !pass out-of bounds i and j
       CALL thisVector%clear()
       CALL thisVector%init(6)   
-      CALL thisVector%set(-1,1._SRK)
-      CALL thisVector%set(7,1._SRK)
+      CALL thisVector%set(-1,1._SRK,iverr)
+      IF(iverr /= -2) THEN
+        WRITE(*,*) 'CALL petscvec%setOne(...) FAILED!'
+        STOP 666
+      ENDIF
+      CALL thisVector%set(7,1._SRK,iverr)
+      IF(iverr /= -2) THEN
+        WRITE(*,*) 'CALL petscvec%setOne(...) FAILED!'
+        STOP 666
+      ENDIF
 
       CALL thisVector%clear()
       CALL thisVector%init(6)
@@ -666,13 +799,13 @@ PROGRAM testVectorTypes
       !Perform test of set function
       !use set to update all values at once (scalar)
       CALL thisVector%init(6)
-      CALL thisVector%set(10._SRK)
+      CALL thisVector%set(10._SRK,iverr)
       SELECTTYPE(thisVector)
         TYPE IS(PETScVectorType)
           !now compare actual values with expected
           DO i=1,6
             CALL thisVector%get(i,dummy)
-            IF((dummy /= 10._SRK)) THEN
+            IF((dummy /= 10._SRK) .AND. iverr /= 0) THEN
               WRITE(*,*) 'CALL petscvec%setAll_scalar(...) FAILED!'
               STOP 666
             ENDIF
@@ -681,7 +814,11 @@ PROGRAM testVectorTypes
       
       !set uninit matrix.
       CALL thisVector%clear()
-      CALL thisVector%set(1._SRK) !since isInit=.FALSE. expect no change
+      CALL thisVector%set(1._SRK,iverr) !since isInit=.FALSE. expect no change
+      IF((dummy /= 10._SRK) .AND. iverr /= -1) THEN
+        WRITE(*,*) 'CALL petscvec%setAll_scalar(...) FAILED!'
+        STOP 666
+      ENDIF
       
       CALL thisVector%init(6)
         
@@ -715,13 +852,13 @@ PROGRAM testVectorTypes
       testvec(4)=8._SRK
       testvec(5)=10._SRK
       testvec(6)=12._SRK
-      CALL thisVector%set(testvec)
+      CALL thisVector%set(testvec,iverr)
       SELECTTYPE(thisVector)
         TYPE IS(PETScVectorType)
           !now compare actual values with expected
           DO i=1,6
             CALL thisVector%get(i,dummy)
-            IF((dummy /= testvec(i))) THEN
+            IF((dummy /= testvec(i)) .AND. iverr /= 0) THEN
               WRITE(*,*) 'CALL petscvec%setAll_array(...) FAILED!'
               STOP 666
             ENDIF
@@ -736,7 +873,28 @@ PROGRAM testVectorTypes
       testvec2(4)=7._SRK
       testvec2(5)=9._SRK
       testvec2(6)=11._SRK
-      CALL thisVector%set(testvec2) !since isInit=.FALSE. expect no change
+      CALL thisVector%set(testvec2,iverr) !since isInit=.FALSE. expect no change
+      IF(iverr /= -1) THEN
+        WRITE(*,*) 'CALL petscvec%setAll_array(...) FAILED!'
+        STOP 666
+      ENDIF
+      
+      !set improper size
+      CALL thisVector%clear()
+      CALL thisVector%init(7)
+      testvec2(1)=1._SRK
+      testvec2(2)=3._SRK
+      testvec2(3)=5._SRK
+      testvec2(4)=7._SRK
+      testvec2(5)=9._SRK
+      testvec2(6)=11._SRK
+      CALL thisVector%set(testvec2,iverr) !since isInit=.FALSE. expect no change
+      IF(iverr /= -3) THEN
+        WRITE(*,*) 'CALL petscvec%setAll_array(...) FAILED!'
+        STOP 666
+      ENDIF
+      
+      CALL thisVector%clear()
       CALL thisVector%init(6)
       SELECTTYPE(thisVector)
         TYPE IS(PETScVectorType)
@@ -758,7 +916,7 @@ PROGRAM testVectorTypes
       !Perform test of set function
       !use set to update all values at once (scalar)
       CALL thisVector%init(6)
-      CALL thisVector%set(4,6,10._SRK)
+      CALL thisVector%set(4,6,10._SRK,iverr)
       SELECTTYPE(thisVector)
         TYPE IS(PETScVectorType)
           !now compare actual values with expected
@@ -780,8 +938,31 @@ PROGRAM testVectorTypes
       
       !set uninit matrix.
       CALL thisVector%clear()
-      CALL thisVector%set(4,6,1._SRK) !since isInit=.FALSE. expect no change
+      CALL thisVector%set(4,6,1._SRK,iverr) !since isInit=.FALSE. expect no change
+      IF((iverr /= -1._SRK)) THEN
+        WRITE(*,*) 'CALL petscvec%setRange_scalar(...) FAILED!'
+        STOP 666
+      ENDIF
       
+      !set out of bounds
+      CALL thisVector%clear()
+      CALL thisVector%init(6)
+      CALL thisVector%set(4,7,1._SRK,iverr) 
+      IF((iverr /= -2._SRK)) THEN
+        WRITE(*,*) 'CALL petscvec%setRange_scalar(...) FAILED!'
+        STOP 666
+      ENDIF
+      
+      !set out of bounds
+      CALL thisVector%clear()
+      CALL thisVector%init(6)
+      CALL thisVector%set(0,3,1._SRK,iverr)
+      IF((iverr /= -2._SRK)) THEN
+        WRITE(*,*) 'CALL petscvec%setRange_scalar(...) FAILED!'
+        STOP 666
+      ENDIF
+      
+      CALL thisVector%clear()
       CALL thisVector%init(6)
         
       SELECTTYPE(thisVector)
@@ -810,20 +991,20 @@ PROGRAM testVectorTypes
       testvec(1)=1._SRK
       testvec(2)=3._SRK
       testvec(3)=5._SRK
-      CALL thisVector%set(4,6,testvec)
+      CALL thisVector%set(4,6,testvec,iverr)
       SELECTTYPE(thisVector)
         TYPE IS(PETScVectorType)
           !now compare actual values with expected
           DO i=1,3
             CALL thisVector%get(i,dummy)
-            IF((dummy /= 0._SRK)) THEN
+            IF((dummy /= 0._SRK) .AND. iverr /= 0) THEN
               WRITE(*,*) 'CALL petscvec%setRange_array(...) FAILED!'
               STOP 666
             ENDIF
           ENDDO
           DO i=4,6
             CALL thisVector%get(i,dummy)
-            IF((dummy /= testvec(i-3))) THEN
+            IF((dummy /= testvec(i-3)) .AND. iverr /= 0) THEN
               WRITE(*,*) 'CALL petscvec%setRange_array(...) FAILED!'
               STOP 666
             ENDIF
@@ -836,7 +1017,27 @@ PROGRAM testVectorTypes
       testvec2(1)=2._SRK
       testvec2(2)=4._SRK
       testvec2(3)=6._SRK
-      CALL thisVector%set(4,6,testvec2) !since isInit=.FALSE. expect no change
+      CALL thisVector%set(4,6,testvec2,iverr) !since isInit=.FALSE. expect no change
+      IF(iverr /= -1) THEN
+        WRITE(*,*) 'CALL petscvec%setRange_array(...) FAILED!'
+        STOP 666
+      ENDIF
+      DEALLOCATE(testvec2)
+      
+      !set size not equal to range
+      CALL thisVector%clear()
+      CALL thisVector%init(6)
+      ALLOCATE(testvec2(3))
+      testvec2(1)=2._SRK
+      testvec2(2)=4._SRK
+      testvec2(3)=6._SRK
+      CALL thisVector%set(2,6,testvec2,iverr)
+      IF(iverr /= -3) THEN
+        WRITE(*,*) 'CALL petscvec%setRange_array(...) FAILED!'
+        STOP 666
+      ENDIF
+            
+      CALL thisVector%clear()
       CALL thisVector%init(6)
         
       SELECTTYPE(thisVector)

@@ -29,7 +29,6 @@ PROGRAM testStochasticSampler
   TYPE(MPI_EnvType),POINTER :: MPIEnv
   TYPE(OMP_EnvType),POINTER :: OMPEnv
   REAL(SDK),ALLOCATABLE ::  y(:), z(:)
-  INTEGER(SIK),ALLOCATABLE :: iii(:)
   REAL(SDK) :: mean, stdev, x
   INTEGER(SLK) :: firstten(11)
   INTEGER :: i,j,n
@@ -151,133 +150,15 @@ PROGRAM testStochasticSampler
   CALL TestMaxwellian()
   CALL TestWatt()
   CALL TestEvap()
-
-  n=1e6
-  
-  WRITE(*,*)
-  WRITE(*,*) "Test Normalized Histogram"
-  ALLOCATE(y(5))
-  y=(/ 0.2, 0.4, 0.1, 0.05, 0.25 /)
-  ALLOCATE(iii(5))
-  iii=0
-  DO i=1,n
-    j=myRNG%histogram(y)
-    iii(j)=iii(j)+1
-  ENDDO
-  WRITE(*,*) "COUNT:  ", myRNG%counter
-  DO i=1,5
-    WRITE(*,*) "           ", REAL(iii(i))/REAL(n,SDK)
-  ENDDO
-
-  WRITE(*,*)
-  WRITE(*,*) "Test Unnormalized Histogram"
-  y=(/ 0.2, 0.4, 0.1, 0.05, 0.25 /)
-  iii=0
-  DO i=1,n
-    j=myRNG%unnormhistogram(y)
-    iii(j)=iii(j)+1
-  ENDDO
-  WRITE(*,*) "COUNT:  ", myRNG%counter
-  DO i=1,5
-    WRITE(*,*) "           ", REAL(iii(i))/REAL(n,SDK)
-  ENDDO
-
-  WRITE(*,*)
-  WRITE(*,*) "Test Normalized Continuous Histogram"
-  y=(/ 0.2, 0.4, 0.1, 0.05, 0.25 /)
-  allocate(z(6))
-  z=(/ 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 /)
-  mean=0.0
-  stdev=0.0
-  DO i=1,n
-    x=myRNG%conthistogram(y,z)
-    mean=mean+x/REAL(n,SDK)
-    stdev=stdev+x**2/REAL(n,SDK)
-  ENDDO
-  WRITE(*,*) "COUNT:  ", myRNG%counter
-  WRITE(*,*) "MEAN:      ", mean
-  WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
-
-  WRITE(*,*)
-  WRITE(*,*) "Test Unnormalized Continuous Histogram"
-  y=2.0*y
-  z=(/ 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 /)
-  mean=0.0
-  stdev=0.0
-  DO i=1,n
-    x=myRNG%unnormconthistogram(y,z)
-    mean=mean+x/REAL(n,SDK)
-    stdev=stdev+x**2/REAL(n,SDK)
-  ENDDO
-  WRITE(*,*) "COUNT:  ", myRNG%counter
-  WRITE(*,*) "MEAN:      ", mean
-  WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
-
-  WRITE(*,*)
-  WRITE(*,*) "Test Normalized Piece-wise Linear"
-  DEALLOCATE(y,z)
-  ALLOCATE(y(3),z(3))
-  y=(/ 0.0, 1.0, 0.0 /)
-  z=(/ 0.0, 1.0, 2.0 /)
-  mean=0.0
-  stdev=0.0
-  DO i=1,n
-    x=myRNG%pwlinear(y,z)
-    mean=mean+x/REAL(n,SDK)
-    stdev=stdev+x**2/REAL(n,SDK)
-  ENDDO
-  WRITE(*,*) "COUNT:  ", myRNG%counter
-  WRITE(*,*) "MEAN:      ", mean
-  WRITE(*,*) "MEAN TRUE: ", 1.0_SDK
-  WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
-  WRITE(*,*) "SDEV TRUE: ", 1.0_SDK/SQRT(6.0_SDK)
-
-  WRITE(*,*)
-  WRITE(*,*) "Test Unnormalized Piece-wise Linear"
-  y=(/ 0.0, 2.0, 0.0 /)
-  z=(/ 0.0, 1.0, 3.0 /)
-  mean=0.0
-  stdev=0.0
-  DO i=1,n
-    x=myRNG%unnormpwlinear(y,z)
-    mean=mean+x/REAL(n,SDK)
-    stdev=stdev+x**2/REAL(n,SDK)
-  ENDDO
-  WRITE(*,*) "COUNT:  ", myRNG%counter
-  WRITE(*,*) "MEAN:      ", mean
-  WRITE(*,*) "MEAN TRUE: ", 4.0_SDK/3.0_SDK
-  WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
-  WRITE(*,*) "SDEV TRUE: ", SQRT(7.0_SDK)/SQRT(18.0_SDK)
-
-  WRITE(*,*)
-  WRITE(*,*) "Test Rejection Sampling"
-  mean=0.0
-  stdev=0.0
-  DO i=1,n
-    x=myRNG%rejection(linear,0.0_SDK,5.0_SDK,7.0_SDK)
-    mean=mean+x/REAL(n,SDK)
-    stdev=stdev+x**2/REAL(n,SDK)
-  ENDDO
-  WRITE(*,*) "COUNT:  ", myRNG%counter
-  WRITE(*,*) "MEAN:      ", mean
-  WRITE(*,*) "MEAN TRUE: ", 10.0_SDK/3.0_SDK
-  WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
-  WRITE(*,*) "SDEV TRUE: ", 5.0_SDK/SQRT(18.0_SDK)
-  
-  WRITE(*,*)
-  WRITE(*,*) "Test Rejection Sampling with function arguments"
-  mean=0.0
-  stdev=0.0
-  DO i=1,n
-    x=myRNG%rejectionarg(lineararg,0.0_SDK,2.0_SDK,7.0_SDK,(/2.0_SDK,1.0_SDK/))
-    mean=mean+x/REAL(n,SDK)
-    stdev=stdev+x**2/REAL(n,SDK)
-  ENDDO
-  WRITE(*,*) "COUNT:  ", myRNG%counter
-  WRITE(*,*) "MEAN:      ", mean
-  WRITE(*,*) "MEAN TRUE: ", 11.0_SDK/9.0_SDK
-  WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
-  WRITE(*,*) "SDEV TRUE: ", SQRT(23.0_SDK)/9.0_SDK
+  ! The following need to have their results checked:
+  CALL TestNormHist()
+  CALL TestUnnormHist()
+  CALL TestNormContHist()
+  CALL TestUnnormContHist()
+  CALL TestNormPWLinear()
+  CALL TestUnnormPWLinear()
+  CALL TestRejection()
+  CALL TestRejectionArg()
 
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING STOCHASTIC SAMPLER PASSED!'
@@ -349,7 +230,7 @@ PROGRAM testStochasticSampler
       WRITE(*,*) "SDEV TRUE: ", 1.0/SQRT(12.0)
       
       IF (ABS(mean/0.5_SDK-1.0_SDK)>5.0_SDK/SQRT(REAL(n,SDK))) THEN
-        WRITE(*,*) "RNG does not meet acceptance criterial.  Test FAILED"
+        WRITE(*,*) "RNG does not meet acceptance criteria.  Test FAILED"
         STOP 666
       ENDIF
   
@@ -369,7 +250,7 @@ PROGRAM testStochasticSampler
       WRITE(*,*) "SDEV TRUE: ", (9.0_SDK- (-8.0_SDK))/SQRT(12.0)
 
       IF (ABS(mean/((9.0_SDK+ (-8.0_SDK))/2.0_SDK)-1.0_SDK)>5.0_SDK/SQRT(REAL(n,SDK))) THEN
-        WRITE(*,*) "Uniform does not meet acceptance criterial.  Test FAILED"
+        WRITE(*,*) "Uniform does not meet acceptance criteria.  Test FAILED"
         STOP 666
       ENDIF
       ENDSUBROUTINE TestUniform
@@ -394,7 +275,7 @@ PROGRAM testStochasticSampler
       WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
       WRITE(*,*) "SDEV TRUE: ", 1.0_SDK/2.0_SDK
       IF (ABS(mean/(1.0_SDK/2.0_SDK)-1.0_SDK)>5.0_SDK/SQRT(REAL(n,SDK))) THEN
-        WRITE(*,*) "Exponential does not meet acceptance criterial.  Test FAILED"
+        WRITE(*,*) "Exponential does not meet acceptance criteria.  Test FAILED"
         STOP 666
       ENDIF
     ENDSUBROUTINE TestExp
@@ -419,7 +300,7 @@ PROGRAM testStochasticSampler
       WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
       WRITE(*,*) "SDEV TRUE: ", 0.5_SDK
       IF (ABS(mean/2.0_SDK-1.0_SDK)>5.0_SDK/SQRT(REAL(n,SDK))) THEN
-        WRITE(*,*) "Normal does not meet acceptance criterial.  Test FAILED"
+        WRITE(*,*) "Normal does not meet acceptance criteria.  Test FAILED"
         STOP 666
       ENDIF
     
@@ -438,7 +319,7 @@ PROGRAM testStochasticSampler
       WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
       WRITE(*,*) "SDEV TRUE: ", SQRT((EXP(0.5_SDK**2)-1.0_SDK)*EXP(2.0_SDK*2.0_SDK+0.5_SDK**2))
       IF (ABS(mean/(EXP(2.0_SDK+0.5_SDK**2/2.0_SDK))-1.0_SDK)>5.0_SDK/SQRT(REAL(n,SDK))) THEN
-        WRITE(*,*) "Log-Normal does not meet acceptance criterial.  Test FAILED"
+        WRITE(*,*) "Log-Normal does not meet acceptance criteria.  Test FAILED"
         STOP 666
       ENDIF
 
@@ -465,7 +346,7 @@ PROGRAM testStochasticSampler
       WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
       WRITE(*,*) "SDEV TRUE: ", SQRT(3.0_SDK/2.0_SDK)*T
       IF (ABS(mean/(3.0_SDK/2.0_SDK*T)-1.0_SDK)/(3.0_SDK/2.0_SDK*T)>5.0_SDK/SQRT(REAL(n,SDK))) THEN
-        WRITE(*,*) "Maxwellian does not meet acceptance criterial.  Test FAILED"
+        WRITE(*,*) "Maxwellian does not meet acceptance criteria.  Test FAILED"
         STOP 666
       ENDIF
 
@@ -497,7 +378,7 @@ PROGRAM testStochasticSampler
       WRITE(*,*) "SDEV TRUE: ", SQRT((a**2*(-36.0*SQRT(a**3*b)+a*SQRT(b)*(12.0+a*b)* &
             (4.0*SQRT(a)+a**1.5*b-SQRT(b)*SQRT(a**3*b))))/SQRT(a**3*b))/(2.0*SQRT(2.0))
       IF (ABS(mean/(a**2.5*SQRT(b)*(6.0_SDK+a*b)/(4.0_SDK*SQRT(a**3*b)))-1.0_SDK)>5.0_SDK/SQRT(REAL(n,SDK))) THEN
-        WRITE(*,*) "Watt does not meet acceptance criterial.  Test FAILED"
+        WRITE(*,*) "Watt does not meet acceptance criteria.  Test FAILED"
         STOP 666
       ENDIF
 
@@ -527,11 +408,245 @@ PROGRAM testStochasticSampler
       WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
       WRITE(*,*) "SDEV TRUE: ", SQRT(32.0_SDK)/5.0_SDK
       IF (ABS(mean/(8.0_SDK/5.0_SDK)-1.0_SDK)>5.0_SDK/SQRT(REAL(n,SDK))) THEN
-        WRITE(*,*) "Evaporation does not meet acceptance criterial.  Test FAILED"
+        WRITE(*,*) "Evaporation does not meet acceptance criteria.  Test FAILED"
         STOP 666
       ENDIF
       
     ENDSUBROUTINE TestEvap
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE TestNormHist
+      INTEGER(SLK) :: i,n, inicount
+      REAL(SDK) :: x, mean, stdev, theta
+      REAL(SRK),ALLOCATABLE :: y(:), iii(:)
+      ALLOCATE(y(5))
+      ALLOCATE(iii(5))
+      n=1e6
+  
+      WRITE(*,*)
+      WRITE(*,*) "Test Normalized Histogram"
+      y=(/ 0.2, 0.4, 0.1, 0.05, 0.25 /)
+      
+      iii=0.0_SDK
+      DO i=1,n
+        j=myRNG%histogram(y)
+        iii(j)=iii(j)+1
+      ENDDO
+      WRITE(*,*) "COUNT:  ", myRNG%counter
+      DO i=1,5
+        WRITE(*,*) "           ", REAL(iii(i))/REAL(n,SDK)
+      ENDDO
+      WRITE(*,*) "COUNT:  ", myRNG%counter
+      WRITE(*,*) "MEAN:      ", mean
+      WRITE(*,*) "MEAN TRUE: ", 8.0_SDK/5.0_SDK
+      WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
+      WRITE(*,*) "SDEV TRUE: ", SQRT(32.0_SDK)/5.0_SDK
+!~       IF (ABS(mean/(8.0_SDK/5.0_SDK)-1.0_SDK)>5.0_SDK/SQRT(REAL(n,SDK))) THEN
+!~         WRITE(*,*) "Normalized Histogram does not meet acceptance criteria.  Test FAILED"
+!~         STOP 666
+!~       ENDIF
+      DEALLOCATE(y)
+      DEALLOCATE(iii)
+    ENDSUBROUTINE TestNormHist
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE TestUnnormHist
+      INTEGER(SLK) :: i,n, inicount
+      REAL(SDK) :: x, mean, stdev, theta
+      REAL(SRK),ALLOCATABLE :: y(:), iii(:)
+      ALLOCATE(y(5))
+      ALLOCATE(iii(5))
+      n=1e6
+  
+      WRITE(*,*)
+      WRITE(*,*) "Test Unnormalized Histogram"
+      
+      y=(/ 0.2, 0.4, 0.1, 0.05, 0.25 /)
+      iii=0
+      DO i=1,n
+        j=myRNG%unnormhistogram(y)
+        iii(j)=iii(j)+1
+      ENDDO
+      WRITE(*,*) "COUNT:  ", myRNG%counter
+      DO i=1,5
+        WRITE(*,*) "           ", REAL(iii(i))/REAL(n,SDK)
+      ENDDO
+      WRITE(*,*) "COUNT:  ", myRNG%counter
+      WRITE(*,*) "MEAN:      ", mean
+      WRITE(*,*) "MEAN TRUE: ", 8.0_SDK/5.0_SDK
+      WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
+      WRITE(*,*) "SDEV TRUE: ", SQRT(32.0_SDK)/5.0_SDK
+!~       IF (ABS(mean/(8.0_SDK/5.0_SDK)-1.0_SDK)>5.0_SDK/SQRT(REAL(n,SDK))) THEN
+!~         WRITE(*,*) "Unnormalized Histogram does not meet acceptance criteria.  Test FAILED"
+!~         STOP 666
+!~       ENDIF
+      DEALLOCATE(y)
+      DEALLOCATE(iii)
+    ENDSUBROUTINE TestUnnormHist
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE TestNormContHist
+      INTEGER(SLK) :: i,n, inicount
+      REAL(SDK) :: x, mean, stdev, theta
+      REAL(SRK),ALLOCATABLE :: y(:), z(:)
+      ALLOCATE(y(5))
+      ALLOCATE(z(6))
+      n=1e6
+  
+      WRITE(*,*)
+      WRITE(*,*) "Test Normalized Continuous Histogram"
+      y=(/ 0.2, 0.4, 0.1, 0.05, 0.25 /)
+      z=(/ 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 /)
+      mean=0.0
+      stdev=0.0
+      DO i=1,n
+        x=myRNG%conthistogram(y,z)
+        mean=mean+x/REAL(n,SDK)
+        stdev=stdev+x**2/REAL(n,SDK)
+      ENDDO
+      WRITE(*,*) "COUNT:  ", myRNG%counter
+      WRITE(*,*) "MEAN:      ", mean
+      WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
+      
+      DEALLOCATE(y)
+      DEALLOCATE(z)
+    ENDSUBROUTINE TestNormContHist    
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE TestUnnormContHist
+      INTEGER(SLK) :: i,n, inicount
+      REAL(SDK) :: x, mean, stdev, theta
+      REAL(SRK),ALLOCATABLE :: y(:), z(:)
+      ALLOCATE(y(5))
+      ALLOCATE(z(5))
+      n=1e6
+  
+      WRITE(*,*)
+      WRITE(*,*) "Test Unnormalized Continuous Histogram"
+      y=2.0*y
+      z=(/ 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 /)
+      mean=0.0
+      stdev=0.0
+      DO i=1,n
+        x=myRNG%unnormconthistogram(y,z)
+        mean=mean+x/REAL(n,SDK)
+        stdev=stdev+x**2/REAL(n,SDK)
+      ENDDO
+      WRITE(*,*) "COUNT:  ", myRNG%counter
+      WRITE(*,*) "MEAN:      ", mean
+      WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
+      
+      DEALLOCATE(y)
+      DEALLOCATE(z)
+    ENDSUBROUTINE TestUnnormContHist  
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE TestNormPWLinear
+      INTEGER(SLK) :: i,n, inicount
+      REAL(SDK) :: x, mean, stdev, theta
+      REAL(SRK),ALLOCATABLE :: y(:), z(:)
+      ALLOCATE(y(3))
+      ALLOCATE(z(3))
+      n=1e6
+  
+      WRITE(*,*)
+      WRITE(*,*) "Test Normalized Piece-wise Linear"
+      y=(/ 0.0, 1.0, 0.0 /)
+      z=(/ 0.0, 1.0, 2.0 /)
+      mean=0.0
+      stdev=0.0
+      DO i=1,n
+        x=myRNG%pwlinear(y,z)
+        mean=mean+x/REAL(n,SDK)
+        stdev=stdev+x**2/REAL(n,SDK)
+      ENDDO
+      WRITE(*,*) "COUNT:  ", myRNG%counter
+      WRITE(*,*) "MEAN:      ", mean
+      WRITE(*,*) "MEAN TRUE: ", 1.0_SDK
+      WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
+      WRITE(*,*) "SDEV TRUE: ", 1.0_SDK/SQRT(6.0_SDK)
+
+      DEALLOCATE(y)
+      DEALLOCATE(z)
+    ENDSUBROUTINE TestNormPWLinear     
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE TestUnnormPWLinear
+      INTEGER(SLK) :: i,n, inicount
+      REAL(SDK) :: x, mean, stdev, theta
+      REAL(SRK),ALLOCATABLE :: y(:), z(:)
+      ALLOCATE(y(3))
+      ALLOCATE(z(3))
+      n=1e6
+  
+      WRITE(*,*)
+      WRITE(*,*) "Test Unnormalized Piece-wise Linear"
+      y=(/ 0.0, 2.0, 0.0 /)
+      z=(/ 0.0, 1.0, 3.0 /)
+      mean=0.0
+      stdev=0.0
+      DO i=1,n
+        x=myRNG%unnormpwlinear(y,z)
+        mean=mean+x/REAL(n,SDK)
+        stdev=stdev+x**2/REAL(n,SDK)
+      ENDDO
+      WRITE(*,*) "COUNT:  ", myRNG%counter
+      WRITE(*,*) "MEAN:      ", mean
+      WRITE(*,*) "MEAN TRUE: ", 4.0_SDK/3.0_SDK
+      WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
+      WRITE(*,*) "SDEV TRUE: ", SQRT(7.0_SDK)/SQRT(18.0_SDK)
+
+      DEALLOCATE(y)
+      DEALLOCATE(z)
+    ENDSUBROUTINE TestUnnormPWLinear    
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE TestRejection
+      INTEGER(SLK) :: i,n, inicount
+      REAL(SDK) :: x, mean, stdev, theta
+      REAL(SRK),ALLOCATABLE :: y(:), z(:)
+      n=1e6
+  
+      WRITE(*,*)
+      WRITE(*,*) "Test Rejection Sampling"
+      mean=0.0
+      stdev=0.0
+      DO i=1,n
+        x=myRNG%rejection(linear,0.0_SDK,5.0_SDK,7.0_SDK)
+        mean=mean+x/REAL(n,SDK)
+        stdev=stdev+x**2/REAL(n,SDK)
+      ENDDO
+      WRITE(*,*) "COUNT:  ", myRNG%counter
+      WRITE(*,*) "MEAN:      ", mean
+      WRITE(*,*) "MEAN TRUE: ", 10.0_SDK/3.0_SDK
+      WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
+      WRITE(*,*) "SDEV TRUE: ", 5.0_SDK/SQRT(18.0_SDK)
+      
+    ENDSUBROUTINE TestRejection
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE TestRejectionArg
+      INTEGER(SLK) :: i,n, inicount
+      REAL(SDK) :: x, mean, stdev, theta
+      REAL(SRK),ALLOCATABLE :: y(:), z(:)
+      n=1e6
+        
+      WRITE(*,*)
+      WRITE(*,*) "Test Rejection Sampling with function arguments"
+      mean=0.0
+      stdev=0.0
+      DO i=1,n
+        x=myRNG%rejectionarg(lineararg,0.0_SDK,2.0_SDK,7.0_SDK,(/2.0_SDK,1.0_SDK/))
+        mean=mean+x/REAL(n,SDK)
+        stdev=stdev+x**2/REAL(n,SDK)
+      ENDDO
+      WRITE(*,*) "COUNT:  ", myRNG%counter
+      WRITE(*,*) "MEAN:      ", mean
+      WRITE(*,*) "MEAN TRUE: ", 11.0_SDK/9.0_SDK
+      WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
+      WRITE(*,*) "SDEV TRUE: ", SQRT(23.0_SDK)/9.0_SDK
+      
+    ENDSUBROUTINE TestRejectionArg
 !
 ENDPROGRAM testStochasticSampler
 !
