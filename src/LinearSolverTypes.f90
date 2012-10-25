@@ -210,7 +210,7 @@ MODULE LinearSolverTypes
       
       INTEGER(SIK) :: matrixType, TPLType
       INTEGER(SIK) :: solverMethod
-      INTEGER(SIK) :: numberMPI, numberOMP
+      INTEGER(SIK) :: MPI_Comm_ID, numberOMP
       CHARACTER(LEN=256) :: timerName
       LOGICAL(SBK) :: localalloc
 #ifdef HAVE_PETSC
@@ -218,16 +218,17 @@ MODULE LinearSolverTypes
 #endif
 
       !Pull data from the parameter list
+      MPI_Comm_ID=-1
       CALL pList%get('matrixType',matrixType)
       CALL pList%get('TPLType',TPLType)
       CALL pList%get('solverMethod',solverMethod)
-      CALL pList%get('numberMPI',numberMPI)
+      CALL pList%get('MPI_Comm_ID',MPI_Comm_ID)
       CALL pList%get('numberOMP',numberOMP)
       CALL pList%get('timerName',timerName)
       
       !Initialize parallel environments based on input
-      IF(numberMPI>0) CALL solver%MPIparallelEnv%initialize(numberMPI)
-      IF(numberOMP>0) CALL solver%OMPparallelEnv%initialize(numberOMP)
+      IF(MPI_Comm_ID >= 0) CALL solver%MPIparallelEnv%initialize(MPI_Comm_ID)
+      IF(numberOMP > 0) CALL solver%OMPparallelEnv%initialize(numberOMP)
 
       !Error checking of subroutine input
       localalloc=.FALSE.
