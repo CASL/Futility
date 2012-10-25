@@ -70,6 +70,8 @@ MODULE VectorTypes
   PUBLIC :: VectorType
   PUBLIC :: RealVectorType
   PUBLIC :: PETScVectorType
+  PUBLIC :: reqParamsVectorType
+  PUBLIC :: optParamsVectorType
   PUBLIC :: BLAS_asum
   PUBLIC :: BLAS_axpy
   PUBLIC :: BLAS_copy
@@ -391,6 +393,10 @@ MODULE VectorTypes
     !> @copydetails VectorTypes::swap_VectorType
     MODULE PROCEDURE swap_VectorType
   ENDINTERFACE BLAS_swap 
+  
+  !> The parameter lists to use when validating a parameter list for
+  !> initialization
+  TYPE(ParamType),SAVE :: reqParamsVectorType,optParamsVectorType
   
   !> Exception Handler for use in VectorTypes
   TYPE(ExceptionHandlerType),POINTER,SAVE :: eVectorType => NULL()

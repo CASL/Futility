@@ -429,7 +429,7 @@ CONTAINS
       EQUIVALENCE(xinit,xinitint)
       INTEGER(SIK) :: xfixed,neval,nval,i
       !REAL(SSK),ALLOCATABLE :: ans(:),xval(:)
-      REAL(SSK) :: ans,xval,logvals(23)
+      REAL(SSK) :: ans,xval,logvals(27)
       
       !Set test input for number of evaluations and number of values to evaluate
       !neval=1
@@ -441,29 +441,58 @@ CONTAINS
       !CALL RANDOM_NUMBER(xval)
       !xval=xval*(-10._SSK)
       
-      logvals(1)=LOG(1.0_SSK/256.0_SSK)
-      logvals(2)=LOG(1.0_SSK/16.0_SSK)
-      logvals(3)=LOG(1.0_SSK/4.0_SSK)
-      logvals(4)=LOG(1.0_SSK/2.0_SSK)
-      logvals(5)=LOG(1.0_SSK/1.5_SSK)
-      logvals(6)=LOG(1.0_SSK/1.25_SSK)
-      logvals(7)=LOG(1.0_SSK/1.125_SSK)
-      logvals(8)=LOG(1.0_SSK/1.0625_SSK)
-      logvals(9)=LOG(1.0_SSK/1.03125_SSK)
-      logvals(10)=LOG(1.0_SSK/1.015625_SSK)
-      logvals(11)=LOG(1.0_SSK/1.007813_SSK)
-      logvals(12)=LOG(1.0_SSK/1.003906_SSK)
-      logvals(13)=LOG(1.0_SSK/1.001953_SSK)
-      logvals(14)=LOG(1.0_SSK/1.000977_SSK)
-      logvals(15)=LOG(1.0_SSK/1.000488_SSK)
-      logvals(16)=LOG(1.0_SSK/1.000244_SSK)
-      logvals(17)=LOG(1.0_SSK/1.000122_SSK)
-      logvals(18)=LOG(1.0_SSK/1.000061_SSK)
-      logvals(19)=LOG(1.0_SSK/1.000031_SSK)
-      logvals(20)=LOG(1.0_SSK/1.000015_SSK)
-      logvals(21)=LOG(1.0_SSK/1.000008_SSK)
-      logvals(22)=LOG(1.0_SSK/1.000004_SSK)
-      logvals(23)=LOG(1.0_SSK/1.000002_SSK)
+      !Trial Negative values
+      !logvals(1)=LOG(1.0_SSK/256.0_SSK)
+      !logvals(2)=LOG(1.0_SSK/16.0_SSK)
+      !logvals(3)=LOG(1.0_SSK/4.0_SSK)
+      !logvals(4)=LOG(1.0_SSK/2.0_SSK)
+      !logvals(5)=LOG(1.0_SSK/1.5_SSK)
+      !logvals(6)=LOG(1.0_SSK/1.25_SSK)
+      !logvals(7)=LOG(1.0_SSK/1.125_SSK)
+      !logvals(8)=LOG(1.0_SSK/1.0625_SSK)
+      !logvals(9)=LOG(1.0_SSK/1.03125_SSK)
+      !logvals(10)=LOG(1.0_SSK/1.015625_SSK)
+      !logvals(11)=LOG(1.0_SSK/1.007813_SSK)
+      !logvals(12)=LOG(1.0_SSK/1.003906_SSK)
+      !logvals(13)=LOG(1.0_SSK/1.001953_SSK)
+      !logvals(14)=LOG(1.0_SSK/1.000977_SSK)
+      !logvals(15)=LOG(1.0_SSK/1.000488_SSK)
+      !logvals(16)=LOG(1.0_SSK/1.000244_SSK)
+      !logvals(17)=LOG(1.0_SSK/1.000122_SSK)
+      !logvals(18)=LOG(1.0_SSK/1.000061_SSK)
+      !logvals(19)=LOG(1.0_SSK/1.000031_SSK)
+      !logvals(20)=LOG(1.0_SSK/1.000015_SSK)
+      !logvals(21)=LOG(1.0_SSK/1.000008_SSK)
+      !logvals(22)=LOG(1.0_SSK/1.000004_SSK)
+      !logvals(23)=LOG(1.0_SSK/1.000002_SSK)
+      !Positive Values
+      logvals(1)=LOG(256.00000_SSK)
+      logvals(2)=LOG(16.000000_SSK)
+      logvals(3)=LOG(4.0000000_SSK)
+      logvals(4)=LOG(2.0000000_SSK)
+      logvals(5)=LOG(1.5000000_SSK)
+      logvals(6)=LOG(1.2500000_SSK)
+      logvals(7)=LOG(1.1250000_SSK)
+      logvals(8)=LOG(1.0625000_SSK)
+      logvals(9)=LOG(1.0312500_SSK)
+      logvals(10)=LOG(1.0156250_SSK)
+      logvals(11)=LOG(1.0078125_SSK)
+      logvals(12)=LOG(1.0039063_SSK)
+      logvals(13)=LOG(1.0019531_SSK)
+      logvals(14)=LOG(1.0009766_SSK)
+      logvals(15)=LOG(1.0004883_SSK)
+      logvals(16)=LOG(1.0002441_SSK)
+      logvals(17)=LOG(1.0001221_SSK)
+      logvals(18)=LOG(1.0000610_SSK)
+      logvals(19)=LOG(1.0000305_SSK)
+      logvals(20)=LOG(1.0000153_SSK)
+      logvals(21)=LOG(1.0000076_SSK)
+      logvals(22)=LOG(1.0000038_SSK)
+      logvals(23)=LOG(1.0000019_SSK)
+      logvals(24)=LOG(1.0000010_SSK)
+      logvals(25)=LOG(1.0000005_SSK)
+      logvals(26)=LOG(1.0000002_SSK)
+      logvals(27)=LOG(1.0000001_SSK)
       
       x=-10._SSK
       xinit=EXP(x)
@@ -474,17 +503,21 @@ CONTAINS
       WRITE(*,*) 'Printing Y...'
       CALL printBit(yint)
       
-      x=4.0_SSK
+      !Get it to work for positive numbers first.
+      
+      x=0.5_SSK
       xinit=EXP(x)
-      yint=65536_SIK
+      y=1.0_SRK
+      !yint=1073741824_SIK
+      !yint=65536_SIK
       WRITE(*,*) 'x=',x,'y=',y,'EXP(x)=',xinit
       WRITE(*,*) 'Printing EXP(Xinitial)...'
       CALL printBit(xinitint)
       WRITE(*,*) 'Printing Y...'
       CALL printBit(yint)
       DO i=1,5
-        IF(x <= logvals(i)) THEN
-          x=x-logvals(i); yint=IBCLR(yint,28-i)
+        IF(x >= logvals(i)) THEN
+          x=x-logvals(i); yint=IBSET(yint,27-i)
         ENDIF
         WRITE(*,*) 'x=',x,'y=',y,'EXP(x)=',xinit
         WRITE(*,*) 'Printing EXP(Xinitial)...'
@@ -492,9 +525,9 @@ CONTAINS
         WRITE(*,*) 'Printing Y...'
         CALL printBit(yint)
       ENDDO
-      DO i=6,23
-        IF(x <= logvals(i)) THEN
-          x=x-logvals(i); yint=IBSET(yint,28-i)
+      DO i=6,24
+        IF(x >= logvals(i)) THEN
+          x=x-logvals(i); yint=IBSET(yint,27-i)
         ENDIF
         WRITE(*,*) 'x=',x,'y=',y,'EXP(x)=',xinit
         WRITE(*,*) 'Printing EXP(Xinitial)...'
