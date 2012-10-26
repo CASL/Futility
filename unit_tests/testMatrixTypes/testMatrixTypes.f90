@@ -438,6 +438,9 @@ PROGRAM testMatrixTypes
       !off-nominal tests
       !pass matrix w/out setshape
       CALL thisMatrix%clear()
+      CALL pList%clear()
+      CALL pList%add('testPL->n',3)
+      CALL pList%add('testPL->nnz',6)
       CALL thisMatrix%init(pList)
       CALL thisMatrix%set(1,1,1._SRK) !since jCount = 0, expect no change
       SELECTTYPE(thisMatrix)
@@ -459,7 +462,7 @@ PROGRAM testMatrixTypes
       SELECTTYPE(thisMatrix)
         TYPE IS(SparseMatrixType); CALL thisMatrix%setShape(1,1)
       ENDSELECT
-          
+
       CALL thisMatrix%set(-1,1,1._SRK)
       CALL thisMatrix%set(1,-1,1._SRK)
       CALL thisMatrix%set(4,1,1._SRK)
@@ -565,7 +568,6 @@ PROGRAM testMatrixTypes
       ENDSELECT
       CALL thisMatrix%clear()
       WRITE(*,*) '  Passed: CALL sparse%get(...)'
-      
       
       DEALLOCATE(thisMatrix)
 !
@@ -2176,7 +2178,6 @@ PROGRAM testMatrixTypes
       ENDSELECT
       WRITE(*,*) '  Passed: CALL BLAS_matmult(...) A=PETSC B=PETSC C=PETSC'
 #endif
-      
     ENDSUBROUTINE  testMatrixMultSparse
 !
 !-------------------------------------------------------------------------------
