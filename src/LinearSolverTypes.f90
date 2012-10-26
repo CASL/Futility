@@ -411,17 +411,25 @@ MODULE LinearSolverTypes
       solver%info=0
       CALL solver%MPIparallelEnv%clear()
       CALL solver%OMPparallelEnv%clear()
-      IF(ALLOCATED(solver%A)) DEALLOCATE(solver%A)
-      IF(ALLOCATED(solver%X)) DEALLOCATE(solver%X)
-      IF(ALLOCATED(solver%b)) DEALLOCATE(solver%b)
+      IF(ALLOCATED(solver%A)) THEN
+        CALL solver%A%clear()
+        DEALLOCATE(solver%A)
+      ENDIF
+      IF(ALLOCATED(solver%X)) THEN
+        CALL solver%X%clear()
+        DEALLOCATE(solver%X)
+      ENDIF
+      IF(ALLOCATED(solver%b)) THEN
+        CALL solver%b%clear()
+        DEALLOCATE(solver%b)
+      ENDIF
       IF(ALLOCATED(solver%IPIV)) CALL demallocA(solver%IPIV)
       IF(ALLOCATED(solver%M)) THEN
         CALL solver%M%clear()
         DEALLOCATE(solver%M)
       ENDIF
-
-      !No timer clear function-just call toc instead
-      CALL solver%SolveTime%toc()
+      
+      CALL solver%SolveTime%ResetTimer()
       solver%isDecomposed=.FALSE.
     ENDSUBROUTINE clear_LinearSolverType_Direct
 !
@@ -443,9 +451,18 @@ MODULE LinearSolverTypes
       solver%info=0
       CALL solver%MPIparallelEnv%clear()
       CALL solver%OMPparallelEnv%clear()
-      IF(ALLOCATED(solver%A)) DEALLOCATE(solver%A)
-      IF(ALLOCATED(solver%X)) DEALLOCATE(solver%X)
-      IF(ALLOCATED(solver%b)) DEALLOCATE(solver%b)
+      IF(ALLOCATED(solver%A)) THEN
+        CALL solver%A%clear()
+        DEALLOCATE(solver%A)
+      ENDIF
+      IF(ALLOCATED(solver%X)) THEN
+        CALL solver%X%clear()
+        DEALLOCATE(solver%X)
+      ENDIF
+      IF(ALLOCATED(solver%b)) THEN
+        CALL solver%b%clear()
+        DEALLOCATE(solver%b)
+      ENDIF
       IF(ALLOCATED(solver%M)) THEN
         CALL solver%M%clear()
         DEALLOCATE(solver%M)
@@ -454,9 +471,8 @@ MODULE LinearSolverTypes
 #ifdef HAVE_PETSC
       CALL KSPDestroy(solver%ksp,ierr)
 #endif 
-
-      !No timer clear function-just call toc instead
-      CALL solver%SolveTime%toc()
+      
+      CALL solver%SolveTime%ResetTimer()
       solver%isDecomposed=.FALSE.
       solver%hasX0=.FALSE.
       solver%normType=-1
