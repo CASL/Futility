@@ -521,11 +521,12 @@ PROGRAM testStochasticSampler
       REAL(SDK) :: x, mean, stdev, theta
       REAL(SRK),ALLOCATABLE :: y(:), z(:)
       ALLOCATE(y(5))
-      ALLOCATE(z(5))
+      ALLOCATE(z(6))
       n=1e6
   
       WRITE(*,*)
       WRITE(*,*) "Test Unnormalized Continuous Histogram"
+      y=(/ 0.2, 0.4, 0.1, 0.05, 0.25 /)
       y=2.0*y
       z=(/ 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 /)
       mean=0.0
@@ -608,10 +609,15 @@ PROGRAM testStochasticSampler
       INTEGER(SLK) :: i,n, inicount
       REAL(SDK) :: x, mean, stdev, theta
       REAL(SRK),ALLOCATABLE :: y(:), z(:)
+      ALLOCATE(y(3))
+      ALLOCATE(z(3))
       n=1e6
-  
+         
+      
       WRITE(*,*)
       WRITE(*,*) "Test Rejection Sampling"
+      y=(/ 0.0, 2.0, 0.0 /)
+      z=(/ 0.0, 1.0, 3.0 /)
       mean=0.0
       stdev=0.0
       DO i=1,n
@@ -632,10 +638,14 @@ PROGRAM testStochasticSampler
       INTEGER(SLK) :: i,n, inicount
       REAL(SDK) :: x, mean, stdev, theta
       REAL(SRK),ALLOCATABLE :: y(:), z(:)
+      ALLOCATE(y(3))
+      ALLOCATE(z(3))
       n=1e6
         
       WRITE(*,*)
       WRITE(*,*) "Test Rejection Sampling with function arguments"
+      y=(/ 0.0, 2.0, 0.0 /)
+      z=(/ 0.0, 1.0, 3.0 /)
       mean=0.0
       stdev=0.0
       DO i=1,n
