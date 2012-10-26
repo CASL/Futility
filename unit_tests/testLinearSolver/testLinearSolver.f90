@@ -1951,7 +1951,7 @@ CONTAINS
       DEALLOCATE(thisX)
       CALL thisLS%clear()
       WRITE(*,*)'  Passed: CALL Iterative%solver() BICGSTAB'
-      
+
 #ifdef HAVE_PETSC
       !The PETSC sparse matrix type
       ! initialize linear system
@@ -1968,7 +1968,7 @@ CONTAINS
       ! initialize matrix A
       CALL pList%clear()
       CALL pList%add('PL->n',9_SNK)
-      CALL pList%add('PL->nnz',0_SNK)
+      CALL pList%add('PL->m',0_SNK)
       CALL pList%add('PL->mattype',0_SNK)
       CALL thisLS%A%init(pList)
       
@@ -2025,7 +2025,7 @@ CONTAINS
       CALL thisLS%X%init(9)
       
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-          CALL thisLS%setX0(thisX)
+        CALL thisLS%setX0(thisX)
       ENDSELECT
 
       ! build b and set it
@@ -2087,7 +2087,7 @@ CONTAINS
       CALL pList%add('PL->timerName','testTimer')
       CALL pList%validate(pList,optListLS)
       CALL thisLS%init(pList)
-      
+
       ! initialize matrix A
       CALL pList%clear()
       CALL pList%add('PL->n',9_SNK)
@@ -2586,7 +2586,7 @@ CONTAINS
       !  [ 0 -1  4]
       CALL pList%clear()
       CALL pList%add('PL->n',3_SNK)
-      CALL pList%add('PL->nnz',7_SNK)
+      CALL pList%add('PL->m',7_SNK)
       CALL thisLS%A%init(pList)
       SELECTTYPE(A => thisLS%A); TYPE IS(PETScMatrixType)
         CALL A%set(1,1, 4._SRK)
@@ -3012,7 +3012,7 @@ CONTAINS
       ! initialize matrix A
       CALL pList%clear()
       CALL pList%add('PL->n',9_SNK)
-      CALL pList%add('PL->nnz',33_SNK)
+      CALL pList%add('PL->m',33_SNK)
       CALL thisLS%A%init(pList)
       
       !A =  4    -1     0    -1     0     0     0     0     0
