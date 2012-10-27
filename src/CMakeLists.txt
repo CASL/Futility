@@ -12,10 +12,14 @@
 
 INCLUDE(TribitsLibraryMacros)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
 #Library for utility code
 TRIBITS_ADD_LIBRARY(Utils
+    HEADERS
+	  UnitTest_harness.h
     SOURCES
+      #UnitTest.f90
       IntrType.f90
       Strings.f90
       Times.f90
