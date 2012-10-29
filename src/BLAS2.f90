@@ -3527,11 +3527,11 @@ MODULE BLAS2
           CHARACTER(LEN=1),INTENT(IN) :: uplo
           CHARACTER(LEN=1),INTENT(IN) :: trans
           CHARACTER(LEN=1),INTENT(IN) :: diag
-          INTEGER(SIK),INTENT(IN) :: n
-          INTEGER(SIK),INTENT(IN) :: lda
-          REAL(SSK),INTENT(IN) :: a(lda,*)
-          REAL(SSK),INTENT(INOUT) :: x(*)
-          INTEGER(SIK),INTENT(IN) :: incx
+          INTEGER,INTENT(IN) :: n
+          INTEGER,INTENT(IN) :: lda
+          REAL(KIND(0.0e0)),INTENT(IN) :: a(lda,*)
+          REAL(KIND(0.0e0)),INTENT(INOUT) :: x(*)
+          INTEGER,INTENT(IN) :: incx
         ENDSUBROUTINE sgemv
       ENDINTERFACE
       CALL strsv(uplo,trans,diag,n,a,lda,x,incx)
@@ -3702,11 +3702,11 @@ MODULE BLAS2
           CHARACTER(LEN=1),INTENT(IN) :: uplo
           CHARACTER(LEN=1),INTENT(IN) :: trans
           CHARACTER(LEN=1),INTENT(IN) :: diag
-          INTEGER(SIK),INTENT(IN) :: n
-          INTEGER(SIK),INTENT(IN) :: lda
-          REAL(SDK),INTENT(IN) :: a(lda,*)
-          REAL(SDK),INTENT(INOUT) :: x(*)
-          INTEGER(SIK),INTENT(IN) :: incx
+          INTEGER,INTENT(IN) :: n
+          INTEGER,INTENT(IN) :: lda
+          REAL(KIND(0.0d0)),INTENT(IN) :: a(lda,*)
+          REAL(KIND(0.0d0)),INTENT(INOUT) :: x(*)
+          INTEGER,INTENT(IN) :: incx
         ENDSUBROUTINE dtrsv
       ENDINTERFACE
       CALL dtrsv(uplo,trans,diag,n,a,lda,x,incx)
