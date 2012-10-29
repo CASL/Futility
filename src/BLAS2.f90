@@ -3532,7 +3532,7 @@ MODULE BLAS2
           REAL(KIND(0.0e0)),INTENT(IN) :: a(lda,*)
           REAL(KIND(0.0e0)),INTENT(INOUT) :: x(*)
           INTEGER,INTENT(IN) :: incx
-        ENDSUBROUTINE sgemv
+        ENDSUBROUTINE strsv
       ENDINTERFACE
       CALL strsv(uplo,trans,diag,n,a,lda,x,incx)
 #else
