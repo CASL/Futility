@@ -5234,8 +5234,7 @@ MODULE ParameterLists
           thisParam%pdat%name=TRIM(name)
           IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
           thisParam%pdat%dataType='1-D ARRAY TYPE(StringType)'
-          SELECTTYPE(p=>thisParam%pdat)
-            TYPE IS(ParamType_STR_a1)
+          SELECTTYPE(p => thisParam%pdat); TYPE IS(ParamType_STR_a1)
               ALLOCATE(p%val(SIZE(param)))
               p%val=param
           ENDSELECT
@@ -5296,9 +5295,10 @@ MODULE ParameterLists
     SUBROUTINE clear_ParamType_STR_a1(thisParam)
       CLASS(ParamType_STR_a1),INTENT(INOUT) :: thisParam
       INTEGER(SIK) :: i
-      DO i=1,SIZE(thisParam%val)
-        thisParam%val(i)=''         !Not sure how to clear this since it doesn't have a clear routine!
+      DO i=SIZE(thisParam%val),1,-1
+        thisParam%val(i)=''
       ENDDO
+      DEALLOCATE(thisParam%val)
       thisParam%name=''
       thisParam%dataType=''
       thisParam%description=''
