@@ -1221,7 +1221,7 @@ PROGRAM testVectorTypes
     CALL xVector%init(3)
     CALL yVector%init(3)
     CALL aVector%init(3)
-    
+
     !Test BLAS_asum (absolute value summation)
     CALL xVector%set(1, 5.0_SRK)
     CALL xVector%set(2,-2.0_SRK)
@@ -1920,6 +1920,9 @@ PROGRAM testVectorTypes
       WRITE(*,*) "CALL BLAS_swap(THISVECTOR=xVector,THATVECTOR=yVector) [REAL] FAILED!"
       STOP 666
     ENDIF
+    CALL xVector%clear()
+    CALL yVector%clear()
+    CALL aVector%clear()
     DEALLOCATE(xVector)
     DEALLOCATE(yVector)
     DEALLOCATE(aVector)
@@ -2632,11 +2635,14 @@ PROGRAM testVectorTypes
       WRITE(*,*) "CALL BLAS_swap(THISVECTOR=xVector,THATVECTOR=yVector) [PETSC] FAILED!"
       STOP 666
     ENDIF
+    WRITE(*,*) '  Passed: CALL BLAS_swap(...) [PETSC]'
+    CALL xVector%clear()
+    CALL yVector%clear()
+    CALL aVector%clear()
     DEALLOCATE(xVector)
     DEALLOCATE(yVector)
     DEALLOCATE(aVector)
-    WRITE(*,*) '  Passed: CALL BLAS_swap(...) [PETSC]'
 #endif
-    
     ENDSUBROUTINE testBLAS1Interface
+!
 ENDPROGRAM testVectorTypes
