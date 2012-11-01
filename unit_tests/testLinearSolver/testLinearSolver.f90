@@ -28,7 +28,7 @@ PROGRAM testLinearSolver
   
   TYPE(ExceptionHandlerType),POINTER :: e
   TYPE(MPI_EnvType) :: mpiTestEnv
-  TYPE(ParamType) :: pList, optListLS
+  TYPE(ParamType) :: pList, optListLS, vecPList
   
 #ifdef HAVE_PETSC
 #include <finclude/petsc.h>
@@ -46,7 +46,9 @@ PROGRAM testLinearSolver
   CALL optListLS%add('PL->MPI_Comm_ID',PE_COMM_SELF)
   CALL optListLS%add('PL->numberOMP',1_SNK)
   CALL optListLS%add('PL->timerName','LinearSolver Timer')
-
+  ! Set up vector parameter list
+  CALL vecPList%add('PL -> n',2)
+  
   !Configure exception handler for test
   ALLOCATE(e)
   CALL e%setStopOnError(.FALSE.)
@@ -90,7 +92,6 @@ CONTAINS
 !-------------------------------------------------------------------------------
     SUBROUTINE testClear()
       CLASS(LinearSolverType_Base),ALLOCATABLE :: thisLS
-
     !test Direct
       ALLOCATE(LinearSolverType_Direct :: thisLS)
       
@@ -112,12 +113,13 @@ CONTAINS
         CALL thisLS%A%init(pList) !2x2, symmetric
         
         ! initialize vector X
+        CALL vecPList%set('PL -> n',2)
         ALLOCATE(RealVectorType :: thisLS%X)
-        CALL thisLS%X%init(2)
+        CALL thisLS%X%init(vecPList)
         
         ! initialize vector b
         ALLOCATE(RealVectorType :: thisLS%b)
-        CALL thisLS%b%init(2)
+        CALL thisLS%b%init(vecPList)
         
         ! allocate IPIV
         ALLOCATE(thisLS%IPIV(2))
@@ -174,12 +176,13 @@ CONTAINS
         CALL thisLS%A%init(pList) !2x2, symmetric
         
         ! initialize vector X
+        CALL vecPList%set('PL -> n',2)
         ALLOCATE(RealVectorType :: thisLS%X)
-        CALL thisLS%X%init(2)
+        CALL thisLS%X%init(vecPList)
         
         ! initialize vector b
         ALLOCATE(RealVectorType :: thisLS%b)
-        CALL thisLS%b%init(2)        
+        CALL thisLS%b%init(vecPList)        
         
         ! initialize matrix M
         ALLOCATE(DenseSquareMatrixType :: thisLS%M)
@@ -477,11 +480,13 @@ CONTAINS
       CALL thisLS%A%init(pList)
       
       ! initialize vector X
-      CALL thisLS%X%init(4)
+      CALL vecPList%set('PL -> n',4)
+      CALL thisLS%X%init(vecPList)
       CALL thisLS%solve()
       
       ! initialize vector b
-      CALL thisLS%b%init(6)
+      CALL vecPList%set('PL -> n',6)
+      CALL thisLS%b%init(vecPList)
       CALL thisLS%solve()
       
       CALL thisLS%A%clear()
@@ -521,13 +526,14 @@ CONTAINS
         CALL A%set(3,3,2._SRK)
       ENDSELECT
       ! initialize vector b
-      CALL thisLS%b%init(3)
+      CALL vecPList%set('PL -> n',3)
+      CALL thisLS%b%init(vecPList)
       ! set all values to 6
       SELECTTYPE(b => thisLS%b); TYPE IS(RealVectorType)
         CALL b%set(6._SRK)
       ENDSELECT
       ! initialize vector X
-      CALL thisLS%X%init(3)
+      CALL thisLS%X%init(vecPList)
       CALL thisLS%solve()
       
       !Check the result
@@ -581,7 +587,8 @@ CONTAINS
       ENDSELECT
       
       ! initialize vector b
-      CALL thisLS%b%init(4)
+      CALL vecPList%set('PL -> n',4)
+      CALL thisLS%b%init(vecPList)
       SELECTTYPE(b => thisLS%b); TYPE IS(RealVectorType)
       CALL b%set(1,10._SRK)
       CALL b%set(2,9._SRK)
@@ -590,7 +597,7 @@ CONTAINS
       ENDSELECT
       
       ! initialize vector X
-      CALL thisLS%X%init(4)
+      CALL thisLS%X%init(vecPList)
       
       ! solve
       CALL thisLS%solve()
@@ -644,7 +651,8 @@ CONTAINS
       ENDSELECT
       
       ! initialize vector b
-      CALL thisLS%b%init(3)
+      CALL vecPList%set('PL -> n',3)
+      CALL thisLS%b%init(vecPList)
       SELECTTYPE(b => thisLS%b); TYPE IS(RealVectorType)
         CALL b%set(1,1._SRK)
         CALL b%set(2,2._SRK)
@@ -652,7 +660,7 @@ CONTAINS
       ENDSELECT
       
       ! initialize vector X
-      CALL thisLS%X%init(3)
+      CALL thisLS%X%init(vecPList)
       CALL thisLS%solve()
 
       !Check M
@@ -763,13 +771,14 @@ CONTAINS
       ENDSELECT
       
       ! initialize vector X
-      CALL thisLS%X%init(9)
+      CALL vecPList%set('PL -> n',9)
+      CALL thisLS%X%init(vecPList)
       SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
         CALL X%set(1.0_SRK)
       ENDSELECT
       
       ! initialize vector b
-      CALL thisLS%b%init(9)
+      CALL thisLS%b%init(vecPList)
       SELECTTYPE(b => thisLS%b); TYPE IS(RealVectorType)
         CALL b%set(1.0_SRK)
       ENDSELECT
@@ -813,7 +822,8 @@ CONTAINS
       ENDSELECT
       
       ! initialize vector b
-      CALL thisLS%b%init(3)
+      CALL vecPList%set('PL -> n',3)
+      CALL thisLS%b%init(vecPList)
       SELECTTYPE(b => thisLS%b); TYPE IS(RealVectorType)
         CALL b%set(1,1._SRK)
         CALL b%set(2,2._SRK)
@@ -821,7 +831,8 @@ CONTAINS
       ENDSELECT
       
       ! initialize vector X
-      CALL thisLS%X%init(2)
+      CALL vecPList%set('PL -> n',2)
+      CALL thisLS%X%init(vecPList)
       SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
       CALL X%set(1.0_SRK)
       ENDSELECT
@@ -870,7 +881,8 @@ CONTAINS
       ENDSELECT
       
       ! initialize vector b
-      CALL thisLS%b%init(3)
+      CALL vecPList%set('PL -> n',3)
+      CALL thisLS%b%init(vecPList)
       SELECTTYPE(b => thisLS%b); TYPE IS(RealVectorType)
         CALL b%set(1,4._SRK)
         CALL b%set(2,6._SRK)
@@ -878,7 +890,7 @@ CONTAINS
       ENDSELECT
       
       ! initialize vector X
-      CALL thisLS%X%init(3)
+      CALL thisLS%X%init(vecPList)
       
       ! solve it
       CALL thisLS%solve()
@@ -921,7 +933,8 @@ CONTAINS
       ENDSELECT
       
       ! initialize vector b
-      CALL thisLS%b%init(3)
+      CALL vecPList%set('PL -> n',3)
+      CALL thisLS%b%init(vecPList)
       SELECTTYPE(b => thisLS%b); TYPE IS(RealVectorType)
         CALL b%set(1, 4._SRK)
         CALL b%set(2, 6._SRK)
@@ -929,7 +942,7 @@ CONTAINS
       ENDSELECT
       
       ! initialize vector X
-      CALL thisLS%X%init(3)
+      CALL thisLS%X%init(vecPList)
       CALL thisLS%solve()
       
       !Check M
@@ -1028,7 +1041,8 @@ CONTAINS
       ENDSELECT
  
       ! initialize vector b
-      CALL thisLS%b%init(3)
+      CALL vecPList%set('PL -> n',3)
+      CALL thisLS%b%init(vecPList)
       SELECTTYPE(b => thisLS%b); TYPE IS(RealVectorType)
         CALL b%set(1,1._SRK)
         CALL b%set(1,2._SRK)
@@ -1036,7 +1050,7 @@ CONTAINS
       ENDSELECT
       
       ! initialize vector X
-      CALL thisLS%X%init(3)
+      CALL thisLS%X%init(vecPList)
       
       CALL thisLS%solve()
       !Check 
@@ -1074,7 +1088,8 @@ CONTAINS
       ENDSELECT
       
       ! initialize vector b
-      CALL thisLS%b%init(3)
+      CALL vecPList%set('PL -> n',3)
+      CALL thisLS%b%init(vecPList)
       SELECTTYPE(b => thisLS%b); TYPE IS(RealVectorType)
         CALL b%set(1,1._SRK)
         CALL b%set(2,2._SRK)
@@ -1082,7 +1097,7 @@ CONTAINS
       ENDSELECT
       
       ! initialize vector X
-      CALL thisLS%X%init(3)
+      CALL thisLS%X%init(vecPList)
       CALL thisLS%solve()
       
       !Check M
@@ -1163,7 +1178,8 @@ CONTAINS
       ENDSELECT
       
       ! initialize vector b
-      CALL thisLS%b%init(3)
+      CALL vecPList%set('PL -> n',3)
+      CALL thisLS%b%init(vecPList)
       SELECTTYPE(b => thisLS%b); TYPE IS(RealVectorType)
         CALL b%set(1,1._SRK)
         CALL b%set(2,2._SRK)
@@ -1171,7 +1187,7 @@ CONTAINS
       ENDSELECT
       
       ! initialize vector X
-      CALL thisLS%X%init(3)
+      CALL thisLS%X%init(vecPList)
       
       CALL thisLS%solve()
       CALL thisLS%clear()
@@ -1231,13 +1247,14 @@ CONTAINS
       ENDSELECT
       
       ! initialize vector X
-      CALL thisLS%X%init(9)
+      CALL vecPList%set('PL -> n',9)
+      CALL thisLS%X%init(vecPList)
       SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
         CALL X%set(1.0_SRK)
       ENDSELECT
       
       ! initialize vector b
-      CALL thisLS%b%init(9)
+      CALL thisLS%b%init(vecPList)
       SELECTTYPE(b => thisLS%b); TYPE IS(RealVectorType)
         CALL b%set(1.0_SRK)
       ENDSELECT
@@ -1282,14 +1299,16 @@ CONTAINS
       ENDSELECT
       
       ! initialize vector b
-      CALL thisLS%b%init(3)
+      CALL vecPList%set('PL -> n',3)
+      CALL thisLS%b%init(vecPlist)
       SELECTTYPE(b => thisLS%b); TYPE IS(RealVectorType)
         CALL b%set(1,1._SRK)
         CALL b%set(2,2._SRK)
         CALL b%set(3,2._SRK)
       ENDSELECT
       ! initialize vector X
-      CALL thisLS%X%init(2)
+      CALL vecPList%set('PL -> n',2)
+      CALL thisLS%X%init(vecPList)
       SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
         CALL X%set(1.0_SRK)
       ENDSELECT
@@ -1335,7 +1354,8 @@ CONTAINS
       CALL thisLS%init(pList)
       
       ! initialize vector X
-      CALL thisLS%X%init(2)
+      CALL vecPList%set('PL -> n',2)
+      CALL thisLS%X%init(vecPList)
       SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
         CALL X%set(1,0._SRK)
         CALL X%set(2,0._SRK)
@@ -1491,11 +1511,12 @@ CONTAINS
         CALL thisLS%init(pList)
 
         ! initialize vectors X and b
-        CALL thisLS%b%init(4)
-        CALL thisLS%X%init(4)
+        CALL vecPList%set('PL -> n',4)
+        CALL thisLS%b%init(vecPList)
+        CALL thisLS%X%init(vecPList)
         CALL thisLS%getResidual(resid)
 
-        CALL resid%init(4)
+        CALL resid%init(vecPList)
         CALL thisLS%getResidual(resid)
         
         CALL thisLS%clear()
@@ -1564,18 +1585,19 @@ CONTAINS
       ENDSELECT
 
       ! initialize vector X
-      CALL thisLS%X%init(9)
+      CALL vecPList%set('PL -> n',9)
+      CALL thisLS%X%init(vecPlist)
       SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
         CALL X%set(1._SRK)
       ENDSELECT
 
       ! initialize vector b
-      CALL thisLS%b%init(9)
+      CALL thisLS%b%init(vecPList)
       SELECTTYPE(b => thisLS%b); TYPE IS(RealVectorType)
         CALL b%set(10._SRK)
       ENDSELECT
       
-      CALL resid%init(9)
+      CALL resid%init(vecPList)
       ALLOCATE(resid_soln(9))
       resid_soln=(/-8._SRK,-9._SRK,-8._SRK,-9._SRK,-10._SRK, &
         -9._SRK,-8._SRK,-9._SRK,-8._SRK/)
@@ -1681,14 +1703,15 @@ CONTAINS
       thisX=1.0_SRK
       
       ! initialize vector X
-      CALL thisLS%X%init(9)
+      CALL vecPList%set('PL -> n',9)
+      CALL thisLS%X%init(vecPList)
       
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
           CALL thisLS%setX0(thisX)
       ENDSELECT
 
       ! build b and set it
-      CALL thisLS%b%init(9)
+      CALL thisLS%b%init(vecPList)
       SELECTTYPE(b => thisLS%b); TYPE IS(RealVectorType)
         CALL b%set(1.0_SRK)
       ENDSELECT
@@ -1766,7 +1789,8 @@ CONTAINS
       ENDDO
       
       !initialize vector X
-      CALL thisLS%X%init(9)
+      CALL vecPList%set('PL -> n',9)
+      CALL thisLS%X%init(vecPList)
       
       !build X0 and set it to 1.0s
       ALLOCATE(thisX(9))
@@ -1776,7 +1800,7 @@ CONTAINS
       ENDSELECT
       
       !build b and set it
-      CALL thisLS%b%init(9)
+      CALL thisLS%b%init(vecPList)
       SELECTTYPE(b => thisLS%b); TYPE IS(RealVectorType)
         CALL b%set(1.0_SRK)
       ENDSELECT
@@ -1869,7 +1893,8 @@ CONTAINS
       ENDSELECT
       
       ! initialize the vector b
-      CALL thisLS%b%init(3)
+      CALL vecPList%set('PL -> n',3)
+      CALL thisLS%b%init(vecPList)
       SELECTTYPE(b => thisLS%b); TYPE IS(RealVectorType)
         CALL b%set(1,1._SRK)
         CALL b%set(2,2._SRK)
@@ -1877,7 +1902,7 @@ CONTAINS
       ENDSELECT
       
       ! initialize the vector X
-      CALL thisLS%X%init(3)
+      CALL thisLS%X%init(vecPList)
 
       CALL thisLS%solve()
       
@@ -1920,7 +1945,8 @@ CONTAINS
       ENDSELECT
       
       ! initialize vector b
-      CALL thisLS%b%init(3)
+      CALL vecPList%set('PL -> n',3)
+      CALL thisLS%b%init(vecPList)
       SELECTTYPE(b => thisLS%b); TYPE IS(RealVectorType)
         CALL b%set(1,1._SRK)
         CALL b%set(2,2._SRK)
@@ -1932,7 +1958,8 @@ CONTAINS
       thisX=1.0_SRK
       
       ! initialize vector X
-      CALL thisLS%X%init(2)
+      CALL vecPList%set('PL -> n',2)
+      CALL thisLS%X%init(vecPList)
 
       !set iterations and convergence information and build/set M
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
@@ -2224,7 +2251,8 @@ CONTAINS
       ENDSELECT
 
       ! initialize vector b
-      CALL thisLS%b%init(2)
+      CALL vecPList%set('PL -> n',2)
+      CALL thisLS%b%init(vecPList)
       SELECTTYPE(b => thisLS%b); TYPE IS(RealVectorType)
         CALL b%set(1,1._SRK)
         CALL b%set(2,3._SRK)
@@ -2235,7 +2263,8 @@ CONTAINS
       thisX=1.0_SRK
       
       ! initialize vector X
-      CALL thisLS%X%init(3)
+      CALL vecPList%set('PL -> n',3)
+      CALL thisLS%X%init(vecPList)
       
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
         CALL thisLS%setX0(thisX)
@@ -2285,7 +2314,8 @@ CONTAINS
       ENDSELECT
       
       ! initialize vector b
-      CALL thisLS%b%init(3)
+      CALL vecPList%set('PL -> n',3)
+      CALL thisLS%b%init(vecPList)
       SELECTTYPE(b => thisLS%b); TYPE IS(RealVectorType)
         CALL b%set(1,1._SRK)
         CALL b%set(2,2._SRK)
@@ -2297,7 +2327,8 @@ CONTAINS
       thisX=1.0_SRK
       
       ! initialize vector X
-      CALL thisLS%X%init(2)
+      CALL vecPList%set('PL -> n',2)
+      CALL thisLS%X%init(vecPList)
       
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
         CALL thisLS%setX0(thisX)
@@ -2353,7 +2384,8 @@ CONTAINS
       ENDSELECT
 
       ! initialize vector b
-      CALL thisLS%b%init(3)
+      CALL vecPList%set('PL -> n',3)
+      CALL thisLS%b%init(vecPList)
       SELECTTYPE(b => thisLS%b); TYPE IS(RealVectorType)
         CALL b%set(1,1._SRK)
         CALL b%set(2,2._SRK)
@@ -2361,7 +2393,7 @@ CONTAINS
       ENDSELECT
       
       ! initialize vector X
-      CALL thisLS%X%init(3)
+      CALL thisLS%X%init(vecPList)
 
       !set iterations and convergence information and
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
@@ -2417,7 +2449,8 @@ CONTAINS
       ENDSELECT
      
       ! initialize vector b
-      CALL thisLS%b%init(3)
+      CALL vecPList%set('PL -> n',3)
+      CALL thisLS%b%init(vecPList)
       SELECTTYPE(b => thisLS%b); TYPE IS(RealVectorType)
         CALL b%set(1,1._SRK)
         CALL b%set(2,2._SRK)
@@ -2429,7 +2462,7 @@ CONTAINS
       thisX=0._SRK
       
       ! initialize vector X
-      CALL thisLS%X%init(3)
+      CALL thisLS%X%init(vecPList)
       
       !set iterations and convergence information and
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
@@ -2485,7 +2518,8 @@ CONTAINS
       ENDSELECT
       
       ! initialize vector b
-      CALL thisLS%b%init(3)
+      CALL vecPList%set('PL -> n',3)
+      CALL thisLS%b%init(vecPList)
       SELECTTYPE(b => thisLS%b); TYPE IS(RealVectorType)
         CALL b%set(1,1._SRK)
         CALL b%set(2,2._SRK)
@@ -2493,7 +2527,7 @@ CONTAINS
       ENDSELECT
       
       ! initialize vector X
-      CALL thisLS%X%init(3)
+      CALL thisLS%X%init(vecPList)
 
       CALL thisLS%solve()
 
@@ -2724,14 +2758,15 @@ CONTAINS
       thisX=1.0_SRK
       
       ! initialize vector X
-      CALL thisLS%X%init(9)
+      CALL vecPList%set('PL -> n',9)
+      CALL thisLS%X%init(vecPList)
       
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
           CALL thisLS%setX0(thisX)
       ENDSELECT
 
       ! build b and set it
-      CALL thisLS%b%init(9)
+      CALL thisLS%b%init(vecPList)
       SELECTTYPE(b => thisLS%b); TYPE IS(RealVectorType)
         CALL b%set(1.0_SRK)
       ENDSELECT
@@ -2809,7 +2844,8 @@ CONTAINS
       ENDDO
       
       !initialize vector X
-      CALL thisLS%X%init(9)
+      CALL vecPList%set('PL -> n',9)
+      CALL thisLS%X%init(vecPList)
       
       !build X0 and set it to 1.0s
       ALLOCATE(thisX(9))
@@ -2819,7 +2855,7 @@ CONTAINS
       ENDSELECT
       
       !build b and set it
-      CALL thisLS%b%init(9)
+      CALL thisLS%b%init(vecPList)
       SELECTTYPE(b => thisLS%b); TYPE IS(RealVectorType)
         CALL b%set(1.0_SRK)
       ENDSELECT
@@ -2911,7 +2947,8 @@ CONTAINS
       ENDSELECT
       
       ! initialize the vector b
-      CALL thisLS%b%init(3)
+      CALL vecPList%set('PL -> n',3)
+      CALL thisLS%b%init(vecPList)
       SELECTTYPE(b => thisLS%b); TYPE IS(RealVectorType)
         CALL b%set(1,1._SRK)
         CALL b%set(2,2._SRK)
@@ -2919,7 +2956,7 @@ CONTAINS
       ENDSELECT
       
       ! initialize the vector X
-      CALL thisLS%X%init(3)
+      CALL thisLS%X%init(vecPList)
 
       CALL thisLS%solve()
       
@@ -2962,7 +2999,8 @@ CONTAINS
       ENDSELECT
       
       ! initialize vector b
-      CALL thisLS%b%init(3)
+      CALL vecPList%set('PL -> n',3)
+      CALL thisLS%b%init(vecPlist)
       SELECTTYPE(b => thisLS%b); TYPE IS(RealVectorType)
         CALL b%set(1,1._SRK)
         CALL b%set(2,2._SRK)
@@ -2974,7 +3012,8 @@ CONTAINS
       thisX=1.0_SRK
       
       ! initialize vector X
-      CALL thisLS%X%init(2)
+      CALL vecPList%set('PL -> n',2)
+      CALL thisLS%X%init(vecPList)
 
       !set iterations and convergence information and build/set M
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)

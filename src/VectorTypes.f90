@@ -126,11 +126,10 @@ MODULE VectorTypes
   
   !> Explicitly defines the interface for the init routine of all vector types
   ABSTRACT INTERFACE
-    SUBROUTINE int_vector_init_sub(thisVector,n,pList)
+    SUBROUTINE int_vector_init_sub(thisVector,pList)
       IMPORT :: SIK,ParamType,VectorType
       CLASS(VectorType),INTENT(INOUT) :: thisVector
-      INTEGER(SIK),INTENT(IN) :: n
-      TYPE(ParamType),INTENT(IN),OPTIONAL :: pList
+      TYPE(ParamType),INTENT(IN) :: pList
     ENDSUBROUTINE int_vector_init_sub
   ENDINTERFACE
   
@@ -418,14 +417,17 @@ MODULE VectorTypes
 !-------------------------------------------------------------------------------
 !> @brief Initializes the real vector
 !> @param declares the vector type to act on
-!> @param n the number of rows
+!> @param pList the number of rows
 !>
-    SUBROUTINE init_RealVectorType(thisVector,n,pList)
+    SUBROUTINE init_RealVectorType(thisVector,pList)
       CHARACTER(LEN=*),PARAMETER :: myName='init_RealVectorType'
       CLASS(RealVectorType),INTENT(INOUT) :: thisVector
-      INTEGER(SIK),INTENT(IN) :: n
-      TYPE(ParamType),INTENT(IN),OPTIONAL :: pList
+      TYPE(ParamType),INTENT(IN) :: pList
       LOGICAL(SBK) :: localalloc
+      INTEGER(SIK) :: n
+      
+      !Pull Data from Parameter List
+      CALL pList%get('n',n)
       
       !Error checking of subroutine input
       localalloc=.FALSE.
@@ -643,13 +645,16 @@ MODULE VectorTypes
 !> @param declares the vector type to act on
 !> @param n the number of rows
 !>
-    SUBROUTINE init_PETScVectorType(thisVector,n,pList)
+    SUBROUTINE init_PETScVectorType(thisVector,pList)
       CHARACTER(LEN=*),PARAMETER :: myName='init_PETScVectorType'
       CLASS(PETScVectorType),INTENT(INOUT) :: thisVector
-      INTEGER(SIK),INTENT(IN) :: n
-      TYPE(ParamType),INTENT(IN),OPTIONAL :: pList
+      TYPE(ParamType),INTENT(IN) :: pList
       LOGICAL(SBK) :: localalloc
-
+      INTEGER(SIK) :: n
+      
+      !Pull Data from Parameter List
+      CALL pList%get('n',n)
+      
       !Error checking of subroutine input
       localalloc=.FALSE.
       IF(.NOT.ASSOCIATED(eVectorType)) THEN
@@ -657,7 +662,7 @@ MODULE VectorTypes
         ALLOCATE(eVectorType)
       ENDIF
 
-#ifdef HAVE_PETSC      
+#ifdef HAVE_PETSC
       IF(.NOT. thisVector%isInit) THEN
         IF(n < 1) THEN
           CALL eVectorType%raiseError('Incorrect input to '// &

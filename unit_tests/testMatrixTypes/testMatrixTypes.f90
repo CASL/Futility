@@ -31,7 +31,7 @@ PROGRAM testMatrixTypes
 #endif
   
   TYPE(ExceptionHandlerType),POINTER :: e
-  TYPE(ParamType) :: pList,optList
+  TYPE(ParamType) :: pList,optList,vecPList
   
   !Configure exception handler for test
   ALLOCATE(e)
@@ -39,6 +39,8 @@ PROGRAM testMatrixTypes
   CALL e%setQuietMode(.TRUE.)
   eMatrixType => e
   
+  !Set up vector PL
+  CALL vecPList%add('PL -> n',1)
 #ifdef HAVE_PETSC    
       CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
 #endif
@@ -76,17 +78,17 @@ PROGRAM testMatrixTypes
 #ifdef HAVE_PETSC
       PetscErrorCode  :: ierr
 #endif
-      
+      CALL vecPList%set('PL -> n',3)
       ALLOCATE(SparseMatrixType :: thisMatrix)
       ALLOCATE(RealVectorType :: xRealVector)
       ALLOCATE(RealVectorType :: yRealVector)
-      CALL xRealVector%init(3)
-      CALL yRealVector%init(3)
+      CALL xRealVector%init(vecPList)
+      CALL yRealVector%init(vecPlist)
 #ifdef HAVE_PETSC
       ALLOCATE(PETScVectorType :: xPETScVector)
       ALLOCATE(PETScVectorType :: yPETScVector)
-      CALL xPETScVector%init(3)
-      CALL yPETScVector%init(3)
+      CALL xPETScVector%init(vecPList)
+      CALL yPETScVector%init(vecPlist)
 #endif
       
       SELECTTYPE(thisMatrix)

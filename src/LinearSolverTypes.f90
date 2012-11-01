@@ -1074,15 +1074,19 @@ MODULE LinearSolverTypes
       REAL(SRK):: calpha,crho,comega,crhod,cbeta,pts,ptt
       TYPE(RealVectorType) :: vr,vr0,vs,vv,vp,vy,vz,vt
       INTEGER(SIK) :: i,n,iterations
+      TYPE(ParamType) :: pList
 
-      CALL vr%init(solver%A%n)
-      CALL vr0%init(solver%A%n)
-      CALL vs%init(solver%A%n)
-      CALL vv%init(solver%A%n)
-      CALL vp%init(solver%A%n)
-      CALL vy%init(solver%A%n)
-      CALL vz%init(solver%A%n)
-      CALL vt%init(solver%A%n)
+      !Get the n value and set the parameter list
+      CALL pList%add('VecList -> n',solver%A%n)
+      
+      CALL vr%init(pList)
+      CALL vr0%init(pList)
+      CALL vs%init(pList)
+      CALL vv%init(pList)
+      CALL vp%init(pList)
+      CALL vy%init(pList)
+      CALL vz%init(pList)
+      CALL vt%init(pList)
       
       n=solver%A%n
       calpha=one
@@ -1159,10 +1163,13 @@ MODULE LinearSolverTypes
       REAL(SRK),ALLOCATABLE :: v(:,:), R(:,:), w(:), c(:), s(:), g(:), y(:)
       TYPE(RealVectorType) :: u
       INTEGER(SIK) :: i,j,k,m,n,it
+      TYPE(ParamType) :: pList
       
+      !Set parameter list for vector
+      CALL pList%add('VecList -> n',solver%A%n)
       n=solver%A%n
       m=MIN(solver%nRestart,n)
-      CALL u%init(n)
+      CALL u%init(pList)
       ALLOCATE(v(n,m+1))
       ALLOCATE(R(m+1,m+1))
       ALLOCATE(w(n))
@@ -1772,11 +1779,16 @@ MODULE LinearSolverTypes
       INTEGER(SIK) :: M,N,i,maxIters
       REAL(SRK) :: alpha,beta,error,z0_dot,z1_dot,convTol
       TYPE(RealVectorType) :: z,w,r,p,b
+      TYPE(ParamType) :: pList,pList2
       
+      !Set parameter list for vector
+      CALL pList%add('VecList -> n',solver%A%n)
+      CALL pList2%add('VecList -> n',solver%A%n)
       N=solver%A%n
       M=N
       SELECTTYPE(A => solver%A); TYPE IS(DenseRectMatrixType)
         M=A%m
+        CALL pList2%set('VecList -> n',M)
       ENDSELECT
       solver%info=-1
       convTol=1e-9
@@ -1786,11 +1798,11 @@ MODULE LinearSolverTypes
         convTol=solver%convTol
       ENDSELECT
       IF(N >= M) THEN
-        CALL r%init(N)
-        CALL w%init(N)
-        CALL b%init(N)
-        CALL z%init(M)
-        CALL p%init(M)
+        CALL r%init(pList)
+        CALL w%init(pList)
+        CALL b%init(pList)
+        CALL z%init(pList2)
+        CALL p%init(pList2)
         CALL r%set(0._SRK)
         CALL z%set(0._SRK)
         

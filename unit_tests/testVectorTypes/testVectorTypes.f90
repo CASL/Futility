@@ -20,6 +20,7 @@ PROGRAM testVectorTypes
   USE IntrType
   USE ExceptionHandler
   USE BLAS
+  USE ParameterLists
   IMPLICIT NONE
   
 #ifdef HAVE_PETSC
@@ -68,6 +69,7 @@ PROGRAM testVectorTypes
       INTEGER(SIK) :: i,vecsize
       REAL(SRK),ALLOCATABLE :: testvec(:),testvec2(:),dummyvec(:)
       REAL(SRK) :: dummy
+      TYPE(ParamType) :: pList
 
 !Test for real vectors      
       !Perform test of clear function
@@ -100,7 +102,8 @@ PROGRAM testVectorTypes
       !Perform test of init function
       !first check intended init path (m provided)
       eVectorType => NULL()
-      CALL thisVector%init(10)
+      CALL pList%add('testPL->n',10)
+      CALL thisVector%init(pList)
       eVectorType => e
       SELECTTYPE(thisVector)
         TYPE IS(RealVectorType)
@@ -115,21 +118,25 @@ PROGRAM testVectorTypes
           ENDIF
       ENDSELECT  
       CALL thisVector%clear()
-        
+      CALL pList%clear()
+      
       !now check init without m being provided
-      CALL thisVector%init(-10) !expect exception
+      CALL pList%add('testPL->n',-10)
+      CALL thisVector%init(pList) !expect exception
       IF(thisVector%isInit) THEN
         WRITE(*,*) 'CALL realvec%init(...) FAILED!'
         STOP 666
       ENDIF
       CALL thisVector%clear()
-        
+      CALL pList%clear()
+      
       !init it twice so on 2nd init, isInit==.TRUE.
-      CALL thisVector%init(10)
+      CALL pList%add('testPL->n',10)
+      CALL thisVector%init(pList)
       SELECTTYPE(thisVector)
         TYPE IS(RealVectorType); thisVector%n=1
       ENDSELECT
-      CALL thisVector%init(10)
+      CALL thisVector%init(pList)
       SELECTTYPE(thisVector)
         TYPE IS(RealVectorType)
           IF(thisVector%n/=1) THEN !n/=1 implies it was changed, and thus fail
@@ -139,22 +146,27 @@ PROGRAM testVectorTypes
       ENDSELECT
      !init with n<1
       CALL thisVector%clear()
-      CALL thisVector%init(-1) !expect exception
+      CALL pList%clear()
+      CALL pList%add('testPL->n',-1)
+      CALL thisVector%init(pList) !expect exception
       IF(thisVector%isInit) THEN
         WRITE(*,*) 'CALL realvec%init(...) FAILED!'
         STOP 666
       ENDIF
       CALL thisVector%clear()
       !n<1, and m not provided
-      CALL thisVector%init(-1) !expect exception
+      CALL thisVector%init(pList) !expect exception
       IF(thisVector%isInit) THEN
         WRITE(*,*) 'CALL realvec%init(...) FAILED!'
         STOP 666
       ENDIF
       CALL thisVector%clear()
+      
       !init with m<1
       CALL thisVector%clear()
-      CALL thisVector%init(-10) !expect exception
+      CALL pList%clear()
+      CALL pList%add('testPL->n',-10)
+      CALL thisVector%init(pList) !expect exception
       IF(thisVector%isInit) THEN
         WRITE(*,*) 'CALL realvec%init(...) FAILED!'
         STOP 666
@@ -164,7 +176,9 @@ PROGRAM testVectorTypes
       
       !Perform test of set function
       !use set to update the values
-      CALL thisVector%init(6)
+      CALL pList%clear()
+      CALL pList%add('testPL->n',6)
+      CALL thisVector%init(pList)
       CALL thisVector%set(1,1._SRK)
       CALL thisVector%set(2,2._SRK)
       CALL thisVector%set(3,3._SRK)
@@ -195,7 +209,9 @@ PROGRAM testVectorTypes
       
       !pass out-of bounds i and j
       CALL thisVector%clear()
-      CALL thisVector%init(6)   
+      CALL pList%clear()
+      CALL pList%add('testPL->n',6)
+      CALL thisVector%init(pList)   
       CALL thisVector%set(-1,1._SRK,iverr)
       SELECTTYPE(thisVector)
         TYPE IS(RealVectorType)
@@ -214,7 +230,9 @@ PROGRAM testVectorTypes
       ENDSELECT
 
       CALL thisVector%clear()
-      CALL thisVector%init(6)
+      CALL pList%clear()
+      CALL pList%add('testPL->n',6)
+      CALL thisVector%init(pList)
         
       SELECTTYPE(thisVector)
         TYPE IS(RealVectorType)
@@ -229,7 +247,7 @@ PROGRAM testVectorTypes
       
       !Perform test of set function
       !use set to update all values at once (scalar)
-      CALL thisVector%init(6)
+      CALL thisVector%init(pList)
       CALL thisVector%set(10._SRK,iverr)
       SELECTTYPE(thisVector)
         TYPE IS(RealVectorType)
@@ -253,7 +271,9 @@ PROGRAM testVectorTypes
           ENDIF
       ENDSELECT
       
-      CALL thisVector%init(6)
+      CALL pList%clear()
+      CALL pList%add('testPL->n',6)
+      CALL thisVector%init(pList)
         
       SELECTTYPE(thisVector)
         TYPE IS(RealVectorType)
@@ -268,7 +288,9 @@ PROGRAM testVectorTypes
       
       !Perform test of set function
       !use set to update all values at once (array)
-      CALL thisVector%init(6)
+      CALL pList%clear()
+      CALL pList%add('testPL->n',6)
+      CALL thisVector%init(pList)
       ALLOCATE(testvec(6))
       ALLOCATE(testvec2(6))
       testvec(1)=2._SRK
@@ -308,7 +330,9 @@ PROGRAM testVectorTypes
       
       !set unequal size
       CALL thisVector%clear()
-      CALL thisVector%init(7)
+      CALL pList%clear()
+      CALL pList%add('testPL->n',7)
+      CALL thisVector%init(pList)
       CALL thisVector%set(testvec2,iverr)
       SELECTTYPE(thisVector)
         TYPE IS(RealVectorType)
@@ -320,7 +344,9 @@ PROGRAM testVectorTypes
       
       
       CALL thisVector%clear()
-      CALL thisVector%init(6)
+      CALL pList%clear()
+      CALL pList%add('testPL->n',6)
+      CALL thisVector%init(pList)
         
       SELECTTYPE(thisVector)
         TYPE IS(RealVectorType)
@@ -335,7 +361,7 @@ PROGRAM testVectorTypes
       
       !Perform test of set function
       !use set to update all values at once (scalar)
-      CALL thisVector%init(6)
+      CALL thisVector%init(pList)
       CALL thisVector%set(4,6,10._SRK,iverr)
       SELECTTYPE(thisVector)
         TYPE IS(RealVectorType)
@@ -367,7 +393,9 @@ PROGRAM testVectorTypes
       
       !set out of bounds
       CALL thisVector%clear()
-      CALL thisVector%init(6)
+      CALL pList%clear()
+      CALL pList%add('testPL->n',6)
+      CALL thisVector%init(pList)
       CALL thisVector%set(5,7,1._SRK,iverr) !since isInit=.FALSE. expect no change
       SELECTTYPE(thisVector)
         TYPE IS(RealVectorType)
@@ -377,7 +405,9 @@ PROGRAM testVectorTypes
           ENDIF
       ENDSELECT
       CALL thisVector%clear()
-      CALL thisVector%init(6)
+      CALL pList%clear()
+      CALL pList%add('testPL->n',6)
+      CALL thisVector%init(pList)
       CALL thisVector%set(0,3,1._SRK,iverr) !since isInit=.FALSE. expect no change
       SELECTTYPE(thisVector)
         TYPE IS(RealVectorType)
@@ -387,7 +417,7 @@ PROGRAM testVectorTypes
           ENDIF
       ENDSELECT
       
-      CALL thisVector%init(6)
+      CALL thisVector%init(pList)
         
       SELECTTYPE(thisVector)
         TYPE IS(RealVectorType) 
@@ -402,7 +432,9 @@ PROGRAM testVectorTypes
       
       !Perform test of set function
       !use set to update all values at once (array)
-      CALL thisVector%init(6)
+      CALL pList%clear()
+      CALL pList%add('testPL->n',6)
+      CALL thisVector%init(pList)
       DEALLOCATE(testvec,testvec2)
       ALLOCATE(testvec(3))
       ALLOCATE(testvec2(3))
@@ -442,7 +474,9 @@ PROGRAM testVectorTypes
       ENDSELECT
       
       CALL thisVector%clear()
-      CALL thisVector%init(6)
+      CALL pList%clear()
+      CALL pList%add('testPL->n',6)
+      CALL thisVector%init(pList)
       SELECTTYPE(thisVector)
         TYPE IS(RealVectorType)
           CALL thisVector%set(5,7,testvec2,iverr)
@@ -453,7 +487,9 @@ PROGRAM testVectorTypes
       ENDSELECT
       
       CALL thisVector%clear()
-      CALL thisVector%init(6)
+      CALL pList%clear()
+      CALL pList%add('testPL->n',6)
+      CALL thisVector%init(pList)
       SELECTTYPE(thisVector)
         TYPE IS(RealVectorType)
           CALL thisVector%set(0,2,testvec2,iverr) 
@@ -464,7 +500,9 @@ PROGRAM testVectorTypes
       ENDSELECT
       
       CALL thisVector%clear()
-      CALL thisVector%init(6)
+      CALL pList%clear()
+      CALL pList%add('testPL->n',6)
+      CALL thisVector%init(pList)
       SELECTTYPE(thisVector)
         TYPE IS(RealVectorType)
           CALL thisVector%set(2,6,testvec2,iverr) 
@@ -474,7 +512,7 @@ PROGRAM testVectorTypes
           ENDIF
       ENDSELECT
       
-      CALL thisVector%init(6)
+      CALL thisVector%init(pList)
         
       SELECTTYPE(thisVector)
         TYPE IS(RealVectorType)
@@ -496,7 +534,9 @@ PROGRAM testVectorTypes
       !Perform test of getOne function
       ![1 5 8 9 3 7 2]
       CALL thisVector%clear()
-      CALL thisVector%init(7)
+      CALL pList%clear()
+      CALL pList%add('testPL->n',7)
+      CALL thisVector%init(pList)
       SELECTTYPE(thisVector)
         TYPE IS(RealVectorType)
           CALL thisVector%set(1,1._SRK)
@@ -548,7 +588,9 @@ PROGRAM testVectorTypes
       WRITE(*,*) '  Passed: CALL realvec%getOne(...)'
       
       CALL thisVector%clear()
-      CALL thisVector%init(7)
+      CALL pList%clear()
+      CALL pList%add('testPL->n',7)
+      CALL thisVector%init(pList)
       DEALLOCATE(testvec)
       ALLOCATE(testvec(7))
       testvec=0._SRK
@@ -588,7 +630,9 @@ PROGRAM testVectorTypes
       WRITE(*,*) '  Passed: CALL realvec%getAll(...)'
       
       CALL thisVector%clear()
-      CALL thisVector%init(7)  
+      CALL pList%clear()
+      CALL pList%add('testPL->n',7)
+      CALL thisVector%init(pList)
       DEALLOCATE(testvec)
       ALLOCATE(testvec(3))
       testvec=0._SRK
@@ -664,7 +708,9 @@ PROGRAM testVectorTypes
       !Perform test of init function
       !first check intended init path (m provided)
       eVectorType => NULL()
-      CALL thisVector%init(10)
+      CALL pList%clear()
+      CALL pList%add('testPL->n',10)
+      CALL thisVector%init(pList)
       eVectorType => e
       SELECTTYPE(thisVector)
         TYPE IS(PETScVectorType)
@@ -678,11 +724,13 @@ PROGRAM testVectorTypes
             WRITE(*,*) 'CALL petscvec%init(...) FAILED!'
             STOP 666
           ENDIF
-      ENDSELECT  
+      ENDSELECT
       CALL thisVector%clear()
         
       !now check init without m being provided
-      CALL thisVector%init(-10) !expect exception
+      CALL pList%clear()
+      CALL pList%add('testPL->n',-10)
+      CALL thisVector%init(pList) !expect exception
       IF(thisVector%isInit) THEN
         WRITE(*,*) 'CALL petscvec%init(...) FAILED!'
         STOP 666
@@ -690,11 +738,13 @@ PROGRAM testVectorTypes
       CALL thisVector%clear()
         
       !init it twice so on 2nd init, isInit==.TRUE.
-      CALL thisVector%init(10)
+      CALL pList%clear()
+      CALL pList%add('testPL->n',10)
+      CALL thisVector%init(pList)
       SELECTTYPE(thisVector)
         TYPE IS(PETScVectorType); thisVector%n=1
       ENDSELECT
-      CALL thisVector%init(10)
+      CALL thisVector%init(pList)
       SELECTTYPE(thisVector)
         TYPE IS(PETScVectorType)
           IF(thisVector%n/=1) THEN !n/=1 implies it was changed, and thus fail
@@ -704,14 +754,18 @@ PROGRAM testVectorTypes
       ENDSELECT
      !init with n<1
       CALL thisVector%clear()
-      CALL thisVector%init(-1) !expect exception
+      CALL pList%clear()
+      CALL pList%add('testPL->n',-1)
+      CALL thisVector%init(pList) !expect exception
       IF(thisVector%isInit) THEN
         WRITE(*,*) 'CALL petscvec%init(...) FAILED!'
         STOP 666
       ENDIF
       CALL thisVector%clear()
       !n<1, and m not provided
-      CALL thisVector%init(-1) !expect exception
+      CALL pList%clear()
+      CALL pList%add('testPL->n',-1)
+      CALL thisVector%init(pList) !expect exception
       IF(thisVector%isInit) THEN
         WRITE(*,*) 'CALL petscvec%init(...) FAILED!'
         STOP 666
@@ -719,7 +773,9 @@ PROGRAM testVectorTypes
       CALL thisVector%clear()
       !init with m<1
       CALL thisVector%clear()
-      CALL thisVector%init(-10) !expect exception
+      CALL pList%clear()
+      CALL pList%add('testPL->n',-10)
+      CALL thisVector%init(pList) !expect exception
       IF(thisVector%isInit) THEN
         WRITE(*,*) 'CALL petscvec%init(...) FAILED!'
         STOP 666
@@ -729,7 +785,9 @@ PROGRAM testVectorTypes
       
       !Perform test of set function
       !use set to update the values
-      CALL thisVector%init(6)
+      CALL pList%clear()
+      CALL pList%add('testPL->n',6)
+      CALL thisVector%init(pList)
       CALL thisVector%set(1,1._SRK)
       CALL thisVector%set(2,2._SRK)
       CALL thisVector%set(3,3._SRK)
@@ -763,7 +821,9 @@ PROGRAM testVectorTypes
       
       !pass out-of bounds i and j
       CALL thisVector%clear()
-      CALL thisVector%init(6)   
+      CALL pList%clear()
+      CALL pList%add('testPL->n',6)
+      CALL thisVector%init(pList)   
       CALL thisVector%set(-1,1._SRK,iverr)
       IF(iverr /= -2) THEN
         WRITE(*,*) 'CALL petscvec%setOne(...) FAILED!'
@@ -776,7 +836,9 @@ PROGRAM testVectorTypes
       ENDIF
 
       CALL thisVector%clear()
-      CALL thisVector%init(6)
+      CALL pList%clear()
+      CALL pList%add('testPL->n',6)
+      CALL thisVector%init(pList)
         
       SELECTTYPE(thisVector)
         TYPE IS(PETScVectorType)
@@ -798,7 +860,7 @@ PROGRAM testVectorTypes
       
       !Perform test of set function
       !use set to update all values at once (scalar)
-      CALL thisVector%init(6)
+      CALL thisVector%init(pList)
       CALL thisVector%set(10._SRK,iverr)
       SELECTTYPE(thisVector)
         TYPE IS(PETScVectorType)
@@ -820,7 +882,9 @@ PROGRAM testVectorTypes
         STOP 666
       ENDIF
       
-      CALL thisVector%init(6)
+      CALL pList%clear()
+      CALL pList%add('testPL->n',6)
+      CALL thisVector%init(pList)
         
       SELECTTYPE(thisVector)
         TYPE IS(PETScVectorType)
@@ -841,7 +905,9 @@ PROGRAM testVectorTypes
       
       !Perform test of set function 
       !use set to update all values at once (array)
-      CALL thisVector%init(6)
+      CALL pList%clear()
+      CALL pList%add('testPL->n',6)
+      CALL thisVector%init(pList)
       DEALLOCATE(testvec)
       DEALLOCATE(testvec2)
       ALLOCATE(testvec(6))
@@ -881,7 +947,9 @@ PROGRAM testVectorTypes
       
       !set improper size
       CALL thisVector%clear()
-      CALL thisVector%init(7)
+      CALL pList%clear()
+      CALL pList%add('testPL->n',7)
+      CALL thisVector%init(pList)
       testvec2(1)=1._SRK
       testvec2(2)=3._SRK
       testvec2(3)=5._SRK
@@ -895,7 +963,9 @@ PROGRAM testVectorTypes
       ENDIF
       
       CALL thisVector%clear()
-      CALL thisVector%init(6)
+      CALL pList%clear()
+      CALL pList%add('testPL->n',6)
+      CALL thisVector%init(pList)
       SELECTTYPE(thisVector)
         TYPE IS(PETScVectorType)
           ! manually assemble vector
@@ -915,7 +985,9 @@ PROGRAM testVectorTypes
       
       !Perform test of set function
       !use set to update all values at once (scalar)
-      CALL thisVector%init(6)
+      CALL pList%clear()
+      CALL pList%add('testPL->n',6)
+      CALL thisVector%init(pList)
       CALL thisVector%set(4,6,10._SRK,iverr)
       SELECTTYPE(thisVector)
         TYPE IS(PETScVectorType)
@@ -946,7 +1018,9 @@ PROGRAM testVectorTypes
       
       !set out of bounds
       CALL thisVector%clear()
-      CALL thisVector%init(6)
+      CALL pList%clear()
+      CALL pList%add('testPL->n',6)
+      CALL thisVector%init(pList)
       CALL thisVector%set(4,7,1._SRK,iverr) 
       IF((iverr /= -2._SRK)) THEN
         WRITE(*,*) 'CALL petscvec%setRange_scalar(...) FAILED!'
@@ -955,7 +1029,9 @@ PROGRAM testVectorTypes
       
       !set out of bounds
       CALL thisVector%clear()
-      CALL thisVector%init(6)
+      CALL pList%clear()
+      CALL pList%add('testPL->n',6)
+      CALL thisVector%init(pList)
       CALL thisVector%set(0,3,1._SRK,iverr)
       IF((iverr /= -2._SRK)) THEN
         WRITE(*,*) 'CALL petscvec%setRange_scalar(...) FAILED!'
@@ -963,7 +1039,9 @@ PROGRAM testVectorTypes
       ENDIF
       
       CALL thisVector%clear()
-      CALL thisVector%init(6)
+      CALL pList%clear()
+      CALL pList%add('testPL->n',6)
+      CALL thisVector%init(pList)
         
       SELECTTYPE(thisVector)
         TYPE IS(PETScVectorType)
@@ -984,7 +1062,9 @@ PROGRAM testVectorTypes
       
       !Perform test of set function
       !use set to update all values at once (array)
-      CALL thisVector%init(6)
+      CALL pList%clear()
+      CALL pList%add('testPL->n',6)
+      CALL thisVector%init(pList)
       DEALLOCATE(testvec)
       DEALLOCATE(testvec2)
       ALLOCATE(testvec(3))
@@ -1026,7 +1106,9 @@ PROGRAM testVectorTypes
       
       !set size not equal to range
       CALL thisVector%clear()
-      CALL thisVector%init(6)
+      CALL pList%clear()
+      CALL pList%add('testPL->n',6)
+      CALL thisVector%init(pList)
       ALLOCATE(testvec2(3))
       testvec2(1)=2._SRK
       testvec2(2)=4._SRK
@@ -1038,7 +1120,9 @@ PROGRAM testVectorTypes
       ENDIF
             
       CALL thisVector%clear()
-      CALL thisVector%init(6)
+      CALL pList%clear()
+      CALL pList%add('testPL->n',6)
+      CALL thisVector%init(pList)
         
       SELECTTYPE(thisVector)
         TYPE IS(PETScVectorType)
@@ -1060,7 +1144,9 @@ PROGRAM testVectorTypes
       !Perform test of get function
       ![1 5 8 9 3 7 2]
       CALL thisVector%clear()
-      CALL thisVector%init(7)
+      CALL pList%clear()
+      CALL pList%add('testPL->n',7)
+      CALL thisVector%init(pList)
       SELECTTYPE(thisVector)
         TYPE IS(PETScVectorType)
           CALL thisVector%set(1,1._SRK)
@@ -1114,7 +1200,9 @@ PROGRAM testVectorTypes
       !Perform test of get function
       ![1 5 8 9 3 7 2]
       CALL thisVector%clear()
-      CALL thisVector%init(7)
+      CALL pList%clear()
+      CALL pList%add('testPL->n',7)
+      CALL thisVector%init(pList)
       DEALLOCATE(testvec)
       ALLOCATE(testvec(7))
       SELECTTYPE(thisVector)
@@ -1154,7 +1242,9 @@ PROGRAM testVectorTypes
       !Perform test of get function
       ![1 5 8 9 3 7 2]
       CALL thisVector%clear()
-      CALL thisVector%init(7)
+      CALL pList%clear()
+      CALL pList%add('testPL->n',7)
+      CALL thisVector%init(pList)
       DEALLOCATE(testvec)
       ALLOCATE(testvec(3))
       SELECTTYPE(thisVector)
@@ -1213,14 +1303,16 @@ PROGRAM testVectorTypes
     REAL(SRK) :: r, a
     REAL(SRK),ALLOCATABLE :: dummyvec(:),dummyvec2(:)
     INTEGER(SIK) :: r_index
-
+    TYPE(ParamType) :: pList
     ! test with real vectors
     ALLOCATE(RealVectorType :: xVector)
     ALLOCATE(RealVectorType :: yVector)
     ALLOCATE(RealVectorType :: aVector)
-    CALL xVector%init(3)
-    CALL yVector%init(3)
-    CALL aVector%init(3)
+    CALL pList%clear()
+    CALL pList%add('testPL->n',3)
+    CALL xVector%init(pList)
+    CALL yVector%init(pList)
+    CALL aVector%init(pList)
 
     !Test BLAS_asum (absolute value summation)
     CALL xVector%set(1, 5.0_SRK)
