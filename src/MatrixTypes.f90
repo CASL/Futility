@@ -158,9 +158,7 @@ MODULE MatrixTypes
   
   !> @brief The extended type for PETSc matrices
   TYPE,EXTENDS(SquareMatrixType) :: PETScMatrixType
-   
-    !> whether sparse or dense
-    INTEGER(SIK) :: SparseDense
+  
     !> creation status
     LOGICAL(SBK) :: isCreated=.FALSE.
     !> assembly status
@@ -313,6 +311,7 @@ MODULE MatrixTypes
   
   !> Name of module
   CHARACTER(LEN=*),PARAMETER :: modName='MATRIXTYPES'
+
 !
 !===============================================================================
   CONTAINS
@@ -326,13 +325,12 @@ MODULE MatrixTypes
       CHARACTER(LEN=*),PARAMETER :: myName='init_SparseMatrixParam'
       CLASS(SparseMatrixType),INTENT(INOUT) :: matrix
       CLASS(ParamType),INTENT(IN) :: pList
-      INTEGER(SIK) :: n,nnz,mattype
+      INTEGER(SIK) :: n,nnz
       LOGICAL(SBK) :: localalloc
       
       ! Pull Data From Parameter List
       CALL pList%get('n',n)
       CALL pList%get('nnz',nnz)
-      mattype=0
       
       !Error checking of subroutine input
       localalloc=.FALSE.
@@ -343,7 +341,7 @@ MODULE MatrixTypes
 
       IF(.NOT. matrix%isInit) THEN
         IF((n < 1).OR.(nnz < 1))  THEN
-          CALL eMatrixType%raiseError('Incorrect input to '// &
+          CALL eMatrixType%raiseError('Incorrect   input to '// &
           modName//'::'//myName//' - Input parameters must be '// &
             'greater than 1!')
         ELSE
@@ -379,13 +377,12 @@ MODULE MatrixTypes
       CHARACTER(LEN=*),PARAMETER :: myName='init_TriDiagMatrixParam'
       CLASS(TriDiagMatrixType),INTENT(INOUT) :: matrix
       CLASS(ParamType),INTENT(IN) :: pList
-      INTEGER(SIK) :: n, m, mattype
-      LOGICAL(SBK) :: localalloc
+      INTEGER(SIK) :: n
+      LOGICAL(SBK) :: localalloc, isSym
       
       ! Pull Data From Parameter List
       CALL pList%get('n',n)
-      CALL pList%get('m',m)
-      mattype=0
+      CALL pList%get('isSym',isSym)
       
      !Error checking of subroutine input
       localalloc=.FALSE.
@@ -402,10 +399,10 @@ MODULE MatrixTypes
         ELSE
           matrix%isInit=.TRUE.
           matrix%n=n
-          IF(m == 0) THEN
-            matrix%isSymmetric=.FALSE.
-          ELSE
+          IF(isSym) THEN
             matrix%isSymmetric=.TRUE.
+          ELSE
+            matrix%isSymmetric=.FALSE.
           ENDIF
           CALL dmallocA(matrix%a,3,n)
         ENDIF
@@ -427,13 +424,12 @@ MODULE MatrixTypes
       CHARACTER(LEN=*),PARAMETER :: myName='init_DenseRectMatrixParam'
       CLASS(DenseRectMatrixType),INTENT(INOUT) :: matrix
       CLASS(ParamType),INTENT(IN) :: pList
-      INTEGER(SIK) :: n, m, mattype
+      INTEGER(SIK) :: n, m
       LOGICAL(SBK) :: localalloc
       
       ! Pull Data From Parameter List
       CALL pList%get('n',n)
       CALL pList%get('m',m)
-      mattype=0
       
       !Error checking of subroutine input
       localalloc=.FALSE.
@@ -475,13 +471,12 @@ MODULE MatrixTypes
       CHARACTER(LEN=*),PARAMETER :: myName='init_DenseSquareMatrixParam'
       CLASS(DenseSquareMatrixType),INTENT(INOUT) :: matrix
       CLASS(ParamType),INTENT(IN) :: pList
-      INTEGER(SIK) :: n, m, mattype
-      LOGICAL(SBK) :: localalloc
+      INTEGER(SIK) :: n
+      LOGICAL(SBK) :: localalloc, isSym
       
       ! Pull Data From Parameter List
       CALL pList%get('n',n)
-      CALL pList%get('m',m)
-      mattype=0
+      CALL pList%get('isSym',isSym)
       
       !Error checking of subroutine input
       localalloc=.FALSE.
@@ -498,10 +493,10 @@ MODULE MatrixTypes
         ELSE
           matrix%isInit=.TRUE.
           matrix%n=n
-          IF(m == 0) THEN
-            matrix%isSymmetric=.FALSE.
-          ELSE
+          IF(isSym) THEN
             matrix%isSymmetric=.TRUE.
+          ELSE
+            matrix%isSymmetric=.FALSE.
           ENDIF
           CALL dmallocA(matrix%a,n,n)
         ENDIF
@@ -523,8 +518,8 @@ MODULE MatrixTypes
       CHARACTER(LEN=*),PARAMETER :: myName='init_PETScMatrixParam'
       CLASS(PETScMatrixType),INTENT(INOUT) :: matrix
       CLASS(ParamType),INTENT(IN) :: pList
-      INTEGER(SIK) :: n, m, mattype=0
-      LOGICAL(SBK) :: localalloc
+      INTEGER(SIK) :: n, matType, MPI_COMM_ID
+      LOGICAL(SBK) :: localalloc, isSym
       
 #ifdef HAVE_PETSC
       PetscErrorCode  :: ierr
@@ -540,7 +535,9 @@ MODULE MatrixTypes
 #ifdef HAVE_PETSC
       ! Pull Data From Parameter List
       CALL pList%get('n',n)
-      CALL pList%get('m',m)
+      CALL pList%get('isSym',isSym)
+      CALL pList%get('matType',matType)
+      CALL pList%get('MPI_COMM_ID',MPI_COMM_ID)
 
       IF(.NOT. matrix%isInit) THEN
         IF(n < 1) THEN
@@ -551,20 +548,24 @@ MODULE MatrixTypes
           matrix%isInit=.TRUE.
           matrix%n=n
           matrix%isAssembled=.FALSE.
-          IF(m == 0) THEN
-            matrix%isSymmetric=.FALSE.
-          ELSE
+          IF(isSym) THEN
             matrix%isSymmetric=.TRUE.
+          ELSE
+            matrix%isSymmetric=.FALSE.
           ENDIF
           IF(.NOT.matrix%isCreated) THEN
-            CALL MatCreate(MPI_COMM_WORLD,matrix%a,ierr)
+            CALL MatCreate(MPI_COMM_ID,matrix%a,ierr)
             matrix%isCreated=.TRUE.
           ENDIF
           CALL MatSetSizes(matrix%a,PETSC_DECIDE,PETSC_DECIDE,matrix%n,matrix%n,ierr)
-          IF (matrix%SparseDense == 0) THEN     ! sparse matrix
+          IF (matType == SPARSE) THEN
             CALL MatSetType(matrix%a,MATMPIAIJ,ierr)
-          ELSEIF (matrix%SparseDense == 1) THEN ! dense matrix
+          ELSEIF (matType == DENSESQUARE) THEN
             CALL MatSetType(matrix%a,MATMPIDENSE,ierr)
+          ELSE
+            CALL eMatrixType%raiseError('Invalid matrix type in '// &
+              modName//'::'//myName//' - Only sparse and dense square '// &
+              'matrices are available with PETSc.')
           ENDIF
           CALL MatSetUp(matrix%a,ierr)
         ENDIF

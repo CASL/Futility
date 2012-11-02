@@ -72,7 +72,6 @@ MODULE LinearSolverTypes
   INTEGER(SIK),PARAMETER,PUBLIC :: BICGSTAB=1,CGNR=2,GMRES=3
   !> set enumeration scheme for direct solver methods
   INTEGER(SIK),PARAMETER,PUBLIC :: GE=1,LU=2
-
   
   !> @brief the base linear solver type
   TYPE,ABSTRACT :: LinearSolverType_Base
@@ -241,14 +240,7 @@ MODULE LinearSolverTypes
          
         ! go through solver hierarchy to determine TPLType
         IF(TPLType==PETSC) THEN ! PETSc
-#ifdef HAVE_PETSC
-          ! switch matrixType if PETSc not available
-          IF(matrixType==SPARSE) THEN ! sparse
-            matrixType=4 ! PETSc sparse
-          ELSEIF(matrixType==DENSESQUARE) THEN ! dense
-            matrixType=5 ! PETSc dense
-          ENDIF
-#else
+#ifndef HAVE_PETSC
           TPLType=TRILINOS
           CALL eLinearSolverType%raiseWarning(modName//'::'// &
                     myName//'- PETSc is not enabled, TRILINOS will be '// &
@@ -257,8 +249,7 @@ MODULE LinearSolverTypes
 #endif
         ENDIF
         IF(TPLType==TRILINOS) THEN ! Trilinos
-#ifdef HAVE_TRILINOS
-#else
+#ifndef HAVE_TRILINOS
           ! we don't have Trilinos, so switch to next option (MKL)
           TPLType=MKL
           CALL eLinearSolverType%raiseWarning(modName//'::'// &
@@ -267,42 +258,35 @@ MODULE LinearSolverTypes
 #endif
         ENDIF
         IF(TPLType==MKL) THEN ! MKL
-#ifdef HAVE_MKL
-#else
+#ifndef HAVE_MKL
           ! we don't have MKL, so switch to next option (native)
           TPLType=NATIVE
           CALL eLinearSolverType%raiseWarning(modName//'::'// &
-                    myName//'- TRILINOS is not enabled, MKL will be '// &
+                    myName//'- MKL is not enabled, native solvers will be '// &
                       'used instead.')
 #endif
         ENDIF
 
         ! allocate matrix (A)
         IF(.NOT.ALLOCATED(solver%A)) THEN
-          IF(matrixType==0) THEN ! Sparse
-            ALLOCATE(SparseMatrixType :: solver%A)
-          ELSEIF(matrixType==1) THEN ! TriDiag 
-            ALLOCATE(TriDiagMatrixType :: solver%A)
-          ELSEIF(matrixType==2) THEN ! DenseSquare
-            ALLOCATE(DenseSquareMatrixType :: solver%A)
-          ELSEIF(matrixType==3) THEN ! DenseRect
-            ALLOCATE(DenseRectMatrixType :: solver%A)
-          ELSEIF(matrixType==4) THEN ! PETSc Sparse
+          IF(TPLType==PETSC) THEN
             ALLOCATE(PETScMatrixType :: solver%A)
-            SELECTTYPE(A => solver%A); TYPE IS(PETScMatrixType)
-              A%SparseDense=0  ! sparse
-            ENDSELECT
-          ELSEIF(matrixType==5) THEN ! PETSc Dense
-            ALLOCATE(PETScMatrixType :: solver%A)
-            SELECTTYPE(A => solver%A); TYPE IS(PETScMatrixType)
-              A%SparseDense=1  ! dense
-            ENDSELECT
+          ELSE
+            IF(matrixType==0) THEN ! Sparse
+              ALLOCATE(SparseMatrixType :: solver%A)
+            ELSEIF(matrixType==1) THEN ! TriDiag 
+              ALLOCATE(TriDiagMatrixType :: solver%A)
+            ELSEIF(matrixType==2) THEN ! DenseSquare
+              ALLOCATE(DenseSquareMatrixType :: solver%A)
+            ELSEIF(matrixType==3) THEN ! DenseRect
+              ALLOCATE(DenseRectMatrixType :: solver%A)
+            ENDIF
           ENDIF
         ELSE
           ! throw exception
         ENDIF
         ! allocate vectors (X and b)
-        IF(matrixType==4 .OR. matrixType==5) THEN
+        IF(TPLType==PETSC) THEN
           ALLOCATE(PETScVectorType :: solver%X)
           ALLOCATE(PETScVectorType :: solver%b)
         ELSE
@@ -330,35 +314,35 @@ MODULE LinearSolverTypes
           IF((solverMethod > 0) .AND. &
              (solverMethod <= MAX_IT_SOLVER_METHODS)) THEN         
               
-
-            IF(matrixType==4 .OR. matrixType==5) THEN ! PETSc
+  
+            IF(TPLType==PETSC) THEN ! PETSc
 #ifdef HAVE_PETSC
-              ! create and assemble matrix
-              SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
-                IF(.NOT.A%isCreated) THEN
-                  CALL MatCreate(solver%MPIparallelEnv%comm,A%a,ierr)
-                  A%isCreated=.TRUE.
-                ENDIF
-                IF(matrixType==4) THEN ! Sparse
-                  A%SparseDense=0
-                ELSEIF(matrixType==5) THEN ! Dense
-                  A%SparseDense=1
-                ENDIF
-              ENDSELECT
-              ! create source vector
-              SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
-                IF(.NOT.b%isCreated) THEN
-                  CALL VecCreate(solver%MPIparallelEnv%comm,b%b,ierr)
-                  b%isCreated=.TRUE.
-                ENDIF
-              ENDSELECT
-              ! create solution vector
-              SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
-                IF(.NOT.X%isCreated) THEN
-                  CALL VecCreate(solver%MPIparallelEnv%comm,X%b,ierr)
-                  X%isCreated=.TRUE.
-                ENDIF
-              ENDSELECT
+              !! create and assemble matrix
+              !SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
+              !  IF(.NOT.A%isCreated) THEN
+              !    CALL MatCreate(solver%MPIparallelEnv%comm,A%a,ierr)
+              !    A%isCreated=.TRUE.
+              !  ENDIF
+              !  IF(matrixType==4) THEN ! Sparse
+              !    A%SparseDense=0
+              !  ELSEIF(matrixType==5) THEN ! Dense
+              !    A%SparseDense=1
+              !  ENDIF
+              !ENDSELECT
+              !! create source vector
+              !SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
+              !  IF(.NOT.b%isCreated) THEN
+              !    CALL VecCreate(solver%MPIparallelEnv%comm,b%b,ierr)
+              !    b%isCreated=.TRUE.
+              !  ENDIF
+              !ENDSELECT
+              !! create solution vector
+              !SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
+              !  IF(.NOT.X%isCreated) THEN
+              !    CALL VecCreate(solver%MPIparallelEnv%comm,X%b,ierr)
+              !    X%isCreated=.TRUE.
+              !  ENDIF
+              !ENDSELECT
               !create and initialize KSP
               CALL KSPCreate(solver%MPIparallelEnv%comm,solver%ksp,ierr)
               
@@ -1053,7 +1037,7 @@ MODULE LinearSolverTypes
       ENDIF
       ALLOCATE(DenseSquareMatrixType :: solver%M)
       CALL pList%add('PL->n',solver%A%n)
-      CALL pList%add('PL->m',0_SNK)
+      CALL pList%add('PL->isSym',.FALSE.)
       CALL solver%M%init(pList)
       DO i=1,solver%M%n
         CALL solver%M%set(i,i,1.0_SRK)
@@ -1360,7 +1344,7 @@ MODULE LinearSolverTypes
           ENDIF
 
           CALL pList%add('PL->n',A%n)
-          CALL pList%add('PL->m',0_SNK)
+          CALL pList%add('PL->isSym',.FALSE.)
           CALL solver%M%init(pList)
           SELECTTYPE(M => solver%M); TYPE IS(TriDiagMatrixType)
             M%a(2,1)=1.0_SRK/A%a(2,1)
@@ -1595,7 +1579,7 @@ MODULE LinearSolverTypes
       CALL dmallocA(solver%IPIV,solver%A%n)
 
       CALL pList%add('PL->n',solver%A%n)
-      CALL pList%add('PL->m',0_SNK)
+      CALL pList%add('PL->isSym',.FALSE.)
       CALL solver%M%init(pList)
       SELECTTYPE(M => solver%M); TYPE IS(DenseSquareMatrixType)
         SELECTTYPE(A => solver%A); TYPE IS(DenseSquareMatrixType)

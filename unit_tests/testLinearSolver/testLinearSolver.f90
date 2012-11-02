@@ -28,7 +28,7 @@ PROGRAM testLinearSolver
   
   TYPE(ExceptionHandlerType),POINTER :: e
   TYPE(MPI_EnvType) :: mpiTestEnv
-  TYPE(ParamType) :: pList, optListLS, vecPList
+  TYPE(ParamType) :: pList, optListLS, optListMat, vecPList
   
 #ifdef HAVE_PETSC
 #include <finclude/petsc.h>
@@ -46,6 +46,13 @@ PROGRAM testLinearSolver
   CALL optListLS%add('PL->MPI_Comm_ID',PE_COMM_SELF)
   CALL optListLS%add('PL->numberOMP',1_SNK)
   CALL optListLS%add('PL->timerName','LinearSolver Timer')
+  
+  !Set up optional PL
+  CALL optListMat%add('testPL->nnz',-1_SNK)
+  CALL optListMat%add('testPL->isSym',.FALSE.)
+  CALL optListMat%add('testPL->matType',SPARSE)
+  CALL optListMat%add('testPL->MPI_Comm_ID',PE_COMM_SELF)
+  
   ! Set up vector parameter list
   CALL vecPList%add('PL -> n',2)
   
@@ -109,7 +116,8 @@ CONTAINS
         ALLOCATE(DenseSquareMatrixType :: thisLS%A)
         CALL pList%clear()
         CALL pList%add('PL->n',2_SNK)
-        CALL pList%add('PL->m',1_SNK)
+        CALL pList%add('PL->isSym',.TRUE.)
+        CALL pList%validate(pList,optListMat)
         CALL thisLS%A%init(pList) !2x2, symmetric
         
         ! initialize vector X
@@ -128,7 +136,7 @@ CONTAINS
         ALLOCATE(DenseSquareMatrixType :: thisLS%M)
         CALL pList%clear()
         CALL pList%add('PL->n',10_SNK)
-        CALL pList%add('PL->m',10_SNK)
+        CALL pList%add('PL->isSym',.TRUE.)
         CALL thisLS%M%init(pList)
         
       ENDSELECT
@@ -172,7 +180,8 @@ CONTAINS
         ALLOCATE(DenseSquareMatrixType :: thisLS%A)
         CALL pList%clear()
         CALL pList%add('PL->n',2_SNK)
-        CALL pList%add('PL->m',1_SNK)
+        CALL pList%add('PL->isSym',.TRUE.)
+        CALL pList%validate(pList,optListMat)
         CALL thisLS%A%init(pList) !2x2, symmetric
         
         ! initialize vector X
@@ -188,7 +197,7 @@ CONTAINS
         ALLOCATE(DenseSquareMatrixType :: thisLS%M)
         CALL pList%clear()
         CALL pList%add('PL->n',10_SNK)
-        CALL pList%add('PL->m',10_SNK)
+        CALL pList%add('PL->isSym',.TRUE.)
         CALL thisLS%M%init(pList)
       ENDSELECT
       
@@ -384,7 +393,7 @@ CONTAINS
       ALLOCATE(DenseSquareMatrixType :: thisLS%M)
       CALL pList%clear()
       CALL pList%add('PL->n',10_SNK)
-      CALL pList%add('PL->m',10_SNK)
+      CALL pList%add('PL->isSym',.TRUE.)
       CALL thisLS%M%init(pList)
       thisLS%isDecomposed=.TRUE.
       
@@ -422,7 +431,7 @@ CONTAINS
       ALLOCATE(DenseSquareMatrixType :: thisLS%M)
       CALL pList%clear()
       CALL pList%add('PL->n',10_SNK)
-      CALL pList%add('PL->m',10_SNK)
+      CALL pList%add('PL->isSym',.TRUE.)
       CALL thisLS%M%init(pList)
       thisLS%isDecomposed=.TRUE.
       
@@ -476,7 +485,8 @@ CONTAINS
       ! initialize matrix A
       CALL pList%clear()
       CALL pList%add('PL->n',3_SNK)
-      CALL pList%add('PL->m',0_SNK)
+      CALL pList%add('PL->isSym',.FALSE.)
+      CALL pList%validate(pList,optListMat)
       CALL thisLS%A%init(pList)
       
       ! initialize vector X
@@ -509,7 +519,8 @@ CONTAINS
       ! initialize matrix A
       CALL pList%clear()
       CALL pList%add('PL->n',3_SNK)
-      CALL pList%add('PL->m',0_SNK)
+      CALL pList%add('PL->isSym',.FALSE.)
+      CALL pList%validate(pList,optListMat)
       CALL thisLS%A%init(pList)
       !A=[1 2 3]  b=[6]   x=[*]
       !  [1 3 2]    [6]     [*]
@@ -560,7 +571,8 @@ CONTAINS
       ! initialize matrix A
       CALL pList%clear()
       CALL pList%add('PL->n',4_SNK)
-      CALL pList%add('PL->m',0_SNK)
+      CALL pList%add('PL->isSym',.FALSE.)
+      CALL pList%validate(pList,optListMat)
       CALL thisLS%A%init(pList)
       
       !A=[1 2 3 4]  b=[10]   x=[1]
@@ -640,7 +652,8 @@ CONTAINS
       ! initialize matrix A
       CALL pList%clear()
       CALL pList%add('PL->n',3_SNK)
-      CALL pList%add('PL->m',1_SNK)
+      CALL pList%add('PL->isSym',.TRUE.)
+      CALL pList%validate(pList,optListMat)
       CALL thisLS%A%init(pList)
       SELECTTYPE(A => thisLS%A); TYPE IS(TriDiagMatrixType)
         CALL A%set(1,1,4._SRK)
@@ -733,6 +746,7 @@ CONTAINS
       CALL pList%clear()
       CALL pList%add('PL->n',9_SNK)
       CALL pList%add('PL->nnz',33_SNK)
+      CALL pList%validate(pList,optListMat)
       CALL thisLS%A%init(pList)
       SELECTTYPE(A=>thisLS%A); TYPE IS(SparseMatrixType)
         CALL A%setShape(1,1, 4.0_SRK)
@@ -811,6 +825,7 @@ CONTAINS
       CALL pList%clear()
       CALL pList%add('PL->n',3_SNK)
       CALL pList%add('PL->m',2_SNK)
+      CALL pList%validate(pList,optListMat)
       CALL thisLS%A%init(pList)
       SELECTTYPE(A => thisLS%A); TYPE IS(DenseRectMatrixType)
         CALL A%set(1,1,1._SRK)
@@ -866,7 +881,8 @@ CONTAINS
       ! initialize matrix A
       CALL pList%clear()
       CALL pList%add('PL->n',3_SNK)
-      CALL pList%add('PL->m',0_SNK)
+      CALL pList%add('PL->isSym',.FALSE.)
+      CALL pList%validate(pList,optListMat)
       CALL thisLS%A%init(pList)
       SELECTTYPE(A => thisLS%A); TYPE IS(DenseSquareMatrixType)
         CALL A%set(1,1,1._SRK)
@@ -918,7 +934,8 @@ CONTAINS
       ! initialize matrix A
       CALL pList%clear()
       CALL pList%add('PL->n',3_SNK)
-      CALL pList%add('PL->m',0_SNK)
+      CALL pList%add('PL->isSym',.FALSE.)
+      CALL pList%validate(pList,optListMat)
       CALL thisLS%A%init(pList)
       SELECTTYPE(A => thisLS%A); TYPE IS(DenseSquareMatrixType)
         CALL A%set(1,1,1._SRK)
@@ -1030,7 +1047,8 @@ CONTAINS
       ! initialize matrix A
       CALL pList%clear()
       CALL pList%add('PL->n',3_SNK)
-      CALL pList%add('PL->m',1_SNK)
+      CALL pList%add('PL->isSym',.TRUE.)
+      CALL pList%validate(pList,optListMat)
       CALL thisLS%A%init(pList)
       SELECTTYPE(A => thisLS%A); TYPE IS(TriDiagMatrixType)
         CALL A%set(1,1,4._SRK)
@@ -1077,7 +1095,8 @@ CONTAINS
       !  [ 0 -1  4]
       CALL pList%clear()
       CALL pList%add('PL->n',3_SNK)
-      CALL pList%add('PL->m',1_SNK)
+      CALL pList%add('PL->isSym',.TRUE.)
+      CALL pList%validate(pList,optListMat)
       CALL thisLS%A%init(pList)
       SELECTTYPE(A => thisLS%A); TYPE IS(TriDiagMatrixType)
         CALL A%set(1,1,4._SRK)
@@ -1167,7 +1186,8 @@ CONTAINS
       !  [ 0    -1  0.5]
       CALL pList%clear()
       CALL pList%add('PL->n',3_SNK)
-      CALL pList%add('PL->m',1_SNK)
+      CALL pList%add('PL->isSym',.TRUE.)
+      CALL pList%validate(pList,optListMat)
       CALL thisLS%A%init(pList)  !symmetric
       SELECTTYPE(A => thisLS%A); TYPE IS(TriDiagMatrixType)
         CALL A%set(1,1,0.5_SRK)
@@ -1209,6 +1229,7 @@ CONTAINS
       CALL pList%clear()
       CALL pList%add('PL->n', 9_SNK)
       CALL pList%add('PL->nnz',33_SNK)
+      CALL pList%validate(pList,optListMat)
       CALL thisLS%A%init(pList)
       SELECTTYPE(A => thisLS%A); TYPE IS(SparseMatrixType)
         CALL A%setShape(1,1, 4.0_SRK)
@@ -1288,6 +1309,7 @@ CONTAINS
       CALL pList%clear()
       CALL pList%add('PL->n',3_SNK)
       CALL pList%add('PL->m',2_SNK)
+      CALL pList%validate(pList,optListMat)
       CALL thisLS%A%init(pList)
       SELECTTYPE(A => thisLS%A); TYPE IS(DenseRectMatrixType)
         CALL A%set(1,1,1._SRK)
@@ -1391,7 +1413,7 @@ CONTAINS
       CALL thisLS%init(pList)
       
       ! initialize vector X
-      CALL thisLS%X%init(2)
+      CALL thisLS%X%init(vecPList)
       SELECTTYPE(X => thisLS%X); TYPE IS(PETScVectorType)
         CALL X%set(1,0._SRK)
         CALL X%set(2,0._SRK)
@@ -1538,6 +1560,7 @@ CONTAINS
       CALL pList%clear()
       CALL pList%add('PL->n',9_SNK)
       CALL pList%add('PL->nnz',33_SNK)
+      CALL pList%validate(pList,optListMat)
       CALL thisLS%A%init(pList)
       !A =  4    -1     0    -1     0     0     0     0     0
       !    -1     4    -1     0    -1     0     0     0     0
@@ -1651,6 +1674,7 @@ CONTAINS
       CALL pList%clear()
       CALL pList%add('PL->n',9_SNK)
       CALL pList%add('PL->nnz',33_SNK)
+      CALL pList%validate(pList,optListMat)
       CALL thisLS%A%init(pList)
       
       !A =  4    -1     0    -1     0     0     0     0     0
@@ -1774,7 +1798,8 @@ CONTAINS
       ! initialize matrix A
       CALL pList%clear()
       CALL pList%add('PL->n',9_SNK)
-      CALL pList%add('PL->m',1_SNK)
+      CALL pList%add('PL->isSym',.TRUE.)
+      CALL pList%validate(pList,optListMat)
       CALL thisLS%A%init(pList) !9x9, symmetric.
       DO i=1,9
         SELECTTYPE(A => thisLS%A); TYPE IS(DenseSquareMatrixType)
@@ -1882,7 +1907,8 @@ CONTAINS
       ! initialize the matrix A
       CALL pList%clear()
       CALL pList%add('PL->n',3_SNK)
-      CALL pList%add('PL->m',1_SNK)
+      CALL pList%add('PL->isSym',.TRUE.)
+      CALL pList%validate(pList,optListMat)
       CALL thisLS%A%init(pList)
       SELECTTYPE(A => thisLS%A); TYPE IS(TriDiagMatrixType)
         CALL A%set(1,1, 4._SRK)
@@ -1934,6 +1960,7 @@ CONTAINS
       CALL pList%clear()
       CALL pList%add('PL->n',3_SNK)
       CALL pList%add('PL->m',2_SNK)
+      CALL pList%validate(pList,optListMat)
       CALL thisLS%A%init(pList)
       SELECTTYPE(A => thisLS%A); TYPE IS(DenseRectMatrixType)
         CALL A%set(1,1,1._SRK)
@@ -1995,8 +2022,9 @@ CONTAINS
       ! initialize matrix A
       CALL pList%clear()
       CALL pList%add('PL->n',9_SNK)
-      CALL pList%add('PL->m',0_SNK)
+      CALL pList%add('PL->isSym',.FALSE.)
       CALL pList%add('PL->mattype',0_SNK)
+      CALL pList%validate(pList,optListMat)
       CALL thisLS%A%init(pList)
       
       !A =  4    -1     0    -1     0     0     0     0     0
@@ -2049,14 +2077,15 @@ CONTAINS
       thisX=1.0_SRK
       
       ! initialize vector X
-      CALL thisLS%X%init(9)
+      CALL vecPList%set('PL -> n',9)
+      CALL thisLS%X%init(vecPList)
       
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
         CALL thisLS%setX0(thisX)
       ENDSELECT
 
       ! build b and set it
-      CALL thisLS%b%init(9)
+      CALL thisLS%b%init(vecPList)
       SELECTTYPE(b => thisLS%b); TYPE IS(PETScVectorType)
         CALL b%set(1.0_SRK)
       ENDSELECT
@@ -2118,7 +2147,8 @@ CONTAINS
       ! initialize matrix A
       CALL pList%clear()
       CALL pList%add('PL->n',9_SNK)
-      CALL pList%add('PL->m',1_SNK)
+      CALL pList%add('PL->isSym',.TRUE.)
+      CALL pList%validate(pList,optListMat)
       CALL thisLS%A%init(pList) !9x9, symmetric.
       DO i=1,9
         SELECTTYPE(A => thisLS%A); TYPE IS(PETScMatrixType)
@@ -2133,7 +2163,8 @@ CONTAINS
       ENDDO
       
       !initialize vector X
-      CALL thisLS%X%init(9)
+      CALL vecPList%set('PL -> n',9)
+      CALL thisLS%X%init(vecPList)
       
       !build X0 and set it to 1.0s
       ALLOCATE(thisX(9))
@@ -2143,7 +2174,7 @@ CONTAINS
       ENDSELECT
       
       !build b and set it
-      CALL thisLS%b%init(9)
+      CALL thisLS%b%init(vecPList)
       SELECTTYPE(b => thisLS%b); TYPE IS(PETScVectorType)
         CALL b%set(1.0_SRK)
       ENDSELECT
@@ -2240,6 +2271,7 @@ CONTAINS
       CALL pList%clear()
       CALL pList%add('PL->n',2_SNK)
       CALL pList%add('PL->m',3_SNK)
+      CALL pList%validate(pList,optListMat)
       CALL thisLS%A%init(pList)
       SELECTTYPE(A => thisLS%A); TYPE IS(DenseRectMatrixType)
         CALL A%set(1,1,1._SRK)
@@ -2303,6 +2335,7 @@ CONTAINS
       CALL pList%clear()
       CALL pList%add('PL->n',3_SNK)
       CALL pList%add('PL->m',2_SNK)
+      CALL pList%validate(pList,optListMat)
       CALL thisLS%A%init(pList)
       SELECTTYPE(A => thisLS%A); TYPE IS(DenseRectMatrixType)
         CALL A%set(1,1,1._SRK)
@@ -2373,7 +2406,8 @@ CONTAINS
       ! initialize matrix A
       CALL pList%clear()
       CALL pList%add('PL->n',3_SNK)
-      CALL pList%add('PL->m',1_SNK)
+      CALL pList%add('PL->isSym',.TRUE.)
+      CALL pList%validate(pList,optListMat)
       CALL thisLS%A%init(pList)
       SELECTTYPE(A => thisLS%A); TYPE IS(DenseSquareMatrixType)
         CALL A%set(1,1,4._SRK)
@@ -2437,6 +2471,7 @@ CONTAINS
       CALL pList%clear()
       CALL pList%add('PL->n',3_SNK)
       CALL pList%add('PL->nnz',7_SNK)
+      CALL pList%validate(pList,optListMat)
       CALL thisLS%A%init(pList)
       SELECTTYPE(A => thisLS%A); TYPE IS(SparseMatrixType)
         CALL A%setShape(1,1, 4._SRK)
@@ -2507,7 +2542,8 @@ CONTAINS
       ! initialize matrix A
       CALL pList%clear()
       CALL pList%add('PL->n',3_SNK)
-      CALL pList%add('PL->m',1_SNK)
+      CALL pList%add('PL->isSym',.TRUE.)
+      CALL pList%validate(pList,optListMat)
       CALL thisLS%A%init(pList)
       SELECTTYPE(A => thisLS%A); TYPE IS(TriDiagMatrixType)
         CALL A%set(1,1,4._SRK)
@@ -2559,7 +2595,8 @@ CONTAINS
       ! initialize matrix A
       CALL pList%clear()
       CALL pList%add('PL->n',3_SNK)
-      CALL pList%add('PL->m',1_SNK)
+      CALL pList%add('PL->isSym',.TRUE.)
+      CALL pList%validate(pList,optListMat)
       CALL thisLS%A%init(pList)
       SELECTTYPE(A => thisLS%A); TYPE IS(PETScMatrixType)
         CALL A%set(1,1,4._SRK)
@@ -2570,7 +2607,8 @@ CONTAINS
       ENDSELECT
 
       ! initialize vector b
-      CALL thisLS%b%init(3)
+      CALL vecPList%set('PL -> n',3)
+      CALL thisLS%b%init(vecPList)
       SELECTTYPE(b => thisLS%b); TYPE IS(PETScVectorType)
         CALL b%set(1,1._SRK)
         CALL b%set(2,2._SRK)
@@ -2578,7 +2616,7 @@ CONTAINS
       ENDSELECT
       
       ! initialize vector X
-      CALL thisLS%X%init(3)
+      CALL thisLS%X%init(vecPList)
 
       !set iterations and convergence information and
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
@@ -2620,7 +2658,8 @@ CONTAINS
       !  [ 0 -1  4]
       CALL pList%clear()
       CALL pList%add('PL->n',3_SNK)
-      CALL pList%add('PL->m',7_SNK)
+      CALL pList%add('PL->isSym',.TRUE.)
+      CALL pList%validate(pList,optListMat)
       CALL thisLS%A%init(pList)
       SELECTTYPE(A => thisLS%A); TYPE IS(PETScMatrixType)
         CALL A%set(1,1, 4._SRK)
@@ -2633,7 +2672,8 @@ CONTAINS
       ENDSELECT
      
       ! initialize vector b
-      CALL thisLS%b%init(3)
+      CALL vecPList%set('PL -> n',3)
+      CALL thisLS%b%init(vecPList)
       SELECTTYPE(b => thisLS%b); TYPE IS(PETScVectorType)
         CALL b%set(1,1._SRK)
         CALL b%set(2,2._SRK)
@@ -2645,7 +2685,7 @@ CONTAINS
       thisX=0._SRK
       
       ! initialize vector X
-      CALL thisLS%X%init(3)
+      CALL thisLS%X%init(vecPList)
       
       !set iterations and convergence information and
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
@@ -2706,6 +2746,7 @@ CONTAINS
       CALL pList%clear()
       CALL pList%add('PL->n',9_SNK)
       CALL pList%add('PL->nnz',33_SNK)
+      CALL pList%validate(pList,optListMat)
       CALL thisLS%A%init(pList)
       
       !A =  4    -1     0    -1     0     0     0     0     0
@@ -2829,7 +2870,8 @@ CONTAINS
       ! initialize matrix A
       CALL pList%clear()
       CALL pList%add('PL->n',9_SNK)
-      CALL pList%add('PL->m',1_SNK)
+      CALL pList%add('PL->isSym',.TRUE.)
+      CALL pList%validate(pList,optListMat)
       CALL thisLS%A%init(pList) !9x9, symmetric.
       DO i=1,9
         SELECTTYPE(A => thisLS%A); TYPE IS(DenseSquareMatrixType)
@@ -2936,7 +2978,8 @@ CONTAINS
       ! initialize the matrix A
       CALL pList%clear()
       CALL pList%add('PL->n',3_SNK)
-      CALL pList%add('PL->m',1_SNK)
+      CALL pList%add('PL->isSym',.TRUE.)
+      CALL pList%validate(pList,optListMat)
       CALL thisLS%A%init(pList)
       SELECTTYPE(A => thisLS%A); TYPE IS(TriDiagMatrixType)
         CALL A%set(1,1, 4._SRK)
@@ -2988,6 +3031,7 @@ CONTAINS
       CALL pList%clear()
       CALL pList%add('PL->n',3_SNK)
       CALL pList%add('PL->m',2_SNK)
+      CALL pList%validate(pList,optListMat)
       CALL thisLS%A%init(pList)
       SELECTTYPE(A => thisLS%A); TYPE IS(DenseRectMatrixType)
         CALL A%set(1,1,1._SRK)
@@ -3036,7 +3080,6 @@ CONTAINS
 #ifdef HAVE_PETSC
       !With GMRES
       !The sparse matrix type
-      
       ! initialize linear system
       CALL pList%clear()
       CALL pList%add('PL->matrixType',SPARSE)
@@ -3051,7 +3094,9 @@ CONTAINS
       ! initialize matrix A
       CALL pList%clear()
       CALL pList%add('PL->n',9_SNK)
-      CALL pList%add('PL->m',33_SNK)
+      CALL pList%add('PL->isSym',.TRUE.)
+      CALL pList%add('PL->matType',SPARSE)
+      CALL pList%validate(pList,optListMat)
       CALL thisLS%A%init(pList)
       
       !A =  4    -1     0    -1     0     0     0     0     0
@@ -3104,14 +3149,16 @@ CONTAINS
       thisX=1.0_SRK
       
       ! initialize vector X
-      CALL thisLS%X%init(9)
+      CALL pList%clear()
+      CALL vecPList%set('PL -> n',9)
+      CALL thisLS%X%init(vecPList)
       
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
           CALL thisLS%setX0(thisX)
       ENDSELECT
 
       ! build b and set it
-      CALL thisLS%b%init(9)
+      CALL thisLS%b%init(vecPList)
       SELECTTYPE(b => thisLS%b); TYPE IS(PETScVectorType)
         CALL b%set(1.0_SRK)
       ENDSELECT
@@ -3174,7 +3221,9 @@ CONTAINS
       ! initialize matrix A
       CALL pList%clear()
       CALL pList%add('PL->n',9_SNK)
-      CALL pList%add('PL->m',1_SNK)
+      CALL pList%add('PL->isSym',.TRUE.)
+      CALL pList%add('PL->matType',SPARSE)
+      CALL pList%validate(pList,optListMat)
       CALL thisLS%A%init(pList) !9x9, symmetric.
       DO i=1,9
         SELECTTYPE(A => thisLS%A); TYPE IS(PETScMatrixType)
@@ -3189,7 +3238,8 @@ CONTAINS
       ENDDO
       
       !initialize vector X
-      CALL thisLS%X%init(9)
+      CALL vecPList%set('PL -> n',9)
+      CALL thisLS%X%init(vecPList)
       
       !build X0 and set it to 1.0s
       ALLOCATE(thisX(9))
@@ -3199,7 +3249,7 @@ CONTAINS
       ENDSELECT
       
       !build b and set it
-      CALL thisLS%b%init(9)
+      CALL thisLS%b%init(vecPList)
       SELECTTYPE(b => thisLS%b); TYPE IS(PETScVectorType)
         CALL b%set(1.0_SRK)
       ENDSELECT

@@ -22,6 +22,7 @@ PROGRAM testMatrixTypes
   USE ExceptionHandler
   USE BLAS
   USE ParameterLists
+  USE ParallelEnv
   IMPLICIT NONE
   
 #ifdef HAVE_PETSC
@@ -31,7 +32,7 @@ PROGRAM testMatrixTypes
 #endif
   
   TYPE(ExceptionHandlerType),POINTER :: e
-  TYPE(ParamType) :: pList,optList,vecPList
+  TYPE(ParamType) :: pList,optListMat,vecPList
   
   !Configure exception handler for test
   ALLOCATE(e)
@@ -39,8 +40,15 @@ PROGRAM testMatrixTypes
   CALL e%setQuietMode(.TRUE.)
   eMatrixType => e
   
+  !Set up optional PL
+  CALL optListMat%add('testPL->nnz',-1_SNK)
+  CALL optListMat%add('testPL->isSym',.FALSE.)
+  CALL optListMat%add('testPL->matType',SPARSE)
+  CALL optListMat%add('testPL->MPI_Comm_ID',PE_COMM_SELF)
+  
   !Set up vector PL
   CALL vecPList%add('PL -> n',1)
+  
 #ifdef HAVE_PETSC    
       CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
 #endif
@@ -129,13 +137,11 @@ PROGRAM testMatrixTypes
       ENDSELECT
           
       !check init 
-      ! build optional list for validation
-      CALL optList%add('testPL->nnz',-1_SNK)
       
       ! build parameter list
       CALL pList%add('testPL->n',10_SNK)
       CALL pList%add('testPL->nnz',10_SNK)
-      CALL pList%validate(pList,optList)
+      CALL pList%validate(pList,optListMat)
       eMatrixType => NULL()
       CALL thisMatrix%init(pList)
       eMatrixType => e
@@ -159,7 +165,7 @@ PROGRAM testMatrixTypes
         
       !now check init without m being provided
       CALL pList%add('testPL->n',10_SNK)
-      CALL pList%validate(pList,optList)
+      CALL pList%validate(pList,optListMat)
       CALL thisMatrix%init(pList) !expect exception
       IF(thisMatrix%isInit) THEN
         WRITE(*,*) 'CALL sparse%init(...) FAILED!'
@@ -185,7 +191,7 @@ PROGRAM testMatrixTypes
       CALL pList%clear()
       CALL pList%add('testPL->n',-1_SNK)
       CALL pList%add('testPL->nnz',10_SNK)
-      CALL pList%validate(pList,optList)
+      CALL pList%validate(pList,optListMat)
       CALL thisMatrix%init(pList) !expect exception
       IF(thisMatrix%isInit) THEN
         WRITE(*,*) 'CALL sparse%init(...) FAILED!'
@@ -195,7 +201,7 @@ PROGRAM testMatrixTypes
       CALL pList%clear()
       !n<1, and m not provided
       CALL pList%add('testPL->n',-1_SNK)
-      CALL pList%validate(pList,optList)
+      CALL pList%validate(pList,optListMat)
       CALL thisMatrix%init(pList) !expect exception
       IF(thisMatrix%isInit) THEN
         WRITE(*,*) 'CALL sparse%init(...) FAILED!'
@@ -206,7 +212,7 @@ PROGRAM testMatrixTypes
       !init with m<1
       CALL pList%add('testPL->n',10_SNK)
       CALL pList%add('testPL->nnz',-10_SNK)
-      CALL pList%validate(pList,optList)
+      CALL pList%validate(pList,optListMat)
       CALL thisMatrix%init(pList) !expect exception
       IF(thisMatrix%isInit) THEN
         WRITE(*,*) 'CALL sparse%init(...) FAILED!'
@@ -232,15 +238,11 @@ PROGRAM testMatrixTypes
       ia_vals(3)=4
       ia_vals(4)=7
       
-      ! build optional list for validation
-      CALL optList%clear()
-      CALL optList%add('testPL->nnz',-1_SNK)
-      
       ! build parameter list
       CALL pList%clear()
       CALL pList%add('testPL->n',3_SNK)
       CALL pList%add('testPL->nnz',6_SNK)
-      CALL pList%validate(pList,optList)
+      CALL pList%validate(pList,optListMat)
       CALL thisMatrix%clear()
       CALL thisMatrix%init(pList)
         
@@ -595,14 +597,12 @@ PROGRAM testMatrixTypes
           ENDIF
           WRITE(*,*) '  Passed: CALL densesquare%clear()'
       ENDSELECT
-      !check init     
-      ! build optional list for validation
-      CALL optList%add('testPL->m',0_SNK)
       
+      !check init     
       CALL pList%clear()
       CALL pList%add('testPL->n',10_SNK)
-      CALL pList%add('testPL->m',0_SNK)
-      CALL pList%validate(pList,optList)
+      CALL pList%add('testPL->isSym',.FALSE.)
+      CALL pList%validate(pList,optListMat)
       eMatrixType => NULL()
       CALL thisMatrix%init(pList) !n=10, not symmetric
       eMatrixType => e
@@ -622,8 +622,8 @@ PROGRAM testMatrixTypes
       CALL thisMatrix%clear()
       CALL pList%clear()
       CALL pList%add('testPL->n',10_SNK)
-      CALL pList%add('testPL->m',10_SNK)
-      CALL pList%validate(pList,optList)
+      CALL pList%add('testPL->isSym',.TRUE.)
+      CALL pList%validate(pList,optListMat)
       CALL thisMatrix%init(pList) !n=10, symmetric
       SELECTTYPE(thisMatrix)
         TYPE IS(DenseSquareMatrixType)
@@ -637,8 +637,8 @@ PROGRAM testMatrixTypes
       !test with double init (isInit==true on 2nd try)
       CALL pList%clear()
       CALL pList%add('testPL->n',10_SNK)
-      CALL pList%add('testPL->m',10_SNK)
-      CALL pList%validate(pList,optList)
+      CALL pList%add('testPL->isSym',.TRUE.)
+      CALL pList%validate(pList,optListMat)
       CALL thisMatrix%init(pList) !n=10, symmetric
       SELECTTYPE(thisMatrix)
         TYPE IS(DenseSquareMatrixType); thisMatrix%isSymmetric=.FALSE.
@@ -655,8 +655,8 @@ PROGRAM testMatrixTypes
       !test with n<1
       CALL pList%clear()
       CALL pList%add('testPL->n',-1_SNK)
-      CALL pList%add('testPL->m',100_SNK)
-      CALL pList%validate(pList,optList)
+      CALL pList%add('testPL->isSym',.TRUE.)
+      CALL pList%validate(pList,optListMat)
       CALL thisMatrix%init(pList) !expect exception
       IF(thisMatrix%isInit) THEN
         WRITE(*,*) 'CALL densesquare%init(...) FAILED!'
@@ -666,7 +666,7 @@ PROGRAM testMatrixTypes
       !test with n<1 and no second parameter
       CALL pList%clear()
       CALL pList%add('testPL->n',-1_SNK)
-      CALL pList%validate(pList,optList)
+      CALL pList%validate(pList,optListMat)
       CALL thisMatrix%init(pList) !expect exception
       IF(thisMatrix%isInit) THEN
         WRITE(*,*) 'CALL densesquare%init(...) FAILED!'
@@ -681,7 +681,7 @@ PROGRAM testMatrixTypes
       CALL thisMatrix%clear()
       CALL pList%clear()
       CALL pList%add('testPL->n',2_SNK)
-      CALL pList%add('testPL->m',1_SNK)
+      CALL pList%add('testPL->isSym',.TRUE.)
       CALL thisMatrix%init(pList)  !symmetric
       CALL thisMatrix%set(1,1,1._SRK)
       CALL thisMatrix%set(1,2,2._SRK)
@@ -788,7 +788,7 @@ PROGRAM testMatrixTypes
       
       CALL pList%clear()
       CALL pList%add('testPL->n',2_SNK)
-      CALL pList%add('testPL->m',0_SNK)
+      CALL pList%add('testPL->isSym',.FALSE.)
       CALL thisMatrix%init(pList)  !nonsymmetric
       CALL thisMatrix%set(1,1,1._SRK)
       CALL thisMatrix%set(1,2,2._SRK)
@@ -853,14 +853,10 @@ PROGRAM testMatrixTypes
           WRITE(*,*) '  Passed: CALL tridiag%clear()'
       ENDSELECT
       !check init      
-      ! build optional list for validation
-      CALL optList%clear()
-      CALL optList%add('testPL->m',0_SNK)
-      
       CALL pList%clear()
       CALL pList%add('testPL->n',10_SNK)
-      CALL pList%add('testPL->m',0_SNK)
-      CALL pList%validate(pList,optList)
+      CALL pList%add('testPL->isSym',.FALSE.)
+      CALL pList%validate(pList,optListMat)
       eMatrixType => NULL()
       CALL thisMatrix%init(pList) !n=10, not symmetric
       eMatrixType => e
@@ -880,8 +876,8 @@ PROGRAM testMatrixTypes
       CALL thisMatrix%clear()
       CALL pList%clear()
       CALL pList%add('testPL->n',10_SNK)
-      CALL pList%add('testPL->m',10_SNK)
-      CALL pList%validate(pList,optList)
+      CALL pList%add('testPL->isSym',.TRUE.)
+      CALL pList%validate(pList,optListMat)
       CALL thisMatrix%init(pList) !n=10, symmetric
       SELECTTYPE(thisMatrix)
         TYPE IS(TriDiagMatrixType)
@@ -895,8 +891,8 @@ PROGRAM testMatrixTypes
       !test with double init (isInit==true on 2nd try)
       CALL pList%clear()
       CALL pList%add('testPL->n',10_SNK)
-      CALL pList%add('testPL->m',10_SNK)
-      CALL pList%validate(pList,optList)
+      CALL pList%add('testPL->isSym',.TRUE.)
+      CALL pList%validate(pList,optListMat)
       CALL thisMatrix%init(pList) !n=10, symmetric
       SELECTTYPE(thisMatrix)
         TYPE IS(TriDiagMatrixType); thisMatrix%isSymmetric=.FALSE.
@@ -913,8 +909,8 @@ PROGRAM testMatrixTypes
       !test with n<1
       CALL pList%clear()
       CALL pList%add('testPL->n',-1_SNK)
-      CALL pList%add('testPL->m',100_SNK)
-      CALL pList%validate(pList,optList)
+      CALL pList%add('testPL->isSym',.TRUE.)
+      CALL pList%validate(pList,optListMat)
       CALL thisMatrix%init(pList) !expect exception
       IF(thisMatrix%isInit) THEN
         WRITE(*,*) 'CALL tridiag%init(...) FAILED!'
@@ -924,7 +920,7 @@ PROGRAM testMatrixTypes
       !test with n<1 and no second parameter
       CALL pList%clear()
       CALL pList%add('testPL->n',-1_SNK)
-      CALL pList%validate(pList,optList)
+      CALL pList%validate(pList,optListMat)
       CALL thisMatrix%init(pList) !expect exception
       IF(thisMatrix%isInit) THEN
         WRITE(*,*) 'CALL tridiag%init(...) FAILED!'
@@ -941,7 +937,7 @@ PROGRAM testMatrixTypes
       CALL thisMatrix%clear()
       CALL pList%clear()
       CALL pList%add('testPL->n',3_SNK)
-      CALL pList%add('testPL->m',1_SNK)
+      CALL pList%add('testPL->isSym',.TRUE.)
       CALL thisMatrix%init(pList)  !symmetric
       CALL thisMatrix%set(1,1,1._SRK)
       CALL thisMatrix%set(1,2,4._SRK)
@@ -980,7 +976,7 @@ PROGRAM testMatrixTypes
       CALL thisMatrix%clear()
       CALL pList%clear()
       CALL pList%add('testPL->n',3_SNK)
-      CALL pList%add('testPL->m',0_SNK)
+      CALL pList%add('testPL->isSym',.FALSE.)
       CALL thisMatrix%init(pList)  !nonsymmetric
       CALL thisMatrix%set(1,1,1._SRK)
       CALL thisMatrix%set(1,2,4._SRK)
@@ -1024,7 +1020,7 @@ PROGRAM testMatrixTypes
       CALL thisMatrix%clear()
       CALL pList%clear()
       CALL pList%add('testPL->n',4_SNK)
-      CALL pList%add('testPL->m',0_SNK)
+      CALL pList%add('testPL->isSym',.FALSE.)
       CALL thisMatrix%init(pList)
       CALL thisMatrix%set(-1,1,1._SRK)
       CALL thisMatrix%set(1,-1,1._SRK)
@@ -1058,13 +1054,10 @@ PROGRAM testMatrixTypes
           WRITE(*,*) '  Passed: CALL denserect%clear()'
       ENDSELECT
       !check init
-      ! build optional list for validation
-      CALL optList%clear()
-      
       CALL pList%clear()
       CALL pList%add('testPL->n',10_SNK)
       CALL pList%add('testPL->m',15_SNK)
-      CALL pList%validate(pList,optList)
+      CALL pList%validate(pList,optListMat)
       eMatrixType => NULL()
       CALL thisMatrix%init(pList)
       eMatrixType => e
@@ -1100,7 +1093,7 @@ PROGRAM testMatrixTypes
       CALL pList%clear()
       CALL pList%add('testPL->n',-1_SNK)
       CALL pList%add('testPL->m',10_SNK)
-      CALL pList%validate(pList,optList)
+      CALL pList%validate(pList,optListMat)
       CALL thisMatrix%init(pList) !expect exception
       IF(thisMatrix%isInit) THEN
         WRITE(*,*) 'CALL denserect%init(...) FAILED!'
@@ -1111,7 +1104,7 @@ PROGRAM testMatrixTypes
       CALL pList%clear()
       CALL pList%add('testPL->n',10_SNK)
       CALL pList%add('testPL->m',-1_SNK)
-      CALL pList%validate(pList,optList)
+      CALL pList%validate(pList,optListMat)
       CALL thisMatrix%init(pList) !expect exception
       IF(thisMatrix%isInit) THEN
         WRITE(*,*) 'CALL denserect%init(...) FAILED!'
@@ -1270,16 +1263,11 @@ PROGRAM testMatrixTypes
           WRITE(*,*) '  Passed: CALL petscsparse%clear()'
       ENDSELECT
       !check init
-      ! build optional list for validation
-      CALL optList%clear()
-      CALL optList%add('testPL->m',0_SNK) ! not symmetric
-      CALL optList%add('testPL->mattype',0_SNK) ! sparse
-      
       CALL pList%clear()
       CALL pList%add('testPL->n',10_SNK)
-      CALL pList%add('testPL->m',0_SNK)
-      CALL pList%add('testPL->mattype',0_SNK) ! sparse
-      CALL pList%validate(pList,optList)
+      CALL pList%add('testPL->isSym',.FALSE.)
+      CALL pList%add('testPL->matType',SPARSE)
+      CALL pList%validate(pList,optListMat)
       eMatrixType => NULL()
       CALL thisMatrix%init(pList) !n=10, not symmetric (0), sparse (0)
       eMatrixType => e
@@ -1299,9 +1287,9 @@ PROGRAM testMatrixTypes
       CALL thisMatrix%clear()
       CALL pList%clear()
       CALL pList%add('testPL->n',10_SNK)
-      CALL pList%add('testPL->m',1_SNK)
-      CALL pList%add('testPL->mattype',0_SNK)
-      CALL pList%validate(pList,optList)
+      CALL pList%add('testPL->isSym',.TRUE.)
+      CALL pList%add('testPL->matType',SPARSE)
+      CALL pList%validate(pList,optListMat)
       CALL thisMatrix%init(pList) !n=10, symmetric (1), sparse (0)
       SELECTTYPE(thisMatrix)
         TYPE IS(PETScMatrixType)
@@ -1315,9 +1303,9 @@ PROGRAM testMatrixTypes
       !test with double init (isInit==true on 2nd try)
       CALL pList%clear()
       CALL pList%add('testPL->n',10_SNK)
-      CALL pList%add('testPL->m',1_SNK)
-      CALL pList%add('testPL->mattype',0_SNK)
-      CALL pList%validate(pList,optList)
+      CALL pList%add('testPL->isSym',.TRUE.)
+      CALL pList%add('testPL->matType',SPARSE)
+      CALL pList%validate(pList,optListMat)
       CALL thisMatrix%init(pList) !n=10, symmetric (1), sparse (0)
       SELECTTYPE(thisMatrix)
         TYPE IS(PETScMatrixType); thisMatrix%isSymmetric=.FALSE.
@@ -1334,9 +1322,9 @@ PROGRAM testMatrixTypes
       !test with n<1
       CALL pList%clear()
       CALL pList%add('testPL->n',-1_SNK)
-      CALL pList%add('testPL->m',100_SNK)
-      CALL pList%add('testPL->mattype',0_SNK)
-      CALL pList%validate(pList,optList)
+      CALL pList%add('testPL->isSym',.TRUE.)
+      CALL pList%add('testPL->matType',SPARSE)
+      CALL pList%validate(pList,optListMat)
       CALL thisMatrix%init(pList) !expect exception
       IF(thisMatrix%isInit) THEN
         WRITE(*,*) 'CALL petscsparse%init(...) FAILED!'
@@ -1352,8 +1340,9 @@ PROGRAM testMatrixTypes
       ![2 3]
       CALL pList%clear()
       CALL pList%add('testPL->n',2_SNK)
-      CALL pList%add('testPL->m',1_SNK)
-      CALL pList%add('testPL->mattype',0_SNK)
+      CALL pList%add('testPL->isSym',.TRUE.)
+      CALL pList%add('testPL->matType',SPARSE)
+      CALL pList%validate(pList,optListMat)
       CALL thisMatrix%init(pList)  ! symmetric (1), sparse (0)
       CALL thisMatrix%set(1,1,1._SRK)
       CALL thisMatrix%set(1,2,2._SRK)
@@ -1385,8 +1374,9 @@ PROGRAM testMatrixTypes
      
       CALL pList%clear()
       CALL pList%add('testPL->n',2_SNK)
-      CALL pList%add('testPL->m',0_SNK)
-      CALL pList%add('testPL->mattype',0_SNK)
+      CALL pList%add('testPL->isSym',.FALSE.)
+      CALL pList%add('testPL->mattype',SPARSE)
+      CALL pList%validate(pList,optListMat)
       CALL thisMatrix%init(pList)  ! nonsymmetric (0), sparse (0)
       CALL thisMatrix%set(1,1,1._SRK)
       CALL thisMatrix%set(1,2,2._SRK)
@@ -1436,8 +1426,9 @@ PROGRAM testMatrixTypes
       CALL thisMatrix%clear()
       CALL pList%clear()
       CALL pList%add('testPL->n',2_SNK)
-      CALL pList%add('testPL->m',1_SNK)
+      CALL pList%add('testPL->isSym',.TRUE.)
       CALL pList%add('testPL->mattype',SPARSE)
+      CALL pList%validate(pList,optListMat)
       CALL thisMatrix%init(pList)  !symmetric
       CALL thisMatrix%set(1,1,1._SRK)
       CALL thisMatrix%set(1,2,2._SRK)
@@ -1579,8 +1570,9 @@ PROGRAM testMatrixTypes
       CALL thisMatrix%clear()
       CALL pList%clear()
       CALL pList%add('testPL->n',3_SNK)
-      CALL pList%add('testPL->m',0_SNK)
-      CALL pList%add('testPL->mattype',0_SNK)
+      CALL pList%add('testPL->isSym',.FALSE.)
+      CALL pList%add('testPL->mattype',SPARSE)
+      CALL pList%validate(pList,optListMat)
       CALL thisMatrix%init(pList) ! non-symmetric (0), sparse (0) 
       SELECTTYPE(thisMatrix)
         TYPE IS(PETScMatrixType)
@@ -1682,16 +1674,11 @@ PROGRAM testMatrixTypes
           WRITE(*,*) '  Passed: CALL petscdense%clear()'
       ENDSELECT
       !check init
-      ! build optional list for validation
-      CALL optList%clear()
-      CALL optList%add('testPL->m',0_SNK) ! not symmetric
-      CALL optList%add('testPL->mattype',1_SNK) ! dense
-      
       CALL pList%clear()
       CALL pList%add('testPL->n',10_SNK)
-      CALL pList%add('testPL->m',0_SNK)
-      CALL pList%add('testPL->mattype',1_SNK) ! dense
-      CALL pList%validate(pList,optList)
+      CALL pList%add('testPL->isSym',.FALSE.)
+      CALL pList%add('testPL->mattype',DENSESQUARE) ! dense
+      CALL pList%validate(pList,optListMat)
       eMatrixType => NULL()
       CALL thisMatrix%init(pList) !n=10, not symmetric (0), sparse (0)
       eMatrixType => e
@@ -1711,9 +1698,9 @@ PROGRAM testMatrixTypes
       CALL thisMatrix%clear()
       CALL pList%clear()
       CALL pList%add('testPL->n',10_SNK)
-      CALL pList%add('testPL->m',1_SNK)
-      CALL pList%add('testPL->mattype',1_SNK)
-      CALL pList%validate(pList,optList)
+      CALL pList%add('testPL->isSym',.TRUE.)
+      CALL pList%add('testPL->mattype',DENSESQUARE)
+      CALL pList%validate(pList,optListMat)
       CALL thisMatrix%init(pList) !n=10, symmetric (1), sparse (0)
       SELECTTYPE(thisMatrix)
         TYPE IS(PETScMatrixType)
@@ -1727,9 +1714,9 @@ PROGRAM testMatrixTypes
       !test with double init (isInit==true on 2nd try)
       CALL pList%clear()
       CALL pList%add('testPL->n',10_SNK)
-      CALL pList%add('testPL->m',1_SNK)
-      CALL pList%add('testPL->mattype',1_SNK)
-      CALL pList%validate(pList,optList)
+      CALL pList%add('testPL->isSym',.TRUE.)
+      CALL pList%add('testPL->mattype',DENSESQUARE)
+      CALL pList%validate(pList,optListMat)
       CALL thisMatrix%init(pList) !n=10, symmetric (1), sparse (0)
       SELECTTYPE(thisMatrix)
         TYPE IS(PETScMatrixType); thisMatrix%isSymmetric=.FALSE.
@@ -1752,8 +1739,9 @@ PROGRAM testMatrixTypes
       ![2 3]
       CALL pList%clear()
       CALL pList%add('testPL->n',2_SNK)
-      CALL pList%add('testPL->m',1_SNK)
-      CALL pList%add('testPL->mattype',1_SNK)
+      CALL pList%add('testPL->isSym',.TRUE.)
+      CALL pList%add('testPL->mattype',DENSESQUARE)
+      CALL pList%validate(pList,optListMat)
       CALL thisMatrix%init(pList)  !symmetric (1), dense (1)
       CALL thisMatrix%set(1,1,1._SRK)
       CALL thisMatrix%set(1,2,2._SRK)
@@ -1785,8 +1773,9 @@ PROGRAM testMatrixTypes
       
       CALL pList%clear()
       CALL pList%add('testPL->n',2_SNK)
-      CALL pList%add('testPL->m',0_SNK)
-      CALL pList%add('testPL->mattype',1_SNK)
+      CALL pList%add('testPL->isSym',.FALSE.)
+      CALL pList%add('testPL->mattype',DENSESQUARE)
+      CALL pList%validate(pList,optListMat)
       CALL thisMatrix%init(pList)  !nonsymmetric (0), dense (1)
       CALL thisMatrix%set(1,1,1._SRK)
       CALL thisMatrix%set(1,2,2._SRK)
@@ -1826,8 +1815,9 @@ PROGRAM testMatrixTypes
       CALL thisMatrix%clear()
       CALL pList%clear()
       CALL pList%add('testPL->n',2_SNK)
-      CALL pList%add('testPL->m',0_SNK)
-      CALL pList%add('testPL->mattype',1_SNK)
+      CALL pList%add('testPL->isSym',.FALSE.)
+      CALL pList%add('testPL->mattype',DENSESQUARE)
+      CALL pList%validate(pList,optListMat)
       CALL thisMatrix%init(pList)
       CALL thisMatrix%set(-1,1,1._SRK)
       CALL thisMatrix%set(1,-1,1._SRK)
@@ -1840,8 +1830,9 @@ PROGRAM testMatrixTypes
       CALL thisMatrix%clear()
       CALL pList%clear()
       CALL pList%add('testPL->n',2_SNK)
-      CALL pList%add('testPL->m',1_SNK)
+      CALL pList%add('testPL->isSym',.TRUE.)
       CALL pList%add('testPL->mattype',DENSESQUARE)
+      CALL pList%validate(pList,optListMat)
       CALL thisMatrix%init(pList)  !symmetric
       CALL thisMatrix%set(1,1,1._SRK)
       CALL thisMatrix%set(1,2,2._SRK)
@@ -1983,8 +1974,9 @@ PROGRAM testMatrixTypes
       CALL thisMatrix%clear()
       CALL pList%clear()
       CALL pList%add('testPL->n',3_SNK)
-      CALL pList%add('testPL->m',0_SNK)
-      CALL pList%add('testPL->mattype',1_SNK)
+      CALL pList%add('testPL->isSym',.FALSE.)
+      CALL pList%add('testPL->mattype',DENSESQUARE)
+      CALL pList%validate(pList,optListMat)
       CALL thisMatrix%init(pList) ! non-symmetric (0), dense (1)
       SELECTTYPE(thisMatrix)
         TYPE IS(PETScMatrixType)
@@ -2076,8 +2068,9 @@ PROGRAM testMatrixTypes
       ALLOCATE(PETScMatrixType :: thisMtrx)
       CALL pList%clear()
       CALL pList%add('testPL->n',3_SNK)
-      CALL pList%add('testPL->m',1_SNK)
+      CALL pList%add('testPL->isSym',.TRUE.)
       CALL pList%add('testPL->mattype',SPARSE)
+      CALL pList%validate(pList,optListMat)
       CALL thisMtrx%clear()
       CALL thisMtrx%init(pList)  !symmetric
       CALL thisMtrx%set(1,1,1._SRK)
@@ -2197,7 +2190,7 @@ PROGRAM testMatrixTypes
       ALLOCATE(DenseSquareMatrixType :: thisMtrx)
       CALL pList%clear()
       CALL pList%add('testPL->n',3_SNK)
-      CALL pList%add('testPL->m',1_SNK)
+      CALL pList%add('testPL->isSym',.TRUE.)
       CALL thisMtrx%clear()
       CALL thisMtrx%init(pList)  !symmetric
       CALL thisMtrx%set(1,1,1._SRK)
@@ -2393,7 +2386,7 @@ PROGRAM testMatrixTypes
       ALLOCATE(DenseSquareMatrixType :: cmat)
       CALL pList%clear()
       CALL pList%add('testPL->n',3_SNK)
-      CALL pList%add('testPL->m',1_SNK)
+      CALL pList%add('testPL->isSym',.TRUE.)
       CALL cmat%init(pList)  !symmetric
       CALL cmat%set(1,1,3._SRK)
       CALL cmat%set(1,2,3._SRK)
@@ -2588,8 +2581,9 @@ PROGRAM testMatrixTypes
       ALLOCATE(PETScMatrixType :: thisMtrx)
       CALL pList%clear()
       CALL pList%add('testPL->n',3_SNK)
-      CALL pList%add('testPL->m',1_SNK)
+      CALL pList%add('testPL->isSym',.TRUE.)
       CALL pList%add('testPL->mattype',DENSESQUARE)
+      CALL pList%validate(pList,optListMat)
       CALL thisMtrx%clear()
       CALL thisMtrx%init(pList)  !symmetric
       CALL thisMtrx%set(1,1,1._SRK)
@@ -2729,7 +2723,7 @@ PROGRAM testMatrixTypes
       ALLOCATE(DenseSquareMatrixType :: cmat)
       CALL pList%clear()
       CALL pList%add('testPL->n',3_SNK)
-      CALL pList%add('testPL->m',1_SNK)
+      CALL pList%add('testPL->isSym',.TRUE.)
       CALL bmat%init(pList)  !symmetric
       CALL bmat%set(1,1,1._SRK)
       CALL bmat%set(1,2,0._SRK)
@@ -2739,7 +2733,7 @@ PROGRAM testMatrixTypes
       CALL bmat%set(3,3,1._SRK)
       CALL pList%clear()
       CALL pList%add('testPL->n',3_SNK)
-      CALL pList%add('testPL->m',1_SNK) 
+      CALL pList%add('testPL->isSym',.TRUE.) 
       CALL cmat%init(pList)  !symmetric
       CALL cmat%set(1,1,3._SRK)
       CALL cmat%set(1,2,3._SRK)
@@ -2917,7 +2911,7 @@ PROGRAM testMatrixTypes
       ALLOCATE(DenseSquareMatrixType :: cmat)
       CALL pList%clear()
       CALL pList%add('testPL->n',3_SNK)
-      CALL pList%add('testPL->m',1_SNK)
+      CALL pList%add('testPL->isSym',.TRUE.)
       CALL cmat%init(pList)  !symmetric
       CALL cmat%set(1,1,3._SRK)
       CALL cmat%set(1,2,3._SRK)
