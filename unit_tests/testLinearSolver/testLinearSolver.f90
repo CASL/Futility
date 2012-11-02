@@ -55,6 +55,7 @@ PROGRAM testLinearSolver
   
   ! Set up vector parameter list
   CALL vecPList%add('PL -> n',2)
+  CALL vecPList%add('PL -> MPI_Comm_ID',PE_COMM_SELF)
   
   !Configure exception handler for test
   ALLOCATE(e)

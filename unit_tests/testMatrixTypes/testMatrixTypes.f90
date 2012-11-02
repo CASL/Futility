@@ -48,6 +48,7 @@ PROGRAM testMatrixTypes
   
   !Set up vector PL
   CALL vecPList%add('PL -> n',1)
+  CALL vecPList%add('PL -> MPI_Comm_ID',PE_COMM_SELF)
   
 #ifdef HAVE_PETSC    
       CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)

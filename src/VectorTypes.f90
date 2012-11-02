@@ -650,10 +650,11 @@ MODULE VectorTypes
       CLASS(PETScVectorType),INTENT(INOUT) :: thisVector
       TYPE(ParamType),INTENT(IN) :: pList
       LOGICAL(SBK) :: localalloc
-      INTEGER(SIK) :: n
+      INTEGER(SIK) :: n, MPI_Comm_ID
       
       !Pull Data from Parameter List
       CALL pList%get('n',n)
+      CALL pList%get('MPI_Comm_ID',MPI_Comm_ID)
       
       !Error checking of subroutine input
       localalloc=.FALSE.
@@ -671,9 +672,8 @@ MODULE VectorTypes
         ELSE
           thisVector%isInit=.TRUE.
           thisVector%n=n
-          ! will need to change MPI_COMM_WORLD to param list value
           IF(.NOT.thisVector%isCreated) THEN
-            CALL VecCreate(MPI_COMM_WORLD,thisVector%b,iperr)
+            CALL VecCreate(MPI_Comm_ID,thisVector%b,iperr)
             thisVector%isCreated=.TRUE.
           ENDIF
           CALL VecSetSizes(thisVector%b,PETSC_DECIDE,thisVector%n,iperr)
