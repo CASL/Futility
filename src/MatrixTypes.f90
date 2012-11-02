@@ -126,10 +126,10 @@ MODULE MatrixTypes
   !> Explicitly defines the interface for the init routine of all matrix types
   !> with parameter list
   ABSTRACT INTERFACE
-    SUBROUTINE int_matrix_init_param_sub(matrix,pList)
+    SUBROUTINE int_matrix_init_param_sub(matrix,Params)
       IMPORT :: MatrixType,ParamType
       CLASS(MatrixType),INTENT(INOUT) :: matrix
-      CLASS(ParamType),INTENT(IN) :: pList
+      CLASS(ParamType),INTENT(IN) :: Params
     ENDSUBROUTINE int_matrix_init_param_sub
   ENDINTERFACE
   
@@ -321,16 +321,16 @@ MODULE MatrixTypes
 !> @param matrix the matrix type to act on
 !> @param pList the parameter list
 !>
-    SUBROUTINE init_SparseMatrixParam(matrix,pList)
+    SUBROUTINE init_SparseMatrixParam(matrix,Params)
       CHARACTER(LEN=*),PARAMETER :: myName='init_SparseMatrixParam'
       CLASS(SparseMatrixType),INTENT(INOUT) :: matrix
-      CLASS(ParamType),INTENT(IN) :: pList
+      CLASS(ParamType),INTENT(IN) :: Params
       INTEGER(SIK) :: n,nnz
       LOGICAL(SBK) :: localalloc
       
       ! Pull Data From Parameter List
-      CALL pList%get('n',n)
-      CALL pList%get('nnz',nnz)
+      CALL Params%get('n',n)
+      CALL Params%get('nnz',nnz)
       
       !Error checking of subroutine input
       localalloc=.FALSE.
@@ -373,16 +373,16 @@ MODULE MatrixTypes
 !> @param matrix the matrix type to act on
 !> @param pList the parameter list
 !>
-    SUBROUTINE init_TriDiagMatrixParam(matrix,pList)
+    SUBROUTINE init_TriDiagMatrixParam(matrix,Params)
       CHARACTER(LEN=*),PARAMETER :: myName='init_TriDiagMatrixParam'
       CLASS(TriDiagMatrixType),INTENT(INOUT) :: matrix
-      CLASS(ParamType),INTENT(IN) :: pList
+      CLASS(ParamType),INTENT(IN) :: Params
       INTEGER(SIK) :: n
       LOGICAL(SBK) :: localalloc, isSym
       
       ! Pull Data From Parameter List
-      CALL pList%get('n',n)
-      CALL pList%get('isSym',isSym)
+      CALL Params%get('n',n)
+      CALL Params%get('isSym',isSym)
       
      !Error checking of subroutine input
       localalloc=.FALSE.
@@ -420,16 +420,16 @@ MODULE MatrixTypes
 !> @param matrix the matrix type to act on
 !> @param pList the parameter list
 !>
-    SUBROUTINE init_DenseRectMatrixParam(matrix,pList)
+    SUBROUTINE init_DenseRectMatrixParam(matrix,Params)
       CHARACTER(LEN=*),PARAMETER :: myName='init_DenseRectMatrixParam'
       CLASS(DenseRectMatrixType),INTENT(INOUT) :: matrix
-      CLASS(ParamType),INTENT(IN) :: pList
+      CLASS(ParamType),INTENT(IN) :: Params
       INTEGER(SIK) :: n, m
       LOGICAL(SBK) :: localalloc
       
       ! Pull Data From Parameter List
-      CALL pList%get('n',n)
-      CALL pList%get('m',m)
+      CALL Params%get('n',n)
+      CALL Params%get('m',m)
       
       !Error checking of subroutine input
       localalloc=.FALSE.
@@ -467,16 +467,16 @@ MODULE MatrixTypes
 !> @param matrix the matrix type to act on
 !> @param pList the parameter list
 !>
-    SUBROUTINE init_DenseSquareMatrixParam(matrix,pList)
+    SUBROUTINE init_DenseSquareMatrixParam(matrix,Params)
       CHARACTER(LEN=*),PARAMETER :: myName='init_DenseSquareMatrixParam'
       CLASS(DenseSquareMatrixType),INTENT(INOUT) :: matrix
-      CLASS(ParamType),INTENT(IN) :: pList
+      CLASS(ParamType),INTENT(IN) :: Params
       INTEGER(SIK) :: n
       LOGICAL(SBK) :: localalloc, isSym
       
       ! Pull Data From Parameter List
-      CALL pList%get('n',n)
-      CALL pList%get('isSym',isSym)
+      CALL Params%get('n',n)
+      CALL Params%get('isSym',isSym)
       
       !Error checking of subroutine input
       localalloc=.FALSE.
@@ -514,10 +514,10 @@ MODULE MatrixTypes
 !> @param matrix the matrix type to act on
 !> @param pList the parameter list
 !>
-    SUBROUTINE init_PETScMatrixParam(matrix,pList)
+    SUBROUTINE init_PETScMatrixParam(matrix,Params)
       CHARACTER(LEN=*),PARAMETER :: myName='init_PETScMatrixParam'
       CLASS(PETScMatrixType),INTENT(INOUT) :: matrix
-      CLASS(ParamType),INTENT(IN) :: pList
+      CLASS(ParamType),INTENT(IN) :: Params
       INTEGER(SIK) :: n, matType, MPI_COMM_ID
       LOGICAL(SBK) :: localalloc, isSym
       
@@ -534,10 +534,10 @@ MODULE MatrixTypes
       
 #ifdef HAVE_PETSC
       ! Pull Data From Parameter List
-      CALL pList%get('n',n)
-      CALL pList%get('isSym',isSym)
-      CALL pList%get('matType',matType)
-      CALL pList%get('MPI_COMM_ID',MPI_COMM_ID)
+      CALL Params%get('n',n)
+      CALL Params%get('isSym',isSym)
+      CALL Params%get('matType',matType)
+      CALL Params%get('MPI_COMM_ID',MPI_COMM_ID)
 
       IF(.NOT. matrix%isInit) THEN
         IF(n < 1) THEN
