@@ -1081,7 +1081,7 @@ MODULE MatrixTypes
 !> @param y the vector to add to the product of @c A and @c x
 !>
     SUBROUTINE matvec_MatrixTypeVectorType(thisMatrix,trans,alpha,x,beta,y)
-    CHARACTER(LEN=*),PARAMETER :: myName='matvec_MatrixTypeVectorType'
+      CHARACTER(LEN=*),PARAMETER :: myName='matvec_MatrixTypeVectorType'
       CLASS(MatrixType),INTENT(INOUT) :: thisMatrix
       CLASS(VectorType),INTENT(INOUT) :: x
       CHARACTER(LEN=1),OPTIONAL,INTENT(IN) :: trans

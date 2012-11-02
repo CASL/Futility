@@ -126,10 +126,10 @@ MODULE VectorTypes
   
   !> Explicitly defines the interface for the init routine of all vector types
   ABSTRACT INTERFACE
-    SUBROUTINE int_vector_init_sub(thisVector,pList)
+    SUBROUTINE int_vector_init_sub(thisVector,Params)
       IMPORT :: SIK,ParamType,VectorType
       CLASS(VectorType),INTENT(INOUT) :: thisVector
-      TYPE(ParamType),INTENT(IN) :: pList
+      TYPE(ParamType),INTENT(IN) :: Params
     ENDSUBROUTINE int_vector_init_sub
   ENDINTERFACE
   
@@ -419,15 +419,15 @@ MODULE VectorTypes
 !> @param declares the vector type to act on
 !> @param pList the number of rows
 !>
-    SUBROUTINE init_RealVectorType(thisVector,pList)
+    SUBROUTINE init_RealVectorType(thisVector,Params)
       CHARACTER(LEN=*),PARAMETER :: myName='init_RealVectorType'
       CLASS(RealVectorType),INTENT(INOUT) :: thisVector
-      TYPE(ParamType),INTENT(IN) :: pList
+      TYPE(ParamType),INTENT(IN) :: Params
       LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: n
       
       !Pull Data from Parameter List
-      CALL pList%get('n',n)
+      CALL Params%get('n',n)
       
       !Error checking of subroutine input
       localalloc=.FALSE.
@@ -645,16 +645,16 @@ MODULE VectorTypes
 !> @param declares the vector type to act on
 !> @param n the number of rows
 !>
-    SUBROUTINE init_PETScVectorType(thisVector,pList)
+    SUBROUTINE init_PETScVectorType(thisVector,Params)
       CHARACTER(LEN=*),PARAMETER :: myName='init_PETScVectorType'
       CLASS(PETScVectorType),INTENT(INOUT) :: thisVector
-      TYPE(ParamType),INTENT(IN) :: pList
+      TYPE(ParamType),INTENT(IN) :: Params
       LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: n, MPI_Comm_ID
       
       !Pull Data from Parameter List
-      CALL pList%get('n',n)
-      CALL pList%get('MPI_Comm_ID',MPI_Comm_ID)
+      CALL Params%get('n',n)
+      CALL Params%get('MPI_Comm_ID',MPI_Comm_ID)
       
       !Error checking of subroutine input
       localalloc=.FALSE.
