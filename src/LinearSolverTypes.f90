@@ -202,12 +202,14 @@ MODULE LinearSolverTypes
 !>
 !> This routine initializes the data spaces for the direct linear solver. 
 !>
-    SUBROUTINE init_LinearSolverType_Base(solver,pList)
+    SUBROUTINE init_LinearSolverType_Base(solver,lsPList)
       CHARACTER(LEN=*),PARAMETER :: myName='init_LinearSolverType_Base'
       CLASS(LinearSolverType_Base),INTENT(INOUT) :: solver
-      TYPE(ParamType),INTENT(IN) :: pList
-      
-      INTEGER(SIK) :: matrixType, TPLType
+      CLASS(ParamType),POINTER :: pListPtr
+      TYPE(ParamType),INTENT(IN) :: lsPList
+      TYPE(ParamType) :: matPList, vecxPList, vecbPList
+      ! local variables
+      INTEGER(SIK) :: matType, TPLType
       INTEGER(SIK) :: solverMethod
       INTEGER(SIK) :: MPI_Comm_ID, numberOMP
       CHARACTER(LEN=256) :: timerName
@@ -216,25 +218,38 @@ MODULE LinearSolverTypes
       PetscErrorCode  :: ierr
 #endif
 
-      !Pull data from the parameter list
-      MPI_Comm_ID=-1
-      CALL pList%get('matrixType',matrixType)
-      CALL pList%get('TPLType',TPLType)
-      CALL pList%get('solverMethod',solverMethod)
-      CALL pList%get('MPI_Comm_ID',MPI_Comm_ID)
-      CALL pList%get('numberOMP',numberOMP)
-      CALL pList%get('timerName',timerName)
-      
-      !Initialize parallel environments based on input
-      IF(MPI_Comm_ID >= 0) CALL solver%MPIparallelEnv%initialize(MPI_Comm_ID)
-      IF(numberOMP > 0) CALL solver%OMPparallelEnv%initialize(numberOMP)
-
       !Error checking of subroutine input
       localalloc=.FALSE.
       IF(.NOT.ASSOCIATED(eLinearSolverType)) THEN
         localalloc=.TRUE.
         ALLOCATE(eLinearSolverType)
       ENDIF
+
+      !Pull data from the parameter list
+      MPI_Comm_ID=-1
+      CALL lsPList%get('TPLType',TPLType)
+      CALL lsPList%get('solverMethod',solverMethod)
+      CALL lsPList%get('MPI_Comm_ID',MPI_Comm_ID)
+      CALL lsPList%get('numberOMP',numberOMP)
+      CALL lsPList%get('timerName',timerName)
+      ! pull data for matrix parameter list
+      CALL lsPList%get('LinearSolverType->MatrixType_A',pListPtr)
+      matPList=pListPtr
+      matType=-2
+      CALL matPList%get('matType',matType)
+      CALL matPList%add('MPI_Comm_ID',MPI_Comm_ID)
+      ! pull data for vector parameter list
+      CALL lsPList%get('LinearSolverType->VectorType_x',pListPtr)
+      vecxPList=pListPtr
+      CALL vecxPList%add('MPI_Comm_ID',MPI_Comm_ID)
+      CALL lsPList%get('LinearSolverType->VectorType_b',pListPtr)
+      vecbPList=pListPtr
+      CALL vecbPList%add('MPI_Comm_ID',MPI_Comm_ID)
+      
+      
+      !Initialize parallel environments based on input
+      IF(MPI_Comm_ID >= 0) CALL solver%MPIparallelEnv%initialize(MPI_Comm_ID)
+      IF(numberOMP > 0) CALL solver%OMPparallelEnv%initialize(numberOMP)
       
       IF(.NOT. solver%isInit) THEN
          
@@ -267,32 +282,44 @@ MODULE LinearSolverTypes
 #endif
         ENDIF
 
-        ! allocate matrix (A)
+        ! allocate and initialize matrix (A)
         IF(.NOT.ALLOCATED(solver%A)) THEN
           IF(TPLType==PETSC) THEN
             ALLOCATE(PETScMatrixType :: solver%A)
           ELSE
-            IF(matrixType==0) THEN ! Sparse
+            IF(matType==0) THEN ! Sparse
               ALLOCATE(SparseMatrixType :: solver%A)
-            ELSEIF(matrixType==1) THEN ! TriDiag 
+            ELSEIF(matType==1) THEN ! TriDiag 
               ALLOCATE(TriDiagMatrixType :: solver%A)
-            ELSEIF(matrixType==2) THEN ! DenseSquare
-              ALLOCATE(DenseSquareMatrixType :: solver%A)
-            ELSEIF(matrixType==3) THEN ! DenseRect
+            ELSEIF(matType==2) THEN ! DenseSquare
+              ALLOCATE(DenseSquareMatrixType :: solver%A)  
+            ELSEIF(matType==3) THEN ! DenseRect
               ALLOCATE(DenseRectMatrixType :: solver%A)
             ENDIF
           ENDIF
+          CALL solver%A%init(matPList)
         ELSE
           ! throw exception
         ENDIF
         ! allocate vectors (X and b)
-        IF(TPLType==PETSC) THEN
-          ALLOCATE(PETScVectorType :: solver%X)
-          ALLOCATE(PETScVectorType :: solver%b)
+        IF(.NOT.ALLOCATED(solver%X)) THEN
+          IF(.NOT.ALLOCATED(solver%b)) THEN
+            IF(TPLType==PETSC) THEN
+              ALLOCATE(PETScVectorType :: solver%X)
+              ALLOCATE(PETScVectorType :: solver%b)
+            ELSE
+              ALLOCATE(RealVectorType :: solver%X)
+              ALLOCATE(RealVectorType :: solver%b)
+            ENDIF
+            CALL solver%X%init(vecxPList)
+            CALL solver%b%init(vecbPList)
+          ELSE
+            ! throw exception
+          ENDIF
         ELSE
-          ALLOCATE(RealVectorType :: solver%X)
-          ALLOCATE(RealVectorType :: solver%b)
+          ! throw exception
         ENDIF
+        
       
         ! direct solver
         SELECTTYPE(solver); TYPE IS(LinearSolverType_Direct)
@@ -317,32 +344,6 @@ MODULE LinearSolverTypes
   
             IF(TPLType==PETSC) THEN ! PETSc
 #ifdef HAVE_PETSC
-              !! create and assemble matrix
-              !SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
-              !  IF(.NOT.A%isCreated) THEN
-              !    CALL MatCreate(solver%MPIparallelEnv%comm,A%a,ierr)
-              !    A%isCreated=.TRUE.
-              !  ENDIF
-              !  IF(matrixType==4) THEN ! Sparse
-              !    A%SparseDense=0
-              !  ELSEIF(matrixType==5) THEN ! Dense
-              !    A%SparseDense=1
-              !  ENDIF
-              !ENDSELECT
-              !! create source vector
-              !SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
-              !  IF(.NOT.b%isCreated) THEN
-              !    CALL VecCreate(solver%MPIparallelEnv%comm,b%b,ierr)
-              !    b%isCreated=.TRUE.
-              !  ENDIF
-              !ENDSELECT
-              !! create solution vector
-              !SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
-              !  IF(.NOT.X%isCreated) THEN
-              !    CALL VecCreate(solver%MPIparallelEnv%comm,X%b,ierr)
-              !    X%isCreated=.TRUE.
-              !  ENDIF
-              !ENDSELECT
               !create and initialize KSP
               CALL KSPCreate(solver%MPIparallelEnv%comm,solver%ksp,ierr)
               

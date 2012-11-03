@@ -440,6 +440,7 @@ MODULE MatrixTypes
       
       IF(.NOT. matrix%isInit) THEN
         IF(n < 1) THEN
+          WRITE(*,*) n
           CALL eMatrixType%raiseError('Incorrect input to '// &
             modName//'::'//myName//' - Number of rows (n) must'// &
               ' be greater than 1!')

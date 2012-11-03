@@ -1810,8 +1810,9 @@ MODULE VectorTypes
       !Setup the required and optional parameter lists
       n=1_SIK
       MPI_Comm=1_SIK
+      CALL reqParamsVectorType%clear()
       CALL reqParamsVectorType%add('n',n)
-      CALL reqParamsVectorType%add('MPI_Comm_ID',MPI_Comm)
+      !CALL reqParamsVectorType%add('MPI_Comm_ID',MPI_Comm)
       
       !There are no optional parameters at this time.
       !Validate against the reqParams and OptParams
