@@ -225,8 +225,7 @@ MODULE LinearSolverTypes
         ALLOCATE(eLinearSolverType)
       ENDIF
 
-      !Pull data from the parameter list
-      MPI_Comm_ID=-1
+      !Pull LS data from the parameter list
       CALL lsPList%get('TPLType',TPLType)
       CALL lsPList%get('solverMethod',solverMethod)
       CALL lsPList%get('MPI_Comm_ID',MPI_Comm_ID)
@@ -235,7 +234,6 @@ MODULE LinearSolverTypes
       ! pull data for matrix parameter list
       CALL lsPList%get('LinearSolverType->A->MatrixType',pListPtr)
       matPList=pListPtr
-      matType=-2
       CALL matPList%get('matType',matType)
       CALL matPList%add('MPI_Comm_ID',MPI_Comm_ID)
       ! pull data for vector parameter list
@@ -265,7 +263,6 @@ MODULE LinearSolverTypes
         ENDIF
         IF(TPLType==TRILINOS) THEN ! Trilinos
 #ifndef HAVE_TRILINOS
-          ! we don't have Trilinos, so switch to next option (MKL)
           TPLType=MKL
           CALL eLinearSolverType%raiseWarning(modName//'::'// &
                     myName//'- TRILINOS is not enabled, MKL will be '// &
@@ -274,7 +271,6 @@ MODULE LinearSolverTypes
         ENDIF
         IF(TPLType==MKL) THEN ! MKL
 #ifndef HAVE_MKL
-          ! we don't have MKL, so switch to next option (native)
           TPLType=NATIVE
           CALL eLinearSolverType%raiseWarning(modName//'::'// &
                     myName//'- MKL is not enabled, native solvers will be '// &
@@ -284,93 +280,93 @@ MODULE LinearSolverTypes
 
         ! allocate and initialize matrix (A)
         IF(.NOT.ALLOCATED(solver%A)) THEN
-          IF(TPLType==PETSC) THEN
+          IF(TPLType==PETSC) THEN ! PETSc solver requires special PETSc type
             ALLOCATE(PETScMatrixType :: solver%A)
-          ELSE
-            IF(matType==0) THEN ! Sparse
+          ELSE ! all other TPLs use the standard matrix types
+            IF(matType==SPARSE) THEN
               ALLOCATE(SparseMatrixType :: solver%A)
-            ELSEIF(matType==1) THEN ! TriDiag 
+            ELSEIF(matType==TRIDIAG) THEN  
               ALLOCATE(TriDiagMatrixType :: solver%A)
-            ELSEIF(matType==2) THEN ! DenseSquare
+            ELSEIF(matType==DENSESQUARE) THEN
               ALLOCATE(DenseSquareMatrixType :: solver%A)  
-            ELSEIF(matType==3) THEN ! DenseRect
+            ELSEIF(matType==DENSERECT) THEN
               ALLOCATE(DenseRectMatrixType :: solver%A)
             ENDIF
           ENDIF
           CALL solver%A%init(matPList)
         ELSE
-          ! throw exception
+          CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
+            '  - MatrixType A not allocated!')
         ENDIF
-        ! allocate vectors (X and b)
+        ! allocate and initialize vectors (X and b)
         IF(.NOT.ALLOCATED(solver%X)) THEN
           IF(.NOT.ALLOCATED(solver%b)) THEN
-            IF(TPLType==PETSC) THEN
+            IF(TPLType==PETSC) THEN ! PETSc solver requires special PETSc type
               ALLOCATE(PETScVectorType :: solver%X)
               ALLOCATE(PETScVectorType :: solver%b)
-            ELSE
+            ELSE ! all other TPLs use the real vector type
               ALLOCATE(RealVectorType :: solver%X)
               ALLOCATE(RealVectorType :: solver%b)
             ENDIF
             CALL solver%X%init(vecxPList)
             CALL solver%b%init(vecbPList)
           ELSE
-            ! throw exception
+            CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
+              '  - VectorType b not allocated!')
           ENDIF
         ELSE
-          ! throw exception
+          CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
+            '  - VectorType x not allocated!')
         ENDIF
         
-      
-        ! direct solver
-        SELECTTYPE(solver); TYPE IS(LinearSolverType_Direct)
-          IF((solverMethod > 0) .AND. &
-             (solverMethod <= MAX_DIRECT_SOLVER_METHODS)) THEN         
-            !assign values to solver
-            CALL solver%SolveTime%setTimerName(timerName)   
-            solver%solverMethod=solverMethod
-            solver%TPLType=TPLType
-            solver%isInit=.TRUE.
-          ELSE
-            CALL eLinearSolverType%raiseError('Incorrect call to '// &
-              modName//'::'//myName//' - invalid value of solverMethod')
-          ENDIF
-        ENDSELECT
-        
-        ! iterative solver
-        SELECTTYPE(solver); TYPE IS(LinearSolverType_Iterative)
-          IF((solverMethod > 0) .AND. &
-             (solverMethod <= MAX_IT_SOLVER_METHODS)) THEN         
-              
-  
-            IF(TPLType==PETSC) THEN ! PETSc
-#ifdef HAVE_PETSC
-              !create and initialize KSP
-              CALL KSPCreate(solver%MPIparallelEnv%comm,solver%ksp,ierr)
-              
-              !set iterative solver type
-              SELECTCASE(solverMethod)
-                CASE(1) ! BCGS
-                  CALL KSPSetType(solver%ksp,KSPBCGS,ierr)
-                CASE(2) ! CGNR
-                  CALL KSPSetType(solver%ksp,KSPCGNE,ierr)
-                CASE(3) ! GMRES
-                  CALL KSPSetType(solver%ksp,KSPGMRES,ierr)
-              ENDSELECT
-#else
+        ! define other linear solver variables
+        SELECTTYPE(solver)
+          TYPE IS(LinearSolverType_Direct) ! direct solver
+            IF((solverMethod > 0) .AND. &
+               (solverMethod <= MAX_DIRECT_SOLVER_METHODS)) THEN         
+              !assign values to solver
+              CALL solver%SolveTime%setTimerName(timerName)   
+              solver%solverMethod=solverMethod
+              solver%TPLType=TPLType
+              solver%isInit=.TRUE.
+            ELSE
               CALL eLinearSolverType%raiseError('Incorrect call to '// &
                 modName//'::'//myName//' - invalid value of solverMethod')
-#endif 
             ENDIF
-
-            !assign values to solver
-            CALL solver%SolveTime%setTimerName(timerName)   
-            solver%solverMethod=solverMethod
-            solver%TPLType=TPLType
-            solver%isInit=.TRUE.
-          ELSE
-            CALL eLinearSolverType%raiseError('Incorrect call to '// &
-              modName//'::'//myName//' - invalid value of solverMethod')
-          ENDIF
+        
+          TYPE IS(LinearSolverType_Iterative) ! iterative solver
+            IF((solverMethod > 0) .AND. &
+               (solverMethod <= MAX_IT_SOLVER_METHODS)) THEN         
+                
+              IF(TPLType==PETSC) THEN
+#ifdef HAVE_PETSC
+                !create and initialize KSP
+                CALL KSPCreate(solver%MPIparallelEnv%comm,solver%ksp,ierr)
+                
+                !set iterative solver type
+                SELECTCASE(solverMethod)
+                  CASE(BICGSTAB) 
+                    CALL KSPSetType(solver%ksp,KSPBCGS,ierr)
+                  CASE(CGNR) 
+                    CALL KSPSetType(solver%ksp,KSPCGNE,ierr)
+                  CASE(GMRES) 
+                    CALL KSPSetType(solver%ksp,KSPGMRES,ierr)
+                ENDSELECT
+#else     
+                CALL eLinearSolverType%raiseError('Incorrect call to '// &
+                  modName//'::'//myName//' - invalid value of solverMethod')
+#endif    
+              ENDIF
+          
+              !assign values to solver
+              CALL solver%SolveTime%setTimerName(timerName)   
+              solver%solverMethod=solverMethod
+              solver%TPLType=TPLType
+              solver%isInit=.TRUE.
+            ELSE
+              CALL eLinearSolverType%raiseError('Incorrect call to '// &
+                modName//'::'//myName//' - invalid value of solverMethod')
+            ENDIF
         ENDSELECT
       ELSE
         CALL eLinearSolverType%raiseError('Incorrect call to '// &
@@ -507,7 +503,7 @@ MODULE LinearSolverTypes
         solver%info=-1
         CALL solver%SolveTime%tic()
         SELECTCASE(solver%solverMethod)
-          CASE(1) !GE
+          CASE(GE) 
             SELECTTYPE(A => solver%A)
               TYPE IS(DenseSquareMatrixType)
                 CALL solveGE_DenseSquare(solver)
@@ -526,7 +522,7 @@ MODULE LinearSolverTypes
                       'and sparse system is not implemented, CGNR method '// &
                         'is used instead.')
             ENDSELECT
-          CASE(2) !LU
+          CASE(LU)
             SELECTTYPE(A => solver%A)
               TYPE IS(DenseSquareMatrixType)
                 IF(.NOT. solver%isDecomposed) &
