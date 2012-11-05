@@ -103,7 +103,7 @@ PROGRAM testVectorTypes
       !Perform test of init function
       !first check intended init path (m provided)
       eVectorType => NULL()
-      CALL pList%add('testPL->n',10)
+      CALL pList%add('VectorType->n',10)
       CALL thisVector%init(pList)
       eVectorType => e
       SELECTTYPE(thisVector)
@@ -122,7 +122,7 @@ PROGRAM testVectorTypes
       CALL pList%clear()
       
       !now check init without m being provided
-      CALL pList%add('testPL->n',-10)
+      CALL pList%add('VectorType->n',-10)
       CALL thisVector%init(pList) !expect exception
       IF(thisVector%isInit) THEN
         WRITE(*,*) 'CALL realvec%init(...) FAILED!'
@@ -132,7 +132,7 @@ PROGRAM testVectorTypes
       CALL pList%clear()
       
       !init it twice so on 2nd init, isInit==.TRUE.
-      CALL pList%add('testPL->n',10)
+      CALL pList%add('VectorType->n',10)
       CALL thisVector%init(pList)
       SELECTTYPE(thisVector)
         TYPE IS(RealVectorType); thisVector%n=1
@@ -148,7 +148,7 @@ PROGRAM testVectorTypes
      !init with n<1
       CALL thisVector%clear()
       CALL pList%clear()
-      CALL pList%add('testPL->n',-1)
+      CALL pList%add('VectorType->n',-1)
       CALL thisVector%init(pList) !expect exception
       IF(thisVector%isInit) THEN
         WRITE(*,*) 'CALL realvec%init(...) FAILED!'
@@ -166,7 +166,7 @@ PROGRAM testVectorTypes
       !init with m<1
       CALL thisVector%clear()
       CALL pList%clear()
-      CALL pList%add('testPL->n',-10)
+      CALL pList%add('VectorType->n',-10)
       CALL thisVector%init(pList) !expect exception
       IF(thisVector%isInit) THEN
         WRITE(*,*) 'CALL realvec%init(...) FAILED!'
@@ -178,7 +178,7 @@ PROGRAM testVectorTypes
       !Perform test of set function
       !use set to update the values
       CALL pList%clear()
-      CALL pList%add('testPL->n',6)
+      CALL pList%add('VectorType->n',6)
       CALL thisVector%init(pList)
       CALL thisVector%set(1,1._SRK)
       CALL thisVector%set(2,2._SRK)
@@ -211,7 +211,7 @@ PROGRAM testVectorTypes
       !pass out-of bounds i and j
       CALL thisVector%clear()
       CALL pList%clear()
-      CALL pList%add('testPL->n',6)
+      CALL pList%add('VectorType->n',6)
       CALL thisVector%init(pList)   
       CALL thisVector%set(-1,1._SRK,iverr)
       SELECTTYPE(thisVector)
@@ -232,7 +232,7 @@ PROGRAM testVectorTypes
 
       CALL thisVector%clear()
       CALL pList%clear()
-      CALL pList%add('testPL->n',6)
+      CALL pList%add('VectorType->n',6)
       CALL thisVector%init(pList)
         
       SELECTTYPE(thisVector)
@@ -273,7 +273,7 @@ PROGRAM testVectorTypes
       ENDSELECT
       
       CALL pList%clear()
-      CALL pList%add('testPL->n',6)
+      CALL pList%add('VectorType->n',6)
       CALL thisVector%init(pList)
         
       SELECTTYPE(thisVector)
@@ -290,7 +290,7 @@ PROGRAM testVectorTypes
       !Perform test of set function
       !use set to update all values at once (array)
       CALL pList%clear()
-      CALL pList%add('testPL->n',6)
+      CALL pList%add('VectorType->n',6)
       CALL thisVector%init(pList)
       ALLOCATE(testvec(6))
       ALLOCATE(testvec2(6))
@@ -332,7 +332,7 @@ PROGRAM testVectorTypes
       !set unequal size
       CALL thisVector%clear()
       CALL pList%clear()
-      CALL pList%add('testPL->n',7)
+      CALL pList%add('VectorType->n',7)
       CALL thisVector%init(pList)
       CALL thisVector%set(testvec2,iverr)
       SELECTTYPE(thisVector)
@@ -346,7 +346,7 @@ PROGRAM testVectorTypes
       
       CALL thisVector%clear()
       CALL pList%clear()
-      CALL pList%add('testPL->n',6)
+      CALL pList%add('VectorType->n',6)
       CALL thisVector%init(pList)
         
       SELECTTYPE(thisVector)
@@ -395,7 +395,7 @@ PROGRAM testVectorTypes
       !set out of bounds
       CALL thisVector%clear()
       CALL pList%clear()
-      CALL pList%add('testPL->n',6)
+      CALL pList%add('VectorType->n',6)
       CALL thisVector%init(pList)
       CALL thisVector%set(5,7,1._SRK,iverr) !since isInit=.FALSE. expect no change
       SELECTTYPE(thisVector)
@@ -407,7 +407,7 @@ PROGRAM testVectorTypes
       ENDSELECT
       CALL thisVector%clear()
       CALL pList%clear()
-      CALL pList%add('testPL->n',6)
+      CALL pList%add('VectorType->n',6)
       CALL thisVector%init(pList)
       CALL thisVector%set(0,3,1._SRK,iverr) !since isInit=.FALSE. expect no change
       SELECTTYPE(thisVector)
@@ -434,7 +434,7 @@ PROGRAM testVectorTypes
       !Perform test of set function
       !use set to update all values at once (array)
       CALL pList%clear()
-      CALL pList%add('testPL->n',6)
+      CALL pList%add('VectorType->n',6)
       CALL thisVector%init(pList)
       DEALLOCATE(testvec,testvec2)
       ALLOCATE(testvec(3))
@@ -476,7 +476,7 @@ PROGRAM testVectorTypes
       
       CALL thisVector%clear()
       CALL pList%clear()
-      CALL pList%add('testPL->n',6)
+      CALL pList%add('VectorType->n',6)
       CALL thisVector%init(pList)
       SELECTTYPE(thisVector)
         TYPE IS(RealVectorType)
@@ -489,7 +489,7 @@ PROGRAM testVectorTypes
       
       CALL thisVector%clear()
       CALL pList%clear()
-      CALL pList%add('testPL->n',6)
+      CALL pList%add('VectorType->n',6)
       CALL thisVector%init(pList)
       SELECTTYPE(thisVector)
         TYPE IS(RealVectorType)
@@ -502,7 +502,7 @@ PROGRAM testVectorTypes
       
       CALL thisVector%clear()
       CALL pList%clear()
-      CALL pList%add('testPL->n',6)
+      CALL pList%add('VectorType->n',6)
       CALL thisVector%init(pList)
       SELECTTYPE(thisVector)
         TYPE IS(RealVectorType)
@@ -536,7 +536,7 @@ PROGRAM testVectorTypes
       ![1 5 8 9 3 7 2]
       CALL thisVector%clear()
       CALL pList%clear()
-      CALL pList%add('testPL->n',7)
+      CALL pList%add('VectorType->n',7)
       CALL thisVector%init(pList)
       SELECTTYPE(thisVector)
         TYPE IS(RealVectorType)
@@ -590,7 +590,7 @@ PROGRAM testVectorTypes
       
       CALL thisVector%clear()
       CALL pList%clear()
-      CALL pList%add('testPL->n',7)
+      CALL pList%add('VectorType->n',7)
       CALL thisVector%init(pList)
       DEALLOCATE(testvec)
       ALLOCATE(testvec(7))
@@ -632,7 +632,7 @@ PROGRAM testVectorTypes
       
       CALL thisVector%clear()
       CALL pList%clear()
-      CALL pList%add('testPL->n',7)
+      CALL pList%add('VectorType->n',7)
       CALL thisVector%init(pList)
       DEALLOCATE(testvec)
       ALLOCATE(testvec(3))
@@ -710,8 +710,8 @@ PROGRAM testVectorTypes
       !first check intended init path (m provided)
       eVectorType => NULL()
       CALL pList%clear()
-      CALL pList%add('testPL->n',10)
-      CALL pList%add('testPL->MPI_Comm_ID',PE_COMM_SELF)
+      CALL pList%add('VectorType->n',10)
+      CALL pList%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
       CALL thisVector%init(pList)
       eVectorType => e
       SELECTTYPE(thisVector)
@@ -731,8 +731,8 @@ PROGRAM testVectorTypes
         
       !now check init without m being provided
       CALL pList%clear()
-      CALL pList%add('testPL->n',-10)
-      CALL pList%add('testPL->MPI_Comm_ID',PE_COMM_SELF)
+      CALL pList%add('VectorType->n',-10)
+      CALL pList%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
       CALL thisVector%init(pList) !expect exception
       IF(thisVector%isInit) THEN
         WRITE(*,*) 'CALL petscvec%init(...) FAILED!'
@@ -742,8 +742,8 @@ PROGRAM testVectorTypes
         
       !init it twice so on 2nd init, isInit==.TRUE.
       CALL pList%clear()
-      CALL pList%add('testPL->n',10)
-      CALL pList%add('testPL->MPI_Comm_ID',PE_COMM_SELF)
+      CALL pList%add('VectorType->n',10)
+      CALL pList%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
       CALL thisVector%init(pList)
       SELECTTYPE(thisVector)
         TYPE IS(PETScVectorType); thisVector%n=1
@@ -759,8 +759,8 @@ PROGRAM testVectorTypes
      !init with n<1
       CALL thisVector%clear()
       CALL pList%clear()
-      CALL pList%add('testPL->n',-1)
-      CALL pList%add('testPL->MPI_Comm_ID',PE_COMM_SELF)
+      CALL pList%add('VectorType->n',-1)
+      CALL pList%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
       CALL thisVector%init(pList) !expect exception
       IF(thisVector%isInit) THEN
         WRITE(*,*) 'CALL petscvec%init(...) FAILED!'
@@ -769,8 +769,8 @@ PROGRAM testVectorTypes
       CALL thisVector%clear()
       !n<1, and m not provided
       CALL pList%clear()
-      CALL pList%add('testPL->n',-1)
-      CALL pList%add('testPL->MPI_Comm_ID',PE_COMM_SELF)
+      CALL pList%add('VectorType->n',-1)
+      CALL pList%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
       CALL thisVector%init(pList) !expect exception
       IF(thisVector%isInit) THEN
         WRITE(*,*) 'CALL petscvec%init(...) FAILED!'
@@ -780,8 +780,8 @@ PROGRAM testVectorTypes
       !init with m<1
       CALL thisVector%clear()
       CALL pList%clear()
-      CALL pList%add('testPL->n',-10)
-      CALL pList%add('testPL->MPI_Comm_ID',PE_COMM_SELF)
+      CALL pList%add('VectorType->n',-10)
+      CALL pList%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
       CALL thisVector%init(pList) !expect exception
       IF(thisVector%isInit) THEN
         WRITE(*,*) 'CALL petscvec%init(...) FAILED!'
@@ -793,8 +793,8 @@ PROGRAM testVectorTypes
       !Perform test of set function
       !use set to update the values
       CALL pList%clear()
-      CALL pList%add('testPL->n',6)
-      CALL pList%add('testPL->MPI_Comm_ID',PE_COMM_SELF)
+      CALL pList%add('VectorType->n',6)
+      CALL pList%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
       CALL thisVector%init(pList)
       CALL thisVector%set(1,1._SRK)
       CALL thisVector%set(2,2._SRK)
@@ -830,8 +830,8 @@ PROGRAM testVectorTypes
       !pass out-of bounds i and j
       CALL thisVector%clear()
       CALL pList%clear()
-      CALL pList%add('testPL->n',6)
-      CALL pList%add('testPL->MPI_Comm_ID',PE_COMM_SELF)
+      CALL pList%add('VectorType->n',6)
+      CALL pList%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
       CALL thisVector%init(pList)   
       CALL thisVector%set(-1,1._SRK,iverr)
       IF(iverr /= -2) THEN
@@ -846,8 +846,8 @@ PROGRAM testVectorTypes
 
       CALL thisVector%clear()
       CALL pList%clear()
-      CALL pList%add('testPL->n',6)
-      CALL pList%add('testPL->MPI_Comm_ID',PE_COMM_SELF)
+      CALL pList%add('VectorType->n',6)
+      CALL pList%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
       CALL thisVector%init(pList)
         
       SELECTTYPE(thisVector)
@@ -893,8 +893,8 @@ PROGRAM testVectorTypes
       ENDIF
       
       CALL pList%clear()
-      CALL pList%add('testPL->n',6)
-      CALL pList%add('testPL->MPI_Comm_ID',PE_COMM_SELF)
+      CALL pList%add('VectorType->n',6)
+      CALL pList%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
       CALL thisVector%init(pList)
         
       SELECTTYPE(thisVector)
@@ -917,8 +917,8 @@ PROGRAM testVectorTypes
       !Perform test of set function 
       !use set to update all values at once (array)
       CALL pList%clear()
-      CALL pList%add('testPL->n',6)
-      CALL pList%add('testPL->MPI_Comm_ID',PE_COMM_SELF)
+      CALL pList%add('VectorType->n',6)
+      CALL pList%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
       CALL thisVector%init(pList)
       DEALLOCATE(testvec)
       DEALLOCATE(testvec2)
@@ -960,8 +960,8 @@ PROGRAM testVectorTypes
       !set improper size
       CALL thisVector%clear()
       CALL pList%clear()
-      CALL pList%add('testPL->n',7)
-      CALL pList%add('testPL->MPI_Comm_ID',PE_COMM_SELF)
+      CALL pList%add('VectorType->n',7)
+      CALL pList%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
       CALL thisVector%init(pList)
       testvec2(1)=1._SRK
       testvec2(2)=3._SRK
@@ -977,8 +977,8 @@ PROGRAM testVectorTypes
       
       CALL thisVector%clear()
       CALL pList%clear()
-      CALL pList%add('testPL->n',6)
-      CALL pList%add('testPL->MPI_Comm_ID',PE_COMM_SELF)
+      CALL pList%add('VectorType->n',6)
+      CALL pList%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
       CALL thisVector%init(pList)
       SELECTTYPE(thisVector)
         TYPE IS(PETScVectorType)
@@ -1000,8 +1000,8 @@ PROGRAM testVectorTypes
       !Perform test of set function
       !use set to update all values at once (scalar)
       CALL pList%clear()
-      CALL pList%add('testPL->n',6)
-      CALL pList%add('testPL->MPI_Comm_ID',PE_COMM_SELF)
+      CALL pList%add('VectorType->n',6)
+      CALL pList%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
       CALL thisVector%init(pList)
       CALL thisVector%set(4,6,10._SRK,iverr)
       SELECTTYPE(thisVector)
@@ -1034,8 +1034,8 @@ PROGRAM testVectorTypes
       !set out of bounds
       CALL thisVector%clear()
       CALL pList%clear()
-      CALL pList%add('testPL->n',6)
-      CALL pList%add('testPL->MPI_Comm_ID',PE_COMM_SELF)
+      CALL pList%add('VectorType->n',6)
+      CALL pList%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
       CALL thisVector%init(pList)
       CALL thisVector%set(4,7,1._SRK,iverr) 
       IF((iverr /= -2._SRK)) THEN
@@ -1046,8 +1046,8 @@ PROGRAM testVectorTypes
       !set out of bounds
       CALL thisVector%clear()
       CALL pList%clear()
-      CALL pList%add('testPL->n',6)
-      CALL pList%add('testPL->MPI_Comm_ID',PE_COMM_SELF)
+      CALL pList%add('VectorType->n',6)
+      CALL pList%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
       CALL thisVector%init(pList)
       CALL thisVector%set(0,3,1._SRK,iverr)
       IF((iverr /= -2._SRK)) THEN
@@ -1057,8 +1057,8 @@ PROGRAM testVectorTypes
       
       CALL thisVector%clear()
       CALL pList%clear()
-      CALL pList%add('testPL->n',6)
-      CALL pList%add('testPL->MPI_Comm_ID',PE_COMM_SELF)
+      CALL pList%add('VectorType->n',6)
+      CALL pList%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
       CALL thisVector%init(pList)
         
       SELECTTYPE(thisVector)
@@ -1081,8 +1081,8 @@ PROGRAM testVectorTypes
       !Perform test of set function
       !use set to update all values at once (array)
       CALL pList%clear()
-      CALL pList%add('testPL->n',6)
-      CALL pList%add('testPL->MPI_Comm_ID',PE_COMM_SELF)
+      CALL pList%add('VectorType->n',6)
+      CALL pList%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
       CALL thisVector%init(pList)
       DEALLOCATE(testvec)
       DEALLOCATE(testvec2)
@@ -1126,8 +1126,8 @@ PROGRAM testVectorTypes
       !set size not equal to range
       CALL thisVector%clear()
       CALL pList%clear()
-      CALL pList%add('testPL->n',6)
-      CALL pList%add('testPL->MPI_Comm_ID',PE_COMM_SELF)
+      CALL pList%add('VectorType->n',6)
+      CALL pList%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
       CALL thisVector%init(pList)
       ALLOCATE(testvec2(3))
       testvec2(1)=2._SRK
@@ -1141,8 +1141,8 @@ PROGRAM testVectorTypes
             
       CALL thisVector%clear()
       CALL pList%clear()
-      CALL pList%add('testPL->n',6)
-      CALL pList%add('testPL->MPI_Comm_ID',PE_COMM_SELF)
+      CALL pList%add('VectorType->n',6)
+      CALL pList%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
       CALL thisVector%init(pList)
         
       SELECTTYPE(thisVector)
@@ -1166,8 +1166,8 @@ PROGRAM testVectorTypes
       ![1 5 8 9 3 7 2]
       CALL thisVector%clear()
       CALL pList%clear()
-      CALL pList%add('testPL->n',7)
-      CALL pList%add('testPL->MPI_Comm_ID',PE_COMM_SELF)
+      CALL pList%add('VectorType->n',7)
+      CALL pList%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
       CALL thisVector%init(pList)
       SELECTTYPE(thisVector)
         TYPE IS(PETScVectorType)
@@ -1223,8 +1223,8 @@ PROGRAM testVectorTypes
       ![1 5 8 9 3 7 2]
       CALL thisVector%clear()
       CALL pList%clear()
-      CALL pList%add('testPL->n',7)
-      CALL pList%add('testPL->MPI_Comm_ID',PE_COMM_SELF)
+      CALL pList%add('VectorType->n',7)
+      CALL pList%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
       CALL thisVector%init(pList)
       DEALLOCATE(testvec)
       ALLOCATE(testvec(7))
@@ -1266,8 +1266,8 @@ PROGRAM testVectorTypes
       ![1 5 8 9 3 7 2]
       CALL thisVector%clear()
       CALL pList%clear()
-      CALL pList%add('testPL->n',7)
-      CALL pList%add('testPL->MPI_Comm_ID',PE_COMM_SELF)
+      CALL pList%add('VectorType->n',7)
+      CALL pList%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
       CALL thisVector%init(pList)
       DEALLOCATE(testvec)
       ALLOCATE(testvec(3))
@@ -1333,7 +1333,7 @@ PROGRAM testVectorTypes
     ALLOCATE(RealVectorType :: yVector)
     ALLOCATE(RealVectorType :: aVector)
     CALL pList%clear()
-    CALL pList%add('testPL->n',3)
+    CALL pList%add('VectorType->n',3)
     CALL xVector%init(pList)
     CALL yVector%init(pList)
     CALL aVector%init(pList)
@@ -2050,8 +2050,8 @@ PROGRAM testVectorTypes
     ALLOCATE(PETScVectorType :: yVector)
     ALLOCATE(PETScVectorType :: aVector)
     CALL pList%clear()
-    CALL pList%add('testPL->n',3)
-    CALL pList%add('testPL->MPI_Comm_ID',PE_COMM_SELF)
+    CALL pList%add('VectorType->n',3)
+    CALL pList%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
     CALL xVector%init(pList)
     CALL yVector%init(pList)
     CALL aVector%init(pList)

@@ -430,7 +430,7 @@ MODULE VectorTypes
       CALL validRealVTParams(validParams)
       
       !Pull Data from Parameter List
-      CALL Params%get('n',n)
+      CALL Params%get('VectorType->n',n)
       
       !Error checking of subroutine input
       localalloc=.FALSE.
@@ -1785,7 +1785,7 @@ MODULE VectorTypes
       
       !Setup the required and optional parameter lists
       n=1_SIK
-      CALL reqParamsVectorType%add('n',n)
+      CALL reqParamsVectorType%add('VectorType->n',n)
       
       !There are no optional parameters at this time.
       !Validate against the reqParams and OptParams
@@ -1806,23 +1806,18 @@ MODULE VectorTypes
     SUBROUTINE validPETScVTParams(thisParams)
       TYPE(ParamType),INTENT(INOUT) :: thisParams
       INTEGER(SIK) :: n,MPI_Comm
-      CLASS(ParamType),POINTER :: pListPtr
-      TYPE(ParamType) :: tmpParams
       
       !Setup the required and optional parameter lists
       n=1_SIK
       MPI_Comm=1_SIK
-      CALL tmpParams%clear()
-      CALL tmpParams%add('PL->n',n)
-      CALL tmpParams%add('PL->MPI_Comm_ID',MPI_Comm)
-      CALL tmpParams%get('PL',pListPtr)
-      reqParamsVectorType=pListPtr
+      CALL reqParamsVectorType%clear()
+      CALL reqParamsVectorType%add('VectorType->n',n)
+      CALL reqParamsVectorType%add('VectorType->MPI_Comm_ID',MPI_Comm)
       
       !There are no optional parameters at this time.
       !Validate against the reqParams and OptParams
       CALL thisParams%validate(reqParamsVectorType)
       CALL reqParamsVectorType%clear()
-      CALL tmpParams%clear()
     ENDSUBROUTINE validPETScVTParams
 !
 ENDMODULE VectorTypes
