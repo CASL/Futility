@@ -233,18 +233,18 @@ MODULE LinearSolverTypes
       CALL lsPList%get('numberOMP',numberOMP)
       CALL lsPList%get('timerName',timerName)
       ! pull data for matrix parameter list
-      CALL lsPList%get('LinearSolverType->MatrixType_A',pListPtr)
+      CALL lsPList%get('LinearSolverType->A->MatrixType',pListPtr)
       matPList=pListPtr
       matType=-2
       CALL matPList%get('matType',matType)
       CALL matPList%add('MPI_Comm_ID',MPI_Comm_ID)
       ! pull data for vector parameter list
-      CALL lsPList%get('LinearSolverType->VectorType_x',pListPtr)
+      CALL lsPList%get('LinearSolverType->x->VectorType',pListPtr)
       vecxPList=pListPtr
-      CALL vecxPList%add('MPI_Comm_ID',MPI_Comm_ID)
-      CALL lsPList%get('LinearSolverType->VectorType_b',pListPtr)
+      CALL vecxPList%add('VectorType->MPI_Comm_ID',MPI_Comm_ID)
+      CALL lsPList%get('LinearSolverType->b->VectorType',pListPtr)
       vecbPList=pListPtr
-      CALL vecbPList%add('MPI_Comm_ID',MPI_Comm_ID)
+      CALL vecbPList%add('VectorType->MPI_Comm_ID',MPI_Comm_ID)
       
       
       !Initialize parallel environments based on input
@@ -1037,8 +1037,8 @@ MODULE LinearSolverTypes
         DEALLOCATE(solver%M)
       ENDIF
       ALLOCATE(DenseSquareMatrixType :: solver%M)
-      CALL pList%add('PL->n',solver%A%n)
-      CALL pList%add('PL->isSym',.FALSE.)
+      CALL pList%add('MatrixType->n',solver%A%n)
+      CALL pList%add('MatrixType->isSym',.FALSE.)
       CALL solver%M%init(pList)
       DO i=1,solver%M%n
         CALL solver%M%set(i,i,1.0_SRK)
@@ -1062,7 +1062,7 @@ MODULE LinearSolverTypes
       TYPE(ParamType) :: pList
 
       !Get the n value and set the parameter list
-      CALL pList%add('VecList -> n',solver%A%n)
+      CALL pList%add('VectorType -> n',solver%A%n)
       
       CALL vr%init(pList)
       CALL vr0%init(pList)
@@ -1151,7 +1151,7 @@ MODULE LinearSolverTypes
       TYPE(ParamType) :: pList
       
       !Set parameter list for vector
-      CALL pList%add('VecList -> n',solver%A%n)
+      CALL pList%add('VectorType -> n',solver%A%n)
       n=solver%A%n
       m=MIN(solver%nRestart,n)
       CALL u%init(pList)
@@ -1344,8 +1344,8 @@ MODULE LinearSolverTypes
             RETURN
           ENDIF
 
-          CALL pList%add('PL->n',A%n)
-          CALL pList%add('PL->isSym',.FALSE.)
+          CALL pList%add('MatrixType->n',A%n)
+          CALL pList%add('MatrixType->isSym',.FALSE.)
           CALL solver%M%init(pList)
           SELECTTYPE(M => solver%M); TYPE IS(TriDiagMatrixType)
             M%a(2,1)=1.0_SRK/A%a(2,1)
@@ -1579,8 +1579,8 @@ MODULE LinearSolverTypes
       ENDIF
       CALL dmallocA(solver%IPIV,solver%A%n)
 
-      CALL pList%add('PL->n',solver%A%n)
-      CALL pList%add('PL->isSym',.FALSE.)
+      CALL pList%add('MatrixType->n',solver%A%n)
+      CALL pList%add('MatrixType->isSym',.FALSE.)
       CALL solver%M%init(pList)
       SELECTTYPE(M => solver%M); TYPE IS(DenseSquareMatrixType)
         SELECTTYPE(A => solver%A); TYPE IS(DenseSquareMatrixType)
@@ -1767,13 +1767,13 @@ MODULE LinearSolverTypes
       TYPE(ParamType) :: pList,pList2
       
       !Set parameter list for vector
-      CALL pList%add('VecList -> n',solver%A%n)
-      CALL pList2%add('VecList -> n',solver%A%n)
+      CALL pList%add('VectorType -> n',solver%A%n)
+      CALL pList2%add('VectorType -> n',solver%A%n)
       N=solver%A%n
       M=N
       SELECTTYPE(A => solver%A); TYPE IS(DenseRectMatrixType)
         M=A%m
-        CALL pList2%set('VecList -> n',M)
+        CALL pList2%set('VectorType -> n',M)
       ENDSELECT
       solver%info=-1
       convTol=1e-9

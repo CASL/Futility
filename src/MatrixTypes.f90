@@ -329,8 +329,8 @@ MODULE MatrixTypes
       LOGICAL(SBK) :: localalloc
       
       ! Pull Data From Parameter List
-      CALL Params%get('n',n)
-      CALL Params%get('nnz',nnz)
+      CALL Params%get('MatrixType->n',n)
+      CALL Params%get('MatrixType->nnz',nnz)
       
       !Error checking of subroutine input
       localalloc=.FALSE.
@@ -381,8 +381,8 @@ MODULE MatrixTypes
       LOGICAL(SBK) :: localalloc, isSym
       
       ! Pull Data From Parameter List
-      CALL Params%get('n',n)
-      CALL Params%get('isSym',isSym)
+      CALL Params%get('MatrixType->n',n)
+      CALL Params%get('MatrixType->isSym',isSym)
       
      !Error checking of subroutine input
       localalloc=.FALSE.
@@ -428,8 +428,8 @@ MODULE MatrixTypes
       LOGICAL(SBK) :: localalloc
       
       ! Pull Data From Parameter List
-      CALL Params%get('n',n)
-      CALL Params%get('m',m)
+      CALL Params%get('MatrixType->n',n)
+      CALL Params%get('MatrixType->m',m)
       
       !Error checking of subroutine input
       localalloc=.FALSE.
@@ -476,8 +476,8 @@ MODULE MatrixTypes
       LOGICAL(SBK) :: localalloc, isSym
       
       ! Pull Data From Parameter List
-      CALL Params%get('n',n)
-      CALL Params%get('isSym',isSym)
+      CALL Params%get('MatrixType->n',n)
+      CALL Params%get('MatrixType->isSym',isSym)
       
       !Error checking of subroutine input
       localalloc=.FALSE.
@@ -535,10 +535,10 @@ MODULE MatrixTypes
       
 #ifdef HAVE_PETSC
       ! Pull Data From Parameter List
-      CALL Params%get('n',n)
-      CALL Params%get('isSym',isSym)
-      CALL Params%get('matType',matType)
-      CALL Params%get('MPI_COMM_ID',MPI_COMM_ID)
+      CALL Params%get('MatrixType->n',n)
+      CALL Params%get('MatrixType->isSym',isSym)
+      CALL Params%get('MatrixType->matType',matType)
+      CALL Params%get('MatrixType->MPI_COMM_ID',MPI_COMM_ID)
 
       IF(.NOT. matrix%isInit) THEN
         IF(n < 1) THEN
