@@ -1806,18 +1806,23 @@ MODULE VectorTypes
     SUBROUTINE validPETScVTParams(thisParams)
       TYPE(ParamType),INTENT(INOUT) :: thisParams
       INTEGER(SIK) :: n,MPI_Comm
+      CLASS(ParamType),POINTER :: pListPtr
+      TYPE(ParamType) :: tmpParams
       
       !Setup the required and optional parameter lists
       n=1_SIK
       MPI_Comm=1_SIK
-      CALL reqParamsVectorType%clear()
-      CALL reqParamsVectorType%add('n',n)
-      !CALL reqParamsVectorType%add('MPI_Comm_ID',MPI_Comm)
+      CALL tmpParams%clear()
+      CALL tmpParams%add('PL->n',n)
+      CALL tmpParams%add('PL->MPI_Comm_ID',MPI_Comm)
+      CALL tmpParams%get('PL',pListPtr)
+      reqParamsVectorType=pListPtr
       
       !There are no optional parameters at this time.
       !Validate against the reqParams and OptParams
       CALL thisParams%validate(reqParamsVectorType)
       CALL reqParamsVectorType%clear()
+      CALL tmpParams%clear()
     ENDSUBROUTINE validPETScVTParams
 !
 ENDMODULE VectorTypes
