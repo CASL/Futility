@@ -453,6 +453,7 @@ MODULE VectorTypes
         CALL eVectorType%raiseError('Incorrect call to '// &
           modName//'::'//myName//' - VectorType already initialized')
       ENDIF
+      CALL validParams%clear()
       IF(localalloc) DEALLOCATE(eVectorType)
     ENDSUBROUTINE init_RealVectorType
 !
@@ -699,6 +700,7 @@ MODULE VectorTypes
          modName//'::'//myName//' - PETSc not enabled.  You will'// &
          'need to recompile with PETSc enabled to use this feature.')
 #endif
+      CALL validParams%clear()
       IF(localalloc) DEALLOCATE(eVectorType)
     ENDSUBROUTINE init_PETScVectorType
 !
