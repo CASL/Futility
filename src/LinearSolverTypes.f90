@@ -376,9 +376,10 @@ MODULE LinearSolverTypes
         CALL eLinearSolverType%raiseError('Incorrect call to '// &
           modName//'::'//myName//' - LinearSolverType already initialized')
       ENDIF
-      
+      CALL vecbPList%clear()
+      CALL vecxPList%clear()
+      CALL matPList%clear()
       IF(localalloc) DEALLOCATE(eLinearSolverType)
-      
     ENDSUBROUTINE init_LinearSolverType_Base
 !
 !-------------------------------------------------------------------------------
