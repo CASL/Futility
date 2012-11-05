@@ -1776,7 +1776,7 @@ MODULE VectorTypes
 !> @param thisParams The parameter list that was input to the initialization
 !>        routine.
 !> The required parameters for the Real Vector Type are:
-!>        '...->n',SIK
+!>        'VectorType->n',SIK
 !> The optional parameters for the Real Vector Type do not exist.
 !>
     SUBROUTINE validRealVTParams(thisParams)
@@ -1799,8 +1799,8 @@ MODULE VectorTypes
 !> @param thisParams The parameter list that was input to the initialization
 !>        routine.
 !> The required parameters for the PETSc Vector Type are:
-!>        '...->n',SIK
-!>        '...->MPI_Comm_ID',SIK
+!>        'VectorType->n',SIK
+!>        'VectorType->MPI_Comm_ID',SIK
 !> The optional parameters for the PETSc Vector Type do not exist.
 !>
     SUBROUTINE validPETScVTParams(thisParams)
