@@ -477,9 +477,8 @@ MODULE MatrixTypes
         CALL eMatrixType%raiseError('Incorrect call to '// &
           modName//'::'//myName//' - MatrixType already initialized')
       ENDIF
-
+      CALL validParams%clear()
       IF(localalloc) DEALLOCATE(eMatrixType)
-      
     ENDSUBROUTINE init_DenseRectMatrixParam
 !
 !-------------------------------------------------------------------------------
