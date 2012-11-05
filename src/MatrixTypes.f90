@@ -306,6 +306,10 @@ MODULE MatrixTypes
     MODULE PROCEDURE matmult_MatrixType
   ENDINTERFACE BLAS_matmult
   
+  !> The parameter lists to use when validating a parameter list for
+  !> initialization
+  TYPE(ParamType),SAVE :: reqParamsMatrixType, optParamsMatrixType
+  
   !> Exception Handler for use in MatrixTypes
   TYPE(ExceptionHandlerType),POINTER,SAVE :: eMatrixType => NULL()
   
@@ -325,8 +329,13 @@ MODULE MatrixTypes
       CHARACTER(LEN=*),PARAMETER :: myName='init_SparseMatrixParam'
       CLASS(SparseMatrixType),INTENT(INOUT) :: matrix
       CLASS(ParamType),INTENT(IN) :: Params
+      TYPE(ParamType) :: validParams
       INTEGER(SIK) :: n,nnz
       LOGICAL(SBK) :: localalloc
+      
+      !Validate Input Parameter List 
+      validParams=Params
+      CALL validSMTParams(validParams)
       
       ! Pull Data From Parameter List
       CALL Params%get('MatrixType->n',n)
@@ -377,8 +386,13 @@ MODULE MatrixTypes
       CHARACTER(LEN=*),PARAMETER :: myName='init_TriDiagMatrixParam'
       CLASS(TriDiagMatrixType),INTENT(INOUT) :: matrix
       CLASS(ParamType),INTENT(IN) :: Params
+      TYPE(ParamType) :: validParams
       INTEGER(SIK) :: n
       LOGICAL(SBK) :: localalloc, isSym
+      
+      !Validate Input Parameter List 
+      validParams=Params
+      CALL validTDMTParams(validParams)
       
       ! Pull Data From Parameter List
       CALL Params%get('MatrixType->n',n)
@@ -424,8 +438,13 @@ MODULE MatrixTypes
       CHARACTER(LEN=*),PARAMETER :: myName='init_DenseRectMatrixParam'
       CLASS(DenseRectMatrixType),INTENT(INOUT) :: matrix
       CLASS(ParamType),INTENT(IN) :: Params
+      TYPE(ParamType) :: validParams
       INTEGER(SIK) :: n, m
       LOGICAL(SBK) :: localalloc
+      
+      !Validate Input Parameter List 
+      validParams=Params
+      CALL validDRMTParams(validParams)
       
       ! Pull Data From Parameter List
       CALL Params%get('MatrixType->n',n)
@@ -472,8 +491,13 @@ MODULE MatrixTypes
       CHARACTER(LEN=*),PARAMETER :: myName='init_DenseSquareMatrixParam'
       CLASS(DenseSquareMatrixType),INTENT(INOUT) :: matrix
       CLASS(ParamType),INTENT(IN) :: Params
+      TYPE(ParamType) :: validParams
       INTEGER(SIK) :: n
       LOGICAL(SBK) :: localalloc, isSym
+      
+      !Validate Input Parameter List 
+      validParams=Params
+      CALL validDSMTParams(validParams)
       
       ! Pull Data From Parameter List
       CALL Params%get('MatrixType->n',n)
@@ -519,6 +543,7 @@ MODULE MatrixTypes
       CHARACTER(LEN=*),PARAMETER :: myName='init_PETScMatrixParam'
       CLASS(PETScMatrixType),INTENT(INOUT) :: matrix
       CLASS(ParamType),INTENT(IN) :: Params
+      TYPE(ParamType) :: validParams
       INTEGER(SIK) :: n, matType, MPI_COMM_ID
       LOGICAL(SBK) :: localalloc, isSym
       
@@ -534,6 +559,10 @@ MODULE MatrixTypes
       ENDIF
       
 #ifdef HAVE_PETSC
+      !Validate Input Parameter List 
+      validParams=Params
+      CALL validPMTParams(validParams)
+      
       ! Pull Data From Parameter List
       CALL Params%get('MatrixType->n',n)
       CALL Params%get('MatrixType->isSym',isSym)
@@ -1485,5 +1514,149 @@ MODULE MatrixTypes
   
       IF(localalloc) DEALLOCATE(eMatrixType)
     ENDSUBROUTINE matmult_MatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief Subroutine that sets up the default parameter lists for the Sparse 
+!>        Matrix Type and then validates them against the input parameter list.
+!> @param thisParams The parameter list that was input to the initialization
+!>        routine.
+!> The required parameters for the Sparse Matrix Type are:
+!>        'MatrixType->n',SIK
+!>        'MatrixType->nnz',SIK
+!> The optional parameters for the Sparse Matrix Type do not exist.
+!>
+    SUBROUTINE validSMTParams(thisParams)
+      TYPE(ParamType),INTENT(INOUT) :: thisParams
+      INTEGER(SIK) :: n,nnz
+      
+      !Setup the required and optional parameter lists
+      n=1_SIK
+      nnz=1_SIK
+      CALL reqParamsMatrixType%clear()
+      CALL reqParamsMatrixType%add('MatrixType->n',n)
+      CALL reqParamsMatrixType%add('MatrixType->nnz',nnz)
+      
+      !There are no optional parameters at this time.
+      !Validate against the reqParams and OptParams
+      CALL thisParams%validate(reqParamsMatrixType)
+      CALL reqParamsMatrixType%clear()
+    ENDSUBROUTINE validSMTParams
+!
+!-------------------------------------------------------------------------------
+!> @brief Subroutine that sets up the default parameter lists for the Tri- 
+!>        Diagonal Matrix Type and then validates them against the input 
+!>        parameter list.
+!> @param thisParams The parameter list that was input to the initialization
+!>        routine.
+!> The required parameters for the Tri-Diagonal Matrix Type are:
+!>        'MatrixType->n',SIK
+!>        'MatrixType->isSym',SBK
+!> The optional parameters for the Tri-Diagonal Matrix Type do not exist.
+!>
+    SUBROUTINE validTDMTParams(thisParams)
+      TYPE(ParamType),INTENT(INOUT) :: thisParams
+      INTEGER(SIK) :: n
+      LOGICAL(SBK) :: isSym
+      !Setup the required and optional parameter lists
+      n=1_SIK
+      isSym=.FALSE.
+      CALL reqParamsMatrixType%clear()
+      CALL reqParamsMatrixType%add('MatrixType->n',n)
+      CALL reqParamsMatrixType%add('MatrixType->isSym',isSym)
+      
+      !There are no optional parameters at this time.
+      !Validate against the reqParams and OptParams
+      CALL thisParams%validate(reqParamsMatrixType)
+      CALL reqParamsMatrixType%clear()
+    ENDSUBROUTINE validTDMTParams
+!
+!-------------------------------------------------------------------------------
+!> @brief Subroutine that sets up the default parameter lists for the Dense 
+!>        Rectangular Matrix Type and then validates them against the input 
+!>        parameter list.
+!> @param thisParams The parameter list that was input to the initialization
+!>        routine.
+!> The required parameters for the Dense Retangular Matrix Type are:
+!>        'MatrixType->n',SIK
+!>        'MatrixType->m',SIK
+!> The optional parameters for the Dense Retangular Matrix Type do not exist.
+!>
+    SUBROUTINE validDRMTParams(thisParams)
+      TYPE(ParamType),INTENT(INOUT) :: thisParams
+      INTEGER(SIK) :: n,m
+      
+      !Setup the required and optional parameter lists
+      n=1_SIK
+      m=1_SIK
+      CALL reqParamsMatrixType%clear()
+      CALL reqParamsMatrixType%add('MatrixType->n',n)
+      CALL reqParamsMatrixType%add('MatrixType->m',m)
+      
+      !There are no optional parameters at this time.
+      !Validate against the reqParams and OptParams
+      CALL thisParams%validate(reqParamsMatrixType)
+      CALL reqParamsMatrixType%clear()
+    ENDSUBROUTINE validDRMTParams
+!
+!-------------------------------------------------------------------------------
+!> @brief Subroutine that sets up the default parameter lists for the Dense 
+!>        Square Matrix Type and then validates them against the input 
+!>        parameter list.
+!> @param thisParams The parameter list that was input to the initialization
+!>        routine.
+!> The required parameters for the Dense Square Matrix Type are:
+!>        'MatrixType->n',SIK
+!>        'MatrixType->isSym',SBK
+!> The optional parameters for the Dense Square Matrix Type do not exist.
+!>
+    SUBROUTINE validDSMTParams(thisParams)
+      TYPE(ParamType),INTENT(INOUT) :: thisParams
+      INTEGER(SIK) :: n
+      LOGICAL(SBK) :: isSym
+      
+      !Setup the required and optional parameter lists
+      n=1_SIK
+      isSym=.FALSE.
+      CALL reqParamsMatrixType%clear()
+      CALL reqParamsMatrixType%add('MatrixType->n',n)
+      CALL reqParamsMatrixType%add('MatrixType->isSym',isSym)
+      
+      !There are no optional parameters at this time.
+      !Validate against the reqParams and OptParams
+      CALL thisParams%validate(reqParamsMatrixType)
+      CALL reqParamsMatrixType%clear()
+    ENDSUBROUTINE validDSMTParams
+!
+!-------------------------------------------------------------------------------
+!> @brief Subroutine that sets up the default parameter lists for the PETSc 
+!>        Matrix Type and then validates them against the input parameter list.
+!> @param thisParams The parameter list that was input to the initialization
+!>        routine.
+!> The required parameters for the PETSc Matrix Type are:
+!>        'MatrixType->n',SIK
+!>        'MatrixType->isSym',SBK
+!>        'MatrixType->matType',SIK
+!>        'MatrixType->MPI_COMM_ID',SIK
+!> The optional parameters for the PETSc Matrix Type do not exist.
+!>
+    SUBROUTINE validPMTParams(thisParams)
+      TYPE(ParamType),INTENT(INOUT) :: thisParams
+      INTEGER(SIK) :: n,matType,MPI_COMM_ID
+      LOGICAL(SBK) :: isSym
+      
+      !Setup the required and optional parameter lists
+      n=1_SIK
+      isSym=.FALSE.
+      CALL reqParamsMatrixType%clear()
+      CALL reqParamsMatrixType%add('MatrixType->n',n)
+      CALL reqParamsMatrixType%add('MatrixType->isSym',isSym)
+      CALL reqParamsMatrixType%add('MatrixType->matType',matType)
+      CALL reqParamsMatrixType%add('MatrixType->MPI_COMM_ID',MPI_COMM_ID)
+      
+      !There are no optional parameters at this time.
+      !Validate against the reqParams and OptParams
+      CALL thisParams%validate(reqParamsMatrixType)
+      CALL reqParamsMatrixType%clear()
+    ENDSUBROUTINE validPMTParams
 !
 ENDMODULE MatrixTypes
