@@ -66,6 +66,7 @@ PROGRAM testMatrixTypes
   WRITE(*,*) 'TESTING MATRIX TYPES PASSED!'
   WRITE(*,*) '==================================================='
   DEALLOCATE(e)
+  CALL clearMTParams()
   
 #ifdef HAVE_PETSC    
       CALL PetscFinalize(ierr)

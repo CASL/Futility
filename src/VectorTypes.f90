@@ -79,6 +79,10 @@ MODULE VectorTypes
   PUBLIC :: BLAS_nrm2
   PUBLIC :: BLAS_scal
   PUBLIC :: BLAS_swap
+  PUBLIC :: reqParamsRealVT,optParamsRealVT
+  PUBLIC :: reqParamsPETScVT,optParamsPETScVT
+  PUBLIC :: setupVTParams
+  PUBLIC :: clearVTParams
   
   !> @brief the base vector type
   TYPE,ABSTRACT :: VectorType
@@ -392,12 +396,8 @@ MODULE VectorTypes
   ENDINTERFACE BLAS_swap 
   
   !> Logical flag to check whether the required and optional parameter lists
-  !> have been created yet for the Real Vector Type.
-  LOGICAL(SBK),SAVE :: flagParamsRealVT=.FALSE.
-  
-  !> Logical flag to check whether the required and optional parameter lists
-  !> have been created yet for the PETSc Vector Type.
-  LOGICAL(SBK),SAVE :: flagParamsPETScVT=.FALSE.
+  !> have been created yet for the Vector Types.
+  LOGICAL(SBK),SAVE :: flagParamsVT=.FALSE.
   
   !> The parameter lists to use when validating a parameter list for
   !> initialization for the Real Vector Type.
@@ -438,7 +438,7 @@ MODULE VectorTypes
       INTEGER(SIK) :: n
       
       !Check to set up required and optional param lists.
-      IF(.NOT.flagParamsRealVT) CALL setupRealVTParams()
+      IF(.NOT.flagParamsVT) CALL setupVTParams()
       
       !Validate against the reqParams and OptParams
       validParams=Params
@@ -481,11 +481,6 @@ MODULE VectorTypes
       thisVector%isInit=.FALSE.
       thisVector%n=0
       IF(ALLOCATED(thisVector%b)) CALL demallocA(thisVector%b)
-      IF(flagParamsRealVT) THEN
-        CALL reqParamsRealVT%clear()
-        CALL optParamsRealVT%clear()
-        flagParamsRealVT=.FALSE.
-      ENDIF
     ENDSUBROUTINE clear_RealVectorType
 !
 !-------------------------------------------------------------------------------
@@ -678,7 +673,7 @@ MODULE VectorTypes
       INTEGER(SIK) :: n, MPI_Comm_ID
       
       !Check to set up required and optional param lists.
-      IF(.NOT.flagParamsPETScVT) CALL setupPETScVTParams()
+      IF(.NOT.flagParamsVT) CALL setupVTParams()
       
       !Validate against the reqParams and OptParams
       validParams=Params
@@ -1801,51 +1796,50 @@ MODULE VectorTypes
     ENDSUBROUTINE swap_VectorType  
 !
 !-------------------------------------------------------------------------------
-!> @brief Subroutine that sets up the default parameter lists for the Real 
-!>        Vector Type and then validates them against the input parameter list.
-!> @param thisParams The parameter list that was input to the initialization
-!>        routine.
+!> @brief Subroutine that sets up the default parameter lists for the  Vector 
+!>        Types, both Real and PETSc.
 !> The required parameters for the Real Vector Type are:
 !>        'VectorType->n',SIK
 !> The optional parameters for the Real Vector Type do not exist.
-!>
-    SUBROUTINE setupRealVTParams()
-      INTEGER(SIK) :: n
-      
-      !Setup the required and optional parameter lists
-      n=1_SIK
-      CALL reqParamsRealVT%clear()
-      CALL reqParamsRealVT%add('VectorType->n',n)
-      
-      !There are no optional parameters at this time.
-      
-      !Set flag to true since the defaults have been set for this type.
-      flagParamsRealVT=.TRUE.
-    ENDSUBROUTINE setupRealVTParams
-!
-!-------------------------------------------------------------------------------
-!> @brief Subroutine that sets up the default parameter lists for the PETSc
-!>        Vector Type and then validates them against the input parameter list.
-!> @param thisParams The parameter list that was input to the initialization
-!>        routine.
 !> The required parameters for the PETSc Vector Type are:
 !>        'VectorType->n',SIK
 !>        'VectorType->MPI_Comm_ID',SIK
 !> The optional parameters for the PETSc Vector Type do not exist.
 !>
-    SUBROUTINE setupPETScVTParams()
+    SUBROUTINE setupVTParams()
       INTEGER(SIK) :: n,MPI_Comm
       
       !Setup the required and optional parameter lists
-      n=1_SIK
-      MPI_Comm=1_SIK
+      n=1
+      MPI_Comm=1
+      !Real Vector Type
+      CALL reqParamsRealVT%add('VectorType->n',n)
+      
+      !PETSc Vector Type
       CALL reqParamsPETScVT%add('VectorType->n',n)
       CALL reqParamsPETScVT%add('VectorType->MPI_Comm_ID',MPI_Comm)
-      
       !There are no optional parameters at this time.
       
       !Set flag to true since the defaults have been set for this type.
-      flagParamsPETScVT=.TRUE.
-    ENDSUBROUTINE setupPETScVTParams
+      flagParamsVT=.TRUE.
+    ENDSUBROUTINE setupVTParams
+!
+!-------------------------------------------------------------------------------
+!> @brief Subroutine that clears the default parameter lists for the  Vector 
+!>        Types, both Real and PETSc.
+!>
+    SUBROUTINE clearVTParams()
+      INTEGER(SIK) :: n
+      
+      !Real Vector Type
+      CALL reqParamsRealVT%clear()
+      
+      !PETSc Vector Type
+      CALL reqParamsPETScVT%clear()
+      !There are no optional parameters at this time.
+      
+      !Set flag to true since the defaults have been set for this type.
+      flagParamsVT=.FALSE.
+    ENDSUBROUTINE clearVTParams
 !
 ENDMODULE VectorTypes

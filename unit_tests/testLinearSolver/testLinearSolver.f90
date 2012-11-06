@@ -96,6 +96,7 @@ PROGRAM testLinearSolver
   CALL vecPList%clear()
   CALL optListMat%clear()
   CALL optListLS%clear()
+  CALL clearLSTParams()
   
 #ifdef HAVE_PETSC    
   CALL PetscFinalize(ierr)

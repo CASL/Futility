@@ -87,6 +87,9 @@ MODULE LinearSolverTypes
   PUBLIC :: LinearSolverType_Direct
   PUBLIC :: LinearSolverType_Iterative
   PUBLIC :: LNorm
+  PUBLIC :: reqParamsLST,optParamsLST
+  PUBLIC :: setupLSTParams
+  PUBLIC :: clearLSTParams
   
   !> Number of direct solver solution methodologies - for error checking
   INTEGER(SIK),PARAMETER :: MAX_DIRECT_SOLVER_METHODS=2
@@ -452,11 +455,6 @@ MODULE LinearSolverTypes
         CALL solver%M%clear()
         DEALLOCATE(solver%M)
       ENDIF
-      IF(flagParamsLST) THEN
-        CALL reqParamsLST%clear()
-        CALL optParamsLST%clear()
-        flagParamsLST=.FALSE.
-      ENDIF
       CALL solver%SolveTime%ResetTimer()
       solver%isDecomposed=.FALSE.
     ENDSUBROUTINE clear_LinearSolverType_Direct
@@ -494,11 +492,6 @@ MODULE LinearSolverTypes
       IF(ALLOCATED(solver%M)) THEN
         CALL solver%M%clear()
         DEALLOCATE(solver%M)
-      ENDIF
-      IF(flagParamsLST) THEN
-        CALL reqParamsLST%clear()
-        CALL optParamsLST%clear()
-        flagParamsLST=.FALSE.
       ENDIF
       
 #ifdef HAVE_PETSC
@@ -1922,9 +1915,7 @@ MODULE LinearSolverTypes
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine that sets up the default parameter lists for the Linear  
-!>        Solver Type and then validates them against the input parameter list.
-!> @param thisParams The parameter list that was input to the initialization
-!>        routine.
+!>        Solver Type.
 !> The required parameters for the Linear Solver Type are:
 !>        'LinearSolverType->TPLType',SIK
 !>        'LinearSolverType->solverMethod',SIK
@@ -1968,5 +1959,41 @@ MODULE LinearSolverTypes
       !Set flag to true since the defaults have been set for this type.
       flagParamsLST=.TRUE.
     ENDSUBROUTINE setupLSTParams
+!
+!-------------------------------------------------------------------------------
+!> @brief Subroutine that clears the default parameter lists for the Linear  
+!>        Solver Type.
+!>
+    SUBROUTINE clearLSTParams()
+      INTEGER(SIK) :: n,TPLType,solverMethod,MPI_COMM_ID,numberOMP !,matType
+      CHARACTER(LEN=256) :: timerName
+      
+      !Setup the required and optional parameter lists
+      n=1_SIK
+      !matType=1_SIK
+      TPLType=1_SIK
+      solverMethod=1_SIK
+      MPI_COMM_ID=1_SIK
+      numberOMP=1_SIK
+      
+      CALL reqParamsLST%clear()
+      CALL reqParamsLST%add('LinearSolverType->TPLType',TPLType)
+      CALL reqParamsLST%add('LinearSolverType->solverMethod',solverMethod)
+      CALL reqParamsLST%add('LinearSolverType->MPI_COMM_ID',MPI_COMM_ID)
+      CALL reqParamsLST%add('LinearSolverType->numberOMP',numberOMP)
+      CALL reqParamsLST%add('LinearSolverType->timerName',timerName)
+      !CALL reqParamsLST%add('LinearSolverType->matType',matType)
+      CALL reqParamsLST%add('LinearSolverType->A->MatrixType->n',n)
+      CALL reqParamsLST%remove('LinearSolverType->A->MatrixType->n')
+      CALL reqParamsLST%add('LinearSolverType->b->VectorType->n',n)
+      CALL reqParamsLST%remove('LinearSolverType->b->VectorType->n')
+      CALL reqParamsLST%add('LinearSolverType->x->VectorType->n',n)
+      CALL reqParamsLST%remove('LinearSolverType->x->VectorType->n')
+      
+      !There are no optional parameters at this time.
+      
+      !Set flag to true since the defaults have been set for this type.
+      flagParamsLST=.FALSE.
+    ENDSUBROUTINE clearLSTParams
 !
 ENDMODULE LinearSolverTypes

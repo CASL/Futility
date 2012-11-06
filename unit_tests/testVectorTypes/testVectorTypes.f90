@@ -49,6 +49,18 @@ PROGRAM testVectorTypes
   WRITE(*,*) 'TESTING VECTOR TYPES...'
   WRITE(*,*) '==================================================='
   
+  !Edit the reference lists
+  !CALL reqParamsRealVT%edit(666)
+  !WRITE(666,*)
+  !WRITE(666,*) '==================================================='
+  !WRITE(666,*)
+  !CALL optParamsRealVT%edit(666)
+  !CALL reqParamsPETScVT%edit(666)
+  !WRITE(666,*)
+  !WRITE(666,*) '==================================================='
+  !WRITE(666,*)
+  !CALL optParamsPETScVT%edit(666)
+  
   CALL testVector()
   
   CALL testBLAS1Interface()
@@ -57,6 +69,7 @@ PROGRAM testVectorTypes
   WRITE(*,*) 'TESTING VECTOR TYPES PASSED!'
   WRITE(*,*) '==================================================='
   DEALLOCATE(e)
+  CALL clearVTParams()
   
 #ifdef HAVE_PETSC    
   CALL PetscFinalize(ierr)
