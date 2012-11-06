@@ -269,7 +269,7 @@ PROGRAM testExpTables
   DO i=1,5
     CALL testET2(i)%clear()
   ENDDO
-  CALL bitEXP()
+  !CALL bitEXP()
 !
 !===============================================================================
 CONTAINS

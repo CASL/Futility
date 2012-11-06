@@ -72,8 +72,6 @@ MODULE ExpTables
   PRIVATE
   
   !List of public members
-  PUBLIC :: reqParamsExpTables
-  PUBLIC :: optParamsExpTables
   PUBLIC :: EXACT_EXP_TABLE
   PUBLIC :: SINGLE_LEVEL_EXP_TABLE
   PUBLIC :: TWO_LEVEL_EXP_TABLE
@@ -83,6 +81,9 @@ MODULE ExpTables
   PUBLIC :: eExpTable
   PUBLIC :: exptTbl
   PUBLIC :: EXPT
+  PUBLIC :: reqParamsExpTables,optParamsExpTables
+  PUBLIC :: setupETParams
+  PUBLIC :: clearETParams
   
 !Enumerations for the different table types
 
@@ -156,7 +157,7 @@ MODULE ExpTables
   
   !> Logical indicates whether or not the parameter lists for validation
   !> have been initialized (only needs to be done once per execution)
-  LOGICAL(SBK),SAVE :: lrefParams=.FALSE.
+  LOGICAL(SBK),SAVE :: flagETParams=.FALSE.
   
   !> The parameter lists to use when validating a parameter list for
   !> initialization
@@ -253,7 +254,7 @@ MODULE ExpTables
       ENDIF
       
       !Initialize reference parameter lists
-      IF(.NOT.lrefParams) CALL setRefExpTablesParams()
+      IF(.NOT.flagETParams) CALL setupETParams()
       
       !Input checking
       nerror=eExpTable%getcounter(EXCEPTION_ERROR)
@@ -540,19 +541,21 @@ MODULE ExpTables
     ENDFUNCTION EXPT_TwoOrder
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets the reference parameter lists for a fixed source solver
+!> @brief Subroutine that sets up the default parameter lists for the Exp Table
+!>        Type.
+!> The required parameters for the Real Vector Type do not exist.
+!> The optional parameters for the Real Vector Type are:
+!>        'ExpTableType->tabletype',SIK
+!>        'ExpTableType->minval',SRK
+!>        'ExpTableType->maxval',SRK
+!>        'ExpTableType->nintervals',SIK
+!>        'ExpTableType->error',SRK
+!>        'ExpTableType->errorflag',SBK
 !> 
-    SUBROUTINE setRefExpTablesParams()
-!    
-!Clear existing reference lists
-      CALL reqParamsExpTables%clear()
-      CALL optParamsExpTables%clear()
-      
-!
-!Set names for required parameters
+    SUBROUTINE setupETParams()
 
-!
-!Set defaults for optional parameters
+      !Set names for required parameters
+      !Set defaults for optional parameters
       CALL optParamsExpTables%add('ExpTables -> tabletype',LINEAR_EXP_TABLE, &
         'The default ExpTable is just a linear level lookup table.')
       CALL optParamsExpTables%add('ExpTables -> minval',-10._SRK, &
@@ -566,7 +569,20 @@ MODULE ExpTables
       CALL optParamsExpTables%add('ExpTables -> errorflag',.FALSE., &
         'The default value for the error in the exponential table.')
       
+      flagETParams=.TRUE.
+    ENDSUBROUTINE setupETParams
+
+!-------------------------------------------------------------------------------
+!> @brief Subroutine that clears the default parameter lists for the Exp Table
+!>        Type.
+!> 
+    SUBROUTINE clearETParams()
+
+      !ExpTableType required parameters
+      !ExpTableType optional parameters
+      CALL optParamsExpTables%clear()
       
-    ENDSUBROUTINE setRefExpTablesParams
+      flagETParams=.FALSE.
+    ENDSUBROUTINE clearETParams
 !
 ENDMODULE ExpTables
