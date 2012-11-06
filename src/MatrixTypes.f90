@@ -607,10 +607,10 @@ MODULE MatrixTypes
       
 #ifdef HAVE_PETSC
       !Check to set up required and optional param lists.
-      IF(.NOT.flagParamsPETScMT) CALL setupPETScMTParams()      
+      IF(.NOT.flagParamsPMT) CALL setupPMTParams()      
       !Validate against the reqParams and OptParams
       validParams=Params
-      CALL validParams%validate(reqParamsPETScMT)
+      CALL validParams%validate(reqParamsPMT)
       
       ! Pull Data From Parameter List
       CALL Params%get('MatrixType->n',n)
