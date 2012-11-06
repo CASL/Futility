@@ -21,12 +21,23 @@ TRIBITS_ADD_LIBRARY(Utils
     SOURCES
       #UnitTest.f90
       IntrType.f90
+      BLAS1.f90
+      BLAS2.f90
+      BLAS3.f90
+      BLAS.f90
       Strings.f90
       Times.f90
       BinaryTrees.f90
       MortonOrdering.f90
+      Geom_Points.f90
+      Geom_Line.f90
+      Geom_Plane.f90
+      Geom_CircCyl.f90
+      Geom_Box.f90
+      Geom.f90
       ExceptionHandler.f90
       Allocs.f90
+      ExpTables.f90
       ParallelEnv.f90
       IO_Strings.f90
       FileType_Base.f90
@@ -37,17 +48,6 @@ TRIBITS_ADD_LIBRARY(Utils
       IOutil.f90
       ParameterLists.f90
       CommandLineProcessor.f90
-      Geom_Points.f90
-      Geom_Line.f90
-      Geom_Plane.f90
-      Geom_CircCyl.f90
-      Geom_Box.f90
-      Geom.f90
-      ExpTables.f90
-      BLAS1.f90
-      BLAS2.f90
-      BLAS3.f90
-      BLAS.f90
       MatrixTypes.f90
       VectorTypes.f90
       LinearSolverTypes.f90

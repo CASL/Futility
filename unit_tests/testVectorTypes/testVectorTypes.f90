@@ -22,6 +22,7 @@ PROGRAM testVectorTypes
   USE BLAS
   USE ParameterLists
   USE ParallelEnv
+  USE VectorTypes
   IMPLICIT NONE
   
 #ifdef HAVE_PETSC
@@ -38,10 +39,10 @@ PROGRAM testVectorTypes
   ALLOCATE(e)
   CALL e%setStopOnError(.FALSE.)
   CALL e%setQuietMode(.TRUE.)
-  eMatrixType => e
+  eVectorType => e
   
 #ifdef HAVE_PETSC    
-      CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
+  CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
 #endif
 
   WRITE(*,*) '==================================================='

@@ -23,6 +23,8 @@ PROGRAM testMatrixTypes
   USE BLAS
   USE ParameterLists
   USE ParallelEnv
+  USE VectorTypes
+  USE MatrixTypes
   IMPLICIT NONE
   
 #ifdef HAVE_PETSC
@@ -51,7 +53,7 @@ PROGRAM testMatrixTypes
   CALL vecPList%add('VectorType -> MPI_Comm_ID',PE_COMM_SELF)
   
 #ifdef HAVE_PETSC    
-      CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
+  CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
 #endif
 
   WRITE(*,*) '==================================================='

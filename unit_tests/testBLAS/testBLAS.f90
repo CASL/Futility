@@ -18,17 +18,8 @@
 PROGRAM testBLAS
   
   USE IntrType
-  USE ExceptionHandler
   USE BLAS
   IMPLICIT NONE
-  
-  TYPE(ExceptionHandlerType),POINTER :: e
-  
-  !Configure exception handler for test
-  ALLOCATE(e)
-  CALL e%setStopOnError(.FALSE.)
-  CALL e%setQuietMode(.TRUE.)
-  eMatrixType => e
 
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING BLAS...'
@@ -49,8 +40,6 @@ PROGRAM testBLAS
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING BLAS PASSED!'
   WRITE(*,*) '==================================================='
-  DEALLOCATE(e)
-
 !
 !===============================================================================
   CONTAINS
