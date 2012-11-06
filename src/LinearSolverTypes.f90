@@ -452,7 +452,10 @@ MODULE LinearSolverTypes
         CALL solver%M%clear()
         DEALLOCATE(solver%M)
       ENDIF
-      
+      IF(flagParamsLST) THEN
+        CALL reqParamsLST%clear()
+        CALL optParamsLST%clear()
+      ENDIF
       CALL solver%SolveTime%ResetTimer()
       solver%isDecomposed=.FALSE.
     ENDSUBROUTINE clear_LinearSolverType_Direct
@@ -490,6 +493,10 @@ MODULE LinearSolverTypes
       IF(ALLOCATED(solver%M)) THEN
         CALL solver%M%clear()
         DEALLOCATE(solver%M)
+      ENDIF
+      IF(flagParamsLST) THEN
+        CALL reqParamsLST%clear()
+        CALL optParamsLST%clear()
       ENDIF
       
 #ifdef HAVE_PETSC

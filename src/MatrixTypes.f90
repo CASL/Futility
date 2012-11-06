@@ -677,6 +677,10 @@ MODULE MatrixTypes
       IF(ALLOCATED(matrix%ia)) CALL demallocA(matrix%ia)
       IF(ALLOCATED(matrix%ja)) CALL demallocA(matrix%ja)
       IF(ALLOCATED(matrix%a)) CALL demallocA(matrix%a)
+      IF(flagParamsSMT) THEN
+        CALL reqParamsSMT%clear()
+        CALL optParamsSMT%clear()
+      ENDIF
     ENDSUBROUTINE clear_SparseMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -690,6 +694,10 @@ MODULE MatrixTypes
       matrix%n=0
       matrix%isSymmetric=.FALSE.
       IF(ALLOCATED(matrix%a)) CALL demallocA(matrix%a)
+      IF(flagParamsDSMT) THEN
+        CALL reqParamsDSMT%clear()
+        CALL optParamsDSMT%clear()
+      ENDIF
     ENDSUBROUTINE clear_DenseSquareMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -703,6 +711,10 @@ MODULE MatrixTypes
       matrix%n=0
       matrix%isSymmetric=.FALSE.
       IF(ALLOCATED(matrix%a)) CALL demallocA(matrix%a)
+      IF(flagParamsTDMT) THEN
+        CALL reqParamsTDMT%clear()
+        CALL optParamsTDMT%clear()
+      ENDIF
      ENDSUBROUTINE clear_TriDiagMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -716,6 +728,10 @@ MODULE MatrixTypes
       matrix%n=0
       matrix%m=0
       IF(ALLOCATED(matrix%a)) CALL demallocA(matrix%a)
+      IF(flagParamsDRMT) THEN
+        CALL reqParamsDRMT%clear()
+        CALL optParamsDRMT%clear()
+      ENDIF
     ENDSUBROUTINE clear_DenseRectMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -744,6 +760,10 @@ MODULE MatrixTypes
       matrix%isCreated=.FALSE.
       matrix%isSymmetric=.FALSE.
       CALL MatDestroy(matrix%a,ierr)
+      IF(flagParamsPMT) THEN
+        CALL reqParamsPMT%clear()
+        CALL optParamsPMT%clear()
+      ENDIF
 #else
       CALL eMatrixType%raiseFatalError('Incorrect call to '// &
               modName//'::'//myName//' - PETSc not enabled.  You will'// &
