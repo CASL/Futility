@@ -455,6 +455,7 @@ MODULE LinearSolverTypes
       IF(flagParamsLST) THEN
         CALL reqParamsLST%clear()
         CALL optParamsLST%clear()
+        flagParamsLST=.FALSE.
       ENDIF
       CALL solver%SolveTime%ResetTimer()
       solver%isDecomposed=.FALSE.
@@ -497,6 +498,7 @@ MODULE LinearSolverTypes
       IF(flagParamsLST) THEN
         CALL reqParamsLST%clear()
         CALL optParamsLST%clear()
+        flagParamsLST=.FALSE.
       ENDIF
       
 #ifdef HAVE_PETSC

@@ -680,6 +680,7 @@ MODULE MatrixTypes
       IF(flagParamsSMT) THEN
         CALL reqParamsSMT%clear()
         CALL optParamsSMT%clear()
+        flagParamsSMT=.FALSE.
       ENDIF
     ENDSUBROUTINE clear_SparseMatrixType
 !
@@ -697,6 +698,7 @@ MODULE MatrixTypes
       IF(flagParamsDSMT) THEN
         CALL reqParamsDSMT%clear()
         CALL optParamsDSMT%clear()
+        flagParamsDSMT=.FALSE.
       ENDIF
     ENDSUBROUTINE clear_DenseSquareMatrixType
 !
@@ -714,6 +716,7 @@ MODULE MatrixTypes
       IF(flagParamsTDMT) THEN
         CALL reqParamsTDMT%clear()
         CALL optParamsTDMT%clear()
+        flagParamsTDMT=.FALSE.
       ENDIF
      ENDSUBROUTINE clear_TriDiagMatrixType
 !
@@ -731,6 +734,7 @@ MODULE MatrixTypes
       IF(flagParamsDRMT) THEN
         CALL reqParamsDRMT%clear()
         CALL optParamsDRMT%clear()
+        flagParamsDRMT=.FALSE.
       ENDIF
     ENDSUBROUTINE clear_DenseRectMatrixType
 !
@@ -763,6 +767,7 @@ MODULE MatrixTypes
       IF(flagParamsPMT) THEN
         CALL reqParamsPMT%clear()
         CALL optParamsPMT%clear()
+        flagParamsPMT=.FALSE.
       ENDIF
 #else
       CALL eMatrixType%raiseFatalError('Incorrect call to '// &

@@ -484,6 +484,7 @@ MODULE VectorTypes
       IF(flagParamsRealVT) THEN
         CALL reqParamsRealVT%clear()
         CALL optParamsRealVT%clear()
+        flagParamsRealVT=.FALSE.
       ENDIF
     ENDSUBROUTINE clear_RealVectorType
 !
@@ -743,6 +744,7 @@ MODULE VectorTypes
       IF(flagParamsPETScVT) THEN
         CALL reqParamsPETScVT%clear()
         CALL optParamsPETScVT%clear()
+        flagParamsPETScVT=.FALSE.
       ENDIF
 #else
       CHARACTER(LEN=*),PARAMETER :: myName='setOne_PETScVectorType'
