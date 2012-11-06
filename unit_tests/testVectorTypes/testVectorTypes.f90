@@ -634,6 +634,7 @@ PROGRAM testVectorTypes
       CALL pList%clear()
       CALL pList%add('VectorType->n',7)
       CALL thisVector%init(pList)
+      CALL pList%clear()
       DEALLOCATE(testvec)
       ALLOCATE(testvec(3))
       testvec=0._SRK
@@ -1337,6 +1338,7 @@ PROGRAM testVectorTypes
     CALL xVector%init(pList)
     CALL yVector%init(pList)
     CALL aVector%init(pList)
+    CALL pList%clear()
 
     !Test BLAS_asum (absolute value summation)
     CALL xVector%set(1, 5.0_SRK)
