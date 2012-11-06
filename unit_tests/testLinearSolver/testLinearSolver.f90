@@ -528,7 +528,6 @@ CONTAINS
       ALLOCATE(LinearSolverType_Direct :: thisLS)
       
     !Test GE (Dense-Square)
-      WRITE(*,*) 142
       ! initialize linear system
       CALL pList%clear()
       CALL pList%add('LinearSolverType->TPLType',NATIVE)

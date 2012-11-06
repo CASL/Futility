@@ -15,37 +15,63 @@
 ! manufacturer, or otherwise, does not necessarily constitute or imply its     !
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!> @brief Module to provide the ability to solve a system of equations
+!> @brief Module provides a linear system type and methods to solve systems
+!> of equations
 !>
-!> DESCRIPTION
-!> ??? Make PURE SUBROUTINES WHERE NECESSARY
+!> The linear solver/system type owns it's own matrices and vectors. It is
+!> initialized with parameter lists. In general any third party library (TPL)
+!> that may be interfaced with this module should be implemented such that it's
+!> optional.
+!> 
+!> Currently supported TPLs include:
+!>  - PETSc (with interfaces to KSP)
+!>
+!> Additional TPL support is planned for:
+!>  - Trilinos
+!>  - MKL
+!>  - LAPACK
+!>  - ScaLAPACK
+!>
+!> The solver methods include two classes: Direct and Iterative
+!>  - Direct Methods
+!>    - LU decomposition (with partial pivoting)
+!>  - Iterative Methods
+!>    - BiCGSTAB (with ILU preconditioning)
+!>    - GMRES
+!>    - CGNR
+!> 
 !>
 !> @par Module Dependencies
 !>  - @ref IntrType "IntrType": @copybrief IntrType
+!>  - @ref BLAS "BLAS": @copybrief BLAS
+!>  - @ref Times "Times": @copybrief Times
 !>  - @ref ExceptionHandler "ExceptionHandler": @copybrief ExceptionHandler
 !>  - @ref Allocs "Allocs": @copybrief Allocs
+!>  - @ref ParameterLists "ParameterLists": @copybrief ParameterLists
 !>  - @ref ParallelEnv "ParallelEnv": @copybrief ParallelEnv
-!>  - @ref TimerType "TimerType": @copybrief TimerType
+!>  - @ref VectorTypes "VectorTypes": @copybrief VectorTypes
+!>  - @ref MatrixTypes "MatrixTypes": @copybrief MatrixTypes
 !>
 !> @par EXAMPLES
 !> @code
 !> 
 !> @endcode
 !>
-!> @author Adam Nelson, Zhouyu Liu
+!> @author Adam Nelson, Zhouyu Liu, Shane Stimpson, Brendan Kochunas
 !>   @date 03/28/2012
 !>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE LinearSolverTypes
 
   USE IntrType
+  USE BLAS
+  USE Times
   USE ExceptionHandler
   USE Allocs
-  USE ParallelEnv
-  USE Times
-  USE MatrixTypes
   USE ParameterLists
-  USE BLAS
+  USE ParallelEnv
+  USE VectorTypes
+  USE MatrixTypes
   IMPLICIT NONE
   
 #ifdef HAVE_PETSC
@@ -264,10 +290,10 @@ MODULE LinearSolverTypes
       IF(MPI_Comm_ID >= 0) CALL solver%MPIparallelEnv%initialize(MPI_Comm_ID)
       IF(numberOMP > 0) CALL solver%OMPparallelEnv%initialize(numberOMP)
       
-      IF(.NOT. solver%isInit) THEN
+      IF(.NOT.solver%isInit) THEN
          
         ! go through solver hierarchy to determine TPLType
-        IF(TPLType==PETSC) THEN ! PETSc
+        IF(TPLType == PETSC) THEN ! PETSc
 #ifndef HAVE_PETSC
           TPLType=TRILINOS
           CALL eLinearSolverType%raiseWarning(modName//'::'// &
@@ -276,7 +302,7 @@ MODULE LinearSolverTypes
           
 #endif
         ENDIF
-        IF(TPLType==TRILINOS) THEN ! Trilinos
+        IF(TPLType == TRILINOS) THEN ! Trilinos
 #ifndef HAVE_TRILINOS
           TPLType=MKL
           CALL eLinearSolverType%raiseWarning(modName//'::'// &
@@ -284,7 +310,7 @@ MODULE LinearSolverTypes
                       'used instead.')
 #endif
         ENDIF
-        IF(TPLType==MKL) THEN ! MKL
+        IF(TPLType == MKL) THEN ! MKL
 #ifndef HAVE_MKL
           TPLType=NATIVE
           CALL eLinearSolverType%raiseWarning(modName//'::'// &
@@ -313,6 +339,7 @@ MODULE LinearSolverTypes
           CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
             '  - MatrixType A not allocated!')
         ENDIF
+        
         ! allocate and initialize vectors (X and b)
         IF(.NOT.ALLOCATED(solver%X)) THEN
           IF(.NOT.ALLOCATED(solver%b)) THEN
@@ -831,6 +858,7 @@ MODULE LinearSolverTypes
 !> The matrix and vectors are operated outside of linear solver object, so they
 !> need to checked before solving. This subroutine checks these information, and
 !> it will be used for both direct solve subroutine and iterative subroutine.
+!>
     SUBROUTINE solve_checkInput(solver)
       CHARACTER(LEN=*),PARAMETER :: myName='solve_checkInput'
       CLASS(LinearSolverType_Base),INTENT(INOUT) :: solver
@@ -1052,6 +1080,7 @@ MODULE LinearSolverTypes
       CALL pList%add('MatrixType->n',solver%A%n)
       CALL pList%add('MatrixType->isSym',.FALSE.)
       CALL solver%M%init(pList)
+      CALL pList%clear()
       DO i=1,solver%M%n
         CALL solver%M%set(i,i,1.0_SRK)
       ENDDO
@@ -1075,7 +1104,6 @@ MODULE LinearSolverTypes
 
       !Get the n value and set the parameter list
       CALL pList%add('VectorType -> n',solver%A%n)
-      
       CALL vr%init(pList)
       CALL vr0%init(pList)
       CALL vs%init(pList)
@@ -1084,6 +1112,7 @@ MODULE LinearSolverTypes
       CALL vy%init(pList)
       CALL vz%init(pList)
       CALL vt%init(pList)
+      CALL pList%clear()
       
       n=solver%A%n
       calpha=one
@@ -1157,7 +1186,7 @@ MODULE LinearSolverTypes
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
 
       REAL(SRK)  :: beta, h, t, phibar, temp, tol
-      REAL(SRK),ALLOCATABLE :: v(:,:), R(:,:), w(:), c(:), s(:), g(:), y(:)
+      REAL(SRK),ALLOCATABLE :: v(:,:),R(:,:),w(:),c(:),s(:),g(:),y(:)
       TYPE(RealVectorType) :: u
       INTEGER(SIK) :: j,k,m,n,it
       TYPE(ParamType) :: pList
@@ -1219,7 +1248,6 @@ MODULE LinearSolverTypes
         R(it,it)=temp
         g(it)=c(it)*phibar
         phibar=-s(it)*phibar
-        !WRITE(*,*) it, phibar
         IF(ABS(phibar)<=tol) EXIT
       ENDDO
       
@@ -1359,6 +1387,7 @@ MODULE LinearSolverTypes
           CALL pList%add('MatrixType->n',A%n)
           CALL pList%add('MatrixType->isSym',.FALSE.)
           CALL solver%M%init(pList)
+          CALL pList%clear()
           SELECTTYPE(M => solver%M); TYPE IS(TriDiagMatrixType)
             M%a(2,1)=1.0_SRK/A%a(2,1)
             DO i=1,A%n-1
@@ -1594,6 +1623,7 @@ MODULE LinearSolverTypes
       CALL pList%add('MatrixType->n',solver%A%n)
       CALL pList%add('MatrixType->isSym',.FALSE.)
       CALL solver%M%init(pList)
+      CALL pList%clear()
       SELECTTYPE(M => solver%M); TYPE IS(DenseSquareMatrixType)
         SELECTTYPE(A => solver%A); TYPE IS(DenseSquareMatrixType)
           M=A
@@ -1804,7 +1834,7 @@ MODULE LinearSolverTypes
         CALL z%set(0._SRK)
         
         SELECTTYPE(vecb => solver%b); TYPE IS(RealVectorType)
-            b%b=vecb%b
+          b%b=vecb%b
         ENDSELECT
         
         CALL BLAS_matvec(THISMATRIX=solver%A,X=solver%X,Y=r)
@@ -1841,7 +1871,9 @@ MODULE LinearSolverTypes
         CALL z%clear()
         CALL p%clear()
       ENDIF
-    ENDSUBROUTINE
+      CALL pList%clear()
+      CALL pList2%clear()
+    ENDSUBROUTINE solveCGNR
 !
 !-------------------------------------------------------------------------------
 !> @brief Find the L-norm of a given vector.
@@ -1866,7 +1898,7 @@ MODULE LinearSolverTypes
         CASE(2)
           !2-norm
           norm=BLAS_nrm2(x)
-        CASE (: -2)
+        CASE(: -2)
           !not possible.
           norm=0.0_SRK
         CASE DEFAULT
