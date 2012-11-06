@@ -55,10 +55,10 @@ PROGRAM testLinearSolver
   CALL optListLS%add('LinearSolverType->b->VectorType->n',-1_SNK)
   
   !Set up optional PL
-  CALL optListMat%add('testPL->nnz',-1_SNK)
-  CALL optListMat%add('testPL->isSym',.FALSE.)
-  CALL optListMat%add('testPL->matType',SPARSE)
-  CALL optListMat%add('testPL->MPI_Comm_ID',PE_COMM_SELF)
+  CALL optListMat%add('MatrixType->nnz',-1_SNK)
+  CALL optListMat%add('MatrixType->isSym',.FALSE.)
+  CALL optListMat%add('MatrixType->matType',SPARSE)
+  CALL optListMat%add('MatrixType->MPI_Comm_ID',PE_COMM_SELF)
   
   ! Set up vector parameter list
   CALL vecPList%add('VectorType -> n',2)
@@ -91,6 +91,11 @@ PROGRAM testLinearSolver
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING LINEAR SOLVERS PASSED!'
   WRITE(*,*) '==================================================='
+  
+  CALL pList%clear()
+  CALL vecPList%clear()
+  CALL optListMat%clear()
+  CALL optListLS%clear()
   
 #ifdef HAVE_PETSC    
   CALL PetscFinalize(ierr)
@@ -234,7 +239,6 @@ CONTAINS
 !-------------------------------------------------------------------------------
     SUBROUTINE testInit()
       CLASS(LinearSolverType_Base),ALLOCATABLE :: thisLS
-      CLASS(ParamType),POINTER :: tmp
    !test Direct
       ALLOCATE(LinearSolverType_Direct :: thisLS)
       
@@ -2145,8 +2149,6 @@ CONTAINS
       CLASS(LinearSolverType_Base),ALLOCATABLE :: thisLS
       REAL(SRK),ALLOCATABLE :: thisB(:),dummyvec(:)
       REAL(SRK),POINTER :: thisX(:)
-      INTEGER(SIK) :: i
-      LOGICAL(SBK) :: match
 
       ALLOCATE(LinearSolverType_Iterative :: thisLS)
 

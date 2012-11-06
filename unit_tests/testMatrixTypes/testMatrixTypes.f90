@@ -766,7 +766,8 @@ PROGRAM testMatrixTypes
       CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xRealVector,BETA=2.0_SRK,Y=yRealVector)
       CALL yRealVector%get(y)
       IF(ANY(.NOT.(y .APPROXEQ. (/8._SRK,12._SRK,1._SRK/)))) THEN
-        WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xRealVector,BETA=2.0_SRK,Y=yRealVector) -densesq FAILED!"
+        WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xRealVector,"// &
+          "BETA=2.0_SRK,Y=yRealVector) -densesq FAILED!"
         STOP 666
       ENDIF
       CALL thisMatrix%clear()
@@ -780,7 +781,8 @@ PROGRAM testMatrixTypes
       CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,BETA=2.0_SRK,Y=yRealVector) !Error check uninit
       CALL yRealVector%get(y)
       IF(ANY(.NOT.(y .APPROXEQ. (/2._SRK,2._SRK,2._SRK/)))) THEN
-        WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xRealVector,BETA=2.0_SRK,Y=yRealVector) -densesq FAILED!"
+        WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xRealVector,"// &
+          "BETA=2.0_SRK,Y=yRealVector) -densesq FAILED!"
         STOP 666
       ENDIF
       WRITE(*,*) '  Passed: CALL BLAS_matvec(...) densesq-matrix'
