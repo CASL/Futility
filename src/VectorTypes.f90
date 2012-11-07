@@ -736,11 +736,6 @@ MODULE VectorTypes
       thisVector%n=0
 
       CALL VecDestroy(thisVector%b,iperr)
-      IF(flagParamsPETScVT) THEN
-        CALL reqParamsPETScVT%clear()
-        CALL optParamsPETScVT%clear()
-        flagParamsPETScVT=.FALSE.
-      ENDIF
 #else
       CHARACTER(LEN=*),PARAMETER :: myName='setOne_PETScVectorType'
       LOGICAL(SBK) :: localalloc
