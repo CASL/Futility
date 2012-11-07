@@ -88,6 +88,13 @@ PROGRAM testLinearSolver
   CALL testIterativeSolve_CGNR()
   CALL testIterativeSolve_GMRES()
 
+  !Edit the reference lists
+  !CALL reqParamsLST%edit(666)
+  !WRITE(666,*)
+  !WRITE(666,*) '==================================================='
+  !WRITE(666,*)
+  !CALL optParamsLST%edit(666)
+  
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING LINEAR SOLVERS PASSED!'
   WRITE(*,*) '==================================================='
@@ -97,6 +104,8 @@ PROGRAM testLinearSolver
   CALL optListMat%clear()
   CALL optListLS%clear()
   CALL clearLSTParams()
+  CALL clearMTParams()
+  CALL clearVTParams()
   
 #ifdef HAVE_PETSC    
   CALL PetscFinalize(ierr)
