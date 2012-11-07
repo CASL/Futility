@@ -67,6 +67,7 @@ PROGRAM testMatrixTypes
   WRITE(*,*) '==================================================='
   DEALLOCATE(e)
   CALL clearMTParams()
+  CALL clearVTParams()
   
 #ifdef HAVE_PETSC    
       CALL PetscFinalize(ierr)
