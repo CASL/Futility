@@ -49,6 +49,8 @@ PROGRAM testVectorTypes
   WRITE(*,*) 'TESTING VECTOR TYPES...'
   WRITE(*,*) '==================================================='
   
+  CALL testVector()
+  
   !Edit the reference lists
   !CALL reqParamsRealVT%edit(666)
   !WRITE(666,*)
@@ -60,8 +62,6 @@ PROGRAM testVectorTypes
   !WRITE(666,*) '==================================================='
   !WRITE(666,*)
   !CALL optParamsPETScVT%edit(666)
-  
-  CALL testVector()
   
   CALL testBLAS1Interface()
   

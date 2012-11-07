@@ -1965,30 +1965,8 @@ MODULE LinearSolverTypes
 !>        Solver Type.
 !>
     SUBROUTINE clearLSTParams()
-      INTEGER(SIK) :: n,TPLType,solverMethod,MPI_COMM_ID,numberOMP !,matType
-      CHARACTER(LEN=256) :: timerName
-      
-      !Setup the required and optional parameter lists
-      n=1_SIK
-      !matType=1_SIK
-      TPLType=1_SIK
-      solverMethod=1_SIK
-      MPI_COMM_ID=1_SIK
-      numberOMP=1_SIK
       
       CALL reqParamsLST%clear()
-      CALL reqParamsLST%add('LinearSolverType->TPLType',TPLType)
-      CALL reqParamsLST%add('LinearSolverType->solverMethod',solverMethod)
-      CALL reqParamsLST%add('LinearSolverType->MPI_COMM_ID',MPI_COMM_ID)
-      CALL reqParamsLST%add('LinearSolverType->numberOMP',numberOMP)
-      CALL reqParamsLST%add('LinearSolverType->timerName',timerName)
-      !CALL reqParamsLST%add('LinearSolverType->matType',matType)
-      CALL reqParamsLST%add('LinearSolverType->A->MatrixType->n',n)
-      CALL reqParamsLST%remove('LinearSolverType->A->MatrixType->n')
-      CALL reqParamsLST%add('LinearSolverType->b->VectorType->n',n)
-      CALL reqParamsLST%remove('LinearSolverType->b->VectorType->n')
-      CALL reqParamsLST%add('LinearSolverType->x->VectorType->n',n)
-      CALL reqParamsLST%remove('LinearSolverType->x->VectorType->n')
       
       !There are no optional parameters at this time.
       
