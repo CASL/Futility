@@ -543,8 +543,8 @@ MODULE ExpTables
 !-------------------------------------------------------------------------------
 !> @brief Subroutine that sets up the default parameter lists for the Exp Table
 !>        Type.
-!> The required parameters for the Real Vector Type do not exist.
-!> The optional parameters for the Real Vector Type are:
+!> The required parameters for the Exp Table Type do not exist.
+!> The optional parameters for the Exp Table Type are:
 !>        'ExpTableType->tabletype',SIK
 !>        'ExpTableType->minval',SRK
 !>        'ExpTableType->maxval',SRK
