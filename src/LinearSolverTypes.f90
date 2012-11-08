@@ -275,10 +275,10 @@ MODULE LinearSolverTypes
       CALL Params%get('LinearSolverType->MPI_Comm_ID',MPI_Comm_ID)
       CALL Params%get('LinearSolverType->numberOMP',numberOMP)
       CALL Params%get('LinearSolverType->timerName',timerName)
+      CALL Params%get('LinearSolverType->matType',matType)
       ! pull data for matrix parameter list
       CALL Params%get('LinearSolverType->A->MatrixType',pListPtr)
       matPList=pListPtr
-      CALL matPList%get('MatrixType->matType',matType)
       CALL matPList%add('MatrixType->MPI_Comm_ID',MPI_Comm_ID)
       ! pull data for vector parameter list
       CALL Params%get('LinearSolverType->x->VectorType',pListPtr)
@@ -1922,19 +1922,19 @@ MODULE LinearSolverTypes
 !>        'LinearSolverType->MPI_COMM_ID',SIK
 !>        'LinearSolverType->numberOMP',SIK
 !>        'LinearSolverType->timerName',CHAR(LEN=256)
-!!!>        'LinearSolverType->matType',SIK
+!>        'LinearSolverType->matType',SIK
 !>        'LinearSolverType->A->MatrixType',Parameter List for MatrixType
 !>        'LinearSolverType->x->VectorType',Parameter List for VectorType
 !>        'LinearSolverType->b->VectorType',Parameter List for VectorType
 !> The optional parameters for the PETSc Matrix Type do not exist.
 !>
     SUBROUTINE setupLSTParams()
-      INTEGER(SIK) :: n,TPLType,solverMethod,MPI_COMM_ID,numberOMP !,matType
+      INTEGER(SIK) :: n,TPLType,solverMethod,MPI_COMM_ID,numberOMP,matType
       CHARACTER(LEN=256) :: timerName
       
       !Setup the required and optional parameter lists
       n=1_SIK
-      !matType=1_SIK
+      matType=1_SIK
       TPLType=1_SIK
       solverMethod=1_SIK
       MPI_COMM_ID=1_SIK
@@ -1946,7 +1946,7 @@ MODULE LinearSolverTypes
       CALL reqParamsLST%add('LinearSolverType->MPI_COMM_ID',MPI_COMM_ID)
       CALL reqParamsLST%add('LinearSolverType->numberOMP',numberOMP)
       CALL reqParamsLST%add('LinearSolverType->timerName',timerName)
-      !CALL reqParamsLST%add('LinearSolverType->matType',matType)
+      CALL reqParamsLST%add('LinearSolverType->matType',matType)
       CALL reqParamsLST%add('LinearSolverType->A->MatrixType->n',n)
       CALL reqParamsLST%remove('LinearSolverType->A->MatrixType->n')
       CALL reqParamsLST%add('LinearSolverType->b->VectorType->n',n)

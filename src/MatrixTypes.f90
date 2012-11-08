@@ -1593,19 +1593,19 @@ MODULE MatrixTypes
       isSym=.FALSE.
       matType=1
       MPI_COMM_ID=1
-      !Sparse Matrix Type
+      !Sparse Matrix Type - Required
       CALL reqParamsSMT%add('MatrixType->n',n)
       CALL reqParamsSMT%add('MatrixType->nnz',nnz)
-      !Tri-Diagonal Matrix Type
+      !Tri-Diagonal Matrix Type - Required
       CALL reqParamsTDMT%add('MatrixType->n',n)
       CALL reqParamsTDMT%add('MatrixType->isSym',isSym)
-      !Dense Rectangular Matrix Type
+      !Dense Rectangular Matrix Type - Required
       CALL reqParamsDRMT%add('MatrixType->n',n)
       CALL reqParamsDRMT%add('MatrixType->m',m)
-      !Dense Square Matrix Type
+      !Dense Square Matrix Type - Required
       CALL reqParamsDSMT%add('MatrixType->n',n)
       CALL reqParamsDSMT%add('MatrixType->isSym',isSym)
-      !PETSc Matrix Type
+      !PETSc Matrix Type - Required
       CALL reqParamsPMT%add('MatrixType->n',n)
       CALL reqParamsPMT%add('MatrixType->isSym',isSym)
       CALL reqParamsPMT%add('MatrixType->matType',matType)

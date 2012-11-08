@@ -45,11 +45,11 @@ PROGRAM testLinearSolver
   CALL optListLS%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
   CALL optListLS%add('LinearSolverType->numberOMP',1_SNK)
   CALL optListLS%add('LinearSolverType->timerName','LinearSolver Timer')
+  CALL optListLS%add('LinearSolverType->matType',SPARSE)
   ! set parameters for matrices
   CALL optListLS%add('LinearSolverType->A->MatrixType->n',-1_SNK)
   CALL optListLS%add('LinearSolverType->A->MatrixType->nnz',-1_SNK)
   CALL optListLS%add('LinearSolverType->A->MatrixType->isSym',.FALSE.)
-  CALL optListLS%add('LinearSolverType->A->MatrixType->matType',SPARSE)
   ! set parameters for vectors
   CALL optListLS%add('LinearSolverType->x->VectorType->n',-1_SNK)
   CALL optListLS%add('LinearSolverType->b->VectorType->n',-1_SNK)
@@ -57,7 +57,6 @@ PROGRAM testLinearSolver
   !Set up optional PL
   CALL optListMat%add('MatrixType->nnz',-1_SNK)
   CALL optListMat%add('MatrixType->isSym',.FALSE.)
-  CALL optListMat%add('MatrixType->matType',SPARSE)
   CALL optListMat%add('MatrixType->MPI_Comm_ID',PE_COMM_SELF)
   
   ! Set up vector parameter list
