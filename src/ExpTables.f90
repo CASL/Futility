@@ -254,7 +254,7 @@ MODULE ExpTables
       ENDIF
       
       !Initialize reference parameter lists
-      IF(.NOT.ExpTableType_Paramsflag) CALL setupETParams()
+      IF(.NOT.ExpTableType_Paramsflag) CALL ExpTables_Declare_ValidParams()
       
       !Input checking
       nerror=eExpTable%getcounter(EXCEPTION_ERROR)
