@@ -438,11 +438,11 @@ MODULE VectorTypes
       INTEGER(SIK) :: n
       
       !Check to set up required and optional param lists.
-      IF(.NOT.VectorTypes_Paramsflag) CALL VectorTypes_Declare_ValidParams()
+      IF(.NOT.VectorType_Paramsflag) CALL VectorType_Declare_ValidParams()
       
       !Validate against the reqParams and OptParams
       validParams=Params
-      CALL validParams%validate(RealVectorTypes_reqParams)
+      CALL validParams%validate(RealVectorType_reqParams)
       
       !Pull Data from Parameter List
       CALL Params%get('VectorType->n',n)
@@ -673,11 +673,11 @@ MODULE VectorTypes
       INTEGER(SIK) :: n, MPI_Comm_ID
       
       !Check to set up required and optional param lists.
-      IF(.NOT.VectorTypes_Paramsflag) CALL VectorTypes_Declare_ValidParams()
+      IF(.NOT.VectorType_Paramsflag) CALL VectorType_Declare_ValidParams()
       
       !Validate against the reqParams and OptParams
       validParams=Params
-      CALL validParams%validate(PETScVectorTypes_reqParams)
+      CALL validParams%validate(PETScVectorType_reqParams)
       
       !Pull Data from Parameter List
       CALL Params%get('n',n)
