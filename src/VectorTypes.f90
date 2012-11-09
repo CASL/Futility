@@ -401,11 +401,11 @@ MODULE VectorTypes
   
   !> The parameter lists to use when validating a parameter list for
   !> initialization for the Real Vector Type.
-  TYPE(ParamType),SAVE :: RealVectorType_reqParams,RealVectorType_optParams
+  TYPE(ParamType),PROTECTED,SAVE :: RealVectorType_reqParams,RealVectorType_optParams
   
   !> The parameter lists to use when validating a parameter list for
   !> initialization for the PETSc Vector Type.
-  TYPE(ParamType),SAVE :: PETScVectorType_reqParams,PETScVectorType_optParams
+  TYPE(ParamType),PROTECTED,SAVE :: PETScVectorType_reqParams,PETScVectorType_optParams
   
   !> Exception Handler for use in VectorTypes
   TYPE(ExceptionHandlerType),POINTER,SAVE :: eVectorType => NULL()

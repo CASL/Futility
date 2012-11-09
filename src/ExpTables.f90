@@ -161,7 +161,7 @@ MODULE ExpTables
   
   !> The parameter lists to use when validating a parameter list for
   !> initialization;
-  TYPE(ParamType),SAVE :: ExpTableType_reqParams,ExpTableType_optParams
+  TYPE(ParamType),PROTECTED,SAVE :: ExpTableType_reqParams,ExpTableType_optParams
 !
 !===============================================================================
   CONTAINS

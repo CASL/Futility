@@ -215,7 +215,7 @@ MODULE LinearSolverTypes
   
   !> The parameter lists to use when validating a parameter list for
   !> initialization for a Linear Solver Type.
-  TYPE(ParamType),SAVE :: LinearSolverType_reqParams,LinearSolverType_optParams
+  TYPE(ParamType),PROTECTED,SAVE :: LinearSolverType_reqParams,LinearSolverType_optParams
   
   !> Exception Handler for use in MatrixTypes
   TYPE(ExceptionHandlerType),POINTER,SAVE :: eLinearSolverType => NULL()

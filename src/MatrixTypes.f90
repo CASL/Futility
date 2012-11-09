@@ -319,23 +319,23 @@ MODULE MatrixTypes
   
   !> The parameter lists to use when validating a parameter list for
   !> initialization for a Sparse Matrix Type.
-  TYPE(ParamType),SAVE :: SparseMatrixType_reqParams, SparseMatrixType_optParams
+  TYPE(ParamType),PROTECTED,SAVE :: SparseMatrixType_reqParams, SparseMatrixType_optParams
   
   !> The parameter lists to use when validating a parameter list for
   !> initialization for a Tri-Diagonal Matrix Type.
-  TYPE(ParamType),SAVE :: TriDiagMatrixType_reqParams, TriDiagMatrixType_optParams
+  TYPE(ParamType),PROTECTED,SAVE :: TriDiagMatrixType_reqParams, TriDiagMatrixType_optParams
   
   !> The parameter lists to use when validating a parameter list for
   !> initialization for a Dense Rectangular Matrix Type.
-  TYPE(ParamType),SAVE :: DenseRectMatrixType_reqParams, DenseRectMatrixType_optParams
+  TYPE(ParamType),PROTECTED,SAVE :: DenseRectMatrixType_reqParams, DenseRectMatrixType_optParams
   
   !> The parameter lists to use when validating a parameter list for
   !> initialization for a Dense Square Matrix Type.
-  TYPE(ParamType),SAVE :: DenseSquareMatrixType_reqParams, DenseSquareMatrixType_optParams
+  TYPE(ParamType),PROTECTED,SAVE :: DenseSquareMatrixType_reqParams, DenseSquareMatrixType_optParams
   
   !> The parameter lists to use when validating a parameter list for
   !> initialization for a PETSc Matrix Type.
-  TYPE(ParamType),SAVE :: PETScMatrixType_reqParams, PETScMatrixType_optParams
+  TYPE(ParamType),PROTECTED,SAVE :: PETScMatrixType_reqParams, PETScMatrixType_optParams
   
   !> Exception Handler for use in MatrixTypes
   TYPE(ExceptionHandlerType),POINTER,SAVE :: eMatrixType => NULL()
