@@ -69,7 +69,7 @@ PROGRAM testVectorTypes
   WRITE(*,*) 'TESTING VECTOR TYPES PASSED!'
   WRITE(*,*) '==================================================='
   DEALLOCATE(e)
-  CALL clearVTParams()
+  CALL VectorType_Clear_ValidParams()
   
 #ifdef HAVE_PETSC    
   CALL PetscFinalize(ierr)

@@ -66,8 +66,8 @@ PROGRAM testMatrixTypes
   WRITE(*,*) 'TESTING MATRIX TYPES PASSED!'
   WRITE(*,*) '==================================================='
   DEALLOCATE(e)
-  CALL clearMTParams()
-  CALL clearVTParams()
+  CALL MatrixTypes_Clear_ValidParams()
+  CALL VectorType_Clear_ValidParams()
   
 #ifdef HAVE_PETSC    
       CALL PetscFinalize(ierr)
