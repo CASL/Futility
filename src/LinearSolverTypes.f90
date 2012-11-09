@@ -87,9 +87,9 @@ MODULE LinearSolverTypes
   PUBLIC :: LinearSolverType_Direct
   PUBLIC :: LinearSolverType_Iterative
   PUBLIC :: LNorm
-  PUBLIC :: reqParamsLST,optParamsLST
-  PUBLIC :: setupLSTParams
-  PUBLIC :: clearLSTParams
+  PUBLIC :: LinearSolverType_reqParams,LinearSolverType_optParams
+  PUBLIC :: LinearSolverType_Declare_ValidParams
+  PUBLIC :: LinearSolverType_Clear_ValidParams
   
   !> Number of direct solver solution methodologies - for error checking
   INTEGER(SIK),PARAMETER :: MAX_DIRECT_SOLVER_METHODS=2
@@ -211,11 +211,11 @@ MODULE LinearSolverTypes
   
   !> Logical flag to check whether the required and optional parameter lists
   !> have been created yet for the Linear Solver Type.
-  LOGICAL(SBK),SAVE :: flagParamsLST=.FALSE.
+  LOGICAL(SBK),SAVE :: LinearSolverType_Paramsflag=.FALSE.
   
   !> The parameter lists to use when validating a parameter list for
   !> initialization for a Linear Solver Type.
-  TYPE(ParamType),SAVE :: reqParamsLST, optParamsLST
+  TYPE(ParamType),SAVE :: LinearSolverType_reqParams,LinearSolverType_optParams
   
   !> Exception Handler for use in MatrixTypes
   TYPE(ExceptionHandlerType),POINTER,SAVE :: eLinearSolverType => NULL()
@@ -256,11 +256,11 @@ MODULE LinearSolverTypes
 #endif
 
       !Check to set up required and optional param lists.
-      IF(.NOT.flagParamsLST) CALL setupLSTParams()
+      IF(.NOT.LinearSolverType_Paramsflag) CALL LinearSolverType_Declare_ValidParams()
       
       !Validate against the reqParams and OptParams
       validParams=Params
-      CALL validParams%validate(reqParamsLST)
+      CALL validParams%validate(LinearSolverType_reqParams)
       
       !Error checking of subroutine input
       localalloc=.FALSE.
@@ -1928,7 +1928,7 @@ MODULE LinearSolverTypes
 !>        'LinearSolverType->b->VectorType',Parameter List for VectorType
 !> The optional parameters for the PETSc Matrix Type do not exist.
 !>
-    SUBROUTINE setupLSTParams()
+    SUBROUTINE LinearSolverType_Declare_ValidParams()
       INTEGER(SIK) :: n,TPLType,solverMethod,MPI_COMM_ID,numberOMP,matType
       CHARACTER(LEN=256) :: timerName
       
@@ -1940,38 +1940,38 @@ MODULE LinearSolverTypes
       MPI_COMM_ID=1_SIK
       numberOMP=1_SIK
       
-      CALL reqParamsLST%clear()
-      CALL reqParamsLST%add('LinearSolverType->TPLType',TPLType)
-      CALL reqParamsLST%add('LinearSolverType->solverMethod',solverMethod)
-      CALL reqParamsLST%add('LinearSolverType->MPI_COMM_ID',MPI_COMM_ID)
-      CALL reqParamsLST%add('LinearSolverType->numberOMP',numberOMP)
-      CALL reqParamsLST%add('LinearSolverType->timerName',timerName)
-      CALL reqParamsLST%add('LinearSolverType->matType',matType)
-      CALL reqParamsLST%add('LinearSolverType->A->MatrixType->n',n)
-      CALL reqParamsLST%remove('LinearSolverType->A->MatrixType->n')
-      CALL reqParamsLST%add('LinearSolverType->b->VectorType->n',n)
-      CALL reqParamsLST%remove('LinearSolverType->b->VectorType->n')
-      CALL reqParamsLST%add('LinearSolverType->x->VectorType->n',n)
-      CALL reqParamsLST%remove('LinearSolverType->x->VectorType->n')
+      CALL LinearSolverType_reqParams%clear()
+      CALL LinearSolverType_reqParams%add('LinearSolverType->TPLType',TPLType)
+      CALL LinearSolverType_reqParams%add('LinearSolverType->solverMethod',solverMethod)
+      CALL LinearSolverType_reqParams%add('LinearSolverType->MPI_COMM_ID',MPI_COMM_ID)
+      CALL LinearSolverType_reqParams%add('LinearSolverType->numberOMP',numberOMP)
+      CALL LinearSolverType_reqParams%add('LinearSolverType->timerName',timerName)
+      CALL LinearSolverType_reqParams%add('LinearSolverType->matType',matType)
+      CALL LinearSolverType_reqParams%add('LinearSolverType->A->MatrixType->n',n)
+      CALL LinearSolverType_reqParams%remove('LinearSolverType->A->MatrixType->n')
+      CALL LinearSolverType_reqParams%add('LinearSolverType->b->VectorType->n',n)
+      CALL LinearSolverType_reqParams%remove('LinearSolverType->b->VectorType->n')
+      CALL LinearSolverType_reqParams%add('LinearSolverType->x->VectorType->n',n)
+      CALL LinearSolverType_reqParams%remove('LinearSolverType->x->VectorType->n')
       
       !There are no optional parameters at this time.
       
       !Set flag to true since the defaults have been set for this type.
-      flagParamsLST=.TRUE.
-    ENDSUBROUTINE setupLSTParams
+      LinearSolverType_Paramsflag=.TRUE.
+    ENDSUBROUTINE LinearSolverType_Declare_ValidParams
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine that clears the default parameter lists for the Linear  
 !>        Solver Type.
 !>
-    SUBROUTINE clearLSTParams()
+    SUBROUTINE LinearSolverType_Clear_ValidParams()
       
-      CALL reqParamsLST%clear()
+      CALL LinearSolverType_reqParams%clear()
       
       !There are no optional parameters at this time.
       
       !Set flag to true since the defaults have been set for this type.
-      flagParamsLST=.FALSE.
-    ENDSUBROUTINE clearLSTParams
+      LinearSolverType_Paramsflag=.FALSE.
+    ENDSUBROUTINE LinearSolverType_Clear_ValidParams
 !
 ENDMODULE LinearSolverTypes

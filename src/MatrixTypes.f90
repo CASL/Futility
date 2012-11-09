@@ -93,13 +93,13 @@ MODULE MatrixTypes
   PUBLIC :: PETScMatrixType
   PUBLIC :: BLAS_matvec
   PUBLIC :: BLAS_matmult
-  PUBLIC :: reqParamsSMT,optParamsSMT
-  PUBLIC :: reqParamsTDMT,optParamsTDMT
-  PUBLIC :: reqParamsDRMT,optParamsDRMT
-  PUBLIC :: reqParamsDSMT,optParamsDSMT
-  PUBLIC :: reqParamsPMT,optParamsPMT
-  PUBLIC :: setupMTParams
-  PUBLIC :: clearMTParams
+  PUBLIC :: SparseMatrixType_reqParams,SparseMatrixType_optParams
+  PUBLIC :: TriDiagMatrixType_reqParams,TriDiagMatrixType_optParams
+  PUBLIC :: DenseRectMatrixType_reqParams,DenseRectMatrixType_optParams
+  PUBLIC :: DenseSquareMatrixType_reqParams,DenseSquareMatrixType_optParams
+  PUBLIC :: PETScMatrixType_reqParams,PETScMatrixType_optParams
+  PUBLIC :: MatrixTypes_Declare_ValidParams
+  PUBLIC :: MatrixTypes_Clear_ValidParams
   
   !> set enumeration scheme for matrix types
   INTEGER(SIK),PUBLIC :: SPARSE=0,TRIDIAG=1,DENSESQUARE=2,DENSERECT=3
@@ -315,27 +315,27 @@ MODULE MatrixTypes
   
   !> Logical flag to check whether the required and optional parameter lists
   !> have been created yet for the Matrix Types.
-  LOGICAL(SBK),SAVE :: flagParamsMT=.FALSE.
+  LOGICAL(SBK),SAVE :: MatrixType_Paramsflag=.FALSE.
   
   !> The parameter lists to use when validating a parameter list for
   !> initialization for a Sparse Matrix Type.
-  TYPE(ParamType),SAVE :: reqParamsSMT, optParamsSMT
+  TYPE(ParamType),SAVE :: SparseMatrixType_reqParams, SparseMatrixType_optParams
   
   !> The parameter lists to use when validating a parameter list for
   !> initialization for a Tri-Diagonal Matrix Type.
-  TYPE(ParamType),SAVE :: reqParamsTDMT, optParamsTDMT
+  TYPE(ParamType),SAVE :: TriDiagMatrixType_reqParams, TriDiagMatrixType_optParams
   
   !> The parameter lists to use when validating a parameter list for
   !> initialization for a Dense Rectangular Matrix Type.
-  TYPE(ParamType),SAVE :: reqParamsDRMT, optParamsDRMT
+  TYPE(ParamType),SAVE :: DenseRectMatrixType_reqParams, DenseRectMatrixType_optParams
   
   !> The parameter lists to use when validating a parameter list for
   !> initialization for a Dense Square Matrix Type.
-  TYPE(ParamType),SAVE :: reqParamsDSMT, optParamsDSMT
+  TYPE(ParamType),SAVE :: DenseSquareMatrixType_reqParams, DenseSquareMatrixType_optParams
   
   !> The parameter lists to use when validating a parameter list for
   !> initialization for a PETSc Matrix Type.
-  TYPE(ParamType),SAVE :: reqParamsPMT, optParamsPMT
+  TYPE(ParamType),SAVE :: PETScMatrixType_reqParams, PETScMatrixType_optParams
   
   !> Exception Handler for use in MatrixTypes
   TYPE(ExceptionHandlerType),POINTER,SAVE :: eMatrixType => NULL()
@@ -361,11 +361,11 @@ MODULE MatrixTypes
       LOGICAL(SBK) :: localalloc
       
       !Check to set up required and optional param lists.
-      IF(.NOT.flagParamsMT) CALL setupMTParams()
+      IF(.NOT.MatrixType_Paramsflag) CALL MatrixTypes_Declare_ValidParams()
       
       !Validate against the reqParams and OptParams
       validParams=Params
-      CALL validParams%validate(reqParamsSMT)
+      CALL validParams%validate(SparseMatrixType_reqParams)
       
       ! Pull Data From Parameter List
       CALL Params%get('MatrixType->n',n)
@@ -421,11 +421,11 @@ MODULE MatrixTypes
       LOGICAL(SBK) :: localalloc, isSym
       
       !Check to set up required and optional param lists.
-      IF(.NOT.flagParamsMT) CALL setupMTParams()
+      IF(.NOT.MatrixType_Paramsflag) CALL MatrixTypes_Declare_ValidParams()
       
       !Validate against the reqParams and OptParams
       validParams=Params
-      CALL validParams%validate(reqParamsTDMT)
+      CALL validParams%validate(TriDiagMatrixType_reqParams)
       
       ! Pull Data From Parameter List
       CALL Params%get('MatrixType->n',n)
@@ -476,11 +476,11 @@ MODULE MatrixTypes
       LOGICAL(SBK) :: localalloc
       
       !Check to set up required and optional param lists.
-      IF(.NOT.flagParamsMT) CALL setupMTParams()
+      IF(.NOT.MatrixType_Paramsflag) CALL MatrixTypes_Declare_ValidParams()
       
       !Validate against the reqParams and OptParams
       validParams=Params
-      CALL validParams%validate(reqParamsDRMT)
+      CALL validParams%validate(DenseRectMatrixType_reqParams)
       
       ! Pull Data From Parameter List
       CALL Params%get('MatrixType->n',n)
@@ -531,11 +531,11 @@ MODULE MatrixTypes
       LOGICAL(SBK) :: localalloc, isSym
       
       !Check to set up required and optional param lists.
-      IF(.NOT.flagParamsMT) CALL setupMTParams()
+      IF(.NOT.MatrixType_Paramsflag) CALL MatrixTypes_Declare_ValidParams()
       
       !Validate against the reqParams and OptParams
       validParams=Params
-      CALL validParams%validate(reqParamsDSMT)
+      CALL validParams%validate(DenseSquareMatrixType_reqParams)
       
       ! Pull Data From Parameter List
       CALL Params%get('MatrixType->n',n)
@@ -598,10 +598,10 @@ MODULE MatrixTypes
       
 #ifdef HAVE_PETSC
       !Check to set up required and optional param lists.
-      IF(.NOT.flagParamsMT) CALL setupMTParams()      
+      IF(.NOT.MatrixType_Paramsflag) CALL MatrixTypes_Declare_ValidParams()      
       !Validate against the reqParams and OptParams
       validParams=Params
-      CALL validParams%validate(reqParamsPMT)
+      CALL validParams%validate(PETScMatrixType_reqParams)
       
       ! Pull Data From Parameter List
       CALL Params%get('MatrixType->n',n)
@@ -1582,7 +1582,7 @@ MODULE MatrixTypes
 !>        'MatrixType->MPI_COMM_ID',SIK
 !> The optional parameters for the PETSc Matrix Type do not exist.
 !>
-    SUBROUTINE setupMTParams()
+    SUBROUTINE MatrixTypes_Declare_ValidParams()
       INTEGER(SIK) :: n,m,nnz,matType,MPI_COMM_ID
       LOGICAL(SBK) :: isSym
       
@@ -1594,51 +1594,51 @@ MODULE MatrixTypes
       matType=1
       MPI_COMM_ID=1
       !Sparse Matrix Type - Required
-      CALL reqParamsSMT%add('MatrixType->n',n)
-      CALL reqParamsSMT%add('MatrixType->nnz',nnz)
+      CALL SparseMatrixType_reqParams%add('MatrixType->n',n)
+      CALL SparseMatrixType_reqParams%add('MatrixType->nnz',nnz)
       !Tri-Diagonal Matrix Type - Required
-      CALL reqParamsTDMT%add('MatrixType->n',n)
-      CALL reqParamsTDMT%add('MatrixType->isSym',isSym)
+      CALL TriDiagMatrixType_reqParams%add('MatrixType->n',n)
+      CALL TriDiagMatrixType_reqParams%add('MatrixType->isSym',isSym)
       !Dense Rectangular Matrix Type - Required
-      CALL reqParamsDRMT%add('MatrixType->n',n)
-      CALL reqParamsDRMT%add('MatrixType->m',m)
+      CALL DenseRectMatrixType_reqParams%add('MatrixType->n',n)
+      CALL DenseRectMatrixType_reqParams%add('MatrixType->m',m)
       !Dense Square Matrix Type - Required
-      CALL reqParamsDSMT%add('MatrixType->n',n)
-      CALL reqParamsDSMT%add('MatrixType->isSym',isSym)
+      CALL DenseSquareMatrixType_reqParams%add('MatrixType->n',n)
+      CALL DenseSquareMatrixType_reqParams%add('MatrixType->isSym',isSym)
       !PETSc Matrix Type - Required
-      CALL reqParamsPMT%add('MatrixType->n',n)
-      CALL reqParamsPMT%add('MatrixType->isSym',isSym)
-      CALL reqParamsPMT%add('MatrixType->matType',matType)
-      CALL reqParamsPMT%add('MatrixType->MPI_COMM_ID',MPI_COMM_ID)
+      CALL PETScMatrixType_reqParams%add('MatrixType->n',n)
+      CALL PETScMatrixType_reqParams%add('MatrixType->isSym',isSym)
+      CALL PETScMatrixType_reqParams%add('MatrixType->matType',matType)
+      CALL PETScMatrixType_reqParams%add('MatrixType->MPI_COMM_ID',MPI_COMM_ID)
       
       !There are no optional parameters at this time.
       
       !Set flag to true since the defaults have been set for this type.
-      flagParamsMT=.TRUE.
-    ENDSUBROUTINE setupMTParams
+      MatrixType_Paramsflag=.TRUE.
+    ENDSUBROUTINE MatrixTypes_Declare_ValidParams
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine that clears the default parameter lists for the all 
 !>        Matrix Types including Sparse, Tri-Diagonal, Dense Rectangular, Dense
 !>        Square, and PETSc.
 !>
-    SUBROUTINE clearMTParams()
+    SUBROUTINE MatrixTypes_Clear_ValidParams()
       
       !Sparse Matrix Type
-      CALL reqParamsSMT%clear()
+      CALL SparseMatrixType_reqParams%clear()
       !Tri-Diagonal Matrix Type
-      CALL reqParamsTDMT%clear()
+      CALL TriDiagMatrixType_reqParams%clear()
       !Dense Rectangular Matrix Type
-      CALL reqParamsDRMT%clear()
+      CALL DenseRectMatrixType_reqParams%clear()
       !Dense Square Matrix Type
-      CALL reqParamsDSMT%clear()
+      CALL DenseSquareMatrixType_reqParams%clear()
       !PETSc Matrix Type
-      CALL reqParamsPMT%clear()
+      CALL PETScMatrixType_reqParams%clear()
       
       !There are no optional parameters at this time.
       
       !Set flag to true since the defaults have been set for this type.
-      flagParamsMT=.FALSE.
-    ENDSUBROUTINE clearMTParams
+      MatrixType_Paramsflag=.FALSE.
+    ENDSUBROUTINE MatrixTypes_Clear_ValidParams
 !
 ENDMODULE MatrixTypes
