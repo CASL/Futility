@@ -979,7 +979,7 @@ MODULE LinearSolverTypes
       normType=normType_in
       convTol=convTol_in
       maxIters=maxIters_in
-      nRestart=nRestart_in
+      IF(PRESENT(nRestart_in)) nRestart=nRestart_in
       IF(normType <= -2) THEN
         CALL eLinearSolverType%raiseWarning(modName//'::'// &
           myName//' - Incorrect input, normType should not be less '// &
@@ -995,13 +995,13 @@ MODULE LinearSolverTypes
       IF(maxIters <= 1) THEN
         CALL eLinearSolverType%raiseWarning(modName//'::'// &
           myName//' - Incorrect input, maxIters should not be less '// &
-            'than 1. Default value is used!')
+            'than or equal to 1. Default value is used!')
         maxIters=1000
       ENDIF
       IF(nRestart <= 1 .OR. .NOT.PRESENT(nRestart_in)) THEN
         CALL eLinearSolverType%raiseWarning(modName//'::'// &
           myName//' - Incorrect input, nRestart should not be less '// &
-            'than 1. Default value is used!')
+            'than or equal to 1. Default value is used!')
         nRestart=30
       ENDIF
       IF(solver%isInit) THEN
