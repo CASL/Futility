@@ -25,6 +25,10 @@
 !> matrix-matrix multiplication are also added to the global generic interfaces
 !> for @ref BLAS2::BLAS_matvec "BLAS_matvec" and BLAS_matmat interfaces.
 !>
+!> The objects are initialized with a parameter list. For valid reference lists
+!> see @ref MatrixTypes::MatrixTypes_Declare_ValidParams
+!> "MatrixTypes_Declare_ValidParams".
+!>
 !> NOTE: Sparse formats are CSR formats that match the 3-Array Variation Format
 !> of the Intel MKL. However, filling these requires traversing the matrix
 !> in row-major format (i.e., increment i in inner loop). This is more how a C
@@ -1557,7 +1561,7 @@ MODULE MatrixTypes
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine that sets up the default parameter lists for the all 
-!>        Matrix Types including Sparse, Tri-Diagonal, Dense Rectangular, Dense
+!>        MatrixTypes including Sparse, Tri-Diagonal, Dense Rectangular, Dense
 !>        Square, and PETSc.
 !> The required parameters for the Sparse Matrix Type are:
 !>        'MatrixType->n',SIK
@@ -1619,7 +1623,7 @@ MODULE MatrixTypes
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine that clears the default parameter lists for the all 
-!>        Matrix Types including Sparse, Tri-Diagonal, Dense Rectangular, Dense
+!>        MatrixTypes including Sparse, Tri-Diagonal, Dense Rectangular, Dense
 !>        Square, and PETSc.
 !>
     SUBROUTINE MatrixTypes_Clear_ValidParams()

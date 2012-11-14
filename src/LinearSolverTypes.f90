@@ -22,6 +22,10 @@
 !> initialized with parameter lists. In general any third party library (TPL)
 !> that may be interfaced with this module should be implemented such that it's
 !> optional.
+!>
+!> For valid reference lists
+!> see @ref MatrixTypes::LinearSolverTypes_Declare_ValidParams
+!> "LinearSolverTypes_Declare_ValidParams".
 !> 
 !> Currently supported TPLs include:
 !>  - PETSc (with interfaces to KSP)
@@ -1914,8 +1918,8 @@ MODULE LinearSolverTypes
     ENDSUBROUTINE LNorm
 !
 !-------------------------------------------------------------------------------
-!> @brief Subroutine that sets up the default parameter lists for the Linear  
-!>        Solver Type.
+!> @brief Subroutine that sets up the default parameter lists for the
+!>        LinearSolverType.
 !> The required parameters for the Linear Solver Type are:
 !>        'LinearSolverType->TPLType',SIK
 !>        'LinearSolverType->solverMethod',SIK
@@ -1961,8 +1965,8 @@ MODULE LinearSolverTypes
     ENDSUBROUTINE LinearSolverType_Declare_ValidParams
 !
 !-------------------------------------------------------------------------------
-!> @brief Subroutine that clears the default parameter lists for the Linear  
-!>        Solver Type.
+!> @brief Subroutine that clears the default parameter lists for the
+!>        LinearSolverType.
 !>
     SUBROUTINE LinearSolverType_Clear_ValidParams()
       
