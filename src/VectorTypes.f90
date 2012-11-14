@@ -1807,10 +1807,10 @@ MODULE VectorTypes
       !Setup the required and optional parameter lists
       n=1
       MPI_Comm=1
-      !Real Vector Type
+      !Real Vector Type - Required
       CALL RealVectorType_reqParams%add('VectorType->n',n)
       
-      !PETSc Vector Type
+      !PETSc Vector Type - Required
       CALL PETScVectorType_reqParams%add('VectorType->n',n)
       CALL PETScVectorType_reqParams%add('VectorType->MPI_Comm_ID',MPI_Comm)
       !There are no optional parameters at this time.
@@ -1825,14 +1825,14 @@ MODULE VectorTypes
 !>
     SUBROUTINE VectorType_Clear_ValidParams()
       
-      !Real Vector Type
+      !Real Vector Type - Required
       CALL RealVectorType_reqParams%clear()
       
-      !PETSc Vector Type
+      !PETSc Vector Type - Required
       CALL PETScVectorType_reqParams%clear()
       !There are no optional parameters at this time.
       
-      !Set flag to true since the defaults have been set for this type.
+      !Set flag to false since the defaults have been cleared for this type.
       VectorType_Paramsflag=.FALSE.
     ENDSUBROUTINE VectorType_Clear_ValidParams
 !
