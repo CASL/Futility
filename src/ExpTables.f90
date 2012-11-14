@@ -24,6 +24,10 @@
 !> cache and because the EXP() function can take up to ~100 more FLOPS to 
 !> evaluate than multiply or add operation.
 !>
+!> The object is initialized with a parameter list. For valid reference lists
+!> see @ref ExpTables::ExpTables_Declare_ValidParams
+!> "ExpTables_Declare_ValidParams".
+!>
 !> This module is largely based on the following paper:
 !>
 !> A. Yamamoto, et al., "Computational efficiencies of approximated functions
@@ -541,10 +545,10 @@ MODULE ExpTables
     ENDFUNCTION EXPT_TwoOrder
 !
 !-------------------------------------------------------------------------------
-!> @brief Subroutine that sets up the default parameter lists for the Exp Table
-!>        Type.
-!> The required parameters for the Exp Table Type do not exist.
-!> The optional parameters for the Exp Table Type are:
+!> @brief Subroutine that sets up the default parameter lists for the 
+!>        ExpTableType.
+!> The required parameters for the ExpTableType do not exist.
+!> The optional parameters for the ExpTableType are:
 !>        'ExpTableType->tabletype',SIK
 !>        'ExpTableType->minval',SRK
 !>        'ExpTableType->maxval',SRK
@@ -573,8 +577,8 @@ MODULE ExpTables
     ENDSUBROUTINE ExpTables_Declare_ValidParams
 
 !-------------------------------------------------------------------------------
-!> @brief Subroutine that clears the default parameter lists for the Exp Table
-!>        Type.
+!> @brief Subroutine that clears the default parameter lists for the 
+!>        ExpTableType.
 !> 
     SUBROUTINE ExpTables_Clear_ValidParams()
 

@@ -18,7 +18,11 @@
 !> @brief Utility module for defining vector types.
 !>
 !> The types of vectors defined in this module include a real vector type,
-!> and PETSc vector type. 
+!> and PETSc vector type.
+!>
+!> The objects are initialized with a parameter list. For valid reference lists
+!> see @ref VectorTypes::VectorTypes_Declare_ValidParams
+!> "VectorTypes_Declare_ValidParams".
 !>
 !> @par Module Dependencies
 !>  - @ref IntrType "IntrType": @copybrief IntrType
@@ -1791,8 +1795,8 @@ MODULE VectorTypes
     ENDSUBROUTINE swap_VectorType  
 !
 !-------------------------------------------------------------------------------
-!> @brief Subroutine that sets up the default parameter lists for the  Vector 
-!>        Types, both Real and PETSc.
+!> @brief Subroutine that sets up the default parameter lists for the
+!>        VectorTypes, both Real and PETSc.
 !> The required parameters for the Real Vector Type are:
 !>        'VectorType->n',SIK
 !> The optional parameters for the Real Vector Type do not exist.
@@ -1820,8 +1824,8 @@ MODULE VectorTypes
     ENDSUBROUTINE VectorType_Declare_ValidParams
 !
 !-------------------------------------------------------------------------------
-!> @brief Subroutine that clears the default parameter lists for the  Vector 
-!>        Types, both Real and PETSc.
+!> @brief Subroutine that clears the default parameter lists for the
+!>        VectorTypes, both Real and PETSc.
 !>
     SUBROUTINE VectorType_Clear_ValidParams()
       
