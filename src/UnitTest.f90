@@ -96,7 +96,7 @@ MODULE UnitTest
       CHARACTER(LEN=6) :: passfail
       INTEGER :: npass=0
       INTEGER :: nfail=0
-      TYPE(UTestElement),POINTER :: tmp
+      TYPE(UTestElement),POINTER :: tmp, tmp1
       
       WRITE(*,"('===================================================')")
       WRITE(*,"('|                 TEST STATISTICS                 |')")
@@ -110,8 +110,10 @@ MODULE UnitTest
           npass=npass+tmp%npass
           nfail=nfail+tmp%nfail
         ENDIF
-        IF (.NOT. ASSOCIATED(tmp%next)) EXIT
-        tmp=>tmp%next
+        tmp1=>tmp%next
+        DEALLOCATE(tmp)
+        IF (.NOT. ASSOCIATED(tmp1)) EXIT
+        tmp=>tmp1
       ENDDO
       WRITE(*,"('|-------------------------------------------------|')")
       WRITE(*,"('| ',A20,'| ',I06,' | ',I06,' | ',I07,' |')") '       Total        ',npass,nfail,npass+nfail
