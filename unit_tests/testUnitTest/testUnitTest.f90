@@ -15,7 +15,7 @@
 ! manufacturer, or otherwise, does not necessarily constitute or imply its     !
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-PROGRAM testXMLProc
+PROGRAM testUnitTest
 #include "UnitTest.h"
   USE UnitTest
 
@@ -92,5 +92,5 @@ PROGRAM testXMLProc
       ASSERT(.FALSE.,"test 3")      
     ENDSUBROUTINE mysubroutineC
 !
-ENDPROGRAM testXMLProc
+ENDPROGRAM testUnitTest
 

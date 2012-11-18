@@ -36,7 +36,8 @@ MODULE UnitTest
 ! List of Public items
   PUBLIC :: UTest_Start
   PUBLIC :: UTest_Finalize
-  PUBLIC :: UTest_Register
+  PUBLIC :: UTest_Start_SubTest
+  PUBLIC :: UTest_End_SubTest
   PUBLIC :: UTest_Assert
   PUBLIC :: utest_prefix
   PUBLIC :: utest_lastfail
@@ -143,7 +144,7 @@ MODULE UnitTest
 !>
 !> description
 !>
-    SUBROUTINE UTest_Register(subtestname)
+    SUBROUTINE UTest_Start_SubTest(subtestname)
       CHARACTER(LEN=*),INTENT(IN) :: subtestname
       TYPE(UTestElement),POINTER :: tmp
       
@@ -152,10 +153,32 @@ MODULE UnitTest
       utest_curtest%next=>tmp
       utest_curtest=>tmp
       
+      WRITE(*,*)
       WRITE(*,*) '  BEGIN TEST '//subtestname
       utest_inmain=.FALSE.
       
-    ENDSUBROUTINE UTest_Register
+    ENDSUBROUTINE UTest_Start_SubTest
+!
+!-------------------------------------------------------------------------------
+!> @brief description
+!> @param parameter    description
+!>
+!> description
+!>
+    SUBROUTINE UTest_End_SubTest()
+      CHARACTER(LEN=6) :: pfstr
+      
+      IF(utest_curtest%nfail>0) THEN
+        pfstr='FAILED'
+      ELSE
+        pfstr='PASSED'
+      ENDIF
+      
+      WRITE(*,*) '  TEST '//utest_curtest%subtestname//' '//pfstr
+      WRITE(*,*) 
+      utest_inmain=.TRUE.
+      
+    ENDSUBROUTINE UTest_End_SubTest
 !
 !-------------------------------------------------------------------------------
 !> @brief description
