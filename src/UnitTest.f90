@@ -163,14 +163,15 @@ MODULE UnitTest
 !>
 !> description
 !>
-    SUBROUTINE UTest_Assert(bool,file,line,msg)
+!   Removed file, because path is to long
+    SUBROUTINE UTest_Assert(bool,line,msg)
       LOGICAL,INTENT(IN) :: bool
-      CHARACTER(LEN=*),INTENT(IN) :: file
+      !CHARACTER(LEN=*),INTENT(IN) :: file
       INTEGER,INTENT(IN) :: line
       CHARACTER(LEN=*),INTENT(IN) :: msg
       
-      CHARACTER(LEN=LEN(file)) :: name
-      name=trim_path(file)
+      !CHARACTER(LEN=LEN(file)) :: name
+      !name=trim_path(file)
       
       IF(bool) THEN
         utest_lastfail=.FALSE.
@@ -186,7 +187,7 @@ MODULE UnitTest
         ELSE
           utest_curtest%nfail=utest_curtest%nfail+1
         ENDIF
-        WRITE(*,'(A,A,I0,A,A,A)') TRIM(name),'|Line:',line,' - ', TRIM(utest_prefix)//" "//TRIM(msg), '  FAILED'
+        WRITE(*,'(A,I0,A,A,A)') 'Line:',line,' - ', TRIM(utest_prefix)//" "//TRIM(msg), '  FAILED'
       ENDIF
       
     ENDSUBROUTINE UTest_Assert

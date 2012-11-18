@@ -7,8 +7,8 @@
 #define SET_PREFIX(pfx)  utest_prefix=pfx//" -"
 
 #define SET_INTERACTIVE()  utest_interactive=.TRUE.
-
-#define ASSERT(bool,msg)  CALL UTest_Assert(bool,__FILE__,__LINE__,msg)
+// removed __FILE__ from ASSERT because path is to long
+#define ASSERT(bool,msg)  CALL UTest_Assert(bool,__LINE__,msg)
 
 #define ASSERTFAIL(bool,msg)  ASSERT(bool,msg); IF(utest_lastfail) STOP __LINE__
 
