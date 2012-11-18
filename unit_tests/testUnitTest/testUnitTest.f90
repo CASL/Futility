@@ -18,11 +18,6 @@
 PROGRAM testXMLProc
 #include "UnitTest.h"
   USE UnitTest
-  USE ISO_FORTRAN_ENV
-  USE IntrType
-  USE ExceptionHandler
-  USE IOutil
-  USE XMLProc
 
   IMPLICIT NONE
 #ifdef HAVE_MPI
@@ -33,39 +28,69 @@ PROGRAM testXMLProc
   INTEGER :: MPI_COMM_WORLD=0
 #endif
   
-  !WRITE(*,*) '==================================================='
-  !WRITE(*,*) 'TESTING XMLPROC...'
-  !WRITE(*,*) '==================================================='
-  CREATE_TEST("XMLProc")
-  utest_interactive=.TRUE.
+  CREATE_TEST("UnitTest")
   
-  !CALL ScanXML()
-  REGISTER_SUBTEST("A",mysubroutine)
-  ASSERT(.TRUE.,"test 1")
-  ASSERTFAIL(.TRUE.,"test 2")
-  ASSERT(.FALSE.,"test 3")
-  REGISTER_SUBTEST("B",mysubroutine)
-  ASSERT(.TRUE.,"test 1")
-  ASSERTFAIL(.TRUE.,"test 2")
-  ASSERT(.FALSE.,"test 3")
-  REGISTER_SUBTEST("C",mysubroutine)
-  ASSERT(.TRUE.,"test 1")
-  ASSERTFAIL(.TRUE.,"test 2")
-  ASSERT(.FALSE.,"test 3")
-  !ASSERTFAIL(.FALSE.,"test 4")
+  !SET_INTERACTIVE()
+  SET_PREFIX("testUTest")
+  
+  ! Subtests
+  REGISTER_SUBTEST("A",mysubroutineA)
+
+  REGISTER_SUBTEST("B",mysubroutineB)
+
+  ASSERT(.TRUE.,"in main")
+  
+  REGISTER_SUBTEST("C",mysubroutineC)
+  
   
   FINALIZE_TEST()
-  !WRITE(*,*) '==================================================='
-  !WRITE(*,*) 'TESTING XMLPROC PASSED!'
-  !WRITE(*,*) '==================================================='
+
   STAY()
 #ifdef HAVE_MPI
   CALL MPI_Finalize(mpierr)
 #endif
-!  READ(*,*)
 !
 !===============================================================================
-!  CONTAINS
+  CONTAINS
+!
+!-------------------------------------------------------------------------------
+!> @brief description
+!> @param parameter    description
+!>
+!> description
+!>
+    SUBROUTINE mysubroutineA()
+      ASSERT(.TRUE.,"test 1")
+      FINFO() "This is a test that you shouldn't see"
+      ASSERTFAIL(.TRUE.,"test 2")
+      ASSERT(.FALSE.,"test 3")
+      FINFO() "This is a test that you should see"
+    ENDSUBROUTINE mysubroutineA
+!
+!-------------------------------------------------------------------------------
+!> @brief description
+!> @param parameter    description
+!>
+!> description
+!>
+    SUBROUTINE mysubroutineB()
+      ASSERT(.TRUE.,"test 1")
+      ASSERTFAIL(.TRUE.,"test 2")
+      ASSERT(.FALSE.,"test 3")      
+    ENDSUBROUTINE mysubroutineB
+!
+!-------------------------------------------------------------------------------
+!> @brief description
+!> @param parameter    description
+!>
+!> description
+!>
+    SUBROUTINE mysubroutineC()
+      SET_PREFIX("SubC")
+      ASSERT(.TRUE.,"test 1")
+      ASSERTFAIL(.TRUE.,"test 2")
+      ASSERT(.FALSE.,"test 3")      
+    ENDSUBROUTINE mysubroutineC
 !
 ENDPROGRAM testXMLProc
 
