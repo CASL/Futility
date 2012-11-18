@@ -1200,7 +1200,7 @@ MODULE VectorTypes
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incy
-      REAL(SRK) :: alpha=1.
+      REAL(SRK) :: alpha
       LOGICAL(SBK) :: localalloc
       
       !Error checking of subroutine input
@@ -1210,7 +1210,8 @@ MODULE VectorTypes
         ALLOCATE(eVectorType)
       ENDIF
       
-      IF (PRESENT(a)) alpha=a
+      alpha=1._SRK
+      IF(PRESENT(a)) alpha=a
       
       SELECTTYPE(thisVector); TYPE IS(RealVectorType)
         SELECTTYPE(newVector); TYPE IS(RealVectorType)
