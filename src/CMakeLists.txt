@@ -19,7 +19,7 @@ TRIBITS_ADD_LIBRARY(Utils
     HEADERS
 	  UnitTest_harness.h
     SOURCES
-      #UnitTest.f90
+      UnitTest.f90
       IntrType.f90
       BLAS1.f90
       BLAS2.f90

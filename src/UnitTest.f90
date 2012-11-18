@@ -27,17 +27,26 @@
  
 !>
 !> @author Benjamin Collins
-!>    @date
+!>    @date 11/17/2012
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-MODULE UNIT_TEST
- 
-  USE IntrType
- 
+MODULE UnitTest
   IMPLICIT NONE
   PRIVATE
 !
 ! List of Public items
-  PUBLIC :: subroutine
+  PUBLIC :: UTest_Start
+  PUBLIC :: UTest_Finalize
+  PUBLIC :: UTest_Assert
+  PUBLIC :: utest_lastfail
+  PUBLIC :: utest_interactive
+!
+! List of global variables
+  CHARACTER(LEN=20) :: utest_testname
+  CHARACTER(LEN=20) :: utest_subtestname
+  LOGICAL :: utest_interactive
+  LOGICAL :: utest_lastfail
+  LOGICAL :: utest_failure
+  INTEGER :: utest_verbose
 !
 !===============================================================================
   CONTAINS
@@ -48,8 +57,15 @@ MODULE UNIT_TEST
 !>
 !> description
 !>
-    SUBROUTINE UTest_Start(...)
-    
+    SUBROUTINE UTest_Start(testname)
+      CHARACTER(LEN=*),INTENT(IN) :: testname
+      
+      utest_testname=testname
+      WRITE(*,*) '==================================================='
+      WRITE(*,*) 'STARTING TEST: '//TRIM(utest_testname)//'...'
+      WRITE(*,*) '==================================================='
+      
+      ! some initialization stuff
     ENDSUBROUTINE UTest_Start
 !
 !-------------------------------------------------------------------------------
@@ -58,18 +74,26 @@ MODULE UNIT_TEST
 !>
 !> description
 !>
-    SUBROUTINE UTest_Register(...)
-    
-    ENDSUBROUTINE UTest_Register
-!
-!-------------------------------------------------------------------------------
-!> @brief description
-!> @param parameter    description
-!>
-!> description
-!>
-    SUBROUTINE UTest_Finalize(...)
-    
+    SUBROUTINE UTest_Finalize()
+      CHARACTER(LEN=6) :: passfail
+      
+      IF (.NOT. utest_failure) THEN
+        passfail="PASSED"
+      ELSE
+        passfail="FAILED"
+      ENDIF
+      
+      WRITE(*,*) '==================================================='
+      WRITE(*,*) 'TEST '//utest_testname//' '//passfail
+      WRITE(*,*) '==================================================='
+      WRITE(*,*) '|                 TEST STATISTICS                 |'
+      WRITE(*,*) '|-------------------------------------------------|'
+      WRITE(*,*) '|  SUBTEST NAME      |  PASS   |  FAIL  |  TOTAL  |'
+      WRITE(*,*) '|-------------------------------------------------|'
+      WRITE(*,*) '|                    |         |        |         |'
+      WRITE(*,*) '|                    |         |        |         |'
+      WRITE(*,*) '==================================================='
+      
     ENDSUBROUTINE UTest_Finalize
 !
 !-------------------------------------------------------------------------------
@@ -78,9 +102,39 @@ MODULE UNIT_TEST
 !>
 !> description
 !>
-    SUBROUTINE UTest_Assert(...)
-    
+    SUBROUTINE UTest_Assert(bool,file,line,msg)
+      LOGICAL,INTENT(IN) :: bool
+      CHARACTER(LEN=*),INTENT(IN) :: file
+      INTEGER,INTENT(IN) :: line
+      CHARACTER(LEN=*),INTENT(IN) :: msg
+      
+      CHARACTER(LEN=LEN(file)) :: name
+      name=trim_path(file)
+      
+      IF(bool) THEN
+        utest_lastfail=.FALSE.
+      ELSE
+        utest_lastfail=.TRUE.
+        WRITE(*,'(A,A,I0,A,A,A)') TRIM(name),'|Line:',line,' - ', msg, '  FAILED'
+      ENDIF
+      
     ENDSUBROUTINE UTest_Assert
-
 !
-ENDMODULE UNIT_TEST
+!-------------------------------------------------------------------------------
+!> @brief description
+!> @param parameter    description
+!>
+!> description
+!>
+    FUNCTION trim_path(file) RESULT(name)
+      CHARACTER(LEN=*),INTENT(IN) :: file
+      CHARACTER(LEN=LEN(file)) :: name
+      INTEGER :: i
+      
+      DO i=LEN(file),1,-1
+        IF(file(i:i)=="\") EXIT
+      ENDDO
+      name=file(i+1:LEN(file))
+    ENDFUNCTION
+!
+ENDMODULE UnitTest
