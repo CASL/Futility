@@ -1171,7 +1171,11 @@ MODULE LinearSolverTypes
         ENDIF
         CALL vt%set(zero)
         CALL BLAS_matvec(THISMATRIX=solver%A,X=vz,Y=vt)
-        comega=BLAS_dot(vs,vt)/BLAS_dot(vt,vt)
+        IF(BLAS_dot(vt,vt) /= 0) THEN
+          comega=BLAS_dot(vs,vt)/BLAS_dot(vt,vt)
+        ELSE
+          comega=0._SRK
+        ENDIF
         SELECTTYPE(X => solver%X); TYPE IS(RealVectorType)
           X%b=X%b+calpha*vy%b+comega*vz%b
         ENDSELECT
