@@ -8,6 +8,8 @@
 
 #define SET_INTERACTIVE()  utest_interactive=.TRUE.
 
+#define SET_VERBOSE(verb)  utest_verbose=verb
+
 ! Removed __FILE__ from ASSERT because path is too long
 #define ASSERT(bool,msg)  CALL UTest_Assert(bool,__LINE__,msg)
 
