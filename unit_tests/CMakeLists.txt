@@ -15,6 +15,7 @@
 # the tests at the end have the most dependencies.
 # 
 SET(UNIT_TEST_NAMES
+    testUnitTest
     testSelectedKinds
     testStrings
     testTimes
