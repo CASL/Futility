@@ -640,6 +640,7 @@ MODULE LinearSolverTypes
                 CALL solveBiCGSTAB(solver)
 
               TYPE IS(SparseMatrixType)
+                !CALL DecomposeILU_Sparse(solver)
                 CALL solveBiCGSTAB(solver)
 
               TYPE IS(TriDiagMatrixType)
@@ -1147,9 +1148,11 @@ MODULE LinearSolverTypes
         ! y_j=inv(M)*p_j, store in y
         CALL vy%set(zero)
         IF(ALLOCATED(solver%M)) THEN
-          SELECTTYPE(M => solver%M); TYPE IS(DenseSquareMatrixType)
-            CALL MinvMult_dense(M,vp%b,vy%b)
+          SELECTTYPE(M => solver%M)
+            TYPE IS(DenseSquareMatrixType); CALL MinvMult_dense(M,vp%b,vy%b)
+            !TYPE IS(SparseMatrixType); CALL MinvMult_Sparse(M,vp%b,vy%b)
           ENDSELECT
+          
         ELSE
           vy%b=vp%b
         ENDIF
@@ -1176,7 +1179,7 @@ MODULE LinearSolverTypes
         !get L_norm
         CALL LNorm(vr%b,solver%normType,solver%residual)
         !check convergence
-        IF(solver%residual<=solver%convTol) EXIT
+        IF(solver%residual <= solver%convTol) EXIT
       ENDDO
       solver%iters=iterations
       solver%info=0
@@ -1191,7 +1194,7 @@ MODULE LinearSolverTypes
     SUBROUTINE solveGMRES(solver)
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
 
-      REAL(SRK)  :: beta, h, t, phibar, temp, tol
+      REAL(SRK)  :: beta,h,t,phibar,temp,tol
       REAL(SRK),ALLOCATABLE :: v(:,:),R(:,:),w(:),c(:),s(:),g(:),y(:)
       TYPE(RealVectorType) :: u
       INTEGER(SIK) :: j,k,m,n,it
@@ -1202,6 +1205,7 @@ MODULE LinearSolverTypes
       n=solver%A%n
       m=MIN(solver%nRestart,n)
       CALL u%init(pList)
+      CALL pList%clear()
       ALLOCATE(v(n,m+1))
       ALLOCATE(R(m+1,m+1))
       ALLOCATE(w(n))
@@ -1218,33 +1222,33 @@ MODULE LinearSolverTypes
       y(:)=0._SRK
 
       CALL solver%getResidual(u)
-      CALL LNorm(u%b,2_SIK,beta)
+      CALL LNorm(u%b,2,beta)
       tol=solver%convTol*beta
       
       v(:,1)=-u%b/beta
       h=beta
       phibar=beta
       !Iterate on solution
-      DO it=1_SIK,m
+      DO it=1,m
         CALL BLAS_matvec(THISMATRIX=solver%A,X=v(:,it),BETA=0.0_SRK,Y=w)
-        h=BLAS_dot(w,v(:,1))
+        h=BLAS_dot(n,w,1,v(:,1),1)
         w=w-h*v(:,1)
         t=h
         DO k=2,it
-          h=BLAS_DOT(w,v(:,k))
+          h=BLAS_dot(n,w,1,v(:,k),1)
           w=w-h*v(:,k)
           R(k-1,it)=c(k-1)*t+s(k-1)*h
           t=c(k-1)*h-s(k-1)*t
         ENDDO
-        CALL LNorm(w,2_SIK,h)
+        CALL LNorm(w,2,h)
         !WRITE(*,*) "h = ", h
-        IF(h>0.0_SRK) THEN
+        IF(h > 0.0_SRK) THEN
           v(:,it+1)=w/h
         ELSE
           v(:,it+1)=0.0_SRK*w
         ENDIF
         !Set up next Given's rotation
-        IF(t>=0.0_SRK) THEN
+        IF(t >= 0.0_SRK) THEN
           temp=SQRT(t*t+h*h)
         ELSE
           temp=-SQRT(t*t+h*h)
@@ -1254,12 +1258,12 @@ MODULE LinearSolverTypes
         R(it,it)=temp
         g(it)=c(it)*phibar
         phibar=-s(it)*phibar
-        IF(ABS(phibar)<=tol) EXIT
+        IF(ABS(phibar) <= tol) EXIT
       ENDDO
       
-      DO j=it,1_SIK,-1_SIK
+      DO j=it,1,-1
         temp=0.0_SRK
-        DO k=j+1_SIK,it
+        DO k=j+1,it
           temp=temp+R(j,k)*y(k)
         ENDDO
         y(j)=(g(j)-temp)/R(j,j)
@@ -1268,9 +1272,18 @@ MODULE LinearSolverTypes
       CALL BLAS_matvec(v(:,1:it),y(1:it),0.0_SRK,u%b)
       CALL BLAS_axpy(u,solver%x)
       CALL solver%getResidual(u)
-      CALL LNorm(u%b,2_SIK,beta)
+      CALL LNorm(u%b,2,beta)
       solver%iters=it
       solver%info=0
+      
+      DEALLOCATE(v)
+      DEALLOCATE(R)
+      DEALLOCATE(w)
+      DEALLOCATE(c)
+      DEALLOCATE(s)
+      DEALLOCATE(g)
+      DEALLOCATE(y)
+      CALL u%clear()
     ENDSUBROUTINE solveGMRES
 !
 !-------------------------------------------------------------------------------
