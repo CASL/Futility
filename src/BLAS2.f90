@@ -315,7 +315,7 @@ MODULE BLAS2
           IF(incy == 1) THEN
             IF(beta == 0.0_SSK) THEN
               IF(leny > 100) THEN
-                mleny=MOD(n,5)
+                mleny=MOD(leny,5)
                 IF(mleny /= 0) y(1:mleny)=0.0_SSK
                 DO i=mleny+1,leny,5
                   y(i)=0.0_SSK
@@ -329,8 +329,8 @@ MODULE BLAS2
               ENDIF
             ELSE
               IF(leny > 100) THEN
-                mleny=MOD(n,5)
-                IF(mleny /= 0) Y(1:mleny)=beta*y(1:mleny)
+                mleny=MOD(leny,5)
+                IF(mleny /= 0) y(1:mleny)=beta*y(1:mleny)
                 DO i=mleny+1,leny,5
                   y(i)=beta*y(i)
                   y(i+1)=beta*y(i+1)
@@ -1566,8 +1566,8 @@ MODULE BLAS2
           IF(incy == 1) THEN
             IF(beta == 0.0_SDK) THEN
               IF(leny > 100) THEN
-                mleny=MOD(n,5)
-                IF(mleny /= 0) Y(1:mleny)=0.0_SDK
+                mleny=MOD(leny,5)
+                IF(mleny /= 0) y(1:mleny)=0.0_SDK
                 DO i=mleny+1,leny,5
                   y(i)=0.0_SDK
                   y(i+1)=0.0_SDK
@@ -1580,8 +1580,8 @@ MODULE BLAS2
               ENDIF
             ELSE
               IF(leny > 100) THEN
-                mleny=MOD(n,5)
-                IF(mleny /= 0) Y(1:mleny)=beta*y(1:mleny)
+                mleny=MOD(leny,5)
+                IF(mleny /= 0) y(1:mleny)=beta*y(1:mleny)
                 DO i=mleny+1,leny,5
                   y(i)=beta*y(i)
                   y(i+1)=beta*y(i+1)
