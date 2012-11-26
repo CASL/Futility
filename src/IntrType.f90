@@ -78,7 +78,9 @@
 !> @par
 !> (09/24/2011) - Brendan Kochunas
 !>   - Added operator .APPROXLE. and .APPROXGE. for "approximately less/greater than"
-
+!> @par
+!> (11/26/2011) - Zhouyu Liu
+!>   - Added function SOFTEQR for "soft relative equalivalence"
 !>
 !> @todo
 !> - Add support for Fortran 2003 C-interoperable types.
@@ -100,6 +102,7 @@ MODULE IntrType
   PUBLIC :: OPERATOR(.APPROXLE.)
   PUBLIC :: OPERATOR(.APPROXGE.)
   PUBLIC :: SOFTEQ
+  PUBLIC :: SOFTEQR
 !
 ! Variables
   !> @name Private Variables
@@ -253,13 +256,22 @@ MODULE IntrType
     MODULE PROCEDURE approxge_double
   ENDINTERFACE
   
-  !> @brief Interface for the operator for "softt equivalence" for intrinsic
+  !> @brief Interface for the operator for "soft equivalence" for intrinsic
   !> types
   INTERFACE SOFTEQ
     !> @copybrief IntrType::softeq_single
     MODULE PROCEDURE softeq_single
     !> @copybrief IntrType::softeq_double
     MODULE PROCEDURE softeq_double
+  ENDINTERFACE
+  
+  !> @brief Interface for the operator for "soft relative equivalence" for intrinsic
+  !> types
+  INTERFACE SOFTEQR
+    !> @copybrief IntrType::softeqr_single
+    MODULE PROCEDURE softeqr_single
+    !> @copybrief IntrType::softeqr_double
+    MODULE PROCEDURE softeqr_double
   ENDINTERFACE
 !
 !===============================================================================
@@ -606,5 +618,43 @@ MODULE IntrType
       LOGICAL(SBK) :: bool
       bool=(ABS(r1 - r2) <= tol)
     ENDFUNCTION softeq_double
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation when comparing two single precision reals
+!> with SOFTEQR
+!> @param r1 a single precision real number
+!> @param r2 a single precision real number
+!> @param tol a single precision real number
+!> @returns @c bool result of comparison
+!>
+    ELEMENTAL FUNCTION softeqr_single(r1,r2,tol) RESULT(bool)
+      REAL(SSK),INTENT(IN) :: r1
+      REAL(SSK),INTENT(IN) :: r2
+      REAL(SSK),INTENT(IN) :: tol
+      LOGICAL(SBK) :: bool
+      REAL(SSK) :: eps
+      eps=MAX(ABS(r1),ABS(r2))*tol
+      IF(r1 == 0.0_SSK .OR. r1 == 0.0_SSK) eps=EPSS
+      bool=(ABS(r1-r2) <= eps)
+    ENDFUNCTION softeqr_single
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation when comparing two double precision reals
+!> with SOFTEQR
+!> @param r1 a double precision real number
+!> @param r2 a double precision real number
+!> @param tol a double precision real number
+!> @returns @c bool result of comparison
+!>
+    ELEMENTAL FUNCTION softeqr_double(r1,r2,tol) RESULT(bool)
+      REAL(SDK),INTENT(IN) :: r1
+      REAL(SDK),INTENT(IN) :: r2
+      REAL(SDK),INTENT(IN) :: tol
+       LOGICAL(SBK) :: bool
+      REAL(SSK) :: eps
+      eps=MAX(ABS(r1),ABS(r2))*tol
+      IF(r1 == 0.0_SSK .OR. r1 == 0.0_SSK) eps=EPSD
+      bool=(ABS(r1-r2) <= eps)
+    ENDFUNCTION softeqr_double
 !
 ENDMODULE IntrType
