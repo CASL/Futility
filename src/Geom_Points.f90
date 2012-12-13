@@ -92,9 +92,6 @@ MODULE Geom_Points
       !> @copybrief GeomPoints::insert_LinkedListPointType
       !> @copydetails GeomPoints::insert_LinkedListPointType
       PROCEDURE,PASS :: insert => insert_LinkedListPointType
-      !> @copybrief GeomPoints::print_LinkedListPointType
-      !> @copydetails GeomPoints::print_LinkedListPointType
-      PROCEDURE,PASS :: print => print_LinkedListPointType
   ENDTYPE LinkedListPointType
   
   !> @brief Generic interface for computing midpoint
@@ -510,29 +507,6 @@ MODULE Geom_Points
         ENDSELECT
       ENDIF
     ENDSUBROUTINE insert_LinkedListPointType
-!
-!-------------------------------------------------------------------------------
-!> @brief Prints the contents of a linked list of points
-!> @param firstPoint the first element in the linked list
-!> 
-!> This prints the point coordinates for each point
-    SUBROUTINE print_LinkedListPointType(firstPoint)
-      CLASS(LinkedListPointType),INTENT(IN),TARGET :: firstPoint
-      TYPE(LinkedListPointType),POINTER :: thisPoint
-
-      thisPoint => firstPoint
-      DO
-        IF(ASSOCIATED(thisPoint%next))THEN
-          WRITE(*,'(a,e12.5,a,e12.5,a,e12.5)')'(',thisPoint%p%coord(1),',', &
-            thisPoint%p%coord(2),')',distance(thisPoint%p,thisPoint%next%p)
-          thisPoint => thisPoint%next
-        ELSE
-          WRITE(*,'(a,e12.5,a,e12.5,a)')'(',thisPoint%p%coord(1),',', &
-            thisPoint%p%coord(2),')'
-          EXIT
-        ENDIF
-      ENDDO
-    ENDSUBROUTINE print_LinkedListPointType
 !
 !-------------------------------------------------------------------------------
 !> @brief Clears a linked list of PointTypes.

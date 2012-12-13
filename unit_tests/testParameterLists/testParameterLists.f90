@@ -1725,6 +1725,19 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%get(''testSSK1a'',valssk1a) FAILED!'
       STOP 666
     ENDIF
+    !Test with deallocated array
+    DEALLOCATE(valssk1a)
+    CALL someParam%get('testSSK1a',valssk1a)
+    IF(valssk1a(1) /= 5.0_SSK .OR. valssk1a(2) /= 7.0_SSK ) THEN
+      WRITE(*,*) 'CALL someParam%get(''testSSK1a'',valssk1a) FAILED!'
+      STOP 666
+    ENDIF
+    DEALLOCATE(valssk1a)
+    CALL testParam%get('testSSK1a',valssk1a)
+    IF(valssk1a(1) /= 5.0_SSK .OR. valssk1a(2) /= 7.0_SSK ) THEN
+      WRITE(*,*) 'CALL testParam%get(''testSSK1a'',valssk1a) FAILED!'
+      STOP 666
+    ENDIF
     eParams => e
     CALL testParam2%get('testSSK1a',valssk1a)
     CALL testParam%get('testError',valssk1a)
@@ -1879,6 +1892,19 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     valsdk1a=0.0_SDK
+    CALL testParam%get('testSDK1a',valsdk1a)
+    IF(valsdk1a(1) /= 5.5_SDK .OR. valsdk1a(2) /= 7.5_SDK ) THEN
+      WRITE(*,*) 'CALL testParam%get(''testSDK1a'',valsdk1a) FAILED!'
+      STOP 666
+    ENDIF
+    !Test with deallocated array
+    DEALLOCATE(valsdk1a)
+    CALL someParam%get('testSDK1a',valsdk1a)
+    IF(valsdk1a(1) /= 5.5_SDK .OR. valsdk1a(2) /= 7.5_SDK ) THEN
+      WRITE(*,*) 'CALL someParam%get(''testSDK1a'',valsdk1a) FAILED!'
+      STOP 666
+    ENDIF
+    DEALLOCATE(valsdk1a)
     CALL testParam%get('testSDK1a',valsdk1a)
     IF(valsdk1a(1) /= 5.5_SDK .OR. valsdk1a(2) /= 7.5_SDK ) THEN
       WRITE(*,*) 'CALL testParam%get(''testSDK1a'',valsdk1a) FAILED!'
@@ -2042,6 +2068,19 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%get(''testSNK1a'',valsnk1a) FAILED!'
       STOP 666
     ENDIF
+    !Test with deallocated array
+    DEALLOCATE(valsnk1a)
+    CALL someParam%get('testSNK1a',valsnk1a)
+    IF(valsnk1a(1) /= 5_SNK .OR. valsnk1a(2) /= 7_SNK ) THEN
+      WRITE(*,*) 'CALL someParam%get(''testSNK1a'',valsnk1a) FAILED!'
+      STOP 666
+    ENDIF
+    DEALLOCATE(valsnk1a)
+    CALL testParam%get('testSNK1a',valsnk1a)
+    IF(valsnk1a(1) /= 5_SNK .OR. valsnk1a(2) /= 7_SNK ) THEN
+      WRITE(*,*) 'CALL testParam%get(''testSNK1a'',valsnk1a) FAILED!'
+      STOP 666
+    ENDIF
     eParams => e
     CALL testParam2%get('testSNK1a',valsnk1a)
     CALL testParam%get('testError',valsnk1a)
@@ -2200,6 +2239,19 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%get(''testSLK1a'',valslk1a) FAILED!'
       STOP 666
     ENDIF
+    !Test with deallocated array
+    DEALLOCATE(valslk1a)
+    CALL someParam%get('testSLK1a',valslk1a)
+    IF(valslk1a(1) /= 6_SLK .OR. valslk1a(2) /= 8_SLK ) THEN
+      WRITE(*,*) 'CALL someParam%get(''testSLK1a'',valslk1a) FAILED!'
+      STOP 666
+    ENDIF
+    DEALLOCATE(valslk1a)
+    CALL testParam%get('testSLK1a',valslk1a)
+    IF(valslk1a(1) /= 6_SLK .OR. valslk1a(2) /= 8_SLK ) THEN
+      WRITE(*,*) 'CALL testParam%get(''testSLK1a'',valslk1a) FAILED!'
+      STOP 666
+    ENDIF
     eParams => e
     CALL testParam2%get('testSLK1a',valslk1a)
     CALL testParam%get('testError',valslk1a)
@@ -2353,6 +2405,19 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     valsbk1a=.FALSE.
+    CALL testParam%get('testSBK1a',valsbk1a)
+    IF(.NOT.valsbk1a(1) .OR. valsbk1a(2)) THEN
+      WRITE(*,*) 'CALL testParam%get(''testSBK1a'',valsbk1a) FAILED!'
+      STOP 666
+    ENDIF
+    !Test with deallocated array
+    DEALLOCATE(valsbk1a)
+    CALL someParam%get('testSBK1a',valsbk1a)
+    IF(.NOT.valsbk1a(1) .OR. valsbk1a(2)) THEN
+      WRITE(*,*) 'CALL someParam%get(''testSBK1a'',valsbk1a) FAILED!'
+      STOP 666
+    ENDIF
+    DEALLOCATE(valsbk1a)
     CALL testParam%get('testSBK1a',valsbk1a)
     IF(.NOT.valsbk1a(1) .OR. valsbk1a(2)) THEN
       WRITE(*,*) 'CALL testParam%get(''testSBK1a'',valsbk1a) FAILED!'
@@ -2526,7 +2591,21 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%get(''testSTR1a'',valstr1a) FAILED!'
       STOP 666
     ENDIF
-    
+    !Test with deallocated array
+    DEALLOCATE(valstr1a)
+    CALL someParam%get('testSTR1a',valstr1a)
+    IF(valstr1a(1) /= '''testing''' .OR. valstr1a(2) /= 'more testing' .OR. &
+        SIZE(valstr1a) /= 2_SIK) THEN
+      WRITE(*,*) 'CALL testParam%get(''testSTR1a'',valstr1a) FAILED!'
+      STOP 666
+    ENDIF
+    DEALLOCATE(valstr1a)
+    CALL testParam%get('testSTR1a',valstr1a)
+    IF(valstr1a(1) /= '''testing''' .OR. valstr1a(2) /= 'more testing' .OR. &
+        SIZE(valstr1a) /= 2_SIK) THEN
+      WRITE(*,*) 'CALL testParam%get(''testSTR1a'',valstr1a) FAILED!'
+      STOP 666
+    ENDIF
     eParams => e
     CALL testParam2%get('testSTR1a',valstr1a)
     CALL testParam%get('testError',valstr1a)
@@ -2730,6 +2809,23 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%get(''testSSK2a'',valssk2a) FAILED!'
       STOP 666
     ENDIF
+    !Test with deallocated array
+    DEALLOCATE(valssk2a)
+    CALL someParam%get('testSSK2a',valssk2a)
+    IF(valssk2a(1,1) /= 5.0_SSK .OR. valssk2a(2,1) /= 7.0_SSK .OR. &
+        valssk2a(1,2) /= 6.0_SSK .OR. valssk2a(2,2) /= 8.0_SSK .OR. &
+          SIZE(valssk2a,1) /= 2_SIK .OR. SIZE(valssk2a,2) /= 2_SIK) THEN
+      WRITE(*,*) 'CALL someParam%get(''testSSK2a'',valssk2a) FAILED!'
+      STOP 666
+    ENDIF
+    DEALLOCATE(valssk2a)
+    CALL testParam%get('testSSK2a',valssk2a)
+    IF(valssk2a(1,1) /= 5.0_SSK .OR. valssk2a(2,1) /= 7.0_SSK .OR. &
+        valssk2a(1,2) /= 6.0_SSK .OR. valssk2a(2,2) /= 8.0_SSK .OR. &
+          SIZE(valssk2a,1) /= 2_SIK .OR. SIZE(valssk2a,2) /= 2_SIK) THEN
+      WRITE(*,*) 'CALL testParam%get(''testSSK2a'',valssk2a) FAILED!'
+      STOP 666
+    ENDIF
     eParams => e
     CALL testParam2%get('testSSK2a',valssk2a)
     CALL testParam%get('testError',valssk2a)
@@ -2899,6 +2995,23 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     valsdk2a=0.0_SDK
+    CALL testParam%get('testSDK2a',valsdk2a)
+    IF(valsdk2a(1,1) /= 5.5_SDK .OR. valsdk2a(2,1) /= 7.5_SDK .OR. &
+        valsdk2a(1,2) /= 6.5_SDK .OR. valsdk2a(2,2) /= 8.5_SDK .OR. &
+          SIZE(valsdk2a,1) /= 2_SIK .OR. SIZE(valsdk2a,2) /= 2_SIK) THEN
+      WRITE(*,*) 'CALL testParam%get(''testSDK2a'',valsdk2a) FAILED!'
+      STOP 666
+    ENDIF
+    !Test with deallocated array
+    DEALLOCATE(valsdk2a)
+    CALL someParam%get('testSDK2a',valsdk2a)
+    IF(valsdk2a(1,1) /= 5.5_SDK .OR. valsdk2a(2,1) /= 7.5_SDK .OR. &
+        valsdk2a(1,2) /= 6.5_SDK .OR. valsdk2a(2,2) /= 8.5_SDK .OR. &
+          SIZE(valsdk2a,1) /= 2_SIK .OR. SIZE(valsdk2a,2) /= 2_SIK) THEN
+      WRITE(*,*) 'CALL someParam%get(''testSDK2a'',valsdk2a) FAILED!'
+      STOP 666
+    ENDIF
+    DEALLOCATE(valsdk2a)
     CALL testParam%get('testSDK2a',valsdk2a)
     IF(valsdk2a(1,1) /= 5.5_SDK .OR. valsdk2a(2,1) /= 7.5_SDK .OR. &
         valsdk2a(1,2) /= 6.5_SDK .OR. valsdk2a(2,2) /= 8.5_SDK .OR. &
@@ -3083,6 +3196,23 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%get(''testSNK2a'',valsnk2a) FAILED!'
       STOP 666
     ENDIF
+    !Test with deallocated array
+    DEALLOCATE(valsnk2a)
+    CALL someParam%get('testSNK2a',valsnk2a)
+    IF(valsnk2a(1,1) /= 5_SNK .OR. valsnk2a(2,1) /= 7_SNK .OR. &
+        valsnk2a(1,2) /= 6_SNK .OR. valsnk2a(2,2) /= 8_SNK .OR. &
+          SIZE(valsnk2a,1) /= 2_SIK .OR. SIZE(valsnk2a,2) /= 2_SIK) THEN
+      WRITE(*,*) 'CALL someParam%get(''testSNK2a'',valsnk2a) FAILED!'
+      STOP 666
+    ENDIF
+    DEALLOCATE(valsnk2a)
+    CALL testParam%get('testSNK2a',valsnk2a)
+    IF(valsnk2a(1,1) /= 5_SNK .OR. valsnk2a(2,1) /= 7_SNK .OR. &
+        valsnk2a(1,2) /= 6_SNK .OR. valsnk2a(2,2) /= 8_SNK .OR. &
+          SIZE(valsnk2a,1) /= 2_SIK .OR. SIZE(valsnk2a,2) /= 2_SIK) THEN
+      WRITE(*,*) 'CALL testParam%get(''testSNK2a'',valsnk2a) FAILED!'
+      STOP 666
+    ENDIF
     eParams => e
     CALL testParam2%get('testSNK2a',valsnk2a)
     CALL testParam%get('testError',valsnk2a)
@@ -3251,6 +3381,23 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     valslk2a=0_SLK
+    CALL testParam%get('testSLK2a',valslk2a)
+    IF(valslk2a(1,1) /= 6_SLK .OR. valslk2a(2,1) /= 8_SLK .OR. &
+        valslk2a(1,2) /= 7_SLK .OR. valslk2a(2,2) /= 9_SLK .OR. &
+          SIZE(valslk2a,1) /= 2_SIK .OR. SIZE(valslk2a,2) /= 2_SIK) THEN
+      WRITE(*,*) 'CALL testParam%get(''testSLK2a'',valslk2a) FAILED!'
+      STOP 666
+    ENDIF
+    !Test with deallocated array
+    DEALLOCATE(valslk2a)
+    CALL someParam%get('testSLK2a',valslk2a)
+    IF(valslk2a(1,1) /= 6_SLK .OR. valslk2a(2,1) /= 8_SLK .OR. &
+        valslk2a(1,2) /= 7_SLK .OR. valslk2a(2,2) /= 9_SLK .OR. &
+          SIZE(valslk2a,1) /= 2_SIK .OR. SIZE(valslk2a,2) /= 2_SIK) THEN
+      WRITE(*,*) 'CALL someParam%get(''testSLK2a'',valslk2a) FAILED!'
+      STOP 666
+    ENDIF
+    DEALLOCATE(valslk2a)
     CALL testParam%get('testSLK2a',valslk2a)
     IF(valslk2a(1,1) /= 6_SLK .OR. valslk2a(2,1) /= 8_SLK .OR. &
         valslk2a(1,2) /= 7_SLK .OR. valslk2a(2,2) /= 9_SLK .OR. &
@@ -3429,6 +3576,25 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     valssk3a=0.0_SSK
+    CALL testParam%get('testSSK3a',valssk3a)
+    IF(ANY(valssk3a(1,1,:) /= 5.0_SSK) .OR. ANY(valssk3a(2,1,:) /= 7.0_SSK) .OR. &
+        ANY(valssk3a(1,2,:) /= 6.0_SSK) .OR. ANY(valssk3a(2,2,:) /= 8.0_SSK) .OR. &
+          SIZE(valssk3a,1) /= 2_SIK .OR. SIZE(valssk3a,2) /= 2_SIK .OR. &
+            SIZE(valssk3a,3) /= 2_SIK) THEN
+      WRITE(*,*) 'CALL testParam%get(''testSSK3a'',valssk3a) FAILED!'
+      STOP 666
+    ENDIF
+    !Test with deallocated array
+    DEALLOCATE(valssk3a)
+    CALL someParam%get('testSSK3a',valssk3a)
+    IF(ANY(valssk3a(1,1,:) /= 5.0_SSK) .OR. ANY(valssk3a(2,1,:) /= 7.0_SSK) .OR. &
+        ANY(valssk3a(1,2,:) /= 6.0_SSK) .OR. ANY(valssk3a(2,2,:) /= 8.0_SSK) .OR. &
+          SIZE(valssk3a,1) /= 2_SIK .OR. SIZE(valssk3a,2) /= 2_SIK .OR. &
+            SIZE(valssk3a,3) /= 2_SIK) THEN
+      WRITE(*,*) 'CALL someParam%get(''testSSK3a'',valssk3a) FAILED!'
+      STOP 666
+    ENDIF
+    DEALLOCATE(valssk3a)
     CALL testParam%get('testSSK3a',valssk3a)
     IF(ANY(valssk3a(1,1,:) /= 5.0_SSK) .OR. ANY(valssk3a(2,1,:) /= 7.0_SSK) .OR. &
         ANY(valssk3a(1,2,:) /= 6.0_SSK) .OR. ANY(valssk3a(2,2,:) /= 8.0_SSK) .OR. &
@@ -3623,6 +3789,25 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%get(''testSDK3a'',valsdk3a) FAILED!'
       STOP 666
     ENDIF
+    !Test with deallocated array
+    DEALLOCATE(valsdk3a)
+    CALL someParam%get('testSDK3a',valsdk3a)
+    IF(ANY(valsdk3a(1,1,:) /= 5.5_SDK) .OR. ANY(valsdk3a(2,1,:) /= 7.5_SDK) .OR. &
+        ANY(valsdk3a(1,2,:) /= 6.5_SDK) .OR. ANY(valsdk3a(2,2,:) /= 8.5_SDK) .OR. &
+          SIZE(valsdk3a,1) /= 2_SIK .OR. SIZE(valsdk3a,2) /= 2_SIK .OR. &
+            SIZE(valsdk3a,3) /= 2_SIK) THEN
+      WRITE(*,*) 'CALL someParam%get(''testSDK3a'',valsdk3a) FAILED!'
+      STOP 666
+    ENDIF
+    DEALLOCATE(valsdk3a)
+    CALL testParam%get('testSDK3a',valsdk3a)
+    IF(ANY(valsdk3a(1,1,:) /= 5.5_SDK) .OR. ANY(valsdk3a(2,1,:) /= 7.5_SDK) .OR. &
+        ANY(valsdk3a(1,2,:) /= 6.5_SDK) .OR. ANY(valsdk3a(2,2,:) /= 8.5_SDK) .OR. &
+          SIZE(valsdk3a,1) /= 2_SIK .OR. SIZE(valsdk3a,2) /= 2_SIK .OR. &
+            SIZE(valsdk3a,3) /= 2_SIK) THEN
+      WRITE(*,*) 'CALL testParam%get(''testSDK3a'',valsdk3a) FAILED!'
+      STOP 666
+    ENDIF
     eParams => e
     CALL testParam2%get('testSDK3a',valsdk3a)
     CALL testParam%get('testError',valsdk3a)
@@ -3809,6 +3994,25 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%get(''testSNK3a'',valsnk3a) FAILED!'
       STOP 666
     ENDIF
+    !Test with deallocated array
+    DEALLOCATE(valsnk3a)
+    CALL someParam%get('testSNK3a',valsnk3a)
+    IF(ANY(valsnk3a(1,1,:) /= 5_SNK) .OR. ANY(valsnk3a(2,1,:) /= 7_SNK) .OR. &
+        ANY(valsnk3a(1,2,:) /= 6_SNK) .OR. ANY(valsnk3a(2,2,:) /= 8_SNK) .OR. &
+          SIZE(valsnk3a,1) /= 2_SIK .OR. SIZE(valsnk3a,2) /= 2_SIK .OR. &
+            SIZE(valsnk3a,3) /= 2_SIK) THEN
+      WRITE(*,*) 'CALL someParam%get(''testSNK3a'',valsnk3a) FAILED!'
+      STOP 666
+    ENDIF
+    DEALLOCATE(valsnk3a)
+    CALL testParam%get('testSNK3a',valsnk3a)
+    IF(ANY(valsnk3a(1,1,:) /= 5_SNK) .OR. ANY(valsnk3a(2,1,:) /= 7_SNK) .OR. &
+        ANY(valsnk3a(1,2,:) /= 6_SNK) .OR. ANY(valsnk3a(2,2,:) /= 8_SNK) .OR. &
+          SIZE(valsnk3a,1) /= 2_SIK .OR. SIZE(valsnk3a,2) /= 2_SIK .OR. &
+            SIZE(valsnk3a,3) /= 2_SIK) THEN
+      WRITE(*,*) 'CALL testParam%get(''testSNK3a'',valsnk3a) FAILED!'
+      STOP 666
+    ENDIF
     eParams => e
     CALL testParam2%get('testSNK3a',valsnk3a)
     CALL testParam%get('testError',valsnk3a)
@@ -3986,6 +4190,25 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     valslk3a=0_SLK
+    CALL testParam%get('testSLK3a',valslk3a)
+    IF(ANY(valslk3a(1,1,:) /= 6_SLK) .OR. ANY(valslk3a(2,1,:) /= 8_SLK) .OR. &
+        ANY(valslk3a(1,2,:) /= 7_SLK) .OR. ANY(valslk3a(2,2,:) /= 9_SLK) .OR. &
+          SIZE(valslk3a,1) /= 2_SIK .OR. SIZE(valslk3a,2) /= 2_SIK .OR. &
+            SIZE(valslk3a,3) /= 2_SIK) THEN
+      WRITE(*,*) 'CALL testParam%get(''testSLK3a'',valslk3a) FAILED!'
+      STOP 666
+    ENDIF
+    !Test with deallocated array
+    DEALLOCATE(valslk3a)
+    CALL someParam%get('testSLK3a',valslk3a)
+    IF(ANY(valslk3a(1,1,:) /= 6_SLK) .OR. ANY(valslk3a(2,1,:) /= 8_SLK) .OR. &
+        ANY(valslk3a(1,2,:) /= 7_SLK) .OR. ANY(valslk3a(2,2,:) /= 9_SLK) .OR. &
+          SIZE(valslk3a,1) /= 2_SIK .OR. SIZE(valslk3a,2) /= 2_SIK .OR. &
+            SIZE(valslk3a,3) /= 2_SIK) THEN
+      WRITE(*,*) 'CALL someParam%get(''testSLK3a'',valslk3a) FAILED!'
+      STOP 666
+    ENDIF
+    DEALLOCATE(valslk3a)
     CALL testParam%get('testSLK3a',valslk3a)
     IF(ANY(valslk3a(1,1,:) /= 6_SLK) .OR. ANY(valslk3a(2,1,:) /= 8_SLK) .OR. &
         ANY(valslk3a(1,2,:) /= 7_SLK) .OR. ANY(valslk3a(2,2,:) /= 9_SLK) .OR. &

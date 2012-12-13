@@ -3902,11 +3902,16 @@ MODULE ParameterLists
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SSK_a1)
           IF(thisParam%name == TRIM(name)) THEN
-            IF(SIZE(thisParam%val) /= SIZE(val)) THEN
-              DEALLOCATE(val)
+            IF(ALLOCATED(val)) THEN
+              IF(SIZE(thisParam%val) /= SIZE(val)) THEN
+                DEALLOCATE(val)
+                ALLOCATE(val(SIZE(thisParam%val)))
+              ENDIF
+              val=thisParam%val
+            ELSE
               ALLOCATE(val(SIZE(thisParam%val)))
+              val=thisParam%val
             ENDIF
-            val=thisParam%val
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
               ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
@@ -3919,11 +3924,16 @@ MODULE ParameterLists
             !Parameter was found
             SELECTTYPE(p=>tmpParam)
               TYPE IS(ParamType_SSK_a1)
-                IF(SIZE(p%val) /= SIZE(val)) THEN
-                  DEALLOCATE(val)
+                IF(ALLOCATED(val)) THEN
+                  IF(SIZE(p%val) /= SIZE(val)) THEN
+                    DEALLOCATE(val)
+                    ALLOCATE(val(SIZE(p%val)))
+                  ENDIF
+                  val=p%val
+                ELSE
                   ALLOCATE(val(SIZE(p%val)))
+                  val=p%val
                 ENDIF
-                val=p%val
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
@@ -4203,11 +4213,16 @@ MODULE ParameterLists
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SDK_a1)
           IF(thisParam%name == TRIM(name)) THEN
-            IF(SIZE(thisParam%val) /= SIZE(val)) THEN
-              DEALLOCATE(val)
+            IF(ALLOCATED(val)) THEN
+              IF(SIZE(thisParam%val) /= SIZE(val)) THEN
+                DEALLOCATE(val)
+                ALLOCATE(val(SIZE(thisParam%val)))
+              ENDIF
+              val=thisParam%val
+            ELSE
               ALLOCATE(val(SIZE(thisParam%val)))
+              val=thisParam%val
             ENDIF
-            val=thisParam%val
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
               ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
@@ -4220,11 +4235,16 @@ MODULE ParameterLists
             !Parameter was found
             SELECTTYPE(p=>tmpParam)
               TYPE IS(ParamType_SDK_a1)
-                IF(SIZE(p%val) /= SIZE(val)) THEN
-                  DEALLOCATE(val)
+                IF(ALLOCATED(val)) THEN
+                  IF(SIZE(p%val) /= SIZE(val)) THEN
+                    DEALLOCATE(val)
+                    ALLOCATE(val(SIZE(p%val)))
+                  ENDIF
+                  val=p%val
+                ELSE
                   ALLOCATE(val(SIZE(p%val)))
+                  val=p%val
                 ENDIF
-                val=p%val
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
@@ -4503,11 +4523,16 @@ MODULE ParameterLists
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SNK_a1)
           IF(thisParam%name == TRIM(name)) THEN
-            IF(SIZE(thisParam%val) /= SIZE(val)) THEN
-              DEALLOCATE(val)
+            IF(ALLOCATED(val)) THEN
+              IF(SIZE(thisParam%val) /= SIZE(val)) THEN
+                DEALLOCATE(val)
+                ALLOCATE(val(SIZE(thisParam%val)))
+              ENDIF
+              val=thisParam%val
+            ELSE
               ALLOCATE(val(SIZE(thisParam%val)))
+              val=thisParam%val
             ENDIF
-            val=thisParam%val
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
               ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
@@ -4520,11 +4545,16 @@ MODULE ParameterLists
             !Parameter was found
             SELECTTYPE(p=>tmpParam)
               TYPE IS(ParamType_SNK_a1)
-                IF(SIZE(p%val) /= SIZE(val)) THEN
-                  DEALLOCATE(val)
+                IF(ALLOCATED(val)) THEN
+                  IF(SIZE(p%val) /= SIZE(val)) THEN
+                    DEALLOCATE(val)
+                    ALLOCATE(val(SIZE(p%val)))
+                  ENDIF
+                  val=p%val
+                ELSE
                   ALLOCATE(val(SIZE(p%val)))
+                  val=p%val
                 ENDIF
-                val=p%val
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
@@ -4803,11 +4833,16 @@ MODULE ParameterLists
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SLK_a1)
           IF(thisParam%name == TRIM(name)) THEN
-            IF(SIZE(thisParam%val) /= SIZE(val)) THEN
-              DEALLOCATE(val)
+            IF(ALLOCATED(val)) THEN
+              IF(SIZE(thisParam%val) /= SIZE(val)) THEN
+                DEALLOCATE(val)
+                ALLOCATE(val(SIZE(thisParam%val)))
+              ENDIF
+              val=thisParam%val
+            ELSE
               ALLOCATE(val(SIZE(thisParam%val)))
+              val=thisParam%val
             ENDIF
-            val=thisParam%val
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
               ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
@@ -4820,11 +4855,16 @@ MODULE ParameterLists
             !Parameter was found
             SELECTTYPE(p=>tmpParam)
               TYPE IS(ParamType_SLK_a1)
-                IF(SIZE(p%val) /= SIZE(val)) THEN
-                  DEALLOCATE(val)
+                IF(ALLOCATED(val)) THEN
+                  IF(SIZE(p%val) /= SIZE(val)) THEN
+                    DEALLOCATE(val)
+                    ALLOCATE(val(SIZE(p%val)))
+                  ENDIF
+                  val=p%val
+                ELSE
                   ALLOCATE(val(SIZE(p%val)))
+                  val=p%val
                 ENDIF
-                val=p%val
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
@@ -5099,11 +5139,16 @@ MODULE ParameterLists
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SBK_a1)
           IF(thisParam%name == TRIM(name)) THEN
-            IF(SIZE(thisParam%val) /= SIZE(val)) THEN
-              DEALLOCATE(val)
+            IF(ALLOCATED(val)) THEN
+              IF(SIZE(thisParam%val) /= SIZE(val)) THEN
+                DEALLOCATE(val)
+                ALLOCATE(val(SIZE(thisParam%val)))
+              ENDIF
+              val=thisParam%val
+            ELSE
               ALLOCATE(val(SIZE(thisParam%val)))
+              val=thisParam%val
             ENDIF
-            val=thisParam%val
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
               ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
@@ -5116,11 +5161,16 @@ MODULE ParameterLists
             !Parameter was found
             SELECTTYPE(p=>tmpParam)
               TYPE IS(ParamType_SBK_a1)
-                IF(SIZE(p%val) /= SIZE(val)) THEN
-                  DEALLOCATE(val)
+                IF(ALLOCATED(val)) THEN
+                  IF(SIZE(p%val) /= SIZE(val)) THEN
+                    DEALLOCATE(val)
+                    ALLOCATE(val(SIZE(p%val)))
+                  ENDIF
+                  val=p%val
+                ELSE
                   ALLOCATE(val(SIZE(p%val)))
+                  val=p%val
                 ENDIF
-                val=p%val
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
@@ -5397,11 +5447,16 @@ MODULE ParameterLists
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_STR_a1)
           IF(thisParam%name == TRIM(name)) THEN
-            IF(SIZE(thisParam%val) /= SIZE(val)) THEN
-              DEALLOCATE(val)
+            IF(ALLOCATED(val)) THEN
+              IF(SIZE(thisParam%val) /= SIZE(val)) THEN
+                DEALLOCATE(val)
+                ALLOCATE(val(SIZE(thisParam%val)))
+              ENDIF
+              val=thisParam%val
+            ELSE
               ALLOCATE(val(SIZE(thisParam%val)))
+              val=thisParam%val
             ENDIF
-            val=thisParam%val
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
               ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
@@ -5414,11 +5469,16 @@ MODULE ParameterLists
             !Parameter was found
             SELECTTYPE(p=>tmpParam)
               TYPE IS(ParamType_STR_a1)
-                IF(SIZE(p%val) /= SIZE(val)) THEN
-                  DEALLOCATE(val)
+                IF(ALLOCATED(val)) THEN
+                  IF(SIZE(p%val) /= SIZE(val)) THEN
+                    DEALLOCATE(val)
+                    ALLOCATE(val(SIZE(p%val)))
+                  ENDIF
+                  val=p%val
+                ELSE
                   ALLOCATE(val(SIZE(p%val)))
+                  val=p%val
                 ENDIF
-                val=p%val
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
@@ -5704,12 +5764,17 @@ MODULE ParameterLists
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SSK_a2)
           IF(thisParam%name == TRIM(name)) THEN
-            IF(SIZE(thisParam%val,1) /= SIZE(val,1) .OR. &
-                 SIZE(thisParam%val,2) /= SIZE(val,2)) THEN
-              DEALLOCATE(val)
+            IF(ALLOCATED(val)) THEN
+              IF(SIZE(thisParam%val,1) /= SIZE(val,1) .OR. &
+                   SIZE(thisParam%val,2) /= SIZE(val,2)) THEN
+                DEALLOCATE(val)
+                ALLOCATE(val(SIZE(thisParam%val,1),SIZE(thisParam%val,2)))
+              ENDIF
+              val=thisParam%val
+            ELSE
               ALLOCATE(val(SIZE(thisParam%val,1),SIZE(thisParam%val,2)))
+              val=thisParam%val
             ENDIF
-            val=thisParam%val
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
               ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
@@ -5722,12 +5787,17 @@ MODULE ParameterLists
             !Parameter was found
             SELECTTYPE(p=>tmpParam)
               TYPE IS(ParamType_SSK_a2)
-                IF(SIZE(p%val,1) /= SIZE(val,1) .OR. &
-                     SIZE(p%val,2) /= SIZE(val,2)) THEN
-                  DEALLOCATE(val)
+                IF(ALLOCATED(val)) THEN
+                  IF(SIZE(p%val,1) /= SIZE(val,1) .OR. &
+                       SIZE(p%val,2) /= SIZE(val,2)) THEN
+                    DEALLOCATE(val)
+                    ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2)))
+                  ENDIF
+                  val=p%val
+                ELSE
                   ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2)))
+                  val=p%val
                 ENDIF
-                val=p%val
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
@@ -6008,12 +6078,17 @@ MODULE ParameterLists
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SDK_a2)
           IF(thisParam%name == TRIM(name)) THEN
-            IF(SIZE(thisParam%val,1) /= SIZE(val,1) .OR. &
-                 SIZE(thisParam%val,2) /= SIZE(val,2)) THEN
-              DEALLOCATE(val)
+            IF(ALLOCATED(val)) THEN
+              IF(SIZE(thisParam%val,1) /= SIZE(val,1) .OR. &
+                   SIZE(thisParam%val,2) /= SIZE(val,2)) THEN
+                DEALLOCATE(val)
+                ALLOCATE(val(SIZE(thisParam%val,1),SIZE(thisParam%val,2)))
+              ENDIF
+              val=thisParam%val
+            ELSE
               ALLOCATE(val(SIZE(thisParam%val,1),SIZE(thisParam%val,2)))
+              val=thisParam%val
             ENDIF
-            val=thisParam%val
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
               ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
@@ -6026,12 +6101,17 @@ MODULE ParameterLists
             !Parameter was found
             SELECTTYPE(p=>tmpParam)
               TYPE IS(ParamType_SDK_a2)
-                IF(SIZE(p%val,1) /= SIZE(val,1) .OR. &
-                     SIZE(p%val,2) /= SIZE(val,2)) THEN
-                  DEALLOCATE(val)
+                IF(ALLOCATED(val)) THEN
+                  IF(SIZE(p%val,1) /= SIZE(val,1) .OR. &
+                       SIZE(p%val,2) /= SIZE(val,2)) THEN
+                    DEALLOCATE(val)
+                    ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2)))
+                  ENDIF
+                  val=p%val
+                ELSE
                   ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2)))
+                  val=p%val
                 ENDIF
-                val=p%val
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
@@ -6312,12 +6392,17 @@ MODULE ParameterLists
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SNK_a2)
           IF(thisParam%name == TRIM(name)) THEN
-            IF(SIZE(thisParam%val,1) /= SIZE(val,1) .OR. &
-                 SIZE(thisParam%val,2) /= SIZE(val,2)) THEN
-              DEALLOCATE(val)
+            IF(ALLOCATED(val)) THEN
+              IF(SIZE(thisParam%val,1) /= SIZE(val,1) .OR. &
+                   SIZE(thisParam%val,2) /= SIZE(val,2)) THEN
+                DEALLOCATE(val)
+                ALLOCATE(val(SIZE(thisParam%val,1),SIZE(thisParam%val,2)))
+              ENDIF
+              val=thisParam%val
+            ELSE
               ALLOCATE(val(SIZE(thisParam%val,1),SIZE(thisParam%val,2)))
+              val=thisParam%val
             ENDIF
-            val=thisParam%val
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
               ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
@@ -6330,12 +6415,17 @@ MODULE ParameterLists
             !Parameter was found
             SELECTTYPE(p=>tmpParam)
               TYPE IS(ParamType_SNK_a2)
-                IF(SIZE(p%val,1) /= SIZE(val,1) .OR. &
-                     SIZE(p%val,2) /= SIZE(val,2)) THEN
-                  DEALLOCATE(val)
+                IF(ALLOCATED(val)) THEN
+                  IF(SIZE(p%val,1) /= SIZE(val,1) .OR. &
+                       SIZE(p%val,2) /= SIZE(val,2)) THEN
+                    DEALLOCATE(val)
+                    ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2)))
+                  ENDIF
+                  val=p%val
+                ELSE
                   ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2)))
+                  val=p%val
                 ENDIF
-                val=p%val
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
@@ -6616,12 +6706,17 @@ MODULE ParameterLists
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SLK_a2)
           IF(thisParam%name == TRIM(name)) THEN
-            IF(SIZE(thisParam%val,1) /= SIZE(val,1) .OR. &
-                 SIZE(thisParam%val,2) /= SIZE(val,2)) THEN
-              DEALLOCATE(val)
+            IF(ALLOCATED(val)) THEN
+              IF(SIZE(thisParam%val,1) /= SIZE(val,1) .OR. &
+                   SIZE(thisParam%val,2) /= SIZE(val,2)) THEN
+                DEALLOCATE(val)
+                ALLOCATE(val(SIZE(thisParam%val,1),SIZE(thisParam%val,2)))
+              ENDIF
+              val=thisParam%val
+            ELSE
               ALLOCATE(val(SIZE(thisParam%val,1),SIZE(thisParam%val,2)))
+              val=thisParam%val
             ENDIF
-            val=thisParam%val
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
               ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
@@ -6634,12 +6729,17 @@ MODULE ParameterLists
             !Parameter was found
             SELECTTYPE(p=>tmpParam)
               TYPE IS(ParamType_SLK_a2)
-                IF(SIZE(p%val,1) /= SIZE(val,1) .OR. &
-                     SIZE(p%val,2) /= SIZE(val,2)) THEN
-                  DEALLOCATE(val)
+                IF(ALLOCATED(val)) THEN
+                  IF(SIZE(p%val,1) /= SIZE(val,1) .OR. &
+                       SIZE(p%val,2) /= SIZE(val,2)) THEN
+                    DEALLOCATE(val)
+                    ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2)))
+                  ENDIF
+                  val=p%val
+                ELSE
                   ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2)))
+                  val=p%val
                 ENDIF
-                val=p%val
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
@@ -6929,14 +7029,20 @@ MODULE ParameterLists
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SSK_a3)
           IF(thisParam%name == TRIM(name)) THEN
-            IF(SIZE(thisParam%val,1) /= SIZE(val,1) .OR. &
-                 SIZE(thisParam%val,2) /= SIZE(val,2) .OR. &
-                   SIZE(thisParam%val,3) /= SIZE(val,3)) THEN
-              DEALLOCATE(val)
+            IF(ALLOCATED(val)) THEN
+              IF(SIZE(thisParam%val,1) /= SIZE(val,1) .OR. &
+                   SIZE(thisParam%val,2) /= SIZE(val,2) .OR. &
+                     SIZE(thisParam%val,3) /= SIZE(val,3)) THEN
+                DEALLOCATE(val)
+                ALLOCATE(val(SIZE(thisParam%val,1), &
+                  SIZE(thisParam%val,2),SIZE(thisParam%val,3)))
+              ENDIF
+              val=thisParam%val
+            ELSE
               ALLOCATE(val(SIZE(thisParam%val,1), &
-                SIZE(thisParam%val,2),SIZE(thisParam%val,3)))
+                  SIZE(thisParam%val,2),SIZE(thisParam%val,3)))
+              val=thisParam%val
             ENDIF
-            val=thisParam%val
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
               ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
@@ -6949,13 +7055,18 @@ MODULE ParameterLists
             !Parameter was found
             SELECTTYPE(p=>tmpParam)
               TYPE IS(ParamType_SSK_a3)
-                IF(SIZE(p%val,1) /= SIZE(val,1) .OR. &
-                     SIZE(p%val,2) /= SIZE(val,2) .OR. &
-                       SIZE(p%val,3) /= SIZE(val,3)) THEN
-                  DEALLOCATE(val)
+                IF(ALLOCATED(val)) THEN
+                  IF(SIZE(p%val,1) /= SIZE(val,1) .OR. &
+                       SIZE(p%val,2) /= SIZE(val,2) .OR. &
+                         SIZE(p%val,3) /= SIZE(val,3)) THEN
+                    DEALLOCATE(val)
+                    ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2),SIZE(p%val,3)))
+                  ENDIF
+                  val=p%val
+                ELSE
                   ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2),SIZE(p%val,3)))
+                  val=p%val
                 ENDIF
-                val=p%val
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
@@ -7240,13 +7351,20 @@ MODULE ParameterLists
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SDK_a3)
           IF(thisParam%name == TRIM(name)) THEN
-            IF(SIZE(thisParam%val,1) /= SIZE(val,1) .OR. &
-                 SIZE(thisParam%val,2) /= SIZE(val,2) .OR. &
-                   SIZE(thisParam%val,3) /= SIZE(val,3)) THEN
-              DEALLOCATE(val)
-              ALLOCATE(val(SIZE(thisParam%val,1),SIZE(thisParam%val,2),SIZE(thisParam%val,3)))
+            IF(ALLOCATED(val)) THEN
+              IF(SIZE(thisParam%val,1) /= SIZE(val,1) .OR. &
+                   SIZE(thisParam%val,2) /= SIZE(val,2) .OR. &
+                     SIZE(thisParam%val,3) /= SIZE(val,3)) THEN
+                DEALLOCATE(val)
+                ALLOCATE(val(SIZE(thisParam%val,1), &
+                  SIZE(thisParam%val,2),SIZE(thisParam%val,3)))
+              ENDIF
+              val=thisParam%val
+            ELSE
+              ALLOCATE(val(SIZE(thisParam%val,1), &
+                  SIZE(thisParam%val,2),SIZE(thisParam%val,3)))
+              val=thisParam%val
             ENDIF
-            val=thisParam%val
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
               ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
@@ -7259,13 +7377,18 @@ MODULE ParameterLists
             !Parameter was found
             SELECTTYPE(p=>tmpParam)
               TYPE IS(ParamType_SDK_a3)
-                IF(SIZE(p%val,1) /= SIZE(val,1) .OR. &
-                     SIZE(p%val,2) /= SIZE(val,2) .OR. &
-                       SIZE(p%val,3) /= SIZE(val,3)) THEN
-                  DEALLOCATE(val)
+                IF(ALLOCATED(val)) THEN
+                  IF(SIZE(p%val,1) /= SIZE(val,1) .OR. &
+                       SIZE(p%val,2) /= SIZE(val,2) .OR. &
+                         SIZE(p%val,3) /= SIZE(val,3)) THEN
+                    DEALLOCATE(val)
+                    ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2),SIZE(p%val,3)))
+                  ENDIF
+                  val=p%val
+                ELSE
                   ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2),SIZE(p%val,3)))
+                  val=p%val
                 ENDIF
-                val=p%val
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
@@ -7550,14 +7673,20 @@ MODULE ParameterLists
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SNK_a3)
           IF(thisParam%name == TRIM(name)) THEN
-            IF(SIZE(thisParam%val,1) /= SIZE(val,1) .OR. &
-                 SIZE(thisParam%val,2) /= SIZE(val,2) .OR. &
-                   SIZE(thisParam%val,3) /= SIZE(val,3)) THEN
-              DEALLOCATE(val)
+            IF(ALLOCATED(val)) THEN
+              IF(SIZE(thisParam%val,1) /= SIZE(val,1) .OR. &
+                   SIZE(thisParam%val,2) /= SIZE(val,2) .OR. &
+                     SIZE(thisParam%val,3) /= SIZE(val,3)) THEN
+                DEALLOCATE(val)
+                ALLOCATE(val(SIZE(thisParam%val,1), &
+                  SIZE(thisParam%val,2),SIZE(thisParam%val,3)))
+              ENDIF
+              val=thisParam%val
+            ELSE
               ALLOCATE(val(SIZE(thisParam%val,1), &
                   SIZE(thisParam%val,2),SIZE(thisParam%val,3)))
+              val=thisParam%val
             ENDIF
-            val=thisParam%val
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
               ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
@@ -7570,13 +7699,18 @@ MODULE ParameterLists
             !Parameter was found
             SELECTTYPE(p=>tmpParam)
               TYPE IS(ParamType_SNK_a3)
-                IF(SIZE(p%val,1) /= SIZE(val,1) .OR. &
-                     SIZE(p%val,2) /= SIZE(val,2) .OR. &
-                       SIZE(p%val,3) /= SIZE(val,3)) THEN
-                  DEALLOCATE(val)
+                IF(ALLOCATED(val)) THEN
+                  IF(SIZE(p%val,1) /= SIZE(val,1) .OR. &
+                       SIZE(p%val,2) /= SIZE(val,2) .OR. &
+                         SIZE(p%val,3) /= SIZE(val,3)) THEN
+                    DEALLOCATE(val)
+                    ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2),SIZE(p%val,3)))
+                  ENDIF
+                  val=p%val
+                ELSE
                   ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2),SIZE(p%val,3)))
+                  val=p%val
                 ENDIF
-                val=p%val
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
@@ -7861,14 +7995,20 @@ MODULE ParameterLists
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SLK_a3)
           IF(thisParam%name == TRIM(name)) THEN
-            IF(SIZE(thisParam%val,1) /= SIZE(val,1) .OR. &
-                 SIZE(thisParam%val,2) /= SIZE(val,2) .OR. &
-                   SIZE(thisParam%val,3) /= SIZE(val,3)) THEN
-              DEALLOCATE(val)
+            IF(ALLOCATED(val)) THEN
+              IF(SIZE(thisParam%val,1) /= SIZE(val,1) .OR. &
+                   SIZE(thisParam%val,2) /= SIZE(val,2) .OR. &
+                     SIZE(thisParam%val,3) /= SIZE(val,3)) THEN
+                DEALLOCATE(val)
+                ALLOCATE(val(SIZE(thisParam%val,1), &
+                  SIZE(thisParam%val,2),SIZE(thisParam%val,3)))
+              ENDIF
+              val=thisParam%val
+            ELSE
               ALLOCATE(val(SIZE(thisParam%val,1), &
                   SIZE(thisParam%val,2),SIZE(thisParam%val,3)))
+              val=thisParam%val
             ENDIF
-            val=thisParam%val
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
               ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
@@ -7881,13 +8021,18 @@ MODULE ParameterLists
             !Parameter was found
             SELECTTYPE(p=>tmpParam)
               TYPE IS(ParamType_SLK_a3)
-                IF(SIZE(p%val,1) /= SIZE(val,1) .OR. &
-                     SIZE(p%val,2) /= SIZE(val,2) .OR. &
-                       SIZE(p%val,3) /= SIZE(val,3)) THEN
-                  DEALLOCATE(val)
+                IF(ALLOCATED(val)) THEN
+                  IF(SIZE(p%val,1) /= SIZE(val,1) .OR. &
+                       SIZE(p%val,2) /= SIZE(val,2) .OR. &
+                         SIZE(p%val,3) /= SIZE(val,3)) THEN
+                    DEALLOCATE(val)
+                    ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2),SIZE(p%val,3)))
+                  ENDIF
+                  val=p%val
+                ELSE
                   ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2),SIZE(p%val,3)))
+                  val=p%val
                 ENDIF
-                val=p%val
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
