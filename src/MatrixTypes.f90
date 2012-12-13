@@ -372,8 +372,9 @@ MODULE MatrixTypes
       CALL validParams%validate(SparseMatrixType_reqParams)
       
       ! Pull Data From Parameter List
-      CALL Params%get('MatrixType->n',n)
-      CALL Params%get('MatrixType->nnz',nnz)
+      CALL validParams%get('MatrixType->n',n)
+      CALL validParams%get('MatrixType->nnz',nnz)
+      CALL validParams%clear()
       
       !Error checking of subroutine input
       localalloc=.FALSE.
@@ -406,9 +407,8 @@ MODULE MatrixTypes
         CALL eMatrixType%raiseError('Incorrect call to '// &
           modName//'::'//myName//' - MatrixType already initialized')
       ENDIF
-
-      IF(localalloc) DEALLOCATE(eMatrixType)
       
+      IF(localalloc) DEALLOCATE(eMatrixType)
     ENDSUBROUTINE init_SparseMatrixParam
 !
 !-------------------------------------------------------------------------------
@@ -432,10 +432,11 @@ MODULE MatrixTypes
       CALL validParams%validate(TriDiagMatrixType_reqParams)
       
       ! Pull Data From Parameter List
-      CALL Params%get('MatrixType->n',n)
-      CALL Params%get('MatrixType->isSym',isSym)
+      CALL validParams%get('MatrixType->n',n)
+      CALL validParams%get('MatrixType->isSym',isSym)
+      CALL validParams%clear()
       
-     !Error checking of subroutine input
+      !Error checking of subroutine input
       localalloc=.FALSE.
       IF(.NOT.ASSOCIATED(eMatrixType)) THEN
         localalloc=.TRUE.
@@ -463,7 +464,6 @@ MODULE MatrixTypes
       ENDIF
         
       IF(localalloc) DEALLOCATE(eMatrixType)
-      
     ENDSUBROUTINE init_TriDiagMatrixParam
 !
 !-------------------------------------------------------------------------------
@@ -487,8 +487,9 @@ MODULE MatrixTypes
       CALL validParams%validate(DenseRectMatrixType_reqParams)
       
       ! Pull Data From Parameter List
-      CALL Params%get('MatrixType->n',n)
-      CALL Params%get('MatrixType->m',m)
+      CALL validParams%get('MatrixType->n',n)
+      CALL validParams%get('MatrixType->m',m)
+      CALL validParams%clear()
       
       !Error checking of subroutine input
       localalloc=.FALSE.
@@ -517,7 +518,7 @@ MODULE MatrixTypes
         CALL eMatrixType%raiseError('Incorrect call to '// &
           modName//'::'//myName//' - MatrixType already initialized')
       ENDIF
-      CALL validParams%clear()
+      
       IF(localalloc) DEALLOCATE(eMatrixType)
     ENDSUBROUTINE init_DenseRectMatrixParam
 !
@@ -542,8 +543,9 @@ MODULE MatrixTypes
       CALL validParams%validate(DenseSquareMatrixType_reqParams)
       
       ! Pull Data From Parameter List
-      CALL Params%get('MatrixType->n',n)
-      CALL Params%get('MatrixType->isSym',isSym)
+      CALL validParams%get('MatrixType->n',n)
+      CALL validParams%get('MatrixType->isSym',isSym)
+      CALL validParams%clear()
       
       !Error checking of subroutine input
       localalloc=.FALSE.
@@ -571,9 +573,8 @@ MODULE MatrixTypes
         CALL eMatrixType%raiseError('Incorrect call to '// &
           modName//'::'//myName//' - MatrixType already initialized')
       ENDIF
-
-      IF(localalloc) DEALLOCATE(eMatrixType)
       
+      IF(localalloc) DEALLOCATE(eMatrixType)
     ENDSUBROUTINE init_DenseSquareMatrixParam
 !
 !-------------------------------------------------------------------------------
@@ -608,10 +609,11 @@ MODULE MatrixTypes
       CALL validParams%validate(PETScMatrixType_reqParams)
       
       ! Pull Data From Parameter List
-      CALL Params%get('MatrixType->n',n)
-      CALL Params%get('MatrixType->isSym',isSym)
-      CALL Params%get('MatrixType->matType',matType)
-      CALL Params%get('MatrixType->MPI_COMM_ID',MPI_COMM_ID)
+      CALL validParams%get('MatrixType->n',n)
+      CALL validParams%get('MatrixType->isSym',isSym)
+      CALL validParams%get('MatrixType->matType',matType)
+      CALL validParams%get('MatrixType->MPI_COMM_ID',MPI_COMM_ID)
+      CALL validParams%clear()
 
       IF(.NOT. matrix%isInit) THEN
         IF(n < 1) THEN
@@ -653,7 +655,6 @@ MODULE MatrixTypes
               'need to recompile with PETSc enabled to use this feature.')
 #endif
       IF(localalloc) DEALLOCATE(eMatrixType)
-      
     ENDSUBROUTINE init_PETScMatrixParam
 !
 !-------------------------------------------------------------------------------
