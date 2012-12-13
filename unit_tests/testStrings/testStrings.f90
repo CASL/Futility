@@ -42,11 +42,11 @@ PROGRAM testStrings
   ELSE
     WRITE(*,*) '  Passed: LEN_TRIM(testString) (uninit)'
   ENDIF
-  IF(testString%sPrint() /= '') THEN
-    WRITE(*,*) 'testString%sPrint() (uninit) FAILED!'
+  IF(CHAR(testString) /= '') THEN
+    WRITE(*,*) 'CHAR(testString) (uninit) FAILED!'
     STOP 666
   ELSE
-    WRITE(*,*) '  Passed: testString%sPrint() (uninit)'
+    WRITE(*,*) '  Passed: CHAR(testString) (uninit)'
   ENDIF
   IF(TRIM(testString) /= '') THEN
     WRITE(*,*) 'TRIM(testString) (uninit) FAILED!'
@@ -58,8 +58,8 @@ PROGRAM testStrings
 !Test assigning an empty character to a string
   char10=''
   testString=char10
-  IF(testString%sPrint() /= char10) THEN
-    WRITE(*,*) 'testString%sPrint() (empty) FAILED!'
+  IF(CHAR(testString) /= char10) THEN
+    WRITE(*,*) 'CHAR(testString) (empty) FAILED!'
     STOP 666
   ENDIF
   IF(LEN(testString) /= LEN(char10)) THEN
@@ -77,8 +77,8 @@ PROGRAM testStrings
 !
 !Test assigning a zero length character to a string
   testString=TRIM(char10)
-  IF(testString%sPrint() /= TRIM(char10)) THEN
-    WRITE(*,*) 'testString%sPrint() (zero-length) FAILED!'
+  IF(CHAR(testString) /= TRIM(char10)) THEN
+    WRITE(*,*) 'CHAR(testString) (zero-length) FAILED!'
     STOP 666
   ENDIF
   IF(LEN(testString) /= 0) THEN
@@ -96,24 +96,24 @@ PROGRAM testStrings
 !
 !Test assigning a non-empty character to a string from a constant
   testString='constant'
-  IF(testString%sPrint() /= 'constant') THEN
-    WRITE(*,*) 'testString%sPrint() (=''constant'') FAILED!'
+  IF(CHAR(testString) /= 'constant') THEN
+    WRITE(*,*) 'CHAR(testString) (=''constant'') FAILED!'
     STOP 666
   ENDIF
-  IF(testString%sPrint(12,0) /= '        ') THEN
-    WRITE(*,*) 'testString%sPrint(12,0) (=''constant'') FAILED!'
+  IF(CHAR(testString,12,0) /= '        ') THEN
+    WRITE(*,*) 'CHAR(testString,12,0) (=''constant'') FAILED!'
     STOP 666
   ENDIF
-  IF(testString%sPrint(1,1) /= 'c        ') THEN
-    WRITE(*,*) 'testString%sPrint(12,0) (=''constant'') FAILED!'
+  IF(CHAR(testString,1,1) /= 'c        ') THEN
+    WRITE(*,*) 'CHAR(testString,12,0) (=''constant'') FAILED!'
     STOP 666
   ENDIF
-  IF(testString%sPrint(2,3) /= 'on       ') THEN
-    WRITE(*,*) 'testString%sPrint(12,0) (=''constant'') FAILED!'
+  IF(CHAR(testString,2,3) /= 'on       ') THEN
+    WRITE(*,*) 'CHAR(testString,12,0) (=''constant'') FAILED!'
     STOP 666
   ENDIF
-  IF(testString%sPrint(-1,100) /= 'constant') THEN
-    WRITE(*,*) 'testString%sPrint(12,0) (=''constant'') FAILED!'
+  IF(CHAR(testString,-1,100) /= 'constant') THEN
+    WRITE(*,*) 'CHAR(testString,12,0) (=''constant'') FAILED!'
     STOP 666
   ENDIF
   IF(LEN(testString) /= 8) THEN
@@ -132,8 +132,8 @@ PROGRAM testStrings
 !Test assigning a non-empty character to a string from a variable
   char10='variable'
   testString=char10
-  IF(testString%sPrint() /= 'variable  ') THEN
-    WRITE(*,*) 'testString%sPrint() (=variable) FAILED!'
+  IF(CHAR(testString) /= 'variable  ') THEN
+    WRITE(*,*) 'CHAR(testString) (=variable) FAILED!'
     STOP 666
   ENDIF
   IF(LEN(testString) /= 10) THEN
@@ -166,7 +166,7 @@ PROGRAM testStrings
 !Test assigning a string to a string
   testString2='testString2'
   testString2=testString
-  IF(testString2%sPrint() /= 'testString1') THEN
+  IF(CHAR(testString2) /= 'testString1') THEN
     WRITE(*,*) 'testString2=testString FAILED!'
     STOP 666
   ENDIF
