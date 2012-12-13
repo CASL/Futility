@@ -201,17 +201,18 @@ CONTAINS
 !> @endcode
 !>
     SUBROUTINE init_Sampler(sampler,RNGid,seed0,skip,MPIparallelEnv,OMPparallelEnv)
+      CHARACTER(LEN=*),PARAMETER :: myName='init_Sampler'
       CLASS(StochasticSamplingType),INTENT(INOUT) :: sampler
       INTEGER(SIK),INTENT(IN) :: RNGid
       INTEGER(SLK),INTENT(IN),OPTIONAL :: seed0
       INTEGER(SLK),INTENT(IN),OPTIONAL :: skip
-      TYPE(MPI_EnvType),POINTER,INTENT(IN),OPTIONAL :: MPIparallelEnv
-      TYPE(OMP_EnvType),POINTER,INTENT(IN),OPTIONAL :: OMPparallelEnv
+      TYPE(MPI_EnvType),INTENT(IN),OPTIONAL :: MPIparallelEnv
+      TYPE(OMP_EnvType),INTENT(IN),OPTIONAL :: OMPparallelEnv
       
-      CHARACTER(LEN=*),PARAMETER :: myName='init_Sampler'
+      LOGICAL(SBK) :: localalloc
+      INTEGER(SIK) :: mpirank,omprank,nproc,nthread
+      INTEGER(SLK) :: myskip,period
       TYPE(RNGdataType) :: RNGdata
-      INTEGER(SIK) :: mpirank, omprank, nproc, nthread
-      INTEGER(SLK) :: myskip, period
       
       mpirank=0_SIK
       omprank=0_SIK
@@ -221,11 +222,13 @@ CONTAINS
       
       RNGdata=generators(RNGid)
 
+      localalloc=.FALSE.
       IF(.NOT.ASSOCIATED(eStochasticSampler)) THEN
+        localalloc=.TRUE.
         ALLOCATE(eStochasticSampler)
       ENDIF
 
-      IF (PRESENT(MPIparallelEnv)) THEN
+      IF(PRESENT(MPIparallelEnv)) THEN
         IF (MPIparallelEnv%isInit()) THEN
           mpirank=MPIparallelEnv%rank
           nproc=MPIparallelEnv%nproc
@@ -234,7 +237,7 @@ CONTAINS
             ' - MPI Env is not initialized, and will not be used.')
         ENDIF
       ENDIF
-      IF (PRESENT(OMPparallelEnv)) THEN
+      IF(PRESENT(OMPparallelEnv)) THEN
         IF (OMPparallelEnv%isInit()) THEN
           omprank=OMPparallelEnv%rank
           nthread=OMPparallelEnv%nthread
@@ -244,11 +247,11 @@ CONTAINS
         ENDIF
       ENDIF
       
-      IF (PRESENT(skip)) myskip=skip
+      IF(PRESENT(skip)) myskip=skip
       
       ! Reduced the number of bits for period where add is non-zero to prevent
       ! overflow of the period
-      IF( RNGdata%RNadd==0 ) THEN
+      IF(RNGdata%RNadd == 0) THEN
         period=ISHFT(1_SLK,RNGdata%RNlog2mod-2)
       ELSE
         period=ISHFT(1_SLK,RNGdata%RNlog2mod-1)
@@ -261,7 +264,7 @@ CONTAINS
       ! Add checks for constraints on seed0
       IF(PRESENT(seed0)) sampler%RNseed=seed0
       
-      IF (myskip/=0_SLK) THEN
+      IF(myskip /= 0_SLK) THEN
         sampler%RNseed=RNskip(RNGdata,sampler%RNseed,myskip)
       ENDIF
       
@@ -273,6 +276,7 @@ CONTAINS
       
       sampler%isInit=.TRUE.
       sampler%counter=0
+      IF(localalloc) DEALLOCATE(eStochasticSampler)
     ENDSUBROUTINE init_Sampler
 !
 !-------------------------------------------------------------------------------
@@ -482,9 +486,7 @@ CONTAINS
       REAL(SDK),INTENT(IN) :: y(:)
       REAL(SDK),INTENT(IN) :: x(:)
       REAL(SDK) :: rang
-      
       rang=sampler%conthistogram(y/sum(y),x)
-      
     ENDFUNCTION uchist_Sampler
 !
 !-------------------------------------------------------------------------------
@@ -510,10 +512,10 @@ CONTAINS
       sum=0.0_SDK
       DO i=1,n
         sum=sum+(y(i)+y(i+1))/2*(x(i+1)-x(i))
-        IF (rn1 <sum) EXIT
+        IF(rn1 <sum) EXIT
       ENDDO
       
-      IF (rn1 < y(i)/(y(i+1)+y(i))) THEN
+      IF(rn1 < y(i)/(y(i+1)+y(i))) THEN
         rang=x(i+1) - (x(i+1)-x(i))*SQRT(rn2)
       ELSE
         rang=x(i)+(x(i+1)-x(i))*SQRT(rn2)
