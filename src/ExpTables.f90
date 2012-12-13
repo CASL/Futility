@@ -453,6 +453,7 @@ MODULE ExpTables
               ENDDO
           ENDSELECT
           myET%isinit=.TRUE.
+          CALL tmpList%clear()
         ENDIF
       ENDIF
       IF(localalloc) DEALLOCATE(eExpTable)

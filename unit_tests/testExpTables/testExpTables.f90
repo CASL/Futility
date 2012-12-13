@@ -33,6 +33,7 @@ PROGRAM testExpTables
   TYPE(ParamType),SAVE :: PL
 
   eExpTable => e
+  eParams => e
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING EXPTABLES...'
   WRITE(*,*) '==================================================='
@@ -264,6 +265,7 @@ PROGRAM testExpTables
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING EXPTABLES COMPLETE!'
   WRITE(*,*) '==================================================='
+  CALL PL%clear()
   CALL ErrCheck()
   CALL perftest()
   DO i=1,5
