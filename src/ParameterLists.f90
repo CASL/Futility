@@ -821,69 +821,69 @@ MODULE ParameterLists
               !Assign the parameter value using a recursive call
               IF(ASSOCIATED(p%pdat)) CALL assign_ParamType(thisParam,p%pdat)
             TYPE IS(ParamType_SSK)
-              CALL thisParam%init(p%name%sPrint(),p%val, &
-                p%description%sPrint())
+              CALL thisParam%init(CHAR(p%name),p%val, &
+                CHAR(p%description))
             TYPE IS(ParamType_SDK)
-              CALL thisParam%init(p%name%sPrint(),p%val, &
-                p%description%sPrint())
+              CALL thisParam%init(CHAR(p%name),p%val, &
+                CHAR(p%description))
             TYPE IS(ParamType_SNK)
-              CALL thisParam%init(p%name%sPrint(),p%val, &
-                p%description%sPrint())
+              CALL thisParam%init(CHAR(p%name),p%val, &
+                CHAR(p%description))
             TYPE IS(ParamType_SLK)
-              CALL thisParam%init(p%name%sPrint(),p%val, &
-                p%description%sPrint())
+              CALL thisParam%init(CHAR(p%name),p%val, &
+                CHAR(p%description))
             TYPE IS(ParamType_SBK)
-              CALL thisParam%init(p%name%sPrint(),p%val, &
-                p%description%sPrint())
+              CALL thisParam%init(CHAR(p%name),p%val, &
+                CHAR(p%description))
             TYPE IS(ParamType_STR)
-              CALL thisParam%init(p%name%sPrint(),p%val, &
-                p%description%sPrint())
+              CALL thisParam%init(CHAR(p%name),p%val, &
+                CHAR(p%description))
             TYPE IS(ParamType_SSK_a1)
-              CALL thisParam%init(p%name%sPrint(),p%val, &
-                p%description%sPrint())
+              CALL thisParam%init(CHAR(p%name),p%val, &
+                CHAR(p%description))
             TYPE IS(ParamType_SDK_a1)
-              CALL thisParam%init(p%name%sPrint(),p%val, &
-                p%description%sPrint())
+              CALL thisParam%init(CHAR(p%name),p%val, &
+                CHAR(p%description))
             TYPE IS(ParamType_SNK_a1)
-              CALL thisParam%init(p%name%sPrint(),p%val, &
-                p%description%sPrint())
+              CALL thisParam%init(CHAR(p%name),p%val, &
+                CHAR(p%description))
             TYPE IS(ParamType_SLK_a1)
-              CALL thisParam%init(p%name%sPrint(),p%val, &
-                p%description%sPrint())
+              CALL thisParam%init(CHAR(p%name),p%val, &
+                CHAR(p%description))
             TYPE IS(ParamType_SBK_a1)
-              CALL thisParam%init(p%name%sPrint(),p%val, &
-                p%description%sPrint())
+              CALL thisParam%init(CHAR(p%name),p%val, &
+                CHAR(p%description))
             TYPE IS(ParamType_STR_a1)
-              CALL thisParam%init(p%name%sPrint(),p%val, &
-                p%description%sPrint())
+              CALL thisParam%init(CHAR(p%name),p%val, &
+                CHAR(p%description))
             TYPE IS(ParamType_SSK_a2)
-              CALL thisParam%init(p%name%sPrint(),p%val, &
-                p%description%sPrint())
+              CALL thisParam%init(CHAR(p%name),p%val, &
+                CHAR(p%description))
             TYPE IS(ParamType_SDK_a2)
-              CALL thisParam%init(p%name%sPrint(),p%val, &
-                p%description%sPrint())
+              CALL thisParam%init(CHAR(p%name),p%val, &
+                CHAR(p%description))
             TYPE IS(ParamType_SNK_a2)
-              CALL thisParam%init(p%name%sPrint(),p%val, &
-                p%description%sPrint())
+              CALL thisParam%init(CHAR(p%name),p%val, &
+                CHAR(p%description))
             TYPE IS(ParamType_SLK_a2)
-              CALL thisParam%init(p%name%sPrint(),p%val, &
-                p%description%sPrint())
+              CALL thisParam%init(CHAR(p%name),p%val, &
+                CHAR(p%description))
             TYPE IS(ParamType_SSK_a3)
-              CALL thisParam%init(p%name%sPrint(),p%val, &
-                p%description%sPrint())
+              CALL thisParam%init(CHAR(p%name),p%val, &
+                CHAR(p%description))
             TYPE IS(ParamType_SDK_a3)
-              CALL thisParam%init(p%name%sPrint(),p%val, &
-                p%description%sPrint())
+              CALL thisParam%init(CHAR(p%name),p%val, &
+                CHAR(p%description))
             TYPE IS(ParamType_SNK_a3)
-              CALL thisParam%init(p%name%sPrint(),p%val, &
-                p%description%sPrint())
+              CALL thisParam%init(CHAR(p%name),p%val, &
+                CHAR(p%description))
             TYPE IS(ParamType_SLK_a3)
-              CALL thisParam%init(p%name%sPrint(),p%val, &
-                p%description%sPrint())
+              CALL thisParam%init(CHAR(p%name),p%val, &
+                CHAR(p%description))
             TYPE IS(ParamType_List)
               IF(ALLOCATED(p%plList)) THEN
-                CALL thisParam%init(p%name%sPrint(),p%plList, &
-                  p%description%sPrint())
+                CALL thisParam%init(CHAR(p%name),p%plList, &
+                  CHAR(p%description))
               ELSE
                 !Allocate an empty list
                 ALLOCATE(ParamType_List :: thisParam%pdat)
@@ -3402,11 +3402,11 @@ MODULE ParameterLists
       IF(PRESENT(indent)) i=i+indent
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
       IF(LEN_TRIM(thisParam%description) == 0) THEN
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val%sPrint()
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') &
+          thisParam%dataType//' :: '//thisParam%name//'='//thisParam%val
       ELSE
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,a,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val%sPrint(), &
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') &
+          thisParam%dataType//' :: '//thisParam%name//'='//thisParam%val// &
             ' !'//thisParam%description
       ENDIF
     ENDSUBROUTINE edit_ParamType_STR
@@ -5261,29 +5261,25 @@ MODULE ParameterLists
       INTEGER(SIK),INTENT(IN) :: funit
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
       CHARACTER(LEN=12) :: fmt,fmt2
-      !Compiler problem for gnu-4.6.3.  It is fixed in gnu-4.7.0.
-      !CHARACTER(LEN=MAXVAL(LEN(thisParam%val))) :: tmpstr(SIZE(thisParam%val))
       INTEGER(SIK) :: i,j,k
       
       i=1
       j=5
       IF(PRESENT(indent)) i=i+indent
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
-      !tmpstr(1)=thisParam%val(1)%sPrint()
       IF(LEN_TRIM(thisParam%description) == 0) THEN
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val(1)%sPrint()
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') &
+          thisParam%dataType//' :: '//thisParam%name//'='//thisParam%val(1)
       ELSE
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,a,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val(1)%sPrint(), &
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') &
+          thisParam%dataType//' :: '//thisParam%name//'='//thisParam%val(1)// &
             ' !'//thisParam%description
       ENDIF
       j=j+LEN(thisParam%dataType)+LEN(thisParam%name)
       WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
       DO k=2,SIZE(thisParam%val)
-        !tmpstr(k)=thisParam%val(k)%sPrint()
         WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,a)') &
-          thisParam%val(k)%sPrint()
+          CHAR(thisParam%val(k))
       ENDDO
       
     ENDSUBROUTINE edit_ParamType_STR_a1

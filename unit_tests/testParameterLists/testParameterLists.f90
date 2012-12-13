@@ -770,15 +770,15 @@ PROGRAM testParameterLists
     !Test clear
     eParams => NULL()
     CALL testParam%clear()
-    IF(LEN(testParam%name%sPrint()) /= 0) THEN
+    IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (SSK) FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%datatype%sPrint()) /= 0) THEN
+    IF(LEN(testParam%datatype) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %datatype (SSK) FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%description%sPrint()) /= 0) THEN
+    IF(LEN(testParam%description) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %description (SSK) FAILED!'
       STOP 666
     ENDIF
@@ -910,15 +910,15 @@ PROGRAM testParameterLists
     !test clear
     eParams => NULL()
     CALL testParam%clear()
-    IF(LEN(testParam%name%sPrint()) /= 0) THEN
+    IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (List) FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%datatype%sPrint()) /= 0) THEN
+    IF(LEN(testParam%datatype) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %datatype (List) FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%description%sPrint()) /= 0) THEN
+    IF(LEN(testParam%description) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %description (List) FAILED!'
       STOP 666
     ENDIF
@@ -1045,15 +1045,15 @@ PROGRAM testParameterLists
     !Test clear
     eParams => NULL()
     CALL testParam%clear()
-    IF(LEN(testParam%name%sPrint()) /= 0) THEN
+    IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (SDK) FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%datatype%sPrint()) /= 0) THEN
+    IF(LEN(testParam%datatype) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %datatype (SDK) FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%description%sPrint()) /= 0) THEN
+    IF(LEN(testParam%description) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %description (SDK) FAILED!'
       STOP 666
     ENDIF
@@ -1167,15 +1167,15 @@ PROGRAM testParameterLists
     !Test clear
     eParams => NULL()
     CALL testParam%clear()
-    IF(LEN(testParam%name%sPrint()) /= 0) THEN
+    IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (SNK) FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%datatype%sPrint()) /= 0) THEN
+    IF(LEN(testParam%datatype) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %datatype (SNK) FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%description%sPrint()) /= 0) THEN
+    IF(LEN(testParam%description) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %description (SNK) FAILED!'
       STOP 666
     ENDIF
@@ -1289,15 +1289,15 @@ PROGRAM testParameterLists
     !Test clear
     eParams => NULL()
     CALL testParam%clear()
-    IF(LEN(testParam%name%sPrint()) /= 0) THEN
+    IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (SLK) FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%datatype%sPrint()) /= 0) THEN
+    IF(LEN(testParam%datatype) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %datatype (SLK) FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%description%sPrint()) /= 0) THEN
+    IF(LEN(testParam%description) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %description (SLK) FAILED!'
       STOP 666
     ENDIF
@@ -1411,15 +1411,15 @@ PROGRAM testParameterLists
     !Test clear
     eParams => NULL()
     CALL testParam%clear()
-    IF(LEN(testParam%name%sPrint()) /= 0) THEN
+    IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (SBK) FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%datatype%sPrint()) /= 0) THEN
+    IF(LEN(testParam%datatype) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %datatype (SBK) FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%description%sPrint()) /= 0) THEN
+    IF(LEN(testParam%description) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %description (SBK) FAILED!'
       STOP 666
     ENDIF
@@ -1540,15 +1540,15 @@ PROGRAM testParameterLists
     !Test clear
     eParams => NULL()
     CALL testParam%clear()
-    IF(LEN(testParam%name%sPrint()) /= 0) THEN
+    IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name StringType (STR) FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%datatype%sPrint()) /= 0) THEN
+    IF(LEN(testParam%datatype) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %datatype StringType (STR) FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%description%sPrint()) /= 0) THEN
+    IF(LEN(testParam%description) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %description StringType (STR) FAILED!'
       STOP 666
     ENDIF
@@ -1778,15 +1778,15 @@ PROGRAM testParameterLists
     !Test clear
     eParams => NULL()
     CALL testParam%clear()
-    IF(LEN(testParam%name%sPrint()) /= 0) THEN
+    IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (SSK) 1-D FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%datatype%sPrint()) /= 0) THEN
+    IF(LEN(testParam%datatype) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %datatype (SSK) 1-D FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%description%sPrint()) /= 0) THEN
+    IF(LEN(testParam%description) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %description (SSK) 1-D FAILED!'
       STOP 666
     ENDIF
@@ -1936,15 +1936,15 @@ PROGRAM testParameterLists
     !Test clear
     eParams => NULL()
     CALL testParam%clear()
-    IF(LEN(testParam%name%sPrint()) /= 0) THEN
+    IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (SDK) 1-D FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%datatype%sPrint()) /= 0) THEN
+    IF(LEN(testParam%datatype) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %datatype (SDK) 1-D FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%description%sPrint()) /= 0) THEN
+    IF(LEN(testParam%description) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %description (SDK) 1-D FAILED!'
       STOP 666
     ENDIF
@@ -2094,15 +2094,15 @@ PROGRAM testParameterLists
     !Test clear
     eParams => NULL()
     CALL testParam%clear()
-    IF(LEN(testParam%name%sPrint()) /= 0) THEN
+    IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (SNK) 1-D FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%datatype%sPrint()) /= 0) THEN
+    IF(LEN(testParam%datatype) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %datatype (SNK) 1-D FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%description%sPrint()) /= 0) THEN
+    IF(LEN(testParam%description) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %description (SNK) 1-D FAILED!'
       STOP 666
     ENDIF
@@ -2252,15 +2252,15 @@ PROGRAM testParameterLists
     !Test clear
     eParams => NULL()
     CALL testParam%clear()
-    IF(LEN(testParam%name%sPrint()) /= 0) THEN
+    IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (SLK) 1-D FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%datatype%sPrint()) /= 0) THEN
+    IF(LEN(testParam%datatype) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %datatype (SLK) 1-D FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%description%sPrint()) /= 0) THEN
+    IF(LEN(testParam%description) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %description (SLK) 1-D FAILED!'
       STOP 666
     ENDIF
@@ -2412,15 +2412,15 @@ PROGRAM testParameterLists
     !Test clear
     eParams => NULL()
     CALL testParam%clear()
-    IF(LEN(testParam%name%sPrint()) /= 0) THEN
+    IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (SBK) 1-D FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%datatype%sPrint()) /= 0) THEN
+    IF(LEN(testParam%datatype) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %datatype (SBK) 1-D FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%description%sPrint()) /= 0) THEN
+    IF(LEN(testParam%description) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %description (SBK) 1-D FAILED!'
       STOP 666
     ENDIF
@@ -2614,15 +2614,15 @@ PROGRAM testParameterLists
     !Test clear
     eParams => NULL()
     CALL testParam%clear()
-    IF(LEN(testParam%name%sPrint()) /= 0) THEN
+    IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name StringType (STR) 1-D FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%datatype%sPrint()) /= 0) THEN
+    IF(LEN(testParam%datatype) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %datatype StringType (STR) 1-D FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%description%sPrint()) /= 0) THEN
+    IF(LEN(testParam%description) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %description StringType (STR) 1-D FAILED!'
       STOP 666
     ENDIF
@@ -2792,15 +2792,15 @@ PROGRAM testParameterLists
     !Test clear
     eParams => NULL()
     CALL testParam%clear()
-    IF(LEN(testParam%name%sPrint()) /= 0) THEN
+    IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (SSK) 2-D FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%datatype%sPrint()) /= 0) THEN
+    IF(LEN(testParam%datatype) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %datatype (SSK) 2-D FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%description%sPrint()) /= 0) THEN
+    IF(LEN(testParam%description) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %description (SSK) 2-D FAILED!'
       STOP 666
     ENDIF
@@ -2969,15 +2969,15 @@ PROGRAM testParameterLists
     !Test clear
     eParams => NULL()
     CALL testParam%clear()
-    IF(LEN(testParam%name%sPrint()) /= 0) THEN
+    IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (SDK) 2-D FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%datatype%sPrint()) /= 0) THEN
+    IF(LEN(testParam%datatype) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %datatype (SDK) 2-D FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%description%sPrint()) /= 0) THEN
+    IF(LEN(testParam%description) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %description (SDK) 2-D FAILED!'
       STOP 666
     ENDIF
@@ -3144,15 +3144,15 @@ PROGRAM testParameterLists
     !Test clear
     eParams => NULL()
     CALL testParam%clear()
-    IF(LEN(testParam%name%sPrint()) /= 0) THEN
+    IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (SNK) 2-D FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%datatype%sPrint()) /= 0) THEN
+    IF(LEN(testParam%datatype) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %datatype (SNK) 2-D FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%description%sPrint()) /= 0) THEN
+    IF(LEN(testParam%description) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %description (SNK) 2-D FAILED!'
       STOP 666
     ENDIF
@@ -3320,15 +3320,15 @@ PROGRAM testParameterLists
     !Test clear
     eParams => NULL()
     CALL testParam%clear()
-    IF(LEN(testParam%name%sPrint()) /= 0) THEN
+    IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (SLK) 2-D FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%datatype%sPrint()) /= 0) THEN
+    IF(LEN(testParam%datatype) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %datatype (SLK) 2-D FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%description%sPrint()) /= 0) THEN
+    IF(LEN(testParam%description) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %description (SLK) 2-D FAILED!'
       STOP 666
     ENDIF
@@ -3506,15 +3506,15 @@ PROGRAM testParameterLists
     !Test clear
     eParams => NULL()
     CALL testParam%clear()
-    IF(LEN(testParam%name%sPrint()) /= 0) THEN
+    IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (SSK) 3-D FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%datatype%sPrint()) /= 0) THEN
+    IF(LEN(testParam%datatype) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %datatype (SSK) 3-D FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%description%sPrint()) /= 0) THEN
+    IF(LEN(testParam%description) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %description (SSK) 3-D FAILED!'
       STOP 666
     ENDIF
@@ -3692,15 +3692,15 @@ PROGRAM testParameterLists
     !Test clear
     eParams => NULL()
     CALL testParam%clear()
-    IF(LEN(testParam%name%sPrint()) /= 0) THEN
+    IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (SDK) 3-D FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%datatype%sPrint()) /= 0) THEN
+    IF(LEN(testParam%datatype) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %datatype (SDK) 3-D FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%description%sPrint()) /= 0) THEN
+    IF(LEN(testParam%description) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %description (SDK) 3-D FAILED!'
       STOP 666
     ENDIF
@@ -3877,15 +3877,15 @@ PROGRAM testParameterLists
     !Test clear
     eParams => NULL()
     CALL testParam%clear()
-    IF(LEN(testParam%name%sPrint()) /= 0) THEN
+    IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (SNK) 3-D FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%datatype%sPrint()) /= 0) THEN
+    IF(LEN(testParam%datatype) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %datatype (SNK) 3-D FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%description%sPrint()) /= 0) THEN
+    IF(LEN(testParam%description) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %description (SNK) 3-D FAILED!'
       STOP 666
     ENDIF
@@ -4063,15 +4063,15 @@ PROGRAM testParameterLists
     !Test clear
     eParams => NULL()
     CALL testParam%clear()
-    IF(LEN(testParam%name%sPrint()) /= 0) THEN
+    IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (SLK) 3-D FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%datatype%sPrint()) /= 0) THEN
+    IF(LEN(testParam%datatype) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %datatype (SLK) 3-D FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%description%sPrint()) /= 0) THEN
+    IF(LEN(testParam%description) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %description (SLK) 3-D FAILED!'
       STOP 666
     ENDIF
