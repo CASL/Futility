@@ -29,13 +29,12 @@ PROGRAM testIOutil
   CHARACTER(LEN=1) :: shortstring1,shortstring2,shortstring3
   INTEGER :: ioerr,i
   LOGICAL :: lexist
-  TYPE(ExceptionHandlerType),POINTER :: e
+  TYPE(ExceptionHandlerType),TARGET :: e
       
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING IOUTIL...'
   WRITE(*,*) '==================================================='
   
-  ALLOCATE(e)
   CALL e%setStopOnError(.FALSE.)
   CALL e%setQuietMode(.TRUE.)
   
