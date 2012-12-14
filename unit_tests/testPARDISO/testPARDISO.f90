@@ -19,6 +19,9 @@ include '/opt/intel-12/mkl/include/mkl_pardiso.f90'
 PROGRAM testPARDISO
   
   USE ExceptionHandler
+  USE IntrType
+  USE MatrixTypes
+  USE VectorTypes
   USE MKL_PARDISO
   IMPLICIT NONE
 
@@ -47,6 +50,16 @@ PROGRAM testPARDISO
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testPARDISOInterface()
+    TYPE(SparseMatrixType) :: matrix
+    TYPE(RealVectorType) :: x,b
+    
+    INTEGER(SIK) :: pt(64)
+    INTEGER(SIK) :: maxfct,solver,mnum,mtype,phase,n,nrhs,error
+    INTEGER(SIK) :: perm(64),iparm(64)
+    REAL(SRK) :: dparm(64)
+    
+!    CALL PARDISO_INIT(pt,mtype,solver,iparm,dparm,error)
+!    WRITE(*,*) error
       
       !CALL pardiso()
 
