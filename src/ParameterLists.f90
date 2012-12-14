@@ -55,6 +55,7 @@
 !>  - 2-D arrays of 64-bit integers
 !>  - 2-D arrays of single precision reals
 !>  - 2-D arrays of double precision reals
+!>  - 2-D arrays of "StringTypes"
 !>  - 3-D arrays of 32-bit integers
 !>  - 3-D arrays of 64-bit integers
 !>  - 3-D arrays of single precision reals
@@ -186,6 +187,9 @@ MODULE ParameterLists
       !> @copybrief ParameterLists::init_ParamType_SLK_a2
       !> @copydoc ParameterLists::init_ParamType_SLK_a2
       PROCEDURE,PASS,PRIVATE :: initSLKa2 => init_ParamType_SLK_a2
+      !> @copybrief ParameterLists::init_ParamType_STR_a2
+      !> @copydoc ParameterLists::init_ParamType_STR_a2
+      PROCEDURE,PASS,PRIVATE :: initSTRa2 => init_ParamType_STR_a2
       !> @copybrief ParameterLists::init_ParamType_SSK_a3
       !> @copydoc ParameterLists::init_ParamType_SSK_a3
       PROCEDURE,PASS,PRIVATE :: initSSKa3 => init_ParamType_SSK_a3
@@ -202,7 +206,7 @@ MODULE ParameterLists
       GENERIC :: init => initParamList,initSSK,initSDK,initSNK,initSLK, &
                  initSBK,initSTR,initCHAR,initSSKa1,initSDKa1,initSNKa1, &
                  initSLKa1,initSBKa1,initSTRa1,initSSKa2,initSDKa2,initSNKa2, &
-                 initSLKa2,initSSKa3,initSDKa3,initSNKa3,initSLKa3
+                 initSLKa2,initSTRa2,initSSKa3,initSDKa3,initSNKa3,initSLKa3
       !> @copybrief ParameterLists::set_ParamType_List
       !> @copydoc ParameterLists::set_ParamType_List
       PROCEDURE,PASS,PRIVATE :: setParamList => set_ParamType_List
@@ -257,6 +261,9 @@ MODULE ParameterLists
       !> @copybrief ParameterLists::set_ParamType_SLK_a2
       !> @copydoc ParameterLists::set_ParamType_SLK_a2
       PROCEDURE,PASS,PRIVATE :: setSLKa2 => set_ParamType_SLK_a2
+      !> @copybrief ParameterLists::set_ParamType_STR_a2
+      !> @copydoc ParameterLists::set_ParamType_STR_a2
+      PROCEDURE,PASS,PRIVATE :: setSTRa2 => set_ParamType_STR_a2
       !> @copybrief ParameterLists::set_ParamType_SSK_a3
       !> @copydoc ParameterLists::set_ParamType_SSK_a3
       PROCEDURE,PASS,PRIVATE :: setSSKa3 => set_ParamType_SSK_a3
@@ -273,7 +280,7 @@ MODULE ParameterLists
       GENERIC :: set => setParamList,setSSK,setSDK,setSNK,setSLK, &
                  setSBK,setSTR,setCHAR,setSSKa1,setSDKa1,setSNKa1, &
                  setSLKa1,setSBKa1,setSTRa1,setSSKa2,setSDKa2,setSNKa2, &
-                 setSLKa2,setSSKa3,setSDKa3,setSNKa3,setSLKa3
+                 setSLKa2,setSTRa2,setSSKa3,setSDKa3,setSNKa3,setSLKa3
       !> @copybrief ParameterLists::get_ParamType
       !> @copydoc ParameterLists::get_ParamType
       PROCEDURE,PASS,PRIVATE :: getParam => get_ParamType
@@ -331,6 +338,9 @@ MODULE ParameterLists
       !> @copybrief ParameterLists::get_ParamType_SLK_a2
       !> @copydoc ParameterLists::get_ParamType_SLK_a2
       PROCEDURE,PASS,PRIVATE :: getSLKa2 => get_ParamType_SLK_a2
+      !> @copybrief ParameterLists::get_ParamType_STR_a2
+      !> @copydoc ParameterLists::get_ParamType_STR_a2
+      PROCEDURE,PASS,PRIVATE :: getSTRa2 => get_ParamType_STR_a2
       !> @copybrief ParameterLists::get_ParamType_SSK_a3
       !> @copydoc ParameterLists::get_ParamType_SSK_a3
       PROCEDURE,PASS,PRIVATE :: getSSKa3 => get_ParamType_SSK_a3
@@ -346,8 +356,8 @@ MODULE ParameterLists
       !> Generic type bound interface for all @c get operations
       GENERIC :: get => getParam,getParamList,getSSK,getSDK,getSNK, &
                  getSLK,getSBK,getSTR,getCHAR,getSSKa1,getSDKa1,getSNKa1, &
-                 getSBKa1,getSLKa1,getSTRa1,getSSKa2,getSDKa2, &
-                 getSNKa2,getSLKa2,getSSKa3,getSDKa3,getSNKa3,getSLKa3
+                 getSBKa1,getSLKa1,getSTRa1,getSSKa2,getSDKa2,getSNKa2, &
+                 getSLKa2,getSTRa2,getSSKa3,getSDKa3,getSNKa3,getSLKa3
       !> @copybrief ParameterLists::add_ParamType
       !> @copydoc ParameterLists::add_ParamType
       PROCEDURE,PASS,PRIVATE :: addParam => add_ParamType
@@ -405,6 +415,9 @@ MODULE ParameterLists
       !> @copybrief ParameterLists::add_ParamType_SLK_a2
       !> @copydoc ParameterLists::add_ParamType_SLK_a2
       PROCEDURE,PASS,PRIVATE :: addSLKa2 => add_ParamType_SLK_a2
+      !> @copybrief ParameterLists::add_ParamType_STR_a2
+      !> @copydoc ParameterLists::add_ParamType_STR_a2
+      PROCEDURE,PASS,PRIVATE :: addSTRa2 => add_ParamType_STR_a2
       !> @copybrief ParameterLists::add_ParamType_SSK_a3
       !> @copydoc ParameterLists::add_ParamType_SSK_a3
       PROCEDURE,PASS,PRIVATE :: addSSKa3 => add_ParamType_SSK_a3
@@ -421,7 +434,7 @@ MODULE ParameterLists
       GENERIC :: add => addParam,addList,addSSK,addSDK, &
          addSNK,addSLK,addSBK,addSTR,addCHAR,addSSKa1,addSDKa1, &
          addSNKa1,addSLKa1,addSBKa1,addSTRa1,addSSKa2,addSDKa2, &
-         addSNKa2,addSLKa2,addSSKa3,addSDKa3,addSNKa3,addSLKa3
+         addSNKa2,addSLKa2,addSTRa2,addSSKa3,addSDKa3,addSNKa3,addSLKa3
       !> @copybrief ParameterLists::remove_ParamType
       !> @copydoc ParameterLists::remove_ParamType
       PROCEDURE,PASS :: remove => remove_ParamType
@@ -629,8 +642,8 @@ MODULE ParameterLists
       PROCEDURE,PASS :: clear => clear_ParamType_SBK_a1
   ENDTYPE ParamType_SBK_a1
 
-  !> @brief Extended type of a ParamType for defining a parameter that
-  !> is a string derived type
+  !> @brief Extended type of a ParamType for defining a one dimensional 
+  !> array parameter that is a string derived type
   TYPE,EXTENDS(ParamType) :: ParamType_STR_a1
     !> The value of the parameter
     TYPE(StringType),ALLOCATABLE :: val(:)
@@ -711,6 +724,22 @@ MODULE ParameterLists
       !> @copydoc ParameterLists::clear_ParamType_SLK_a2
       PROCEDURE,PASS :: clear => clear_ParamType_SLK_a2
   ENDTYPE ParamType_SLK_a2
+  
+  !> @brief Extended type of a ParamType for defining a two dimensional 
+  !> array parameter that is a string derived type
+  TYPE,EXTENDS(ParamType) :: ParamType_STR_a2
+    !> The value of the parameter
+    TYPE(StringType),ALLOCATABLE :: val(:,:)
+!
+!List of type bound procedures
+    CONTAINS
+      !> @copybrief ParameterLists::edit_ParamType_STR_a2
+      !> @copydoc ParameterLists::edit_ParamType_STR_a2
+      PROCEDURE,PASS :: edit => edit_ParamType_STR_a2
+      !> @copybrief ParameterLists::clear_ParamType_STR_a2
+      !> @copydoc ParameterLists::clear_ParamType_STR_a2
+      PROCEDURE,PASS :: clear => clear_ParamType_STR_a2
+  ENDTYPE ParamType_STR_a2
 !----------------------------------------------------------------------
 !     Three-Dimensional Arrays
 !----------------------------------------------------------------------
@@ -866,6 +895,9 @@ MODULE ParameterLists
               CALL thisParam%init(p%name%sPrint(),p%val, &
                 p%description%sPrint())
             TYPE IS(ParamType_SLK_a2)
+              CALL thisParam%init(p%name%sPrint(),p%val, &
+                p%description%sPrint())
+            TYPE IS(ParamType_STR_a2)
               CALL thisParam%init(p%name%sPrint(),p%val, &
                 p%description%sPrint())
             TYPE IS(ParamType_SSK_a3)
@@ -6822,6 +6854,330 @@ MODULE ParameterLists
       ENDIF
       IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE add_ParamType_SLK_a2
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes a ParamType object as a 2-D array string derived type
+!> @param thisParam the parameter to initialize
+!> @param name the name of the parameter
+!> @param param a 2-D array string derived type
+!> @param description an optional description for this parameter
+!> 
+!> This routine is not recursive, so it is like setting a scalar parameter.
+!> Therefore the name cannot contain the "->" symbol to indicate access to a 
+!> sub-list. @c thisParam must not already be inititalized.
+!>
+    SUBROUTINE init_ParamType_STR_a2(thisParam,name,param,description)
+      CHARACTER(LEN=*),PARAMETER :: myName='init_ParamType_STR_a2'
+      CLASS(ParamType),INTENT(INOUT) :: thisParam
+      TYPE(StringType),INTENT(IN) :: param(:,:)
+      CHARACTER(LEN=*),INTENT(IN) :: name
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+      LOGICAL(SBK) :: localalloc
+      INTEGER(SIK) :: ipos
+      
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eParams)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eParams)
+      ENDIF
+      
+      IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
+        !Check that '->' character is not in name
+        ipos=INDEX(name,'->')
+        IF(ipos == 0) THEN
+          ALLOCATE(ParamType_STR_a2 :: thisParam%pdat)
+          thisParam%pdat%name=TRIM(name)
+          IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+          thisParam%pdat%dataType='2-D ARRAY TYPE(StringType)'
+          SELECTTYPE(p => thisParam%pdat); TYPE IS(ParamType_STR_a2)
+              ALLOCATE(p%val(SIZE(param,1),SIZE(param,2)))
+              p%val=param
+          ENDSELECT
+        ELSE
+          CALL eParams%raiseError(modName//'::'//myName// &
+            ' - "->" symbol is not allowed in name!')
+        ENDIF
+      ELSE
+        CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter is already initialized! Use set method!')
+      ENDIF
+      IF(localalloc) DEALLOCATE(eParams)
+    ENDSUBROUTINE init_ParamType_STR_a2
+!
+!-------------------------------------------------------------------------------
+!> @brief Edits a string derived type parameter
+!> @param thisParam the string derived type parameter to edit
+!> @param funit the unit number to edit the parameter to
+!> @param indent optional indicates the number of blank spaces to precede the
+!>        beginning of text to edit.
+!>
+!>  The way this is set up could go horribly awry for printing things nicely.
+!>  Check back later.
+    SUBROUTINE edit_ParamType_STR_a2(thisParam,funit,indent)
+      CLASS(ParamType_STR_a2),INTENT(IN) :: thisParam
+      INTEGER(SIK),INTENT(IN) :: funit
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+      CHARACTER(LEN=12) :: fmt,fmt2,fmt3
+      INTEGER(SIK) :: i,j,k,l
+      !Compiler problem for gnu-4.6.3.  It is fixed in gnu-4.7.0.
+      !CHARACTER(LEN=MAXVAL(LEN(thisParam%val))) :: tmpstr(SIZE(thisParam%val))
+      
+      i=1
+      j=6
+      IF(PRESENT(indent)) i=i+indent
+      WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
+      !tmpstr(1)=thisParam%val(1)%sPrint()
+      IF(LEN_TRIM(thisParam%description) == 0) THEN
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') &
+          thisParam%dataType//' :: '//thisParam%name//'= ...'
+      ELSE
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,a)') &
+          thisParam%dataType//' :: '//thisParam%name//'= ... !'//thisParam%description
+      ENDIF
+      j=j+LEN(thisParam%dataType)+LEN(thisParam%name)
+      WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
+      WRITE(fmt3,'(i12)') SIZE(thisParam%val,1); fmt3=ADJUSTL(fmt3)
+      DO k=1,SIZE(thisParam%val,2)
+        !DO l=1,SIZE(thisParam%val,1)
+        !  WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,a)') &
+        !    TRIM(thisParam%val(l,k)%sPrint()))
+        !ENDDO
+        !Doesn't work sadly... syntax error in the format for some reason.
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,'//TRIM(fmt3)//'a)') &
+           (TRIM(thisParam%val(l,k)%sPrint()),l=1,SIZE(thisParam%val,1) )
+      ENDDO
+      
+    ENDSUBROUTINE edit_ParamType_STR_a2
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears a string derived type parameter
+!> @param thisParam the string derived type parameter to clear
+!> 
+    SUBROUTINE clear_ParamType_STR_a2(thisParam)
+      CLASS(ParamType_STR_a2),INTENT(INOUT) :: thisParam
+      INTEGER(SIK) :: i,j
+      DO j=SIZE(thisParam%val,1),1,-1
+        DO i=SIZE(thisParam%val,2),1,-1
+          thisParam%val(j,i)=''
+        ENDDO
+      ENDDO
+      DEALLOCATE(thisParam%val)
+      thisParam%name=''
+      thisParam%dataType=''
+      thisParam%description=''
+    ENDSUBROUTINE clear_ParamType_STR_a2
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the value of an existing string derived type parameter to a new value.
+!> @param thisParam the parameter in which an existing parameter with name 
+!>        matching @c name will be to set the new value of @c param
+!> @param name the name of an existing parameter to set the value of
+!> @param param the new value to set for the parameter
+!> @param description an optional new description for the parameter identified
+!>        by @c name
+!>
+!> If a parameter with @c name is not found an error is produced. If the
+!> parameter with @c name is not a string derived type parameter
+!> then an error is produced.
+!>
+    SUBROUTINE set_ParamType_STR_a2(thisParam,name,param,description)
+      CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_STR_a2'
+      CLASS(ParamType),INTENT(INOUT) :: thisParam
+      CHARACTER(LEN=*),INTENT(IN) :: name
+      TYPE(StringType),INTENT(IN) :: param(:,:)
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+      LOGICAL(SBK) :: localalloc
+      CLASS(ParamType),POINTER :: tmpParam
+      
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eParams)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eParams)
+      ENDIF
+      
+      SELECTTYPE(thisParam)
+        TYPE IS(ParamType_STR_a2)
+          IF(thisParam%name == TRIM(name)) THEN
+            IF(SIZE(thisParam%val,1) /= SIZE(param,1) .OR. &
+                 SIZE(thisParam%val,2) /= SIZE(param,2)) THEN
+              DEALLOCATE(thisParam%val)
+              ALLOCATE(thisParam%val(SIZE(param,1),SIZE(param,2)))
+            ENDIF
+            thisParam%val=param
+            IF(PRESENT(description)) thisParam%description=TRIM(description)
+          ELSE
+            CALL eParams%raiseError(modName//'::'//myName// &
+              ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+                '" but name is "'//thisParam%name//'"!')
+          ENDIF
+        CLASS DEFAULT
+          !Search for the parameter name
+          CALL thisParam%getParam(name,tmpParam)
+          IF(ASSOCIATED(tmpParam)) THEN
+            !Parameter was found
+            SELECTTYPE(p=>tmpParam)
+              TYPE IS(ParamType_STR_a2)
+                IF(SIZE(p%val,1) /= SIZE(param,1) .OR. &
+                     SIZE(p%val,2) /= SIZE(param,2)) THEN
+                  DEALLOCATE(p%val)
+                  ALLOCATE(p%val(SIZE(param,1),SIZE(param,2)))
+                ENDIF
+                p%val=param
+                IF(PRESENT(description)) p%description=TRIM(description)
+              CLASS DEFAULT
+                CALL eParams%raiseError(modName//'::'//myName// &
+                  ' - parameter data type mismatch! Parameter type is '// &
+                    tmpParam%dataType//' and must be 2-D ARRAY TYPE(StringType)!')
+            ENDSELECT
+          ELSE
+            CALL eParams%raiseError(modName//'::'//myName// &
+              ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+                thisParam%name//'"!')
+          ENDIF
+      ENDSELECT
+      IF(localalloc) DEALLOCATE(eParams)
+    ENDSUBROUTINE set_ParamType_STR_a2
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the string derived type for a specified parameter
+!> @param thisParam the parameter in which an existing parameter with name 
+!>        matching @c name will have it's value returned
+!> @param name the name of the parameter to return the value of
+!> @param val the current value of the parameter with @c name
+!> 
+!> If a parameter with @c name is not found an error is produced. If the 
+!> parameter with @c name is not a string derived type parameter
+!> then an error is produced.
+!>
+    SUBROUTINE get_ParamType_STR_a2(thisParam,name,val)
+      CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_STR_a2'
+      CLASS(ParamType),INTENT(IN) :: thisParam
+      CHARACTER(LEN=*),INTENT(IN) :: name
+      TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: val(:,:)
+      LOGICAL(SBK) :: localalloc
+      CLASS(ParamType),POINTER :: tmpParam
+      
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eParams)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eParams)
+      ENDIF
+      
+      SELECTTYPE(thisParam)
+        TYPE IS(ParamType_STR_a2)
+          IF(thisParam%name == TRIM(name)) THEN
+            IF(ALLOCATED(val)) THEN
+              IF(SIZE(thisParam%val,1) /= SIZE(val,1) .OR. &
+                   SIZE(thisParam%val,2) /= SIZE(val,2)) THEN
+                DEALLOCATE(val)
+                ALLOCATE(val(SIZE(thisParam%val,1),SIZE(thisParam%val,2)))
+              ENDIF
+              val=thisParam%val
+            ELSE
+              ALLOCATE(val(SIZE(thisParam%val,1),SIZE(thisParam%val,2)))
+              val=thisParam%val
+            ENDIF
+          ELSE
+            CALL eParams%raiseError(modName//'::'//myName// &
+              ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+                thisParam%name//'"!')
+          ENDIF
+        CLASS DEFAULT
+          !Search for the parameter name
+          CALL thisParam%getParam(name,tmpParam)
+          IF(ASSOCIATED(tmpParam)) THEN
+            !Parameter was found
+            SELECTTYPE(p=>tmpParam)
+              TYPE IS(ParamType_STR_a2)
+                IF(ALLOCATED(val)) THEN
+                  IF(SIZE(p%val,1) /= SIZE(val,1) .OR. &
+                       SIZE(p%val,2) /= SIZE(val,2)) THEN
+                    DEALLOCATE(val)
+                    ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2)))
+                  ENDIF
+                  val=p%val
+                ELSE
+                  ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2)))
+                  val=p%val
+                ENDIF
+              CLASS DEFAULT
+                CALL eParams%raiseError(modName//'::'//myName// &
+                  ' - parameter data type mismatch! Parameter type is '// &
+                    tmpParam%dataType//' and must be 2-D ARRAY TYPE(StringType)!')
+            ENDSELECT
+          ELSE
+            CALL eParams%raiseError(modName//'::'//myName// &
+              ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+                thisParam%name//'"!')
+          ENDIF
+      ENDSELECT
+      IF(localalloc) DEALLOCATE(eParams)
+    ENDSUBROUTINE get_ParamType_STR_a2
+!
+!-------------------------------------------------------------------------------
+!> @brief Adds a string derived type parameter to a set of parameters
+!> @param thisParam the set of parameters to which a new parameter will be added
+!> @param name the location and name of the new parameter
+!> @param param the string derived type of the new parameter
+!> @param description an optional input for a description of the new parameter
+!> 
+!> This routine creates a new parameter within @c thisParam with @c name.
+!> @c name may contain a full or partial path to the new parameter. If @c name 
+!> can be matched to an existing parameter in @c thisParam an error is produced
+!> If @c name contains a full path for which intermediate lists do not exist
+!> then this lists are created in the process of adding the new parameter.
+!> If @c thisParam is not initialized and @c name does not contain a "->"
+!> symbol then this routine behaves equivalently to 
+!> @ref ParameterLists::init_ParamType_STR_a2 "initSTR".
+!> 
+    SUBROUTINE add_ParamType_STR_a2(thisParam,name,param,description)
+      CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_STR_a2'
+      CLASS(ParamType),INTENT(INOUT) :: thisParam
+      CHARACTER(LEN=*),INTENT(IN) :: name
+      TYPE(StringType),INTENT(IN) :: param(:,:)
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+      CHARACTER(LEN=LEN(name)) :: prevname,thisname
+      LOGICAL(SBK) :: localalloc
+      INTEGER(SIK) :: ipos
+      TYPE(ParamType) :: newParam
+      CLASS(ParamType),POINTER :: tmpParam
+      
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eParams)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eParams)
+      ENDIF
+      
+      !Search for the name to make sure it does not exist
+      CALL get_ParamType(thisParam,name,tmpParam)
+      
+      IF(.NOT.ASSOCIATED(tmpParam)) THEN
+        prevname=''
+        thisname=ADJUSTL(name)
+        ipos=INDEX(name,'->',.TRUE.)
+        IF(ipos > 0) THEN
+          prevname=ADJUSTL(name(1:ipos-1))
+          thisname=ADJUSTL(name(ipos+2:LEN(name)))
+        ENDIF
+      
+        !Initialize the new parameter
+        IF(PRESENT(description)) THEN
+          CALL init_ParamType_STR_a2(newParam,thisname,param,description)
+        ELSE
+          CALL init_ParamType_STR_a2(newParam,thisname,param)
+        ENDIF
+        
+        !Add the new parameter to thisParam
+        CALL add_ParamType(thisParam,prevname,newParam)
+        CALL newParam%clear()
+      ELSE
+        CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name "'//TRIM(name)// &
+            '" already exists! Use set method or full parameter list path!')
+      ENDIF
+      IF(localalloc) DEALLOCATE(eParams)
+    ENDSUBROUTINE add_ParamType_STR_a2
+!
 !3333333333333333333333333333333333333333333333333333333333333333333333333333333
 !        Three Dimensional Arrays    
 !3333333333333333333333333333333333333333333333333333333333333333333333333333333
