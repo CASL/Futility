@@ -48,40 +48,40 @@
 !>   CHARACTER(LEN=20) :: char20
 !>   TYPE(StringType) :: myString
 !>
-!>   WRITE(*,*) '"'//myString%sPrint()//'"'
-!>   WRITE(*,*) '"'//TRIM(myString%sPrint())//'"'
-!>   WRITE(*,*) '"'//ADJUSTL(myString%sPrint())//'"'
-!>   WRITE(*,*) '"'//ADJUSTR(myString%sPrint())//'"'
-!>   WRITE(*,*) '"'//LEN(myString%sPrint())//'"'
-!>   WRITE(*,*) '"'//LEN_TRIM(myString%sPrint())//'"'
+!>   WRITE(*,*) '"'//CHAR(myString)//'"'
+!>   WRITE(*,*) '"'//TRIM(myString)//'"'
+!>   WRITE(*,*) '"'//ADJUSTL(myString)//'"'
+!>   WRITE(*,*) '"'//ADJUSTR(myString)//'"'
+!>   WRITE(*,*) '"'//LEN(myString)//'"'
+!>   WRITE(*,*) '"'//LEN_TRIM(myString)//'"'
 !>
 !>   myString=' hello world'
 !>   char20=myString
-!>   WRITE(*,*) '"'//myString%sPrint()//'"'
+!>   WRITE(*,*) '"'//CHAR(myString)//'"'
 !>   WRITE(*,*) '"'//char20//'"'
-!>   WRITE(*,*) '"'//TRIM(myString%sPrint())//'"'
+!>   WRITE(*,*) '"'//TRIM(CHAR(myString))//'"'
 !>   WRITE(*,*) '"'//TRIM(char20)//'"'
-!>   WRITE(*,*) '"'//ADJUSTL(myString%sPrint())//'"'
+!>   WRITE(*,*) '"'//ADJUSTL(CHAR(myString))//'"'
 !>   WRITE(*,*) '"'//ADJUSTL(char20)//'"'
-!>   WRITE(*,*) '"'//ADJUSTR(myString%sPrint())//'"'
+!>   WRITE(*,*) '"'//ADJUSTR(myString)//'"'
 !>   WRITE(*,*) '"'//ADJUSTR(char20)//'"'
-!>   WRITE(*,*) '"'//LEN(myString%sPrint())//'"'
+!>   WRITE(*,*) '"'//LEN(myString)//'"'
 !>   WRITE(*,*) '"'//LEN(char20)//'"'
-!>   WRITE(*,*) '"'//LEN_TRIM(myString%sPrint())//'"'
+!>   WRITE(*,*) '"'//LEN_TRIM(myString)//'"'
 !>   WRITE(*,*) '"'//LEN_TRIM(char20)//'"'
 !>
 !>   myString=char20
-!>   WRITE(*,*) '"'//myString%sPrint()//'"'
+!>   WRITE(*,*) '"'//CHAR(myString)//'"'
 !>   WRITE(*,*) '"'//char20//'"'
-!>   WRITE(*,*) '"'//TRIM(myString%sPrint())//'"'
+!>   WRITE(*,*) '"'//TRIM(myString)//'"'
 !>   WRITE(*,*) '"'//TRIM(char20)//'"'
-!>   WRITE(*,*) '"'//ADJUSTL(myString%sPrint())//'"'
+!>   WRITE(*,*) '"'//ADJUSTL(myString)//'"'
 !>   WRITE(*,*) '"'//ADJUSTL(char20)//'"'
-!>   WRITE(*,*) '"'//ADJUSTR(myString%sPrint())//'"'
+!>   WRITE(*,*) '"'//ADJUSTR(myString)//'"'
 !>   WRITE(*,*) '"'//ADJUSTR(char20)//'"'
-!>   WRITE(*,*) '"'//LEN(myString%sPrint())//'"'
+!>   WRITE(*,*) '"'//LEN(myString)//'"'
 !>   WRITE(*,*) '"'//LEN(char20)//'"'
-!>   WRITE(*,*) '"'//LEN_TRIM(myString%sPrint())//'"'
+!>   WRITE(*,*) '"'//LEN_TRIM(myString)//'"'
 !>   WRITE(*,*) '"'//LEN_TRIM(char20)//'"'
 !>
 !> END PROGRAM
@@ -99,6 +99,7 @@ MODULE Strings
 !
 ! List of Public items
   PUBLIC :: StringType
+  PUBLIC :: CHAR
   PUBLIC :: LEN
   PUBLIC :: LEN_TRIM
   PUBLIC :: TRIM
@@ -123,13 +124,15 @@ MODULE Strings
     INTEGER(SIK),PRIVATE :: ntrim=0
     !> The string stored as an array of length 1 character strings
     CHARACTER(LEN=1),ALLOCATABLE,PRIVATE :: s(:)
-!
-!List of type bound procedures
-    CONTAINS
-      !> @copybrief Strings::length_StringType
-      !> @copydetails Strings::length_StringType
-      PROCEDURE,PASS :: sPrint => sPrint_StringType
   ENDTYPE StringType
+  
+  !> @brief Overloads the Fortran intrinsic procedure CHAR() so
+  !> a string type argument may be passed.
+  INTERFACE CHAR
+    !> @copybrief Strings::CHAR_StringType
+    !> @copydetails Strings::CHAR_StringType
+    MODULE PROCEDURE  CHAR_StringType
+  ENDINTERFACE
   
   !> @brief Overloads the Fortran intrinsic procedure LEN() so
   !> a string type argument may be passed.
@@ -281,7 +284,7 @@ MODULE Strings
 !>
 !> This routine basically converts a @c StringType to a @c CHARACTER type.
 !>
-    PURE FUNCTION sPrint_StringType(thisStr,stt,stp) RESULT(s)
+    PURE FUNCTION CHAR_StringType(thisStr,stt,stp) RESULT(s)
       CLASS(StringType),INTENT(IN) :: thisStr
       INTEGER(SIK),INTENT(IN),OPTIONAL :: stt
       INTEGER(SIK),INTENT(IN),OPTIONAL :: stp
@@ -299,7 +302,7 @@ MODULE Strings
           s(j:j)=thisStr%s(i)
         ENDDO
       ENDIF
-    ENDFUNCTION sPrint_StringType
+    ENDFUNCTION CHAR_StringType
 !
 !-------------------------------------------------------------------------------
 !> @brief Returns the contents of the string excluding all trailing whitespace
@@ -334,7 +337,7 @@ MODULE Strings
     PURE FUNCTION ADJUSTL_StringType(thisStr) RESULT(s)
       CLASS(StringType),INTENT(IN) :: thisStr
       CHARACTER(LEN=thisStr%n) :: s
-      s=ADJUSTL(thisStr%sPrint())
+      s=ADJUSTL(CHAR(thisStr))
     ENDFUNCTION ADJUSTL_StringType
 !
 !-------------------------------------------------------------------------------
@@ -349,7 +352,7 @@ MODULE Strings
     PURE FUNCTION ADJUSTR_StringType(thisStr) RESULT(s)
       CLASS(StringType),INTENT(IN) :: thisStr
       CHARACTER(LEN=thisStr%n) :: s
-      s=ADJUSTR(thisStr%sPrint())
+      s=ADJUSTR(CHAR(thisStr))
     ENDFUNCTION ADJUSTR_StringType
 !
 !-------------------------------------------------------------------------------
@@ -370,9 +373,9 @@ MODULE Strings
       LOGICAL,INTENT(IN),OPTIONAL :: back
       INTEGER :: ipos
       IF(PRESENT(back)) THEN
-        ipos=INDEX(string%sPrint(),substring,back)
+        ipos=INDEX(CHAR(string),substring,back)
       ELSE
-        ipos=INDEX(string%sPrint(),substring)
+        ipos=INDEX(CHAR(string),substring)
       ENDIF
     ENDFUNCTION INDEX_StringType_char
 !
@@ -394,9 +397,9 @@ MODULE Strings
       LOGICAL,INTENT(IN),OPTIONAL :: back
       INTEGER :: ipos
       IF(PRESENT(back)) THEN
-        ipos=INDEX(string,substring%sPrint(),back)
+        ipos=INDEX(string,CHAR(substring),back)
       ELSE
-        ipos=INDEX(string,substring%sPrint())
+        ipos=INDEX(string,CHAR(substring))
       ENDIF
     ENDFUNCTION INDEX_char_StringType
 !
@@ -418,9 +421,9 @@ MODULE Strings
       LOGICAL,INTENT(IN),OPTIONAL :: back
       INTEGER :: ipos
       IF(PRESENT(back)) THEN
-        ipos=INDEX(string%sPrint(),substring%sPrint(),back)
+        ipos=INDEX(CHAR(string),CHAR(substring),back)
       ELSE
-        ipos=INDEX(string%sPrint(),substring%sPrint())
+        ipos=INDEX(CHAR(string),CHAR(substring))
       ENDIF
     ENDFUNCTION INDEX_StringType_StringType
 !
@@ -436,7 +439,7 @@ MODULE Strings
     PURE SUBROUTINE assign_StringType_to_char(s,thisStr)
       CHARACTER(LEN=*),INTENT(INOUT) :: s  
       CLASS(StringType),INTENT(IN) :: thisStr
-      s=thisStr%sPrint()
+      s=CHAR(thisStr)
     ENDSUBROUTINE assign_StringType_to_char
 !
 !-------------------------------------------------------------------------------
@@ -515,7 +518,7 @@ MODULE Strings
       CHARACTER(LEN=*),INTENT(IN) :: s  
       CLASS(StringType),INTENT(IN) :: thisStr
       CHARACTER(LEN=thisStr%n+LEN(s)) :: newstring
-      newstring=s//thisStr%sPrint()
+      newstring=s//CHAR(thisStr)
     ENDFUNCTION concatenate_StringType_onto_char
 !
 !-------------------------------------------------------------------------------
@@ -533,7 +536,7 @@ MODULE Strings
       CLASS(StringType),INTENT(IN) :: thisStr
       CHARACTER(LEN=*),INTENT(IN) :: s
       CHARACTER(LEN=thisStr%n+LEN(s)) :: newstring
-      newstring=thisStr%sPrint()//s
+      newstring=CHAR(thisStr)//s
     ENDFUNCTION concatenate_char_onto_StringType
 !
 !-------------------------------------------------------------------------------
@@ -550,7 +553,7 @@ MODULE Strings
       CLASS(StringType),INTENT(IN) :: s1
       CLASS(StringType),INTENT(IN) :: s2
       CHARACTER(LEN=s1%n+s2%n) :: s
-      s=s1%sPrint()//s2%sPrint()
+      s=CHAR(s1)//CHAR(s2)
     ENDFUNCTION concatenate_StringType_onto_StringType
 !
 !-------------------------------------------------------------------------------
@@ -567,7 +570,7 @@ MODULE Strings
       CHARACTER(LEN=*),INTENT(IN) :: s
       CLASS(StringType),INTENT(IN) :: thisStr
       LOGICAL(SBK) :: bool
-      bool=(s == thisStr%sPrint())
+      bool=(s == CHAR(thisStr))
     ENDFUNCTION equalto_char_StringType
 !
 !-------------------------------------------------------------------------------
@@ -584,7 +587,7 @@ MODULE Strings
       CLASS(StringType),INTENT(IN) :: thisStr
       CHARACTER(LEN=*),INTENT(IN) :: s
       LOGICAL(SBK) :: bool
-      bool=(s == thisStr%sPrint())
+      bool=(s == CHAR(thisStr))
     ENDFUNCTION equalto_StringType_char
 !
 !-------------------------------------------------------------------------------
@@ -601,7 +604,7 @@ MODULE Strings
       CLASS(StringType),INTENT(IN) :: s1
       CLASS(StringType),INTENT(IN) :: s2
       LOGICAL(SBK) :: bool
-      bool=(s1%sPrint() == s2%sPrint())
+      bool=(CHAR(s1) == CHAR(s2))
     ENDFUNCTION equalto_StringType_StringType
 !
 !-------------------------------------------------------------------------------
@@ -618,7 +621,7 @@ MODULE Strings
       CHARACTER(LEN=*),INTENT(IN) :: s
       CLASS(StringType),INTENT(IN) :: thisStr
       LOGICAL(SBK) :: bool
-      bool=(s /= thisStr%sPrint())
+      bool=(s /= CHAR(thisStr))
     ENDFUNCTION notequalto_char_StringType
 !
 !-------------------------------------------------------------------------------
@@ -635,7 +638,7 @@ MODULE Strings
       CLASS(StringType),INTENT(IN) :: thisStr
       CHARACTER(LEN=*),INTENT(IN) :: s
       LOGICAL(SBK) :: bool
-      bool=(s /= thisStr%sPrint())
+      bool=(s /= CHAR(thisStr))
     ENDFUNCTION notequalto_StringType_char
 !
 !-------------------------------------------------------------------------------
@@ -652,7 +655,7 @@ MODULE Strings
       CLASS(StringType),INTENT(IN) :: s1
       CLASS(StringType),INTENT(IN) :: s2
       LOGICAL(SBK) :: bool
-      bool=(s1%sPrint() /= s2%sPrint())
+      bool=(CHAR(s1) /= CHAR(s2))
     ENDFUNCTION notequalto_StringType_StringType
 !
 ENDMODULE Strings

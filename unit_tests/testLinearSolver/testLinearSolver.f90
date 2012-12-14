@@ -26,7 +26,7 @@ PROGRAM testLinearSolver
   USE ParameterLists
   IMPLICIT NONE
   
-  TYPE(ExceptionHandlerType),POINTER :: e
+  TYPE(ExceptionHandlerType),TARGET :: e
   TYPE(MPI_EnvType) :: mpiTestEnv
   TYPE(ParamType) :: pList, optListLS, optListMat, vecPList
   
@@ -64,9 +64,9 @@ PROGRAM testLinearSolver
   CALL vecPList%add('VectorType -> MPI_Comm_ID',PE_COMM_SELF)
   
   !Configure exception handler for test
-  ALLOCATE(e)
   CALL e%setStopOnError(.FALSE.)
   CALL e%setQuietMode(.TRUE.)
+  eParams => e
   eLinearSolverType => e
   CALL mpiTestEnv%initialize(PE_COMM_SELF)
 
@@ -111,9 +111,6 @@ PROGRAM testLinearSolver
 #else
   CALL mpiTestEnv%finalize()
 #endif
-  
-  DEALLOCATE(e)
-  
 !
 !===============================================================================
 CONTAINS
@@ -1686,7 +1683,7 @@ CONTAINS
       thisX=1.0_SRK
       
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-          CALL thisLS%setX0(thisX)
+        CALL thisLS%setX0(thisX)
       ENDSELECT
 
       SELECTTYPE(b => thisLS%b); TYPE IS(RealVectorType)
@@ -1734,6 +1731,7 @@ CONTAINS
       DEALLOCATE(thisB)
       CALL thisLS%A%clear()
       CALL thisLS%clear()
+      DEALLOCATE(thisX)
       
     !test with A being densesquare
     
@@ -2695,6 +2693,7 @@ CONTAINS
       
       DEALLOCATE(thisB)
       CALL thisLS%clear()
+      DEALLOCATE(thisX)
       
     !test with A being densesquare
     

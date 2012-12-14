@@ -274,24 +274,25 @@ MODULE LinearSolverTypes
       ENDIF
 
       !Pull LS data from the parameter list
-      CALL Params%get('LinearSolverType->TPLType',TPLType)
-      CALL Params%get('LinearSolverType->solverMethod',solverMethod)
-      CALL Params%get('LinearSolverType->MPI_Comm_ID',MPI_Comm_ID)
-      CALL Params%get('LinearSolverType->numberOMP',numberOMP)
-      CALL Params%get('LinearSolverType->timerName',timerName)
-      CALL Params%get('LinearSolverType->matType',matType)
+      CALL validParams%get('LinearSolverType->TPLType',TPLType)
+      CALL validParams%get('LinearSolverType->solverMethod',solverMethod)
+      CALL validParams%get('LinearSolverType->MPI_Comm_ID',MPI_Comm_ID)
+      CALL validParams%get('LinearSolverType->numberOMP',numberOMP)
+      CALL validParams%get('LinearSolverType->timerName',timerName)
+      CALL validParams%get('LinearSolverType->matType',matType)
       ! pull data for matrix parameter list
-      CALL Params%get('LinearSolverType->A->MatrixType',pListPtr)
+      CALL validParams%get('LinearSolverType->A->MatrixType',pListPtr)
       matPList=pListPtr
       CALL matPList%add('MatrixType->MPI_Comm_ID',MPI_Comm_ID)
       ! pull data for vector parameter list
-      CALL Params%get('LinearSolverType->x->VectorType',pListPtr)
+      CALL validParams%get('LinearSolverType->x->VectorType',pListPtr)
       vecxPList=pListPtr
       CALL vecxPList%add('VectorType->MPI_Comm_ID',MPI_Comm_ID)
-      CALL Params%get('LinearSolverType->b->VectorType',pListPtr)
+      CALL validParams%get('LinearSolverType->b->VectorType',pListPtr)
       vecbPList=pListPtr
       CALL vecbPList%add('VectorType->MPI_Comm_ID',MPI_Comm_ID)
       
+      CALL validParams%clear()
       
       !Initialize parallel environments based on input
       IF(MPI_Comm_ID >= 0) CALL solver%MPIparallelEnv%initialize(MPI_Comm_ID)

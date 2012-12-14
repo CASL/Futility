@@ -33,13 +33,13 @@ PROGRAM testMatrixTypes
   PetscErrorCode  :: ierr
 #endif
   
-  TYPE(ExceptionHandlerType),POINTER :: e
+  TYPE(ExceptionHandlerType),TARGET :: e
   TYPE(ParamType) :: pList,optListMat,vecPList
   
   !Configure exception handler for test
-  ALLOCATE(e)
   CALL e%setStopOnError(.FALSE.)
   CALL e%setQuietMode(.TRUE.)
+  eParams => e
   eMatrixType => e
   
   !Set up optional PL
@@ -65,7 +65,9 @@ PROGRAM testMatrixTypes
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING MATRIX TYPES PASSED!'
   WRITE(*,*) '==================================================='
-  DEALLOCATE(e)
+  CALL optListMat%clear()
+  CALL vecPList%clear()
+  CALL pList%clear()
   CALL MatrixTypes_Clear_ValidParams()
   CALL VectorType_Clear_ValidParams()
   
@@ -2055,9 +2057,11 @@ PROGRAM testMatrixTypes
       WRITE(*,*) '  Passed: CALL petscdensesquare%get(...)'
       
       DEALLOCATE(thisMatrix)
-
+      CALL xPETScVector%clear()
+      CALL yPETScVector%clear()
 #endif
-
+      CALL xRealVector%clear()
+      CALL yRealVector%clear()
     ENDSUBROUTINE testMatrix
 !
 !-------------------------------------------------------------------------------

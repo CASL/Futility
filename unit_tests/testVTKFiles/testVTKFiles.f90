@@ -411,7 +411,7 @@ PROGRAM testVTKFiles
   ENDIF
 !
 !Test cell removal
-  CALL testVTKFile%clear
+  CALL testVTKFile%clear()
   CALL testVTKFile%initialize(666,'testVTK15.vtk',STATUS='testVTK15')
   CALL SetupTest6_Mesh()
   ALLOCATE(testMask(4))
@@ -444,6 +444,7 @@ PROGRAM testVTKFiles
   CALL testVTKMesh%clear()
   CALL testVTKMesh2%clear()
   CALL testVTKData%clear()
+  CALL testVTKFile%clear()
 !
 !===============================================================================
   CONTAINS
