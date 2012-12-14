@@ -6943,7 +6943,7 @@ MODULE ParameterLists
         !    TRIM(thisParam%val(l,k)%sPrint()))
         !ENDDO
         !Doesn't work sadly... syntax error in the format for some reason.
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,'//TRIM(fmt3)//'a)') &
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,'//TRIM(fmt3)//'(ax))') &
            (TRIM(thisParam%val(l,k)%sPrint()),l=1,SIZE(thisParam%val,1) )
       ENDDO
       
