@@ -3731,15 +3731,15 @@ PROGRAM testParameterLists
     !Test clear
     eParams => NULL()
     CALL testParam%clear()
-    IF(LEN(testParam%name%sPrint()) /= 0) THEN
+    IF(LEN(CHAR(testParam%name)) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name StringType (STR) 2-D FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%datatype%sPrint()) /= 0) THEN
+    IF(LEN(CHAR(testParam%datatype)) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %datatype StringType (STR) 2-D FAILED!'
       STOP 666
     ENDIF
-    IF(LEN(testParam%description%sPrint()) /= 0) THEN
+    IF(LEN(CHAR(testParam%description)) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %description StringType (STR) 2-D FAILED!'
       STOP 666
     ENDIF

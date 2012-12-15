@@ -895,11 +895,11 @@ MODULE ParameterLists
               CALL thisParam%init(CHAR(p%name),p%val, &
                 CHAR(p%description))
             TYPE IS(ParamType_SLK_a2)
-              CALL thisParam%init(p%name%sPrint(),p%val, &
-                p%description%sPrint())
+              CALL thisParam%init(CHAR(p%name),p%val, &
+                CHAR(p%description))
             TYPE IS(ParamType_STR_a2)
-              CALL thisParam%init(p%name%sPrint(),p%val, &
-                p%description%sPrint())
+              CALL thisParam%init(CHAR(p%name),p%val, &
+                CHAR(p%description))
             TYPE IS(ParamType_SSK_a3)
               CALL thisParam%init(CHAR(p%name),p%val, &
                 CHAR(p%description))
@@ -6922,7 +6922,7 @@ MODULE ParameterLists
       j=6
       IF(PRESENT(indent)) i=i+indent
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
-      !tmpstr(1)=thisParam%val(1)%sPrint()
+      !tmpstr(1)=CHAR(thisParam%val(1))
       IF(LEN_TRIM(thisParam%description) == 0) THEN
         WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') &
           thisParam%dataType//' :: '//thisParam%name//'= ...'
@@ -6936,11 +6936,11 @@ MODULE ParameterLists
       DO k=1,SIZE(thisParam%val,2)
         !DO l=1,SIZE(thisParam%val,1)
         !  WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,a)') &
-        !    TRIM(thisParam%val(l,k)%sPrint()))
+        !    TRIM(CHAR(thisParam%val(l,k))))
         !ENDDO
         !Doesn't work sadly... syntax error in the format for some reason.
         WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,'//TRIM(fmt3)//'(ax))') &
-           (TRIM(thisParam%val(l,k)%sPrint()),l=1,SIZE(thisParam%val,1) )
+           (TRIM(CHAR(thisParam%val(l,k))),l=1,SIZE(thisParam%val,1) )
       ENDDO
       
     ENDSUBROUTINE edit_ParamType_STR_a2
