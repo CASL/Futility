@@ -6922,7 +6922,7 @@ MODULE ParameterLists
       j=6
       IF(PRESENT(indent)) i=i+indent
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
-      !tmpstr(1)=thisParam%val(1)%sPrint()
+      !tmpstr(1)=CHAR(thisParam%val(1))
       IF(LEN_TRIM(thisParam%description) == 0) THEN
         WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') &
           thisParam%dataType//' :: '//thisParam%name//'= ...'
