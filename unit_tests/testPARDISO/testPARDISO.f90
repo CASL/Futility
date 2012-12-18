@@ -15,16 +15,17 @@
 ! manufacturer, or otherwise, does not necessarily constitute or imply its     !
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-include '/opt/intel-12/mkl/include/mkl_pardiso.f90'
+include 'mkl_pardiso.f90'
 PROGRAM testPARDISO
   
   USE ExceptionHandler
   USE IntrType
   USE MatrixTypes
   USE VectorTypes
+  USE ParameterLists
   USE MKL_PARDISO
+  
   IMPLICIT NONE
-
   
   TYPE(ExceptionHandlerType),TARGET :: e
   
@@ -38,6 +39,8 @@ PROGRAM testPARDISO
 
 #ifdef HAVE_PARDISO
   CALL testPARDISOInterface()
+#else
+  WRITE(*,*) "PARDISO NOT ENABLED!"
 #endif
   
   WRITE(*,*) '==================================================='
@@ -50,19 +53,76 @@ PROGRAM testPARDISO
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testPARDISOInterface()
-    TYPE(SparseMatrixType) :: matrix
-    TYPE(RealVectorType) :: x,b
+    TYPE(SparseMatrixType) :: thisMatrix
+    TYPE(RealVectorType) :: thisx,thisb
+    TYPE(ParamType) :: pList
+    INTEGER(SIK) :: i
     
-    INTEGER(SIK) :: pt(64)
-    INTEGER(SIK) :: maxfct,solver,mnum,mtype,phase,n,nrhs,error
-    INTEGER(SIK) :: perm(64),iparm(64)
-    REAL(SRK) :: dparm(64)
+    TYPE(MKL_PARDISO_HANDLE):: pt(64)
+    INTEGER(SIK) :: maxfct,solver,mnum,mtype,phase,n,nrhs,msglvl,error
+    INTEGER(SIK) :: iparm(64)
+    INTEGER(SIK),ALLOCATABLE :: perm(:)
     
-!    CALL PARDISO_INIT(pt,mtype,solver,iparm,dparm,error)
-!    WRITE(*,*) error
-      
-      !CALL pardiso()
-
+    DO i = 1, 64
+      iparm(i) = 0
+      pt(i)%dummy=0
+    ENDDO 
+    iparm(3)=1
+  
+    maxfct=1
+    mnum=1
+    mtype=11
+    phase=13
+    nrhs=1
+    msglvl=0
+    error=0
+    
+    CALL PARDISOINIT(pt,mtype,iparm)
+    
+!    ! build matrix
+!    CALL pList%clear()
+!    CALL pList%add('MatrixType->n',2_SNK)
+!    CALL pList%add('MatrixType->nnz',2_SNK)
+!    CALL thisMatrix%clear()
+!    CALL thisMatrix%init(pList)
+!    CALL thisMatrix%setShape(1,1,1.0_SRK)
+!    CALL thisMatrix%setShape(2,2,1.0_SRK)
+!    WRITE(*,*) thisMatrix%ia
+!    WRITE(*,*) thisMatrix%ja
+!    WRITE(*,*) thisMatrix%a
+!    
+!    CALL pList%clear()
+!    CALL pList%add('VectorType->n',2)
+!    CALL thisb%init(pList)
+!    WRITE(*,*) thisb%b
+!    
+!    CALL pList%clear()
+!    CALL pList%add('VectorType->n',2)
+!    CALL thisx%init(pList)
+!    thisx%b=1
+!    WRITE(*,*) thisx%b
+!    
+!    n=thisb%n
+!    ALLOCATE(perm(n))
+!    perm=1
+!
+!    WRITE(*,*)
+!    WRITE(*,*) maxfct
+!    WRITE(*,*) mnum
+!    WRITE(*,*) mtype
+!    WRITE(*,*) phase
+!    WRITE(*,*) n
+!    WRITE(*,*) perm
+!    WRITE(*,*) nrhs
+!    WRITE(*,*) iparm
+!    WRITE(*,*) msglvl
+!    WRITE(*,*)
+!     
+!    !CALL PARDISO(pt,maxfct,mnum,mtype,phase,n,thisMatrix%a,thisMatrix%ia, &
+!    !  thisMatrix%ja,perm,nrhs,iparm,msglvl,thisb%b,thisx%b,error)
+!      
+!    WRITE(*,*) thisx%b
+!
     ENDSUBROUTINE testPARDISOInterface
 
 ENDPROGRAM
