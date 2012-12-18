@@ -247,7 +247,7 @@ PROGRAM testParallelEnv
   CALL MPI_Barrier(MPI_COMM_WORLD,mpierr)
   CALL eParEnv%setStopOnError(.FALSE.)
   CALL eParEnv%setQuietMode(.TRUE.)
-  CALL testPE%init(MPI_COMM_WORLD,0,0,0,0)
+  CALL testPE%initialize(MPI_COMM_WORLD,0,0,0,0)
   !CALL testPE%init(MPI_COMM_WORLD,mysize,1,1,1)
   !CALL testPE%world%barrier()
   !WRITE(OUTPUT_UNIT,*) myrank,testPE%space%rank,testPE%energy%rank,testPE%angle%rank

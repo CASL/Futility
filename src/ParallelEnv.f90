@@ -514,7 +514,7 @@ MODULE ParallelEnv
         
         IF(mpierr == MPI_SUCCESS .AND. tmpcomm /= MPI_COMM_NULL) THEN
           !Setup MPI Env object for the virtual topology
-          CALL myPE%CartGridWorld%initialize(tmpcomm)
+          CALL myPE%CartGridWorld%init(tmpcomm)
           
           !Setup Communicator for Spatial Decomposition
           activeCommDim=.FALSE.
@@ -522,7 +522,7 @@ MODULE ParallelEnv
           CALL MPI_Cart_sub(myPE%CartGridWorld%comm,activeCommDim,tmpcomm,mpierr)
           IF(mpierr == MPI_SUCCESS) THEN
             ALLOCATE(myPE%space)
-            CALL myPE%space%initialize(tmpcomm)
+            CALL myPE%space%init(tmpcomm)
           ELSE
             WRITE(smpierr,'(i12)') mpierr; smpierr=ADJUSTL(smpierr)
             CALL eParEnv%raiseError(modName//'::'//myName// &
@@ -536,7 +536,7 @@ MODULE ParallelEnv
           CALL MPI_Cart_sub(myPE%CartGridWorld%comm,activeCommDim,tmpcomm,mpierr)
           IF(mpierr == MPI_SUCCESS) THEN
             ALLOCATE(myPE%angle)
-            CALL myPE%angle%initialize(tmpcomm)
+            CALL myPE%angle%init(tmpcomm)
           ELSE
             WRITE(smpierr,'(i12)') mpierr; smpierr=ADJUSTL(smpierr)
             CALL eParEnv%raiseError(modName//'::'//myName// &
@@ -550,7 +550,7 @@ MODULE ParallelEnv
           CALL MPI_Cart_sub(myPE%CartGridWorld%comm,activeCommDim,tmpcomm,mpierr)
           IF(mpierr == MPI_SUCCESS) THEN
             ALLOCATE(myPE%energy)
-            CALL myPE%energy%initialize(tmpcomm)
+            CALL myPE%energy%init(tmpcomm)
           ELSE
             WRITE(smpierr,'(i12)') mpierr; smpierr=ADJUSTL(smpierr)
             CALL eParEnv%raiseError(modName//'::'//myName// &
@@ -559,7 +559,7 @@ MODULE ParallelEnv
           ENDIF
           
           !Setup Ray decomposition
-          ALLOCATE(myPE%ray); CALL myPE%ray%initialize(nthreads)
+          ALLOCATE(myPE%ray); CALL myPE%ray%init(nthreads)
         ELSE
           WRITE(smpierr,'(i12)') mpierr; smpierr=ADJUSTL(smpierr)
           CALL eParEnv%raiseError(modName//'::'//myName// &
