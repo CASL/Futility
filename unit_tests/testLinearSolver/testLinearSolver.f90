@@ -68,7 +68,7 @@ PROGRAM testLinearSolver
   CALL e%setQuietMode(.TRUE.)
   eParams => e
   eLinearSolverType => e
-  CALL mpiTestEnv%initialize(PE_COMM_SELF)
+  CALL mpiTestEnv%init(PE_COMM_SELF)
 
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING LINEAR SOLVERS...'
@@ -128,8 +128,8 @@ CONTAINS
         thisLS%solverMethod=BICGSTAB
         thisLS%info=2
         thisLS%isDecomposed=.TRUE.
-        CALL thisLS%MPIparallelEnv%initialize(0)
-        CALL thisLS%OMPparallelEnv%initialize(1)
+        CALL thisLS%MPIparallelEnv%init(PE_COMM_SELF)
+        CALL thisLS%OMPparallelEnv%init(1)
         
         ! initialize matrix A
         ALLOCATE(DenseSquareMatrixType :: thisLS%A)
@@ -192,8 +192,8 @@ CONTAINS
         thisLS%convTol=2._SRK
         thisLS%residual=2._SRK
         thisLS%isDecomposed=.TRUE.
-        CALL thisLS%MPIparallelEnv%initialize(0)
-        CALL thisLS%OMPparallelEnv%initialize(1)
+        CALL thisLS%MPIparallelEnv%init(PE_COMM_SELF)
+        CALL thisLS%OMPparallelEnv%init(1)
         
         ! initialize matrix A
         ALLOCATE(DenseSquareMatrixType :: thisLS%A)

@@ -51,38 +51,38 @@ PROGRAM testParallelEnv
       WRITE(OUTPUT_UNIT,*) 'testOMP%isInit() FAILED!'
       STOP 666
     ENDIF
-    CALL testOMP%initialize()
-    IF(testOMP%nthread /= 1 .OR. testOMP%rank /= 0 .OR. &
+    CALL testOMP%init()
+    IF(testOMP%nproc /= 1 .OR. testOMP%rank /= 0 .OR. &
         .NOT.testOMP%isInit() .OR. .NOT.testOMP%master) THEN
-      WRITE(OUTPUT_UNIT,*) 'testOMP%initialize() FAILED!'
+      WRITE(OUTPUT_UNIT,*) 'testOMP%init() FAILED!'
       STOP 666
     ELSE
       WRITE(OUTPUT_UNIT,*) '  Passed: testOMP%isInit() (NO OMP)'
-      WRITE(OUTPUT_UNIT,*) '  Passed: testOMP%initialize() (NO OMP)'
+      WRITE(OUTPUT_UNIT,*) '  Passed: testOMP%init() (NO OMP)'
     ENDIF
     CALL testOMP%clear()
-    IF(testOMP%nthread /= -1 .OR. testOMP%rank /= -1 .OR. &
+    IF(testOMP%nproc /= -1 .OR. testOMP%rank /= -1 .OR. &
       testOMP%isInit() .OR. testOMP%master) THEN
       WRITE(OUTPUT_UNIT,*) 'testOMP%clear() FAILED!'
       STOP 666
     ELSE
       WRITE(*,*) '  Passed: testOMP%clear()'
     ENDIF
-!$  CALL testOMP%initialize(1)
-!$  IF(testOMP%nthread /= 1 .OR. testOMP%rank /= 0 .OR. &
+!$  CALL testOMP%init(1)
+!$  IF(testOMP%nproc /= 1 .OR. testOMP%rank /= 0 .OR. &
 !$     .NOT.testOMP%master) THEN
-!$    WRITE(OUTPUT_UNIT,*) 'testOMP%initialize(1) FAILED!'
+!$    WRITE(OUTPUT_UNIT,*) 'testOMP%init(1) FAILED!'
 !$    STOP 666
 !$  ELSE
-!$    WRITE(OUTPUT_UNIT,*) '  Passed: testOMP%initialize(1)'
+!$    WRITE(OUTPUT_UNIT,*) '  Passed: testOMP%init(1)'
 !$  ENDIF
-!$  CALL testOMP%initialize(1000)
-!$  IF(testOMP%nthread /= omp_get_max_threads() .OR. testOMP%rank /= 0 .OR. &
+!$  CALL testOMP%init(1000)
+!$  IF(testOMP%nproc /= omp_get_max_threads() .OR. testOMP%rank /= 0 .OR. &
 !$     .NOT.testOMP%master) THEN
-!$    WRITE(OUTPUT_UNIT,*) 'testOMP%initialize(1000) FAILED!'
+!$    WRITE(OUTPUT_UNIT,*) 'testOMP%init(1000) FAILED!'
 !$    STOP 666
 !$  ELSE
-!$    WRITE(OUTPUT_UNIT,*) '  Passed: testOMP%initialize(1000)'
+!$    WRITE(OUTPUT_UNIT,*) '  Passed: testOMP%init(1000)'
 !$  ENDIF
     WRITE(OUTPUT_UNIT,*) '---------------------------------------------------'
   ENDIF
@@ -108,27 +108,27 @@ PROGRAM testParallelEnv
 #endif
   ENDIF
 #ifdef HAVE_MPI
-  CALL testMPI%initialize(MPI_COMM_WORLD)
+  CALL testMPI%init(MPI_COMM_WORLD)
   IF(testMPI%comm /= MPI_COMM_WORLD .OR. testMPI%rank /= myrank &
      .OR. testMPI%nproc == -1 .OR. .NOT.testMPI%isInit()) THEN
-    WRITE(OUTPUT_UNIT,*) myrank,'CALL testMPI%initialize(MPI_COMM_WORLD) FAILED!'
+    WRITE(OUTPUT_UNIT,*) myrank,'CALL testMPI%init(MPI_COMM_WORLD) FAILED!'
     FLUSH(OUTPUT_UNIT)
     CALL MPI_Abort(MPI_COMM_WORLD,666,mpierr)
   ELSE
-    WRITE(OUTPUT_UNIT,*) '  Passed: CALL testMPI%initialize(MPI_COMM_WORLD)', &
+    WRITE(OUTPUT_UNIT,*) '  Passed: CALL testMPI%init(MPI_COMM_WORLD)', &
       testMPI%rank
     FLUSH(OUTPUT_UNIT)
     CALL MPI_Barrier(MPI_COMM_WORLD,mpierr)
   ENDIF
 #else
   WRITE(OUTPUT_UNIT,*) '  WARNING: EXECUTABLE NOT COMPILED FOR MPI'
-  CALL testMPI%initialize(0)
+  CALL testMPI%init(PE_COMM_SELF)
   IF(testMPI%comm /= 1 .OR. testMPI%nproc /= 1 .OR. testMPI%rank /= 0 &
      .OR. .NOT.testMPI%master .OR. .NOT.testMPI%isInit()) THEN
-    WRITE(OUTPUT_UNIT,*) 'CALL testMPI%initialize(0) FAILED!'
+    WRITE(OUTPUT_UNIT,*) 'CALL testMPI%init(0) FAILED!'
     STOP 666
   ELSE
-    WRITE(OUTPUT_UNIT,*) '  Passed: CALL testMPI%initialize(0)'
+    WRITE(OUTPUT_UNIT,*) '  Passed: CALL testMPI%init(0)'
   ENDIF
 #endif
   CALL testMPI%barrier()
@@ -136,7 +136,7 @@ PROGRAM testParallelEnv
   FLUSH(OUTPUT_UNIT)
   CALL testMPI%barrier()
   
-  CALL testMPI2%initialize(testMPI%comm)
+  CALL testMPI2%init(testMPI%comm)
   IF(testMPI%master) THEN
     testMPI2%nproc=7
     testMPI2%rank=0
@@ -248,7 +248,7 @@ PROGRAM testParallelEnv
   CALL eParEnv%setStopOnError(.FALSE.)
   CALL eParEnv%setQuietMode(.TRUE.)
   CALL testPE%initialize(MPI_COMM_WORLD,0,0,0,0)
-  !CALL testPE%initialize(MPI_COMM_WORLD,mysize,1,1,1)
+  !CALL testPE%init(MPI_COMM_WORLD,mysize,1,1,1)
   !CALL testPE%world%barrier()
   !WRITE(OUTPUT_UNIT,*) myrank,testPE%space%rank,testPE%energy%rank,testPE%angle%rank
   !FLUSH(OUTPUT_UNIT)
@@ -270,16 +270,16 @@ PROGRAM testParallelEnv
 !     testPE%energy%rank /= 0 .OR. .NOT.testPE%energy%master .OR. &
 !     .NOT.testPE%angle%isInit() .OR. testPE%angle%nproc /= 1 .OR. &
 !     testPE%angle%rank /= 0 .OR. .NOT.testPE%angle%master .OR. &
-!     testPE%ray%nthread /= 1 .OR. .NOT.testPE%ray%master) THEN
-!    WRITE(OUTPUT_UNIT,*) 'CALL testPE%initialize FAILED!',myrank
+!     testPE%ray%nproc /= 1 .OR. .NOT.testPE%ray%master) THEN
+!    WRITE(OUTPUT_UNIT,*) 'CALL testPE%init FAILED!',myrank
 !    CALL MPI_Abort(MPI_COMM_WORLD,666,mpierr)
 !  ELSE
 !    CALL testPE%world%barrier()
-!    WRITE(OUTPUT_UNIT,*) '  Passed: testPE%initialize(...)',myrank
+!    WRITE(OUTPUT_UNIT,*) '  Passed: testPE%init(...)',myrank
 !    FLUSH(OUTPUT_UNIT)
 !    CALL testPE%world%barrier()
 !  ENDIF
-!  CALL testPE2%initialize(MPI_COMM_WORLD,1,testPE%world%nproc,1,1)
+!  CALL testPE2%init(MPI_COMM_WORLD,1,testPE%world%nproc,1,1)
 !  IF(.NOT.testPE2%world%isInit() .OR. testPE2%world%rank /= myrank .OR. &
 !     testPE2%world%nproc == -1 .OR. .NOT.testPE2%energy%isInit() .OR. &
 !     testPE2%energy%nproc /= testPE2%world%nproc .OR. testPE2%energy%rank /= myrank &
@@ -287,16 +287,16 @@ PROGRAM testParallelEnv
 !     testPE2%space%rank /= 0 .OR. .NOT.testPE2%space%master .OR. &
 !     .NOT.testPE2%angle%isInit() .OR. testPE2%angle%nproc /= 1 .OR. &
 !     testPE2%angle%rank /= 0 .OR. .NOT.testPE2%angle%master .OR. &
-!     testPE2%ray%nthread /= 1 .OR. .NOT.testPE2%ray%master) THEN
-!    WRITE(OUTPUT_UNIT,*) 'CALL testPE2%initialize FAILED!',myrank
+!     testPE2%ray%nproc /= 1 .OR. .NOT.testPE2%ray%master) THEN
+!    WRITE(OUTPUT_UNIT,*) 'CALL testPE2%init FAILED!',myrank
 !    CALL MPI_Abort(MPI_COMM_WORLD,666,mpierr)
 !  ELSE
 !    CALL testPE2%world%barrier()
-!    WRITE(OUTPUT_UNIT,*) '  Passed: testPE2%initialize(...)',myrank
+!    WRITE(OUTPUT_UNIT,*) '  Passed: testPE2%init(...)',myrank
 !    FLUSH(OUTPUT_UNIT)
 !    CALL testPE2%world%barrier()
 !  ENDIF
-!  CALL testPE3%initialize(MPI_COMM_WORLD,1,1,testPE%world%nproc,1)
+!  CALL testPE3%init(MPI_COMM_WORLD,1,1,testPE%world%nproc,1)
 !  IF(.NOT.testPE3%world%isInit() .OR. testPE3%world%rank /= myrank .OR. &
 !     testPE3%world%nproc == -1 .OR. .NOT.testPE3%angle%isInit() .OR. &
 !     testPE3%angle%nproc /= testPE3%world%nproc .OR. testPE3%angle%rank /= myrank &
@@ -304,12 +304,12 @@ PROGRAM testParallelEnv
 !     testPE3%space%rank /= 0 .OR. .NOT.testPE3%space%master .OR. &
 !     .NOT.testPE3%energy%isInit() .OR. testPE3%energy%nproc /= 1 .OR. &
 !     testPE3%energy%rank /= 0 .OR. .NOT.testPE3%energy%master .OR. &
-!     testPE3%ray%nthread /= 1 .OR. .NOT.testPE3%ray%master) THEN
-!    WRITE(OUTPUT_UNIT,*) 'CALL testPE3%initialize FAILED!',myrank
+!     testPE3%ray%nproc /= 1 .OR. .NOT.testPE3%ray%master) THEN
+!    WRITE(OUTPUT_UNIT,*) 'CALL testPE3%init FAILED!',myrank
 !    CALL MPI_Abort(MPI_COMM_WORLD,666,mpierr)
 !  ELSE
 !    CALL testPE3%world%barrier()
-!    WRITE(OUTPUT_UNIT,*) '  Passed: testPE3%initialize(...)',myrank
+!    WRITE(OUTPUT_UNIT,*) '  Passed: testPE3%init(...)',myrank
 !    FLUSH(OUTPUT_UNIT)
 !    CALL testPE3%world%barrier()
 !  ENDIF
@@ -319,7 +319,7 @@ PROGRAM testParallelEnv
     WRITE(*,*) 'CALL testPE%isInit() world%isInit() FAILED!'
     STOP 666
   ENDIF
-  CALL testPE%world%initialize(0)
+  CALL testPE%world%init(0)
   IF(testPE%isInit()) THEN
     WRITE(*,*) 'CALL testPE%isInit() ASSOCIATED(space) FAILED!'
     STOP 666
@@ -329,7 +329,7 @@ PROGRAM testParallelEnv
     WRITE(*,*) 'CALL testPE%isInit() space%isInit() FAILED!'
     STOP 666
   ENDIF
-  CALL testPE%space%initialize(0)
+  CALL testPE%space%init(0)
   IF(testPE%isInit()) THEN
     WRITE(*,*) 'CALL testPE%isInit() ASSOCIATED(angle) FAILED!'
     STOP 666
@@ -339,7 +339,7 @@ PROGRAM testParallelEnv
     WRITE(*,*) 'CALL testPE%isInit() angle%isInit() FAILED!'
     STOP 666
   ENDIF
-  CALL testPE%angle%initialize(0)
+  CALL testPE%angle%init(0)
   IF(testPE%isInit()) THEN
     WRITE(*,*) 'CALL testPE%isInit() ASSOCIATED(energy) FAILED!'
     STOP 666
@@ -349,7 +349,7 @@ PROGRAM testParallelEnv
     WRITE(*,*) 'CALL testPE%isInit() energy%isInit() FAILED!'
     STOP 666
   ENDIF
-  CALL testPE%energy%initialize(0)
+  CALL testPE%energy%init(0)
   IF(testPE%isInit()) THEN
     WRITE(*,*) 'CALL testPE%isInit() ASSOCIATED(ray) FAILED!'
     STOP 666
@@ -359,7 +359,7 @@ PROGRAM testParallelEnv
     WRITE(*,*) 'CALL testPE%isInit() ray%isInit() FAILED!'
     STOP 666
   ENDIF
-  CALL testPE%ray%initialize()
+  CALL testPE%ray%init()
   IF(.NOT.testPE%isInit()) THEN
     WRITE(*,*) 'CALL testPE%isInit() FAILED!'
     STOP 666
@@ -379,12 +379,12 @@ PROGRAM testParallelEnv
      .NOT.testPE%space%master .OR. .NOT.testPE%angle%master .OR. &
      .NOT.testPE%angle%isInit() .OR. testPE%angle%comm /= 1 .OR. &
      testPE%angle%nproc /=1 .OR. testPE%angle%rank /= 0 .OR.  &
-     testPE%ray%nthread /= 1 .OR. testPE%ray%rank /= 0 .OR. &
+     testPE%ray%nproc /= 1 .OR. testPE%ray%rank /= 0 .OR. &
      .NOT.testPE%ray%master) THEN
-    WRITE(OUTPUT_UNIT,*) 'CALL testPE%initialize() FAILED!'
+    WRITE(OUTPUT_UNIT,*) 'CALL testPE%init() FAILED!'
     STOP 666
   ELSE
-    WRITE(OUTPUT_UNIT,*) '  Passed: CALL testPE%initialize()'
+    WRITE(OUTPUT_UNIT,*) '  Passed: CALL testPE%init()'
   ENDIF
 #endif
   CALL testPE%clear()
