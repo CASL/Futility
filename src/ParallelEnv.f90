@@ -67,27 +67,52 @@ MODULE ParallelEnv
   PUBLIC :: ParallelEnvType
   PUBLIC :: eParEnv
   
-  !> Type describes basic information for MPI environment
-  TYPE :: MPI_EnvType
+  TYPE,ABSTRACT :: ParEnvType
     !> Logical with initialization status
     LOGICAL(SBK),PRIVATE :: initstat=.FALSE.
-    !> Fortran integer ID for the communicator
-    INTEGER(SIK) :: comm=-1
+    !> Whether or not this processor is the master.
+    LOGICAL(SBK) :: master=.FALSE.
     !> The number of processors in the communicator
     INTEGER(SIK) :: nproc=-1
     !> The rank of the processor within the communicator
     INTEGER(SIK) :: rank=-1
-    !> Whether or not this processor is the master.
-    LOGICAL(SBK) :: master=.FALSE.
 !
 !List of type bound procedures (methods) for the object
     CONTAINS
-      !> @copybrief ParallelEnv::getInitStat_MPI_Env_type
-      !> @copydetails  ParallelEnv::getInitStat_MPI_Env_type
-      PROCEDURE,PASS :: isInit => getInitStat_MPI_Env_type
+      !> @copybrief ParallelEnv::getInitStat_ParEnvType
+      !> @copydetails  ParallelEnv::getInitStat_ParEnvType
+      PROCEDURE,PASS :: isInit => getInitStat_ParEnvType
+      !>
+      PROCEDURE(init_ParEnvType_Intfc),DEFERRED,PASS :: init
+      !>
+      PROCEDURE(clear_ParEnvType_Intfc),DEFERRED,PASS :: clear
+  ENDTYPE ParEnvType
+  
+  ABSTRACT INTERFACE
+    SUBROUTINE init_ParEnvType_Intfc(myPE,PEparam)
+      IMPORT :: SIK,ParEnvType
+      CLASS(ParEnvType),INTENT(INOUT) :: myPE
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: PEparam
+    ENDSUBROUTINE init_ParEnvType_Intfc
+  ENDINTERFACE
+    
+  ABSTRACT INTERFACE
+    SUBROUTINE clear_ParEnvType_Intfc(myPE)
+      IMPORT :: ParEnvType
+      CLASS(ParEnvType),INTENT(INOUT) :: myPE
+    ENDSUBROUTINE clear_ParEnvType_Intfc
+  ENDINTERFACE
+    
+  !> Type describes basic information for MPI environment
+  TYPE,EXTENDS(ParEnvType) :: MPI_EnvType
+    !> Fortran integer ID for the communicator
+    INTEGER(SIK) :: comm=-1
+!
+!List of type bound procedures (methods) for the object
+    CONTAINS
       !> @copybrief ParallelEnv::init_MPI_Env_type
       !> @copydetails  ParallelEnv::init_MPI_Env_type
-      PROCEDURE,PASS :: initialize => init_MPI_Env_type
+      PROCEDURE,PASS :: init => init_MPI_Env_type
       !> @copybrief ParallelEnv::partition_indeces_MPI_Env_Type
       !> @copydetails  ParallelEnv::partition_indeces_MPI_Env_Type
       PROCEDURE,PASS :: partition => partition_indeces_MPI_Env_Type
@@ -109,24 +134,13 @@ MODULE ParallelEnv
   ENDTYPE MPI_EnvType
 
   !> Type describes basic information about OpenMP environment
-  TYPE :: OMP_EnvType
-    !> Logical with initialization status
-    LOGICAL(SBK),PRIVATE :: initstat=.FALSE.
-    !> The number of threads in the OpenMP section
-    INTEGER(SIK) :: nthread=-1
-    !> The rank of the thread
-    INTEGER(SIK) :: rank=-1
-    !> Whether or not the the thread is the master
-    LOGICAL(SBK) :: master=.FALSE.
+  TYPE,EXTENDS(ParEnvType) :: OMP_EnvType
 !
 !List of type bound procedures (methods) for the object
     CONTAINS
-      !> @copybrief ParallelEnv::getInitStat_OMP_Env_type
-      !> @copydetails  ParallelEnv::getInitStat_OMP_Env_type
-      PROCEDURE,PASS :: isInit => getInitStat_OMP_Env_type
       !> @copybrief ParallelEnv::init_OMP_Env_type
       !> @copydetails  ParallelEnv::init_OMP_Env_type
-      PROCEDURE,PASS :: initialize => init_OMP_Env_type
+      PROCEDURE,PASS :: init => init_OMP_Env_type
       !> @copybrief ParallelEnv::clear_OMP_Env_type
       !> @copydetails  ParallelEnv::clear_OMP_Env_type
       PROCEDURE,PASS :: clear => clear_OMP_Env_type
@@ -173,6 +187,14 @@ MODULE ParallelEnv
 !
 !===============================================================================      
   CONTAINS
+!
+!-------------------------------------------------------------------------------
+!> @brief Function returns initialization status of a ParEnvType @e myPE.
+    PURE FUNCTION getInitStat_ParEnvType(myPE) RESULT(bool)
+      CLASS(ParEnvType),INTENT(IN) :: myPE
+      LOGICAL(SBK) :: bool
+      bool=myPE%initstat
+    ENDFUNCTION getInitStat_ParEnvType
 !
 !-------------------------------------------------------------------------------
 !> @brief Partitions a continuous range of indeces by attempting to evenly 
@@ -226,20 +248,12 @@ MODULE ParallelEnv
     ENDSUBROUTINE partition_indeces_MPI_Env_Type
 !
 !-------------------------------------------------------------------------------
-!> @brief Function returns initialization status of an MPI_EnvType @e myPE.
-    PURE FUNCTION getInitStat_MPI_Env_type(myPE) RESULT(bool)
-      CLASS(MPI_EnvType),INTENT(IN) :: myPE
-      LOGICAL(SBK) :: bool
-      bool=myPE%initstat
-    ENDFUNCTION getInitStat_MPI_Env_type
-!
-!-------------------------------------------------------------------------------
 !> @brief Initializes an MPI environment type object.
-    SUBROUTINE init_MPI_Env_type(myPE,icomm)
+    SUBROUTINE init_MPI_Env_type(myPE,PEparam)
       CHARACTER(LEN=*),PARAMETER :: myName='init_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
-      INTEGER(SIK),INTENT(IN) :: icomm
-      INTEGER(SIK) :: isinit
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: PEparam
+      INTEGER(SIK) :: isinit,icomm
       LOGICAL(SBK) :: localalloc
       
       IF(.NOT.myPE%initstat) THEN
@@ -248,6 +262,9 @@ MODULE ParallelEnv
           ALLOCATE(eParEnv)
           localalloc=.TRUE.
         ENDIF
+        
+        icomm=PE_COMM_SELF
+        IF(PRESENT(PEparam)) icomm=PEparam
         
 #ifdef HAVE_MPI
         CALL MPI_Initialized(isinit,mpierr)
@@ -419,17 +436,17 @@ MODULE ParallelEnv
 !
 !-------------------------------------------------------------------------------
 !> @brief Initializes an OpenMP environment type object.
-    SUBROUTINE init_OMP_Env_type(myPE,uthreads)
+    SUBROUTINE init_OMP_Env_type(myPE,PEparam)
       CLASS(OMP_EnvType),INTENT(INOUT) :: myPE
-      INTEGER(SIK),INTENT(IN),OPTIONAL :: uthreads
-      myPE%nthread=1
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: PEparam
+      myPE%nproc=1
       myPE%rank=0
       myPE%master=.TRUE.
-!$    IF(PRESENT(uthreads)) THEN
-!$      IF(uthreads > omp_get_max_threads()) THEN
-!$        myPE%nthread=omp_get_max_threads()
+!$    IF(PRESENT(PEparam)) THEN
+!$      IF(PEparam > omp_get_max_threads()) THEN
+!$        myPE%nproc=omp_get_max_threads()
 !$      ELSE
-!$        myPE%nthread=MAX(1,uthreads)
+!$        myPE%nproc=MAX(1,PEparam)
 !$      ENDIF
 !$    ENDIF
       myPE%initStat=.TRUE.
@@ -439,7 +456,7 @@ MODULE ParallelEnv
 !> Clears the OpenMP environment type object
     SUBROUTINE clear_OMP_Env_type(myPE)
       CLASS(OMP_EnvType),INTENT(INOUT) :: myPE
-      myPE%nthread=-1
+      myPE%nproc=-1
       myPE%rank=-1
       myPE%master=.FALSE.
       myPE%initStat=.FALSE.
@@ -466,7 +483,7 @@ MODULE ParallelEnv
         localalloc=.TRUE.
       ENDIF
       nerror=eParEnv%getCounter(EXCEPTION_ERROR)
-      CALL myPE%world%initialize(commWorld)
+      CALL myPE%world%init(commWorld)
       
 
       IF(nspace < 1) CALL eParEnv%raiseError(modName//'::'//myName// &
@@ -550,11 +567,11 @@ MODULE ParallelEnv
               'virtual topology, mpierr='//TRIM(smpierr)//'!')
         ENDIF
 #else
-        CALL myPE%world%initialize(commWorld)
+        CALL myPE%world%init(commWorld)
         ALLOCATE(myPE%space); myPE%space=myPE%world
         ALLOCATE(myPE%angle); myPE%angle=myPE%world
         ALLOCATE(myPE%energy); myPE%energy=myPE%world
-        ALLOCATE(myPE%ray); CALL myPE%ray%initialize(nthreads)
+        ALLOCATE(myPE%ray); CALL myPE%ray%init(nthreads)
 #endif
       ENDIF
       

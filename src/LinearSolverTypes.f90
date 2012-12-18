@@ -295,8 +295,8 @@ MODULE LinearSolverTypes
       CALL validParams%clear()
       
       !Initialize parallel environments based on input
-      IF(MPI_Comm_ID >= 0) CALL solver%MPIparallelEnv%initialize(MPI_Comm_ID)
-      IF(numberOMP > 0) CALL solver%OMPparallelEnv%initialize(numberOMP)
+      IF(MPI_Comm_ID >= 0) CALL solver%MPIparallelEnv%init(MPI_Comm_ID)
+      IF(numberOMP > 0) CALL solver%OMPparallelEnv%init(numberOMP)
       
       IF(.NOT.solver%isInit) THEN
          

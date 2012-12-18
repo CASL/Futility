@@ -111,7 +111,7 @@ PROGRAM testStochasticSampler
 
   ! Set up parallel environment for initialization test
   !   Initialize null MPI env then sets it to appear as 100 processors and of rank 20
-  CALL MPIEnv%initialize(PE_COMM_SELF)
+  CALL MPIEnv%init(PE_COMM_SELF)
   MPIEnv%nproc=100
   MPIEnv%rank=22
 
@@ -120,13 +120,13 @@ PROGRAM testStochasticSampler
 
   ! Set up parallel environment for initialization test
   !   Initialize null MPI env then sets it to appear as 10 processors and of rank 2
-  CALL MPIEnv%initialize(PE_COMM_SELF)
+  CALL MPIEnv%init(PE_COMM_SELF)
   MPIEnv%nproc=10
   MPIEnv%rank=2
   ! Set up parallel environment for initialization test
   !   Initialize null MPI env then sets it to appear as 10 processors and of rank 2
-  CALL OMPEnv%initialize(1)
-  OMPEnv%nthread=10
+  CALL OMPEnv%init(1)
+  OMPEnv%nproc=10
   OMPEnv%rank=2
   CALL myRNG3%init(3,MPIparallelEnv=MPIEnv,OMPparallelEnv=OMPEnv)
   WRITE(*,*) "RNG 3 MPI Skipping: ", myRNG3%rng()

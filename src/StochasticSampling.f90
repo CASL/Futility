@@ -240,7 +240,7 @@ CONTAINS
       IF(PRESENT(OMPparallelEnv)) THEN
         IF (OMPparallelEnv%isInit()) THEN
           omprank=OMPparallelEnv%rank
-          nthread=OMPparallelEnv%nthread
+          nthread=OMPparallelEnv%nproc
         ELSE
           CALL eStochasticSampler%raiseWarning(modName//'::'//myName// &
             ' - OMP Env is not initialized, and will not be used.')
