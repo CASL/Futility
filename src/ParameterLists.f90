@@ -5351,10 +5351,10 @@ MODULE ParameterLists
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
       IF(LEN_TRIM(thisParam%description) == 0) THEN
         WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'='//thisParam%val(1)
+          thisParam%dataType//' :: '//thisParam%name//'='//CHAR(thisParam%val(1))
       ELSE
         WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'='//thisParam%val(1)// &
+          thisParam%dataType//' :: '//thisParam%name//'='//CHAR(thisParam%val(1))// &
             ' !'//thisParam%description
       ENDIF
       j=j+LEN(thisParam%dataType)+LEN(thisParam%name)
@@ -6936,11 +6936,11 @@ MODULE ParameterLists
       DO k=1,SIZE(thisParam%val,2)
         !DO l=1,SIZE(thisParam%val,1)
         !  WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,a)') &
-        !    TRIM(CHAR(thisParam%val(l,k))))
+        !    TRIM(CHAR(thisParam%val(l,k)) ) )
         !ENDDO
         !Doesn't work sadly... syntax error in the format for some reason.
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,'//TRIM(fmt3)//'(ax))') &
-           (TRIM(CHAR(thisParam%val(l,k))),l=1,SIZE(thisParam%val,1) )
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,'//TRIM(fmt3)//'a)') &
+           (TRIM(CHAR(thisParam%val(l,k)))//' ',l=1,SIZE(thisParam%val,1) )
       ENDDO
       
     ENDSUBROUTINE edit_ParamType_STR_a2
