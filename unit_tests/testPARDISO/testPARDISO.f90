@@ -53,6 +53,7 @@ PROGRAM testPARDISO
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testPARDISOInterface()
+#ifdef HAVE_PARDISO
     TYPE(SparseMatrixType) :: thisMatrix
     TYPE(RealVectorType) :: thisx,thisb
     TYPE(ParamType) :: pList
@@ -123,6 +124,7 @@ PROGRAM testPARDISO
 !      
 !    WRITE(*,*) thisx%b
 !
+#endif
     ENDSUBROUTINE testPARDISOInterface
 
 ENDPROGRAM
