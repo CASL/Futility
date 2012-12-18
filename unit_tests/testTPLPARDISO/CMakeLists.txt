@@ -11,4 +11,4 @@
 #
 ################################################################################
 INCLUDE(MPACT_CreateUnitTest)
-MPACT_CreateUnitTest(testTPLS)
+MPACT_CreateUnitTest(testTPLPARDISO)

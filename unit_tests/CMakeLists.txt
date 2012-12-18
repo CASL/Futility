@@ -35,7 +35,7 @@ SET(UNIT_TEST_NAMES
     testMatrixTypes
     testVectorTypes
     testLinearSolver
-#    testTPLS
+    testTPLPARDISO
 )
 FOREACH(test ${UNIT_TEST_NAMES})
     ADD_SUBDIRECTORY(${test})

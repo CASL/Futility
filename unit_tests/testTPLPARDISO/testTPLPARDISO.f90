@@ -18,10 +18,12 @@
 #ifdef HAVE_PARDISO
 include 'mkl_pardiso.f90'
 #endif
-PROGRAM testTPLS
+PROGRAM testTPLPARDISO
   
+#ifdef HAVE_PARDISO
   USE MKL_PARDISO
-  
+#endif
+
   IMPLICIT NONE
   
 ! define precision kinds
@@ -50,8 +52,10 @@ PROGRAM testTPLS
   WRITE(*,*) '==================================================='
 
 #ifdef HAVE_PARDISO
-  CALL testPARDISO_PARDISOINIT()
-  CALL testPARDISO_PARDISO()
+  CALL testPARDISOINIT()
+  CALL testPARDISO()
+#else
+  WRITE(*,*) ' PARDISO not enabled!'
 #endif
   
   WRITE(*,*) '==================================================='
@@ -63,7 +67,7 @@ PROGRAM testTPLS
   CONTAINS
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE testPARDISO_PARDISOINIT()
+    SUBROUTINE testPARDISOINIT()
 #ifdef HAVE_PARDISO
     INTEGER(SIK) :: i
     
@@ -79,13 +83,13 @@ PROGRAM testTPLS
 
     CALL PARDISOINIT(pt,mtype,iparm)
     
-    WRITE(*,*) '  Passed: CALL PARDISO_PARDISOINIT()'
+    WRITE(*,*) '  Passed: CALL PARDISOINIT()'
 #endif
-    ENDSUBROUTINE testPARDISO_PARDISOINIT
+    ENDSUBROUTINE testPARDISOINIT
     
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE testPARDISO_PARDISO()
+    SUBROUTINE testPARDISO()
 #ifdef HAVE_PARDISO
     INTEGER(SIK) :: i
     
@@ -171,7 +175,7 @@ PROGRAM testTPLS
     perm=1
      
     CALL PARDISO(pt,maxfct,mnum,mtype,phase,n,a,ia,ja,perm,nrhs,iparm,msglvl,b,x,error)
-    IF (error /= 0) WRITE(*,*) 'CALL PARDISO_PARDISO() -solve FAILED!'
+    IF (error /= 0) WRITE(*,*) 'CALL PARDISO() -solve FAILED!'
       
     ! test solution
     !WRITE(*,*) x
@@ -179,11 +183,11 @@ PROGRAM testTPLS
     ! terminate and release memory
     phase=-1
     CALL PARDISO(pt,maxfct,mnum,mtype,phase,n,a,ia,ja,perm,nrhs,iparm,msglvl,b,x,error)
-    IF (error /= 0) WRITE(*,*) 'CALL PARDISO_PARDISO() -release_memory FAILED!'
+    IF (error /= 0) WRITE(*,*) 'CALL PARDISO() -release_memory FAILED!'
     
-    WRITE(*,*) '  Passed: CALL PARDISO_PARDISO()'
+    WRITE(*,*) '  Passed: CALL PARDISO()'
        
 #endif
-    ENDSUBROUTINE testPARDISO_PARDISO
+    ENDSUBROUTINE testPARDISO
 
 ENDPROGRAM
