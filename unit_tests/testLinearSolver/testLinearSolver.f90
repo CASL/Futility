@@ -1287,6 +1287,115 @@ CONTAINS
         WRITE(*,*) 'CALL Direct%solve() -LU method FAILED!'
         STOP 666
       ENDIF
+      CALL thisLS%clear()
+      
+#ifdef HAVE_PARDISO
+      ! test with GE (doesn't affect actual solve)
+      ! initialize linear system
+      CALL pList%clear()
+      CALL pList%add('LinearSolverType->TPLType',PARDISO_MKL)
+      CALL pList%add('LinearSolverType->solverMethod',GE)
+      CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
+      CALL pList%add('LinearSolverType->numberOMP',1_SNK)
+      CALL pList%add('LinearSolverType->timerName','testTimer')
+      CALL pList%add('LinearSolverType->A->MatrixType->matType',SPARSE)
+      CALL pList%add('LinearSolverType->A->MatrixType->n',3_SNK)
+      CALL pList%add('LinearSolverType->A->MatrixType->nnz',8_SNK)
+      CALL pList%add('LinearSolverType->x->VectorType->n',3_SNK)
+      CALL pList%add('LinearSolverType->b->VectorType->n',3_SNK)
+      CALL pList%validate(pList,optListLS)
+      CALL thisLS%init(pList)
+      
+      !A=[1 0 1 ]  b=[4]    x=[1]
+      !  [2 5 -2]    [6]      [2]
+      !  [3 6 9 ]    [42]     [3]
+      SELECTTYPE(A => thisLS%A); TYPE IS(SparseMatrixType)
+        CALL A%setShape(1,1,1._SRK)
+        CALL A%setShape(1,3,1._SRK)
+        CALL A%setShape(2,1,2._SRK)
+        CALL A%setShape(2,2,5._SRK)
+        CALL A%setShape(2,3,-2._SRK)
+        CALL A%setShape(3,1,3._SRK)
+        CALL A%setShape(3,2,6._SRK)
+        CALL A%setShape(3,3,9._SRK)
+      ENDSELECT
+
+      SELECTTYPE(b => thisLS%b); TYPE IS(RealVectorType)
+        CALL b%set(1, 4._SRK)
+        CALL b%set(2, 6._SRK)
+        CALL b%set(3,42._SRK)
+      ENDSELECT
+
+      CALL thisLS%solve()
+      
+      ! check X
+      SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
+        IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+        ALLOCATE(dummyvec(X%n))
+        CALL X%get(dummyvec)
+        IF(.NOT. (SOFTEQ(dummyvec(1),1._SRK,1E-14_SRK)  &
+           .AND.  SOFTEQ(dummyvec(2),2._SRK,1E-14_SRK)  &
+           .AND.  SOFTEQ(dummyvec(3),3._SRK,1E-14_SRK)) &
+           .AND. thisLS%info == 0) THEN
+          WRITE(*,*) 'CALL PARDISODirect%solve() FAILED!'
+          STOP 666
+        ENDIF
+      ENDSELECT
+      CALL thisLS%clear()
+      
+      ! test with LU (doesn't affect actual solve)
+      ! initialize linear system
+      CALL pList%clear()
+      CALL pList%add('LinearSolverType->TPLType',PARDISO_MKL)
+      CALL pList%add('LinearSolverType->solverMethod',LU)
+      CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
+      CALL pList%add('LinearSolverType->numberOMP',1_SNK)
+      CALL pList%add('LinearSolverType->timerName','testTimer')
+      CALL pList%add('LinearSolverType->A->MatrixType->matType',SPARSE)
+      CALL pList%add('LinearSolverType->A->MatrixType->n',3_SNK)
+      CALL pList%add('LinearSolverType->A->MatrixType->nnz',8_SNK)
+      CALL pList%add('LinearSolverType->x->VectorType->n',3_SNK)
+      CALL pList%add('LinearSolverType->b->VectorType->n',3_SNK)
+      CALL pList%validate(pList,optListLS)
+      CALL thisLS%init(pList)
+      
+      !A=[1 0 1 ]  b=[4]    x=[1]
+      !  [2 5 -2]    [6]      [2]
+      !  [3 6 9 ]    [42]     [3]
+      SELECTTYPE(A => thisLS%A); TYPE IS(SparseMatrixType)
+        CALL A%setShape(1,1,1._SRK)
+        CALL A%setShape(1,3,1._SRK)
+        CALL A%setShape(2,1,2._SRK)
+        CALL A%setShape(2,2,5._SRK)
+        CALL A%setShape(2,3,-2._SRK)
+        CALL A%setShape(3,1,3._SRK)
+        CALL A%setShape(3,2,6._SRK)
+        CALL A%setShape(3,3,9._SRK)
+      ENDSELECT
+
+      SELECTTYPE(b => thisLS%b); TYPE IS(RealVectorType)
+        CALL b%set(1, 4._SRK)
+        CALL b%set(2, 6._SRK)
+        CALL b%set(3,42._SRK)
+      ENDSELECT
+
+      CALL thisLS%solve()
+      
+      ! check X
+      SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
+        IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+        ALLOCATE(dummyvec(X%n))
+        CALL X%get(dummyvec)
+        IF(.NOT. (SOFTEQ(dummyvec(1),1._SRK,1E-14_SRK)  &
+           .AND.  SOFTEQ(dummyvec(2),2._SRK,1E-14_SRK)  &
+           .AND.  SOFTEQ(dummyvec(3),3._SRK,1E-14_SRK)) &
+           .AND. thisLS%info == 0) THEN
+          WRITE(*,*) 'CALL PARDISODirect%solve() FAILED!'
+          STOP 666
+        ENDIF
+      ENDSELECT
+#endif
+      
       WRITE(*,*) '  Passed: CALL Direct%solve()'
     !end test of direct solver
       CALL thisLS%clear()

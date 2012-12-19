@@ -65,6 +65,9 @@
 !>   @date 03/28/2012
 !>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
+#ifdef HAVE_PARDISO
+include 'mkl_pardiso.f90'
+#endif
 MODULE LinearSolverTypes
 
   USE IntrType
@@ -76,6 +79,9 @@ MODULE LinearSolverTypes
   USE ParallelEnv
   USE VectorTypes
   USE MatrixTypes
+#ifdef HAVE_PARDISO
+  USE MKL_PARDISO
+#endif
   IMPLICIT NONE
   
 #ifdef HAVE_PETSC
@@ -100,7 +106,7 @@ MODULE LinearSolverTypes
   !> Number of iterative solver solution methodologies - for error checking
   INTEGER(SIK),PARAMETER :: MAX_IT_SOLVER_METHODS=3
   !> set enumeration scheme for TPLs
-  INTEGER(SIK),PARAMETER,PUBLIC :: PETSC=0,TRILINOS=1,MKL=2,NATIVE=3
+  INTEGER(SIK),PARAMETER,PUBLIC :: PETSC=0,TRILINOS=1,PARDISO_MKL=2,MKL=3,NATIVE=4
   !> set enumeration scheme for iterative solver methods
   INTEGER(SIK),PARAMETER,PUBLIC :: BICGSTAB=1,CGNR=2,GMRES=3
   !> set enumeration scheme for direct solver methods
@@ -166,6 +172,13 @@ MODULE LinearSolverTypes
   TYPE,EXTENDS(LinearSolverType_Base) :: LinearSolverType_Direct
     !> Storage of row exchanges
     INTEGER(SIK),ALLOCATABLE :: IPIV(:)
+#ifdef HAVE_PARDISO
+    TYPE(MKL_PARDISO_HANDLE),ALLOCATABLE:: pt(:)
+    INTEGER(SIK),ALLOCATABLE :: iparm(:)
+    INTEGER(SIK),ALLOCATABLE :: perm(:)
+    INTEGER(SIK) :: phase
+    INTEGER(SIK) :: mtype
+#endif
 !
 !List of Type Bound Procedures
     CONTAINS 
@@ -250,7 +263,7 @@ MODULE LinearSolverTypes
       CLASS(ParamType),POINTER :: pListPtr
       TYPE(ParamType) :: validParams,matPList,vecxPList,vecbPList
       ! local variables
-      INTEGER(SIK) :: matType,TPLType
+      INTEGER(SIK) :: i,matType,TPLType
       INTEGER(SIK) :: solverMethod
       INTEGER(SIK) :: MPI_Comm_ID,numberOMP
       CHARACTER(LEN=256) :: timerName
@@ -312,10 +325,26 @@ MODULE LinearSolverTypes
         ENDIF
         IF(TPLType == TRILINOS) THEN ! Trilinos
 #ifndef HAVE_TRILINOS
+          TPLType=PARDISO_MKL
+          CALL eLinearSolverType%raiseWarning(modName//'::'// &
+                    myName//'- TRILINOS is not enabled, PARDISO will be '// &
+                      'used instead.')
+#endif
+        ENDIF
+        IF(TPLType == PARDISO_MKL) THEN ! PARDISO
+#ifndef HAVE_PARDISO
           TPLType=MKL
           CALL eLinearSolverType%raiseWarning(modName//'::'// &
-                    myName//'- TRILINOS is not enabled, MKL will be '// &
+                    myName//'- PARDISO is not enabled, native solvers will be '// &
                       'used instead.')
+#else
+          SELECTTYPE(solver)
+            TYPE IS(LinearSolverType_Iterative)
+              TPLType=MKL
+              CALL eLinearSolverType%raiseWarning(modName//'::'// &
+                        myName//'- PARDISO is a not an iterative solver, MKL '// &
+                          'will be used instead.')
+           ENDSELECT
 #endif
         ENDIF
         IF(TPLType == MKL) THEN ! MKL
@@ -329,16 +358,27 @@ MODULE LinearSolverTypes
 
         ! allocate and initialize matrix (A)
         IF(.NOT.ALLOCATED(solver%A)) THEN
-          IF(TPLType==PETSC) THEN ! PETSc solver requires special PETSc type
+          IF(TPLType == PETSC) THEN ! PETSc solver requires special PETSc type
             ALLOCATE(PETScMatrixType :: solver%A)
+          ELSEIF(TPLType == PARDISO_MKL) THEN ! PARDISO only uses sparse matrices
+            ALLOCATE(SparseMatrixType :: solver%A)
+#ifdef HAVE_PARDISO
+            SELECTTYPE(solver); TYPE IS(LinearSolverType_Direct)
+              solver%mtype=11 ! real and nonsymmetric
+            ENDSELECT
+#endif
+            IF(matType /= SPARSE) THEN
+              CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
+            '  - MatrixType A not allocated!')
+            ENDIF
           ELSE ! all other TPLs use the standard matrix types
-            IF(matType==SPARSE) THEN
+            IF(matType == SPARSE) THEN
               ALLOCATE(SparseMatrixType :: solver%A)
-            ELSEIF(matType==TRIDIAG) THEN  
+            ELSEIF(matType == TRIDIAG) THEN  
               ALLOCATE(TriDiagMatrixType :: solver%A)
-            ELSEIF(matType==DENSESQUARE) THEN
+            ELSEIF(matType == DENSESQUARE) THEN
               ALLOCATE(DenseSquareMatrixType :: solver%A)  
-            ELSEIF(matType==DENSERECT) THEN
+            ELSEIF(matType == DENSERECT) THEN
               ALLOCATE(DenseRectMatrixType :: solver%A)
             ENDIF
           ENDIF
@@ -383,6 +423,26 @@ MODULE LinearSolverTypes
               CALL eLinearSolverType%raiseError('Incorrect call to '// &
                 modName//'::'//myName//' - invalid value of solverMethod')
             ENDIF
+#ifdef HAVE_PARDISO
+            IF(solver%TPLtype == PARDISO_MKL) THEN
+              ALLOCATE(solver%iparm(64))
+              ALLOCATE(solver%pt(64))
+              DO i=1,64
+                solver%iparm(i) = 0
+                solver%pt(i)%dummy=0
+              ENDDO 
+              solver%iparm(3)=numberOMP !number of threads
+              
+              ! allocate and initiailize solver%perm
+              ALLOCATE(solver%perm(solver%A%n))
+              solver%perm=1
+              
+              ! initialize phase
+              solver%phase=13
+              
+              CALL PARDISOINIT(solver%pt,solver%mtype,solver%iparm)
+            ENDIF
+#endif
         
           TYPE IS(LinearSolverType_Iterative) ! iterative solver
             IF((solverMethod > 0) .AND. &
@@ -443,6 +503,12 @@ MODULE LinearSolverTypes
       solver%info=0
       CALL solver%MPIparallelEnv%clear()
       CALL solver%OMPparallelEnv%clear()
+#ifdef HAVE_PARDISO
+      IF(ALLOCATED(solver%perm))  DEALLOCATE(solver%perm)
+      IF(ALLOCATED(solver%iparm)) DEALLOCATE(solver%iparm)
+      IF(ALLOCATED(solver%pt))    DEALLOCATE(solver%pt)
+      solver%phase=-1 
+#endif      
       IF(ALLOCATED(solver%A)) THEN
         CALL solver%A%clear()
         DEALLOCATE(solver%A)
@@ -542,6 +608,9 @@ MODULE LinearSolverTypes
       CHARACTER(LEN=*),PARAMETER :: myName='solve_LinearSolverType_Direct'
       CLASS(LinearSolverType_Direct),INTENT(INOUT) :: solver
       LOGICAL(SBK) :: localalloc
+#ifdef HAVE_PARDISO
+      INTEGER(SIK) :: msglvl=0,nrhs=1,maxfct=1,mnum=1,error=0
+#endif
       
       localalloc=.FALSE.
       IF(.NOT.ASSOCIATED(eLinearSolverType)) THEN
@@ -564,13 +633,31 @@ MODULE LinearSolverTypes
                 CALL solvePLU_TriDiag(solver)
 
               CLASS DEFAULT
-                !Should not use direct method, go to CGNR
-                CALL solveCGNR(solver)
-                IF(solver%info == 0) &
-                  CALL eLinearSolverType%raiseWarning(modName//'::'// &
-                    myName//'- GE method for dense rectangular system '// &
-                      'and sparse system is not implemented, CGNR method '// &
-                        'is used instead.')
+                IF(solver%TPLtype==PARDISO_MKL) THEN
+#ifdef HAVE_PARDISO
+                  SELECTTYPE(A => solver%A); TYPE IS(SparseMatrixType)
+                    SELECTTYPE(x => solver%x); TYPE IS(RealVectorType)
+                      SELECTTYPE(b => solver%b); TYPE IS(RealVectorType)
+                        CALL PARDISO(solver%pt,maxfct,mnum,solver%mtype, &
+                          solver%phase,A%n,A%a,A%ia,A%ja,solver%perm,nrhs, &
+                            solver%iparm,msglvl,b%b,x%b,error)
+                         solver%phase=23
+                      ENDSELECT
+                    ENDSELECT
+                  ENDSELECT
+#else
+                  CALL eLinearSolverType%raiseError('Incorrect call to '// &
+                    modName//'::'//myName//' - PARDISO not enabled.')
+#endif
+                ELSE
+                  !Should not use direct method, go to CGNR
+                  CALL solveCGNR(solver)
+                  IF(solver%info == 0) &
+                    CALL eLinearSolverType%raiseWarning(modName//'::'// &
+                      myName//'- GE method for dense rectangular system '// &
+                        'and sparse system is not implemented, CGNR method '// &
+                          'is used instead.')
+                ENDIF
             ENDSELECT
           CASE(LU)
             SELECTTYPE(A => solver%A)
@@ -585,13 +672,31 @@ MODULE LinearSolverTypes
                 CALL solvePLU_TriDiag(solver)
 
               CLASS DEFAULT
-                !Should not use direct method, go to CGNR
-                CALL solveCGNR(solver)
-                IF(solver%info == 0) &
-                  CALL eLinearSolverType%raiseWarning(modName//'::'// &
-                    myName//'- LU method for dense rectangular system '// &
-                      'and sparse system is not implemented, CGNR method '// &
-                        'is used instead.')
+                IF(solver%TPLtype==PARDISO_MKL) THEN
+#ifdef HAVE_PARDISO
+                  SELECTTYPE(A => solver%A); TYPE IS(SparseMatrixType)
+                    SELECTTYPE(x => solver%x); TYPE IS(RealVectorType)
+                      SELECTTYPE(b => solver%b); TYPE IS(RealVectorType)
+                        CALL PARDISO(solver%pt,maxfct,mnum,solver%mtype, &
+                          solver%phase,A%n,A%a,A%ia,A%ja,solver%perm,nrhs, &
+                            solver%iparm,msglvl,b%b,x%b,error)
+                         solver%phase=23
+                      ENDSELECT
+                    ENDSELECT
+                  ENDSELECT
+#else
+                  CALL eLinearSolverType%raiseError('Incorrect call to '// &
+                    modName//'::'//myName//' - PARDISO not enabled.')
+#endif
+                ELSE
+                  !Should not use direct method, go to CGNR
+                  CALL solveCGNR(solver)
+                  IF(solver%info == 0) &
+                    CALL eLinearSolverType%raiseWarning(modName//'::'// &
+                      myName//'- LU method for dense rectangular system '// &
+                        'and sparse system is not implemented, CGNR method '// &
+                          'is used instead.')
+                ENDIF
             ENDSELECT
         ENDSELECT
         CALL solver%SolveTime%toc()
