@@ -38,6 +38,7 @@ MODULE ParallelEnv
   USE IntrType
   USE ExceptionHandler
   USE BLAS
+  USE Allocs
 !$ USE OMP_LIB
 
   IMPLICIT NONE
@@ -217,7 +218,8 @@ MODULE ParallelEnv
 !> then the remainder of indeces will be assigned to the processes with ranks
 !> 0-nremainder
 !>
-    PURE SUBROUTINE partition_indeces_ParEnvType(myPE,n1,n2,ipart,istt,istp)
+    SUBROUTINE partition_indeces_ParEnvType(myPE,n1,n2,ipart,istt,istp)
+      CHARACTER(LEN=*),PARAMETER :: myName='partition_greedy_ParEnvType'
       CLASS(ParEnvType),INTENT(IN) :: myPE
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n1
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n2
@@ -268,17 +270,105 @@ MODULE ParallelEnv
 !> then the remainder of indeces will be assigned to the processes with ranks
 !> 0-nremainder
 !>
-    PURE SUBROUTINE partition_greedy_ParEnvType(myPE,iwgt,n1,n2,ipart,istt,istp)
+    SUBROUTINE partition_greedy_ParEnvType(myPE,iwgt,n1,n2,ipart,idxmap)
+      CHARACTER(LEN=*),PARAMETER :: myName='partition_greedy_ParEnvType'
       CLASS(ParEnvType),INTENT(IN) :: myPE
       INTEGER(SIK),INTENT(IN) :: iwgt(:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n1
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n2
       INTEGER(SIK),INTENT(IN),OPTIONAL :: ipart
-      INTEGER(SIK),INTENT(OUT) :: istt
-      INTEGER(SIK),INTENT(OUT) :: istp
+      INTEGER(SIK),ALLOCATABLE,INTENT(INOUT) :: idxmap(:)
       
-      istt=1
-      istp=0
+      LOGICAL(SBK) :: localalloc
+      INTEGER(SIK) :: i,j,k,n,iwt,idx,iproc,nidx,pid
+      INTEGER(SIK),ALLOCATABLE :: wsum(:),sorted_idx(:,:),tmpwt(:),nwtproc(:)
+      
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eParEnv)) THEN
+        ALLOCATE(eParEnv)
+        localalloc=.TRUE.
+      ENDIF
+      
+      IF(PRESENT(n1)) THEN
+        i=n1
+      ELSE
+        i=LBOUND(iwgt,DIM=1)
+      ENDIF
+      IF(PRESENT(n2)) THEN
+        j=n2
+      ELSE
+        j=UBOUND(iwgt,DIM=1)
+      ENDIF
+      n=SIZE(iwgt)
+      
+      IF(myPE%initstat) THEN
+        IF(PRESENT(ipart)) THEN
+          pid=ipart
+        ELSE
+          pid=myPE%rank
+        ENDIF
+        IF(j >= i .AND. LBOUND(iwgt,DIM=1) <= i .AND. j <= UBOUND(iwgt,DIM=1)) THEN
+          IF(0 <= pid .AND. pid < myPE%nproc .AND. myPE%nproc <= n) THEN
+            IF(ALLOCATED(idxmap)) DEALLOCATE(idxmap)
+            
+            CALL dmallocA(wsum,myPE%nproc)
+            CALL dmallocA(nwtproc,myPE%nproc)
+            CALL dmallocA(sorted_idx,myPE%nproc,n)
+            CALL dmallocA(tmpwt,n)
+            tmpwt=iwgt
+            wsum=0
+            nwtproc=0
+            sorted_idx=0
+            
+            !Assign the weights for each index into the "bin" (e.g. processor)
+            !with the current lowest sum
+            DO k=i,j
+              !Value and location of maximum weight
+              idx=MAXLOC(tmpwt(i:j),DIM=1)
+              iwt=tmpwt(idx)
+              
+              
+              !Location of minimum sum of weights per proc
+              iproc=MINLOC(wsum,DIM=1)
+              
+              !Index map for sorted_idx
+              nwtproc(iproc)=nwtproc(iproc)+1
+              
+              !Update sum and sorted values
+              sorted_idx(iproc,nwtproc(iproc))=idx
+              wsum(iproc)=wsum(iproc)+iwt
+              tmpwt(idx)=0
+            ENDDO
+            
+            
+            !Assign results to output variable while sorting
+            pid=pid+1
+            nidx=nwtproc(pid)
+            ALLOCATE(idxmap(1:nidx))
+            DO k=nidx,1,-1
+              idx=MAXLOC(sorted_idx(pid,1:nidx),DIM=1)
+              idxmap(k)=sorted_idx(pid,idx)
+              sorted_idx(pid,idx)=0
+            ENDDO
+            
+            !Clear locals
+            CALL demallocA(tmpwt)
+            CALL demallocA(sorted_idx)
+            CALL demallocA(nwtproc)
+            CALL demallocA(wsum)
+          ELSE
+            CALL eParEnv%raiseError(modName//'::'//myName// &
+              ' - Illegal value for ipart or too many processors!')
+          ENDIF
+        ELSE
+          CALL eParEnv%raiseError(modName//'::'//myName// &
+            ' - Error with dimensions of iwgt, n1, and n2!')
+        ENDIF
+      ELSE
+        CALL eParEnv%raiseError(modName//'::'//myName// &
+          ' - Parallel environment is not initialized!')
+      ENDIF
+      IF(localalloc) DEALLOCATE(eParEnv)
     ENDSUBROUTINE partition_greedy_ParEnvType
 !
 !-------------------------------------------------------------------------------

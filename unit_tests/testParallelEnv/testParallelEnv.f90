@@ -18,6 +18,8 @@
 PROGRAM testParallelEnv
   
   USE ISO_FORTRAN_ENV
+  USE IntrType
+  USE ExceptionHandler
   USE ParallelEnv
   !$ USE OMP_LIB
   IMPLICIT NONE
@@ -26,11 +28,14 @@ PROGRAM testParallelEnv
   INCLUDE 'mpif.h'
 #endif
 
+  TYPE(ExceptionHandlerType),TARGET :: e
   TYPE(ParallelEnvType) :: testPE,testPE2,testPE3
   TYPE(MPI_EnvType) :: testMPI,testMPI2
   TYPE(OMP_EnvType) :: testOMP
   
   INTEGER :: mpierr,myrank,mysize,tmp,stt,stp
+  INTEGER(SIK),ALLOCATABLE :: testIDX(:),testWGT(:)
+  
 #ifdef HAVE_MPI
   CALL MPI_Init(mpierr)
   CALL MPI_Comm_rank(MPI_COMM_WORLD,myrank,mpierr)
@@ -40,7 +45,10 @@ PROGRAM testParallelEnv
   myrank=0
   mysize=1
 #endif
-  ALLOCATE(eParEnv)
+  eParEnv => e
+  CALL eParEnv%setQuietMode(.TRUE.)
+  CALL eParEnv%setStopOnError(.FALSE.)
+  
   IF(myrank == 0) THEN
     WRITE(OUTPUT_UNIT,*) '==================================================='
     WRITE(OUTPUT_UNIT,*) 'TESTING PARALLEL ENVIRONMENT...'
@@ -216,6 +224,121 @@ PROGRAM testParallelEnv
       STOP 666
 #endif
     ENDIF
+    
+    testMPI2%nproc=10
+    ALLOCATE(testWGT(40))
+    testWGT=(/936,936,936,936,1722,1722,1722,1722,1722,1722,1722,1722,1916, &
+              1916,1916,1916,1944,1944,1944,1944,1916,1916,1916,1916,1571, &
+              1571,1571,1571,4122,4122,4122,4122,4266,4266,4266,4266,1850, &
+              1850,1850,1850/)
+    eParEnv => NULL()
+    CALL testMPI2%partition(IWGT=testWGT,IPART=0,IDXMAP=testIDX)
+    eParEnv => e
+    IF(ANY(testIDX /= (/11,23,33/))) THEN
+      WRITE(OUTPUT_UNIT,*) testMPI2%rank,'CALL testMPI2%partition(...) FAILED!'
+#ifdef HAVE_MPI
+      FLUSH(OUTPUT_UNIT)
+      CALL MPI_Abort(MPI_COMM_WORLD,666,mpierr)
+#else
+      STOP 666
+#endif
+    ENDIF
+    CALL testMPI2%partition(IWGT=testWGT,IPART=1,IDXMAP=testIDX)
+    IF(ANY(testIDX /= (/12,24,34/))) THEN
+      WRITE(OUTPUT_UNIT,*) testMPI2%rank,'CALL testMPI2%partition(...) FAILED!'
+#ifdef HAVE_MPI
+      FLUSH(OUTPUT_UNIT)
+      CALL MPI_Abort(MPI_COMM_WORLD,666,mpierr)
+#else
+      STOP 666
+#endif
+    ENDIF
+    CALL testMPI2%partition(IWGT=testWGT,IPART=2,IDXMAP=testIDX)
+    IF(ANY(testIDX /= (/3,9,35,37/))) THEN
+      WRITE(OUTPUT_UNIT,*) testMPI2%rank,'CALL testMPI2%partition(...) FAILED!'
+#ifdef HAVE_MPI
+      FLUSH(OUTPUT_UNIT)
+      CALL MPI_Abort(MPI_COMM_WORLD,666,mpierr)
+#else
+      STOP 666
+#endif
+    ENDIF
+    CALL testMPI2%partition(IWGT=testWGT,IPART=3,IDXMAP=testIDX)
+    IF(ANY(testIDX /= (/4,10,36,38/))) THEN
+      WRITE(OUTPUT_UNIT,*) testMPI2%rank,'CALL testMPI2%partition(...) FAILED!'
+#ifdef HAVE_MPI
+      FLUSH(OUTPUT_UNIT)
+      CALL MPI_Abort(MPI_COMM_WORLD,666,mpierr)
+#else
+      STOP 666
+#endif
+    ENDIF
+    CALL testMPI2%partition(IWGT=testWGT,IPART=4,IDXMAP=testIDX)
+    IF(ANY(testIDX /= (/5,15,27,29/))) THEN
+      WRITE(OUTPUT_UNIT,*) testMPI2%rank,'CALL testMPI2%partition(...) FAILED!'
+#ifdef HAVE_MPI
+      FLUSH(OUTPUT_UNIT)
+      CALL MPI_Abort(MPI_COMM_WORLD,666,mpierr)
+#else
+      STOP 666
+#endif
+    ENDIF
+    CALL testMPI2%partition(IWGT=testWGT,IPART=5,IDXMAP=testIDX)
+    IF(ANY(testIDX /= (/6,16,28,30/))) THEN
+      WRITE(OUTPUT_UNIT,*) testMPI2%rank,'CALL testMPI2%partition(...) FAILED!'
+#ifdef HAVE_MPI
+      FLUSH(OUTPUT_UNIT)
+      CALL MPI_Abort(MPI_COMM_WORLD,666,mpierr)
+#else
+      STOP 666
+#endif
+    ENDIF
+    CALL testMPI2%partition(IWGT=testWGT,IDXMAP=testIDX)
+    IF(ANY(testIDX /= (/1,7,21,31/))) THEN
+      WRITE(OUTPUT_UNIT,*) testMPI2%rank,'CALL testMPI2%partition(...) FAILED!'
+#ifdef HAVE_MPI
+      FLUSH(OUTPUT_UNIT)
+      CALL MPI_Abort(MPI_COMM_WORLD,666,mpierr)
+#else
+      STOP 666
+#endif
+    ENDIF
+    CALL testMPI2%partition(IWGT=testWGT,IPART=7,IDXMAP=testIDX)
+    IF(ANY(testIDX /= (/2,8,22,32/))) THEN
+      WRITE(OUTPUT_UNIT,*) testMPI2%rank,'CALL testMPI2%partition(...) FAILED!'
+#ifdef HAVE_MPI
+      FLUSH(OUTPUT_UNIT)
+      CALL MPI_Abort(MPI_COMM_WORLD,666,mpierr)
+#else
+      STOP 666
+#endif
+    ENDIF
+    CALL testMPI2%partition(IWGT=testWGT,IPART=8,IDXMAP=testIDX)
+    IF(ANY(testIDX /= (/13,17,19,25,39/))) THEN
+      WRITE(OUTPUT_UNIT,*) testMPI2%rank,'CALL testMPI2%partition(...) FAILED!'
+#ifdef HAVE_MPI
+      FLUSH(OUTPUT_UNIT)
+      CALL MPI_Abort(MPI_COMM_WORLD,666,mpierr)
+#else
+      STOP 666
+#endif
+    ENDIF
+    CALL testMPI2%partition(IWGT=testWGT,N1=1,N2=40,IPART=9,IDXMAP=testIDX)
+    IF(ANY(testIDX /= (/14,18,20,26,40/))) THEN
+      WRITE(OUTPUT_UNIT,*) testMPI2%rank,'CALL testMPI2%partition(...) FAILED!'
+#ifdef HAVE_MPI
+      FLUSH(OUTPUT_UNIT)
+      CALL MPI_Abort(MPI_COMM_WORLD,666,mpierr)
+#else
+      STOP 666
+#endif
+    ENDIF
+    
+    !Error Checking
+    CALL testMPI2%partition(IWGT=testWGT,N1=1,N2=40,IPART=100,IDXMAP=testIDX)
+    CALL testMPI2%partition(IWGT=testWGT,N1=41,N2=40,IDXMAP=testIDX)
+    CALL testMPI2%clear()
+    CALL testMPI2%partition(IWGT=testWGT,N1=1,N2=40,IDXMAP=testIDX)
     WRITE(*,*) '  Passed: testMPI2%partition(...)'
     FLUSH(OUTPUT_UNIT)
   ENDIF
@@ -239,7 +362,6 @@ PROGRAM testParallelEnv
 #endif
   ENDIF
   IF(myrank == 0) WRITE(OUTPUT_UNIT,*) '---------------------------------------------------'
-  
   IF(myrank == 0) WRITE(OUTPUT_UNIT,*) 'TESTING PARENVTYPE'
   
 #ifdef HAVE_MPI
@@ -415,5 +537,4 @@ PROGRAM testParallelEnv
   CALL MPI_Barrier(MPI_COMM_WORLD,mpierr)
 #endif
   CALL testMPI%finalize()
-  DEALLOCATE(eParEnv)
 ENDPROGRAM testParallelEnv
