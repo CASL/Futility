@@ -82,10 +82,19 @@ MODULE ParallelEnv
       !> @copybrief ParallelEnv::getInitStat_ParEnvType
       !> @copydetails  ParallelEnv::getInitStat_ParEnvType
       PROCEDURE,PASS :: isInit => getInitStat_ParEnvType
+      !> @copybrief ParallelEnv::partition_indeces_ParEnvType
+      !> @copydetails  ParallelEnv::partition_indeces_ParEnvType
+      PROCEDURE,PASS :: partitionIDX => partition_indeces_ParEnvType
+      !> @copybrief ParallelEnv::partition_greedy_ParEnvType
+      !> @copydetails  ParallelEnv::partition_greedy_ParEnvType
+      PROCEDURE,PASS :: partitionGreedy => partition_greedy_ParEnvType
+      !>
+      GENERIC :: partition => partitionIDX,partitionGreedy
       !>
       PROCEDURE(init_ParEnvType_Intfc),DEFERRED,PASS :: init
       !>
       PROCEDURE(clear_ParEnvType_Intfc),DEFERRED,PASS :: clear
+      
   ENDTYPE ParEnvType
   
   ABSTRACT INTERFACE
@@ -113,9 +122,6 @@ MODULE ParallelEnv
       !> @copybrief ParallelEnv::init_MPI_Env_type
       !> @copydetails  ParallelEnv::init_MPI_Env_type
       PROCEDURE,PASS :: init => init_MPI_Env_type
-      !> @copybrief ParallelEnv::partition_indeces_MPI_Env_Type
-      !> @copydetails  ParallelEnv::partition_indeces_MPI_Env_Type
-      PROCEDURE,PASS :: partition => partition_indeces_MPI_Env_Type
       !> @copybrief ParallelEnv::clear_MPI_Env_type
       !> @copydetails  ParallelEnv::clear_MPI_Env_type
       PROCEDURE,PASS :: clear => clear_MPI_Env_type
@@ -199,32 +205,35 @@ MODULE ParallelEnv
 !-------------------------------------------------------------------------------
 !> @brief Partitions a continuous range of indeces by attempting to evenly 
 !> divide them among processors
-!> @param myMPI the mpi environment object
-!> @param n1 the starting index for the range of indeces
-!> @param n2 the stopping index for the range of indeces
+!> @param myPE the parallel environment object
+!> @param n1 the starting index for the range of indeces (optional)
+!> @param n2 the stopping index for the range of indeces (optional)
+!> @param ipart the partition to obtain return @c istt and @c istp values for
+!>        (optional). When not present the rank is used.
 !> @param istt return value for processor dependent starting index
 !> @param istp return value for processor dependent stopping index
 !>
 !> If the number of indeces cannot be evenly distributed amongst processors
 !> then the remainder of indeces will be assigned to the processes with ranks
 !> 0-nremainder
-    PURE SUBROUTINE partition_indeces_MPI_Env_Type(myMPI,n1,n2,istt,istp,ipart)
-      CLASS(MPI_EnvType),INTENT(IN) :: myMPI
-      INTEGER(SIK),INTENT(IN) :: n1
-      INTEGER(SIK),INTENT(IN) :: n2
+!>
+    PURE SUBROUTINE partition_indeces_ParEnvType(myPE,n1,n2,ipart,istt,istp)
+      CLASS(ParEnvType),INTENT(IN) :: myPE
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: n1
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: n2
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: ipart
       INTEGER(SIK),INTENT(OUT) :: istt
       INTEGER(SIK),INTENT(OUT) :: istp
-      INTEGER(SIK),OPTIONAL,INTENT(IN) :: ipart
       
       INTEGER(SIK) :: myrank,nproc
       INTEGER(SIK) :: nwork,nwork_per_proc,work_rem
       
       istt=1
       istp=0
-      IF(myMPI%initstat) THEN
-        myrank=myMPI%rank
+      IF(myPE%initstat) THEN
+        myrank=myPE%rank
         IF(PRESENT(ipart)) myrank=ipart
-        nproc=myMPI%nproc
+        nproc=myPE%nproc
         nwork=n2-n1+1
         IF(myrank < nwork) THEN
           !Evenly divide work on each process
@@ -245,7 +254,32 @@ MODULE ParallelEnv
           IF(istt > istp) istp=istt
         ENDIF
       ENDIF
-    ENDSUBROUTINE partition_indeces_MPI_Env_Type
+    ENDSUBROUTINE partition_indeces_ParEnvType
+!
+!-------------------------------------------------------------------------------
+!> @brief Partition a continuous range of indeces based on associated weights.
+!> @param myPE the parallel environment object
+!> @param n1 the starting index for the range of indeces
+!> @param n2 the stopping index for the range of indeces
+!> @param istt return value for processor dependent starting index
+!> @param istp return value for processor dependent stopping index
+!>
+!> If the number of indeces cannot be evenly distributed amongst processors
+!> then the remainder of indeces will be assigned to the processes with ranks
+!> 0-nremainder
+!>
+    PURE SUBROUTINE partition_greedy_ParEnvType(myPE,iwgt,n1,n2,ipart,istt,istp)
+      CLASS(ParEnvType),INTENT(IN) :: myPE
+      INTEGER(SIK),INTENT(IN) :: iwgt(:)
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: n1
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: n2
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: ipart
+      INTEGER(SIK),INTENT(OUT) :: istt
+      INTEGER(SIK),INTENT(OUT) :: istp
+      
+      istt=1
+      istp=0
+    ENDSUBROUTINE partition_greedy_ParEnvType
 !
 !-------------------------------------------------------------------------------
 !> @brief Initializes an MPI environment type object.

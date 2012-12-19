@@ -140,7 +140,7 @@ PROGRAM testParallelEnv
   IF(testMPI%master) THEN
     testMPI2%nproc=7
     testMPI2%rank=0
-    CALL testMPI2%partition(2,25,stt,stp)
+    CALL testMPI2%partition(N1=2,N2=25,ISTT=stt,ISTP=stp)
     IF(stt /= 2 .OR. stp /= 5) THEN
       WRITE(OUTPUT_UNIT,*) testMPI2%rank,'CALL testMPI2%partition(...) FAILED!'
 #ifdef HAVE_MPI
@@ -151,7 +151,7 @@ PROGRAM testParallelEnv
 #endif
     ENDIF
     testMPI2%rank=1
-    CALL testMPI2%partition(2,25,stt,stp)
+    CALL testMPI2%partition(N1=2,N2=25,ISTT=stt,ISTP=stp)
     IF(stt /= 6 .OR. stp /= 9) THEN
       WRITE(OUTPUT_UNIT,*) testMPI2%rank,'CALL testMPI2%partition(...) FAILED!'
 #ifdef HAVE_MPI
@@ -162,7 +162,7 @@ PROGRAM testParallelEnv
 #endif
     ENDIF
     testMPI2%rank=2
-    CALL testMPI2%partition(2,25,stt,stp)
+    CALL testMPI2%partition(N1=2,N2=25,ISTT=stt,ISTP=stp)
     IF(stt /= 10 .OR. stp /= 13) THEN
       WRITE(OUTPUT_UNIT,*) testMPI2%rank,'CALL testMPI2%partition(...) FAILED!'
 #ifdef HAVE_MPI
@@ -173,7 +173,7 @@ PROGRAM testParallelEnv
 #endif
     ENDIF
     testMPI2%rank=3
-    CALL testMPI2%partition(2,25,stt,stp)
+    CALL testMPI2%partition(N1=2,N2=25,ISTT=stt,ISTP=stp)
     IF(stt /= 14 .OR. stp /= 16) THEN
       WRITE(OUTPUT_UNIT,*) testMPI2%rank,'CALL testMPI2%partition(...) FAILED!'
 #ifdef HAVE_MPI
@@ -184,7 +184,7 @@ PROGRAM testParallelEnv
 #endif
     ENDIF
     testMPI2%rank=4
-    CALL testMPI2%partition(2,25,stt,stp)
+    CALL testMPI2%partition(N1=2,N2=25,ISTT=stt,ISTP=stp)
     IF(stt /= 17 .OR. stp /= 19) THEN
       WRITE(OUTPUT_UNIT,*) testMPI2%rank,'CALL testMPI2%partition(...) FAILED!'
 #ifdef HAVE_MPI
@@ -195,7 +195,7 @@ PROGRAM testParallelEnv
 #endif
     ENDIF
     testMPI2%rank=5
-    CALL testMPI2%partition(2,25,stt,stp)
+    CALL testMPI2%partition(N1=2,N2=25,ISTT=stt,ISTP=stp)
     IF(stt /= 20 .OR. stp /= 22) THEN
       WRITE(OUTPUT_UNIT,*) testMPI2%rank,'CALL testMPI2%partition(...) FAILED!'
 #ifdef HAVE_MPI
@@ -206,7 +206,7 @@ PROGRAM testParallelEnv
 #endif
     ENDIF
     testMPI2%rank=6
-    CALL testMPI2%partition(2,25,stt,stp)
+    CALL testMPI2%partition(N1=2,N2=25,ISTT=stt,ISTP=stp)
     IF(stt /= 23 .OR. stp /= 25) THEN
       WRITE(OUTPUT_UNIT,*) testMPI2%rank,'CALL testMPI2%partition(...) FAILED!'
 #ifdef HAVE_MPI
