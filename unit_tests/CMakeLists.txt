@@ -35,8 +35,17 @@ SET(UNIT_TEST_NAMES
     testMatrixTypes
     testVectorTypes
     testLinearSolver
-    testTPLPARDISO
+    
 )
+
+# add test for PARDISO if enabled
+IF (${PACKAGE_NAME}_ENABLE_PARDISO)
+    SET(UNIT_TEST_NAMES
+        ${UNIT_TEST_NAMES}
+        testTPLPARDISO
+        )
+ENDIF()
+
 FOREACH(test ${UNIT_TEST_NAMES})
     ADD_SUBDIRECTORY(${test})
 ENDFOREACH()
