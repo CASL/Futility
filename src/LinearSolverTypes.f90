@@ -2066,6 +2066,7 @@ MODULE LinearSolverTypes
       solverMethod=1_SIK
       MPI_COMM_ID=1_SIK
       numberOMP=1_SIK
+      timerName='Some LinearSolver Timer'
       
       CALL LinearSolverType_reqParams%clear()
       CALL LinearSolverType_reqParams%add('LinearSolverType->TPLType',TPLType)
