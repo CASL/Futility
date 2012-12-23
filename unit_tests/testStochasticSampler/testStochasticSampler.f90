@@ -427,6 +427,8 @@ PROGRAM testStochasticSampler
       DO i=1,n
         j=myRNG%histogram(y)
         iii(j)=iii(j)+1
+        mean=mean+REAL(j,SDK)/REAL(n,SDK)
+        stdev=stdev+REAL(j,SDK)**2/REAL(n,SDK)
       ENDDO
       WRITE(*,*) "COUNT:  ", myRNG%counter
       DO i=1,5
@@ -434,9 +436,9 @@ PROGRAM testStochasticSampler
       ENDDO
       WRITE(*,*) "COUNT:  ", myRNG%counter
       WRITE(*,*) "MEAN:      ", mean
-      WRITE(*,*) "MEAN TRUE: ", 8.0_SDK/5.0_SDK
+      WRITE(*,*) "MEAN TRUE: ", 2.75_SRK
       WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
-      WRITE(*,*) "SDEV TRUE: ", SQRT(32.0_SDK)/5.0_SDK
+      WRITE(*,*) "SDEV TRUE: ", SQRT(9.75_SRK-2.75_SRK**2)
 !~       IF (ABS(mean/(8.0_SDK/5.0_SDK)-1.0_SDK)>5.0_SDK/SQRT(REAL(n,SDK))) THEN
 !~         WRITE(*,*) "Normalized Histogram does not meet acceptance criteria.  Test FAILED"
 !~         STOP 666
@@ -457,13 +459,15 @@ PROGRAM testStochasticSampler
       WRITE(*,*)
       WRITE(*,*) "Test Unnormalized Histogram"
       
-      y=(/ 0.2, 0.4, 0.1, 0.05, 0.25 /)
+      y=(/ 2.0, 4.0, 1.0, 0.5, 2.5 /)
       iii=0
       mean=0.0_SDK
       stdev=0.0_SDK
       DO i=1,n
         j=myRNG%unnormhistogram(y)
         iii(j)=iii(j)+1
+        mean=mean+REAL(j,SDK)/REAL(n,SDK)
+        stdev=stdev+REAL(j,SDK)**2/REAL(n,SDK)
       ENDDO
       WRITE(*,*) "COUNT:  ", myRNG%counter
       DO i=1,5
@@ -471,9 +475,9 @@ PROGRAM testStochasticSampler
       ENDDO
       WRITE(*,*) "COUNT:  ", myRNG%counter
       WRITE(*,*) "MEAN:      ", mean
-      WRITE(*,*) "MEAN TRUE: ", 8.0_SDK/5.0_SDK
+      WRITE(*,*) "MEAN TRUE: ", 2.75_SRK
       WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
-      WRITE(*,*) "SDEV TRUE: ", SQRT(32.0_SDK)/5.0_SDK
+      WRITE(*,*) "SDEV TRUE: ", SQRT(9.75_SRK-2.75_SRK**2)
 !~       IF (ABS(mean/(8.0_SDK/5.0_SDK)-1.0_SDK)>5.0_SDK/SQRT(REAL(n,SDK))) THEN
 !~         WRITE(*,*) "Unnormalized Histogram does not meet acceptance criteria.  Test FAILED"
 !~         STOP 666
@@ -494,7 +498,7 @@ PROGRAM testStochasticSampler
       WRITE(*,*)
       WRITE(*,*) "Test Normalized Continuous Histogram"
       y=(/ 0.2, 0.4, 0.1, 0.05, 0.25 /)
-      z=(/ 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 /)
+      z=(/ 1.0, 2.0, 3.0, 4.0, 5.0, 7.0 /)
       mean=0.0_SDK
       stdev=0.0_SDK
       DO i=1,n
@@ -504,7 +508,9 @@ PROGRAM testStochasticSampler
       ENDDO
       WRITE(*,*) "COUNT:  ", myRNG%counter
       WRITE(*,*) "MEAN:      ", mean
+      WRITE(*,*) "MEAN TRUE: ", 3.375_SRK
       WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
+      WRITE(*,*) "SDEV TRUE: ", SQRT(43.0_SRK/3.0_SRK-3.375_SRK**2)
       
       DEALLOCATE(y)
       DEALLOCATE(z)
@@ -521,11 +527,10 @@ PROGRAM testStochasticSampler
   
       WRITE(*,*)
       WRITE(*,*) "Test Unnormalized Continuous Histogram"
-      y=(/ 0.2, 0.4, 0.1, 0.05, 0.25 /)
-      y=2.0*y
-      z=(/ 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 /)
-      mean=0.0
-      stdev=0.0
+      y=(/ 2.0, 4.0, 1.0, 0.5, 2.5 /)
+      z=(/ 1.0, 2.0, 3.0, 4.0, 5.0, 7.0 /)
+      mean=0.0_SDK
+      stdev=0.0_SDK
       DO i=1,n
         x=myRNG%unnormconthistogram(y,z)
         mean=mean+x/REAL(n,SDK)
@@ -533,7 +538,9 @@ PROGRAM testStochasticSampler
       ENDDO
       WRITE(*,*) "COUNT:  ", myRNG%counter
       WRITE(*,*) "MEAN:      ", mean
+      WRITE(*,*) "MEAN TRUE: ", 3.375_SRK
       WRITE(*,*) "SDEV:      ", SQRT(stdev-mean**2)
+      WRITE(*,*) "SDEV TRUE: ", SQRT(43.0_SRK/3.0_SRK-3.375_SRK**2)
       
       DEALLOCATE(y)
       DEALLOCATE(z)
