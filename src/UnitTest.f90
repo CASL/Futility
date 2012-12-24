@@ -221,6 +221,7 @@ MODULE UnitTest
       
       WRITE(*,*) '  COMPONENT '//utest_componentname//' '//pfstr
       utest_component=.FALSE.
+      utest_prefix=""
       
     ENDSUBROUTINE UTest_End_Component
 !
