@@ -38,6 +38,7 @@ MODULE UnitTest
   PUBLIC :: UTest_Finalize
   PUBLIC :: UTest_Start_SubTest
   PUBLIC :: UTest_End_SubTest
+  PUBLIC :: UTest_Start_Component
   PUBLIC :: UTest_Assert
   PUBLIC :: utest_prefix
   PUBLIC :: utest_lastfail
@@ -56,10 +57,13 @@ MODULE UnitTest
 ! List of global variables
   CHARACTER(LEN=20) :: utest_testname
   CHARACTER(LEN=20) :: utest_subtestname
+  CHARACTER(LEN=20) :: utest_componentname
   CHARACTER(LEN=20) :: utest_prefix
-  LOGICAL :: utest_interactive
-  LOGICAL :: utest_lastfail
-  LOGICAL :: utest_inmain
+  LOGICAL :: utest_component=.FALSE.
+  LOGICAL :: utest_compfail=.FALSE.
+  LOGICAL :: utest_interactive=.FALSE.
+  LOGICAL :: utest_lastfail=.FALSE.
+  LOGICAL :: utest_inmain=.TRUE.
   INTEGER :: utest_verbose
   TYPE(UTestElement),POINTER :: utest_firsttest=>NULL()
   TYPE(UTestElement),POINTER :: utest_curtest=>NULL()
@@ -168,6 +172,8 @@ MODULE UnitTest
     SUBROUTINE UTest_End_SubTest()
       CHARACTER(LEN=6) :: pfstr
       
+      IF(utest_component) CALL UTest_End_Component()
+      
       IF(utest_curtest%nfail>0) THEN
         pfstr='FAILED'
       ELSE
@@ -179,6 +185,44 @@ MODULE UnitTest
       utest_inmain=.TRUE.
       
     ENDSUBROUTINE UTest_End_SubTest
+!
+!-------------------------------------------------------------------------------
+!> @brief description
+!> @param parameter    description
+!>
+!> description
+!>
+    SUBROUTINE UTest_Start_Component(componentname)
+      CHARACTER(LEN=*),INTENT(IN) :: componentname
+      
+      IF(utest_component) CALL UTest_End_Component()
+      
+      utest_component=.TRUE.
+      utest_compfail=.FALSE.
+      utest_componentname=componentname
+      utest_prefix=componentname//" -"
+      
+    ENDSUBROUTINE UTest_Start_Component
+!
+!-------------------------------------------------------------------------------
+!> @brief description
+!> @param parameter    description
+!>
+!> description
+!>
+    SUBROUTINE UTest_End_Component()
+      CHARACTER(LEN=6) :: pfstr
+      
+      IF(utest_compfail) THEN
+        pfstr='FAILED'
+      ELSE
+        pfstr='PASSED'
+      ENDIF
+      
+      WRITE(*,*) '  COMPONENT '//utest_componentname//' '//pfstr
+      utest_component=.FALSE.
+      
+    ENDSUBROUTINE UTest_End_Component
 !
 !-------------------------------------------------------------------------------
 !> @brief description
@@ -210,7 +254,8 @@ MODULE UnitTest
         ELSE
           utest_curtest%nfail=utest_curtest%nfail+1
         ENDIF
-        WRITE(*,'(A,I0,A,A,A)') 'Line:',line,' - ', TRIM(utest_prefix)//" "//TRIM(msg), '  FAILED'
+        utest_compfail=.TRUE.
+        WRITE(*,'(A,I0,A,A,A)') '    ASSERTION FAILED on line ',line,':  ', TRIM(utest_prefix)//" "//TRIM(msg)
       ENDIF
       
     ENDSUBROUTINE UTest_Assert

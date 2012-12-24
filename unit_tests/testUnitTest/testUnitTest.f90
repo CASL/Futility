@@ -60,11 +60,13 @@ PROGRAM testUnitTest
 !> description
 !>
     SUBROUTINE mysubroutineA()
-      ASSERT(.TRUE.,"test 1")
-      FINFO() "This is a test that you shouldn't see"
-      ASSERTFAIL(.TRUE.,"test 2")
-      ASSERT(.FALSE.,"test 3")
-      FINFO() "This is a test that you should see"
+      COMPONENT_TEST("SubA_1")
+        ASSERT(.TRUE.,"test 1")
+        FINFO() "This is a test that you shouldn't see"
+      COMPONENT_TEST("SubA_2")
+        ASSERTFAIL(.TRUE.,"test 2")
+        ASSERT(.FALSE.,"test 3")
+        FINFO() "This is a test that you should see"
     ENDSUBROUTINE mysubroutineA
 !
 !-------------------------------------------------------------------------------
@@ -74,9 +76,10 @@ PROGRAM testUnitTest
 !> description
 !>
     SUBROUTINE mysubroutineB()
-      ASSERT(.TRUE.,"test 1")
-      ASSERTFAIL(.TRUE.,"test 2")
-      ASSERT(.FALSE.,"test 3")      
+      COMPONENT_TEST("SubB")
+        ASSERT(.TRUE.,"test 1")
+        ASSERTFAIL(.TRUE.,"test 2")
+        ASSERT(.FALSE.,"test 3")      
     ENDSUBROUTINE mysubroutineB
 !
 !-------------------------------------------------------------------------------
@@ -86,10 +89,12 @@ PROGRAM testUnitTest
 !> description
 !>
     SUBROUTINE mysubroutineC()
-      SET_PREFIX("SubC")
-      ASSERT(.TRUE.,"test 1")
-      ASSERTFAIL(.TRUE.,"test 2")
-      ASSERT(.FALSE.,"test 3")      
+      COMPONENT_TEST("SubC")
+        ASSERT(.TRUE.,"test 1")
+        ASSERTFAIL(.TRUE.,"test 2")
+        ASSERT(.FALSE.,"test 3")
+      
+        
     ENDSUBROUTINE mysubroutineC
 !
 ENDPROGRAM testUnitTest
