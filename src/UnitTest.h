@@ -19,6 +19,6 @@
 
 #define STAY()  IF(utest_interactive) READ(*,*)
 
-#define FINFO()  IF(utest_lastfail) WRITE(*,*) "    "//
+#define FINFO()  IF(utest_lastfail) WRITE(*,*)
 
 #define INFO(verb)  IF(verb<=utest_verbose) WRITE(*,*) 
