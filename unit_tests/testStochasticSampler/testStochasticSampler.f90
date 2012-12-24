@@ -16,13 +16,14 @@
 ! enDOrsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testStochasticSampler
-      
+#include "UnitTest.h"
+  USE UnitTest    
   USE IntrType
   USE StochasticSampling
   USE ParallelEnv
   USE ISO_FORTRAN_ENV
   IMPLICIT NONE
-  
+
   TYPE(StochasticSamplingType) :: myRNG
   TYPE(StochasticSamplingType) :: myRNG2
   TYPE(StochasticSamplingType) :: myRNG3
@@ -58,21 +59,13 @@ PROGRAM testStochasticSampler
     ENDFUNCTION
   ENDINTERFACE
   
-  WRITE(*,*) '==================================================='
-  WRITE(*,*) 'TESTING STOCHASTIC SAMPLER...'
-  WRITE(*,*) '==================================================='
+  CREATE_TEST("StochasticSampler")
   
   ! Test Manager Init
   CALL myRNG%init(3)
   ! Test Initialize
-  IF (.NOT. myRNG%isInit) THEN
-    WRITE(*,*) 'RNG did not initialize.  Test FAILED!'
-    STOP 666
-  ENDIF
-  IF (myRNG%counter/=0) THEN
-    WRITE(*,*) 'RNG did not initialize properly.  Test FAILED!'
-    STOP 666
-  ENDIF
+  ASSERT(myRNG%isInit,'RNG did not initialize.')
+  ASSERT(myRNG%counter==0,'RNG did not initialize properly.')
   
   firstten(1)=1_SLK
   firstten(2)=2806196910506780710_SLK
@@ -87,13 +80,10 @@ PROGRAM testStochasticSampler
   firstten(11)=2039497501229545367_SLK
   
   DO i=1,11
-    IF(.NOT. (myRNG%RNseed==firstten(i))) THEN
-      WRITE(*,*) 'RNG did not reproduce first 10 random numbers.  Test FAILED!'
-      STOP 666
-    ENDIF
+    ASSERT(myRNG%RNseed==firstten(i),'RNG did not reproduce first 10 random numbers')
+    FINFO() 'Failed at random number: ', i
     x=myRNG%rng()
   ENDDO
-  WRITE(*,*) 'RNG reproduced first 10 random numbers.  Test PASSED!'
 
   CALL TestRNG()
   
@@ -157,9 +147,7 @@ PROGRAM testStochasticSampler
   CALL TestRejection()
   CALL TestRejectionArg()
 
-  WRITE(*,*) '==================================================='
-  WRITE(*,*) 'TESTING STOCHASTIC SAMPLER PASSED!'
-  WRITE(*,*) '==================================================='
+  FINALIZE_TEST()
   CALL MPIEnv%finalize()
   CALL myRNG%clear()
 !
