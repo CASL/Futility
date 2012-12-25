@@ -19,12 +19,14 @@ PROGRAM testStochasticSampler
 #include "UnitTest.h"
   USE UnitTest    
   USE IntrType
-  USE StochasticSampling
+  USE ExceptionHandler
   USE ParallelEnv
+  USE StochasticSampling
   USE ISO_FORTRAN_ENV
   IMPLICIT NONE
 
   TYPE(StochasticSamplingType) :: myRNG
+  TYPE(ExceptionHandlerType),POINTER :: e => NULL()
   TYPE(MPI_EnvType) :: MPIEnv
   TYPE(OMP_EnvType) :: OMPEnv
   
@@ -54,7 +56,7 @@ PROGRAM testStochasticSampler
   ENDINTERFACE
   
   CREATE_TEST("StochasticSampler")
-  
+
   REGISTER_SUBTEST('Initialize',TestInit)
   REGISTER_SUBTEST('RNG Performance',TestRNG)
   REGISTER_SUBTEST('Uniform Dist',TestUniform)
@@ -88,6 +90,10 @@ PROGRAM testStochasticSampler
       INTEGER :: i
       INTEGER(SLK) :: firstten(11)
       REAL(SDK) :: x
+      
+      ALLOCATE(e)
+      CALL e%setQuietMode(.TRUE.)
+      eStochasticSampler => e
       ! Test Manager Init
       CALL myRNG%init(3)
       SET_PREFIX('RNG Init')
