@@ -40,6 +40,7 @@ MODULE UnitTest
   PUBLIC :: UTest_End_SubTest
   PUBLIC :: UTest_Start_Component
   PUBLIC :: UTest_Assert
+  PUBLIC :: UTest_Stay
   PUBLIC :: utest_prefix
   PUBLIC :: utest_lastfail
   PUBLIC :: utest_interactive
@@ -260,6 +261,17 @@ MODULE UnitTest
       ENDIF
       
     ENDSUBROUTINE UTest_Assert
+!
+!-------------------------------------------------------------------------------
+!> @brief description
+!> @param parameter    description
+!>
+!> description
+!>
+    SUBROUTINE UTest_Stay()
+      WRITE(*,*) 'Press Return to Continue:'
+      READ(*,*)
+    ENDSUBROUTINE UTest_Stay
 !
 !-------------------------------------------------------------------------------
 !> @brief description

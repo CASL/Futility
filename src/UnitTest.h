@@ -17,7 +17,7 @@
 
 #define ASSERTFAIL(bool,msg)  ASSERT(bool,msg); IF(utest_lastfail) STOP __LINE__
 
-#define STAY()  IF(utest_interactive) READ(*,*)
+#define STAY()  IF(utest_interactive) CALL UTest_Stay()
 
 #define FINFO()  IF(utest_lastfail) WRITE(*,*)
 
