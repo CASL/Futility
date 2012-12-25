@@ -102,8 +102,6 @@ PROGRAM testStochasticSampler
       ASSERT(myRNG%counter==0,'counter')
       ASSERT(myRNG%RNmult==2806196910506780709_SLK,'mult')
       ASSERT(myRNG%RNadd==1_SLK,'add')
-      ASSERT(myRNG%RNmask==2_SLK**63-1_SLK,'mask')
-      ASSERT(myRNG%RNmod==2_SLK**63,'mod')
       ASSERT(myRNG%RNnorm==1.0_SDK/2.0_SDK**63,'norm')
 
       firstten(1)=1_SLK
