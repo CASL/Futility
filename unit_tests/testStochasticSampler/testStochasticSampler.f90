@@ -54,7 +54,6 @@ PROGRAM testStochasticSampler
   ENDINTERFACE
   
   CREATE_TEST("StochasticSampler")
-  !SET_INTERACTIVE()
   
   REGISTER_SUBTEST('Initialize',TestInit)
   REGISTER_SUBTEST('RNG Performance',TestRNG)
@@ -78,7 +77,6 @@ PROGRAM testStochasticSampler
   CALL myRNG%clear()
   
   FINALIZE_TEST() 
-  STAY()
 !
 !===============================================================================
   CONTAINS
@@ -92,10 +90,16 @@ PROGRAM testStochasticSampler
       REAL(SDK) :: x
       ! Test Manager Init
       CALL myRNG%init(3)
+      SET_PREFIX('RNG Init')
       ! Test Initialize
-      ASSERT(myRNG%isInit,'RNG did not initialize.')
-      ASSERT(myRNG%counter==0,'RNG did not initialize properly.')
-      
+      ASSERT(myRNG%isInit,'isInit')
+      ASSERT(myRNG%counter==0,'counter')
+      ASSERT(myRNG%RNmult==2806196910506780709_SLK,'mult')
+      ASSERT(myRNG%RNadd==1_SLK,'add')
+      ASSERT(myRNG%RNmask==2_SLK**63-1_SLK,'mask')
+      ASSERT(myRNG%RNmod==2_SLK**63,'mod')
+      ASSERT(myRNG%RNnorm==1.0_SDK/2.0_SDK**63,'norm')
+
       firstten(1)=1_SLK
       firstten(2)=2806196910506780710_SLK
       firstten(3)=6924308458965941631_SLK
