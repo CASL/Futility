@@ -36,6 +36,7 @@ MODULE BinaryTrees
   PUBLIC :: BinaryTreeType_Integer
   PUBLIC :: BinaryTreeType_Index
   PUBLIC :: CreateBinaryTree
+  PUBLIC :: CreateBinaryTreeRmDup
   PUBLIC :: BurnBinaryTree
   PUBLIC :: SortedBinaryTree
   
@@ -86,6 +87,17 @@ MODULE BinaryTrees
     !> @copydetails BinaryTrees::CreateBinaryTreeIndex_Index
     MODULE PROCEDURE CreateBinaryTree_Index
   ENDINTERFACE CreateBinaryTree
+  
+  !> Generic interface to creating a binary tree data type for
+  !> different types of binary trees and input data
+  INTERFACE CreateBinaryTreeRmDup
+    !> @copybrief BinaryTrees::CreateBinaryTreeRmDup_Integer
+    !> @copydetails BinaryTrees::CreateBinaryTreeRmDup_Integer
+    MODULE PROCEDURE CreateBinaryTreeRmDup_Integer
+    !> @copybrief BinaryTrees::CreateBinaryTreeRmDup_Index
+    !> @copydetails BinaryTrees::CreateBinaryTreeRmDup_Index
+    MODULE PROCEDURE CreateBinaryTreeRmDup_Index
+  ENDINTERFACE CreateBinaryTreeRmDup
   
   !> Generic interface for destroying a binary tree
   INTERFACE BurnBinaryTree
@@ -149,6 +161,24 @@ MODULE BinaryTrees
     ENDSUBROUTINE CreateBinaryTree_Integer
 !
 !-------------------------------------------------------------------------------
+!> @brief Constructs a binary tree from a list of integers
+!> @param t the binary tree to be created
+!> @param list the list of integers to put into the tree
+!>
+!> 
+    SUBROUTINE CreateBinaryTreeRmDup_Integer(t,list)    
+      TYPE(BinaryTreeType_Integer),POINTER :: t
+      INTEGER(SIK),INTENT(IN) :: list(:)
+      INTEGER(SIK) :: i
+      
+      IF(.NOT.ASSOCIATED(t)) THEN
+        DO i=1,SIZE(list)
+          CALL InsertBinaryTreeNodeRmDup_Integer(t,list(i))
+        ENDDO
+      ENDIF
+    ENDSUBROUTINE CreateBinaryTreeRmDup_Integer
+!
+!-------------------------------------------------------------------------------
 !> @brief Recursive subroutine inserts a new node into the binary tree.
 !> @param t the current node in the binary tree
 !> @param number the number be inserted in the node
@@ -172,6 +202,33 @@ MODULE BinaryTrees
         CALL InsertBinaryTreeNode_Integer(t%right,number)
       ENDIF
     ENDSUBROUTINE InsertBinaryTreeNode_Integer
+!
+!-------------------------------------------------------------------------------
+!> @brief Recursive subroutine inserts a new node into the binary tree.
+!> @param t the current node in the binary tree
+!> @param number the number be inserted in the node
+!>
+!> Recursive subroutines are really bad for trees with a very high depth because
+!> a new stack is allocated each level down the tree. This creates all kinds of 
+!> performance issues and so it should be replaced by a non-recursive routine
+!> to traverse the tree. However, it should be ok for initial use.
+    RECURSIVE SUBROUTINE InsertBinaryTreeNodeRmDup_Integer(t,number)
+      TYPE(BinaryTreeType_Integer),POINTER :: t
+      INTEGER(SIK),INTENT(IN) :: number
+
+      !If (sub)tree is empty, put number at root
+      IF(.NOT.ASSOCIATED(t)) THEN
+        ALLOCATE(t)
+        t%val=number
+      ELSEIF(number == t%val) THEN
+      !Abandon it if the same
+      !otherwise, insert into correct subtree
+      ELSEIF(number < t%val) THEN
+        CALL InsertBinaryTreeNodeRmDup_Integer(t%left,number)
+      ELSE
+        CALL InsertBinaryTreeNodeRmDup_Integer(t%right,number)
+      ENDIF
+    ENDSUBROUTINE InsertBinaryTreeNodeRmDup_Integer
 !
 !-------------------------------------------------------------------------------
 !> @brief Recursive function returns if a number is found in the tree
@@ -240,6 +297,40 @@ MODULE BinaryTrees
     ENDSUBROUTINE CreateBinaryTree_Index
 !
 !-------------------------------------------------------------------------------
+!> @brief Constructs a binary tree from a list of integers and indeces
+!> @param t the binary tree to be created
+!> @param list the list of integers to put into the tree
+!> @param n1 optional, the starting index
+!> @param n2 optional, the ending index
+!> 
+!> This is useful for searching lists with non-sequential, and possibly
+!> unordered values.
+    SUBROUTINE CreateBinaryTreeRmDup_Index(t,list,n1,n2)
+      TYPE(BinaryTreeType_Index),POINTER :: t
+      INTEGER(SIK),INTENT(IN) :: list(:)
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: n1,n2
+      INTEGER(SIK) :: i,j,stt,stp
+      
+      IF(PRESENT(n1)) THEN
+        stt=n1
+      ELSE
+        stt=1
+      ENDIF
+      IF(PRESENT(n2)) THEN
+        stp=n2
+      ELSE
+        stp=SIZE(list)
+      ENDIF
+      IF(stp-stt+1 == SIZE(list) .AND. .NOT.ASSOCIATED(t)) THEN
+        j=0
+        DO i=stt,stp
+          j=j+1
+          CALL InsertBinaryTreeNodeRmDup_Index(t,list(j),i)
+        ENDDO
+      ENDIF
+    ENDSUBROUTINE CreateBinaryTreeRmDup_Index
+!
+!-------------------------------------------------------------------------------
 !> @brief Recursive subroutine inserts a new node into the binary tree.
 !> @param t the current node in the binary tree
 !> @param number the number be inserted in the node
@@ -265,6 +356,35 @@ MODULE BinaryTrees
         CALL InsertBinaryTreeNode_Index(t%right,number,index)
       ENDIF
     ENDSUBROUTINE InsertBinaryTreeNode_Index
+!
+!-------------------------------------------------------------------------------
+!> @brief Recursive subroutine inserts a new node into the binary tree.
+!> @param t the current node in the binary tree
+!> @param number the number be inserted in the node
+!> @param index the index of the number to be inserted
+!>
+!> Recursive subroutines are really bad for trees with a very high depth because
+!> a new stack is allocated each level down the tree. This creates all kinds of 
+!> performance issues and so it should be replaced by a non-recursive routine
+!> to traverse the tree. However, it should be ok for initial use.
+    RECURSIVE SUBROUTINE InsertBinaryTreeNodeRmDup_Index(t,number,index)
+      TYPE(BinaryTreeType_Index),POINTER :: t
+      INTEGER(SIK),INTENT(IN) :: number,index
+
+      !If (sub)tree is empty, put number at root
+      IF(.NOT.ASSOCIATED(t)) THEN
+        ALLOCATE(t)
+        t%val=number
+        t%index=index
+      ELSEIF(number == t%val) THEN
+      !Abandon it if it is the same
+      !otherwise, insert into correct subtree
+      ELSEIF(number < t%val) THEN
+        CALL InsertBinaryTreeNodeRmDup_Index(t%left,number,index)
+      ELSE
+        CALL InsertBinaryTreeNodeRmDup_Index(t%right,number,index)
+      ENDIF
+    ENDSUBROUTINE InsertBinaryTreeNodeRmDup_Index
 !
 !-------------------------------------------------------------------------------
 !> @brief Recursive function returns if a number is found in the tree

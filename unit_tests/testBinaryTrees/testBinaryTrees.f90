@@ -34,7 +34,14 @@ PROGRAM testBinaryTrees
   ALLOCATE(emptyi(1:0))
   CALL CreateBinaryTree(t,emptyi)
   CALL BurnBinaryTree(t)
-  
+  CALL CreateBinaryTreeRmDup(t,(/4,8,4,6,7,2,1/))
+  IF(t%val /= 4) THEN
+    WRITE(*,*) 'CALL CreateBinaryTreeRmDup(t,...) FAILED!'
+    STOP 666
+  ELSE
+    WRITE(*,*) '  Passed: CALL CreateBinaryTreeRmDup(t,...)'
+  ENDIF
+  CALL BurnBinaryTree(t)
   CALL CreateBinaryTree(t,(/8,3,4,6,7,2,1/))
   IF(t%val /= 8) THEN
     WRITE(*,*) 'CALL CreateBinaryTree(t,...) FAILED!'
@@ -60,6 +67,14 @@ PROGRAM testBinaryTrees
   WRITE(*,*) '---------------------------------------------------'
   
   WRITE(*,*) 'TESTING INDEXED BINARY TREE'
+  CALL CreateBinaryTreeRmDup(t2,(/4,8,4,6,7,2,1/),1,7)
+  IF(t2%val /= 4) THEN
+    WRITE(*,*) 'CALL CreateBinaryTreeRmDup(t,...) FAILED!'
+    STOP 666
+  ELSE
+    WRITE(*,*) '  Passed: CALL CreateBinaryTreeRmDup(t,...)'
+  ENDIF
+  CALL BurnBinaryTree(t2)
   CALL CreateBinaryTree(t2,(/8,3,4,6,7,2,1/))
   IF(t2%val /= 8) THEN
     WRITE(*,*) 'CALL CreateBinaryTree(t2,...) FAILED!'
