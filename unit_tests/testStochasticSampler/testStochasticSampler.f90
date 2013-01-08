@@ -99,10 +99,10 @@ PROGRAM testStochasticSampler
       SET_PREFIX('RNG Init')
       ! Test Initialize
       ASSERT(myRNG%isInit,'isInit')
-      ASSERT(myRNG%counter==0,'counter')
-      ASSERT(myRNG%RNmult==2806196910506780709_SLK,'mult')
-      ASSERT(myRNG%RNadd==1_SLK,'add')
-      ASSERT(myRNG%RNnorm==1.0_SDK/2.0_SDK**63,'norm')
+      ASSERT(myRNG%counter == 0,'counter')
+      ASSERT(myRNG%RNmult == 2806196910506780709_SLK,'mult')
+      ASSERT(myRNG%RNadd == 1_SLK,'add')
+      ASSERT(myRNG%RNnorm == 1.0_SDK/2.0_SDK**63,'norm')
 
       firstten(1)=1_SLK
       firstten(2)=2806196910506780710_SLK
@@ -117,7 +117,7 @@ PROGRAM testStochasticSampler
       firstten(11)=2039497501229545367_SLK
       
       DO i=1,11
-        ASSERT(myRNG%RNseed==firstten(i),'RNG did not reproduce first 10 random numbers')
+        ASSERT(myRNG%RNseed == firstten(i),'RNG did not reproduce first 10 random numbers')
         FINFO() 'Failed at random number: ', i
         x=myRNG%rng()
       ENDDO
@@ -126,8 +126,8 @@ PROGRAM testStochasticSampler
         x=myRNG%rng()
       ENDDO
       
-      CALL myRNG2%init(3,skip=myRNG%counter)
-      ASSERT(myRNG%rng()==myRNG2%rng(),'RNG did not skip ahead properly.')
+      CALL myRNG2%init(3,SKIP=myRNG%counter)
+      ASSERT(myRNG%rng() == myRNG2%rng(),'RNG did not skip ahead properly.')
       FINFO() "RNG 1:         ", myRNG%rng()
       FINFO() "RNG 2 Skipped: ", myRNG2%rng()
       CALL myRNG2%clear()

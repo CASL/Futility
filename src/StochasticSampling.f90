@@ -17,16 +17,17 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief Utility module for performing stochastic sampling.
 !>
-!> This package contains a Linear Congruential Random Number Generator that is
-!> contained in MCNP.  The LCRNG format is common and could easily be extended
-!> to have other LCRNGs.  The LCRNG is initialized by providing the routine with
-!> an initial seed.  In addition to the LCRNG, several statistical distribution
-!> functions have been created to allow for the sampling of non-uniform
-!> distrubitions.
+!> This package contains a Linear Congruential Random Number Generator (LCRNG)
+!> that is contained in MCNP. The LCRNG format is common and could easily be
+!> extended to have other LCRNGs. The LCRNG is initialized by providing the
+!> routine with an initial seed. In addition to the LCRNG, several statistical
+!> distribution functions have been created to allow for the sampling of
+!> non-uniform distrubitions.
 !>
 !> @par Module Dependencies
 !>  - @ref IntrType "IntrType": @copybrief IntrType
 !>  - @ref ExceptionHandler "ExceptionHandler": @copybrief ExceptionHandler
+!>  - @ref ParallelEnv "ParallelEnv": @copybrief ParallelEnv
 !>
 !> @par EXAMPLES
 !> @code
@@ -36,11 +37,11 @@
 !>   REAL(SDK) :: randvar
 !>
 !>   CALL myRNG%init(5_SLK**19)
-!>   randvar = myRNG%rng()
-!>   randvar = myRNG%uniform(-1.0,1.0)
-!>   randvar = myRNG%exponential(0.75)
-!>   randvar = myRNG%normal(0.0,1.0)
-!>   randint = myRNG%histogram( (/ 0.2, 0.5, 0.1, 0.3 /) )
+!>   randvar=myRNG%rng()
+!>   randvar=myRNG%uniform(-1.0,1.0)
+!>   randvar=myRNG%exponential(0.75)
+!>   randvar=myRNG%normal(0.0,1.0)
+!>   randint=myRNG%histogram( (/ 0.2, 0.5, 0.1, 0.3 /) )
 !> ENDPROGRAM ExampleRNG
 !> @endcode
 !>
@@ -51,8 +52,8 @@
 MODULE StochasticSampling
 
   USE IntrType
-  USE ParallelEnv
   USE ExceptionHandler
+  USE ParallelEnv
   IMPLICIT NONE
   PRIVATE
 !
@@ -65,6 +66,9 @@ MODULE StochasticSampling
   
   !> Pi
   REAL(SRK),PARAMETER,PRIVATE :: PI=3.141592653589793_SRK
+  
+  !> Name of module
+  CHARACTER(LEN=*),PARAMETER :: modName='STOCHASTICSAMPLER'
   
   !> Add description
   TYPE :: RNGdataType
@@ -177,15 +181,13 @@ MODULE StochasticSampling
       !> @copydetails StochasticSampling::pwlreject_Sampler
 !       Implemented but buggy
 !      PROCEDURE,PASS :: pwlrejection => pwlreject_Sampler
-    ENDTYPE StochasticSamplingType
+  ENDTYPE StochasticSamplingType
 
-    !> Exception Handler for use in MatrixTypes
+  !> Exception Handler for use in MatrixTypes
   TYPE(ExceptionHandlerType),POINTER,SAVE :: eStochasticSampler => NULL()
-  
-  !> Name of module
-  CHARACTER(LEN=*),PARAMETER :: modName='STOCHASTICSAMPLER'
-  
-CONTAINS
+!
+!===============================================================================
+  CONTAINS
 !
 !-------------------------------------------------------------------------------
 !> @brief Constructor for a stochastic sampler
@@ -214,10 +216,10 @@ CONTAINS
       INTEGER(SLK) :: myskip,period
       TYPE(RNGdataType) :: RNGdata
       
-      mpirank=0_SIK
-      omprank=0_SIK
-      nproc=1_SIK
-      nthread=1_SIK
+      mpirank=0
+      omprank=0
+      nproc=1
+      nthread=1
       myskip=0_SLK
       
       RNGdata=generators(RNGid)
@@ -229,7 +231,7 @@ CONTAINS
       ENDIF
 
       IF(PRESENT(MPIparallelEnv)) THEN
-        IF (MPIparallelEnv%isInit()) THEN
+        IF(MPIparallelEnv%isInit()) THEN
           mpirank=MPIparallelEnv%rank
           nproc=MPIparallelEnv%nproc
         ELSE
@@ -238,7 +240,7 @@ CONTAINS
         ENDIF
       ENDIF
       IF(PRESENT(OMPparallelEnv)) THEN
-        IF (OMPparallelEnv%isInit()) THEN
+        IF(OMPparallelEnv%isInit()) THEN
           omprank=OMPparallelEnv%rank
           nthread=OMPparallelEnv%nproc
         ELSE
@@ -258,15 +260,13 @@ CONTAINS
       ENDIF
 
       myskip=myskip+INT(mpirank,SLK)*INT(period/INT(nproc,SLK),SLK)+ &
-              INT(omprank,SLK)*INT(period/INT(nproc*nthread,SLK),SLK)
+        INT(omprank,SLK)*INT(period/INT(nproc*nthread,SLK),SLK)
       
       sampler%RNseed=RNGdata%RNseed0
       ! Add checks for constraints on seed0
       IF(PRESENT(seed0)) sampler%RNseed=seed0
       
-      IF(myskip /= 0_SLK) THEN
-        sampler%RNseed=RNskip(RNGdata,sampler%RNseed,myskip)
-      ENDIF
+      IF(myskip /= 0_SLK) sampler%RNseed=RNskip(RNGdata,sampler%RNseed,myskip)
       
       sampler%RNmult=RNGdata%RNmult
       sampler%RNadd=RNGdata%RNadd
@@ -334,7 +334,6 @@ CONTAINS
       CLASS(StochasticSamplingType),INTENT(INOUT) :: sampler
       REAL(SDK),INTENT(IN) :: a
       REAL(SDK) :: rang
-
       rang=-LOG(sampler%rng())/a
     ENDFUNCTION exp_Sampler
 !
@@ -380,12 +379,13 @@ CONTAINS
     FUNCTION maxw_Sampler(sampler,T) RESULT(rang)
       CLASS(StochasticSamplingType),INTENT(INOUT) :: sampler
       REAL(SDK),INTENT(IN) :: T
-      REAL(SDK) :: rn1, rn2, rn3
+      REAL(SDK) :: rn1,rn2,rn3
       REAL(SDK) :: rang
       
       rn1=-LOG(sampler%rng())
       rn2=-LOG(sampler%rng())
-      rn3=COS(0.5_SDK*PI*sampler%rng())**2
+      rn3=COS(0.5_SDK*PI*sampler%rng())
+      rn3=rn3*rn3
       rang=T*(rn1+rn2*rn3)
     ENDFUNCTION maxw_Sampler
 !
@@ -400,9 +400,9 @@ CONTAINS
       CLASS(StochasticSamplingType),INTENT(INOUT) :: sampler
       REAL(SDK),INTENT(IN) :: a
       REAL(SDK),INTENT(IN) :: b
-      REAL(SDK) :: w, a2b
+      REAL(SDK) :: w,a2b
       REAL(SDK) :: rang
-      a2b=a**2*b
+      a2b=a*a*b
       w=sampler%maxwellian(a)
       rang=w+0.25_SDK*a2b+sampler%uniform(-1.0_SDK,1.0_SDK)*SQRT(a2b*w)
     ENDFUNCTION watt_Sampler
@@ -424,7 +424,7 @@ CONTAINS
 !
 !-------------------------------------------------------------------------------
 !> @brief Routine returns a random number from a Discrete Histogram with
-!>                components y
+!> components y
 !> @param sampler the type variable to sample from
 !> @param y is a vector of the values of the histogram
 !>
@@ -440,13 +440,13 @@ CONTAINS
       sum=0.0_SDK
       DO rang=1,n
         sum=sum+y(rang)
-        IF (rn1 <sum) EXIT
+        IF(rn1 < sum) EXIT
       ENDDO
     ENDFUNCTION nhist_Sampler
 !
 !-------------------------------------------------------------------------------
 !> @brief Routine returns a random number from an unnormalized discrete
-!>        histogram with components y
+!> histogram with components y
 !> @param sampler the type variable to sample from
 !> @param y is a vector of the values of the histogram
 !>
@@ -459,7 +459,7 @@ CONTAINS
 !
 !-------------------------------------------------------------------------------
 !> @brief Routine returns a random number from a normalized continuous
-!>        histogram with components y and bounds x
+!> histogram with components y and bounds x
 !> @param sampler the type variable to sample from
 !> @param y is a vector of the values of the histogram
 !> @param x is a vector of the bounds of y
@@ -476,7 +476,7 @@ CONTAINS
 !
 !-------------------------------------------------------------------------------
 !> @brief Routine returns a random number from an unnormalized continuous
-!>        histogram with components y and bounds x
+!> histogram with components y and bounds x
 !> @param sampler the type variable to sample from
 !> @param y is a vector of the values of the histogram
 !> @param x is a vector of the bounds of y
@@ -486,12 +486,12 @@ CONTAINS
       REAL(SDK),INTENT(IN) :: y(:)
       REAL(SDK),INTENT(IN) :: x(:)
       REAL(SDK) :: rang
-      rang=sampler%conthistogram(y/sum(y),x)
+      rang=sampler%conthistogram(y/SUM(y),x)
     ENDFUNCTION uchist_Sampler
 !
 !-------------------------------------------------------------------------------
 !> @brief Routine returns a random number from a normalized piece-wise linear
-!>        distribution with points x and y
+!> distribution with points x and y
 !> @param sampler the type variable to sample from
 !> @param y is a vector of the y values of the piece-wise linear function
 !> @param x is a vector of the x values of the piece-wise linear function
@@ -501,7 +501,7 @@ CONTAINS
       REAL(SDK),INTENT(IN) :: y(:)
       REAL(SDK),INTENT(IN) :: x(:)
       REAL(SDK) :: rang
-      REAL(SDK) :: rn1, rn2, sum
+      REAL(SDK) :: rn1,rn2,sum
       INTEGER(SIK) :: i,n
       
       n=SIZE(x,DIM=1)-1
@@ -516,7 +516,7 @@ CONTAINS
       ENDDO
       
       IF(rn1 < y(i)/(y(i+1)+y(i))) THEN
-        rang=x(i+1) - (x(i+1)-x(i))*SQRT(rn2)
+        rang=x(i+1)-(x(i+1)-x(i))*SQRT(rn2)
       ELSE
         rang=x(i)+(x(i+1)-x(i))*SQRT(rn2)
       ENDIF
@@ -524,7 +524,7 @@ CONTAINS
 !
 !-------------------------------------------------------------------------------
 !> @brief Routine returns a random number from a unnormalized piece-wise linear
-!>        distribution with points x and y
+!> distribution with points x and y
 !> @param sampler the type variable to sample from
 !> @param y is a vector of the y values of the piece-wise linear function
 !> @param x is a vector of the x values of the piece-wise linear function
@@ -548,7 +548,7 @@ CONTAINS
 !
 !-------------------------------------------------------------------------------
 !> @brief Routine returns a random number from an arbitrary function func using
-!>        rejection sampling
+!> rejection sampling
 !> @param sampler the type variable to sample from
 !> @param func is the function which is sampled
 !> @param xmin is the minimum value of x
@@ -572,13 +572,13 @@ CONTAINS
 
       DO
         rang=sampler%uniform(xmin,xmax)
-        IF (sampler%uniform(0.0_SDK,ymax)<=func(rang)) RETURN
+        IF(sampler%uniform(0.0_SDK,ymax) <= func(rang)) RETURN
       ENDDO
     ENDFUNCTION reject_Sampler
 !
 !-------------------------------------------------------------------------------
 !> @brief Routine returns a random number from an arbitrary function func with
-!>        extra argument vector arg using rejection sampling
+!> extra argument vector arg using rejection sampling
 !> @param sampler the type variable to sample from
 !> @param func is the function which is sampled
 !> @param xmin is the minimum value of x
@@ -605,21 +605,21 @@ CONTAINS
 
       DO
         rang=sampler%uniform(xmin,xmax)
-        IF (sampler%uniform(0.0_SDK,ymax)<=func(rang,arg)) RETURN
+        IF(sampler%uniform(0.0_SDK,ymax) <= func(rang,arg)) RETURN
       ENDDO
     ENDFUNCTION rejectarg_Sampler
 !!
 !!-------------------------------------------------------------------------------
 !!> @brief Routine returns a random number from an arbitrary function func using
-!!>        rejection sampling which is bound by a piece-wise linear function
+!!> rejection sampling which is bound by a piece-wise linear function
 !!> @param sampler the type variable to sample from
 !!> @param func is the function which is sampled
 !!> @param yval is the y components of a piece-wise linear function bounding func
 !!> @param xval is the x components of a piece-wise linear function bounding func
 !!> @param c is an optional scalar which scales the piece-wise linear fucntion
-!!>          bounding func.  It is important to note that if c is present the pwl
-!!>          function is assumed to be normalized, if it is not present the pwl
-!!>          function is not scaled and used as is
+!!>        bounding func.  It is important to note that if c is present the pwl
+!!>        function is assumed to be normalized, if it is not present the pwl
+!!>        function is not scaled and used as is
 !!>
 !*** this function is commented out because it is buggy and isn't a needed feature right now
 !    FUNCTION pwlreject_Sampler(sampler,func,yval,xval,c) RESULT(rang)
@@ -643,7 +643,7 @@ CONTAINS
 !      n=SIZE(xval,DIM=1)-1
 !      ALLOCATE(yscaled(n+1))
 !      
-!      IF (PRESENT(c)) THEN
+!      IF(PRESENT(c)) THEN
 !        mult=c
 !        yscaled=yval
 !      ELSE
@@ -657,7 +657,7 @@ CONTAINS
 !      DO
 !        rang=sampler%pwlinear(yscaled,xval)
 !        DO i=1,n
-!          IF (xval(i) >= rang) then
+!          IF(xval(i) >= rang) then
 !            g=(yscaled(i)-yscaled(i-1))/(xval(i)-xval(i-1))*(rang-xval(i-1))+yscaled(i-1)
 !            EXIT
 !          ENDIF
@@ -669,15 +669,15 @@ CONTAINS
 !
 !-------------------------------------------------------------------------------
 !> @brief Routine returns a random number from an arbitrary function func using
-!>        rejection sampling which is bound by a piece-wise linear function
+!> rejection sampling which is bound by a piece-wise linear function
 !> @param sampler the type variable to sample from
 !> @param func is the function which is sampled
 !> @param yval is the y components of a piece-wise linear function bounding func
 !> @param xval is the x components of a piece-wise linear function bounding func
 !> @param c is an optional scalar which scales the piece-wise linear fucntion
-!>          bounding func.  It is important to note that if c is present the pwl
-!>          function is assumed to be normalized, if it is not present the pwl
-!>          function is not scaled and used as is
+!>        bounding func.  It is important to note that if c is present the pwl
+!>        function is assumed to be normalized, if it is not present the pwl
+!>        function is not scaled and used as is
 !>
     PURE FUNCTION RNskip(RNGdata,seed0,skip) RESULT(newseed)
       TYPE(RNGdataType),INTENT(IN) :: RNGdata
@@ -685,17 +685,17 @@ CONTAINS
       INTEGER(SLK),INTENT(IN) :: skip
       ! Local Variables
       INTEGER(SLK) :: newseed
-      INTEGER(SLK) :: nskip, gen, g, inc, c, gp, rn, period, mask
+      INTEGER(SLK) :: nskip,gen,g,inc,c,gp,rn,period,mask
       
       mask=ISHFT(NOT(0_SLK),RNGdata%RNlog2mod-64)
-      IF( RNGdata%RNadd==0 ) THEN
+      IF(RNGdata%RNadd == 0) THEN
         period=ISHFT(1_SLK,RNGdata%RNlog2mod-2)
       ELSE
         period=ISHFT(1_SLK,RNGdata%RNlog2mod)
       ENDIF
       
       nskip=skip
-      DO WHILE (nskip<0_SLK)
+      DO WHILE(nskip < 0_SLK)
         nskip=nskip+period
       ENDDO
       
@@ -704,7 +704,7 @@ CONTAINS
       g=RNGdata%RNmult
       inc=0
       c=RNGdata%RNadd
-      DO WHILE(nskip>0_SLK)
+      DO WHILE(nskip > 0_SLK)
         IF(BTEST(nskip,0))  THEN
           gen=IAND(gen*g,mask)
           inc=IAND(inc*g,mask)
