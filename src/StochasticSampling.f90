@@ -60,6 +60,16 @@ MODULE StochasticSampling
 ! List of public members
   PUBLIC :: eStochasticSampler
   PUBLIC :: StochasticSamplingType
+  PUBLIC :: RNG_MCNP_STD
+  PUBLIC :: RNG_LEcuyer1
+  PUBLIC :: RNG_LEcuyer2
+  PUBLIC :: RNG_LEcuyer3
+  
+  ! Ennumeration list for RNG types
+  INTEGER(SIK),PARAMETER :: RNG_MCNP_STD=1
+  INTEGER(SIK),PARAMETER :: RNG_LEcuyer1=2
+  INTEGER(SIK),PARAMETER :: RNG_LEcuyer2=3
+  INTEGER(SIK),PARAMETER :: RNG_LEcuyer3=4 
   
   !> Maximum length for the name of a random number generator
   INTEGER(SIK),PARAMETER :: MAX_RNG_NAME_LEN=8
