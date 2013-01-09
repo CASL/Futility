@@ -95,7 +95,7 @@ PROGRAM testStochasticSampler
       CALL e%setQuietMode(.TRUE.)
       eStochasticSampler => e
       ! Test Manager Init
-      CALL myRNG%init(3)
+      CALL myRNG%init(RNG_LEcuyer2)
       SET_PREFIX('RNG Init')
       ! Test Initialize
       ASSERT(myRNG%isInit,'isInit')
@@ -126,19 +126,18 @@ PROGRAM testStochasticSampler
         x=myRNG%rng()
       ENDDO
       
-      CALL myRNG2%init(3,SKIP=myRNG%counter)
+      CALL myRNG2%init(RNG_LEcuyer2,SKIP=myRNG%counter)
       ASSERT(myRNG%rng() == myRNG2%rng(),'RNG did not skip ahead properly.')
       FINFO() "RNG 1:         ", myRNG%rng()
       FINFO() "RNG 2 Skipped: ", myRNG2%rng()
       CALL myRNG2%clear()
 
       !  Set up case wehre parallel env is not initialized
-      CALL myRNG2%init(3,MPIparallelEnv=MPIEnv,OMPparallelEnv=OMPEnv)
-      CALL myRNG3%init(3)
+      CALL myRNG2%init(RNG_LEcuyer2,MPIparallelEnv=MPIEnv,OMPparallelEnv=OMPEnv)
+      CALL myRNG3%init(RNG_LEcuyer2)
       ASSERT(myRNG2%RNseed==myRNG3%RNseed,'RNG did not handle uninitialized parallel env properly.')
       CALL myRNG2%clear()
       CALL myRNG3%clear()
-      
       
       ! Set up parallel environment for initialization test
       !   Initialize null MPI env then sets it to appear as 100 processors and of rank 22
@@ -146,7 +145,7 @@ PROGRAM testStochasticSampler
       MPIEnv%nproc=100
       MPIEnv%rank=22
       
-      CALL myRNG2%init(3,MPIparallelEnv=MPIEnv)
+      CALL myRNG2%init(RNG_LEcuyer2,MPIparallelEnv=MPIEnv)
       
       ! Set up parallel environment for initialization test
       !   Initialize null MPI env then sets it to appear as 10 processors and of rank 2
@@ -157,7 +156,7 @@ PROGRAM testStochasticSampler
       CALL OMPEnv%init(1)
       OMPEnv%nproc=10
       OMPEnv%rank=2
-      CALL myRNG3%init(3,MPIparallelEnv=MPIEnv,OMPparallelEnv=OMPEnv)
+      CALL myRNG3%init(RNG_LEcuyer2,MPIparallelEnv=MPIEnv,OMPparallelEnv=OMPEnv)
       
       ASSERT(myRNG2%RNseed==myRNG3%RNseed,'RNG Parallel Decomposition did not initialize properly.')
       
@@ -184,8 +183,11 @@ PROGRAM testStochasticSampler
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE TestRNG
+      USE Times
+      
       INTEGER(SLK) :: i,n, inicount
       REAL(SDK) :: x, mean, stdev, truemean, truestd, tol
+      TYPE(TimerType) :: testTimer
       
       n=1e8
       
@@ -196,11 +198,13 @@ PROGRAM testStochasticSampler
       truestd=1.0_SDK/SQRT(12.0_SDK)
       tol=5.0_SDK/SQRT(REAL(n,SDK))
 
+      CALL testTimer%tic()
       DO i=1,n
         x=myRNG%rng()
         mean=mean+x/REAL(n,SDK)
         stdev=stdev+x**2/REAL(n,SDK)
       ENDDO
+      CALL testTimer%toc()
       stdev=SQRT(stdev-mean**2)
 
       ASSERT(myRNG%counter-inicount==n,'Check counter increment.')      
@@ -208,6 +212,9 @@ PROGRAM testStochasticSampler
       FINFO() mean,truemean,ABS(mean-truemean)
       ASSERT(ABS(stdev-truestd)<tol,'RNG standard deviation does not meet criteria')
       FINFO() stdev,truestd,ABS(stdev-truestd)
+      
+      WRITE(*,'(A,ES14.7,A)') '     RNG generated ', REAL(n,SRK)/testTimer%elapsedtime, &
+                              ' random numbers per second'
  
     ENDSUBROUTINE TestRNG
 !
