@@ -189,6 +189,8 @@ PROGRAM testStochasticSampler
       REAL(SDK) :: x, mean, stdev, truemean, truestd, tol
       TYPE(TimerType) :: testTimer
       
+      CALL testTimer%setTimerHiResMode(.TRUE.) 
+      
       n=1e8
       
       inicount=myRNG%counter
