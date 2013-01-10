@@ -500,7 +500,6 @@ MODULE MatrixTypes
       
       IF(.NOT. matrix%isInit) THEN
         IF(n < 1) THEN
-          WRITE(*,*) n
           CALL eMatrixType%raiseError('Incorrect input to '// &
             modName//'::'//myName//' - Number of rows (n) must'// &
               ' be greater than 1!')
@@ -1166,8 +1165,14 @@ MODULE MatrixTypes
       REAL(SRK),ALLOCATABLE :: tmpmat(:,:),tmpvec(:),tmpy(:)
       INTEGER(SIK) :: i,j
       LOGICAL(SBK) :: localalloc
+#ifdef HAVE_PETSC
+      PetscErrorCode  :: iperr
+      TYPE(PETScVectorType) :: dummy
+      TYPE(ParamType) :: vecPList
+#endif
       
       CHARACTER(LEN=1) :: t
+      REAL(SRK) :: a,b
       
       !Error checking of subroutine input
       localalloc=.FALSE.
@@ -1178,7 +1183,11 @@ MODULE MatrixTypes
       
       IF(thisMatrix%isInit) THEN
         t='n'
+        a=1
+        b=1
         IF(PRESENT(trans)) t=trans
+        IF(PRESENT(alpha)) a=alpha
+        IF(PRESENT(beta))  b=beta
         
         SELECTTYPE(x); TYPE IS(RealVectorType)
           SELECTTYPE(y); TYPE IS(RealVectorType)
@@ -1233,33 +1242,19 @@ MODULE MatrixTypes
           SELECTTYPE(y); TYPE IS(PETScVectorType)
             SELECTTYPE(thisMatrix); TYPE IS(PETScMatrixType)
 #ifdef HAVE_PETSC
-                ALLOCATE(tmpmat(thisMatrix%n,thisMatrix%n))
-                ALLOCATE(tmpvec(x%n))
-                ALLOCATE(tmpy(x%n))
-                ! stuff into temporary matrix
-                DO i=1,thisMatrix%n
-                  DO j=1,thisMatrix%n
-                    CALL thisMatrix%get(i,j,tmpmat(i,j))
-                  ENDDO
-                ENDDO
-                ! stuff into temporary vector
-                CALL x%get(tmpvec)
-                CALL y%get(tmpy)
-                IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
-                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-                    alpha,tmpmat,thisMatrix%n,tmpvec,1,beta,tmpy,1)
-                ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-                    alpha,tmpmat,thisMatrix%n,tmpvec,1,tmpy,1)
-                ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
-                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-                    tmpmat,thisMatrix%n,tmpvec,1,beta,tmpy,1)
-                ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-                    tmpmat,thisMatrix%n,tmpvec,1,tmpy,1)
+                CALL vecPList%add('VectorType -> n',y%n)
+                CALL vecPList%add('VectorType -> MPI_Comm_ID',y%comm)
+                CALL dummy%init(vecPList)
+                IF(t == 'n') THEN
+                  CALL MatMult(thisMatrix%a,x%b,dummy%b,iperr)
+                ELSE
+                  CALL MatMultTranspose(thisMatrix%a,x%b,dummy%b,iperr)
                 ENDIF
-                ! set into return vector
-                CALL y%set(tmpy)
+                CALL BLAS_scal(dummy,a)
+                CALL BLAS_scal(y,b)
+                CALL BLAS_axpy(dummy,y)
+                CALL vecPList%clear()
+                CALL dummy%clear()
 #else
                 CALL eMatrixType%raiseFatalError('Incorrect call to '// &
                    modName//'::'//myName//' - PETSc not enabled.  You will'// &

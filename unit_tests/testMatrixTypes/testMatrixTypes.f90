@@ -485,14 +485,12 @@ PROGRAM testMatrixTypes
       CALL pList%add('MatrixType->nnz',6_SNK)
       CALL thisMatrix%clear()
       CALL thisMatrix%init(pList)
-      WRITE(*,*) 4
         
       SELECTTYPE(thisMatrix)
         TYPE IS(SparseMatrixType)
           CALL thisMatrix%setShape(1,1)
           CALL thisMatrix%setShape(2,2)
       ENDSELECT
-      WRITE(*,*) 5
       CALL thisMatrix%set(1,2,1._SRK)
         
       SELECTTYPE(thisMatrix)
@@ -1431,21 +1429,24 @@ PROGRAM testMatrixTypes
       !no crash? good
       WRITE(*,*) '  Passed: CALL petscsparse%set(...)'
       
-      !Test BLAS_matvec
       CALL thisMatrix%clear()
       CALL pList%clear()
-      CALL pList%add('MatrixType->n',2_SNK)
-      CALL pList%add('MatrixType->isSym',.TRUE.)
+      CALL pList%add('MatrixType->n',3_SNK)
+      CALL pList%add('MatrixType->isSym',.FALSE.)
       CALL pList%add('MatrixType->mattype',SPARSE)
       CALL pList%validate(pList,optListMat)
       CALL thisMatrix%init(pList)  !symmetric
       CALL thisMatrix%set(1,1,1._SRK)
-      CALL thisMatrix%set(1,2,2._SRK)
-      CALL thisMatrix%set(2,2,3._SRK)
+      CALL thisMatrix%set(1,3,2._SRK)
+      CALL thisMatrix%set(2,2,4._SRK)
+      CALL thisMatrix%set(2,3,3._SRK)
+      CALL thisMatrix%set(3,1,4._SRK)
+      CALL thisMatrix%set(3,2,5._SRK)
+      CALL thisMatrix%set(3,3,6._SRK)
       x=1.0_SRK
       y=1.0_SRK
       CALL BLAS_matvec(THISMATRIX=thisMatrix,X=x,Y=y)
-      IF(ANY(.NOT.(y .APPROXEQ. (/4._SRK,6._SRK,1._SRK/)))) THEN
+      IF(ANY(.NOT.(y .APPROXEQ. (/4._SRK,8._SRK,16._SRK/)))) THEN
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,X=x,Y=y) -petscsparse FAILED!"
         STOP 666
       ENDIF
@@ -1453,7 +1454,7 @@ PROGRAM testMatrixTypes
       CALL yRealVector%set(1.0_SRK)
       CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,Y=yRealVector)
       CALL yRealVector%get(y)
-      IF(ANY(.NOT.(y .APPROXEQ. (/4._SRK,6._SRK,1._SRK/)))) THEN
+      IF(ANY(.NOT.(y .APPROXEQ. (/4._SRK,8._SRK,16._SRK/)))) THEN
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,Y=yRealVector) -petscsparse FAILED!"
         STOP 666
       ENDIF
@@ -1461,80 +1462,80 @@ PROGRAM testMatrixTypes
       CALL yPETScVector%set(1.0_SRK)
       CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xPETScVector,Y=yPETScVector)
       CALL yRealVector%get(y)
-      IF(ANY(.NOT.(y .APPROXEQ. (/4._SRK,6._SRK,1._SRK/)))) THEN
+      IF(ANY(.NOT.(y .APPROXEQ. (/4._SRK,8._SRK,16._SRK/)))) THEN
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,X=PETScVector,Y=yPETScVector) -petscsparse FAILED!"
         STOP 666
       ENDIF
       y=1.0_SRK
       CALL BLAS_matvec(THISMATRIX=thisMatrix,trans='t',X=x,Y=y)
-      IF(ANY(.NOT.(y .APPROXEQ. (/4._SRK,6._SRK,1._SRK/)))) THEN
-        WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,X=x,Y=y) -petscsparse FAILED!"
+      IF(ANY(.NOT.(y .APPROXEQ. (/6._SRK,10._SRK,12._SRK/)))) THEN
+        WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,trans='t',X=x,Y=y) -petscsparse FAILED!"
         STOP 666
       ENDIF
       CALL yRealVector%set(1.0_SRK)
       CALL BLAS_matvec(THISMATRIX=thisMatrix,trans='t',X=xRealVector,Y=yRealVector)
       CALL yRealVector%get(y)
-      IF(ANY(.NOT.(y .APPROXEQ. (/4._SRK,6._SRK,1._SRK/)))) THEN
+      IF(ANY(.NOT.(y .APPROXEQ. (/6._SRK,10._SRK,12._SRK/)))) THEN
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,Y=yRealVector) -petscsparse FAILED!"
         STOP 666
       ENDIF
       CALL yPETScVector%set(1.0_SRK)
       CALL BLAS_matvec(THISMATRIX=thisMatrix,trans='t',X=xPETScVector,Y=yPETScVector)
       CALL yPETScVector%get(y)
-      IF(ANY(.NOT.(y .APPROXEQ. (/4._SRK,6._SRK,1._SRK/)))) THEN
-        WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xPETScVector,Y=yPETScVector) -petscsparse FAILED!"
+      IF(ANY(.NOT.(y .APPROXEQ. (/6._SRK,10._SRK,12._SRK/)))) THEN
+        WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,trans='t',X=xPETScVector,Y=yPETScVector) -petscsparse FAILED!"
         STOP 666
       ENDIF
       y=1.0_SRK
       CALL BLAS_matvec(THISMATRIX=thisMatrix,X=x,BETA=2.0_SRK,Y=y)
-      IF(ANY(.NOT.(y .APPROXEQ. (/5._SRK,7._SRK,1._SRK/)))) THEN
+      IF(ANY(.NOT.(y .APPROXEQ. (/5._SRK,9._SRK,17._SRK/)))) THEN
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,X=x,BETA=2.0_SRK,Y=y) -petscsparse FAILED!"
         STOP 666
       ENDIF
       CALL yRealVector%set(1.0_SRK)
       CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,BETA=2.0_SRK,Y=yRealVector)
       CALL yRealVector%get(y)
-      IF(ANY(.NOT.(y .APPROXEQ. (/5._SRK,7._SRK,1._SRK/)))) THEN
+      IF(ANY(.NOT.(y .APPROXEQ. (/5._SRK,9._SRK,17._SRK/)))) THEN
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,BETA=2.0_SRK,Y=yRealVector) -petscsparse FAILED!"
         STOP 666
       ENDIF
       CALL yPETScVector%set(1.0_SRK)
       CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xPETScVector,BETA=2.0_SRK,Y=yPETScVector)
       CALL yPETScVector%get(y)
-      IF(ANY(.NOT.(y .APPROXEQ. (/5._SRK,7._SRK,1._SRK/)))) THEN
+      IF(ANY(.NOT.(y .APPROXEQ. (/5._SRK,9._SRK,17._SRK/)))) THEN
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xPETScVector,BETA=2.0_SRK,Y=yPETScVector) -petscsparse FAILED!"
         STOP 666
       ENDIF
       y=1.0_SRK
       CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=x,Y=y)
-      IF(ANY(.NOT.(y .APPROXEQ. (/7._SRK,11._SRK,1._SRK/)))) THEN
+      IF(ANY(.NOT.(y .APPROXEQ. (/7._SRK,15._SRK,31._SRK/)))) THEN
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=x,Y=y) -petscsparse FAILED!"
         STOP 666
       ENDIF
       CALL yRealVector%set(1.0_SRK)
       CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xRealVector,Y=yRealVector)
       CALL yRealVector%get(y)
-      IF(ANY(.NOT.(y .APPROXEQ. (/7._SRK,11._SRK,1._SRK/)))) THEN
+      IF(ANY(.NOT.(y .APPROXEQ. (/7._SRK,15._SRK,31._SRK/)))) THEN
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xRealVector,Y=yRealVector) -petscsparse FAILED!"
         STOP 666
       ENDIF
       CALL yPETScVector%set(1.0_SRK)
       CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xPETScVector,Y=yPETScVector)
       CALL yPETScVector%get(y)
-      IF(ANY(.NOT.(y .APPROXEQ. (/7._SRK,11._SRK,1._SRK/)))) THEN
+      IF(ANY(.NOT.(y .APPROXEQ. (/7._SRK,15._SRK,31._SRK/)))) THEN
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xPETScVector,Y=yPETScVector) -petscsparse FAILED!"
         STOP 666
       ENDIF
       y=1.0_SRK
       CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=x,BETA=2.0_SRK,Y=y)
-      IF(ANY(.NOT.(y .APPROXEQ. (/8._SRK,12._SRK,1._SRK/)))) THEN
+      IF(ANY(.NOT.(y .APPROXEQ. (/8._SRK,16._SRK,32._SRK/)))) THEN
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=x,BETA=2.0_SRK,Y=y) -petscsparse FAILED!"
         STOP 666
       ENDIF
       CALL yRealVector%set(1.0_SRK)
       CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xRealVector,BETA=2.0_SRK,Y=yRealVector)
       CALL yRealVector%get(y)
-      IF(ANY(.NOT.(y .APPROXEQ. (/8._SRK,12._SRK,1._SRK/)))) THEN
+      IF(ANY(.NOT.(y .APPROXEQ. (/8._SRK,16._SRK,32._SRK/)))) THEN
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xRealVector,BETA=2.0_SRK,Y=yRealVector)", &
                    "-petscsparse FAILED!"
         STOP 666
@@ -1542,7 +1543,7 @@ PROGRAM testMatrixTypes
       CALL yPETScVector%set(1.0_SRK)
       CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xPETScVector,BETA=2.0_SRK,Y=yPETScVector)
       CALL yPETScVector%get(y)
-      IF(ANY(.NOT.(y .APPROXEQ. (/8._SRK,12._SRK,1._SRK/)))) THEN
+      IF(ANY(.NOT.(y .APPROXEQ. (/8._SRK,16._SRK,32._SRK/)))) THEN
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xPETScVector,BETA=2.0_SRK,Y=yPETScVector)", &
                    " -petscsparse FAILED!"
         STOP 666
@@ -1551,7 +1552,7 @@ PROGRAM testMatrixTypes
       y=2._SRK
       CALL BLAS_matvec(THISMATRIX=thisMatrix,X=x,BETA=2.0_SRK,Y=y) !Error check uninit
       IF(ANY(.NOT.(y .APPROXEQ. (/2._SRK,2._SRK,2._SRK/)))) THEN
-        WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=x,BETA=2.0_SRK,Y=y) -petscsparse FAILED!"
+        WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,X=x,BETA=2.0_SRK,Y=y) -petscsparse FAILED!"
         STOP 666
       ENDIF
       CALL yRealVector%set(2._SRK)
@@ -1838,18 +1839,22 @@ PROGRAM testMatrixTypes
       !Test BLAS_matvec
       CALL thisMatrix%clear()
       CALL pList%clear()
-      CALL pList%add('MatrixType->n',2_SNK)
-      CALL pList%add('MatrixType->isSym',.TRUE.)
+      CALL pList%add('MatrixType->n',3_SNK)
+      CALL pList%add('MatrixType->isSym',.FALSE.)
       CALL pList%add('MatrixType->mattype',DENSESQUARE)
       CALL pList%validate(pList,optListMat)
       CALL thisMatrix%init(pList)  !symmetric
       CALL thisMatrix%set(1,1,1._SRK)
-      CALL thisMatrix%set(1,2,2._SRK)
-      CALL thisMatrix%set(2,2,3._SRK)
+      CALL thisMatrix%set(1,3,2._SRK)
+      CALL thisMatrix%set(2,2,4._SRK)
+      CALL thisMatrix%set(2,3,3._SRK)
+      CALL thisMatrix%set(3,1,4._SRK)
+      CALL thisMatrix%set(3,2,5._SRK)
+      CALL thisMatrix%set(3,3,6._SRK)
       x=1.0_SRK
       y=1.0_SRK
       CALL BLAS_matvec(THISMATRIX=thisMatrix,X=x,Y=y)
-      IF(ANY(.NOT.(y .APPROXEQ. (/4._SRK,6._SRK,1._SRK/)))) THEN
+      IF(ANY(.NOT.(y .APPROXEQ. (/4._SRK,8._SRK,16._SRK/)))) THEN
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,X=x,Y=y) -petscdense FAILED!"
         STOP 666
       ENDIF
@@ -1857,7 +1862,7 @@ PROGRAM testMatrixTypes
       CALL yRealVector%set(1.0_SRK)
       CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,Y=yRealVector)
       CALL yRealVector%get(y)
-      IF(ANY(.NOT.(y .APPROXEQ. (/4._SRK,6._SRK,1._SRK/)))) THEN
+      IF(ANY(.NOT.(y .APPROXEQ. (/4._SRK,8._SRK,16._SRK/)))) THEN
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,Y=yRealVector) -petscdense FAILED!"
         STOP 666
       ENDIF
@@ -1865,80 +1870,80 @@ PROGRAM testMatrixTypes
       CALL yPETScVector%set(1.0_SRK)
       CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xPETScVector,Y=yPETScVector)
       CALL yPETScVector%get(y)
-      IF(ANY(.NOT.(y .APPROXEQ. (/4._SRK,6._SRK,1._SRK/)))) THEN
+      IF(ANY(.NOT.(y .APPROXEQ. (/4._SRK,8._SRK,16._SRK/)))) THEN
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,X=PETScVector,Y=yPETScVector) -petscdense FAILED!"
         STOP 666
       ENDIF
       y=1.0_SRK
       CALL BLAS_matvec(THISMATRIX=thisMatrix,trans='t',X=x,Y=y)
-      IF(ANY(.NOT.(y .APPROXEQ. (/4._SRK,6._SRK,1._SRK/)))) THEN
-        WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,X=x,Y=y) -petscdense FAILED!"
+      IF(ANY(.NOT.(y .APPROXEQ. (/6._SRK,10._SRK,12._SRK/)))) THEN
+        WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,trans='t',X=x,Y=y) -petscdense FAILED!"
         STOP 666
       ENDIF
       CALL yRealVector%set(1.0_SRK)
       CALL BLAS_matvec(THISMATRIX=thisMatrix,trans='t',X=xRealVector,Y=yRealVector)
       CALL yRealVector%get(y)
-      IF(ANY(.NOT.(y .APPROXEQ. (/4._SRK,6._SRK,1._SRK/)))) THEN
+      IF(ANY(.NOT.(y .APPROXEQ. (/6._SRK,10._SRK,12._SRK/)))) THEN
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,Y=yRealVector) -petscdense FAILED!"
         STOP 666
       ENDIF
       CALL yPETScVector%set(1.0_SRK)
       CALL BLAS_matvec(THISMATRIX=thisMatrix,trans='t',X=xPETScVector,Y=yPETScVector)
       CALL yPETScVector%get(y)
-      IF(ANY(.NOT.(y .APPROXEQ. (/4._SRK,6._SRK,1._SRK/)))) THEN
+      IF(ANY(.NOT.(y .APPROXEQ. (/6._SRK,10._SRK,12._SRK/)))) THEN
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xPETScVector,Y=yPETScVector) -petscdense FAILED!"
         STOP 666
       ENDIF
       y=1.0_SRK
       CALL BLAS_matvec(THISMATRIX=thisMatrix,X=x,BETA=2.0_SRK,Y=y)
-      IF(ANY(.NOT.(y .APPROXEQ. (/5._SRK,7._SRK,1._SRK/)))) THEN
+      IF(ANY(.NOT.(y .APPROXEQ. (/5._SRK,9._SRK,17._SRK/)))) THEN
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,X=x,BETA=2.0_SRK,Y=y) -petscdense FAILED!"
         STOP 666
       ENDIF
       CALL yRealVector%set(1.0_SRK)
       CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,BETA=2.0_SRK,Y=yRealVector)
       CALL yRealVector%get(y)
-      IF(ANY(.NOT.(y .APPROXEQ. (/5._SRK,7._SRK,1._SRK/)))) THEN
+      IF(ANY(.NOT.(y .APPROXEQ. (/5._SRK,9._SRK,17._SRK/)))) THEN
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,BETA=2.0_SRK,Y=yRealVector) -petscdense FAILED!"
         STOP 666
       ENDIF
       CALL yPETScVector%set(1.0_SRK)
       CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xPETScVector,BETA=2.0_SRK,Y=yPETScVector)
       CALL yPETScVector%get(y)
-      IF(ANY(.NOT.(y .APPROXEQ. (/5._SRK,7._SRK,1._SRK/)))) THEN
+      IF(ANY(.NOT.(y .APPROXEQ. (/5._SRK,9._SRK,17._SRK/)))) THEN
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xPETScVector,BETA=2.0_SRK,Y=yPETScVector) -petscdense FAILED!"
         STOP 666
       ENDIF
       y=1.0_SRK
       CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=x,Y=y)
-      IF(ANY(.NOT.(y .APPROXEQ. (/7._SRK,11._SRK,1._SRK/)))) THEN
+      IF(ANY(.NOT.(y .APPROXEQ. (/7._SRK,15._SRK,31._SRK/)))) THEN
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=x,Y=y) -petscdense FAILED!"
         STOP 666
       ENDIF
       CALL yRealVector%set(1.0_SRK)
       CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xRealVector,Y=yRealVector)
       CALL yRealVector%get(y)
-      IF(ANY(.NOT.(y .APPROXEQ. (/7._SRK,11._SRK,1._SRK/)))) THEN
+      IF(ANY(.NOT.(y .APPROXEQ. (/7._SRK,15._SRK,31._SRK/)))) THEN
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xRealVector,Y=yRealVector) -petscdense FAILED!"
         STOP 666
       ENDIF
       CALL yPETScVector%set(1.0_SRK)
       CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xPETScVector,Y=yPETScVector)
       CALL yPETScVector%get(y)
-      IF(ANY(.NOT.(y .APPROXEQ. (/7._SRK,11._SRK,1._SRK/)))) THEN
+      IF(ANY(.NOT.(y .APPROXEQ. (/7._SRK,15._SRK,31._SRK/)))) THEN
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xPETScVector,Y=yPETScVector) -petscdense FAILED!"
         STOP 666
       ENDIF
       y=1.0_SRK
       CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=x,BETA=2.0_SRK,Y=y)
-      IF(ANY(.NOT.(y .APPROXEQ. (/8._SRK,12._SRK,1._SRK/)))) THEN
+      IF(ANY(.NOT.(y .APPROXEQ. (/8._SRK,16._SRK,32._SRK/)))) THEN
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=x,BETA=2.0_SRK,Y=y) -petscdense FAILED!"
         STOP 666
       ENDIF
       CALL yRealVector%set(1.0_SRK)
       CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xRealVector,BETA=2.0_SRK,Y=yRealVector)
       CALL yRealVector%get(y)
-      IF(ANY(.NOT.(y .APPROXEQ. (/8._SRK,12._SRK,1._SRK/)))) THEN
+      IF(ANY(.NOT.(y .APPROXEQ. (/8._SRK,16._SRK,32._SRK/)))) THEN
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xRealVector,BETA=2.0_SRK,Y=yRealVector)", &
                    " -petscdense FAILED!"
         STOP 666
@@ -1946,7 +1951,7 @@ PROGRAM testMatrixTypes
       CALL yPETScVector%set(1.0_SRK)
       CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xPETScVector,BETA=2.0_SRK,Y=yPETScVector)
       CALL yPETScVector%get(y)
-      IF(ANY(.NOT.(y .APPROXEQ. (/8._SRK,12._SRK,1._SRK/)))) THEN
+      IF(ANY(.NOT.(y .APPROXEQ. (/8._SRK,16._SRK,32._SRK/)))) THEN
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xPETScVector,BETA=2.0_SRK,Y=yPETScVector)", &
                    " -petscdense FAILED!"
         STOP 666
