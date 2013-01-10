@@ -283,6 +283,8 @@ MODULE VectorTypes
     LOGICAL(SBK) :: isCreated=.FALSE.
     !> assembly status
     LOGICAL(SBK) :: isAssembled=.FALSE.
+    !> MPI comm ID
+    INTEGER(SIK) :: comm=-1
 !
 !List of Type Bound Procedures
     CONTAINS 
@@ -703,8 +705,9 @@ MODULE VectorTypes
         ELSE
           thisVector%isInit=.TRUE.
           thisVector%n=n
+          thisVector%comm=MPI_Comm_ID
           IF(.NOT.thisVector%isCreated) THEN
-            CALL VecCreate(MPI_Comm_ID,thisVector%b,iperr)
+            CALL VecCreate(thisVector%comm,thisVector%b,iperr)
             thisVector%isCreated=.TRUE.
           ENDIF
           CALL VecSetSizes(thisVector%b,PETSC_DECIDE,thisVector%n,iperr)
@@ -741,7 +744,7 @@ MODULE VectorTypes
 
       CALL VecDestroy(thisVector%b,iperr)
 #else
-      CHARACTER(LEN=*),PARAMETER :: myName='setOne_PETScVectorType'
+      CHARACTER(LEN=*),PARAMETER :: myName='clear_PETScVectorType'
       LOGICAL(SBK) :: localalloc
       
       localalloc=.FALSE.
@@ -774,6 +777,7 @@ MODULE VectorTypes
         IF((i <= thisVector%n) .AND. (i > 0)) THEN
           CALL VecSetValue(thisVector%b,i-1,setval,INSERT_VALUES,iperr)
           thisVector%isAssembled=.FALSE.
+          ierrc=iperr
         ENDIF
       ENDIF
       IF(PRESENT(ierr)) ierr=ierrc
@@ -972,16 +976,9 @@ MODULE VectorTypes
 #ifdef HAVE_PETSC
       ierrc=-1
       IF(thisVector%isInit) THEN
-        !
-        !Commenting out for now to let iperr get returned for unassembled case
-        !IF(.NOT.(thisVector%isAssembled)) THEN
-        !  CALL VecAssemblyBegin(thisVector%b,iperr)
-        !  CALL VecAssemblyEnd(thisVector%b,iperr)
-        !  thisVector%isAssembled=.TRUE.
-        !ENDIF
-        
         ierrc=-2
         IF((i <= thisVector%n) .AND. (i > 0)) THEN
+          IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
           CALL VecGetValues(thisVector%b,1,i-1,getval,iperr)
           ierrc=iperr
         ENDIF
