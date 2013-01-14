@@ -42,7 +42,6 @@ PROGRAM testUnitTest
   
   REGISTER_SUBTEST("C",mysubroutineC)
   
-  
   FINALIZE_TEST()
 
   STAY()

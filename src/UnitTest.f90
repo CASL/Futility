@@ -197,7 +197,7 @@ MODULE UnitTest
       utest_curtest=>tmp
       
       WRITE(*,*)
-      WRITE(*,*) 'BEGIN SUBTEST '//subtestname
+      WRITE(*,'(a)')utest_pad(1:utest_lvl*2)//'BEGIN SUBTEST '//subtestname
       utest_inmain=.FALSE.
       
     ENDSUBROUTINE UTest_Start_SubTest
@@ -219,7 +219,7 @@ MODULE UnitTest
         pfstr='  PASSED'
       ENDIF
       
-      WRITE(*,'(a71,a)')utest_pad(1:utest_lvl*2)//'TEST '//trim(utest_curtest%subtestname)//utest_dot,pfstr
+      WRITE(*,'(a71,a)')utest_pad(1:utest_lvl*2)//'SUBTEST '//trim(utest_curtest%subtestname)//utest_dot,pfstr
       WRITE(*,*) 
       utest_inmain=.TRUE.
       
