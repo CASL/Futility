@@ -6,7 +6,7 @@
 
 #define COMPONENT_TEST(name)  CALL UTest_Start_Component(name)
 
-#define SET_PREFIX(pfx)  utest_prefix=pfx//" -"
+#define SET_PREFIX(pfx)  CALL UTest_setpfx(pfx)
 
 #define SET_INTERACTIVE()  utest_interactive=.TRUE.
 
@@ -15,7 +15,7 @@
 ! Removed __FILE__ from ASSERT because path is too long
 #define ASSERT(bool,msg)  CALL UTest_Assert(bool,__LINE__,msg)
 
-#define ASSERTFAIL(bool,msg)  ASSERT(bool,msg); IF(utest_lastfail) STOP __LINE__
+#define ASSERTFAIL(bool,msg)  ASSERT(bool,msg); IF(utest_lastfail) CALL EXIT(-__LINE__)
 
 #define STAY()  IF(utest_interactive) CALL UTest_Stay()
 
