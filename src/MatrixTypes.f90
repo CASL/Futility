@@ -196,6 +196,9 @@ MODULE MatrixTypes
       !> @copybrief MatrixTypes::get_PETScMatrixType
       !> @copydetails MatrixTypes::get_PETScMatrixType
       PROCEDURE,PASS :: get => get_PETScMatrixType
+      !> @copybrief MatrixTypes::assemble_PETScMatrixType
+      !> @copydetails MatrixTypes::assemble_PETScMatrixType
+      PROCEDURE,PASS :: assemble => assemble_PETScMatrixType
   ENDTYPE PETScMatrixType
   
   !> @brief The extended type for dense square matrices
@@ -1030,6 +1033,38 @@ MODULE MatrixTypes
     ENDSUBROUTINE get_PETScMatrixtype
 !
 !-------------------------------------------------------------------------------
+    SUBROUTINE assemble_PETScMatrixType(thisMatrix,ierr)
+      CLASS(PETScMatrixType),INTENT(INOUT) :: thisMatrix
+      INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
+      INTEGER(SIK) :: ierrc
+#ifdef HAVE_PETSC
+      PetscErrorCode  :: iperr
+      
+      ierrc=0
+      IF(.NOT.thisMatrix%isAssembled) THEN
+        CALL MatAssemblyBegin(thisMatrix%a,iperr)
+        IF(iperr == 0) CALL MatAssemblyEnd(thisMatrix%a,iperr)
+        IF(iperr == 0) thisMatrix%isAssembled=.TRUE.
+        ierrc=iperr
+      ENDIF
+      IF(PRESENT(ierr)) ierr=ierrc
+#else
+      CHARACTER(LEN=*),PARAMETER :: myName='assemble_PETScMatrixType'
+      LOGICAL(SBK) :: localalloc
+      
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eMatrixType)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eMatrixType)
+      ENDIF
+      CALL eMatrixType%raiseFatalError('Incorrect call to '// &
+         modName//'::'//myName//' - PETSc not enabled.  You will'// &
+         'need to recompile with PETSc enabled to use this feature.')
+      IF(localalloc) DEALLOCATE(eMatrixType)
+#endif
+    ENDSUBROUTINE assemble_PETScMatrixType
+!
+!-------------------------------------------------------------------------------
 !> @brief Subroutine provides an interface to matrix vector multiplication for
 !> the MatrixType.
 !> @param trans single character input indicating whether or not to use the 
@@ -1245,6 +1280,9 @@ MODULE MatrixTypes
                 CALL vecPList%add('VectorType -> n',y%n)
                 CALL vecPList%add('VectorType -> MPI_Comm_ID',y%comm)
                 CALL dummy%init(vecPList)
+                IF(.NOT.x%isAssembled) CALL x%assemble()
+                IF(.NOT.y%isAssembled) CALL y%assemble()
+                IF(.NOT.thisMatrix%isAssembled) CALL thisMatrix%assemble()
                 IF(t == 'n') THEN
                   CALL MatMult(thisMatrix%a,x%b,dummy%b,iperr)
                 ELSE
