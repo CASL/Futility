@@ -47,6 +47,7 @@ MODULE UnitTest
   PUBLIC :: utest_lastfail
   PUBLIC :: utest_interactive
   PUBLIC :: utest_verbose
+  PUBLIC :: utest_nfail
   PUBLIC :: utest_inmain
 !
 ! List of global types
@@ -66,8 +67,8 @@ MODULE UnitTest
   LOGICAL :: utest_compfail=.FALSE.
   LOGICAL :: utest_interactive=.FALSE.
   LOGICAL :: utest_lastfail=.FALSE.
-  LOGICAL :: utest_anyfail=.FALSE.
   LOGICAL :: utest_inmain=.TRUE.
+  INTEGER :: utest_nfail=0
   INTEGER :: utest_verbose
   TYPE(UTestElement),POINTER :: utest_firsttest=>NULL()
   TYPE(UTestElement),POINTER :: utest_curtest=>NULL()
@@ -137,7 +138,7 @@ MODULE UnitTest
       INTEGER :: nfail=0
       TYPE(UTestElement),POINTER :: tmp, tmp1
 
-      IF (utest_anyfail) THEN
+      IF (utest_nfail > 0) THEN
         passfail="FAILED"
         passfail=utest_fail
       ELSE
@@ -174,7 +175,7 @@ MODULE UnitTest
       
       utest_lvl=utest_lvl-1
       
-      IF(utest_anyfail)THEN
+      IF(utest_nfail > 0)THEN
         CALL EXIT(nfail)
       ENDIF
     ENDSUBROUTINE UTest_Finalize
@@ -302,7 +303,7 @@ MODULE UnitTest
           utest_curtest%npass=utest_curtest%npass+1
         ENDIF
       ELSE
-        utest_anyfail=.TRUE.
+        utest_nfail=utest_nfail+1
         utest_lastfail=.TRUE.
         IF(utest_inmain) THEN
           utest_firsttest%nfail=utest_firsttest%nfail+1

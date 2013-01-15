@@ -42,6 +42,9 @@ PROGRAM testUnitTest
   
   REGISTER_SUBTEST("C",mysubroutineC)
   
+  ! NEVER DO THIS IN YOUR UNIT TEST
+  !    This is testing failures as well as passing tests.  Expect 3 failures.
+  utest_nfail=utest_nfail-3
   FINALIZE_TEST()
 
   STAY()
