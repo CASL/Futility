@@ -77,17 +77,18 @@ MODULE UnitTest
   CHARACTER(LEN=80),PARAMETER :: utest_hline='================================================================================'
   CHARACTER(LEN=80),PARAMETER :: utest_pad='                                                                                '
   CHARACTER(LEN=80),PARAMETER :: utest_dot='  ..............................................................................'
-#ifdef COLOR_OUT
-#ifdef __linux__
-  character(LEN=17),PARAMETER :: utest_fail=achar(27)//'[31;1m'//'FAILED'//achar(27)//'[0m'
-  character(LEN=17),PARAMETER :: utest_pass=achar(27)//'[32;1m'//'PASSED'//achar(27)//'[0m'
+#ifdef COLOR_LINUX
+  CHARACTER(LEN=7),PARAMETER :: c_red=ACHAR(27)//'[31;1m'                       
+  CHARACTER(LEN=7),PARAMETER :: c_grn=ACHAR(27)//'[32;1m'                       
+  CHARACTER(LEN=7),PARAMETER :: c_yel=ACHAR(27)//'[33;1m'                       
+  CHARACTER(LEN=7),PARAMETER :: c_blu=ACHAR(27)//'[34;1m'                       
+  CHARACTER(LEN=4),PARAMETER :: c_nrm=ACHAR(27)//'[0m' 
 #else
-  character(LEN=6),PARAMETER :: utest_fail="FAILED"
-  character(LEN=6),PARAMETER :: utest_pass="PASSED"
-#endif
-#else
-  character(LEN=6),PARAMETER :: utest_fail="FAILED"
-  character(LEN=6),PARAMETER :: utest_pass="PASSED"
+  CHARACTER(LEN=1),PARAMETER :: c_red=ACHAR(0)                                  
+  CHARACTER(LEN=1),PARAMETER :: c_grn=ACHAR(0)                                  
+  CHARACTER(LEN=1),PARAMETER :: c_yel=ACHAR(0)                                  
+  CHARACTER(LEN=1),PARAMETER :: c_blu=ACHAR(0)                                  
+  CHARACTER(LEN=1),PARAMETER :: c_nrm=ACHAR(0)   
 #endif
 
   CHARACTER(LEN=80) :: line
@@ -139,11 +140,9 @@ MODULE UnitTest
       TYPE(UTestElement),POINTER :: tmp, tmp1
 
       IF (utest_nfail > 0) THEN
-        passfail="FAILED"
-        passfail=utest_fail
+        passfail=c_red//"FAILED"//c_nrm
       ELSE
-        passfail="PASSED"
-        passfail=utest_pass
+        passfail=c_grn//"PASSED"//c_nrm
       ENDIF
       
       WRITE(*,'(a)')utest_hline
@@ -210,14 +209,14 @@ MODULE UnitTest
 !> description
 !>
     SUBROUTINE UTest_End_SubTest()
-      CHARACTER(LEN=8) :: pfstr
+      CHARACTER(LEN=19) :: pfstr
       
       IF(utest_component) CALL UTest_End_Component()
       
       IF(utest_curtest%nfail>0) THEN
-        pfstr='  FAILED'
+        pfstr=c_red//'  FAILED'//c_nrm
       ELSE
-        pfstr='  PASSED'
+        pfstr=c_grn//'  PASSED'//c_nrm
       ENDIF
       
       WRITE(*,'(a71,a)')utest_pad(1:utest_lvl*2)//'SUBTEST '//trim(utest_curtest%subtestname)//utest_dot,pfstr
@@ -260,21 +259,20 @@ MODULE UnitTest
 !> description
 !>
     SUBROUTINE UTest_End_Component()
-      CHARACTER(LEN=8) :: pfstr
+      CHARACTER(LEN=19) :: pfstr
+      
+      utest_lvl=utest_lvl-1
       
       IF(utest_compfail) THEN
-        pfstr='  FAILED'
+        pfstr=c_red//'  FAILED'//c_nrm
       ELSE
-        pfstr='  PASSED'
+        pfstr=c_grn//'  PASSED'//c_nrm
       ENDIF
       
       WRITE(*,'(a71,a)')utest_pad(1:utest_lvl*2)//'COMPONENT '//TRIM(utest_componentname)//utest_dot,pfstr
       utest_component=.FALSE.
       utest_prefix=""
       utest_npfx=0
-      
-      utest_lvl=utest_lvl-1
-      
     ENDSUBROUTINE UTest_End_Component
 !
 !-------------------------------------------------------------------------------
@@ -311,7 +309,7 @@ MODULE UnitTest
           utest_curtest%nfail=utest_curtest%nfail+1
         ENDIF
         utest_compfail=.TRUE.
-        WRITE(*,'(A,I0,A,A)')utest_pad(1:utest_lvl*2)//'ASSERTION FAILED on line ',line,':'
+        WRITE(*,'(A,I0,A,A)')utest_pad(1:utest_lvl*2)//c_red//'ASSERTION FAILED'//c_nrm//' on line ',line,':'
         utest_lvl=utest_lvl+1
         WRITE(*,'(a)')utest_pad(1:utest_lvl*2)//utest_prefix(1:utest_npfx)//TRIM(ADJUSTL(msg))
         utest_lvl=utest_lvl-1
