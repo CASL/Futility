@@ -23,6 +23,8 @@ PROGRAM testTPLHDF5
 
   IMPLICIT NONE
 
+  CHARACTER(LEN=8),PARAMETER :: hdf_file='hdf01.h5'
+
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING HDF5 TPL...'
   WRITE(*,*) '==================================================='
@@ -44,6 +46,45 @@ PROGRAM testTPLHDF5
 !-------------------------------------------------------------------------------
     SUBROUTINE testHDF5()
 #ifdef HAVE_HDF5
+      INTEGER(HID_T) :: error,file_id,dspace_id,dset_id
+      INTEGER(HSIZE_T),DIMENSION(2),PARAMETER :: dims=(/10,5/)
+      INTEGER :: i,j
+      INTEGER,DIMENSION(10,5) :: dataz
+
+      DO i=1,10
+        DO j=1,5
+          dataz(i,j)=i+j*2
+        ENDDO
+      ENDDO
+
+      ! Initialize the interface
+      CALL h5open_f(error)
+
+      ! Create/open an HDF file
+      CALL h5fcreate_f(hdf_file,H5F_ACC_TRUNC_F,file_id,error)
+
+      ! Create a dataspace   rank  dims   
+      CALL h5screate_simple_f(2,dims,dspace_id,error)
+      
+      ! Create a dataset
+      CALL h5dcreate_f(file_id,'testdata',H5T_NATIVE_INTEGER,dspace_id, &
+        dset_id,error)
+
+      ! Write data to the dataset
+      CALL h5dwrite_f(dset_id,H5T_NATIVE_INTEGER,dataz,dims,error)
+
+      ! Close the dataset
+      CALL h5dclose_f(dset_id,error)
+
+      ! close the dataspace
+      CALL h5sclose_f(dspace_id,error)
+
+      ! Close the file
+      CALL h5fclose_f(file_id,error)
+
+      ! Close the interface
+      CALL h5close_f(error)
+
 #endif
     ENDSUBROUTINE testHDF5
 

@@ -2,7 +2,7 @@
 
 #define FINALIZE_TEST()  CALL UTest_Finalize()
 
-#define REGISTER_SUBTEST(name,subname)  CALL UTest_Start_SubTest(name); CALL subname(); CALL UTest_End_SubTest()
+#define REGISTER_SUBTEST(name,subname)  CALL UTest_Start_SubTest(name); CALL subname; CALL UTest_End_SubTest()
 
 #define COMPONENT_TEST(name)  CALL UTest_Start_Component(name)
 

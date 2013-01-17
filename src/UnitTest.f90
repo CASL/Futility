@@ -108,7 +108,7 @@ MODULE UnitTest
       CHARACTER(LEN=*),INTENT(IN) :: testname
       TYPE(UTestElement),POINTER :: tmp
      
-      utest_lvl=utest_lvl+1
+      !utest_lvl=utest_lvl+1
 
       utest_testname=testname
       WRITE(*,'(a)')utest_hline
@@ -172,7 +172,7 @@ MODULE UnitTest
       WRITE(*,"('| ',A37,'| ',I10,' | ',I10,' | ',I11,' |')") 'Total                ',npass,nfail,npass+nfail
       WRITE(*,"('================================================================================')")
       
-      utest_lvl=utest_lvl-1
+      ! utest_lvl=utest_lvl-1
       
       IF(utest_nfail > 0)THEN
         CALL EXIT(nfail)
