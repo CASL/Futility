@@ -46,7 +46,7 @@ PROGRAM testTPLHDF5
 !-------------------------------------------------------------------------------
     SUBROUTINE testHDF5()
 #ifdef HAVE_HDF5
-      INTEGER(HID_T) :: error,file_id,dspace_id,dset_id
+      INTEGER(HID_T) :: error,file_id,dspace_id,dset_id,grp_id
       INTEGER(HSIZE_T),DIMENSION(2),PARAMETER :: dims=(/10,5/)
       INTEGER :: i,j
       INTEGER,DIMENSION(10,5) :: dataz
@@ -65,7 +65,11 @@ PROGRAM testTPLHDF5
 
       ! Create a dataspace   rank  dims   
       CALL h5screate_simple_f(2,dims,dspace_id,error)
-      
+     
+      ! Group structures
+      CALL h5gcreate_f(file_id,'grp_a',grp_id,error)
+
+
       ! Create a dataset
       CALL h5dcreate_f(file_id,'testdata',H5T_NATIVE_INTEGER,dspace_id, &
         dset_id,error)
