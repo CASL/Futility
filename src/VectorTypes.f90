@@ -98,133 +98,133 @@ MODULE VectorTypes
 !List of Type Bound Procedures
     CONTAINS
       !> Deferred routine for clearing the vector
-      PROCEDURE(int_vector_clear_sub),DEFERRED,PASS :: clear
+      PROCEDURE(vector_clear_absintfc),DEFERRED,PASS :: clear
       !> Deferred routine for initializing the vector
-      PROCEDURE(int_vector_init_sub),DEFERRED,PASS :: init
+      PROCEDURE(vector_init_absintfc),DEFERRED,PASS :: init
       !> Deferred routine for setting one vector value
-      PROCEDURE(int_vector_setOne_sub),DEFERRED,PASS :: setOne
+      PROCEDURE(vector_init_setOne_absintfc),DEFERRED,PASS :: setOne
       !> Deferred routine for setting all vector values with scalar
-      PROCEDURE(int_vector_setAll_scalar_sub),DEFERRED,PASS :: setAll_scalar
+      PROCEDURE(vector_setAll_scalar_absintfc),DEFERRED,PASS :: setAll_scalar
       !> Deferred routine for setting all vector values with array
-      PROCEDURE(int_vector_setAll_array_sub),DEFERRED,PASS :: setAll_array
+      PROCEDURE(vector_setAll_array_absintfc),DEFERRED,PASS :: setAll_array
       !> Deferred routine for setting all vector values with scalar
-      PROCEDURE(int_vector_setRange_scalar_sub),DEFERRED,PASS :: setRange_scalar
+      PROCEDURE(vector_setRange_scalar_absintfc),DEFERRED,PASS :: setRange_scalar
       !> Deferred routine for setting all vector values with array
-      PROCEDURE(int_vector_setRange_array_sub),DEFERRED,PASS :: setRange_array
+      PROCEDURE(vector_setRange_array_absintfc),DEFERRED,PASS :: setRange_array
       GENERIC :: set => setOne,setAll_scalar,setAll_array,setRange_scalar,setRange_array
       !> Deferred routine for getting vector value
-      PROCEDURE(int_vector_getOne_sub),DEFERRED,PASS :: getOne
+      PROCEDURE(vector_getOne_absintfc),DEFERRED,PASS :: getOne
       !> Deferred routine for getting all vector values
-      PROCEDURE(int_vector_getAll_sub),DEFERRED,PASS :: getAll
+      PROCEDURE(vector_getAll_absintfc),DEFERRED,PASS :: getAll
       !> Deferred routine for getting a range of vector values
-      PROCEDURE(int_vector_getRange_sub),DEFERRED,PASS :: getRange
+      PROCEDURE(vector_getRange_absintfc),DEFERRED,PASS :: getRange
       GENERIC :: get => getOne,getAll,getRange
   ENDTYPE VectorType    
 !
 !List of Abstract Interfaces
   !> Explicitly defines the interface for the clear routine of all vector types
   ABSTRACT INTERFACE
-    SUBROUTINE int_vector_clear_sub(thisVector)
+    SUBROUTINE vector_clear_absintfc(thisVector)
       IMPORT :: VectorType
       CLASS(VectorType),INTENT(INOUT) :: thisVector
-    ENDSUBROUTINE int_vector_clear_sub
+    ENDSUBROUTINE vector_clear_absintfc
   ENDINTERFACE
   
   !> Explicitly defines the interface for the init routine of all vector types
   ABSTRACT INTERFACE
-    SUBROUTINE int_vector_init_sub(thisVector,Params)
+    SUBROUTINE vector_init_absintfc(thisVector,Params)
       IMPORT :: SIK,ParamType,VectorType
       CLASS(VectorType),INTENT(INOUT) :: thisVector
       TYPE(ParamType),INTENT(IN) :: Params
-    ENDSUBROUTINE int_vector_init_sub
+    ENDSUBROUTINE vector_init_absintfc
   ENDINTERFACE
   
   !> Explicitly defines the interface for the set one routine of all vector types
   ABSTRACT INTERFACE
-    SUBROUTINE int_vector_setOne_sub(thisVector,i,setval,ierr)
+    SUBROUTINE vector_init_setOne_absintfc(thisVector,i,setval,ierr)
       IMPORT :: SIK,SRK,VectorType
       CLASS(VectorType),INTENT(INOUT) :: thisVector
       INTEGER(SIK),INTENT(IN) :: i
       REAL(SRK),INTENT(IN) :: setval
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-    ENDSUBROUTINE int_vector_setOne_sub
+    ENDSUBROUTINE vector_init_setOne_absintfc
   ENDINTERFACE
   
   !> Explicitly defines the interface for the set all (scalar) routine of all vector types
   ABSTRACT INTERFACE
-    SUBROUTINE int_vector_setAll_scalar_sub(thisVector,setval,ierr)
+    SUBROUTINE vector_setAll_scalar_absintfc(thisVector,setval,ierr)
       IMPORT :: SIK,SRK,VectorType
       CLASS(VectorType),INTENT(INOUT) :: thisVector
       REAL(SRK),INTENT(IN) :: setval
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-    ENDSUBROUTINE int_vector_setAll_scalar_sub
+    ENDSUBROUTINE vector_setAll_scalar_absintfc
   ENDINTERFACE
   
   !> Explicitly defines the interface for the set all (array) routine of all vector types
   ABSTRACT INTERFACE
-    SUBROUTINE int_vector_setAll_array_sub(thisVector,setval,ierr)
+    SUBROUTINE vector_setAll_array_absintfc(thisVector,setval,ierr)
       IMPORT :: SIK,SRK,VectorType
       CLASS(VectorType),INTENT(INOUT) :: thisVector
       REAL(SRK),INTENT(IN) :: setval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-    ENDSUBROUTINE int_vector_setAll_array_sub
+    ENDSUBROUTINE vector_setAll_array_absintfc
   ENDINTERFACE
   
   !> Explicitly defines the interface for the set range (scalar) routine of all vector types
   ABSTRACT INTERFACE
-    SUBROUTINE int_vector_setRange_scalar_sub(thisVector,istt,istp,setval,ierr)
+    SUBROUTINE vector_setRange_scalar_absintfc(thisVector,istt,istp,setval,ierr)
       IMPORT :: SIK,SRK,VectorType
       CLASS(VectorType),INTENT(INOUT) :: thisVector
       INTEGER(SIK),INTENT(IN) :: istt
       INTEGER(SIK),INTENT(IN) :: istp
       REAL(SRK),INTENT(IN) :: setval
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-    ENDSUBROUTINE int_vector_setRange_scalar_sub
+    ENDSUBROUTINE vector_setRange_scalar_absintfc
   ENDINTERFACE
   
   !> Explicitly defines the interface for the set range (array) routine of all vector types
   ABSTRACT INTERFACE
-    SUBROUTINE int_vector_setRange_array_sub(thisVector,istt,istp,setval,ierr)
+    SUBROUTINE vector_setRange_array_absintfc(thisVector,istt,istp,setval,ierr)
       IMPORT :: SIK,SRK,VectorType
       CLASS(VectorType),INTENT(INOUT) :: thisVector
       INTEGER(SIK),INTENT(IN) :: istt
       INTEGER(SIK),INTENT(IN) :: istp
       REAL(SRK),INTENT(IN) :: setval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-    ENDSUBROUTINE int_vector_setRange_array_sub
+    ENDSUBROUTINE vector_setRange_array_absintfc
   ENDINTERFACE
   
   !> Explicitly defines the interface for the get (scalar) routine of all vector types
   ABSTRACT INTERFACE
-    SUBROUTINE int_vector_getOne_sub(thisVector,i,getval,ierr)
+    SUBROUTINE vector_getOne_absintfc(thisVector,i,getval,ierr)
       IMPORT :: SIK,SRK,VectorType
       CLASS(VectorType),INTENT(INOUT) :: thisVector
       INTEGER(SIK),INTENT(IN) :: i
       REAL(SRK),INTENT(INOUT) :: getval
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-    ENDSUBROUTINE int_vector_getOne_sub
+    ENDSUBROUTINE vector_getOne_absintfc
   ENDINTERFACE
   
   !> Explicitly defines the interface for the get (scalar) routine of all vector types
   ABSTRACT INTERFACE
-    SUBROUTINE int_vector_getAll_sub(thisVector,getval,ierr)
+    SUBROUTINE vector_getAll_absintfc(thisVector,getval,ierr)
       IMPORT :: SIK,SRK,VectorType
       CLASS(VectorType),INTENT(INOUT) :: thisVector
       REAL(SRK),INTENT(INOUT) :: getval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-    ENDSUBROUTINE int_vector_getAll_sub
+    ENDSUBROUTINE vector_getAll_absintfc
   ENDINTERFACE
   
   !> Explicitly defines the interface for the get (scalar) routine of all vector types
   ABSTRACT INTERFACE
-    SUBROUTINE int_vector_getRange_sub(thisVector,istt,istp,getval,ierr)
+    SUBROUTINE vector_getRange_absintfc(thisVector,istt,istp,getval,ierr)
       IMPORT :: SIK,SRK,VectorType
       CLASS(VectorType),INTENT(INOUT) :: thisVector
       INTEGER(SIK),INTENT(IN) :: istt
       INTEGER(SIK),INTENT(IN) :: istp
       REAL(SRK),INTENT(INOUT) :: getval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-    ENDSUBROUTINE int_vector_getRange_sub
+    ENDSUBROUTINE vector_getRange_absintfc
   ENDINTERFACE
   
   !> @brief The extended type for real vector

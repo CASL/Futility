@@ -153,19 +153,19 @@ MODULE LinearSolverTypes
       !> Deferred routine for initializing the linear solver system
       PROCEDURE,PASS :: init => init_LinearSolverType_Base
       !> Deferred routine for clearing the linear solver
-      PROCEDURE(int_linearsolver_sub),DEFERRED,PASS :: clear
+      PROCEDURE(linearsolver_sub_asbintfc),DEFERRED,PASS :: clear
       !> Deferred routine for solving the linear system
-      PROCEDURE(int_linearsolver_sub),DEFERRED,PASS :: solve
+      PROCEDURE(linearsolver_sub_asbintfc),DEFERRED,PASS :: solve
       !> Routine for updating status of M and isDecomposed when A has changed
       PROCEDURE,PASS :: updatedA
   ENDTYPE LinearSolverType_Base
   
   !> Explicitly defines the interface for the clear and solve routines
   ABSTRACT INTERFACE
-    SUBROUTINE int_linearsolver_sub(solver)
+    SUBROUTINE linearsolver_sub_asbintfc(solver)
       IMPORT :: LinearSolverType_Base
       CLASS(LinearSolverType_Base),INTENT(INOUT) :: solver
-    ENDSUBROUTINE int_linearsolver_sub
+    ENDSUBROUTINE linearsolver_sub_asbintfc
   ENDINTERFACE
 
   !> @brief The extended type for the Direct Linear Solver

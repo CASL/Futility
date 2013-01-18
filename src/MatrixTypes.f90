@@ -118,41 +118,41 @@ MODULE MatrixTypes
 !List of Type Bound Procedures
     CONTAINS
       !> Deferred routine for clearing the matrix
-      PROCEDURE(int_matrix_sub),DEFERRED,PASS :: clear
+      PROCEDURE(matrix_sub_asbintfc),DEFERRED,PASS :: clear
       !> Deferred routine for initializing the matrix
-      PROCEDURE(int_matrix_init_param_sub),DEFERRED,PASS :: init
+      PROCEDURE(matrix_init_param_sub_asbintfc),DEFERRED,PASS :: init
       !> Deferred routine for setting matrix values
-      PROCEDURE(int_matrix_set_sub),DEFERRED,PASS :: set
+      PROCEDURE(matrix_set_sub_asbintfc),DEFERRED,PASS :: set
   ENDTYPE MatrixType    
 !
 !List of Abstract Interfaces
   !> Explicitly defines the interface for the clear routine of all matrix types
   ABSTRACT INTERFACE
-    SUBROUTINE int_matrix_sub(matrix)
+    SUBROUTINE matrix_sub_asbintfc(matrix)
       IMPORT :: MatrixType
       CLASS(MatrixType),INTENT(INOUT) :: matrix
-    ENDSUBROUTINE int_matrix_sub
+    ENDSUBROUTINE matrix_sub_asbintfc
   ENDINTERFACE
   
   !> Explicitly defines the interface for the init routine of all matrix types
   !> with parameter list
   ABSTRACT INTERFACE
-    SUBROUTINE int_matrix_init_param_sub(matrix,Params)
+    SUBROUTINE matrix_init_param_sub_asbintfc(matrix,Params)
       IMPORT :: MatrixType,ParamType
       CLASS(MatrixType),INTENT(INOUT) :: matrix
       CLASS(ParamType),INTENT(IN) :: Params
-    ENDSUBROUTINE int_matrix_init_param_sub
+    ENDSUBROUTINE matrix_init_param_sub_asbintfc
   ENDINTERFACE
   
   !> Explicitly defines the interface for the set routine of all matrix types
   ABSTRACT INTERFACE
-    SUBROUTINE int_matrix_set_sub(matrix,i,j,setval)
+    SUBROUTINE matrix_set_sub_asbintfc(matrix,i,j,setval)
       IMPORT :: SIK,SRK,MatrixType
       CLASS(MatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(IN) :: setval
-    ENDSUBROUTINE int_matrix_set_sub
+    ENDSUBROUTINE matrix_set_sub_asbintfc
   ENDINTERFACE
     
   !> @brief The extended type of matrices for square matrices
