@@ -92,25 +92,25 @@ MODULE ParallelEnv
       !>
       GENERIC :: partition => partitionIDX,partitionGreedy
       !>
-      PROCEDURE(init_ParEnvType_Intfc),DEFERRED,PASS :: init
+      PROCEDURE(ParEnvType_init_absintfc),DEFERRED,PASS :: init
       !>
-      PROCEDURE(clear_ParEnvType_Intfc),DEFERRED,PASS :: clear
+      PROCEDURE(ParEnvType_clear_absintfc),DEFERRED,PASS :: clear
       
   ENDTYPE ParEnvType
   
   ABSTRACT INTERFACE
-    SUBROUTINE init_ParEnvType_Intfc(myPE,PEparam)
+    SUBROUTINE ParEnvType_init_absintfc(myPE,PEparam)
       IMPORT :: SIK,ParEnvType
       CLASS(ParEnvType),INTENT(INOUT) :: myPE
       INTEGER(SIK),INTENT(IN),OPTIONAL :: PEparam
-    ENDSUBROUTINE init_ParEnvType_Intfc
+    ENDSUBROUTINE ParEnvType_init_absintfc
   ENDINTERFACE
     
   ABSTRACT INTERFACE
-    SUBROUTINE clear_ParEnvType_Intfc(myPE)
+    SUBROUTINE ParEnvType_clear_absintfc(myPE)
       IMPORT :: ParEnvType
       CLASS(ParEnvType),INTENT(INOUT) :: myPE
-    ENDSUBROUTINE clear_ParEnvType_Intfc
+    ENDSUBROUTINE ParEnvType_clear_absintfc
   ENDINTERFACE
     
   !> Type describes basic information for MPI environment
