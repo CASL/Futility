@@ -118,41 +118,41 @@ MODULE MatrixTypes
 !List of Type Bound Procedures
     CONTAINS
       !> Deferred routine for clearing the matrix
-      PROCEDURE(matrix_sub_asbintfc),DEFERRED,PASS :: clear
+      PROCEDURE(matrix_sub_absintfc),DEFERRED,PASS :: clear
       !> Deferred routine for initializing the matrix
-      PROCEDURE(matrix_init_param_sub_asbintfc),DEFERRED,PASS :: init
+      PROCEDURE(matrix_init_param_sub_absintfc),DEFERRED,PASS :: init
       !> Deferred routine for setting matrix values
-      PROCEDURE(matrix_set_sub_asbintfc),DEFERRED,PASS :: set
+      PROCEDURE(matrix_set_sub_absintfc),DEFERRED,PASS :: set
   ENDTYPE MatrixType    
 !
 !List of Abstract Interfaces
   !> Explicitly defines the interface for the clear routine of all matrix types
   ABSTRACT INTERFACE
-    SUBROUTINE matrix_sub_asbintfc(matrix)
+    SUBROUTINE matrix_sub_absintfc(matrix)
       IMPORT :: MatrixType
       CLASS(MatrixType),INTENT(INOUT) :: matrix
-    ENDSUBROUTINE matrix_sub_asbintfc
+    ENDSUBROUTINE matrix_sub_absintfc
   ENDINTERFACE
   
   !> Explicitly defines the interface for the init routine of all matrix types
   !> with parameter list
   ABSTRACT INTERFACE
-    SUBROUTINE matrix_init_param_sub_asbintfc(matrix,Params)
+    SUBROUTINE matrix_init_param_sub_absintfc(matrix,Params)
       IMPORT :: MatrixType,ParamType
       CLASS(MatrixType),INTENT(INOUT) :: matrix
       CLASS(ParamType),INTENT(IN) :: Params
-    ENDSUBROUTINE matrix_init_param_sub_asbintfc
+    ENDSUBROUTINE matrix_init_param_sub_absintfc
   ENDINTERFACE
   
   !> Explicitly defines the interface for the set routine of all matrix types
   ABSTRACT INTERFACE
-    SUBROUTINE matrix_set_sub_asbintfc(matrix,i,j,setval)
+    SUBROUTINE matrix_set_sub_absintfc(matrix,i,j,setval)
       IMPORT :: SIK,SRK,MatrixType
       CLASS(MatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(IN) :: setval
-    ENDSUBROUTINE matrix_set_sub_asbintfc
+    ENDSUBROUTINE matrix_set_sub_absintfc
   ENDINTERFACE
     
   !> @brief The extended type of matrices for square matrices

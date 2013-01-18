@@ -91,11 +91,11 @@ MODULE FileType_Base
 !List of type bound procedures (methods) for the Base File Type object
     CONTAINS
       !> Deferred routine for opening the file.
-      PROCEDURE(FileBase_sub_asbintfc),DEFERRED,PASS :: fopen
+      PROCEDURE(FileBase_sub_absintfc),DEFERRED,PASS :: fopen
       !> Deferred routine for closing the file.
-      PROCEDURE(FileBase_sub_asbintfc),DEFERRED,PASS :: fclose
+      PROCEDURE(FileBase_sub_absintfc),DEFERRED,PASS :: fclose
       !> Deferred routine for deleting the file.
-      PROCEDURE(FileBase_sub_asbintfc),DEFERRED,PASS :: fdelete
+      PROCEDURE(FileBase_sub_absintfc),DEFERRED,PASS :: fdelete
       !> @copybrief FileType_Base::setFilePath_file
       !> @copydetails FileType_Base::setFilePath_file
       PROCEDURE,PASS :: setFilePath => setFilePath_file
@@ -146,10 +146,10 @@ MODULE FileType_Base
   !> An abstract interface for type bound procedures for opening, closing,
   !> and deleting a file.
   ABSTRACT INTERFACE
-    SUBROUTINE FileBase_sub_asbintfc(file)
+    SUBROUTINE FileBase_sub_absintfc(file)
       IMPORT :: BaseFileType
       CLASS(BaseFileType),INTENT(INOUT) :: file
-    ENDSUBROUTINE FileBase_sub_asbintfc
+    ENDSUBROUTINE FileBase_sub_absintfc
   ENDINTERFACE
 !
 !===============================================================================
