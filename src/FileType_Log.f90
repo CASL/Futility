@@ -152,7 +152,9 @@ MODULE FileType_Log
       CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: pad
       INTEGER(SIK),OPTIONAL,INTENT(IN) :: recl
       CHARACTER(LEN=MAXLEN_TIMER_NAME-10) :: fname
-
+      
+      fname=''
+      
       !Initialize the timer for the log file
       CALL fileobj%timer%setTimerHiResMode(.TRUE.)
       CALL getFileName(file,fname,fileobj%e)
@@ -171,9 +173,9 @@ MODULE FileType_Log
       CLASS(LogFileType),INTENT(INOUT) :: file
       LOGICAL(SBK),OPTIONAL,INTENT(IN) :: ldel
       LOGICAL(SBK) :: bool
+      bool=.FALSE.
       CALL file%timer%ResetTimer()
       file%echostat=.FALSE.
-      bool=.FALSE.
       IF(PRESENT(ldel)) bool=ldel
       CALL clear_fortran_file(file,bool)
     ENDSUBROUTINE clear_log_file

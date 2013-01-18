@@ -1196,13 +1196,14 @@ MODULE VTKFiles
     REAL(SRK),ALLOCATABLE :: scratchX(:),scratchY(:),scratchZ(:)
     INTEGER(SIK) :: i,j,k,n,p,q
     INTEGER(SIK),ALLOCATABLE :: pointMap(:)
+
+    n=0
+    q=0
     
     CALL thisVTKMesh%convert(VTK_UNSTRUCTURED_GRID)
     ALLOCATE(nodePresent(SIZE(thisVTKMesh%nodeList)))
     
     !Calculate the length of new cell list and node list
-    n=0
-    q=0
     DO i=1,thisVTKMesh%numCells
       IF(.NOT. cellNotPresent(i)) THEN
         n=n+1

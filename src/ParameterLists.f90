@@ -1561,6 +1561,7 @@ MODULE ParameterLists
       INTEGER(SIK) :: i
       CLASS(ParamType),POINTER :: tmpParam
       
+      i=0
       SELECTTYPE(p=>thisParam)
         TYPE IS(ParamType)
           !Call check on the thisParam's value

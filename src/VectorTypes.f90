@@ -1826,6 +1826,9 @@ MODULE VectorTypes
 !>        VectorTypes, both Real and PETSc.
 !>
     SUBROUTINE VectorType_Clear_ValidParams()
+
+      !Set flag to false since the defaults have been cleared for this type.
+      VectorType_Paramsflag=.FALSE.
       
       !Real Vector Type - Required
       CALL RealVectorType_reqParams%clear()
@@ -1834,8 +1837,6 @@ MODULE VectorTypes
       CALL PETScVectorType_reqParams%clear()
       !There are no optional parameters at this time.
       
-      !Set flag to false since the defaults have been cleared for this type.
-      VectorType_Paramsflag=.FALSE.
     ENDSUBROUTINE VectorType_Clear_ValidParams
 !
 ENDMODULE VectorTypes

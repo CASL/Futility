@@ -559,6 +559,8 @@ MODULE ExpTables
 !> 
     SUBROUTINE ExpTables_Declare_ValidParams()
 
+      ExpTableType_Paramsflag=.TRUE.
+
       !Set names for required parameters
       !Set defaults for optional parameters
       CALL ExpTableType_optParams%add('ExpTables -> tabletype',LINEAR_EXP_TABLE, &
@@ -574,7 +576,6 @@ MODULE ExpTables
       CALL ExpTableType_optParams%add('ExpTables -> errorflag',.FALSE., &
         'The default value for the error in the exponential table.')
       
-      ExpTableType_Paramsflag=.TRUE.
     ENDSUBROUTINE ExpTables_Declare_ValidParams
 
 !-------------------------------------------------------------------------------
@@ -583,11 +584,11 @@ MODULE ExpTables
 !> 
     SUBROUTINE ExpTables_Clear_ValidParams()
 
+      ExpTableType_Paramsflag=.FALSE.
+
       !ExpTableType required parameters
       !ExpTableType optional parameters
       CALL ExpTableType_optParams%clear()
-      
-      ExpTableType_Paramsflag=.FALSE.
     ENDSUBROUTINE ExpTables_Clear_ValidParams
 !
 ENDMODULE ExpTables

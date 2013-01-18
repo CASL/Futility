@@ -117,12 +117,8 @@ MODULE Geom_Line
 !> @param line line segment of type @c LineType
     ELEMENTAL SUBROUTINE clear_LineType(line)
       CLASS(LineType),INTENT(INOUT) :: line
-#ifdef __GFORTRAN__
       CALL line%p(1)%clear()
       CALL line%p(2)%clear()
-#else
-      CALL line%p%clear()
-#endif
     ENDSUBROUTINE clear_LineType
 !
 !-------------------------------------------------------------------------------

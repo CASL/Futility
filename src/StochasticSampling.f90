@@ -331,6 +331,7 @@ MODULE StochasticSampling
       REAL(SDK),INTENT(IN) :: xmin
       REAL(SDK),INTENT(IN) :: xmax
       REAL(SDK) :: rang
+      rang=0._SDK
       rang=xmin+(xmax-xmin)*sampler%rng()
     ENDFUNCTION unif_Sampler
 !
@@ -344,6 +345,7 @@ MODULE StochasticSampling
       CLASS(StochasticSamplingType),INTENT(INOUT) :: sampler
       REAL(SDK),INTENT(IN) :: a
       REAL(SDK) :: rang
+      rang=0._SDK
       rang=-LOG(sampler%rng())/a
     ENDFUNCTION exp_Sampler
 !
@@ -360,6 +362,7 @@ MODULE StochasticSampling
       REAL(SDK),INTENT(IN) :: sigma
       REAL(SDK) :: rn1,rn2
       REAL(SDK) :: rang
+      rang=0._SDK
       rn1=-LOG(sampler%rng())
       rn2=COS(2.0_SDK*PI*sampler%rng())
       rang=mu+sigma*SQRT(2.0_SDK*rn1)*rn2
@@ -377,6 +380,7 @@ MODULE StochasticSampling
       REAL(SDK),INTENT(IN) :: mu
       REAL(SDK),INTENT(IN) :: sigma
       REAL(SDK) :: rang
+      rang=0._SDK
       rang=EXP(sampler%normal(mu,sigma))
     ENDFUNCTION lognorm_Sampler
 !
@@ -391,7 +395,7 @@ MODULE StochasticSampling
       REAL(SDK),INTENT(IN) :: T
       REAL(SDK) :: rn1,rn2,rn3
       REAL(SDK) :: rang
-      
+      rang=0._SDK
       rn1=-LOG(sampler%rng())
       rn2=-LOG(sampler%rng())
       rn3=COS(0.5_SDK*PI*sampler%rng())
@@ -428,6 +432,7 @@ MODULE StochasticSampling
       REAL(SDK),INTENT(IN) :: theta
       REAL(SDK) :: rn1
       REAL(SDK) :: rang
+      rang=0._SDK
       rn1=sampler%rng()
       rang=-theta*LOG(rn1*sampler%rng())
     ENDFUNCTION evap_Sampler
@@ -464,6 +469,7 @@ MODULE StochasticSampling
       CLASS(StochasticSamplingType),INTENT(INOUT) :: sampler
       REAL(SDK),INTENT(IN) :: y(:)
       INTEGER(SIK) :: rang
+      rang=0._SDK
       rang=sampler%histogram(y/SUM(y))
     ENDFUNCTION uhist_Sampler
 !
@@ -480,6 +486,7 @@ MODULE StochasticSampling
       REAL(SDK),INTENT(IN) :: x(:)
       REAL(SDK) :: rang
       INTEGER(SIK) :: interval
+      interval=0
       interval=sampler%histogram(y)
       rang=sampler%uniform(x(interval),x(interval+1))
     ENDFUNCTION nchist_Sampler
@@ -496,6 +503,7 @@ MODULE StochasticSampling
       REAL(SDK),INTENT(IN) :: y(:)
       REAL(SDK),INTENT(IN) :: x(:)
       REAL(SDK) :: rang
+      rang=0._SDK
       rang=sampler%conthistogram(y/SUM(y),x)
     ENDFUNCTION uchist_Sampler
 !

@@ -1623,6 +1623,9 @@ MODULE MatrixTypes
 !>        Square, and PETSc.
 !>
     SUBROUTINE MatrixTypes_Clear_ValidParams()
+
+      !Set flag to true since the defaults have been set for this type.
+      MatrixType_Paramsflag=.FALSE.
       
       !Sparse Matrix Type
       CALL SparseMatrixType_reqParams%clear()
@@ -1637,8 +1640,6 @@ MODULE MatrixTypes
       
       !There are no optional parameters at this time.
       
-      !Set flag to true since the defaults have been set for this type.
-      MatrixType_Paramsflag=.FALSE.
     ENDSUBROUTINE MatrixTypes_Clear_ValidParams
 !
 ENDMODULE MatrixTypes

@@ -1215,6 +1215,8 @@ MODULE LinearSolverTypes
       INTEGER(SIK) :: n,iterations
       TYPE(ParamType) :: pList
 
+      n=0
+
       !Get the n value and set the parameter list
       CALL pList%add('VectorType -> n',solver%A%n)
       CALL vr%init(pList)
@@ -1310,6 +1312,7 @@ MODULE LinearSolverTypes
       INTEGER(SIK) :: j,k,m,n,it
       TYPE(ParamType) :: pList
       
+      n=0
       !Set parameter list for vector
       CALL pList%add('VectorType -> n',solver%A%n)
       n=solver%A%n
@@ -1661,7 +1664,9 @@ MODULE LinearSolverTypes
       REAL(SRK) :: thisa(solver%A%n,solver%A%n)
       REAL(SRK) :: t,thisb(solver%A%n),tmpxval
       INTEGER(SIK) :: N,i,irow,icol,IPIV(solver%A%n)
-
+      
+      N=0
+      
       SELECTTYPE(b => solver%b); TYPE IS(RealVectorType)
         thisb=b%b
       ENDSELECT
@@ -1937,11 +1942,13 @@ MODULE LinearSolverTypes
       TYPE(RealVectorType) :: z,w,r,p,b
       TYPE(ParamType) :: pList,pList2
       
+      N=0
+      N=solver%A%n
+      M=N
       !Set parameter list for vector
       CALL pList%add('VectorType -> n',solver%A%n)
       CALL pList2%add('VectorType -> n',solver%A%n)
-      N=solver%A%n
-      M=N
+      
       SELECTTYPE(A => solver%A); TYPE IS(DenseRectMatrixType)
         M=A%m
         CALL pList2%set('VectorType -> n',M)
@@ -2094,12 +2101,13 @@ MODULE LinearSolverTypes
 !>
     SUBROUTINE LinearSolverType_Clear_ValidParams()
       
+      !Set flag to true since the defaults have been set for this type.
+      LinearSolverType_Paramsflag=.FALSE.
+      
       CALL LinearSolverType_reqParams%clear()
       
       !There are no optional parameters at this time.
       
-      !Set flag to true since the defaults have been set for this type.
-      LinearSolverType_Paramsflag=.FALSE.
     ENDSUBROUTINE LinearSolverType_Clear_ValidParams
 !
 ENDMODULE LinearSolverTypes
