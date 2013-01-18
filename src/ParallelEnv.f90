@@ -483,7 +483,7 @@ MODULE ParallelEnv
 !> @brief Wrapper routine calls MPI_Allreduce and performs a sum of operation
 !> for a real array.
 !> @param myPE the MPI parallel environment 
-!> @param n the number of data elements to commincate
+!> @param n the number of data elements to communicate
 !> @param x the partial sum to be returned as the total sum
 !>
 !> This routine only performs a sum operation and only for reals.
@@ -518,7 +518,7 @@ MODULE ParallelEnv
 !> @brief Wrapper routine calls MPI_Allreduce and performs a logical and
 !> operation for a scalar logical.
 !> @param myPE the MPI parallel environment 
-!> @param n the number of data elements to commincate
+!> @param n the number of data elements to communicate
 !> @param x the partial sum to be returned as the total sum
 !>
 !> This routine only performs a sum operation and only for reals.

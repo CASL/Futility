@@ -46,6 +46,14 @@ IF (${PACKAGE_NAME}_ENABLE_PARDISO)
         )
 ENDIF()
 
+# add test for HDF5 if enabled
+IF (${PACKAGE_NAME}_ENABLE_HDF5)
+    SET(UNIT_TEST_NAMES
+        ${UNIT_TEST_NAMES}
+        testTPLHDF5
+        )
+ENDIF()
+
 FOREACH(test ${UNIT_TEST_NAMES})
     ADD_SUBDIRECTORY(${test})
 ENDFOREACH()
