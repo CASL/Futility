@@ -35,7 +35,8 @@ SET(UNIT_TEST_NAMES
     testMatrixTypes
     testVectorTypes
     testLinearSolver
-    
+    testHDF5FileType
+
 )
 
 # add test for PARDISO if enabled
