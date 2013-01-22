@@ -773,28 +773,16 @@ MODULE LinearSolverTypes
               TYPE IS(PETScMatrixType)
 #ifdef HAVE_PETSC   
                 ! assemble matrix if necessary
-                IF(.NOT.(A%isAssembled)) THEN
-                  CALL MatAssemblyBegin(A%a,MAT_FINAL_ASSEMBLY,ierr)
-                  CALL MatAssemblyEnd(A%a,MAT_FINAL_ASSEMBLY,ierr)
-                  A%isAssembled=.TRUE.
-                ENDIF
+                IF(.NOT.(A%isAssembled)) CALL A%assemble()
                 
                 ! assemble source vector if necessary
                 SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
-                  IF(.NOT.(b%isAssembled)) THEN
-                    CALL VecAssemblyBegin(b%b,ierr)
-                    CALL VecAssemblyEnd(b%b,ierr)
-                    b%isAssembled=.TRUE.
-                  ENDIF
+                  IF(.NOT.(b%isAssembled)) CALL b%assemble()
                 ENDSELECT
                 
                 ! assemble solution vector if necessary
                 SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
-                  IF(.NOT.(X%isAssembled)) THEN
-                    CALL VecAssemblyBegin(X%b,ierr)
-                    CALL VecAssemblyEnd(X%b,ierr)
-                    X%isAssembled=.TRUE.
-                  ENDIF
+                  IF(.NOT.(X%isAssembled)) CALL X%assemble()
                 ENDSELECT
                 
                 SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
@@ -840,28 +828,16 @@ MODULE LinearSolverTypes
               TYPE IS(PETScMatrixType)
 #ifdef HAVE_PETSC   
                 ! assemble matrix if necessary
-                IF(.NOT.(A%isAssembled)) THEN
-                  CALL MatAssemblyBegin(A%a,MAT_FINAL_ASSEMBLY,ierr)
-                  CALL MatAssemblyEnd(A%a,MAT_FINAL_ASSEMBLY,ierr)
-                  A%isAssembled=.TRUE.
-                ENDIF
+                IF(.NOT.(A%isAssembled)) CALL A%assemble()
                 
                 ! assemble source vector if necessary
                 SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
-                  IF(.NOT.(b%isAssembled)) THEN
-                    CALL VecAssemblyBegin(b%b,ierr)
-                    CALL VecAssemblyEnd(b%b,ierr)
-                    b%isAssembled=.TRUE.
-                  ENDIF
+                  IF(.NOT.(b%isAssembled)) CALL b%assemble()
                 ENDSELECT
                 
                 ! assemble solution vector if necessary
                 SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
-                  IF(.NOT.(X%isAssembled)) THEN
-                    CALL VecAssemblyBegin(X%b,ierr)
-                    CALL VecAssemblyEnd(X%b,ierr)
-                    X%isAssembled=.TRUE.
-                  ENDIF
+                  IF(.NOT.(X%isAssembled)) CALL X%assemble()
                 ENDSELECT
                 
                 SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
@@ -913,28 +889,16 @@ MODULE LinearSolverTypes
               TYPE IS(PETScMatrixType)
 #ifdef HAVE_PETSC 
                 ! assemble matrix if necessary
-                IF(.NOT.(A%isAssembled)) THEN
-                  CALL MatAssemblyBegin(A%a,MAT_FINAL_ASSEMBLY,ierr)
-                  CALL MatAssemblyEnd(A%a,MAT_FINAL_ASSEMBLY,ierr)
-                  A%isAssembled=.TRUE.
-                ENDIF
+                IF(.NOT.(A%isAssembled)) CALL A%assemble()
                 
                 ! assemble source vector if necessary
                 SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
-                  IF(.NOT.(b%isAssembled)) THEN
-                    CALL VecAssemblyBegin(b%b,ierr)
-                    CALL VecAssemblyEnd(b%b,ierr)
-                    b%isAssembled=.TRUE.
-                  ENDIF
+                  IF(.NOT.(b%isAssembled)) CALL b%assemble()
                 ENDSELECT
                 
                 ! assemble solution vector if necessary
                 SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
-                  IF(.NOT.(X%isAssembled)) THEN
-                    CALL VecAssemblyBegin(X%b,ierr)
-                    CALL VecAssemblyEnd(X%b,ierr)
-                    X%isAssembled=.TRUE.
-                  ENDIF
+                  IF(.NOT.(X%isAssembled)) CALL X%assemble()
                 ENDSELECT
                 
                 SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
