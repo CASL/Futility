@@ -11,4 +11,14 @@
 #
 ################################################################################
 INCLUDE(MPACT_CreateUnitTest)
+INCLUDE(MPACT_CopyFiles)
+
+# List any files from the main source directory that the test depends on
+SET(ADDITIONAL_FILES
+    readtest.h5
+)
+
 MPACT_CreateUnitTest(testHDF5FileType)
+
+MPACT_CopyFiles(ADDITIONAL_FILES)
+UNSET(ADDITIONAL_FILES)

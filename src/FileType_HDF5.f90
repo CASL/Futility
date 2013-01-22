@@ -28,6 +28,11 @@
 !> subroutine calls, so there are preprocessor directives switching between the
 !> two depending on which library is present.
 !>
+!> It is important to note that the read and write routines are typed to use
+!> fixed precision (for instance SSK and SDK instead of SRK). This is important
+!> because we need to use the supported types of the HDF5 library and file
+!> format.
+!>
 !> @par Module Dependencies
 !>  - @ref IntrType "IntrType": @copybrief IntrType
 !>  - @ref ExceptionHandler "ExceptionHandler": @copybrief Exceptionhandler
@@ -35,6 +40,10 @@
 !>
 !> @author Mitchell T.H. Young
 !>   @date 01/20/2013
+!> 
+!> @todo
+!>  - Add function/subroutine headers
+!>  - Make sure routines are safe (check for initialized object, etc.)
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE FileType_HDF5
   
@@ -76,23 +85,31 @@ MODULE FileType_HDF5
       !> Delete the file
       PROCEDURE,PASS :: fdelete => delete_HDF5FileType
       !> List the members of a group
-!      PROCEDURE,PASS :: ls => ls_HDF5FileType
+      PROCEDURE,PASS :: ls => ls_HDF5FileType
+      !> Create a group in the HDF5 File
+      PROCEDURE,PASS :: mkdir => mkdir_HDF5FileType
       !> Determine the number of members of a group
-!      PROCEDURE,PASS :: ngrp => ngrp_HDF5FileType
-      !> Write: real, rank 1
-      PROCEDURE,PASS :: write_r1
-      !> Write: real, rank 2
-      PROCEDURE,PASS :: write_r2
+      PROCEDURE,PASS :: ngrp => ngrp_HDF5FileType
+      !> Write: real(SDK), rank 1
+      PROCEDURE,PASS :: write_d1
+      !> Write: real(SDK), rank 2
+      PROCEDURE,PASS :: write_d2
+      !> Write: real(SSK), rank 1
+!      PROCEDURE,PASS :: write_r1
+      !> Write: logical, rank1
+      PROCEDURE,PASS :: write_l1
       !> ...
       !> Write data to the file as a dataset
-      GENERIC :: write => write_r1,write_r2
-      !> Write: real, rank 1
+      GENERIC :: write => write_d1,write_d2,write_l1
+      !> Read: real(SDK), rank 1
+      PROCEDURE,PASS :: read_d1
+      !> Read: real(SDK), rank 2
+!      PROCEDURE,PASS :: read_d2
+      !> Read: real(SSK), rank 1
 !      PROCEDURE,PASS :: read_r1
-      !> Write: real, rank 2
-!      PROCEDURE,PASS :: read_r2
       ! ...
       !> Read data from a dataset in the file.
-!      GENERIC  :: read => read_r1,read_r2!,...
+      GENERIC  :: read => read_d1!,read_d2,...
   ENDTYPE
 !
 !===============================================================================
@@ -100,6 +117,7 @@ MODULE FileType_HDF5
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE init_HDF5FileType(this,filename,w)
+      CHARACTER(LEN=*),PARAMETER :: myName='init_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: filename
       LOGICAL(SBK),INTENT(IN) :: w
@@ -108,7 +126,7 @@ MODULE FileType_HDF5
       CHARACTER(LEN=MAX_FEXT_LENGTH) :: fext
 #ifdef HAVE_HDF5
       INTEGER(HID_T) :: error
-#endif      
+#endif
       IF(.NOT.ASSOCIATED(this%e)) THEN
         ALLOCATE(this%e)
       ENDIF
@@ -119,13 +137,16 @@ MODULE FileType_HDF5
       CALL this%setFileExt(fext)
 
       ! Set read/write status
-      CALL this%setWriteStat(.TRUE.)
+      CALL this%setWriteStat(w)
 
       this%fullname=filename
 
       ! Initialize the HDF5 interface. This needs be done before any other calls
       ! to the HF5 interface can be made.
       CALL h5open_f(error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//": ")
+      ENDIF
 
       ! Open the HDF5 file
       CALL this%fopen()
@@ -139,6 +160,7 @@ MODULE FileType_HDF5
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE clear_HDF5FileType(this)
+      CHARACTER(LEN=*),PARAMETER :: myName='clear_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
 #ifdef HAVE_HDF5    
       INTEGER(HID_T) :: error
@@ -157,6 +179,7 @@ MODULE FileType_HDF5
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE open_HDF5FileType(file)
+      CHARACTER(LEN=*),PARAMETER :: myName='open_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: file
 #ifdef HAVE_HDF5    
       INTEGER(HID_T) :: acc
@@ -176,6 +199,7 @@ MODULE FileType_HDF5
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE close_HDF5FileType(file)
+      CHARACTER(LEN=*),PARAMETER :: myName='close_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: file
 #ifdef HAVE_HDF5    
       INTEGER(HID_T) :: error
@@ -186,16 +210,114 @@ MODULE FileType_HDF5
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE delete_HDF5FileType(file)
+      CHARACTER(LEN=*),PARAMETER :: myName='delete_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: file
       
       RETURN 
     ENDSUBROUTINE delete_HDF5FileType
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE write_r1(this,dsetname,data)
+    SUBROUTINE ls_HDF5FileType(this,path,elem)
+      CHARACTER(LEN=*),PARAMETER :: myName='ls_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(IN) :: this
+      CHARACTER(LEN=*),INTENT(IN) :: path
+      CHARACTER(LEN=*),ALLOCATABLE,INTENT(INOUT) :: elem(:)
+      CHARACTER(LEN=MAX_PATH_LENGTH),ALLOCATABLE :: path2
+#ifdef HAVE_HDF5
+      INTEGER(HSIZE_T) :: num_obj,i
+      INTEGER(HID_T) :: grp_id,error
+      INTEGER :: store_type,nlinks,max_corder
+
+      path2=convertPath(path)
+     
+      CALL h5gopen_f(this%file_id, path2, grp_id, error)
+
+      CALL h5gget_info_f(grp_id, store_type, nlinks, max_corder, error)
+
+      IF(ALLOCATED(elem))THEN
+        DEALLOCATE(elem)
+      ENDIF
+      ALLOCATE(elem(nlinks))
+
+      DO i=0,nlinks-1
+        CALL h5lget_name_by_idx_f(this%file_id, path2, H5_INDEX_NAME_F, &
+                                  H5_ITER_INC_F, i, elem(i+1), error)
+      ENDDO
+
+      CALL h5gclose_f(grp_id, error)
+
+#endif
+    ENDSUBROUTINE ls_HDF5FileType
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE mkdir_HDF5FileType(this,path)
+      CHARACTER(LEN=*),PARAMETER :: myNAme='mkdir_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: this
+      CHARACTER(LEN=*),INTENT(IN) :: path
+      CHARACTER(LEN=MAX_PATH_LENGTH) :: path2
+#ifdef HAVE_HDF5
+      INTEGER(HID_T) :: group_id,error
+
+      ! Ensure that we have write permissions to the file
+      IF(.NOT.this%isWrite())THEN
+        CALL this%e%raiseWarning(myName//": Can not create group in read-only file.")
+      ENDIF
+
+      ! Convert the path to use slashes
+      path2=convertPath(path)
+
+      ! Create the group
+      CALL h5gcreate_f(this%file_id,path2,group_id,error)
+      
+      IF(error == 0)THEN
+        ! Close the group
+        CALL h5gclose_f(group_id,error)
+        IF(error /= 0)THEN
+          CALL this%e%raiseWarning(myName//": Failed to close HDF group")
+        ENDIF
+      ELSE
+        CALL this%e%raiseWarning(myName//": Failed to create HDF5 group.")
+      ENDIF
+#endif
+    ENDSUBROUTINE mkdir_HDF5FileType
+!
+!-------------------------------------------------------------------------------
+    FUNCTION ngrp_HDF5FileType(this,path) RESULT(ngrp)
+      CHARACTER(LEN=*),PARAMETER :: myName='ngrp_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: this
+      CHARACTER(LEN=*),INTENT(IN) :: path
+      CHARACTER(LEN=MAX_PATH_LENGTH) :: path2
+      INTEGER(SIK) :: ngrp
+#ifdef HAVE_HDF5
+      INTEGER(HSIZE_T) :: num_obj,i
+      INTEGER(HID_T) :: grp_id,error
+      INTEGER :: store_type,nlinks,max_corder
+
+      path2=convertPath(path)
+ 
+      CALL h5gopen_f(this%file_id, path2, grp_id, error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//": Could not open group in HDF5 file.")
+      ENDIF
+
+      CALL h5gget_info_f(grp_id, store_type, nlinks, max_corder, error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//": Could not get group info in HDF5 file.")
+      ENDIF
+
+      ngrp=nlinks
+#else
+      ngrp=0
+#endif
+    ENDFUNCTION ngrp_HDF5FileType
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE write_d1(this,dsetname,data)
+      CHARACTER(LEN=*),PARAMETER :: myName='writed1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
-      REAL(SRK),ALLOCATABLE :: data(:)
+      REAL(SDK),ALLOCATABLE :: data(:)
+      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
 #ifdef HAVE_HDF5
       INTEGER(HSIZE_T),DIMENSION(1) :: dims
       INTEGER(HID_T),PARAMETER :: rank=1
@@ -203,32 +325,53 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: error
       INTEGER(HID_T) :: dspace_id,dset_id
 
+      ! Convert the path name
+      path = convertPath(dsetname)
+
       ! Determine the dimensions for the dataspace
       dims=SHAPE(data)
 
       ! Create the dataspace
       CALL h5screate_simple_f(rank,dims,dspace_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not create dataspace.')
+      ENDIF
 
       ! Create the dataset
-      CALL h5dcreate_f(this%file_id, dsetname, H5T_NATIVE_DOUBLE, dspace_id, &
+      CALL h5dcreate_f(this%file_id, path, H5T_NATIVE_DOUBLE, dspace_id, &
                        dset_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not create dataset.')
+      ENDIF
       
       ! Write to the dataset
       CALL h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, data, dims, error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not write to th dataset.')
+      ENDIF
 
       ! Close the dataset
       CALL h5dclose_f(dset_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not close the dataset.')
+      ENDIF
 
       ! Close the dataspace
       CALL h5sclose_f(dspace_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not close the dataspace.')
+      ENDIF
+
 #endif
-    ENDSUBROUTINE write_r1
+    ENDSUBROUTINE write_d1
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE write_r2(this,dsetname,data)
+    SUBROUTINE write_d2(this,dsetname,data)
+      CHARACTER(LEN=*),PARAMETER :: myName='writed2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
-      REAL(SRK),ALLOCATABLE :: data(:,:)
+      REAL(SDK),ALLOCATABLE :: data(:,:)
+      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
 #ifdef HAVE_HDF5
       INTEGER(HSIZE_T),DIMENSION(2) :: dims
       INTEGER(HID_T),PARAMETER :: rank=2
@@ -236,25 +379,268 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: error
       INTEGER(HID_T) :: dspace_id,dset_id
 
+      ! Convert the path name
+      path = convertPath(dsetname)
+
       ! Determine the dimensions for the dataspace
       dims=SHAPE(data)
 
       ! Create the dataspace
       CALL h5screate_simple_f(rank,dims,dspace_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not create dataspace.')
+      ENDIF
 
       ! Create the dataset
-      CALL h5dcreate_f(this%file_id, dsetname, H5T_NATIVE_DOUBLE, dspace_id, &
+      CALL h5dcreate_f(this%file_id, path, H5T_NATIVE_DOUBLE, dspace_id, &
                        dset_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not create dataset.')
+      ENDIF
       
       ! Write to the dataset
       CALL h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, data, dims, error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not write to the dataset.')
+      ENDIF
 
       ! Close the dataset
       CALL h5dclose_f(dset_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not close the dataset.')
+      ENDIF
 
       ! Close the dataspace
       CALL h5sclose_f(dspace_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not close the dataspace.')
+      ENDIF
 #endif
-    ENDSUBROUTINE write_r2
+    ENDSUBROUTINE write_d2
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE write_l1(this,dsetname,data)
+      CHARACTER(LEN=*),PARAMETER :: myName='writel1_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: this
+      CHARACTER(LEN=*),INTENT(IN) :: dsetname
+      LOGICAL(SBK),ALLOCATABLE,INTENT(IN) :: data(:)
+      CHARACTER(LEN=SIZE(data)) :: datac
+      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+#ifdef HAVE_HDF5
+      INTEGER(HSIZE_T),DIMENSION(1) :: dims
+      INTEGER(HID_T),PARAMETER :: rank=1
+      
+      INTEGER(HID_T) :: error
+      INTEGER(HID_T) :: dspace_id,dset_id
+      INTEGER(SIK) :: i
+
+      ! Convert the path name
+      path = convertPath(dsetname)
+
+      ! For now we are conferting to characters which store T/F since there is
+      ! not native boolean support for hdf5. We need to use a surrugate
+      ! character string
+      DO i=1,SIZE(data)
+        IF(data(i))THEN
+          datac(i:i)='T'
+        ELSE
+          datac(i:i)='F'
+        ENDIF
+      ENDDO
+
+
+      ! Determine the dimensions for the dataspace
+      dims=SHAPE(data)
+
+      ! Create the dataspace
+      CALL h5screate_simple_f(rank,dims,dspace_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//": Failed to create dataspace.")
+      ENDIF
+
+      ! Create the dataset
+      CALL h5dcreate_f(this%file_id, path, H5T_NATIVE_CHARACTER, dspace_id, &
+                       dset_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//": Failed to create dataset.")
+      ENDIF
+
+      ! Write to the dataset
+      CALL h5dwrite_f(dset_id, H5T_NATIVE_CHARACTER, datac, dims, error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//": Failed to write to dataset.")
+      ENDIF
+
+      ! Close the dataset
+      CALL h5dclose_f(dset_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//": Failed to close dataset.")
+      ENDIF
+
+      ! Close the dataspace
+      CALL h5sclose_f(dspace_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//": Failed to close dataspace.")
+      ENDIF
+
+#endif     
+
+    ENDSUBROUTINE write_l1
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE write_i1(this,dsetname,data)
+      CHARACTER(LEN=*),PARAMETER :: myName='writei1_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: this
+      CHARACTER(LEN=*),INTENT(IN) :: dsetname
+      INTEGER(SIK),ALLOCATABLE :: data(:)
+      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+#ifdef HAVE_HDF5
+      INTEGER(HSIZE_T),DIMENSION(1) :: dims
+      INTEGER(HID_T),PARAMETER :: rank=1
+      
+      INTEGER(HID_T) :: error
+      INTEGER(HID_T) :: dspace_id,dset_id
+
+      ! Convert the path name
+      path = convertPath(dsetname)
+
+      ! Determine the dimensions for the dataspace
+      dims=SHAPE(data)
+
+      ! Create the dataspace
+      CALL h5screate_simple_f(rank,dims,dspace_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//": Failed to create dataspace.")
+      ENDIF
+
+      ! Create the dataset
+      CALL h5dcreate_f(this%file_id, path, H5T_NATIVE_INTEGER, dspace_id, &
+                       dset_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//": Failed to create dataset.")
+      ENDIF
+
+      ! Write to the dataset
+      CALL h5dwrite_f(dset_id, H5T_NATIVE_INTEGER, data, dims, error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//": Failed to write to dataset.")
+      ENDIF
+
+      ! Close the dataset
+      CALL h5dclose_f(dset_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//": Failed to close dataset.")
+      ENDIF
+
+      ! Close the dataspace
+      CALL h5sclose_f(dspace_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//": Failed to close dataspace.")
+      ENDIF
+
+#endif
+    ENDSUBROUTINE write_i1
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE read_d1(this,dsetname,data)
+      CHARACTER(LEN=*),PARAMETER :: myName='readd1_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: this
+      CHARACTER(LEN=*),INTENT(IN) :: dsetname
+      REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: data(:)
+      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+#ifdef HAVE_HDF5
+      INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims,len1
+      INTEGER(HID_T),PARAMETER :: rank=1
+      
+      INTEGER(HID_T) :: error,mem,ndims
+      INTEGER(HID_T) :: dspace_id,dset_id
+
+      ! Convert the path name to use slashes
+      path=convertPath(dsetname)
+
+      ! Open the dataset
+      CALL h5dopen_f(this%file_id, path, dset_id, error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//": Failed to open dataset.")
+      ENDIF
+
+      ! Get dataset dimensions for allocation
+      CALL h5dget_space_f(dset_id,dspace_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//": Failed to obtain the dataspace.")
+      ENDIF
+      ! Make sure the rank is right
+      CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+      IF(error < 0)THEN
+        CALL this%e%raiseError(myName//": Failed to retrieve number of dataspace dimensions.")
+      ENDIF
+      IF(ndims /= rank)THEN
+        CALL this%e%raiseError(myName//": Using wrong read function for rank.")
+      ENDIF
+
+      CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
+      IF(error < 0)THEN
+        CALL this%e%raiseError(myName//": Failed to retrieve dataspace dimensions.")
+      ENDIF
+
+      ! Allocate space if needed
+      IF(ALLOCATED(data))THEN
+        ! Make sure the data is the right size
+        IF(ANY(SHAPE(data) /= dims))THEN
+          CALL this%e%raiseError(myName//": data array is the wrong size.")
+        ENDIF
+      ELSE
+        ! Allocate to size
+        ALLOCATE(data(dims(1)))
+      ENDIF
+
+      ! Read the dataset
+      mem=H5T_NATIVE_DOUBLE
+      CALL h5dread_f(dset_id,mem,data,dims,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//": Failed to read data from dataset.")
+      ENDIF
+
+      ! Close the dataset
+      CALL h5dclose_f(dset_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//": Failed to close dataset.")
+      ENDIF
+
+      ! Close the dataspace
+      CALL h5sclose_f(dspace_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//": Failed to close dataspace.")
+      ENDIF
+
+#endif
+    ENDSUBROUTINE read_d1
+
+!
+!-------------------------------------------------------------------------------
+    FUNCTION convertPath(path)
+      CHARACTER(LEN=*),INTENT(IN) :: path
+      CHARACTER(LEN=80) :: convertpath
+
+      INTEGER :: i,ipos,ipos2,nelem,last,ind
+
+      convertpath=''
+
+      last=len(trim(path))
+      ! Split the path string by '->'
+      ipos=1
+      DO
+        ind=INDEX(path(ipos:last),'->')
+        ipos2=ind+ipos-1
+        IF(ind>0)THEN
+          convertPath=trim(convertpath)//'/'//path(ipos:ipos2-1)
+          ipos=ipos2+2
+        ELSE
+          convertPath=trim(convertPath)//'/'//path(ipos:last)
+          EXIT
+        ENDIF
+      ENDDO ! Elements in path string
+
+    ENDFUNCTION convertPath
 
 ENDMODULE FileType_HDF5
