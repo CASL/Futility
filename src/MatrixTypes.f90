@@ -1012,11 +1012,7 @@ MODULE MatrixTypes
       aij=0.0_SRK
       IF(matrix%isInit) THEN
         ! assemble matrix if necessary
-        IF (.NOT.(matrix%isAssembled)) THEN
-          CALL MatAssemblyBegin(matrix%a,MAT_FINAL_ASSEMBLY,ierr)
-          CALL MatAssemblyEnd(matrix%a,MAT_FINAL_ASSEMBLY,ierr)
-          matrix%isAssembled=.TRUE.
-        ENDIF
+        IF (.NOT.(matrix%isAssembled)) CALL matrix%assemble()
       
         IF((i <= matrix%n) .AND. ((j > 0) .AND. (i > 0))) THEN
           CALL MatGetValues(matrix%a,1,i-1,1,j-1,aij,ierr)
@@ -1042,8 +1038,8 @@ MODULE MatrixTypes
       
       ierrc=0
       IF(.NOT.thisMatrix%isAssembled) THEN
-        CALL MatAssemblyBegin(thisMatrix%a,iperr)
-        IF(iperr == 0) CALL MatAssemblyEnd(thisMatrix%a,iperr)
+        CALL MatAssemblyBegin(thisMatrix%a,MAT_FINAL_ASSEMBLY,iperr)
+        IF(iperr == 0) CALL MatAssemblyEnd(thisMatrix%a,MAT_FINAL_ASSEMBLY,iperr)
         IF(iperr == 0) thisMatrix%isAssembled=.TRUE.
         ierrc=iperr
       ENDIF
