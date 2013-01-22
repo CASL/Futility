@@ -1016,14 +1016,7 @@ MODULE VectorTypes
       IF(thisVector%isInit) THEN
         ierrc=-3
         IF(SIZE(getval) == thisVector%n) THEN
-          !
-          !Commenting out for now to let iperr get returned for unassembled case
-          !IF(.NOT.(thisVector%isAssembled)) THEN
-          !  CALL VecAssemblyBegin(thisVector%b,iperr)
-          !  CALL VecAssemblyEnd(thisVector%b,iperr)
-          !  thisVector%isAssembled=.TRUE.
-          !ENDIF
-          
+          IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
           DO i=1,thisVector%n
             CALL VecGetValues(thisVector%b,1,i-1,getval(i),iperr)
           ENDDO
@@ -1069,14 +1062,7 @@ MODULE VectorTypes
         IF(0 < istt .AND. istt <= istp .AND. istp <= thisVector%n) THEN
           ierrc=-3
           IF(istp-istt+1 == SIZE(getval)) THEN
-            !
-            !Commenting out for now to let iperr get returned for unassembled case
-            !IF(.NOT.(thisVector%isAssembled)) THEN
-            !  CALL VecAssemblyBegin(thisVector%b,iperr)
-            !  CALL VecAssemblyEnd(thisVector%b,iperr)
-            !  thisVector%isAssembled=.TRUE.
-            !ENDIF
-            
+            IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
             DO i=istt,istp
               CALL VecGetValues(thisVector%b,1,i-1,getval(i-istt+1),iperr)
             ENDDO
@@ -1168,7 +1154,8 @@ MODULE VectorTypes
       
       SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
 #ifdef HAVE_PETSC
-        CALL VecNorm(thisVector%b,NORM_1,r,iperr)
+        IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
+        IF(iperr == 0) CALL VecNorm(thisVector%b,NORM_1,r,iperr)
 #else
         CALL eVectorType%raiseFatalError('Incorrect call to '// &
            modName//'::'//myName//' - PETSc not enabled.  You will'// &
@@ -1229,7 +1216,8 @@ MODULE VectorTypes
       SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
         SELECTTYPE(newVector); TYPE IS(PETScVectorType)
 #ifdef HAVE_PETSC
-          CALL VecAXPY(newVector%b,alpha,thisVector%b,iperr)
+          IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
+          IF(iperr == 0) CALL VecAXPY(newVector%b,alpha,thisVector%b,iperr)
 #else
           CALL eVectorType%raiseFatalError('Incorrect call to '// &
              modName//'::'//myName//' - PETSc not enabled.  You will'// &
@@ -1442,7 +1430,8 @@ MODULE VectorTypes
       SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
         SELECTTYPE(thatVector); TYPE IS(PETScVectorType)
 #ifdef HAVE_PETSC
-          CALL VecTDot(thisVector%b,thatVector%b,r,iperr)
+          IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
+          IF(iperr == 0) CALL VecTDot(thisVector%b,thatVector%b,r,iperr)
 #else
           CALL eVectorType%raiseFatalError('Incorrect call to '// &
              modName//'::'//myName//' - PETSc not enabled.  You will'// &
@@ -1598,7 +1587,8 @@ MODULE VectorTypes
       
       SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
 #ifdef HAVE_PETSC
-        CALL VecNorm(thisVector%b,NORM_2,norm2,iperr)
+        IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
+        IF(iperr == 0) CALL VecNorm(thisVector%b,NORM_2,norm2,iperr)
 #else
         CALL eVectorType%raiseFatalError('Incorrect call to '// &
            modName//'::'//myName//' - PETSc not enabled.  You will'// &
@@ -1646,7 +1636,7 @@ MODULE VectorTypes
       
       SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
 #ifdef HAVE_PETSC
-        CALL thisVector%assemble(iperr)
+        IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
         IF(iperr == 0) CALL VecScale(thisVector%b,a,iperr)
 #else
         CALL eVectorType%raiseFatalError('Incorrect call to '// &
@@ -1778,8 +1768,8 @@ MODULE VectorTypes
       SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
         SELECTTYPE(thatVector); TYPE IS(PETScVectorType)
 #ifdef HAVE_PETSC
-          CALL thisVector%assemble(iperr)
-          IF(iperr == 0) CALL thatVector%assemble(iperr)
+          IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
+          IF(.NOT.thatVector%isAssembled) CALL thatVector%assemble(iperr)
           IF(iperr == 0) CALL VecSwap(thisVector%b,thatVector%b,iperr)
 #else
           CALL eVectorType%raiseFatalError('Incorrect call to '// &
