@@ -1,7 +1,5 @@
 ################################################################################
 #
-# CMake File for MPACT
-#
 # Description: CMake script to add the MPACT_Utils library.
 #              
 #
@@ -42,6 +40,7 @@ TRIBITS_ADD_LIBRARY(Utils
       IO_Strings.f90
       FileType_Base.f90
       FileType_Fortran.f90
+      FileType_HDF5.f90
       FileType_Log.f90
       FileType_Input.f90
       VTKFiles.f90
