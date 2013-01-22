@@ -72,7 +72,7 @@ PROGRAM testMatrixTypes
   CALL VectorType_Clear_ValidParams()
   
 #ifdef HAVE_PETSC    
-      CALL PetscFinalize(ierr)
+  CALL PetscFinalize(ierr)
 #endif
 !
 !===============================================================================
