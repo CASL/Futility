@@ -46,6 +46,14 @@ IF (${PACKAGE_NAME}_ENABLE_PARDISO)
         )
 ENDIF()
 
+# add test for PETSC if enabled
+IF (${PACKAGE_NAME}_ENABLE_PETSC)
+    SET(UNIT_TEST_NAMES
+        ${UNIT_TEST_NAMES}
+        testTPLPETSC
+        )
+ENDIF()
+
 # add test for HDF5 if enabled
 IF (${PACKAGE_NAME}_ENABLE_HDF5)
     SET(UNIT_TEST_NAMES
