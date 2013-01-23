@@ -588,8 +588,8 @@ PROGRAM testTPLPETSC
     Vec :: x,b
     Mat :: A
     KSP :: ksp
-    PetscReal :: rtol=1E-8,abstol=1E-8,dtol=1E-1
-    PetscInt  :: maxits=1000,restart=50
+    PetscReal :: rtol,abstol,dtol
+    PetscInt  :: maxits,restart
     REAL(SRK) :: getval
    
     !test KSPCreate
@@ -672,15 +672,20 @@ PROGRAM testTPLPETSC
     ENDIF
     WRITE(*,*) '  Passed: CALL KSPSetFromOptions(...)'
     
-!    test KSPSetTolerances (will need to test more)
-!    CALL KSPSetTolerances(ksp,rtol,abstol,dtol,maxits,ierr)
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL KSPSetTolerances(ksp,rtol,abstol,dtol,maxits,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
-!    WRITE(*,*) '  Passed: CALL KSPSetTolerances(...)'
+    !test KSPSetTolerances (will need to test more)
+    rtol=1E-12
+    abstol=1E-12
+    dtol=PETSC_DEFAULT_DOUBLE_PRECISION
+    maxits=1000
+    CALL KSPSetTolerances(ksp,rtol,abstol,dtol,maxits,ierr)
+    IF(ierr /= 0) THEN
+      WRITE(*,*) 'CALL KSPSetTolerances(ksp,rtol,abstol,dtol,maxits,ierr) FAILED!'
+      STOP 666
+    ENDIF
+    WRITE(*,*) '  Passed: CALL KSPSetTolerances(...)'
     
     !test KSPGMRESSetRestart
+    restart=50
     CALL KSPGMRESSetRestart(ksp,restart,ierr)
     IF(ierr /= 0) THEN
       WRITE(*,*) 'CALL KSPGMRESSetRestart(ksp,restart,ierr) FAILED!'
@@ -688,34 +693,31 @@ PROGRAM testTPLPETSC
     ENDIF
     WRITE(*,*) '  Passed: CALL KSPGMRESSetRestart(...)'
     
-!    !test KSPSolve
-!    CALL KSPSolve(ksp,b,x,ierr)
-!    CALL VecGetValues(x,1,0,getval,ierr)
-!    IF(getval /= 0.4_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) getval
-!      WRITE(*,*) 'CALL VecGetValues(x,1,0,getval,ierr) [KSPSolve] FAILED!'
-!      STOP 666
-!    ENDIF
-!    CALL VecGetValues(x,1,1,getval,ierr)
-!    IF(getval /= -0.2_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) getval
-!      WRITE(*,*) 'CALL VecGetValues(x,1,1,getval,ierr) [KSPSolve] FAILED!'
-!      STOP 666
-!    ENDIF
-!    CALL VecGetValues(x,1,2,getval,ierr)
-!    IF(getval /= 0.6_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) getval
-!      WRITE(*,*) 'CALL VecGetValues(x,1,2,getval,ierr) [KSPSolve] FAILED!'
-!      STOP 666
-!    ENDIF
-!    WRITE(*,*) '  Passed: CALL KSPSolve(...)'
-!    
-!    CALL KSPDestroy(ksp,ierr)
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL KSPDestroy(ksp,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
-!    WRITE(*,*) '  Passed: CALL KSPDestroy(...)'
+    !test KSPSolve
+    CALL KSPSolve(ksp,b,x,ierr)
+    CALL VecGetValues(x,1,0,getval,ierr)
+    IF(ABS(getval-0.4_SRK)>1E-13 .OR. ierr /= 0) THEN
+      WRITE(*,*) 'CALL VecGetValues(x,1,0,getval,ierr) [KSPSolve] FAILED!'
+      STOP 666
+    ENDIF
+    CALL VecGetValues(x,1,1,getval,ierr)
+    IF(ABS(getval+0.2_SRK)>1E-13 .OR. ierr /= 0) THEN
+      WRITE(*,*) 'CALL VecGetValues(x,1,1,getval,ierr) [KSPSolve] FAILED!'
+      STOP 666
+    ENDIF
+    CALL VecGetValues(x,1,2,getval,ierr)
+    IF(ABS(getval-0.6_SRK)>1E-13 .OR. ierr /= 0) THEN
+      WRITE(*,*) 'CALL VecGetValues(x,1,2,getval,ierr) [KSPSolve] FAILED!'
+      STOP 666
+    ENDIF
+    WRITE(*,*) '  Passed: CALL KSPSolve(...)'
+    
+    CALL KSPDestroy(ksp,ierr)
+    IF(ierr /= 0) THEN
+      WRITE(*,*) 'CALL KSPDestroy(ksp,ierr) FAILED!'
+      STOP 666
+    ENDIF
+    WRITE(*,*) '  Passed: CALL KSPDestroy(...)'
   
   ENDSUBROUTINE testPETSC_KSP
 
