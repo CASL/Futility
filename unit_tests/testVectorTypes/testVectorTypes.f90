@@ -1331,6 +1331,28 @@ PROGRAM testVectorTypes
       WRITE(*,*) '  Passed: CALL petscvec%getRange(...)'
       
       DEALLOCATE(thisVector)
+#else
+      !Call PETSc objects for code coverage.  
+      !All of these calls should produce errors
+      ALLOCATE(PETScVectorType :: thisVector)
+      !clear it
+      CALL thisVector%clear()
+      !Set one scalar
+      CALL thisVector%set(1,1._SRK)
+      !Set all scalar
+      CALL thisVector%set(1._SRK)
+      !Set all vector
+      CALL thisVector%set((/1._SRK,1._SRK/))
+      !Set range scalar
+      CALL thisVector%set(1,1,1._SRK)
+      !Set range vector
+      CALL thisVector%set(1,1,(/1._SRK,1._SRK/))
+      !Get one scalar
+      CALL thisVector%get(1,dummy)
+      !Get all vector
+      CALL thisVector%get(dummyvec)
+      !Get range vector
+      CALL thisVector%get(1,1,dummyvec)
 #endif
       
     ENDSUBROUTINE testVector
