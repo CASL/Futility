@@ -37,7 +37,6 @@ PROGRAM testHDF5
 
   FINALIZE_TEST()
 
-
 !
 !===============================================================================
   CONTAINS
@@ -59,7 +58,7 @@ PROGRAM testHDF5
       ENDDO
     
       ! Create a RW access file. Existing file overwritten
-      CALL h5%init('test.h5',.TRUE.)
+      CALL h5%init('test.h5','NEW')
 #ifdef HAVE_HDF5
       ASSERT(h5%isinit,'HDF5 file type not properly initialized!')
 #else
@@ -82,7 +81,7 @@ PROGRAM testHDF5
       CHARACTER(LEN=80),ALLOCATABLE :: sets(:)
       INTEGER(SIK) :: i
 
-      CALL h5%init('readtest.h5',.FALSE.)
+      CALL h5%init('readtest.h5','READ')
 
       CALL h5%ls('groupA',sets)
       DO i=1,SIZE(sets)
@@ -107,7 +106,7 @@ PROGRAM testHDF5
 
       ALLOCATE(testR1(100))
 
-      CALL h5%init('test2.h5',.TRUE.)
+      CALL h5%init('test2.h5','NEW')
 
       
 
