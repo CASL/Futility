@@ -49,6 +49,7 @@ MODULE UnitTest
   PUBLIC :: utest_verbose
   PUBLIC :: utest_nfail
   PUBLIC :: utest_inmain
+  PUBLIC :: utest_master
 !
 ! List of global types
   TYPE :: UTestElement
@@ -63,6 +64,7 @@ MODULE UnitTest
   CHARACTER(LEN=20) :: utest_subtestname
   CHARACTER(LEN=20) :: utest_componentname
   CHARACTER(LEN=20) :: utest_prefix
+  LOGICAL :: utest_master=.TRUE.
   LOGICAL :: utest_component=.FALSE.
   LOGICAL :: utest_compfail=.FALSE.
   LOGICAL :: utest_interactive=.FALSE.
@@ -111,10 +113,13 @@ MODULE UnitTest
       !utest_lvl=utest_lvl+1
 
       utest_testname=testname
-      WRITE(*,'(a)')utest_hline
-      WRITE(*,*) 'STARTING TEST: '//TRIM(utest_testname)//'...'
-      WRITE(*,'(a)')utest_hline
-      
+
+      IF(utest_master)THEN
+        WRITE(*,'(a)')utest_hline
+        WRITE(*,*) 'STARTING TEST: '//TRIM(utest_testname)//'...'
+        WRITE(*,'(a)')utest_hline
+      ENDIF
+
       utest_inmain=.TRUE.
       ALLOCATE(tmp)
       tmp%subtestname="main"
@@ -145,21 +150,25 @@ MODULE UnitTest
         passfail=c_grn//"PASSED"//c_nrm
       ENDIF
       
-      WRITE(*,'(a)')utest_hline
-      WRITE(*,'(a73,a)')  ' TEST '//utest_testname//utest_pad,passfail
-      WRITE(*,'(a)')utest_hline
+      IF(utest_master)THEN
+        WRITE(*,'(a)')utest_hline
+        WRITE(*,'(a73,a)')  ' TEST '//utest_testname//utest_pad,passfail
+        WRITE(*,'(a)')utest_hline
      
-      WRITE(*,"('================================================================================')")
-      WRITE(*,"('|                               TEST STATISTICS                                |')")
-      WRITE(*,"('|------------------------------------------------------------------------------|')")
-      WRITE(*,"('|  SUBTEST NAME                        |    PASS    |    FAIL    |    TOTAL    |')")
-      WRITE(*,"('|------------------------------------------------------------------------------|')")
+        WRITE(*,"('================================================================================')")
+        WRITE(*,"('|                               TEST STATISTICS                                |')")
+        WRITE(*,"('|------------------------------------------------------------------------------|')")
+        WRITE(*,"('|  SUBTEST NAME                        |    PASS    |    FAIL    |    TOTAL    |')")
+        WRITE(*,"('|------------------------------------------------------------------------------|')")
+      ENDIF
       tmp=>utest_firsttest
       DO 
         IF (tmp%npass+tmp%nfail>0) THEN
-          WRITE(*,"('| ',A37,'| ',I10,' | ',I10,' | ',I11,' |')") &
-            adjustl(tmp%subtestname//"                            "),&
-            tmp%npass,tmp%nfail,tmp%npass+tmp%nfail
+          IF(utest_master)THEN 
+            WRITE(*,"('| ',A37,'| ',I10,' | ',I10,' | ',I11,' |')") &
+              adjustl(tmp%subtestname//"                            "),&
+              tmp%npass,tmp%nfail,tmp%npass+tmp%nfail
+          ENDIF
           npass=npass+tmp%npass
           nfail=nfail+tmp%nfail
         ENDIF
@@ -168,9 +177,11 @@ MODULE UnitTest
         IF (.NOT. ASSOCIATED(tmp1)) EXIT
         tmp=>tmp1
       ENDDO
-      WRITE(*,"('|------------------------------------------------------------------------------|')")
-      WRITE(*,"('| ',A37,'| ',I10,' | ',I10,' | ',I11,' |')") 'Total                ',npass,nfail,npass+nfail
-      WRITE(*,"('================================================================================')")
+      IF(utest_master)then
+        WRITE(*,"('|------------------------------------------------------------------------------|')")
+        WRITE(*,"('| ',A37,'| ',I10,' | ',I10,' | ',I11,' |')") 'Total                ',npass,nfail,npass+nfail
+        WRITE(*,"('================================================================================')")
+      ENDIF
       
       ! utest_lvl=utest_lvl-1
       
@@ -196,8 +207,10 @@ MODULE UnitTest
       utest_curtest%next=>tmp
       utest_curtest=>tmp
       
-      WRITE(*,*)
-      WRITE(*,'(a)')utest_pad(1:utest_lvl*2)//'BEGIN SUBTEST '//subtestname
+      IF(utest_master)THEN
+        WRITE(*,*)
+        WRITE(*,'(a)')utest_pad(1:utest_lvl*2)//'BEGIN SUBTEST '//subtestname
+      ENDIF
       utest_inmain=.FALSE.
       
     ENDSUBROUTINE UTest_Start_SubTest
@@ -219,8 +232,10 @@ MODULE UnitTest
         pfstr=c_grn//'  PASSED'//c_nrm
       ENDIF
       
-      WRITE(*,'(a71,a)')utest_pad(1:utest_lvl*2)//'SUBTEST '//trim(utest_curtest%subtestname)//utest_dot,pfstr
-      WRITE(*,*) 
+      IF(utest_master)THEN
+        WRITE(*,'(a71,a)')utest_pad(1:utest_lvl*2)//'SUBTEST '//trim(utest_curtest%subtestname)//utest_dot,pfstr
+        WRITE(*,*)
+      ENDIF
       utest_inmain=.TRUE.
       
       utest_lvl=utest_lvl-1
@@ -246,9 +261,11 @@ MODULE UnitTest
       utest_prefix=componentname//" -"
       utest_npfx=LEN(componentname)+3
 
-      WRITE(*,*)
-      WRITE(*,'(a)')utest_pad(1:utest_lvl*2)//'BEGIN COMPONENT '// &
-        componentname
+      IF(utest_master)THEN
+        WRITE(*,*)
+        WRITE(*,'(a)')utest_pad(1:utest_lvl*2)//'BEGIN COMPONENT '// &
+          componentname
+      ENDIF
       
     ENDSUBROUTINE UTest_Start_Component
 !
@@ -269,7 +286,10 @@ MODULE UnitTest
         pfstr=c_grn//'  PASSED'//c_nrm
       ENDIF
       
-      WRITE(*,'(a71,a)')utest_pad(1:utest_lvl*2)//'COMPONENT '//TRIM(utest_componentname)//utest_dot,pfstr
+      IF(utest_master)THEN
+        WRITE(*,'(a71,a)')utest_pad(1:utest_lvl*2)//'COMPONENT '// &
+          TRIM(utest_componentname)//utest_dot,pfstr
+      ENDIF
       utest_component=.FALSE.
       utest_prefix=""
       utest_npfx=0

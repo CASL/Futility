@@ -46,7 +46,7 @@
 !>  - Make sure routines are safe (check for initialized object, etc.)
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE FileType_HDF5
-  
+
 #ifdef HAVE_HDF5
   USE HDF5
 #endif
@@ -54,13 +54,18 @@ MODULE FileType_HDF5
   USE FileType_Base
   USE IntrType
   USE ExceptionHandler
+  USE ParallelEnv
   IMPLICIT NONE
   PRIVATE
   
+#ifdef HAVE_MPI
+  INCLUDE 'mpif.h'
+#endif
+
+  !> This type extends the base file type, and adds support for writing to and
   !List of Public Members
   PUBLIC :: HDF5FileType
 
-  !> This type extends the base file type, and adds support for writing to and
   !> reading from HDF5 binary files. As implemented, there are three modes for
   !> accessing a file can be opened as: 'read' and 'write' and 'new'. Read mode
   !> opens an already extant HDF5 file and allows the client code to interrogate
@@ -75,6 +80,8 @@ MODULE FileType_HDF5
     CHARACTER(LEN=MAX_PATH_LENGTH+MAX_FNAME_LENGTH+MAX_FEXT_LENGTH) :: fullname=''
     !> Access mode for creating/opening file.
     CHARACTER(LEN=5) :: mode
+    !> Parallel environment for MPI I/O
+    TYPE(MPI_EnvType) :: pe
 
 #ifdef HAVE_HDF5
     !> File id assigned by the HDF5 library when file is opened
@@ -133,11 +140,12 @@ MODULE FileType_HDF5
 !> This routine initializes an HDF5 file object by setting the objects
 !> attributes, initializing the HDF5 library interface and calling the @c open
 !> routine.
-    SUBROUTINE init_HDF5FileType(this,filename,mode)
+    SUBROUTINE init_HDF5FileType(this,filename,mode,pe)
       CHARACTER(LEN=*),PARAMETER :: myName='init_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: filename
       CHARACTER(LEN=*),INTENT(IN) :: mode
+      TYPE(MPI_EnvType),INTENT(IN),TARGET,OPTIONAL :: pe
       CHARACTER(LEN=MAX_PATH_LENGTH) :: fpath
       CHARACTER(LEN=MAX_FNAME_LENGTH) :: fname
       CHARACTER(LEN=MAX_FEXT_LENGTH) :: fext
@@ -148,6 +156,11 @@ MODULE FileType_HDF5
         ALLOCATE(this%e)
       ENDIF
 #ifdef HAVE_HDF5
+#ifdef HAVE_MPI
+      ! Set up the communicator
+      CALL this%pe%init(PE_COMM_WORLD)
+#endif
+
       CALL getFileParts(filename,fpath,fname,fext,this%e)
       CALL this%setFilePath(fpath)
       CALL this%setFileName(fname)
@@ -203,6 +216,10 @@ MODULE FileType_HDF5
       ! Close the HDF5 interface. This can only be done once all calls to the
       ! HDF5 library are complete.
       CALL h5close_f(error)
+#ifdef HAVE_MPI
+!      CALL this%pe%finalize()
+      CALL this%pe%clear()
+#endif
 #endif
       this%isinit=.FALSE.
       IF(ASSOCIATED(this%e)) THEN
@@ -223,21 +240,32 @@ MODULE FileType_HDF5
 #ifdef HAVE_HDF5    
       INTEGER(HID_T) :: acc
       INTEGER(HID_T) :: error
+      INTEGER(HID_T) :: plist_id
+
+      CALL h5pcreate_f(H5P_FILE_ACCESS_F,plist_id,error)
+      !TODO error
+#ifdef HAVE_MPI
+      !TODO something more robust than MPI_COMM_WORLD
+      CALL h5pset_fapl_mpio_f(plist_id,MPI_COMM_WORLD,MPI_INFO_NULL,error)
+      !TODO error
+#endif
 
       ! Decide what access type to use
       SELECTCASE(TRIM(file%mode))
       CASE('READ')
         acc=H5F_ACC_RDONLY_F
-        CALL h5fopen_f(file%fullname,acc,file%file_id,error)
+        CALL h5fopen_f(file%fullname,acc,file%file_id,error,access_prp=plist_id)
       CASE('WRITE')
         acc=H5F_ACC_RDWR_F
-        CALL h5fopen_f(file%fullname,acc,file%file_id,error)
+        CALL h5fopen_f(file%fullname,acc,file%file_id,error,access_prp=plist_id)
       CASE('NEW')
         acc=H5F_ACC_TRUNC_F
-        CALL h5fcreate_f(file%fullname,acc,file%file_id,error)
+        CALL h5fcreate_f(file%fullname,acc,file%file_id,error,access_prp=plist_id)
       CASE DEFAULT
         CALL file%e%raiseError(myName//": Unrecognized access mode.")
       ENDSELECT
+
+      CALL h5pclose_f(plist_id,error)
 #endif
     ENDSUBROUTINE open_HDF5FileType
 !
@@ -469,18 +497,19 @@ MODULE FileType_HDF5
     ENDSUBROUTINE write_d1
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE write_d2(this,dsetname,data)
+    SUBROUTINE write_d2(this,dsetname,data,gdims_in)
       CHARACTER(LEN=*),PARAMETER :: myName='writed2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
-      REAL(SDK),ALLOCATABLE :: data(:,:)
+      REAL(SDK),ALLOCATABLE,INTENT(IN) :: data(:,:)
+      INTEGER(SIK),DIMENSION(2),INTENT(IN),OPTIONAL :: gdims_in
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
 #ifdef HAVE_HDF5
-      INTEGER(HSIZE_T),DIMENSION(2) :: dims
+      INTEGER(HSIZE_T),DIMENSION(2) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=2
       
       INTEGER(HID_T) :: error
-      INTEGER(HID_T) :: dspace_id,dset_id
+      INTEGER(HID_T) :: dspace_id,gspace_id,dset_id,plist_id
 
       ! Make sure the object is initialized
       IF(.NOT.this%isinit)THEN
@@ -493,27 +522,84 @@ MODULE FileType_HDF5
         RETURN
       ENDIF
 
+      ! stash offset
+      offset(1) = LBOUND(data,1)-1
+      offset(2) = LBOUND(data,2)-1
+
+      ! set one to ones. This is usually used for more complicated parallel
+      ! chunking schemes, but we are doing a simplified case
+      one=1
+
       ! Convert the path name
       path = convertPath(dsetname)
 
       ! Determine the dimensions for the dataspace
-      dims=SHAPE(data)
+      ldims=SHAPE(data)
 
-      ! Create the dataspace
-      CALL h5screate_simple_f(rank,dims,dspace_id,error)
+      ! Store the dimensions from global if present
+      IF(PRESENT(gdims_in))THEN
+        gdims=gdims_in
+      ELSE
+        gdims=ldims
+      ENDIF
+
+      ! Create and HDF5 parameter list for the dataset creation.
+      CALL h5pcreate_f(H5P_DATASET_CREATE_F,plist_id,error)
+
+      ! Create the dataspace. This changes for parallel datasets.
+#ifdef HAVE_MPI
+      ! Make sure that the global dims are present if needed
+      IF (this%pe%rank == 0)THEN
+        IF(.NOT.PRESENT(gdims_in))THEN
+          CALL this%e%raiseError(myName//': For parallel write, global '//&
+          'dimensions are required.')
+        ENDIF
+      ENDIF
+      CALL h5pset_chunk_f(plist_id,rank,ldims,error)
+
+#endif
+      ! Global dataspace
+      CALL h5screate_simple_f(rank,gdims,gspace_id,error)
+      !TODO error
+
+      ! Local dataspace
+      CALL h5screate_simple_f(rank,ldims,dspace_id,error)
       IF(error /= 0)THEN
         CALL this%e%raiseError(myName//': Could not create dataspace.')
       ENDIF
 
       ! Create the dataset
-      CALL h5dcreate_f(this%file_id, path, H5T_NATIVE_DOUBLE, dspace_id, &
-                       dset_id,error)
+      CALL h5dcreate_f(this%file_id, path, H5T_NATIVE_DOUBLE, gspace_id, &
+                       dset_id,error,plist_id)
       IF(error /= 0)THEN
         CALL this%e%raiseError(myName//': Could not create dataset.')
       ENDIF
+
+      ! Destroy the property list
+      CALL h5pclose_f(plist_id,error)
+      !todo error
+
+      ! Select the global dataspace for the dataset
+      CALL h5dget_space_f(dset_id,gspace_id,error)
+      !TODO error
+
+      ! Create a property list for the write operation
+      CALL h5pcreate_f(H5P_DATASET_XFER_F, plist_id,error)
+      !todo error
+
+#ifdef HAVE_MPI
+      ! Set to parallel write
+      CALL h5pset_dxpl_mpio_f(plist_id,H5FD_MPIO_COLLECTIVE_F,error)
+      !todo error
+      ! Select the hyperslab
+      CALL h5sselect_hyperslab_f(gspace_id,H5S_SELECT_SET_F,offset,one,error, &
+                                 one,ldims)
+      !todo error
+#endif
       
       ! Write to the dataset
-      CALL h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, data, dims, error)
+      CALL h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, data, gdims, error, &
+                      dspace_id,gspace_id,plist_id)
       IF(error /= 0)THEN
         CALL this%e%raiseError(myName//': Could not write to the dataset.')
       ENDIF
@@ -529,6 +615,12 @@ MODULE FileType_HDF5
       IF(error /= 0)THEN
         CALL this%e%raiseError(myName//': Could not close the dataspace.')
       ENDIF
+      CALL h5sclose_f(gspace_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not close the dataspace.')
+      ENDIF
+      
+      CALL h5pclose_f(plist_id,error)
 #endif
     ENDSUBROUTINE write_d2
 !
