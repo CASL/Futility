@@ -285,6 +285,8 @@ MODULE VectorTypes
     LOGICAL(SBK) :: isAssembled=.FALSE.
     !> MPI comm ID
     INTEGER(SIK) :: comm=-1
+    !> total number of local values
+    INTEGER(SIK) :: nlocal=-1
 !
 !List of Type Bound Procedures
     CONTAINS 
@@ -676,18 +678,19 @@ MODULE VectorTypes
       TYPE(ParamType),INTENT(IN) :: Params
       TYPE(ParamType) :: validParams
       LOGICAL(SBK) :: localalloc
-      INTEGER(SIK) :: n, MPI_Comm_ID
+      INTEGER(SIK) :: n, MPI_Comm_ID, nlocal
       
       !Check to set up required and optional param lists.
       IF(.NOT.VectorType_Paramsflag) CALL VectorType_Declare_ValidParams()
       
       !Validate against the reqParams and OptParams
       validParams=Params
-      CALL validParams%validate(PETScVectorType_reqParams)
+      CALL validParams%validate(PETScVectorType_reqParams,PETScVectorType_optParams)
       
       !Pull Data from Parameter List
-      CALL Params%get('n',n)
-      CALL Params%get('MPI_Comm_ID',MPI_Comm_ID)
+      CALL validParams%get('VectorType->n',n)
+      CALL validParams%get('VectorType->MPI_Comm_ID',MPI_Comm_ID)
+      CALL validParams%get('VectorType->nlocal',nlocal)
       
       !Error checking of subroutine input
       localalloc=.FALSE.
@@ -706,11 +709,16 @@ MODULE VectorTypes
           thisVector%isInit=.TRUE.
           thisVector%n=n
           thisVector%comm=MPI_Comm_ID
+          thisVector%nlocal=nlocal
           IF(.NOT.thisVector%isCreated) THEN
             CALL VecCreate(thisVector%comm,thisVector%b,iperr)
             thisVector%isCreated=.TRUE.
           ENDIF
-          CALL VecSetSizes(thisVector%b,PETSC_DECIDE,thisVector%n,iperr)
+          IF(nlocal<0) THEN
+            CALL VecSetSizes(thisVector%b,PETSC_DECIDE,thisVector%n,iperr)
+          ELSE
+            CALL VecSetSizes(thisVector%b,nlocal,thisVector%n,iperr)
+          ENDIF
           CALL VecSetType(thisVector%b,VECMPI,iperr)
           CALL VecSetFromOptions(thisVector%b,iperr)
           CALL VecSet(thisVector%b,0._SRK,iperr)
@@ -1794,19 +1802,22 @@ MODULE VectorTypes
 !> The optional parameters for the PETSc Vector Type do not exist.
 !>
     SUBROUTINE VectorType_Declare_ValidParams()
-      INTEGER(SIK) :: n,MPI_Comm
+      INTEGER(SIK) :: n,MPI_Comm,nlocal
       
       !Setup the required and optional parameter lists
       n=1
       MPI_Comm=1
+      nlocal=-1
       !Real Vector Type - Required
       CALL RealVectorType_reqParams%add('VectorType->n',n)
       
       !PETSc Vector Type - Required
       CALL PETScVectorType_reqParams%add('VectorType->n',n)
       CALL PETScVectorType_reqParams%add('VectorType->MPI_Comm_ID',MPI_Comm)
+
       !There are no optional parameters at this time.
-      
+      CALL PETScVectorType_optParams%add('VectorType->nlocal',nlocal)
+
       !Set flag to true since the defaults have been set for this type.
       VectorType_Paramsflag=.TRUE.
     ENDSUBROUTINE VectorType_Declare_ValidParams
@@ -1826,6 +1837,7 @@ MODULE VectorTypes
       !PETSc Vector Type - Required
       CALL PETScVectorType_reqParams%clear()
       !There are no optional parameters at this time.
+      CALL PETScVectorType_optParams%clear()
       
     ENDSUBROUTINE VectorType_Clear_ValidParams
 !

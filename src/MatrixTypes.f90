@@ -174,6 +174,8 @@ MODULE MatrixTypes
     LOGICAL(SBK) :: isCreated=.FALSE.
     !> assembly status
     LOGICAL(SBK) :: isAssembled=.FALSE.
+    !> number of local values
+    INTEGER(SIK) :: nlocal
     
 #ifdef HAVE_PETSC
     Mat :: A
@@ -589,7 +591,7 @@ MODULE MatrixTypes
       CLASS(PETScMatrixType),INTENT(INOUT) :: matrix
       CLASS(ParamType),INTENT(IN) :: Params
       TYPE(ParamType) :: validParams
-      INTEGER(SIK) :: n, matType, MPI_COMM_ID
+      INTEGER(SIK) :: n, matType, MPI_COMM_ID, nlocal
       LOGICAL(SBK) :: localalloc, isSym
       
 #ifdef HAVE_PETSC
@@ -608,13 +610,14 @@ MODULE MatrixTypes
       IF(.NOT.MatrixType_Paramsflag) CALL MatrixTypes_Declare_ValidParams()      
       !Validate against the reqParams and OptParams
       validParams=Params
-      CALL validParams%validate(PETScMatrixType_reqParams)
+      CALL validParams%validate(PETScMatrixType_reqParams,PETScMatrixType_optParams)
       
       ! Pull Data From Parameter List
       CALL validParams%get('MatrixType->n',n)
       CALL validParams%get('MatrixType->isSym',isSym)
       CALL validParams%get('MatrixType->matType',matType)
       CALL validParams%get('MatrixType->MPI_COMM_ID',MPI_COMM_ID)
+      CALL validParams%get('MatrixType->nlocal',nlocal)
       CALL validParams%clear()
 
       IF(.NOT. matrix%isInit) THEN
@@ -626,6 +629,7 @@ MODULE MatrixTypes
           matrix%isInit=.TRUE.
           matrix%n=n
           matrix%isAssembled=.FALSE.
+          matrix%nlocal=nlocal
           IF(isSym) THEN
             matrix%isSymmetric=.TRUE.
           ELSE
@@ -635,7 +639,11 @@ MODULE MatrixTypes
             CALL MatCreate(MPI_COMM_ID,matrix%a,ierr)
             matrix%isCreated=.TRUE.
           ENDIF
-          CALL MatSetSizes(matrix%a,PETSC_DECIDE,PETSC_DECIDE,matrix%n,matrix%n,ierr)
+          IF(nlocal<0) THEN
+            CALL MatSetSizes(matrix%a,PETSC_DECIDE,PETSC_DECIDE,matrix%n,matrix%n,ierr)
+          ELSE
+            CALL MatSetSizes(matrix%a,nlocal,nlocal,matrix%n,matrix%n,ierr)
+          ENDIF
           IF (matType == SPARSE) THEN
             CALL MatSetType(matrix%a,MATMPIAIJ,ierr)
           ELSEIF (matType == DENSESQUARE) THEN
@@ -1275,6 +1283,7 @@ MODULE MatrixTypes
 #ifdef HAVE_PETSC
                 CALL vecPList%add('VectorType -> n',y%n)
                 CALL vecPList%add('VectorType -> MPI_Comm_ID',y%comm)
+                CALL vecPList%add('VectorType -> nlocal',x%nlocal)
                 CALL dummy%init(vecPList)
                 IF(.NOT.x%isAssembled) CALL x%assemble()
                 IF(.NOT.y%isAssembled) CALL y%assemble()
@@ -1617,7 +1626,7 @@ MODULE MatrixTypes
 !> The optional parameters for the PETSc Matrix Type do not exist.
 !>
     SUBROUTINE MatrixTypes_Declare_ValidParams()
-      INTEGER(SIK) :: n,m,nnz,matType,MPI_COMM_ID
+      INTEGER(SIK) :: n,m,nnz,matType,MPI_COMM_ID,nlocal
       LOGICAL(SBK) :: isSym
       
       !Setup the required and optional parameter lists
@@ -1627,6 +1636,7 @@ MODULE MatrixTypes
       isSym=.FALSE.
       matType=1
       MPI_COMM_ID=1
+      nlocal=-1
       !Sparse Matrix Type - Required
       CALL SparseMatrixType_reqParams%add('MatrixType->n',n)
       CALL SparseMatrixType_reqParams%add('MatrixType->nnz',nnz)
@@ -1646,6 +1656,7 @@ MODULE MatrixTypes
       CALL PETScMatrixType_reqParams%add('MatrixType->MPI_COMM_ID',MPI_COMM_ID)
       
       !There are no optional parameters at this time.
+      CALL PETScMatrixType_optParams%add('MatrixType->nlocal',nlocal)
       
       !Set flag to true since the defaults have been set for this type.
       MatrixType_Paramsflag=.TRUE.
