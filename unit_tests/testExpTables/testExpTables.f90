@@ -419,13 +419,16 @@ CONTAINS
       WRITE(*,*) ' Performance measurements completed'
 #else
       USE Times
+      USE StochasticSampling
 
       INTEGER(SIK) :: nval,neval,j,ix
       REAL(SRK),ALLOCATABLE :: xval(:),ans(:)
       TYPE(ExpTableType) :: myTable
       TYPE(TimerType) :: testTimer
+      TYPE(StochasticSamplingType) :: myRNG
 
       CALL testTimer%setTimerHiResMode(.TRUE.) 
+      CALL myRNG%init(RNG_LEcuyer2)
       WRITE(*,*)
       WRITE(*,*)
       WRITE(*,*) ' Getting performance measurements without TAU...'
@@ -437,7 +440,9 @@ CONTAINS
       !Setup test input
       ALLOCATE(ans(1:nval))
       ALLOCATE(xval(1:nval))
-      CALL RANDOM_NUMBER(xval)
+      DO j=1,nval
+        xval(j)=myRNG%rng()
+      ENDDO
       xval=xval*(-10._SRK)
             
       WRITE(*,*) 'EXACT myTable%EXPT()'
@@ -467,6 +472,8 @@ CONTAINS
       CALL testTimer%toc()
       WRITE(*,*) "Took: ", testTimer%elapsedtime
       CALL myTable%clear()
+      CALL PL%clear()
+      CALL myRNG%clear()
       
       WRITE(*,*) ' Performance measurements completed'
 #endif
