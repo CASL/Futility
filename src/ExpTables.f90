@@ -194,18 +194,6 @@ MODULE ExpTables
       
       IF(myET%minVal <= x .AND. x <= myET%maxVal) THEN
         ans=myET%ptrExpT(x)
-        !SELECTCASE(myET%tableType)
-        !  CASE (SINGLE_LEVEL_EXP_TABLE)
-        !    ans=EXPT_Single(myET,x)
-        !  CASE (TWO_LEVEL_EXP_TABLE)
-        !    ans=EXPT_TwoLevel(myET,x)
-        !  CASE (LINEAR_EXP_TABLE)
-        !    ans=EXPT_Linear(myET,x)
-        !  CASE (ORDER2_EXP_TABLE)
-        !    ans=EXPT_TwoOrder(myET,x)
-        !  CASE DEFAULT
-        !    ans=1._SRK-EXP(x)
-        !  ENDSELECT
       ELSE
         ans=1._SRK-EXP(x)
       ENDIF
