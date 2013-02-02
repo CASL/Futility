@@ -417,6 +417,58 @@ CONTAINS
       CALL myTable%clear()
       
       WRITE(*,*) ' Performance measurements completed'
+#else
+      USE Times
+
+      INTEGER(SIK) :: nval,neval,j,ix
+      REAL(SRK),ALLOCATABLE :: xval(:),ans(:)
+      TYPE(ExpTableType) :: myTable
+      TYPE(TimerType) :: testTimer
+
+      CALL testTimer%setTimerHiResMode(.TRUE.) 
+      WRITE(*,*)
+      WRITE(*,*)
+      WRITE(*,*) ' Getting performance measurements without TAU...'
+      
+      !Set test input for number of evaluations and number of values to evaluate
+      neval=100000
+      nval=300
+
+      !Setup test input
+      ALLOCATE(ans(1:nval))
+      ALLOCATE(xval(1:nval))
+      CALL RANDOM_NUMBER(xval)
+      xval=xval*(-10._SRK)
+            
+      WRITE(*,*) 'EXACT myTable%EXPT()'
+      CALL PL%add('ExpTables -> tabletype',EXACT_EXP_TABLE)
+      CALL myTable%initialize(PL)
+      CALL testTimer%tic()
+      DO i=1,neval
+        ans=REAL(i,SRK)
+        DO j=1,nval
+          ans(j)=ans(j)+myTable%EXPT(xval(j))
+        ENDDO
+      ENDDO
+      CALL testTimer%toc()
+      WRITE(*,*) "Took: ", testTimer%elapsedtime
+      CALL myTable%clear()
+      
+      WRITE(*,*) 'LINEAR myTable%EXPT()'
+      CALL PL%add('ExpTables -> tabletype',LINEAR_EXP_TABLE)
+      CALL myTable%initialize(PL)
+      CALL testTimer%ResetTimer()
+      DO i=1,neval
+        ans=REAL(i,SRK)
+        DO j=1,nval
+          ans(j)=ans(j)+myTable%EXPT(xval(j))
+        ENDDO
+      ENDDO
+      CALL testTimer%toc()
+      WRITE(*,*) "Took: ", testTimer%elapsedtime
+      CALL myTable%clear()
+      
+      WRITE(*,*) ' Performance measurements completed'
 #endif
     ENDSUBROUTINE perftest
 !
