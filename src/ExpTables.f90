@@ -136,6 +136,8 @@ MODULE ExpTables
     REAL(SRK),ALLOCATABLE :: table3rd(:)
     !> Two dimensional table for better cache coherency
     REAL(SRK),ALLOCATABLE :: table2D(:,:)
+    !> Procedure pointer to selected expt routine
+    PROCEDURE(expT_absintfc),POINTER :: ptrExpT => NULL()
 !
 !List of type bound prodedures
     CONTAINS
@@ -149,6 +151,15 @@ MODULE ExpTables
       !> @copydetails ExpTables::clear_ExpTable
       PROCEDURE,PASS :: clear => clear_ExpTable
   ENDTYPE ExpTableType
+!
+  ABSTRACT INTERFACE
+    FUNCTION expt_absintfc(thisExpT,x) RESULT(y)
+      IMPORT :: SRK,ExpTableType
+      CLASS(ExpTableType),INTENT(IN) :: thisExpT
+      REAL(SRK),INTENT(IN) :: x
+      REAL(SRK) :: y
+    ENDFUNCTION expt_absintfc
+  ENDINTERFACE
   
   !> Module name
   CHARACTER(LEN=*),PARAMETER :: modName='EXPTABLES'
@@ -182,18 +193,19 @@ MODULE ExpTables
       REAL(SRK) :: ans
       
       IF(myET%minVal <= x .AND. x <= myET%maxVal) THEN
-        SELECTCASE(myET%tableType)
-          CASE (SINGLE_LEVEL_EXP_TABLE)
-            ans=EXPT_Single(myET,x)
-          CASE (TWO_LEVEL_EXP_TABLE)
-            ans=EXPT_TwoLevel(myET,x)
-          CASE (LINEAR_EXP_TABLE)
-            ans=EXPT_Linear(myET,x)
-          CASE (ORDER2_EXP_TABLE)
-            ans=EXPT_TwoOrder(myET,x)
-          CASE DEFAULT
-            ans=1._SRK-EXP(x)
-          ENDSELECT
+        ans=myET%ptrExpT(x)
+        !SELECTCASE(myET%tableType)
+        !  CASE (SINGLE_LEVEL_EXP_TABLE)
+        !    ans=EXPT_Single(myET,x)
+        !  CASE (TWO_LEVEL_EXP_TABLE)
+        !    ans=EXPT_TwoLevel(myET,x)
+        !  CASE (LINEAR_EXP_TABLE)
+        !    ans=EXPT_Linear(myET,x)
+        !  CASE (ORDER2_EXP_TABLE)
+        !    ans=EXPT_TwoOrder(myET,x)
+        !  CASE DEFAULT
+        !    ans=1._SRK-EXP(x)
+        !  ENDSELECT
       ELSE
         ans=1._SRK-EXP(x)
       ENDIF
@@ -354,8 +366,10 @@ MODULE ExpTables
           maxTable=maxVal*nintervals
           SELECTCASE(tableType)
             CASE (EXACT_EXP_TABLE)
+              myET%ptrExpT=>EXPT_Exact
               myET%tableType=EXACT_EXP_TABLE
             CASE(SINGLE_LEVEL_EXP_TABLE)
+              myET%ptrExpT=>EXPT_Single
               CALL dmalloc0A(myET%table,minTable,maxTable)
               myET%nintervals=nintervals
               myET%tableType=tableType
@@ -370,6 +384,7 @@ MODULE ExpTables
                 x=x+myET%dx
               ENDDO
             CASE(TWO_LEVEL_EXP_TABLE)
+              myET%ptrExpT=>EXPT_TwoLevel
               CALL dmalloc0A(myET%table,minTable,maxTable)
               CALL dmallocA(myET%table2rd,nintervals)
               myET%nintervals=nintervals
@@ -394,6 +409,7 @@ MODULE ExpTables
                 myET%table2rd(i)=EXP(x2rd)
               ENDDO
             CASE(LINEAR_EXP_TABLE)
+              myET%ptrExpT=>EXPT_Linear
               CALL dmalloc0A(myET%table2D,1,2,minTable,maxTable)
               myET%nintervals=nintervals
               myET%tableType=tableType
@@ -413,6 +429,7 @@ MODULE ExpTables
                 y1=y2
               ENDDO
             CASE(ORDER2_EXP_TABLE)
+              myET%ptrExpT=>EXPT_TwoOrder
               CALL dmalloc0A(myET%table,minTable,maxTable)
               CALL dmalloc0A(myET%table2rd,minTable,maxTable)
               CALL dmalloc0A(myET%table3rd,minTable,maxTable)
@@ -458,6 +475,21 @@ MODULE ExpTables
       ENDIF
       IF(localalloc) DEALLOCATE(eExpTable)
     ENDSUBROUTINE init_ExpTable
+!
+!-------------------------------------------------------------------------------
+!> @brief Exponential function evaluated exactly
+!> @param myET Exponential table type object
+!> @param x the value to evaluate
+!> @return ans the return value equal to 1-EXP(x) 
+!>
+!> This routine returns the exact answer to 1-EXP(x)
+!>
+    ELEMENTAL FUNCTION EXPT_Exact(myET,x) RESULT(ans)
+      CLASS(ExpTableType),INTENT(IN) :: myET
+      REAL(SRK),INTENT(IN) :: x
+      REAL(SRK) :: ans
+      ans=1._SRK-EXP(x)
+    ENDFUNCTION EXPT_Exact
 !
 !-------------------------------------------------------------------------------
 !> @brief Exponential function evaluated by single-level table without 

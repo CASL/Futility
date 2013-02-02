@@ -434,8 +434,8 @@ CONTAINS
       WRITE(*,*) ' Getting performance measurements without TAU...'
       
       !Set test input for number of evaluations and number of values to evaluate
-      neval=100000
-      nval=300
+      neval=1000000
+      nval=3000
 
       !Setup test input
       ALLOCATE(ans(1:nval))
@@ -460,7 +460,7 @@ CONTAINS
       CALL myTable%clear()
       
       WRITE(*,*) 'LINEAR myTable%EXPT()'
-      CALL PL%add('ExpTables -> tabletype',LINEAR_EXP_TABLE)
+      CALL PL%set('ExpTables -> tabletype',LINEAR_EXP_TABLE)
       CALL myTable%initialize(PL)
       CALL testTimer%ResetTimer()
       DO i=1,neval
