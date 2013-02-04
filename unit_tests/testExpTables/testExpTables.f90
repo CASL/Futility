@@ -267,7 +267,7 @@ PROGRAM testExpTables
   WRITE(*,*) '==================================================='
   CALL PL%clear()
   CALL ErrCheck()
-  CALL perftest()
+  !CALL perftest()
   DO i=1,5
     CALL testET2(i)%clear()
   ENDDO
