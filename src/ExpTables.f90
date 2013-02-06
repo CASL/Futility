@@ -153,11 +153,11 @@ MODULE ExpTables
   ENDTYPE ExpTableType
 !
   ABSTRACT INTERFACE
-    FUNCTION expt_absintfc(thisExpT,x) RESULT(y)
+    ELEMENTAL FUNCTION expt_absintfc(thisExpT,x) RESULT(ans)
       IMPORT :: SRK,ExpTableType
       CLASS(ExpTableType),INTENT(IN) :: thisExpT
       REAL(SRK),INTENT(IN) :: x
-      REAL(SRK) :: y
+      REAL(SRK) :: ans
     ENDFUNCTION expt_absintfc
   ENDINTERFACE
   
