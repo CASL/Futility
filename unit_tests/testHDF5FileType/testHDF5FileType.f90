@@ -44,7 +44,7 @@ PROGRAM testHDF5
 
   CREATE_TEST("HDF File Type")
 
-#ifdef HAVE_HDF5
+#ifdef HAVE_HDF5_DISABLED
   REGISTER_SUBTEST("HDF5FileType Write",testHDF5FileTypeWrite)
   REGISTER_SUBTEST("HDF5FileType Read",testHDF5FileTypeRead)
 #ifdef HAVE_MPI
@@ -108,7 +108,7 @@ PROGRAM testHDF5
     
       ! Create a RW access file. Existing file overwritten
       CALL h5%init('test.h5','NEW')
-#ifdef HAVE_HDF5
+#ifdef HAVE_HDF5_DISABLED
       ASSERT(h5%isinit,'HDF5 file type not properly initialized!')
 #else
       ASSERT(.TRUE.,'HDF5 not present')

@@ -47,7 +47,7 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE FileType_HDF5
 
-#ifdef HAVE_HDF5
+#ifdef HAVE_HDF5_DISABLED
   USE HDF5
 #endif
   USE IO_Strings
@@ -83,7 +83,7 @@ MODULE FileType_HDF5
     !> Parallel environment for MPI I/O
     TYPE(MPI_EnvType) :: pe
 
-#ifdef HAVE_HDF5
+#ifdef HAVE_HDF5_DISABLED
     !> File id assigned by the HDF5 library when file is opened
     INTEGER(HID_T) :: file_id=0
 #endif
@@ -184,13 +184,13 @@ MODULE FileType_HDF5
       CHARACTER(LEN=MAX_PATH_LENGTH) :: fpath
       CHARACTER(LEN=MAX_FNAME_LENGTH) :: fname
       CHARACTER(LEN=MAX_FEXT_LENGTH) :: fext
-#ifdef HAVE_HDF5
+#ifdef HAVE_HDF5_DISABLED
       INTEGER(HID_T) :: error
 #endif
       IF(.NOT.ASSOCIATED(this%e)) THEN
         ALLOCATE(this%e)
       ENDIF
-#ifdef HAVE_HDF5
+#ifdef HAVE_HDF5_DISABLED
 #ifdef HAVE_MPI
       ! Set up the communicator
       CALL this%pe%init(PE_COMM_WORLD)
@@ -243,7 +243,7 @@ MODULE FileType_HDF5
     SUBROUTINE clear_HDF5FileType(this)
       CHARACTER(LEN=*),PARAMETER :: myName='clear_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
-#ifdef HAVE_HDF5    
+#ifdef HAVE_HDF5_DISABLED
       INTEGER(HID_T) :: error
       ! Close the HDF5 file.
       CALL h5fclose_f(this%file_id,error)
@@ -272,7 +272,7 @@ MODULE FileType_HDF5
     SUBROUTINE open_HDF5FileType(file)
       CHARACTER(LEN=*),PARAMETER :: myName='open_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: file
-#ifdef HAVE_HDF5    
+#ifdef HAVE_HDF5_DISABLED 
       INTEGER(HID_T) :: acc
       INTEGER(HID_T) :: error
       INTEGER(HID_T) :: plist_id
@@ -312,7 +312,7 @@ MODULE FileType_HDF5
     SUBROUTINE close_HDF5FileType(file)
       CHARACTER(LEN=*),PARAMETER :: myName='close_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: file
-#ifdef HAVE_HDF5    
+#ifdef HAVE_HDF5_DISABLED
       INTEGER(HID_T) :: error
       
       CALL h5fclose_f(file%file_id,error)
@@ -351,7 +351,7 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),INTENT(IN) :: path
       CHARACTER(LEN=*),ALLOCATABLE,INTENT(INOUT) :: objs(:)
       CHARACTER(LEN=MAX_PATH_LENGTH),ALLOCATABLE :: path2
-#ifdef HAVE_HDF5
+#ifdef HAVE_HDF5_DISABLED
       INTEGER(HSIZE_T) :: num_obj,i
       INTEGER(HID_T) :: grp_id,error
       INTEGER :: store_type,nlinks,max_corder
@@ -394,7 +394,7 @@ MODULE FileType_HDF5
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: path
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path2
-#ifdef HAVE_HDF5
+#ifdef HAVE_HDF5_DISABLED
       INTEGER(HID_T) :: group_id,error
 
       ! Make sure the object is initialized
@@ -437,7 +437,7 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),INTENT(IN) :: path
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path2
       INTEGER(SIK) :: ngrp
-#ifdef HAVE_HDF5
+#ifdef HAVE_HDF5_DISABLED
       INTEGER(HSIZE_T) :: num_obj,i
       INTEGER(HID_T) :: grp_id,error
       INTEGER :: store_type,nlinks,max_corder
@@ -474,7 +474,7 @@ MODULE FileType_HDF5
       REAL(SDK),ALLOCATABLE,INTENT(IN) :: data(:)
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
       INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: gdims_in
-#ifdef HAVE_HDF5
+#ifdef HAVE_HDF5_DISABLED
       INTEGER(HSIZE_T),DIMENSION(1) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=1
       
@@ -578,9 +578,9 @@ MODULE FileType_HDF5
       ENDIF
       
       ! Select the hyperslab
-      CALL h5sselect_hyperslab_f(gspace_id,H5S_SELECT_SET_
+!      CALL h5sselect_hyperslab_f(gspace_id,H5S_SELECT_SET_
 !> @brief Write a rank-1 array of doubles to a datasetF,offset,one,error, &
-                                 one,ldims)
+!                                 one,ldims)
       IF(error /= 0)THEN
         CALL this%e%raiseError(myName//': Could not select hyperslab.')
       ENDIF
@@ -625,7 +625,7 @@ MODULE FileType_HDF5
       REAL(SDK),ALLOCATABLE,INTENT(IN) :: data(:,:)
       INTEGER(SIK),DIMENSION(2),INTENT(IN),OPTIONAL :: gdims_in
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
-#ifdef HAVE_HDF5
+#ifdef HAVE_HDF5_DISABLED
       INTEGER(HSIZE_T),DIMENSION(2) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=2
       
@@ -771,7 +771,7 @@ MODULE FileType_HDF5
       REAL(SDK),ALLOCATABLE,INTENT(IN) :: data(:,:,:)
       INTEGER(SIK),DIMENSION(3),INTENT(IN),OPTIONAL :: gdims_in
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
-#ifdef HAVE_HDF5
+#ifdef HAVE_HDF5_DISABLED
       INTEGER(HSIZE_T),DIMENSION(3) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=3
       
@@ -918,7 +918,7 @@ MODULE FileType_HDF5
       REAL(SSK),ALLOCATABLE,INTENT(IN) :: data(:)
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
       INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: gdims_in
-#ifdef HAVE_HDF5
+#ifdef HAVE_HDF5_DISABLED
       INTEGER(HSIZE_T),DIMENSION(1) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=1
       
@@ -1068,7 +1068,7 @@ MODULE FileType_HDF5
       REAL(SSK),ALLOCATABLE,INTENT(IN) :: data(:,:)
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
       INTEGER(SIK),DIMENSION(2),INTENT(IN),OPTIONAL :: gdims_in
-#ifdef HAVE_HDF5
+#ifdef HAVE_HDF5_DISABLED
       INTEGER(HSIZE_T),DIMENSION(2) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=2
       
@@ -1219,7 +1219,7 @@ MODULE FileType_HDF5
       REAL(SSK),ALLOCATABLE,INTENT(IN) :: data(:,:,:)
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
       INTEGER(SIK),DIMENSION(3),INTENT(IN),OPTIONAL :: gdims_in
-#ifdef HAVE_HDF5
+#ifdef HAVE_HDF5_DISABLED
       INTEGER(HSIZE_T),DIMENSION(3) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=3
       
@@ -1374,7 +1374,7 @@ MODULE FileType_HDF5
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
       INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: gdims_in
       INTEGER(SIK) :: i
-#ifdef HAVE_HDF5
+#ifdef HAVE_HDF5_DISABLED
       INTEGER(HSIZE_T),DIMENSION(1) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=1
       
@@ -1533,7 +1533,7 @@ MODULE FileType_HDF5
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
       INTEGER(SIK),DIMENSION(2),INTENT(IN),OPTIONAL :: gdims_in
       INTEGER(SIK) :: i,j
-#ifdef HAVE_HDF5
+#ifdef HAVE_HDF5_DISABLED
       INTEGER(HSIZE_T),DIMENSION(2) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=2
       
@@ -1692,7 +1692,7 @@ MODULE FileType_HDF5
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
       INTEGER(SIK),DIMENSION(3),INTENT(IN),OPTIONAL :: gdims_in
       INTEGER(SIK) :: i,j,k
-#ifdef HAVE_HDF5
+#ifdef HAVE_HDF5_DISABLED
       INTEGER(HSIZE_T),DIMENSION(3) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=3
       
@@ -1851,7 +1851,7 @@ MODULE FileType_HDF5
       INTEGER(SIK),ALLOCATABLE,INTENT(IN) :: data(:)
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
       INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: gdims_in
-#ifdef HAVE_HDF5
+#ifdef HAVE_HDF5_DISABLED
       INTEGER(HSIZE_T),DIMENSION(1) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=1
       
@@ -2001,7 +2001,7 @@ MODULE FileType_HDF5
       INTEGER(SIK),ALLOCATABLE,INTENT(IN) :: data(:,:)
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
       INTEGER(SIK),DIMENSION(2),INTENT(IN),OPTIONAL :: gdims_in
-#ifdef HAVE_HDF5
+#ifdef HAVE_HDF5_DISABLED
       INTEGER(HSIZE_T),DIMENSION(2) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=2
       
@@ -2152,7 +2152,7 @@ MODULE FileType_HDF5
       INTEGER(SIK),ALLOCATABLE,INTENT(IN) :: data(:,:,:)
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
       INTEGER(SIK),DIMENSION(3),INTENT(IN),OPTIONAL :: gdims_in
-#ifdef HAVE_HDF5
+#ifdef HAVE_HDF5_DISABLED
       INTEGER(HSIZE_T),DIMENSION(3) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=3
       
@@ -2302,7 +2302,7 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: data(:)
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
-#ifdef HAVE_HDF5
+#ifdef HAVE_HDF5_DISABLED
       INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims,len1
       INTEGER(HID_T),PARAMETER :: rank=1
       
@@ -2382,7 +2382,7 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: data(:,:)
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
-#ifdef HAVE_HDF5
+#ifdef HAVE_HDF5_DISABLED
       INTEGER(HSIZE_T),DIMENSION(2) :: dims,maxdims,len1
       INTEGER(HID_T),PARAMETER :: rank=2
       
@@ -2464,7 +2464,7 @@ MODULE FileType_HDF5
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: data(:,:,:)
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
       INTEGER(SIK) :: i
-#ifdef HAVE_HDF5
+#ifdef HAVE_HDF5_DISABLED
       INTEGER(HSIZE_T),DIMENSION(3) :: dims,maxdims,len1
       INTEGER(HID_T),PARAMETER :: rank=3
       
@@ -2545,7 +2545,7 @@ SUBROUTINE read_s1(this,dsetname,data)
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: data(:)
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
-#ifdef HAVE_HDF5
+#ifdef HAVE_HDF5_DISABLED
       INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims,len1
       INTEGER(HID_T),PARAMETER :: rank=1
       
@@ -2625,7 +2625,7 @@ SUBROUTINE read_s2(this,dsetname,data)
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: data(:,:)
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
-#ifdef HAVE_HDF5
+#ifdef HAVE_HDF5_DISABLED
       INTEGER(HSIZE_T),DIMENSION(2) :: dims,maxdims,len1
       INTEGER(HID_T),PARAMETER :: rank=2
       
@@ -2705,7 +2705,7 @@ SUBROUTINE read_s3(this,dsetname,data)
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: data(:,:,:)
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
-#ifdef HAVE_HDF5
+#ifdef HAVE_HDF5_DISABLED
       INTEGER(HSIZE_T),DIMENSION(3) :: dims,maxdims,len1
       INTEGER(HID_T),PARAMETER :: rank=3
       
@@ -2785,7 +2785,7 @@ SUBROUTINE read_s3(this,dsetname,data)
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SIK),ALLOCATABLE,INTENT(INOUT) :: data(:)
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
-#ifdef HAVE_HDF5
+#ifdef HAVE_HDF5_DISABLED
       INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims,len1
       INTEGER(HID_T),PARAMETER :: rank=1
       
@@ -2865,7 +2865,7 @@ SUBROUTINE read_s3(this,dsetname,data)
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SIK),ALLOCATABLE,INTENT(INOUT) :: data(:,:)
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
-#ifdef HAVE_HDF5
+#ifdef HAVE_HDF5_DISABLED
       INTEGER(HSIZE_T),DIMENSION(2) :: dims,maxdims,len1
       INTEGER(HID_T),PARAMETER :: rank=2
       
@@ -2945,7 +2945,7 @@ SUBROUTINE read_s3(this,dsetname,data)
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SIK),ALLOCATABLE,INTENT(INOUT) :: data(:,:,:)
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
-#ifdef HAVE_HDF5
+#ifdef HAVE_HDF5_DISABLED
       INTEGER(HSIZE_T),DIMENSION(3) :: dims,maxdims,len1
       INTEGER(HID_T),PARAMETER :: rank=3
       
@@ -3027,7 +3027,7 @@ SUBROUTINE read_l1(this,dsetname,data)
       INTEGER(SIK) :: datac(SIZE(data))
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
       INTEGER :: i
-#ifdef HAVE_HDF5
+#ifdef HAVE_HDF5_DISABLED
       INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims,len1
       INTEGER(HID_T),PARAMETER :: rank=1
       
@@ -3117,7 +3117,7 @@ SUBROUTINE read_l2(this,dsetname,data)
       INTEGER(SIK) :: datac(SIZE(data,DIM=1),SIZE(data,DIM=2))
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
       INTEGER(SIK) :: i,j
-#ifdef HAVE_HDF5
+#ifdef HAVE_HDF5_DISABLED
       INTEGER(HSIZE_T),DIMENSION(2) :: dims,maxdims,len1
       INTEGER(HID_T),PARAMETER :: rank=2
       
@@ -3208,7 +3208,7 @@ SUBROUTINE read_l3(this,dsetname,data)
       INTEGER(SIK) :: datac(SIZE(data,DIM=1),SIZE(data,DIM=2),SIZE(data,DIM=3))
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
       INTEGER(SIK) :: i,j,k
-#ifdef HAVE_HDF5
+#ifdef HAVE_HDF5_DISABLED
       INTEGER(HSIZE_T),DIMENSION(3) :: dims,maxdims,len1
       INTEGER(HID_T),PARAMETER :: rank=3
       
