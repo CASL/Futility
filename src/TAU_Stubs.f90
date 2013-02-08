@@ -131,6 +131,8 @@ MODULE TAU_Stubs
   TYPE :: ProfilerType
     INTEGER(SLK) :: num_calls=0
     LOGICAL(SBK) :: isStart=.FALSE.
+    LOGICAL(SBK) :: inOMP=.FALSE.
+    REAL(SDK) :: ompTime=0.0_SDK
     TYPE(StringType) :: name
     TYPE(TimerType) :: timer
     TYPE(ProfilerType),POINTER :: nextProfiler => NULL()
@@ -237,6 +239,7 @@ MODULE TAU_Stubs
 !>
     SUBROUTINE TAU_PROFILE_START(profileID)
       INTEGER(SIK),INTENT(IN) :: profileID(2)
+      LOGICAL(SBK) :: inOMP
       INTEGER(SIK) :: it,tid
       TYPE(ProfilerType),POINTER :: activeThreadProfiler
       
@@ -244,17 +247,25 @@ MODULE TAU_Stubs
 !       Profilers are thread dependent, so only access profilers initialized on
 !       other threads when NOT in a parallel region.
 !
-!$      IF((.NOT.OMP_IN_PARALLEL()) .OR. (OMP_IN_PARALLEL() .AND. &
-!$        profileID(1) == OMP_GET_THREAD_NUM()+1)) THEN        
-        tid=profileID(1)
-        IF(profileID(2) > 0 .AND. profileID(2) <= TauStubLibData%nProfiles(tid)) THEN
-          activeThreadProfiler => TauStubLibData%threadProfilesDB(tid)%profiler
-          DO it=1,profileID(2)-1
-            activeThreadProfiler => activeThreadProfiler%nextProfiler
-          ENDDO
-          activeThreadProfiler%isStart=.TRUE.
-          CALL activeThreadProfiler%timer%tic()
-        ENDIF
+        tid=1
+        inOMP=.FALSE.
+!$      inOMP=OMP_IN_PARALLEL()
+!$      tid=OMP_GET_THREAD_NUM()+1
+!$      IF(.NOT.inOMP .OR. (inOMP .AND. profileID(1) == tid)) THEN
+          tid=profileID(1)
+          IF(profileID(2) > 0 .AND. profileID(2) <= TauStubLibData%nProfiles(tid)) THEN
+            activeThreadProfiler => TauStubLibData%threadProfilesDB(tid)%profiler
+            DO it=1,profileID(2)-1
+              activeThreadProfiler => activeThreadProfiler%nextProfiler
+            ENDDO
+            activeThreadProfiler%isStart=.TRUE.
+            activeThreadProfiler%inOMP=inOMP
+            IF(.NOT.activeThreadProfiler%inOMP) THEN
+              CALL activeThreadProfiler%timer%tic()
+            ELSE
+!$            activeThreadProfiler%ompTime=OMP_GET_WTIME()
+            ENDIF
+          ENDIF
 !$      ENDIF
       ENDIF
     ENDSUBROUTINE TAU_PROFILE_START
@@ -276,7 +287,13 @@ MODULE TAU_Stubs
             activeThreadProfiler => activeThreadProfiler%nextProfiler
           ENDDO
           IF(activeThreadProfiler%isStart) THEN
-            CALL activeThreadProfiler%timer%toc()
+            IF(.NOT.activeThreadProfiler%inOMP) THEN
+              CALL activeThreadProfiler%timer%toc()
+            ELSE
+!$            activeThreadProfiler%timer%elapsedTime= &
+!$              activeThreadProfiler%timer%elapsedTime+OMP_GET_WTIME()-&
+!$                activeThreadProfiler%ompTime
+            ENDIF
             activeThreadProfiler%isStart=.FALSE.
             activeThreadProfiler%num_calls=activeThreadProfiler%num_calls+1
           ENDIF
