@@ -267,7 +267,7 @@ PROGRAM testExpTables
   WRITE(*,*) '==================================================='
   CALL PL%clear()
   CALL ErrCheck()
-  CALL perftest()
+  !CALL perftest()
   DO i=1,5
     CALL testET2(i)%clear()
   ENDDO
@@ -415,6 +415,65 @@ CONTAINS
         CALL TAU_PROFILE_STOP(profiler5)
       ENDDO
       CALL myTable%clear()
+      
+      WRITE(*,*) ' Performance measurements completed'
+#else
+      USE Times
+      USE StochasticSampling
+
+      INTEGER(SIK) :: nval,neval,j,ix
+      REAL(SRK),ALLOCATABLE :: xval(:),ans(:)
+      TYPE(ExpTableType) :: myTable
+      TYPE(TimerType) :: testTimer
+      TYPE(StochasticSamplingType) :: myRNG
+
+      CALL testTimer%setTimerHiResMode(.TRUE.) 
+      CALL myRNG%init(RNG_LEcuyer2)
+      WRITE(*,*)
+      WRITE(*,*)
+      WRITE(*,*) ' Getting performance measurements without TAU...'
+      
+      !Set test input for number of evaluations and number of values to evaluate
+      neval=1000000
+      nval=3000
+
+      !Setup test input
+      ALLOCATE(ans(1:nval))
+      ALLOCATE(xval(1:nval))
+      DO j=1,nval
+        xval(j)=myRNG%rng()
+      ENDDO
+      xval=xval*(-10._SRK)
+            
+      WRITE(*,*) 'EXACT myTable%EXPT()'
+      CALL PL%add('ExpTables -> tabletype',EXACT_EXP_TABLE)
+      CALL myTable%initialize(PL)
+      CALL testTimer%tic()
+      DO i=1,neval
+        ans=REAL(i,SRK)
+        DO j=1,nval
+          ans(j)=ans(j)+myTable%EXPT(xval(j))
+        ENDDO
+      ENDDO
+      CALL testTimer%toc()
+      WRITE(*,*) "Took: ", testTimer%elapsedtime
+      CALL myTable%clear()
+      
+      WRITE(*,*) 'LINEAR myTable%EXPT()'
+      CALL PL%set('ExpTables -> tabletype',LINEAR_EXP_TABLE)
+      CALL myTable%initialize(PL)
+      CALL testTimer%ResetTimer()
+      DO i=1,neval
+        ans=REAL(i,SRK)
+        DO j=1,nval
+          ans(j)=ans(j)+myTable%EXPT(xval(j))
+        ENDDO
+      ENDDO
+      CALL testTimer%toc()
+      WRITE(*,*) "Took: ", testTimer%elapsedtime
+      CALL myTable%clear()
+      CALL PL%clear()
+      CALL myRNG%clear()
       
       WRITE(*,*) ' Performance measurements completed'
 #endif
