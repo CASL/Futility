@@ -712,12 +712,12 @@ PROGRAM testVectorTypes
             WRITE(*,*) 'CALL petscvec%clear() FAILED!'
             STOP 666
           ENDIF
-          !check if pointer for b is null
-          !if not, clear did not destroy it
-          IF(thisVector%b /= PETSC_NULL_REAL) THEN
-            WRITE(*,*) 'CALL petscvec%clear() FAILED!'
-            STOP 666
-          ENDIF
+!          !check if pointer for b is null (not supported till 3.3)
+!          !if not, clear did not destroy it
+!          IF(thisVector%b /= PETSC_NULL_REAL) THEN
+!            WRITE(*,*) 'CALL petscvec%clear() FAILED!'
+!            STOP 666
+!          ENDIF
           WRITE(*,*) '  Passed: CALL petscvec%clear()'
       ENDSELECT
       

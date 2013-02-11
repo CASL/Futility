@@ -1263,11 +1263,12 @@ PROGRAM testMatrixTypes
             WRITE(*,*) 'CALL petscsparse%clear() FAILED!'
             STOP 666
           ENDIF
-          IF(thisMatrix%a /= PETSC_NULL_REAL) THEN
-            WRITE(*,*) 'CALL petscsparse%clear() FAILED!'
-            STOP 666
-          ENDIF
-          WRITE(*,*) '  Passed: CALL petscsparse%clear()'
+          !check if pointer fo a is null (not supported till 3.3)
+!          IF(thisMatrix%a /= PETSC_NULL_REAL) THEN
+!            WRITE(*,*) 'CALL petscsparse%clear() FAILED!'
+!            STOP 666
+!          ENDIF
+!          WRITE(*,*) '  Passed: CALL petscsparse%clear()'
       ENDSELECT
       !check init
       CALL pList%clear()
@@ -1677,11 +1678,12 @@ PROGRAM testMatrixTypes
             WRITE(*,*) 'CALL petscdense%clear() FAILED!'
             STOP 666
           ENDIF
-          IF(thisMatrix%a /= PETSC_NULL_REAL) THEN
-            WRITE(*,*) 'CALL petscdense%clear() FAILED!'
-            STOP 666
-          ENDIF
-          WRITE(*,*) '  Passed: CALL petscdense%clear()'
+           !check if pointer fo a is null (not supported till 3.3)
+!          IF(thisMatrix%a /= PETSC_NULL_REAL) THEN
+!            WRITE(*,*) 'CALL petscdense%clear() FAILED!'
+!            STOP 666
+!          ENDIF
+!          WRITE(*,*) '  Passed: CALL petscdense%clear()'
       ENDSELECT
       !check init
       CALL pList%clear()

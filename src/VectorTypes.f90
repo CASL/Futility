@@ -745,12 +745,11 @@ MODULE VectorTypes
       CLASS(PETScVectorType),INTENT(INOUT) :: thisVector
       
 #ifdef HAVE_PETSC
+      IF(thisVector%isInit) CALL VecDestroy(thisVector%b,iperr)
       thisVector%isInit=.FALSE.
       thisVector%isAssembled=.FALSE.
       thisVector%isCreated=.FALSE.
       thisVector%n=0
-
-      CALL VecDestroy(thisVector%b,iperr)
 #else
       CHARACTER(LEN=*),PARAMETER :: myName='clear_PETScVectorType'
       LOGICAL(SBK) :: localalloc

@@ -744,12 +744,12 @@ MODULE MatrixTypes
       ENDIF
       
 #ifdef HAVE_PETSC
+      IF(matrix%isInit) CALL MatDestroy(matrix%a,ierr)
       matrix%isInit=.FALSE.
       matrix%n=0
       matrix%isAssembled=.FALSE.
       matrix%isCreated=.FALSE.
       matrix%isSymmetric=.FALSE.
-      CALL MatDestroy(matrix%a,ierr)
 #else
       CALL eMatrixType%raiseFatalError('Incorrect call to '// &
               modName//'::'//myName//' - PETSc not enabled.  You will'// &

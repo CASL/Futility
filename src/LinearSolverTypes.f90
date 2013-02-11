@@ -542,10 +542,6 @@ MODULE LinearSolverTypes
       PetscErrorCode  :: ierr
 #endif
 
-      solver%isInit=.FALSE.
-      solver%solverMethod=-1
-      solver%hasX=.FALSE.
-      solver%info=0
       CALL solver%MPIparallelEnv%clear()
       CALL solver%OMPparallelEnv%clear()
       IF(ALLOCATED(solver%A)) THEN
@@ -564,10 +560,13 @@ MODULE LinearSolverTypes
         CALL solver%M%clear()
         DEALLOCATE(solver%M)
       ENDIF
-      
 #ifdef HAVE_PETSC
-      CALL KSPDestroy(solver%ksp,ierr)
+      !IF(solver%isInit) CALL KSPDestroy(solver%ksp,ierr)
 #endif 
+      solver%isInit=.FALSE.
+      solver%solverMethod=-1
+      solver%hasX=.FALSE.
+      solver%info=0
       
       CALL solver%SolveTime%ResetTimer()
       solver%isDecomposed=.FALSE.

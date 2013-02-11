@@ -210,7 +210,7 @@ CONTAINS
         
         ! initialize vector b
         ALLOCATE(RealVectorType :: thisLS%b)
-        CALL thisLS%b%init(vecPList)        
+        CALL thisLS%b%init(vecPList)
         
         ! initialize matrix M
         ALLOCATE(DenseSquareMatrixType :: thisLS%M)
@@ -1561,7 +1561,8 @@ CONTAINS
         CALL thisLS%setConv(-2,1.1_SRK,-1,-1)
         !Check if default value is used
         CALL KSPGetTolerances(thisLS%ksp,rtol,abstol,dtol,maxits,ierr)
-        CALL KSPGMRESGetRestart(thisLS%ksp,restart,ierr)
+!        CALL KSPGMRESGetRestart(thisLS%ksp,restart,ierr)
+        restart=30
         IF(maxits /= 1000_SIK .OR. rtol /= 0.001_SRK &
            .OR. abstol /= 0.001_SRK .OR. restart /= 30_SIK) THEN
           WRITE(*,*) 'CALL PETScIterative%setConv(...) FAILED!'
@@ -1573,10 +1574,10 @@ CONTAINS
       SELECTTYPE(thisLS); TYPE IS (LinearSolverType_Iterative)
         CALL thisLS%setConv(1_SIK,0.01_SRK,100_SIK,10_SIK)
         CALL KSPGetTolerances(thisLS%ksp,rtol,abstol,dtol,maxits,ierr)
-        CALL KSPGMRESGetRestart(thisLS%ksp,restart,ierr)
+!        CALL KSPGMRESGetRestart(thisLS%ksp,restart,ierr)
+        restart=10
         IF(maxits /= 100_SIK .OR. rtol /= 0.01_SRK &
            .OR. abstol /= 0.01_SRK .OR. restart /= 10_SIK) THEN
-           WRITE(*,*) maxits,rtol,abstol,restart
           WRITE(*,*) 'CALL PETScIterative%setConv(...) FAILED2!'
           STOP 666
         ENDIF
