@@ -27,7 +27,7 @@ PROGRAM testMatrixTypes
   USE MatrixTypes
   IMPLICIT NONE
   
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
 #include <finclude/petsc.h>
 #undef IS
   PetscErrorCode  :: ierr
@@ -52,7 +52,7 @@ PROGRAM testMatrixTypes
   CALL vecPList%add('VectorType -> n',1)
   CALL vecPList%add('VectorType -> MPI_Comm_ID',PE_COMM_SELF)
   
-#ifdef HAVE_PETSC    
+#ifdef MPACT_HAVE_PETSC    
   CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
 #endif
 
@@ -71,7 +71,7 @@ PROGRAM testMatrixTypes
   CALL MatrixTypes_Clear_ValidParams()
   CALL VectorType_Clear_ValidParams()
   
-#ifdef HAVE_PETSC    
+#ifdef MPACT_HAVE_PETSC    
   CALL PetscFinalize(ierr)
 #endif
 !
@@ -90,7 +90,7 @@ PROGRAM testMatrixTypes
       REAL(SRK) :: a_vals(6),x(3),y(3)
       REAL(SRK) :: dummy
       REAL(SRK),ALLOCATABLE :: dummyvec(:)
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: ierr
 #endif
       CALL vecPList%set('VectorType -> n',3)
@@ -99,7 +99,7 @@ PROGRAM testMatrixTypes
       ALLOCATE(RealVectorType :: yRealVector)
       CALL xRealVector%init(vecPList)
       CALL yRealVector%init(vecPlist)
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       ALLOCATE(PETScVectorType :: xPETScVector)
       ALLOCATE(PETScVectorType :: yPETScVector)
       CALL xPETScVector%init(vecPList)
@@ -1238,7 +1238,7 @@ PROGRAM testMatrixTypes
       DEALLOCATE(thisMatrix)
       
 !Test for PETSc matrices (if necessary)
-#ifdef HAVE_PETSC  
+#ifdef MPACT_HAVE_PETSC  
 
 !Test for PETSc sparsematrices 
       ALLOCATE(PETScMatrixType :: thisMatrix)
@@ -2079,7 +2079,7 @@ PROGRAM testMatrixTypes
       INTEGER(SIK) :: i,j
       REAL(SRK) :: ALPHA,BETA,dummy  
 
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       !
       !1.) A: PETSc  B: PETSc  C: PETSc     ----------------------------
       !
@@ -2591,7 +2591,7 @@ PROGRAM testMatrixTypes
       CALL bmat%clear()
       CALL cmat%clear()
 
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       !
       !5.) A: PETSc  B: PETSc  C: PETSc     ----------------------------
       !

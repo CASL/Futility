@@ -46,7 +46,7 @@ MODULE ParallelEnv
   
 #ifdef HAVE_MPI
   
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
 #include <finclude/petsc.h>
 #undef IS
   PetscErrorCode  :: ierr
@@ -405,7 +405,7 @@ MODULE ParallelEnv
           IF(mpierr /= MPI_SUCCESS) CALL eParEnv%raiseError(modName//'::'// &
             myName//' - call to MPI_Init returned an error!')
             
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
           CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
 #endif
           

@@ -30,7 +30,7 @@ PROGRAM testLinearSolver
   TYPE(MPI_EnvType) :: mpiTestEnv
   TYPE(ParamType) :: pList, optListLS, optListMat, vecPList
   
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
 #include <finclude/petsc.h>
 #undef IS
   PetscErrorCode  :: ierr
@@ -106,7 +106,7 @@ PROGRAM testLinearSolver
   CALL MatrixTypes_Clear_ValidParams()
   CALL VectorType_Clear_ValidParams()
   
-#ifdef HAVE_PETSC    
+#ifdef MPACT_HAVE_PETSC    
   CALL PetscFinalize(ierr)
 #else
   CALL mpiTestEnv%finalize()
@@ -1410,7 +1410,7 @@ CONTAINS
       REAL(SRK),ALLOCATABLE :: resid_soln(:),dummyvec(:)
       TYPE(RealVectorType) :: resid
       INTEGER(SIK) :: i
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       PetscReal :: rtol,abstol,dtol
       PetscInt  :: maxits,restart
       PetscErrorCode :: ierr
@@ -1457,7 +1457,7 @@ CONTAINS
       CALL thisLS%clear()
       WRITE(*,*) '  Passed: CALL Iterative%setX0(...)'
   
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       ! initialize linear system
       CALL pList%clear()
       CALL pList%add('LinearSolverType->TPLType',PETSC)
@@ -1538,7 +1538,7 @@ CONTAINS
       CALL thisLS%clear()
       WRITE(*,*) '  Passed: CALL Iterative%setConv(...)'
  
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       !Test setConv
       !Bad input
       ! initialize linear system
@@ -2041,7 +2041,7 @@ CONTAINS
       CALL thisLS%clear()
       WRITE(*,*)'  Passed: CALL Iterative%solver() BICGSTAB'
 
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       !The PETSC sparse matrix type
       ! initialize linear system
       CALL pList%clear()
@@ -2551,7 +2551,7 @@ CONTAINS
 
       WRITE(*,*)'  Passed: CALL Iterative%solver() CGNR'
       
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       ! DenseSquare matrix
       ! initialize linear system
       CALL pList%clear()
@@ -3004,7 +3004,7 @@ CONTAINS
       CALL thisLS%clear()
       WRITE(*,*)'  Passed: CALL Iterative%solver() GMRES'
       
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       !With GMRES
       !The sparse matrix type
       ! initialize linear system

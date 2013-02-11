@@ -78,7 +78,7 @@ MODULE MatrixTypes
   USE ParameterLists
   IMPLICIT NONE
 
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
 #include <finclude/petsc.h>
 #undef IS
 #endif
@@ -177,7 +177,7 @@ MODULE MatrixTypes
     !> number of local values
     INTEGER(SIK) :: nlocal
     
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
     Mat :: A
 #endif
 !
@@ -594,7 +594,7 @@ MODULE MatrixTypes
       INTEGER(SIK) :: n, matType, MPI_COMM_ID, nlocal
       LOGICAL(SBK) :: localalloc, isSym
       
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: ierr
 #endif
 
@@ -605,7 +605,7 @@ MODULE MatrixTypes
         ALLOCATE(eMatrixType)
       ENDIF
       
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       !Check to set up required and optional param lists.
       IF(.NOT.MatrixType_Paramsflag) CALL MatrixTypes_Declare_ValidParams()      
       !Validate against the reqParams and OptParams
@@ -732,7 +732,7 @@ MODULE MatrixTypes
       CHARACTER(LEN=*),PARAMETER :: myName='clear_PETScMatrixType'
       CLASS(PETScMatrixType),INTENT(INOUT) :: matrix
       LOGICAL(SBK) :: localalloc
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: ierr
 #endif
 
@@ -743,7 +743,7 @@ MODULE MatrixTypes
         ALLOCATE(eMatrixType)
       ENDIF
       
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       IF(matrix%isInit) CALL MatDestroy(matrix%a,ierr)
       matrix%isInit=.FALSE.
       matrix%n=0
@@ -922,7 +922,7 @@ MODULE MatrixTypes
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(IN) :: setval
       LOGICAL(SBK) :: localalloc
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: ierr
 #endif
 
@@ -933,7 +933,7 @@ MODULE MatrixTypes
         ALLOCATE(eMatrixType)
       ENDIF
       
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       IF(matrix%isInit) THEN
         IF(((j <= matrix%n) .AND. (i <= matrix%n)) & 
           .AND. ((j > 0) .AND. (i > 0))) THEN
@@ -1005,7 +1005,7 @@ MODULE MatrixTypes
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(INOUT) :: aij
       LOGICAL(SBK) :: localalloc
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: ierr
 #endif
 
@@ -1016,7 +1016,7 @@ MODULE MatrixTypes
         ALLOCATE(eMatrixType)
       ENDIF
       
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       aij=0.0_SRK
       IF(matrix%isInit) THEN
         ! assemble matrix if necessary
@@ -1041,7 +1041,7 @@ MODULE MatrixTypes
       CLASS(PETScMatrixType),INTENT(INOUT) :: thisMatrix
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
       INTEGER(SIK) :: ierrc
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: iperr
       
       ierrc=0
@@ -1148,7 +1148,7 @@ MODULE MatrixTypes
                 thisMatrix%ja,thisMatrix%a,x,y)
             ENDIF
           TYPE IS(PETScMatrixType)
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
             ALLOCATE(tmpmat(thisMatrix%n,thisMatrix%n))
             ! stuff into temporary matrix
             DO i=1,thisMatrix%n
@@ -1204,7 +1204,7 @@ MODULE MatrixTypes
       REAL(SRK),ALLOCATABLE :: tmpmat(:,:),tmpvec(:),tmpy(:)
       INTEGER(SIK) :: i,j
       LOGICAL(SBK) :: localalloc
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: iperr
       TYPE(PETScVectorType) :: dummy
       TYPE(ParamType) :: vecPList
@@ -1280,7 +1280,7 @@ MODULE MatrixTypes
         SELECTTYPE(x); TYPE IS(PETScVectorType)
           SELECTTYPE(y); TYPE IS(PETScVectorType)
             SELECTTYPE(thisMatrix); TYPE IS(PETScMatrixType)
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
                 CALL vecPList%add('VectorType -> n',y%n)
                 CALL vecPList%add('VectorType -> MPI_Comm_ID',y%comm)
                 CALL vecPList%add('VectorType -> nlocal',x%nlocal)
@@ -1310,7 +1310,7 @@ MODULE MatrixTypes
         SELECTTYPE(x); TYPE IS(RealVectorType)
           SELECTTYPE(y); TYPE IS(RealVectorType)
             SELECTTYPE(thisMatrix); TYPE IS(PETScMatrixType)
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
                 ALLOCATE(tmpmat(thisMatrix%n,thisMatrix%n))
                 ALLOCATE(tmpvec(x%n))
                 ALLOCATE(tmpy(x%n))
@@ -1541,7 +1541,7 @@ MODULE MatrixTypes
               TYPE IS(PETScMatrixType)
                 SELECTTYPE(C)
                   TYPE IS(PETScMatrixType)
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
                     ALLOCATE(tmpA(A%n,A%n))
                     ALLOCATE(tmpB(B%n,B%n))
                     ALLOCATE(tmpC(C%n,C%n))

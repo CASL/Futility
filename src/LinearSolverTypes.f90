@@ -84,7 +84,7 @@ MODULE LinearSolverTypes
 #endif
   IMPLICIT NONE
   
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
 #include <finclude/petsc.h>
 #undef IS !petscisdef.h defines the keyword IS, and it needs to be reset
 #endif
@@ -143,7 +143,7 @@ MODULE LinearSolverTypes
     !> -1: Unsuccessful exit
     INTEGER(SIK) :: info
 
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
     KSP :: ksp
 #endif
 
@@ -268,7 +268,7 @@ MODULE LinearSolverTypes
       INTEGER(SIK) :: MPI_Comm_ID,numberOMP
       CHARACTER(LEN=256) :: timerName
       LOGICAL(SBK) :: localalloc
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: ierr
 #endif
 
@@ -315,7 +315,7 @@ MODULE LinearSolverTypes
          
         ! go through solver hierarchy to determine TPLType
         IF(TPLType == PETSC) THEN ! PETSc
-#ifndef HAVE_PETSC
+#ifndef MPACT_HAVE_PETSC
           TPLType=TRILINOS
           CALL eLinearSolverType%raiseWarning(modName//'::'// &
                     myName//'- PETSc is not enabled, TRILINOS will be '// &
@@ -449,7 +449,7 @@ MODULE LinearSolverTypes
                (solverMethod <= MAX_IT_SOLVER_METHODS)) THEN         
                 
               IF(TPLType==PETSC) THEN
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
                 !create and initialize KSP
                 CALL KSPCreate(solver%MPIparallelEnv%comm,solver%ksp,ierr)
                 
@@ -538,7 +538,7 @@ MODULE LinearSolverTypes
 !>
     SUBROUTINE clear_LinearSolverType_Iterative(solver)
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: ierr
 #endif
 
@@ -560,7 +560,7 @@ MODULE LinearSolverTypes
         CALL solver%M%clear()
         DEALLOCATE(solver%M)
       ENDIF
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       !IF(solver%isInit) CALL KSPDestroy(solver%ksp,ierr)
 #endif 
       solver%isInit=.FALSE.
@@ -713,7 +713,7 @@ MODULE LinearSolverTypes
       CHARACTER(LEN=*),PARAMETER :: myName='solve_LinearSolverType_Iterative'
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
       LOGICAL(SBK) :: localalloc
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: ierr
 #endif
 
@@ -770,7 +770,7 @@ MODULE LinearSolverTypes
                       'is not implemented, CGNR method is used instead.')
                    
               TYPE IS(PETScMatrixType)
-#ifdef HAVE_PETSC   
+#ifdef MPACT_HAVE_PETSC   
                 ! assemble matrix if necessary
                 IF(.NOT.(A%isAssembled)) CALL A%assemble()
                 
@@ -825,7 +825,7 @@ MODULE LinearSolverTypes
                     'is not implemented, BiCGSTAB method is used instead.')
                  
               TYPE IS(PETScMatrixType)
-#ifdef HAVE_PETSC   
+#ifdef MPACT_HAVE_PETSC   
                 ! assemble matrix if necessary
                 IF(.NOT.(A%isAssembled)) CALL A%assemble()
                 
@@ -886,7 +886,7 @@ MODULE LinearSolverTypes
                       'is not implemented, CGNR method is used instead.')
 
               TYPE IS(PETScMatrixType)
-#ifdef HAVE_PETSC 
+#ifdef MPACT_HAVE_PETSC 
                 ! assemble matrix if necessary
                 IF(.NOT.(A%isAssembled)) CALL A%assemble()
                 
@@ -1033,7 +1033,7 @@ MODULE LinearSolverTypes
       REAL(SRK),INTENT(IN) :: convTol_in
       INTEGER(SIK),INTENT(IN) :: maxIters_in
       INTEGER(SIK),INTENT(IN),OPTIONAL :: nRestart_in
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: ierr
       PetscInt  :: maxits,nrst
       PetscReal :: rtol,abstol,dtol=PETSC_DEFAULT_DOUBLE_PRECISION
@@ -1085,7 +1085,7 @@ MODULE LinearSolverTypes
         solver%nRestart=nRestart
 
         IF(solver%TPLType == PETSC) THEN
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
           rtol=convTol
           abstol=convTol
           maxits=maxIters

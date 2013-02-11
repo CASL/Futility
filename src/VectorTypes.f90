@@ -62,7 +62,7 @@ MODULE VectorTypes
                              BLAS1_swap  => BLAS_swap  
   IMPLICIT NONE
 
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
 #include <finclude/petsc.h>
 #undef IS
 #endif
@@ -276,7 +276,7 @@ MODULE VectorTypes
   !> @brief The extended type for PETSc vectors
   TYPE,EXTENDS(VectorType) :: PETScVectorType
     !> The values of the vector
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
     Vec :: b
 #endif
     !> creation status
@@ -418,7 +418,7 @@ MODULE VectorTypes
   !> Exception Handler for use in VectorTypes
   TYPE(ExceptionHandlerType),POINTER,SAVE :: eVectorType => NULL()
 
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
   !> Scratch variable for petsc error code.
   !> It is an integer type.
   PetscErrorCode  :: iperr
@@ -699,7 +699,7 @@ MODULE VectorTypes
         ALLOCATE(eVectorType)
       ENDIF
 
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       IF(.NOT. thisVector%isInit) THEN
         IF(n < 1) THEN
           CALL eVectorType%raiseError('Incorrect input to '// &
@@ -744,7 +744,7 @@ MODULE VectorTypes
     SUBROUTINE clear_PETScVectorType(thisVector)
       CLASS(PETScVectorType),INTENT(INOUT) :: thisVector
       
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       IF(thisVector%isInit) CALL VecDestroy(thisVector%b,iperr)
       thisVector%isInit=.FALSE.
       thisVector%isAssembled=.FALSE.
@@ -777,7 +777,7 @@ MODULE VectorTypes
       REAL(SRK),INTENT(IN) :: setval
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
 
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       ierrc=-1
       IF(thisVector%isInit) THEN
         ierrc=-2
@@ -814,7 +814,7 @@ MODULE VectorTypes
       REAL(SRK),INTENT(IN) :: setval
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
 
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       ierrc=-1
       IF(thisVector%isInit) THEN
         CALL thisVector%assemble(iperr)
@@ -848,7 +848,7 @@ MODULE VectorTypes
       REAL(SRK),INTENT(IN) :: setval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
       
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       INTEGER(SIK) :: i
       
       ierrc=-1
@@ -892,7 +892,7 @@ MODULE VectorTypes
       INTEGER(SIK),INTENT(IN) :: istp
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
       
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       INTEGER(SIK) :: i
       
       ierrc=-1
@@ -936,7 +936,7 @@ MODULE VectorTypes
       INTEGER(SIK),INTENT(IN) :: istp
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
 
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       INTEGER(SIK) :: i
       
       ierrc=-1
@@ -980,7 +980,7 @@ MODULE VectorTypes
       REAL(SRK),INTENT(INOUT) :: getval
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
       
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       ierrc=-1
       IF(thisVector%isInit) THEN
         ierrc=-2
@@ -1016,7 +1016,7 @@ MODULE VectorTypes
       REAL(SRK),INTENT(INOUT) :: getval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
 
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       INTEGER(SIK) :: i
       
       ierrc=-1
@@ -1060,7 +1060,7 @@ MODULE VectorTypes
       REAL(SRK),INTENT(INOUT) :: getval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
       
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       INTEGER(SIK) :: i
       
       ierrc=-1
@@ -1098,7 +1098,7 @@ MODULE VectorTypes
     SUBROUTINE assemble_PETScVectorType(thisVector,ierr)
       CLASS(PETScVectorType),INTENT(INOUT) :: thisVector
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       ierrc=0
       IF(.NOT.thisVector%isAssembled) THEN
         thisVector%isAssembled=.FALSE.
@@ -1160,7 +1160,7 @@ MODULE VectorTypes
       ENDSELECT
       
       SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
         IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
         IF(iperr == 0) CALL VecNorm(thisVector%b,NORM_1,r,iperr)
 #else
@@ -1222,7 +1222,7 @@ MODULE VectorTypes
       
       SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
         SELECTTYPE(newVector); TYPE IS(PETScVectorType)
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
           IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
           IF(iperr == 0) CALL VecAXPY(newVector%b,alpha,thisVector%b,iperr)
 #else
@@ -1280,7 +1280,7 @@ MODULE VectorTypes
       SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
         SELECTTYPE(newVector); TYPE IS(PETScVectorType)
           SELECTTYPE(aVector); TYPE IS(PETScVectorType)
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
             ALLOCATE(tmpthis(thisVector%n))
             ALLOCATE(tmpnew(newVector%n))
             ALLOCATE(tmpa(aVector%n))
@@ -1371,7 +1371,7 @@ MODULE VectorTypes
       
       SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
         SELECTTYPE(newVector); TYPE IS(PETScVectorType)
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
           IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
           IF(iperr == 0) CALL VecCopy(thisVector%b,newVector%b,iperr)
 #else
@@ -1436,7 +1436,7 @@ MODULE VectorTypes
       
       SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
         SELECTTYPE(thatVector); TYPE IS(PETScVectorType)
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
           IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
           IF(iperr == 0) CALL VecTDot(thisVector%b,thatVector%b,r,iperr)
 #else
@@ -1480,7 +1480,7 @@ MODULE VectorTypes
       ENDSELECT
       
       SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
         ALLOCATE(tmpthis(thisVector%n))
         CALL thisVector%get(tmpthis)
 #else
@@ -1534,7 +1534,7 @@ MODULE VectorTypes
       ENDSELECT
       
       SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
         ALLOCATE(tmpthis(thisVector%n))
         CALL thisVector%get(tmpthis)
 #else
@@ -1593,7 +1593,7 @@ MODULE VectorTypes
       ENDSELECT
       
       SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
         IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
         IF(iperr == 0) CALL VecNorm(thisVector%b,NORM_2,norm2,iperr)
 #else
@@ -1642,7 +1642,7 @@ MODULE VectorTypes
       ENDSELECT
       
       SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
         IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
         IF(iperr == 0) CALL VecScale(thisVector%b,a,iperr)
 #else
@@ -1690,7 +1690,7 @@ MODULE VectorTypes
       
       SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
         SELECTTYPE(aVector); TYPE IS(PETScVectorType)
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
           ALLOCATE(tmpthis(thisVector%n))
           ALLOCATE(tmpa(aVector%n))
           CALL thisVector%get(tmpthis)
@@ -1774,7 +1774,7 @@ MODULE VectorTypes
       
       SELECTTYPE(thisVector); TYPE IS(PETScVectorType)
         SELECTTYPE(thatVector); TYPE IS(PETScVectorType)
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
           IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
           IF(.NOT.thatVector%isAssembled) CALL thatVector%assemble(iperr)
           IF(iperr == 0) CALL VecSwap(thisVector%b,thatVector%b,iperr)
