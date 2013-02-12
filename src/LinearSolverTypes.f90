@@ -561,7 +561,7 @@ MODULE LinearSolverTypes
         DEALLOCATE(solver%M)
       ENDIF
 #ifdef MPACT_HAVE_PETSC
-      !IF(solver%isInit) CALL KSPDestroy(solver%ksp,ierr)
+      IF(solver%TPLType==PETSC .AND. solver%isInit) CALL KSPDestroy(solver%ksp,ierr)
 #endif 
       solver%isInit=.FALSE.
       solver%solverMethod=-1

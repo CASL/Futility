@@ -180,7 +180,6 @@ CONTAINS
       
     !test Iterative
       ALLOCATE(LinearSolverType_Iterative :: thisLS)
-
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
         !first build one by hand to test
         thisLS%isInit=.TRUE.
@@ -194,6 +193,9 @@ CONTAINS
         thisLS%isDecomposed=.TRUE.
         CALL thisLS%MPIparallelEnv%init(PE_COMM_SELF)
         CALL thisLS%OMPparallelEnv%init(1)
+#ifdef MPACT_HAVE_PETSC
+        CALL KSPCreate(thisLS%MPIparallelEnv%comm,thisLS%ksp,ierr)
+#endif
         
         ! initialize matrix A
         ALLOCATE(DenseSquareMatrixType :: thisLS%A)
