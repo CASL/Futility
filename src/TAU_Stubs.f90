@@ -187,8 +187,8 @@ MODULE TAU_Stubs
         TauStubLibData%rankWorld=0
 #endif
         TauStubLibData%nthreads=1
-!$      TauStubLibData%nthreads=OMP_GET_NUM_PROCS()
-    
+!$      TauStubLibData%nthreads=OMP_GET_MAX_THREADS()
+        
         ALLOCATE(TauStubLibData%threadProfilesDB(TauStubLibData%nthreads))
         ALLOCATE(TauStubLibData%nProfiles(TauStubLibData%nthreads))
         TauStubLibData%nProfiles=0
@@ -378,8 +378,11 @@ MODULE TAU_Stubs
                 activeProfiler%isStart=.FALSE.
                 activeProfiler%num_calls=activeProfiler%num_calls+1
               ENDIF
-              
-              WRITE(tmpRstr,'(g20.15)') ((activeProfiler%timer%getTimeReal())*1.e6_SDK)
+              IF(activeProfiler%timer%getTimeReal() < 0.0_SDK) THEN
+                WRITE(tmpRstr,'(g20.15)') 0.0_SDK
+              ELSE
+                WRITE(tmpRstr,'(g20.15)') ((activeProfiler%timer%getTimeReal())*1.e6_SDK)
+              ENDIF
               WRITE(tmpIstr,'(i16)') activeProfiler%num_calls
               tline='"'//CHAR(activeProfiler%name)//'" '//TRIM(ADJUSTL(tmpIstr))// &
                 ' 0 '//TRIM(ADJUSTL(tmpRstr))//' '//TRIM(ADJUSTL(tmpRstr))// &
