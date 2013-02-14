@@ -263,7 +263,7 @@ MODULE LinearSolverTypes
       CLASS(ParamType),POINTER :: pListPtr
       TYPE(ParamType) :: validParams,matPList,vecxPList,vecbPList
       ! local variables
-      INTEGER(SIK) :: i,matType,TPLType
+      INTEGER(SIK) :: i,matType,TPLType,n
       INTEGER(SIK) :: solverMethod
       INTEGER(SIK) :: MPI_Comm_ID,numberOMP
       CHARACTER(LEN=256) :: timerName
@@ -304,7 +304,9 @@ MODULE LinearSolverTypes
       CALL validParams%get('LinearSolverType->b->VectorType',pListPtr)
       vecbPList=pListPtr
       CALL vecbPList%add('VectorType->MPI_Comm_ID',MPI_Comm_ID)
-      
+      !pull size from source vector
+      CALL validParams%get('LinearSolverType->b->VectorType->n',n)
+
       CALL validParams%clear()
       
       !Initialize parallel environments based on input
@@ -318,8 +320,8 @@ MODULE LinearSolverTypes
 #ifndef MPACT_HAVE_PETSC
           TPLType=TRILINOS
           CALL eLinearSolverType%raiseWarning(modName//'::'// &
-                    myName//'- PETSc is not enabled, TRILINOS will be '// &
-                      'used instead.')
+                    myName//' - PETSc is not enabled, will try to '// &
+                      'use TRILINOS instead.')
           
 #endif
         ENDIF
@@ -327,23 +329,23 @@ MODULE LinearSolverTypes
 #ifndef HAVE_TRILINOS
           TPLType=PARDISO_MKL
           CALL eLinearSolverType%raiseWarning(modName//'::'// &
-                    myName//'- TRILINOS is not enabled, PARDISO will be '// &
-                      'used instead.')
+                    myName//' - TRILINOS is not enabled, will try to '// &
+                      'use PARDISO instead.')
 #endif
         ENDIF
         IF(TPLType == PARDISO_MKL) THEN ! PARDISO
 #ifndef HAVE_PARDISO
           TPLType=MKL
           CALL eLinearSolverType%raiseWarning(modName//'::'// &
-                    myName//'- PARDISO is not enabled, native solvers will be '// &
-                      'used instead.')
+                    myName//' - PARDISO is not enabled, will use NATIVE '// &
+                      'solvers instead.')
 #else
           SELECTTYPE(solver)
             TYPE IS(LinearSolverType_Iterative)
               TPLType=MKL
               CALL eLinearSolverType%raiseWarning(modName//'::'// &
-                        myName//'- PARDISO is a not an iterative solver, MKL '// &
-                          'will be used instead.')
+                        myName//' - PARDISO is a not an iterative solver, will '// &
+                          'try to use MKL instead.')
            ENDSELECT
 #endif
         ENDIF
@@ -351,8 +353,8 @@ MODULE LinearSolverTypes
 #ifndef HAVE_MKL
           TPLType=NATIVE
           CALL eLinearSolverType%raiseWarning(modName//'::'// &
-                    myName//'- MKL is not enabled, native solvers will be '// &
-                      'used instead.')
+                    myName//' - MKL is not enabled, will use NATIVE '// &
+                      'solvers instead.')
 #endif
         ENDIF
 
@@ -447,7 +449,15 @@ MODULE LinearSolverTypes
           TYPE IS(LinearSolverType_Iterative) ! iterative solver
             IF((solverMethod > 0) .AND. &
                (solverMethod <= MAX_IT_SOLVER_METHODS)) THEN         
-                
+
+              !only GMRES can handle when sparse LS of size 1
+              IF(n==1 .AND. matType == SPARSE .AND. solverMethod/= GMRES) THEN
+                solverMethod=GMRES
+                CALL eLinearSolverType%raiseWarning(modName//'::'// &
+                  myName//' - Only GMRES can handle sparse systems of size 1.  '// &
+                  'Switching solver method to GMRES.')
+              ENDIF
+
               IF(TPLType==PETSC) THEN
 #ifdef MPACT_HAVE_PETSC
                 !create and initialize KSP
