@@ -67,7 +67,11 @@ MODULE FileType_HDF5
   !List of Public Members
   PUBLIC :: HDF5FileType
   !> Maximum HDF5 string length
+#ifdef MPACT_HAVE_HDF5
   INTEGER(HSIZE_T),PARAMETER :: LEN_HDF5_STRING=256
+#else
+  INTEGER(SIK),PARAMETER :: LEN_HDF5_STRING=256
+#endif
 
   !> reading from HDF5 binary files. As implemented, there are three modes for
   !> accessing a file can be opened as: 'read' and 'write' and 'new'. Read mode
