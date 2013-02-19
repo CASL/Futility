@@ -46,13 +46,8 @@ PROGRAM testHDF5
   CREATE_TEST("HDF File Type")
 
 #ifdef MPACT_HAVE_HDF5
-<<<<<<< HEAD
   REGISTER_SUBTEST("HDF5FileType Write",testHDF5FileTypeWrite)
   REGISTER_SUBTEST("HDF5FileType Read",testHDF5FileTypeRead)
-=======
-!  REGISTER_SUBTEST("HDF5FileType Write",testHDF5FileTypeWrite)
-!  REGISTER_SUBTEST("HDF5FileType Read",testHDF5FileTypeRead)
->>>>>>> e4ee4dde788d57dc87eedfea901e045e1445a077
 #ifdef HAVE_MPI
   REGISTER_SUBTEST("HDF5FileType Parallel",testHDF5Parallel)
 #endif
@@ -92,9 +87,9 @@ PROGRAM testHDF5
       ALLOCATE(testI1(10))
       ALLOCATE(testI2(5,5))
       ALLOCATE(testI3(3,3,3))
-      ALLOCATE(testC1(3))
-      ALLOCATE(testC2(2,2))
-      ALLOCATE(testC3(2,2,2))
+!      ALLOCATE(testC1(3))
+!      ALLOCATE(testC2(2,2))
+!      ALLOCATE(testC3(2,2,2))
 
       testD1=[(i,i=1,SIZE(testD1))]
       testD2=RESHAPE([(i,i=1,SIZE(testD2))],SHAPE(testD2))
@@ -115,20 +110,17 @@ PROGRAM testHDF5
           ENDDO
         ENDDO
       ENDDO
-      testC1(1)='String 1';testC1(2)='String 2';testC1(3)='String 3'
-      testC2(1,1)='String 1,1';testC2(1,2)='String1,2';testC2(2,1)='String 2,1'
-      testC2(2,2)='String2,2';
-      testC3(1,1,1)='String 1,1,1';testC3(1,2,1)='String 1,2,1';
-      testC3(2,1,1)='String 2,1,1';testC3(2,2,1)='String 2,2,1';
-      testC3(1,1,2)='String 1,1,2';testC3(1,2,2)='String 1,2,1';
-      testC3(2,1,2)='String 2,1,2';testC3(2,2,2)='String 2,2,1';
+!      testC1(1)='String 1';testC1(2)='String 2';testC1(3)='String 3'
+!      testC2(1,1)='String 1,1';testC2(1,2)='String1,2';testC2(2,1)='String 2,1'
+!      testC2(2,2)='String2,2';
+!      testC3(1,1,1)='String 1,1,1';testC3(1,2,1)='String 1,2,1';
+!      testC3(2,1,1)='String 2,1,1';testC3(2,2,1)='String 2,2,1';
+!      testC3(1,1,2)='String 1,1,2';testC3(1,2,2)='String 1,2,1';
+!      testC3(2,1,2)='String 2,1,2';testC3(2,2,2)='String 2,2,1';
     
       ! Create a RW access file. Existing file overwritten
-<<<<<<< HEAD
       CALL h5%init('writetest.h5','NEW')
-=======
-      CALL h5%init('test.h5','NEW')
->>>>>>> e4ee4dde788d57dc87eedfea901e045e1445a077
+      
 #ifdef MPACT_HAVE_HDF5
       ASSERT(h5%isinit,'HDF5 file type not properly initialized!')
 #else
@@ -143,15 +135,15 @@ PROGRAM testHDF5
       CALL h5%write('groupR->memR2',testR2,SHAPE(testR2))
       CALL h5%write('groupR->memR3',testR3,SHAPE(testR3))
       CALL h5%mkdir('groupI')
-!      CALL h5%write('groupI->memI1',testI1)
+      CALL h5%write('groupI->memI1',testI1)
       CALL h5%write('groupI->memI2',testI2,SHAPE(testI2))
       CALL h5%write('groupI->memI3',testI3,SHAPE(testI3))
       CALL h5%mkdir('groupL')
-!      CALL h5%write('groupL->memL1',testL1)
+      CALL h5%write('groupL->memL1',testL1)
       CALL h5%write('groupL->memL2',testL2,SHAPE(testL2))
       CALL h5%write('groupL->memL3',testL3,SHAPE(testL3))
       CALL h5%mkdir('groupC')
-      CALL h5%write('groupC->memC1',testC1)
+!      CALL h5%write('groupC->memC1',testC1)
 
       CALL h5%clear()
       ASSERT(.NOT.h5%isinit,'HDF5 object not properly cleared!')
