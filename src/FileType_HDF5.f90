@@ -133,6 +133,8 @@ MODULE FileType_HDF5
       PROCEDURE,PASS :: write_i2
       !> Write: integer(SIK), rank 3
       PROCEDURE,PASS :: write_i3
+      !> Write: character string
+      PROCEDURE,PASS :: write_string_helper
       !> Write: character string, rank 1
       PROCEDURE,PASS :: write_c1
       !> Write data to the file as a dataset
@@ -2302,35 +2304,23 @@ MODULE FileType_HDF5
     ENDSUBROUTINE write_i3
 !
 !-------------------------------------------------------------------------------
-!> @brief Write a rank-1 array of character strings to a dataset
+!> @brief Write a single character string to a dataset
     SUBROUTINE write_c1(this,dsetname,data,gdims_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writec1_HDF5FileType'
-      INTEGER(SIK) :: i,j,length_max
+      CHARACTER(LEN=*),PARAMETER :: myName='write_string_helper_HDF5FileType'
+      INTEGER(SIK) :: i,j
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
-      TYPE(StringType),ALLOCATABLE,INTENT(IN) :: data(:)
-!      CHARACTER,ALLOCATABLE :: datac(:,:)
-      CHARACTER(LEN=LEN_HDF5_STRING) :: datac(SIZE(data))
-      CHARACTER(LEN=LEN_HDF5_STRING) :: string_temp
+      TYPE(StringType),INTENT(IN) :: data
+      CHARACTER(LEN=LEN_TRIM(data)) :: datas
+      CHARACTER, ALLOCATABLE :: datac(:)
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
       INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: gdims_in
 #ifdef MPACT_HAVE_HDF5
       INTEGER(HSIZE_T),DIMENSION(1) :: ldims,gdims,offset,one
-      INTEGER,PARAMETER :: rank=2
+      INTEGER(HID_T),PARAMETER :: rank=1
       
       INTEGER :: error
       INTEGER(HID_T) :: dspace_id,dset_id,gspace_id,plist_id
-      INTEGER(HID_T) :: type_id
-
-      ! Determine longest string in data
-      length_max=0
-      DO i=1,SIZE(data)
-        length_max=MAX(LEN_TRIM(data(i)),length_max)
-      ENDDO
-            
-      ! Allocate datac
-!      ALLOCATE(datac(SIZE(DATA),length_max))
-!      ALLOCATE(CHARACTER(length_max) :: string_temp(1)) ! GNU sucks with strings
 
       ! Make sure the object is initialized
       IF(.NOT.this%isinit)THEN
@@ -2342,6 +2332,13 @@ MODULE FileType_HDF5
         CALL this%e%raiseError(myName//': File is readonly!')
         RETURN
       ENDIF
+
+      ! Convert StringType to character vector
+      datas=TRIM(data)
+      ALLOCATE(datac(LEN(datas)))
+      DO i=1,SIZE(datac)
+        datac(i)=datas(i:i)
+      ENDDO
       
       ! stash offset
       offset(1) = LBOUND(datac,1)-1
@@ -2374,7 +2371,7 @@ MODULE FileType_HDF5
       ! Make sure that the global dims are present if needed
       IF (this%pe%rank == 0)THEN
         IF(.NOT.PRESENT(gdims_in))THEN
-          CALL this%e%raiseError(myName//': For parallel write, global '//&
+          CALL this%e%raiseError(myName//': For parallel,write, global '//&
             'dimensions are required.')
         ENDIF
       ENDIF
@@ -2395,15 +2392,8 @@ MODULE FileType_HDF5
         CALL this%e%raiseError(myName//': Could not create dataspace.')
       ENDIF
 
-      ! Initialize type_id
-      CALL h5tcopy_f(H5T_NATIVE_CHARACTER,type_id,error)
-      CALL h5tset_size_f(type_id,LEN_HDF5_STRING,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not initialize type_id.')
-      ENDIF
-
       ! Create the dataset
-      CALL h5dcreate_f(this%file_id, path, type_id, gspace_id, &
+      CALL h5dcreate_f(this%file_id, path, H5T_NATIVE_CHARACTER, gspace_id, &
                        dset_id,error)
       IF(error /= 0)THEN
         CALL this%e%raiseError(myName//': Could not create dataset.')
@@ -2442,22 +2432,11 @@ MODULE FileType_HDF5
         CALL this%e%raiseError(myName//': Could not select hyperslab.')
       ENDIF
 #endif
-
-      ! Convert StringType data to character array
-!      datac(:,:)=' '
-      DO i=1,SIZE(data)
-!        string_temp=TRIM(data(i))
-!        DO j=1,LEN_TRIM(string_temp)
-!          datac(i,j)=string_temp(j:j)
-!        ENDDO
-        datac(i)=TRIM(data(i))
-      ENDDO
-      WRITE(*,*) datac
       
       ! Write to the dataset
-      CALL h5dwrite_f(dset_id, type_id, datac, gdims, error, &
+      CALL h5dwrite_f(dset_id, H5T_NATIVE_CHARACTER, datac, gdims, error, &
                       dspace_id,gspace_id,plist_id)
-      IF(error /= 0)THEN!
+      IF(error /= 0)THEN
         CALL this%e%raiseError(myName//': Could not write to the dataset.')
       ENDIF
 
@@ -2483,6 +2462,39 @@ MODULE FileType_HDF5
       ENDIF
 #endif
     ENDSUBROUTINE write_c1
+!
+!-------------------------------------------------------------------------------
+!> @brief Write a rank-1 array of strings to a dataset
+    SUBROUTINE write_string_helper(this,dsetname,data,gdims_in)
+      CHARACTER(LEN=*),PARAMETER :: myName='writec1_HDF5FileType'
+      INTEGER(SIK) :: i
+      CLASS(HDF5FileType),INTENT(INOUT) :: this
+      CHARACTER(LEN=*),INTENT(IN) :: dsetname
+      TYPE(StringType),ALLOCATABLE,INTENT(IN) :: data(:)
+      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=MAX_PATH_LENGTH) :: path_shape,path_string
+      INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: gdims_in
+      INTEGER(SIK),ALLOCATABLE :: data_shape(:)
+      
+      
+      ! This and write_c1 will swap names.  Just did this to make sure it builds
+      ! until I can finish.
+      
+#ifdef MPACT_HAVE_HDF5
+      data_shape=SHAPE(data)
+      
+      
+      WRITE(path_shape,*) TRIM(path),"SHAPE"
+      CALL this%write_i1(path_shape,data_shape)
+      
+      DO i=1,SIZE(data)
+        WRITE(path_string,*) TRIM(path),i
+!        CALL this%write_string_helper(path_string,data(i))
+      ENDDO
+      
+    
+#endif MPACT_HAVE_HDF5
+    ENDSUBROUTINE write_string_helper
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE read_d1(this,dsetname,data)
