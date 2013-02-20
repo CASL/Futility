@@ -139,12 +139,16 @@ MODULE FileType_HDF5
       PROCEDURE,PASS :: write_i3
       !> Write: character string
       PROCEDURE,PASS :: write_string_helper
+      !> Write: character string
+      PROCEDURE,PASS :: write_c
       !> Write: character string, rank 1
-      PROCEDURE,PASS :: write_c1
+      ! PROCEDURE,PASS :: write_c1
+      !> Write: character string, rank 2
+      ! PROCEDURE,PASS :: write_c2
       !> Write data to the file as a dataset
       GENERIC :: write => write_d1,write_d2,write_d3,write_s1,write_s2, &
             write_s3,write_l1,write_l2,write_l3,write_i1,write_i2,write_i3, &
-            write_c1!,write_c2,write_c3
+            write_c!,write_c1,write_c2
       !> Read: real(SDK), rank 1
       PROCEDURE,PASS :: read_d1
       !> Read: real(SDK), rank 2
@@ -2308,8 +2312,8 @@ MODULE FileType_HDF5
     ENDSUBROUTINE write_i3
 !
 !-------------------------------------------------------------------------------
-!> @brief Write a single character string to a dataset
-    SUBROUTINE write_c1(this,dsetname,data,gdims_in)
+!> @brief Helper function to write a single character string to a dataset
+    SUBROUTINE write_string_helper(this,dsetname,data,gdims_in)
       CHARACTER(LEN=*),PARAMETER :: myName='write_string_helper_HDF5FileType'
       INTEGER(SIK) :: i,j
       CLASS(HDF5FileType),INTENT(INOUT) :: this
@@ -2465,18 +2469,19 @@ MODULE FileType_HDF5
         CALL this%e%raiseError(myName//': Could not close the parameter list.')
       ENDIF
 #endif
-    ENDSUBROUTINE write_c1
+    ENDSUBROUTINE write_string_helper
 !
 !-------------------------------------------------------------------------------
-!> @brief Write a rank-1 array of strings to a dataset
-    SUBROUTINE write_string_helper(this,dsetname,data,gdims_in)
+!> @brief Write a string to a dataset
+    SUBROUTINE write_c(this,dsetname,data,gdims_in)
       CHARACTER(LEN=*),PARAMETER :: myName='writec1_HDF5FileType'
       INTEGER(SIK) :: i
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
-      TYPE(StringType),ALLOCATABLE,INTENT(IN) :: data(:)
+      TYPE(StringType),INTENT(IN) :: data
+      TYPE(StringType),ALLOCATABLE :: data_c(:)
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path_shape,path_string
+      CHARACTER(LEN=MAX_PATH_LENGTH) :: path_shape
       INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: gdims_in
       INTEGER(SIK),ALLOCATABLE :: data_shape(:)
       
@@ -2485,20 +2490,20 @@ MODULE FileType_HDF5
       ! until I can finish.
       
 #ifdef MPACT_HAVE_HDF5
-      data_shape=SHAPE(data)
+!      ALLOCATE(data_c(1));
+!      data_c(1)=data
       
-      
-      WRITE(path_shape,*) TRIM(path),"SHAPE"
-      CALL this%write_i1(path_shape,data_shape)
-      
-      DO i=1,SIZE(data)
-        WRITE(path_string,*) TRIM(path),i
-!        CALL this%write_string_helper(path_string,data(i))
-      ENDDO
+      path=convertPath(dsetname)
+     
+      IF(PRESENT(gdims_in))THEN
+        CALL this%write_string_helper(TRIM(path),data,gdims_in)
+      ELSE
+        CALL this%write_string_helper(TRIM(path),data)
+      ENDIF
       
     
 #endif MPACT_HAVE_HDF5
-    ENDSUBROUTINE write_string_helper
+    ENDSUBROUTINE write_c
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE read_d1(this,dsetname,data)

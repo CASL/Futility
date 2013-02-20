@@ -88,8 +88,8 @@ PROGRAM testHDF5
       ALLOCATE(testI1(10))
       ALLOCATE(testI2(5,5))
       ALLOCATE(testI3(3,3,3))
-!      ALLOCATE(testC1(3))
-!      ALLOCATE(testC2(2,2))
+      ALLOCATE(testC1(3))
+      ALLOCATE(testC2(2,2))
 
       testD1=[(i,i=1,SIZE(testD1))]
       testD2=RESHAPE([(i,i=1,SIZE(testD2))],SHAPE(testD2))
@@ -110,10 +110,10 @@ PROGRAM testHDF5
           ENDDO
         ENDDO
       ENDDO
-      testC='String Test'
-!      testC1(1)='String 1';testC1(2)='String 2';testC1(3)='String 3'
-!      testC2(1,1)='String 1,1';testC2(1,2)='String1,2';testC2(2,1)='String 2,1'
-!      testC2(2,2)='String2,2';
+      testC='Scalar String Test'
+      testC1(1)='String 1';testC1(2)='String 2';testC1(3)='String 3'
+      testC2(1,1)='String 1,1';testC2(1,2)='String1,2';testC2(2,1)='String 2,1'
+      testC2(2,2)='String2,2';
     
       ! Create a RW access file. Existing file overwritten
       CALL h5%init('writetest.h5','NEW')
