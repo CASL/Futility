@@ -267,7 +267,7 @@ MODULE UnitTest
       utest_compfail=.FALSE.
       utest_componentname=componentname
       utest_prefix=componentname//" -"
-      utest_npfx=LEN(componentname)+3
+      utest_npfx=MIN(LEN(componentname)+3,20)
 
       IF(utest_master) THEN
         WRITE(*,*)
@@ -288,6 +288,7 @@ MODULE UnitTest
       IF(utest_compfail) THEN
         pfstr=c_red//' FAILED'//c_nrm
       ELSE
+        utest_lvl=utest_lvl-1
         pfstr=c_grn//' PASSED'//c_nrm
       ENDIF
       
@@ -295,7 +296,7 @@ MODULE UnitTest
         WRITE(*,'(A71,A)') utest_pad(1:utest_lvl*2)//'COMPONENT '// &
           TRIM(utest_componentname)//utest_dot,pfstr
       ENDIF
-      utest_lvl=utest_lvl-1
+      IF(utest_compfail) utest_lvl=utest_lvl-1
       utest_component=.FALSE.
       utest_prefix=''
       utest_npfx=0
@@ -377,7 +378,7 @@ MODULE UnitTest
         utest_npfx=0
       ELSE
         utest_prefix=pfx//' - '
-        utest_npfx=LEN(pfx)+3
+        utest_npfx=MIN(LEN(pfx)+3,20)
       ENDIF
     ENDSUBROUTINE UTest_setpfx
 !
