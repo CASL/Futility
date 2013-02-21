@@ -141,6 +141,7 @@ PROGRAM testHDF5
       CALL h5%write('groupL->memL3',testL3,SHAPE(testL3))
       CALL h5%mkdir('groupC')
       CALL h5%write('groupC->memC',testC)
+      CALL h5%write('groupC->memC1',testC1,SHAPE(testC1))
 
       CALL h5%clear()
       ASSERT(.NOT.h5%isinit,'HDF5 object not properly cleared!')
