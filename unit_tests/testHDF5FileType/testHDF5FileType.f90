@@ -23,9 +23,9 @@ PROGRAM testHDF5
   USE UnitTest
   USE IntrType
   USE ExceptionHandler
+  USE Strings
   USE FileType_HDF5
   USE IO_Strings
-  USE Strings
   
   IMPLICIT NONE
   
