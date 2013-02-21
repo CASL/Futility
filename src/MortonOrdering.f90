@@ -607,7 +607,9 @@ MODULE MortonOrdering
         ENDDO
       ENDIF
       IF(il == 0 .AND. in == 1) THEN
-        subnode => thisZTreeNode
+        SELECTTYPE(thisZTreeNode); TYPE IS(ZTreeNodeType)
+          subnode => thisZTreeNode
+        ENDSELECT
       ENDIF
     ENDSUBROUTINE ZTree_getSubNodePointer
 !
@@ -630,7 +632,9 @@ MODULE MortonOrdering
       IF(thisZTreeNode%istt <= idx .AND. idx <= thisZTreeNode%istp &
          .AND. idx > 0) THEN
         IF(idx == thisZTreeNode%istt .AND. idx == thisZTreeNode%istp) THEN
-          leafnode => thisZTreeNode
+          SELECTTYPE(thisZTreeNode); TYPE IS(ZTreeNodeType)
+            leafnode => thisZTreeNode
+          ENDSELECT
         ELSE
           !Determine which subdomain to enter
           
