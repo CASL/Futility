@@ -24,7 +24,7 @@ PROGRAM testSpaceFillingCurve
   
   INTEGER(SIK) :: i,j,k,iout,jout,kout,istt,istp,rx(2),ry(2),rz(2)
   
-  TYPE(ZTreeNodeType) :: testZTree
+  TYPE(ZTreeNodeType),TARGET :: testZTree
   TYPE(ZTreeNodeType) :: tmpZTreeNode
   TYPE(ZTreeNodeType),POINTER :: tmpZTreeLevel(:)
   
@@ -36,17 +36,19 @@ PROGRAM testSpaceFillingCurve
   REGISTER_SUBTEST('Z-Tree %istpMax()',testZTreeIstpMax)
   REGISTER_SUBTEST('Z-Tree %ijk2oneD(...)',testZTreeIJK2oneD)
   REGISTER_SUBTEST('Z-Tree %oneD2ijk(...)',testZTreeOneD2ijk)
-  REGISTER_SUBTEST('Z-Tree %renumber(...)',testZTreeRenumber)
-  REGISTER_SUBTEST('Z-Tree %shave(...)',testZTreeShave)
   REGISTER_SUBTEST('Z-Tree %getMaxLevels(...)',testZTreeGetMaxLevels)
   REGISTER_SUBTEST('Z-Tree %getNDomains(...)',testZTreeGetNDomains)
-  REGISTER_SUBTEST('Z-Tree %getNodeBounds(...)',testZTreeGetNodeBounds)
+  REGISTER_SUBTEST('Z-Tree %getSubNodeBounds(...)',testZTreeGetSubNodeBounds)
+  REGISTER_SUBTEST('Z-Tree %getSubNodePointer(...)',testZTreeGetSubNodePointer)
+  REGISTER_SUBTEST('Z-Tree %getLeafNodePointer(...)',testZTreeGetLeafNodePointer)
+  REGISTER_SUBTEST('Z-Tree %renumber(...)',testZTreeRenumber)
+  REGISTER_SUBTEST('Z-Tree %shave(...)',testZTreeShave)
   REGISTER_SUBTEST('Z-Tree %partition(...)',testZTreePartition)
   
   FINALIZE_TEST()
 !
 !===============================================================================
-CONTAINS
+  CONTAINS
 !
 !-------------------------------------------------------------------------------
 !Test MortonIndex
@@ -1150,6 +1152,7 @@ CONTAINS
           ENDDO
         ENDDO
       ENDDO
+      CALL testZTree%clear()
     ENDSUBROUTINE testZTreeShave
 !
 !-------------------------------------------------------------------------------
@@ -1202,32 +1205,93 @@ CONTAINS
 !
 !-------------------------------------------------------------------------------
 !Test %getNodeBounds
-    SUBROUTINE testZTreeGetNodeBounds()
+    SUBROUTINE testZTreeGetSubNodeBounds()
       CALL testZTree%getSubNodeBounds(1,3,istt,istp)
-      ASSERT(ALL((/istt,istp/) == -1),'%getSubNodeBounds(1,3,...) (uninit)')
+      ASSERT(ALL((/istt,istp/) == -1),'(1,3,...) (uninit)')
       CALL testZTree%getSubNodeBounds(0,1,istt,istp)
-      ASSERT(ALL((/istt,istp/) == -1),'%getSubNodeBounds(0,1,...) (uninit)')
+      ASSERT(ALL((/istt,istp/) == -1),'(0,1,...) (uninit)')
       CALL testZTree%init(1,4,1,4,1,1,1)
       CALL testZTree%getSubNodeBounds(0,1,istt,istp)
-      ASSERT(ALL((/istt,istp/) == (/1,16/)),'%getSubNodeBounds(0,1,...) 4x4x1')
+      ASSERT(ALL((/istt,istp/) == (/1,16/)),'(0,1,...) 4x4x1')
       CALL testZTree%getSubNodeBounds(1,3,istt,istp)
-      ASSERT(ALL((/istt,istp/) == (/9,12/)),'%getSubNodeBounds(1,3,...) 4x4x1')
+      ASSERT(ALL((/istt,istp/) == (/9,12/)),'(1,3,...) 4x4x1')
       CALL testZTree%getSubNodeBounds(2,3,istt,istp)
-      ASSERT(ALL((/istt,istp/) == 3),'%getSubNodeBounds(2,3,...) 4x4x1')
+      ASSERT(ALL((/istt,istp/) == 3),'(2,3,...) 4x4x1')
       CALL testZTree%getSubNodeBounds(2,13,istt,istp)
-      ASSERT(ALL((/istt,istp/) == 13),'%getSubNodeBounds(2,13,...) 4x4x1')
+      ASSERT(ALL((/istt,istp/) == 13),'(2,13,...) 4x4x1')
       CALL testZTree%getSubNodeBounds(3,13,istt,istp)
-      ASSERT(ALL((/istt,istp/) == -1),'%getSubNodeBounds(3,13,...) 4x4x1')
+      ASSERT(ALL((/istt,istp/) == -1),'(3,13,...) 4x4x1')
       CALL testZTree%clear()
       CALL testZTree%init(1,8,1,8,1,35,1)
       CALL testZTree%getSubNodeBounds(6,13,istt,istp)
-      ASSERT(ALL((/istt,istp/) == 821),'%getSubNodeBounds(6,13,...) 8x8x35')
+      ASSERT(ALL((/istt,istp/) == 821),'(6,13,...) 8x8x35')
       CALL testZTree%getSubNodeBounds(5,400,istt,istp)
-      ASSERT(ALL((/istt,istp/) == 400),'%getSubNodeBounds(5,400,...) 8x8x35')
+      ASSERT(ALL((/istt,istp/) == 400),'(5,400,...) 8x8x35')
       CALL testZTree%getSubNodeBounds(6,400,istt,istp)
-      ASSERT(ALL((/istt,istp/) == -1),'%getSubNodeBounds(6,400,...) 8x8x35')
+      ASSERT(ALL((/istt,istp/) == -1),'(6,400,...) 8x8x35')
       CALL testZTree%clear()
-    ENDSUBROUTINE testZTreeGetNodeBounds
+    ENDSUBROUTINE testZTreeGetSubNodeBounds
+!
+!-------------------------------------------------------------------------------
+!Test %getSubNodePointer
+    SUBROUTINE testZTreeGetSubNodePointer()
+      TYPE(ZTreeNodeType),POINTER :: pZTree
+      
+      CALL testZTree%getSubNodePointer(1,3,pZTree)
+      ASSERT(.NOT.ASSOCIATED(pZTree),'(1,3,...) (uninit)')
+      CALL testZTree%getSubNodePointer(0,1,pZTree)
+      ASSERT(ASSOCIATED(pZTree,testZTree),'(0,1,...) (uninit)')
+      CALL testZTree%init(1,4,1,4,1,1,1)
+      CALL testZTree%getSubNodePointer(0,1,pZTree)
+      CALL testZTree%getSubNodeBounds(0,1,istt,istp)
+      ASSERT(ALL((/istt,istp/) == (/pZTree%istt,pZTree%istp/)),'(0,1,...) 4x4x1')
+      CALL testZTree%getSubNodePointer(1,3,pZTree)
+      CALL testZTree%getSubNodeBounds(1,3,istt,istp)
+      ASSERT(ALL((/istt,istp/) == (/pZTree%istt,pZTree%istp/)),'(1,3,...) 4x4x1')
+      CALL testZTree%getSubNodePointer(2,3,pZTree)
+      CALL testZTree%getSubNodeBounds(2,3,istt,istp)
+      ASSERT(ALL((/istt,istp/) == (/pZTree%istt,pZTree%istp/)),'(2,3,...) 4x4x1')
+      CALL testZTree%getSubNodePointer(2,13,pZTree)
+      CALL testZTree%getSubNodeBounds(2,13,istt,istp)
+      ASSERT(ALL((/istt,istp/) == (/pZTree%istt,pZTree%istp/)),'(2,13,...) 4x4x1')
+      CALL testZTree%getSubNodePointer(3,13,pZTree)
+      ASSERT(.NOT.ASSOCIATED(pZTree),'(3,13,...) 4x4x1')
+      CALL testZTree%clear()
+      CALL testZTree%init(1,8,1,8,1,35,1)
+      CALL testZTree%getSubNodePointer(6,13,pZTree)
+      CALL testZTree%getSubNodeBounds(6,13,istt,istp)
+      ASSERT(ALL((/istt,istp/) == (/pZTree%istt,pZTree%istp/)),'(6,13,...) 8x8x35')
+      CALL testZTree%getSubNodePointer(5,400,pZTree)
+      CALL testZTree%getSubNodeBounds(5,400,istt,istp)
+      ASSERT(ALL((/istt,istp/) == (/pZTree%istt,pZTree%istp/)),'(5,400,...) 8x8x35')
+      CALL testZTree%getSubNodePointer(6,400,pZTree)
+      ASSERT(.NOT.ASSOCIATED(pZTree),'(6,400,...) 8x8x35')
+      CALL testZTree%clear()
+    ENDSUBROUTINE testZTreeGetSubNodePointer
+!
+!-------------------------------------------------------------------------------
+!Test %getLeafNodePointer
+    SUBROUTINE testZTreeGetLeafNodePointer()
+      TYPE(ZTreeNodeType),POINTER :: pZTree
+      
+      CALL testZTree%getLeafNodePointer(1,pZTree)
+      ASSERT(.NOT.ASSOCIATED(pZTree),'(1,...) (uninit)')
+      CALL testZTree%getLeafNodePointer(-1,pZTree)
+      ASSERT(.NOT.ASSOCIATED(pZTree),'(-1,...) (uninit)')
+      CALL testZTree%init(1,4,1,4,1,4,1)
+      CALL testZTree%getLeafNodePointer(65,pZTree)
+      ASSERT(.NOT.ASSOCIATED(pZTree),'(65,...) 4x4x4')
+      DO i=1,64
+        CALL testZTree%getLeafNodePointer(i,pZTree)
+        ASSERT(ALL((/pZTree%istt,pZTree%istp/) == i),'(i,...) %istt %istp 4x4x4')
+        FINFO() 'i=',i
+        ASSERT(pZTree%nsubdomains == 0,'(i,...) %nsubdomains 4x4x4')
+        FINFO() 'i=',i
+        ASSERT(.NOT.ASSOCIATED(pZTree%subdomains),'(i,...) %subdomains 4x4x4')
+        FINFO() 'i=',i
+      ENDDO
+      CALL testZTree%clear()
+    ENDSUBROUTINE testZTreeGetLeafNodePointer
 !
 !-------------------------------------------------------------------------------
 !Test %partition
