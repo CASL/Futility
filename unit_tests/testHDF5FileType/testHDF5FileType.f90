@@ -25,7 +25,7 @@ PROGRAM testHDF5
   USE ExceptionHandler
   USE FileType_HDF5
   USE IO_Strings
-  USE Strings
+!  USE Strings
   
   IMPLICIT NONE
   
@@ -72,8 +72,8 @@ PROGRAM testHDF5
       REAL(SSK),ALLOCATABLE :: testR1(:),testR2(:,:),testR3(:,:,:)
       LOGICAL(SBK),ALLOCATABLE :: testL1(:),testL2(:,:),testL3(:,:,:)
       INTEGER(SIK),ALLOCATABLE :: testI1(:),testI2(:,:),testI3(:,:,:)
-      TYPE(StringType) :: testC
-      TYPE(StringType),ALLOCATABLE :: testC1(:),testC2(:,:)
+!      TYPE(StringType) :: testC
+!      TYPE(StringType),ALLOCATABLE :: testC1(:),testC2(:,:)
       INTEGER(SIK) :: i,j,k
 
       ALLOCATE(testD1(10))
@@ -88,8 +88,8 @@ PROGRAM testHDF5
       ALLOCATE(testI1(10))
       ALLOCATE(testI2(5,5))
       ALLOCATE(testI3(3,3,3))
-      ALLOCATE(testC1(3))
-      ALLOCATE(testC2(2,2))
+!      ALLOCATE(testC1(3))
+!      ALLOCATE(testC2(2,2))
 
       testD1=[(i,i=1,SIZE(testD1))]
       testD2=RESHAPE([(i,i=1,SIZE(testD2))],SHAPE(testD2))
@@ -110,10 +110,10 @@ PROGRAM testHDF5
           ENDDO
         ENDDO
       ENDDO
-      testC='Scalar String Test'
-      testC1(1)='String 1';testC1(2)='String 2';testC1(3)='String 3'
-      testC2(1,1)='String 1,1';testC2(1,2)='String1,2';testC2(2,1)='String 2,1'
-      testC2(2,2)='String2,2';
+!      testC='Scalar String Test'
+!      testC1(1)='String 1';testC1(2)='String 2';testC1(3)='String 3'
+!      testC2(1,1)='String 1,1';testC2(1,2)='String1,2';testC2(2,1)='String 2,1'
+!      testC2(2,2)='String2,2';
     
       ! Create a RW access file. Existing file overwritten
       CALL h5%init('writetest.h5','NEW')
@@ -140,8 +140,8 @@ PROGRAM testHDF5
       CALL h5%write('groupL->memL2',testL2,SHAPE(testL2))
       CALL h5%write('groupL->memL3',testL3,SHAPE(testL3))
       CALL h5%mkdir('groupC')
-      CALL h5%write('groupC->memC',testC)
-      CALL h5%write('groupC->memC1',testC1,SHAPE(testC1))
+!      CALL h5%write('groupC->memC',testC)
+!      CALL h5%write('groupC->memC1',testC1,SHAPE(testC1))
 
       CALL h5%clear()
       ASSERT(.NOT.h5%isinit,'HDF5 object not properly cleared!')
