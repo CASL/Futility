@@ -104,6 +104,12 @@ MODULE MortonOrdering
       !> @copybrief MortonOrdering::ZTree_getNDomains
       !> @copydetails MortonOrdering::ZTree_getNDomains
       PROCEDURE,PASS :: getNDomains => ZTree_getNDomains
+      !> @copybrief MortonOrdering::ZTree_getSubNodePointer
+      !> @copydetails MortonOrdering::ZTree_getSubNodePointer
+      PROCEDURE,PASS :: getSubNodePointer => ZTree_getSubNodePointer
+      !> @copybrief MortonOrdering::ZTree_getLeafNodePointer
+      !> @copydetails MortonOrdering::ZTree_getLeafNodePointer
+      PROCEDURE,PASS :: getLeafNodePointer => ZTree_getLeafNodePointer
       !> @copybrief MortonOrdering::ZTree_getSubNodeBounds
       !> @copydetails MortonOrdering::ZTree_getSubNodeBounds
       PROCEDURE,PASS :: getSubNodeBounds => ZTree_getSubNodeBounds
@@ -563,7 +569,88 @@ MODULE MortonOrdering
         istt=thisZTreeNode%istt
         istp=thisZTreeNode%istp
       ENDIF
-    ENDSUBROUTINE ZTree_getSubNodeBounds
+  ENDSUBROUTINE ZTree_getSubNodeBounds
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns a pointer to a node located at coordinates specified by the
+!> level and node within level.
+!> @param thisZTreeNode the node to get the subnode bounds from
+!> @param il the ith level below this node
+!> @param in the ith node within the level @c il
+!> @param subnode (output) the pointer to the node
+!>
+!> If the index is not valid within the level or the level is not valid then
+!> the pointer is returned as null.
+!>
+!> Not actually sure if we need this, getLeafNode is really more useful I think.
+!>
+    RECURSIVE SUBROUTINE ZTree_getSubNodePointer(thisZTreeNode,il,in,subnode)
+      CLASS(ZTreeNodeType),TARGET,INTENT(IN) :: thisZTreeNode
+      INTEGER(SIK),INTENT(IN) :: il
+      INTEGER(SIK),INTENT(IN) :: in
+      TYPE(ZTreeNodeType),POINTER,INTENT(OUT) :: subnode
+      INTEGER(SIK) :: id,ndstt,ndstp
+      
+      subnode => NULL()
+      IF(il > 0) THEN
+        !Determine which subdomain to enter
+        ndstt=1
+        DO id=1,thisZTreeNode%nsubdomains
+          ndstp=ndstt+thisZTreeNode%subdomains(id)%getNDomains(il-1)-1
+          IF(ndstt <= in .AND. in <= ndstp) THEN
+            !The node index lies within this subdomain
+            CALL thisZTreeNode%subdomains(id)% &
+              getSubNodePointer(il-1,in-ndstt+1,subnode)
+            EXIT
+          ENDIF
+          ndstt=ndstp+1
+        ENDDO
+      ENDIF
+      IF(il == 0 .AND. in == 1) THEN
+        SELECTTYPE(thisZTreeNode); TYPE IS(ZTreeNodeType)
+          subnode => thisZTreeNode
+        ENDSELECT
+      ENDIF
+    ENDSUBROUTINE ZTree_getSubNodePointer
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns a pointer to a leaf node specified by its global index.
+!> @param thisZTreeNode the node to get the subnode bounds from
+!> @param idx the leaf node's global index within the tree
+!> @param leafnode (output) the pointer to the node
+!>
+!> If the index is not positive or within the range of the tree then the pointer
+!> is returned as null.
+!>
+    RECURSIVE SUBROUTINE ZTree_getLeafNodePointer(thisZTreeNode,idx,leafnode)
+      CLASS(ZTreeNodeType),TARGET,INTENT(IN) :: thisZTreeNode
+      INTEGER(SIK),INTENT(IN) :: idx
+      TYPE(ZTreeNodeType),POINTER,INTENT(OUT) :: leafnode
+      INTEGER(SIK) :: id,ndstt,ndstp
+      
+      leafnode => NULL()
+      IF(thisZTreeNode%istt <= idx .AND. idx <= thisZTreeNode%istp &
+         .AND. idx > 0) THEN
+        IF(idx == thisZTreeNode%istt .AND. idx == thisZTreeNode%istp) THEN
+          SELECTTYPE(thisZTreeNode); TYPE IS(ZTreeNodeType)
+            leafnode => thisZTreeNode
+          ENDSELECT
+        ELSE
+          !Determine which subdomain to enter
+          
+          DO id=1,thisZTreeNode%nsubdomains
+            ndstt=thisZTreeNode%subdomains(id)%istt
+            ndstp=thisZTreeNode%subdomains(id)%istp
+            IF(ndstt <= idx .AND. idx <= ndstp) THEN
+              !The node index lies within this subdomain
+              CALL thisZTreeNode%subdomains(id)% &
+                getLeafNodePointer(idx,leafnode)
+              EXIT
+            ENDIF
+          ENDDO
+        ENDIF
+      ENDIF
+    ENDSUBROUTINE ZTree_getLeafNodePointer
 !
 !-------------------------------------------------------------------------------
 !> @brief Renumbers a "Z-tree" node with a new starting index and stopping index
