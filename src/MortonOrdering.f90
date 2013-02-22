@@ -110,6 +110,9 @@ MODULE MortonOrdering
       !> @copybrief MortonOrdering::ZTree_getLeafNodePointer
       !> @copydetails MortonOrdering::ZTree_getLeafNodePointer
       PROCEDURE,PASS :: getLeafNodePointer => ZTree_getLeafNodePointer
+      !> @copybrief MortonOrdering::ZTree_addToLeafs
+      !> @copydetails MortonOrdering::ZTree_addToLeafs
+      PROCEDURE,PASS :: addToLeafs => ZTree_addToLeafs
       !> @copybrief MortonOrdering::ZTree_getSubNodeBounds
       !> @copydetails MortonOrdering::ZTree_getSubNodeBounds
       PROCEDURE,PASS :: getSubNodeBounds => ZTree_getSubNodeBounds
@@ -651,6 +654,64 @@ MODULE MortonOrdering
         ENDIF
       ENDIF
     ENDSUBROUTINE ZTree_getLeafNodePointer
+!
+!-------------------------------------------------------------------------------
+!> @brief Adds a fixed block size to all leaf nodes in the Z-tree
+!> @param thisZTreeNode the "Z"-Tree node to start renumbering from 
+!>        (must be initialized)
+!> @param xdim the x-dimension of the block to add (xdim > 0)
+!> @param ydim the y-dimension of the block to add (ydim > 0)
+!> @param zdim the z-dimension of the block to add (zdim > 0)
+!> 
+    PURE RECURSIVE SUBROUTINE ZTree_addToLeafs(thisZTreeNode,xdim,ydim,zdim)
+      CLASS(ZTreeNodeType),INTENT(INOUT) :: thisZTreeNode
+      INTEGER(SIK),INTENT(IN) :: xdim
+      INTEGER(SIK),INTENT(IN) :: ydim
+      INTEGER(SIK),INTENT(IN) :: zdim
+      INTEGER(SIK) :: id,istt,isttd,xstt,ystt,zstt
+      
+      IF(thisZTreeNode%istt /= -1 .AND. ALL((/xdim,ydim,zdim/) > 0)) THEN
+        
+        !Update starting dimensions
+        thisZTreeNode%x(1)=(thisZTreeNode%x(1)-1)*xdim+1
+        thisZTreeNode%y(1)=(thisZTreeNode%y(1)-1)*ydim+1
+        thisZTreeNode%z(1)=(thisZTreeNode%z(1)-1)*zdim+1
+        
+        IF(thisZTreeNode%nsubdomains == 0) THEN
+          !This is a leaf node insert the new block on this leaf
+          istt=thisZTreeNode%istt
+          xstt=thisZTreeNode%x(1)
+          ystt=thisZTreeNode%y(1)
+          zstt=thisZTreeNode%z(1)
+          CALL thisZTreeNode%clear()
+          CALL thisZTreeNode%init(xstt,xstt+xdim-1,ystt,ystt+ydim-1, &
+            zstt,zstt+zdim-1,istt)
+        ELSE
+          !This is an intermediate level, so modify the dimensions
+          !and update istp then the subdomains. The starting index
+          !of the subdomains is also updated.
+          thisZTreeNode%x(2)=thisZTreeNode%x(2)*xdim
+          thisZTreeNode%y(2)=thisZTreeNode%y(2)*ydim
+          thisZTreeNode%z(2)=thisZTreeNode%z(2)*zdim
+        
+          thisZTreeNode%istp=thisZTreeNode%istt-1+ &
+          (thisZTreeNode%x(2)-thisZTreeNode%x(1)+1)* &
+            (thisZTreeNode%y(2)-thisZTreeNode%y(1)+1)* &
+              (thisZTreeNode%z(2)-thisZTreeNode%z(1)+1)
+          
+          !Update subdomains
+          isttd=thisZTreeNode%istt
+          xstt=thisZTreeNode%x(1)
+          ystt=thisZTreeNode%y(1)
+          zstt=thisZTreeNode%z(1)
+          DO id=1,thisZTreeNode%nsubdomains
+            thisZTreeNode%subdomains(id)%istt=isttd
+            CALL thisZTreeNode%subdomains(id)%addToleafs(xdim,ydim,zdim)
+            isttd=thisZTreeNode%subdomains(id)%istp+1
+          ENDDO
+        ENDIF
+      ENDIF
+    ENDSUBROUTINE ZTree_addToLeafs
 !
 !-------------------------------------------------------------------------------
 !> @brief Renumbers a "Z-tree" node with a new starting index and stopping index
