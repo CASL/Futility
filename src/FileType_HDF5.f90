@@ -3212,7 +3212,7 @@ MODULE FileType_HDF5
         ENDIF
         
         ! Create path for each StringType element
-        WRITE(string_number,*) CHAR(i)
+        WRITE(string_number,FMT="(i0)") i
         WRITE(path_string,*) TRIM(path)//"("//TRIM(ADJUSTL(string_number))//")"
         path_string=ADJUSTL(path_string)
 
