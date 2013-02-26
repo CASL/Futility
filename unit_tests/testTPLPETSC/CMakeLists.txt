@@ -11,4 +11,4 @@
 #
 ################################################################################
 INCLUDE(MPACT_CreateUnitTest)
-MPACT_CreateUnitTest(testTPLPETSC)
+MPACT_CreateParUnitTest(testTPLPETSC 1)
