@@ -666,7 +666,7 @@ MODULE MortonOrdering
 !>
 !> This only happens in grids that have prime factors other than 2.
 !>
-    PURE SUBROUTINE ZTree_flattenLeafs(thisZTreeNode)
+    SUBROUTINE ZTree_flattenLeafs(thisZTreeNode)
       CLASS(ZTreeNodeType),INTENT(INOUT) :: thisZTreeNode
       INTEGER(SIK) :: nlevels,id,id0,id2,idp,idshift,ip,newnd,nsubd
       INTEGER(SIK) :: x(2),y(2),z(2),istt
