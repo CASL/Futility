@@ -78,7 +78,8 @@ PROGRAM testHDF5
       INTEGER(SIK) :: testI0
       LOGICAL(SBK) :: testL0
       TYPE(StringType) :: testC0
-      TYPE(StringType),ALLOCATABLE :: testC1(:),testC2(:,:)
+      TYPE(StringType),ALLOCATABLE :: testC1(:),testC2(:,:),testC3(:,:,:)
+      CHARACTER(LEN=12) :: helper_string
       INTEGER(SIK) :: i,j,k
 
       ALLOCATE(testD1(10))
@@ -95,6 +96,7 @@ PROGRAM testHDF5
       ALLOCATE(testI3(3,3,3))
       ALLOCATE(testC1(3))
       ALLOCATE(testC2(2,2))
+      ALLOCATE(testC3(3,4,5))
 
       testD0=42.123456789_SDK
       testD1=[(i,i=1,SIZE(testD1))]
@@ -123,6 +125,15 @@ PROGRAM testHDF5
       testC1(1)='String 1';testC1(2)='String 2';testC1(3)='String 3'
       testC2(1,1)='String 1,1';testC2(1,2)='String 1,2';testC2(2,1)='String 2,1'
       testC2(2,2)='String 2,2';
+      DO i=1,SIZE(testC3,1)
+        DO j=1,SIZE(testC3,2)
+          DO k=1,SIZE(testC3,3)
+            WRITE(helper_string,FMT="(a7,i0,a1,i0,a1,i0)") 'String ',i,&
+                    &",",j,",",k
+            testC3(i,j,k) = helper_string
+          ENDDO
+        ENDDO
+      ENDDO
     
       ! Create a RW access file. Existing file overwritten
       CALL h5%init('writetest.h5','NEW')
@@ -156,9 +167,10 @@ PROGRAM testHDF5
       CALL h5%write('groupC->memC0',testC0)
       CALL h5%write('groupC->memC1',testC1,SHAPE(testC1))
       CALL h5%write('groupC->memC2',testC2,SHAPE(testC2))
+      CALL h5%write('groupC->memC3',testC3,SHAPE(testC3))
 
       DEALLOCATE(testD1,testD2,testD3,testR1,testR2,testR3,testI1,testI2, &
-            testI3,testL1,testL2,testL3,testC1,testC2)
+            testI3,testL1,testL2,testL3,testC1,testC2,testC3)
 
       CALL h5%clear()
       ASSERT(.NOT.h5%isinit,'HDF5 object not properly cleared!')
