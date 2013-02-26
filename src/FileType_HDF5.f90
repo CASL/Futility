@@ -113,18 +113,24 @@ MODULE FileType_HDF5
       PROCEDURE,PASS :: mkdir => mkdir_HDF5FileType
       !> Determine the number of members of a group
       PROCEDURE,PASS :: ngrp => ngrp_HDF5FileType
+      !> Write: double(SKD)
+      PROCEDURE,PASS :: write_d0
       !> Write: double(SDK), rank 1
       PROCEDURE,PASS :: write_d1
       !> Write: double(SDK), rank 2
       PROCEDURE,PASS :: write_d2
       !> Write: double(SDK), rank 3
       PROCEDURE,PASS :: write_d3
+      !> Write: real(SSK)
+      PROCEDURE,PASS :: write_s0
       !> Write: real(SSK), rank 1
       PROCEDURE,PASS :: write_s1
       !> Write: real(SSK), rank 2
       PROCEDURE,PASS :: write_s2
       !> Write: real(SSK), rank 3
       PROCEDURE,PASS :: write_s3
+      !> Write: logical(SBK)
+      PROCEDURE,PASS :: write_l0
       !> Write: logical(SBK), rank 1
       PROCEDURE,PASS :: write_l1
       !> Write: logical(SBK), rank 2
@@ -145,12 +151,19 @@ MODULE FileType_HDF5
       PROCEDURE,PASS :: write_c1_helper
       !> Write: character string, rank 1
       PROCEDURE,PASS :: write_c1
+      !> Write: character string, rank 2 helper
+      PROCEDURE,PASS :: write_c2_helper
       !> Write: character string, rank 2
-      ! PROCEDURE,PASS :: write_c2
+      PROCEDURE,PASS :: write_c2
+      !> Write: character string, rank 3 helper
+      PROCEDURE,PASS :: write_c3_helper
+      !> Write: character string, rank 3
+      PROCEDURE,PASS :: write_c3
       !> Write data to the file as a dataset
-      GENERIC :: write => write_d1,write_d2,write_d3,write_s1,write_s2, &
-          write_s3,write_l1,write_l2,write_l3,write_i0,write_i1,write_i2, &
-          write_i3,write_c0,write_c1_helper,write_c1!,write_c2
+      GENERIC :: write => write_d0,write_d1,write_d2,write_d3,write_s0, &
+      write_s1,write_s2,write_s3,write_l0,write_l1,write_l2,write_l3,write_i0, &
+      write_i1,write_i2,write_i3,write_c0,write_c1_helper,write_c1, &
+      write_c2_helper,write_c2,write_c3_helper,write_c3
       !> Read: real(SDK), rank 1
       PROCEDURE,PASS :: read_d1
       !> Read: real(SDK), rank 2
@@ -482,6 +495,158 @@ MODULE FileType_HDF5
       ngrp=0
 #endif
     ENDFUNCTION ngrp_HDF5FileType
+!
+!-------------------------------------------------------------------------------
+!> @brief Write a rank-1 array of doubles to a dataset
+    SUBROUTINE write_d0(this,dsetname,data,gdims_in)
+      CHARACTER(LEN=*),PARAMETER :: myName='writed0_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: this
+      CHARACTER(LEN=*),INTENT(IN) :: dsetname
+      REAL(SDK),INTENT(IN) :: data
+      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: gdims_in
+#ifdef MPACT_HAVE_HDF5
+      INTEGER(HSIZE_T),DIMENSION(1) :: ldims,gdims,offset,one
+      INTEGER(HID_T),PARAMETER :: rank=1
+      
+      INTEGER(HID_T) :: error
+      INTEGER(HID_T) :: dspace_id,dset_id,gspace_id,plist_id
+
+      ! Make sure the object is initialized
+      IF(.NOT.this%isinit)THEN
+        CALL this%e%raiseError(myName//': File object not initialized.')
+      ENDIF
+
+      ! Check that the file is writable. Best to catch this before HDF5 does.
+      IF(.NOT.this%isWrite())THEN
+        CALL this%e%raiseError(myName//': File is readonly!')
+        RETURN
+      ENDIF
+      
+      ! stash offset
+      offset(1) = 0
+      
+      ! set one to ones. This is usually used for more complicated parallel
+      ! chunking schemes, but we are doing a simplified case
+      one=1
+
+      ! Convert the path name
+      path = convertPath(dsetname)
+
+      ! Determine the dimensions for the dataspace
+      ldims=1
+      
+      ! Store the dimensions from global if present
+      IF(PRESENT(gdims_in))THEN
+        gdims=gdims_in
+      ELSE
+        gdims=ldims
+      ENDIF
+      
+      !Create an HDF5 parameter list for the dataset creation.
+      CALL h5pcreate_f(H5P_DATASET_CREATE_F,plist_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not create parameter list.')
+      ENDIF
+      
+      ! Create the dataspace
+#ifdef HAVE_MPI
+      ! Make sure that the global dims are present if needed
+      IF (this%pe%rank == 0)THEN
+        IF(.NOT.PRESENT(gdims_in))THEN
+          CALL this%e%raiseError(myName//': For parallel,write, global '//&
+            'dimensions are required.')
+        ENDIF
+      ENDIF
+      CALL h5pset_chunk_f(plist_id,rank,ldims,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not set chunk.')
+      ENDIF
+#endif
+      ! Global dataspace
+      CALL h5screate_simple_f(rank,gdims,gspace_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not create dataspace.')
+      ENDIF
+      
+      ! Local dataspace
+      CALL h5screate_simple_f(rank,ldims,dspace_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not create dataspace.')
+      ENDIF
+
+      ! Create the dataset
+      CALL h5dcreate_f(this%file_id, path, H5T_NATIVE_DOUBLE, gspace_id, &
+                       dset_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not create dataset.')
+      ENDIF
+      
+      ! Destroy the property list
+      CALL h5pclose_f(plist_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not close parameter list.')
+      ENDIF
+      
+      ! Select the global dataspace for the dataset
+      CALL h5dget_space_f(dset_id,gspace_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not select global dataspace'//&
+          ' for the dataset.')
+      ENDIF
+      
+      ! Create a property list for the write operation
+      CALL h5pcreate_f(H5P_DATASET_XFER_F,plist_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not create property list '//&
+          'for write operation.')
+      ENDIF
+#ifdef HAVE_MPI
+      ! Set to parallel write
+      CALL h5pset_dxpl_mpio_f(plist_id,H5FD_MPIO_COLLECTIVE_F,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not set parallel write.')
+      ENDIF
+      
+      ! Select the hyperslab
+!      CALL h5sselect_hyperslab_f(gspace_id,H5S_SELECT_SET_
+!> @brief Write a rank-1 array of doubles to a datasetF,offset,one,error, &
+!                                 one,ldims)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not select hyperslab.')
+      ENDIF
+#endif
+      
+      ! Write to the dataset
+      CALL h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, data, gdims, error, &
+                      dspace_id,gspace_id,plist_id)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not write to the dataset.')
+      ENDIF
+
+      ! Close the dataset
+      CALL h5dclose_f(dset_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not close the dataset.')
+      ENDIF
+
+      ! Close the dataspace
+
+      CALL h5sclose_f(dspace_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not close the dataspace.')
+      ENDIF
+      CALL h5sclose_f(gspace_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not close the dataspace.')
+      ENDIF
+      
+      CALL h5pclose_f(plist_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not close the parameter list.')
+      ENDIF
+#endif
+    ENDSUBROUTINE write_d0
 !
 !-------------------------------------------------------------------------------
 !> @brief Write a rank-1 array of doubles to a dataset
@@ -928,9 +1093,160 @@ MODULE FileType_HDF5
     ENDSUBROUTINE write_d3
 !
 !-------------------------------------------------------------------------------
+!> @brief Write a real to a dataset
+    SUBROUTINE write_s0(this,dsetname,data,gdims_in)
+      CHARACTER(LEN=*),PARAMETER :: myName='writes0_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: this
+      CHARACTER(LEN=*),INTENT(IN) :: dsetname
+      REAL(SSK),INTENT(IN) :: data
+      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: gdims_in
+#ifdef MPACT_HAVE_HDF5
+      INTEGER(HSIZE_T),DIMENSION(1) :: ldims,gdims,offset,one
+      INTEGER(HID_T),PARAMETER :: rank=1
+      
+      INTEGER(HID_T) :: error
+      INTEGER(HID_T) :: dspace_id,dset_id,gspace_id,plist_id
+
+      ! Make sure the object is initialized
+      IF(.NOT.this%isinit)THEN
+        CALL this%e%raiseError(myName//': File object not initialized.')
+      ENDIF
+
+      ! Check that the file is writable. Best to catch this before HDF5 does.
+      IF(.NOT.this%isWrite())THEN
+        CALL this%e%raiseError(myName//': File is readonly!')
+        RETURN
+      ENDIF
+      
+      ! stash offset
+      offset(1) = 0
+      
+      ! set one to ones. This is usually used for more complicated parallel
+      ! chunking schemes, but we are doing a simplified case
+      one=1
+
+      ! Convert the path name
+      path = convertPath(dsetname)
+
+      ! Determine the dimensions for the dataspace
+      ldims=1
+      
+      ! Store the dimensions from global if present
+      IF(PRESENT(gdims_in))THEN
+        gdims=gdims_in
+      ELSE
+        gdims=ldims
+      ENDIF
+      
+      !Create an HDF5 parameter list for the dataset creation.
+      CALL h5pcreate_f(H5P_DATASET_CREATE_F,plist_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not create parameter list.')
+      ENDIF
+      
+      ! Create the dataspace
+#ifdef HAVE_MPI
+      ! Make sure that the global dims are present if needed
+      IF (this%pe%rank == 0)THEN
+        IF(.NOT.PRESENT(gdims_in))THEN
+          CALL this%e%raiseError(myName//': For parallel write, global '//&
+            'dimensions are required.')
+        ENDIF
+      ENDIF
+      CALL h5pset_chunk_f(plist_id,rank,ldims,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not set chunk.')
+      ENDIF
+#endif
+      ! Global dataspace
+      CALL h5screate_simple_f(rank,gdims,gspace_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not create dataspace.')
+      ENDIF
+      
+      ! Local dataspace
+      CALL h5screate_simple_f(rank,ldims,dspace_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not create dataspace.')
+      ENDIF
+
+      ! Create the dataset
+      CALL h5dcreate_f(this%file_id, path, H5T_NATIVE_REAL, gspace_id, &
+                       dset_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not create dataset.')
+      ENDIF
+      
+      ! Destroy the property list
+      CALL h5pclose_f(plist_id,error)
+
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not close parameter list.')
+      ENDIF
+      
+      ! Select the global dataspace for the dataset
+      CALL h5dget_space_f(dset_id,gspace_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not select global dataspace'//&
+          ' for the dataset.')
+      ENDIF
+      
+      ! Create a property list for the write operation
+      CALL h5pcreate_f(H5P_DATASET_XFER_F,plist_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not create property list '//&
+          'for write operation.')
+      ENDIF
+#ifdef HAVE_MPI
+      ! Set to parallel write
+      CALL h5pset_dxpl_mpio_f(plist_id,H5FD_MPIO_COLLECTIVE_F,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not set parallel write.')
+      ENDIF
+      
+      ! Select the hyperslab
+      CALL h5sselect_hyperslab_f(gspace_id,H5S_SELECT_SET_F,offset,one,error, &
+                                 one,ldims)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not select hyperslab.')
+      ENDIF
+#endif
+      
+      ! Write to the dataset
+      CALL h5dwrite_f(dset_id, H5T_NATIVE_REAL, data, gdims, error, &
+                      dspace_id,gspace_id,plist_id)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not write to the dataset.')
+      ENDIF
+
+      ! Close the dataset
+      CALL h5dclose_f(dset_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not close the dataset.')
+      ENDIF
+
+      ! Close the dataspace
+      CALL h5sclose_f(dspace_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not close the dataspace.')
+      ENDIF
+      CALL h5sclose_f(gspace_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not close the dataspace.')
+      ENDIF
+      
+      CALL h5pclose_f(plist_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not close the parameter list.')
+      ENDIF
+#endif
+    ENDSUBROUTINE write_s0
+!
+!-------------------------------------------------------------------------------
 !> @brief Write a rank-1 array of reals to a dataset
     SUBROUTINE write_s1(this,dsetname,data,gdims_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writer1_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: myName='writes1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SSK),ALLOCATABLE,INTENT(IN) :: data(:)
@@ -1080,7 +1396,7 @@ MODULE FileType_HDF5
 !-------------------------------------------------------------------------------
 !> @brief Write a rank-2 array of reals to a dataset
     SUBROUTINE write_s2(this,dsetname,data,gdims_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writer2_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: myName='writes2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SSK),ALLOCATABLE,INTENT(IN) :: data(:,:)
@@ -1231,7 +1547,7 @@ MODULE FileType_HDF5
 !-------------------------------------------------------------------------------
 !> @brief Write a rank-3 array of reals to a dataset
     SUBROUTINE write_s3(this,dsetname,data,gdims_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writer3_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: myName='writes3_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SSK),ALLOCATABLE,INTENT(IN) :: data(:,:,:)
@@ -1379,6 +1695,168 @@ MODULE FileType_HDF5
       ENDIF
 #endif
     ENDSUBROUTINE write_s3
+!
+!-------------------------------------------------------------------------------
+!> @brief Write a logical to a dataset
+    SUBROUTINE write_l0(this,dsetname,data,gdims_in)
+      IMPLICIT NONE
+      CHARACTER(LEN=*),PARAMETER :: myName='writel0_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: this
+      CHARACTER(LEN=*),INTENT(IN) :: dsetname
+      LOGICAL(SBK),INTENT(IN) :: data
+      CHARACTER :: datac
+      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: gdims_in
+      INTEGER(SIK) :: i
+#ifdef MPACT_HAVE_HDF5
+      INTEGER(HSIZE_T),DIMENSION(1) :: ldims,gdims,offset,one
+      INTEGER(HID_T),PARAMETER :: rank=1
+      
+      INTEGER(HID_T) :: error
+      INTEGER(HID_T) :: dspace_id,dset_id,gspace_id,plist_id
+
+      ! Make sure the object is initialized
+      IF(.NOT.this%isinit)THEN
+
+        CALL this%e%raiseError(myName//': File object not initialized.')
+      ENDIF
+
+      ! Check that the file is writable. Best to catch this before HDF5 does.
+      IF(.NOT.this%isWrite())THEN
+        CALL this%e%raiseError(myName//': File is readonly!')
+        RETURN
+      ENDIF
+      
+      ! stash offset
+      offset(1) = 0
+      
+      ! set one to ones. This is usually used for more complicated parallel
+      ! chunking schemes, but we are doing a simplified case
+      one=1
+
+      ! Convert the path name
+      path = convertPath(dsetname)
+
+      ! Determine the dimensions for the dataspace
+      ldims=1
+      
+      ! Store the dimensions from global if present
+      IF(PRESENT(gdims_in))THEN
+        gdims=gdims_in
+      ELSE
+        gdims=ldims
+      ENDIF
+      
+      !Create an HDF5 parameter list for the dataset creation.
+      CALL h5pcreate_f(H5P_DATASET_CREATE_F,plist_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not create parameter list.')
+      ENDIF
+      
+      ! Create the dataspace
+#ifdef HAVE_MPI
+      ! Make sure that the global dims are present if needed
+      IF (this%pe%rank == 0)THEN
+        IF(.NOT.PRESENT(gdims_in))THEN
+          CALL this%e%raiseError(myName//': For parallel,write, global '//&
+            'dimensions are required.')
+        ENDIF
+      ENDIF
+      CALL h5pset_chunk_f(plist_id,rank,ldims,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not set chunk.')
+      ENDIF
+#endif
+      ! Global dataspace
+      CALL h5screate_simple_f(rank,gdims,gspace_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not create dataspace.')
+      ENDIF
+      
+      ! Local dataspace
+      CALL h5screate_simple_f(rank,ldims,dspace_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not create dataspace.')
+      ENDIF
+
+      ! Create the dataset
+      CALL h5dcreate_f(this%file_id, path, H5T_NATIVE_CHARACTER, gspace_id, &
+                       dset_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not create dataset.')
+      ENDIF
+      
+      ! Destroy the property list
+      CALL h5pclose_f(plist_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not close parameter list.')
+      ENDIF
+      
+      ! Select the global dataspace for the dataset
+      CALL h5dget_space_f(dset_id,gspace_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not select global dataspace'//&
+          ' for the dataset.')
+      ENDIF
+      
+      ! Create a property list for the write operation
+      CALL h5pcreate_f(H5P_DATASET_XFER_F,plist_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not create property list '//&
+          'for write operation.')
+      ENDIF
+#ifdef HAVE_MPI
+      ! Set to parallel write
+      CALL h5pset_dxpl_mpio_f(plist_id,H5FD_MPIO_COLLECTIVE_F,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not set parallel write.')
+      ENDIF
+      
+      ! Select the hyperslab
+      CALL h5sselect_hyperslab_f(gspace_id,H5S_SELECT_SET_F,offset,one,error, &
+                                 one,ldims)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not select hyperslab.')
+      ENDIF
+#endif
+
+      ! Convert to surrogate character array, since HDF5 does not support
+      ! Boolean variables
+      IF(data .EQV. .TRUE.) THEN
+        datac='T'
+      ELSE
+        datac='F'
+      ENDIF
+      
+      ! Write to the dataset
+      CALL h5dwrite_f(dset_id, H5T_NATIVE_CHARACTER, datac, gdims, error, &
+                      dspace_id,gspace_id,plist_id)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not write to the dataset.')
+      ENDIF
+
+      ! Close the dataset
+      CALL h5dclose_f(dset_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not close the dataset.')
+      ENDIF
+
+      ! Close the dataspace
+      CALL h5sclose_f(dspace_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not close the dataspace.')
+      ENDIF
+      CALL h5sclose_f(gspace_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not close the dataspace.')
+      ENDIF
+      
+      CALL h5pclose_f(plist_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not close the parameter list.')
+      ENDIF
+#endif
+    ENDSUBROUTINE write_l0
 !
 !-------------------------------------------------------------------------------
 !> @brief Write a rank-1 array of logicals to a dataset
@@ -1543,7 +2021,7 @@ MODULE FileType_HDF5
 !-------------------------------------------------------------------------------
 !> @brief Write a rank-2 array of logicals to a dataset
     SUBROUTINE write_l2(this,dsetname,data,gdims_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writel1_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: myName='writel2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       LOGICAL(SBK),ALLOCATABLE,INTENT(IN) :: data(:,:)
@@ -2625,7 +3103,7 @@ MODULE FileType_HDF5
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE write_c1_helper(this,dsetname,data,gdims_in)
-      CHARACTER(LEN=*),PARAMETER :: MyName='writec1_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: MyName='writec1helper_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       TYPE(StringType),ALLOCATABLE,INTENT(IN) :: data(:)
@@ -2647,7 +3125,7 @@ MODULE FileType_HDF5
 
 !
 !-------------------------------------------------------------------------------
-!> @brief Write a StringType to dataset
+!> @brief Write a rank-1 array of StringTypes to dataset
     SUBROUTINE write_c1(this,dsetname,data,length_max,gdims_in)
       CHARACTER(LEN=*),PARAMETER :: myName='writec1_HDF5FileType'
       INTEGER(SIK) :: i,j
@@ -2741,7 +3219,7 @@ MODULE FileType_HDF5
         ENDIF
         
         ! Create path for each StringType element
-        WRITE(string_number,*) CHAR(i)
+        WRITE(string_number,FMT="(i0)") i
         WRITE(path_string,*) TRIM(path)//"("//TRIM(ADJUSTL(string_number))//")"
         path_string=ADJUSTL(path_string)
 
@@ -2802,12 +3280,13 @@ MODULE FileType_HDF5
       
       ENDDO
       
-        ! Create dataset to store shape of array
-        WRITE(path_shape,*) TRIM(path)//":SHAPE"
-        path_shape=ADJUSTL(path_shape)
-        ALLOCATE(shape_data(SIZE(SHAPE(data))))
-        shape_data=SHAPE(data)
-        CALL this%write(path_shape,shape_data)
+      ! Create dataset to store shape of array
+      WRITE(path_shape,*) TRIM(path)//":SHAPE"
+      path_shape=ADJUSTL(path_shape)
+      ALLOCATE(shape_data(SIZE(SHAPE(data))))
+      shape_data=SHAPE(data)
+      CALL this%write(path_shape,shape_data)
+      DEALLOCATE(shape_data)
       
 
       ! Close the dataspace
@@ -2826,6 +3305,433 @@ MODULE FileType_HDF5
       ENDIF
 #endif
     ENDSUBROUTINE write_c1
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE write_c2_helper(this,dsetname,data,gdims_in)
+      CHARACTER(LEN=*),PARAMETER :: MyName='writec2helper_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: this
+      CHARACTER(LEN=*),INTENT(IN) :: dsetname
+      TYPE(StringType),ALLOCATABLE,INTENT(IN) :: data(:,:)
+      INTEGER(SIK) :: length_max,i,j
+      INTEGER(SIK),DIMENSION(2),INTENT(IN),OPTIONAL :: gdims_in
+      
+      length_max=0
+      DO j=1,SIZE(data,1)
+        DO i=1,SIZE(data,2)
+          length_max=MAXVAL(([LEN_TRIM(data(j,i)),length_max]))
+        ENDDO
+      ENDDO
+      
+      IF(PRESENT(gdims_in))THEN
+        CALL this%write(dsetname,data,length_max,gdims_in)
+      ELSE
+        CALL this%write(dsetname,data,length_max)
+      ENDIF
+      
+    ENDSUBROUTINE write_c2_helper
+
+!
+!-------------------------------------------------------------------------------
+!> @brief Write a rank-2 array of StringTypes to dataset
+    SUBROUTINE write_c2(this,dsetname,data,length_max,gdims_in)
+      CHARACTER(LEN=*),PARAMETER :: myName='writec2_HDF5FileType'
+      INTEGER(SIK) :: i,j,k
+      CLASS(HDF5FileType),INTENT(INOUT) :: this
+      CHARACTER(LEN=*),INTENT(IN) :: dsetname
+      TYPE(StringType),ALLOCATABLE,INTENT(IN) :: data(:,:)
+      INTEGER(SIK),INTENT(IN) :: length_max
+      CHARACTER(LEN=length_max) :: datas
+      CHARACTER, ALLOCATABLE :: datac(:)
+      CHARACTER(LEN=SIZE(data)) :: string_number
+      CHARACTER(LEN=MAX_PATH_LENGTH) :: path,path_string,path_shape
+      INTEGER(SIK),DIMENSION(2),INTENT(IN),OPTIONAL :: gdims_in
+      INTEGER(SIK),ALLOCATABLE :: shape_data(:)
+#ifdef MPACT_HAVE_HDF5
+      INTEGER(HSIZE_T),DIMENSION(2) :: gdims
+      INTEGER(HSIZE_T),DIMENSION(1) :: ldims,offset,one
+      INTEGER(HID_T),PARAMETER :: rank=1
+      
+      INTEGER :: error
+      INTEGER(HID_T) :: dspace_id,dset_id,gspace_id,plist_id
+
+      ! Make sure the object is initialized
+      IF(.NOT.this%isinit)THEN
+        CALL this%e%raiseError(myName//': File object not initialized.')
+      ENDIF
+
+      ! Check that the file is writable. Best to catch this before HDF5 does.
+      IF(.NOT.this%isWrite())THEN
+        CALL this%e%raiseError(myName//': File is readonly!')
+        RETURN
+      ENDIF
+      
+      ! set one to ones. This is usually used for more complicated parallel
+      ! chunking schemes, but we are doing a simplified case
+      one=1
+
+      ! Convert the path name
+      path = convertPath(dsetname)
+      DO k=1,SIZE(data,1)
+        DO i=1,SIZE(data,2)
+
+          ! Convert StringType array element (k,i) to character vector
+          datas=TRIM(data(k,i))
+          ALLOCATE(datac(LEN(datas)))
+          DO j=1,SIZE(datac)
+            datac(j)=datas(j:j)
+          ENDDO
+      
+          ! stash offset
+          offset(1) = LBOUND(datac,1)-1
+
+          ! Determine the dimensions for the dataspace
+          ldims=SHAPE(datac)
+      
+          ! Store the dimensions from global if present
+          IF(PRESENT(gdims_in))THEN
+            gdims=gdims_in
+          ENDIF
+      
+          !Create an HDF5 parameter list for the dataset creation.
+          CALL h5pcreate_f(H5P_DATASET_CREATE_F,plist_id,error)
+          IF(error /= 0)THEN
+            CALL this%e%raiseError(myName//': Could not create parameter list.')
+          ENDIF
+      
+          ! Create the dataspace
+#ifdef HAVE_MPI
+          ! Make sure that the global dims are present if needed
+          IF (this%pe%rank == 0)THEN
+            IF(.NOT.PRESENT(gdims_in))THEN
+              CALL this%e%raiseError(myName//': For parallel,write, global '//&
+                'dimensions are required.')
+            ENDIF
+          ENDIF
+          CALL h5pset_chunk_f(plist_id,rank,ldims,error)
+          IF(error /= 0)THEN
+            CALL this%e%raiseError(myName//': Could not set chunk.')
+          ENDIF
+#endif
+          ! Global dataspace
+          ! ldims used since each element is written individually
+          CALL h5screate_simple_f(rank,ldims,gspace_id,error)
+          IF(error /= 0)THEN
+            CALL this%e%raiseError(myName//': Could not create dataspace.')
+          ENDIF
+      
+          ! Local dataspace
+          CALL h5screate_simple_f(rank,ldims,dspace_id,error)
+          IF(error /= 0)THEN
+            CALL this%e%raiseError(myName//': Could not create dataspace.')
+          ENDIF
+        
+          ! Create path for each StringType element
+          WRITE(string_number,FMT="(i0,a1,i0)") k,",",i
+          WRITE(path_string,*) TRIM(path)//"("//TRIM(ADJUSTL(string_number))// &
+                  ")"
+          path_string=ADJUSTL(path_string)
+
+          ! Create the dataset
+          CALL h5dcreate_f(this%file_id, path_string, H5T_NATIVE_CHARACTER, &
+                          gspace_id, dset_id,error)
+          IF(error /= 0)THEN
+            CALL this%e%raiseError(myName//': Could not create dataset.')
+          ENDIF
+      
+          ! Destroy the property list
+          CALL h5pclose_f(plist_id,error)
+          IF(error /= 0)THEN
+            CALL this%e%raiseError(myName//': Could not close parameter list.')
+          ENDIF
+      
+          ! Select the global dataspace for the dataset
+          CALL h5dget_space_f(dset_id,gspace_id,error)
+          IF(error /= 0)THEN
+            CALL this%e%raiseError(myName//': Could not select global '//&
+                    'dataspace for the dataset.')
+          ENDIF
+      
+          ! Create a property list for the write operation
+          CALL h5pcreate_f(H5P_DATASET_XFER_F,plist_id,error)
+          IF(error /= 0)THEN
+
+            CALL this%e%raiseError(myName//': Could not create property '//&
+              'list for write operation.')
+          ENDIF
+#ifdef HAVE_MPI
+          ! Set to parallel write
+          CALL h5pset_dxpl_mpio_f(plist_id,H5FD_MPIO_COLLECTIVE_F,error)
+          IF(error /= 0)THEN
+            CALL this%e%raiseError(myName//': Could not set parallel write.')
+          ENDIF
+      
+          ! Select the hyperslab
+          CALL h5sselect_hyperslab_f(gspace_id,H5S_SELECT_SET_F,offset,one, &
+                                      error,one,ldims)
+          IF(error /= 0)THEN
+            CALL this%e%raiseError(myName//': Could not select hyperslab.')
+          ENDIF
+#endif
+      
+          ! Write to the dataset
+          CALL h5dwrite_f(dset_id, H5T_NATIVE_CHARACTER, datac, ldims, error, &
+                          dspace_id,gspace_id,plist_id)
+          IF(error /= 0)THEN
+            CALL this%e%raiseError(myName//': Could not write to the dataset.')
+          ENDIF
+          DEALLOCATE(datac)
+
+          ! Close the dataset
+          CALL h5dclose_f(dset_id,error)
+          IF(error /= 0)THEN
+            CALL this%e%raiseError(myName//': Could not close the dataset.')
+          ENDIF
+      
+        ENDDO
+      ENDDO
+      
+      ! Create dataset to store shape of array
+      WRITE(path_shape,*) TRIM(path)//":SHAPE"
+      path_shape=ADJUSTL(path_shape)
+      ALLOCATE(shape_data(SIZE(SHAPE(data))))
+      shape_data=SHAPE(data)
+      CALL this%write(path_shape,shape_data)
+      DEALLOCATE(shape_data)
+      
+
+      ! Close the dataspace
+      CALL h5sclose_f(dspace_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not close the dataspace.')
+      ENDIF
+      CALL h5sclose_f(gspace_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not close the dataspace.')
+      ENDIF
+      
+      CALL h5pclose_f(plist_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not close the parameter list.')
+      ENDIF
+#endif
+    ENDSUBROUTINE write_c2
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE write_c3_helper(this,dsetname,data,gdims_in)
+      CHARACTER(LEN=*),PARAMETER :: MyName='writec3helper_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: this
+      CHARACTER(LEN=*),INTENT(IN) :: dsetname
+      TYPE(StringType),ALLOCATABLE,INTENT(IN) :: data(:,:,:)
+      INTEGER(SIK) :: length_max,i,j,k
+      INTEGER(SIK),DIMENSION(3),INTENT(IN),OPTIONAL :: gdims_in
+      
+      length_max=0
+      DO k=1,SIZE(data,3)
+        DO j=1,SIZE(data,1)
+          DO i=1,SIZE(data,2)
+            length_max=MAXVAL(([LEN_TRIM(data(j,i,k)),length_max]))
+          ENDDO
+        ENDDO
+      ENDDO
+      
+      IF(PRESENT(gdims_in))THEN
+        CALL this%write(dsetname,data,length_max,gdims_in)
+      ELSE
+        CALL this%write(dsetname,data,length_max)
+      ENDIF
+      
+    ENDSUBROUTINE write_c3_helper
+
+!
+!-------------------------------------------------------------------------------
+!> @brief Write a rank-3 array of StringTypes to dataset
+    SUBROUTINE write_c3(this,dsetname,data,length_max,gdims_in)
+      CHARACTER(LEN=*),PARAMETER :: myName='writec3_HDF5FileType'
+      INTEGER(SIK) :: i,j,k,m
+      CLASS(HDF5FileType),INTENT(INOUT) :: this
+      CHARACTER(LEN=*),INTENT(IN) :: dsetname
+      TYPE(StringType),ALLOCATABLE,INTENT(IN) :: data(:,:,:)
+      INTEGER(SIK),INTENT(IN) :: length_max
+      CHARACTER(LEN=length_max) :: datas
+      CHARACTER, ALLOCATABLE :: datac(:)
+      CHARACTER(LEN=SIZE(data)) :: string_number
+      CHARACTER(LEN=MAX_PATH_LENGTH) :: path,path_string,path_shape
+      INTEGER(SIK),DIMENSION(3),INTENT(IN),OPTIONAL :: gdims_in
+      INTEGER(SIK),ALLOCATABLE :: shape_data(:)
+#ifdef MPACT_HAVE_HDF5
+      INTEGER(HSIZE_T),DIMENSION(3) :: gdims
+      INTEGER(HSIZE_T),DIMENSION(1) :: ldims,offset,one
+      INTEGER(HID_T),PARAMETER :: rank=1
+      
+      INTEGER :: error
+      INTEGER(HID_T) :: dspace_id,dset_id,gspace_id,plist_id
+
+      ! Make sure the object is initialized
+      IF(.NOT.this%isinit)THEN
+        CALL this%e%raiseError(myName//': File object not initialized.')
+      ENDIF
+
+      ! Check that the file is writable. Best to catch this before HDF5 does.
+      IF(.NOT.this%isWrite())THEN
+        CALL this%e%raiseError(myName//': File is readonly!')
+        RETURN
+      ENDIF
+      
+      ! set one to ones. This is usually used for more complicated parallel
+      ! chunking schemes, but we are doing a simplified case
+      one=1
+
+      ! Convert the path name
+      path = convertPath(dsetname)
+      DO m=1,SIZE(data,3)
+        DO k=1,SIZE(data,1)
+          DO i=1,SIZE(data,2)
+
+            ! Convert StringType array element (k,i) to character vector
+            datas=TRIM(data(k,i,m))
+            ALLOCATE(datac(LEN(datas)))
+            DO j=1,SIZE(datac)
+              datac(j)=datas(j:j)
+            ENDDO
+      
+            ! stash offset
+            offset(1) = LBOUND(datac,1)-1
+
+            ! Determine the dimensions for the dataspace
+            ldims=SHAPE(datac)
+      
+            ! Store the dimensions from global if present
+            IF(PRESENT(gdims_in))THEN
+              gdims=gdims_in
+            ENDIF
+      
+            !Create an HDF5 parameter list for the dataset creation.
+            CALL h5pcreate_f(H5P_DATASET_CREATE_F,plist_id,error)
+            IF(error /= 0)THEN
+              CALL this%e%raiseError(myName//': Could not create parameter'// &
+                      ' list.')
+            ENDIF
+      
+            ! Create the dataspace
+#ifdef HAVE_MPI
+            ! Make sure that the global dims are present if needed
+            IF (this%pe%rank == 0)THEN
+              IF(.NOT.PRESENT(gdims_in))THEN
+                CALL this%e%raiseError(myName//': For parallel,write, '//&
+                  'global dimensions are required.')
+              ENDIF
+            ENDIF
+            CALL h5pset_chunk_f(plist_id,rank,ldims,error)
+            IF(error /= 0)THEN
+              CALL this%e%raiseError(myName//': Could not set chunk.')
+            ENDIF
+#endif
+            ! Global dataspace
+            ! ldims used since each element is written individually
+            CALL h5screate_simple_f(rank,ldims,gspace_id,error)
+            IF(error /= 0)THEN
+              CALL this%e%raiseError(myName//': Could not create dataspace.')
+            ENDIF
+      
+            ! Local dataspace
+            CALL h5screate_simple_f(rank,ldims,dspace_id,error)
+            IF(error /= 0)THEN
+              CALL this%e%raiseError(myName//': Could not create dataspace.')
+            ENDIF
+        
+            ! Create path for each StringType element
+            WRITE(string_number,FMT="(i0,a1,i0,a1,i0)") k,",",i,",",m
+            WRITE(path_string,*) TRIM(path)//"("// &
+                      TRIM(ADJUSTL(string_number))//")"
+            path_string=ADJUSTL(path_string)
+
+            ! Create the dataset
+            CALL h5dcreate_f(this%file_id, path_string, H5T_NATIVE_CHARACTER, &
+                            gspace_id, dset_id,error)
+            IF(error /= 0)THEN
+              CALL this%e%raiseError(myName//': Could not create dataset.')
+            ENDIF
+      
+            ! Destroy the property list
+            CALL h5pclose_f(plist_id,error)
+            IF(error /= 0)THEN
+              CALL this%e%raiseError(myName//': Could not close parameter '// &
+                          'list.')
+            ENDIF
+      
+            ! Select the global dataspace for the dataset
+            CALL h5dget_space_f(dset_id,gspace_id,error)
+            IF(error /= 0)THEN
+              CALL this%e%raiseError(myName//': Could not select global '//&
+                      'dataspace for the dataset.')
+            ENDIF
+      
+            ! Create a property list for the write operation
+            CALL h5pcreate_f(H5P_DATASET_XFER_F,plist_id,error)
+            IF(error /= 0)THEN
+
+              CALL this%e%raiseError(myName//': Could not create property '//&
+                'list for write operation.')
+            ENDIF
+#ifdef HAVE_MPI
+            ! Set to parallel write
+            CALL h5pset_dxpl_mpio_f(plist_id,H5FD_MPIO_COLLECTIVE_F,error)
+            IF(error /= 0)THEN
+              CALL this%e%raiseError(myName//': Could not set parallel write.')
+            ENDIF
+      
+            ! Select the hyperslab
+            CALL h5sselect_hyperslab_f(gspace_id,H5S_SELECT_SET_F,offset,one, &
+                                      error,one,ldims)
+            IF(error /= 0)THEN
+              CALL this%e%raiseError(myName//': Could not select hyperslab.')
+            ENDIF
+#endif
+      
+            ! Write to the dataset
+            CALL h5dwrite_f(dset_id, H5T_NATIVE_CHARACTER, datac, ldims, error,&
+                            dspace_id,gspace_id,plist_id)
+            IF(error /= 0)THEN
+              CALL this%e%raiseError(myName//': Could not write to the '// &
+                          'dataset.')
+            ENDIF
+            DEALLOCATE(datac)
+
+            ! Close the dataset
+            CALL h5dclose_f(dset_id,error)
+            IF(error /= 0)THEN
+              CALL this%e%raiseError(myName//': Could not close the dataset.')
+            ENDIF
+      
+          ENDDO
+        ENDDO
+      ENDDO
+      
+      ! Create dataset to store shape of array
+      WRITE(path_shape,*) TRIM(path)//":SHAPE"
+      path_shape=ADJUSTL(path_shape)
+      ALLOCATE(shape_data(SIZE(SHAPE(data))))
+      shape_data=SHAPE(data)
+      CALL this%write(path_shape,shape_data)
+      DEALLOCATE(shape_data)
+      
+
+      ! Close the dataspace
+      CALL h5sclose_f(dspace_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not close the dataspace.')
+      ENDIF
+      CALL h5sclose_f(gspace_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not close the dataspace.')
+      ENDIF
+      
+      CALL h5pclose_f(plist_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//': Could not close the parameter list.')
+      ENDIF
+#endif
+    ENDSUBROUTINE write_c3
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE read_d1(this,dsetname,data)
