@@ -77,7 +77,7 @@
 !> END PROGRAM
 !> @endcode
 !>
-!> @author Brendan Kochunas
+!> @author Brendan Kochunas and Dan Jabaay
 !>   @date 07/26/2012
 !> @par Revisions:
 !>   (08/14/2012) - Dan Jabaay

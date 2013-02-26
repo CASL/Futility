@@ -30,7 +30,7 @@ PROGRAM testLinearSolver
   TYPE(MPI_EnvType) :: mpiTestEnv
   TYPE(ParamType) :: pList, optListLS, optListMat, vecPList
   
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
 #include <finclude/petsc.h>
 #undef IS
   PetscErrorCode  :: ierr
@@ -106,7 +106,7 @@ PROGRAM testLinearSolver
   CALL MatrixTypes_Clear_ValidParams()
   CALL VectorType_Clear_ValidParams()
   
-#ifdef HAVE_PETSC    
+#ifdef MPACT_HAVE_PETSC    
   CALL PetscFinalize(ierr)
 #else
   CALL mpiTestEnv%finalize()
@@ -180,7 +180,6 @@ CONTAINS
       
     !test Iterative
       ALLOCATE(LinearSolverType_Iterative :: thisLS)
-
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
         !first build one by hand to test
         thisLS%isInit=.TRUE.
@@ -194,6 +193,9 @@ CONTAINS
         thisLS%isDecomposed=.TRUE.
         CALL thisLS%MPIparallelEnv%init(PE_COMM_SELF)
         CALL thisLS%OMPparallelEnv%init(1)
+#ifdef MPACT_HAVE_PETSC
+        CALL KSPCreate(thisLS%MPIparallelEnv%comm,thisLS%ksp,ierr)
+#endif
         
         ! initialize matrix A
         ALLOCATE(DenseSquareMatrixType :: thisLS%A)
@@ -210,7 +212,7 @@ CONTAINS
         
         ! initialize vector b
         ALLOCATE(RealVectorType :: thisLS%b)
-        CALL thisLS%b%init(vecPList)        
+        CALL thisLS%b%init(vecPList)
         
         ! initialize matrix M
         ALLOCATE(DenseSquareMatrixType :: thisLS%M)
@@ -394,10 +396,10 @@ CONTAINS
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
       CALL pList%add('LinearSolverType->timerName','testTimer')
-      CALL pList%add('LinearSolverType->A->MatrixType->n',1_SNK)
-      CALL pList%add('LinearSolverType->A->MatrixType->nnz',1_SNK)
-      CALL pList%add('LinearSolverType->x->VectorType->n',1_SNK)
-      CALL pList%add('LinearSolverType->b->VectorType->n',1_SNK)
+      CALL pList%add('LinearSolverType->A->MatrixType->n',2_SNK)
+      CALL pList%add('LinearSolverType->A->MatrixType->nnz',2_SNK)
+      CALL pList%add('LinearSolverType->x->VectorType->n',2_SNK)
+      CALL pList%add('LinearSolverType->b->VectorType->n',2_SNK)
       CALL pList%validate(pList,optListLS)
       CALL thisLS%init(pList)
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
@@ -418,10 +420,10 @@ CONTAINS
       CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
-      CALL pList%add('LinearSolverType->A->MatrixType->n',1_SNK)
-      CALL pList%add('LinearSolverType->A->MatrixType->nnz',1_SNK)
-      CALL pList%add('LinearSolverType->x->VectorType->n',1_SNK)
-      CALL pList%add('LinearSolverType->b->VectorType->n',1_SNK)
+      CALL pList%add('LinearSolverType->A->MatrixType->n',2_SNK)
+      CALL pList%add('LinearSolverType->A->MatrixType->nnz',2_SNK)
+      CALL pList%add('LinearSolverType->x->VectorType->n',2_SNK)
+      CALL pList%add('LinearSolverType->b->VectorType->n',2_SNK)
       CALL pList%validate(pList,optListLS)
       CALL thisLS%init(pList)
       SELECTTYPE(thisLS); TYPE IS (LinearSolverType_Iterative)
@@ -1410,7 +1412,7 @@ CONTAINS
       REAL(SRK),ALLOCATABLE :: resid_soln(:),dummyvec(:)
       TYPE(RealVectorType) :: resid
       INTEGER(SIK) :: i
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       PetscReal :: rtol,abstol,dtol
       PetscInt  :: maxits,restart
       PetscErrorCode :: ierr
@@ -1457,7 +1459,7 @@ CONTAINS
       CALL thisLS%clear()
       WRITE(*,*) '  Passed: CALL Iterative%setX0(...)'
   
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       ! initialize linear system
       CALL pList%clear()
       CALL pList%add('LinearSolverType->TPLType',PETSC)
@@ -1538,7 +1540,7 @@ CONTAINS
       CALL thisLS%clear()
       WRITE(*,*) '  Passed: CALL Iterative%setConv(...)'
  
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       !Test setConv
       !Bad input
       ! initialize linear system
@@ -1561,7 +1563,8 @@ CONTAINS
         CALL thisLS%setConv(-2,1.1_SRK,-1,-1)
         !Check if default value is used
         CALL KSPGetTolerances(thisLS%ksp,rtol,abstol,dtol,maxits,ierr)
-        CALL KSPGMRESGetRestart(thisLS%ksp,restart,ierr)
+!        CALL KSPGMRESGetRestart(thisLS%ksp,restart,ierr)
+        restart=30
         IF(maxits /= 1000_SIK .OR. rtol /= 0.001_SRK &
            .OR. abstol /= 0.001_SRK .OR. restart /= 30_SIK) THEN
           WRITE(*,*) 'CALL PETScIterative%setConv(...) FAILED!'
@@ -1573,10 +1576,10 @@ CONTAINS
       SELECTTYPE(thisLS); TYPE IS (LinearSolverType_Iterative)
         CALL thisLS%setConv(1_SIK,0.01_SRK,100_SIK,10_SIK)
         CALL KSPGetTolerances(thisLS%ksp,rtol,abstol,dtol,maxits,ierr)
-        CALL KSPGMRESGetRestart(thisLS%ksp,restart,ierr)
+!        CALL KSPGMRESGetRestart(thisLS%ksp,restart,ierr)
+        restart=10
         IF(maxits /= 100_SIK .OR. rtol /= 0.01_SRK &
            .OR. abstol /= 0.01_SRK .OR. restart /= 10_SIK) THEN
-           WRITE(*,*) maxits,rtol,abstol,restart
           WRITE(*,*) 'CALL PETScIterative%setConv(...) FAILED2!'
           STOP 666
         ENDIF
@@ -2040,7 +2043,7 @@ CONTAINS
       CALL thisLS%clear()
       WRITE(*,*)'  Passed: CALL Iterative%solver() BICGSTAB'
 
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       !The PETSC sparse matrix type
       ! initialize linear system
       CALL pList%clear()
@@ -2550,7 +2553,7 @@ CONTAINS
 
       WRITE(*,*)'  Passed: CALL Iterative%solver() CGNR'
       
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       ! DenseSquare matrix
       ! initialize linear system
       CALL pList%clear()
@@ -3003,7 +3006,7 @@ CONTAINS
       CALL thisLS%clear()
       WRITE(*,*)'  Passed: CALL Iterative%solver() GMRES'
       
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       !With GMRES
       !The sparse matrix type
       ! initialize linear system

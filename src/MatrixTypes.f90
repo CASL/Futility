@@ -78,7 +78,7 @@ MODULE MatrixTypes
   USE ParameterLists
   IMPLICIT NONE
 
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
 #include <finclude/petsc.h>
 #undef IS
 #endif
@@ -123,6 +123,8 @@ MODULE MatrixTypes
       PROCEDURE(matrix_init_param_sub_absintfc),DEFERRED,PASS :: init
       !> Deferred routine for setting matrix values
       PROCEDURE(matrix_set_sub_absintfc),DEFERRED,PASS :: set
+      !> Deferred routine for getting a matrix value
+      PROCEDURE(matrix_get_sub_absintfc),DEFERRED,PASS :: get
   ENDTYPE MatrixType    
 !
 !List of Abstract Interfaces
@@ -154,6 +156,17 @@ MODULE MatrixTypes
       REAL(SRK),INTENT(IN) :: setval
     ENDSUBROUTINE matrix_set_sub_absintfc
   ENDINTERFACE
+  
+  !> Explicitly defines the interface for the get routine of all matrix types
+  ABSTRACT INTERFACE
+    SUBROUTINE matrix_get_sub_absintfc(matrix,i,j,getval)
+      IMPORT :: SIK,SRK,MatrixType
+      CLASS(MatrixType),INTENT(INOUT) :: matrix
+      INTEGER(SIK),INTENT(IN) :: i
+      INTEGER(SIK),INTENT(IN) :: j
+      REAL(SRK),INTENT(INOUT) :: getval
+    ENDSUBROUTINE matrix_get_sub_absintfc
+  ENDINTERFACE
     
   !> @brief The extended type of matrices for square matrices
   TYPE,ABSTRACT,EXTENDS(MatrixType) :: SquareMatrixType
@@ -177,7 +190,7 @@ MODULE MatrixTypes
     !> number of local values
     INTEGER(SIK) :: nlocal
     
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
     Mat :: A
 #endif
 !
@@ -225,6 +238,9 @@ MODULE MatrixTypes
       !> @copybrief MatrixTypes::set_DenseSquareMatrixType
       !> @copydetails MatrixTypes::set_DenseSquareMatrixType
       PROCEDURE,PASS :: set => set_DenseSquareMatrixType
+      !> @copybrief MatrixTypes::get_DenseSquareMatrixType
+      !> @copydetails MatrixTypes::get_DenseSquareMatrixType
+      PROCEDURE,PASS :: get => get_DenseSquareMatrixType
   ENDTYPE DenseSquareMatrixType
   
   !> @brief The extended type for dense rectangular matrices
@@ -243,6 +259,9 @@ MODULE MatrixTypes
       !> @copybrief MatrixTypes::set_DenseRectMatrixType
       !> @copydetails MatrixTypes::set_DenseRectMatrixType
       PROCEDURE,PASS :: set => set_DenseRectMatrixType
+      !> @copybrief MatrixTypes::get_DenseRectMatrixType
+      !> @copydetails MatrixTypes::get_DenseRectMatrixType
+      PROCEDURE,PASS :: get => get_DenseRectMatrixType
   ENDTYPE DenseRectMatrixType
   
   !I think this may need to be revisited
@@ -262,6 +281,9 @@ MODULE MatrixTypes
       !> @copybrief MatrixTypes::set_TriDiagMatrixType
       !> @copydetails MatrixTypes::set_TriDiagMatrixType
       PROCEDURE,PASS :: set => set_TriDiagMatrixType
+      !> @copybrief MatrixTypes::get_TriDiagMatrixType
+      !> @copydetails MatrixTypes::get_TriDiagMatrixType
+      PROCEDURE,PASS :: get => get_TriDiagMatrixType
   ENDTYPE TriDiagMatrixType
   
   !> @brief The basic sparse matrix type
@@ -594,7 +616,7 @@ MODULE MatrixTypes
       INTEGER(SIK) :: n, matType, MPI_COMM_ID, nlocal
       LOGICAL(SBK) :: localalloc, isSym
       
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: ierr
 #endif
 
@@ -605,7 +627,7 @@ MODULE MatrixTypes
         ALLOCATE(eMatrixType)
       ENDIF
       
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       !Check to set up required and optional param lists.
       IF(.NOT.MatrixType_Paramsflag) CALL MatrixTypes_Declare_ValidParams()      
       !Validate against the reqParams and OptParams
@@ -732,7 +754,7 @@ MODULE MatrixTypes
       CHARACTER(LEN=*),PARAMETER :: myName='clear_PETScMatrixType'
       CLASS(PETScMatrixType),INTENT(INOUT) :: matrix
       LOGICAL(SBK) :: localalloc
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: ierr
 #endif
 
@@ -743,13 +765,13 @@ MODULE MatrixTypes
         ALLOCATE(eMatrixType)
       ENDIF
       
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
+      IF(matrix%isInit) CALL MatDestroy(matrix%a,ierr)
       matrix%isInit=.FALSE.
       matrix%n=0
       matrix%isAssembled=.FALSE.
       matrix%isCreated=.FALSE.
       matrix%isSymmetric=.FALSE.
-      CALL MatDestroy(matrix%a,ierr)
 #else
       CALL eMatrixType%raiseFatalError('Incorrect call to '// &
               modName//'::'//myName//' - PETSc not enabled.  You will'// &
@@ -922,7 +944,7 @@ MODULE MatrixTypes
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(IN) :: setval
       LOGICAL(SBK) :: localalloc
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: ierr
 #endif
 
@@ -933,7 +955,7 @@ MODULE MatrixTypes
         ALLOCATE(eMatrixType)
       ENDIF
       
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       IF(matrix%isInit) THEN
         IF(((j <= matrix%n) .AND. (i <= matrix%n)) & 
           .AND. ((j > 0) .AND. (i > 0))) THEN
@@ -953,6 +975,89 @@ MODULE MatrixTypes
     ENDSUBROUTINE set_PETScMatrixType
 !
 !-------------------------------------------------------------------------------
+!> @brief Gets the values in the tridiagonal matrix
+!> @param matrix the matrix type to act on
+!> @param i the ith location in the matrix
+!> @param j the jth location in the matrix
+!> @param setval the value to be set
+!>
+    SUBROUTINE get_TriDiagMatrixType(matrix,i,j,getval)
+      CHARACTER(LEN=*),PARAMETER :: myName='get_TriDiagMatrixType'
+      CLASS(TriDiagMatrixType),INTENT(INOUT) :: matrix
+      INTEGER(SIK),INTENT(IN) :: i
+      INTEGER(SIK),INTENT(IN) :: j
+      REAL(SRK),INTENT(INOUT) :: getval
+      IF(matrix%isInit) THEN
+        IF(((j <= matrix%n) .AND. (i <= matrix%n)) &
+            .AND. (i>=1) .AND. (j >= 1)) THEN
+          !based on i,j, put in correct location
+          IF((j == (i-1)).AND. (i > 1)) THEN !sub-diag
+            getval=matrix%a(1,i)
+          ELSEIF((j == (i+1)) .AND. (i < matrix%n)) THEN !super-diag
+            getval=matrix%a(3,i)
+          ELSEIF(i == j) THEN
+            getval=matrix%a(2,i)
+          ENDIF
+        ENDIF
+      ENDIF
+    ENDSUBROUTINE get_TriDiagMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the values in the dense rectangular matrix
+!> @param matrix the matrix type to act on
+!> @param i the ith location in the matrix
+!> @param j the jth location in the matrix
+!> @param setval the value to be set
+!>
+    SUBROUTINE get_DenseRectMatrixType(matrix,i,j,getval)
+      CHARACTER(LEN=*),PARAMETER :: myName='get_DenseRectMatrixType'
+      CLASS(DenseRectMatrixType),INTENT(INOUT) :: matrix
+      INTEGER(SIK),INTENT(IN) :: i
+      INTEGER(SIK),INTENT(IN) :: j
+      REAL(SRK),INTENT(INOUT) :: getval
+      IF(matrix%isInit) THEN
+        IF(((j <= matrix%m) .AND. (i <= matrix%n)) &
+          .AND. ((j > 0) .AND. (i > 0))) getval=matrix%a(i,j)
+      ENDIF
+    ENDSUBROUTINE get_DenseRectMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the values in the Dense Square matrix
+!> @param declare the matrix type to act on
+!> @param i the ith location in the matrix
+!> @param j the jth location in the matrix
+!>
+!> This routine gets the values of the sparse matrix.  If the (i,j) location is 
+!> out of bounds, then -1051.0 (an arbitrarily chosen key) is returned.
+!>
+    SUBROUTINE get_DenseSquareMatrixType(matrix,i,j,getval)
+      CHARACTER(LEN=*),PARAMETER :: myName='get_DenseSquareMatrixType'
+      CLASS(DenseSquareMatrixType),INTENT(INOUT) :: matrix
+      INTEGER(SIK),INTENT(IN) :: i
+      INTEGER(SIK),INTENT(IN) :: j
+      REAL(SRK),INTENT(INOUT) :: getval
+      LOGICAL(SBK) :: localalloc
+
+      !Error checking of subroutine input
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eMatrixType)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eMatrixType)
+      ENDIF
+      
+      getval=0.0_SRK
+      IF(matrix%isInit) THEN
+        IF((i <= matrix%n) .AND. (j <= matrix%n) .AND. ((j > 0) .AND. (i > 0))) THEN
+          getval=matrix%A(i,j)
+        ELSE
+          getval=-1051._SRK
+        ENDIF
+      ENDIF
+
+      IF(localalloc) DEALLOCATE(eMatrixType)
+    ENDSUBROUTINE get_DenseSquareMatrixtype
+!
+!-------------------------------------------------------------------------------
 !> @brief Gets the values in the sparse matrix - presently untested
 !> @param matrix the matrix type to act on
 !> @param i the ith location in the matrix
@@ -962,16 +1067,16 @@ MODULE MatrixTypes
 !> is not present, then 0.0 is returned.  If the (i,j) location is out of
 !> bounds, then -1051.0 is returned (-1051.0 is an arbitrarily chosen key).
 !>
-    SUBROUTINE get_SparseMatrixType(matrix,i,j,aij)
+    SUBROUTINE get_SparseMatrixType(matrix,i,j,getval)
       CHARACTER(LEN=*),PARAMETER :: myName='get_SparseMatrixType'
       CLASS(SparseMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       INTEGER(SIK) :: ja_index
       LOGICAL(SBK) :: found_ja
-      REAL(SRK),INTENT(INOUT) :: aij
+      REAL(SRK),INTENT(INOUT) :: getval
       
-      aij=0.0_SRK
+      getval=0.0_SRK
       IF(matrix%isInit) THEN
         IF(((matrix%jCount > 0).AND.(i <= matrix%n)) &
             .AND. ((j > 0) .AND. (i > 0))) THEN
@@ -982,9 +1087,9 @@ MODULE MatrixTypes
               EXIT          
             ENDIF
           ENDDO
-          IF(found_ja) aij=matrix%a(ja_index)
+          IF(found_ja) getval=matrix%a(ja_index)
         ELSE
-          aij=-1051._SRK
+          getval=-1051._SRK
         ENDIF
       ENDIF
     ENDSUBROUTINE get_SparseMatrixtype
@@ -998,14 +1103,14 @@ MODULE MatrixTypes
 !> This routine gets the values of the sparse matrix.  If the (i,j) location is 
 !> out of bounds, then -1051.0 (an arbitrarily chosen key) is returned.
 !>
-    SUBROUTINE get_PETScMatrixType(matrix,i,j,aij)
+    SUBROUTINE get_PETScMatrixType(matrix,i,j,getval)
       CHARACTER(LEN=*),PARAMETER :: myName='get_PETScMatrixType'
       CLASS(PETScMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
-      REAL(SRK),INTENT(INOUT) :: aij
+      REAL(SRK),INTENT(INOUT) :: getval
       LOGICAL(SBK) :: localalloc
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: ierr
 #endif
 
@@ -1016,16 +1121,16 @@ MODULE MatrixTypes
         ALLOCATE(eMatrixType)
       ENDIF
       
-#ifdef HAVE_PETSC
-      aij=0.0_SRK
+#ifdef MPACT_HAVE_PETSC
+      getval=0.0_SRK
       IF(matrix%isInit) THEN
         ! assemble matrix if necessary
         IF (.NOT.(matrix%isAssembled)) CALL matrix%assemble()
       
-        IF((i <= matrix%n) .AND. ((j > 0) .AND. (i > 0))) THEN
-          CALL MatGetValues(matrix%a,1,i-1,1,j-1,aij,ierr)
+        IF((i <= matrix%n) .AND. (j <= matrix%n) .AND. ((j > 0) .AND. (i > 0))) THEN
+          CALL MatGetValues(matrix%a,1,i-1,1,j-1,getval,ierr)
         ELSE
-          aij=-1051._SRK
+          getval=-1051._SRK
         ENDIF
       ENDIF
 #else
@@ -1041,7 +1146,7 @@ MODULE MatrixTypes
       CLASS(PETScMatrixType),INTENT(INOUT) :: thisMatrix
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
       INTEGER(SIK) :: ierrc
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: iperr
       
       ierrc=0
@@ -1148,7 +1253,7 @@ MODULE MatrixTypes
                 thisMatrix%ja,thisMatrix%a,x,y)
             ENDIF
           TYPE IS(PETScMatrixType)
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
             ALLOCATE(tmpmat(thisMatrix%n,thisMatrix%n))
             ! stuff into temporary matrix
             DO i=1,thisMatrix%n
@@ -1204,7 +1309,7 @@ MODULE MatrixTypes
       REAL(SRK),ALLOCATABLE :: tmpmat(:,:),tmpvec(:),tmpy(:)
       INTEGER(SIK) :: i,j
       LOGICAL(SBK) :: localalloc
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: iperr
       TYPE(PETScVectorType) :: dummy
       TYPE(ParamType) :: vecPList
@@ -1280,7 +1385,7 @@ MODULE MatrixTypes
         SELECTTYPE(x); TYPE IS(PETScVectorType)
           SELECTTYPE(y); TYPE IS(PETScVectorType)
             SELECTTYPE(thisMatrix); TYPE IS(PETScMatrixType)
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
                 CALL vecPList%add('VectorType -> n',y%n)
                 CALL vecPList%add('VectorType -> MPI_Comm_ID',y%comm)
                 CALL vecPList%add('VectorType -> nlocal',x%nlocal)
@@ -1310,7 +1415,7 @@ MODULE MatrixTypes
         SELECTTYPE(x); TYPE IS(RealVectorType)
           SELECTTYPE(y); TYPE IS(RealVectorType)
             SELECTTYPE(thisMatrix); TYPE IS(PETScMatrixType)
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
                 ALLOCATE(tmpmat(thisMatrix%n,thisMatrix%n))
                 ALLOCATE(tmpvec(x%n))
                 ALLOCATE(tmpy(x%n))
@@ -1541,7 +1646,7 @@ MODULE MatrixTypes
               TYPE IS(PETScMatrixType)
                 SELECTTYPE(C)
                   TYPE IS(PETScMatrixType)
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
                     ALLOCATE(tmpA(A%n,A%n))
                     ALLOCATE(tmpB(B%n,B%n))
                     ALLOCATE(tmpC(C%n,C%n))

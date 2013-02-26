@@ -51,7 +51,7 @@ PROGRAM testTPLPETSC
   WRITE(*,*) 'TESTING PETSC TPL...'
   WRITE(*,*) '==================================================='
 
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
   CALL testPETSC_VEC()
   CALL testPETSC_MAT()
   CALL testPETSC_KSP()

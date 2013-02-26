@@ -59,7 +59,7 @@ ENDIF()
 IF (${PACKAGE_NAME}_ENABLE_HDF5)
     SET(UNIT_TEST_NAMES
         ${UNIT_TEST_NAMES}
-        testTPLHDF5
+#        testTPLHDF5
         )
 ENDIF()
 

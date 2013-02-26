@@ -194,6 +194,7 @@ MODULE Times
   !> potential expense of portability as SYSTEM_CLOCK is only defined
   !> for the default type integer.
   INTEGER(SLK) :: count_hi
+  
   !> @brief The rate of processor clock counts per second (for HI-RES timer)
   !>
   !> Second output argument of the intrinsic Fortran subroutine
@@ -202,6 +203,7 @@ MODULE Times
   !> potential expense of portability as SYSTEM_CLOCK is only defined
   !> for the default type integer.
   INTEGER(SLK) :: rate_hi
+  
   !> @brief The total number of processor clock counts before rollover.
   !> (for HI-RES timer)
   !>
@@ -211,6 +213,7 @@ MODULE Times
   !> potential expense of portability as SYSTEM_CLOCK is only defined
   !> for the default type integer.
   INTEGER(SLK) :: count_max_hi
+  
   !> @brief The current value of the processor clock (for HI-RES timer)
   !>
   !> First output argument of the intrinsic Fortran subroutine SYSTEM_CLOCK.
@@ -219,6 +222,7 @@ MODULE Times
   !> potential expense of portability as SYSTEM_CLOCK is only defined
   !> for the default type integer.
   INTEGER :: count_lo
+  
   !> @brief The rate of processor clock counts per second (for LO-RES timer)
   !>
   !> Second output argument of the intrinsic Fortran subroutine
@@ -227,6 +231,7 @@ MODULE Times
   !> potential expense of portability as SYSTEM_CLOCK is only defined
   !> for the default type integer.
   INTEGER :: rate_lo
+  
   !> @brief The total number of processor clock counts before rollover.
   !> (for LO-RES timer)
   !>

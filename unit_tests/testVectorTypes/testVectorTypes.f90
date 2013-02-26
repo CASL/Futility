@@ -25,7 +25,7 @@ PROGRAM testVectorTypes
   USE VectorTypes
   IMPLICIT NONE
   
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
 #include <finclude/petsc.h>
 #undef IS
  
@@ -41,7 +41,7 @@ PROGRAM testVectorTypes
   CALL e%setQuietMode(.TRUE.)
   eVectorType => e
   
-#ifdef HAVE_PETSC    
+#ifdef MPACT_HAVE_PETSC    
   CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
 #endif
 
@@ -71,7 +71,7 @@ PROGRAM testVectorTypes
   DEALLOCATE(e)
   CALL VectorType_Clear_ValidParams()
   
-#ifdef HAVE_PETSC    
+#ifdef MPACT_HAVE_PETSC    
   CALL PetscFinalize(ierr)
 #endif
 !
@@ -687,7 +687,7 @@ PROGRAM testVectorTypes
       DEALLOCATE(thisVector)
  
 !Test for PETSc vectors (if necessary)
-#ifdef HAVE_PETSC    
+#ifdef MPACT_HAVE_PETSC    
       
       !Perform test of clear function
       !make vector without using untested init
@@ -712,12 +712,12 @@ PROGRAM testVectorTypes
             WRITE(*,*) 'CALL petscvec%clear() FAILED!'
             STOP 666
           ENDIF
-          !check if pointer for b is null
-          !if not, clear did not destroy it
-          IF(thisVector%b /= PETSC_NULL_REAL) THEN
-            WRITE(*,*) 'CALL petscvec%clear() FAILED!'
-            STOP 666
-          ENDIF
+!          !check if pointer for b is null (not supported till 3.3)
+!          !if not, clear did not destroy it
+!          IF(thisVector%b /= PETSC_NULL_REAL) THEN
+!            WRITE(*,*) 'CALL petscvec%clear() FAILED!'
+!            STOP 666
+!          ENDIF
           WRITE(*,*) '  Passed: CALL petscvec%clear()'
       ENDSELECT
       
@@ -2083,7 +2083,7 @@ PROGRAM testVectorTypes
     DEALLOCATE(aVector)
     WRITE(*,*) '  Passed: CALL BLAS_swap(...) [REAL]'
     
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
     ! test with PETSc vectors
     ALLOCATE(PETScVectorType :: xVector)
     ALLOCATE(PETScVectorType :: yVector)

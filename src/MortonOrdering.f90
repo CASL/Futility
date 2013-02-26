@@ -104,6 +104,18 @@ MODULE MortonOrdering
       !> @copybrief MortonOrdering::ZTree_getNDomains
       !> @copydetails MortonOrdering::ZTree_getNDomains
       PROCEDURE,PASS :: getNDomains => ZTree_getNDomains
+      !> @copybrief MortonOrdering::ZTree_getSubNodePointer
+      !> @copydetails MortonOrdering::ZTree_getSubNodePointer
+      PROCEDURE,PASS :: getSubNodePointer => ZTree_getSubNodePointer
+      !> @copybrief MortonOrdering::ZTree_getLeafNodePointer
+      !> @copydetails MortonOrdering::ZTree_getLeafNodePointer
+      PROCEDURE,PASS :: getLeafNodePointer => ZTree_getLeafNodePointer
+      !> @copybrief MortonOrdering::ZTree_flattenLeafs
+      !> @copydetails MortonOrdering::ZTree_flattenLeafs
+      PROCEDURE,PASS :: flattenLeafs => ZTree_flattenLeafs
+      !> @copybrief MortonOrdering::ZTree_addToLeafs
+      !> @copydetails MortonOrdering::ZTree_addToLeafs
+      PROCEDURE,PASS :: addToLeafs => ZTree_addToLeafs
       !> @copybrief MortonOrdering::ZTree_getSubNodeBounds
       !> @copydetails MortonOrdering::ZTree_getSubNodeBounds
       PROCEDURE,PASS :: getSubNodeBounds => ZTree_getSubNodeBounds
@@ -563,7 +575,228 @@ MODULE MortonOrdering
         istt=thisZTreeNode%istt
         istp=thisZTreeNode%istp
       ENDIF
-    ENDSUBROUTINE ZTree_getSubNodeBounds
+  ENDSUBROUTINE ZTree_getSubNodeBounds
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns a pointer to a node located at coordinates specified by the
+!> level and node within level.
+!> @param thisZTreeNode the node to get the subnode bounds from
+!> @param il the ith level below this node
+!> @param in the ith node within the level @c il
+!> @param subnode (output) the pointer to the node
+!>
+!> If the index is not valid within the level or the level is not valid then
+!> the pointer is returned as null.
+!>
+!> Not actually sure if we need this, getLeafNode is really more useful I think.
+!>
+    RECURSIVE SUBROUTINE ZTree_getSubNodePointer(thisZTreeNode,il,in,subnode)
+      CLASS(ZTreeNodeType),TARGET,INTENT(IN) :: thisZTreeNode
+      INTEGER(SIK),INTENT(IN) :: il
+      INTEGER(SIK),INTENT(IN) :: in
+      TYPE(ZTreeNodeType),POINTER,INTENT(OUT) :: subnode
+      INTEGER(SIK) :: id,ndstt,ndstp
+      
+      subnode => NULL()
+      IF(il > 0) THEN
+        !Determine which subdomain to enter
+        ndstt=1
+        DO id=1,thisZTreeNode%nsubdomains
+          ndstp=ndstt+thisZTreeNode%subdomains(id)%getNDomains(il-1)-1
+          IF(ndstt <= in .AND. in <= ndstp) THEN
+            !The node index lies within this subdomain
+            CALL thisZTreeNode%subdomains(id)% &
+              getSubNodePointer(il-1,in-ndstt+1,subnode)
+            EXIT
+          ENDIF
+          ndstt=ndstp+1
+        ENDDO
+      ENDIF
+      IF(il == 0 .AND. in == 1) THEN
+        SELECTTYPE(thisZTreeNode); TYPE IS(ZTreeNodeType)
+          subnode => thisZTreeNode
+        ENDSELECT
+      ENDIF
+    ENDSUBROUTINE ZTree_getSubNodePointer
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns a pointer to a leaf node specified by its global index.
+!> @param thisZTreeNode the node to get the subnode bounds from
+!> @param idx the leaf node's global index within the tree
+!> @param leafnode (output) the pointer to the node
+!>
+!> If the index is not positive or within the range of the tree then the pointer
+!> is returned as null.
+!>
+    RECURSIVE SUBROUTINE ZTree_getLeafNodePointer(thisZTreeNode,idx,leafnode)
+      CLASS(ZTreeNodeType),TARGET,INTENT(IN) :: thisZTreeNode
+      INTEGER(SIK),INTENT(IN) :: idx
+      TYPE(ZTreeNodeType),POINTER,INTENT(OUT) :: leafnode
+      INTEGER(SIK) :: id,ndstt,ndstp
+      
+      leafnode => NULL()
+      IF(thisZTreeNode%istt <= idx .AND. idx <= thisZTreeNode%istp &
+         .AND. idx > 0) THEN
+        IF(idx == thisZTreeNode%istt .AND. idx == thisZTreeNode%istp) THEN
+          SELECTTYPE(thisZTreeNode); TYPE IS(ZTreeNodeType)
+            leafnode => thisZTreeNode
+          ENDSELECT
+        ELSE
+          !Determine which subdomain to enter
+          
+          DO id=1,thisZTreeNode%nsubdomains
+            ndstt=thisZTreeNode%subdomains(id)%istt
+            ndstp=thisZTreeNode%subdomains(id)%istp
+            IF(ndstt <= idx .AND. idx <= ndstp) THEN
+              !The node index lies within this subdomain
+              CALL thisZTreeNode%subdomains(id)% &
+                getLeafNodePointer(idx,leafnode)
+              EXIT
+            ENDIF
+          ENDDO
+        ENDIF
+      ENDIF
+    ENDSUBROUTINE ZTree_getLeafNodePointer
+!
+!-------------------------------------------------------------------------------
+!> @brief If the leafs on the tree are not all on the deepest level of the tree
+!> then the last two levels of the tree are restructured so that the deepest
+!> level of the tree is completely filled.
+!> @param thisZTreeNode
+!>
+!> This only happens in grids that have prime factors other than 2.
+!>
+    SUBROUTINE ZTree_flattenLeafs(thisZTreeNode)
+      CLASS(ZTreeNodeType),INTENT(INOUT) :: thisZTreeNode
+      INTEGER(SIK) :: nlevels,id,id0,id2,idp,idshift,ip,newnd,nsubd
+      INTEGER(SIK) :: x(2),y(2),z(2),istt
+      TYPE(ZTreeNodeType),POINTER :: pZTree,pZTreeParent,tmpSubDomains(:)
+      
+      nlevels=thisZTreeNode%getMaxLevels(0)
+      IF(nlevels > 0) THEN
+        IF(thisZTreeNode%getNDomains(nlevels) < &
+            thisZTreeNode%istpMax()-thisZTreeNode%istt+1) THEN
+        
+          !Restructure the last two levels of the Z-Tree
+          idshift=0
+          nsubd=thisZTreeNode%getNDomains(nlevels-1)
+          DO id0=1,nsubd
+            id=id0+idshift
+            CALL thisZTreeNode%getSubNodePointer(nlevels-1,id,pZTree)
+          
+            IF(pZTree%nsubdomains > 0) THEN
+              !This node needs to be deleted, move children to parent
+              !Start by finding it's parent.
+              FindParent: DO ip=1,thisZTreeNode%getNDomains(nlevels-2)
+                CALL thisZTreeNode%getSubNodePointer(nlevels-2,ip,pZTreeParent)
+                DO idp=1,pZTreeParent%nsubdomains
+                  IF(pZTreeParent%subdomains(idp)%istt == pZTree%istt .AND. &
+                    pZTreeParent%subdomains(idp)%istp == pZTree%istp) &
+                    EXIT FindParent
+                ENDDO
+              ENDDO FindParent
+            
+              !Move children up to parent, preserve ordering
+              newnd=pZTreeParent%nsubdomains+pZTree%nsubdomains-1
+              ALLOCATE(tmpSubDomains(newnd))
+            
+              !From one to the this child subdomain on the parent
+              DO id2=1,idp-1
+                tmpSubDomains(id2)=pZTreeParent%subdomains(id2)
+                CALL pZTreeParent%subdomains(id2)%clear()
+              ENDDO
+            
+              !Then all the subdomains on the child
+              DO id2=idp,idp+pZTree%nsubdomains-1
+                tmpSubDomains(id2)=pZTree%subdomains(id2-idp+1)
+              ENDDO
+            
+              !All the subdomains on the parent that come after the child
+              DO id2=idp+pZTree%nsubdomains,newnd
+                x=pZTreeParent%subdomains(id2-pZTree%nsubdomains+1)%x
+                y=pZTreeParent%subdomains(id2-pZTree%nsubdomains+1)%y
+                z=pZTreeParent%subdomains(id2-pZTree%nsubdomains+1)%z
+                istt=pZTreeParent%subdomains(id2-pZTree%nsubdomains+1)%istt
+                
+                !Use init because these subdomains may have multiple levels
+                CALL tmpSubDomains(id2)%init(x(1),x(2),y(1),y(2),z(1),z(2),istt)
+                CALL pZTreeParent%subdomains(id2-pZTree%nsubdomains+1)%clear()
+              ENDDO
+              
+              !The number of domains on level nlevel-1 has changed, so on
+              !the next iteration of id we need to update the index passed to
+              !getSubNodePointer on this level to account for this change.
+              idshift=idshift+pZTree%nsubdomains-1
+            
+              !Clean up
+              CALL pZTree%clear()
+              DEALLOCATE(pZTreeParent%subdomains)
+              pZTreeParent%nsubdomains=newnd
+              pZTreeParent%subdomains => tmpSubDomains
+              tmpSubDomains => NULL()
+            ENDIF
+          ENDDO
+        ENDIF
+      ENDIF
+    ENDSUBROUTINE ZTree_flattenLeafs
+!
+!-------------------------------------------------------------------------------
+!> @brief Adds a fixed block size to all leaf nodes in the Z-tree
+!> @param thisZTreeNode the "Z"-Tree node to start renumbering from 
+!>        (must be initialized)
+!> @param xdim the x-dimension of the block to add (xdim > 0)
+!> @param ydim the y-dimension of the block to add (ydim > 0)
+!> @param zdim the z-dimension of the block to add (zdim > 0)
+!> 
+    PURE RECURSIVE SUBROUTINE ZTree_addToLeafs(thisZTreeNode,xdim,ydim,zdim)
+      CLASS(ZTreeNodeType),INTENT(INOUT) :: thisZTreeNode
+      INTEGER(SIK),INTENT(IN) :: xdim
+      INTEGER(SIK),INTENT(IN) :: ydim
+      INTEGER(SIK),INTENT(IN) :: zdim
+      INTEGER(SIK) :: id,istt,isttd,xstt,ystt,zstt
+      
+      IF(thisZTreeNode%istt /= -1 .AND. ALL((/xdim,ydim,zdim/) > 0)) THEN
+        
+        !Update starting dimensions
+        thisZTreeNode%x(1)=(thisZTreeNode%x(1)-1)*xdim+1
+        thisZTreeNode%y(1)=(thisZTreeNode%y(1)-1)*ydim+1
+        thisZTreeNode%z(1)=(thisZTreeNode%z(1)-1)*zdim+1
+        
+        IF(thisZTreeNode%nsubdomains == 0) THEN
+          !This is a leaf node insert the new block on this leaf
+          istt=thisZTreeNode%istt
+          xstt=thisZTreeNode%x(1)
+          ystt=thisZTreeNode%y(1)
+          zstt=thisZTreeNode%z(1)
+          CALL thisZTreeNode%clear()
+          CALL thisZTreeNode%init(xstt,xstt+xdim-1,ystt,ystt+ydim-1, &
+            zstt,zstt+zdim-1,istt)
+        ELSE
+          !This is an intermediate level, so modify the dimensions
+          !and update istp then the subdomains. The starting index
+          !of the subdomains is also updated.
+          thisZTreeNode%x(2)=thisZTreeNode%x(2)*xdim
+          thisZTreeNode%y(2)=thisZTreeNode%y(2)*ydim
+          thisZTreeNode%z(2)=thisZTreeNode%z(2)*zdim
+        
+          thisZTreeNode%istp=thisZTreeNode%istt-1+ &
+          (thisZTreeNode%x(2)-thisZTreeNode%x(1)+1)* &
+            (thisZTreeNode%y(2)-thisZTreeNode%y(1)+1)* &
+              (thisZTreeNode%z(2)-thisZTreeNode%z(1)+1)
+          
+          !Update subdomains
+          isttd=thisZTreeNode%istt
+          xstt=thisZTreeNode%x(1)
+          ystt=thisZTreeNode%y(1)
+          zstt=thisZTreeNode%z(1)
+          DO id=1,thisZTreeNode%nsubdomains
+            thisZTreeNode%subdomains(id)%istt=isttd
+            CALL thisZTreeNode%subdomains(id)%addToleafs(xdim,ydim,zdim)
+            isttd=thisZTreeNode%subdomains(id)%istp+1
+          ENDDO
+        ENDIF
+      ENDIF
+    ENDSUBROUTINE ZTree_addToLeafs
 !
 !-------------------------------------------------------------------------------
 !> @brief Renumbers a "Z-tree" node with a new starting index and stopping index

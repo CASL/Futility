@@ -84,7 +84,7 @@ MODULE LinearSolverTypes
 #endif
   IMPLICIT NONE
   
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
 #include <finclude/petsc.h>
 #undef IS !petscisdef.h defines the keyword IS, and it needs to be reset
 #endif
@@ -143,7 +143,7 @@ MODULE LinearSolverTypes
     !> -1: Unsuccessful exit
     INTEGER(SIK) :: info
 
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
     KSP :: ksp
 #endif
 
@@ -263,12 +263,12 @@ MODULE LinearSolverTypes
       CLASS(ParamType),POINTER :: pListPtr
       TYPE(ParamType) :: validParams,matPList,vecxPList,vecbPList
       ! local variables
-      INTEGER(SIK) :: i,matType,TPLType
+      INTEGER(SIK) :: i,matType,TPLType,n
       INTEGER(SIK) :: solverMethod
       INTEGER(SIK) :: MPI_Comm_ID,numberOMP
       CHARACTER(LEN=256) :: timerName
       LOGICAL(SBK) :: localalloc
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: ierr
 #endif
 
@@ -304,22 +304,24 @@ MODULE LinearSolverTypes
       CALL validParams%get('LinearSolverType->b->VectorType',pListPtr)
       vecbPList=pListPtr
       CALL vecbPList%add('VectorType->MPI_Comm_ID',MPI_Comm_ID)
-      
+      !pull size from source vector
+      CALL validParams%get('LinearSolverType->b->VectorType->n',n)
+
       CALL validParams%clear()
       
       !Initialize parallel environments based on input
-      IF(MPI_Comm_ID >= 0) CALL solver%MPIparallelEnv%init(MPI_Comm_ID)
+      IF(MPI_Comm_ID /= -1) CALL solver%MPIparallelEnv%init(MPI_Comm_ID)
       IF(numberOMP > 0) CALL solver%OMPparallelEnv%init(numberOMP)
       
       IF(.NOT.solver%isInit) THEN
          
         ! go through solver hierarchy to determine TPLType
         IF(TPLType == PETSC) THEN ! PETSc
-#ifndef HAVE_PETSC
+#ifndef MPACT_HAVE_PETSC
           TPLType=TRILINOS
           CALL eLinearSolverType%raiseWarning(modName//'::'// &
-                    myName//'- PETSc is not enabled, TRILINOS will be '// &
-                      'used instead.')
+                    myName//' - PETSc is not enabled, will try to '// &
+                      'use TRILINOS instead.')
           
 #endif
         ENDIF
@@ -327,23 +329,23 @@ MODULE LinearSolverTypes
 #ifndef HAVE_TRILINOS
           TPLType=PARDISO_MKL
           CALL eLinearSolverType%raiseWarning(modName//'::'// &
-                    myName//'- TRILINOS is not enabled, PARDISO will be '// &
-                      'used instead.')
+                    myName//' - TRILINOS is not enabled, will try to '// &
+                      'use PARDISO instead.')
 #endif
         ENDIF
         IF(TPLType == PARDISO_MKL) THEN ! PARDISO
 #ifndef HAVE_PARDISO
           TPLType=MKL
           CALL eLinearSolverType%raiseWarning(modName//'::'// &
-                    myName//'- PARDISO is not enabled, native solvers will be '// &
-                      'used instead.')
+                    myName//' - PARDISO is not enabled, will use NATIVE '// &
+                      'solvers instead.')
 #else
           SELECTTYPE(solver)
             TYPE IS(LinearSolverType_Iterative)
               TPLType=MKL
               CALL eLinearSolverType%raiseWarning(modName//'::'// &
-                        myName//'- PARDISO is a not an iterative solver, MKL '// &
-                          'will be used instead.')
+                        myName//' - PARDISO is a not an iterative solver, will '// &
+                          'try to use MKL instead.')
            ENDSELECT
 #endif
         ENDIF
@@ -351,8 +353,8 @@ MODULE LinearSolverTypes
 #ifndef HAVE_MKL
           TPLType=NATIVE
           CALL eLinearSolverType%raiseWarning(modName//'::'// &
-                    myName//'- MKL is not enabled, native solvers will be '// &
-                      'used instead.')
+                    myName//' - MKL is not enabled, will use NATIVE '// &
+                      'solvers instead.')
 #endif
         ENDIF
 
@@ -447,9 +449,17 @@ MODULE LinearSolverTypes
           TYPE IS(LinearSolverType_Iterative) ! iterative solver
             IF((solverMethod > 0) .AND. &
                (solverMethod <= MAX_IT_SOLVER_METHODS)) THEN         
-                
+
+              !only GMRES can handle when sparse LS of size 1
+              IF(n==1 .AND. matType == SPARSE .AND. solverMethod/= GMRES) THEN
+                solverMethod=GMRES
+                CALL eLinearSolverType%raiseWarning(modName//'::'// &
+                  myName//' - Only GMRES can handle sparse systems of size 1.  '// &
+                  'Switching solver method to GMRES.')
+              ENDIF
+
               IF(TPLType==PETSC) THEN
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
                 !create and initialize KSP
                 CALL KSPCreate(solver%MPIparallelEnv%comm,solver%ksp,ierr)
                 
@@ -538,14 +548,10 @@ MODULE LinearSolverTypes
 !>
     SUBROUTINE clear_LinearSolverType_Iterative(solver)
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: ierr
 #endif
 
-      solver%isInit=.FALSE.
-      solver%solverMethod=-1
-      solver%hasX=.FALSE.
-      solver%info=0
       CALL solver%MPIparallelEnv%clear()
       CALL solver%OMPparallelEnv%clear()
       IF(ALLOCATED(solver%A)) THEN
@@ -564,10 +570,13 @@ MODULE LinearSolverTypes
         CALL solver%M%clear()
         DEALLOCATE(solver%M)
       ENDIF
-      
-#ifdef HAVE_PETSC
-      CALL KSPDestroy(solver%ksp,ierr)
+#ifdef MPACT_HAVE_PETSC
+      IF(solver%TPLType==PETSC .AND. solver%isInit) CALL KSPDestroy(solver%ksp,ierr)
 #endif 
+      solver%isInit=.FALSE.
+      solver%solverMethod=-1
+      solver%hasX=.FALSE.
+      solver%info=0
       
       CALL solver%SolveTime%ResetTimer()
       solver%isDecomposed=.FALSE.
@@ -714,7 +723,7 @@ MODULE LinearSolverTypes
       CHARACTER(LEN=*),PARAMETER :: myName='solve_LinearSolverType_Iterative'
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
       LOGICAL(SBK) :: localalloc
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: ierr
 #endif
 
@@ -771,7 +780,7 @@ MODULE LinearSolverTypes
                       'is not implemented, CGNR method is used instead.')
                    
               TYPE IS(PETScMatrixType)
-#ifdef HAVE_PETSC   
+#ifdef MPACT_HAVE_PETSC   
                 ! assemble matrix if necessary
                 IF(.NOT.(A%isAssembled)) CALL A%assemble()
                 
@@ -826,7 +835,7 @@ MODULE LinearSolverTypes
                     'is not implemented, BiCGSTAB method is used instead.')
                  
               TYPE IS(PETScMatrixType)
-#ifdef HAVE_PETSC   
+#ifdef MPACT_HAVE_PETSC   
                 ! assemble matrix if necessary
                 IF(.NOT.(A%isAssembled)) CALL A%assemble()
                 
@@ -887,7 +896,7 @@ MODULE LinearSolverTypes
                       'is not implemented, CGNR method is used instead.')
 
               TYPE IS(PETScMatrixType)
-#ifdef HAVE_PETSC 
+#ifdef MPACT_HAVE_PETSC 
                 ! assemble matrix if necessary
                 IF(.NOT.(A%isAssembled)) CALL A%assemble()
                 
@@ -1034,7 +1043,7 @@ MODULE LinearSolverTypes
       REAL(SRK),INTENT(IN) :: convTol_in
       INTEGER(SIK),INTENT(IN) :: maxIters_in
       INTEGER(SIK),INTENT(IN),OPTIONAL :: nRestart_in
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: ierr
       PetscInt  :: maxits,nrst
       PetscReal :: rtol,abstol,dtol=PETSC_DEFAULT_DOUBLE_PRECISION
@@ -1086,7 +1095,7 @@ MODULE LinearSolverTypes
         solver%nRestart=nRestart
 
         IF(solver%TPLType == PETSC) THEN
-#ifdef HAVE_PETSC
+#ifdef MPACT_HAVE_PETSC
           rtol=convTol
           abstol=convTol
           maxits=maxIters
