@@ -42,6 +42,7 @@ PROGRAM testSpaceFillingCurve
   REGISTER_SUBTEST('Z-Tree %getSubNodePointer(...)',testZTreeGetSubNodePointer)
   REGISTER_SUBTEST('Z-Tree %getLeafNodePointer(...)',testZTreeGetLeafNodePointer)
   REGISTER_SUBTEST('Z-Tree %addToLeafs(...)',testZTreeAddToLeafs)
+  REGISTER_SUBTEST('Z-Tree %flattenLeafs(...)',testZTreeflattenLeafs)
   REGISTER_SUBTEST('Z-Tree %renumber(...)',testZTreeRenumber)
   REGISTER_SUBTEST('Z-Tree %shave(...)',testZTreeShave)
   REGISTER_SUBTEST('Z-Tree %partition(...)',testZTreePartition)
@@ -1293,6 +1294,40 @@ PROGRAM testSpaceFillingCurve
       ENDDO
       CALL testZTree%clear()
     ENDSUBROUTINE testZTreeGetLeafNodePointer
+!
+!-------------------------------------------------------------------------------
+!Test %getLeafNodePointer
+    SUBROUTINE testZTreeflattenLeafs()
+      !Test uninitialized state
+      CALL testZTree%flattenLeafs()
+      ASSERT(ALL(testZTree%x == 0),'%x')
+      ASSERT(ALL(testZTree%y == 0),'%y')
+      ASSERT(ALL(testZTree%z == 0),'%z')
+      ASSERT(testZTree%istt == -1,'%istt')
+      ASSERT(testZTree%istp == -1,'%istp')
+      ASSERT(testZTree%nsubdomains == 0,'%nsubdomains')
+      ASSERT(.NOT.ASSOCIATED(testZTree%subdomains),'%subdomains')
+      
+      CALL testZTree%init(1,5,1,5,1,1,1)
+      CALL testZTree%flattenLeafs()
+      
+      ASSERT(testZTree%getMaxLevels(0) == 2,'%getMaxLevels(0) 5x5x1')
+      ASSERT(testZTree%getNDomains(2) == 25,'%getNDomains(2) 5x5x1')
+      ASSERT(testZTree%subdomains(1)%nsubdomains == 4,'%subdomains(1)%nsubdomains 5x5x1')
+      ASSERT(testZTree%subdomains(1)%istt == 1,'%subdomains(1)%istt 5x5x1')
+      ASSERT(testZTree%subdomains(1)%istp == 4,'%subdomains(1)%istp 5x5x1')
+      ASSERT(testZTree%subdomains(2)%nsubdomains == 6,'%subdomains(1)%nsubdomains 5x5x1')
+      ASSERT(testZTree%subdomains(2)%istt == 5,'%subdomains(1)%istt 5x5x1')
+      ASSERT(testZTree%subdomains(2)%istp == 10,'%subdomains(1)%istp 5x5x1')
+      ASSERT(testZTree%subdomains(3)%nsubdomains == 6,'%subdomains(1)%nsubdomains 5x5x1')
+      ASSERT(testZTree%subdomains(3)%istt == 11,'%subdomains(1)%istt 5x5x1')
+      ASSERT(testZTree%subdomains(3)%istp == 16,'%subdomains(1)%istp 5x5x1')
+      ASSERT(testZTree%subdomains(4)%nsubdomains == 9,'%subdomains(1)%nsubdomains 5x5x1')
+      ASSERT(testZTree%subdomains(4)%istt == 17,'%subdomains(1)%istt 5x5x1')
+      ASSERT(testZTree%subdomains(4)%istp == 25,'%subdomains(1)%istp 5x5x1')
+      
+      CALL testZTree%clear()
+    ENDSUBROUTINE testZTreeflattenLeafs
 !
 !-------------------------------------------------------------------------------
 !Test %getLeafNodePointer

@@ -110,6 +110,9 @@ MODULE MortonOrdering
       !> @copybrief MortonOrdering::ZTree_getLeafNodePointer
       !> @copydetails MortonOrdering::ZTree_getLeafNodePointer
       PROCEDURE,PASS :: getLeafNodePointer => ZTree_getLeafNodePointer
+      !> @copybrief MortonOrdering::ZTree_flattenLeafs
+      !> @copydetails MortonOrdering::ZTree_flattenLeafs
+      PROCEDURE,PASS :: flattenLeafs => ZTree_flattenLeafs
       !> @copybrief MortonOrdering::ZTree_addToLeafs
       !> @copydetails MortonOrdering::ZTree_addToLeafs
       PROCEDURE,PASS :: addToLeafs => ZTree_addToLeafs
@@ -654,6 +657,88 @@ MODULE MortonOrdering
         ENDIF
       ENDIF
     ENDSUBROUTINE ZTree_getLeafNodePointer
+!
+!-------------------------------------------------------------------------------
+!> @brief If the leafs on the tree are not all on the deepest level of the tree
+!> then the last two levels of the tree are restructured so that the deepest
+!> level of the tree is completely filled.
+!> @param thisZTreeNode
+!>
+!> This only happens in grids that have prime factors other than 2.
+!>
+    PURE SUBROUTINE ZTree_flattenLeafs(thisZTreeNode)
+      CLASS(ZTreeNodeType),INTENT(INOUT) :: thisZTreeNode
+      INTEGER(SIK) :: nlevels,id,id0,id2,idp,idshift,ip,newnd,nsubd
+      INTEGER(SIK) :: x(2),y(2),z(2),istt
+      TYPE(ZTreeNodeType),POINTER :: pZTree,pZTreeParent,tmpSubDomains(:)
+      
+      nlevels=thisZTreeNode%getMaxLevels(0)
+      IF(nlevels > 0) THEN
+        IF(thisZTreeNode%getNDomains(nlevels) < &
+            thisZTreeNode%istpMax()-thisZTreeNode%istt+1) THEN
+        
+          !Restructure the last two levels of the Z-Tree
+          idshift=0
+          nsubd=thisZTreeNode%getNDomains(nlevels-1)
+          DO id0=1,nsubd
+            id=id0+idshift
+            CALL thisZTreeNode%getSubNodePointer(nlevels-1,id,pZTree)
+          
+            IF(pZTree%nsubdomains > 0) THEN
+              !This node needs to be deleted, move children to parent
+              !Start by finding it's parent.
+              FindParent: DO ip=1,thisZTreeNode%getNDomains(nlevels-2)
+                CALL thisZTreeNode%getSubNodePointer(nlevels-2,ip,pZTreeParent)
+                DO idp=1,pZTreeParent%nsubdomains
+                  IF(pZTreeParent%subdomains(idp)%istt == pZTree%istt .AND. &
+                    pZTreeParent%subdomains(idp)%istp == pZTree%istp) &
+                    EXIT FindParent
+                ENDDO
+              ENDDO FindParent
+            
+              !Move children up to parent, preserve ordering
+              newnd=pZTreeParent%nsubdomains+pZTree%nsubdomains-1
+              ALLOCATE(tmpSubDomains(newnd))
+            
+              !From one to the this child subdomain on the parent
+              DO id2=1,idp-1
+                tmpSubDomains(id2)=pZTreeParent%subdomains(id2)
+                CALL pZTreeParent%subdomains(id2)%clear()
+              ENDDO
+            
+              !Then all the subdomains on the child
+              DO id2=idp,idp+pZTree%nsubdomains-1
+                tmpSubDomains(id2)=pZTree%subdomains(id2-idp+1)
+              ENDDO
+            
+              !All the subdomains on the parent that come after the child
+              DO id2=idp+pZTree%nsubdomains,newnd
+                x=pZTreeParent%subdomains(id2-pZTree%nsubdomains+1)%x
+                y=pZTreeParent%subdomains(id2-pZTree%nsubdomains+1)%y
+                z=pZTreeParent%subdomains(id2-pZTree%nsubdomains+1)%z
+                istt=pZTreeParent%subdomains(id2-pZTree%nsubdomains+1)%istt
+                
+                !Use init because these subdomains may have multiple levels
+                CALL tmpSubDomains(id2)%init(x(1),x(2),y(1),y(2),z(1),z(2),istt)
+                CALL pZTreeParent%subdomains(id2-pZTree%nsubdomains+1)%clear()
+              ENDDO
+              
+              !The number of domains on level nlevel-1 has changed, so on
+              !the next iteration of id we need to update the index passed to
+              !getSubNodePointer on this level to account for this change.
+              idshift=idshift+pZTree%nsubdomains-1
+            
+              !Clean up
+              CALL pZTree%clear()
+              DEALLOCATE(pZTreeParent%subdomains)
+              pZTreeParent%nsubdomains=newnd
+              pZTreeParent%subdomains => tmpSubDomains
+              tmpSubDomains => NULL()
+            ENDIF
+          ENDDO
+        ENDIF
+      ENDIF
+    ENDSUBROUTINE ZTree_flattenLeafs
 !
 !-------------------------------------------------------------------------------
 !> @brief Adds a fixed block size to all leaf nodes in the Z-tree
