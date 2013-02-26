@@ -3273,12 +3273,13 @@ MODULE FileType_HDF5
       
       ENDDO
       
-        ! Create dataset to store shape of array
-        WRITE(path_shape,*) TRIM(path)//":SHAPE"
-        path_shape=ADJUSTL(path_shape)
-        ALLOCATE(shape_data(SIZE(SHAPE(data))))
-        shape_data=SHAPE(data)
-        CALL this%write(path_shape,shape_data)
+      ! Create dataset to store shape of array
+      WRITE(path_shape,*) TRIM(path)//":SHAPE"
+      path_shape=ADJUSTL(path_shape)
+      ALLOCATE(shape_data(SIZE(SHAPE(data))))
+      shape_data=SHAPE(data)
+      CALL this%write(path_shape,shape_data)
+      DEALLOCATE(shape_data)
       
 
       ! Close the dataspace
