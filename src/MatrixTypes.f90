@@ -123,6 +123,8 @@ MODULE MatrixTypes
       PROCEDURE(matrix_init_param_sub_absintfc),DEFERRED,PASS :: init
       !> Deferred routine for setting matrix values
       PROCEDURE(matrix_set_sub_absintfc),DEFERRED,PASS :: set
+      !> Deferred routine for getting a matrix value
+      PROCEDURE(matrix_get_sub_absintfc),DEFERRED,PASS :: get
   ENDTYPE MatrixType    
 !
 !List of Abstract Interfaces
@@ -153,6 +155,17 @@ MODULE MatrixTypes
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(IN) :: setval
     ENDSUBROUTINE matrix_set_sub_absintfc
+  ENDINTERFACE
+  
+  !> Explicitly defines the interface for the get routine of all matrix types
+  ABSTRACT INTERFACE
+    SUBROUTINE matrix_get_sub_absintfc(matrix,i,j,getval)
+      IMPORT :: SIK,SRK,MatrixType
+      CLASS(MatrixType),INTENT(INOUT) :: matrix
+      INTEGER(SIK),INTENT(IN) :: i
+      INTEGER(SIK),INTENT(IN) :: j
+      REAL(SRK),INTENT(INOUT) :: getval
+    ENDSUBROUTINE matrix_get_sub_absintfc
   ENDINTERFACE
     
   !> @brief The extended type of matrices for square matrices
@@ -225,6 +238,9 @@ MODULE MatrixTypes
       !> @copybrief MatrixTypes::set_DenseSquareMatrixType
       !> @copydetails MatrixTypes::set_DenseSquareMatrixType
       PROCEDURE,PASS :: set => set_DenseSquareMatrixType
+      !> @copybrief MatrixTypes::get_DenseSquareMatrixType
+      !> @copydetails MatrixTypes::get_DenseSquareMatrixType
+      PROCEDURE,PASS :: get => get_DenseSquareMatrixType
   ENDTYPE DenseSquareMatrixType
   
   !> @brief The extended type for dense rectangular matrices
@@ -243,6 +259,9 @@ MODULE MatrixTypes
       !> @copybrief MatrixTypes::set_DenseRectMatrixType
       !> @copydetails MatrixTypes::set_DenseRectMatrixType
       PROCEDURE,PASS :: set => set_DenseRectMatrixType
+      !> @copybrief MatrixTypes::get_DenseRectMatrixType
+      !> @copydetails MatrixTypes::get_DenseRectMatrixType
+      PROCEDURE,PASS :: get => get_DenseRectMatrixType
   ENDTYPE DenseRectMatrixType
   
   !I think this may need to be revisited
@@ -262,6 +281,9 @@ MODULE MatrixTypes
       !> @copybrief MatrixTypes::set_TriDiagMatrixType
       !> @copydetails MatrixTypes::set_TriDiagMatrixType
       PROCEDURE,PASS :: set => set_TriDiagMatrixType
+      !> @copybrief MatrixTypes::get_TriDiagMatrixType
+      !> @copydetails MatrixTypes::get_TriDiagMatrixType
+      PROCEDURE,PASS :: get => get_TriDiagMatrixType
   ENDTYPE TriDiagMatrixType
   
   !> @brief The basic sparse matrix type
@@ -953,6 +975,89 @@ MODULE MatrixTypes
     ENDSUBROUTINE set_PETScMatrixType
 !
 !-------------------------------------------------------------------------------
+!> @brief Gets the values in the tridiagonal matrix
+!> @param matrix the matrix type to act on
+!> @param i the ith location in the matrix
+!> @param j the jth location in the matrix
+!> @param setval the value to be set
+!>
+    SUBROUTINE get_TriDiagMatrixType(matrix,i,j,getval)
+      CHARACTER(LEN=*),PARAMETER :: myName='get_TriDiagMatrixType'
+      CLASS(TriDiagMatrixType),INTENT(INOUT) :: matrix
+      INTEGER(SIK),INTENT(IN) :: i
+      INTEGER(SIK),INTENT(IN) :: j
+      REAL(SRK),INTENT(INOUT) :: getval
+      IF(matrix%isInit) THEN
+        IF(((j <= matrix%n) .AND. (i <= matrix%n)) &
+            .AND. (i>=1) .AND. (j >= 1)) THEN
+          !based on i,j, put in correct location
+          IF((j == (i-1)).AND. (i > 1)) THEN !sub-diag
+            getval=matrix%a(1,i)
+          ELSEIF((j == (i+1)) .AND. (i < matrix%n)) THEN !super-diag
+            getval=matrix%a(3,i)
+          ELSEIF(i == j) THEN
+            getval=matrix%a(2,i)
+          ENDIF
+        ENDIF
+      ENDIF
+    ENDSUBROUTINE get_TriDiagMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the values in the dense rectangular matrix
+!> @param matrix the matrix type to act on
+!> @param i the ith location in the matrix
+!> @param j the jth location in the matrix
+!> @param setval the value to be set
+!>
+    SUBROUTINE get_DenseRectMatrixType(matrix,i,j,getval)
+      CHARACTER(LEN=*),PARAMETER :: myName='get_DenseRectMatrixType'
+      CLASS(DenseRectMatrixType),INTENT(INOUT) :: matrix
+      INTEGER(SIK),INTENT(IN) :: i
+      INTEGER(SIK),INTENT(IN) :: j
+      REAL(SRK),INTENT(INOUT) :: getval
+      IF(matrix%isInit) THEN
+        IF(((j <= matrix%m) .AND. (i <= matrix%n)) &
+          .AND. ((j > 0) .AND. (i > 0))) getval=matrix%a(i,j)
+      ENDIF
+    ENDSUBROUTINE get_DenseRectMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the values in the Dense Square matrix
+!> @param declare the matrix type to act on
+!> @param i the ith location in the matrix
+!> @param j the jth location in the matrix
+!>
+!> This routine gets the values of the sparse matrix.  If the (i,j) location is 
+!> out of bounds, then -1051.0 (an arbitrarily chosen key) is returned.
+!>
+    SUBROUTINE get_DenseSquareMatrixType(matrix,i,j,getval)
+      CHARACTER(LEN=*),PARAMETER :: myName='get_DenseSquareMatrixType'
+      CLASS(DenseSquareMatrixType),INTENT(INOUT) :: matrix
+      INTEGER(SIK),INTENT(IN) :: i
+      INTEGER(SIK),INTENT(IN) :: j
+      REAL(SRK),INTENT(INOUT) :: getval
+      LOGICAL(SBK) :: localalloc
+
+      !Error checking of subroutine input
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eMatrixType)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eMatrixType)
+      ENDIF
+      
+      getval=0.0_SRK
+      IF(matrix%isInit) THEN
+        IF((i <= matrix%n) .AND. (j <= matrix%n) .AND. ((j > 0) .AND. (i > 0))) THEN
+          getval=matrix%A(i,j)
+        ELSE
+          getval=-1051._SRK
+        ENDIF
+      ENDIF
+
+      IF(localalloc) DEALLOCATE(eMatrixType)
+    ENDSUBROUTINE get_DenseSquareMatrixtype
+!
+!-------------------------------------------------------------------------------
 !> @brief Gets the values in the sparse matrix - presently untested
 !> @param matrix the matrix type to act on
 !> @param i the ith location in the matrix
@@ -962,16 +1067,16 @@ MODULE MatrixTypes
 !> is not present, then 0.0 is returned.  If the (i,j) location is out of
 !> bounds, then -1051.0 is returned (-1051.0 is an arbitrarily chosen key).
 !>
-    SUBROUTINE get_SparseMatrixType(matrix,i,j,aij)
+    SUBROUTINE get_SparseMatrixType(matrix,i,j,getval)
       CHARACTER(LEN=*),PARAMETER :: myName='get_SparseMatrixType'
       CLASS(SparseMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       INTEGER(SIK) :: ja_index
       LOGICAL(SBK) :: found_ja
-      REAL(SRK),INTENT(INOUT) :: aij
+      REAL(SRK),INTENT(INOUT) :: getval
       
-      aij=0.0_SRK
+      getval=0.0_SRK
       IF(matrix%isInit) THEN
         IF(((matrix%jCount > 0).AND.(i <= matrix%n)) &
             .AND. ((j > 0) .AND. (i > 0))) THEN
@@ -982,9 +1087,9 @@ MODULE MatrixTypes
               EXIT          
             ENDIF
           ENDDO
-          IF(found_ja) aij=matrix%a(ja_index)
+          IF(found_ja) getval=matrix%a(ja_index)
         ELSE
-          aij=-1051._SRK
+          getval=-1051._SRK
         ENDIF
       ENDIF
     ENDSUBROUTINE get_SparseMatrixtype
@@ -998,12 +1103,12 @@ MODULE MatrixTypes
 !> This routine gets the values of the sparse matrix.  If the (i,j) location is 
 !> out of bounds, then -1051.0 (an arbitrarily chosen key) is returned.
 !>
-    SUBROUTINE get_PETScMatrixType(matrix,i,j,aij)
+    SUBROUTINE get_PETScMatrixType(matrix,i,j,getval)
       CHARACTER(LEN=*),PARAMETER :: myName='get_PETScMatrixType'
       CLASS(PETScMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
-      REAL(SRK),INTENT(INOUT) :: aij
+      REAL(SRK),INTENT(INOUT) :: getval
       LOGICAL(SBK) :: localalloc
 #ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: ierr
@@ -1017,15 +1122,15 @@ MODULE MatrixTypes
       ENDIF
       
 #ifdef MPACT_HAVE_PETSC
-      aij=0.0_SRK
+      getval=0.0_SRK
       IF(matrix%isInit) THEN
         ! assemble matrix if necessary
         IF (.NOT.(matrix%isAssembled)) CALL matrix%assemble()
       
-        IF((i <= matrix%n) .AND. ((j > 0) .AND. (i > 0))) THEN
-          CALL MatGetValues(matrix%a,1,i-1,1,j-1,aij,ierr)
+        IF((i <= matrix%n) .AND. (j <= matrix%n) .AND. ((j > 0) .AND. (i > 0))) THEN
+          CALL MatGetValues(matrix%a,1,i-1,1,j-1,getval,ierr)
         ELSE
-          aij=-1051._SRK
+          getval=-1051._SRK
         ENDIF
       ENDIF
 #else
