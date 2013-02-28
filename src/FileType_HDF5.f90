@@ -4681,7 +4681,7 @@ SUBROUTINE read_s3(this,dsetname,data)
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       LOGICAL(SBK),INTENT(INOUT) :: data
-      CHARACTER :: datac
+      CHARACTER(LEN=1) :: datac
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
 #ifdef MPACT_HAVE_HDF5
       INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
@@ -4759,7 +4759,7 @@ SUBROUTINE read_l1(this,dsetname,data)
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: data(:)
-      INTEGER(SIK) :: datac(SIZE(data))
+      CHARACTER,ALLOCATABLE :: datac(:)
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
       INTEGER :: i
 #ifdef MPACT_HAVE_HDF5
@@ -4804,7 +4804,7 @@ SUBROUTINE read_l1(this,dsetname,data)
         CALL this%e%raiseError(myName//": Failed to retrieve dataspace dimensions.")
       ENDIF
 
-      ! Allocate space if needed
+      ! Allocate space in data if needed
       IF(ALLOCATED(data))THEN
         ! Make sure the data is the right size
         IF(ANY(SHAPE(data) /= dims))THEN
@@ -4814,6 +4814,9 @@ SUBROUTINE read_l1(this,dsetname,data)
         ! Allocate to size
         ALLOCATE(data(dims(1)))
       ENDIF
+      
+      ! Allocate space in datac
+      ALLOCATE(datac(dims(1)))
 
       ! Read the dataset
       mem=H5T_NATIVE_CHARACTER
@@ -4836,9 +4839,11 @@ SUBROUTINE read_l1(this,dsetname,data)
       
       ! Convert from surrogate character array to boolean array
       data=.FALSE.
-      FORALL(i=1:SIZE(data),datac(i)==1)
+      FORALL(i=1:SIZE(data),datac(i)=='T')
         data(i)=.TRUE.
       END FORALL
+      
+      DEALLOCATE(datac)
 
 #endif
     ENDSUBROUTINE read_l1
@@ -4849,7 +4854,7 @@ SUBROUTINE read_l2(this,dsetname,data)
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: data(:,:)
-      INTEGER(SIK) :: datac(SIZE(data,DIM=1),SIZE(data,DIM=2))
+      CHARACTER(LEN=1),ALLOCATABLE :: datac(:,:)
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
       INTEGER(SIK) :: i,j
 #ifdef MPACT_HAVE_HDF5
@@ -4894,7 +4899,7 @@ SUBROUTINE read_l2(this,dsetname,data)
         CALL this%e%raiseError(myName//": Failed to retrieve dataspace dimensions.")
       ENDIF
 
-      ! Allocate space if needed
+      ! Allocate space for data if needed
       IF(ALLOCATED(data))THEN
         ! Make sure the data is the right size
         IF(ANY(SHAPE(data) /= dims))THEN
@@ -4904,6 +4909,9 @@ SUBROUTINE read_l2(this,dsetname,data)
         ! Allocate to size
         ALLOCATE(data(dims(1),dims(2)))
       ENDIF
+      
+      ! Allocate space for datac
+      ALLOCATE(datac(dims(1),dims(2)))
 
       ! Read the dataset
       mem=H5T_NATIVE_CHARACTER
@@ -4927,9 +4935,11 @@ SUBROUTINE read_l2(this,dsetname,data)
       ! Convert from surrogate character array to boolean array
       data=.FALSE.
       FORALL(i=1:SIZE(data,DIM=1),j=1:SIZE(data,DIM=2), &
-            datac(i,j)==1)
+            datac(i,j)=='T')
         data(i,j)=.TRUE.
       END FORALL
+      
+      DEALLOCATE(datac)
 
 #endif
     ENDSUBROUTINE read_l2
@@ -4940,7 +4950,7 @@ SUBROUTINE read_l3(this,dsetname,data)
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: data(:,:,:)
-      INTEGER(SIK) :: datac(SIZE(data,DIM=1),SIZE(data,DIM=2),SIZE(data,DIM=3))
+      CHARACTER(LEN=1),ALLOCATABLE :: datac(:,:,:)
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
       INTEGER(SIK) :: i,j,k
 #ifdef MPACT_HAVE_HDF5
@@ -4985,7 +4995,7 @@ SUBROUTINE read_l3(this,dsetname,data)
         CALL this%e%raiseError(myName//": Failed to retrieve dataspace dimensions.")
       ENDIF
 
-      ! Allocate space if needed
+      ! Allocate space for data if needed
       IF(ALLOCATED(data))THEN
         ! Make sure the data is the right size
         IF(ANY(SHAPE(data) /= dims))THEN
@@ -4995,6 +5005,9 @@ SUBROUTINE read_l3(this,dsetname,data)
         ! Allocate to size
         ALLOCATE(data(dims(1),dims(2),dims(3)))
       ENDIF
+      
+      ! Allocate space for datac
+      ALLOCATE(datac(dims(1),dims(2),dims(3)))
 
       ! Read the dataset
       mem=H5T_NATIVE_CHARACTER
@@ -5018,9 +5031,11 @@ SUBROUTINE read_l3(this,dsetname,data)
       ! Convert from surrogate character array to boolean array
       data(:,:,:)=.FALSE.
       FORALL(i=1:SIZE(data,DIM=1),j=1:SIZE(data,DIM=2),k=1:SIZE(data,DIM=3), &
-            datac(i,j,k)==1)
+            datac(i,j,k)=='T')
         data(i,j,k)=.TRUE.
       END FORALL
+      
+      DEALLOCATE(datac)
 
 #endif
     ENDSUBROUTINE read_l3

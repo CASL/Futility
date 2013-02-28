@@ -202,19 +202,6 @@ PROGRAM testHDF5
         WRITE(1,*)sets(i)
       ENDDO
 
-      ALLOCATE(testD1(10))
-      ALLOCATE(testD2(5,5))
-      ALLOCATE(testD3(3,3,3))
-      ALLOCATE(testR1(10))
-      ALLOCATE(testR2(5,5))
-      ALLOCATE(testR3(3,3,3))
-      ALLOCATE(testL1(10))
-      ALLOCATE(testL2(5,5))
-      ALLOCATE(testL3(3,3,3))
-      ALLOCATE(testI1(10))
-      ALLOCATE(testI2(5,5))
-      ALLOCATE(testI3(3,3,3))
-
       ! Read a dataset (real-1)
       CALL h5%read('groupD->memD0',testD0)
       CALL h5%read('groupD->memD1',testD1)
