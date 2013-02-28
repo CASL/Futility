@@ -184,10 +184,15 @@ PROGRAM testHDF5
       REAL(SSK),ALLOCATABLE :: testR1(:),testR2(:,:),testR3(:,:,:)
       LOGICAL(SBK),ALLOCATABLE :: testL1(:),testL2(:,:),testL3(:,:,:)
       INTEGER(SIK),ALLOCATABLE :: testI1(:),testI2(:,:),testI3(:,:,:)
+      REAL(SDK) :: testD0
+      REAL(SSK) :: testR0
+      INTEGER(SIK) :: testI0
+      LOGICAL(SBK) :: testL0
       CHARACTER(LEN=80),ALLOCATABLE :: sets(:)
       INTEGER(SIK) :: i
-      CHARACTER(LEN=80),PARAMETER :: FMT_data_r='(5f9.5)',FMT_data_i='(5i9)', &
-              FMT_data_l='(5l9)'
+      CHARACTER(LEN=80),PARAMETER :: FMT_data_r='(5f14.10)',FMT_data_i='(5i12)', &
+              FMT_data_l='(5l12)',FMT_data_c='(4a12)'
+      TYPE(StringType) :: testC0
 
       CALL h5%init('readtest.h5','READ')
       OPEN(UNIT=1,FILE='readtest.out')
@@ -211,31 +216,41 @@ PROGRAM testHDF5
       ALLOCATE(testI3(3,3,3))
 
       ! Read a dataset (real-1)
+      CALL h5%read('groupD->memD0',testD0)
       CALL h5%read('groupD->memD1',testD1)
-      CALL h5%read('groupR->memR1',testR1)
-      CALL h5%read('groupI->memI1',testI1)
-      CALL h5%read('groupL->memL1',testL1)
       CALL h5%read('groupD->memD2',testD2)
-      CALL h5%read('groupR->memR2',testR2)
-      CALL h5%read('groupI->memI2',testI2)
-      CALL h5%read('groupL->memL2',testL2)
       CALL h5%read('groupD->memD3',testD3)
+      CALL h5%read('groupR->memR0',testR0)
+      CALL h5%read('groupR->memR1',testR1)
+      CALL h5%read('groupR->memR2',testR2)
       CALL h5%read('groupR->memR3',testR3)
+      CALL h5%read('groupI->memI0',testI0)
+      CALL h5%read('groupI->memI1',testI1)
+      CALL h5%read('groupI->memI2',testI2)
       CALL h5%read('groupI->memI3',testI3)
+      CALL h5%read('groupL->memL0',testL0)
+      CALL h5%read('groupL->memL1',testL1)
+      CALL h5%read('groupL->memL2',testL2)
       CALL h5%read('groupL->memL3',testL3)
+      CALL h5%read('groupC->memC0',testC0)
       
+      WRITE(1,*) 'testD0:'; WRITE(1,FMT=FMT_data_r)testD0
       WRITE(1,*) 'testD1:'; WRITE(1,FMT=FMT_data_r)testD1
       WRITE(1,*) 'testD2:'; WRITE(1,FMT=FMT_data_r)testD2
       WRITE(1,*) 'testD3:'; WRITE(1,FMT=FMT_data_r)testD3
+      WRITE(1,*) 'testR0:'; WRITE(1,FMT=FMT_data_r)testR0
       WRITE(1,*) 'testR1:'; WRITE(1,FMT=FMT_data_r)testR1
       WRITE(1,*) 'testR2:'; WRITE(1,FMT=FMT_data_r)testR2
       WRITE(1,*) 'testR3:'; WRITE(1,FMT=FMT_data_r)testR3
+      WRITE(1,*) 'testI0:'; WRITE(1,FMT=FMT_data_i)testI0
       WRITE(1,*) 'testI1:'; WRITE(1,FMT=FMT_data_i)testI1
       WRITE(1,*) 'testI2:'; WRITE(1,FMT=FMT_data_i)testI2
       WRITE(1,*) 'testI3:'; WRITE(1,FMT=FMT_data_i)testI3
+      WRITE(1,*) 'testL0:'; WRITE(1,FMT=FMT_data_l)testL0
       WRITE(1,*) 'testL1:'; WRITE(1,FMT=FMT_data_l)testL1
       WRITE(1,*) 'testL2:'; WRITE(1,FMT=FMT_data_l)testL2
       WRITE(1,*) 'testL3:'; WRITE(1,FMT=FMT_data_l)testL3
+      WRITE(1,*) 'testC0:'; WRITE(1,FMT=FMT_data_c)CHAR(testC0)
       CLOSE(UNIT=1)
 
       CALL h5%clear()
