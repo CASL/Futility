@@ -508,7 +508,7 @@ MODULE FileType_HDF5
     ENDFUNCTION ngrp_HDF5FileType
 !
 !-------------------------------------------------------------------------------
-!> @brief Write a rank-1 array of doubles to a dataset
+!> @brief Write a double to a dataset
     SUBROUTINE write_d0(this,dsetname,data,gdims_in)
       CHARACTER(LEN=*),PARAMETER :: myName='writed0_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
@@ -2350,7 +2350,7 @@ MODULE FileType_HDF5
 #endif
     ENDSUBROUTINE write_l3
 !-------------------------------------------------------------------------------
-!> @brief Write a rank-0 array of integers to a dataset
+!> @brief Write an integer to a dataset
     SUBROUTINE write_i0(this,dsetname,data,gdims_in)
       CHARACTER(LEN=*),PARAMETER :: myName='writei0_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
@@ -3113,6 +3113,7 @@ MODULE FileType_HDF5
     ENDSUBROUTINE write_c0
 !
 !-------------------------------------------------------------------------------
+!> @brief Find max string length, then write rank-1 array of Strings to dataset
     SUBROUTINE write_c1_helper(this,dsetname,data,gdims_in)
       CHARACTER(LEN=*),PARAMETER :: MyName='writec1helper_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
@@ -3318,6 +3319,7 @@ MODULE FileType_HDF5
     ENDSUBROUTINE write_c1
 !
 !-------------------------------------------------------------------------------
+!> @brief Find max string length, then write rank-2 array of Strings to dataset
     SUBROUTINE write_c2_helper(this,dsetname,data,gdims_in)
       CHARACTER(LEN=*),PARAMETER :: MyName='writec2helper_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
@@ -3528,6 +3530,7 @@ MODULE FileType_HDF5
     ENDSUBROUTINE write_c2
 !
 !-------------------------------------------------------------------------------
+!> @brief Find max string length, then write rank-3 array of Strings to dataset
     SUBROUTINE write_c3_helper(this,dsetname,data,gdims_in)
       CHARACTER(LEN=*),PARAMETER :: MyName='writec3helper_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
@@ -3745,6 +3748,7 @@ MODULE FileType_HDF5
     ENDSUBROUTINE write_c3
 !
 !-------------------------------------------------------------------------------
+!> @brief Read a double from dataset
     SUBROUTINE read_d0(this,dsetname,data)
       CHARACTER(LEN=*),PARAMETER :: myName='readd0_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
@@ -3814,6 +3818,7 @@ MODULE FileType_HDF5
     ENDSUBROUTINE read_d0
 !
 !-------------------------------------------------------------------------------
+!> @brief Read a rank-2 array of doubles from dataset
     SUBROUTINE read_d1(this,dsetname,data)
       CHARACTER(LEN=*),PARAMETER :: myName='readd1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
@@ -3894,8 +3899,9 @@ MODULE FileType_HDF5
     ENDSUBROUTINE read_d1
 !
 !-------------------------------------------------------------------------------
+!> @brief Read a rank-2 array of doubles from dataset
     SUBROUTINE read_d2(this,dsetname,data)
-      CHARACTER(LEN=*),PARAMETER :: myName='readd3_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: myName='readd2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: data(:,:)
@@ -3975,6 +3981,7 @@ MODULE FileType_HDF5
 
 !
 !-------------------------------------------------------------------------------
+!> @brief Read a rank-3 array of doubles from dataset
     SUBROUTINE read_d3(this,dsetname,data)
       CHARACTER(LEN=*),PARAMETER :: myName='readd3_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
@@ -4056,6 +4063,7 @@ MODULE FileType_HDF5
 
 !
 !-------------------------------------------------------------------------------
+!> @brief Read a real from dataset
     SUBROUTINE read_s0(this,dsetname,data)
       CHARACTER(LEN=*),PARAMETER :: myName='reads0_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
@@ -4126,8 +4134,9 @@ MODULE FileType_HDF5
 !
 
 !-------------------------------------------------------------------------------
-SUBROUTINE read_s1(this,dsetname,data)
-      CHARACTER(LEN=*),PARAMETER :: myName='readr1_HDF5FileType'
+!> @brief Read a rank-1 array of reals from dataset
+    SUBROUTINE read_s1(this,dsetname,data)
+      CHARACTER(LEN=*),PARAMETER :: myName='reads1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: data(:)
@@ -4206,8 +4215,9 @@ SUBROUTINE read_s1(this,dsetname,data)
     ENDSUBROUTINE read_s1
 !
 !-------------------------------------------------------------------------------
-SUBROUTINE read_s2(this,dsetname,data)
-      CHARACTER(LEN=*),PARAMETER :: myName='readr2_HDF5FileType'
+!> @brief Read a rank-2 array of reals from dataset
+    SUBROUTINE read_s2(this,dsetname,data)
+      CHARACTER(LEN=*),PARAMETER :: myName='reads2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: data(:,:)
@@ -4286,8 +4296,9 @@ SUBROUTINE read_s2(this,dsetname,data)
     ENDSUBROUTINE read_s2
 !
 !-------------------------------------------------------------------------------
-SUBROUTINE read_s3(this,dsetname,data)
-      CHARACTER(LEN=*),PARAMETER :: myName='readr3_HDF5FileType'
+!> @brief Read a rank-3 array of reals from dataset
+    SUBROUTINE read_s3(this,dsetname,data)
+      CHARACTER(LEN=*),PARAMETER :: myName='read23_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: data(:,:,:)
@@ -4366,6 +4377,7 @@ SUBROUTINE read_s3(this,dsetname,data)
     ENDSUBROUTINE read_s3
 !
 !-------------------------------------------------------------------------------
+!> @brief Read an integer from dataset
     SUBROUTINE read_i0(this,dsetname,data)
       CHARACTER(LEN=*),PARAMETER :: myName='readi0_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
@@ -4436,6 +4448,7 @@ SUBROUTINE read_s3(this,dsetname,data)
 !
 
 !-------------------------------------------------------------------------------
+!> @brief Read a rank-1 array of integers from dataset
     SUBROUTINE read_i1(this,dsetname,data)
       CHARACTER(LEN=*),PARAMETER :: myName='readi1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
@@ -4516,6 +4529,7 @@ SUBROUTINE read_s3(this,dsetname,data)
     ENDSUBROUTINE read_i1
 !
 !-------------------------------------------------------------------------------
+!> @brief Read a rank-2 array of integers from dataset
     SUBROUTINE read_i2(this,dsetname,data)
       CHARACTER(LEN=*),PARAMETER :: myName='readi2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
@@ -4596,6 +4610,7 @@ SUBROUTINE read_s3(this,dsetname,data)
     ENDSUBROUTINE read_i2
 !
 !-------------------------------------------------------------------------------
+!> @brief Read a rank-3 array of integers from dataset
     SUBROUTINE read_i3(this,dsetname,data)
       CHARACTER(LEN=*),PARAMETER :: myName='readi3_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
@@ -4676,6 +4691,7 @@ SUBROUTINE read_s3(this,dsetname,data)
     ENDSUBROUTINE read_i3
 !
 !-------------------------------------------------------------------------------
+!> @brief Read a logical from dataset
     SUBROUTINE read_l0(this,dsetname,data)
       CHARACTER(LEN=*),PARAMETER :: myName='readl0_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
@@ -4754,7 +4770,8 @@ SUBROUTINE read_s3(this,dsetname,data)
 !
 
 !-------------------------------------------------------------------------------
-SUBROUTINE read_l1(this,dsetname,data)
+!> @brief Read a rank-1 array of logicals from dataset
+    SUBROUTINE read_l1(this,dsetname,data)
       CHARACTER(LEN=*),PARAMETER :: myName='readl1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
@@ -4849,7 +4866,8 @@ SUBROUTINE read_l1(this,dsetname,data)
     ENDSUBROUTINE read_l1
 !
 !-------------------------------------------------------------------------------
-SUBROUTINE read_l2(this,dsetname,data)
+!> @brief Read a rank-2 array of logicals from dataset
+    SUBROUTINE read_l2(this,dsetname,data)
       CHARACTER(LEN=*),PARAMETER :: myName='readl2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
@@ -4945,7 +4963,8 @@ SUBROUTINE read_l2(this,dsetname,data)
     ENDSUBROUTINE read_l2
 !
 !-------------------------------------------------------------------------------
-SUBROUTINE read_l3(this,dsetname,data)
+!> @brief Read a rank-3 array of logicals from dataset
+    SUBROUTINE read_l3(this,dsetname,data)
       CHARACTER(LEN=*),PARAMETER :: myName='readl3_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
@@ -5041,7 +5060,8 @@ SUBROUTINE read_l3(this,dsetname,data)
     ENDSUBROUTINE read_l3
 !
 !-------------------------------------------------------------------------------
-SUBROUTINE read_c0(this,dsetname,data)
+!> @brief Read a string from dataset
+    SUBROUTINE read_c0(this,dsetname,data)
       CHARACTER(LEN=*),PARAMETER :: myName='readc0_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
