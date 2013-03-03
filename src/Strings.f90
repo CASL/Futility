@@ -117,13 +117,13 @@ MODULE Strings
     !>
     !> This is needed because SIZE(%s) does not reliably return 0 when
     !> s has been allocated and then unallocated.
-    INTEGER(SIK),PRIVATE :: n=0
+    INTEGER(SIK) :: n=0
     !> The trim length of the string
     !>
     !> This is needed for the TRIM routine
-    INTEGER(SIK),PRIVATE :: ntrim=0
+    INTEGER(SIK) :: ntrim=0
     !> The string stored as an array of length 1 character strings
-    CHARACTER(LEN=1),ALLOCATABLE,PRIVATE :: s(:)
+    CHARACTER(LEN=1),ALLOCATABLE :: s(:)
   ENDTYPE StringType
   
   !> @brief Overloads the Fortran intrinsic procedure CHAR() so
@@ -457,7 +457,7 @@ MODULE Strings
       INTEGER(SIK) :: i
       
       IF(thisStr%n > 0) THEN
-        DEALLOCATE(thisStr%s)
+        IF(ALLOCATED(thisStr%s)) DEALLOCATE(thisStr%s)
         thisStr%n=0
         thisStr%ntrim=0
       ENDIF
