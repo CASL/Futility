@@ -95,7 +95,7 @@ PROGRAM testHDF5
       ALLOCATE(testI2(5,5))
       ALLOCATE(testI3(3,3,3))
       ALLOCATE(testC1(3))
-      ALLOCATE(testC2(2,2))
+      ALLOCATE(testC2(2,3))
       ALLOCATE(testC3(3,4,5))
 
       testD0=42.123456789_SDK
@@ -121,8 +121,17 @@ PROGRAM testHDF5
           ENDDO
         ENDDO
       ENDDO
-      testC0='Scalar String Test'
-      testC1(1)='String 1';testC1(2)='String 2';testC1(3)='String 3'
+      testC0='Rank-0 (Not-an-array) String Test'
+      DO i=1,SIZE(testC1)
+        WRITE(helper_string,FMT="(a7,i0)") 'String ',i
+        testC1(i)=helper_string
+      ENDDO
+      DO i=1,SIZE(testC2,1)
+        DO j=1,SIZE(TestC2,2)
+          WRITE(helper_string,FMT="(a7,i0,a1,i0)") 'String ',i,',',j
+          testC2(i,j)=helper_string
+        ENDDO
+      ENDDO
       testC2(1,1)='String 1,1';testC2(1,2)='String 1,2';testC2(2,1)='String 2,1'
       testC2(2,2)='String 2,2';
       DO i=1,SIZE(testC3,1)
@@ -130,7 +139,7 @@ PROGRAM testHDF5
           DO k=1,SIZE(testC3,3)
             WRITE(helper_string,FMT="(a7,i0,a1,i0,a1,i0)") 'String ',i,&
                     &",",j,",",k
-            testC3(i,j,k) = helper_string
+            testC3(i,j,k)=helper_string
           ENDDO
         ENDDO
       ENDDO
@@ -155,12 +164,12 @@ PROGRAM testHDF5
       CALL h5%write('groupR->memR3',testR3,SHAPE(testR3))
       CALL h5%mkdir('groupI')
       CALL h5%write('groupI->memI0',testI0)
-      CALL h5%write('groupI->memI1',testI1)
+      CALL h5%write('groupI->memI1',testI1,SHAPE(testL1))
       CALL h5%write('groupI->memI2',testI2,SHAPE(testI2))
       CALL h5%write('groupI->memI3',testI3,SHAPE(testI3))
       CALL h5%mkdir('groupL')
       CALL h5%write('groupL->memL0',testL0)
-      CALL h5%write('groupL->memL1',testL1)
+      CALL h5%write('groupL->memL1',testL1,SHAPE(testL1))
       CALL h5%write('groupL->memL2',testL2,SHAPE(testL2))
       CALL h5%write('groupL->memL3',testL3,SHAPE(testL3))
       CALL h5%mkdir('groupC')
