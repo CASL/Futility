@@ -5067,7 +5067,6 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       TYPE(StringType),INTENT(INOUT) :: data
       CHARACTER(LEN=100) :: datas
-      CHARACTER,ALLOCATABLE :: datac(:)
       INTEGER(SIK) :: i
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
 #ifdef MPACT_HAVE_HDF5
@@ -5124,19 +5123,14 @@ MODULE FileType_HDF5
 !      ENDIF
 
       ! Read the dataset
-      ALLOCATE(datac(100))
       mem=H5T_NATIVE_CHARACTER
-      CALL h5dread_f(dset_id,mem,datac,dims,error)
+      CALL h5dread_f(dset_id,mem,datas,dims,error)
       IF(error /= 0)THEN
         CALL this%e%raiseError(myName//": Failed to read data from dataset.")
       ENDIF
       
       ! Convert to StringType
-      DO i=1,SIZE(datac)
-        datas(i:i)=datac(i)
-      ENDDO
       data=TRIM(datas)
-      DEALLOCATE(datac)
 
       ! Close the dataset
       CALL h5dclose_f(dset_id,error)
