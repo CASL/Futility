@@ -19,11 +19,12 @@ PROGRAM testLinearSolver
   
   USE IntrType
   USE ExceptionHandler
+  USE ParameterLists
   USE LinearSolverTypes
   USE MatrixTypes
   USE VectorTypes
   USE ParallelEnv
-  USE ParameterLists
+  
   IMPLICIT NONE
   
   TYPE(ExceptionHandlerType),TARGET :: e
