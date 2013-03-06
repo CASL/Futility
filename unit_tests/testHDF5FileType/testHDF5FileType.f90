@@ -193,14 +193,15 @@ PROGRAM testHDF5
       REAL(SSK),ALLOCATABLE :: testR1(:),testR2(:,:),testR3(:,:,:)
       LOGICAL(SBK),ALLOCATABLE :: testL1(:),testL2(:,:),testL3(:,:,:)
       INTEGER(SIK),ALLOCATABLE :: testI1(:),testI2(:,:),testI3(:,:,:)
+      TYPE(StringType),ALLOCATABLE :: testC1(:),testC2(:,:),testC3(:,:,:)
       REAL(SDK) :: testD0
       REAL(SSK) :: testR0
       INTEGER(SIK) :: testI0
       LOGICAL(SBK) :: testL0
       CHARACTER(LEN=80),ALLOCATABLE :: sets(:)
-      INTEGER(SIK) :: i
+      INTEGER(SIK) :: i,j,k
       CHARACTER(LEN=80),PARAMETER :: FMT_data_r='(5f14.10)',FMT_data_i='(5i12)', &
-              FMT_data_l='(5l12)',FMT_data_c='(4a12)'
+              FMT_data_l='(5l12)'
       TYPE(StringType) :: testC0
 
       CALL h5%init('readtest.h5','READ')
@@ -229,6 +230,9 @@ PROGRAM testHDF5
       CALL h5%read('groupL->memL2',testL2)
       CALL h5%read('groupL->memL3',testL3)
       CALL h5%read('groupC->memC0',testC0)
+      CALL h5%read('groupC->memC1',testC1)
+      CALL h5%read('groupC->memC2',testC2)
+      CALL h5%read('groupC->memC3',testC3)
       
       WRITE(1,*) 'testD0:'; WRITE(1,FMT=FMT_data_r)testD0
       WRITE(1,*) 'testD1:'; WRITE(1,FMT=FMT_data_r)testD1
@@ -246,7 +250,25 @@ PROGRAM testHDF5
       WRITE(1,*) 'testL1:'; WRITE(1,FMT=FMT_data_l)testL1
       WRITE(1,*) 'testL2:'; WRITE(1,FMT=FMT_data_l)testL2
       WRITE(1,*) 'testL3:'; WRITE(1,FMT=FMT_data_l)testL3
-      WRITE(1,*) 'testC0:'; WRITE(1,FMT=FMT_data_c)CHAR(testC0)
+      WRITE(1,*) 'testC0:'; WRITE(1,FMT=*)CHAR(testC0)
+      WRITE(1,*) 'testC1:'; 
+      DO i=1,SIZE(testC1)
+        WRITE(1,*)CHAR(testC1(i))
+      ENDDO
+      WRITE(1,*) 'testC2:';
+      DO i=1,SIZE(testC2,1)
+        DO j=1,SIZE(testC2,2)
+          WRITE(1,*)CHAR(testC2(i,j))
+        ENDDO
+      ENDDO
+      WRITE(1,*) 'testC3:';
+      DO i=1,SIZE(testC3,1)
+        DO j=1,SIZE(testC3,2)
+          DO k=1,SIZE(testC3,3)
+            WRITE(1,*)CHAR(testC3(i,j,k))
+          ENDDO
+        ENDDO
+      ENDDO
       CLOSE(UNIT=1)
 
       CALL h5%clear()

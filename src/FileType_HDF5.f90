@@ -198,11 +198,17 @@ MODULE FileType_HDF5
       PROCEDURE,PASS :: read_l3
       !> Read: character string
       PROCEDURE,PASS :: read_c0
+      !> Read: character string, rank 1
+      PROCEDURE,PASS :: read_c1
+      !> Read: character string, rank 2
+      PROCEDURE,PASS :: read_c2
+      !> Read: character string, rank 3
+      PROCEDURE,PASS :: read_c3
       ! ...
       !> Read data from a dataset in the file.
       GENERIC  :: read => read_d1,read_d2,read_d3,read_s1,read_s2,read_s3, &
             read_i1,read_i2,read_i3,read_l1,read_l2,read_l3,read_c0,read_d0, &
-            read_s0,read_i0,read_l0
+            read_s0,read_i0,read_l0,read_c1,read_c2,read_c3
   ENDTYPE
 !
 !===============================================================================
@@ -3334,7 +3340,7 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SIK),INTENT(IN) :: length_max
       TYPE(StringType),ALLOCATABLE,INTENT(IN) :: data(:,:)
-      CHARACTER :: datac(length_max,SIZE(data,2),SIZE(data,1))
+      CHARACTER :: datac(length_max,SIZE(data,1),SIZE(data,2))
       CHARACTER(LEN=length_max) :: datas
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
       INTEGER(SIK),DIMENSION(3),INTENT(IN),OPTIONAL :: gdims_in
@@ -3364,9 +3370,9 @@ MODULE FileType_HDF5
       path = convertPath(dsetname)
       
       
-      DO k=1,SIZE(data,1)
-        DO i=1,SIZE(data,2)
-          datas=TRIM(data(k,i))
+      DO k=1,SIZE(data,2)
+        DO i=1,SIZE(data,1)
+          datas=TRIM(data(i,k))
           DO j=1,length_max
             datac(j,i,k)=datas(j:j)
           ENDDO
@@ -3527,7 +3533,7 @@ MODULE FileType_HDF5
       TYPE(StringType),ALLOCATABLE,INTENT(IN) :: data(:,:,:)
       INTEGER(SIK),INTENT(IN) :: length_max
       CHARACTER(LEN=length_max) :: datas
-      CHARACTER :: datac(length_max,SIZE(data,3),SIZE(data,2),SIZE(data,1))
+      CHARACTER :: datac(length_max,SIZE(data,1),SIZE(data,2),SIZE(data,3))
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
       INTEGER(SIK),DIMENSION(4),INTENT(IN),OPTIONAL :: gdims_in
 #ifdef MPACT_HAVE_HDF5
@@ -3556,10 +3562,10 @@ MODULE FileType_HDF5
       path = convertPath(dsetname)
       
       ! Fill character array
-      DO m=1,SIZE(data,1)
+      DO m=1,SIZE(data,3)
         DO k=1,SIZE(data,2)
-          DO i=1,SIZE(data,3)
-            datas=TRIM(data(m,k,i))
+          DO i=1,SIZE(data,1)
+            datas=TRIM(data(i,k,m))
             DO j=1,length_max
               datac(j,i,k,m)=datas(j:j)
             ENDDO
@@ -5004,7 +5010,7 @@ MODULE FileType_HDF5
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       TYPE(StringType),INTENT(INOUT) :: data
-      CHARACTER(LEN=100) :: datas
+      CHARACTER,ALLOCATABLE :: datac(:)
       INTEGER(SIK) :: i
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
 #ifdef MPACT_HAVE_HDF5
@@ -5049,26 +5055,20 @@ MODULE FileType_HDF5
         CALL this%e%raiseError(myName//": Failed to retrieve dataspace dimensions.")
       ENDIF
 
-      ! Allocate space if needed
-!      IF(ALLOCATED(data))THEN
-        ! Make sure the data is the right size
-!        IF(ANY(SHAPE(data) /= dims))THEN
-!          CALL this%e%raiseError(myName//": data array is the wrong size.")
-!        ENDIF
-!      ELSE
-        ! Allocate to size
-!        ALLOCATE(data(dims(1)))
-!      ENDIF
+      ! Allocate character array
+      ALLOCATE(datac(dims(1)))
 
       ! Read the dataset
       mem=H5T_NATIVE_CHARACTER
-      CALL h5dread_f(dset_id,mem,datas,dims,error)
+      CALL h5dread_f(dset_id,mem,datac,dims,error)
       IF(error /= 0)THEN
         CALL this%e%raiseError(myName//": Failed to read data from dataset.")
       ENDIF
       
       ! Convert to StringType
-      data=TRIM(datas)
+      DO i=1,SIZE(datac)
+        data=data//datac(i)
+      ENDDO
 
       ! Close the dataset
       CALL h5dclose_f(dset_id,error)
@@ -5084,6 +5084,300 @@ MODULE FileType_HDF5
 
 #endif
     ENDSUBROUTINE read_c0
+!
+!-------------------------------------------------------------------------------
+!> @brief Read a rank-1 array of strings from dataset
+    SUBROUTINE read_c1(this,dsetname,data)
+      CHARACTER(LEN=*),PARAMETER :: myName='readc1_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: this
+      CHARACTER(LEN=*),INTENT(IN) :: dsetname
+      TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: data(:)
+      CHARACTER,ALLOCATABLE :: datac(:,:)
+      INTEGER(SIK) :: i,j
+      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+#ifdef MPACT_HAVE_HDF5
+      INTEGER(HSIZE_T),DIMENSION(2) :: dims,maxdims
+      INTEGER(HID_T),PARAMETER :: rank=2
+      
+      INTEGER(HID_T) :: error,mem,ndims
+      INTEGER(HID_T) :: dspace_id,dset_id
+
+      ! Make sure the object is initialized
+      IF(.NOT.this%isinit)THEN
+        CALL this%e%raiseError(myName//': File object not initialized.')
+      ENDIF
+
+
+      ! Convert the path name to use slashes
+      path=convertPath(dsetname)
+
+      ! Open the dataset
+      CALL h5dopen_f(this%file_id, path, dset_id, error)
+
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//": Failed to open dataset.")
+      ENDIF
+
+      ! Get dataset dimensions for allocation
+      CALL h5dget_space_f(dset_id,dspace_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//": Failed to obtain the dataspace.")
+      ENDIF
+      ! Make sure the rank is right
+      CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+      IF(error < 0)THEN
+        CALL this%e%raiseError(myName//": Failed to retrieve number of dataspace dimensions.")
+      ENDIF
+      IF(ndims /= rank)THEN
+        CALL this%e%raiseError(myName//": Using wrong read function for rank.")
+      ENDIF
+
+      CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
+      IF(error < 0)THEN
+        CALL this%e%raiseError(myName//": Failed to retrieve dataspace dimensions.")
+      ENDIF
+
+
+      ! Allocate character array to size
+      ALLOCATE(datac(dims(1),dims(2)))
+
+      ! Read the dataset
+      mem=H5T_NATIVE_CHARACTER
+      CALL h5dread_f(dset_id,mem,datac,dims,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//": Failed to read data from dataset.")
+      ENDIF
+      
+      ! Allocate space if needed
+      IF(ALLOCATED(data))THEN
+        ! Make sure the data is the right size
+        IF(SIZE(data) /= dims(2))THEN
+          CALL this%e%raiseError(myName//": data array is the wrong size.")
+        ENDIF
+      ELSE
+        ! Allocate to size
+        ALLOCATE(data(dims(2)))
+      ENDIF
+      
+      ! Convert to StringType
+      DO i=1,SIZE(data)
+        DO j=1,SIZE(datac(:,i))
+          data(i)=data(i)//datac(j,i)
+        ENDDO
+      ENDDO
+      
+      ! Close the dataset
+      CALL h5dclose_f(dset_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//": Failed to close dataset.")
+      ENDIF
+
+      ! Close the dataspace
+      CALL h5sclose_f(dspace_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//": Failed to close dataspace.")
+      ENDIF
+
+#endif
+    ENDSUBROUTINE read_c1
+!
+!-------------------------------------------------------------------------------
+!> @brief Read a rank-2 array of strings from dataset
+    SUBROUTINE read_c2(this,dsetname,data)
+      CHARACTER(LEN=*),PARAMETER :: myName='readc2_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: this
+      CHARACTER(LEN=*),INTENT(IN) :: dsetname
+      TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: data(:,:)
+      CHARACTER,ALLOCATABLE :: datac(:,:,:)
+      INTEGER(SIK) :: i,j,k
+      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+#ifdef MPACT_HAVE_HDF5
+      INTEGER(HSIZE_T),DIMENSION(3) :: dims,maxdims
+      INTEGER(HID_T),PARAMETER :: rank=3
+      
+      INTEGER(HID_T) :: error,mem,ndims
+      INTEGER(HID_T) :: dspace_id,dset_id
+
+      ! Make sure the object is initialized
+      IF(.NOT.this%isinit)THEN
+        CALL this%e%raiseError(myName//': File object not initialized.')
+      ENDIF
+
+
+      ! Convert the path name to use slashes
+      path=convertPath(dsetname)
+
+      ! Open the dataset
+      CALL h5dopen_f(this%file_id, path, dset_id, error)
+
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//": Failed to open dataset.")
+      ENDIF
+
+      ! Get dataset dimensions for allocation
+      CALL h5dget_space_f(dset_id,dspace_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//": Failed to obtain the dataspace.")
+      ENDIF
+      ! Make sure the rank is right
+      CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+      IF(error < 0)THEN
+        CALL this%e%raiseError(myName//": Failed to retrieve number of dataspace dimensions.")
+      ENDIF
+      IF(ndims /= rank)THEN
+        CALL this%e%raiseError(myName//": Using wrong read function for rank.")
+      ENDIF
+
+      CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
+      IF(error < 0)THEN
+        CALL this%e%raiseError(myName//": Failed to retrieve dataspace dimensions.")
+      ENDIF
+
+
+      ! Allocate character array to size
+      ALLOCATE(datac(dims(1),dims(2),dims(3)))
+
+      ! Read the dataset
+      mem=H5T_NATIVE_CHARACTER
+      CALL h5dread_f(dset_id,mem,datac,dims,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//": Failed to read data from dataset.")
+      ENDIF
+      
+      ! Allocate space if needed
+      IF(ALLOCATED(data))THEN
+        ! Make sure the data is the right size
+        IF(ANY(SIZE(data) /= [dims(2),dims(3)]))THEN
+          CALL this%e%raiseError(myName//": data array is the wrong size.")
+        ENDIF
+      ELSE
+        ! Allocate to size
+        ALLOCATE(data(dims(2),dims(3)))
+      ENDIF
+      
+      ! Convert to StringType
+      DO i=1,SIZE(data,1)
+        DO j=1,SIZE(data,2)
+          DO k=1,SIZE(datac(:,i,j))
+            data(i,j)=data(i,j)//datac(k,i,j)
+          ENDDO
+        ENDDO
+      ENDDO
+      
+      ! Close the dataset
+      CALL h5dclose_f(dset_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//": Failed to close dataset.")
+      ENDIF
+
+      ! Close the dataspace
+      CALL h5sclose_f(dspace_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//": Failed to close dataspace.")
+      ENDIF
+
+#endif
+    ENDSUBROUTINE read_c2
+!
+!-------------------------------------------------------------------------------
+!> @brief Read a rank-3 array of strings from dataset
+    SUBROUTINE read_c3(this,dsetname,data)
+      CHARACTER(LEN=*),PARAMETER :: myName='readc3_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: this
+      CHARACTER(LEN=*),INTENT(IN) :: dsetname
+      TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: data(:,:,:)
+      CHARACTER,ALLOCATABLE :: datac(:,:,:,:)
+      INTEGER(SIK) :: i,j,k,m
+      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+#ifdef MPACT_HAVE_HDF5
+      INTEGER(HSIZE_T),DIMENSION(4) :: dims,maxdims
+      INTEGER(HID_T),PARAMETER :: rank=4
+      
+      INTEGER(HID_T) :: error,mem,ndims
+      INTEGER(HID_T) :: dspace_id,dset_id
+
+      ! Make sure the object is initialized
+      IF(.NOT.this%isinit)THEN
+        CALL this%e%raiseError(myName//': File object not initialized.')
+      ENDIF
+
+
+      ! Convert the path name to use slashes
+      path=convertPath(dsetname)
+
+      ! Open the dataset
+      CALL h5dopen_f(this%file_id, path, dset_id, error)
+
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//": Failed to open dataset.")
+      ENDIF
+
+      ! Get dataset dimensions for allocation
+      CALL h5dget_space_f(dset_id,dspace_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//": Failed to obtain the dataspace.")
+      ENDIF
+      ! Make sure the rank is right
+      CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+      IF(error < 0)THEN
+        CALL this%e%raiseError(myName//": Failed to retrieve number of dataspace dimensions.")
+      ENDIF
+      IF(ndims /= rank)THEN
+        CALL this%e%raiseError(myName//": Using wrong read function for rank.")
+      ENDIF
+
+      CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
+      IF(error < 0)THEN
+        CALL this%e%raiseError(myName//": Failed to retrieve dataspace dimensions.")
+      ENDIF
+
+
+      ! Allocate character array to size
+      ALLOCATE(datac(dims(1),dims(2),dims(3),dims(4)))
+
+      ! Read the dataset
+      mem=H5T_NATIVE_CHARACTER
+      CALL h5dread_f(dset_id,mem,datac,dims,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//": Failed to read data from dataset.")
+      ENDIF
+      
+      ! Allocate space if needed
+      IF(ALLOCATED(data))THEN
+        ! Make sure the data is the right size
+        IF(ANY(SIZE(data) /= [dims(2),dims(3),dims(4)]))THEN
+          CALL this%e%raiseError(myName//": data array is the wrong size.")
+        ENDIF
+      ELSE
+        ! Allocate to size
+        ALLOCATE(data(dims(2),dims(3),dims(4)))
+      ENDIF
+      
+      ! Convert to StringType
+      DO i=1,SIZE(data,1)
+        DO j=1,SIZE(data,2)
+          DO m=1,SIZE(data,3)
+            DO k=1,SIZE(datac(:,i,j,m))
+             data(i,j,m)=data(i,j,m)//datac(k,i,j,m)
+            ENDDO
+          ENDDO
+        ENDDO
+      ENDDO
+      
+      ! Close the dataset
+      CALL h5dclose_f(dset_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//": Failed to close dataset.")
+      ENDIF
+
+      ! Close the dataspace
+      CALL h5sclose_f(dspace_id,error)
+      IF(error /= 0)THEN
+        CALL this%e%raiseError(myName//": Failed to close dataspace.")
+      ENDIF
+
+#endif
+    ENDSUBROUTINE read_c3
 !
 !-------------------------------------------------------------------------------
 !> @brief Convert a path provided with '->' separators to '/'
