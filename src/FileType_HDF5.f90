@@ -58,10 +58,6 @@ MODULE FileType_HDF5
   USE Strings
   IMPLICIT NONE
   PRIVATE
-  
-#ifdef HAVE_MPI
-  INCLUDE 'mpif.h'
-#endif
 
   !> This type extends the base file type, and adds support for writing to and
   !List of Public Members
@@ -567,19 +563,6 @@ MODULE FileType_HDF5
       ENDIF
       
       ! Create the dataspace
-#ifdef HAVE_MPI
-      ! Make sure that the global dims are present if needed
-      IF (this%pe%rank == 0)THEN
-        IF(.NOT.PRESENT(gdims_in))THEN
-          CALL this%e%raiseError(myName//': For parallel,write, global '//&
-            'dimensions are required.')
-        ENDIF
-      ENDIF
-      CALL h5pset_chunk_f(plist_id,rank,ldims,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set chunk.')
-      ENDIF
-#endif
       ! Global dataspace
       CALL h5screate_simple_f(rank,gdims,gspace_id,error)
       IF(error /= 0)THEN
@@ -618,21 +601,6 @@ MODULE FileType_HDF5
         CALL this%e%raiseError(myName//': Could not create property list '//&
           'for write operation.')
       ENDIF
-#ifdef HAVE_MPI
-      ! Set to parallel write
-      CALL h5pset_dxpl_mpio_f(plist_id,H5FD_MPIO_COLLECTIVE_F,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set parallel write.')
-      ENDIF
-      
-      ! Select the hyperslab
-!      CALL h5sselect_hyperslab_f(gspace_id,H5S_SELECT_SET_
-!> @brief Write a rank-1 array of doubles to a datasetF,offset,one,error, &
-!                                 one,ldims)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not select hyperslab.')
-      ENDIF
-#endif
       
       ! Write to the dataset
       CALL h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, data, gdims, error, &
@@ -719,19 +687,6 @@ MODULE FileType_HDF5
       ENDIF
       
       ! Create the dataspace
-#ifdef HAVE_MPI
-      ! Make sure that the global dims are present if needed
-      IF (this%pe%rank == 0)THEN
-        IF(.NOT.PRESENT(gdims_in))THEN
-          CALL this%e%raiseError(myName//': For parallel,write, global '//&
-            'dimensions are required.')
-        ENDIF
-      ENDIF
-      CALL h5pset_chunk_f(plist_id,rank,ldims,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set chunk.')
-      ENDIF
-#endif
       ! Global dataspace
       CALL h5screate_simple_f(rank,gdims,gspace_id,error)
       IF(error /= 0)THEN
@@ -770,21 +725,6 @@ MODULE FileType_HDF5
         CALL this%e%raiseError(myName//': Could not create property list '//&
           'for write operation.')
       ENDIF
-#ifdef HAVE_MPI
-      ! Set to parallel write
-      CALL h5pset_dxpl_mpio_f(plist_id,H5FD_MPIO_COLLECTIVE_F,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set parallel write.')
-      ENDIF
-      
-      ! Select the hyperslab
-!      CALL h5sselect_hyperslab_f(gspace_id,H5S_SELECT_SET_
-!> @brief Write a rank-1 array of doubles to a datasetF,offset,one,error, &
-!                                 one,ldims)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not select hyperslab.')
-      ENDIF
-#endif
       
       ! Write to the dataset
       CALL h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, data, gdims, error, &
@@ -870,20 +810,7 @@ MODULE FileType_HDF5
         CALL this%e%raiseError(myName//': Could not create parameter list.')
       ENDIF
       
-      ! Create the dataspace. This changes for parallel datasets.
-#ifdef HAVE_MPI
-      ! Make sure that the global dims are present if needed
-      IF (this%pe%rank == 0)THEN
-        IF(.NOT.PRESENT(gdims_in))THEN
-          CALL this%e%raiseError(myName//': For parallel write, global '//&
-          'dimensions are required.')
-        ENDIF
-      ENDIF
-      CALL h5pset_chunk_f(plist_id,rank,ldims,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set chunk.')
-      ENDIF
-#endif
+      ! Create the dataspace. 
       ! Global dataspace
       CALL h5screate_simple_f(rank,gdims,gspace_id,error)
       IF(error /= 0)THEN
@@ -920,20 +847,6 @@ MODULE FileType_HDF5
       IF(error /= 0)THEN
         CALL this%e%raiseError(myName//': Could not create property list.')
       ENDIF
-      
-#ifdef HAVE_MPI
-      ! Set to parallel write
-      CALL h5pset_dxpl_mpio_f(plist_id,H5FD_MPIO_COLLECTIVE_F,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set to parallel write.')
-      ENDIF
-      ! Select the hyperslab
-      CALL h5sselect_hyperslab_f(gspace_id,H5S_SELECT_SET_F,offset,one,error, &
-                                 one,ldims)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not select hyperslab.')
-      ENDIF
-#endif
       
       ! Write to the dataset
       CALL h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, data, gdims, error, &
@@ -1017,20 +930,7 @@ MODULE FileType_HDF5
         CALL this%e%raiseError(myName//': Could not create parameter list.')
       ENDIF
       
-      ! Create the dataspace. This changes for parallel datasets.
-#ifdef HAVE_MPI
-      ! Make sure that the global dims are present if needed
-      IF (this%pe%rank == 0)THEN
-        IF(.NOT.PRESENT(gdims_in))THEN
-          CALL this%e%raiseError(myName//': For parallel write, global '//&
-          'dimensions are required.')
-        ENDIF
-      ENDIF
-      CALL h5pset_chunk_f(plist_id,rank,ldims,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set chunk.')
-      ENDIF
-#endif
+      ! Create the dataspace.
       ! Global dataspace
       CALL h5screate_simple_f(rank,gdims,gspace_id,error)
       IF(error /= 0)THEN
@@ -1066,21 +966,7 @@ MODULE FileType_HDF5
       CALL h5pcreate_f(H5P_DATASET_XFER_F, plist_id,error)
       IF(error /= 0)THEN
         CALL this%e%raiseError(myName//': Could not create property list.')
-      ENDIF
-      
-#ifdef HAVE_MPI
-      ! Set to parallel write
-      CALL h5pset_dxpl_mpio_f(plist_id,H5FD_MPIO_COLLECTIVE_F,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set to parallel write.')
-      ENDIF
-      ! Select the hyperslab
-      CALL h5sselect_hyperslab_f(gspace_id,H5S_SELECT_SET_F,offset,one,error, &
-                                 one,ldims)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not select hyperslab.')
-      ENDIF
-#endif
+      ENDIF 
       
       ! Write to the dataset
       CALL h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, data, gdims, error, &
@@ -1163,19 +1049,6 @@ MODULE FileType_HDF5
       ENDIF
       
       ! Create the dataspace
-#ifdef HAVE_MPI
-      ! Make sure that the global dims are present if needed
-      IF (this%pe%rank == 0)THEN
-        IF(.NOT.PRESENT(gdims_in))THEN
-          CALL this%e%raiseError(myName//': For parallel write, global '//&
-            'dimensions are required.')
-        ENDIF
-      ENDIF
-      CALL h5pset_chunk_f(plist_id,rank,ldims,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set chunk.')
-      ENDIF
-#endif
       ! Global dataspace
       CALL h5screate_simple_f(rank,gdims,gspace_id,error)
       IF(error /= 0)THEN
@@ -1215,20 +1088,6 @@ MODULE FileType_HDF5
         CALL this%e%raiseError(myName//': Could not create property list '//&
           'for write operation.')
       ENDIF
-#ifdef HAVE_MPI
-      ! Set to parallel write
-      CALL h5pset_dxpl_mpio_f(plist_id,H5FD_MPIO_COLLECTIVE_F,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set parallel write.')
-      ENDIF
-      
-      ! Select the hyperslab
-      CALL h5sselect_hyperslab_f(gspace_id,H5S_SELECT_SET_F,offset,one,error, &
-                                 one,ldims)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not select hyperslab.')
-      ENDIF
-#endif
       
       ! Write to the dataset
       CALL h5dwrite_f(dset_id, H5T_NATIVE_REAL, data, gdims, error, &
@@ -1314,19 +1173,6 @@ MODULE FileType_HDF5
       ENDIF
       
       ! Create the dataspace
-#ifdef HAVE_MPI
-      ! Make sure that the global dims are present if needed
-      IF (this%pe%rank == 0)THEN
-        IF(.NOT.PRESENT(gdims_in))THEN
-          CALL this%e%raiseError(myName//': For parallel write, global '//&
-            'dimensions are required.')
-        ENDIF
-      ENDIF
-      CALL h5pset_chunk_f(plist_id,rank,ldims,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set chunk.')
-      ENDIF
-#endif
       ! Global dataspace
       CALL h5screate_simple_f(rank,gdims,gspace_id,error)
       IF(error /= 0)THEN
@@ -1365,20 +1211,6 @@ MODULE FileType_HDF5
         CALL this%e%raiseError(myName//': Could not create property list '//&
           'for write operation.')
       ENDIF
-#ifdef HAVE_MPI
-      ! Set to parallel write
-      CALL h5pset_dxpl_mpio_f(plist_id,H5FD_MPIO_COLLECTIVE_F,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set parallel write.')
-      ENDIF
-      
-      ! Select the hyperslab
-      CALL h5sselect_hyperslab_f(gspace_id,H5S_SELECT_SET_F,offset,one,error, &
-                                 one,ldims)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not select hyperslab.')
-      ENDIF
-#endif
       
       ! Write to the dataset
       CALL h5dwrite_f(dset_id, H5T_NATIVE_REAL, data, gdims, error, &
@@ -1465,19 +1297,6 @@ MODULE FileType_HDF5
       ENDIF
       
       ! Create the dataspace
-#ifdef HAVE_MPI
-      ! Make sure that the global dims are present if needed
-      IF (this%pe%rank == 0)THEN
-        IF(.NOT.PRESENT(gdims_in))THEN
-          CALL this%e%raiseError(myName//': For parallel,write, global '//&
-            'dimensions are required.')
-        ENDIF
-      ENDIF
-      CALL h5pset_chunk_f(plist_id,rank,ldims,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set chunk.')
-      ENDIF
-#endif
       ! Global dataspace
       CALL h5screate_simple_f(rank,gdims,gspace_id,error)
       IF(error /= 0)THEN
@@ -1516,20 +1335,6 @@ MODULE FileType_HDF5
         CALL this%e%raiseError(myName//': Could not create property list '//&
           'for write operation.')
       ENDIF
-#ifdef HAVE_MPI
-      ! Set to parallel write
-      CALL h5pset_dxpl_mpio_f(plist_id,H5FD_MPIO_COLLECTIVE_F,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set parallel write.')
-      ENDIF
-      
-      ! Select the hyperslab
-      CALL h5sselect_hyperslab_f(gspace_id,H5S_SELECT_SET_F,offset,one,error, &
-                                 one,ldims)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not select hyperslab.')
-      ENDIF
-#endif
       
       ! Write to the dataset
       CALL h5dwrite_f(dset_id, H5T_NATIVE_REAL, data, gdims, error, &
@@ -1617,19 +1422,6 @@ MODULE FileType_HDF5
       ENDIF
       
       ! Create the dataspace
-#ifdef HAVE_MPI
-      ! Make sure that the global dims are present if needed
-      IF (this%pe%rank == 0)THEN
-        IF(.NOT.PRESENT(gdims_in))THEN
-          CALL this%e%raiseError(myName//': For parallel,write, global '//&
-            'dimensions are required.')
-        ENDIF
-      ENDIF
-      CALL h5pset_chunk_f(plist_id,rank,ldims,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set chunk.')
-      ENDIF
-#endif
       ! Global dataspace
       CALL h5screate_simple_f(rank,gdims,gspace_id,error)
       IF(error /= 0)THEN
@@ -1668,20 +1460,6 @@ MODULE FileType_HDF5
         CALL this%e%raiseError(myName//': Could not create property list '//&
           'for write operation.')
       ENDIF
-#ifdef HAVE_MPI
-      ! Set to parallel write
-      CALL h5pset_dxpl_mpio_f(plist_id,H5FD_MPIO_COLLECTIVE_F,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set parallel write.')
-      ENDIF
-      
-      ! Select the hyperslab
-      CALL h5sselect_hyperslab_f(gspace_id,H5S_SELECT_SET_F,offset,one,error, &
-                                 one,ldims)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not select hyperslab.')
-      ENDIF
-#endif
       
       ! Write to the dataset
       CALL h5dwrite_f(dset_id, H5T_NATIVE_REAL, data, gdims, error, &
@@ -1771,19 +1549,6 @@ MODULE FileType_HDF5
       ENDIF
       
       ! Create the dataspace
-#ifdef HAVE_MPI
-      ! Make sure that the global dims are present if needed
-      IF (this%pe%rank == 0)THEN
-        IF(.NOT.PRESENT(gdims_in))THEN
-          CALL this%e%raiseError(myName//': For parallel,write, global '//&
-            'dimensions are required.')
-        ENDIF
-      ENDIF
-      CALL h5pset_chunk_f(plist_id,rank,ldims,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set chunk.')
-      ENDIF
-#endif
       ! Global dataspace
       CALL h5screate_simple_f(rank,gdims,gspace_id,error)
       IF(error /= 0)THEN
@@ -1822,20 +1587,6 @@ MODULE FileType_HDF5
         CALL this%e%raiseError(myName//': Could not create property list '//&
           'for write operation.')
       ENDIF
-#ifdef HAVE_MPI
-      ! Set to parallel write
-      CALL h5pset_dxpl_mpio_f(plist_id,H5FD_MPIO_COLLECTIVE_F,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set parallel write.')
-      ENDIF
-      
-      ! Select the hyperslab
-      CALL h5sselect_hyperslab_f(gspace_id,H5S_SELECT_SET_F,offset,one,error, &
-                                 one,ldims)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not select hyperslab.')
-      ENDIF
-#endif
 
       ! Convert to surrogate character array, since HDF5 does not support
       ! Boolean variables
@@ -1932,19 +1683,6 @@ MODULE FileType_HDF5
       ENDIF
       
       ! Create the dataspace
-#ifdef HAVE_MPI
-      ! Make sure that the global dims are present if needed
-      IF (this%pe%rank == 0)THEN
-        IF(.NOT.PRESENT(gdims_in))THEN
-          CALL this%e%raiseError(myName//': For parallel,write, global '//&
-            'dimensions are required.')
-        ENDIF
-      ENDIF
-      CALL h5pset_chunk_f(plist_id,rank,ldims,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set chunk.')
-      ENDIF
-#endif
       ! Global dataspace
       CALL h5screate_simple_f(rank,gdims,gspace_id,error)
       IF(error /= 0)THEN
@@ -1983,20 +1721,6 @@ MODULE FileType_HDF5
         CALL this%e%raiseError(myName//': Could not create property list '//&
           'for write operation.')
       ENDIF
-#ifdef HAVE_MPI
-      ! Set to parallel write
-      CALL h5pset_dxpl_mpio_f(plist_id,H5FD_MPIO_COLLECTIVE_F,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set parallel write.')
-      ENDIF
-      
-      ! Select the hyperslab
-      CALL h5sselect_hyperslab_f(gspace_id,H5S_SELECT_SET_F,offset,one,error, &
-                                 one,ldims)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not select hyperslab.')
-      ENDIF
-#endif
 
       ! Convert to surrogate character array, since HDF5 does not support
       ! Boolean variables
@@ -2092,19 +1816,6 @@ MODULE FileType_HDF5
       ENDIF
       
       ! Create the dataspace
-#ifdef HAVE_MPI
-      ! Make sure that the global dims are present if needed
-      IF (this%pe%rank == 0)THEN
-        IF(.NOT.PRESENT(gdims_in))THEN
-          CALL this%e%raiseError(myName//': For parallel,write, global '//&
-            'dimensions are required.')
-        ENDIF
-      ENDIF
-      CALL h5pset_chunk_f(plist_id,rank,ldims,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set chunk.')
-      ENDIF
-#endif
       ! Global dataspace
       CALL h5screate_simple_f(rank,gdims,gspace_id,error)
       IF(error /= 0)THEN
@@ -2143,20 +1854,6 @@ MODULE FileType_HDF5
         CALL this%e%raiseError(myName//': Could not create property list '//&
           'for write operation.')
       ENDIF
-#ifdef HAVE_MPI
-      ! Set to parallel write
-      CALL h5pset_dxpl_mpio_f(plist_id,H5FD_MPIO_COLLECTIVE_F,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set parallel write.')
-      ENDIF
-      
-      ! Select the hyperslab
-      CALL h5sselect_hyperslab_f(gspace_id,H5S_SELECT_SET_F,offset,one,error, &
-                                 one,ldims)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not select hyperslab.')
-      ENDIF
-#endif
 
       ! Convert to surrogate character array, since HDF5 does not support
       ! Boolean variables
@@ -2252,19 +1949,6 @@ MODULE FileType_HDF5
       ENDIF
       
       ! Create the dataspace
-#ifdef HAVE_MPI
-      ! Make sure that the global dims are present if needed
-      IF (this%pe%rank == 0)THEN
-        IF(.NOT.PRESENT(gdims_in))THEN
-          CALL this%e%raiseError(myName//': For parallel,write, global '//&
-            'dimensions are required.')
-        ENDIF
-      ENDIF
-      CALL h5pset_chunk_f(plist_id,rank,ldims,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set chunk.')
-      ENDIF
-#endif
       ! Global dataspace
       CALL h5screate_simple_f(rank,gdims,gspace_id,error)
       IF(error /= 0)THEN
@@ -2303,20 +1987,6 @@ MODULE FileType_HDF5
         CALL this%e%raiseError(myName//': Could not create property list '//&
           'for write operation.')
       ENDIF
-#ifdef HAVE_MPI
-      ! Set to parallel write
-      CALL h5pset_dxpl_mpio_f(plist_id,H5FD_MPIO_COLLECTIVE_F,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set parallel write.')
-      ENDIF
-      
-      ! Select the hyperslab
-      CALL h5sselect_hyperslab_f(gspace_id,H5S_SELECT_SET_F,offset,one,error, &
-                                 one,ldims)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not select hyperslab.')
-      ENDIF
-#endif
 
       ! Convert to surrogate character array, since HDF5 does not support
       ! Boolean variables
@@ -2409,19 +2079,6 @@ MODULE FileType_HDF5
       ENDIF
       
       ! Create the dataspace
-#ifdef HAVE_MPI
-      ! Make sure that the global dims are present if needed
-      IF (this%pe%rank == 0)THEN
-        IF(.NOT.PRESENT(gdims_in))THEN
-          CALL this%e%raiseError(myName//': For parallel,write, global '//&
-            'dimensions are required.')
-        ENDIF
-      ENDIF
-      CALL h5pset_chunk_f(plist_id,rank,ldims,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set chunk.')
-      ENDIF
-#endif
       ! Global dataspace
       CALL h5screate_simple_f(rank,gdims,gspace_id,error)
       IF(error /= 0)THEN
@@ -2460,20 +2117,6 @@ MODULE FileType_HDF5
         CALL this%e%raiseError(myName//': Could not create property list '//&
           'for write operation.')
       ENDIF
-#ifdef HAVE_MPI
-      ! Set to parallel write
-      CALL h5pset_dxpl_mpio_f(plist_id,H5FD_MPIO_COLLECTIVE_F,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set parallel write.')
-      ENDIF
-      
-      ! Select the hyperslab
-      CALL h5sselect_hyperslab_f(gspace_id,H5S_SELECT_SET_F,offset,one,error, &
-                                 one,ldims)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not select hyperslab.')
-      ENDIF
-#endif
       
       ! Write to the dataset
       CALL h5dwrite_f(dset_id, H5T_NATIVE_INTEGER, data, gdims, error, &
@@ -2558,19 +2201,6 @@ MODULE FileType_HDF5
       ENDIF
       
       ! Create the dataspace
-#ifdef HAVE_MPI
-      ! Make sure that the global dims are present if needed
-      IF (this%pe%rank == 0)THEN
-        IF(.NOT.PRESENT(gdims_in))THEN
-          CALL this%e%raiseError(myName//': For parallel,write, global '//&
-            'dimensions are required.')
-        ENDIF
-      ENDIF
-      CALL h5pset_chunk_f(plist_id,rank,ldims,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set chunk.')
-      ENDIF
-#endif
       ! Global dataspace
       CALL h5screate_simple_f(rank,gdims,gspace_id,error)
       IF(error /= 0)THEN
@@ -2609,20 +2239,6 @@ MODULE FileType_HDF5
         CALL this%e%raiseError(myName//': Could not create property list '//&
           'for write operation.')
       ENDIF
-#ifdef HAVE_MPI
-      ! Set to parallel write
-      CALL h5pset_dxpl_mpio_f(plist_id,H5FD_MPIO_COLLECTIVE_F,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set parallel write.')
-      ENDIF
-      
-      ! Select the hyperslab
-      CALL h5sselect_hyperslab_f(gspace_id,H5S_SELECT_SET_F,offset,one,error, &
-                                 one,ldims)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not select hyperslab.')
-      ENDIF
-#endif
       
       ! Write to the dataset
       CALL h5dwrite_f(dset_id, H5T_NATIVE_INTEGER, data, gdims, error, &
@@ -2709,19 +2325,6 @@ MODULE FileType_HDF5
       ENDIF
       
       ! Create the dataspace
-#ifdef HAVE_MPI
-      ! Make sure that the global dims are present if needed
-      IF (this%pe%rank == 0)THEN
-        IF(.NOT.PRESENT(gdims_in))THEN
-          CALL this%e%raiseError(myName//': For parallel,write, global '//&
-            'dimensions are required.')
-        ENDIF
-      ENDIF
-      CALL h5pset_chunk_f(plist_id,rank,ldims,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set chunk.')
-      ENDIF
-#endif
       ! Global dataspace
       CALL h5screate_simple_f(rank,gdims,gspace_id,error)
       IF(error /= 0)THEN
@@ -2760,20 +2363,6 @@ MODULE FileType_HDF5
         CALL this%e%raiseError(myName//': Could not create property list '//&
           'for write operation.')
       ENDIF
-#ifdef HAVE_MPI
-      ! Set to parallel write
-      CALL h5pset_dxpl_mpio_f(plist_id,H5FD_MPIO_COLLECTIVE_F,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set parallel write.')
-      ENDIF
-      
-      ! Select the hyperslab
-      CALL h5sselect_hyperslab_f(gspace_id,H5S_SELECT_SET_F,offset,one,error, &
-                                 one,ldims)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not select hyperslab.')
-      ENDIF
-#endif
       
       ! Write to the dataset
       CALL h5dwrite_f(dset_id, H5T_NATIVE_INTEGER, data, gdims, error, &
@@ -2861,19 +2450,6 @@ MODULE FileType_HDF5
       ENDIF
       
       ! Create the dataspace
-#ifdef HAVE_MPI
-      ! Make sure that the global dims are present if needed
-      IF (this%pe%rank == 0)THEN
-        IF(.NOT.PRESENT(gdims_in))THEN
-          CALL this%e%raiseError(myName//': For parallel,write, global '//&
-            'dimensions are required.')
-        ENDIF
-      ENDIF
-      CALL h5pset_chunk_f(plist_id,rank,ldims,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set chunk.')
-      ENDIF
-#endif
       ! Global dataspace
       CALL h5screate_simple_f(rank,gdims,gspace_id,error)
       IF(error /= 0)THEN
@@ -2912,20 +2488,6 @@ MODULE FileType_HDF5
         CALL this%e%raiseError(myName//': Could not create property list '//&
           'for write operation.')
       ENDIF
-#ifdef HAVE_MPI
-      ! Set to parallel write
-      CALL h5pset_dxpl_mpio_f(plist_id,H5FD_MPIO_COLLECTIVE_F,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set parallel write.')
-      ENDIF
-      
-      ! Select the hyperslab
-      CALL h5sselect_hyperslab_f(gspace_id,H5S_SELECT_SET_F,offset,one,error, &
-                                 one,ldims)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not select hyperslab.')
-      ENDIF
-#endif
       
       ! Write to the dataset
       CALL h5dwrite_f(dset_id, H5T_NATIVE_INTEGER, data, gdims, error, &
@@ -3021,19 +2583,6 @@ MODULE FileType_HDF5
       ENDIF
       
       ! Create the dataspace
-#ifdef HAVE_MPI
-      ! Make sure that the global dims are present if needed
-      IF (this%pe%rank == 0)THEN
-        IF(.NOT.PRESENT(gdims_in))THEN
-          CALL this%e%raiseError(myName//': For parallel,write, global '//&
-            'dimensions are required.')
-        ENDIF
-      ENDIF
-      CALL h5pset_chunk_f(plist_id,rank,ldims,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set chunk.')
-      ENDIF
-#endif
       ! Global dataspace
       CALL h5screate_simple_f(rank,gdims,gspace_id,error)
       IF(error /= 0)THEN
@@ -3072,20 +2621,6 @@ MODULE FileType_HDF5
         CALL this%e%raiseError(myName//': Could not create property list '//&
           'for write operation.')
       ENDIF
-#ifdef HAVE_MPI
-      ! Set to parallel write
-      CALL h5pset_dxpl_mpio_f(plist_id,H5FD_MPIO_COLLECTIVE_F,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set parallel write.')
-      ENDIF
-      
-      ! Select the hyperslab
-      CALL h5sselect_hyperslab_f(gspace_id,H5S_SELECT_SET_F,offset,one,error, &
-                                 one,ldims)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not select hyperslab.')
-      ENDIF
-#endif
       
       ! Write to the dataset
       CALL h5dwrite_f(dset_id, H5T_NATIVE_CHARACTER, datac, gdims, error, &
@@ -3209,19 +2744,6 @@ MODULE FileType_HDF5
       ENDIF
       
       ! Create the dataspace
-#ifdef HAVE_MPI
-      ! Make sure that the global dims are present if needed
-      IF (this%pe%rank == 0)THEN
-        IF(.NOT.PRESENT(gdims_in))THEN
-          CALL this%e%raiseError(myName//': For parallel,write, global '//&
-            'dimensions are required.')
-        ENDIF
-      ENDIF
-      CALL h5pset_chunk_f(plist_id,rank,ldims,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set chunk.')
-      ENDIF
-#endif
       ! Global dataspace
       CALL h5screate_simple_f(rank,gdims,gspace_id,error)
       IF(error /= 0)THEN
@@ -3260,20 +2782,6 @@ MODULE FileType_HDF5
         CALL this%e%raiseError(myName//': Could not create property list '//&
           'for write operation.')
       ENDIF
-#ifdef HAVE_MPI
-      ! Set to parallel write
-      CALL h5pset_dxpl_mpio_f(plist_id,H5FD_MPIO_COLLECTIVE_F,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set parallel write.')
-      ENDIF
-      
-      ! Select the hyperslab
-      CALL h5sselect_hyperslab_f(gspace_id,H5S_SELECT_SET_F,offset,one,error, &
-                               one,ldims)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not select hyperslab.')
-      ENDIF
-#endif
       
       ! Write to the dataset
       CALL h5dwrite_f(dset_id, H5T_NATIVE_CHARACTER, datac, gdims, error, &
@@ -3399,19 +2907,6 @@ MODULE FileType_HDF5
       ENDIF
       
       ! Create the dataspace
-#ifdef HAVE_MPI
-      ! Make sure that the global dims are present if needed
-      IF (this%pe%rank == 0)THEN
-        IF(.NOT.PRESENT(gdims_in))THEN
-          CALL this%e%raiseError(myName//': For parallel,write, global '//&
-            'dimensions are required.')
-        ENDIF
-      ENDIF
-      CALL h5pset_chunk_f(plist_id,rank,ldims,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set chunk.')
-      ENDIF
-#endif
       ! Global dataspace
       CALL h5screate_simple_f(rank,gdims,gspace_id,error)
       IF(error /= 0)THEN
@@ -3450,20 +2945,6 @@ MODULE FileType_HDF5
         CALL this%e%raiseError(myName//': Could not create property '//&
           'list for write operation.')
       ENDIF
-#ifdef HAVE_MPI
-      ! Set to parallel write
-      CALL h5pset_dxpl_mpio_f(plist_id,H5FD_MPIO_COLLECTIVE_F,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set parallel write.')
-      ENDIF
-      
-      ! Select the hyperslab
-      CALL h5sselect_hyperslab_f(gspace_id,H5S_SELECT_SET_F,offset,one, &
-                                  error,one,ldims)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not select hyperslab.')
-      ENDIF
-#endif
       
       ! Write to the dataset
       CALL h5dwrite_f(dset_id, H5T_NATIVE_CHARACTER, datac, ldims, error, &
@@ -3595,19 +3076,6 @@ MODULE FileType_HDF5
       ENDIF
       
       ! Create the dataspace
-#ifdef HAVE_MPI
-      ! Make sure that the global dims are present if needed
-      IF (this%pe%rank == 0)THEN
-        IF(.NOT.PRESENT(gdims_in))THEN
-          CALL this%e%raiseError(myName//': For parallel,write, '//&
-            'global dimensions are required.')
-        ENDIF
-      ENDIF
-      CALL h5pset_chunk_f(plist_id,rank,ldims,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set chunk.')
-      ENDIF
-#endif
       ! Global dataspace
       CALL h5screate_simple_f(rank,gdims,gspace_id,error)
       IF(error /= 0)THEN
@@ -3646,20 +3114,6 @@ MODULE FileType_HDF5
          CALL this%e%raiseError(myName//': Could not create property '//&
           'list for write operation.')
       ENDIF
-#ifdef HAVE_MPI
-      ! Set to parallel write
-      CALL h5pset_dxpl_mpio_f(plist_id,H5FD_MPIO_COLLECTIVE_F,error)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not set parallel write.')
-      ENDIF
-      
-      ! Select the hyperslab
-      CALL h5sselect_hyperslab_f(gspace_id,H5S_SELECT_SET_F,offset,one, &
-                               error,one,ldims)
-      IF(error /= 0)THEN
-        CALL this%e%raiseError(myName//': Could not select hyperslab.')
-      ENDIF
-#endif
       
       ! Write to the dataset
       CALL h5dwrite_f(dset_id, H5T_NATIVE_CHARACTER, datac, ldims, error,&
