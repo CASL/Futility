@@ -271,6 +271,9 @@ PROGRAM testHDF5
       ENDDO
       CLOSE(UNIT=1)
 
+      DEALLOCATE(testD1,testD2,testD3,testR1,testR2,testR3,testI1,testI2, &
+            testI3,testL1,testL2,testL3,testC1,testC2,testC3)
+
       CALL h5%clear()
       ASSERT(.NOT.h5%isinit, 'HDF5 object not properly cleared!')
       
