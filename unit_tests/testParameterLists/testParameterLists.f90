@@ -488,23 +488,23 @@ PROGRAM testParameterLists
   WRITE(*,*) 'TESTING Has Routines...'
   CALL testParam%edit(OUTPUT_UNIT)
   IF(testParam%has('->error')) THEN
-    WRITE(*,*) "failed"
+    WRITE(*,*) "Incorrect input - no leading name  FAILED!"
     STOP 666
   ENDIF
   IF(testParam%has('testPL->error->')) THEN
-    WRITE(*,*) "failed"
+    WRITE(*,*) "Incorrect input - no final name  FAILED!"
     STOP 666
   ENDIF
   IF(.NOT. testParam%has('testPL')) THEN
-    WRITE(*,*) "failed"
+    WRITE(*,*) "Find top level parameter list  FAILED!"
     STOP 666
   ENDIF
   IF(.NOT. testParam%has('testPL->testSDK')) THEN
-    WRITE(*,*) "failed"
+    WRITE(*,*) "Find parameter  FAILED!"
     STOP 666
   ENDIF
   IF(testParam%has('testPL->shenanigans')) THEN
-    WRITE(*,*) "failed"
+    WRITE(*,*) "Find non-existant parameter  FAILED!"
     STOP 666
   ENDIF
   

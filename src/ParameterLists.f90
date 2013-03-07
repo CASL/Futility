@@ -1380,6 +1380,7 @@ MODULE ParameterLists
       CALL thisParam%getParam(name,tmpParam)
       hasname=ASSOCIATED(tmpParam)
       
+      tmpParam => NULL()
       IF(localalloc) DEALLOCATE(eParams)
     ENDFUNCTION has_ParamType
 !
