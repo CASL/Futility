@@ -77,12 +77,14 @@
 !> END PROGRAM
 !> @endcode
 !>
-!> @author Brendan Kochunas and Dan Jabaay
+!> @author Brendan Kochunas and Dan Jabaay and Benjamin Collins
 !>   @date 07/26/2012
 !> @par Revisions:
 !>   (08/14/2012) - Dan Jabaay
 !>   - Expanded functionality to scalar, one, two, and three dimensional arrays
 !>     of the parameter types listed above.
+!>   (03/07/2013) - Benjamin Collins
+!>   - Added has function to return if the parameter list has a given parameter
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE ParameterLists
   USE IntrType
@@ -438,6 +440,9 @@ MODULE ParameterLists
       !> @copybrief ParameterLists::remove_ParamType
       !> @copydoc ParameterLists::remove_ParamType
       PROCEDURE,PASS :: remove => remove_ParamType
+      !> @copybrief ParameterLists::has_ParamType
+      !> @copydoc ParameterLists::has_ParamType
+      PROCEDURE,PASS :: has => has_ParamType
       !> @copybrief ParameterLists::validate_ParamType
       !> @copydoc ParameterLists::validate_ParamType
       PROCEDURE,PASS :: validate => validate_ParamType
@@ -1329,6 +1334,54 @@ MODULE ParameterLists
       ENDIF
       IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE remove_ParamType
+!
+!-------------------------------------------------------------------------------
+!> @brief Determines if a parameter with a given name exists in a parameter object.
+!> @param thisParam the host parameter to search for the parameter (whose name
+!>        matches @c name) from
+!> @param name the name of the parameter to be searched for in @c thisParam
+!> @param hasname the logical which returns if @c name is present
+!>
+!> If @c name cannot be matched then FALSE is returned. The @c name cannot
+!> be blank or contain entries like "->somename" or 
+!> "firstname -> -> secondname".
+!>
+    FUNCTION has_ParamType(thisParam,name) RESULT(hasname)
+      CHARACTER(LEN=*),PARAMETER :: myName='has_ParamType'
+      CLASS(ParamType),INTENT(INOUT) :: thisParam
+      CHARACTER(LEN=*),INTENT(IN) :: name
+      LOGICAL(SBK) :: hasname
+      CHARACTER(LEN=LEN(name)) :: tmpname
+      LOGICAL(SBK) :: localalloc
+      INTEGER(SIK) :: ipos
+      CLASS(ParamType),POINTER :: tmpParam => NULL()
+      
+      hasname=.FALSE.
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eParams)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eParams)
+      ENDIF
+      
+      tmpname=name
+      ipos=INDEX(tmpname,'->')
+      DO WHILE (ipos > 0)
+        IF((ipos == 1) .OR. (ipos == LEN_TRIM(tmpname)-1)) THEN
+          CALL eParams%raiseError(modName//'::'//myName// &
+            ' - cannot search for a blank name!')
+          RETURN
+        ENDIF
+        tmpname=ADJUSTL(tmpname(ipos+2:LEN(tmpname)))
+        ipos=INDEX(tmpname,'->')
+      ENDDO
+        
+      
+      !Search for the parameter name
+      CALL thisParam%getParam(name,tmpParam)
+      hasname=ASSOCIATED(tmpParam)
+      
+      IF(localalloc) DEALLOCATE(eParams)
+    ENDFUNCTION has_ParamType
 !
 !-------------------------------------------------------------------------------
 !> @brief Edits the information of a parameter

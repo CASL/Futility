@@ -485,6 +485,30 @@ PROGRAM testParameterLists
   DEALLOCATE(valslk3a)
   
   WRITE(*,*) '---------------------------------------------------'
+  WRITE(*,*) 'TESTING Has Routines...'
+  CALL testParam%edit(OUTPUT_UNIT)
+  IF(testParam%has('->error')) THEN
+    WRITE(*,*) "failed"
+    STOP 666
+  ENDIF
+  IF(testParam%has('testPL->error->')) THEN
+    WRITE(*,*) "failed"
+    STOP 666
+  ENDIF
+  IF(.NOT. testParam%has('testPL')) THEN
+    WRITE(*,*) "failed"
+    STOP 666
+  ENDIF
+  IF(.NOT. testParam%has('testPL->testSDK')) THEN
+    WRITE(*,*) "failed"
+    STOP 666
+  ENDIF
+  IF(testParam%has('testPL->shenanigans')) THEN
+    WRITE(*,*) "failed"
+    STOP 666
+  ENDIF
+  
+  WRITE(*,*) '---------------------------------------------------'
   WRITE(*,*) 'TESTING Remove Routines...'
   !test remove
   CALL testParam%edit(OUTPUT_UNIT)
