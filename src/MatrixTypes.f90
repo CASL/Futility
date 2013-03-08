@@ -990,7 +990,7 @@ MODULE MatrixTypes
       IF(matrix%isInit) THEN
         IF(((j <= matrix%n) .AND. (i <= matrix%n)) &
             .AND. (i>=1) .AND. (j >= 1)) THEN
-          !based on i,j, put in correct location
+          !based on i,j, pull from correct location
           IF((j == (i-1)).AND. (i > 1)) THEN !sub-diag
             getval=matrix%a(1,i)
           ELSEIF((j == (i+1)) .AND. (i < matrix%n)) THEN !super-diag
@@ -998,6 +998,8 @@ MODULE MatrixTypes
           ELSEIF(i == j) THEN
             getval=matrix%a(2,i)
           ENDIF
+        ELSE
+          getval=-1051._SRK
         ENDIF
       ENDIF
     ENDSUBROUTINE get_TriDiagMatrixType
@@ -1016,8 +1018,11 @@ MODULE MatrixTypes
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(INOUT) :: getval
       IF(matrix%isInit) THEN
-        IF(((j <= matrix%m) .AND. (i <= matrix%n)) &
-          .AND. ((j > 0) .AND. (i > 0))) getval=matrix%a(i,j)
+        IF(((j <= matrix%m) .AND. (i <= matrix%n)) .AND. ((j > 0) .AND. (i > 0))) THEN 
+          getval=matrix%a(i,j)
+        ELSE
+          getval=-1051._SRK
+        ENDIF
       ENDIF
     ENDSUBROUTINE get_DenseRectMatrixType
 !
