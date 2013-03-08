@@ -551,17 +551,17 @@ PROGRAM testMatrixTypes
         TYPE IS(SparseMatrixType)
           CALL thisMatrix%get(4,2,dummy)
           IF(dummy /= -1051._SRK) THEN
-            WRITE(*,*) 'CALL sparse%get(...) FAILED!' !column one check
+            WRITE(*,*) 'CALL sparse%get(...) FAILED!' 
             STOP 666
           ENDIF
           CALL thisMatrix%get(-1,2,dummy)
           IF(dummy/=-1051._SRK) THEN
-            WRITE(*,*) 'CALL sparse%get(...) FAILED!' !column one check
+            WRITE(*,*) 'CALL sparse%get(...) FAILED!' 
             STOP 666
           ENDIF
           CALL thisMatrix%get(2,-1,dummy)
           IF(dummy/=-1051._SRK) THEN
-            WRITE(*,*) 'CALL sparse%get(...) FAILED!' !column one check
+            WRITE(*,*) 'CALL sparse%get(...) FAILED!' 
             STOP 666
           ENDIF
       ENDSELECT
@@ -571,13 +571,12 @@ PROGRAM testMatrixTypes
         TYPE IS(SparseMatrixType)      
           CALL thisMatrix%get(1,1,dummy)
           IF(dummy /= 0.0_SRK) THEN
-            WRITE(*,*) 'CALL sparse%get(...) FAILED!' !column one check
+            WRITE(*,*) 'CALL sparse%get(...) FAILED!' 
             STOP 666
           ENDIF
       ENDSELECT
       CALL thisMatrix%clear()
       WRITE(*,*) '  Passed: CALL sparse%get(...)'
-      
       DEALLOCATE(thisMatrix)
 !
 !Test for dense square matrices        
@@ -705,9 +704,14 @@ PROGRAM testMatrixTypes
       !Test BLAS_matvec
       x=1.0_SRK
       y=1.0_SRK
-      SELECTTYPE(thisMatrix)
-        TYPE IS(DenseSquareMatrixType)
-      ENDSELECT
+      CALL thisMatrix%clear()
+      CALL pList%clear()
+      CALL pList%add('MatrixType->n',2_SNK)
+      CALL pList%add('MatrixType->isSym',.TRUE.)
+      CALL thisMatrix%init(pList)  !symmetric
+      CALL thisMatrix%set(1,1,1._SRK)
+      CALL thisMatrix%set(1,2,2._SRK)
+      CALL thisMatrix%set(2,2,3._SRK)
       CALL BLAS_matvec(THISMATRIX=thisMatrix,X=x,Y=y)
       IF(ANY(.NOT.(y .APPROXEQ. (/4._SRK,6._SRK,1._SRK/)))) THEN
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,X=x,Y=y) -densesq FAILED!"
@@ -823,6 +827,84 @@ PROGRAM testMatrixTypes
       !no crash? good
       CALL thisMatrix%clear()
       WRITE(*,*) '  Passed: CALL densesquare%set(...)'
+      
+      !Perform test of functionality of get function
+      ![1 0 2]
+      ![0 0 3]
+      ![4 5 6]
+      CALL thisMatrix%clear()
+      CALL pList%clear()
+      CALL pList%add('MatrixType->n',3_SNK)
+      CALL pList%add('MatrixType->isSym',.FALSE.)
+      CALL thisMatrix%init(pList)
+      SELECTTYPE(thisMatrix)
+        TYPE IS(DenseSquareMatrixType)
+          CALL thisMatrix%set(1,1,1._SRK)
+          CALL thisMatrix%set(1,3,2._SRK)
+          CALL thisMatrix%set(2,3,3._SRK)
+          CALL thisMatrix%set(3,1,4._SRK)
+          CALL thisMatrix%set(3,2,5._SRK)
+          CALL thisMatrix%set(3,3,6._SRK)
+          IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+          ALLOCATE(dummyvec(9))
+          CALL thisMatrix%get(1,1,dummyvec(1))
+          CALL thisMatrix%get(2,1,dummyvec(2))
+          CALL thisMatrix%get(3,1,dummyvec(3))
+          CALL thisMatrix%get(1,2,dummyvec(4))
+          CALL thisMatrix%get(2,2,dummyvec(5))
+          CALL thisMatrix%get(3,2,dummyvec(6))
+          CALL thisMatrix%get(1,3,dummyvec(7))
+          CALL thisMatrix%get(2,3,dummyvec(8))
+          CALL thisMatrix%get(3,3,dummyvec(9))
+          IF(((dummyvec(1) /= 1._SRK)  .OR. &
+              (dummyvec(2) /= 0._SRK)) .OR. &
+              (dummyvec(3) /= 4._SRK)) THEN
+            WRITE(*,*) dummyvec
+            WRITE(*,*) 'CALL densesquare%get(...) FAILED!' !column one check
+            STOP 666
+          ELSEIF(((dummyvec(4) /= 0._SRK).OR. &
+                  (dummyvec(5) /= 0._SRK)) .OR. &
+                  (dummyvec(6) /= 5._SRK)) THEN
+            WRITE(*,*) 'CALL densesquare%get(...) FAILED!' !column two check
+            STOP 666
+          ELSEIF(((dummyvec(7) /= 2._SRK).OR. &
+                  (dummyvec(8) /= 3._SRK)) .OR. &
+                  (dummyvec(9) /= 6._SRK)) THEN
+            WRITE(*,*) 'CALL densesquare%get(...) FAILED!' !column three check
+            STOP 666
+          ENDIF
+      ENDSELECT
+      !test with out of bounds i,j, make sure no crash.
+      SELECTTYPE(thisMatrix)
+        TYPE IS(DenseSquareMatrixType)
+          CALL thisMatrix%get(4,2,dummy)
+          IF(dummy /= -1051._SRK) THEN
+            WRITE(*,*) 'CALL densesquare%get(...) FAILED!' 
+            STOP 666
+          ENDIF
+          CALL thisMatrix%get(-1,2,dummy)
+          IF(dummy/=-1051._SRK) THEN
+            WRITE(*,*) 'CALL densesquare%get(...) FAILED!' 
+            STOP 666
+          ENDIF
+          CALL thisMatrix%get(2,-1,dummy)
+          IF(dummy/=-1051._SRK) THEN
+            WRITE(*,*) 'CALL densesquare%get(...) FAILED!' 
+            STOP 666
+          ENDIF
+      ENDSELECT
+      !test get with uninit, make sure no crash.
+      CALL thisMatrix%clear()
+      SELECTTYPE(thisMatrix)
+        TYPE IS(DenseSquareMatrixType)      
+          CALL thisMatrix%get(1,1,dummy)
+          IF(dummy /= 0.0_SRK) THEN
+            WRITE(*,*) 'CALL densesquare%get(...) FAILED!' !column one check
+            STOP 666
+          ENDIF
+      ENDSELECT
+      CALL thisMatrix%clear()
+      WRITE(*,*) '  Passed: CALL densesquare%get(...)'
       DEALLOCATE(thisMatrix)
 !
 !Test for tri-diagonal matrices
@@ -1036,6 +1118,82 @@ PROGRAM testMatrixTypes
       !no crash? good
       CALL thisMatrix%clear()
       WRITE(*,*) '  Passed: CALL tridiag%set(...)'
+      
+      !Perform test of functionality of get function
+      ![1 2 0]
+      ![4 0 3]
+      ![0 5 6]
+      CALL thisMatrix%clear()
+      CALL pList%clear()
+      CALL pList%add('MatrixType->n',3_SNK)
+      CALL pList%add('MatrixType->isSym',.FALSE.)
+      CALL thisMatrix%init(pList)
+      SELECTTYPE(thisMatrix)
+        TYPE IS(TriDiagMatrixType)
+          CALL thisMatrix%set(1,1,1._SRK)
+          CALL thisMatrix%set(1,2,2._SRK)
+          CALL thisMatrix%set(2,1,4._SRK)
+          CALL thisMatrix%set(2,3,3._SRK)
+          CALL thisMatrix%set(3,2,5._SRK)
+          CALL thisMatrix%set(3,3,6._SRK)
+          IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+          ALLOCATE(dummyvec(9))
+          dummyvec=0
+          CALL thisMatrix%get(1,1,dummyvec(1))
+          CALL thisMatrix%get(2,1,dummyvec(2))
+          CALL thisMatrix%get(1,2,dummyvec(4))
+          CALL thisMatrix%get(3,2,dummyvec(6))
+          CALL thisMatrix%get(2,3,dummyvec(8))
+          CALL thisMatrix%get(3,3,dummyvec(9))
+          IF(((dummyvec(1) /= 1._SRK)  .OR. &
+              (dummyvec(2) /= 4._SRK)) .OR. &
+              (dummyvec(3) /= 0._SRK)) THEN
+            WRITE(*,*) 'CALL tridiag%get(...) FAILED!' !column one check
+            STOP 666
+          ELSEIF(((dummyvec(4) /= 2._SRK).OR. &
+                  (dummyvec(5) /= 0._SRK)) .OR. &
+                  (dummyvec(6) /= 5._SRK)) THEN
+            WRITE(*,*) 'CALL tridiag%get(...) FAILED!' !column two check
+            STOP 666
+          ELSEIF(((dummyvec(7) /= 0._SRK).OR. &
+                  (dummyvec(8) /= 3._SRK)) .OR. &
+                  (dummyvec(9) /= 6._SRK)) THEN
+            WRITE(*,*) 'CALL tridiag%get(...) FAILED!' !column three check
+            STOP 666
+          ENDIF
+      ENDSELECT
+      !test with out of bounds i,j, make sure no crash.
+      SELECTTYPE(thisMatrix)
+        TYPE IS(TriDiagMatrixType)
+          CALL thisMatrix%get(4,2,dummy)
+          IF(dummy /= -1051._SRK) THEN
+            WRITE(*,*) 'CALL tridiag%get(...) FAILED!' 
+            STOP 666
+          ENDIF
+          CALL thisMatrix%get(-1,2,dummy)
+          IF(dummy/=-1051._SRK) THEN
+            WRITE(*,*) 'CALL tridiag%get(...) FAILED!' 
+            STOP 666
+          ENDIF
+          CALL thisMatrix%get(2,-1,dummy)
+          IF(dummy/=-1051._SRK) THEN
+            WRITE(*,*) 'CALL tridiag%get(...) FAILED!' 
+            STOP 666
+          ENDIF
+      ENDSELECT
+      !test get with uninit, make sure no crash.
+      CALL thisMatrix%clear()
+      SELECTTYPE(thisMatrix)
+        TYPE IS(TriDiagMatrixType)      
+          dummy=0.0_SRK
+          CALL thisMatrix%get(1,1,dummy)
+          IF(dummy /= 0.0_SRK) THEN
+            WRITE(*,*) 'CALL tridiag%get(...) FAILED!'
+            STOP 666
+          ENDIF
+      ENDSELECT
+      CALL thisMatrix%clear()
+      WRITE(*,*) '  Passed: CALL tridiag%get(...)'
       DEALLOCATE(thisMatrix)
 !
 !Test for dense rectangular matrices
@@ -1235,6 +1393,76 @@ PROGRAM testMatrixTypes
       !no crash? good
       CALL thisMatrix%clear()
       WRITE(*,*) '  Passed: CALL denserect%set(...)'
+      
+      !Perform test of functionality of get function
+      ![1 0 2]
+      ![4 5 3]
+      CALL thisMatrix%clear()
+      CALL pList%clear()
+      CALL pList%add('MatrixType->n',2_SNK)
+      CALL pList%add('MatrixType->m',3_SNK)
+      CALL thisMatrix%init(pList)
+      SELECTTYPE(thisMatrix)
+        TYPE IS(DenseRectMatrixType)
+          CALL thisMatrix%set(1,1,1._SRK)
+          CALL thisMatrix%set(1,3,2._SRK)
+          CALL thisMatrix%set(2,1,4._SRK)
+          CALL thisMatrix%set(2,2,5._SRK)
+          CALL thisMatrix%set(2,3,3._SRK)
+          IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+          ALLOCATE(dummyvec(6))
+          CALL thisMatrix%get(1,1,dummyvec(1))
+          CALL thisMatrix%get(2,1,dummyvec(2))
+          CALL thisMatrix%get(1,2,dummyvec(3))
+          CALL thisMatrix%get(2,2,dummyvec(4))
+          CALL thisMatrix%get(1,3,dummyvec(5))
+          CALL thisMatrix%get(2,3,dummyvec(6))
+          IF((dummyvec(1) /= 1._SRK)  .OR. &
+              (dummyvec(2) /= 4._SRK)) THEN
+            WRITE(*,*) 'CALL densesquare%get(...) FAILED!' !column one check
+            STOP 666
+          ELSEIF((dummyvec(3) /= 0._SRK).OR. &
+                  (dummyvec(4) /= 5._SRK)) THEN
+            WRITE(*,*) 'CALL densesquare%get(...) FAILED!' !column two check
+            STOP 666
+          ELSEIF((dummyvec(5) /= 2._SRK).OR. &
+                  (dummyvec(6) /= 3._SRK)) THEN
+            WRITE(*,*) 'CALL densesquare%get(...) FAILED!' !column three check
+            STOP 666
+          ENDIF
+      ENDSELECT
+      !test with out of bounds i,j, make sure no crash.
+      SELECTTYPE(thisMatrix)
+        TYPE IS(DenseRectMatrixType)
+          CALL thisMatrix%get(4,2,dummy)
+          IF(dummy /= -1051._SRK) THEN
+            WRITE(*,*) 'CALL densesquare%get(...) FAILED!' 
+            STOP 666
+          ENDIF
+          CALL thisMatrix%get(-1,2,dummy)
+          IF(dummy/=-1051._SRK) THEN
+            WRITE(*,*) 'CALL densesquare%get(...) FAILED!' 
+            STOP 666
+          ENDIF
+          CALL thisMatrix%get(2,-1,dummy)
+          IF(dummy/=-1051._SRK) THEN
+            WRITE(*,*) 'CALL densesquare%get(...) FAILED!' 
+            STOP 666
+          ENDIF
+      ENDSELECT
+      !test get with uninit, make sure no crash.
+      CALL thisMatrix%clear()
+      SELECTTYPE(thisMatrix)
+        TYPE IS(DenseRectMatrixType)    
+          dummy=0.0_SRK        
+          CALL thisMatrix%get(1,1,dummy)
+          IF(dummy /= 0.0_SRK) THEN
+            WRITE(*,*) 'CALL densesquare%get(...) FAILED!' 
+            STOP 666
+          ENDIF
+      ENDSELECT
+      CALL thisMatrix%clear()
+      WRITE(*,*) '  Passed: CALL densesquare%get(...)'
       DEALLOCATE(thisMatrix)
       
 !Test for PETSc matrices (if necessary)
@@ -1652,7 +1880,6 @@ PROGRAM testMatrixTypes
       ENDSELECT
       CALL thisMatrix%clear()
       WRITE(*,*) '  Passed: CALL petscsparse%get(...)'
-      
       DEALLOCATE(thisMatrix)
 
 !Test for PETSc dense square matrices        
