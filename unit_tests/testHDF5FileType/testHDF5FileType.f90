@@ -27,6 +27,7 @@ PROGRAM testHDF5
   USE Strings
   USE FileType_HDF5
   USE IO_Strings
+  USE ParameterLists
   
   IMPLICIT NONE
   
@@ -81,6 +82,8 @@ PROGRAM testHDF5
       TYPE(StringType),ALLOCATABLE :: testC1(:),testC2(:,:),testC3(:,:,:)
       CHARACTER(LEN=12) :: helper_string
       INTEGER(SIK) :: i,j,k
+      TYPE(ParamType),TARGET :: testP
+	  CLASS(ParamType),POINTER :: testPpoint
 
       ALLOCATE(testD1(10))
       ALLOCATE(testD2(5,5))
@@ -143,6 +146,14 @@ PROGRAM testHDF5
           ENDDO
         ENDDO
       ENDDO
+      
+ !     CALL testP%add('plist->name','Parameter List HDF5 Write Test')
+ !     CALL testP%add('plist->testD0',testD0)
+ !     CALL testP%add('plist->testD1',testD1)
+ !     CALL testP%add('plist->layer2->testR1',testR1)
+ !     CALL testP%add('plist->layer2->testR2',testR2)
+ !     CALL testP%add('next-to-plist->layer2->layer3->layer4','Foget about it!')
+      CALL testP%add('testD0',testD0)
     
       ! Create a RW access file. Existing file overwritten
       CALL h5%init('writetest.h5','NEW')
@@ -177,6 +188,8 @@ PROGRAM testHDF5
       CALL h5%write('groupC->memC1',testC1,SHAPE(testC1))
       CALL h5%write('groupC->memC2',testC2,SHAPE(testC2))
       CALL h5%write('groupC->memC3',testC3,SHAPE(testC3))
+      CALL h5%mkdir('groupP')
+      CALL h5%write('groupP->Parameter_test',testP)
 
       DEALLOCATE(testD1,testD2,testD3,testR1,testR2,testR3,testI1,testI2, &
             testI3,testL1,testL2,testL3,testC1,testC2,testC3)
