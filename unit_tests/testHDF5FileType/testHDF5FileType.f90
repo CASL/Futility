@@ -32,13 +32,6 @@ PROGRAM testHDF5
   IMPLICIT NONE
   
 #ifdef HAVE_MPI
-  INCLUDE 'mpif.h'
-#endif
-
-  TYPE(MPI_EnvType) :: testMPI
-  INTEGER(SIK) :: mpierr,mysize,myrank
-  
-#ifdef HAVE_MPI
   CALL testMPI%init(mpierr)
   IF(testMPI%rank /= 0) THEN
     utest_master=.FALSE.
@@ -50,18 +43,11 @@ PROGRAM testHDF5
 #ifdef MPACT_HAVE_HDF5
   REGISTER_SUBTEST("HDF5FileType Write",testHDF5FileTypeWrite)
   REGISTER_SUBTEST("HDF5FileType Read",testHDF5FileTypeRead)
-#ifdef HAVE_MPI
-  REGISTER_SUBTEST("HDF5FileType Parallel",testHDF5Parallel)
-#endif
 #else
   REGISTER_SUBTEST("HDF5 Not Present",testHDF5_wo)
 #endif
 
   FINALIZE_TEST()
-#ifdef HAVE_MPI
-  CALL testMPI%finalize()
-  CALL testMPI%clear()
-#endif
 
 !
 !===============================================================================
@@ -307,63 +293,9 @@ PROGRAM testHDF5
 !-------------------------------------------------------------------------------
     SUBROUTINE testHDF5_wo()
       TYPE(HDF5FileType) :: h5
-      REAL(SRK),ALLOCATABLE :: testR1(:)
-
-      ALLOCATE(testR1(100))
 
       CALL h5%init('test2.h5','NEW')
     ENDSUBROUTINE testHDF5_wo
 !
 !-------------------------------------------------------------------------------
-
-   SUBROUTINE testHDF5Parallel
-
-      TYPE(HDF5FileType) :: h5
-      REAL(SRK),ALLOCATABLE :: testR2(:,:)
-      INTEGER(SIK),PARAMETER :: dim1=16
-      INTEGER(SIK),PARAMETER :: dim2=16
-      INTEGER(SIK) :: rank,l1,u1,l2,u2,nproc,mpierr
-      INTEGER(SIK) :: npp1,npp2,ndir1,ndir2
-
-      rank=testMPI%rank
-      nproc=testMPI%nproc
-      selectcase(nproc)
-      CASE(4)
-        npp1=8
-        npp2=8
-        ndir1=2
-        ndir2=2
-      CASE(8)
-        npp1=8
-        npp2=4
-        ndir1=2
-        ndir2=4
-      CASE(16)
-        npp1=4
-        npp2=4
-        ndir1=4
-        ndir2=4
-      CASE default
-        stop
-      ENDSELECT
-    
-      ! Allocate the local part of the array. This won't be the entire array,
-      ! but just the local domain of the global array.
-      l1=(MOD(rank,ndir1))*npp1+1
-      u1=l1+npp1-1
-      l2=(rank/ndir1)*npp2+1
-      u2=l2+npp2-1
-      ALLOCATE(testR2(l1:u1,l2:u2))
-
-      WRITE(*,*)rank,l1,l2
-
-      testR2=rank+1
-
-      CALL h5%init('parallelout.h5','NEW')
-
-      CALL h5%write('testD2',testR2,(/dim1,dim2/))
-
-      CALL h5%clear()
-
-    ENDSUBROUTINE testHDF5Parallel
 ENDPROGRAM testHDF5

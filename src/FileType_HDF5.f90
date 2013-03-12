@@ -56,7 +56,6 @@ MODULE FileType_HDF5
   USE ExceptionHandler
   USE ParallelEnv
   USE Strings
-  USE ISO_C_BINDING
   IMPLICIT NONE
   PRIVATE
 
@@ -232,12 +231,11 @@ MODULE FileType_HDF5
 !> This routine initializes an HDF5 file object by setting the objects
 !> attributes, initializing the HDF5 library interface and calling the @c open
 !> routine.
-    SUBROUTINE init_HDF5FileType(this,filename,mode,pe)
+    SUBROUTINE init_HDF5FileType(this,filename,mode)
       CHARACTER(LEN=*),PARAMETER :: myName='init_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: filename
       CHARACTER(LEN=*),INTENT(IN) :: mode
-      TYPE(MPI_EnvType),INTENT(IN),TARGET,OPTIONAL :: pe
       CHARACTER(LEN=MAX_PATH_LENGTH) :: fpath
       CHARACTER(LEN=MAX_FNAME_LENGTH) :: fname
       CHARACTER(LEN=MAX_FEXT_LENGTH) :: fext
@@ -248,10 +246,6 @@ MODULE FileType_HDF5
         ALLOCATE(this%e)
       ENDIF
 #ifdef MPACT_HAVE_HDF5
-#ifdef HAVE_MPI
-      ! Set up the communicator
-      CALL this%pe%init(PE_COMM_WORLD)
-#endif
 
       CALL getFileParts(filename,fpath,fname,fext,this%e)
       CALL this%setFilePath(fpath)
@@ -409,7 +403,7 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),ALLOCATABLE,INTENT(INOUT) :: objs(:)
       CHARACTER(LEN=MAX_PATH_LENGTH),ALLOCATABLE :: path2
 #ifdef MPACT_HAVE_HDF5
-      INTEGER(HSIZE_T) :: num_obj,i
+      INTEGER(HSIZE_T) :: i
       INTEGER(HID_T) :: grp_id,error
       INTEGER :: store_type,nlinks,max_corder
 
@@ -495,7 +489,6 @@ MODULE FileType_HDF5
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path2
       INTEGER(SIK) :: ngrp
 #ifdef MPACT_HAVE_HDF5
-      INTEGER(HSIZE_T) :: num_obj,i
       INTEGER(HID_T) :: grp_id,error
       INTEGER :: store_type,nlinks,max_corder
 
@@ -1515,7 +1508,6 @@ MODULE FileType_HDF5
       CHARACTER :: datac
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
       INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: gdims_in
-      INTEGER(SIK) :: i
 #ifdef MPACT_HAVE_HDF5
       INTEGER(HSIZE_T),DIMENSION(1) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=1
@@ -2548,7 +2540,6 @@ MODULE FileType_HDF5
       
       INTEGER(HID_T) :: error
       INTEGER(HID_T) :: dspace_id,dset_id,gspace_id,plist_id
-      TYPE(C_PTR) :: f_ptr
 
       ! Make sure the object is initialized
       IF(.NOT.this%isinit)THEN
