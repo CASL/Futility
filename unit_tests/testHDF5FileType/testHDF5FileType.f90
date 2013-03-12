@@ -30,13 +30,6 @@ PROGRAM testHDF5
   USE ParameterLists
   
   IMPLICIT NONE
-  
-#ifdef HAVE_MPI
-  CALL testMPI%init(mpierr)
-  IF(testMPI%rank /= 0) THEN
-    utest_master=.FALSE.
-  ENDIF
-#endif
 
   CREATE_TEST("HDF File Type")
 
