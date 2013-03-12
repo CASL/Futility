@@ -34,15 +34,24 @@
 !> format.
 !>
 !> @par Module Dependencies
-!>  - @ref IntrType "IntrType": @copybrief IntrType
-!>  - @ref ExceptionHandler "ExceptionHandler": @copybrief Exceptionhandler
+!>  - @ref IO_Strings "IO_Strings": @copybrief IO_Strings
 !>  - @ref FileType_Base "FileType_Base": @copybrief FileType_Base
+!>  - @ref IntrType "IntrType": @copybrief IntrType
+!>  - @ref ExceptionHandler "ExceptionHandler": @copybrief ExceptionHandler
+!>  - @ref ParallelEnv "ParallelEnv": @copybrief ParallelEnv
+!>  - @ref Strings "Strings": @copybrief Strings
 !>
 !> @author Mitchell T.H. Young
 !>   @date 01/20/2013
+!>
+!> @par Revisions:
+!> (03/12/2013) - Aaron Graham
+!>   - Added read/write routines for SSK, SDK, SNK, SLK, SBK, and StringType
+!>     variable types for arrays of rank 0-3.
+!>   - Removed MPI/parallel code since it needs to be redesigned.
 !> 
 !> @todo
-!>  - Implement MPI/parallel HDF5
+!>  - Implement MPI/Parallel HDF5
 !>  - Make sure routines are safe (check for initialized object, etc.)
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE FileType_HDF5
