@@ -56,19 +56,13 @@ MODULE FileType_HDF5
   USE ExceptionHandler
   USE ParallelEnv
   USE Strings
-  USE ParameterLists
+  USE ISO_C_BINDING
   IMPLICIT NONE
   PRIVATE
 
   !> This type extends the base file type, and adds support for writing to and
   !List of Public Members
   PUBLIC :: HDF5FileType
-  !> Maximum HDF5 string length
-#ifdef MPACT_HAVE_HDF5
-  INTEGER(HSIZE_T),PARAMETER :: LEN_HDF5_STRING=256
-#else
-  INTEGER(SIK),PARAMETER :: LEN_HDF5_STRING=256
-#endif
 
   !> reading from HDF5 binary files. As implemented, there are three modes for
   !> accessing a file can be opened as: 'read' and 'write' and 'new'. Read mode
@@ -164,14 +158,12 @@ MODULE FileType_HDF5
       PROCEDURE,PASS :: write_c3_helper
       !> Write: character string, rank 3
       PROCEDURE,PASS :: write_c3
-      !> Write: parameter
-      PROCEDURE,PASS :: write_param
       !> Write data to the file as a dataset
       GENERIC :: write => write_d0,write_d1,write_d2,write_d3,write_s0, &
       write_s1,write_s2,write_s3,write_b0,write_b1,write_b2,write_b3,write_n0, &
       write_n1,write_n2,write_n3,write_c0,write_c1_helper,write_c1, &
-      write_c2_helper,write_c2,write_c3_helper,write_c3,write_param,write_l0, &
-      write_l1,write_l2,write_l3
+      write_c2_helper,write_c2,write_c3_helper,write_c3,write_l0,write_l1, &
+      write_l2,write_l3
       !> Read: real(SDK)
       PROCEDURE,PASS :: read_d0
       !> Read: real(SDK), rank 1
@@ -1516,7 +1508,7 @@ MODULE FileType_HDF5
 !> @brief Write a logical to a dataset
     SUBROUTINE write_b0(this,dsetname,data,gdims_in)
       IMPLICIT NONE
-      CHARACTER(LEN=*),PARAMETER :: myName='writel0_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: myName='writeb0_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       LOGICAL(SBK),INTENT(IN) :: data
@@ -1651,7 +1643,7 @@ MODULE FileType_HDF5
 !> @brief Write a rank-1 array of logicals to a dataset
     SUBROUTINE write_b1(this,dsetname,data,gdims_in)
       IMPLICIT NONE
-      CHARACTER(LEN=*),PARAMETER :: myName='writel1_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: myName='writeb1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       LOGICAL(SBK),ALLOCATABLE,INTENT(IN) :: data(:)
@@ -1783,7 +1775,7 @@ MODULE FileType_HDF5
 !-------------------------------------------------------------------------------
 !> @brief Write a rank-2 array of logicals to a dataset
     SUBROUTINE write_b2(this,dsetname,data,gdims_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writel2_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: myName='writeb2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       LOGICAL(SBK),ALLOCATABLE,INTENT(IN) :: data(:,:)
@@ -1879,7 +1871,7 @@ MODULE FileType_HDF5
       ! Convert to surrogate character array, since HDF5 does not support
       ! Boolean variables
       datac(:,:)='F'
-      FORALL(i=1:SIZE(data,DIM=2),j=1:SIZE(data,DIM=2),data(i,j))
+      FORALL(i=1:SIZE(data,DIM=1),j=1:SIZE(data,DIM=2),data(i,j))
         datac(i,j)='T'
       END FORALL
       
@@ -1915,7 +1907,7 @@ MODULE FileType_HDF5
 !-------------------------------------------------------------------------------
 !> @brief Write a rank-3 array of logicals to a dataset
     SUBROUTINE write_b3(this,dsetname,data,gdims_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writel3_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: myName='writeb3_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       LOGICAL(SBK),ALLOCATABLE,INTENT(IN) :: data(:,:,:)
@@ -2047,9 +2039,9 @@ MODULE FileType_HDF5
 #endif
     ENDSUBROUTINE write_b3
 !-------------------------------------------------------------------------------
-!> @brief Write an integer to a dataset
+!> @brief Write a 32-bit integer to a dataset
     SUBROUTINE write_n0(this,dsetname,data,gdims_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writei0_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: myName='writen0_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SNK),INTENT(IN) :: data
@@ -2113,7 +2105,7 @@ MODULE FileType_HDF5
       ENDIF
 
       ! Create the dataset
-      CALL h5dcreate_f(this%file_id, path, H5T_NATIVE_DOUBLE, gspace_id, &
+      CALL h5dcreate_f(this%file_id, path, H5T_NATIVE_INTEGER, gspace_id, &
                        dset_id,error)
       IF(error /= 0)THEN
         CALL this%e%raiseError(myName//': Could not create dataset.')
@@ -2169,9 +2161,9 @@ MODULE FileType_HDF5
 #endif
     ENDSUBROUTINE write_n0
 !-------------------------------------------------------------------------------
-!> @brief Write a rank-1 array of integers to a dataset
+!> @brief Write a rank-1 array of 32-bit integers to a dataset
     SUBROUTINE write_n1(this,dsetname,data,gdims_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writei1_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: myName='writen1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SNK),ALLOCATABLE,INTENT(IN) :: data(:)
@@ -2235,7 +2227,7 @@ MODULE FileType_HDF5
       ENDIF
 
       ! Create the dataset
-      CALL h5dcreate_f(this%file_id, path, H5T_NATIVE_DOUBLE, gspace_id, &
+      CALL h5dcreate_f(this%file_id, path, H5T_NATIVE_INTEGER, gspace_id, &
                        dset_id,error)
       IF(error /= 0)THEN
         CALL this%e%raiseError(myName//': Could not create dataset.')
@@ -2292,9 +2284,9 @@ MODULE FileType_HDF5
     ENDSUBROUTINE write_n1
 !
 !-------------------------------------------------------------------------------
-!> @brief Write a rank-2 array of integers to a dataset
+!> @brief Write a rank-2 array of 32-bit integers to a dataset
     SUBROUTINE write_n2(this,dsetname,data,gdims_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writei2_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: myName='writen2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SNK),ALLOCATABLE,INTENT(IN) :: data(:,:)
@@ -2359,7 +2351,7 @@ MODULE FileType_HDF5
       ENDIF
 
       ! Create the dataset
-      CALL h5dcreate_f(this%file_id, path, H5T_NATIVE_DOUBLE, gspace_id, &
+      CALL h5dcreate_f(this%file_id, path, H5T_NATIVE_INTEGER, gspace_id, &
                        dset_id,error)
       IF(error /= 0)THEN
         CALL this%e%raiseError(myName//': Could not create dataset.')
@@ -2416,9 +2408,9 @@ MODULE FileType_HDF5
     ENDSUBROUTINE write_n2
 !
 !-------------------------------------------------------------------------------
-!> @brief Write a rank-3 array of integers to a dataset
+!> @brief Write a rank-3 array of 32-bit integers to a dataset
     SUBROUTINE write_n3(this,dsetname,data,gdims_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writei3_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: myName='writen3_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SNK),ALLOCATABLE,INTENT(IN) :: data(:,:,:)
@@ -2484,7 +2476,7 @@ MODULE FileType_HDF5
       ENDIF
 
       ! Create the dataset
-      CALL h5dcreate_f(this%file_id, path, H5T_NATIVE_DOUBLE, gspace_id, &
+      CALL h5dcreate_f(this%file_id, path, H5T_NATIVE_INTEGER, gspace_id, &
                        dset_id,error)
       IF(error /= 0)THEN
         CALL this%e%raiseError(myName//': Could not create dataset.')
@@ -2541,21 +2533,22 @@ MODULE FileType_HDF5
     ENDSUBROUTINE write_n3
 !
 !-------------------------------------------------------------------------------
-!> @brief Write an integer to a dataset
+!> @brief Write a 64-bit "integer" to a dataset
     SUBROUTINE write_l0(this,dsetname,datat,gdims_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writei0_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: myName='writel0_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SLK),INTENT(IN) :: datat
-      INTEGER(SNK) :: data
+      REAL(SDK) :: data
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
       INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: gdims_in
 #ifdef MPACT_HAVE_HDF5
       INTEGER(HSIZE_T),DIMENSION(1) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=1
       
-      INTEGER(HID_T) :: error,mem
+      INTEGER(HID_T) :: error
       INTEGER(HID_T) :: dspace_id,dset_id,gspace_id,plist_id
+      TYPE(C_PTR) :: f_ptr
 
       ! Make sure the object is initialized
       IF(.NOT.this%isinit)THEN
@@ -2607,13 +2600,8 @@ MODULE FileType_HDF5
         CALL this%e%raiseError(myName//': Could not create dataspace.')
       ENDIF
 
-      ! Get the correct data type
-      data=datat
-      CALL this%e%raiseWarning(myName//': Converting from long integer to '// &
-                'normal integer!')
-
       ! Create the dataset
-      CALL h5dcreate_f(this%file_id, path, H5T_NATIVE_INTEGER, gspace_id, &
+      CALL h5dcreate_f(this%file_id, path, H5T_STD_I64LE, gspace_id, &
                        dset_id,error)
       IF(error /= 0)THEN
         CALL this%e%raiseError(myName//': Could not create dataset.')
@@ -2639,8 +2627,13 @@ MODULE FileType_HDF5
           'for write operation.')
       ENDIF
       
+      ! Convert data type
+      data=datat
+      CALL this%e%raiseWarning(myName//': Converting from long integer to '// &
+                  'double to accomodate HDF5!!!')
+      
       ! Write to the dataset
-      CALL h5dwrite_f(dset_id, H5T_NATIVE_INTEGER, data, gdims, error, &
+      CALL h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, data, gdims, error, &
                       dspace_id,gspace_id,plist_id)
       IF(error /= 0)THEN
         CALL this%e%raiseError(myName//': Could not write to the dataset.')
@@ -2669,13 +2662,13 @@ MODULE FileType_HDF5
 #endif
     ENDSUBROUTINE write_l0
 !-------------------------------------------------------------------------------
-!> @brief Write a rank-1 array of integers to a dataset
+!> @brief Write a rank-1 array of 64-bit "integers" to a dataset
     SUBROUTINE write_l1(this,dsetname,datat,gdims_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writei1_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: myName='writel1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SLK),ALLOCATABLE,INTENT(IN) :: datat(:)
-      INTEGER(SNK) :: data(SIZE(datat))
+      REAL(SDK) :: data(SIZE(datat))
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
       INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: gdims_in
 #ifdef MPACT_HAVE_HDF5
@@ -2736,7 +2729,7 @@ MODULE FileType_HDF5
       ENDIF
 
       ! Create the dataset
-      CALL h5dcreate_f(this%file_id, path, H5T_NATIVE_INTEGER, gspace_id, &
+      CALL h5dcreate_f(this%file_id, path, H5T_STD_I64LE, gspace_id, &
                        dset_id,error)
       IF(error /= 0)THEN
         CALL this%e%raiseError(myName//': Could not create dataset.')
@@ -2765,10 +2758,10 @@ MODULE FileType_HDF5
       ! Convert to different datatyp
       data=datat
       CALL this%e%raiseWarning(myName//': Converting from long integer to '// &
-                'normal integer!')
+                'double to accomodate HDF5!!!')
       
       ! Write to the dataset
-      CALL h5dwrite_f(dset_id, H5T_NATIVE_INTEGER, data, gdims, error, &
+      CALL h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, data, gdims, error, &
                       dspace_id,gspace_id,plist_id)
       IF(error /= 0)THEN
         CALL this%e%raiseError(myName//': Could not write to the dataset.')
@@ -2798,13 +2791,13 @@ MODULE FileType_HDF5
     ENDSUBROUTINE write_l1
 !
 !-------------------------------------------------------------------------------
-!> @brief Write a rank-2 array of integers to a dataset
+!> @brief Write a rank-2 array of 64-bit "integers" to a dataset
     SUBROUTINE write_l2(this,dsetname,datat,gdims_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writei2_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: myName='writel2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SLK),ALLOCATABLE,INTENT(IN) :: datat(:,:)
-      INTEGER(SNK) :: data(SIZE(datat,1),SIZE(datat,2))
+      REAL(SDK) :: data(SIZE(datat,1),SIZE(datat,2))
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
       INTEGER(SIK),DIMENSION(2),INTENT(IN),OPTIONAL :: gdims_in
 #ifdef MPACT_HAVE_HDF5
@@ -2866,7 +2859,7 @@ MODULE FileType_HDF5
       ENDIF
 
       ! Create the dataset
-      CALL h5dcreate_f(this%file_id, path, H5T_NATIVE_INTEGER, gspace_id, &
+      CALL h5dcreate_f(this%file_id, path, H5T_STD_I64LE, gspace_id, &
                        dset_id,error)
       IF(error /= 0)THEN
         CALL this%e%raiseError(myName//': Could not create dataset.')
@@ -2894,11 +2887,11 @@ MODULE FileType_HDF5
       
       ! Convert data type
       data=datat
-      CALL this%e%raiseError(myName//': Converting from long intger to '// &
-                  'normal integer!')
+      CALL this%e%raiseWarning(myName//': Converting from long intger to '// &
+                  'double to accomodate HDF5!!!')
       
       ! Write to the dataset
-      CALL h5dwrite_f(dset_id, H5T_NATIVE_INTEGER, data, gdims, error, &
+      CALL h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, data, gdims, error, &
                       dspace_id,gspace_id,plist_id)
       IF(error /= 0)THEN
         CALL this%e%raiseError(myName//': Could not write to the dataset.')
@@ -2928,13 +2921,13 @@ MODULE FileType_HDF5
     ENDSUBROUTINE write_l2
 !
 !-------------------------------------------------------------------------------
-!> @brief Write a rank-3 array of integers to a dataset
+!> @brief Write a rank-3 array of 64-bit "integers" to a dataset
     SUBROUTINE write_l3(this,dsetname,datat,gdims_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writei3_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: myName='writel3_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SLK),ALLOCATABLE,INTENT(IN) :: datat(:,:,:)
-      INTEGER(SNK) :: data(SIZE(datat,1),SIZE(datat,2),SIZE(datat,3))
+      REAL(SDK) :: data(SIZE(datat,1),SIZE(datat,2),SIZE(datat,3))
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
       INTEGER(SIK),DIMENSION(3),INTENT(IN),OPTIONAL :: gdims_in
 #ifdef MPACT_HAVE_HDF5
@@ -2997,7 +2990,7 @@ MODULE FileType_HDF5
       ENDIF
 
       ! Create the dataset
-      CALL h5dcreate_f(this%file_id, path, H5T_NATIVE_INTEGER, gspace_id, &
+      CALL h5dcreate_f(this%file_id, path, H5T_STD_I64LE, gspace_id, &
                        dset_id,error)
       IF(error /= 0)THEN
         CALL this%e%raiseError(myName//': Could not create dataset.')
@@ -3026,10 +3019,10 @@ MODULE FileType_HDF5
       ! Convert Data type
       data=datat
       CALL this%e%raiseWarning(myName//': Converting from long integer to '// &
-                  'normal integer!')
+                  'double to accomodate HDF5!!!')
       
       ! Write to the dataset
-      CALL h5dwrite_f(dset_id, H5T_NATIVE_INTEGER, data, gdims, error, &
+      CALL h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, data, gdims, error, &
                       dspace_id,gspace_id,plist_id)
       IF(error /= 0)THEN
         CALL this%e%raiseError(myName//': Could not write to the dataset.')
@@ -3684,23 +3677,6 @@ MODULE FileType_HDF5
       ENDIF
 #endif
     ENDSUBROUTINE write_c3
-!
-!-------------------------------------------------------------------------------
-!> @brief Write a ParamType to a dataset
-    RECURSIVE SUBROUTINE write_param(this,dsetname,data)
-      CHARACTER(LEN=*),PARAMETER :: myName='writeparam_HDF5FileType'
-      CLASS(HDF5FileType),INTENT(INOUT) :: this
-      CHARACTER(LEN=*),INTENT(IN) :: dsetname
-      CLASS(ParamType),INTENT(INOUT) :: data
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path,newpath
-      INTEGER(SIK) :: i
-#ifdef MPACT_HAVE_HDF5
-
-
-
-#endif
-    ENDSUBROUTINE write_param
-!
 !-------------------------------------------------------------------------------
 !> @brief Read a double from dataset
     SUBROUTINE read_d0(this,dsetname,data)
@@ -4331,9 +4307,9 @@ MODULE FileType_HDF5
     ENDSUBROUTINE read_s3
 !
 !-------------------------------------------------------------------------------
-!> @brief Read an integer from dataset
+!> @brief Read a 32-bit integer from dataset
     SUBROUTINE read_n0(this,dsetname,data)
-      CHARACTER(LEN=*),PARAMETER :: myName='readi0_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: myName='readn0_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SNK),INTENT(INOUT) :: data
@@ -4402,9 +4378,9 @@ MODULE FileType_HDF5
 !
 
 !-------------------------------------------------------------------------------
-!> @brief Read a rank-1 array of integers from dataset
+!> @brief Read a rank-1 array of 32-bit integers from dataset
     SUBROUTINE read_n1(this,dsetname,data)
-      CHARACTER(LEN=*),PARAMETER :: myName='readi1_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: myName='readn1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: data(:)
@@ -4483,9 +4459,9 @@ MODULE FileType_HDF5
     ENDSUBROUTINE read_n1
 !
 !-------------------------------------------------------------------------------
-!> @brief Read a rank-2 array of integers from dataset
+!> @brief Read a rank-2 array of 32-bit integers from dataset
     SUBROUTINE read_n2(this,dsetname,data)
-      CHARACTER(LEN=*),PARAMETER :: myName='readi2_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: myName='readn2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: data(:,:)
@@ -4564,9 +4540,9 @@ MODULE FileType_HDF5
     ENDSUBROUTINE read_n2
 !
 !-------------------------------------------------------------------------------
-!> @brief Read a rank-3 array of integers from dataset
+!> @brief Read a rank-3 array of 32-bit integers from dataset
     SUBROUTINE read_n3(this,dsetname,data)
-      CHARACTER(LEN=*),PARAMETER :: myName='readi3_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: myName='readn3_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: data(:,:,:)
@@ -4645,13 +4621,13 @@ MODULE FileType_HDF5
     ENDSUBROUTINE read_n3
 !
 !-------------------------------------------------------------------------------
-!> @brief Read an integer from dataset
+!> @brief Read a 64-bit "integer" from dataset
     SUBROUTINE read_l0(this,dsetname,data)
-      CHARACTER(LEN=*),PARAMETER :: myName='readi0_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: myName='readl0_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SLK),INTENT(INOUT) :: data
-      INTEGER(SNK) :: datat
+      REAL(SDK) :: datat
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
 #ifdef MPACT_HAVE_HDF5
       INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
@@ -4694,7 +4670,7 @@ MODULE FileType_HDF5
       ENDIF
 
       ! Read the dataset
-      mem=H5T_NATIVE_INTEGER
+      mem=H5T_NATIVE_DOUBLE
       CALL h5dread_f(dset_id,mem,datat,dims,error)
       IF(error /= 0)THEN
         CALL this%e%raiseError(myName//": Failed to read data from dataset.")
@@ -4714,15 +4690,17 @@ MODULE FileType_HDF5
       
       ! Convert data type
       data=datat
+      CALL this%e%raiseWarning(myName//": Converting from double to long "// &
+                  "integer!")
 
 #endif
     ENDSUBROUTINE read_l0
 !
 
 !-------------------------------------------------------------------------------
-!> @brief Read a rank-1 array of integers from dataset
+!> @brief Read a rank-1 array of 64-bit "integers" from dataset
     SUBROUTINE read_l1(this,dsetname,data)
-      CHARACTER(LEN=*),PARAMETER :: myName='readi1_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: myName='readl1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: data(:)
@@ -4801,14 +4779,16 @@ MODULE FileType_HDF5
       
       ! Conver data type
       data=datat
+      CALL this%e%raiseWarning(myName//": Converting from double to long "// &
+                  "integer!")
 
 #endif
     ENDSUBROUTINE read_l1
 !
 !-------------------------------------------------------------------------------
-!> @brief Read a rank-2 array of integers from dataset
+!> @brief Read a rank-2 array of 64-bit "integers" from dataset
     SUBROUTINE read_l2(this,dsetname,data)
-      CHARACTER(LEN=*),PARAMETER :: myName='readi2_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: myName='readl2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: data(:,:)
@@ -4887,14 +4867,16 @@ MODULE FileType_HDF5
       
       ! Conver data type
       data=datat
+      CALL this%e%raiseWarning(myName//": Converting from double to long "// &
+                  "integer!")
 
 #endif
     ENDSUBROUTINE read_l2
 !
 !-------------------------------------------------------------------------------
-!> @brief Read a rank-3 array of integers from dataset
+!> @brief Read a rank-3 array of 64-bit "integers" from dataset
     SUBROUTINE read_l3(this,dsetname,data)
-      CHARACTER(LEN=*),PARAMETER :: myName='readi3_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: myName='readl3_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: data(:,:,:)
@@ -4973,6 +4955,8 @@ MODULE FileType_HDF5
       
       ! Conver data type
       data=datat
+      CALL this%e%raiseWarning(myName//": Converting from double to long "// &
+                  "integer!")
 
 #endif
     ENDSUBROUTINE read_l3
@@ -4980,7 +4964,7 @@ MODULE FileType_HDF5
 !-------------------------------------------------------------------------------
 !> @brief Read a logical from dataset
     SUBROUTINE read_b0(this,dsetname,data)
-      CHARACTER(LEN=*),PARAMETER :: myName='readl0_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: myName='readb0_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       LOGICAL(SBK),INTENT(INOUT) :: data
@@ -5059,7 +5043,7 @@ MODULE FileType_HDF5
 !-------------------------------------------------------------------------------
 !> @brief Read a rank-1 array of logicals from dataset
     SUBROUTINE read_b1(this,dsetname,data)
-      CHARACTER(LEN=*),PARAMETER :: myName='readl1_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: myName='readb1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: data(:)
@@ -5155,7 +5139,7 @@ MODULE FileType_HDF5
 !-------------------------------------------------------------------------------
 !> @brief Read a rank-2 array of logicals from dataset
     SUBROUTINE read_b2(this,dsetname,data)
-      CHARACTER(LEN=*),PARAMETER :: myName='readl2_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: myName='readb2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: data(:,:)
@@ -5252,7 +5236,7 @@ MODULE FileType_HDF5
 !-------------------------------------------------------------------------------
 !> @brief Read a rank-3 array of logicals from dataset
     SUBROUTINE read_b3(this,dsetname,data)
-      CHARACTER(LEN=*),PARAMETER :: myName='readl3_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: myName='readb3_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: data(:,:,:)

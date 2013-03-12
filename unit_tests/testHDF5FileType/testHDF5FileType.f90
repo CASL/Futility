@@ -71,56 +71,63 @@ PROGRAM testHDF5
     SUBROUTINE testHDF5FileTypeWrite()
       TYPE(HDF5FileType) :: h5
       REAL(SDK),ALLOCATABLE :: testD1(:),testD2(:,:),testD3(:,:,:)
-      REAL(SSK),ALLOCATABLE :: testR1(:),testR2(:,:),testR3(:,:,:)
-      LOGICAL(SBK),ALLOCATABLE :: testL1(:),testL2(:,:),testL3(:,:,:)
-      INTEGER(SIK),ALLOCATABLE :: testI1(:),testI2(:,:),testI3(:,:,:)
+      REAL(SSK),ALLOCATABLE :: testS1(:),testS2(:,:),testS3(:,:,:)
+      LOGICAL(SBK),ALLOCATABLE :: testB1(:),testB2(:,:),testB3(:,:,:)
+      INTEGER(SLK),ALLOCATABLE :: testL1(:),testL2(:,:),testL3(:,:,:)
+      INTEGER(SNK),ALLOCATABLE :: testN1(:),testN2(:,:),testN3(:,:,:)
       REAL(SDK) :: testD0
-      REAL(SSK) :: testR0
-      INTEGER(SIK) :: testI0
-      LOGICAL(SBK) :: testL0
+      REAL(SSK) :: testS0
+      INTEGER(SLK) :: testL0
+      INTEGER(SNK) :: testN0
+      LOGICAL(SBK) :: testB0
       TYPE(StringType) :: testC0
       TYPE(StringType),ALLOCATABLE :: testC1(:),testC2(:,:),testC3(:,:,:)
       CHARACTER(LEN=12) :: helper_string
       INTEGER(SIK) :: i,j,k
-      TYPE(ParamType),TARGET :: testP
-	  CLASS(ParamType),POINTER :: testPpoint
 
       ALLOCATE(testD1(10))
-      ALLOCATE(testD2(5,5))
-      ALLOCATE(testD3(3,3,3))
-      ALLOCATE(testR1(10))
-      ALLOCATE(testR2(5,5))
-      ALLOCATE(testR3(3,3,3))
+      ALLOCATE(testD2(4,5))
+      ALLOCATE(testD3(3,4,5))
+      ALLOCATE(testS1(10))
+      ALLOCATE(testS2(4,5))
+      ALLOCATE(testS3(3,4,5))
+      ALLOCATE(testB1(6))
+      ALLOCATE(testB2(6,5))
+      ALLOCATE(testB3(6,5,2))
       ALLOCATE(testL1(10))
-      ALLOCATE(testL2(5,5))
-      ALLOCATE(testL3(3,3,3))
-      ALLOCATE(testI1(10))
-      ALLOCATE(testI2(5,5))
-      ALLOCATE(testI3(3,3,3))
+      ALLOCATE(testL2(4,5))
+      ALLOCATE(testL3(3,4,5))
+      ALLOCATE(testN1(10))
+      ALLOCATE(testN2(4,5))
+      ALLOCATE(testN3(3,4,5))
       ALLOCATE(testC1(3))
       ALLOCATE(testC2(2,3))
       ALLOCATE(testC3(3,4,5))
 
       testD0=42.123456789_SDK
-      testD1=[(i,i=1,SIZE(testD1))]
-      testD2=RESHAPE([(i,i=1,SIZE(testD2))],SHAPE(testD2))
-      testD3=RESHAPE([(i,i=1,SIZE(testD3))],SHAPE(testD3))
-      testR0=42.000_SSK
-      testR1=[(i,i=1,SIZE(testR1))]
-      testR2=RESHAPE([(i,i=1,SIZE(testR2))],SHAPE(testR2))
-      testR3=RESHAPE([(i,i=1,SIZE(testR3))],SHAPE(testR3))
-      testI0=42
-      testI1=[(i,i=1,SIZE(testI1))]
-      testI2=RESHAPE([(i,i=1,SIZE(testI2))],SHAPE(testI2))
-      testI3=RESHAPE([(i,i=1,SIZE(testI3))],SHAPE(testI3))
-      testL0=.FALSE.
-      testL1(:)=.TRUE.; testL2(:,:)=.TRUE.; testL3(:,:,:)=.TRUE.
-      DO i=1,3,2
-        testL1(i)=.FALSE.
-        DO j=1,3,3
-          testL2(i,j)=.FALSE.
-          DO k=1,3
-            testL3(i,j,k)=.FALSE.
+      testD1=[(i*1.0000000001_SDK,i=1,SIZE(testD1))]
+      testD2=RESHAPE([(i*1.0000000001_SDK,i=1,SIZE(testD2))],SHAPE(testD2))
+      testD3=RESHAPE([(i*1.0000000001_SDK,i=1,SIZE(testD3))],SHAPE(testD3))
+      testS0=42.000_SSK
+      testS1=[(i,i=1,SIZE(testS1))]
+      testS2=RESHAPE([(i,i=1,SIZE(testS2))],SHAPE(testS2))
+      testS3=RESHAPE([(i,i=1,SIZE(testS3))],SHAPE(testS3))
+      testL0=123456789123456789_SLK
+      testL1=[(i+1000000000,i=1,SIZE(testL1))]
+      testL2=RESHAPE([(i+1000000000,i=1,SIZE(testL2))],SHAPE(testL2))
+      testL3=RESHAPE([(i+1000000000,i=1,SIZE(testL3))],SHAPE(testL3))
+      testN0=42_SNK
+      testN1=[(i,i=1,SIZE(testN1))]
+      testN2=RESHAPE([(i,i=1,SIZE(testN2))],SHAPE(testN2))
+      testN3=RESHAPE([(i,i=1,SIZE(testN3))],SHAPE(testN3))
+      testB0=.FALSE.
+      testB1(:)=.TRUE.; testB2(:,:)=.TRUE.; testB3(:,:,:)=.TRUE.
+      DO i=1,SIZE(testB1),2
+        testB1(i)=.FALSE.
+        DO j=1,SIZE(testB2,DIM=2),3
+          testB2(i,j)=.FALSE.
+          DO k=1,SIZE(testB3,DIM=3)
+            testB3(i,j,k)=.FALSE.
           ENDDO
         ENDDO
       ENDDO
@@ -146,14 +153,6 @@ PROGRAM testHDF5
           ENDDO
         ENDDO
       ENDDO
-      
- !     CALL testP%add('plist->name','Parameter List HDF5 Write Test')
- !     CALL testP%add('plist->testD0',testD0)
- !     CALL testP%add('plist->testD1',testD1)
- !     CALL testP%add('plist->layer2->testR1',testR1)
- !     CALL testP%add('plist->layer2->testR2',testR2)
- !     CALL testP%add('next-to-plist->layer2->layer3->layer4','Foget about it!')
-      CALL testP%add('testD0',testD0)
     
       ! Create a RW access file. Existing file overwritten
       CALL h5%init('writetest.h5','NEW')
@@ -163,36 +162,38 @@ PROGRAM testHDF5
 #else
       ASSERT(.TRUE.,'HDF5 not present')
 #endif
-      CALL h5%mkdir('groupD')
-      CALL h5%write('groupD->memD0',testD0)
-      CALL h5%write('groupD->memD1',testD1,SHAPE(testD1))
-      CALL h5%write('groupD->memD2',testD2,SHAPE(testD2))
-      CALL h5%write('groupD->memD3',testD3,SHAPE(testD3))
       CALL h5%mkdir('groupR')
-      CALL h5%write('groupR->memR0',testR0)
-      CALL h5%write('groupR->memR1',testR1,SHAPE(testR1))
-      CALL h5%write('groupR->memR2',testR2,SHAPE(testR2))
-      CALL h5%write('groupR->memR3',testR3,SHAPE(testR3))
+      CALL h5%write('groupR->memD0',testD0)
+      CALL h5%write('groupR->memD1',testD1,SHAPE(testD1))
+      CALL h5%write('groupR->memD2',testD2,SHAPE(testD2))
+      CALL h5%write('groupR->memD3',testD3,SHAPE(testD3))
+      CALL h5%write('groupR->memS0',testS0)
+      CALL h5%write('groupR->memS1',testS1,SHAPE(testS1))
+      CALL h5%write('groupR->memS2',testS2,SHAPE(testS2))
+      CALL h5%write('groupR->memS3',testS3,SHAPE(testS3))
       CALL h5%mkdir('groupI')
-      CALL h5%write('groupI->memI0',testI0)
-      CALL h5%write('groupI->memI1',testI1,SHAPE(testL1))
-      CALL h5%write('groupI->memI2',testI2,SHAPE(testI2))
-      CALL h5%write('groupI->memI3',testI3,SHAPE(testI3))
-      CALL h5%mkdir('groupL')
-      CALL h5%write('groupL->memL0',testL0)
-      CALL h5%write('groupL->memL1',testL1,SHAPE(testL1))
-      CALL h5%write('groupL->memL2',testL2,SHAPE(testL2))
-      CALL h5%write('groupL->memL3',testL3,SHAPE(testL3))
+      CALL h5%write('groupI->memL0',testL0)
+      CALL h5%write('groupI->memL1',testL1,SHAPE(testL1))
+      CALL h5%write('groupI->memL2',testL2,SHAPE(testL2))
+      CALL h5%write('groupI->memL3',testL3,SHAPE(testL3))
+      CALL h5%write('groupI->memN0',testN0)
+      CALL h5%write('groupI->memN1',testN1,SHAPE(testN1))
+      CALL h5%write('groupI->memN2',testN2,SHAPE(testN2))
+      CALL h5%write('groupI->memN3',testN3,SHAPE(testN3))
+      CALL h5%mkdir('groupB')
+      CALL h5%write('groupB->memB0',testB0)
+      CALL h5%write('groupB->memB1',testB1,SHAPE(testB1))
+      CALL h5%write('groupB->memB2',testB2,SHAPE(testB2))
+      CALL h5%write('groupB->memB3',testB3,SHAPE(testB3))
       CALL h5%mkdir('groupC')
       CALL h5%write('groupC->memC0',testC0)
       CALL h5%write('groupC->memC1',testC1,SHAPE(testC1))
       CALL h5%write('groupC->memC2',testC2,SHAPE(testC2))
       CALL h5%write('groupC->memC3',testC3,SHAPE(testC3))
-      CALL h5%mkdir('groupP')
-      CALL h5%write('groupP->Parameter_test',testP)
 
-      DEALLOCATE(testD1,testD2,testD3,testR1,testR2,testR3,testI1,testI2, &
-            testI3,testL1,testL2,testL3,testC1,testC2,testC3)
+      DEALLOCATE(testD1,testD2,testD3,testS1,testS2,testS3,testL1,testL2, &
+            testL3,testB1,testB2,testB3,testC1,testC2,testC3,testN1,testN2, &
+            testN3)
 
       CALL h5%clear()
       ASSERT(.NOT.h5%isinit,'HDF5 object not properly cleared!')
@@ -203,45 +204,51 @@ PROGRAM testHDF5
     SUBROUTINE testHDF5FileTypeRead()
       TYPE(HDF5FileType) :: h5
       REAL(SDK),ALLOCATABLE :: testD1(:),testD2(:,:),testD3(:,:,:)
-      REAL(SSK),ALLOCATABLE :: testR1(:),testR2(:,:),testR3(:,:,:)
-      LOGICAL(SBK),ALLOCATABLE :: testL1(:),testL2(:,:),testL3(:,:,:)
-      INTEGER(SIK),ALLOCATABLE :: testI1(:),testI2(:,:),testI3(:,:,:)
+      REAL(SSK),ALLOCATABLE :: testS1(:),testS2(:,:),testS3(:,:,:)
+      LOGICAL(SBK),ALLOCATABLE :: testB1(:),testB2(:,:),testB3(:,:,:)
+      INTEGER(SLK),ALLOCATABLE :: testL1(:),testL2(:,:),testL3(:,:,:)
+      INTEGER(SNK),ALLOCATABLE :: testN1(:),testN2(:,:),testN3(:,:,:)
       TYPE(StringType),ALLOCATABLE :: testC1(:),testC2(:,:),testC3(:,:,:)
       REAL(SDK) :: testD0
-      REAL(SSK) :: testR0
-      INTEGER(SIK) :: testI0
-      LOGICAL(SBK) :: testL0
+      REAL(SSK) :: testS0
+      INTEGER(SLK) :: testL0
+      INTEGER(SNK) :: testN0
+      LOGICAL(SBK) :: testB0
+      TYPE(StringType) :: testC0
       CHARACTER(LEN=80),ALLOCATABLE :: sets(:)
       INTEGER(SIK) :: i,j,k
-      CHARACTER(LEN=80),PARAMETER :: FMT_data_r='(5f14.10)',FMT_data_i='(5i12)', &
-              FMT_data_l='(5l12)'
-      TYPE(StringType) :: testC0
+      CHARACTER(LEN=80),PARAMETER :: FMT_data_r='(5f15.11)',FMT_data_i='(5i15)'&
+              ,FMT_data_l='(5l15)'
 
       CALL h5%init('readtest.h5','READ')
       OPEN(UNIT=1,FILE='readtest.out')
 
-      CALL h5%ls('groupD',sets)
+      CALL h5%ls('groupR',sets)
       DO i=1,SIZE(sets)
         WRITE(1,*)sets(i)
       ENDDO
 
       ! Read a dataset (real-1)
-      CALL h5%read('groupD->memD0',testD0)
-      CALL h5%read('groupD->memD1',testD1)
-      CALL h5%read('groupD->memD2',testD2)
-      CALL h5%read('groupD->memD3',testD3)
-      CALL h5%read('groupR->memR0',testR0)
-      CALL h5%read('groupR->memR1',testR1)
-      CALL h5%read('groupR->memR2',testR2)
-      CALL h5%read('groupR->memR3',testR3)
-      CALL h5%read('groupI->memI0',testI0)
-      CALL h5%read('groupI->memI1',testI1)
-      CALL h5%read('groupI->memI2',testI2)
-      CALL h5%read('groupI->memI3',testI3)
-      CALL h5%read('groupL->memL0',testL0)
-      CALL h5%read('groupL->memL1',testL1)
-      CALL h5%read('groupL->memL2',testL2)
-      CALL h5%read('groupL->memL3',testL3)
+      CALL h5%read('groupR->memD0',testD0)
+      CALL h5%read('groupR->memD1',testD1)
+      CALL h5%read('groupR->memD2',testD2)
+      CALL h5%read('groupR->memD3',testD3)
+      CALL h5%read('groupR->memS0',testS0)
+      CALL h5%read('groupR->memS1',testS1)
+      CALL h5%read('groupR->memS2',testS2)
+      CALL h5%read('groupR->memS3',testS3)
+      CALL h5%read('groupI->memN0',testN0)
+      CALL h5%read('groupI->memN1',testN1)
+      CALL h5%read('groupI->memN2',testN2)
+      CALL h5%read('groupI->memN3',testN3)
+      CALL h5%read('groupI->memL0',testL0)
+      CALL h5%read('groupI->memL1',testL1)
+      CALL h5%read('groupI->memL2',testL2)
+      CALL h5%read('groupI->memL3',testL3)
+      CALL h5%read('groupB->memB0',testB0)
+      CALL h5%read('groupB->memB1',testB1)
+      CALL h5%read('groupB->memB2',testB2)
+      CALL h5%read('groupB->memB3',testB3)
       CALL h5%read('groupC->memC0',testC0)
       CALL h5%read('groupC->memC1',testC1)
       CALL h5%read('groupC->memC2',testC2)
@@ -251,18 +258,22 @@ PROGRAM testHDF5
       WRITE(1,*) 'testD1:'; WRITE(1,FMT=FMT_data_r)testD1
       WRITE(1,*) 'testD2:'; WRITE(1,FMT=FMT_data_r)testD2
       WRITE(1,*) 'testD3:'; WRITE(1,FMT=FMT_data_r)testD3
-      WRITE(1,*) 'testR0:'; WRITE(1,FMT=FMT_data_r)testR0
-      WRITE(1,*) 'testR1:'; WRITE(1,FMT=FMT_data_r)testR1
-      WRITE(1,*) 'testR2:'; WRITE(1,FMT=FMT_data_r)testR2
-      WRITE(1,*) 'testR3:'; WRITE(1,FMT=FMT_data_r)testR3
-      WRITE(1,*) 'testI0:'; WRITE(1,FMT=FMT_data_i)testI0
-      WRITE(1,*) 'testI1:'; WRITE(1,FMT=FMT_data_i)testI1
-      WRITE(1,*) 'testI2:'; WRITE(1,FMT=FMT_data_i)testI2
-      WRITE(1,*) 'testI3:'; WRITE(1,FMT=FMT_data_i)testI3
-      WRITE(1,*) 'testL0:'; WRITE(1,FMT=FMT_data_l)testL0
-      WRITE(1,*) 'testL1:'; WRITE(1,FMT=FMT_data_l)testL1
-      WRITE(1,*) 'testL2:'; WRITE(1,FMT=FMT_data_l)testL2
-      WRITE(1,*) 'testL3:'; WRITE(1,FMT=FMT_data_l)testL3
+      WRITE(1,*) 'testS0:'; WRITE(1,FMT=FMT_data_r)testS0
+      WRITE(1,*) 'testS1:'; WRITE(1,FMT=FMT_data_r)testS1
+      WRITE(1,*) 'testS2:'; WRITE(1,FMT=FMT_data_r)testS2
+      WRITE(1,*) 'testS3:'; WRITE(1,FMT=FMT_data_r)testS3
+      WRITE(1,*) 'testN0:'; WRITE(1,FMT=FMT_data_i)testN0
+      WRITE(1,*) 'testN1:'; WRITE(1,FMT=FMT_data_i)testN1
+      WRITE(1,*) 'testN2:'; WRITE(1,FMT=FMT_data_i)testN2
+      WRITE(1,*) 'testN3:'; WRITE(1,FMT=FMT_data_i)testN3
+      WRITE(1,*) 'testL0:'; WRITE(1,*)testL0
+      WRITE(1,*) 'testL1:'; WRITE(1,FMT=FMT_data_i)testL1
+      WRITE(1,*) 'testL2:'; WRITE(1,FMT=FMT_data_i)testL2
+      WRITE(1,*) 'testL3:'; WRITE(1,FMT=FMT_data_i)testL3
+      WRITE(1,*) 'testB0:'; WRITE(1,FMT=FMT_data_l)testB0
+      WRITE(1,*) 'testB1:'; WRITE(1,FMT=FMT_data_l)testB1
+      WRITE(1,*) 'testB2:'; WRITE(1,FMT=FMT_data_l)testB2
+      WRITE(1,*) 'testB3:'; WRITE(1,FMT=FMT_data_l)testB3
       WRITE(1,*) 'testC0:'; WRITE(1,FMT=*)CHAR(testC0)
       WRITE(1,*) 'testC1:'; 
       DO i=1,SIZE(testC1)
@@ -284,8 +295,9 @@ PROGRAM testHDF5
       ENDDO
       CLOSE(UNIT=1)
 
-      DEALLOCATE(testD1,testD2,testD3,testR1,testR2,testR3,testI1,testI2, &
-            testI3,testL1,testL2,testL3,testC1,testC2,testC3)
+      DEALLOCATE(testD1,testD2,testD3,testS1,testS2,testS3,testL1,testL2, &
+            testL3,testB1,testB2,testB3,testC1,testC2,testC3,testN1,testN2, &
+            testN3)
 
       CALL h5%clear()
       ASSERT(.NOT.h5%isinit, 'HDF5 object not properly cleared!')
