@@ -102,6 +102,24 @@ MODULE UnitTest
   CONTAINS
 !
 !-------------------------------------------------------------------------------
+!> @brief Increase unit test output indentation level
+!>
+!> Self-explanatory.
+!>
+    SUBROUTINE UTest_incl()
+      utest_lvl=utest_lvl+1
+    ENDSUBROUTINE UTest_incl
+!
+!-------------------------------------------------------------------------------
+!> @brief Decrease unit test output indentation level
+!>
+!> Self-explanatory.
+!>
+    SUBROUTINE UTest_decl()
+      utest_lvl=utest_lvl-1
+    ENDSUBROUTINE UTest_decl
+!
+!-------------------------------------------------------------------------------
 !> @brief description
 !> @param parameter    description
 !>
@@ -126,8 +144,6 @@ MODULE UnitTest
       
       utest_interactive=.FALSE.
       utest_verbose=0
-      
-      ! some initialization stuff
     ENDSUBROUTINE UTest_Start
 !
 !-------------------------------------------------------------------------------
@@ -153,12 +169,6 @@ MODULE UnitTest
         WRITE(*,'(A72,A)')  ' TEST '//utest_testname//utest_pad,passfail
         WRITE(*,'(A)') utest_hline
      
-        !WRITE(*,"('================================================================================')")
-        !WRITE(*,"('|                               TEST STATISTICS                                |')")
-        !WRITE(*,"('|------------------------------------------------------------------------------|')")
-        !WRITE(*,"('|  SUBTEST NAME                        |    PASS    |    FAIL    |    TOTAL    |')")
-        !WRITE(*,"('|------------------------------------------------------------------------------|')")
-        
         WRITE(*,'(A)') utest_hline
         WRITE(*,'(A,31x,A,31x,A)') '|','TEST STATISTICS','|'
         WRITE(*,'(A)') '|--------------------------------------------------'// &
@@ -185,16 +195,12 @@ MODULE UnitTest
         tmp => tmp1
       ENDDO
       IF(utest_master) THEN
-        !WRITE(*,"('|------------------------------------------------------------------------------|')")
         WRITE(*,'(A)') '|--------------------------------------------------'// &
           '---------------------------|'
         WRITE(*,"('| ',A37,'| ',I10,' | ',I10,' | ',I10,' |')") 'Total                ', &
           npass,nfail,npass+nfail
         WRITE(*,'(A)') utest_hline
-        !WRITE(*,"('================================================================================')")
       ENDIF
-      
-      ! utest_lvl=utest_lvl-1
       
       IF(utest_nfail > 0) THEN
         !This statement is not standard and may not be portable.
@@ -212,7 +218,6 @@ MODULE UnitTest
       CHARACTER(LEN=*),INTENT(IN) :: subtestname
       TYPE(UTestElement),POINTER :: tmp
       
-      utest_lvl=utest_lvl+1
       ALLOCATE(tmp)
       tmp%subtestname=subtestname
       utest_curtest%next=>tmp
@@ -222,6 +227,8 @@ MODULE UnitTest
         WRITE(*,*)
         WRITE(*,'(A)') utest_pad(1:utest_lvl*2)//'BEGIN SUBTEST '//subtestname
       ENDIF
+
+      CALL UTest_incl()
       utest_inmain=.FALSE.
     ENDSUBROUTINE UTest_Start_SubTest
 !
@@ -235,6 +242,9 @@ MODULE UnitTest
       CHARACTER(LEN=19) :: pfstr
       
       IF(utest_component) CALL UTest_End_Component()
+
+      CALL UTest_decl()
+
       IF(utest_curtest%nfail > 0) THEN
         pfstr=c_red//' FAILED'//c_nrm
       ELSE
@@ -247,7 +257,6 @@ MODULE UnitTest
         WRITE(*,*)
       ENDIF
       utest_inmain=.TRUE.
-      utest_lvl=utest_lvl-1
     ENDSUBROUTINE UTest_End_SubTest
 !
 !-------------------------------------------------------------------------------
@@ -258,8 +267,6 @@ MODULE UnitTest
 !>
     SUBROUTINE UTest_Start_Component(componentname)
       CHARACTER(LEN=*),INTENT(IN) :: componentname
-      
-      utest_lvl=utest_lvl+1
       
       IF(utest_component) CALL UTest_End_Component()
       
@@ -274,6 +281,9 @@ MODULE UnitTest
         WRITE(*,'(A)') utest_pad(1:utest_lvl*2)//'BEGIN COMPONENT '// &
           componentname
       ENDIF
+
+      CALL UTest_incl()
+
     ENDSUBROUTINE UTest_Start_Component
 !
 !-------------------------------------------------------------------------------
@@ -285,10 +295,11 @@ MODULE UnitTest
     SUBROUTINE UTest_End_Component()
       CHARACTER(LEN=19) :: pfstr
       
+      CALL UTest_decl()
+
       IF(utest_compfail) THEN
         pfstr=c_red//' FAILED'//c_nrm
       ELSE
-        utest_lvl=utest_lvl-1
         pfstr=c_grn//' PASSED'//c_nrm
       ENDIF
       
@@ -296,7 +307,7 @@ MODULE UnitTest
         WRITE(*,'(A71,A)') utest_pad(1:utest_lvl*2)//'COMPONENT '// &
           TRIM(utest_componentname)//utest_dot,pfstr
       ENDIF
-      IF(utest_compfail) utest_lvl=utest_lvl-1
+
       utest_component=.FALSE.
       utest_prefix=''
       utest_npfx=0
@@ -313,7 +324,6 @@ MODULE UnitTest
       INTEGER,INTENT(IN) :: line
       CHARACTER(LEN=*),INTENT(IN) :: msg
       
-      utest_lvl=utest_lvl+1
       IF(bool) THEN
         utest_lastfail=.FALSE.
         IF(utest_inmain) THEN
@@ -332,13 +342,10 @@ MODULE UnitTest
         utest_compfail=.TRUE.
         WRITE(*,'(A,I0,A,A)') utest_pad(1:utest_lvl*2)//c_red// &
           'ASSERTION FAILED'//c_nrm//' on line ',line,':'
-        utest_lvl=utest_lvl+1
         WRITE(*,'(A)') utest_pad(1:utest_lvl*2)//utest_prefix(1:utest_npfx)// &
           TRIM(ADJUSTL(msg))
-        utest_lvl=utest_lvl-1
         WRITE(*,*)
       ENDIF
-      utest_lvl=utest_lvl-1
     ENDSUBROUTINE UTest_Assert
 !
 !-------------------------------------------------------------------------------
