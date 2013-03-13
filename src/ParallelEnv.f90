@@ -569,6 +569,8 @@ MODULE ParallelEnv
 !$    IF(PRESENT(PEparam)) THEN
 !$      IF(PEparam > omp_get_max_threads()) THEN
 !$        myPE%nproc=omp_get_max_threads()
+!$      ELSEIF(PEparam == 0) THEN
+!$        myPE%nproc=omp_get_num_threads()
 !$      ELSE
 !$        myPE%nproc=MAX(1,PEparam)
 !$      ENDIF
