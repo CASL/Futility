@@ -341,7 +341,7 @@ MODULE FileType_HDF5
       !TODO error
 #ifdef HAVE_MPI
       !TODO something more robust than MPI_COMM_WORLD
-      CALL h5pset_fapl_mpio_f(plist_id,MPI_COMM_WORLD,MPI_INFO_NULL,error)
+      !CALL h5pset_fapl_mpio_f(plist_id,MPI_COMM_WORLD,MPI_INFO_NULL,error)
       !TODO error
 #endif
 

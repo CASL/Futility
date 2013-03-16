@@ -51,7 +51,7 @@ PROGRAM testHDF5
   REGISTER_SUBTEST("HDF5FileType Write",testHDF5FileTypeWrite)
   REGISTER_SUBTEST("HDF5FileType Read",testHDF5FileTypeRead)
 #ifdef HAVE_MPI
-  REGISTER_SUBTEST("HDF5FileType Parallel",testHDF5Parallel)
+!  REGISTER_SUBTEST("HDF5FileType Parallel",testHDF5Parallel)
 #endif
 #else
   REGISTER_SUBTEST("HDF5 Not Present",testHDF5_wo)
