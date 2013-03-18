@@ -26,7 +26,7 @@ PROGRAM testStochasticSampler
   IMPLICIT NONE
 
   TYPE(StochasticSamplingType) :: myRNG
-  TYPE(ExceptionHandlerType),POINTER :: e => NULL()
+  TYPE(ExceptionHandlerType),TARGET :: e
   TYPE(MPI_EnvType) :: MPIEnv
   TYPE(OMP_EnvType) :: OMPEnv
   
@@ -91,7 +91,6 @@ PROGRAM testStochasticSampler
       INTEGER(SLK) :: firstten(11)
       REAL(SDK) :: x
       
-      ALLOCATE(e)
       CALL e%setQuietMode(.TRUE.)
       eStochasticSampler => e
       ! Test Manager Init
@@ -185,13 +184,13 @@ PROGRAM testStochasticSampler
     SUBROUTINE TestRNG
       USE Times
       
-      INTEGER(SLK) :: i,n, inicount
-      REAL(SDK) :: x, mean, stdev, truemean, truestd, tol
+      INTEGER(SLK) :: i,n,inicount
+      REAL(SDK) :: x,mean,stdev,truemean,truestd,tol
       TYPE(TimerType) :: testTimer
       
       CALL testTimer%setTimerHiResMode(.TRUE.) 
       
-      n=1e8
+      n=100000000
       
       inicount=myRNG%counter
       mean=0.0
@@ -215,7 +214,7 @@ PROGRAM testStochasticSampler
       ASSERT(ABS(stdev-truestd)<tol,'RNG standard deviation does not meet criteria')
       FINFO() stdev,truestd,ABS(stdev-truestd)
       
-      WRITE(*,'(A,ES14.7,A)') '     RNG generated ', REAL(n,SRK)/testTimer%elapsedtime, &
+      WRITE(*,'(A,ES14.7,A)') '     RNG generated ',REAL(n,SRK)/testTimer%elapsedtime, &
                               ' random numbers per second'
  
     ENDSUBROUTINE TestRNG
@@ -223,9 +222,9 @@ PROGRAM testStochasticSampler
 !-------------------------------------------------------------------------------
     SUBROUTINE TestUniform
       INTEGER(SLK) :: i,n,inicount
-      REAL(SDK) :: x,mean,stdev, truemean, truestd, tol
+      REAL(SDK) :: x,mean,stdev,truemean,truestd,tol
 
-      n=1e6
+      n=1000000
 
       inicount=myRNG%counter
       mean=0.0
@@ -271,8 +270,9 @@ PROGRAM testStochasticSampler
 !-------------------------------------------------------------------------------
     SUBROUTINE TestExp
       INTEGER(SLK) :: i,n,inicount
-      REAL(SDK) :: x,mean,stdev, truemean, truestd, tol
-      n=1e6
+      REAL(SDK) :: x,mean,stdev,truemean,truestd,tol
+      
+      n=1000000
 
       inicount=myRNG%counter
       mean=0.0
@@ -299,8 +299,9 @@ PROGRAM testStochasticSampler
 !-------------------------------------------------------------------------------
     SUBROUTINE TestNormal
       INTEGER(SLK) :: i,n,inicount
-      REAL(SDK) :: x,mean,stdev, truemean, truestd, tol
-      n=1e6
+      REAL(SDK) :: x,mean,stdev,truemean,truestd,tol
+      
+      n=1000000
 
       COMPONENT_TEST('Normal Distribution')
       inicount=myRNG%counter
@@ -348,8 +349,9 @@ PROGRAM testStochasticSampler
 !-------------------------------------------------------------------------------   
     SUBROUTINE TestMaxwellian
       INTEGER(SLK) :: i,n,inicount
-      REAL(SDK) :: x,mean,stdev,T, truemean, truestd, tol
-      n=1e6
+      REAL(SDK) :: x,mean,stdev,T,truemean,truestd,tol
+      
+      n=1000000
 
       inicount=myRNG%counter
       T=600.0_SDK
@@ -376,10 +378,10 @@ PROGRAM testStochasticSampler
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE TestWatt
-      INTEGER(SLK) :: i,n, inicount
-      REAL(SDK) :: x, mean, stdev, a, b, truemean, truestd, tol
+      INTEGER(SLK) :: i,n,inicount
+      REAL(SDK) :: x,mean,stdev,a,b,truemean,truestd,tol
       
-      n=1e6
+      n=1000000
 
       inicount=myRNG%counter
       a=2.0_SDK
@@ -408,10 +410,10 @@ PROGRAM testStochasticSampler
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE TestEvap
-      INTEGER(SLK) :: i,n, inicount
-      REAL(SDK) :: x, theta, mean, stdev, truemean, truestd, tol
+      INTEGER(SLK) :: i,n,inicount
+      REAL(SDK) :: x, theta,mean,stdev,truemean,truestd,tol
       
-      n=1e6
+      n=1000000
 
       inicount=myRNG%counter
       theta=0.8_SDK
@@ -438,12 +440,14 @@ PROGRAM testStochasticSampler
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE TestNormHist
-      INTEGER(SLK) :: i,j,n, inicount
-      REAL(SDK) :: mean, stdev, truemean, truestd, tol
+      INTEGER(SLK) :: i,j,n,inicount
+      REAL(SDK) :: mean,stdev,truemean,truestd,tol
       REAL(SRK),ALLOCATABLE :: y(:), iii(:)
+      
       ALLOCATE(y(5))
       ALLOCATE(iii(5))
-      n=1e6
+      
+      n=1000000
   
       inicount=myRNG%counter
       y=(/ 0.2, 0.4, 0.1, 0.05, 0.25 /)
@@ -479,12 +483,13 @@ PROGRAM testStochasticSampler
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE TestUnnormHist
-      INTEGER(SLK) :: i,j,n, inicount
-      REAL(SDK) :: mean, stdev, truemean, truestd, tol
-      REAL(SRK),ALLOCATABLE :: y(:), iii(:)
+      INTEGER(SLK) :: i,j,n,inicount
+      REAL(SDK) :: mean,stdev,truemean,truestd,tol
+      REAL(SRK),ALLOCATABLE :: y(:),iii(:)
+      
       ALLOCATE(y(5))
       ALLOCATE(iii(5))
-      n=1e6
+      n=1000000
   
       inicount=myRNG%counter
       y=(/ 2.0, 4.0, 1.0, 0.5, 2.5 /)
@@ -520,12 +525,13 @@ PROGRAM testStochasticSampler
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE TestNormContHist
-      INTEGER(SLK) :: i,n, inicount
-      REAL(SDK) :: x, mean, stdev, truemean, truestd, tol
-      REAL(SRK),ALLOCATABLE :: y(:), z(:)
+      INTEGER(SLK) :: i,n,inicount
+      REAL(SDK) :: x,mean,stdev,truemean,truestd,tol
+      REAL(SRK),ALLOCATABLE :: y(:),z(:)
+      
       ALLOCATE(y(5))
       ALLOCATE(z(6))
-      n=1e6
+      n=1000000
 
       inicount=myRNG%counter
       y=(/ 0.2, 0.4, 0.1, 0.05, 0.25 /)
@@ -555,12 +561,13 @@ PROGRAM testStochasticSampler
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE TestUnnormContHist
-      INTEGER(SLK) :: i,n, inicount
-      REAL(SDK) :: x, mean, stdev, truemean, truestd, tol
-      REAL(SRK),ALLOCATABLE :: y(:), z(:)
+      INTEGER(SLK) :: i,n,inicount
+      REAL(SDK) :: x,mean,stdev,truemean,truestd,tol
+      REAL(SRK),ALLOCATABLE :: y(:),z(:)
+      
       ALLOCATE(y(5))
       ALLOCATE(z(6))
-      n=1e6
+      n=1000000
 
       inicount=myRNG%counter
       y=(/ 2.0, 4.0, 1.0, 0.5, 2.5 /)
@@ -590,12 +597,13 @@ PROGRAM testStochasticSampler
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE TestNormPWLinear
-      INTEGER(SLK) :: i,n, inicount
-      REAL(SDK) :: x, mean, stdev, truemean, truestd, tol
-      REAL(SRK),ALLOCATABLE :: y(:), z(:)
+      INTEGER(SLK) :: i,n,inicount
+      REAL(SDK) :: x, mean,stdev,truemean,truestd,tol
+      REAL(SRK),ALLOCATABLE :: y(:),z(:)
+      
       ALLOCATE(y(3))
       ALLOCATE(z(3))
-      n=1e6
+      n=1000000
 
       inicount=myRNG%counter
       y=(/ 0.0, 1.0, 0.0 /)
@@ -625,12 +633,13 @@ PROGRAM testStochasticSampler
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE TestUnnormPWLinear
-      INTEGER(SLK) :: i,n, inicount
-      REAL(SDK) :: x, mean, stdev, truemean, truestd, tol
-      REAL(SRK),ALLOCATABLE :: y(:), z(:)
+      INTEGER(SLK) :: i,n,inicount
+      REAL(SDK) :: x,mean,stdev,truemean,truestd,tol
+      REAL(SRK),ALLOCATABLE :: y(:),z(:)
+      
       ALLOCATE(y(3))
       ALLOCATE(z(3))
-      n=1e6
+      n=1000000
 
       inicount=myRNG%counter
       y=(/ 0.0, 2.0, 0.0 /)
@@ -660,12 +669,13 @@ PROGRAM testStochasticSampler
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE TestRejection
-      INTEGER(SLK) :: i,n, inicount
-      REAL(SDK) :: x, mean, stdev, truemean, truestd, tol
-      REAL(SRK),ALLOCATABLE :: y(:), z(:)
+      INTEGER(SLK) :: i,n,inicount
+      REAL(SDK) :: x,mean,stdev,truemean,truestd,tol
+      REAL(SRK),ALLOCATABLE :: y(:),z(:)
+      
       ALLOCATE(y(3))
       ALLOCATE(z(3))
-      n=1e6
+      n=1000000
 
       inicount=myRNG%counter
       y=(/ 0.0, 2.0, 0.0 /)
@@ -693,12 +703,13 @@ PROGRAM testStochasticSampler
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE TestRejectionArg
-      INTEGER(SLK) :: i,n, inicount
-      REAL(SDK) :: x, mean, stdev, truemean, truestd, tol
-      REAL(SRK),ALLOCATABLE :: y(:), z(:)
+      INTEGER(SLK) :: i,n,inicount
+      REAL(SDK) :: x,mean,stdev,truemean,truestd,tol
+      REAL(SRK),ALLOCATABLE :: y(:),z(:)
+      
       ALLOCATE(y(3))
       ALLOCATE(z(3))
-      n=1e6
+      n=1000000
 
       inicount=myRNG%counter
       y=(/ 0.0, 2.0, 0.0 /)
