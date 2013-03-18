@@ -1794,7 +1794,7 @@ MODULE MatrixTypes
       CALL PETScMatrixType_reqParams%clear()
       
       !There are no optional parameters at this time.
-      
+      CALL PETScMatrixType_optParams%clear()
     ENDSUBROUTINE MatrixTypes_Clear_ValidParams
 !
 ENDMODULE MatrixTypes
