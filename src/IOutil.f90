@@ -90,6 +90,7 @@ MODULE IOutil
   PUBLIC :: strfind
   PUBLIC :: strrep
   PUBLIC :: stripComment
+  PUBLIC :: SlashRep
   
   !File Types
   PUBLIC :: BaseFileType

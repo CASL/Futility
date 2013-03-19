@@ -111,6 +111,7 @@ MODULE IO_Strings
   PUBLIC :: nmatchstr
   PUBLIC :: strrep
   PUBLIC :: stripComment
+  PUBLIC :: SlashRep
       
   !> Character representing a space symbol
   CHARACTER(LEN=*),PARAMETER :: BLANK=" "
