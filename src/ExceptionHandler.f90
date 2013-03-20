@@ -129,6 +129,7 @@ MODULE ExceptionHandler
   PUBLIC :: EXCEPTION_OK
   PUBLIC :: EXCEPTION_INFORMATION
   PUBLIC :: EXCEPTION_WARNING
+  PUBLIC :: EXCEPTION_DEBUG_WARNING
   PUBLIC :: EXCEPTION_ERROR
   PUBLIC :: EXCEPTION_FATAL_ERROR
   PUBLIC :: EXCEPTION_FAILURE
@@ -149,6 +150,8 @@ MODULE ExceptionHandler
   INTEGER(SIK),PARAMETER :: EXCEPTION_FATAL_ERROR=4
   !> An enumeration for defining an FAILURE exception
   INTEGER(SIK),PARAMETER :: EXCEPTION_FAILURE=5
+  !> An enumeration for defining a DEBUG WARNING exception
+  INTEGER(SIK),PARAMETER :: EXCEPTION_DEBUG_WARNING=6
   !> The number of exception types
   INTEGER(SIK),PARAMETER :: EXCEPTION_SIZE=5
   !> The maximum size of an exception message
@@ -165,6 +168,8 @@ MODULE ExceptionHandler
     LOGICAL(SBK),PRIVATE :: logFileActive=.FALSE.
     !> Defines whether or not to report exceptions to standard error
     LOGICAL(SBK),PRIVATE :: quiet=.FALSE.
+    !> Defines whether or not to debug warnings are enabled
+    LOGICAL(SBK),PRIVATE :: debug=.TRUE.
     !> The output unit identifier for the log file
     INTEGER(SIK),PRIVATE :: logFileUnit=0_SIK
     !> The number of INFORMATION exceptions that have been raised
@@ -200,6 +205,12 @@ MODULE ExceptionHandler
       !> @copybrief ExceptionHandler::isQuietMode
       !> @copydetails ExceptionHandler::isQuietMode
       PROCEDURE,PASS :: isQuietMode
+      !> @copybrief ExceptionHandler::setDebugMode
+      !> @copydetails ExceptionHandler::setDebugMode
+      PROCEDURE,PASS :: setDebugMode
+      !> @copybrief ExceptionHandler::isDebugMode
+      !> @copydetails ExceptionHandler::isDebugMode
+      PROCEDURE,PASS :: isDebugMode
       !> @copybrief ExceptionHandler::setLogFileUnit
       !> @copydetails ExceptionHandler::setLogFileUnit
       PROCEDURE,PASS :: setLogFileUnit
@@ -227,6 +238,9 @@ MODULE ExceptionHandler
       !> @copybrief ExceptionHandler::raiseWarning
       !> @copydetails ExceptionHandler::raiseWarning
       PROCEDURE,PASS :: raiseWarning
+      !> @copybrief ExceptionHandler::raiseDebugWarning
+      !> @copydetails ExceptionHandler::raiseDebugWarning
+      PROCEDURE,PASS :: raiseDebugWarning
       !> @copybrief ExceptionHandler::raiseError
       !> @copydetails ExceptionHandler::raiseError
       PROCEDURE,PASS :: raiseError
@@ -467,6 +481,27 @@ MODULE ExceptionHandler
     ENDFUNCTION isQuietMode
 !
 !-------------------------------------------------------------------------------
+!> @brief Suppress/Unsupress exception reporting for debug warnings
+!> @param e the exception object
+!> @param bool the boolean for debug mode
+    SUBROUTINE setDebugMode(e,bool)
+      CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
+      LOGICAL(SBK),INTENT(IN) :: bool
+      e%debug=bool
+    ENDSUBROUTINE setDebugMode
+!
+!-------------------------------------------------------------------------------
+!> @brief Get the status of the debug mode. Whether or not exception reporting
+!> of debug warnings are supressed
+!> @param e the exception object
+!> @returns bool indicates whether or not debug reporting is suppressed
+    PURE FUNCTION isDebugMode(e) RESULT(bool)
+      CLASS(ExceptionHandlerType),INTENT(IN) :: e
+      LOGICAL(SBK) :: bool
+      bool=e%debug
+    ENDFUNCTION isDebugMode
+!
+!-------------------------------------------------------------------------------
 !> @brief Set the exception handler to stop when an error is raised.
 !> @param e the exception object
 !> @param bool the value for stopping on when an error is raised
@@ -519,6 +554,21 @@ MODULE ExceptionHandler
       CALL exceptionMessage(EXCEPTION_WARNING,e%quiet,e%logFileActive, &
                             e%logFileUnit,e%lastMesg)
     ENDSUBROUTINE raiseWarning
+!
+!-------------------------------------------------------------------------------
+!> @brief Raise a debug warning exception in the exception handler.
+!> @param e the exception object
+!> @param mesg an informative message about the exception that was raised
+!>
+!> The routine throws a warning if the debug output is enabled, otherwise
+!> remains silent.
+    SUBROUTINE raiseDebugWarning(e,mesg)
+      CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
+      CHARACTER(LEN=*),INTENT(IN) :: mesg
+      
+      IF(e%debug) CALL e%raiseWarning(mesg)
+
+    ENDSUBROUTINE raiseDebugWarning
 !
 !-------------------------------------------------------------------------------
 !> @brief Raise an error exception in the exception handler.

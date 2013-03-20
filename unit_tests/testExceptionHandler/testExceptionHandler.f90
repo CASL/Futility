@@ -34,6 +34,7 @@ PROGRAM testExceptionHandler
   WRITE(*,*) '  Passed:              EXCEPTION_OK = ',EXCEPTION_OK
   WRITE(*,*) '  Passed:     EXCEPTION_INFORMATION = ',EXCEPTION_INFORMATION
   WRITE(*,*) '  Passed:         EXCEPTION_WARNING = ',EXCEPTION_WARNING
+  WRITE(*,*) '  Passed:   EXCEPTION_DEBUG_WARNING = ',EXCEPTION_DEBUG_WARNING
   WRITE(*,*) '  Passed:           EXCEPTION_ERROR = ',EXCEPTION_ERROR
   WRITE(*,*) '  Passed:     EXCEPTION_FATAL_ERROR = ',EXCEPTION_FATAL_ERROR
   WRITE(*,*) '  Passed:         EXCEPTION_FAILURE = ',EXCEPTION_FAILURE
@@ -55,6 +56,20 @@ PROGRAM testExceptionHandler
     STOP 666
   ELSE
     WRITE(*,*) '  Passed: CALL test%setQuietMode(.TRUE.)'
+  ENDIF
+  
+  IF(.NOT. test%isDebugMode()) THEN
+    WRITE(*,*) 'test%isDebugMode() FAILED!'
+    STOP 666
+  ELSE
+    WRITE(*,*) '  Passed: test%isDebugMode()'
+  ENDIF
+  CALL test%setDebugMode(.FALSE.)
+  IF(test%isDebugMode()) THEN
+    WRITE(*,*) 'CALL test%setDebugMode(.TRUE.) FAILED!'
+    STOP 666
+  ELSE
+    WRITE(*,*) '  Passed: CALL test%setDebugMode(.TRUE.)'
   ENDIF
   IF(.NOT.test%isStopOnError()) THEN
     WRITE(*,*) 'test%isStopOnError() FAILED!'
@@ -170,8 +185,24 @@ PROGRAM testExceptionHandler
   ELSE
     WRITE(*,*) '  Passed: CALL test%raiseWarning(''Test warning'')'
   ENDIF
+  CALL test%setDebugMode(.FALSE.)
+  CALL test%raiseDebugWarning('Test warning')
+  IF(ANY(test%getCounterAll() /= (/1,1,0,0,0/))) THEN
+    WRITE(*,*) 'CALL test%raiseDebugWarning(''Test warning'') while debug is FALSE FAILED!'
+    STOP 666
+  ELSE
+    WRITE(*,*) '  Passed: CALL test%raiseDebugWarning(''Test warning'') while debug is FALSE'
+  ENDIF
+  CALL test%setDebugMode(.TRUE.)
+  CALL test%raiseDebugWarning('Test warning')
+  IF(ANY(test%getCounterAll() /= (/1,2,0,0,0/))) THEN
+    WRITE(*,*) 'CALL test%raiseDebugWarning(''Test warning'') while debug is TRUE FAILED!'
+    STOP 666
+  ELSE
+    WRITE(*,*) '  Passed: CALL test%raiseDebugWarning(''Test warning'') while debug is TRUE'
+  ENDIF
   CALL test%raiseError('Test error')
-  IF(ANY(test%getCounterAll() /= (/1,1,1,0,0/))) THEN
+  IF(ANY(test%getCounterAll() /= (/1,2,1,0,0/))) THEN
     WRITE(*,*) 'CALL test%raiseError(''Test error'') FAILED!'
     STOP 666
   ELSE
@@ -181,14 +212,14 @@ PROGRAM testExceptionHandler
   OPEN(UNIT=test%getLogFileUnit(),FILE='Exception.log', &
        ACCESS='SEQUENTIAL',FORM='FORMATTED',ACTION='READ')
   CALL test%raiseFailure('Test failure')
-  IF(ANY(test%getCounterAll() /= (/1,1,1,0,1/))) THEN
+  IF(ANY(test%getCounterAll() /= (/1,2,1,0,1/))) THEN
     WRITE(*,*) 'CALL test%raiseFailure(''Test failure'') FAILED!'
     STOP 666
   ELSE
     WRITE(*,*) '  Passed: CALL test%raiseFailure(''Test failure'')'
   ENDIF
   IF(test%getCounter(EXCEPTION_INFORMATION) /= 1 .AND. &
-     test%getCounter(EXCEPTION_WARNING) /= 1 .AND. &
+     test%getCounter(EXCEPTION_WARNING) /= 2 .AND. &
      test%getCounter(EXCEPTION_ERROR) /= 1 .AND. &
      test%getCounter(EXCEPTION_FATAL_ERROR) /= 0 .AND. &
      test%getCounter(EXCEPTION_FAILURE) /= 1 .AND. &
