@@ -792,7 +792,6 @@ MODULE MatrixTypes
 !> If setShape has previously been applied to the same sparse matrix.
 !>
     SUBROUTINE set_SparseMatrixType(matrix,i,j,setval)
-      USE TAU_Stubs
       CHARACTER(LEN=*),PARAMETER :: myName='set_SparseMatrixType'
       CLASS(SparseMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
@@ -801,9 +800,6 @@ MODULE MatrixTypes
       INTEGER(SIK) :: ja_index
       LOGICAL(SBK) :: found_ja
       
-      INTEGER(SIK),SAVE :: profiler_set_sparseMatrix(2)
-      CALL TAU_PROFILE_TIMER(profiler_set_sparseMatrix,"set_sparseMatrix")
-      CALL TAU_PROFILE_START(profiler_set_sparseMatrix)
       IF(matrix%isInit) THEN
         IF(((matrix%jCount > 0).AND.(i <= matrix%n)) &
             .AND. ((j > 0) .AND. (i > 0))) THEN
@@ -819,7 +815,6 @@ MODULE MatrixTypes
           IF(found_ja) matrix%a(ja_index)=setval
         ENDIF
       ENDIF
-      CALL TAU_PROFILE_STOP(profiler_set_sparseMatrix)
     ENDSUBROUTINE set_SparseMatrixtype
 !
 !-------------------------------------------------------------------------------
@@ -830,16 +825,11 @@ MODULE MatrixTypes
 !> @param setval the value to be set
 !>
     SUBROUTINE set_DenseSquareMatrixType(matrix,i,j,setval)
-      USE TAU_Stubs
       CHARACTER(LEN=*),PARAMETER :: myName='set_DenseSquareMatrixType'
       CLASS(DenseSquareMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(IN) :: setval
-      
-      INTEGER(SIK),SAVE :: profiler_set_DenseSquareMatrixType(2)
-      CALL TAU_PROFILE_TIMER(profiler_set_DenseSquareMatrixType,"set_DenseSquareMatrixType")
-      CALL TAU_PROFILE_START(profiler_set_DenseSquareMatrixType)
       IF(matrix%isInit) THEN
         IF(((j <= matrix%n) .AND. (i <= matrix%n)) & 
           .AND. ((j > 0) .AND. (i > 0))) THEN
@@ -847,7 +837,6 @@ MODULE MatrixTypes
           IF(matrix%isSymmetric) matrix%a(j,i)=setval
         ENDIF
       ENDIF
-      CALL TAU_PROFILE_STOP(profiler_set_DenseSquareMatrixType)
     ENDSUBROUTINE set_DenseSquareMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -912,7 +901,6 @@ MODULE MatrixTypes
 !> will be ignored.
 !> 
     SUBROUTINE set_shape_SparseMatrixType(matrix,i,j,setval)
-      USE TAU_Stubs
       CHARACTER(LEN=*),PARAMETER :: myName='set_shape_SparseMatrixType'
       CLASS(SparseMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
@@ -920,9 +908,6 @@ MODULE MatrixTypes
       REAL(SRK),OPTIONAL,INTENT(IN) :: setval
       LOGICAL(SBK) :: ijOK
       
-      INTEGER(SIK),SAVE :: profiler_set_shape_SparseMatrixType(2)
-      CALL TAU_PROFILE_TIMER(profiler_set_shape_SparseMatrixType,"set_shape_SparseMatrixType")
-      CALL TAU_PROFILE_START(profiler_set_shape_SparseMatrixType)
       IF(matrix%isInit) THEN
         IF((i <= matrix%n) .AND. ((j > 0) .AND. (i > 0))) THEN
           !enforce entering values in row-major order
@@ -945,7 +930,6 @@ MODULE MatrixTypes
           ENDIF
         ENDIF
       ENDIF
-      CALL TAU_PROFILE_STOP(profiler_set_shape_SparseMatrixType)
     ENDSUBROUTINE set_shape_SparseMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -1054,17 +1038,12 @@ MODULE MatrixTypes
 !> out of bounds, then -1051.0 (an arbitrarily chosen key) is returned.
 !>
     SUBROUTINE get_DenseSquareMatrixType(matrix,i,j,getval)
-      USE TAU_Stubs
       CHARACTER(LEN=*),PARAMETER :: myName='get_DenseSquareMatrixType'
       CLASS(DenseSquareMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(INOUT) :: getval
       LOGICAL(SBK) :: localalloc
-
-      INTEGER(SIK),SAVE :: profiler_get_DenseSquareMatrixType(2)
-      CALL TAU_PROFILE_TIMER(profiler_get_DenseSquareMatrixType,"get_DenseSquareMatrixType")
-      CALL TAU_PROFILE_START(profiler_get_DenseSquareMatrixType)
 
       !Error checking of subroutine input
       localalloc=.FALSE.
@@ -1083,7 +1062,6 @@ MODULE MatrixTypes
       ENDIF
 
       IF(localalloc) DEALLOCATE(eMatrixType)
-      CALL TAU_PROFILE_STOP(profiler_get_DenseSquareMatrixType)
     ENDSUBROUTINE get_DenseSquareMatrixtype
 !
 !-------------------------------------------------------------------------------
@@ -1097,7 +1075,6 @@ MODULE MatrixTypes
 !> bounds, then -1051.0 is returned (-1051.0 is an arbitrarily chosen key).
 !>
     SUBROUTINE get_SparseMatrixType(matrix,i,j,getval)
-      USE TAU_Stubs
       CHARACTER(LEN=*),PARAMETER :: myName='get_SparseMatrixType'
       CLASS(SparseMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
@@ -1106,9 +1083,6 @@ MODULE MatrixTypes
       LOGICAL(SBK) :: found_ja
       REAL(SRK),INTENT(INOUT) :: getval
       
-      INTEGER(SIK),SAVE :: profiler_get_SparseMatrixType(2)
-      CALL TAU_PROFILE_TIMER(profiler_get_SparseMatrixType,"get_SparseMatrixType")
-      CALL TAU_PROFILE_START(profiler_get_SparseMatrixType)
       getval=0.0_SRK
       IF(matrix%isInit) THEN
         IF(((matrix%jCount > 0).AND.(i <= matrix%n)) &
@@ -1125,7 +1099,6 @@ MODULE MatrixTypes
           getval=-1051._SRK
         ENDIF
       ENDIF
-      CALL TAU_PROFILE_STOP(profiler_get_SparseMatrixType)
     ENDSUBROUTINE get_SparseMatrixtype
 !
 !-------------------------------------------------------------------------------
