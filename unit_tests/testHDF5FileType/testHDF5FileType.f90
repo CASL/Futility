@@ -48,6 +48,7 @@ PROGRAM testHDF5
   CREATE_TEST("HDF File Type")
 
 #ifdef MPACT_HAVE_HDF5
+  REGISTER_SUBTEST("HDF5FileType Delete",testHDF5FileTypeCreateDelete)
   REGISTER_SUBTEST("HDF5FileType Write",testHDF5FileTypeWrite)
   REGISTER_SUBTEST("HDF5FileType Read",testHDF5FileTypeRead)
 #ifdef HAVE_MPI
@@ -58,14 +59,29 @@ PROGRAM testHDF5
 #endif
 
   FINALIZE_TEST()
-#ifdef HAVE_MPI
-  CALL testMPI%finalize()
-  CALL testMPI%clear()
-#endif
+!#ifdef HAVE_MPI
+!  CALL testMPI%finalize()
+!  CALL testMPI%clear()
+!#endif
 
 !
 !===============================================================================
   CONTAINS
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testHDF5FileTypeCreateDelete()
+      TYPE(HDF5FileType) :: h5
+      LOGICAL(SBK) :: exists
+      
+      CALL h5%init('createdeletetest.h5','NEW')
+      ASSERT(h5%isinit,'HDF5 object no properly initialized')
+      IF(h5%isinit) exists=.TRUE.
+      
+      CALL h5%fdelete()
+      INQUIRE(FILE='createdeletetest.h5',EXIST=exists)
+      ASSERT(.NOT.exists,'HDF5 object not properly deleted.')
+      
+    ENDSUBROUTINE testHDF5FileTypeCreateDelete
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testHDF5FileTypeWrite()
@@ -163,33 +179,33 @@ PROGRAM testHDF5
       ASSERT(.TRUE.,'HDF5 not present')
 #endif
       CALL h5%mkdir('groupR')
-      CALL h5%write('groupR->memD0',testD0)
-      CALL h5%write('groupR->memD1',testD1,SHAPE(testD1))
-      CALL h5%write('groupR->memD2',testD2,SHAPE(testD2))
-      CALL h5%write('groupR->memD3',testD3,SHAPE(testD3))
-      CALL h5%write('groupR->memS0',testS0)
-      CALL h5%write('groupR->memS1',testS1,SHAPE(testS1))
-      CALL h5%write('groupR->memS2',testS2,SHAPE(testS2))
-      CALL h5%write('groupR->memS3',testS3,SHAPE(testS3))
+      CALL h5%fwrite('groupR->memD0',testD0)
+      CALL h5%fwrite('groupR->memD1',testD1,SHAPE(testD1))
+      CALL h5%fwrite('groupR->memD2',testD2,SHAPE(testD2))
+      CALL h5%fwrite('groupR->memD3',testD3,SHAPE(testD3))
+      CALL h5%fwrite('groupR->memS0',testS0)
+      CALL h5%fwrite('groupR->memS1',testS1,SHAPE(testS1))
+      CALL h5%fwrite('groupR->memS2',testS2,SHAPE(testS2))
+      CALL h5%fwrite('groupR->memS3',testS3,SHAPE(testS3))
       CALL h5%mkdir('groupI')
-      CALL h5%write('groupI->memL0',testL0)
-      CALL h5%write('groupI->memL1',testL1,SHAPE(testL1))
-      CALL h5%write('groupI->memL2',testL2,SHAPE(testL2))
-      CALL h5%write('groupI->memL3',testL3,SHAPE(testL3))
-      CALL h5%write('groupI->memN0',testN0)
-      CALL h5%write('groupI->memN1',testN1,SHAPE(testN1))
-      CALL h5%write('groupI->memN2',testN2,SHAPE(testN2))
-      CALL h5%write('groupI->memN3',testN3,SHAPE(testN3))
+      CALL h5%fwrite('groupI->memL0',testL0)
+      CALL h5%fwrite('groupI->memL1',testL1,SHAPE(testL1))
+      CALL h5%fwrite('groupI->memL2',testL2,SHAPE(testL2))
+      CALL h5%fwrite('groupI->memL3',testL3,SHAPE(testL3))
+      CALL h5%fwrite('groupI->memN0',testN0)
+      CALL h5%fwrite('groupI->memN1',testN1,SHAPE(testN1))
+      CALL h5%fwrite('groupI->memN2',testN2,SHAPE(testN2))
+      CALL h5%fwrite('groupI->memN3',testN3,SHAPE(testN3))
       CALL h5%mkdir('groupB')
-      CALL h5%write('groupB->memB0',testB0)
-      CALL h5%write('groupB->memB1',testB1,SHAPE(testB1))
-      CALL h5%write('groupB->memB2',testB2,SHAPE(testB2))
-      CALL h5%write('groupB->memB3',testB3,SHAPE(testB3))
+      CALL h5%fwrite('groupB->memB0',testB0)
+      CALL h5%fwrite('groupB->memB1',testB1,SHAPE(testB1))
+      CALL h5%fwrite('groupB->memB2',testB2,SHAPE(testB2))
+      CALL h5%fwrite('groupB->memB3',testB3,SHAPE(testB3))
       CALL h5%mkdir('groupC')
-      CALL h5%write('groupC->memC0',testC0)
-      CALL h5%write('groupC->memC1',testC1,SHAPE(testC1))
-      CALL h5%write('groupC->memC2',testC2,SHAPE(testC2))
-      CALL h5%write('groupC->memC3',testC3,SHAPE(testC3))
+      CALL h5%fwrite('groupC->memC0',testC0)
+      CALL h5%fwrite('groupC->memC1',testC1,SHAPE(testC1))
+      CALL h5%fwrite('groupC->memC2',testC2,SHAPE(testC2))
+      CALL h5%fwrite('groupC->memC3',testC3,SHAPE(testC3))
 
       DEALLOCATE(testD1,testD2,testD3,testS1,testS2,testS3,testL1,testL2, &
             testL3,testB1,testB2,testB3,testC1,testC2,testC3,testN1,testN2, &
@@ -229,30 +245,30 @@ PROGRAM testHDF5
       ENDDO
 
       ! Read a dataset (real-1)
-      CALL h5%read('groupR->memD0',testD0)
-      CALL h5%read('groupR->memD1',testD1)
-      CALL h5%read('groupR->memD2',testD2)
-      CALL h5%read('groupR->memD3',testD3)
-      CALL h5%read('groupR->memS0',testS0)
-      CALL h5%read('groupR->memS1',testS1)
-      CALL h5%read('groupR->memS2',testS2)
-      CALL h5%read('groupR->memS3',testS3)
-      CALL h5%read('groupI->memN0',testN0)
-      CALL h5%read('groupI->memN1',testN1)
-      CALL h5%read('groupI->memN2',testN2)
-      CALL h5%read('groupI->memN3',testN3)
-      CALL h5%read('groupI->memL0',testL0)
-      CALL h5%read('groupI->memL1',testL1)
-      CALL h5%read('groupI->memL2',testL2)
-      CALL h5%read('groupI->memL3',testL3)
-      CALL h5%read('groupB->memB0',testB0)
-      CALL h5%read('groupB->memB1',testB1)
-      CALL h5%read('groupB->memB2',testB2)
-      CALL h5%read('groupB->memB3',testB3)
-      CALL h5%read('groupC->memC0',testC0)
-      CALL h5%read('groupC->memC1',testC1)
-      CALL h5%read('groupC->memC2',testC2)
-      CALL h5%read('groupC->memC3',testC3)
+      CALL h5%fread('groupR->memD0',testD0)
+      CALL h5%fread('groupR->memD1',testD1)
+      CALL h5%fread('groupR->memD2',testD2)
+      CALL h5%fread('groupR->memD3',testD3)
+      CALL h5%fread('groupR->memS0',testS0)
+      CALL h5%fread('groupR->memS1',testS1)
+      CALL h5%fread('groupR->memS2',testS2)
+      CALL h5%fread('groupR->memS3',testS3)
+      CALL h5%fread('groupI->memN0',testN0)
+      CALL h5%fread('groupI->memN1',testN1)
+      CALL h5%fread('groupI->memN2',testN2)
+      CALL h5%fread('groupI->memN3',testN3)
+      CALL h5%fread('groupI->memL0',testL0)
+      CALL h5%fread('groupI->memL1',testL1)
+      CALL h5%fread('groupI->memL2',testL2)
+      CALL h5%fread('groupI->memL3',testL3)
+      CALL h5%fread('groupB->memB0',testB0)
+      CALL h5%fread('groupB->memB1',testB1)
+      CALL h5%fread('groupB->memB2',testB2)
+      CALL h5%fread('groupB->memB3',testB3)
+      CALL h5%fread('groupC->memC0',testC0)
+      CALL h5%fread('groupC->memC1',testC1)
+      CALL h5%fread('groupC->memC2',testC2)
+      CALL h5%fread('groupC->memC3',testC3)
       
       WRITE(1,*) 'testD0:'; WRITE(1,FMT=FMT_data_r)testD0
       WRITE(1,*) 'testD1:'; WRITE(1,FMT=FMT_data_r)testD1
@@ -358,7 +374,7 @@ PROGRAM testHDF5
 
       CALL h5%init('parallelout.h5','NEW')
 
-      CALL h5%write('testD2',testR2,(/dim1,dim2/))
+      CALL h5%fwrite('testD2',testR2,(/dim1,dim2/))
 
       CALL h5%clear()
 
