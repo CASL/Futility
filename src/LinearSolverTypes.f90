@@ -145,6 +145,7 @@ MODULE LinearSolverTypes
 
 #ifdef MPACT_HAVE_PETSC
     KSP :: ksp
+    PC :: pc
 #endif
 
   !
@@ -268,6 +269,7 @@ MODULE LinearSolverTypes
       INTEGER(SIK) :: MPI_Comm_ID,numberOMP
       CHARACTER(LEN=256) :: timerName
       LOGICAL(SBK) :: localalloc
+      character(LEN=20) :: pctype
 #ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: ierr
 #endif
@@ -472,6 +474,22 @@ MODULE LinearSolverTypes
                   CASE(GMRES) 
                     CALL KSPSetType(solver%ksp,KSPGMRES,ierr)
                 ENDSELECT
+
+                SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
+                  CALL KSPSetOperators(solver%ksp,A%a,A%a, &
+                    DIFFERENT_NONZERO_PATTERN,ierr)
+                ENDSELECT
+
+                !set preconditioner
+                IF(solver%solverMethod == GMRES) THEN
+                  CALL KSPGetPC(solver%ksp,solver%pc,ierr)
+                  CALL PCSetType(solver%pc,PCBJACOBI,ierr)
+                  CALL PetscOptionsSetValue("-sub_pc_type", "ilu", ierr)
+!                  CALL PetscOptionsSetValue("-sub_pc_factor_levels",1, ierr)
+                  CALL PCSetFromOptions(solver%pc,ierr)
+                ENDIF
+                CALL KSPSetFromOptions(solver%ksp,ierr)
+
 #else     
                 CALL eLinearSolverType%raiseError('Incorrect call to '// &
                   modName//'::'//myName//' - invalid value of solverMethod')
@@ -794,11 +812,11 @@ MODULE LinearSolverTypes
                   IF(.NOT.(X%isAssembled)) CALL X%assemble()
                 ENDSELECT
                 
-                SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
-                  CALL KSPSetOperators(solver%ksp,A%a,A%a, &
-                    DIFFERENT_NONZERO_PATTERN,ierr)
-                ENDSELECT
-                CALL KSPSetFromOptions(solver%ksp,ierr)
+!                SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
+!                  CALL KSPSetOperators(solver%ksp,A%a,A%a, &
+!                    DIFFERENT_NONZERO_PATTERN,ierr)
+!                ENDSELECT
+!                CALL KSPSetFromOptions(solver%ksp,ierr)
                 
                 ! solve
                 SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
@@ -849,11 +867,11 @@ MODULE LinearSolverTypes
                   IF(.NOT.(X%isAssembled)) CALL X%assemble()
                 ENDSELECT
                 
-                SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
-                  CALL KSPSetOperators(solver%ksp,A%a,A%a, &
-                    DIFFERENT_NONZERO_PATTERN,ierr)
-                ENDSELECT
-                CALL KSPSetFromOptions(solver%ksp,ierr)
+!                SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
+!                  CALL KSPSetOperators(solver%ksp,A%a,A%a, &
+!                    DIFFERENT_NONZERO_PATTERN,ierr)
+!                ENDSELECT
+!                CALL KSPSetFromOptions(solver%ksp,ierr)
                 
                 ! solve
                 SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
@@ -910,11 +928,11 @@ MODULE LinearSolverTypes
                   IF(.NOT.(X%isAssembled)) CALL X%assemble()
                 ENDSELECT
                 
-                SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
-                  CALL KSPSetOperators(solver%ksp,A%a,A%a, &
-                    DIFFERENT_NONZERO_PATTERN,ierr)
-                ENDSELECT
-                CALL KSPSetFromOptions(solver%ksp,ierr)
+!                SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
+!                  CALL KSPSetOperators(solver%ksp,A%a,A%a, &
+!                    DIFFERENT_NONZERO_PATTERN,ierr)
+!                ENDSELECT
+!                CALL KSPSetFromOptions(solver%ksp,ierr)
 
                 ! solve
                 SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
