@@ -145,6 +145,7 @@ MODULE LinearSolverTypes
 
 #ifdef MPACT_HAVE_PETSC
     KSP :: ksp
+    PC :: pc
 #endif
 
   !
@@ -263,10 +264,10 @@ MODULE LinearSolverTypes
       CLASS(ParamType),POINTER :: pListPtr
       TYPE(ParamType) :: validParams,matPList,vecxPList,vecbPList
       ! local variables
-      INTEGER(SIK) :: i,matType,TPLType,n
-      INTEGER(SIK) :: solverMethod
+      INTEGER(SIK) :: i,n
+      INTEGER(SIK) :: matType,ReqTPLType,TPLType,solverMethod
       INTEGER(SIK) :: MPI_Comm_ID,numberOMP
-      CHARACTER(LEN=256) :: timerName
+      CHARACTER(LEN=256) :: timerName,ReqTPLTypeStr,TPLTypeStr
       LOGICAL(SBK) :: localalloc
 #ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: ierr
@@ -293,16 +294,16 @@ MODULE LinearSolverTypes
       CALL validParams%get('LinearSolverType->numberOMP',numberOMP)
       CALL validParams%get('LinearSolverType->timerName',timerName)
       CALL validParams%get('LinearSolverType->matType',matType)
-      ! pull data for matrix parameter list
+      ! pull data for matrix and vector parameter lists
       CALL validParams%get('LinearSolverType->A->MatrixType',pListPtr)
       matPList=pListPtr
-      CALL matPList%add('MatrixType->MPI_Comm_ID',MPI_Comm_ID)
-      ! pull data for vector parameter list
       CALL validParams%get('LinearSolverType->x->VectorType',pListPtr)
       vecxPList=pListPtr
-      CALL vecxPList%add('VectorType->MPI_Comm_ID',MPI_Comm_ID)
       CALL validParams%get('LinearSolverType->b->VectorType',pListPtr)
       vecbPList=pListPtr
+      !add mpi communicator to parameter lists
+      CALL matPList%add('MatrixType->MPI_Comm_ID',MPI_Comm_ID)
+      CALL vecxPList%add('VectorType->MPI_Comm_ID',MPI_Comm_ID)
       CALL vecbPList%add('VectorType->MPI_Comm_ID',MPI_Comm_ID)
       !pull size from source vector
       CALL validParams%get('LinearSolverType->b->VectorType->n',n)
@@ -315,47 +316,66 @@ MODULE LinearSolverTypes
       
       IF(.NOT.solver%isInit) THEN
          
+        ReqTPLType=TPLType
         ! go through solver hierarchy to determine TPLType
         IF(TPLType == PETSC) THEN ! PETSc
 #ifndef MPACT_HAVE_PETSC
           TPLType=TRILINOS
-          CALL eLinearSolverType%raiseWarning(modName//'::'// &
-                    myName//' - PETSc is not enabled, will try to '// &
-                      'use TRILINOS instead.')
-          
 #endif
         ENDIF
         IF(TPLType == TRILINOS) THEN ! Trilinos
 #ifndef HAVE_TRILINOS
           TPLType=PARDISO_MKL
-          CALL eLinearSolverType%raiseWarning(modName//'::'// &
-                    myName//' - TRILINOS is not enabled, will try to '// &
-                      'use PARDISO instead.')
 #endif
         ENDIF
         IF(TPLType == PARDISO_MKL) THEN ! PARDISO
 #ifndef HAVE_PARDISO
           TPLType=MKL
-          CALL eLinearSolverType%raiseWarning(modName//'::'// &
-                    myName//' - PARDISO is not enabled, will use NATIVE '// &
-                      'solvers instead.')
-#else
-          SELECTTYPE(solver)
-            TYPE IS(LinearSolverType_Iterative)
-              TPLType=MKL
-              CALL eLinearSolverType%raiseWarning(modName//'::'// &
-                        myName//' - PARDISO is a not an iterative solver, will '// &
-                          'try to use MKL instead.')
-           ENDSELECT
 #endif
         ENDIF
         IF(TPLType == MKL) THEN ! MKL
 #ifndef HAVE_MKL
           TPLType=NATIVE
-          CALL eLinearSolverType%raiseWarning(modName//'::'// &
-                    myName//' - MKL is not enabled, will use NATIVE '// &
-                      'solvers instead.')
 #endif
+        ENDIF
+
+        ! get right string for requested tpl type
+        SELECTCASE(ReqTPLType)
+          CASE(PETSC)
+            ReqTPLTypeStr='PETSC'
+          CASE(TRILINOS)
+            ReqTPLTypeStr='TRILINOS'
+          CASE(PARDISO_MKL)
+            ReqTPLTypeStr='PARDISO_MKL'
+          CASE(MKL)
+            ReqTPLTypeStr='MKL'
+          CASE(NATIVE)
+            ReqTPLTypeStr='NATIVE'
+        ENDSELECT
+
+        ! get right string for actual tpl type
+        SELECTCASE(TPLType)
+          CASE(PETSC)
+            TPLTypeStr='PETSC'
+          CASE(TRILINOS)
+            TPLTypeStr='TRILINOS'
+          CASE(PARDISO_MKL)
+            TPLTypeStr='PARDISO_MKL'
+          CASE(MKL)
+            TPLTypeStr='MKL'
+          CASE(NATIVE)
+            TPLTypeStr='NATIVE'
+        ENDSELECT
+
+        !print status of TPL post-heirarchy
+        IF(ReqTPLType == TPLType) THEN
+          CALL eLinearSolverType%raiseWarning(modName//'::'// &
+            myName//' - Requested TPL '//TRIM(ReqTPLTypeStr)// &
+            ' is enabled and will be used.')
+        ELSE
+          CALL eLinearSolverType%raiseWarning(modName//'::'// &
+            myName//' - Requested TPL '//TRIM(ReqTPLTypeStr)// &
+              ' is not enabled, will use '//TRIM(TPLTypeStr)//' solvers instead.')
         ENDIF
 
         ! allocate and initialize matrix (A)
@@ -472,6 +492,22 @@ MODULE LinearSolverTypes
                   CASE(GMRES) 
                     CALL KSPSetType(solver%ksp,KSPGMRES,ierr)
                 ENDSELECT
+
+                SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
+                  CALL KSPSetOperators(solver%ksp,A%a,A%a, &
+                    DIFFERENT_NONZERO_PATTERN,ierr)
+                ENDSELECT
+
+                !set preconditioner
+                IF(solver%solverMethod == GMRES) THEN
+                  CALL KSPGetPC(solver%ksp,solver%pc,ierr)
+                  CALL PCSetType(solver%pc,PCBJACOBI,ierr)
+                  CALL PetscOptionsSetValue("-sub_pc_type", "ilu", ierr)
+!                  CALL PetscOptionsSetValue("-sub_pc_factor_levels",1, ierr)
+                  CALL PCSetFromOptions(solver%pc,ierr)
+                ENDIF
+                CALL KSPSetFromOptions(solver%ksp,ierr)
+
 #else     
                 CALL eLinearSolverType%raiseError('Incorrect call to '// &
                   modName//'::'//myName//' - invalid value of solverMethod')
@@ -794,11 +830,11 @@ MODULE LinearSolverTypes
                   IF(.NOT.(X%isAssembled)) CALL X%assemble()
                 ENDSELECT
                 
-                SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
-                  CALL KSPSetOperators(solver%ksp,A%a,A%a, &
-                    DIFFERENT_NONZERO_PATTERN,ierr)
-                ENDSELECT
-                CALL KSPSetFromOptions(solver%ksp,ierr)
+!                SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
+!                  CALL KSPSetOperators(solver%ksp,A%a,A%a, &
+!                    DIFFERENT_NONZERO_PATTERN,ierr)
+!                ENDSELECT
+!                CALL KSPSetFromOptions(solver%ksp,ierr)
                 
                 ! solve
                 SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
@@ -849,11 +885,11 @@ MODULE LinearSolverTypes
                   IF(.NOT.(X%isAssembled)) CALL X%assemble()
                 ENDSELECT
                 
-                SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
-                  CALL KSPSetOperators(solver%ksp,A%a,A%a, &
-                    DIFFERENT_NONZERO_PATTERN,ierr)
-                ENDSELECT
-                CALL KSPSetFromOptions(solver%ksp,ierr)
+!                SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
+!                  CALL KSPSetOperators(solver%ksp,A%a,A%a, &
+!                    DIFFERENT_NONZERO_PATTERN,ierr)
+!                ENDSELECT
+!                CALL KSPSetFromOptions(solver%ksp,ierr)
                 
                 ! solve
                 SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
@@ -910,11 +946,11 @@ MODULE LinearSolverTypes
                   IF(.NOT.(X%isAssembled)) CALL X%assemble()
                 ENDSELECT
                 
-                SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
-                  CALL KSPSetOperators(solver%ksp,A%a,A%a, &
-                    DIFFERENT_NONZERO_PATTERN,ierr)
-                ENDSELECT
-                CALL KSPSetFromOptions(solver%ksp,ierr)
+!                SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
+!                  CALL KSPSetOperators(solver%ksp,A%a,A%a, &
+!                    DIFFERENT_NONZERO_PATTERN,ierr)
+!                ENDSELECT
+!                CALL KSPSetFromOptions(solver%ksp,ierr)
 
                 ! solve
                 SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
