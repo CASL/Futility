@@ -311,7 +311,7 @@ MODULE FileType_HDF5
 #else
       ! We dont have HDF5, so we can't initialize
       CALL thisHDF5File%e%raiseWarning('The HDF5 library is not present in '// &
-          this build')
+          'this build')
 #endif
     ENDSUBROUTINE init_HDF5FileType
 !
@@ -408,7 +408,7 @@ MODULE FileType_HDF5
       CLASS(HDF5FileType),INTENT(INOUT) :: file
       LOGICAL(SBK) :: localalloc
       CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: emesg
-      
+#ifdef MPACT_HAVE_HDF5
       localalloc=.FALSE.
       IF(.NOT.ASSOCIATED(file%e)) THEN
         ALLOCATE(file%e)
@@ -437,6 +437,11 @@ MODULE FileType_HDF5
           'Cannot delete file! File object has not been initialized!')
       ENDIF
       IF(localalloc) DEALLOCATE(file%e)
+#elseif
+      ! We dont have HDF5, so we can't initialize
+      CALL thisHDF5File%e%raiseWarning('The HDF5 library is not present in '// &
+          'this build')
+#endif      
     ENDSUBROUTINE delete_HDF5FileType
 !
 !-------------------------------------------------------------------------------
