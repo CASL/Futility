@@ -106,132 +106,190 @@ MODULE FileType_HDF5
 #endif
 
     CONTAINS
-      
-      !> Initialize and open the HDF5 file
+      !> @copybrief FileType_HDF5::init_HDF5FileType
+      !> @copydetails FileType_HDF5::init_HDF5FileType
       PROCEDURE,PASS :: init => init_HDF5FileType
-      !> Close and destroy object
+      !> @copybrief FileType_HDF5::clear_HDF5FileType
+      !> @copydetails FileType_HDF5::clear_HDF5FileType
       PROCEDURE,PASS :: clear => clear_HDF5FileType
-      !> Open the HDF5 file and obtain ID
+      !> @copybrief FileType_HDF5::open_HDF5FileType
+      !> @copydetails FileType_HDF5::open_HDF5FileType
       PROCEDURE,PASS :: fopen => open_HDF5FileType
-      !> Close the HDF5 file
+      !> @copybrief FileType_HDF5::close_HDF5FileType
+      !> @copydetails FileType_HDF5::close_HDF5FileType
       PROCEDURE,PASS :: fclose => close_HDF5FileType
-      !> Delete the file
+      !> @copybrief FileType_HDF5::delete_HDF5FileType
+      !> @copydetails FileType_HDF5::delete_HDF5FileType
       PROCEDURE,PASS :: fdelete => delete_HDF5FileType
-      !> List the members of a group
+      !> @copybrief FileType_HDF5::ls_HDF5FileType
+      !> @copydetails FileType_HDF5::ls_HDF5FileType
       PROCEDURE,PASS :: ls => ls_HDF5FileType
-      !> Create a group in the HDF5 File
+      !> @copybrief FileType_HDF5::mkdir_HDF5FileType
+      !> @copydetails FileType_HDF5::mkdir_HDF5FileType
       PROCEDURE,PASS :: mkdir => mkdir_HDF5FileType
-      !> Determine the number of members of a group
+      !> @copybrief FileType_HDF5::ngrp_HDF5FileType
+      !> @copydetails FileType_HDF5::ngrp_HDF5FileType
       PROCEDURE,PASS :: ngrp => ngrp_HDF5FileType
-      !> Write: double(SKD)
+      !> @copybrief FileType_HDF5::write_d0
+      !> @copydoc FileType_HDF5::write_d0
       PROCEDURE,PASS,PRIVATE :: write_d0
-      !> Write: double(SDK), rank 1
+      !> @copybrief FileType_HDF5::write_d1
+      !> @copydoc FileType_HDF5::write_d1
       PROCEDURE,PASS,PRIVATE :: write_d1
-      !> Write: double(SDK), rank 2
+      !> @copybrief FileType_HDF5::write_d2
+      !> @copydoc FileType_HDF5::write_d2
       PROCEDURE,PASS,PRIVATE :: write_d2
-      !> Write: double(SDK), rank 3
+      !> @copybrief FileType_HDF5::write_d3
+      !> @copydoc FileType_HDF5::write_d3
       PROCEDURE,PASS,PRIVATE :: write_d3
-      !> Write: real(SSK)
+      !> @copybrief FileType_HDF5::write_s0
+      !> @copydoc FileType_HDF5::write_s0
       PROCEDURE,PASS,PRIVATE :: write_s0
-      !> Write: real(SSK), rank 1
+      !> @copybrief FileType_HDF5::write_s1
+      !> @copydoc FileType_HDF5::write_s1
       PROCEDURE,PASS,PRIVATE :: write_s1
-      !> Write: real(SSK), rank 2
+      !> @copybrief FileType_HDF5::write_s2
+      !> @copydoc FileType_HDF5::write_s2
       PROCEDURE,PASS,PRIVATE :: write_s2
-      !> Write: real(SSK), rank 3
+      !> @copybrief FileType_HDF5::write_s3
+      !> @copydoc FileType_HDF5::write_s3
       PROCEDURE,PASS,PRIVATE :: write_s3
-      !> Write: logical(SBK)
+      !> @copybrief FileType_HDF5::write_b0
+      !> @copydoc FileType_HDF5::write_b0
       PROCEDURE,PASS,PRIVATE :: write_b0
-      !> Write: logical(SBK), rank 1
+      !> @copybrief FileType_HDF5::write_b1
+      !> @copydoc FileType_HDF5::write_b1
       PROCEDURE,PASS,PRIVATE :: write_b1
-      !> Write: logical(SBK), rank 2
+      !> @copybrief FileType_HDF5::write_b2
+      !> @copydoc FileType_HDF5::write_b2
       PROCEDURE,PASS,PRIVATE :: write_b2
-      !> Write: logical(SBK), rank 3
+      !> @copybrief FileType_HDF5::write_b3
+      !> @copydoc FileType_HDF5::write_b3
       PROCEDURE,PASS,PRIVATE :: write_b3
-      !> Write: integer(SNK), rank 0
+      !> @copybrief FileType_HDF5::write_n0
+      !> @copydoc FileType_HDF5::write_n0
       PROCEDURE,PASS,PRIVATE :: write_n0
-      !> Write: integer(SNK), rank 1
+      !> @copybrief FileType_HDF5::write_n1
+      !> @copydoc FileType_HDF5::write_n1
       PROCEDURE,PASS,PRIVATE :: write_n1
-      !> Write: integer(SNK), rank 2
+      !> @copybrief FileType_HDF5::write_n2
+      !> @copydoc FileType_HDF5::write_n2
       PROCEDURE,PASS,PRIVATE :: write_n2
-      !> Write: integer(SNK), rank 3
+      !> @copybrief FileType_HDF5::write_n3
+      !> @copydoc FileType_HDF5::write_n3
       PROCEDURE,PASS,PRIVATE :: write_n3
-      !> Write: integer(SLK), rank 0
+      !> @copybrief FileType_HDF5::write_l0
+      !> @copydoc FileType_HDF5::write_l0
       PROCEDURE,PASS,PRIVATE :: write_l0
-      !> Write: integer(SLK), rank 1
+      !> @copybrief FileType_HDF5::write_l1
+      !> @copydoc FileType_HDF5::write_l1
       PROCEDURE,PASS,PRIVATE :: write_l1
-      !> Write: integer(SLK), rank 2
+      !> @copybrief FileType_HDF5::write_l2
+      !> @copydoc FileType_HDF5::write_l2
       PROCEDURE,PASS,PRIVATE :: write_l2
-      !> Write: integer(SLK), rank 3
+      !> @copybrief FileType_HDF5::write_l3
+      !> @copydoc FileType_HDF5::write_l3
       PROCEDURE,PASS,PRIVATE :: write_l3
-      !> Write: character string
+      !> @copybrief FileType_HDF5::write_c0
+      !> @copydoc FileType_HDF5::write_c0
       PROCEDURE,PASS,PRIVATE :: write_c0
-      !> Write: character string, rank 1 helper
+      !> @copybrief FileType_HDF5::write_c1_helper
+      !> @copydoc FileType_HDF5::write_c1_helper
       PROCEDURE,PASS,PRIVATE :: write_c1_helper
-      !> Write: character string, rank 1
+      !> @copybrief FileType_HDF5::write_c1
+      !> @copydoc FileType_HDF5::write_c1
       PROCEDURE,PASS,PRIVATE :: write_c1
-      !> Write: character string, rank 2 helper
+      !> @copybrief FileType_HDF5::write_c2_helper
+      !> @copydoc FileType_HDF5::write_c2_helper
       PROCEDURE,PASS,PRIVATE :: write_c2_helper
-      !> Write: character string, rank 2
+      !> @copybrief FileType_HDF5::write_c2
+      !> @copydoc FileType_HDF5::write_c2
       PROCEDURE,PASS,PRIVATE :: write_c2
-      !> Write: character string, rank 3 helper
+      !> @copybrief FileType_HDF5::write_c3_helper
+      !> @copydoc FileType_HDF5::write_c3_helper
       PROCEDURE,PASS,PRIVATE :: write_c3_helper
-      !> Write: character string, rank 3
+      !> @copybrief FileType_HDF5::write_c3
+      !> @copydoc FileType_HDF5::write_c3
       PROCEDURE,PASS,PRIVATE :: write_c3
-      !> Write data to the file as a dataset
+      !> Generic typebound interface for all @c write operations
       GENERIC :: fwrite => write_d0,write_d1,write_d2,write_d3,write_s0, &
       write_s1,write_s2,write_s3,write_b0,write_b1,write_b2,write_b3,write_n0, &
       write_n1,write_n2,write_n3,write_c0,write_c1_helper,write_c1, &
       write_c2_helper,write_c2,write_c3_helper,write_c3,write_l0,write_l1, &
       write_l2,write_l3
-      !> Read: real(SDK)
+      !> @copybrief FileType_HDF5::read_d0
+      !> @copydoc FileType_HDF5::read_d0
       PROCEDURE,PASS,PRIVATE :: read_d0
-      !> Read: real(SDK), rank 1
+      !> @copybrief FileType_HDF5::read_d1
+      !> @copydoc FileType_HDF5::read_d1
       PROCEDURE,PASS,PRIVATE :: read_d1
-      !> Read: real(SDK), rank 2
+      !> @copybrief FileType_HDF5::read_d2
+      !> @copydoc FileType_HDF5::read_d2
       PROCEDURE,PASS,PRIVATE :: read_d2
-      !> Read: real(SDK), rank 3
+      !> @copybrief FileType_HDF5::read_d3
+      !> @copydoc FileType_HDF5::read_d3
       PROCEDURE,PASS,PRIVATE :: read_d3
-      !> Read: real(SSK)
+      !> @copybrief FileType_HDF5::read_s0
+      !> @copydoc FileType_HDF5::read_s0
       PROCEDURE,PASS,PRIVATE :: read_s0
-      !> Read: real(SSK), rank 1
+      !> @copybrief FileType_HDF5::read_s1
+      !> @copydoc FileType_HDF5::read_s1
       PROCEDURE,PASS,PRIVATE :: read_s1
-      !> Read: real(SSK), rank 2
+      !> @copybrief FileType_HDF5::read_s2
+      !> @copydoc FileType_HDF5::read_s2
       PROCEDURE,PASS,PRIVATE :: read_s2
-      !> Read: real(SSK), rank 3
+      !> @copybrief FileType_HDF5::read_s3
+      !> @copydoc FileType_HDF5::read_s3
       PROCEDURE,PASS,PRIVATE :: read_s3
-      !> Read: integer(SNK)
-      PROCEDURE,PASS,PRIVATE :: read_n0
-      !> Read: integer(SNK), rank 1
-      PROCEDURE,PASS,PRIVATE :: read_n1
-      !> Read: integer(SNK), rank 2
-      PROCEDURE,PASS,PRIVATE :: read_n2
-      !> Read: integer(SNK), rank 3
-      PROCEDURE,PASS,PRIVATE :: read_n3
-      !> Read: integer(SLK)
-      PROCEDURE,PASS,PRIVATE :: read_l0
-      !> Read: integer(SLK), rank 1
-      PROCEDURE,PASS,PRIVATE :: read_l1
-      !> Read: integer(SLK), rank 2
-      PROCEDURE,PASS,PRIVATE :: read_l2
-      !> Read: integer(SLK), rank 3
-      PROCEDURE,PASS,PRIVATE :: read_l3
-      !> Read: logical(SBK)
+      !> @copybrief FileType_HDF5::read_b0
+      !> @copydoc FileType_HDF5::read_b0
       PROCEDURE,PASS,PRIVATE :: read_b0
-      !> Read: logical(SBK), rank 1
+      !> @copybrief FileType_HDF5::read_b1
+      !> @copydoc FileType_HDF5::read_b1
       PROCEDURE,PASS,PRIVATE :: read_b1
-      !> Read: logical(SBK), rank 2
+      !> @copybrief FileType_HDF5::read_b2
+      !> @copydoc FileType_HDF5::read_b2
       PROCEDURE,PASS,PRIVATE :: read_b2
-      !> Read: logical(SBK), rank 3)
+      !> @copybrief FileType_HDF5::read_b3
+      !> @copydoc FileType_HDF5::read_b3
       PROCEDURE,PASS,PRIVATE :: read_b3
-      !> Read: character string
+      !> @copybrief FileType_HDF5::read_n0
+      !> @copydoc FileType_HDF5::read_n0
+      PROCEDURE,PASS,PRIVATE :: read_n0
+      !> @copybrief FileType_HDF5::read_n1
+      !> @copydoc FileType_HDF5::read_n1
+      PROCEDURE,PASS,PRIVATE :: read_n1
+      !> @copybrief FileType_HDF5::read_n2
+      !> @copydoc FileType_HDF5::read_n2
+      PROCEDURE,PASS,PRIVATE :: read_n2
+      !> @copybrief FileType_HDF5::read_n3
+      !> @copydoc FileType_HDF5::read_n3
+      PROCEDURE,PASS,PRIVATE :: read_n3
+      !> @copybrief FileType_HDF5::read_l0
+      !> @copydoc FileType_HDF5::read_l0
+      PROCEDURE,PASS,PRIVATE :: read_l0
+      !> @copybrief FileType_HDF5::read_l1
+      !> @copydoc FileType_HDF5::read_l1
+      PROCEDURE,PASS,PRIVATE :: read_l1
+      !> @copybrief FileType_HDF5::read_l2
+      !> @copydoc FileType_HDF5::read_l2
+      PROCEDURE,PASS,PRIVATE :: read_l2
+      !> @copybrief FileType_HDF5::read_l3
+      !> @copydoc FileType_HDF5::read_l3
+      PROCEDURE,PASS,PRIVATE :: read_l3
+      !> @copybrief FileType_HDF5::read_c0
+      !> @copydoc FileType_HDF5::read_c0
       PROCEDURE,PASS,PRIVATE :: read_c0
-      !> Read: character string, rank 1
+      !> @copybrief FileType_HDF5::read_c1
+      !> @copydoc FileType_HDF5::read_c1
       PROCEDURE,PASS,PRIVATE :: read_c1
-      !> Read: character string, rank 2
+      !> @copybrief FileType_HDF5::read_c2
+      !> @copydoc FileType_HDF5::read_c2
       PROCEDURE,PASS,PRIVATE :: read_c2
-      !> Read: character string, rank 3
+      !> @copybrief FileType_HDF5::read_c3
+      !> @copydoc FileType_HDF5::read_c3
       PROCEDURE,PASS,PRIVATE :: read_c3
-      !> Read data from a dataset in the file.
+      !> Generic typebound interface for all @c read operations
       GENERIC :: fread => read_d1,read_d2,read_d3,read_s1,read_s2,read_s3, &
             read_l1,read_l2,read_l3,read_b1,read_b2,read_b3,read_c0,read_d0, &
             read_s0,read_l0,read_b0,read_c1,read_c2,read_c3,read_n0,read_n1, &
@@ -437,9 +495,9 @@ MODULE FileType_HDF5
           'Cannot delete file! File object has not been initialized!')
       ENDIF
       IF(localalloc) DEALLOCATE(file%e)
-#elseif
+#else
       ! We dont have HDF5, so we can't initialize
-      CALL thisHDF5File%e%raiseWarning('The HDF5 library is not present in '// &
+      CALL file%e%raiseWarning('The HDF5 library is not present in '// &
           'this build')
 #endif      
     ENDSUBROUTINE delete_HDF5FileType
