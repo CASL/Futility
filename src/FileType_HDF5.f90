@@ -3711,7 +3711,7 @@ MODULE FileType_HDF5
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to obtain the dataspace.')
-            ! Make sure the rank is right
+      ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to retrieve number of dataspace dimensions.')
@@ -3856,7 +3856,7 @@ MODULE FileType_HDF5
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to obtain the dataspace.')
-            ! Make sure the rank is right
+      ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to retrieve number of dataspace dimensions.')
@@ -3934,7 +3934,7 @@ MODULE FileType_HDF5
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to obtain the dataspace.')
-            ! Make sure the rank is right
+      ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to retrieve number of dataspace dimensions.')
@@ -4012,7 +4012,7 @@ MODULE FileType_HDF5
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to obtain the dataspace.')
-            ! Make sure the rank is right
+      ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to retrieve number of dataspace dimensions.')
@@ -4080,7 +4080,7 @@ MODULE FileType_HDF5
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to obtain the dataspace.')
-            ! Make sure the rank is right
+      ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to retrieve number of dataspace dimensions.')
@@ -4157,7 +4157,7 @@ MODULE FileType_HDF5
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to obtain the dataspace.')
-            ! Make sure the rank is right
+      ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to retrieve number of dataspace dimensions.')
@@ -4234,7 +4234,7 @@ MODULE FileType_HDF5
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to obtain the dataspace.')
-            ! Make sure the rank is right
+      ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to retrieve number of dataspace dimensions.')
@@ -4311,7 +4311,7 @@ MODULE FileType_HDF5
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to obtain the dataspace.')
-            ! Make sure the rank is right
+      ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to retrieve number of dataspace dimensions.')
@@ -4379,7 +4379,7 @@ MODULE FileType_HDF5
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to obtain the dataspace.')
-            ! Make sure the rank is right
+      ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to retrieve number of dataspace dimensions.')
@@ -4456,7 +4456,7 @@ MODULE FileType_HDF5
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to obtain the dataspace.')
-            ! Make sure the rank is right
+      ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to retrieve number of dataspace dimensions.')
@@ -4533,7 +4533,7 @@ MODULE FileType_HDF5
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to obtain the dataspace.')
-            ! Make sure the rank is right
+      ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to retrieve number of dataspace dimensions.')
@@ -4612,7 +4612,7 @@ MODULE FileType_HDF5
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to obtain the dataspace.')
-            ! Make sure the rank is right
+      ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to retrieve number of dataspace dimensions.')
@@ -4688,7 +4688,7 @@ MODULE FileType_HDF5
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to obtain the dataspace.')
-            ! Make sure the rank is right
+      ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to retrieve number of dataspace dimensions.')
@@ -4774,7 +4774,7 @@ MODULE FileType_HDF5
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to obtain the dataspace.')
-            ! Make sure the rank is right
+      ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to retrieve number of dataspace dimensions.')
@@ -4860,7 +4860,7 @@ MODULE FileType_HDF5
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to obtain the dataspace.')
-            ! Make sure the rank is right
+      ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to retrieve number of dataspace dimensions.')
@@ -4945,7 +4945,7 @@ MODULE FileType_HDF5
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to obtain the dataspace.')
-            ! Make sure the rank is right
+      ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to retrieve number of dataspace dimensions.')
@@ -5025,7 +5025,7 @@ MODULE FileType_HDF5
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to obtain the dataspace.')
-            ! Make sure the rank is right
+      ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to retrieve number of dataspace dimensions.')
@@ -5118,7 +5118,7 @@ MODULE FileType_HDF5
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to obtain the dataspace.')
-            ! Make sure the rank is right
+      ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to retrieve number of dataspace dimensions.')
@@ -5210,7 +5210,7 @@ MODULE FileType_HDF5
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to obtain the dataspace.')
-            ! Make sure the rank is right
+      ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to retrieve number of dataspace dimensions.')
@@ -5304,7 +5304,7 @@ MODULE FileType_HDF5
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to obtain the dataspace.')
-            ! Make sure the rank is right
+      ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to retrieve number of dataspace dimensions.')
@@ -5573,7 +5573,7 @@ MODULE FileType_HDF5
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to obtain the dataspace.')
-            ! Make sure the rank is right
+      ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to retrieve number of dataspace dimensions.')
