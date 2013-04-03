@@ -34,12 +34,12 @@
 !> format.
 !>
 !> @par Module Dependencies
-!>  - @ref IO_Strings "IO_Strings": @copybrief IO_Strings
-!>  - @ref FileType_Base "FileType_Base": @copybrief FileType_Base
-!>  - @ref IntrType "IntrType": @copybrief IntrType
-!>  - @ref ExceptionHandler "ExceptionHandler": @copybrief ExceptionHandler
-!>  - @ref ParallelEnv "ParallelEnv": @copybrief ParallelEnv
-!>  - @ref Strings "Strings": @copybrief Strings
+!>  - @ref IO_Strings "IO_Strings' - @copybrief IO_Strings
+!>  - @ref FileType_Base "FileType_Base' - @copybrief FileType_Base
+!>  - @ref IntrType "IntrType' - @copybrief IntrType
+!>  - @ref ExceptionHandler "ExceptionHandler' - @copybrief ExceptionHandler
+!>  - @ref ParallelEnv "ParallelEnv' - @copybrief ParallelEnv
+!>  - @ref Strings "Strings' - @copybrief Strings
 !>
 !> @author Mitchell T.H. Young
 !>   @date 01/20/2013
@@ -339,7 +339,7 @@ MODULE FileType_HDF5
         CALL thisHDF5File%setWriteStat(.TRUE.)
       CASE DEFAULT
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ": Unrecognized access mode.")
+        ' - Unrecognized access mode.')
       ENDSELECT
 
       thisHDF5File%fullname=filename
@@ -348,7 +348,7 @@ MODULE FileType_HDF5
       ! to the HF5 interface can be made.
       CALL h5open_f(error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Could not initialize HDF5 INTERFACE.")
+        ' - Could not initialize HDF5 INTERFACE.')
          
       ! Open the HDF5 file
       CALL thisHDF5File%fopen()
@@ -369,7 +369,7 @@ MODULE FileType_HDF5
 #else
       ! We dont have HDF5, so we can't initialize
       CALL thisHDF5File%e%raiseWarning('The HDF5 library is not present in '// &
-          'this build')
+        'this build')
 #endif
     ENDSUBROUTINE init_HDF5FileType
 !
@@ -386,13 +386,13 @@ MODULE FileType_HDF5
       ! Close the HDF5 file.
       CALL h5fclose_f(thisHDF5File%file_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Unable to close HDF5 file.')
+        ' - Unable to close HDF5 file.')
 
       ! Close the HDF5 interface. This can only be done once all calls to the
       ! HDF5 library are complete.
       CALL h5close_f(error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Unable to close HDF5 INTERFACE.')
+        ' - Unable to close HDF5 INTERFACE.')
 #endif
       thisHDF5File%isinit=.FALSE.
       IF(ASSOCIATED(thisHDF5File%e)) DEALLOCATE(thisHDF5File%e)
@@ -414,7 +414,7 @@ MODULE FileType_HDF5
 
       CALL h5pcreate_f(H5P_FILE_ACCESS_F,plist_id,error)
       IF (error /= 0) CALL file%e%raiseError(modName//'::'//myName// &
-          ": Unable to create property list for open operation.")
+        ' - Unable to create property list for open operation.')
 
       ! Decide what access type to use
       SELECTCASE(TRIM(file%mode))
@@ -430,12 +430,12 @@ MODULE FileType_HDF5
             access_prp=plist_id)
       CASE DEFAULT
         CALL file%e%raiseError(modName//'::'//myName// &
-            ": Unrecognized access mode.")
+        ' - Unrecognized access mode.')
       ENDSELECT
 
       CALL h5pclose_f(plist_id,error)
       IF(error /= 0) CALL file%e%raiseError(modName//'::'//myName// &
-          ' - Unable to destroy property list.')
+        ' - Unable to destroy property list.')
 #endif
     ENDSUBROUTINE open_HDF5FileType
 !
@@ -450,7 +450,7 @@ MODULE FileType_HDF5
 #ifdef MPACT_HAVE_HDF5
       CALL h5fclose_f(file%file_id,error)
       IF(error /= 0) CALL file%e%raiseError(modName//'::'//myName// &
-          ' - Unable to close HDF5 file.')
+        ' - Unable to close HDF5 file.')
 #endif
     ENDSUBROUTINE close_HDF5FileType
 !
@@ -478,7 +478,7 @@ MODULE FileType_HDF5
             IOSTAT=error)
         IF(error /= 0) THEN
           CALL file%e%raiseError(modName//'::'//myName// &
-              ' - Could not open file.')
+            ' - Could not open file.')
         ELSE
           CALL file%clear()
           CLOSE(UNIT=1,STATUS='DELETE',IOSTAT=error)
@@ -492,13 +492,13 @@ MODULE FileType_HDF5
         ENDIF
       ELSE
         CALL file%e%raiseError(modName//'::'//myName//' - '// &
-          'Cannot delete file! File object has not been initialized!')
+        'Cannot delete file! File object has not been initialized!')
       ENDIF
       IF(localalloc) DEALLOCATE(file%e)
 #else
       ! We dont have HDF5, so we can't initialize
       CALL file%e%raiseWarning('The HDF5 library is not present in '// &
-          'this build')
+        'this build')
 #endif      
     ENDSUBROUTINE delete_HDF5FileType
 !
@@ -527,17 +527,17 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
 
       path2=convertPath(path)
      
       CALL h5gopen_f(thisHDF5File%file_id, path2, grp_id, error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Unable to open file.')
+        ' - Unable to open file.')
 
       CALL h5gget_info_f(grp_id, store_type, nlinks, max_corder, error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Unable to get group information.')
+        ' - Unable to get group information.')
 
       IF(ALLOCATED(objs)) DEALLOCATE(objs)
       ALLOCATE(objs(nlinks))
@@ -546,12 +546,12 @@ MODULE FileType_HDF5
         CALL h5lget_name_by_idx_f(thisHDF5File%file_id, path2, H5_INDEX_NAME_F,&
             H5_ITER_INC_F, i, objs(i+1), error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ' - Unable to get object name.')
+        ' - Unable to get object name.')
       ENDDO
 
       CALL h5gclose_f(grp_id, error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Unable to close group.')
+        ' - Unable to close group.')
 
 #endif
     ENDSUBROUTINE ls_HDF5FileType
@@ -573,11 +573,11 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
          
       ! Ensure that we have write permissions to the file
       IF(.NOT.thisHDF5File%isWrite()) CALL thisHDF5File%e%raiseWarning(modName &
-          //'::'//myName//": Can not create group in read-only file.")
+          //'::'//myName//' - Can not create group in read-only file.')
          
       ! Convert the path to use slashes
       path2=convertPath(path)
@@ -589,10 +589,10 @@ MODULE FileType_HDF5
         ! Close the group
         CALL h5gclose_f(group_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseWarning(modName//'::'// &
-            myName//": Failed to close HDF group")
+            myName//' - Failed to close HDF group')
       ELSE
         CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
-            ": Failed to create HDF5 group.")
+        ' - Failed to create HDF5 group.')
       ENDIF
 #endif
     ENDSUBROUTINE mkdir_HDF5FileType
@@ -615,17 +615,17 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
          
       path2=convertPath(path)
  
       CALL h5gopen_f(thisHDF5File%file_id, path2, grp_id, error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Could not open group in HDF5 file.")
+        ' - Could not open group in HDF5 file.')
          
       CALL h5gget_info_f(grp_id, store_type, nlinks, max_corder, error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Could not get group info in HDF5 file.")
+        ' - Could not get group info in HDF5 file.')
          
       ngrp=nlinks
 #else
@@ -657,12 +657,12 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
          
       ! Check that the file is writable. Best to catch this before HDF5 does.
       IF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-             ': File is readonly!')
+          ' - File is readonly!')
       ELSE
       
         ! stash offset
@@ -688,65 +688,65 @@ MODULE FileType_HDF5
         !Create an HDF5 parameter list for the dataset creation.
         CALL h5pcreate_f(H5P_DATASET_CREATE_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create parameter list.')
+          ' - Could not create parameter list.')
                  
         ! Create the dataspace
         ! Global dataspace
         CALL h5screate_simple_f(rank,gdims,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
                  
         ! Local dataspace
         CALL h5screate_simple_f(rank,ldims,dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
            
         ! Create the dataset
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_DOUBLE, &
-            gspace_id, dset_id,error)
+          gspace_id, dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataset.')
+          ' - Could not create dataset.')
                  
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close parameter list.')
+          ' - Could not close parameter list.')
                  
         ! Select the global dataspace for the dataset
         CALL h5dget_space_f(dset_id,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not select global dataspace for the dataset.')
+          ' - Could not select global dataspace for the dataset.')
                  
         ! Create a property list for the write operation
         CALL h5pcreate_f(H5P_DATASET_XFER_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create property list for write operation.')
+          ' - Could not create property list for write operation.')
                  
         ! Write to the dataset
         CALL h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, vals, gdims, error, &
-            dspace_id,gspace_id,plist_id)
+          dspace_id,gspace_id,plist_id)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not write to the dataset.')
+          ' - Could not write to the dataset.')
            
         ! Close the dataset
         CALL h5dclose_f(dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataset.')
+          ' - Could not close the dataset.')
            
         ! Close the dataspace
         
         CALL h5sclose_f(dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
         
         
         CALL h5sclose_f(gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
                  
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the parameter list.')
+          ' - Could not close the parameter list.')
       ENDIF
 #endif
     ENDSUBROUTINE write_d0
@@ -775,12 +775,12 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
          
       ! Check that the file is writable. Best to catch this before HDF5 does.
       IF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-             ': File is readonly!')
+         ' - File is readonly!')
       ELSE
       
         ! stash offset
@@ -806,64 +806,64 @@ MODULE FileType_HDF5
         !Create an HDF5 parameter list for the dataset creation.
         CALL h5pcreate_f(H5P_DATASET_CREATE_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create parameter list.')
+          ' - Could not create parameter list.')
                  
         ! Create the dataspace
         ! Global dataspace
         CALL h5screate_simple_f(rank,gdims,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
                  
         ! Local dataspace
         CALL h5screate_simple_f(rank,ldims,dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
            
         ! Create the dataset
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_DOUBLE, &
             gspace_id, dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataset.')
+          ' - Could not create dataset.')
                  
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close parameter list.')
+          ' - Could not close parameter list.')
                  
         ! Select the global dataspace for the dataset
         CALL h5dget_space_f(dset_id,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not select global dataspace for the dataset.')
+          ' - Could not select global dataspace for the dataset.')
                  
         ! Create a property list for the write operation
         CALL h5pcreate_f(H5P_DATASET_XFER_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create property list for write operation.')
+          ' - Could not create property list for write operation.')
                  
         ! Write to the dataset
         CALL h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, vals, gdims, error, &
             dspace_id,gspace_id,plist_id)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not write to the dataset.')
+          ' - Could not write to the dataset.')
            
         ! Close the dataset
         CALL h5dclose_f(dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataset.')
+          ' - Could not close the dataset.')
            
         ! Close the dataspace
         CALL h5sclose_f(dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
         
         
         CALL h5sclose_f(gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
                  
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the parameter list.')
+          ' - Could not close the parameter list.')
       ENDIF
 #endif
     ENDSUBROUTINE write_d1
@@ -892,12 +892,12 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Check that the file is writable. Best to catch this before HDF5 does.
       IF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-             ': File is readonly!')
+         ' - File is readonly!')
       ELSE
 
         ! stash offset
@@ -924,60 +924,60 @@ MODULE FileType_HDF5
         ! Create and HDF5 parameter list for the dataset creation.
         CALL h5pcreate_f(H5P_DATASET_CREATE_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create parameter list.')
+          ' - Could not create parameter list.')
               
         ! Create the dataspace. 
         ! Global dataspace
         CALL h5screate_simple_f(rank,gdims,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
         
         ! Local dataspace
         CALL h5screate_simple_f(rank,ldims,dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
         
         ! Create the dataset
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_DOUBLE, &
                 gspace_id, dset_id,error,plist_id)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataset.')
+          ' - Could not create dataset.')
         
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not destroy property list.')
+          ' - Could not destroy property list.')
               
         ! Select the global dataspace for the dataset
         CALL h5dget_space_f(dset_id,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not select global dataspace.')
+          ' - Could not select global dataspace.')
         
         ! Create a property list for the write operation
         CALL h5pcreate_f(H5P_DATASET_XFER_F, plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create property list.')
+          ' - Could not create property list.')
               
         ! Write to the dataset
         CALL h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, vals, gdims, error, &
             dspace_id,gspace_id,plist_id)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not write to the dataset.')
+          ' - Could not write to the dataset.')
         
         ! Close the dataset
         CALL h5dclose_f(dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataset.')
+          ' - Could not close the dataset.')
         
         ! Close the dataspace
         CALL h5sclose_f(dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
         
         
         CALL h5sclose_f(gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
               
         CALL h5pclose_f(plist_id,error)
       ENDIF
@@ -1009,12 +1009,12 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Check that the file is writable. Best to catch this before HDF5 does.
       IF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-             ': File is readonly!')
+          ' - File is readonly!')
       ELSE
 
         ! stash offset
@@ -1041,64 +1041,64 @@ MODULE FileType_HDF5
         ! Create and HDF5 parameter list for the dataset creation.
         CALL h5pcreate_f(H5P_DATASET_CREATE_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create parameter list.')
+          ' - Could not create parameter list.')
               
         ! Create the dataspace.
         ! Global dataspace
         CALL h5screate_simple_f(rank,gdims,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
         
         ! Local dataspace
         CALL h5screate_simple_f(rank,ldims,dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
         
         ! Create the dataset
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_DOUBLE, &
             gspace_id, dset_id,error, plist_id)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataset.')
+          ' - Could not create dataset.')
         
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not destroy property list.')
+          ' - Could not destroy property list.')
               
         ! Select the global dataspace for the dataset
         CALL h5dget_space_f(dset_id,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not select global dataspace.')
+          ' - Could not select global dataspace.')
         
         ! Create a property list for the write operation
         CALL h5pcreate_f(H5P_DATASET_XFER_F, plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create property list.')
+          ' - Could not create property list.')
         
         ! Write to the dataset
         CALL h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, vals, gdims, error, &
             dspace_id,gspace_id,plist_id)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not write to the dataset.')
+          ' - Could not write to the dataset.')
         
         ! Close the dataset
         CALL h5dclose_f(dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataset.')
+          ' - Could not close the dataset.')
         
         ! Close the dataspace
         CALL h5sclose_f(dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
         
         
         CALL h5sclose_f(gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
               
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not destroy property list.')
+          ' - Could not destroy property list.')
       ENDIF
 #endif
     ENDSUBROUTINE write_d3
@@ -1127,12 +1127,12 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Check that the file is writable. Best to catch this before HDF5 does.
       IF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-             ': File is readonly!')
+          ' - File is readonly!')
       ELSE
       
         ! stash offset
@@ -1158,65 +1158,65 @@ MODULE FileType_HDF5
         !Create an HDF5 parameter list for the dataset creation.
         CALL h5pcreate_f(H5P_DATASET_CREATE_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create parameter list.')
+          ' - Could not create parameter list.')
               
         ! Create the dataspace
         ! Global dataspace
         CALL h5screate_simple_f(rank,gdims,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
               
         ! Local dataspace
         CALL h5screate_simple_f(rank,ldims,dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
         
         ! Create the dataset
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_REAL, &
             gspace_id, dset_id, error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataset.')
+          ' - Could not create dataset.')
               
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
         
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close parameter list.')
+          ' - Could not close parameter list.')
               
         ! Select the global dataspace for the dataset
         CALL h5dget_space_f(dset_id,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not select global dataspace for the dataset.')
+          ' - Could not select global dataspace for the dataset.')
               
         ! Create a property list for the write operation
         CALL h5pcreate_f(H5P_DATASET_XFER_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create property list for write operation.')
+          ' - Could not create property list for write operation.')
               
         ! Write to the dataset
         CALL h5dwrite_f(dset_id, H5T_NATIVE_REAL, vals, gdims, error, &
             dspace_id,gspace_id,plist_id)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not write to the dataset.')
+          ' - Could not write to the dataset.')
         
         ! Close the dataset
         CALL h5dclose_f(dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataset.')
+          ' - Could not close the dataset.')
         
         ! Close the dataspace
         CALL h5sclose_f(dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
         
         
         CALL h5sclose_f(gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
               
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the parameter list.')
+          ' - Could not close the parameter list.')
       ENDIF
 #endif
     ENDSUBROUTINE write_s0
@@ -1245,12 +1245,12 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Check that the file is writable. Best to catch this before HDF5 does.
       IF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-             ': File is readonly!')
+          ' - File is readonly!')
       ELSE
       
         ! stash offset
@@ -1276,64 +1276,64 @@ MODULE FileType_HDF5
         !Create an HDF5 parameter list for the dataset creation.
         CALL h5pcreate_f(H5P_DATASET_CREATE_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create parameter list.')
+          ' - Could not create parameter list.')
               
         ! Create the dataspace
         ! Global dataspace
         CALL h5screate_simple_f(rank,gdims,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
               
         ! Local dataspace
         CALL h5screate_simple_f(rank,ldims,dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
         
         ! Create the dataset
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_REAL, &
             gspace_id, dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataset.')
+          ' - Could not create dataset.')
               
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close parameter list.')
+          ' - Could not close parameter list.')
               
         ! Select the global dataspace for the dataset
         CALL h5dget_space_f(dset_id,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not select global dataspace for the dataset.')
+          ' - Could not select global dataspace for the dataset.')
               
         ! Create a property list for the write operation
         CALL h5pcreate_f(H5P_DATASET_XFER_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create property list for write operation.')
+          ' - Could not create property list for write operation.')
               
         ! Write to the dataset
         CALL h5dwrite_f(dset_id, H5T_NATIVE_REAL, vals, gdims, error, &
             dspace_id,gspace_id,plist_id)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not write to the dataset.')
+          ' - Could not write to the dataset.')
         
         ! Close the dataset
         CALL h5dclose_f(dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataset.')
+          ' - Could not close the dataset.')
         
         ! Close the dataspace
         CALL h5sclose_f(dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
         
         
         CALL h5sclose_f(gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
               
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the parameter list.')
+          ' - Could not close the parameter list.')
       ENDIF
 #endif
     ENDSUBROUTINE write_s1
@@ -1362,12 +1362,12 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Check that the file is writable. Best to catch this before HDF5 does.
       IF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-             ': File is readonly!')
+          ' - File is readonly!')
       ELSE
       
         ! stash offset
@@ -1394,64 +1394,64 @@ MODULE FileType_HDF5
         !Create an HDF5 parameter list for the dataset creation.
         CALL h5pcreate_f(H5P_DATASET_CREATE_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create parameter list.')
+          ' - Could not create parameter list.')
               
         ! Create the dataspace
         ! Global dataspace
         CALL h5screate_simple_f(rank,gdims,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
               
         ! Local dataspace
         CALL h5screate_simple_f(rank,ldims,dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
         
         ! Create the dataset
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_REAL, &
             gspace_id, dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataset.')
+          ' - Could not create dataset.')
               
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close parameter list.')
+          ' - Could not close parameter list.')
               
         ! Select the global dataspace for the dataset
         CALL h5dget_space_f(dset_id,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not select global dataspace for the dataset.')
+          ' - Could not select global dataspace for the dataset.')
               
         ! Create a property list for the write operation
         CALL h5pcreate_f(H5P_DATASET_XFER_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create property list for write operation.')
+          ' - Could not create property list for write operation.')
               
         ! Write to the dataset
         CALL h5dwrite_f(dset_id, H5T_NATIVE_REAL, vals, gdims, error, &
             dspace_id,gspace_id,plist_id)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not write to the dataset.')
+          ' - Could not write to the dataset.')
         
         ! Close the dataset
         CALL h5dclose_f(dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataset.')
+          ' - Could not close the dataset.')
         
         ! Close the dataspace
         CALL h5sclose_f(dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
         
         
         CALL h5sclose_f(gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
               
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the parameter list.')
+          ' - Could not close the parameter list.')
       ENDIF
 #endif
     ENDSUBROUTINE write_s2
@@ -1480,12 +1480,12 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Check that the file is writable. Best to catch this before HDF5 does.
       IF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-             ': File is readonly!')
+          ' - File is readonly!')
       ELSE
       
         ! stash offset
@@ -1513,64 +1513,64 @@ MODULE FileType_HDF5
         !Create an HDF5 parameter list for the dataset creation.
         CALL h5pcreate_f(H5P_DATASET_CREATE_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create parameter list.')
+          ' - Could not create parameter list.')
               
         ! Create the dataspace
         ! Global dataspace
         CALL h5screate_simple_f(rank,gdims,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
               
         ! Local dataspace
         CALL h5screate_simple_f(rank,ldims,dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
         
         ! Create the dataset
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_REAL, &
             gspace_id, dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataset.')
+          ' - Could not create dataset.')
               
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close parameter list.')
+          ' - Could not close parameter list.')
               
         ! Select the global dataspace for the dataset
         CALL h5dget_space_f(dset_id,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not select global dataspace for the dataset.')
+          ' - Could not select global dataspace for the dataset.')
               
         ! Create a property list for the write operation
         CALL h5pcreate_f(H5P_DATASET_XFER_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create property list for write operation.')
+          ' - Could not create property list for write operation.')
               
         ! Write to the dataset
         CALL h5dwrite_f(dset_id, H5T_NATIVE_REAL, vals, gdims, error, &
             dspace_id,gspace_id,plist_id)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not write to the dataset.')
+          ' - Could not write to the dataset.')
         
         ! Close the dataset
         CALL h5dclose_f(dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataset.')
+          ' - Could not close the dataset.')
         
         ! Close the dataspace
         CALL h5sclose_f(dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
         
         
         CALL h5sclose_f(gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
               
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the parameter list.')
+          ' - Could not close the parameter list.')
       ENDIF
 #endif
     ENDSUBROUTINE write_s3
@@ -1601,12 +1601,12 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Check that the file is writable. Best to catch this before HDF5 does.
       IF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-             ': File is readonly!')
+          ' - File is readonly!')
       ELSE
       
         ! stash offset
@@ -1632,39 +1632,39 @@ MODULE FileType_HDF5
         !Create an HDF5 parameter list for the dataset creation.
         CALL h5pcreate_f(H5P_DATASET_CREATE_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create parameter list.')
+          ' - Could not create parameter list.')
               
         ! Create the dataspace
         ! Global dataspace
         CALL h5screate_simple_f(rank,gdims,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
               
         ! Local dataspace
         CALL h5screate_simple_f(rank,ldims,dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
         
         ! Create the dataset
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_CHARACTER, &
             gspace_id, dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataset.')
+          ' - Could not create dataset.')
               
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close parameter list.')
+          ' - Could not close parameter list.')
               
         ! Select the global dataspace for the dataset
         CALL h5dget_space_f(dset_id,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not select global dataspace for the dataset.')
+          ' - Could not select global dataspace for the dataset.')
               
         ! Create a property list for the write operation
         CALL h5pcreate_f(H5P_DATASET_XFER_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create property list for write operation.')
+          ' - Could not create property list for write operation.')
         
         ! Convert to surrogate character array, since HDF5 does not support
         ! Boolean variables
@@ -1678,26 +1678,26 @@ MODULE FileType_HDF5
         CALL h5dwrite_f(dset_id, H5T_NATIVE_CHARACTER, valsc, gdims, error, &
             dspace_id,gspace_id,plist_id)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not write to the dataset.')
+          ' - Could not write to the dataset.')
         
         ! Close the dataset
         CALL h5dclose_f(dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataset.')
+          ' - Could not close the dataset.')
         
         ! Close the dataspace
         CALL h5sclose_f(dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
         
         
         CALL h5sclose_f(gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
               
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the parameter list.')
+          ' - Could not close the parameter list.')
       ENDIF
 #endif
     ENDSUBROUTINE write_b0
@@ -1729,12 +1729,12 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Check that the file is writable. Best to catch this before HDF5 does.
       IF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-             ': File is readonly!')
+          ' - File is readonly!')
       ELSE
       
         ! stash offset
@@ -1760,39 +1760,39 @@ MODULE FileType_HDF5
         !Create an HDF5 parameter list for the dataset creation.
         CALL h5pcreate_f(H5P_DATASET_CREATE_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create parameter list.')
+          ' - Could not create parameter list.')
               
         ! Create the dataspace
         ! Global dataspace
         CALL h5screate_simple_f(rank,gdims,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
               
         ! Local dataspace
         CALL h5screate_simple_f(rank,ldims,dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
         
         ! Create the dataset
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_CHARACTER, &
             gspace_id, dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataset.')
+          ' - Could not create dataset.')
               
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close parameter list.')
+          ' - Could not close parameter list.')
               
         ! Select the global dataspace for the dataset
         CALL h5dget_space_f(dset_id,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not select global dataspace for the dataset.')
+          ' - Could not select global dataspace for the dataset.')
               
         ! Create a property list for the write operation
         CALL h5pcreate_f(H5P_DATASET_XFER_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create property list for write operation.')
+          ' - Could not create property list for write operation.')
         
         ! Convert to surrogate character array, since HDF5 does not support
         ! Boolean variables
@@ -1805,25 +1805,25 @@ MODULE FileType_HDF5
         CALL h5dwrite_f(dset_id, H5T_NATIVE_CHARACTER, valsc, gdims, error, &
             dspace_id,gspace_id,plist_id)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not write to the dataset.')
+          ' - Could not write to the dataset.')
         
         ! Close the dataset
         CALL h5dclose_f(dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataset.')
+          ' - Could not close the dataset.')
         
         ! Close the dataspace
         CALL h5sclose_f(dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
         
         CALL h5sclose_f(gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
               
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the parameter list.')
+          ' - Could not close the parameter list.')
       ENDIF
 #endif
     ENDSUBROUTINE write_b1
@@ -1854,12 +1854,12 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Check that the file is writable. Best to catch this before HDF5 does.
       IF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-             ': File is readonly!')
+          ' - File is readonly!')
       ELSE
       
         ! stash offset
@@ -1886,39 +1886,39 @@ MODULE FileType_HDF5
         !Create an HDF5 parameter list for the dataset creation.
         CALL h5pcreate_f(H5P_DATASET_CREATE_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create parameter list.')
+          ' - Could not create parameter list.')
               
         ! Create the dataspace
         ! Global dataspace
         CALL h5screate_simple_f(rank,gdims,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
               
         ! Local dataspace
         CALL h5screate_simple_f(rank,ldims,dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
         
         ! Create the dataset
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_CHARACTER, &
             gspace_id, dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataset.')
+          ' - Could not create dataset.')
               
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close parameter list.')
+          ' - Could not close parameter list.')
               
         ! Select the global dataspace for the dataset
         CALL h5dget_space_f(dset_id,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not select global dataspace for the dataset.')
+          ' - Could not select global dataspace for the dataset.')
               
         ! Create a property list for the write operation
         CALL h5pcreate_f(H5P_DATASET_XFER_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create property list for write operation.')
+          ' - Could not create property list for write operation.')
         
         ! Convert to surrogate character array, since HDF5 does not support
         ! Boolean variables
@@ -1931,25 +1931,25 @@ MODULE FileType_HDF5
         CALL h5dwrite_f(dset_id, H5T_NATIVE_CHARACTER, valsc, gdims, error, &
             dspace_id,gspace_id,plist_id)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not write to the dataset.')
+          ' - Could not write to the dataset.')
         
         ! Close the dataset
         CALL h5dclose_f(dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataset.')
+          ' - Could not close the dataset.')
         
         ! Close the dataspace
         CALL h5sclose_f(dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
         
         CALL h5sclose_f(gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
               
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the parameter list.')
+          ' - Could not close the parameter list.')
       ENDIF
 #endif
     ENDSUBROUTINE write_b2
@@ -1979,12 +1979,12 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Check that the file is writable. Best to catch this before HDF5 does.
       IF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-             ': File is readonly!')
+          ' - File is readonly!')
       ELSE
       
         ! stash offset
@@ -2012,39 +2012,39 @@ MODULE FileType_HDF5
         !Create an HDF5 parameter list for the dataset creation.
         CALL h5pcreate_f(H5P_DATASET_CREATE_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create parameter list.')
+          ' - Could not create parameter list.')
               
         ! Create the dataspace
         ! Global dataspace
         CALL h5screate_simple_f(rank,gdims,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
               
         ! Local dataspace
         CALL h5screate_simple_f(rank,ldims,dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
         
         ! Create the dataset
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_CHARACTER, &
             gspace_id, dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataset.')
+          ' - Could not create dataset.')
               
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close parameter list.')
+          ' - Could not close parameter list.')
               
         ! Select the global dataspace for the dataset
         CALL h5dget_space_f(dset_id,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not select global dataspace for the dataset.')
+          ' - Could not select global dataspace for the dataset.')
               
         ! Create a property list for the write operation
         CALL h5pcreate_f(H5P_DATASET_XFER_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create property list for write operation.')
+          ' - Could not create property list for write operation.')
         
         ! Convert to surrogate character array, since HDF5 does not support
         ! Boolean variables
@@ -2058,25 +2058,25 @@ MODULE FileType_HDF5
         CALL h5dwrite_f(dset_id, H5T_NATIVE_CHARACTER, valsc, gdims, error, &
             dspace_id,gspace_id,plist_id)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not write to the dataset.')
+          ' - Could not write to the dataset.')
         
         ! Close the dataset
         CALL h5dclose_f(dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataset.')
+          ' - Could not close the dataset.')
         
         ! Close the dataspace
         CALL h5sclose_f(dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
         
         CALL h5sclose_f(gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
               
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the parameter list.')
+          ' - Could not close the parameter list.')
       ENDIF
 #endif
     ENDSUBROUTINE write_b3
@@ -2104,12 +2104,12 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Check that the file is writable. Best to catch this before HDF5 does.
       IF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-             ': File is readonly!')
+          ' - File is readonly!')
       ELSE
       
         ! stash offset
@@ -2135,63 +2135,63 @@ MODULE FileType_HDF5
         !Create an HDF5 parameter list for the dataset creation.
         CALL h5pcreate_f(H5P_DATASET_CREATE_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create parameter list.')
+          ' - Could not create parameter list.')
               
         ! Create the dataspace
         ! Global dataspace
         CALL h5screate_simple_f(rank,gdims,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
               
         ! Local dataspace
         CALL h5screate_simple_f(rank,ldims,dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
         
         ! Create the dataset
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_INTEGER, &
             gspace_id, dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataset.')
+          ' - Could not create dataset.')
               
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close parameter list.')
+          ' - Could not close parameter list.')
               
         ! Select the global dataspace for the dataset
         CALL h5dget_space_f(dset_id,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not select global dataspace for the dataset.')
+          ' - Could not select global dataspace for the dataset.')
               
         ! Create a property list for the write operation
         CALL h5pcreate_f(H5P_DATASET_XFER_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create property list for write operation.')
+          ' - Could not create property list for write operation.')
               
         ! Write to the dataset
         CALL h5dwrite_f(dset_id, H5T_NATIVE_INTEGER, vals, gdims, error, &
             dspace_id,gspace_id,plist_id)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not write to the dataset.')
+          ' - Could not write to the dataset.')
         
         ! Close the dataset
         CALL h5dclose_f(dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataset.')
+          ' - Could not close the dataset.')
         
         ! Close the dataspace
         CALL h5sclose_f(dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
         
         CALL h5sclose_f(gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
               
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the parameter list.')
+          ' - Could not close the parameter list.')
       ENDIF
 #endif
     ENDSUBROUTINE write_n0
@@ -2219,12 +2219,12 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Check that the file is writable. Best to catch this before HDF5 does.
       IF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-             ': File is readonly!')
+          ' - File is readonly!')
       ELSE
       
         ! stash offset
@@ -2250,63 +2250,63 @@ MODULE FileType_HDF5
         !Create an HDF5 parameter list for the dataset creation.
         CALL h5pcreate_f(H5P_DATASET_CREATE_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create parameter list.')
+          ' - Could not create parameter list.')
               
         ! Create the dataspace
         ! Global dataspace
         CALL h5screate_simple_f(rank,gdims,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
               
         ! Local dataspace
         CALL h5screate_simple_f(rank,ldims,dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
         
         ! Create the dataset
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_INTEGER, &
             gspace_id, dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataset.')
+          ' - Could not create dataset.')
               
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close parameter list.')
+          ' - Could not close parameter list.')
               
         ! Select the global dataspace for the dataset
         CALL h5dget_space_f(dset_id,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not select global dataspace for the dataset.')
+          ' - Could not select global dataspace for the dataset.')
               
         ! Create a property list for the write operation
         CALL h5pcreate_f(H5P_DATASET_XFER_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create property list for write operation.')
+          ' - Could not create property list for write operation.')
               
         ! Write to the dataset
         CALL h5dwrite_f(dset_id, H5T_NATIVE_INTEGER, vals, gdims, error, &
             dspace_id,gspace_id,plist_id)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not write to the dataset.')
+          ' - Could not write to the dataset.')
         
         ! Close the dataset
         CALL h5dclose_f(dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataset.')
+          ' - Could not close the dataset.')
         
         ! Close the dataspace
         CALL h5sclose_f(dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
         
         CALL h5sclose_f(gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
               
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the parameter list.')
+          ' - Could not close the parameter list.')
       ENDIF
 #endif
     ENDSUBROUTINE write_n1
@@ -2335,12 +2335,12 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Check that the file is writable. Best to catch this before HDF5 does.
       IF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-             ': File is readonly!')
+          ' - File is readonly!')
       ELSE
       
         ! stash offset
@@ -2367,63 +2367,63 @@ MODULE FileType_HDF5
         !Create an HDF5 parameter list for the dataset creation.
         CALL h5pcreate_f(H5P_DATASET_CREATE_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create parameter list.')
+          ' - Could not create parameter list.')
               
         ! Create the dataspace
         ! Global dataspace
         CALL h5screate_simple_f(rank,gdims,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
               
         ! Local dataspace
         CALL h5screate_simple_f(rank,ldims,dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
         
         ! Create the dataset
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_INTEGER, &
             gspace_id, dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataset.')
+          ' - Could not create dataset.')
               
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close parameter list.')
+          ' - Could not close parameter list.')
               
         ! Select the global dataspace for the dataset
         CALL h5dget_space_f(dset_id,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not select global dataspace for the dataset.')
+          ' - Could not select global dataspace for the dataset.')
               
         ! Create a property list for the write operation
         CALL h5pcreate_f(H5P_DATASET_XFER_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create property list for write operation.')
+          ' - Could not create property list for write operation.')
               
         ! Write to the dataset
         CALL h5dwrite_f(dset_id, H5T_NATIVE_INTEGER, vals, gdims, error, &
             dspace_id,gspace_id,plist_id)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not write to the dataset.')
+          ' - Could not write to the dataset.')
         
         ! Close the dataset
         CALL h5dclose_f(dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataset.')
+          ' - Could not close the dataset.')
         
         ! Close the dataspace
         CALL h5sclose_f(dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
         
         CALL h5sclose_f(gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
               
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the parameter list.')
+          ' - Could not close the parameter list.')
       ENDIF
 #endif
     ENDSUBROUTINE write_n2
@@ -2452,12 +2452,12 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Check that the file is writable. Best to catch this before HDF5 does.
       IF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-             ': File is readonly!')
+          ' - File is readonly!')
       ELSE
       
         ! stash offset
@@ -2485,63 +2485,63 @@ MODULE FileType_HDF5
         !Create an HDF5 parameter list for the dataset creation.
         CALL h5pcreate_f(H5P_DATASET_CREATE_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create parameter list.')
+          ' - Could not create parameter list.')
               
         ! Create the dataspace
         ! Global dataspace
         CALL h5screate_simple_f(rank,gdims,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
               
         ! Local dataspace
         CALL h5screate_simple_f(rank,ldims,dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
         
         ! Create the dataset
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_INTEGER, &
             gspace_id, dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataset.')
+          ' - Could not create dataset.')
               
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close parameter list.')
+          ' - Could not close parameter list.')
               
         ! Select the global dataspace for the dataset
         CALL h5dget_space_f(dset_id,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not select global dataspace for the dataset.')
+          ' - Could not select global dataspace for the dataset.')
               
         ! Create a property list for the write operation
         CALL h5pcreate_f(H5P_DATASET_XFER_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create property list for write operation.')
+          ' - Could not create property list for write operation.')
               
         ! Write to the dataset
         CALL h5dwrite_f(dset_id, H5T_NATIVE_INTEGER, vals, gdims, error, &
             dspace_id,gspace_id,plist_id)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not write to the dataset.')
+          ' - Could not write to the dataset.')
         
         ! Close the dataset
         CALL h5dclose_f(dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataset.')
+          ' - Could not close the dataset.')
         
         ! Close the dataspace
         CALL h5sclose_f(dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
         
         CALL h5sclose_f(gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
               
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the parameter list.')
+          ' - Could not close the parameter list.')
       ENDIF
 #endif
     ENDSUBROUTINE write_n3
@@ -2573,12 +2573,12 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Check that the file is writable. Best to catch this before HDF5 does.
       IF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-             ': File is readonly!')
+          ' - File is readonly!')
       ELSE
       
         ! stash offset
@@ -2604,68 +2604,68 @@ MODULE FileType_HDF5
         !Create an HDF5 parameter list for the dataset creation.
         CALL h5pcreate_f(H5P_DATASET_CREATE_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create parameter list.')
+          ' - Could not create parameter list.')
               
         ! Create the dataspace
         ! Global dataspace
         CALL h5screate_simple_f(rank,gdims,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
               
         ! Local dataspace
         CALL h5screate_simple_f(rank,ldims,dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
         
         ! Create the dataset
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_STD_I64LE, gspace_id, &
             dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataset.')
+          ' - Could not create dataset.')
               
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close parameter list.')
+          ' - Could not close parameter list.')
               
         ! Select the global dataspace for the dataset
         CALL h5dget_space_f(dset_id,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not select global dataspace for the dataset.')
+          ' - Could not select global dataspace for the dataset.')
               
         ! Create a property list for the write operation
         CALL h5pcreate_f(H5P_DATASET_XFER_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create property list for write operation.')
+          ' - Could not create property list for write operation.')
               
         ! Convert data type
         vals=valst
         CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
-            ': Converting from long integer to double to accomodate HDF5!!!')
+          ' - Converting from long integer to double to accomodate HDF5!!!')
         
         ! Write to the dataset
         CALL h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, vals, gdims, error, &
             dspace_id,gspace_id,plist_id)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not write to the dataset.')
+          ' - Could not write to the dataset.')
         
         ! Close the dataset
         CALL h5dclose_f(dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataset.')
+          ' - Could not close the dataset.')
         
         ! Close the dataspace
         CALL h5sclose_f(dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
         
         CALL h5sclose_f(gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
               
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the parameter list.')
+          ' - Could not close the parameter list.')
       ENDIF
 #endif
     ENDSUBROUTINE write_l0
@@ -2696,12 +2696,12 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Check that the file is writable. Best to catch this before HDF5 does.
       IF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-             ': File is readonly!')
+          ' - File is readonly!')
       ELSE
       
         ! stash offset
@@ -2727,68 +2727,68 @@ MODULE FileType_HDF5
         !Create an HDF5 parameter list for the dataset creation.
         CALL h5pcreate_f(H5P_DATASET_CREATE_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create parameter list.')
+          ' - Could not create parameter list.')
               
         ! Create the dataspace
         ! Global dataspace
         CALL h5screate_simple_f(rank,gdims,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
               
         ! Local dataspace
         CALL h5screate_simple_f(rank,ldims,dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
         
         ! Create the dataset
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_STD_I64LE, gspace_id, &
             dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataset.')
+          ' - Could not create dataset.')
               
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close parameter list.')
+          ' - Could not close parameter list.')
               
         ! Select the global dataspace for the dataset
         CALL h5dget_space_f(dset_id,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not select global dataspace for the dataset.')
+          ' - Could not select global dataspace for the dataset.')
               
         ! Create a property list for the write operation
         CALL h5pcreate_f(H5P_DATASET_XFER_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create property list for write operation.')
+          ' - Could not create property list for write operation.')
               
         ! Convert to different datatyp
         vals=valst
         CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
-            ': Converting from long integer to double to accomodate HDF5!!!')
+          ' - Converting from long integer to double to accomodate HDF5!!!')
         
         ! Write to the dataset
         CALL h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, vals, gdims, error, &
             dspace_id,gspace_id,plist_id)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not write to the dataset.')
+          ' - Could not write to the dataset.')
         
         ! Close the dataset
         CALL h5dclose_f(dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataset.')
+          ' - Could not close the dataset.')
         
         ! Close the dataspace
         CALL h5sclose_f(dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
         
         CALL h5sclose_f(gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
               
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the parameter list.')
+          ' - Could not close the parameter list.')
       ENDIF
 #endif
     ENDSUBROUTINE write_l1
@@ -2820,12 +2820,12 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Check that the file is writable. Best to catch this before HDF5 does.
       IF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-             ': File is readonly!')
+          ' - File is readonly!')
       ELSE
       
         ! stash offset
@@ -2852,68 +2852,68 @@ MODULE FileType_HDF5
         !Create an HDF5 parameter list for the dataset creation.
         CALL h5pcreate_f(H5P_DATASET_CREATE_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create parameter list.')
+          ' - Could not create parameter list.')
               
         ! Create the dataspace
         ! Global dataspace
         CALL h5screate_simple_f(rank,gdims,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
               
         ! Local dataspace
         CALL h5screate_simple_f(rank,ldims,dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
         
         ! Create the dataset
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_STD_I64LE, gspace_id, &
             dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataset.')
+          ' - Could not create dataset.')
               
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close parameter list.')
+          ' - Could not close parameter list.')
               
         ! Select the global dataspace for the dataset
         CALL h5dget_space_f(dset_id,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not select global dataspace for the dataset.')
+          ' - Could not select global dataspace for the dataset.')
               
         ! Create a property list for the write operation
         CALL h5pcreate_f(H5P_DATASET_XFER_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create property list for write operation.')
+          ' - Could not create property list for write operation.')
               
         ! Convert data type
         vals=valst
         CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
-            ': Converting from long integer to double to accomodate HDF5!!!')
+          ' - Converting from long integer to double to accomodate HDF5!!!')
         
         ! Write to the dataset
         CALL h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, vals, gdims, error, &
             dspace_id,gspace_id,plist_id)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not write to the dataset.')
+          ' - Could not write to the dataset.')
         
         ! Close the dataset
         CALL h5dclose_f(dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataset.')
+          ' - Could not close the dataset.')
         
         ! Close the dataspace
         CALL h5sclose_f(dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
         
         CALL h5sclose_f(gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
               
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the parameter list.')
+          ' - Could not close the parameter list.')
       ENDIF
 #endif
     ENDSUBROUTINE write_l2
@@ -2945,12 +2945,12 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Check that the file is writable. Best to catch this before HDF5 does.
       IF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-             ': File is readonly!')
+          ' - File is readonly!')
       ELSE
       
         ! stash offset
@@ -2978,68 +2978,68 @@ MODULE FileType_HDF5
         !Create an HDF5 parameter list for the dataset creation.
         CALL h5pcreate_f(H5P_DATASET_CREATE_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create parameter list.')
+          ' - Could not create parameter list.')
               
         ! Create the dataspace
         ! Global dataspace
         CALL h5screate_simple_f(rank,gdims,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
               
         ! Local dataspace
         CALL h5screate_simple_f(rank,ldims,dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
         
         ! Create the dataset
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_STD_I64LE, gspace_id, &
             dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataset.')
+          ' - Could not create dataset.')
               
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close parameter list.')
+          ' - Could not close parameter list.')
               
         ! Select the global dataspace for the dataset
         CALL h5dget_space_f(dset_id,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not select global dataspace for the dataset.')
+          ' - Could not select global dataspace for the dataset.')
               
         ! Create a property list for the write operation
         CALL h5pcreate_f(H5P_DATASET_XFER_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create property list for write operation.')
+          ' - Could not create property list for write operation.')
               
         ! Convert Data type
         vals=valst
         CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
-            ': Converting from long integer to double to accomodate HDF5!!!')
+          ' - Converting from long integer to double to accomodate HDF5!!!')
         
         ! Write to the valsset
         CALL h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, vals, gdims, error, &
             dspace_id,gspace_id,plist_id)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not write to the dataset.')
+          ' - Could not write to the dataset.')
         
         ! Close the dataset
         CALL h5dclose_f(dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataset.')
+          ' - Could not close the dataset.')
         
         ! Close the dataspace
         CALL h5sclose_f(dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
         
         CALL h5sclose_f(gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
               
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the parameter list.')
+          ' - Could not close the parameter list.')
       ENDIF
 #endif
     ENDSUBROUTINE write_l3
@@ -3073,12 +3073,12 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Check that the file is writable. Best to catch this before HDF5 does.
       IF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-             ': File is readonly!')
+          ' - File is readonly!')
       ELSE
 
         ! Convert StringType to character vector
@@ -3111,64 +3111,64 @@ MODULE FileType_HDF5
         !Create an HDF5 parameter list for the dataset creation.
         CALL h5pcreate_f(H5P_DATASET_CREATE_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create parameter list.')
+          ' - Could not create parameter list.')
               
         ! Create the dataspace
         ! Global dataspace
         CALL h5screate_simple_f(rank,gdims,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
               
         ! Local dataspace
         CALL h5screate_simple_f(rank,ldims,dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
         
         ! Create the dataset
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_CHARACTER, &
             gspace_id, dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataset.')
+          ' - Could not create dataset.')
               
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close parameter list.')
+          ' - Could not close parameter list.')
               
         ! Select the global dataspace for the dataset
         CALL h5dget_space_f(dset_id,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not select global dataspace for the dataset.')
+          ' - Could not select global dataspace for the dataset.')
               
         ! Create a property list for the write operation
         CALL h5pcreate_f(H5P_DATASET_XFER_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create property list for write operation.')
+          ' - Could not create property list for write operation.')
               
         ! Write to the dataset
         CALL h5dwrite_f(dset_id, H5T_NATIVE_CHARACTER, valsc, gdims, error, &
             dspace_id,gspace_id,plist_id)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not write to the dataset.')
+          ' - Could not write to the dataset.')
               DEALLOCATE(valsc)
         
         ! Close the dataset
         CALL h5dclose_f(dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataset.')
+          ' - Could not close the dataset.')
         
         ! Close the dataspace
         CALL h5sclose_f(dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
         
         CALL h5sclose_f(gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
               
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the parameter list.')
+          ' - Could not close the parameter list.')
       ENDIF
 #endif
     ENDSUBROUTINE write_c0
@@ -3192,11 +3192,11 @@ MODULE FileType_HDF5
       
       length_max=0
       DO i=1,SIZE(vals)
-        length_max=MAXVAL(([LEN_TRIM(vals(i)),length_max]))
+        length_max=MAX(LEN_TRIM(vals(i)),length_max)
       ENDDO
       
       IF(PRESENT(gdims_in)) THEN
-        CALL thisHDF5File%fwrite(dsetname,vals,length_max,[length_max,gdims_in])
+        CALL thisHDF5File%fwrite(dsetname,vals,length_max,(/length_max,gdims_in/))
       ELSE
         CALL thisHDF5File%fwrite(dsetname,vals,length_max)
       ENDIF
@@ -3235,12 +3235,12 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Check that the file is writable. Best to catch this before HDF5 does.
       IF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-             ': File is readonly!')
+          ' - File is readonly!')
       ELSE
       
         ! set one to ones. This is usually used for more complicated parallel
@@ -3275,63 +3275,63 @@ MODULE FileType_HDF5
         !Create an HDF5 parameter list for the dataset creation.
         CALL h5pcreate_f(H5P_DATASET_CREATE_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create parameter list.')
+          ' - Could not create parameter list.')
               
         ! Create the dataspace
         ! Global dataspace
         CALL h5screate_simple_f(rank,gdims,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
               
         ! Local dataspace
         CALL h5screate_simple_f(rank,ldims,dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
         
         ! Create the dataset
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_CHARACTER, &
             gspace_id, dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataset.')
+          ' - Could not create dataset.')
               
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close parameter list.')
+          ' - Could not close parameter list.')
               
         ! Select the global dataspace for the dataset
         CALL h5dget_space_f(dset_id,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not select global dataspace for the dataset.')
+          ' - Could not select global dataspace for the dataset.')
               
         ! Create a property list for the write operation
         CALL h5pcreate_f(H5P_DATASET_XFER_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create property list for write operation.')
+          ' - Could not create property list for write operation.')
               
         ! Write to the dataset
         CALL h5dwrite_f(dset_id, H5T_NATIVE_CHARACTER, valsc, gdims, error, &
-            dspace_id,gspace_id,plist_id)
+          dspace_id,gspace_id,plist_id)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not write to the dataset.')
+          ' - Could not write to the dataset.')
         
         ! Close the dataset
         CALL h5dclose_f(dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataset.')
+          ' - Could not close the dataset.')
         
         ! Close the dataspace
         CALL h5sclose_f(dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
         
         CALL h5sclose_f(gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
               
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the parameter list.')
+          ' - Could not close the parameter list.')
       ENDIF
 #endif
     ENDSUBROUTINE write_c1
@@ -3356,18 +3356,16 @@ MODULE FileType_HDF5
       length_max=0
       DO j=1,SIZE(vals,1)
         DO i=1,SIZE(vals,2)
-          length_max=MAXVAL(([LEN_TRIM(vals(j,i)),length_max]))
+          length_max=MAX(LEN_TRIM(vals(j,i)),length_max)
         ENDDO
       ENDDO
       
       IF(PRESENT(gdims_in)) THEN
-        CALL thisHDF5File%fwrite(dsetname,vals,length_max,[length_max,gdims_in])
+        CALL thisHDF5File%fwrite(dsetname,vals,length_max,(/length_max,gdims_in/))
       ELSE
         CALL thisHDF5File%fwrite(dsetname,vals,length_max)
       ENDIF
-      
     ENDSUBROUTINE write_c2_helper
-
 !
 !-------------------------------------------------------------------------------
 !> @brief Write a rank-2 array of StringTypes to dataset
@@ -3400,12 +3398,12 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Check that the file is writable. Best to catch this before HDF5 does.
       IF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-             ': File is readonly!')
+          ' - File is readonly!')
       ELSE
       
         ! set one to ones. This is usually used for more complicated parallel
@@ -3443,64 +3441,64 @@ MODULE FileType_HDF5
         !Create an HDF5 parameter list for the dataset creation.
         CALL h5pcreate_f(H5P_DATASET_CREATE_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create parameter list.')
+          ' - Could not create parameter list.')
               
         ! Create the dataspace
         ! Global dataspace
         CALL h5screate_simple_f(rank,gdims,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
               
         ! Local dataspace
         CALL h5screate_simple_f(rank,ldims,dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
         
         ! Create the dataset
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_CHARACTER, &
             gspace_id, dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataset.')
+          ' - Could not create dataset.')
               
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close parameter list.')
+          ' - Could not close parameter list.')
               
         ! Select the global dataspace for the dataset
         CALL h5dget_space_f(dset_id,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not select global '//&
-                  'dataspace for the dataset.')
+          ' - Could not select global '//&
+            'dataspace for the dataset.')
               
         ! Create a property list for the write operation
         CALL h5pcreate_f(H5P_DATASET_XFER_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create property list for write operation.')
+          ' - Could not create property list for write operation.')
               
         ! Write to the dataset
         CALL h5dwrite_f(dset_id, H5T_NATIVE_CHARACTER, valsc, ldims, error, &
             dspace_id,gspace_id,plist_id)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not write to the dataset.')
+          ' - Could not write to the dataset.')
         
         ! Close the dataset
         CALL h5dclose_f(dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataset.')
+          ' - Could not close the dataset.')
               
         ! Close the dataspace
         CALL h5sclose_f(dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
         
         CALL h5sclose_f(gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
               
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the parameter list.')
+          ' - Could not close the parameter list.')
       ENDIF
 #endif
     ENDSUBROUTINE write_c2
@@ -3526,19 +3524,17 @@ MODULE FileType_HDF5
       DO k=1,SIZE(vals,3)
         DO j=1,SIZE(vals,1)
           DO i=1,SIZE(vals,2)
-            length_max=MAXVAL(([LEN_TRIM(vals(j,i,k)),length_max]))
+            length_max=MAX(LEN_TRIM(vals(j,i,k)),length_max)
           ENDDO
         ENDDO
       ENDDO
       
       IF(PRESENT(gdims_in)) THEN
-        CALL thisHDF5File%fwrite(dsetname,vals,length_max,[length_max,gdims_in])
+        CALL thisHDF5File%fwrite(dsetname,vals,length_max,(/length_max,gdims_in/))
       ELSE
         CALL thisHDF5File%fwrite(dsetname,vals,length_max)
       ENDIF
-      
     ENDSUBROUTINE write_c3_helper
-
 !
 !-------------------------------------------------------------------------------
 !> @brief Write a rank-3 array of StringTypes to dataset
@@ -3571,12 +3567,12 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Check that the file is writable. Best to catch this before HDF5 does.
       IF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-             ': File is readonly!')
+          ' - File is readonly!')
       ELSE
       
         ! set one to ones. This is usually used for more complicated parallel
@@ -3617,64 +3613,64 @@ MODULE FileType_HDF5
         !Create an HDF5 parameter list for the dataset creation.
         CALL h5pcreate_f(H5P_DATASET_CREATE_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create parameter'//        ' list.')
+          ' - Could not create parameter'//        ' list.')
               
         ! Create the dataspace
         ! Global dataspace
         CALL h5screate_simple_f(rank,gdims,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
               
         ! Local dataspace
         CALL h5screate_simple_f(rank,ldims,dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataspace.')
+          ' - Could not create dataspace.')
                
         ! Create the dataset
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_CHARACTER, &
             gspace_id, dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create dataset.')
+          ' - Could not create dataset.')
               
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close parameter list.')
+          ' - Could not close parameter list.')
               
         ! Select the global dataspace for the dataset
         CALL h5dget_space_f(dset_id,gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not select global '//&
-                  'dataspace for the dataset.')
+          ' - Could not select global '//&
+            'dataspace for the dataset.')
               
         ! Create a property list for the write operation
         CALL h5pcreate_f(H5P_DATASET_XFER_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not create property list for write operation.')
+          ' - Could not create property list for write operation.')
               
         ! Write to the dataset
         CALL h5dwrite_f(dset_id, H5T_NATIVE_CHARACTER, valsc, ldims, error, &
             dspace_id,gspace_id,plist_id)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not write to the dataset.')
+          ' - Could not write to the dataset.')
 
         ! Close the dataset
         CALL h5dclose_f(dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataset.')
+          ' - Could not close the dataset.')
               
         ! Close the dataspace
         CALL h5sclose_f(dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
         
         CALL h5sclose_f(gspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the dataspace.')
+          ' - Could not close the dataspace.')
               
         CALL h5pclose_f(plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ': Could not close the parameter list.')
+          ' - Could not close the parameter list.')
       ENDIF
 #endif
     ENDSUBROUTINE write_c3
@@ -3701,7 +3697,7 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Convert the path name to use slashes
       path=convertPath(dsetname)
@@ -3709,38 +3705,38 @@ MODULE FileType_HDF5
       ! Open the dataset
       CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-           ": Failed to open dataset.")
+         ' - Failed to open dataset.')
       
       ! Get dataset dimensions for allocation
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to obtain the dataspace.")
+        ' - Failed to obtain the dataspace.')
             ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve number of dataspace dimensions.")
+        ' - Failed to retrieve number of dataspace dimensions.')
       IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Using wrong read function for rank.")
+        ' - Using wrong read function for rank.')
 
       CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve dataspace dimensions.")
+        ' - Failed to retrieve dataspace dimensions.')
       
       ! Read the dataset
       mem=H5T_NATIVE_DOUBLE
       CALL h5dread_f(dset_id,mem,vals,dims,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to read data from dataset.")
+        ' - Failed to read data from dataset.')
       
       ! Close the dataset
       CALL h5dclose_f(dset_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataset.")
+        ' - Failed to close dataset.')
       
       ! Close the dataspace
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataspace.")
+        ' - Failed to close dataspace.')
       
 #endif
     ENDSUBROUTINE read_d0
@@ -3768,7 +3764,7 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Convert the path name to use slashes
       path=convertPath(dsetname)
@@ -3776,29 +3772,29 @@ MODULE FileType_HDF5
       ! Open the dataset
       CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to open dataset.")
+        ' - Failed to open dataset.')
       
       ! Get dataset dimensions for allocation
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to obtain the dataspace.")
+        ' - Failed to obtain the dataspace.')
       
       ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve number of dataspace dimensions.")
+        ' - Failed to retrieve number of dataspace dimensions.')
       IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Using wrong read function for rank.")
+        ' - Using wrong read function for rank.')
 
       CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve dataspace dimensions.")
+        ' - Failed to retrieve dataspace dimensions.')
       
       ! Allocate space if needed
       IF(ALLOCATED(vals)) THEN
         ! Make sure the data is the right size
         IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
-            '::'//myName//": data array is the wrong size.")
+          '::'//myName//' - data array is the wrong size.')
       ELSE
         ! Allocate to size
         ALLOCATE(vals(dims(1)))
@@ -3808,17 +3804,17 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_DOUBLE
       CALL h5dread_f(dset_id,mem,vals,dims,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to read data from dataset.")
+        ' - Failed to read data from dataset.')
       
       ! Close the dataset
       CALL h5dclose_f(dset_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataset.")
+        ' - Failed to close dataset.')
       
       ! Close the dataspace
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataspace.")
+        ' - Failed to close dataspace.')
       
 #endif
     ENDSUBROUTINE read_d1
@@ -3846,7 +3842,7 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Convert the path name to use slashes
       path=convertPath(dsetname)
@@ -3854,28 +3850,28 @@ MODULE FileType_HDF5
       ! Open the dataset
       CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to open dataset.")
+        ' - Failed to open dataset.')
       
       ! Get dataset dimensions for allocation
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to obtain the dataspace.")
+        ' - Failed to obtain the dataspace.')
             ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve number of dataspace dimensions.")
+        ' - Failed to retrieve number of dataspace dimensions.')
       IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Using wrong read function for rank.")
+        ' - Using wrong read function for rank.')
 
       CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve dataspace dimensions.")
+        ' - Failed to retrieve dataspace dimensions.')
       
       ! Allocate space if needed
       IF(ALLOCATED(vals)) THEN
         ! Make sure the data is the right size
         IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
-            '::'//myName//": data array is the wrong size.")
+          '::'//myName//' - data array is the wrong size.')
       ELSE
         ! Allocate to size
         ALLOCATE(vals(dims(1),dims(2)))
@@ -3885,17 +3881,17 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_DOUBLE
       CALL h5dread_f(dset_id,mem,vals,dims,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to read data from dataset.")
+        ' - Failed to read data from dataset.')
       
       ! Close the dataset
       CALL h5dclose_f(dset_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataset.")
+        ' - Failed to close dataset.')
       
       ! Close the dataspace
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataspace.")
+        ' - Failed to close dataspace.')
       
 #endif
     ENDSUBROUTINE read_d2
@@ -3924,7 +3920,7 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Convert the path name to use slashes
       path=convertPath(dsetname)
@@ -3932,28 +3928,28 @@ MODULE FileType_HDF5
       ! Open the dataset
       CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to open dataset.")
+        ' - Failed to open dataset.')
       
       ! Get dataset dimensions for allocation
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to obtain the dataspace.")
+        ' - Failed to obtain the dataspace.')
             ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve number of dataspace dimensions.")
+        ' - Failed to retrieve number of dataspace dimensions.')
       IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Using wrong read function for rank.")
+        ' - Using wrong read function for rank.')
       
       CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve dataspace dimensions.")
+        ' - Failed to retrieve dataspace dimensions.')
       
       ! Allocate space if needed
       IF(ALLOCATED(vals)) THEN
         ! Make sure the data is the right size
         IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
-            '::'//myName//": data array is the wrong size.")
+          '::'//myName//' - data array is the wrong size.')
       ELSE
         ! Allocate to size
         ALLOCATE(vals(dims(1),dims(2),dims(3)))
@@ -3963,17 +3959,17 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_DOUBLE
       CALL h5dread_f(dset_id,mem,vals,dims,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to read data from dataset.")
+        ' - Failed to read data from dataset.')
       
       ! Close the dataset
       CALL h5dclose_f(dset_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataset.")
+        ' - Failed to close dataset.')
       
       ! Close the dataspace
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataspace.")
+        ' - Failed to close dataspace.')
       
 #endif
     ENDSUBROUTINE read_d3
@@ -4002,7 +3998,7 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Convert the path name to use slashes
       path=convertPath(dsetname)
@@ -4010,38 +4006,38 @@ MODULE FileType_HDF5
       ! Open the dataset
       CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to open dataset.")
+        ' - Failed to open dataset.')
       
       ! Get dataset dimensions for allocation
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to obtain the dataspace.")
+        ' - Failed to obtain the dataspace.')
             ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve number of dataspace dimensions.")
+        ' - Failed to retrieve number of dataspace dimensions.')
       IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Using wrong read function for rank.")
+        ' - Using wrong read function for rank.')
       
       CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve dataspace dimensions.")
+        ' - Failed to retrieve dataspace dimensions.')
       
       ! Read the dataset
       mem=H5T_NATIVE_REAL
       CALL h5dread_f(dset_id,mem,vals,dims,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to read data from dataset.")
+        ' - Failed to read data from dataset.')
       
       ! Close the dataset
       CALL h5dclose_f(dset_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataset.")
+        ' - Failed to close dataset.')
       
       ! Close the dataspace
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataspace.")
+        ' - Failed to close dataspace.')
       
 #endif
     ENDSUBROUTINE read_s0
@@ -4070,7 +4066,7 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Convert the path name to use slashes
       path=convertPath(dsetname)
@@ -4078,28 +4074,28 @@ MODULE FileType_HDF5
       ! Open the dataset
       CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to open dataset.")
+        ' - Failed to open dataset.')
       
       ! Get dataset dimensions for allocation
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to obtain the dataspace.")
+        ' - Failed to obtain the dataspace.')
             ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve number of dataspace dimensions.")
+        ' - Failed to retrieve number of dataspace dimensions.')
       IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Using wrong read function for rank.")
+        ' - Using wrong read function for rank.')
       
       CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve dataspace dimensions.")
+        ' - Failed to retrieve dataspace dimensions.')
       
       ! Allocate space if needed
       IF(ALLOCATED(vals)) THEN
         ! Make sure the vals is the right size
         IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
-            '::'//myName//": data array is the wrong size.")
+          '::'//myName//' - data array is the wrong size.')
       ELSE
         ! Allocate to size
         ALLOCATE(vals(dims(1)))
@@ -4109,17 +4105,17 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_REAL
       CALL h5dread_f(dset_id,mem,vals,dims,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to read data from dataset.")
+        ' - Failed to read data from dataset.')
       
       ! Close the dataset
       CALL h5dclose_f(dset_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataset.")
+        ' - Failed to close dataset.')
       
       ! Close the dataspace
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataspace.")
+        ' - Failed to close dataspace.')
       
 #endif
     ENDSUBROUTINE read_s1
@@ -4147,7 +4143,7 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Convert the path name to use slashes
       path=convertPath(dsetname)
@@ -4155,28 +4151,28 @@ MODULE FileType_HDF5
       ! Open the dataset
       CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to open dataset.")
+        ' - Failed to open dataset.')
       
       ! Get dataset dimensions for allocation
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to obtain the dataspace.")
+        ' - Failed to obtain the dataspace.')
             ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve number of dataspace dimensions.")
+        ' - Failed to retrieve number of dataspace dimensions.')
       IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Using wrong read function for rank.")
+        ' - Using wrong read function for rank.')
       
       CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve dataspace dimensions.")
+        ' - Failed to retrieve dataspace dimensions.')
       
       ! Allocate space if needed
       IF(ALLOCATED(vals)) THEN
         ! Make sure the data is the right size
         IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
-            '::'//myName//": data array is the wrong size.")
+          '::'//myName//' - data array is the wrong size.')
       ELSE
         ! Allocate to size
         ALLOCATE(vals(dims(1),dims(2)))
@@ -4186,17 +4182,17 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_REAL
       CALL h5dread_f(dset_id,mem,vals,dims,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to read data from dataset.")
+        ' - Failed to read data from dataset.')
       
       ! Close the dataset
       CALL h5dclose_f(dset_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataset.")
+        ' - Failed to close dataset.')
       
       ! Close the dataspace
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataspace.")
+        ' - Failed to close dataspace.')
       
 #endif
     ENDSUBROUTINE read_s2
@@ -4224,7 +4220,7 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Convert the path name to use slashes
       path=convertPath(dsetname)
@@ -4232,28 +4228,28 @@ MODULE FileType_HDF5
       ! Open the dataset
       CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to open dataset.")
+        ' - Failed to open dataset.')
       
       ! Get dataset dimensions for allocation
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to obtain the dataspace.")
+        ' - Failed to obtain the dataspace.')
             ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve number of dataspace dimensions.")
+        ' - Failed to retrieve number of dataspace dimensions.')
       IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Using wrong read function for rank.")
+        ' - Using wrong read function for rank.')
       
       CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve dataspace dimensions.")
+        ' - Failed to retrieve dataspace dimensions.')
       
       ! Allocate space if needed
       IF(ALLOCATED(vals)) THEN
         ! Make sure the data is the right size
         IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
-            '::'//myName//": data array is the wrong size.")
+          '::'//myName//' - data array is the wrong size.')
       ELSE
         ! Allocate to size
         ALLOCATE(vals(dims(1),dims(2),dims(3)))
@@ -4263,17 +4259,17 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_REAL
       CALL h5dread_f(dset_id,mem,vals,dims,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to read data from dataset.")
+        ' - Failed to read data from dataset.')
       
       ! Close the dataset
       CALL h5dclose_f(dset_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataset.")
+        ' - Failed to close dataset.')
       
       ! Close the dataspace
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataspace.")
+        ' - Failed to close dataspace.')
       
 #endif
     ENDSUBROUTINE read_s3
@@ -4301,7 +4297,7 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Convert the path name to use slashes
       path=convertPath(dsetname)
@@ -4309,38 +4305,38 @@ MODULE FileType_HDF5
       ! Open the dataset
       CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to open dataset.")
+        ' - Failed to open dataset.')
       
       ! Get dataset dimensions for allocation
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to obtain the dataspace.")
+        ' - Failed to obtain the dataspace.')
             ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve number of dataspace dimensions.")
+        ' - Failed to retrieve number of dataspace dimensions.')
       IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Using wrong read function for rank.")
+        ' - Using wrong read function for rank.')
       
       CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve dataspace dimensions.")
+        ' - Failed to retrieve dataspace dimensions.')
       
       ! Read the dataset
       mem=H5T_NATIVE_INTEGER
       CALL h5dread_f(dset_id,mem,vals,dims,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to read data from dataset.")
+        ' - Failed to read data from dataset.')
       
       ! Close the dataset
       CALL h5dclose_f(dset_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataset.")
+        ' - Failed to close dataset.')
       
       ! Close the dataspace
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataspace.")
+        ' - Failed to close dataspace.')
       
 #endif
     ENDSUBROUTINE read_n0
@@ -4369,7 +4365,7 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Convert the path name to use slashes
       path=convertPath(dsetname)
@@ -4377,28 +4373,28 @@ MODULE FileType_HDF5
       ! Open the dataset
       CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to open dataset.")
+        ' - Failed to open dataset.')
       
       ! Get dataset dimensions for allocation
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to obtain the dataspace.")
+        ' - Failed to obtain the dataspace.')
             ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve number of dataspace dimensions.")
+        ' - Failed to retrieve number of dataspace dimensions.')
       IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Using wrong read function for rank.")
+        ' - Using wrong read function for rank.')
       
       CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve dataspace dimensions.")
+        ' - Failed to retrieve dataspace dimensions.')
       
       ! Allocate space if needed
       IF(ALLOCATED(vals)) THEN
         ! Make sure the data is the right size
         IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
-            '::'//myName//": data array is the wrong size.")
+          '::'//myName//' - data array is the wrong size.')
       ELSE
         ! Allocate to size
         ALLOCATE(vals(dims(1)))
@@ -4408,17 +4404,17 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_INTEGER
       CALL h5dread_f(dset_id,mem,vals,dims,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to read data from dataset.")
+        ' - Failed to read data from dataset.')
       
       ! Close the dataset
       CALL h5dclose_f(dset_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataset.")
+        ' - Failed to close dataset.')
       
       ! Close the dataspace
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataspace.")
+        ' - Failed to close dataspace.')
       
 #endif
     ENDSUBROUTINE read_n1
@@ -4446,7 +4442,7 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Convert the path name to use slashes
       path=convertPath(dsetname)
@@ -4454,28 +4450,28 @@ MODULE FileType_HDF5
       ! Open the dataset
       CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to open dataset.")
+        ' - Failed to open dataset.')
       
       ! Get dataset dimensions for allocation
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to obtain the dataspace.")
+        ' - Failed to obtain the dataspace.')
             ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve number of dataspace dimensions.")
+        ' - Failed to retrieve number of dataspace dimensions.')
       IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Using wrong read function for rank.")
+        ' - Using wrong read function for rank.')
       
       CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve dataspace dimensions.")
+        ' - Failed to retrieve dataspace dimensions.')
       
       ! Allocate space if needed
       IF(ALLOCATED(vals)) THEN
         ! Make sure the data is the right size
         IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
-            '::'//myName//": data array is the wrong size.")
+          '::'//myName//' - data array is the wrong size.')
       ELSE
         ! Allocate to size
         ALLOCATE(vals(dims(1),dims(2)))
@@ -4485,17 +4481,17 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_INTEGER
       CALL h5dread_f(dset_id,mem,vals,dims,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to read data from dataset.")
+        ' - Failed to read data from dataset.')
       
       ! Close the dataset
       CALL h5dclose_f(dset_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataset.")
+        ' - Failed to close dataset.')
       
       ! Close the dataspace
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataspace.")
+        ' - Failed to close dataspace.')
       
 #endif
     ENDSUBROUTINE read_n2
@@ -4523,7 +4519,7 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Convert the path name to use slashes
       path=convertPath(dsetname)
@@ -4531,28 +4527,28 @@ MODULE FileType_HDF5
       ! Open the dataset
       CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to open dataset.")
+        ' - Failed to open dataset.')
       
       ! Get dataset dimensions for allocation
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to obtain the dataspace.")
+        ' - Failed to obtain the dataspace.')
             ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve number of dataspace dimensions.")
+        ' - Failed to retrieve number of dataspace dimensions.')
       IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Using wrong read function for rank.")
+        ' - Using wrong read function for rank.')
 
       CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve dataspace dimensions.")
+        ' - Failed to retrieve dataspace dimensions.')
       
       ! Allocate space if needed
       IF(ALLOCATED(vals)) THEN
         ! Make sure the data is the right size
         IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
-            '::'//myName//": data array is the wrong size.")
+          '::'//myName//' - data array is the wrong size.')
       ELSE
         ! Allocate to size
         ALLOCATE(vals(dims(1),dims(2),dims(3)))
@@ -4562,17 +4558,17 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_INTEGER
       CALL h5dread_f(dset_id,mem,vals,dims,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to read data from dataset.")
+        ' - Failed to read data from dataset.')
       
       ! Close the dataset
       CALL h5dclose_f(dset_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataset.")
+        ' - Failed to close dataset.')
       
       ! Close the dataspace
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataspace.")
+        ' - Failed to close dataspace.')
       
 #endif
     ENDSUBROUTINE read_n3
@@ -4602,7 +4598,7 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Convert the path name to use slashes
       path=convertPath(dsetname)
@@ -4610,43 +4606,43 @@ MODULE FileType_HDF5
       ! Open the dataset
       CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to open dataset.")
+        ' - Failed to open dataset.')
       
       ! Get dataset dimensions for allocation
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to obtain the dataspace.")
+        ' - Failed to obtain the dataspace.')
             ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve number of dataspace dimensions.")
+        ' - Failed to retrieve number of dataspace dimensions.')
       IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Using wrong read function for rank.")
+        ' - Using wrong read function for rank.')
 
       CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve dataspace dimensions.")
+        ' - Failed to retrieve dataspace dimensions.')
       
       ! Read the dataset
       mem=H5T_NATIVE_DOUBLE
       CALL h5dread_f(dset_id,mem,valst,dims,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to read data from dataset.")
+        ' - Failed to read data from dataset.')
       
       ! Close the dataset
       CALL h5dclose_f(dset_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataset.")
+        ' - Failed to close dataset.')
       
       ! Close the dataspace
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataspace.")
+        ' - Failed to close dataspace.')
             
       ! Convert data type
       vals=valst
       CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
-          ": Converting from double to long integer!")
+        ' - Converting from double to long integer!')
 
 #endif
     ENDSUBROUTINE read_l0
@@ -4678,7 +4674,7 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Convert the path name to use slashes
       path=convertPath(dsetname)
@@ -4686,28 +4682,28 @@ MODULE FileType_HDF5
       ! Open the dataset
       CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to open dataset.")
+        ' - Failed to open dataset.')
       
       ! Get dataset dimensions for allocation
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to obtain the dataspace.")
+        ' - Failed to obtain the dataspace.')
             ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve number of dataspace dimensions.")
+        ' - Failed to retrieve number of dataspace dimensions.')
       IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Using wrong read function for rank.")
+        ' - Using wrong read function for rank.')
 
       CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve dataspace dimensions.")
+        ' - Failed to retrieve dataspace dimensions.')
       
       ! Allocate space if needed
       IF(ALLOCATED(vals)) THEN
         ! Make sure the data is the right size
         IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
-            '::'//myName//": data array is the wrong size.")
+          '::'//myName//' - data array is the wrong size.')
       ELSE
         ! Allocate to size
         ALLOCATE(vals(dims(1)))
@@ -4718,22 +4714,22 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_INTEGER
       CALL h5dread_f(dset_id,mem,valst,dims,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to read data from dataset.")
+        ' - Failed to read data from dataset.')
       
       ! Close the dataset
       CALL h5dclose_f(dset_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataset.")
+        ' - Failed to close dataset.')
       
       ! Close the dataspace
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataspace.")
+        ' - Failed to close dataspace.')
             
       ! Conver data type
       vals=valst
       CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
-          ": Converting from double to long integer!")
+        ' - Converting from double to long integer!')
 
 #endif
     ENDSUBROUTINE read_l1
@@ -4764,7 +4760,7 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Convert the path name to use slashes
       path=convertPath(dsetname)
@@ -4772,28 +4768,28 @@ MODULE FileType_HDF5
       ! Open the dataset
       CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to open dataset.")
+        ' - Failed to open dataset.')
       
       ! Get dataset dimensions for allocation
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to obtain the dataspace.")
+        ' - Failed to obtain the dataspace.')
             ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve number of dataspace dimensions.")
+        ' - Failed to retrieve number of dataspace dimensions.')
       IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Using wrong read function for rank.")
+        ' - Using wrong read function for rank.')
 
       CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve dataspace dimensions.")
+        ' - Failed to retrieve dataspace dimensions.')
       
       ! Allocate space if needed
       IF(ALLOCATED(vals)) THEN
         ! Make sure the data is the right size
         IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
-            '::'//myName//": data array is the wrong size.")
+          '::'//myName//' - data array is the wrong size.')
       ELSE
         ! Allocate to size
         ALLOCATE(vals(dims(1),dims(2)))
@@ -4804,22 +4800,22 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_INTEGER
       CALL h5dread_f(dset_id,mem,valst,dims,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to read data from dataset.")
+        ' - Failed to read data from dataset.')
       
       ! Close the dataset
       CALL h5dclose_f(dset_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataset.")
+        ' - Failed to close dataset.')
       
       ! Close the dataspace
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataspace.")
+        ' - Failed to close dataspace.')
             
       ! Conver data type
       vals=valst
       CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
-          ": Converting from double to long integer!")
+        ' - Converting from double to long integer!')
 
 #endif
     ENDSUBROUTINE read_l2
@@ -4850,7 +4846,7 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Convert the path name to use slashes
       path=convertPath(dsetname)
@@ -4858,28 +4854,28 @@ MODULE FileType_HDF5
       ! Open the dataset
       CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to open dataset.")
+        ' - Failed to open dataset.')
       
       ! Get dataset dimensions for allocation
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to obtain the dataspace.")
+        ' - Failed to obtain the dataspace.')
             ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve number of dataspace dimensions.")
+        ' - Failed to retrieve number of dataspace dimensions.')
       IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Using wrong read function for rank.")
+        ' - Using wrong read function for rank.')
       
       CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve dataspace dimensions.")
+        ' - Failed to retrieve dataspace dimensions.')
       
       ! Allocate space if needed
       IF(ALLOCATED(vals)) THEN
         ! Make sure the data is the right size
         IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
-            '::'//myName//": data array is the wrong size.")
+          '::'//myName//' - data array is the wrong size.')
       ELSE
         ! Allocate to size
         ALLOCATE(vals(dims(1),dims(2),dims(3)))
@@ -4890,22 +4886,22 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_INTEGER
       CALL h5dread_f(dset_id,mem,valst,dims,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to read data from dataset.")
+        ' - Failed to read data from dataset.')
       
       ! Close the dataset
       CALL h5dclose_f(dset_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataset.")
+        ' - Failed to close dataset.')
       
       ! Close the dataspace
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataspace.")
+        ' - Failed to close dataspace.')
             
       ! Conver data type
       vals=valst
       CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
-          ": Converting from double to long integer!")
+        ' - Converting from double to long integer!')
 
 #endif
     ENDSUBROUTINE read_l3
@@ -4935,7 +4931,7 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
       ! Convert the path name to use slashes
       path=convertPath(dsetname)
@@ -4943,28 +4939,28 @@ MODULE FileType_HDF5
       ! Open the dataset
       CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to open dataset.")
+        ' - Failed to open dataset.')
       
       ! Get dataset dimensions for allocation
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to obtain the dataspace.")
+        ' - Failed to obtain the dataspace.')
             ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve number of dataspace dimensions.")
+        ' - Failed to retrieve number of dataspace dimensions.')
       IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Using wrong read function for rank.")
+        ' - Using wrong read function for rank.')
       
       CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve dataspace dimensions.")
+        ' - Failed to retrieve dataspace dimensions.')
       
       ! Read the dataset
       mem=H5T_NATIVE_CHARACTER
       CALL h5dread_f(dset_id,mem,valsc,dims,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to read data from dataset.")
+        ' - Failed to read data from dataset.')
             
       ! Convert to logical from character
       IF(valsc=='F') THEN
@@ -4976,12 +4972,12 @@ MODULE FileType_HDF5
       ! Close the dataset
       CALL h5dclose_f(dset_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataset.")
+        ' - Failed to close dataset.')
       
       ! Close the dataspace
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataspace.")
+        ' - Failed to close dataspace.')
       
 #endif
     ENDSUBROUTINE read_b0
@@ -5013,7 +5009,7 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
 
       ! Convert the path name to use slashes
@@ -5023,28 +5019,28 @@ MODULE FileType_HDF5
       CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
 
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to open dataset.")
+        ' - Failed to open dataset.')
       
       ! Get dataset dimensions for allocation
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to obtain the dataspace.")
+        ' - Failed to obtain the dataspace.')
             ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve number of dataspace dimensions.")
+        ' - Failed to retrieve number of dataspace dimensions.')
       IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Using wrong read function for rank.")
+        ' - Using wrong read function for rank.')
 
       CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve dataspace dimensions.")
+        ' - Failed to retrieve dataspace dimensions.')
       
       ! Allocate space in data if needed
       IF(ALLOCATED(vals)) THEN
         ! Make sure the data is the right size
         IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
-            '::'//myName//": data array is the wrong size.")
+          '::'//myName//' - data array is the wrong size.')
       ELSE
         ! Allocate to size
         ALLOCATE(vals(dims(1)))
@@ -5057,17 +5053,17 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_CHARACTER
       CALL h5dread_f(dset_id,mem,valsc,dims,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to read data from dataset.")
+        ' - Failed to read data from dataset.')
       
       ! Close the dataset
       CALL h5dclose_f(dset_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataset.")
+        ' - Failed to close dataset.')
       
       ! Close the dataspace
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataspace.")
+        ' - Failed to close dataspace.')
             
       ! Convert from surrogate character array to boolean array
       vals=.FALSE.
@@ -5106,7 +5102,7 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
 
       ! Convert the path name to use slashes
@@ -5116,28 +5112,28 @@ MODULE FileType_HDF5
       CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
 
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to open dataset.")
+        ' - Failed to open dataset.')
       
       ! Get dataset dimensions for allocation
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to obtain the dataspace.")
+        ' - Failed to obtain the dataspace.')
             ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve number of dataspace dimensions.")
+        ' - Failed to retrieve number of dataspace dimensions.')
       IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Using wrong read function for rank.")
+        ' - Using wrong read function for rank.')
       
       CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve dataspace dimensions.")
+        ' - Failed to retrieve dataspace dimensions.')
       
       ! Allocate space for data if needed
       IF(ALLOCATED(vals)) THEN
         ! Make sure the data is the right size
         IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
-            '::'//myName//": data array is the wrong size.")
+          '::'//myName//' - data array is the wrong size.')
       ELSE
         ! Allocate to size
         ALLOCATE(vals(dims(1),dims(2)))
@@ -5150,17 +5146,17 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_CHARACTER
       CALL h5dread_f(dset_id,mem,valsc,dims,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to read data from dataset.")
+        ' - Failed to read data from dataset.')
       
       ! Close the dataset
       CALL h5dclose_f(dset_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataset.")
+        ' - Failed to close dataset.')
       
       ! Close the dataspace
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataspace.")
+        ' - Failed to close dataspace.')
             
       ! Convert from surrogate character array to boolean array
       vals=.FALSE.
@@ -5199,7 +5195,7 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
 
       ! Convert the path name to use slashes
@@ -5208,28 +5204,28 @@ MODULE FileType_HDF5
       ! Open the dataset
       CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to open dataset.")
+        ' - Failed to open dataset.')
       
       ! Get dataset dimensions for allocation
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to obtain the dataspace.")
+        ' - Failed to obtain the dataspace.')
             ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve number of dataspace dimensions.")
+        ' - Failed to retrieve number of dataspace dimensions.')
       IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Using wrong read function for rank.")
+        ' - Using wrong read function for rank.')
       
       CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve dataspace dimensions.")
+        ' - Failed to retrieve dataspace dimensions.')
       
       ! Allocate space for data if needed
       IF(ALLOCATED(vals)) THEN
         ! Make sure the data is the right size
         IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
-            '::'//myName//": data array is the wrong size.")
+          '::'//myName//' - data array is the wrong size.')
       ELSE
         ! Allocate to size
         ALLOCATE(vals(dims(1),dims(2),dims(3)))
@@ -5242,17 +5238,17 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_CHARACTER
       CALL h5dread_f(dset_id,mem,valsc,dims,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to read data from dataset.")
+        ' - Failed to read data from dataset.')
       
       ! Close the dataset
       CALL h5dclose_f(dset_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataset.")
+        ' - Failed to close dataset.')
       
       ! Close the dataspace
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataspace.")
+        ' - Failed to close dataspace.')
             
       ! Convert from surrogate character array to boolean array
       vals(:,:,:)=.FALSE.
@@ -5292,7 +5288,7 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
 
       ! Convert the path name to use slashes
@@ -5302,22 +5298,22 @@ MODULE FileType_HDF5
       CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
 
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to open dataset.")
+        ' - Failed to open dataset.')
       
       ! Get dataset dimensions for allocation
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to obtain the dataspace.")
+        ' - Failed to obtain the dataspace.')
             ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve number of dataspace dimensions.")
+        ' - Failed to retrieve number of dataspace dimensions.')
       IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Using wrong read function for rank.")
+        ' - Using wrong read function for rank.')
       
       CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve dataspace dimensions.")
+        ' - Failed to retrieve dataspace dimensions.')
       
       ! Allocate character array
       ALLOCATE(valsc(dims(1)))
@@ -5326,7 +5322,7 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_CHARACTER
       CALL h5dread_f(dset_id,mem,valsc,dims,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to read data from dataset.")
+        ' - Failed to read data from dataset.')
             
       ! Convert to StringType
       DO i=1,SIZE(valsc)
@@ -5336,12 +5332,12 @@ MODULE FileType_HDF5
       ! Close the dataset
       CALL h5dclose_f(dset_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataset.")
+        ' - Failed to close dataset.')
       
       ! Close the dataspace
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataspace.")
+        ' - Failed to close dataspace.')
       
 #endif
     ENDSUBROUTINE read_c0
@@ -5372,7 +5368,7 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
 
       ! Convert the path name to use slashes
@@ -5381,23 +5377,23 @@ MODULE FileType_HDF5
       ! Open the dataset
       CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to open dataset.")
+        ' - Failed to open dataset.')
       
       ! Get dataset dimensions for allocation
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to obtain the dataspace.")
+        ' - Failed to obtain the dataspace.')
       
       ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve number of dataspace dimensions.")
+        ' - Failed to retrieve number of dataspace dimensions.')
       IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Using wrong read function for rank.")
+        ' - Using wrong read function for rank.')
       
       CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve dataspace dimensions.")
+        ' - Failed to retrieve dataspace dimensions.')
       
 
       ! Allocate character array to size
@@ -5407,13 +5403,13 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_CHARACTER
       CALL h5dread_f(dset_id,mem,valsc,dims,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to read data from dataset.")
+        ' - Failed to read data from dataset.')
             
       ! Allocate space if needed
       IF(ALLOCATED(vals)) THEN
         ! Make sure the data is the right size
         IF(SIZE(vals) /= dims(2)) CALL thisHDF5File%e%raiseError(modName// &
-            '::'//myName//": data array is the wrong size.")
+          '::'//myName//' - data array is the wrong size.')
       ELSE
         ! Allocate to size
         ALLOCATE(vals(dims(2)))
@@ -5429,12 +5425,12 @@ MODULE FileType_HDF5
       ! Close the dataset
       CALL h5dclose_f(dset_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataset.")
+        ' - Failed to close dataset.')
       
       ! Close the dataspace
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataspace.")
+        ' - Failed to close dataspace.')
       
 #endif
     ENDSUBROUTINE read_c1
@@ -5465,7 +5461,7 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
 
       ! Convert the path name to use slashes
@@ -5475,22 +5471,22 @@ MODULE FileType_HDF5
       CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
 
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to open dataset.")
+        ' - Failed to open dataset.')
       
       ! Get dataset dimensions for allocation
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to obtain the dataspace.")
-            ! Make sure the rank is right
+        ' - Failed to obtain the dataspace.')
+      ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve number of dataspace dimensions.")
+        ' - Failed to retrieve number of dataspace dimensions.')
       IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Using wrong read function for rank.")
+        ' - Using wrong read function for rank.')
       
       CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve dataspace dimensions.")
+        ' - Failed to retrieve dataspace dimensions.')
       
 
       ! Allocate character array to size
@@ -5500,14 +5496,14 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_CHARACTER
       CALL h5dread_f(dset_id,mem,valsc,dims,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to read data from dataset.")
+        ' - Failed to read data from dataset.')
             
       ! Allocate space if needed
       IF(ALLOCATED(vals)) THEN
         ! Make sure the data is the right size
-        IF(ANY(SIZE(vals) /= [dims(2),dims(3)])) &
+        IF(ANY(SIZE(vals) /= (/dims(2),dims(3)/))) &
             CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ": data array is the wrong size.")
+              ' - data array is the wrong size.')
       ELSE
         ! Allocate to size
         ALLOCATE(vals(dims(2),dims(3)))
@@ -5525,12 +5521,12 @@ MODULE FileType_HDF5
       ! Close the dataset
       CALL h5dclose_f(dset_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataset.")
+        ' - Failed to close dataset.')
       
       ! Close the dataspace
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataspace.")
+        ' - Failed to close dataspace.')
       
 #endif
     ENDSUBROUTINE read_c2
@@ -5561,7 +5557,7 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//': File object not initialized.')
+        '::'//myName//' - File object not initialized.')
       
 
       ! Convert the path name to use slashes
@@ -5571,22 +5567,22 @@ MODULE FileType_HDF5
       CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
 
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to open dataset.")
+        ' - Failed to open dataset.')
       
       ! Get dataset dimensions for allocation
       CALL h5dget_space_f(dset_id,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to obtain the dataspace.")
+        ' - Failed to obtain the dataspace.')
             ! Make sure the rank is right
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve number of dataspace dimensions.")
+        ' - Failed to retrieve number of dataspace dimensions.')
       IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Using wrong read function for rank.")
+        ' - Using wrong read function for rank.')
       
       CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to retrieve dataspace dimensions.")
+        ' - Failed to retrieve dataspace dimensions.')
       
 
       ! Allocate character array to size
@@ -5596,14 +5592,14 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_CHARACTER
       CALL h5dread_f(dset_id,mem,valsc,dims,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to read data from dataset.")
+        ' - Failed to read data from dataset.')
             
       ! Allocate space if needed
       IF(ALLOCATED(vals)) THEN
         ! Make sure the data is the right size
-        IF(ANY(SIZE(vals) /= [dims(2),dims(3),dims(4)])) & 
-            CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ": data array is the wrong size.")
+        IF(ANY(SIZE(vals) /= (/dims(2),dims(3),dims(4)/))) & 
+          CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+            ' - data array is the wrong size.')
       ELSE
         ! Allocate to size
         ALLOCATE(vals(dims(2),dims(3),dims(4)))
@@ -5623,12 +5619,12 @@ MODULE FileType_HDF5
       ! Close the dataset
       CALL h5dclose_f(dset_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataset.")
+        ' - Failed to close dataset.')
       
       ! Close the dataspace
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ": Failed to close dataspace.")
+        ' - Failed to close dataspace.')
       
 #endif
     ENDSUBROUTINE read_c3
