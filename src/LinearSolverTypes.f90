@@ -1801,7 +1801,8 @@ MODULE LinearSolverTypes
 
             !Perform forward substitution
             DO irow=i+1,N
-              M%A(irow,i)=M%A(irow,i)/M%A(i,i)
+              t=1.0_SRK/M%A(i,i)
+              M%A(irow,i)=M%A(irow,i)*t
               CALL BLAS_axpy(N-i,-M%A(irow,i),M%A(i:N,i+1),N,M%A(irow:N,i+1),N)
             ENDDO
           ENDDO
