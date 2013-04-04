@@ -481,6 +481,9 @@ MODULE LinearSolverTypes
                   'Switching solver method to GMRES.')
               ENDIF
 
+              solver%solverMethod=solverMethod
+              solver%TPLType=TPLType
+
               IF(TPLType==PETSC) THEN
 #ifdef MPACT_HAVE_PETSC
                 !create and initialize KSP
@@ -501,14 +504,12 @@ MODULE LinearSolverTypes
                     DIFFERENT_NONZERO_PATTERN,ierr)
                 ENDSELECT
 
-!                !set preconditioner
-!                IF(solver%solverMethod == GMRES) THEN
-!                  CALL KSPGetPC(solver%ksp,solver%pc,ierr)
-!                  CALL PCSetType(solver%pc,PCBJACOBI,ierr)
-!                  CALL PetscOptionsSetValue("-sub_pc_type", "ilu", ierr)
-!!                  CALL PetscOptionsSetValue("-sub_pc_factor_levels",1, ierr)
-!                  CALL PCSetFromOptions(solver%pc,ierr)
-!                ENDIF
+                !set preconditioner
+                IF(solver%solverMethod == GMRES) THEN
+                  CALL KSPGetPC(solver%ksp,solver%pc,ierr)
+                  CALL PCSetType(solver%pc,PCBJACOBI,ierr)
+                  CALL PCSetFromOptions(solver%pc,ierr)
+                ENDIF
                 CALL KSPSetFromOptions(solver%ksp,ierr)
 
 #else     
@@ -519,8 +520,6 @@ MODULE LinearSolverTypes
           
               !assign values to solver
               CALL solver%SolveTime%setTimerName(timerName)   
-              solver%solverMethod=solverMethod
-              solver%TPLType=TPLType
               solver%isInit=.TRUE.
             ELSE
               CALL eLinearSolverType%raiseError('Incorrect call to '// &
