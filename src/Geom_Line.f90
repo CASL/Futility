@@ -223,7 +223,13 @@ MODULE Geom_Line
           p%coord(1)=p%coord(1)+s*u(1)
           p%coord(2)=p%coord(2)+s*u(2)
         ELSE
-          p%dim=-3 !would intersect if segments were infinite
+          !would intersect if segments were infinite. Still store how close it 
+          !was though. this is useful for calling routines that might need to 
+          !know that the point was close (i.e. Coarse ray trace)
+          p=s1p0
+          p%dim=-3 
+          p%coord(1)=p%coord(1)+s*u(1)
+          p%coord(2)=p%coord(2)+s*u(2)
         ENDIF
       ENDIF
     ENDFUNCTION intersect_lines2D
