@@ -467,6 +467,8 @@ MODULE Geom_Points
 
       IF(PRESENT(markDuplicates))THEN
         mark=markDuplicates
+      ELSE
+        mark=.FALSE.
       ENDIF
       
       IF(ASSOCIATED(thisPoint)) THEN
@@ -496,10 +498,16 @@ MODULE Geom_Points
               !updated again if other degenerate cases are still encountered 
               !to not be be correctly identified.
               IF(ABS(d-searchPoint1%sortval) <= 10._SRK*EPSREAL) THEN
-                IF(mark) searchPoint1%isDuplicate=.TRUE.
+                IF(mark) THEN
+                  searchPoint1%isDuplicate=.TRUE.
+WRITE(*,*)'duplicate 1',searchPoint1%p%coord
+                ENDIF
                 linsert=.FALSE.
               ELSEIF(ABS(d-searchPoint2%sortval) <= 10._SRK*EPSREAL) THEN
-                IF(mark) searchPoint2%isDuplicate=.TRUE.
+                IF(mark) THEN
+                  searchPoint2%isDuplicate=.TRUE.
+WRITE(*,*)'duplicate 2',searchPoint2%p%coord
+                ENDIF 
                 linsert=.FALSE.
               ELSEIF(searchPoint1%sortval < d .AND. d < searchPoint2%sortval) THEN
                 thisPoint%next => searchPoint2
