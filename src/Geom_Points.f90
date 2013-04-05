@@ -500,13 +500,11 @@ MODULE Geom_Points
               IF(ABS(d-searchPoint1%sortval) <= 10._SRK*EPSREAL) THEN
                 IF(mark) THEN
                   searchPoint1%isDuplicate=.TRUE.
-WRITE(*,*)'duplicate 1',searchPoint1%p%coord
                 ENDIF
                 linsert=.FALSE.
               ELSEIF(ABS(d-searchPoint2%sortval) <= 10._SRK*EPSREAL) THEN
                 IF(mark) THEN
                   searchPoint2%isDuplicate=.TRUE.
-WRITE(*,*)'duplicate 2',searchPoint2%p%coord
                 ENDIF 
                 linsert=.FALSE.
               ELSEIF(searchPoint1%sortval < d .AND. d < searchPoint2%sortval) THEN
