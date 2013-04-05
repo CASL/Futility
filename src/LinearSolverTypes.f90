@@ -218,7 +218,10 @@ MODULE LinearSolverTypes
       PROCEDURE,PASS :: solve => solve_LinearSolverType_Iterative
       !> @copybrief LinearSolverTypes::getResidual_LinearSolverType_Iterative
       !> @copydetails LinearSolverTypes::getResidual_LinearSolverType_Iterative
-      PROCEDURE,PASS :: getResidual => getResidual_LinearSolverType_Iterative
+      PROCEDURE,PASS :: getResidual_LinearSolverType_Iterative
+      PROCEDURE,PASS :: getIterResidual_LinearSolverType_Iterative
+      GENERIC :: getResidual => getResidual_LinearSolverType_Iterative, &
+                                getIterResidual_LinearSolverType_Iterative
       !> @copybrief LinearSolverTypes::setConv_LinearSolverType_Iterative
       !> @copydetails LinearSolverTypes::setConv_LinearSolverType_Iterative
       PROCEDURE,PASS :: setConv => setConv_LinearSolverType_Iterative
@@ -478,6 +481,9 @@ MODULE LinearSolverTypes
                   'Switching solver method to GMRES.')
               ENDIF
 
+              solver%solverMethod=solverMethod
+              solver%TPLType=TPLType
+
               IF(TPLType==PETSC) THEN
 #ifdef MPACT_HAVE_PETSC
                 !create and initialize KSP
@@ -502,8 +508,6 @@ MODULE LinearSolverTypes
                 IF(solver%solverMethod == GMRES) THEN
                   CALL KSPGetPC(solver%ksp,solver%pc,ierr)
                   CALL PCSetType(solver%pc,PCBJACOBI,ierr)
-                  CALL PetscOptionsSetValue("-sub_pc_type", "ilu", ierr)
-!                  CALL PetscOptionsSetValue("-sub_pc_factor_levels",1, ierr)
                   CALL PCSetFromOptions(solver%pc,ierr)
                 ENDIF
                 CALL KSPSetFromOptions(solver%ksp,ierr)
@@ -516,8 +520,6 @@ MODULE LinearSolverTypes
           
               !assign values to solver
               CALL solver%SolveTime%setTimerName(timerName)   
-              solver%solverMethod=solverMethod
-              solver%TPLType=TPLType
               solver%isInit=.TRUE.
             ELSE
               CALL eLinearSolverType%raiseError('Incorrect call to '// &
@@ -956,6 +958,7 @@ MODULE LinearSolverTypes
                 SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
                   SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
                     CALL KSPSolve(solver%ksp,b%b,x%b,ierr)
+                    
                     IF(ierr==0) solver%info=0
                   ENDSELECT
                 ENDSELECT
@@ -1181,6 +1184,27 @@ MODULE LinearSolverTypes
         ENDIF
       ENDIF
     ENDSUBROUTINE getResidual_LinearSolverType_Iterative
+!
+!-------------------------------------------------------------------------------
+!>
+    SUBROUTINE getIterResidual_LinearSolverType_Iterative(solver,niters,resid)
+      CHARACTER(LEN=*),PARAMETER :: myName='getIterResidual'
+      CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
+      INTEGER(SIK) :: niters,ierr
+      REAL(SRK) :: resid
+     
+      IF(solver%TPLType == PETSC) THEN
+#ifdef MPACT_HAVE_PETSC 
+        CALL KSPGetIterationNumber(solver%ksp,niters,ierr)
+        CALL KSPGetResidualNorm(solver%ksp,resid,ierr)
+#endif
+      ELSE
+        CALL eLinearSolverType%raiseFatalError('Incorrect call to '// &
+           modName//'::'//myName//' - This feature is currently only' // &
+           ' supported for lienar solvers using PETSc.')
+      ENDIF
+    ENDSUBROUTINE getIterResidual_LinearSolverType_Iterative
+
 !
 !-------------------------------------------------------------------------------
 !> @brief Decompose Dense  Linear System using the BiCGSTAB method
@@ -1801,7 +1825,8 @@ MODULE LinearSolverTypes
 
             !Perform forward substitution
             DO irow=i+1,N
-              M%A(irow,i)=M%A(irow,i)/M%A(i,i)
+              t=1.0_SRK/M%A(i,i)
+              M%A(irow,i)=M%A(irow,i)*t
               CALL BLAS_axpy(N-i,-M%A(irow,i),M%A(i:N,i+1),N,M%A(irow:N,i+1),N)
             ENDDO
           ENDDO

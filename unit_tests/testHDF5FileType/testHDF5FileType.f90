@@ -325,6 +325,7 @@ PROGRAM testHDF5
       TYPE(HDF5FileType) :: h5
 
       CALL h5%init('test2.h5','NEW')
+      CALL h5%clear()
     ENDSUBROUTINE testHDF5_wo
 !
 !-------------------------------------------------------------------------------
