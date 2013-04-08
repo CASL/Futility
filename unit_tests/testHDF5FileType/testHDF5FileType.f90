@@ -233,15 +233,15 @@ PROGRAM testHDF5
       TYPE(StringType) :: testC0
       CHARACTER(LEN=80),ALLOCATABLE :: sets(:)
       INTEGER(SIK) :: i,j,k
-      CHARACTER(LEN=80),PARAMETER :: FMT_data_r='(5f15.11)',FMT_data_i='(5i15)'&
-              ,FMT_data_l='(5l15)'
+      CHARACTER(LEN=8667) :: readcheck, readtest
+      LOGICAL(SBK) :: checkread
 
       CALL h5%init('readtest.h5','READ')
-      OPEN(UNIT=1,FILE='readtest.out')
 
       CALL h5%ls('groupR',sets)
-      DO i=1,SIZE(sets)
-        WRITE(1,*)sets(i)
+      WRITE(readtest,*) TRIM(ADJUSTL(sets(1)))
+      DO i=2,SIZE(sets)
+        WRITE(readtest,*) TRIM(readtest)//sets(i)
       ENDDO
 
       ! Read a dataset (real-1)
@@ -270,46 +270,45 @@ PROGRAM testHDF5
       CALL h5%fread('groupC->memC2',testC2)
       CALL h5%fread('groupC->memC3',testC3)
       
-      WRITE(1,*) 'testD0:'; WRITE(1,FMT=FMT_data_r)testD0
-      WRITE(1,*) 'testD1:'; WRITE(1,FMT=FMT_data_r)testD1
-      WRITE(1,*) 'testD2:'; WRITE(1,FMT=FMT_data_r)testD2
-      WRITE(1,*) 'testD3:'; WRITE(1,FMT=FMT_data_r)testD3
-      WRITE(1,*) 'testS0:'; WRITE(1,FMT=FMT_data_r)testS0
-      WRITE(1,*) 'testS1:'; WRITE(1,FMT=FMT_data_r)testS1
-      WRITE(1,*) 'testS2:'; WRITE(1,FMT=FMT_data_r)testS2
-      WRITE(1,*) 'testS3:'; WRITE(1,FMT=FMT_data_r)testS3
-      WRITE(1,*) 'testN0:'; WRITE(1,FMT=FMT_data_i)testN0
-      WRITE(1,*) 'testN1:'; WRITE(1,FMT=FMT_data_i)testN1
-      WRITE(1,*) 'testN2:'; WRITE(1,FMT=FMT_data_i)testN2
-      WRITE(1,*) 'testN3:'; WRITE(1,FMT=FMT_data_i)testN3
-      WRITE(1,*) 'testL0:'; WRITE(1,*)testL0
-      WRITE(1,*) 'testL1:'; WRITE(1,FMT=FMT_data_i)testL1
-      WRITE(1,*) 'testL2:'; WRITE(1,FMT=FMT_data_i)testL2
-      WRITE(1,*) 'testL3:'; WRITE(1,FMT=FMT_data_i)testL3
-      WRITE(1,*) 'testB0:'; WRITE(1,FMT=FMT_data_l)testB0
-      WRITE(1,*) 'testB1:'; WRITE(1,FMT=FMT_data_l)testB1
-      WRITE(1,*) 'testB2:'; WRITE(1,FMT=FMT_data_l)testB2
-      WRITE(1,*) 'testB3:'; WRITE(1,FMT=FMT_data_l)testB3
-      WRITE(1,*) 'testC0:'; WRITE(1,FMT=*)CHAR(testC0)
-      WRITE(1,*) 'testC1:'; 
+      WRITE(readtest,*) TRIM(readtest),'testD0:'; WRITE(readtest,FMT=*)TRIM(readtest),testD0
+      WRITE(readtest,*) TRIM(readtest),'testD1:'; WRITE(readtest,FMT=*)TRIM(readtest),testD1
+      WRITE(readtest,*) TRIM(readtest),'testD2:'; WRITE(readtest,FMT=*)TRIM(readtest),testD2
+      WRITE(readtest,*) TRIM(readtest),'testD3:'; WRITE(readtest,FMT=*)TRIM(readtest),testD3
+      WRITE(readtest,*) TRIM(readtest),'testS0:'; WRITE(readtest,FMT=*)TRIM(readtest),testS0
+      WRITE(readtest,*) TRIM(readtest),'testS1:'; WRITE(readtest,FMT=*)TRIM(readtest),testS1
+      WRITE(readtest,*) TRIM(readtest),'testS2:'; WRITE(readtest,FMT=*)TRIM(readtest),testS2
+      WRITE(readtest,*) TRIM(readtest),'testS3:'; WRITE(readtest,FMT=*)TRIM(readtest),testS3
+      WRITE(readtest,*) TRIM(readtest),'testN0:'; WRITE(readtest,FMT=*)TRIM(readtest),testN0
+      WRITE(readtest,*) TRIM(readtest),'testN1:'; WRITE(readtest,FMT=*)TRIM(readtest),testN1
+      WRITE(readtest,*) TRIM(readtest),'testN2:'; WRITE(readtest,FMT=*)TRIM(readtest),testN2
+      WRITE(readtest,*) TRIM(readtest),'testN3:'; WRITE(readtest,FMT=*)TRIM(readtest),testN3
+      WRITE(readtest,*) TRIM(readtest),'testL0:'; WRITE(readtest,FMT=*)TRIM(readtest),testL0
+      WRITE(readtest,*) TRIM(readtest),'testL1:'; WRITE(readtest,FMT=*)TRIM(readtest),testL1
+      WRITE(readtest,*) TRIM(readtest),'testL2:'; WRITE(readtest,FMT=*)TRIM(readtest),testL2
+      WRITE(readtest,*) TRIM(readtest),'testL3:'; WRITE(readtest,FMT=*)TRIM(readtest),testL3
+      WRITE(readtest,*) TRIM(readtest),'testB0:'; WRITE(readtest,FMT=*)TRIM(readtest),testB0
+      WRITE(readtest,*) TRIM(readtest),'testB1:'; WRITE(readtest,FMT=*)TRIM(readtest),testB1
+      WRITE(readtest,*) TRIM(readtest),'testB2:'; WRITE(readtest,FMT=*)TRIM(readtest),testB2
+      WRITE(readtest,*) TRIM(readtest),'testB3:'; WRITE(readtest,FMT=*)TRIM(readtest),testB3
+      WRITE(readtest,*) TRIM(readtest),'testC0:'; WRITE(1,FMT=*)TRIM(readtest)//TRIM(testC0)
+      WRITE(readtest,*) TRIM(readtest),'testC1:'; 
       DO i=1,SIZE(testC1)
-        WRITE(1,*)CHAR(testC1(i))
+        WRITE(readtest,*)TRIM(readtest),CHAR(testC1(i))
       ENDDO
-      WRITE(1,*) 'testC2:';
+      WRITE(readtest,*) TRIM(readtest),'testC2:';
       DO i=1,SIZE(testC2,1)
         DO j=1,SIZE(testC2,2)
-          WRITE(1,*)CHAR(testC2(i,j))
+          WRITE(readtest,*)TRIM(readtest),CHAR(testC2(i,j))
         ENDDO
       ENDDO
-      WRITE(1,*) 'testC3:';
+      WRITE(readtest,*) TRIM(readtest),'testC3:';
       DO i=1,SIZE(testC3,1)
         DO j=1,SIZE(testC3,2)
           DO k=1,SIZE(testC3,3)
-            WRITE(1,*)CHAR(testC3(i,j,k))
+            WRITE(readtest,*)TRIM(readtest),CHAR(testC3(i,j,k))
           ENDDO
         ENDDO
       ENDDO
-      CLOSE(UNIT=1)
 
       DEALLOCATE(testD1,testD2,testD3,testS1,testS2,testS3,testL1,testL2, &
             testL3,testB1,testB2,testB3,testC1,testC2,testC3,testN1,testN2, &
@@ -317,6 +316,17 @@ PROGRAM testHDF5
 
       CALL h5%clear()
       ASSERT(.NOT.h5%isinit, 'HDF5 object not properly cleared!')
+      
+      CALL testHDF5_read_check(readcheck)
+      checkread=.TRUE.
+      DO i=1,LEN(readtest)
+        IF (readtest(i:i) /= readcheck(i:i)) THEN
+          checkread=.FALSE.
+          WRITE(*,*) i, readtest(i:i), readcheck(i:i)
+        ENDIF
+      ENDDO
+      
+      ASSERT(checkread, 'HDF5 file not properly read!')
       
     ENDSUBROUTINE testHDF5FileTypeRead
 !
@@ -328,6 +338,144 @@ PROGRAM testHDF5
       CALL h5%clear()
     ENDSUBROUTINE testHDF5_wo
 !
+!-------------------------------------------------------------------------------
+    SUBROUTINE testHDF5_read_check(readtest)
+      CHARACTER(LEN=*), INTENT(INOUT) :: readtest
+      
+      WRITE(readtest,FMT=*) '                                          '// &
+      '                                                                  '// &
+      '            memD0memD1memD2memD3memS0memS1memS2memS3testD0:   42.1'// &
+      '23456789000002testD1:   1.0000000001000000        2.00000000020000'// &
+      '00        3.0000000003000000        4.0000000004000000        5.00'// &
+      '00000005000000        6.0000000006000000        7.0000000007000001'// &
+      '        8.0000000008000001        9.0000000009000001        10.000'// &
+      '000001000000testD2:   1.0000000001000000        2.0000000002000000'// &
+      '        3.0000000003000000        4.0000000004000000        5.0000'// &
+      '000005000000        6.0000000006000000        7.0000000007000001  '// &
+      '      8.0000000008000001        9.0000000009000001        10.00000'// &
+      '0001000000        11.000000001100000        12.000000001200000    '// &
+      '    13.000000001300000        14.000000001400000        15.0000000'// &
+      '01500000        16.000000001600000        17.000000001700002      '// &
+      '  18.000000001800000        19.000000001899998        20.000000002'// &
+      '000000testD3:   1.0000000001000000        2.0000000002000000      '// &
+      '  3.0000000003000000        4.0000000004000000        5.0000000005'// &
+      '000000        6.0000000006000000        7.0000000007000001        '// &
+      '8.0000000008000001        9.0000000009000001        10.00000000100'// &
+      '0000        11.000000001100000        12.000000001200000        13'// &
+      '.000000001300000        14.000000001400000        15.0000000015000'// &
+      '00        16.000000001600000        17.000000001700002        18.0'// &
+      '00000001800000        19.000000001899998        20.000000002000000'// &
+      '        21.000000002100002        22.000000002200000        23.000'// &
+      '000002299998        24.000000002400000        25.000000002500002  '// &
+      '      26.000000002600000        27.000000002699998        28.00000'// &
+      '0002800000        29.000000002900002        30.000000003000000    '// &
+      '    31.000000003099998        32.000000003200000        33.0000000'// &
+      '03300002        34.000000003400004        35.000000003499999      '// &
+      '  36.000000003600000        37.000000003700002        38.000000003'// &
+      '799997        39.000000003899999        40.000000004000000        '// &
+      '41.000000004100002        42.000000004200004        43.00000000429'// &
+      '9999        44.000000004400000        45.000000004500002        46'// &
+      '.000000004599997        47.000000004699999        48.0000000048000'// &
+      '00        49.000000004900002        50.000000005000004        51.0'// &
+      '00000005099999        52.000000005200000        53.000000005300002'// &
+      '        54.000000005399997        55.000000005499999        56.000'// &
+      '000005600000        57.000000005700002        58.000000005800004  '// &
+      '      59.000000005899999        60.000000006000000testS0:   42.000'// &
+      '0000testS1:   1.00000000       2.00000000       3.00000000       4'// &
+      '.00000000       5.00000000       6.00000000       7.00000000      '// &
+      ' 8.00000000       9.00000000       10.0000000testS2:   1.00000000 '// &
+      '      2.00000000       3.00000000       4.00000000       5.0000000'// &
+      '0       6.00000000       7.00000000       8.00000000       9.00000'// &
+      '000       10.0000000       11.0000000       12.0000000       13.00'// &
+      '00000       14.0000000       15.0000000       16.0000000       17.'// &
+      '0000000       18.0000000       19.0000000       20.0000000testS3: '// &
+      '  1.00000000       2.00000000       3.00000000       4.00000000   '// &
+      '    5.00000000       6.00000000       7.00000000       8.00000000 '// &
+      '      9.00000000       10.0000000       11.0000000       12.000000'// &
+      '0       13.0000000       14.0000000       15.0000000       16.0000'// &
+      '000       17.0000000       18.0000000       19.0000000       20.00'// &
+      '00000       21.0000000       22.0000000       23.0000000       24.'// &
+      '0000000       25.0000000       26.0000000       27.0000000       2'// &
+      '8.0000000       29.0000000       30.0000000       31.0000000      '// &
+      ' 32.0000000       33.0000000       34.0000000       35.0000000    '// &
+      '   36.0000000       37.0000000       38.0000000       39.0000000  '// &
+      '     40.0000000       41.0000000       42.0000000       43.0000000'// &
+      '       44.0000000       45.0000000       46.0000000       47.00000'// &
+      '00       48.0000000       49.0000000       50.0000000       51.000'// &
+      '0000       52.0000000       53.0000000       54.0000000       55.0'// &
+      '000000       56.0000000       57.0000000       58.0000000       59'// &
+      '.0000000       60.0000000testN0:          42testN1:           1   '// &
+      '        2           3           4           5           6         '// &
+      '  7           8           9          10testN2:           1        '// &
+      '   2           3           4           5           6           7  '// &
+      '         8           9          10          11          12        '// &
+      '  13          14          15          16          17          18  '// &
+      '        19          20testN3:           1           2           3 '// &
+      '          4           5           6           7           8       '// &
+      '    9          10          11          12          13          14 '// &
+      '         15          16          17          18          19       '// &
+      '   20          21          22          23          24          25 '// &
+      '         26          27          28          29          30       '// &
+      '   31          32          33          34          35          36 '// &
+      '         37          38          39          40          41       '// &
+      '   42          43          44          45          46          47 '// &
+      '         48          49          50          51          52       '// &
+      '   53          54          55          56          57          58 '// &
+      '         59          60testL0:   123456789123456784testL1:        '// &
+      '   1000000001           1000000002           1000000003           '// &
+      '1000000004           1000000005           1000000006           100'// &
+      '0000007           1000000008           1000000009           100000'// &
+      '0010testL2:           1000000001           1000000002           10'// &
+      '00000003           1000000004           1000000005           10000'// &
+      '00006           1000000007           1000000008           10000000'// &
+      '09           1000000010           1000000011           1000000012 '// &
+      '          1000000013           1000000014           1000000015    '// &
+      '       1000000016           1000000017           1000000018       '// &
+      '    1000000019           1000000020testL3:           1000000001   '// &
+      '        1000000002           1000000003           1000000004      '// &
+      '     1000000005           1000000006           1000000007         '// &
+      '  1000000008           1000000009           1000000010           1'// &
+      '000000011           1000000012           1000000013           1000'// &
+      '000014           1000000015           1000000016           1000000'// &
+      '017           1000000018           1000000019           1000000020'// &
+      '           1000000021           1000000022           1000000023   '// &
+      '        1000000024           1000000025           1000000026      '// &
+      '     1000000027           1000000028           1000000029         '// &
+      '  1000000030           1000000031           1000000032           1'// &
+      '000000033           1000000034           1000000035           1000'// &
+      '000036           1000000037           1000000038           1000000'// &
+      '039           1000000040           1000000041           1000000042'// &
+      '           1000000043           1000000044           1000000045   '// &
+      '        1000000046           1000000047           1000000048      '// &
+      '     1000000049           1000000050           1000000051         '// &
+      '  1000000052           1000000053           1000000054           1'// &
+      '000000055           1000000056           1000000057           1000'// &
+      '000058           1000000059           1000000060testB0: FtestB1: F'// &
+      ' T F T F TtestB2: F T F T F T T T T T T T T T T T T T F T F T F T '// &
+      'T T T T T TtestB3: F T F T F T T T T T T T T T T T T T F T F T F T'// &
+      ' T T T T T T F T F T F T T T T T T T T T T T T T F T F T F T T T T'// &
+      ' T T TtestC0:testC1:String 1String 2String 3testC2:String 1,1Strin'// &
+      'g 1,2String 1,3String 2,1String 2,2String 2,3testC3:String 1,1,1St'// &
+      'ring 1,1,2String 1,1,3String 1,1,4String 1,1,5String 1,2,1String 1'// &
+      ',2,2String 1,2,3String 1,2,4String 1,2,5String 1,3,1String 1,3,2St'// &
+      'ring 1,3,3String 1,3,4String 1,3,5String 1,4,1String 1,4,2String 1'// &
+      ',4,3String 1,4,4String 1,4,5String 2,1,1String 2,1,2String 2,1,3St'// &
+      'ring 2,1,4String 2,1,5String 2,2,1String 2,2,2String 2,2,3String 2'// &
+      ',2,4String 2,2,5String 2,3,1String 2,3,2String 2,3,3String 2,3,4St'// &
+      'ring 2,3,5String 2,4,1String 2,4,2String 2,4,3String 2,4,4String 2'// &
+      ',4,5String 3,1,1String 3,1,2String 3,1,3String 3,1,4String 3,1,5St'// &
+      'ring 3,2,1String 3,2,2String 3,2,3String 3,2,4String 3,2,5String 3'// &
+      ',3,1String 3,3,2String 3,3,3String 3,3,4String 3,3,5String 3,4,1St'// &
+      'ring 3,4,2String 3,4,3String 3,4,4String 3,4,5'!                    '// &
+!      '                                                                  '// &
+!      '                                                                  '// &
+!      '                                                                  '// &
+!      '                                                                  '// &
+!      '                                                                  '// &
+!      '                                                                  '// &
+!      '                                            '
+    END SUBROUTINE testHDF5_read_check
+!'
 !-------------------------------------------------------------------------------
 
    SUBROUTINE testHDF5Parallel
