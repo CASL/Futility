@@ -27,7 +27,7 @@
 !> It provides a generic interface to functions that return the Morton index
 !> in 2-D or 3-D. It also provides a tree like data structure called a "Z"-Tree
 !> which can be used to recursively partition a cuboid domain defined by
-!> starting and ending indeces in the x-, y-, and z-dimension.
+!> starting and ending indices in the x-, y-, and z-dimension.
 !>
 !> For integer coordinates X and Y if X and Y are represented in binary form
 !> e.g. for 2-bits (x2,x1) and (y2,y1) then the binary form of the Morton index
@@ -68,11 +68,11 @@ MODULE MortonOrdering
   !> to the dimensions with longer aspect ratios.
   !>
   TYPE :: ZTreeNodeType
-    !> The starting and stopping indeces for the x-dimension for this node.
+    !> The starting and stopping indices for the x-dimension for this node.
     INTEGER(SIK),DIMENSION(2) :: x=0
-    !> The starting and stopping indeces for the y-dimension for this node.
+    !> The starting and stopping indices for the y-dimension for this node.
     INTEGER(SIK),DIMENSION(2) :: y=0
-    !> The starting and stopping indeces for the z-dimension for this node.
+    !> The starting and stopping indices for the z-dimension for this node.
     INTEGER(SIK),DIMENSION(2) :: z=0
     !> The starting 1-D index for the domain defined on this node
     INTEGER(SIK) :: istt=-1
@@ -337,7 +337,7 @@ MODULE MortonOrdering
           !Allocate the subdomains
           ALLOCATE(thisZTreeNode%subdomains(thisZTreeNode%nsubdomains))
         
-          !Assign sizes and indeces to each subdomain
+          !Assign sizes and indices to each subdomain
           id=0
           DO iz=1,ndz
             DO iy=1,ndy
@@ -536,7 +536,7 @@ MODULE MortonOrdering
     ENDFUNCTION ZTree_getNDomains
 !
 !-------------------------------------------------------------------------------
-!> @brief Returns the starting and stopping indeces for a node located at 
+!> @brief Returns the starting and stopping indices for a node located at 
 !> coordinates specified by the level and node within level.
 !> @param thisZTreeNode the node to get the subnode bounds from
 !> @param il the ith level below this node
@@ -936,11 +936,11 @@ MODULE MortonOrdering
 !
 !-------------------------------------------------------------------------------
 !> @brief Partitions the global indexing within a "Z"-Tree. It returns the 
-!> starting and stopping indeces for the ith partition given a desired number
+!> starting and stopping indices for the ith partition given a desired number
 !> of partitions.
 !> @param thisZTreeNode the "Z"-Tree node whose indexing will be partitioned
 !> @param npart the number of partitions for the "Z"-tree
-!> @param ipart the ith partition to get the bounding indeces for
+!> @param ipart the ith partition to get the bounding indices for
 !> @param istt (output) the starting index for the partition
 !> @param istp (output) the stopping index for the partition
 !> 
@@ -1002,7 +1002,7 @@ MODULE MortonOrdering
             avgNperP=REAL(nwork,SRK)/REAL(npart,SRK)
             
             !Loop up to this partition to determine it's starting/stopping
-            !indeces.
+            !indices.
             idpart=-1
             ipstt=1
             npart_rem=npart
@@ -1020,7 +1020,7 @@ MODULE MortonOrdering
                 idpart=idpart+1
                 npart_rem=npart_rem-1
                 IF(idpart == ipart) THEN
-                  !Found the starting/stopping indeces for the
+                  !Found the starting/stopping indices for the
                   !desired partition, so assign output and exit
                   istt=ipstt
                   istp=ipstp

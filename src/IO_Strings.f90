@@ -66,7 +66,7 @@
 !> !Returns the number of times '/' is found in '/home/usr/dir/tmp'
 !> WRITE(*,*) nmatchstr('/home/usr/dir/tmp','/')
 !>
-!> !Returns the indeces in '/home/usr/dir/tmp' where '/' is found
+!> !Returns the indices in '/home/usr/dir/tmp' where '/' is found
 !> WRITE(*,*) strfind('/home/usr/dir/tmp','/')
 !>
 !> !Replaces '/' with '\' in string 
@@ -205,15 +205,15 @@ CONTAINS
     ENDSUBROUTINE stripComment
 !
 !-------------------------------------------------------------------------------
-!> @brief Function returns the indeces in a string where substring pattern
+!> @brief Function returns the indices in a string where substring pattern
 !> is found.
 !> @param string the string to search
 !> @param pattern the substring to look for within string
-!> @returns indeces a vector with the indeces in string where pattern starts
-    PURE FUNCTION strfind(string,pattern) RESULT(indeces)
+!> @returns indices a vector with the indices in string where pattern starts
+    PURE FUNCTION strfind(string,pattern) RESULT(indices)
       CHARACTER(LEN=*),INTENT(IN) :: string
       CHARACTER(LEN=*),INTENT(IN) :: pattern
-      INTEGER(SIK) :: indeces(nmatchstr(string,pattern))
+      INTEGER(SIK) :: indices(nmatchstr(string,pattern))
       INTEGER(SIK) :: i,n
       
       n=0
@@ -221,7 +221,7 @@ CONTAINS
         IF(i+LEN(pattern)-1 > LEN(string)) EXIT
         IF(string(i:i+LEN(pattern)-1) == pattern) THEN
           n=n+1
-          indeces(n)=i
+          indices(n)=i
         ENDIF
       ENDDO
     ENDFUNCTION strfind
@@ -287,7 +287,7 @@ CONTAINS
       CHARACTER(LEN=*),INTENT(IN) :: findp
       CHARACTER(LEN=*),INTENT(IN) :: repp
       CHARACTER(LEN=LEN(string)) :: string2
-      INTEGER(SIK) :: n,indeces(nmatchstr(string,findp))
+      INTEGER(SIK) :: n,indices(nmatchstr(string,findp))
       INTEGER(SIK) :: i,stt,stp,dlen,slen,rlen,flen,tlen
       
       slen=LEN(string)
@@ -297,15 +297,15 @@ CONTAINS
       dlen=rlen-flen
       string2=string
       n=nmatchstr(string,findp)
-      indeces=strfind(string,findp)
+      indices=strfind(string,findp)
       IF(slen >= tlen+n*dlen) THEN
         DO i=1,n
-          stt=indeces(i)
+          stt=indices(i)
           stp=stt+rlen-1
           string(stt:stp)=repp
           string(stp+1:slen)=string2(stt+flen-(i-1)*dlen:slen)
           IF(i < n) THEN
-            indeces(i+1)=indeces(i+1)+dlen
+            indices(i+1)=indices(i+1)+dlen
           ENDIF
         ENDDO
       ENDIF

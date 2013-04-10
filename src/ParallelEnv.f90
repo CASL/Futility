@@ -83,9 +83,9 @@ MODULE ParallelEnv
       !> @copybrief ParallelEnv::getInitStat_ParEnvType
       !> @copydetails  ParallelEnv::getInitStat_ParEnvType
       PROCEDURE,PASS :: isInit => getInitStat_ParEnvType
-      !> @copybrief ParallelEnv::partition_indeces_ParEnvType
-      !> @copydetails  ParallelEnv::partition_indeces_ParEnvType
-      PROCEDURE,PASS :: partitionIDX => partition_indeces_ParEnvType
+      !> @copybrief ParallelEnv::partition_indices_ParEnvType
+      !> @copydetails  ParallelEnv::partition_indices_ParEnvType
+      PROCEDURE,PASS :: partitionIDX => partition_indices_ParEnvType
       !> @copybrief ParallelEnv::partition_greedy_ParEnvType
       !> @copydetails  ParallelEnv::partition_greedy_ParEnvType
       PROCEDURE,PASS :: partitionGreedy => partition_greedy_ParEnvType
@@ -204,25 +204,25 @@ MODULE ParallelEnv
     ENDFUNCTION getInitStat_ParEnvType
 !
 !-------------------------------------------------------------------------------
-!> @brief Partitions a continuous range of indeces by attempting to evenly 
+!> @brief Partitions a continuous range of indices by attempting to evenly 
 !> divide them among processors
 !> @param myPE the parallel environment object
-!> @param n1 the starting index for the range of indeces (optional)
-!> @param n2 the stopping index for the range of indeces (optional)
+!> @param n1 the starting index for the range of indices (optional)
+!> @param n2 the stopping index for the range of indices (optional)
 !> @param ipart the partition to obtain return @c istt and @c istp values for
 !>        (optional). When not present the rank is used.
 !> @param istt return value for processor dependent starting index
 !> @param istp return value for processor dependent stopping index
 !>
-!> If the number of indeces cannot be evenly distributed amongst processors
-!> then the remainder of indeces will be assigned to the processes with ranks
+!> If the number of indices cannot be evenly distributed amongst processors
+!> then the remainder of indices will be assigned to the processes with ranks
 !> 0-nremainder
 !>
-    SUBROUTINE partition_indeces_ParEnvType(myPE,n1,n2,ipart,istt,istp)
+    SUBROUTINE partition_indices_ParEnvType(myPE,n1,n2,ipart,istt,istp)
       CHARACTER(LEN=*),PARAMETER :: myName='partition_greedy_ParEnvType'
       CLASS(ParEnvType),INTENT(IN) :: myPE
-      INTEGER(SIK),INTENT(IN),OPTIONAL :: n1
-      INTEGER(SIK),INTENT(IN),OPTIONAL :: n2
+      INTEGER(SIK),INTENT(IN) :: n1
+      INTEGER(SIK),INTENT(IN) :: n2
       INTEGER(SIK),INTENT(IN),OPTIONAL :: ipart
       INTEGER(SIK),INTENT(OUT) :: istt
       INTEGER(SIK),INTENT(OUT) :: istp
@@ -256,18 +256,18 @@ MODULE ParallelEnv
           IF(istt > istp) istp=istt
         ENDIF
       ENDIF
-    ENDSUBROUTINE partition_indeces_ParEnvType
+    ENDSUBROUTINE partition_indices_ParEnvType
 !
 !-------------------------------------------------------------------------------
-!> @brief Partition a continuous range of indeces based on associated weights.
+!> @brief Partition a continuous range of indices based on associated weights.
 !> @param myPE the parallel environment object
-!> @param n1 the starting index for the range of indeces
-!> @param n2 the stopping index for the range of indeces
+!> @param n1 the starting index for the range of indices
+!> @param n2 the stopping index for the range of indices
 !> @param istt return value for processor dependent starting index
 !> @param istp return value for processor dependent stopping index
 !>
-!> If the number of indeces cannot be evenly distributed amongst processors
-!> then the remainder of indeces will be assigned to the processes with ranks
+!> If the number of indices cannot be evenly distributed amongst processors
+!> then the remainder of indices will be assigned to the processes with ranks
 !> 0-nremainder
 !>
     SUBROUTINE partition_greedy_ParEnvType(myPE,iwgt,n1,n2,ipart,idxmap)

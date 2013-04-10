@@ -54,7 +54,7 @@
 !> Furthermore, there are some important subtleties to understand about the
 !> profilers. When a profiler is defined with @ref TAU_Stubs::TAU_PROFILE_TIMER
 !> "TAU_PROFILE_TIMER" it is thread dependent. The return argument @c profileID
-!> essentially contains two indeces: the thread on which the profiler was defined
+!> essentially contains two indices: the thread on which the profiler was defined
 !> and the number of profilers defined before it. This data functions as
 !> the profiler database lookup key. When outside of @c PARALLEL
 !> constructs, the master thread will be able to access any of the profilers, but

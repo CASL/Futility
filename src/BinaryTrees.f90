@@ -263,7 +263,7 @@ MODULE BinaryTrees
     ENDSUBROUTINE BurnBinaryTree_Integer
 !
 !-------------------------------------------------------------------------------
-!> @brief Constructs a binary tree from a list of integers and indeces
+!> @brief Constructs a binary tree from a list of integers and indices
 !> @param t the binary tree to be created
 !> @param list the list of integers to put into the tree
 !> @param n1 optional, the starting index
@@ -297,7 +297,7 @@ MODULE BinaryTrees
     ENDSUBROUTINE CreateBinaryTree_Index
 !
 !-------------------------------------------------------------------------------
-!> @brief Constructs a binary tree from a list of integers and indeces
+!> @brief Constructs a binary tree from a list of integers and indices
 !> @param t the binary tree to be created
 !> @param list the list of integers to put into the tree
 !> @param n1 optional, the starting index
@@ -427,7 +427,7 @@ MODULE BinaryTrees
     ENDFUNCTION getBinaryTree_Index
 !
 !-------------------------------------------------------------------------------
-!> @brief Recursive subroutine deallocates a binary tree with indeces
+!> @brief Recursive subroutine deallocates a binary tree with indices
 !> @param t the binary tree to be deallocated
     RECURSIVE SUBROUTINE BurnBinaryTree_Index(t)
       TYPE(BinaryTreeType_Index),POINTER :: t

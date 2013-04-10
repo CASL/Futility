@@ -1464,7 +1464,7 @@ MODULE LinearSolverTypes
 
       solver%info=-1
       SELECTTYPE(M => solver%M); TYPE IS(SparseMatrixType)
-        ! Find the indeces of M containing the diagonal terms
+        ! Find the indices of M containing the diagonal terms
         DO i=1,M%n
           DO j=M%ia(i),M%ia(i+1)-1
             IF(i==M%ja(j)) THEN

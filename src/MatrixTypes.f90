@@ -295,7 +295,7 @@ MODULE MatrixTypes
     INTEGER(SIK) :: nnz=0
     !> The number of elements in each row
     INTEGER(SIK),ALLOCATABLE :: ia(:)
-    !> The column indeces for each element
+    !> The column indices for each element
     INTEGER(SIK),ALLOCATABLE :: ja(:) !columns
     !> The values of the matrix
     REAL(SRK),ALLOCATABLE :: a(:) !values
