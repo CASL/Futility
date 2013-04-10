@@ -1,3 +1,5 @@
+#define UTEST_FAIL_CODE 666
+
 #define CREATE_TEST(name)  CALL UTest_Start(name)
 
 #define FINALIZE_TEST()  CALL UTest_Finalize()
@@ -15,7 +17,7 @@
 ! Removed __FILE__ from ASSERT because path is too long
 #define ASSERT(bool,msg)  CALL UTest_Assert(bool,__LINE__,msg)
 
-#define ASSERTFAIL(bool,msg)  ASSERT(bool,msg); IF(utest_lastfail) CALL EXIT(-__LINE__)
+#define ASSERTFAIL(bool,msg)  ASSERT(bool,msg); IF(utest_lastfail) STOP UTEST_FAIL_CODE
 
 #define STAY()  IF(utest_interactive) CALL UTest_Stay()
 

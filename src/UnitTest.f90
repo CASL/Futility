@@ -27,6 +27,7 @@
 !>    @date 11/17/2012
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE UnitTest
+#include "UnitTest.h"
   IMPLICIT NONE
   PRIVATE
 !
@@ -204,7 +205,8 @@ MODULE UnitTest
       
       IF(utest_nfail > 0) THEN
         !This statement is not standard and may not be portable.
-        CALL EXIT(nfail)
+        !CALL EXIT(utest_nfail)
+        STOP UTEST_FAIL_CODE
       ENDIF
     ENDSUBROUTINE UTest_Finalize
 !
