@@ -879,45 +879,49 @@ MODULE MortonOrdering
               CALL thisZTreeNode%subdomains(id)%shave(sdx,sdy,sdz)
             
             IF(thisZTreeNode%subdomains(id)%istt == -1) THEN
-              !The entire subdomain was cleared, so reallocate the subdomains
-              tmpSubDomains => thisZTreeNode%subdomains
-              NULLIFY(thisZTreeNode%subdomains)
-              thisZTreeNode%nsubdomains=thisZTreeNode%nsubdomains-1
-              ALLOCATE(thisZTreeNode%subdomains(thisZTreeNode%nsubdomains))
+              IF(thisZTreeNode%nsubdomains == 1) THEN
+                CALL thisZTreeNode%clear()
+              ELSE
+                !The entire subdomain was cleared, so reallocate the subdomains
+                tmpSubDomains => thisZTreeNode%subdomains
+                NULLIFY(thisZTreeNode%subdomains)
+                thisZTreeNode%nsubdomains=thisZTreeNode%nsubdomains-1
+                ALLOCATE(thisZTreeNode%subdomains(thisZTreeNode%nsubdomains))
             
-              !Re-initialize the subdomains with a new starting index
-              idstt=thisZTreeNode%istt
-              DO id2=1,id-1
-                thisZTreeNode%subdomains(id2)%x=tmpSubDomains(id2)%x
-                thisZTreeNode%subdomains(id2)%y=tmpSubDomains(id2)%y
-                thisZTreeNode%subdomains(id2)%z=tmpSubDomains(id2)%z
-                thisZTreeNode%subdomains(id2)%istt=tmpSubDomains(id2)%istt
-                thisZTreeNode%subdomains(id2)%istp=tmpSubDomains(id2)%istp
-                thisZTreeNode%subdomains(id2)%nsubdomains= &
-                  tmpSubDomains(id2)%nsubdomains
-                thisZTreeNode%subdomains(id2)%subdomains => &
-                  tmpSubDomains(id2)%subdomains
-                idstt=thisZTreeNode%subdomains(id2)%istp+1
-              ENDDO
-              DO id2=id+1,thisZTreeNode%nsubdomains+1
-                thisZTreeNode%subdomains(id2-1)%x=tmpSubDomains(id2)%x
-                thisZTreeNode%subdomains(id2-1)%y=tmpSubDomains(id2)%y
-                thisZTreeNode%subdomains(id2-1)%z=tmpSubDomains(id2)%z
-                thisZTreeNode%subdomains(id2-1)%istt=tmpSubDomains(id2)%istt
-                thisZTreeNode%subdomains(id2-1)%istp=tmpSubDomains(id2)%istp
-                thisZTreeNode%subdomains(id2-1)%nsubdomains= &
-                  tmpSubDomains(id2)%nsubdomains
-                thisZTreeNode%subdomains(id2-1)%subdomains => &
-                  tmpSubDomains(id2)%subdomains
-                CALL thisZTreeNode%subdomains(id2-1)%renumber(idstt)
-                idstt=thisZTreeNode%subdomains(id2-1)%istp+1
-              ENDDO
+                !Re-initialize the subdomains with a new starting index
+                idstt=thisZTreeNode%istt
+                DO id2=1,id-1
+                  thisZTreeNode%subdomains(id2)%x=tmpSubDomains(id2)%x
+                  thisZTreeNode%subdomains(id2)%y=tmpSubDomains(id2)%y
+                  thisZTreeNode%subdomains(id2)%z=tmpSubDomains(id2)%z
+                  thisZTreeNode%subdomains(id2)%istt=tmpSubDomains(id2)%istt
+                  thisZTreeNode%subdomains(id2)%istp=tmpSubDomains(id2)%istp
+                  thisZTreeNode%subdomains(id2)%nsubdomains= &
+                    tmpSubDomains(id2)%nsubdomains
+                  thisZTreeNode%subdomains(id2)%subdomains => &
+                    tmpSubDomains(id2)%subdomains
+                  idstt=thisZTreeNode%subdomains(id2)%istp+1
+                ENDDO
+                DO id2=id+1,thisZTreeNode%nsubdomains+1
+                  thisZTreeNode%subdomains(id2-1)%x=tmpSubDomains(id2)%x
+                  thisZTreeNode%subdomains(id2-1)%y=tmpSubDomains(id2)%y
+                  thisZTreeNode%subdomains(id2-1)%z=tmpSubDomains(id2)%z
+                  thisZTreeNode%subdomains(id2-1)%istt=tmpSubDomains(id2)%istt
+                  thisZTreeNode%subdomains(id2-1)%istp=tmpSubDomains(id2)%istp
+                  thisZTreeNode%subdomains(id2-1)%nsubdomains= &
+                    tmpSubDomains(id2)%nsubdomains
+                  thisZTreeNode%subdomains(id2-1)%subdomains => &
+                    tmpSubDomains(id2)%subdomains
+                  CALL thisZTreeNode%subdomains(id2-1)%renumber(idstt)
+                  idstt=thisZTreeNode%subdomains(id2-1)%istp+1
+                ENDDO
               
-              !Clear temporary
-              DEALLOCATE(tmpSubDomains)
+                !Clear temporary
+                DEALLOCATE(tmpSubDomains)
             
-              !Change the stopping index for this node
-              thisZTreeNode%istp=idstt-1
+                !Change the stopping index for this node
+                thisZTreeNode%istp=idstt-1
+              ENDIF
             ELSEIF(thisZTreeNode%subdomains(id)%istp < idstp) THEN
               !Part of this subdomain was removed, so renumber all the
               !subdomains downstream of this subdomains.
