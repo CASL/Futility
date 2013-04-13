@@ -879,6 +879,8 @@ MODULE MortonOrdering
               CALL thisZTreeNode%subdomains(id)%shave(sdx,sdy,sdz)
             
             IF(thisZTreeNode%subdomains(id)%istt == -1) THEN
+              !If the parenet domain only contain the subdomain which will be cleared,
+              !the parent domain also needs to be cleared. Add by Ang 04112013
               IF(thisZTreeNode%nsubdomains == 1) THEN
                 CALL thisZTreeNode%clear()
               ELSE
