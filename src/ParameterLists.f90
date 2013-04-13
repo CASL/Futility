@@ -1348,7 +1348,7 @@ MODULE ParameterLists
 !>
     FUNCTION has_ParamType(thisParam,name) RESULT(hasname)
       CHARACTER(LEN=*),PARAMETER :: myName='has_ParamType'
-      CLASS(ParamType),INTENT(INOUT) :: thisParam
+      CLASS(ParamType),INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       LOGICAL(SBK) :: hasname
       CHARACTER(LEN=LEN(name)) :: tmpname
