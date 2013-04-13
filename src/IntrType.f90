@@ -456,7 +456,7 @@ MODULE IntrType
     ELEMENTAL FUNCTION approxeq_rel_single(a,b) RESULT(bool)
       REAL(SSK),INTENT(IN) :: a,b
       LOGICAL(SBK) :: bool
-      REAL(SSK) :: eps
+      REAL(SDK) :: eps
       eps=MAX(ABS(a),ABS(b))*EPSS
       IF(a == 0.0_SSK .OR. b == 0.0_SSK) eps=EPSS
       bool=(ABS(a-b) <= eps)
@@ -650,8 +650,8 @@ MODULE IntrType
       REAL(SDK),INTENT(IN) :: r1
       REAL(SDK),INTENT(IN) :: r2
       REAL(SDK),INTENT(IN) :: tol
-       LOGICAL(SBK) :: bool
-      REAL(SSK) :: eps
+      LOGICAL(SBK) :: bool
+      REAL(SDK) :: eps
       eps=MAX(ABS(r1),ABS(r2))*tol
       IF(r1 == 0.0_SSK .OR. r1 == 0.0_SSK) eps=EPSD
       bool=(ABS(r1-r2) <= eps)
