@@ -29,7 +29,13 @@
 MODULE UnitTest
 #include "UnitTest.h"
   IMPLICIT NONE
+
+#ifdef HAVE_MPI
+  INCLUDE "mpif.h"
+#endif
+
   PRIVATE
+
 !
 ! List of Public items
   PUBLIC :: UTest_Start
@@ -95,6 +101,12 @@ MODULE UnitTest
   CHARACTER(LEN=1),PARAMETER :: c_nrm=ACHAR(0)   
 #endif
 
+  !> Variables for MPI tests
+#ifdef HAVE_MPI
+  INTEGER :: rank,nproc,mpierr,i
+  INTEGER :: mpistatus(MPI_STATUS_SIZE)
+#endif
+
   CHARACTER(LEN=80) :: line
   INTEGER :: utest_npfx=0
   INTEGER :: utest_lvl=0
@@ -129,7 +141,22 @@ MODULE UnitTest
     SUBROUTINE UTest_Start(testname)
       CHARACTER(LEN=*),INTENT(IN) :: testname
       TYPE(UTestElement),POINTER :: tmp
-      
+
+!Determine the global MPI parameters
+#ifdef HAVE_MPI
+      CALL MPI_Comm_size(MPI_COMM_WORLD,nproc,mpierr)
+      IF(mpierr /= 0) THEN
+        WRITE(*,*) 'MPI ERROR: UTest_Start :: MPI_Comm_size FAILED'
+        STOP
+      ENDIF
+      CALL MPI_Comm_rank(MPI_COMM_WORLD,rank,mpierr)
+      IF(mpierr /= 0) THEN
+        WRITE(*,*) 'MPI ERROR: UTest_Start :: MPI_Comm_rank FAILED'
+        STOP
+      ENDIF
+      IF(rank /= 0) utest_master=.FALSE.
+#endif
+
       utest_testname=testname
       IF(utest_master) THEN
         WRITE(*,'(A)') utest_hline
@@ -157,12 +184,27 @@ MODULE UnitTest
       CHARACTER(LEN=17) :: passfail
       INTEGER :: npass=0
       INTEGER :: nfail=0
+      INTEGER :: sendbuf(2),recvbuf(2)
+      CHARACTER(LEN=79) :: sendcharbuf,recvcharbuf,subtest_stats
       TYPE(UTestElement),POINTER :: tmp, tmp1
 
-      IF(utest_nfail > 0) THEN
-        passfail=c_red//'FAILED'//c_nrm
-      ELSE
-        passfail=c_grn//'PASSED'//c_nrm
+!If this is a parallel test, the test fails if tests on ANY processor failed
+#ifdef HAVE_MPI
+      sendbuf(1)=utest_nfail
+      CALL MPI_Allreduce(sendbuf(1),recvbuf(1),1,MPI_INTEGER,MPI_SUM,MPI_COMM_WORLD,mpierr)
+      IF(mpierr /= 0) THEN
+        WRITE(*,*) 'MPI ERROR: UTest_FINALIZE :: MPI_Allreduce FAILED'
+        STOP
+      ENDIF
+      utest_nfail=recvbuf(1)
+#endif
+
+      IF(utest_master) THEN
+        IF(utest_nfail > 0) THEN
+          passfail=c_red//'FAILED'//c_nrm
+        ELSE
+          passfail=c_grn//'PASSED'//c_nrm
+        ENDIF
       ENDIF
       
       IF(utest_master) THEN
@@ -180,13 +222,49 @@ MODULE UnitTest
           '---------------------------|'
       ENDIF
       tmp => utest_firsttest
-      DO 
+
+      DO
         IF(tmp%npass+tmp%nfail>0) THEN
-          IF(utest_master)THEN 
+!          IF(utest_master)THEN 
+#ifdef HAVE_MPI
+          !The master prints its stats first
+          IF(utest_master) THEN
             WRITE(*,"('| ',A37,'| ',I10,' | ',I10,' | ',I10,' |')") &
               adjustl(tmp%subtestname//"                            "),&
               tmp%npass,tmp%nfail,tmp%npass+tmp%nfail
           ENDIF
+
+          !The other processes send there stats to the master
+          !The master then prints them in order
+          DO i=1,nproc-1
+            IF(rank == 0) THEN
+              CALL MPI_Recv(recvcharbuf,79,MPI_CHARACTER,i,1,MPI_COMM_WORLD,mpistatus,mpierr)
+              IF(mpierr /= 0) THEN
+                WRITE(*,*) 'MPI ERROR: UTest_FINALIZE :: MPI_Recv FAILED'
+                STOP
+              ENDIF
+              subtest_stats=recvcharbuf
+            ENDIF
+            IF(i == rank) THEN
+              WRITE(sendcharbuf,"('| ',A37,'| ',I10,' | ',I10,' | ',I10,' |')") &
+                adjustl(tmp%subtestname//"                            "),&
+                tmp%npass,tmp%nfail,tmp%npass+tmp%nfail
+              CALL MPI_Send(sendcharbuf,79,MPI_CHARACTER,0,1,MPI_COMM_WORLD,mpierr)
+              IF(mpierr /= 0) THEN
+                WRITE(*,*) 'MPI ERROR: UTest_FINALIZE :: MPI_Send FAILED'
+                STOP
+              ENDIF
+            ENDIF
+            IF(utest_master) THEN
+              WRITE(*,'(A79)') subtest_stats
+            ENDIF
+          ENDDO
+#else
+          WRITE(*,"('| ',A37,'| ',I10,' | ',I10,' | ',I10,' |')") &
+            adjustl(tmp%subtestname//"                            "),&
+            tmp%npass,tmp%nfail,tmp%npass+tmp%nfail
+#endif
+!          ENDIF
           npass=npass+tmp%npass
           nfail=nfail+tmp%nfail
         ENDIF
@@ -195,6 +273,20 @@ MODULE UnitTest
         IF(.NOT.ASSOCIATED(tmp1)) EXIT
         tmp => tmp1
       ENDDO
+
+!If this is a parallel test, we need the statistics across all processors
+#ifdef HAVE_MPI
+      sendbuf(1)=npass
+      sendbuf(2)=nfail
+      CALL MPI_Reduce(sendbuf,recvbuf,2,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,mpierr)
+      IF(mpierr /= 0) THEN
+        WRITE(*,*) 'MPI ERROR: UTest_FINALIZE :: MPI_Reduce FAILED'
+        STOP
+      ENDIF
+      npass=recvbuf(1)
+      nfail=recvbuf(2)
+#endif
+
       IF(utest_master) THEN
         WRITE(*,'(A)') '|--------------------------------------------------'// &
           '---------------------------|'
@@ -202,12 +294,16 @@ MODULE UnitTest
           npass,nfail,npass+nfail
         WRITE(*,'(A)') utest_hline
       ENDIF
-      
+
       IF(utest_nfail > 0) THEN
         !This statement is not standard and may not be portable.
         !CALL EXIT(utest_nfail)
         STOP UTEST_FAIL_CODE
       ENDIF
+
+      !Possibly call MPI_Finalize here if this is the last thing called in the
+      !unit test
+
     ENDSUBROUTINE UTest_Finalize
 !
 !-------------------------------------------------------------------------------
@@ -221,14 +317,22 @@ MODULE UnitTest
       TYPE(UTestElement),POINTER :: tmp
       
       ALLOCATE(tmp)
+!If we're using MPI, each processor should have a unique subtest name
       tmp%subtestname=subtestname
+#ifdef HAVE_MPI
+      IF(nproc == 1) THEN
+        tmp%subtestname=subtestname
+      ELSE
+        WRITE(tmp%subtestname,'(A11,A4,I5)') TRIM(ADJUSTL(subtestname))," PID",rank
+      ENDIF
+#else
+      tmp%subtestname=subtestname
+#endif
       utest_curtest%next=>tmp
       utest_curtest=>tmp
       
-      IF(utest_master) THEN
-        WRITE(*,*)
-        WRITE(*,'(A)') utest_pad(1:utest_lvl*2)//'BEGIN SUBTEST '//subtestname
-      ENDIF
+      WRITE(*,*)
+      WRITE(*,'(A)') utest_pad(1:utest_lvl*2)//'BEGIN SUBTEST '//tmp%subtestname
 
       CALL UTest_incl()
       utest_inmain=.FALSE.
@@ -253,12 +357,19 @@ MODULE UnitTest
         pfstr=c_grn//' PASSED'//c_nrm
       ENDIF
       
-      IF(utest_master) THEN
-        WRITE(*,'(A71,A)') utest_pad(1:utest_lvl*2)//'SUBTEST '// &
-          TRIM(utest_curtest%subtestname)//utest_dot,pfstr
-        WRITE(*,*)
-      ENDIF
+      WRITE(*,'(A71,A)') utest_pad(1:utest_lvl*2)//'SUBTEST '// &
+        TRIM(utest_curtest%subtestname)//utest_dot,pfstr
+      WRITE(*,*)
       utest_inmain=.TRUE.
+
+#ifdef HAVE_MPI
+      CALL MPI_Barrier(MPI_COMM_WORLD,mpierr)
+      IF(mpierr /= 0) THEN
+        WRITE(*,*) 'MPI ERROR: UTest_End_SubTest :: MPI_Barrier FAILED'
+        STOP
+      ENDIF
+#endif
+
     ENDSUBROUTINE UTest_End_SubTest
 !
 !-------------------------------------------------------------------------------
@@ -274,15 +385,22 @@ MODULE UnitTest
       
       utest_component=.TRUE.
       utest_compfail=.FALSE.
-      utest_componentname=componentname
-      utest_prefix=componentname//" -"
-      utest_npfx=MIN(LEN(componentname)+3,20)
-
-      IF(utest_master) THEN
-        WRITE(*,*)
-        WRITE(*,'(A)') utest_pad(1:utest_lvl*2)//'BEGIN COMPONENT '// &
-          componentname
+!If we're using MPI, each processor should have a unique subtest name
+#ifdef HAVE_MPI
+      IF(nproc == 1) THEN
+        utest_componentname=componentname
+      ELSE
+        WRITE(utest_componentname,'(A11,A4,I5)') TRIM(ADJUSTL(componentname))," PID",rank
       ENDIF
+#else
+      utest_componentname=componentname
+#endif
+      utest_prefix=utest_componentname//" -"
+      utest_npfx=MIN(LEN(utest_componentname)+3,20)
+
+      WRITE(*,*)
+      WRITE(*,'(A)') utest_pad(1:utest_lvl*2)//'BEGIN COMPONENT '// &
+        utest_componentname
 
       CALL UTest_incl()
 
@@ -305,10 +423,8 @@ MODULE UnitTest
         pfstr=c_grn//' PASSED'//c_nrm
       ENDIF
       
-      IF(utest_master)THEN
-        WRITE(*,'(A71,A)') utest_pad(1:utest_lvl*2)//'COMPONENT '// &
-          TRIM(utest_componentname)//utest_dot,pfstr
-      ENDIF
+      WRITE(*,'(A71,A)') utest_pad(1:utest_lvl*2)//'COMPONENT '// &
+        TRIM(utest_componentname)//utest_dot,pfstr
 
       utest_component=.FALSE.
       utest_prefix=''
