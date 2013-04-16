@@ -105,6 +105,7 @@ MODULE UnitTest
 #ifdef HAVE_MPI
   INTEGER :: rank,nproc,mpierr,i
   INTEGER :: mpistatus(MPI_STATUS_SIZE)
+  LOGICAL :: mpiinit
 #endif
 
   CHARACTER(LEN=80) :: line
@@ -144,17 +145,28 @@ MODULE UnitTest
 
 !Determine the global MPI parameters
 #ifdef HAVE_MPI
-      CALL MPI_Comm_size(MPI_COMM_WORLD,nproc,mpierr)
+      CALL MPI_initialized(mpiinit,mpierr)
       IF(mpierr /= 0) THEN
-        WRITE(*,*) 'MPI ERROR: UTest_Start :: MPI_Comm_size FAILED'
+        WRITE(*,*) 'MPI ERROR: UTest_Start :: MPI_Comm_initialized FAILED'
         STOP
       ENDIF
-      CALL MPI_Comm_rank(MPI_COMM_WORLD,rank,mpierr)
-      IF(mpierr /= 0) THEN
-        WRITE(*,*) 'MPI ERROR: UTest_Start :: MPI_Comm_rank FAILED'
-        STOP
+      IF(mpiinit) THEN
+        CALL MPI_Comm_size(MPI_COMM_WORLD,nproc,mpierr)
+        IF(mpierr /= 0) THEN
+          WRITE(*,*) 'MPI ERROR: UTest_Start :: MPI_Comm_size FAILED'
+          STOP
+        ENDIF
+        CALL MPI_Comm_rank(MPI_COMM_WORLD,rank,mpierr)
+        IF(mpierr /= 0) THEN
+          WRITE(*,*) 'MPI ERROR: UTest_Start :: MPI_Comm_rank FAILED'
+          STOP
+        ENDIF
+        IF(rank /= 0) utest_master=.FALSE.
+      !MPI is not actually being used
+      ELSE
+        nproc=1
+        rank=0
       ENDIF
-      IF(rank /= 0) utest_master=.FALSE.
 #endif
 
       utest_testname=testname
@@ -190,13 +202,16 @@ MODULE UnitTest
 
 !If this is a parallel test, the test fails if tests on ANY processor failed
 #ifdef HAVE_MPI
-      sendbuf(1)=utest_nfail
-      CALL MPI_Allreduce(sendbuf(1),recvbuf(1),1,MPI_INTEGER,MPI_SUM,MPI_COMM_WORLD,mpierr)
-      IF(mpierr /= 0) THEN
-        WRITE(*,*) 'MPI ERROR: UTest_FINALIZE :: MPI_Allreduce FAILED'
-        STOP
+      !If MPI is not actually being used, then no reduction is necessary
+      IF(mpiinit) THEN
+        sendbuf(1)=utest_nfail
+        CALL MPI_Allreduce(sendbuf(1),recvbuf(1),1,MPI_INTEGER,MPI_SUM,MPI_COMM_WORLD,mpierr)
+        IF(mpierr /= 0) THEN
+          WRITE(*,*) 'MPI ERROR: UTest_FINALIZE :: MPI_Allreduce FAILED'
+          STOP
+        ENDIF
+        utest_nfail=recvbuf(1)
       ENDIF
-      utest_nfail=recvbuf(1)
 #endif
 
       IF(utest_master) THEN
@@ -225,7 +240,6 @@ MODULE UnitTest
 
       DO
         IF(tmp%npass+tmp%nfail>0) THEN
-!          IF(utest_master)THEN 
 #ifdef HAVE_MPI
           !The master prints its stats first
           IF(utest_master) THEN
@@ -236,6 +250,8 @@ MODULE UnitTest
 
           !The other processes send there stats to the master
           !The master then prints them in order
+          !If mpi is unitialized or if only 1 process exists, this loop is never
+          !executed
           DO i=1,nproc-1
             IF(rank == 0) THEN
               CALL MPI_Recv(recvcharbuf,79,MPI_CHARACTER,i,1,MPI_COMM_WORLD,mpistatus,mpierr)
@@ -264,7 +280,6 @@ MODULE UnitTest
             adjustl(tmp%subtestname//"                            "),&
             tmp%npass,tmp%nfail,tmp%npass+tmp%nfail
 #endif
-!          ENDIF
           npass=npass+tmp%npass
           nfail=nfail+tmp%nfail
         ENDIF
@@ -276,15 +291,18 @@ MODULE UnitTest
 
 !If this is a parallel test, we need the statistics across all processors
 #ifdef HAVE_MPI
-      sendbuf(1)=npass
-      sendbuf(2)=nfail
-      CALL MPI_Reduce(sendbuf,recvbuf,2,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,mpierr)
-      IF(mpierr /= 0) THEN
-        WRITE(*,*) 'MPI ERROR: UTest_FINALIZE :: MPI_Reduce FAILED'
-        STOP
+      !If MPI is not actually being used, then no reduction is necessary
+      IF(mpiinit) THEN
+        sendbuf(1)=npass
+        sendbuf(2)=nfail
+        CALL MPI_Reduce(sendbuf,recvbuf,2,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,mpierr)
+        IF(mpierr /= 0) THEN
+          WRITE(*,*) 'MPI ERROR: UTest_FINALIZE :: MPI_Reduce FAILED'
+          STOP
+        ENDIF
+        npass=recvbuf(1)
+        nfail=recvbuf(2)
       ENDIF
-      npass=recvbuf(1)
-      nfail=recvbuf(2)
 #endif
 
       IF(utest_master) THEN
@@ -363,10 +381,13 @@ MODULE UnitTest
       utest_inmain=.TRUE.
 
 #ifdef HAVE_MPI
-      CALL MPI_Barrier(MPI_COMM_WORLD,mpierr)
-      IF(mpierr /= 0) THEN
-        WRITE(*,*) 'MPI ERROR: UTest_End_SubTest :: MPI_Barrier FAILED'
-        STOP
+      !If MPI is not initialized, we don't need a barrier
+      IF(mpiinit) THEN
+        CALL MPI_Barrier(MPI_COMM_WORLD,mpierr)
+        IF(mpierr /= 0) THEN
+          WRITE(*,*) 'MPI ERROR: UTest_End_SubTest :: MPI_Barrier FAILED'
+          STOP
+        ENDIF
       ENDIF
 #endif
 
