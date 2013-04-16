@@ -132,6 +132,9 @@ MODULE ParallelEnv
       !> @copybrief ParallelEnv::allReduce_MPI_Env_type
       !> @copydetails  ParallelEnv::allReduce_MPI_Env_type
       PROCEDURE,PASS :: allReduce => allReduce_MPI_Env_type
+      !> @copybrief ParallelEnv::allReduceMax_MPI_Env_type
+      !> @copydetails  ParallelEnv::allReduceMax_MPI_Env_type
+      PROCEDURE,PASS :: allReduceMax => allReduceMax_MPI_Env_type
       !> @copybrief ParallelEnv::trueForAll_MPI_Env_type
       !> @copydetails  ParallelEnv::trueForAll_MPI_Env_type
       PROCEDURE,PASS :: trueForAll => trueForAll_MPI_Env_type
@@ -513,6 +516,41 @@ MODULE ParallelEnv
       ENDIF
 #endif
     ENDSUBROUTINE allReduce_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine calls MPI_Allreduce and performs a max operation
+!> for a real array.
+!> @param myPE the MPI parallel environment 
+!> @param n the number of data elements to communicate
+!> @param x the partial sum to be returned as the total sum
+!>
+!> This routine only performs a sum operation and only for reals.
+!>
+    SUBROUTINE allReduceMax_MPI_Env_type(myPE,n,x)
+      CHARACTER(LEN=*),PARAMETER :: myName='allReduce_MPI_Env_type'
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
+      INTEGER(SIK),INTENT(IN) :: n
+      REAL(SRK),INTENT(INOUT) :: x(*)
+#ifdef HAVE_MPI
+      REAL(SRK) :: rbuf(n)
+      IF(myPE%initstat) THEN
+#ifdef DBL
+        CALL MPI_Allreduce(x,rbuf,n,MPI_DOUBLE_PRECISION,MPI_MAX, &
+          myPE%comm,mpierr)
+#else
+        CALL MPI_Allreduce(x,rbuf,n,MPI_SINGLE_PRECISION,MPI_MAX, &
+          myPE%comm,mpierr)  
+#endif
+        IF(mpierr /= MPI_SUCCESS) THEN
+          CALL eParEnv%raiseError(modName//'::'// &
+            myName//' - call to MPI_AllreduceMax returned an error!')
+        ELSE
+          !Copy the result to the output argument
+          CALL BLAS_copy(n,rbuf,1,x,1)
+        ENDIF
+      ENDIF
+#endif
+    ENDSUBROUTINE allReduceMax_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
 !> @brief Wrapper routine calls MPI_Allreduce and performs a logical and
