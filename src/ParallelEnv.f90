@@ -648,7 +648,6 @@ MODULE ParallelEnv
       ENDIF
       nerror=eParEnv%getCounter(EXCEPTION_ERROR)
       CALL myPE%world%init(commWorld)
-      
 
       IF(nspace < 1) CALL eParEnv%raiseError(modName//'::'//myName// &
         ' - input nspace is less than 1!')
@@ -670,7 +669,7 @@ MODULE ParallelEnv
         commDims(1)=nspace
         commDims(2)=nangle
         commDims(3)=nenergy
-        
+
 #ifdef HAVE_MPI
         !Create Virtual Cartesian Grid Topology from communicator
         CALL MPI_Cart_create(myPE%world%comm,3,commDims,isPeriodic,.TRUE., &
