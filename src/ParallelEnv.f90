@@ -34,7 +34,7 @@
 !>  - initialization/clear routines for ParallelEnvType
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE ParallelEnv
-  
+
   USE IntrType
   USE ExceptionHandler
   USE BLAS
@@ -43,15 +43,15 @@ MODULE ParallelEnv
 
   IMPLICIT NONE
   PRIVATE
-  
+
 #ifdef HAVE_MPI
-  
+
 #ifdef MPACT_HAVE_PETSC
 #include <finclude/petsc.h>
 #undef IS
   PetscErrorCode  :: ierr
 #else
-  INCLUDE 'mpif.h' 
+  INCLUDE 'mpif.h'
 #endif
 
   INTEGER,PARAMETER :: PE_COMM_SELF=MPI_COMM_SELF
@@ -67,7 +67,7 @@ MODULE ParallelEnv
   PUBLIC :: OMP_EnvType
   PUBLIC :: ParallelEnvType
   PUBLIC :: eParEnv
-  
+
   TYPE,ABSTRACT :: ParEnvType
     !> Logical with initialization status
     LOGICAL(SBK),PRIVATE :: initstat=.FALSE.
@@ -95,9 +95,9 @@ MODULE ParallelEnv
       PROCEDURE(ParEnvType_init_absintfc),DEFERRED,PASS :: init
       !>
       PROCEDURE(ParEnvType_clear_absintfc),DEFERRED,PASS :: clear
-      
+
   ENDTYPE ParEnvType
-  
+
   ABSTRACT INTERFACE
     SUBROUTINE ParEnvType_init_absintfc(myPE,PEparam)
       IMPORT :: SIK,ParEnvType
@@ -105,14 +105,14 @@ MODULE ParallelEnv
       INTEGER(SIK),INTENT(IN),OPTIONAL :: PEparam
     ENDSUBROUTINE ParEnvType_init_absintfc
   ENDINTERFACE
-    
+
   ABSTRACT INTERFACE
     SUBROUTINE ParEnvType_clear_absintfc(myPE)
       IMPORT :: ParEnvType
       CLASS(ParEnvType),INTENT(INOUT) :: myPE
     ENDSUBROUTINE ParEnvType_clear_absintfc
   ENDINTERFACE
-    
+
   !> Type describes basic information for MPI environment
   TYPE,EXTENDS(ParEnvType) :: MPI_EnvType
     !> Fortran integer ID for the communicator
@@ -155,7 +155,7 @@ MODULE ParallelEnv
       !> @copydetails  ParallelEnv::clear_OMP_Env_type
       PROCEDURE,PASS :: clear => clear_OMP_Env_type
   ENDTYPE OMP_EnvType
-  
+
   !> Type describes parallel environment for neutron transport
   !>
   !> Fairly specific to MPACT
@@ -185,17 +185,17 @@ MODULE ParallelEnv
       !> @copydetails  ParallelEnv::clear_ParEnvType
       PROCEDURE,PASS :: clear => clear_ParEnvType
   ENDTYPE ParallelEnvType
-  
+
   !> Private scratch variable for the mpierr
   INTEGER(SIK) :: mpierr
-  
+
   !> Module name
   CHARACTER(LEN=*),PARAMETER :: modName='PARALLELENV'
-  
+
   !> Exception Handler for the module
   TYPE(ExceptionHandlerType),POINTER,SAVE :: eParEnv => NULL()
 !
-!===============================================================================      
+!===============================================================================
   CONTAINS
 !
 !-------------------------------------------------------------------------------
@@ -207,7 +207,7 @@ MODULE ParallelEnv
     ENDFUNCTION getInitStat_ParEnvType
 !
 !-------------------------------------------------------------------------------
-!> @brief Partitions a continuous range of indices by attempting to evenly 
+!> @brief Partitions a continuous range of indices by attempting to evenly
 !> divide them among processors
 !> @param myPE the parallel environment object
 !> @param n1 the starting index for the range of indices (optional)
@@ -229,10 +229,10 @@ MODULE ParallelEnv
       INTEGER(SIK),INTENT(IN),OPTIONAL :: ipart
       INTEGER(SIK),INTENT(OUT) :: istt
       INTEGER(SIK),INTENT(OUT) :: istp
-      
+
       INTEGER(SIK) :: myrank,nproc
       INTEGER(SIK) :: nwork,nwork_per_proc,work_rem
-      
+
       istt=1
       istp=0
       IF(myPE%initstat) THEN
@@ -243,19 +243,19 @@ MODULE ParallelEnv
         IF(myrank < nwork) THEN
           !Evenly divide work on each process
           nwork_per_proc=nwork/nproc
-          
+
           !Remainder of work (to be assigned to first work_rem processors)
           work_rem=MOD(nwork,nproc)
-          
+
           !Starting index
           istt=myrank*nwork_per_proc+MIN(myrank,work_rem)+n1
-          
+
           !Stopping index
           istp=istt+nwork_per_proc-1
-          
+
           !Adjust for remainder of work
           IF(work_rem > myrank) istp=istp+1
-          
+
           IF(istt > istp) istp=istt
         ENDIF
       ENDIF
@@ -281,17 +281,17 @@ MODULE ParallelEnv
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n2
       INTEGER(SIK),INTENT(IN),OPTIONAL :: ipart
       INTEGER(SIK),ALLOCATABLE,INTENT(INOUT) :: idxmap(:)
-      
+
       LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: i,j,k,n,iwt,idx,iproc,nidx,pid
       INTEGER(SIK),ALLOCATABLE :: wsum(:),sorted_idx(:,:),tmpwt(:),nwtproc(:)
-      
+
       localalloc=.FALSE.
       IF(.NOT.ASSOCIATED(eParEnv)) THEN
         ALLOCATE(eParEnv)
         localalloc=.TRUE.
       ENDIF
-      
+
       IF(PRESENT(n1)) THEN
         i=n1
       ELSE
@@ -303,7 +303,7 @@ MODULE ParallelEnv
         j=UBOUND(iwgt,DIM=1)
       ENDIF
       n=SIZE(iwgt)
-      
+
       IF(myPE%initstat) THEN
         IF(PRESENT(ipart)) THEN
           pid=ipart
@@ -313,7 +313,7 @@ MODULE ParallelEnv
         IF(j >= i .AND. LBOUND(iwgt,DIM=1) <= i .AND. j <= UBOUND(iwgt,DIM=1)) THEN
           IF(0 <= pid .AND. pid < myPE%nproc .AND. myPE%nproc <= n) THEN
             IF(ALLOCATED(idxmap)) DEALLOCATE(idxmap)
-            
+
             CALL dmallocA(wsum,myPE%nproc)
             CALL dmallocA(nwtproc,myPE%nproc)
             CALL dmallocA(sorted_idx,myPE%nproc,n)
@@ -322,28 +322,28 @@ MODULE ParallelEnv
             wsum=0
             nwtproc=0
             sorted_idx=0
-            
+
             !Assign the weights for each index into the "bin" (e.g. processor)
             !with the current lowest sum
             DO k=i,j
               !Value and location of maximum weight
               idx=MAXLOC(tmpwt(i:j),DIM=1)
               iwt=tmpwt(idx)
-              
-              
+
+
               !Location of minimum sum of weights per proc
               iproc=MINLOC(wsum,DIM=1)
-              
+
               !Index map for sorted_idx
               nwtproc(iproc)=nwtproc(iproc)+1
-              
+
               !Update sum and sorted values
               sorted_idx(iproc,nwtproc(iproc))=idx
               wsum(iproc)=wsum(iproc)+iwt
               tmpwt(idx)=0
             ENDDO
-            
-            
+
+
             !Assign results to output variable while sorting
             pid=pid+1
             nidx=nwtproc(pid)
@@ -353,7 +353,7 @@ MODULE ParallelEnv
               idxmap(k)=sorted_idx(pid,idx)
               sorted_idx(pid,idx)=0
             ENDDO
-            
+
             !Clear locals
             CALL demallocA(tmpwt)
             CALL demallocA(sorted_idx)
@@ -382,17 +382,17 @@ MODULE ParallelEnv
       INTEGER(SIK),INTENT(IN),OPTIONAL :: PEparam
       INTEGER(SIK) :: isinit,icomm
       LOGICAL(SBK) :: localalloc
-      
+
       IF(.NOT.myPE%initstat) THEN
         localalloc=.FALSE.
         IF(.NOT.ASSOCIATED(eParEnv)) THEN
           ALLOCATE(eParEnv)
           localalloc=.TRUE.
         ENDIF
-        
+
         icomm=PE_COMM_SELF
         IF(PRESENT(PEparam)) icomm=PEparam
-        
+
 #ifdef HAVE_MPI
         CALL MPI_Initialized(isinit,mpierr)
         IF(mpierr /= MPI_SUCCESS) CALL eParEnv%raiseError(modName//'::'// &
@@ -407,13 +407,13 @@ MODULE ParallelEnv
           CALL MPI_Init(mpierr)
           IF(mpierr /= MPI_SUCCESS) CALL eParEnv%raiseError(modName//'::'// &
             myName//' - call to MPI_Init returned an error!')
-            
+
 #ifdef MPACT_HAVE_PETSC
           CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
 #endif
-          
+
           !Default communicator is MPI_COMM_WORLD if MPI was not initialized
-          !Set communicator to MPI_COMM_SELF though if this was passed 
+          !Set communicator to MPI_COMM_SELF though if this was passed
           !explicitly.
           myPE%comm=MPI_COMM_WORLD
           IF(icomm == MPI_COMM_SELF) myPE%comm=MPI_COMM_SELF
@@ -423,7 +423,7 @@ MODULE ParallelEnv
         ELSE
           myPE%comm=icomm
         ENDIF
-      
+
         !Get Information about the communicator
 #ifdef HAVE_MPI
         CALL MPI_Comm_size(myPE%comm,myPE%nproc,mpierr)
@@ -450,7 +450,7 @@ MODULE ParallelEnv
       CHARACTER(LEN=*),PARAMETER :: myName='clear_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
       LOGICAL(SBK) :: localalloc
-      
+
       IF(myPE%initstat) THEN
 #ifdef HAVE_MPI
         localalloc=.FALSE.
@@ -485,7 +485,7 @@ MODULE ParallelEnv
 !-------------------------------------------------------------------------------
 !> @brief Wrapper routine calls MPI_Allreduce and performs a sum of operation
 !> for a real array.
-!> @param myPE the MPI parallel environment 
+!> @param myPE the MPI parallel environment
 !> @param n the number of data elements to communicate
 !> @param x the partial sum to be returned as the total sum
 !>
@@ -504,7 +504,7 @@ MODULE ParallelEnv
           myPE%comm,mpierr)
 #else
         CALL MPI_Allreduce(x,rbuf,n,MPI_SINGLE_PRECISION,MPI_SUM, &
-          myPE%comm,mpierr)  
+          myPE%comm,mpierr)
 #endif
         IF(mpierr /= MPI_SUCCESS) THEN
           CALL eParEnv%raiseError(modName//'::'// &
@@ -520,7 +520,7 @@ MODULE ParallelEnv
 !-------------------------------------------------------------------------------
 !> @brief Wrapper routine calls MPI_Allreduce and performs a max operation
 !> for a real array.
-!> @param myPE the MPI parallel environment 
+!> @param myPE the MPI parallel environment
 !> @param n the number of data elements to communicate
 !> @param x the partial sum to be returned as the total sum
 !>
@@ -539,7 +539,7 @@ MODULE ParallelEnv
           myPE%comm,mpierr)
 #else
         CALL MPI_Allreduce(x,rbuf,n,MPI_SINGLE_PRECISION,MPI_MAX, &
-          myPE%comm,mpierr)  
+          myPE%comm,mpierr)
 #endif
         IF(mpierr /= MPI_SUCCESS) THEN
           CALL eParEnv%raiseError(modName//'::'// &
@@ -555,7 +555,7 @@ MODULE ParallelEnv
 !-------------------------------------------------------------------------------
 !> @brief Wrapper routine calls MPI_Allreduce and performs a logical and
 !> operation for a scalar logical.
-!> @param myPE the MPI parallel environment 
+!> @param myPE the MPI parallel environment
 !> @param n the number of data elements to communicate
 !> @param x the partial sum to be returned as the total sum
 !>
@@ -640,7 +640,7 @@ MODULE ParallelEnv
       CHARACTER(LEN=12) :: smpierr
       INTEGER(SIK) :: nerror,tmpcomm,commDims(3)
       LOGICAL(SBK) :: localalloc,activeCommDim(3)
-      
+
       localalloc=.FALSE.
       IF(.NOT.ASSOCIATED(eParEnv)) THEN
         ALLOCATE(eParEnv)
@@ -664,7 +664,7 @@ MODULE ParallelEnv
         CALL eParEnv%raiseWarning(modName//'::'//myName//' - Number of '// &
           'available MPI processes is more than grid size, '// &
             'some processes will not be used!')
-      
+
       IF(nerror == eParEnv%getCounter(EXCEPTION_ERROR)) THEN
         commDims(1)=nspace
         commDims(2)=nangle
@@ -674,11 +674,11 @@ MODULE ParallelEnv
         !Create Virtual Cartesian Grid Topology from communicator
         CALL MPI_Cart_create(myPE%world%comm,3,commDims,isPeriodic,.TRUE., &
           tmpcomm,mpierr)
-        
+
         IF(mpierr == MPI_SUCCESS .AND. tmpcomm /= MPI_COMM_NULL) THEN
           !Setup MPI Env object for the virtual topology
           CALL myPE%CartGridWorld%init(tmpcomm)
-          
+
           !Setup Communicator for Spatial Decomposition
           activeCommDim=.FALSE.
           activeCommDim(1)=.TRUE.
@@ -692,7 +692,7 @@ MODULE ParallelEnv
               ' - Unexpected error creating MPI communicator for spatial '// &
                 'decomp., mpierr='//TRIM(smpierr)//'!')
           ENDIF
-          
+
           !Setup Communicator for Angular Decomposition
           activeCommDim(1)=.FALSE.
           activeCommDim(2)=.TRUE.
@@ -706,7 +706,7 @@ MODULE ParallelEnv
               ' - Unexpected error creating MPI communicator for angular '// &
                 'decomp., mpierr='//TRIM(smpierr)//'!')
           ENDIF
-          
+
           !Setup Communicator for Energy Decomposition
           activeCommDim(2)=.FALSE.
           activeCommDim(3)=.TRUE.
@@ -720,7 +720,7 @@ MODULE ParallelEnv
               ' - Unexpected error creating MPI communicator for energy '// &
                 'decomp., mpierr='//TRIM(smpierr)//'!')
           ENDIF
-          
+
           !Setup Ray decomposition
           ALLOCATE(myPE%ray); CALL myPE%ray%init(nthreads)
         ELSE
@@ -737,7 +737,7 @@ MODULE ParallelEnv
         ALLOCATE(myPE%ray); CALL myPE%ray%init(nthreads)
 #endif
       ENDIF
-      
+
       IF(localalloc) DEALLOCATE(eParEnv)
     ENDSUBROUTINE init_ParEnvType
 !
@@ -745,7 +745,7 @@ MODULE ParallelEnv
 !> Clears the parallel environment type object
     SUBROUTINE clear_ParEnvType(myPE)
       CLASS(ParallelEnvType),INTENT(INOUT) :: myPE
-      
+
       IF(ASSOCIATED(myPE%ray)) DEALLOCATE(myPE%ray)
       IF(ASSOCIATED(myPE%energy)) THEN
         CALL myPE%energy%clear(); DEALLOCATE(myPE%energy)
@@ -764,9 +764,9 @@ MODULE ParallelEnv
     PURE FUNCTION isInit_ParEnvType(myPE) RESULT(initStat)
       CLASS(ParallelEnvType),INTENT(IN) :: myPE
       LOGICAL(SBK) :: initStat
-      
+
       initStat=.FALSE.
-      
+
       IF(.NOT.myPE%world%initStat) RETURN
       IF(.NOT.ASSOCIATED(myPE%space)) RETURN
       IF(.NOT.myPE%space%initStat) RETURN
@@ -776,9 +776,9 @@ MODULE ParallelEnv
       IF(.NOT.myPE%energy%initStat) RETURN
       IF(.NOT.ASSOCIATED(myPE%ray)) RETURN
       IF(.NOT.myPE%ray%initStat) RETURN
-      
+
       initStat=.TRUE.
-      
+
     ENDFUNCTION isInit_ParEnvType
 !
 ENDMODULE ParallelEnv
