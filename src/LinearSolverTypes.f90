@@ -590,8 +590,8 @@ MODULE LinearSolverTypes
       PetscErrorCode  :: ierr
 #endif
 
-      CALL solver%MPIparallelEnv%clear()
-      CALL solver%OMPparallelEnv%clear()
+!      CALL solver%MPIparallelEnv%clear()
+!      CALL solver%OMPparallelEnv%clear()
       IF(ALLOCATED(solver%A)) THEN
         CALL solver%A%clear()
         DEALLOCATE(solver%A)

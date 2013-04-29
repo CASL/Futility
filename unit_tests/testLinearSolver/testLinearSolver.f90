@@ -230,8 +230,8 @@ CONTAINS
         IF(thisLS%isInit .OR.thisLS%solverMethod == 1                  &
           .OR. ALLOCATED(thisLS%M) .OR. ALLOCATED(thisLS%A)            &
           .OR. ALLOCATED(thisLS%X) .OR. thisLS%info /= 0               &
-          .OR. thisLS%MPIparallelEnv%isInit()                          &
-          .OR. thisLS%OMPparallelEnv%isInit()                          &
+!          .OR. thisLS%MPIparallelEnv%isInit()                          &
+!          .OR. thisLS%OMPparallelEnv%isInit()                          &
           .OR. thisLS%normType == 2 .OR. thisLS%maxIters == 2          &
           .OR. thisLS%iters == 2 .OR. thisLS%isDecomposed              &
           .OR. thisLS%residual == 2._SRK .OR. thisLS%convTol == 2._SRK) THEN
