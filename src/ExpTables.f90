@@ -219,6 +219,7 @@ MODULE ExpTables
       myET%maxVal=0._SRK
       myET%tableErr=0._SRK
       myET%isinit=.FALSE.
+      IF(ExpTableType_Paramsflag) CALL ExpTables_Clear_ValidParams()
     ENDSUBROUTINE clear_ExpTable
 !
 !-------------------------------------------------------------------------------
