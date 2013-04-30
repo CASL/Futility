@@ -28,16 +28,16 @@ PROGRAM testHDF5
   USE FileType_HDF5
   USE IO_Strings
   USE ParameterLists
-  
+
   IMPLICIT NONE
-  
+
 #ifdef HAVE_MPI
   INCLUDE 'mpif.h'
 #endif
 
   TYPE(MPI_EnvType) :: testMPI
   INTEGER(SIK) :: mpierr,mysize,myrank
-  
+
 #ifdef HAVE_MPI
   CALL testMPI%init(mpierr)
   IF(testMPI%rank /=0)THEN
@@ -69,15 +69,15 @@ PROGRAM testHDF5
     SUBROUTINE testHDF5FileTypeCreateDelete()
       TYPE(HDF5FileType) :: h5
       LOGICAL(SBK) :: exists
-      
+
       CALL h5%init('createdeletetest.h5','NEW')
       ASSERT(h5%isinit,'HDF5 object no properly initialized')
       IF(h5%isinit) exists=.TRUE.
-      
+
       CALL h5%fdelete()
       INQUIRE(FILE='createdeletetest.h5',EXIST=exists)
       ASSERT(.NOT.exists,'HDF5 object not properly deleted.')
-      
+
     ENDSUBROUTINE testHDF5FileTypeCreateDelete
 !
 !-------------------------------------------------------------------------------
@@ -125,7 +125,7 @@ PROGRAM testHDF5
       testS1=[(i,i=1,SIZE(testS1))]
       testS2=RESHAPE([(i,i=1,SIZE(testS2))],SHAPE(testS2))
       testS3=RESHAPE([(i,i=1,SIZE(testS3))],SHAPE(testS3))
-      testL0=123456789123456789_SLK
+      testL0=12345678912345678_SLK
       testL1=[(i+1000000000,i=1,SIZE(testL1))]
       testL2=RESHAPE([(i+1000000000,i=1,SIZE(testL2))],SHAPE(testL2))
       testL3=RESHAPE([(i+1000000000,i=1,SIZE(testL3))],SHAPE(testL3))
@@ -166,10 +166,10 @@ PROGRAM testHDF5
           ENDDO
         ENDDO
       ENDDO
-    
+
       ! Create a RW access file. Existing file overwritten
       CALL h5%init('writetest.h5','NEW')
-      
+
 #ifdef MPACT_HAVE_HDF5
       ASSERT(h5%isinit,'HDF5 file type not properly initialized!')
 #else
@@ -274,7 +274,7 @@ PROGRAM testHDF5
       refS1=[(i,i=1,SIZE(refS1))]
       refS2=RESHAPE([(i,i=1,SIZE(refS2))],SHAPE(refS2))
       refS3=RESHAPE([(i,i=1,SIZE(refS3))],SHAPE(refS3))
-      refL0=123456789123456789_SLK
+      refL0=12345678912345678_SLK
       refL1=[(i+1000000000,i=1,SIZE(refL1))]
       refL2=RESHAPE([(i+1000000000,i=1,SIZE(refL2))],SHAPE(refL2))
       refL3=RESHAPE([(i+1000000000,i=1,SIZE(refL3))],SHAPE(refL3))
@@ -315,7 +315,7 @@ PROGRAM testHDF5
           ENDDO
         ENDDO
       ENDDO
-      
+
 !  Begin test
       CALL h5%init('readtest.h5','READ')
 
@@ -353,6 +353,7 @@ PROGRAM testHDF5
       ASSERT(ALL(testN3==refN3),'N3 Failure')
       CALL h5%fread('groupI->memL0',testL0)
       ASSERT(testL0==refL0,'L0 Failure')
+      FINFO()testL0,refL0
       CALL h5%fread('groupI->memL1',testL1)
       ASSERT(ALL(testL1==refL1),'L1 Failure')
       CALL h5%fread('groupI->memL2',testL2)
@@ -393,7 +394,7 @@ PROGRAM testHDF5
         ENDDO
       ENDDO
       ASSERT(checkread,'C3 Failure')
-      
+
 !      WRITE(readtest,*) TRIM(readtest),'testD0:'; WRITE(readtest,FMT=*)TRIM(readtest),testD0
 !      WRITE(readtest,*) TRIM(readtest),'testD1:'; WRITE(readtest,FMT=*)TRIM(readtest),testD1
 !      WRITE(readtest,*) TRIM(readtest),'testD2:'; WRITE(readtest,FMT=*)TRIM(readtest),testD2
@@ -415,7 +416,7 @@ PROGRAM testHDF5
 !      WRITE(readtest,*) TRIM(readtest),'testB2:'; WRITE(readtest,FMT=*)TRIM(readtest),testB2
 !      WRITE(readtest,*) TRIM(readtest),'testB3:'; WRITE(readtest,FMT=*)TRIM(readtest),testB3
 !      WRITE(readtest,*) TRIM(readtest),'testC0:'; WRITE(1,FMT=*)TRIM(readtest)//TRIM(testC0)
-!      WRITE(readtest,*) TRIM(readtest),'testC1:'; 
+!      WRITE(readtest,*) TRIM(readtest),'testC1:';
 !      DO i=1,SIZE(testC1)
 !        WRITE(readtest,*)TRIM(readtest),CHAR(testC1(i))
 !      ENDDO
@@ -442,7 +443,7 @@ PROGRAM testHDF5
 
       CALL h5%clear()
       ASSERT(.NOT.h5%isinit, 'HDF5 object not properly cleared!')
-      
+
  !     CALL testHDF5_read_check(readcheck)
  !     checkread=.TRUE.
  !     DO i=1,LEN(readtest)
@@ -451,9 +452,9 @@ PROGRAM testHDF5
  !         WRITE(*,*) i, readtest(i:i), readcheck(i:i)
  !       ENDIF
  !     ENDDO
- !     
+ !
  !     ASSERT(checkread, 'HDF5 file not properly read!')
-      
+
     ENDSUBROUTINE testHDF5FileTypeRead
 !
 !-------------------------------------------------------------------------------
@@ -467,7 +468,7 @@ PROGRAM testHDF5
 !-------------------------------------------------------------------------------
     SUBROUTINE testHDF5_read_check(readtest)
       CHARACTER(LEN=*), INTENT(INOUT) :: readtest
-      
+
       WRITE(readtest,FMT=*) '                                          '// &
       '                                                                  '// &
       '            memD0memD1memD2memD3memS0memS1memS2memS3testD0:   42.1'// &
