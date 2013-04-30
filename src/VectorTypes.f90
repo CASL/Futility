@@ -489,6 +489,7 @@ MODULE VectorTypes
       thisVector%isInit=.FALSE.
       thisVector%n=0
       IF(ALLOCATED(thisVector%b)) CALL demallocA(thisVector%b)
+      IF(VectorType_Paramsflag) CALL VectorType_Clear_ValidParams()
     ENDSUBROUTINE clear_RealVectorType
 !
 !-------------------------------------------------------------------------------
@@ -750,6 +751,7 @@ MODULE VectorTypes
       thisVector%isAssembled=.FALSE.
       thisVector%isCreated=.FALSE.
       thisVector%n=0
+      IF(VectorType_Paramsflag) CALL VectorType_Clear_ValidParams()
 #else
       CHARACTER(LEN=*),PARAMETER :: myName='clear_PETScVectorType'
       LOGICAL(SBK) :: localalloc

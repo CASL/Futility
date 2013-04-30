@@ -705,6 +705,7 @@ MODULE MatrixTypes
       IF(ALLOCATED(matrix%ia)) CALL demallocA(matrix%ia)
       IF(ALLOCATED(matrix%ja)) CALL demallocA(matrix%ja)
       IF(ALLOCATED(matrix%a)) CALL demallocA(matrix%a)
+      IF(MatrixType_Paramsflag) CALL MatrixTypes_Clear_ValidParams()    
     ENDSUBROUTINE clear_SparseMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -718,6 +719,7 @@ MODULE MatrixTypes
       matrix%n=0
       matrix%isSymmetric=.FALSE.
       IF(ALLOCATED(matrix%a)) CALL demallocA(matrix%a)
+      IF(MatrixType_Paramsflag) CALL MatrixTypes_Clear_ValidParams()   
     ENDSUBROUTINE clear_DenseSquareMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -731,6 +733,7 @@ MODULE MatrixTypes
       matrix%n=0
       matrix%isSymmetric=.FALSE.
       IF(ALLOCATED(matrix%a)) CALL demallocA(matrix%a)
+      IF(MatrixType_Paramsflag) CALL MatrixTypes_Clear_ValidParams()  
      ENDSUBROUTINE clear_TriDiagMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -744,6 +747,7 @@ MODULE MatrixTypes
       matrix%n=0
       matrix%m=0
       IF(ALLOCATED(matrix%a)) CALL demallocA(matrix%a)
+      IF(MatrixType_Paramsflag) CALL MatrixTypes_Clear_ValidParams()  
     ENDSUBROUTINE clear_DenseRectMatrixType
 !
 !-------------------------------------------------------------------------------

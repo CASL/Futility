@@ -576,6 +576,7 @@ MODULE LinearSolverTypes
       ENDIF
       CALL solver%SolveTime%ResetTimer()
       solver%isDecomposed=.FALSE.
+      IF(LinearSolverType_Paramsflag) CALL LinearSolverType_Clear_ValidParams()
     ENDSUBROUTINE clear_LinearSolverType_Direct
 !
 !-------------------------------------------------------------------------------
@@ -624,6 +625,7 @@ MODULE LinearSolverTypes
       solver%iters=0
       solver%convTol=0._SRK
       solver%residual=0._SRK
+      IF(LinearSolverType_Paramsflag) CALL LinearSolverType_Clear_ValidParams()
     ENDSUBROUTINE clear_LinearSolverType_Iterative
 !
 !-------------------------------------------------------------------------------

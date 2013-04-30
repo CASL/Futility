@@ -103,9 +103,6 @@ PROGRAM testLinearSolver
   CALL vecPList%clear()
   CALL optListMat%clear()
   CALL optListLS%clear()
-  CALL LinearSolverType_Clear_ValidParams()
-  CALL MatrixTypes_Clear_ValidParams()
-  CALL VectorType_Clear_ValidParams()
   
 #ifdef MPACT_HAVE_PETSC    
   CALL PetscFinalize(ierr)
