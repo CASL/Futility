@@ -129,12 +129,27 @@ MODULE ParallelEnv
       !> @copybrief ParallelEnv::barrier_MPI_Env_type
       !> @copydetails  ParallelEnv::barrier_MPI_Env_type
       PROCEDURE,PASS :: barrier => barrier_MPI_Env_type
-      !> @copybrief ParallelEnv::allReduce_MPI_Env_type
-      !> @copydetails  ParallelEnv::allReduce_MPI_Env_type
-      PROCEDURE,PASS :: allReduce => allReduce_MPI_Env_type
-      !> @copybrief ParallelEnv::allReduceMax_MPI_Env_type
-      !> @copydetails  ParallelEnv::allReduceMax_MPI_Env_type
-      PROCEDURE,PASS :: allReduceMax => allReduceMax_MPI_Env_type
+      !> @copybrief ParallelEnv::allReduceR_MPI_Env_type
+      !> @copydetails  ParallelEnv::allReduceR_MPI_Env_type
+      PROCEDURE,PASS :: allReduce => allReduceR_MPI_Env_type
+      !> @copybrief ParallelEnv::allReduceI_MPI_Env_type
+      !> @copydetails  ParallelEnv::allReduceI_MPI_Env_type
+      PROCEDURE,PASS :: allReduceI => allReduceI_MPI_Env_type
+      !GENERIC :: allReduce => allReduceR_MPI_Env_type,allReduceI_MPI_Env_type
+      !> @copybrief ParallelEnv::allReduceMaxR_MPI_Env_type
+      !> @copydetails  ParallelEnv::allReduceMaxR_MPI_Env_type
+      PROCEDURE,PASS :: allReduceMax => allReduceMaxR_MPI_Env_type
+      !> @copybrief ParallelEnv::allReduceMaxI_MPI_Env_type
+      !> @copydetails  ParallelEnv::allReduceMaxI_MPI_Env_type
+      PROCEDURE,PASS :: allReduceMaxI => allReduceMaxI_MPI_Env_type
+      !GENERIC :: allReduceMax => allReduceMaxR_MPI_Env_type,allReduceMaxI_MPI_Env_type
+      !> @copybrief ParallelEnv::allReduceMinR_MPI_Env_type
+      !> @copydetails  ParallelEnv::allReduceMinR_MPI_Env_type
+      PROCEDURE,PASS :: allReduceMin => allReduceMinR_MPI_Env_type
+      !> @copybrief ParallelEnv::allReduceMinI_MPI_Env_type
+      !> @copydetails  ParallelEnv::allReduceMinI_MPI_Env_type
+      PROCEDURE,PASS :: allReduceMinI => allReduceMinI_MPI_Env_type
+      !GENERIC :: allReduceMin => allReduceMinR_MPI_Env_type,allReduceMinI_MPI_Env_type
       !> @copybrief ParallelEnv::trueForAll_MPI_Env_type
       !> @copydetails  ParallelEnv::trueForAll_MPI_Env_type
       PROCEDURE,PASS :: trueForAll => trueForAll_MPI_Env_type
@@ -186,6 +201,33 @@ MODULE ParallelEnv
       PROCEDURE,PASS :: clear => clear_ParEnvType
   ENDTYPE ParallelEnvType
 
+  !INTERFACE allReduce_MPI_Env_type
+  !  !> @copybrief ParallelEnv::allReduceR_MPI_Env_type
+  !  !> @copydetails ParallelEnv::allReduceR_MPI_Env_type
+  !  MODULE PROCEDURE allReduceR_MPI_Env_type
+  !  !> @copybrief ParallelEnv::allReduceI_MPI_Env_type
+  !  !> @copydetails ParallelEnv::allReduceI_MPI_Env_type
+  !  MODULE PROCEDURE allReduceI_MPI_Env_type
+  !ENDINTERFACE
+  !
+  !INTERFACE allReduceMax_MPI_Env_type
+  !  !> @copybrief ParallelEnv::allReduceMaxR_MPI_Env_type
+  !  !> @copydetails ParallelEnv::allReduceMaxR_MPI_Env_type
+  !  MODULE PROCEDURE allReduceMaxR_MPI_Env_type
+  !  !> @copybrief ParallelEnv::allReduceMaxI_MPI_Env_type
+  !  !> @copydetails ParallelEnv::allReduceMaxI_MPI_Env_type
+  !  MODULE PROCEDURE allReduceMaxI_MPI_Env_type
+  !ENDINTERFACE
+  !
+  !INTERFACE allReduceMin_MPI_Env_type
+  !  !> @copybrief ParallelEnv::allReduceMinR_MPI_Env_type
+  !  !> @copydetails ParallelEnv::allReduceMinR_MPI_Env_type
+  !  MODULE PROCEDURE allReduceMinR_MPI_Env_type
+  !  !> @copybrief ParallelEnv::allReduceMinI_MPI_Env_type
+  !  !> @copydetails ParallelEnv::allReduceMinI_MPI_Env_type
+  !  MODULE PROCEDURE allReduceMinI_MPI_Env_type
+  !ENDINTERFACE
+    
   !> Private scratch variable for the mpierr
   INTEGER(SIK) :: mpierr
 
@@ -491,7 +533,7 @@ MODULE ParallelEnv
 !>
 !> This routine only performs a sum operation and only for reals.
 !>
-    SUBROUTINE allReduce_MPI_Env_type(myPE,n,x)
+    SUBROUTINE allReduceR_MPI_Env_type(myPE,n,x)
       CHARACTER(LEN=*),PARAMETER :: myName='allReduce_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       INTEGER(SIK),INTENT(IN) :: n
@@ -515,18 +557,18 @@ MODULE ParallelEnv
         ENDIF
       ENDIF
 #endif
-    ENDSUBROUTINE allReduce_MPI_Env_type
+    ENDSUBROUTINE allReduceR_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
 !> @brief Wrapper routine calls MPI_Allreduce and performs a max operation
 !> for a real array.
 !> @param myPE the MPI parallel environment
 !> @param n the number of data elements to communicate
-!> @param x the partial sum to be returned as the total sum
+!> @param x the partial array to be returned as the max array
 !>
-!> This routine only performs a sum operation and only for reals.
+!> This routine only performs a max operation and only for reals.
 !>
-    SUBROUTINE allReduceMax_MPI_Env_type(myPE,n,x)
+    SUBROUTINE allReduceMaxR_MPI_Env_type(myPE,n,x)
       CHARACTER(LEN=*),PARAMETER :: myName='allReduce_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       INTEGER(SIK),INTENT(IN) :: n
@@ -550,7 +592,135 @@ MODULE ParallelEnv
         ENDIF
       ENDIF
 #endif
-    ENDSUBROUTINE allReduceMax_MPI_Env_type
+    ENDSUBROUTINE allReduceMaxR_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine calls MPI_Allreduce and performs a min operation
+!> for a real array.
+!> @param myPE the MPI parallel environment
+!> @param n the number of data elements to communicate
+!> @param x the partial array to be returned as the min array
+!>
+!> This routine only performs a min operation and only for reals.
+!>
+    SUBROUTINE allReduceMinR_MPI_Env_type(myPE,n,x)
+      CHARACTER(LEN=*),PARAMETER :: myName='allReduce_MPI_Env_type'
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
+      INTEGER(SIK),INTENT(IN) :: n
+      REAL(SRK),INTENT(INOUT) :: x(*)
+#ifdef HAVE_MPI
+      REAL(SRK) :: rbuf(n)
+      IF(myPE%initstat) THEN
+#ifdef DBL
+        CALL MPI_Allreduce(x,rbuf,n,MPI_DOUBLE_PRECISION,MPI_MIN, &
+          myPE%comm,mpierr)
+#else
+        CALL MPI_Allreduce(x,rbuf,n,MPI_SINGLE_PRECISION,MPI_MIN, &
+          myPE%comm,mpierr)
+#endif
+        IF(mpierr /= MPI_SUCCESS) THEN
+          CALL eParEnv%raiseError(modName//'::'// &
+            myName//' - call to MPI_AllreduceMin returned an error!')
+        ELSE
+          !Copy the result to the output argument
+          CALL BLAS_copy(n,rbuf,1,x,1)
+        ENDIF
+      ENDIF
+#endif
+    ENDSUBROUTINE allReduceMinR_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine calls MPI_Allreduce and performs a sum of operation
+!> for an integer array.
+!> @param myPE the MPI parallel environment
+!> @param n the number of data elements to communicate
+!> @param x the partial sum to be returned as the total sum
+!>
+!> This routine only performs a sum operation and only for integers.
+!>
+    SUBROUTINE allReduceI_MPI_Env_type(myPE,n,x)
+      CHARACTER(LEN=*),PARAMETER :: myName='allReduce_MPI_Env_type'
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
+      INTEGER(SIK),INTENT(IN) :: n
+      INTEGER(SIK),INTENT(INOUT) :: x(*)
+#ifdef HAVE_MPI
+      INTEGER(SIK) :: rbuf(n)
+      IF(myPE%initstat) THEN
+        CALL MPI_Allreduce(x,rbuf,n,MPI_INTEGER,MPI_SUM, &
+          myPE%comm,mpierr)
+        IF(mpierr /= MPI_SUCCESS) THEN
+          CALL eParEnv%raiseError(modName//'::'// &
+            myName//' - call to MPI_Allreduce returned an error!')
+        ELSE
+          !Copy the result to the output argument
+          !CALL BLAS_copy(n,rbuf,1,x,1)
+          x=rbuf ! No BLAS_copy for integers
+        ENDIF
+      ENDIF
+#endif
+    ENDSUBROUTINE allReduceI_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine calls MPI_Allreduce and performs a max operation
+!> for an integer array.
+!> @param myPE the MPI parallel environment
+!> @param n the number of data elements to communicate
+!> @param x the partial array to be returned as the max array
+!>
+!> This routine only performs a max operation and only for integers.
+!>
+    SUBROUTINE allReduceMaxI_MPI_Env_type(myPE,n,x)
+      CHARACTER(LEN=*),PARAMETER :: myName='allReduce_MPI_Env_type'
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
+      INTEGER(SIK),INTENT(IN) :: n
+      INTEGER(SIK),INTENT(INOUT) :: x(*)
+#ifdef HAVE_MPI
+      INTEGER(SIK) :: rbuf(n)
+      IF(myPE%initstat) THEN
+        CALL MPI_Allreduce(x,rbuf,n,MPI_INTEGER,MPI_MAX, &
+          myPE%comm,mpierr)
+        IF(mpierr /= MPI_SUCCESS) THEN
+          CALL eParEnv%raiseError(modName//'::'// &
+            myName//' - call to MPI_AllreduceMax returned an error!')
+        ELSE
+          !Copy the result to the output argument
+          !CALL BLAS_copy(n,rbuf,1,x,1)
+          x=rbuf ! No BLAS_copy for integers
+        ENDIF
+      ENDIF
+#endif
+    ENDSUBROUTINE allReduceMaxI_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine calls MPI_Allreduce and performs a min operation
+!> for an integer array.
+!> @param myPE the MPI parallel environment
+!> @param n the number of data elements to communicate
+!> @param x the partial array to be returned as the min array
+!>
+!> This routine only performs a min operation and only for integers.
+!>
+    SUBROUTINE allReduceMinI_MPI_Env_type(myPE,n,x)
+      CHARACTER(LEN=*),PARAMETER :: myName='allReduce_MPI_Env_type'
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
+      INTEGER(SIK),INTENT(IN) :: n
+      INTEGER(SIK),INTENT(INOUT) :: x(*)
+#ifdef HAVE_MPI
+      INTEGER(SIK) :: rbuf(n)
+      IF(myPE%initstat) THEN
+        CALL MPI_Allreduce(x,rbuf,n,MPI_INTEGER,MPI_MIN, &
+          myPE%comm,mpierr)
+        IF(mpierr /= MPI_SUCCESS) THEN
+          CALL eParEnv%raiseError(modName//'::'// &
+            myName//' - call to MPI_AllreduceMin returned an error!')
+        ELSE
+          !Copy the result to the output argument
+          !CALL BLAS_copy(n,rbuf,1,x,1)
+          x=rbuf ! No BLAS_copy for integers
+        ENDIF
+      ENDIF
+#endif
+    ENDSUBROUTINE allReduceMinI_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
 !> @brief Wrapper routine calls MPI_Allreduce and performs a logical and
