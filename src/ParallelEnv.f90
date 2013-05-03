@@ -654,7 +654,7 @@ MODULE ParallelEnv
         ELSE
           !Copy the result to the output argument
           !CALL BLAS_copy(n,rbuf,1,x,1)
-          x=rbuf ! No BLAS_copy for integers
+          x(1:n)=rbuf ! No BLAS_copy for integers
         ENDIF
       ENDIF
 #endif
@@ -685,7 +685,7 @@ MODULE ParallelEnv
         ELSE
           !Copy the result to the output argument
           !CALL BLAS_copy(n,rbuf,1,x,1)
-          x=rbuf ! No BLAS_copy for integers
+          x(1:n)=rbuf ! No BLAS_copy for integers
         ENDIF
       ENDIF
 #endif
@@ -716,7 +716,7 @@ MODULE ParallelEnv
         ELSE
           !Copy the result to the output argument
           !CALL BLAS_copy(n,rbuf,1,x,1)
-          x=rbuf ! No BLAS_copy for integers
+          x(1:n)=rbuf ! No BLAS_copy for integers
         ENDIF
       ENDIF
 #endif
