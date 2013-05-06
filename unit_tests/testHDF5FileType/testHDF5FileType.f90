@@ -361,7 +361,7 @@ PROGRAM testHDF5
 
       CALL h5%ls('groupR',sets)
       DO i=1,SIZE(sets)
-        ASSERT(TRIM(refsets(i))==TRIM(sets(i)),refsets(i)//'List Failure')
+        ASSERT(TRIM(refsets(i))==TRIM(sets(i)),refsets(i)//' List Failure')
       ENDDO
 
       SET_PREFIX("hdf5%read()")
