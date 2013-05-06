@@ -484,27 +484,22 @@ MODULE FileType_HDF5
         ALLOCATE(file%e)
         localalloc=.TRUE.
       ENDIF
-      IF(file%isinit) THEN
-        OPEN(UNIT=1,FILE=TRIM(file%getFilePath())// &
-            TRIM(file%getFileName())//TRIM(file%getFileExt()), &
-            IOSTAT=error)
-        IF(error /= 0) THEN
-          CALL file%e%raiseError(modName//'::'//myName// &
-            ' - Could not open file.')
-        ELSE
-          CALL file%clear()
-          CLOSE(UNIT=1,STATUS='DELETE',IOSTAT=error)
-          IF(error /= 0) THEN
-            WRITE(emesg,'(a,i4,a,i4)') 'Error deleting file (UNIT=', &
-                1,') IOSTAT=',error
-            CALL file%e%raiseError(modName//'::'//myName//' - '//emesg)
-          ELSE
-            CALL file%setOpenStat(.FALSE.)
-          ENDIF
-        ENDIF
+      OPEN(UNIT=1,FILE=TRIM(file%getFilePath())// &
+          TRIM(file%getFileName())//TRIM(file%getFileExt()), &
+          IOSTAT=error)
+      IF(error /= 0) THEN
+        CALL file%e%raiseError(modName//'::'//myName// &
+          ' - Could not open file.')
       ELSE
-        CALL file%e%raiseError(modName//'::'//myName//' - '// &
-        'Cannot delete file! File object has not been initialized!')
+        IF(file%isinit) CALL file%clear()
+        CLOSE(UNIT=1,STATUS='DELETE',IOSTAT=error)
+        IF(error /= 0) THEN
+          WRITE(emesg,'(a,i4,a,i4)') 'Error deleting file (UNIT=', &
+              1,') IOSTAT=',error
+          CALL file%e%raiseError(modName//'::'//myName//' - '//emesg)
+        ELSE
+          CALL file%setOpenStat(.FALSE.)
+        ENDIF
       ENDIF
       IF(localalloc) DEALLOCATE(file%e)
 #else
