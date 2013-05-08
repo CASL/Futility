@@ -614,6 +614,7 @@ MODULE MatrixTypes
       CLASS(ParamType),INTENT(IN) :: Params
       TYPE(ParamType) :: validParams
       INTEGER(SIK) :: n, matType, MPI_COMM_ID, nlocal
+      INTEGER(SIK),ALLOCATABLE :: dnnz(:), onnz(:)
       LOGICAL(SBK) :: localalloc, isSym
       
 #ifdef MPACT_HAVE_PETSC
@@ -640,6 +641,10 @@ MODULE MatrixTypes
       CALL validParams%get('MatrixType->matType',matType)
       CALL validParams%get('MatrixType->MPI_COMM_ID',MPI_COMM_ID)
       CALL validParams%get('MatrixType->nlocal',nlocal)
+      ALLOCATE(dnnz(nlocal))
+      ALLOCATE(onnz(nlocal))
+      CALL validParams%get('MatrixType->dnnz',dnnz)
+      CALL validParams%get('MatrixType->onnz',onnz)
       CALL validParams%clear()
 
       IF(.NOT. matrix%isInit) THEN
@@ -666,6 +671,7 @@ MODULE MatrixTypes
           ELSE
             CALL MatSetSizes(matrix%a,nlocal,nlocal,matrix%n,matrix%n,ierr)
           ENDIF
+          
           IF (matType == SPARSE) THEN
             CALL MatSetType(matrix%a,MATMPIAIJ,ierr)
           ELSEIF (matType == DENSESQUARE) THEN
@@ -675,7 +681,12 @@ MODULE MatrixTypes
               modName//'::'//myName//' - Only sparse and dense square '// &
               'matrices are available with PETSc.')
           ENDIF
-          CALL MatSetUp(matrix%a,ierr)
+          
+          IF(MINVAL(dnnz) > 0_SIK .AND. MINVAL(onnz) > 0_SIK) THEN
+            CALL MatMPIAIJSetPreallocation(matrix%A,0,dnnz,0,onnz,ierr)
+          ELSE
+            CALL MatSetUp(matrix%a,ierr)
+          ENDIF
         ENDIF
       ELSE
         CALL eMatrixType%raiseError('Incorrect call to '// &
@@ -1742,13 +1753,15 @@ MODULE MatrixTypes
 !> The optional parameters for the PETSc Matrix Type do not exist.
 !>
     SUBROUTINE MatrixTypes_Declare_ValidParams()
-      INTEGER(SIK) :: n,m,nnz,matType,MPI_COMM_ID,nlocal
+      INTEGER(SIK) :: n,m,nnz,dnnz(1),onnz(1),matType,MPI_COMM_ID,nlocal
       LOGICAL(SBK) :: isSym
       
       !Setup the required and optional parameter lists
       n=1
       m=1
       nnz=1
+      dnnz=-1
+      onnz=-1
       isSym=.FALSE.
       matType=1
       MPI_COMM_ID=1
@@ -1773,6 +1786,8 @@ MODULE MatrixTypes
       
       !There are no optional parameters at this time.
       CALL PETScMatrixType_optParams%add('MatrixType->nlocal',nlocal)
+      CALL PETScMatrixType_optParams%add('MatrixType->dnnz',dnnz)
+      CALL PETScMatrixType_optParams%add('MatrixType->onnz',onnz)
       
       !Set flag to true since the defaults have been set for this type.
       MatrixType_Paramsflag=.TRUE.
