@@ -505,7 +505,7 @@ MODULE LinearSolverTypes
                 ENDSELECT
 
                 !set preconditioner
-                IF(solver%solverMethod == GMRES) THEN
+                IF((solver%solverMethod == GMRES) .OR. (solver%solverMethod == BICGSTAB)) THEN
                   CALL KSPGetPC(solver%ksp,solver%pc,ierr)
                   CALL PCSetType(solver%pc,PCBJACOBI,ierr)
                   CALL PCSetFromOptions(solver%pc,ierr)
