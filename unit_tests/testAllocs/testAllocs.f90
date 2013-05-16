@@ -15,57 +15,56 @@
 ! manufacturer, or otherwise, does not necessarily constitute or imply its     !
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
+#include "UnitTest.h"
+
 PROGRAM testAllocs
       
   USE IntrType
   USE Allocs
+  USE UnitTest
   IMPLICIT NONE
   
-  WRITE(*,*) '==================================================='
-  WRITE(*,*) 'TESTING ALLOCS...'
-  WRITE(*,*) '==================================================='
-  WRITE(*,*) 'TESTING PARAMETERS'
-  WRITE(*,*) '  Passed: ALLOC_MEMSTRING_LENGTH = ',ALLOC_MEMSTRING_LENGTH
-  WRITE(*,*) '---------------------------------------------------'
-  WRITE(*,*) 'TESTING ALLOCS MEMORY USAGE REPORTING'
-  IF(getMemUsageChar(563246226243._SRK) /= '  524.56 GB   ') THEN
-    WRITE(*,*) 'getMemUsageChar(563246226243._SRK) FAILED!'
-    STOP 666
-  ELSE
-    WRITE(*,*) '  Passed: getMemUsageChar(bytes) = '// &
-               getMemUsageChar(563246226243._SRK)
-  ENDIF
+  CREATE_TEST("Allocs")
   
-  IF(getMemUsageChar() /= '    0.00 bytes') THEN
-    WRITE(*,*) 'getMemUsageChar() FAILED!'
-    STOP 666
-  ELSE
-    WRITE(*,*) '  Passed: getMemUsageChar() = '//TRIM(getMemUsageChar())
-  ENDIF
-  WRITE(*,*) '---------------------------------------------------'
+  REGISTER_SUBTEST("testGetMemUsage()",testGetMemUsage)
   
   CALL eAllocs%setStopOnError(.FALSE.)
   CALL eAllocs%setQuietMode(.TRUE.)
-  CALL testTOOBIGP()
-  CALL testTOOBIGA()
+  REGISTER_SUBTEST("testTOOBIGP()",testTOOBIGP)
+  REGISTER_SUBTEST("testTOOBIGA()",testTOOBIGA)
   CALL eAllocs%setStopOnError(.TRUE.)
   
-  CALL testBOOLP()
-  CALL testBOOLA()
-  CALL testINTP()
-  CALL testINTA()
-  CALL testLONGINTP()
-  CALL testLONGINTA()
-  CALL testSINGLEP()
-  CALL testSINGLEA()
-  CALL testDOUBLEP()
-  CALL testDOUBLEA()
+  REGISTER_SUBTEST("testBOOLP()",testBOOLP)
+  REGISTER_SUBTEST("testBOOLA()",testBOOLA)
+  REGISTER_SUBTEST("testINTP()",testINTP)
+  REGISTER_SUBTEST("testINTA()",testINTA)
+  REGISTER_SUBTEST("testLONGINTP()",testLONGINTP)
+  REGISTER_SUBTEST("testLONGINTA()",testLONGINTA)
+  REGISTER_SUBTEST("testSINGLEP()",testSINGLEP)
+  REGISTER_SUBTEST("testSINGLEA()",testSINGLEA)
+  REGISTER_SUBTEST("testDOUBLEP()",testDOUBLEP)
+  REGISTER_SUBTEST("testDOUBLEA()",testDOUBLEa)
   
-  WRITE(*,*) '==================================================='
-  WRITE(*,*) 'TESTING ALLOCS PASSED!'
-  WRITE(*,*) '==================================================='
+  !    CALL testBOOLA()
+  !    CALL testINTP()
+  !    CALL testINTA()
+  !    CALL testLONGINTP()
+  !    CALL testLONGINTA()
+  !    CALL testSINGLEP()
+  !    CALL testSINGLEA()
+  !    CALL testDOUBLEP()
+  !    CALL testDOUBLEA()
+  
+  FINALIZE_TEST()
   
   CONTAINS
+    SUBROUTINE testGetMemUsage()
+      
+      ASSERT(ALLOC_MEMSTRING_LENGTH == 14_SIK,'ALLOC_MEMSTRING_LENGTH')
+      ASSERT(getMemUsageChar(563246226243._SRK) == '  524.56 GB   ','getMemUsageChar(563246226243._SRK)')  
+      ASSERT(getMemUsageChar() == '    0.00 bytes','getMemUsageChar()')
+  
+    ENDSUBROUTINE testGetMemUsage
 !
 !===============================================================================
 ! Test allocation/deallocation for booleans
@@ -74,6 +73,7 @@ PROGRAM testAllocs
       USE Allocs
       IMPLICIT NONE
     
+      LOGICAL(SBK) :: test
       LOGICAL(SBK),POINTER :: bool1(:)
       LOGICAL(SBK),POINTER :: bool2(:,:)
       LOGICAL(SBK),POINTER :: bool3(:,:,:)
@@ -84,64 +84,39 @@ PROGRAM testAllocs
       REAL(SRK) :: nbytes0
 
       NULLIFY(bool1,bool2,bool3,bool4,bool5,bool6,bool7)
-
-      WRITE(*,*) 'TESTING ALLOCS FOR LOGICAL (BOOLEAN) POINTER TYPES'
   !
   ! rank 1 variable
       NULLIFY(bool1)
       CALL dmallocP(bool1,-10)
+      ASSERT(.NOT.ASSOCIATED(bool1),'dmallocP(bool1,-10)')
       CALL dmallocP(bool1,10)
-      IF( (.NOT.ASSOCIATED(bool1)) .OR. ANY(bool1) .OR. &
-          (UBOUND(bool1,1) /= 10) .OR. (LBOUND(bool1,1) /= 1) ) THEN
-        WRITE(*,*) 'CALL dmallocP(bool1,10) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocP(bool1,10) = ' &
-                   //TRIM(getMemUsageChar())
-      ENDIF
+      test=(ASSOCIATED(bool1)) .AND. .NOT.ANY(bool1) .AND. &
+            (UBOUND(bool1,1) == 10) .AND. (LBOUND(bool1,1)==1)
+      ASSERT(test,'dmallocP(bool1,10)')
+      
       nbytes0=Alloc_nbytes
       CALL dmallocP(bool1,100)
-      IF( (.NOT.ASSOCIATED(bool1)) .OR. ANY(bool1) .OR. Alloc_nbytes /= nbytes0 &
-          .OR. (UBOUND(bool1,1) /= 10) .OR. (LBOUND(bool1,1) /= 1) ) THEN
-        WRITE(*,*) 'Redundant CALL dmallocP(bool1,100) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: Redundant CALL dmallocP(bool1,100)'
-      ENDIF
+      test=ASSOCIATED(bool1) .AND. .NOT.ANY(bool1) .AND. Alloc_nbytes == nbytes0 &
+            .AND. UBOUND(bool1,1) == 10 .AND. LBOUND(bool1,1) == 1
+      ASSERT(test,'dmallocP(bool1,100)')
+      
       CALL demallocP(bool1)
-      IF( ASSOCIATED(bool1) .OR. Alloc_nbytes /= 0.0_SRK) THEN
-        WRITE(*,*) 'CALL demallocP(bool1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL demallocP(bool1)'
-      ENDIF
+      ASSERT(.NOT.ASSOCIATED(bool1) .AND. Alloc_nbytes == 0.0_SRK,'demallocP(bool1)')
+      
       CALL demallocP(bool1)
-      IF( ASSOCIATED(bool1) .OR. Alloc_nbytes /= 0.0_SRK) THEN
-        WRITE(*,*) 'Redundant CALL demallocP(bool1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: Redundant CALL demallocP(bool1)'
-      ENDIF
+      ASSERT(.NOT.ASSOCIATED(bool1) .AND. Alloc_nbytes == 0.0_SRK,'demallocP(bool1)')
+      
       CALL dmalloc0P(bool1,8,-1)
       CALL dmalloc0P(bool1,-1,8)
-      IF( (.NOT.ASSOCIATED(bool1)) .OR. ANY(bool1) .OR. &
-          (UBOUND(bool1,1) /= 8) .OR. (LBOUND(bool1,1) /= -1) ) THEN
-        WRITE(*,*) 'CALL dmalloc0P(bool1,-1,8) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0P(bool1,-1,8) = ' &
-                   //TRIM(getMemUsageChar())
-      ENDIF
+      test=(ASSOCIATED(bool1)) .AND. .NOT.ANY(bool1) .AND. &
+          (UBOUND(bool1,1) == 8) .AND. (LBOUND(bool1,1) == -1)
+      ASSERT(test,'dmalloc0P(bool1,-1,8)')
+      
       nbytes0=Alloc_nbytes
       CALL dmalloc0P(bool1,-1,1)
-      IF( (.NOT.ASSOCIATED(bool1)) .OR. ANY(bool1) .OR. Alloc_nbytes /= nbytes0 &
-          .OR. (UBOUND(bool1,1) /= 8) .OR. (LBOUND(bool1,1) /= -1) ) THEN
-        WRITE(*,*) 'Redundant CALL dmalloc0P(bool1,-1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: Redundant CALL dmalloc0P(bool1,-1,1) = ' &
-                   //TRIM(getMemUsageChar())
-      ENDIF
+      test=(ASSOCIATED(bool1)) .AND. .NOT.ANY(bool1) .AND. Alloc_nbytes == nbytes0 &
+          .AND. (UBOUND(bool1,1) == 8) .AND. (LBOUND(bool1,1) == -1)
+      ASSERT(test,'dmalloc0P(bool1,-1,1)')
       CALL demallocP(bool1)
   !
   ! rank 2 variable
@@ -5468,24 +5443,11 @@ PROGRAM testAllocs
       NULLIFY(s2tb,s3tb,s4tb,s5tb,s6tb,s7tb)
       NULLIFY(d2tb,d3tb,d4tb,d5tb,d6tb,d7tb)
       
-      WRITE(*,*) 'TESTING ALLOCS FOR ERROR CATCHING WITH POINTERS'
-      
-      IF(SUM(eAllocs%getCounterAll()) /= 0) THEN
-        WRITE(*,*) 'SUM(eAllocs%getCounterAll()) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: SUM(eAllocs%getCounterAll()) = ',SUM(eAllocs%getCounterAll())
-      ENDIF
-
-      IF(LEN_TRIM(eAllocs%getLastMessage()) /= 0) THEN
-        WRITE(*,*) 'eAllocs%getLastMessage() FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: eAllocs%getLastMessage() = '//TRIM(eAllocs%getLastMessage())
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) == 0,'SUM(eAllocs%getCounterAll())')
+      ASSERT(LEN_TRIM(eAllocs%getLastMessage()) == 0,'LEN_TRIM(eAllocs%getLastMessage())')
 !
 !Test logicals (booleans)
-       WRITE(*,*) '  Skipping: CALL dmallocP(b1tb,2147483647)'
+!       WRITE(*,*) '  Skipping: CALL dmallocP(b1tb,2147483647)'
 !        CALL dmallocP(b1tb,2147483647)
 !        IF(SUM(eAllocs%getCounterAll()) == 0) THEN
 !          WRITE(*,*) 'CALL dmallocP(b1tb,2147483647) FAILED!'
@@ -5493,7 +5455,7 @@ PROGRAM testAllocs
 !        ELSE
 !          WRITE(*,*) '  Passed: CALL dmallocP(b1tb,2147483647)'
 !        ENDIF
-       WRITE(*,*) '  Skipping: CALL dmalloc0P(b1tb,-2147483648,2147483647)'
+!       WRITE(*,*) '  Skipping: CALL dmalloc0P(b1tb,-2147483648,2147483647)'
 !        CALL dmalloc0P(b1tb,-2147483648,2147483647)
 !        IF(SUM(eAllocs%getCounterAll()) == 0) THEN
 !          WRITE(*,*) 'CALL dmalloc0P(b1tb,-2147483648,2147483647)'
@@ -5502,94 +5464,29 @@ PROGRAM testAllocs
 !          WRITE(*,*) '  Passed: CALL dmalloc0P(b1tb,-2147483648,2147483647)'
 !        ENDIF
       CALL dmallocP(b2tb,1000000000,1000)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocP(b2tb,1000000000,1000) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocP(b2tb,1000000000,1000)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocP(b2tb,1000000000,1000)')
       CALL dmalloc0P(b2tb,1,1000000000,1,1000)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0P(b2tb,1,1000000000,1,1000) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0P(b2tb,1,1000000000,1,1000)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0P(b2tb,1,1000000000,1,1000)')
       CALL dmallocP(b3tb,1000000000,1000,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocP(b3tb,1000000000,1000,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocP(b3tb,1000000000,1000,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocP(b3tb,1000000000,1000,1)')
       CALL dmalloc0P(b3tb,1,1000000000,1,1000,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0P(b3tb,1,1000000000,1,1000,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0P(b3tb,1,1000000000,1,1000,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0P(b3tb,1,1000000000,1,1000,1,1)')
       CALL dmallocP(b4tb,1000000000,1000,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocP(b4tb,1000000000,1000,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocP(b4tb,1000000000,1000,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocP(b4tb,1000000000,1000,1,1)')
       CALL dmalloc0P(b4tb,1,1000000000,1,1000,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0P(b4tb,1,1000000000,1,1000,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0P(b4tb,1,1000000000,1,1000,1,1,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0P(b4tb,1,1000000000,1,1000,1,1,1,1)')
       CALL dmallocP(b5tb,1000000000,1000,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocP(b5tb,1000000000,1000,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocP(b5tb,1000000000,1000,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocP(b5tb,1000000000,1000,1,1,1)')
       CALL dmalloc0P(b5tb,1,1000000000,1,1000,1,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0P(b5tb,1,1000000000,1,1000,1,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0P(b5tb,1,1000000000,1,1000,1,1,1,1,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0P(b5tb,1,1000000000,1,1000,1,1,1,1,1,1)')
       CALL dmallocP(b6tb,1000000000,1000,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocP(b6tb,1000000000,1000,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocP(b6tb,1000000000,1000,1,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocP(b6tb,1000000000,1000,1,1,1,1)')
       CALL dmalloc0P(b6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0P(b6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0P(b6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0P(b6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)')
       CALL dmallocP(b7tb,1000000000,1000,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocP(b7tb,1000000000,1000,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocP(b7tb,1000000000,1000,1,1,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocP(b7tb,1000000000,1000,1,1,1,1,1)')
       CALL dmalloc0P(b7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0P(b7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0P(b7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0P(b7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)')
 !
 !Test regular integers
        WRITE(*,*) '  Skipping: CALL dmallocP(i1tb,2147483647)'
@@ -5609,94 +5506,29 @@ PROGRAM testAllocs
 !          WRITE(*,*) '  Passed: CALL dmalloc0P(i1tb,-2147483648,2147483647)'
 !        ENDIF
       CALL dmallocP(i2tb,1000000000,1000)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocP(i2tb,1000000000,1000) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocP(i2tb,1000000000,1000)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocP(i2tb,1000000000,1000)')
       CALL dmalloc0P(i2tb,1,1000000000,1,1000)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0P(i2tb,1,1000000000,1,1000) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0P(i2tb,1,1000000000,1,1000)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0P(i2tb,1,1000000000,1,1000)')
       CALL dmallocP(i3tb,1000000000,1000,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocP(i3tb,1000000000,1000,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocP(i3tb,1000000000,1000,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocP(i3tb,1000000000,1000,1)')
       CALL dmalloc0P(i3tb,1,1000000000,1,1000,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0P(i3tb,1,1000000000,1,1000,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0P(i3tb,1,1000000000,1,1000,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0P(i3tb,1,1000000000,1,1000,1,1)')
       CALL dmallocP(i4tb,1000000000,1000,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocP(i4tb,1000000000,1000,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocP(i4tb,1000000000,1000,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocP(i4tb,1000000000,1000,1,1)')
       CALL dmalloc0P(i4tb,1,1000000000,1,1000,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0P(i4tb,1,1000000000,1,1000,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0P(i4tb,1,1000000000,1,1000,1,1,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0P(i4tb,1,1000000000,1,1000,1,1,1,1)')
       CALL dmallocP(i5tb,1000000000,1000,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocP(i5tb,1000000000,1000,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocP(i5tb,1000000000,1000,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocP(i5tb,1000000000,1000,1,1,1)')
       CALL dmalloc0P(i5tb,1,1000000000,1,1000,1,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0P(i5tb,1,1000000000,1,1000,1,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0P(i5tb,1,1000000000,1,1000,1,1,1,1,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0P(i5tb,1,1000000000,1,1000,1,1,1,1,1,1)')
       CALL dmallocP(i6tb,1000000000,1000,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocP(i6tb,1000000000,1000,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocP(i6tb,1000000000,1000,1,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocP(i6tb,1000000000,1000,1,1,1,1)')
       CALL dmalloc0P(i6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0P(i6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0P(i6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0P(i6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)')
       CALL dmallocP(i7tb,1000000000,1000,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocP(i7tb,1000000000,1000,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocP(i7tb,1000000000,1000,1,1,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocP(i7tb,1000000000,1000,1,1,1,1,1)')
       CALL dmalloc0P(i7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0P(i7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0P(i7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0P(i7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)')
 !
 !Test long ints
        WRITE(*,*) '  Skipping: CALL dmallocP(l1tb,2147483647)'
@@ -5716,94 +5548,29 @@ PROGRAM testAllocs
 !          WRITE(*,*) '  Passed: CALL dmalloc0P(l1tb,-2147483648,2147483647)'
 !        ENDIF
       CALL dmallocP(l2tb,1000000000,1000)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocP(l2tb,1000000000,1000) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocP(l2tb,1000000000,1000)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocP(l2tb,1000000000,1000)')
       CALL dmalloc0P(l2tb,1,1000000000,1,1000)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0P(l2tb,1,1000000000,1,1000) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0P(l2tb,1,1000000000,1,1000)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0P(l2tb,1,1000000000,1,1000)')
       CALL dmallocP(l3tb,1000000000,1000,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocP(l3tb,1000000000,1000,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocP(l3tb,1000000000,1000,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocP(l3tb,1000000000,1000,1)')
       CALL dmalloc0P(l3tb,1,1000000000,1,1000,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0P(l3tb,1,1000000000,1,1000,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0P(l3tb,1,1000000000,1,1000,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0P(l3tb,1,1000000000,1,1000,1,1)')
       CALL dmallocP(l4tb,1000000000,1000,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocP(l4tb,1000000000,1000,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocP(l4tb,1000000000,1000,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocP(l4tb,1000000000,1000,1,1)')
       CALL dmalloc0P(l4tb,1,1000000000,1,1000,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0P(l4tb,1,1000000000,1,1000,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0P(l4tb,1,1000000000,1,1000,1,1,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0P(l4tb,1,1000000000,1,1000,1,1,1,1)')
       CALL dmallocP(l5tb,1000000000,1000,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocP(l5tb,1000000000,1000,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocP(l5tb,1000000000,1000,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocP(l5tb,1000000000,1000,1,1,1)')
       CALL dmalloc0P(l5tb,1,1000000000,1,1000,1,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0P(l5tb,1,1000000000,1,1000,1,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0P(l5tb,1,1000000000,1,1000,1,1,1,1,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0P(l5tb,1,1000000000,1,1000,1,1,1,1,1,1)')
       CALL dmallocP(l6tb,1000000000,1000,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocP(l6tb,1000000000,1000,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocP(l6tb,1000000000,1000,1,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocP(l6tb,1000000000,1000,1,1,1,1)')
       CALL dmalloc0P(l6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0P(l6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0P(l6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0P(l6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)')
       CALL dmallocP(l7tb,1000000000,1000,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocP(l7tb,1000000000,1000,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocP(l7tb,1000000000,1000,1,1,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocP(l7tb,1000000000,1000,1,1,1,1,1)')
       CALL dmalloc0P(l7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0P(l7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0P(l7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0P(l7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)')
 !
 !Test single reals
        WRITE(*,*) '  Skipping: CALL dmallocP(s1tb,2147483647)'
@@ -5823,94 +5590,29 @@ PROGRAM testAllocs
 !          WRITE(*,*) '  Passed: CALL dmalloc0P(s1tb,-2147483648,2147483647)'
 !        ENDIF
       CALL dmallocP(s2tb,1000000000,1000)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocP(s2tb,1000000000,1000) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocP(s2tb,1000000000,1000)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocP(s2tb,1000000000,1000)')
       CALL dmalloc0P(s2tb,1,1000000000,1,1000)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0P(s2tb,1,1000000000,1,1000) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0P(s2tb,1,1000000000,1,1000)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0P(s2tb,1,1000000000,1,1000)')
       CALL dmallocP(s3tb,1000000000,1000,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocP(s3tb,1000000000,1000,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocP(s3tb,1000000000,1000,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocP(s3tb,1000000000,1000,1)')
       CALL dmalloc0P(s3tb,1,1000000000,1,1000,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0P(s3tb,1,1000000000,1,1000,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0P(s3tb,1,1000000000,1,1000,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0P(s3tb,1,1000000000,1,1000,1,1)')
       CALL dmallocP(s4tb,1000000000,1000,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocP(s4tb,1000000000,1000,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocP(s4tb,1000000000,1000,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocP(s4tb,1000000000,1000,1,1)')
       CALL dmalloc0P(s4tb,1,1000000000,1,1000,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0P(s4tb,1,1000000000,1,1000,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0P(s4tb,1,1000000000,1,1000,1,1,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0P(s4tb,1,1000000000,1,1000,1,1,1,1)')
       CALL dmallocP(s5tb,1000000000,1000,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocP(s5tb,1000000000,1000,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocP(s5tb,1000000000,1000,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocP(s5tb,1000000000,1000,1,1,1)')
       CALL dmalloc0P(s5tb,1,1000000000,1,1000,1,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0P(s5tb,1,1000000000,1,1000,1,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0P(s5tb,1,1000000000,1,1000,1,1,1,1,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0P(s5tb,1,1000000000,1,1000,1,1,1,1,1,1)')
       CALL dmallocP(s6tb,1000000000,1000,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocP(s6tb,1000000000,1000,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocP(s6tb,1000000000,1000,1,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocP(s6tb,1000000000,1000,1,1,1,1)')
       CALL dmalloc0P(s6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0P(s6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0P(s6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0P(s6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)')
       CALL dmallocP(s7tb,1000000000,1000,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocP(s7tb,1000000000,1000,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocP(s7tb,1000000000,1000,1,1,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocP(s7tb,1000000000,1000,1,1,1,1,1)')
       CALL dmalloc0P(s7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0P(s7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0P(s7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0P(s7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)')
 !
 !Test double reals
        WRITE(*,*) '  Skipping: CALL dmallocP(d1tb,2147483647)'
@@ -5930,102 +5632,35 @@ PROGRAM testAllocs
 !          WRITE(*,*) '  Passed: CALL dmalloc0P(d1tb,-2147483648,2147483647)'
 !        ENDIF
       CALL dmallocP(d2tb,1000000000,1000)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocP(d2tb,1000000000,1000) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocP(d2tb,1000000000,1000)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocP(d2tb,1000000000,1000)')
       CALL dmalloc0P(d2tb,1,1000000000,1,1000)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0P(d2tb,1,1000000000,1,1000) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0P(d2tb,1,1000000000,1,1000)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0P(d2tb,1,1000000000,1,1000)')
       CALL dmallocP(d3tb,1000000000,1000,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocP(d3tb,1000000000,1000,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocP(d3tb,1000000000,1000,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocP(d3tb,1000000000,1000,1)')
       CALL dmalloc0P(d3tb,1,1000000000,1,1000,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0P(d3tb,1,1000000000,1,1000,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0P(d3tb,1,1000000000,1,1000,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0P(d3tb,1,1000000000,1,1000,1,1)')
       CALL dmallocP(d4tb,1000000000,1000,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocP(d4tb,1000000000,1000,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocP(d4tb,1000000000,1000,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocP(d4tb,1000000000,1000,1,1)')
       CALL dmalloc0P(d4tb,1,1000000000,1,1000,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0P(d4tb,1,1000000000,1,1000,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0P(d4tb,1,1000000000,1,1000,1,1,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0P(d4tb,1,1000000000,1,1000,1,1,1,1)')
       CALL dmallocP(d5tb,1000000000,1000,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocP(d5tb,1000000000,1000,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocP(d5tb,1000000000,1000,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocP(d5tb,1000000000,1000,1,1,1)')
       CALL dmalloc0P(d5tb,1,1000000000,1,1000,1,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0P(d5tb,1,1000000000,1,1000,1,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0P(d5tb,1,1000000000,1,1000,1,1,1,1,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0P(d5tb,1,1000000000,1,1000,1,1,1,1,1,1)')
       CALL dmallocP(d6tb,1000000000,1000,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocP(d6tb,1000000000,1000,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocP(d6tb,1000000000,1000,1,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocP(d6tb,1000000000,1000,1,1,1,1)')
       CALL dmalloc0P(d6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0P(d6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0P(d6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0P(d6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)')
       CALL dmallocP(d7tb,1000000000,1000,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocP(d7tb,1000000000,1000,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocP(d7tb,1000000000,1000,1,1,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocP(d7tb,1000000000,1000,1,1,1,1,1)')
       CALL dmalloc0P(d7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0P(d7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0P(d7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)'
-      ENDIF
-      WRITE(*,*) '---------------------------------------------------'
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0P(d7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)')
+      
     ENDSUBROUTINE testTOOBIGP
 !
 !===============================================================================
 ! Test error checking for over allocation
     SUBROUTINE testTOOBIGA
-      USE IntrType
-      USE Allocs
       
 !        INTEGER(SNK),ALLOCATABLE :: i1tb(:)
       INTEGER(SNK),ALLOCATABLE :: i2tb(:,:)
@@ -6063,9 +5698,6 @@ PROGRAM testAllocs
       REAL(SDK),ALLOCATABLE :: d6tb(:,:,:,:,:,:)
       REAL(SDK),ALLOCATABLE :: d7tb(:,:,:,:,:,:,:)
       
-      
-      WRITE(*,*) 'TESTING ALLOCS FOR ERROR CATCHING'
-      
 !        IF(SUM(eAllocs%getCounterAll()) == 0) THEN
 !          WRITE(*,*) 'SUM(eAllocs%getCounterAll()) FAILED!'
 !          STOP 666
@@ -6098,94 +5730,30 @@ PROGRAM testAllocs
 !          WRITE(*,*) '  Passed: CALL dmalloc0A(b1tb,-2147483648,2147483647)'
 !        ENDIF
       CALL dmallocA(b2tb,1000000000,1000)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocA(b2tb,1000000000,1000) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocA(b2tb,1000000000,1000)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(b2tb,1000000000,1000)')
       CALL dmalloc0A(b2tb,1,1000000000,1,1000)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0A(b2tb,1,1000000000,1,1000) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0A(b2tb,1,1000000000,1,1000)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(b2tb,1,1000000000,1,1000)')
       CALL dmallocA(b3tb,1000000000,1000,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocA(b3tb,1000000000,1000,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocA(b3tb,1000000000,1000,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(b3tb,1000000000,1000,1)')
       CALL dmalloc0A(b3tb,1,1000000000,1,1000,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0A(b3tb,1,1000000000,1,1000,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0A(b3tb,1,1000000000,1,1000,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(b3tb,1,1000000000,1,1000,1,1)')
       CALL dmallocA(b4tb,1000000000,1000,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocA(b4tb,1000000000,1000,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocA(b4tb,1000000000,1000,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(b4tb,1000000000,1000,1,1)')
       CALL dmalloc0A(b4tb,1,1000000000,1,1000,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0A(b4tb,1,1000000000,1,1000,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0A(b4tb,1,1000000000,1,1000,1,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(b4tb,1,1000000000,1,1000,1,1,1,1)')
       
       CALL dmallocA(b5tb,1000000000,1000,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocA(b5tb,1000000000,1000,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocA(b5tb,1000000000,1000,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(b5tb,1000000000,1000,1,1,1)')
       CALL dmalloc0A(b5tb,1,1000000000,1,1000,1,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0A(b5tb,1,1000000000,1,1000,1,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0A(b5tb,1,1000000000,1,1000,1,1,1,1,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(b5tb,1,1000000000,1,1000,1,1,1,1,1,1)')
       CALL dmallocA(b6tb,1000000000,1000,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocA(b6tb,1000000000,1000,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocA(b6tb,1000000000,1000,1,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(b6tb,1000000000,1000,1,1,1,1)')
       CALL dmalloc0A(b6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0A(b6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0A(b6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(b6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)')
       CALL dmallocA(b7tb,1000000000,1000,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocA(b7tb,1000000000,1000,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocA(b7tb,1000000000,1000,1,1,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(b7tb,1000000000,1000,1,1,1,1,1)')
       CALL dmalloc0A(b7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0A(b7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0A(b7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(b7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)')
 !
 !Test regular integers
        WRITE(*,*) '  Skipping: CALL dmallocA(i1tb,2147483647)'
@@ -6205,94 +5773,29 @@ PROGRAM testAllocs
 !          WRITE(*,*) '  Passed: CALL dmalloc0A(i1tb,-2147483648,2147483647)'
 !        ENDIF
       CALL dmallocA(i2tb,1000000000,1000)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocA(i2tb,1000000000,1000) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocA(i2tb,1000000000,1000)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(i2tb,1000000000,1000)')
       CALL dmalloc0A(i2tb,1,1000000000,1,1000)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0A(i2tb,1,1000000000,1,1000) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0A(i2tb,1,1000000000,1,1000)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(i2tb,1,1000000000,1,1000)')
       CALL dmallocA(i3tb,1000000000,1000,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocA(i3tb,1000000000,1000,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocA(i3tb,1000000000,1000,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(i3tb,1000000000,1000,1)')
       CALL dmalloc0A(i3tb,1,1000000000,1,1000,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0A(i3tb,1,1000000000,1,1000,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0A(i3tb,1,1000000000,1,1000,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(i3tb,1,1000000000,1,1000,1,1)')
       CALL dmallocA(i4tb,1000000000,1000,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocA(i4tb,1000000000,1000,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocA(i4tb,1000000000,1000,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(i4tb,1000000000,1000,1,1)')
       CALL dmalloc0A(i4tb,1,1000000000,1,1000,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0A(i4tb,1,1000000000,1,1000,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0A(i4tb,1,1000000000,1,1000,1,1,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(i4tb,1,1000000000,1,1000,1,1,1,1)')
       CALL dmallocA(i5tb,1000000000,1000,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocA(i5tb,1000000000,1000,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocA(i5tb,1000000000,1000,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(i5tb,1000000000,1000,1,1,1)')
       CALL dmalloc0A(i5tb,1,1000000000,1,1000,1,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0A(i5tb,1,1000000000,1,1000,1,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0A(i5tb,1,1000000000,1,1000,1,1,1,1,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(i5tb,1,1000000000,1,1000,1,1,1,1,1,1)')
       CALL dmallocA(i6tb,1000000000,1000,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocA(i6tb,1000000000,1000,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocA(i6tb,1000000000,1000,1,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(i6tb,1000000000,1000,1,1,1,1)')
       CALL dmalloc0A(i6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0A(i6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0A(i6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(i6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)')
       CALL dmallocA(i7tb,1000000000,1000,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocA(i7tb,1000000000,1000,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocA(i7tb,1000000000,1000,1,1,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(i7tb,1000000000,1000,1,1,1,1,1)')
       CALL dmalloc0A(i7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0A(i7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0A(i7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(i7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)')
 !
 !Test long ints
        WRITE(*,*) '  Skipping: CALL dmallocA(l1tb,2147483647)'
@@ -6312,94 +5815,29 @@ PROGRAM testAllocs
 !          WRITE(*,*) '  Passed: CALL dmalloc0A(l1tb,-2147483648,2147483647)'
 !        ENDIF
       CALL dmallocA(l2tb,1000000000,1000)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocA(l2tb,1000000000,1000) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocA(l2tb,1000000000,1000)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(l2tb,1000000000,1000)')
       CALL dmalloc0A(l2tb,1,1000000000,1,1000)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0A(l2tb,1,1000000000,1,1000) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0A(l2tb,1,1000000000,1,1000)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(l2tb,1,1000000000,1,1000)')
       CALL dmallocA(l3tb,1000000000,1000,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocA(l3tb,1000000000,1000,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocA(l3tb,1000000000,1000,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(l3tb,1000000000,1000,1)')
       CALL dmalloc0A(l3tb,1,1000000000,1,1000,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0A(l3tb,1,1000000000,1,1000,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0A(l3tb,1,1000000000,1,1000,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(l3tb,1,1000000000,1,1000,1,1)')
       CALL dmallocA(l4tb,1000000000,1000,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocA(l4tb,1000000000,1000,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocA(l4tb,1000000000,1000,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(l4tb,1000000000,1000,1,1)')
       CALL dmalloc0A(l4tb,1,1000000000,1,1000,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0A(l4tb,1,1000000000,1,1000,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0A(l4tb,1,1000000000,1,1000,1,1,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(l4tb,1,1000000000,1,1000,1,1,1,1)')
       CALL dmallocA(l5tb,1000000000,1000,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocA(l5tb,1000000000,1000,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocA(l5tb,1000000000,1000,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(l5tb,1000000000,1000,1,1,1)')
       CALL dmalloc0A(l5tb,1,1000000000,1,1000,1,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0A(l5tb,1,1000000000,1,1000,1,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0A(l5tb,1,1000000000,1,1000,1,1,1,1,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(l5tb,1,1000000000,1,1000,1,1,1,1,1,1)')
       CALL dmallocA(l6tb,1000000000,1000,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocA(l6tb,1000000000,1000,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocA(l6tb,1000000000,1000,1,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(l6tb,1000000000,1000,1,1,1,1)')
       CALL dmalloc0A(l6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0A(l6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0A(l6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(l6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)')
       CALL dmallocA(l7tb,1000000000,1000,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocA(l7tb,1000000000,1000,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocA(l7tb,1000000000,1000,1,1,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(l7tb,1000000000,1000,1,1,1,1,1)')
       CALL dmalloc0A(l7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0A(l7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0A(l7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(l7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)')
 !
 !Test single reals
        WRITE(*,*) '  Skipping: CALL dmallocA(s1tb,2147483647)'
@@ -6419,94 +5857,29 @@ PROGRAM testAllocs
 !          WRITE(*,*) '  Passed: CALL dmalloc0A(s1tb,-2147483648,2147483647)'
 !        ENDIF
       CALL dmallocA(s2tb,1000000000,1000)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocA(s2tb,1000000000,1000) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocA(s2tb,1000000000,1000)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(s2tb,1000000000,1000)')
       CALL dmalloc0A(s2tb,1,1000000000,1,1000)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0A(s2tb,1,1000000000,1,1000) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0A(s2tb,1,1000000000,1,1000)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(s2tb,1,1000000000,1,1000)')
       CALL dmallocA(s3tb,1000000000,1000,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocA(s3tb,1000000000,1000,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocA(s3tb,1000000000,1000,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(s3tb,1000000000,1000,1)')
       CALL dmalloc0A(s3tb,1,1000000000,1,1000,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0A(s3tb,1,1000000000,1,1000,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0A(s3tb,1,1000000000,1,1000,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(s3tb,1,1000000000,1,1000,1,1)')
       CALL dmallocA(s4tb,1000000000,1000,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocA(s4tb,1000000000,1000,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocA(s4tb,1000000000,1000,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(s4tb,1000000000,1000,1,1)')
       CALL dmalloc0A(s4tb,1,1000000000,1,1000,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0A(s4tb,1,1000000000,1,1000,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0A(s4tb,1,1000000000,1,1000,1,1,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(s4tb,1,1000000000,1,1000,1,1,1,1)')
       CALL dmallocA(s5tb,1000000000,1000,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocA(s5tb,1000000000,1000,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocA(s5tb,1000000000,1000,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(s5tb,1000000000,1000,1,1,1)')
       CALL dmalloc0A(s5tb,1,1000000000,1,1000,1,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0A(s5tb,1,1000000000,1,1000,1,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0A(s5tb,1,1000000000,1,1000,1,1,1,1,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(s5tb,1,1000000000,1,1000,1,1,1,1,1,1)')
       CALL dmallocA(s6tb,1000000000,1000,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocA(s6tb,1000000000,1000,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocA(s6tb,1000000000,1000,1,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(s6tb,1000000000,1000,1,1,1,1)')
       CALL dmalloc0A(s6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0A(s6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0A(s6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(s6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)')
       CALL dmallocA(s7tb,1000000000,1000,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocA(s7tb,1000000000,1000,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocA(s7tb,1000000000,1000,1,1,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(s7tb,1000000000,1000,1,1,1,1,1)')
       CALL dmalloc0A(s7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0A(s7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0A(s7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(s7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)')
 !
 !Test double reals
        WRITE(*,*) '  Skipping: CALL dmallocA(d1tb,2147483647)'
@@ -6526,95 +5899,30 @@ PROGRAM testAllocs
 !          WRITE(*,*) '  Passed: CALL dmalloc0A(d1tb,-2147483648,2147483647)'
 !        ENDIF
       CALL dmallocA(d2tb,1000000000,1000)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocA(d2tb,1000000000,1000) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocA(d2tb,1000000000,1000)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(d2tb,1000000000,1000)')
       CALL dmalloc0A(d2tb,1,1000000000,1,1000)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0A(d2tb,1,1000000000,1,1000) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0A(d2tb,1,1000000000,1,1000)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(d2tb,1,1000000000,1,1000)')
       CALL dmallocA(d3tb,1000000000,1000,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocA(d3tb,1000000000,1000,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocA(d3tb,1000000000,1000,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(d3tb,1000000000,1000,1)')
       CALL dmalloc0A(d3tb,1,1000000000,1,1000,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0A(d3tb,1,1000000000,1,1000,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0A(d3tb,1,1000000000,1,1000,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(d3tb,1,1000000000,1,1000,1,1)')
       CALL dmallocA(d4tb,1000000000,1000,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocA(d4tb,1000000000,1000,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocA(d4tb,1000000000,1000,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(d4tb,1000000000,1000,1,1)')
       CALL dmalloc0A(d4tb,1,1000000000,1,1000,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0A(d4tb,1,1000000000,1,1000,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0A(d4tb,1,1000000000,1,1000,1,1,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(d4tb,1,1000000000,1,1000,1,1,1,1)')
       CALL dmallocA(d5tb,1000000000,1000,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocA(d5tb,1000000000,1000,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocA(d5tb,1000000000,1000,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(d5tb,1000000000,1000,1,1,1)')
       CALL dmalloc0A(d5tb,1,1000000000,1,1000,1,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0A(d5tb,1,1000000000,1,1000,1,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0A(d5tb,1,1000000000,1,1000,1,1,1,1,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(d5tb,1,1000000000,1,1000,1,1,1,1,1,1)')
       CALL dmallocA(d6tb,1000000000,1000,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocA(d6tb,1000000000,1000,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocA(d6tb,1000000000,1000,1,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(d6tb,1000000000,1000,1,1,1,1)')
       CALL dmalloc0A(d6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0A(d6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0A(d6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)'
-      ENDIF
-      
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(d6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)')
       CALL dmallocA(d7tb,1000000000,1000,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmallocA(d7tb,1000000000,1000,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmallocA(d7tb,1000000000,1000,1,1,1,1,1)'
-      ENDIF
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(d7tb,1000000000,1000,1,1,1,1,1)')
       CALL dmalloc0A(d7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)
-      IF(SUM(eAllocs%getCounterAll()) == 0) THEN
-        WRITE(*,*) 'CALL dmalloc0A(d7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL dmalloc0A(d7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)'
-      ENDIF
-      WRITE(*,*) '---------------------------------------------------'
+      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(d7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)')
+
     ENDSUBROUTINE testTOOBIGA
 !    
 ENDPROGRAM testAllocs
