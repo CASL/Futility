@@ -330,7 +330,6 @@ MODULE FileType_HDF5
       CHARACTER(LEN=MAX_FEXT_LENGTH) :: fext
       INTEGER(SIK) :: unitno
       LOGICAL(SBK) :: ostat
-
       IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
 #ifdef MPACT_HAVE_HDF5
 
