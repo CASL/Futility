@@ -23,11 +23,20 @@ PROGRAM testTAU_Stubs
   IMPLICIT NONE
   
   INTEGER(SIK) :: profiler1(2),profiler2(2),tid
+  REAL(SRK),ALLOCATABLE :: rdum(:)
   
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING TAU_STUBS...'
   WRITE(*,*) '==================================================='
   CALL TAU_PROFILE_INIT()
+  
+  CALL TAUSTUB_CHECK_MEMORY()
+  CALL TAUSTUB_CHECK_MEMORY()
+  ALLOCATE(rdum(1048576))
+  CALL TAUSTUB_CHECK_MEMORY()
+  DEALLOCATE(rdum)
+  CALL TAUSTUB_CHECK_MEMORY()
+  READ(*,*)
   
   tid=1
   profiler1=0
