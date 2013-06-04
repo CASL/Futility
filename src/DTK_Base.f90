@@ -15,27 +15,63 @@
 ! manufacturer, or otherwise, does not necessarily constitute or imply its     !
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!> @brief The global geometry module, collecting all public members of 
-!> other geometry modules. This is the module that should be used elsewhere
-!> in the code.
+!> @brief 
 !>
 !> @par Module Dependencies
-!>  - @ref Geom_Points "Geom_Points": @copybrief Geom_Points
-!>  - @ref Geom_Line "Geom_Line": @copybrief Geom_Line
-!>  - @ref Geom_Plane "Geom_Plane": @copybrief Geom_Plane
-!>  - @ref Geom_CircCyl "Geom_CircCyl": @copybrief Geom_CircCyl
-!>  - @ref Geom_Box "Geom_Box": @copybrief Geom_Box
+!>  - @ref IntrType "IntrType": @copybrief IntrType
+!>  - @ref ExceptionHandler "ExceptionHandler": @copybrief ExceptionHandler
 !>
-!> @author Brendan Kochunas
-!>    @date 5/26/2011
+!> @author Daniel Jabaay
+!>    @date 6/4/2013
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-MODULE Geom
-
-  USE Geom_Points
-  USE Geom_Line
-  USE Geom_Plane
-  USE Geom_CircCyl
-  USE Geom_Box
+MODULE DTK_Base
+  USE ISO_C_BINDING
+  USE IntrType
+  USE ExceptionHandler
+  
   IMPLICIT NONE
+  PRIVATE
+  
+  PUBLIC :: getGeom
+  
+  !> The module name
+  CHARACTER(LEN=*),PARAMETER :: modName='DTK_BASE'
+  
+  !> The module exception handler
+  TYPE(ExceptionHandlerType),POINTER,SAVE :: eDTK => NULL()
+  
 !
-ENDMODULE Geom
+!===============================================================================
+  CONTAINS
+!
+!-------------------------------------------------------------------------------
+!> @brief 
+!> @param myModMesh Modular Mesh object to use to calculate pin positions in the
+!>        global core geometry
+!>
+    SUBROUTINE getGeom()
+      CHARACTER(LEN=*),PARAMETER :: myName='getGeom'
+      !TYPE(ModMeshType),POINTER,INTENT(IN) :: myModMesh
+      
+      LOGICAL(SBK) :: localalloc
+      !CLASS(CoreMeshType),POINTER :: coremesh => NULL()
+      
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eDTK)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eDTK)
+      ENDIF
+      
+      !IF(.NOT. myModMesh%isinit) THEN
+      !  CALL eDTK%raiseError(modName//'::'//myName// &
+      !    ' - Modular Mesh is not initialized!')
+      !ELSE
+      !  coremesh => myModMesh%core
+      !  
+      !ENDIF
+      
+      
+    ENDSUBROUTINE getGeom
+    
+!
+ENDMODULE DTK_Base
