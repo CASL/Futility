@@ -218,11 +218,11 @@ MODULE FileType_HDF5
       !> @copydoc FileType_HDF5::write_c3
       PROCEDURE,PASS,PRIVATE :: write_c3
       !> Generic typebound interface for all @c write operations
-      GENERIC :: fwrite => write_d0,write_d1,write_d2,write_d3,write_d4,write_s0, &
-      write_s1,write_s2,write_s3,write_s4,write_b0,write_b1,write_b2,write_b3,write_n0, &
-      write_n1,write_n2,write_n3,write_c0,write_c1_helper,write_c1, &
-      write_c2_helper,write_c2,write_c3_helper,write_c3,write_l0,write_l1, &
-      write_l2,write_l3
+      GENERIC :: fwrite => write_d0, write_d1, write_d2, write_d3, write_d4,   &
+      write_s0, write_s1, write_s2, write_s3, write_s4, write_b0, write_b1,    &
+      write_b2, write_b3, write_n0, write_n1, write_n2, write_n3, write_c0,    &
+      write_c1_helper, write_c1, write_c2_helper, write_c2, write_c3_helper,   &
+      write_c3, write_l0, write_l1, write_l2, write_l3
       !> @copybrief FileType_HDF5::read_d0
       !> @copydoc FileType_HDF5::read_d0
       PROCEDURE,PASS,PRIVATE :: read_d0
@@ -238,6 +238,9 @@ MODULE FileType_HDF5
       !> @copybrief FileType_HDF5::read_d4
       !> @copydoc FileType_HDF5::read_d4
       PROCEDURE,PASS,PRIVATE :: read_d4
+      !> @copybrief FileType_HDF5::read_dp4
+      !> @copydoc FileType_HDF5::read_dp4
+      PROCEDURE,PASS,PRIVATE :: read_dp4
       !> @copybrief FileType_HDF5::read_s0
       !> @copydoc FileType_HDF5::read_s0
       PROCEDURE,PASS,PRIVATE :: read_s0
@@ -302,10 +305,12 @@ MODULE FileType_HDF5
       !> @copydoc FileType_HDF5::read_c3
       PROCEDURE,PASS,PRIVATE :: read_c3
       !> Generic typebound interface for all @c read operations
-      GENERIC :: fread => read_d1,read_d2,read_d3,read_d4,read_s1,read_s2,read_s3, &
-            read_s4,read_l1,read_l2,read_l3,read_b1,read_b2,read_b3,read_c0,read_d0, &
-            read_s0,read_l0,read_b0,read_c1,read_c2,read_c3,read_n0,read_n1, &
-            read_n2,read_n3
+      GENERIC :: fread => read_d1, read_d2, read_d3, read_d4, read_s1, read_s2,&
+        read_s3, read_s4, read_l1, read_l2, read_l3, read_b1, read_b2, read_b3,&
+        read_c0, read_d0, read_s0, read_l0, read_b0, read_c1, read_c2, read_c3,&
+        read_n0, read_n1, read_n2, read_n3
+      !> Generic typebound interface for pointer-based read operations
+      GENERIC :: freadp => read_dp4
   ENDTYPE
 !
 !===============================================================================
@@ -4298,6 +4303,83 @@ MODULE FileType_HDF5
 
 #endif
     ENDSUBROUTINE read_d4
+!
+!-------------------------------------------------------------------------------
+!> @brief Read a rank-4 array of doubles from dataset
+!> @param thisHDF5File the HDF5FileType object to read from
+!> @param dsetname dataset name and path to read from
+!> @param vals variable to hold read data
+!>
+!> This routine reads a rank-4 array of doubles from the dataset @c dsetname
+!> and stores the values in @c vals
+    SUBROUTINE read_dp4(thisHDF5File,dsetname,vals)
+      CHARACTER(LEN=*),PARAMETER :: myName='readd4_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
+      CHARACTER(LEN=*),INTENT(IN) :: dsetname
+      REAL(SDK),POINTER,INTENT(INOUT) :: vals(:,:,:,:)
+      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+#ifdef MPACT_HAVE_HDF5
+      INTEGER(HSIZE_T),DIMENSION(4) :: dims,maxdims
+      INTEGER(HID_T),PARAMETER :: rank=4
+
+      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: dspace_id,dset_id
+
+      ! Make sure the object is initialized
+      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
+        '::'//myName//' - File object not initialized.')
+
+      ! Convert the path name to use slashes
+      path=convertPath(dsetname)
+
+      ! Open the dataset
+      CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
+      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+        ' - Failed to open dataset.')
+
+      ! Get dataset dimensions for allocation
+      CALL h5dget_space_f(dset_id,dspace_id,error)
+      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+        ' - Failed to obtain the dataspace.')
+      ! Make sure the rank is right
+      CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+        ' - Failed to retrieve number of dataspace dimensions.')
+      IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+        ' - Using wrong read function for rank.')
+
+      CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
+      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+        ' - Failed to retrieve dataspace dimensions.')
+
+      ! Allocate space if needed
+      IF(ASSOCIATED(vals)) THEN
+        ! Make sure the data is the right size
+        IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - data array is the wrong size.')
+      ELSE
+        ! Allocate to size
+        ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4)))
+      ENDIF
+
+      ! Read the dataset
+      mem=H5T_NATIVE_DOUBLE
+      CALL h5dread_f(dset_id,mem,vals,dims,error)
+      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+        ' - Failed to read data from dataset.')
+
+      ! Close the dataset
+      CALL h5dclose_f(dset_id,error)
+      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+        ' - Failed to close dataset.')
+
+      ! Close the dataspace
+      CALL h5sclose_f(dspace_id,error)
+      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+        ' - Failed to close dataspace.')
+
+#endif
+    ENDSUBROUTINE read_dp4
 !
 !-------------------------------------------------------------------------------
 !> @brief Read a real from dataset
