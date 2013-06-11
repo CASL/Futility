@@ -52,4 +52,5 @@ TRIBITS_ADD_LIBRARY(Utils
       VectorTypes.f90
       LinearSolverTypes.f90
       StochasticSampling.f90
+      DTK_Base.f90
 )
