@@ -539,7 +539,6 @@ MODULE FileType_HDF5
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
         '::'//myName//' - File object not initialized.')
-
       path2=convertPath(path)
 
       CALL h5gopen_f(thisHDF5File%file_id, path2, grp_id, error)
