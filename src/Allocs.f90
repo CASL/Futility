@@ -699,7 +699,7 @@ MODULE Allocs
 !> To see the current memory usage use the module global variable \e Alloc_nbytes
 !> when calling getMemUsageChar.
     SUBROUTINE getMemUsage(memory,units)
-      CHARACTER(LEN=32),INTENT(IN) :: units
+      CHARACTER(LEN=*),INTENT(IN) :: units
       REAL(SRK),INTENT(INOUT) :: memory
       CHARACTER(LEN=32) :: mem_string,mem_unit
       REAL(SRK),PARAMETER :: KB2bytes=1024_SRK
