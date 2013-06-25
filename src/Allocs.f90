@@ -129,6 +129,7 @@ MODULE Allocs
   PUBLIC :: demallocP
   PUBLIC :: demallocA
   PUBLIC :: getMemUsageChar
+  PUBLIC :: getMemUsage
   PUBLIC :: Alloc_nbytes
   PUBLIC :: ALLOC_MEMSTRING_LENGTH
   PUBLIC :: eAllocs
@@ -690,6 +691,41 @@ MODULE Allocs
       ENDIF
       WRITE(memstring,'(f8.2,a)') mem,' '//unit
     ENDFUNCTION getMemUsageChar_bytes
+!
+!-------------------------------------------------------------------------------
+!> @brief Function to get the memory usage for input argument bytes as a string
+!> @param bytes the number of bytes
+!>
+!> To see the current memory usage use the module global variable \e Alloc_nbytes
+!> when calling getMemUsageChar.
+    SUBROUTINE getMemUsage(memory,units)
+      CHARACTER(LEN=32),INTENT(IN) :: units
+      REAL(SRK),INTENT(INOUT) :: memory
+      CHARACTER(LEN=32) :: mem_string,mem_unit
+      REAL(SRK),PARAMETER :: KB2bytes=1024_SRK
+      REAL(SRK),PARAMETER :: MB2bytes=1048576_SRK
+      REAL(SRK),PARAMETER :: GB2bytes=1073741824_SRK
+      
+      ! Get memory usage for current process, then convert to bytes
+      mem_string=getMemUsageChar_default()
+      READ(mem_string,FMT='(f8.2,a)') memory,mem_unit
+      IF(TRIM(mem_unit)=='KB') THEN
+        memory=memory*KB2bytes
+      ELSEIF(TRIM(mem_unit)=='MB') THEN
+        memory=memory*MB2bytes
+      ELSEIF(TRIM(mem_unit)=='GB') THEN
+        memory=memory*GB2bytes
+      ENDIF
+
+      ! Total memory as bytes, convert to whatever was requrested
+      IF(TRIM(ADJUSTL(units))=='KB') THEN
+        memory=memory/KB2bytes
+      ELSEIF(TRIM(ADJUSTL(units))=='MB') THEN
+        memory=memory*MB2bytes
+      ELSEIF(TRIM(ADJUSTL(units))=='GB') THEN
+        memory=memory*GB2bytes
+      ENDIF
+    ENDSUBROUTINE getMemUsage
 !
 !-------------------------------------------------------------------------------
 !> @name Private Routines
