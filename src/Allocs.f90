@@ -709,11 +709,11 @@ MODULE Allocs
       ! Get memory usage for current process, then convert to bytes
       mem_string=getMemUsageChar_default()
       READ(mem_string,FMT='(f8.2,a)') memory,mem_unit
-      IF(TRIM(mem_unit)=='KB') THEN
+      IF(TRIM(ADJUSTL(mem_unit))=='KB') THEN
         memory=memory*KB2bytes
-      ELSEIF(TRIM(mem_unit)=='MB') THEN
+      ELSEIF(TRIM(ADJUSTL(mem_unit))=='MB') THEN
         memory=memory*MB2bytes
-      ELSEIF(TRIM(mem_unit)=='GB') THEN
+      ELSEIF(TRIM(ADJUSTL(mem_unit))=='GB') THEN
         memory=memory*GB2bytes
       ENDIF
 
@@ -721,9 +721,9 @@ MODULE Allocs
       IF(TRIM(ADJUSTL(units))=='KB') THEN
         memory=memory/KB2bytes
       ELSEIF(TRIM(ADJUSTL(units))=='MB') THEN
-        memory=memory*MB2bytes
+        memory=memory/MB2bytes
       ELSEIF(TRIM(ADJUSTL(units))=='GB') THEN
-        memory=memory*GB2bytes
+        memory=memory/GB2bytes
       ENDIF
     ENDSUBROUTINE getMemUsage
 !
