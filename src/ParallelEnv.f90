@@ -50,6 +50,7 @@ MODULE ParallelEnv
 #include <finclude/petsc.h>
 #undef IS
   PetscErrorCode  :: ierr
+  PetscBool :: petsc_isinit
 #else
   INCLUDE 'mpif.h'
 #endif
@@ -450,10 +451,6 @@ MODULE ParallelEnv
           IF(mpierr /= MPI_SUCCESS) CALL eParEnv%raiseError(modName//'::'// &
             myName//' - call to MPI_Init returned an error!')
 
-#ifdef MPACT_HAVE_PETSC
-          CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
-#endif
-
           !Default communicator is MPI_COMM_WORLD if MPI was not initialized
           !Set communicator to MPI_COMM_SELF though if this was passed
           !explicitly.
@@ -465,6 +462,12 @@ MODULE ParallelEnv
         ELSE
           myPE%comm=icomm
         ENDIF
+        
+#ifdef MPACT_HAVE_PETSC
+        !check if PETSC has been initialized as well
+        CALL PetscInitialized(petsc_isinit,ierr)
+        IF(.NOT.petsc_isinit) CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
+#endif
 
         !Get Information about the communicator
 #ifdef HAVE_MPI
