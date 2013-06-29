@@ -29,7 +29,8 @@ PROGRAM testAllocs
   CREATE_TEST("Allocs")
   
   REGISTER_SUBTEST("testGetMemUsage()",testGetMemUsage)
-  
+  REGISTER_SUBTEST("testGetMemUsageChar()",testGetMemUsageChar)
+ 
   CALL eAllocs%setStopOnError(.FALSE.)
   CALL eAllocs%setQuietMode(.TRUE.)
   REGISTER_SUBTEST("testTOOBIGP()",testTOOBIGP)
@@ -50,12 +51,34 @@ PROGRAM testAllocs
   FINALIZE_TEST()
   
   CONTAINS
-    SUBROUTINE testGetMemUsage()
+    SUBROUTINE testGetMemUsageChar()
       
       ASSERT(ALLOC_MEMSTRING_LENGTH == 14_SIK,'ALLOC_MEMSTRING_LENGTH')
       ASSERT(getMemUsageChar(563246226243._SRK) == '  524.56 GB   ','getMemUsageChar(563246226243._SRK)')  
       ASSERT(getMemUsageChar() == '    0.00 bytes','getMemUsageChar()')
   
+    ENDSUBROUTINE testGetMemUsageChar
+!
+!===============================================================================
+    SUBROUTINE testGetMemUsage()
+      REAL(SDK) :: memory
+      REAL(SRK),ALLOCATABLE :: tmpvar(:)
+
+      CALL dmallocA(tmpvar,1000000_SIK)
+      CALL getMemUsage(memory,'whatever')
+      ASSERT(SOFTEQ(memory,8000634.87999_SRK,1.0E-4_SRK),'getMemUsage(memory,''bytes'')')
+
+      CALL getMemUsage(memory,'KB')
+      ASSERT(SOFTEQ(memory,7813.11999_SRK,1.0E-4_SRK),'getMemUsage(memory,''KB'')')
+
+      CALL getMemUsage(memory,'MB')
+      ASSERT(SOFTEQ(memory,7.62999999_SRK,1.0E-7_SRK),'getMemUsage(memory,''MB'')')
+
+      CALL getMemUsage(memory,'GB')
+      ASSERT(SOFTEQ(memory,0.00745117187_SRK,1.0E-10_SRK),'getMemUsage(memory,''GB'')')
+
+      CALL demallocA(tmpvar)
+      
     ENDSUBROUTINE testGetMemUsage
 !
 !===============================================================================
