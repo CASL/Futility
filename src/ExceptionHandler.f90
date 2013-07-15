@@ -705,7 +705,9 @@ MODULE ExceptionHandler
 #ifdef HAVE_MPI
       IF(stopmode) CALL MPI_Abort(MPI_COMM_WORLD,666,ierr)
 #else
-      IF(stopmode) STOP 666
+      IF(stopmode) THEN
+        STOP 666
+      ENDIF
 #endif
     ENDSUBROUTINE exceptionStop
 !

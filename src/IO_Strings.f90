@@ -369,6 +369,7 @@ CONTAINS
           IF(inQuotes) THEN
             inQuotes=.FALSE.
             n=n+1
+            CYCLE
           ELSE
             inQuotes=.TRUE.
           ENDIF
