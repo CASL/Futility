@@ -3949,9 +3949,9 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       CHARACTER(LEN=*),INTENT(IN) :: vals
       CHARACTER(LEN=MAX_PATH_LENGTH) :: path
-      INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: gdims_in
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: gdims_in
 #ifdef MPACT_HAVE_HDF5
-      INTEGER(HSIZE_T),DIMENSION(1) :: ldims,gdims,offset,one
+      INTEGER(HSIZE_T),DIMENSION(1) :: ldims,offset,one,gdims
       INTEGER(HID_T),PARAMETER :: rank=1
 
       INTEGER(HID_T) :: dspace_id,dset_id,gspace_id,plist_id
@@ -3981,9 +3981,9 @@ MODULE FileType_HDF5
 
         ! Store the dimensions from global if present
         IF(PRESENT(gdims_in)) THEN
-          gdims=gdims_in
+          gdims(1)=gdims_in
         ELSE
-          gdims=ldims
+          gdims(1)=ldims(1)
         ENDIF
 
         !Create an HDF5 parameter list for the dataset creation.

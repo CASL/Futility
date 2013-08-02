@@ -262,7 +262,7 @@ PROGRAM testHDF5
       CALL h5%fwrite('groupST->memST2',refST2,SHAPE(refST2))
       CALL h5%fwrite('groupST->memST3',refST3,SHAPE(refST3))
       CALL h5%mkdir('groupC')
-      CALL h5%fwrite('groupC->memC1',refC1,SHAPE(refC1))
+      CALL h5%fwrite('groupC->memC1',refC1)
       
       CALL h5%fread('groupR->memD0',testD0)
       ASSERT(testD0==refD0,'D0 Write Failure')
