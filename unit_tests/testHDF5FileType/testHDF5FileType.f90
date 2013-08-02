@@ -48,8 +48,9 @@ PROGRAM testHDF5
   INTEGER(SLK) :: refL0
   INTEGER(SNK) :: refN0
   LOGICAL(SBK) :: refB0
-  TYPE(StringType) :: refC0
-  TYPE(StringType),ALLOCATABLE :: refC1(:),refC2(:,:),refC3(:,:,:)
+  TYPE(StringType) :: refST0
+  TYPE(StringType),ALLOCATABLE :: refST1(:),refST2(:,:),refST3(:,:,:)
+  CHARACTER(LEN=32) :: refC1
   CHARACTER(LEN=12) :: helper_string
   LOGICAL(SBK) :: exists
   TYPE(StringType),ALLOCATABLE :: refsets(:)
@@ -78,7 +79,7 @@ PROGRAM testHDF5
         '--------------------'
   ENDIF
   DEALLOCATE(refD1,refD2,refD3,refD4,refS1,refS2,refS3,refS4,refB1,refB2,refB3,&
-      refL1,refL2,refL3,refN1,refN2,refN3,refC1,refC2,refC3,refsets)
+      refL1,refL2,refL3,refN1,refN2,refN3,refST1,refST2,refST3,refsets)
 #else
   REGISTER_SUBTEST("HDF5 Not Present",testHDF5_wo)
 #endif
@@ -114,9 +115,9 @@ PROGRAM testHDF5
       ALLOCATE(refN1(10))
       ALLOCATE(refN2(4,5))
       ALLOCATE(refN3(3,4,5))
-      ALLOCATE(refC1(3))
-      ALLOCATE(refC2(2,3))
-      ALLOCATE(refC3(3,4,5))
+      ALLOCATE(refST1(3))
+      ALLOCATE(refST2(2,3))
+      ALLOCATE(refST3(3,4,5))
       ALLOCATE(refsets(10))
 
       refD0=42.123456789_SDK
@@ -148,28 +149,29 @@ PROGRAM testHDF5
           ENDDO
         ENDDO
       ENDDO
-      refC0='Rank-0 (Not-an-array) String Test'
-      DO i=1,SIZE(refC1)
+      refST0='Rank-0 (Not-an-array) String Test'
+      DO i=1,SIZE(refST1)
         WRITE(helper_string,FMT="(a7,i0)") 'String ',i
-        refC1(i)=helper_string
+        refST1(i)=helper_string
       ENDDO
-      DO i=1,SIZE(refC2,1)
-        DO j=1,SIZE(refC2,2)
+      DO i=1,SIZE(refST2,1)
+        DO j=1,SIZE(refST2,2)
           WRITE(helper_string,FMT="(a7,i0,a1,i0)") 'String ',i,',',j
-          refC2(i,j)=helper_string
+          refST2(i,j)=helper_string
         ENDDO
       ENDDO
-      refC2(1,1)='String 1,1';refC2(1,2)='String 1,2';refC2(2,1)='String 2,1'
-      refC2(2,2)='String 2,2';
-      DO i=1,SIZE(refC3,1)
-        DO j=1,SIZE(refC3,2)
-          DO k=1,SIZE(refC3,3)
+      refST2(1,1)='String 1,1';refST2(1,2)='String 1,2';refST2(2,1)='String 2,1'
+      refST2(2,2)='String 2,2';
+      DO i=1,SIZE(refST3,1)
+        DO j=1,SIZE(refST3,2)
+          DO k=1,SIZE(refST3,3)
             WRITE(helper_string,FMT="(a7,i0,a1,i0,a1,i0)") 'String ',i,&
                     &",",j,",",k
-            refC3(i,j,k)=helper_string
+            refST3(i,j,k)=helper_string
           ENDDO
         ENDDO
       ENDDO
+      refC1='MPACT string test               '
       
       refsets(1)='memD0'
       refsets(2)='memD1'
@@ -215,13 +217,14 @@ PROGRAM testHDF5
       LOGICAL(SBK),ALLOCATABLE :: testB1(:),testB2(:,:),testB3(:,:,:)
       INTEGER(SLK),ALLOCATABLE :: testL1(:),testL2(:,:),testL3(:,:,:)
       INTEGER(SNK),ALLOCATABLE :: testN1(:),testN2(:,:),testN3(:,:,:)
-      TYPE(StringType),ALLOCATABLE :: testC1(:),testC2(:,:),testC3(:,:,:)
+      TYPE(StringType),ALLOCATABLE :: testST1(:),testST2(:,:),testST3(:,:,:)
       REAL(SDK) :: testD0
       REAL(SSK) :: testS0
       INTEGER(SLK) :: testL0
       INTEGER(SNK) :: testN0
       LOGICAL(SBK) :: testB0
-      TYPE(StringType) :: testC0
+      CHARACTER(LEN=32) :: testC1
+      TYPE(StringType) :: testST0
       INTEGER(SIK) :: i,j,k
       LOGICAL(SBK) :: checkwrite
 
@@ -253,11 +256,13 @@ PROGRAM testHDF5
       CALL h5%fwrite('groupB->memB1',refB1,SHAPE(refB1))
       CALL h5%fwrite('groupB->memB2',refB2,SHAPE(refB2))
       CALL h5%fwrite('groupB->memB3',refB3,SHAPE(refB3))
+      CALL h5%mkdir('groupST')
+      CALL h5%fwrite('groupST->memST0',refST0)
+      CALL h5%fwrite('groupST->memST1',refST1,SHAPE(refST1))
+      CALL h5%fwrite('groupST->memST2',refST2,SHAPE(refST2))
+      CALL h5%fwrite('groupST->memST3',refST3,SHAPE(refST3))
       CALL h5%mkdir('groupC')
-      CALL h5%fwrite('groupC->memC0',refC0)
       CALL h5%fwrite('groupC->memC1',refC1,SHAPE(refC1))
-      CALL h5%fwrite('groupC->memC2',refC2,SHAPE(refC2))
-      CALL h5%fwrite('groupC->memC3',refC3,SHAPE(refC3))
       
       CALL h5%fread('groupR->memD0',testD0)
       ASSERT(testD0==refD0,'D0 Write Failure')
@@ -304,36 +309,38 @@ PROGRAM testHDF5
       ASSERT(ALL(testB2.EQV.refB2),'B2 Write Failure')
       CALL h5%fread('groupB->memB3',testB3)
       ASSERT(ALL(testB3.EQV.refB3),'B3 Write Failure')
-      CALL h5%fread('groupC->memC0',testC0)
-      ASSERT(testC0==refC0,'C0 Write Failure')
-      CALL h5%fread('groupC->memC1',testC1)
+      CALL h5%fread('groupST->memST0',testST0)
+      ASSERT(testST0==refST0,'ST0 Write Failure')
+      CALL h5%fread('groupST->memST1',testST1)
       checkwrite=.TRUE.
-      DO i=1,SIZE(refC1)
-        IF(testC1(i)/=refC1(i)) checkwrite=.FALSE.
+      DO i=1,SIZE(refST1)
+        IF(testST1(i)/=refST1(i)) checkwrite=.FALSE.
       ENDDO
-      ASSERT(checkwrite,'C1 Write Failure')
-      CALL h5%fread('groupC->memC2',testC2)
+      ASSERT(checkwrite,'ST1 Write Failure')
+      CALL h5%fread('groupST->memST2',testST2)
       checkwrite=.TRUE.
-      DO i=1,SIZE(refC2,1)
-        DO j=1,SIZE(refC2,2)
-          IF(testC2(i,j)/=refC2(i,j)) checkwrite=.FALSE.
+      DO i=1,SIZE(refST2,1)
+        DO j=1,SIZE(refST2,2)
+          IF(testST2(i,j)/=refST2(i,j)) checkwrite=.FALSE.
         ENDDO
       ENDDO
-      ASSERT(checkwrite,'C2 Write Failure')
-      CALL h5%fread('groupC->memC3',testC3)
+      ASSERT(checkwrite,'ST2 Write Failure')
+      CALL h5%fread('groupST->memST3',testST3)
       checkwrite=.TRUE.
-      DO i=1,SIZE(refC3,1)
-        DO j=1,SIZE(refC3,2)
-          DO k=1,SIZE(refC3,3)
-            IF(testC3(i,j,k)/=refC3(i,j,k)) checkwrite=.FALSE.
+      DO i=1,SIZE(refST3,1)
+        DO j=1,SIZE(refST3,2)
+          DO k=1,SIZE(refST3,3)
+            IF(testST3(i,j,k)/=refST3(i,j,k)) checkwrite=.FALSE.
           ENDDO
         ENDDO
       ENDDO
-      ASSERT(checkwrite,'C3 Write Failure')      
+      ASSERT(checkwrite,'ST3 Write Failure')      
+      CALL h5%fread('groupC->memC1',testC1)
+      ASSERT(TRIM(testC1)==TRIM(refC1),'C1 Write Failure')
 
-      CALL h5%fdelete()
-      INQUIRE(FILE='writetest.h5',EXIST=exists)
-      ASSERT(.NOT.exists,'HDF5 object not properly deleted!')
+!      CALL h5%fdelete()
+!      INQUIRE(FILE='writetest.h5',EXIST=exists)
+!      ASSERT(.NOT.exists,'HDF5 object not properly deleted!')
 
     ENDSUBROUTINE testHDF5FileTypeWrite
 !
@@ -345,13 +352,14 @@ PROGRAM testHDF5
       LOGICAL(SBK),ALLOCATABLE :: testB1(:),testB2(:,:),testB3(:,:,:)
       INTEGER(SLK),ALLOCATABLE :: testL1(:),testL2(:,:),testL3(:,:,:)
       INTEGER(SNK),ALLOCATABLE :: testN1(:),testN2(:,:),testN3(:,:,:)
-      TYPE(StringType),ALLOCATABLE :: testC1(:),testC2(:,:),testC3(:,:,:)
+      TYPE(StringType),ALLOCATABLE :: testST1(:),testST2(:,:),testST3(:,:,:)
       REAL(SDK) :: testD0
       REAL(SSK) :: testS0
       INTEGER(SLK) :: testL0
       INTEGER(SNK) :: testN0
       LOGICAL(SBK) :: testB0
-      TYPE(StringType) :: testC0
+      CHARACTER(LEN=32) :: testC1
+      TYPE(StringType) :: testST0
       CHARACTER(LEN=80),ALLOCATABLE :: sets(:)
       INTEGER(SIK) :: i,j,k
       LOGICAL(SBK) :: checkread
@@ -411,35 +419,38 @@ PROGRAM testHDF5
       ASSERT(ALL(testB2.EQV.refB2),'B2 Read Failure')
       CALL h5%fread('groupB->memB3',testB3)
       ASSERT(ALL(testB3.EQV.refB3),'B3 Read Failure')
-      CALL h5%fread('groupC->memC0',testC0)
-      ASSERT(testC0==refC0,'C0 Read Failure')
-      CALL h5%fread('groupC->memC1',testC1)
+      CALL h5%fread('groupST->memST0',testST0)
+      ASSERT(testST0==refST0,'ST0 Read Failure')
+      CALL h5%fread('groupST->memST1',testST1)
       checkread=.TRUE.
-      DO i=1,SIZE(refC1)
-        IF(testC1(i)/=refC1(i)) checkread=.FALSE.
+      DO i=1,SIZE(refST1)
+        IF(testST1(i)/=refST1(i)) checkread=.FALSE.
       ENDDO
-      ASSERT(checkread,'C1 Read Failure')
-      CALL h5%fread('groupC->memC2',testC2)
+      ASSERT(checkread,'ST1 Read Failure')
+      CALL h5%fread('groupST->memST2',testST2)
       checkread=.TRUE.
-      DO i=1,SIZE(refC2,1)
-        DO j=1,SIZE(refC2,2)
-          IF(testC2(i,j)/=refC2(i,j)) checkread=.FALSE.
+      DO i=1,SIZE(refST2,1)
+        DO j=1,SIZE(refST2,2)
+          IF(testST2(i,j)/=refST2(i,j)) checkread=.FALSE.
         ENDDO
       ENDDO
-      ASSERT(checkread,'C2 Read Failure')
-      CALL h5%fread('groupC->memC3',testC3)
+      ASSERT(checkread,'ST2 Read Failure')
+      CALL h5%fread('groupST->memST3',testST3)
       checkread=.TRUE.
-      DO i=1,SIZE(refC3,1)
-        DO j=1,SIZE(refC3,2)
-          DO k=1,SIZE(refC3,3)
-            IF(testC3(i,j,k)/=refC3(i,j,k)) checkread=.FALSE.
+      DO i=1,SIZE(refST3,1)
+        DO j=1,SIZE(refST3,2)
+          DO k=1,SIZE(refST3,3)
+            IF(testST3(i,j,k)/=refST3(i,j,k)) checkread=.FALSE.
           ENDDO
         ENDDO
       ENDDO
-      ASSERT(checkread,'C3 Read Failure')
+      ASSERT(checkread,'ST3 Read Failure')
+      CALL h5%fread('groupC->memC1',testC1)
+      ASSERT(TRIM(testC1) == TRIM(refC1),'C1 Read Failure')
+      WRITE(*,*) TRIM(testC1),':',TRIM(refC1)
 
       DEALLOCATE(testD1,testD2,testD3,testS1,testS2,testS3,testL1,testL2, &
-            testL3,testB1,testB2,testB3,testC1,testC2,testC3,testN1,testN2, &
+            testL3,testB1,testB2,testB3,testST1,testST2,testST3,testN1,testN2, &
             testN3,testD4,testS4)
 
       CALL h5%clear()
