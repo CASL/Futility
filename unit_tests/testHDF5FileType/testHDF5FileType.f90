@@ -86,8 +86,8 @@ PROGRAM testHDF5
 
   FINALIZE_TEST()
 #ifdef HAVE_MPI
-  CALL testMPI%clear()
   CALL testMPI%finalize()
+  CALL testMPI%clear()
 #endif
 
 !
@@ -341,7 +341,7 @@ PROGRAM testHDF5
 !      CALL h5%fdelete()
 !      INQUIRE(FILE='writetest.h5',EXIST=exists)
 !      ASSERT(.NOT.exists,'HDF5 object not properly deleted!')
-
+      CALL h5%clear()
     ENDSUBROUTINE testHDF5FileTypeWrite
 !
 !-------------------------------------------------------------------------------
