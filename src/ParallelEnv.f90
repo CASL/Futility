@@ -228,7 +228,7 @@ MODULE ParallelEnv
   !  !> @copydetails ParallelEnv::allReduceMinI_MPI_Env_type
   !  MODULE PROCEDURE allReduceMinI_MPI_Env_type
   !ENDINTERFACE
-    
+
   !> Private scratch variable for the mpierr
   INTEGER(SIK) :: mpierr
 
@@ -462,7 +462,7 @@ MODULE ParallelEnv
         ELSE
           myPE%comm=icomm
         ENDIF
-        
+
 #ifdef MPACT_HAVE_PETSC
         !check if PETSC has been initialized as well
         CALL PetscInitialized(petsc_isinit,ierr)
