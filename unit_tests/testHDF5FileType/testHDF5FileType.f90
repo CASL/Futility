@@ -86,8 +86,8 @@ PROGRAM testHDF5
 
   FINALIZE_TEST()
 #ifdef HAVE_MPI
-  CALL testMPI%finalize()
   CALL testMPI%clear()
+  CALL testMPI%finalize()
 #endif
 
 !
