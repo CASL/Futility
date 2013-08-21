@@ -341,7 +341,7 @@ PROGRAM testHDF5
 !      CALL h5%fdelete()
 !      INQUIRE(FILE='writetest.h5',EXIST=exists)
 !      ASSERT(.NOT.exists,'HDF5 object not properly deleted!')
-
+      CALL h5%clear()
     ENDSUBROUTINE testHDF5FileTypeWrite
 !
 !-------------------------------------------------------------------------------
@@ -447,7 +447,6 @@ PROGRAM testHDF5
       ASSERT(checkread,'ST3 Read Failure')
       CALL h5%fread('groupC->memC1',testC1)
       ASSERT(TRIM(testC1) == TRIM(refC1),'C1 Read Failure')
-      WRITE(*,*) TRIM(testC1),':',TRIM(refC1)
 
       DEALLOCATE(testD1,testD2,testD3,testS1,testS2,testS3,testL1,testL2, &
             testL3,testB1,testB2,testB3,testST1,testST2,testST3,testN1,testN2, &
