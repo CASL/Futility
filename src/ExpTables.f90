@@ -17,11 +17,11 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief Module defines the exponent table type objects and methods.
 !>
-!> For characteristics solvers that have to evaluate an exponential 
+!> For characteristics solvers that have to evaluate an exponential
 !> (e.g. EXP()) a lot, it is often more computationally efficient to tabulate
 !> evaluations of the exponential function and then to query the tables when
 !> evaluating the exponential. This is because the table can often fit in L1
-!> cache and because the EXP() function can take up to ~100 more FLOPS to 
+!> cache and because the EXP() function can take up to ~100 more FLOPS to
 !> evaluate than multiply or add operation.
 !>
 !> The object is initialized with a parameter list. For valid reference lists
@@ -43,11 +43,11 @@
 !>  - @c LINEAR_EXP_TABLE table linear interpolates exp(x) as m*x+b
 !>  - @c ORDER2_EXP_TABLE is table does second order interpolation of exp(x)
 !>
-!> The tables are generally set up for the interval x=[-10,0] and can be 
-!> specified for a given number of points in the table or a desired 
+!> The tables are generally set up for the interval x=[-10,0] and can be
+!> specified for a given number of points in the table or a desired
 !> accuracy for the table.
 !>
-!> According to the above paper the @c TWO_LEVEL_EXP_TABLE and 
+!> According to the above paper the @c TWO_LEVEL_EXP_TABLE and
 !> @c LINEAR_EXP_TABLE should perform favorably. This module is tested by
 !> @c testExpTables.f90 which also measures performance if TAU/PAPI are
 !> available on the test machine.
@@ -74,7 +74,7 @@ MODULE ExpTables
 
   IMPLICIT NONE
   PRIVATE
-  
+
   !List of public members
   PUBLIC :: EXACT_EXP_TABLE
   PUBLIC :: SINGLE_LEVEL_EXP_TABLE
@@ -88,7 +88,7 @@ MODULE ExpTables
   PUBLIC :: ExpTableType_reqParams,ExpTableType_optParams
   PUBLIC :: ExpTables_Declare_ValidParams
   PUBLIC :: ExpTables_Clear_ValidParams
-  
+
 !Enumerations for the different table types
 
   !> Value indicating an exact exponential table
@@ -123,9 +123,9 @@ MODULE ExpTables
     !> The square of rdx
     REAL(SRK) :: rdx2rd=0._SRK
     !> The minimum value of the table
-    INTEGER(SIK) :: minVal=0
+    REAL(SRK) :: minVal=0.0_SRK
     !> The maximum value of the table
-    INTEGER(SIK) :: maxVal=0
+    REAL(SRK) :: maxVal=0.0_SRK
     !> An upper bound estimate of the error of the table
     REAL(SRK) :: tableErr=0._SRK
     !> The first column of the table
@@ -149,20 +149,20 @@ MODULE ExpTables
       !> @copydetails ExpTables::clear_ExpTable
       PROCEDURE,PASS :: clear => clear_ExpTable
   ENDTYPE ExpTableType
-  
+
   !> Module name
   CHARACTER(LEN=*),PARAMETER :: modName='EXPTABLES'
-  
+
   !> Exponent table object used outside of this modular
   TYPE(ExpTableType),SAVE,TARGET :: exptTbl
-  
+
   !> Exception handler for the module
   TYPE(ExceptionHandlerType),POINTER,SAVE :: eExpTable => NULL()
-  
+
   !> Logical indicates whether or not the parameter lists for validation
   !> have been initialized (only needs to be done once per execution)
   LOGICAL(SBK),SAVE :: ExpTableType_Paramsflag=.FALSE.
-  
+
   !> The parameter lists to use when validating a parameter list for
   !> initialization;
   TYPE(ParamType),PROTECTED,SAVE :: ExpTableType_reqParams,ExpTableType_optParams
@@ -180,7 +180,7 @@ MODULE ExpTables
       CLASS(ExpTableType),INTENT(IN) :: myET
       REAL(SRK),INTENT(IN) :: x
       REAL(SRK) :: ans
-      
+
       IF(myET%minVal <= x .AND. x <= myET%maxVal) THEN
         SELECTCASE(myET%tableType)
           CASE (SINGLE_LEVEL_EXP_TABLE)
@@ -230,37 +230,37 @@ MODULE ExpTables
 !> @page ParamList Description of Parameter List
 !> @param reqParamsExpTables This parameter list is null.
 !> @param ExpTableType_optParams
-!>   - <TT><'ExpTables -> tabletype'></TT> - Takes an integer as an input. The 
+!>   - <TT><'ExpTables -> tabletype'></TT> - Takes an integer as an input. The
 !>   integer is an enumeration specifying which table will be generated.  The
 !>   options are: EXACT_EXP_TABLE, SINGLE_LEVEL_EXP_TABLE, TWO_LEVEL_EXP_TABLE,
 !>   LINEAR_EXP_TABLE, and ORDER2_EXP_TABLE.  The default value is LINEAR_EXP_TABLE.
-!>   - <TT><'ExpTables -> minval'></TT> - 
-!>   - <TT><'ExpTables -> maxval'></TT> - 
-!>   - <TT><'ExpTables -> nintervals'></TT> - 
-!>   - <TT><'ExpTables -> error'></TT> - 
-!>   - <TT><'ExpTables -> errorflag'></TT> - 
+!>   - <TT><'ExpTables -> minval'></TT> -
+!>   - <TT><'ExpTables -> maxval'></TT> -
+!>   - <TT><'ExpTables -> nintervals'></TT> -
+!>   - <TT><'ExpTables -> error'></TT> -
+!>   - <TT><'ExpTables -> errorflag'></TT> -
 !>
     SUBROUTINE init_ExpTable(myET,Params)
       CHARACTER(LEN=*),PARAMETER :: myName="init_ExpTable"
       CLASS(ExpTableType),INTENT(INOUT) :: myET
       TYPE(ParamType),OPTIONAL,INTENT(IN) :: Params
-     
+
       LOGICAL(SBK) :: localalloc,ErrFlag
       INTEGER(SIK) :: nerror,i,tableType,nintervals
       REAL(SRK) :: x,x2rd,tableErr,x1,x2,x3,y1,y2,y3,rdx2
       REAL(SRK) :: minVal,maxVal
       INTEGER(SIK) :: minTable,maxTable
       TYPE(ParamType) :: tmpList
-      
+
       localalloc=.FALSE.
       IF(.NOT.ASSOCIATED(eExpTable)) THEN
         ALLOCATE(eExpTable)
         localalloc=.TRUE.
       ENDIF
-      
+
       !Initialize reference parameter lists
       IF(.NOT.ExpTableType_Paramsflag) CALL ExpTables_Declare_ValidParams()
-      
+
       !Input checking
       nerror=eExpTable%getcounter(EXCEPTION_ERROR)
       IF(myET%isinit) THEN
@@ -280,16 +280,18 @@ MODULE ExpTables
           CALL ExpTableType_optParams%get('ExpTables -> tabletype',tableType)
         ENDIF
         !Default value for minVal and maxVal
+        minVal=0.0_SRK
+        maxVal=0.0_SRK
         CALL tmpList%get('ExpTables -> minval',minVal)
         CALL tmpList%get('ExpTables -> maxval',maxVal)
-        IF(minVal >= 0_SRK) THEN
+        IF(minVal >= 0._SRK) THEN
           CALL eExpTable%raiseWarning(modName//'::'//myName// &
             ' - Minimum value of the range of the table is not negative!'// &
               ' Using default table type!')
           !Get Default param
           CALL ExpTableType_optParams%get('ExpTables -> minval',minVal)
         ENDIF
-        IF(maxVal > 0_SRK) THEN
+        IF(maxVal > 0._SRK) THEN
           CALL eExpTable%raiseWarning(modName//'::'//myName// &
             ' - Maximum value of the range of the table is positive!'// &
               ' Using default table type!')
@@ -333,7 +335,7 @@ MODULE ExpTables
               CALL eExpTable%raiseError(modName//'::'//myName// &
                 ' - Exponent table type is incorrect!')
           ENDSELECT
-        !Ignore the user error and keep the input nintervals 
+        !Ignore the user error and keep the input nintervals
         ELSE
           SELECTCASE(tableType)
             CASE (EXACT_EXP_TABLE)
@@ -461,11 +463,11 @@ MODULE ExpTables
     ENDSUBROUTINE init_ExpTable
 !
 !-------------------------------------------------------------------------------
-!> @brief Exponential function evaluated by single-level table without 
+!> @brief Exponential function evaluated by single-level table without
 !> interpolation
 !> @param myET Exponential table type object
 !> @param x the value to evaluate
-!> @return ans the return value approximate to 1-EXP(x) 
+!> @return ans the return value approximate to 1-EXP(x)
 !>
 !> It is assumed x is in the interval [myET%minVal,myET%maxVal], which is
 !> checked in the calling routine which is the only public interface to this
@@ -485,7 +487,7 @@ MODULE ExpTables
 !> interpolation
 !> @param myET Exponential table type object
 !> @param x the value to evaluate
-!> @return ans the return value approximate to 1-EXP(x) 
+!> @return ans the return value approximate to 1-EXP(x)
 !>
 !> It is assumed x is in the interval [myET%minVal,myET%maxVal], which is
 !> checked in the calling routine which is the only public interface to this
@@ -495,7 +497,7 @@ MODULE ExpTables
       CLASS(ExpTableType),INTENT(IN) :: myET
       REAL(SRK),INTENT(IN) :: x
       REAL(SRK) :: ans
-      
+
       INTEGER(SIK) :: i,i2rd
       REAL(SRK) :: mid
       !
@@ -511,7 +513,7 @@ MODULE ExpTables
 !> @brief Exponential function evaluated by table with linear interpolation
 !> @param myET Exponential table type object
 !> @param x the value to evaluate
-!> @return ans the return value approximate to 1-EXP(x) 
+!> @return ans the return value approximate to 1-EXP(x)
 !>
 !> It is assumed x is in the interval [myET%minVal,myET%maxVal], which is
 !> checked in the calling routine which is the only public interface to this
@@ -527,11 +529,11 @@ MODULE ExpTables
       ans=myET%table2D(1,i)*x+myET%table2D(2,i)
     ENDFUNCTION EXPT_Linear
 !-------------------------------------------------------------------------------
-!> @brief Exponential function evaluated by table with second order 
+!> @brief Exponential function evaluated by table with second order
 !> interpolation
 !> @param myET Exponential table type object
 !> @param x the value to evaluate
-!> @return ans the return value approximate to 1-EXP(x) 
+!> @return ans the return value approximate to 1-EXP(x)
 !>
 !> It is assumed x is in the interval [myET%minVal,myET%maxVal], which is
 !> checked in the calling routine which is the only public interface to this
@@ -539,7 +541,7 @@ MODULE ExpTables
 !>
     ELEMENTAL FUNCTION EXPT_TwoOrder(myET,x) RESULT(ans)
       CLASS(ExpTableType),INTENT(IN) :: myET
-      REAL(SRK),INTENT(IN) :: x      
+      REAL(SRK),INTENT(IN) :: x
       REAL(SRK) :: ans
       INTEGER(SIK) :: i
       i=FLOOR(x*myET%rdx)
@@ -547,7 +549,7 @@ MODULE ExpTables
     ENDFUNCTION EXPT_TwoOrder
 !
 !-------------------------------------------------------------------------------
-!> @brief Subroutine that sets up the default parameter lists for the 
+!> @brief Subroutine that sets up the default parameter lists for the
 !>        ExpTableType.
 !> The required parameters for the ExpTableType do not exist.
 !> The optional parameters for the ExpTableType are:
@@ -557,7 +559,7 @@ MODULE ExpTables
 !>        'ExpTableType->nintervals',SIK
 !>        'ExpTableType->error',SRK
 !>        'ExpTableType->errorflag',SBK
-!> 
+!>
     SUBROUTINE ExpTables_Declare_ValidParams()
 
       ExpTableType_Paramsflag=.TRUE.
@@ -576,13 +578,13 @@ MODULE ExpTables
         'The default value for the error in the exponential table.')
       CALL ExpTableType_optParams%add('ExpTables -> errorflag',.FALSE., &
         'The default value for the error in the exponential table.')
-      
+
     ENDSUBROUTINE ExpTables_Declare_ValidParams
 
 !-------------------------------------------------------------------------------
-!> @brief Subroutine that clears the default parameter lists for the 
+!> @brief Subroutine that clears the default parameter lists for the
 !>        ExpTableType.
-!> 
+!>
     SUBROUTINE ExpTables_Clear_ValidParams()
 
       ExpTableType_Paramsflag=.FALSE.
