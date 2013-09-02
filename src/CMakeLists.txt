@@ -12,10 +12,24 @@ INCLUDE(TribitsLibraryMacros)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
+IF(WIN32)
+    TRIBITS_ADD_LIBRARY(CUtils
+        HEADERS getSysProcMemInfo.h
+        SOURCES getSysProcMemInfo.c
+        DEPLIBS Psapi 
+    )
+ELSE()
+    TRIBITS_ADD_LIBRARY(CUtils
+        HEADERS getSysProcMemInfo.h
+        SOURCES getSysProcMemInfo.c 
+    )
+ENDIF()
+
 #Library for utility code
 TRIBITS_ADD_LIBRARY(Utils
     HEADERS
-	  UnitTest.h
+	    UnitTest.h
+	    getSysProcMemInfo_F.h
     SOURCES
       UnitTest.f90
       IntrType.f90
@@ -54,4 +68,6 @@ TRIBITS_ADD_LIBRARY(Utils
       LinearSolverTypes.f90
       StochasticSampling.f90
       DTK_Base.f90
+    DEPLIBS
+      CUtils
 )
