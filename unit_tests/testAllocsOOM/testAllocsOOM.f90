@@ -26,7 +26,6 @@ PROGRAM testAllocsOOM
   
   INCLUDE 'getSysProcMemInfo_F.h'  
   
-  LOGICAL(SBK) :: test
   INTEGER(SIK) :: nerror0,nerror1
   INTEGER(C_LONG_LONG) :: maxRam,maxSwap,memAvail,maxMem
   
@@ -34,7 +33,7 @@ PROGRAM testAllocsOOM
   
   CALL eAllocs%setStopOnError(.FALSE.)
   CALL eAllocs%setQuietMode(.TRUE.)
-  maxMem=0.0_SRK
+  maxMem=0
   CALL getSysMemInfo(maxRam,maxSwap,memAvail)
   maxMem=maxRam+maxSwap
   REGISTER_SUBTEST('testTOOBIGP()',testTOOBIGP)
