@@ -343,170 +343,288 @@ PROGRAM testAllocsOOM
 ! Test error checking for over allocation
     SUBROUTINE testTOOBIGA()
       
-!        INTEGER(SNK),ALLOCATABLE :: i1tb(:)
+      INTEGER(SNK),ALLOCATABLE :: i1tb(:)
       INTEGER(SNK),ALLOCATABLE :: i2tb(:,:)
       INTEGER(SNK),ALLOCATABLE :: i3tb(:,:,:)
       INTEGER(SNK),ALLOCATABLE :: i4tb(:,:,:,:)
       INTEGER(SNK),ALLOCATABLE :: i5tb(:,:,:,:,:)
       INTEGER(SNK),ALLOCATABLE :: i6tb(:,:,:,:,:,:)
       INTEGER(SNK),ALLOCATABLE :: i7tb(:,:,:,:,:,:,:)
-!        INTEGER(SLK),ALLOCATABLE :: l1tb(:)
+      INTEGER(SLK),ALLOCATABLE :: l1tb(:)
       INTEGER(SLK),ALLOCATABLE :: l2tb(:,:)
       INTEGER(SLK),ALLOCATABLE :: l3tb(:,:,:)
       INTEGER(SLK),ALLOCATABLE :: l4tb(:,:,:,:)
       INTEGER(SLK),ALLOCATABLE :: l5tb(:,:,:,:,:)
       INTEGER(SLK),ALLOCATABLE :: l6tb(:,:,:,:,:,:)
       INTEGER(SLK),ALLOCATABLE :: l7tb(:,:,:,:,:,:,:)
-!        LOGICAL(SBK),ALLOCATABLE :: b1tb(:)
+      LOGICAL(SBK),ALLOCATABLE :: b1tb(:)
       LOGICAL(SBK),ALLOCATABLE :: b2tb(:,:)
       LOGICAL(SBK),ALLOCATABLE :: b3tb(:,:,:)
       LOGICAL(SBK),ALLOCATABLE :: b4tb(:,:,:,:)
       LOGICAL(SBK),ALLOCATABLE :: b5tb(:,:,:,:,:)
       LOGICAL(SBK),ALLOCATABLE :: b6tb(:,:,:,:,:,:)
       LOGICAL(SBK),ALLOCATABLE :: b7tb(:,:,:,:,:,:,:)
-!        REAL(SSK),ALLOCATABLE :: s1tb(:)
+      REAL(SSK),ALLOCATABLE :: s1tb(:)
       REAL(SSK),ALLOCATABLE :: s2tb(:,:)
       REAL(SSK),ALLOCATABLE :: s3tb(:,:,:)
       REAL(SSK),ALLOCATABLE :: s4tb(:,:,:,:)
       REAL(SSK),ALLOCATABLE :: s5tb(:,:,:,:,:)
       REAL(SSK),ALLOCATABLE :: s6tb(:,:,:,:,:,:)
       REAL(SSK),ALLOCATABLE :: s7tb(:,:,:,:,:,:,:)
-!        REAL(SDK),ALLOCATABLE :: d1tb(:)
+      REAL(SDK),ALLOCATABLE :: d1tb(:)
       REAL(SDK),ALLOCATABLE :: d2tb(:,:)
       REAL(SDK),ALLOCATABLE :: d3tb(:,:,:)
       REAL(SDK),ALLOCATABLE :: d4tb(:,:,:,:)
       REAL(SDK),ALLOCATABLE :: d5tb(:,:,:,:,:)
       REAL(SDK),ALLOCATABLE :: d6tb(:,:,:,:,:,:)
-      REAL(SDK),ALLOCATABLE :: d7tb(:,:,:,:,:,:,:)
-      
+      REAL(SDK),ALLOCATABLE :: d7tb(:,:,:,:,:,:,:)      
       
       
       CALL dmallocA(b2tb,1000000000,1000)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(b2tb,1000000000,1000)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmallocA(b2tb,1000000000,1000)')
+      nerror0=nerror1
       CALL dmalloc0A(b2tb,1,1000000000,1,1000)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(b2tb,1,1000000000,1,1000)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmalloc0A(b2tb,1,1000000000,1,1000)')
+      nerror0=nerror1
       CALL dmallocA(b3tb,1000000000,1000,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(b3tb,1000000000,1000,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmallocA(b3tb,1000000000,1000,1)')
+      nerror0=nerror1
       CALL dmalloc0A(b3tb,1,1000000000,1,1000,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(b3tb,1,1000000000,1,1000,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmalloc0A(b3tb,1,1000000000,1,1000,1,1)')
+      nerror0=nerror1
       CALL dmallocA(b4tb,1000000000,1000,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(b4tb,1000000000,1000,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmallocA(b4tb,1000000000,1000,1,1)')
+      nerror0=nerror1
       CALL dmalloc0A(b4tb,1,1000000000,1,1000,1,1,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(b4tb,1,1000000000,1,1000,1,1,1,1)')
-      
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmalloc0A(b4tb,1,1000000000,1,1000,1,1,1,1)')
+      nerror0=nerror1
       CALL dmallocA(b5tb,1000000000,1000,1,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(b5tb,1000000000,1000,1,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmallocA(b5tb,1000000000,1000,1,1,1)')
+      nerror0=nerror1
       CALL dmalloc0A(b5tb,1,1000000000,1,1000,1,1,1,1,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(b5tb,1,1000000000,1,1000,1,1,1,1,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmalloc0A(b5tb,1,1000000000,1,1000,1,1,1,1,1,1)')
+      nerror0=nerror1
       CALL dmallocA(b6tb,1000000000,1000,1,1,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(b6tb,1000000000,1000,1,1,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmallocA(b6tb,1000000000,1000,1,1,1,1)')
+      nerror0=nerror1
       CALL dmalloc0A(b6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(b6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmalloc0A(b6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)')
+      nerror0=nerror1
       CALL dmallocA(b7tb,1000000000,1000,1,1,1,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(b7tb,1000000000,1000,1,1,1,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmallocA(b7tb,1000000000,1000,1,1,1,1,1)')
+      nerror0=nerror1
       CALL dmalloc0A(b7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(b7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmalloc0A(b7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)')
+      nerror0=nerror1
       
       CALL dmallocA(i2tb,1000000000,1000)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(i2tb,1000000000,1000)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmallocA(i2tb,1000000000,1000)')
+      nerror0=nerror1
       CALL dmalloc0A(i2tb,1,1000000000,1,1000)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(i2tb,1,1000000000,1,1000)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmalloc0A(i2tb,1,1000000000,1,1000)')
+      nerror0=nerror1
       CALL dmallocA(i3tb,1000000000,1000,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(i3tb,1000000000,1000,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmallocA(i3tb,1000000000,1000,1)')
+      nerror0=nerror1
       CALL dmalloc0A(i3tb,1,1000000000,1,1000,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(i3tb,1,1000000000,1,1000,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmalloc0A(i3tb,1,1000000000,1,1000,1,1)')
+      nerror0=nerror1
       CALL dmallocA(i4tb,1000000000,1000,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(i4tb,1000000000,1000,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmallocA(i4tb,1000000000,1000,1,1)')
+      nerror0=nerror1
       CALL dmalloc0A(i4tb,1,1000000000,1,1000,1,1,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(i4tb,1,1000000000,1,1000,1,1,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmalloc0A(i4tb,1,1000000000,1,1000,1,1,1,1)')
+      nerror0=nerror1
       CALL dmallocA(i5tb,1000000000,1000,1,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(i5tb,1000000000,1000,1,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmallocA(i5tb,1000000000,1000,1,1,1)')
+      nerror0=nerror1
       CALL dmalloc0A(i5tb,1,1000000000,1,1000,1,1,1,1,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(i5tb,1,1000000000,1,1000,1,1,1,1,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmalloc0A(i5tb,1,1000000000,1,1000,1,1,1,1,1,1)')
+      nerror0=nerror1
       CALL dmallocA(i6tb,1000000000,1000,1,1,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(i6tb,1000000000,1000,1,1,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmallocA(i6tb,1000000000,1000,1,1,1,1)')
+      nerror0=nerror1
       CALL dmalloc0A(i6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(i6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmalloc0A(i6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)')
+      nerror0=nerror1
       CALL dmallocA(i7tb,1000000000,1000,1,1,1,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(i7tb,1000000000,1000,1,1,1,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmallocA(i7tb,1000000000,1000,1,1,1,1,1)')
+      nerror0=nerror1
       CALL dmalloc0A(i7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(i7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmalloc0A(i7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)')
+      nerror0=nerror1
       
       CALL dmallocA(l2tb,1000000000,1000)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(l2tb,1000000000,1000)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmallocA(l2tb,1000000000,1000)')
+      nerror0=nerror1
       CALL dmalloc0A(l2tb,1,1000000000,1,1000)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(l2tb,1,1000000000,1,1000)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmalloc0A(l2tb,1,1000000000,1,1000)')
+      nerror0=nerror1
       CALL dmallocA(l3tb,1000000000,1000,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(l3tb,1000000000,1000,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmallocA(l3tb,1000000000,1000,1)')
+      nerror0=nerror1
       CALL dmalloc0A(l3tb,1,1000000000,1,1000,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(l3tb,1,1000000000,1,1000,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmalloc0A(l3tb,1,1000000000,1,1000,1,1)')
+      nerror0=nerror1
       CALL dmallocA(l4tb,1000000000,1000,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(l4tb,1000000000,1000,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmallocA(l4tb,1000000000,1000,1,1)')
+      nerror0=nerror1
       CALL dmalloc0A(l4tb,1,1000000000,1,1000,1,1,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(l4tb,1,1000000000,1,1000,1,1,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmalloc0A(l4tb,1,1000000000,1,1000,1,1,1,1)')
+      nerror0=nerror1
       CALL dmallocA(l5tb,1000000000,1000,1,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(l5tb,1000000000,1000,1,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmallocA(l5tb,1000000000,1000,1,1,1)')
+      nerror0=nerror1
       CALL dmalloc0A(l5tb,1,1000000000,1,1000,1,1,1,1,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(l5tb,1,1000000000,1,1000,1,1,1,1,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmalloc0A(l5tb,1,1000000000,1,1000,1,1,1,1,1,1)')
+      nerror0=nerror1
       CALL dmallocA(l6tb,1000000000,1000,1,1,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(l6tb,1000000000,1000,1,1,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmallocA(l6tb,1000000000,1000,1,1,1,1)')
+      nerror0=nerror1
       CALL dmalloc0A(l6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(l6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmalloc0A(l6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)')
+      nerror0=nerror1
       CALL dmallocA(l7tb,1000000000,1000,1,1,1,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(l7tb,1000000000,1000,1,1,1,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmallocA(l7tb,1000000000,1000,1,1,1,1,1)')
+      nerror0=nerror1
       CALL dmalloc0A(l7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(l7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmalloc0A(l7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)')
+      nerror0=nerror1
       
       CALL dmallocA(s2tb,1000000000,1000)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(s2tb,1000000000,1000)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmallocA(s2tb,1000000000,1000)')
+      nerror0=nerror1
       CALL dmalloc0A(s2tb,1,1000000000,1,1000)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(s2tb,1,1000000000,1,1000)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmalloc0A(s2tb,1,1000000000,1,1000)')
+      nerror0=nerror1
       CALL dmallocA(s3tb,1000000000,1000,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(s3tb,1000000000,1000,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmallocA(s3tb,1000000000,1000,1)')
+      nerror0=nerror1
       CALL dmalloc0A(s3tb,1,1000000000,1,1000,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(s3tb,1,1000000000,1,1000,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmalloc0A(s3tb,1,1000000000,1,1000,1,1)')
+      nerror0=nerror1
       CALL dmallocA(s4tb,1000000000,1000,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(s4tb,1000000000,1000,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmallocA(s4tb,1000000000,1000,1,1)')
+      nerror0=nerror1
       CALL dmalloc0A(s4tb,1,1000000000,1,1000,1,1,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(s4tb,1,1000000000,1,1000,1,1,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmalloc0A(s4tb,1,1000000000,1,1000,1,1,1,1)')
+      nerror0=nerror1
       CALL dmallocA(s5tb,1000000000,1000,1,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(s5tb,1000000000,1000,1,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmallocA(s5tb,1000000000,1000,1,1,1)')
+      nerror0=nerror1
       CALL dmalloc0A(s5tb,1,1000000000,1,1000,1,1,1,1,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(s5tb,1,1000000000,1,1000,1,1,1,1,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmalloc0A(s5tb,1,1000000000,1,1000,1,1,1,1,1,1)')
+      nerror0=nerror1
       CALL dmallocA(s6tb,1000000000,1000,1,1,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(s6tb,1000000000,1000,1,1,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmalloc0A(i7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)')
+      nerror0=nerror1
       CALL dmalloc0A(s6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(s6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmalloc0A(s6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)')
+      nerror0=nerror1
       CALL dmallocA(s7tb,1000000000,1000,1,1,1,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(s7tb,1000000000,1000,1,1,1,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmallocA(s7tb,1000000000,1000,1,1,1,1,1)')
+      nerror0=nerror1
       CALL dmalloc0A(s7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(s7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmalloc0A(s7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)')
+      nerror0=nerror1
       
       CALL dmallocA(d2tb,1000000000,1000)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(d2tb,1000000000,1000)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmallocA(d2tb,1000000000,1000)')
+      nerror0=nerror1
       CALL dmalloc0A(d2tb,1,1000000000,1,1000)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(d2tb,1,1000000000,1,1000)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmalloc0A(d2tb,1,1000000000,1,1000)')
+      nerror0=nerror1
       CALL dmallocA(d3tb,1000000000,1000,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(d3tb,1000000000,1000,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmallocA(d3tb,1000000000,1000,1)')
+      nerror0=nerror1
       CALL dmalloc0A(d3tb,1,1000000000,1,1000,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(d3tb,1,1000000000,1,1000,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmalloc0A(d3tb,1,1000000000,1,1000,1,1)')
+      nerror0=nerror1
       CALL dmallocA(d4tb,1000000000,1000,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(d4tb,1000000000,1000,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmallocA(d4tb,1000000000,1000,1,1)')
+      nerror0=nerror1
       CALL dmalloc0A(d4tb,1,1000000000,1,1000,1,1,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(d4tb,1,1000000000,1,1000,1,1,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmalloc0A(d4tb,1,1000000000,1,1000,1,1,1,1)')
+      nerror0=nerror1
       CALL dmallocA(d5tb,1000000000,1000,1,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(d5tb,1000000000,1000,1,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmallocA(d5tb,1000000000,1000,1,1,1)')
+      nerror0=nerror1
       CALL dmalloc0A(d5tb,1,1000000000,1,1000,1,1,1,1,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(d5tb,1,1000000000,1,1000,1,1,1,1,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmalloc0A(d5tb,1,1000000000,1,1000,1,1,1,1,1,1)')
+      nerror0=nerror1
       CALL dmallocA(d6tb,1000000000,1000,1,1,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(d6tb,1000000000,1000,1,1,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmallocA(d6tb,1000000000,1000,1,1,1,1)')
+      nerror0=nerror1
       CALL dmalloc0A(d6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(d6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmalloc0A(d6tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1)')
+      nerror0=nerror1
       CALL dmallocA(d7tb,1000000000,1000,1,1,1,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmallocA(d7tb,1000000000,1000,1,1,1,1,1)')
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmallocA(d7tb,1000000000,1000,1,1,1,1,1)')
+      nerror0=nerror1
       CALL dmalloc0A(d7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)
-      ASSERT(SUM(eAllocs%getCounterAll()) /= 0,'dmalloc0A(d7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)')
-
+      nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerror0+1 == nerror1,'dmalloc0A(d7tb,1,1000000000,1,1000,1,1,1,1,1,1,1,1,1,1)')
+      nerror0=nerror1
+      
     ENDSUBROUTINE testTOOBIGA
 !    
 ENDPROGRAM testAllocsOOM
