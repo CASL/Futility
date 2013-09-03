@@ -76,7 +76,7 @@ void getProcMemInfo(long long *curUsage, long long *peakUsage)
 }
 
 #else
-//This is for Linux/Unix systems
+
 #include <sys/sysinfo.h>
 #include <sys/resource.h>
 #include <string.h>
