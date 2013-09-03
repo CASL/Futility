@@ -117,7 +117,7 @@ void getProcMemInfo(long long *curUsage, long long *peakUsage)
   }
   fclose(file);
   
-  *peakusage *= 1024;
+  *peakUsage *= 1024;
 }
 
 int parseLine(char * line)
