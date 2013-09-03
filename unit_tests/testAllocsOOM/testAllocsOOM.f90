@@ -48,6 +48,8 @@ PROGRAM testAllocsOOM
     REGISTER_SUBTEST('testTOOBIGA()',testTOOBIGA)
   ELSE
     ASSERT(.FALSE.,'SKIPPING TEST! MACHINE HAS MORE MEMORY THAN TEST CAN ALLOCATE!')
+    FINFO() 'Machine has "',maxMem,'" bytes of memory,'
+    FINFO() 'which is larger than what test will allocate (',memForTest,' bytes).'
   ENDIF
   
   FINALIZE_TEST()
