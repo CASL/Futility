@@ -32,6 +32,7 @@ PROGRAM testAllocs
   CALL eAllocs%setStopOnError(.FALSE.)
   CALL eAllocs%setQuietMode(.TRUE.)
   
+  REGISTER_SUBTEST('testAllocsError',testAllocsError)
   REGISTER_SUBTEST('testBOOLP()',testBOOLP)
   REGISTER_SUBTEST('testBOOLA()',testBOOLA)
   REGISTER_SUBTEST('testINTP()',testINTP)
@@ -46,6 +47,15 @@ PROGRAM testAllocs
   FINALIZE_TEST()
   
   CONTAINS
+
+    SUBROUTINE testAllocsError()
+
+      CALL AllocsError(3_SIK,50.0_SRK)
+      ASSERT(SUM(eAllocs%getCounterAll()) == 1,'Allocs Error Handling')
+  
+    ENDSUBROUTINE testAllocsError
+!
+!===============================================================================
     SUBROUTINE testGetMemUsageChar()
       
       ASSERT(ALLOC_MEMSTRING_LENGTH == 14_SIK,'ALLOC_MEMSTRING_LENGTH')

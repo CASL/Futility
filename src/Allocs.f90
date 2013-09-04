@@ -133,6 +133,9 @@ MODULE Allocs
   PUBLIC :: Alloc_nbytes
   PUBLIC :: ALLOC_MEMSTRING_LENGTH
   PUBLIC :: eAllocs
+#ifdef UNIT_TEST
+  PUBLIC :: AllocsError
+#endif
 !
 ! Variables
   !> Maximum length of character string returned by 
