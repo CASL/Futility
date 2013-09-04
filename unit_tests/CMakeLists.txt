@@ -36,11 +36,15 @@ SET(UNIT_TEST_NAMES
     testVectorTypes
     testLinearSolver
     testHDF5FileType
-
+    
 )
 
+IF("${PROJECT_NAME}" STREQUAL "MPACT")
+    SET(UNIT_TEST_NAMES ${UNIT_TEST_NAMES} testAllocsOOM)
+ENDIF()
+
 # add test for PARDISO if enabled
-IF (${PACKAGE_NAME}_ENABLE_PARDISO)
+IF(${PACKAGE_NAME}_ENABLE_PARDISO)
     SET(UNIT_TEST_NAMES
         ${UNIT_TEST_NAMES}
         testTPLPARDISO
@@ -48,7 +52,7 @@ IF (${PACKAGE_NAME}_ENABLE_PARDISO)
 ENDIF()
 
 # add test for PETSC if enabled
-IF (${PACKAGE_NAME}_ENABLE_PETSC)
+IF(${PACKAGE_NAME}_ENABLE_PETSC)
     SET(UNIT_TEST_NAMES
         ${UNIT_TEST_NAMES}
         testTPLPETSC
@@ -57,7 +61,7 @@ IF (${PACKAGE_NAME}_ENABLE_PETSC)
 ENDIF()
 
 # add test for HDF5 if enabled
-IF (${PACKAGE_NAME}_ENABLE_HDF5)
+IF(${PACKAGE_NAME}_ENABLE_HDF5)
     SET(UNIT_TEST_NAMES
         ${UNIT_TEST_NAMES}
 #        testTPLHDF5
