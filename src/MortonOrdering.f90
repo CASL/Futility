@@ -86,6 +86,9 @@ MODULE MortonOrdering
       !> @copybrief MortonOrdering::ZTree_Create
       !> @copydetails MortonOrdering::ZTree_Create
       PROCEDURE,PASS :: init => ZTree_Create
+      !> @copybrief MortonOrdering::ZTree_initSingle
+      !> @copydetails MortonOrdering::ZTree_initSingle
+      PROCEDURE,PASS :: initSingle => ZTree_initSingle
       !> @copybrief MortonOrdering::ZTree_Burn
       !> @copydetails MortonOrdering::ZTree_Burn
       PROCEDURE,PASS :: clear => ZTree_Burn
@@ -219,6 +222,52 @@ MODULE MortonOrdering
         iord=iord+iord
       ENDDO
     ENDFUNCTION bin2int
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param node a "Z"-Tree node object to initialize
+!> @param x1 the starting x index for the domain on this node (x1 > 0)
+!> @param x2 the stopping x index for the domain on this node (x2 >= x1)
+!> @param y1 the starting y index for the domain on this node (y1 > 0)
+!> @param y2 the stopping y index for the domain on this node (y2 >= y1)
+!> @param z1 the starting z index for the domain on this node (z1 > 0)
+!> @param z2 the stopping z index for the domain on this node (z2 >= z1)
+!> @param istt the starting global 1-D index for this node (istt >= 0)
+!> @param nsubd the number of subdomains that will be added to the node
+!>
+!> This routine is used for initializing a Z tree node without constructing the
+!> rest of the tree. It is therefore not recursive. Its intended purpose is to
+!> allow for more directed construction of the Z tree for more indexing control
+!> and easier partitioning. It should probably be used in conjunction with the
+!> addChild routines and updateIndices routines to form a complete tree.
+    SUBROUTINE ZTree_initSingle(node,x1,x2,y1,y2,z1,z2,istt,nsubd)
+      CHARACTER(LEN=*),PARAMETER :: myName='ZTree_initSingle'
+      CLASS(ZTreeNodeType),INTENT(INOUT) :: node
+      INTEGER(SIK),INTENT(IN) :: x1,x2
+      INTEGER(SIK),INTENT(IN) :: y1,y2
+      INTEGER(SIK),INTENT(IN) :: z1,z2
+      INTEGER(SIK),INTENT(IN) :: istt
+      INTEGER(SIK),INTENT(IN) :: nsubd
+
+      !Check for valid input
+      IF(.NOT.(istt < 0 .OR. x2 < x1 .OR. y2 < y1 .OR. z2 < z1 .OR. &
+        x1 < 1 .OR. y1 < 1 .OR. z1 < 1 .OR. node%istt /= -1)) THEN
+
+        !Assign values to this node based on inputs
+        node%istt=istt
+        node%x(1)=x1
+        node%x(2)=x2
+        node%y(1)=y1
+        node%y(2)=y2
+        node%z(1)=z1
+        node%z(2)=z2
+
+        node%nsubdomains=nsubd
+        ALLOCATE(node%subdomains(nsubd))
+
+        node%istp=0
+      ENDIF
+    ENDSUBROUTINE ZTree_initSingle
 !
 !-------------------------------------------------------------------------------
 !> @brief Creates a "Z"-Tree using the bounds of a rectilinear grid
@@ -681,7 +730,6 @@ MODULE MortonOrdering
           idshift=0
           nsubd=thisZTreeNode%getNDomains(nlevels-1)
           DO id0=1,nsubd
-! WRITE(*,*)"boop",id0,nsubd
             id=id0+idshift
             CALL thisZTreeNode%getSubNodePointer(nlevels-1,id,pZTree)
 
