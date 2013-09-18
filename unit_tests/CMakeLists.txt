@@ -60,6 +60,18 @@ IF(${PACKAGE_NAME}_ENABLE_PETSC)
         )
 ENDIF()
 
+# add test for SLEPC if enabled
+IF(${PACKAGE_NAME}_ENABLE_SLEPC)
+  
+  MESSAGE("hi1")
+    SET(UNIT_TEST_NAMES
+        ${UNIT_TEST_NAMES}
+        testTPLSLEPC
+        )
+ELSE()
+MESSAGE("hi2")
+ENDIF()
+
 # add test for HDF5 if enabled
 IF(${PACKAGE_NAME}_ENABLE_HDF5)
     SET(UNIT_TEST_NAMES
