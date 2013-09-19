@@ -15,26 +15,22 @@
 ! manufacturer, or otherwise, does not necessarily constitute or imply its     !
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-#include "UnitTest.h"
+
 
 PROGRAM testHDF5
+#include "UnitTest.h"
   USE ISO_FORTRAN_ENV
-  USE ParallelEnv
   USE UnitTest
   USE IntrType
   USE Strings
   USE ExceptionHandler
-  USE Strings
+  USE ParameterLists
+  USE ParallelEnv
   USE FileType_HDF5
   USE IO_Strings
-  USE ParameterLists
 
   IMPLICIT NONE
-
-#ifdef HAVE_MPI
-  INCLUDE 'mpif.h'
-#endif
-
+  
   TYPE(MPI_EnvType) :: testMPI
   INTEGER(SIK) :: mpierr,mysize,myrank
   !  Reference solutions
@@ -55,16 +51,11 @@ PROGRAM testHDF5
   LOGICAL(SBK) :: exists
   TYPE(StringType),ALLOCATABLE :: refsets(:)
 
-#ifdef HAVE_MPI
-  CALL testMPI%init(mpierr)
-  IF(testMPI%rank /=0)THEN
-    utest_master=.FALSE.
-  ENDIF
-#endif
+  CALL testMPI%init(PE_COMM_WORLD)
+  IF(testMPI%rank /= 0)  utest_master=.FALSE.
 
   CREATE_TEST("HDF File Type")
-
-#ifdef MPACT_HAVE_HDF5
+  
   CALL testHDF5FileTypeSetup()
   REGISTER_SUBTEST("HDF5FileType Init and Delete",testHDF5FileTypeCreateDelete)
   REGISTER_SUBTEST("HDF5FileType Read",testHDF5FileTypeRead)
@@ -80,15 +71,10 @@ PROGRAM testHDF5
   ENDIF
   DEALLOCATE(refD1,refD2,refD3,refD4,refS1,refS2,refS3,refS4,refB1,refB2,refB3,&
       refL1,refL2,refL3,refN1,refN2,refN3,refST1,refST2,refST3,refsets)
-#else
-  REGISTER_SUBTEST("HDF5 Not Present",testHDF5_wo)
-#endif
 
   FINALIZE_TEST()
-#ifdef HAVE_MPI
   CALL testMPI%finalize()
   CALL testMPI%clear()
-#endif
 
 !
 !===============================================================================
