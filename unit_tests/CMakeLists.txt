@@ -35,8 +35,6 @@ SET(UNIT_TEST_NAMES
     testMatrixTypes
     testVectorTypes
     testLinearSolver
-    testHDF5FileType
-    
 )
 
 IF("${PROJECT_NAME}" STREQUAL "MPACT")
@@ -64,7 +62,7 @@ ENDIF()
 IF(${PACKAGE_NAME}_ENABLE_HDF5)
     SET(UNIT_TEST_NAMES
         ${UNIT_TEST_NAMES}
-#        testTPLHDF5
+        testHDF5FileType
         )
 ENDIF()
 
