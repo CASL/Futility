@@ -309,9 +309,10 @@ MODULE ExceptionHandler
       CLASS(ExceptionHandlerType),INTENT(IN) :: e
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK) :: count
-      IF(ASSOCIATED(e%surrogate)) THEN
-        count=e%surrogate%getCounter(i)
-      ELSE
+
+      ! IF(ASSOCIATED(e%surrogate)) THEN
+      !   count=e%surrogate%getCounter(i)
+      ! ELSE
         count=-1
         SELECTCASE(i)
           CASE(EXCEPTION_INFORMATION)
@@ -325,7 +326,7 @@ MODULE ExceptionHandler
           CASE(EXCEPTION_FAILURE)
             count=e%nFail
         ENDSELECT
-      ENDIF
+      ! ENDIF
     ENDFUNCTION getCounter
 !
 !-------------------------------------------------------------------------------
