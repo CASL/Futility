@@ -269,7 +269,7 @@ MODULE ExceptionHandler
       CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
 
       IF(ASSOCIATED(e%surrogate)) THEN
-        CALL e%surrogate%initCounter()
+        !CALL e%surrogate%initCounter()
       ELSE
         e%nInfo=0
         e%nWarn=0
@@ -290,7 +290,7 @@ MODULE ExceptionHandler
       INTEGER(SIK) :: counter(EXCEPTION_SIZE)
 
       IF(ASSOCIATED(e%surrogate)) THEN
-        counter=e%surrogate%getCounterAll()
+        !counter=e%surrogate%getCounterAll()
       ELSE
         counter(EXCEPTION_INFORMATION)=e%nInfo
         counter(EXCEPTION_WARNING)=e%nWarn
@@ -336,7 +336,7 @@ MODULE ExceptionHandler
       CLASS(ExceptionHandlerType),INTENT(IN) :: e
       CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: lastMesg
       IF(ASSOCIATED(e%surrogate)) THEN
-        lastMesg=e%surrogate%getLastMessage()
+        !lastMesg=e%surrogate%getLastMessage()
       ELSE
         lastMesg=e%lastMesg
       ENDIF
@@ -377,7 +377,7 @@ MODULE ExceptionHandler
       INTEGER(SIK) :: unit
 
       IF(ASSOCIATED(e%surrogate)) THEN
-        unit=e%surrogate%getLogFileUnit()
+        !unit=e%surrogate%getLogFileUnit()
       ELSE
         unit=e%logFileUnit
       ENDIF
@@ -414,7 +414,7 @@ MODULE ExceptionHandler
       LOGICAL(SBK) :: isactive
 
       IF(ASSOCIATED(e%surrogate)) THEN
-        isactive=e%surrogate%isLogActive()
+        !isactive=e%surrogate%isLogActive()
       ELSE
         isactive=.FALSE.
         IF(e%logFileActive) CALL e%checkLogFileOK
@@ -439,7 +439,7 @@ MODULE ExceptionHandler
       CHARACTER(LEN=10) :: fpropstr
 
       IF(ASSOCIATED(e%surrogate)) THEN
-        CALL e%surrogate%checkLogFileOK()
+        !CALL e%surrogate%checkLogFileOK()
       ELSE
         !Since the state of the log file can change (e.g. closed) check it's
         !integrity
@@ -525,7 +525,7 @@ MODULE ExceptionHandler
       LOGICAL(SBK) :: bool
 
       IF(ASSOCIATED(e%surrogate)) THEN
-        bool=e%surrogate%isQuietMode()
+        !bool=e%surrogate%isQuietMode()
       ELSE
         bool=e%quiet
       ENDIF
@@ -555,7 +555,7 @@ MODULE ExceptionHandler
       LOGICAL(SBK) :: bool
 
       IF(ASSOCIATED(e%surrogate)) THEN
-        bool=e%surrogate%isDebugMode()
+        !bool=e%surrogate%isDebugMode()
       ELSE
         bool=e%debug
       ENDIF
@@ -585,7 +585,7 @@ MODULE ExceptionHandler
       LOGICAL(SBK) :: bool
 
       IF(ASSOCIATED(e%surrogate)) THEN
-        bool=e%surrogate%isStopOnError()
+        !bool=e%surrogate%isStopOnError()
       ELSE
         bool=e%stopOnError
       ENDIF
@@ -603,7 +603,7 @@ MODULE ExceptionHandler
       CHARACTER(LEN=*),INTENT(IN) :: mesg
 
       IF(ASSOCIATED(e%surrogate)) THEN
-        CALL e%surrogate%raiseInformation(mesg)
+        !CALL e%surrogate%raiseInformation(mesg)
       ELSE
         e%nInfo=e%nInfo+1
         e%lastMesg=mesg
@@ -624,7 +624,7 @@ MODULE ExceptionHandler
       CHARACTER(LEN=*),INTENT(IN) :: mesg
 
       IF(ASSOCIATED(e%surrogate)) THEN
-        CALL e%surrogate%raiseWarning(mesg)
+        !CALL e%surrogate%raiseWarning(mesg)
       ELSE
         e%nWarn=e%nWarn+1
         e%lastMesg=mesg
@@ -645,7 +645,7 @@ MODULE ExceptionHandler
       CHARACTER(LEN=*),INTENT(IN) :: mesg
 
       IF(ASSOCIATED(e%surrogate)) THEN
-        CALL e%surrogate%raiseDebugWarning(mesg)
+        !CALL e%surrogate%raiseDebugWarning(mesg)
       ELSE
         IF(e%debug) CALL e%raiseWarning(mesg)
       ENDIF
@@ -664,7 +664,7 @@ MODULE ExceptionHandler
       CHARACTER(LEN=*),INTENT(IN) :: mesg
 
       IF(ASSOCIATED(e%surrogate)) THEN
-        CALL e%surrogate%raiseError(mesg)
+        !CALL e%surrogate%raiseError(mesg)
       ELSE
         e%nError=e%nError+1
         e%lastMesg=mesg
@@ -687,7 +687,7 @@ MODULE ExceptionHandler
       CHARACTER(LEN=*),INTENT(IN) :: mesg
 
       IF(ASSOCIATED(e%surrogate)) THEN
-        CALL e%surrogate%raiseFatalError(mesg)
+        !CALL e%surrogate%raiseFatalError(mesg)
       ELSE
         e%nFatal=e%nFatal+1
         e%lastMesg=mesg
@@ -709,7 +709,7 @@ MODULE ExceptionHandler
       CHARACTER(LEN=*),INTENT(IN) :: mesg
 
       IF(ASSOCIATED(e%surrogate)) THEN
-        CALL e%surrogate%raiseFailure(mesg)
+        !CALL e%surrogate%raiseFailure(mesg)
       ELSE
         e%nFail=e%nFail+1
         e%lastMesg=mesg
