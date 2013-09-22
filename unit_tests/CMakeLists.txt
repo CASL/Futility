@@ -83,3 +83,4 @@ ENDFOREACH()
 # Clear these variables
 UNSET(UNIT_TEST_NAMES)
 UNSET(test)
+
