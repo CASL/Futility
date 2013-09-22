@@ -66,8 +66,6 @@ IF(${PACKAGE_NAME}_ENABLE_SLEPC)
         ${UNIT_TEST_NAMES}
         testTPLSLEPC
         )
-ELSE()
-MESSAGE("hi2")
 ENDIF()
 
 # add test for HDF5 if enabled
