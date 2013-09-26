@@ -57,17 +57,17 @@ MODULE UnitTest
 !
 ! List of global types
   TYPE :: UTestElement
-    CHARACTER(LEN=20) :: subtestname
+    CHARACTER(LEN=60) :: subtestname
     INTEGER :: nfail=0
     INTEGER :: npass=0
     TYPE(UTestElement),POINTER :: next => NULL()
   ENDTYPE UTestElement
 !
 ! List of global variables
-  CHARACTER(LEN=20) :: utest_testname
-  CHARACTER(LEN=20) :: utest_subtestname
-  CHARACTER(LEN=20) :: utest_componentname
-  CHARACTER(LEN=20) :: utest_prefix
+  CHARACTER(LEN=60) :: utest_testname
+  CHARACTER(LEN=60) :: utest_subtestname
+  CHARACTER(LEN=60) :: utest_componentname
+  CHARACTER(LEN=60) :: utest_prefix
   LOGICAL :: utest_master=.TRUE.
   LOGICAL :: utest_component=.FALSE.
   LOGICAL :: utest_compfail=.FALSE.
