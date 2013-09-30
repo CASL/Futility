@@ -80,6 +80,8 @@ MODULE MortonOrdering
     INTEGER(SIK) :: istp=-1
     !> The number of subdomains this node has been divided into
     INTEGER(SIK) :: nsubdomains=0
+    !> The number of fully-defined children (subdomains)
+    INTEGER(SIK) :: ndefined=0
     !> The subdomains for the domain defined by this node
     TYPE(ZTreeNodeType),POINTER :: subdomains(:) => NULL()
     CONTAINS
@@ -89,6 +91,9 @@ MODULE MortonOrdering
       !> @copybrief MortonOrdering::ZTree_initSingle
       !> @copydetails MortonOrdering::ZTree_initSingle
       PROCEDURE,PASS :: initSingle => ZTree_initSingle
+      !> @copybrief MortonOrdering::ZTree_addChild
+      !> @copydetails MortonOrdering::ZTree_addChild
+      PROCEDURE,PASS :: addChild => ZTree_addChild
       !> @copybrief MortonOrdering::ZTree_Burn
       !> @copydetails MortonOrdering::ZTree_Burn
       PROCEDURE,PASS :: clear => ZTree_Burn
@@ -270,6 +275,55 @@ MODULE MortonOrdering
     ENDSUBROUTINE ZTree_initSingle
 !
 !-------------------------------------------------------------------------------
+!> @brief Add a child node to a Z Tree node
+!> @param node the node to which the child should be added
+!> @param x1 starting x index
+!> @param x2 stopping x index
+!> @param y1 starting y index
+!> @param y2 stopping y index
+!> @param z1 starting z index
+!> @param z2 stopping z index
+!>
+    FUNCTION ZTree_addChild(node,x1,x2,y1,y2,z1,z2,nsubd,construct) RESULT(child)
+      CHARACTER(LEN=*),PARAMETER :: myName='ZTree_addChild'
+      CLASS(ZTreeNodeType),INTENT(INOUT) :: node
+      INTEGER(SIK),INTENT(IN) :: x1
+      INTEGER(SIK),INTENT(IN) :: x2
+      INTEGER(SIK),INTENT(IN) :: y1
+      INTEGER(SIK),INTENT(IN) :: y2
+      INTEGER(SIK),INTENT(IN) :: z1
+      INTEGER(SIK),INTENT(IN) :: z2
+      INTEGER(SIK),INTENT(IN) :: nsubd
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: construct
+
+      TYPE(ZTreeNodeType),POINTER :: child
+
+      LOGICAL(SBK) :: const
+      INTEGER(SIK) :: istt
+
+      ! Make sure there is still space for more children
+      IF(node%ndefined < node%nsubdomains) THEN
+        const=.TRUE.
+        IF(PRESENT(construct)) THEN
+          const=construct
+        ENDIF
+
+        node%ndefined=node%ndefined+1
+        istt=node%istp+1
+        IF(const) THEN
+          CALL node%subdomains(node%ndefined)%init(x1,x2,y1,y2,z1,z2,istt)
+        ELSE
+          CALL node%subdomains(node%ndefined)%initSingle(x1,x2,y1,y2,z1,z2,istt,nsubd)
+        ENDIF
+        child => node%subdomains(node%ndefined)
+        node%istp=child%istp
+      ELSE
+        ! Should probably throw an error
+      ENDIF
+WRITE(*,*)"child added"
+    ENDFUNCTION ZTree_addChild
+!
+!-------------------------------------------------------------------------------
 !> @brief Creates a "Z"-Tree using the bounds of a rectilinear grid
 !> @param thisZTreeNode a "Z"-Tree node object to initialize
 !> @param x1 the starting x index for the domain on this node (x1 > 0)
@@ -290,17 +344,25 @@ MODULE MortonOrdering
 !> are split. Only dimensions with size greater than 1 are split because 1
 !> cannot be split.
 !>
-    PURE RECURSIVE SUBROUTINE ZTree_Create(thisZTreeNode,x1,x2,y1,y2,z1,z2,istt)
+    PURE RECURSIVE SUBROUTINE ZTree_Create(thisZTreeNode,x1,x2,y1,y2,z1,z2, &
+      istt,construct)
       CLASS(ZTreeNodeType),INTENT(INOUT) :: thisZTreeNode
       INTEGER(SIK),INTENT(IN) :: x1,x2
       INTEGER(SIK),INTENT(IN) :: y1,y2
       INTEGER(SIK),INTENT(IN) :: z1,z2
       INTEGER(SIK),INTENT(IN) :: istt
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: construct
       LOGICAL(SBK) :: splitX,splitY,splitZ
       INTEGER(SIK) :: nx,ny,nz
       INTEGER(SIK) :: id,idstt,ix,iy,iz,ndx,ndy,ndz,nsmall
       INTEGER(SIK),DIMENSION(2) :: nxdstt,nxdstp,nydstt,nydstp,nzdstt,nzdstp
       REAL(SRK) :: rx,ry,rz
+      LOGICAL(SBK) :: const
+
+      const=.TRUE.
+      IF(PRESENT(construct)) THEN
+        const=construct
+      ENDIF
 
       !Check for valid input
       IF(.NOT.(istt < 0 .OR. x2 < x1 .OR. y2 < y1 .OR. z2 < z1 .OR. &
@@ -406,6 +468,22 @@ MODULE MortonOrdering
         thisZTreeNode%istp=idstt
       ENDIF
     ENDSUBROUTINE ZTree_Create
+!
+!-------------------------------------------------------------------------------
+!> @brief Construct the tree below all nodes reachable from the passed node,
+!> updating indexing along the way
+!> @param node the node to bloom
+!>
+!> This routine completes the construction of a partially constructed tree by
+!> constructing the bottom-most nodes and updating the indexing of the nodes
+!> above.
+    PURE RECURSIVE SUBROUTINE ZTree_Bloom(node)
+      CHARACTER(LEN=*),PARAMETER :: myName='ZTree_Bloom'
+      CLASS(ZTreeNodeType),INTENT(INOUT) :: node
+
+
+
+    ENDSUBROUTINE ZTree_Bloom
 !
 !-------------------------------------------------------------------------------
 !> @brief Clears a "Z"-Tree object
