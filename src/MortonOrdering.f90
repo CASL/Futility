@@ -284,7 +284,13 @@ MODULE MortonOrdering
 !> @param y2 stopping y index
 !> @param z1 starting z index
 !> @param z2 stopping z index
+!> @param nsubd number of subdivisions that thie child node will have. Optional.
 !>
+!> This function generates a child node in the subdomains list of the passed in
+!> node, returning a pointer to the child node. If nsubd is provided and not
+!> zero, the child will be initialized with the initSingle routine, so that its
+!> children can be initialized hands-on as well. If not provided, it will call
+!> the normal init routine.
     FUNCTION ZTree_addChild(node,x1,x2,y1,y2,z1,z2,nsubd) RESULT(child)
       CHARACTER(LEN=*),PARAMETER :: myName='ZTree_addChild'
       CLASS(ZTreeNodeType),INTENT(INOUT) :: node
