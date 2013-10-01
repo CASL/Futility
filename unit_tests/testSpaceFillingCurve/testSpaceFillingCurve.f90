@@ -16,20 +16,20 @@
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testSpaceFillingCurve
-#include "UnitTest.h" 
+#include "UnitTest.h"
   USE UnitTest
   USE IntrType
   USE MortonOrdering
   IMPLICIT NONE
-  
+
   INTEGER(SIK) :: i,j,k,iout,jout,kout,istt,istp,rx(2),ry(2),rz(2)
-  
+
   TYPE(ZTreeNodeType),TARGET :: testZTree
   TYPE(ZTreeNodeType) :: tmpZTreeNode
   TYPE(ZTreeNodeType),POINTER :: tmpZTreeLevel(:)
-  
+
   CREATE_TEST('SPACE FILLING CURVES')
-  
+
   REGISTER_SUBTEST('Morton Ordering',testMortonIndex)
   REGISTER_SUBTEST('Z-Tree %clear()',testZtreeClear)
   REGISTER_SUBTEST('Z-Tree %init(...)',testZTreeInit)
@@ -46,7 +46,8 @@ PROGRAM testSpaceFillingCurve
   REGISTER_SUBTEST('Z-Tree %renumber(...)',testZTreeRenumber)
   REGISTER_SUBTEST('Z-Tree %shave(...)',testZTreeShave)
   REGISTER_SUBTEST('Z-Tree %partition(...)',testZTreePartition)
-  
+  REGISTER_SUBTEST('Deferred construction',testDeferredConst)
+
   FINALIZE_TEST()
 !
 !===============================================================================
@@ -96,7 +97,7 @@ PROGRAM testSpaceFillingCurve
       testZTree%subdomains(2)%z=1
       testZTree%subdomains(1)%istt=2
       testZTree%subdomains(1)%istp=2
-      
+
       !Test clear
       CALL testZTree%clear()
       ASSERT(ALL(testZTree%x == 0),'%x')
@@ -119,10 +120,10 @@ PROGRAM testSpaceFillingCurve
       ASSERT(ALL(testZTree%y == 0),'testZTree%y')
       ASSERT(ALL(testZTree%z == 0),'testZTree%z')
       ASSERT(testZTree%istt == -1,'testZTree%istt')
-      
+
       ASSERT(testZTree%nsubdomains == 0,'testZTree%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(testZTree%subdomains),'testZTree%subdomains')
-      
+
       COMPONENT_TEST('%init(1,4,4,1,1,4,1)')
       CALL testZTree%init(1,4,4,1,1,4,1)
       ASSERT(ALL(testZTree%x == 0),'testZTree%x')
@@ -131,7 +132,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(testZTree%istt == -1,'testZTree%istt')
       ASSERT(testZTree%nsubdomains == 0,'testZTree%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(testZTree%subdomains),'testZTree%subdomains')
-      
+
       COMPONENT_TEST('%init(1,4,1,4,4,1,1)')
       CALL testZTree%init(1,4,1,4,4,1,1)
       ASSERT(ALL(testZTree%x == 0),'testZTree%x')
@@ -140,7 +141,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(testZTree%istt == -1,'testZTree%istt')
       ASSERT(testZTree%nsubdomains == 0,'testZTree%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(testZTree%subdomains),'testZTree%subdomains')
-      
+
       COMPONENT_TEST('%init(1,4,1,4,1,4,-5)')
       CALL testZTree%init(1,4,1,4,1,4,-5)
       ASSERT(ALL(testZTree%x == 0),'testZTree%x')
@@ -149,7 +150,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(testZTree%istt == -1,'testZTree%istt')
       ASSERT(testZTree%nsubdomains == 0,'testZTree%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(testZTree%subdomains),'testZTree%subdomains')
-      
+
       COMPONENT_TEST('%init(-1,4,1,4,1,4,1)')
       CALL testZTree%init(-1,4,1,4,1,4,1)
       ASSERT(ALL(testZTree%x == 0),'testZTree%x')
@@ -158,7 +159,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(testZTree%istt == -1,'testZTree%istt')
       ASSERT(testZTree%nsubdomains == 0,'testZTree%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(testZTree%subdomains),'testZTree%subdomains')
-      
+
       COMPONENT_TEST('%init(-1,4,-1,4,1,4,1)')
       CALL testZTree%init(-1,4,-1,4,1,4,1)
       ASSERT(ALL(testZTree%x == 0),'testZTree%x')
@@ -167,7 +168,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(testZTree%istt == -1,'testZTree%istt')
       ASSERT(testZTree%nsubdomains == 0,'testZTree%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(testZTree%subdomains),'testZTree%subdomains')
-      
+
       COMPONENT_TEST('%init(1,4,1,4,-1,4,1)')
       ASSERT(ALL(testZTree%x == 0),'testZTree%x')
       ASSERT(ALL(testZTree%y == 0),'testZTree%y')
@@ -175,7 +176,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(testZTree%istt == -1,'testZTree%istt')
       ASSERT(testZTree%nsubdomains == 0,'testZTree%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(testZTree%subdomains),'testZTree%subdomains')
-      
+
       !Correct case
       COMPONENT_TEST('%init(1,4,1,4,1,4,1)')
       CALL testZTree%init(1,4,1,4,1,4,1)
@@ -186,7 +187,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(testZTree%istp == 64,'testZTree%istp')
       ASSERT(testZTree%nsubdomains == 8,'testZTree%nsubdomains')
       ASSERT(SIZE(testZTree%subdomains,DIM=1) == 8,'SIZE(testZTree%nsubdomains)')
-      
+
       CALL checkLevel1() !Check level 1 domains
       CALL checkLevel2d1() !Check level 2 domain 1
       CALL checkLevel2d2() !Check level 2 domain 2
@@ -197,7 +198,7 @@ PROGRAM testSpaceFillingCurve
       CALL checkLevel2d7() !Check level 2 domain 7
       CALL checkLevel2d8() !Check level 2 domain 8
       CALL testZTree%init(1,4,1,4,1,4,1) !Error check
-      
+
       !
       !Check a few other grids to test for preferential splitting and uneven splitting
       CALL testZTree%clear()
@@ -205,7 +206,7 @@ PROGRAM testSpaceFillingCurve
       COMPONENT_TEST('%init(1,3,1,3,1,6,1)')
       ASSERT(testZTree%nsubdomains == 2,'aspect ratio == 2')
       CALL testZTree%clear()
-      
+
       COMPONENT_TEST('%init(1,3,1,3,1,1,1)')
       CALL testZTree%init(1,3,1,3,1,1,1)
       ASSERT(testZTree%nsubdomains == 4,'%nsubdomains')
@@ -218,7 +219,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(testZTree%subdomains(4)%istt == 6,'%subdomains(4)%istt')
       ASSERT(testZTree%subdomains(4)%nsubdomains == 4,'%subdomains(4)%nsubdomains')
       CALL testZTree%clear()
-      
+
       COMPONENT_TEST('%init(1,1,1,1,1,3,1)')
       CALL testZTree%init(1,1,1,1,1,3,1)
       ASSERT(testZTree%nsubdomains == 2,'%nsubdomains')
@@ -232,7 +233,7 @@ PROGRAM testSpaceFillingCurve
 !-------------------------------------------------------------------------------
     SUBROUTINE checkLevel1()
       tmpZTreeLevel => testZTree%subdomains
-      
+
       tmpZTreeNode=tmpZTreeLevel(1) !Domain 1
       ASSERT(ALL(tmpZTreeNode%x == (/1,2/)),'%subdomains(1)%x')
       ASSERT(ALL(tmpZTreeNode%y == (/1,2/)),'%subdomains(1)%y')
@@ -241,7 +242,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == 8,'%subdomains(1)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 8,'%subdomains(1)%nsubdomains')
       ASSERT(SIZE(tmpZTreeNode%subdomains,DIM=1) == 8,'SIZE(%subdomains(1)%subdomains)')
-      
+
       tmpZTreeNode=tmpZTreeLevel(2) !Domain 2
       ASSERT(ALL(tmpZTreeNode%x == (/3,4/)),'%subdomains(2)%x')
       ASSERT(ALL(tmpZTreeNode%y == (/1,2/)),'%subdomains(2)%y')
@@ -250,7 +251,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == 16,'%subdomains(2)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 8,'%subdomains(2)%nsubdomains')
       ASSERT(SIZE(tmpZTreeNode%subdomains,DIM=1) == 8,'SIZE(%subdomains(2)%subdomains)')
-      
+
       tmpZTreeNode=tmpZTreeLevel(3) !Domain 3
       ASSERT(ALL(tmpZTreeNode%x == (/1,2/)),'%subdomains(3)%x')
       ASSERT(ALL(tmpZTreeNode%y == (/3,4/)),'%subdomains(3)%y')
@@ -259,7 +260,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == 24,'%subdomains(3)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 8,'%subdomains(3)%nsubdomains')
       ASSERT(SIZE(tmpZTreeNode%subdomains,DIM=1) == 8,'SIZE(%subdomains(3)%subdomains)')
-      
+
       tmpZTreeNode=tmpZTreeLevel(4) !Domain 4
       ASSERT(ALL(tmpZTreeNode%x == (/3,4/)),'%subdomains(4)%x')
       ASSERT(ALL(tmpZTreeNode%y == (/3,4/)),'%subdomains(4)%y')
@@ -268,7 +269,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == 32,'%subdomains(4)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 8,'%subdomains(4)%nsubdomains')
       ASSERT(SIZE(tmpZTreeNode%subdomains,DIM=1) == 8,'SIZE(%subdomains(4)%subdomains)')
-      
+
       tmpZTreeNode=tmpZTreeLevel(5) !Domain 5
       ASSERT(ALL(tmpZTreeNode%x == (/1,2/)),'%subdomains(5)%x')
       ASSERT(ALL(tmpZTreeNode%y == (/1,2/)),'%subdomains(5)%y')
@@ -277,7 +278,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == 40,'%subdomains(5)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 8,'%subdomains(4)%nsubdomains')
       ASSERT(SIZE(tmpZTreeNode%subdomains,DIM=1) == 8,'SIZE(%subdomains(4)%subdomains)')
-      
+
       tmpZTreeNode=tmpZTreeLevel(6) !Domain 6
       ASSERT(ALL(tmpZTreeNode%x == (/3,4/)),'%subdomains(6)%x')
       ASSERT(ALL(tmpZTreeNode%y == (/1,2/)),'%subdomains(6)%y')
@@ -286,7 +287,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == 48,'%subdomains(6)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 8,'%subdomains(6)%nsubdomains')
       ASSERT(SIZE(tmpZTreeNode%subdomains,DIM=1) == 8,'SIZE(%subdomains(6)%subdomains)')
-      
+
       tmpZTreeNode=tmpZTreeLevel(7) !Domain 7
       ASSERT(ALL(tmpZTreeNode%x == (/1,2/)),'%subdomains(7)%x')
       ASSERT(ALL(tmpZTreeNode%y == (/3,4/)),'%subdomains(7)%y')
@@ -295,7 +296,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == 56,'%subdomains(7)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 8,'%subdomains(7)%nsubdomains')
       ASSERT(SIZE(tmpZTreeNode%subdomains,DIM=1) == 8,'SIZE(%subdomains(7)%subdomains)')
-      
+
       tmpZTreeNode=tmpZTreeLevel(8) !Domain 8
       ASSERT(ALL(tmpZTreeNode%x == (/3,4/)),'%subdomains(8)%x')
       ASSERT(ALL(tmpZTreeNode%y == (/3,4/)),'%subdomains(8)%y')
@@ -309,7 +310,7 @@ PROGRAM testSpaceFillingCurve
 !-------------------------------------------------------------------------------
     SUBROUTINE checkLevel2d1()
       tmpZTreeLevel => testZTree%subdomains(1)%subdomains
-      
+
       tmpZTreeNode=tmpZTreeLevel(1) !Domain 1
       ASSERT(ALL(tmpZTreeNode%x == 1),'%subdomains(1)%subdomains(1)%x')
       ASSERT(ALL(tmpZTreeNode%y == 1),'%subdomains(1)%subdomains(1)%y')
@@ -318,7 +319,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(1)%subdomains(1)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(1)%subdomains(1)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(1)%subdomains(1)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(2) !Domain 2
       ASSERT(ALL(tmpZTreeNode%x == 2),'%subdomains(1)%subdomains(2)%x')
       ASSERT(ALL(tmpZTreeNode%y == 1),'%subdomains(1)%subdomains(2)%y')
@@ -327,7 +328,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(1)%subdomains(2)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(1)%subdomains(2)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(1)%subdomains(2)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(3) !Domain 3
       ASSERT(ALL(tmpZTreeNode%x == 1),'%subdomains(1)%subdomains(3)%x')
       ASSERT(ALL(tmpZTreeNode%y == 2),'%subdomains(1)%subdomains(3)%y')
@@ -336,7 +337,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(1)%subdomains(3)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(1)%subdomains(3)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(1)%subdomains(3)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(4) !Domain 4
       ASSERT(ALL(tmpZTreeNode%x == 2),'%subdomains(1)%subdomains(4)%x')
       ASSERT(ALL(tmpZTreeNode%y == 2),'%subdomains(1)%subdomains(4)%y')
@@ -345,7 +346,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(1)%subdomains(4)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(1)%subdomains(4)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(1)%subdomains(4)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(5) !Domain 5
       ASSERT(ALL(tmpZTreeNode%x == 1),'%subdomains(1)%subdomains(5)%x')
       ASSERT(ALL(tmpZTreeNode%y == 1),'%subdomains(1)%subdomains(5)%y')
@@ -354,7 +355,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(1)%subdomains(5)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(1)%subdomains(5)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(1)%subdomains(5)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(6) !Domain 6
       ASSERT(ALL(tmpZTreeNode%x == 2),'%subdomains(1)%subdomains(6)%x')
       ASSERT(ALL(tmpZTreeNode%y == 1),'%subdomains(1)%subdomains(6)%y')
@@ -363,7 +364,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(1)%subdomains(6)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(1)%subdomains(6)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(1)%subdomains(6)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(7) !Domain 7
       ASSERT(ALL(tmpZTreeNode%x == 1),'%subdomains(1)%subdomains(7)%x')
       ASSERT(ALL(tmpZTreeNode%y == 2),'%subdomains(1)%subdomains(7)%y')
@@ -372,7 +373,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(1)%subdomains(7)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(1)%subdomains(7)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(1)%subdomains(7)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(8) !Domain 8
       ASSERT(ALL(tmpZTreeNode%x == 2),'%subdomains(1)%subdomains(8)%x')
       ASSERT(ALL(tmpZTreeNode%y == 2),'%subdomains(1)%subdomains(8)%y')
@@ -386,7 +387,7 @@ PROGRAM testSpaceFillingCurve
 !-------------------------------------------------------------------------------
     SUBROUTINE checkLevel2d2()
       tmpZTreeLevel => testZTree%subdomains(2)%subdomains
-      
+
       tmpZTreeNode=tmpZTreeLevel(1) !Domain 1
       ASSERT(ALL(tmpZTreeNode%x == 3),'%subdomains(2)%subdomains(1)%x')
       ASSERT(ALL(tmpZTreeNode%y == 1),'%subdomains(2)%subdomains(1)%y')
@@ -395,7 +396,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(2)%subdomains(1)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(2)%subdomains(1)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(2)%subdomains(1)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(2) !Domain 2
       ASSERT(ALL(tmpZTreeNode%x == 4),'%subdomains(2)%subdomains(2)%x')
       ASSERT(ALL(tmpZTreeNode%y == 1),'%subdomains(2)%subdomains(2)%y')
@@ -404,7 +405,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(2)%subdomains(2)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(2)%subdomains(2)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(2)%subdomains(2)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(3) !Domain 3
       ASSERT(ALL(tmpZTreeNode%x == 3),'%subdomains(2)%subdomains(3)%x')
       ASSERT(ALL(tmpZTreeNode%y == 2),'%subdomains(2)%subdomains(3)%y')
@@ -413,7 +414,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(2)%subdomains(3)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(2)%subdomains(3)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(2)%subdomains(3)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(4) !Domain 4
       ASSERT(ALL(tmpZTreeNode%x == 4),'%subdomains(2)%subdomains(4)%x')
       ASSERT(ALL(tmpZTreeNode%y == 2),'%subdomains(2)%subdomains(4)%y')
@@ -422,7 +423,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(2)%subdomains(4)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(2)%subdomains(4)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(2)%subdomains(4)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(5) !Domain 5
       ASSERT(ALL(tmpZTreeNode%x == 3),'%subdomains(2)%subdomains(5)%x')
       ASSERT(ALL(tmpZTreeNode%y == 1),'%subdomains(2)%subdomains(5)%y')
@@ -431,7 +432,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(2)%subdomains(5)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(2)%subdomains(5)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(2)%subdomains(5)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(6) !Domain 6
       ASSERT(ALL(tmpZTreeNode%x == 4),'%subdomains(2)%subdomains(6)%x')
       ASSERT(ALL(tmpZTreeNode%y == 1),'%subdomains(2)%subdomains(6)%y')
@@ -440,7 +441,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(2)%subdomains(6)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(2)%subdomains(6)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(2)%subdomains(6)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(7) !Domain 7
       ASSERT(ALL(tmpZTreeNode%x == 3),'%subdomains(2)%subdomains(7)%x')
       ASSERT(ALL(tmpZTreeNode%y == 2),'%subdomains(2)%subdomains(7)%y')
@@ -449,7 +450,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(2)%subdomains(7)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(2)%subdomains(7)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(2)%subdomains(7)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(8) !Domain 8
       ASSERT(ALL(tmpZTreeNode%x == 4),'%subdomains(2)%subdomains(8)%x')
       ASSERT(ALL(tmpZTreeNode%y == 2),'%subdomains(2)%subdomains(8)%y')
@@ -463,7 +464,7 @@ PROGRAM testSpaceFillingCurve
 !-------------------------------------------------------------------------------
     SUBROUTINE checkLevel2d3()
       tmpZTreeLevel => testZTree%subdomains(3)%subdomains
-      
+
       tmpZTreeNode=tmpZTreeLevel(1) !Domain 1
       ASSERT(ALL(tmpZTreeNode%x == 1),'%subdomains(3)%subdomains(1)%x')
       ASSERT(ALL(tmpZTreeNode%y == 3),'%subdomains(3)%subdomains(1)%y')
@@ -472,7 +473,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(3)%subdomains(1)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(3)%subdomains(1)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(3)%subdomains(1)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(2) !Domain 2
       ASSERT(ALL(tmpZTreeNode%x == (/2,2/)),'%subdomains(3)%subdomains(2)%x')
       ASSERT(ALL(tmpZTreeNode%y == (/3,3/)),'%subdomains(3)%subdomains(2)%y')
@@ -481,7 +482,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(3)%subdomains(2)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(3)%subdomains(2)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(3)%subdomains(2)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(3) !Domain 3
       ASSERT(ALL(tmpZTreeNode%x == 1),'%subdomains(3)%subdomains(3)%x')
       ASSERT(ALL(tmpZTreeNode%y == 4),'%subdomains(3)%subdomains(3)%y')
@@ -490,7 +491,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(3)%subdomains(3)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(3)%subdomains(3)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(3)%subdomains(3)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(4) !Domain 4
       ASSERT(ALL(tmpZTreeNode%x == 2),'%subdomains(3)%subdomains(4)%x')
       ASSERT(ALL(tmpZTreeNode%y == 4),'%subdomains(3)%subdomains(4)%y')
@@ -499,7 +500,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(3)%subdomains(4)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(3)%subdomains(4)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(3)%subdomains(4)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(5) !Domain 5
       ASSERT(ALL(tmpZTreeNode%x == 1),'%subdomains(3)%subdomains(5)%x')
       ASSERT(ALL(tmpZTreeNode%y == 3),'%subdomains(3)%subdomains(5)%y')
@@ -508,7 +509,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(3)%subdomains(5)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(3)%subdomains(5)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(3)%subdomains(5)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(6) !Domain 6
       ASSERT(ALL(tmpZTreeNode%x == 2),'%subdomains(3)%subdomains(6)%x')
       ASSERT(ALL(tmpZTreeNode%y == 3),'%subdomains(3)%subdomains(6)%y')
@@ -517,7 +518,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(3)%subdomains(6)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(3)%subdomains(6)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(3)%subdomains(6)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(7) !Domain 7
       ASSERT(ALL(tmpZTreeNode%x == 1),'%subdomains(3)%subdomains(7)%x')
       ASSERT(ALL(tmpZTreeNode%y == 4),'%subdomains(3)%subdomains(7)%y')
@@ -526,7 +527,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(3)%subdomains(7)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(3)%subdomains(7)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(3)%subdomains(7)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(8) !Domain 8
       ASSERT(ALL(tmpZTreeNode%x == 2),'%subdomains(3)%subdomains(8)%x')
       ASSERT(ALL(tmpZTreeNode%y == 4),'%subdomains(3)%subdomains(8)%y')
@@ -540,7 +541,7 @@ PROGRAM testSpaceFillingCurve
 !-------------------------------------------------------------------------------
     SUBROUTINE checkLevel2d4()
       tmpZTreeLevel => testZTree%subdomains(4)%subdomains
-      
+
       tmpZTreeNode=tmpZTreeLevel(1) !Domain 1
       ASSERT(ALL(tmpZTreeNode%x == 3),'%subdomains(4)%subdomains(1)%x')
       ASSERT(ALL(tmpZTreeNode%y == 3),'%subdomains(4)%subdomains(1)%y')
@@ -549,7 +550,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(4)%subdomains(1)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(4)%subdomains(1)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(4)%subdomains(1)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(2) !Domain 2
       ASSERT(ALL(tmpZTreeNode%x == 4),'%subdomains(4)%subdomains(2)%x')
       ASSERT(ALL(tmpZTreeNode%y == 3),'%subdomains(4)%subdomains(2)%y')
@@ -558,7 +559,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(4)%subdomains(2)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(4)%subdomains(2)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(4)%subdomains(2)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(3) !Domain 3
       ASSERT(ALL(tmpZTreeNode%x == 3),'%subdomains(4)%subdomains(3)%x')
       ASSERT(ALL(tmpZTreeNode%y == 4),'%subdomains(4)%subdomains(3)%y')
@@ -567,7 +568,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(4)%subdomains(3)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(4)%subdomains(3)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(4)%subdomains(3)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(4) !Domain 4
       ASSERT(ALL(tmpZTreeNode%x == 4),'%subdomains(4)%subdomains(4)%x')
       ASSERT(ALL(tmpZTreeNode%y == 4),'%subdomains(4)%subdomains(4)%y')
@@ -576,7 +577,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(4)%subdomains(4)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(4)%subdomains(4)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(4)%subdomains(4)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(5) !Domain 5
       ASSERT(ALL(tmpZTreeNode%x == 3),'%subdomains(4)%subdomains(5)%x')
       ASSERT(ALL(tmpZTreeNode%y == 3),'%subdomains(4)%subdomains(5)%y')
@@ -585,7 +586,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(4)%subdomains(5)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(4)%subdomains(5)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(4)%subdomains(5)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(6) !Domain 6
       ASSERT(ALL(tmpZTreeNode%x == 4),'%subdomains(4)%subdomains(6)%x')
       ASSERT(ALL(tmpZTreeNode%y == 3),'%subdomains(4)%subdomains(6)%y')
@@ -594,7 +595,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(4)%subdomains(6)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(4)%subdomains(6)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(4)%subdomains(6)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(7) !Domain 7
       ASSERT(ALL(tmpZTreeNode%x == 3),'%subdomains(4)%subdomains(7)%x')
       ASSERT(ALL(tmpZTreeNode%y == 4),'%subdomains(4)%subdomains(7)%y')
@@ -603,7 +604,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(4)%subdomains(7)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(4)%subdomains(7)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(4)%subdomains(7)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(8) !Domain 8
       ASSERT(ALL(tmpZTreeNode%x == 4),'%subdomains(4)%subdomains(8)%x')
       ASSERT(ALL(tmpZTreeNode%y == 4),'%subdomains(4)%subdomains(8)%y')
@@ -617,7 +618,7 @@ PROGRAM testSpaceFillingCurve
 !-------------------------------------------------------------------------------
     SUBROUTINE checkLevel2d5()
       tmpZTreeLevel => testZTree%subdomains(5)%subdomains
-      
+
       tmpZTreeNode=tmpZTreeLevel(1) !Domain 1
       ASSERT(ALL(tmpZTreeNode%x == 1),'%subdomains(5)%subdomains(1)%x')
       ASSERT(ALL(tmpZTreeNode%y == 1),'%subdomains(5)%subdomains(1)%y')
@@ -626,7 +627,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(5)%subdomains(1)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(5)%subdomains(1)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(5)%subdomains(1)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(2) !Domain 2
       ASSERT(ALL(tmpZTreeNode%x == 2),'%subdomains(5)%subdomains(2)%x')
       ASSERT(ALL(tmpZTreeNode%y == 1),'%subdomains(5)%subdomains(2)%y')
@@ -635,7 +636,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(5)%subdomains(2)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(5)%subdomains(2)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(5)%subdomains(2)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(3) !Domain 3
       ASSERT(ALL(tmpZTreeNode%x == 1),'%subdomains(5)%subdomains(3)%x')
       ASSERT(ALL(tmpZTreeNode%y == 2),'%subdomains(5)%subdomains(3)%y')
@@ -644,7 +645,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(5)%subdomains(3)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(5)%subdomains(3)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(5)%subdomains(3)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(4) !Domain 4
       ASSERT(ALL(tmpZTreeNode%x == 2),'%subdomains(5)%subdomains(4)%x')
       ASSERT(ALL(tmpZTreeNode%y == 2),'%subdomains(5)%subdomains(4)%y')
@@ -653,7 +654,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(5)%subdomains(4)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(5)%subdomains(4)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(5)%subdomains(4)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(5) !Domain 5
       ASSERT(ALL(tmpZTreeNode%x == 1),'%subdomains(5)%subdomains(5)%x')
       ASSERT(ALL(tmpZTreeNode%y == 1),'%subdomains(5)%subdomains(5)%y')
@@ -662,7 +663,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(5)%subdomains(5)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(5)%subdomains(5)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(5)%subdomains(5)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(6) !Domain 6
       ASSERT(ALL(tmpZTreeNode%x == 2),'%subdomains(5)%subdomains(6)%x')
       ASSERT(ALL(tmpZTreeNode%y == 1),'%subdomains(5)%subdomains(6)%y')
@@ -671,7 +672,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(5)%subdomains(6)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(5)%subdomains(6)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(5)%subdomains(6)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(7) !Domain 7
       ASSERT(ALL(tmpZTreeNode%x == 1),'%subdomains(5)%subdomains(7)%x')
       ASSERT(ALL(tmpZTreeNode%y == 2),'%subdomains(5)%subdomains(7)%y')
@@ -680,7 +681,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(5)%subdomains(7)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(5)%subdomains(7)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(5)%subdomains(7)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(8) !Domain 8
       ASSERT(ALL(tmpZTreeNode%x == 2),'%subdomains(5)%subdomains(8)%x')
       ASSERT(ALL(tmpZTreeNode%y == 2),'%subdomains(5)%subdomains(8)%y')
@@ -694,7 +695,7 @@ PROGRAM testSpaceFillingCurve
 !-------------------------------------------------------------------------------
     SUBROUTINE checkLevel2d6()
       tmpZTreeLevel => testZTree%subdomains(6)%subdomains
-      
+
       tmpZTreeNode=tmpZTreeLevel(1) !Domain 1
       ASSERT(ALL(tmpZTreeNode%x == 3),'%subdomains(6)%subdomains(1)%x')
       ASSERT(ALL(tmpZTreeNode%y == 1),'%subdomains(6)%subdomains(1)%y')
@@ -703,7 +704,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(6)%subdomains(1)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(6)%subdomains(1)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(6)%subdomains(1)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(2) !Domain 2
       ASSERT(ALL(tmpZTreeNode%x == 4),'%subdomains(6)%subdomains(2)%x')
       ASSERT(ALL(tmpZTreeNode%y == 1),'%subdomains(6)%subdomains(2)%y')
@@ -712,7 +713,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(6)%subdomains(2)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(6)%subdomains(2)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(6)%subdomains(2)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(3) !Domain 3
       ASSERT(ALL(tmpZTreeNode%x == 3),'%subdomains(6)%subdomains(3)%x')
       ASSERT(ALL(tmpZTreeNode%y == 2),'%subdomains(6)%subdomains(3)%y')
@@ -721,7 +722,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(6)%subdomains(3)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(6)%subdomains(3)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(6)%subdomains(3)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(4) !Domain 4
       ASSERT(ALL(tmpZTreeNode%x == 4),'%subdomains(6)%subdomains(4)%x')
       ASSERT(ALL(tmpZTreeNode%y == 2),'%subdomains(6)%subdomains(4)%y')
@@ -730,7 +731,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(6)%subdomains(4)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(6)%subdomains(4)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(6)%subdomains(4)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(5) !Domain 5
       ASSERT(ALL(tmpZTreeNode%x == 3),'%subdomains(6)%subdomains(5)%x')
       ASSERT(ALL(tmpZTreeNode%y == 1),'%subdomains(6)%subdomains(5)%y')
@@ -739,7 +740,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(6)%subdomains(5)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(6)%subdomains(5)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(6)%subdomains(5)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(6) !Domain 6
       ASSERT(ALL(tmpZTreeNode%x == 4),'%subdomains(6)%subdomains(6)%x')
       ASSERT(ALL(tmpZTreeNode%y == 1),'%subdomains(6)%subdomains(6)%y')
@@ -748,7 +749,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(6)%subdomains(6)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(6)%subdomains(6)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(6)%subdomains(6)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(7) !Domain 7
       ASSERT(ALL(tmpZTreeNode%x == 3),'%subdomains(6)%subdomains(7)%x')
       ASSERT(ALL(tmpZTreeNode%y == 2),'%subdomains(6)%subdomains(7)%y')
@@ -757,7 +758,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(6)%subdomains(7)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(6)%subdomains(7)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(6)%subdomains(7)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(8) !Domain 8
       ASSERT(ALL(tmpZTreeNode%x == 4),'%subdomains(6)%subdomains(8)%x')
       ASSERT(ALL(tmpZTreeNode%y == 2),'%subdomains(6)%subdomains(8)%y')
@@ -771,7 +772,7 @@ PROGRAM testSpaceFillingCurve
 !-------------------------------------------------------------------------------
     SUBROUTINE checkLevel2d7()
       tmpZTreeLevel => testZTree%subdomains(7)%subdomains
-      
+
       tmpZTreeNode=tmpZTreeLevel(1) !Domain 1
       ASSERT(ALL(tmpZTreeNode%x == 1),'%subdomains(7)%subdomains(1)%x')
       ASSERT(ALL(tmpZTreeNode%y == 3),'%subdomains(7)%subdomains(1)%y')
@@ -780,7 +781,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(7)%subdomains(1)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(7)%subdomains(1)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(7)%subdomains(1)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(2) !Domain 2
       ASSERT(ALL(tmpZTreeNode%x == 2),'%subdomains(7)%subdomains(2)%x')
       ASSERT(ALL(tmpZTreeNode%y == 3),'%subdomains(7)%subdomains(2)%y')
@@ -789,7 +790,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(7)%subdomains(2)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(7)%subdomains(2)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(7)%subdomains(2)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(3) !Domain 3
       ASSERT(ALL(tmpZTreeNode%x == 1),'%subdomains(7)%subdomains(3)%x')
       ASSERT(ALL(tmpZTreeNode%y == 4),'%subdomains(7)%subdomains(3)%y')
@@ -798,7 +799,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(7)%subdomains(3)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(7)%subdomains(3)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(7)%subdomains(3)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(4) !Domain 4
       ASSERT(ALL(tmpZTreeNode%x == 2),'%subdomains(7)%subdomains(4)%x')
       ASSERT(ALL(tmpZTreeNode%y == 4),'%subdomains(7)%subdomains(4)%y')
@@ -807,7 +808,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(7)%subdomains(4)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(7)%subdomains(4)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(7)%subdomains(4)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(5) !Domain 5
       ASSERT(ALL(tmpZTreeNode%x == 1),'%subdomains(7)%subdomains(5)%x')
       ASSERT(ALL(tmpZTreeNode%y == 3),'%subdomains(7)%subdomains(5)%y')
@@ -816,7 +817,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(7)%subdomains(5)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(7)%subdomains(5)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(7)%subdomains(5)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(6) !Domain 6
       ASSERT(ALL(tmpZTreeNode%x == 2),'%subdomains(7)%subdomains(6)%x')
       ASSERT(ALL(tmpZTreeNode%y == 3),'%subdomains(7)%subdomains(6)%y')
@@ -825,7 +826,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(7)%subdomains(6)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(7)%subdomains(6)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(7)%subdomains(6)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(7) !Domain 7
       ASSERT(ALL(tmpZTreeNode%x == 1),'%subdomains(7)%subdomains(7)%x')
       ASSERT(ALL(tmpZTreeNode%y == 4),'%subdomains(7)%subdomains(7)%y')
@@ -834,7 +835,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(7)%subdomains(7)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(7)%subdomains(7)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(7)%subdomains(7)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(8) !Domain 8
       ASSERT(ALL(tmpZTreeNode%x == 2),'%subdomains(7)%subdomains(8)%x')
       ASSERT(ALL(tmpZTreeNode%y == 4),'%subdomains(7)%subdomains(8)%y')
@@ -848,7 +849,7 @@ PROGRAM testSpaceFillingCurve
 !-------------------------------------------------------------------------------
     SUBROUTINE checkLevel2d8()
       tmpZTreeLevel => testZTree%subdomains(8)%subdomains
-      
+
       tmpZTreeNode=tmpZTreeLevel(1) !Domain 1
       ASSERT(ALL(tmpZTreeNode%x == 3),'%subdomains(8)%subdomains(1)%x')
       ASSERT(ALL(tmpZTreeNode%y == 3),'%subdomains(8)%subdomains(1)%y')
@@ -857,7 +858,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(8)%subdomains(1)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(8)%subdomains(1)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(8)%subdomains(1)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(2) !Domain 2
       ASSERT(ALL(tmpZTreeNode%x == 4),'%subdomains(8)%subdomains(2)%x')
       ASSERT(ALL(tmpZTreeNode%y == 3),'%subdomains(8)%subdomains(2)%y')
@@ -866,7 +867,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(8)%subdomains(2)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(8)%subdomains(2)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(8)%subdomains(2)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(3) !Domain 3
       ASSERT(ALL(tmpZTreeNode%x == 3),'%subdomains(8)%subdomains(3)%x')
       ASSERT(ALL(tmpZTreeNode%y == 4),'%subdomains(8)%subdomains(3)%y')
@@ -875,7 +876,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(8)%subdomains(3)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(8)%subdomains(3)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(8)%subdomains(3)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(4) !Domain 4
       ASSERT(ALL(tmpZTreeNode%x == 4),'%subdomains(8)%subdomains(4)%x')
       ASSERT(ALL(tmpZTreeNode%y == 4),'%subdomains(8)%subdomains(4)%y')
@@ -884,7 +885,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(8)%subdomains(4)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(8)%subdomains(4)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(8)%subdomains(4)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(5) !Domain 5
       ASSERT(ALL(tmpZTreeNode%x == 3),'%subdomains(8)%subdomains(5)%x')
       ASSERT(ALL(tmpZTreeNode%y == 3),'%subdomains(8)%subdomains(5)%y')
@@ -893,7 +894,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(8)%subdomains(5)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(8)%subdomains(5)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(8)%subdomains(5)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(6) !Domain 6
       ASSERT(ALL(tmpZTreeNode%x == 4),'%subdomains(8)%subdomains(6)%x')
       ASSERT(ALL(tmpZTreeNode%y == 3),'%subdomains(8)%subdomains(6)%y')
@@ -902,7 +903,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(8)%subdomains(6)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(8)%subdomains(6)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(8)%subdomains(6)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(7) !Domain 7
       ASSERT(ALL(tmpZTreeNode%x == 3),'%subdomains(8)%subdomains(7)%x')
       ASSERT(ALL(tmpZTreeNode%y == 4),'%subdomains(8)%subdomains(7)%y')
@@ -911,7 +912,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(tmpZTreeNode%istp == tmpZTreeNode%istt,'%subdomains(8)%subdomains(7)%istp')
       ASSERT(tmpZTreeNode%nsubdomains == 0,'%subdomains(8)%subdomains(7)%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(tmpZTreeNode%subdomains),'%subdomains(8)%subdomains(7)%subdomains')
-      
+
       tmpZTreeNode=tmpZTreeLevel(8) !Domain 8
       ASSERT(ALL(tmpZTreeNode%x == 4),'%subdomains(8)%subdomains(8)%x')
       ASSERT(ALL(tmpZTreeNode%y == 4),'%subdomains(8)%subdomains(8)%y')
@@ -925,7 +926,7 @@ PROGRAM testSpaceFillingCurve
 !-------------------------------------------------------------------------------
 !Test %istpMax()
     SUBROUTINE testZTreeIstpMax()
-      
+
       ASSERT(testZTree%istpMax() == -1,'uninit')
       CALL testZTree%init(1,4,1,4,1,4,1)
       ASSERT(testZTree%istpMax() == 64,'testZTree%istpMax()')
@@ -953,7 +954,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(testZTree%ijk2oneD(5,1,1) == -1,'testZTree%ijk2oneD(5,1,1)')
       ASSERT(testZTree%ijk2oneD(1,5,1) == -1,'testZTree%ijk2oneD(1,5,1)')
       ASSERT(testZTree%ijk2oneD(1,1,5) == -1,'testZTree%ijk2oneD(1,1,5)')
-      
+
       !Correctness
       DO k=1,4
         DO j=1,4
@@ -969,19 +970,19 @@ PROGRAM testSpaceFillingCurve
 !-------------------------------------------------------------------------------
 !Test %oneD2ijk
     SUBROUTINE testZTreeOneD2ijk()
-      
+
       CALL testZTree%oneD2ijk(0,iout,jout,kout)
       ASSERT(ALL((/iout,jout,kout/) == -1),'%oneD2ijk(0,..) (uninit)')
       CALL testZTree%oneD2ijk(-1,iout,jout,kout)
       ASSERT(ALL((/iout,jout,kout/) == -1),'%oneD2ijk(-1,...) (uninit)')
-      
+
       CALL testZTree%init(1,4,1,4,1,4,1)
       !Degenerate cases
       CALL testZTree%oneD2ijk(-1,iout,jout,kout)
       ASSERT(ALL((/iout,jout,kout/) == -1),'%oneD2ijk(-1,...)')
       CALL testZTree%oneD2ijk(65,iout,jout,kout)
       ASSERT(ALL((/iout,jout,kout/) == -1),'%oneD2ijk(65,...)')
-      
+
       !Correctness
       DO k=1,4
         DO j=1,4
@@ -1009,7 +1010,7 @@ PROGRAM testSpaceFillingCurve
           ENDDO
         ENDDO
       ENDDO
-      
+
       testZTree%istt=-1
       CALL testZTree%renumber(1)
       DO k=1,4
@@ -1020,7 +1021,7 @@ PROGRAM testSpaceFillingCurve
           ENDDO
         ENDDO
       ENDDO
-      
+
       !Correctness
       testZTree%istt=1
       CALL testZTree%renumber(10)
@@ -1067,7 +1068,7 @@ PROGRAM testSpaceFillingCurve
       rx=(/0,5/); ry=(/0,5/); rz=(/0,5/)
       CALL testZTree%shave(rx,ry,rz)
       ASSERT(testZTree%istt == -1,'%istt (0:5,0:5,0:5)')
-      
+
       COMPONENT_TEST('%shave((/2,2/),(/2,2/),(/1,1/))')
       CALL testZTree%init(1,4,1,4,1,1,1)
       rx=2; ry=2; rz=1
@@ -1076,7 +1077,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(testZTree%subdomains(1)%nsubdomains == 3,'%subdomains(1)%nsubdomains')
       ASSERT(testZTree%subdomains(4)%istt == 12,'%subdomains(4)%istt')
       ASSERT(testZTree%ijk2oneD(2,2,1) == -1,'%ijk2oneD(2,2,1)')
-      
+
       COMPONENT_TEST('%shave((/2,4/),(/2,4/),(/1,1/))')
       rx=(/3,4/); ry=(/3,4/)
       CALL testZTree%shave(rx,ry,rz)
@@ -1090,7 +1091,7 @@ PROGRAM testSpaceFillingCurve
         ENDDO
       ENDDO
       CALL testZTree%clear()
-      
+
       COMPONENT_TEST('%shave((/3,4/),(/1,2/),(/1,1/))')
       CALL testZTree%init(1,4,1,4,1,1,1)
       rx=4; ry=4; rz=1
@@ -1108,7 +1109,7 @@ PROGRAM testSpaceFillingCurve
         ENDDO
       ENDDO
       CALL testZTree%clear()
-      
+
       COMPONENT_TEST('%shave((/2,3/),(/2,3/),(/2,3/))')
       CALL testZTree%init(1,4,1,4,1,4,1)
       rx=(/2,3/); ry=(/2,3/); rz=(/2,3/)
@@ -1124,7 +1125,7 @@ PROGRAM testSpaceFillingCurve
           ENDDO
         ENDDO
       ENDDO
-      
+
       COMPONENT_TEST('%shave(...) (already shaved)')
       rx=2; ry=2; rz=2
       CALL testZTree%shave(rx,ry,rz)
@@ -1139,7 +1140,7 @@ PROGRAM testSpaceFillingCurve
           ENDDO
         ENDDO
       ENDDO
-      
+
       COMPONENT_TEST('%shave(...) (out of bounds)')
       rx=25; ry=25; rz=25
       CALL testZTree%shave(rx,ry,rz)
@@ -1238,7 +1239,7 @@ PROGRAM testSpaceFillingCurve
 !Test %getSubNodePointer
     SUBROUTINE testZTreeGetSubNodePointer()
       TYPE(ZTreeNodeType),POINTER :: pZTree
-      
+
       CALL testZTree%getSubNodePointer(1,3,pZTree)
       ASSERT(.NOT.ASSOCIATED(pZTree),'(1,3,...) (uninit)')
       CALL testZTree%getSubNodePointer(0,1,pZTree)
@@ -1275,7 +1276,7 @@ PROGRAM testSpaceFillingCurve
 !Test %getLeafNodePointer
     SUBROUTINE testZTreeGetLeafNodePointer()
       TYPE(ZTreeNodeType),POINTER :: pZTree
-      
+
       CALL testZTree%getLeafNodePointer(1,pZTree)
       ASSERT(.NOT.ASSOCIATED(pZTree),'(1,...) (uninit)')
       CALL testZTree%getLeafNodePointer(-1,pZTree)
@@ -1307,10 +1308,10 @@ PROGRAM testSpaceFillingCurve
       ASSERT(testZTree%istp == -1,'%istp')
       ASSERT(testZTree%nsubdomains == 0,'%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(testZTree%subdomains),'%subdomains')
-      
+
       CALL testZTree%init(1,5,1,5,1,1,1)
       CALL testZTree%flattenLeafs()
-      
+
       ASSERT(testZTree%getMaxLevels(0) == 2,'%getMaxLevels(0) 5x5x1')
       ASSERT(testZTree%getNDomains(2) == 25,'%getNDomains(2) 5x5x1')
       ASSERT(testZTree%subdomains(1)%nsubdomains == 4,'%subdomains(1)%nsubdomains 5x5x1')
@@ -1325,14 +1326,14 @@ PROGRAM testSpaceFillingCurve
       ASSERT(testZTree%subdomains(4)%nsubdomains == 9,'%subdomains(1)%nsubdomains 5x5x1')
       ASSERT(testZTree%subdomains(4)%istt == 17,'%subdomains(1)%istt 5x5x1')
       ASSERT(testZTree%subdomains(4)%istp == 25,'%subdomains(1)%istp 5x5x1')
-      
+
       CALL testZTree%clear()
     ENDSUBROUTINE testZTreeflattenLeafs
 !
 !-------------------------------------------------------------------------------
 !Test %getLeafNodePointer
     SUBROUTINE testZTreeAddtoLeafs()
-      
+
       CALL testZTree%addToLeafs(2,2,2)
       ASSERT(ALL(testZTree%x == 0),'%x')
       ASSERT(ALL(testZTree%y == 0),'%y')
@@ -1341,7 +1342,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(testZTree%istp == -1,'%istp')
       ASSERT(testZTree%nsubdomains == 0,'%nsubdomains')
       ASSERT(.NOT.ASSOCIATED(testZTree%subdomains),'%subdomains')
-      
+
       CALL testZTree%init(1,1,1,1,1,1,1)
       CALL testZTree%addToLeafs(0,2,2)
       ASSERT(ALL(testZTree%x == 1),'%x')
@@ -1462,7 +1463,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(ALL(testZTree%subdomains(8)%y == (/3,4/)),'%subdomains(8)%y 4x4x4')
       ASSERT(ALL(testZTree%subdomains(8)%z == (/3,4/)),'%subdomains(8)%z 4x4x4')
       CALL testZTree%clear()
-      
+
       CALL testZTree%init(1,1,1,1,1,1,1)
       CALL testZTree%addToLeafs(1,1,2)
       CALL testZTree%addToLeafs(1,2,1)
@@ -1477,7 +1478,7 @@ PROGRAM testSpaceFillingCurve
       ASSERT(testZTree%getNDomains(1) == 2,'%getNDomains(1) 2x2x2 binary')
       ASSERT(testZTree%getNDomains(2) == 4,'%getNDomains(2) 2x2x2 binary')
       ASSERT(testZTree%getNDomains(3) == 8,'%getNDomains(3) 2x2x2 binary')
-      
+
       CALL testZTree%clear()
     ENDSUBROUTINE testZTreeAddtoLeafs
 !
@@ -1513,5 +1514,66 @@ PROGRAM testSpaceFillingCurve
       ASSERT(ALL((/istt,istp/) == (/14,16/)),'%partition(5,4,istt,istp)')
       CALL testZTree%clear()
     ENDSUBROUTINE testZTreePartition
+
+!
+!-------------------------------------------------------------------------------
+! This routine tests the initSingle and addChild routines, which are used for
+! more exotic indexing schemes.
+    SUBROUTINE testDeferredConst()
+      TYPE(ZTreeNodeType) :: root
+      TYPE(ZTreeNodeType),POINTER :: child,child2
+      INTEGER(SIK) :: nx,ny,nz,nz_block
+      INTEGER(SIK) :: i,ip
+      INTEGER(SIK) :: istt,istp
+      LOGICAL(SBK) :: bool
+
+      nx=5
+      ny=5
+      nz=12
+      nz_block=4
+      CALL root%initSingle(1,nx,1,ny,1,nz,1,nz_block)
+      DO i=1,nz_block
+        istt=REAL(i-1)*nz/nz_block+1
+        istp=REAL(i)*nz/nz_block
+        child => root%addChild(1,nx,1,ny,istt,istp,nz/nz_block)
+        DO ip=1,nz/nz_block
+          child2 => child%addChild(1,nx,1,ny,ip,ip)
+        ENDDO
+      ENDDO
+
+      ! make sure things are all good at each level
+      ASSERT(root%istt == 1,"Bad starting index for root.")
+      ASSERT(root%istp == 300,"Bad stopping index for root.")
+      ASSERT(root%nsubdomains == 4, "Bad number of subdomains for root.")
+      ASSERT(ALL(root%x == (/1,nx/)), "Bad X bounds on root.")
+      ASSERT(ALL(root%y == (/1,ny/)), "Bad Y bounds on root.")
+      ASSERT(ALL(root%z == (/1,nz/)), "Bad Z bounds on root.")
+
+      bool=(root%subdomains(1)%istt == 1)
+      ASSERT(bool, "Bad starting index for subdomain.")
+      bool=(root%subdomains(1)%istp == 75)
+      ASSERT(bool, "Bad stopping index for subdomain.")
+
+      bool=(root%subdomains(2)%istt == 76)
+      ASSERT(bool, "Bad starting index for subdomain.")
+      bool=(root%subdomains(2)%istp == 150)
+      ASSERT(bool, "Bad stopping index for subdomain.")
+
+      bool=(root%subdomains(3)%istt == 151)
+      ASSERT(bool, "Bad starting index for subdomain.")
+      bool=(root%subdomains(3)%istp == 225)
+      ASSERT(bool, "Bad stopping index for subdomain.")
+
+      bool=(root%subdomains(4)%istt == 226)
+      ASSERT(bool, "Bad starting index for subdomain.")
+      bool=(root%subdomains(4)%istp == 300)
+      ASSERT(bool, "Bad stopping index for subdomain.")
+
+      bool=(root%subdomains(4)%nsubdomains == 3)
+      ASSERT(bool, "Bad number of subdomains for subdomain.")
+
+      bool=(root%subdomains(3)%subdomains(2)%istt == 176)
+      ASSERT(bool, "Bad number of subdomains for subdomain.")
+    ENDSUBROUTINE testDeferredConst
 !
 ENDPROGRAM testSpaceFillingCurve

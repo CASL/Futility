@@ -268,9 +268,10 @@ MODULE MortonOrdering
         node%z(2)=z2
 
         node%nsubdomains=nsubd
+        node%ndefined=0
         ALLOCATE(node%subdomains(nsubd))
 
-        node%istp=0
+        node%istp=node%istt-1
       ENDIF
     ENDSUBROUTINE ZTree_initSingle
 !
@@ -284,7 +285,7 @@ MODULE MortonOrdering
 !> @param z1 starting z index
 !> @param z2 stopping z index
 !>
-    FUNCTION ZTree_addChild(node,x1,x2,y1,y2,z1,z2,nsubd,construct) RESULT(child)
+    FUNCTION ZTree_addChild(node,x1,x2,y1,y2,z1,z2,nsubd) RESULT(child)
       CHARACTER(LEN=*),PARAMETER :: myName='ZTree_addChild'
       CLASS(ZTreeNodeType),INTENT(INOUT) :: node
       INTEGER(SIK),INTENT(IN) :: x1
@@ -293,34 +294,40 @@ MODULE MortonOrdering
       INTEGER(SIK),INTENT(IN) :: y2
       INTEGER(SIK),INTENT(IN) :: z1
       INTEGER(SIK),INTENT(IN) :: z2
-      INTEGER(SIK),INTENT(IN) :: nsubd
-      LOGICAL(SBK),INTENT(IN),OPTIONAL :: construct
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: nsubd
 
       TYPE(ZTreeNodeType),POINTER :: child
 
+      INTEGER(SIK) :: nsub
       LOGICAL(SBK) :: const
       INTEGER(SIK) :: istt
 
       ! Make sure there is still space for more children
       IF(node%ndefined < node%nsubdomains) THEN
         const=.TRUE.
-        IF(PRESENT(construct)) THEN
-          const=construct
+        nsub=0
+        IF(PRESENT(nsubd)) THEN
+          nsub=nsubd
+        ENDIF
+        IF(nsub > 0) THEN
+          const=.FALSE.
         ENDIF
 
         node%ndefined=node%ndefined+1
         istt=node%istp+1
         IF(const) THEN
           CALL node%subdomains(node%ndefined)%init(x1,x2,y1,y2,z1,z2,istt)
+          node%istp=node%subdomains(node%ndefined)%istp
         ELSE
           CALL node%subdomains(node%ndefined)%initSingle(x1,x2,y1,y2,z1,z2,istt,nsubd)
+          ! We need to guess (admittedly a pretty good one) at the number of
+          ! elements in the child.
+          node%istp=istt+(x2-x1+1)*(y2-y1+1)*(z2-z1+1)-1
         ENDIF
         child => node%subdomains(node%ndefined)
-        node%istp=child%istp
       ELSE
         ! Should probably throw an error
       ENDIF
-WRITE(*,*)"child added"
     ENDFUNCTION ZTree_addChild
 !
 !-------------------------------------------------------------------------------
@@ -468,22 +475,6 @@ WRITE(*,*)"child added"
         thisZTreeNode%istp=idstt
       ENDIF
     ENDSUBROUTINE ZTree_Create
-!
-!-------------------------------------------------------------------------------
-!> @brief Construct the tree below all nodes reachable from the passed node,
-!> updating indexing along the way
-!> @param node the node to bloom
-!>
-!> This routine completes the construction of a partially constructed tree by
-!> constructing the bottom-most nodes and updating the indexing of the nodes
-!> above.
-    PURE RECURSIVE SUBROUTINE ZTree_Bloom(node)
-      CHARACTER(LEN=*),PARAMETER :: myName='ZTree_Bloom'
-      CLASS(ZTreeNodeType),INTENT(INOUT) :: node
-
-
-
-    ENDSUBROUTINE ZTree_Bloom
 !
 !-------------------------------------------------------------------------------
 !> @brief Clears a "Z"-Tree object
