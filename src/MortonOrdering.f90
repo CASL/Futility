@@ -80,6 +80,8 @@ MODULE MortonOrdering
     INTEGER(SIK) :: istp=-1
     !> The number of subdomains this node has been divided into
     INTEGER(SIK) :: nsubdomains=0
+    !> The number of fully-defined children (subdomains)
+    INTEGER(SIK) :: ndefined=0
     !> The subdomains for the domain defined by this node
     TYPE(ZTreeNodeType),POINTER :: subdomains(:) => NULL()
     CONTAINS
@@ -89,6 +91,9 @@ MODULE MortonOrdering
       !> @copybrief MortonOrdering::ZTree_initSingle
       !> @copydetails MortonOrdering::ZTree_initSingle
       PROCEDURE,PASS :: initSingle => ZTree_initSingle
+      !> @copybrief MortonOrdering::ZTree_addChild
+      !> @copydetails MortonOrdering::ZTree_addChild
+      PROCEDURE,PASS :: addChild => ZTree_addChild
       !> @copybrief MortonOrdering::ZTree_Burn
       !> @copydetails MortonOrdering::ZTree_Burn
       PROCEDURE,PASS :: clear => ZTree_Burn
@@ -263,11 +268,73 @@ MODULE MortonOrdering
         node%z(2)=z2
 
         node%nsubdomains=nsubd
+        node%ndefined=0
         ALLOCATE(node%subdomains(nsubd))
 
-        node%istp=0
+        node%istp=node%istt-1
       ENDIF
     ENDSUBROUTINE ZTree_initSingle
+!
+!-------------------------------------------------------------------------------
+!> @brief Add a child node to a Z Tree node
+!> @param node the node to which the child should be added
+!> @param x1 starting x index
+!> @param x2 stopping x index
+!> @param y1 starting y index
+!> @param y2 stopping y index
+!> @param z1 starting z index
+!> @param z2 stopping z index
+!> @param nsubd number of subdivisions that thie child node will have. Optional.
+!>
+!> This function generates a child node in the subdomains list of the passed in
+!> node, returning a pointer to the child node. If nsubd is provided and not
+!> zero, the child will be initialized with the initSingle routine, so that its
+!> children can be initialized hands-on as well. If not provided, it will call
+!> the normal init routine.
+    FUNCTION ZTree_addChild(node,x1,x2,y1,y2,z1,z2,nsubd) RESULT(child)
+      CHARACTER(LEN=*),PARAMETER :: myName='ZTree_addChild'
+      CLASS(ZTreeNodeType),INTENT(INOUT) :: node
+      INTEGER(SIK),INTENT(IN) :: x1
+      INTEGER(SIK),INTENT(IN) :: x2
+      INTEGER(SIK),INTENT(IN) :: y1
+      INTEGER(SIK),INTENT(IN) :: y2
+      INTEGER(SIK),INTENT(IN) :: z1
+      INTEGER(SIK),INTENT(IN) :: z2
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: nsubd
+
+      TYPE(ZTreeNodeType),POINTER :: child
+
+      INTEGER(SIK) :: nsub
+      LOGICAL(SBK) :: const
+      INTEGER(SIK) :: istt
+
+      ! Make sure there is still space for more children
+      IF(node%ndefined < node%nsubdomains) THEN
+        const=.TRUE.
+        nsub=0
+        IF(PRESENT(nsubd)) THEN
+          nsub=nsubd
+        ENDIF
+        IF(nsub > 0) THEN
+          const=.FALSE.
+        ENDIF
+
+        node%ndefined=node%ndefined+1
+        istt=node%istp+1
+        IF(const) THEN
+          CALL node%subdomains(node%ndefined)%init(x1,x2,y1,y2,z1,z2,istt)
+          node%istp=node%subdomains(node%ndefined)%istp
+        ELSE
+          CALL node%subdomains(node%ndefined)%initSingle(x1,x2,y1,y2,z1,z2,istt,nsubd)
+          ! We need to guess (admittedly a pretty good one) at the number of
+          ! elements in the child.
+          node%istp=istt+(x2-x1+1)*(y2-y1+1)*(z2-z1+1)-1
+        ENDIF
+        child => node%subdomains(node%ndefined)
+      ELSE
+        ! Should probably throw an error
+      ENDIF
+    ENDFUNCTION ZTree_addChild
 !
 !-------------------------------------------------------------------------------
 !> @brief Creates a "Z"-Tree using the bounds of a rectilinear grid
@@ -290,17 +357,25 @@ MODULE MortonOrdering
 !> are split. Only dimensions with size greater than 1 are split because 1
 !> cannot be split.
 !>
-    PURE RECURSIVE SUBROUTINE ZTree_Create(thisZTreeNode,x1,x2,y1,y2,z1,z2,istt)
+    PURE RECURSIVE SUBROUTINE ZTree_Create(thisZTreeNode,x1,x2,y1,y2,z1,z2, &
+      istt,construct)
       CLASS(ZTreeNodeType),INTENT(INOUT) :: thisZTreeNode
       INTEGER(SIK),INTENT(IN) :: x1,x2
       INTEGER(SIK),INTENT(IN) :: y1,y2
       INTEGER(SIK),INTENT(IN) :: z1,z2
       INTEGER(SIK),INTENT(IN) :: istt
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: construct
       LOGICAL(SBK) :: splitX,splitY,splitZ
       INTEGER(SIK) :: nx,ny,nz
       INTEGER(SIK) :: id,idstt,ix,iy,iz,ndx,ndy,ndz,nsmall
       INTEGER(SIK),DIMENSION(2) :: nxdstt,nxdstp,nydstt,nydstp,nzdstt,nzdstp
       REAL(SRK) :: rx,ry,rz
+      LOGICAL(SBK) :: const
+
+      const=.TRUE.
+      IF(PRESENT(construct)) THEN
+        const=construct
+      ENDIF
 
       !Check for valid input
       IF(.NOT.(istt < 0 .OR. x2 < x1 .OR. y2 < y1 .OR. z2 < z1 .OR. &
