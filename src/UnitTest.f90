@@ -341,7 +341,7 @@ MODULE UnitTest
       IF(nproc == 1) THEN
         tmp%subtestname=subtestname
       ELSE
-        WRITE(tmp%subtestname,'(A11,A4,I5)') TRIM(ADJUSTL(subtestname))," PID",rank
+        WRITE(tmp%subtestname,'(A40,A4,I5)') TRIM(ADJUSTL(subtestname))," PID",rank
       ENDIF
 #else
       tmp%subtestname=subtestname
@@ -350,7 +350,7 @@ MODULE UnitTest
       utest_curtest=>tmp
       
       WRITE(*,*)
-      WRITE(*,'(A)') utest_pad(1:utest_lvl*2)//'BEGIN SUBTEST '//tmp%subtestname
+      WRITE(*,'(A)') utest_pad(1:utest_lvl*2)//'BEGIN SUBTEST '//TRIM(ADJUSTL(tmp%subtestname))
 
       CALL UTest_incl()
       utest_inmain=.FALSE.
@@ -376,7 +376,7 @@ MODULE UnitTest
       ENDIF
       
       WRITE(*,'(A71,A)') utest_pad(1:utest_lvl*2)//'SUBTEST '// &
-        TRIM(utest_curtest%subtestname)//utest_dot,pfstr
+        TRIM(ADJUSTL(utest_curtest%subtestname))//utest_dot,pfstr
       WRITE(*,*)
       utest_inmain=.TRUE.
 
@@ -411,7 +411,7 @@ MODULE UnitTest
       IF(nproc == 1) THEN
         utest_componentname=componentname
       ELSE
-        WRITE(utest_componentname,'(A11,A4,I5)') TRIM(ADJUSTL(componentname))," PID",rank
+        WRITE(utest_componentname,'(A40,A4,I5)') TRIM(ADJUSTL(componentname))," PID",rank
       ENDIF
 #else
       utest_componentname=componentname
@@ -421,7 +421,7 @@ MODULE UnitTest
 
       WRITE(*,*)
       WRITE(*,'(A)') utest_pad(1:utest_lvl*2)//'BEGIN COMPONENT '// &
-        utest_componentname
+        TRIM(ADJUSTL(utest_componentname))
 
       CALL UTest_incl()
 
@@ -445,7 +445,7 @@ MODULE UnitTest
       ENDIF
       
       WRITE(*,'(A71,A)') utest_pad(1:utest_lvl*2)//'COMPONENT '// &
-        TRIM(utest_componentname)//utest_dot,pfstr
+        TRIM(ADJUSTL(utest_componentname))//utest_dot,pfstr
 
       utest_component=.FALSE.
       utest_prefix=''
