@@ -1192,8 +1192,9 @@ MODULE LinearSolverTypes
     SUBROUTINE getIterResidual_LinearSolverType_Iterative(solver,niters,resid)
       CHARACTER(LEN=*),PARAMETER :: myName='getIterResidual'
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
-      INTEGER(SIK) :: niters,ierr
-      REAL(SRK) :: resid
+      INTEGER(SIK),INTENT(INOUT) :: niters
+      REAL(SRK),INTENT(INOUT) :: resid
+      INTEGER(SIK) :: ierr
      
       IF(solver%TPLType == PETSC) THEN
 #ifdef MPACT_HAVE_PETSC 
@@ -1201,9 +1202,8 @@ MODULE LinearSolverTypes
         CALL KSPGetResidualNorm(solver%ksp,resid,ierr)
 #endif
       ELSE
-        CALL eLinearSolverType%raiseFatalError('Incorrect call to '// &
-           modName//'::'//myName//' - This feature is currently only' // &
-           ' supported for lienar solvers using PETSc.')
+        niters=solver%iters
+        resid=resid !returns unchanged
       ENDIF
     ENDSUBROUTINE getIterResidual_LinearSolverType_Iterative
 
@@ -1420,6 +1420,7 @@ MODULE LinearSolverTypes
         ENDDO
       
         CALL BLAS_matvec(v(:,1:it),y(1:it),0.0_SRK,u%b)
+        WRITE(*,*) 'u(1): ',u%b(1)
         CALL BLAS_axpy(u,solver%x)
         CALL solver%getResidual(u)
         CALL LNorm(u%b,2,beta)
