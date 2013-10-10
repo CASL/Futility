@@ -1420,7 +1420,6 @@ MODULE LinearSolverTypes
         ENDDO
       
         CALL BLAS_matvec(v(:,1:it),y(1:it),0.0_SRK,u%b)
-        WRITE(*,*) 'u(1): ',u%b(1)
         CALL BLAS_axpy(u,solver%x)
         CALL solver%getResidual(u)
         CALL LNorm(u%b,2,beta)
