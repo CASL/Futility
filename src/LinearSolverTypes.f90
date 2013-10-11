@@ -1416,9 +1416,9 @@ MODULE LinearSolverTypes
           DO k=j+1,it
             temp=temp+R(j,k)*y(k)
           ENDDO
-          y(j)=(g(j)-temp)/R(j,j)
+          IF(R(j,j) > 0.0_SRK) y(j)=(g(j)-temp)/R(j,j)
         ENDDO
-      
+
         CALL BLAS_matvec(v(:,1:it),y(1:it),0.0_SRK,u%b)
         CALL BLAS_axpy(u,solver%x)
         CALL solver%getResidual(u)
