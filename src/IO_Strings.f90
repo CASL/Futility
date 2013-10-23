@@ -16,15 +16,15 @@
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief Utility module for I/O providing routines for manipulating strings.
-!> 
+!>
 !> This module provides several routines and parameters for string manipulation.
 !> Because it is an I/O utility module its public members should be accessed
 !> from @ref IOutil "IOutil". It should not be accessed directly unless it is
-!> needed within another I/O utility module. This module is tested by @c 
+!> needed within another I/O utility module. This module is tested by @c
 !> testIOutil.f90 and the coverage report can be found at the @ref
 !> CodeCoverageReports "Code Coverage Reports" page. An example of how to use
 !> the routines in this module is provided below and in the test.
-!> 
+!>
 !> @par Module Dependencies
 !>  - @ref IntrType "IntrType": @copybrief IntrType
 !>  - @ref ExceptionHandler "ExceptionHandler": @copybrief Exceptionhandler
@@ -32,7 +32,7 @@
 !> @par EXAMPLES
 !> @code
 !> PROGRAM FileExample
-!> 
+!>
 !> USE IOutil
 !> IMPLICIT NONE
 !>
@@ -55,7 +55,7 @@
 !> WRITE(*,*) nFields('1 2 2*3 5')
 !> CALL getField(4,'1 2 2*3 5',string)
 !> WRITE(*,*) string
-!> 
+!>
 !> string='upper'
 !> CALL toUPPER(string)
 !> WRITE(*,*) string
@@ -69,7 +69,7 @@
 !> !Returns the indices in '/home/usr/dir/tmp' where '/' is found
 !> WRITE(*,*) strfind('/home/usr/dir/tmp','/')
 !>
-!> !Replaces '/' with '\' in string 
+!> !Replaces '/' with '\' in string
 !> string='/home/usr/dir/tmp'
 !> CALL strrep(string,'/','\')
 !> WRITE(*,*) string
@@ -79,18 +79,18 @@
 !>
 !> @author Brendan Kochunas
 !>   @date 07/05/2011
-!> 
+!>
 !> @todo
 !>  - Add optional inputs to nFields and getField to specify delimiter symbols
 !>    and repeater symbols.
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE IO_Strings
-  
+
   USE IntrType
   USE ExceptionHandler
   IMPLICIT NONE
   PRIVATE !Default private
-  
+
   !List of Public Members
   PUBLIC :: BLANK
   PUBLIC :: BANG
@@ -112,7 +112,8 @@ MODULE IO_Strings
   PUBLIC :: strrep
   PUBLIC :: stripComment
   PUBLIC :: SlashRep
-      
+  PUBLIC :: printCentered
+
   !> Character representing a space symbol
   CHARACTER(LEN=*),PARAMETER :: BLANK=" "
   !> Character representing a comment symbol
@@ -135,10 +136,10 @@ MODULE IO_Strings
   !> (BLASH for Windows, FSLASH for everything else)
   CHARACTER(LEN=*),PARAMETER :: SLASH=FSLASH
 #endif
-  
+
   !> Module Name for exception handler
   CHARACTER(LEN=*),PARAMETER :: modName='IO_STRINGS'
-      
+
   !> @brief Generic interface to get the parts of the path-file name.
   !>
   !> This interfaces is presently redundant but is provided on the
@@ -148,7 +149,7 @@ MODULE IO_Strings
     !> @copydetails IO_Strings::getFileParts_string
     MODULE PROCEDURE getFileParts_string
   ENDINTERFACE
-      
+
   !> @brief Generic interface to get the file name.
   !>
   !> This interfaces is presently redundant but is provided on the
@@ -158,7 +159,7 @@ MODULE IO_Strings
     !> @copydetails IO_Strings::getPath_string
     MODULE PROCEDURE getPath_string
   ENDINTERFACE
-      
+
   !> @brief Generic interface to get the file name.
   !>
   !> This interfaces is presently redundant but is provided on the
@@ -168,7 +169,7 @@ MODULE IO_Strings
     !> @copydetails IO_Strings::getFileParts_string
     MODULE PROCEDURE getFileName_string
   ENDINTERFACE
-      
+
   !> @brief Generic interface to get the extension of a file name.
   !>
   !> This interfaces is presently redundant but is provided on the
@@ -179,7 +180,7 @@ MODULE IO_Strings
     MODULE PROCEDURE getFileNameExt_string
   ENDINTERFACE
 !
-!===============================================================================      
+!===============================================================================
 CONTAINS
 !
 !-------------------------------------------------------------------------------
@@ -189,7 +190,7 @@ CONTAINS
       CHARACTER(LEN=*),INTENT(INOUT) :: string
       INTEGER(SIK) :: nBang,stt,stp
       INTEGER(SIK),ALLOCATABLE :: bangloc(:)
-      
+
       stt=1
       stp=LEN(string)
       IF(strmatch(string,BANG)) THEN
@@ -199,7 +200,7 @@ CONTAINS
         ALLOCATE(bangloc(nBANG))
         bangloc=strfind(string,BANG)
         stp=bangloc(1)-1
-        DEALLOCATE(bangloc)          
+        DEALLOCATE(bangloc)
       ENDIF
       string=string(stt:stp)
     ENDSUBROUTINE stripComment
@@ -215,7 +216,7 @@ CONTAINS
       CHARACTER(LEN=*),INTENT(IN) :: pattern
       INTEGER(SIK) :: indices(nmatchstr(string,pattern))
       INTEGER(SIK) :: i,n
-      
+
       n=0
       DO i=1,LEN(string)
         IF(i+LEN(pattern)-1 > LEN(string)) EXIT
@@ -233,13 +234,13 @@ CONTAINS
 !> @param pattern the substring to match
 !> @returns n the number of times @c pattern was found in @c string
 !>
-!> @note Does not handle trailing spaces that can be eliminated by TRIM() so 
+!> @note Does not handle trailing spaces that can be eliminated by TRIM() so
 !> strings should be trimmed when passing into function.
     PURE FUNCTION nmatchstr(string,pattern) RESULT(n)
       CHARACTER(LEN=*),INTENT(IN) :: string
       CHARACTER(LEN=*),INTENT(IN) :: pattern
       INTEGER(SIK) :: i,n
-      
+
       n=0
       DO i=1,LEN(string)
         IF(i+LEN(pattern)-1 > LEN(string)) EXIT
@@ -248,20 +249,20 @@ CONTAINS
     ENDFUNCTION nmatchstr
 !
 !-------------------------------------------------------------------------------
-!> @brief Returns whether or not a substring @c pattern is found within @c 
+!> @brief Returns whether or not a substring @c pattern is found within @c
 !> string
 !> @param string the string to search
 !> @param pattern the substring to find
 !> @returns bool whether or not @c pattern was found in @c string
 !>
-!> @note Does not handle trailing spaces that can be eliminated by TRIM() so 
+!> @note Does not handle trailing spaces that can be eliminated by TRIM() so
 !> strings should be trimmed when passing into function.
     PURE FUNCTION strmatch(string,pattern) RESULT(bool)
       CHARACTER(LEN=*),INTENT(IN) :: string
       CHARACTER(LEN=*),INTENT(IN) :: pattern
       LOGICAL(SBK) :: bool
       INTEGER(SIK) :: i
-      
+
       bool=.FALSE.
       IF(LEN(pattern) > 0) THEN
         DO i=1,LEN(string)
@@ -289,7 +290,7 @@ CONTAINS
       CHARACTER(LEN=LEN(string)) :: string2
       INTEGER(SIK) :: n,indices(nmatchstr(string,findp))
       INTEGER(SIK) :: i,stt,stp,dlen,slen,rlen,flen,tlen
-      
+
       slen=LEN(string)
       tlen=LEN_TRIM(string)
       rlen=LEN(repp)
@@ -326,7 +327,7 @@ CONTAINS
     ENDSUBROUTINE toUPPER
 !
 !-------------------------------------------------------------------------------
-!> @brief Counts the number of non-blank entries on a line. An "entry" is 
+!> @brief Counts the number of non-blank entries on a line. An "entry" is
 !> recognized as a character that is not a space that precedes a space.
 !> @param aline input string
 !> @returns nfields output value for number of fields
@@ -345,14 +346,14 @@ CONTAINS
         nfields=-1
         RETURN
       ENDIF
-      
+
       !Check for double-quoted strings, if the number of double quotes is odd
       !then return with a value of -2 to signal an error
       IF(MOD(nmatchstr(TRIM(aline),'"'),2) /= 0) THEN
         nfields=-2
         RETURN
       ENDIF
-      
+
       nonblankd=.FALSE.
       multidata=.FALSE.
       inQuotes=.FALSE.
@@ -362,7 +363,7 @@ CONTAINS
       ELSE
         nfields=0
       ENDIF
-      
+
       n=0
       DO i=ncol,1,-1
         IF(aline(i:i) == "'" .OR. aline(i:i) == '"') THEN
@@ -374,7 +375,7 @@ CONTAINS
             inQuotes=.TRUE.
           ENDIF
         ENDIF
-        
+
         !Process the spaces and multiplier characters if not in a quoted string
         IF(.NOT.inQuotes) THEN
           IF(aline(i:i) == ' ' .OR. ICHAR(aline(i:i)) == 9) THEN !ichar(tab)=9
@@ -416,8 +417,8 @@ CONTAINS
 !>
 !> If i is outside the range of the number of fields it returns an empty string.
 !> A bug is present such that if nFields is is greater than the actual number
-!> of readable fields then the read statement will return a non-zero IOSTAT 
-!> value. An optional return argument was added to be able to return this 
+!> of readable fields then the read statement will return a non-zero IOSTAT
+!> value. An optional return argument was added to be able to return this
 !> error value.
     PURE SUBROUTINE getField(i,string,field,ierrout)
       INTEGER(SIK),INTENT(IN) :: i
@@ -426,7 +427,7 @@ CONTAINS
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierrout
       INTEGER(SIK) :: j,ioerr,nf
       CHARACTER(LEN=LEN(string)) :: temp
-                 
+
       field=''
       temp=string
       nf=nFields(temp)
@@ -455,9 +456,9 @@ CONTAINS
 !< @{
 !> @brief Separate the path and filename.
 !> @param string input that is a path and filename
-!> @param path output string containing just the path (includes file separator 
+!> @param path output string containing just the path (includes file separator
 !>        at the end)
-!> @param fname output string with the filename 
+!> @param fname output string with the filename
 !> @param ext output string with the filename extension (including the '.')
 !>
 !> Given a path/filename string it returns the path, filename, and file
@@ -606,7 +607,7 @@ CONTAINS
     ENDSUBROUTINE getFileNameExt_string
 !
 !-------------------------------------------------------------------------------
-!> @brief Private routine replaces slash character in file path names with 
+!> @brief Private routine replaces slash character in file path names with
 !> the system appropriate file separator slash.
     PURE SUBROUTINE SlashRep(string)
       CHARACTER(LEN=*),INTENT(INOUT) :: string
@@ -620,6 +621,25 @@ CONTAINS
 #endif
       ENDDO
     ENDSUBROUTINE SlashRep
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param
+!>
+!>
+    FUNCTION printCentered(string,width) RESULT(line)
+      CHARACTER(LEN=*),PARAMETER :: myName='printCentered'
+      CHARACTER(LEN=*),INTENT(IN) :: string
+      INTEGER(SIK),INTENT(IN):: width
+      !
+      INTEGER(SIK) :: stt, stp
+      CHARACTER(LEN=width) :: line
+
+      line=""
+      stt=(width-LEN(string))/2
+      stp=stt+LEN(string)
+      line(stt:stp)=string
+    ENDFUNCTION printCentered
 !> @}
-! 
+!
 ENDMODULE IO_Strings

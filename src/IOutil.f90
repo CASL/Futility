@@ -18,7 +18,7 @@
 !> @brief Global module for I/O utility modules, collecting all
 !> public members of other I/O type modules. This is the module that should be
 !> used elsewhere in the code.
-!> 
+!>
 !> This module and its dependent modules are tested using @c testIOutil.f90.
 !> The dependent modules are listed below. Examples on how to use this
 !> module can be found in the examples of each of the dependent modules. This
@@ -30,7 +30,7 @@
 !> The functionality presently, only encompasses Fortran file types. The file
 !> type object is abstracted in such a way that it should be relatively painless
 !> to add new types of files. One example of a new file  type may be a SILO
-!> database or HDF5 file. 
+!> database or HDF5 file.
 !>
 !> @par Module Dependencies
 !>  - @ref IO_Strings "IO_Strings": @copybrief IO_Strings
@@ -63,13 +63,13 @@ MODULE IOutil
   USE FileType_Input
   IMPLICIT NONE
   PRIVATE
-  
+
   !Public parameters
   PUBLIC :: MAX_PATH_LENGTH
   PUBLIC :: MAX_FNAME_LENGTH
   PUBLIC :: MAX_FEXT_LENGTH
   PUBLIC :: MAX_INPUT_FILE_LINE_LEN
-  
+
   !Public members from IO_Strings
   PUBLIC :: BLANK
   PUBLIC :: BANG
@@ -91,7 +91,8 @@ MODULE IOutil
   PUBLIC :: strrep
   PUBLIC :: stripComment
   PUBLIC :: SlashRep
-  
+  PUBLIC :: printCentered
+
   !File Types
   PUBLIC :: BaseFileType
   PUBLIC :: FortranFileType
