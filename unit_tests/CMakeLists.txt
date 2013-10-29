@@ -60,8 +60,6 @@ ENDIF()
 
 # add test for SLEPC if enabled
 IF(${PACKAGE_NAME}_ENABLE_SLEPC)
-  
-  MESSAGE("hi1")
     SET(UNIT_TEST_NAMES
         ${UNIT_TEST_NAMES}
         testTPLSLEPC
@@ -73,6 +71,7 @@ IF(${PACKAGE_NAME}_ENABLE_HDF5)
     SET(UNIT_TEST_NAMES
         ${UNIT_TEST_NAMES}
         testHDF5FileType
+        testTPLHDF5
         )
 ENDIF()
 
