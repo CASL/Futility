@@ -61,12 +61,13 @@ MODULE FileType_HDF5
 #ifdef MPACT_HAVE_HDF5
   USE HDF5
 #endif
-  USE IO_Strings
-  USE FileType_Base
   USE IntrType
-  USE ExceptionHandler
-  USE ParallelEnv
   USE Strings
+  USE ExceptionHandler
+  USE IO_Strings
+  USE ParallelEnv
+  USE FileType_Base
+  
   IMPLICIT NONE
   PRIVATE
 
@@ -331,6 +332,7 @@ MODULE FileType_HDF5
 !> This routine initializes an HDF5 file object by setting the objects
 !> attributes, initializing the HDF5 library interface and calling the @c open
 !> routine.
+!>
     SUBROUTINE init_HDF5FileType(thisHDF5File,filename,mode)
       CHARACTER(LEN=*),PARAMETER :: myName='init_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -401,6 +403,7 @@ MODULE FileType_HDF5
 !>
 !> This routine releases resources used for interacting with the HSF5 file. It
 !> closes the file and the HDF5 library interface.
+!>
     SUBROUTINE clear_HDF5FileType(thisHDF5File)
       CHARACTER(LEN=*),PARAMETER :: myName='clear_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -427,6 +430,7 @@ MODULE FileType_HDF5
 !> This routine implements the abstract @c fopen routine in the base file type.
 !> It uses the HDF5 library interface that was initialized in @c init to open
 !> the file.
+!>
     SUBROUTINE open_HDF5FileType(file)
       CHARACTER(LEN=*),PARAMETER :: myName='open_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: file
@@ -466,6 +470,7 @@ MODULE FileType_HDF5
 !> @param file the HDF5FileType object to close
 !>
 !> This routine implements the abstract @c fclose routine in the base file type.
+!>
     SUBROUTINE close_HDF5FileType(file)
       CHARACTER(LEN=*),PARAMETER :: myName='close_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: file
@@ -483,6 +488,7 @@ MODULE FileType_HDF5
 !>
 !> This routine implements the abstract @c fdelete routine in the base file
 !> type.
+!>
     SUBROUTINE delete_HDF5FileType(file)
       CHARACTER(LEN=*),PARAMETER :: myName='delete_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: file
@@ -531,6 +537,7 @@ MODULE FileType_HDF5
 !> its constituents is stored in the objs list. If objs is passed in, it will be
 !> deallocated and reallocated to the proper size to store the names of all of
 !> the objects in the group.
+!>
     SUBROUTINE ls_HDF5FileType(thisHDF5File,path,objs)
       CHARACTER(LEN=*),PARAMETER :: myName='ls_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -579,6 +586,7 @@ MODULE FileType_HDF5
 !>
 !> This routine is used to create a new group in an HDF5 file. It can only be
 !> called if the file has write access.
+!>
     SUBROUTINE mkdir_HDF5FileType(thisHDF5File,path)
       CHARACTER(LEN=*),PARAMETER :: myNAme='mkdir_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -619,6 +627,7 @@ MODULE FileType_HDF5
 !> @param path the group in the file to interrogate
 !>
 !> This function returns how many objects are in the group @c path.
+!>
     FUNCTION ngrp_HDF5FileType(thisHDF5File,path) RESULT(ngrp)
       CHARACTER(LEN=*),PARAMETER :: myName='ngrp_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -658,6 +667,7 @@ MODULE FileType_HDF5
 !>
 !> This routine writes a double @c vals to a dataset of name and path @c
 !> dsetname using the shape @c gdims_in, if present.
+!>
     SUBROUTINE write_d0(thisHDF5File,dsetname,vals,gdims_in)
       CHARACTER(LEN=*),PARAMETER :: myName='writed0_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -776,6 +786,7 @@ MODULE FileType_HDF5
 !>
 !> This routine writes a rank-1 array of doubles @c vals to a dataset of name
 !> and path @c dsetname using the shape @c gdims_in, if present.
+!>
     SUBROUTINE write_d1(thisHDF5File,dsetname,vals,gdims_in)
       CHARACTER(LEN=*),PARAMETER :: myName='writed1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -893,6 +904,7 @@ MODULE FileType_HDF5
 !>
 !> This routine writes a rank-2 array of doubles @c vals to a dataset of name
 !> and path @c dsetname using the shape @c gdims_in, if present.
+!>
     SUBROUTINE write_d2(thisHDF5File,dsetname,vals,gdims_in)
       CHARACTER(LEN=*),PARAMETER :: myName='writed2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -1009,6 +1021,7 @@ MODULE FileType_HDF5
 !>
 !> This routine writes a rank-3 array of doubles @c vals to a dataset of name
 !> and path @c dsetname using the shape @c gdims_in, if present.
+!>
     SUBROUTINE write_d3(thisHDF5File,dsetname,vals,gdims_in)
       CHARACTER(LEN=*),PARAMETER :: myName='writed3_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -1129,6 +1142,7 @@ MODULE FileType_HDF5
 !>
 !> This routine writes a rank-4 array of doubles @c vals to a dataset of name
 !> and path @c dsetname using the shape @c gdims_in, if present.
+!>
     SUBROUTINE write_d4(thisHDF5File,dsetname,vals,gdims_in)
       CHARACTER(LEN=*),PARAMETER :: myName='writed4_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -1250,6 +1264,7 @@ MODULE FileType_HDF5
 !>
 !> This routine writes a real @c vals to a dataset of name
 !> and path @c dsetname using the shape @c gdims_in, if present.
+!>
     SUBROUTINE write_s0(thisHDF5File,dsetname,vals,gdims_in)
       CHARACTER(LEN=*),PARAMETER :: myName='writes0_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -1368,6 +1383,7 @@ MODULE FileType_HDF5
 !>
 !> This routine writes a rank-1 array of reals @c vals to a dataset of name
 !> and path @c dsetname using the shape @c gdims_in, if present.
+!>
     SUBROUTINE write_s1(thisHDF5File,dsetname,vals,gdims_in)
       CHARACTER(LEN=*),PARAMETER :: myName='writes1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -1485,6 +1501,7 @@ MODULE FileType_HDF5
 !>
 !> This routine writes a rank-2 array of reals @c vals to a dataset of name
 !> and path @c dsetname using the shape @c gdims_in, if present.
+!>
     SUBROUTINE write_s2(thisHDF5File,dsetname,vals,gdims_in)
       CHARACTER(LEN=*),PARAMETER :: myName='writes2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -1603,6 +1620,7 @@ MODULE FileType_HDF5
 !>
 !> This routine writes a rank-3 array of reals @c vals to a dataset of name
 !> and path @c dsetname using the shape @c gdims_in, if present.
+!>
     SUBROUTINE write_s3(thisHDF5File,dsetname,vals,gdims_in)
       CHARACTER(LEN=*),PARAMETER :: myName='writes3_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -1722,6 +1740,7 @@ MODULE FileType_HDF5
 !>
 !> This routine writes a rank-4 array of reals @c vals to a dataset of name
 !> and path @c dsetname using the shape @c gdims_in, if present.
+!>
     SUBROUTINE write_s4(thisHDF5File,dsetname,vals,gdims_in)
       CHARACTER(LEN=*),PARAMETER :: myName='writes4_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -1842,6 +1861,7 @@ MODULE FileType_HDF5
 !>
 !> This routine writes a logical @c vals to a dataset of name
 !> and path @c dsetname using the shape @c gdims_in, if present.
+!>
     SUBROUTINE write_b0(thisHDF5File,dsetname,vals,gdims_in)
       IMPLICIT NONE
       CHARACTER(LEN=*),PARAMETER :: myName='writeb0_HDF5FileType'
@@ -1969,6 +1989,7 @@ MODULE FileType_HDF5
 !>
 !> This routine writes a rank-1 array of logicals @c vals to a dataset of name
 !> and path @c dsetname using the shape @c gdims_in, if present.
+!>
     SUBROUTINE write_b1(thisHDF5File,dsetname,vals,gdims_in)
       IMPLICIT NONE
       CHARACTER(LEN=*),PARAMETER :: myName='writeb1_HDF5FileType'
@@ -2095,6 +2116,7 @@ MODULE FileType_HDF5
 !>
 !> This routine writes a rank-2 array of logicals @c vals to a dataset of name
 !> and path @c dsetname using the shape @c gdims_in, if present.
+!>
     SUBROUTINE write_b2(thisHDF5File,dsetname,vals,gdims_in)
       CHARACTER(LEN=*),PARAMETER :: myName='writeb2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -2220,6 +2242,7 @@ MODULE FileType_HDF5
 !>
 !> This routine writes a rank-3 array of logicals @c vals to a dataset of name
 !> and path @c dsetname using the shape @c gdims_in, if present.
+!>
     SUBROUTINE write_b3(thisHDF5File,dsetname,vals,gdims_in)
       CHARACTER(LEN=*),PARAMETER :: myName='writeb3_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -2347,6 +2370,7 @@ MODULE FileType_HDF5
 !>
 !> This routine writes an integer @c vals to a dataset of name
 !> and path @c dsetname using the shape @c gdims_in, if present.
+!>
     SUBROUTINE write_n0(thisHDF5File,dsetname,vals,gdims_in)
       CHARACTER(LEN=*),PARAMETER :: myName='writen0_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -2462,6 +2486,7 @@ MODULE FileType_HDF5
 !>
 !> This routine writes a rank-1 array of integers @c vals to a dataset of name
 !> and path @c dsetname using the shape @c gdims_in, if present.
+!>
     SUBROUTINE write_n1(thisHDF5File,dsetname,vals,gdims_in)
       CHARACTER(LEN=*),PARAMETER :: myName='writen1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -2578,6 +2603,7 @@ MODULE FileType_HDF5
 !>
 !> This routine writes a rank-2 array of integers @c vals to a dataset of name
 !> and path @c dsetname using the shape @c gdims_in, if present.
+!>
     SUBROUTINE write_n2(thisHDF5File,dsetname,vals,gdims_in)
       CHARACTER(LEN=*),PARAMETER :: myName='writen2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -2695,6 +2721,7 @@ MODULE FileType_HDF5
 !>
 !> This routine writes a rank-3 array of integers @c vals to a dataset of name
 !> and path @c dsetname using the shape @c gdims_in, if present.
+!>
     SUBROUTINE write_n3(thisHDF5File,dsetname,vals,gdims_in)
       CHARACTER(LEN=*),PARAMETER :: myName='writen3_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -2815,6 +2842,7 @@ MODULE FileType_HDF5
 !> and path @c dsetname using the shape @c gdims_in, if present.  A double is
 !> used for the write operation to compensate for the lack of an long integer
 !> write interface in the HDF5 library.
+!>
     SUBROUTINE write_l0(thisHDF5File,dsetname,valst,gdims_in)
       CHARACTER(LEN=*),PARAMETER :: myName='writel0_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -2938,6 +2966,7 @@ MODULE FileType_HDF5
 !> name and path @c dsetname using the shape @c gdims_in, if present.  Doubles
 !> are used for the write operation to compensate for the lack of an long
 !> integer write interface in the HDF5 library.
+!>
     SUBROUTINE write_l1(thisHDF5File,dsetname,valst,gdims_in)
       CHARACTER(LEN=*),PARAMETER :: myName='writel1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -3062,6 +3091,7 @@ MODULE FileType_HDF5
 !> name and path @c dsetname using the shape @c gdims_in, if present.  Doubles
 !> are used for the write operation to compensate for the lack of an long
 !> integer write interface in the HDF5 library.
+!>
     SUBROUTINE write_l2(thisHDF5File,dsetname,valst,gdims_in)
       CHARACTER(LEN=*),PARAMETER :: myName='writel2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -3187,6 +3217,7 @@ MODULE FileType_HDF5
 !> name and path @c dsetname using the shape @c gdims_in, if present.  Doubles
 !> are used for the write operation to compensate for the lack of an long
 !> integer write interface in the HDF5 library.
+!>
     SUBROUTINE write_l3(thisHDF5File,dsetname,valst,gdims_in)
       CHARACTER(LEN=*),PARAMETER :: myName='writel3_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -3312,6 +3343,7 @@ MODULE FileType_HDF5
 !> This routine writes a stringType @c vals to a dataset of
 !> name and path @c dsetname using the shape @c gdims_in, if present.
 !> StringsTypes are represented as rank-1 arrays of characters.
+!>
     SUBROUTINE write_st0(thisHDF5File,dsetname,vals,gdims_in)
       CHARACTER(LEN=*),PARAMETER :: myName='writec0_HDF5FileType'
       INTEGER(SIK) :: i
@@ -3440,6 +3472,7 @@ MODULE FileType_HDF5
 !>
 !> This routine finds the length of the longest stringType in @c vals, stores
 !> the value in @c length_max, and calls the @c fwrite routine.
+!>
     SUBROUTINE write_st1_helper(thisHDF5File,dsetname,vals,gdims_in)
       CHARACTER(LEN=*),PARAMETER :: MyName='writec1helper_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -3458,9 +3491,7 @@ MODULE FileType_HDF5
       ELSE
         CALL thisHDF5File%fwrite(dsetname,vals,length_max)
       ENDIF
-
     ENDSUBROUTINE write_st1_helper
-
 !
 !-------------------------------------------------------------------------------
 !> @brief Write a rank-1 array of StringTypes to dataset
@@ -3473,6 +3504,7 @@ MODULE FileType_HDF5
 !> This routine writes a rank-1 array of stringTypes @c vals to a dataset of
 !> name and path @c dsetname using the shape @c gdims_in, if present.
 !> StringsTypes are represented as rank-1 arrays of characters.
+!>
     SUBROUTINE write_st1(thisHDF5File,dsetname,vals,length_max,gdims_in)
       CHARACTER(LEN=*),PARAMETER :: myName='writec1_HDF5FileType'
       INTEGER(SIK) :: i,j
@@ -3603,6 +3635,7 @@ MODULE FileType_HDF5
 !>
 !> This routine finds the length of the longest stringType in @c vals, stores
 !> the value in @c length_max, and calls the @c fwrite routine.
+!>
     SUBROUTINE write_st2_helper(thisHDF5File,dsetname,vals,gdims_in)
       CHARACTER(LEN=*),PARAMETER :: MyName='writec2helper_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -3636,6 +3669,7 @@ MODULE FileType_HDF5
 !> This routine writes a rank-2 array of stringTypes @c vals to a dataset of
 !> name and path @c dsetname using the shape @c gdims_in, if present.
 !> StringsTypes are represented as rank-1 arrays of characters.
+!>
     SUBROUTINE write_st2(thisHDF5File,dsetname,vals,length_max,gdims_in)
       CHARACTER(LEN=*),PARAMETER :: myName='writec2_HDF5FileType'
       INTEGER(SIK) :: i,j,k
@@ -3663,15 +3697,13 @@ MODULE FileType_HDF5
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - File is readonly!')
       ELSE
-
         ! set one to ones. This is usually used for more complicated parallel
         ! chunking schemes, but we are doing a simplified case
         one=1
 
         ! Convert the path name
         path=convertPath(dsetname)
-
-
+        
         DO k=1,SIZE(vals,2)
           DO i=1,SIZE(vals,1)
             valss=TRIM(vals(i,k))
@@ -3770,6 +3802,7 @@ MODULE FileType_HDF5
 !>
 !> This routine finds the length of the longest stringType in @c vals, stores
 !> the value in @c length_max, and calls the @c fwrite routine.
+!>
     SUBROUTINE write_st3_helper(thisHDF5File,dsetname,vals,gdims_in)
       CHARACTER(LEN=*),PARAMETER :: MyName='writec3helper_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -3805,6 +3838,7 @@ MODULE FileType_HDF5
 !> This routine writes a rank-3 array of stringTypes @c vals to a dataset of
 !> name and path @c dsetname using the shape @c gdims_in, if present.
 !> StringsTypes are represented as rank-1 arrays of characters.
+!>
     SUBROUTINE write_st3(thisHDF5File,dsetname,vals,length_max,gdims_in)
       CHARACTER(LEN=*),PARAMETER :: myName='writec3_HDF5FileType'
       INTEGER(SIK) :: i,j,k,m
@@ -3942,6 +3976,7 @@ MODULE FileType_HDF5
 !>
 !> This routine writes a rank-1 array of characters @c vals to a dataset of name
 !> and path @c dsetname using the shape @c gdims_in, if present.
+!>
     SUBROUTINE write_c1(thisHDF5File,dsetname,vals,gdims_in)
       IMPLICIT NONE
       CHARACTER(LEN=*),PARAMETER :: myName='writec1_HDF5FileType'
@@ -4058,6 +4093,7 @@ MODULE FileType_HDF5
 !>
 !> This routine reads a double from the dataset @c dsetname and stores
 !> the value in @c vals
+!>
     SUBROUTINE read_d0(thisHDF5File,dsetname,vals)
       CHARACTER(LEN=*),PARAMETER :: myName='readd0_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -4113,7 +4149,6 @@ MODULE FileType_HDF5
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to close dataspace.')
-
 #endif
     ENDSUBROUTINE read_d0
 !
@@ -4125,6 +4160,7 @@ MODULE FileType_HDF5
 !>
 !> This routine reads a rank-1 array of doubles from the dataset @c dsetname
 !> and stores the values in @c vals
+!>
     SUBROUTINE read_d1(thisHDF5File,dsetname,vals)
       CHARACTER(LEN=*),PARAMETER :: myName='readd1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -4191,7 +4227,6 @@ MODULE FileType_HDF5
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to close dataspace.')
-
 #endif
     ENDSUBROUTINE read_d1
 !
@@ -4203,6 +4238,7 @@ MODULE FileType_HDF5
 !>
 !> This routine reads a rank-2 array of doubles from the dataset @c dsetname
 !> and stores the values in @c vals
+!>
     SUBROUTINE read_d2(thisHDF5File,dsetname,vals)
       CHARACTER(LEN=*),PARAMETER :: myName='readd2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -4268,7 +4304,6 @@ MODULE FileType_HDF5
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to close dataspace.')
-
 #endif
     ENDSUBROUTINE read_d2
 !
@@ -4280,6 +4315,7 @@ MODULE FileType_HDF5
 !>
 !> This routine reads a rank-3 array of doubles from the dataset @c dsetname
 !> and stores the values in @c vals
+!>
     SUBROUTINE read_d3(thisHDF5File,dsetname,vals)
       CHARACTER(LEN=*),PARAMETER :: myName='readd3_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -4345,7 +4381,6 @@ MODULE FileType_HDF5
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to close dataspace.')
-
 #endif
     ENDSUBROUTINE read_d3
 !
@@ -4357,6 +4392,7 @@ MODULE FileType_HDF5
 !>
 !> This routine reads a rank-4 array of doubles from the dataset @c dsetname
 !> and stores the values in @c vals
+!>
     SUBROUTINE read_d4(thisHDF5File,dsetname,vals)
       CHARACTER(LEN=*),PARAMETER :: myName='readd4_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -4422,7 +4458,6 @@ MODULE FileType_HDF5
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to close dataspace.')
-
 #endif
     ENDSUBROUTINE read_d4
 !
@@ -4434,6 +4469,7 @@ MODULE FileType_HDF5
 !>
 !> This routine reads a rank-4 array of doubles from the dataset @c dsetname
 !> and stores the values in @c vals
+!>
     SUBROUTINE read_dp4(thisHDF5File,dsetname,vals)
       CHARACTER(LEN=*),PARAMETER :: myName='readd4_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -4499,7 +4535,6 @@ MODULE FileType_HDF5
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to close dataspace.')
-
 #endif
     ENDSUBROUTINE read_dp4
 !
@@ -4511,6 +4546,7 @@ MODULE FileType_HDF5
 !>
 !> This routine reads a real from the dataset @c dsetname
 !> and stores the value in @c vals
+!>
     SUBROUTINE read_s0(thisHDF5File,dsetname,vals)
       CHARACTER(LEN=*),PARAMETER :: myName='reads0_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -4566,11 +4602,9 @@ MODULE FileType_HDF5
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to close dataspace.')
-
 #endif
     ENDSUBROUTINE read_s0
 !
-
 !-------------------------------------------------------------------------------
 !> @brief Read a rank-1 array of reals from dataset
 !> @param thisHDF5File the HDF5FileType object to read from
@@ -4579,6 +4613,7 @@ MODULE FileType_HDF5
 !>
 !> This routine reads a rank-1 array of reals from the dataset @c dsetname
 !> and stores the values in @c vals
+!>
     SUBROUTINE read_s1(thisHDF5File,dsetname,vals)
       CHARACTER(LEN=*),PARAMETER :: myName='reads1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -4644,7 +4679,6 @@ MODULE FileType_HDF5
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to close dataspace.')
-
 #endif
     ENDSUBROUTINE read_s1
 !
@@ -4656,6 +4690,7 @@ MODULE FileType_HDF5
 !>
 !> This routine reads a rank-2 array of reals from the dataset @c dsetname
 !> and stores the values in @c vals
+!>
     SUBROUTINE read_s2(thisHDF5File,dsetname,vals)
       CHARACTER(LEN=*),PARAMETER :: myName='reads2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -4721,7 +4756,6 @@ MODULE FileType_HDF5
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to close dataspace.')
-
 #endif
     ENDSUBROUTINE read_s2
 !
@@ -4733,6 +4767,7 @@ MODULE FileType_HDF5
 !>
 !> This routine reads a rank-3 array of reals from the dataset @c dsetname
 !> and stores the values in @c vals
+!>
     SUBROUTINE read_s3(thisHDF5File,dsetname,vals)
       CHARACTER(LEN=*),PARAMETER :: myName='reads3_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -4798,7 +4833,6 @@ MODULE FileType_HDF5
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to close dataspace.')
-
 #endif
     ENDSUBROUTINE read_s3
 !
@@ -4810,6 +4844,7 @@ MODULE FileType_HDF5
 !>
 !> This routine reads a rank-4 array of reals from the dataset @c dsetname
 !> and stores the values in @c vals
+!>
     SUBROUTINE read_s4(thisHDF5File,dsetname,vals)
       CHARACTER(LEN=*),PARAMETER :: myName='reads4_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -4875,7 +4910,6 @@ MODULE FileType_HDF5
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to close dataspace.')
-
 #endif
     ENDSUBROUTINE read_s4
 !
@@ -4887,6 +4921,7 @@ MODULE FileType_HDF5
 !>
 !> This routine reads an integer from the dataset @c dsetname
 !> and stores the values in @c vals
+!>
     SUBROUTINE read_n0(thisHDF5File,dsetname,vals)
       CHARACTER(LEN=*),PARAMETER :: myName='readn0_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -4955,6 +4990,7 @@ MODULE FileType_HDF5
 !>
 !> This routine reads a rank-1 array of integers from the dataset @c dsetname
 !> and stores the values in @c vals
+!>
     SUBROUTINE read_n1(thisHDF5File,dsetname,vals)
       CHARACTER(LEN=*),PARAMETER :: myName='readn1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -5020,7 +5056,6 @@ MODULE FileType_HDF5
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to close dataspace.')
-
 #endif
     ENDSUBROUTINE read_n1
 !
@@ -5032,6 +5067,7 @@ MODULE FileType_HDF5
 !>
 !> This routine reads a rank-2 array of integers from the dataset @c dsetname
 !> and stores the values in @c vals
+!>
     SUBROUTINE read_n2(thisHDF5File,dsetname,vals)
       CHARACTER(LEN=*),PARAMETER :: myName='readn2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -5097,7 +5133,6 @@ MODULE FileType_HDF5
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to close dataspace.')
-
 #endif
     ENDSUBROUTINE read_n2
 !
@@ -5109,6 +5144,7 @@ MODULE FileType_HDF5
 !>
 !> This routine reads a rank-3 array of integers from the dataset @c dsetname
 !> and stores the values in @c vals
+!>
     SUBROUTINE read_n3(thisHDF5File,dsetname,vals)
       CHARACTER(LEN=*),PARAMETER :: myName='readn3_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -5174,7 +5210,6 @@ MODULE FileType_HDF5
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to close dataspace.')
-
 #endif
     ENDSUBROUTINE read_n3
 !
@@ -5187,6 +5222,7 @@ MODULE FileType_HDF5
 !> This routine reads a long integer from the dataset @c dsetname
 !> and stores the values in @c vals.  A double is used to read the data to
 !> compensate for the lack of a long integer read interface in the HDF5 library.
+!>
     SUBROUTINE read_l0(thisHDF5File,dsetname,vals)
       CHARACTER(LEN=*),PARAMETER :: myName='readl0_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -5248,11 +5284,9 @@ MODULE FileType_HDF5
       vals=valst
       CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
         ' - Converting from double to long integer!')
-
 #endif
     ENDSUBROUTINE read_l0
 !
-
 !-------------------------------------------------------------------------------
 !> @brief Read a rank-1 array of 64-bit "integers" from dataset
 !> @param thisHDF5File the HDF5FileType object to read from
@@ -5263,6 +5297,7 @@ MODULE FileType_HDF5
 !> dsetname and stores the values in @c vals.  A double is used to read the data
 !> to compensate for the lack of a long integer read interface in the HDF5
 !> library.
+!>
     SUBROUTINE read_l1(thisHDF5File,dsetname,vals)
       CHARACTER(LEN=*),PARAMETER :: myName='readl1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -5335,7 +5370,6 @@ MODULE FileType_HDF5
       vals=valst
       CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
         ' - Converting from double to long integer!')
-
 #endif
     ENDSUBROUTINE read_l1
 !
@@ -5349,6 +5383,7 @@ MODULE FileType_HDF5
 !> dsetname and stores the values in @c vals.  A double is used to read the data
 !> to compensate for the lack of a long integer read interface in the HDF5
 !> library.
+!>
     SUBROUTINE read_l2(thisHDF5File,dsetname,vals)
       CHARACTER(LEN=*),PARAMETER :: myName='readl2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -5421,7 +5456,6 @@ MODULE FileType_HDF5
       vals=valst
       CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
         ' - Converting from double to long integer!')
-
 #endif
     ENDSUBROUTINE read_l2
 !
@@ -5435,6 +5469,7 @@ MODULE FileType_HDF5
 !> dsetname and stores the values in @c vals.  A double is used to read the data
 !> to compensate for the lack of a long integer read interface in the HDF5
 !> library.
+!>
     SUBROUTINE read_l3(thisHDF5File,dsetname,vals)
       CHARACTER(LEN=*),PARAMETER :: myName='readl3_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -5507,7 +5542,6 @@ MODULE FileType_HDF5
       vals=valst
       CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
         ' - Converting from double to long integer!')
-
 #endif
     ENDSUBROUTINE read_l3
 !
@@ -5520,6 +5554,7 @@ MODULE FileType_HDF5
 !> This routine reads a logical from the dataset @c
 !> dsetname and stores the values in @c vals.  The datum is read as a character
 !> 'T' or 'F' then converted to a logical.
+!>
     SUBROUTINE read_b0(thisHDF5File,dsetname,vals)
       CHARACTER(LEN=*),PARAMETER :: myName='readb0_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -5583,7 +5618,6 @@ MODULE FileType_HDF5
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to close dataspace.')
-
 #endif
     ENDSUBROUTINE read_b0
 !
@@ -5596,6 +5630,7 @@ MODULE FileType_HDF5
 !> This routine reads a rank-1 array of logicals from the dataset @c
 !> dsetname and stores the values in @c vals.  The data are read as characters
 !> 'T' or 'F' then converted to logicals.
+!>
     SUBROUTINE read_b1(thisHDF5File,dsetname,vals)
       CHARACTER(LEN=*),PARAMETER :: myName='readb1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -5614,8 +5649,7 @@ MODULE FileType_HDF5
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
         '::'//myName//' - File object not initialized.')
-
-
+      
       ! Convert the path name to use slashes
       path=convertPath(dsetname)
 
@@ -5671,12 +5705,11 @@ MODULE FileType_HDF5
 
       ! Convert from surrogate character array to boolean array
       vals=.FALSE.
-      FORALL(i=1:SIZE(vals),valsc(i)=='T')
+      FORALL(i=1:SIZE(vals),valsc(i) == 'T')
         vals(i)=.TRUE.
-      END FORALL
-
+      ENDFORALL
+      
       DEALLOCATE(valsc)
-
 #endif
     ENDSUBROUTINE read_b1
 !
@@ -5689,6 +5722,7 @@ MODULE FileType_HDF5
 !> This routine reads a rank-2 array of logicals from the dataset @c
 !> dsetname and stores the values in @c vals.  The data are read as characters
 !> 'T' or 'F' then converted to logicals.
+!>
     SUBROUTINE read_b2(thisHDF5File,dsetname,vals)
       CHARACTER(LEN=*),PARAMETER :: myName='readb2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -5764,12 +5798,11 @@ MODULE FileType_HDF5
 
       ! Convert from surrogate character array to boolean array
       vals=.FALSE.
-      FORALL(i=1:SIZE(vals,DIM=1),j=1:SIZE(vals,DIM=2),    valsc(i,j)=='T')
+      FORALL(i=1:SIZE(vals,DIM=1),j=1:SIZE(vals,DIM=2),valsc(i,j) == 'T')
         vals(i,j)=.TRUE.
-      END FORALL
-
+      ENDFORALL
+      
       DEALLOCATE(valsc)
-
 #endif
     ENDSUBROUTINE read_b2
 !
@@ -5782,6 +5815,7 @@ MODULE FileType_HDF5
 !> This routine reads a rank-3 array of logicals from the dataset @c
 !> dsetname and stores the values in @c vals.  The data are read as characters
 !> 'T' or 'F' then converted to logicals.
+!>
     SUBROUTINE read_b3(thisHDF5File,dsetname,vals)
       CHARACTER(LEN=*),PARAMETER :: myName='readb3_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -5800,8 +5834,7 @@ MODULE FileType_HDF5
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
         '::'//myName//' - File object not initialized.')
-
-
+      
       ! Convert the path name to use slashes
       path=convertPath(dsetname)
 
@@ -5857,12 +5890,11 @@ MODULE FileType_HDF5
       ! Convert from surrogate character array to boolean array
       vals(:,:,:)=.FALSE.
       FORALL(i=1:SIZE(vals,DIM=1),j=1:SIZE(vals,DIM=2),k=1:SIZE(vals,DIM=3), &
-                   valsc(i,j,k)=='T')
+        valsc(i,j,k) == 'T')
         vals(i,j,k)=.TRUE.
-      END FORALL
-
+      ENDFORALL
+      
       DEALLOCATE(valsc)
-
 #endif
     ENDSUBROUTINE read_b3
 !
@@ -5875,6 +5907,7 @@ MODULE FileType_HDF5
 !> This routine reads a stringType from the dataset @c
 !> dsetname and stores the values in @c vals.  Each string is read as an array
 !> of characters then converted to a stringType.
+!>
     SUBROUTINE read_st0(thisHDF5File,dsetname,vals)
       CHARACTER(LEN=*),PARAMETER :: myName='readst0_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -5942,7 +5975,6 @@ MODULE FileType_HDF5
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to close dataspace.')
-
 #endif
     ENDSUBROUTINE read_st0
 !
@@ -5955,6 +5987,7 @@ MODULE FileType_HDF5
 !> This routine reads a rank-1 array of stringTypes from the dataset @c
 !> dsetname and stores the values in @c vals.  Each string is read as an array
 !> of characters then converted to a stringType.
+!>
     SUBROUTINE read_st1(thisHDF5File,dsetname,vals)
       CHARACTER(LEN=*),PARAMETER :: myName='readst1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -6035,7 +6068,6 @@ MODULE FileType_HDF5
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to close dataspace.')
-
 #endif
     ENDSUBROUTINE read_st1
 !
@@ -6048,6 +6080,7 @@ MODULE FileType_HDF5
 !> This routine reads a rank-2 array of stringTypes from the dataset @c
 !> dsetname and stores the values in @c vals.  Each string is read as an array
 !> of characters then converted to a stringType.
+!>
     SUBROUTINE read_st2(thisHDF5File,dsetname,vals)
       CHARACTER(LEN=*),PARAMETER :: myName='readst2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -6144,6 +6177,7 @@ MODULE FileType_HDF5
 !> This routine reads a rank-3 array of stringTypes from the dataset @c
 !> dsetname and stores the values in @c vals.  Each string is read as an array
 !> of characters then converted to a stringType.
+!>
     SUBROUTINE read_st3(thisHDF5File,dsetname,vals)
       CHARACTER(LEN=*),PARAMETER :: myName='readst3_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -6229,7 +6263,6 @@ MODULE FileType_HDF5
       CALL h5sclose_f(dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Failed to close dataspace.')
-
 #endif
     ENDSUBROUTINE read_st3
 !
@@ -6242,6 +6275,7 @@ MODULE FileType_HDF5
 !> This routine reads a rank-1 array of characters from the dataset @c
 !> dsetname and stores the values in @c vals.  The data are read as characters
 !> 'T' or 'F' then converted to logicals.
+!>
     SUBROUTINE read_c1(thisHDF5File,dsetname,vals)
       CHARACTER(LEN=*),PARAMETER :: myName='readc1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -6319,6 +6353,7 @@ MODULE FileType_HDF5
 !> @param path the path string to convert.
 !>
 !> Paths in MPACT use '->' to resolve heirarchy. HSF5 uses '/'.
+!>
     FUNCTION convertPath(path)
       CHARACTER(LEN=*),INTENT(IN) :: path
       CHARACTER(LEN=80) :: convertpath
@@ -6333,11 +6368,11 @@ MODULE FileType_HDF5
       DO
         ind=INDEX(path(ipos:last),'->')
         ipos2=ind+ipos-1
-        IF(ind>0) THEN
-          convertPath=trim(convertpath)//'/'//path(ipos:ipos2-1)
+        IF(ind > 0) THEN
+          convertPath=TRIM(convertpath)//'/'//path(ipos:ipos2-1)
           ipos=ipos2+2
         ELSE
-          convertPath=trim(convertPath)//'/'//path(ipos:last)
+          convertPath=TRIM(convertPath)//'/'//path(ipos:last)
           EXIT
         ENDIF
       ENDDO ! Elements in path string
