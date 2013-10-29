@@ -548,6 +548,7 @@ MODULE ParallelEnv
       REAL(SRK) :: rbuf(n)
       IF(myPE%initstat) THEN
 #ifdef DBL
+
         CALL MPI_Allreduce(x,rbuf,n,MPI_DOUBLE_PRECISION,MPI_SUM, &
           myPE%comm,mpierr)
 #else
