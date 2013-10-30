@@ -155,8 +155,16 @@ MODULE IOutil
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: status
       CHARACTER(LEN=1) :: tmpVal
       INTEGER(SIK) :: len,stat
+
+#ifdef __GFORTRAN__
+      !Without this defined when building with GNU this routine will
+      !segfault from a stack overflow.
+      !
+      !If this line is included when building with Intel it causes a link
+      !error in testIOutil.
       INTRINSIC GET_COMMAND
-      
+#endif
+
       len=0
       CALL GET_COMMAND(COMMAND=tmpVal,LENGTH=len)
       IF(PRESENT(command)) THEN
@@ -271,7 +279,7 @@ MODULE IOutil
       IF(stat > 0) len=stat
       stat=MIN(0,stat)
       IF(PRESENT(dir)) CALL GET_CURRENT_DIRECTORY_internal(dir,len,stat)
-      IF(PRESENT(length)) length=len
+      IF(PRESENT(length)) length=len-1
       IF(PRESENT(status)) status=stat
     ENDSUBROUTINE GET_CURRENT_DIRECTORY_string
 !
@@ -282,7 +290,7 @@ MODULE IOutil
       INTEGER(SIK),INTENT(OUT) :: status
       CHARACTER(LEN=length) :: tmp
       CALL getPWD_c(tmp,length,status)
-      IF(status == 0) dir=tmp(1:length)
+      IF(status == 0) dir=tmp(1:length-1) !Remove the C_NULL_CHAR
     ENDSUBROUTINE GET_CURRENT_DIRECTORY_internal
 !
 ENDMODULE IOutil

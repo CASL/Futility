@@ -156,7 +156,7 @@ void getPWD_c(char* pwdpath, int* pathlen, int* status)
   int npwd;
   
   pwd = getcwd(NULL, 0);
-  npwd = strlen(pwd);
+  npwd = strlen(pwd)+1;
 
   if (npwd <= *pathlen)
   {
