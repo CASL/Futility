@@ -24,7 +24,7 @@ PROGRAM testAllocsOOM
   USE Allocs
   IMPLICIT NONE
   
-  INCLUDE 'getSysProcMemInfo_F.h'  
+  INCLUDE 'getSysProcInfo_F.h'
   
   INTEGER(SIK) :: nerror0,nerror1,n1,n2,i
   INTEGER(C_LONG_LONG),SAVE :: maxRam,maxSwap,memAvail,maxMem,memForTest

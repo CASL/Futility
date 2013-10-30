@@ -26,7 +26,9 @@
 !> the routines in this module is provided below and in the test.
 !>
 !> @par Module Dependencies
+!>  - ISO_FORTRAN_ENV
 !>  - @ref IntrType "IntrType": @copybrief IntrType
+!>  - @ref Strings "Strings": @copybrief Strings
 !>  - @ref ExceptionHandler "ExceptionHandler": @copybrief Exceptionhandler
 !>
 !> @par EXAMPLES
@@ -85,8 +87,9 @@
 !>    and repeater symbols.
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE IO_Strings
-
+  USE ISO_FORTRAN_ENV
   USE IntrType
+  USE Strings
   USE ExceptionHandler
   IMPLICIT NONE
   PRIVATE !Default private
@@ -108,12 +111,14 @@ MODULE IO_Strings
   PUBLIC :: toUPPER
   PUBLIC :: strfind
   PUBLIC :: strmatch
+  PUBLIC :: strarraymatch
+  PUBLIC :: strarraymatchind
   PUBLIC :: nmatchstr
   PUBLIC :: strrep
   PUBLIC :: stripComment
   PUBLIC :: SlashRep
   PUBLIC :: printCentered
-
+  
   !> Character representing a space symbol
   CHARACTER(LEN=*),PARAMETER :: BLANK=" "
   !> Character representing a comment symbol
@@ -148,8 +153,8 @@ MODULE IO_Strings
     !> @copybrief IO_Strings::getFileParts_string
     !> @copydetails IO_Strings::getFileParts_string
     MODULE PROCEDURE getFileParts_string
-  ENDINTERFACE
-
+  ENDINTERFACE getFileParts
+  
   !> @brief Generic interface to get the file name.
   !>
   !> This interfaces is presently redundant but is provided on the
@@ -158,8 +163,8 @@ MODULE IO_Strings
     !> @copybrief IO_Strings::getPath_string
     !> @copydetails IO_Strings::getPath_string
     MODULE PROCEDURE getPath_string
-  ENDINTERFACE
-
+  ENDINTERFACE getFilePath
+  
   !> @brief Generic interface to get the file name.
   !>
   !> This interfaces is presently redundant but is provided on the
@@ -168,8 +173,8 @@ MODULE IO_Strings
     !> @copybrief IO_Strings::getFileName_string
     !> @copydetails IO_Strings::getFileParts_string
     MODULE PROCEDURE getFileName_string
-  ENDINTERFACE
-
+  ENDINTERFACE getFileName
+  
   !> @brief Generic interface to get the extension of a file name.
   !>
   !> This interfaces is presently redundant but is provided on the
@@ -178,14 +183,113 @@ MODULE IO_Strings
     !> @copybrief IO_Strings::getFileNameExt_string
     !> @copydetails IO_Strings::getFileNameExt_string
     MODULE PROCEDURE getFileNameExt_string
-  ENDINTERFACE
+  ENDINTERFACE getFileNameExt
+  
+  !> @brief Generic interface for strmatch
+  !>
+  !> This interfaces allows for the input argument to be either a
+  !> character array or a StringType.
+  INTERFACE strmatch
+    !> @copybrief IO_Strings::strmatch_char
+    !> @copydetails IO_Strings::strmatch_char
+    MODULE PROCEDURE strmatch_char
+    !> @copybrief IO_Strings::strmatch_string
+    !> @copydetails IO_Strings::strmatch_string
+    MODULE PROCEDURE strmatch_string
+  ENDINTERFACE strmatch
+  
+  
+  !> @brief Generic interface for strrep
+  !>
+  !> This interfaces allows for the input argument to be either a
+  !> character array or a StringType.
+  INTERFACE strrep
+    !> @copybrief IO_Strings::strrep_char_char_char
+    !> @copydetails IO_Strings::strrep_char_char_char
+    MODULE PROCEDURE strrep_char_char_char
+    !> @copybrief IO_Strings::strrep_string_char_char
+    !> @copydetails IO_Strings::strrep_string_char_char
+    MODULE PROCEDURE strrep_string_char_char
+  ENDINTERFACE strrep
+  
+  !> @brief Generic interface for toUPPER
+  !>
+  !> This interfaces allows for the input argument to be either a
+  !> character array or a StringType.
+  INTERFACE toUPPER
+    !> @copybrief IO_Strings::toUPPER_char
+    !> @copydetails IO_Strings::toUPPER_char
+    MODULE PROCEDURE toUPPER_char
+    !> @copybrief IO_Strings::toUPPER_string
+    !> @copydetails IO_Strings::toUPPER_string
+    MODULE PROCEDURE toUPPER_string
+  ENDINTERFACE toUPPER
+  
+  !> @brief Generic interface for nFields
+  !>
+  !> This interfaces allows for the input argument to be either a
+  !> character array or a StringType.
+  INTERFACE nFields
+    !> @copybrief IO_Strings::nFields_char
+    !> @copydetails IO_Strings::nFields_char
+    MODULE PROCEDURE nFields_char
+    !> @copybrief IO_Strings::nFields_string
+    !> @copydetails IO_Strings::nFields_string
+    MODULE PROCEDURE nFields_string
+  ENDINTERFACE nFields
+  
+  !> @brief Generic interface for nFields
+  !>
+  !> This interfaces allows for the input argument to be either a
+  !> character array or a StringType.
+  INTERFACE getField
+    !> @copybrief IO_Strings::getField_char_char
+    !> @copydetails IO_Strings::getField_char_char
+    MODULE PROCEDURE getField_char_char
+    !> @copybrief IO_Strings::getField_string_string
+    !> @copydetails IO_Strings::getField_string_string
+    MODULE PROCEDURE getField_string_string
+    !> @copybrief IO_Strings::getField_string_char
+    !> @copydetails IO_Strings::getField_string_char
+    MODULE PROCEDURE getField_string_char
+    !> @copybrief IO_Strings::getField_char_string
+    !> @copydetails IO_Strings::getField_char_string
+    MODULE PROCEDURE getField_char_string
+  ENDINTERFACE getField
+  
+  !> @brief Generic interface for strarraymatch
+  !>
+  !> This interfaces allows for the input argument to be either a
+  !> character array or a StringType.
+  INTERFACE strarraymatch
+    !> @copybrief IO_Strings::strarraymatch_char
+    !> @copydetails IO_Strings::strarraymatch_char
+    MODULE PROCEDURE strarraymatch_char
+    !> @copybrief IO_Strings::strarraymatch_string
+    !> @copydetails IO_Strings::strarraymatch_string
+    MODULE PROCEDURE strarraymatch_string
+  ENDINTERFACE strarraymatch
+  
+  !> @brief Generic interface for strarraymatch
+  !>
+  !> This interfaces allows for the input argument to be either a
+  !> character array or a StringType.
+  INTERFACE strarraymatchind
+    !> @copybrief IO_Strings::strarraymatchind_char
+    !> @copydetails IO_Strings::strarraymatchind_char
+    MODULE PROCEDURE strarraymatchind_char
+    !> @copybrief IO_Strings::strarraymatchind_string
+    !> @copydetails IO_Strings::strarraymatchind_string
+    MODULE PROCEDURE strarraymatchind_string
+  ENDINTERFACE strarraymatchind
 !
-!===============================================================================
-CONTAINS
+!===============================================================================      
+  CONTAINS
 !
 !-------------------------------------------------------------------------------
 !> Strips the end of a line based on the comment symbol (BANG)
 !> @param string the string to strip any ending comments from
+!>
     PURE SUBROUTINE stripComment(string)
       CHARACTER(LEN=*),INTENT(INOUT) :: string
       INTEGER(SIK) :: nBang,stt,stp
@@ -211,6 +315,7 @@ CONTAINS
 !> @param string the string to search
 !> @param pattern the substring to look for within string
 !> @returns indices a vector with the indices in string where pattern starts
+!>
     PURE FUNCTION strfind(string,pattern) RESULT(indices)
       CHARACTER(LEN=*),INTENT(IN) :: string
       CHARACTER(LEN=*),INTENT(IN) :: pattern
@@ -236,6 +341,7 @@ CONTAINS
 !>
 !> @note Does not handle trailing spaces that can be eliminated by TRIM() so
 !> strings should be trimmed when passing into function.
+!>
     PURE FUNCTION nmatchstr(string,pattern) RESULT(n)
       CHARACTER(LEN=*),INTENT(IN) :: string
       CHARACTER(LEN=*),INTENT(IN) :: pattern
@@ -257,7 +363,8 @@ CONTAINS
 !>
 !> @note Does not handle trailing spaces that can be eliminated by TRIM() so
 !> strings should be trimmed when passing into function.
-    PURE FUNCTION strmatch(string,pattern) RESULT(bool)
+!>
+    PURE FUNCTION strmatch_char(string,pattern) RESULT(bool)
       CHARACTER(LEN=*),INTENT(IN) :: string
       CHARACTER(LEN=*),INTENT(IN) :: pattern
       LOGICAL(SBK) :: bool
@@ -273,7 +380,25 @@ CONTAINS
           ENDIF
         ENDDO
       ENDIF
-    ENDFUNCTION strmatch
+    ENDFUNCTION strmatch_char
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns whether or not a substring @c pattern is found within @c 
+!> string
+!> @param string the string to search
+!> @param pattern the substring to find
+!> @returns bool whether or not @c pattern was found in @c string
+!>
+!> @note Does not handle trailing spaces that can be eliminated by TRIM() so 
+!> strings should be trimmed when passing into function.
+!>
+    PURE FUNCTION strmatch_string(string,pattern) RESULT(bool)
+      TYPE(StringType),INTENT(IN) :: string
+      CHARACTER(LEN=*),INTENT(IN) :: pattern
+      LOGICAL(SBK) :: bool
+      
+      bool=strmatch_char(CHAR(string),pattern)
+    ENDFUNCTION strmatch_string
 !
 !-------------------------------------------------------------------------------
 !> @brief Replaces a substring pattern with a different substring in a string
@@ -283,7 +408,8 @@ CONTAINS
 !> @c repp can be larger than @c findp and as long as the size of string can
 !> accomodate the increased length of all replacements. Trailing and preceding
 !> spaces are counted in all strings.
-    PURE SUBROUTINE strrep(string,findp,repp)
+!>
+    PURE SUBROUTINE strrep_char_char_char(string,findp,repp)
       CHARACTER(LEN=*),INTENT(INOUT) :: string
       CHARACTER(LEN=*),INTENT(IN) :: findp
       CHARACTER(LEN=*),INTENT(IN) :: repp
@@ -310,31 +436,64 @@ CONTAINS
           ENDIF
         ENDDO
       ENDIF
-    ENDSUBROUTINE strrep
+    ENDSUBROUTINE strrep_char_char_char
+!
+!-------------------------------------------------------------------------------
+!> @brief Replaces a substring pattern with a different substring in a string
+!> @param string the string which will have substrings replaced
+!> @param findp the substring pattern to find and replace
+!> @param repp the new substring that will be replace parts of string
+!>
+!> Adapter for @ref strrep_char_char_char so that a string may be passed.
+!>
+    PURE SUBROUTINE strrep_string_char_char(string,findp,repp)
+      TYPE(StringType),INTENT(INOUT) :: string
+      CHARACTER(LEN=*),INTENT(IN) :: findp
+      CHARACTER(LEN=*),INTENT(IN) :: repp
+      CHARACTER(LEN=string%n) :: tmp
+      tmp=string
+      CALL strrep_char_char_char(tmp,findp,repp)
+      string=tmp
+    ENDSUBROUTINE strrep_string_char_char
 !
 !-------------------------------------------------------------------------------
 !> @brief Utility function takes a string and converts all lower case letters to
 !> upper case letters.
 !> @param word input is a string, output has all upper case letters
-    PURE SUBROUTINE toUPPER(word)
+!>
+    PURE SUBROUTINE toUPPER_string(word)
+      TYPE(StringType),INTENT(INOUT) :: word
+      INTEGER(SIK) :: i
+      DO i=1,LEN(word)
+        IF('a' <= word%s(i) .AND. word%s(i) <= 'z') &
+          word%s(i)=ACHAR(IACHAR(word%s(i))-32)
+      ENDDO
+    ENDSUBROUTINE toUPPER_string
+!
+!-------------------------------------------------------------------------------
+!> @brief Utility function takes a character array and converts all lower case
+!> letters to upper case letters.
+!> @param word input is a character array, output has all upper case letters
+!>
+    PURE SUBROUTINE toUPPER_char(word)
       CHARACTER(LEN=*),INTENT(INOUT) :: word
       INTEGER(SIK) :: i
       DO i=1,LEN(word)
-        IF('a' <= word(i:i) .AND. word(i:i) <= 'z') THEN
+        IF('a' <= word(i:i) .AND. word(i:i) <= 'z') &
           word(i:i)=ACHAR(IACHAR(word(i:i))-32)
-        ENDIF
       ENDDO
-    ENDSUBROUTINE toUPPER
+    ENDSUBROUTINE toUPPER_char
 !
 !-------------------------------------------------------------------------------
 !> @brief Counts the number of non-blank entries on a line. An "entry" is
 !> recognized as a character that is not a space that precedes a space.
-!> @param aline input string
+!> @param aline input character array
 !> @returns nfields output value for number of fields
 !>
 !> @note A continuous set of non-blank characters is one entry a continous set
 !>       of blank space characters is one blank.
-    PURE FUNCTION nFields(aline)
+!>
+    PURE FUNCTION nFields_char(aline)  RESULT(nfields)
       INTEGER(SIK) :: nfields
       CHARACTER(LEN=*),INTENT(IN) :: aline
       INTEGER(SIK) :: i,multidcol,n,ncol,nmult,ioerr
@@ -406,10 +565,25 @@ CONTAINS
       ELSE
         nfields=n/2
       ENDIF
-    ENDFUNCTION nFields
+    ENDFUNCTION nFields_char
 !
 !-------------------------------------------------------------------------------
-!> @brief Return the ith field of a string as a string
+!> @brief Counts the number of non-blank entries on a line. An "entry" is 
+!> recognized as a character that is not a space that precedes a space.
+!> @param aline input a StringType
+!> @returns nfields output value for number of fields
+!>
+!> @note A continuous set of non-blank characters is one entry a continous set
+!>       of blank space characters is one blank.
+!>
+    PURE FUNCTION nFields_string(aline) RESULT(nfields)
+      INTEGER(SIK) :: nfields
+      TYPE(StringType),INTENT(IN) :: aline
+      nfields=nFields_char(CHAR(aline))
+    ENDFUNCTION nFields_string
+!
+!-------------------------------------------------------------------------------
+!> @brief Return the ith field of a character array as a string
 !> @param i the ith field
 !> @param string the input string
 !> @param field the output string containing the ith field
@@ -420,16 +594,17 @@ CONTAINS
 !> of readable fields then the read statement will return a non-zero IOSTAT
 !> value. An optional return argument was added to be able to return this
 !> error value.
-    PURE SUBROUTINE getField(i,string,field,ierrout)
+!>
+    PURE SUBROUTINE getField_char_string(i,string,field,ierrout)
       INTEGER(SIK),INTENT(IN) :: i
       CHARACTER(LEN=*),INTENT(IN) :: string
-      CHARACTER(LEN=*),INTENT(OUT) :: field
+      TYPE(StringType),INTENT(OUT) :: field
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierrout
       INTEGER(SIK) :: j,ioerr,nf
-      CHARACTER(LEN=LEN(string)) :: temp
-
-      field=''
+      CHARACTER(LEN=LEN(string)) :: temp,temp2
+                 
       temp=string
+      temp2=''
       nf=nFields(temp)
       IF(0 < i .AND. i <= nf) THEN
         !The fortran READ(*,*) parses at the '/' character
@@ -440,20 +615,79 @@ CONTAINS
           !Temporarily change the FSLASH character to a BSLASH character
           !to get correct parsing behavior
           CALL strrep(temp,FSLASH,BSLASH)
-          READ(temp,*,IOSTAT=ioerr) (field,j=1,i)
+          READ(temp,*,IOSTAT=ioerr) (temp2,j=1,i)
           CALL strrep(temp,BSLASH,FSLASH)
-          CALL strrep(field,BSLASH,FSLASH)
+          CALL strrep(temp2,BSLASH,FSLASH)
         ELSE
-          READ(temp,*,IOSTAT=ioerr) (field,j=1,i)
+          READ(temp,*,IOSTAT=ioerr) (temp2,j=1,i)
         ENDIF
-        IF(ioerr /= 0) field=''
+        field=TRIM(temp2)
         IF(PRESENT(ierrout)) ierrout=ioerr
+      ELSE
+        IF(PRESENT(ierrout)) ierrout=IOSTAT_END
       ENDIF
-    ENDSUBROUTINE getField
+    ENDSUBROUTINE getField_char_string
 !
 !-------------------------------------------------------------------------------
-!> @name Private Functions/Subroutines
-!< @{
+!> @brief Return the ith field of a character array as a character array
+!> @param i the ith field
+!> @param string the input character array
+!> @param field the output character array containing the ith field
+!> @param ierrout an optional return argument with the IOSTAT value
+!>
+!> See getField_char_string.
+!>
+    PURE SUBROUTINE getField_char_char(i,string,field,ierrout)
+      INTEGER(SIK),INTENT(IN) :: i
+      CHARACTER(LEN=*),INTENT(IN) :: string
+      CHARACTER(LEN=*),INTENT(OUT) :: field
+      INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierrout
+      INTEGER(SIK) :: ierr
+      TYPE(StringType) :: tmpField
+      CALL getField_char_string(i,string,tmpField,ierr)
+      field=tmpField
+      IF(LEN(tmpField) > LEN(field)) THEN
+        ierr=666
+        field=''
+      ENDIF
+      IF(PRESENT(ierrout)) ierrout=ierr
+    ENDSUBROUTINE getField_char_char
+!
+!-------------------------------------------------------------------------------
+!> @brief Return the ith field of a string as a string
+!> @param i the ith field
+!> @param string the input string
+!> @param field the output string containing the ith field
+!> @param ierrout an optional return argument with the IOSTAT value
+!>
+!> See getField_char_string.
+!>
+    PURE SUBROUTINE getField_string_string(i,string,field,ierrout)
+      INTEGER(SIK),INTENT(IN) :: i
+      TYPE(StringType),INTENT(IN) :: string
+      TYPE(StringType),INTENT(OUT) :: field
+      INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierrout
+      CALL getField_char_string(i,CHAR(string),field,ierrout)
+    ENDSUBROUTINE getField_string_string
+!
+!-------------------------------------------------------------------------------
+!> @brief Return the ith field of a string as a character array
+!> @param i the ith field
+!> @param string the input string
+!> @param field the output character array containing the ith field
+!> @param ierrout an optional return argument with the IOSTAT value
+!>
+!> See getField_char_string.
+!>
+    PURE SUBROUTINE getField_string_char(i,string,field,ierrout)
+      INTEGER(SIK),INTENT(IN) :: i
+      TYPE(StringType),INTENT(IN) :: string
+      CHARACTER(LEN=*),INTENT(OUT) :: field
+      INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierrout
+      CALL getField_char_char(i,CHAR(string),field,ierrout)
+    ENDSUBROUTINE getField_string_char
+!
+!-------------------------------------------------------------------------------
 !> @brief Separate the path and filename.
 !> @param string input that is a path and filename
 !> @param path output string containing just the path (includes file separator
@@ -471,6 +705,7 @@ CONTAINS
 !> The file extension is everything in string after and including the last '.'
 !> character. If there is no '.' character in the file name then the extension
 !> is an empty string.
+!>
     SUBROUTINE getFileParts_string(string,path,fname,ext,e)
       CHARACTER(LEN=*),INTENT(IN) :: string
       CHARACTER(LEN=*),INTENT(OUT) :: path
@@ -504,6 +739,7 @@ CONTAINS
 !> filename.
 !> @param string input string with path and filename
 !> @param path output string with the path (including a slash at the end)
+!>
     SUBROUTINE getPath_string(string,path,e)
       CHARACTER(LEN=*),INTENT(IN) :: string
       CHARACTER(LEN=*),INTENT(OUT) :: path
@@ -537,6 +773,7 @@ CONTAINS
 !> filename.
 !> @param string input string with path and filename
 !> @param fname output string with the filename (including extension)
+!>
     SUBROUTINE getFileName_string(string,fname,e)
       CHARACTER(LEN=*),INTENT(IN) :: string
       CHARACTER(LEN=*),INTENT(OUT) :: fname
@@ -570,6 +807,7 @@ CONTAINS
 !> filename and path.
 !> @param string input string with path and filename
 !> @param ext output string with the filename extension (including the '.')
+!>
     SUBROUTINE getFileNameExt_string(string,ext,e)
       CHARACTER(LEN=*),INTENT(IN) :: string
       CHARACTER(LEN=*),INTENT(OUT) :: ext
@@ -607,22 +845,6 @@ CONTAINS
     ENDSUBROUTINE getFileNameExt_string
 !
 !-------------------------------------------------------------------------------
-!> @brief Private routine replaces slash character in file path names with
-!> the system appropriate file separator slash.
-    PURE SUBROUTINE SlashRep(string)
-      CHARACTER(LEN=*),INTENT(INOUT) :: string
-      INTEGER(SIK) :: i
-
-      DO i=1,LEN_TRIM(string)
-#ifdef WIN32
-        IF(string(i:i) == FSLASH) string(i:i)=SLASH
-#else
-        IF(string(i:i) == BSLASH) string(i:i)=SLASH
-#endif
-      ENDDO
-    ENDSUBROUTINE SlashRep
-!
-!-------------------------------------------------------------------------------
 !> @brief
 !> @param
 !>
@@ -640,6 +862,120 @@ CONTAINS
       stp=stt+LEN(string)
       line(stt:stp)=string
     ENDFUNCTION printCentered
-!> @}
+!> @brief Returns whether or not a substring @c pattern is found within @c 
+!> string array
+!> @param string the stringarray to search
+!> @param pattern the substring to find
+!> @returns bool whether or not @c pattern was found in @c string
+!>
+!> @note Does not handle trailing spaces that can be eliminated by TRIM() so 
+!> strings should be trimmed when passing into function.
+!>
+    PURE FUNCTION strarraymatch_char(string,pattern) RESULT(bool)
+      CHARACTER(LEN=*),INTENT(IN) :: string(:)
+      CHARACTER(LEN=*),INTENT(IN) :: pattern
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: i
+      
+      bool=.FALSE.
+      DO i=1,SIZE(string,DIM=1)
+        bool=strmatch(string(i),pattern)
+        IF(bool) EXIT
+      ENDDO
+    ENDFUNCTION strarraymatch_char
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns whether or not a substring @c pattern is found within @c 
+!> string array
+!> @param string the stringarray to search
+!> @param pattern the substring to find
+!> @returns ind the index in string array @c string where the substring was 
+!> found.
+!>
+!> @note Does not handle trailing spaces that can be eliminated by TRIM() so 
+!> strings should be trimmed when passing into function.
+!>
+    PURE FUNCTION strarraymatch_string(string,pattern) RESULT(bool)
+      TYPE(StringType),INTENT(IN) :: string(:)
+      CHARACTER(LEN=*),INTENT(IN) :: pattern
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: i
+      
+      bool=.FALSE.
+      DO i=1,SIZE(string,DIM=1)
+        bool=strmatch(CHAR(string(i)),pattern)
+        IF(bool) EXIT
+      ENDDO
+    ENDFUNCTION strarraymatch_string
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns the index where a substring @c pattern is found within @c 
+!> string array.
+!> @param string the stringarray to search
+!> @param pattern the substring to find
+!> @returns ind the index in string array @c string where the substring was 
+!> found.
+!>
+!> @note Does not handle trailing spaces that can be eliminated by TRIM() so 
+!> strings should be trimmed when passing into function.
+!>
+    PURE FUNCTION strarraymatchind_char(string,pattern) RESULT(ind)
+      CHARACTER(LEN=*),INTENT(IN) :: string(:)
+      CHARACTER(LEN=*),INTENT(IN) :: pattern
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: i,ind
+      
+      ind=-1
+      DO i=1,SIZE(string,DIM=1)
+        bool=strmatch(string(i),pattern)
+        IF(bool) THEN
+          ind=i
+          EXIT
+        ENDIF
+      ENDDO
+    ENDFUNCTION strarraymatchind_char
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns the index where a substring @c pattern is found within @c 
+!> string array.
+!> @param string the stringarray to search
+!> @param pattern the substring to find
+!> @returns bool whether or not @c pattern was found in @c string
+!>
+!> @note Does not handle trailing spaces that can be eliminated by TRIM() so 
+!> strings should be trimmed when passing into function.
+!>
+    PURE FUNCTION strarraymatchind_string(string,pattern) RESULT(ind)
+      TYPE(StringType),INTENT(IN) :: string(:)
+      CHARACTER(LEN=*),INTENT(IN) :: pattern
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: i,ind
+      
+      ind=-1
+      DO i=1,SIZE(string,DIM=1)
+        bool=strmatch(CHAR(string(i)),pattern)
+        IF(bool) THEN
+          ind=i
+          EXIT
+        ENDIF
+      ENDDO
+    ENDFUNCTION strarraymatchind_string
+!
+!-------------------------------------------------------------------------------
+!> @brief Private routine replaces slash character in file path names with 
+!> the system appropriate file separator slash.
+!>
+    PURE SUBROUTINE SlashRep(string)
+      CHARACTER(LEN=*),INTENT(INOUT) :: string
+      INTEGER(SIK) :: i
+
+      DO i=1,LEN_TRIM(string)
+#ifdef WIN32
+        IF(string(i:i) == FSLASH) string(i:i)=SLASH
+#else
+        IF(string(i:i) == BSLASH) string(i:i)=SLASH
+#endif
+      ENDDO
+    ENDSUBROUTINE SlashRep
 !
 ENDMODULE IO_Strings

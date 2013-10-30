@@ -75,6 +75,26 @@ void getProcMemInfo(long long *curUsage, long long *peakUsage)
   *peakUsage = pmc.PeakPagefileUsage;
 }
 
+void getPWD_c(char* pwdpath, int* pathlen, int* status)
+{
+  DWORD retval;
+  retval = GetCurrentDirectory(*pathlen, pwdpath);
+  
+  if(retval == 0)
+  {
+    *status = -1;
+  }
+  else if(retval < *pathlen)
+  {
+    *status = 0;
+  }
+  else if(retval > *pathlen)
+  {
+    *status = retval;
+  }
+}
+
+
 #else
 
 #include <sys/sysinfo.h>
@@ -82,6 +102,7 @@ void getProcMemInfo(long long *curUsage, long long *peakUsage)
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 
 void getSysMemInfo(long long *totalPhysMem, long long *totalSwap, long long *totalFreeMem)
 {
@@ -127,5 +148,26 @@ int parseLine(char * line)
   line[i-3] = '\0';
   i = atoi(line);
   return i;
+}
+
+void getPWD_c(char* pwdpath, int* pathlen, int* status)
+{
+  char* pwd;
+  int npwd;
+  
+  pwd = getcwd(NULL, 0);
+  npwd = strlen(pwd);
+
+  if (npwd <= *pathlen)
+  {
+    *status = 0;
+    strncpy(pwdpath, pwd, npwd);
+  }
+  else
+  {
+    *status = npwd;
+    memset(&pwdpath[0], 0, *pathlen);
+  }
+  free (pwd);
 }
 #endif

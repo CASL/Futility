@@ -126,53 +126,42 @@ MODULE CommandLineProcessor
       
   USE ISO_FORTRAN_ENV
   USE IntrType
+  USE Strings
   USE ExceptionHandler
   USE IOutil
   
   IMPLICIT NONE
   PRIVATE
   
-  PUBLIC :: MAX_ARG_STRING_LENGTH
-  PUBLIC :: MAX_EXECNAME_LENGTH
-  PUBLIC :: MAX_CMD_LINE_OPT_NAME
-  PUBLIC :: MAX_CMD_LINE_OPT_DESC
   PUBLIC :: CmdLineProcType
   
   !> Name of the module to be used in exception reporting
   CHARACTER(LEN=*),PARAMETER :: modName='COMMANDLINEPROCESSOR'
-  
-  !> Maximum length for any one argument on the command line
-  INTEGER(SIK),PARAMETER :: MAX_ARG_STRING_LENGTH=1024
-  !> Maximum length for the name of the executable to be used by the command
-  !> line processor.
-  INTEGER(SIK),PARAMETER :: MAX_EXECNAME_LENGTH=32
-  !> Maximum length for the name of a command line option
-  INTEGER(SIK),PARAMETER :: MAX_CMD_LINE_OPT_NAME=32
-  !> Maximum length for the description of a command line option
-  INTEGER(SIK),PARAMETER :: MAX_CMD_LINE_OPT_DESC=1024
   
   !> @brief Derived type for a command line option
   !>
   !> This is used to only for displaying help information
   TYPE :: CmdLineOptType
     !> The name of the option
-    CHARACTER(LEN=MAX_CMD_LINE_OPT_NAME) :: name=''
+    TYPE(StringType) :: name
     !> The description of the option
-    CHARACTER(LEN=MAX_CMD_LINE_OPT_DESC) :: description=''
+    TYPE(StringType) :: description
   ENDTYPE CmdLineOptType
   
   !> Derived type for a command line processor object
   TYPE :: CmdLineProcType
     !> Name of executable
-    CHARACTER(LEN=MAX_EXECNAME_LENGTH),PRIVATE :: execname=''
+    TYPE(StringType),PRIVATE :: execname
     !> String describing usage
-    CHARACTER(LEN=MAX_ARG_STRING_LENGTH),PRIVATE :: usage=''
+    TYPE(StringType),PRIVATE :: usage
+    !> Original command line
+    TYPE(StringType) :: cmdline
     !> Number of allowable command line options
     INTEGER(SIK),PRIVATE :: nopts=0
     !> Number of command line arguments
     INTEGER(SIK),PRIVATE :: narg=0
     !> Character array with command line arguments
-    CHARACTER(LEN=MAX_ARG_STRING_LENGTH),POINTER,PRIVATE :: CmdLineArgs(:)=>NULL()
+    TYPE(StringType),POINTER,PRIVATE :: CmdLineArgs(:)=>NULL()
     !> List of command line options for help message
     TYPE(CmdLineOptType),POINTER,PRIVATE :: opts(:)=>NULL()
     !> Exception Handler for the command line processor
@@ -205,9 +194,14 @@ MODULE CommandLineProcessor
       !> @copybrief CommandLineProcessor::getNargs
       !> @copydetails CommandLineProcessor::getNargs
       PROCEDURE,PASS :: getNargs
-      !> @copybrief CommandLineProcessor::getCmdArg
-      !> @copydetails CommandLineProcessor::getCmdArg
-      PROCEDURE,PASS :: getCmdArg
+      !> @copybrief CommandLineProcessor::getCmdArg_char
+      !> @copydetails CommandLineProcessor::getCmdArg_char
+      PROCEDURE,PRIVATE,PASS :: getCmdArg_char
+      !> @copybrief CommandLineProcessor::getCmdArg_string
+      !> @copydetails CommandLineProcessor::getCmdArg_string
+      PROCEDURE,PRIVATE,PASS :: getCmdArg_string
+      !> Generic type bound interface for all @c getCmdArg routines
+      GENERIC :: getCmdArg => getCmdArg_char,getCmdArg_string
       !> @copybrief CommandLineProcessor::clearCmdLine
       !> @copydetails CommandLineProcessor::clearCmdLine
       PROCEDURE,PASS :: clearCmdLine
@@ -217,6 +211,9 @@ MODULE CommandLineProcessor
       !> @copybrief CommandLineProcessor::ProcCmdLineArgs
       !> @copydetails CommandLineProcessor::ProcCmdLineArgs
       PROCEDURE,PASS :: ProcCmdLineArgs
+      !> @copybrief CommandLineProcessor::clear_CLP
+      !> @copydetails CommandLineProcessor::clear_CLP
+      PROCEDURE,PASS :: clear => clear_CLP
   ENDTYPE CmdLineProcType
 !
 !===============================================================================
@@ -234,17 +231,7 @@ MODULE CommandLineProcessor
       CHARACTER(LEN=*),PARAMETER :: myName='setExecName'
       CLASS(CmdLineProcType),INTENT(INOUT) :: clp
       CHARACTER(LEN=*) :: execname
-      TYPE(ExceptionHandlerType) :: e
       
-      IF(LEN_TRIM(execname) > MAX_EXECNAME_LENGTH) THEN
-        IF(ASSOCIATED(clp%e)) THEN
-          CALL clp%e%raiseWarning(modName//'::'//myName// &
-            ' - name is going to be truncated.')
-        ELSE
-          CALL e%raiseWarning(modName//'::'//myName// &
-            ' - name is going to be truncated.')
-        ENDIF
-      ENDIF
       clp%execname=TRIM(execname)
     ENDSUBROUTINE setExecName
 !
@@ -256,7 +243,7 @@ MODULE CommandLineProcessor
 !>
     FUNCTION getExecName(clp) RESULT(execname)
       CLASS(CmdLineProcType),INTENT(IN) :: clp
-      CHARACTER(LEN=MAX_EXECNAME_LENGTH) :: execname
+      CHARACTER(LEN=clp%execname%n) :: execname
       execname=clp%execname
     ENDFUNCTION getExecName
 !
@@ -270,17 +257,7 @@ MODULE CommandLineProcessor
       CHARACTER(LEN=*),PARAMETER :: myName='defineUsage'
       CLASS(CmdLineProcType),INTENT(INOUT) :: clp
       CHARACTER(LEN=*),INTENT(IN) :: usagestr
-      TYPE(ExceptionHandlerType) :: e
       
-      IF(LEN_TRIM(usagestr) > MAX_ARG_STRING_LENGTH) THEN
-        IF(ASSOCIATED(clp%e)) THEN
-          CALL clp%e%raiseWarning(modName//'::'//myName// &
-            ' - usage string is going to be truncated.')
-        ELSE
-          CALL e%raiseWarning(modName//'::'//myName// &
-            ' - usage string is going to be truncated.')
-        ENDIF
-      ENDIF
       clp%usage=TRIM(usagestr)
     ENDSUBROUTINE defineUsage
 !
@@ -349,15 +326,9 @@ MODULE CommandLineProcessor
       ENDIf
       IF(0 < iopt .AND. iopt <= clp%nopts) THEN
         !Warn for bad input
-        IF(LEN_TRIM(name) > MAX_CMD_LINE_OPT_NAME) &
-          CALL clp%e%raiseWarning(modName//'::'//myName// &
-            ' - option name is going to be truncated.')
         IF(LEN_TRIM(name) == 0) &
           CALL clp%e%raiseWarning(modName//'::'//myName// &
             ' - option name is empty!')
-        IF(LEN_TRIM(description) > MAX_CMD_LINE_OPT_DESC) &
-          CALL clp%e%raiseWarning(modName//'::'//myName// &
-            ' - option description is going to be truncated.')
         IF(LEN_TRIM(description) == 0) &
           CALL clp%e%raiseWarning(modName//'::'//myName// &
             ' - option description is empty!')
@@ -380,18 +351,10 @@ MODULE CommandLineProcessor
     SUBROUTINE clearOpts(clp)
       CHARACTER(LEN=*),PARAMETER :: myName='clearOpts'
       CLASS(CmdLineProcType),INTENT(INOUT) :: clp
-      TYPE(ExceptionHandlerType) :: e
+      clp%usage=''
       IF(ASSOCIATED(clp%opts)) THEN
         DEALLOCATE(clp%opts)
         clp%nopts=0
-      ELSE
-        IF(ASSOCIATED(clp%e)) THEN
-          CALL clp%e%raiseWarning(modName//'::'//myName// &
-            ' - command line options already clear.')
-        ELSE
-          CALL e%raiseWarning(modName//'::'//myName// &
-            ' - command line options already clear.')
-        ENDIF
       ENDIF
     ENDSUBROUTINE clearOpts
 !
@@ -409,8 +372,7 @@ MODULE CommandLineProcessor
       CHARACTER(LEN=*),PARAMETER :: myName='setCmdLine'
       CLASS(CmdLineProcType),INTENT(INOUT) :: clp
       CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: iline
-      CHARACTER(LEN=MAX_ARG_STRING_LENGTH) :: cmdline
-      CHARACTER(LEN=MAX_ARG_STRING_LENGTH) :: opt=''
+      TYPE(StringType) :: cmdline,opt
       INTEGER(SIK) :: iarg,ierr,cmdlinelength
       LOGICAL(SBK) :: localalloc
       
@@ -421,10 +383,9 @@ MODULE CommandLineProcessor
       ENDIf
       IF(.NOT.ASSOCIATED(clp%CmdLineArgs)) THEN
         IF(PRESENT(iline)) THEN
-          IF(LEN_TRIM(iline) > MAX_ARG_STRING_LENGTH) &
-            CALL clp%e%raiseError(modName//'::'//myName// &
-              ' - input command line is being truncated.')
+          
           cmdline=TRIM(iline)
+          clp%cmdline=cmdline
           clp%narg=nFields(cmdline)
           !Only store command line arguments if there were any.
           IF(clp%narg > 0) THEN
@@ -435,12 +396,11 @@ MODULE CommandLineProcessor
             ENDDO
           ENDIF
         ELSE
-          CALL GET_COMMAND(cmdline,cmdlinelength,ierr)
+        CALL GET_COMMAND(cmdline,cmdlinelength,ierr)
           IF(ierr /= 0) CALL clp%e%raiseError(modName//'::'//myName// &
               ' - problem getting command line.')
-          IF(cmdlinelength > MAX_ARG_STRING_LENGTH) CALL clp%e%raiseError( &
-            modName//'::'//myName//' - command line is too long to store!')
           clp%narg=nFields(cmdline)-1
+          clp%cmdline=cmdline
           !Only store command line arguments if there were any.
           IF(clp%narg > 0) THEN
             ALLOCATE(clp%CmdLineArgs(1:clp%narg))
@@ -462,6 +422,7 @@ MODULE CommandLineProcessor
     PURE SUBROUTINE clearCmdLine(clp)
       CHARACTER(LEN=*),PARAMETER :: myName='clearCmdLine'
       CLASS(CmdLineProcType),INTENT(INOUT) :: clp
+      clp%cmdline=''
       IF(ASSOCIATED(clp%CmdLineArgs)) THEN
         DEALLOCATE(clp%CmdLineArgs)
         clp%narg=0
@@ -474,11 +435,11 @@ MODULE CommandLineProcessor
 !> @param iarg input, the ith command line argument
 !> @param argout output, a string with the ith output argument
 !>
-    SUBROUTINE getCmdArg(clp,iarg,argout)
+    SUBROUTINE getCmdArg_string(clp,iarg,argout)
       CHARACTER(LEN=*),PARAMETER :: myName='getCmdArg'
       CLASS(CmdLineProcType),INTENT(INOUT) :: clp
       INTEGER(SIK),INTENT(IN) :: iarg
-      CHARACTER(LEN=*),INTENT(OUT) :: argout
+      TYPE(StringType),INTENT(OUT) :: argout
       CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: emsg
       TYPE(ExceptionHandlerType) :: e
       
@@ -494,7 +455,23 @@ MODULE CommandLineProcessor
           CALL e%raiseError(TRIM(emsg))
         ENDIF
       ENDIF
-    ENDSUBROUTINE getCmdArg
+    ENDSUBROUTINE getCmdArg_string
+!
+!-------------------------------------------------------------------------------
+!> @brief Get a command line argument
+!> @param clp command line processor object
+!> @param iarg input, the ith command line argument
+!> @param argout output, a string with the ith output argument
+!>
+    SUBROUTINE getCmdArg_char(clp,iarg,argout)
+      CHARACTER(LEN=*),PARAMETER :: myName='getCmdArg'
+      CLASS(CmdLineProcType),INTENT(INOUT) :: clp
+      INTEGER(SIK),INTENT(IN) :: iarg
+      CHARACTER(LEN=*),INTENT(OUT) :: argout
+      TYPE(StringType) :: tmpStr
+      CALL getCmdArg_string(clp,iarg,tmpStr)
+      argout=tmpStr
+    ENDSUBROUTINE getCmdArg_char
 !
 !-------------------------------------------------------------------------------
 !> @brief Get the number command line arguments
@@ -536,17 +513,31 @@ MODULE CommandLineProcessor
       CLASS(CmdLineProcType),INTENT(IN) :: clp
       INTEGER(SIK) :: iopt
       
-      WRITE(OUTPUT_UNIT,*)
-      WRITE(OUTPUT_UNIT,*)
-      WRITE(OUTPUT_UNIT,'(a)') ' Usage for '//TRIM(clp%execname)//' is...'
-      WRITE(OUTPUT_UNIT,*)
-      WRITE(OUTPUT_UNIT,'(4x,a)') TRIM(clp%execname)//'  '//TRIM(clp%usage)
-      DO iopt=1,clp%nopts
+      IF(LEN_TRIM(clp%execname) > 0 .AND. LEN_TRIM(clp%usage) > 0) THEN
         WRITE(OUTPUT_UNIT,*)
-        WRITE(OUTPUT_UNIT,'(6x,a)') TRIM(clp%opts(iopt)%name)//' '// &
-                                    TRIM(clp%opts(iopt)%description)
-      ENDDO
-      WRITE(OUTPUT_UNIT,*)
+        WRITE(OUTPUT_UNIT,*)
+        WRITE(OUTPUT_UNIT,'(a)') ' Usage for '//TRIM(clp%execname)//' is...'
+        WRITE(OUTPUT_UNIT,*)
+        WRITE(OUTPUT_UNIT,'(4x,a)') TRIM(clp%execname)//'  '//TRIM(clp%usage)
+        DO iopt=1,clp%nopts
+          WRITE(OUTPUT_UNIT,*)
+          WRITE(OUTPUT_UNIT,'(6x,a)') TRIM(clp%opts(iopt)%name)//' '// &
+                                      TRIM(clp%opts(iopt)%description)
+        ENDDO
+        WRITE(OUTPUT_UNIT,*)
+      ENDIF
     ENDSUBROUTINE DisplayHelp
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears the command line processor object
+!> @param clp command line processor object
+!>
+    SUBROUTINE clear_CLP(clp)
+      CLASS(CmdLineProcType),INTENT(INOUT) :: clp
+      
+      clp%execname=''
+      CALL clearCmdLine(clp)
+      CALL clearOpts(clp)
+    ENDSUBROUTINE clear_CLP
 !
 ENDMODULE CommandLineProcessor

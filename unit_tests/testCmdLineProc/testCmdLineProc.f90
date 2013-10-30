@@ -16,7 +16,9 @@
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testCmdLineProc
-      
+#include "UnitTest.h"
+  USE UnitTest
+  USE Strings
   USE CommandLineProcessor
   USE ExceptionHandler
   IMPLICIT NONE
@@ -25,168 +27,104 @@ PROGRAM testCmdLineProc
   
   TYPE(CmdLineProcType) :: testCLP
   INTEGER :: iarg
-  CHARACTER(LEN=MAX_ARG_STRING_LENGTH) :: str
-  CHARACTER(LEN=MAX_ARG_STRING_LENGTH+10) :: longstr
-  TYPE(ExceptionHandlerType),POINTER :: e
+  CHARACTER(LEN=128) :: str
+  TYPE(ExceptionHandlerType),TARGET :: e
 
   !Configure exception handler of CmdLineProc for testing
-  ALLOCATE(e)
   testCLP%e => e
   CALL testCLP%e%setStopOnError(.FALSE.)
   CALL testCLP%e%setQuietMode(.TRUE.)
 
-  WRITE(*,*) '==================================================='
-  WRITE(*,*) 'TESTING COMMAND LINE PROCESSOR...'
-  WRITE(*,*) '==================================================='
-
-  WRITE(*,*) 'TESTING PARAMETERS'
-  WRITE(*,*) '  Passed: MAX_ARG_STRING_LENGTH = ',MAX_ARG_STRING_LENGTH
-  WRITE(*,*) '  Passed:   MAX_EXECNAME_LENGTH = ',MAX_EXECNAME_LENGTH
-  WRITE(*,*) '  Passed: MAX_CMD_LINE_OPT_NAME = ',MAX_CMD_LINE_OPT_NAME
-  WRITE(*,*) '  Passed: MAX_CMD_LINE_OPT_DESC = ',MAX_CMD_LINE_OPT_DESC
-  WRITE(*,*) '---------------------------------------------------'
-
-  WRITE(*,*) 'TESTING METHODS FOR EXE NAME AND USAGE'
-  str=testCLP%getExecName()
-  CALL testCLP%setExecName('This is a really long name that is too long to fit.exe')
-  testCLP%e => NULL()
-  CALL testCLP%setExecName('This is a really long name that is too long to fit.exe')
-  testCLP%e => e
-  CALL testCLP%setExecName('MPACT.exe')
-  IF(TRIM(testCLP%getExecName()) /= 'MPACT.exe') THEN
-    WRITE(*,*) 'CALL testCLP%setExecName(''MPACT.exe'') FAILED!'
-    STOP 666
-  ELSE
-    WRITE(*,*) '  Passed: CALL testCLP%setExecName(''MPACT.exe'')'
-    WRITE(*,*) '  Passed: CALL testCLP%getExecName()'
-  ENDIF
-  longstr='[[-help] | [input_file] [output_file]]'
-  longstr(MAX_ARG_STRING_LENGTH+10:MAX_ARG_STRING_LENGTH+10)='.'
-  CALL testCLP%defineUsage(longstr)
-  testCLP%e => NULL()
-  CALL testCLP%defineUsage(longstr)
-  testCLP%e => e
-  WRITE(*,*) '  Passed: CALL testCLP%defineUsage(''[[-help] | [input_file] [output_file]]'')'
-  WRITE(*,*) '---------------------------------------------------'
+  CREATE_TEST('COMMAND_LINE_PROCESSOR')
   
-  WRITE(*,*) 'TESTING METHODS FOR DEFINING OPTIONS'
-  CALL testCLP%clearOpts()
-  CALL testCLP%setNumOpts(-1)
-  IF(testCLP%getNumOpts() /= 0) THEN
-    WRITE(*,*) 'testCLP%getNumOpts() FAILED!'
-    STOP 666
-  ELSE
-    WRITE(*,*) '  Passed: testCLP%getNumOpts()'
-  ENDIF
-  testCLP%e => NULL()
-  CALL testCLP%setNumOpts(3)
-  testCLP%e => e
-  IF(testCLP%getNumOpts() /= 3) THEN
-    WRITE(*,*) 'CALL testCLP%setNumOpts(3) FAILED!'
-    STOP 666
-  ELSE
-    WRITE(*,*) '  Passed: CALL testCLP%getNumOpts(3)'
-  ENDIF
-  CALL testCLP%setNumOpts(4)
-  IF(testCLP%getNumOpts() /= 3) THEN
-    WRITE(*,*) 'CALL testCLP%setNumOpts(4) FAILED!'
-    STOP 666
-  ENDIF
-  CALL testCLP%defineOpt(0,'Oops!','Oh no!')
-  CALL testCLP%defineOpt(1,'','')
-  CALL testCLP%defineOpt(1,'This is way way way way way too long','')
-  testCLP%e => NULL()
-  CALL testCLP%defineOpt(1,'This is way way way way way too long','')
-  testCLP%e => e
-  longstr='Displays this help message.'
-  longstr(MAX_ARG_STRING_LENGTH+10:MAX_ARG_STRING_LENGTH+10)='.'
-  CALL testCLP%defineOpt(1,'-help',longstr)
-  WRITE(str,'(a,i4,a)') ' Name of the input file (max.', &
-                        MAX_ARG_STRING_LENGTH,' characters)'
-  CALL testCLP%defineOpt(2,' input_file',TRIM(str))
-  WRITE(str,'(a,i4,a)') 'Name of the output file (max.', &
-                        MAX_ARG_STRING_LENGTH,' characters)'
-  CALL testCLP%defineOpt(3,' output_file',TRIM(str))
-  WRITE(*,*) '  Passed: CALL testCLP%defineOpt(...)'
-  CALL testCLP%DisplayHelp()
-  WRITE(*,*) '  Passed: CALL testCLP%DisplayHelp()'
-  CALL testCLP%clearOpts()
-  IF(testCLP%getNumOpts() /= 0) THEN
-    WRITE(*,*) 'CALL testCLP%clearOpts() FAILED!'
-    STOP 666
-  ELSE
-    WRITE(*,*) '  Passed: CALL testCLP%clearOpts()'
-  ENDIF
-  testCLP%e => NULL()
-  CALL testCLP%clearOpts()
-  testCLP%e => e
-  WRITE(*,*) '---------------------------------------------------'
+  REGISTER_SUBTEST('ExecName',testExecName)
+  REGISTER_SUBTEST('Usage',testUsage)
+  REGISTER_SUBTEST('Options',testOptions)
+  REGISTER_SUBTEST('Processing',testProcessing)
   
-  WRITE(*,*) 'TESTING COMMAND LINE PROCESSING'
-  CALL testCLP%clearCmdLine()
-  CALL testCLP%getCmdArg(1,str)
-  CALL testCLP%setCmdLine('')
-  CALL testCLP%clearCmdLine()
-  CALL testCLP%setCmdLine()
-  IF(testCLP%getNargs() /= 0) THEN
-    WRITE(*,*) 'CALL testCLP%setCmdLine() FAILED!'
-    STOP 666
-  ELSE
-    WRITE(*,*) '  Passed: CALL testCLP%setCmdLine()'
-  ENDIF
-  longstr='test.inp'
-  longstr(MAX_ARG_STRING_LENGTH+10:MAX_ARG_STRING_LENGTH+10)='.'
-  CALL testCLP%setCmdLine(longstr)
-  testCLP%e => NULL()
-  CALL testCLP%setCmdLine()
-  testCLP%e => e
-  IF(testCLP%getNargs() /= 1) THEN
-    WRITE(*,*) 'testCLP%getNargs() FAILED!'
-    STOP 666
-  ELSE
-    WRITE(*,*) '  Passed: testCLP%getNargs()'
-  ENDIF
-  CALL testCLP%getCmdArg(1,str)
-  IF(TRIM(str) /= 'test.inp') THEN
-    WRITE(*,*) 'CALL testCLP%getCmdArg(1,str) FAILED!'
-    STOP 666
-  ELSE
-    WRITE(*,*) '  Passed: CALL testCLP%setCmdLine(...)'
-    WRITE(*,*) '  Passed: CALL testCLP%getCmdLine(...)'
-  ENDIF
-  CALL testCLP%ProcCmdLineArgs(testProcArgs)
-  CALL testCLP%clearCmdLine()
-  IF(testCLP%getNargs() /= 0) THEN
-    WRITE(*,*) 'CALL testCLP%clearCmdLine() FAILED!'
-    STOP 666
-  ELSE
-    WRITE(*,*) '  Passed: CALL testCLP%clearCmdLine()'
-  ENDIF
-  longstr='''/some directory/directory/file.file'' arg2 arg3'
-  CALL testCLP%setCmdLine(longstr)
-  IF(testCLP%getNargs() /= 3) THEN
-    WRITE(*,*) 'CALL testCLP%getCmdLine(...) FAILED!'
-    STOP 666
-  ELSE
-    WRITE(*,*) '  Passed: CALL testCLP%getCmdLine(...) (space in path)'
-  ENDIF
-  testCLP%e => NULL()
-  CALL testCLP%clearCmdLine()
-  testCLP%e => e
-  WRITE(*,*) '==================================================='
-  WRITE(*,*) 'TESTING COMMAND LINE PROCESSOR PASSED!'
-  WRITE(*,*) '==================================================='
-  DEALLOCATE(e)
+  FINALIZE_TEST()
+!
+!===============================================================================
+  CONTAINS
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testExecName()
+      ASSERT(testCLP%getExecName() == '','%getExecName() (uninit)')
+      CALL testCLP%setExecName('test.exe')
+      ASSERT(TRIM(testCLP%getExecName()) == 'test.exe','set/getExecName')
+    ENDSUBROUTINE testExecname
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testUsage()
+      CALL testCLP%defineUsage('[[-help] | [input_file] [output_file]]')
+      !No assertionis possible here
+    ENDSUBROUTINE testUsage
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testOptions()
+      CALL testCLP%clearOpts()
+      CALL testCLP%setExecName('test5.exe')
+      CALL testCLP%defineUsage('[[-help] | [input_file] [output_file]]')
+      
+      CALL testCLP%setNumOpts(-1)
+      ASSERT(testCLP%getNumOpts() == 0,'%setNumOpts(-1)')
+      testCLP%e => NULL()
+      CALL testCLP%setNumOpts(3)
+      testCLP%e => e
+      ASSERT(testCLP%getNumOpts() == 3,'%setNumOpts(3)')
+      CALL testCLP%setNumOpts(4)
+      ASSERT(testCLP%getNumOpts() == 3,'%setNumOpts(4)')
+      CALL testCLP%defineOpt(0,'Oops!','Oh no!')
+      CALL testCLP%defineOpt(1,'','')
+      CALL testCLP%defineOpt(1,'This is way way way way way too long','')
+      CALL testCLP%defineOpt(1,'-help','Displays this help message.')
+      CALL testCLP%defineOpt(2,' input_file','Name of the input file')
+      CALL testCLP%defineOpt(3,' output_file','Name of the output file')
+      CALL testCLP%DisplayHelp()
+      CALL testCLP%clearOpts()
+      ASSERT(testCLP%getNumOpts() == 0,'%clearOpts()')
+      CALL testCLP%DisplayHelp()
+      CALL testCLP%clearOpts()
+    ENDSUBROUTINE testOptions
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testProcessing()
+      TYPE(StringType) :: tmpStr
+    
+      CALL testCLP%clearCmdLine()
+      CALL testCLP%getCmdArg(1,str)
+      CALL testCLP%setCmdLine('')
+      CALL testCLP%clearCmdLine()
+      CALL testCLP%setCmdLine()
+      ASSERT(testCLP%getNargs() == 0,'%getNargs()')
+      str='test.inp'
+      CALL testCLP%setCmdLine(str)
+      ASSERT(str == testCLP%cmdline,'%cmdline')
+      testCLP%e => NULL()
+      CALL testCLP%setCmdLine()
+      testCLP%e => e
+      ASSERT(testCLP%getNargs() == 1,'%getNargs()')
+      str=''
+      CALL testCLP%getCmdArg(1,str(1:2))
+      ASSERT(TRIM(str) == 'te','%getCmdArg(...)')
+      CALL testCLP%getCmdArg(1,tmpStr)
+      ASSERT(tmpStr == 'test.inp','%getCmdArg(...)')
+      
+      CALL testCLP%ProcCmdLineArgs(testProcArgs)
+      CALL testCLP%clearCmdLine()
+      ASSERT(testCLP%getNargs() == 0,'%clearCmdLine()')
+      str='''/some directory/directory/file.file'' arg2 arg3'
+      CALL testCLP%setCmdLine(str)
+      ASSERT(testCLP%getNargs() == 3,'%setCmdLine(str)')
+      CALL testCLP%clear()
+    ENDSUBROUTINE testProcessing
+!
 ENDPROGRAM testCmdLineProc
 
 SUBROUTINE testProcArgs(tclp)
+  USE UnitTest
   USE CommandLineProcessor
   CLASS(CmdLineProcType),INTENT(INOUT) :: tclp
-  
-  IF(tclp%getNargs() /= 1) THEN
-    WRITE(*,*) 'CALL testCLP%ProcCmdLineArgs(testProcArgs) FAILED!'
-    STOP 666
-  ELSE
-    WRITE(*,*) '  Passed: CALL testCLP%ProcCmdLineArgs(testProcArgs)'
-  ENDIF
+  COMPONENT_TEST('testProcArgs')
+  ASSERT(tclp%getNargs() == 1,'nargs')
 ENDSUBROUTINE testProcArgs

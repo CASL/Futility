@@ -151,7 +151,7 @@ MODULE FileType_Log
       CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: action
       CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: pad
       INTEGER(SIK),OPTIONAL,INTENT(IN) :: recl
-      CHARACTER(LEN=MAXLEN_TIMER_NAME-10) :: fname
+      CHARACTER(LEN=LEN(file)) :: fname
       
       fname=''
       

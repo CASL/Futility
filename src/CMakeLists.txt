@@ -14,14 +14,14 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
 IF(WIN32)
     TRIBITS_ADD_LIBRARY(CUtils
-        HEADERS getSysProcMemInfo.h
-        SOURCES getSysProcMemInfo.c
+        HEADERS getSysProcInfo.h
+        SOURCES getSysProcInfo.c
         DEPLIBS Psapi 
     )
 ELSE()
     TRIBITS_ADD_LIBRARY(CUtils
-        HEADERS getSysProcMemInfo.h
-        SOURCES getSysProcMemInfo.c 
+        HEADERS getSysProcInfo.h
+        SOURCES getSysProcInfo.c
     )
 ENDIF()
 
@@ -29,7 +29,7 @@ ENDIF()
 TRIBITS_ADD_LIBRARY(Utils
     HEADERS
 	    UnitTest.h
-	    getSysProcMemInfo_F.h
+	    getSysProcInfo_F.h
     SOURCES
       UnitTest.f90
       IntrType.f90

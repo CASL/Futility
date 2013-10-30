@@ -16,12 +16,14 @@
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testParameterLists
-  
+#include "UnitTest.h" 
   USE ISO_FORTRAN_ENV
   USE IntrType
   USE Strings
   USE ExceptionHandler
   USE ParameterLists
+  USE UnitTest
+  
   IMPLICIT NONE
   
   REAL(SSK) :: valssk
@@ -50,9 +52,8 @@ PROGRAM testParameterLists
   TYPE(ParamType) :: testParam,testParam2,testParam3,testList(5),testList2(3)
   CLASS(ParamType),POINTER :: someParam
   
-  WRITE(*,*) '==================================================='
-  WRITE(*,*) 'TESTING PARAMETERLISTS...'
-  WRITE(*,*) '==================================================='
+  CREATE_TEST('Test Parameter Lists')
+  
   ALLOCATE(e)
   CALL e%setStopOnError(.FALSE.)
   CALL e%setQuietMode(.TRUE.)
@@ -452,6 +453,12 @@ PROGRAM testParameterLists
   valslk3a=-1230_SLK
   CALL testParam%add('testPL2->testSLK3a',valslk3a,'Creates a new sublist')
   CALL testParam%edit(OUTPUT_UNIT)
+  !
+  !Calling %verify here to check all of the possible PL types
+  !
+  testParam2=testParam
+  CALL testParam%verify(testParam2,valsbk)
+  CALL testParam2%clear()
   eParams => NULL()
   !Testing the local exception handler while adding a parameter to another parameter
   CALL testParam2%add('testPL3->sublist1',testParam)
@@ -745,6 +752,8 @@ PROGRAM testParameterLists
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING PARAMETERLISTS PASSED!'
   WRITE(*,*) '==================================================='  
+  
+  FINALIZE_TEST()
   CALL testClear()
   DEALLOCATE(e)
 !

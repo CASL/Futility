@@ -66,6 +66,7 @@
 !>  - @ref Strings "Strings": @copybrief Strings
 !>  - @ref ExceptionHandler "ExceptionHandler": @copybrief ExceptionHandler
 !>  - @ref IO_Strings "IO_Strings": @copybrief IO_Strings
+!>  - @ref UnitTest "UnitTest": @copybrief UnitTest
 !>
 !> @par EXAMPLE
 !> @code
@@ -85,12 +86,17 @@
 !>     of the parameter types listed above.
 !>   (03/07/2013) - Benjamin Collins
 !>   - Added has function to return if the parameter list has a given parameter
+!>   (10/22/2013) - Dan Jabaay
+!>   - Added the %verify subroutine for validating two parameter lists and then
+!>     checking that all of the values in the parameter list are equal.  
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE ParameterLists
+#include "UnitTest.h"
   USE IntrType
   USE Strings
   USE ExceptionHandler
   USE IO_Strings
+  USE UnitTest
   
   IMPLICIT NONE
   PRIVATE !Default private for module contents
@@ -446,6 +452,9 @@ MODULE ParameterLists
       !> @copybrief ParameterLists::validate_ParamType
       !> @copydoc ParameterLists::validate_ParamType
       PROCEDURE,PASS :: validate => validate_ParamType
+      !> @copybrief ParameterLists::verify_ParamType
+      !> @copydoc ParameterLists::verify_ParamType
+      PROCEDURE,PASS :: verify => verify_ParamType
       !> @copybrief ParameterLists::edit_ParamType
       !> @copydoc ParameterLists::edit_ParamType
       PROCEDURE,PASS :: edit => edit_ParamType
@@ -1437,12 +1446,13 @@ MODULE ParameterLists
 !> @returns isValid logical indicating that all the required parameters exist
 !>          in @c thisParam and are of the correct type. 
 !>
-    RECURSIVE FUNCTION validateReq_ParamType(thisParam,reqParams,prefix) &
+    RECURSIVE FUNCTION validateReq_ParamType(thisParam,reqParams,prefix,isMatch) &
       RESULT(isValid)
       CHARACTER(LEN=*),PARAMETER :: myName='validateReq_ParamType'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CLASS(ParamType),INTENT(IN) :: reqParams
       CHARACTER(LEN=*),INTENT(IN) :: prefix
+      LOGICAL(SBK),INTENT(OUT),OPTIONAL :: isMatch
       LOGICAL(SBK) :: isValid
       INTEGER(SIK) :: i,ntrue
       CLASS(ParamType),POINTER :: tmpParam
@@ -1454,15 +1464,25 @@ MODULE ParameterLists
       SELECTTYPE(p=>reqParams)
         TYPE IS(ParamType)
           !Call validate on the required parameter's value
-          IF(ASSOCIATED(p%pdat)) &
-            isValid=validateReq_ParamType(thisParam,p%pdat,prefix)
+          IF(PRESENT(isMatch)) THEN
+            IF(ASSOCIATED(p%pdat)) &
+              isValid=validateReq_ParamType(thisParam,p%pdat,prefix,isMatch)
+          ELSE
+            IF(ASSOCIATED(p%pdat)) &
+              isValid=validateReq_ParamType(thisParam,p%pdat,prefix)
+          ENDIF
         TYPE IS(ParamType_List)
           !Loop over all parameters in the list and check each
           IF(ALLOCATED(p%plList)) THEN
             ntrue=0
             DO i=1,SIZE(p%plList)
-              IF(validateReq_ParamType(thisParam,p%plList(i), &
-                prefix//p%name//'->')) ntrue=ntrue+1
+              IF(PRESENT(isMatch)) THEN
+                IF(validateReq_ParamType(thisParam,p%plList(i), &
+                  prefix//p%name//'->',isMatch)) ntrue=ntrue+1
+              ELSE
+                IF(validateReq_ParamType(thisParam,p%plList(i), &
+                  prefix//p%name//'->')) ntrue=ntrue+1
+              ENDIF
             ENDDO
             IF(ntrue == SIZE(p%plList)) isValid=.TRUE.
           ELSE
@@ -1477,6 +1497,7 @@ MODULE ParameterLists
             ELSE
               IF(SAME_TYPE_AS(tmpParam,p)) THEN
                 isValid=.TRUE.
+                IF(PRESENT(isMatch)) isMatch=match_ParamType(tmpParam,p,prefix)
               ELSE
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - Required parameter "'//prefix//p%name//'" has type "'// &
@@ -1494,6 +1515,7 @@ MODULE ParameterLists
           ELSE
             IF(SAME_TYPE_AS(tmpParam,p)) THEN
               isValid=.TRUE.
+              IF(PRESENT(isMatch)) isMatch=match_ParamType(tmpParam,p,prefix)
             ELSE
               CALL eParams%raiseError(modName//'::'//myName// &
                 ' - Required parameter "'//prefix//p%name//'" has type "'// &
@@ -1707,6 +1729,403 @@ MODULE ParameterLists
       ENDIF
       IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE validate_Paramtype
+!
+!-------------------------------------------------------------------------------
+!> @brief Verify should only be used in a unit test setting.  It is for checking
+!>        the structure AND values in two parameter lists.  If they are a match,
+!>        isMatch will be returned as true.  If not, false.  Assertion failures
+!>        will be printed for the parameter list values that fail.
+!> @param thisParam
+!> @param reqParams
+!> @param isMatch
+!>
+    SUBROUTINE verify_Paramtype(thisParam,reqParams,isMatch)
+      CLASS(ParamType),INTENT(INOUT) :: thisParam
+      CLASS(ParamType),INTENT(IN) :: reqParams
+      LOGICAL(SBK),INTENT(OUT) :: isMatch
+      LOGICAL(SBK) :: isValid,localalloc
+      
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eParams)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eParams)
+      ENDIF
+      
+      !Assume the list is valid, check it only if the required parameter
+      !list is not empty.
+      isValid=.TRUE.
+      isMatch=.FALSE.
+      IF(ASSOCIATED(reqParams%pdat)) &
+        isValid=validateReq_ParamType(thisParam,reqParams,'',isMatch)
+      
+    ENDSUBROUTINE verify_Paramtype
+!
+!-------------------------------------------------------------------------------
+!> @brief This function assumes that thisParam and thatParam are of the same 
+!>        extended ParamType.  It also assumes that there is a "gettable" value
+!>        that is of thisParam%name on the ParamType.  This function determines
+!>        the extended type, then "gets" the appropriate parameter from both
+!>        lists, then checks their equivalence.  If they are equal or
+!>        approximately equal, the function results in true.  If not, false.
+!>        The function also performs unit test harness assertions when checking
+!>        the values.
+!> @param thisParam  The parameter list being validated
+!> @param thatParam  The parameter list being checked against
+!> @param bool The logical result of the checked parameters.
+!>
+    FUNCTION match_ParamType(thisParam,thatParam,prefix) RESULT(bool)
+      CLASS(ParamType),INTENT(INOUT) :: thisParam
+      CLASS(ParamType),INTENT(IN),TARGET :: thatParam
+      CHARACTER(LEN=*),INTENT(IN) :: prefix
+      LOGICAL(SBK) :: bool
+      CLASS(ParamType),POINTER :: paramPtr => NULL()
+      INTEGER(SIK) :: i,j
+      LOGICAL(SBK) :: localalloc,tmpsbk1,tmpsbk2
+      LOGICAL(SBK),ALLOCATABLE :: tmpsbka11(:),tmpsbka12(:)
+      REAL(SSK) :: tmpssk1,tmpssk2
+      REAL(SSK),ALLOCATABLE :: tmpsska11(:),tmpsska21(:,:),tmpsska31(:,:,:)
+      REAL(SSK),ALLOCATABLE :: tmpsska12(:),tmpsska22(:,:),tmpsska32(:,:,:)
+      REAL(SDK) :: tmpsdk1,tmpsdk2
+      REAL(SDK),ALLOCATABLE :: tmpsdka11(:),tmpsdka21(:,:),tmpsdka31(:,:,:)
+      REAL(SDK),ALLOCATABLE :: tmpsdka12(:),tmpsdka22(:,:),tmpsdka32(:,:,:)
+      INTEGER(SNK) :: tmpsnk1,tmpsnk2
+      INTEGER(SNK),ALLOCATABLE :: tmpsnka11(:),tmpsnka21(:,:),tmpsnka31(:,:,:)
+      INTEGER(SNK),ALLOCATABLE :: tmpsnka12(:),tmpsnka22(:,:),tmpsnka32(:,:,:)
+      INTEGER(SLK) :: tmpslk1,tmpslk2
+      INTEGER(SLK),ALLOCATABLE :: tmpslka11(:),tmpslka21(:,:),tmpslka31(:,:,:)
+      INTEGER(SLK),ALLOCATABLE :: tmpslka12(:),tmpslka22(:,:),tmpslka32(:,:,:)
+      TYPE(StringType) :: tmpstr1,tmpstr2
+      TYPE(StringType),ALLOCATABLE :: tmpstra11(:),tmpstra21(:,:)
+      TYPE(StringType),ALLOCATABLE :: tmpstra12(:),tmpstra22(:,:)
+      
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(eParams)) THEN
+        localalloc=.TRUE.
+        ALLOCATE(eParams)
+      ENDIF
+      
+      !Point to the intent(in) param to use the get function
+      !paramPtr => thatParam
+      bool=.FALSE.
+      !Find the extended parameter type, then use the appropriate variable
+      !and "get" the data to check.
+      SELECTTYPE(paramPtr => thatParam)
+        TYPE IS(ParamType_SSK)
+          CALL thisParam%get(CHAR(thisParam%name),tmpssk1)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpssk2)
+          bool=(tmpssk1 .APPROXEQ. tmpssk2)
+          ASSERT(bool, prefix//CHAR(thisParam%name))
+          FINFO() 'test value=',tmpssk1
+          FINFO() 'ref. value=',tmpssk2
+        TYPE IS(ParamType_SDK)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsdk1)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsdk2)
+          bool=(tmpsdk1 .APPROXEQ. tmpsdk2)
+          ASSERT(bool, prefix//CHAR(thisParam%name))
+          FINFO() 'test value=',tmpsdk1
+          FINFO() 'ref. value=',tmpsdk2
+        TYPE IS(ParamType_SNK)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsnk1)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsnk2)
+          bool=(tmpsnk1 == tmpsnk2)
+          ASSERT(bool, prefix//CHAR(thisParam%name))
+          FINFO() 'test value=',tmpsnk1
+          FINFO() 'ref. value=',tmpsnk2
+        TYPE IS(ParamType_SLK)
+          CALL thisParam%get(CHAR(thisParam%name),tmpslk1)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpslk2)
+          bool=(tmpslk1 == tmpslk2)
+          ASSERT(bool, prefix//CHAR(thisParam%name))
+          FINFO() 'test value=',tmpslk1
+          FINFO() 'ref. value=',tmpslk2
+        TYPE IS(ParamType_SBK)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsbk1)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsbk2)
+          bool=(tmpsbk1 .EQV. tmpsbk2)
+          ASSERT(bool, prefix//CHAR(thisParam%name))
+          FINFO() 'test value=',tmpsbk1
+          FINFO() 'ref. value=',tmpsbk2
+        TYPE IS(ParamType_STR)
+          CALL thisParam%get(CHAR(thisParam%name),tmpstr1)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpstr2)
+          bool=(tmpstr1 == tmpstr2)
+          ASSERT(bool, prefix//CHAR(thisParam%name))
+          FINFO() 'test value=',CHAR(tmpstr1)
+          FINFO() 'ref. value=',CHAR(tmpstr2)
+        TYPE IS(ParamType_SSK_a1)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsska11)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsska12)
+          bool=SIZE(tmpsska11,DIM=1) == SIZE(tmpsska12,DIM=1)
+          ASSERT(bool, 'SIZE of '//prefix//CHAR(thisParam%name))
+          FINFO() SIZE(tmpsska11,DIM=1), SIZE(tmpsska12,DIM=1)
+          IF(bool) THEN
+            bool=ALL(tmpsska11 .APPROXEQ. tmpsska12)
+            ASSERT(bool, prefix//CHAR(thisParam%name))
+            FINFO() 'test values=',tmpsska11
+            FINFO() 'ref. values=',tmpsska12
+          ENDIF
+          DEALLOCATE(tmpsska11); DEALLOCATE(tmpsska12)
+        TYPE IS(ParamType_SDK_a1)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsdka11)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsdka12)
+          bool=SIZE(tmpsdka11,DIM=1) == SIZE(tmpsdka12,DIM=1)
+          ASSERT(bool, 'SIZE of '//prefix//CHAR(thisParam%name))
+          FINFO() SIZE(tmpsdka11,DIM=1), SIZE(tmpsdka12,DIM=1)
+          IF(bool) THEN
+            bool=ALL(tmpsdka11 .APPROXEQ. tmpsdka12)
+            ASSERT(bool, prefix//CHAR(thisParam%name))
+            FINFO() 'test values=',tmpsdka11
+            FINFO() 'ref. values=',tmpsdka12
+          ENDIF
+          DEALLOCATE(tmpsdka11); DEALLOCATE(tmpsdka12)
+        TYPE IS(ParamType_SNK_a1)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsnka11)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsnka12)
+          bool=SIZE(tmpsnka11,DIM=1) == SIZE(tmpsnka12,DIM=1)
+          ASSERT(bool, 'SIZE of '//prefix//CHAR(thisParam%name))
+          FINFO() SIZE(tmpsnka11,DIM=1), SIZE(tmpsnka12,DIM=1)
+          IF(bool) THEN
+            bool=ALL(tmpsnka11 == tmpsnka12)
+            ASSERT(bool, prefix//CHAR(thisParam%name))
+            FINFO() 'test values=',tmpsnka11
+            FINFO() 'ref. values=',tmpsnka12
+          ENDIF
+          DEALLOCATE(tmpsnka11); DEALLOCATE(tmpsnka12)
+        TYPE IS(ParamType_SLK_a1)
+          CALL thisParam%get(CHAR(thisParam%name),tmpslka11)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpslka12)
+          bool=SIZE(tmpslka11,DIM=1) == SIZE(tmpslka12,DIM=1)
+          ASSERT(bool, 'SIZE of '//prefix//CHAR(thisParam%name))
+          FINFO() SIZE(tmpslka11,DIM=1), SIZE(tmpslka12,DIM=1)
+          IF(bool) THEN
+            bool=ALL(tmpslka11 == tmpslka12)
+            ASSERT(bool, prefix//CHAR(thisParam%name))
+            FINFO() 'test values=',tmpslka11
+            FINFO() 'ref. values=',tmpslka12
+          ENDIF
+          DEALLOCATE(tmpslka11); DEALLOCATE(tmpslka12)
+        TYPE IS(ParamType_SBK_a1)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsbka11)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsbka12)
+          bool=SIZE(tmpsbka11,DIM=1) == SIZE(tmpsbka12,DIM=1)
+          ASSERT(bool, 'SIZE of '//prefix//CHAR(thisParam%name))
+          FINFO() SIZE(tmpsbka11,DIM=1), SIZE(tmpsbka12,DIM=1)
+          IF(bool) THEN
+            bool=ALL(tmpsbka11 .EQV. tmpsbka12)
+            ASSERT(bool, prefix//CHAR(thisParam%name))
+            FINFO() 'test values=',tmpsbka11
+            FINFO() 'ref. values=',tmpsbka12
+          ENDIF
+          DEALLOCATE(tmpsbka11); DEALLOCATE(tmpsbka12)
+        TYPE IS(ParamType_STR_a1)
+          CALL thisParam%get(CHAR(thisParam%name),tmpstra11)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpstra12)
+          bool=SIZE(tmpstra11,DIM=1) == SIZE(tmpstra12,DIM=1)
+          ASSERT(bool, 'SIZE of '//prefix//CHAR(thisParam%name))
+          FINFO() SIZE(tmpstra11,DIM=1), SIZE(tmpstra12,DIM=1)
+          IF(bool) THEN
+            DO i=1,SIZE(tmpstra11)
+              bool=tmpstra11(i) == tmpstra12(i)
+              ASSERT(bool, prefix//CHAR(thisParam%name))
+              FINFO() 'test values=',CHAR(tmpstra11(i))
+              FINFO() 'ref. values=',CHAR(tmpstra12(i))
+              IF(.NOT. bool) EXIT
+            ENDDO
+            !clear?
+           ENDIF
+           DEALLOCATE(tmpstra11); DEALLOCATE(tmpstra12)
+        TYPE IS(ParamType_SSK_a2)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsska21)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsska22)
+          bool=SIZE(tmpsska21,DIM=1) == SIZE(tmpsska22,DIM=1)
+          ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
+          FINFO() SIZE(tmpsska21,DIM=1), SIZE(tmpsska22,DIM=1)
+          IF(bool) THEN
+            bool=SIZE(tmpsska21,DIM=2) == SIZE(tmpsska22,DIM=2)
+            ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
+            FINFO() SIZE(tmpsska21,DIM=2), SIZE(tmpsska22,DIM=2)
+            IF(bool) THEN
+              bool=ALL(tmpsska21 .APPROXEQ. tmpsska22)
+              ASSERT(bool, prefix//CHAR(thisParam%name))
+              FINFO() 'test values=',tmpsska21
+              FINFO() 'ref. values=',tmpsska22
+            ENDIF
+          ENDIF
+          DEALLOCATE(tmpsska21); DEALLOCATE(tmpsska22)
+        TYPE IS(ParamType_SDK_a2)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsdka21)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsdka22)
+          bool=SIZE(tmpsdka21,DIM=1) == SIZE(tmpsdka22,DIM=1)
+          ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
+          FINFO() SIZE(tmpsdka21,DIM=1), SIZE(tmpsdka22,DIM=1)
+          IF(bool) THEN
+            bool=SIZE(tmpsdka21,DIM=2) == SIZE(tmpsdka22,DIM=2)
+            ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
+            FINFO() SIZE(tmpsdka21,DIM=2), SIZE(tmpsdka22,DIM=2)
+            IF(bool) THEN
+              bool=ALL(tmpsdka21 .APPROXEQ. tmpsdka22)
+              ASSERT(bool, prefix//CHAR(thisParam%name))
+              FINFO() 'test values=',tmpsdka21
+              FINFO() 'ref. values=',tmpsdka22
+            ENDIF
+          ENDIF
+          DEALLOCATE(tmpsdka21); DEALLOCATE(tmpsdka22)
+        TYPE IS(ParamType_SNK_a2)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsnka21)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsnka22)
+          bool=SIZE(tmpsnka21,DIM=1) == SIZE(tmpsnka22,DIM=1)
+          ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
+          FINFO() SIZE(tmpsnka21,DIM=1), SIZE(tmpsnka22,DIM=1)
+          IF(bool) THEN
+            bool=SIZE(tmpsnka21,DIM=2) == SIZE(tmpsnka22,DIM=2)
+            ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
+            FINFO() SIZE(tmpsnka21,DIM=2), SIZE(tmpsnka22,DIM=2)
+            IF(bool) THEN
+              bool=ALL(tmpsnka21 == tmpsnka22)
+              ASSERT(bool, prefix//CHAR(thisParam%name))
+              FINFO() 'test values=',tmpsnka21
+              FINFO() 'ref. values=',tmpsnka22
+            ENDIF
+          ENDIF
+          DEALLOCATE(tmpsnka21); DEALLOCATE(tmpsnka22)
+        TYPE IS(ParamType_SLK_a2)
+          CALL thisParam%get(CHAR(thisParam%name),tmpslka21)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpslka22)
+          bool=SIZE(tmpslka21,DIM=1) == SIZE(tmpslka22,DIM=1)
+          ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
+          FINFO() SIZE(tmpslka21,DIM=1), SIZE(tmpslka22,DIM=1)
+          IF(bool) THEN
+            bool=SIZE(tmpslka21,DIM=2) == SIZE(tmpslka22,DIM=2)
+            ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
+            FINFO() SIZE(tmpslka21,DIM=2), SIZE(tmpslka22,DIM=2)
+            IF(bool) THEN
+              bool=ALL(tmpslka21 == tmpslka22)
+              ASSERT(bool, prefix//CHAR(thisParam%name))
+              FINFO() 'test values=',tmpslka21
+              FINFO() 'ref. values=',tmpslka22
+            ENDIF
+          ENDIF
+          DEALLOCATE(tmpslka21); DEALLOCATE(tmpslka22)
+        TYPE IS(ParamType_STR_a2)
+          CALL thisParam%get(CHAR(thisParam%name),tmpstra21)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpstra22)
+          bool=SIZE(tmpstra21,DIM=1) == SIZE(tmpstra22,DIM=1)
+          ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
+          FINFO() SIZE(tmpstra21,DIM=1), SIZE(tmpstra22,DIM=1)
+          IF(bool) THEN
+            bool=SIZE(tmpstra21,DIM=2) == SIZE(tmpstra22,DIM=2)
+            ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
+            FINFO() SIZE(tmpstra21,DIM=2), SIZE(tmpstra22,DIM=2)
+            IF(bool) THEN
+              outer : DO j=1,SIZE(tmpstra21,DIM=2)
+                DO i=1,SIZE(tmpstra21,DIM=1)
+                  bool=tmpstra21(i,j) == tmpstra22(i,j)
+                  ASSERT(bool, prefix//CHAR(thisParam%name))
+                  FINFO() 'test values=',CHAR(tmpstra21(i,j))
+                  FINFO() 'ref. values=',CHAR(tmpstra22(i,j))
+                  IF(.NOT.bool) EXIT outer
+                ENDDO
+              ENDDO outer
+            ENDIF
+          ENDIF
+          !clear?
+          DEALLOCATE(tmpstra21); DEALLOCATE(tmpstra22)
+        TYPE IS(ParamType_SSK_a3)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsska31)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsska32)
+          bool=SIZE(tmpsska31,DIM=1) == SIZE(tmpsska32,DIM=1)
+          ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
+          FINFO() SIZE(tmpsska31,DIM=1), SIZE(tmpsska32,DIM=1)
+          IF(bool) THEN
+            bool=SIZE(tmpsska31,DIM=2) == SIZE(tmpsska32,DIM=2)
+            ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
+            FINFO() SIZE(tmpsska31,DIM=2), SIZE(tmpsska32,DIM=2)
+            IF(bool) THEN
+              bool=SIZE(tmpsska31,DIM=3) == SIZE(tmpsska32,DIM=3)
+              ASSERT(bool, 'SIZE DIM=3 of '//prefix//CHAR(thisParam%name))
+              FINFO() SIZE(tmpsska31,DIM=3), SIZE(tmpsska32,DIM=3)
+              IF(bool) THEN
+                bool=ALL(tmpsska31 .APPROXEQ. tmpsska32)
+                ASSERT(bool, prefix//CHAR(thisParam%name))
+                FINFO() 'test values=',tmpsska31
+                FINFO() 'ref. values=',tmpsska32
+              ENDIF
+            ENDIF
+          ENDIF
+          DEALLOCATE(tmpsska31); DEALLOCATE(tmpsska32)
+        TYPE IS(ParamType_SDK_a3)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsdka31)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsdka32)
+          bool=SIZE(tmpsdka31,DIM=1) == SIZE(tmpsdka32,DIM=1)
+          ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
+          FINFO() SIZE(tmpsdka31,DIM=1), SIZE(tmpsdka32,DIM=1)
+          IF(bool) THEN
+            bool=SIZE(tmpsdka31,DIM=2) == SIZE(tmpsdka32,DIM=2)
+            ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
+            FINFO() SIZE(tmpsdka31,DIM=2), SIZE(tmpsdka32,DIM=2)
+            IF(bool) THEN
+              bool=SIZE(tmpsdka31,DIM=3) == SIZE(tmpsdka32,DIM=3)
+              ASSERT(bool, 'SIZE DIM=3 of '//prefix//CHAR(thisParam%name))
+              FINFO() SIZE(tmpsdka31,DIM=3), SIZE(tmpsdka32,DIM=3)
+              IF(bool) THEN
+                bool=ALL(tmpsdka31 .APPROXEQ. tmpsdka32)
+                ASSERT(bool, prefix//CHAR(thisParam%name))
+                FINFO() 'test values=',tmpsdka31
+                FINFO() 'ref. values=',tmpsdka32
+              ENDIF
+            ENDIF
+          ENDIF
+          DEALLOCATE(tmpsdka31); DEALLOCATE(tmpsdka32)
+        TYPE IS(ParamType_SNK_a3)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsnka31)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsnka32)
+          bool=SIZE(tmpsnka31,DIM=1) == SIZE(tmpsnka32,DIM=1)
+          ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
+          FINFO() SIZE(tmpsnka31,DIM=1), SIZE(tmpsnka32,DIM=1)
+          IF(bool) THEN
+            bool=SIZE(tmpsnka31,DIM=2) == SIZE(tmpsnka32,DIM=2)
+            ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
+            FINFO() SIZE(tmpsnka31,DIM=2), SIZE(tmpsnka32,DIM=2)
+            IF(bool) THEN
+              bool=SIZE(tmpsnka31,DIM=3) == SIZE(tmpsnka32,DIM=3)
+              ASSERT(bool, 'SIZE DIM=3 of '//prefix//CHAR(thisParam%name))
+              FINFO() SIZE(tmpsnka31,DIM=3), SIZE(tmpsnka32,DIM=3)
+              IF(bool) THEN
+                bool=ALL(tmpsnka31 == tmpsnka32)
+                ASSERT(bool, prefix//CHAR(thisParam%name))
+                FINFO() 'test values=',tmpsnka31
+                FINFO() 'ref. values=',tmpsnka32
+              ENDIF
+            ENDIF
+          ENDIF
+          DEALLOCATE(tmpsnka31); DEALLOCATE(tmpsnka32)
+        TYPE IS(ParamType_SLK_a3)
+          CALL thisParam%get(CHAR(thisParam%name),tmpslka31)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpslka32)
+          bool=SIZE(tmpslka31,DIM=1) == SIZE(tmpslka32,DIM=1)
+          ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
+          FINFO() SIZE(tmpslka31,DIM=1), SIZE(tmpslka32,DIM=1)
+          IF(bool) THEN
+            bool=SIZE(tmpslka31,DIM=2) == SIZE(tmpslka32,DIM=2)
+            ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
+            FINFO() SIZE(tmpslka31,DIM=2), SIZE(tmpslka32,DIM=2)
+            IF(bool) THEN
+              bool=SIZE(tmpslka31,DIM=3) == SIZE(tmpslka32,DIM=3)
+              ASSERT(bool, 'SIZE DIM=3 of '//prefix//CHAR(thisParam%name))
+              FINFO() SIZE(tmpslka31,DIM=3), SIZE(tmpslka32,DIM=3)
+              IF(bool) THEN
+                bool=ALL(tmpslka31 == tmpslka32)
+                ASSERT(bool, prefix//CHAR(thisParam%name))
+                FINFO() 'test values=',tmpslka31
+                FINFO() 'ref. values=',tmpslka32
+              ENDIF
+            ENDIF
+          ENDIF
+          DEALLOCATE(tmpslka31); DEALLOCATE(tmpslka32)
+        CLASS DEFAULT
+          CONTINUE
+      ENDSELECT
+    ENDFUNCTION match_ParamType
 !
 !-------------------------------------------------------------------------------
 !> @brief Initializes a ParamType object as a parameter list

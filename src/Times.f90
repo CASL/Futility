@@ -83,8 +83,9 @@
 !>   - Updated unit test.
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE Times
-
   USE IntrType
+  USE Strings
+  
   IMPLICIT NONE
   PRIVATE !Default private for module contents
 !
@@ -92,13 +93,10 @@ MODULE Times
   PUBLIC :: TimerType
   PUBLIC :: getDate
   PUBLIC :: getClockTime
-  PUBLIC :: MAXLEN_TIMER_NAME
   PUBLIC :: MAXLEN_TIME_STRING
   PUBLIC :: MAXLEN_DATE_STRING
   PUBLIC :: MAXLEN_CLOCK_STRING
-      
-  !> Maximum length of character string for timer names
-  INTEGER(SIK),PARAMETER :: MAXLEN_TIMER_NAME=20
+  
   !> Maximum length of character string for the reported time
   INTEGER(SIK),PARAMETER :: MAXLEN_TIME_STRING=18
   !> Maximum length of character string for the reported date
@@ -115,8 +113,8 @@ MODULE Times
   !> data type is also public so the programmer can create their own timers
   !> if they wish for use elsewhere in the code.
   TYPE :: TimerType
-    !> @brief Descriptive name for the timer (20 characters or less)
-    CHARACTER(LEN=MAXLEN_TIMER_NAME),PRIVATE :: name=''
+    !> @brief Descriptive name for the timer
+    TYPE(StringType),PRIVATE :: name
     !> @brief Clock cycle count value for start of the timer (set by 
     !> @ref Times::tic "tic")
     INTEGER(SLK),PRIVATE :: count=0_SDK
@@ -361,7 +359,7 @@ MODULE Times
 !> Names are 20 characters or less.
     FUNCTION getTimerName(myTimer) RESULT(name)
       CLASS(TimerType),INTENT(IN) :: myTimer
-      CHARACTER(LEN=MAXLEN_TIMER_NAME) :: name
+      CHARACTER(LEN=myTimer%name%n) :: name
       name=TRIM(myTimer%name)
     ENDFUNCTION getTimerName
 !
