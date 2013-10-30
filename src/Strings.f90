@@ -206,10 +206,10 @@ MODULE Strings
     MODULE PROCEDURE ANY_StringTypeArray_StringType
     !> @copybrief Strings::ANY_char_StringTypeArray
     !> @copydetails Strings::ANY_char_StringTypeArray
-    MODULE PROCEDURE ANY_char_StringTypeArray
-    !> @copybrief Strings::ANY_StringType_StringType_Array
-    !> @copydetails Strings::ANY_StringType_StringType_Array
-    MODULE PROCEDURE ANY_StringType_StringTypeArray
+    !MODULE PROCEDURE ANY_char_StringTypeArray
+    !> @copybrief Strings::ANY_StringTypeStringTypeArray
+    !> @copydetails Strings::ANY_StringTypeStringTypeArray
+    !MODULE PROCEDURE ANY_StringTypeStringTypeArray
   ENDINTERFACE
   
   !> @brief Overloads the Fortran intrinsic procedure ALL() so 
@@ -223,10 +223,10 @@ MODULE Strings
     MODULE PROCEDURE ALL_StringTypeArray_StringType
     !> @copybrief Strings::ALL_char_StringTypeArray
     !> @copydetails Strings::ALL_char_StringTypeArray
-    MODULE PROCEDURE ALL_char_StringTypeArray
-    !> @copybrief Strings::ALL_StringType_StringTypeArray
-    !> @copydetails Strings::ALL_StringType_StringTypeArray
-    MODULE PROCEDURE ALL_StringType_StringTypeArray
+    !MODULE PROCEDURE ALL_char_StringTypeArray
+    !!> @copybrief Strings::ALL_StringType_StringTypeArray
+    !!> @copydetails Strings::ALL_StringType_StringTypeArray
+    !MODULE PROCEDURE ALL_StringType_StringTypeArray
   ENDINTERFACE
   
   !> @brief Overloads the assignment operator.
@@ -469,7 +469,7 @@ MODULE Strings
 !> function @c ANY does for character variables.
 !>
     PURE FUNCTION ANY_StringTypeArray_char(thisStr,s,not) RESULT(bool)
-      CLASS(StringType),INTENT(IN) :: thisStr(:)
+      TYPE(StringType),INTENT(IN) :: thisStr(:)
       CHARACTER(LEN=*),INTENT(IN) :: s  
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: not
       LOGICAL(SBK) :: bool
@@ -499,7 +499,7 @@ MODULE Strings
 !> function @c ANY does for character variables.
 !>
     PURE FUNCTION ANY_StringTypeArray_StringType(thisStr,s,not) RESULT(bool)
-      CLASS(StringType),INTENT(IN) :: thisStr(:)
+      TYPE(StringType),INTENT(IN) :: thisStr(:)
       CLASS(StringType),INTENT(IN) :: s
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: not
       LOGICAL(SBK) :: bool
@@ -523,18 +523,18 @@ MODULE Strings
 !> The intent is that this behaves exactly the same way as the intrinsic
 !> function @c ANY does for character variables.
 !>
-    PURE FUNCTION ANY_char_StringTypeArray(s,thisStr,not) RESULT(bool)
-      CHARACTER(LEN=*),INTENT(IN) :: s  
-      CLASS(StringType),INTENT(IN) :: thisStr(:)
-      LOGICAL(SBK),INTENT(IN),OPTIONAL :: not
-      LOGICAL(SBK) :: bool
-      
-      IF(PRESENT(not)) THEN
-        bool=ANY_StringTypeArray_char(thisStr,s,not)
-      ELSE
-        bool=ANY_StringTypeArray_char(thisStr,s)
-      ENDIF
-    ENDFUNCTION ANY_char_StringTypeArray
+!    PURE FUNCTION ANY_char_StringTypeArray(s,thisStr,not) RESULT(bool)
+!      CHARACTER(LEN=*),INTENT(IN) :: s  
+!      TYPE(StringType),INTENT(IN) :: thisStr(:)
+!      LOGICAL(SBK),INTENT(IN),OPTIONAL :: not
+!      LOGICAL(SBK) :: bool
+!      
+!      IF(PRESENT(not)) THEN
+!        bool=ANY_StringTypeArray_char(thisStr,s,not)
+!      ELSE
+!        bool=ANY_StringTypeArray_char(thisStr,s)
+!      ENDIF
+!    ENDFUNCTION ANY_char_StringTypeArray
 !
 !-------------------------------------------------------------------------------
 !> @brief Returns the boolean of comparison of all of the contents of the array 
@@ -548,18 +548,18 @@ MODULE Strings
 !> The intent is that this behaves exactly the same way as the intrinsic
 !> function @c ANY does for character variables.
 !>
-    PURE FUNCTION ANY_StringType_StringTypeArray(s,thisStr,not) RESULT(bool)
-      CLASS(StringType),INTENT(IN) :: s 
-      CLASS(StringType),INTENT(IN) :: thisStr(:)
-      LOGICAL(SBK),INTENT(IN),OPTIONAL :: not
-      LOGICAL(SBK) :: bool
-      
-      IF(PRESENT(not)) THEN
-        bool=ANY_StringTypeArray_char(thisStr,CHAR(s),not)
-      ELSE
-        bool=ANY_StringTypeArray_char(thisStr,CHAR(s))
-      ENDIF
-    ENDFUNCTION ANY_StringType_StringTypeArray
+!    PURE FUNCTION ANY_StringTypeStringTypeArray(s,thisStr,not) RESULT(bool)
+!      CLASS(StringType),INTENT(IN) :: s 
+!      TYPE(StringType),INTENT(IN) :: thisStr(:)
+!      LOGICAL(SBK),INTENT(IN),OPTIONAL :: not
+!      LOGICAL(SBK) :: bool
+!      
+!      IF(PRESENT(not)) THEN
+!        bool=ANY_StringTypeArray_char(thisStr,CHAR(s),not)
+!      ELSE
+!        bool=ANY_StringTypeArray_char(thisStr,CHAR(s))
+!      ENDIF
+!    ENDFUNCTION ANY_StringTypeStringTypeArray
 !
 !-------------------------------------------------------------------------------
 !> @brief Returns the boolean of comparison of all of the contents of the array 
@@ -574,7 +574,7 @@ MODULE Strings
 !> function @c ANY does for character variables.
 !>
     PURE FUNCTION ALL_StringTypeArray_char(thisStr,s,not) RESULT(bool)
-      CLASS(StringType),INTENT(IN) :: thisStr(:)
+      TYPE(StringType),INTENT(IN) :: thisStr(:)
       CHARACTER(LEN=*),INTENT(IN) :: s  
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: not
       LOGICAL(SBK) :: bool
@@ -604,7 +604,7 @@ MODULE Strings
 !> function @c ANY does for character variables.
 !>
     PURE FUNCTION ALL_StringTypeArray_StringType(thisStr,s,not) RESULT(bool)
-      CLASS(StringType),INTENT(IN) :: thisStr(:)
+      TYPE(StringType),INTENT(IN) :: thisStr(:)
       CLASS(StringType),INTENT(IN) :: s 
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: not
       LOGICAL(SBK) :: bool
@@ -628,18 +628,18 @@ MODULE Strings
 !> The intent is that this behaves exactly the same way as the intrinsic
 !> function @c ANY does for character variables.
 !>
-    PURE FUNCTION ALL_char_StringTypeArray(s,thisStr,not) RESULT(bool)
-      CHARACTER(LEN=*),INTENT(IN) :: s  
-      CLASS(StringType),INTENT(IN) :: thisStr(:)
-      LOGICAL(SBK),INTENT(IN),OPTIONAL :: not
-      LOGICAL(SBK) :: bool
-      
-      IF(PRESENT(not)) THEN
-        bool=ALL_StringTypeArray_char(thisStr,s,not)
-      ELSE
-        bool=ALL_StringTypeArray_char(thisStr,s)
-      ENDIF
-    ENDFUNCTION ALL_char_StringTypeArray
+!    PURE FUNCTION ALL_char_StringTypeArray(s,thisStr,not) RESULT(bool)
+!      CHARACTER(LEN=*),INTENT(IN) :: s  
+!      TYPE(StringType),INTENT(IN) :: thisStr(:)
+!      LOGICAL(SBK),INTENT(IN),OPTIONAL :: not
+!      LOGICAL(SBK) :: bool
+!      
+!      IF(PRESENT(not)) THEN
+!        bool=ALL_StringTypeArray_char(thisStr,s,not)
+!      ELSE
+!        bool=ALL_StringTypeArray_char(thisStr,s)
+!      ENDIF
+!    ENDFUNCTION ALL_char_StringTypeArray
 !
 !-------------------------------------------------------------------------------
 !> @brief Returns the boolean of comparison of all of the contents of the array 
@@ -653,18 +653,18 @@ MODULE Strings
 !> The intent is that this behaves exactly the same way as the intrinsic
 !> function @c ANY does for character variables.
 !>
-    PURE FUNCTION ALL_StringType_StringTypeArray(s,thisStr,not) RESULT(bool)
-      CLASS(StringType),INTENT(IN) :: s 
-      CLASS(StringType),INTENT(IN) :: thisStr(:)
-      LOGICAL(SBK),INTENT(IN),OPTIONAL :: not
-      LOGICAL(SBK) :: bool
-      
-      IF(PRESENT(not)) THEN
-        bool=ALL_StringTypeArray_char(thisStr,CHAR(s),not)
-      ELSE
-        bool=ALL_StringTypeArray_char(thisStr,CHAR(s))
-      ENDIF
-    ENDFUNCTION ALL_StringType_StringTypeArray
+!    PURE FUNCTION ALL_StringType_StringTypeArray(s,thisStr,not) RESULT(bool)
+!      CLASS(StringType),INTENT(IN) :: s 
+!      TYPE(StringType),INTENT(IN) :: thisStr(:)
+!      LOGICAL(SBK),INTENT(IN),OPTIONAL :: not
+!      LOGICAL(SBK) :: bool
+!      
+!      IF(PRESENT(not)) THEN
+!        bool=ALL_StringTypeArray_char(thisStr,CHAR(s),not)
+!      ELSE
+!        bool=ALL_StringTypeArray_char(thisStr,CHAR(s))
+!      ENDIF
+!    ENDFUNCTION ALL_StringType_StringTypeArray
 !
 !-------------------------------------------------------------------------------
 !> @brief Assigns the contents of a string to an intrinsic character type
