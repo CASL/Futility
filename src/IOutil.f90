@@ -155,6 +155,7 @@ MODULE IOutil
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: status
       CHARACTER(LEN=1) :: tmpVal
       INTEGER(SIK) :: len,stat
+      INTRINSIC GET_COMMAND
       
       len=0
       CALL GET_COMMAND(COMMAND=tmpVal,LENGTH=len)
@@ -207,6 +208,7 @@ MODULE IOutil
       CHARACTER(LEN=1) :: tmpVal
       LOGICAL(SBK) :: trm_nm
       INTEGER(SIK) :: len,stat
+      INTRINSIC GET_ENVIRONMENT_VARIABLE
       
       trm_nm=.TRUE.
       len=0
@@ -269,7 +271,7 @@ MODULE IOutil
       IF(stat > 0) len=stat
       stat=MIN(0,stat)
       IF(PRESENT(dir)) CALL GET_CURRENT_DIRECTORY_internal(dir,len,stat)
-      IF(PRESENT(length)) length=len-1
+      IF(PRESENT(length)) length=len
       IF(PRESENT(status)) status=stat
     ENDSUBROUTINE GET_CURRENT_DIRECTORY_string
 !
@@ -280,7 +282,7 @@ MODULE IOutil
       INTEGER(SIK),INTENT(OUT) :: status
       CHARACTER(LEN=length) :: tmp
       CALL getPWD_c(tmp,length,status)
-      IF(status == 0) dir=tmp(1:length-1) !use length-1 to remove C_NULL_CHAR
+      IF(status == 0) dir=tmp(1:length)
     ENDSUBROUTINE GET_CURRENT_DIRECTORY_internal
 !
 ENDMODULE IOutil
