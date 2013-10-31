@@ -74,8 +74,8 @@ PROGRAM testTimes
   READ(aclock,'(i2,a1,i2,a1,i2)',iostat=ioerr) idum1,adum1,idum2,adum2,idum3
   ASSERT(ioerr == 0,'ioerr')
   ASSERT(.NOT.(idum1 < 0 .OR. idum1 > 23),'hour')
-  ASSERT(.NOT.(idum2 < 1 .OR. idum2 > 59),'minute')
-  ASSERT(.NOT.(idum3 < 1 .OR. idum3 > 59),'second')
+  ASSERT(.NOT.(idum2 < 0 .OR. idum2 > 59),'minute')
+  ASSERT(.NOT.(idum3 < 0 .OR. idum3 > 59),'second')
   ASSERT(adum1 == adum2 .AND. adum1 == ':',':')
   INFO(0) 'getClockTime() = '//getClockTime()
   
@@ -142,8 +142,8 @@ PROGRAM testTimes
   READ(aclock,'(i2,a1,i2,a1,i2)',iostat=ioerr) idum1,adum1,idum2,adum2,idum3
   ASSERT(ioerr == 0,'ioerr')
   ASSERT(.NOT.(idum1 < 0 .OR. idum1 > 23),'hour')
-  ASSERT(.NOT.(idum2 < 1 .OR. idum2 > 59),'minute')
-  ASSERT(.NOT.(idum3 < 1 .OR. idum3 > 59),'second')
+  ASSERT(.NOT.(idum2 < 0 .OR. idum2 > 59),'minute')
+  ASSERT(.NOT.(idum3 < 0 .OR. idum3 > 59),'second')
   ASSERT(adum1 == adum2 .AND. adum1 == ':',':')
   INFO(0) '  Passed: testTimer%getTimerResolution()=', &
     testTimer%getTimerResolution()
