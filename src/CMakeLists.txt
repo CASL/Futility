@@ -65,6 +65,7 @@ TRIBITS_ADD_LIBRARY(Utils
       CommandLineProcessor.f90
       MatrixTypes.f90
       VectorTypes.f90
+      PreconditionerTypes.f90
       LinearSolverTypes.f90
       StochasticSampling.f90
     DEPLIBS

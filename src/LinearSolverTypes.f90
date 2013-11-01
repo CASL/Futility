@@ -79,6 +79,7 @@ MODULE LinearSolverTypes
   USE ParallelEnv
   USE VectorTypes
   USE MatrixTypes
+  USE PreconditionerTypes
 #ifdef HAVE_PARDISO
   USE MKL_PARDISO
 #endif
