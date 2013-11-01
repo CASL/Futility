@@ -323,6 +323,10 @@ PROGRAM testHDF5
       ASSERT(checkwrite,'ST3 Write Failure')      
       CALL h5%fread('groupC->memC1',testC1)
       ASSERT(TRIM(testC1)==TRIM(refC1),'C1 Write Failure')
+      
+      i=h5%ngrp('groupR')
+      ASSERT(i == 10,'ngrp_HDF5FileType')
+      FINFO() i
 
 !      CALL h5%fdelete()
 !      INQUIRE(FILE='writetest.h5',EXIST=exists)
@@ -334,6 +338,7 @@ PROGRAM testHDF5
     SUBROUTINE testHDF5FileTypeRead()
       TYPE(HDF5FileType) :: h5
       REAL(SDK),ALLOCATABLE :: testD1(:),testD2(:,:),testD3(:,:,:),testD4(:,:,:,:)
+      REAL(SDK),POINTER :: testDP4(:,:,:,:)
       REAL(SSK),ALLOCATABLE :: testS1(:),testS2(:,:),testS3(:,:,:),testS4(:,:,:,:)
       LOGICAL(SBK),ALLOCATABLE :: testB1(:),testB2(:,:),testB3(:,:,:)
       INTEGER(SLK),ALLOCATABLE :: testL1(:),testL2(:,:),testL3(:,:,:)
@@ -370,6 +375,8 @@ PROGRAM testHDF5
       ASSERT(ALL(testD3==refD3),'D3 Read Failure')
       CALL h5%fread('groupR->memD4',testD4)
       ASSERT(ALL(testD4==refD4),'D4 Read Failure')
+      CALL h5%freadp('groupR->memD4',testDP4)
+      ASSERT(ALL(testDP4==refD4),'DP4 Read Failure')
       CALL h5%fread('groupR->memS0',testS0)
       ASSERT(testS0==refS0,'S0 Read Failure')
       CALL h5%fread('groupR->memS1',testS1)

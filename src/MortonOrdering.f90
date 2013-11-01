@@ -229,7 +229,8 @@ MODULE MortonOrdering
     ENDFUNCTION bin2int
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Initializes a single Z-tree node without recursively initializing the
+!>        any child nodes.
 !> @param node a "Z"-Tree node object to initialize
 !> @param x1 the starting x index for the domain on this node (x1 > 0)
 !> @param x2 the stopping x index for the domain on this node (x2 >= x1)
@@ -245,6 +246,7 @@ MODULE MortonOrdering
 !> allow for more directed construction of the Z tree for more indexing control
 !> and easier partitioning. It should probably be used in conjunction with the
 !> addChild routines and updateIndices routines to form a complete tree.
+!>
     SUBROUTINE ZTree_initSingle(node,x1,x2,y1,y2,z1,z2,istt,nsubd)
       CHARACTER(LEN=*),PARAMETER :: myName='ZTree_initSingle'
       CLASS(ZTreeNodeType),INTENT(INOUT) :: node
@@ -291,6 +293,7 @@ MODULE MortonOrdering
 !> zero, the child will be initialized with the initSingle routine, so that its
 !> children can be initialized hands-on as well. If not provided, it will call
 !> the normal init routine.
+!>
     FUNCTION ZTree_addChild(node,x1,x2,y1,y2,z1,z2,nsubd) RESULT(child)
       CHARACTER(LEN=*),PARAMETER :: myName='ZTree_addChild'
       CLASS(ZTreeNodeType),INTENT(INOUT) :: node
