@@ -29,7 +29,37 @@ MODULE Sorting
   USE IntrType
   IMPLICIT NONE
   
-  !> Avogadro's Number
-  REAL(SRK),PARAMETER :: Na=6.02214129000E+23_SRK !16 digits
- 
+  PUBLIC :: Sort
+
+
+!
+!===============================================================================
+  CONTAINS
+!
+!-------------------------------------------------------------------------------
+!> @brief A simple sorting algorithm for a 1-D real vector sort.  The arguments
+!>        data will be sorted in ascending/increasing order and returned.
+!> @param r A vector of unsorted reals
+!>
+    SUBROUTINE Sort(r) 
+      REAL(SRK),INTENT(INOUT) :: r(:)
+      !LOGICAL(SBK),INTENT(IN),OPTIONAL :: reverse
+      LOGICAL(SBK) :: sorted
+      INTEGER(SIK) :: i
+      REAL(SRK) :: tmp
+      
+      DO WHILE(.NOT.sorted)
+        sorted=.TRUE.
+        DO i=1,SIZE(r)-1
+          IF(r(i) > r(i+1)) THEN
+            tmp=r(i+1)
+            r(i+1)=r(i)
+            r(i)=tmp
+            sorted=.FALSE.
+          ENDIF
+        ENDDO
+      ENDDO
+      
+    ENDSUBROUTINE
+!
 ENDMODULE Sorting
