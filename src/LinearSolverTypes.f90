@@ -111,6 +111,42 @@ MODULE LinearSolverTypes
   INTEGER(SIK),PARAMETER,PUBLIC :: BICGSTAB=1,CGNR=2,GMRES=3
   !> set enumeration scheme for direct solver methods
   INTEGER(SIK),PARAMETER,PUBLIC :: GE=1,LU=2
+
+  !> @brief the base preconditioner type
+  TYPE,ABSTRACT :: PreconditionerType_Base
+    !> Initialization status
+    LOGICAL(SBK) :: isInit=.FALSE.
+    !> Flag to indicated whether this is the preconditioner or its inverse
+    LOGICAL(SBK) :: isInverse=.FALSE.
+    !
+    !List of Type Bound Procedures
+    CONTAINS
+      !> Deferred routine for clearing the preconditioner
+      PROCEDURE(precond_sub_absintfc),DEFERRED,PASS :: clear
+      !> Deferred routine for initializing the preconditioner
+      PROCEDURE(precond_sub_absintfc),DEFERRED,PASS :: init
+  ENDTYPE PreconditionerType_Base
+
+  TYPE,EXTENDS(PreconditionerType_Base) :: PreconditionerType_ILU
+    !> ILU Preconditioner Matrix
+    CLASS(MatrixType),ALLOCATABLE :: M
+    !
+    ! List of Type Bound Procedures
+    CONTAINS
+      !> @copybrief LinearSolverTypes::clear_PreconditionerType_ILU
+      !> @copydetails LinearSolvertypes::clear_PreconditionerType_ILU
+      PROCEDURE :: clear => clear_PreconditionerType_ILU
+      !> @copybrief LinearSolverTypes::init_PreconditionerType_ILU
+      !> @copydetails LinearSolvertypes::init_PreconditionerType_ILU
+      PROCEDURE :: init => init_PreconditionerType_ILU
+  ENDTYPE PreconditionerType_ILU
+
+  ABSTRACT INTERFACE
+    SUBROUTINE precond_sub_absintfc(PC)
+      IMPORT :: PreconditionerType_Base
+      CLASS(PreconditionerType_Base),INTENT(INOUT) :: PC
+    ENDSUBROUTINE precond_sub_absintfc
+  ENDINTERFACE
   
   !> @brief the base linear solver type
   TYPE,ABSTRACT :: LinearSolverType_Base
@@ -246,7 +282,24 @@ MODULE LinearSolverTypes
 !
 !===============================================================================
   CONTAINS
-  
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes the Linear Solver Type with a parameter list
+!> @param pList the parameter list
+!>
+!> @param solver The linear solver to act on
+    SUBROUTINE init_PreconditionerType_ILU(PC)
+      CLASS(PreconditionerType_ILU),INTENT(INOUT) :: PC
+    ENDSUBROUTINE init_PreconditionerType_ILU
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes the Linear Solver Type with a parameter list
+!> @param pList the parameter list
+!>
+!> @param solver The linear solver to act on
+    SUBROUTINE clear_PreconditionerType_ILU(PC)
+      CLASS(PreconditionerType_ILU),INTENT(INOUT) :: PC
+    ENDSUBROUTINE clear_PreconditionerType_ILU
 !
 !-------------------------------------------------------------------------------
 !> @brief Initializes the Linear Solver Type with a parameter list
