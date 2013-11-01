@@ -57,7 +57,8 @@ PROGRAM testHDF5
   CREATE_TEST("HDF File Type")
   
   CALL testHDF5FileTypeSetup()
-  REGISTER_SUBTEST("HDF5FileType Init and Delete",testHDF5FileTypeCreateDelete)
+  REGISTER_SUBTEST("HDF5FileType Initialization Checks",testHDF5FileTypeCreateDelete)
+  REGISTER_SUBTEST("HDF5FileType Error Checks",testHDF5FileTypeErrorCheck)
   REGISTER_SUBTEST("HDF5FileType Read",testHDF5FileTypeRead)
   IF(utest_nfail==0) THEN
     REGISTER_SUBTEST("HDF5FileType Write",testHDF5FileTypeWrite)
@@ -157,7 +158,7 @@ PROGRAM testHDF5
           ENDDO
         ENDDO
       ENDDO
-      refC1='MPACT string test               '
+      refC1='MPACT string test'; refC1=ADJUSTL(refC1)
       
       refsets(1)='memD0'
       refsets(2)='memD1'
@@ -180,6 +181,21 @@ PROGRAM testHDF5
       ASSERT(h5%isinit,'HDF5 object no properly initialized')
       IF(h5%isinit) exists=.TRUE.
 
+      CALL h5%fclose()
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR) == 0,'hdf5_filetype%fclose')
+      CALL h5%clear()
+      ASSERT(.NOT.h5%isinit,'HDF5 object not properly cleared.')
+      CALL h5%init('createdeletetest.h5','WRITE')
+      ASSERT(h5%isWrite(),'HDF object %isWrite() should be .TRUE.')
+      CALL h5%mkdir('testGroup')
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR) == 0,'hdf5_filetype%init ''WRITE''')
+      CALL h5%clear()
+      CALL h5%init('createdeletetest.h5','READ')
+      ASSERT(.NOT.(h5%isWrite()),'HDF object %isWrite() should be .FALSE.')
+      CALL h5%e%setStopOnError(.FALSE.)
+      CALL h5%mkdir('testGroup')
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR) == 1,'hdf5_filetype%init ''READ''')
+      FINFO() h5%e%getCounter(EXCEPTION_ERROR)
       CALL h5%fdelete()
       INQUIRE(FILE='createdeletetest.h5',EXIST=exists)
       ASSERT(.NOT.h5%isinit,'HDF5 object still initialized after deletion.')
@@ -187,13 +203,136 @@ PROGRAM testHDF5
       
       CALL h5%init('createdeletetest.h5','NEW')
       IF(h5%isinit) exists=.TRUE.
-      CALL h5%clear()
-      ASSERT(.NOT.h5%isinit,'HDF5 object not properly cleared.')
       CALL h5%fdelete()
       INQUIRE(FILE='createdeletetest.h5',EXIST=exists)
       ASSERT(.NOT.exists,'HDF5 object not properly deleted after begin cleared.')
 
     ENDSUBROUTINE testHDF5FileTypeCreateDelete
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testHDF5FileTypeErrorCheck()
+      TYPE(HDF5FileType) :: h5
+      CHARACTER(LEN=32),ALLOCATABLE :: tmpchar(:)
+      REAL(SDK),POINTER :: d4ptr(:,:,:,:)
+
+      CALL h5%fwrite('groupR->memD0',refD0)
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==1,'%write_d0 %isinit check')
+      CALL h5%fwrite('groupR->memD1',refD1,SHAPE(refD1))
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==2,'%write_d1 %isinit check')
+      CALL h5%fwrite('groupR->memD2',refD2,SHAPE(refD2))
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==3,'%write_d2 %isinit check')
+      CALL h5%fwrite('groupR->memD3',refD3,SHAPE(refD3))
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==4,'%write_d3 %isinit check')
+      CALL h5%fwrite('groupR->memD4',refD4,SHAPE(refD4))
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==5,'%write_d4 %isinit check')
+      CALL h5%fwrite('groupR->memS0',refS0)
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==6,'%write_s0 %isinit check')
+      CALL h5%fwrite('groupR->memS1',refS1,SHAPE(refS1))
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==7,'%write_s1 %isinit check')
+      CALL h5%fwrite('groupR->memS2',refS2,SHAPE(refS2))
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==8,'%write_s2 %isinit check')
+      CALL h5%fwrite('groupR->memS3',refS3,SHAPE(refS3))
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==9,'%write_s3 %isinit check')
+      CALL h5%fwrite('groupR->memS4',refS4,SHAPE(refS4))
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==10,'%write_s4 %isinit check')
+      CALL h5%fwrite('groupI->memL0',refL0)
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==11,'%write_l0 %isinit check')
+      CALL h5%fwrite('groupI->memL1',refL1,SHAPE(refL1))
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==12,'%write_l1 %isinit check')
+      CALL h5%fwrite('groupI->memL2',refL2,SHAPE(refL2))
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==13,'%write_l2 %isinit check')
+      CALL h5%fwrite('groupI->memL3',refL3,SHAPE(refL3))
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==14,'%write_l3 %isinit check')
+      CALL h5%fwrite('groupI->memN0',refN0)
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==15,'%write_n0 %isinit check')
+      CALL h5%fwrite('groupI->memN1',refN1,SHAPE(refN1))
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==16,'%write_n1 %isinit check')
+      CALL h5%fwrite('groupI->memN2',refN2,SHAPE(refN2))
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==17,'%write_n2 %isinit check')
+      CALL h5%fwrite('groupI->memN3',refN3,SHAPE(refN3))
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==18,'%write_n3 %isinit check')
+      CALL h5%fwrite('groupB->memB0',refB0)
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==19,'%write_b0 %isinit check')
+      CALL h5%fwrite('groupB->memB1',refB1,SHAPE(refB1))
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==20,'%write_b1 %isinit check')
+      CALL h5%fwrite('groupB->memB2',refB2,SHAPE(refB2))
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==21,'%write_b2 %isinit check')
+      CALL h5%fwrite('groupB->memB3',refB3,SHAPE(refB3))
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==22,'%write_b3 %isinit check')
+      CALL h5%fwrite('groupST->memST0',refST0)
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==23,'%write_st0 %isinit check')
+      CALL h5%fwrite('groupST->memST1',refST1,SHAPE(refST1))
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==24,'%write_st1 %isinit check')
+      CALL h5%fwrite('groupST->memST2',refST2,SHAPE(refST2))
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==25,'%write_st2 %isinit check')
+      CALL h5%fwrite('groupST->memST3',refST3,SHAPE(refST3))
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==26,'%write_st3 %isinit check')
+      CALL h5%fwrite('groupC->memC1',refC1)
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==27,'%write_c1 %isinit check')
+      CALL h5%mkdir('groupI')
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==28,'%mkdir %isinit check')
+      CALL h5%ls('groupR',tmpchar)
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==29,'%ls %isinit check')
+
+      
+      CALL h5%fread('groupR->memD0',refD0)
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==30,'%write_d0 %isinit check')
+      CALL h5%fread('groupR->memD1',refD1)
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==31,'%write_d1 %isinit check')
+      CALL h5%fread('groupR->memD2',refD2)
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==32,'%write_d2 %isinit check')
+      CALL h5%fread('groupR->memD3',refD3)
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==33,'%write_d3 %isinit check')
+      CALL h5%fread('groupR->memD4',refD4)
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==34,'%write_d4 %isinit check')
+      CALL h5%freadp('groupR->memD4',d4ptr)
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==35,'%write_d4 %isinit check')
+      CALL h5%fread('groupR->memS0',refS0)
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==36,'%write_s0 %isinit check')
+      CALL h5%fread('groupR->memS1',refS1)
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==37,'%write_s1 %isinit check')
+      CALL h5%fread('groupR->memS2',refS2)
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==38,'%write_s2 %isinit check')
+      CALL h5%fread('groupR->memS3',refS3)
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==39,'%write_s3 %isinit check')
+      CALL h5%fread('groupR->memS4',refS4)
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==40,'%write_s4 %isinit check')
+      CALL h5%fread('groupI->memL0',refL0)
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==41,'%write_l0 %isinit check')
+      CALL h5%fread('groupI->memL1',refL1)
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==42,'%write_l1 %isinit check')
+      CALL h5%fread('groupI->memL2',refL2)
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==43,'%write_l2 %isinit check')
+      CALL h5%fread('groupI->memL3',refL3)
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==44,'%write_l3 %isinit check')
+      CALL h5%fread('groupI->memN0',refN0)
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==45,'%write_n0 %isinit check')
+      CALL h5%fread('groupI->memN1',refN1)
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==46,'%write_n1 %isinit check')
+      CALL h5%fread('groupI->memN2',refN2)
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==47,'%write_n2 %isinit check')
+      CALL h5%fread('groupI->memN3',refN3)
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==48,'%write_n3 %isinit check')
+      CALL h5%fread('groupB->memB0',refB0)
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==49,'%write_b0 %isinit check')
+      CALL h5%fread('groupB->memB1',refB1)
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==50,'%write_b1 %isinit check')
+      CALL h5%fread('groupB->memB2',refB2)
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==51,'%write_b2 %isinit check')
+      CALL h5%fread('groupB->memB3',refB3)
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==52,'%write_b3 %isinit check')
+      CALL h5%fread('groupST->memST0',refST0)
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==53,'%write_st0 %isinit check')
+      CALL h5%fread('groupST->memST1',refST1)
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==54,'%write_st1 %isinit check')
+      CALL h5%fread('groupST->memST2',refST2)
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==55,'%write_st2 %isinit check')
+      CALL h5%fread('groupST->memST3',refST3)
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==56,'%write_st3 %isinit check')
+
+
+
+    ENDSUBROUTINE testHDF5FileTypeErrorCheck
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testHDF5FileTypeWrite()
@@ -214,40 +353,161 @@ PROGRAM testHDF5
       INTEGER(SIK) :: i,j,k
       LOGICAL(SBK) :: checkwrite
 
+      COMPONENT_TEST('%fwrite with gdims')
       ! Create a RW access file. Existing file overwritten
       CALL h5%init('writetest.h5','NEW')
 
+      ! Test writing with the gdims arguments
       CALL h5%mkdir('groupR')
-      CALL h5%fwrite('groupR->memD0',refD0)
+      CALL h5%fwrite('groupR->memD0',refD0,SHAPE(refD0))
       CALL h5%fwrite('groupR->memD1',refD1,SHAPE(refD1))
       CALL h5%fwrite('groupR->memD2',refD2,SHAPE(refD2))
       CALL h5%fwrite('groupR->memD3',refD3,SHAPE(refD3))
       CALL h5%fwrite('groupR->memD4',refD4,SHAPE(refD4))
-      CALL h5%fwrite('groupR->memS0',refS0)
+      CALL h5%fwrite('groupR->memS0',refS0,SHAPE(refS0))
       CALL h5%fwrite('groupR->memS1',refS1,SHAPE(refS1))
       CALL h5%fwrite('groupR->memS2',refS2,SHAPE(refS2))
       CALL h5%fwrite('groupR->memS3',refS3,SHAPE(refS3))
       CALL h5%fwrite('groupR->memS4',refS4,SHAPE(refS4))
       CALL h5%mkdir('groupI')
-      CALL h5%fwrite('groupI->memL0',refL0)
+      CALL h5%fwrite('groupI->memL0',refL0,SHAPE(refL0))
       CALL h5%fwrite('groupI->memL1',refL1,SHAPE(refL1))
       CALL h5%fwrite('groupI->memL2',refL2,SHAPE(refL2))
       CALL h5%fwrite('groupI->memL3',refL3,SHAPE(refL3))
-      CALL h5%fwrite('groupI->memN0',refN0)
+      CALL h5%fwrite('groupI->memN0',refN0,SHAPE(refN0))
       CALL h5%fwrite('groupI->memN1',refN1,SHAPE(refN1))
       CALL h5%fwrite('groupI->memN2',refN2,SHAPE(refN2))
       CALL h5%fwrite('groupI->memN3',refN3,SHAPE(refN3))
       CALL h5%mkdir('groupB')
-      CALL h5%fwrite('groupB->memB0',refB0)
+      CALL h5%fwrite('groupB->memB0',refB0,SHAPE(refB0))
       CALL h5%fwrite('groupB->memB1',refB1,SHAPE(refB1))
       CALL h5%fwrite('groupB->memB2',refB2,SHAPE(refB2))
       CALL h5%fwrite('groupB->memB3',refB3,SHAPE(refB3))
       CALL h5%mkdir('groupST')
-      CALL h5%fwrite('groupST->memST0',refST0)
+      CALL h5%fwrite('groupST->memST0',refST0,SHAPE(refST0))
       CALL h5%fwrite('groupST->memST1',refST1,SHAPE(refST1))
       CALL h5%fwrite('groupST->memST2',refST2,SHAPE(refST2))
       CALL h5%fwrite('groupST->memST3',refST3,SHAPE(refST3))
       CALL h5%mkdir('groupC')
+      CALL h5%fwrite('groupC->memC1',refC1,LEN(refC1))
+      
+      CALL h5%fread('groupR->memD0',testD0)
+      ASSERT(testD0==refD0,'D0 Write Failure with gdims_in')
+      CALL h5%fread('groupR->memD1',testD1)
+      ASSERT(ALL(testD1==refD1),'D1 Write Failure with gdims_in')
+      CALL h5%fread('groupR->memD2',testD2)
+      ASSERT(ALL(testD2==refD2),'D2 Write Failure with gdims_in')
+      CALL h5%fread('groupR->memD3',testD3)
+      ASSERT(ALL(testD3==refD3),'D3 Write Failure with gdims_in')
+      CALL h5%fread('groupR->memD4',testD4)
+      ASSERT(ALL(testD4==refD4),'D4 Write Failure with gdims_in')
+      CALL h5%fread('groupR->memS0',testS0)
+      ASSERT(testS0==refS0,'S0 Write Failure with gdims_in')
+      CALL h5%fread('groupR->memS1',testS1)
+      ASSERT(ALL(testS1==refS1),'S1 Write Failure with gdims_in')
+      CALL h5%fread('groupR->memS2',testS2)
+      ASSERT(ALL(testS2==refS2),'S2 Write Failure with gdims_in')
+      CALL h5%fread('groupR->memS3',testS3)
+      ASSERT(ALL(testS3==refS3),'S3 Write Failure with gdims_in')
+      CALL h5%fread('groupR->memS4',testS4)
+      ASSERT(ALL(testS4==refS4),'S4 Write Failure with gdims_in')
+      CALL h5%fread('groupI->memN0',testN0)
+      ASSERT(testN0==refN0,'N0 Write Failure with gdims_in')
+      CALL h5%fread('groupI->memN1',testN1)
+      ASSERT(ALL(testN1==refN1),'N1 Write Failure with gdims_in')
+      CALL h5%fread('groupI->memN2',testN2)
+      ASSERT(ALL(testN2==refN2),'N2 Write Failure with gdims_in')
+      CALL h5%fread('groupI->memN3',testN3)
+      ASSERT(ALL(testN3==refN3),'N3 Write Failure with gdims_in')
+      CALL h5%fread('groupI->memL0',testL0)
+      ASSERT(testL0==refL0,'L0 Write Failure with gdims_in')
+      FINFO()testL0,refL0
+      CALL h5%fread('groupI->memL1',testL1)
+      ASSERT(ALL(testL1==refL1),'L1 Write Failure with gdims_in')
+      CALL h5%fread('groupI->memL2',testL2)
+      ASSERT(ALL(testL2==refL2),'L2 Write Failure with gdims_in')
+      CALL h5%fread('groupI->memL3',testL3)
+      ASSERT(ALL(testL3==refL3),'L3 Write Failure with gdims_in')
+      CALL h5%fread('groupB->memB0',testB0)
+      ASSERT(testB0.EQV.refB0,'B0 Write Failure with gdims_in')
+      CALL h5%fread('groupB->memB1',testB1)
+      ASSERT(ALL(testB1.EQV.refB1),'B1 Write Failure with gdims_in')
+      CALL h5%fread('groupB->memB2',testB2)
+      ASSERT(ALL(testB2.EQV.refB2),'B2 Write Failure with gdims_in')
+      CALL h5%fread('groupB->memB3',testB3)
+      ASSERT(ALL(testB3.EQV.refB3),'B3 Write Failure with gdims_in')
+      CALL h5%fread('groupST->memST0',testST0)
+      ASSERT(testST0==refST0,'ST0 Write Failure with gdims_in')
+      CALL h5%fread('groupST->memST1',testST1)
+      checkwrite=.TRUE.
+      DO i=1,SIZE(refST1)
+        IF(testST1(i)/=refST1(i)) checkwrite=.FALSE.
+      ENDDO
+      ASSERT(checkwrite,'ST1 Write Failure with gdims_in')
+      CALL h5%fread('groupST->memST2',testST2)
+      checkwrite=.TRUE.
+      DO i=1,SIZE(refST2,1)
+        DO j=1,SIZE(refST2,2)
+          IF(testST2(i,j)/=refST2(i,j)) checkwrite=.FALSE.
+        ENDDO
+      ENDDO
+      ASSERT(checkwrite,'ST2 Write Failure with gdims_in')
+      CALL h5%fread('groupST->memST3',testST3)
+      checkwrite=.TRUE.
+      DO i=1,SIZE(refST3,1)
+        DO j=1,SIZE(refST3,2)
+          DO k=1,SIZE(refST3,3)
+            IF(testST3(i,j,k)/=refST3(i,j,k)) checkwrite=.FALSE.
+          ENDDO
+        ENDDO
+      ENDDO
+      ASSERT(checkwrite,'ST3 Write Failure with gdims_in')      
+      CALL h5%fread('groupC->memC1',testC1)
+      ASSERT(TRIM(testC1)==TRIM(refC1),'C1 Write Failure with gdims_in')
+      FINFO() ':'//testC1//':  :'//refC1//':'
+
+      i=h5%ngrp('groupR')
+      ASSERT(i == 10,'ngrp_HDF5FileType')
+      FINFO() i
+
+      ! Delete the file
+      CALL h5%fdelete()
+
+      COMPONENT_TEST('%fwrite without gdims')
+      CALL h5%init('writetest.h5','NEW')
+
+      ! Test writing without the gdims arguments
+      CALL h5%mkdir('groupR')
+      CALL h5%mkdir('groupI')
+      CALL h5%mkdir('groupB')
+      CALL h5%mkdir('groupST')
+      CALL h5%mkdir('groupC')
+      CALL h5%fwrite('groupR->memD0',refD0)
+      CALL h5%fwrite('groupR->memD1',refD1)
+      CALL h5%fwrite('groupR->memD2',refD2)
+      CALL h5%fwrite('groupR->memD3',refD3)
+      CALL h5%fwrite('groupR->memD4',refD4)
+      CALL h5%fwrite('groupR->memS0',refS0)
+      CALL h5%fwrite('groupR->memS1',refS1)
+      CALL h5%fwrite('groupR->memS2',refS2)
+      CALL h5%fwrite('groupR->memS3',refS3)
+      CALL h5%fwrite('groupR->memS4',refS4)
+      CALL h5%fwrite('groupI->memL0',refL0)
+      CALL h5%fwrite('groupI->memL1',refL1)
+      CALL h5%fwrite('groupI->memL2',refL2)
+      CALL h5%fwrite('groupI->memL3',refL3)
+      CALL h5%fwrite('groupI->memN0',refN0)
+      CALL h5%fwrite('groupI->memN1',refN1)
+      CALL h5%fwrite('groupI->memN2',refN2)
+      CALL h5%fwrite('groupI->memN3',refN3)
+      CALL h5%fwrite('groupB->memB0',refB0)
+      CALL h5%fwrite('groupB->memB1',refB1)
+      CALL h5%fwrite('groupB->memB2',refB2)
+      CALL h5%fwrite('groupB->memB3',refB3)
+      CALL h5%fwrite('groupST->memST0',refST0)
+      CALL h5%fwrite('groupST->memST1',refST1)
+      CALL h5%fwrite('groupST->memST2',refST2)
+      CALL h5%fwrite('groupST->memST3',refST3)
       CALL h5%fwrite('groupC->memC1',refC1)
       
       CALL h5%fread('groupR->memD0',testD0)
@@ -297,6 +557,7 @@ PROGRAM testHDF5
       ASSERT(ALL(testB3.EQV.refB3),'B3 Write Failure')
       CALL h5%fread('groupST->memST0',testST0)
       ASSERT(testST0==refST0,'ST0 Write Failure')
+      FINFO() ':'//CHAR(testST0)//':  :'//CHAR(refST0)//':'
       CALL h5%fread('groupST->memST1',testST1)
       checkwrite=.TRUE.
       DO i=1,SIZE(refST1)
@@ -322,16 +583,15 @@ PROGRAM testHDF5
       ENDDO
       ASSERT(checkwrite,'ST3 Write Failure')      
       CALL h5%fread('groupC->memC1',testC1)
-      ASSERT(TRIM(testC1)==TRIM(refC1),'C1 Write Failure')
+      ASSERT(testC1==refC1,'C1 Write Failure')
       
       i=h5%ngrp('groupR')
       ASSERT(i == 10,'ngrp_HDF5FileType')
       FINFO() i
-
-!      CALL h5%fdelete()
-!      INQUIRE(FILE='writetest.h5',EXIST=exists)
-!      ASSERT(.NOT.exists,'HDF5 object not properly deleted!')
-      CALL h5%clear()
+ 
+      CALL h5%fdelete()
+      INQUIRE(FILE='writetest.h5',EXIST=exists)
+      ASSERT(.NOT.exists,'HDF5 object not properly deleted!')
     ENDSUBROUTINE testHDF5FileTypeWrite
 !
 !-------------------------------------------------------------------------------
@@ -439,11 +699,11 @@ PROGRAM testHDF5
       ENDDO
       ASSERT(checkread,'ST3 Read Failure')
       CALL h5%fread('groupC->memC1',testC1)
-      ASSERT(TRIM(testC1) == TRIM(refC1),'C1 Read Failure')
+      ASSERT(testC1 == refC1,'C1 Read Failure')
 
       DEALLOCATE(testD1,testD2,testD3,testS1,testS2,testS3,testL1,testL2, &
             testL3,testB1,testB2,testB3,testST1,testST2,testST3,testN1,testN2, &
-            testN3,testD4,testS4)
+            testN3,testD4,testS4,testDP4)
 
       CALL h5%clear()
       ASSERT(.NOT.h5%isinit, 'HDF5 object not properly cleared!')
