@@ -475,9 +475,16 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),PARAMETER :: myName='close_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: file
 #ifdef MPACT_HAVE_HDF5
-      CALL h5fclose_f(file%file_id,error)
-      IF(error /= 0) CALL file%e%raiseError(modName//'::'//myName// &
-        ' - Unable to close HDF5 file.')
+      IF(.NOT.ASSOCIATED(file%e)) ALLOCATE(file%e)
+      CALL file%e%setStopOnError(.FALSE.)
+      IF(.NOT.file%isinit) THEN
+        CALL file%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
+      ELSE
+        CALL h5fclose_f(file%file_id,error)
+        IF(error /= 0) CALL file%e%raiseError(modName//'::'//myName// &
+          ' - Unable to close HDF5 file.')
+      ENDIF
 #endif
     ENDSUBROUTINE close_HDF5FileType
 !
@@ -543,39 +550,43 @@ MODULE FileType_HDF5
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: path
       CHARACTER(LEN=*),ALLOCATABLE,INTENT(INOUT) :: objs(:)
-      CHARACTER(LEN=MAX_PATH_LENGTH),ALLOCATABLE :: path2
+      CHARACTER(LEN=MAX_PATH_LENGTH) :: path2
 #ifdef MPACT_HAVE_HDF5
       INTEGER(HSIZE_T) :: i
       INTEGER(HID_T) :: grp_id,error
       INTEGER :: store_type,nlinks,max_corder
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-      path2=convertPath(path)
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
+      ELSE
+        path2=convertPath(path)
 
-      CALL h5gopen_f(thisHDF5File%file_id, path2, grp_id, error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Unable to open file.')
-
-      CALL h5gget_info_f(grp_id, store_type, nlinks, max_corder, error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Unable to get group information.')
-
-      IF(ALLOCATED(objs)) DEALLOCATE(objs)
-      ALLOCATE(objs(nlinks))
-
-      DO i=0,nlinks-1
-        CALL h5lget_name_by_idx_f(thisHDF5File%file_id, path2, H5_INDEX_NAME_F,&
-            H5_ITER_INC_F, i, objs(i+1), error)
+        CALL h5gopen_f(thisHDF5File%file_id, path2, grp_id, error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Unable to get object name.')
-      ENDDO
+          ' - Unable to open file.')
 
-      CALL h5gclose_f(grp_id, error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Unable to close group.')
+        CALL h5gget_info_f(grp_id, store_type, nlinks, max_corder, error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Unable to get group information.')
 
+        IF(ALLOCATED(objs)) DEALLOCATE(objs)
+        ALLOCATE(objs(nlinks))
+  
+        DO i=0,nlinks-1
+          CALL h5lget_name_by_idx_f(thisHDF5File%file_id, path2, H5_INDEX_NAME_F,&
+              H5_ITER_INC_F, i, objs(i+1), error)
+          IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Unable to get object name.')
+        ENDDO
+
+        CALL h5gclose_f(grp_id, error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Unable to close group.')
+      ENDIF
 #endif
     ENDSUBROUTINE ls_HDF5FileType
 !
@@ -596,27 +607,32 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: group_id,error
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ! Ensure that we have write permissions to the file
-      IF(.NOT.thisHDF5File%isWrite()) CALL thisHDF5File%e%raiseWarning(modName &
-          //'::'//myName//' - Can not create group in read-only file.')
-
-      ! Convert the path to use slashes
-      path2=convertPath(path)
-
-      ! Create the group
-      CALL h5gcreate_f(thisHDF5File%file_id,path2,group_id,error)
-
-      IF(error == 0) THEN
-        ! Close the group
-        CALL h5gclose_f(group_id,error)
-        IF(error /= 0) CALL thisHDF5File%e%raiseWarning(modName//'::'// &
-            myName//' - Failed to close HDF group')
+      ELSEIF(.NOT.thisHDF5File%isWrite()) THEN
+        CALL thisHDF5File%e%raiseError(modName &
+            //'::'//myName//' - Can not create group in read-only file.')
       ELSE
-        CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
-        ' - Failed to create HDF5 group.')
+
+        ! Convert the path to use slashes
+        path2=convertPath(path)
+
+        ! Create the group
+        CALL h5gcreate_f(thisHDF5File%file_id,path2,group_id,error)
+
+        IF(error == 0) THEN
+          ! Close the group
+          CALL h5gclose_f(group_id,error)
+          IF(error /= 0) CALL thisHDF5File%e%raiseWarning(modName//'::'// &
+              myName//' - Failed to close HDF group')
+        ELSE
+          CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
+            ' - Failed to create HDF5 group.')
+        ENDIF
       ENDIF
 #endif
     ENDSUBROUTINE mkdir_HDF5FileType
@@ -639,20 +655,25 @@ MODULE FileType_HDF5
       INTEGER :: store_type,nlinks,max_corder
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
+      ELSE
 
-      path2=convertPath(path)
+        path2=convertPath(path)
 
-      CALL h5gopen_f(thisHDF5File%file_id, path2, grp_id, error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Could not open group in HDF5 file.')
+        CALL h5gopen_f(thisHDF5File%file_id, path2, grp_id, error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Could not open group in HDF5 file.')
 
-      CALL h5gget_info_f(grp_id, store_type, nlinks, max_corder, error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Could not get group info in HDF5 file.')
+        CALL h5gget_info_f(grp_id, store_type, nlinks, max_corder, error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Could not get group info in HDF5 file.')
 
-      ngrp=nlinks
+        ngrp=nlinks
+      ENDIF
 #else
       ngrp=0
 #endif
@@ -682,11 +703,13 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id,gspace_id,plist_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ! Check that the file is writable. Best to catch this before HDF5 does.
-      IF(.NOT.thisHDF5File%isWrite()) THEN
+      ELSEIF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - File is readonly!')
       ELSE
@@ -801,11 +824,13 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id,gspace_id,plist_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ! Check that the file is writable. Best to catch this before HDF5 does.
-      IF(.NOT.thisHDF5File%isWrite()) THEN
+      ELSEIF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
          ' - File is readonly!')
       ELSE
@@ -919,11 +944,13 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,gspace_id,dset_id,plist_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ! Check that the file is writable. Best to catch this before HDF5 does.
-      IF(.NOT.thisHDF5File%isWrite()) THEN
+      ELSEIF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
          ' - File is readonly!')
       ELSE
@@ -1037,11 +1064,13 @@ MODULE FileType_HDF5
 
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ! Check that the file is writable. Best to catch this before HDF5 does.
-      IF(.NOT.thisHDF5File%isWrite()) THEN
+      ELSEIF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - File is readonly!')
       ELSE
@@ -1158,11 +1187,13 @@ MODULE FileType_HDF5
 
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ! Check that the file is writable. Best to catch this before HDF5 does.
-      IF(.NOT.thisHDF5File%isWrite()) THEN
+      ELSEIF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - File is readonly!')
       ELSE
@@ -1279,11 +1310,13 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id,gspace_id,plist_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ! Check that the file is writable. Best to catch this before HDF5 does.
-      IF(.NOT.thisHDF5File%isWrite()) THEN
+      ELSEIF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - File is readonly!')
       ELSE
@@ -1398,11 +1431,13 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id,gspace_id,plist_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ! Check that the file is writable. Best to catch this before HDF5 does.
-      IF(.NOT.thisHDF5File%isWrite()) THEN
+      ELSEIF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - File is readonly!')
       ELSE
@@ -1516,11 +1551,13 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id,gspace_id,plist_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ! Check that the file is writable. Best to catch this before HDF5 does.
-      IF(.NOT.thisHDF5File%isWrite()) THEN
+      ELSEIF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - File is readonly!')
       ELSE
@@ -1635,11 +1672,13 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id,gspace_id,plist_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ! Check that the file is writable. Best to catch this before HDF5 does.
-      IF(.NOT.thisHDF5File%isWrite()) THEN
+      ELSEIF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - File is readonly!')
       ELSE
@@ -1755,11 +1794,13 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id,gspace_id,plist_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ! Check that the file is writable. Best to catch this before HDF5 does.
-      IF(.NOT.thisHDF5File%isWrite()) THEN
+      ELSEIF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - File is readonly!')
       ELSE
@@ -1878,11 +1919,13 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id,gspace_id,plist_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ! Check that the file is writable. Best to catch this before HDF5 does.
-      IF(.NOT.thisHDF5File%isWrite()) THEN
+      ELSEIF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - File is readonly!')
       ELSE
@@ -2007,11 +2050,13 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id,gspace_id,plist_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ! Check that the file is writable. Best to catch this before HDF5 does.
-      IF(.NOT.thisHDF5File%isWrite()) THEN
+      ELSEIF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - File is readonly!')
       ELSE
@@ -2133,11 +2178,13 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id,gspace_id,plist_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ! Check that the file is writable. Best to catch this before HDF5 does.
-      IF(.NOT.thisHDF5File%isWrite()) THEN
+      ELSEIF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - File is readonly!')
       ELSE
@@ -2259,11 +2306,13 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id,gspace_id,plist_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ! Check that the file is writable. Best to catch this before HDF5 does.
-      IF(.NOT.thisHDF5File%isWrite()) THEN
+      ELSEIF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - File is readonly!')
       ELSE
@@ -2385,11 +2434,13 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id,gspace_id,plist_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ! Check that the file is writable. Best to catch this before HDF5 does.
-      IF(.NOT.thisHDF5File%isWrite()) THEN
+      ELSEIF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - File is readonly!')
       ELSE
@@ -2501,11 +2552,13 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id,gspace_id,plist_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ! Check that the file is writable. Best to catch this before HDF5 does.
-      IF(.NOT.thisHDF5File%isWrite()) THEN
+      ELSEIF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - File is readonly!')
       ELSE
@@ -2618,11 +2671,13 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id,gspace_id,plist_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ! Check that the file is writable. Best to catch this before HDF5 does.
-      IF(.NOT.thisHDF5File%isWrite()) THEN
+      ELSEIF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - File is readonly!')
       ELSE
@@ -2736,11 +2791,13 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id,gspace_id,plist_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ! Check that the file is writable. Best to catch this before HDF5 does.
-      IF(.NOT.thisHDF5File%isWrite()) THEN
+      ELSEIF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - File is readonly!')
       ELSE
@@ -2858,11 +2915,13 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id,gspace_id,plist_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ! Check that the file is writable. Best to catch this before HDF5 does.
-      IF(.NOT.thisHDF5File%isWrite()) THEN
+      ELSEIF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - File is readonly!')
       ELSE
@@ -2982,11 +3041,13 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id,gspace_id,plist_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ! Check that the file is writable. Best to catch this before HDF5 does.
-      IF(.NOT.thisHDF5File%isWrite()) THEN
+      ELSEIF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - File is readonly!')
       ELSE
@@ -3107,11 +3168,13 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id,gspace_id,plist_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ! Check that the file is writable. Best to catch this before HDF5 does.
-      IF(.NOT.thisHDF5File%isWrite()) THEN
+      ELSEIF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - File is readonly!')
       ELSE
@@ -3233,11 +3296,13 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id,gspace_id,plist_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ! Check that the file is writable. Best to catch this before HDF5 does.
-      IF(.NOT.thisHDF5File%isWrite()) THEN
+      ELSEIF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - File is readonly!')
       ELSE
@@ -3362,17 +3427,19 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id,gspace_id,plist_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ! Check that the file is writable. Best to catch this before HDF5 does.
-      IF(.NOT.thisHDF5File%isWrite()) THEN
+      ELSEIF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - File is readonly!')
       ELSE
 
         ! Convert StringType to character vector
-        valss=TRIM(vals)
+        valss=CHAR(vals)
         ALLOCATE(valsc(LEN(valss)))
         DO i=1,SIZE(valsc)
           valsc(i)=valss(i:i)
@@ -3483,13 +3550,13 @@ MODULE FileType_HDF5
 
       length_max=0
       DO i=1,SIZE(vals)
-        length_max=MAX(LEN_TRIM(vals(i)),length_max)
+        length_max=MAX(LEN(vals(i)),length_max)
       ENDDO
 
       IF(PRESENT(gdims_in)) THEN
         CALL thisHDF5File%fwrite(dsetname,vals,length_max,(/length_max,gdims_in/))
       ELSE
-        CALL thisHDF5File%fwrite(dsetname,vals,length_max)
+        CALL thisHDF5File%fwrite(dsetname,vals,length_max,(/length_max,SHAPE(vals)/))
       ENDIF
     ENDSUBROUTINE write_st1_helper
 !
@@ -3524,11 +3591,12 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id,gspace_id,plist_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
+      IF(.NOT.thisHDF5File%isinit) THEN
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
 
       ! Check that the file is writable. Best to catch this before HDF5 does.
-      IF(.NOT.thisHDF5File%isWrite()) THEN
+      ELSEIF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - File is readonly!')
       ELSE
@@ -3542,7 +3610,7 @@ MODULE FileType_HDF5
 
         ! Fill character array
         DO i=1,SIZE(vals)
-          valss=TRIM(vals(i))
+          valss=CHAR(vals(i))
           DO j=1,length_max
             valsc(j,i)=valss(j:j)
           ENDDO
@@ -3647,7 +3715,7 @@ MODULE FileType_HDF5
       length_max=0
       DO j=1,SIZE(vals,1)
         DO i=1,SIZE(vals,2)
-          length_max=MAX(LEN_TRIM(vals(j,i)),length_max)
+          length_max=MAX(LEN(vals(j,i)),length_max)
         ENDDO
       ENDDO
 
@@ -3689,11 +3757,12 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id,gspace_id,plist_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
+      IF(.NOT.thisHDF5File%isinit) THEN
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
 
       ! Check that the file is writable. Best to catch this before HDF5 does.
-      IF(.NOT.thisHDF5File%isWrite()) THEN
+      ELSEIF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - File is readonly!')
       ELSE
@@ -3706,7 +3775,7 @@ MODULE FileType_HDF5
         
         DO k=1,SIZE(vals,2)
           DO i=1,SIZE(vals,1)
-            valss=TRIM(vals(i,k))
+            valss=CHAR(vals(i,k))
             DO j=1,length_max
               valsc(j,i,k)=valss(j:j)
             ENDDO
@@ -3858,11 +3927,12 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id,gspace_id,plist_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
+      IF(.NOT.thisHDF5File%isinit) THEN
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
 
       ! Check that the file is writable. Best to catch this before HDF5 does.
-      IF(.NOT.thisHDF5File%isWrite()) THEN
+      ELSEIF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - File is readonly!')
       ELSE
@@ -3992,11 +4062,12 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id,gspace_id,plist_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
+      IF(.NOT.thisHDF5File%isinit) THEN
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
 
       ! Check that the file is writable. Best to catch this before HDF5 does.
-      IF(.NOT.thisHDF5File%isWrite()) THEN
+      ELSEIF(.NOT.thisHDF5File%isWrite()) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - File is readonly!')
       ELSE
@@ -4012,7 +4083,7 @@ MODULE FileType_HDF5
         path=convertPath(dsetname)
 
         ! Determine the dimensions for the dataspace
-        ldims(1)=LEN_TRIM(vals)
+        ldims(1)=LEN(vals)
 
         ! Store the dimensions from global if present
         IF(PRESENT(gdims_in)) THEN
@@ -4059,7 +4130,7 @@ MODULE FileType_HDF5
           ' - Could not create property list for write operation.')
 
         ! Write to the dataset
-        CALL h5dwrite_f(dset_id, H5T_NATIVE_CHARACTER, TRIM(vals), gdims, error, &
+        CALL h5dwrite_f(dset_id, H5T_NATIVE_CHARACTER, vals, gdims, error, &
             dspace_id,gspace_id,plist_id)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - Could not write to the dataset.')
@@ -4108,47 +4179,52 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
+      ELSE
 
-      ! Convert the path name to use slashes
-      path=convertPath(dsetname)
+        ! Convert the path name to use slashes
+        path=convertPath(dsetname)
 
-      ! Open the dataset
-      CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-         ' - Failed to open dataset.')
+        ! Open the dataset
+        CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+           ' - Failed to open dataset.')
 
-      ! Get dataset dimensions for allocation
-      CALL h5dget_space_f(dset_id,dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to obtain the dataspace.')
-      ! Make sure the rank is right
-      CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve number of dataspace dimensions.')
-      IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Using wrong read function for rank.')
+        ! Get dataset dimensions for allocation
+        CALL h5dget_space_f(dset_id,dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to obtain the dataspace.')
+        ! Make sure the rank is right
+        CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve number of dataspace dimensions.')
+        IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Using wrong read function for rank.')
 
-      CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve dataspace dimensions.')
+        CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve dataspace dimensions.')
+  
+        ! Read the dataset
+        mem=H5T_NATIVE_DOUBLE
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to read data from dataset.')
+  
+        ! Close the dataset
+        CALL h5dclose_f(dset_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataset.')
 
-      ! Read the dataset
-      mem=H5T_NATIVE_DOUBLE
-      CALL h5dread_f(dset_id,mem,vals,dims,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to read data from dataset.')
-
-      ! Close the dataset
-      CALL h5dclose_f(dset_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataset.')
-
-      ! Close the dataspace
-      CALL h5sclose_f(dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataspace.')
+        ! Close the dataspace
+        CALL h5sclose_f(dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataspace.')
+      ENDIF
 #endif
     ENDSUBROUTINE read_d0
 !
@@ -4175,58 +4251,63 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
-      ! Convert the path name to use slashes
-      path=convertPath(dsetname)
-
-      ! Open the dataset
-      CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to open dataset.')
-
-      ! Get dataset dimensions for allocation
-      CALL h5dget_space_f(dset_id,dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to obtain the dataspace.')
-
-      ! Make sure the rank is right
-      CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve number of dataspace dimensions.')
-      IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Using wrong read function for rank.')
-
-      CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve dataspace dimensions.')
-
-      ! Allocate space if needed
-      IF(ALLOCATED(vals)) THEN
-        ! Make sure the data is the right size
-        IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//' - data array is the wrong size.')
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ELSE
-        ! Allocate to size
-        ALLOCATE(vals(dims(1)))
+
+        ! Convert the path name to use slashes
+        path=convertPath(dsetname)
+
+        ! Open the dataset
+        CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to open dataset.')
+
+        ! Get dataset dimensions for allocation
+        CALL h5dget_space_f(dset_id,dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to obtain the dataspace.')
+
+        ! Make sure the rank is right
+        CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve number of dataspace dimensions.')
+        IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Using wrong read function for rank.')
+
+        CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve dataspace dimensions.')
+
+        ! Allocate space if needed
+        IF(ALLOCATED(vals)) THEN
+          ! Make sure the data is the right size
+          IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
+            '::'//myName//' - data array is the wrong size.')
+        ELSE
+          ! Allocate to size
+          ALLOCATE(vals(dims(1)))
+        ENDIF
+
+        ! Read the dataset
+        mem=H5T_NATIVE_DOUBLE
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to read data from dataset.')
+
+        ! Close the dataset
+        CALL h5dclose_f(dset_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataset.')
+
+        ! Close the dataspace
+        CALL h5sclose_f(dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataspace.')
       ENDIF
-
-      ! Read the dataset
-      mem=H5T_NATIVE_DOUBLE
-      CALL h5dread_f(dset_id,mem,vals,dims,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to read data from dataset.')
-
-      ! Close the dataset
-      CALL h5dclose_f(dset_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataset.')
-
-      ! Close the dataspace
-      CALL h5sclose_f(dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataspace.')
 #endif
     ENDSUBROUTINE read_d1
 !
@@ -4253,57 +4334,62 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
-      ! Convert the path name to use slashes
-      path=convertPath(dsetname)
-
-      ! Open the dataset
-      CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to open dataset.')
-
-      ! Get dataset dimensions for allocation
-      CALL h5dget_space_f(dset_id,dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to obtain the dataspace.')
-      ! Make sure the rank is right
-      CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve number of dataspace dimensions.')
-      IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Using wrong read function for rank.')
-
-      CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve dataspace dimensions.')
-
-      ! Allocate space if needed
-      IF(ALLOCATED(vals)) THEN
-        ! Make sure the data is the right size
-        IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//' - data array is the wrong size.')
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ELSE
-        ! Allocate to size
-        ALLOCATE(vals(dims(1),dims(2)))
+
+        ! Convert the path name to use slashes
+        path=convertPath(dsetname)
+
+        ! Open the dataset
+        CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to open dataset.')
+
+        ! Get dataset dimensions for allocation
+        CALL h5dget_space_f(dset_id,dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to obtain the dataspace.')
+        ! Make sure the rank is right
+        CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve number of dataspace dimensions.')
+        IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Using wrong read function for rank.')
+ 
+        CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve dataspace dimensions.')
+
+        ! Allocate space if needed
+        IF(ALLOCATED(vals)) THEN
+          ! Make sure the data is the right size
+          IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
+            '::'//myName//' - data array is the wrong size.')
+        ELSE
+          ! Allocate to size
+          ALLOCATE(vals(dims(1),dims(2)))
+        ENDIF
+
+        ! Read the dataset
+        mem=H5T_NATIVE_DOUBLE
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to read data from dataset.')
+
+        ! Close the dataset
+        CALL h5dclose_f(dset_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataset.')
+
+        ! Close the dataspace
+        CALL h5sclose_f(dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataspace.')
       ENDIF
-
-      ! Read the dataset
-      mem=H5T_NATIVE_DOUBLE
-      CALL h5dread_f(dset_id,mem,vals,dims,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to read data from dataset.')
-
-      ! Close the dataset
-      CALL h5dclose_f(dset_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataset.')
-
-      ! Close the dataspace
-      CALL h5sclose_f(dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataspace.')
 #endif
     ENDSUBROUTINE read_d2
 !
@@ -4330,57 +4416,62 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
-      ! Convert the path name to use slashes
-      path=convertPath(dsetname)
-
-      ! Open the dataset
-      CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to open dataset.')
-
-      ! Get dataset dimensions for allocation
-      CALL h5dget_space_f(dset_id,dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to obtain the dataspace.')
-      ! Make sure the rank is right
-      CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve number of dataspace dimensions.')
-      IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Using wrong read function for rank.')
-
-      CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve dataspace dimensions.')
-
-      ! Allocate space if needed
-      IF(ALLOCATED(vals)) THEN
-        ! Make sure the data is the right size
-        IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//' - data array is the wrong size.')
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ELSE
-        ! Allocate to size
-        ALLOCATE(vals(dims(1),dims(2),dims(3)))
+
+        ! Convert the path name to use slashes
+        path=convertPath(dsetname)
+
+        ! Open the dataset
+        CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to open dataset.')
+
+        ! Get dataset dimensions for allocation
+        CALL h5dget_space_f(dset_id,dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to obtain the dataspace.')
+        ! Make sure the rank is right
+        CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve number of dataspace dimensions.')
+        IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Using wrong read function for rank.')
+
+        CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve dataspace dimensions.')
+  
+        ! Allocate space if needed
+        IF(ALLOCATED(vals)) THEN
+          ! Make sure the data is the right size
+          IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
+            '::'//myName//' - data array is the wrong size.')
+        ELSE
+          ! Allocate to size
+          ALLOCATE(vals(dims(1),dims(2),dims(3)))
+        ENDIF
+  
+        ! Read the dataset
+        mem=H5T_NATIVE_DOUBLE
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to read data from dataset.')
+
+        ! Close the dataset
+        CALL h5dclose_f(dset_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataset.')
+
+        ! Close the dataspace
+        CALL h5sclose_f(dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataspace.')
       ENDIF
-
-      ! Read the dataset
-      mem=H5T_NATIVE_DOUBLE
-      CALL h5dread_f(dset_id,mem,vals,dims,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to read data from dataset.')
-
-      ! Close the dataset
-      CALL h5dclose_f(dset_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataset.')
-
-      ! Close the dataspace
-      CALL h5sclose_f(dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataspace.')
 #endif
     ENDSUBROUTINE read_d3
 !
@@ -4407,57 +4498,62 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
-      ! Convert the path name to use slashes
-      path=convertPath(dsetname)
-
-      ! Open the dataset
-      CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to open dataset.')
-
-      ! Get dataset dimensions for allocation
-      CALL h5dget_space_f(dset_id,dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to obtain the dataspace.')
-      ! Make sure the rank is right
-      CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve number of dataspace dimensions.')
-      IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Using wrong read function for rank.')
-
-      CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve dataspace dimensions.')
-
-      ! Allocate space if needed
-      IF(ALLOCATED(vals)) THEN
-        ! Make sure the data is the right size
-        IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//' - data array is the wrong size.')
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ELSE
-        ! Allocate to size
-        ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4)))
+
+        ! Convert the path name to use slashes
+        path=convertPath(dsetname)
+
+        ! Open the dataset
+        CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to open dataset.')
+
+        ! Get dataset dimensions for allocation
+        CALL h5dget_space_f(dset_id,dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to obtain the dataspace.')
+        ! Make sure the rank is right
+        CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve number of dataspace dimensions.')
+        IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Using wrong read function for rank.')
+
+        CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve dataspace dimensions.')
+
+        ! Allocate space if needed
+        IF(ALLOCATED(vals)) THEN
+          ! Make sure the data is the right size
+          IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
+            '::'//myName//' - data array is the wrong size.')
+        ELSE
+          ! Allocate to size
+          ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4)))
+        ENDIF
+
+        ! Read the dataset
+        mem=H5T_NATIVE_DOUBLE
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to read data from dataset.')
+
+        ! Close the dataset
+        CALL h5dclose_f(dset_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataset.')
+
+        ! Close the dataspace
+        CALL h5sclose_f(dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataspace.')
       ENDIF
-
-      ! Read the dataset
-      mem=H5T_NATIVE_DOUBLE
-      CALL h5dread_f(dset_id,mem,vals,dims,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to read data from dataset.')
-
-      ! Close the dataset
-      CALL h5dclose_f(dset_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataset.')
-
-      ! Close the dataspace
-      CALL h5sclose_f(dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataspace.')
 #endif
     ENDSUBROUTINE read_d4
 !
@@ -4484,57 +4580,62 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
-      ! Convert the path name to use slashes
-      path=convertPath(dsetname)
-
-      ! Open the dataset
-      CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to open dataset.')
-
-      ! Get dataset dimensions for allocation
-      CALL h5dget_space_f(dset_id,dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to obtain the dataspace.')
-      ! Make sure the rank is right
-      CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve number of dataspace dimensions.')
-      IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Using wrong read function for rank.')
-
-      CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve dataspace dimensions.')
-
-      ! Allocate space if needed
-      IF(ASSOCIATED(vals)) THEN
-        ! Make sure the data is the right size
-        IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//' - data array is the wrong size.')
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ELSE
-        ! Allocate to size
-        ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4)))
+
+        ! Convert the path name to use slashes
+        path=convertPath(dsetname)
+
+        ! Open the dataset
+        CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to open dataset.')
+  
+        ! Get dataset dimensions for allocation
+        CALL h5dget_space_f(dset_id,dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to obtain the dataspace.')
+        ! Make sure the rank is right
+         CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve number of dataspace dimensions.')
+        IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Using wrong read function for rank.')
+
+        CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve dataspace dimensions.')
+
+        ! Allocate space if needed
+        IF(ASSOCIATED(vals)) THEN
+          ! Make sure the data is the right size
+          IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
+            '::'//myName//' - data array is the wrong size.')
+        ELSE
+          ! Allocate to size
+          ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4)))
+        ENDIF
+
+        ! Read the dataset
+        mem=H5T_NATIVE_DOUBLE
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to read data from dataset.')
+
+        ! Close the dataset
+        CALL h5dclose_f(dset_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataset.')
+
+        ! Close the dataspace
+        CALL h5sclose_f(dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataspace.')
       ENDIF
-
-      ! Read the dataset
-      mem=H5T_NATIVE_DOUBLE
-      CALL h5dread_f(dset_id,mem,vals,dims,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to read data from dataset.')
-
-      ! Close the dataset
-      CALL h5dclose_f(dset_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataset.')
-
-      ! Close the dataspace
-      CALL h5sclose_f(dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataspace.')
 #endif
     ENDSUBROUTINE read_dp4
 !
@@ -4561,47 +4662,52 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
+      ELSE
 
-      ! Convert the path name to use slashes
-      path=convertPath(dsetname)
+        ! Convert the path name to use slashes
+        path=convertPath(dsetname)
+ 
+        ! Open the dataset
+        CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to open dataset.')
 
-      ! Open the dataset
-      CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to open dataset.')
+        ! Get dataset dimensions for allocation
+        CALL h5dget_space_f(dset_id,dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to obtain the dataspace.')
+        ! Make sure the rank is right
+        CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve number of dataspace dimensions.')
+        IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Using wrong read function for rank.')
 
-      ! Get dataset dimensions for allocation
-      CALL h5dget_space_f(dset_id,dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to obtain the dataspace.')
-      ! Make sure the rank is right
-      CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve number of dataspace dimensions.')
-      IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Using wrong read function for rank.')
+        CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve dataspace dimensions.')
 
-      CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve dataspace dimensions.')
+        ! Read the dataset
+        mem=H5T_NATIVE_REAL
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to read data from dataset.')
 
-      ! Read the dataset
-      mem=H5T_NATIVE_REAL
-      CALL h5dread_f(dset_id,mem,vals,dims,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to read data from dataset.')
+        ! Close the dataset
+        CALL h5dclose_f(dset_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataset.')
 
-      ! Close the dataset
-      CALL h5dclose_f(dset_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataset.')
-
-      ! Close the dataspace
-      CALL h5sclose_f(dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataspace.')
+        ! Close the dataspace
+        CALL h5sclose_f(dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataspace.')
+      ENDIF
 #endif
     ENDSUBROUTINE read_s0
 !
@@ -4628,57 +4734,62 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
-      ! Convert the path name to use slashes
-      path=convertPath(dsetname)
-
-      ! Open the dataset
-      CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to open dataset.')
-
-      ! Get dataset dimensions for allocation
-      CALL h5dget_space_f(dset_id,dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to obtain the dataspace.')
-      ! Make sure the rank is right
-      CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve number of dataspace dimensions.')
-      IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Using wrong read function for rank.')
-
-      CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve dataspace dimensions.')
-
-      ! Allocate space if needed
-      IF(ALLOCATED(vals)) THEN
-        ! Make sure the vals is the right size
-        IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//' - data array is the wrong size.')
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ELSE
-        ! Allocate to size
-        ALLOCATE(vals(dims(1)))
+
+        ! Convert the path name to use slashes
+        path=convertPath(dsetname)
+
+        ! Open the dataset
+        CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to open dataset.')
+
+        ! Get dataset dimensions for allocation
+        CALL h5dget_space_f(dset_id,dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to obtain the dataspace.')
+        ! Make sure the rank is right
+        CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve number of dataspace dimensions.')
+        IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Using wrong read function for rank.')
+
+        CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve dataspace dimensions.')
+
+        ! Allocate space if needed
+        IF(ALLOCATED(vals)) THEN
+          ! Make sure the vals is the right size
+          IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
+            '::'//myName//' - data array is the wrong size.')
+        ELSE
+          ! Allocate to size
+          ALLOCATE(vals(dims(1)))
+        ENDIF
+
+        ! Read the dataset
+        mem=H5T_NATIVE_REAL
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to read data from dataset.')
+
+        ! Close the dataset
+        CALL h5dclose_f(dset_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataset.')
+
+        ! Close the dataspace
+        CALL h5sclose_f(dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataspace.')
       ENDIF
-
-      ! Read the dataset
-      mem=H5T_NATIVE_REAL
-      CALL h5dread_f(dset_id,mem,vals,dims,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to read data from dataset.')
-
-      ! Close the dataset
-      CALL h5dclose_f(dset_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataset.')
-
-      ! Close the dataspace
-      CALL h5sclose_f(dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataspace.')
 #endif
     ENDSUBROUTINE read_s1
 !
@@ -4705,57 +4816,62 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
-      ! Convert the path name to use slashes
-      path=convertPath(dsetname)
-
-      ! Open the dataset
-      CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to open dataset.')
-
-      ! Get dataset dimensions for allocation
-      CALL h5dget_space_f(dset_id,dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to obtain the dataspace.')
-      ! Make sure the rank is right
-      CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve number of dataspace dimensions.')
-      IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Using wrong read function for rank.')
-
-      CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve dataspace dimensions.')
-
-      ! Allocate space if needed
-      IF(ALLOCATED(vals)) THEN
-        ! Make sure the data is the right size
-        IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//' - data array is the wrong size.')
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ELSE
-        ! Allocate to size
-        ALLOCATE(vals(dims(1),dims(2)))
+
+        ! Convert the path name to use slashes
+        path=convertPath(dsetname)
+
+        ! Open the dataset
+        CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to open dataset.')
+
+        ! Get dataset dimensions for allocation
+        CALL h5dget_space_f(dset_id,dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to obtain the dataspace.')
+        ! Make sure the rank is right
+        CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve number of dataspace dimensions.')
+        IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Using wrong read function for rank.')
+
+        CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve dataspace dimensions.')
+
+        ! Allocate space if needed
+        IF(ALLOCATED(vals)) THEN
+          ! Make sure the data is the right size
+          IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
+            '::'//myName//' - data array is the wrong size.')
+        ELSE
+          ! Allocate to size
+          ALLOCATE(vals(dims(1),dims(2)))
+        ENDIF
+
+        ! Read the dataset
+        mem=H5T_NATIVE_REAL
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to read data from dataset.')
+
+        ! Close the dataset
+        CALL h5dclose_f(dset_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataset.')
+
+        ! Close the dataspace
+        CALL h5sclose_f(dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataspace.')
       ENDIF
-
-      ! Read the dataset
-      mem=H5T_NATIVE_REAL
-      CALL h5dread_f(dset_id,mem,vals,dims,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to read data from dataset.')
-
-      ! Close the dataset
-      CALL h5dclose_f(dset_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataset.')
-
-      ! Close the dataspace
-      CALL h5sclose_f(dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataspace.')
 #endif
     ENDSUBROUTINE read_s2
 !
@@ -4782,57 +4898,62 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
-      ! Convert the path name to use slashes
-      path=convertPath(dsetname)
-
-      ! Open the dataset
-      CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to open dataset.')
-
-      ! Get dataset dimensions for allocation
-      CALL h5dget_space_f(dset_id,dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to obtain the dataspace.')
-      ! Make sure the rank is right
-      CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve number of dataspace dimensions.')
-      IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Using wrong read function for rank.')
-
-      CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve dataspace dimensions.')
-
-      ! Allocate space if needed
-      IF(ALLOCATED(vals)) THEN
-        ! Make sure the data is the right size
-        IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//' - data array is the wrong size.')
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ELSE
-        ! Allocate to size
-        ALLOCATE(vals(dims(1),dims(2),dims(3)))
+
+        ! Convert the path name to use slashes
+        path=convertPath(dsetname)
+
+        ! Open the dataset
+        CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to open dataset.')
+
+        ! Get dataset dimensions for allocation
+        CALL h5dget_space_f(dset_id,dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to obtain the dataspace.')
+         ! Make sure the rank is right
+        CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve number of dataspace dimensions.')
+        IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Using wrong read function for rank.')
+
+        CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve dataspace dimensions.')
+
+        ! Allocate space if needed
+        IF(ALLOCATED(vals)) THEN
+          ! Make sure the data is the right size
+          IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
+            '::'//myName//' - data array is the wrong size.')
+        ELSE
+          ! Allocate to size
+          ALLOCATE(vals(dims(1),dims(2),dims(3)))
+        ENDIF
+
+        ! Read the dataset
+        mem=H5T_NATIVE_REAL
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to read data from dataset.')
+
+        ! Close the dataset
+        CALL h5dclose_f(dset_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataset.')
+
+        ! Close the dataspace
+        CALL h5sclose_f(dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataspace.')
       ENDIF
-
-      ! Read the dataset
-      mem=H5T_NATIVE_REAL
-      CALL h5dread_f(dset_id,mem,vals,dims,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to read data from dataset.')
-
-      ! Close the dataset
-      CALL h5dclose_f(dset_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataset.')
-
-      ! Close the dataspace
-      CALL h5sclose_f(dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataspace.')
 #endif
     ENDSUBROUTINE read_s3
 !
@@ -4859,57 +4980,62 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
-      ! Convert the path name to use slashes
-      path=convertPath(dsetname)
-
-      ! Open the dataset
-      CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to open dataset.')
-
-      ! Get dataset dimensions for allocation
-      CALL h5dget_space_f(dset_id,dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to obtain the dataspace.')
-      ! Make sure the rank is right
-      CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve number of dataspace dimensions.')
-      IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Using wrong read function for rank.')
-
-      CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve dataspace dimensions.')
-
-      ! Allocate space if needed
-      IF(ALLOCATED(vals)) THEN
-        ! Make sure the data is the right size
-        IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//' - data array is the wrong size.')
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ELSE
-        ! Allocate to size
-        ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4)))
+
+        ! Convert the path name to use slashes
+        path=convertPath(dsetname)
+
+        ! Open the dataset
+        CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to open dataset.')
+
+        ! Get dataset dimensions for allocation
+        CALL h5dget_space_f(dset_id,dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to obtain the dataspace.')
+        ! Make sure the rank is right
+        CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve number of dataspace dimensions.')
+        IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Using wrong read function for rank.')
+
+        CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve dataspace dimensions.')
+
+        ! Allocate space if needed
+        IF(ALLOCATED(vals)) THEN
+          ! Make sure the data is the right size
+          IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
+            '::'//myName//' - data array is the wrong size.')
+        ELSE
+          ! Allocate to size
+          ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4)))
+        ENDIF
+
+        ! Read the dataset
+        mem=H5T_NATIVE_REAL
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to read data from dataset.')
+
+        ! Close the dataset
+        CALL h5dclose_f(dset_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataset.')
+
+        ! Close the dataspace
+        CALL h5sclose_f(dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataspace.')
       ENDIF
-
-      ! Read the dataset
-      mem=H5T_NATIVE_REAL
-      CALL h5dread_f(dset_id,mem,vals,dims,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to read data from dataset.')
-
-      ! Close the dataset
-      CALL h5dclose_f(dset_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataset.')
-
-      ! Close the dataspace
-      CALL h5sclose_f(dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataspace.')
 #endif
     ENDSUBROUTINE read_s4
 !
@@ -4936,47 +5062,52 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
+      ELSE
 
-      ! Convert the path name to use slashes
-      path=convertPath(dsetname)
+        ! Convert the path name to use slashes
+        path=convertPath(dsetname)
 
-      ! Open the dataset
-      CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to open dataset.')
+        ! Open the dataset
+        CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to open dataset.')
 
-      ! Get dataset dimensions for allocation
-      CALL h5dget_space_f(dset_id,dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to obtain the dataspace.')
-      ! Make sure the rank is right
-      CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve number of dataspace dimensions.')
-      IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Using wrong read function for rank.')
+        ! Get dataset dimensions for allocation
+        CALL h5dget_space_f(dset_id,dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to obtain the dataspace.')
+        ! Make sure the rank is right
+        CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve number of dataspace dimensions.')
+        IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Using wrong read function for rank.')
 
-      CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve dataspace dimensions.')
+        CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve dataspace dimensions.')
 
-      ! Read the dataset
-      mem=H5T_NATIVE_INTEGER
-      CALL h5dread_f(dset_id,mem,vals,dims,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to read data from dataset.')
+        ! Read the dataset
+        mem=H5T_NATIVE_INTEGER
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to read data from dataset.')
 
-      ! Close the dataset
-      CALL h5dclose_f(dset_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataset.')
+        ! Close the dataset
+        CALL h5dclose_f(dset_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataset.')
 
       ! Close the dataspace
-      CALL h5sclose_f(dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataspace.')
+        CALL h5sclose_f(dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataspace.')
+      ENDIF
 
 #endif
     ENDSUBROUTINE read_n0
@@ -5005,57 +5136,62 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
-      ! Convert the path name to use slashes
-      path=convertPath(dsetname)
-
-      ! Open the dataset
-      CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to open dataset.')
-
-      ! Get dataset dimensions for allocation
-      CALL h5dget_space_f(dset_id,dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to obtain the dataspace.')
-      ! Make sure the rank is right
-      CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve number of dataspace dimensions.')
-      IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Using wrong read function for rank.')
-
-      CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve dataspace dimensions.')
-
-      ! Allocate space if needed
-      IF(ALLOCATED(vals)) THEN
-        ! Make sure the data is the right size
-        IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//' - data array is the wrong size.')
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ELSE
-        ! Allocate to size
-        ALLOCATE(vals(dims(1)))
+
+        ! Convert the path name to use slashes
+        path=convertPath(dsetname)
+
+        ! Open the dataset
+        CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to open dataset.')
+
+        ! Get dataset dimensions for allocation
+        CALL h5dget_space_f(dset_id,dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to obtain the dataspace.')
+        ! Make sure the rank is right
+        CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve number of dataspace dimensions.')
+        IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Using wrong read function for rank.')
+
+        CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve dataspace dimensions.')
+
+        ! Allocate space if needed
+        IF(ALLOCATED(vals)) THEN
+          ! Make sure the data is the right size
+          IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
+            '::'//myName//' - data array is the wrong size.')
+        ELSE
+          ! Allocate to size
+          ALLOCATE(vals(dims(1)))
+        ENDIF
+
+        ! Read the dataset
+        mem=H5T_NATIVE_INTEGER
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to read data from dataset.')
+
+        ! Close the dataset
+        CALL h5dclose_f(dset_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataset.')
+
+        ! Close the dataspace
+        CALL h5sclose_f(dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataspace.')
       ENDIF
-
-      ! Read the dataset
-      mem=H5T_NATIVE_INTEGER
-      CALL h5dread_f(dset_id,mem,vals,dims,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to read data from dataset.')
-
-      ! Close the dataset
-      CALL h5dclose_f(dset_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataset.')
-
-      ! Close the dataspace
-      CALL h5sclose_f(dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataspace.')
 #endif
     ENDSUBROUTINE read_n1
 !
@@ -5082,57 +5218,62 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
-      ! Convert the path name to use slashes
-      path=convertPath(dsetname)
-
-      ! Open the dataset
-      CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to open dataset.')
-
-      ! Get dataset dimensions for allocation
-      CALL h5dget_space_f(dset_id,dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to obtain the dataspace.')
-      ! Make sure the rank is right
-      CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve number of dataspace dimensions.')
-      IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Using wrong read function for rank.')
-
-      CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve dataspace dimensions.')
-
-      ! Allocate space if needed
-      IF(ALLOCATED(vals)) THEN
-        ! Make sure the data is the right size
-        IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//' - data array is the wrong size.')
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ELSE
-        ! Allocate to size
-        ALLOCATE(vals(dims(1),dims(2)))
+
+        ! Convert the path name to use slashes
+        path=convertPath(dsetname)
+
+        ! Open the dataset
+        CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to open dataset.')
+
+        ! Get dataset dimensions for allocation
+        CALL h5dget_space_f(dset_id,dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to obtain the dataspace.')
+        ! Make sure the rank is right
+        CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve number of dataspace dimensions.')
+        IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Using wrong read function for rank.')
+
+        CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve dataspace dimensions.')
+
+        ! Allocate space if needed
+        IF(ALLOCATED(vals)) THEN
+          ! Make sure the data is the right size
+          IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
+            '::'//myName//' - data array is the wrong size.')
+        ELSE
+          ! Allocate to size
+          ALLOCATE(vals(dims(1),dims(2)))
+        ENDIF
+
+        ! Read the dataset
+        mem=H5T_NATIVE_INTEGER
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to read data from dataset.')
+
+        ! Close the dataset
+        CALL h5dclose_f(dset_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataset.')
+
+        ! Close the dataspace
+        CALL h5sclose_f(dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataspace.')
       ENDIF
-
-      ! Read the dataset
-      mem=H5T_NATIVE_INTEGER
-      CALL h5dread_f(dset_id,mem,vals,dims,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to read data from dataset.')
-
-      ! Close the dataset
-      CALL h5dclose_f(dset_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataset.')
-
-      ! Close the dataspace
-      CALL h5sclose_f(dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataspace.')
 #endif
     ENDSUBROUTINE read_n2
 !
@@ -5159,57 +5300,62 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
-      ! Convert the path name to use slashes
-      path=convertPath(dsetname)
-
-      ! Open the dataset
-      CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to open dataset.')
-
-      ! Get dataset dimensions for allocation
-      CALL h5dget_space_f(dset_id,dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to obtain the dataspace.')
-      ! Make sure the rank is right
-      CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve number of dataspace dimensions.')
-      IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Using wrong read function for rank.')
-
-      CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve dataspace dimensions.')
-
-      ! Allocate space if needed
-      IF(ALLOCATED(vals)) THEN
-        ! Make sure the data is the right size
-        IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//' - data array is the wrong size.')
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ELSE
-        ! Allocate to size
-        ALLOCATE(vals(dims(1),dims(2),dims(3)))
+
+        ! Convert the path name to use slashes
+        path=convertPath(dsetname)
+
+        ! Open the dataset
+        CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to open dataset.')
+
+        ! Get dataset dimensions for allocation
+        CALL h5dget_space_f(dset_id,dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to obtain the dataspace.')
+        ! Make sure the rank is right
+        CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve number of dataspace dimensions.')
+        IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Using wrong read function for rank.')
+
+        CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve dataspace dimensions.')
+
+        ! Allocate space if needed
+        IF(ALLOCATED(vals)) THEN
+          ! Make sure the data is the right size
+          IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
+            '::'//myName//' - data array is the wrong size.')
+        ELSE
+          ! Allocate to size
+          ALLOCATE(vals(dims(1),dims(2),dims(3)))
+        ENDIF
+
+        ! Read the dataset
+        mem=H5T_NATIVE_INTEGER
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to read data from dataset.')
+
+        ! Close the dataset
+        CALL h5dclose_f(dset_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataset.')
+
+        ! Close the dataspace
+        CALL h5sclose_f(dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataspace.')
       ENDIF
-
-      ! Read the dataset
-      mem=H5T_NATIVE_INTEGER
-      CALL h5dread_f(dset_id,mem,vals,dims,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to read data from dataset.')
-
-      ! Close the dataset
-      CALL h5dclose_f(dset_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataset.')
-
-      ! Close the dataspace
-      CALL h5sclose_f(dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataspace.')
 #endif
     ENDSUBROUTINE read_n3
 !
@@ -5238,52 +5384,57 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
+      ELSE
 
-      ! Convert the path name to use slashes
-      path=convertPath(dsetname)
+        ! Convert the path name to use slashes
+        path=convertPath(dsetname)
+ 
+        ! Open the dataset
+        CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to open dataset.')
 
-      ! Open the dataset
-      CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to open dataset.')
+        ! Get dataset dimensions for allocation
+        CALL h5dget_space_f(dset_id,dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to obtain the dataspace.')
+        ! Make sure the rank is right
+        CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve number of dataspace dimensions.')
+        IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Using wrong read function for rank.')
 
-      ! Get dataset dimensions for allocation
-      CALL h5dget_space_f(dset_id,dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to obtain the dataspace.')
-      ! Make sure the rank is right
-      CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve number of dataspace dimensions.')
-      IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Using wrong read function for rank.')
+        CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve dataspace dimensions.')
 
-      CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve dataspace dimensions.')
+        ! Read the dataset
+        mem=H5T_NATIVE_DOUBLE
+        CALL h5dread_f(dset_id,mem,valst,dims,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to read data from dataset.')
 
-      ! Read the dataset
-      mem=H5T_NATIVE_DOUBLE
-      CALL h5dread_f(dset_id,mem,valst,dims,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to read data from dataset.')
+        ! Close the dataset
+        CALL h5dclose_f(dset_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataset.')
 
-      ! Close the dataset
-      CALL h5dclose_f(dset_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataset.')
+        ! Close the dataspace
+        CALL h5sclose_f(dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataspace.')
 
-      ! Close the dataspace
-      CALL h5sclose_f(dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataspace.')
-
-      ! Convert data type
-      vals=valst
-      CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
-        ' - Converting from double to long integer!')
+        ! Convert data type
+        vals=valst
+        CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
+          ' - Converting from double to long integer!')
+      ENDIF
 #endif
     ENDSUBROUTINE read_l0
 !
@@ -5313,63 +5464,68 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
-      ! Convert the path name to use slashes
-      path=convertPath(dsetname)
-
-      ! Open the dataset
-      CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to open dataset.')
-
-      ! Get dataset dimensions for allocation
-      CALL h5dget_space_f(dset_id,dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to obtain the dataspace.')
-      ! Make sure the rank is right
-      CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve number of dataspace dimensions.')
-      IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Using wrong read function for rank.')
-
-      CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve dataspace dimensions.')
-
-      ! Allocate space if needed
-      IF(ALLOCATED(vals)) THEN
-        ! Make sure the data is the right size
-        IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//' - data array is the wrong size.')
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ELSE
-        ! Allocate to size
-        ALLOCATE(vals(dims(1)))
+
+        ! Convert the path name to use slashes
+        path=convertPath(dsetname)
+
+        ! Open the dataset
+        CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to open dataset.')
+
+        ! Get dataset dimensions for allocation
+        CALL h5dget_space_f(dset_id,dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to obtain the dataspace.')
+        ! Make sure the rank is right
+        CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve number of dataspace dimensions.')
+        IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Using wrong read function for rank.')
+
+        CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve dataspace dimensions.')
+
+        ! Allocate space if needed
+        IF(ALLOCATED(vals)) THEN
+          ! Make sure the data is the right size
+          IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
+            '::'//myName//' - data array is the wrong size.')
+        ELSE
+          ! Allocate to size
+          ALLOCATE(vals(dims(1)))
+        ENDIF
+        ALLOCATE(valst(dims(1)))
+
+        ! Read the dataset
+        mem=H5T_NATIVE_INTEGER
+        CALL h5dread_f(dset_id,mem,valst,dims,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to read data from dataset.')
+
+        ! Close the dataset
+        CALL h5dclose_f(dset_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataset.')
+
+        ! Close the dataspace
+        CALL h5sclose_f(dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataspace.')
+
+        ! Conver data type
+        vals=valst
+        CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
+          ' - Converting from double to long integer!')
       ENDIF
-      ALLOCATE(valst(dims(1)))
-
-      ! Read the dataset
-      mem=H5T_NATIVE_INTEGER
-      CALL h5dread_f(dset_id,mem,valst,dims,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to read data from dataset.')
-
-      ! Close the dataset
-      CALL h5dclose_f(dset_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataset.')
-
-      ! Close the dataspace
-      CALL h5sclose_f(dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataspace.')
-
-      ! Conver data type
-      vals=valst
-      CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
-        ' - Converting from double to long integer!')
 #endif
     ENDSUBROUTINE read_l1
 !
@@ -5399,63 +5555,68 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
-      ! Convert the path name to use slashes
-      path=convertPath(dsetname)
-
-      ! Open the dataset
-      CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to open dataset.')
-
-      ! Get dataset dimensions for allocation
-      CALL h5dget_space_f(dset_id,dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to obtain the dataspace.')
-      ! Make sure the rank is right
-      CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve number of dataspace dimensions.')
-      IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Using wrong read function for rank.')
-
-      CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve dataspace dimensions.')
-
-      ! Allocate space if needed
-      IF(ALLOCATED(vals)) THEN
-        ! Make sure the data is the right size
-        IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//' - data array is the wrong size.')
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ELSE
-        ! Allocate to size
-        ALLOCATE(vals(dims(1),dims(2)))
+
+        ! Convert the path name to use slashes
+        path=convertPath(dsetname)
+
+        ! Open the dataset
+        CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to open dataset.')
+
+        ! Get dataset dimensions for allocation
+        CALL h5dget_space_f(dset_id,dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to obtain the dataspace.')
+        ! Make sure the rank is right
+        CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve number of dataspace dimensions.')
+        IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Using wrong read function for rank.')
+
+        CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve dataspace dimensions.')
+
+        ! Allocate space if needed
+        IF(ALLOCATED(vals)) THEN
+          ! Make sure the data is the right size
+          IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
+            '::'//myName//' - data array is the wrong size.')
+        ELSE
+          ! Allocate to size
+          ALLOCATE(vals(dims(1),dims(2)))
+        ENDIF
+        ALLOCATE(valst(dims(1),dims(2)))
+
+        ! Read the dataset
+        mem=H5T_NATIVE_INTEGER
+        CALL h5dread_f(dset_id,mem,valst,dims,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to read data from dataset.')
+
+        ! Close the dataset
+        CALL h5dclose_f(dset_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataset.')
+
+        ! Close the dataspace
+        CALL h5sclose_f(dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataspace.')
+
+        ! Conver data type
+        vals=valst
+        CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
+          ' - Converting from double to long integer!')
       ENDIF
-      ALLOCATE(valst(dims(1),dims(2)))
-
-      ! Read the dataset
-      mem=H5T_NATIVE_INTEGER
-      CALL h5dread_f(dset_id,mem,valst,dims,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to read data from dataset.')
-
-      ! Close the dataset
-      CALL h5dclose_f(dset_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataset.')
-
-      ! Close the dataspace
-      CALL h5sclose_f(dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataspace.')
-
-      ! Conver data type
-      vals=valst
-      CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
-        ' - Converting from double to long integer!')
 #endif
     ENDSUBROUTINE read_l2
 !
@@ -5485,63 +5646,68 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
-      ! Convert the path name to use slashes
-      path=convertPath(dsetname)
-
-      ! Open the dataset
-      CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to open dataset.')
-
-      ! Get dataset dimensions for allocation
-      CALL h5dget_space_f(dset_id,dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to obtain the dataspace.')
-      ! Make sure the rank is right
-      CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve number of dataspace dimensions.')
-      IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Using wrong read function for rank.')
-
-      CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve dataspace dimensions.')
-
-      ! Allocate space if needed
-      IF(ALLOCATED(vals)) THEN
-        ! Make sure the data is the right size
-        IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//' - data array is the wrong size.')
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ELSE
-        ! Allocate to size
-        ALLOCATE(vals(dims(1),dims(2),dims(3)))
+
+        ! Convert the path name to use slashes
+        path=convertPath(dsetname)
+
+        ! Open the dataset
+        CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to open dataset.')
+
+        ! Get dataset dimensions for allocation
+        CALL h5dget_space_f(dset_id,dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to obtain the dataspace.')
+        ! Make sure the rank is right
+        CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve number of dataspace dimensions.')
+        IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Using wrong read function for rank.')
+
+        CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve dataspace dimensions.')
+
+        ! Allocate space if needed
+        IF(ALLOCATED(vals)) THEN
+          ! Make sure the data is the right size
+          IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
+            '::'//myName//' - data array is the wrong size.')
+        ELSE
+          ! Allocate to size
+          ALLOCATE(vals(dims(1),dims(2),dims(3)))
+        ENDIF
+        ALLOCATE(valst(dims(1),dims(2),dims(3)))
+
+        ! Read the dataset
+        mem=H5T_NATIVE_INTEGER
+        CALL h5dread_f(dset_id,mem,valst,dims,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to read data from dataset.')
+
+        ! Close the dataset
+        CALL h5dclose_f(dset_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataset.')
+
+        ! Close the dataspace
+        CALL h5sclose_f(dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataspace.')
+
+        ! Conver data type
+        vals=valst
+        CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
+          ' - Converting from double to long integer!')
       ENDIF
-      ALLOCATE(valst(dims(1),dims(2),dims(3)))
-
-      ! Read the dataset
-      mem=H5T_NATIVE_INTEGER
-      CALL h5dread_f(dset_id,mem,valst,dims,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to read data from dataset.')
-
-      ! Close the dataset
-      CALL h5dclose_f(dset_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataset.')
-
-      ! Close the dataspace
-      CALL h5sclose_f(dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataspace.')
-
-      ! Conver data type
-      vals=valst
-      CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
-        ' - Converting from double to long integer!')
 #endif
     ENDSUBROUTINE read_l3
 !
@@ -5570,54 +5736,59 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
-      ! Convert the path name to use slashes
-      path=convertPath(dsetname)
-
-      ! Open the dataset
-      CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to open dataset.')
-
-      ! Get dataset dimensions for allocation
-      CALL h5dget_space_f(dset_id,dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to obtain the dataspace.')
-      ! Make sure the rank is right
-      CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve number of dataspace dimensions.')
-      IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Using wrong read function for rank.')
-
-      CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve dataspace dimensions.')
-
-      ! Read the dataset
-      mem=H5T_NATIVE_CHARACTER
-      CALL h5dread_f(dset_id,mem,valsc,dims,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to read data from dataset.')
-
-      ! Convert to logical from character
-      IF(valsc=='F') THEN
-        vals=.FALSE.
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ELSE
-        vals=.TRUE.
+
+        ! Convert the path name to use slashes
+        path=convertPath(dsetname)
+
+        ! Open the dataset
+        CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to open dataset.')
+
+        ! Get dataset dimensions for allocation
+        CALL h5dget_space_f(dset_id,dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to obtain the dataspace.')
+        ! Make sure the rank is right
+        CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve number of dataspace dimensions.')
+        IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Using wrong read function for rank.')
+
+        CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve dataspace dimensions.')
+
+        ! Read the dataset
+        mem=H5T_NATIVE_CHARACTER
+        CALL h5dread_f(dset_id,mem,valsc,dims,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to read data from dataset.')
+
+        ! Convert to logical from character
+        IF(valsc=='F') THEN
+          vals=.FALSE.
+        ELSE
+          vals=.TRUE.
+        ENDIF
+
+        ! Close the dataset
+        CALL h5dclose_f(dset_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataset.')
+
+        ! Close the dataspace
+        CALL h5sclose_f(dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataspace.')
       ENDIF
-
-      ! Close the dataset
-      CALL h5dclose_f(dset_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataset.')
-
-      ! Close the dataspace
-      CALL h5sclose_f(dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataspace.')
 #endif
     ENDSUBROUTINE read_b0
 !
@@ -5647,69 +5818,74 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-      
-      ! Convert the path name to use slashes
-      path=convertPath(dsetname)
-
-      ! Open the dataset
-      CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
-
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to open dataset.')
-
-      ! Get dataset dimensions for allocation
-      CALL h5dget_space_f(dset_id,dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to obtain the dataspace.')
-      ! Make sure the rank is right
-      CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve number of dataspace dimensions.')
-      IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Using wrong read function for rank.')
-
-      CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve dataspace dimensions.')
-
-      ! Allocate space in data if needed
-      IF(ALLOCATED(vals)) THEN
-        ! Make sure the data is the right size
-        IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//' - data array is the wrong size.')
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ELSE
-        ! Allocate to size
-        ALLOCATE(vals(dims(1)))
-      ENDIF
-
-      ! Allocate space in datac
-      ALLOCATE(valsc(dims(1)))
-
-      ! Read the dataset
-      mem=H5T_NATIVE_CHARACTER
-      CALL h5dread_f(dset_id,mem,valsc,dims,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to read data from dataset.')
-
-      ! Close the dataset
-      CALL h5dclose_f(dset_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataset.')
-
-      ! Close the dataspace
-      CALL h5sclose_f(dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataspace.')
-
-      ! Convert from surrogate character array to boolean array
-      vals=.FALSE.
-      FORALL(i=1:SIZE(vals),valsc(i) == 'T')
-        vals(i)=.TRUE.
-      ENDFORALL
       
-      DEALLOCATE(valsc)
+        ! Convert the path name to use slashes
+        path=convertPath(dsetname)
+
+        ! Open the dataset
+        CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
+
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to open dataset.')
+
+        ! Get dataset dimensions for allocation
+        CALL h5dget_space_f(dset_id,dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to obtain the dataspace.')
+        ! Make sure the rank is right
+        CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve number of dataspace dimensions.')
+        IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Using wrong read function for rank.')
+
+        CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve dataspace dimensions.')
+
+        ! Allocate space in data if needed
+        IF(ALLOCATED(vals)) THEN
+           ! Make sure the data is the right size
+          IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
+            '::'//myName//' - data array is the wrong size.')
+        ELSE
+          ! Allocate to size
+          ALLOCATE(vals(dims(1)))
+        ENDIF
+
+        ! Allocate space in datac
+        ALLOCATE(valsc(dims(1)))
+
+        ! Read the dataset
+        mem=H5T_NATIVE_CHARACTER
+        CALL h5dread_f(dset_id,mem,valsc,dims,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to read data from dataset.')
+
+        ! Close the dataset
+        CALL h5dclose_f(dset_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataset.')
+
+        ! Close the dataspace
+        CALL h5sclose_f(dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataspace.')
+ 
+        ! Convert from surrogate character array to boolean array
+        vals=.FALSE.
+        FORALL(i=1:SIZE(vals),valsc(i) == 'T')
+          vals(i)=.TRUE.
+        ENDFORALL
+      
+        DEALLOCATE(valsc)
+      ENDIF
 #endif
     ENDSUBROUTINE read_b1
 !
@@ -5739,70 +5915,74 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
-
-      ! Convert the path name to use slashes
-      path=convertPath(dsetname)
-
-      ! Open the dataset
-      CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
-
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to open dataset.')
-
-      ! Get dataset dimensions for allocation
-      CALL h5dget_space_f(dset_id,dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to obtain the dataspace.')
-      ! Make sure the rank is right
-      CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve number of dataspace dimensions.')
-      IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Using wrong read function for rank.')
-
-      CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve dataspace dimensions.')
-
-      ! Allocate space for data if needed
-      IF(ALLOCATED(vals)) THEN
-        ! Make sure the data is the right size
-        IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//' - data array is the wrong size.')
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ELSE
-        ! Allocate to size
-        ALLOCATE(vals(dims(1),dims(2)))
-      ENDIF
 
-      ! Allocate space for datac
-      ALLOCATE(valsc(dims(1),dims(2)))
+        ! Convert the path name to use slashes
+        path=convertPath(dsetname)
+ 
+        ! Open the dataset
+        CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
 
-      ! Read the dataset
-      mem=H5T_NATIVE_CHARACTER
-      CALL h5dread_f(dset_id,mem,valsc,dims,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to read data from dataset.')
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to open dataset.')
 
-      ! Close the dataset
-      CALL h5dclose_f(dset_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataset.')
+        ! Get dataset dimensions for allocation
+        CALL h5dget_space_f(dset_id,dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to obtain the dataspace.')
+         ! Make sure the rank is right
+        CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve number of dataspace dimensions.')
+        IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Using wrong read function for rank.')
 
-      ! Close the dataspace
-      CALL h5sclose_f(dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataspace.')
+        CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve dataspace dimensions.')
 
-      ! Convert from surrogate character array to boolean array
-      vals=.FALSE.
-      FORALL(i=1:SIZE(vals,DIM=1),j=1:SIZE(vals,DIM=2),valsc(i,j) == 'T')
-        vals(i,j)=.TRUE.
-      ENDFORALL
+        ! Allocate space for data if needed
+        IF(ALLOCATED(vals)) THEN
+          ! Make sure the data is the right size
+          IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
+            '::'//myName//' - data array is the wrong size.')
+        ELSE
+          ! Allocate to size
+          ALLOCATE(vals(dims(1),dims(2)))
+        ENDIF
+
+        ! Allocate space for datac
+        ALLOCATE(valsc(dims(1),dims(2)))
+
+        ! Read the dataset
+        mem=H5T_NATIVE_CHARACTER
+        CALL h5dread_f(dset_id,mem,valsc,dims,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to read data from dataset.')
+
+        ! Close the dataset
+        CALL h5dclose_f(dset_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataset.')
+
+        ! Close the dataspace
+        CALL h5sclose_f(dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataspace.')
+
+        ! Convert from surrogate character array to boolean array
+        vals=.FALSE.
+        FORALL(i=1:SIZE(vals,DIM=1),j=1:SIZE(vals,DIM=2),valsc(i,j) == 'T')
+          vals(i,j)=.TRUE.
+        ENDFORALL
       
-      DEALLOCATE(valsc)
+        DEALLOCATE(valsc)
+      ENDIF
 #endif
     ENDSUBROUTINE read_b2
 !
@@ -5832,69 +6012,74 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-      
-      ! Convert the path name to use slashes
-      path=convertPath(dsetname)
-
-      ! Open the dataset
-      CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to open dataset.')
-
-      ! Get dataset dimensions for allocation
-      CALL h5dget_space_f(dset_id,dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to obtain the dataspace.')
-      ! Make sure the rank is right
-      CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve number of dataspace dimensions.')
-      IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Using wrong read function for rank.')
-
-      CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve dataspace dimensions.')
-
-      ! Allocate space for data if needed
-      IF(ALLOCATED(vals)) THEN
-        ! Make sure the data is the right size
-        IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//' - data array is the wrong size.')
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ELSE
-        ! Allocate to size
-        ALLOCATE(vals(dims(1),dims(2),dims(3)))
-      ENDIF
-
-      ! Allocate space for datac
-      ALLOCATE(valsc(dims(1),dims(2),dims(3)))
-
-      ! Read the dataset
-      mem=H5T_NATIVE_CHARACTER
-      CALL h5dread_f(dset_id,mem,valsc,dims,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to read data from dataset.')
-
-      ! Close the dataset
-      CALL h5dclose_f(dset_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataset.')
-
-      ! Close the dataspace
-      CALL h5sclose_f(dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataspace.')
-
-      ! Convert from surrogate character array to boolean array
-      vals(:,:,:)=.FALSE.
-      FORALL(i=1:SIZE(vals,DIM=1),j=1:SIZE(vals,DIM=2),k=1:SIZE(vals,DIM=3), &
-        valsc(i,j,k) == 'T')
-        vals(i,j,k)=.TRUE.
-      ENDFORALL
       
-      DEALLOCATE(valsc)
+        ! Convert the path name to use slashes
+        path=convertPath(dsetname)
+
+        ! Open the dataset
+        CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to open dataset.')
+
+        ! Get dataset dimensions for allocation
+        CALL h5dget_space_f(dset_id,dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to obtain the dataspace.')
+        ! Make sure the rank is right
+        CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve number of dataspace dimensions.')
+        IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Using wrong read function for rank.')
+
+        CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve dataspace dimensions.')
+
+        ! Allocate space for data if needed
+        IF(ALLOCATED(vals)) THEN
+          ! Make sure the data is the right size
+          IF(ANY(SHAPE(vals) /= dims)) CALL thisHDF5File%e%raiseError(modName// &
+            '::'//myName//' - data array is the wrong size.')
+        ELSE
+          ! Allocate to size
+          ALLOCATE(vals(dims(1),dims(2),dims(3)))
+        ENDIF
+
+        ! Allocate space for datac
+        ALLOCATE(valsc(dims(1),dims(2),dims(3)))
+
+        ! Read the dataset
+        mem=H5T_NATIVE_CHARACTER
+        CALL h5dread_f(dset_id,mem,valsc,dims,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to read data from dataset.')
+
+        ! Close the dataset
+        CALL h5dclose_f(dset_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataset.')
+
+        ! Close the dataspace
+        CALL h5sclose_f(dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataspace.')
+
+        ! Convert from surrogate character array to boolean array
+        vals(:,:,:)=.FALSE.
+        FORALL(i=1:SIZE(vals,DIM=1),j=1:SIZE(vals,DIM=2),k=1:SIZE(vals,DIM=3), &
+          valsc(i,j,k) == 'T')
+          vals(i,j,k)=.TRUE.
+        ENDFORALL
+      
+        DEALLOCATE(valsc)
+      ENDIF
 #endif
     ENDSUBROUTINE read_b3
 !
@@ -5924,57 +6109,62 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
+      ELSE
 
+        ! Convert the path name to use slashes
+        path=convertPath(dsetname)
 
-      ! Convert the path name to use slashes
-      path=convertPath(dsetname)
+        ! Open the dataset
+        CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
 
-      ! Open the dataset
-      CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to open dataset.')
 
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to open dataset.')
+        ! Get dataset dimensions for allocation
+        CALL h5dget_space_f(dset_id,dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to obtain the dataspace.')
+        ! Make sure the rank is right
+        CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve number of dataspace dimensions.')
+        IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Using wrong read function for rank.')
 
-      ! Get dataset dimensions for allocation
-      CALL h5dget_space_f(dset_id,dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to obtain the dataspace.')
-      ! Make sure the rank is right
-      CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve number of dataspace dimensions.')
-      IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Using wrong read function for rank.')
+        CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve dataspace dimensions.')
 
-      CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve dataspace dimensions.')
+        ! Allocate character array
+        ALLOCATE(valsc(dims(1)))
 
-      ! Allocate character array
-      ALLOCATE(valsc(dims(1)))
+        ! Read the dataset
+        mem=H5T_NATIVE_CHARACTER
+        CALL h5dread_f(dset_id,mem,valsc,dims,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to read data from dataset.')
 
-      ! Read the dataset
-      mem=H5T_NATIVE_CHARACTER
-      CALL h5dread_f(dset_id,mem,valsc,dims,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to read data from dataset.')
+        ! Convert to StringType
+        vals=''
+        DO i=1,SIZE(valsc)
+          vals=vals//valsc(i)
+        ENDDO
 
-      ! Convert to StringType
-      DO i=1,SIZE(valsc)
-        vals=vals//valsc(i)
-      ENDDO
+        ! Close the dataset
+        CALL h5dclose_f(dset_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataset.')
 
-      ! Close the dataset
-      CALL h5dclose_f(dset_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataset.')
-
-      ! Close the dataspace
-      CALL h5sclose_f(dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataspace.')
+        ! Close the dataspace
+        CALL h5sclose_f(dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataspace.')
+      ENDIF
 #endif
     ENDSUBROUTINE read_st0
 !
@@ -6004,70 +6194,74 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
-
-      ! Convert the path name to use slashes
-      path=convertPath(dsetname)
-
-      ! Open the dataset
-      CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to open dataset.')
-
-      ! Get dataset dimensions for allocation
-      CALL h5dget_space_f(dset_id,dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to obtain the dataspace.')
-
-      ! Make sure the rank is right
-      CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve number of dataspace dimensions.')
-      IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Using wrong read function for rank.')
-
-      CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve dataspace dimensions.')
-
-
-      ! Allocate character array to size
-      ALLOCATE(valsc(dims(1),dims(2)))
-
-      ! Read the dataset
-      mem=H5T_NATIVE_CHARACTER
-      CALL h5dread_f(dset_id,mem,valsc,dims,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to read data from dataset.')
-
-      ! Allocate space if needed
-      IF(ALLOCATED(vals)) THEN
-        ! Make sure the data is the right size
-        IF(SIZE(vals) /= dims(2)) CALL thisHDF5File%e%raiseError(modName// &
-          '::'//myName//' - data array is the wrong size.')
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ELSE
-        ! Allocate to size
-        ALLOCATE(vals(dims(2)))
-      ENDIF
 
-      ! Convert to StringType
-      DO i=1,SIZE(vals)
-        DO j=1,SIZE(valsc(:,i))
-          vals(i)=vals(i)//valsc(j,i)
+        ! Convert the path name to use slashes
+        path=convertPath(dsetname)
+
+        ! Open the dataset
+        CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to open dataset.')
+
+        ! Get dataset dimensions for allocation
+        CALL h5dget_space_f(dset_id,dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to obtain the dataspace.')
+
+        ! Make sure the rank is right
+        CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve number of dataspace dimensions.')
+        IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Using wrong read function for rank.')
+
+        CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve dataspace dimensions.')
+
+        ! Allocate character array to size
+        ALLOCATE(valsc(dims(1),dims(2)))
+
+        ! Read the dataset
+        mem=H5T_NATIVE_CHARACTER
+        CALL h5dread_f(dset_id,mem,valsc,dims,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to read data from dataset.')
+
+        ! Allocate space if needed
+        IF(ALLOCATED(vals)) THEN
+          ! Make sure the data is the right size
+          IF(SIZE(vals) /= dims(2)) CALL thisHDF5File%e%raiseError(modName// &
+            '::'//myName//' - data array is the wrong size.')
+        ELSE
+          ! Allocate to size
+          ALLOCATE(vals(dims(2)))
+        ENDIF
+
+        ! Convert to StringType
+        DO i=1,SIZE(vals)
+          vals(i)=''
+          DO j=1,SIZE(valsc(:,i))
+            vals(i)=vals(i)//valsc(j,i)
+          ENDDO
         ENDDO
-      ENDDO
 
-      ! Close the dataset
-      CALL h5dclose_f(dset_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataset.')
+        ! Close the dataset
+        CALL h5dclose_f(dset_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataset.')
 
-      ! Close the dataspace
-      CALL h5sclose_f(dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataspace.')
+        ! Close the dataspace
+        CALL h5sclose_f(dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataspace.')
+      ENDIF
 #endif
     ENDSUBROUTINE read_st1
 !
@@ -6097,74 +6291,78 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
-
-      ! Convert the path name to use slashes
-      path=convertPath(dsetname)
-
-      ! Open the dataset
-      CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
-
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to open dataset.')
-
-      ! Get dataset dimensions for allocation
-      CALL h5dget_space_f(dset_id,dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to obtain the dataspace.')
-      ! Make sure the rank is right
-      CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve number of dataspace dimensions.')
-      IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Using wrong read function for rank.')
-
-      CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve dataspace dimensions.')
-
-
-      ! Allocate character array to size
-      ALLOCATE(valsc(dims(1),dims(2),dims(3)))
-
-      ! Read the dataset
-      mem=H5T_NATIVE_CHARACTER
-      CALL h5dread_f(dset_id,mem,valsc,dims,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to read data from dataset.')
-
-      ! Allocate space if needed
-      IF(ALLOCATED(vals)) THEN
-        ! Make sure the data is the right size
-        IF(ANY(SIZE(vals) /= (/dims(2),dims(3)/))) &
-            CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-              ' - data array is the wrong size.')
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ELSE
-        ! Allocate to size
-        ALLOCATE(vals(dims(2),dims(3)))
-      ENDIF
 
-      ! Convert to StringType
-      DO i=1,SIZE(vals,1)
-        DO j=1,SIZE(vals,2)
-          DO k=1,SIZE(valsc(:,i,j))
-            vals(i,j)=vals(i,j)//valsc(k,i,j)
+        ! Convert the path name to use slashes
+        path=convertPath(dsetname)
+
+        ! Open the dataset
+        CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
+
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to open dataset.')
+
+        ! Get dataset dimensions for allocation
+        CALL h5dget_space_f(dset_id,dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to obtain the dataspace.')
+        ! Make sure the rank is right
+        CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve number of dataspace dimensions.')
+        IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Using wrong read function for rank.')
+
+        CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve dataspace dimensions.')
+ 
+
+        ! Allocate character array to size
+        ALLOCATE(valsc(dims(1),dims(2),dims(3)))
+
+        ! Read the dataset
+        mem=H5T_NATIVE_CHARACTER
+        CALL h5dread_f(dset_id,mem,valsc,dims,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to read data from dataset.')
+
+        ! Allocate space if needed
+        IF(ALLOCATED(vals)) THEN
+          ! Make sure the data is the right size
+          IF(ALL(SHAPE(vals) /= (/dims(2),dims(3)/))) &
+              CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+                ' - data array is the wrong size.')
+        ELSE
+          ! Allocate to size
+          ALLOCATE(vals(dims(2),dims(3)))
+        ENDIF
+
+        ! Convert to StringType
+        DO i=1,SIZE(vals,1)
+          DO j=1,SIZE(vals,2)
+            vals(i,j)=''
+            DO k=1,SIZE(valsc(:,i,j))
+              vals(i,j)=vals(i,j)//valsc(k,i,j)
+            ENDDO
           ENDDO
         ENDDO
-      ENDDO
 
-      ! Close the dataset
-      CALL h5dclose_f(dset_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataset.')
+        ! Close the dataset
+        CALL h5dclose_f(dset_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataset.')
 
-      ! Close the dataspace
-      CALL h5sclose_f(dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataspace.')
-
+        ! Close the dataspace
+        CALL h5sclose_f(dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataspace.')
+      ENDIF
 #endif
     ENDSUBROUTINE read_st2
 !
@@ -6194,75 +6392,80 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-
-
-      ! Convert the path name to use slashes
-      path=convertPath(dsetname)
-
-      ! Open the dataset
-      CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
-
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to open dataset.')
-
-      ! Get dataset dimensions for allocation
-      CALL h5dget_space_f(dset_id,dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to obtain the dataspace.')
-      ! Make sure the rank is right
-      CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve number of dataspace dimensions.')
-      IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Using wrong read function for rank.')
-
-      CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve dataspace dimensions.')
-
-
-      ! Allocate character array to size
-      ALLOCATE(valsc(dims(1),dims(2),dims(3),dims(4)))
-
-      ! Read the dataset
-      mem=H5T_NATIVE_CHARACTER
-      CALL h5dread_f(dset_id,mem,valsc,dims,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to read data from dataset.')
-
-      ! Allocate space if needed
-      IF(ALLOCATED(vals)) THEN
-        ! Make sure the data is the right size
-        IF(ANY(SIZE(vals) /= (/dims(2),dims(3),dims(4)/))) &
-          CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ' - data array is the wrong size.')
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
       ELSE
-        ! Allocate to size
-        ALLOCATE(vals(dims(2),dims(3),dims(4)))
-      ENDIF
 
-      ! Convert to StringType
-      DO i=1,SIZE(vals,1)
-        DO j=1,SIZE(vals,2)
-          DO m=1,SIZE(vals,3)
-            DO k=1,SIZE(valsc(:,i,j,m))
-             vals(i,j,m)=vals(i,j,m)//valsc(k,i,j,m)
+        ! Convert the path name to use slashes
+        path=convertPath(dsetname)
+
+        ! Open the dataset
+        CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
+
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to open dataset.')
+
+        ! Get dataset dimensions for allocation
+        CALL h5dget_space_f(dset_id,dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to obtain the dataspace.')
+        ! Make sure the rank is right
+        CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve number of dataspace dimensions.')
+        IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Using wrong read function for rank.')
+
+        CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve dataspace dimensions.')
+
+
+        ! Allocate character array to size
+        ALLOCATE(valsc(dims(1),dims(2),dims(3),dims(4)))
+
+        ! Read the dataset
+        mem=H5T_NATIVE_CHARACTER
+        CALL h5dread_f(dset_id,mem,valsc,dims,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to read data from dataset.')
+
+        ! Allocate space if needed
+        IF(ALLOCATED(vals)) THEN
+          ! Make sure the data is the right size
+          IF(ALL(SHAPE(vals) /= (/dims(2),dims(3),dims(4)/))) &
+            CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+              ' - data array is the wrong size.')
+        ELSE
+          ! Allocate to size
+          ALLOCATE(vals(dims(2),dims(3),dims(4)))
+        ENDIF
+
+        ! Convert to StringType
+        DO i=1,SIZE(vals,1)
+          DO j=1,SIZE(vals,2)
+            DO m=1,SIZE(vals,3)
+              vals(i,j,m)=''
+              DO k=1,SIZE(valsc(:,i,j,m))
+               vals(i,j,m)=vals(i,j,m)//valsc(k,i,j,m)
+              ENDDO
             ENDDO
           ENDDO
         ENDDO
-      ENDDO
 
-      ! Close the dataset
-      CALL h5dclose_f(dset_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataset.')
+        ! Close the dataset
+        CALL h5dclose_f(dset_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataset.')
 
-      ! Close the dataspace
-      CALL h5sclose_f(dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataspace.')
+        ! Close the dataspace
+        CALL h5sclose_f(dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataspace.')
+      ENDIF
 #endif
     ENDSUBROUTINE read_st3
 !
@@ -6292,59 +6495,62 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: dspace_id,dset_id
 
       ! Make sure the object is initialized
-      IF(.NOT.thisHDF5File%isinit) CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
+      IF(.NOT.thisHDF5File%isinit) THEN
+        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
+      ELSE
 
+        ! Convert the path name to use slashes
+        path=convertPath(dsetname)
 
-      ! Convert the path name to use slashes
-      path=convertPath(dsetname)
+        ! Open the dataset
+        CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
 
-      ! Open the dataset
-      CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to open dataset.')
 
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to open dataset.')
+        ! Get dataset dimensions for allocation
+        CALL h5dget_space_f(dset_id,dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to obtain the dataspace.')
+        ! Make sure the rank is right
+        CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve number of dataspace dimensions.')
+        IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Using wrong read function for rank.')
 
-      ! Get dataset dimensions for allocation
-      CALL h5dget_space_f(dset_id,dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to obtain the dataspace.')
-      ! Make sure the rank is right
-      CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve number of dataspace dimensions.')
-      IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Using wrong read function for rank.')
+        CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
+        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to retrieve dataspace dimensions.')
 
-      CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve dataspace dimensions.')
+        ! Allocate surrogate data
+        ALLOCATE(valsc(dims(1)))
 
-      ! Allocate surrogate data
-      ALLOCATE(valsc(dims(1)))
+        ! Read the dataset
+        mem=H5T_NATIVE_CHARACTER
+        CALL h5dread_f(dset_id,mem,valsc,dims,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to read data from dataset.')
 
-      ! Read the dataset
-      mem=H5T_NATIVE_CHARACTER
-      CALL h5dread_f(dset_id,mem,valsc,dims,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to read data from dataset.')
+        ! Close the dataset
+        CALL h5dclose_f(dset_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataset.')
 
-      ! Close the dataset
-      CALL h5dclose_f(dset_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataset.')
+        ! Close the dataspace
+        CALL h5sclose_f(dspace_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close dataspace.')
 
-      ! Close the dataspace
-      CALL h5sclose_f(dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataspace.')
-
-      ! Convert from surrogate character array to boolean array
-      vals(:)=" "
-      DO i=1,SIZE(valsc)
-        vals(i:i)=valsc(i)
-      ENDDO
-
+        ! Convert from surrogate character array to boolean array
+        vals(:)=" "
+        DO i=1,SIZE(valsc)
+          vals(i:i)=valsc(i)
+        ENDDO
+      ENDIF
 #endif
     ENDSUBROUTINE read_c1
 !

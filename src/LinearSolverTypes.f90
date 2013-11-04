@@ -111,6 +111,7 @@ MODULE LinearSolverTypes
   INTEGER(SIK),PARAMETER,PUBLIC :: BICGSTAB=1,CGNR=2,GMRES=3
   !> set enumeration scheme for direct solver methods
   INTEGER(SIK),PARAMETER,PUBLIC :: GE=1,LU=2
+
   
   !> @brief the base linear solver type
   TYPE,ABSTRACT :: LinearSolverType_Base
@@ -246,7 +247,6 @@ MODULE LinearSolverTypes
 !
 !===============================================================================
   CONTAINS
-  
 !
 !-------------------------------------------------------------------------------
 !> @brief Initializes the Linear Solver Type with a parameter list
