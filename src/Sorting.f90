@@ -30,7 +30,17 @@ MODULE Sorting
   IMPLICIT NONE
   
   PUBLIC :: Sort
-
+  
+  !> @brief Generic interface to sort arrays.
+  !>
+  INTERFACE Sort
+    !> @copybrief Sorting::Sort_1DReal
+    !> @copydetails Sorting::Sort_1DReal
+    MODULE PROCEDURE Sort_1DReal
+    !> @copybrief Sorting::Sort_1DInt
+    !> @copydetails Sorting::Sort_1DInt
+    MODULE PROCEDURE Sort_1DInt
+  ENDINTERFACE Sort
 
 !
 !===============================================================================
@@ -41,13 +51,14 @@ MODULE Sorting
 !>        data will be sorted in ascending/increasing order and returned.
 !> @param r A vector of unsorted reals
 !>
-    SUBROUTINE Sort(r) 
+    SUBROUTINE Sort_1DReal(r) 
       REAL(SRK),INTENT(INOUT) :: r(:)
       !LOGICAL(SBK),INTENT(IN),OPTIONAL :: reverse
       LOGICAL(SBK) :: sorted
       INTEGER(SIK) :: i
       REAL(SRK) :: tmp
       
+      sorted=.FALSE.
       DO WHILE(.NOT.sorted)
         sorted=.TRUE.
         DO i=1,SIZE(r)-1
@@ -60,6 +71,34 @@ MODULE Sorting
         ENDDO
       ENDDO
       
-    ENDSUBROUTINE
+    ENDSUBROUTINE Sort_1DReal
+!
+!-------------------------------------------------------------------------------
+!> @brief A simple sorting algorithm for a 1-D integer vector sort.  The 
+!>        arguments data will be sorted in ascending/increasing order and 
+!>        returned.
+!> @param r A vector of unsorted integers
+!>
+    SUBROUTINE Sort_1DInt(r) 
+      INTEGER(SIK),INTENT(INOUT) :: r(:)
+      !LOGICAL(SBK),INTENT(IN),OPTIONAL :: reverse
+      LOGICAL(SBK) :: sorted
+      INTEGER(SIK) :: i
+      INTEGER(SIK) :: tmp
+      
+      sorted=.FALSE.
+      DO WHILE(.NOT.sorted)
+        sorted=.TRUE.
+        DO i=1,SIZE(r)-1
+          IF(r(i) > r(i+1)) THEN
+            tmp=r(i+1)
+            r(i+1)=r(i)
+            r(i)=tmp
+            sorted=.FALSE.
+          ENDIF
+        ENDDO
+      ENDDO
+      
+    ENDSUBROUTINE Sort_1DInt
 !
 ENDMODULE Sorting
