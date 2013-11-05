@@ -67,7 +67,7 @@ MODULE FileType_HDF5
   USE IO_Strings
   USE ParallelEnv
   USE FileType_Base
-  
+
   IMPLICIT NONE
   PRIVATE
 
@@ -345,7 +345,6 @@ MODULE FileType_HDF5
       LOGICAL(SBK) :: ostat
       IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
 #ifdef MPACT_HAVE_HDF5
-
       CALL getFileParts(filename,fpath,fname,fext,thisHDF5File%e)
       CALL thisHDF5File%setFilePath(fpath)
       CALL thisHDF5File%setFileName(fname)
@@ -575,7 +574,7 @@ MODULE FileType_HDF5
 
         IF(ALLOCATED(objs)) DEALLOCATE(objs)
         ALLOCATE(objs(nlinks))
-  
+
         DO i=0,nlinks-1
           CALL h5lget_name_by_idx_f(thisHDF5File%file_id, path2, H5_INDEX_NAME_F,&
               H5_ITER_INC_F, i, objs(i+1), error)
@@ -754,7 +753,7 @@ MODULE FileType_HDF5
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_DOUBLE, &
           gspace_id, dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create dataset.')
+          ' - Could not create dataset:'//path)
 
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
@@ -875,7 +874,7 @@ MODULE FileType_HDF5
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_DOUBLE, &
             gspace_id, dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create dataset.')
+          ' - Could not create dataset:'//path//path)
 
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
@@ -996,7 +995,7 @@ MODULE FileType_HDF5
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_DOUBLE, &
                 gspace_id, dset_id,error,plist_id)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create dataset.')
+          ' - Could not create dataset:'//path//path)
 
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
@@ -1117,7 +1116,7 @@ MODULE FileType_HDF5
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_DOUBLE, &
             gspace_id, dset_id,error, plist_id)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create dataset.')
+          ' - Could not create dataset:'//path//path)
 
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
@@ -1241,7 +1240,7 @@ MODULE FileType_HDF5
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_DOUBLE, &
             gspace_id, dset_id,error, plist_id)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create dataset.')
+          ' - Could not create dataset:'//path//path)
 
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
@@ -1361,7 +1360,7 @@ MODULE FileType_HDF5
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_REAL, &
             gspace_id, dset_id, error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create dataset.')
+          ' - Could not create dataset:'//path//path)
 
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
@@ -1482,7 +1481,7 @@ MODULE FileType_HDF5
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_REAL, &
             gspace_id, dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create dataset.')
+          ' - Could not create dataset:'//path//path)
 
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
@@ -1603,7 +1602,7 @@ MODULE FileType_HDF5
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_REAL, &
             gspace_id, dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create dataset.')
+          ' - Could not create dataset:'//path//path)
 
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
@@ -1725,7 +1724,7 @@ MODULE FileType_HDF5
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_REAL, &
             gspace_id, dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create dataset.')
+          ' - Could not create dataset:'//path//path)
 
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
@@ -1848,7 +1847,7 @@ MODULE FileType_HDF5
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_REAL, &
             gspace_id, dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create dataset.')
+          ' - Could not create dataset:'//path//path)
 
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
@@ -1970,7 +1969,7 @@ MODULE FileType_HDF5
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_CHARACTER, &
             gspace_id, dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create dataset.')
+          ' - Could not create dataset:'//path//path)
 
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
@@ -2101,7 +2100,7 @@ MODULE FileType_HDF5
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_CHARACTER, &
             gspace_id, dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create dataset.')
+          ' - Could not create dataset:'//path//path)
 
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
@@ -2230,7 +2229,7 @@ MODULE FileType_HDF5
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_CHARACTER, &
             gspace_id, dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create dataset.')
+          ' - Could not create dataset:'//path//path)
 
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
@@ -2359,7 +2358,7 @@ MODULE FileType_HDF5
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_CHARACTER, &
             gspace_id, dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create dataset.')
+          ' - Could not create dataset:'//path//path)
 
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
@@ -2485,7 +2484,7 @@ MODULE FileType_HDF5
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_INTEGER, &
             gspace_id, dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create dataset.')
+          ' - Could not create dataset:'//path//path)
 
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
@@ -2603,7 +2602,7 @@ MODULE FileType_HDF5
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_INTEGER, &
             gspace_id, dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create dataset.')
+          ' - Could not create dataset:'//path//path)
 
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
@@ -2723,7 +2722,7 @@ MODULE FileType_HDF5
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_INTEGER, &
             gspace_id, dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create dataset.')
+          ' - Could not create dataset:'//path//path)
 
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
@@ -2844,7 +2843,7 @@ MODULE FileType_HDF5
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_INTEGER, &
             gspace_id, dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create dataset.')
+          ' - Could not create dataset:'//path//path)
 
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
@@ -2966,7 +2965,7 @@ MODULE FileType_HDF5
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_STD_I64LE, gspace_id, &
             dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create dataset.')
+          ' - Could not create dataset:'//path//path)
 
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
@@ -3092,7 +3091,7 @@ MODULE FileType_HDF5
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_STD_I64LE, gspace_id, &
             dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create dataset.')
+          ' - Could not create dataset:'//path//path)
 
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
@@ -3220,7 +3219,7 @@ MODULE FileType_HDF5
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_STD_I64LE, gspace_id, &
             dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create dataset.')
+          ' - Could not create dataset:'//path//path)
 
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
@@ -3349,7 +3348,7 @@ MODULE FileType_HDF5
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_STD_I64LE, gspace_id, &
             dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create dataset.')
+          ' - Could not create dataset:'//path)
 
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
@@ -3485,7 +3484,7 @@ MODULE FileType_HDF5
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_CHARACTER, &
             gspace_id, dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create dataset.')
+          ' - Could not create dataset:'//path)
 
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
@@ -3650,7 +3649,7 @@ MODULE FileType_HDF5
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_CHARACTER, &
             gspace_id, dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create dataset.')
+          ' - Could not create dataset:'//path)
 
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
@@ -3772,7 +3771,7 @@ MODULE FileType_HDF5
 
         ! Convert the path name
         path=convertPath(dsetname)
-        
+
         DO k=1,SIZE(vals,2)
           DO i=1,SIZE(vals,1)
             valss=CHAR(vals(i,k))
@@ -3817,7 +3816,7 @@ MODULE FileType_HDF5
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_CHARACTER, &
             gspace_id, dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create dataset.')
+          ' - Could not create dataset:'//path)
 
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
@@ -3992,7 +3991,7 @@ MODULE FileType_HDF5
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_CHARACTER, &
             gspace_id, dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create dataset.')
+          ' - Could not create dataset:'//path)
 
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
@@ -4112,7 +4111,7 @@ MODULE FileType_HDF5
         CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_CHARACTER, &
             gspace_id, dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create dataset.')
+          ' - Could not create dataset:'//path)
 
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
@@ -4208,13 +4207,13 @@ MODULE FileType_HDF5
         CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
         IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - Failed to retrieve dataspace dimensions.')
-  
+
         ! Read the dataset
         mem=H5T_NATIVE_DOUBLE
         CALL h5dread_f(dset_id,mem,vals,dims,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - Failed to read data from dataset.')
-  
+
         ! Close the dataset
         CALL h5dclose_f(dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
@@ -4359,7 +4358,7 @@ MODULE FileType_HDF5
           ' - Failed to retrieve number of dataspace dimensions.')
         IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - Using wrong read function for rank.')
- 
+
         CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
         IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - Failed to retrieve dataspace dimensions.')
@@ -4445,7 +4444,7 @@ MODULE FileType_HDF5
         CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
         IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - Failed to retrieve dataspace dimensions.')
-  
+
         ! Allocate space if needed
         IF(ALLOCATED(vals)) THEN
           ! Make sure the data is the right size
@@ -4455,7 +4454,7 @@ MODULE FileType_HDF5
           ! Allocate to size
           ALLOCATE(vals(dims(1),dims(2),dims(3)))
         ENDIF
-  
+
         ! Read the dataset
         mem=H5T_NATIVE_DOUBLE
         CALL h5dread_f(dset_id,mem,vals,dims,error)
@@ -4594,7 +4593,7 @@ MODULE FileType_HDF5
         CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - Failed to open dataset.')
-  
+
         ! Get dataset dimensions for allocation
         CALL h5dget_space_f(dset_id,dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
@@ -4671,7 +4670,7 @@ MODULE FileType_HDF5
 
         ! Convert the path name to use slashes
         path=convertPath(dsetname)
- 
+
         ! Open the dataset
         CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
@@ -5393,7 +5392,7 @@ MODULE FileType_HDF5
 
         ! Convert the path name to use slashes
         path=convertPath(dsetname)
- 
+
         ! Open the dataset
         CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
@@ -5824,7 +5823,7 @@ MODULE FileType_HDF5
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
       ELSE
-      
+
         ! Convert the path name to use slashes
         path=convertPath(dsetname)
 
@@ -5877,13 +5876,13 @@ MODULE FileType_HDF5
         CALL h5sclose_f(dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - Failed to close dataspace.')
- 
+
         ! Convert from surrogate character array to boolean array
         vals=.FALSE.
         FORALL(i=1:SIZE(vals),valsc(i) == 'T')
           vals(i)=.TRUE.
         ENDFORALL
-      
+
         DEALLOCATE(valsc)
       ENDIF
 #endif
@@ -5924,7 +5923,7 @@ MODULE FileType_HDF5
 
         ! Convert the path name to use slashes
         path=convertPath(dsetname)
- 
+
         ! Open the dataset
         CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
 
@@ -5980,7 +5979,7 @@ MODULE FileType_HDF5
         FORALL(i=1:SIZE(vals,DIM=1),j=1:SIZE(vals,DIM=2),valsc(i,j) == 'T')
           vals(i,j)=.TRUE.
         ENDFORALL
-      
+
         DEALLOCATE(valsc)
       ENDIF
 #endif
@@ -6018,7 +6017,7 @@ MODULE FileType_HDF5
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
       ELSE
-      
+
         ! Convert the path name to use slashes
         path=convertPath(dsetname)
 
@@ -6077,7 +6076,7 @@ MODULE FileType_HDF5
           valsc(i,j,k) == 'T')
           vals(i,j,k)=.TRUE.
         ENDFORALL
-      
+
         DEALLOCATE(valsc)
       ENDIF
 #endif
@@ -6321,7 +6320,7 @@ MODULE FileType_HDF5
         CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
         IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - Failed to retrieve dataspace dimensions.')
- 
+
 
         ! Allocate character array to size
         ALLOCATE(valsc(dims(1),dims(2),dims(3)))

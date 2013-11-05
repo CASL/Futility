@@ -68,6 +68,7 @@ TRIBITS_ADD_LIBRARY(Utils
       PreconditionerTypes.f90
       LinearSolverTypes.f90
       StochasticSampling.f90
+      Sorting.f90
     DEPLIBS
       CUtils
 )
