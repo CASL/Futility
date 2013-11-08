@@ -65,44 +65,74 @@ MODULE PreconditionerTypes
 
   !
   ! List of Public members
-  PUBLIC :: PreconditionerType_Base
-  PUBLIC :: PreconditionerType_ILU
+  PUBLIC :: PreconditionerType
+  PUBLIC :: LU_PreCondType
+!  PUBLIC :: Minv_PreCondType
 
-  !> @brief the base preconditioner type
-  TYPE,ABSTRACT :: PreconditionerType_Base
-    !> Initialization status
+
+  TYPE,ABSTRACT :: PreConditionerType
     LOGICAL(SBK) :: isInit=.FALSE.
-    !> Flag to indicated whether this is the preconditioner or its inverse
-    LOGICAL(SBK) :: isInverse=.FALSE.
-    !
-    !List of Type Bound Procedures
-    CONTAINS
-      !> Deferred routine for clearing the preconditioner
-      PROCEDURE(precond_sub_absintfc),DEFERRED,PASS :: clear
-      !> Deferred routine for initializing the preconditioner
-      PROCEDURE(precond_sub_absintfc),DEFERRED,PASS :: init
-  ENDTYPE PreconditionerType_Base
+    CLASS(MatrixType),POINTER :: A=>NULL()
 
-  TYPE,EXTENDS(PreconditionerType_Base) :: PreconditionerType_ILU
-    !> ILU Preconditioner Matrix
-    CLASS(MatrixType),ALLOCATABLE :: M
-    !
-    ! List of Type Bound Procedures
     CONTAINS
-      !> @copybrief LinearSolverTypes::clear_PreconditionerType_ILU
-      !> @copydetails LinearSolvertypes::clear_PreconditionerType_ILU
-      PROCEDURE :: clear => clear_PreconditionerType_ILU
-      !> @copybrief LinearSolverTypes::init_PreconditionerType_ILU
-      !> @copydetails LinearSolvertypes::init_PreconditionerType_ILU
-      PROCEDURE :: init => init_PreconditionerType_ILU
-  ENDTYPE PreconditionerType_ILU
+      PROCEDURE(precond_init_absintfc),DEFERRED,PASS :: init
+      PROCEDURE(precond_absintfc),DEFERRED,PASS :: clear
+      PROCEDURE(precond_absintfc),DEFERRED,PASS :: setup
+      PROCEDURE(precond_apply_absintfc),DEFERRED,PASS :: apply
+  ENDTYPE PreConditionerType
+
+  TYPE,ABSTRACT,EXTENDS(PreConditionerType) :: LU_PreCondType
+    CLASS(MatrixType),POINTER :: L
+    CLASS(MatrixType),POINTER :: U
+
+    CONTAINS
+      PROCEDURE,PASS :: init => init_LU_PreCondType
+      PROCEDURE,PASS :: clear => clear_LU_PreCondType
+      PROCEDURE(precond_LU_absintfc),DEFERRED,PASS :: setup
+      PROCEDURE,PASS :: apply => apply_LU_PreCondType
+  ENDTYPE LU_PreCondType
+
+!  TYPE,EXTENDS(PreConditionerType) :: Minv_PreCondType
+!    TYPE(MatrixType) :: Minv
+!
+!    CONTAINS
+!      PROCEDURE,PASS :: init => init_Minv_PreCondType
+!      PROCEDURE,PASS :: clear => clear_Minv_PreCondType
+!      PROCEDURE,PASS :: setup => setup_Minv_PreCondType
+!      PROCEDURE,PASS :: apply => apply_Minv_PreCondType
+!  ENDTYPE Minv_PreCondType
 
   ABSTRACT INTERFACE
-    SUBROUTINE precond_sub_absintfc(PC)
-      IMPORT :: PreconditionerType_Base
-      CLASS(PreconditionerType_Base),INTENT(INOUT) :: PC
-    ENDSUBROUTINE precond_sub_absintfc
+    SUBROUTINE precond_init_absintfc(PC,A)
+      IMPORT :: PreconditionerType,Matrixtype
+      CLASS(PreconditionerType),INTENT(INOUT) :: PC
+      CLASS(MatrixType),INTENT(IN) :: A
+    ENDSUBROUTINE precond_init_absintfc
   ENDINTERFACE
+
+  ABSTRACT INTERFACE
+    SUBROUTINE precond_apply_absintfc(PC,v)
+      IMPORT :: PreconditionerType,VectorType
+      CLASS(PreconditionerType),INTENT(INOUT) :: PC
+      CLASS(VectorType),INTENT(IN) :: v
+    ENDSUBROUTINE precond_apply_absintfc
+  ENDINTERFACE
+
+  ABSTRACT INTERFACE
+    SUBROUTINE precond_absintfc(PC)
+      IMPORT :: PreconditionerType
+      CLASS(PreconditionerType),INTENT(INOUT) :: PC
+    ENDSUBROUTINE precond_absintfc
+  ENDINTERFACE
+
+  ABSTRACT INTERFACE
+    SUBROUTINE precond_LU_absintfc(PC)
+      IMPORT :: LU_PrecondType
+      CLASS(LU_PrecondType),INTENT(INOUT) :: PC
+    ENDSUBROUTINE precond_LU_absintfc
+  ENDINTERFACE
+
+  CHARACTER(LEN=*),PARAMETER :: modName='PreconditionerTypes'
 !
 !===============================================================================
   CONTAINS
@@ -112,18 +142,52 @@ MODULE PreconditionerTypes
 !> @param pList the parameter list
 !>
 !> @param solver The linear solver to act on
-    SUBROUTINE init_PreconditionerType_ILU(PC)
-      CLASS(PreconditionerType_ILU),INTENT(INOUT) :: PC
-    ENDSUBROUTINE init_PreconditionerType_ILU
+    SUBROUTINE init_LU_PreCondtype(PC,A)
+      CLASS(LU_PrecondType),INTENT(INOUT) :: PC
+      CLASS(MatrixType),TARGET,INTENT(IN) :: A
+
+      CHARACTER(LEN=*),PARAMETER :: myName='init_LU_PreCondType'
+
+
+      IF(PC%isinit) THEN
+        ! Throw and error (need to set up error handling
+      ELSE
+        IF(.NOT.(A%isInit)) THEN
+          ! Throw another error
+        ELSE
+          PC%A => A
+
+          ! This might not be necessary here, but not sure
+          SELECTTYPE(mat => PC%A)
+            CLASS IS(SparseMatrixType)
+              ALLOCATE(SparseMatrixType :: PC%L)
+              ALLOCATE(SparseMatrixType :: PC%U)
+            CLASS DEFAULT
+              ! Throw an error or warning or something
+          ENDSELECT 
+
+        ENDIF
+      ENDIF
+    ENDSUBROUTINE init_LU_PreCondtype
 !
 !-------------------------------------------------------------------------------
 !> @brief Initializes the Linear Solver Type with a parameter list
 !> @param pList the parameter list
 !>
 !> @param solver The linear solver to act on
-    SUBROUTINE clear_PreconditionerType_ILU(PC)
-      CLASS(PreconditionerType_ILU),INTENT(INOUT) :: PC
-    ENDSUBROUTINE clear_PreconditionerType_ILU
+    SUBROUTINE clear_LU_PreCondtype(PC)
+      CLASS(LU_PrecondType),INTENT(INOUT) :: PC
+    ENDSUBROUTINE clear_LU_PreCondtype
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes the Linear Solver Type with a parameter list
+!> @param pList the parameter list
+!>
+!> @param solver The linear solver to act on
+    SUBROUTINE apply_LU_PreCondtype(PC,v)
+      CLASS(LU_PrecondType),INTENT(INOUT) :: PC
+      CLASS(Vectortype),INTENT(INOUT) :: v
+    ENDSUBROUTINE apply_LU_PreCondtype
 !
 !-------------------------------------------------------------------------------
 END MODULE
