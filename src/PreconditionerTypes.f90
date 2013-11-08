@@ -147,6 +147,8 @@ MODULE PreconditionerTypes
       CLASS(MatrixType),TARGET,INTENT(IN) :: A
 
       CHARACTER(LEN=*),PARAMETER :: myName='init_LU_PreCondType'
+      INTEGER(SIK) :: row,col,col2,i,j,k
+      REAL(SRK) :: val1,val2,val3
 
 
       IF(PC%isinit) THEN
@@ -162,6 +164,38 @@ MODULE PreconditionerTypes
             CLASS IS(SparseMatrixType)
               ALLOCATE(SparseMatrixType :: PC%L)
               ALLOCATE(SparseMatrixType :: PC%U)
+              SELECTTYPE(U => PC%U); TYPE IS(SparseMatrixType)
+                SELECTTYPE(L => PC%L); TYPE IS(SparseMatrixType)
+                  j=0
+                  val1=0.0_SRK
+                  val2=0.0_SRK
+                  DO row=2,SIZE(mat%ia)
+                    DO i=1,mat%ia(row)
+                      j=j+1
+                      col=mat%ja(j)
+                      IF(col > row-1) EXIT
+                      CALL mat%get(row,col,val1)
+                      CALL mat%get(col,col,val2)
+                      val2=val1/val2
+                      CALL L%setShape(row,col,val2)
+                      DO k=i+1,mat%ia(row)
+                        col2=mat%ja(j-i+k)
+                        CALL mat%get(row,col2,val1)
+                        IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) THEN
+                          IF(col2 < row) THEN
+                            CALL L%get(col,col2,val3)
+                            CALL L%setShape(row,col2,val1-val2*val3)
+                          ELSE
+                            CALL U%get(col,col2,val3)
+                            CALL U%setShape(row,col2,val1-val2*val3)
+                          ENDIF
+                        ENDIF
+                      ENDDO
+                    ENDDO
+                    CALL L%setShape(row,row,1.0_SRK)
+                  ENDDO
+                ENDSELECT
+              ENDSELECT
             CLASS DEFAULT
               ! Throw an error or warning or something
           ENDSELECT 
