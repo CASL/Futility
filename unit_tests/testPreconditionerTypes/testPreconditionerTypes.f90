@@ -61,7 +61,7 @@ PROGRAM testMatrixTypes
   CREATE_TEST('Test Preconditioner Types')
 
   CALL setupTest()
-  REGISTER_SUBTEST('Test LU Preconditioner Type',testILU)
+  REGISTER_SUBTEST('Test LU Preconditioner Type',testLU_PreCondType)
 
   FINALIZE_TEST()
 
@@ -118,7 +118,7 @@ PROGRAM testMatrixTypes
     ENDSUBROUTINE setupTest
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE testILU()
+    SUBROUTINE testLU_PreCondType()
       TYPE(LU_PreCondType) :: testLU
 
       IF(testMatrix%isInit) THEN
@@ -126,20 +126,24 @@ PROGRAM testMatrixTypes
         ! Check %init
         ASSERT(testLU%isInit,'LU Preconditioner %isInit')
         ASSERT(ASSOCIATED(testLU%A),'LU Preconditioner ASSOCIATED(LU%A)')
-        ! Check L
         ASSERT(testLU%L%isInit,'LU Preconditioner %L%isInit')
-        ! Check U
         ASSERT(testLU%U%isInit,'LU Preconditioner %U%isInit')
+        ! Check L
+        ! Check U
         
         ! Check %apply
         ! Check %clear
         CALL testLU%clear()
+        ASSERT(.NOT.(testLU%isInit),'LU Preconditioner .NOT.(lu%isInit)')
+        ASSERT(.NOT.(ASSOCIATED(testLU%A)),'LU Preconditioner .NOT.ASSOCIATED(LU%A)')
+        ASSERT(.NOT.(testLU%L%isInit),'LU Preconditioner .NOT.(LU%L%isInit)')
+        ASSERT(.NOT.(testLU%U%isInit),'LU Preconditioner .NOT.(LU%U%isInit)')
       ELSE
         ASSERT(.FALSE.,'TestMatrix Initialization')
       ENDIF
 
 
-    ENDSUBROUTINE testILU
+    ENDSUBROUTINE testLU_PreCondtype
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE clearTest()
