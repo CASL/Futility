@@ -80,14 +80,14 @@ MODULE PreconditionerTypes
       PROCEDURE(precond_apply_absintfc),DEFERRED,PASS :: apply
   ENDTYPE PreConditionerType
 
-  TYPE,ABSTRACT,EXTENDS(PreConditionerType) :: LU_PreCondType
+  TYPE,EXTENDS(PreConditionerType) :: LU_PreCondType
     CLASS(MatrixType),POINTER :: L
     CLASS(MatrixType),POINTER :: U
 
     CONTAINS
       PROCEDURE,PASS :: init => init_LU_PreCondType
       PROCEDURE,PASS :: clear => clear_LU_PreCondType
-      PROCEDURE(precond_LU_absintfc),DEFERRED,PASS :: setup
+      PROCEDURE,PASS :: setup => setup_LU_PreCondType
       PROCEDURE,PASS :: apply => apply_LU_PreCondType
   ENDTYPE LU_PreCondType
 
@@ -122,13 +122,6 @@ MODULE PreconditionerTypes
       IMPORT :: PreconditionerType
       CLASS(PreconditionerType),INTENT(INOUT) :: PC
     ENDSUBROUTINE precond_absintfc
-  ENDINTERFACE
-
-  ABSTRACT INTERFACE
-    SUBROUTINE precond_LU_absintfc(PC)
-      IMPORT :: LU_PrecondType
-      CLASS(LU_PrecondType),INTENT(INOUT) :: PC
-    ENDSUBROUTINE precond_LU_absintfc
   ENDINTERFACE
 
   CHARACTER(LEN=*),PARAMETER :: modName='PreconditionerTypes'
@@ -279,6 +272,15 @@ MODULE PreconditionerTypes
       CLASS(LU_PrecondType),INTENT(INOUT) :: PC
       CLASS(Vectortype),INTENT(INOUT) :: v
     ENDSUBROUTINE apply_LU_PreCondtype
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes the Linear Solver Type with a parameter list
+!> @param pList the parameter list
+!>
+!> @param solver The linear solver to act on
+    SUBROUTINE setup_LU_PreCondtype(PC)
+      CLASS(LU_PrecondType),INTENT(INOUT) :: PC
+    ENDSUBROUTINE setup_LU_PreCondtype
 !
 !-------------------------------------------------------------------------------
 END MODULE
