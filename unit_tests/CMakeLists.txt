@@ -35,6 +35,7 @@ SET(UNIT_TEST_NAMES
     testBLAS
     testMatrixTypes
     testVectorTypes
+    testPreconditionerTypes
     testLinearSolver
 )
 
