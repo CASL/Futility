@@ -174,7 +174,7 @@ MODULE PreconditionerTypes
                   nU=0; nL=0  !number of rows
                   nnzU=0; nnzL=0 !number of non-zero elements
                   DO row=1,SIZE(mat%ia)-1
-                    DO i=1,mat%ia(row)
+                    DO i=1,mat%ia(row+1)-mat%ia(row)
                       j=j+1
                       col=mat%ja(j)
                       ! This may be redundant since mat is sparse, but be safe for now
@@ -216,7 +216,7 @@ MODULE PreconditionerTypes
                     val1=0.0_SRK
                     val2=0.0_SRK
                     DO row=2,SIZE(mat%ia)-1
-                      DO i=1,mat%ia(row)
+                      DO i=1,mat%ia(row+1)-mat%ia(row)
                         j=j+1
                         col=mat%ja(j)
                         IF(col > row-1) EXIT
@@ -224,7 +224,7 @@ MODULE PreconditionerTypes
                         CALL mat%get(col,col,val2)
                         val2=val1/val2
                         CALL L%setShape(row,col,val2)
-                        DO k=i+1,mat%ia(row)
+                        DO k=i+1,mat%ia(row+1)-mat%ia(row)
                           col2=mat%ja(j-i+k)
                           CALL mat%get(row,col2,val1)
                           IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) THEN
@@ -261,6 +261,12 @@ MODULE PreconditionerTypes
 !> @param solver The linear solver to act on
     SUBROUTINE clear_LU_PreCondtype(PC)
       CLASS(LU_PrecondType),INTENT(INOUT) :: PC
+
+      NULLIFY(PC%A)
+      CALL PC%U%clear()
+      CALL PC%L%clear()
+      PC%isInit=.FALSE.
+
     ENDSUBROUTINE clear_LU_PreCondtype
 !
 !-------------------------------------------------------------------------------
