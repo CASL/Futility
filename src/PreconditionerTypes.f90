@@ -51,7 +51,6 @@ MODULE PreconditionerTypes
 
   USE IntrType
   USE BLAS
-  USE Times
   USE ExceptionHandler
   USE Allocs
   USE ParameterLists
@@ -60,7 +59,6 @@ MODULE PreconditionerTypes
   USE MatrixTypes
 
   IMPLICIT NONE
-
   PRIVATE
 
   !
@@ -68,6 +66,7 @@ MODULE PreconditionerTypes
   PUBLIC :: PreconditionerType
   PUBLIC :: LU_PreCondType
 !  PUBLIC :: Minv_PreCondType
+  PUBLIC :: ePreCondType
 
 
   TYPE,ABSTRACT :: PreConditionerType
@@ -133,6 +132,8 @@ MODULE PreconditionerTypes
   ENDINTERFACE
 
   CHARACTER(LEN=*),PARAMETER :: modName='PreconditionerTypes'
+
+  TYPE(ExceptionHandlerType),POINTER,SAVE :: ePreCondType => NULL()
 !
 !===============================================================================
   CONTAINS
@@ -147,15 +148,24 @@ MODULE PreconditionerTypes
       CLASS(MatrixType),TARGET,INTENT(IN) :: A
 
       CHARACTER(LEN=*),PARAMETER :: myName='init_LU_PreCondType'
-      INTEGER(SIK) :: row,col,col2,i,j,k
+      INTEGER(SIK) :: row,col,col2,i,j,k,nL,nU,nnzL,nnzU
       REAL(SRK) :: val1,val2,val3
+      LOGICAL(SBK) :: localalloc
+      TYPE(ParamType) :: PL
 
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(ePreCondType)) THEN
+        ALLOCATE(ePreCondType)
+        localalloc=.TRUE.
+      ENDIF
 
       IF(PC%isinit) THEN
-        ! Throw and error (need to set up error handling
+        CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+          ' - Preconditioner is already initialized!')
       ELSE
         IF(.NOT.(A%isInit)) THEN
-          ! Throw another error
+          CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+            ' - Matrix being used for LU Preconditioner is not initialized!')
         ELSE
           PC%A => A
 
@@ -166,38 +176,85 @@ MODULE PreconditionerTypes
               ALLOCATE(SparseMatrixType :: PC%U)
               SELECTTYPE(U => PC%U); TYPE IS(SparseMatrixType)
                 SELECTTYPE(L => PC%L); TYPE IS(SparseMatrixType)
+                  ! Loop over A to get initialization data for L and U
                   j=0
-                  val1=0.0_SRK
-                  val2=0.0_SRK
-                  DO row=2,SIZE(mat%ia)
+                  nU=0; nL=0  !number of rows
+                  nnzU=0; nnzL=0 !number of non-zero elements
+                  DO row=1,SIZE(mat%ia)-1
                     DO i=1,mat%ia(row)
                       j=j+1
                       col=mat%ja(j)
-                      IF(col > row-1) EXIT
+                      ! This may be redundant since mat is sparse, but be safe for now
                       CALL mat%get(row,col,val1)
-                      CALL mat%get(col,col,val2)
-                      val2=val1/val2
-                      CALL L%setShape(row,col,val2)
-                      DO k=i+1,mat%ia(row)
-                        col2=mat%ja(j-i+k)
-                        CALL mat%get(row,col2,val1)
-                        IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) THEN
-                          IF(col2 < row) THEN
-                            CALL L%get(col,col2,val3)
-                            CALL L%setShape(row,col2,val1-val2*val3)
-                          ELSE
-                            CALL U%get(col,col2,val3)
-                            CALL U%setShape(row,col2,val1-val2*val3)
-                          ENDIF
+                      IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) THEN
+                        IF(col == row) THEN
+                          nnzU=nnzU+1 ! This location is in U
+                        ELSEIF(col > row) THEN
+                          nnzU=nnzU+1 !This location is in U
+                        ELSE
+                          nnzL=nnzL+1 !This location is in L
                         ENDIF
-                      ENDDO
+                      ENDIF
                     ENDDO
-                    CALL L%setShape(row,row,1.0_SRK)
+                    nnzL=nnzL+1 ! Account for 1's on diagonal of L
                   ENDDO
+                  
+                  ! Initialize L and U
+                  nU=mat%n
+                  nL=mat%n
+                  CALL PL%add('MatrixType->n',nU)
+                  CALL PL%add('MatrixType->nnz',nnzU)
+                  CALL U%init(PL)
+                  CALL PL%set('MatrixType->n',nL)
+                  CALL PL%set('MatrixType->nnz',nnzL)
+                  CALL L%init(PL)
+                  CALL PL%clear()
+                    
+                  ! Make sure initialization worked
+                  IF(.NOT.(U%isInit)) THEN
+                    CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+                      ' - In LU decomposition, U was not properly initialized!')
+                  ELSEIF(.NOT.(L%isInit)) THEN
+                    CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+                      ' - In LU decomposition, L was not properly initialized!')
+                  ! Now loop through A again and set values of L and U
+                  ELSE
+                    j=0
+                    val1=0.0_SRK
+                    val2=0.0_SRK
+                    DO row=2,SIZE(mat%ia)-1
+                      DO i=1,mat%ia(row)
+                        j=j+1
+                        col=mat%ja(j)
+                        IF(col > row-1) EXIT
+                        CALL mat%get(row,col,val1)
+                        CALL mat%get(col,col,val2)
+                        val2=val1/val2
+                        CALL L%setShape(row,col,val2)
+                        DO k=i+1,mat%ia(row)
+                          col2=mat%ja(j-i+k)
+                          CALL mat%get(row,col2,val1)
+                          IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) THEN
+                            IF(col2 < row) THEN
+                              CALL L%get(col,col2,val3)
+                              CALL L%setShape(row,col2,val1-val2*val3)
+                            ELSE
+                              CALL U%get(col,col2,val3)
+                              CALL U%setShape(row,col2,val1-val2*val3)
+                            ENDIF
+                          ENDIF
+                        ENDDO
+                      ENDDO
+                      CALL L%setShape(row,row,1.0_SRK)
+                    ENDDO
+
+                    PC%isInit=.TRUE.
+                  ENDIF
                 ENDSELECT
               ENDSELECT
             CLASS DEFAULT
-              ! Throw an error or warning or something
+              CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+                ' - LU Preconditioners are not supported by input matrix type!')
           ENDSELECT 
 
         ENDIF
