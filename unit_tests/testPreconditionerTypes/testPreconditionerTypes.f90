@@ -31,7 +31,8 @@ PROGRAM testMatrixTypes
   IMPLICIT NONE
   
   TYPE(ExceptionHandlerType),TARGET :: e
-  TYPE(ParamType) :: pList,optListMat,vecPList
+  TYPE(ParamType) :: PListMat
+  CLASS(MatrixType),POINTER :: testMatrix
 
 #ifdef HAVE_MPI
   INCLUDE 'mpif.h'
@@ -52,23 +53,15 @@ PROGRAM testMatrixTypes
   eParams => e
   ePreCondType => e
   
-  !Set up optional PL
-  CALL optListMat%add('MatrixType->nnz',-1_SNK)
-  CALL optListMat%add('MatrixType->isSym',.FALSE.)
-  CALL optListMat%add('MatrixType->matType',SPARSE)
-  CALL optListMat%add('MatrixType->MPI_Comm_ID',PE_COMM_SELF)
   
-  !Set up vector PL
-  CALL vecPList%add('VectorType -> n',1)
-  CALL vecPList%add('VectorType -> MPI_Comm_ID',PE_COMM_SELF)
-  
-!#ifdef MPACT_HAVE_PETSC    
-!  CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
-!#endif
+#ifdef MPACT_HAVE_PETSC    
+  CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
+#endif
 
   CREATE_TEST('Test Preconditioner Types')
 
   CALL setupTest()
+  REGISTER_SUBTEST('Test LU Preconditioner Type',testILU)
 
   FINALIZE_TEST()
 
@@ -86,19 +79,74 @@ PROGRAM testMatrixTypes
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE setupTest()
+      INTEGER(SIK) :: i
+      REAL(SRK) :: tmpreal
 
+      !Set up PL
+      CALL PListMat%add('MatrixType->nnz',40) ! Will be a 10x10, 5-stripe matrix
+      CALL PListMat%add('MatrixType->n',10)
+      ALLOCATE(SparseMatrixType :: testMatrix)
+      CALL testMatrix%init(PListMat)
 
+      ! Fill Matrix
+      SELECTTYPE(testMatrix); TYPE IS(SparseMatrixType)
+        tmpreal=0.0_SRK
+        DO i=1,10
+          IF(i >= 5) THEN
+            tmpreal=tmpreal+1.0_SRK
+            CALL testMatrix%setShape(i,i-4,tmpreal)
+          ENDIF
+          IF(i >= 2) THEN
+            tmpreal=tmpreal+1.0_SRK
+            CALL testMatrix%setShape(i,i-1,tmpreal)
+          ENDIF
+          tmpreal=tmpreal+1.0_SRK
+          CALL testMatrix%setShape(i,i,tmpreal)
+          IF(i <= 9) THEN
+            tmpreal=tmpreal+1.0_SRK
+            CALL testMatrix%setShape(i,i+1,tmpreal)
+          ENDIF
+          IF(i <= 6) THEN
+            tmpreal=tmpreal+1.0_SRK
+            CALL testMatrix%setShape(i,i+4,tmpreal)
+          ENDIF
+        ENDDO
+      CLASS DEFAULT
+        ASSERT(.FALSE.,'ALLOCATE(SparseMatrixType :: testMatrix)')
+      ENDSELECT
 
     ENDSUBROUTINE setupTest
 !
 !-------------------------------------------------------------------------------
+    SUBROUTINE testILU()
+      TYPE(LU_PreCondType) :: testLU
+
+      IF(testMatrix%isInit) THEN
+        CALL testLU%init(testMatrix)
+        ! Check %init
+        ASSERT(testLU%isInit,'LU Preconditioner %isInit')
+        ASSERT(ASSOCIATED(testLU%A),'LU Preconditioner ASSOCIATED(LU%A)')
+        ! Check L
+        ASSERT(testLU%L%isInit,'LU Preconditioner %L%isInit')
+        ! Check U
+        ASSERT(testLU%U%isInit,'LU Preconditioner %U%isInit')
+        
+        ! Check %apply
+        ! Check %clear
+        CALL testLU%clear()
+      ELSE
+        ASSERT(.FALSE.,'TestMatrix Initialization')
+      ENDIF
+
+
+    ENDSUBROUTINE testILU
+!
+!-------------------------------------------------------------------------------
     SUBROUTINE clearTest()
 
-      CALL optListMat%clear()
-      CALL vecPList%clear()
-      CALL pList%clear()
+      CALL PListMat%clear()
       CALL MatrixTypes_Clear_ValidParams()
-      CALL VectorType_Clear_ValidParams()
+      CALL testMatrix%clear()
 
     ENDSUBROUTINE clearTest
 ENDPROGRAM testMatrixTypes
