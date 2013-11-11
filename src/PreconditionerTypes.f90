@@ -356,6 +356,77 @@ MODULE PreconditionerTypes
       CHARACTER(LEN=*),PARAMETER :: myName='setup_BILU_PreCondType'
       CLASS(BILU_PrecondType),INTENT(INOUT) :: PC
       
+      INTEGER(SIK) :: row,col,col2,i,j,k,nL,nU,nnzL,nnzU
+      REAL(SRK) :: val1
+      LOGICAL(SBK) :: localalloc
+      TYPE(ParamType) :: PL
+
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(ePreCondType)) THEN
+        ALLOCATE(ePreCondType)
+        localalloc=.TRUE.
+      ENDIF
+
+      IF(.NOT.(PC%isinit)) THEN
+        CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+          ' - Preconditioner is not initialized!')
+      ELSE
+        IF(.NOT.(PC%A%isInit)) THEN
+          CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+            ' - Matrix being used for LU Preconditioner is not initialized!')
+        ELSE
+          ! This might not be necessary here, but not sure
+          SELECTTYPE(mat => PC%A)
+            CLASS IS(SparseMatrixType)
+              SELECTTYPE(U => PC%U); TYPE IS(SparseMatrixType)
+                SELECTTYPE(L => PC%L); TYPE IS(SparseMatrixType)
+                  ! Loop over A to get initialization data for L and U
+                  ! may need to change for block matrices
+                  j=0
+                  nU=0; nL=0  !number of rows
+                  nnzU=0; nnzL=0 !number of non-zero elements
+                  DO row=1,SIZE(mat%ia)-1
+                    DO i=1,mat%ia(row+1)-mat%ia(row)
+                      j=j+1
+                      col=mat%ja(j)
+                      ! This may be redundant since mat is sparse, but be safe for now
+                      CALL mat%get(row,col,val1)
+                      IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) THEN
+                        IF(col == row) THEN
+                          nnzU=nnzU+1 ! This location is in U
+                        ELSEIF(col > row) THEN
+                          nnzU=nnzU+1 !This location is in U
+                        ELSE
+                          nnzL=nnzL+1 !This location is in L
+                        ENDIF
+                      ENDIF
+                    ENDDO
+                    nnzL=nnzL+1 ! Account for 1's on diagonal of L
+                  ENDDO
+                  
+                  ! Initialize L and U
+                  nU=mat%n
+                  nL=mat%n
+                  CALL PL%add('MatrixType->n',nU)
+                  CALL PL%add('MatrixType->nnz',nnzU)
+                  CALL U%init(PL)
+                  CALL PL%set('MatrixType->n',nL)
+                  CALL PL%set('MatrixType->nnz',nnzL)
+                  CALL L%init(PL)
+                  CALL PL%clear()
+                    
+                ENDSELECT
+              ENDSELECT
+!            CLASS IS(PETScMatrixType)
+!              !to be supported at some point soon
+            CLASS DEFAULT
+              CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+                ' - LU Preconditioners are not supported by input matrix type!')
+          ENDSELECT 
+        ENDIF
+      ENDIF
+
+      IF(localalloc) DEALLOCATE(ePreCondType)
     ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
