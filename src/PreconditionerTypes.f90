@@ -110,7 +110,7 @@ MODULE PreconditionerTypes
     SUBROUTINE precond_init_absintfc(PC,A)
       IMPORT :: PreconditionerType,Matrixtype
       CLASS(PreconditionerType),INTENT(INOUT) :: PC
-      CLASS(MatrixType),INTENT(IN) :: A
+      CLASS(MatrixType),TARGET,INTENT(IN) :: A
     ENDSUBROUTINE precond_init_absintfc
   ENDINTERFACE
 
@@ -118,7 +118,7 @@ MODULE PreconditionerTypes
     SUBROUTINE precond_apply_absintfc(PC,v)
       IMPORT :: PreconditionerType,VectorType
       CLASS(PreconditionerType),INTENT(INOUT) :: PC
-      CLASS(VectorType),INTENT(IN) :: v
+      CLASS(VectorType),INTENT(INOUT) :: v
     ENDSUBROUTINE precond_apply_absintfc
   ENDINTERFACE
 
@@ -174,6 +174,10 @@ MODULE PreconditionerTypes
             CLASS IS(SparseMatrixType)
               ALLOCATE(SparseMatrixType :: PC%L)
               ALLOCATE(SparseMatrixType :: PC%U)
+              PC%isInit=.TRUE.
+            CLASS IS(PETScMatrixType)
+              ALLOCATE(PETScMatrixType :: PC%L)
+              ALLOCATE(PETScMatrixType :: PC%U)
               PC%isInit=.TRUE.
             CLASS DEFAULT
               CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
@@ -417,8 +421,23 @@ MODULE PreconditionerTypes
                     
                 ENDSELECT
               ENDSELECT
-!            CLASS IS(PETScMatrixType)
-!              !to be supported at some point soon
+            CLASS IS(PETScMatrixType)
+              SELECTTYPE(U => PC%U); TYPE IS(SparseMatrixType)
+                SELECTTYPE(L => PC%L); TYPE IS(SparseMatrixType)
+                  !to be supported at some point soon
+                  
+                  ! Initialize L and U (add preallocation eventually)
+                  nU=mat%n
+                  nL=mat%n
+                  CALL PL%add('MatrixType->n',nU)
+                  CALL U%init(PL)
+                  CALL PL%set('MatrixType->n',nL)
+                  CALL L%init(PL)
+                  CALL PL%clear()
+                  
+                ENDSELECT
+              ENDSELECT
+              
             CLASS DEFAULT
               CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
                 ' - LU Preconditioners are not supported by input matrix type!')
