@@ -31,8 +31,9 @@ PROGRAM testMatrixTypes
   IMPLICIT NONE
   
   TYPE(ExceptionHandlerType),TARGET :: e
-  TYPE(ParamType) :: PListMat
+  TYPE(ParamType) :: PListMat,PListVec
   CLASS(MatrixType),POINTER :: testMatrix
+  CLASS(VectorType),POINTER :: testVector
 
 #ifdef HAVE_MPI
   INCLUDE 'mpif.h'
@@ -82,7 +83,12 @@ PROGRAM testMatrixTypes
       INTEGER(SIK) :: i
       REAL(SRK) :: tmpreal
 
-      !Set up PL
+      !Set up Vector
+      CALL PListMat%add('VectorType->n',10_SIK)
+      ALLOCATE(RealVectorType :: testVector)
+      CALL testVector%init(PListVec)      
+
+      !Set up Matrix
       CALL PListMat%add('MatrixType->nnz',40) ! Will be a 10x10, 5-stripe matrix
       CALL PListMat%add('MatrixType->n',10)
       ALLOCATE(SparseMatrixType :: testMatrix)
@@ -110,6 +116,7 @@ PROGRAM testMatrixTypes
             tmpreal=tmpreal+1.0_SRK
             CALL testMatrix%setShape(i,i+4,tmpreal)
           ENDIF
+          CALL testVector%set(i,REAL(i*1.0_SRK,SRK))
         ENDDO
       CLASS DEFAULT
         ASSERT(.FALSE.,'ALLOCATE(SparseMatrixType :: testMatrix)')
@@ -119,29 +126,39 @@ PROGRAM testMatrixTypes
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testLU_PreCondType()
-      TYPE(LU_PreCondType) :: testLU
+      CLASS(LU_PreCondType),ALLOCATABLE :: testLU
 
-      IF(testMatrix%isInit) THEN
-        CALL testLU%init(testMatrix)
+      IF(testMatrix%isInit .AND. testVector%isInit) THEN
+        COMPONENT_TEST('ILU Preconditioner Type')
+        ALLOCATE(ILU_PreCondType :: testLU)
+
         ! Check %init
+        CALL testLU%init(testMatrix)
         ASSERT(testLU%isInit,'LU Preconditioner %isInit')
         ASSERT(ASSOCIATED(testLU%A),'LU Preconditioner ASSOCIATED(LU%A)')
+
+        ! Check %setup
+        CALL testLU%setup()
         ASSERT(testLU%L%isInit,'LU Preconditioner %L%isInit')
         ASSERT(testLU%U%isInit,'LU Preconditioner %U%isInit')
         ! Check L
         ! Check U
         
         ! Check %apply
+        CALL testLU%apply(testVector)
+
         ! Check %clear
         CALL testLU%clear()
         ASSERT(.NOT.(testLU%isInit),'LU Preconditioner .NOT.(lu%isInit)')
-        ASSERT(.NOT.(ASSOCIATED(testLU%A)),'LU Preconditioner .NOT.ASSOCIATED(LU%A)')
-        ASSERT(.NOT.(testLU%L%isInit),'LU Preconditioner .NOT.(LU%L%isInit)')
-        ASSERT(.NOT.(testLU%U%isInit),'LU Preconditioner .NOT.(LU%U%isInit)')
+        ASSERT(.NOT.(ASSOCIATED(testLU%A)),'LU Preconditioner .NOT.(ASSOCIATED(LU%A))')
+        ASSERT(.NOT.(ASSOCIATED(testLU%L)),'LU Preconditioner .NOT.(ASSOCIATED(LU%L))')
+        ASSERT(.NOT.(ASSOCIATED(testLU%U)),'LU Preconditioner .NOT.(ASSOCIATED(LU%U))')
       ELSE
-        ASSERT(.FALSE.,'TestMatrix Initialization')
+        ASSERT(testMatrix%isInit,'TestMatrix Initialization')
+        ASSERT(testVector%isInit,'TestVector Initialization')
       ENDIF
 
+      DEALLOCATE(testLU)
 
     ENDSUBROUTINE testLU_PreCondtype
 !
@@ -149,8 +166,12 @@ PROGRAM testMatrixTypes
     SUBROUTINE clearTest()
 
       CALL PListMat%clear()
+      CALL PListVec%clear()
       CALL MatrixTypes_Clear_ValidParams()
       CALL testMatrix%clear()
+      CALL testVector%clear()
+      DEALLOCATE(testMatrix)
+      DEALLOCATE(testVector)
 
     ENDSUBROUTINE clearTest
 ENDPROGRAM testMatrixTypes

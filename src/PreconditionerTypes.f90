@@ -65,7 +65,7 @@ MODULE PreconditionerTypes
   ! List of Public members
   PUBLIC :: PreconditionerType
   PUBLIC :: LU_PreCondType
-!  PUBLIC :: Minv_PreCondType
+  PUBLIC :: ILU_PreCondType
   PUBLIC :: ePreCondType
 
 
@@ -80,26 +80,21 @@ MODULE PreconditionerTypes
       PROCEDURE(precond_apply_absintfc),DEFERRED,PASS :: apply
   ENDTYPE PreConditionerType
 
-  TYPE,EXTENDS(PreConditionerType) :: LU_PreCondType
+  TYPE,ABSTRACT,EXTENDS(PreConditionerType) :: LU_PreCondType
     CLASS(MatrixType),POINTER :: L
     CLASS(MatrixType),POINTER :: U
 
     CONTAINS
       PROCEDURE,PASS :: init => init_LU_PreCondType
       PROCEDURE,PASS :: clear => clear_LU_PreCondType
-      PROCEDURE,PASS :: setup => setup_LU_PreCondType
+      PROCEDURE(precond_LU_absintfc),DEFERRED,PASS :: setup
       PROCEDURE,PASS :: apply => apply_LU_PreCondType
   ENDTYPE LU_PreCondType
 
-!  TYPE,EXTENDS(PreConditionerType) :: Minv_PreCondType
-!    TYPE(MatrixType) :: Minv
-!
-!    CONTAINS
-!      PROCEDURE,PASS :: init => init_Minv_PreCondType
-!      PROCEDURE,PASS :: clear => clear_Minv_PreCondType
-!      PROCEDURE,PASS :: setup => setup_Minv_PreCondType
-!      PROCEDURE,PASS :: apply => apply_Minv_PreCondType
-!  ENDTYPE Minv_PreCondType
+  TYPE,EXTENDS(LU_PreCondType) :: ILU_PreCondType
+    CONTAINS
+      PROCEDURE,PASS :: setup => setup_ILU_PreCondType
+  ENDTYPE ILU_PreCondType
 
   ABSTRACT INTERFACE
     SUBROUTINE precond_init_absintfc(PC,A)
@@ -122,6 +117,11 @@ MODULE PreconditionerTypes
       IMPORT :: PreconditionerType
       CLASS(PreconditionerType),INTENT(INOUT) :: PC
     ENDSUBROUTINE precond_absintfc
+
+    SUBROUTINE precond_LU_absintfc(PC)
+      IMPORT :: LU_PreCondType
+      CLASS(LU_PreCondType),INTENT(INOUT) :: PC
+    ENDSUBROUTINE precond_LU_absintfc
   ENDINTERFACE
 
   CHARACTER(LEN=*),PARAMETER :: modName='PreconditionerTypes'
@@ -141,10 +141,7 @@ MODULE PreconditionerTypes
       CLASS(MatrixType),TARGET,INTENT(IN) :: A
 
       CHARACTER(LEN=*),PARAMETER :: myName='init_LU_PreCondType'
-      INTEGER(SIK) :: row,col,col2,i,j,k,nL,nU,nnzL,nnzU
-      REAL(SRK) :: val1,val2,val3
       LOGICAL(SBK) :: localalloc
-      TYPE(ParamType) :: PL
 
       localalloc=.FALSE.
       IF(.NOT.ASSOCIATED(ePreCondType)) THEN
@@ -167,6 +164,74 @@ MODULE PreconditionerTypes
             CLASS IS(SparseMatrixType)
               ALLOCATE(SparseMatrixType :: PC%L)
               ALLOCATE(SparseMatrixType :: PC%U)
+              PC%isInit=.TRUE.
+            CLASS DEFAULT
+              CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+                ' - LU Preconditioners are not supported for input matrix type!')
+          ENDSELECT 
+
+        ENDIF
+      ENDIF
+    ENDSUBROUTINE init_LU_PreCondtype
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes the Linear Solver Type with a parameter list
+!> @param pList the parameter list
+!>
+!> @param solver The linear solver to act on
+    SUBROUTINE clear_LU_PreCondtype(PC)
+      CLASS(LU_PrecondType),INTENT(INOUT) :: PC
+
+      NULLIFY(PC%A)
+      CALL PC%U%clear()
+      CALL PC%L%clear()
+      DEALLOCATE(PC%U)
+      DEALLOCATE(PC%L)
+      PC%isInit=.FALSE.
+
+    ENDSUBROUTINE clear_LU_PreCondtype
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes the Linear Solver Type with a parameter list
+!> @param pList the parameter list
+!>
+!> @param solver The linear solver to act on
+    SUBROUTINE apply_LU_PreCondtype(PC,v)
+      CLASS(LU_PrecondType),INTENT(INOUT) :: PC
+      CLASS(Vectortype),INTENT(INOUT) :: v
+    ENDSUBROUTINE apply_LU_PreCondtype
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes the Linear Solver Type with a parameter list
+!> @param pList the parameter list
+!>
+!> @param solver The linear solver to act on
+    SUBROUTINE setup_ILU_PreCondtype(PC)
+      CLASS(ILU_PrecondType),INTENT(INOUT) :: PC
+
+      CHARACTER(LEN=*),PARAMETER :: myName='setup_ILU_PreCondType'
+      INTEGER(SIK) :: row,col,col2,i,j,k,nL,nU,nnzL,nnzU
+      REAL(SRK) :: val1,val2,val3
+      LOGICAL(SBK) :: localalloc
+      TYPE(ParamType) :: PL
+
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(ePreCondType)) THEN
+        ALLOCATE(ePreCondType)
+        localalloc=.TRUE.
+      ENDIF
+
+      IF(.NOT.(PC%isinit)) THEN
+        CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+          ' - Preconditioner is not initialized!')
+      ELSE
+        IF(.NOT.(PC%A%isInit)) THEN
+          CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+            ' - Matrix being used for LU Preconditioner is not initialized!')
+        ELSE
+          ! This might not be necessary here, but not sure
+          SELECTTYPE(mat => PC%A)
+            CLASS IS(SparseMatrixType)
               SELECTTYPE(U => PC%U); TYPE IS(SparseMatrixType)
                 SELECTTYPE(L => PC%L); TYPE IS(SparseMatrixType)
                   ! Loop over A to get initialization data for L and U
@@ -240,8 +305,6 @@ MODULE PreconditionerTypes
                       ENDDO
                       CALL L%setShape(row,row,1.0_SRK)
                     ENDDO
-
-                    PC%isInit=.TRUE.
                   ENDIF
                 ENDSELECT
               ENDSELECT
@@ -249,44 +312,11 @@ MODULE PreconditionerTypes
               CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
                 ' - LU Preconditioners are not supported by input matrix type!')
           ENDSELECT 
-
         ENDIF
       ENDIF
-    ENDSUBROUTINE init_LU_PreCondtype
-!
-!-------------------------------------------------------------------------------
-!> @brief Initializes the Linear Solver Type with a parameter list
-!> @param pList the parameter list
-!>
-!> @param solver The linear solver to act on
-    SUBROUTINE clear_LU_PreCondtype(PC)
-      CLASS(LU_PrecondType),INTENT(INOUT) :: PC
 
-      NULLIFY(PC%A)
-      CALL PC%U%clear()
-      CALL PC%L%clear()
-      PC%isInit=.FALSE.
-
-    ENDSUBROUTINE clear_LU_PreCondtype
-!
-!-------------------------------------------------------------------------------
-!> @brief Initializes the Linear Solver Type with a parameter list
-!> @param pList the parameter list
-!>
-!> @param solver The linear solver to act on
-    SUBROUTINE apply_LU_PreCondtype(PC,v)
-      CLASS(LU_PrecondType),INTENT(INOUT) :: PC
-      CLASS(Vectortype),INTENT(INOUT) :: v
-    ENDSUBROUTINE apply_LU_PreCondtype
-!
-!-------------------------------------------------------------------------------
-!> @brief Initializes the Linear Solver Type with a parameter list
-!> @param pList the parameter list
-!>
-!> @param solver The linear solver to act on
-    SUBROUTINE setup_LU_PreCondtype(PC)
-      CLASS(LU_PrecondType),INTENT(INOUT) :: PC
-    ENDSUBROUTINE setup_LU_PreCondtype
+      IF(localalloc) DEALLOCATE(ePreCondType)
+    ENDSUBROUTINE setup_ILU_PreCondtype
 !
 !-------------------------------------------------------------------------------
 END MODULE
