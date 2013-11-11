@@ -182,7 +182,7 @@ MODULE PreconditionerTypes
     SUBROUTINE clear_LU_PreCondtype(PC)
       CLASS(LU_PrecondType),INTENT(INOUT) :: PC
 
-      NULLIFY(PC%A)
+      IF(ASSOCIATED(PC%A)) NULLIFY(PC%A)
       CALL PC%U%clear()
       CALL PC%L%clear()
       DEALLOCATE(PC%U)
@@ -196,10 +196,29 @@ MODULE PreconditionerTypes
 !> @param pList the parameter list
 !>
 !> @param solver The linear solver to act on
-    SUBROUTINE apply_LU_PreCondtype(PC,v)
+    SUBROUTINE apply_LU_PreCondType(PC,v)
       CLASS(LU_PrecondType),INTENT(INOUT) :: PC
       CLASS(Vectortype),INTENT(INOUT) :: v
-    ENDSUBROUTINE apply_LU_PreCondtype
+
+      CHARACTER(LEN=*),PARAMETER :: myName='apply_LU_PreCondType'
+      LOGICAL(SBK) :: localalloc
+
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(ePreCondType)) THEN
+        ALLOCATE(ePreCondType)
+        localalloc=.TRUE.
+      ENDIF
+
+      IF(.NOT.(PC%isInit)) THEN
+        CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+          ' - Preconditioner is not initialized.')
+      ELSEIF(.NOT.(v%isInit)) THEN
+        CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+          ' - VectorType is not initialized.')
+      ELSE
+        ! Perform U^-1 * L^-1 * v
+      ENDIF
+    ENDSUBROUTINE apply_LU_PreCondType
 !
 !-------------------------------------------------------------------------------
 !> @brief Initializes the Linear Solver Type with a parameter list
