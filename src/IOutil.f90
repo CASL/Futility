@@ -60,8 +60,8 @@ MODULE IOutil
   USE IO_Strings
   USE FileType_Base
   USE FileType_Fortran
-  USE FileType_Log
   USE FileType_Input
+  USE FileType_Log
   IMPLICIT NONE
   PRIVATE
 
