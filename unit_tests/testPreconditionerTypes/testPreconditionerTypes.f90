@@ -38,8 +38,8 @@ PROGRAM testMatrixTypes
   
   TYPE(ExceptionHandlerType),TARGET :: e
   TYPE(ParamType) :: PListMat,PListVec
-  CLASS(MatrixType),POINTER :: testMatrix
-  CLASS(VectorType),POINTER :: testVector
+  CLASS(MatrixType),ALLOCATABLE :: testMatrix
+  CLASS(VectorType),ALLOCATABLE :: testVector
 
 #ifdef HAVE_MPI
   INTEGER :: mpierr
@@ -48,8 +48,8 @@ PROGRAM testMatrixTypes
   INTEGER :: MPI_COMM_WORLD=0
 #endif
   !Configure exception handler for test
-  CALL e%setStopOnError(.FALSE.)
-  CALL e%setQuietMode(.TRUE.)
+  CALL e%setStopOnError(.TRUE.)
+  CALL e%setQuietMode(.FALSE.)
   eParams => e
   ePreCondType => e
   
@@ -60,13 +60,15 @@ PROGRAM testMatrixTypes
 
   CREATE_TEST('Test Preconditioner Types')
 
-  CALL setupTest()
+  CALL setupILUTest()
   REGISTER_SUBTEST('Test ILU Preconditioner Type',testILU_PreCondType)
+  CALL clearTest()
+  
+  CALL setupBILUTest()
   REGISTER_SUBTEST('Test BILU Preconditioner Type',testBILU_PreCondType)
-
-  FINALIZE_TEST()
-
   CALL clearTest()  
+  
+  FINALIZE_TEST()
   
 #ifdef MPACT_HAVE_PETSC    
   CALL PetscFinalize(ierr)
@@ -79,12 +81,12 @@ PROGRAM testMatrixTypes
   CONTAINS
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE setupTest()
+    SUBROUTINE setupILUTest()
       INTEGER(SIK) :: i
       REAL(SRK) :: tmpreal
 
       !Set up Vector
-      CALL PListMat%add('VectorType->n',10_SIK)
+      CALL PListVec%add('VectorType->n',10_SIK)
       ALLOCATE(RealVectorType :: testVector)
       CALL testVector%init(PListVec)      
 
@@ -122,7 +124,7 @@ PROGRAM testMatrixTypes
         ASSERT(.FALSE.,'ALLOCATE(SparseMatrixType :: testMatrix)')
       ENDSELECT
 
-    ENDSUBROUTINE setupTest
+    ENDSUBROUTINE setupILUTest
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testILU_PreCondType()
@@ -161,6 +163,52 @@ PROGRAM testMatrixTypes
       DEALLOCATE(testLU)
 
     ENDSUBROUTINE testILU_PreCondtype
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE setupBILUTest()
+      INTEGER(SIK) :: i
+      REAL(SRK) :: tmpreal
+
+      !Set up Vector
+      CALL PListVec%add('VectorType->n',10_SIK)
+      ALLOCATE(RealVectorType :: testVector)
+      CALL testVector%init(PListVec)      
+
+      !Set up Matrix
+      CALL PListMat%add('MatrixType->nnz',40) ! Will be a 10x10, 5-stripe matrix
+      CALL PListMat%add('MatrixType->n',10)
+      ALLOCATE(SparseMatrixType :: testMatrix)
+      CALL testMatrix%init(PListMat)
+
+      ! Fill Matrix
+      SELECTTYPE(testMatrix); TYPE IS(SparseMatrixType)
+        tmpreal=0.0_SRK
+        DO i=1,10
+          IF(i >= 5) THEN
+            tmpreal=tmpreal+1.0_SRK
+            CALL testMatrix%setShape(i,i-4,tmpreal)
+          ENDIF
+          IF(i >= 2) THEN
+            tmpreal=tmpreal+1.0_SRK
+            CALL testMatrix%setShape(i,i-1,tmpreal)
+          ENDIF
+          tmpreal=tmpreal+1.0_SRK
+          CALL testMatrix%setShape(i,i,tmpreal)
+          IF(i <= 9) THEN
+            tmpreal=tmpreal+1.0_SRK
+            CALL testMatrix%setShape(i,i+1,tmpreal)
+          ENDIF
+          IF(i <= 6) THEN
+            tmpreal=tmpreal+1.0_SRK
+            CALL testMatrix%setShape(i,i+4,tmpreal)
+          ENDIF
+          CALL testVector%set(i,REAL(i*1.0_SRK,SRK))
+        ENDDO
+      CLASS DEFAULT
+        ASSERT(.FALSE.,'ALLOCATE(SparseMatrixType :: testMatrix)')
+      ENDSELECT
+
+    ENDSUBROUTINE setupBILUTest
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testBILU_PreCondType()
@@ -208,8 +256,8 @@ PROGRAM testMatrixTypes
       CALL MatrixTypes_Clear_ValidParams()
       CALL testMatrix%clear()
       CALL testVector%clear()
-      DEALLOCATE(testMatrix)
-      DEALLOCATE(testVector)
+      IF(ALLOCATED(testMatrix)) DEALLOCATE(testMatrix)
+      IF(ALLOCATED(testVector)) DEALLOCATE(testVector)
 
     ENDSUBROUTINE clearTest
 ENDPROGRAM testMatrixTypes
