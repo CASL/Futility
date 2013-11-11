@@ -66,6 +66,7 @@ MODULE PreconditionerTypes
   PUBLIC :: PreconditionerType
   PUBLIC :: LU_PreCondType
   PUBLIC :: ILU_PreCondType
+  PUBLIC :: BILU_PreCondType
   PUBLIC :: ePreCondType
 
 
@@ -95,6 +96,15 @@ MODULE PreconditionerTypes
     CONTAINS
       PROCEDURE,PASS :: setup => setup_ILU_PreCondType
   ENDTYPE ILU_PreCondType
+  
+  TYPE,EXTENDS(LU_PreCondType) :: BILU_PreCondType
+    INTEGER(SIK) :: nPlane
+    INTEGER(SIK) :: nPin
+    INTEGER(SIK) :: nGrp
+    INTEGER(SIK) :: BILUType  !for 2D, 3D and other variants
+    CONTAINS
+      PROCEDURE,PASS :: setup => setup_BILU_PreCondType
+  ENDTYPE BILU_PreCondType
 
   ABSTRACT INTERFACE
     SUBROUTINE precond_init_absintfc(PC,A)
@@ -336,6 +346,17 @@ MODULE PreconditionerTypes
 
       IF(localalloc) DEALLOCATE(ePreCondType)
     ENDSUBROUTINE setup_ILU_PreCondtype
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets up the BILU Preconditioner
+!> @param pList the parameter list
+!>
+!> @param solver The linear solver to act on
+    SUBROUTINE setup_BILU_PreCondtype(PC)
+      CHARACTER(LEN=*),PARAMETER :: myName='setup_BILU_PreCondType'
+      CLASS(BILU_PrecondType),INTENT(INOUT) :: PC
+      
+    ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
 END MODULE
