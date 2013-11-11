@@ -30,24 +30,23 @@ PROGRAM testMatrixTypes
   USE PreconditionerTypes
   IMPLICIT NONE
   
-  TYPE(ExceptionHandlerType),TARGET :: e
-  TYPE(ParamType) :: PListMat,PListVec
-  CLASS(MatrixType),POINTER :: testMatrix
-  CLASS(VectorType),POINTER :: testVector
-
-#ifdef HAVE_MPI
-  INCLUDE 'mpif.h'
-  INTEGER :: mpierr
-  CALL MPI_Init(mpierr)
-#else
-  INTEGER :: MPI_COMM_WORLD=0
-#endif
 #ifdef MPACT_HAVE_PETSC
 #include <finclude/petsc.h>
 #undef IS
   PetscErrorCode  :: ierr
 #endif
   
+  TYPE(ExceptionHandlerType),TARGET :: e
+  TYPE(ParamType) :: PListMat,PListVec
+  CLASS(MatrixType),POINTER :: testMatrix
+  CLASS(VectorType),POINTER :: testVector
+
+#ifdef HAVE_MPI
+  INTEGER :: mpierr
+  CALL MPI_Init(mpierr)
+#else
+  INTEGER :: MPI_COMM_WORLD=0
+#endif
   !Configure exception handler for test
   CALL e%setStopOnError(.FALSE.)
   CALL e%setQuietMode(.TRUE.)
