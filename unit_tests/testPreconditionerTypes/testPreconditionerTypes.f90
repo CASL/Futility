@@ -61,7 +61,8 @@ PROGRAM testMatrixTypes
   CREATE_TEST('Test Preconditioner Types')
 
   CALL setupTest()
-  REGISTER_SUBTEST('Test LU Preconditioner Type',testLU_PreCondType)
+  REGISTER_SUBTEST('Test ILU Preconditioner Type',testILU_PreCondType)
+  REGISTER_SUBTEST('Test BILU Preconditioner Type',testBILU_PreCondType)
 
   FINALIZE_TEST()
 
@@ -124,7 +125,7 @@ PROGRAM testMatrixTypes
     ENDSUBROUTINE setupTest
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE testLU_PreCondType()
+    SUBROUTINE testILU_PreCondType()
       CLASS(LU_PreCondType),ALLOCATABLE :: testLU
 
       IF(testMatrix%isInit .AND. testVector%isInit) THEN
@@ -133,13 +134,13 @@ PROGRAM testMatrixTypes
 
         ! Check %init
         CALL testLU%init(testMatrix)
-        ASSERT(testLU%isInit,'LU Preconditioner %isInit')
-        ASSERT(ASSOCIATED(testLU%A),'LU Preconditioner ASSOCIATED(LU%A)')
+        ASSERT(testLU%isInit,'ILU Preconditioner %isInit')
+        ASSERT(ASSOCIATED(testLU%A),'ILU Preconditioner ASSOCIATED(LU%A)')
 
         ! Check %setup
         CALL testLU%setup()
-        ASSERT(testLU%L%isInit,'LU Preconditioner %L%isInit')
-        ASSERT(testLU%U%isInit,'LU Preconditioner %U%isInit')
+        ASSERT(testLU%L%isInit,'ILU Preconditioner %L%isInit')
+        ASSERT(testLU%U%isInit,'ILU Preconditioner %U%isInit')
         ! Check L
         ! Check U
         
@@ -148,10 +149,10 @@ PROGRAM testMatrixTypes
 
         ! Check %clear
         CALL testLU%clear()
-        ASSERT(.NOT.(testLU%isInit),'LU Preconditioner .NOT.(lu%isInit)')
-        ASSERT(.NOT.(ASSOCIATED(testLU%A)),'LU Preconditioner .NOT.(ASSOCIATED(LU%A))')
-        ASSERT(.NOT.(ASSOCIATED(testLU%L)),'LU Preconditioner .NOT.(ASSOCIATED(LU%L))')
-        ASSERT(.NOT.(ASSOCIATED(testLU%U)),'LU Preconditioner .NOT.(ASSOCIATED(LU%U))')
+        ASSERT(.NOT.(testLU%isInit),'ILU Preconditioner .NOT.(lu%isInit)')
+        ASSERT(.NOT.(ASSOCIATED(testLU%A)),'ILU Preconditioner .NOT.(ASSOCIATED(LU%A))')
+        ASSERT(.NOT.(ASSOCIATED(testLU%L)),'ILU Preconditioner .NOT.(ASSOCIATED(LU%L))')
+        ASSERT(.NOT.(ASSOCIATED(testLU%U)),'ILU Preconditioner .NOT.(ASSOCIATED(LU%U))')
       ELSE
         ASSERT(testMatrix%isInit,'TestMatrix Initialization')
         ASSERT(testVector%isInit,'TestVector Initialization')
@@ -159,7 +160,45 @@ PROGRAM testMatrixTypes
 
       DEALLOCATE(testLU)
 
-    ENDSUBROUTINE testLU_PreCondtype
+    ENDSUBROUTINE testILU_PreCondtype
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testBILU_PreCondType()
+      CLASS(LU_PreCondType),ALLOCATABLE :: testLU
+
+      IF(testMatrix%isInit .AND. testVector%isInit) THEN
+        COMPONENT_TEST('BILU Preconditioner Type')
+        ALLOCATE(BILU_PreCondType :: testLU)
+
+        ! Check %init
+        CALL testLU%init(testMatrix)
+        ASSERT(testLU%isInit,'BILU Preconditioner %isInit')
+        ASSERT(ASSOCIATED(testLU%A),'BILU Preconditioner ASSOCIATED(LU%A)')
+
+        ! Check %setup
+        CALL testLU%setup()
+        ASSERT(testLU%L%isInit,'BILU Preconditioner %L%isInit')
+        ASSERT(testLU%U%isInit,'BILU Preconditioner %U%isInit')
+        ! Check L
+        ! Check U
+        
+        ! Check %apply
+        CALL testLU%apply(testVector)
+
+        ! Check %clear
+        CALL testLU%clear()
+        ASSERT(.NOT.(testLU%isInit),'BILU Preconditioner .NOT.(lu%isInit)')
+        ASSERT(.NOT.(ASSOCIATED(testLU%A)),'BILU Preconditioner .NOT.(ASSOCIATED(LU%A))')
+        ASSERT(.NOT.(ASSOCIATED(testLU%L)),'BILU Preconditioner .NOT.(ASSOCIATED(LU%L))')
+        ASSERT(.NOT.(ASSOCIATED(testLU%U)),'BILU Preconditioner .NOT.(ASSOCIATED(LU%U))')
+      ELSE
+        ASSERT(testMatrix%isInit,'TestMatrix Initialization')
+        ASSERT(testVector%isInit,'TestVector Initialization')
+      ENDIF
+
+      DEALLOCATE(testLU)
+
+    ENDSUBROUTINE testBILU_PreCondtype
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE clearTest()
