@@ -16,7 +16,8 @@
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testBinaryTrees
-
+#include "UnitTest.h"
+  USE UnitTest
   USE IntrType
   USE BinaryTrees
   IMPLICIT NONE

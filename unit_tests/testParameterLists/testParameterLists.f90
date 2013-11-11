@@ -16,14 +16,13 @@
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testParameterLists
-#include "UnitTest.h" 
+#include "UnitTest.h"
   USE ISO_FORTRAN_ENV
+  USE UnitTest
   USE IntrType
   USE Strings
   USE ExceptionHandler
   USE ParameterLists
-  USE UnitTest
-  
   IMPLICIT NONE
   
   REAL(SSK) :: valssk

@@ -17,12 +17,12 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testStochasticSampler
 #include "UnitTest.h"
+  USE ISO_FORTRAN_ENV
   USE UnitTest    
   USE IntrType
   USE ExceptionHandler
   USE ParallelEnv
   USE StochasticSampling
-  USE ISO_FORTRAN_ENV
   IMPLICIT NONE
 
   TYPE(StochasticSamplingType) :: myRNG

@@ -17,25 +17,25 @@
 SET(UNIT_TEST_NAMES
     testUnitTest
     testSelectedKinds
-    testSorting
+    testBLAS
     testStrings
     testTimes
     testGeom
+    testSorting
     testBinaryTrees
+    testExceptionHandler
     testSpaceFillingCurve
-    testExceptionHandler      
     testAllocs
-    testExpTables
-    testStochasticSampler
-    testParallelEnv
-    testIOutil
     testParameterLists
+    testIOutil
+    testParallelEnv
+    testExpTables
     testVTKFiles
     testCmdLineProc
-    testBLAS
-    testMatrixTypes
     testVectorTypes
+    testMatrixTypes
     testLinearSolver
+    testStochasticSampler
 )
 
 IF("${PROJECT_NAME}" STREQUAL "MPACT")

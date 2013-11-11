@@ -52,11 +52,10 @@
 !>   @date 02/02/2012
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE VTKFiles
-  
   USE IntrType
   USE ExceptionHandler
-  USE FileType_Fortran
   USE Allocs
+  USE FileType_Fortran
   IMPLICIT NONE
   PRIVATE
   

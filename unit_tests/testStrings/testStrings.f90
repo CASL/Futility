@@ -15,10 +15,10 @@
 ! manufacturer, or otherwise, does not necessarily constitute or imply its     !
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-#include "UnitTest.h"
 PROGRAM testStrings
+#include "UnitTest.h"
+  USE UnitTest  
   USE IntrType
-  USE UnitTest
   USE Strings
   IMPLICIT NONE
   

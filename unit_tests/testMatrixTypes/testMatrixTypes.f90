@@ -16,7 +16,8 @@
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testMatrixTypes
-  
+#include "UnitTest.h"
+  USE UnitTest
   USE ISO_FORTRAN_ENV
   USE IntrType
   USE ExceptionHandler

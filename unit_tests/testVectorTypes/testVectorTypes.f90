@@ -16,7 +16,8 @@
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testVectorTypes
-  
+#include "UnitTest.h"
+  USE UnitTest
   USE IntrType
   USE ExceptionHandler
   USE BLAS

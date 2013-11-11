@@ -17,10 +17,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testExpTables
   USE IntrType
-  USE Allocs
   USE ExceptionHandler
-  USE ExpTables
+  USE Allocs
   USE ParameterLists
+  USE ExpTables
   IMPLICIT NONE
   
   TYPE(ExceptionHandlerType),TARGET :: e

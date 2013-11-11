@@ -16,7 +16,8 @@
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testSelectedKinds
-      
+#include "UnitTest.h"
+  USE UnitTest
   USE IntrType
   IMPLICIT NONE
 
