@@ -48,8 +48,8 @@ PROGRAM testMatrixTypes
   INTEGER :: MPI_COMM_WORLD=0
 #endif
   !Configure exception handler for test
-  CALL e%setStopOnError(.TRUE.)
-  CALL e%setQuietMode(.FALSE.)
+  CALL e%setStopOnError(.FALSE.)
+  CALL e%setQuietMode(.TRUE.)
   eParams => e
   ePreCondType => e
   
@@ -63,10 +63,12 @@ PROGRAM testMatrixTypes
   CALL setupILUTest()
   REGISTER_SUBTEST('Test ILU Preconditioner Type',testILU_PreCondType)
   CALL clearTest()
-  
+
+#ifdef MPACT_HAVE_PETSC
   CALL setupBILUTest()
   REGISTER_SUBTEST('Test BILU Preconditioner Type',testBILU_PreCondType)
-  CALL clearTest()  
+  CALL clearTest() 
+#endif 
   
   FINALIZE_TEST()
   
@@ -166,44 +168,42 @@ PROGRAM testMatrixTypes
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE setupBILUTest()
-      INTEGER(SIK) :: i
-      REAL(SRK) :: tmpreal
+      INTEGER(SIK) :: i,j,iostatus,ierr
+      INTEGER(SIK) :: nPlane,nPin,nGrp,N
+      REAL(SRK) :: tmpreal,val
+      
+      nPlane=3
+      nPin=9
+      nGrp=1
+      N=nPlane*nPin*nGrp
 
       !Set up Vector
-      CALL PListVec%add('VectorType->n',10_SIK)
-      ALLOCATE(RealVectorType :: testVector)
+      CALL PListVec%add('VectorType->n',N)
+      CALL PListVec%add('VectorType->MPI_Comm_ID',MPI_COMM_WORLD)    
+      ALLOCATE(PETScVectorType :: testVector)
       CALL testVector%init(PListVec)      
 
       !Set up Matrix
-      CALL PListMat%add('MatrixType->nnz',40) ! Will be a 10x10, 5-stripe matrix
-      CALL PListMat%add('MatrixType->n',10)
-      ALLOCATE(SparseMatrixType :: testMatrix)
+      CALL PListMat%add('MatrixType->matType',SPARSE)
+      CALL PListMat%add('MatrixType->n',N)
+      CALL PListMat%add('MatrixType->isSym',.FALSE.)
+      CALL PListMat%add('MatrixType->MPI_Comm_ID',MPI_COMM_WORLD)
+      ALLOCATE(PETScMatrixType :: testMatrix)
       CALL testMatrix%init(PListMat)
-
-      ! Fill Matrix
-      SELECTTYPE(testMatrix); TYPE IS(SparseMatrixType)
-        tmpreal=0.0_SRK
-        DO i=1,10
-          IF(i >= 5) THEN
-            tmpreal=tmpreal+1.0_SRK
-            CALL testMatrix%setShape(i,i-4,tmpreal)
-          ENDIF
-          IF(i >= 2) THEN
-            tmpreal=tmpreal+1.0_SRK
-            CALL testMatrix%setShape(i,i-1,tmpreal)
-          ENDIF
-          tmpreal=tmpreal+1.0_SRK
-          CALL testMatrix%setShape(i,i,tmpreal)
-          IF(i <= 9) THEN
-            tmpreal=tmpreal+1.0_SRK
-            CALL testMatrix%setShape(i,i+1,tmpreal)
-          ENDIF
-          IF(i <= 6) THEN
-            tmpreal=tmpreal+1.0_SRK
-            CALL testMatrix%setShape(i,i+4,tmpreal)
-          ENDIF
-          CALL testVector%set(i,REAL(i*1.0_SRK,SRK))
+      
+      SELECTTYPE(testMatrix); TYPE IS(PETScMatrixType)
+        
+        ! Fill Matrix from File
+        OPEN(unit=111,file="matrices/1g_matrix.txt",status='old')
+        READ(111,*,iostat=iostatus)
+        DO WHILE(iostatus==0)
+          READ(111,*,iostat=iostatus) i,j,val
+          CALL testMatrix%set(i,j,val)
         ENDDO
+        CLOSE(111)
+        CALL testMatrix%assemble()
+!        CALL MatView(testMatrix%A,PETSC_VIEWER_STDOUT_SELF,ierr)
+        
       CLASS DEFAULT
         ASSERT(.FALSE.,'ALLOCATE(SparseMatrixType :: testMatrix)')
       ENDSELECT
@@ -214,21 +214,67 @@ PROGRAM testMatrixTypes
     SUBROUTINE testBILU_PreCondType()
       CLASS(LU_PreCondType),ALLOCATABLE :: testLU
 
+      INTEGER(SIK) :: nPlane,nPin,nGrp
+      INTEGER(SIK) :: row,col
+      REAL(SRK) :: tmpval
+      TYPE(ParamType) :: pList
+      
       IF(testMatrix%isInit .AND. testVector%isInit) THEN
         COMPONENT_TEST('BILU Preconditioner Type')
         ALLOCATE(BILU_PreCondType :: testLU)
+        
+        nPlane=3
+        nPin=9
+        nGrp=1
 
-        ! Check %init
+        !initialize        
         CALL testLU%init(testMatrix)
+        !set some values (to be moved into init at some point)
+        SELECTTYPE(pc => testLU); TYPE IS(BILU_PreCondType)
+          pc%nPlane=nPlane
+          pc%nPin=nPin
+          pc%nGrp=nGrp    
+        ENDSELECT
+        ! Check %init
         ASSERT(testLU%isInit,'BILU Preconditioner %isInit')
         ASSERT(ASSOCIATED(testLU%A),'BILU Preconditioner ASSOCIATED(LU%A)')
+        ASSERT(testLU%L%isInit,'BILU Preconditioner %L%isInit')
+        ASSERT(testLU%U%isInit,'BILU Preconditioner %U%isInit')
 
         ! Check %setup
         CALL testLU%setup()
-        ASSERT(testLU%L%isInit,'BILU Preconditioner %L%isInit')
-        ASSERT(testLU%U%isInit,'BILU Preconditioner %U%isInit')
         ! Check L
         ! Check U
+        SELECTTYPE(A => testLU%A); TYPE IS(PETScMatrixType)
+          DO row=1,A%n
+            WRITE(667,'(I4)',ADVANCE='NO') row
+            DO col=1,A%n
+              CALL A%get(row,col,tmpval)
+              WRITE(667,'(E15.5)',ADVANCE='NO') tmpval
+            ENDDO   
+            WRITE(667,*)            
+          ENDDO
+        ENDSELECT
+        SELECTTYPE(A => testLU%L); TYPE IS(PETScMatrixType)
+          DO row=1,A%n
+            WRITE(667,'(I4)',ADVANCE='NO') row
+            DO col=1,A%n
+              CALL A%get(row,col,tmpval)
+              WRITE(667,'(E15.5)',ADVANCE='NO') tmpval
+            ENDDO   
+            WRITE(667,*)            
+          ENDDO
+        ENDSELECT
+        SELECTTYPE(A => testLU%U); TYPE IS(PETScMatrixType)
+          DO row=1,A%n
+            WRITE(667,'(I4)',ADVANCE='NO') row
+            DO col=1,A%n
+              CALL A%get(row,col,tmpval)
+              WRITE(667,'(E15.5)',ADVANCE='NO') tmpval
+            ENDDO   
+            WRITE(667,*)            
+          ENDDO
+        ENDSELECT
         
         ! Check %apply
         CALL testLU%apply(testVector)
