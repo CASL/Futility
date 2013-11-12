@@ -310,33 +310,62 @@ MODULE PreconditionerTypes
                       ' - In LU decomposition, L was not properly initialized!')
                   ! Now loop through A again and set values of L and U
                   ELSE
+                    ! Set the shape
                     j=0
-                    val1=0.0_SRK
-                    val2=0.0_SRK
-                    DO row=2,SIZE(mat%ia)-1
+                    DO row=1,SIZE(mat%ia)-1
+                      j=mat%ia(row)
                       DO i=1,mat%ia(row+1)-mat%ia(row)
+                        col=mat%ja(j)
+                        ! This may be redundant since mat is sparse, but be safe for now
+                        CALL mat%get(row,col,val1)
+                        IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) THEN
+                          IF(col >= row) THEN
+                            CALL U%setShape(row,col,0.0_SRK)
+                          ELSE
+                            CALL L%setShape(row,col,0.0_SRK)
+                          ENDIF
+                        ENDIF
                         j=j+1
+                      ENDDO
+                      CALL L%setShape(row,row,0.0_SRK)
+                    ENDDO
+
+                    ! Set the first row of U and L
+                    DO i=1,mat%ia(2)-mat%ia(1)
+                      col=mat%ja(i)
+                      CALL mat%get(1,col,val1)
+                      CALL U%set(1,col,val1)
+WRITE(*,*) 'set:',1,col,val1
+                    ENDDO
+                    CALL L%set(1,1,1.0_SRK)
+                    ! Now complete LU Decomposition
+                    DO row=2,SIZE(mat%ia)-1
+                      j=mat%ia(row)
+                      DO i=1,mat%ia(row+1)-mat%ia(row)
                         col=mat%ja(j)
                         IF(col > row-1) EXIT
                         CALL mat%get(row,col,val1)
                         CALL mat%get(col,col,val2)
                         val2=val1/val2
-                        CALL L%setShape(row,col,val2)
+                        CALL L%set(row,col,val2)
+WRITE(*,*) 'set:',row,col,val2
                         DO k=i+1,mat%ia(row+1)-mat%ia(row)
                           col2=mat%ja(j-i+k)
                           CALL mat%get(row,col2,val1)
+WRITE(*,*) 'get:',row,col2,val1
                           IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) THEN
+                            CALL U%get(col,col2,val3)
+WRITE(*,*) 'get:',col,col2,val3
                             IF(col2 < row) THEN
-                              CALL L%get(col,col2,val3)
-                              CALL L%setShape(row,col2,val1-val2*val3)
+                              CALL L%set(row,col2,val1-val2*val3)
                             ELSE
-                              CALL U%get(col,col2,val3)
-                              CALL U%setShape(row,col2,val1-val2*val3)
+                              CALL U%set(row,col2,val1-val2*val3)
                             ENDIF
                           ENDIF
                         ENDDO
+                        j=j+1
                       ENDDO
-                      CALL L%setShape(row,row,1.0_SRK)
+                      CALL L%set(row,row,1.0_SRK)
                     ENDDO
                   ENDIF
                 ENDSELECT
