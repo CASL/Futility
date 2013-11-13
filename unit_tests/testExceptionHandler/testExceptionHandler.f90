@@ -17,10 +17,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testExceptionHandler
 #include "UnitTest.h"
-  USE UnitTest
   USE ISO_FORTRAN_ENV
-  USE IntrType
-  USE ExceptionHandler
+  USE UnitTest
+  USE Utils
+  
   IMPLICIT NONE
 
   TYPE(ExceptionHandlerType) :: test

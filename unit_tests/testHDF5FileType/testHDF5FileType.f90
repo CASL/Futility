@@ -15,20 +15,12 @@
 ! manufacturer, or otherwise, does not necessarily constitute or imply its     !
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-
-
 PROGRAM testHDF5
 #include "UnitTest.h"
   USE ISO_FORTRAN_ENV
   USE UnitTest
-  USE IntrType
-  USE Strings
-  USE ExceptionHandler
-  USE ParameterLists
-  USE ParallelEnv
-  USE FileType_HDF5
-  USE IO_Strings
-
+  USE Utils
+  
   IMPLICIT NONE
   
   TYPE(MPI_EnvType) :: testMPI

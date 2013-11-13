@@ -15,55 +15,43 @@
 ! manufacturer, or otherwise, does not necessarily constitute or imply its     !
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-PROGRAM testSorting
-#include "UnitTest.h"
-  USE UnitTest
-  USE Utils
+MODULE Utils
+  USE IntrType
+  USE Strings
+  USE Times
+  USE BLAS1
+  USE BLAS2
+  USE BLAS3
+  USE BinaryTrees
+  USE Sorting
+  USE MortonOrdering
+  USE Geom_Points
+  USE Geom_Line
+  USE Geom_Plane
+  USE Geom_CircCyl
+  USE Geom_Box
+  USE ExceptionHandler
+  USE Allocs
+  USE ParallelEnv
+  USE IO_Strings
+  USE FileType_Base
+  USE FileType_Fortran
+  USE FileType_Input
+  USE FileType_Log
+  USE FileType_HDF5
+  USE IOutil
+  USE VTKFiles
+  USE ParameterLists
+  USE CommandLineProcessor
+  USE ExpTables
+  USE VectorTypes
+  USE MatrixTypes
+  USE LinearSolverTypes
+  USE StochasticSampling
   
   IMPLICIT NONE
   
-  LOGICAL(SBK) :: bool
-  REAL(SRK) :: tmprealarray(10)
-  INTEGER(SIK) :: tmpintarray(10)
-!
-!Check the timer resolution
-  CREATE_TEST('SORTING')
-!
-  COMPONENT_TEST('1-D Real Array')
-  tmprealarray(1)=100.0_SRK
-  tmprealarray(2)=-5.0_SRK
-  tmprealarray(3)=60.0_SRK
-  tmprealarray(4)=10.0_SRK
-  tmprealarray(5)=45.0_SRK
-  tmprealarray(6)=-10.0_SRK
-  tmprealarray(7)=20.0_SRK
-  tmprealarray(8)=5.0_SRK
-  tmprealarray(9)=-30.0_SRK
-  tmprealarray(10)=20.0_SRK
+  INCLUDE 'getSysProcInfo_F.h'
   
-  CALL sort(tmprealarray)
-  
-  bool=ALL(tmprealarray .APPROXEQ. (/-30.0_SRK,-10.0_SRK,-5.0_SRK,5.0_SRK,10.0_SRK, &
-    20.0_SRK,20.0_SRK,45.0_SRK,60.0_SRK,100.0_SRK/))
-  ASSERT(bool,'1-D array sort')
-  
-  COMPONENT_TEST('1-D Integer Array')
-  tmpintarray(1)=-5
-  tmpintarray(2)=100
-  tmpintarray(3)=60
-  tmpintarray(4)=10
-  tmpintarray(5)=45
-  tmpintarray(6)=-10
-  tmpintarray(7)=20
-  tmpintarray(8)=5
-  tmpintarray(9)=-30
-  tmpintarray(10)=20
-  
-  CALL sort(tmpintarray)
-  
-  bool=ALL(tmpintarray == (/-30,-10,-5,5,10,20,20,45,60,100/))
-  ASSERT(bool,'1-D array sort')
-  
-  FINALIZE_TEST()
-!
-ENDPROGRAM testSorting
+ENDMODULE Utils
+

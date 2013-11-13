@@ -123,11 +123,11 @@
 !> 
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE CommandLineProcessor
-      
   USE ISO_FORTRAN_ENV
   USE IntrType
   USE Strings
   USE ExceptionHandler
+  USE IO_Strings
   USE IOutil
   
   IMPLICIT NONE

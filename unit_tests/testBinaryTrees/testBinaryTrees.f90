@@ -18,8 +18,8 @@
 PROGRAM testBinaryTrees
 #include "UnitTest.h"
   USE UnitTest
-  USE IntrType
-  USE BinaryTrees
+  USE Utils
+  
   IMPLICIT NONE
 
   TYPE(BinaryTreeType_Integer),POINTER :: t => NULL()

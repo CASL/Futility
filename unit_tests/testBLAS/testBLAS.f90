@@ -18,8 +18,8 @@
 PROGRAM testBLAS
 #include "UnitTest.h"
   USE UnitTest
-  USE IntrType
-  USE BLAS
+  USE Utils
+  
   IMPLICIT NONE
 
   WRITE(*,*) '==================================================='

@@ -19,9 +19,8 @@ PROGRAM testIOutil
 #include "UnitTest.h"
   USE ISO_FORTRAN_ENV
   USE UnitTest
-  USE Strings
-  USE ExceptionHandler
-  USE IOutil
+  USE Utils
+  
   IMPLICIT NONE
   
   TYPE(FortranFileType) :: testFile,testFile2

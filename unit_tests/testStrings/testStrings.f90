@@ -18,8 +18,8 @@
 PROGRAM testStrings
 #include "UnitTest.h"
   USE UnitTest  
-  USE IntrType
-  USE Strings
+  USE Utils
+  
   IMPLICIT NONE
   
   INTEGER(SIK) :: i

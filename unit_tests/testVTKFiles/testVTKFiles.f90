@@ -18,9 +18,8 @@
 PROGRAM testVTKFiles
 #include "UnitTest.h"
   USE UnitTest
-  USE IntrType
-  USE ExceptionHandler
-  USE VTKFiles
+  USE Utils
+  
   IMPLICIT NONE
   
   CHARACTER(LEN=257) :: longstring

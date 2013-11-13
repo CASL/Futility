@@ -18,7 +18,8 @@
 PROGRAM testSelectedKinds
 #include "UnitTest.h"
   USE UnitTest
-  USE IntrType
+  USE Utils
+  
   IMPLICIT NONE
 
   REAL(SSK) :: singlefloat

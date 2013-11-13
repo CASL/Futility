@@ -16,12 +16,12 @@
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testParallelEnv
-  
+#include "UnitTest.h"
   USE ISO_FORTRAN_ENV
-  USE IntrType
-  USE ExceptionHandler
-  USE ParallelEnv
-  !$ USE OMP_LIB
+!$ USE OMP_LIB
+  USE UnitTest  
+  USE Utils
+  
   IMPLICIT NONE
 
 #ifdef HAVE_MPI

@@ -19,10 +19,8 @@ PROGRAM testStochasticSampler
 #include "UnitTest.h"
   USE ISO_FORTRAN_ENV
   USE UnitTest    
-  USE IntrType
-  USE ExceptionHandler
-  USE ParallelEnv
-  USE StochasticSampling
+  USE Utils
+  
   IMPLICIT NONE
 
   TYPE(StochasticSamplingType) :: myRNG

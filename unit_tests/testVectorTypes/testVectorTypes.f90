@@ -18,12 +18,8 @@
 PROGRAM testVectorTypes
 #include "UnitTest.h"
   USE UnitTest
-  USE IntrType
-  USE ExceptionHandler
-  USE BLAS
-  USE ParameterLists
-  USE ParallelEnv
-  USE VectorTypes
+  USE Utils
+  
   IMPLICIT NONE
   
 #ifdef MPACT_HAVE_PETSC

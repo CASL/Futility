@@ -19,10 +19,8 @@ PROGRAM testParameterLists
 #include "UnitTest.h"
   USE ISO_FORTRAN_ENV
   USE UnitTest
-  USE IntrType
-  USE Strings
-  USE ExceptionHandler
-  USE ParameterLists
+  USE Utils
+  
   IMPLICIT NONE
   
   REAL(SSK) :: valssk
