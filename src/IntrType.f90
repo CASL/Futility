@@ -101,6 +101,7 @@ MODULE IntrType
   PUBLIC :: OPERATOR(.APPROXEQR.)
   PUBLIC :: OPERATOR(.APPROXLE.)
   PUBLIC :: OPERATOR(.APPROXGE.)
+  PUBLIC :: OPERATOR(==)
   PUBLIC :: SOFTEQ
   PUBLIC :: SOFTEQR
 !
@@ -272,6 +273,14 @@ MODULE IntrType
     MODULE PROCEDURE softeqr_single
     !> @copybrief IntrType::softeqr_double
     MODULE PROCEDURE softeqr_double
+  ENDINTERFACE
+  
+  !> @brief Overloads the Fortran intrinsic operator for comparing
+  !> two logicals to see if they are equal
+  INTERFACE OPERATOR(==)
+    !> @copybrief IntrType::equalto_logical
+    !> @copydetails IntrType::equalto_logical
+    MODULE PROCEDURE equalto_logical
   ENDINTERFACE
 !
 !===============================================================================
@@ -656,5 +665,18 @@ MODULE IntrType
       IF(r1 == 0.0_SSK .OR. r1 == 0.0_SSK) eps=EPSD
       bool=(ABS(r1-r2) <= eps)
     ENDFUNCTION softeqr_double
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation when comparing two logical variables
+!> @param l1 a logical of type SBK
+!> @param l2 a logical of type SBK
+!> @returns @c bool result of comparison
+!>
+    ELEMENTAL FUNCTION equalto_logical(l1,l2) RESULT(bool)
+      LOGICAL(SBK),INTENT(IN) :: l1
+      LOGICAL(SBK),INTENT(IN) :: l2
+      LOGICAL(SBK) :: bool
+      bool=(l1 .EQV. l2)
+    ENDFUNCTION equalto_logical
 !
 ENDMODULE IntrType
