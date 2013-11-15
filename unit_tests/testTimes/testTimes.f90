@@ -18,8 +18,8 @@
 PROGRAM testTimes
 #include "UnitTest.h"
   USE UnitTest
-  USE IntrType
-  USE Times
+  USE Utils
+  
   IMPLICIT NONE
   
   TYPE(TimerType) :: testTimer

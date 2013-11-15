@@ -16,14 +16,9 @@
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testLinearSolver
-  
-  USE IntrType
-  USE ExceptionHandler
-  USE ParameterLists
-  USE LinearSolverTypes
-  USE MatrixTypes
-  USE VectorTypes
-  USE ParallelEnv
+#include "UnitTest.h"
+  USE UnitTest 
+  USE Utils
   
   IMPLICIT NONE
   

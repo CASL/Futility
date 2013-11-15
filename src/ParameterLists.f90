@@ -92,11 +92,11 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE ParameterLists
 #include "UnitTest.h"
+  USE UnitTest
   USE IntrType
   USE Strings
   USE ExceptionHandler
   USE IO_Strings
-  USE UnitTest
   
   IMPLICIT NONE
   PRIVATE !Default private for module contents

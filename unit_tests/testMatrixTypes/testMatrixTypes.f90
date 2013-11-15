@@ -16,15 +16,11 @@
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testMatrixTypes
-  
+#include "UnitTest.h"
   USE ISO_FORTRAN_ENV
-  USE IntrType
-  USE ExceptionHandler
-  USE BLAS
-  USE ParameterLists
-  USE ParallelEnv
-  USE VectorTypes
-  USE MatrixTypes
+  USE UnitTest
+  USE Utils
+  
   IMPLICIT NONE
   
 #ifdef MPACT_HAVE_PETSC

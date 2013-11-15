@@ -16,10 +16,10 @@
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testVTKFiles
-      
-  USE IntrType
-  USE ExceptionHandler
-  USE VTKFiles
+#include "UnitTest.h"
+  USE UnitTest
+  USE Utils
+  
   IMPLICIT NONE
   
   CHARACTER(LEN=257) :: longstring

@@ -16,8 +16,10 @@
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testSelectedKinds
-      
-  USE IntrType
+#include "UnitTest.h"
+  USE UnitTest
+  USE Utils
+  
   IMPLICIT NONE
 
   REAL(SSK) :: singlefloat

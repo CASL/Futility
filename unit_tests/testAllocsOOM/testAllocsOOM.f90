@@ -19,12 +19,9 @@ PROGRAM testAllocsOOM
 #include "UnitTest.h"
   USE ISO_C_BINDING
   USE UnitTest
-  USE IntrType
-  USE ExceptionHandler
-  USE Allocs
-  IMPLICIT NONE
+  USE Utils
   
-  INCLUDE 'getSysProcInfo_F.h'
+  IMPLICIT NONE
   
   INTEGER(SIK) :: nerror0,nerror1,n1,n2,i
   INTEGER(C_LONG_LONG),SAVE :: maxRam,maxSwap,memAvail,maxMem,memForTest

@@ -17,9 +17,9 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testAllocs
 #include "UnitTest.h"
-  USE IntrType
-  USE Allocs
   USE UnitTest
+  USE Utils
+  
   IMPLICIT NONE
   
   LOGICAL(SBK) :: test

@@ -16,9 +16,10 @@
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testBLAS
+#include "UnitTest.h"
+  USE UnitTest
+  USE Utils
   
-  USE IntrType
-  USE BLAS
   IMPLICIT NONE
 
   WRITE(*,*) '==================================================='

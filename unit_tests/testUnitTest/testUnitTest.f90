@@ -18,8 +18,8 @@
 PROGRAM testUnitTest
 #include "UnitTest.h"
   USE UnitTest
-
   IMPLICIT NONE
+  
 #ifdef HAVE_MPI
   INCLUDE 'mpif.h'
   INTEGER :: mpierr

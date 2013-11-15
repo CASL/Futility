@@ -16,9 +16,10 @@
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testBinaryTrees
-
-  USE IntrType
-  USE BinaryTrees
+#include "UnitTest.h"
+  USE UnitTest
+  USE Utils
+  
   IMPLICIT NONE
 
   TYPE(BinaryTreeType_Integer),POINTER :: t => NULL()

@@ -74,8 +74,8 @@ MODULE MatrixTypes
   USE Allocs
   USE BLAS2,           ONLY: BLAS2_matvec => BLAS_matvec
   USE BLAS3,           ONLY: BLAS3_matmult => BLAS_matmat
-  USE VectorTypes
   USE ParameterLists
+  USE VectorTypes
   IMPLICIT NONE
 
 #ifdef MPACT_HAVE_PETSC

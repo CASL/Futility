@@ -18,8 +18,8 @@
 PROGRAM testSpaceFillingCurve
 #include "UnitTest.h"
   USE UnitTest
-  USE IntrType
-  USE MortonOrdering
+  USE Utils
+  
   IMPLICIT NONE
 
   INTEGER(SIK) :: i,j,k,iout,jout,kout,istt,istp,rx(2),ry(2),rz(2)

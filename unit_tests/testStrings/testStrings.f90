@@ -15,11 +15,11 @@
 ! manufacturer, or otherwise, does not necessarily constitute or imply its     !
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-#include "UnitTest.h"
 PROGRAM testStrings
-  USE IntrType
-  USE UnitTest
-  USE Strings
+#include "UnitTest.h"
+  USE UnitTest  
+  USE Utils
+  
   IMPLICIT NONE
   
   INTEGER(SIK) :: i

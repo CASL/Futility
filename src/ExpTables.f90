@@ -68,8 +68,8 @@
 MODULE ExpTables
 
   USE IntrType
-  USE Allocs
   USE ExceptionHandler
+  USE Allocs
   USE ParameterLists
 
   IMPLICIT NONE

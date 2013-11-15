@@ -16,13 +16,10 @@
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testVectorTypes
+#include "UnitTest.h"
+  USE UnitTest
+  USE Utils
   
-  USE IntrType
-  USE ExceptionHandler
-  USE BLAS
-  USE ParameterLists
-  USE ParallelEnv
-  USE VectorTypes
   IMPLICIT NONE
   
 #ifdef MPACT_HAVE_PETSC

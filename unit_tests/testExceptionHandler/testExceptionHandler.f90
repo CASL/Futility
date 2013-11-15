@@ -16,10 +16,11 @@
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testExceptionHandler
-      
+#include "UnitTest.h"
   USE ISO_FORTRAN_ENV
-  USE IntrType
-  USE ExceptionHandler
+  USE UnitTest
+  USE Utils
+  
   IMPLICIT NONE
 
   TYPE(ExceptionHandlerType) :: test

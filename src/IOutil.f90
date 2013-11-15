@@ -58,50 +58,10 @@ MODULE IOutil
   USE IntrType
   USE Strings
   USE IO_Strings
-  USE FileType_Base
-  USE FileType_Fortran
-  USE FileType_Log
-  USE FileType_Input
+  
   IMPLICIT NONE
   PRIVATE
 
-  !Public parameters
-  PUBLIC :: MAX_PATH_LENGTH
-  PUBLIC :: MAX_FNAME_LENGTH
-  PUBLIC :: MAX_FEXT_LENGTH
-  PUBLIC :: MAX_INPUT_FILE_LINE_LEN
-
-  !Public members from IO_Strings
-  PUBLIC :: BLANK
-  PUBLIC :: BANG
-  PUBLIC :: DOT
-  PUBLIC :: FSLASH
-  PUBLIC :: BSLASH
-  PUBLIC :: SLASH
-  PUBLIC :: COLON
-  PUBLIC :: getFilePath
-  PUBLIC :: getFileName
-  PUBLIC :: getFileNameExt
-  PUBLIC :: getFileParts
-  PUBLIC :: nFields
-  PUBLIC :: getField
-  PUBLIC :: toUPPER
-  PUBLIC :: strmatch
-  PUBLIC :: strarraymatch
-  PUBLIC :: strarraymatchind
-  PUBLIC :: nmatchstr
-  PUBLIC :: strfind
-  PUBLIC :: strrep
-  PUBLIC :: stripComment
-  PUBLIC :: SlashRep
-  PUBLIC :: printCentered
-  
-  !File Types
-  PUBLIC :: BaseFileType
-  PUBLIC :: FortranFileType
-  PUBLIC :: LogFileType
-  PUBLIC :: InputFileType
-  
   !Run-time Environment
   PUBLIC :: GET_COMMAND
   PUBLIC :: GET_ENVIRONMENT_VARIABLE

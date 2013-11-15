@@ -16,10 +16,11 @@
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testGeom
-      
-  USE IntrType
-  USE Geom
-  USE ISO_FORTRAN_ENV
+#include "UnitTest.h"
+  USE ISO_FORTRAN_ENV  
+  USE UnitTest
+  USE Utils
+  
   IMPLICIT NONE
   
   TYPE(PointType) :: point,point2,point3,points(2),points2(2),points3(2)
