@@ -1821,6 +1821,7 @@ MODULE ParameterLists
           CALL thisParam%get(CHAR(thisParam%name),tmpsdk1)
           CALL paramPtr%get(CHAR(paramPtr%name),tmpsdk2)
           bool=(tmpsdk1 .APPROXEQ. tmpsdk2)
+          IF(.NOT.bool) bool=SOFTEQ(tmpsdk1,tmpsdk2,EPSD*10._SRK)
           ASSERT(bool, prefix//CHAR(thisParam%name))
           FINFO() 'test value=',tmpsdk1
           FINFO() 'ref. value=',tmpsdk2
