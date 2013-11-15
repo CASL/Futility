@@ -11,4 +11,14 @@
 #
 ################################################################################
 INCLUDE(MPACT_CreateUnitTest)
+INCLUDE(MPACT_CopyFiles)
+
+SET(ADDITIONAL_FILES
+    matrices/1g_matrix.txt
+    matrices/mg_matrix.txt
+)
+
 MPACT_CreateUnitTest(testPreconditionerTypes)
+
+MPACT_CopyFiles(ADDITIONAL_FILES)
+UNSET(ADDITIONAL_FILES)
