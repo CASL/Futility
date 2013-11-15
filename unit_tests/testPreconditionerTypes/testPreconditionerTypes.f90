@@ -38,7 +38,7 @@ PROGRAM testMatrixTypes
   
   TYPE(ExceptionHandlerType),TARGET :: e
   TYPE(ParamType) :: PListMat,PListVec
-  CLASS(MatrixType),ALLOCATABLE :: testMatrix
+  CLASS(MatrixType),ALLOCATABLE :: testSparseMatrix,testDenseMatrix
   CLASS(VectorType),ALLOCATABLE :: testVector
 
 #ifdef HAVE_MPI
@@ -92,38 +92,46 @@ PROGRAM testMatrixTypes
       ALLOCATE(RealVectorType :: testVector)
       CALL testVector%init(PListVec)      
 
-      !Set up Matrix
+      !Set up Matrices
       CALL PListMat%add('MatrixType->nnz',40) ! Will be a 10x10, 5-stripe matrix
       CALL PListMat%add('MatrixType->n',10)
-      ALLOCATE(SparseMatrixType :: testMatrix)
-      CALL testMatrix%init(PListMat)
+      CALL PListMat%add('MatrixType->isSym',.FALSE.)
+      ALLOCATE(SparseMatrixType :: testSparseMatrix)
+      ALLOCATE(DenseSquareMatrixType :: testDenseMatrix)
+      CALL testSparseMatrix%init(PListMat)
+      CALL testDenseMatrix%init(PListMat)
 
       ! Fill Matrix
-      SELECTTYPE(testMatrix); TYPE IS(SparseMatrixType)
+      SELECTTYPE(testSparseMatrix); TYPE IS(SparseMatrixType)
         tmpreal=0.0_SRK
         DO i=1,10
           IF(i >= 5) THEN
             tmpreal=tmpreal+1.0_SRK
-            CALL testMatrix%setShape(i,i-4,tmpreal)
+            CALL testSparseMatrix%setShape(i,i-4,tmpreal)
+            CALL testDenseMatrix%set(i,i-4,tmpreal)
           ENDIF
           IF(i >= 2) THEN
             tmpreal=tmpreal+1.0_SRK
-            CALL testMatrix%setShape(i,i-1,tmpreal)
+            CALL testSparseMatrix%setShape(i,i-1,tmpreal)
+            CALL testDenseMatrix%set(i,i-1,tmpreal)
           ENDIF
           tmpreal=tmpreal+1.0_SRK
-          CALL testMatrix%setShape(i,i,tmpreal)
+          CALL testSparseMatrix%setShape(i,i,tmpreal)
+          CALL testDenseMatrix%set(i,i,tmpreal)
           IF(i <= 9) THEN
             tmpreal=tmpreal+1.0_SRK
-            CALL testMatrix%setShape(i,i+1,tmpreal)
+            CALL testSparseMatrix%setShape(i,i+1,tmpreal)
+            CALL testDenseMatrix%set(i,i+1,tmpreal)
           ENDIF
           IF(i <= 6) THEN
             tmpreal=tmpreal+1.0_SRK
-            CALL testMatrix%setShape(i,i+4,tmpreal)
+            CALL testSparseMatrix%setShape(i,i+4,tmpreal)
+            CALL testDenseMatrix%set(i,i+4,tmpreal)
           ENDIF
           CALL testVector%set(i,REAL(i*1.0_SRK,SRK))
         ENDDO
       CLASS DEFAULT
-        ASSERT(.FALSE.,'ALLOCATE(SparseMatrixType :: testMatrix)')
+        ASSERT(.FALSE.,'ALLOCATE(SparseMatrixType :: testSparseMatrix)')
       ENDSELECT
 
     ENDSUBROUTINE setupILUTest
@@ -131,25 +139,58 @@ PROGRAM testMatrixTypes
 !-------------------------------------------------------------------------------
     SUBROUTINE testILU_PreCondType()
       CLASS(LU_PreCondType),ALLOCATABLE :: testLU
+      TYPE(RealVectorType) :: tempVector
 
-      IF(testMatrix%isInit .AND. testVector%isInit) THEN
-        COMPONENT_TEST('ILU Preconditioner Type')
+      COMPONENT_TEST('ILU Preconditioner Type, DenseMatrixType')
+      IF(testDenseMatrix%isInit .AND. testVector%isInit) THEN
         ALLOCATE(ILU_PreCondType :: testLU)
-
+        
         ! Check %init
-        CALL testLU%init(testMatrix)
-        ASSERT(testLU%isInit,'ILU Preconditioner %isInit')
-        ASSERT(ASSOCIATED(testLU%A),'ILU Preconditioner ASSOCIATED(LU%A)')
-
+        CALL testLU%init(testDenseMatrix)
         ! Check %setup
         CALL testLU%setup()
+!SELECTTYPE(a => testLU%A); TYPE IS(DenseSquareMatrixType)
+!WRITE(*,*) A%a
+!SELECTTYPE(l => testLU%L); TYPE IS(DenseSquareMatrixType)
+!WRITE(*,*) l%a
+!ENDSELECT
+!ENDSELECT
+        ! Check %apply
+        SELECTTYPE(testVector); TYPE IS(RealVectorType)
+          tempVector=testVector
+        ENDSELECT
+        CALL testLU%apply(tempVector)
+        ! Check %clear
+        CALL testLU%clear()
+      ELSE
+        ASSERT(testSparseMatrix%isInit,'TestDenseMatrix Initialization')
+        ASSERT(testVector%isInit,'TestVector Initialization')
+      ENDIF
+        
+      COMPONENT_TEST('ILU Preconditioner Type, SparseMatrixType')
+      IF(testSparseMatrix%isInit .AND. testVector%isInit) THEN
+        ! Check %init
+        CALL testLU%init(testSparseMatrix)
+        ASSERT(testLU%isInit,'ILU Preconditioner %isInit')
+        ASSERT(ASSOCIATED(testLU%A),'ILU Preconditioner ASSOCIATED(LU%A)')
         ASSERT(testLU%L%isInit,'ILU Preconditioner %L%isInit')
         ASSERT(testLU%U%isInit,'ILU Preconditioner %U%isInit')
+        ! Check %setup
+        CALL testLU%setup()
         ! Check L
         ! Check U
+!SELECTTYPE(L => testLU%L); TYPE IS(SparseMatrixType)
+!WRITE(*,*) L%ia,':',L%ja,':',L%a
+!ENDSELECT
+!SELECTTYPE(U => testLU%U); TYPE IS(SparseMatrixType)
+!WRITE(*,*) U%ia,':',U%ja,':',U%a
+!ENDSELECT
         
         ! Check %apply
-        CALL testLU%apply(testVector)
+        SELECTTYPE(testVector); TYPE IS(RealVectorType)
+          tempVector=testVector
+        ENDSELECT
+        CALL testLU%apply(tempVector)
 
         ! Check %clear
         CALL testLU%clear()
@@ -158,7 +199,7 @@ PROGRAM testMatrixTypes
         ASSERT(.NOT.(ASSOCIATED(testLU%L)),'ILU Preconditioner .NOT.(ASSOCIATED(LU%L))')
         ASSERT(.NOT.(ASSOCIATED(testLU%U)),'ILU Preconditioner .NOT.(ASSOCIATED(LU%U))')
       ELSE
-        ASSERT(testMatrix%isInit,'TestMatrix Initialization')
+        ASSERT(testSparseMatrix%isInit,'TestSparseMatrix Initialization')
         ASSERT(testVector%isInit,'TestVector Initialization')
       ENDIF
 
@@ -188,24 +229,24 @@ PROGRAM testMatrixTypes
       CALL PListMat%add('MatrixType->n',N)
       CALL PListMat%add('MatrixType->isSym',.FALSE.)
       CALL PListMat%add('MatrixType->MPI_Comm_ID',MPI_COMM_WORLD)
-      ALLOCATE(PETScMatrixType :: testMatrix)
-      CALL testMatrix%init(PListMat)
+      ALLOCATE(PETScMatrixType :: testSparseMatrix)
+      CALL testSparseMatrix%init(PListMat)
       
-      SELECTTYPE(testMatrix); TYPE IS(PETScMatrixType)
+      SELECTTYPE(testSparseMatrix); TYPE IS(PETScMatrixType)
         
         ! Fill Matrix from File
         OPEN(unit=111,file="matrices/1g_matrix.txt",status='old')
         READ(111,*,iostat=iostatus)
         DO WHILE(iostatus==0)
           READ(111,*,iostat=iostatus) i,j,val
-          CALL testMatrix%set(i,j,val)
+          CALL testSparseMatrix%set(i,j,val)
         ENDDO
         CLOSE(111)
-        CALL testMatrix%assemble()
-!        CALL MatView(testMatrix%A,PETSC_VIEWER_STDOUT_SELF,ierr)
+        CALL testSparseMatrix%assemble()
+!        CALL MatView(testSparseMatrix%A,PETSC_VIEWER_STDOUT_SELF,ierr)
         
       CLASS DEFAULT
-        ASSERT(.FALSE.,'ALLOCATE(SparseMatrixType :: testMatrix)')
+        ASSERT(.FALSE.,'ALLOCATE(SparseMatrixType :: testSparseMatrix)')
       ENDSELECT
 
     ENDSUBROUTINE setupBILUTest
@@ -219,7 +260,7 @@ PROGRAM testMatrixTypes
       REAL(SRK) :: tmpval
       TYPE(ParamType) :: pList
       
-      IF(testMatrix%isInit .AND. testVector%isInit) THEN
+      IF(testSparseMatrix%isInit .AND. testVector%isInit) THEN
         COMPONENT_TEST('BILU Preconditioner Type')
         ALLOCATE(BILU_PreCondType :: testLU)
         
@@ -228,7 +269,7 @@ PROGRAM testMatrixTypes
         nGrp=1
 
         !initialize        
-        CALL testLU%init(testMatrix)
+        CALL testLU%init(testSparseMatrix)
         !set some values (to be moved into init at some point)
         SELECTTYPE(pc => testLU); TYPE IS(BILU_PreCondType)
           pc%nPlane=nPlane
@@ -286,7 +327,7 @@ PROGRAM testMatrixTypes
         ASSERT(.NOT.(ASSOCIATED(testLU%L)),'BILU Preconditioner .NOT.(ASSOCIATED(LU%L))')
         ASSERT(.NOT.(ASSOCIATED(testLU%U)),'BILU Preconditioner .NOT.(ASSOCIATED(LU%U))')
       ELSE
-        ASSERT(testMatrix%isInit,'TestMatrix Initialization')
+        ASSERT(testSparseMatrix%isInit,'TestMatrix Initialization')
         ASSERT(testVector%isInit,'TestVector Initialization')
       ENDIF
 
@@ -300,9 +341,10 @@ PROGRAM testMatrixTypes
       CALL PListMat%clear()
       CALL PListVec%clear()
       CALL MatrixTypes_Clear_ValidParams()
-      CALL testMatrix%clear()
+      CALL testSparseMatrix%clear()
       CALL testVector%clear()
-      IF(ALLOCATED(testMatrix)) DEALLOCATE(testMatrix)
+      IF(ALLOCATED(testSparseMatrix)) DEALLOCATE(testSparseMatrix)
+      IF(ALLOCATED(testDenseMatrix)) DEALLOCATE(testDenseMatrix)
       IF(ALLOCATED(testVector)) DEALLOCATE(testVector)
 
     ENDSUBROUTINE clearTest

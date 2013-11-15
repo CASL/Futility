@@ -153,6 +153,8 @@ MODULE PreconditionerTypes
 
       TYPE(ParamType) :: PL
       LOGICAL(SBK) :: localalloc
+      INTEGER(SIK) :: col,row,i,j,nU,nL,nnzU,nnzL
+      REAL(SRK) :: val
 
       localalloc=.FALSE.
       IF(.NOT.ASSOCIATED(ePreCondType)) THEN
@@ -172,10 +174,95 @@ MODULE PreconditionerTypes
 
           ! This might not be necessary here, but not sure
           SELECTTYPE(mat => PC%A)
+            CLASS IS(DenseSquareMatrixType)
+              ALLOCATE(DenseSquareMatrixtype :: PC%L)
+              ALLOCATE(DenseSquareMatrixType :: PC%U)
+             
+              CALL PL%add('MatrixType->n',mat%n)
+              CALL PL%add('MatrixType->isSym',.FALSE.)
+              CALL PC%L%init(PL)
+              CALL PC%U%init(PL)
+              CALL PL%clear()
+
+              IF(PC%L%isInit .AND. PC%U%isInit) THEN
+                j=mat%n
+                DO row=1,j
+                  DO col=1,j
+                    CALL PC%L%set(row,col,0.0_SRK)
+                    CALL PC%U%set(row,col,0.0_SRK)
+                  ENDDO
+                ENDDO
+                
+                PC%isInit=.TRUE.
+              ELSEIF(.NOT.(PC%L%isInit)) THEN
+                CALL ePreCondtype%raiseError('Incorrect input to '//modName//'::'//myName// &
+                  ' - In LU Preconditioner initialization, L was not properly initialized')
+              ELSE
+                CALL ePreCondtype%raiseError('Incorrect input to '//modName//'::'//myName// &
+                  ' - In LU Preconditioner initialization, U was not properly initialized')
+              ENDIF
             CLASS IS(SparseMatrixType)
               ALLOCATE(SparseMatrixType :: PC%L)
               ALLOCATE(SparseMatrixType :: PC%U)
               PC%isInit=.TRUE.
+
+              ! Loop over A to get initialization data for L and U
+              j=0
+              nU=0; nL=0  !number of rows
+              nnzU=0; nnzL=0 !number of non-zero elements
+              DO row=1,SIZE(mat%ia)-1
+                DO i=1,mat%ia(row+1)-mat%ia(row)
+                  j=j+1
+                  col=mat%ja(j)
+                  ! This may be redundant since mat is sparse, but be safe for now
+                  CALL mat%get(row,col,val)
+                  IF(.NOT.(val .APPROXEQA. 0.0_SRK)) THEN
+                    IF(col == row) THEN
+                      nnzU=nnzU+1 ! This location is in U
+                    ELSEIF(col > row) THEN
+                      nnzU=nnzU+1 !This location is in U
+                    ELSE
+                      nnzL=nnzL+1 !This location is in L
+                    ENDIF
+                  ENDIF
+                ENDDO
+                nnzL=nnzL+1 ! Account for 1's on diagonal of L
+              ENDDO
+                
+              ! Initialize L and U
+              nU=mat%n
+              nL=mat%n
+              CALL PL%add('MatrixType->n',nU)
+              CALL PL%add('MatrixType->nnz',nnzU)
+              CALL PC%U%init(PL)
+              CALL PL%set('MatrixType->n',nL)
+              CALL PL%set('MatrixType->nnz',nnzL)
+              CALL PC%L%init(PL)
+              CALL PL%clear()
+                    
+              SELECTTYPE(L => PC%L); TYPE IS(SparseMatrixType)
+                SELECTTYPE(U => PC%U); TYPE IS(SparseMatrixType)
+                  ! Set the shape
+                  j=0
+                  DO row=1,SIZE(mat%ia)-1
+                    j=mat%ia(row)
+                    DO i=1,mat%ia(row+1)-mat%ia(row)
+                      col=mat%ja(j)
+                      ! This may be redundant since mat is sparse, but be safe for now
+                      CALL mat%get(row,col,val)
+                      IF(.NOT.(val .APPROXEQA. 0.0_SRK)) THEN
+                        IF(col >= row) THEN
+                          CALL U%setShape(row,col,0.0_SRK)
+                        ELSE
+                          CALL L%setShape(row,col,0.0_SRK)
+                        ENDIF
+                      ENDIF
+                      j=j+1
+                    ENDDO
+                    CALL L%setShape(row,row,0.0_SRK)
+                  ENDDO
+                ENDSELECT
+              ENDSELECT
             CLASS IS(PETScMatrixType)
               !allocate L and U
               ALLOCATE(PETScMatrixType :: PC%L)
@@ -284,43 +371,49 @@ MODULE PreconditionerTypes
         ELSE
           ! This might not be necessary here, but not sure
           SELECTTYPE(mat => PC%A)
+            CLASS IS(DenseSquareMatrixtype)
+              SELECTTYPE(U => PC%U); TYPE IS(DenseSquareMatrixType)
+                SELECTTYPE(L => PC%L); TYPE IS(DenseSquareMatrixType)
+                  IF(.NOT.(U%isinit)) THEN
+                    CALL ePrecondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+                      ' - in LU decomposition, U was not properly initialize!')
+                  ELSEIF(.NOT.(L%isinit)) THEN
+                    CALL ePrecondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+                      ' - in LU decomposition, L was not properly initialize!')
+                  ELSE
+                    j=mat%n
+                    DO col=1,j
+                      CALL mat%get(1,col,val1)
+                      CALL U%set(1,col,val1)
+                    ENDDO
+                    CALL L%set(1,1,1.0_SRK)
+                    ! Now complete LU Decomposition
+                    DO row=2,j
+                      DO col=1,row-1
+                        CALL mat%get(row,col,val1)
+                        CALL mat%get(col,col,val2)
+                        val2=val1/val2
+                        CALL L%set(row,col,val2)
+                        DO col2=col+1,j
+                          CALL mat%get(row,col2,val1)
+                          IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) THEN
+                            CALL U%get(col,col2,val3)
+                            IF(col2 < row) THEN
+                              CALL L%set(row,col2,val1-val2*val3)
+                            ELSE
+                              CALL U%set(row,col2,val1-val2*val3)
+                            ENDIF
+                          ENDIF
+                        ENDDO
+                      ENDDO
+                      CALL L%set(row,row,1.0_SRK)
+                    ENDDO
+                  ENDIF
+                ENDSELECT
+              ENDSELECT
             CLASS IS(SparseMatrixType)
               SELECTTYPE(U => PC%U); TYPE IS(SparseMatrixType)
                 SELECTTYPE(L => PC%L); TYPE IS(SparseMatrixType)
-                  ! Loop over A to get initialization data for L and U
-                  j=0
-                  nU=0; nL=0  !number of rows
-                  nnzU=0; nnzL=0 !number of non-zero elements
-                  DO row=1,SIZE(mat%ia)-1
-                    DO i=1,mat%ia(row+1)-mat%ia(row)
-                      j=j+1
-                      col=mat%ja(j)
-                      ! This may be redundant since mat is sparse, but be safe for now
-                      CALL mat%get(row,col,val1)
-                      IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) THEN
-                        IF(col == row) THEN
-                          nnzU=nnzU+1 ! This location is in U
-                        ELSEIF(col > row) THEN
-                          nnzU=nnzU+1 !This location is in U
-                        ELSE
-                          nnzL=nnzL+1 !This location is in L
-                        ENDIF
-                      ENDIF
-                    ENDDO
-                    nnzL=nnzL+1 ! Account for 1's on diagonal of L
-                  ENDDO
-                  
-                  ! Initialize L and U
-                  nU=mat%n
-                  nL=mat%n
-                  CALL PL%add('MatrixType->n',nU)
-                  CALL PL%add('MatrixType->nnz',nnzU)
-                  CALL U%init(PL)
-                  CALL PL%set('MatrixType->n',nL)
-                  CALL PL%set('MatrixType->nnz',nnzL)
-                  CALL L%init(PL)
-                  CALL PL%clear()
-                    
                   ! Make sure initialization worked
                   IF(.NOT.(U%isInit)) THEN
                     CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
@@ -330,32 +423,12 @@ MODULE PreconditionerTypes
                       ' - In LU decomposition, L was not properly initialized!')
                   ! Now loop through A again and set values of L and U
                   ELSE
-                    ! Set the shape
-                    j=0
-                    DO row=1,SIZE(mat%ia)-1
-                      j=mat%ia(row)
-                      DO i=1,mat%ia(row+1)-mat%ia(row)
-                        col=mat%ja(j)
-                        ! This may be redundant since mat is sparse, but be safe for now
-                        CALL mat%get(row,col,val1)
-                        IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) THEN
-                          IF(col >= row) THEN
-                            CALL U%setShape(row,col,0.0_SRK)
-                          ELSE
-                            CALL L%setShape(row,col,0.0_SRK)
-                          ENDIF
-                        ENDIF
-                        j=j+1
-                      ENDDO
-                      CALL L%setShape(row,row,0.0_SRK)
-                    ENDDO
-
                     ! Set the first row of U and L
                     DO i=1,mat%ia(2)-mat%ia(1)
                       col=mat%ja(i)
                       CALL mat%get(1,col,val1)
                       CALL U%set(1,col,val1)
-WRITE(*,*) 'set:',1,col,val1
+!WRITE(*,*) 'set:',1,col,val1
                     ENDDO
                     CALL L%set(1,1,1.0_SRK)
                     ! Now complete LU Decomposition
@@ -368,14 +441,14 @@ WRITE(*,*) 'set:',1,col,val1
                         CALL mat%get(col,col,val2)
                         val2=val1/val2
                         CALL L%set(row,col,val2)
-WRITE(*,*) 'set:',row,col,val2
+!WRITE(*,*) 'set:',row,col,val2
                         DO k=i+1,mat%ia(row+1)-mat%ia(row)
                           col2=mat%ja(j-i+k)
                           CALL mat%get(row,col2,val1)
-WRITE(*,*) 'get:',row,col2,val1
+!WRITE(*,*) 'get:',row,col2,val1
                           IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) THEN
                             CALL U%get(col,col2,val3)
-WRITE(*,*) 'get:',col,col2,val3
+!WRITE(*,*) 'get:',col,col2,val3
                             IF(col2 < row) THEN
                               CALL L%set(row,col2,val1-val2*val3)
                             ELSE
