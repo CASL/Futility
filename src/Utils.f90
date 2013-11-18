@@ -46,6 +46,7 @@ MODULE Utils
   USE ExpTables
   USE VectorTypes
   USE MatrixTypes
+  USE PreconditionerTypes
   USE LinearSolverTypes
   USE StochasticSampling
   
