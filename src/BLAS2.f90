@@ -222,12 +222,18 @@ MODULE BLAS2
     !> @copybrief BLAS2::dcsrmv_noALPHABETANNNZ
     !> @copydetails BLAS2::dcsrmv_noALPHABETANNNZ
     MODULE PROCEDURE dcsrmv_noALPHABETANNNZ
-    !> @copybrief BLAS2:;strsv_all
+    !> @copybrief BLAS2::strsv_all
     !> @copydetails BLAS2::strsv_all
     MODULE PROCEDURE strsv_all
     !> @copybrief BLAS2::dtrsv_all
     !> @copydetails BLAS2::dtrsv_all
     MODULE PROCEDURE dtrsv_all
+    !> @copybrief BLAS2::sstrsv_all
+    !> @copydetails BLAS2::sstrsv_all
+    MODULE PROCEDURE sstrsv_all
+    !> @copybrief BLAS2::dstrsv_all
+    !> @copydetails BLAS2::dstrsv_all
+    MODULE PROCEDURE dstrsv_all
   ENDINTERFACE BLAS_matvec
 !
 !===============================================================================
@@ -3517,15 +3523,15 @@ MODULE BLAS2
 !> the code available on http://netlib.org/blas/strsv.f but has some minor
 !> modifications. The error checking is somewhat different.
 !>
-    PURE SUBROUTINE strsv_all(uplo,trans,diag,n,a,x,incx)
+    PURE SUBROUTINE strsv_all(uplo,trans,diag,a,x)
       CHARACTER(LEN=1),INTENT(IN) :: uplo
       CHARACTER(LEN=1),INTENT(IN) :: trans
       CHARACTER(LEN=1),INTENT(IN) :: diag
-      INTEGER(SIK),INTENT(IN) :: n
       REAL(SSK),INTENT(IN) :: a(:,:)
       REAL(SSK),INTENT(INOUT) :: x(:)
-      INTEGER(SIK),INTENT(IN) :: incx
+      INTEGER(SIK) :: incx
       INTEGER(SIK) :: lda
+      INTEGER(SIK) :: n
 
 #ifdef HAVE_BLAS
       INTERFACE
@@ -3540,7 +3546,9 @@ MODULE BLAS2
           INTEGER,INTENT(IN) :: incx
         ENDSUBROUTINE strsv
       ENDINTERFACE
+      n=SIZE(a,DIM=2)
       lda=SIZE(a,DIM=1)
+      incx=1_SIK
       CALL strsv(uplo,trans,diag,n,a,lda,x,incx)
 #else
       LOGICAL(SBK) :: ltrans, nounit
@@ -3549,8 +3557,9 @@ MODULE BLAS2
       REAL(SSK),PARAMETER :: ZERO=0.0_SSK
       INTRINSIC MAX
     
-      lda=SIZE(a,DIM=1)
-      IF(n > 0 .AND. incx /= 0 .AND. lda >= MAX(1,n) .AND. &
+      n=SIZE(a,DIM=2)
+      incx=1_SIK
+      IF(n > 0 .AND. incx /= 0 .AND. &
           (trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
             trans == 'n' .OR. trans == 'N') .AND. &
           (uplo == 'u' .OR. uplo == 'U' .OR. uplo == 'l' .OR. uplo == 'L') .AND. &
@@ -3694,15 +3703,15 @@ MODULE BLAS2
 !> the code available on http://netlib.org/blas/strsv.f but has some minor
 !> modifications. The error checking is somewhat different.
 !>
-    PURE SUBROUTINE dtrsv_all(uplo,trans,diag,n,a,x,incx)
+    PURE SUBROUTINE dtrsv_all(uplo,trans,diag,a,x)
       CHARACTER(LEN=1),INTENT(IN) :: uplo
       CHARACTER(LEN=1),INTENT(IN) :: trans
       CHARACTER(LEN=1),INTENT(IN) :: diag
-      INTEGER(SIK),INTENT(IN) :: n
       REAL(SDK),INTENT(IN) :: a(:,:)
       REAL(SDK),INTENT(INOUT) :: x(:)
-      INTEGER(SIK),INTENT(IN) :: incx
+      INTEGER(SIK) :: incx
       INTEGER(SIK) :: lda
+      INTEGER(SIK) :: n
 
 #ifdef HAVE_BLAS
       INTERFACE
@@ -3717,7 +3726,9 @@ MODULE BLAS2
           INTEGER,INTENT(IN) :: incx
         ENDSUBROUTINE dtrsv
       ENDINTERFACE
+      n=SIZE(a,DIM=2)
       lda=SIZE(a,DIM=1)
+      incx=1_SIK
       CALL dtrsv(uplo,trans,diag,n,a,lda,x,incx)
 #else
       LOGICAL(SBK) :: ltrans, nounit
@@ -3726,7 +3737,9 @@ MODULE BLAS2
       REAL(SDK),PARAMETER :: ZERO=0.0_SSK
       INTRINSIC MAX
     
+      n=SIZE(a,DIM=2)
       lda=SIZE(a,DIM=1)
+      incx=1_SIK
       IF(n > 0 .AND. incx /= 0 .AND. lda >= MAX(1,N) .AND. &
           (trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
             trans == 'n' .OR. trans == 'N') .AND. &
@@ -3851,5 +3864,147 @@ MODULE BLAS2
 
 #endif
     ENDSUBROUTINE dtrsv_all
+!
+!-------------------------------------------------------------------------------
+!> @brief Subroutine solves a triangular matrix linear system.
+!> @param uplo single character input indicating if an upper (U) or lower (L) 
+!>        maxtrix is stored in @c A
+!> @param trans single character input indicating whether or not to use the 
+!>        transpose of @c A
+!> @param diag single character input indicating whether or not a unity
+!>        diagonal is used
+!> @param n the size of the dimension of @c A (number of rows and columns)
+!> @param A the double-precision matrix multiply with @c x
+!> @param lda the size of the leading (first) dimension of @c A
+!> @param x the double-precision vector to multiply with @c A
+!> @param incx the increment to use when looping over elements in @c x
+!>
+!> If an external BLAS library is available at link time then that library
+!> routine that gets called, otherwise the supplied code is used. It is based on
+!> the code available on http://netlib.org/blas/strsv.f but has some minor
+!> modifications. The error checking is somewhat different.
+!>
+    PURE SUBROUTINE sstrsv_all(uplo,trans,diag,a,ia,ja,x)
+      CHARACTER(LEN=1),INTENT(IN) :: uplo
+      CHARACTER(LEN=1),INTENT(IN) :: trans
+      CHARACTER(LEN=1),INTENT(IN) :: diag
+      REAL(SSK),INTENT(IN) :: a(:)
+      REAL(SSK),INTENT(IN) :: ia(:)
+      REAL(SSK),INTENT(IN) :: ja(SIZE(a))
+      REAL(SSK),INTENT(INOUT) :: x(SIZE(ia)-1)
+
+!#ifdef HAVE_BLAS
+!      INTERFACE
+!        PURE SUBROUTINE dtrsv(uplo,trans,diag,n,a,lda,x,incx)
+!          CHARACTER(LEN=1),INTENT(IN) :: uplo
+!          CHARACTER(LEN=1),INTENT(IN) :: trans
+!          CHARACTER(LEN=1),INTENT(IN) :: diag
+!          INTEGER,INTENT(IN) :: n
+!          INTEGER,INTENT(IN) :: lda
+!          REAL(KIND(0.0d0)),INTENT(IN) :: a(lda,*)
+!          REAL(KIND(0.0d0)),INTENT(INOUT) :: x(*)
+!          INTEGER,INTENT(IN) :: incx
+!        ENDSUBROUTINE dtrsv
+!      ENDINTERFACE
+!      lda=SIZE(a,DIM=1)
+!      CALL dtrsv(uplo,trans,diag,n,a,lda,x,incx)
+!#else
+      LOGICAL(SBK) :: ltrans, nounit
+      INTEGER(SIK) :: i,ix,j,jx,kx
+      REAL(SSK) :: temp
+      REAL(SSK),PARAMETER :: ZERO=0.0_SSK
+      INTRINSIC MAX
+    
+      IF((trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
+           trans == 'n' .OR. trans == 'N') .AND. &
+          (uplo == 'u' .OR. uplo == 'U' .OR. uplo == 'l' .OR. uplo == 'L') .AND. &
+          (diag == 't' .OR. diag == 'T' .OR. diag == 'n' .OR. diag == 'N')) THEN
+
+        IF (diag == 'n' .OR. diag == 'N') nounit=.TRUE.
+ 
+        IF (trans == 'n' .OR. trans == 'N') THEN  ! Form  x := inv( A )*x.
+          IF (uplo == 'u' .OR. uplo == 'U') THEN  ! Upper triangular
+          ELSE  ! Lower Triangular
+          ENDIF
+        ELSE  ! Form  x := inv( A**T )*x.
+          IF (uplo == 'u' .OR. uplo == 'U') THEN
+          ELSE  ! Lower Triangular
+          ENDIF
+        ENDIF
+      ENDIF
+
+!#endif
+    ENDSUBROUTINE sstrsv_all
+!
+!-------------------------------------------------------------------------------
+!> @brief Subroutine solves a triangular matrix linear system.
+!> @param uplo single character input indicating if an upper (U) or lower (L) 
+!>        maxtrix is stored in @c A
+!> @param trans single character input indicating whether or not to use the 
+!>        transpose of @c A
+!> @param diag single character input indicating whether or not a unity
+!>        diagonal is used
+!> @param n the size of the dimension of @c A (number of rows and columns)
+!> @param A the double-precision matrix multiply with @c x
+!> @param lda the size of the leading (first) dimension of @c A
+!> @param x the double-precision vector to multiply with @c A
+!> @param incx the increment to use when looping over elements in @c x
+!>
+!> If an external BLAS library is available at link time then that library
+!> routine that gets called, otherwise the supplied code is used. It is based on
+!> the code available on http://netlib.org/blas/strsv.f but has some minor
+!> modifications. The error checking is somewhat different.
+!>
+    PURE SUBROUTINE dstrsv_all(uplo,trans,diag,a,ia,ja,x)
+      CHARACTER(LEN=1),INTENT(IN) :: uplo
+      CHARACTER(LEN=1),INTENT(IN) :: trans
+      CHARACTER(LEN=1),INTENT(IN) :: diag
+      REAL(SDK),INTENT(IN) :: a(:)
+      REAL(SDK),INTENT(IN) :: ia(:)
+      REAL(SDK),INTENT(IN) :: ja(SIZE(a))
+      REAL(SDK),INTENT(INOUT) :: x(SIZE(ia)-1)
+
+!#ifdef HAVE_BLAS
+!      INTERFACE
+!        PURE SUBROUTINE dtrsv(uplo,trans,diag,n,a,lda,x,incx)
+!          CHARACTER(LEN=1),INTENT(IN) :: uplo
+!          CHARACTER(LEN=1),INTENT(IN) :: trans
+!          CHARACTER(LEN=1),INTENT(IN) :: diag
+!          INTEGER,INTENT(IN) :: n
+!          INTEGER,INTENT(IN) :: lda
+!          REAL(KIND(0.0d0)),INTENT(IN) :: a(lda,*)
+!          REAL(KIND(0.0d0)),INTENT(INOUT) :: x(*)
+!          INTEGER,INTENT(IN) :: incx
+!        ENDSUBROUTINE dtrsv
+!      ENDINTERFACE
+!      lda=SIZE(a,DIM=1)
+!      CALL dtrsv(uplo,trans,diag,n,a,lda,x,incx)
+!#else
+      LOGICAL(SBK) :: ltrans, nounit
+      INTEGER(SIK) :: i,ix,j,jx,kx
+      REAL(SDK) :: temp
+      REAL(SDK),PARAMETER :: ZERO=0.0_SDK
+      INTRINSIC MAX
+    
+      IF((trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
+           trans == 'n' .OR. trans == 'N') .AND. &
+          (uplo == 'u' .OR. uplo == 'U' .OR. uplo == 'l' .OR. uplo == 'L') .AND. &
+          (diag == 't' .OR. diag == 'T' .OR. diag == 'n' .OR. diag == 'N')) THEN
+
+        IF (diag == 'n' .OR. diag == 'N') nounit=.TRUE.
+ 
+        IF (trans == 'n' .OR. trans == 'N') THEN  ! Form  x := inv( A )*x.
+          IF (uplo == 'u' .OR. uplo == 'U') THEN  ! Upper triangular
+          ELSE  ! Lower Triangular
+          ENDIF
+        ELSE  ! Form  x := inv( A**T )*x.
+          IF (uplo == 'u' .OR. uplo == 'U') THEN
+          ELSE  ! Lower Triangular
+          ENDIF
+        ENDIF
+      ENDIF
+
+!#endif
+    ENDSUBROUTINE dstrsv_all
 !
 ENDMODULE BLAS2
