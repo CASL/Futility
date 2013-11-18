@@ -222,6 +222,12 @@ MODULE BLAS2
     !> @copybrief BLAS2::dcsrmv_noALPHABETANNNZ
     !> @copydetails BLAS2::dcsrmv_noALPHABETANNNZ
     MODULE PROCEDURE dcsrmv_noALPHABETANNNZ
+    !> @copybrief BLAS2:;strsv_all
+    !> @copydetails BLAS2::strsv_all
+    MODULE PROCEDURE strsv_all
+    !> @copybrief BLAS2::dtrsv_all
+    !> @copydetails BLAS2::dtrsv_all
+    MODULE PROCEDURE dtrsv_all
   ENDINTERFACE BLAS_matvec
 !
 !===============================================================================
@@ -3511,15 +3517,15 @@ MODULE BLAS2
 !> the code available on http://netlib.org/blas/strsv.f but has some minor
 !> modifications. The error checking is somewhat different.
 !>
-    PURE SUBROUTINE strsv_all(uplo,trans,diag,n,a,lda,x,incx)
+    PURE SUBROUTINE strsv_all(uplo,trans,diag,n,a,x,incx)
       CHARACTER(LEN=1),INTENT(IN) :: uplo
       CHARACTER(LEN=1),INTENT(IN) :: trans
       CHARACTER(LEN=1),INTENT(IN) :: diag
       INTEGER(SIK),INTENT(IN) :: n
-      INTEGER(SIK),INTENT(IN) :: lda
-      REAL(SSK),INTENT(IN) :: a(lda,*)
-      REAL(SSK),INTENT(INOUT) :: x(*)
+      REAL(SSK),INTENT(IN) :: a(:,:)
+      REAL(SSK),INTENT(INOUT) :: x(:)
       INTEGER(SIK),INTENT(IN) :: incx
+      INTEGER(SIK) :: lda
 
 #ifdef HAVE_BLAS
       INTERFACE
@@ -3534,6 +3540,7 @@ MODULE BLAS2
           INTEGER,INTENT(IN) :: incx
         ENDSUBROUTINE strsv
       ENDINTERFACE
+      lda=SIZE(a,DIM=1)
       CALL strsv(uplo,trans,diag,n,a,lda,x,incx)
 #else
       LOGICAL(SBK) :: ltrans, nounit
@@ -3542,7 +3549,8 @@ MODULE BLAS2
       REAL(SSK),PARAMETER :: ZERO=0.0_SSK
       INTRINSIC MAX
     
-      IF(n > 0 .AND. incx /= 0 .AND. lda<MAX(1,N) .AND. &
+      lda=SIZE(a,DIM=1)
+      IF(n > 0 .AND. incx /= 0 .AND. lda >= MAX(1,n) .AND. &
           (trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
             trans == 'n' .OR. trans == 'N') .AND. &
           (uplo == 'u' .OR. uplo == 'U' .OR. uplo == 'l' .OR. uplo == 'L') .AND. &
@@ -3686,15 +3694,15 @@ MODULE BLAS2
 !> the code available on http://netlib.org/blas/strsv.f but has some minor
 !> modifications. The error checking is somewhat different.
 !>
-    PURE SUBROUTINE dtrsv_all(uplo,trans,diag,n,a,lda,x,incx)
+    PURE SUBROUTINE dtrsv_all(uplo,trans,diag,n,a,x,incx)
       CHARACTER(LEN=1),INTENT(IN) :: uplo
       CHARACTER(LEN=1),INTENT(IN) :: trans
       CHARACTER(LEN=1),INTENT(IN) :: diag
       INTEGER(SIK),INTENT(IN) :: n
-      INTEGER(SIK),INTENT(IN) :: lda
-      REAL(SDK),INTENT(IN) :: a(lda,*)
-      REAL(SDK),INTENT(INOUT) :: x(*)
+      REAL(SDK),INTENT(IN) :: a(:,:)
+      REAL(SDK),INTENT(INOUT) :: x(:)
       INTEGER(SIK),INTENT(IN) :: incx
+      INTEGER(SIK) :: lda
 
 #ifdef HAVE_BLAS
       INTERFACE
@@ -3709,6 +3717,7 @@ MODULE BLAS2
           INTEGER,INTENT(IN) :: incx
         ENDSUBROUTINE dtrsv
       ENDINTERFACE
+      lda=SIZE(a,DIM=1)
       CALL dtrsv(uplo,trans,diag,n,a,lda,x,incx)
 #else
       LOGICAL(SBK) :: ltrans, nounit
@@ -3717,7 +3726,8 @@ MODULE BLAS2
       REAL(SDK),PARAMETER :: ZERO=0.0_SSK
       INTRINSIC MAX
     
-      IF(n > 0 .AND. incx /= 0 .AND. lda<MAX(1,N) .AND. &
+      lda=SIZE(a,DIM=1)
+      IF(n > 0 .AND. incx /= 0 .AND. lda >= MAX(1,N) .AND. &
           (trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
             trans == 'n' .OR. trans == 'N') .AND. &
           (uplo == 'u' .OR. uplo == 'U' .OR. uplo == 'l' .OR. uplo == 'L') .AND. &
