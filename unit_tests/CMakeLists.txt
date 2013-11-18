@@ -33,11 +33,8 @@ SET(UNIT_TEST_NAMES
     testVTKFiles
     testCmdLineProc
     testVectorTypes
-<<<<<<< HEAD
-    testPreconditionerTypes
-=======
     testMatrixTypes
->>>>>>> 30d2afe58249fd9cfb6b5612c6d5efd71a17ca27
+    testPreconditionerTypes
     testLinearSolver
     testStochasticSampler
 )
