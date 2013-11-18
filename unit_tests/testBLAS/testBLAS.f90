@@ -22,25 +22,13 @@ PROGRAM testBLAS
   
   IMPLICIT NONE
 
-  WRITE(*,*) '==================================================='
-  WRITE(*,*) 'TESTING BLAS...'
-  WRITE(*,*) '==================================================='
+  CREATE_TEST('test BLAS')
 
-  WRITE(*,*) 'TESTING BLAS LEVEL 1'
-  CALL testBLAS1()
-  WRITE(*,*) '---------------------------------------------------'
+  REGISTER_SUBTEST('Test BLAS 1',testBLAS1)
+  REGISTER_SUBTEST('Test BLAS 2',testBLAS2)
+  REGISTER_SUBTEST('Test BLAS 3',testBLAS3)
   
-  WRITE(*,*) 'TESTING BLAS LEVEL 2'
-  CALL testBLAS2()
-  WRITE(*,*) '---------------------------------------------------'
-  
-  WRITE(*,*) 'TESTING BLAS LEVEL 3'
-  CALL testBLAS3()
-  WRITE(*,*) '---------------------------------------------------'
-  
-  WRITE(*,*) '==================================================='
-  WRITE(*,*) 'TESTING BLAS PASSED!'
-  WRITE(*,*) '==================================================='
+  FINALIZE_TEST()
 !
 !===============================================================================
   CONTAINS
@@ -2063,6 +2051,37 @@ PROGRAM testBLAS
         WRITE(*,*) "CALL BLAS_matvec(ia,ja,daa,dx(1:4),dy(1:4)) FAILED!"
         STOP 666
       ENDIF
+
+      !strsv_all
+      sa(1:4,1:4)=RESHAPE((/1.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK, &
+        0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/))
+      sx(1:4)=1.0_SDK
+      sx(5:8)=(/1.000000_SSK,-0.500000_SSK,-0.1666667_SSK,-0.08333333_SSK/)
+      CALL BLAS_matvec('L','N','N',4_SIK,sa(1:4,1:4),sx(1:4),1_SIK)
+      ASSERT(ALL(sx(1:4) .APPROXEQA. sx(5:8)),'CALL BLAS_matvec(''L'',''L'',''N'',4,sa(1:4,1:4),1')
+
+      sa(1:4,1:4)=RESHAPE((/1.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK, &
+        0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/),ORDER=(/2,1/))
+      sx(1:4)=1.0_SSK
+      sx(5:8)=(/0.0000000_SSK,0.0000000_SSK,0.0000000_SSK,0.2500000_SSK/)
+      CALL BLAS_matvec('U','N','N',4_SIK,sa(1:4,1:4),sx(1:4),1_SIK)
+      ASSERT(ALL(sx(1:4) .APPROXEQA. sx(5:8)),'CALL BLAS_matvec(''U'',''N'',''N'',4,sa(1:4,1:4),1')
+      FINFO() 'Solution: ',sx(5:8),'  Result: ',sx(1:4)
+
+      !dtrsv_all
+      da(1:4,1:4)=RESHAPE((/1.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK, &
+        0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/))
+      dx(1:4)=1.0_SDK
+      dx(5:8)=(/1.0000000000_SDK,-0.500000000_SDK,-0.16666666666667_SDK,-0.08333333333333_SDK/)
+      CALL BLAS_matvec('L','N','N',4_SIK,da(1:4,1:4),dx(1:4),1_SIK)
+      ASSERT(ALL(dx(1:4) .APPROXEQA. dx(5:8)),'CALL BLAS_matvec(''L'',''L'',''N'',4,da(1:4,1:4),1')
+
+      da(1:4,1:4)=RESHAPE((/1.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK, &
+        0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/),ORDER=(/2,1/))
+      dx(1:4)=1.0_SDK
+      dx(5:8)=(/0.0000000_SDK,0.0000000_SDK,0.0000000_SDK,0.2500000_SDK/)
+      CALL BLAS_matvec('U','N','N',4_SIK,da(1:4,1:4),dx(1:4),1_SIK)
+      ASSERT(ALL(dx(1:4) .APPROXEQA. dx(5:8)),'CALL BLAS_matvec(''U'',''L'',''N'',4,da(1:4,1:4),1')
     ENDSUBROUTINE testBLAS2
 !
 !-------------------------------------------------------------------------------
