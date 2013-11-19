@@ -3746,7 +3746,11 @@ MODULE BLAS2
           (uplo == 'u' .OR. uplo == 'U' .OR. uplo == 'l' .OR. uplo == 'L') .AND. &
           (diag == 't' .OR. diag == 'T' .OR. diag == 'n' .OR. diag == 'N')) THEN
 
-        IF (diag == 'n' .OR. diag == 'N') nounit=.TRUE.
+        IF (diag == 'n' .OR. diag == 'N') THEN
+          nounit=.TRUE.
+        ELSE
+          nounit=.FALSE.
+        ENDIF
  
         IF (incx<=0) THEN
             kx = 1 - (n-1)*incx
@@ -3889,9 +3893,10 @@ MODULE BLAS2
       CHARACTER(LEN=1),INTENT(IN) :: trans
       CHARACTER(LEN=1),INTENT(IN) :: diag
       REAL(SSK),INTENT(IN) :: a(:)
-      REAL(SSK),INTENT(IN) :: ia(:)
-      REAL(SSK),INTENT(IN) :: ja(SIZE(a))
+      INTEGER(SIK),INTENT(IN) :: ia(:)
+      INTEGER(SIK),INTENT(IN) :: ja(SIZE(a))
       REAL(SSK),INTENT(INOUT) :: x(SIZE(ia)-1)
+      INTEGER(SIK) :: n
 
 !#ifdef HAVE_BLAS
 !      INTERFACE
@@ -3915,6 +3920,7 @@ MODULE BLAS2
       REAL(SSK),PARAMETER :: ZERO=0.0_SSK
       INTRINSIC MAX
     
+      n=SIZE(x)
       IF((trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
            trans == 'n' .OR. trans == 'N') .AND. &
           (uplo == 'u' .OR. uplo == 'U' .OR. uplo == 'l' .OR. uplo == 'L') .AND. &
@@ -3924,7 +3930,29 @@ MODULE BLAS2
  
         IF (trans == 'n' .OR. trans == 'N') THEN  ! Form  x := inv( A )*x.
           IF (uplo == 'u' .OR. uplo == 'U') THEN  ! Upper triangular
+            DO i=n,1,-1
+              DO j=ia(i+1)-1,ia(i),-1
+                IF(ja(j) <= i) EXIT
+                x(i)=x(i)-a(j)*x(ja(j))
+              ENDDO
+              IF(ja(j) == i) THEN
+                x(i)=x(i)/a(j)
+              ELSEIF(nounit) THEN
+                x(i)=0.0_SDK
+              ENDIF
+            ENDDO
           ELSE  ! Lower Triangular
+            DO i=1,n
+              DO j=ia(i),ia(i+1)-1
+                IF(ja(j) >= i) EXIT
+                x(i)=x(i)-a(j)*x(ja(j))
+              ENDDO
+              IF(ja(j) == i) THEN
+                x(i)=x(i)/a(j)
+              ELSEIF(nounit) THEN
+                x(i)=0.0_SDK
+              ENDIF
+            ENDDO
           ENDIF
         ELSE  ! Form  x := inv( A**T )*x.
           IF (uplo == 'u' .OR. uplo == 'U') THEN
@@ -3960,8 +3988,8 @@ MODULE BLAS2
       CHARACTER(LEN=1),INTENT(IN) :: trans
       CHARACTER(LEN=1),INTENT(IN) :: diag
       REAL(SDK),INTENT(IN) :: a(:)
-      REAL(SDK),INTENT(IN) :: ia(:)
-      REAL(SDK),INTENT(IN) :: ja(SIZE(a))
+      INTEGER(SIK),INTENT(IN) :: ia(:)
+      INTEGER(SIK),INTENT(IN) :: ja(SIZE(a))
       REAL(SDK),INTENT(INOUT) :: x(SIZE(ia)-1)
 
 !#ifdef HAVE_BLAS
@@ -3981,11 +4009,12 @@ MODULE BLAS2
 !      CALL dtrsv(uplo,trans,diag,n,a,lda,x,incx)
 !#else
       LOGICAL(SBK) :: ltrans, nounit
-      INTEGER(SIK) :: i,ix,j,jx,kx
+      INTEGER(SIK) :: i,ix,j,jx,kx,n
       REAL(SDK) :: temp
       REAL(SDK),PARAMETER :: ZERO=0.0_SDK
       INTRINSIC MAX
     
+      n=SIZE(x)
       IF((trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
            trans == 'n' .OR. trans == 'N') .AND. &
           (uplo == 'u' .OR. uplo == 'U' .OR. uplo == 'l' .OR. uplo == 'L') .AND. &
@@ -3995,7 +4024,25 @@ MODULE BLAS2
  
         IF (trans == 'n' .OR. trans == 'N') THEN  ! Form  x := inv( A )*x.
           IF (uplo == 'u' .OR. uplo == 'U') THEN  ! Upper triangular
+            DO i=n,1,-1
+              DO j=ia(i+1)-1,ia(i),-1
+                IF(ja(j) <= i) EXIT
+                x(i)=x(i)-a(j)*x(ja(j))
+              ENDDO
+              IF((ja(j) == i) .AND. nounit) THEN
+                x(i)=x(i)/a(j)
+              ENDIF
+            ENDDO
           ELSE  ! Lower Triangular
+            DO i=1,n
+              DO j=ia(i),ia(i+1)-1
+                IF(ja(j) >= i) EXIT
+                x(i)=x(i)-a(j)*x(ja(j))
+              ENDDO
+              IF((ja(j) == i) .AND. nounit) THEN
+                x(i)=x(i)/a(j)
+              ENDIF
+            ENDDO
           ENDIF
         ELSE  ! Form  x := inv( A**T )*x.
           IF (uplo == 'u' .OR. uplo == 'U') THEN
