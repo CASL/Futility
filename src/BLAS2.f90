@@ -3917,9 +3917,8 @@ MODULE BLAS2
  
         IF (trans == 'n' .OR. trans == 'N') THEN  ! Form  x := inv( A )*x.
           IF (uplo == 'u' .OR. uplo == 'U') THEN  ! Upper triangular
-            IF(ANY(ia <= 0)) n=0 ! In case a row does not have any elements
+            IF((ANY(ia <= 0)) .AND. nounit) n=0 ! In case a row does not have any elements
             DO i=n,1,-1
-              IF(ia(i) <= 0) CYCLE ! In case a row does not have any elements
               DO j=ia(i+1)-1,ia(i),-1
                 IF(ja(j) <= i) EXIT
                 x(i)=x(i)-a(j)*x(ja(j))
@@ -3931,9 +3930,8 @@ MODULE BLAS2
               ENDIF
             ENDDO
           ELSE  ! Lower Triangular
-            IF(ANY(ia <= 0)) n=0 ! In case a row does not have any elements
+            IF((ANY(ia <= 0)) .AND. nounit) n=0 ! In case a row does not have any elements
             DO i=1,n
-              IF(ia(i) <= 0) CYCLE ! In case a row does not have any elements
               DO j=ia(i),ia(i+1)-1
                 IF(ja(j) >= i) EXIT
                 x(i)=x(i)-a(j)*x(ja(j))
@@ -4026,7 +4024,7 @@ MODULE BLAS2
  
         IF (trans == 'n' .OR. trans == 'N') THEN  ! Form  x := inv( A )*x.
           IF (uplo == 'u' .OR. uplo == 'U') THEN  ! Upper triangular
-            IF(ANY(ia <= 0)) n=0 ! In case a row does not have any elements
+            IF((ANY(ia <= 0)) .AND. nounit) n=0 ! In case a row does not have any elements
             DO i=n,1,-1
               DO j=ia(i+1)-1,ia(i),-1
                 IF(ja(j) <= i) EXIT
@@ -4037,7 +4035,7 @@ MODULE BLAS2
               ENDIF
             ENDDO
           ELSE  ! Lower Triangular
-            IF(ANY(ia <= 0)) n=0 ! In case a row does not have any elements
+            IF((ANY(ia <= 0)) .AND. nounit) n=0 ! In case a row does not have any elements
             DO i=1,n
               DO j=ia(i),ia(i+1)-1
                 IF(ja(j) >= i) EXIT
