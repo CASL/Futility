@@ -190,7 +190,7 @@ PROGRAM testMatrixTypes
         SELECTTYPE(testVector); TYPE IS(RealVectorType)
           tempVector=testVector
         ENDSELECT
-        CALL testLU%apply(tempVector)
+!        CALL testLU%apply(tempVector)
 
         ! Check %clear
         CALL testLU%clear()

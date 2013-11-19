@@ -226,7 +226,6 @@ MODULE PreconditionerTypes
                     ENDIF
                   ENDIF
                 ENDDO
-                nnzL=nnzL+1 ! Account for 1's on diagonal of L
               ENDDO
                 
               ! Initialize L and U
@@ -245,21 +244,17 @@ MODULE PreconditionerTypes
                   ! Set the shape
                   j=0
                   DO row=1,SIZE(mat%ia)-1
-                    j=mat%ia(row)
-                    DO i=1,mat%ia(row+1)-mat%ia(row)
-                      col=mat%ja(j)
+                    DO col=mat%ia(row),mat%ia(row+1)-1
                       ! This may be redundant since mat is sparse, but be safe for now
                       CALL mat%get(row,col,val)
                       IF(.NOT.(val .APPROXEQA. 0.0_SRK)) THEN
                         IF(col >= row) THEN
-                          CALL U%setShape(row,col,0.0_SRK)
+                          CALL U%setShape(row,col,val)
                         ELSE
-                          CALL L%setShape(row,col,0.0_SRK)
+                          CALL L%setShape(row,col,val)
                         ENDIF
                       ENDIF
-                      j=j+1
                     ENDDO
-                    CALL L%setShape(row,row,0.0_SRK)
                   ENDDO
                 ENDSELECT
               ENDSELECT
@@ -337,7 +332,28 @@ MODULE PreconditionerTypes
         CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
           ' - VectorType is not initialized.')
       ELSE
-        ! Perform U^-1 * L^-1 * v
+        SELECTTYPE(v)
+          CLASS IS(RealVectorType)
+            SELECTTYPE(L => PC%L)
+              CLASS IS(DenseSquareMatrixType)
+                SELECTTYPE(U => PC%U); TYPE IS(DenseSquareMatrixtype)
+                  CALL BLAS_matvec('L','N','T',L%a,v%b)
+                  CALL BLAS_matvec('U','N','N',U%a,v%b)
+                ENDSELECT
+              CLASS IS(SparseMatrixType)
+                SELECTTYPE(U => PC%U); TYPE IS(SparseMatrixType)
+!WRITE(*,*) L%a,':',L%ia,':',L%ja
+                  CALL BLAS_matvec('L','N','T',L%a,L%ia,L%ja,v%b)
+                  CALL BLAS_matvec('U','N','N',U%a,U%ia,U%ja,v%b)
+                ENDSELECT
+              CLASS DEFAULT
+                CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+                  ' - Preconditioner Matrix type is not supported!')
+            ENDSELECT
+          CLASS DEFAULT
+            CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+              ' - Vector type is not support by this PreconditionerType.')
+        ENDSELECT
       ENDIF
     ENDSUBROUTINE apply_LU_PreCondType
 !
@@ -381,32 +397,25 @@ MODULE PreconditionerTypes
                     CALL ePrecondType%raiseError('Incorrect input to '//modName//'::'//myName// &
                       ' - in LU decomposition, L was not properly initialize!')
                   ELSE
+                    ! LU Decomposition
                     j=mat%n
-                    DO col=1,j
-                      CALL mat%get(1,col,val1)
-                      CALL U%set(1,col,val1)
-                    ENDDO
-                    CALL L%set(1,1,1.0_SRK)
-                    ! Now complete LU Decomposition
                     DO row=2,j
                       DO col=1,row-1
-                        CALL mat%get(row,col,val1)
-                        CALL mat%get(col,col,val2)
+                        CALL L%get(row,col,val1)
+                        CALL U%get(col,col,val2)
                         val2=val1/val2
                         CALL L%set(row,col,val2)
                         DO col2=col+1,j
-                          CALL mat%get(row,col2,val1)
-                          IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) THEN
-                            CALL U%get(col,col2,val3)
-                            IF(col2 < row) THEN
-                              CALL L%set(row,col2,val1-val2*val3)
-                            ELSE
-                              CALL U%set(row,col2,val1-val2*val3)
-                            ENDIF
+                          CALL U%get(col,col2,val3)
+                          IF(col2 < row) THEN
+                            CALL L%get(row,col2,val1)
+                            IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) CALL L%set(row,col2,val1-val2*val3)
+                          ELSE
+                            CALL U%get(row,col2,val1)
+                            IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) CALL U%set(row,col2,val1-val2*val3)
                           ENDIF
                         ENDDO
                       ENDDO
-                      CALL L%set(row,row,1.0_SRK)
                     ENDDO
                   ENDIF
                 ENDSELECT
@@ -423,42 +432,25 @@ MODULE PreconditionerTypes
                       ' - In LU decomposition, L was not properly initialized!')
                   ! Now loop through A again and set values of L and U
                   ELSE
-                    ! Set the first row of U and L
-                    DO i=1,mat%ia(2)-mat%ia(1)
-                      col=mat%ja(i)
-                      CALL mat%get(1,col,val1)
-                      CALL U%set(1,col,val1)
-!WRITE(*,*) 'set:',1,col,val1
-                    ENDDO
-                    CALL L%set(1,1,1.0_SRK)
                     ! Now complete LU Decomposition
                     DO row=2,SIZE(mat%ia)-1
-                      j=mat%ia(row)
-                      DO i=1,mat%ia(row+1)-mat%ia(row)
-                        col=mat%ja(j)
-                        IF(col > row-1) EXIT
-                        CALL mat%get(row,col,val1)
-                        CALL mat%get(col,col,val2)
+                      DO col=mat%ia(row),mat%ia(row+1)-1
+                        IF(col >= row) EXIT
+                        CALL L%get(row,col,val1)
+                        CALL U%get(col,col,val2)
                         val2=val1/val2
                         CALL L%set(row,col,val2)
-!WRITE(*,*) 'set:',row,col,val2
-                        DO k=i+1,mat%ia(row+1)-mat%ia(row)
-                          col2=mat%ja(j-i+k)
-                          CALL mat%get(row,col2,val1)
-!WRITE(*,*) 'get:',row,col2,val1
-                          IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) THEN
-                            CALL U%get(col,col2,val3)
-!WRITE(*,*) 'get:',col,col2,val3
-                            IF(col2 < row) THEN
-                              CALL L%set(row,col2,val1-val2*val3)
-                            ELSE
-                              CALL U%set(row,col2,val1-val2*val3)
-                            ENDIF
+                        DO col2=col+1,mat%ia(row+1)-1
+                          IF(col2 < row) THEN
+                            CALL L%get(row,col2,val1)
+                            IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) CALL L%set(row,col2,val1-val2*val3)
+                          ELSE
+                            CALL U%get(row,col2,val1)
+                            IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) CALL U%set(row,col2,val1-val2*val3)
                           ENDIF
                         ENDDO
                         j=j+1
                       ENDDO
-                      CALL L%set(row,row,1.0_SRK)
                     ENDDO
                   ENDIF
                 ENDSELECT
