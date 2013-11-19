@@ -935,7 +935,7 @@ MODULE MatrixTypes
           IF((matrix%jCount < matrix%nnz) & 
             .AND.((matrix%iPrev == i).AND.(matrix%jPrev < j))) THEN
             ijOK=.TRUE.
-          ELSEIF(matrix%iPrev+1 == i) THEN
+          ELSEIF(matrix%iPrev < i) THEN
             ijOK=.TRUE.
           ENDIF
           IF(matrix%ia(i) == 0) matrix%ia(i)=matrix%jCount+1
