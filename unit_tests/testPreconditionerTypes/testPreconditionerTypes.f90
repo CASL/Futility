@@ -151,7 +151,7 @@ PROGRAM testMatrixTypes
         CALL testLU%setup()
 !SELECTTYPE(a => testLU%A); TYPE IS(DenseSquareMatrixType)
 !WRITE(*,*) A%a
-!SELECTTYPE(l => testLU%L); TYPE IS(DenseSquareMatrixType)
+!SELECTTYPE(l => testLU%L); TYPE IS(SparseMatrixType)
 !WRITE(*,*) l%a
 !ENDSELECT
 !ENDSELECT
@@ -190,7 +190,7 @@ PROGRAM testMatrixTypes
         SELECTTYPE(testVector); TYPE IS(RealVectorType)
           tempVector=testVector
         ENDSELECT
-!        CALL testLU%apply(tempVector)
+        CALL testLU%apply(tempVector)
 
         ! Check %clear
         CALL testLU%clear()
