@@ -175,45 +175,14 @@ MODULE PreconditionerTypes
           ! This might not be necessary here, but not sure
           SELECTTYPE(mat => PC%A)
             CLASS IS(DenseSquareMatrixType)
-              ALLOCATE(DenseSquareMatrixtype :: PC%L)
-              ALLOCATE(DenseSquareMatrixType :: PC%U)
-             
-              CALL PL%add('MatrixType->n',mat%n)
-              CALL PL%add('MatrixType->isSym',.FALSE.)
-              CALL PC%L%init(PL)
-              CALL PC%U%init(PL)
-              CALL PL%clear()
-
-              IF(PC%L%isInit .AND. PC%U%isInit) THEN
-                j=mat%n
-                DO row=1,j
-                  DO col=1,j
-                    CALL PC%L%set(row,col,0.0_SRK)
-                    CALL PC%U%set(row,col,0.0_SRK)
-                  ENDDO
-                ENDDO
-                
-                PC%isInit=.TRUE.
-              ELSEIF(.NOT.(PC%L%isInit)) THEN
-                CALL ePreCondtype%raiseError('Incorrect input to '//modName//'::'//myName// &
-                  ' - In LU Preconditioner initialization, L was not properly initialized')
-              ELSE
-                CALL ePreCondtype%raiseError('Incorrect input to '//modName//'::'//myName// &
-                  ' - In LU Preconditioner initialization, U was not properly initialized')
-              ENDIF
-            CLASS IS(SparseMatrixType)
               ALLOCATE(SparseMatrixType :: PC%L)
               ALLOCATE(SparseMatrixType :: PC%U)
-              PC%isInit=.TRUE.
 
               ! Loop over A to get initialization data for L and U
-              j=0
               nU=0; nL=0  !number of rows
               nnzU=0; nnzL=0 !number of non-zero elements
-              DO row=1,SIZE(mat%ia)-1
-                DO i=1,mat%ia(row+1)-mat%ia(row)
-                  j=j+1
-                  col=mat%ja(j)
+              DO row=1,mat%n
+                DO col=1,mat%n
                   ! This may be redundant since mat is sparse, but be safe for now
                   CALL mat%get(row,col,val)
                   IF(.NOT.(val .APPROXEQA. 0.0_SRK)) THEN
@@ -226,6 +195,7 @@ MODULE PreconditionerTypes
                     ENDIF
                   ENDIF
                 ENDDO
+                nnzL=nnzL+1
               ENDDO
                 
               ! Initialize L and U
@@ -242,9 +212,8 @@ MODULE PreconditionerTypes
               SELECTTYPE(L => PC%L); TYPE IS(SparseMatrixType)
                 SELECTTYPE(U => PC%U); TYPE IS(SparseMatrixType)
                   ! Set the shape
-                  j=0
-                  DO row=1,SIZE(mat%ia)-1
-                    DO col=mat%ia(row),mat%ia(row+1)-1
+                  DO row=1,mat%n
+                    DO col=1,mat%n
                       ! This may be redundant since mat is sparse, but be safe for now
                       CALL mat%get(row,col,val)
                       IF(.NOT.(val .APPROXEQA. 0.0_SRK)) THEN
@@ -255,9 +224,86 @@ MODULE PreconditionerTypes
                         ENDIF
                       ENDIF
                     ENDDO
+                    CALL L%setShape(row,row,1.0_SRK)
                   ENDDO
                 ENDSELECT
               ENDSELECT
+                
+              IF(PC%L%isInit .AND. PC%U%isInit) THEN
+                PC%isInit=.TRUE.
+              ELSEIF(.NOT.(PC%L%isInit)) THEN
+                CALL ePreCondtype%raiseError('Incorrect input to '//modName//'::'//myName// &
+                  ' - In LU Preconditioner initialization, L was not properly initialized')
+              ELSE
+                CALL ePreCondtype%raiseError('Incorrect input to '//modName//'::'//myName// &
+                  ' - In LU Preconditioner initialization, U was not properly initialized')
+              ENDIF
+            CLASS IS(SparseMatrixType)
+              ALLOCATE(SparseMatrixType :: PC%L)
+              ALLOCATE(SparseMatrixType :: PC%U)
+
+              ! Loop over A to get initialization data for L and U
+              nU=0; nL=0  !number of rows
+              nnzU=0; nnzL=0 !number of non-zero elements
+              DO row=1,SIZE(mat%ia)-1
+                DO j=mat%ia(row),mat%ia(row+1)-1
+                  col=mat%ja(j)
+                  ! This may be redundant since mat is sparse, but be safe for now
+                  CALL mat%get(row,col,val)
+                  IF(.NOT.(val .APPROXEQA. 0.0_SRK)) THEN
+                    IF(col == row) THEN
+                      nnzU=nnzU+1 ! This location is in U
+                    ELSEIF(col > row) THEN
+                      nnzU=nnzU+1 !This location is in U
+                    ELSE
+                      nnzL=nnzL+1 !This location is in L
+                    ENDIF
+                  ENDIF
+                ENDDO
+                nnzL=nnzL+1
+              ENDDO
+                
+              ! Initialize L and U
+              nU=mat%n
+              nL=mat%n
+              CALL PL%add('MatrixType->n',nU)
+              CALL PL%add('MatrixType->nnz',nnzU)
+              CALL PC%U%init(PL)
+              CALL PL%set('MatrixType->n',nL)
+              CALL PL%set('MatrixType->nnz',nnzL)
+              CALL PC%L%init(PL)
+              CALL PL%clear()
+                    
+              SELECTTYPE(L => PC%L); TYPE IS(SparseMatrixType)
+                SELECTTYPE(U => PC%U); TYPE IS(SparseMatrixType)
+                  ! Set the shape
+                  DO row=1,SIZE(mat%ia)-1
+                    DO j=mat%ia(row),mat%ia(row+1)-1
+                      col=mat%ja(j)
+                      ! This may be redundant since mat is sparse, but be safe for now
+                      CALL mat%get(row,col,val)
+                      IF(.NOT.(val .APPROXEQA. 0.0_SRK)) THEN
+                        IF(col >= row) THEN
+                          CALL U%setShape(row,col,val)
+                        ELSE
+                          CALL L%setShape(row,col,val)
+                        ENDIF
+                      ENDIF
+                    ENDDO
+                    CALL L%setShape(row,row,1.0_SRK)
+                  ENDDO
+                ENDSELECT
+              ENDSELECT
+                
+              IF(PC%L%isInit .AND. PC%U%isInit) THEN
+                PC%isInit=.TRUE.
+              ELSEIF(.NOT.(PC%L%isInit)) THEN
+                CALL ePreCondtype%raiseError('Incorrect input to '//modName//'::'//myName// &
+                  ' - In LU Preconditioner initialization, L was not properly initialized')
+              ELSE
+                CALL ePreCondtype%raiseError('Incorrect input to '//modName//'::'//myName// &
+                  ' - In LU Preconditioner initialization, U was not properly initialized')
+              ENDIF
             CLASS IS(PETScMatrixType)
               !allocate L and U
               ALLOCATE(PETScMatrixType :: PC%L)
@@ -342,7 +388,6 @@ MODULE PreconditionerTypes
                 ENDSELECT
               CLASS IS(SparseMatrixType)
                 SELECTTYPE(U => PC%U); TYPE IS(SparseMatrixType)
-!WRITE(*,*) L%a,':',L%ia,':',L%ja
                   CALL BLAS_matvec('L','N','T',L%a,L%ia,L%ja,v%b)
                   CALL BLAS_matvec('U','N','N',U%a,U%ia,U%ja,v%b)
                 ENDSELECT
@@ -449,7 +494,6 @@ MODULE PreconditionerTypes
                             IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) CALL U%set(row,col2,val1-val2*val3)
                           ENDIF
                         ENDDO
-                        j=j+1
                       ENDDO
                     ENDDO
                   ENDIF
