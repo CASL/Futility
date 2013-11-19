@@ -381,11 +381,6 @@ MODULE PreconditionerTypes
         SELECTTYPE(v)
           CLASS IS(RealVectorType)
             SELECTTYPE(L => PC%L)
-              CLASS IS(DenseSquareMatrixType)
-                SELECTTYPE(U => PC%U); TYPE IS(DenseSquareMatrixtype)
-                  CALL BLAS_matvec('L','N','T',L%a,v%b)
-                  CALL BLAS_matvec('U','N','N',U%a,v%b)
-                ENDSELECT
               CLASS IS(SparseMatrixType)
                 SELECTTYPE(U => PC%U); TYPE IS(SparseMatrixType)
                   CALL BLAS_matvec('L','N','T',L%a,L%ia,L%ja,v%b)
