@@ -478,20 +478,25 @@ MODULE PreconditionerTypes
                     ! Now complete LU Decomposition
                     DO row=2,SIZE(mat%ia)-1
                       DO col=mat%ia(row),mat%ia(row+1)-1
-                        IF(col >= row) EXIT
-                        CALL L%get(row,col,val1)
-                        CALL U%get(col,col,val2)
-                        val2=val1/val2
-                        CALL L%set(row,col,val2)
-                        DO col2=col+1,mat%ia(row+1)-1
-                          IF(col2 < row) THEN
-                            CALL L%get(row,col2,val1)
-                            IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) CALL L%set(row,col2,val1-val2*val3)
-                          ELSE
-                            CALL U%get(row,col2,val1)
-                            IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) CALL U%set(row,col2,val1-val2*val3)
-                          ENDIF
-                        ENDDO
+                        IF(mat%ja(col) >= row) EXIT
+                        CALL L%get(row,mat%ja(col),val1)
+                        IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) THEN
+                          CALL U%get(mat%ja(col),mat%ja(col),val2)
+                          val2=val1/val2
+                          CALL L%set(row,mat%ja(col),val2)
+                          DO col2=col+1,mat%ia(row+1)-1
+                            CALL U%get(mat%ja(col),mat%ja(col2),val3)
+                            IF(.NOT.(val3 .APPROXEQA. 0.0_SRK)) THEN
+                              IF(mat%ja(col2) < row) THEN
+                                CALL L%get(row,mat%ja(col2),val1)
+                                IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) CALL L%set(row,mat%ja(col2),val1-val2*val3)
+                              ELSE
+                                CALL U%get(row,mat%ja(col2),val1)
+                                IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) CALL U%set(row,mat%ja(col2),val1-val2*val3)
+                              ENDIF
+                            ENDIF
+                          ENDDO
+                        ENDIF
                       ENDDO
                     ENDDO
                   ENDIF
