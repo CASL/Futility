@@ -425,11 +425,10 @@ MODULE PreconditionerTypes
           CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
             ' - Matrix being used for LU Preconditioner is not initialized!')
         ELSE
-          ! This might not be necessary here, but not sure
           SELECTTYPE(mat => PC%A)
             CLASS IS(DenseSquareMatrixtype)
-              SELECTTYPE(U => PC%U); TYPE IS(DenseSquareMatrixType)
-                SELECTTYPE(L => PC%L); TYPE IS(DenseSquareMatrixType)
+              SELECTTYPE(U => PC%U); TYPE IS(SparseMatrixType)
+                SELECTTYPE(L => PC%L); TYPE IS(SparseMatrixType)
                   IF(.NOT.(U%isinit)) THEN
                     CALL ePrecondType%raiseError('Incorrect input to '//modName//'::'//myName// &
                       ' - in LU decomposition, U was not properly initialize!')
@@ -442,19 +441,23 @@ MODULE PreconditionerTypes
                     DO row=2,j
                       DO col=1,row-1
                         CALL L%get(row,col,val1)
-                        CALL U%get(col,col,val2)
-                        val2=val1/val2
-                        CALL L%set(row,col,val2)
-                        DO col2=col+1,j
-                          CALL U%get(col,col2,val3)
-                          IF(col2 < row) THEN
-                            CALL L%get(row,col2,val1)
-                            IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) CALL L%set(row,col2,val1-val2*val3)
-                          ELSE
-                            CALL U%get(row,col2,val1)
-                            IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) CALL U%set(row,col2,val1-val2*val3)
-                          ENDIF
-                        ENDDO
+                        IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) THEN
+                          CALL U%get(col,col,val2)
+                          val2=val1/val2
+                          CALL L%set(row,col,val2)
+                          DO col2=col+1,j
+                            CALL U%get(col,col2,val3)
+                            IF(.NOT.(val3 .APPROXEQA. 0.0_SRK)) THEN
+                              IF(col2 < row) THEN
+                                CALL L%get(row,col2,val1)
+                                IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) CALL L%set(row,col2,val1-val2*val3)
+                              ELSE
+                                CALL U%get(row,col2,val1)
+                                IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) CALL U%set(row,col2,val1-val2*val3)
+                              ENDIF
+                            ENDIF
+                          ENDDO
+                        ENDIF
                       ENDDO
                     ENDDO
                   ENDIF

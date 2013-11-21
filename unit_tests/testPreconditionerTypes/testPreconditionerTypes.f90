@@ -153,6 +153,9 @@ PROGRAM testMatrixTypes
 !WRITE(*,*) A%a
 !SELECTTYPE(l => testLU%L); TYPE IS(SparseMatrixType)
 !WRITE(*,*) l%a
+!SELECTTYPE(u => testLU%U); TYPE IS(SparseMatrixType)
+!WRITE(*,*) u%a
+!ENDSELECT
 !ENDSELECT
 !ENDSELECT
         ! Check %apply
