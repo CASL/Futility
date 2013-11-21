@@ -1412,13 +1412,8 @@ MODULE LinearSolverTypes
           IF(ABS(phibar) <= tol) EXIT
         ENDDO
         
-        DO j=it,1,-1
-          temp=0.0_SRK
-          DO k=j+1,it
-            temp=temp+R(j,k)*y(k)
-          ENDDO
-          IF(R(j,j) > 0.0_SRK) y(j)=(g(j)-temp)/R(j,j)
-        ENDDO
+        y(1:it)=g(1:it)
+        CALL BLAS_matvec('U','N','N',R(1:it,1:it),y(1:it))
 
         CALL BLAS_matvec(v(:,1:it),y(1:it),0.0_SRK,u%b)
         CALL BLAS_axpy(u,solver%x)
@@ -1745,20 +1740,9 @@ MODULE LinearSolverTypes
 
       !Perform backward substitution
       IF(thisa(N,N) .APPROXEQA. 0._SRK) RETURN
-      SELECTTYPE(X => solver%X); TYPE IS(RealVectorType)
-        CALL X%set(N,thisb(N)/thisa(N,N))
-      ENDSELECT
-      DO irow=N-1,1,-1
-        t=0._SRK
-        DO icol=irow+1,N
-          SELECTTYPE(X => solver%X); TYPE IS(RealVectorType)
-            CALL X%get(icol,tmpxval)  
-            t=t+thisa(irow,icol)*tmpxval
-           ENDSELECT
-        ENDDO
-         SELECTTYPE(X => solver%X); TYPE IS(RealVectorType)
-           CALL X%set(irow,(thisb(irow)-t)/thisa(irow,irow))
-         ENDSELECT
+      CALL BLAS_matvec('U','N','U',thisa,thisb)
+      DO irow=1,N
+        CALL solver%X%set(irow,thisb(irow))
       ENDDO
       solver%info=0
     ENDSUBROUTINE solveGE_DenseSquare
