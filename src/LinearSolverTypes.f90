@@ -1740,9 +1740,20 @@ MODULE LinearSolverTypes
 
       !Perform backward substitution
       IF(thisa(N,N) .APPROXEQA. 0._SRK) RETURN
-      CALL BLAS_matvec('U','N','U',thisa,thisb)
-      DO irow=1,N
-        CALL solver%X%set(irow,thisb(irow))
+      SELECTTYPE(X => solver%X); TYPE IS(RealVectorType)
+        CALL X%set(N,thisb(N)/thisa(N,N))
+      ENDSELECT
+      DO irow=N-1,1,-1
+        t=0._SRK
+        DO icol=irow+1,N
+          SELECTTYPE(X => solver%X); TYPE IS(RealVectorType)
+            CALL X%get(icol,tmpxval)  
+            t=t+thisa(irow,icol)*tmpxval
+           ENDSELECT
+        ENDDO
+         SELECTTYPE(X => solver%X); TYPE IS(RealVectorType)
+           CALL X%set(irow,(thisb(irow)-t)/thisa(irow,irow))
+         ENDSELECT
       ENDDO
       solver%info=0
     ENDSUBROUTINE solveGE_DenseSquare
