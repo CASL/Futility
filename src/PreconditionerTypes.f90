@@ -312,8 +312,6 @@ MODULE PreconditionerTypes
               !initialize L and U
               SELECTTYPE(U => PC%U); TYPE IS(PETScMatrixType)
                 SELECTTYPE(L => PC%L); TYPE IS(PETScMatrixType)
-                  !to be supported at some point soon
-                  
                   ! Initialize L and U (add preallocation eventually)
                   CALL PL%add('MatrixType->matType',SPARSE)
                   CALL PL%add('MatrixType->n',mat%n)
