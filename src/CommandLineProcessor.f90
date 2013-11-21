@@ -165,7 +165,7 @@ MODULE CommandLineProcessor
     !> List of command line options for help message
     TYPE(CmdLineOptType),POINTER,PRIVATE :: opts(:)=>NULL()
     !> Exception Handler for the command line processor
-    TYPE(ExceptionHandlerType),POINTER :: e
+    TYPE(ExceptionHandlerType),POINTER :: e => NULL()
     CONTAINS
       !> @copybrief CommandLineProcessor::setExecName
       !> @copydetails CommandLineProcessor::setExecName
