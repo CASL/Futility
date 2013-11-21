@@ -39,7 +39,9 @@ PROGRAM testMatrixTypes
   TYPE(ExceptionHandlerType),TARGET :: e
   TYPE(ParamType) :: PListMat,PListVec
   CLASS(MatrixType),ALLOCATABLE :: testSparseMatrix,testDenseMatrix
+  CLASS(MatrixType),ALLOCATABLE :: testBILU_1g,testBILU_mg
   CLASS(VectorType),ALLOCATABLE :: testVector
+  CLASS(VectorType),ALLOCATABLE :: testVec_1g,testVec_mg
 
 #ifdef HAVE_MPI
   INTEGER :: mpierr
@@ -151,8 +153,11 @@ PROGRAM testMatrixTypes
         CALL testLU%setup()
 !SELECTTYPE(a => testLU%A); TYPE IS(DenseSquareMatrixType)
 !WRITE(*,*) A%a
-!SELECTTYPE(l => testLU%L); TYPE IS(DenseSquareMatrixType)
+!SELECTTYPE(l => testLU%L); TYPE IS(SparseMatrixType)
 !WRITE(*,*) l%a
+!SELECTTYPE(u => testLU%U); TYPE IS(SparseMatrixType)
+!WRITE(*,*) u%a
+!ENDSELECT
 !ENDSELECT
 !ENDSELECT
         ! Check %apply
@@ -190,7 +195,7 @@ PROGRAM testMatrixTypes
         SELECTTYPE(testVector); TYPE IS(RealVectorType)
           tempVector=testVector
         ENDSELECT
-!        CALL testLU%apply(tempVector)
+        CALL testLU%apply(tempVector)
 
         ! Check %clear
         CALL testLU%clear()
@@ -212,7 +217,8 @@ PROGRAM testMatrixTypes
       INTEGER(SIK) :: i,j,iostatus,ierr
       INTEGER(SIK) :: nPlane,nPin,nGrp,N
       REAL(SRK) :: tmpreal,val
-      
+
+      !!!setup 1g stuff      
       nPlane=3
       nPin=9
       nGrp=1
@@ -221,33 +227,69 @@ PROGRAM testMatrixTypes
       !Set up Vector
       CALL PListVec%add('VectorType->n',N)
       CALL PListVec%add('VectorType->MPI_Comm_ID',MPI_COMM_WORLD)    
-      ALLOCATE(PETScVectorType :: testVector)
-      CALL testVector%init(PListVec)      
+      ALLOCATE(PETScVectorType :: testVec_1g)
+      CALL testVec_1g%init(PListVec) 
 
       !Set up Matrix
       CALL PListMat%add('MatrixType->matType',SPARSE)
       CALL PListMat%add('MatrixType->n',N)
       CALL PListMat%add('MatrixType->isSym',.FALSE.)
       CALL PListMat%add('MatrixType->MPI_Comm_ID',MPI_COMM_WORLD)
-      ALLOCATE(PETScMatrixType :: testSparseMatrix)
-      CALL testSparseMatrix%init(PListMat)
-      
-      SELECTTYPE(testSparseMatrix); TYPE IS(PETScMatrixType)
+      ALLOCATE(PETScMatrixType :: testBILU_1g)
+      CALL testBILU_1g%init(PListMat)
+
+      SELECTTYPE(testBILU_1g); TYPE IS(PETScMatrixType)
         
         ! Fill Matrix from File
         OPEN(unit=111,file="matrices/1g_matrix.txt",status='old')
         READ(111,*,iostat=iostatus)
         DO WHILE(iostatus==0)
           READ(111,*,iostat=iostatus) i,j,val
-          CALL testSparseMatrix%set(i,j,val)
+          CALL testBILU_1g%set(i,j,val)
         ENDDO
         CLOSE(111)
-        CALL testSparseMatrix%assemble()
+        CALL testBILU_1g%assemble()
 !        CALL MatView(testSparseMatrix%A,PETSC_VIEWER_STDOUT_SELF,ierr)
         
       CLASS DEFAULT
         ASSERT(.FALSE.,'ALLOCATE(SparseMatrixType :: testSparseMatrix)')
       ENDSELECT
+
+      !!!setup mg stuff      
+      nPlane=3
+      nPin=9
+      nGrp=1
+      N=nPlane*nPin*nGrp
+
+!      !Set up Vector
+!      CALL PListVec%add('VectorType->n',N)
+!      CALL PListVec%add('VectorType->MPI_Comm_ID',MPI_COMM_WORLD)    
+!      ALLOCATE(PETScVectorType :: testVec_mg)
+!      CALL testVec_mg%init(PListVec) 
+!
+!      !Set up Matrix
+!      CALL PListMat%add('MatrixType->matType',SPARSE)
+!      CALL PListMat%add('MatrixType->n',N)
+!      CALL PListMat%add('MatrixType->isSym',.FALSE.)
+!      CALL PListMat%add('MatrixType->MPI_Comm_ID',MPI_COMM_WORLD)
+!      ALLOCATE(PETScMatrixType :: testBILU_1g)
+!      CALL testBILU_1g%init(PListMat)
+!
+!      SELECTTYPE(testBILU_1g); TYPE IS(PETScMatrixType)
+!        
+!        ! Fill Matrix from File
+!        OPEN(unit=111,file="matrices/1g_matrix.txt",status='old')
+!        READ(111,*,iostat=iostatus)
+!        DO WHILE(iostatus==0)
+!          READ(111,*,iostat=iostatus) i,j,val
+!          CALL testBILU_1g%set(i,j,val)
+!        ENDDO
+!        CLOSE(111)
+!        CALL testBILU_1g%assemble()
+!        
+!      CLASS DEFAULT
+!        ASSERT(.FALSE.,'ALLOCATE(SparseMatrixType :: testSparseMatrix)')
+!      ENDSELECT
 
     ENDSUBROUTINE setupBILUTest
 !
@@ -256,82 +298,331 @@ PROGRAM testMatrixTypes
       CLASS(LU_PreCondType),ALLOCATABLE :: testLU
 
       INTEGER(SIK) :: nPlane,nPin,nGrp
-      INTEGER(SIK) :: row,col
-      REAL(SRK) :: tmpval
+      INTEGER(SIK) :: row,col,i,j,iostatus
+      REAL(SRK) :: tmpval,reftmpval,val
       TYPE(ParamType) :: pList
+      CLASS(MatrixType),ALLOCATABLE :: refBILU_L,refBILU_U
       
-      IF(testSparseMatrix%isInit .AND. testVector%isInit) THEN
-        COMPONENT_TEST('BILU Preconditioner Type')
-        ALLOCATE(BILU_PreCondType :: testLU)
-        
-        nPlane=3
-        nPin=9
-        nGrp=1
-
-        !initialize        
-        CALL testLU%init(testSparseMatrix)
-        !set some values (to be moved into init at some point)
-        SELECTTYPE(pc => testLU); TYPE IS(BILU_PreCondType)
-          pc%nPlane=nPlane
-          pc%nPin=nPin
-          pc%nGrp=nGrp    
-        ENDSELECT
-        ! Check %init
-        ASSERT(testLU%isInit,'BILU Preconditioner %isInit')
-        ASSERT(ASSOCIATED(testLU%A),'BILU Preconditioner ASSOCIATED(LU%A)')
-        ASSERT(testLU%L%isInit,'BILU Preconditioner %L%isInit')
-        ASSERT(testLU%U%isInit,'BILU Preconditioner %U%isInit')
-
-        ! Check %setup
-        CALL testLU%setup()
-        ! Check L
-        ! Check U
-        SELECTTYPE(A => testLU%A); TYPE IS(PETScMatrixType)
-          DO row=1,A%n
-            WRITE(667,'(I4)',ADVANCE='NO') row
-            DO col=1,A%n
-              CALL A%get(row,col,tmpval)
-              WRITE(667,'(E15.5)',ADVANCE='NO') tmpval
-            ENDDO   
-            WRITE(667,*)            
+      COMPONENT_TEST('BILU Preconditioner Type (1g)')
+      IF(ALLOCATED(testBILU_1g) .AND. ALLOCATED(testVec_1g)) THEN
+        IF(testBILU_1g%isInit .AND. testVec_1g%isInit) THEN
+          ALLOCATE(BILU_PreCondType :: testLU)
+          
+          nPlane=3
+          nPin=9
+          nGrp=1
+  
+          !initialize        
+          CALL testLU%init(testBILU_1g)
+          !set some values (to be moved into init at some point)
+          SELECTTYPE(pc => testLU); TYPE IS(BILU_PreCondType)
+            pc%nPlane=nPlane
+            pc%nPin=nPin
+            pc%nGrp=nGrp    
+          ENDSELECT
+          ! Check %init
+          ASSERT(testLU%isInit,'BILU Preconditioner %isInit')
+          ASSERT(ASSOCIATED(testLU%A),'BILU Preconditioner ASSOCIATED(LU%A)')
+          ASSERT(testLU%L%isInit,'BILU Preconditioner %L%isInit')
+          ASSERT(testLU%U%isInit,'BILU Preconditioner %U%isInit')
+  
+          ! Check %setup
+          CALL testLU%setup()
+          
+          !write some matrices out
+          SELECTTYPE(A => testLU%A); TYPE IS(PETScMatrixType)
+            WRITE(667,*) "A: "
+            DO row=1,A%n
+              WRITE(667,'(I4)',ADVANCE='NO') row
+              DO col=1,A%n
+                CALL A%get(row,col,tmpval)
+                WRITE(667,'(ES20.10)',ADVANCE='NO') tmpval
+              ENDDO   
+              WRITE(667,*)            
+            ENDDO
+            WRITE(667,*)  
+          ENDSELECT
+          SELECTTYPE(A => testLU%L); TYPE IS(PETScMatrixType)
+            WRITE(667,*) "L: "
+            DO row=1,A%n
+              WRITE(667,'(I4)',ADVANCE='NO') row
+              DO col=1,A%n
+                CALL A%get(row,col,tmpval)
+                WRITE(667,'(ES20.10)',ADVANCE='NO') tmpval
+              ENDDO   
+              WRITE(667,*)            
+            ENDDO
+            WRITE(667,*)  
+          ENDSELECT
+          SELECTTYPE(A => testLU%L); TYPE IS(PETScMatrixType)
+            DO row=1,A%n
+              DO col=1,A%n
+                CALL A%get(row,col,tmpval)
+                IF(tmpval /= 0.0_SRK) WRITE(670,'(2I4,ES25.15)') row,col,tmpval
+              ENDDO         
+            ENDDO
+          ENDSELECT
+          SELECTTYPE(A => testLU%U); TYPE IS(PETScMatrixType)
+            WRITE(667,*) "U: "
+            DO row=1,A%n
+              WRITE(667,'(I4)',ADVANCE='NO') row
+              DO col=1,A%n
+                CALL A%get(row,col,tmpval)
+                WRITE(667,'(ES20.10)',ADVANCE='NO') tmpval
+              ENDDO   
+              WRITE(667,*)            
+            ENDDO
+            WRITE(667,*)  
+          ENDSELECT
+          SELECTTYPE(A => testLU%U); TYPE IS(PETScMatrixType)
+            DO row=1,A%n
+              DO col=1,A%n
+                CALL A%get(row,col,tmpval)
+                IF(tmpval /= 0.0_SRK) WRITE(671,'(2I4,ES20.10)') row,col,tmpval
+              ENDDO         
+            ENDDO
+          ENDSELECT
+          
+          !setup ref L
+          CALL PListMat%add('MatrixType->matType',SPARSE)
+          CALL PListMat%add('MatrixType->n',testLU%L%N)
+          CALL PListMat%add('MatrixType->isSym',.FALSE.)
+          CALL PListMat%add('MatrixType->MPI_Comm_ID',MPI_COMM_WORLD)
+          ALLOCATE(PETScMatrixType :: refBILU_L)
+          CALL refBILU_L%init(PListMat)
+          OPEN(unit=111,file="matrices/refBILU_1gL.txt",status='old')
+          iostatus=0
+          DO WHILE(iostatus==0)
+            READ(111,*,iostat=iostatus) i,j,val
+            CALL refBILU_L%set(i,j,val)
           ENDDO
-        ENDSELECT
-        SELECTTYPE(A => testLU%L); TYPE IS(PETScMatrixType)
-          DO row=1,A%n
-            WRITE(667,'(I4)',ADVANCE='NO') row
-            DO col=1,A%n
-              CALL A%get(row,col,tmpval)
-              WRITE(667,'(E15.5)',ADVANCE='NO') tmpval
-            ENDDO   
-            WRITE(667,*)            
+          CLOSE(111)
+          !check L
+          SELECTTYPE(L => testLU%L); TYPE IS(PETScMatrixType)
+            SELECTTYPE(refL => refBILU_L); TYPE IS(PETScMatrixType)
+              DO row=1,L%n
+                DO col=1,L%n
+                  CALL L%get(row,col,tmpval)
+                  CALL refL%get(row,col,reftmpval)
+                  ASSERT( ABS(tmpval-reftmpval) < 1E-12_SRK,"BILU_L failed")
+                  FINFO() row,col,tmpval,reftmpval,ABS(tmpval-reftmpval)
+                ENDDO         
+              ENDDO
+            ENDSELECT
+          ENDSELECT
+          CALL refBILU_L%clear()
+          DEALLOCATE(refBILU_L)
+  
+          !setup ref U
+          CALL PListMat%add('MatrixType->matType',SPARSE)
+          CALL PListMat%add('MatrixType->n',testLU%U%N)
+          CALL PListMat%add('MatrixType->isSym',.FALSE.)
+          CALL PListMat%add('MatrixType->MPI_Comm_ID',MPI_COMM_WORLD)
+          ALLOCATE(PETScMatrixType :: refBILU_U)
+          CALL refBILU_U%init(PListMat)
+          OPEN(unit=111,file="matrices/refBILU_1gU.txt",status='old')
+          iostatus=0
+          DO WHILE(iostatus==0)
+            READ(111,*,iostat=iostatus) i,j,val
+            CALL refBILU_U%set(i,j,val)
           ENDDO
-        ENDSELECT
-        SELECTTYPE(A => testLU%U); TYPE IS(PETScMatrixType)
-          DO row=1,A%n
-            WRITE(667,'(I4)',ADVANCE='NO') row
-            DO col=1,A%n
-              CALL A%get(row,col,tmpval)
-              WRITE(667,'(E15.5)',ADVANCE='NO') tmpval
-            ENDDO   
-            WRITE(667,*)            
-          ENDDO
-        ENDSELECT
-        
-        ! Check %apply
-        CALL testLU%apply(testVector)
-
-        ! Check %clear
-        CALL testLU%clear()
-        ASSERT(.NOT.(testLU%isInit),'BILU Preconditioner .NOT.(lu%isInit)')
-        ASSERT(.NOT.(ASSOCIATED(testLU%A)),'BILU Preconditioner .NOT.(ASSOCIATED(LU%A))')
-        ASSERT(.NOT.(ASSOCIATED(testLU%L)),'BILU Preconditioner .NOT.(ASSOCIATED(LU%L))')
-        ASSERT(.NOT.(ASSOCIATED(testLU%U)),'BILU Preconditioner .NOT.(ASSOCIATED(LU%U))')
+          CLOSE(111)
+          !check U
+          SELECTTYPE(U => testLU%U); TYPE IS(PETScMatrixType)
+            SELECTTYPE(refU => refBILU_U); TYPE IS(PETScMatrixType)
+              DO row=1,U%n
+                DO col=1,U%n
+                  CALL U%get(row,col,tmpval)
+                  CALL refU%get(row,col,reftmpval)
+                  ASSERT( ABS(tmpval-reftmpval) < 1E-12_SRK,"BILU_U failed")
+                  FINFO() row,col,tmpval,reftmpval,ABS(tmpval-reftmpval)
+                ENDDO         
+              ENDDO
+            ENDSELECT
+          ENDSELECT
+          CALL refBILU_U%clear()
+          DEALLOCATE(refBILU_U)
+  
+          ! Check %apply
+          CALL testLU%apply(testVec_1g)
+  
+          ! Check %clear
+          CALL testLU%clear()
+          ASSERT(.NOT.(testLU%isInit),'BILU Preconditioner .NOT.(lu%isInit)')
+          ASSERT(.NOT.(ASSOCIATED(testLU%A)),'BILU Preconditioner .NOT.(ASSOCIATED(LU%A))')
+          ASSERT(.NOT.(ASSOCIATED(testLU%L)),'BILU Preconditioner .NOT.(ASSOCIATED(LU%L))')
+          ASSERT(.NOT.(ASSOCIATED(testLU%U)),'BILU Preconditioner .NOT.(ASSOCIATED(LU%U))')
+          DEALLOCATE(testLU)
+        ELSE
+          ASSERT(testBILU_1g%isInit,'TestMatrix Initialization')
+          ASSERT(testVec_1g%isInit,'TestVector Initialization')
+        ENDIF
       ELSE
-        ASSERT(testSparseMatrix%isInit,'TestMatrix Initialization')
-        ASSERT(testVector%isInit,'TestVector Initialization')
+        ASSERT(ALLOCATED(testBILU_1g),'TestMatrix Allocation')
+        ASSERT(ALLOCATED(testVec_1g),'TestVector Allocation')
       ENDIF
 
-      DEALLOCATE(testLU)
+      
+      !COMPONENT_TEST('BILU Preconditioner Type (mg)')
+      IF(ALLOCATED(testBILU_mg) .AND. ALLOCATED(testVec_mg)) THEN
+        IF(testBILU_mg%isInit .AND. testVec_mg%isInit) THEN
+          ALLOCATE(BILU_PreCondType :: testLU)
+          
+          nPlane=3
+          nPin=9
+          nGrp=56
+  
+          !initialize        
+          CALL testLU%init(testBILU_mg)
+          !set some values (to be moved into init at some point)
+          SELECTTYPE(pc => testLU); TYPE IS(BILU_PreCondType)
+            pc%nPlane=nPlane
+            pc%nPin=nPin
+            pc%nGrp=nGrp    
+          ENDSELECT
+          ! Check %init
+          ASSERT(testLU%isInit,'BILU Preconditioner %isInit')
+          ASSERT(ASSOCIATED(testLU%A),'BILU Preconditioner ASSOCIATED(LU%A)')
+          ASSERT(testLU%L%isInit,'BILU Preconditioner %L%isInit')
+          ASSERT(testLU%U%isInit,'BILU Preconditioner %U%isInit')
+  
+          ! Check %setup
+          CALL testLU%setup()
+          
+          !write some matrices out
+          SELECTTYPE(A => testLU%A); TYPE IS(PETScMatrixType)
+            WRITE(667,*) "A: "
+            DO row=1,A%n
+              WRITE(667,'(I4)',ADVANCE='NO') row
+              DO col=1,A%n
+                CALL A%get(row,col,tmpval)
+                WRITE(667,'(ES20.10)',ADVANCE='NO') tmpval
+              ENDDO   
+              WRITE(667,*)            
+            ENDDO
+            WRITE(667,*)  
+          ENDSELECT
+          SELECTTYPE(A => testLU%L); TYPE IS(PETScMatrixType)
+            WRITE(667,*) "L: "
+            DO row=1,A%n
+              WRITE(667,'(I4)',ADVANCE='NO') row
+              DO col=1,A%n
+                CALL A%get(row,col,tmpval)
+                WRITE(667,'(ES20.10)',ADVANCE='NO') tmpval
+              ENDDO   
+              WRITE(667,*)            
+            ENDDO
+            WRITE(667,*)  
+          ENDSELECT
+          SELECTTYPE(A => testLU%L); TYPE IS(PETScMatrixType)
+            DO row=1,A%n
+              DO col=1,A%n
+                CALL A%get(row,col,tmpval)
+                IF(tmpval /= 0.0_SRK) WRITE(670,'(2I4,ES25.15)') row,col,tmpval
+              ENDDO         
+            ENDDO
+          ENDSELECT
+          SELECTTYPE(A => testLU%U); TYPE IS(PETScMatrixType)
+            WRITE(667,*) "U: "
+            DO row=1,A%n
+              WRITE(667,'(I4)',ADVANCE='NO') row
+              DO col=1,A%n
+                CALL A%get(row,col,tmpval)
+                WRITE(667,'(ES20.10)',ADVANCE='NO') tmpval
+              ENDDO   
+              WRITE(667,*)            
+            ENDDO
+            WRITE(667,*)  
+          ENDSELECT
+          SELECTTYPE(A => testLU%U); TYPE IS(PETScMatrixType)
+            DO row=1,A%n
+              DO col=1,A%n
+                CALL A%get(row,col,tmpval)
+                IF(tmpval /= 0.0_SRK) WRITE(671,'(2I4,ES20.10)') row,col,tmpval
+              ENDDO         
+            ENDDO
+          ENDSELECT
+          
+          !setup ref L
+          CALL PListMat%add('MatrixType->matType',SPARSE)
+          CALL PListMat%add('MatrixType->n',testLU%L%N)
+          CALL PListMat%add('MatrixType->isSym',.FALSE.)
+          CALL PListMat%add('MatrixType->MPI_Comm_ID',MPI_COMM_WORLD)
+          ALLOCATE(PETScMatrixType :: refBILU_L)
+          CALL refBILU_L%init(PListMat)
+          OPEN(unit=111,file="matrices/refBILU_1gL.txt",status='old')
+          iostatus=0
+          DO WHILE(iostatus==0)
+            READ(111,*,iostat=iostatus) i,j,val
+            CALL refBILU_L%set(i,j,val)
+          ENDDO
+          CLOSE(111)
+          !check L
+          SELECTTYPE(L => testLU%L); TYPE IS(PETScMatrixType)
+            SELECTTYPE(refL => refBILU_L); TYPE IS(PETScMatrixType)
+              DO row=1,L%n
+                DO col=1,L%n
+                  CALL L%get(row,col,tmpval)
+                  CALL refL%get(row,col,reftmpval)
+                  ASSERT( ABS(tmpval-reftmpval) < 1E-12_SRK,"BILU_L failed")
+                  FINFO() row,col,tmpval,reftmpval,ABS(tmpval-reftmpval)
+                ENDDO         
+              ENDDO
+            ENDSELECT
+          ENDSELECT
+          CALL refBILU_L%clear()
+          DEALLOCATE(refBILU_L)
+  
+          !setup ref U
+          CALL PListMat%add('MatrixType->matType',SPARSE)
+          CALL PListMat%add('MatrixType->n',testLU%U%N)
+          CALL PListMat%add('MatrixType->isSym',.FALSE.)
+          CALL PListMat%add('MatrixType->MPI_Comm_ID',MPI_COMM_WORLD)
+          ALLOCATE(PETScMatrixType :: refBILU_U)
+          CALL refBILU_U%init(PListMat)
+          OPEN(unit=111,file="matrices/refBILU_1gU.txt",status='old')
+          iostatus=0
+          DO WHILE(iostatus==0)
+            READ(111,*,iostat=iostatus) i,j,val
+            CALL refBILU_U%set(i,j,val)
+          ENDDO
+          CLOSE(111)
+          !check U
+          SELECTTYPE(U => testLU%U); TYPE IS(PETScMatrixType)
+            SELECTTYPE(refU => refBILU_U); TYPE IS(PETScMatrixType)
+              DO row=1,U%n
+                DO col=1,U%n
+                  CALL U%get(row,col,tmpval)
+                  CALL refU%get(row,col,reftmpval)
+                  ASSERT( ABS(tmpval-reftmpval) < 1E-12_SRK,"BILU_U failed")
+                  FINFO() row,col,tmpval,reftmpval,ABS(tmpval-reftmpval)
+                ENDDO         
+              ENDDO
+            ENDSELECT
+          ENDSELECT
+          CALL refBILU_U%clear()
+          DEALLOCATE(refBILU_U)
+  
+          ! Check %apply
+          CALL testLU%apply(testVec_mg)
+  
+          ! Check %clear
+          CALL testLU%clear()
+          ASSERT(.NOT.(testLU%isInit),'BILU Preconditioner .NOT.(lu%isInit)')
+          ASSERT(.NOT.(ASSOCIATED(testLU%A)),'BILU Preconditioner .NOT.(ASSOCIATED(LU%A))')
+          ASSERT(.NOT.(ASSOCIATED(testLU%L)),'BILU Preconditioner .NOT.(ASSOCIATED(LU%L))')
+          ASSERT(.NOT.(ASSOCIATED(testLU%U)),'BILU Preconditioner .NOT.(ASSOCIATED(LU%U))')
+          DEALLOCATE(testLU)
+        ELSE
+          ASSERT(testBILU_mg%isInit,'TestMatrix Initialization')
+          ASSERT(testVec_mg%isInit,'TestVector Initialization')
+        ENDIF
+      ELSE
+        !ASSERT(ALLOCATED(testBILU_mg),'TestMatrix Allocation')
+        !ASSERT(ALLOCATED(testVec_mg),'TestVector Allocation')
+      ENDIF
+
+      
 
     ENDSUBROUTINE testBILU_PreCondtype
 !
@@ -341,11 +632,17 @@ PROGRAM testMatrixTypes
       CALL PListMat%clear()
       CALL PListVec%clear()
       CALL MatrixTypes_Clear_ValidParams()
-      CALL testSparseMatrix%clear()
-      CALL testVector%clear()
+      IF(ALLOCATED(testSparseMatrix)) CALL testSparseMatrix%clear()
+      IF(ALLOCATED(testBILU_1g)) CALL testBILU_1g%clear()
+      IF(ALLOCATED(testBILU_mg)) CALL testBILU_mg%clear()
+      IF(ALLOCATED(testVector)) CALL testVector%clear()
+       
       IF(ALLOCATED(testSparseMatrix)) DEALLOCATE(testSparseMatrix)
+      IF(ALLOCATED(testBILU_1g)) DEALLOCATE(testBILU_1g)
+      IF(ALLOCATED(testBILU_mg)) DEALLOCATE(testBILU_mg)
       IF(ALLOCATED(testDenseMatrix)) DEALLOCATE(testDenseMatrix)
       IF(ALLOCATED(testVector)) DEALLOCATE(testVector)
+     
 
     ENDSUBROUTINE clearTest
 ENDPROGRAM testMatrixTypes

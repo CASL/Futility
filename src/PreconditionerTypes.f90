@@ -175,45 +175,14 @@ MODULE PreconditionerTypes
           ! This might not be necessary here, but not sure
           SELECTTYPE(mat => PC%A)
             CLASS IS(DenseSquareMatrixType)
-              ALLOCATE(DenseSquareMatrixtype :: PC%L)
-              ALLOCATE(DenseSquareMatrixType :: PC%U)
-             
-              CALL PL%add('MatrixType->n',mat%n)
-              CALL PL%add('MatrixType->isSym',.FALSE.)
-              CALL PC%L%init(PL)
-              CALL PC%U%init(PL)
-              CALL PL%clear()
-
-              IF(PC%L%isInit .AND. PC%U%isInit) THEN
-                j=mat%n
-                DO row=1,j
-                  DO col=1,j
-                    CALL PC%L%set(row,col,0.0_SRK)
-                    CALL PC%U%set(row,col,0.0_SRK)
-                  ENDDO
-                ENDDO
-                
-                PC%isInit=.TRUE.
-              ELSEIF(.NOT.(PC%L%isInit)) THEN
-                CALL ePreCondtype%raiseError('Incorrect input to '//modName//'::'//myName// &
-                  ' - In LU Preconditioner initialization, L was not properly initialized')
-              ELSE
-                CALL ePreCondtype%raiseError('Incorrect input to '//modName//'::'//myName// &
-                  ' - In LU Preconditioner initialization, U was not properly initialized')
-              ENDIF
-            CLASS IS(SparseMatrixType)
               ALLOCATE(SparseMatrixType :: PC%L)
               ALLOCATE(SparseMatrixType :: PC%U)
-              PC%isInit=.TRUE.
 
               ! Loop over A to get initialization data for L and U
-              j=0
               nU=0; nL=0  !number of rows
               nnzU=0; nnzL=0 !number of non-zero elements
-              DO row=1,SIZE(mat%ia)-1
-                DO i=1,mat%ia(row+1)-mat%ia(row)
-                  j=j+1
-                  col=mat%ja(j)
+              DO row=1,mat%n
+                DO col=1,mat%n
                   ! This may be redundant since mat is sparse, but be safe for now
                   CALL mat%get(row,col,val)
                   IF(.NOT.(val .APPROXEQA. 0.0_SRK)) THEN
@@ -226,6 +195,7 @@ MODULE PreconditionerTypes
                     ENDIF
                   ENDIF
                 ENDDO
+                nnzL=nnzL+1
               ENDDO
                 
               ! Initialize L and U
@@ -242,9 +212,8 @@ MODULE PreconditionerTypes
               SELECTTYPE(L => PC%L); TYPE IS(SparseMatrixType)
                 SELECTTYPE(U => PC%U); TYPE IS(SparseMatrixType)
                   ! Set the shape
-                  j=0
-                  DO row=1,SIZE(mat%ia)-1
-                    DO col=mat%ia(row),mat%ia(row+1)-1
+                  DO row=1,mat%n
+                    DO col=1,mat%n
                       ! This may be redundant since mat is sparse, but be safe for now
                       CALL mat%get(row,col,val)
                       IF(.NOT.(val .APPROXEQA. 0.0_SRK)) THEN
@@ -255,9 +224,86 @@ MODULE PreconditionerTypes
                         ENDIF
                       ENDIF
                     ENDDO
+                    CALL L%setShape(row,row,1.0_SRK)
                   ENDDO
                 ENDSELECT
               ENDSELECT
+                
+              IF(PC%L%isInit .AND. PC%U%isInit) THEN
+                PC%isInit=.TRUE.
+              ELSEIF(.NOT.(PC%L%isInit)) THEN
+                CALL ePreCondtype%raiseError('Incorrect input to '//modName//'::'//myName// &
+                  ' - In LU Preconditioner initialization, L was not properly initialized')
+              ELSE
+                CALL ePreCondtype%raiseError('Incorrect input to '//modName//'::'//myName// &
+                  ' - In LU Preconditioner initialization, U was not properly initialized')
+              ENDIF
+            CLASS IS(SparseMatrixType)
+              ALLOCATE(SparseMatrixType :: PC%L)
+              ALLOCATE(SparseMatrixType :: PC%U)
+
+              ! Loop over A to get initialization data for L and U
+              nU=0; nL=0  !number of rows
+              nnzU=0; nnzL=0 !number of non-zero elements
+              DO row=1,SIZE(mat%ia)-1
+                DO j=mat%ia(row),mat%ia(row+1)-1
+                  col=mat%ja(j)
+                  ! This may be redundant since mat is sparse, but be safe for now
+                  CALL mat%get(row,col,val)
+                  IF(.NOT.(val .APPROXEQA. 0.0_SRK)) THEN
+                    IF(col == row) THEN
+                      nnzU=nnzU+1 ! This location is in U
+                    ELSEIF(col > row) THEN
+                      nnzU=nnzU+1 !This location is in U
+                    ELSE
+                      nnzL=nnzL+1 !This location is in L
+                    ENDIF
+                  ENDIF
+                ENDDO
+                nnzL=nnzL+1
+              ENDDO
+                
+              ! Initialize L and U
+              nU=mat%n
+              nL=mat%n
+              CALL PL%add('MatrixType->n',nU)
+              CALL PL%add('MatrixType->nnz',nnzU)
+              CALL PC%U%init(PL)
+              CALL PL%set('MatrixType->n',nL)
+              CALL PL%set('MatrixType->nnz',nnzL)
+              CALL PC%L%init(PL)
+              CALL PL%clear()
+                    
+              SELECTTYPE(L => PC%L); TYPE IS(SparseMatrixType)
+                SELECTTYPE(U => PC%U); TYPE IS(SparseMatrixType)
+                  ! Set the shape
+                  DO row=1,SIZE(mat%ia)-1
+                    DO j=mat%ia(row),mat%ia(row+1)-1
+                      col=mat%ja(j)
+                      ! This may be redundant since mat is sparse, but be safe for now
+                      CALL mat%get(row,col,val)
+                      IF(.NOT.(val .APPROXEQA. 0.0_SRK)) THEN
+                        IF(col >= row) THEN
+                          CALL U%setShape(row,col,val)
+                        ELSE
+                          CALL L%setShape(row,col,val)
+                        ENDIF
+                      ENDIF
+                    ENDDO
+                    CALL L%setShape(row,row,1.0_SRK)
+                  ENDDO
+                ENDSELECT
+              ENDSELECT
+                
+              IF(PC%L%isInit .AND. PC%U%isInit) THEN
+                PC%isInit=.TRUE.
+              ELSEIF(.NOT.(PC%L%isInit)) THEN
+                CALL ePreCondtype%raiseError('Incorrect input to '//modName//'::'//myName// &
+                  ' - In LU Preconditioner initialization, L was not properly initialized')
+              ELSE
+                CALL ePreCondtype%raiseError('Incorrect input to '//modName//'::'//myName// &
+                  ' - In LU Preconditioner initialization, U was not properly initialized')
+              ENDIF
             CLASS IS(PETScMatrixType)
               !allocate L and U
               ALLOCATE(PETScMatrixType :: PC%L)
@@ -335,14 +381,8 @@ MODULE PreconditionerTypes
         SELECTTYPE(v)
           CLASS IS(RealVectorType)
             SELECTTYPE(L => PC%L)
-              CLASS IS(DenseSquareMatrixType)
-                SELECTTYPE(U => PC%U); TYPE IS(DenseSquareMatrixtype)
-                  CALL BLAS_matvec('L','N','T',L%a,v%b)
-                  CALL BLAS_matvec('U','N','N',U%a,v%b)
-                ENDSELECT
               CLASS IS(SparseMatrixType)
                 SELECTTYPE(U => PC%U); TYPE IS(SparseMatrixType)
-!WRITE(*,*) L%a,':',L%ia,':',L%ja
                   CALL BLAS_matvec('L','N','T',L%a,L%ia,L%ja,v%b)
                   CALL BLAS_matvec('U','N','N',U%a,U%ia,U%ja,v%b)
                 ENDSELECT
@@ -385,11 +425,10 @@ MODULE PreconditionerTypes
           CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
             ' - Matrix being used for LU Preconditioner is not initialized!')
         ELSE
-          ! This might not be necessary here, but not sure
           SELECTTYPE(mat => PC%A)
             CLASS IS(DenseSquareMatrixtype)
-              SELECTTYPE(U => PC%U); TYPE IS(DenseSquareMatrixType)
-                SELECTTYPE(L => PC%L); TYPE IS(DenseSquareMatrixType)
+              SELECTTYPE(U => PC%U); TYPE IS(SparseMatrixType)
+                SELECTTYPE(L => PC%L); TYPE IS(SparseMatrixType)
                   IF(.NOT.(U%isinit)) THEN
                     CALL ePrecondType%raiseError('Incorrect input to '//modName//'::'//myName// &
                       ' - in LU decomposition, U was not properly initialize!')
@@ -402,19 +441,23 @@ MODULE PreconditionerTypes
                     DO row=2,j
                       DO col=1,row-1
                         CALL L%get(row,col,val1)
-                        CALL U%get(col,col,val2)
-                        val2=val1/val2
-                        CALL L%set(row,col,val2)
-                        DO col2=col+1,j
-                          CALL U%get(col,col2,val3)
-                          IF(col2 < row) THEN
-                            CALL L%get(row,col2,val1)
-                            IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) CALL L%set(row,col2,val1-val2*val3)
-                          ELSE
-                            CALL U%get(row,col2,val1)
-                            IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) CALL U%set(row,col2,val1-val2*val3)
-                          ENDIF
-                        ENDDO
+                        IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) THEN
+                          CALL U%get(col,col,val2)
+                          val2=val1/val2
+                          CALL L%set(row,col,val2)
+                          DO col2=col+1,j
+                            CALL U%get(col,col2,val3)
+                            IF(.NOT.(val3 .APPROXEQA. 0.0_SRK)) THEN
+                              IF(col2 < row) THEN
+                                CALL L%get(row,col2,val1)
+                                IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) CALL L%set(row,col2,val1-val2*val3)
+                              ELSE
+                                CALL U%get(row,col2,val1)
+                                IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) CALL U%set(row,col2,val1-val2*val3)
+                              ENDIF
+                            ENDIF
+                          ENDDO
+                        ENDIF
                       ENDDO
                     ENDDO
                   ENDIF
@@ -449,7 +492,6 @@ MODULE PreconditionerTypes
                             IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) CALL U%set(row,col2,val1-val2*val3)
                           ENDIF
                         ENDDO
-                        j=j+1
                       ENDDO
                     ENDDO
                   ENDIF
@@ -474,14 +516,21 @@ MODULE PreconditionerTypes
       CHARACTER(LEN=*),PARAMETER :: myName='setup_BILU_PreCondType'
       CLASS(BILU_PrecondType),INTENT(INOUT) :: PC
       
-      INTEGER(SIK) :: ipl,row,col
-      INTEGER(SIK) :: d_stt,c_stt,u_stt,b1
+      INTEGER(SIK) :: ipl,ix,iy,row,col
+      INTEGER(SIK) :: d_stt,c_stt,b1
+      INTEGER(SIK) :: d0_stt,c0_stt
+      INTEGER(SIK) :: d1_stt,c1_stt
       INTEGER(SIK) :: local_r,local_c
+      INTEGER(SIK) :: X,Y,Z
       REAL(SRK) :: tmpval
       LOGICAL(SBK) :: localalloc
       TYPE(ParamType) :: PL
       REAL(SRK),ALLOCATABLE :: tmp2DU(:,:),tmp2DinvM(:,:)
       REAL(SRK),ALLOCATABLE :: tmpT(:,:),tmpB(:,:),tmpM(:,:)
+      REAL(SRK),ALLOCATABLE :: L2(:,:),U2(:,:),F2(:,:),tmpS(:,:),tmpN(:,:)
+      REAL(SRK),ALLOCATABLE :: tmp1DU(:,:),tmp1DinvM(:,:),tmp1D(:,:)
+      REAL(SRK),ALLOCATABLE :: L1(:,:),U1(:,:),F1(:,:),tmpE(:,:),tmpW(:,:)
+      REAL(SRK),ALLOCATABLE :: tmp0DU(:,:),tmp0D(:,:),tmp0DinvM(:,:)
 
       localalloc=.FALSE.
       IF(.NOT.ASSOCIATED(ePreCondType)) THEN
@@ -498,7 +547,11 @@ MODULE PreconditionerTypes
             ' - Matrix being used for LU Preconditioner is not initialized!')
         ELSE
           
-          WRITE(*,*) 'hi from setup',pc%nPlane,pc%nPin,pc%nGrp
+          !dimension variables
+          X=SQRT(REAL(pc%nPin))
+          Y=SQRT(REAL(pc%nPin))
+          Z=pc%nPlane
+          !variables for 3D
           ALLOCATE(tmp2DU(pc%nPin*pc%nGrp,pc%nPin*pc%nGrp))
           ALLOCATE(tmp2DinvM(pc%nPin*pc%nGrp,pc%nPin*pc%nGrp))
           ALLOCATE(tmpT(pc%nPin*pc%nGrp,pc%nPin*pc%nGrp))
@@ -509,26 +562,46 @@ MODULE PreconditionerTypes
           tmpT=0.0_SRK
           tmpB=0.0_SRK
           tmpM=0.0_SRK
+          !variables for 2D
+          ALLOCATE(L2(pc%nPin*pc%nGrp,pc%nPin*pc%nGrp))
+          ALLOCATE(U2(pc%nPin*pc%nGrp,pc%nPin*pc%nGrp))
+          ALLOCATE(F2(pc%nPin*pc%nGrp,pc%nPin*pc%nGrp))
+          ALLOCATE(tmpS(X*pc%nGrp,X*pc%nGrp))
+          ALLOCATE(tmpN(X*pc%nGrp,X*pc%nGrp))
+          ALLOCATE(tmp1DU(X*pc%nGrp,X*pc%nGrp))
+          ALLOCATE(tmp1DinvM(X*pc%nGrp,X*pc%nGrp))
+          ALLOCATE(tmp1D(X*pc%nGrp,X*pc%nGrp))
+          L2=0.0_SRK
+          U2=0.0_SRK
+          F2=0.0_SRK
+          tmpS=0.0_SRK
+          tmpN=0.0_SRK
+          tmp1DU=0.0_SRK
+          tmp1DinvM=0.0_SRK
+          tmp1D=0.0_SRK
+          !variables for 1D
+          ALLOCATE(L1(X*pc%nGrp,X*pc%nGrp))
+          ALLOCATE(U1(X*pc%nGrp,X*pc%nGrp))
+          ALLOCATE(F1(X*pc%nGrp,X*pc%nGrp))
+          ALLOCATE(tmpE(pc%nGrp,pc%nGrp))
+          ALLOCATE(tmpW(pc%nGrp,pc%nGrp))
+          ALLOCATE(tmp0D(pc%nGrp,pc%nGrp))
+          ALLOCATE(tmp0DinvM(pc%nGrp,pc%nGrp))
+          ALLOCATE(tmp0DU(pc%nGrp,pc%nGrp))
+          L1=0.0_SRK
+          U1=0.0_SRK
+          F1=0.0_SRK
+          tmpE=0.0_SRK
+          tmpW=0.0_SRK
+          tmp0D=0.0_SRK
+          tmp0DinvM=0.0_SRK
           
-          DO ipl=1,pc%nPlane
+          DO ipl=1,Z
           
             d_stt=(ipl-2)*pc%nPin*pc%nGrp+1
             c_stt=(ipl-1)*pc%nPin*pc%nGrp+1
             
             IF(ipl==1) THEN
-              !pull block M into matrix
-              local_r=1
-              DO row=c_stt,c_stt+pc%nPin*pc%nGrp-1
-                local_c=1
-                DO col=c_stt,c_stt+pc%nPin*pc%nGrp-1
-                  CALL pc%A%get(row,col,tmpval)
-                  IF(tmpval /= 0.0_SRK) THEN
-                    tmpM(local_r,local_c)=tmpval
-                  ENDIF
-                  local_c=local_c+1
-                ENDDO
-                local_r=local_r+1
-              ENDDO
               !form diagonal block of L
               DO row=c_stt,c_stt+pc%nPin*pc%nGrp-1
                 DO col=c_stt,c_stt+pc%nPin*pc%nGrp-1
@@ -566,28 +639,7 @@ MODULE PreconditionerTypes
                   local_c=local_c+1
                 ENDDO
                 local_r=local_r+1
-              ENDDO
-              
-              !determine inverse of M (either ABI or direct)
-              CALL direct_inv(tmpM,tmp2DinvM)
-              
-!              !print some things for debugging
-!              WRITE(*,*) "M: "
-!              DO row=1,pc%nPin*pc%nGrp
-!                WRITE(*,'(I4,9F15.5)') row,tmpM(row,:)
-!              ENDDO
-!              WRITE(*,*) "invM: "
-!              DO row=1,pc%nPin*pc%nGrp
-!                WRITE(*,'(I4,9F15.5)') row,tmp2DinvM(row,:)
-!              ENDDO
-!              WRITE(*,*) "B: "
-!              DO row=1,pc%nPin*pc%nGrp
-!                WRITE(*,'(I4,9F15.5)') row,tmpB(row,:)
-!              ENDDO
-!              WRITE(*,*) "T: "
-!              DO row=1,pc%nPin*pc%nGrp
-!                WRITE(*,'(I4,9F15.5)') row,tmpT(row,:)
-!              ENDDO
+              ENDDO     
               
               !form diagonal block of L
               tmp2DU=MATMUL(tmpB,tmp2DinvM)
@@ -599,8 +651,8 @@ MODULE PreconditionerTypes
                 DO col=c_stt,c_stt+pc%nPin*pc%nGrp-1
                   CALL pc%A%get(row,col,tmpval)
                   !IF(tmpval /= 0.0_SRK) CALL pc%L%set(row,col,tmpval)    !if enforcing same structure
-                  IF(tmpval /= 0.0_SRK .OR. &
-                    tmp2DU(local_r,local_c) /= 0.0_SRK) THEN
+                  IF(tmpval /= 0.0_SRK) THEN !.OR. &
+!                    tmp2DU(local_r,local_c) /= 0.0_SRK) THEN
                     CALL pc%L%set(row,col,tmpval-tmp2DU(local_r,local_c))
                   ENDIF
                   local_c=local_c+1
@@ -627,9 +679,10 @@ MODULE PreconditionerTypes
               DO row=d_stt,d_stt+pc%nPin*pc%nGrp-1
                 local_c=1
                 DO col=c_stt,c_stt+pc%nPin*pc%nGrp-1
+                  CALL pc%A%get(row,col,tmpval)
                   !IF(tmpval /= 0.0_SRK) CALL pc%L%set(row,col,tmpval)    !if enforcing same structure
-                  IF(tmpval /= 0.0_SRK .OR. &
-                    tmp2DU(local_r,local_c) /= 0.0_SRK) THEN
+                  IF(tmpval /= 0.0_SRK) THEN !.OR. &
+!                    tmp2DU(local_r,local_c) /= 0.0_SRK) THEN
                     CALL pc%U%set(row,col,tmp2DU(local_r,local_c))
                   ENDIF
                   local_c=local_c+1
@@ -638,7 +691,210 @@ MODULE PreconditionerTypes
               ENDDO
               
             ENDIF
-          
+            
+            !pull block M into matrix
+            local_r=1
+            DO row=c_stt,c_stt+pc%nPin*pc%nGrp-1
+              local_c=1
+              DO col=c_stt,c_stt+pc%nPin*pc%nGrp-1
+                CALL pc%L%get(row,col,tmpval)
+                IF(tmpval /= 0.0_SRK) THEN
+                  tmpM(local_r,local_c)=tmpval
+                ENDIF
+                local_c=local_c+1
+              ENDDO
+              local_r=local_r+1
+            ENDDO
+    
+            
+            !LU M_k (2)  ...tmpM
+            DO iy=1,Y
+              d1_stt=(iy-2)*pc%Ngrp*Y+1
+              c1_stt=(iy-1)*pc%Ngrp*Y+1
+              
+              IF(iy==1) THEN
+                !set diagonal of L2
+                DO row=c1_stt,c1_stt+Y*pc%nGrp-1
+                  DO col=c1_stt,c1_stt+Y*pc%nGrp-1
+                    tmpval=tmpM(row,col)
+                    L2(row,col)=tmpval
+                  ENDDO
+                ENDDO
+                !set U to diagonal block
+                DO row=c1_stt,c1_stt+Y*pc%nGrp-1
+                  U2(row,row)=1.0_SRK
+                ENDDO
+              ELSE
+                !fill tmpS (can probably condense)
+                tmpS=0.0_SRK
+                local_r=1
+                DO row=c1_stt,c1_stt+Y*pc%nGrp-1
+                  local_c=1
+                  DO col=d1_stt,d1_stt+Y*pc%nGrp-1
+                    tmpS(local_r,local_c)=tmpM(row,col)
+                    local_c=local_c+1
+                  ENDDO
+                  local_r=local_r+1
+                ENDDO
+                !fill tmpN (can probably condense)
+                tmpN=0.0_SRK
+                local_r=1
+                DO row=d1_stt,d1_stt+Y*pc%nGrp-1
+                  local_c=1
+                  DO col=c1_stt,c1_stt+Y*pc%nGrp-1
+                    tmpN(local_r,local_c)=tmpM(row,col)
+                    local_c=local_c+1
+                  ENDDO
+                  local_r=local_r+1
+                ENDDO
+                !form diagonal block of L (can probably condense)
+                tmp1DU=MATMUL(tmpS,tmp1DinvM)
+                tmp1DU=MATMUL(tmp1DU,tmpN)
+                local_r=1
+                DO row=c1_stt,c1_stt+Y*pc%nGrp-1
+                  local_c=1
+                  DO col=c1_stt,c1_stt+Y*pc%nGrp-1
+                    !IF(tmpval /= 0.0_SRK) CALL pc%L%set(row,col,tmpval)    !if enforcing same structure
+                    IF(tmpval /= 0.0_SRK .OR. tmp1DU(local_r,local_c) /= 0.0_SRK) THEN
+                      L2(row,col)=tmpM(row,col)-tmp1DU(local_r,local_c)
+                    ENDIF
+                    local_c=local_c+1
+                  ENDDO
+                  local_r=local_r+1
+                ENDDO
+                !form lower block of L (can probably condense)
+                local_r=1
+                DO row=c1_stt,c1_stt+Y*pc%nGrp-1
+                  local_c=1
+                  DO col=d1_stt,d1_stt+Y*pc%nGrp-1
+                    !IF(tmpval /= 0.0_SRK) CALL pc%L%set(row,col,tmpval)    !if enforcing same structure
+                    IF(tmpS(local_r,local_c) /= 0.0_SRK) THEN
+                      L2(row,col)=tmpS(local_r,local_c)
+                    ENDIF
+                    local_c=local_c+1
+                  ENDDO
+                  local_r=local_r+1
+                ENDDO
+                !form upper block of U (can probably condense)
+                tmp1DU=MATMUL(tmp1DinvM,tmpN)
+                local_r=1
+                DO row=d1_stt,d1_stt+Y*pc%nGrp-1
+                  local_c=1
+                  DO col=c1_stt,c1_stt+Y*pc%nGrp-1
+                    !IF(tmpval /= 0.0_SRK) CALL pc%L%set(row,col,tmpval)    !if enforcing same structure
+                    IF(tmpval /= 0.0_SRK .OR. tmp1DU(local_r,local_c) /= 0.0_SRK) THEN
+                      U2(row,col)=tmp1DU(local_r,local_c)
+                    ENDIF
+                    local_c=local_c+1
+                  ENDDO
+                  local_r=local_r+1
+                ENDDO
+                !form diagonal block of U
+                tmp1DU=MATMUL(tmp1DinvM,tmpN)
+                DO row=c1_stt,c1_stt+Y*pc%nGrp-1
+                  U2(row,row)=1.0_SRK
+                ENDDO
+                
+              ENDIF
+              
+              tmp1D=L2(c1_stt:c1_stt+Y*pc%nGrp-1,c1_stt:c1_stt+Y*pc%nGrp-1)
+              
+              DO ix=1,X
+                             
+                d0_stt=(ix-2)*pc%Ngrp+1
+                c0_stt=(ix-1)*pc%Ngrp+1
+              
+                IF(ix==1) THEN
+                  !set diagonal of L
+                  DO row=c0_stt,c0_stt+pc%nGrp-1
+                    DO col=c0_stt,c0_stt+pc%nGrp-1
+                      L1(row,col)=tmp1D(row,col)
+                    ENDDO
+                  ENDDO
+                  !set U to diagonal block
+                  DO row=c0_stt,c0_stt+pc%nGrp-1
+                    U1(row,row)=1.0_SRK
+                  ENDDO
+                ELSE
+                  !fill tmpW
+                  local_r=1
+                  DO row=c0_stt,c0_stt+pc%nGrp-1
+                    local_c=1
+                    DO col=d0_stt,d0_stt+pc%nGrp-1
+                      tmpW(local_r,local_c)=tmp1D(row,col)
+                      local_c=local_c+1
+                    ENDDO
+                    local_r=local_r+1
+                  ENDDO
+                  !fill tmpE
+                  local_r=1
+                  DO row=d0_stt,d0_stt+pc%nGrp-1
+                    local_c=1
+                    DO col=c0_stt,c0_stt+pc%nGrp-1
+                      tmpE(local_r,local_c)=tmp1D(row,col)
+                      local_c=local_c+1
+                    ENDDO
+                    local_r=local_r+1
+                  ENDDO
+                  !set diagonal of L
+                  tmp0DU=MATMUL(tmpW,tmp0DinvM)
+                  tmp0DU=MATMUL(tmp0DU,tmpE)
+                  local_r=1
+                  DO row=c0_stt,c0_stt+pc%nGrp-1
+                    local_c=1
+                    DO col=c0_stt,c0_stt+pc%nGrp-1
+                      L1(row,col)=tmp1D(row,col)-tmp0DU(local_r,local_c)
+                      local_c=local_c+1
+                    ENDDO
+                    local_r=local_r+1
+                  ENDDO
+                  !set lower block of L
+                  local_r=1
+                  DO row=c0_stt,c0_stt+pc%nGrp-1
+                    local_c=1
+                    DO col=d0_stt,d0_stt+pc%nGrp-1
+                      L1(row,col)=tmpW(local_r,local_c)
+                      local_c=local_c+1
+                    ENDDO
+                    local_r=local_r+1
+                  ENDDO
+                  !set upper block of U
+                  tmp0DU=MATMUL(tmp0DinvM,tmpE)
+                  local_r=1
+                  DO row=d0_stt,d0_stt+pc%nGrp-1
+                    local_c=1
+                    DO col=c0_stt,c0_stt+pc%nGrp-1
+                      U1(row,col)=tmp0DU(local_r,local_c)
+                      local_c=local_c+1
+                    ENDDO
+                    local_r=local_r+1
+                  ENDDO               
+                  !set diagonal block of U
+                  DO row=c0_stt,c0_stt+pc%nGrp-1
+                    U1(row,row)=1.0_SRK
+                  ENDDO
+                ENDIF
+                
+                tmp0D=L1(c0_stt:c0_stt+pc%nGrp-1,c0_stt:c0_stt+pc%nGrp-1)
+                
+                !determine 0D inverse (always direct for 0D)
+                CALL direct_inv(tmp0D,tmp0DinvM)
+                F1(c0_stt:c0_stt+pc%nGrp-1,c0_stt:c0_stt+pc%nGrp-1)=tmp0DinvM
+
+              ENDDO
+              
+              !determine 1D inverse (eventually ABI)
+              !CALL direct_inv(tmp1D,tmp1DinvM)
+              CALL ABI(L1,U1,F1,pc%Ngrp,tmp1DinvM)
+              F2(c1_stt:c1_stt+pc%nGrp-1,c1_stt:c1_stt+pc%nGrp-1)=tmp1DinvM
+                
+            ENDDO
+            
+            !determine 2D inverse (eventually ABI)
+            !CALL direct_inv(tmpM,tmp2DinvM)
+            CALL ABI(L2,U2,F2,X*pc%Ngrp,tmp2DinvM)
+            
+            
           ENDDO
           
           DEALLOCATE(tmp2DU,tmp2DinvM)
@@ -650,7 +906,7 @@ MODULE PreconditionerTypes
     ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
-!> @brief Returns the inverse of a matrix
+!> @brief Returns the complete inverse of a matrix
 !>
     SUBROUTINE direct_inv(inpA,invA)
       REAL(SRK),INTENT(IN) :: inpA(:,:)
@@ -692,6 +948,95 @@ MODULE PreconditionerTypes
       DEALLOCATE(A)
     
     ENDSUBROUTINE direct_inv
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns the approximate block inverse of a matrix
+!>
+    SUBROUTINE ABI(L,U,F,block_dim,invA)
+      REAL(SRK),INTENT(IN) :: L(:,:)
+      REAL(SRK),INTENT(IN) :: U(:,:)
+      REAL(SRK),INTENT(IN) :: F(:,:)
+      INTEGER(SIK),INTENT(IN) :: block_dim
+      REAL(SRK),INTENT(INOUT),ALLOCATABLE :: invA(:,:)
+      
+      INTEGER(SIK) :: i,ix,X
+      INTEGER(SIK) :: ic,iu,id
+      REAL(SRK),ALLOCATABLE :: L0(:,:),DinvU0(:,:)
+      
+      IF(ALLOCATED(invA)) DEALLOCATE(invA)
+      ALLOCATE(invA(SIZE(L(:,1)),SIZE(L(1,:))))
+      invA=0.0_SRK
+      
+      ALLOCATE(L0(block_dim,block_dim))
+      ALLOCATE(DinvU0(block_dim,block_dim))
+      L0=0.0_SRK
+      DinvU0=0.0_SRK
+      
+      X=SIZE(L(:,1))/block_dim
+      DO i=X,1,-1
+        ic=(i-1)*block_dim+1
+        iu=(i)*block_dim+1
+        id=(i-2)*block_dim+1
+        
+        IF(i==1) THEN
+        
+          DO ix=X,1,-1
+            IF(ix == i) THEN
+              !diagonal block term
+              DinvU0=U(ic:ic+block_dim-1,iu:iu+block_dim-1)
+              invA(ic:ic+block_dim-1,ic:ic+block_dim-1) = &
+                F(ic:ic+block_dim-1,ic:ic+block_dim-1)+MATMUL(DinvU0,invA(iu:iu+block_dim-1,ic:ic+block_dim-1))
+            ELSEIF(ix == i+1) THEN
+              !upper block term
+              L0=L(ic:ic+block_dim-1,iu:iu+block_dim-1)
+              DinvU0=U(ic:ic+block_dim-1,iu:iu+block_dim-1)
+              invA(ic:ic+block_dim-1,iu:iu+block_dim-1) = &
+                -MATMUL(DinvU0,invA(iu:iu+block_dim-1,iu:iu+block_dim-1))
+            ENDIF
+          ENDDO
+          
+        ELSEIF(i==X) THEN
+          
+          DO ix=X,1,-1
+            IF(ix == i) THEN
+              !diagonal block term
+              invA(ic:ic+block_dim-1,ic:ic+block_dim-1) = &
+                F(ic:ic+block_dim-1,ic:ic+block_dim-1)
+            ELSEIF(ix == i-1) THEN
+              !lower block term)
+              L0=L(ic:ic+block_dim-1,id:id+block_dim-1)
+              invA(ic:ic+block_dim-1,id:id+block_dim-1)= &
+                -MATMUL(MATMUL(invA(ic:ic+block_dim-1,ic:ic+block_dim-1),L0), &
+                F(id:id+block_dim-1,id:id+block_dim-1))
+            ENDIF
+          ENDDO
+          
+        ELSE
+          
+          DO ix=X,1,-1
+            IF(ix == i) THEN
+              !diagonal block term)
+              DinvU0=U(ic:ic+block_dim-1,iu:iu+block_dim-1)
+              invA(ic:ic+block_dim-1,ic:ic+block_dim-1) = &
+                F(ic:ic+block_dim-1,ic:ic+block_dim-1) + MATMUL(DinvU0,invA(iu:iu+block_dim-1,ic:ic+block_dim-1))
+            ELSEIF(ix == i-1) THEN
+              !lower block term
+              L0=L(ic:ic+block_dim-1,id:id+block_dim-1)
+              invA(ic:ic+block_dim-1,id:id+block_dim-1)=-MATMUL(invA(ic:ic+block_dim-1,ic:ic+block_dim-1), &
+                MATMUL(L0,F(id:id+block_dim-1,id:id+block_dim-1)))
+            ELSEIF(ix == i+1) THEN
+              !upper block term
+              L0=L(ic:ic+block_dim-1,id:id+block_dim-1)
+              DinvU0=U(ic:ic+block_dim-1,iu:iu+block_dim-1)
+              invA(ic:ic+block_dim-1,iu:iu+block_dim-1)=-MATMUL(DinvU0,invA(iu:iu+block_dim-1,iu:iu+block_dim-1))
+            ENDIF
+          ENDDO
+          
+        ENDIF
+        
+      ENDDO
+    
+    ENDSUBROUTINE ABI
 !
 !-------------------------------------------------------------------------------
 END MODULE
