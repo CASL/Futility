@@ -16,6 +16,8 @@ INCLUDE(MPACT_CopyFiles)
 SET(ADDITIONAL_FILES
     matrices/1g_matrix.txt
     matrices/mg_matrix.txt
+    matrices/refBILU_1gL.txt
+    matrices/refBILU_1gU.txt
 )
 
 MPACT_CreateUnitTest(testPreconditionerTypes)

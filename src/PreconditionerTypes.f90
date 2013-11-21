@@ -517,7 +517,9 @@ MODULE PreconditionerTypes
       CLASS(BILU_PrecondType),INTENT(INOUT) :: PC
       
       INTEGER(SIK) :: ipl,ix,iy,row,col
-      INTEGER(SIK) :: d_stt,c_stt,u_stt,b1
+      INTEGER(SIK) :: d_stt,c_stt,b1
+      INTEGER(SIK) :: d0_stt,c0_stt
+      INTEGER(SIK) :: d1_stt,c1_stt
       INTEGER(SIK) :: local_r,local_c
       INTEGER(SIK) :: X,Y,Z
       REAL(SRK) :: tmpval
@@ -525,9 +527,9 @@ MODULE PreconditionerTypes
       TYPE(ParamType) :: PL
       REAL(SRK),ALLOCATABLE :: tmp2DU(:,:),tmp2DinvM(:,:)
       REAL(SRK),ALLOCATABLE :: tmpT(:,:),tmpB(:,:),tmpM(:,:)
-      REAL(SRK),ALLOCATABLE :: L2(:,:),U2(:,:),tmpS(:,:),tmpN(:,:)
+      REAL(SRK),ALLOCATABLE :: L2(:,:),U2(:,:),F2(:,:),tmpS(:,:),tmpN(:,:)
       REAL(SRK),ALLOCATABLE :: tmp1DU(:,:),tmp1DinvM(:,:),tmp1D(:,:)
-      REAL(SRK),ALLOCATABLE :: L1(:,:),U1(:,:),tmpE(:,:),tmpW(:,:)
+      REAL(SRK),ALLOCATABLE :: L1(:,:),U1(:,:),F1(:,:),tmpE(:,:),tmpW(:,:)
       REAL(SRK),ALLOCATABLE :: tmp0DU(:,:),tmp0D(:,:),tmp0DinvM(:,:)
 
       localalloc=.FALSE.
@@ -563,6 +565,7 @@ MODULE PreconditionerTypes
           !variables for 2D
           ALLOCATE(L2(pc%nPin*pc%nGrp,pc%nPin*pc%nGrp))
           ALLOCATE(U2(pc%nPin*pc%nGrp,pc%nPin*pc%nGrp))
+          ALLOCATE(F2(pc%nPin*pc%nGrp,pc%nPin*pc%nGrp))
           ALLOCATE(tmpS(X*pc%nGrp,X*pc%nGrp))
           ALLOCATE(tmpN(X*pc%nGrp,X*pc%nGrp))
           ALLOCATE(tmp1DU(X*pc%nGrp,X*pc%nGrp))
@@ -570,6 +573,7 @@ MODULE PreconditionerTypes
           ALLOCATE(tmp1D(X*pc%nGrp,X*pc%nGrp))
           L2=0.0_SRK
           U2=0.0_SRK
+          F2=0.0_SRK
           tmpS=0.0_SRK
           tmpN=0.0_SRK
           tmp1DU=0.0_SRK
@@ -578,6 +582,7 @@ MODULE PreconditionerTypes
           !variables for 1D
           ALLOCATE(L1(X*pc%nGrp,X*pc%nGrp))
           ALLOCATE(U1(X*pc%nGrp,X*pc%nGrp))
+          ALLOCATE(F1(X*pc%nGrp,X*pc%nGrp))
           ALLOCATE(tmpE(pc%nGrp,pc%nGrp))
           ALLOCATE(tmpW(pc%nGrp,pc%nGrp))
           ALLOCATE(tmp0D(pc%nGrp,pc%nGrp))
@@ -585,6 +590,7 @@ MODULE PreconditionerTypes
           ALLOCATE(tmp0DU(pc%nGrp,pc%nGrp))
           L1=0.0_SRK
           U1=0.0_SRK
+          F1=0.0_SRK
           tmpE=0.0_SRK
           tmpW=0.0_SRK
           tmp0D=0.0_SRK
@@ -645,8 +651,8 @@ MODULE PreconditionerTypes
                 DO col=c_stt,c_stt+pc%nPin*pc%nGrp-1
                   CALL pc%A%get(row,col,tmpval)
                   !IF(tmpval /= 0.0_SRK) CALL pc%L%set(row,col,tmpval)    !if enforcing same structure
-                  IF(tmpval /= 0.0_SRK .OR. &
-                    tmp2DU(local_r,local_c) /= 0.0_SRK) THEN
+                  IF(tmpval /= 0.0_SRK) THEN !.OR. &
+!                    tmp2DU(local_r,local_c) /= 0.0_SRK) THEN
                     CALL pc%L%set(row,col,tmpval-tmp2DU(local_r,local_c))
                   ENDIF
                   local_c=local_c+1
@@ -673,9 +679,10 @@ MODULE PreconditionerTypes
               DO row=d_stt,d_stt+pc%nPin*pc%nGrp-1
                 local_c=1
                 DO col=c_stt,c_stt+pc%nPin*pc%nGrp-1
+                  CALL pc%A%get(row,col,tmpval)
                   !IF(tmpval /= 0.0_SRK) CALL pc%L%set(row,col,tmpval)    !if enforcing same structure
-                  IF(tmpval /= 0.0_SRK .OR. &
-                    tmp2DU(local_r,local_c) /= 0.0_SRK) THEN
+                  IF(tmpval /= 0.0_SRK) THEN !.OR. &
+!                    tmp2DU(local_r,local_c) /= 0.0_SRK) THEN
                     CALL pc%U%set(row,col,tmp2DU(local_r,local_c))
                   ENDIF
                   local_c=local_c+1
@@ -702,29 +709,28 @@ MODULE PreconditionerTypes
             
             !LU M_k (2)  ...tmpM
             DO iy=1,Y
-            
-              d_stt=(iy-2)*pc%Ngrp*Y+1
-              c_stt=(iy-1)*pc%Ngrp*Y+1
+              d1_stt=(iy-2)*pc%Ngrp*Y+1
+              c1_stt=(iy-1)*pc%Ngrp*Y+1
               
               IF(iy==1) THEN
                 !set diagonal of L2
-                DO row=c_stt,c_stt+Y*pc%nGrp-1
-                  DO col=c_stt,c_stt+Y*pc%nGrp-1
+                DO row=c1_stt,c1_stt+Y*pc%nGrp-1
+                  DO col=c1_stt,c1_stt+Y*pc%nGrp-1
                     tmpval=tmpM(row,col)
                     L2(row,col)=tmpval
                   ENDDO
                 ENDDO
                 !set U to diagonal block
-                DO row=c_stt,c_stt+Y*pc%nGrp-1
+                DO row=c1_stt,c1_stt+Y*pc%nGrp-1
                   U2(row,row)=1.0_SRK
                 ENDDO
               ELSE
                 !fill tmpS (can probably condense)
                 tmpS=0.0_SRK
                 local_r=1
-                DO row=c_stt,c_stt+Y*pc%nGrp-1
+                DO row=c1_stt,c1_stt+Y*pc%nGrp-1
                   local_c=1
-                  DO col=d_stt,d_stt+Y*pc%nGrp-1
+                  DO col=d1_stt,d1_stt+Y*pc%nGrp-1
                     tmpS(local_r,local_c)=tmpM(row,col)
                     local_c=local_c+1
                   ENDDO
@@ -733,9 +739,9 @@ MODULE PreconditionerTypes
                 !fill tmpN (can probably condense)
                 tmpN=0.0_SRK
                 local_r=1
-                DO row=d_stt,d_stt+Y*pc%nGrp-1
+                DO row=d1_stt,d1_stt+Y*pc%nGrp-1
                   local_c=1
-                  DO col=c_stt,c_stt+Y*pc%nGrp-1
+                  DO col=c1_stt,c1_stt+Y*pc%nGrp-1
                     tmpN(local_r,local_c)=tmpM(row,col)
                     local_c=local_c+1
                   ENDDO
@@ -745,9 +751,9 @@ MODULE PreconditionerTypes
                 tmp1DU=MATMUL(tmpS,tmp1DinvM)
                 tmp1DU=MATMUL(tmp1DU,tmpN)
                 local_r=1
-                DO row=c_stt,c_stt+Y*pc%nGrp-1
+                DO row=c1_stt,c1_stt+Y*pc%nGrp-1
                   local_c=1
-                  DO col=c_stt,c_stt+Y*pc%nGrp-1
+                  DO col=c1_stt,c1_stt+Y*pc%nGrp-1
                     !IF(tmpval /= 0.0_SRK) CALL pc%L%set(row,col,tmpval)    !if enforcing same structure
                     IF(tmpval /= 0.0_SRK .OR. tmp1DU(local_r,local_c) /= 0.0_SRK) THEN
                       L2(row,col)=tmpM(row,col)-tmp1DU(local_r,local_c)
@@ -758,9 +764,9 @@ MODULE PreconditionerTypes
                 ENDDO
                 !form lower block of L (can probably condense)
                 local_r=1
-                DO row=c_stt,c_stt+Y*pc%nGrp-1
+                DO row=c1_stt,c1_stt+Y*pc%nGrp-1
                   local_c=1
-                  DO col=d_stt,d_stt+Y*pc%nGrp-1
+                  DO col=d1_stt,d1_stt+Y*pc%nGrp-1
                     !IF(tmpval /= 0.0_SRK) CALL pc%L%set(row,col,tmpval)    !if enforcing same structure
                     IF(tmpS(local_r,local_c) /= 0.0_SRK) THEN
                       L2(row,col)=tmpS(local_r,local_c)
@@ -772,9 +778,9 @@ MODULE PreconditionerTypes
                 !form upper block of U (can probably condense)
                 tmp1DU=MATMUL(tmp1DinvM,tmpN)
                 local_r=1
-                DO row=d_stt,d_stt+Y*pc%nGrp-1
+                DO row=d1_stt,d1_stt+Y*pc%nGrp-1
                   local_c=1
-                  DO col=c_stt,c_stt+Y*pc%nGrp-1
+                  DO col=c1_stt,c1_stt+Y*pc%nGrp-1
                     !IF(tmpval /= 0.0_SRK) CALL pc%L%set(row,col,tmpval)    !if enforcing same structure
                     IF(tmpval /= 0.0_SRK .OR. tmp1DU(local_r,local_c) /= 0.0_SRK) THEN
                       U2(row,col)=tmp1DU(local_r,local_c)
@@ -785,38 +791,36 @@ MODULE PreconditionerTypes
                 ENDDO
                 !form diagonal block of U
                 tmp1DU=MATMUL(tmp1DinvM,tmpN)
-                DO row=c_stt,c_stt+Y*pc%nGrp-1
+                DO row=c1_stt,c1_stt+Y*pc%nGrp-1
                   U2(row,row)=1.0_SRK
                 ENDDO
                 
               ENDIF
               
-              tmp1D=L2(c_stt:c_stt+Y*pc%nGrp-1,c_stt:c_stt+Y*pc%nGrp-1)
+              tmp1D=L2(c1_stt:c1_stt+Y*pc%nGrp-1,c1_stt:c1_stt+Y*pc%nGrp-1)
               
               DO ix=1,X
                              
-                d_stt=(ix-2)*pc%Ngrp+1
-                c_stt=(ix-1)*pc%Ngrp+1
+                d0_stt=(ix-2)*pc%Ngrp+1
+                c0_stt=(ix-1)*pc%Ngrp+1
               
-                WRITE(*,*) 'ix: ',ix
                 IF(ix==1) THEN
                   !set diagonal of L
-                  WRITE(*,*) 'c_stt: ',c_stt
-                  DO row=c_stt,c_stt+pc%nGrp-1
-                    DO col=c_stt,c_stt+pc%nGrp-1
+                  DO row=c0_stt,c0_stt+pc%nGrp-1
+                    DO col=c0_stt,c0_stt+pc%nGrp-1
                       L1(row,col)=tmp1D(row,col)
                     ENDDO
                   ENDDO
                   !set U to diagonal block
-                  DO row=c_stt,c_stt+pc%nGrp-1
+                  DO row=c0_stt,c0_stt+pc%nGrp-1
                     U1(row,row)=1.0_SRK
                   ENDDO
                 ELSE
                   !fill tmpW
                   local_r=1
-                  DO row=c_stt,c_stt+pc%nGrp-1
+                  DO row=c0_stt,c0_stt+pc%nGrp-1
                     local_c=1
-                    DO col=d_stt,d_stt+pc%nGrp-1
+                    DO col=d0_stt,d0_stt+pc%nGrp-1
                       tmpW(local_r,local_c)=tmp1D(row,col)
                       local_c=local_c+1
                     ENDDO
@@ -824,9 +828,9 @@ MODULE PreconditionerTypes
                   ENDDO
                   !fill tmpE
                   local_r=1
-                  DO row=d_stt,d_stt+pc%nGrp-1
+                  DO row=d0_stt,d0_stt+pc%nGrp-1
                     local_c=1
-                    DO col=c_stt,c_stt+pc%nGrp-1
+                    DO col=c0_stt,c0_stt+pc%nGrp-1
                       tmpE(local_r,local_c)=tmp1D(row,col)
                       local_c=local_c+1
                     ENDDO
@@ -836,9 +840,9 @@ MODULE PreconditionerTypes
                   tmp0DU=MATMUL(tmpW,tmp0DinvM)
                   tmp0DU=MATMUL(tmp0DU,tmpE)
                   local_r=1
-                  DO row=c_stt,c_stt+pc%nGrp-1
+                  DO row=c0_stt,c0_stt+pc%nGrp-1
                     local_c=1
-                    DO col=c_stt,c_stt+pc%nGrp-1
+                    DO col=c0_stt,c0_stt+pc%nGrp-1
                       L1(row,col)=tmp1D(row,col)-tmp0DU(local_r,local_c)
                       local_c=local_c+1
                     ENDDO
@@ -846,9 +850,9 @@ MODULE PreconditionerTypes
                   ENDDO
                   !set lower block of L
                   local_r=1
-                  DO row=c_stt,c_stt+pc%nGrp-1
+                  DO row=c0_stt,c0_stt+pc%nGrp-1
                     local_c=1
-                    DO col=d_stt,d_stt+pc%nGrp-1
+                    DO col=d0_stt,d0_stt+pc%nGrp-1
                       L1(row,col)=tmpW(local_r,local_c)
                       local_c=local_c+1
                     ENDDO
@@ -857,34 +861,40 @@ MODULE PreconditionerTypes
                   !set upper block of U
                   tmp0DU=MATMUL(tmp0DinvM,tmpE)
                   local_r=1
-                  DO row=d_stt,d_stt+pc%nGrp-1
+                  DO row=d0_stt,d0_stt+pc%nGrp-1
                     local_c=1
-                    DO col=c_stt,c_stt+pc%nGrp-1
+                    DO col=c0_stt,c0_stt+pc%nGrp-1
                       U1(row,col)=tmp0DU(local_r,local_c)
                       local_c=local_c+1
                     ENDDO
                     local_r=local_r+1
                   ENDDO               
                   !set diagonal block of U
-                  DO row=c_stt,c_stt+pc%nGrp-1
+                  DO row=c0_stt,c0_stt+pc%nGrp-1
                     U1(row,row)=1.0_SRK
                   ENDDO
                 ENDIF
                 
-                tmp0D=L2(c_stt:c_stt+pc%nGrp-1,c_stt:c_stt+pc%nGrp-1)
+                tmp0D=L1(c0_stt:c0_stt+pc%nGrp-1,c0_stt:c0_stt+pc%nGrp-1)
                 
                 !determine 0D inverse (always direct for 0D)
                 CALL direct_inv(tmp0D,tmp0DinvM)
+                F1(c0_stt:c0_stt+pc%nGrp-1,c0_stt:c0_stt+pc%nGrp-1)=tmp0DinvM
+
               ENDDO
               
               !determine 1D inverse (eventually ABI)
-              CALL direct_inv(tmp1D,tmp1DinvM)
+              !CALL direct_inv(tmp1D,tmp1DinvM)
+              CALL ABI(L1,U1,F1,pc%Ngrp,tmp1DinvM)
+              F2(c1_stt:c1_stt+pc%nGrp-1,c1_stt:c1_stt+pc%nGrp-1)=tmp1DinvM
                 
             ENDDO
             
             !determine 2D inverse (eventually ABI)
-            CALL direct_inv(tmpM,tmp2DinvM)
-          
+            !CALL direct_inv(tmpM,tmp2DinvM)
+            CALL ABI(L2,U2,F2,X*pc%Ngrp,tmp2DinvM)
+            
+            
           ENDDO
           
           DEALLOCATE(tmp2DU,tmp2DinvM)
@@ -947,20 +957,41 @@ MODULE PreconditionerTypes
       REAL(SRK),INTENT(IN) :: U(:,:)
       REAL(SRK),INTENT(IN) :: F(:,:)
       INTEGER(SIK),INTENT(IN) :: block_dim
-      REAL(SRK),INTENT(INOUT) :: invA(:,:)
+      REAL(SRK),INTENT(INOUT),ALLOCATABLE :: invA(:,:)
       
       INTEGER(SIK) :: i,ix,X
+      INTEGER(SIK) :: ic,iu,id
+      REAL(SRK),ALLOCATABLE :: L0(:,:),DinvU0(:,:)
+      
+      IF(ALLOCATED(invA)) DEALLOCATE(invA)
+      ALLOCATE(invA(SIZE(L(:,1)),SIZE(L(1,:))))
+      invA=0.0_SRK
+      
+      ALLOCATE(L0(block_dim,block_dim))
+      ALLOCATE(DinvU0(block_dim,block_dim))
+      L0=0.0_SRK
+      DinvU0=0.0_SRK
       
       X=SIZE(L(:,1))/block_dim
       DO i=X,1,-1
+        ic=(i-1)*block_dim+1
+        iu=(i)*block_dim+1
+        id=(i-2)*block_dim+1
         
         IF(i==1) THEN
         
           DO ix=X,1,-1
             IF(ix == i) THEN
               !diagonal block term
+              DinvU0=U(ic:ic+block_dim-1,iu:iu+block_dim-1)
+              invA(ic:ic+block_dim-1,ic:ic+block_dim-1) = &
+                F(ic:ic+block_dim-1,ic:ic+block_dim-1)+MATMUL(DinvU0,invA(iu:iu+block_dim-1,ic:ic+block_dim-1))
             ELSEIF(ix == i+1) THEN
               !upper block term
+              L0=L(ic:ic+block_dim-1,iu:iu+block_dim-1)
+              DinvU0=U(ic:ic+block_dim-1,iu:iu+block_dim-1)
+              invA(ic:ic+block_dim-1,iu:iu+block_dim-1) = &
+                -MATMUL(DinvU0,invA(iu:iu+block_dim-1,iu:iu+block_dim-1))
             ENDIF
           ENDDO
           
@@ -969,8 +1000,14 @@ MODULE PreconditionerTypes
           DO ix=X,1,-1
             IF(ix == i) THEN
               !diagonal block term
+              invA(ic:ic+block_dim-1,ic:ic+block_dim-1) = &
+                F(ic:ic+block_dim-1,ic:ic+block_dim-1)
             ELSEIF(ix == i-1) THEN
-              !lower block term
+              !lower block term)
+              L0=L(ic:ic+block_dim-1,id:id+block_dim-1)
+              invA(ic:ic+block_dim-1,id:id+block_dim-1)= &
+                -MATMUL(MATMUL(invA(ic:ic+block_dim-1,ic:ic+block_dim-1),L0), &
+                F(id:id+block_dim-1,id:id+block_dim-1))
             ENDIF
           ENDDO
           
@@ -978,11 +1015,20 @@ MODULE PreconditionerTypes
           
           DO ix=X,1,-1
             IF(ix == i) THEN
-              !diagonal block term
+              !diagonal block term)
+              DinvU0=U(ic:ic+block_dim-1,iu:iu+block_dim-1)
+              invA(ic:ic+block_dim-1,ic:ic+block_dim-1) = &
+                F(ic:ic+block_dim-1,ic:ic+block_dim-1) + MATMUL(DinvU0,invA(iu:iu+block_dim-1,ic:ic+block_dim-1))
             ELSEIF(ix == i-1) THEN
               !lower block term
+              L0=L(ic:ic+block_dim-1,id:id+block_dim-1)
+              invA(ic:ic+block_dim-1,id:id+block_dim-1)=-MATMUL(invA(ic:ic+block_dim-1,ic:ic+block_dim-1), &
+                MATMUL(L0,F(id:id+block_dim-1,id:id+block_dim-1)))
             ELSEIF(ix == i+1) THEN
               !upper block term
+              L0=L(ic:ic+block_dim-1,id:id+block_dim-1)
+              DinvU0=U(ic:ic+block_dim-1,iu:iu+block_dim-1)
+              invA(ic:ic+block_dim-1,iu:iu+block_dim-1)=-MATMUL(DinvU0,invA(iu:iu+block_dim-1,iu:iu+block_dim-1))
             ENDIF
           ENDDO
           
