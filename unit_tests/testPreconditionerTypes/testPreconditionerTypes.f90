@@ -142,6 +142,13 @@ PROGRAM testMatrixTypes
     SUBROUTINE testILU_PreCondType()
       CLASS(LU_PreCondType),ALLOCATABLE :: testLU
       TYPE(RealVectorType) :: tempVector
+      LOGICAL(SBK) :: bool
+      REAL(SRK) :: tmpreal(25),tmpreal2(10)
+
+      !This is used to check %apply() routines
+      tmpreal2=(/81.828106457936357_SRK,-32.910224240167040_SRK,-8.6840659884980056_SRK,12.521242974252598_SRK, &
+        -5.0025526592007603_SRK,-6.9466109699304406_SRK,8.1414442396900757_SRK,-1.8345636773373761_SRK, &
+        -9.2450823045000341_SRK,13.515984012597492_SRK/)
 
       COMPONENT_TEST('ILU Preconditioner Type, DenseMatrixType')
       IF(testDenseMatrix%isInit .AND. testVector%isInit) THEN
@@ -149,22 +156,58 @@ PROGRAM testMatrixTypes
         
         ! Check %init
         CALL testLU%init(testDenseMatrix)
+        ASSERT(testLU%isInit,'DenseSquareMatrixType ILU%isInit')
+        ASSERT(ASSOCIATED(testLU%A),'DenseSquareMatrixType ASSOCIATED(ILU%LU%A)')
+        ASSERT(testLU%L%isInit,'DenseSquareMatrixType ILU%L%isInit')
+        ASSERT(testLU%U%isInit,'DenseSquareMatrixType ILU%U%isInit')
+        SELECTTYPE(L => testLU%L); TYPE IS(SparseMatrixType)
+          bool=ALL(L%ia == (/1,2,4,6,8,11,14,17,20,23,26/))
+          ASSERT(bool,'DenseSquareMatrixType ILU%L%ia')
+          bool=ALL(L%ja == (/1,1,2,2,3,3,4,1,4,5,2,5,6,3,6,7,4,7,8,5,8,9,6,9,10/))
+          ASSERT(bool,'DenseSquareMatrixType ILU%L%ja')
+        CLASS DEFAULT
+          ASSERT(.FALSE.,'DenseSquareMatrixType ILU%L TYPE IS(SparseMatrixType)')
+        ENDSELECT
+        SELECTTYPE(u => testLU%U); TYPE IS(SparseMatrixType)
+          bool=ALL(U%ia == (/1,4,7,10,13,16,19,21,23,25,26/))
+          ASSERT(bool,'DenseSquareMatrixType ILU%U%ia')
+          bool=ALL(U%ja == (/1,2,5,2,3,6,3,4,7,4,5,8,5,6,9,6,7,10,7,8,8,9,9,10,10/))
+          ASSERT(bool,'DenseSquareMatrixType ILU%U%ja')
+        CLASS DEFAULT
+          ASSERT(.FALSE.,'DenseSquareMatrixType ILU%U TYPE IS(SparseMatrixType)')
+        ENDSELECT
+
         ! Check %setup
         CALL testLU%setup()
-!SELECTTYPE(a => testLU%A); TYPE IS(DenseSquareMatrixType)
-!WRITE(*,*) A%a
-!SELECTTYPE(l => testLU%L); TYPE IS(SparseMatrixType)
-!WRITE(*,*) l%a
-!SELECTTYPE(u => testLU%U); TYPE IS(SparseMatrixType)
-!WRITE(*,*) u%a
-!ENDSELECT
-!ENDSELECT
-!ENDSELECT
+        SELECTTYPE(L => testLU%L); TYPE IS(SparseMatrixType)
+          tmpreal=(/1.0000000000000000_SRK,4.0000000000000000_SRK,1.0000000000000000_SRK, &
+            -2.6666666666666665_SRK,1.0000000000000000_SRK,0.47999999999999998_SRK,1.0000000000000000_SRK, &
+            16.000000000000000_SRK,2.0731707317073171_SRK,1.0000000000000000_SRK,-7.0000000000000000_SRK, &
+            -0.37272727272727274_SRK,1.0000000000000000_SRK,1.0400000000000000_SRK,0.34141855385676517_SRK, &
+            1.0000000000000000_SRK,3.6585365853658538_SRK,3.7054946009258081_SRK,1.0000000000000000_SRK,&
+            -0.57603305785123970_SRK,-0.26853383673906256_SRK,1.0000000000000000_SRK,0.48051500172433614_SRK,&
+            0.69170671251519822_SRK,1.0000000000000000_SRK/)
+          ASSERT(ALL(L%a .APPROXEQA. tmpreal),'DenseSquareMatrixtype ILU%L%a')
+        ENDSELECT
+        SELECTTYPE(U => testLU%U); TYPE IS(SparseMatrixType)
+          tmpreal=(/1.0000000000000000_SRK,2.0000000000000000_SRK,3.0000000000000000_SRK, &
+            -3.0000000000000000_SRK,6.0000000000000000_SRK,7.0000000000000000_SRK,25.000000000000000_SRK, &
+            10.000000000000000_SRK,11.000000000000000_SRK,8.1999999999999993_SRK,14.000000000000000_SRK, &
+            15.000000000000000_SRK,-59.024390243902438_SRK,19.000000000000000_SRK,20.000000000000000_SRK, &
+            79.081818181818178_SRK,24.000000000000000_SRK,25.000000000000000_SRK,8.3659547074376341_SRK, &
+            29.000000000000000_SRK,-130.33739220733625_SRK,33.000000000000000_SRK,56.382277769413854_SRK, &
+            37.000000000000000_SRK,2.3939765938292652_SRK/)
+          ASSERT(ALL(U%a .APPROXEQA. tmpreal),'DenseSquareMatrixType ILU%U%a')
+        ENDSELECT
+
         ! Check %apply
         SELECTTYPE(testVector); TYPE IS(RealVectorType)
           tempVector=testVector
         ENDSELECT
         CALL testLU%apply(tempVector)
+        ASSERT(ALL(tempVector%b .APPROXEQA. tmpreal2),'DenseSquareMatrixType ILU%apply(vector)')
+        
+
         ! Check %clear
         CALL testLU%clear()
       ELSE
@@ -173,36 +216,66 @@ PROGRAM testMatrixTypes
       ENDIF
         
       COMPONENT_TEST('ILU Preconditioner Type, SparseMatrixType')
+      ! Check %init
+      CALL testLU%init(testSparseMatrix)
       IF(testSparseMatrix%isInit .AND. testVector%isInit) THEN
-        ! Check %init
-        CALL testLU%init(testSparseMatrix)
-        ASSERT(testLU%isInit,'ILU Preconditioner %isInit')
-        ASSERT(ASSOCIATED(testLU%A),'ILU Preconditioner ASSOCIATED(LU%A)')
-        ASSERT(testLU%L%isInit,'ILU Preconditioner %L%isInit')
-        ASSERT(testLU%U%isInit,'ILU Preconditioner %U%isInit')
+        ASSERT(testLU%isInit,'SparseMatrixType ILU%isInit')
+        ASSERT(ASSOCIATED(testLU%A),'SparseMatrixType ASSOCIATED(ILU%LU%A)')
+        ASSERT(testLU%L%isInit,'SparseMatrixType ILU%L%isInit')
+        ASSERT(testLU%U%isInit,'SparseMatrixType ILU%U%isInit')
+        SELECTTYPE(L => testLU%L); TYPE IS(SparseMatrixType)
+          bool=ALL(L%ia == (/1,2,4,6,8,11,14,17,20,23,26/))
+          ASSERT(bool,'SparseMatrixType ILU%L%ia')
+          bool=ALL(L%ja == (/1,1,2,2,3,3,4,1,4,5,2,5,6,3,6,7,4,7,8,5,8,9,6,9,10/))
+          ASSERT(bool,'SparseMatrixType ILU%L%ja')
+        CLASS DEFAULT
+          ASSERT(.FALSE.,'SparseMatrixType ILU%L TYPE IS(SparseMatrixType)')
+        ENDSELECT
+        SELECTTYPE(u => testLU%U); TYPE IS(SparseMatrixType)
+          bool=ALL(U%ia == (/1,4,7,10,13,16,19,21,23,25,26/))
+          ASSERT(bool,'SparseMatrixType ILU%U%ia')
+          bool=ALL(U%ja == (/1,2,5,2,3,6,3,4,7,4,5,8,5,6,9,6,7,10,7,8,8,9,9,10,10/))
+          ASSERT(bool,'SparseMatrixType ILU%U%ja')
+        CLASS DEFAULT
+          ASSERT(.FALSE.,'SparseMatrixType ILU%U TYPE IS(SparseMatrixType)')
+        ENDSELECT
+
         ! Check %setup
         CALL testLU%setup()
-        ! Check L
-        ! Check U
-!SELECTTYPE(L => testLU%L); TYPE IS(SparseMatrixType)
-!WRITE(*,*) L%ia,':',L%ja,':',L%a
-!ENDSELECT
-!SELECTTYPE(U => testLU%U); TYPE IS(SparseMatrixType)
-!WRITE(*,*) U%ia,':',U%ja,':',U%a
-!ENDSELECT
-        
+        SELECTTYPE(L => testLU%L); TYPE IS(SparseMatrixType)
+          tmpreal=(/1.0000000000000000_SRK,4.0000000000000000_SRK,1.0000000000000000_SRK, &
+            -2.6666666666666665_SRK,1.0000000000000000_SRK,0.47999999999999998_SRK,1.0000000000000000_SRK, &
+            16.000000000000000_SRK,2.0731707317073171_SRK,1.0000000000000000_SRK,-7.0000000000000000_SRK, &
+            -0.37272727272727274_SRK,1.0000000000000000_SRK,1.0400000000000000_SRK,0.34141855385676517_SRK, &
+            1.0000000000000000_SRK,3.6585365853658538_SRK,3.7054946009258081_SRK,1.0000000000000000_SRK,&
+            -0.57603305785123970_SRK,-0.26853383673906256_SRK,1.0000000000000000_SRK,0.48051500172433614_SRK,&
+            0.69170671251519822_SRK,1.0000000000000000_SRK/)
+          ASSERT(ALL(L%a .APPROXEQA. tmpreal),'SparseMatrixtype ILU%L%a')
+        ENDSELECT
+        SELECTTYPE(U => testLU%U); TYPE IS(SparseMatrixType)
+          tmpreal=(/1.0000000000000000_SRK,2.0000000000000000_SRK,3.0000000000000000_SRK, &
+            -3.0000000000000000_SRK,6.0000000000000000_SRK,7.0000000000000000_SRK,25.000000000000000_SRK, &
+            10.000000000000000_SRK,11.000000000000000_SRK,8.1999999999999993_SRK,14.000000000000000_SRK, &
+            15.000000000000000_SRK,-59.024390243902438_SRK,19.000000000000000_SRK,20.000000000000000_SRK, &
+            79.081818181818178_SRK,24.000000000000000_SRK,25.000000000000000_SRK,8.3659547074376341_SRK, &
+            29.000000000000000_SRK,-130.33739220733625_SRK,33.000000000000000_SRK,56.382277769413854_SRK, &
+            37.000000000000000_SRK,2.3939765938292652_SRK/)
+          ASSERT(ALL(U%a .APPROXEQA. tmpreal),'SparseMatrixType ILU%U%a')
+        ENDSELECT
+
         ! Check %apply
         SELECTTYPE(testVector); TYPE IS(RealVectorType)
           tempVector=testVector
         ENDSELECT
         CALL testLU%apply(tempVector)
+        ASSERT(ALL(tempVector%b .APPROXEQA. tmpreal2),'SparseMatrixType ILU%apply(vector)')
 
         ! Check %clear
         CALL testLU%clear()
-        ASSERT(.NOT.(testLU%isInit),'ILU Preconditioner .NOT.(lu%isInit)')
-        ASSERT(.NOT.(ASSOCIATED(testLU%A)),'ILU Preconditioner .NOT.(ASSOCIATED(LU%A))')
-        ASSERT(.NOT.(ASSOCIATED(testLU%L)),'ILU Preconditioner .NOT.(ASSOCIATED(LU%L))')
-        ASSERT(.NOT.(ASSOCIATED(testLU%U)),'ILU Preconditioner .NOT.(ASSOCIATED(LU%U))')
+        ASSERT(.NOT.(testLU%isInit),'SparseMatrixType .NOT.(ILU%LU%isInit)')
+        ASSERT(.NOT.(ASSOCIATED(testLU%A)),'SparseMatrixType .NOT.(ASSOCIATED(ILU%LU%A))')
+        ASSERT(.NOT.(ASSOCIATED(testLU%L)),'SparseMatrixType .NOT.(ASSOCIATED(ILU%LU%L))')
+        ASSERT(.NOT.(ASSOCIATED(testLU%U)),'SparseMatrixType .NOT.(ASSOCIATED(ILU%LU%U))')
       ELSE
         ASSERT(testSparseMatrix%isInit,'TestSparseMatrix Initialization')
         ASSERT(testVector%isInit,'TestVector Initialization')
