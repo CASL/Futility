@@ -29,7 +29,10 @@ PROGRAM testPreconditionerTypes
   USE MatrixTypes
   USE PreconditionerTypes
   IMPLICIT NONE
-  
+
+#ifdef HAVE_MPI
+  INCLUDE 'mpif.h'
+#endif
 #ifdef MPACT_HAVE_PETSC
 #include <finclude/petsc.h>
 #undef IS
