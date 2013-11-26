@@ -436,6 +436,8 @@ MODULE PreconditionerTypes
                   ELSE
                     ! LU Decomposition
                     j=mat%n
+                    ! Just do "simple" looping.  Since A is dense, naive looping through columns is about
+                    ! as efficient as a more complicated sparse matrix looping scheme
                     DO row=2,j
                       DO col=1,row-1
                         CALL L%get(row,col,val1)
@@ -474,6 +476,7 @@ MODULE PreconditionerTypes
                   ! Now loop through A again and set values of L and U
                   ELSE
                     ! Now complete LU Decomposition
+                    ! A is sparse, so use A%ia and A%ja to work through L and U
                     DO row=2,SIZE(mat%ia)-1
                       DO col=mat%ia(row),mat%ia(row+1)-1
                         IF(mat%ja(col) >= row) EXIT
