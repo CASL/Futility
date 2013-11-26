@@ -18,6 +18,8 @@ SET(ADDITIONAL_FILES
     matrices/mg_matrix.txt
     matrices/refBILU_1gL.txt
     matrices/refBILU_1gU.txt
+    matrices/refBILU_mgL.txt
+    matrices/refBILU_mgU.txt
 )
 
 MPACT_CreateUnitTest(testPreconditionerTypes)
