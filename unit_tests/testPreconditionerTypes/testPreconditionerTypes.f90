@@ -30,13 +30,14 @@ PROGRAM testPreconditionerTypes
   USE PreconditionerTypes
   IMPLICIT NONE
 
-#ifdef HAVE_MPI
-  INCLUDE 'mpif.h'
-#endif
 #ifdef MPACT_HAVE_PETSC
 #include <finclude/petsc.h>
 #undef IS
   PetscErrorCode  :: ierr
+#else
+#ifdef HAVE_MPI
+  INCLUDE 'mpif.h'
+#endif
 #endif
   
   TYPE(ExceptionHandlerType),TARGET :: e
@@ -294,6 +295,7 @@ PROGRAM testPreconditionerTypes
       INTEGER(SIK) :: nPlane,nPin,nGrp,N
       REAL(SRK) :: tmpreal,val
 
+#ifdef HAVE_MPI
       !!!setup 1g stuff      
       nPlane=3
       nPin=9
@@ -371,6 +373,7 @@ PROGRAM testPreconditionerTypes
       CLASS DEFAULT
         ASSERT(.FALSE.,'ALLOCATE(SparseMatrixType :: testSparseMatrix)')
       ENDSELECT
+#endif
 
     ENDSUBROUTINE setupBILUTest
 !
@@ -385,6 +388,7 @@ PROGRAM testPreconditionerTypes
       CLASS(MatrixType),ALLOCATABLE :: refBILU_L,refBILU_U
       
       COMPONENT_TEST('BILU Preconditioner Type (1g)')
+#ifdef HAVE_MPI
       IF(ALLOCATED(testBILU_1g) .AND. ALLOCATED(testVec_1g)) THEN
         IF(testBILU_1g%isInit .AND. testVec_1g%isInit) THEN
           ALLOCATE(BILU_PreCondType :: testLU)
@@ -711,7 +715,7 @@ PROGRAM testPreconditionerTypes
         ASSERT(ALLOCATED(testBILU_mg),'TestMatrix Allocation')
         ASSERT(ALLOCATED(testVec_mg),'TestVector Allocation')
       ENDIF
-
+#endif
       
 
     ENDSUBROUTINE testBILU_PreCondtype
