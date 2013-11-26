@@ -187,6 +187,8 @@ MODULE MatrixTypes
     LOGICAL(SBK) :: isCreated=.FALSE.
     !> assembly status
     LOGICAL(SBK) :: isAssembled=.FALSE.
+    !> MPI comm ID
+    INTEGER(SIK) :: comm=-1
     !> number of local values
     INTEGER(SIK) :: nlocal
     
@@ -655,6 +657,7 @@ MODULE MatrixTypes
         ELSE
           matrix%isInit=.TRUE.
           matrix%n=n
+          matrix%comm=MPI_COMM_ID
           matrix%isAssembled=.FALSE.
           matrix%nlocal=nlocal
           IF(isSym) THEN
@@ -932,7 +935,7 @@ MODULE MatrixTypes
           IF((matrix%jCount < matrix%nnz) & 
             .AND.((matrix%iPrev == i).AND.(matrix%jPrev < j))) THEN
             ijOK=.TRUE.
-          ELSEIF(matrix%iPrev+1 == i) THEN
+          ELSEIF(matrix%iPrev < i) THEN
             ijOK=.TRUE.
           ENDIF
           IF(matrix%ia(i) == 0) matrix%ia(i)=matrix%jCount+1

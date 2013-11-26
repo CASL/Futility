@@ -22,25 +22,13 @@ PROGRAM testBLAS
   
   IMPLICIT NONE
 
-  WRITE(*,*) '==================================================='
-  WRITE(*,*) 'TESTING BLAS...'
-  WRITE(*,*) '==================================================='
+  CREATE_TEST('test BLAS')
 
-  WRITE(*,*) 'TESTING BLAS LEVEL 1'
-  CALL testBLAS1()
-  WRITE(*,*) '---------------------------------------------------'
+  REGISTER_SUBTEST('Test BLAS 1',testBLAS1)
+  REGISTER_SUBTEST('Test BLAS 2',testBLAS2)
+  REGISTER_SUBTEST('Test BLAS 3',testBLAS3)
   
-  WRITE(*,*) 'TESTING BLAS LEVEL 2'
-  CALL testBLAS2()
-  WRITE(*,*) '---------------------------------------------------'
-  
-  WRITE(*,*) 'TESTING BLAS LEVEL 3'
-  CALL testBLAS3()
-  WRITE(*,*) '---------------------------------------------------'
-  
-  WRITE(*,*) '==================================================='
-  WRITE(*,*) 'TESTING BLAS PASSED!'
-  WRITE(*,*) '==================================================='
+  FINALIZE_TEST()
 !
 !===============================================================================
   CONTAINS
@@ -907,7 +895,7 @@ PROGRAM testBLAS
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testBLAS2()
-      INTEGER(SIK) :: ia(5),ja(7)
+      INTEGER(SIK) :: ia(5),ja(7),ia2(10),ja2(10)
       REAL(SSK) :: sa(128,128),sx(128),sy(128),salpha,sbeta,saa(7)
       REAL(SDK) :: da(128,128),dx(128),dy(128),dalpha,dbeta,daa(7)
 !
@@ -2063,6 +2051,138 @@ PROGRAM testBLAS
         WRITE(*,*) "CALL BLAS_matvec(ia,ja,daa,dx(1:4),dy(1:4)) FAILED!"
         STOP 666
       ENDIF
+
+      !strsv_all
+      sa(1:4,1:4)=RESHAPE((/1.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK, &
+        0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/))
+      sx(1:4)=1.0_SSK
+      sx(5:8)=(/1.000000_SSK,-0.500000_SSK,-0.1666667_SSK,-0.08333333_SSK/)
+      CALL BLAS_matvec('L','N','N',sa(1:4,1:4),sx(1:4))
+      ASSERT(ALL(sx(1:4) .APPROXEQA. sx(5:8)),'CALL BLAS_matvec(''L'',''N'',''N'',sa(1:4,1:4),sx(1:4)')
+      FINFO() 'Solution: ',sx(5:8),'  Result: ',sx(1:4)
+      
+      sa(1:4,1:4)=RESHAPE((/1.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK, &
+        0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/),ORDER=(/2,1/))
+      sx(1:4)=1.0_SSK
+      CALL BLAS_matvec('U','T','N',sa(1:4,1:4),sx(1:4))
+      ASSERT(ALL(sx(1:4) .APPROXEQA. sx(5:8)),'CALL BLAS_matvec(''U'',''T'',''N'',sa(1:4,1:4),sx(1:4)')
+      FINFO() 'Solution: ',sx(5:8),'  Result: ',sx(1:4)
+
+      sa(1:4,1:4)=RESHAPE((/1.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK, &
+        0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/),ORDER=(/2,1/))
+      sx(1:4)=1.0_SSK
+      sx(5:8)=(/0.0000000_SSK,0.0000000_SSK,0.0000000_SSK,0.2500000_SSK/)
+      CALL BLAS_matvec('U','N','N',sa(1:4,1:4),sx(1:4))
+      ASSERT(ALL(sx(1:4) .APPROXEQA. sx(5:8)),'CALL BLAS_matvec(''U'',''N'',''N'',sa(1:4,1:4),sx(1:4)')
+      FINFO() 'Solution: ',sx(5:8),'  Result: ',sx(1:4)
+      
+      sa(1:4,1:4)=RESHAPE((/1.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK, &
+        0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/))
+      sx(1:4)=1.0_SSK
+      CALL BLAS_matvec('L','T','N',sa(1:4,1:4),sx(1:4))
+      ASSERT(ALL(sx(1:4) .APPROXEQA. sx(5:8)),'CALL BLAS_matvec(''L'',''T'',''N'',sa(1:4,1:4),sx(1:4)')
+      FINFO() 'Solution: ',sx(5:8),'  Result: ',sx(1:4)
+
+      !dtrsv_all
+      da(1:4,1:4)=RESHAPE((/1.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK, &
+        0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/))
+      dx(1:4)=1.0_SDK
+      dx(5:8)=(/1.0000000000_SDK,-0.500000000_SDK,-0.16666666666667_SDK,-0.08333333333333_SDK/)
+      CALL BLAS_matvec('L','N','N',da(1:4,1:4),dx(1:4))
+      ASSERT(ALL(dx(1:4) .APPROXEQA. dx(5:8)),'CALL BLAS_matvec(''L'',''N'',''N'',da(1:4,1:4),dx(1:4)')
+      FINFO() 'Solution: ',dx(5:8),'  Result: ',dx(1:4)
+      
+      da(1:4,1:4)=RESHAPE((/1.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK, &
+        0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/),ORDER=(/2,1/))
+      dx(1:4)=1.0_SDK
+      CALL BLAS_matvec('U','T','N',da(1:4,1:4),dx(1:4))
+      ASSERT(ALL(dx(1:4) .APPROXEQA. dx(5:8)),'CALL BLAS_matvec(''U'',''T'',''N'',da(1:4,1:4),dx(1:4)')
+      FINFO() 'Solution: ',dx(5:8),'  Result: ',dx(1:4)
+      
+      da(1:4,1:4)=RESHAPE((/1.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK, &
+        0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/),ORDER=(/2,1/))
+      dx(1:4)=1.0_SDK
+      dx(5:8)=(/0.0000000_SDK,0.0000000_SDK,0.0000000_SDK,0.2500000_SDK/)
+      CALL BLAS_matvec('U','N','N',da(1:4,1:4),dx(1:4))
+      ASSERT(ALL(dx(1:4) .APPROXEQA. dx(5:8)),'CALL BLAS_matvec(''U'',''N'',''N'',da(1:4,1:4),dx(1:4)')
+      FINFO() 'Solution: ',dx(5:8),'  Result: ',dx(1:4)
+      
+      da(1:4,1:4)=RESHAPE((/1.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK, &
+        0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/))
+      dx(1:4)=1.0_SDK
+      CALL BLAS_matvec('L','T','N',da(1:4,1:4),dx(1:4))
+      ASSERT(ALL(dx(1:4) .APPROXEQA. dx(5:8)),'CALL BLAS_matvec(''L'',''T'',''N'',da(1:4,1:4),dx(1:4)')
+      FINFO() 'Solution: ',dx(5:8),'  Result: ',dx(1:4)
+
+      !strsv_all_sparse
+      sx(1:10)=(/1.0_SSK,2.0_SSK,2.0_SSK,3.0_SSK,3.0_SSK,3.0_SSK,4.0_SSK,4.0_SSK,4.0_SSK,4.0_SSK/)
+      sx(11:14)=1.0_SSK
+      ja2(1:10)=(/1,1,2,1,2,3,1,2,3,4/)
+      ia2(1:5)=(/1,2,4,7,11/)
+      sx(15:18)=(/1.0000000_SSK,-0.5000000_SSK,-0.1666666666666666_SSK,-0.083333333333333333_SSK/)
+      CALL BLAS_matvec('L','N','N',sx(1:10),ia2(1:5),ja2(1:10),sx(11:14))
+      ASSERT(ALL(sx(11:14) .APPROXEQA. sx(15:18)),'CALL BLAS_matvec(''L'',''N'',''N'',sa,ia,ja,sx')
+      FINFO() 'Calculated:',sx(11:14),' Solution:',sx(15:18)
+      
+      sx(1:10)=(/1.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK,3.0_SSK,4.0_SSK,4.0_SSK/)
+      sx(11:14)=1.0_SSK
+      ja2(1:10)=(/1,2,3,4,2,3,4,3,4,4/)
+      ia2(1:5)=(/1,5,8,10,11/)
+      CALL BLAS_matvec('U','T','N',sx(1:10),ia2(1:5),ja2(1:10),sx(11:14))
+      ASSERT(ALL(sx(11:14) .APPROXEQA. sx(15:18)),'CALL BLAS_matvec(''U'',''T'',''N'',sa,ia,ja,sx')
+      FINFO() 'Calculated:',sx(11:14),' Solution:',sx(15:18)
+      
+      sx(1:10)=(/1.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK,3.0_SSK,4.0_SSK,4.0_SSK/)
+      sx(11:14)=1.0_SSK
+      ja2(1:10)=(/1,2,3,4,2,3,4,3,4,4/)
+      ia2(1:5)=(/1,5,8,10,11/)
+      sx(15:18)=(/0.00000000_SSK,0.0000000_SSK,0.0000000_SSK,0.25000000_SSK/)
+      CALL BLAS_matvec('U','N','N',sx(1:10),ia2(1:5),ja2(1:10),sx(11:14))
+      ASSERT(ALL(sx(11:14) .APPROXEQA. sx(15:18)),'CALL BLAS_matvec(''U'',''N'',''N'',sa,ia,ja,sx')
+      FINFO() 'Calculated:',sx(11:14),' Solution:',sx(15:18)
+      
+      sx(1:10)=(/1.0_SSK,2.0_SSK,2.0_SSK,3.0_SSK,3.0_SSK,3.0_SSK,4.0_SSK,4.0_SSK,4.0_SSK,4.0_SSK/)
+      sx(11:14)=1.0_SSK
+      ja2(1:10)=(/1,1,2,1,2,3,1,2,3,4/)
+      ia2(1:5)=(/1,2,4,7,11/)
+      CALL BLAS_matvec('L','T','N',sx(1:10),ia2(1:5),ja2(1:10),sx(11:14))
+      ASSERT(ALL(sx(11:14) .APPROXEQA. sx(15:18)),'CALL BLAS_matvec(''L'',''T'',''N'',sa,ia,ja,sx')
+      FINFO() 'Calculated:',sx(11:14),' Solution:',sx(15:18)
+      
+      !dtrsv_all_sparse
+      dx(1:10)=(/1.0_SDK,2.0_SDK,2.0_SDK,3.0_SDK,3.0_SDK,3.0_SDK,4.0_SDK,4.0_SDK,4.0_SDK,4.0_SDK/)
+      dx(11:14)=1.0_SDK
+      ja2(1:10)=(/1,1,2,1,2,3,1,2,3,4/)
+      ia2(1:5)=(/1,2,4,7,11/)
+      dx(15:18)=(/1.0000000_SDK,-0.5000000_SDK,-0.1666666666666666_SDK,-0.083333333333333333_SDK/)
+      CALL BLAS_matvec('L','N','N',dx(1:10),ia2(1:5),ja2(1:10),dx(11:14))
+      ASSERT(ALL(dx(11:14) .APPROXEQA. dx(15:18)),'CALL BLAS_matvec(''L'',''N'',''N'',da,ia,ja,dx')
+      FINFO() 'Calculated:',dx(11:14),' Solution:',dx(15:18)
+      
+      dx(1:10)=(/1.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK,3.0_SDK,4.0_SDK,4.0_SDK/)
+      dx(11:14)=1.0_SDK
+      ja2(1:10)=(/1,2,3,4,2,3,4,3,4,4/)
+      ia2(1:5)=(/1,5,8,10,11/)
+      CALL BLAS_matvec('U','T','N',dx(1:10),ia2(1:5),ja2(1:10),dx(11:14))
+      ASSERT(ALL(dx(11:14) .APPROXEQA. dx(15:18)),'CALL BLAS_matvec(''U'',''T'',''N'',da,ia,ja,dx')
+      FINFO() 'Calculated:',dx(11:14),' Solution:',dx(15:18)
+      
+      dx(1:10)=(/1.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK,3.0_SDK,4.0_SDK,4.0_SDK/)
+      dx(11:14)=1.0_SDK
+      ja2(1:10)=(/1,2,3,4,2,3,4,3,4,4/)
+      ia2(1:5)=(/1,5,8,10,11/)
+      dx(15:18)=(/0.00000000_SDK,0.0000000_SDK,0.0000000_SDK,0.25000000_SDK/)
+      CALL BLAS_matvec('U','N','N',dx(1:10),ia2(1:5),ja2(1:10),dx(11:14))
+      ASSERT(ALL(dx(11:14) .APPROXEQA. dx(15:18)),'CALL BLAS_matvec(''U'',''N'',''N'',da,ia,ja,dx')
+      FINFO() 'Calculated:',dx(11:14),' Solution:',dx(15:18)
+      
+      dx(1:10)=(/1.0_SDK,2.0_SDK,2.0_SDK,3.0_SDK,3.0_SDK,3.0_SDK,4.0_SDK,4.0_SDK,4.0_SDK,4.0_SDK/)
+      dx(11:14)=1.0_SDK
+      ja2(1:10)=(/1,1,2,1,2,3,1,2,3,4/)
+      ia2(1:5)=(/1,2,4,7,11/)
+      CALL BLAS_matvec('L','T','N',dx(1:10),ia2(1:5),ja2(1:10),dx(11:14))
+      ASSERT(ALL(dx(11:14) .APPROXEQA. dx(15:18)),'CALL BLAS_matvec(''L'',''T'',''N'',da,ia,ja,dx')
+      FINFO() 'Calculated:',dx(11:14),' Solution:',dx(15:18)
     ENDSUBROUTINE testBLAS2
 !
 !-------------------------------------------------------------------------------

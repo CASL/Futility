@@ -222,6 +222,18 @@ MODULE BLAS2
     !> @copybrief BLAS2::dcsrmv_noALPHABETANNNZ
     !> @copydetails BLAS2::dcsrmv_noALPHABETANNNZ
     MODULE PROCEDURE dcsrmv_noALPHABETANNNZ
+    !> @copybrief BLAS2::strsv_all
+    !> @copydetails BLAS2::strsv_all
+    MODULE PROCEDURE strsv_all
+    !> @copybrief BLAS2::dtrsv_all
+    !> @copydetails BLAS2::dtrsv_all
+    MODULE PROCEDURE dtrsv_all
+    !> @copybrief BLAS2::sstrsv_all
+    !> @copydetails BLAS2::sstrsv_all
+    MODULE PROCEDURE strsv_all_sparse
+    !> @copybrief BLAS2::dstrsv_all
+    !> @copydetails BLAS2::dstrsv_all
+    MODULE PROCEDURE dtrsv_all_sparse
   ENDINTERFACE BLAS_matvec
 !
 !===============================================================================
@@ -3511,15 +3523,15 @@ MODULE BLAS2
 !> the code available on http://netlib.org/blas/strsv.f but has some minor
 !> modifications. The error checking is somewhat different.
 !>
-    PURE SUBROUTINE strsv_all(uplo,trans,diag,n,a,lda,x,incx)
+    PURE SUBROUTINE strsv_all(uplo,trans,diag,a,x)
       CHARACTER(LEN=1),INTENT(IN) :: uplo
       CHARACTER(LEN=1),INTENT(IN) :: trans
       CHARACTER(LEN=1),INTENT(IN) :: diag
-      INTEGER(SIK),INTENT(IN) :: n
-      INTEGER(SIK),INTENT(IN) :: lda
-      REAL(SSK),INTENT(IN) :: a(lda,*)
-      REAL(SSK),INTENT(INOUT) :: x(*)
-      INTEGER(SIK),INTENT(IN) :: incx
+      REAL(SSK),INTENT(IN) :: a(:,:)
+      REAL(SSK),INTENT(INOUT) :: x(:)
+      INTEGER(SIK) :: incx
+      INTEGER(SIK) :: lda
+      INTEGER(SIK) :: n
 
 #ifdef HAVE_BLAS
       INTERFACE
@@ -3534,6 +3546,9 @@ MODULE BLAS2
           INTEGER,INTENT(IN) :: incx
         ENDSUBROUTINE strsv
       ENDINTERFACE
+      n=SIZE(a,DIM=2)
+      lda=SIZE(a,DIM=1)
+      incx=1_SIK
       CALL strsv(uplo,trans,diag,n,a,lda,x,incx)
 #else
       LOGICAL(SBK) :: ltrans, nounit
@@ -3542,7 +3557,9 @@ MODULE BLAS2
       REAL(SSK),PARAMETER :: ZERO=0.0_SSK
       INTRINSIC MAX
     
-      IF(n > 0 .AND. incx /= 0 .AND. lda<MAX(1,N) .AND. &
+      n=SIZE(a,DIM=2)
+      incx=1_SIK
+      IF(n > 0 .AND. incx /= 0 .AND. &
           (trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
             trans == 'n' .OR. trans == 'N') .AND. &
           (uplo == 'u' .OR. uplo == 'U' .OR. uplo == 'l' .OR. uplo == 'L') .AND. &
@@ -3686,15 +3703,15 @@ MODULE BLAS2
 !> the code available on http://netlib.org/blas/strsv.f but has some minor
 !> modifications. The error checking is somewhat different.
 !>
-    PURE SUBROUTINE dtrsv_all(uplo,trans,diag,n,a,lda,x,incx)
+    PURE SUBROUTINE dtrsv_all(uplo,trans,diag,a,x)
       CHARACTER(LEN=1),INTENT(IN) :: uplo
       CHARACTER(LEN=1),INTENT(IN) :: trans
       CHARACTER(LEN=1),INTENT(IN) :: diag
-      INTEGER(SIK),INTENT(IN) :: n
-      INTEGER(SIK),INTENT(IN) :: lda
-      REAL(SDK),INTENT(IN) :: a(lda,*)
-      REAL(SDK),INTENT(INOUT) :: x(*)
-      INTEGER(SIK),INTENT(IN) :: incx
+      REAL(SDK),INTENT(IN) :: a(:,:)
+      REAL(SDK),INTENT(INOUT) :: x(:)
+      INTEGER(SIK) :: incx
+      INTEGER(SIK) :: lda
+      INTEGER(SIK) :: n
 
 #ifdef HAVE_BLAS
       INTERFACE
@@ -3709,6 +3726,9 @@ MODULE BLAS2
           INTEGER,INTENT(IN) :: incx
         ENDSUBROUTINE dtrsv
       ENDINTERFACE
+      n=SIZE(a,DIM=2)
+      lda=SIZE(a,DIM=1)
+      incx=1_SIK
       CALL dtrsv(uplo,trans,diag,n,a,lda,x,incx)
 #else
       LOGICAL(SBK) :: ltrans, nounit
@@ -3717,13 +3737,20 @@ MODULE BLAS2
       REAL(SDK),PARAMETER :: ZERO=0.0_SSK
       INTRINSIC MAX
     
-      IF(n > 0 .AND. incx /= 0 .AND. lda<MAX(1,N) .AND. &
+      n=SIZE(a,DIM=2)
+      lda=SIZE(a,DIM=1)
+      incx=1_SIK
+      IF(n > 0 .AND. incx /= 0 .AND. lda >= MAX(1,N) .AND. &
           (trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
             trans == 'n' .OR. trans == 'N') .AND. &
           (uplo == 'u' .OR. uplo == 'U' .OR. uplo == 'l' .OR. uplo == 'L') .AND. &
           (diag == 't' .OR. diag == 'T' .OR. diag == 'n' .OR. diag == 'N')) THEN
 
-        IF (diag == 'n' .OR. diag == 'N') nounit=.TRUE.
+        IF (diag == 'n' .OR. diag == 'N') THEN
+          nounit=.TRUE.
+        ELSE
+          nounit=.FALSE.
+        ENDIF
  
         IF (incx<=0) THEN
             kx = 1 - (n-1)*incx
@@ -3841,5 +3868,213 @@ MODULE BLAS2
 
 #endif
     ENDSUBROUTINE dtrsv_all
+!
+!-------------------------------------------------------------------------------
+!> @brief Subroutine solves a triangular matrix linear system.
+!> @param uplo single character input indicating if an upper (U) or lower (L) 
+!>        maxtrix is stored in @c A
+!> @param trans single character input indicating whether or not to use the 
+!>        transpose of @c A
+!> @param diag single character input indicating whether or not a unity
+!>        diagonal is used
+!> @param n the size of the dimension of @c A (number of rows and columns)
+!> @param A the double-precision matrix multiply with @c x
+!> @param lda the size of the leading (first) dimension of @c A
+!> @param x the double-precision vector to multiply with @c A
+!> @param incx the increment to use when looping over elements in @c x
+!>
+!> If an external BLAS library is available at link time then that library
+!> routine that gets called, otherwise the supplied code is used. It is based on
+!> the code available on http://netlib.org/blas/strsv.f but has some minor
+!> modifications. The error checking is somewhat different.
+!>
+    PURE SUBROUTINE strsv_all_sparse(uplo,trans,diag,a,ia,ja,x)
+      CHARACTER(LEN=1),INTENT(IN) :: uplo
+      CHARACTER(LEN=1),INTENT(IN) :: trans
+      CHARACTER(LEN=1),INTENT(IN) :: diag
+      REAL(SSK),INTENT(IN) :: a(:)
+      INTEGER(SIK),INTENT(IN) :: ia(:)
+      INTEGER(SIK),INTENT(IN) :: ja(SIZE(a))
+      REAL(SSK),INTENT(INOUT) :: x(SIZE(ia)-1)
+      INTEGER(SIK) :: n
+
+!#ifdef HAVE_BLAS
+!  Need to track down the BLAS routine for this, if it exists, and insert it here
+!#else
+      LOGICAL(SBK) :: ltrans, nounit
+      INTEGER(SIK) :: i,ix,j,jx,kx
+      REAL(SSK) :: temp
+      REAL(SSK),PARAMETER :: ZERO=0.0_SSK
+      INTRINSIC MAX
+    
+      n=SIZE(x)
+      IF((trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
+           trans == 'n' .OR. trans == 'N') .AND. &
+          (uplo == 'u' .OR. uplo == 'U' .OR. uplo == 'l' .OR. uplo == 'L') .AND. &
+          (diag == 't' .OR. diag == 'T' .OR. diag == 'n' .OR. diag == 'N')) THEN
+
+        IF (diag == 'n' .OR. diag == 'N') nounit=.TRUE.
+ 
+        IF (trans == 'n' .OR. trans == 'N') THEN  ! Form  x := inv( A )*x.
+          IF (uplo == 'u' .OR. uplo == 'U') THEN  ! Upper triangular
+            IF((ANY(ia <= 0)) .AND. nounit) n=0 ! In case a row does not have any elements
+            DO i=n,1,-1
+              DO j=ia(i+1)-1,ia(i),-1
+                IF(ja(j) <= i) EXIT
+                x(i)=x(i)-a(j)*x(ja(j))
+              ENDDO
+              IF(ja(j) == i) THEN
+                x(i)=x(i)/a(j)
+              ELSEIF(nounit) THEN
+                x(i)=0.0_SDK
+              ENDIF
+            ENDDO
+          ELSE  ! Lower Triangular
+            IF((ANY(ia <= 0)) .AND. nounit) n=0 ! In case a row does not have any elements
+            DO i=1,n
+              DO j=ia(i),ia(i+1)-1
+                IF(ja(j) >= i) EXIT
+                x(i)=x(i)-a(j)*x(ja(j))
+              ENDDO
+              IF(ja(j) == i) THEN
+                x(i)=x(i)/a(j)
+              ELSEIF(nounit) THEN
+                x(i)=0.0_SDK
+              ENDIF
+            ENDDO
+          ENDIF
+        ELSE  ! Form  x := inv( A**T )*x.
+          IF (uplo == 'u' .OR. uplo == 'U') THEN
+            DO j = 1,SIZE(ia)-1
+              IF(.NOT.(x(j) .APPROXEQA. ZERO)) THEN
+                IF (nounit) x(j)=x(j)/a(ia(j))
+                temp=x(j)
+                DO i=ia(j)+1,ia(j+1)-1
+                  IF(ja(i) <= j) CYCLE
+                  x(ja(i))=x(ja(i))-temp*a(i)
+                ENDDO
+              ENDIF
+            ENDDO
+          ELSE  ! Lower Triangular
+            DO i=n,1,-1
+              IF(.NOT.(x(i) .APPROXEQA. ZERO)) THEN
+                IF(nounit) x(i)=x(i)/a(ia(i+1)-1)
+                temp=x(i)
+                DO j=ia(i+1)-2,ia(i),-1
+                  IF(ja(j) > i) CYCLE
+                  x(ja(j))=x(ja(j))-a(j)*temp
+                ENDDO
+              ENDIF
+            ENDDO
+          ENDIF
+        ENDIF
+      ENDIF
+
+!#endif
+    ENDSUBROUTINE strsv_all_sparse
+!
+!-------------------------------------------------------------------------------
+!> @brief Subroutine solves a triangular matrix linear system.
+!> @param uplo single character input indicating if an upper (U) or lower (L) 
+!>        maxtrix is stored in @c A
+!> @param trans single character input indicating whether or not to use the 
+!>        transpose of @c A
+!> @param diag single character input indicating whether or not a unity
+!>        diagonal is used
+!> @param n the size of the dimension of @c A (number of rows and columns)
+!> @param A the double-precision matrix multiply with @c x
+!> @param lda the size of the leading (first) dimension of @c A
+!> @param x the double-precision vector to multiply with @c A
+!> @param incx the increment to use when looping over elements in @c x
+!>
+!> If an external BLAS library is available at link time then that library
+!> routine that gets called, otherwise the supplied code is used. It is based on
+!> the code available on http://netlib.org/blas/strsv.f but has some minor
+!> modifications. The error checking is somewhat different.
+!>
+    PURE SUBROUTINE dtrsv_all_sparse(uplo,trans,diag,a,ia,ja,x)
+      CHARACTER(LEN=1),INTENT(IN) :: uplo
+      CHARACTER(LEN=1),INTENT(IN) :: trans
+      CHARACTER(LEN=1),INTENT(IN) :: diag
+      REAL(SDK),INTENT(IN) :: a(:)
+      INTEGER(SIK),INTENT(IN) :: ia(:)
+      INTEGER(SIK),INTENT(IN) :: ja(SIZE(a))
+      REAL(SDK),INTENT(INOUT) :: x(SIZE(ia)-1)
+
+!#ifdef HAVE_BLAS
+!  Need to track down the BLAS routine for this, if it exists, and insert it here
+!#else
+      LOGICAL(SBK) :: ltrans, nounit
+      INTEGER(SIK) :: i,ix,j,jx,kx,n
+      REAL(SDK) :: temp
+      REAL(SDK),PARAMETER :: ZERO=0.0_SDK
+      INTRINSIC MAX
+    
+      n=SIZE(x)
+      IF((trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
+           trans == 'n' .OR. trans == 'N') .AND. &
+          (uplo == 'u' .OR. uplo == 'U' .OR. uplo == 'l' .OR. uplo == 'L') .AND. &
+          (diag == 't' .OR. diag == 'T' .OR. diag == 'n' .OR. diag == 'N')) THEN
+
+        IF (diag == 'n' .OR. diag == 'N') THEN
+          nounit=.TRUE.
+        ELSE
+          nounit=.FALSE.
+        ENDIF
+ 
+        IF (trans == 'n' .OR. trans == 'N') THEN  ! Form  x := inv( A )*x.
+          IF (uplo == 'u' .OR. uplo == 'U') THEN  ! Upper triangular
+            IF((ANY(ia <= 0)) .AND. nounit) n=0 ! In case a row does not have any elements
+            DO i=n,1,-1
+              DO j=ia(i+1)-1,ia(i),-1
+                IF(ja(j) <= i) EXIT
+                x(i)=x(i)-a(j)*x(ja(j))
+              ENDDO
+              IF((ja(j) == i) .AND. nounit) THEN
+                x(i)=x(i)/a(j)
+              ENDIF
+            ENDDO
+          ELSE  ! Lower Triangular
+            IF((ANY(ia <= 0)) .AND. nounit) n=0 ! In case a row does not have any elements
+            DO i=1,n
+              DO j=ia(i),ia(i+1)-1
+                IF(ja(j) >= i) EXIT
+                x(i)=x(i)-a(j)*x(ja(j))
+                IF(j == SIZE(ja)) EXIT
+              ENDDO
+              IF((ja(j) == i) .AND. nounit) THEN
+                x(i)=x(i)/a(j)
+              ENDIF
+            ENDDO
+          ENDIF
+        ELSE  ! Form  x := inv( A**T )*x.
+          IF (uplo == 'u' .OR. uplo == 'U') THEN
+            DO j = 1,SIZE(ia)-1
+              IF(.NOT.(x(j) .APPROXEQA. ZERO)) THEN
+                IF (nounit) x(j)=x(j)/a(ia(j))
+                temp=x(j)
+                DO i=ia(j)+1,ia(j+1)-1
+                  IF(ja(i) <= j) CYCLE
+                  x(ja(i))=x(ja(i))-temp*a(i)
+                ENDDO
+              ENDIF
+            ENDDO
+          ELSE  ! Lower Triangular
+            DO i=n,1,-1
+              IF(.NOT.(x(i) .APPROXEQA. ZERO)) THEN
+                IF(nounit) x(i)=x(i)/a(ia(i+1)-1)
+                temp=x(i)
+                DO j=ia(i+1)-2,ia(i),-1
+                  IF(ja(j) > i) CYCLE
+                  x(ja(j))=x(ja(j))-a(j)*temp
+                ENDDO
+              ENDIF
+            ENDDO
+          ENDIF
+        ENDIF
+      ENDIF
+
+!#endif
+    ENDSUBROUTINE dtrsv_all_sparse
 !
 ENDMODULE BLAS2
