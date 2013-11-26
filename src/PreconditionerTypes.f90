@@ -89,12 +89,13 @@ MODULE PreconditionerTypes
       PROCEDURE,PASS :: init => init_LU_PreCondType
       PROCEDURE,PASS :: clear => clear_LU_PreCondType
       PROCEDURE(precond_LU_absintfc),DEFERRED,PASS :: setup
-      PROCEDURE,PASS :: apply => apply_LU_PreCondType
+      PROCEDURE(precond_applyLU_absintfc),DEFERRED,PASS :: apply
   ENDTYPE LU_PreCondType
 
   TYPE,EXTENDS(LU_PreCondType) :: ILU_PreCondType
     CONTAINS
       PROCEDURE,PASS :: setup => setup_ILU_PreCondType
+      PROCEDURE,PASS :: apply => apply_ILU_PreCondType
   ENDTYPE ILU_PreCondType
   
   TYPE,EXTENDS(LU_PreCondType) :: BILU_PreCondType
@@ -104,6 +105,7 @@ MODULE PreconditionerTypes
     INTEGER(SIK) :: BILUType  !for 2D, 3D and other variants
     CONTAINS
       PROCEDURE,PASS :: setup => setup_BILU_PreCondType
+      PROCEDURE,PASS :: apply => apply_BILU_PreCondType
   ENDTYPE BILU_PreCondType
 
   ABSTRACT INTERFACE
@@ -120,6 +122,12 @@ MODULE PreconditionerTypes
       CLASS(PreconditionerType),INTENT(INOUT) :: PC
       CLASS(VectorType),INTENT(INOUT) :: v
     ENDSUBROUTINE precond_apply_absintfc
+
+    SUBROUTINE precond_applyLU_absintfc(PC,v)
+      IMPORT :: LU_PreCondType,VectorType
+      CLASS(LU_PreCondType),INTENT(INOUT) :: PC
+      CLASS(VectorType),INTENT(INOUT) :: v
+    ENDSUBROUTINE precond_applyLU_absintfc
   ENDINTERFACE
 
   ABSTRACT INTERFACE
@@ -356,11 +364,11 @@ MODULE PreconditionerTypes
 !> @param pList the parameter list
 !>
 !> @param solver The linear solver to act on
-    SUBROUTINE apply_LU_PreCondType(PC,v)
-      CLASS(LU_PrecondType),INTENT(INOUT) :: PC
+    SUBROUTINE apply_ILU_PreCondType(PC,v)
+      CLASS(ILU_PrecondType),INTENT(INOUT) :: PC
       CLASS(Vectortype),INTENT(INOUT) :: v
 
-      CHARACTER(LEN=*),PARAMETER :: myName='apply_LU_PreCondType'
+      CHARACTER(LEN=*),PARAMETER :: myName='apply_ILU_PreCondType'
       LOGICAL(SBK) :: localalloc
 
       localalloc=.FALSE.
@@ -393,7 +401,48 @@ MODULE PreconditionerTypes
               ' - Vector type is not support by this PreconditionerType.')
         ENDSELECT
       ENDIF
-    ENDSUBROUTINE apply_LU_PreCondType
+    ENDSUBROUTINE apply_ILU_PreCondType
+!-------------------------------------------------------------------------------
+!> @brief Applies the Block LU Decomposition
+!> @param PC the preconditioner
+!> @param v the vector to operate on
+!>
+    SUBROUTINE apply_BILU_PreCondType(PC,v)
+      CHARACTER(LEN=*),PARAMETER :: myName='apply_BILU_PreCondType'
+      CLASS(BILU_PrecondType),INTENT(INOUT) :: PC
+      CLASS(Vectortype),INTENT(INOUT) :: v
+
+      LOGICAL(SBK) :: localalloc
+
+      localalloc=.FALSE.
+      IF(.NOT.ASSOCIATED(ePreCondType)) THEN
+        ALLOCATE(ePreCondType)
+        localalloc=.TRUE.
+      ENDIF
+
+      IF(.NOT.(PC%isInit)) THEN
+        CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+          ' - Preconditioner is not initialized.')
+      ELSEIF(.NOT.(v%isInit)) THEN
+        CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+          ' - VectorType is not initialized.')
+      ELSE
+        SELECTTYPE(v)
+          CLASS IS(PETScVectorType)
+            SELECTTYPE(L => PC%L)
+              CLASS IS(PETScMatrixType)
+                
+              CLASS DEFAULT
+                CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+                  ' - Preconditioner Matrix type is not supported!')
+            ENDSELECT
+          CLASS DEFAULT
+            CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+              ' - Vector type is not support by this PreconditionerType.')
+        ENDSELECT
+      ENDIF
+
+    ENDSUBROUTINE apply_BILU_PreCondType
 !
 !-------------------------------------------------------------------------------
 !> @brief Initializes the Linear Solver Type with a parameter list
