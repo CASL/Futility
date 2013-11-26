@@ -372,11 +372,7 @@ MODULE LinearSolverTypes
         ENDSELECT
 
         !print status of TPL post-heirarchy
-        IF(ReqTPLType == TPLType) THEN
-          CALL eLinearSolverType%raiseWarning(modName//'::'// &
-            myName//' - Requested TPL '//TRIM(ReqTPLTypeStr)// &
-            ' is enabled and will be used.')
-        ELSE
+        IF(ReqTPLType /= TPLType) THEN
           CALL eLinearSolverType%raiseWarning(modName//'::'// &
             myName//' - Requested TPL '//TRIM(ReqTPLTypeStr)// &
               ' is not enabled, will use '//TRIM(TPLTypeStr)//' solvers instead.')
