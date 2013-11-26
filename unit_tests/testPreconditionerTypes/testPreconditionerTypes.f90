@@ -34,6 +34,10 @@ PROGRAM testPreconditionerTypes
 #include <finclude/petsc.h>
 #undef IS
   PetscErrorCode  :: ierr
+#else
+#ifdef HAVE_MPI
+  INCLUDE 'mpif.h'
+#endif
 #endif
   
   TYPE(ExceptionHandlerType),TARGET :: e
