@@ -559,6 +559,7 @@ MODULE LinearSolverTypes
               CASE('ILU')
                 ALLOCATE(ILU_PreCondtype :: solver%PreCondType)
                 CALL solver%PreCondType%init(solver%A)
+                CALL solver%PreCondType%setup()
               CASE('BILU')
             ENDSELECT
         ENDIF
@@ -622,6 +623,10 @@ MODULE LinearSolverTypes
 
 !      CALL solver%MPIparallelEnv%clear()
 !      CALL solver%OMPparallelEnv%clear()
+      IF(ALLOCATED(solver%PreCondType)) THEN
+        CALL solver%PreCondType%clear()
+        DEALLOCATE(solver%PrecondType)
+      ENDIF
       IF(ALLOCATED(solver%A)) THEN
         CALL solver%A%clear()
         DEALLOCATE(solver%A)
@@ -1375,12 +1380,12 @@ MODULE LinearSolverTypes
       TYPE(RealVectorType) :: u
       INTEGER(SIK) :: j,k,m,n,it
       TYPE(ParamType) :: pList
-      LOGICAL(SBK) :: PreCond=.FALSE.
+      LOGICAL(SBK) :: PreCond
       
+      PreCond=.FALSE.
       IF(ALLOCATED(solver%PreCondType)) THEN
         IF(solver%PreCondType%isInit) PreCond=.TRUE.
       ENDIF
-      IF(PreCond) WRITE(*,*) 'Preconditioning is being used.'
       n=0
       !Set parameter list for vector
       CALL pList%add('VectorType -> n',solver%A%n)
@@ -1417,9 +1422,9 @@ MODULE LinearSolverTypes
         DO it=1,m
           CALL BLAS_matvec(THISMATRIX=solver%A,X=v(:,it),BETA=0.0_SRK,Y=w)
           IF(PreCond) THEN
-            u%b=v(:,it)
+            u%b=w
             CALL solver%PreCondType%apply(u)
-            v(:,it)=u%b
+            w=u%b
           ENDIF
           h=BLAS_dot(n,w,1,v(:,1),1)
           w=w-h*v(:,1)
