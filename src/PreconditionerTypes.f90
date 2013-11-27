@@ -250,26 +250,46 @@ MODULE PreconditionerTypes
               ALLOCATE(SparseMatrixType :: PC%L)
               ALLOCATE(SparseMatrixType :: PC%U)
 
-              ! Loop over A to get initialization data for L and U
-              nU=0; nL=0  !number of rows
-              nnzU=0; nnzL=0 !number of non-zero elements
-              DO row=1,SIZE(mat%ia)-1
-                DO j=mat%ia(row),mat%ia(row+1)-1
-                  col=mat%ja(j)
-                  ! This may be redundant since mat is sparse, but be safe for now
-                  CALL mat%get(row,col,val)
-                  IF(.NOT.(val .APPROXEQA. 0.0_SRK)) THEN
-                    IF(col == row) THEN
-                      nnzU=nnzU+1 ! This location is in U
-                    ELSEIF(col > row) THEN
-                      nnzU=nnzU+1 !This location is in U
-                    ELSE
-                      nnzL=nnzL+1 !This location is in L
-                    ENDIF
-                  ENDIF
-                ENDDO
-                nnzL=nnzL+1
-              ENDDO
+              SELECTTYPE(PC)
+                TYPE IS(ILU_PrecondType)
+                  ! Loop over A to get initialization data for L and U
+                  nU=0; nL=0  !number of rows
+                  nnzU=0; nnzL=0 !number of non-zero elements
+                  DO row=1,SIZE(mat%ia)-1
+                    DO j=mat%ia(row),mat%ia(row+1)-1
+                      col=mat%ja(j)
+                      ! This may be redundant since mat is sparse, but be safe for now
+                      CALL mat%get(row,col,val)
+                      IF(.NOT.(val .APPROXEQA. 0.0_SRK)) THEN
+                        IF(col == row) THEN
+                          nnzU=nnzU+1
+                          nnzL=nnzL+1
+                        ELSEIF(col > row) THEN
+                          nnzU=nnzU+1 !This location is in U
+                        ELSE
+                          nnzL=nnzL+1 !This location is in L
+                        ENDIF
+                      ENDIF
+                    ENDDO
+                  ENDDO
+                TYPE IS(BILU_PrecondType)
+                  ! Loop over A to get initialization data for L and U
+                  nnzU=0
+                  nnzL=0
+                  DO row=1,SIZE(mat%ia)-1
+                    DO j=mat%ia(row),mat%ia(row+1)-1
+                      col=mat%ja(j)
+                      CALL mat%get(row,col,val)
+                      IF(.NOT.(val .APPROXEQA. 0.0_SRK)) THEN
+                        IF(col > row+PC%Ngrp*PC%Npin-1) THEN
+                          nnzU=nnzU+1
+                        ENDIF
+                      ENDIF
+                    ENDDO
+                  ENDDO
+                  nnzL=mat%nnz-nnzU
+                  nnzU=nnzU+mat%n
+              ENDSELECT
                 
               ! Initialize L and U
               nU=mat%n
@@ -281,26 +301,52 @@ MODULE PreconditionerTypes
               CALL PL%set('MatrixType->nnz',nnzL)
               CALL PC%L%init(PL)
               CALL PL%clear()
-                    
-              SELECTTYPE(L => PC%L); TYPE IS(SparseMatrixType)
-                SELECTTYPE(U => PC%U); TYPE IS(SparseMatrixType)
-                  ! Set the shape
-                  DO row=1,SIZE(mat%ia)-1
-                    DO j=mat%ia(row),mat%ia(row+1)-1
-                      col=mat%ja(j)
-                      ! This may be redundant since mat is sparse, but be safe for now
-                      CALL mat%get(row,col,val)
-                      IF(.NOT.(val .APPROXEQA. 0.0_SRK)) THEN
-                        IF(col >= row) THEN
-                          CALL U%setShape(row,col,val)
-                        ELSE
-                          CALL L%setShape(row,col,val)
-                        ENDIF
-                      ENDIF
-                    ENDDO
-                    CALL L%setShape(row,row,1.0_SRK)
-                  ENDDO
-                ENDSELECT
+
+              SELECTTYPE(PC)
+                TYPE IS(ILU_PrecondType)  
+                  SELECTTYPE(L => PC%L); TYPE IS(SparseMatrixType)
+                    SELECTTYPE(U => PC%U); TYPE IS(SparseMatrixType)
+                      ! Set the shape
+                      DO row=1,SIZE(mat%ia)-1
+                        DO j=mat%ia(row),mat%ia(row+1)-1
+                          col=mat%ja(j)
+                          ! This may be redundant since mat is sparse, but be safe for now
+                          CALL mat%get(row,col,val)
+                          IF(.NOT.(val .APPROXEQA. 0.0_SRK)) THEN
+                            IF(col >= row) THEN
+                              CALL U%setShape(row,col,val)
+                            ELSE
+                              CALL L%setShape(row,col,val)
+                            ENDIF
+                          ENDIF
+                        ENDDO
+                        CALL L%setShape(row,row,1.0_SRK)
+                      ENDDO
+                    ENDSELECT
+                  ENDSELECT
+                TYPE IS(BILU_PrecondType) 
+                  SELECTTYPE(L => PC%L); TYPE IS(SparseMatrixType)
+                    SELECTTYPE(U => PC%U); TYPE IS(SparseMatrixType)
+                      ! Set the shape
+                      DO row=1,SIZE(mat%ia)-1
+                        DO j=mat%ia(row),mat%ia(row+1)-1
+                          col=mat%ja(j)
+                          ! This may be redundant since mat is sparse, but be safe for now
+                          CALL mat%get(row,col,val)
+                          IF(.NOT.(val .APPROXEQA. 0.0_SRK)) THEN
+                            IF(col >= row+PC%Ngrp*PC%Npin-1) THEN
+                              CALL U%setShape(row,col,0.0_SRK)
+                            ELSEIF(row == col) THEN
+                              CALL U%setShape(row,row,0.0_SRK)
+                              CALL L%setShape(row,row,0.0_SRK)
+                            ELSE
+                              CALL L%setShape(row,col,0.0_SRK)
+                            ENDIF
+                          ENDIF
+                        ENDDO
+                      ENDDO
+                    ENDSELECT
+                  ENDSELECT 
               ENDSELECT
                 
               IF(PC%L%isInit .AND. PC%U%isInit) THEN
@@ -328,7 +374,6 @@ MODULE PreconditionerTypes
                   CALL U%init(PL)
                   CALL L%init(PL)
                   CALL PL%clear()
-                  
                 ENDSELECT
               ENDSELECT
 
@@ -652,7 +697,6 @@ MODULE PreconditionerTypes
           tmp0DinvM=0.0_SRK
           
           DO ipl=1,Z
-          
             d_stt=(ipl-2)*pc%nPin*pc%nGrp+1
             c_stt=(ipl-1)*pc%nPin*pc%nGrp+1
             
@@ -760,7 +804,6 @@ MODULE PreconditionerTypes
               ENDDO
               local_r=local_r+1
             ENDDO
-    
             
             !LU M_k (2)  ...tmpM
             DO iy=1,Y
@@ -941,7 +984,7 @@ MODULE PreconditionerTypes
               !determine 1D inverse (eventually ABI)
               !CALL direct_inv(tmp1D,tmp1DinvM)
               CALL ABI(L1,U1,F1,pc%Ngrp,tmp1DinvM)
-              F2(c1_stt:c1_stt+pc%nGrp-1,c1_stt:c1_stt+pc%nGrp-1)=tmp1DinvM
+              F2(c1_stt:c1_stt+X*pc%nGrp-1,c1_stt:c1_stt+X*pc%nGrp-1)=tmp1DinvM
                 
             ENDDO
             
@@ -949,9 +992,7 @@ MODULE PreconditionerTypes
             !CALL direct_inv(tmpM,tmp2DinvM)
             CALL ABI(L2,U2,F2,X*pc%Ngrp,tmp2DinvM)
             
-            
           ENDDO
-          
           DEALLOCATE(tmp2DU,tmp2DinvM)
           
         ENDIF
