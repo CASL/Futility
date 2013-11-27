@@ -209,6 +209,8 @@ MODULE LinearSolverTypes
     REAL(SRK) :: convTol=1.0E-5_SRK
     !> Actual residual converged to
     REAL(SRK) :: residual=0._SRK
+    !> Preconditioner to be used by LinearSolverTyope
+    CLASS(PreconditionerType),ALLOCATABLE :: PreCondType
 !
 !List of Type Bound Procedures
     CONTAINS 
@@ -230,6 +232,9 @@ MODULE LinearSolverTypes
       !> @copybrief LinearSolverTypes::setX0_LinearSolverType_Iterative
       !> @copydetails LinearSolverTypes::setX0_LinearSolverType_Iterative
       PROCEDURE,PASS :: setX0 => setX0_LinearSolverType_Iterative
+      !> @copybrief LinearSolverTypes::init_PreCond_LinearSolverType_Iterative
+      !> @copydetails LinearSolverTypes::init_PreCond_LinearSolverType_Iterative
+      PROCEDURE,PASS :: initPC => init_PreCond_LinearSolverType_Iterative
   ENDTYPE LinearSolverType_Iterative
   
   !> Logical flag to check whether the required and optional parameter lists
@@ -271,7 +276,7 @@ MODULE LinearSolverTypes
       INTEGER(SIK) :: i,n
       INTEGER(SIK) :: matType,ReqTPLType,TPLType,solverMethod
       INTEGER(SIK) :: MPI_Comm_ID,numberOMP
-      CHARACTER(LEN=256) :: timerName,ReqTPLTypeStr,TPLTypeStr
+      CHARACTER(LEN=256) :: timerName,ReqTPLTypeStr,TPLTypeStr,PreCondType
       LOGICAL(SBK) :: localalloc
 #ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: ierr
@@ -305,6 +310,9 @@ MODULE LinearSolverTypes
       vecxPList=pListPtr
       CALL validParams%get('LinearSolverType->b->VectorType',pListPtr)
       vecbPList=pListPtr
+      ! Check for Preconditioner Data
+      IF(validParams%has('LinearSolverType->PreCondType')) &
+        CALL validParams%get('LinearSolvertype->PreCondType',PreCondType)
       !add mpi communicator to parameter lists
       CALL matPList%add('MatrixType->MPI_Comm_ID',MPI_Comm_ID)
       CALL vecxPList%add('VectorType->MPI_Comm_ID',MPI_Comm_ID)
@@ -532,6 +540,30 @@ MODULE LinearSolverTypes
       CALL matPList%clear()
       IF(localalloc) DEALLOCATE(eLinearSolverType)
     ENDSUBROUTINE init_LinearSolverType_Base
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes preconditioner for Iteartive Linear Solver Type
+!> @param solver The linear solver to act on
+!> @param PreCondType The preconditioner method
+!>
+!> This routine initializes the precondtioner of type PreCondType
+!>
+    SUBROUTINE init_Precond_LinearSolverType_Iterative(solver,PreCondType)
+      CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
+      CHARACTER(LEN=*),INTENT(IN) :: PreCondType
+
+      IF(solver%isinit) THEN
+        IF(solver%A%isinit) THEN
+          ! Allocate and Initiailize PreconditionerType
+            SELECTCASE(PreCondType)
+              CASE('ILU')
+                ALLOCATE(ILU_PreCondtype :: solver%PreCondType)
+                CALL solver%PreCondType%init(solver%A)
+              CASE('BILU')
+            ENDSELECT
+        ENDIF
+      ENDIF
+    ENDSUBROUTINE init_PreCond_LinearSolverType_Iterative
 !
 !-------------------------------------------------------------------------------
 !> @brief Clears the Direct Linear Solver Type
@@ -1343,7 +1375,12 @@ MODULE LinearSolverTypes
       TYPE(RealVectorType) :: u
       INTEGER(SIK) :: j,k,m,n,it
       TYPE(ParamType) :: pList
+      LOGICAL(SBK) :: PreCond=.FALSE.
       
+      IF(ALLOCATED(solver%PreCondType)) THEN
+        IF(solver%PreCondType%isInit) PreCond=.TRUE.
+      ENDIF
+      IF(PreCond) WRITE(*,*) 'Preconditioning is being used.'
       n=0
       !Set parameter list for vector
       CALL pList%add('VectorType -> n',solver%A%n)
@@ -1352,6 +1389,7 @@ MODULE LinearSolverTypes
       CALL u%init(pList)
       CALL pList%clear()
       CALL solver%getResidual(u)
+      IF(PreCond) CALL solver%PreCondType%apply(u)
       CALL LNorm(u%b,2,beta)
       solver%iters=0
 
@@ -1378,6 +1416,11 @@ MODULE LinearSolverTypes
         !Iterate on solution
         DO it=1,m
           CALL BLAS_matvec(THISMATRIX=solver%A,X=v(:,it),BETA=0.0_SRK,Y=w)
+          IF(PreCond) THEN
+            u%b=v(:,it)
+            CALL solver%PreCondType%apply(u)
+            v(:,it)=u%b
+          ENDIF
           h=BLAS_dot(n,w,1,v(:,1),1)
           w=w-h*v(:,1)
           t=h
