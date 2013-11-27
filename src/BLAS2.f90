@@ -3898,9 +3898,6 @@ MODULE BLAS2
       REAL(SSK),INTENT(INOUT) :: x(SIZE(ia)-1)
       INTEGER(SIK) :: n
 
-!#ifdef HAVE_BLAS
-!  Need to track down the BLAS routine for this, if it exists, and insert it here
-!#else
       LOGICAL(SBK) :: ltrans, nounit
       INTEGER(SIK) :: i,ix,j,jx,kx
       REAL(SSK) :: temp
@@ -3970,7 +3967,6 @@ MODULE BLAS2
         ENDIF
       ENDIF
 
-!#endif
     ENDSUBROUTINE strsv_all_sparse
 !
 !-------------------------------------------------------------------------------
@@ -4001,9 +3997,6 @@ MODULE BLAS2
       INTEGER(SIK),INTENT(IN) :: ja(SIZE(a))
       REAL(SDK),INTENT(INOUT) :: x(SIZE(ia)-1)
 
-!#ifdef HAVE_BLAS
-!  Need to track down the BLAS routine for this, if it exists, and insert it here
-!#else
       LOGICAL(SBK) :: ltrans, nounit
       INTEGER(SIK) :: i,ix,j,jx,kx,n
       REAL(SDK) :: temp
@@ -4074,7 +4067,6 @@ MODULE BLAS2
         ENDIF
       ENDIF
 
-!#endif
     ENDSUBROUTINE dtrsv_all_sparse
 !
 ENDMODULE BLAS2
