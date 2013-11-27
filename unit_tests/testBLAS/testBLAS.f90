@@ -2053,21 +2053,52 @@ PROGRAM testBLAS
       ENDIF
 
       !strsv_all
+      !Normal, lower triangular, non-unity diagonal
       sa(1:4,1:4)=RESHAPE((/1.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK, &
         0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/))
       sx(1:4)=1.0_SSK
-      sx(5:8)=(/1.000000_SSK,-0.500000_SSK,-0.1666667_SSK,-0.08333333_SSK/)
+      sx(5:8)=(/1.0000000000_SSK,-0.500000000_SSK,-0.16666666666667_SSK,-0.08333333333333_SSK/)
       CALL BLAS_matvec('L','N','N',sa(1:4,1:4),sx(1:4))
       ASSERT(ALL(sx(1:4) .APPROXEQA. sx(5:8)),'CALL BLAS_matvec(''L'',''N'',''N'',sa(1:4,1:4),sx(1:4)')
       FINFO() 'Solution: ',sx(5:8),'  Result: ',sx(1:4)
-      
+      !Increment > 1, lower triangular, non-unity diagonal
+      sa(1:4,1:4)=RESHAPE((/1.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK, &
+        0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/))
+      sx(9:16)=1.0_SSK
+      sx(5:8)=(/1.0000000000_SSK,-0.500000000_SSK,-0.16666666666667_SSK,-0.08333333333333_SSK/)
+      CALL BLAS_matvec('L','N','N',sa(1:4,1:4),sx(9:16),2_SIK)
+      ASSERT(ALL(sx(9:16:2) .APPROXEQA. sx(5:8)),'CALL BLAS_matvec(''L'',''N'',''N'',sa(1:4,1:4),sx(1:4),2')
+      FINFO() 'Solution: ',sx(5:8),'  Result: ',sx(9:16:2)
+      !Increment < 0, lower triangular, non-unity diagonal
+      sa(1:4,1:4)=RESHAPE((/1.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK, &
+        0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/))
+      sx(9:16)=1.0_SSK
+      sx(5:8)=(/1.0000000000_SSK,-0.500000000_SSK,-0.16666666666667_SSK,-0.08333333333333_SSK/)
+      CALL BLAS_matvec('L','N','N',sa(1:4,1:4),sx(9:16),-2_SIK)
+      ASSERT(ALL(sx(15:9:-2) .APPROXEQA. sx(5:8)),'CALL BLAS_matvec(''L'',''N'',''N'',sa(1:4,1:4),sx(1:4),-2')
+      FINFO() 'Solution: ',sx(5:8),'  Result: ',sx(15:9:-2)
+      !Transposed, upper triangular non-unity diagonal
       sa(1:4,1:4)=RESHAPE((/1.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK, &
         0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/),ORDER=(/2,1/))
       sx(1:4)=1.0_SSK
       CALL BLAS_matvec('U','T','N',sa(1:4,1:4),sx(1:4))
       ASSERT(ALL(sx(1:4) .APPROXEQA. sx(5:8)),'CALL BLAS_matvec(''U'',''T'',''N'',sa(1:4,1:4),sx(1:4)')
       FINFO() 'Solution: ',sx(5:8),'  Result: ',sx(1:4)
-
+      !Transposed, Incrememnt > 1, upper triangular, non-unity diagonal
+      sa(1:4,1:4)=RESHAPE((/1.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK, &
+        0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/),ORDER=(/2,1/))
+      sx(9:16)=1.0_SSK
+      CALL BLAS_matvec('U','T','N',sa(1:4,1:4),sx(9:16),2_SIK)
+      ASSERT(ALL(sx(9:16:2) .APPROXEQA. sx(5:8)),'CALL BLAS_matvec(''U'',''T'',''N'',sa(1:4,1:4),sx(1:4),2')
+      FINFO() 'Solution: ',sx(5:8),'  Result: ',sx(9:16:2)
+      !Transposed, Increment < 0, upper triangular, non-unity diagonal
+      sa(1:4,1:4)=RESHAPE((/1.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK, &
+        0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/),ORDER=(/2,1/))
+      sx(9:16)=1.0_SSK
+      CALL BLAS_matvec('U','T','N',sa(1:4,1:4),sx(9:16),-2_SIK)
+      ASSERT(ALL(sx(15:9:-2) .APPROXEQA. sx(5:8)),'CALL BLAS_matvec(''U'',''T'',''N'',sa(1:4,1:4),sx(1:4),-2')
+      FINFO() 'Solution: ',sx(5:8),'  Result: ',sx(15:9:-2)
+      !Normal, Upper triangular, non-unity diagonal
       sa(1:4,1:4)=RESHAPE((/1.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK, &
         0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/),ORDER=(/2,1/))
       sx(1:4)=1.0_SSK
@@ -2075,15 +2106,46 @@ PROGRAM testBLAS
       CALL BLAS_matvec('U','N','N',sa(1:4,1:4),sx(1:4))
       ASSERT(ALL(sx(1:4) .APPROXEQA. sx(5:8)),'CALL BLAS_matvec(''U'',''N'',''N'',sa(1:4,1:4),sx(1:4)')
       FINFO() 'Solution: ',sx(5:8),'  Result: ',sx(1:4)
-      
+      !Increment > 1, Upper triangular, non-unity diagonal
+      sa(1:4,1:4)=RESHAPE((/1.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK, &
+        0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/),ORDER=(/2,1/))
+      sx(9:16)=1.0_SSK
+      sx(5:8)=(/0.0000000_SSK,0.0000000_SSK,0.0000000_SSK,0.2500000_SSK/)
+      CALL BLAS_matvec('U','N','N',sa(1:4,1:4),sx(9:16),2_SIK)
+      ASSERT(ALL(sx(9:16:2) .APPROXEQA. sx(5:8)),'CALL BLAS_matvec(''U'',''N'',''N'',sa(1:4,1:4),sx(1:4),2')
+      FINFO() 'Solution: ',sx(5:8),'  Result: ',sx(9:16:2)
+      !Increment < 0, Upper triangular, non-unity diagonal
+      sa(1:4,1:4)=RESHAPE((/1.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK, &
+        0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/),ORDER=(/2,1/))
+      sx(9:16)=1.0_SSK
+      sx(5:8)=(/0.0000000_SSK,0.0000000_SSK,0.0000000_SSK,0.2500000_SSK/)
+      CALL BLAS_matvec('U','N','N',sa(1:4,1:4),sx(9:16),-2_SIK)
+      ASSERT(ALL(sx(15:9:-2) .APPROXEQA. sx(5:8)),'CALL BLAS_matvec(''U'',''N'',''N'',sa(1:4,1:4),sx(1:4),-2')
+      FINFO() 'Solution: ',sx(5:8),'  Result: ',sx(15:9:-2)
+      !Transposed, lower triangular, non-unity diagonal
       sa(1:4,1:4)=RESHAPE((/1.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK, &
         0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/))
       sx(1:4)=1.0_SSK
       CALL BLAS_matvec('L','T','N',sa(1:4,1:4),sx(1:4))
       ASSERT(ALL(sx(1:4) .APPROXEQA. sx(5:8)),'CALL BLAS_matvec(''L'',''T'',''N'',sa(1:4,1:4),sx(1:4)')
       FINFO() 'Solution: ',sx(5:8),'  Result: ',sx(1:4)
+      !Transposed, increment > 1, lower triangular, non-unity diagonal
+      sa(1:4,1:4)=RESHAPE((/1.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK, &
+        0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/))
+      sx(9:16)=1.0_SSK
+      CALL BLAS_matvec('L','T','N',sa(1:4,1:4),sx(9:16),2_SIK)
+      ASSERT(ALL(sx(9:16:2) .APPROXEQA. sx(5:8)),'CALL BLAS_matvec(''L'',''T'',''N'',sa(1:4,1:4),sx(1:4),2')
+      FINFO() 'Solution: ',sx(5:8),'  Result: ',sx(9:16:2)
+      !Transposed, increment < 0, lower triangular, non-unity diagonal
+      sa(1:4,1:4)=RESHAPE((/1.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK, &
+        0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/))
+      sx(9:16)=1.0_SSK
+      CALL BLAS_matvec('L','T','N',sa(1:4,1:4),sx(9:16),-2_SIK)
+      ASSERT(ALL(sx(15:9:-2) .APPROXEQA. sx(5:8)),'CALL BLAS_matvec(''L'',''T'',''N'',sa(1:4,1:4),sx(1:4),-2')
+      FINFO() 'Solution: ',sx(5:8),'  Result: ',sx(15:9:2)
 
       !dtrsv_all
+      !Normal, lower triangular, non-unity diagonal
       da(1:4,1:4)=RESHAPE((/1.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK, &
         0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/))
       dx(1:4)=1.0_SDK
@@ -2091,14 +2153,44 @@ PROGRAM testBLAS
       CALL BLAS_matvec('L','N','N',da(1:4,1:4),dx(1:4))
       ASSERT(ALL(dx(1:4) .APPROXEQA. dx(5:8)),'CALL BLAS_matvec(''L'',''N'',''N'',da(1:4,1:4),dx(1:4)')
       FINFO() 'Solution: ',dx(5:8),'  Result: ',dx(1:4)
-      
+      !Increment > 1, lower triangular, non-unity diagonal
+      da(1:4,1:4)=RESHAPE((/1.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK, &
+        0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/))
+      dx(9:16)=1.0_SDK
+      dx(5:8)=(/1.0000000000_SDK,-0.500000000_SDK,-0.16666666666667_SDK,-0.08333333333333_SDK/)
+      CALL BLAS_matvec('L','N','N',da(1:4,1:4),dx(9:16),2_SIK)
+      ASSERT(ALL(dx(9:16:2) .APPROXEQA. dx(5:8)),'CALL BLAS_matvec(''L'',''N'',''N'',da(1:4,1:4),dx(1:4),2')
+      FINFO() 'Solution: ',dx(5:8),'  Result: ',dx(9:16:2)
+      !Increment < 0, lower triangular, non-unity diagonal
+      da(1:4,1:4)=RESHAPE((/1.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK, &
+        0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/))
+      dx(9:16)=1.0_SDK
+      dx(5:8)=(/1.0000000000_SDK,-0.500000000_SDK,-0.16666666666667_SDK,-0.08333333333333_SDK/)
+      CALL BLAS_matvec('L','N','N',da(1:4,1:4),dx(9:16),-2_SIK)
+      ASSERT(ALL(dx(15:9:-2) .APPROXEQA. dx(5:8)),'CALL BLAS_matvec(''L'',''N'',''N'',da(1:4,1:4),dx(1:4),-2')
+      FINFO() 'Solution: ',dx(5:8),'  Result: ',dx(15:9:-2)
+      !Transposed, upper triangular non-unity diagonal
       da(1:4,1:4)=RESHAPE((/1.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK, &
         0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/),ORDER=(/2,1/))
       dx(1:4)=1.0_SDK
       CALL BLAS_matvec('U','T','N',da(1:4,1:4),dx(1:4))
       ASSERT(ALL(dx(1:4) .APPROXEQA. dx(5:8)),'CALL BLAS_matvec(''U'',''T'',''N'',da(1:4,1:4),dx(1:4)')
       FINFO() 'Solution: ',dx(5:8),'  Result: ',dx(1:4)
-      
+      !Transposed, Incrememnt > 1, upper triangular, non-unity diagonal
+      da(1:4,1:4)=RESHAPE((/1.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK, &
+        0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/),ORDER=(/2,1/))
+      dx(9:16)=1.0_SDK
+      CALL BLAS_matvec('U','T','N',da(1:4,1:4),dx(9:16),2_SIK)
+      ASSERT(ALL(dx(9:16:2) .APPROXEQA. dx(5:8)),'CALL BLAS_matvec(''U'',''T'',''N'',da(1:4,1:4),dx(1:4),2')
+      FINFO() 'Solution: ',dx(5:8),'  Result: ',dx(9:16:2)
+      !Transposed, Increment < 0, upper triangular, non-unity diagonal
+      da(1:4,1:4)=RESHAPE((/1.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK, &
+        0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/),ORDER=(/2,1/))
+      dx(9:16)=1.0_SDK
+      CALL BLAS_matvec('U','T','N',da(1:4,1:4),dx(9:16),-2_SIK)
+      ASSERT(ALL(dx(15:9:-2) .APPROXEQA. dx(5:8)),'CALL BLAS_matvec(''U'',''T'',''N'',da(1:4,1:4),dx(1:4),-2')
+      FINFO() 'Solution: ',dx(5:8),'  Result: ',dx(15:9:-2)
+      !Normal, Upper triangular, non-unity diagonal
       da(1:4,1:4)=RESHAPE((/1.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK, &
         0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/),ORDER=(/2,1/))
       dx(1:4)=1.0_SDK
@@ -2106,13 +2198,43 @@ PROGRAM testBLAS
       CALL BLAS_matvec('U','N','N',da(1:4,1:4),dx(1:4))
       ASSERT(ALL(dx(1:4) .APPROXEQA. dx(5:8)),'CALL BLAS_matvec(''U'',''N'',''N'',da(1:4,1:4),dx(1:4)')
       FINFO() 'Solution: ',dx(5:8),'  Result: ',dx(1:4)
-      
+      !Increment > 1, Upper triangular, non-unity diagonal
+      da(1:4,1:4)=RESHAPE((/1.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK, &
+        0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/),ORDER=(/2,1/))
+      dx(9:16)=1.0_SDK
+      dx(5:8)=(/0.0000000_SDK,0.0000000_SDK,0.0000000_SDK,0.2500000_SDK/)
+      CALL BLAS_matvec('U','N','N',da(1:4,1:4),dx(9:16),2_SIK)
+      ASSERT(ALL(dx(9:16:2) .APPROXEQA. dx(5:8)),'CALL BLAS_matvec(''U'',''N'',''N'',da(1:4,1:4),dx(1:4),2')
+      FINFO() 'Solution: ',dx(5:8),'  Result: ',dx(9:16:2)
+      !Increment < 0, Upper triangular, non-unity diagonal
+      da(1:4,1:4)=RESHAPE((/1.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK, &
+        0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/),ORDER=(/2,1/))
+      dx(9:16)=1.0_SDK
+      dx(5:8)=(/0.0000000_SDK,0.0000000_SDK,0.0000000_SDK,0.2500000_SDK/)
+      CALL BLAS_matvec('U','N','N',da(1:4,1:4),dx(9:16),-2_SIK)
+      ASSERT(ALL(dx(15:9:-2) .APPROXEQA. dx(5:8)),'CALL BLAS_matvec(''U'',''N'',''N'',da(1:4,1:4),dx(1:4),-2')
+      FINFO() 'Solution: ',dx(5:8),'  Result: ',dx(15:9:-2)
+      !Transposed, lower triangular, non-unity diagonal
       da(1:4,1:4)=RESHAPE((/1.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK, &
         0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/))
       dx(1:4)=1.0_SDK
       CALL BLAS_matvec('L','T','N',da(1:4,1:4),dx(1:4))
       ASSERT(ALL(dx(1:4) .APPROXEQA. dx(5:8)),'CALL BLAS_matvec(''L'',''T'',''N'',da(1:4,1:4),dx(1:4)')
       FINFO() 'Solution: ',dx(5:8),'  Result: ',dx(1:4)
+      !Transposed, increment > 1, lower triangular, non-unity diagonal
+      da(1:4,1:4)=RESHAPE((/1.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK, &
+        0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/))
+      dx(9:16)=1.0_SDK
+      CALL BLAS_matvec('L','T','N',da(1:4,1:4),dx(9:16),2_SIK)
+      ASSERT(ALL(dx(9:16:2) .APPROXEQA. dx(5:8)),'CALL BLAS_matvec(''L'',''T'',''N'',da(1:4,1:4),dx(1:4),2')
+      FINFO() 'Solution: ',dx(5:8),'  Result: ',dx(9:16:2)
+      !Transposed, increment < 0, lower triangular, non-unity diagonal
+      da(1:4,1:4)=RESHAPE((/1.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK, &
+        0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/))
+      dx(9:16)=1.0_SDK
+      CALL BLAS_matvec('L','T','N',da(1:4,1:4),dx(9:16),-2_SIK)
+      ASSERT(ALL(dx(15:9:-2) .APPROXEQA. dx(5:8)),'CALL BLAS_matvec(''L'',''T'',''N'',da(1:4,1:4),dx(1:4),-2')
+      FINFO() 'Solution: ',dx(5:8),'  Result: ',dx(15:9:2)
 
       !strsv_all_sparse
       sx(1:10)=(/1.0_SSK,2.0_SSK,2.0_SSK,3.0_SSK,3.0_SSK,3.0_SSK,4.0_SSK,4.0_SSK,4.0_SSK,4.0_SSK/)

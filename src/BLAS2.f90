@@ -3523,12 +3523,13 @@ MODULE BLAS2
 !> the code available on http://netlib.org/blas/strsv.f but has some minor
 !> modifications. The error checking is somewhat different.
 !>
-    PURE SUBROUTINE strsv_all(uplo,trans,diag,a,x)
+    PURE SUBROUTINE strsv_all(uplo,trans,diag,a,x,incx_in)
       CHARACTER(LEN=1),INTENT(IN) :: uplo
       CHARACTER(LEN=1),INTENT(IN) :: trans
       CHARACTER(LEN=1),INTENT(IN) :: diag
       REAL(SSK),INTENT(IN) :: a(:,:)
       REAL(SSK),INTENT(INOUT) :: x(:)
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: incx_in
       INTEGER(SIK) :: incx
       INTEGER(SIK) :: lda
       INTEGER(SIK) :: n
@@ -3548,7 +3549,11 @@ MODULE BLAS2
       ENDINTERFACE
       n=SIZE(a,DIM=2)
       lda=SIZE(a,DIM=1)
-      incx=1_SIK
+      IF(PRESENT(incx_in)) THEN
+        incx=incx_in
+      ELSE
+        incx=1_SIK
+      ENDIF
       CALL strsv(uplo,trans,diag,n,a,lda,x,incx)
 #else
       LOGICAL(SBK) :: ltrans, nounit
@@ -3558,7 +3563,11 @@ MODULE BLAS2
       INTRINSIC MAX
     
       n=SIZE(a,DIM=2)
-      incx=1_SIK
+      IF(PRESENT(incx_in)) THEN
+        incx=incx_in
+      ELSE
+        incx=1_SIK
+      ENDIF
       IF(n > 0 .AND. incx /= 0 .AND. &
           (trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
             trans == 'n' .OR. trans == 'N') .AND. &
@@ -3703,12 +3712,13 @@ MODULE BLAS2
 !> the code available on http://netlib.org/blas/strsv.f but has some minor
 !> modifications. The error checking is somewhat different.
 !>
-    PURE SUBROUTINE dtrsv_all(uplo,trans,diag,a,x)
+    PURE SUBROUTINE dtrsv_all(uplo,trans,diag,a,x,incx_in)
       CHARACTER(LEN=1),INTENT(IN) :: uplo
       CHARACTER(LEN=1),INTENT(IN) :: trans
       CHARACTER(LEN=1),INTENT(IN) :: diag
       REAL(SDK),INTENT(IN) :: a(:,:)
       REAL(SDK),INTENT(INOUT) :: x(:)
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: incx_in
       INTEGER(SIK) :: incx
       INTEGER(SIK) :: lda
       INTEGER(SIK) :: n
@@ -3728,7 +3738,11 @@ MODULE BLAS2
       ENDINTERFACE
       n=SIZE(a,DIM=2)
       lda=SIZE(a,DIM=1)
-      incx=1_SIK
+      IF(PRESENT(incx_in)) THEN
+        incx=incx_in
+      ELSE
+        incx=1_SIK
+      ENDIF
       CALL dtrsv(uplo,trans,diag,n,a,lda,x,incx)
 #else
       LOGICAL(SBK) :: ltrans, nounit
@@ -3739,7 +3753,11 @@ MODULE BLAS2
     
       n=SIZE(a,DIM=2)
       lda=SIZE(a,DIM=1)
-      incx=1_SIK
+      IF(PRESENT(incx_in)) THEN
+        incx=incx_in
+      ELSE
+        incx=1_SIK
+      ENDIF
       IF(n > 0 .AND. incx /= 0 .AND. lda >= MAX(1,N) .AND. &
           (trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
             trans == 'n' .OR. trans == 'N') .AND. &
@@ -3898,9 +3916,6 @@ MODULE BLAS2
       REAL(SSK),INTENT(INOUT) :: x(SIZE(ia)-1)
       INTEGER(SIK) :: n
 
-!#ifdef HAVE_BLAS
-!  Need to track down the BLAS routine for this, if it exists, and insert it here
-!#else
       LOGICAL(SBK) :: ltrans, nounit
       INTEGER(SIK) :: i,ix,j,jx,kx
       REAL(SSK) :: temp
@@ -3970,7 +3985,6 @@ MODULE BLAS2
         ENDIF
       ENDIF
 
-!#endif
     ENDSUBROUTINE strsv_all_sparse
 !
 !-------------------------------------------------------------------------------
@@ -4001,9 +4015,6 @@ MODULE BLAS2
       INTEGER(SIK),INTENT(IN) :: ja(SIZE(a))
       REAL(SDK),INTENT(INOUT) :: x(SIZE(ia)-1)
 
-!#ifdef HAVE_BLAS
-!  Need to track down the BLAS routine for this, if it exists, and insert it here
-!#else
       LOGICAL(SBK) :: ltrans, nounit
       INTEGER(SIK) :: i,ix,j,jx,kx,n
       REAL(SDK) :: temp
@@ -4074,7 +4085,6 @@ MODULE BLAS2
         ENDIF
       ENDIF
 
-!#endif
     ENDSUBROUTINE dtrsv_all_sparse
 !
 ENDMODULE BLAS2
