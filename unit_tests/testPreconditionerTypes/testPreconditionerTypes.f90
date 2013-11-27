@@ -216,6 +216,7 @@ PROGRAM testPreconditionerTypes
         ENDSELECT
         CALL testLU%apply(tempVector)
         ASSERT(ALL(tempVector%b .APPROXEQA. tmpreal2),'DenseSquareMatrixType ILU%apply(vector)')
+        FINFO() 'Solution:',tmpreal2,'Calculated:',tempVector%b
         
 
         ! Check %clear
