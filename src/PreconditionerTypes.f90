@@ -938,7 +938,7 @@ MODULE PreconditionerTypes
               !determine 1D inverse (eventually ABI)
               !CALL direct_inv(tmp1D,tmp1DinvM)
               CALL ABI(L1,U1,F1,pc%Ngrp,tmp1DinvM)
-              F2(c1_stt:c1_stt+pc%nGrp-1,c1_stt:c1_stt+pc%nGrp-1)=tmp1DinvM
+              F2(c1_stt:c1_stt+X*pc%nGrp-1,c1_stt:c1_stt+X*pc%nGrp-1)=tmp1DinvM
                 
             ENDDO
             
