@@ -345,6 +345,17 @@ MODULE MatrixTypes
     !> @copydetails MatrixTypes::matmult_MatrixType
     MODULE PROCEDURE matmult_MatrixType
   ENDINTERFACE BLAS_matmult
+
+  !> @brief Adds strsv_all and dtrsv_all routines for sparse matrices to the
+  !> @ref BLAS2::BLAS_matvec "BLAS_matvec" interface
+  INTERFACE trsv_sparse
+    !> @copybrief MatrixTypes::strsv_all_sparse
+    !> @copydetails MatrixTypes::strsv_all_sparse
+    MODULE PROCEDURE strsv_all_sparse
+    !> @copybrief MatrixTypes::dtrsv_all_sparse
+    !> @copydetails MatrixTypes::dtrsv_all_sparse
+    MODULE PROCEDURE dtrsv_all_sparse
+  ENDINTERFACE trsv_sparse
   
   !> Logical flag to check whether the required and optional parameter lists
   !> have been created yet for the Matrix Types.
@@ -1209,7 +1220,7 @@ MODULE MatrixTypes
 !> @param beta the scalar used to scale @c y
 !> @param y the vector to add to the product of @c A and @c x
 !>
-    SUBROUTINE matvec_MatrixType(thisMatrix,trans,alpha,x,beta,y)
+    SUBROUTINE matvec_MatrixType(thisMatrix,trans,alpha,x,beta,y,uplo,diag,incx_in)
       CHARACTER(LEN=*),PARAMETER :: myName='matvec_MatrixType'
       CLASS(MatrixType),INTENT(INOUT) :: thisMatrix
       CHARACTER(LEN=1),OPTIONAL,INTENT(IN) :: trans
@@ -1217,11 +1228,15 @@ MODULE MatrixTypes
       REAL(SRK),INTENT(IN) :: x(:)
       REAL(SRK),INTENT(IN),OPTIONAL :: beta
       REAL(SRK),INTENT(INOUT) :: y(:)
+      CHARACTER(LEN=1),INTENT(IN),OPTIONAL :: uplo
+      CHARACTER(LEN=1),INTENT(IN),OPTIONAL :: diag
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: incx_in
       REAL(SRK),ALLOCATABLE :: tmpmat(:,:)
       INTEGER(SIK) :: i,j
       LOGICAL(SBK) :: localalloc
       
-      CHARACTER(LEN=1) :: t
+      CHARACTER(LEN=1) :: t,ul,d
+      INTEGER(SIK) :: incx
 
       !Error checking of subroutine input
       localalloc=.FALSE.
@@ -1232,11 +1247,20 @@ MODULE MatrixTypes
       
       IF(thisMatrix%isInit) THEN
         t='n'
+        ul='n'
+        d='n'
+        incx=1_SIK
         IF(PRESENT(trans)) t=trans
+        IF(PRESENT(uplo)) ul=uplo
+        IF(PRESENT(diag)) d=diag
+        IF(PRESENT(incx_in)) incx=incx_in
         
         SELECTTYPE(thisMatrix)
           TYPE IS(DenseSquareMatrixType)
-            IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
+            IF(ul /= 'n') THEN
+              y=x
+              CALL BLAS2_matvec(ul,t,d,thisMatrix%a,y,incx)
+            ELSEIF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
               CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
                 alpha,thisMatrix%a,thisMatrix%n,x,1,beta,y,1)
             ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
@@ -1264,7 +1288,10 @@ MODULE MatrixTypes
                 thisMatrix%a,thisMatrix%n,x,1,y,1)
             ENDIF
           TYPE IS(SparseMatrixType)
-            IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
+            IF(ul /= 'n') THEN
+              y=x
+              CALL trsv_sparse(ul,t,d,thisMatrix%a,thisMatrix%ia,thisMatrix%ja,y,incx)
+            ELSEIF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
               CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
                 thisMatrix%ja,thisMatrix%a,alpha,x,beta,y)
             ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
@@ -1323,7 +1350,7 @@ MODULE MatrixTypes
 !> @param beta the scalar used to scale @c y
 !> @param y the vector to add to the product of @c A and @c x
 !>
-    SUBROUTINE matvec_MatrixTypeVectorType(thisMatrix,trans,alpha,x,beta,y)
+    SUBROUTINE matvec_MatrixTypeVectorType(thisMatrix,trans,alpha,x,beta,y,uplo,diag,incx_in)
       CHARACTER(LEN=*),PARAMETER :: myName='matvec_MatrixTypeVectorType'
       CLASS(MatrixType),INTENT(INOUT) :: thisMatrix
       CLASS(VectorType),INTENT(INOUT) :: x
@@ -1331,6 +1358,9 @@ MODULE MatrixTypes
       REAL(SRK),INTENT(IN),OPTIONAL :: alpha
       REAL(SRK),INTENT(IN),OPTIONAL :: beta
       CLASS(VectorType),INTENT(INOUT) :: y
+      CHARACTER(LEN=1),INTENT(IN),OPTIONAL :: uplo
+      CHARACTER(LEN=1),INTENT(IN),OPTIONAL :: diag
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: incx_in
       REAL(SRK),ALLOCATABLE :: tmpmat(:,:),tmpvec(:),tmpy(:)
       INTEGER(SIK) :: i,j
       LOGICAL(SBK) :: localalloc
@@ -1340,7 +1370,8 @@ MODULE MatrixTypes
       TYPE(ParamType) :: vecPList
 #endif
       
-      CHARACTER(LEN=1) :: t
+      CHARACTER(LEN=1) :: t,ul,d
+      INTEGER(SIK) :: incx
       REAL(SRK) :: a,b
       
       !Error checking of subroutine input
@@ -1352,9 +1383,15 @@ MODULE MatrixTypes
       
       IF(thisMatrix%isInit) THEN
         t='n'
+        ul='n'
+        d='n'
+        incx=1_SIK
         a=1
         b=1
         IF(PRESENT(trans)) t=trans
+        IF(PRESENT(uplo)) ul=uplo
+        IF(PRESENT(diag)) d=diag
+        IF(PRESENT(incx_in)) incx=incx_in
         IF(PRESENT(alpha)) a=alpha
         IF(PRESENT(beta))  b=beta
         
@@ -1362,7 +1399,10 @@ MODULE MatrixTypes
           SELECTTYPE(y); TYPE IS(RealVectorType)
             SELECTTYPE(thisMatrix)
               TYPE IS(DenseSquareMatrixType)
-                IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
+                IF(ul /= 'n') THEN
+                  y%b=x%b
+                  CALL BLAS2_matvec(ul,t,d,thisMatrix%a,y%b,incx)
+                ELSEIF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
                   CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
                     alpha,thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
                 ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
@@ -1390,7 +1430,10 @@ MODULE MatrixTypes
                     thisMatrix%a,thisMatrix%n,x%b,1,y%b,1)
                 ENDIF
               TYPE IS(SparseMatrixType)
-                IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
+                IF(ul /= 'n') THEN
+                  y%b=x%b
+                  CALL trsv_sparse(ul,t,d,thisMatrix%a,thisMatrix%ia,thisMatrix%ja,y%b,incx)
+                ELSEIF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
                   CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
                     thisMatrix%ja,thisMatrix%a,alpha,x%b,beta,y%b)
                 ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
@@ -1403,43 +1446,7 @@ MODULE MatrixTypes
                   CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
                     thisMatrix%ja,thisMatrix%a,x%b,y%b)
                 ENDIF
-            ENDSELECT
-          ENDSELECT
-        ENDSELECT
-        
-        SELECTTYPE(x); TYPE IS(PETScVectorType)
-          SELECTTYPE(y); TYPE IS(PETScVectorType)
-            SELECTTYPE(thisMatrix); TYPE IS(PETScMatrixType)
-#ifdef MPACT_HAVE_PETSC
-                CALL vecPList%add('VectorType -> n',y%n)
-                CALL vecPList%add('VectorType -> MPI_Comm_ID',y%comm)
-                CALL vecPList%add('VectorType -> nlocal',x%nlocal)
-                CALL dummy%init(vecPList)
-                IF(.NOT.x%isAssembled) CALL x%assemble()
-                IF(.NOT.y%isAssembled) CALL y%assemble()
-                IF(.NOT.thisMatrix%isAssembled) CALL thisMatrix%assemble()
-                IF(t == 'n') THEN
-                  CALL MatMult(thisMatrix%a,x%b,dummy%b,iperr)
-                ELSE
-                  CALL MatMultTranspose(thisMatrix%a,x%b,dummy%b,iperr)
-                ENDIF
-                CALL BLAS_scal(dummy,a)
-                CALL BLAS_scal(y,b)
-                CALL BLAS_axpy(dummy,y)
-                CALL vecPList%clear()
-                CALL dummy%clear()
-#else
-                CALL eMatrixType%raiseFatalError('Incorrect call to '// &
-                   modName//'::'//myName//' - PETSc not enabled.  You will'// &
-                   'need to recompile with PETSc enabled to use this feature.')
-#endif
-            ENDSELECT
-          ENDSELECT
-        ENDSELECT
-        
-        SELECTTYPE(x); TYPE IS(RealVectorType)
-          SELECTTYPE(y); TYPE IS(RealVectorType)
-            SELECTTYPE(thisMatrix); TYPE IS(PETScMatrixType)
+              TYPE IS(PETScMatrixType)
 #ifdef MPACT_HAVE_PETSC
                 ALLOCATE(tmpmat(thisMatrix%n,thisMatrix%n))
                 ALLOCATE(tmpvec(x%n))
@@ -1477,10 +1484,259 @@ MODULE MatrixTypes
           ENDSELECT
         ENDSELECT
         
+        SELECTTYPE(x); TYPE IS(PETScVectorType)
+          SELECTTYPE(y); TYPE IS(PETScVectorType)
+            SELECTTYPE(thisMatrix); TYPE IS(PETScMatrixType)
+#ifdef MPACT_HAVE_PETSC
+                CALL vecPList%add('VectorType -> n',y%n)
+                CALL vecPList%add('VectorType -> MPI_Comm_ID',y%comm)
+                CALL vecPList%add('VectorType -> nlocal',x%nlocal)
+                CALL dummy%init(vecPList)
+                IF(.NOT.x%isAssembled) CALL x%assemble()
+                IF(.NOT.y%isAssembled) CALL y%assemble()
+                IF(.NOT.thisMatrix%isAssembled) CALL thisMatrix%assemble()
+                IF(t == 'n') THEN
+                  CALL MatMult(thisMatrix%a,x%b,dummy%b,iperr)
+                ELSE
+                  CALL MatMultTranspose(thisMatrix%a,x%b,dummy%b,iperr)
+                ENDIF
+                CALL BLAS_scal(dummy,a)
+                CALL BLAS_scal(y,b)
+                CALL BLAS_axpy(dummy,y)
+                CALL vecPList%clear()
+                CALL dummy%clear()
+#else
+                CALL eMatrixType%raiseFatalError('Incorrect call to '// &
+                   modName//'::'//myName//' - PETSc not enabled.  You will'// &
+                   'need to recompile with PETSc enabled to use this feature.')
+#endif
+            ENDSELECT
+          ENDSELECT
+        ENDSELECT
+        
       ENDIF
 
       IF(localalloc) DEALLOCATE(eMatrixType)
     ENDSUBROUTINE matvec_MatrixTypeVectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Subroutine solves a triangular matrix linear system.
+!> @param uplo single character input indicating if an upper (U) or lower (L) 
+!>        maxtrix is stored in @c A
+!> @param trans single character input indicating whether or not to use the 
+!>        transpose of @c A
+!> @param diag single character input indicating whether or not a unity
+!>        diagonal is used
+!> @param n the size of the dimension of @c A (number of rows and columns)
+!> @param A the double-precision matrix multiply with @c x
+!> @param lda the size of the leading (first) dimension of @c A
+!> @param x the double-precision vector to multiply with @c A
+!> @param incx the increment to use when looping over elements in @c x
+!>
+!> If an external BLAS library is available at link time then that library
+!> routine that gets called, otherwise the supplied code is used. It is based on
+!> the code available on http://netlib.org/blas/strsv.f but has some minor
+!> modifications. The error checking is somewhat different.
+!>
+    PURE SUBROUTINE strsv_all_sparse(uplo,trans,diag,a,ia,ja,x,incx_in)
+      CHARACTER(LEN=1),INTENT(IN) :: uplo
+      CHARACTER(LEN=1),INTENT(IN) :: trans
+      CHARACTER(LEN=1),INTENT(IN) :: diag
+      REAL(SSK),INTENT(IN) :: a(:)
+      INTEGER(SIK),INTENT(IN) :: ia(:)
+      INTEGER(SIK),INTENT(IN) :: ja(:)
+      REAL(SSK),INTENT(INOUT) :: x(:)
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: incx_in
+      INTEGER(SIK) :: n,incx
+
+      LOGICAL(SBK) :: ltrans, nounit
+      INTEGER(SIK) :: i,ix,j,jx,kx
+      REAL(SSK) :: temp
+      REAL(SSK),PARAMETER :: ZERO=0.0_SSK
+      INTRINSIC MAX
+    
+      n=SIZE(x)
+      IF(PRESENT(incx_in)) THEN
+        incx=incx_in
+      ELSE
+        incx=1_SIK
+      ENDIF
+      IF((trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
+           trans == 'n' .OR. trans == 'N') .AND. &
+          (uplo == 'u' .OR. uplo == 'U' .OR. uplo == 'l' .OR. uplo == 'L') .AND. &
+          (diag == 't' .OR. diag == 'T' .OR. diag == 'n' .OR. diag == 'N')) THEN
+
+        IF (diag == 'n' .OR. diag == 'N') nounit=.TRUE.
+ 
+        IF (trans == 'n' .OR. trans == 'N') THEN  ! Form  x := inv( A )*x.
+          IF (uplo == 'u' .OR. uplo == 'U') THEN  ! Upper triangular
+            IF(incx == 1_SIK) THEN
+              IF((ANY(ia <= 0)) .AND. nounit) n=0 ! In case a row does not have any elements
+              DO i=n,1,-1
+                DO j=ia(i+1)-1,ia(i),-1
+                  IF(ja(j) <= i) EXIT
+                  x(i)=x(i)-a(j)*x(ja(j))
+                ENDDO
+                IF(ja(j) == i) THEN
+                  x(i)=x(i)/a(j)
+                ELSEIF(nounit) THEN
+                  x(i)=0.0_SDK
+                ENDIF
+              ENDDO
+            ELSE
+            ENDIF
+          ELSE  ! Lower Triangular
+            IF(incx == 1_SIK) THEN
+              IF((ANY(ia <= 0)) .AND. nounit) n=0 ! In case a row does not have any elements
+              DO i=1,n
+                DO j=ia(i),ia(i+1)-1
+                  IF(ja(j) >= i) EXIT
+                  x(i)=x(i)-a(j)*x(ja(j))
+                ENDDO
+                IF(ja(j) == i) THEN
+                  x(i)=x(i)/a(j)
+                ELSEIF(nounit) THEN
+                  x(i)=0.0_SDK
+                ENDIF
+              ENDDO
+            ELSE
+            ENDIF
+          ENDIF
+        ELSE  ! Form  x := inv( A**T )*x.
+          IF (uplo == 'u' .OR. uplo == 'U') THEN
+            IF(incx == 1_SIK) THEN
+              DO j = 1,SIZE(ia)-1
+                IF(.NOT.(x(j) .APPROXEQA. ZERO)) THEN
+                  IF (nounit) x(j)=x(j)/a(ia(j))
+                  temp=x(j)
+                  DO i=ia(j)+1,ia(j+1)-1
+                    IF(ja(i) <= j) CYCLE
+                    x(ja(i))=x(ja(i))-temp*a(i)
+                  ENDDO
+                ENDIF
+              ENDDO
+            ELSE
+            ENDIF
+          ELSE  ! Lower Triangular
+            IF(incx == 1_SIK) THEN
+              DO i=n,1,-1
+                IF(.NOT.(x(i) .APPROXEQA. ZERO)) THEN
+                  IF(nounit) x(i)=x(i)/a(ia(i+1)-1)
+                  temp=x(i)
+                  DO j=ia(i+1)-2,ia(i),-1
+                    IF(ja(j) > i) CYCLE
+                    x(ja(j))=x(ja(j))-a(j)*temp
+                  ENDDO
+                ENDIF
+              ENDDO
+            ELSE
+            ENDIF
+          ENDIF
+        ENDIF
+      ENDIF
+
+    ENDSUBROUTINE strsv_all_sparse
+!
+!-------------------------------------------------------------------------------
+!> @brief Subroutine solves a triangular matrix linear system.
+!> @param uplo single character input indicating if an upper (U) or lower (L) 
+!>        maxtrix is stored in @c A
+!> @param trans single character input indicating whether or not to use the 
+!>        transpose of @c A
+!> @param diag single character input indicating whether or not a unity
+!>        diagonal is used
+!> @param n the size of the dimension of @c A (number of rows and columns)
+!> @param A the double-precision matrix multiply with @c x
+!> @param lda the size of the leading (first) dimension of @c A
+!> @param x the double-precision vector to multiply with @c A
+!> @param incx the increment to use when looping over elements in @c x
+!>
+!> If an external BLAS library is available at link time then that library
+!> routine that gets called, otherwise the supplied code is used. It is based on
+!> the code available on http://netlib.org/blas/strsv.f but has some minor
+!> modifications. The error checking is somewhat different.
+!>
+    PURE SUBROUTINE dtrsv_all_sparse(uplo,trans,diag,a,ia,ja,x,incx_in)
+      CHARACTER(LEN=1),INTENT(IN) :: uplo
+      CHARACTER(LEN=1),INTENT(IN) :: trans
+      CHARACTER(LEN=1),INTENT(IN) :: diag
+      REAL(SDK),INTENT(IN) :: a(:)
+      INTEGER(SIK),INTENT(IN) :: ia(:)
+      INTEGER(SIK),INTENT(IN) :: ja(:)
+      REAL(SDK),INTENT(INOUT) :: x(:)
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: incx_in
+
+      LOGICAL(SBK) :: ltrans, nounit
+      INTEGER(SIK) :: i,ix,j,jx,kx,n,incx
+      REAL(SDK) :: temp
+      REAL(SDK),PARAMETER :: ZERO=0.0_SDK
+      INTRINSIC MAX
+    
+      n=SIZE(x)
+      IF((trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
+           trans == 'n' .OR. trans == 'N') .AND. &
+          (uplo == 'u' .OR. uplo == 'U' .OR. uplo == 'l' .OR. uplo == 'L') .AND. &
+          (diag == 't' .OR. diag == 'T' .OR. diag == 'n' .OR. diag == 'N')) THEN
+
+        IF (diag == 'n' .OR. diag == 'N') THEN
+          nounit=.TRUE.
+        ELSE
+          nounit=.FALSE.
+        ENDIF
+ 
+        IF (trans == 'n' .OR. trans == 'N') THEN  ! Form  x := inv( A )*x.
+          IF (uplo == 'u' .OR. uplo == 'U') THEN  ! Upper triangular
+            IF((ANY(ia <= 0)) .AND. nounit) n=0 ! In case a row does not have any elements
+            DO i=n,1,-1
+              DO j=ia(i+1)-1,ia(i),-1
+                IF(ja(j) <= i) EXIT
+                x(i)=x(i)-a(j)*x(ja(j))
+              ENDDO
+              IF((ja(j) == i) .AND. nounit) THEN
+                x(i)=x(i)/a(j)
+              ENDIF
+            ENDDO
+          ELSE  ! Lower Triangular
+            IF((ANY(ia <= 0)) .AND. nounit) n=0 ! In case a row does not have any elements
+            DO i=1,n
+              DO j=ia(i),ia(i+1)-1
+                IF(ja(j) >= i) EXIT
+                x(i)=x(i)-a(j)*x(ja(j))
+                IF(j == SIZE(ja)) EXIT
+              ENDDO
+              IF((ja(j) == i) .AND. nounit) THEN
+                x(i)=x(i)/a(j)
+              ENDIF
+            ENDDO
+          ENDIF
+        ELSE  ! Form  x := inv( A**T )*x.
+          IF (uplo == 'u' .OR. uplo == 'U') THEN
+            DO j = 1,SIZE(ia)-1
+              IF(.NOT.(x(j) .APPROXEQA. ZERO)) THEN
+                IF (nounit) x(j)=x(j)/a(ia(j))
+                temp=x(j)
+                DO i=ia(j)+1,ia(j+1)-1
+                  IF(ja(i) <= j) CYCLE
+                  x(ja(i))=x(ja(i))-temp*a(i)
+                ENDDO
+              ENDIF
+            ENDDO
+          ELSE  ! Lower Triangular
+            DO i=n,1,-1
+              IF(.NOT.(x(i) .APPROXEQA. ZERO)) THEN
+                IF(nounit) x(i)=x(i)/a(ia(i+1)-1)
+                temp=x(i)
+                DO j=ia(i+1)-2,ia(i),-1
+                  IF(ja(j) > i) CYCLE
+                  x(ja(j))=x(ja(j))-a(j)*temp
+                ENDDO
+              ENDIF
+            ENDDO
+          ENDIF
+        ENDIF
+      ENDIF
+
+    ENDSUBROUTINE dtrsv_all_sparse
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine provides an interface to matrix matrix multiplication for
