@@ -434,8 +434,8 @@ MODULE PreconditionerTypes
             SELECTTYPE(L => PC%L)
               CLASS IS(SparseMatrixType)
                 SELECTTYPE(U => PC%U); TYPE IS(SparseMatrixType)
-                  CALL BLAS_matvec('L','N','T',L%a,L%ia,L%ja,v%b)
-                  CALL BLAS_matvec('U','N','N',U%a,U%ia,U%ja,v%b)
+                  CALL BLAS_matvec(THISMATRIX=L,X=v,Y=v,TRANS='N',UPLO='L',UNITY='U') !'L','N','T',L,v)
+                  CALL BLAS_matvec(THISMATRIX=U,X=v,Y=v,TRANS='N',UPLO='U',UNITY='N') !'U','N','N',U,v)
                 ENDSELECT
               CLASS DEFAULT
                 CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
