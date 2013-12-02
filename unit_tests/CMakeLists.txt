@@ -34,6 +34,7 @@ SET(UNIT_TEST_NAMES
     testCmdLineProc
     testVectorTypes
     testMatrixTypes
+    testPreconditionerTypes
     testLinearSolver
     testStochasticSampler
 )

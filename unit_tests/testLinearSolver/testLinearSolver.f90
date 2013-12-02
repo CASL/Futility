@@ -66,12 +66,9 @@ PROGRAM testLinearSolver
   eLinearSolverType => e
   CALL mpiTestEnv%init(PE_COMM_SELF)
 
-  WRITE(*,*) '==================================================='
-  WRITE(*,*) 'TESTING LINEAR SOLVERS...'
-  WRITE(*,*) '==================================================='
-  
-  WRITE(*,*) 'TESTING NORMS PROCEDURE'
-  CALL testNorms()
+  CREATE_TEST('Test Linear Solvers')
+ 
+  REGISTER_SUBTEST('TESTING NORMS PROCEDURE',testNorms)
   
   WRITE(*,*) 'TESTING LINEAR SOLVER TYPES'
   CALL testClear()
@@ -90,10 +87,8 @@ PROGRAM testLinearSolver
   !WRITE(666,*)
   !CALL optParamsLST%edit(666)
   
-  WRITE(*,*) '==================================================='
-  WRITE(*,*) 'TESTING LINEAR SOLVERS PASSED!'
-  WRITE(*,*) '==================================================='
-  
+  FINALIZE_TEST() 
+
   CALL pList%clear()
   CALL vecPList%clear()
   CALL optListMat%clear()
@@ -565,10 +560,7 @@ CONTAINS
       CALL thisLS%solve()
       
       !Check the result
-      IF(thisLS%info /= -1 ) THEN
-        WRITE(*,*) 'CALL Direct%solve() -GE method FAILED!'
-        STOP 666
-      ENDIF
+      ASSERT(thisLS%info == -1,'CALL Direct%solve() -GE method FAILED!')
       CALL thisLS%clear()
       
     ! Test LU (Dense-Square)

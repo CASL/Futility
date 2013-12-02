@@ -79,6 +79,7 @@ MODULE LinearSolverTypes
   USE ParallelEnv
   USE VectorTypes
   USE MatrixTypes
+  USE PreconditionerTypes
 #ifdef HAVE_PARDISO
   USE MKL_PARDISO
 #endif
@@ -371,11 +372,7 @@ MODULE LinearSolverTypes
         ENDSELECT
 
         !print status of TPL post-heirarchy
-        IF(ReqTPLType == TPLType) THEN
-          CALL eLinearSolverType%raiseWarning(modName//'::'// &
-            myName//' - Requested TPL '//TRIM(ReqTPLTypeStr)// &
-            ' is enabled and will be used.')
-        ELSE
+        IF(ReqTPLType /= TPLType) THEN
           CALL eLinearSolverType%raiseWarning(modName//'::'// &
             myName//' - Requested TPL '//TRIM(ReqTPLTypeStr)// &
               ' is not enabled, will use '//TRIM(TPLTypeStr)//' solvers instead.')
@@ -1412,14 +1409,9 @@ MODULE LinearSolverTypes
           phibar=-s(it)*phibar
           IF(ABS(phibar) <= tol) EXIT
         ENDDO
-
-        DO j=it,1,-1
-          temp=0.0_SRK
-          DO k=j+1,it
-            temp=temp+R(j,k)*y(k)
-          ENDDO
-          IF(R(j,j) > 0.0_SRK) y(j)=(g(j)-temp)/R(j,j)
-        ENDDO
+        
+        y(1:it)=g(1:it)
+        CALL BLAS_matvec('U','N','N',R(1:it,1:it),y(1:it))
 
         CALL BLAS_matvec(v(:,1:it),y(1:it),0.0_SRK,u%b)
         CALL BLAS_axpy(u,solver%x)
