@@ -80,7 +80,6 @@ PROGRAM testPreconditionerTypes
   CALL setupBILUTest(1)
   REGISTER_SUBTEST('Test BILU Preconditioner Type (sparse)',testBILU_PreCondType)
   CALL clearTest() 
-!#endif
   
   FINALIZE_TEST()
   
@@ -445,6 +444,11 @@ PROGRAM testPreconditionerTypes
           ASSERT(ASSOCIATED(testLU%A),'BILU Preconditioner ASSOCIATED(LU%A)')
           ASSERT(testLU%L%isInit,'BILU Preconditioner %L%isInit')
           ASSERT(testLU%U%isInit,'BILU Preconditioner %U%isInit')
+          SELECTTYPE(pc => testLU); TYPE IS(BILU_PreCondType)
+            ASSERT(ALLOCATED(pc%F0),'BILU Preconditioner ALLOCATED(LU%F0)')
+            ASSERT(ALLOCATED(pc%EW),'BILU Preconditioner ALLOCATED(LU%EW)')
+            ASSERT(ALLOCATED(pc%NS),'BILU Preconditioner ALLOCATED(LU%NS)')
+          ENDSELECT
   
           ! Check %setup
           CALL testLU%setup()
