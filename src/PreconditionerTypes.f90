@@ -103,6 +103,9 @@ MODULE PreconditionerTypes
     INTEGER(SIK) :: nPin
     INTEGER(SIK) :: nGrp
     INTEGER(SIK) :: BILUType  !for 2D, 3D and other variants
+    REAL(SRK),ALLOCATABLE :: F0(:,:) !change to array of matrices instead of one big matrix eventually
+    REAL(SRK),ALLOCATABLE :: EW(:,:) !change to array of vectors
+    REAL(SRK),ALLOCATABLE :: NS(:,:) !change to array of vectors
     CONTAINS
       PROCEDURE,PASS :: setup => setup_BILU_PreCondType
       PROCEDURE,PASS :: apply => apply_BILU_PreCondType
@@ -180,6 +183,17 @@ WRITE(*,*) '   --Initializing Preconditioner...'
             ' - Matrix being used for LU Preconditioner is not initialized!')
         ELSE
           PC%A => A
+
+          !allocate additional storage for BILU3D
+          SELECTTYPE(PC)
+            TYPE IS(BILU_PrecondType)
+              ALLOCATE(PC%F0(PC%A%n,PC%A%n))
+              ALLOCATE(PC%EW(PC%A%n,PC%A%n))
+              ALLOCATE(PC%NS(PC%A%n,PC%A%n))
+              PC%F0=0.0_SRK
+              PC%EW=0.0_SRK
+              PC%NS=0.0_SRK
+          ENDSELECT
 
           ! This might not be necessary here, but not sure
           SELECTTYPE(mat => PC%A)
@@ -623,6 +637,7 @@ WRITE(*,*) '   --Initializing Preconditioner...'
       INTEGER(SIK) :: d1_stt,c1_stt
       INTEGER(SIK) :: local_r,local_c
       INTEGER(SIK) :: X,Y,Z
+      INTEGER(SIK) :: tmpind1,tmpind2
       REAL(SRK) :: tmpval
       LOGICAL(SBK) :: localalloc
       TYPE(ParamType) :: PL
@@ -986,12 +1001,20 @@ WRITE(*,*) '   --Initializing Preconditioner...'
               !CALL direct_inv(tmp1D,tmp1DinvM)
               CALL ABI(L1,U1,F1,pc%Ngrp,tmp1DinvM)
               F2(c1_stt:c1_stt+X*pc%nGrp-1,c1_stt:c1_stt+X*pc%nGrp-1)=tmp1DinvM
+              !store for apply
+              tmpind1=(ipl-1)*pc%nGrp*X*Y+(iy-1)*pc%nGrp*X+1
+              tmpind2=(ipl-1)*pc%nGrp*X*Y+iy*pc%nGrp*X
+              PC%F0(tmpind1:tmpind2,tmpind1:tmpind2)=F1
+              PC%EW(tmpind1:tmpind2,tmpind1:tmpind2)=tmp1D
                 
             ENDDO
             
             !determine 2D inverse (eventually ABI)
             !CALL direct_inv(tmpM,tmp2DinvM)
             CALL ABI(L2,U2,F2,X*pc%Ngrp,tmp2DinvM)
+            tmpind1=(ipl-1)*pc%nGrp*X*Y+1
+            tmpind2=ipl*pc%nGrp*X*Y
+            PC%NS(tmpind1:tmpind2,tmpind1:tmpind2)=tmpM
             
           ENDDO
           DEALLOCATE(tmp2DU,tmp2DinvM)
