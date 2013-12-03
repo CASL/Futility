@@ -1538,7 +1538,7 @@ MODULE MatrixTypes
 !> the code available on http://netlib.org/blas/strsv.f but has some minor
 !> modifications. The error checking is somewhat different.
 !>
-    PURE SUBROUTINE strsv_all_sparse(uplo,trans,diag,a,ia,ja,x,incx_in)
+    SUBROUTINE strsv_all_sparse(uplo,trans,diag,a,ia,ja,x,incx_in)
       CHARACTER(LEN=1),INTENT(IN) :: uplo
       CHARACTER(LEN=1),INTENT(IN) :: trans
       CHARACTER(LEN=1),INTENT(IN) :: diag
@@ -1554,7 +1554,6 @@ MODULE MatrixTypes
       REAL(SSK) :: temp
       REAL(SSK),PARAMETER :: ZERO=0.0_SSK
       INTRINSIC MAX
-    
       n=SIZE(x)
       IF(PRESENT(incx_in)) THEN
         incx=incx_in
@@ -1566,6 +1565,7 @@ MODULE MatrixTypes
           (uplo == 'u' .OR. uplo == 'U' .OR. uplo == 'l' .OR. uplo == 'L') .AND. &
           (diag == 't' .OR. diag == 'T' .OR. diag == 'n' .OR. diag == 'N')) THEN
 
+        nounit=.FALSE.
         IF (diag == 'n' .OR. diag == 'N') nounit=.TRUE.
  
         IF (trans == 'n' .OR. trans == 'N') THEN  ! Form  x := inv( A )*x.
@@ -1577,11 +1577,7 @@ MODULE MatrixTypes
                   IF(ja(j) <= i) EXIT
                   x(i)=x(i)-a(j)*x(ja(j))
                 ENDDO
-                IF(ja(j) == i) THEN
-                  x(i)=x(i)/a(j)
-                ELSEIF(nounit) THEN
-                  x(i)=0.0_SDK
-                ENDIF
+                IF((ja(j) == i) .AND. nounit) x(i)=x(i)/a(j)
               ENDDO
             ELSE
             ENDIF
@@ -1593,11 +1589,7 @@ MODULE MatrixTypes
                   IF(ja(j) >= i) EXIT
                   x(i)=x(i)-a(j)*x(ja(j))
                 ENDDO
-                IF(ja(j) == i) THEN
-                  x(i)=x(i)/a(j)
-                ELSEIF(nounit) THEN
-                  x(i)=0.0_SDK
-                ENDIF
+                IF((ja(j) == i) .AND. nounit) x(i)=x(i)/a(j)
               ENDDO
             ELSE
             ENDIF
@@ -1656,7 +1648,7 @@ MODULE MatrixTypes
 !> the code available on http://netlib.org/blas/strsv.f but has some minor
 !> modifications. The error checking is somewhat different.
 !>
-    PURE SUBROUTINE dtrsv_all_sparse(uplo,trans,diag,a,ia,ja,x,incx_in)
+    SUBROUTINE dtrsv_all_sparse(uplo,trans,diag,a,ia,ja,x,incx_in)
       CHARACTER(LEN=1),INTENT(IN) :: uplo
       CHARACTER(LEN=1),INTENT(IN) :: trans
       CHARACTER(LEN=1),INTENT(IN) :: diag
@@ -1671,18 +1663,19 @@ MODULE MatrixTypes
       REAL(SDK) :: temp
       REAL(SDK),PARAMETER :: ZERO=0.0_SDK
       INTRINSIC MAX
-    
       n=SIZE(x)
+      IF(PRESENT(incx_in)) THEN
+        incx=incx_in
+      ELSE
+        incx=1_SIK
+      ENDIF
       IF((trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
            trans == 'n' .OR. trans == 'N') .AND. &
           (uplo == 'u' .OR. uplo == 'U' .OR. uplo == 'l' .OR. uplo == 'L') .AND. &
           (diag == 't' .OR. diag == 'T' .OR. diag == 'n' .OR. diag == 'N')) THEN
 
-        IF (diag == 'n' .OR. diag == 'N') THEN
-          nounit=.TRUE.
-        ELSE
-          nounit=.FALSE.
-        ENDIF
+        nounit=.FALSE.
+        IF (diag == 'n' .OR. diag == 'N') nounit=.TRUE.
  
         IF (trans == 'n' .OR. trans == 'N') THEN  ! Form  x := inv( A )*x.
           IF (uplo == 'u' .OR. uplo == 'U') THEN  ! Upper triangular
@@ -1692,9 +1685,7 @@ MODULE MatrixTypes
                 IF(ja(j) <= i) EXIT
                 x(i)=x(i)-a(j)*x(ja(j))
               ENDDO
-              IF((ja(j) == i) .AND. nounit) THEN
-                x(i)=x(i)/a(j)
-              ENDIF
+              IF((ja(j) == i) .AND. nounit) x(i)=x(i)/a(j)
             ENDDO
           ELSE  ! Lower Triangular
             IF((ANY(ia <= 0)) .AND. nounit) n=0 ! In case a row does not have any elements
@@ -1704,9 +1695,7 @@ MODULE MatrixTypes
                 x(i)=x(i)-a(j)*x(ja(j))
                 IF(j == SIZE(ja)) EXIT
               ENDDO
-              IF((ja(j) == i) .AND. nounit) THEN
-                x(i)=x(i)/a(j)
-              ENDIF
+              IF((ja(j) == i) .AND. nounit) x(i)=x(i)/a(j)
             ENDDO
           ENDIF
         ELSE  ! Form  x := inv( A**T )*x.
