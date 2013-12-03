@@ -154,7 +154,7 @@ PROGRAM testPreconditionerTypes
         -5.0025526592007603_SRK,-6.9466109699304406_SRK,8.1414442396900757_SRK,-1.8345636773373761_SRK, &
         -9.2450823045000341_SRK,13.515984012597492_SRK/)
 
-      COMPONENT_TEST('ILU Preconditioner Type, DenseMatrixType')
+      COMPONENT_TEST('ILU_PreCondType, DenseMatrixType')
       IF(testDenseMatrix%isInit .AND. testVector%isInit) THEN
         ALLOCATE(ILU_PreCondType :: testLU)
         
@@ -210,6 +210,7 @@ PROGRAM testPreconditionerTypes
         ENDSELECT
         CALL testLU%apply(tempVector)
         ASSERT(ALL(tempVector%b .APPROXEQA. tmpreal2),'DenseSquareMatrixType ILU%apply(vector)')
+        FINFO() 'Result:',tempVector%b,'Solution:',tmpreal2
         
 
         ! Check %clear
@@ -219,7 +220,7 @@ PROGRAM testPreconditionerTypes
         ASSERT(testVector%isInit,'TestVector Initialization')
       ENDIF
         
-      COMPONENT_TEST('ILU Preconditioner Type, SparseMatrixType')
+      COMPONENT_TEST('ILU_PreCondType, SparseMatrixType')
       ! Check %init
       CALL testLU%init(testSparseMatrix)
       IF(testSparseMatrix%isInit .AND. testVector%isInit) THEN
@@ -273,6 +274,7 @@ PROGRAM testPreconditionerTypes
         ENDSELECT
         CALL testLU%apply(tempVector)
         ASSERT(ALL(tempVector%b .APPROXEQA. tmpreal2),'SparseMatrixType ILU%apply(vector)')
+        FINFO() 'Result:',tempVector%b,'Solution:',tmpreal2
 
         ! Check %clear
         CALL testLU%clear()

@@ -52,15 +52,10 @@ PROGRAM testMatrixTypes
   CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
 #endif
 
-  WRITE(*,*) '==================================================='
-  WRITE(*,*) 'TESTING MATRIX TYPES...'
-  WRITE(*,*) '==================================================='
+  CREATE_TEST('Test Matrix Types') 
+  REGISTER_SUBTEST('TestMatrix',testMatrix)
+  FINALIZE_TEST()
   
-  CALL testMatrix()
-  
-  WRITE(*,*) '==================================================='
-  WRITE(*,*) 'TESTING MATRIX TYPES PASSED!'
-  WRITE(*,*) '==================================================='
   CALL optListMat%clear()
   CALL vecPList%clear()
   CALL pList%clear()
@@ -77,7 +72,7 @@ PROGRAM testMatrixTypes
 !-------------------------------------------------------------------------------
     SUBROUTINE testMatrix()
       CLASS(MatrixType),ALLOCATABLE :: thisMatrix
-      CLASS(VectorType),ALLOCATABLE :: xRealVector,yRealVector
+      CLASS(RealVectorType),ALLOCATABLE :: xRealVector,yRealVector
       CLASS(VectorType),ALLOCATABLE :: xPETScVector,yPETScVector
       INTEGER(SIK) :: i
       INTEGER(SIK) :: matsize1,matsize2
@@ -437,6 +432,63 @@ PROGRAM testMatrixTypes
         WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xRealVector,BETA=2.0_SRK,Y=yRealVector) -sparse FAILED!"
         STOP 666
       ENDIF
+! Check sparse triangular solvers
+      CALL yRealVector%clear()
+      CALL xRealVector%clear()
+      CALL thisMatrix%clear()
+      IF(ALLOCATED(thisMatrix)) DEALLOCATE(thisMatrix)
+      ALLOCATE(SparseMatrixType :: thisMatrix)
+      CALL Plist%clear()
+      CALL vecPList%clear()
+      CALL PList%add('MatrixType->n',4_SIK)
+      CALL PList%add('MatrixType->matType',SPARSE)
+      CALL Plist%add('MatrixType->nnz',16_SIK)
+      CALL vecPList%add('VectorType->n',4_SIK)
+      CALL xRealVector%init(vecPList)
+      CALL yRealVector%init(vecPList)
+      CALL thisMatrix%init(PList)
+      SELECTTYPE(x => xRealVector); TYPE IS(RealVectorType)
+        CALL x%set(1.0_SRK)
+      ENDSELECT
+      SELECTTYPE(mat => thisMatrix); TYPE IS(SparseMatrixType)
+        CALL mat%setShape(1,1,1.0_SRK)
+        CALL mat%setShape(1,2,2.0_SRK)
+        CALL mat%setShape(1,3,3.0_SRK)
+        CALL mat%setShape(1,4,4.0_SRK)
+        CALL mat%setShape(2,1,2.0_SRK)
+        CALL mat%setShape(2,2,2.0_SRK)
+        CALL mat%setShape(2,3,3.0_SRK)
+        CALL mat%setShape(2,4,4.0_SRK)
+        CALL mat%setShape(3,1,3.0_SRK)
+        CALL mat%setShape(3,2,3.0_SRK)
+        CALL mat%setShape(3,3,3.0_SRK)
+        CALL mat%setShape(3,4,4.0_SRK)
+        CALL mat%setShape(4,1,4.0_SRK)
+        CALL mat%setShape(4,2,4.0_SRK)
+        CALL mat%setShape(4,3,4.0_SRK)
+        CALL mat%setShape(4,4,4.0_SRK)
+      ENDSELECT
+      ! Test both the VectorType and native interface
+      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+      ALLOCATE(dummyvec(4))
+      dummyvec=(/1.0000000_SRK,-0.5000000_SRK,-0.1666666666666666_SRK,-0.083333333333333333_SRK/)
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,Y=yRealVector,TRANS='N',UPLO='L',DIAG='N')
+      ASSERT(ALL(yRealVector%b .APPROXEQA. dummyvec),'BLAS_matvec(THISMATRIX,X,Y,TRANS=''N'',UPLO=''L'',DIAG=''N''')
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,Y=yRealVector,TRANS='T',UPLO='U',DIAG='N')
+      ASSERT(ALL(yRealVector%b .APPROXEQA. dummyvec),'BLAS_matvec(THISMATRIX,X,Y,TRANS=''N'',UPLO=''L'',DIAG=''N''')
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector%b,Y=yRealVector%b,TRANS='N',UPLO='L',DIAG='N')
+      ASSERT(ALL(yRealVector%b .APPROXEQA. dummyvec),'BLAS_matvec(MATRIX,X%b,Y%b,TRANS=''N'',UPLO=''L'',DIAG=''N''')
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector%b,Y=yRealVector%b,TRANS='T',UPLO='U',DIAG='N')
+      ASSERT(ALL(yRealVector%b .APPROXEQA. dummyvec),'BLAS_matvec(MATRIX,X%b,Y%b,TRANS=''N'',UPLO=''L'',DIAG=''N''')
+      dummyvec=(/0.00_SRK,0.00_SRK,0.00_SRK,0.250_SRK/)
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,Y=yRealVector,TRANS='N',UPLO='U',DIAG='N')
+      ASSERT(ALL(yRealVector%b .APPROXEQA. dummyvec),'BLAS_matvec(THISMATRIX,X,Y,TRANS=''N'',UPLO=''U'',DIAG=''N''')
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,Y=yRealVector,TRANS='T',UPLO='L',DIAG='N')
+      ASSERT(ALL(yRealVector%b .APPROXEQA. dummyvec),'BLAS_matvec(THISMATRIX,X,Y,TRANS=''T'',UPLO=''L'',DIAG=''N''')
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector%b,Y=yRealVector%b,TRANS='N',UPLO='U',DIAG='N')
+      ASSERT(ALL(yRealVector%b .APPROXEQA. dummyvec),'BLAS_matvec(MATRIX,X%b,Y%b,TRANS=''N'',UPLO=''U'',DIAG=''N''')
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector%b,Y=yRealVector%b,TRANS='T',UPLO='L',DIAG='N')
+      ASSERT(ALL(yRealVector%b .APPROXEQA. dummyvec),'BLAS_matvec(MATRIX,X%b,Y%b,TRANS=''T'',UPLO=''L'',DIAG=''N''')
       WRITE(*,*) '  Passed: CALL BLAS_matvec(...) sparse-matrix'
       
       !Test BLAS_matmult when SparseMatType is supported.
@@ -789,6 +841,64 @@ PROGRAM testMatrixTypes
           "BETA=2.0_SRK,Y=yRealVector) -densesq FAILED!"
         STOP 666
       ENDIF
+
+      ! Check sparse triangular solvers
+      CALL yRealVector%clear()
+      CALL xRealVector%clear()
+      CALL thisMatrix%clear()
+      IF(ALLOCATED(thisMatrix)) DEALLOCATE(thisMatrix)
+      ALLOCATE(DenseSquareMatrixType :: thisMatrix)
+      CALL Plist%clear()
+      CALL vecPList%clear()
+      CALL PList%add('MatrixType->n',4_SIK)
+      CALL PList%add('MatrixType->matType',DENSESQUARE)
+      CALL Plist%add('MatrixType->isSym',.FALSE.)
+      CALL vecPList%add('VectorType->n',4_SIK)
+      CALL xRealVector%init(vecPList)
+      CALL yRealVector%init(vecPList)
+      CALL thisMatrix%init(PList)
+      SELECTTYPE(x => xRealVector); TYPE IS(RealVectorType)
+        CALL x%set(1.0_SRK)
+      ENDSELECT
+      SELECTTYPE(mat => thisMatrix); TYPE IS(DenseSquareMatrixType)
+        CALL mat%set(1,1,1.0_SRK)
+        CALL mat%set(1,2,2.0_SRK)
+        CALL mat%set(1,3,3.0_SRK)
+        CALL mat%set(1,4,4.0_SRK)
+        CALL mat%set(2,1,2.0_SRK)
+        CALL mat%set(2,2,2.0_SRK)
+        CALL mat%set(2,3,3.0_SRK)
+        CALL mat%set(2,4,4.0_SRK)
+        CALL mat%set(3,1,3.0_SRK)
+        CALL mat%set(3,2,3.0_SRK)
+        CALL mat%set(3,3,3.0_SRK)
+        CALL mat%set(3,4,4.0_SRK)
+        CALL mat%set(4,1,4.0_SRK)
+        CALL mat%set(4,2,4.0_SRK)
+        CALL mat%set(4,3,4.0_SRK)
+        CALL mat%set(4,4,4.0_SRK)
+      ENDSELECT
+      ! Test both the VectorType and native interfaces
+      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+      ALLOCATE(dummyvec(4))
+      dummyvec=(/1.0000000_SRK,-0.5000000_SRK,-0.1666666666666666_SRK,-0.083333333333333333_SRK/)
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,Y=yRealVector,TRANS='N',UPLO='L',DIAG='N')
+      ASSERT(ALL(yRealVector%b .APPROXEQA. dummyvec),'BLAS_matvec(THISMATRIX,X,Y,TRANS=''N'',UPLO=''L'',DIAG=''N''')
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,Y=yRealVector,TRANS='T',UPLO='U',DIAG='N')
+      ASSERT(ALL(yRealVector%b .APPROXEQA. dummyvec),'BLAS_matvec(THISMATRIX,X,Y,TRANS=''N'',UPLO=''L'',DIAG=''N''')
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector%b,Y=yRealVector%b,TRANS='N',UPLO='L',DIAG='N')
+      ASSERT(ALL(yRealVector%b .APPROXEQA. dummyvec),'BLAS_matvec(MATRIX,X%b,Y%b,TRANS=''N'',UPLO=''L'',DIAG=''N''')
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector%b,Y=yRealVector%b,TRANS='T',UPLO='U',DIAG='N')
+      ASSERT(ALL(yRealVector%b .APPROXEQA. dummyvec),'BLAS_matvec(MATRIX,X%b,Y%b,TRANS=''N'',UPLO=''L'',DIAG=''N''')
+      dummyvec=(/0.00_SRK,0.00_SRK,0.00_SRK,0.250_SRK/)
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,Y=yRealVector,TRANS='N',UPLO='U',DIAG='N')
+      ASSERT(ALL(yRealVector%b .APPROXEQA. dummyvec),'BLAS_matvec(THISMATRIX,X,Y,TRANS=''N'',UPLO=''U'',DIAG=''N''')
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,Y=yRealVector,TRANS='T',UPLO='L',DIAG='N')
+      ASSERT(ALL(yRealVector%b .APPROXEQA. dummyvec),'BLAS_matvec(THISMATRIX,X,Y,TRANS=''T'',UPLO=''L'',DIAG=''N''')
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector%b,Y=yRealVector%b,TRANS='N',UPLO='U',DIAG='N')
+      ASSERT(ALL(yRealVector%b .APPROXEQA. dummyvec),'BLAS_matvec(MATRIX,X%b,Y%b,TRANS=''N'',UPLO=''U'',DIAG=''N''')
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector%b,Y=yRealVector%b,TRANS='T',UPLO='L',DIAG='N')
+      ASSERT(ALL(yRealVector%b .APPROXEQA. dummyvec),'BLAS_matvec(MATRIX,X%b,Y%b,TRANS=''T'',UPLO=''L'',DIAG=''N''')
       WRITE(*,*) '  Passed: CALL BLAS_matvec(...) densesq-matrix'
       
       CALL testMatrixMultSquare()
