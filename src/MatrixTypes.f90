@@ -348,14 +348,14 @@ MODULE MatrixTypes
 
   !> @brief Adds strsv_all and dtrsv_all routines for sparse matrices to the
   !> @ref BLAS2::BLAS_matvec "BLAS_matvec" interface
-  INTERFACE trsv_sparse
+!  INTERFACE trsv_sparse
     !> @copybrief MatrixTypes::strsv_all_sparse
     !> @copydetails MatrixTypes::strsv_all_sparse
-    MODULE PROCEDURE strsv_all_sparse
+!    MODULE PROCEDURE strsv_all_sparse
     !> @copybrief MatrixTypes::dtrsv_all_sparse
     !> @copydetails MatrixTypes::dtrsv_all_sparse
-    MODULE PROCEDURE dtrsv_all_sparse
-  ENDINTERFACE trsv_sparse
+!    MODULE PROCEDURE dtrsv_all_sparse
+!  ENDINTERFACE trsv_sparse
   
   !> Logical flag to check whether the required and optional parameter lists
   !> have been created yet for the Matrix Types.
@@ -1219,6 +1219,9 @@ MODULE MatrixTypes
 !> @param x the vector to multiply with @c A
 !> @param beta the scalar used to scale @c y
 !> @param y the vector to add to the product of @c A and @c x
+!> @param uplo character indicating if @c thisMatrix is upper or lower triangular
+!> @param diag character indicating if diagonal of @c thisMatrix should be treated
+!> @param incx_in integer containing distance between elements in @c x
 !>
     SUBROUTINE matvec_MatrixType(thisMatrix,trans,alpha,x,beta,y,uplo,diag,incx_in)
       CHARACTER(LEN=*),PARAMETER :: myName='matvec_MatrixType'
@@ -1349,6 +1352,9 @@ MODULE MatrixTypes
 !> @param x the vector to multiply with @c A
 !> @param beta the scalar used to scale @c y
 !> @param y the vector to add to the product of @c A and @c x
+!> @param uplo character indicating if @c thisMatrix is upper or lower triangular
+!> @param diag character indicating if diagonal of @c thisMatrix should be treated
+!> @param incx_in integer containing distance between elements in @c x
 !>
     SUBROUTINE matvec_MatrixTypeVectorType(thisMatrix,trans,alpha,x,beta,y,uplo,diag,incx_in)
       CHARACTER(LEN=*),PARAMETER :: myName='matvec_MatrixTypeVectorType'
@@ -1538,96 +1544,96 @@ MODULE MatrixTypes
 !> the code available on http://netlib.org/blas/strsv.f but has some minor
 !> modifications. The error checking is somewhat different.
 !>
-    SUBROUTINE strsv_all_sparse(uplo,trans,diag,a,ia,ja,x,incx_in)
-      CHARACTER(LEN=1),INTENT(IN) :: uplo
-      CHARACTER(LEN=1),INTENT(IN) :: trans
-      CHARACTER(LEN=1),INTENT(IN) :: diag
-      REAL(SSK),INTENT(IN) :: a(:)
-      INTEGER(SIK),INTENT(IN) :: ia(:)
-      INTEGER(SIK),INTENT(IN) :: ja(:)
-      REAL(SSK),INTENT(INOUT) :: x(:)
-      INTEGER(SIK),INTENT(IN),OPTIONAL :: incx_in
-      INTEGER(SIK) :: n,incx
-
-      LOGICAL(SBK) :: ltrans, nounit
-      INTEGER(SIK) :: i,ix,j,jx,kx
-      REAL(SSK) :: temp
-      REAL(SSK),PARAMETER :: ZERO=0.0_SSK
-      INTRINSIC MAX
-      n=SIZE(x)
-      IF(PRESENT(incx_in)) THEN
-        incx=incx_in
-      ELSE
-        incx=1_SIK
-      ENDIF
-      IF((trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
-           trans == 'n' .OR. trans == 'N') .AND. &
-          (uplo == 'u' .OR. uplo == 'U' .OR. uplo == 'l' .OR. uplo == 'L') .AND. &
-          (diag == 't' .OR. diag == 'T' .OR. diag == 'n' .OR. diag == 'N')) THEN
-
-        nounit=.FALSE.
-        IF (diag == 'n' .OR. diag == 'N') nounit=.TRUE.
- 
-        IF (trans == 'n' .OR. trans == 'N') THEN  ! Form  x := inv( A )*x.
-          IF (uplo == 'u' .OR. uplo == 'U') THEN  ! Upper triangular
-            IF(incx == 1_SIK) THEN
-              IF((ANY(ia <= 0)) .AND. nounit) n=0 ! In case a row does not have any elements
-              DO i=n,1,-1
-                DO j=ia(i+1)-1,ia(i),-1
-                  IF(ja(j) <= i) EXIT
-                  x(i)=x(i)-a(j)*x(ja(j))
-                ENDDO
-                IF((ja(j) == i) .AND. nounit) x(i)=x(i)/a(j)
-              ENDDO
-            ELSE
-            ENDIF
-          ELSE  ! Lower Triangular
-            IF(incx == 1_SIK) THEN
-              IF((ANY(ia <= 0)) .AND. nounit) n=0 ! In case a row does not have any elements
-              DO i=1,n
-                DO j=ia(i),ia(i+1)-1
-                  IF(ja(j) >= i) EXIT
-                  x(i)=x(i)-a(j)*x(ja(j))
-                ENDDO
-                IF((ja(j) == i) .AND. nounit) x(i)=x(i)/a(j)
-              ENDDO
-            ELSE
-            ENDIF
-          ENDIF
-        ELSE  ! Form  x := inv( A**T )*x.
-          IF (uplo == 'u' .OR. uplo == 'U') THEN
-            IF(incx == 1_SIK) THEN
-              DO j = 1,SIZE(ia)-1
-                IF(.NOT.(x(j) .APPROXEQA. ZERO)) THEN
-                  IF (nounit) x(j)=x(j)/a(ia(j))
-                  temp=x(j)
-                  DO i=ia(j)+1,ia(j+1)-1
-                    IF(ja(i) <= j) CYCLE
-                    x(ja(i))=x(ja(i))-temp*a(i)
-                  ENDDO
-                ENDIF
-              ENDDO
-            ELSE
-            ENDIF
-          ELSE  ! Lower Triangular
-            IF(incx == 1_SIK) THEN
-              DO i=n,1,-1
-                IF(.NOT.(x(i) .APPROXEQA. ZERO)) THEN
-                  IF(nounit) x(i)=x(i)/a(ia(i+1)-1)
-                  temp=x(i)
-                  DO j=ia(i+1)-2,ia(i),-1
-                    IF(ja(j) > i) CYCLE
-                    x(ja(j))=x(ja(j))-a(j)*temp
-                  ENDDO
-                ENDIF
-              ENDDO
-            ELSE
-            ENDIF
-          ENDIF
-        ENDIF
-      ENDIF
-
-    ENDSUBROUTINE strsv_all_sparse
+!    PURE SUBROUTINE strsv_all_sparse(uplo,trans,diag,a,ia,ja,x,incx_in)
+!      CHARACTER(LEN=1),INTENT(IN) :: uplo
+!      CHARACTER(LEN=1),INTENT(IN) :: trans
+!      CHARACTER(LEN=1),INTENT(IN) :: diag
+!      REAL(SSK),INTENT(IN) :: a(:)
+!      INTEGER(SIK),INTENT(IN) :: ia(:)
+!      INTEGER(SIK),INTENT(IN) :: ja(:)
+!      REAL(SSK),INTENT(INOUT) :: x(:)
+!      INTEGER(SIK),INTENT(IN),OPTIONAL :: incx_in
+!      INTEGER(SIK) :: n,incx
+!
+!      LOGICAL(SBK) :: ltrans, nounit
+!      INTEGER(SIK) :: i,ix,j,jx,kx
+!      REAL(SSK) :: temp
+!      REAL(SSK),PARAMETER :: ZERO=0.0_SSK
+!      INTRINSIC MAX
+!      n=SIZE(x)
+!      IF(PRESENT(incx_in)) THEN
+!        incx=incx_in
+!      ELSE
+!        incx=1_SIK
+!      ENDIF
+!      IF((trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
+!           trans == 'n' .OR. trans == 'N') .AND. &
+!          (uplo == 'u' .OR. uplo == 'U' .OR. uplo == 'l' .OR. uplo == 'L') .AND. &
+!          (diag == 't' .OR. diag == 'T' .OR. diag == 'n' .OR. diag == 'N')) THEN
+!
+!        nounit=.FALSE.
+!        IF (diag == 'n' .OR. diag == 'N') nounit=.TRUE.
+! 
+!        IF (trans == 'n' .OR. trans == 'N') THEN  ! Form  x := inv( A )*x.
+!          IF (uplo == 'u' .OR. uplo == 'U') THEN  ! Upper triangular
+!            IF(incx == 1_SIK) THEN
+!              IF((ANY(ia <= 0)) .AND. nounit) n=0 ! In case a row does not have any elements
+!              DO i=n,1,-1
+!                DO j=ia(i+1)-1,ia(i),-1
+!                  IF(ja(j) <= i) EXIT
+!                  x(i)=x(i)-a(j)*x(ja(j))
+!                ENDDO
+!                IF((ja(j) == i) .AND. nounit) x(i)=x(i)/a(j)
+!              ENDDO
+!            ELSE
+!            ENDIF
+!          ELSE  ! Lower Triangular
+!            IF(incx == 1_SIK) THEN
+!              IF((ANY(ia <= 0)) .AND. nounit) n=0 ! In case a row does not have any elements
+!              DO i=1,n
+!                DO j=ia(i),ia(i+1)-1
+!                  IF(ja(j) >= i) EXIT
+!                  x(i)=x(i)-a(j)*x(ja(j))
+!                ENDDO
+!                IF((ja(j) == i) .AND. nounit) x(i)=x(i)/a(j)
+!              ENDDO
+!            ELSE
+!            ENDIF
+!          ENDIF
+!        ELSE  ! Form  x := inv( A**T )*x.
+!          IF (uplo == 'u' .OR. uplo == 'U') THEN
+!            IF(incx == 1_SIK) THEN
+!              DO j = 1,SIZE(ia)-1
+!                IF(.NOT.(x(j) .APPROXEQA. ZERO)) THEN
+!                  IF (nounit) x(j)=x(j)/a(ia(j))
+!                  temp=x(j)
+!                  DO i=ia(j)+1,ia(j+1)-1
+!                    IF(ja(i) <= j) CYCLE
+!                    x(ja(i))=x(ja(i))-temp*a(i)
+!                  ENDDO
+!                ENDIF
+!              ENDDO
+!            ELSE
+!            ENDIF
+!          ELSE  ! Lower Triangular
+!            IF(incx == 1_SIK) THEN
+!              DO i=n,1,-1
+!                IF(.NOT.(x(i) .APPROXEQA. ZERO)) THEN
+!                  IF(nounit) x(i)=x(i)/a(ia(i+1)-1)
+!                  temp=x(i)
+!                  DO j=ia(i+1)-2,ia(i),-1
+!                    IF(ja(j) > i) CYCLE
+!                    x(ja(j))=x(ja(j))-a(j)*temp
+!                  ENDDO
+!                ENDIF
+!              ENDDO
+!            ELSE
+!            ENDIF
+!          ENDIF
+!        ENDIF
+!      ENDIF
+!
+!    ENDSUBROUTINE strsv_all_sparse
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine solves a triangular matrix linear system.
@@ -1648,20 +1654,21 @@ MODULE MatrixTypes
 !> the code available on http://netlib.org/blas/strsv.f but has some minor
 !> modifications. The error checking is somewhat different.
 !>
-    SUBROUTINE dtrsv_all_sparse(uplo,trans,diag,a,ia,ja,x,incx_in)
+!    PURE SUBROUTINE dtrsv_all_sparse(uplo,trans,diag,a,ia,ja,x,incx_in)
+    PURE SUBROUTINE trsv_sparse(uplo,trans,diag,a,ia,ja,x,incx_in)
       CHARACTER(LEN=1),INTENT(IN) :: uplo
       CHARACTER(LEN=1),INTENT(IN) :: trans
       CHARACTER(LEN=1),INTENT(IN) :: diag
-      REAL(SDK),INTENT(IN) :: a(:)
+      REAL(SRK),INTENT(IN) :: a(:)
       INTEGER(SIK),INTENT(IN) :: ia(:)
       INTEGER(SIK),INTENT(IN) :: ja(:)
-      REAL(SDK),INTENT(INOUT) :: x(:)
+      REAL(SRK),INTENT(INOUT) :: x(:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx_in
 
       LOGICAL(SBK) :: ltrans, nounit
       INTEGER(SIK) :: i,ix,j,jx,kx,n,incx
-      REAL(SDK) :: temp
-      REAL(SDK),PARAMETER :: ZERO=0.0_SDK
+      REAL(SRK) :: temp
+      REAL(SRK),PARAMETER :: ZERO=0.0_SRK
       INTRINSIC MAX
       n=SIZE(x)
       IF(PRESENT(incx_in)) THEN
@@ -1725,7 +1732,8 @@ MODULE MatrixTypes
         ENDIF
       ENDIF
 
-    ENDSUBROUTINE dtrsv_all_sparse
+    ENDSUBROUTINE trsv_sparse
+!    ENDSUBROUTINE dtrsv_all_sparse
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine provides an interface to matrix matrix multiplication for
