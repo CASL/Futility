@@ -164,6 +164,7 @@ MODULE PreconditionerTypes
       INTEGER(SIK) :: col,row,i,j,nU,nL,nnzU,nnzL
       REAL(SRK) :: val
 
+WRITE(*,*) '   --Initializing Preconditioner...'
       localalloc=.FALSE.
       IF(.NOT.ASSOCIATED(ePreCondType)) THEN
         ALLOCATE(ePreCondType)
