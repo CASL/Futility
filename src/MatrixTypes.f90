@@ -346,14 +346,16 @@ MODULE MatrixTypes
     MODULE PROCEDURE matmult_MatrixType
   ENDINTERFACE BLAS_matmult
 
-  INTERFACE triang_solve_sparse
+  !> @brief Adds strsv_all and dtrsv_all routines for sparse matrices to the
+  !> @ref BLAS2::BLAS_matvec "BLAS_matvec" interface
+  INTERFACE trsv_sparse
     !> @copybrief MatrixTypes::strsv_all_sparse
-    !> @copydetails matrixTypes::strsv_all_sparse
+    !> @copydetails MatrixTypes::strsv_all_sparse
     MODULE PROCEDURE strsv_all_sparse
     !> @copybrief MatrixTypes::dtrsv_all_sparse
-    !> @copydetails matrixTypes::dtrsv_all_sparse
+    !> @copydetails MatrixTypes::dtrsv_all_sparse
     MODULE PROCEDURE dtrsv_all_sparse
-  ENDINTERFACE triang_solve_sparse
+  ENDINTERFACE trsv_sparse
   
   !> Logical flag to check whether the required and optional parameter lists
   !> have been created yet for the Matrix Types.
@@ -1218,7 +1220,7 @@ MODULE MatrixTypes
 !> @param beta the scalar used to scale @c y
 !> @param y the vector to add to the product of @c A and @c x
 !>
-    SUBROUTINE matvec_MatrixType(thisMatrix,trans,alpha,x,beta,y,uplo,unity,incx_in)
+    SUBROUTINE matvec_MatrixType(thisMatrix,trans,alpha,x,beta,y,uplo,diag,incx_in)
       CHARACTER(LEN=*),PARAMETER :: myName='matvec_MatrixType'
       CLASS(MatrixType),INTENT(INOUT) :: thisMatrix
       CHARACTER(LEN=1),OPTIONAL,INTENT(IN) :: trans
@@ -1227,15 +1229,12 @@ MODULE MatrixTypes
       REAL(SRK),INTENT(IN),OPTIONAL :: beta
       REAL(SRK),INTENT(INOUT) :: y(:)
       CHARACTER(LEN=1),INTENT(IN),OPTIONAL :: uplo
-      CHARACTER(LEN=1),INTENT(IN),OPTIONAL :: unity
+      CHARACTER(LEN=1),INTENT(IN),OPTIONAL :: diag
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx_in
       REAL(SRK),ALLOCATABLE :: tmpmat(:,:)
       INTEGER(SIK) :: i,j
       LOGICAL(SBK) :: localalloc
-      
-      CHARACTER(LEN=1) :: t
-      CHARACTER(LEN=1) :: ul
-      CHARACTER(LEN=1) :: u
+      CHARACTER(LEN=1) :: t,ul,d
       INTEGER(SIK) :: incx
 
       !Error checking of subroutine input
@@ -1248,18 +1247,18 @@ MODULE MatrixTypes
       IF(thisMatrix%isInit) THEN
         t='n'
         ul='n'
-        u='n'
+        d='n'
         incx=1_SIK
         IF(PRESENT(trans)) t=trans
         IF(PRESENT(uplo)) ul=uplo
-        IF(PRESENT(unity)) u=unity
+        IF(PRESENT(diag)) d=diag
         IF(PRESENT(incx_in)) incx=incx_in
         
         SELECTTYPE(thisMatrix)
           TYPE IS(DenseSquareMatrixType)
             IF(ul /= 'n') THEN
               y=x
-              CALL BLAS2_matvec(ul,t,u,thisMatrix%A,y,incx)
+              CALL BLAS2_matvec(ul,t,d,thisMatrix%a,y,incx)
             ELSEIF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
               CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
                 alpha,thisMatrix%a,thisMatrix%n,x,1,beta,y,1)
@@ -1290,7 +1289,7 @@ MODULE MatrixTypes
           TYPE IS(SparseMatrixType)
             IF(ul /= 'n') THEN
               y=x
-              CALL triang_solve_sparse(ul,t,u,thisMatrix%a,thisMatrix%ia,thisMatrix%ja,y,incx)
+              CALL trsv_sparse(ul,t,d,thisMatrix%a,thisMatrix%ia,thisMatrix%ja,y,incx)
             ELSEIF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
               CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
                 thisMatrix%ja,thisMatrix%a,alpha,x,beta,y)
@@ -1350,7 +1349,7 @@ MODULE MatrixTypes
 !> @param beta the scalar used to scale @c y
 !> @param y the vector to add to the product of @c A and @c x
 !>
-    SUBROUTINE matvec_MatrixTypeVectorType(thisMatrix,trans,alpha,x,beta,y,uplo,unity,incx_in)
+    SUBROUTINE matvec_MatrixTypeVectorType(thisMatrix,trans,alpha,x,beta,y,uplo,diag,incx_in)
       CHARACTER(LEN=*),PARAMETER :: myName='matvec_MatrixTypeVectorType'
       CLASS(MatrixType),INTENT(INOUT) :: thisMatrix
       CLASS(VectorType),INTENT(INOUT) :: x
@@ -1358,9 +1357,9 @@ MODULE MatrixTypes
       REAL(SRK),INTENT(IN),OPTIONAL :: alpha
       REAL(SRK),INTENT(IN),OPTIONAL :: beta
       CLASS(VectorType),INTENT(INOUT) :: y
-      CHARACTER(LEN=1),OPTIONAL,INTENT(IN) :: uplo
-      CHARACTER(LEN=1),OPTIONAL,INTENT(IN) :: unity
-      INTEGER(SIK),OPTIONAL,INTENT(IN) :: incx_in
+      CHARACTER(LEN=1),INTENT(IN),OPTIONAL :: uplo
+      CHARACTER(LEN=1),INTENT(IN),OPTIONAL :: diag
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: incx_in
       REAL(SRK),ALLOCATABLE :: tmpmat(:,:),tmpvec(:),tmpy(:)
       INTEGER(SIK) :: i,j
       LOGICAL(SBK) :: localalloc
@@ -1370,9 +1369,9 @@ MODULE MatrixTypes
       TYPE(ParamType) :: vecPList
 #endif
       
-      CHARACTER(LEN=1) :: t,ul,u
-      REAL(SRK) :: a,b
+      CHARACTER(LEN=1) :: t,ul,d
       INTEGER(SIK) :: incx
+      REAL(SRK) :: a,b
       
       !Error checking of subroutine input
       localalloc=.FALSE.
@@ -1384,13 +1383,13 @@ MODULE MatrixTypes
       IF(thisMatrix%isInit) THEN
         t='n'
         ul='n'
-        u='n'
+        d='n'
         incx=1_SIK
         a=1
         b=1
         IF(PRESENT(trans)) t=trans
         IF(PRESENT(uplo)) ul=uplo
-        IF(PRESENT(unity)) u=unity
+        IF(PRESENT(diag)) d=diag
         IF(PRESENT(incx_in)) incx=incx_in
         IF(PRESENT(alpha)) a=alpha
         IF(PRESENT(beta))  b=beta
@@ -1401,7 +1400,7 @@ MODULE MatrixTypes
               TYPE IS(DenseSquareMatrixType)
                 IF(ul /= 'n') THEN
                   y%b=x%b
-                  CALL BLAS2_matvec(ul,t,u,thisMatrix%a,y%b,incx)
+                  CALL BLAS2_matvec(ul,t,d,thisMatrix%a,y%b,incx)
                 ELSEIF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
                   CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
                     alpha,thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
@@ -1432,7 +1431,7 @@ MODULE MatrixTypes
               TYPE IS(SparseMatrixType)
                 IF(ul /= 'n') THEN
                   y%b=x%b
-                  CALL triang_solve_sparse(ul,t,u,thisMatrix%a,thisMatrix%ia,thisMatrix%ja,y%b,incx)
+                  CALL trsv_sparse(ul,t,d,thisMatrix%a,thisMatrix%ia,thisMatrix%ja,y%b,incx)
                 ELSEIF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
                   CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
                     thisMatrix%ja,thisMatrix%a,alpha,x%b,beta,y%b)
@@ -1513,7 +1512,6 @@ MODULE MatrixTypes
             ENDSELECT
           ENDSELECT
         ENDSELECT
-        
         
       ENDIF
 
