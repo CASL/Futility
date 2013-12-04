@@ -710,32 +710,7 @@ PROGRAM testPreconditionerTypes
           ! Check %setup
           CALL testLU%setup()
           
-!          !write some matrices out
-!          SELECTTYPE(A => testLU%A); TYPE IS(PETScMatrixType)
-!            WRITE(667,*) "A: "
-!            WRITE(*,*) "A%n: ",a%n
-!            DO row=1,A%n
-!              WRITE(667,'(I4)',ADVANCE='NO') row
-!              DO col=1,A%n
-!                CALL A%get(row,col,tmpval)
-!                WRITE(667,'(ES20.10)',ADVANCE='NO') tmpval
-!              ENDDO   
-!              WRITE(667,*)            
-!            ENDDO
-!            WRITE(667,*)  
-!          ENDSELECT
-!          SELECTTYPE(A => testLU%L); TYPE IS(PETScMatrixType)
-!            WRITE(667,*) "L: "
-!            DO row=1,A%n
-!              WRITE(667,'(I4)',ADVANCE='NO') row
-!              DO col=1,A%n
-!                CALL A%get(row,col,tmpval)
-!                WRITE(667,'(ES20.10)',ADVANCE='NO') tmpval
-!              ENDDO   
-!              WRITE(667,*)            
-!            ENDDO
-!            WRITE(667,*)  
-!          ENDSELECT
+
 !          SELECTTYPE(A => testLU%L); CLASS IS(MatrixType)
 !            DO row=1,A%n
 !              DO col=1,A%n
@@ -743,18 +718,6 @@ PROGRAM testPreconditionerTypes
 !                IF(tmpval /= 0.0_SRK) WRITE(670,'(2I7,ES25.15)') row,col,tmpval
 !              ENDDO         
 !            ENDDO
-!          ENDSELECT
-!          SELECTTYPE(A => testLU%U); TYPE IS(PETScMatrixType)
-!            WRITE(667,*) "U: "
-!            DO row=1,A%n
-!              WRITE(667,'(I4)',ADVANCE='NO') row
-!              DO col=1,A%n
-!                CALL A%get(row,col,tmpval)
-!                WRITE(667,'(ES20.10)',ADVANCE='NO') tmpval
-!              ENDDO   
-!              WRITE(667,*)            
-!            ENDDO
-!            WRITE(667,*)  
 !          ENDSELECT
 !          SELECTTYPE(A => testLU%U); CLASS IS(MatrixType)
 !            DO row=1,A%n
