@@ -715,7 +715,7 @@ PROGRAM testPreconditionerTypes
 !            DO row=1,A%n
 !              DO col=1,A%n
 !                CALL A%get(row,col,tmpval)
-!                IF(tmpval /= 0.0_SRK) WRITE(670,'(2I7,ES25.15)') row,col,tmpval
+!                IF(tmpval /= 0.0_SRK) WRITE(690,'(2I7,ES25.15)') row,col,tmpval
 !              ENDDO         
 !            ENDDO
 !          ENDSELECT
@@ -723,7 +723,7 @@ PROGRAM testPreconditionerTypes
 !            DO row=1,A%n
 !              DO col=1,A%n
 !                CALL A%get(row,col,tmpval)
-!                IF(tmpval /= 0.0_SRK) WRITE(671,'(2I7,ES20.10)') row,col,tmpval
+!                IF(tmpval /= 0.0_SRK) WRITE(691,'(2I7,ES20.10)') row,col,tmpval
 !              ENDDO         
 !            ENDDO
 !          ENDSELECT
