@@ -419,7 +419,7 @@ PROGRAM testPreconditionerTypes
       REAL(SRK) :: tmpval,reftmpval,val
       TYPE(ParamType) :: pList
       CLASS(MatrixType),ALLOCATABLE :: refBILU_L,refBILU_U
-      REAL(SRK),ALLOCATABLE :: refF0(:,:,:),refEW(:,:),refNS(:,:)
+      REAL(SRK),ALLOCATABLE :: refF0(:,:,:),refE(:,:),refW(:,:),refNS(:,:)
       
       COMPONENT_TEST('BILU Preconditioner Type (1g)')
       IF(ALLOCATED(testBILU_1g) .AND. ALLOCATED(testVec_1g)) THEN
@@ -456,6 +456,23 @@ PROGRAM testPreconditionerTypes
   
           ! Check %setup
           CALL testLU%setup()
+
+!          SELECTTYPE(A => testLU%L); CLASS IS(MatrixType)
+!            DO row=1,A%n
+!              DO col=1,A%n
+!                CALL A%get(row,col,tmpval)
+!                IF(tmpval /= 0.0_SRK) WRITE(670,'(2I7,ES25.15)') row,col,tmpval
+!              ENDDO         
+!            ENDDO
+!          ENDSELECT
+!          SELECTTYPE(A => testLU%U); CLASS IS(MatrixType)
+!            DO row=1,A%n
+!              DO col=1,A%n
+!                CALL A%get(row,col,tmpval)
+!                IF(tmpval /= 0.0_SRK) WRITE(671,'(2I7,ES20.10)') row,col,tmpval
+!              ENDDO         
+!            ENDDO
+!          ENDSELECT
           
           !setup ref L
           CALL PListMat%clear()
@@ -486,7 +503,7 @@ PROGRAM testPreconditionerTypes
                     ASSERT( ABS(tmpval-reftmpval) < 1E-12_SRK,"BILU_L failed")
                     FINFO() row,col,tmpval,reftmpval,ABS(tmpval-reftmpval)
                   ENDIF
-                ENDDO         
+                ENDDO                  
               ENDDO
             ENDSELECT
           ENDSELECT
@@ -536,12 +553,12 @@ PROGRAM testPreconditionerTypes
             refF0=reshape((/1.52431687918166E-02_SRK,1.16870895256247E-02_SRK,1.85629858767893E-02_SRK, &
                             1.14018363153568E-02_SRK,8.80036206987993E-03_SRK,1.51509720731947E-02_SRK, &
                             1.79997134755537E-02_SRK,1.41923457803996E-02_SRK,3.35443060137467E-02_SRK, &
-                            1.51918528737727E-02_SRK,1.16499382123109E-02_SRK,1.84761602643270E-02_SRK, &
-                            1.13685427168264E-02_SRK,8.76495803446321E-03_SRK,1.50548743144254E-02_SRK, &
-                            1.79219155341178E-02_SRK,1.41264144749203E-02_SRK,3.30373055396229E-02_SRK, &
-                            1.52446381098966E-02_SRK,1.16881871227233E-02_SRK,1.85674786446213E-02_SRK, &
-                            1.14027635068055E-02_SRK,8.80087415960557E-03_SRK,1.51537538732142E-02_SRK, &
-                            1.80034506505641E-02_SRK,1.41945726384877E-02_SRK,3.36014312686684E-02_SRK/), shape(refF0))
+                            1.51918717517392E-02_SRK,1.16499353220384E-02_SRK,1.84760035086477E-02_SRK, &
+                            1.13685498420068E-02_SRK,8.76518180813781E-03_SRK,1.50556732400713E-02_SRK, &
+                            1.79218987869634E-02_SRK,1.41262087542388E-02_SRK,3.30371928702778E-02_SRK, &
+                            1.52446571082415E-02_SRK,1.16881875940967E-02_SRK,1.85673369107944E-02_SRK, &
+                            1.14027712075350E-02_SRK,8.80109246707898E-03_SRK,1.51545422940830E-02_SRK, &
+                            1.80034336652926E-02_SRK,1.41943673794494E-02_SRK,3.36013317764767E-02_SRK/), shape(refF0))
             ! check F0
             DO row=1,pc%nPlane*pc%nPin
               ASSERT( ABS(pc%F0(row,1,1)-refF0(row,1,1)) < 1E-12_SRK,'F0 not correct')
@@ -552,40 +569,60 @@ PROGRAM testPreconditionerTypes
           
           SELECTTYPE(pc => testLU); TYPE IS(BILU_PreCondType)
             ! setup ref EW
-            ALLOCATE(refEW(pc%nPlane*X,pc%nGrp*(X-1)))
-            refEW(1,1)=-31.684170810000001_SRK
-            refEW(1,2)=-31.684170810000001_SRK
-            refEW(2,1)=-40.196837709705747_SRK
-            refEW(2,2)=-42.943870361438655_SRK
-            refEW(3,1)=-35.082551731177141_SRK
-            refEW(3,2)=-38.081713238674908_SRK
-            refEW(4,1)=-31.686171861099776_SRK
-            refEW(4,2)=-31.687621831686247_SRK
-            refEW(5,1)=-40.177054550140944_SRK
-            refEW(5,2)=-42.884859150327657_SRK
-            refEW(6,1)=-35.073874563761308_SRK
-            refEW(6,2)=-38.019722799688246_SRK
-            refEW(7,1)=-31.686159118402738_SRK
-            refEW(7,2)=-31.687561588346803_SRK
-            refEW(8,1)=-40.199070225618804_SRK
-            refEW(8,2)=-42.947757129914663_SRK
-            refEW(9,1)=-35.084982346079087_SRK
-            refEW(9,2)=-38.096462202125309_SRK
+            ALLOCATE(refE(pc%nPlane*X,pc%nGrp*(X-1)))
+            refE(1,1)=-31.684170810000001_SRK
+            refE(1,2)=-31.684170810000001_SRK
+            refE(2,1)=-40.196837709705747_SRK
+            refE(2,2)=-42.943870361438655_SRK
+            refE(3,1)=-35.082551731177141_SRK
+            refE(3,2)=-38.081713238674908_SRK
+            refE(4,1)=-31.686195254792654_SRK
+            refE(4,2)=-31.687387662201822_SRK
+            refE(5,1)=-40.177486681995958_SRK
+            refE(5,2)=-42.887675628844256_SRK
+            refE(6,1)=-35.073583720533449_SRK
+            refE(6,2)=-38.020228708166954_SRK
+            refE(7,1)=-31.686188158214176_SRK
+            refE(7,2)=-31.687363601247633_SRK
+            refE(8,1)=-40.199492823751321_SRK
+            refE(8,2)=-42.950491441083166_SRK
+            refE(9,1)=-35.084695220281809_SRK
+            refE(9,2)=-38.096963497341299_SRK
             ! check E
             DO row=1,pc%nPlane*X
               DO col=1,pc%nGrp*(X-1)
-                ASSERT( ABS(pc%E(row,col)-refEW(row,col)) < 1E-8_SRK,'E not correct')
-                FINFO() row,col,pc%E(row,col),refEW(row,col),ABS(pc%E(row,col)-refEW(row,col))
+                ASSERT( ABS(pc%E(row,col)-refE(row,col)) < 1E-8_SRK,'E not correct')
+                FINFO() row,col,pc%E(row,col),refE(row,col),ABS(pc%E(row,col)-refE(row,col))
               ENDDO
             ENDDO
+            DEALLOCATE(refE)
+            ALLOCATE(refW(pc%nPlane*X,pc%nGrp*(X-1)))
+            refW(1,1)=-31.684170810000001_SRK
+            refW(1,2)=-31.684170810000001_SRK
+            refW(2,1)=-40.196837709705747_SRK
+            refW(2,2)=-42.943870361438655_SRK
+            refW(3,1)=-35.082551731177141_SRK
+            refW(3,2)=-38.081713238674908_SRK
+            refW(4,1)=-31.686269912274671_SRK
+            refW(4,2)=-31.687554996224595_SRK
+            refW(5,1)=-40.177847430143707_SRK
+            refW(5,2)=-42.885673381258442_SRK
+            refW(6,1)=-35.073835068239092_SRK
+            refW(6,2)=-38.019894511180176_SRK
+            refW(7,1)=-31.686262105914835_SRK
+            refW(7,2)=-31.687507856770278_SRK
+            refW(8,1)=-40.199844540536134_SRK
+            refW(8,2)=-42.948557617915739_SRK
+            refW(9,1)=-35.084939476677974_SRK
+            refW(9,2)=-38.096634689705297_SRK
             ! check W
             DO row=1,pc%nPlane*X
               DO col=1,pc%nGrp*(X-1)
-                ASSERT( ABS(pc%W(row,col)-refEW(row,col)) < 1E-8_SRK,'W not correct')
-                FINFO() row,col,pc%W(row,col),refEW(row,col),ABS(pc%W(row,col)-refEW(row,col))
+                ASSERT( ABS(pc%W(row,col)-refW(row,col)) < 1E-8_SRK,'W not correct')
+                FINFO() row,col,pc%W(row,col),refW(row,col),ABS(pc%W(row,col)-refW(row,col))
               ENDDO
             ENDDO
-            DEALLOCATE(refEW)
+            DEALLOCATE(refW)
           ENDSELECT
           
           SELECTTYPE(pc => testLU); TYPE IS(BILU_PreCondType)
@@ -597,19 +634,26 @@ PROGRAM testPreconditionerTypes
             refNS(1,4)=-31.684170810000001_SRK     
             refNS(1,5)=-35.263759227000001_SRK     
             refNS(1,6)=-31.684170810000001_SRK     
-            refNS(2,1)=-31.686212002592885_SRK     
-            refNS(2,2)=-35.264698418614515_SRK     
-            refNS(2,3)=-31.685369755259785_SRK     
-            refNS(2,4)=-31.687204303859019_SRK     
-            refNS(2,5)=-35.266961426344466_SRK     
-            refNS(2,6)=-31.695172160964621_SRK     
-            refNS(3,1)=-31.686203496097384_SRK     
-            refNS(3,2)=-35.264729630435944_SRK     
-            refNS(3,3)=-31.685457103727295_SRK     
-            refNS(3,4)=-31.687178993851113_SRK     
-            refNS(3,5)=-35.266927483295909_SRK     
-            refNS(3,6)=-31.694917204360948_SRK    
+            refNS(2,1)=-31.686085396646412_SRK     
+            refNS(2,2)=-35.265011903834456_SRK     
+            refNS(2,3)=-31.686025045836693_SRK     
+            refNS(2,4)=-31.687038645731004_SRK     
+            refNS(2,5)=-35.264477419331939_SRK     
+            refNS(2,6)=-31.693134448199206_SRK     
+            refNS(3,1)=-31.686079082894786_SRK     
+            refNS(3,2)=-35.265013403216770_SRK     
+            refNS(3,3)=-31.686075014157939_SRK     
+            refNS(3,4)=-31.687007010082439_SRK     
+            refNS(3,5)=-35.264510703459905_SRK     
+            refNS(3,6)=-31.692945891849245_SRK    
             ! check N
+            DO row=1,pc%nPlane
+              DO col=1,pc%nGrp*X*(x-1)
+                ASSERT( ABS(pc%N(row,col)-refNS(row,col)) < 1E-8_SRK,'N not correct')
+                FINFO() row,col,pc%N(row,col),refNS(row,col),ABS(pc%N(row,col)-refNS(row,col))
+              ENDDO
+            ENDDO
+            ! check S
             DO row=1,pc%nPlane
               DO col=1,pc%nGrp*X*(x-1)
                 ASSERT( ABS(pc%N(row,col)-refNS(row,col)) < 1E-8_SRK,'N not correct')
@@ -637,7 +681,6 @@ PROGRAM testPreconditionerTypes
         ASSERT(ALLOCATED(testBILU_1g),'TestMatrix Allocation')
         ASSERT(ALLOCATED(testVec_1g),'TestVector Allocation')
       ENDIF
-
       
       COMPONENT_TEST('BILU Preconditioner Type (mg)')
       IF(ALLOCATED(testBILU_mg) .AND. ALLOCATED(testVec_mg)) THEN
@@ -693,7 +736,7 @@ PROGRAM testPreconditionerTypes
 !            ENDDO
 !            WRITE(667,*)  
 !          ENDSELECT
-!          SELECTTYPE(A => testLU%L); TYPE IS(PETScMatrixType)
+!          SELECTTYPE(A => testLU%L); CLASS IS(MatrixType)
 !            DO row=1,A%n
 !              DO col=1,A%n
 !                CALL A%get(row,col,tmpval)
@@ -713,7 +756,7 @@ PROGRAM testPreconditionerTypes
 !            ENDDO
 !            WRITE(667,*)  
 !          ENDSELECT
-!          SELECTTYPE(A => testLU%U); TYPE IS(PETScMatrixType)
+!          SELECTTYPE(A => testLU%U); CLASS IS(MatrixType)
 !            DO row=1,A%n
 !              DO col=1,A%n
 !                CALL A%get(row,col,tmpval)
