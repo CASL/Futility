@@ -211,6 +211,8 @@ MODULE LinearSolverTypes
     REAL(SRK) :: residual=0._SRK
     !> Preconditioner to be used by LinearSolverTyope
     CLASS(PreconditionerType),ALLOCATABLE :: PreCondType
+    !> Number of times to precondition the system
+    INTEGER(SIK) :: pciters=0_SIK
 !
 !List of Type Bound Procedures
     CONTAINS 
@@ -234,7 +236,7 @@ MODULE LinearSolverTypes
       PROCEDURE,PASS :: setX0 => setX0_LinearSolverType_Iterative
       !> @copybrief LinearSolverTypes::init_PreCond_LinearSolverType_Iterative
       !> @copydetails LinearSolverTypes::init_PreCond_LinearSolverType_Iterative
-      PROCEDURE,PASS :: initPC => init_PreCond_LinearSolverType_Iterative
+      PROCEDURE,PASS :: setupPC => setup_PreCond_LinearSolverType_Iterative
   ENDTYPE LinearSolverType_Iterative
   
   !> Logical flag to check whether the required and optional parameter lists
@@ -244,6 +246,16 @@ MODULE LinearSolverTypes
   !> The parameter lists to use when validating a parameter list for
   !> initialization for a Linear Solver Type.
   TYPE(ParamType),PROTECTED,SAVE :: LinearSolverType_reqParams,LinearSolverType_optParams
+
+  !> Interface for preconditioned and unpreconditioned GMRES solvers
+  INTERFACE solveGMRES
+    !> @copybrief LinearSolverTypes::solveGMRES_nopc
+    !> @copydetails LienarSolverTypes::solveGMRES_nopc
+    MODULE PROCEDURE solveGMRES_nopc
+    !> @copybrief LinearSolverTypes::solveGMRES_pc
+    !> @copydetails LinearSolverTypes::solveGMRES_pc
+    MODULE PROCEDURE solveGMRES_lpc
+  ENDINTERFACE
   
   !> Exception Handler for use in MatrixTypes
   TYPE(ExceptionHandlerType),POINTER,SAVE :: eLinearSolverType => NULL()
@@ -274,7 +286,7 @@ MODULE LinearSolverTypes
       TYPE(ParamType) :: validParams,matPList,vecxPList,vecbPList
       ! local variables
       INTEGER(SIK) :: i,n
-      INTEGER(SIK) :: matType,ReqTPLType,TPLType,solverMethod
+      INTEGER(SIK) :: matType,ReqTPLType,TPLType,solverMethod,pciters
       INTEGER(SIK) :: MPI_Comm_ID,numberOMP
       CHARACTER(LEN=256) :: timerName,ReqTPLTypeStr,TPLTypeStr,PreCondType
       LOGICAL(SBK) :: localalloc
@@ -311,8 +323,12 @@ MODULE LinearSolverTypes
       CALL validParams%get('LinearSolverType->b->VectorType',pListPtr)
       vecbPList=pListPtr
       ! Check for Preconditioner Data
-      IF(validParams%has('LinearSolverType->PreCondType')) &
-        CALL validParams%get('LinearSolvertype->PreCondType',PreCondType)
+      IF(validParams%has('LinearSolverType->PreCondType')) THEN
+        CALL validParams%get('LinearSolverType->PreCondType',PreCondType)
+        CALL ValidParams%get('LinearSolverType->PreCondTypeIters',pciters)
+      ELSE
+        PreCondType='NOPC'
+      ENDIF
       !add mpi communicator to parameter lists
       CALL matPList%add('MatrixType->MPI_Comm_ID',MPI_Comm_ID)
       CALL vecxPList%add('VectorType->MPI_Comm_ID',MPI_Comm_ID)
@@ -488,6 +504,20 @@ MODULE LinearSolverTypes
 
               solver%solverMethod=solverMethod
               solver%TPLType=TPLType
+              IF(TRIM(PreCondType) /= 'NOPC') THEN
+                ! If pciters < 0 then preconditioning will always be used
+                ! Otherwise, pciters will be decremented, and preconditioning will stop
+                ! when pciters == 0
+                IF(pciters == 0) THEN
+                  solver%pciters=-1_SIK
+                ELSE
+                  solver%pciters=pciters
+                ENDIF
+                IF(PreCondType == 'ILU') THEN
+                  ALLOCATE(ILU_PreCondtype :: solver%PreCondType)
+                ELSEIF(PreCondType == 'BILU') THEN
+                ENDIF
+              ENDIF
 
               IF(TPLType==PETSC) THEN
 #ifdef MPACT_HAVE_PETSC
@@ -546,25 +576,26 @@ MODULE LinearSolverTypes
 !> @param solver The linear solver to act on
 !> @param PreCondType The preconditioner method
 !>
-!> This routine initializes the precondtioner of type PreCondType
+!> This routine sets up the precondtioner of type PreCondType
 !>
-    SUBROUTINE init_Precond_LinearSolverType_Iterative(solver,PreCondType)
+    SUBROUTINE setup_PreCond_LinearSolverType_Iterative(solver)
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
-      CHARACTER(LEN=*),INTENT(IN) :: PreCondType
+      CHARACTER(LEN=*),PARAMETER :: myName='setup_PreCond_LinearSolverType_Iterative'
 
       IF(solver%isinit) THEN
         IF(solver%A%isinit) THEN
-          ! Allocate and Initiailize PreconditionerType
-            SELECTCASE(PreCondType)
-              CASE('ILU')
-                ALLOCATE(ILU_PreCondtype :: solver%PreCondType)
-                CALL solver%PreCondType%init(solver%A)
-                CALL solver%PreCondType%setup()
-              CASE('BILU')
-            ENDSELECT
+          ! Set up PreconditionerType
+          CALL solver%PreCondType%init(solver%A)
+          CALL solver%PreCondType%setup()
+        ELSE
+          CALL eLinearSolverType%raiseError('Incorrect input to'//modName//'::'//myName// &
+            ' - LinearSolverType matrix is not initialized. Preconditioner cannot be set up.')
         ENDIF
+      ELSE
+        CALL eLinearSolverType%raiseError('Incorrect input to'//modName//'::'//myName// &
+          ' - LinearSolverType is not initialized. Preconditioner cannot be set up.')
       ENDIF
-    ENDSUBROUTINE init_PreCond_LinearSolverType_Iterative
+    ENDSUBROUTINE setup_PreCond_LinearSolverType_Iterative
 !
 !-------------------------------------------------------------------------------
 !> @brief Clears the Direct Linear Solver Type
@@ -1004,7 +1035,24 @@ MODULE LinearSolverTypes
                    'need to recompile with PETSc enabled to use this feature.')
 #endif  
               CLASS DEFAULT
-                CALL solveGMRES(solver)
+              !WRITE(*,*) solver%pciters
+                IF(solver%pciters /= 0) THEN
+                WRITE(*,*) '  --Setting up preconditioner'
+                !  IF(ALLOCATED(solver%PreCondType)) THEN
+                !    IF(.NOT.(solver%PreCondType%isInit) THEN
+                !      CALL myLS%setupPC()
+                !    ENDIF
+                !  ELSE
+                !    ALLOCATE(ILU_PreCondtype :: solver%PreCondType)
+                !    CALL myLS%setupPC()
+                !  ENDIF
+                  IF(.NOT.(ALLOCATED(solver%PreCondType))) ALLOCATE(ILU_PreCondtype :: solver%PreCondType)
+                  IF(solver%PrecondType%isInit) CALL solver%PreCondType%clear()
+                  CALL solver%setupPC
+                  CALL solveGMRES(solver,solver%PreCondType)
+                ELSE
+                  CALL solveGMRES(solver)
+                ENDIF
             ENDSELECT
         ENDSELECT
         CALL solver%SolveTime%toc()
@@ -1367,12 +1415,13 @@ MODULE LinearSolverTypes
     ENDSUBROUTINE solveBiCGSTAB
 !
 !-------------------------------------------------------------------------------
-!> @brief Solves the Iterative Linear System using the GMRES method
+!> @brief Solves the Iterative Linear System using the GMRES method with no
+!>        preconditioning
 !> @param solver The linear solver to act on
 !>
 !> This subroutine solves the Iterative Linear System using the GMRES method
 !>
-    SUBROUTINE solveGMRES(solver)
+    SUBROUTINE solveGMRES_nopc(solver)
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
 
       REAL(SRK)  :: beta,h,t,phibar,temp,tol
@@ -1380,12 +1429,7 @@ MODULE LinearSolverTypes
       TYPE(RealVectorType) :: u
       INTEGER(SIK) :: j,k,m,n,it
       TYPE(ParamType) :: pList
-      LOGICAL(SBK) :: PreCond
-      
-      PreCond=.FALSE.
-      IF(ALLOCATED(solver%PreCondType)) THEN
-        IF(solver%PreCondType%isInit) PreCond=.TRUE.
-      ENDIF
+
       n=0
       !Set parameter list for vector
       CALL pList%add('VectorType -> n',solver%A%n)
@@ -1394,7 +1438,6 @@ MODULE LinearSolverTypes
       CALL u%init(pList)
       CALL pList%clear()
       CALL solver%getResidual(u)
-      IF(PreCond) CALL solver%PreCondType%apply(u)
       CALL LNorm(u%b,2,beta)
       solver%iters=0
 
@@ -1421,11 +1464,6 @@ MODULE LinearSolverTypes
         !Iterate on solution
         DO it=1,m
           CALL BLAS_matvec(THISMATRIX=solver%A,X=v(:,it),BETA=0.0_SRK,Y=w)
-          IF(PreCond) THEN
-            u%b=w
-            CALL solver%PreCondType%apply(u)
-            w=u%b
-          ENDIF
           h=BLAS_dot(n,w,1,v(:,1),1)
           w=w-h*v(:,1)
           t=h
@@ -1476,7 +1514,115 @@ MODULE LinearSolverTypes
       ENDIF
       solver%info=0
       CALL u%clear()
-    ENDSUBROUTINE solveGMRES
+    ENDSUBROUTINE solveGMRES_nopc
+!
+!-------------------------------------------------------------------------------
+!> @brief Solves the Iterative Linear System using the GMRES method with
+!>        left-preconditioning
+!> @param solver The linear solver to act on
+!> @param PreCondType The preconditioner object to use on the system
+!>
+!> This subroutine solves the Iterative Linear System using the GMRES method
+!>
+    SUBROUTINE solveGMRES_lpc(solver,PreCondType)
+      CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
+      CLASS(PreconditionerType),INTENT(INOUT) :: PrecondType
+
+      REAL(SRK)  :: beta,h,t,phibar,temp,tol
+      REAL(SRK),ALLOCATABLE :: v(:,:),R(:,:),w(:),c(:),s(:),g(:),y(:)
+      TYPE(RealVectorType) :: u
+      INTEGER(SIK) :: j,k,m,n,it
+      TYPE(ParamType) :: pList
+      
+      n=0
+      !Set parameter list for vector
+      CALL pList%add('VectorType -> n',solver%A%n)
+      n=solver%A%n
+      m=MIN(solver%nRestart,n)
+      CALL u%init(pList)
+      CALL pList%clear()
+      CALL solver%getResidual(u)
+      CALL PreCondType%apply(u)
+      CALL LNorm(u%b,2,beta)
+      solver%iters=0
+
+      IF(beta > EPSILON(0.0_SRK)) THEN
+        ALLOCATE(v(n,m+1))
+        ALLOCATE(R(m+1,m+1))
+        ALLOCATE(w(n))
+        ALLOCATE(c(m+1))
+        ALLOCATE(s(m+1))
+        ALLOCATE(g(m+1))
+        ALLOCATE(y(m+1))
+        v(:,:)=0._SRK
+        R(:,:)=0._SRK
+        w(:)=0._SRK
+        c(:)=0._SRK
+        s(:)=0._SRK
+        g(:)=0._SRK
+        y(:)=0._SRK
+        tol=solver%convTol*beta
+        
+        v(:,1)=-u%b/beta
+        h=beta
+        phibar=beta
+        !Iterate on solution
+        DO it=1,m
+          CALL BLAS_matvec(THISMATRIX=solver%A,X=v(:,it),BETA=0.0_SRK,Y=w)
+          u%b=w
+          CALL solver%PreCondType%apply(u)
+          w=u%b
+          h=BLAS_dot(n,w,1,v(:,1),1)
+          w=w-h*v(:,1)
+          t=h
+          DO k=2,it
+            h=BLAS_dot(n,w,1,v(:,k),1)
+            w=w-h*v(:,k)
+            R(k-1,it)=c(k-1)*t+s(k-1)*h
+            t=c(k-1)*h-s(k-1)*t
+          ENDDO
+          CALL LNorm(w,2,h)
+          !WRITE(*,*) "h = ", h
+          IF(h > 0.0_SRK) THEN
+            v(:,it+1)=w/h
+          ELSE
+            v(:,it+1)=0.0_SRK*w
+          ENDIF
+          !Set up next Given's rotation
+          IF(t >= 0.0_SRK) THEN
+            temp=SQRT(t*t+h*h)
+          ELSE
+            temp=-SQRT(t*t+h*h)
+          ENDIF
+          c(it)=t/temp
+          s(it)=h/temp
+          R(it,it)=temp
+          g(it)=c(it)*phibar
+          phibar=-s(it)*phibar
+          IF(ABS(phibar) <= tol) EXIT
+        ENDDO
+        
+        y(1:it)=g(1:it)
+        CALL BLAS_matvec('U','N','N',R(1:it,1:it),y(1:it))
+
+        CALL BLAS_matvec(v(:,1:it),y(1:it),0.0_SRK,u%b)
+        CALL BLAS_axpy(u,solver%x)
+        CALL solver%getResidual(u)
+        CALL LNorm(u%b,2,beta)
+        IF(it == m+1) it=m
+        solver%iters=it
+        
+        DEALLOCATE(v)
+        DEALLOCATE(R)
+        DEALLOCATE(w)
+        DEALLOCATE(c)
+        DEALLOCATE(s)
+        DEALLOCATE(g)
+        DEALLOCATE(y)
+      ENDIF
+      solver%info=0
+      CALL u%clear()
+    ENDSUBROUTINE solveGMRES_lpc
 !
 !-------------------------------------------------------------------------------
 !> @brief Factorizes a sparse solver%A with ILU method and stores this in
