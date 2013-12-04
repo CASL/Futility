@@ -720,12 +720,16 @@ WRITE(*,*) '   --Initializing Preconditioner...'
       LOGICAL(SBK) :: localalloc
       TYPE(ParamType) :: PL
       REAL(SRK),ALLOCATABLE :: tmp2DU(:,:),tmp2DinvM(:,:)
-      REAL(SRK),ALLOCATABLE :: tmpT(:,:),tmpB(:,:),tmpM(:,:)
-      REAL(SRK),ALLOCATABLE :: L2(:,:),U2(:,:),F2(:,:),tmpS(:,:),tmpN(:,:)
+      REAL(SRK),ALLOCATABLE :: tmpM(:,:)
+      REAL(SRK),ALLOCATABLE :: tmpT(:),tmpB(:)
+      REAL(SRK),ALLOCATABLE :: L2(:,:),U2(:,:),F2(:,:)
+      REAL(SRK),ALLOCATABLE :: tmpS(:),tmpN(:)
       REAL(SRK),ALLOCATABLE :: tmp1DU(:,:),tmp1DinvM(:,:),tmp1D(:,:)
-      REAL(SRK),ALLOCATABLE :: L1(:,:),U1(:,:),F1(:,:),tmpE(:,:),tmpW(:,:)
+      REAL(SRK),ALLOCATABLE :: L1(:,:),U1(:,:),F1(:,:)
+      REAL(SRK),ALLOCATABLE :: tmpE(:),tmpW(:)
       REAL(SRK),ALLOCATABLE :: tmp0DU(:,:),tmp0D(:,:),tmp0DinvM(:,:)
-
+      REAL(SRK),ALLOCATABLE :: tmpvec(:)
+      
       localalloc=.FALSE.
       IF(.NOT.ASSOCIATED(ePreCondType)) THEN
         ALLOCATE(ePreCondType)
@@ -748,8 +752,8 @@ WRITE(*,*) '   --Initializing Preconditioner...'
           !variables for 3D
           ALLOCATE(tmp2DU(pc%nPin*pc%nGrp,pc%nPin*pc%nGrp))
           ALLOCATE(tmp2DinvM(pc%nPin*pc%nGrp,pc%nPin*pc%nGrp))
-          ALLOCATE(tmpT(pc%nPin*pc%nGrp,pc%nPin*pc%nGrp))
-          ALLOCATE(tmpB(pc%nPin*pc%nGrp,pc%nPin*pc%nGrp))
+          ALLOCATE(tmpT(pc%nPin*pc%nGrp))
+          ALLOCATE(tmpB(pc%nPin*pc%nGrp))
           ALLOCATE(tmpM(pc%nPin*pc%nGrp,pc%nPin*pc%nGrp))
           tmp2DU=0.0_SRK
           tmp2DinvM=0.0_SRK
@@ -760,8 +764,8 @@ WRITE(*,*) '   --Initializing Preconditioner...'
           ALLOCATE(L2(pc%nPin*pc%nGrp,pc%nPin*pc%nGrp))
           ALLOCATE(U2(pc%nPin*pc%nGrp,pc%nPin*pc%nGrp))
           ALLOCATE(F2(pc%nPin*pc%nGrp,pc%nPin*pc%nGrp))
-          ALLOCATE(tmpS(X*pc%nGrp,X*pc%nGrp))
-          ALLOCATE(tmpN(X*pc%nGrp,X*pc%nGrp))
+          ALLOCATE(tmpS(X*pc%nGrp))
+          ALLOCATE(tmpN(X*pc%nGrp))
           ALLOCATE(tmp1DU(X*pc%nGrp,X*pc%nGrp))
           ALLOCATE(tmp1DinvM(X*pc%nGrp,X*pc%nGrp))
           ALLOCATE(tmp1D(X*pc%nGrp,X*pc%nGrp))
@@ -777,8 +781,9 @@ WRITE(*,*) '   --Initializing Preconditioner...'
           ALLOCATE(L1(X*pc%nGrp,X*pc%nGrp))
           ALLOCATE(U1(X*pc%nGrp,X*pc%nGrp))
           ALLOCATE(F1(X*pc%nGrp,X*pc%nGrp))
-          ALLOCATE(tmpE(pc%nGrp,pc%nGrp))
-          ALLOCATE(tmpW(pc%nGrp,pc%nGrp))
+          ALLOCATE(tmpE(pc%nGrp))
+          ALLOCATE(tmpW(pc%nGrp))
+          ALLOCATE(tmpvec(pc%nGrp))
           ALLOCATE(tmp0D(pc%nGrp,pc%nGrp))
           ALLOCATE(tmp0DinvM(pc%nGrp,pc%nGrp))
           ALLOCATE(tmp0DU(pc%nGrp,pc%nGrp))
@@ -787,6 +792,7 @@ WRITE(*,*) '   --Initializing Preconditioner...'
           F1=0.0_SRK
           tmpE=0.0_SRK
           tmpW=0.0_SRK
+          tmpvec=0.0_SRK
           tmp0D=0.0_SRK
           tmp0DinvM=0.0_SRK
           
@@ -810,42 +816,28 @@ WRITE(*,*) '   --Initializing Preconditioner...'
               !pull T block into matrix
               local_r=1
               DO row=d_stt,d_stt+pc%nPin*pc%nGrp-1
-                local_c=1
-                DO col=c_stt,c_stt+pc%nPin*pc%nGrp-1
-                  CALL pc%A%get(row,col,tmpval)
-                  IF(tmpval /= 0.0_SRK) THEN
-                    tmpT(local_r,local_c)=tmpval
-                  ENDIF
-                  local_c=local_c+1
-                ENDDO
+                CALL pc%A%get(row,c_stt+local_r-1,tmpval)
+                tmpT(local_r)=tmpval
                 local_r=local_r+1
               ENDDO
               !pull B block into matrix
               local_r=1
               DO row=c_stt,c_stt+pc%nPin*pc%nGrp-1
-                local_c=1
-                DO col=d_stt,d_stt+pc%nPin*pc%nGrp-1
-                  CALL pc%A%get(row,col,tmpval)
-                  IF(tmpval /= 0.0_SRK) THEN
-                    tmpB(local_r,local_c)=tmpval
-                  ENDIF
-                  local_c=local_c+1
-                ENDDO
+                CALL pc%A%get(row,d_stt+local_r-1,tmpval)
+                tmpB(local_r)=tmpval
                 local_r=local_r+1
               ENDDO     
               
               !form diagonal block of L
-              tmp2DU=MATMUL(tmpB,tmp2DinvM)
-              tmp2DU=MATMUL(tmp2DU,tmpT)
+              CALL dmatmul_left(tmpB,tmp2DinvM,tmp2DU)
+              CALL dmatmul_right(tmp2DU,tmpT,tmp2DU)
               !form diagonal block of L
               local_r=1
               DO row=c_stt,c_stt+pc%nPin*pc%nGrp-1
                 local_c=1
                 DO col=c_stt,c_stt+pc%nPin*pc%nGrp-1
                   CALL pc%A%get(row,col,tmpval)
-                  !IF(tmpval /= 0.0_SRK) CALL pc%L%set(row,col,tmpval)    !if enforcing same structure
-                  IF(tmpval /= 0.0_SRK) THEN !.OR. &
-!                    tmp2DU(local_r,local_c) /= 0.0_SRK) THEN
+                  IF(tmpval /= 0.0_SRK) THEN
                     CALL pc%L%set(row,col,tmpval-tmp2DU(local_r,local_c))
                   ENDIF
                   local_c=local_c+1
@@ -867,15 +859,13 @@ WRITE(*,*) '   --Initializing Preconditioner...'
                 CALL pc%U%set(row,row,1.0_SRK)
               ENDDO
               !form upper block of U
-              tmp2DU=MATMUL(tmp2DinvM,tmpT)
+              CALL dmatmul_right(tmp2DinvM,tmpT,tmp2DU)
               local_r=1
               DO row=d_stt,d_stt+pc%nPin*pc%nGrp-1
                 local_c=1
                 DO col=c_stt,c_stt+pc%nPin*pc%nGrp-1
                   CALL pc%A%get(row,col,tmpval)
-                  !IF(tmpval /= 0.0_SRK) CALL pc%L%set(row,col,tmpval)    !if enforcing same structure
-                  IF(tmpval /= 0.0_SRK) THEN !.OR. &
-!                    tmp2DU(local_r,local_c) /= 0.0_SRK) THEN
+                  IF(tmpval /= 0.0_SRK) THEN
                     CALL pc%U%set(row,col,tmp2DU(local_r,local_c))
                   ENDIF
                   local_c=local_c+1
@@ -918,36 +908,26 @@ WRITE(*,*) '   --Initializing Preconditioner...'
                 ENDDO
               ELSE
                 !fill tmpS (can probably condense)
-                tmpS=0.0_SRK
                 local_r=1
                 DO row=c1_stt,c1_stt+Y*pc%nGrp-1
-                  local_c=1
-                  DO col=d1_stt,d1_stt+Y*pc%nGrp-1
-                    tmpS(local_r,local_c)=tmpM(row,col)
-                    local_c=local_c+1
-                  ENDDO
+                  tmpS(local_r)=tmpM(row,d1_stt+local_r-1)
                   local_r=local_r+1
                 ENDDO
                 !fill tmpN (can probably condense)
                 tmpN=0.0_SRK
                 local_r=1
                 DO row=d1_stt,d1_stt+Y*pc%nGrp-1
-                  local_c=1
-                  DO col=c1_stt,c1_stt+Y*pc%nGrp-1
-                    tmpN(local_r,local_c)=tmpM(row,col)
-                    local_c=local_c+1
-                  ENDDO
+                  tmpN(local_r)=tmpM(row,c1_stt+local_r-1)
                   local_r=local_r+1
                 ENDDO
                 !form diagonal block of L (can probably condense)
-                tmp1DU=MATMUL(tmpS,tmp1DinvM)
-                tmp1DU=MATMUL(tmp1DU,tmpN)
+                CALL dmatmul_left(tmpS,tmp1DinvM,tmp1DU)
+                CALL dmatmul_right(tmp1DU,tmpN,tmp1DU)
                 local_r=1
                 DO row=c1_stt,c1_stt+Y*pc%nGrp-1
                   local_c=1
                   DO col=c1_stt,c1_stt+Y*pc%nGrp-1
-                    !IF(tmpval /= 0.0_SRK) CALL pc%L%set(row,col,tmpval)    !if enforcing same structure
-                    IF(tmpval /= 0.0_SRK .OR. tmp1DU(local_r,local_c) /= 0.0_SRK) THEN
+                    IF(tmpM(row,col) /= 0.0_SRK) THEN
                       L2(row,col)=tmpM(row,col)-tmp1DU(local_r,local_c)
                     ENDIF
                     local_c=local_c+1
@@ -957,24 +937,16 @@ WRITE(*,*) '   --Initializing Preconditioner...'
                 !form lower block of L (can probably condense)
                 local_r=1
                 DO row=c1_stt,c1_stt+Y*pc%nGrp-1
-                  local_c=1
-                  DO col=d1_stt,d1_stt+Y*pc%nGrp-1
-                    !IF(tmpval /= 0.0_SRK) CALL pc%L%set(row,col,tmpval)    !if enforcing same structure
-                    IF(tmpS(local_r,local_c) /= 0.0_SRK) THEN
-                      L2(row,col)=tmpS(local_r,local_c)
-                    ENDIF
-                    local_c=local_c+1
-                  ENDDO
+                  L2(row,d1_stt+local_r-1)=tmpS(local_r)
                   local_r=local_r+1
                 ENDDO
                 !form upper block of U (can probably condense)
-                tmp1DU=MATMUL(tmp1DinvM,tmpN)
+                CALL dmatmul_right(tmp1DinvM,tmpN,tmp1DU)
                 local_r=1
                 DO row=d1_stt,d1_stt+Y*pc%nGrp-1
                   local_c=1
                   DO col=c1_stt,c1_stt+Y*pc%nGrp-1
-                    !IF(tmpval /= 0.0_SRK) CALL pc%L%set(row,col,tmpval)    !if enforcing same structure
-                    IF(tmpval /= 0.0_SRK .OR. tmp1DU(local_r,local_c) /= 0.0_SRK) THEN
+                    IF(tmpM(row,col) /= 0.0_SRK) THEN
                       U2(row,col)=tmp1DU(local_r,local_c)
                     ENDIF
                     local_c=local_c+1
@@ -982,7 +954,7 @@ WRITE(*,*) '   --Initializing Preconditioner...'
                   local_r=local_r+1
                 ENDDO
                 !form diagonal block of U
-                tmp1DU=MATMUL(tmp1DinvM,tmpN)
+                CALL dmatmul_right(tmp1DinvM,tmpN,tmp1DU)
                 DO row=c1_stt,c1_stt+Y*pc%nGrp-1
                   U2(row,row)=1.0_SRK
                 ENDDO
@@ -1011,26 +983,19 @@ WRITE(*,*) '   --Initializing Preconditioner...'
                   !fill tmpW
                   local_r=1
                   DO row=c0_stt,c0_stt+pc%nGrp-1
-                    local_c=1
-                    DO col=d0_stt,d0_stt+pc%nGrp-1
-                      tmpW(local_r,local_c)=tmp1D(row,col)
-                      local_c=local_c+1
-                    ENDDO
+                    tmpW(local_r)=tmp1D(row,d0_stt+local_r-1)
                     local_r=local_r+1
                   ENDDO
+                  
                   !fill tmpE
                   local_r=1
                   DO row=d0_stt,d0_stt+pc%nGrp-1
-                    local_c=1
-                    DO col=c0_stt,c0_stt+pc%nGrp-1
-                      tmpE(local_r,local_c)=tmp1D(row,col)
-                      local_c=local_c+1
-                    ENDDO
+                    tmpE(local_r)=tmp1D(row,c0_stt+local_r-1)
                     local_r=local_r+1
                   ENDDO
                   !set diagonal of L
-                  tmp0DU=MATMUL(tmpW,tmp0DinvM)
-                  tmp0DU=MATMUL(tmp0DU,tmpE)
+                  CALL dmatmul_left(tmpW,tmp0DinvM,tmp0DU)
+                  CALL dmatmul_right(tmp0DU,tmpE,tmp0DU)
                   local_r=1
                   DO row=c0_stt,c0_stt+pc%nGrp-1
                     local_c=1
@@ -1043,15 +1008,11 @@ WRITE(*,*) '   --Initializing Preconditioner...'
                   !set lower block of L
                   local_r=1
                   DO row=c0_stt,c0_stt+pc%nGrp-1
-                    local_c=1
-                    DO col=d0_stt,d0_stt+pc%nGrp-1
-                      L1(row,col)=tmpW(local_r,local_c)
-                      local_c=local_c+1
-                    ENDDO
+                    L1(row,d0_stt+local_r-1)=tmpW(local_r)
                     local_r=local_r+1
                   ENDDO
                   !set upper block of U
-                  tmp0DU=MATMUL(tmp0DinvM,tmpE)
+                  CALL dmatmul_right(tmp0DinvM,tmpE,tmp0DU)
                   local_r=1
                   DO row=d0_stt,d0_stt+pc%nGrp-1
                     local_c=1
@@ -1119,6 +1080,50 @@ WRITE(*,*) '   --Initializing Preconditioner...'
 
       IF(localalloc) DEALLOCATE(ePreCondType)
     ENDSUBROUTINE setup_BILU_PreCondtype
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns the matrix multiplication where the diagonal matrix is on the left
+!>
+!> @params A is the full matrix
+!> @params b is the diagonal of a matrix
+!>
+    SUBROUTINE dmatmul_left(b,A,P)
+      REAL(SRK),INTENT(IN) :: b(:)
+      REAL(SRK),INTENT(IN) :: A(:,:)
+      REAL(SRK),INTENT(INOUT) :: P(:,:)
+      
+      INTEGER(SIK) :: row,col,N
+      
+      N=SIZE(P(:,1))
+      DO row=1,N
+        DO col=1,N
+          P(row,col)=A(row,col)*b(row)
+        ENDDO
+      ENDDO
+      
+    ENDSUBROUTINE dmatmul_left
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns the matrix multiplication where the diagonal matrix is on the right
+!>
+!> @params A is the full matrix
+!> @params b is the diagonal of a matrix
+!>
+    SUBROUTINE dmatmul_right(A,b,P)
+      REAL(SRK),INTENT(IN) :: A(:,:)
+      REAL(SRK),INTENT(IN) :: b(:)
+      REAL(SRK),INTENT(INOUT) :: P(:,:)
+      
+      INTEGER(SIK) :: row,col,N
+      
+      N=SIZE(P(:,1))
+      DO row=1,N
+        DO col=1,N
+          P(row,col)=A(row,col)*b(col)
+        ENDDO
+      ENDDO
+      
+    ENDSUBROUTINE dmatmul_right
 !
 !-------------------------------------------------------------------------------
 !> @brief Returns the complete inverse of a matrix
