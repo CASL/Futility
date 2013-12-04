@@ -1239,7 +1239,8 @@ WRITE(*,*) '   --Initializing Preconditioner...'
                   CALL dmatmul_right(tmp0D,E,tmp0D)
                   DO row=c0,c0+dim0D-1
                     DO col=c0,c0+dim0D-1
-                      L1(row,col)=tmp1D(row,col)-tmp0D(row-c0+1,col-c0+1)
+                      IF(tmp1D(row,col) /= 0.0_SRK) &
+                        L1(row,col)=tmp1D(row,col)-tmp0D(row-c0+1,col-c0+1)
                     ENDDO
                   ENDDO
                   !set lower block of L
@@ -1250,7 +1251,8 @@ WRITE(*,*) '   --Initializing Preconditioner...'
                   CALL dmatmul_right(invM0,E,tmp0D)
                   DO row=d0,d0+dim0D-1
                     DO col=c0,c0+dim0D-1
-                      U1(row,col)=tmp0D(row-d0+1,col-c0+1)
+                      IF(tmp1D(row,col) /= 0.0_SRK) &
+                        U1(row,col)=tmp0D(row-d0+1,col-c0+1)
                     ENDDO
                   ENDDO               
                   !set diagonal block of U
@@ -1398,18 +1400,20 @@ WRITE(*,*) '   --Initializing Preconditioner...'
       INTEGER(SIK),INTENT(IN) :: block_dim
       REAL(SRK),INTENT(INOUT),ALLOCATABLE :: invA(:,:)
       
-      INTEGER(SIK) :: i,ix,X
+      INTEGER(SIK) :: i,ix,X,row
       INTEGER(SIK) :: ic,iu,id
-      REAL(SRK),ALLOCATABLE :: L0(:,:),DinvU0(:,:)
+      REAL(SRK),ALLOCATABLE :: L0(:,:),tmpM(:,:),invDU0(:)
       
       IF(ALLOCATED(invA)) DEALLOCATE(invA)
       ALLOCATE(invA(SIZE(L(:,1)),SIZE(L(1,:))))
       invA=0.0_SRK
       
       ALLOCATE(L0(block_dim,block_dim))
-      ALLOCATE(DinvU0(block_dim,block_dim))
+      ALLOCATE(tmpM(block_dim,block_dim))
+      ALLOCATE(invDU0(block_dim))
       L0=0.0_SRK
-      DinvU0=0.0_SRK
+      tmpM=0.0_SRK
+      invDU0=0.0_SRK
       
       X=SIZE(L(:,1))/block_dim
       DO i=X,1,-1
@@ -1422,15 +1426,20 @@ WRITE(*,*) '   --Initializing Preconditioner...'
           DO ix=X,1,-1
             IF(ix == i) THEN
               !diagonal block term
-              DinvU0=U(ic:ic+block_dim-1,iu:iu+block_dim-1)
+              DO row=1,block_dim
+                invDU0(row)=U(ic+row-1,iu+row-1)
+              ENDDO
+              CALL dmatmul_left(invDU0,invA(iu:iu+block_dim-1,ic:ic+block_dim-1),tmpM)
               invA(ic:ic+block_dim-1,ic:ic+block_dim-1) = &
-                F(ic:ic+block_dim-1,ic:ic+block_dim-1)+MATMUL(DinvU0,invA(iu:iu+block_dim-1,ic:ic+block_dim-1))
+                F(ic:ic+block_dim-1,ic:ic+block_dim-1)+tmpM
             ELSEIF(ix == i+1) THEN
               !upper block term
               L0=L(ic:ic+block_dim-1,iu:iu+block_dim-1)
-              DinvU0=U(ic:ic+block_dim-1,iu:iu+block_dim-1)
-              invA(ic:ic+block_dim-1,iu:iu+block_dim-1) = &
-                -MATMUL(DinvU0,invA(iu:iu+block_dim-1,iu:iu+block_dim-1))
+              DO row=1,block_dim
+                invDU0(row)=U(ic+row-1,iu+row-1)
+              ENDDO
+              CALL dmatmul_left(invDU0,invA(iu:iu+block_dim-1,iu:iu+block_dim-1),tmpM)
+              invA(ic:ic+block_dim-1,iu:iu+block_dim-1) = -tmpM
             ENDIF
           ENDDO
           
@@ -1455,9 +1464,12 @@ WRITE(*,*) '   --Initializing Preconditioner...'
           DO ix=X,1,-1
             IF(ix == i) THEN
               !diagonal block term)
-              DinvU0=U(ic:ic+block_dim-1,iu:iu+block_dim-1)
+              DO row=1,block_dim
+                invDU0(row)=U(ic+row-1,iu+row-1)
+              ENDDO
+              CALL dmatmul_left(invDU0,invA(iu:iu+block_dim-1,ic:ic+block_dim-1),tmpM)
               invA(ic:ic+block_dim-1,ic:ic+block_dim-1) = &
-                F(ic:ic+block_dim-1,ic:ic+block_dim-1) + MATMUL(DinvU0,invA(iu:iu+block_dim-1,ic:ic+block_dim-1))
+                F(ic:ic+block_dim-1,ic:ic+block_dim-1) + tmpM
             ELSEIF(ix == i-1) THEN
               !lower block term
               L0=L(ic:ic+block_dim-1,id:id+block_dim-1)
@@ -1466,8 +1478,11 @@ WRITE(*,*) '   --Initializing Preconditioner...'
             ELSEIF(ix == i+1) THEN
               !upper block term
               L0=L(ic:ic+block_dim-1,id:id+block_dim-1)
-              DinvU0=U(ic:ic+block_dim-1,iu:iu+block_dim-1)
-              invA(ic:ic+block_dim-1,iu:iu+block_dim-1)=-MATMUL(DinvU0,invA(iu:iu+block_dim-1,iu:iu+block_dim-1))
+              DO row=1,block_dim
+                invDU0(row)=U(ic+row-1,iu+row-1)
+              ENDDO
+              CALL dmatmul_left(invDU0,invA(iu:iu+block_dim-1,iu:iu+block_dim-1),tmpM)
+              invA(ic:ic+block_dim-1,iu:iu+block_dim-1)=-tmpM
             ENDIF
           ENDDO
           
