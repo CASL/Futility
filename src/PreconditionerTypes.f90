@@ -103,9 +103,11 @@ MODULE PreconditionerTypes
     INTEGER(SIK) :: nPin
     INTEGER(SIK) :: nGrp
     INTEGER(SIK) :: BILUType  !for 2D, 3D and other variants
-    REAL(SRK),ALLOCATABLE :: F0(:,:) !change to array of matrices instead of one big matrix eventually
-    REAL(SRK),ALLOCATABLE :: EW(:,:) !change to array of vectors
-    REAL(SRK),ALLOCATABLE :: NS(:,:) !change to array of vectors
+    REAL(SRK),ALLOCATABLE :: F0(:,:,:)
+    REAL(SRK),ALLOCATABLE :: E(:,:)
+    REAL(SRK),ALLOCATABLE :: W(:,:) 
+    REAL(SRK),ALLOCATABLE :: N(:,:) 
+    REAL(SRK),ALLOCATABLE :: S(:,:) 
     CONTAINS
       PROCEDURE,PASS :: setup => setup_BILU_PreCondType
       PROCEDURE,PASS :: apply => apply_BILU_PreCondType
@@ -165,6 +167,7 @@ MODULE PreconditionerTypes
       TYPE(ParamType) :: PL
       LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: col,row,i,j,nU,nL,nnzU,nnzL
+      INTEGER(SIK) :: X
       REAL(SRK) :: val
 
 WRITE(*,*) '   --Initializing Preconditioner...'
@@ -187,12 +190,17 @@ WRITE(*,*) '   --Initializing Preconditioner...'
           !allocate additional storage for BILU3D
           SELECTTYPE(PC)
             TYPE IS(BILU_PrecondType)
-              ALLOCATE(PC%F0(PC%A%n,PC%A%n))
-              ALLOCATE(PC%EW(PC%A%n,PC%A%n))
-              ALLOCATE(PC%NS(PC%A%n,PC%A%n))
+              X=SQRT(REAL(pc%nPin))
+              ALLOCATE(PC%F0(pc%nPlane*pc%nPin,pc%nGrp,pc%nGrp))
+              ALLOCATE(PC%E(pc%nPlane*X,pc%nGrp*(X-1)))
+              ALLOCATE(PC%W(pc%nPlane*X,pc%nGrp*(X-1)))
+              ALLOCATE(PC%N(pc%nPlane,pc%nGrp*X*(x-1)))
+              ALLOCATE(PC%S(pc%nPlane,pc%nGrp*X*(x-1)))
               PC%F0=0.0_SRK
-              PC%EW=0.0_SRK
-              PC%NS=0.0_SRK
+              PC%E=0.0_SRK
+              PC%W=0.0_SRK
+              PC%N=0.0_SRK
+              PC%S=0.0_SRK
           ENDSELECT
 
           ! This might not be necessary here, but not sure
@@ -411,10 +419,17 @@ WRITE(*,*) '   --Initializing Preconditioner...'
       CLASS(LU_PrecondType),INTENT(INOUT) :: PC
 
       IF(ASSOCIATED(PC%A)) NULLIFY(PC%A)
-      CALL PC%U%clear()
-      CALL PC%L%clear()
+      IF(ASSOCIATED(PC%U)) CALL PC%U%clear()
       DEALLOCATE(PC%U)
+      IF(ASSOCIATED(PC%L)) CALL PC%L%clear()
       DEALLOCATE(PC%L)
+      SELECTTYPE(PC); TYPE IS(BILU_PrecondType) 
+        IF(ALLOCATED(PC%F0)) DEALLOCATE(PC%F0)
+        IF(ALLOCATED(PC%E)) DEALLOCATE(PC%E)
+        IF(ALLOCATED(PC%W)) DEALLOCATE(PC%W)
+        IF(ALLOCATED(PC%N)) DEALLOCATE(PC%N)
+        IF(ALLOCATED(PC%S)) DEALLOCATE(PC%S)
+      ENDSELECT
       PC%isInit=.FALSE.
 
     ENDSUBROUTINE clear_LU_PreCondtype
@@ -487,11 +502,12 @@ WRITE(*,*) '   --Initializing Preconditioner...'
         CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
           ' - VectorType is not initialized.')
       ELSE
+
         SELECTTYPE(v)
           CLASS IS(PETScVectorType)
             SELECTTYPE(L => PC%L)
               CLASS IS(PETScMatrixType)
-                
+
               CLASS DEFAULT
                 CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
                   ' - Preconditioner Matrix type is not supported!')
@@ -638,6 +654,7 @@ WRITE(*,*) '   --Initializing Preconditioner...'
       INTEGER(SIK) :: local_r,local_c
       INTEGER(SIK) :: X,Y,Z
       INTEGER(SIK) :: tmpind1,tmpind2
+      INTEGER(SIK) :: rowstt,colstt
       REAL(SRK) :: tmpval
       LOGICAL(SBK) :: localalloc
       TYPE(ParamType) :: PL
@@ -994,6 +1011,8 @@ WRITE(*,*) '   --Initializing Preconditioner...'
                 !determine 0D inverse (always direct for 0D)
                 CALL direct_inv(tmp0D,tmp0DinvM)
                 F1(c0_stt:c0_stt+pc%nGrp-1,c0_stt:c0_stt+pc%nGrp-1)=tmp0DinvM
+                tmpind1=(ipl-1)*pc%nPin+(iy-1)*Y+ix
+                PC%F0(tmpind1,:,:)=tmp0DinvM
 
               ENDDO
               
@@ -1002,19 +1021,34 @@ WRITE(*,*) '   --Initializing Preconditioner...'
               CALL ABI(L1,U1,F1,pc%Ngrp,tmp1DinvM)
               F2(c1_stt:c1_stt+X*pc%nGrp-1,c1_stt:c1_stt+X*pc%nGrp-1)=tmp1DinvM
               !store for apply
-              tmpind1=(ipl-1)*pc%nGrp*X*Y+(iy-1)*pc%nGrp*X+1
-              tmpind2=(ipl-1)*pc%nGrp*X*Y+iy*pc%nGrp*X
-              PC%F0(tmpind1:tmpind2,tmpind1:tmpind2)=F1
-              PC%EW(tmpind1:tmpind2,tmpind1:tmpind2)=tmp1D
+              tmpind1=(ipl-1)*Y+iy
+              rowstt=0
+              colstt=pc%nGrp
+              DO row=1,pc%nGrp*(X-1)
+                PC%E(tmpind1,row)=tmp1D(rowstt+row,colstt+row)
+              ENDDO
+              rowstt=pc%nGrp
+              colstt=0
+              DO row=1,pc%nGrp*(X-1)
+                PC%W(tmpind1,row)=tmp1D(rowstt+row,colstt+row)
+              ENDDO
                 
             ENDDO
             
             !determine 2D inverse (eventually ABI)
             !CALL direct_inv(tmpM,tmp2DinvM)
             CALL ABI(L2,U2,F2,X*pc%Ngrp,tmp2DinvM)
-            tmpind1=(ipl-1)*pc%nGrp*X*Y+1
-            tmpind2=ipl*pc%nGrp*X*Y
-            PC%NS(tmpind1:tmpind2,tmpind1:tmpind2)=tmpM
+            rowstt=0
+            colstt=X*pc%nGrp
+            DO row=1,pc%nGrp*X*(X-1)
+              PC%N(ipl,row)=tmpM(rowstt+row,colstt+row)
+            ENDDO
+            rowstt=X*pc%nGrp
+            colstt=0
+            DO row=1,pc%nGrp*X*(X-1)
+              PC%S(ipl,row)=tmpM(rowstt+row,colstt+row)
+            ENDDO
+            
             
           ENDDO
           DEALLOCATE(tmp2DU,tmp2DinvM)
@@ -1023,7 +1057,7 @@ WRITE(*,*) '   --Initializing Preconditioner...'
       ENDIF
 
       IF(localalloc) DEALLOCATE(ePreCondType)
-    ENDSUBROUTINE
+    ENDSUBROUTINE setup_BILU_PreCondtype
 !
 !-------------------------------------------------------------------------------
 !> @brief Returns the complete inverse of a matrix
