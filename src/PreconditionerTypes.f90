@@ -489,6 +489,8 @@ WRITE(*,*) '   --Initializing Preconditioner...'
 
       INTEGER(SIK) :: X,Y,Z
       INTEGER(SIK) :: i,j,k
+      INTEGER(SIK) :: index1,index2,index3,index4
+      REAL(SRK),ALLOCATABLE :: soln(:),tmpvec(:)
 
       LOGICAL(SBK) :: localalloc
 
@@ -507,9 +509,12 @@ WRITE(*,*) '   --Initializing Preconditioner...'
       ELSE
 
         SELECTTYPE(v)
-          CLASS IS(PETScVectorType)
+          CLASS IS(RealVectorType)
             SELECTTYPE(L => PC%L)
-              CLASS IS(PETScMatrixType)
+              CLASS IS(SparseMatrixType)
+                ALLOCATE(soln(SIZE(v%b)))
+                ALLOCATE(tmpvec(pc%nPin*pc%nGrp))
+                ALLOCATE(tmpmat(pc%nPin*pc%nGrp,pc%nPin*pc%nGrp))
                 X=SQRT(REAL(pc%nPin))
                 Y=SQRT(REAL(pc%nPin))
                 Z=pc%nPlane
@@ -521,19 +526,53 @@ WRITE(*,*) '   --Initializing Preconditioner...'
                 ! FORWARD SOLVE
 
                 ! Step 1: solve M_1^(2)*z~_1=v_1
-                
+                index1=1
+                index2=pc%nPin*pc%nGrp
+                CALL M2solve(PC,soln(index1:index2),v%b(index1:index2),1)
+
                 ! Step 2: solve M_k^(2)*z~_k=v_k-B_k*v_(k-1)
                   ! Requires B_k
                 DO k=2,Z ! k=planes
                   ! solve M_k^(2)*z~_k=v_k-B_k*z~_(k-1)
-                  
+                  index3=index1
+                  index4=index2
+                  index1=index2+1
+                  index2=index2+pc%nPin*pc%nGrp
+                  tmpmat=pc%L(index1:index2,index1:index2) ! B_k
+                  CALL BLAS_dmatvec(pc%nGrp,1.0_SRK,tmpmat,soln(index3:index4),1.0_SRK,tmpvec)
+                  v%b(index1:index2)=v%b(index1:index2)-tmpvec
+                  CALL M2solve(PC,soln(index1:index2),v%b(index1:index2),k)
+                ENDDO
+
                 ! BACKWARD SOLVE
 
+                ! Step 1: z_Z=z~_Z
 
+                ! Step 2: solve M_k^(2)*z~_k=v_k-B_k*v_(k-1)
+                  ! Requires B_k
+                DO k=(Z-1),1,-1 ! k=planes
+                  ! solve M_k^(2)*z~_k=v_k-B_k*z~_(k-1)
+                  index3=index1
+                  index4=index2
+                  index1=index1-pc%nPin*pc%nGrp
+                  index2=index1-1
+                  tmpmat=pc%U(index1:index2,index1:index2) ! B_k
+                  CALL BLAS_dmatvec(pc%nGrp,1.0_SRK,tmpmat,soln(index3:index4),1.0_SRK,tmpvec)
+                  CALL M2solve(PC,tmpvec,tmpvec,k)
+                  soln(index1:index2)=soln(index1:index2)+tmpvec
+                ENDDO
+
+
+              CLASS IS(PETScMatrixType)
+                CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+                  ' - PETSc Preconditioner Matrix type is not supported!')
               CLASS DEFAULT
                 CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
                   ' - Preconditioner Matrix type is not supported!')
             ENDSELECT
+          CLASS IS(PETScVectorType)
+            CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+              ' - PETSc Vector type is not support by this PreconditionerType.')
           CLASS DEFAULT
             CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
               ' - Vector type is not support by this PreconditionerType.')
@@ -1222,20 +1261,61 @@ WRITE(*,*) '   --Initializing Preconditioner...'
     SUBROUTINE M2solve(PC,x,b,k)
       CHARACTER(LEN=*),PARAMETER :: myName='M2solve'
       CLASS(BILU_PrecondType),INTENT(IN) :: PC
-      CLASS(Vectortype),INTENT(INOUT) :: x
-      CLASS(Vectortype),INTENT(IN) :: b
+      REAL(SRK),INTENT(INOUT) :: x(:) ! length = pc%npins*pc%nGrp
+      REAL(SRK),INTENT(IN) :: b(:)    ! length = pc%npins*pc%nGrp
       INTEGER(SIK),INTENT(IN) :: k
 
+      REAL(SRK),ALLOCATABLE :: tmpvec(:),tmpmat(:,:)
       INTEGER(SIK) :: i,j
       INTEGER(SIK) :: X,Y
+      INTEGER(SIK) :: index1,index2,index3,index4
 
       X=SQRT(REAL(pc%nPin))
       Y=SQRT(REAL(pc%nPin))
       Z=pc%nPlane
 
       ! Step 1: FORWARD SOLVE
-      
-      
+      ! j=1
+
+      index1=1
+      index2=X*pc%nGrp
+
+      CALL M1solve(PC,x(index1:index2),b(index1:index2),1,k)
+
+      ! j=2,Y
+      DO j=2,Y
+        index3=index1
+        index4=index2
+        index1=index2+1
+        index2=index2+X*pc%nGrp
+
+        tmpmat=S(j,k)
+        CALL BLAS_matvec(X*pc%nGrp,1.0_SRK,tmpmat,x(index3:index4),1.0_SRK,tmpvec)
+        b(index1:index2)=b(index1:index2)-tmpvec
+
+        CALL M1solve(PC,x(index1:index2),b(index1:index2),j,k)
+
+      ENDDO
+
+      ! Step 2: BACKWARD SOLVE
+
+      ! j=Y - no change necessary
+
+      ! j=(Y-1),1
+      DO j=(Y-1),1,-1
+        index3=index1
+        index4=index2
+        index1=index1-X*pc%nGrp
+        index2=index1-1
+
+        tmpmat=N(j,k)
+        CALL BLAS_matvec(X*pc%nGrp,1.0_SRK,tmpmat,x(index3:index4),1.0_SRK,tmpvec)
+
+        CALL M1solve(PC,tmpvec,tmpvec,j,k)
+
+        x(index1:index2)=x(index1:index2)+tmpvec
+
+      ENDDO
 
     ENDSUBROUTINE
 !
