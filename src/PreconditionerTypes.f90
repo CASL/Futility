@@ -471,6 +471,9 @@ MODULE PreconditionerTypes
       CLASS(BILU_PrecondType),INTENT(INOUT) :: PC
       CLASS(Vectortype),INTENT(INOUT) :: v
 
+      INTEGER(SIK) :: X,Y,Z
+      INTEGER(SIK) :: i,j,k
+
       LOGICAL(SBK) :: localalloc
 
       localalloc=.FALSE.
@@ -490,7 +493,26 @@ MODULE PreconditionerTypes
           CLASS IS(PETScVectorType)
             SELECTTYPE(L => PC%L)
               CLASS IS(PETScMatrixType)
+                X=SQRT(REAL(pc%nPin))
+                Y=SQRT(REAL(pc%nPin))
+                Z=pc%nPlane
+                ! Solve goes here.
+                ! Requires F0(i,j,k), EW(i,j,k), NS(j,k) and the original BT(k) 
+                ! i = x, j = y, k = z
+                ! To solve M^(3)*z=v
+
+                ! FORWARD SOLVE
+
+                ! Step 1: solve M_1^(2)*z~_1=v_1
                 
+                ! Step 2: solve M_k^(2)*z~_k=v_k-B_k*v_(k-1)
+                  ! Requires B_k
+                DO k=2,Z ! k=planes
+                  ! solve M_k^(2)*z~_k=v_k-B_k*z~_(k-1)
+                  
+                ! BACKWARD SOLVE
+
+
               CLASS DEFAULT
                 CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
                   ' - Preconditioner Matrix type is not supported!')
@@ -1156,6 +1178,93 @@ MODULE PreconditionerTypes
       ENDDO
     
     ENDSUBROUTINE ABI
+!
+!-------------------------------------------------------------------------------
+!> @brief solves M_k^(2)*x=b
+!> requires S~_(j,k), N~_(j,k), W--(i,j,k), E--(i,j,k), F0(i,j,k)
+!>   all in PC
+!>
+    SUBROUTINE M2solve(PC,x,b,k)
+      CHARACTER(LEN=*),PARAMETER :: myName='M2solve'
+      CLASS(BILU_PrecondType),INTENT(IN) :: PC
+      CLASS(Vectortype),INTENT(INOUT) :: x
+      CLASS(Vectortype),INTENT(IN) :: b
+      INTEGER(SIK),INTENT(IN) :: k
+
+      INTEGER(SIK) :: i,j
+      INTEGER(SIK) :: X,Y
+
+      X=SQRT(REAL(pc%nPin))
+      Y=SQRT(REAL(pc%nPin))
+      Z=pc%nPlane
+
+      ! Step 1: FORWARD SOLVE
+      
+      
+
+    ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+!> @brief solves M_j,k^(1)*x=b
+!> requires S~_(j,k), N~_(j,k), W--(i,j,k), E--(i,j,k), F0(i,j,k)
+!>   all in PC
+!>
+    SUBROUTINE M1solve(PC,x,b,j,k)
+      CHARACTER(LEN=*),PARAMETER :: myName='M2solve'
+      CLASS(BILU_PrecondType),INTENT(IN) :: PC
+      CLASS(Vectortype),INTENT(INOUT) :: x
+      CLASS(Vectortype),INTENT(IN) :: b
+      INTEGER(SIK),INTENT(IN) :: j
+      INTEGER(SIK),INTENT(IN) :: k
+
+      REAL(SRK) :: tmpmat(pc%nGrp,pc%nGrp),tmpvec(pc%nGrp),tmpvec2(pc%nGrp)
+      INTEGER(SIK) :: i,ig,index1,index2
+      INTEGER(SIK) :: X,Y,Z
+
+      X=SQRT(REAL(pc%nPin))
+      Y=SQRT(REAL(pc%nPin))
+      Z=pc%nPlane
+
+             ! earlier planes   earlier rows
+      index1=(k-1)*Y*X       +  (j-1)*X
+      index1g=index1*pc%nGrp
+
+      ! For E/W
+      index2=(k-1)*Y+(j-1)
+
+      ! Step 1: FORWARD SOLVE (obtain x~)
+
+      ! i=1
+      tmpmat=pc%F0(index1+1,:,:)
+      tmpvec=b((index1g+1):(index1g+pc%nGrp))
+                     ! size    alpha   A
+      CALL BLAS_matvec(pc%nGrp,1.0_SRK,tmpmat,tmpvec,1.0_SRK,x((index1g+1):(index1g+pc%nGrp)))
+
+      ! rest
+      DO i=2,X
+        tmpmat=pc%F0(index1+i,:,:)
+        tmpvec=b((index1g+1):(index1g+pc%nGrp))
+        tmpvec=tmpvec-pc%W(index2,((i-1)*pc%nGrp+1):(i*pc%nGrp))*x((index1g+1):(index1g+pc%nGrp))
+        index1g=index1g+pc%nGrp ! increase index1g by nGrp for each i
+                       ! size    alpha   A
+        CALL BLAS_matvec(pc%nGrp,1.0_SRK,tmpmat,tmpvec,1.0_SRK,x((index1g+1):(index1g+pc%nGrp)))
+      ENDDO
+
+      ! Step 2: BACKWARD SOLVE
+
+      ! i=X
+      ! Do nothing because x_x,j,k=x~_x
+
+      ! rest
+      DO i=(X-1),1,-1
+        tmpmat=pc%F0(index1+i,:,:)
+        tmpvec=pc%E(index2,((i-1)*pc%nGrp+1):(i*pc%nGrp))*x((index1g+1):(index1g+pc%nGrp))
+        CALL BLAS_matvec(pc%nGrp,1.0_SRK,tmpmat,tmpvec,1.0_SRK,tmpvec2)
+        index1g=index1g-pc%nGrp ! increase index1g by nGrp for each i
+        x((index1g+1):(index1g+pc%nGrp))=x((index1g+1):(index1g+pc%nGrp))-tmpvec2
+      ENDDO
+
+    ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
 END MODULE
