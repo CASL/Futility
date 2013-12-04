@@ -2831,7 +2831,7 @@ CONTAINS
       ENDSELECT
 
       SELECTTYPE(thisLS); TYPE IS(LinearSolvertype_Iterative)
-        CALL thisLS%initPC('ILU')
+        CALL thisLS%setupPC()
       ENDSELECT
       
       ! build X0 and set it to 1.0s
