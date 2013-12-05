@@ -1404,93 +1404,98 @@ WRITE(*,*) '   --Initializing Preconditioner...'
       
       INTEGER(SIK) :: i,ix,X,row
       INTEGER(SIK) :: ic,iu,id
-      REAL(SRK),ALLOCATABLE :: L0(:,:),tmpM(:,:),invDU0(:)
+      REAL(SRK),ALLOCATABLE :: L0(:),tmpM(:,:),invDU0(:)
       
-      IF(ALLOCATED(invA)) DEALLOCATE(invA)
-      ALLOCATE(invA(SIZE(L(:,1)),SIZE(L(1,:))))
-      invA=0.0_SRK
-      
-      ALLOCATE(L0(block_dim,block_dim))
       ALLOCATE(tmpM(block_dim,block_dim))
+      ALLOCATE(L0(block_dim))
       ALLOCATE(invDU0(block_dim))
-      L0=0.0_SRK
       tmpM=0.0_SRK
+      L0=0.0_SRK
       invDU0=0.0_SRK
       
       X=SIZE(L(:,1))/block_dim
-      DO i=X,1,-1
+      
+      !last row
+      i=X
+      ic=(i-1)*block_dim+1
+      iu=(i)*block_dim+1
+      id=(i-2)*block_dim+1
+      DO ix=X,1,-1
+        IF(ix == i) THEN
+          !diagonal block term
+          invA(ic:ic+block_dim-1,ic:ic+block_dim-1) = &
+            F(ic:ic+block_dim-1,ic:ic+block_dim-1)
+        ELSEIF(ix == i-1) THEN
+          !lower block term)
+          DO row=1,block_dim
+            L0(row)=L(ic+row-1,id+row-1)
+          ENDDO
+          CALL dmatmul_right(invA(ic:ic+block_dim-1,ic:ic+block_dim-1),L0,tmpM)
+          invA(ic:ic+block_dim-1,id:id+block_dim-1)= &
+            -MATMUL(tmpM,F(id:id+block_dim-1,id:id+block_dim-1))
+        ENDIF
+      ENDDO
+      
+      !interior rows
+      DO i=X-1,2,-1
         ic=(i-1)*block_dim+1
         iu=(i)*block_dim+1
         id=(i-2)*block_dim+1
-        
-        IF(i==1) THEN
-        
-          DO ix=X,1,-1
-            IF(ix == i) THEN
-              !diagonal block term
-              DO row=1,block_dim
-                invDU0(row)=U(ic+row-1,iu+row-1)
-              ENDDO
-              CALL dmatmul_left(invDU0,invA(iu:iu+block_dim-1,ic:ic+block_dim-1),tmpM)
-              invA(ic:ic+block_dim-1,ic:ic+block_dim-1) = &
-                F(ic:ic+block_dim-1,ic:ic+block_dim-1)+tmpM
-            ELSEIF(ix == i+1) THEN
-              !upper block term
-              L0=L(ic:ic+block_dim-1,iu:iu+block_dim-1)
-              DO row=1,block_dim
-                invDU0(row)=U(ic+row-1,iu+row-1)
-              ENDDO
-              CALL dmatmul_left(invDU0,invA(iu:iu+block_dim-1,iu:iu+block_dim-1),tmpM)
-              invA(ic:ic+block_dim-1,iu:iu+block_dim-1) = -tmpM
-            ENDIF
+          
+        DO ix=X,1,-1
+          IF(ix == i) THEN
+            !diagonal block term)
+            DO row=1,block_dim
+              invDU0(row)=U(ic+row-1,iu+row-1)
+            ENDDO
+            CALL dmatmul_left(invDU0,invA(iu:iu+block_dim-1,ic:ic+block_dim-1),tmpM)
+            invA(ic:ic+block_dim-1,ic:ic+block_dim-1) = &
+              F(ic:ic+block_dim-1,ic:ic+block_dim-1) + tmpM
+          ELSEIF(ix == i-1) THEN
+            !lower block term
+            DO row=1,block_dim
+              L0(row)=L(ic+row-1,id+row-1)
+            ENDDO
+            CALL dmatmul_left(L0,F(id:id+block_dim-1,id:id+block_dim-1),tmpM)
+            invA(ic:ic+block_dim-1,id:id+block_dim-1)=-MATMUL(invA(ic:ic+block_dim-1,ic:ic+block_dim-1),tmpM)
+          ELSEIF(ix == i+1) THEN
+            !upper block term
+            DO row=1,block_dim
+              invDU0(row)=U(ic+row-1,iu+row-1)
+            ENDDO
+            CALL dmatmul_left(invDU0,invA(iu:iu+block_dim-1,iu:iu+block_dim-1),tmpM)
+            invA(ic:ic+block_dim-1,iu:iu+block_dim-1)=-tmpM
+          ENDIF
+        ENDDO !ix
+      ENDDO !i
+      
+      !first row
+      i=1
+      ic=(i-1)*block_dim+1
+      iu=(i)*block_dim+1
+      id=(i-2)*block_dim+1
+      DO ix=X,1,-1
+        IF(ix == i) THEN
+          !diagonal block term
+          DO row=1,block_dim
+            invDU0(row)=U(ic+row-1,iu+row-1)
           ENDDO
-          
-        ELSEIF(i==X) THEN
-          
-          DO ix=X,1,-1
-            IF(ix == i) THEN
-              !diagonal block term
-              invA(ic:ic+block_dim-1,ic:ic+block_dim-1) = &
-                F(ic:ic+block_dim-1,ic:ic+block_dim-1)
-            ELSEIF(ix == i-1) THEN
-              !lower block term)
-              L0=L(ic:ic+block_dim-1,id:id+block_dim-1)
-              invA(ic:ic+block_dim-1,id:id+block_dim-1)= &
-                -MATMUL(MATMUL(invA(ic:ic+block_dim-1,ic:ic+block_dim-1),L0), &
-                F(id:id+block_dim-1,id:id+block_dim-1))
-            ENDIF
+          CALL dmatmul_left(invDU0,invA(iu:iu+block_dim-1,ic:ic+block_dim-1),tmpM)
+          invA(ic:ic+block_dim-1,ic:ic+block_dim-1) = &
+            F(ic:ic+block_dim-1,ic:ic+block_dim-1)+tmpM
+        ELSEIF(ix == i+1) THEN
+          !upper block term
+          DO row=1,block_dim
+            invDU0(row)=U(ic+row-1,iu+row-1)
           ENDDO
-          
-        ELSE
-          
-          DO ix=X,1,-1
-            IF(ix == i) THEN
-              !diagonal block term)
-              DO row=1,block_dim
-                invDU0(row)=U(ic+row-1,iu+row-1)
-              ENDDO
-              CALL dmatmul_left(invDU0,invA(iu:iu+block_dim-1,ic:ic+block_dim-1),tmpM)
-              invA(ic:ic+block_dim-1,ic:ic+block_dim-1) = &
-                F(ic:ic+block_dim-1,ic:ic+block_dim-1) + tmpM
-            ELSEIF(ix == i-1) THEN
-              !lower block term
-              L0=L(ic:ic+block_dim-1,id:id+block_dim-1)
-              invA(ic:ic+block_dim-1,id:id+block_dim-1)=-MATMUL(invA(ic:ic+block_dim-1,ic:ic+block_dim-1), &
-                MATMUL(L0,F(id:id+block_dim-1,id:id+block_dim-1)))
-            ELSEIF(ix == i+1) THEN
-              !upper block term
-              L0=L(ic:ic+block_dim-1,id:id+block_dim-1)
-              DO row=1,block_dim
-                invDU0(row)=U(ic+row-1,iu+row-1)
-              ENDDO
-              CALL dmatmul_left(invDU0,invA(iu:iu+block_dim-1,iu:iu+block_dim-1),tmpM)
-              invA(ic:ic+block_dim-1,iu:iu+block_dim-1)=-tmpM
-            ENDIF
-          ENDDO
-          
+          CALL dmatmul_left(invDU0,invA(iu:iu+block_dim-1,iu:iu+block_dim-1),tmpM)
+          invA(ic:ic+block_dim-1,iu:iu+block_dim-1) = -tmpM
         ENDIF
-        
       ENDDO
+      
+      DEALLOCATE(tmpM)
+      DEALLOCATE(L0)
+      DEALLOCATE(invDU0)
     
     ENDSUBROUTINE ABI
 !
