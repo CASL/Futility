@@ -554,7 +554,7 @@ WRITE(*,*) '   --Initializing Preconditioner...'
                   index2=(k-1)*Y
                   index3=(k-1)*Y*X
                   index3g=(k-1)*Y*X*pc%nGrp-X*pc%nGrp
-                  index4=0
+                  index4=-2*X*pc%nGrp
                   DO j=1,Y
                     index2=index2+1
                     index3gp=index3g
@@ -563,6 +563,8 @@ WRITE(*,*) '   --Initializing Preconditioner...'
                     index3g=index3g+X*pc%nGrp ! which goes from j to j + X*pc%nGrp
         
                     IF(j > 1) THEN
+!                      WRITE(*,*) 'A',k,index4,(X*pc%nGrp),index3gp,index3g
+!                      WRITE(*,*) 'B',SIZE(pc%S,DIM=2),SIZE(soln),SIZE(v%b)
                       CALL BLAS_axpy(-1.0_SRK*pc%S(k,(index4+1):(index4+X*pc%nGrp)), &
                         soln((index3gp+1):(index3gp+X*pc%nGrp)), &
                           v%b((index3g+1):(index3g+X*pc%nGrp)))
@@ -618,7 +620,7 @@ WRITE(*,*) '   --Initializing Preconditioner...'
                   ENDDO
       
                   ! Step 2: BACKWARD SOLVE
-      
+                  index4=index4+X*pc%nGrp 
                   DO j=(Y-1),1,-1
                     index2=index2-1
                     index3gp=index3g
@@ -713,7 +715,7 @@ WRITE(*,*) '   --Initializing Preconditioner...'
                   index2=(k-1)*Y
                   index3=(k-1)*Y*X
                   index3g=(k-1)*Y*X*pc%nGrp-X*pc%nGrp
-                  index4=0
+                  index4=-2*X*pc%nGrp
                   DO j=1,Y
                     index2=index2+1
                     index3gp=index3g
@@ -777,7 +779,7 @@ WRITE(*,*) '   --Initializing Preconditioner...'
                   ENDDO
       
                   ! Step 2: BACKWARD SOLVE
-      
+                  index4=index4+X*pc%nGrp
                   DO j=(Y-1),1,-1
                     index2=index2-1
                     index3gp=index3g
