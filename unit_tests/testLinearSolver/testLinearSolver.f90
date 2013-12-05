@@ -2781,7 +2781,9 @@ CONTAINS
       CALL pList%add('LinearSolverType->A->MatrixType->nnz',33_SNK)
       CALL pList%add('LinearSolverType->x->VectorType->n',9_SNK)
       CALL pList%add('LinearSolverType->b->VectorType->n',9_SNK)
-      CALL pList%add('LinearSolverType->PreCondType','ILU')
+      CALL pList%add('LinearSolverType->PCType','ILU')
+      CALL pList%add('LinearSolverType->PCIters',-1)
+      CALL pList%add('LinearSolverType->PCSetup',0)
       CALL pList%validate(pList,optListLS)
       CALL thisLS%init(pList)
       
@@ -2884,10 +2886,11 @@ CONTAINS
       
       DEALLOCATE(thisB)
       CALL thisLS%clear()
+      WRITE(*,*) 'makes it here'
       DEALLOCATE(thisX)
       
     !test with A being densesquare
-    
+      COMPONENT_TEST('DenseRectMatrixType')
       ! initialize linear system
       CALL pList%clear()
       CALL pList%add('LinearSolverType->TPLType',NATIVE)
@@ -2900,6 +2903,9 @@ CONTAINS
       CALL pList%add('LinearSolverType->A->MatrixType->isSym',.TRUE.)
       CALL pList%add('LinearSolverType->x->VectorType->n',9_SNK)
       CALL pList%add('LinearSolverType->b->VectorType->n',9_SNK)
+      CALL pList%add('LinearSolverType->PCType','NOPC')
+      CALL pList%add('LinearSolverType->PCIters',0)
+      CALL pList%add('LinearSolverType->PCSetup',0)
       CALL pList%validate(pList,optListLS)
       CALL thisLS%init(pList)
       
@@ -2985,6 +2991,7 @@ CONTAINS
       CALL thisLS%clear()
       
       ! TriDiagonal matrix, it will go to LU method
+      COMPONENT_TEST('TriDiagMatrixType')
       
       ! initialize linear system
       CALL pList%clear()

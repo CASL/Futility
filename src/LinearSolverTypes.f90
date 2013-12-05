@@ -529,6 +529,10 @@ MODULE LinearSolverTypes
                   solver%PCTypeName='ILU'
                 ELSEIF(PreCondType == 'BILU') THEN
                 ENDIF
+              ELSE
+                solver%PCTypeName='NOPC'
+                solver%pciters=0
+                solver%pcsetup=0
               ENDIF
 
               IF(TPLType==PETSC) THEN
