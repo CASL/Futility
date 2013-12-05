@@ -82,8 +82,8 @@ MODULE PreconditionerTypes
   ENDTYPE PreConditionerType
 
   TYPE,ABSTRACT,EXTENDS(PreConditionerType) :: LU_PreCondType
-    CLASS(MatrixType),POINTER :: L
-    CLASS(MatrixType),POINTER :: U
+    CLASS(MatrixType),ALLOCATABLE :: L
+    CLASS(MatrixType),ALLOCATABLE :: U
 
     CONTAINS
       PROCEDURE,PASS :: init => init_LU_PreCondType
@@ -170,7 +170,6 @@ MODULE PreconditionerTypes
       INTEGER(SIK) :: X
       REAL(SRK) :: val
 
-WRITE(*,*) '   --Initializing Preconditioner...'
       localalloc=.FALSE.
       IF(.NOT.ASSOCIATED(ePreCondType)) THEN
         ALLOCATE(ePreCondType)
@@ -419,10 +418,14 @@ WRITE(*,*) '   --Initializing Preconditioner...'
       CLASS(LU_PrecondType),INTENT(INOUT) :: PC
 
       IF(ASSOCIATED(PC%A)) NULLIFY(PC%A)
-      IF(ASSOCIATED(PC%U)) CALL PC%U%clear()
-      DEALLOCATE(PC%U)
-      IF(ASSOCIATED(PC%L)) CALL PC%L%clear()
-      DEALLOCATE(PC%L)
+      IF(ALLOCATED(PC%U)) THEN
+        CALL PC%U%clear()
+        DEALLOCATE(PC%U)
+      ENDIF
+      IF(ALLOCATED(PC%L)) THEN
+        CALL PC%L%clear()
+        DEALLOCATE(PC%L)
+      ENDIF
       SELECTTYPE(PC); TYPE IS(BILU_PrecondType) 
         IF(ALLOCATED(PC%F0)) DEALLOCATE(PC%F0)
         IF(ALLOCATED(PC%E)) DEALLOCATE(PC%E)

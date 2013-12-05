@@ -285,8 +285,8 @@ PROGRAM testPreconditionerTypes
         CALL testLU%clear()
         ASSERT(.NOT.(testLU%isInit),'SparseMatrixType .NOT.(ILU%LU%isInit)')
         ASSERT(.NOT.(ASSOCIATED(testLU%A)),'SparseMatrixType .NOT.(ASSOCIATED(ILU%LU%A))')
-        ASSERT(.NOT.(ASSOCIATED(testLU%L)),'SparseMatrixType .NOT.(ASSOCIATED(ILU%LU%L))')
-        ASSERT(.NOT.(ASSOCIATED(testLU%U)),'SparseMatrixType .NOT.(ASSOCIATED(ILU%LU%U))')
+        ASSERT(.NOT.(ALLOCATED(testLU%L)),'SparseMatrixType .NOT.(ASSOCIATED(ILU%LU%L))')
+        ASSERT(.NOT.(ALLOCATED(testLU%U)),'SparseMatrixType .NOT.(ASSOCIATED(ILU%LU%U))')
       ELSE
         ASSERT(testSparseMatrix%isInit,'TestSparseMatrix Initialization')
         ASSERT(testVector%isInit,'TestVector Initialization')
@@ -670,8 +670,8 @@ PROGRAM testPreconditionerTypes
           CALL testLU%clear()
           ASSERT(.NOT.(testLU%isInit),'BILU Preconditioner .NOT.(lu%isInit)')
           ASSERT(.NOT.(ASSOCIATED(testLU%A)),'BILU Preconditioner .NOT.(ASSOCIATED(LU%A))')
-          ASSERT(.NOT.(ASSOCIATED(testLU%L)),'BILU Preconditioner .NOT.(ASSOCIATED(LU%L))')
-          ASSERT(.NOT.(ASSOCIATED(testLU%U)),'BILU Preconditioner .NOT.(ASSOCIATED(LU%U))')
+          ASSERT(.NOT.(ALLOCATED(testLU%L)),'BILU Preconditioner .NOT.(ASSOCIATED(LU%L))')
+          ASSERT(.NOT.(ALLOCATED(testLU%U)),'BILU Preconditioner .NOT.(ASSOCIATED(LU%U))')
           DEALLOCATE(testLU)
         ELSE
           ASSERT(testBILU_1g%isInit,'TestMatrix Initialization')
@@ -807,8 +807,8 @@ PROGRAM testPreconditionerTypes
           CALL testLU%clear()
           ASSERT(.NOT.(testLU%isInit),'BILU Preconditioner .NOT.(lu%isInit)')
           ASSERT(.NOT.(ASSOCIATED(testLU%A)),'BILU Preconditioner .NOT.(ASSOCIATED(LU%A))')
-          ASSERT(.NOT.(ASSOCIATED(testLU%L)),'BILU Preconditioner .NOT.(ASSOCIATED(LU%L))')
-          ASSERT(.NOT.(ASSOCIATED(testLU%U)),'BILU Preconditioner .NOT.(ASSOCIATED(LU%U))')
+          ASSERT(.NOT.(ALLOCATED(testLU%L)),'BILU Preconditioner .NOT.(ASSOCIATED(LU%L))')
+          ASSERT(.NOT.(ALLOCATED(testLU%U)),'BILU Preconditioner .NOT.(ASSOCIATED(LU%U))')
           DEALLOCATE(testLU)
         ELSE
           ASSERT(testBILU_mg%isInit,'TestMatrix Initialization')
