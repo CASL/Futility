@@ -80,6 +80,8 @@ MODULE LinearSolverTypes
   USE VectorTypes
   USE MatrixTypes
   USE PreconditionerTypes
+  USE Strings
+  USE IOUtil
 #ifdef HAVE_PARDISO
   USE MKL_PARDISO
 #endif
@@ -211,8 +213,12 @@ MODULE LinearSolverTypes
     REAL(SRK) :: residual=0._SRK
     !> Preconditioner to be used by LinearSolverTyope
     CLASS(PreconditionerType),ALLOCATABLE :: PreCondType
+    !> The type of preconditioner
+    TYPE(StringType) :: PCTypeName
     !> Number of times to precondition the system
     INTEGER(SIK) :: pciters=0_SIK
+    !> Frequency with which to re-setup preconditioner
+    INTEGER(SIK) :: pcsetup=0_SIK
 !
 !List of Type Bound Procedures
     CONTAINS 
@@ -286,7 +292,7 @@ MODULE LinearSolverTypes
       TYPE(ParamType) :: validParams,matPList,vecxPList,vecbPList
       ! local variables
       INTEGER(SIK) :: i,n
-      INTEGER(SIK) :: matType,ReqTPLType,TPLType,solverMethod,pciters
+      INTEGER(SIK) :: matType,ReqTPLType,TPLType,solverMethod,pciters,pcsetup
       INTEGER(SIK) :: MPI_Comm_ID,numberOMP
       CHARACTER(LEN=256) :: timerName,ReqTPLTypeStr,TPLTypeStr,PreCondType
       LOGICAL(SBK) :: localalloc
@@ -323,9 +329,10 @@ MODULE LinearSolverTypes
       CALL validParams%get('LinearSolverType->b->VectorType',pListPtr)
       vecbPList=pListPtr
       ! Check for Preconditioner Data
-      IF(validParams%has('LinearSolverType->PreCondType')) THEN
-        CALL validParams%get('LinearSolverType->PreCondType',PreCondType)
-        CALL ValidParams%get('LinearSolverType->PreCondTypeIters',pciters)
+      IF(validParams%has('LinearSolverType->PCType')) THEN
+        CALL validParams%get('LinearSolverType->PCType',PreCondType)
+        CALL ValidParams%get('LinearSolverType->PCIters',pciters)
+        CALL validParams%get('LinearSolverType->PCSetup',pcsetup)
       ELSE
         PreCondType='NOPC'
       ENDIF
@@ -513,10 +520,19 @@ MODULE LinearSolverTypes
                 ELSE
                   solver%pciters=pciters
                 ENDIF
+                ! If pcsetup < 0, the preconditioner will be set up every time.
+                ! If pcsetup == 0, it will only get set up once.
+                ! Otherwise, set it up every pcsetup iterations
+                solver%pcsetup=pcsetup
                 IF(PreCondType == 'ILU') THEN
                   ALLOCATE(ILU_PreCondtype :: solver%PreCondType)
+                  solver%PCTypeName='ILU'
                 ELSEIF(PreCondType == 'BILU') THEN
                 ENDIF
+              ELSE
+                solver%PCTypeName='NOPC'
+                solver%pciters=0
+                solver%pcsetup=0
               ENDIF
 
               IF(TPLType==PETSC) THEN
@@ -585,6 +601,7 @@ MODULE LinearSolverTypes
       IF(solver%isinit) THEN
         IF(solver%A%isinit) THEN
           ! Set up PreconditionerType
+          CALL solver%PreCondType%clear()
           CALL solver%PreCondType%init(solver%A)
           CALL solver%PreCondType%setup()
         ELSE
@@ -1035,20 +1052,7 @@ MODULE LinearSolverTypes
                    'need to recompile with PETSc enabled to use this feature.')
 #endif  
               CLASS DEFAULT
-              !WRITE(*,*) solver%pciters
                 IF(solver%pciters /= 0) THEN
-                WRITE(*,*) '  --Setting up preconditioner'
-                !  IF(ALLOCATED(solver%PreCondType)) THEN
-                !    IF(.NOT.(solver%PreCondType%isInit) THEN
-                !      CALL myLS%setupPC()
-                !    ENDIF
-                !  ELSE
-                !    ALLOCATE(ILU_PreCondtype :: solver%PreCondType)
-                !    CALL myLS%setupPC()
-                !  ENDIF
-                  IF(.NOT.(ALLOCATED(solver%PreCondType))) ALLOCATE(ILU_PreCondtype :: solver%PreCondType)
-                  IF(solver%PrecondType%isInit) CALL solver%PreCondType%clear()
-                  CALL solver%setupPC
                   CALL solveGMRES(solver,solver%PreCondType)
                 ELSE
                   CALL solveGMRES(solver)
