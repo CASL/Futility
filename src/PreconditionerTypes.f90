@@ -491,7 +491,7 @@ WRITE(*,*) '   --Initializing Preconditioner...'
       INTEGER(SIK) :: i,j,k
       INTEGER(SIK) :: index1,index1g,index1gp,index2,index3,index3g,index3gp
       INTEGER(SIK) :: index4,index5,index5g,index5gp
-      REAL(SRK),ALLOCATABLE :: soln(:),soln_prev(:),soln_prevk(:),soln_previ(:)
+      REAL(SRK),ALLOCATABLE :: soln(:),soln_prevj(:),soln_prevk(:),soln_previ(:)
       REAL(SRK),ALLOCATABLE :: tmpmat(:,:),tmpTB(:,:)
 
       LOGICAL(SBK) :: localalloc
@@ -514,8 +514,6 @@ WRITE(*,*) '   --Initializing Preconditioner...'
           CLASS IS(RealVectorType)
             SELECTTYPE(L => PC%L)
               CLASS IS(SparseMatrixType)
-
-
                 
                 X=SQRT(REAL(pc%nPin))
                 Y=SQRT(REAL(pc%nPin))
@@ -523,7 +521,7 @@ WRITE(*,*) '   --Initializing Preconditioner...'
   
                 ALLOCATE(soln(SIZE(v%b)))
                 ALLOCATE(soln_previ(pc%nGrp))
-                ALLOCATE(soln_prev(X*pc%nGrp))
+                ALLOCATE(soln_prevj(X*pc%nGrp))
                 ALLOCATE(soln_prevk(X*Y*pc%nGrp))
                 ALLOCATE(tmpmat(pc%nGrp,pc%nGrp))
                 ALLOCATE(tmpTB(pc%nGrp*pc%nPin,pc%nGrp*pc%nPin))
@@ -533,15 +531,16 @@ WRITE(*,*) '   --Initializing Preconditioner...'
                 index5=0
                 index5g=-X*Y*pc%nGrp
                 DO k=1,Z
-                  index5=index5+1
-                  index5gp=index5g
+                  index5=index5+1 ! = k
+                  index5gp=index5g ! = (k-1)*X*Y*pc%nGrp
                   index5g=index5g+X*Y*pc%nGrp
                   
                   IF(k > 1) THEN
                     !CALL BLAS_axpy(-1.0_SRK*pc%B,soln((index5gp+1):(index5gp+X*Y*pc%nGrp)), &
                     !  v%b((index5g+1):(index5g+X*Y*pc%nGrp)))
+                    ! Get bottom matrix B_k from the A matrix
                     tmpTB=0.0_SRK
-                    DO i=1,(pc%nGrp*pc%nPin)
+                    DO i=1,(pc%nGrp*pc%nPin) ! i=1,pc%nGrp*X*Y
                       CALL pc%A%get(index5gp+i,index5g+i,tmpTB(i,i))
                     ENDDO
                     CALL BLAS_matvec(tmpTB,soln((index5gp+1):(index5gp+X*Y*pc%nGrp)),soln_prevk)
@@ -550,16 +549,15 @@ WRITE(*,*) '   --Initializing Preconditioner...'
                   ENDIF
                   
                   ! INSERT M(2) SOLVE HERE
-                                    ! Step 1: FORWARD SOLVE
+                  ! Step 1: FORWARD SOLVEi
                   index2=(k-1)*Y
                   index3=(k-1)*Y*X
                   index3g=(k-1)*Y*X*pc%nGrp-X*pc%nGrp
-                  index4=-2*X*pc%nGrp
+                  index4=0 !-X*pc%nGrp
                   DO j=1,Y
                     index2=index2+1
                     index3gp=index3g
                     index3=index3+X ! which goes from j to j + X
-                    index4=index4+X*pc%nGrp
                     index3g=index3g+X*pc%nGrp ! which goes from j to j + X*pc%nGrp
         
                     IF(j > 1) THEN
@@ -568,6 +566,7 @@ WRITE(*,*) '   --Initializing Preconditioner...'
                       CALL BLAS_axpy(-1.0_SRK*pc%S(k,(index4+1):(index4+X*pc%nGrp)), &
                         soln((index3gp+1):(index3gp+X*pc%nGrp)), &
                           v%b((index3g+1):(index3g+X*pc%nGrp)))
+                      index4=index4+X*pc%nGrp
                     ENDIF
         
                     ! INSERT M(1) SOLVE HERE. Uses soln, v%b, and F0 and W.
@@ -591,7 +590,7 @@ WRITE(*,*) '   --Initializing Preconditioner...'
                         soln((index1gp+1):(index1gp+pc%nGrp)),v%b((index1g+1):(index1g+pc%nGrp)))
                       ! F0(i,j,k)*(b(i,j,k)-W(i,j,k)*soln(i-1))
                       tmpmat=pc%F0(index1,:,:)
-                      CALL BLAS_matvec(tmpmat,v%b((index1g+1):(index1g+pc%nGrp)))
+                      CALL BLAS_matvec(tmpmat,v%b((index1g+1):(index1g+pc%nGrp)),soln((index1g+1):(index1g+pc%nGrp)))
                     ENDDO
 
                     ! Step 2: BACKWARD SOLVE
@@ -620,7 +619,7 @@ WRITE(*,*) '   --Initializing Preconditioner...'
                   ENDDO
       
                   ! Step 2: BACKWARD SOLVE
-                  index4=index4+X*pc%nGrp 
+                  !index4=index4+X*pc%nGrp 
                   DO j=(Y-1),1,-1
                     index2=index2-1
                     index3gp=index3g
@@ -631,8 +630,9 @@ WRITE(*,*) '   --Initializing Preconditioner...'
                     v%b((index3g+1):(index3g+X*pc%nGrp))=0.0_SRK
                     CALL BLAS_axpy(-1.0_SRK*pc%N(k,(index4+1):(index4+X*pc%nGrp)), &
                       soln((index3gp+1):(index3gp+X*pc%nGrp)),v%b((index3g+1):(index3g+X*pc%nGrp)))
-        
-                    soln_prev=soln((index3gp+1):(index3gp+X*pc%nGrp))
+
+!                    index4=index4-X*pc%nGrp
+                    soln_prevj=soln((index3g+1):(index3g+X*pc%nGrp))
         
                     ! INSERT M(1) SOLVE HERE. Uses soln, v%b, and F0 and W.
                     ! Step 1: FORWARD SOLVE (obtain x~)
@@ -656,7 +656,7 @@ WRITE(*,*) '   --Initializing Preconditioner...'
                         soln((index1gp+1):(index1gp+pc%nGrp)),v%b((index1g+1):(index1g+pc%nGrp)))
                       ! F0(i,j,k)*(b(i,j,k)-W(i,j,k)*soln(i-1))
                       tmpmat=pc%F0(index1,:,:)
-                      CALL BLAS_matvec(tmpmat,v%b((index1g+1):(index1g+pc%nGrp)))
+                      CALL BLAS_matvec(tmpmat,v%b((index1g+1):(index1g+pc%nGrp)),soln((index1g+1):(index1g+pc%nGrp)))
                     ENDDO
 
                     ! Step 2: BACKWARD SOLVE
@@ -684,7 +684,7 @@ WRITE(*,*) '   --Initializing Preconditioner...'
                         soln_previ
                     ENDDO
         
-                    soln((index3gp+1):(index3gp+X*pc%nGrp))=soln((index3gp+1):(index3gp+X*pc%nGrp))+soln_prev
+                    soln((index3g+1):(index3g+X*pc%nGrp))=soln((index3g+1):(index3g+X*pc%nGrp))+soln_prevj
         
                   ENDDO
                   
@@ -695,7 +695,7 @@ WRITE(*,*) '   --Initializing Preconditioner...'
                   index5gp=index5g
                   index5g=index5g-X*Y*pc%nGrp
                   
-                  v%b((index5g+1):(index5g+X*Y*pc%nGrp))=0.0_SRK
+!                  v%b((index5g+1):(index5g+X*Y*pc%nGrp))=0.0_SRK
 !                  CALL BLAS_axpy(-1.0_SRK*pc%T,soln((index5gp+1):(index5gp+X*Y*pc%nGrp)), &
 !                    v%b((index5g+1):(index5g+X*Y*pc%nGrp)))
                   tmpTB=0.0_SRK
@@ -705,8 +705,7 @@ WRITE(*,*) '   --Initializing Preconditioner...'
                   CALL BLAS_matvec(tmpTB,soln((index5gp+1):(index5gp+X*Y*pc%nGrp)),soln_prevk)
 !                  CALL BLAS_matvec(pc%A((index5gp+1):(index5gp+X*Y*pc%nGrp),(index5g+1):(index5g+X*Y*pc%nGrp)),&
 !                    soln((index5gp+1):(index5gp+X*Y*pc%nGrp)),soln_prevk)
-                  v%b((index5g+1):(index5g+X*Y*pc%nGrp))=v%b((index5g+1):(index5g+X*Y*pc%nGrp))- &
-                    soln_prevk
+                  v%b((index5g+1):(index5g+X*Y*pc%nGrp))=-soln_prevk
 
                   soln_prevk=soln((index5g+1):(index5g+X*Y*pc%nGrp))
                   
@@ -715,17 +714,17 @@ WRITE(*,*) '   --Initializing Preconditioner...'
                   index2=(k-1)*Y
                   index3=(k-1)*Y*X
                   index3g=(k-1)*Y*X*pc%nGrp-X*pc%nGrp
-                  index4=-2*X*pc%nGrp
+                  index4=0 !-2*X*pc%nGrp
                   DO j=1,Y
                     index2=index2+1
                     index3gp=index3g
                     index3=index3+X ! which goes from j to j + X
-                    index4=index4+X*pc%nGrp
                     index3g=index3g+X*pc%nGrp ! which goes from j to j + X*pc%nGrp
         
                     IF(j > 1) THEN
                       CALL BLAS_axpy(-1.0_SRK*pc%S(k,(index4+1):(index4+X*pc%nGrp)), &
                         soln((index3gp+1):(index3gp+X*pc%nGrp)),v%b((index3g+1):(index3g+X*pc%nGrp)))
+                      index4=index4+X*pc%nGrp
                     ENDIF
         
                     ! INSERT M(1) SOLVE HERE. Uses soln, v%b, and F0 and W.
@@ -748,7 +747,7 @@ WRITE(*,*) '   --Initializing Preconditioner...'
                         soln((index1gp+1):(index1gp+pc%nGrp)),v%b((index1g+1):(index1g+pc%nGrp)))
                       ! F0(i,j,k)*(b(i,j,k)-W(i,j,k)*soln(i-1))
                       tmpmat=pc%F0(index1,:,:)
-                      CALL BLAS_matvec(tmpmat,v%b((index1g+1):(index1g+pc%nGrp)))
+                      CALL BLAS_matvec(tmpmat,v%b((index1g+1):(index1g+pc%nGrp)),soln((index1g+1):(index1g+pc%nGrp)))
                     ENDDO
 
                     ! Step 2: BACKWARD SOLVE
@@ -779,19 +778,19 @@ WRITE(*,*) '   --Initializing Preconditioner...'
                   ENDDO
       
                   ! Step 2: BACKWARD SOLVE
-                  index4=index4+X*pc%nGrp
+                  !index4=index4+X*pc%nGrp
                   DO j=(Y-1),1,-1
                     index2=index2-1
                     index3gp=index3g
                     index3=index3-X ! which goes from j to j + X
-                    index4=index4-X*pc%nGrp
                     index3g=index3g-X*pc%nGrp ! which goes from j to j + X*pc%nGrp
+                    index4=index4-X*pc%nGrp
         
                     v%b((index3g+1):(index3g+X*pc%nGrp))=0.0_SRK
                     CALL BLAS_axpy(-1.0_SRK*pc%N(k,(index4+1):(index4+X*pc%nGrp)), &
                       soln((index3gp+1):(index3gp+X*pc%nGrp)),v%b((index3g+1):(index3g+X*pc%nGrp)))
-        
-                    soln_prev=soln((index3gp+1):(index3gp+X*pc%nGrp))
+!                    index4=index4-X*pc%nGrp
+                    soln_prevj=soln((index3g+1):(index3g+X*pc%nGrp))
         
                     ! INSERT M(1) SOLVE HERE. Uses soln, v%b, and F0 and W.
                     ! Step 1: FORWARD SOLVE (obtain x~)
@@ -815,7 +814,7 @@ WRITE(*,*) '   --Initializing Preconditioner...'
                         soln((index1gp+1):(index1gp+pc%nGrp)),v%b((index1g+1):(index1g+pc%nGrp)))
                       ! F0(i,j,k)*(b(i,j,k)-W(i,j,k)*soln(i-1))
                       tmpmat=pc%F0(index1,:,:)
-                      CALL BLAS_matvec(tmpmat,v%b((index1g+1):(index1g+pc%nGrp)))
+                      CALL BLAS_matvec(tmpmat,v%b((index1g+1):(index1g+pc%nGrp)),soln((index1g+1):(index1g+pc%nGrp)))
                     ENDDO
 
                     ! Step 2: BACKWARD SOLVE
@@ -843,7 +842,7 @@ WRITE(*,*) '   --Initializing Preconditioner...'
                         soln_previ
                     ENDDO
         
-                    soln((index3gp+1):(index3gp+X*pc%nGrp))=soln((index3gp+1):(index3gp+X*pc%nGrp))+soln_prev
+                    soln((index3g+1):(index3g+X*pc%nGrp))=soln((index3g+1):(index3g+X*pc%nGrp))+soln_prevj
         
                   ENDDO
                 
