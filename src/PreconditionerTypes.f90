@@ -851,6 +851,8 @@ MODULE PreconditionerTypes
                   soln((index5g+1):(index5g+X*Y*pc%nGrp))=soln((index5g+1):(index5g+X*Y*pc%nGrp))+soln_prevk
                 ENDDO
                 
+                !place solution back into v
+                v%b=soln
 
               CLASS IS(PETScMatrixType)
                 CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
