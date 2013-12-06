@@ -2886,7 +2886,6 @@ CONTAINS
       
       DEALLOCATE(thisB)
       CALL thisLS%clear()
-      WRITE(*,*) 'makes it here'
       DEALLOCATE(thisX)
       
     !test with A being densesquare
