@@ -512,7 +512,6 @@ MODULE PreconditionerTypes
         CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
           ' - VectorType is not initialized.')
       ELSE
-
         SELECTTYPE(v)
           CLASS IS(RealVectorType)
             SELECTTYPE(L => PC%L)
@@ -1030,275 +1029,295 @@ MODULE PreconditionerTypes
           CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
             ' - Matrix being used for LU Preconditioner is not initialized!')
         ELSE
-          
-          !dimension variables
-          XY=pc%nPin
-          X=SQRT(REAL(XY))
-          Y=SQRT(REAL(XY))
-          Z=pc%nPlane
-          G=pc%nGrp
-          dim0D=G
-          dim1D=X*G
-          dim2D=XY*G
-          !variables for 3D
-          ALLOCATE(invM2(dim2D,dim2D))
-          ALLOCATE(T(dim2D))
-          ALLOCATE(B(dim2D))
-          ALLOCATE(tmp2D(dim2D,dim2D))
-          T=0.0_SRK
-          B=0.0_SRK
-          tmp2D=0.0_SRK
-          invM2=0.0_SRK
-          !variables for 2D
-          ALLOCATE(L2(dim2D,dim2D))
-          ALLOCATE(U2(dim2D,dim2D))
-          ALLOCATE(F2(dim2D,dim2D))
-          ALLOCATE(S(dim1D))
-          ALLOCATE(N(dim1D))
-          ALLOCATE(invM1(dim1D,dim1D))
-          ALLOCATE(tmp1D(dim1D,dim1D))
-          L2=0.0_SRK
-          U2=0.0_SRK
-          F2=0.0_SRK
-          S=0.0_SRK
-          N=0.0_SRK
-          tmp1D=0.0_SRK
-          invM1=0.0_SRK
-          !variables for 1D
-          ALLOCATE(L1(dim1D,dim1D))
-          ALLOCATE(U1(dim1D,dim1D))
-          ALLOCATE(F1(dim1D,dim1D))
-          ALLOCATE(E(dim0D))
-          ALLOCATE(W(dim0D))
-          ALLOCATE(tmp0D(dim0D,dim0D))
-          ALLOCATE(invM0(dim0D,dim0D))
-          L1=0.0_SRK
-          U1=0.0_SRK
-          F1=0.0_SRK
-          E=0.0_SRK
-          W=0.0_SRK
-          tmp0D=0.0_SRK
-          invM0=0.0_SRK
-          
-          DO iz=1,Z
-            d2=(iz-2)*dim2D+1
-            c2=(iz-1)*dim2D+1
-            
-            IF(iz==1) THEN
-              !form diagonal block of L
-              DO row=c2,c2+dim2D-1
-                DO col=c2,c2+dim2D-1
-                  CALL pc%A%get(row,col,val)
-                  IF(val /= 0.0_SRK) CALL pc%L%set(row,col,val)
-                ENDDO
-              ENDDO
-              !form diagonal block of U (Identity)
-              DO row=c2,c2+dim2D-1
-                CALL pc%U%set(row,row,1.0_SRK)
-              ENDDO
-            ELSE
-              !pull T block into matrix
-              DO row=d2,d2+dim2D-1
-                CALL pc%A%get(row,c2+row-d2,val)
-                T(row-d2+1)=val
-              ENDDO
-              !pull B block into matrix
-              DO row=c2,c2+dim2D-1
-                CALL pc%A%get(row,d2+row-c2,val)
-                B(row-c2+1)=val
-              ENDDO     
-              !form diagonal block of L
-              tmp2D=0.0_SRK
-              CALL dmatmul_left(B,invM2,tmp2D)
-              CALL dmatmul_right(tmp2D,T,tmp2D)
-              !form diagonal block of L
-              DO row=c2,c2+dim2D-1
-                DO col=c2,c2+dim2D-1
-                  CALL pc%A%get(row,col,val)
-                  IF(val /= 0.0_SRK) &
-                    CALL pc%L%set(row,col,val-tmp2D(row-c2+1,col-c2+1))
-                ENDDO
-              ENDDO
-              !form lower block of L
-              DO row=c2,c2+dim2D-1
-                DO col=d2,d2+dim2D-1
-                  CALL pc%A%get(row,col,val)
-                  IF(val /= 0.0_SRK) &
-                    CALL pc%L%set(row,col,val)
-                ENDDO
-              ENDDO
-              !form diagonal block of U (Identity)
-              DO row=c2,c2+dim2D-1
-                CALL pc%U%set(row,row,1.0_SRK)
-              ENDDO
-              !form upper block of U
-              CALL dmatmul_right(invM2,T,tmp2D)
-              DO row=d2,d2+dim2D-1
-                DO col=c2,c2+dim2D-1
-                  CALL pc%A%get(row,col,val)
-                  IF(val /= 0.0_SRK) &
-                    CALL pc%U%set(row,col,tmp2D(row-d2+1,col-c2+1))
-                ENDDO
-              ENDDO
 
-            ENDIF
-            
-            !pull block M into matrix
-            tmp2D=0.0_SRK
-            DO row=c2,c2+dim2D-1
-              DO col=c2,c2+dim2D-1
-                CALL pc%L%get(row,col,val)
-                IF(val /= 0.0_SRK) &
-                  tmp2D(row-c2+1,col-c2+1)=val
-              ENDDO
-            ENDDO
-            
-            !LU M_k (2)  ...tmp2D
-            DO iy=1,Y
-              d1=(iy-2)*dim1D+1
-              c1=(iy-1)*dim1D+1
-              
-              IF(iy==1) THEN
-                !set diagonal of L2
-                DO row=c1,c1+dim1D-1
-                  DO col=c1,c1+dim1D-1
-                    val=tmp2D(row,col)
-                    L2(row,col)=val
-                  ENDDO
-                ENDDO
-                !set U to diagonal block
-                DO row=c1,c1+dim1D-1
-                  U2(row,row)=1.0_SRK
-                ENDDO
+          SELECTTYPE(U => PC%U); TYPE IS(SparseMatrixType)
+            SELECTTYPE(L => PC%L); TYPE IS(SparseMatrixType)
+              IF(.NOT.(U%isinit)) THEN
+                CALL ePrecondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+                  ' - in LU decomposition, U was not properly initialize!')
+              ELSEIF(.NOT.(L%isinit)) THEN
+                CALL ePrecondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+                  ' - in LU decomposition, L was not properly initialize!')
               ELSE
-                !fill S
-                DO row=c1,c1+dim1D-1
-                  S(row-c1+1)=tmp2D(row,d1+row-c1)
-                ENDDO
-                !fill N
+          
+                !dimension variables
+                XY=pc%nPin
+                X=SQRT(REAL(XY))
+                Y=SQRT(REAL(XY))
+                Z=pc%nPlane
+                G=pc%nGrp
+                dim0D=G
+                dim1D=X*G
+                dim2D=XY*G
+                !variables for 3D
+                ALLOCATE(invM2(dim2D,dim2D))
+                ALLOCATE(T(dim2D))
+                ALLOCATE(B(dim2D))
+                ALLOCATE(tmp2D(dim2D,dim2D))
+                T=0.0_SRK
+                B=0.0_SRK
+                tmp2D=0.0_SRK
+                invM2=0.0_SRK
+                !variables for 2D
+                ALLOCATE(L2(dim2D,dim2D))
+                ALLOCATE(U2(dim2D,dim2D))
+                ALLOCATE(F2(dim2D,dim2D))
+                ALLOCATE(S(dim1D))
+                ALLOCATE(N(dim1D))
+                ALLOCATE(invM1(dim1D,dim1D))
+                ALLOCATE(tmp1D(dim1D,dim1D))
+                L2=0.0_SRK
+                U2=0.0_SRK
+                F2=0.0_SRK
+                S=0.0_SRK
                 N=0.0_SRK
-                DO row=d1,d1+dim1D-1
-                  N(row-d1+1)=tmp2D(row,c1+row-d1)
-                ENDDO
-                !form diagonal block of L
                 tmp1D=0.0_SRK
-                CALL dmatmul_left(S,invM1,tmp1D)
-                CALL dmatmul_right(tmp1D,N,tmp1D)
-                DO row=c1,c1+dim1D-1
-                  DO col=c1,c1+dim1D-1
-                    IF(tmp2D(row,col) /= 0.0_SRK) &
-                      L2(row,col)=tmp2D(row,col)-tmp1D(row-c1+1,col-c1+1)
-                  ENDDO
-                ENDDO
-                !form lower block of L
-                DO row=c1,c1+dim1D-1
-                  L2(row,d1+row-c1)=S(row-c1+1)
-                ENDDO
-                !form upper block of U
-                CALL dmatmul_right(invM1,N,tmp1D)
-                DO row=d1,d1+dim1D-1
-                  DO col=c1,c1+dim1D-1
-                    IF(tmp2D(row,col) /= 0.0_SRK) &
-                      U2(row,col)=tmp1D(row-d1+1,col-c1+1)
-                  ENDDO
-                ENDDO
-                !form diagonal block of U
-                CALL dmatmul_right(invM1,N,tmp1D)
-                DO row=c1,c1+dim1D-1
-                  U2(row,row)=1.0_SRK
-                ENDDO
+                invM1=0.0_SRK
+                !variables for 1D
+                ALLOCATE(L1(dim1D,dim1D))
+                ALLOCATE(U1(dim1D,dim1D))
+                ALLOCATE(F1(dim1D,dim1D))
+                ALLOCATE(E(dim0D))
+                ALLOCATE(W(dim0D))
+                ALLOCATE(tmp0D(dim0D,dim0D))
+                ALLOCATE(invM0(dim0D,dim0D))
+                L1=0.0_SRK
+                U1=0.0_SRK
+                F1=0.0_SRK
+                E=0.0_SRK
+                W=0.0_SRK
+                tmp0D=0.0_SRK
+                invM0=0.0_SRK
                 
+                DO iz=1,Z
+                  d2=(iz-2)*dim2D+1
+                  c2=(iz-1)*dim2D+1
+                  
+                  IF(iz==1) THEN
+                    !form diagonal block of L
+                    DO row=c2,c2+dim2D-1
+                      DO col=c2,c2+dim2D-1
+                        CALL pc%A%get(row,col,val)
+                        IF(val /= 0.0_SRK) CALL pc%L%set(row,col,val)
+                      ENDDO
+                    ENDDO
+                    !form diagonal block of U (Identity)
+                    DO row=c2,c2+dim2D-1
+                      CALL pc%U%set(row,row,1.0_SRK)
+                    ENDDO
+                  ELSE
+                    !pull T block into matrix
+                    DO row=d2,d2+dim2D-1
+                      CALL pc%A%get(row,c2+row-d2,val)
+                      T(row-d2+1)=val
+                    ENDDO
+                    !pull B block into matrix
+                    DO row=c2,c2+dim2D-1
+                      CALL pc%A%get(row,d2+row-c2,val)
+                      B(row-c2+1)=val
+                    ENDDO     
+                    !form diagonal block of L
+                    tmp2D=0.0_SRK
+                    CALL dmatmul_left(B,invM2,tmp2D)
+                    CALL dmatmul_right(tmp2D,T,tmp2D)
+                    !form diagonal block of L
+                    DO row=c2,c2+dim2D-1
+                      DO col=c2,c2+dim2D-1
+                        CALL pc%A%get(row,col,val)
+                        IF(val /= 0.0_SRK) &
+                          CALL pc%L%set(row,col,val-tmp2D(row-c2+1,col-c2+1))
+                      ENDDO
+                    ENDDO
+                    !form lower block of L
+                    DO row=c2,c2+dim2D-1
+                      DO col=d2,d2+dim2D-1
+                        CALL pc%A%get(row,col,val)
+                        IF(val /= 0.0_SRK) &
+                          CALL pc%L%set(row,col,val)
+                      ENDDO
+                    ENDDO
+                    !form diagonal block of U (Identity)
+                    DO row=c2,c2+dim2D-1
+                      CALL pc%U%set(row,row,1.0_SRK)
+                    ENDDO
+                    !form upper block of U
+                    CALL dmatmul_right(invM2,T,tmp2D)
+                    DO row=d2,d2+dim2D-1
+                      DO col=c2,c2+dim2D-1
+                        CALL pc%A%get(row,col,val)
+                        IF(val /= 0.0_SRK) &
+                          CALL pc%U%set(row,col,tmp2D(row-d2+1,col-c2+1))
+                      ENDDO
+                    ENDDO
+      
+                  ENDIF
+                  
+                  !pull block M into matrix
+                  tmp2D=0.0_SRK
+                  DO row=c2,c2+dim2D-1
+                    DO col=c2,c2+dim2D-1
+                      CALL pc%L%get(row,col,val)
+                      IF(val /= 0.0_SRK) &
+                        tmp2D(row-c2+1,col-c2+1)=val
+                    ENDDO
+                  ENDDO
+                  
+                  !LU M_k (2)  ...tmp2D
+                  DO iy=1,Y
+                    d1=(iy-2)*dim1D+1
+                    c1=(iy-1)*dim1D+1
+                    
+                    IF(iy==1) THEN
+                      !set diagonal of L2
+                      DO row=c1,c1+dim1D-1
+                        DO col=c1,c1+dim1D-1
+                          val=tmp2D(row,col)
+                          L2(row,col)=val
+                        ENDDO
+                      ENDDO
+                      !set U to diagonal block
+                      DO row=c1,c1+dim1D-1
+                        U2(row,row)=1.0_SRK
+                      ENDDO
+                    ELSE
+                      !fill S
+                      DO row=c1,c1+dim1D-1
+                        S(row-c1+1)=tmp2D(row,d1+row-c1)
+                      ENDDO
+                      !fill N
+                      N=0.0_SRK
+                      DO row=d1,d1+dim1D-1
+                        N(row-d1+1)=tmp2D(row,c1+row-d1)
+                      ENDDO
+                      !form diagonal block of L
+                      tmp1D=0.0_SRK
+                      CALL dmatmul_left(S,invM1,tmp1D)
+                      CALL dmatmul_right(tmp1D,N,tmp1D)
+                      DO row=c1,c1+dim1D-1
+                        DO col=c1,c1+dim1D-1
+                          IF(tmp2D(row,col) /= 0.0_SRK) &
+                            L2(row,col)=tmp2D(row,col)-tmp1D(row-c1+1,col-c1+1)
+                        ENDDO
+                      ENDDO
+                      !form lower block of L
+                      DO row=c1,c1+dim1D-1
+                        L2(row,d1+row-c1)=S(row-c1+1)
+                      ENDDO
+                      !form upper block of U
+                      CALL dmatmul_right(invM1,N,tmp1D)
+                      DO row=d1,d1+dim1D-1
+                        DO col=c1,c1+dim1D-1
+                          IF(tmp2D(row,col) /= 0.0_SRK) &
+                            U2(row,col)=tmp1D(row-d1+1,col-c1+1)
+                        ENDDO
+                      ENDDO
+                      !form diagonal block of U
+                      CALL dmatmul_right(invM1,N,tmp1D)
+                      DO row=c1,c1+dim1D-1
+                        U2(row,row)=1.0_SRK
+                      ENDDO
+                      
+                    ENDIF
+                    
+                    tmp1D=L2(c1:c1+dim1D-1,c1:c1+dim1D-1)
+                    
+                    DO ix=1,X
+                                   
+                      d0=(ix-2)*dim0D+1
+                      c0=(ix-1)*dim0D+1
+                    
+                      IF(ix==1) THEN
+                        !set diagonal of L
+                        DO row=c0,c0+dim0D-1
+                          DO col=c0,c0+dim0D-1
+                            L1(row,col)=tmp1D(row,col)
+                          ENDDO
+                        ENDDO
+                        !set U to diagonal block
+                        DO row=c0,c0+dim0D-1
+                          U1(row,row)=1.0_SRK
+                        ENDDO
+                      ELSE
+                        !fill W
+                        DO row=c0,c0+dim0D-1
+                          W(row-c0+1)=tmp1D(row,d0+row-c0)
+                        ENDDO
+                        !fill E
+                        DO row=d0,d0+dim0D-1
+                          E(row-d0+1)=tmp1D(row,c0+row-d0)
+                        ENDDO
+                        !set diagonal of L
+                        tmp0D=0.0_SRK
+                        CALL dmatmul_left(W,invM0,tmp0D)
+                        CALL dmatmul_right(tmp0D,E,tmp0D)
+                        DO row=c0,c0+dim0D-1
+                          DO col=c0,c0+dim0D-1
+                            IF(tmp1D(row,col) /= 0.0_SRK) &
+                              L1(row,col)=tmp1D(row,col)-tmp0D(row-c0+1,col-c0+1)
+                          ENDDO
+                        ENDDO
+                        !set lower block of L
+                        DO row=c0,c0+dim0D-1
+                          L1(row,d0+row-c0)=W(row-c0+1)
+                        ENDDO
+                        !set upper block of U
+                        CALL dmatmul_right(invM0,E,tmp0D)
+                        DO row=d0,d0+dim0D-1
+                          DO col=c0,c0+dim0D-1
+                            IF(tmp1D(row,col) /= 0.0_SRK) &
+                              U1(row,col)=tmp0D(row-d0+1,col-c0+1)
+                          ENDDO
+                        ENDDO               
+                        !set diagonal block of U
+                        DO row=c0,c0+dim0D-1
+                          U1(row,row)=1.0_SRK
+                        ENDDO
+                      ENDIF
+                      
+                      tmp0D=L1(c0:c0+dim0D-1,c0:c0+dim0D-1)
+                      
+                      !determine 0D inverse (always direct for 0D)
+                      CALL direct_inv(tmp0D,invM0)
+                      F1(c0:c0+dim0D-1,c0:c0+dim0D-1)=invM0
+                      ind=(iz-1)*XY+(iy-1)*Y+ix
+                      PC%F0(ind,:,:)=invM0
+      
+                    ENDDO !ix
+                    
+                    !determine 1D inverse
+                    CALL ABI(L1,U1,F1,dim0D,invM1)
+                    F2(c1:c1+dim1D-1,c1:c1+dim1D-1)=invM1
+                    !store for apply
+                    ind=(iz-1)*Y+iy
+                    DO row=1,dim0D*(X-1)
+                      PC%E(ind,row)=tmp1D(row,dim0D+row)
+                    ENDDO
+                    DO row=1,dim0D*(X-1)
+                      PC%W(ind,row)=tmp1D(dim0D+row,row)
+                    ENDDO
+                      
+                  ENDDO !iy
+      
+                  !determine 2D inverse
+                  CALL ABI(L2,U2,F2,dim1D,invM2)
+                  DO row=1,dim1D*(X-1)
+                    PC%N(iz,row)=tmp2D(row,dim1D+row)
+                  ENDDO
+                  DO row=1,dim1D*(X-1)
+                    PC%S(iz,row)=tmp2D(dim1D+row,row)
+                  ENDDO
+                  
+                ENDDO !iz
               ENDIF
-              
-              tmp1D=L2(c1:c1+dim1D-1,c1:c1+dim1D-1)
-              
-              DO ix=1,X
-                             
-                d0=(ix-2)*dim0D+1
-                c0=(ix-1)*dim0D+1
-              
-                IF(ix==1) THEN
-                  !set diagonal of L
-                  DO row=c0,c0+dim0D-1
-                    DO col=c0,c0+dim0D-1
-                      L1(row,col)=tmp1D(row,col)
-                    ENDDO
-                  ENDDO
-                  !set U to diagonal block
-                  DO row=c0,c0+dim0D-1
-                    U1(row,row)=1.0_SRK
-                  ENDDO
-                ELSE
-                  !fill W
-                  DO row=c0,c0+dim0D-1
-                    W(row-c0+1)=tmp1D(row,d0+row-c0)
-                  ENDDO
-                  !fill E
-                  DO row=d0,d0+dim0D-1
-                    E(row-d0+1)=tmp1D(row,c0+row-d0)
-                  ENDDO
-                  !set diagonal of L
-                  tmp0D=0.0_SRK
-                  CALL dmatmul_left(W,invM0,tmp0D)
-                  CALL dmatmul_right(tmp0D,E,tmp0D)
-                  DO row=c0,c0+dim0D-1
-                    DO col=c0,c0+dim0D-1
-                      IF(tmp1D(row,col) /= 0.0_SRK) &
-                        L1(row,col)=tmp1D(row,col)-tmp0D(row-c0+1,col-c0+1)
-                    ENDDO
-                  ENDDO
-                  !set lower block of L
-                  DO row=c0,c0+dim0D-1
-                    L1(row,d0+row-c0)=W(row-c0+1)
-                  ENDDO
-                  !set upper block of U
-                  CALL dmatmul_right(invM0,E,tmp0D)
-                  DO row=d0,d0+dim0D-1
-                    DO col=c0,c0+dim0D-1
-                      IF(tmp1D(row,col) /= 0.0_SRK) &
-                        U1(row,col)=tmp0D(row-d0+1,col-c0+1)
-                    ENDDO
-                  ENDDO               
-                  !set diagonal block of U
-                  DO row=c0,c0+dim0D-1
-                    U1(row,row)=1.0_SRK
-                  ENDDO
-                ENDIF
-                
-                tmp0D=L1(c0:c0+dim0D-1,c0:c0+dim0D-1)
-                
-                !determine 0D inverse (always direct for 0D)
-                CALL direct_inv(tmp0D,invM0)
-                F1(c0:c0+dim0D-1,c0:c0+dim0D-1)=invM0
-                ind=(iz-1)*XY+(iy-1)*Y+ix
-                PC%F0(ind,:,:)=invM0
-
-              ENDDO !ix
-              
-              !determine 1D inverse
-              CALL ABI(L1,U1,F1,dim0D,invM1)
-              F2(c1:c1+dim1D-1,c1:c1+dim1D-1)=invM1
-              !store for apply
-              ind=(iz-1)*Y+iy
-              DO row=1,dim0D*(X-1)
-                PC%E(ind,row)=tmp1D(row,dim0D+row)
-              ENDDO
-              DO row=1,dim0D*(X-1)
-                PC%W(ind,row)=tmp1D(dim0D+row,row)
-              ENDDO
-                
-            ENDDO !iy
-
-            !determine 2D inverse
-            CALL ABI(L2,U2,F2,dim1D,invM2)
-            DO row=1,dim1D*(X-1)
-              PC%N(iz,row)=tmp2D(row,dim1D+row)
-            ENDDO
-            DO row=1,dim1D*(X-1)
-              PC%S(iz,row)=tmp2D(dim1D+row,row)
-            ENDDO
-            
-          ENDDO !iz
+  
+            CLASS DEFAULT
+                CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+                  ' - LU Preconditioners are not supported by input matrix type!')
+            ENDSELECT 
+          CLASS DEFAULT
+              CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+                ' - LU Preconditioners are not supported by input matrix type!')
+          ENDSELECT 
           
         ENDIF
       ENDIF

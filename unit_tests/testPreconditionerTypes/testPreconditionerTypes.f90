@@ -70,12 +70,12 @@ PROGRAM testPreconditionerTypes
   REGISTER_SUBTEST('Test ILU Preconditioner Type',testILU_PreCondType)
   CALL clearTest()
 
-#ifdef MPACT_HAVE_PETSC
-  !test BILU petsc
-  CALL setupBILUTest(0)
-  REGISTER_SUBTEST('Test BILU Preconditioner Type (petsc)',testBILU_PreCondType)
-  CALL clearTest()  
-#endif
+!#ifdef MPACT_HAVE_PETSC
+!  !test BILU petsc
+!  CALL setupBILUTest(0)
+!  REGISTER_SUBTEST('Test BILU Preconditioner Type (petsc)',testBILU_PreCondType)
+!  CALL clearTest()  
+!#endif
   !test BILU sparse
   CALL setupBILUTest(1)
   REGISTER_SUBTEST('Test BILU Preconditioner Type (sparse)',testBILU_PreCondType)
