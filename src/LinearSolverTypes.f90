@@ -293,6 +293,7 @@ MODULE LinearSolverTypes
       ! local variables
       INTEGER(SIK) :: i,n
       INTEGER(SIK) :: matType,ReqTPLType,TPLType,solverMethod,pciters,pcsetup
+      INTEGER(SIK) :: nz,npin,ngrp
       INTEGER(SIK) :: MPI_Comm_ID,numberOMP
       CHARACTER(LEN=256) :: timerName,ReqTPLTypeStr,TPLTypeStr,PreCondType
       LOGICAL(SBK) :: localalloc
@@ -333,6 +334,10 @@ MODULE LinearSolverTypes
         CALL validParams%get('LinearSolverType->PCType',PreCondType)
         CALL ValidParams%get('LinearSolverType->PCIters',pciters)
         CALL validParams%get('LinearSolverType->PCSetup',pcsetup)
+        !get extra data necessary for BILU
+        CALL validParams%get('LinearSolverType->nPlane',nz)
+        CALL validParams%get('LinearSolverType->nPin',npin)
+        CALL validParams%get('LinearSolverType->nGrp',ngrp)
       ELSE
         PreCondType='NOPC'
       ENDIF
@@ -530,6 +535,11 @@ MODULE LinearSolverTypes
                 ELSEIF(PreCondType == 'BILU') THEN
                   ALLOCATE(BILU_PreCondtype :: solver%PreCondType)
                   solver%PCTypeName='BILU'
+                  SELECTTYPE(pc => solver%PreCondType); TYPE IS(BILU_PreCondtype)
+                    pc%nGrp=nGrp
+                    pc%nPlane=nz
+                    pc%nPin=npin
+                  ENDSELECT
                 ENDIF
               ELSE
                 solver%PCTypeName='NOPC'
