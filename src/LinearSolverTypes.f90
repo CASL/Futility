@@ -528,6 +528,8 @@ MODULE LinearSolverTypes
                   ALLOCATE(ILU_PreCondtype :: solver%PreCondType)
                   solver%PCTypeName='ILU'
                 ELSEIF(PreCondType == 'BILU') THEN
+                  ALLOCATE(BILU_PreCondtype :: solver%PreCondType)
+                  solver%PCTypeName='BILU'
                 ENDIF
               ELSE
                 solver%PCTypeName='NOPC'
