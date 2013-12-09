@@ -148,6 +148,9 @@ MODULE PreconditionerTypes
     ENDSUBROUTINE precond_LU_absintfc
   ENDINTERFACE
 
+  !> set enumeration scheme for BILU preconditioners
+  INTEGER(SIK),PARAMETER,PUBLIC :: BILU=0,BILUSGS=1
+
   CHARACTER(LEN=*),PARAMETER :: modName='PreconditionerTypes'
 
   TYPE(ExceptionHandlerType),POINTER,SAVE :: ePreCondType => NULL()
@@ -1055,14 +1058,21 @@ MODULE PreconditionerTypes
                     ENDDO     
                     !form diagonal block of L
                     tmp2D=0.0_SRK
-                    CALL dmatmul_left(B,invM2,tmp2D)
-                    CALL dmatmul_right(tmp2D,T,tmp2D)
+                    IF(pc%BILUType==BILU) THEN
+                      CALL dmatmul_left(B,invM2,tmp2D)
+                      CALL dmatmul_right(tmp2D,T,tmp2D)
+                    ENDIF
                     !form diagonal block of L
                     DO row=c2,c2+dim2D-1
                       DO col=c2,c2+dim2D-1
                         CALL pc%A%get(row,col,val)
-                        IF(val /= 0.0_SRK) &
-                          CALL pc%L%set(row,col,val-tmp2D(row-c2+1,col-c2+1))
+                        IF(val /= 0.0_SRK) THEN
+                          IF(pc%BILUType==BILU) THEN
+                            CALL pc%L%set(row,col,val-tmp2D(row-c2+1,col-c2+1))
+                          ELSEIF(pc%BILUType==BILUSGS) THEN
+                            CALL pc%L%set(row,col,val)
+                          ENDIF
+                        ENDIF
                       ENDDO
                     ENDDO
                     !form lower block of L
