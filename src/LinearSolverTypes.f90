@@ -1620,6 +1620,9 @@ MODULE LinearSolverTypes
           R(it,it)=temp
           g(it)=c(it)*phibar
           phibar=-s(it)*phibar
+#ifdef MPACT_DEBUG_MSG
+          WRITE(667,*) '         GMRES-LP',it,ABS(phibar)
+#endif
           IF(ABS(phibar) <= tol) EXIT
         ENDDO
         
