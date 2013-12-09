@@ -413,8 +413,8 @@ MODULE PreconditionerTypes
       INTEGER(SIK) :: i,j,k,ig
       INTEGER(SIK) :: index1,index1g,index1gp,index2,index3,index3g,index3gp
       INTEGER(SIK) :: index4,index5,index5g,index5gp
-      REAL(SRK),ALLOCATABLE :: soln(:),soln_prevj(:),soln_prevk(:),soln_previ(:)
-      REAL(SRK),ALLOCATABLE :: tmpmat(:,:),tmpTB(:,:)
+      REAL(SRK),ALLOCATABLE :: soln(:),soln_prevj(:),soln_prevk(:)
+      REAL(SRK),ALLOCATABLE :: tmpTB(:)
       REAL(SRK) :: tmp
 
       INTEGER(SIK) :: iz,izg,izgp,izy,izyx,izyg,izygp,izyxg,izyxgp,iy,iyg,iym1g
@@ -460,11 +460,9 @@ MODULE PreconditionerTypes
                 dyg=X*pc%nGrp
                 dxg=pc%nGrp
                 
-                ALLOCATE(soln_previ(dxg))
                 ALLOCATE(soln_prevj(dyg))
                 ALLOCATE(soln_prevk(dzg))
-                ALLOCATE(tmpmat(dxg,dxg))
-                ALLOCATE(tmpTB(dzg,dzg))
+                ALLOCATE(tmpTB(dzg))
                 
                 ! Step 1: FORWARD SOLVE
              
@@ -476,14 +474,14 @@ MODULE PreconditionerTypes
               
                   IF(k > 1) THEN
                     ! Get bottom matrix B_k from the A matrix
-                    tmpTB=0.0_SRK
+!                    tmpTB=0.0_SRK
                     DO i=1,dzg 
                                    ! Might need to flip these two.
-                      CALL pc%A%get(izgp+i,izg+i,tmpTB(i,i))
-                      tmpTB(i,i)=-1.0_SRK*tmpTB(i,i)
+                      CALL pc%A%get(izgp+i,izg+i,tmpTB(i))
+                      tmpTB(i)=-1.0_SRK*tmpTB(i)
                     ENDDO
                     ! b=b-B_k*U(k-1)
-                    CALL BLAS_matvec(tmpTB,soln((izgp+1):(izgp+dzg)),v%b((izg+1):(izg+dzg)))!soln_prevk)
+                    CALL BLAS_axpy(tmpTB,soln((izgp+1):(izgp+dzg)),v%b((izg+1):(izg+dzg)))!soln_prevk)
                     !v%b((izg+1):(izg+dzg))=v%b((izg+1):(izg+dzg))-soln_prevk
                   ENDIF
              
@@ -515,7 +513,6 @@ MODULE PreconditionerTypes
              
                     ! i=2,X
                     DO i=2,X
-              !        tmpmat=pc%F0(izyx+i,:,:)
                       izyx=izy+i
                       izyxgp=izyxg
                       izyxg=izyg+(i-1)*dxg ! increase izyxg by nGrp for each i
@@ -580,7 +577,6 @@ MODULE PreconditionerTypes
              
                     ! i=2,X
                     DO i=2,X
-              !        tmpmat=pc%F0(izyx+i,:,:)
                       izyx=izy+i
                       izyxgp=izyxg
                       izyxg=izyg+(i-1)*dxg ! increase izyxg by nGrp for each i
@@ -589,9 +585,8 @@ MODULE PreconditionerTypes
                       CALL BLAS_axpy(-1.0_SRK*pc%W(iy,((i-2)*dxg+1):((i-1)*dxg)), &
                         soln((izyxgp+1):(izyxgp+dxg)),v%b((izyxg+1):(izyxg+dxg)))
                       ! F0(i,j,k)*(b(i,j,k)-W(i,j,k)*soln(i-1))
-                      tmpmat=pc%F0(izyx,:,:)
                       ! soln should be zero
-                      CALL BLAS_matvec(tmpmat,v%b((izyxg+1):(izyxg+dxg)),soln((izyxg+1):(izyxg+dxg)))
+                      CALL BLAS_matvec(pc%F0(izyx,:,:),v%b((izyxg+1):(izyxg+dxg)),soln((izyxg+1):(izyxg+dxg)))
                     ENDDO
              
              
@@ -631,13 +626,13 @@ MODULE PreconditionerTypes
 !                  v%b((izg+1):(izg+dzg))=0.0_SRK
 !                  CALL BLAS_axpy(-1.0_SRK*pc%T,soln((izgp+1):(izgp+dzg)), &
 !                    v%b((izg+1):(izg+dzg)))
-                  tmpTB=0.0_SRK
+!                  tmpTB=0.0_SRK
                   DO i=1,dzg
-                    CALL pc%A%get(izgp+i,izg+i,tmpTB(i,i))
-                    tmpTB(i,i)=-1.0_SRK*tmpTB(i,i)
+                    CALL pc%A%get(izgp+i,izg+i,tmpTB(i))
+                    tmpTB(i)=-1.0_SRK*tmpTB(i)
                   ENDDO
                   v%b((izg+1):(izg+dzg))=0.0_SRK
-                  CALL BLAS_matvec(tmpTB,soln((izgp+1):(izgp+dzg)),v%b((izg+1):(izg+dzg)))
+                  CALL BLAS_axpy(tmpTB,soln((izgp+1):(izgp+dzg)),v%b((izg+1):(izg+dzg)))
 !                  CALL BLAS_matvec(pc%A((izgp+1):(izgp+dzg),(izg+1):(izg+dzg)),&
 !                    soln((izgp+1):(izgp+dzg)),soln_prevk)
              
@@ -673,7 +668,6 @@ MODULE PreconditionerTypes
              
                     ! i=2,X
                     DO i=2,X
-              !        tmpmat=pc%F0(izyx+i,:,:)
                       izyx=izy+i
                       izyxgp=izyxg
                       izyxg=izyg+(i-1)*dxg ! increase izyxg by nGrp for each i
@@ -682,9 +676,8 @@ MODULE PreconditionerTypes
                       CALL BLAS_axpy(-1.0_SRK*pc%W(iy,((i-2)*dxg+1):((i-1)*dxg)), &
                         soln((izyxgp+1):(izyxgp+dxg)),v%b((izyxg+1):(izyxg+dxg)))
                       ! F0(i,j,k)*(b(i,j,k)-W(i,j,k)*soln(i-1))
-                      tmpmat=pc%F0(izyx,:,:)
                       ! soln should be zero
-                      CALL BLAS_matvec(tmpmat,v%b((izyxg+1):(izyxg+dxg)),soln((izyxg+1):(izyxg+dxg)))
+                      CALL BLAS_matvec(pc%F0(izyx,:,:),v%b((izyxg+1):(izyxg+dxg)),soln((izyxg+1):(izyxg+dxg)))
                     ENDDO
              
              
@@ -739,7 +732,6 @@ MODULE PreconditionerTypes
              
                     ! i=2,X
                     DO i=2,X
-              !        tmpmat=pc%F0(izyx+i,:,:)
                       izyx=izy+i
                       izyxgp=izyxg
                       izyxg=izyg+(i-1)*dxg ! increase izyxg by nGrp for each i
@@ -748,9 +740,8 @@ MODULE PreconditionerTypes
                       CALL BLAS_axpy(-1.0_SRK*pc%W(iy,((i-2)*dxg+1):((i-1)*dxg)), &
                         soln((izyxgp+1):(izyxgp+dxg)),v%b((izyxg+1):(izyxg+dxg)))
                       ! F0(i,j,k)*(b(i,j,k)-W(i,j,k)*soln(i-1))
-                      tmpmat=pc%F0(izyx,:,:)
                       ! soln should be zero
-                      CALL BLAS_matvec(tmpmat,v%b((izyxg+1):(izyxg+dxg)),soln((izyxg+1):(izyxg+dxg)))
+                      CALL BLAS_matvec(pc%F0(izyx,:,:),v%b((izyxg+1):(izyxg+dxg)),soln((izyxg+1):(izyxg+dxg)))
                     ENDDO
              
              
