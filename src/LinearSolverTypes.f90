@@ -532,10 +532,15 @@ MODULE LinearSolverTypes
                 IF(PreCondType == 'ILU') THEN
                   ALLOCATE(ILU_PreCondtype :: solver%PreCondType)
                   solver%PCTypeName='ILU'
-                ELSEIF(PreCondType == 'BILU') THEN
+                ELSEIF(PreCondType == 'BILU' .OR. PreCondType == 'BILU-SGS') THEN
                   ALLOCATE(BILU_PreCondtype :: solver%PreCondType)
                   solver%PCTypeName='BILU'
                   SELECTTYPE(pc => solver%PreCondType); TYPE IS(BILU_PreCondtype)
+                    IF(PreCondType == 'BILU') THEN
+                      pc%BILUType=BILU
+                    ELSEIF(PreCondType == 'BILU-SGS') THEN
+                      pc%BILUType=BILUSGS
+                    ENDIF
                     pc%nGrp=nGrp
                     pc%nPlane=nz
                     pc%nPin=npin
