@@ -417,6 +417,9 @@ MODULE PreconditionerTypes
       REAL(SRK),ALLOCATABLE :: tmpmat(:,:),tmpTB(:,:)
       REAL(SRK) :: tmp
 
+      INTEGER(SIK) :: iz,izg,izgp,izy,izyx,izyg,izygp,izyxg,izyxgp,iy,iyg,iym1g
+      INTEGER(SIK) :: dzg,dyg,dxg,dz,dy,dx
+
       LOGICAL(SBK) :: localalloc
 
       localalloc=.FALSE.
@@ -444,374 +447,346 @@ MODULE PreconditionerTypes
 
                 ALLOCATE(soln(SIZE(v%b)))
                 soln=0.0_SRK
+
+                IF(.FALSE.) THEN
+
                 CALL solve_M3(pc,soln,v%b)
 
-!                DO i=1,(pc%nPin*pc%nPlane*pc%nGrp)
-!                  WRITE(41,*) i,soln(i)
-!                ENDDO
-!                STOP 677
-!
-!                ALLOCATE(soln_previ(pc%nGrp))
-!                ALLOCATE(soln_prevj(X*pc%nGrp))
-!                ALLOCATE(soln_prevk(X*Y*pc%nGrp))
-!                ALLOCATE(tmpmat(pc%nGrp,pc%nGrp))
-!                ALLOCATE(tmpTB(pc%nGrp*pc%nPin,pc%nGrp*pc%nPin))
-!                
-!                DO i=1,(pc%nPin*pc%nPlane*pc%nGrp)
-!                  WRITE(22,*) i,v%b(i)
-!                  DO j=1,(pc%nPin*pc%nPlane*pc%nGrp)
-!                    CALL pc%A%get(i,j,tmp)
-!                    WRITE(21,*) i,j,tmp
-!                  ENDDO
-!                ENDDO
-!               
-!                DO k=1,Z
-!                  DO j=1,(pc%nGrp*X*(X-1))
-!                    WRITE(34,*) k,j,pc%N(k,j),pc%S(k,j)
-!                  ENDDO
-!                  DO j=1,Y
-!                    DO i=1,(X-1)*pc%nGrp
-!                      WRITE(32,*) k,j,i,pc%E((k-1)*Y+j,i),pc%W((k-1)*Y+j,i)
-!                    ENDDO
-!                  ENDDO
-!                ENDDO
-!                DO i=1,(pc%nPlane*pc%nPin)
-!                  DO j=1,pc%nGrp
-!                    DO k=1,pc%nGrp
-!                      WRITE(31,*) i,j,k,pc%F0(i,j,k)
-!                    ENDDO
- !                 ENDDO
- !               ENDDO
- !               
- !               ! Step 1: FORWARD SOLVE
-!!                
-!                index5=0
-!                index5g=-X*Y*pc%nGrp
-!                DO k=1,Z
- !                 index5=index5+1 ! = k
- !                 index5gp=index5g ! = (k-1)*X*Y*pc%nGrp
- !                 index5g=index5g+X*Y*pc%nGrp
- !                 
- !                 IF(k > 1) THEN
- !                   !CALL BLAS_axpy(-1.0_SRK*pc%B,soln((index5gp+1):(index5gp+X*Y*pc%nGrp)), &
- !                   !  v%b((index5g+1):(index5g+X*Y*pc%nGrp)))
-!                    ! Get bottom matrix B_k from the A matrix
-!                    tmpTB=0.0_SRK
-!                    DO i=1,(pc%nGrp*pc%nPin) ! i=1,pc%nGrp*X*Y
-!                      CALL pc%A%get(index5gp+i,index5g+i,tmpTB(i,i))
-!                    ENDDO
-!                    CALL BLAS_matvec(tmpTB,soln((index5gp+1):(index5gp+X*Y*pc%nGrp)),soln_prevk)
-!                    v%b((index5g+1):(index5g+X*Y*pc%nGrp))=v%b((index5g+1):(index5g+X*Y*pc%nGrp))- &
-!                      soln_prevk
-!                  ENDIF
-!                  
-!                  ! INSERT M(2) SOLVE HERE
-!                  ! Step 1: FORWARD SOLVEi
-!                  index2=(k-1)*Y
-!                  index3=(k-1)*Y*X
-!                  index3g=(k-1)*Y*X*pc%nGrp-X*pc%nGrp
-!                  index4=0 !-X*pc%nGrp
-!                  DO j=1,Y
-!                    index2=index2+1
-!                    index3gp=index3g
-!                    index3=index3+X ! which goes from j to j + X
-!                    index3g=index3g+X*pc%nGrp ! which goes from j to j + X*pc%nGrp
-!        
-!                    IF(j > 1) THEN
-!!                      WRITE(*,*) 'A',k,index4,(X*pc%nGrp),index3gp,index3g
-!!                      WRITE(*,*) 'B',SIZE(pc%S,DIM=2),SIZE(soln),SIZE(v%b)
-!                      CALL BLAS_axpy(-1.0_SRK*pc%S(k,(index4+1):(index4+X*pc%nGrp)), &
-!                        soln((index3gp+1):(index3gp+X*pc%nGrp)), &
-!                          v%b((index3g+1):(index3g+X*pc%nGrp)))
-!                      index4=index4+X*pc%nGrp
-!                    ENDIF
-!        
-!                    ! INSERT M(1) SOLVE HERE. Uses soln, v%b, and F0 and W.
-!                    ! Step 1: FORWARD SOLVE (obtain x~)
-!
-!                    ! i=1, soln(1)=F0(1,j,k)*b(1,j,k)
-!                    index1=(k-1)*Y*X+(j-1)*X+1
-!                    index1g=(k-1)*Y*X*pc%nGrp+(j-1)*X*pc%nGrp
-!                    CALL BLAS_matvec(pc%F0(index1,:,:),v%b((index1g+1):(index1g+pc%nGrp)), &
-!                      soln((index1g+1):(index1g+pc%nGrp)))
-!
- !                   ! i=2,X
- !                   DO i=2,X
- !!             !        tmpmat=pc%F0(index1+i,:,:)
-!                      index1gp=index1g
-!                      index1=index1+1
-!                      index1g=index1g+pc%nGrp ! increase index1g by nGrp for each i
-!                      ! Overwrite b because not used again.
-!                      ! b(i,j,k)-W(i,j,k)*soln(i-1)
-!                      CALL BLAS_axpy(-1.0_SRK*pc%W(index2,((i-2)*pc%nGrp+1):((i-1)*pc%nGrp)), &
-!                        soln((index1gp+1):(index1gp+pc%nGrp)),v%b((index1g+1):(index1g+pc%nGrp)))
-!                      ! F0(i,j,k)*(b(i,j,k)-W(i,j,k)*soln(i-1))
-!                      tmpmat=pc%F0(index1,:,:)
-!                      CALL BLAS_matvec(tmpmat,v%b((index1g+1):(index1g+pc%nGrp)),soln((index1g+1):(index1g+pc%nGrp)))
-!                    ENDDO
-!
-!                    ! Step 2: BACKWARD SOLVE
-!
-!                    ! i=X
-!                    ! Do nothing (already solved)
-!
- !                   ! rest
- !                   DO i=(X-1),1,-1
-!                      index1gp=index1g
-  !                    index1=index1-1
-  !                    index1g=index1g-pc%nGrp ! increase index1g by nGrp for each i
-  !                    ! Overwrite b once more because unused
-  !                    v%b((index1g+1):(index1g+pc%nGrp))=0.0_SRK
-  !                    ! E(i,j)*soln(i+1,j,k)
-  !                    CALL BLAS_axpy(pc%E(index2,((i-1)*pc%nGrp+1):(i*pc%nGrp)), &
-  !!                      soln((index1gp+1):(index1gp+pc%nGrp)),v%b((index1g+1):(index1g+pc%nGrp)))
- !                     ! ans(i,j,k)=ans(i,j,k)-F0(i,j,k)*(E(i,j)*soln(i+1,j,k))
- !                     tmpmat=pc%F0(index1,:,:)
- !                     CALL BLAS_matvec(-1.0_SRK*tmpmat,v%b((index1g+1):(index1g+pc%nGrp)), &
- !                       soln_previ)
- !                     soln((index1g+1):(index1g+pc%nGrp))=soln((index1g+1):(index1g+pc%nGrp))+ &
- !                       soln_previ
- !                   ENDDO
- !       
- !                 ENDDO
- !     
- !                 ! Step 2: BACKWARD SOLVE
- !                 !index4=index4+X*pc%nGrp 
- !                 DO j=(Y-1),1,-1
- !                   index2=index2-1
- !                   index3gp=index3g
- !!                   index3=index3-X ! which goes from j to j + X
- !                   index4=index4-X*pc%nGrp
- !                   index3g=index3g-X*pc%nGrp ! which goes from j to j + X*pc%nGrp
- !       
-!!                    v%b((index3g+1):(index3g+X*pc%nGrp))=0.0_SRK
- !                   CALL BLAS_axpy(-1.0_SRK*pc%N(k,(index4+1):(index4+X*pc%nGrp)), &
- !                     soln((index3gp+1):(index3gp+X*pc%nGrp)),v%b((index3g+1):(index3g+X*pc%nGrp)))
-!
-!                    index4=index4-X*pc%nGrp
-!                    soln_prevj=soln((index3g+1):(index3g+X*pc%nGrp))
-!        
-!                    ! INSERT M(1) SOLVE HERE. Uses soln, v%b, and F0 and W.
-!                    ! Step 1: FORWARD SOLVE (obtain x~)
-!
-!                    ! i=1, soln(1)=F0(1,j,k)*b(1,j,k)
-!                    index1=(k-1)*Y*X+(j-1)*X+1
-!                    index1g=(k-1)*Y*X*pc%nGrp+(j-1)*X*pc%nGrp
-!                    tmpmat=pc%F0(index1,:,:)
-!                    CALL BLAS_matvec(tmpmat,v%b((index1g+1):(index1g+pc%nGrp)), &
-!                      soln((index1g+1):(index1g+pc%nGrp)))
-!
-!                    ! i=2,X
-!                    DO i=2,X
-!              !        tmpmat=pc%F0(index1+i,:,:)
-!                      index1gp=index1g
-!                      index1=index1+1
-!                      index1g=index1g+pc%nGrp ! increase index1g by nGrp for each i
-!                      ! Overwrite b because not used again.
-!                      ! b(i,j,k)-W(i,j,k)*soln(i-1)
-!                      CALL BLAS_axpy(-1.0_SRK*pc%W(index2,((i-2)*pc%nGrp+1):((i-1)*pc%nGrp)), &
-!                        soln((index1gp+1):(index1gp+pc%nGrp)),v%b((index1g+1):(index1g+pc%nGrp)))
-!                      ! F0(i,j,k)*(b(i,j,k)-W(i,j,k)*soln(i-1))
-!                      tmpmat=pc%F0(index1,:,:)
-!                      CALL BLAS_matvec(tmpmat,v%b((index1g+1):(index1g+pc%nGrp)),soln((index1g+1):(index1g+pc%nGrp)))
-!                    ENDDO
-!
-!                    ! Step 2: BACKWARD SOLVE
-!
-!                    ! i=X
-!                    ! Do nothing (already solved)
-!
-!                    ! rest
-!                    DO i=(X-1),1,-1
-!                      index1gp=index1g
-!                      index1=index1-1
-!                      index1g=index1g-pc%nGrp ! increase index1g by nGrp for each i
-!                      ! Overwrite b once more because unused
-!                      v%b((index1g+1):(index1g+pc%nGrp))=0.0_SRK
-!                      ! E(i,j)*soln(i+1,j,k)
-!                      CALL BLAS_axpy(pc%E(index2,((i-1)*pc%nGrp+1):(i*pc%nGrp)), &
-!                        soln((index1gp+1):(index1gp+pc%nGrp)),v%b((index1g+1):(index1g+pc%nGrp)))
-!                      ! ans(i,j,k)=ans(i,j,k)-F0(i,j,k)*(E(i,j)*soln(i+1,j,k))
-!                      tmpmat=pc%F0(index1,:,:)
-!!                      CALL BLAS_axpy(-1.0_SRK*tmpmat,v%b((index1g+1):(index1g+pc%nGrp)), &
-!!                        soln((index1g+1):(index1g+pc%nGrp)))
-!                      CALL BLAS_matvec(-1.0_SRK*tmpmat,v%b((index1g+1):(index1g+pc%nGrp)), &
-!                        soln_previ)
-!                      soln((index1g+1):(index1g+pc%nGrp))=soln((index1g+1):(index1g+pc%nGrp))+ &
-!                        soln_previ
-!                    ENDDO
-!        
-!                    soln((index3g+1):(index3g+X*pc%nGrp))=soln((index3g+1):(index3g+X*pc%nGrp))+soln_prevj
-!        
-!                  ENDDO
-!                  
-!                ENDDO
-!                
-!                DO k=(Z-1),1,-1
-!                  index5=index5-1
-!                  index5gp=index5g
-!                  index5g=index5g-X*Y*pc%nGrp
-!                  
-!!                  v%b((index5g+1):(index5g+X*Y*pc%nGrp))=0.0_SRK
-!!                  CALL BLAS_axpy(-1.0_SRK*pc%T,soln((index5gp+1):(index5gp+X*Y*pc%nGrp)), &
-!!                    v%b((index5g+1):(index5g+X*Y*pc%nGrp)))
-!                  tmpTB=0.0_SRK
-!                  DO i=1,(pc%nGrp*pc%nPin)
-!                    CALL pc%A%get(index5gp+i,index5g+i,tmpTB(i,i))
-!                  ENDDO
-!                  CALL BLAS_matvec(tmpTB,soln((index5gp+1):(index5gp+X*Y*pc%nGrp)),soln_prevk)
-!!                  CALL BLAS_matvec(pc%A((index5gp+1):(index5gp+X*Y*pc%nGrp),(index5g+1):(index5g+X*Y*pc%nGrp)),&
-!!                    soln((index5gp+1):(index5gp+X*Y*pc%nGrp)),soln_prevk)
-!                  v%b((index5g+1):(index5g+X*Y*pc%nGrp))=-soln_prevk
-!
-!                  soln_prevk=soln((index5g+1):(index5g+X*Y*pc%nGrp))
-!                  
-!                  ! INSERT M(2) SOLVE HERE
-!                                    ! Step 1: FORWARD SOLVE
-!                  index2=(k-1)*Y
-!                  index3=(k-1)*Y*X
-!                  index3g=(k-1)*Y*X*pc%nGrp-X*pc%nGrp
-!                  index4=0 !-2*X*pc%nGrp
-!                  DO j=1,Y
-!                    index2=index2+1
-!                    index3gp=index3g
-!                    index3=index3+X ! which goes from j to j + X
-!                    index3g=index3g+X*pc%nGrp ! which goes from j to j + X*pc%nGrp
-!        
-!                    IF(j > 1) THEN
-!                      CALL BLAS_axpy(-1.0_SRK*pc%S(k,(index4+1):(index4+X*pc%nGrp)), &
-!                        soln((index3gp+1):(index3gp+X*pc%nGrp)),v%b((index3g+1):(index3g+X*pc%nGrp)))
-!                      index4=index4+X*pc%nGrp
-!                    ENDIF
-!        
-!                    ! INSERT M(1) SOLVE HERE. Uses soln, v%b, and F0 and W.
-!                    ! Step 1: FORWARD SOLVE (obtain x~)
-!
-!                    ! i=1, soln(1)=F0(1,j,k)*b(1,j,k)
-!                    index1=(k-1)*Y*X+(j-1)*X+1
-!                    index1g=(k-1)*Y*X*pc%nGrp+(j-1)*X*pc%nGrp
-!                    CALL BLAS_matvec(pc%F0(index1,:,:),v%b((index1g+1):(index1g+pc%nGrp)),soln((index1g+1):(index1g+pc%nGrp)))
-!
-!                    ! i=2,X
-!                    DO i=2,X
-!              !        tmpmat=pc%F0(index1+i,:,:)
-!                      index1gp=index1g
-!                      index1=index1+1
-!                      index1g=index1g+pc%nGrp ! increase index1g by nGrp for each i
-!                      ! Overwrite b because not used again.
-!                      ! b(i,j,k)-W(i,j,k)*soln(i-1)
-!                      CALL BLAS_axpy(-1.0_SRK*pc%W(index2,((i-2)*pc%nGrp+1):((i-1)*pc%nGrp)), &
-!                        soln((index1gp+1):(index1gp+pc%nGrp)),v%b((index1g+1):(index1g+pc%nGrp)))
-!                      ! F0(i,j,k)*(b(i,j,k)-W(i,j,k)*soln(i-1))
-!                      tmpmat=pc%F0(index1,:,:)
-!                      CALL BLAS_matvec(tmpmat,v%b((index1g+1):(index1g+pc%nGrp)),soln((index1g+1):(index1g+pc%nGrp)))
-!                    ENDDO
-!
-!                    ! Step 2: BACKWARD SOLVE
-!
-!                    ! i=X
-!                    ! Do nothing (already solved)
-!
-!                    ! rest
-!                    DO i=(X-1),1,-1
-!                      index1gp=index1g
-!                      index1=index1-1
-!                      index1g=index1g-pc%nGrp ! increase index1g by nGrp for each i
-!                      ! Overwrite b once more because unused
-!                      v%b((index1g+1):(index1g+pc%nGrp))=0.0_SRK
-!                      ! E(i,j)*soln(i+1,j,k)
-!                      CALL BLAS_axpy(pc%E(index2,((i-1)*pc%nGrp+1):(i*pc%nGrp)), &
-!                        soln((index1gp+1):(index1gp+pc%nGrp)),v%b((index1g+1):(index1g+pc%nGrp)))
-!                      ! ans(i,j,k)=ans(i,j,k)-F0(i,j,k)*(E(i,j)*soln(i+1,j,k))
-!                      tmpmat=pc%F0(index1,:,:)
-!!                      CALL BLAS_axpy(-1.0_SRK*tmpmat,v%b((index1g+1):(index1g+pc%nGrp)), &
-!!                        soln((index1g+1):(index1g+pc%nGrp)))
-!                      CALL BLAS_matvec(-1.0_SRK*tmpmat,v%b((index1g+1):(index1g+pc%nGrp)), &
-!                        soln_previ)
-!                      soln((index1g+1):(index1g+pc%nGrp))=soln((index1g+1):(index1g+pc%nGrp))+ &
-!                        soln_previ
-!                    ENDDO
-!        
-!                  ENDDO
-!      
-!                  ! Step 2: BACKWARD SOLVE
-!                  !index4=index4+X*pc%nGrp
-!                  DO j=(Y-1),1,-1
-!                    index2=index2-1
-!                    index3gp=index3g
-!                    index3=index3-X ! which goes from j to j + X
-!                    index3g=index3g-X*pc%nGrp ! which goes from j to j + X*pc%nGrp
-!                    index4=index4-X*pc%nGrp
-!        
-!                    v%b((index3g+1):(index3g+X*pc%nGrp))=0.0_SRK
-!                    CALL BLAS_axpy(-1.0_SRK*pc%N(k,(index4+1):(index4+X*pc%nGrp)), &
-!                      soln((index3gp+1):(index3gp+X*pc%nGrp)),v%b((index3g+1):(index3g+X*pc%nGrp)))
-!!                    index4=index4-X*pc%nGrp
-!                    soln_prevj=soln((index3g+1):(index3g+X*pc%nGrp))
-!        
-!                    ! INSERT M(1) SOLVE HERE. Uses soln, v%b, and F0 and W.
-!                    ! Step 1: FORWARD SOLVE (obtain x~)
-!
-!                    ! i=1, soln(1)=F0(1,j,k)*b(1,j,k)
-!                    index1=(k-1)*Y*X+(j-1)*X+1
-!                    index1g=(k-1)*Y*X*pc%nGrp+(j-1)*X*pc%nGrp
-!                    tmpmat=pc%F0(index1,:,:)
-!                    CALL BLAS_matvec(tmpmat,v%b((index1g+1):(index1g+pc%nGrp)), &
-!                      soln((index1g+1):(index1g+pc%nGrp)))
-!
-!                    ! i=2,X
-!                    DO i=2,X
-!              !        tmpmat=pc%F0(index1+i,:,:)
-!                      index1gp=index1g
-!                      index1=index1+1
-!                      index1g=index1g+pc%nGrp ! increase index1g by nGrp for each i
-!                      ! Overwrite b because not used again.
-!                      ! b(i,j,k)-W(i,j,k)*soln(i-1)
-!                      CALL BLAS_axpy(-1.0_SRK*pc%W(index2,((i-2)*pc%nGrp+1):((i-1)*pc%nGrp)), &
-!                        soln((index1gp+1):(index1gp+pc%nGrp)),v%b((index1g+1):(index1g+pc%nGrp)))
-!                      ! F0(i,j,k)*(b(i,j,k)-W(i,j,k)*soln(i-1))
-!                      tmpmat=pc%F0(index1,:,:)
-!                      CALL BLAS_matvec(tmpmat,v%b((index1g+1):(index1g+pc%nGrp)),soln((index1g+1):(index1g+pc%nGrp)))
-!                    ENDDO
-!
-!                    ! Step 2: BACKWARD SOLVE
-!
-!                    ! i=X
-!                    ! Do nothing (already solved)
-!
-!                    ! rest
-!                    DO i=(X-1),1,-1
-!                      index1gp=index1g
-!                      index1=index1-1
-!                      index1g=index1g-pc%nGrp ! increase index1g by nGrp for each i
-!                      ! Overwrite b once more because unused
-!                      v%b((index1g+1):(index1g+pc%nGrp))=0.0_SRK
-!                      ! E(i,j)*soln(i+1,j,k)
-!                      CALL BLAS_axpy(pc%E(index2,((i-1)*pc%nGrp+1):(i*pc%nGrp)), &
-!                        soln((index1gp+1):(index1gp+pc%nGrp)),v%b((index1g+1):(index1g+pc%nGrp)))
-!                      ! ans(i,j,k)=ans(i,j,k)-F0(i,j,k)*(E(i,j)*soln(i+1,j,k))
-!                      tmpmat=pc%F0(index1,:,:)
-!!                      CALL BLAS_axpy(-1.0_SRK*tmpmat,v%b((index1g+1):(index1g+pc%nGrp)), &
-!!                        soln((index1g+1):(index1g+pc%nGrp)))
-!                      CALL BLAS_matvec(-1.0_SRK*tmpmat,v%b((index1g+1):(index1g+pc%nGrp)), &
-!                        soln_previ)
-!                      soln((index1g+1):(index1g+pc%nGrp))=soln((index1g+1):(index1g+pc%nGrp))+ &
-!                        soln_previ
-!                    ENDDO
-!        
-!                    soln((index3g+1):(index3g+X*pc%nGrp))=soln((index3g+1):(index3g+X*pc%nGrp))+soln_prevj
-                !
-                !  ENDDO
-                !
-                !  soln((index5g+1):(index5g+X*Y*pc%nGrp))=soln((index5g+1):(index5g+X*Y*pc%nGrp))+soln_prevk
-                !ENDDO
+                ELSE
+
+                dz=X*Y
+                dzg=dz*pc%nGrp
+                dy=Y
+                dyg=X*pc%nGrp
+                dxg=pc%nGrp
                 
-                !place solution back into v
-                !v%b=soln
-!                DO i=1,(pc%nPin*pc%nPlane*pc%nGrp)
-!                  WRITE(23,*) i,v%b(i),soln(i)
-!                ENDDO
+                ALLOCATE(soln_previ(dxg))
+                ALLOCATE(soln_prevj(dyg))
+                ALLOCATE(soln_prevk(dzg))
+                ALLOCATE(tmpmat(dxg,dxg))
+                ALLOCATE(tmpTB(dzg,dzg))
+                
+                ! Step 1: FORWARD SOLVE
+             
+                izg=0
+                DO k=1,Z
+                  iz=k ! = k
+                  izgp=izg
+                  izg=(k-1)*dzg
+              
+                  IF(k > 1) THEN
+                    ! Get bottom matrix B_k from the A matrix
+                    tmpTB=0.0_SRK
+                    DO i=1,dzg 
+                                   ! Might need to flip these two.
+                      CALL pc%A%get(izgp+i,izg+i,tmpTB(i,i))
+                      tmpTB(i,i)=-1.0_SRK*tmpTB(i,i)
+                    ENDDO
+                    ! b=b-B_k*U(k-1)
+                    CALL BLAS_matvec(tmpTB,soln((izgp+1):(izgp+dzg)),v%b((izg+1):(izg+dzg)))!soln_prevk)
+                    !v%b((izg+1):(izg+dzg))=v%b((izg+1):(izg+dzg))-soln_prevk
+                  ENDIF
+             
+                  ! INSERT M(2) SOLVE HERE
+                  ! Step 1: FORWARD SOLVE
+                  izyg=(k-1)*dzg
+                  DO j=1,Y
+                    iy=(k-1)*dy+j
+                    izygp=izyg
+                    izy=(k-1)*dz+(j-1)*dy ! which goes from j to j + X
+                    izyg=(k-1)*dzg+(j-1)*dyg ! which goes from j to j + dyg
+             
+                    IF(j > 1) THEN
+                      iym1g=(j-2)*dyg
+                      CALL BLAS_axpy(-1.0_SRK*pc%S(k,(iym1g+1):(iym1g+dyg)), &
+                        soln((izygp+1):(izygp+dyg)),v%b((izyg+1):(izyg+dyg)))
+                    ENDIF
+             
+                    ! INSERT M(1) SOLVE HERE. Uses soln, v%b, and F0 and W.
+                    ! Step 1: FORWARD SOLVE (obtain x~)
+             
+                    ! i=1, soln(1)=F0(1,j,k)*b(1,j,k)
+                    i=1
+                    izyx=izy+i
+                    izyxg=izyg+(i-1)*dxg
+                    ! soln should aready be zero
+                    CALL BLAS_matvec(pc%F0(izyx,:,:),v%b((izyxg+1):(izyxg+dxg)), &
+                      soln((izyxg+1):(izyxg+dxg)))
+             
+                    ! i=2,X
+                    DO i=2,X
+              !        tmpmat=pc%F0(izyx+i,:,:)
+                      izyx=izy+i
+                      izyxgp=izyxg
+                      izyxg=izyg+(i-1)*dxg ! increase izyxg by nGrp for each i
+                      ! Overwrite b because not used again.
+                      ! b(i,j,k)-W(i,j,k)*soln(i-1)
+                      CALL BLAS_axpy(-1.0_SRK*pc%W(iy,((i-2)*dxg+1):((i-1)*dxg)), &
+                        soln((izyxgp+1):(izyxgp+dxg)),v%b((izyxg+1):(izyxg+dxg)))
+                      ! F0(i,j,k)*(b(i,j,k)-W(i,j,k)*soln(i-1))
+                      ! soln should be zero
+                      CALL BLAS_matvec(pc%F0(izyx,:,:),v%b((izyxg+1):(izyxg+dxg)),soln((izyxg+1):(izyxg+dxg)))
+                    ENDDO
+             
+             
+                    ! Step 2: BACKWARD SOLVE
+             
+                    ! i=X
+                    ! Do nothing (already solved)
+             
+                    ! rest
+                    DO i=(X-1),1,-1
+                      izyxgp=izyxg
+                      izyx=izy+i
+                      izyxg=izyg+(i-1)*dxg ! increase izyxg by nGrp for each i
+                      ! Overwrite b once more because unused
+                      v%b((izyxg+1):(izyxg+dxg))=0.0_SRK
+                      ! E(i,j)*soln(i+1,j,k)
+                      CALL BLAS_axpy(pc%E(iy,((i-1)*dxg+1):(i*dxg)), &
+                        soln((izyxgp+1):(izyxgp+dxg)),v%b((izyxg+1):(izyxg+dxg)))
+                      ! ans(i,j,k)=ans(i,j,k)-F0(i,j,k)*(E(i,j)*soln(i+1,j,k))
+                      CALL BLAS_matvec(-1.0_SRK*pc%F0(izyx,:,:),v%b((izyxg+1):(izyxg+dxg)), &
+                        soln((izyxg+1):(izyxg+dxg)))
+                    ENDDO
+              
+                  ENDDO
+              
+                  ! Step 2: BACKWARD SOLVE
+                  
+                  DO j=(Y-1),1,-1
+                    iy=(k-1)*dy+j
+                    izygp=izyg
+                    izy=(k-1)*dz+(j-1)*dy ! which goes from j to j + X
+                    izyg=(k-1)*dzg+(j-1)*dyg ! which goes from j to j + dyg
+                    iyg=(j-1)*dyg
+              
+                    v%b((izyg+1):(izyg+dyg))=0.0_SRK
+                    CALL BLAS_axpy(-1.0_SRK*pc%N(k,(iyg+1):(iyg+dyg)), &
+                      soln((izygp+1):(izygp+dyg)),v%b((izyg+1):(izyg+dyg)))
+             
+                    soln_prevj=soln((izyg+1):(izyg+dyg))
+                    soln((izyg+1):(izyg+dyg))=0.0_SRK
+             
+                    ! INSERT M(1) SOLVE HERE. Uses soln, v%b, and F0 and W.
+                    ! Step 1: FORWARD SOLVE (obtain x~)
+             
+                    ! i=1, soln(1)=F0(1,j,k)*b(1,j,k)
+                    i=1
+                    izyx=izy+i
+                    izyxg=izyg+(i-1)*dxg
+                    ! soln should aready be zero
+                    CALL BLAS_matvec(pc%F0(izyx,:,:),v%b((izyxg+1):(izyxg+dxg)), &
+                      soln((izyxg+1):(izyxg+dxg)))
+             
+                    ! i=2,X
+                    DO i=2,X
+              !        tmpmat=pc%F0(izyx+i,:,:)
+                      izyx=izy+i
+                      izyxgp=izyxg
+                      izyxg=izyg+(i-1)*dxg ! increase izyxg by nGrp for each i
+                      ! Overwrite b because not used again.
+                      ! b(i,j,k)-W(i,j,k)*soln(i-1)
+                      CALL BLAS_axpy(-1.0_SRK*pc%W(iy,((i-2)*dxg+1):((i-1)*dxg)), &
+                        soln((izyxgp+1):(izyxgp+dxg)),v%b((izyxg+1):(izyxg+dxg)))
+                      ! F0(i,j,k)*(b(i,j,k)-W(i,j,k)*soln(i-1))
+                      tmpmat=pc%F0(izyx,:,:)
+                      ! soln should be zero
+                      CALL BLAS_matvec(tmpmat,v%b((izyxg+1):(izyxg+dxg)),soln((izyxg+1):(izyxg+dxg)))
+                    ENDDO
+             
+             
+                    ! Step 2: BACKWARD SOLVE
+             
+                    ! i=X
+                    ! Do nothing (already solved)
+             
+                    ! rest
+                    DO i=(X-1),1,-1
+                      izyxgp=izyxg
+                      izyx=izy+i
+                      izyxg=izyg+(i-1)*dxg ! increase izyxg by nGrp for each i
+                      ! Overwrite b once more because unused
+                      v%b((izyxg+1):(izyxg+dxg))=0.0_SRK
+                      ! E(i,j)*soln(i+1,j,k)
+                      CALL BLAS_axpy(pc%E(iy,((i-1)*dxg+1):(i*dxg)), &
+                        soln((izyxgp+1):(izyxgp+dxg)),v%b((izyxg+1):(izyxg+dxg)))
+                      ! ans(i,j,k)=ans(i,j,k)-F0(i,j,k)*(E(i,j)*soln(i+1,j,k))
+                      CALL BLAS_matvec(-1.0_SRK*pc%F0(izyx,:,:),v%b((izyxg+1):(izyxg+dxg)), &
+                        soln((izyxg+1):(izyxg+dxg)))
+                    ENDDO
+             
+                    soln((izyg+1):(izyg+dyg))=soln((izyg+1):(izyg+dyg))+soln_prevj
+             
+                  ENDDO
+             
+                ENDDO
+             
+                ! STEP 2: Solve Backwards
+                
+                DO k=(Z-1),1,-1
+                  iz=iz-1
+                  izgp=izg
+                  izg=izg-dzg
+             
+!                  v%b((izg+1):(izg+dzg))=0.0_SRK
+!                  CALL BLAS_axpy(-1.0_SRK*pc%T,soln((izgp+1):(izgp+dzg)), &
+!                    v%b((izg+1):(izg+dzg)))
+                  tmpTB=0.0_SRK
+                  DO i=1,dzg
+                    CALL pc%A%get(izgp+i,izg+i,tmpTB(i,i))
+                    tmpTB(i,i)=-1.0_SRK*tmpTB(i,i)
+                  ENDDO
+                  v%b((izg+1):(izg+dzg))=0.0_SRK
+                  CALL BLAS_matvec(tmpTB,soln((izgp+1):(izgp+dzg)),v%b((izg+1):(izg+dzg)))
+!                  CALL BLAS_matvec(pc%A((izgp+1):(izgp+dzg),(izg+1):(izg+dzg)),&
+!                    soln((izgp+1):(izgp+dzg)),soln_prevk)
+             
+                  soln_prevk=soln((izg+1):(izg+dzg))
+                  soln((izg+1):(izg+dzg))=0.0_SRK
+             
+                  ! INSERT M(2) SOLVE HERE
+                  ! Step 1: FORWARD SOLVE
+                  izyg=(k-1)*dzg
+                  DO j=1,Y
+                    iy=(k-1)*dy+j
+                    izygp=izyg
+                    izy=(k-1)*dz+(j-1)*dy ! which goes from j to j + X
+                    izyg=(k-1)*dzg+(j-1)*dyg ! which goes from j to j + dyg
+             
+                    IF(j > 1) THEN
+                      iym1g=(j-2)*dyg
+                      CALL BLAS_axpy(-1.0_SRK*pc%S(k,(iym1g+1):(iym1g+dyg)), &
+                        soln((izygp+1):(izygp+dyg)), &
+                          v%b((izyg+1):(izyg+dyg)))
+                    ENDIF
+             
+                    ! INSERT M(1) SOLVE HERE. Uses soln, v%b, and F0 and W.
+                    ! Step 1: FORWARD SOLVE (obtain x~)
+             
+                    ! i=1, soln(1)=F0(1,j,k)*b(1,j,k)
+                    i=1
+                    izyx=izy+i
+                    izyxg=izyg+(i-1)*dxg
+                    ! soln should aready be zero
+                    CALL BLAS_matvec(pc%F0(izyx,:,:),v%b((izyxg+1):(izyxg+dxg)), &
+                      soln((izyxg+1):(izyxg+dxg)))
+             
+                    ! i=2,X
+                    DO i=2,X
+              !        tmpmat=pc%F0(izyx+i,:,:)
+                      izyx=izy+i
+                      izyxgp=izyxg
+                      izyxg=izyg+(i-1)*dxg ! increase izyxg by nGrp for each i
+                      ! Overwrite b because not used again.
+                      ! b(i,j,k)-W(i,j,k)*soln(i-1)
+                      CALL BLAS_axpy(-1.0_SRK*pc%W(iy,((i-2)*dxg+1):((i-1)*dxg)), &
+                        soln((izyxgp+1):(izyxgp+dxg)),v%b((izyxg+1):(izyxg+dxg)))
+                      ! F0(i,j,k)*(b(i,j,k)-W(i,j,k)*soln(i-1))
+                      tmpmat=pc%F0(izyx,:,:)
+                      ! soln should be zero
+                      CALL BLAS_matvec(tmpmat,v%b((izyxg+1):(izyxg+dxg)),soln((izyxg+1):(izyxg+dxg)))
+                    ENDDO
+             
+             
+                    ! Step 2: BACKWARD SOLVE
+             
+                    ! i=X
+                    ! Do nothing (already solved)
+             
+                    ! rest
+                    DO i=(X-1),1,-1
+                      izyxgp=izyxg
+                      izyx=izy+i
+                      izyxg=izyg+(i-1)*dxg ! increase izyxg by nGrp for each i
+                      ! Overwrite b once more because unused
+                      v%b((izyxg+1):(izyxg+dxg))=0.0_SRK
+                      ! E(i,j)*soln(i+1,j,k)
+                      CALL BLAS_axpy(pc%E(iy,((i-1)*dxg+1):(i*dxg)), &
+                        soln((izyxgp+1):(izyxgp+dxg)),v%b((izyxg+1):(izyxg+dxg)))
+                      ! ans(i,j,k)=ans(i,j,k)-F0(i,j,k)*(E(i,j)*soln(i+1,j,k))
+                      CALL BLAS_matvec(-1.0_SRK*pc%F0(izyx,:,:),v%b((izyxg+1):(izyxg+dxg)), &
+                        soln((izyxg+1):(izyxg+dxg)))
+                    ENDDO
+              
+                  ENDDO
+              
+                  ! Step 2: BACKWARD SOLVE
+                  
+                  DO j=(Y-1),1,-1
+                    iy=(k-1)*dy+j
+                    izygp=izyg
+                    izy=(k-1)*dz+(j-1)*dy ! which goes from j to j + X
+                    izyg=(k-1)*dzg+(j-1)*dyg ! which goes from j to j + dyg
+                    iyg=(j-1)*dyg
+              
+                    v%b((izyg+1):(izyg+dyg))=0.0_SRK
+                    CALL BLAS_axpy(-1.0_SRK*pc%N(k,(iyg+1):(iyg+dyg)), &
+                      soln((izygp+1):(izygp+dyg)),v%b((izyg+1):(izyg+dyg)))
+             
+                    soln_prevj=soln((izyg+1):(izyg+dyg))
+                    soln((izyg+1):(izyg+dyg))=0.0_SRK
+
+                    ! INSERT M(1) SOLVE HERE. Uses soln, v%b, and F0 and W.
+                    ! Step 1: FORWARD SOLVE (obtain x~)
+             
+                    ! i=1, soln(1)=F0(1,j,k)*b(1,j,k)
+                    i=1
+                    izyx=izy+i
+                    izyxg=izyg+(i-1)*dxg
+                    ! soln should aready be zero
+                    CALL BLAS_matvec(pc%F0(izyx,:,:),v%b((izyxg+1):(izyxg+dxg)), &
+                      soln((izyxg+1):(izyxg+dxg)))
+             
+                    ! i=2,X
+                    DO i=2,X
+              !        tmpmat=pc%F0(izyx+i,:,:)
+                      izyx=izy+i
+                      izyxgp=izyxg
+                      izyxg=izyg+(i-1)*dxg ! increase izyxg by nGrp for each i
+                      ! Overwrite b because not used again.
+                      ! b(i,j,k)-W(i,j,k)*soln(i-1)
+                      CALL BLAS_axpy(-1.0_SRK*pc%W(iy,((i-2)*dxg+1):((i-1)*dxg)), &
+                        soln((izyxgp+1):(izyxgp+dxg)),v%b((izyxg+1):(izyxg+dxg)))
+                      ! F0(i,j,k)*(b(i,j,k)-W(i,j,k)*soln(i-1))
+                      tmpmat=pc%F0(izyx,:,:)
+                      ! soln should be zero
+                      CALL BLAS_matvec(tmpmat,v%b((izyxg+1):(izyxg+dxg)),soln((izyxg+1):(izyxg+dxg)))
+                    ENDDO
+             
+             
+                    ! Step 2: BACKWARD SOLVE
+             
+                    ! i=X
+                    ! Do nothing (already solved)
+             
+                    ! rest
+                    DO i=(X-1),1,-1
+                      izyxgp=izyxg
+                      izyx=izy+i
+                      izyxg=izyg+(i-1)*dxg ! increase izyxg by nGrp for each i
+                      ! Overwrite b once more because unused
+                      v%b((izyxg+1):(izyxg+dxg))=0.0_SRK
+                      ! E(i,j)*soln(i+1,j,k)
+                      CALL BLAS_axpy(pc%E(iy,((i-1)*dxg+1):(i*dxg)), &
+                        soln((izyxgp+1):(izyxgp+dxg)),v%b((izyxg+1):(izyxg+dxg)))
+                      ! ans(i,j,k)=ans(i,j,k)-F0(i,j,k)*(E(i,j)*soln(i+1,j,k))
+                      CALL BLAS_matvec(-1.0_SRK*pc%F0(izyx,:,:),v%b((izyxg+1):(izyxg+dxg)), &
+                        soln((izyxg+1):(izyxg+dxg)))
+                    ENDDO
+             
+                    soln((izyg+1):(izyg+dyg))=soln((izyg+1):(izyg+dyg))+soln_prevj
+             
+                  ENDDO
+                
+                  soln((izg+1):(izg+dzg))=soln((izg+1):(izg+dzg))+soln_prevk
+                ENDDO
+
+                ENDIF
+
                 v%b=soln
+                DO i=1,SIZE(soln)
+!                  WRITE(*,*) soln(i)
+                ENDDO
 !                STOP 677
 
               CLASS IS(PETScMatrixType)
