@@ -530,6 +530,7 @@ MODULE LinearSolverTypes
                 ! Otherwise, set it up every pcsetup iterations
                 solver%pcsetup=pcsetup
                 IF(PreCondType == 'ILU') THEN
+                  WRITE(*,*) 'allocate ILU'
                   ALLOCATE(ILU_PreCondtype :: solver%PreCondType)
                   solver%PCTypeName='ILU'
                 ELSEIF(PreCondType == 'BILU' .OR. PreCondType == 'BILU-SGS') THEN
@@ -537,8 +538,10 @@ MODULE LinearSolverTypes
                   solver%PCTypeName='BILU'
                   SELECTTYPE(pc => solver%PreCondType); TYPE IS(BILU_PreCondtype)
                     IF(PreCondType == 'BILU') THEN
+                      WRITE(*,*) 'allocate BILU'
                       pc%BILUType=BILU
                     ELSEIF(PreCondType == 'BILU-SGS') THEN
+                      WRITE(*,*) 'allocate BILU-SGS'
                       pc%BILUType=BILUSGS
                     ENDIF
                     pc%nGrp=nGrp
@@ -1482,6 +1485,9 @@ MODULE LinearSolverTypes
         v(:,1)=-u%b/beta
         h=beta
         phibar=beta
+#ifdef MPACT_DEBUG_MSG
+          WRITE(667,*) '         GMRES-NOPC',0,ABS(phibar)
+#endif
         !Iterate on solution
         DO it=1,m
           CALL BLAS_matvec(THISMATRIX=solver%A,X=v(:,it),BETA=0.0_SRK,Y=w)
@@ -1512,6 +1518,9 @@ MODULE LinearSolverTypes
           R(it,it)=temp
           g(it)=c(it)*phibar
           phibar=-s(it)*phibar
+#ifdef MPACT_DEBUG_MSG
+          WRITE(667,*) '         GMRES-NOPC',it,ABS(phibar)
+#endif
           IF(ABS(phibar) <= tol) EXIT
         ENDDO
         
@@ -1587,6 +1596,9 @@ MODULE LinearSolverTypes
         v(:,1)=-u%b/beta
         h=beta
         phibar=beta
+#ifdef MPACT_DEBUG_MSG
+          WRITE(667,*) '         GMRES-LP',0,ABS(phibar)
+#endif
         !Iterate on solution
         DO it=1,m
           CALL BLAS_matvec(THISMATRIX=solver%A,X=v(:,it),BETA=0.0_SRK,Y=w)
