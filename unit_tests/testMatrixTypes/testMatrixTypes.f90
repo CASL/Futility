@@ -81,6 +81,7 @@ PROGRAM testMatrixTypes
       REAL(SRK) :: a_vals(6),x(3),y(3)
       REAL(SRK) :: dummy
       REAL(SRK),ALLOCATABLE :: dummyvec(:)
+      LOGICAL(SBK) :: bool
 #ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: ierr
 #endif
@@ -473,22 +474,84 @@ PROGRAM testMatrixTypes
       ALLOCATE(dummyvec(4))
       dummyvec=(/1.0000000_SRK,-0.5000000_SRK,-0.1666666666666666_SRK,-0.083333333333333333_SRK/)
       CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,Y=yRealVector,TRANS='N',UPLO='L',DIAG='N')
-      ASSERT(ALL(yRealVector%b .APPROXEQA. dummyvec),'BLAS_matvec(THISMATRIX,X,Y,TRANS=''N'',UPLO=''L'',DIAG=''N''')
-      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,Y=yRealVector,TRANS='T',UPLO='U',DIAG='N')
-      ASSERT(ALL(yRealVector%b .APPROXEQA. dummyvec),'BLAS_matvec(THISMATRIX,X,Y,TRANS=''N'',UPLO=''L'',DIAG=''N''')
+      bool=ALL(yRealVector%b .APPROXEQA. dummyvec)
+      ASSERT(bool,'BLAS_matvec(THISMATRIX,X,Y,TRANS=''N'',UPLO=''L'',DIAG=''N''')
+      FINFO() 'Result:',yRealVector%b,'Solution:',dummyvec
       CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector%b,Y=yRealVector%b,TRANS='N',UPLO='L',DIAG='N')
-      ASSERT(ALL(yRealVector%b .APPROXEQA. dummyvec),'BLAS_matvec(MATRIX,X%b,Y%b,TRANS=''N'',UPLO=''L'',DIAG=''N''')
+      bool=ALL(yRealVector%b .APPROXEQA. dummyvec)
+      ASSERT(bool,'BLAS_matvec(THISMATRIX,X%b,Y%b,TRANS=''N'',UPLO=''L'',DIAG=''N''')
+      FINFO() 'Result:',yRealVector%b,'Solution:',dummyvec
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,Y=yRealVector,TRANS='T',UPLO='U',DIAG='N')
+      bool=ALL(yRealVector%b .APPROXEQA. dummyvec)
+      ASSERT(bool,'BLAS_matvec(THISMATRIX,X,Y,TRANS=''T'',UPLO=''U'',DIAG=''N''')
+      FINFO() 'Result:',yRealVector%b,'Solution:',dummyvec
       CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector%b,Y=yRealVector%b,TRANS='T',UPLO='U',DIAG='N')
-      ASSERT(ALL(yRealVector%b .APPROXEQA. dummyvec),'BLAS_matvec(MATRIX,X%b,Y%b,TRANS=''N'',UPLO=''L'',DIAG=''N''')
+      bool=ALL(yRealVector%b .APPROXEQA. dummyvec)
+      ASSERT(bool,'BLAS_matvec(THISMATRIX,X,Y,TRANS=''T'',UPLO=''U'',DIAG=''N''')
+      FINFO() 'Result:',yRealVector%b,'Solution:',dummyvec
       dummyvec=(/0.00_SRK,0.00_SRK,0.00_SRK,0.250_SRK/)
       CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,Y=yRealVector,TRANS='N',UPLO='U',DIAG='N')
-      ASSERT(ALL(yRealVector%b .APPROXEQA. dummyvec),'BLAS_matvec(THISMATRIX,X,Y,TRANS=''N'',UPLO=''U'',DIAG=''N''')
-      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,Y=yRealVector,TRANS='T',UPLO='L',DIAG='N')
-      ASSERT(ALL(yRealVector%b .APPROXEQA. dummyvec),'BLAS_matvec(THISMATRIX,X,Y,TRANS=''T'',UPLO=''L'',DIAG=''N''')
+      bool=ALL(yRealVector%b .APPROXEQA. dummyvec)
+      ASSERT(bool,'BLAS_matvec(THISMATRIX,X,Y,TRANS=''N'',UPLO=''U'',DIAG=''N''')
+      FINFO() 'Result:',yRealVector%b,'Solution:',dummyvec
       CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector%b,Y=yRealVector%b,TRANS='N',UPLO='U',DIAG='N')
-      ASSERT(ALL(yRealVector%b .APPROXEQA. dummyvec),'BLAS_matvec(MATRIX,X%b,Y%b,TRANS=''N'',UPLO=''U'',DIAG=''N''')
+      bool=ALL(yRealVector%b .APPROXEQA. dummyvec)
+      ASSERT(bool,'BLAS_matvec(THISMATRIX,X%b,Y%b,TRANS=''N'',UPLO=''U'',DIAG=''N''')
+      FINFO() 'Result:',yRealVector%b,'Solution:',dummyvec
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,Y=yRealVector,TRANS='T',UPLO='L',DIAG='N')
+      bool=ALL(yRealVector%b .APPROXEQA. dummyvec)
+      ASSERT(bool,'BLAS_matvec(THISMATRIX,X,Y,TRANS=''T'',UPLO=''L'',DIAG=''N''')
+      FINFO() 'Result:',yRealVector%b,'Solution:',dummyvec
       CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector%b,Y=yRealVector%b,TRANS='T',UPLO='L',DIAG='N')
-      ASSERT(ALL(yRealVector%b .APPROXEQA. dummyvec),'BLAS_matvec(MATRIX,X%b,Y%b,TRANS=''T'',UPLO=''L'',DIAG=''N''')
+      bool=ALL(yRealVector%b .APPROXEQA. dummyvec)
+      ASSERT(bool,'BLAS_matvec(THISMATRIX,X%b,Y%b,TRANS=''T'',UPLO=''L'',DIAG=''N''')
+      FINFO() 'Result:',yRealVector%b,'Solution:',dummyvec
+
+      !Check increments /= 1
+      CALL xRealVector%clear()
+      CALL yRealVector%clear()
+      CALL vecPlist%clear()
+      CALL vecPList%add('VectorType->n',8_SIK)
+      CALL xRealVector%init(vecPList)
+      CALL yRealVector%init(vecPList)
+      SELECTTYPE(x => xrealVector); TYPE IS(RealVectorType)
+        CALL x%set(1.0_SRK)
+      ENDSELECT
+      dummyvec=(/1.0000000_SRK,-0.5000000_SRK,-0.1666666666666666_SRK,-0.083333333333333333_SRK/)
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,Y=yRealVector,TRANS='N',UPLO='L',DIAG='N',INCX_IN=-2_SIK)
+      bool=ALL(yRealVector%b(7:1:-2) .APPROXEQA. dummyvec)
+      ASSERT(bool,'BLAS_matvec(THISMATRIX,X,Y,TRANS=''N'',UPLO=''L'',DIAG=''N'',INXC_IN=-2_SIK')
+      FINFO() 'Result:',yRealVector%b(7:1:-2),'Solution:',dummyvec
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector%b,Y=yRealVector%b,TRANS='N',UPLO='L',DIAG='N',INCX_IN=-2_SIK)
+      bool=ALL(yRealVector%b(7:1:-2) .APPROXEQA. dummyvec)
+      ASSERT(bool,'BLAS_matvec(MATRIX,X%b,Y%b,TRANS=''N'',UPLO=''L'',DIAG=''N'',INXC_IN=-2_SIK')
+      FINFO() 'Result:',yRealVector%b(7:1:-2),'Solution:',dummyvec
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,Y=yRealVector,TRANS='T',UPLO='U',DIAG='N',INCX_IN=-2_SIK)
+      bool=ALL(yRealVector%b(7:1:-2) .APPROXEQA. dummyvec)
+      ASSERT(bool,'BLAS_matvec(THISMATRIX,X,Y,TRANS=''T'',UPLO=''U'',DIAG=''N'',INXC_IN=-2_SIK')
+      FINFO() 'Result:',yRealVector%b(7:1:-2),'Solution:',dummyvec
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector%b,Y=yRealVector%b,TRANS='T',UPLO='U',DIAG='N',INCX_IN=-2_SIK)
+      bool=ALL(yRealVector%b(7:1:-2) .APPROXEQA. dummyvec)
+      ASSERT(bool,'BLAS_matvec(MATRIX,X%b,Y%b,TRANS=''T'',UPLO=''U'',DIAG=''N'',INXC_IN=-2_SIK')
+      FINFO() 'Result:',yRealVector%b(7:1:-2),'Solution:',dummyvec
+      dummyvec=(/0.00_SRK,0.00_SRK,0.00_SRK,0.250_SRK/)
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,Y=yRealVector,TRANS='N',UPLO='U',DIAG='N',INCX_IN=-2_SIK)
+      bool=ALL(yRealVector%b(7:1:-2) .APPROXEQA. dummyvec)
+      ASSERT(bool,'BLAS_matvec(THISMATRIX,X,Y,TRANS=''N'',UPLO=''U'',DIAG=''N'',INXC_IN=-2_SIK')
+      FINFO() 'Result:',yRealVector%b(7:1:-2),'Solution:',dummyvec
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector%b,Y=yRealVector%b,TRANS='N',UPLO='U',DIAG='N',INCX_IN=-2_SIK)
+      bool=ALL(yRealVector%b(7:1:-2) .APPROXEQA. dummyvec)
+      ASSERT(bool,'BLAS_matvec(MATRIX,X%b,Y%b,TRANS=''N'',UPLO=''U'',DIAG=''N'',INXC_IN=-2_SIK')
+      FINFO() 'Result:',yRealVector%b(7:1:-2),'Solution:',dummyvec
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,Y=yRealVector,TRANS='T',UPLO='L',DIAG='N',INCX_IN=-2_SIK)
+      bool=ALL(yRealVector%b(7:1:-2) .APPROXEQA. dummyvec)
+      ASSERT(bool,'BLAS_matvec(THISMATRIX,X,Y,TRANS=''T'',UPLO=''L'',DIAG=''N'',INXC_IN=-2_SIK')
+      FINFO() 'Result:',yRealVector%b(7:1:-2),'Solution:',dummyvec
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector%b,Y=yRealVector%b,TRANS='T',UPLO='L',DIAG='N',INCX_IN=-2_SIK)
+      bool=ALL(yRealVector%b(7:1:-2) .APPROXEQA. dummyvec)
+      ASSERT(bool,'BLAS_matvec(MATRIX,X%b,Y%b,TRANS=''T'',UPLO=''L'',DIAG=''N'',INXC_IN=-2_SIK')
+      FINFO() 'Result:',yRealVector%b(7:1:-2),'Solution:',dummyvec
+
       WRITE(*,*) '  Passed: CALL BLAS_matvec(...) sparse-matrix'
       
       !Test BLAS_matmult when SparseMatType is supported.
@@ -842,7 +905,7 @@ PROGRAM testMatrixTypes
         STOP 666
       ENDIF
 
-      ! Check sparse triangular solvers
+      ! Check dense triangular solvers
       CALL yRealVector%clear()
       CALL xRealVector%clear()
       CALL thisMatrix%clear()
@@ -883,23 +946,83 @@ PROGRAM testMatrixTypes
       ALLOCATE(dummyvec(4))
       dummyvec=(/1.0000000_SRK,-0.5000000_SRK,-0.1666666666666666_SRK,-0.083333333333333333_SRK/)
       CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,Y=yRealVector,TRANS='N',UPLO='L',DIAG='N')
-      ASSERT(ALL(yRealVector%b .APPROXEQA. dummyvec),'BLAS_matvec(THISMATRIX,X,Y,TRANS=''N'',UPLO=''L'',DIAG=''N''')
-      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,Y=yRealVector,TRANS='T',UPLO='U',DIAG='N')
-      ASSERT(ALL(yRealVector%b .APPROXEQA. dummyvec),'BLAS_matvec(THISMATRIX,X,Y,TRANS=''N'',UPLO=''L'',DIAG=''N''')
+      bool=ALL(yRealVector%b .APPROXEQA. dummyvec)
+      ASSERT(bool,'BLAS_matvec(THISMATRIX,X,Y,TRANS=''N'',UPLO=''L'',DIAG=''N''')
+      FINFO() 'Result:',yRealVector%b,'Solution:',dummyvec
       CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector%b,Y=yRealVector%b,TRANS='N',UPLO='L',DIAG='N')
-      ASSERT(ALL(yRealVector%b .APPROXEQA. dummyvec),'BLAS_matvec(MATRIX,X%b,Y%b,TRANS=''N'',UPLO=''L'',DIAG=''N''')
+      bool=ALL(yRealVector%b .APPROXEQA. dummyvec)
+      ASSERT(bool,'BLAS_matvec(THISMATRIX,X%b,Y%b,TRANS=''N'',UPLO=''L'',DIAG=''N''')
+      FINFO() 'Result:',yRealVector%b,'Solution:',dummyvec
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,Y=yRealVector,TRANS='T',UPLO='U',DIAG='N')
+      bool=ALL(yRealVector%b .APPROXEQA. dummyvec)
+      ASSERT(bool,'BLAS_matvec(THISMATRIX,X,Y,TRANS=''T'',UPLO=''U'',DIAG=''N''')
+      FINFO() 'Result:',yRealVector%b,'Solution:',dummyvec
       CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector%b,Y=yRealVector%b,TRANS='T',UPLO='U',DIAG='N')
-      ASSERT(ALL(yRealVector%b .APPROXEQA. dummyvec),'BLAS_matvec(MATRIX,X%b,Y%b,TRANS=''N'',UPLO=''L'',DIAG=''N''')
+      bool=ALL(yRealVector%b .APPROXEQA. dummyvec)
+      ASSERT(bool,'BLAS_matvec(THISMATRIX,X%b,Y%b,TRANS=''T'',UPLO=''U'',DIAG=''N''')
+      FINFO() 'Result:',yRealVector%b,'Solution:',dummyvec
       dummyvec=(/0.00_SRK,0.00_SRK,0.00_SRK,0.250_SRK/)
       CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,Y=yRealVector,TRANS='N',UPLO='U',DIAG='N')
-      ASSERT(ALL(yRealVector%b .APPROXEQA. dummyvec),'BLAS_matvec(THISMATRIX,X,Y,TRANS=''N'',UPLO=''U'',DIAG=''N''')
-      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,Y=yRealVector,TRANS='T',UPLO='L',DIAG='N')
-      ASSERT(ALL(yRealVector%b .APPROXEQA. dummyvec),'BLAS_matvec(THISMATRIX,X,Y,TRANS=''T'',UPLO=''L'',DIAG=''N''')
+      bool=ALL(yRealVector%b .APPROXEQA. dummyvec)
+      ASSERT(bool,'BLAS_matvec(THISMATRIX,X,Y,TRANS=''N'',UPLO=''U'',DIAG=''N''')
+      FINFO() 'Result:',yRealVector%b,'Solution:',dummyvec
       CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector%b,Y=yRealVector%b,TRANS='N',UPLO='U',DIAG='N')
-      ASSERT(ALL(yRealVector%b .APPROXEQA. dummyvec),'BLAS_matvec(MATRIX,X%b,Y%b,TRANS=''N'',UPLO=''U'',DIAG=''N''')
+      bool=ALL(yRealVector%b .APPROXEQA. dummyvec)
+      ASSERT(bool,'BLAS_matvec(THISMATRIX,X%b,Y%b,TRANS=''N'',UPLO=''U'',DIAG=''N''')
+      FINFO() 'Result:',yRealVector%b,'Solution:',dummyvec
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,Y=yRealVector,TRANS='T',UPLO='L',DIAG='N')
+      bool=ALL(yRealVector%b .APPROXEQA. dummyvec)
+      ASSERT(bool,'BLAS_matvec(THISMATRIX,X,Y,TRANS=''T'',UPLO=''L'',DIAG=''N''')
+      FINFO() 'Result:',yRealVector%b,'Solution:',dummyvec
       CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector%b,Y=yRealVector%b,TRANS='T',UPLO='L',DIAG='N')
-      ASSERT(ALL(yRealVector%b .APPROXEQA. dummyvec),'BLAS_matvec(MATRIX,X%b,Y%b,TRANS=''T'',UPLO=''L'',DIAG=''N''')
-      WRITE(*,*) '  Passed: CALL BLAS_matvec(...) densesq-matrix'
+      bool=ALL(yRealVector%b .APPROXEQA. dummyvec)
+      ASSERT(bool,'BLAS_matvec(THISMATRIX,X%b,Y%b,TRANS=''T'',UPLO=''L'',DIAG=''N''')
+      FINFO() 'Result:',yRealVector%b,'Solution:',dummyvec
+
+      !Check increments /= 1
+      CALL xRealVector%clear()
+      CALL yRealVector%clear()
+      CALL vecPlist%clear()
+      CALL vecPList%add('VectorType->n',8_SIK)
+      CALL xRealVector%init(vecPList)
+      CALL yRealVector%init(vecPList)
+      SELECTTYPE(x => xrealVector); TYPE IS(RealVectorType)
+        CALL x%set(1.0_SRK)
+      ENDSELECT
+      dummyvec=(/1.0000000_SRK,-0.5000000_SRK,-0.1666666666666666_SRK,-0.083333333333333333_SRK/)
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,Y=yRealVector,TRANS='N',UPLO='L',DIAG='N',INCX_IN=-2_SIK)
+      bool=ALL(yRealVector%b(7:1:-2) .APPROXEQA. dummyvec)
+      ASSERT(bool,'BLAS_matvec(THISMATRIX,X,Y,TRANS=''N'',UPLO=''L'',DIAG=''N'',INCX_IN=-2_SIK')
+      FINFO() 'Result:',yRealVector%b(7:1:-2),'Solution:',dummyvec
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector%b,Y=yRealVector%b,TRANS='N',UPLO='L',DIAG='N',INCX_IN=-2_SIK)
+      bool=ALL(yRealVector%b(7:1:-2) .APPROXEQA. dummyvec)
+      ASSERT(bool,'BLAS_matvec(THISMATRIX,X%b,Y%b,TRANS=''N'',UPLO=''L'',DIAG=''N'',INCX_IN=-2_SIK')
+      FINFO() 'Result:',yRealVector%b(7:1:-2),'Solution:',dummyvec
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,Y=yRealVector,TRANS='T',UPLO='U',DIAG='N',INCX_IN=-2_SIK)
+      bool=ALL(yRealVector%b(7:1:-2) .APPROXEQA. dummyvec)
+      ASSERT(bool,'BLAS_matvec(THISMATRIX,X,Y,TRANS=''T'',UPLO=''U'',DIAG=''N'',INCX_IN=-2_SIK')
+      FINFO() 'Result:',yRealVector%b(7:1:-2),'Solution:',dummyvec
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector%b,Y=yRealVector%b,TRANS='T',UPLO='U',DIAG='N',INCX_IN=-2_SIK)
+      bool=ALL(yRealVector%b(7:1:-2) .APPROXEQA. dummyvec)
+      ASSERT(bool,'BLAS_matvec(THISMATRIX,X%b,Y%b,TRANS=''T'',UPLO=''U'',DIAG=''N'',INCX_IN=-2_SIK')
+      FINFO() 'Result:',yRealVector%b(7:1:-2),'Solution:',dummyvec
+      dummyvec=(/0.00_SRK,0.00_SRK,0.00_SRK,0.250_SRK/)
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,Y=yRealVector,TRANS='N',UPLO='U',DIAG='N',INCX_IN=-2_SIK)
+      bool=ALL(yRealVector%b(7:1:-2) .APPROXEQA. dummyvec)
+      ASSERT(bool,'BLAS_matvec(THISMATRIX,X,Y,TRANS=''N'',UPLO=''U'',DIAG=''N'',INCX_IN=-2_SIK')
+      FINFO() 'Result:',yRealVector%b(7:1:-2),'Solution:',dummyvec
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector%b,Y=yRealVector%b,TRANS='N',UPLO='U',DIAG='N',INCX_IN=-2_SIK)
+      bool=ALL(yRealVector%b(7:1:-2) .APPROXEQA. dummyvec)
+      ASSERT(bool,'BLAS_matvec(THISMATRIX,X%b,Y%b,TRANS=''N'',UPLO=''U'',DIAG=''N'',INCX_IN=-2_SIK')
+      FINFO() 'Result:',yRealVector%b(7:1:-2),'Solution:',dummyvec
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,Y=yRealVector,TRANS='T',UPLO='L',DIAG='N',INCX_IN=-2_SIK)
+      bool=ALL(yRealVector%b(7:1:-2) .APPROXEQA. dummyvec)
+      ASSERT(bool,'BLAS_matvec(THISMATRIX,X,Y,TRANS=''T'',UPLO=''L'',DIAG=''N'',INCX_IN=-2_SIK')
+      FINFO() 'Result:',yRealVector%b(7:1:-2),'Solution:',dummyvec
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector%b,Y=yRealVector%b,TRANS='T',UPLO='L',DIAG='N',INCX_IN=-2_SIK)
+      bool=ALL(yRealVector%b(7:1:-2) .APPROXEQA. dummyvec)
+      ASSERT(bool,'BLAS_matvec(THISMATRIX,X%b,Y%b,TRANS=''T'',UPLO=''L'',DIAG=''N'',INCX_IN=-2_SIK')
+      FINFO() 'Result:',yRealVector%b(7:1:-2),'Solution:',dummyvec
       
       CALL testMatrixMultSquare()
       
