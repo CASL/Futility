@@ -1007,10 +1007,10 @@ MODULE PreconditionerTypes
                         IF(val /= 0.0_SRK) CALL pc%L%set(row,col,val)
                       ENDDO
                     ENDDO
-                    !form diagonal block of U (Identity)
-                    DO row=c2,c2+dim2D-1
-                      CALL pc%U%set(row,row,1.0_SRK)
-                    ENDDO
+!                    !form diagonal block of U (Identity)
+!                    DO row=c2,c2+dim2D-1
+!                      CALL pc%U%set(row,row,1.0_SRK)
+!                    ENDDO
                   ELSE
                     !pull T block into matrix
                     DO row=d2,d2+dim2D-1
@@ -1049,19 +1049,19 @@ MODULE PreconditionerTypes
                           CALL pc%L%set(row,col,val)
                       ENDDO
                     ENDDO
-                    !form diagonal block of U (Identity)
-                    DO row=c2,c2+dim2D-1
-                      CALL pc%U%set(row,row,1.0_SRK)
-                    ENDDO
-                    !form upper block of U
-                    CALL dmatmul_right(invM2,T,tmp2D)
-                    DO row=d2,d2+dim2D-1
-                      DO col=c2,c2+dim2D-1
-                        CALL pc%A%get(row,col,val)
-                        IF(val /= 0.0_SRK) &
-                          CALL pc%U%set(row,col,tmp2D(row-d2+1,col-c2+1))
-                      ENDDO
-                    ENDDO
+!                    !form diagonal block of U (Identity)
+!                    DO row=c2,c2+dim2D-1
+!                      CALL pc%U%set(row,row,1.0_SRK)
+!                    ENDDO
+!                    !form upper block of U
+!                    CALL dmatmul_right(invM2,T,tmp2D)
+!                    DO row=d2,d2+dim2D-1
+!                      DO col=c2,c2+dim2D-1
+!                        CALL pc%A%get(row,col,val)
+!                        IF(val /= 0.0_SRK) &
+!                          CALL pc%U%set(row,col,tmp2D(row-d2+1,col-c2+1))
+!                      ENDDO
+!                    ENDDO
       
                   ENDIF
                   
@@ -1212,7 +1212,7 @@ MODULE PreconditionerTypes
                   ENDDO !iy
       
                   !determine 2D inverse
-                  CALL ABI(L2,U2,F2,dim1D,invM2)
+                  IF(PC%BILUType==BILU) CALL ABI(L2,U2,F2,dim1D,invM2)
                   DO row=1,dim1D*(X-1)
                     PC%N(iz,row)=tmp2D(row,dim1D+row)
                   ENDDO
