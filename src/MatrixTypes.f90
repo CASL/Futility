@@ -1543,116 +1543,6 @@ MODULE MatrixTypes
 !> the code available on http://netlib.org/blas/strsv.f but has some minor
 !> modifications. The error checking is somewhat different.
 !>
-!    PURE SUBROUTINE strsv_all_sparse(uplo,trans,diag,a,ia,ja,x,incx_in)
-!      CHARACTER(LEN=1),INTENT(IN) :: uplo
-!      CHARACTER(LEN=1),INTENT(IN) :: trans
-!      CHARACTER(LEN=1),INTENT(IN) :: diag
-!      REAL(SSK),INTENT(IN) :: a(:)
-!      INTEGER(SIK),INTENT(IN) :: ia(:)
-!      INTEGER(SIK),INTENT(IN) :: ja(:)
-!      REAL(SSK),INTENT(INOUT) :: x(:)
-!      INTEGER(SIK),INTENT(IN),OPTIONAL :: incx_in
-!      INTEGER(SIK) :: n,incx
-!
-!      LOGICAL(SBK) :: ltrans, nounit
-!      INTEGER(SIK) :: i,ix,j,jx,kx
-!      REAL(SSK) :: temp
-!      REAL(SSK),PARAMETER :: ZERO=0.0_SSK
-!      INTRINSIC MAX
-!      n=SIZE(x)
-!      IF(PRESENT(incx_in)) THEN
-!        incx=incx_in
-!      ELSE
-!        incx=1_SIK
-!      ENDIF
-!      IF((trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
-!           trans == 'n' .OR. trans == 'N') .AND. &
-!          (uplo == 'u' .OR. uplo == 'U' .OR. uplo == 'l' .OR. uplo == 'L') .AND. &
-!          (diag == 't' .OR. diag == 'T' .OR. diag == 'n' .OR. diag == 'N')) THEN
-!
-!        nounit=.FALSE.
-!        IF (diag == 'n' .OR. diag == 'N') nounit=.TRUE.
-! 
-!        IF (trans == 'n' .OR. trans == 'N') THEN  ! Form  x := inv( A )*x.
-!          IF (uplo == 'u' .OR. uplo == 'U') THEN  ! Upper triangular
-!            IF(incx == 1_SIK) THEN
-!              IF((ANY(ia <= 0)) .AND. nounit) n=0 ! In case a row does not have any elements
-!              DO i=n,1,-1
-!                DO j=ia(i+1)-1,ia(i),-1
-!                  IF(ja(j) <= i) EXIT
-!                  x(i)=x(i)-a(j)*x(ja(j))
-!                ENDDO
-!                IF((ja(j) == i) .AND. nounit) x(i)=x(i)/a(j)
-!              ENDDO
-!            ELSE
-!            ENDIF
-!          ELSE  ! Lower Triangular
-!            IF(incx == 1_SIK) THEN
-!              IF((ANY(ia <= 0)) .AND. nounit) n=0 ! In case a row does not have any elements
-!              DO i=1,n
-!                DO j=ia(i),ia(i+1)-1
-!                  IF(ja(j) >= i) EXIT
-!                  x(i)=x(i)-a(j)*x(ja(j))
-!                ENDDO
-!                IF((ja(j) == i) .AND. nounit) x(i)=x(i)/a(j)
-!              ENDDO
-!            ELSE
-!            ENDIF
-!          ENDIF
-!        ELSE  ! Form  x := inv( A**T )*x.
-!          IF (uplo == 'u' .OR. uplo == 'U') THEN
-!            IF(incx == 1_SIK) THEN
-!              DO j = 1,SIZE(ia)-1
-!                IF(.NOT.(x(j) .APPROXEQA. ZERO)) THEN
-!                  IF (nounit) x(j)=x(j)/a(ia(j))
-!                  temp=x(j)
-!                  DO i=ia(j)+1,ia(j+1)-1
-!                    IF(ja(i) <= j) CYCLE
-!                    x(ja(i))=x(ja(i))-temp*a(i)
-!                  ENDDO
-!                ENDIF
-!              ENDDO
-!            ELSE
-!            ENDIF
-!          ELSE  ! Lower Triangular
-!            IF(incx == 1_SIK) THEN
-!              DO i=n,1,-1
-!                IF(.NOT.(x(i) .APPROXEQA. ZERO)) THEN
-!                  IF(nounit) x(i)=x(i)/a(ia(i+1)-1)
-!                  temp=x(i)
-!                  DO j=ia(i+1)-2,ia(i),-1
-!                    IF(ja(j) > i) CYCLE
-!                    x(ja(j))=x(ja(j))-a(j)*temp
-!                  ENDDO
-!                ENDIF
-!              ENDDO
-!            ELSE
-!            ENDIF
-!          ENDIF
-!        ENDIF
-!      ENDIF
-!
-!    ENDSUBROUTINE strsv_all_sparse
-!
-!-------------------------------------------------------------------------------
-!> @brief Subroutine solves a triangular matrix linear system.
-!> @param uplo single character input indicating if an upper (U) or lower (L) 
-!>        maxtrix is stored in @c A
-!> @param trans single character input indicating whether or not to use the 
-!>        transpose of @c A
-!> @param diag single character input indicating whether or not a unity
-!>        diagonal is used
-!> @param n the size of the dimension of @c A (number of rows and columns)
-!> @param A the double-precision matrix multiply with @c x
-!> @param lda the size of the leading (first) dimension of @c A
-!> @param x the double-precision vector to multiply with @c A
-!> @param incx the increment to use when looping over elements in @c x
-!>
-!> If an external BLAS library is available at link time then that library
-!> routine that gets called, otherwise the supplied code is used. It is based on
-!> the code available on http://netlib.org/blas/strsv.f but has some minor
-!> modifications. The error checking is somewhat different.
-!>
 !    PURE SUBROUTINE dtrsv_all_sparse(uplo,trans,diag,a,ia,ja,x,incx_in)
     PURE SUBROUTINE trsv_sparse(uplo,trans,diag,a,ia,ja,x,incx_in)
       CHARACTER(LEN=1),INTENT(IN) :: uplo
@@ -1664,75 +1554,166 @@ MODULE MatrixTypes
       REAL(SRK),INTENT(INOUT) :: x(:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx_in
 
-      LOGICAL(SBK) :: ltrans, nounit
+      LOGICAL(SBK) :: nounit
       INTEGER(SIK) :: i,ix,j,jx,kx,n,incx
-      REAL(SRK) :: temp
       REAL(SRK),PARAMETER :: ZERO=0.0_SRK
       INTRINSIC MAX
-      n=SIZE(x)
+      n=SIZE(ia)-1
       IF(PRESENT(incx_in)) THEN
         incx=incx_in
       ELSE
         incx=1_SIK
       ENDIF
+      ! Check inputs
       IF((trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
            trans == 'n' .OR. trans == 'N') .AND. &
           (uplo == 'u' .OR. uplo == 'U' .OR. uplo == 'l' .OR. uplo == 'L') .AND. &
           (diag == 't' .OR. diag == 'T' .OR. diag == 'n' .OR. diag == 'N')) THEN
 
+        ! Check whether diagonal is treated as unity or not.
         nounit=.FALSE.
         IF (diag == 'n' .OR. diag == 'N') nounit=.TRUE.
- 
+        ! Determine how elements of x are stored, and find "first" element accordingly
+        IF(incx <= 0_SIK) THEN
+          kx=1-(n-1)*incx ! Elements stored in reverse order (highest index to lowest)
+        ELSEIF(incx /= 1) THEN
+          kx=1 ! Elements stored from lowest index to highest
+        ENDIF
+        
+        ! Don't use transpose of matrix
         IF (trans == 'n' .OR. trans == 'N') THEN  ! Form  x := inv( A )*x.
-          IF (uplo == 'u' .OR. uplo == 'U') THEN  ! Upper triangular
-            IF((ANY(ia <= 0)) .AND. nounit) n=0 ! In case a row does not have any elements
-            DO i=n,1,-1
-              DO j=ia(i+1)-1,ia(i),-1
-                IF(ja(j) <= i) EXIT
-                x(i)=x(i)-a(j)*x(ja(j))
+          ! Multiply by upper triangular part of matrix
+          IF (uplo == 'u' .OR. uplo == 'U') THEN 
+            ! Elements of x are stored in increments of 1
+            IF(incx == 1) THEN
+              DO i=n,1,-1
+                DO j=ia(i+1)-1,ia(i),-1
+                  IF(ja(j) == i) EXIT
+                  x(i)=x(i)-a(j)*x(ja(j))
+                ENDDO
+                IF(nounit) x(i)=x(i)/a(j)
               ENDDO
-              IF((ja(j) == i) .AND. nounit) x(i)=x(i)/a(j)
-            ENDDO
-          ELSE  ! Lower Triangular
-            IF((ANY(ia <= 0)) .AND. nounit) n=0 ! In case a row does not have any elements
-            DO i=1,n
-              DO j=ia(i),ia(i+1)-1
-                IF(ja(j) >= i) EXIT
-                x(i)=x(i)-a(j)*x(ja(j))
-                IF(j == SIZE(ja)) EXIT
+            ! Elements are stored in reverse order and/or by increments other than 1
+            ELSE
+              ix=ABS(incx)*n-kx
+              DO i=n,1,-1
+                jx=ABS(incx)*n-kx
+                DO j=ia(i+1)-1,ia(i),-1
+                  IF(ja(j) <= i) EXIT
+                  x(ix)=x(ix)-a(j)*x(jx)
+                  IF(j == ia(i+1)-1) THEN
+                    jx=jx-incx*(n-ja(j)+1)
+                  ELSE
+                    jx=jx-incx*(ja(j+1)-ja(j))
+                  ENDIF
+                ENDDO
+                IF(nounit) x(ix)=x(ix)/a(j)
+                ix=ix-incx
               ENDDO
-              IF((ja(j) == i) .AND. nounit) x(i)=x(i)/a(j)
-            ENDDO
+            ENDIF
+          ! Multiply by lower triangular part of matrix
+          ELSE
+            ! Elements of x are stored in increments of 1
+            IF(incx == 1) THEN
+              DO i=1,n
+                DO j=ia(i),ia(i+1)-1
+                  IF(ja(j) >= i) EXIT
+                  x(i)=x(i)-a(j)*x(ja(j))
+                  IF(j == SIZE(ja)) EXIT
+                ENDDO
+                IF((ja(j) == i) .AND. nounit) x(i)=x(i)/a(j)
+              ENDDO
+            ! Elements are stored in reverse order and/or by increments other than 1
+            ELSE
+              ix=kx
+              DO i=1,n
+                jx=kx
+                DO j=ia(i),ia(i+1)-1
+                  IF(ja(j) >= i) EXIT
+                  IF(ja(j) > 1) THEN
+                    jx=jx+incx*(ja(j)-ja(j-1))
+                  ELSE
+                    jx=jx+incx*(ja(j)-1)
+                  ENDIF
+                  x(ix)=x(ix)-a(j)*x(jx)
+                  IF(j == SIZE(ja)) EXIT
+                ENDDO
+                IF(nounit) x(ix)=x(ix)/a(j)
+                ix=ix+incx
+              ENDDO
+            ENDIF
           ENDIF
-        ELSE  ! Form  x := inv( A**T )*x.
+        ! Use transpose of matrix
+        ELSE
+          ! Multiply by upper trianbular part of matrix
           IF (uplo == 'u' .OR. uplo == 'U') THEN
-            DO j = 1,SIZE(ia)-1
-              IF(.NOT.(x(j) .APPROXEQA. ZERO)) THEN
-                IF (nounit) x(j)=x(j)/a(ia(j))
-                temp=x(j)
-                DO i=ia(j)+1,ia(j+1)-1
-                  IF(ja(i) <= j) CYCLE
-                  x(ja(i))=x(ja(i))-temp*a(i)
-                ENDDO
-              ENDIF
-            ENDDO
-          ELSE  ! Lower Triangular
-            DO i=n,1,-1
-              IF(.NOT.(x(i) .APPROXEQA. ZERO)) THEN
-                IF(nounit) x(i)=x(i)/a(ia(i+1)-1)
-                temp=x(i)
-                DO j=ia(i+1)-2,ia(i),-1
-                  IF(ja(j) > i) CYCLE
-                  x(ja(j))=x(ja(j))-a(j)*temp
-                ENDDO
-              ENDIF
-            ENDDO
+            IF(incx == 1) THEN
+              DO j = 1,SIZE(ia)-1
+                IF(.NOT.(x(j) .APPROXEQA. ZERO)) THEN
+                  IF (nounit) x(j)=x(j)/a(ia(j))
+                  DO i=ia(j)+1,ia(j+1)-1
+                    IF(ja(i) <= j) CYCLE
+                    x(ja(i))=x(ja(i))-x(j)*a(i)
+                  ENDDO
+                ENDIF
+              ENDDO
+            ! Elements are stored in reverse order and/or by increments other than 1
+            ELSE
+              ix=kx
+              DO j = 1,SIZE(ia)-1
+                IF(.NOT.(x(ix) .APPROXEQA. ZERO)) THEN
+                  IF(nounit) x(ix)=x(ix)/a(ia(j))
+                  jx=ix
+                  DO i=ia(j)+1,ia(j+1)-1
+                    IF(ja(i) <= j) CYCLE
+                    jx=jx+incx*(ja(i)-ja(i-1))
+                    x(jx)=x(jx)-x(ix)*a(i)
+                  ENDDO
+                ENDIF
+                ix=ix+incx
+              ENDDO
+            ENDIF
+          ! Multiply by lower triangular part of matrix
+          ELSE
+            ! Elements of x are stored in increments of 1
+            IF(incx == 1) THEN
+              DO i=n,1,-1
+                IF(.NOT.(x(i) .APPROXEQA. ZERO)) THEN
+                  IF(nounit) x(i)=x(i)/a(ia(i+1)-1)
+                  DO j=ia(i+1)-2,ia(i),-1
+                    IF(ja(j) > i) CYCLE
+                    x(ja(j))=x(ja(j))-a(j)*x(i)
+                  ENDDO
+                ENDIF
+              ENDDO
+            ! Elements are stored in reverse order and/or by increments other than 1
+            ELSE
+              ix=ABS(incx)*n-kx
+              DO i=n,1,-1
+                IF(.NOT.(x(ix) .APPROXEQA. ZERO)) THEN
+                  DO j=ia(i+1)-1,ia(i),-1
+                    IF(ja(j) == i) EXIT
+                  ENDDO
+                  IF(nounit) x(ix)=x(ix)/a(j)
+                  jx=ABS(incx)*n-kx
+                  DO j=ia(i+1)-1,ia(i),-1
+                    IF(j == ia(i+1)-1) THEN
+                      jx=jx-incx*(n-ja(j))
+                    ELSE
+                      jx=jx-incx*(ja(j+1)-ja(j))
+                    ENDIF
+                    IF(ja(j) >= i) CYCLE
+                    x(jx)=x(jx)-a(j)*x(ix)
+                  ENDDO
+                ENDIF
+                ix=ix-incx
+              ENDDO
+            ENDIF
           ENDIF
         ENDIF
       ENDIF
 
     ENDSUBROUTINE trsv_sparse
-!    ENDSUBROUTINE dtrsv_all_sparse
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine provides an interface to matrix matrix multiplication for
