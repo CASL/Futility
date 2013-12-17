@@ -1486,7 +1486,7 @@ MODULE LinearSolverTypes
         h=beta
         phibar=beta
 #ifdef MPACT_DEBUG_MSG
-          WRITE(667,*) '         GMRES-NOPC',0,ABS(phibar)
+          WRITE(668,*) '         GMRES-NOPC',0,ABS(phibar)
 #endif
         !Iterate on solution
         DO it=1,m
@@ -1519,7 +1519,7 @@ MODULE LinearSolverTypes
           g(it)=c(it)*phibar
           phibar=-s(it)*phibar
 #ifdef MPACT_DEBUG_MSG
-          WRITE(667,*) '         GMRES-NOPC',it,ABS(phibar)
+          WRITE(668,*) '         GMRES-NOPC',it,ABS(phibar)
 #endif
           IF(ABS(phibar) <= tol) EXIT
         ENDDO
@@ -1597,7 +1597,7 @@ MODULE LinearSolverTypes
         h=beta
         phibar=beta
 #ifdef MPACT_DEBUG_MSG
-          WRITE(667,*) '         GMRES-LP',0,ABS(phibar)
+          WRITE(668,*) '         GMRES-LP',0,ABS(phibar)
 #endif
         !Iterate on solution
         DO it=1,m
@@ -1633,7 +1633,7 @@ MODULE LinearSolverTypes
           g(it)=c(it)*phibar
           phibar=-s(it)*phibar
 #ifdef MPACT_DEBUG_MSG
-          WRITE(667,*) '         GMRES-LP',it,ABS(phibar)
+          WRITE(668,*) '         GMRES-LP',it,ABS(phibar)
 #endif
           IF(ABS(phibar) <= tol) EXIT
         ENDDO
