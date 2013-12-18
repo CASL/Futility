@@ -1555,7 +1555,7 @@ MODULE MatrixTypes
       IF(PRESENT(incx_in)) THEN
         incx=incx_in
       ELSE
-        incx=1_SIK
+        incx=1_SIK ! This won't ever be used in the current interfaces
       ENDIF
       ! Check inputs
       IF((trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
