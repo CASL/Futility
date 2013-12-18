@@ -874,13 +874,8 @@ MODULE PreconditionerTypes
                       DO col2=col+1,LU%ia(row+1)-1
                         CALL LU%get(LU%ja(col),LU%ja(col2),val3)
                         IF(.NOT.(val3 .APPROXEQA. 0.0_SRK)) THEN
-                          IF(LU%ja(col2) < row) THEN
-                            CALL LU%get(row,LU%ja(col2),val1)
-                            IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) CALL LU%set(row,LU%ja(col2),val1-val2*val3)
-                          ELSE
-                            CALL LU%get(row,LU%ja(col2),val1)
-                            IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) CALL LU%set(row,LU%ja(col2),val1-val2*val3)
-                          ENDIF
+                          CALL LU%get(row,LU%ja(col2),val1)
+                          IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) CALL LU%set(row,LU%ja(col2),val1-val2*val3)
                         ENDIF
                       ENDDO
                     ENDIF
