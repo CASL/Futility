@@ -3506,9 +3506,7 @@ MODULE BLAS2
 !>        transpose of @c A
 !> @param diag single character input indicating whether or not a unity
 !>        diagonal is used
-!> @param n the size of the dimension of @c A (number of rows and columns)
-!> @param A the single-precision matrix multiply with @c x
-!> @param lda the size of the leading (first) dimension of @c A
+!> @param a the single-precision matrix multiply with @c x
 !> @param x the single-precision vector to multiply with @c A
 !> @param incx the increment to use when looping over elements in @c x
 !>
@@ -3695,9 +3693,7 @@ MODULE BLAS2
 !>        transpose of @c A
 !> @param diag single character input indicating whether or not a unity
 !>        diagonal is used
-!> @param n the size of the dimension of @c A (number of rows and columns)
-!> @param A the double-precision matrix multiply with @c x
-!> @param lda the size of the leading (first) dimension of @c A
+!> @param a the double-precision matrix multiply with @c x
 !> @param x the double-precision vector to multiply with @c A
 !> @param incx the increment to use when looping over elements in @c x
 !>
