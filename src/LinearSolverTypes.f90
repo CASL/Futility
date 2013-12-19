@@ -619,14 +619,19 @@ MODULE LinearSolverTypes
       CHARACTER(LEN=*),PARAMETER :: myName='setup_PreCond_LinearSolverType_Iterative'
 
       IF(solver%isinit) THEN
-        IF(solver%A%isinit) THEN
-          ! Set up PreconditionerType
-          CALL solver%PreCondType%clear()
-          CALL solver%PreCondType%init(solver%A)
-          CALL solver%PreCondType%setup()
+        IF(ALLOCATED(solver%A)) THEN
+          IF(solver%A%isInit) THEN
+            ! Set up PreconditionerType
+            CALL solver%PreCondType%clear()
+            CALL solver%PreCondType%init(solver%A)
+            CALL solver%PreCondType%setup()
+          ELSE
+          ENDIF
+            CALL eLinearSolverType%raiseError('Incorrect input to'//modName//'::'//myName// &
+              ' - LinearSolverType matrix is not initialized. Preconditioner cannot be set up.')
         ELSE
           CALL eLinearSolverType%raiseError('Incorrect input to'//modName//'::'//myName// &
-            ' - LinearSolverType matrix is not initialized. Preconditioner cannot be set up.')
+            ' - LinearSolverType matrix is not allocated. Preconditioner cannot be set up.')
         ENDIF
       ELSE
         CALL eLinearSolverType%raiseError('Incorrect input to'//modName//'::'//myName// &

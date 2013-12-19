@@ -166,7 +166,7 @@ MODULE PreconditionerTypes
     SUBROUTINE init_LU_PreCondtype(PC,A)
       CHARACTER(LEN=*),PARAMETER :: myName='init_LU_PreCondType'
       CLASS(LU_PrecondType),INTENT(INOUT) :: PC
-      CLASS(MatrixType),TARGET,INTENT(IN) :: A
+      CLASS(MatrixType),ALLOCATABLE,TARGET,INTENT(IN) :: A
 
       TYPE(ParamType) :: PL
       LOGICAL(SBK) :: localalloc
@@ -184,150 +184,154 @@ MODULE PreconditionerTypes
         CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
           ' - Preconditioner is already initialized!')
       ELSE
-        IF(.NOT.(A%isInit)) THEN
+        IF(.NOT.(ALLOCATED(A))) THEN
           CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
-            ' - Matrix being used for LU Preconditioner is not initialized!')
+            ' - Matrix being used for LU Preconditioner is not allocated!')
         ELSE
-          PC%A => A
-
-          !allocate additional storage for BILU3D
-          SELECTTYPE(PC)
-            TYPE IS(BILU_PrecondType)
-              X=SQRT(REAL(pc%nPin))
-              ALLOCATE(PC%F0(pc%nPlane*pc%nPin,pc%nGrp,pc%nGrp))
-              ALLOCATE(PC%E(pc%nPlane*X,pc%nGrp*(X-1)))
-              ALLOCATE(PC%W(pc%nPlane*X,pc%nGrp*(X-1)))
-              ALLOCATE(PC%N(pc%nPlane,pc%nGrp*X*(x-1)))
-              ALLOCATE(PC%S(pc%nPlane,pc%nGrp*X*(x-1)))
-              PC%F0=0.0_SRK
-              PC%E=0.0_SRK
-              PC%W=0.0_SRK
-              PC%N=0.0_SRK
-              PC%S=0.0_SRK
-          ENDSELECT
-
-          ! This might not be necessary here, but not sure
-          SELECTTYPE(mat => PC%A)
-            TYPE IS(DenseSquareMatrixType)
-              ALLOCATE(DenseSquareMatrixType :: PC%LU)
-
-              ! Assign A to LU
-              SELECTTYPE(LU => PC%LU); TYPE IS(DenseSquareMatrixType)
-                LU=mat
-              ENDSELECT
-                
-              IF(PC%LU%isInit) THEN
-                PC%isInit=.TRUE.
-              ELSE
-                CALL ePreCondtype%raiseError('Incorrect input to '//modName//'::'//myName// &
-                  ' - In LU Preconditioner initialization, LU was not properly initialized!')
-              ENDIF
-            TYPE IS(SparseMatrixType)
+          IF(.NOT.(A%isInit)) THEN
+            CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+              ' - Matrix being used for LU Preconditioner is not initialized!')
+          ELSE
+            PC%A => A
+  
+              !allocate additional storage for BILU3D
               SELECTTYPE(PC)
-                TYPE IS(ILU_PrecondType)
-                  ALLOCATE(SparseMatrixType :: PC%LU)
+                TYPE IS(BILU_PrecondType)
+                  X=SQRT(REAL(pc%nPin))
+                  ALLOCATE(PC%F0(pc%nPlane*pc%nPin,pc%nGrp,pc%nGrp))
+                  ALLOCATE(PC%E(pc%nPlane*X,pc%nGrp*(X-1)))
+                  ALLOCATE(PC%W(pc%nPlane*X,pc%nGrp*(X-1)))
+                  ALLOCATE(PC%N(pc%nPlane,pc%nGrp*X*(x-1)))
+                  ALLOCATE(PC%S(pc%nPlane,pc%nGrp*X*(x-1)))
+                  PC%F0=0.0_SRK
+                  PC%E=0.0_SRK
+                  PC%W=0.0_SRK
+                  PC%N=0.0_SRK
+                  PC%S=0.0_SRK
+              ENDSELECT
+  
+              ! This might not be necessary here, but not sure
+              SELECTTYPE(mat => PC%A)
+                TYPE IS(DenseSquareMatrixType)
+                  ALLOCATE(DenseSquareMatrixType :: PC%LU)
+  
                   ! Assign A to LU
-                  SELECTTYPE(LU => PC%LU); TYPE IS(SparseMatrixType)
+                  SELECTTYPE(LU => PC%LU); TYPE IS(DenseSquareMatrixType)
                     LU=mat
                   ENDSELECT
-                  
+                    
                   IF(PC%LU%isInit) THEN
                     PC%isInit=.TRUE.
                   ELSE
-                    CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
-                      ' = In LU Preconditioner initialization, LU was not properly initialized!')
+                    CALL ePreCondtype%raiseError('Incorrect input to '//modName//'::'//myName// &
+                      ' - In LU Preconditioner initialization, LU was not properly initialized!')
                   ENDIF
-                TYPE IS(BILU_PrecondType)
-                  ALLOCATE(SparseMatrixType :: PC%L)
-                  ALLOCATE(SparseMatrixType :: PC%U)
-
-                  ! Loop over A to get initialization data for L and U
-                  nnzU=0
-                  nnzL=0
-                  DO row=1,SIZE(mat%ia)-1
-                    DO j=mat%ia(row),mat%ia(row+1)-1
-                      col=mat%ja(j)
-                      CALL mat%get(row,col,val)
-                      IF(.NOT.(val .APPROXEQA. 0.0_SRK)) THEN
-                        IF(col > row+PC%Ngrp*PC%Npin-1) THEN
-                          nnzU=nnzU+1
-                        ENDIF
+                TYPE IS(SparseMatrixType)
+                  SELECTTYPE(PC)
+                    TYPE IS(ILU_PrecondType)
+                      ALLOCATE(SparseMatrixType :: PC%LU)
+                      ! Assign A to LU
+                      SELECTTYPE(LU => PC%LU); TYPE IS(SparseMatrixType)
+                        LU=mat
+                      ENDSELECT
+                      
+                      IF(PC%LU%isInit) THEN
+                        PC%isInit=.TRUE.
+                      ELSE
+                        CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+                          ' = In LU Preconditioner initialization, LU was not properly initialized!')
                       ENDIF
-                    ENDDO
-                  ENDDO
-                  nnzL=mat%nnz-nnzU
-                  nnzU=nnzU+mat%n
-              ENDSELECT
-                
-              SELECTTYPE(PC); TYPE IS(BILU_PrecondType) 
-                ! Initialize L and U
-                nU=mat%n
-                nL=mat%n
-                CALL PL%add('MatrixType->n',nU)
-                CALL PL%add('MatrixType->nnz',nnzU)
-                CALL PC%U%init(PL)
-                CALL PL%set('MatrixType->n',nL)
-                CALL PL%set('MatrixType->nnz',nnzL)
-                CALL PC%L%init(PL)
-                CALL PL%clear()
-
-                SELECTTYPE(L => PC%L); TYPE IS(SparseMatrixType)
-                  SELECTTYPE(U => PC%U); TYPE IS(SparseMatrixType)
-                    ! Set the shape
-                    DO row=1,SIZE(mat%ia)-1
-                      DO j=mat%ia(row),mat%ia(row+1)-1
-                        col=mat%ja(j)
-                        ! This may be redundant since mat is sparse, but be safe for now
-                        CALL mat%get(row,col,val)
-                        IF(.NOT.(val .APPROXEQA. 0.0_SRK)) THEN
-                          IF(col >= row+PC%Ngrp*PC%Npin-1) THEN
-                            CALL U%setShape(row,col,0.0_SRK)
-                          ELSEIF(row == col) THEN
-                            CALL U%setShape(row,row,0.0_SRK)
-                            CALL L%setShape(row,row,0.0_SRK)
-                          ELSE
-                            CALL L%setShape(row,col,0.0_SRK)
+                    TYPE IS(BILU_PrecondType)
+                      ALLOCATE(SparseMatrixType :: PC%L)
+                      ALLOCATE(SparseMatrixType :: PC%U)
+  
+                      ! Loop over A to get initialization data for L and U
+                      nnzU=0
+                      nnzL=0
+                      DO row=1,SIZE(mat%ia)-1
+                        DO j=mat%ia(row),mat%ia(row+1)-1
+                          col=mat%ja(j)
+                          CALL mat%get(row,col,val)
+                          IF(.NOT.(val .APPROXEQA. 0.0_SRK)) THEN
+                            IF(col > row+PC%Ngrp*PC%Npin-1) THEN
+                              nnzU=nnzU+1
+                            ENDIF
                           ENDIF
-                        ENDIF
+                        ENDDO
                       ENDDO
-                    ENDDO
+                      nnzL=mat%nnz-nnzU
+                      nnzU=nnzU+mat%n
                   ENDSELECT
-                ENDSELECT 
-                IF(PC%L%isInit .AND. PC%U%isInit) THEN
+                    
+                  SELECTTYPE(PC); TYPE IS(BILU_PrecondType) 
+                    ! Initialize L and U
+                    nU=mat%n
+                    nL=mat%n
+                    CALL PL%add('MatrixType->n',nU)
+                    CALL PL%add('MatrixType->nnz',nnzU)
+                    CALL PC%U%init(PL)
+                    CALL PL%set('MatrixType->n',nL)
+                    CALL PL%set('MatrixType->nnz',nnzL)
+                    CALL PC%L%init(PL)
+                    CALL PL%clear()
+  
+                    SELECTTYPE(L => PC%L); TYPE IS(SparseMatrixType)
+                      SELECTTYPE(U => PC%U); TYPE IS(SparseMatrixType)
+                        ! Set the shape
+                        DO row=1,SIZE(mat%ia)-1
+                          DO j=mat%ia(row),mat%ia(row+1)-1
+                            col=mat%ja(j)
+                            ! This may be redundant since mat is sparse, but be safe for now
+                            CALL mat%get(row,col,val)
+                            IF(.NOT.(val .APPROXEQA. 0.0_SRK)) THEN
+                              IF(col >= row+PC%Ngrp*PC%Npin-1) THEN
+                                CALL U%setShape(row,col,0.0_SRK)
+                              ELSEIF(row == col) THEN
+                                CALL U%setShape(row,row,0.0_SRK)
+                                CALL L%setShape(row,row,0.0_SRK)
+                              ELSE
+                                CALL L%setShape(row,col,0.0_SRK)
+                              ENDIF
+                            ENDIF
+                          ENDDO
+                        ENDDO
+                      ENDSELECT
+                    ENDSELECT 
+                    IF(PC%L%isInit .AND. PC%U%isInit) THEN
+                      PC%isInit=.TRUE.
+                    ELSEIF(.NOT.(PC%L%isInit)) THEN
+                      CALL ePreCondtype%raiseError('Incorrect input to '//modName//'::'//myName// &
+                        ' - In LU Preconditioner initialization, L was not properly initialized')
+                    ELSE
+                      CALL ePreCondtype%raiseError('Incorrect input to '//modName//'::'//myName// &
+                        ' - In LU Preconditioner initialization, U was not properly initialized')
+                    ENDIF
+                  ENDSELECT
+                CLASS IS(PETScMatrixType)
+                  !allocate L and U
+                  ALLOCATE(PETScMatrixType :: PC%L)
+                  ALLOCATE(PETScMatrixType :: PC%U)
+                  
+                  !initialize L and U
+                  SELECTTYPE(U => PC%U); TYPE IS(PETScMatrixType)
+                    SELECTTYPE(L => PC%L); TYPE IS(PETScMatrixType)
+                      ! Initialize L and U (add preallocation eventually)
+                      CALL PL%add('MatrixType->matType',SPARSE)
+                      CALL PL%add('MatrixType->n',mat%n)
+                      CALL PL%add('MatrixType->isSym',mat%isSymmetric)
+                      CALL PL%add('MatrixType->MPI_Comm_ID',mat%comm)  
+                      CALL U%init(PL)
+                      CALL L%init(PL)
+                      CALL PL%clear()
+                    ENDSELECT
+                  ENDSELECT
+  
                   PC%isInit=.TRUE.
-                ELSEIF(.NOT.(PC%L%isInit)) THEN
-                  CALL ePreCondtype%raiseError('Incorrect input to '//modName//'::'//myName// &
-                    ' - In LU Preconditioner initialization, L was not properly initialized')
-                ELSE
-                  CALL ePreCondtype%raiseError('Incorrect input to '//modName//'::'//myName// &
-                    ' - In LU Preconditioner initialization, U was not properly initialized')
-                ENDIF
-              ENDSELECT
-            CLASS IS(PETScMatrixType)
-              !allocate L and U
-              ALLOCATE(PETScMatrixType :: PC%L)
-              ALLOCATE(PETScMatrixType :: PC%U)
-              
-              !initialize L and U
-              SELECTTYPE(U => PC%U); TYPE IS(PETScMatrixType)
-                SELECTTYPE(L => PC%L); TYPE IS(PETScMatrixType)
-                  ! Initialize L and U (add preallocation eventually)
-                  CALL PL%add('MatrixType->matType',SPARSE)
-                  CALL PL%add('MatrixType->n',mat%n)
-                  CALL PL%add('MatrixType->isSym',mat%isSymmetric)
-                  CALL PL%add('MatrixType->MPI_Comm_ID',mat%comm)  
-                  CALL U%init(PL)
-                  CALL L%init(PL)
-                  CALL PL%clear()
-                ENDSELECT
-              ENDSELECT
-
-              PC%isInit=.TRUE.
-            CLASS DEFAULT
-              CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
-                ' - LU Preconditioners are not supported for input matrix type!')
-          ENDSELECT 
-
+                CLASS DEFAULT
+                  CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+                    ' - LU Preconditioners are not supported for input matrix type!')
+            ENDSELECT 
+          ENDIF
         ENDIF
       ENDIF
     ENDSUBROUTINE init_LU_PreCondtype
@@ -371,7 +375,7 @@ MODULE PreconditionerTypes
 !> @param solver The linear solver to act on
     SUBROUTINE apply_ILU_PreCondType(PC,v)
       CLASS(ILU_PrecondType),INTENT(INOUT) :: PC
-      CLASS(Vectortype),INTENT(INOUT) :: v
+      CLASS(Vectortype),ALLOCATABLE,INTENT(INOUT) :: v
 
       CHARACTER(LEN=*),PARAMETER :: myName='apply_ILU_PreCondType'
       LOGICAL(SBK) :: localalloc
@@ -385,18 +389,23 @@ MODULE PreconditionerTypes
       IF(.NOT.(PC%isInit)) THEN
         CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
           ' - Preconditioner is not initialized.')
-      ELSEIF(.NOT.(v%isInit)) THEN
+      ELSEIF(.NOT.(ALLOCATED(v))) THEN
         CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
-          ' - VectorType is not initialized.')
+          ' - VectorType is not allocated.')
       ELSE
-        SELECTTYPE(v)
-          CLASS IS(RealVectorType)
-            CALL BLAS_matvec(THISMATRIX=PC%LU,X=v,Y=v,UPLO='L',DIAG='T',TRANS='N')
-            CALL BLAS_matvec(THISMATRIX=PC%LU,X=v,Y=v,UPLO='U',DIAG='N',TRANS='N')
-          CLASS DEFAULT
-            CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
-              ' - Vector type is not support by this PreconditionerType.')
-        ENDSELECT
+        IF(.NOT.(v%isInit)) THEN
+          CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+            ' - VectorType is not initialized.')
+        ELSE
+          SELECTTYPE(v)
+            CLASS IS(RealVectorType)
+              CALL BLAS_matvec(THISMATRIX=PC%LU,X=v,Y=v,UPLO='L',DIAG='T',TRANS='N')
+              CALL BLAS_matvec(THISMATRIX=PC%LU,X=v,Y=v,UPLO='U',DIAG='N',TRANS='N')
+            CLASS DEFAULT
+              CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+                ' - Vector type is not support by this PreconditionerType.')
+          ENDSELECT
+        ENDIF
       ENDIF
     ENDSUBROUTINE apply_ILU_PreCondType
 !-------------------------------------------------------------------------------
@@ -821,67 +830,60 @@ MODULE PreconditionerTypes
       IF(.NOT.(PC%isinit)) THEN
         CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
           ' - Preconditioner is not initialized!')
+      ELSEIF(.NOT.(ALLOCATED(PC%LU))) THEN
+          CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+            ' - Matrix being used for LU Preconditioner is not allocated!')
       ELSE
-        IF(.NOT.(PC%A%isInit)) THEN
+        IF(.NOT.(PC%LU%isInit)) THEN
           CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
             ' - Matrix being used for LU Preconditioner is not initialized!')
         ELSE
           SELECTTYPE(LU => PC%LU)
             CLASS IS(DenseSquareMatrixType)
-              IF(.NOT.(LU%isinit)) THEN
-                CALL ePrecondType%raiseError('Incorrect input to '//modName//'::'//myName// &
-                  ' - in LU decomposition, LU matrix is not properly initialized!')
-              ELSE
-                ! LU Decomposition - No fill-in
-                j=LU%n
-                DO row=2,j
-                  DO col=1,row-1
-                    CALL LU%get(row,col,val1)
-                    IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) THEN
-                      CALL LU%get(col,col,val2)
-                      val2=val1/val2
-                      CALL LU%set(row,col,val2)
-                      DO col2=col+1,j
-                        CALL LU%get(col,col2,val3)
-                        IF(.NOT.(val3 .APPROXEQA. 0.0_SRK)) THEN
-                          IF(col2 < row) THEN
-                            CALL LU%get(row,col2,val1)
-                            IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) CALL LU%set(row,col2,val1-val2*val3)
-                          ELSE
-                            CALL LU%get(row,col2,val1)
-                            IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) CALL LU%set(row,col2,val1-val2*val3)
-                          ENDIF
+              ! LU Decomposition - No fill-in
+              j=LU%n
+              DO row=2,j
+                DO col=1,row-1
+                  CALL LU%get(row,col,val1)
+                  IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) THEN
+                    CALL LU%get(col,col,val2)
+                    val2=val1/val2
+                    CALL LU%set(row,col,val2)
+                    DO col2=col+1,j
+                      CALL LU%get(col,col2,val3)
+                      IF(.NOT.(val3 .APPROXEQA. 0.0_SRK)) THEN
+                        IF(col2 < row) THEN
+                          CALL LU%get(row,col2,val1)
+                          IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) CALL LU%set(row,col2,val1-val2*val3)
+                        ELSE
+                          CALL LU%get(row,col2,val1)
+                          IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) CALL LU%set(row,col2,val1-val2*val3)
                         ENDIF
-                      ENDDO
-                    ENDIF
-                  ENDDO
+                      ENDIF
+                    ENDDO
+                  ENDIF
                 ENDDO
-              ENDIF
+              ENDDO
             CLASS IS(SparseMatrixType)
-              IF(.NOT.(LU%isInit)) THEN
-                CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
-                  ' - In LU decomposition, L was not properly initialized!')
-              ELSE
-                ! ILU Decomposition - No fill-in
-                DO row=2,SIZE(LU%ia)-1
-                  DO col=LU%ia(row),LU%ia(row+1)-1
-                    IF(LU%ja(col) >= row) EXIT
-                    CALL LU%get(row,LU%ja(col),val1)
-                    IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) THEN
-                      CALL LU%get(LU%ja(col),LU%ja(col),val2)
-                      val2=val1/val2
-                      CALL LU%set(row,LU%ja(col),val2)
-                      DO col2=col+1,LU%ia(row+1)-1
-                        CALL LU%get(LU%ja(col),LU%ja(col2),val3)
-                        IF(.NOT.(val3 .APPROXEQA. 0.0_SRK)) THEN
-                          CALL LU%get(row,LU%ja(col2),val1)
-                          IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) CALL LU%set(row,LU%ja(col2),val1-val2*val3)
-                        ENDIF
-                      ENDDO
-                    ENDIF
-                  ENDDO
+              ! ILU Decomposition - No fill-in
+              DO row=2,SIZE(LU%ia)-1
+                DO col=LU%ia(row),LU%ia(row+1)-1
+                  IF(LU%ja(col) >= row) EXIT
+                  CALL LU%get(row,LU%ja(col),val1)
+                  IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) THEN
+                    CALL LU%get(LU%ja(col),LU%ja(col),val2)
+                    val2=val1/val2
+                    CALL LU%set(row,LU%ja(col),val2)
+                    DO col2=col+1,LU%ia(row+1)-1
+                      CALL LU%get(LU%ja(col),LU%ja(col2),val3)
+                      IF(.NOT.(val3 .APPROXEQA. 0.0_SRK)) THEN
+                        CALL LU%get(row,LU%ja(col2),val1)
+                        IF(.NOT.(val1 .APPROXEQA. 0.0_SRK)) CALL LU%set(row,LU%ja(col2),val1-val2*val3)
+                      ENDIF
+                    ENDDO
+                  ENDIF
                 ENDDO
-              ENDIF
+              ENDDO
           ENDSELECT
         ENDIF
       ENDIF

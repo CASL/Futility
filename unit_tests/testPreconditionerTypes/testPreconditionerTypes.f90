@@ -42,10 +42,11 @@ PROGRAM testPreconditionerTypes
   
   TYPE(ExceptionHandlerType),TARGET :: e
   TYPE(ParamType) :: PListMat,PListVec
-  CLASS(MatrixType),ALLOCATABLE :: testSparseMatrix,testDenseMatrix
+  CLASS(MatrixType),ALLOCATABLE :: testSparseMatrix,testDenseMatrix,testMatrix
   CLASS(MatrixType),ALLOCATABLE :: testBILU_1g,testBILU_mg
-  CLASS(VectorType),ALLOCATABLE :: testVector
+  CLASS(VectorType),ALLOCATABLE :: testVector,testDummy
   CLASS(VectorType),ALLOCATABLE :: testVec_1g,testVec_mg
+  INTEGER(SIK) :: nerrors1,nerrors2
 
 #ifdef HAVE_MPI
   INTEGER :: mpierr
@@ -69,6 +70,7 @@ PROGRAM testPreconditionerTypes
   CALL setupILUTest()
   REGISTER_SUBTEST('Test ILU Preconditioner Type',testILU_PreCondType)
   CALL clearTest()
+
 
 !#ifdef MPACT_HAVE_PETSC
 !  !test BILU petsc
@@ -155,6 +157,80 @@ PROGRAM testPreconditionerTypes
       REAL(SRK) :: tmpreal(40),tmpreal2(10)
       INTEGER(SIK) :: i,j,k
 
+
+      ALLOCATE(ILU_PreCondType :: testLU)
+      !Test error checking
+      CALL testLU%init(testDenseMatrix)
+      nerrors1=e%getCounter(EXCEPTION_ERROR)
+      CALL testLU%init(testDenseMatrix)
+      nerrors2=e%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerrors2 == nerrors1+1,'init_LU_Preconditioner PC%isInit check')
+      FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
+      CALL testLU%clear()
+
+      nerrors1=e%getCounter(EXCEPTION_ERROR)
+      CALL testLU%init(testMatrix)
+      nerrors2=e%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerrors2 == nerrors1+1,'init_LU_Preconditioner ALLOCATED(PC%A) check')
+      FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
+
+      nerrors1=e%getCounter(EXCEPTION_ERROR)
+      ALLOCATE(DenseSquareMatrixType :: testMatrix) !Just a dummy matrix for error check tests
+      CALL testLU%init(testMatrix)
+      nerrors2=e%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerrors2 == nerrors1+1,'init_LU_Preconditioner PC%A%isInit check')
+      FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
+
+      CALL testLU%clear()
+      nerrors1=e%getCounter(EXCEPTION_ERROR)
+      CALL testLU%setup()
+      nerrors2=e%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerrors2 == nerrors1+1,'setup_LU_Preconditioner PC%isInit check')
+      FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
+
+      CALL testLU%init(testDenseMatrix)
+      SELECTTYPE(LU => testLU%LU); TYPE IS(DenseSquareMatrixType)
+        CALL LU%clear()        
+        nerrors1=e%getCounter(EXCEPTION_ERROR)        
+        CALL testLU%setup()        
+        nerrors2=e%getCounter(EXCEPTION_ERROR)        
+        ASSERT(nerrors2 == nerrors1+1,'setup_LU_Preconditioner PC%LU%isInit check')        
+        FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
+! This test is commented out for the time being
+! A workaround had to be implemented in gnu, and a petsc build still fails
+! There's no way this should ever happen, so it shouldn't be a problem.
+!        DEALLOCATE(LU)
+!        nerrors1=e%getCounter(EXCEPTION_ERROR)
+!        CALL testLU%setup()
+!        nerrors2=e%getCounter(EXCEPTION_ERROR)
+!        ASSERT(nerrors2 == nerrors1+1,'setup_LU_Preconditioner ALLOCATED(PC%LU) check')
+!        FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
+!        ALLOCATE(LU) ! This has to be done or memory corruption occurs in testLU%clear()
+!                     ! I think this is a gnu bug based on some documentation.  This doesn't
+!                     ! hurt anything though
+      ENDSELECT
+
+      CALL testLU%clear()
+      nerrors1=e%getCounter(EXCEPTION_ERROR)
+      CALL testLU%apply(testDummy)
+      nerrors2=e%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerrors2 == nerrors1+1,'applpy_LU_Preconditioner PC%isInit check')
+      FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1      
+
+      CALL testLU%init(testDenseMatrix)
+      nerrors1=e%getCounter(EXCEPTION_ERROR)
+      CALL testLU%apply(testDummy)
+      nerrors2=e%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerrors2 == nerrors1+1,'apply_LU_Preconditioner ALLOCATED(v) check')
+      FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
+
+      ALLOCATE(RealVectorType :: testDummy)
+      nerrors1=e%getCounter(EXCEPTION_ERROR)
+      CALL testLU%apply(testDummy)
+      nerrors2=e%getCounter(EXCEPTION_ERROR)
+      ASSERT(nerrors2 == nerrors1+1,'apply_LU_Preconditioner v%isInit check')
+      FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
+
       !This is used to check %apply() routines
       tmpreal=(/1.0000000000000000_SRK,2.0000000000000000_SRK,3.0000000000000000_SRK, &
         4.0000000000000000_SRK,-3.0000000000000000_SRK,6.0000000000000000_SRK, &
@@ -176,7 +252,6 @@ PROGRAM testPreconditionerTypes
 
       COMPONENT_TEST('ILU_PreCondType, DenseMatrixType')
       IF(testDenseMatrix%isInit .AND. testVector%isInit) THEN
-        ALLOCATE(ILU_PreCondType :: testLU)
         
         ! Check %init
         CALL testLU%init(testDenseMatrix)
@@ -188,8 +263,9 @@ PROGRAM testPreconditionerTypes
             ASSERT(ALL(LU%a .APPROXEQA. A%a),'DenseSquareMatrixType ILU%LU%a')
           ENDSELECT
         CLASS DEFAULT
-          ASSERT(.FALSE.,'DenseSquareMatrixType ILU%LU TYPE IS(SparseMatrixType)')
+          ASSERT(.FALSE.,'DenseSquareMatrixType ILU%LU TYPE IS(DenseSquareMatrixType)')
         ENDSELECT
+
 
         ! Check %setup
         CALL testLU%setup()

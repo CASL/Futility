@@ -97,6 +97,7 @@ CONTAINS
 !-------------------------------------------------------------------------------
     SUBROUTINE testClear()
       CLASS(LinearSolverType_Base),ALLOCATABLE :: thisLS
+      LOGICAL(SBK) :: bool
     !test Direct
       ALLOCATE(LinearSolverType_Direct :: thisLS)
       
@@ -182,6 +183,10 @@ CONTAINS
         CALL pList%add('MatrixType->isSym',.TRUE.)
         CALL pList%validate(pList,optListMat)
         CALL thisLS%A%init(pList) !2x2, symmetric
+
+        ! initialize preconditioner
+        ALLOCATE(ILU_PreCondType :: thisLS%PreCondType)
+        CALL thisLS%setupPC()
         
         ! initialize vector X
         CALL vecPList%set('VectorType -> n',2)
@@ -204,17 +209,16 @@ CONTAINS
       
       !check results
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-        IF(thisLS%isInit .OR.thisLS%solverMethod == 1                  &
-          .OR. ALLOCATED(thisLS%M) .OR. ALLOCATED(thisLS%A)            &
-          .OR. ALLOCATED(thisLS%X) .OR. thisLS%info /= 0               &
-!          .OR. thisLS%MPIparallelEnv%isInit()                          &
-!          .OR. thisLS%OMPparallelEnv%isInit()                          &
-          .OR. thisLS%normType == 2 .OR. thisLS%maxIters == 2          &
-          .OR. thisLS%iters == 2 .OR. thisLS%isDecomposed              &
-          .OR. thisLS%residual == 2._SRK .OR. thisLS%convTol == 2._SRK) THEN
-          WRITE(*,*) 'CALL Iterative%clear() FAILED!'
-          STOP 666
-        ENDIF
+        bool=thisLS%isInit .OR.thisLS%solverMethod == 1                  &
+            .OR. ALLOCATED(thisLS%M) .OR. ALLOCATED(thisLS%A)            &
+            .OR. ALLOCATED(thisLS%X) .OR. thisLS%info /= 0               &
+!            .OR. thisLS%MPIparallelEnv%isInit()                          &
+!            .OR. thisLS%OMPparallelEnv%isInit()                          &
+            .OR. thisLS%normType == 2 .OR. thisLS%maxIters == 2          &
+            .OR. thisLS%iters == 2 .OR. thisLS%isDecomposed              &
+            .OR. thisLS%residual == 2._SRK .OR. thisLS%convTol == 2._SRK &
+            .OR. ALLOCATED(thisLS%PreCondType)
+        ASSERT(.NOT.(bool),'CALL Iterative%clear() FAILED!')
       ENDSELECT
       CALL thisLS%clear()
       DEALLOCATE(thisLS)
@@ -224,6 +228,7 @@ CONTAINS
 !-------------------------------------------------------------------------------
     SUBROUTINE testInit()
       CLASS(LinearSolverType_Base),ALLOCATABLE :: thisLS
+      INTEGER(SIK) :: nerrors1,nerrors2
    !test Direct
       ALLOCATE(LinearSolverType_Direct :: thisLS)
       
@@ -376,15 +381,42 @@ CONTAINS
       CALL pList%add('LinearSolverType->A->MatrixType->nnz',2_SNK)
       CALL pList%add('LinearSolverType->x->VectorType->n',2_SNK)
       CALL pList%add('LinearSolverType->b->VectorType->n',2_SNK)
+      CALL pList%add('LinearSolverType->PCType','ILU')
+      CALL pList%add('LinearSolverType->PCIters',-1)
+      CALL pList%add('LinearSolverType->PCSetup',0)
+
       CALL pList%validate(pList,optListLS)
       CALL thisLS%init(pList)
-      SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
+      SELECTTYPE(thisLS); TYPE IS(LinearSolvertype_Iterative)
+
         IF(.NOT. (thisLS%isInit .AND. thisLS%solverMethod == 1 &
            .AND. thisLS%MPIparallelEnv%isInit() &
            .AND. thisLS%OMPparallelEnv%isInit() &
            .AND. thisLS%SolveTime%getTimerName() == 'testTimer')) THEN
           WRITE(*,*) 'CALL Iterative%init(...) FAILED!'
           STOP 666
+        ELSE 
+          ! Check uninitialized A
+          CALL thisLS%A%clear()
+          nerrors1=e%getCounter(EXCEPTION_ERROR)
+          CALL thisLS%setupPC()
+          nerrors2=e%getCounter(EXCEPTION_ERROR)
+          ASSERT(nerrors2 == nerrors1+1,'LS%setupPC PC%A%isInit check')
+          FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
+          ! Check deallocated A
+          DEALLOCATE(thisLS%A)
+          nerrors1=e%getCounter(EXCEPTION_ERROR)
+          CALL thisLS%setupPC()
+          nerrors2=e%getCounter(EXCEPTION_ERROR)
+          ASSERT(nerrors2 == nerrors1+1,'LS%setupPC ALLOCATED(PC%A) check')
+          FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
+          ! Check uninitialized linear solver
+          CALL thisLS%clear()
+          nerrors1=e%getCounter(EXCEPTION_ERROR)
+          CALL thisLS%setupPC()
+          nerrors2=e%getCounter(EXCEPTION_ERROR)
+          ASSERT(nerrors2 == nerrors1+1,'LS%setupPC ALLOCATED(PC%A) check')
+          FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
         ENDIF
       ENDSELECT
       CALL thisLS%clear()
@@ -2885,8 +2917,8 @@ CONTAINS
       ASSERT(match,'CALL Iterative%solve() -GMRES FAILED!')
       
       DEALLOCATE(thisB)
-      CALL thisLS%clear()
       DEALLOCATE(thisX)
+      CALL thisLS%clear()
       
     !test with A being densesquare
       COMPONENT_TEST('DenseRectMatrixType')
