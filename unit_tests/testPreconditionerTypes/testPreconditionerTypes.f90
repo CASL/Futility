@@ -211,18 +211,18 @@ PROGRAM testPreconditionerTypes
       ENDSELECT
 
       CALL testLU%clear()
-      nerrors1=e%getCounter(EXCEPTION_ERROR)
-      CALL testLU%apply(testDummy)
-      nerrors2=e%getCounter(EXCEPTION_ERROR)
-      ASSERT(nerrors2 == nerrors1+1,'applpy_LU_Preconditioner PC%isInit check')
-      FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1      
+!      nerrors1=e%getCounter(EXCEPTION_ERROR)
+!      CALL testLU%apply(testDummy)
+!      nerrors2=e%getCounter(EXCEPTION_ERROR)
+!      ASSERT(nerrors2 == nerrors1+1,'applpy_LU_Preconditioner PC%isInit check')
+!      FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1      
 
-      CALL testLU%init(testDenseMatrix)
-      nerrors1=e%getCounter(EXCEPTION_ERROR)
-      CALL testLU%apply(testDummy)
-      nerrors2=e%getCounter(EXCEPTION_ERROR)
-      ASSERT(nerrors2 == nerrors1+1,'apply_LU_Preconditioner ALLOCATED(v) check')
-      FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
+!      CALL testLU%init(testDenseMatrix)
+!      nerrors1=e%getCounter(EXCEPTION_ERROR)
+!      CALL testLU%apply(testDummy)
+!      nerrors2=e%getCounter(EXCEPTION_ERROR)
+!      ASSERT(nerrors2 == nerrors1+1,'apply_LU_Preconditioner ALLOCATED(v) check')
+!      FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
 
       ALLOCATE(RealVectorType :: testDummy)
       nerrors1=e%getCounter(EXCEPTION_ERROR)
