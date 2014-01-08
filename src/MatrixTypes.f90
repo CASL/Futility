@@ -1237,7 +1237,6 @@ MODULE MatrixTypes
       REAL(SRK),ALLOCATABLE :: tmpmat(:,:)
       INTEGER(SIK) :: i,j
       LOGICAL(SBK) :: localalloc
-      
       CHARACTER(LEN=1) :: t,ul,d
       INTEGER(SIK) :: incx
 
@@ -1526,25 +1525,18 @@ MODULE MatrixTypes
     ENDSUBROUTINE matvec_MatrixTypeVectorType
 !
 !-------------------------------------------------------------------------------
-!> @brief Subroutine solves a triangular matrix linear system.
+!> @brief Subroutine solves a sparse triangular matrix linear system.
 !> @param uplo single character input indicating if an upper (U) or lower (L) 
 !>        maxtrix is stored in @c A
 !> @param trans single character input indicating whether or not to use the 
 !>        transpose of @c A
 !> @param diag single character input indicating whether or not a unity
 !>        diagonal is used
-!> @param n the size of the dimension of @c A (number of rows and columns)
-!> @param A the double-precision matrix multiply with @c x
-!> @param lda the size of the leading (first) dimension of @c A
-!> @param x the double-precision vector to multiply with @c A
-!> @param incx the increment to use when looping over elements in @c x
-!>
-!> If an external BLAS library is available at link time then that library
-!> routine that gets called, otherwise the supplied code is used. It is based on
-!> the code available on http://netlib.org/blas/strsv.f but has some minor
-!> modifications. The error checking is somewhat different.
-!>
-!    PURE SUBROUTINE dtrsv_all_sparse(uplo,trans,diag,a,ia,ja,x,incx_in)
+!> @param a the double-precision matrix to multiply with @c x, stored in CSR format
+!> @param ia the indices of the @c a for the first element in each row
+!> @param ja the column indices for each element in @c a
+!> @param x the double-precision vector to multiply with @c a
+!> @param incx_in the increment to use when looping over elements in @c x
     PURE SUBROUTINE trsv_sparse(uplo,trans,diag,a,ia,ja,x,incx_in)
       CHARACTER(LEN=1),INTENT(IN) :: uplo
       CHARACTER(LEN=1),INTENT(IN) :: trans
@@ -1563,7 +1555,7 @@ MODULE MatrixTypes
       IF(PRESENT(incx_in)) THEN
         incx=incx_in
       ELSE
-        incx=1_SIK
+        incx=1_SIK ! This won't ever be used in the current interfaces
       ENDIF
       ! Check inputs
       IF((trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &

@@ -69,24 +69,15 @@ PROGRAM testLinearSolver
   CREATE_TEST('Test Linear Solvers')
  
   REGISTER_SUBTEST('TESTING NORMS PROCEDURE',testNorms)
-  
-  WRITE(*,*) 'TESTING LINEAR SOLVER TYPES'
-  CALL testClear()
-  CALL testInit()
-  CALL testUpdatedA()
-  CALL testDirectSolve()
-  CALL testIterativeOthers()
-  CALL testIterativeSolve_BICGSTAB()
-  CALL testIterativeSolve_CGNR()
-  CALL testIterativeSolve_GMRES()
+  REGISTER_SUBTEST('testClear',testClear)
+  REGISTER_SUBTEST('testInit',testInit)
+  REGISTER_SUBTEST('TestUpdatedA',testUpdatedA)
+  REGISTER_SUBTEST('testDirectSolve',testDirectSolve)
+  REGISTER_SUBTEST('testIterativeOthers',testIterativeOthers)
+  REGISTER_SUBTEST('testIterativeSolve_BICGSTAB',testIterativeSolve_BICGSTAB)
+  REGISTER_SUBTEST('testiterativeSovle_CGNR',testIterativeSolve_CGNR)
+  REGISTER_SUBTEST('testIterativeSolve_GMRES',testIterativeSolve_GMRES)
 
-  !Edit the reference lists
-  !CALL reqParamsLST%edit(666)
-  !WRITE(666,*)
-  !WRITE(666,*) '==================================================='
-  !WRITE(666,*)
-  !CALL optParamsLST%edit(666)
-  
   FINALIZE_TEST() 
 
   CALL pList%clear()
@@ -106,6 +97,7 @@ CONTAINS
 !-------------------------------------------------------------------------------
     SUBROUTINE testClear()
       CLASS(LinearSolverType_Base),ALLOCATABLE :: thisLS
+      LOGICAL(SBK) :: bool
     !test Direct
       ALLOCATE(LinearSolverType_Direct :: thisLS)
       
@@ -163,7 +155,6 @@ CONTAINS
           STOP 666
         ENDIF
       ENDSELECT
-      WRITE(*,*) '  Passed: CALL Direct%clear()'
       DEALLOCATE(thisLS)
       
     !test Iterative
@@ -192,6 +183,10 @@ CONTAINS
         CALL pList%add('MatrixType->isSym',.TRUE.)
         CALL pList%validate(pList,optListMat)
         CALL thisLS%A%init(pList) !2x2, symmetric
+
+        ! initialize preconditioner
+        ALLOCATE(ILU_PreCondType :: thisLS%PreCondType)
+        CALL thisLS%setupPC()
         
         ! initialize vector X
         CALL vecPList%set('VectorType -> n',2)
@@ -214,27 +209,26 @@ CONTAINS
       
       !check results
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-        IF(thisLS%isInit .OR.thisLS%solverMethod == 1                  &
-          .OR. ALLOCATED(thisLS%M) .OR. ALLOCATED(thisLS%A)            &
-          .OR. ALLOCATED(thisLS%X) .OR. thisLS%info /= 0               &
-!          .OR. thisLS%MPIparallelEnv%isInit()                          &
-!          .OR. thisLS%OMPparallelEnv%isInit()                          &
-          .OR. thisLS%normType == 2 .OR. thisLS%maxIters == 2          &
-          .OR. thisLS%iters == 2 .OR. thisLS%isDecomposed              &
-          .OR. thisLS%residual == 2._SRK .OR. thisLS%convTol == 2._SRK) THEN
-          WRITE(*,*) 'CALL Iterative%clear() FAILED!'
-          STOP 666
-        ENDIF
+        bool=thisLS%isInit .OR.thisLS%solverMethod == 1                  &
+            .OR. ALLOCATED(thisLS%M) .OR. ALLOCATED(thisLS%A)            &
+            .OR. ALLOCATED(thisLS%X) .OR. thisLS%info /= 0               &
+!            .OR. thisLS%MPIparallelEnv%isInit()                          &
+!            .OR. thisLS%OMPparallelEnv%isInit()                          &
+            .OR. thisLS%normType == 2 .OR. thisLS%maxIters == 2          &
+            .OR. thisLS%iters == 2 .OR. thisLS%isDecomposed              &
+            .OR. thisLS%residual == 2._SRK .OR. thisLS%convTol == 2._SRK &
+            .OR. ALLOCATED(thisLS%PreCondType)
+        ASSERT(.NOT.(bool),'CALL Iterative%clear() FAILED!')
       ENDSELECT
       CALL thisLS%clear()
       DEALLOCATE(thisLS)
-      WRITE(*,*) '  Passed: CALL Iterative%clear()'
       
     ENDSUBROUTINE testClear
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testInit()
       CLASS(LinearSolverType_Base),ALLOCATABLE :: thisLS
+      INTEGER(SIK) :: nerrors1,nerrors2
    !test Direct
       ALLOCATE(LinearSolverType_Direct :: thisLS)
       
@@ -327,7 +321,6 @@ CONTAINS
       ENDSELECT
       CALL thisLS%clear()
       DEALLOCATE(thisLS)
-      WRITE(*,*) '  Passed: CALL Direct%init(...)'
       
     !test Iterative
       ALLOCATE(LinearSolverType_Iterative :: thisLS)
@@ -388,15 +381,42 @@ CONTAINS
       CALL pList%add('LinearSolverType->A->MatrixType->nnz',2_SNK)
       CALL pList%add('LinearSolverType->x->VectorType->n',2_SNK)
       CALL pList%add('LinearSolverType->b->VectorType->n',2_SNK)
+      CALL pList%add('LinearSolverType->PCType','ILU')
+      CALL pList%add('LinearSolverType->PCIters',-1)
+      CALL pList%add('LinearSolverType->PCSetup',0)
+
       CALL pList%validate(pList,optListLS)
       CALL thisLS%init(pList)
-      SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
+      SELECTTYPE(thisLS); TYPE IS(LinearSolvertype_Iterative)
+
         IF(.NOT. (thisLS%isInit .AND. thisLS%solverMethod == 1 &
            .AND. thisLS%MPIparallelEnv%isInit() &
            .AND. thisLS%OMPparallelEnv%isInit() &
            .AND. thisLS%SolveTime%getTimerName() == 'testTimer')) THEN
           WRITE(*,*) 'CALL Iterative%init(...) FAILED!'
           STOP 666
+        ELSE 
+          ! Check uninitialized A
+          CALL thisLS%A%clear()
+          nerrors1=e%getCounter(EXCEPTION_ERROR)
+          CALL thisLS%setupPC()
+          nerrors2=e%getCounter(EXCEPTION_ERROR)
+          ASSERT(nerrors2 == nerrors1+1,'LS%setupPC PC%A%isInit check')
+          FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
+          ! Check deallocated A
+          DEALLOCATE(thisLS%A)
+          nerrors1=e%getCounter(EXCEPTION_ERROR)
+          CALL thisLS%setupPC()
+          nerrors2=e%getCounter(EXCEPTION_ERROR)
+          ASSERT(nerrors2 == nerrors1+1,'LS%setupPC ALLOCATED(PC%A) check')
+          FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
+          ! Check uninitialized linear solver
+          CALL thisLS%clear()
+          nerrors1=e%getCounter(EXCEPTION_ERROR)
+          CALL thisLS%setupPC()
+          nerrors2=e%getCounter(EXCEPTION_ERROR)
+          ASSERT(nerrors2 == nerrors1+1,'LS%setupPC ALLOCATED(PC%A) check')
+          FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
         ENDIF
       ENDSELECT
       CALL thisLS%clear()
@@ -425,7 +445,6 @@ CONTAINS
       ENDSELECT
       CALL thisLS%clear()
       DEALLOCATE(thisLS)
-      WRITE(*,*) '  Passed: CALL Iterative%init(...)'
 
     ENDSUBROUTINE testInit
 !
@@ -471,7 +490,6 @@ CONTAINS
           STOP 666
         ENDIF
       ENDSELECT
-      WRITE(*,*) '  Passed: CALL Direct%updatedA()'
       CALL thisLS%clear()
       DEALLOCATE(thisLS)
       
@@ -510,7 +528,6 @@ CONTAINS
           STOP 666
         ENDIF
       ENDSELECT
-      WRITE(*,*) '  Passed: CALL Iterative%updatedA()'
       CALL thisLS%clear()
       DEALLOCATE(thisLS)
       
@@ -1383,7 +1400,6 @@ CONTAINS
       ENDSELECT
 #endif
       
-      WRITE(*,*) '  Passed: CALL Direct%solve()'
     !end test of direct solver
       CALL thisLS%clear()
       DEALLOCATE(thisLS)
@@ -1442,7 +1458,6 @@ CONTAINS
       ENDSELECT
       DEALLOCATE(thisX2)
       CALL thisLS%clear()
-      WRITE(*,*) '  Passed: CALL Iterative%setX0(...)'
   
 #ifdef MPACT_HAVE_PETSC
       ! initialize linear system
@@ -1481,7 +1496,6 @@ CONTAINS
       ENDSELECT
       DEALLOCATE(thisX2)
       CALL thisLS%clear()
-      WRITE(*,*) '  Passed: CALL PETScIterative%setX0(...)'
 #endif
       
     !Test setConv
@@ -1523,7 +1537,6 @@ CONTAINS
         ENDIF
       ENDSELECT
       CALL thisLS%clear()
-      WRITE(*,*) '  Passed: CALL Iterative%setConv(...)'
  
 #ifdef MPACT_HAVE_PETSC
       !Test setConv
@@ -1570,7 +1583,6 @@ CONTAINS
         ENDIF
       ENDSELECT
       CALL thisLS%clear()
-      WRITE(*,*) '  Passed: CALL PETScIterative%setConv(...)'
 #endif
       
     !Test getResidual
@@ -1698,7 +1710,6 @@ CONTAINS
       CALL thisLS%clear()
       DEALLOCATE(resid_soln)      
       DEALLOCATE(thisLS)
-      WRITE(*,*) '  Passed: CALL Iterative%getResidual(...)'
       
     ENDSUBROUTINE testIterativeOthers
 !
@@ -2026,7 +2037,6 @@ CONTAINS
       
       DEALLOCATE(thisX)
       CALL thisLS%clear()
-      WRITE(*,*)'  Passed: CALL Iterative%solver() BICGSTAB'
 
 #ifdef MPACT_HAVE_PETSC
       !The PETSC sparse matrix type
@@ -2238,7 +2248,6 @@ CONTAINS
         WRITE(*,*) 'CALL PETSCIterative%solve() -BiCGSTAB FAILED!'
         STOP 666
       ENDIF
-      WRITE(*,*)'  Passed: CALL PETScIterative%solver() BICGSTAB'
       CALL thisLS%clear()
       DEALLOCATE(thisB)
 #endif
@@ -2536,7 +2545,6 @@ CONTAINS
       
       CALL thisLS%clear()
 
-      WRITE(*,*)'  Passed: CALL Iterative%solver() CGNR'
       
 #ifdef MPACT_HAVE_PETSC
       ! DenseSquare matrix
@@ -2658,7 +2666,6 @@ CONTAINS
       DEALLOCATE(thisX)
       CALL thisLS%clear()
 
-      WRITE(*,*)'  Passed: CALL PETScIterative%solver() CGNR'
 #endif
 
       DEALLOCATE(thisLS)
@@ -2675,6 +2682,7 @@ CONTAINS
 
       ALLOCATE(LinearSolverType_Iterative :: thisLS)
 
+      COMPONENT_TEST('SparseMatrixType')
       !With GMRES
       !The sparse matrix type
       
@@ -2783,17 +2791,137 @@ CONTAINS
           ENDIF
         ENDSELECT
       ENDDO
-      IF(.NOT. match) THEN
-        WRITE(*,*) 'CALL Iterative%solve() -GMRES FAILED!'
-        STOP 666
-      ENDIF
+      ASSERT(match,'CALL Iterative%solve() -GMRES FAILED!')
       
       DEALLOCATE(thisB)
       CALL thisLS%clear()
       DEALLOCATE(thisX)
       
+      COMPONENT_TEST('SparseMatrixType, Preconditioned')
+      !With preconditioned GMRES
+      !The sparse matrix type
+      
+      ! initialize linear system
+      CALL pList%clear()
+      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->solverMethod',GMRES)
+      CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
+      CALL pList%add('LinearSolverType->numberOMP',1_SNK)
+      CALL pList%add('LinearSolverType->timerName','testTimer')
+      CALL pList%add('LinearSolverType->A->MatrixType->matType',SPARSE)
+      CALL pList%add('LinearSolverType->A->MatrixType->n',9_SNK)
+      CALL pList%add('LinearSolverType->A->MatrixType->nnz',33_SNK)
+      CALL pList%add('LinearSolverType->x->VectorType->n',9_SNK)
+      CALL pList%add('LinearSolverType->b->VectorType->n',9_SNK)
+      CALL pList%add('LinearSolverType->PCType','ILU')
+      CALL pList%add('LinearSolverType->PCIters',-1)
+      CALL pList%add('LinearSolverType->PCSetup',0)
+      CALL pList%validate(pList,optListLS)
+      CALL thisLS%init(pList)
+      
+      !A =  4    -1     0    -1     0     0     0     0     0
+      !    -1     4    -1     0    -1     0     0     0     0
+      !     0    -1     4     0     0    -1     0     0     0
+      !    -1     0     0     4    -1     0    -1     0     0
+      !     0    -1     0    -1     4    -1     0    -1     0
+      !     0     0    -1     0    -1     4     0     0    -1
+      !     0     0     0    -1     0     0     4    -1     0
+      !     0     0     0     0    -1     0    -1     4    -1
+      !     0     0     0     0     0    -1     0    -1     4
+      SELECTTYPE(A => thisLS%A); TYPE IS(SparseMatrixType)
+          CALL A%setShape(1,1, 4.0_SRK)
+          CALL A%setShape(1,2,-1.0_SRK)
+          CALL A%setShape(1,4,-1.0_SRK)
+          CALL A%setShape(2,1,-1.0_SRK)
+          CALL A%setShape(2,2, 4.0_SRK)
+          CALL A%setShape(2,3,-1.0_SRK)
+          CALL A%setShape(2,5,-1.0_SRK)
+          CALL A%setShape(3,2,-1.0_SRK)
+          CALL A%setShape(3,3, 4.0_SRK)
+          CALL A%setShape(3,6,-1.0_SRK)
+          CALL A%setShape(4,1,-1.0_SRK)
+          CALL A%setShape(4,4, 4.0_SRK)
+          CALL A%setShape(4,5,-1.0_SRK)
+          CALL A%setShape(4,7,-1.0_SRK)
+          CALL A%setShape(5,2,-1.0_SRK)
+          CALL A%setShape(5,4,-1.0_SRK)
+          CALL A%setShape(5,5, 4.0_SRK)
+          CALL A%setShape(5,6,-1.0_SRK)
+          CALL A%setShape(5,8,-1.0_SRK)
+          CALL A%setShape(6,3,-1.0_SRK)
+          CALL A%setShape(6,5,-1.0_SRK)
+          CALL A%setShape(6,6, 4.0_SRK)
+          CALL A%setShape(6,9,-1.0_SRK)
+          CALL A%setShape(7,4,-1.0_SRK)
+          CALL A%setShape(7,7, 4.0_SRK)
+          CALL A%setShape(7,8,-1.0_SRK)
+          CALL A%setShape(8,5,-1.0_SRK)
+          CALL A%setShape(8,7,-1.0_SRK)
+          CALL A%setShape(8,8, 4.0_SRK)
+          CALL A%setShape(8,9,-1.0_SRK)
+          CALL A%setShape(9,6,-1.0_SRK)
+          CALL A%setShape(9,8,-1.0_SRK)
+          CALL A%setShape(9,9, 4.0_SRK)
+      ENDSELECT
+
+      SELECTTYPE(thisLS); TYPE IS(LinearSolvertype_Iterative)
+        CALL thisLS%setupPC()
+      ENDSELECT
+      
+      ! build X0 and set it to 1.0s
+      ALLOCATE(thisX(9))
+      thisX=1.0_SRK
+      
+      SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
+          CALL thisLS%setX0(thisX)
+      ENDSELECT
+
+      SELECTTYPE(b => thisLS%b); TYPE IS(RealVectorType)
+        CALL b%set(1.0_SRK)
+      ENDSELECT
+
+      !set iterations and convergence information and build/set M
+      SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
+        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1000_SIK,30_SIK)
+      ENDSELECT
+      
+      !solve it
+      CALL thisLS%solve()
+      
+      !Store expected solution (from MATLAB) in B
+      ALLOCATE(thisB(9))
+      thisB(1)=0.6875_SRK
+      thisB(2)=0.875_SRK
+      thisB(3)=0.6875_SRK
+      thisB(4)=0.875_SRK
+      thisB(5)=1.125_SRK
+      thisB(6)=0.875_SRK
+      thisB(7)=0.6875_SRK
+      thisB(8)=0.875_SRK
+      thisB(9)=0.6875_SRK
+      !multiply by 10,000 so we can match first five places.
+      thisB=10000.0_SRK*thisB
+      match=.TRUE.
+      DO i=1,SIZE(thisB)
+        SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
+          IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+          ALLOCATE(dummyvec(X%n))
+          CALL X%get(dummyvec)
+          IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
+            WRITE(*,*) 'Calculated:',dummyvec(i)*10000._SRK,'Solution:',thisB(i)
+            match=.FALSE.
+            EXIT
+          ENDIF
+        ENDSELECT
+      ENDDO
+      ASSERT(match,'CALL Iterative%solve() -GMRES FAILED!')
+      
+      DEALLOCATE(thisB)
+      DEALLOCATE(thisX)
+      CALL thisLS%clear()
+      
     !test with A being densesquare
-    
+      COMPONENT_TEST('DenseRectMatrixType')
       ! initialize linear system
       CALL pList%clear()
       CALL pList%add('LinearSolverType->TPLType',NATIVE)
@@ -2806,6 +2934,9 @@ CONTAINS
       CALL pList%add('LinearSolverType->A->MatrixType->isSym',.TRUE.)
       CALL pList%add('LinearSolverType->x->VectorType->n',9_SNK)
       CALL pList%add('LinearSolverType->b->VectorType->n',9_SNK)
+      CALL pList%add('LinearSolverType->PCType','NOPC')
+      CALL pList%add('LinearSolverType->PCIters',0)
+      CALL pList%add('LinearSolverType->PCSetup',0)
       CALL pList%validate(pList,optListLS)
       CALL thisLS%init(pList)
       
@@ -2891,6 +3022,7 @@ CONTAINS
       CALL thisLS%clear()
       
       ! TriDiagonal matrix, it will go to LU method
+      COMPONENT_TEST('TriDiagMatrixType')
       
       ! initialize linear system
       CALL pList%clear()
@@ -2989,7 +3121,6 @@ CONTAINS
      
       DEALLOCATE(thisB)
       CALL thisLS%clear()
-      WRITE(*,*)'  Passed: CALL Iterative%solver() GMRES'
       
 #ifdef MPACT_HAVE_PETSC
       !With GMRES
@@ -3204,7 +3335,6 @@ CONTAINS
       ENDIF
       CALL thisLS%A%clear()
             
-      WRITE(*,*)'  Passed: CALL PETScIterative%solver() GMRES'
 #endif
       CALL thisLS%clear()
       DEALLOCATE(thisX)
@@ -3262,7 +3392,6 @@ CONTAINS
         WRITE(*,*) norm
         STOP 666
       ENDIF
-      WRITE(*,*) '  Passed: CALL LNORM(...)'
     ENDSUBROUTINE testNorms
 
 ENDPROGRAM testLinearSolver
