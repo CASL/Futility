@@ -2520,7 +2520,7 @@ PROGRAM testBLAS
     
       
       
-      !sgemm_all(transa,transb,m,n,k,alpha,a,lda,b,ldb,beta,c,ldc)
+      !dgemm_all(transa,transb,m,n,k,alpha,a,lda,b,ldb,beta,c,ldc)
       !Check beta=0 and alpha=0 returns all zeros for the bounds specified
       CALL BLAS_matmat('N','n',4,4,4,dalpha,da,4,db,4,dbeta,dc,4)
       IF(ANY(.NOT.(dc(1:16,1) .APPROXEQ. 0.0_SDK)) .AND. &
@@ -2644,14 +2644,14 @@ PROGRAM testBLAS
       dc=4.0_SDK 
       dbeta=2.5_SDK     
       CALL BLAS_matmat('N','N',3,5,3,dalpha,da,3,db,3,dbeta,dc,3)
-      !Check sgemm_ttmnkaabbc
+      !Check dgemm_ttmnkaabbc
       CALL BLAS_matmat('N','N',3,5,3,dalpha2,da2,db2,dbeta2,dc2)
       IF(ANY(.NOT.(dc(:,:) .APPROXEQ. dc2(:,:)))) THEN
         WRITE(*,*) "CALL BLAS_matmat('N','N',3,5,3,dalpha2,da2,db2,dbeta2,dc2) FAILED!"
         STOP 666
       ENDIF
       
-      !Check sgemm_ttmnkabbc
+      !Check dgemm_ttmnkabbc
       da= 2.0_SDK; db= 3.0_SDK; dc= 4.0_SDK; dalpha= 1.0_SDK; dbeta= 2.5_SDK
       da2=2.0_SDK; db2=3.0_SDK; dc2=4.0_SDK; dalpha2=2.0_SDK; dbeta2=2.5_SDK
       
@@ -2663,7 +2663,7 @@ PROGRAM testBLAS
         STOP 666
       ENDIF
       
-      !Check sgemm_ttmnkaabc
+      !Check dgemm_ttmnkaabc
       dc= 4.0_SDK; dalpha= 2.0_SDK; dbeta= 1.0_SDK
       dc2=4.0_SDK; dalpha2=2.0_SDK; dbeta2=1.0_SDK
       
@@ -2675,7 +2675,7 @@ PROGRAM testBLAS
         STOP 666
       ENDIF
       
-      !Check sgemm_ttmnkabc
+      !Check dgemm_ttmnkabc
       dc= 4.0_SDK; dalpha= 1.0_SDK; dbeta= 1.0_SDK
       dc2=4.0_SDK; dalpha2=1.0_SDK; dbeta2=1.0_SDK
       
@@ -2687,7 +2687,7 @@ PROGRAM testBLAS
         STOP 666
       ENDIF
       
-      !Check sgemm_mnkaabbc
+      !Check dgemm_mnkaabbc
       dc= 4.0_SDK; dalpha= 2.0_SDK; dbeta= 2.5_SDK
       dc2=4.0_SDK; dalpha2=2.0_SDK; dbeta2=2.5_SDK
       
@@ -2699,7 +2699,7 @@ PROGRAM testBLAS
         STOP 666
       ENDIF
       
-      !Check sgemm_ttaabbc
+      !Check dgemm_ttaabbc
       dc= 4.0_SDK; dalpha= 2.0_SDK; dbeta= 2.5_SDK
       dc2=4.0_SDK; dalpha2=2.0_SDK; dbeta2=2.5_SDK
       
@@ -2712,7 +2712,7 @@ PROGRAM testBLAS
         STOP 666
       ENDIF
       
-      !Check sgemm_aabbc
+      !Check dgemm_aabbc
       dc= 4.0_SDK; dalpha= 2.0_SDK; dbeta= 2.5_SDK
       dc2=4.0_SDK; dalpha2=2.0_SDK; dbeta2=2.5_SDK
       
@@ -2725,20 +2725,20 @@ PROGRAM testBLAS
         STOP 666
       ENDIF
       
-      !Check sgemm_abbc
+      !Check dgemm_abbc
       dc= 4.0_SDK; dalpha= 1.0_SDK; dbeta= 2.5_SDK
       dc2=4.0_SDK; dalpha2=1.0_SDK; dbeta2=2.5_SDK
       
-      CALL BLAS_matmat('N','N',SIZE(dc,DIM=1),SIZE(dc,DIM=2),SIZE(db,DIM=1),dalpha, &
-        da,SIZE(dc,DIM=1),db,SIZE(db,DIM=1),dbeta,dc,1)
-      
+      CALL BLAS_matmat('N','N',SIZE(da,DIM=1),SIZE(db,DIM=2),SIZE(da,DIM=2),dalpha, &
+        da,SIZE(da,DIM=1),db,SIZE(db,DIM=1),dbeta,dc,SIZE(dc,DIM=1))
+
       CALL BLAS_matmat(da2,db2,dbeta2,dc2)
       IF(ANY(.NOT.(dc(:,:) .APPROXEQ. dc2(:,:)))) THEN
         WRITE(*,*) "CALL BLAS_matmat(dalpha2,da2,db2,dbeta2,dc2) FAILED!"
         STOP 666
       ENDIF
       
-      !Check sgemm_aabc
+      !Check dgemm_aabc
       dc= 4.0_SDK; dalpha= 2.0_SDK; dbeta= 1.0_SDK
       dc2=4.0_SDK; dalpha2=2.0_SDK; dbeta2=1.0_SDK
       
@@ -2751,7 +2751,7 @@ PROGRAM testBLAS
         STOP 666
       ENDIF
       
-      !Check sgemm_abc
+      !Check dgemm_abc
       dc= 4.0_SDK; dalpha= 1.0_SDK; dbeta= 1.0_SDK
       dc2=4.0_SDK; dalpha2=1.0_SDK; dbeta2=1.0_SDK
       
