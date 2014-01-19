@@ -2734,7 +2734,7 @@ PROGRAM testBLAS
 
       CALL BLAS_matmat(da2,db2,dbeta2,dc2)
       IF(ANY(.NOT.(dc(:,:) .APPROXEQ. dc2(:,:)))) THEN
-        WRITE(*,*) "CALL BLAS_matmat(dalpha2,da2,db2,dbeta2,dc2) FAILED!"
+        WRITE(*,*) "CALL BLAS_matmat(da2,db2,dbeta2,dc2) FAILED!"
         STOP 666
       ENDIF
       
@@ -2747,7 +2747,7 @@ PROGRAM testBLAS
       
       CALL BLAS_matmat(dalpha2,da2,db2,dc2)
       IF(ANY(.NOT.(dc(:,:) .APPROXEQ. dc2(:,:)))) THEN
-        WRITE(*,*) "CALL BLAS_matmat(dalpha2,da2,db2,dbeta2,dc2) FAILED!"
+        WRITE(*,*) "CALL BLAS_matmat(dalpha2,da2,db2,dc2) FAILED!"
         STOP 666
       ENDIF
       
@@ -2760,7 +2760,7 @@ PROGRAM testBLAS
       
       CALL BLAS_matmat(da2,db2,dc2)
       IF(ANY(.NOT.(dc(:,:) .APPROXEQ. dc2(:,:)))) THEN
-        WRITE(*,*) "CALL BLAS_matmat(dalpha2,da2,db2,dbeta2,dc2) FAILED!"
+        WRITE(*,*) "CALL BLAS_matmat(da2,db2,dc2) FAILED!"
         STOP 666
       ENDIF
     ENDSUBROUTINE testBLAS3
