@@ -1138,12 +1138,14 @@ MODULE BLAS3
       INTEGER(SIK) :: m
       INTEGER(SIK) :: n
       INTEGER(SIK) :: k
+      INTEGER(SIK) :: ldc
       
-      m=SIZE(c,DIM=1)
+      m=SIZE(a,DIM=1)
       n=SIZE(c,DIM=2)
       k=SIZE(b,DIM=1)
+      ldc=SIZE(c,DIM=1)
 
-      CALL dgemm_all('n','n',m,n,k,alpha,a,m,b,k,beta,c,1)
+      CALL dgemm_all('n','n',m,n,k,alpha,a,m,b,k,beta,c,ldc)
 !      
     ENDSUBROUTINE dgemm_aabbc
 !
