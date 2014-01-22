@@ -2717,7 +2717,7 @@ PROGRAM testBLAS
       dc2=4.0_SDK; dalpha2=2.0_SDK; dbeta2=2.5_SDK
       
       CALL BLAS_matmat('N','N',SIZE(dc,DIM=1),SIZE(dc,DIM=2),SIZE(db,DIM=1),dalpha, &
-        da,SIZE(dc,DIM=1),db,SIZE(db,DIM=1),dbeta,dc,1)
+        da,SIZE(dc,DIM=1),db,SIZE(db,DIM=1),dbeta,dc,SIZE(dc,DIM=1))
       
       CALL BLAS_matmat(dalpha2,da2,db2,dbeta2,dc2)
       IF(ANY(.NOT.(dc(:,:) .APPROXEQ. dc2(:,:)))) THEN
