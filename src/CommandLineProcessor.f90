@@ -282,7 +282,7 @@ MODULE CommandLineProcessor
           ' - illegal input, number of options is less than 1!')
       ELSE
         IF(clp%nopts /= 0) THEN
-          CALL clp%e%raiseWarning(modName//'::'//myName// &
+          CALL clp%e%raiseDebugWarning(modName//'::'//myName// &
             ' - number of command line options already set!')
         ELSE
           clp%nopts=n
@@ -327,10 +327,10 @@ MODULE CommandLineProcessor
       IF(0 < iopt .AND. iopt <= clp%nopts) THEN
         !Warn for bad input
         IF(LEN_TRIM(name) == 0) &
-          CALL clp%e%raiseWarning(modName//'::'//myName// &
+          CALL clp%e%raiseDebugWarning(modName//'::'//myName// &
             ' - option name is empty!')
         IF(LEN_TRIM(description) == 0) &
-          CALL clp%e%raiseWarning(modName//'::'//myName// &
+          CALL clp%e%raiseDebugWarning(modName//'::'//myName// &
             ' - option description is empty!')
         !Set option name and description for help message
         clp%opts(iopt)%name=TRIM(name)

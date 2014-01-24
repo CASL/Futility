@@ -758,7 +758,7 @@ MODULE IO_Strings
               CALL e%raiseError(modName//'::GETPATH_STRING - '// &
                 'Path is being truncated!')
             ELSE
-              CALL e2%raiseWarning(modName//'::GETPATH_STRING - '// &
+              CALL e2%raiseDebugWarning(modName//'::GETPATH_STRING - '// &
                 'Path is being truncated!')
             ENDIF
           ENDIF
@@ -792,7 +792,7 @@ MODULE IO_Strings
               CALL e%raiseError(modName//'::GETFILENAME_STRING - '// &
                 'File name is being truncated!')
             ELSE
-              CALL e2%raiseWarning(modName//'::GETFILENAME_STRING - '// &
+              CALL e2%raiseDebugWarning(modName//'::GETFILENAME_STRING - '// &
                 'File name is being truncated!')
             ENDIF
           ENDIF
@@ -834,7 +834,7 @@ MODULE IO_Strings
               CALL e%raiseError(modName//'::GETFILENAMEEXT_STRING - '// &
                 'File name extension is being truncated!')
             ELSE
-              CALL e2%raiseWarning(modName//'::GETFILENAMEEXT_STRING - '// &
+              CALL e2%raiseDebugWarning(modName//'::GETFILENAMEEXT_STRING - '// &
                 'File name extension is being truncated!')
             ENDIF
           ENDIF

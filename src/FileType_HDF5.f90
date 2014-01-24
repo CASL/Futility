@@ -628,10 +628,10 @@ MODULE FileType_HDF5
         IF(error == 0) THEN
           ! Close the group
           CALL h5gclose_f(group_id,error)
-          IF(error /= 0) CALL thisHDF5File%e%raiseWarning(modName//'::'// &
+          IF(error /= 0) CALL thisHDF5File%e%raiseDebugWarning(modName//'::'// &
               myName//' - Failed to close HDF group')
         ELSE
-          CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
+          CALL thisHDF5File%e%raiseDebugWarning(modName//'::'//myName// &
             ' - Failed to create HDF5 group.')
         ENDIF
       ENDIF
@@ -2986,8 +2986,8 @@ MODULE FileType_HDF5
 
         ! Convert data type
         vals=valst
-        CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
-          ' - Converting from long integer to double to accomodate HDF5!!!')
+        CALL thisHDF5File%e%raiseDebugWarning(modName//'::'//myName// &
+          ' - Converting from long integer to double to accommodate HDF5!!!')
 
         ! Write to the dataset
         CALL h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, vals, gdims, error, &
@@ -3112,8 +3112,8 @@ MODULE FileType_HDF5
 
         ! Convert to different datatyp
         vals=valst
-        CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
-          ' - Converting from long integer to double to accomodate HDF5!!!')
+        CALL thisHDF5File%e%raiseDebugWarning(modName//'::'//myName// &
+          ' - Converting from long integer to double to accommodate HDF5!!!')
 
         ! Write to the dataset
         CALL h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, vals, gdims, error, &
@@ -3240,8 +3240,8 @@ MODULE FileType_HDF5
 
         ! Convert data type
         vals=valst
-        CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
-          ' - Converting from long integer to double to accomodate HDF5!!!')
+        CALL thisHDF5File%e%raiseDebugWarning(modName//'::'//myName// &
+          ' - Converting from long integer to double to accommodate HDF5!!!')
 
         ! Write to the dataset
         CALL h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, vals, gdims, error, &
@@ -3369,8 +3369,8 @@ MODULE FileType_HDF5
 
         ! Convert Data type
         vals=valst
-        CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
-          ' - Converting from long integer to double to accomodate HDF5!!!')
+        CALL thisHDF5File%e%raiseDebugWarning(modName//'::'//myName// &
+          ' - Converting from long integer to double to accommodate HDF5!!!')
 
         ! Write to the valsset
         CALL h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, vals, gdims, error, &
@@ -5433,7 +5433,7 @@ MODULE FileType_HDF5
 
         ! Convert data type
         vals=valst
-        CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
+        CALL thisHDF5File%e%raiseDebugWarning(modName//'::'//myName// &
           ' - Converting from double to long integer!')
       ENDIF
 #endif
@@ -5524,7 +5524,7 @@ MODULE FileType_HDF5
 
         ! Conver data type
         vals=valst
-        CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
+        CALL thisHDF5File%e%raiseDebugWarning(modName//'::'//myName// &
           ' - Converting from double to long integer!')
       ENDIF
 #endif
@@ -5615,7 +5615,7 @@ MODULE FileType_HDF5
 
         ! Conver data type
         vals=valst
-        CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
+        CALL thisHDF5File%e%raiseDebugWarning(modName//'::'//myName// &
           ' - Converting from double to long integer!')
       ENDIF
 #endif
@@ -5706,7 +5706,7 @@ MODULE FileType_HDF5
 
         ! Conver data type
         vals=valst
-        CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
+        CALL thisHDF5File%e%raiseDebugWarning(modName//'::'//myName// &
           ' - Converting from double to long integer!')
       ENDIF
 #endif

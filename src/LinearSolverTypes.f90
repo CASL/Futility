@@ -409,7 +409,7 @@ MODULE LinearSolverTypes
 
         !print status of TPL post-heirarchy
         IF(ReqTPLType /= TPLType) THEN
-          CALL eLinearSolverType%raiseWarning(modName//'::'// &
+          CALL eLinearSolverType%raiseDebugWarning(modName//'::'// &
             myName//' - Requested TPL '//TRIM(ReqTPLTypeStr)// &
               ' is not enabled, will use '//TRIM(TPLTypeStr)//' solvers instead.')
         ENDIF
@@ -509,7 +509,7 @@ MODULE LinearSolverTypes
               !only GMRES can handle when sparse LS of size 1
               IF(n==1 .AND. matType == SPARSE .AND. solverMethod/= GMRES) THEN
                 solverMethod=GMRES
-                CALL eLinearSolverType%raiseWarning(modName//'::'// &
+                CALL eLinearSolverType%raiseDebugWarning(modName//'::'// &
                   myName//' - Only GMRES can handle sparse systems of size 1.  '// &
                   'Switching solver method to GMRES.')
               ENDIF
@@ -809,7 +809,7 @@ MODULE LinearSolverTypes
                   !Should not use direct method, go to CGNR
                   CALL solveCGNR(solver)
                   IF(solver%info == 0) &
-                    CALL eLinearSolverType%raiseWarning(modName//'::'// &
+                    CALL eLinearSolverType%raiseDebugWarning(modName//'::'// &
                       myName//'- GE method for dense rectangular system '// &
                         'and sparse system is not implemented, CGNR method '// &
                           'is used instead.')
@@ -848,7 +848,7 @@ MODULE LinearSolverTypes
                   !Should not use direct method, go to CGNR
                   CALL solveCGNR(solver)
                   IF(solver%info == 0) &
-                    CALL eLinearSolverType%raiseWarning(modName//'::'// &
+                    CALL eLinearSolverType%raiseDebugWarning(modName//'::'// &
                       myName//'- LU method for dense rectangular system '// &
                         'and sparse system is not implemented, CGNR method '// &
                           'is used instead.')
@@ -887,7 +887,7 @@ MODULE LinearSolverTypes
             CALL X%set(1.0_SRK)
           ENDSELECT
           solver%hasX0=.TRUE.
-          CALL eLinearSolverType%raiseWarning(modName//'::'// &
+          CALL eLinearSolverType%raiseDebugWarning(modName//'::'// &
             myName//'- Initial X0 is set to 1.')
         ENDIF
         CALL solver%SolveTime%tic()
@@ -912,7 +912,7 @@ MODULE LinearSolverTypes
                 CALL solvePLU_TriDiag(solver)
 
                 IF(solver%info == 0) &
-                  CALL eLinearSolverType%raiseWarning(modName//'::'// &
+                  CALL eLinearSolverType%raiseDebugWarning(modName//'::'// &
                     myName//'- BiCGSTAB method for tridiagonal system '// &
                       'is not implemented, GE method is used instead.')
 
@@ -922,7 +922,7 @@ MODULE LinearSolverTypes
                 CALL solveCGNR(solver)
 
                 IF(solver%info == 0) &
-                  CALL eLinearSolverType%raiseWarning(modName//'::'// &
+                  CALL eLinearSolverType%raiseDebugWarning(modName//'::'// &
                     myName//'- BiCGSTAB method for dense rectangular system '// &
                       'is not implemented, CGNR method is used instead.')
                    
@@ -971,13 +971,13 @@ MODULE LinearSolverTypes
                 CALL solvePLU_TriDiag(solver)
 
                 IF(solver%info == 0) &
-                  CALL eLinearSolverType%raiseWarning(modName//'::'// &
+                  CALL eLinearSolverType%raiseDebugWarning(modName//'::'// &
                   myName//'- CGNR method for tridiagonal system '// &
                     'is not implemented, PLU method is used instead.')
               TYPE IS(SparseMatrixType)
                 CALL solveBiCGSTAB(solver)
                 IF(solver%info == 0) &
-                  CALL eLinearSolverType%raiseWarning(modName//'::'// &
+                  CALL eLinearSolverType%raiseDebugWarning(modName//'::'// &
                   myName//'- CGNR method for sparse system '// &
                     'is not implemented, BiCGSTAB method is used instead.')
                  
@@ -1029,7 +1029,7 @@ MODULE LinearSolverTypes
                 CALL solvePLU_TriDiag(solver)
 
                 IF(solver%info == 0) &
-                  CALL eLinearSolverType%raiseWarning(modName//'::'// &
+                  CALL eLinearSolverType%raiseDebugWarning(modName//'::'// &
                   myName//'- GMRES method for tridiagonal system '// &
                     'is not implemented, PLU method is used instead.')
               TYPE IS(DenseRectMatrixType)
@@ -1038,7 +1038,7 @@ MODULE LinearSolverTypes
                 CALL solveCGNR(solver)
 
                 IF(solver%info == 0) &
-                  CALL eLinearSolverType%raiseWarning(modName//'::'// &
+                  CALL eLinearSolverType%raiseDebugWarning(modName//'::'// &
                     myName//'- GMRES method for dense rectangular system '// &
                       'is not implemented, CGNR method is used instead.')
 
@@ -1217,25 +1217,25 @@ MODULE LinearSolverTypes
       maxIters=maxIters_in
       IF(PRESENT(nRestart_in)) nRestart=nRestart_in
       IF(normType <= -2) THEN
-        CALL eLinearSolverType%raiseWarning(modName//'::'// &
+        CALL eLinearSolverType%raiseDebugWarning(modName//'::'// &
           myName//' - Incorrect input, normType should not be less '// &
             'than -1. Default value is used!')
         normType=2
       ENDIF
       IF(convTol < 0._SRK .OR. convTol >= 1._SRK) THEN
-        CALL eLinearSolverType%raiseWarning(modName//'::'// &
+        CALL eLinearSolverType%raiseDebugWarning(modName//'::'// &
           myName//' - Incorrect input, convTol should be in '// &
             'the range of (0, 1). Default value is used!')
         convTol=0.001_SRK
       ENDIF
       IF(maxIters <= 1) THEN
-        CALL eLinearSolverType%raiseWarning(modName//'::'// &
+        CALL eLinearSolverType%raiseDebugWarning(modName//'::'// &
           myName//' - Incorrect input, maxIters should not be less '// &
             'than or equal to 1. Default value is used!')
         maxIters=1000
       ENDIF
       IF(nRestart <= 1 .OR. .NOT.PRESENT(nRestart_in)) THEN
-        CALL eLinearSolverType%raiseWarning(modName//'::'// &
+        CALL eLinearSolverType%raiseDebugWarning(modName//'::'// &
           myName//' - Incorrect input, nRestart should not be less '// &
             'than or equal to 1. Default value is used!')
         nRestart=30
@@ -1805,7 +1805,7 @@ MODULE LinearSolverTypes
           ENDSELECT
 
           !Give the warning
-          IF(.NOT. diagDom) CALL eLinearSolverType%raiseWarning(modName// &
+          IF(.NOT. diagDom) CALL eLinearSolverType%raiseDebugWarning(modName// &
             '::'//myName//'- Tri-diagonal Matrix not diagonally dominant, '// &
               'solution might be not accurate')
         ENDSELECT

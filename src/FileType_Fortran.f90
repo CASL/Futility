@@ -701,7 +701,7 @@ MODULE FileType_Fortran
         ELSE
           WRITE(emesg,'(a,i4,a)') 'Cannot close file (UNIT=', &
             file%unitno,') File is not open!'
-          CALL file%e%raiseWarning(modName//'::'//myName//' - '//emesg)
+          CALL file%e%raiseDebugWarning(modName//'::'//myName//' - '//emesg)
         ENDIF
       ELSE
         CALL file%e%raiseError(modName//'::'//myName//' - '// &

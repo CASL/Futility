@@ -332,7 +332,7 @@ MODULE VTKFiles
         !Determine the file's title
         IF(PRESENT(status)) THEN
           IF(LEN_TRIM(status) > 256) THEN
-            CALL fileobj%e%raiseWarning(modName//'::'//myName// &
+            CALL fileobj%e%raiseDebugWarning(modName//'::'//myName// &
               ' - File title name is being truncated!')
             title=status(1:256)
           ELSE
