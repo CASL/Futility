@@ -399,7 +399,7 @@ MODULE PreconditionerTypes
         ELSE
           SELECTTYPE(v)
             CLASS IS(RealVectorType)
-              CALL BLAS_matvec(THISMATRIX=PC%LU,X=v,Y=v,UPLO='L',DIAG='T',TRANS='N')
+              CALL BLAS_matvec(THISMATRIX=PC%LU,X=v,Y=v,UPLO='L',DIAG='U',TRANS='N')
               CALL BLAS_matvec(THISMATRIX=PC%LU,X=v,Y=v,UPLO='U',DIAG='N',TRANS='N')
             CLASS DEFAULT
               CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &

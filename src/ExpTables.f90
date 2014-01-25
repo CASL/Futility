@@ -273,7 +273,7 @@ MODULE ExpTables
         !Default value for table type
         CALL tmpList%get('ExpTables -> tabletype',tableType)
         IF(tableType > 5 .OR. tableType < 1) THEN
-          CALL eExpTable%raiseWarning(modName//'::'//myName// &
+          CALL eExpTable%raiseDebugWarning(modName//'::'//myName// &
             ' - Exponent table type is not correct input!'// &
               ' Using default table type!')
           !Get Default param
@@ -285,14 +285,14 @@ MODULE ExpTables
         CALL tmpList%get('ExpTables -> minval',minVal)
         CALL tmpList%get('ExpTables -> maxval',maxVal)
         IF(minVal >= 0._SRK) THEN
-          CALL eExpTable%raiseWarning(modName//'::'//myName// &
+          CALL eExpTable%raiseDebugWarning(modName//'::'//myName// &
             ' - Minimum value of the range of the table is not negative!'// &
               ' Using default table type!')
           !Get Default param
           CALL ExpTableType_optParams%get('ExpTables -> minval',minVal)
         ENDIF
         IF(maxVal > 0._SRK) THEN
-          CALL eExpTable%raiseWarning(modName//'::'//myName// &
+          CALL eExpTable%raiseDebugWarning(modName//'::'//myName// &
             ' - Maximum value of the range of the table is positive!'// &
               ' Using default table type!')
           !Get Default param
@@ -305,7 +305,7 @@ MODULE ExpTables
         !Default value for ninterval
         CALL tmpList%get('ExpTables -> nintervals',nintervals)
         IF(nintervals <= 1) THEN
-          CALL eExpTable%raiseWarning(modName//'::'//myName// &
+          CALL eExpTable%raiseDebugWarning(modName//'::'//myName// &
             ' - Number of intervals is less than or equal to 1!'// &
               ' Using default value!')
           !Get Default param
@@ -317,7 +317,7 @@ MODULE ExpTables
         IF(ErrFlag) THEN
           !Get the error to recalculate the nintervals
           CALL tmpList%get('ExpTables -> error',tableErr)
-          CALL eExpTable%raiseWarning(modName//'::'//myName// &
+          CALL eExpTable%raiseDebugWarning(modName//'::'//myName// &
             ' - Number of intervals is overwritten by the value that'// &
               ' is determined from desired error!')
           SELECTCASE(tableType)

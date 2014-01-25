@@ -1561,7 +1561,7 @@ MODULE MatrixTypes
       IF((trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
            trans == 'n' .OR. trans == 'N') .AND. &
           (uplo == 'u' .OR. uplo == 'U' .OR. uplo == 'l' .OR. uplo == 'L') .AND. &
-          (diag == 't' .OR. diag == 'T' .OR. diag == 'n' .OR. diag == 'N')) THEN
+          (diag == 'u' .OR. diag == 'U' .OR. diag == 'n' .OR. diag == 'N')) THEN
 
         ! Check whether diagonal is treated as unity or not.
         nounit=.FALSE.

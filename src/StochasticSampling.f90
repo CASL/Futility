@@ -245,7 +245,7 @@ MODULE StochasticSampling
           mpirank=MPIparallelEnv%rank
           nproc=MPIparallelEnv%nproc
         ELSE
-          CALL eStochasticSampler%raiseWarning(modName//'::'//myName// &
+          CALL eStochasticSampler%raiseDebugWarning(modName//'::'//myName// &
             ' - MPI Env is not initialized, and will not be used.')
         ENDIF
       ENDIF
@@ -254,7 +254,7 @@ MODULE StochasticSampling
           omprank=OMPparallelEnv%rank
           nthread=OMPparallelEnv%nproc
         ELSE
-          CALL eStochasticSampler%raiseWarning(modName//'::'//myName// &
+          CALL eStochasticSampler%raiseDebugWarning(modName//'::'//myName// &
             ' - OMP Env is not initialized, and will not be used.')
         ENDIF
       ENDIF
