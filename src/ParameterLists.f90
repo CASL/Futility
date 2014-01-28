@@ -1575,7 +1575,7 @@ MODULE ParameterLists
               CALL add_ParamType(thisParam,prefix(1:nprefix),p)
             ELSE
               IF(.NOT.SAME_TYPE_AS(tmpParam,p)) THEN
-                CALL eParams%raiseDebugWarning(modName//'::'//myName// &
+                CALL eParams%raiseWarning(modName//'::'//myName// &
                   ' - Optional parameter "'//prefix//p%name//'" has type "'// &
                     tmpParam%dataType//'" and should be type "'//p%dataType// &
                       '"!  Since has no default value, it will remain unset!')
@@ -1595,7 +1595,7 @@ MODULE ParameterLists
             CALL add_ParamType(thisParam,prefix(1:nprefix),p)
           ELSE
             IF(.NOT.SAME_TYPE_AS(tmpParam,p)) THEN
-              CALL eParams%raiseDebugWarning(modName//'::'//myName// &
+              CALL eParams%raiseWarning(modName//'::'//myName// &
                 ' - Optional parameter "'//prefix//p%name//'" has type "'// &
                   tmpParam%dataType//'" and should be type "'//p%dataType// &
                     '"!  It is being overriden with default value.')
@@ -1617,19 +1617,15 @@ MODULE ParameterLists
 !>        @c thisParam
 !> @param prefix a prefix path for the parameter's full path name
 !>
-    RECURSIVE SUBROUTINE checkExtras_Paramtype(thisParam,reqParams,optParams,prefix,printExtras)
+    RECURSIVE SUBROUTINE checkExtras_Paramtype(thisParam,reqParams,optParams,prefix)
       CHARACTER(LEN=*),PARAMETER :: myName='checkExtras_Paramtype'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CLASS(ParamType),INTENT(IN) :: reqParams
       CLASS(ParamType),INTENT(IN) :: optParams
       CHARACTER(LEN=*),INTENT(IN) :: prefix
-      LOGICAL(SBK),INTENT(IN),OPTIONAL :: printExtras
       INTEGER(SIK) :: i
-      LOGICAL(SBK) :: printInfo
       CLASS(ParamType),POINTER :: tmpParam
       
-      printInfo=.FALSE.
-      IF(PRESENT(printExtras)) printInfo=printExtras
       i=0
       SELECTTYPE(p=>thisParam)
         TYPE IS(ParamType)
@@ -1669,7 +1665,7 @@ MODULE ParameterLists
                 ENDIF
               ENDSELECT
             ELSE
-              IF(printInfo) CALL eParams%raiseInformation(modName//'::'//myName// &
+              CALL eParams%raiseInformation(modName//'::'//myName// &
                 ' - Possible extraneous parameter "'//prefix//p%name// &
                   '" is not present in the reference list!')
             ENDIF
@@ -1681,7 +1677,7 @@ MODULE ParameterLists
           IF(.NOT.ASSOCIATED(tmpParam)) &
             CALL optParams%get(prefix//p%name,tmpParam)
           IF(.NOT.ASSOCIATED(tmpParam)) THEN
-            IF(printInfo) CALL eParams%raiseInformation(modName//'::'//myName// &
+            CALL eParams%raiseInformation(modName//'::'//myName// &
               ' - Possible extraneous parameter "'//prefix//p%name// &
                 '" is not present in the reference list!')
           ENDIF
@@ -1693,6 +1689,7 @@ MODULE ParameterLists
 !> @param thisParam
 !> @param reqParams
 !> @param optParams
+!> @param printExtras
 !>
     SUBROUTINE validate_Paramtype(thisParam,reqParams,optParams,printExtras)
       CLASS(ParamType),INTENT(INOUT) :: thisParam
@@ -1719,16 +1716,12 @@ MODULE ParameterLists
           CALL validateOpt_Paramtype(thisParam,optParams,'')
           !Logic to suppress excessive printing of parameter list information and warnings
           IF(PRESENT(printExtras)) THEN
-            CALL checkExtras_Paramtype(thisParam,reqParams,optParams,'',printExtras)
-          ELSE
-            CALL checkExtras_Paramtype(thisParam,reqParams,optParams,'')
+            IF(printExtras) CALL checkExtras_Paramtype(thisParam,reqParams,optParams,'')
           ENDIF
         ELSE
           !Logic to suppress excessive printing of parameter list information and warnings
           IF(PRESENT(printExtras)) THEN
-            CALL checkExtras_Paramtype(thisParam,reqParams,nullParam,'',printExtras)
-          ELSE
-            CALL checkExtras_Paramtype(thisParam,reqParams,nullParam,'')
+            IF(printExtras) CALL checkExtras_Paramtype(thisParam,reqParams,nullParam,'')
           ENDIF
         ENDIF
       ENDIF
