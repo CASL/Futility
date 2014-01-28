@@ -1569,23 +1569,16 @@ MODULE ParameterLists
             !must at least check that the list exists
             CALL thisParam%getParam(prefix//p%name,tmpParam)
             IF(.NOT.ASSOCIATED(tmpParam)) THEN
-              CALL eParams%raiseWarning(modName//'::'//myName// &
+              CALL eParams%raiseDebugWarning(modName//'::'//myName// &
                 ' - Failed to locate optional parameter "'//prefix// &
-                  p%name//'"!')
-              CALL eParams%raiseInformation(modName//'::'//myName// &
-                ' - Optional parameter "'//prefix//p%name// &
-                  '" is being added with no default value!')
-              
+                  p%name//'"! It is being added with no default value!')
               CALL add_ParamType(thisParam,prefix(1:nprefix),p)
             ELSE
               IF(.NOT.SAME_TYPE_AS(tmpParam,p)) THEN
-                CALL eParams%raiseWarning(modName//'::'//myName// &
+                CALL eParams%raiseDebugWarning(modName//'::'//myName// &
                   ' - Optional parameter "'//prefix//p%name//'" has type "'// &
                     tmpParam%dataType//'" and should be type "'//p%dataType// &
-                      '"!')
-                CALL eParams%raiseInformation(modName//'::'//myName// &
-                  ' - Optional parameter "'//prefix//p%name// &
-                    '" has no default value so it will remain unset!')
+                      '"!  Since has no default value, it will remain unset!')
                 CALL remove_ParamType(thisParam,prefix//p%name)
                 CALL add_ParamType(thisParam,prefix(1:nprefix),p)
               ENDIF
@@ -1596,20 +1589,16 @@ MODULE ParameterLists
           !optional parameter's name and check its type
           CALL thisParam%getParam(prefix//p%name,tmpParam)
           IF(.NOT.ASSOCIATED(tmpParam)) THEN
-            CALL eParams%raiseWarning(modName//'::'//myName// &
-              ' - Failed to locate optional parameter "'//prefix//p%name//'"!')
             CALL eParams%raiseInformation(modName//'::'//myName// &
-              ' - Optional parameter "'//prefix//p%name// &
-                '" is being added with default value.')
+              ' - Failed to locate optional parameter "'//prefix//p%name//'"!'// &
+                'It is being added with default value.')
             CALL add_ParamType(thisParam,prefix(1:nprefix),p)
           ELSE
             IF(.NOT.SAME_TYPE_AS(tmpParam,p)) THEN
-              CALL eParams%raiseWarning(modName//'::'//myName// &
+              CALL eParams%raiseDebugWarning(modName//'::'//myName// &
                 ' - Optional parameter "'//prefix//p%name//'" has type "'// &
-                  tmpParam%dataType//'" and should be type "'//p%dataType//'"!')
-              CALL eParams%raiseInformation(modName//'::'//myName// &
-                ' - Optional parameter "'//prefix//p%name// &
-                  '" is being overriden with default value.')
+                  tmpParam%dataType//'" and should be type "'//p%dataType// &
+                    '"!  It is being overriden with default value.')
               CALL remove_ParamType(thisParam,prefix//p%name)
               CALL add_ParamType(thisParam,prefix(1:nprefix),p)
             ENDIF
@@ -1628,15 +1617,19 @@ MODULE ParameterLists
 !>        @c thisParam
 !> @param prefix a prefix path for the parameter's full path name
 !>
-    RECURSIVE SUBROUTINE checkExtras_Paramtype(thisParam,reqParams,optParams,prefix)
+    RECURSIVE SUBROUTINE checkExtras_Paramtype(thisParam,reqParams,optParams,prefix,printExtras)
       CHARACTER(LEN=*),PARAMETER :: myName='checkExtras_Paramtype'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CLASS(ParamType),INTENT(IN) :: reqParams
       CLASS(ParamType),INTENT(IN) :: optParams
       CHARACTER(LEN=*),INTENT(IN) :: prefix
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: printExtras
       INTEGER(SIK) :: i
+      LOGICAL(SBK) :: printInfo
       CLASS(ParamType),POINTER :: tmpParam
       
+      printInfo=.FALSE.
+      IF(PRESENT(printExtras)) printInfo=printExtras
       i=0
       SELECTTYPE(p=>thisParam)
         TYPE IS(ParamType)
@@ -1676,7 +1669,7 @@ MODULE ParameterLists
                 ENDIF
               ENDSELECT
             ELSE
-              CALL eParams%raiseWarning(modName//'::'//myName// &
+              IF(printInfo) CALL eParams%raiseInformation(modName//'::'//myName// &
                 ' - Possible extraneous parameter "'//prefix//p%name// &
                   '" is not present in the reference list!')
             ENDIF
@@ -1687,10 +1680,11 @@ MODULE ParameterLists
           CALL reqParams%getParam(prefix//p%name,tmpParam)
           IF(.NOT.ASSOCIATED(tmpParam)) &
             CALL optParams%get(prefix//p%name,tmpParam)
-          IF(.NOT.ASSOCIATED(tmpParam)) &
-            CALL eParams%raiseWarning(modName//'::'//myName// &
+          IF(.NOT.ASSOCIATED(tmpParam)) THEN
+            IF(printInfo) CALL eParams%raiseInformation(modName//'::'//myName// &
               ' - Possible extraneous parameter "'//prefix//p%name// &
                 '" is not present in the reference list!')
+          ENDIF
       ENDSELECT
     ENDSUBROUTINE checkExtras_Paramtype
 !
@@ -1700,10 +1694,11 @@ MODULE ParameterLists
 !> @param reqParams
 !> @param optParams
 !>
-    SUBROUTINE validate_Paramtype(thisParam,reqParams,optParams)
+    SUBROUTINE validate_Paramtype(thisParam,reqParams,optParams,printExtras)
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CLASS(ParamType),INTENT(IN) :: reqParams
       CLASS(ParamType),INTENT(IN),OPTIONAL :: optParams
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: printExtras
       LOGICAL(SBK) :: isValid,localalloc
       TYPE(ParamType) :: nullParam
       
@@ -1722,9 +1717,19 @@ MODULE ParameterLists
       IF(isValid) THEN
         IF(PRESENT(optParams)) THEN
           CALL validateOpt_Paramtype(thisParam,optParams,'')
-          CALL checkExtras_Paramtype(thisParam,reqParams,optParams,'')
+          !Logic to suppress excessive printing of parameter list information and warnings
+          IF(PRESENT(printExtras)) THEN
+            CALL checkExtras_Paramtype(thisParam,reqParams,optParams,'',printExtras)
+          ELSE
+            CALL checkExtras_Paramtype(thisParam,reqParams,optParams,'')
+          ENDIF
         ELSE
-          CALL checkExtras_Paramtype(thisParam,reqParams,nullParam,'')
+          !Logic to suppress excessive printing of parameter list information and warnings
+          IF(PRESENT(printExtras)) THEN
+            CALL checkExtras_Paramtype(thisParam,reqParams,nullParam,'',printExtras)
+          ELSE
+            CALL checkExtras_Paramtype(thisParam,reqParams,nullParam,'')
+          ENDIF
         ENDIF
       ENDIF
       IF(localalloc) DEALLOCATE(eParams)
@@ -1778,7 +1783,7 @@ MODULE ParameterLists
       CLASS(ParamType),INTENT(IN),TARGET :: thatParam
       CHARACTER(LEN=*),INTENT(IN) :: prefix
       LOGICAL(SBK) :: bool
-      CLASS(ParamType),POINTER :: paramPtr => NULL()
+      CLASS(ParamType),POINTER :: paramPtr
       INTEGER(SIK) :: i,j
       LOGICAL(SBK) :: localalloc,tmpsbk1,tmpsbk2
       LOGICAL(SBK),ALLOCATABLE :: tmpsbka11(:),tmpsbka12(:)
@@ -1805,7 +1810,7 @@ MODULE ParameterLists
       ENDIF
       
       !Point to the intent(in) param to use the get function
-      !paramPtr => thatParam
+      paramPtr => NULL()
       bool=.FALSE.
       !Find the extended parameter type, then use the appropriate variable
       !and "get" the data to check.
