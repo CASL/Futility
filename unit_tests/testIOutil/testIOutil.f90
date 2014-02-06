@@ -692,7 +692,7 @@ PROGRAM testIOutil
 !-------------------------------------------------------------------------------
     SUBROUTINE testRTEnv()
       INTEGER :: n,stat,n0
-      CHARACTER(LEN=128) :: tmpChar,varname
+      CHARACTER(LEN=1024) :: tmpChar,varname
       TYPE(StringType) :: tmpStr
       
       COMPONENT_TEST('GET_COMMAND')
