@@ -427,8 +427,9 @@ MODULE ParallelEnv
       CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
       INTEGER(SIK),INTENT(IN),OPTIONAL :: PEparam
       INTEGER(SIK) :: isinit,icomm
-      LOGICAL(SBK) :: localalloc
-
+      LOGICAL(SBK) :: localalloc,allpetsc
+      LOGICAL(SBK),ALLOCATABLE :: allpetsc2(:)
+      
       IF(.NOT.myPE%initstat) THEN
         localalloc=.FALSE.
         IF(.NOT.ASSOCIATED(eParEnv)) THEN
@@ -466,12 +467,6 @@ MODULE ParallelEnv
           myPE%comm=icomm
         ENDIF
 
-#ifdef MPACT_HAVE_PETSC
-        !check if PETSC has been initialized as well
-        CALL PetscInitialized(petsc_isinit,ierr)
-        IF(.NOT.petsc_isinit) CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
-#endif
-
         !Get Information about the communicator
 #ifdef HAVE_MPI
         CALL MPI_Comm_size(myPE%comm,myPE%nproc,mpierr)
@@ -485,6 +480,30 @@ MODULE ParallelEnv
         myPE%rank=0
 #endif
         IF(myPE%rank == 0) myPE%master=.TRUE.
+
+#ifdef MPACT_HAVE_PETSC
+        !check if PETSC has been initialized as well
+        CALL PetscInitialized(petsc_isinit,ierr)
+
+        !Insure that PETSc is or is not initialized on all the processes
+        !in this communicator
+        IF(myPE%nproc > 1) THEN
+          ALLOCATE(allpetsc2(0:myPE%nproc-1))
+          allpetsc2=.FALSE.
+          allpetsc2(myPE%rank)=petsc_isinit
+          CALL MPI_Gather(petsc_isinit,1,MPI_LOGICAL, &
+                          allpetsc2(myPE%rank),1,MPI_LOGICAL,0,myPE%comm,mpierr)
+          IF((ANY(allpetsc2) .AND. .NOT.ALL(allpetsc2)) .AND. myPE%master) THEN
+            CALL eParEnv%raiseFatalError(modName//'::'//myName// &
+              ' - Something is wrong with your application. '// &
+                'PetscInitialized should return either .TRUE. or '// &
+                  '.FALSE. for all processes in the communicator.')
+          ENDIF
+          DEALLOCATE(allpetsc2)
+        ENDIF
+        !Call PETSc Initialize
+        IF(.NOT.petsc_isinit) CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
+#endif
         IF(localalloc) DEALLOCATE(eParEnv)
         myPE%initstat=.TRUE.
       ENDIF
