@@ -86,7 +86,7 @@ MODULE FileType_Base
     !> Whether or not the file is open for writing
     LOGICAL(SBK),PRIVATE :: writestat=.FALSE.
     !> The exception handler for the object
-    TYPE(ExceptionHandlerType),POINTER :: e => NULL()
+    TYPE(ExceptionHandlerType) :: e
 !
 !List of type bound procedures (methods) for the Base File Type object
     CONTAINS
@@ -163,13 +163,6 @@ MODULE FileType_Base
       CHARACTER(LEN=*),PARAMETER :: myName='setFilePath_file'
       CLASS(BaseFileType),INTENT(INOUT) :: file
       CHARACTER(LEN=*),INTENT(IN) :: pathstr
-      LOGICAL(SBK) :: localalloc
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(file%e)) THEN
-        ALLOCATE(file%e)
-        localalloc=.TRUE.
-      ENDIF
       IF(file%openstat) THEN
         CALL file%e%raiseError(modName//'::'//myName//' - '// &
           'Cannot change path of file while it is open!')
@@ -178,7 +171,6 @@ MODULE FileType_Base
           modName//'::'//myName//' - input string is too long to store!')
         file%path=TRIM(pathstr)
       ENDIF
-      IF(localalloc) DEALLOCATE(file%e)
     ENDSUBROUTINE setFilePath_file
 !
 !-------------------------------------------------------------------------------
@@ -189,13 +181,6 @@ MODULE FileType_Base
       CHARACTER(LEN=*),PARAMETER :: myName='setFileName_file'
       CLASS(BaseFileType),INTENT(INOUT) :: file
       CHARACTER(LEN=*),INTENT(IN) :: namestr
-      LOGICAL(SBK) :: localalloc
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(file%e)) THEN
-        ALLOCATE(file%e)
-        localalloc=.TRUE.
-      ENDIF
       IF(file%openstat) THEN
         CALL file%e%raiseError(modName//'::'//myName//' - '// &
           'Cannot change name of file while it is open!')
@@ -204,7 +189,6 @@ MODULE FileType_Base
           modName//'::'//myName//' - input string is too long to store!')
         file%name=TRIM(namestr)
       ENDIF
-      IF(localalloc) DEALLOCATE(file%e)
     ENDSUBROUTINE setFileName_file
 !
 !-------------------------------------------------------------------------------
@@ -215,13 +199,6 @@ MODULE FileType_Base
       CHARACTER(LEN=*),PARAMETER :: myName='setFileExt_file'
       CLASS(BaseFileType),INTENT(INOUT) :: file
       CHARACTER(LEN=*),INTENT(IN) :: extstr
-      LOGICAL(SBK) :: localalloc
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(file%e)) THEN
-        ALLOCATE(file%e)
-        localalloc=.TRUE.
-      ENDIF
       IF(file%openstat) THEN
         CALL file%e%raiseError(modName//'::'//myName//' - '// &
           'Cannot change extension of file while it is open!!')
@@ -230,7 +207,6 @@ MODULE FileType_Base
           modName//'::'//myName//' - input string is too long to store!')
         file%ext=TRIM(extstr)
       ENDIF
-      IF(localalloc) DEALLOCATE(file%e)
     ENDSUBROUTINE setFileExt_file
 !
 !-------------------------------------------------------------------------------
@@ -257,13 +233,6 @@ MODULE FileType_Base
       CHARACTER(LEN=*),INTENT(OUT) :: path
       CHARACTER(LEN=*),INTENT(OUT) :: fname
       CHARACTER(LEN=*),INTENT(OUT) :: ext
-      LOGICAL(SBK) :: localalloc
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(file%e)) THEN
-        ALLOCATE(file%e)
-        localalloc=.TRUE.
-      ENDIF
       IF(LEN(path) < LEN_TRIM(file%path)) CALL file%e%raiseError(modName// &
         '::'//myName//' - input string for PATH is not long enough to '// &
           'contain full path!')
@@ -278,7 +247,6 @@ MODULE FileType_Base
         myName//' - input string for EXTENSION is not long enough to '// &
           'contain full string.')
       ext=TRIM(file%ext)
-      IF(localalloc) DEALLOCATE(file%e)
     ENDSUBROUTINE getFileParts_file
 !
 !-------------------------------------------------------------------------------
@@ -361,18 +329,11 @@ MODULE FileType_Base
       CHARACTER(LEN=*),PARAMETER :: myName='setEOFstat_file'
       CLASS(BaseFileType),INTENT(INOUT) :: file
       LOGICAL(SBK),INTENT(IN) :: bool
-      TYPE(ExceptionHandlerType) :: e
-      
       IF(file%openstat) THEN
         file%EOFstat=bool
       ELSE
-        IF(.NOT.ASSOCIATED(file%e)) THEN
-          CALL e%raiseError(modName//'::'//myName// &
-            ' - EOF status cannot be changed on a file that is not open!')
-        ELSE
-          CALL file%e%raiseError(modName//'::'//myName// &
-            ' - EOF status cannot be changed on a file that is not open!')
-        ENDIF
+        CALL file%e%raiseDebug(modName//'::'//myName// &
+          ' - EOF status cannot be changed on a file that is not open!')
       ENDIF
     ENDSUBROUTINE setEOFstat_file
 !
@@ -397,16 +358,9 @@ MODULE FileType_Base
       CHARACTER(LEN=*),PARAMETER :: myName='setReadStat_file'
       CLASS(BaseFileType),INTENT(INOUT) :: file
       LOGICAL(SBK),INTENT(IN) :: bool
-      TYPE(ExceptionHandlerType) :: e
-      
       IF(file%openstat) THEN
-        IF(.NOT.ASSOCIATED(file%e)) THEN
-          CALL e%raiseError(modName//'::'//myName// &
-            ' - Cannot change read status of a file if it is open!')
-        ELSE
-          CALL file%e%raiseError(modName//'::'//myName// &
-            ' - Cannot change read status of a file if it is open!')
-        ENDIF
+        CALL file%e%raiseDebug(modName//'::'//myName// &
+          ' - Cannot change read status of a file if it is open!')
       ELSE
         file%readstat=bool
       ENDIF
@@ -421,16 +375,9 @@ MODULE FileType_Base
       CHARACTER(LEN=*),PARAMETER :: myName='setWriteStat_file'
       CLASS(BaseFileType),INTENT(INOUT) :: file
       LOGICAL(SBK),INTENT(IN) :: bool
-      TYPE(ExceptionHandlerType) :: e
-      
       IF(file%openstat) THEN
-        IF(.NOT.ASSOCIATED(file%e)) THEN
-          CALL e%raiseError(modName//'::'//myName// &
-            ' - Cannot change write status of a file if it is open!')
-        ELSE
-          CALL file%e%raiseError(modName//'::'//myName// &
-            ' - Cannot change write status of a file if it is open!')
-        ENDIF
+        CALL file%e%raiseDebug(modName//'::'//myName// &
+          ' - Cannot change write status of a file if it is open!')
       ELSE
         file%writestat=bool
       ENDIF
@@ -450,9 +397,7 @@ MODULE FileType_Base
       file%EOFstat=.FALSE.
       file%readstat=.FALSE.
       file%writestat=.FALSE.
-      
-      !dissociate exception handler
-      NULLIFY(file%e)
+      CALL file%e%reset()
     ENDSUBROUTINE
 !
 ENDMODULE FileType_Base

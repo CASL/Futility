@@ -35,8 +35,8 @@ PROGRAM testMatrixTypes
   !Configure exception handler for test
   CALL e%setStopOnError(.FALSE.)
   CALL e%setQuietMode(.TRUE.)
-  eParams => e
-  eMatrixType => e
+  CALL eParams%addSurrogate(e)
+  CALL eMatrixType%addSurrogate(e)
   
   !Set up optional PL
   CALL optListMat%add('MatrixType->nnz',-1_SNK)
@@ -141,9 +141,7 @@ PROGRAM testMatrixTypes
       CALL pList%add('MatrixType->n',10_SNK)
       CALL pList%add('MatrixType->nnz',10_SNK)
       CALL pList%validate(pList,optListMat)
-      eMatrixType => NULL()
       CALL thisMatrix%init(pList)
-      eMatrixType => e
       SELECTTYPE(thisMatrix)
         TYPE IS(SparseMatrixType)
           !check for success
@@ -755,9 +753,7 @@ PROGRAM testMatrixTypes
       CALL pList%add('MatrixType->n',10_SNK)
       CALL pList%add('MatrixType->isSym',.FALSE.)
       CALL pList%validate(pList,optListMat)
-      eMatrixType => NULL()
       CALL thisMatrix%init(pList) !n=10, not symmetric
-      eMatrixType => e
       SELECTTYPE(thisMatrix)
         TYPE IS(DenseSquareMatrixType)
           IF(((.NOT. thisMatrix%isInit).OR.(thisMatrix%n /= 10)) &
@@ -1212,9 +1208,7 @@ PROGRAM testMatrixTypes
       CALL pList%add('MatrixType->n',10_SNK)
       CALL pList%add('MatrixType->isSym',.FALSE.)
       CALL pList%validate(pList,optListMat)
-      eMatrixType => NULL()
       CALL thisMatrix%init(pList) !n=10, not symmetric
-      eMatrixType => e
       SELECTTYPE(thisMatrix)
         TYPE IS(TriDiagMatrixType)
           IF(((.NOT. thisMatrix%isInit).OR.(thisMatrix%n /= 10)) &
@@ -1489,9 +1483,7 @@ PROGRAM testMatrixTypes
       CALL pList%add('MatrixType->n',10_SNK)
       CALL pList%add('MatrixType->m',15_SNK)
       CALL pList%validate(pList,optListMat)
-      eMatrixType => NULL()
       CALL thisMatrix%init(pList)
-      eMatrixType => e
       SELECTTYPE(thisMatrix)
         TYPE IS(DenseRectMatrixType)
           IF(((.NOT. thisMatrix%isInit).OR.(thisMatrix%n /= 10)) &
@@ -1770,9 +1762,7 @@ PROGRAM testMatrixTypes
       CALL pList%add('MatrixType->isSym',.FALSE.)
       CALL pList%add('MatrixType->matType',SPARSE)
       CALL pList%validate(pList,optListMat)
-      eMatrixType => NULL()
       CALL thisMatrix%init(pList) !n=10, not symmetric (0), sparse (0)
-      eMatrixType => e
       SELECTTYPE(thisMatrix)
         TYPE IS(PETScMatrixType)
           IF(((.NOT. thisMatrix%isInit).OR.(thisMatrix%n /= 10)) &
@@ -2184,9 +2174,7 @@ PROGRAM testMatrixTypes
       CALL pList%add('MatrixType->isSym',.FALSE.)
       CALL pList%add('MatrixType->mattype',DENSESQUARE) ! dense
       CALL pList%validate(pList,optListMat)
-      eMatrixType => NULL()
       CALL thisMatrix%init(pList) !n=10, not symmetric (0), sparse (0)
-      eMatrixType => e
       SELECTTYPE(thisMatrix)
         TYPE IS(PETScMatrixType)
           IF(((.NOT. thisMatrix%isInit).OR.(thisMatrix%n /= 10)) &

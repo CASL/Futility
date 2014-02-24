@@ -30,9 +30,9 @@ PROGRAM testCmdLineProc
   TYPE(ExceptionHandlerType),TARGET :: e
 
   !Configure exception handler of CmdLineProc for testing
-  testCLP%e => e
-  CALL testCLP%e%setStopOnError(.FALSE.)
-  CALL testCLP%e%setQuietMode(.TRUE.)
+  CALL testCLP%e%addSurrogate(e)
+  CALL e%setStopOnError(.FALSE.)
+  CALL e%setQuietMode(.TRUE.)
 
   CREATE_TEST('COMMAND_LINE_PROCESSOR')
   
@@ -67,9 +67,7 @@ PROGRAM testCmdLineProc
       
       CALL testCLP%setNumOpts(-1)
       ASSERT(testCLP%getNumOpts() == 0,'%setNumOpts(-1)')
-      testCLP%e => NULL()
       CALL testCLP%setNumOpts(3)
-      testCLP%e => e
       ASSERT(testCLP%getNumOpts() == 3,'%setNumOpts(3)')
       CALL testCLP%setNumOpts(4)
       ASSERT(testCLP%getNumOpts() == 3,'%setNumOpts(4)')
@@ -99,9 +97,7 @@ PROGRAM testCmdLineProc
       str='test.inp'
       CALL testCLP%setCmdLine(str)
       ASSERT(str == testCLP%cmdline,'%cmdline')
-      testCLP%e => NULL()
       CALL testCLP%setCmdLine()
-      testCLP%e => e
       ASSERT(testCLP%getNargs() == 1,'%getNargs()')
       str=''
       CALL testCLP%getCmdArg(1,str(1:2))

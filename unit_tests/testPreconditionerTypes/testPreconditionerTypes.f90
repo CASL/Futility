@@ -57,9 +57,8 @@ PROGRAM testPreconditionerTypes
   !Configure exception handler for test
   CALL e%setStopOnError(.FALSE.)
   CALL e%setQuietMode(.TRUE.)
-  eParams => e
-  ePreCondType => e
-  
+  CALL eParams%addSurrogate(e)
+  CALL ePreCondType%addSurrogate(e)
   
 #ifdef MPACT_HAVE_PETSC    
   CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)

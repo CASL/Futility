@@ -280,7 +280,7 @@ MODULE VTKFiles
       PROCEDURE,PASS :: writeScalarData => writeScalarData_VTKLegFileType
   ENDTYPE VTKLegFileType
   
-  TYPE(ExceptionHandlerType),POINTER,SAVE :: eVTK => NULL()
+  TYPE(ExceptionHandlerType),SAVE :: eVTK
 !
 !===============================================================================
   CONTAINS
@@ -313,15 +313,21 @@ MODULE VTKFiles
       INTEGER(SIK),OPTIONAL,INTENT(IN) :: recl
       
       CHARACTER(LEN=256) :: title
-      LOGICAL(SBK) :: localalloc
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(fileobj%e)) THEN
-        ALLOCATE(fileobj%e)
-        localalloc=.TRUE.
-      ENDIF
       
       IF(.NOT.fileobj%isInit()) THEN
+        IF(PRESENT(access)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
+          ' - Optional input "ACCESS" is being ignored. Value is "SEQUENTIAL".')
+        IF(PRESENT(form)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
+          ' - Optional input "FORM" is being ignored. Value is "FORMATTED".')
+        IF(PRESENT(action)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
+          ' - Optional input "ACTION" is being ignored. Value is "WRITE".')
+        IF(PRESENT(pad)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
+          ' - Optional input "PAD" is being ignored. Value is "YES".')
+        IF(PRESENT(position)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
+          ' - Optional input "POSITION" is being ignored. Value is "APPEND".')
+        IF(PRESENT(recl)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
+          ' - Optional input "RECL" is being ignored. File is "SEQUENTIAL".')
+        
         !Initialize the file, only support ascii for now
         CALL init_fortran_file(fileobj,unit,file,'REPLACE','SEQUENTIAL', &
           'FORMATTED','APPEND','WRITE')
@@ -332,7 +338,7 @@ MODULE VTKFiles
         !Determine the file's title
         IF(PRESENT(status)) THEN
           IF(LEN_TRIM(status) > 256) THEN
-            CALL fileobj%e%raiseDebugWarning(modName//'::'//myName// &
+            CALL fileobj%e%raiseDebug(modName//'::'//myName// &
               ' - File title name is being truncated!')
             title=status(1:256)
           ELSE
@@ -355,7 +361,6 @@ MODULE VTKFiles
         CALL fileobj%e%raiseError(modName//'::'//myName// &
           ' - VTK File is already initialized!')
       ENDIF
-      IF(localalloc) DEALLOCATE(fileobj%e)
     ENDSUBROUTINE init_VTKLegFileType
 !
 !-------------------------------------------------------------------------------
@@ -954,7 +959,7 @@ MODULE VTKFiles
      REAL(SRK),ALLOCATABLE :: rightArray(:)
      REAL(SRK),ALLOCATABLE :: leftArray(:)
      INTEGER(SIK),ALLOCATABLE :: leftPoints(:),rightPoints(:)
-     INTEGER(SIK) :: nr,nl,i
+     INTEGER(SIK) :: nr,nl
      
      CALL dmallocA(rightArray,n/2)
      CALL dmallocA(leftArray, n-(n/2))
@@ -1156,7 +1161,6 @@ MODULE VTKFiles
     REAL(SRK),INTENT(IN) :: x_shift
     REAL(SRK),INTENT(IN) :: y_shift
     REAL(SRK),INTENT(IN) :: z_shift
-    LOGICAL(SBK) :: localalloc
     
     IF(thisVTKMesh%meshType == VTK_STRUCTURED_POINTS) THEN
       thisVTKMesh%x(1)=thisVTKMesh%x(1)+x_shift
@@ -1169,14 +1173,8 @@ MODULE VTKFiles
       thisVTKMesh%y=thisVTKMesh%y+y_shift
       thisVTKMesh%z=thisVTKMesh%z+z_shift
     ELSE
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eVTK)) THEN
-        ALLOCATE(eVTK)
-        localalloc=.TRUE.
-      ENDIF
       CALL eVTK%raiseError(modName//'::'//myName// &
         ' - VTKMesh type not supported!')
-      IF(localalloc) DEALLOCATE(eVTK)
     ENDIF
   ENDSUBROUTINE translate_VTKMeshType
 !

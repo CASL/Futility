@@ -90,7 +90,7 @@ PROGRAM testStochasticSampler
       REAL(SDK) :: x
       
       CALL e%setQuietMode(.TRUE.)
-      eStochasticSampler => e
+      CALL eStochasticSampler%addSurrogate(e)
       ! Test Manager Init
       CALL myRNG%init(RNG_LEcuyer2)
       SET_PREFIX('RNG Init')

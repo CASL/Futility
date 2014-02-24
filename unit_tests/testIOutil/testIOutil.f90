@@ -485,14 +485,13 @@ PROGRAM testIOutil
       ASSERT(TRIM(string3) == '.ext',string//' ext')
   
       COMPONENT_TEST('Error Checking')
-      testFile%e => e
       CALL getFileParts(string,shortstring1,shortstring2,shortstring3)
-      CALL getFileParts(string,shortstring1,shortstring2,shortstring3, &
-        testFile%e)
+      CALL getFileParts(string,shortstring1,shortstring2,shortstring3,e)
     ENDSUBROUTINE testIO_Strings
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testBaseFileType()
+      CALL testFile%e%addSurrogate(e)
       ASSERT(.NOT.(testFile%isRead()),'%isRead()')
       ASSERT(.NOT.(testFile%isWrite()),'%isWrite()')
       ASSERT(.NOT.(testFile%isEOF()),'%isEOF()')
@@ -504,7 +503,6 @@ PROGRAM testIOutil
       ASSERT(LEN_TRIM(string1) == 0,'%getFileParts(...) path')
       ASSERT(LEN_TRIM(string2) == 0,'%getFileParts(...) name')
       ASSERT(LEN_TRIM(string3) == 0,'%getFileParts(...) ext')
-      testFile%e => NULL()
       CALL testFile%setFilePath('filepath/')
       ASSERT(TRIM(testFile%getFilePath()) == 'filepath/','%getFilePath()')
       CALL testFile%setFileName('filename')
@@ -515,7 +513,6 @@ PROGRAM testIOutil
       ASSERT(TRIM(string1) == 'filepath/','%getFileParts(...) path')
       ASSERT(TRIM(string2) == 'filename','%getFileParts(...) name')
       ASSERT(TRIM(string3) == '.fext','%getFileParts(...) ext')
-      testFile%e => e
       CALL testFile%setReadStat(.TRUE.)
       ASSERT(testFile%isRead(),'%setReadStat()')
       CALL testFile%setWriteStat(.TRUE.)
@@ -547,8 +544,8 @@ PROGRAM testIOutil
       COMPONENT_TEST('%clear()')
       CALL testFile%clear()
       !Configure exception handler for testing
-      testFile%e => e
-      testFile2%e => e
+      CALL testFile%e%addSurrogate(e)
+      CALL testFile2%e%addSurrogate(e)
       ASSERT(testFile%getUnitNo() == -1,'%getUnitNo()')
       ASSERT(.NOT.(testFile%isFormatted()),'%isFormatted()')
       ASSERT(.NOT.(testFile%isDirect()),'%isDirect()')
@@ -559,6 +556,7 @@ PROGRAM testIOutil
       
       !Called for coverage/error checking
       COMPONENT_TEST('%initialize()')
+      
       CALL testFile%fopen()
       CALL testFile%fclose()
       CALL testFile%fdelete()
@@ -588,10 +586,8 @@ PROGRAM testIOutil
       CALL testFile%fopen()
       CALL testFile2%initialize(UNIT=12,FILE='./testFile.txt')
   
-      testFile%e => NULL()
       CALL testFile%fbackspace()
       CALL testFile%frewind()
-      testFile%e => e
       CALL testFile%fclose()
       ASSERT(.NOT.(testFile%isOpen()),'%fclose()')
       CALL testFile%fdelete()
@@ -612,13 +608,13 @@ PROGRAM testIOutil
       CALL testFile2%fopen()
       CALL testFile2%fdelete()
       CALL testFile%clear()
-      testFile%e => e
+      CALL testFile%e%addSurrogate(e)
       CALL testFile%initialize(UNIT=12,FILE='./testFile.txt',STATUS='OLD', &
         ACCESS='DIRECT',ACTION='READ',RECL=100,FORM='FORMATTED')
       CALL testFile%fopen()
       CALL testFile%fdelete()
       CALL testFile%clear()
-      testFile%e => e
+      CALL testFile%e%addSurrogate(e)
       CALL testFile%initialize(UNIT=12,FILE='./testFile.txt',STATUS='OLD', &
         ACTION='READ',FORM='UNFORMATTED')
       CALL testFile%fopen()
@@ -629,16 +625,13 @@ PROGRAM testIOutil
 !-------------------------------------------------------------------------------
     SUBROUTINE testLogFileType()
       LOGICAL :: bool
-      testLogFile%e => e
       ASSERT(.NOT.(testLogFile%isEcho()),'%isEcho()')
       CALL testLogFile%setEcho(.TRUE.)
       ASSERT(testLogFile%isEcho(),'%setEcho(...)')
       CALL testLogFile%initialize(UNIT=66,FILE='./test.log')
       ASSERT(TRIM(testLogFile%getFileName()) == 'test','%initialize(...)')
       CALL testLogFile%fopen()
-      testLogFile%e => NULL()
       CALL testLogFile%message('Passed: CALL testLogFile%message(...)',.TRUE.,.TRUE.)
-      testLogFile%e => e
       CALL testLogFile%message('Passed: CALL testLogFile%message(...)',.FALSE.,.TRUE.)
       CALL testLogFile%clear(.FALSE.)
       ASSERT(testLogFile%getUnitNo() == -1,'%clear')
@@ -652,8 +645,7 @@ PROGRAM testIOutil
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testInputFileType()
-  
-      testInpFile%e => e
+      CALL testInpFile%e%addSurrogate(e)
       ASSERT(.NOT.(testInpFile%getEchoStat()),'%getEchoStat()')
       ASSERT(testInpFile%getEchoUnit() == -1,'%getEchoUnit()')
       CALL testInpFile%setEchoStat(.TRUE.)
@@ -681,9 +673,7 @@ PROGRAM testIOutil
       ASSERT(LEN_TRIM(testInpFile%getProbe()) == 0,'%fbackspace()')
       CALL testFile%clear(.TRUE.)
       CALL testInpFile%setEchoStat(.FALSE.)
-      testInpFile%e => NULL()
       string=testInpFile%fgetl()
-      testInpFile%e => e
       CALL testInpFile%clear(.TRUE.)
       ASSERT(testInpFile%getEchoUnit() == -1,'%clear() (echo unit)')
       ASSERT(.NOT.(testInpFile%getEchostat()),'%clear() (echo stat)')

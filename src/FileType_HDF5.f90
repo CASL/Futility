@@ -345,7 +345,6 @@ MODULE FileType_HDF5
       INTEGER(SIK) :: unitno
       LOGICAL(SBK) :: ostat
 #endif
-      IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
 #ifdef MPACT_HAVE_HDF5
       CALL getFileParts(filename,fpath,fname,fext,thisHDF5File%e)
       CALL thisHDF5File%setFilePath(fpath)
@@ -421,7 +420,7 @@ MODULE FileType_HDF5
         ' - Unable to close HDF5 INTERFACE.')
 #endif
       thisHDF5File%isinit=.FALSE.
-      IF(ASSOCIATED(thisHDF5File%e)) DEALLOCATE(thisHDF5File%e)
+      CALL clear_base_file(thisHDF5File)
     ENDSUBROUTINE clear_HDF5FileType
 !
 !-------------------------------------------------------------------------------
@@ -476,7 +475,6 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),PARAMETER :: myName='close_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: file
 #ifdef MPACT_HAVE_HDF5
-      IF(.NOT.ASSOCIATED(file%e)) ALLOCATE(file%e)
       CALL file%e%setStopOnError(.FALSE.)
       IF(.NOT.file%isinit) THEN
         CALL file%e%raiseError(modName// &
@@ -501,13 +499,8 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),PARAMETER :: myName='delete_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: file
 #ifdef MPACT_HAVE_HDF5
-      LOGICAL(SBK) :: localalloc
       CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: emesg
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(file%e)) THEN
-        ALLOCATE(file%e)
-        localalloc=.TRUE.
-      ENDIF
+      
       OPEN(UNIT=1,FILE=TRIM(file%getFilePath())// &
           TRIM(file%getFileName())//TRIM(file%getFileExt()), &
           IOSTAT=error)
@@ -525,7 +518,6 @@ MODULE FileType_HDF5
           CALL file%setOpenStat(.FALSE.)
         ENDIF
       ENDIF
-      IF(localalloc) DEALLOCATE(file%e)
 #else
       ! We dont have HDF5, so we can't initialize
       CALL file%e%raiseWarning('The HDF5 library is not present in '// &
@@ -559,7 +551,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -609,7 +600,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -628,10 +618,10 @@ MODULE FileType_HDF5
         IF(error == 0) THEN
           ! Close the group
           CALL h5gclose_f(group_id,error)
-          IF(error /= 0) CALL thisHDF5File%e%raiseDebugWarning(modName//'::'// &
+          IF(error /= 0) CALL thisHDF5File%e%raiseDebug(modName//'::'// &
               myName//' - Failed to close HDF group')
         ELSE
-          CALL thisHDF5File%e%raiseDebugWarning(modName//'::'//myName// &
+          CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
             ' - Failed to create HDF5 group.')
         ENDIF
       ENDIF
@@ -657,7 +647,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -705,7 +694,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -826,7 +814,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -946,7 +933,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -1066,7 +1052,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -1189,7 +1174,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -1312,7 +1296,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -1433,7 +1416,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -1553,7 +1535,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -1674,7 +1655,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -1796,7 +1776,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -1921,7 +1900,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -2052,7 +2030,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -2180,7 +2157,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -2308,7 +2284,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -2436,7 +2411,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -2554,7 +2528,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -2673,7 +2646,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -2793,7 +2765,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -2917,7 +2888,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -2986,7 +2956,7 @@ MODULE FileType_HDF5
 
         ! Convert data type
         vals=valst
-        CALL thisHDF5File%e%raiseDebugWarning(modName//'::'//myName// &
+        CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
           ' - Converting from long integer to double to accommodate HDF5!!!')
 
         ! Write to the dataset
@@ -3043,7 +3013,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -3112,7 +3081,7 @@ MODULE FileType_HDF5
 
         ! Convert to different datatyp
         vals=valst
-        CALL thisHDF5File%e%raiseDebugWarning(modName//'::'//myName// &
+        CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
           ' - Converting from long integer to double to accommodate HDF5!!!')
 
         ! Write to the dataset
@@ -3170,7 +3139,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -3240,7 +3208,7 @@ MODULE FileType_HDF5
 
         ! Convert data type
         vals=valst
-        CALL thisHDF5File%e%raiseDebugWarning(modName//'::'//myName// &
+        CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
           ' - Converting from long integer to double to accommodate HDF5!!!')
 
         ! Write to the dataset
@@ -3298,7 +3266,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -3369,7 +3336,7 @@ MODULE FileType_HDF5
 
         ! Convert Data type
         vals=valst
-        CALL thisHDF5File%e%raiseDebugWarning(modName//'::'//myName// &
+        CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
           ' - Converting from long integer to double to accommodate HDF5!!!')
 
         ! Write to the valsset
@@ -3429,7 +3396,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -4181,7 +4147,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -4253,7 +4218,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -4336,7 +4300,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -4418,7 +4381,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -4500,7 +4462,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -4582,7 +4543,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -4664,7 +4624,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -4736,7 +4695,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -4818,7 +4776,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -4900,7 +4857,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -4982,7 +4938,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -5064,7 +5019,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -5138,7 +5092,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -5220,7 +5173,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -5302,7 +5254,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -5386,7 +5337,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -5433,7 +5383,7 @@ MODULE FileType_HDF5
 
         ! Convert data type
         vals=valst
-        CALL thisHDF5File%e%raiseDebugWarning(modName//'::'//myName// &
+        CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
           ' - Converting from double to long integer!')
       ENDIF
 #endif
@@ -5466,7 +5416,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -5524,7 +5473,7 @@ MODULE FileType_HDF5
 
         ! Conver data type
         vals=valst
-        CALL thisHDF5File%e%raiseDebugWarning(modName//'::'//myName// &
+        CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
           ' - Converting from double to long integer!')
       ENDIF
 #endif
@@ -5557,7 +5506,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -5615,7 +5563,7 @@ MODULE FileType_HDF5
 
         ! Conver data type
         vals=valst
-        CALL thisHDF5File%e%raiseDebugWarning(modName//'::'//myName// &
+        CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
           ' - Converting from double to long integer!')
       ENDIF
 #endif
@@ -5648,7 +5596,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -5706,7 +5653,7 @@ MODULE FileType_HDF5
 
         ! Conver data type
         vals=valst
-        CALL thisHDF5File%e%raiseDebugWarning(modName//'::'//myName// &
+        CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
           ' - Converting from double to long integer!')
       ENDIF
 #endif
@@ -5738,7 +5685,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -5820,7 +5766,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -5917,7 +5862,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -6014,7 +5958,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -6111,7 +6054,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -6196,7 +6138,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -6293,7 +6234,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -6394,7 +6334,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')
@@ -6497,7 +6436,6 @@ MODULE FileType_HDF5
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
-        IF(.NOT.ASSOCIATED(thisHDF5File%e)) ALLOCATE(thisHDF5File%e)
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File object not initialized.')

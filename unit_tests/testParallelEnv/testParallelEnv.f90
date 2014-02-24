@@ -28,7 +28,6 @@ PROGRAM testParallelEnv
   INCLUDE 'mpif.h'
 #endif
 
-  TYPE(ExceptionHandlerType),TARGET :: e
   TYPE(ParallelEnvType) :: testPE,testPE2,testPE3
   TYPE(MPI_EnvType) :: testMPI,testMPI2
   TYPE(OMP_EnvType) :: testOMP
@@ -45,7 +44,6 @@ PROGRAM testParallelEnv
   myrank=0
   mysize=1
 #endif
-  eParEnv => e
   CALL eParEnv%setQuietMode(.TRUE.)
   CALL eParEnv%setStopOnError(.FALSE.)
   
@@ -231,9 +229,7 @@ PROGRAM testParallelEnv
               1916,1916,1916,1944,1944,1944,1944,1916,1916,1916,1916,1571, &
               1571,1571,1571,4122,4122,4122,4122,4266,4266,4266,4266,1850, &
               1850,1850,1850/)
-    eParEnv => NULL()
     CALL testMPI2%partition(IWGT=testWGT,IPART=0,IDXMAP=testIDX)
-    eParEnv => e
     IF(ANY(testIDX /= (/11,23,33/))) THEN
       WRITE(OUTPUT_UNIT,*) testMPI2%rank,'CALL testMPI2%partition(...) FAILED!'
 #ifdef HAVE_MPI

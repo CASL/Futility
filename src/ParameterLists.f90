@@ -110,7 +110,7 @@ MODULE ParameterLists
   CHARACTER(LEN=*),PARAMETER :: modName='PARAMETERLISTS'
   
   !> Exception handler for the module
-  TYPE(ExceptionHandlerType),POINTER,SAVE :: eParams => NULL()
+  TYPE(ExceptionHandlerType),SAVE :: eParams
   
   !> @brief Derived type for a parameter object
   !>
@@ -848,13 +848,6 @@ MODULE ParameterLists
       CHARACTER(LEN=*),PARAMETER :: myName='assign_ParamType'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CLASS(ParamType),INTENT(IN) :: param
-      LOGICAL(SBK) :: localalloc
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType)
@@ -942,7 +935,6 @@ MODULE ParameterLists
           CALL eParams%raiseError(modName//'::'//myName// &
             ' - cannot assign parameter data to a type extension of ParamType!')
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE assign_ParamType
 !
 !-------------------------------------------------------------------------------
@@ -971,15 +963,8 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       CLASS(ParamType),POINTER,INTENT(INOUT) :: param
       CHARACTER(LEN=LEN(name)) :: thisname,nextname,pname
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos,i
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       ipos=INDEX(name,'->')
       thisname=name
@@ -1048,7 +1033,6 @@ MODULE ParameterLists
         CALL eParams%raiseError(modName//'::'//myName// &
           ' - cannot search for a blank name!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE get_ParamType
 !
 !-------------------------------------------------------------------------------
@@ -1075,16 +1059,9 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       CLASS(ParamType),INTENT(IN) :: newParam
       CHARACTER(LEN=LEN(name)) :: thisname,nextname,pname
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos,i,np
       TYPE(ParamType),ALLOCATABLE :: tmpList(:)
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType)
@@ -1202,7 +1179,6 @@ MODULE ParameterLists
           CALL eParams%raiseError(modName//'::'//myName// &
             ' - cannot add parameter to type "'//thisParam%datatype//'"!')
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE add_ParamType
 !
 !-------------------------------------------------------------------------------
@@ -1221,15 +1197,8 @@ MODULE ParameterLists
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=LEN(name)) :: thisname,nextname,pname
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: i,ipos,np,npnew
       TYPE(ParamType),ALLOCATABLE :: tmpList(:)
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       ipos=INDEX(name,'->')
       thisname=name
@@ -1341,7 +1310,6 @@ MODULE ParameterLists
         CALL eParams%raiseError(modName//'::'//myName// &
           ' - cannot search for a blank name!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE remove_ParamType
 !
 !-------------------------------------------------------------------------------
@@ -1361,17 +1329,10 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       LOGICAL(SBK) :: hasname
       CHARACTER(LEN=LEN(name)) :: tmpname
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
       CLASS(ParamType),POINTER :: tmpParam => NULL()
       
       hasname=.FALSE.
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
-      
       tmpname=name
       ipos=INDEX(tmpname,'->')
       DO WHILE (ipos > 0)
@@ -1384,13 +1345,11 @@ MODULE ParameterLists
         ipos=INDEX(tmpname,'->')
       ENDDO
         
-      
       !Search for the parameter name
       CALL thisParam%getParam(name,tmpParam)
       hasname=ASSOCIATED(tmpParam)
       
       tmpParam => NULL()
-      IF(localalloc) DEALLOCATE(eParams)
     ENDFUNCTION has_ParamType
 !
 !-------------------------------------------------------------------------------
@@ -1569,7 +1528,7 @@ MODULE ParameterLists
             !must at least check that the list exists
             CALL thisParam%getParam(prefix//p%name,tmpParam)
             IF(.NOT.ASSOCIATED(tmpParam)) THEN
-              CALL eParams%raiseDebugWarning(modName//'::'//myName// &
+              CALL eParams%raiseDebug(modName//'::'//myName// &
                 ' - Failed to locate optional parameter "'//prefix// &
                   p%name//'"! It is being added with no default value!')
               CALL add_ParamType(thisParam,prefix(1:nprefix),p)
@@ -1696,14 +1655,8 @@ MODULE ParameterLists
       CLASS(ParamType),INTENT(IN) :: reqParams
       CLASS(ParamType),INTENT(IN),OPTIONAL :: optParams
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: printExtras
-      LOGICAL(SBK) :: isValid,localalloc
+      LOGICAL(SBK) :: isValid
       TYPE(ParamType) :: nullParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       !Assume the list is valid, check it only if the required parameter
       !list is not empty.
@@ -1725,7 +1678,6 @@ MODULE ParameterLists
           ENDIF
         ENDIF
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE validate_Paramtype
 !
 !-------------------------------------------------------------------------------
@@ -1741,13 +1693,7 @@ MODULE ParameterLists
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CLASS(ParamType),INTENT(IN) :: reqParams
       LOGICAL(SBK),INTENT(OUT) :: isMatch
-      LOGICAL(SBK) :: isValid,localalloc
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
+      LOGICAL(SBK) :: isValid
       
       !Assume the list is valid, check it only if the required parameter
       !list is not empty.
@@ -1755,7 +1701,6 @@ MODULE ParameterLists
       isMatch=.FALSE.
       IF(ASSOCIATED(reqParams%pdat)) &
         isValid=validateReq_ParamType(thisParam,reqParams,'',isMatch)
-      
     ENDSUBROUTINE verify_Paramtype
 !
 !-------------------------------------------------------------------------------
@@ -1778,7 +1723,7 @@ MODULE ParameterLists
       LOGICAL(SBK) :: bool
       CLASS(ParamType),POINTER :: paramPtr
       INTEGER(SIK) :: i,j
-      LOGICAL(SBK) :: localalloc,tmpsbk1,tmpsbk2
+      LOGICAL(SBK) :: tmpsbk1,tmpsbk2
       LOGICAL(SBK),ALLOCATABLE :: tmpsbka11(:),tmpsbka12(:)
       REAL(SSK) :: tmpssk1,tmpssk2
       REAL(SSK),ALLOCATABLE :: tmpsska11(:),tmpsska21(:,:),tmpsska31(:,:,:)
@@ -1795,12 +1740,6 @@ MODULE ParameterLists
       TYPE(StringType) :: tmpstr1,tmpstr2
       TYPE(StringType),ALLOCATABLE :: tmpstra11(:),tmpstra21(:,:)
       TYPE(StringType),ALLOCATABLE :: tmpstra12(:),tmpstra22(:,:)
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       !Point to the intent(in) param to use the get function
       paramPtr => NULL()
@@ -2143,14 +2082,7 @@ MODULE ParameterLists
       TYPE(ParamType),INTENT(IN) :: param(:)
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos,i
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
@@ -2175,7 +2107,6 @@ MODULE ParameterLists
           ' - parameter '//thisParam%name//' is already initialized!'// &
             ' Use set method instead!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE init_ParamType_List
 !
 !-------------------------------------------------------------------------------
@@ -2253,15 +2184,8 @@ MODULE ParameterLists
       TYPE(ParamType),INTENT(IN) :: paramlist(:)
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: np,i
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_List)
@@ -2320,7 +2244,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE set_ParamType_List
 !
 !-------------------------------------------------------------------------------
@@ -2341,15 +2264,8 @@ MODULE ParameterLists
       CLASS(ParamType),INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       TYPE(ParamType),INTENT(INOUT) :: paramlist(:)
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: i,np
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_List)
@@ -2399,7 +2315,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE get_ParamType_List
 !
 !-------------------------------------------------------------------------------
@@ -2425,16 +2340,9 @@ MODULE ParameterLists
       TYPE(ParamType),INTENT(IN) :: param(:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CHARACTER(LEN=LEN(name)) :: prevname,thisname
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
@@ -2463,7 +2371,6 @@ MODULE ParameterLists
           ' - parameter name "'//TRIM(name)// &
             '" already exists! Use set method or full parameter list path!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE add_ParamType_List
 !
 !-------------------------------------------------------------------------------
@@ -2483,14 +2390,7 @@ MODULE ParameterLists
       REAL(SSK),INTENT(IN) :: param
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
@@ -2511,7 +2411,6 @@ MODULE ParameterLists
         CALL eParams%raiseError(modName//'::'//myName// &
           ' - parameter is already initialized! Use set method!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE init_ParamType_SSK
 !
 !-------------------------------------------------------------------------------
@@ -2578,14 +2477,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       REAL(SSK),INTENT(IN) :: param
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SSK)
@@ -2617,7 +2509,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE set_ParamType_SSK
 !
 !-------------------------------------------------------------------------------
@@ -2636,14 +2527,7 @@ MODULE ParameterLists
       CLASS(ParamType),INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       REAL(SSK),INTENT(INOUT) :: val
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SSK)
@@ -2673,7 +2557,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE get_ParamType_SSK
 !
 !-------------------------------------------------------------------------------
@@ -2700,16 +2583,9 @@ MODULE ParameterLists
       REAL(SSK),INTENT(IN) :: param
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CHARACTER(LEN=LEN(name)) :: prevname,thisname
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
@@ -2738,7 +2614,6 @@ MODULE ParameterLists
           ' - parameter name "'//TRIM(name)// &
             '" already exists! Use set method or full parameter list path!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE add_ParamType_SSK
 !
 !-------------------------------------------------------------------------------
@@ -2758,14 +2633,7 @@ MODULE ParameterLists
       REAL(SDK),INTENT(IN) :: param
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
@@ -2786,7 +2654,6 @@ MODULE ParameterLists
         CALL eParams%raiseError(modName//'::'//myName// &
           ' - parameter is already initialized! Use set method!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE init_ParamType_SDK
 !
 !-------------------------------------------------------------------------------
@@ -2853,14 +2720,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       REAL(SDK),INTENT(IN) :: param
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SDK)
@@ -2892,7 +2752,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE set_ParamType_SDK
 !
 !-------------------------------------------------------------------------------
@@ -2911,14 +2770,7 @@ MODULE ParameterLists
       CLASS(ParamType),INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       REAL(SDK),INTENT(INOUT) :: val
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SDK)
@@ -2948,7 +2800,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE get_ParamType_SDK
 !
 !-------------------------------------------------------------------------------
@@ -2975,16 +2826,9 @@ MODULE ParameterLists
       REAL(SDK),INTENT(IN) :: param
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CHARACTER(LEN=LEN(name)) :: prevname,thisname
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
@@ -3013,7 +2857,6 @@ MODULE ParameterLists
           ' - parameter name "'//TRIM(name)// &
             '" already exists! Use set method or full parameter list path!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE add_ParamType_SDK
 !
 !-------------------------------------------------------------------------------
@@ -3033,14 +2876,7 @@ MODULE ParameterLists
       INTEGER(SNK),INTENT(IN) :: param
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
@@ -3061,7 +2897,6 @@ MODULE ParameterLists
         CALL eParams%raiseError(modName//'::'//myName// &
           ' - parameter is already initialized! Use set method!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE init_ParamType_SNK
 !
 !-------------------------------------------------------------------------------
@@ -3128,14 +2963,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       INTEGER(SNK),INTENT(IN) :: param
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SNK)
@@ -3167,7 +2995,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE set_ParamType_SNK
 !
 !-------------------------------------------------------------------------------
@@ -3186,14 +3013,7 @@ MODULE ParameterLists
       CLASS(ParamType),INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       INTEGER(SNK),INTENT(INOUT) :: val
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SNK)
@@ -3223,7 +3043,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE get_ParamType_SNK
 !
 !-------------------------------------------------------------------------------
@@ -3250,16 +3069,9 @@ MODULE ParameterLists
       INTEGER(SNK),INTENT(IN) :: param
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CHARACTER(LEN=LEN(name)) :: prevname,thisname
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
@@ -3288,7 +3100,6 @@ MODULE ParameterLists
           ' - parameter name "'//TRIM(name)// &
             '" already exists! Use set method or full parameter list path!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE add_ParamType_SNK
 !
 !-------------------------------------------------------------------------------
@@ -3308,14 +3119,7 @@ MODULE ParameterLists
       INTEGER(SLK),INTENT(IN) :: param
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
@@ -3336,7 +3140,6 @@ MODULE ParameterLists
         CALL eParams%raiseError(modName//'::'//myName// &
           ' - parameter is already initialized! Use set method!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE init_ParamType_SLK
 !
 !-------------------------------------------------------------------------------
@@ -3403,14 +3206,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       INTEGER(SLK),INTENT(IN) :: param
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SLK)
@@ -3442,7 +3238,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE set_ParamType_SLK
 !
 !-------------------------------------------------------------------------------
@@ -3461,14 +3256,7 @@ MODULE ParameterLists
       CLASS(ParamType),INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       INTEGER(SLK),INTENT(INOUT) :: val
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SLK)
@@ -3498,7 +3286,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE get_ParamType_SLK
 !
 !-------------------------------------------------------------------------------
@@ -3525,16 +3312,9 @@ MODULE ParameterLists
       INTEGER(SLK),INTENT(IN) :: param
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CHARACTER(LEN=LEN(name)) :: prevname,thisname
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
@@ -3563,7 +3343,6 @@ MODULE ParameterLists
           ' - parameter name "'//TRIM(name)// &
             '" already exists! Use set method or full parameter list path!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE add_ParamType_SLK
 !
 !-------------------------------------------------------------------------------
@@ -3583,14 +3362,7 @@ MODULE ParameterLists
       LOGICAL(SBK),INTENT(IN) :: param
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
@@ -3611,7 +3383,6 @@ MODULE ParameterLists
         CALL eParams%raiseError(modName//'::'//myName// &
           ' - parameter is already initialized! Use set method!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE init_ParamType_SBK
 !
 !-------------------------------------------------------------------------------
@@ -3678,14 +3449,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       LOGICAL(SBK),INTENT(IN) :: param
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SBK)
@@ -3717,7 +3481,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE set_ParamType_SBK
 !
 !-------------------------------------------------------------------------------
@@ -3736,14 +3499,7 @@ MODULE ParameterLists
       CLASS(ParamType),INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       LOGICAL(SBK),INTENT(INOUT) :: val
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SBK)
@@ -3773,7 +3529,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE get_ParamType_SBK
 !
 !-------------------------------------------------------------------------------
@@ -3800,16 +3555,9 @@ MODULE ParameterLists
       LOGICAL(SBK),INTENT(IN) :: param
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CHARACTER(LEN=LEN(name)) :: prevname,thisname
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
@@ -3838,7 +3586,6 @@ MODULE ParameterLists
           ' - parameter name "'//TRIM(name)// &
             '" already exists! Use set method or full parameter list path!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE add_ParamType_SBK
 !
 !-------------------------------------------------------------------------------
@@ -3858,14 +3605,7 @@ MODULE ParameterLists
       TYPE(StringType),INTENT(IN) :: param
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
@@ -3886,7 +3626,6 @@ MODULE ParameterLists
         CALL eParams%raiseError(modName//'::'//myName// &
           ' - parameter is already initialized! Use set method!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE init_ParamType_STR
 !
 !-------------------------------------------------------------------------------
@@ -3947,14 +3686,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       TYPE(StringType),INTENT(IN) :: param
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_STR)
@@ -3986,7 +3718,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE set_ParamType_STR
 !
 !-------------------------------------------------------------------------------
@@ -4005,14 +3736,7 @@ MODULE ParameterLists
       CLASS(ParamType),INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       TYPE(StringType),INTENT(INOUT) :: val
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_STR)
@@ -4042,7 +3766,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE get_ParamType_STR
 !
 !-------------------------------------------------------------------------------
@@ -4068,16 +3791,9 @@ MODULE ParameterLists
       TYPE(StringType),INTENT(IN) :: param
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CHARACTER(LEN=LEN(name)) :: prevname,thisname
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
@@ -4106,7 +3822,6 @@ MODULE ParameterLists
           ' - parameter name "'//TRIM(name)// &
             '" already exists! Use set method or full parameter list path!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE add_ParamType_STR
 !
 !-------------------------------------------------------------------------------
@@ -4224,14 +3939,7 @@ MODULE ParameterLists
       REAL(SSK),INTENT(IN) :: param(:)
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
@@ -4254,7 +3962,6 @@ MODULE ParameterLists
         CALL eParams%raiseError(modName//'::'//myName// &
           ' - parameter is already initialized! Use set method!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE init_ParamType_SSK_a1
 !
 !-------------------------------------------------------------------------------
@@ -4329,14 +4036,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       REAL(SSK),INTENT(IN) :: param(:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SSK_a1)
@@ -4376,7 +4076,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE set_ParamType_SSK_a1
 !
 !-------------------------------------------------------------------------------
@@ -4395,14 +4094,7 @@ MODULE ParameterLists
       CLASS(ParamType),INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: val(:)
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SSK_a1)
@@ -4450,7 +4142,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE get_ParamType_SSK_a1
 !
 !-------------------------------------------------------------------------------
@@ -4477,16 +4168,9 @@ MODULE ParameterLists
       REAL(SSK),INTENT(IN) :: param(:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CHARACTER(LEN=LEN(name)) :: prevname,thisname
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
@@ -4515,7 +4199,6 @@ MODULE ParameterLists
           ' - parameter name "'//TRIM(name)// &
             '" already exists! Use set method or full parameter list path!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE add_ParamType_SSK_a1
 !
 !-------------------------------------------------------------------------------
@@ -4535,14 +4218,7 @@ MODULE ParameterLists
       REAL(SDK),INTENT(IN) :: param(:)
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
@@ -4565,7 +4241,6 @@ MODULE ParameterLists
         CALL eParams%raiseError(modName//'::'//myName// &
           ' - parameter is already initialized! Use set method!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE init_ParamType_SDK_a1
 !
 !-------------------------------------------------------------------------------
@@ -4640,14 +4315,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       REAL(SDK),INTENT(IN) :: param(:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SDK_a1)
@@ -4687,7 +4355,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE set_ParamType_SDK_a1
 !
 !-------------------------------------------------------------------------------
@@ -4706,14 +4373,7 @@ MODULE ParameterLists
       CLASS(ParamType),INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: val(:)
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SDK_a1)
@@ -4761,7 +4421,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE get_ParamType_SDK_a1
 !
 !-------------------------------------------------------------------------------
@@ -4788,16 +4447,9 @@ MODULE ParameterLists
       REAL(SDK),INTENT(IN) :: param(:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CHARACTER(LEN=LEN(name)) :: prevname,thisname
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
@@ -4826,7 +4478,6 @@ MODULE ParameterLists
           ' - parameter name "'//TRIM(name)// &
             '" already exists! Use set method or full parameter list path!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE add_ParamType_SDK_a1
 !
 !-------------------------------------------------------------------------------
@@ -4846,14 +4497,7 @@ MODULE ParameterLists
       INTEGER(SNK),INTENT(IN) :: param(:)
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
@@ -4876,7 +4520,6 @@ MODULE ParameterLists
         CALL eParams%raiseError(modName//'::'//myName// &
           ' - parameter is already initialized! Use set method!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE init_ParamType_SNK_a1
 !
 !-------------------------------------------------------------------------------
@@ -4950,14 +4593,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       INTEGER(SNK),INTENT(IN) :: param(:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SNK_a1)
@@ -4997,7 +4633,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE set_ParamType_SNK_a1
 !
 !-------------------------------------------------------------------------------
@@ -5016,14 +4651,7 @@ MODULE ParameterLists
       CLASS(ParamType),INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: val(:)
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SNK_a1)
@@ -5071,7 +4699,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE get_ParamType_SNK_a1
 !
 !-------------------------------------------------------------------------------
@@ -5098,16 +4725,9 @@ MODULE ParameterLists
       INTEGER(SNK),INTENT(IN) :: param(:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CHARACTER(LEN=LEN(name)) :: prevname,thisname
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
@@ -5136,7 +4756,6 @@ MODULE ParameterLists
           ' - parameter name "'//TRIM(name)// &
             '" already exists! Use set method or full parameter list path!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE add_ParamType_SNK_a1
 !
 !-------------------------------------------------------------------------------
@@ -5156,14 +4775,7 @@ MODULE ParameterLists
       INTEGER(SLK),INTENT(IN) :: param(:)
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
@@ -5186,7 +4798,6 @@ MODULE ParameterLists
         CALL eParams%raiseError(modName//'::'//myName// &
           ' - parameter is already initialized! Use set method!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE init_ParamType_SLK_a1
 !
 !-------------------------------------------------------------------------------
@@ -5260,14 +4871,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       INTEGER(SLK),INTENT(IN) :: param(:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SLK_a1)
@@ -5307,7 +4911,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE set_ParamType_SLK_a1
 !
 !-------------------------------------------------------------------------------
@@ -5326,14 +4929,7 @@ MODULE ParameterLists
       CLASS(ParamType),INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: val(:)
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SLK_a1)
@@ -5381,7 +4977,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE get_ParamType_SLK_a1
 !
 !-------------------------------------------------------------------------------
@@ -5408,16 +5003,9 @@ MODULE ParameterLists
       INTEGER(SLK),INTENT(IN) :: param(:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CHARACTER(LEN=LEN(name)) :: prevname,thisname
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
@@ -5446,7 +5034,6 @@ MODULE ParameterLists
           ' - parameter name "'//TRIM(name)// &
             '" already exists! Use set method or full parameter list path!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE add_ParamType_SLK_a1
 !
 !-------------------------------------------------------------------------------
@@ -5466,14 +5053,7 @@ MODULE ParameterLists
       LOGICAL(SBK),INTENT(IN) :: param(:)
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
@@ -5496,7 +5076,6 @@ MODULE ParameterLists
         CALL eParams%raiseError(modName//'::'//myName// &
           ' - parameter is already initialized! Use set method!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE init_ParamType_SBK_a1
 !
 !-------------------------------------------------------------------------------
@@ -5566,14 +5145,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       LOGICAL(SBK),INTENT(IN) :: param(:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SBK_a1)
@@ -5613,7 +5185,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE set_ParamType_SBK_a1
 !
 !-------------------------------------------------------------------------------
@@ -5632,14 +5203,7 @@ MODULE ParameterLists
       CLASS(ParamType),INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: val(:)
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SBK_a1)
@@ -5687,7 +5251,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE get_ParamType_SBK_a1
 !
 !-------------------------------------------------------------------------------
@@ -5714,16 +5277,9 @@ MODULE ParameterLists
       LOGICAL(SBK),INTENT(IN) :: param(:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CHARACTER(LEN=LEN(name)) :: prevname,thisname
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
@@ -5752,7 +5308,6 @@ MODULE ParameterLists
           ' - parameter name "'//TRIM(name)// &
             '" already exists! Use set method or full parameter list path!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE add_ParamType_SBK_a1
 !
 !-------------------------------------------------------------------------------
@@ -5772,14 +5327,7 @@ MODULE ParameterLists
       TYPE(StringType),INTENT(IN) :: param(:)
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
@@ -5801,7 +5349,6 @@ MODULE ParameterLists
         CALL eParams%raiseError(modName//'::'//myName// &
           ' - parameter is already initialized! Use set method!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE init_ParamType_STR_a1
 !
 !-------------------------------------------------------------------------------
@@ -5874,14 +5421,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       TYPE(StringType),INTENT(IN) :: param(:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_STR_a1)
@@ -5921,7 +5461,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE set_ParamType_STR_a1
 !
 !-------------------------------------------------------------------------------
@@ -5940,14 +5479,7 @@ MODULE ParameterLists
       CLASS(ParamType),INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: val(:)
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_STR_a1)
@@ -5995,7 +5527,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE get_ParamType_STR_a1
 !
 !-------------------------------------------------------------------------------
@@ -6021,16 +5552,9 @@ MODULE ParameterLists
       TYPE(StringType),INTENT(IN) :: param(:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CHARACTER(LEN=LEN(name)) :: prevname,thisname
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
@@ -6059,7 +5583,6 @@ MODULE ParameterLists
           ' - parameter name "'//TRIM(name)// &
             '" already exists! Use set method or full parameter list path!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE add_ParamType_STR_a1
 !
 !2222222222222222222222222222222222222222222222222222222222222222222222222222222
@@ -6084,14 +5607,7 @@ MODULE ParameterLists
       REAL(SSK),INTENT(IN) :: param(:,:)
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
@@ -6114,7 +5630,6 @@ MODULE ParameterLists
         CALL eParams%raiseError(modName//'::'//myName// &
           ' - parameter is already initialized! Use set method!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE init_ParamType_SSK_a2
 !
 !-------------------------------------------------------------------------------
@@ -6189,14 +5704,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       REAL(SSK),INTENT(IN) :: param(:,:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SSK_a2)
@@ -6238,7 +5746,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE set_ParamType_SSK_a2
 !
 !-------------------------------------------------------------------------------
@@ -6257,14 +5764,7 @@ MODULE ParameterLists
       CLASS(ParamType),INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: val(:,:)
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SSK_a2)
@@ -6314,7 +5814,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE get_ParamType_SSK_a2
 !
 !-------------------------------------------------------------------------------
@@ -6341,16 +5840,9 @@ MODULE ParameterLists
       REAL(SSK),INTENT(IN) :: param(:,:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CHARACTER(LEN=LEN(name)) :: prevname,thisname
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
@@ -6379,7 +5871,6 @@ MODULE ParameterLists
           ' - parameter name "'//TRIM(name)// &
             '" already exists! Use set method or full parameter list path!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE add_ParamType_SSK_a2
 !
 !-------------------------------------------------------------------------------
@@ -6399,14 +5890,7 @@ MODULE ParameterLists
       REAL(SDK),INTENT(IN) :: param(:,:)
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
@@ -6429,7 +5913,6 @@ MODULE ParameterLists
         CALL eParams%raiseError(modName//'::'//myName// &
           ' - parameter is already initialized! Use set method!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE init_ParamType_SDK_a2
 !
 !-------------------------------------------------------------------------------
@@ -6503,14 +5986,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       REAL(SDK),INTENT(IN) :: param(:,:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SDK_a2)
@@ -6552,7 +6028,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE set_ParamType_SDK_a2
 !
 !-------------------------------------------------------------------------------
@@ -6571,14 +6046,7 @@ MODULE ParameterLists
       CLASS(ParamType),INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: val(:,:)
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SDK_a2)
@@ -6628,7 +6096,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE get_ParamType_SDK_a2
 !
 !-------------------------------------------------------------------------------
@@ -6655,16 +6122,9 @@ MODULE ParameterLists
       REAL(SDK),INTENT(IN) :: param(:,:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CHARACTER(LEN=LEN(name)) :: prevname,thisname
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
@@ -6693,7 +6153,6 @@ MODULE ParameterLists
           ' - parameter name "'//TRIM(name)// &
             '" already exists! Use set method or full parameter list path!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE add_ParamType_SDK_a2
 !
 !-------------------------------------------------------------------------------
@@ -6713,14 +6172,7 @@ MODULE ParameterLists
       INTEGER(SNK),INTENT(IN) :: param(:,:)
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
@@ -6743,7 +6195,6 @@ MODULE ParameterLists
         CALL eParams%raiseError(modName//'::'//myName// &
           ' - parameter is already initialized! Use set method!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE init_ParamType_SNK_a2
 !
 !-------------------------------------------------------------------------------
@@ -6817,14 +6268,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       INTEGER(SNK),INTENT(IN) :: param(:,:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SNK_a2)
@@ -6866,7 +6310,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE set_ParamType_SNK_a2
 !
 !-------------------------------------------------------------------------------
@@ -6885,14 +6328,7 @@ MODULE ParameterLists
       CLASS(ParamType),INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: val(:,:)
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SNK_a2)
@@ -6942,7 +6378,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE get_ParamType_SNK_a2
 !
 !-------------------------------------------------------------------------------
@@ -6969,16 +6404,9 @@ MODULE ParameterLists
       INTEGER(SNK),INTENT(IN) :: param(:,:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CHARACTER(LEN=LEN(name)) :: prevname,thisname
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
@@ -7007,7 +6435,6 @@ MODULE ParameterLists
           ' - parameter name "'//TRIM(name)// &
             '" already exists! Use set method or full parameter list path!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE add_ParamType_SNK_a2
 !
 !-------------------------------------------------------------------------------
@@ -7027,14 +6454,7 @@ MODULE ParameterLists
       INTEGER(SLK),INTENT(IN) :: param(:,:)
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
@@ -7057,7 +6477,6 @@ MODULE ParameterLists
         CALL eParams%raiseError(modName//'::'//myName// &
           ' - parameter is already initialized! Use set method!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE init_ParamType_SLK_a2
 !
 !-------------------------------------------------------------------------------
@@ -7131,14 +6550,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       INTEGER(SLK),INTENT(IN) :: param(:,:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SLK_a2)
@@ -7180,7 +6592,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE set_ParamType_SLK_a2
 !
 !-------------------------------------------------------------------------------
@@ -7199,14 +6610,7 @@ MODULE ParameterLists
       CLASS(ParamType),INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: val(:,:)
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SLK_a2)
@@ -7256,7 +6660,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE get_ParamType_SLK_a2
 !
 !-------------------------------------------------------------------------------
@@ -7283,16 +6686,9 @@ MODULE ParameterLists
       INTEGER(SLK),INTENT(IN) :: param(:,:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CHARACTER(LEN=LEN(name)) :: prevname,thisname
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
@@ -7321,7 +6717,6 @@ MODULE ParameterLists
           ' - parameter name "'//TRIM(name)// &
             '" already exists! Use set method or full parameter list path!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE add_ParamType_SLK_a2
 !
 !-------------------------------------------------------------------------------
@@ -7341,14 +6736,7 @@ MODULE ParameterLists
       TYPE(StringType),INTENT(IN) :: param(:,:)
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
@@ -7370,7 +6758,6 @@ MODULE ParameterLists
         CALL eParams%raiseError(modName//'::'//myName// &
           ' - parameter is already initialized! Use set method!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE init_ParamType_STR_a2
 !
 !-------------------------------------------------------------------------------
@@ -7455,14 +6842,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       TYPE(StringType),INTENT(IN) :: param(:,:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_STR_a2)
@@ -7504,7 +6884,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE set_ParamType_STR_a2
 !
 !-------------------------------------------------------------------------------
@@ -7523,14 +6902,7 @@ MODULE ParameterLists
       CLASS(ParamType),INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: val(:,:)
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_STR_a2)
@@ -7580,7 +6952,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE get_ParamType_STR_a2
 !
 !-------------------------------------------------------------------------------
@@ -7606,16 +6977,9 @@ MODULE ParameterLists
       TYPE(StringType),INTENT(IN) :: param(:,:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CHARACTER(LEN=LEN(name)) :: prevname,thisname
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
@@ -7644,7 +7008,6 @@ MODULE ParameterLists
           ' - parameter name "'//TRIM(name)// &
             '" already exists! Use set method or full parameter list path!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE add_ParamType_STR_a2
 !
 !3333333333333333333333333333333333333333333333333333333333333333333333333333333
@@ -7669,14 +7032,7 @@ MODULE ParameterLists
       REAL(SSK),INTENT(IN) :: param(:,:,:)
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
@@ -7699,7 +7055,6 @@ MODULE ParameterLists
         CALL eParams%raiseError(modName//'::'//myName// &
           ' - parameter is already initialized! Use set method!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE init_ParamType_SSK_a3
 !
 !-------------------------------------------------------------------------------
@@ -7776,14 +7131,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       REAL(SSK),INTENT(IN) :: param(:,:,:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SSK_a3)
@@ -7827,7 +7175,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE set_ParamType_SSK_a3
 !
 !-------------------------------------------------------------------------------
@@ -7846,14 +7193,7 @@ MODULE ParameterLists
       CLASS(ParamType),INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:)
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SSK_a3)
@@ -7907,7 +7247,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE get_ParamType_SSK_a3
 !
 !-------------------------------------------------------------------------------
@@ -7934,16 +7273,9 @@ MODULE ParameterLists
       REAL(SSK),INTENT(IN) :: param(:,:,:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CHARACTER(LEN=LEN(name)) :: prevname,thisname
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
@@ -7972,7 +7304,6 @@ MODULE ParameterLists
           ' - parameter name "'//TRIM(name)// &
             '" already exists! Use set method or full parameter list path!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE add_ParamType_SSK_a3
 !
 !-------------------------------------------------------------------------------
@@ -7992,14 +7323,7 @@ MODULE ParameterLists
       REAL(SDK),INTENT(IN) :: param(:,:,:)
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
@@ -8022,7 +7346,6 @@ MODULE ParameterLists
         CALL eParams%raiseError(modName//'::'//myName// &
           ' - parameter is already initialized! Use set method!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE init_ParamType_SDK_a3
 !
 !-------------------------------------------------------------------------------
@@ -8098,14 +7421,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       REAL(SDK),INTENT(IN) :: param(:,:,:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SDK_a3)
@@ -8149,7 +7465,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE set_ParamType_SDK_a3
 !
 !-------------------------------------------------------------------------------
@@ -8168,14 +7483,7 @@ MODULE ParameterLists
       CLASS(ParamType),INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:)
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SDK_a3)
@@ -8229,7 +7537,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE get_ParamType_SDK_a3
 !
 !-------------------------------------------------------------------------------
@@ -8256,16 +7563,9 @@ MODULE ParameterLists
       REAL(SDK),INTENT(IN) :: param(:,:,:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CHARACTER(LEN=LEN(name)) :: prevname,thisname
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
@@ -8294,7 +7594,6 @@ MODULE ParameterLists
           ' - parameter name "'//TRIM(name)// &
             '" already exists! Use set method or full parameter list path!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE add_ParamType_SDK_a3
 !
 !-------------------------------------------------------------------------------
@@ -8314,14 +7613,7 @@ MODULE ParameterLists
       INTEGER(SNK),INTENT(IN) :: param(:,:,:)
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
@@ -8344,7 +7636,6 @@ MODULE ParameterLists
         CALL eParams%raiseError(modName//'::'//myName// &
           ' - parameter is already initialized! Use set method!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE init_ParamType_SNK_a3
 !
 !-------------------------------------------------------------------------------
@@ -8420,14 +7711,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       INTEGER(SNK),INTENT(IN) :: param(:,:,:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SNK_a3)
@@ -8471,7 +7755,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE set_ParamType_SNK_a3
 !
 !-------------------------------------------------------------------------------
@@ -8490,14 +7773,7 @@ MODULE ParameterLists
       CLASS(ParamType),INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:)
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SNK_a3)
@@ -8551,7 +7827,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE get_ParamType_SNK_a3
 !
 !-------------------------------------------------------------------------------
@@ -8578,16 +7853,9 @@ MODULE ParameterLists
       INTEGER(SNK),INTENT(IN) :: param(:,:,:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CHARACTER(LEN=LEN(name)) :: prevname,thisname
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
@@ -8616,7 +7884,6 @@ MODULE ParameterLists
           ' - parameter name "'//TRIM(name)// &
             '" already exists! Use set method or full parameter list path!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE add_ParamType_SNK_a3
 !
 !-------------------------------------------------------------------------------
@@ -8636,14 +7903,7 @@ MODULE ParameterLists
       INTEGER(SLK),INTENT(IN) :: param(:,:,:)
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
@@ -8666,7 +7926,6 @@ MODULE ParameterLists
         CALL eParams%raiseError(modName//'::'//myName// &
           ' - parameter is already initialized! Use set method!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE init_ParamType_SLK_a3
 !
 !-------------------------------------------------------------------------------
@@ -8742,14 +8001,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       INTEGER(SLK),INTENT(IN) :: param(:,:,:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SLK_a3)
@@ -8793,7 +8045,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE set_ParamType_SLK_a3
 !
 !-------------------------------------------------------------------------------
@@ -8812,14 +8063,7 @@ MODULE ParameterLists
       CLASS(ParamType),INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:)
-      LOGICAL(SBK) :: localalloc
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SLK_a3)
@@ -8873,7 +8117,6 @@ MODULE ParameterLists
                 thisParam%name//'"!')
           ENDIF
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE get_ParamType_SLK_a3
 !
 !-------------------------------------------------------------------------------
@@ -8900,16 +8143,9 @@ MODULE ParameterLists
       INTEGER(SLK),INTENT(IN) :: param(:,:,:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CHARACTER(LEN=LEN(name)) :: prevname,thisname
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParams)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eParams)
-      ENDIF
       
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
@@ -8938,7 +8174,6 @@ MODULE ParameterLists
           ' - parameter name "'//TRIM(name)// &
             '" already exists! Use set method or full parameter list path!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParams)
     ENDSUBROUTINE add_ParamType_SLK_a3
 !    
 ENDMODULE ParameterLists

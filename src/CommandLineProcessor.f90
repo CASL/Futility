@@ -165,7 +165,7 @@ MODULE CommandLineProcessor
     !> List of command line options for help message
     TYPE(CmdLineOptType),POINTER,PRIVATE :: opts(:)=>NULL()
     !> Exception Handler for the command line processor
-    TYPE(ExceptionHandlerType),POINTER :: e => NULL()
+    TYPE(ExceptionHandlerType) :: e
     CONTAINS
       !> @copybrief CommandLineProcessor::setExecName
       !> @copydetails CommandLineProcessor::setExecName
@@ -270,26 +270,19 @@ MODULE CommandLineProcessor
       CHARACTER(LEN=*),PARAMETER :: myName='setNumOpts'
       CLASS(CmdLineProcType),INTENT(INOUT) :: clp
       INTEGER(SIK),INTENT(IN) :: n
-      LOGICAL(SBK) :: localalloc
       
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(clp%e)) THEN
-        ALLOCATE(clp%e)
-        localalloc=.TRUE.
-      ENDIF
       IF(n < 1) THEN
         CALL clp%e%raiseError(modName//'::'//myName// &
           ' - illegal input, number of options is less than 1!')
       ELSE
         IF(clp%nopts /= 0) THEN
-          CALL clp%e%raiseDebugWarning(modName//'::'//myName// &
+          CALL clp%e%raiseDebug(modName//'::'//myName// &
             ' - number of command line options already set!')
         ELSE
           clp%nopts=n
           ALLOCATE(clp%opts(1:n))
         ENDIF
       ENDIF
-      IF(localalloc) DEALLOCATE(clp%e)
     ENDSUBROUTINE setNumOpts
 !
 !-------------------------------------------------------------------------------
@@ -317,20 +310,14 @@ MODULE CommandLineProcessor
       INTEGER(SIK),INTENT(IN) :: iopt
       CHARACTER(LEN=*),INTENT(IN) :: name,description
       CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: emsg
-      LOGICAL(SBK) :: localalloc
       
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(clp%e))THEN
-        ALLOCATE(clp%e)
-        localalloc=.TRUE.
-      ENDIf
       IF(0 < iopt .AND. iopt <= clp%nopts) THEN
         !Warn for bad input
         IF(LEN_TRIM(name) == 0) &
-          CALL clp%e%raiseDebugWarning(modName//'::'//myName// &
+          CALL clp%e%raiseDebug(modName//'::'//myName// &
             ' - option name is empty!')
         IF(LEN_TRIM(description) == 0) &
-          CALL clp%e%raiseDebugWarning(modName//'::'//myName// &
+          CALL clp%e%raiseDebug(modName//'::'//myName// &
             ' - option description is empty!')
         !Set option name and description for help message
         clp%opts(iopt)%name=TRIM(name)
@@ -341,7 +328,6 @@ MODULE CommandLineProcessor
           ' is less than 0 or greater than ',clp%nopts,'.'
         CALL clp%e%raiseError(TRIM(emsg))
       ENDIF
-      IF(localalloc) DEALLOCATE(clp%e)
     ENDSUBROUTINE defineOpt
 !
 !-------------------------------------------------------------------------------
@@ -374,13 +360,7 @@ MODULE CommandLineProcessor
       CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: iline
       TYPE(StringType) :: cmdline,opt
       INTEGER(SIK) :: iarg,ierr,cmdlinelength
-      LOGICAL(SBK) :: localalloc
       
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(clp%e))THEN
-        ALLOCATE(clp%e)
-        localalloc=.TRUE.
-      ENDIf
       IF(.NOT.ASSOCIATED(clp%CmdLineArgs)) THEN
         IF(PRESENT(iline)) THEN
           
@@ -411,7 +391,6 @@ MODULE CommandLineProcessor
           ENDIF
         ENDIF
       ENDIF
-      IF(localalloc) DEALLOCATE(clp%e)
     ENDSUBROUTINE setCmdLine
 !
 !-------------------------------------------------------------------------------
@@ -441,7 +420,6 @@ MODULE CommandLineProcessor
       INTEGER(SIK),INTENT(IN) :: iarg
       TYPE(StringType),INTENT(OUT) :: argout
       CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: emsg
-      TYPE(ExceptionHandlerType) :: e
       
       argout=''
       IF(0 < iarg .AND. iarg <= clp%narg) THEN
@@ -449,11 +427,7 @@ MODULE CommandLineProcessor
       ELSE
         WRITE(emsg,'(2(a,i4),a)') modName//'::'//myName//' - Argument ',iarg, &
           ' is less than 0 or greater than ',clp%narg,'.'
-        IF(ASSOCIATED(clp%e)) THEN
-          CALL clp%e%raiseError(TRIM(emsg))
-        ELSE
-          CALL e%raiseError(TRIM(emsg))
-        ENDIF
+        CALL clp%e%raiseError(TRIM(emsg))
       ENDIF
     ENDSUBROUTINE getCmdArg_string
 !

@@ -30,15 +30,16 @@ PROGRAM testExpTables
   TYPE(ExpTableType),SAVE :: testET1,testET2(5)
   TYPE(ParamType),SAVE :: PL
 
-  eExpTable => e
-  eParams => e
+  CALL e%setStopOnError(.FALSE.)
+  CALL e%setQuietMode(.TRUE.)
+  CALL eExpTable%addSurrogate(e)
+  CALL eParams%addSurrogate(e)
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING EXPTABLES...'
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING EXPONENTTABLETYPE'
   
-  CALL e%setStopOnError(.FALSE.)
-  CALL e%setQuietMode(.TRUE.)
+  
   !Error checking
   CALL PL%clear()
   CALL testET1%initialize(PL)

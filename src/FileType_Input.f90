@@ -164,6 +164,7 @@ MODULE FileType_Input
 !> @param recl Optional input is not used by this routine.
     SUBROUTINE init_inp_file(fileobj,unit,file,status,access,form, &
                                  position,action,pad,recl)
+      CHARACTER(LEN=*),PARAMETER :: myName='init_inp_file'
       CLASS(InputFileType),INTENT(INOUT) :: fileobj
       INTEGER(SIK),INTENT(IN) :: unit
       CHARACTER(LEN=*),INTENT(IN) :: file
@@ -176,6 +177,21 @@ MODULE FileType_Input
       INTEGER(SIK),OPTIONAL,INTENT(IN) :: recl
       CHARACTER(LEN=4) :: alen=''
       
+      IF(PRESENT(status)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
+        ' - Optional input "STATUS" is being ignored. Value is "OLD".')
+      IF(PRESENT(access)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
+        ' - Optional input "ACCESS" is being ignored. Value is "SEQUENTIAL".')
+      IF(PRESENT(form)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
+        ' - Optional input "FORM" is being ignored. Value is "FORMATTED".')
+      IF(PRESENT(action)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
+        ' - Optional input "ACTION" is being ignored. Value is "READ".')
+      IF(PRESENT(pad)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
+        ' - Optional input "PAD" is being ignored. Value is "YES".')
+      IF(PRESENT(position)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
+        ' - Optional input "POSITION" is being ignored. Value is "REWIND".')
+      IF(PRESENT(recl)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
+        ' - Optional input "RECL" is being ignored. File is "SEQUENTIAL".')
+        
       !Initialize the input file
       CALL init_fortran_file(fileobj,unit,file,'OLD','SEQUENTIAL', &
         'FORMATTED','REWIND','READ')
@@ -232,13 +248,7 @@ MODULE FileType_Input
       CLASS(InputFileType),INTENT(INOUT) :: file
       CHARACTER(LEN=MAX_INPUT_FILE_LINE_LEN) :: oneline
       CHARACTER(LEN=4) :: sioerr,sunit
-      LOGICAL(SBK) :: localalloc
       
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(file%e)) THEN
-        ALLOCATE(file%e)
-        localalloc=.TRUE.
-      ENDIF
       oneline=''
       IF(file%isOpen() .AND. .NOT.file%isEOF()) THEN
         READ(UNIT=file%getUnitNo(),FMT=inpfmt,IOSTAT=ioerr) oneline
@@ -264,7 +274,6 @@ MODULE FileType_Input
         ENDIF
       ENDIF
       file%probe=oneline(1:1)
-      IF(localalloc) DEALLOCATE(file%e)
     ENDFUNCTION read_oneline_inp_file
 !
 !-------------------------------------------------------------------------------
@@ -299,18 +308,11 @@ MODULE FileType_Input
       CHARACTER(LEN=*),PARAMETER :: myName='SETECHOUNIT_INP_FILE'
       CLASS(InputFileType),INTENT(INOUT) :: file
       INTEGER(SIK),INTENT(IN) :: iunit
-      LOGICAL(SBK) :: localalloc
       IF(0 < iunit .AND. iunit /= OUTPUT_UNIT .AND. iunit /= ERROR_UNIT) THEN
         file%echounit=iunit
       ELSE
-        localalloc=.FALSE.
-        IF(.NOT.ASSOCIATED(file%e)) THEN
-          ALLOCATE(file%e)
-          localalloc=.TRUE.
-        ENDIF
         CALL file%e%raiseError('Incorrect input to '//modName//'::'// &
           myName//' - Illegal value for unit number!')
-        IF(localalloc) DEALLOCATE(file%e)
       ENDIF
     ENDSUBROUTINE setEchoUnit_inp_file
 !

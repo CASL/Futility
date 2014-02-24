@@ -141,6 +141,7 @@ MODULE FileType_Log
 !> @param recl Optional input is not used by this routine.
     SUBROUTINE init_log_file(fileobj,unit,file,status,access,form, &
                                  position,action,pad,recl)
+      CHARACTER(LEN=*),PARAMETER :: myName='init_log_file'
       CLASS(LogFileType),INTENT(INOUT) :: fileobj
       INTEGER(SIK),INTENT(IN) :: unit
       CHARACTER(LEN=*),INTENT(IN) :: file
@@ -154,6 +155,20 @@ MODULE FileType_Log
       CHARACTER(LEN=LEN(file)) :: fname
       
       fname=''
+      IF(PRESENT(status)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
+        ' - Optional input "STATUS" is being ignored. Value is "REPLACE".')
+      IF(PRESENT(access)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
+        ' - Optional input "ACCESS" is being ignored. Value is "SEQUENTIAL".')
+      IF(PRESENT(form)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
+        ' - Optional input "FORM" is being ignored. Value is "FORMATTED".')
+      IF(PRESENT(action)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
+        ' - Optional input "ACTION" is being ignored. Value is "WRITE".')
+      IF(PRESENT(pad)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
+        ' - Optional input "PAD" is being ignored. Value is "YES".')
+      IF(PRESENT(position)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
+        ' - Optional input "POSITION" is being ignored. Value is "ASIS".')
+      IF(PRESENT(recl)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
+        ' - Optional input "RECL" is being ignored. File is "SEQUENTIAL".')
       
       !Initialize the timer for the log file
       CALL fileobj%timer%setTimerHiResMode(.TRUE.)
@@ -219,14 +234,8 @@ MODULE FileType_Log
       LOGICAL(SBK),OPTIONAL,INTENT(IN) :: timestamp
       LOGICAL(SBK),OPTIONAL,INTENT(IN) :: echo
       LOGICAL(SBK) :: echostat
-      LOGICAL(SBK) :: localalloc
       LOGICAL(SBK) :: tstat
       
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(file%e)) THEN
-        ALLOCATE(file%e)
-        localalloc=.TRUE.
-      ENDIF
       echostat=file%echostat
       IF(PRESENT(echo)) echostat=echo
       tstat=.FALSE.
@@ -278,7 +287,6 @@ MODULE FileType_Log
       !Flush output buffer
       IF(file%isOpen()) FLUSH(file%getUnitNo())
       IF(echostat) FLUSH(OUTPUT_UNIT)
-      IF(localalloc) DEALLOCATE(file%e)
     ENDSUBROUTINE message_log_file
 !
 ENDMODULE FileType_Log

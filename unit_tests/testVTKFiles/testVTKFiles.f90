@@ -41,8 +41,8 @@ PROGRAM testVTKFiles
   
   !Check clear
   CALL testVTKFile%clear()
-  testVTKFile%e => e
-  eVTK => e
+  CALL testVTKFile%e%addSurrogate(e)
+  CALL eVTK%addSurrogate(e)
   
 !Test Initialize and clear
   CALL testVTKFile%initialize(666,'testVTK0.vtk')
@@ -57,7 +57,7 @@ PROGRAM testVTKFiles
   CALL testVTKFile%initialize(666,'testVTK1.vtk',STATUS='testVTK1')
   
   CALL testVTKFile%clear(.TRUE.)
-  testVTKFile%e=>e
+  CALL testVTKFile%e%addSurrogate(e)
   IF(testVTKFile%isInit()) THEN
     WRITE(*,*) 'CALL testVTKFile%clear() 0 FAILED!'
     STOP 666
@@ -66,7 +66,7 @@ PROGRAM testVTKFiles
   ENDIF
   
   CALL testVTKFile%clear()
-  testVTKFile%e=>e
+  CALL testVTKFile%e%addSurrogate(e)
   longstring='testVTK0.vtk'
   longstring(257:257)='r'
   CALL testVTKFile%initialize(666,'testVTK1.vtk',STATUS=longstring)
@@ -78,7 +78,7 @@ PROGRAM testVTKFiles
   CALL testVTKFile%fclose()
   CALL testVTKFile%writeMesh(testVTKMesh) !write with closed file
   CALL testVTKFile%clear()
-  testVTKFile%e=>e
+  CALL testVTKFile%e%addSurrogate(e)
   CALL testVTKFile%initialize(666,'testVTK1.vtk',STATUS='testVTK1')
   CALL SetupTest1_Mesh()
   CALL testVTKFile%writeMesh(testVTKMesh)

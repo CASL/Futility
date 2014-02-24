@@ -48,7 +48,6 @@
 !>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE PreconditionerTypes
-
   USE IntrType
   USE BLAS
   USE ExceptionHandler
@@ -153,7 +152,7 @@ MODULE PreconditionerTypes
 
   CHARACTER(LEN=*),PARAMETER :: modName='PreconditionerTypes'
 
-  TYPE(ExceptionHandlerType),POINTER,SAVE :: ePreCondType => NULL()
+  TYPE(ExceptionHandlerType),SAVE :: ePreCondType
 !
 !===============================================================================
   CONTAINS
@@ -167,18 +166,10 @@ MODULE PreconditionerTypes
       CHARACTER(LEN=*),PARAMETER :: myName='init_LU_PreCondType'
       CLASS(LU_PrecondType),INTENT(INOUT) :: PC
       CLASS(MatrixType),ALLOCATABLE,TARGET,INTENT(IN) :: A
-
-      TYPE(ParamType) :: PL
-      LOGICAL(SBK) :: localalloc
-      INTEGER(SIK) :: col,row,i,j,nU,nL,nnzU,nnzL
+      INTEGER(SIK) :: col,row,j,nU,nL,nnzU,nnzL
       INTEGER(SIK) :: X
       REAL(SRK) :: val
-
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(ePreCondType)) THEN
-        ALLOCATE(ePreCondType)
-        localalloc=.TRUE.
-      ENDIF
+      TYPE(ParamType) :: PL
 
       IF(PC%isinit) THEN
         CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
@@ -365,7 +356,6 @@ MODULE PreconditionerTypes
         IF(ALLOCATED(PC%S)) DEALLOCATE(PC%S)
       ENDSELECT
       PC%isInit=.FALSE.
-
     ENDSUBROUTINE clear_LU_PreCondtype
 !
 !-------------------------------------------------------------------------------
@@ -376,15 +366,7 @@ MODULE PreconditionerTypes
     SUBROUTINE apply_ILU_PreCondType(PC,v)
       CLASS(ILU_PrecondType),INTENT(INOUT) :: PC
       CLASS(Vectortype),ALLOCATABLE,INTENT(INOUT) :: v
-
       CHARACTER(LEN=*),PARAMETER :: myName='apply_ILU_PreCondType'
-      LOGICAL(SBK) :: localalloc
-
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(ePreCondType)) THEN
-        ALLOCATE(ePreCondType)
-        localalloc=.TRUE.
-      ENDIF
 
       IF(.NOT.(PC%isInit)) THEN
         CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
@@ -418,30 +400,17 @@ MODULE PreconditionerTypes
       CLASS(BILU_PrecondType),INTENT(INOUT) :: PC
       CLASS(Vectortype),INTENT(INOUT) :: v
 
-      INTEGER(SIK) :: X,Y,Z
-      INTEGER(SIK) :: i,j,k,ig
-      INTEGER(SIK) :: index1,index1g,index1gp,index2,index3,index3g,index3gp
-      INTEGER(SIK) :: index4,index5,index5g,index5gp
+      INTEGER(SIK) :: i,j,k,X,Y,Z
+      INTEGER(SIK) :: iz,izg,izgp,izy,izyx,izyg,izygp,izyxg,izyxgp,iy,iyg,iym1g
+      INTEGER(SIK) :: dzg,dyg,dxg,dz,dy
       REAL(SRK),ALLOCATABLE :: soln(:),soln_prevj(:),soln_prevk(:)
       REAL(SRK),ALLOCATABLE :: tmpTB(:)
-      REAL(SRK) :: tmp
-
-      INTEGER(SIK) :: iz,izg,izgp,izy,izyx,izyg,izygp,izyxg,izyxgp,iy,iyg,iym1g
-      INTEGER(SIK) :: dzg,dyg,dxg,dz,dy,dx
-
-      LOGICAL(SBK) :: localalloc
-
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(ePreCondType)) THEN
-        ALLOCATE(ePreCondType)
-        localalloc=.TRUE.
-      ENDIF
 
       IF(.NOT.(PC%isInit)) THEN
-        CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+        CALL ePreCondType%raiseError(modName//'::'//myName// &
           ' - Preconditioner is not initialized.')
       ELSEIF(.NOT.(v%isInit)) THEN
-        CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+        CALL ePreCondType%raiseError(modName//'::'//myName// &
           ' - VectorType is not initialized.')
       ELSE
         SELECTTYPE(v)
@@ -816,16 +785,8 @@ MODULE PreconditionerTypes
       CLASS(ILU_PrecondType),INTENT(INOUT) :: PC
 
       CHARACTER(LEN=*),PARAMETER :: myName='setup_ILU_PreCondType'
-      INTEGER(SIK) :: row,col,col2,i,j,k,nL,nU,nnzL,nnzU
+      INTEGER(SIK) :: row,col,col2,j
       REAL(SRK) :: val1,val2,val3
-      LOGICAL(SBK) :: localalloc
-      TYPE(ParamType) :: PL
-
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(ePreCondType)) THEN
-        ALLOCATE(ePreCondType)
-        localalloc=.TRUE.
-      ENDIF
 
       IF(.NOT.(PC%isinit)) THEN
         CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
@@ -887,8 +848,6 @@ MODULE PreconditionerTypes
           ENDSELECT
         ENDIF
       ENDIF
-
-      IF(localalloc) DEALLOCATE(ePreCondType)
     ENDSUBROUTINE setup_ILU_PreCondtype
 !
 !-------------------------------------------------------------------------------
@@ -900,30 +859,16 @@ MODULE PreconditionerTypes
       CHARACTER(LEN=*),PARAMETER :: myName='setup_BILU_PreCondType'
       CLASS(BILU_PrecondType),INTENT(INOUT) :: PC
       
-      INTEGER(SIK) :: ix,iy,iz
-      INTEGER(SIK) :: row,col
-      INTEGER(SIK) :: d2,c2
-      INTEGER(SIK) :: d0,c0
-      INTEGER(SIK) :: d1,c1
+      INTEGER(SIK) :: ix,iy,iz,row,col,ind
+      INTEGER(SIK) :: c0,c1,c2,d0,d1,d2,dim0D,dim1D,dim2D
       INTEGER(SIK) :: XY,X,Y,Z,G
-      INTEGER(SIK) :: dim0D,dim1D,dim2D
-      INTEGER(SIK) :: ind
-      INTEGER(SIK) :: rowstt,colstt
       REAL(SRK) :: val
-      LOGICAL(SBK) :: localalloc
-      TYPE(ParamType) :: PL
       REAL(SRK),ALLOCATABLE :: invM2(:,:),invM1(:,:),invM0(:,:)
       REAL(SRK),ALLOCATABLE :: tmp2D(:,:),tmp1D(:,:),tmp0D(:,:)
       REAL(SRK),ALLOCATABLE :: L2(:,:),U2(:,:),F2(:,:)
       REAL(SRK),ALLOCATABLE :: L1(:,:),U1(:,:),F1(:,:)
       REAL(SRK),ALLOCATABLE :: T(:),B(:),S(:),N(:),E(:),W(:)
       
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(ePreCondType)) THEN
-        ALLOCATE(ePreCondType)
-        localalloc=.TRUE.
-      ENDIF
-
       IF(.NOT.(PC%isinit)) THEN
         CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
           ' - Preconditioner is not initialized!')
@@ -1231,8 +1176,6 @@ MODULE PreconditionerTypes
           
         ENDIF
       ENDIF
-
-      IF(localalloc) DEALLOCATE(ePreCondType)
     ENDSUBROUTINE setup_BILU_PreCondtype
 !
 !-------------------------------------------------------------------------------
@@ -1427,17 +1370,17 @@ MODULE PreconditionerTypes
       DEALLOCATE(tmpM)
       DEALLOCATE(L0)
       DEALLOCATE(invDU0)
-    
     ENDSUBROUTINE ABI
-
+!
+!-------------------------------------------------------------------------------
+!> @brief 
+!>
     SUBROUTINE solve_M3(pc,v,b)
       CLASS(BILU_PrecondType),INTENT(INOUT) :: PC
       REAL(SRK),INTENT(INOUT) :: v(:)
       REAL(SRK),INTENT(IN) :: b(:)
-
+      INTEGER(SIK) :: X,j,Y,k,Z,ng,index1,index2,index3
       REAL(SRK),ALLOCATABLE :: vt(:),bt(:),tmp(:),Bot(:,:),T(:,:)
-
-      INTEGER(SIK) :: i,X,j,Y,k,Z,ng,index1,index2,index3
 
       ng=pc%nGrp
       X=SQRT(REAL(pc%nPin))
@@ -1484,7 +1427,10 @@ MODULE PreconditionerTypes
       ENDDO
 
     ENDSUBROUTINE solve_M3
-
+!
+!-------------------------------------------------------------------------------
+!> @brief 
+!>
     SUBROUTINE solve_M2(pc,v,b,k)
       CLASS(BILU_PrecondType),INTENT(INOUT) :: PC
       REAL(SRK),INTENT(INOUT) :: v(:)
@@ -1493,7 +1439,7 @@ MODULE PreconditionerTypes
 
       REAL(SRK),ALLOCATABLE :: vt(:),bt(:),tmp(:)
 
-      INTEGER(SIK) :: i,X,j,Y,ng,index1,index2,index3
+      INTEGER(SIK) :: X,j,Y,ng,index1,index2,index3
 
       ng=pc%nGrp
       X=SQRT(REAL(pc%nPin))
@@ -1527,9 +1473,11 @@ MODULE PreconditionerTypes
         CALL solve_M1(pc,tmp,bt,j,k)
         v((index1+1):(index1+X*ng))=vt((index1+1):(index1+X*ng))+tmp
       ENDDO
-
     ENDSUBROUTINE solve_M2
-
+!
+!-------------------------------------------------------------------------------
+!> @brief 
+!>
     SUBROUTINE solve_M1(pc,v,b,j,k)
       CLASS(BILU_PrecondType),INTENT(INOUT) :: PC
       REAL(SRK),INTENT(INOUT) :: v(:)
@@ -1586,8 +1534,6 @@ MODULE PreconditionerTypes
 !          WRITE(*,*) "B",i,j,k,v(((i-1)*ng+1):(i*ng)),pc%F0(index2+i,1,1),pc%E(index3,((i-1)*ng+1))
 !        ENDIF
       ENDDO
-      
     ENDSUBROUTINE solve_M1
 !
-!-------------------------------------------------------------------------------
-END MODULE
+ENDMODULE PreconditionerTypes

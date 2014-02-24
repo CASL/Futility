@@ -54,7 +54,7 @@ PROGRAM testParameterLists
   ALLOCATE(e)
   CALL e%setStopOnError(.FALSE.)
   CALL e%setQuietMode(.TRUE.)
-  eParams => e
+  CALL eParams%addSurrogate(e)
   !Test the parameter type list
   WRITE(*,*) '---------------------------------------------------'
   WRITE(*,*) 'TESTING  PARAMETER TYPE LISTS...'
@@ -152,11 +152,9 @@ PROGRAM testParameterLists
   WRITE(*,*) 'TESTING Add Routines...'
   
   CALL e%setQuietMode(.FALSE.)
-  eParams => NULL()
   !Testing addition of SSK routine
   CALL testParam%add('testSSK',6.0_SSK)
   CALL testParam%edit(OUTPUT_UNIT)
-  eParams => e
   !Testing addition of SSK routine, error for already existing parameter
   CALL testParam%add('testSSK',9.0_SSK)
   !Testing addition of SSK routine, error for not a parameter list
@@ -169,7 +167,6 @@ PROGRAM testParameterLists
   !Testing addition of multiple SSK parameters to parameter list
   CALL testParam%add('testPL->testSSK2',8.0_SSK)
   CALL testParam%edit(OUTPUT_UNIT)
-  eParams => NULL()
   !Testing addition of SDK routine to parameter list
   CALL testParam%add('testPL->testSDK',1.0_SDK)
   CALL testParam%edit(OUTPUT_UNIT)
@@ -280,7 +277,6 @@ PROGRAM testParameterLists
   valslk3a=-4_SLK
   CALL testParam%add('testPL->testSLK3a',valslk3a)
   CALL testParam%edit(OUTPUT_UNIT)
-  eParams => e
   !Testing addition of SSK routine to parameter list, error for already existing parameter
   CALL testParam%add('testPL->testSSK',7.0_SSK)
   CALL testParam%edit(OUTPUT_UNIT)
@@ -456,7 +452,6 @@ PROGRAM testParameterLists
   testParam2=testParam
   CALL testParam%verify(testParam2,valsbk)
   CALL testParam2%clear()
-  eParams => NULL()
   !Testing the local exception handler while adding a parameter to another parameter
   CALL testParam2%add('testPL3->sublist1',testParam)
   CALL testParam2%edit(OUTPUT_UNIT)
@@ -468,7 +463,6 @@ PROGRAM testParameterLists
   !Testing adding an empty parameter list with a description
   CALL testParam2%add('List2',testList2,'Empty list')
   CALL testParam2%edit(OUTPUT_UNIT)
-  eParams => e
   !Testing adding an empty parameter list with a description with exception handler
   CALL testParam2%add('List2',testList2,'Empty list')
   !Clearing the allocated variables
@@ -516,10 +510,8 @@ PROGRAM testParameterLists
   WRITE(*,*) 'TESTING Remove Routines...'
   !test remove
   CALL testParam%edit(OUTPUT_UNIT)
-  eParams => NULL()
   !Testing removal of parameter that doesn't exist
   CALL testParam%remove('testSSK3')
-  eParams => e
   CALL testParam%edit(OUTPUT_UNIT)
   !Testing removal of parameter that is erroneous, need to have a value before '->'
   CALL testParam%remove('->error')
@@ -666,10 +658,8 @@ PROGRAM testParameterLists
   CALL testParam%validate(testParam2,testParam3)
   !Testing the assignment operation
   testParam3=testParam
-  eParams => NULL()
   !test the null required param, but existing optional param
   CALL testParam%validate(testParam2,testParam3)
-  eParams => e
   testParam2=testParam
   CALL testParam3%clear()
   !test existing required params with null optional params
@@ -765,7 +755,6 @@ PROGRAM testParameterLists
     valssk=5._SSK
     !test init
     CALL testParam%init('testError->testSSK',valssk,'The number 5.0')
-    eParams => NULL()
     CALL testParam%init('testSSK',valssk,'The number 5.0')
     IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%init(...) %pdat (SSK) FAILED!'
@@ -784,12 +773,10 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    eParams => e
     CALL testParam%init('testError',valssk)
     WRITE(*,*) '  Passed: CALL testParam%init(...) (SSK)'
   
     !test get
-    eParams => NULL()
     CALL testParam%get('testSSK',someParam)
     IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%get(''testSSK'',someParam) FAILED!'
@@ -806,14 +793,12 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%get(''testSSK'',valssk) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam2%get('testSSK',valssk)
     CALL testParam%get('testError',valssk)
     CALL someParam%get('testError',valssk)
     WRITE(*,*) '  Passed: CALL testParam%get(...) (SSK)'
   
     !test set
-    eParams => NULL()
     CALL someParam%set('testSSK',3.0_SSK,'The number 3.0')
     CALL testParam%get('testSSK',valssk)
     IF(valssk /= 3.0_SSK .OR. someParam%description /= 'The number 3.0') THEN
@@ -826,14 +811,12 @@ PROGRAM testParameterLists
       WRITE(*,*) 'testParam%set(''testSSK'',5.0_SSK) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam2%set('testSSK',valssk)
     CALL someParam%set('testError',valssk)
     CALL testParam%set('testError',valssk)
     WRITE(*,*) '  Passed: CALL testParam%set(...) (SSK)'
   
     !Test clear
-    eParams => NULL()
     CALL testParam%clear()
     IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (SSK) FAILED!'
@@ -851,11 +834,9 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%clear() %pdat (SSK) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     WRITE(*,*) '  Passed: CALL testParam%clear() (SSK)'
   
     !test assignment
-    eParams => NULL()
     CALL testParam%init('testSSK',4.0_SSK)
     testParam2=testparam
     IF(.NOT.ASSOCIATED(testParam2%pdat)) THEN
@@ -870,13 +851,11 @@ PROGRAM testParameterLists
       WRITE(*,*) 'ASSIGNMENT(=) %datatype (SSK) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam%get('testSSK',someParam)
     someParam=testParam
     WRITE(*,*) '  Passed: ASSIGNMENT(=) (SSK)'
     !Clear the variables
     CALL testClear()
-    
   ENDSUBROUTINE testSSK
 !
 !-------------------------------------------------------------------------------
@@ -895,7 +874,6 @@ PROGRAM testParameterLists
   
     !test init
     CALL testParam%init('testError->testPL',testList)
-    eParams => NULL()
     CALL testParam%init('testPL',testList,'A test parameter list')
     IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%init(...) %pdat (List) FAILED!'
@@ -914,12 +892,10 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    eParams => e
     CALL testParam%init('testError',testList,'A test parameter list')
     WRITE(*,*) '  Passed: CALL testParam%init(...) (List)'
   
     !Test get
-    eParams => NULL()
     CALL testParam%get('testPL',someParam)
     CALL someParam%get('testPL',testList)
     IF(testList(1)%pdat%name /= 'testSSK') THEN
@@ -931,7 +907,6 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%get(''testPL'',testList) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL someParam%get('testPL',testList2)
     CALL testParam%get('testPL',testList2)
     CALL testParam2%get('testPL',testList2)
@@ -947,7 +922,6 @@ PROGRAM testParameterLists
     testParam2=testList(1)
     testList(2)=testParam2
     testList(2)%pdat%name='testSSK2'
-    eParams => NULL()
     CALL someParam%set('testPL',testList,'A second list')
     valssk=0.0_SSK
     CALL testParam%edit(OUTPUT_UNIT)
@@ -959,7 +933,6 @@ PROGRAM testParameterLists
     CALL testList(2)%clear()
     CALL testParam%set('testPL',testList,'A test parameter list')
     valssk=0.0_SSK
-    eParams => e
     CALL testParam%get('testPL->testSSK2',valssk)
     IF(valssk /= 0.0_SSK .OR. someParam%description /= 'A test parameter list') THEN
       WRITE(*,*) 'CALL testParam%set(''testPL'',testList,''A test parameter list'') FAILED!'
@@ -973,7 +946,6 @@ PROGRAM testParameterLists
     WRITE(*,*) '  Passed: CALL testParam%set(...) (List)'
   
     !test clear
-    eParams => NULL()
     CALL testParam%clear()
     IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (List) FAILED!'
@@ -991,7 +963,6 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%clear() %pdat (List) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     WRITE(*,*) '  Passed: CALL testParam%clear() (List)'
   
     !Test assignment
@@ -1040,7 +1011,6 @@ PROGRAM testParameterLists
     valsdk=5._SDK
     !test init
     CALL testParam%init('testError->testSDK',valsdk,'The number 5.0')
-    eParams => NULL()
     CALL testParam%init('testSDK',valsdk,'The number 5.0')
     IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%init(...) %pdat (SDK) FAILED!'
@@ -1059,12 +1029,10 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    eParams => e
     CALL testParam%init('testError',valsdk)
     WRITE(*,*) '  Passed: CALL testParam%init(...) (SDK)'
   
     !test get
-    eParams => NULL()
     CALL testParam%get('testSDK',someParam)
     IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%get(''testSDK'',someParam) FAILED!'
@@ -1081,14 +1049,12 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%get(''testSDK'',valsdk) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam2%get('testSDK',valsdk)
     CALL testParam%get('testError',valsdk)
     CALL someParam%get('testError',valsdk)
     WRITE(*,*) '  Passed: CALL testParam%get(...) (SDK)'
   
     !test set
-    eParams => NULL()
     CALL someParam%set('testSDK',3.0_SDK,'The number 3.0')
     CALL testParam%get('testSDK',valsdk)
     IF(valsdk /= 3.0_SDK .OR. someParam%description /= 'The number 3.0') THEN
@@ -1101,14 +1067,12 @@ PROGRAM testParameterLists
       WRITE(*,*) 'testParam%set(''testSDK'',5.0_SDK) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam2%set('testSDK',valsdk)
     CALL someParam%set('testError',valsdk)
     CALL testParam%set('testError',valsdk)
     WRITE(*,*) '  Passed: CALL testParam%set(...) (SDK)'
   
     !Test clear
-    eParams => NULL()
     CALL testParam%clear()
     IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (SDK) FAILED!'
@@ -1126,11 +1090,9 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%clear() %pdat (SDK) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     WRITE(*,*) '  Passed: CALL testParam%clear() (SDK)'
   
     !test assignment
-    eParams => NULL()
     CALL testParam%init('testSDK',4.0_SDK)
     testParam2=testparam
     IF(.NOT.ASSOCIATED(testParam2%pdat)) THEN
@@ -1145,7 +1107,6 @@ PROGRAM testParameterLists
       WRITE(*,*) 'ASSIGNMENT(=) %datatype (SDK) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam%get('testSDK',someParam)
     someParam=testParam
     WRITE(*,*) '  Passed: ASSIGNMENT(=) (SDK)'
@@ -1162,7 +1123,6 @@ PROGRAM testParameterLists
     valsnk=5_SNK
     !test init
     CALL testParam%init('testError->testSNK',valsnk,'The number 5')
-    eParams => NULL()
     CALL testParam%init('testSNK',valsnk,'The number 5')
     IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%init(...) %pdat (SNK) FAILED!'
@@ -1181,12 +1141,10 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    eParams => e
     CALL testParam%init('testError',valsnk)
     WRITE(*,*) '  Passed: CALL testParam%init(...) (SNK)'
   
     !test get
-    eParams => NULL()
     CALL testParam%get('testSNK',someParam)
     IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%get(''testSNK'',someParam) FAILED!'
@@ -1203,14 +1161,12 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%get(''testSNK'',valsnk) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam2%get('testSNK',valsnk)
     CALL testParam%get('testError',valsnk)
     CALL someParam%get('testError',valsnk)
     WRITE(*,*) '  Passed: CALL testParam%get(...) (SNK)'
   
     !test set
-    eParams => NULL()
     CALL someParam%set('testSNK',3_SNK,'The number 3')
     CALL testParam%get('testSNK',valsnk)
     IF(valsnk /= 3_SNK .OR. someParam%description /= 'The number 3') THEN
@@ -1223,14 +1179,12 @@ PROGRAM testParameterLists
       WRITE(*,*) 'testParam%set(''testSNK'',5_SNK) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam2%set('testSNK',valsnk)
     CALL someParam%set('testError',valsnk)
     CALL testParam%set('testError',valsnk)
     WRITE(*,*) '  Passed: CALL testParam%set(...) (SNK)'
   
     !Test clear
-    eParams => NULL()
     CALL testParam%clear()
     IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (SNK) FAILED!'
@@ -1248,11 +1202,9 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%clear() %pdat (SNK) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     WRITE(*,*) '  Passed: CALL testParam%clear() (SNK)'
   
     !test assignment
-    eParams => NULL()
     CALL testParam%init('testSNK',4_SNK)
     testParam2=testparam
     IF(.NOT.ASSOCIATED(testParam2%pdat)) THEN
@@ -1267,7 +1219,6 @@ PROGRAM testParameterLists
       WRITE(*,*) 'ASSIGNMENT(=) %datatype (SNK) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam%get('testSNK',someParam)
     someParam=testParam
     WRITE(*,*) '  Passed: ASSIGNMENT(=) (SNK)'
@@ -1284,7 +1235,6 @@ PROGRAM testParameterLists
     valslk=5_SLK
     !test init
     CALL testParam%init('testError->testSLK',valslk,'The number 5')
-    eParams => NULL()
     CALL testParam%init('testSLK',valslk,'The number 5')
     IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%init(...) %pdat (SLK) FAILED!'
@@ -1303,12 +1253,10 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    eParams => e
     CALL testParam%init('testError',valslk)
     WRITE(*,*) '  Passed: CALL testParam%init(...) (SLK)'
   
     !test get
-    eParams => NULL()
     CALL testParam%get('testSLK',someParam)
     IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%get(''testSLK'',someParam) FAILED!'
@@ -1325,14 +1273,12 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%get(''testSLK'',valslk) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam2%get('testSLK',valslk)
     CALL testParam%get('testError',valslk)
     CALL someParam%get('testError',valslk)
     WRITE(*,*) '  Passed: CALL testParam%get(...) (SLK)'
   
     !test set
-    eParams => NULL()
     CALL someParam%set('testSLK',3_SLK,'The number 3')
     CALL testParam%get('testSLK',valslk)
     IF(valslk /= 3_SLK .OR. someParam%description /= 'The number 3') THEN
@@ -1345,14 +1291,12 @@ PROGRAM testParameterLists
       WRITE(*,*) 'testParam%set(''testSLK'',5_SLK) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam2%set('testSLK',valslk)
     CALL someParam%set('testError',valslk)
     CALL testParam%set('testError',valslk)
     WRITE(*,*) '  Passed: CALL testParam%set(...) (SLK)'
   
     !Test clear
-    eParams => NULL()
     CALL testParam%clear()
     IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (SLK) FAILED!'
@@ -1370,11 +1314,9 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%clear() %pdat (SLK) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     WRITE(*,*) '  Passed: CALL testParam%clear() (SLK)'
   
     !test assignment
-    eParams => NULL()
     CALL testParam%init('testSLK',4_SLK)
     testParam2=testparam
     IF(.NOT.ASSOCIATED(testParam2%pdat)) THEN
@@ -1389,7 +1331,6 @@ PROGRAM testParameterLists
       WRITE(*,*) 'ASSIGNMENT(=) %datatype (SLK) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam%get('testSLK',someParam)
     someParam=testParam
     WRITE(*,*) '  Passed: ASSIGNMENT(=) (SLK)'
@@ -1406,7 +1347,6 @@ PROGRAM testParameterLists
     valsbk=.TRUE.
     !test init
     CALL testParam%init('testError->testSBK',valsbk,'The value is TRUE')
-    eParams => NULL()
     CALL testParam%init('testSBK',valsbk,'The value is TRUE')
     IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%init(...) %pdat (SBK) FAILED!'
@@ -1425,12 +1365,10 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    eParams => e
     CALL testParam%init('testError',valsbk)
     WRITE(*,*) '  Passed: CALL testParam%init(...) (SBK)'
   
     !test get
-    eParams => NULL()
     CALL testParam%get('testSBK',someParam)
     IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%get(''testSBK'',someParam) FAILED!'
@@ -1447,14 +1385,12 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%get(''testSBK'',valsbk) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam2%get('testSBK',valsbk)
     CALL testParam%get('testError',valsbk)
     CALL someParam%get('testError',valsbk)
     WRITE(*,*) '  Passed: CALL testParam%get(...) (SBK)'
   
     !test set
-    eParams => NULL()
     CALL someParam%set('testSBK',.TRUE.,'The value is TRUE')
     CALL testParam%get('testSBK',valsbk)
     IF(.NOT.valsbk .OR. someParam%description /= 'The value is TRUE') THEN
@@ -1467,14 +1403,12 @@ PROGRAM testParameterLists
       WRITE(*,*) 'testParam%set(''testSBK'',FALSE) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam2%set('testSBK',valsbk)
     CALL someParam%set('testError',valsbk)
     CALL testParam%set('testError',valsbk)
     WRITE(*,*) '  Passed: CALL testParam%set(...) (SBK)'
   
     !Test clear
-    eParams => NULL()
     CALL testParam%clear()
     IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (SBK) FAILED!'
@@ -1492,11 +1426,9 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%clear() %pdat (SBK) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     WRITE(*,*) '  Passed: CALL testParam%clear() (SBK)'
   
     !test assignment
-    eParams => NULL()
     CALL testParam%init('testSBK',.TRUE.)
     testParam2=testparam
     IF(.NOT.ASSOCIATED(testParam2%pdat)) THEN
@@ -1511,7 +1443,6 @@ PROGRAM testParameterLists
       WRITE(*,*) 'ASSIGNMENT(=) %datatype (SBK) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam%get('testSBK',someParam)
     someParam=testParam
     WRITE(*,*) '  Passed: ASSIGNMENT(=) (SBK)'
@@ -1529,7 +1460,6 @@ PROGRAM testParameterLists
     valstr='''testing'''
     !test init
     CALL testParam%init('testError->testSTR',valstr,'The value is testing')
-    eParams => NULL()
     CALL testParam%init('testSTR',valstr,'The value is testing')
     IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%init(...) %pdat StringType (STR) FAILED!'
@@ -1548,12 +1478,10 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    eParams => e
     CALL testParam%init('testError',valstr)
     WRITE(*,*) '  Passed: CALL testParam%init(...) StringType (STR)'
   
     !test get
-    eParams => NULL()
     CALL testParam%get('testSTR',someParam)
     IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%get(''testSTR'',someParam) FAILED!'
@@ -1570,14 +1498,12 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%get(''testSTR'',valstr) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam2%get('testSTR',valstr)
     CALL testParam%get('testError',valstr)
     CALL someParam%get('testError',valstr)
     WRITE(*,*) '  Passed: CALL testParam%get(...) StringType (STR)'
   
     !test set
-    eParams => NULL()
     !For strings, they must be stored in a string type first, then passed in.
     valstr='another test'
     CALL someParam%set('testSTR',valstr,'The value is another test')
@@ -1596,14 +1522,12 @@ PROGRAM testParameterLists
       WRITE(*,*) 'testParam%set(''testSTR'',''a different test'') FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam2%set('testSTR',valstr)
     CALL someParam%set('testError',valstr)
     CALL testParam%set('testError',valstr)
     WRITE(*,*) '  Passed: CALL testParam%set(...) StringType (STR)'
   
     !Test clear
-    eParams => NULL()
     CALL testParam%clear()
     IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name StringType (STR) FAILED!'
@@ -1621,11 +1545,9 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%clear() %pdat StringType (STR) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     WRITE(*,*) '  Passed: CALL testParam%clear() StringType (STR)'
   
     !test assignment
-    eParams => NULL()
     valstr='assignment test'
     CALL testParam%init('testSTR',valstr)
     testParam2=testparam
@@ -1641,7 +1563,6 @@ PROGRAM testParameterLists
       WRITE(*,*) 'ASSIGNMENT(=) %datatype StringType (STR) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam%get('testSTR',someParam)
     someParam=testParam
     WRITE(*,*) '  Passed: ASSIGNMENT(=) StringType (STR)'
@@ -1659,7 +1580,6 @@ PROGRAM testParameterLists
     ALLOCATE(testParam2%pdat)
     testParam2%pdat%name='testSTR'
     CALL testParam%init('testError->testSTR','''testing''','The value is testing')
-    eParams => NULL()
     CALL testParam%init('testSTR','''testing''','The value is testing')
     IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%init(...) %pdat StringType (CHAR) FAILED!'
@@ -1677,23 +1597,19 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%init(...) %description StringType (CHAR) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam%init('testSTR','''testing''')
     WRITE(*,*) '  Passed: CALL testParam%init(...) StringType (CHAR)'
   
     !test get
-    eParams => NULL()
     valchar='test again'
     CALL testParam%get('testSTR',valchar)
     IF(TRIM(valchar) /= '''testing''') THEN
       WRITE(*,*) 'CALL testParam%get(''testSTR'',valchar) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     WRITE(*,*) '  Passed: CALL testParam%get(...) StringType (CHAR)'
   
     !test set
-    eParams => NULL()
     !For strings, they must be stored in a string type first, then passed in.
     CALL testParam%set('testSTR','another test','The value is another test')
     !Clear the variable to confirm it gets set.
@@ -1709,7 +1625,6 @@ PROGRAM testParameterLists
       WRITE(*,*) 'testParam%set(''testSTR'',''a different test'') FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     WRITE(*,*) '  Passed: CALL testParam%set(...) StringType (CHAR)'
     
     CALL testParam%clear()
@@ -1740,7 +1655,6 @@ PROGRAM testParameterLists
     valssk1a(2)=7._SSK
     !test init
     CALL testParam%init('testError->testSSK1a',valssk1a,'The numbers 5.0 & 7.0')
-    eParams => NULL()
     CALL testParam%init('testSSK1a',valssk1a,'The numbers 5.0 & 7.0')
     IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%init(...) %pdat (SSK) 1-D FAILED!'
@@ -1759,12 +1673,10 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    eParams => e
     CALL testParam%init('testError',valssk1a)
     WRITE(*,*) '  Passed: CALL testParam%init(...) (SSK) 1-D'
   
     !test get
-    eParams => NULL()
     CALL testParam%get('testSSK1a',someParam)
     IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%get(''testSSK1a'',someParam) FAILED!'
@@ -1803,14 +1715,12 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%get(''testSSK1a'',valssk1a) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam2%get('testSSK1a',valssk1a)
     CALL testParam%get('testError',valssk1a)
     CALL someParam%get('testError',valssk1a)
     WRITE(*,*) '  Passed: CALL testParam%get(...) (SSK) 1-D'
   
     !test set
-    eParams => NULL()
     !
     CALL someParam%set('testSSK1a',(/3.0_SSK,1.0_SSK/),'The number 3.0, and 1.0')
     CALL testParam%get('testSSK1a',valssk1a)
@@ -1847,14 +1757,12 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     
-    eParams => e
     CALL testParam2%set('testSSK1a',valssk1a)
     CALL someParam%set('testError',valssk1a)
     CALL testParam%set('testError',valssk1a)
     WRITE(*,*) '  Passed: CALL testParam%set(...) (SSK) 1-D'
   
     !Test clear
-    eParams => NULL()
     CALL testParam%clear()
     IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (SSK) 1-D FAILED!'
@@ -1874,11 +1782,9 @@ PROGRAM testParameterLists
     ENDIF
 
     
-    eParams => e
     WRITE(*,*) '  Passed: CALL testParam%clear() (SSK) 1-D'
   
     !test assignment
-    eParams => NULL()
     CALL testParam%init('testSSK1a',(/4.0_SSK/))
     testParam2=testparam
     IF(.NOT.ASSOCIATED(testParam2%pdat)) THEN
@@ -1893,7 +1799,6 @@ PROGRAM testParameterLists
       WRITE(*,*) 'ASSIGNMENT(=) %datatype (SSK) 1-D FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam%get('testSSK1a',someParam)
     someParam=testParam
     WRITE(*,*) '  Passed: ASSIGNMENT(=) (SSK) 1-D'
@@ -1912,7 +1817,6 @@ PROGRAM testParameterLists
     valsdk1a(2)=7.5_SDK
     !test init
     CALL testParam%init('testError->testSDK1a',valsdk1a,'The numbers 5.5 & 7.5')
-    eParams => NULL()
     CALL testParam%init('testSDK1a',valsdk1a,'The numbers 5.5 & 7.5')
     IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%init(...) %pdat (SDK) 1-D FAILED!'
@@ -1931,12 +1835,10 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    eParams => e
     CALL testParam%init('testError',valsdk1a)
     WRITE(*,*) '  Passed: CALL testParam%init(...) (SDK) 1-D'
   
     !test get
-    eParams => NULL()
     CALL testParam%get('testSDK1a',someParam)
     IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%get(''testSDK1a'',someParam) FAILED!'
@@ -1975,14 +1877,12 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%get(''testSDK1a'',valsdk1a) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam2%get('testSDK1a',valsdk1a)
     CALL testParam%get('testError',valsdk1a)
     CALL someParam%get('testError',valsdk1a)
     WRITE(*,*) '  Passed: CALL testParam%get(...) (SDK) 1-D'
   
     !test set
-    eParams => NULL()
     CALL someParam%set('testSDK1a',(/3.5_SDK,1.5_SDK/),'The number 3.5, and 1.5')
     CALL testParam%get('testSDK1a',valsdk1a)
     IF(valsdk1a(1) /= 3.5_SDK .OR. valsdk1a(2) /= 1.5_SDK .OR. &
@@ -2018,14 +1918,12 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     
-    eParams => e
     CALL testParam2%set('testSDK1a',valsdk1a)
     CALL someParam%set('testError',valsdk1a)
     CALL testParam%set('testError',valsdk1a)
     WRITE(*,*) '  Passed: CALL testParam%set(...) (SDK) 1-D'
   
     !Test clear
-    eParams => NULL()
     CALL testParam%clear()
     IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (SDK) 1-D FAILED!'
@@ -2045,11 +1943,9 @@ PROGRAM testParameterLists
     ENDIF
 
     
-    eParams => e
     WRITE(*,*) '  Passed: CALL testParam%clear() (SDK) 1-D'
   
     !test assignment
-    eParams => NULL()
     CALL testParam%init('testSDK1a',(/4.0_SDK/))
     testParam2=testparam
     IF(.NOT.ASSOCIATED(testParam2%pdat)) THEN
@@ -2064,7 +1960,6 @@ PROGRAM testParameterLists
       WRITE(*,*) 'ASSIGNMENT(=) %datatype (SDK) 1-D FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam%get('testSDK1a',someParam)
     someParam=testParam
     WRITE(*,*) '  Passed: ASSIGNMENT(=) (SDK) 1-D'
@@ -2083,7 +1978,6 @@ PROGRAM testParameterLists
     valsnk1a(2)=7_SNK
     !test init
     CALL testParam%init('testError->testSNK1a',valsnk1a,'The numbers 5 & 7')
-    eParams => NULL()
     CALL testParam%init('testSNK1a',valsnk1a,'The numbers 5 & 7')
     IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%init(...) %pdat (SNK) 1-D FAILED!'
@@ -2102,12 +1996,10 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    eParams => e
     CALL testParam%init('testError',valsnk1a)
     WRITE(*,*) '  Passed: CALL testParam%init(...) (SNK) 1-D'
   
     !test get
-    eParams => NULL()
     CALL testParam%get('testSNK1a',someParam)
     IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%get(''testSNK1a'',someParam) FAILED!'
@@ -2146,14 +2038,12 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%get(''testSNK1a'',valsnk1a) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam2%get('testSNK1a',valsnk1a)
     CALL testParam%get('testError',valsnk1a)
     CALL someParam%get('testError',valsnk1a)
     WRITE(*,*) '  Passed: CALL testParam%get(...) (SNK) 1-D'
   
     !test set
-    eParams => NULL()
     CALL someParam%set('testSNK1a',(/3_SNK,1_SNK/),'The number 3, and 1')
     CALL testParam%get('testSNK1a',valsnk1a)
     IF(valsnk1a(1) /= 3_SNK .OR. valsnk1a(2) /= 1_SNK .OR. &
@@ -2189,14 +2079,12 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     
-    eParams => e
     CALL testParam2%set('testSNK1a',valsnk1a)
     CALL someParam%set('testError',valsnk1a)
     CALL testParam%set('testError',valsnk1a)
     WRITE(*,*) '  Passed: CALL testParam%set(...) (SNK) 1-D'
   
     !Test clear
-    eParams => NULL()
     CALL testParam%clear()
     IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (SNK) 1-D FAILED!'
@@ -2216,11 +2104,9 @@ PROGRAM testParameterLists
     ENDIF
 
     
-    eParams => e
     WRITE(*,*) '  Passed: CALL testParam%clear() (SNK) 1-D'
   
     !test assignment
-    eParams => NULL()
     CALL testParam%init('testSNK1a',(/4_SNK/))
     testParam2=testparam
     IF(.NOT.ASSOCIATED(testParam2%pdat)) THEN
@@ -2235,7 +2121,6 @@ PROGRAM testParameterLists
       WRITE(*,*) 'ASSIGNMENT(=) %datatype (SNK) 1-D FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam%get('testSNK1a',someParam)
     someParam=testParam
     WRITE(*,*) '  Passed: ASSIGNMENT(=) (SNK) 1-D'
@@ -2254,7 +2139,6 @@ PROGRAM testParameterLists
     valslk1a(2)=8_SLK
     !test init
     CALL testParam%init('testError->testSLK1a',valslk1a,'The numbers 6 & 8')
-    eParams => NULL()
     CALL testParam%init('testSLK1a',valslk1a,'The numbers 6 & 8')
     IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%init(...) %pdat (SLK) 1-D FAILED!'
@@ -2273,12 +2157,10 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    eParams => e
     CALL testParam%init('testError',valslk1a)
     WRITE(*,*) '  Passed: CALL testParam%init(...) (SLK) 1-D'
   
     !test get
-    eParams => NULL()
     CALL testParam%get('testSLK1a',someParam)
     IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%get(''testSLK1a'',someParam) FAILED!'
@@ -2317,14 +2199,12 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%get(''testSLK1a'',valslk1a) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam2%get('testSLK1a',valslk1a)
     CALL testParam%get('testError',valslk1a)
     CALL someParam%get('testError',valslk1a)
     WRITE(*,*) '  Passed: CALL testParam%get(...) (SLK) 1-D'
   
     !test set
-    eParams => NULL()
     CALL someParam%set('testSLK1a',(/3_SLK,1_SLK/),'The number 3, and 1')
     CALL testParam%get('testSLK1a',valslk1a)
     IF(valslk1a(1) /= 3_SLK .OR. valslk1a(2) /= 1_SLK .OR. &
@@ -2360,14 +2240,12 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     
-    eParams => e
     CALL testParam2%set('testSLK1a',valslk1a)
     CALL someParam%set('testError',valslk1a)
     CALL testParam%set('testError',valslk1a)
     WRITE(*,*) '  Passed: CALL testParam%set(...) (SLK) 1-D'
   
     !Test clear
-    eParams => NULL()
     CALL testParam%clear()
     IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (SLK) 1-D FAILED!'
@@ -2387,11 +2265,9 @@ PROGRAM testParameterLists
     ENDIF
 
     
-    eParams => e
     WRITE(*,*) '  Passed: CALL testParam%clear() (SLK) 1-D'
   
     !test assignment
-    eParams => NULL()
     CALL testParam%init('testSLK1a',(/4_SLK/))
     testParam2=testparam
     IF(.NOT.ASSOCIATED(testParam2%pdat)) THEN
@@ -2406,7 +2282,6 @@ PROGRAM testParameterLists
       WRITE(*,*) 'ASSIGNMENT(=) %datatype (SLK) 1-D FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam%get('testSLK1a',someParam)
     someParam=testParam
     WRITE(*,*) '  Passed: ASSIGNMENT(=) (SLK) 1-D'
@@ -2425,7 +2300,6 @@ PROGRAM testParameterLists
     valsbk1a(2)=.FALSE.
     !test init
     CALL testParam%init('testError->testSBK1a',valsbk1a,'The values .TRUE. & .FALSE.')
-    eParams => NULL()
     CALL testParam%init('testSBK1a',valsbk1a,'The values .TRUE. & .FALSE.')
     IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%init(...) %pdat (SBK) 1-D FAILED!'
@@ -2444,12 +2318,10 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    eParams => e
     CALL testParam%init('testError',valsbk1a)
     WRITE(*,*) '  Passed: CALL testParam%init(...) (SBK) 1-D'
   
     !test get
-    eParams => NULL()
     CALL testParam%get('testSBK1a',someParam)
     IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%get(''testSBK1a'',someParam) FAILED!'
@@ -2488,14 +2360,12 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%get(''testSBK1a'',valsbk1a) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam2%get('testSBK1a',valsbk1a)
     CALL testParam%get('testError',valsbk1a)
     CALL someParam%get('testError',valsbk1a)
     WRITE(*,*) '  Passed: CALL testParam%get(...) (SBK) 1-D'
   
     !test set
-    eParams => NULL()
     !
     CALL someParam%set('testSBK1a',(/.FALSE.,.TRUE./),'The values .FALSE. and .TRUE.')
     CALL testParam%get('testSBK1a',valsbk1a)
@@ -2533,14 +2403,12 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     
-    eParams => e
     CALL testParam2%set('testSBK1a',valsbk1a)
     CALL someParam%set('testError',valsbk1a)
     CALL testParam%set('testError',valsbk1a)
     WRITE(*,*) '  Passed: CALL testParam%set(...) (SBK) 1-D'
   
     !Test clear
-    eParams => NULL()
     CALL testParam%clear()
     IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (SBK) 1-D FAILED!'
@@ -2560,11 +2428,9 @@ PROGRAM testParameterLists
     ENDIF
 
     
-    eParams => e
     WRITE(*,*) '  Passed: CALL testParam%clear() (SBK) 1-D'
   
     !test assignment
-    eParams => NULL()
     CALL testParam%init('testSBK1a',(/.TRUE./))
     testParam2=testparam
     IF(.NOT.ASSOCIATED(testParam2%pdat)) THEN
@@ -2579,7 +2445,6 @@ PROGRAM testParameterLists
       WRITE(*,*) 'ASSIGNMENT(=) %datatype (SBK) 1-D FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam%get('testSBK1a',someParam)
     someParam=testParam
     WRITE(*,*) '  Passed: ASSIGNMENT(=) (SBK) 1-D'
@@ -2599,7 +2464,6 @@ PROGRAM testParameterLists
     valstr1a(2)='more testing'
     !test init
     CALL testParam%init('testError->testSTR1a',valstr1a,'The value is testing and more testing')
-    eParams => NULL()
     CALL testParam%init('testSTR1a',valstr1a,'The value is testing and more testing')
     IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%init(...) %pdat StringType (STR) 1-D FAILED!'
@@ -2618,12 +2482,10 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    eParams => e
     CALL testParam%init('testError',valstr1a)
     WRITE(*,*) '  Passed: CALL testParam%init(...) StringType (STR)'
   
     !test get
-    eParams => NULL()
     CALL testParam%get('testSTR1a',someParam)
     IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%get(''testSTR1a'',someParam) FAILED!'
@@ -2671,14 +2533,12 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%get(''testSTR1a'',valstr1a) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam2%get('testSTR1a',valstr1a)
     CALL testParam%get('testError',valstr1a)
     CALL someParam%get('testError',valstr1a)
     WRITE(*,*) '  Passed: CALL testParam%get(...) StringType (STR)'
   
     !test set
-    eParams => NULL()
     !For strings, they must be stored in a string type first, then passed in.
     valstr1a(1)='another test'
     valstr1a(2)='one more test'
@@ -2749,14 +2609,12 @@ PROGRAM testParameterLists
       WRITE(*,*) 'testParam%set(''testSTR1a'',''a different but same test'') FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam2%set('testSTR1a',valstr1a)
     CALL someParam%set('testError',valstr1a)
     CALL testParam%set('testError',valstr1a)
     WRITE(*,*) '  Passed: CALL testParam%set(...) StringType (STR)'
     
     !Test clear
-    eParams => NULL()
     CALL testParam%clear()
     IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name StringType (STR) 1-D FAILED!'
@@ -2774,11 +2632,9 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%clear() %pdat StringType (STR) 1-D FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     WRITE(*,*) '  Passed: CALL testParam%clear() StringType (STR)'
   
     !test assignment
-    eParams => NULL()
     valstr1a(1)='assignment test'
     valstr1a(2)='assignment test'
     valstr1a(3)='assignment test'
@@ -2796,7 +2652,6 @@ PROGRAM testParameterLists
       WRITE(*,*) 'ASSIGNMENT(=) %datatype StringType (STR) 1-D FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam%get('testSTR1a',someParam)
     someParam=testParam
     WRITE(*,*) '  Passed: ASSIGNMENT(=) StringType (STR)'
@@ -2818,7 +2673,6 @@ PROGRAM testParameterLists
     valssk2a(2,2)=8._SSK
     !test init
     CALL testParam%init('testError->testSSK2a',valssk2a,'The numbers 5.0, 7.0, 6.0, & 8.0')
-    eParams => NULL()
     CALL testParam%init('testSSK2a',valssk2a,'The numbers 5.0, 7.0, 6.0, & 8.0')
     IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%init(...) %pdat (SSK) 2-D FAILED!'
@@ -2837,12 +2691,10 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    eParams => e
     CALL testParam%init('testError',valssk2a)
     WRITE(*,*) '  Passed: CALL testParam%init(...) (SSK) 2-D'
   
     !test get
-    eParams => NULL()
     CALL testParam%get('testSSK2a',someParam)
     IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%get(''testSSK2a'',someParam) FAILED!'
@@ -2891,14 +2743,12 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%get(''testSSK2a'',valssk2a) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam2%get('testSSK2a',valssk2a)
     CALL testParam%get('testError',valssk2a)
     CALL someParam%get('testError',valssk2a)
     WRITE(*,*) '  Passed: CALL testParam%get(...) (SSK) 2-D'
   
     !test set
-    eParams => NULL()
     !
     CALL someParam%set('testSSK2a',RESHAPE((/3.0_SSK,1.0_SSK,4.0_SSK,2.0_SSK/),(/2,2/) ),'The number 3.0, 1.0, 4.0, and 2.0')
     CALL testParam%get('testSSK2a',valssk2a)
@@ -2944,14 +2794,12 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     
-    eParams => e
     CALL testParam2%set('testSSK2a',valssk2a)
     CALL someParam%set('testError',valssk2a)
     CALL testParam%set('testError',valssk2a)
     WRITE(*,*) '  Passed: CALL testParam%set(...) (SSK) 2-D'
   
     !Test clear
-    eParams => NULL()
     CALL testParam%clear()
     IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (SSK) 2-D FAILED!'
@@ -2971,11 +2819,9 @@ PROGRAM testParameterLists
     ENDIF
 
     
-    eParams => e
     WRITE(*,*) '  Passed: CALL testParam%clear() (SSK) 2-D'
   
     !test assignment
-    eParams => NULL()
     CALL testParam%init('testSSK2a',RESHAPE((/4.0_SSK/),(/1,1/)) )
     testParam2=testparam
     IF(.NOT.ASSOCIATED(testParam2%pdat)) THEN
@@ -2990,7 +2836,6 @@ PROGRAM testParameterLists
       WRITE(*,*) 'ASSIGNMENT(=) %datatype (SSK) 2-D FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam%get('testSSK2a',someParam)
     someParam=testParam
     WRITE(*,*) '  Passed: ASSIGNMENT(=) (SSK) 2-D'
@@ -3011,7 +2856,6 @@ PROGRAM testParameterLists
     valsdk2a(2,2)=8.5_SDK
     !test init
     CALL testParam%init('testError->testSDK2a',valsdk2a,'The numbers 5.5, 7.5, 6.5, & 8.5')
-    eParams => NULL()
     CALL testParam%init('testSDK2a',valsdk2a,'The numbers 5.5, 7.5, 6.5, & 8.5')
     IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%init(...) %pdat (SDK) 2-D FAILED!'
@@ -3030,12 +2874,10 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    eParams => e
     CALL testParam%init('testError',valsdk2a)
     WRITE(*,*) '  Passed: CALL testParam%init(...) (SDK) 2-D'
   
     !test get
-    eParams => NULL()
     CALL testParam%get('testSDK2a',someParam)
     IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%get(''testSDK2a'',someParam) FAILED!'
@@ -3084,14 +2926,12 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%get(''testSDK2a'',valsdk2a) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam2%get('testSDK2a',valsdk2a)
     CALL testParam%get('testError',valsdk2a)
     CALL someParam%get('testError',valsdk2a)
     WRITE(*,*) '  Passed: CALL testParam%get(...) (SDK) 2-D'
   
     !test set
-    eParams => NULL()
     CALL someParam%set('testSDK2a',RESHAPE((/3.5_SDK,1.5_SDK,4.5_SDK,2.5_SDK/),(/2,2/)), &
         'The numbers 3.5, 1.5, 4.5, and 2.5')
     CALL testParam%get('testSDK2a',valsdk2a)
@@ -3138,14 +2978,12 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     
-    eParams => e
     CALL testParam2%set('testSDK2a',valsdk2a)
     CALL someParam%set('testError',valsdk2a)
     CALL testParam%set('testError',valsdk2a)
     WRITE(*,*) '  Passed: CALL testParam%set(...) (SDK) 2-D'
   
     !Test clear
-    eParams => NULL()
     CALL testParam%clear()
     IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (SDK) 2-D FAILED!'
@@ -3165,11 +3003,9 @@ PROGRAM testParameterLists
     ENDIF
 
     
-    eParams => e
     WRITE(*,*) '  Passed: CALL testParam%clear() (SDK) 2-D'
   
     !test assignment
-    eParams => NULL()
     CALL testParam%init('testSDK2a',RESHAPE((/4.0_SDK/),(/1,1/)) )
     testParam2=testparam
     IF(.NOT.ASSOCIATED(testParam2%pdat)) THEN
@@ -3184,7 +3020,6 @@ PROGRAM testParameterLists
       WRITE(*,*) 'ASSIGNMENT(=) %datatype (SDK) 2-D FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam%get('testSDK2a',someParam)
     someParam=testParam
     WRITE(*,*) '  Passed: ASSIGNMENT(=) (SDK) 2-D'
@@ -3205,7 +3040,6 @@ PROGRAM testParameterLists
     valsnk2a(2,2)=8_SNK
     !test init
     CALL testParam%init('testError->testSNK2a',valsnk2a,'The numbers 5, 7, 6, & 8')
-    eParams => NULL()
     CALL testParam%init('testSNK2a',valsnk2a,'The numbers 5, 7, 6, & 8')
     IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%init(...) %pdat (SNK) 2-D FAILED!'
@@ -3224,12 +3058,10 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    eParams => e
     CALL testParam%init('testError',valsnk2a)
     WRITE(*,*) '  Passed: CALL testParam%init(...) (SNK) 2-D'
   
     !test get
-    eParams => NULL()
     CALL testParam%get('testSNK2a',someParam)
     IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%get(''testSNK2a'',someParam) FAILED!'
@@ -3278,14 +3110,12 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%get(''testSNK2a'',valsnk2a) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam2%get('testSNK2a',valsnk2a)
     CALL testParam%get('testError',valsnk2a)
     CALL someParam%get('testError',valsnk2a)
     WRITE(*,*) '  Passed: CALL testParam%get(...) (SNK) 2-D'
   
     !test set
-    eParams => NULL()
     CALL someParam%set('testSNK2a',RESHAPE((/3_SNK,1_SNK,4_SNK,2_SNK/),(/2,2/)),'The numbers 3, 1, 4, and 2')
     CALL testParam%get('testSNK2a',valsnk2a)
     IF(valsnk2a(1,1) /= 3_SNK .OR. valsnk2a(2,1) /= 1_SNK .OR. &
@@ -3330,14 +3160,12 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     
-    eParams => e
     CALL testParam2%set('testSNK2a',valsnk2a)
     CALL someParam%set('testError',valsnk2a)
     CALL testParam%set('testError',valsnk2a)
     WRITE(*,*) '  Passed: CALL testParam%set(...) (SNK) 2-D'
   
     !Test clear
-    eParams => NULL()
     CALL testParam%clear()
     IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (SNK) 2-D FAILED!'
@@ -3357,11 +3185,9 @@ PROGRAM testParameterLists
     ENDIF
 
     
-    eParams => e
     WRITE(*,*) '  Passed: CALL testParam%clear() (SNK) 2-D'
   
     !test assignment
-    eParams => NULL()
     CALL testParam%init('testSNK2a',RESHAPE((/4_SNK/),(/1,1/)) )
     testParam2=testparam
     IF(.NOT.ASSOCIATED(testParam2%pdat)) THEN
@@ -3376,7 +3202,6 @@ PROGRAM testParameterLists
       WRITE(*,*) 'ASSIGNMENT(=) %datatype (SNK) 2-D FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam%get('testSNK2a',someParam)
     someParam=testParam
     WRITE(*,*) '  Passed: ASSIGNMENT(=) (SNK) 2-D'
@@ -3397,7 +3222,6 @@ PROGRAM testParameterLists
     valslk2a(2,2)=9_SLK
     !test init
     CALL testParam%init('testError->testSLK2a',valslk2a,'The numbers 6, 8, 7, & 9')
-    eParams => NULL()
     CALL testParam%init('testSLK2a',valslk2a,'The numbers 6, 8, 7, & 9')
     IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%init(...) %pdat (SLK) 2-D FAILED!'
@@ -3416,12 +3240,10 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    eParams => e
     CALL testParam%init('testError',valslk2a)
     WRITE(*,*) '  Passed: CALL testParam%init(...) (SLK) 2-D'
   
     !test get
-    eParams => NULL()
     CALL testParam%get('testSLK2a',someParam)
     IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%get(''testSLK2a'',someParam) FAILED!'
@@ -3470,14 +3292,12 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%get(''testSLK2a'',valslk2a) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam2%get('testSLK2a',valslk2a)
     CALL testParam%get('testError',valslk2a)
     CALL someParam%get('testError',valslk2a)
     WRITE(*,*) '  Passed: CALL testParam%get(...) (SLK) 2-D'
   
     !test set
-    eParams => NULL()
     CALL someParam%set('testSLK2a',RESHAPE((/3_SLK,1_SLK,4_SLK,2_SLK/),(/2,2/)),'The numbers 3, 1, 4 and 2')
     CALL testParam%get('testSLK2a',valslk2a)
     IF(valslk2a(1,1) /= 3_SLK .OR. valslk2a(2,1) /= 1_SLK .OR. &
@@ -3523,14 +3343,12 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     
-    eParams => e
     CALL testParam2%set('testSLK2a',valslk2a)
     CALL someParam%set('testError',valslk2a)
     CALL testParam%set('testError',valslk2a)
     WRITE(*,*) '  Passed: CALL testParam%set(...) (SLK) 2-D'
   
     !Test clear
-    eParams => NULL()
     CALL testParam%clear()
     IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (SLK) 2-D FAILED!'
@@ -3550,11 +3368,9 @@ PROGRAM testParameterLists
     ENDIF
 
     
-    eParams => e
     WRITE(*,*) '  Passed: CALL testParam%clear() (SLK) 2-D'
   
     !test assignment
-    eParams => NULL()
     CALL testParam%init('testSLK2a',RESHAPE((/4_SLK/),(/1,1/)) )
     testParam2=testparam
     IF(.NOT.ASSOCIATED(testParam2%pdat)) THEN
@@ -3569,7 +3385,6 @@ PROGRAM testParameterLists
       WRITE(*,*) 'ASSIGNMENT(=) %datatype (SLK) 2-D FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam%get('testSLK2a',someParam)
     someParam=testParam
     WRITE(*,*) '  Passed: ASSIGNMENT(=) (SLK) 2-D'
@@ -3590,7 +3405,6 @@ PROGRAM testParameterLists
     valstr2a(2,2)='more testing2'
     !test init
     CALL testParam%init('testError->testSTR2a',valstr2a,'The value is testing and more testing')
-    eParams => NULL()
     CALL testParam%init('testSTR2a',valstr2a,'The value is testing and more testing')
     IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%init(...) %pdat StringType (STR) 2-D FAILED!'
@@ -3609,12 +3423,10 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    eParams => e
     CALL testParam%init('testError',valstr2a)
     WRITE(*,*) '  Passed: CALL testParam%init(...) StringType (STR)'
   
     !test get
-    eParams => NULL()
     CALL testParam%get('testSTR2a',someParam)
     IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%get(''testSTR2a'',someParam) FAILED!'
@@ -3667,14 +3479,12 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%get(''testSTR2a'',valstr2a) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam2%get('testSTR2a',valstr2a)
     CALL testParam%get('testError',valstr2a)
     CALL someParam%get('testError',valstr2a)
     WRITE(*,*) '  Passed: CALL testParam%get(...) StringType (STR)'
   
     !test set
-    eParams => NULL()
     !For strings, they must be stored in a string type first, then passed in.
     valstr2a(1,1)='another test'
     valstr2a(1,2)='one more test'
@@ -3752,14 +3562,12 @@ PROGRAM testParameterLists
       WRITE(*,*) 'testParam%set(''testSTR2a'',''a different but same test'') FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam2%set('testSTR2a',valstr2a)
     CALL someParam%set('testError',valstr2a)
     CALL testParam%set('testError',valstr2a)
     WRITE(*,*) '  Passed: CALL testParam%set(...) StringType (STR)'
     
     !Test clear
-    eParams => NULL()
     CALL testParam%clear()
     IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name StringType (STR) 2-D FAILED!'
@@ -3777,11 +3585,9 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%clear() %pdat StringType (STR) 2-D FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     WRITE(*,*) '  Passed: CALL testParam%clear() StringType (STR)'
   
     !test assignment
-    eParams => NULL()
     valstr2a(1,1)='assignment test'
     valstr2a(2,1)='assignment test'
     valstr2a(3,1)='assignment test'
@@ -3799,7 +3605,6 @@ PROGRAM testParameterLists
       WRITE(*,*) 'ASSIGNMENT(=) %datatype StringType (STR) 2-D FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam%get('testSTR2a',someParam)
     someParam=testParam
     WRITE(*,*) '  Passed: ASSIGNMENT(=) StringType (STR)'
@@ -3821,7 +3626,6 @@ PROGRAM testParameterLists
     valssk3a(2,2,:)=8._SSK
     !test init
     CALL testParam%init('testError->testSSK3a',valssk3a,'The numbers 5.0, 7.0, 6.0, & 8.0')
-    eParams => NULL()
     CALL testParam%init('testSSK3a',valssk3a,'The numbers 5.0, 7.0, 6.0, & 8.0')
     IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%init(...) %pdat (SSK) 3-D FAILED!'
@@ -3840,12 +3644,10 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    eParams => e
     CALL testParam%init('testError',valssk3a)
     WRITE(*,*) '  Passed: CALL testParam%init(...) (SSK) 3-D'
   
     !test get
-    eParams => NULL()
     CALL testParam%get('testSSK3a',someParam)
     IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%get(''testSSK3a'',someParam) FAILED!'
@@ -3899,14 +3701,12 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%get(''testSSK3a'',valssk3a) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam2%get('testSSK3a',valssk3a)
     CALL testParam%get('testError',valssk3a)
     CALL someParam%get('testError',valssk3a)
     WRITE(*,*) '  Passed: CALL testParam%get(...) (SSK) 3-D'
   
     !test set
-    eParams => NULL()
     !
     CALL someParam%set('testSSK3a', &
       RESHAPE((/3.0_SSK,1.0_SSK,4.0_SSK,2.0_SSK,3.0_SSK,1.0_SSK,4.0_SSK,2.0_SSK/), &
@@ -3959,14 +3759,12 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     
-    eParams => e
     CALL testParam2%set('testSSK3a',valssk3a)
     CALL someParam%set('testError',valssk3a)
     CALL testParam%set('testError',valssk3a)
     WRITE(*,*) '  Passed: CALL testParam%set(...) (SSK) 3-D'
   
     !Test clear
-    eParams => NULL()
     CALL testParam%clear()
     IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (SSK) 3-D FAILED!'
@@ -3986,11 +3784,9 @@ PROGRAM testParameterLists
     ENDIF
 
     
-    eParams => e
     WRITE(*,*) '  Passed: CALL testParam%clear() (SSK) 3-D'
   
     !test assignment
-    eParams => NULL()
     CALL testParam%init('testSSK3a',RESHAPE((/4.0_SSK/),(/1,1,1/)) )
     testParam2=testparam
     IF(.NOT.ASSOCIATED(testParam2%pdat)) THEN
@@ -4005,7 +3801,6 @@ PROGRAM testParameterLists
       WRITE(*,*) 'ASSIGNMENT(=) %datatype (SSK) 3-D FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam%get('testSSK3a',someParam)
     someParam=testParam
     WRITE(*,*) '  Passed: ASSIGNMENT(=) (SSK) 3-D'
@@ -4026,7 +3821,6 @@ PROGRAM testParameterLists
     valsdk3a(2,2,:)=8.5_SDK
     !test init
     CALL testParam%init('testError->testSDK3a',valsdk3a,'The numbers 5.5, 7.5, 6.5, & 8.5')
-    eParams => NULL()
     CALL testParam%init('testSDK3a',valsdk3a,'The numbers 5.5, 7.5, 6.5, & 8.5')
     IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%init(...) %pdat (SDK) 3-D FAILED!'
@@ -4045,12 +3839,10 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    eParams => e
     CALL testParam%init('testError',valsdk3a)
     WRITE(*,*) '  Passed: CALL testParam%init(...) (SDK) 3-D'
   
     !test get
-    eParams => NULL()
     CALL testParam%get('testSDK3a',someParam)
     IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%get(''testSDK3a'',someParam) FAILED!'
@@ -4104,14 +3896,12 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%get(''testSDK3a'',valsdk3a) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam2%get('testSDK3a',valsdk3a)
     CALL testParam%get('testError',valsdk3a)
     CALL someParam%get('testError',valsdk3a)
     WRITE(*,*) '  Passed: CALL testParam%get(...) (SDK) 3-D'
   
     !test set
-    eParams => NULL()
     CALL someParam%set('testSDK3a', &
       RESHAPE((/3.5_SDK,1.5_SDK,4.5_SDK,2.5_SDK,3.5_SDK,1.5_SDK,4.5_SDK,2.5_SDK/), &
         (/2,2,2/)), 'The numbers 3.5, 1.5, 4.5, and 2.5')
@@ -4164,14 +3954,12 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     
-    eParams => e
     CALL testParam2%set('testSDK3a',valsdk3a)
     CALL someParam%set('testError',valsdk3a)
     CALL testParam%set('testError',valsdk3a)
     WRITE(*,*) '  Passed: CALL testParam%set(...) (SDK) 3-D'
   
     !Test clear
-    eParams => NULL()
     CALL testParam%clear()
     IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (SDK) 3-D FAILED!'
@@ -4191,11 +3979,9 @@ PROGRAM testParameterLists
     ENDIF
 
     
-    eParams => e
     WRITE(*,*) '  Passed: CALL testParam%clear() (SDK) 3-D'
   
     !test assignment
-    eParams => NULL()
     CALL testParam%init('testSDK3a',RESHAPE((/4.0_SDK/),(/1,1,1/)) )
     testParam2=testparam
     IF(.NOT.ASSOCIATED(testParam2%pdat)) THEN
@@ -4210,7 +3996,6 @@ PROGRAM testParameterLists
       WRITE(*,*) 'ASSIGNMENT(=) %datatype (SDK) 3-D FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam%get('testSDK3a',someParam)
     someParam=testParam
     WRITE(*,*) '  Passed: ASSIGNMENT(=) (SDK) 3-D'
@@ -4231,7 +4016,6 @@ PROGRAM testParameterLists
     valsnk3a(2,2,:)=8_SNK
     !test init
     CALL testParam%init('testError->testSNK3a',valsnk3a,'The numbers 5, 7, 6, & 8')
-    eParams => NULL()
     CALL testParam%init('testSNK3a',valsnk3a,'The numbers 5, 7, 6, & 8')
     IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%init(...) %pdat (SNK) 3-D FAILED!'
@@ -4250,12 +4034,10 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    eParams => e
     CALL testParam%init('testError',valsnk3a)
     WRITE(*,*) '  Passed: CALL testParam%init(...) (SNK) 3-D'
   
     !test get
-    eParams => NULL()
     CALL testParam%get('testSNK3a',someParam)
     IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%get(''testSNK3a'',someParam) FAILED!'
@@ -4309,14 +4091,12 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%get(''testSNK3a'',valsnk3a) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam2%get('testSNK3a',valsnk3a)
     CALL testParam%get('testError',valsnk3a)
     CALL someParam%get('testError',valsnk3a)
     WRITE(*,*) '  Passed: CALL testParam%get(...) (SNK) 3-D'
   
     !test set
-    eParams => NULL()
     CALL someParam%set('testSNK3a', &
       RESHAPE((/3_SNK,1_SNK,4_SNK,2_SNK,3_SNK,1_SNK,4_SNK,2_SNK/), &
         (/2,2,2/)),'The numbers 3, 1, 4, and 2')
@@ -4368,14 +4148,12 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     
-    eParams => e
     CALL testParam2%set('testSNK3a',valsnk3a)
     CALL someParam%set('testError',valsnk3a)
     CALL testParam%set('testError',valsnk3a)
     WRITE(*,*) '  Passed: CALL testParam%set(...) (SNK) 3-D'
   
     !Test clear
-    eParams => NULL()
     CALL testParam%clear()
     IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (SNK) 3-D FAILED!'
@@ -4395,11 +4173,9 @@ PROGRAM testParameterLists
     ENDIF
 
     
-    eParams => e
     WRITE(*,*) '  Passed: CALL testParam%clear() (SNK) 3-D'
   
     !test assignment
-    eParams => NULL()
     CALL testParam%init('testSNK3a',RESHAPE((/4_SNK/),(/1,1,1/)) )
     testParam2=testparam
     IF(.NOT.ASSOCIATED(testParam2%pdat)) THEN
@@ -4414,7 +4190,6 @@ PROGRAM testParameterLists
       WRITE(*,*) 'ASSIGNMENT(=) %datatype (SNK) 3-D FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam%get('testSNK3a',someParam)
     someParam=testParam
     WRITE(*,*) '  Passed: ASSIGNMENT(=) (SNK) 3-D'
@@ -4435,7 +4210,6 @@ PROGRAM testParameterLists
     valslk3a(2,2,:)=9_SLK
     !test init
     CALL testParam%init('testError->testSLK3a',valslk3a,'The numbers 6, 8, 7, & 9')
-    eParams => NULL()
     CALL testParam%init('testSLK3a',valslk3a,'The numbers 6, 8, 7, & 9')
     IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%init(...) %pdat (SLK) 3-D FAILED!'
@@ -4454,12 +4228,10 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    eParams => e
     CALL testParam%init('testError',valslk3a)
     WRITE(*,*) '  Passed: CALL testParam%init(...) (SLK) 3-D'
   
     !test get
-    eParams => NULL()
     CALL testParam%get('testSLK3a',someParam)
     IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
       WRITE(*,*) 'CALL testParam%get(''testSLK3a'',someParam) FAILED!'
@@ -4513,14 +4285,12 @@ PROGRAM testParameterLists
       WRITE(*,*) 'CALL testParam%get(''testSLK3a'',valslk3a) FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam2%get('testSLK3a',valslk3a)
     CALL testParam%get('testError',valslk3a)
     CALL someParam%get('testError',valslk3a)
     WRITE(*,*) '  Passed: CALL testParam%get(...) (SLK) 3-D'
   
     !test set
-    eParams => NULL()
     CALL someParam%set('testSLK3a', &
       RESHAPE((/3_SLK,1_SLK,4_SLK,2_SLK,3_SLK,1_SLK,4_SLK,2_SLK/), &
         (/2,2,2/)),'The numbers 3, 1, 4 and 2')
@@ -4573,14 +4343,12 @@ PROGRAM testParameterLists
       STOP 666
     ENDIF
     
-    eParams => e
     CALL testParam2%set('testSLK3a',valslk3a)
     CALL someParam%set('testError',valslk3a)
     CALL testParam%set('testError',valslk3a)
     WRITE(*,*) '  Passed: CALL testParam%set(...) (SLK) 3-D'
   
     !Test clear
-    eParams => NULL()
     CALL testParam%clear()
     IF(LEN(testParam%name) /= 0) THEN
       WRITE(*,*) 'CALL testParam%clear() %name (SLK) 3-D FAILED!'
@@ -4600,11 +4368,9 @@ PROGRAM testParameterLists
     ENDIF
 
     
-    eParams => e
     WRITE(*,*) '  Passed: CALL testParam%clear() (SLK) 3-D'
   
     !test assignment
-    eParams => NULL()
     CALL testParam%init('testSLK3a',RESHAPE((/4_SLK/),(/1,1,1/)) )
     testParam2=testparam
     IF(.NOT.ASSOCIATED(testParam2%pdat)) THEN
@@ -4619,7 +4385,6 @@ PROGRAM testParameterLists
       WRITE(*,*) 'ASSIGNMENT(=) %datatype (SLK) 3-D FAILED!'
       STOP 666
     ENDIF
-    eParams => e
     CALL testParam%get('testSLK3a',someParam)
     someParam=testParam
     WRITE(*,*) '  Passed: ASSIGNMENT(=) (SLK) 3-D'

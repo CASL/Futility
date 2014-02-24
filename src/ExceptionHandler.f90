@@ -129,14 +129,13 @@ MODULE ExceptionHandler
   PUBLIC :: EXCEPTION_OK
   PUBLIC :: EXCEPTION_INFORMATION
   PUBLIC :: EXCEPTION_WARNING
-  PUBLIC :: EXCEPTION_DEBUG_WARNING
+  PUBLIC :: EXCEPTION_DEBUG
   PUBLIC :: EXCEPTION_ERROR
   PUBLIC :: EXCEPTION_FATAL_ERROR
-  PUBLIC :: EXCEPTION_FAILURE
   PUBLIC :: EXCEPTION_SIZE
   PUBLIC :: EXCEPTION_MAX_MESG_LENGTH
   PUBLIC :: ExceptionHandlerType
-  PUBLIC :: eDefault
+  PUBLIC :: ASSIGNMENT(=)
 
   !> An enumeration for defining an OK condition
   INTEGER(SIK),PARAMETER :: EXCEPTION_OK=0
@@ -144,14 +143,12 @@ MODULE ExceptionHandler
   INTEGER(SIK),PARAMETER :: EXCEPTION_INFORMATION=1
   !> An enumeration for defining an WARNING exception
   INTEGER(SIK),PARAMETER :: EXCEPTION_WARNING=2
-  !> An enumeration for defining an ERROR exception
-  INTEGER(SIK),PARAMETER :: EXCEPTION_ERROR=3
-  !> An enumeration for defining an FATAL ERROR exception
-  INTEGER(SIK),PARAMETER :: EXCEPTION_FATAL_ERROR=4
-  !> An enumeration for defining an FAILURE exception
-  INTEGER(SIK),PARAMETER :: EXCEPTION_FAILURE=5
   !> An enumeration for defining a DEBUG WARNING exception
-  INTEGER(SIK),PARAMETER :: EXCEPTION_DEBUG_WARNING=6
+  INTEGER(SIK),PARAMETER :: EXCEPTION_DEBUG=3
+  !> An enumeration for defining an ERROR exception
+  INTEGER(SIK),PARAMETER :: EXCEPTION_ERROR=4
+  !> An enumeration for defining an FATAL ERROR exception
+  INTEGER(SIK),PARAMETER :: EXCEPTION_FATAL_ERROR=5
   !> The number of exception types
   INTEGER(SIK),PARAMETER :: EXCEPTION_SIZE=5
   !> The maximum size of an exception message
@@ -166,32 +163,40 @@ MODULE ExceptionHandler
     LOGICAL(SBK),PRIVATE :: stopOnError=.TRUE.
     !> Defines whether or not to report exceptions to a log file
     LOGICAL(SBK),PRIVATE :: logFileActive=.FALSE.
-    !> Defines whether or not to report exceptions to standard error
-    LOGICAL(SBK),PRIVATE :: quiet=.FALSE.
-    !> Defines whether or not to debug warnings are enabled
-    LOGICAL(SBK),PRIVATE :: debug=.TRUE.
     !> The output unit identifier for the log file
-    INTEGER(SIK),PRIVATE :: logFileUnit=0_SIK
+    INTEGER(SIK),PRIVATE :: logFileUnit=666
     !> The number of INFORMATION exceptions that have been raised
     INTEGER(SIK),PRIVATE :: nInfo=0
     !> The number of WARNING exceptions that have been raised
     INTEGER(SIK),PRIVATE :: nWarn=0
+    !> The number of DEBUG exceptions that have been raised
+    INTEGER(SIK),PRIVATE :: nDebug=0
     !> The number of ERROR exceptions that have been raised
     INTEGER(SIK),PRIVATE :: nError=0
     !> The number of FATAL ERROR exceptions that have been raised
     INTEGER(SIK),PRIVATE :: nFatal=0
-    !> The number of FAILURE exceptions that have been raised
-    INTEGER(SIK),PRIVATE :: nFail=0
+    !> Defines whether or not to report exceptions to standard error
+    LOGICAL(SBK),PRIVATE :: quiet(EXCEPTION_SIZE-1)= &
+      (/.FALSE.,.FALSE.,.TRUE.,.FALSE./)
+    !> Logical array that allows for selective verbosity of exception types
+    LOGICAL(SBK),PRIVATE :: verbose(EXCEPTION_SIZE-1)= &
+      (/.TRUE.,.TRUE.,.FALSE.,.TRUE./)
     !> The last exception message that was reported
     CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH),PRIVATE :: lastMesg=''
     !> Surrogate exception handler to which most functions are delegated.
-    TYPE(ExceptionHandlerType),POINTER :: surrogate => NULL()
+    TYPE(ExceptionHandlerType),POINTER,PRIVATE :: surrogate => NULL()
 !
 !List of type bound procedures (methods) for the Exception Handler object
     CONTAINS
+      !> @copybrief ExceptionHandler::addSurrogate
+      !> @copydetails ExceptionHandler::addSurrogate
+      PROCEDURE,PASS :: addSurrogate
       !> @copybrief ExceptionHandler::initCounter
       !> @copydetails ExceptionHandler::initCounter
       PROCEDURE,PASS :: initCounter
+      !> @copybrief ExceptionHandler::reset
+      !> @copydetails ExceptionHandler::reset
+      PROCEDURE,PASS :: reset
       !> @copybrief ExceptionHandler::getCounterAll
       !> @copydetails ExceptionHandler::getCounterAll
       PROCEDURE,PASS :: getCounterAll
@@ -201,18 +206,46 @@ MODULE ExceptionHandler
       !> @copybrief ExceptionHandler::getLastMessage
       !> @copydetails ExceptionHandler::getLastMessage
       PROCEDURE,PASS :: getLastMessage
-      !> @copybrief ExceptionHandler::setQuietMode
-      !> @copydetails ExceptionHandler::setQuietMode
-      PROCEDURE,PASS :: setQuietMode
-      !> @copybrief ExceptionHandler::isQuietMode
-      !> @copydetails ExceptionHandler::isQuietMode
-      PROCEDURE,PASS :: isQuietMode
-      !> @copybrief ExceptionHandler::setDebugMode
-      !> @copydetails ExceptionHandler::setDebugMode
-      PROCEDURE,PASS :: setDebugMode
-      !> @copybrief ExceptionHandler::isDebugMode
-      !> @copydetails ExceptionHandler::isDebugMode
-      PROCEDURE,PASS :: isDebugMode
+      !> @copybrief ExceptionHandler::setQuietMode_all
+      !> @copydetails ExceptionHandler::setQuietMode_all
+      PROCEDURE,PASS,PRIVATE :: setQuietMode_all
+      !> @copybrief ExceptionHandler::setQuietMode_eCode
+      !> @copydetails ExceptionHandler::setQuietMode_eCode
+      PROCEDURE,PASS,PRIVATE :: setQuietMode_eCode
+      !> @copybrief ExceptionHandler::setQuietMode_array
+      !> @copydetails ExceptionHandler::setQuietMode_array
+      PROCEDURE,PASS,PRIVATE :: setQuietMode_array
+      !>
+      GENERIC :: setQuietMode => setQuietMode_all,setQuietMode_eCode, &
+                                 setQuietMode_array
+      !> @copybrief ExceptionHandler::isQuietMode_all
+      !> @copydetails ExceptionHandler::isQuietMode_all
+      PROCEDURE,PASS,PRIVATE :: isQuietMode_all
+      !> @copybrief ExceptionHandler::isQuietMode_eCode
+      !> @copydetails ExceptionHandler::isQuietMode_eCode
+      PROCEDURE,PASS,PRIVATE :: isQuietMode_eCode
+      !>
+      GENERIC :: isQuietMode => isQuietMode_all,isQuietMode_eCode
+      !> @copybrief ExceptionHandler::setVerboseMode_all
+      !> @copydetails ExceptionHandler::setVerboseMode_all
+      PROCEDURE,PASS,PRIVATE :: setVerboseMode_all
+      !> @copybrief ExceptionHandler::setVerboseMode_eCode
+      !> @copydetails ExceptionHandler::setVerboseMode_eCode
+      PROCEDURE,PASS,PRIVATE :: setVerboseMode_eCode
+      !> @copybrief ExceptionHandler::setVerboseMode_array
+      !> @copydetails ExceptionHandler::setVerboseMode_array
+      PROCEDURE,PASS,PRIVATE :: setVerboseMode_array
+      !>
+      GENERIC :: setVerboseMode => setVerboseMode_all,setVerboseMode_eCode, &
+                                 setVerboseMode_array
+      !> @copybrief ExceptionHandler::isVerboseMode_all
+      !> @copydetails ExceptionHandler::isVerboseMode_all
+      PROCEDURE,PASS,PRIVATE :: isVerboseMode_all
+      !> @copybrief ExceptionHandler::isVerboseMode_eCode
+      !> @copydetails ExceptionHandler::isVerboseMode_eCode
+      PROCEDURE,PASS,PRIVATE :: isVerboseMode_eCode
+      !>
+      GENERIC :: isVerboseMode => isVerboseMode_all,isVerboseMode_eCode
       !> @copybrief ExceptionHandler::setLogFileUnit
       !> @copydetails ExceptionHandler::setLogFileUnit
       PROCEDURE,PASS :: setLogFileUnit
@@ -240,63 +273,112 @@ MODULE ExceptionHandler
       !> @copybrief ExceptionHandler::raiseWarning
       !> @copydetails ExceptionHandler::raiseWarning
       PROCEDURE,PASS :: raiseWarning
-      !> @copybrief ExceptionHandler::raiseDebugWarning
-      !> @copydetails ExceptionHandler::raiseDebugWarning
-      PROCEDURE,PASS :: raiseDebugWarning
+      !> @copybrief ExceptionHandler::raiseDebug
+      !> @copydetails ExceptionHandler::raiseDebug
+      PROCEDURE,PASS :: raiseDebug
       !> @copybrief ExceptionHandler::raiseError
       !> @copydetails ExceptionHandler::raiseError
       PROCEDURE,PASS :: raiseError
       !> @copybrief ExceptionHandler::raiseFatalError
       !> @copydetails ExceptionHandler::raiseFatalError
       PROCEDURE,PASS :: raiseFatalError
-      !> @copybrief ExceptionHandler::raiseFailure
-      !> @copydetails ExceptionHandler::raiseFailure
-      PROCEDURE,PASS :: raiseFailure
   ENDTYPE ExceptionHandlerType
 
-  !> @brief Default target for other exception handlers
-  !>
-  !> Singleton object. May or may not be used.
-  TYPE(ExceptionHandlerType),TARGET,SAVE :: eDefault
+  INTERFACE ASSIGNMENT(=)
+    !> @copybrief ExceptionHandler::assign_etype
+    !> @copydoc ExceptionHandler::assign_etype
+    MODULE PROCEDURE assign_etype
+  ENDINTERFACE
 !
 !===============================================================================
   CONTAINS
 !
 !-------------------------------------------------------------------------------
+!> @brief
+!>
+    SUBROUTINE assign_etype(e,e2)
+      TYPE(ExceptionHandlerType),INTENT(OUT) :: e
+      TYPE(ExceptionHandlerType),INTENT(IN) :: e2
+      e%nInfo=e2%nInfo
+      e%nWarn=e2%nWarn
+      e%nDebug=e2%nDebug
+      e%nError=e2%nError
+      e%nFatal=e2%nFatal
+      e%lastMesg=e2%lastMesg
+      e%logFileUnit=e2%logFileUnit
+      e%stopOnError=e2%stopOnError
+      e%logFileActive=e2%logFileActive
+      e%quiet=e2%quiet
+      e%verbose=e2%verbose
+      e%surrogate => e2%surrogate
+    ENDSUBROUTINE assign_etype
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!>
+    SUBROUTINE addSurrogate(e,e2)
+      CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
+      TYPE(ExceptionHandlerType),TARGET,INTENT(IN) :: e2
+      e%surrogate => e2
+      IF(ASSOCIATED(e2%surrogate)) e%surrogate => e2%surrogate
+    ENDSUBROUTINE addSurrogate
+!
+!-------------------------------------------------------------------------------
 !> @brief Initialize the exception counters for an exception object.
 !> @param e the exception object
-    SUBROUTINE initCounter(e)
+!>
+    PURE SUBROUTINE initCounter(e)
       CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
-
-      IF(ASSOCIATED(e%surrogate)) THEN
-        !CALL e%surrogate%initCounter()
-      ELSE
-        e%nInfo=0
-        e%nWarn=0
-        e%nError=0
-        e%nFatal=0
-        e%nFail=0
-        e%lastMesg=''
-      ENDIF
-
+      IF(ASSOCIATED(e%surrogate)) CALL copyFromSurrogate(e)
+      e%nInfo=0
+      e%nWarn=0
+      e%nError=0
+      e%nFatal=0
+      e%nDebug=0
+      e%lastMesg=''
     ENDSUBROUTINE initCounter
+!
+!-------------------------------------------------------------------------------
+!> @brief Resets an exception handler to its default state.
+!> @param e the exception object
+!>
+    PURE SUBROUTINE reset(e)
+      CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
+      NULLIFY(e%surrogate)
+      e%nInfo=0
+      e%nWarn=0
+      e%nError=0
+      e%nFatal=0
+      e%nDebug=0
+      e%lastMesg=''
+      e%logFileUnit=666
+      e%stopOnError=.TRUE.
+      e%logFileActive=.FALSE.
+      e%quiet=(/.FALSE.,.FALSE.,.TRUE.,.FALSE./)
+      e%verbose=(/.TRUE.,.TRUE.,.FALSE.,.TRUE./)
+    ENDSUBROUTINE reset
 !
 !-------------------------------------------------------------------------------
 !> @brief Get the counters for the exception object.
 !> @param e the exception object
 !> @returns counter array with counter values
+!>
     PURE FUNCTION getCounterAll(e) RESULT(counter)
       CLASS(ExceptionHandlerType),INTENT(IN) :: e
       INTEGER(SIK) :: counter(EXCEPTION_SIZE)
 
       IF(ASSOCIATED(e%surrogate)) THEN
-        !counter=e%surrogate%getCounterAll()
+        counter(EXCEPTION_INFORMATION)=e%surrogate%nInfo
+        counter(EXCEPTION_WARNING)=e%surrogate%nWarn
+        counter(EXCEPTION_ERROR)=e%surrogate%nError
+        counter(EXCEPTION_FATAL_ERROR)=e%surrogate%nFatal
+        counter(EXCEPTION_DEBUG)=e%surrogate%nDebug
       ELSE
         counter(EXCEPTION_INFORMATION)=e%nInfo
         counter(EXCEPTION_WARNING)=e%nWarn
         counter(EXCEPTION_ERROR)=e%nError
         counter(EXCEPTION_FATAL_ERROR)=e%nFatal
-        counter(EXCEPTION_FAILURE)=e%nFail
+        counter(EXCEPTION_DEBUG)=e%nDebug
       ENDIF
     ENDFUNCTION getCounterAll
 !
@@ -305,41 +387,50 @@ MODULE ExceptionHandler
 !> @param e the exception object
 !> @param i the index of the exception type
 !> @returns count the number of a certain exception type
+!>
     PURE FUNCTION getCounter(e,i) RESULT(count)
       CLASS(ExceptionHandlerType),INTENT(IN) :: e
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK) :: count
-
-      ! IF(ASSOCIATED(e%surrogate)) THEN
-      !   count=e%surrogate%getCounter(i)
-      ! ELSE
-        count=-1
+      count=-1
+      IF(ASSOCIATED(e%surrogate)) THEN
+        SELECTCASE(i)
+          CASE(EXCEPTION_INFORMATION)
+            count=e%surrogate%nInfo
+          CASE(EXCEPTION_WARNING)
+            count=e%surrogate%nWarn
+          CASE(EXCEPTION_DEBUG)
+            count=e%surrogate%nDebug
+          CASE(EXCEPTION_ERROR)
+            count=e%surrogate%nError
+          CASE(EXCEPTION_FATAL_ERROR)
+            count=e%surrogate%nFatal
+        ENDSELECT
+      ELSE
         SELECTCASE(i)
           CASE(EXCEPTION_INFORMATION)
             count=e%nInfo
           CASE(EXCEPTION_WARNING)
             count=e%nWarn
+          CASE(EXCEPTION_DEBUG)
+            count=e%nDebug
           CASE(EXCEPTION_ERROR)
             count=e%nError
           CASE(EXCEPTION_FATAL_ERROR)
             count=e%nFatal
-          CASE(EXCEPTION_FAILURE)
-            count=e%nFail
         ENDSELECT
-      ! ENDIF
+      ENDIF
     ENDFUNCTION getCounter
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the last exception message.
 !> @param e the exception object
+!>
     PURE FUNCTION getLastMessage(e) RESULT(lastMesg)
       CLASS(ExceptionHandlerType),INTENT(IN) :: e
       CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: lastMesg
-      IF(ASSOCIATED(e%surrogate)) THEN
-        !lastMesg=e%surrogate%getLastMessage()
-      ELSE
-        lastMesg=e%lastMesg
-      ENDIF
+      lastMesg=e%lastMesg
+      IF(ASSOCIATED(e%surrogate)) lastMesg=e%surrogate%lastMesg
     ENDFUNCTION getLastMessage
 !
 !-------------------------------------------------------------------------------
@@ -347,40 +438,36 @@ MODULE ExceptionHandler
 !> @param e the exception object
 !>
 !> This routine checks for a valid unit number.
+!>
     SUBROUTINE setLogFileUnit(e,unit)
       CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
       INTEGER(SIK),INTENT(IN) :: unit
-      LOGICAL(SBK) :: tmpquiet
-
-      IF(ASSOCIATED(e%surrogate)) THEN
-        NULLIFY(e%surrogate)
-      ENDIF
+      LOGICAL(SBK) :: tmpQuiet
+      IF(ASSOCIATED(e%surrogate)) CALL copyFromSurrogate(e)
 
       !Try to set the log file unit number. Check that it is a valid
       !value. If not display a warning.
       IF(unit /= OUTPUT_UNIT .AND. unit /= ERROR_UNIT .AND. unit > 0) THEN
         e%logFileUnit=unit
       ELSE
-        tmpquiet=e%quiet
-        e%quiet=.FALSE.
-        CALL e%raiseWarning('Illegal unit number for log file. '// &
-                            'Log file unit not set.')
-        e%quiet=tmpquiet
+        e%lastMesg='Illegal unit number for log file. '// &
+                   'Log file unit not set.'
+        tmpQuiet=.FALSE.
+        e%nWarn=e%nWarn+1
+        CALL exceptionMessage(EXCEPTION_WARNING,tmpQuiet,.FALSE., &
+          ERROR_UNIT,e%lastMesg)
       ENDIF
     ENDSUBROUTINE setLogFileUnit
 !
 !-------------------------------------------------------------------------------
 !> @brief Get the unit number for the exception log file.
 !> @param e the exception object
-    FUNCTION getLogFileUnit(e) RESULT(unit)
+!>
+    PURE FUNCTION getLogFileUnit(e) RESULT(unit)
       CLASS(ExceptionHandlerType),INTENT(IN) :: e
       INTEGER(SIK) :: unit
-
-      IF(ASSOCIATED(e%surrogate)) THEN
-        !unit=e%surrogate%getLogFileUnit()
-      ELSE
-        unit=e%logFileUnit
-      ENDIF
+      unit=e%logFileUnit
+      IF(ASSOCIATED(e%surrogate)) unit=e%surrogate%logFileUnit
     ENDFUNCTION getLogFileUnit
 !
 !-------------------------------------------------------------------------------
@@ -390,14 +477,11 @@ MODULE ExceptionHandler
 !>
 !> This routine has some error handling so the log file cannot be set to active
 !> if the log file unit is not open for writing as a sequential formatted file.
+!>
     SUBROUTINE setLogActive(e,isactive)
       CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
       LOGICAL(SBK),INTENT(IN) :: isactive
-
-      IF(ASSOCIATED(e%surrogate)) THEN
-        NULLIFY(e%surrogate)
-      ENDIF
-
+      IF(ASSOCIATED(e%surrogate)) CALL copyFromSurrogate(e)
       IF(isactive) THEN
         CALL e%checkLogFileOK()
       ELSE
@@ -409,18 +493,18 @@ MODULE ExceptionHandler
 !> @brief Get the exception log file reporting mode.
 !> @param e the exception object
 !> @returns isactive boolean for the log file reporting mode
+!>
     FUNCTION isLogActive(e) RESULT(isactive)
       CLASS(ExceptionHandlerType) :: e
       LOGICAL(SBK) :: isactive
-
+      isactive=.FALSE.
       IF(ASSOCIATED(e%surrogate)) THEN
-        !isactive=e%surrogate%isLogActive()
+        IF(e%surrogate%logFileActive) CALL e%surrogate%checkLogFileOK()
+        isactive=e%surrogate%logFileActive
       ELSE
-        isactive=.FALSE.
-        IF(e%logFileActive) CALL e%checkLogFileOK
+        IF(e%logFileActive) CALL e%checkLogFileOK()
         isactive=e%logFileActive
       ENDIF
-
     ENDFUNCTION isLogActive
 !
 !-------------------------------------------------------------------------------
@@ -432,71 +516,45 @@ MODULE ExceptionHandler
 !> write access and is sequential. For each of these properties that is not met
 !> a warning is output to standard error and log file active status is set to
 !> false.
-    SUBROUTINE checkLogFileOK(e)
+!>
+    RECURSIVE SUBROUTINE checkLogFileOK(e)
       CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
-      LOGICAL(SBK) :: tmpquiet,isOpen
-      INTEGER(SIK) :: nWarnOld
-      CHARACTER(LEN=10) :: fpropstr
+      LOGICAL(SBK) :: isOpen
+      INTEGER(SIK) :: nDebugOld
+      CHARACTER(LEN=10) :: fprop
 
       IF(ASSOCIATED(e%surrogate)) THEN
-        !CALL e%surrogate%checkLogFileOK()
+        CALL checkLogFileOK(e%surrogate)
       ELSE
         !Since the state of the log file can change (e.g. closed) check it's
         !integrity
-        nWarnOld=e%nWarn
+        nDebugOld=e%nDebug
+        e%logFileActive=.FALSE.
 
         !Test if the file is open
         INQUIRE(UNIT=e%logFileUnit,OPENED=isOpen)
-        IF(.NOT.isOpen) THEN
-          tmpquiet=e%quiet
-          e%quiet=.FALSE.
-          CALL e%raiseWarning('Log file is not open! '// &
-                              'Log file status is inactive.')
-          e%logFileActive=.FALSE.
-          e%quiet=tmpquiet
-        ENDIF
+        IF(.NOT.isOpen) CALL raiseDebug(e,'Log file is not open! '// &
+          'Log file status is inactive.')
 
-        !Test is the file is a formatted file
-        INQUIRE(UNIT=e%logFileUnit,FORM=fpropstr)
-        IF(TRIM(fpropstr) /= 'FORMATTED') THEN
-          tmpquiet=e%quiet
-          e%quiet=.FALSE.
-          CALL e%raiseWarning('Log file is not a formatted file! '// &
-                              'Log file status is inactive.')
-          e%logFileActive=.FALSE.
-          e%quiet=tmpquiet
-        ENDIF
+        !Test if the file is a formatted file
+        INQUIRE(UNIT=e%logFileUnit,FORM=fprop)
+        IF(TRIM(fprop) /= 'FORMATTED') CALL raiseDebug(e, &
+          'Log file is not a formatted file! Log file status is inactive.')
 
         !Test if the file is sequential
-        INQUIRE(UNIT=e%logFileUnit,ACCESS=fpropstr)
-        IF(TRIM(fpropstr) /= 'SEQUENTIAL') THEN
-          tmpquiet=e%quiet
-          e%quiet=.FALSE.
-          CALL e%raiseWarning('Log file is not a sequential file! '// &
-                              'Log file status is inactive.')
-          e%logFileActive=.FALSE.
-          e%quiet=tmpquiet
-        ENDIF
+        INQUIRE(UNIT=e%logFileUnit,ACCESS=fprop)
+        IF(TRIM(fprop) /= 'SEQUENTIAL') CALL raiseDebug(e, &
+          'Log file is not a sequential file! Log file status is inactive.')
 
         !Test if the file has been opened for writing
-        INQUIRE(UNIT=e%logFileUnit,ACTION=fpropstr)
-        IF(.NOT.(TRIM(fpropstr) == 'WRITE' .OR. &
-                 TRIM(fpropstr) == 'READWRITE')) THEN
-          tmpquiet=e%quiet
-          e%quiet=.FALSE.
-          CALL e%raiseWarning('Log file is not open for writing! '// &
-                              'Log file status is inactive.')
-          e%logFileActive=.FALSE.
-          e%quiet=tmpquiet
-        ENDIF
+        INQUIRE(UNIT=e%logFileUnit,ACTION=fprop)
+        IF(.NOT.(TRIM(fprop) == 'WRITE' .OR. TRIM(fprop) == 'READWRITE')) &
+          CALL raiseDebug(e,'Log file is not open for writing! '// &
+            'Log file status is inactive.')
 
         !If none of the checks produced a new warning then the log file check
         !passes the return value can be set to .TRUE. otherwise it is .FALSE.
-        IF(nWarnOld == e%nWarn) THEN
-          e%logFileActive=.TRUE.
-        ELSE
-          e%logFileActive=.FALSE.
-        ENDIF
+        IF(nDebugOld == e%nDebug) e%logFileActive=.TRUE.
       ENDIF
     ENDSUBROUTINE checkLogFileOK
 !
@@ -504,75 +562,161 @@ MODULE ExceptionHandler
 !> @brief Suppress/Unsupress exception reporting to standard error.
 !> @param e the exception object
 !> @param bool the boolean for quiet mode
-    SUBROUTINE setQuietMode(e,bool)
+!>
+    PURE SUBROUTINE setQuietMode_all(e,bool)
       CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
       LOGICAL(SBK),INTENT(IN) :: bool
-
-      IF(ASSOCIATED(e%surrogate)) THEN
-        NULLIFY(e%surrogate)
-      ENDIF
-
+      IF(ASSOCIATED(e%surrogate)) CALL copyFromSurrogate(e)
       e%quiet=bool
-    ENDSUBROUTINE setQuietMode
+    ENDSUBROUTINE setQuietMode_all
+!
+!-------------------------------------------------------------------------------
+!> @brief Suppress/Unsupress which exceptions will be reported to standard
+!>        error.
+!> @param e the exception object
+!> @param int the enumeration corresponding to the exception type
+!> @param bool the optional logical whether to turn the exception reporting on
+!>        or off
+!>
+    PURE SUBROUTINE setQuietMode_eCode(e,eCode,bool)
+      CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
+      INTEGER(SIK),INTENT(IN) :: eCode
+      LOGICAL(SBK),INTENT(IN) :: bool
+      IF(ASSOCIATED(e%surrogate)) CALL copyFromSurrogate(e)
+      IF(EXCEPTION_OK < eCode .AND. eCode < EXCEPTION_SIZE) &
+        e%quiet(eCode)=bool
+    ENDSUBROUTINE setQuietMode_eCode
+!
+!-------------------------------------------------------------------------------
+!> @brief Suppress/Unsupress which exceptions will be reported to standard
+!>        error.
+!> @param e the exception object
+!> @param int the enumeration corresponding to the exception type
+!> @param bool the optional logical whether to turn the exception reporting on
+!>        or off
+!>
+    PURE SUBROUTINE setQuietMode_array(e,bool)
+      CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
+      LOGICAL(SBK),INTENT(IN) :: bool(:)
+      INTEGER(SIK) :: n
+      IF(ASSOCIATED(e%surrogate)) CALL copyFromSurrogate(e)
+      n=MIN(EXCEPTION_SIZE-1,SIZE(bool))
+      e%quiet(1:n)=bool(1:n)
+    ENDSUBROUTINE setQuietMode_array
 !
 !-------------------------------------------------------------------------------
 !> @brief Get the status of the quiet mode. Whether or not exception reporting
-!> to standard error is suppressed.
+!>        to standard error is suppressed.
 !> @param e the exception object
 !> @returns bool indicates whether or not exception reporting is suppressed
-    PURE FUNCTION isQuietMode(e) RESULT(bool)
+!>
+    PURE FUNCTION isQuietMode_all(e) RESULT(bool)
       CLASS(ExceptionHandlerType),INTENT(IN) :: e
       LOGICAL(SBK) :: bool
-
-      IF(ASSOCIATED(e%surrogate)) THEN
-        !bool=e%surrogate%isQuietMode()
-      ELSE
-        bool=e%quiet
-      ENDIF
-    ENDFUNCTION isQuietMode
+      bool=ALL(e%quiet)
+      IF(ASSOCIATED(e%surrogate)) bool=ALL(e%surrogate%quiet)
+    ENDFUNCTION isQuietMode_all
 !
 !-------------------------------------------------------------------------------
-!> @brief Suppress/Unsupress exception reporting for debug warnings
+!> @brief Get the status of the quiet mode. Whether or not exception reporting
+!>        to standard error is suppressed.
 !> @param e the exception object
-!> @param bool the boolean for debug mode
-    SUBROUTINE setDebugMode(e,bool)
+!> @returns bool indicates whether or not exception reporting is suppressed
+!>
+    PURE FUNCTION isQuietMode_eCode(e,eCode) RESULT(bool)
+      CLASS(ExceptionHandlerType),INTENT(IN) :: e
+      INTEGER(SIK),INTENT(IN) :: eCode
+      LOGICAL(SBK) :: bool
+      bool=.FALSE.
+      IF((EXCEPTION_OK < eCode) .AND. (eCode <= EXCEPTION_SIZE-1)) THEN
+        bool=e%quiet(eCode)
+        IF(ASSOCIATED(e%surrogate)) bool=e%surrogate%quiet(eCode)
+      ENDIF
+    ENDFUNCTION isQuietMode_eCode
+!
+!-------------------------------------------------------------------------------
+!> @brief Suppress/Unsupress exception reporting to the log file.
+!> @param e the exception object
+!> @param bool the boolean for quiet mode
+!>
+    PURE SUBROUTINE setVerboseMode_all(e,bool)
       CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
       LOGICAL(SBK),INTENT(IN) :: bool
-
-      IF(ASSOCIATED(e%surrogate)) THEN
-        NULLIFY(e%surrogate)
-      ENDIF
-      e%debug=bool
-    ENDSUBROUTINE setDebugMode
+      IF(ASSOCIATED(e%surrogate)) CALL copyFromSurrogate(e)
+      e%verbose=bool
+    ENDSUBROUTINE setVerboseMode_all
 !
 !-------------------------------------------------------------------------------
-!> @brief Get the status of the debug mode. Whether or not exception reporting
-!> of debug warnings are suppressed
+!> @brief Suppress/Unsupress which exceptions will be reported to the log file.
 !> @param e the exception object
-!> @returns bool indicates whether or not debug reporting is suppressed
-    PURE FUNCTION isDebugMode(e) RESULT(bool)
+!> @param int the enumeration corresponding to the exception type
+!> @param bool the optional logical whether to turn the exception reporting on
+!>        or off
+!>
+    PURE SUBROUTINE setVerboseMode_eCode(e,eCode,bool)
+      CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
+      INTEGER(SIK),INTENT(IN) :: eCode
+      LOGICAL(SBK),INTENT(IN) :: bool
+      IF(ASSOCIATED(e%surrogate)) CALL copyFromSurrogate(e)
+      IF(EXCEPTION_OK < eCode .AND. eCode < EXCEPTION_SIZE) &
+        e%verbose(eCode)=bool
+    ENDSUBROUTINE setVerboseMode_eCode
+!
+!-------------------------------------------------------------------------------
+!> @brief Suppress/Unsupress which exceptions will be reported to the log file.
+!> @param e the exception object
+!> @param int the enumeration corresponding to the exception type
+!> @param bool the optional logical whether to turn the exception reporting on
+!>        or off
+!>
+    PURE SUBROUTINE setVerboseMode_array(e,bool)
+      CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
+      LOGICAL(SBK),INTENT(IN) :: bool(:)
+      INTEGER(SIK) :: n
+      IF(ASSOCIATED(e%surrogate)) CALL copyFromSurrogate(e)
+      n=MIN(EXCEPTION_SIZE-1,SIZE(bool))
+      e%verbose(1:n)=bool(1:n)
+    ENDSUBROUTINE setVerboseMode_array
+!
+!-------------------------------------------------------------------------------
+!> @brief Get the status of the quiet mode. Whether or not exception reporting
+!>        to the log file is suppressed.
+!> @param e the exception object
+!> @returns bool indicates whether or not exception reporting is suppressed
+!>
+    PURE FUNCTION isVerboseMode_all(e) RESULT(bool)
       CLASS(ExceptionHandlerType),INTENT(IN) :: e
       LOGICAL(SBK) :: bool
-
-      IF(ASSOCIATED(e%surrogate)) THEN
-        !bool=e%surrogate%isDebugMode()
-      ELSE
-        bool=e%debug
+      bool=ALL(e%verbose)
+      IF(ASSOCIATED(e%surrogate)) bool=ALL(e%surrogate%verbose)
+    ENDFUNCTION isVerboseMode_all
+!
+!-------------------------------------------------------------------------------
+!> @brief Get the status of the quiet mode. Whether or not exception reporting
+!>        to the log file is suppressed.
+!> @param e the exception object
+!> @returns bool indicates whether or not exception reporting is suppressed
+!>
+    PURE FUNCTION isVerboseMode_eCode(e,eCode) RESULT(bool)
+      CLASS(ExceptionHandlerType),INTENT(IN) :: e
+      INTEGER(SIK),INTENT(IN) :: eCode
+      LOGICAL(SBK) :: bool
+      bool=.FALSE.
+      IF((EXCEPTION_OK < eCode) .AND. (eCode <= EXCEPTION_SIZE-1)) THEN
+        bool=e%verbose(eCode)
+        IF(ASSOCIATED(e%surrogate)) bool=e%surrogate%verbose(eCode)
       ENDIF
-    ENDFUNCTION isDebugMode
+    ENDFUNCTION isVerboseMode_eCode
 !
 !-------------------------------------------------------------------------------
 !> @brief Set the exception handler to stop when an error is raised.
 !> @param e the exception object
 !> @param bool the value for stopping on when an error is raised
-    SUBROUTINE setStopOnError(e,bool)
+!>
+    PURE SUBROUTINE setStopOnError(e,bool)
       CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
       LOGICAL(SBK),INTENT(IN) :: bool
-
-      IF(ASSOCIATED(e%surrogate)) THEN
-        NULLIFY(e%surrogate)
-      ENDIF
-
+      IF(ASSOCIATED(e%surrogate)) CALL copyFromSurrogate(e)
       e%stopOnError=bool
     ENDSUBROUTINE setStopOnError
 !
@@ -580,15 +724,12 @@ MODULE ExceptionHandler
 !> @brief Get the status for stopping when an error is raised.
 !> @param e the exception object
 !> @returns bool indicates if the exception object will stop on an error
+!>
     PURE FUNCTION isStopOnError(e) RESULT(bool)
       CLASS(ExceptionHandlerType),INTENT(IN) :: e
       LOGICAL(SBK) :: bool
-
-      IF(ASSOCIATED(e%surrogate)) THEN
-        !bool=e%surrogate%isStopOnError()
-      ELSE
-        bool=e%stopOnError
-      ENDIF
+      bool=e%stopOnError
+      IF(ASSOCIATED(e%surrogate)) bool=e%surrogate%stopOnError
     ENDFUNCTION isStopOnError
 !
 !-------------------------------------------------------------------------------
@@ -598,17 +739,25 @@ MODULE ExceptionHandler
 !>
 !> The routine adds one to the appropriate exception counter, reports the
 !> exception message and then potentially stops execution.
+!>
     SUBROUTINE raiseInformation(e,mesg)
       CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
       CHARACTER(LEN=*),INTENT(IN) :: mesg
-
+      LOGICAL(SBK) :: toLog
       IF(ASSOCIATED(e%surrogate)) THEN
-        !CALL e%surrogate%raiseInformation(mesg)
+        e%surrogate%nInfo=e%surrogate%nInfo+1
+        e%surrogate%lastMesg=mesg
+        toLog=(e%surrogate%logFileActive .AND. &
+          e%surrogate%verbose(EXCEPTION_INFORMATION))
+        CALL exceptionMessage(EXCEPTION_INFORMATION, &
+          e%surrogate%quiet(EXCEPTION_INFORMATION),toLog, &
+          e%surrogate%logFileUnit,e%surrogate%lastMesg)
       ELSE
         e%nInfo=e%nInfo+1
         e%lastMesg=mesg
-        CALL exceptionMessage(EXCEPTION_INFORMATION,e%quiet,e%logFileActive, &
-                              e%logFileUnit,e%lastMesg)
+        toLog=(e%logFileActive .AND. e%verbose(EXCEPTION_INFORMATION))
+        CALL exceptionMessage(EXCEPTION_INFORMATION, &
+          e%quiet(EXCEPTION_INFORMATION),toLog,e%logFileUnit,e%lastMesg)
       ENDIF
     ENDSUBROUTINE raiseInformation
 !
@@ -619,17 +768,25 @@ MODULE ExceptionHandler
 !>
 !> The routine adds one to the appropriate exception counter, reports the
 !> exception message and then potentially stops execution.
+!>
     SUBROUTINE raiseWarning(e,mesg)
       CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
       CHARACTER(LEN=*),INTENT(IN) :: mesg
-
+      LOGICAL(SBK) :: toLog
       IF(ASSOCIATED(e%surrogate)) THEN
-        !CALL e%surrogate%raiseWarning(mesg)
+        e%surrogate%nWarn=e%nWarn+1
+        e%surrogate%lastMesg=mesg
+        toLog=(e%surrogate%logFileActive .AND. &
+          e%surrogate%verbose(EXCEPTION_WARNING))
+        CALL exceptionMessage(EXCEPTION_WARNING, &
+          e%surrogate%quiet(EXCEPTION_WARNING),toLog, &
+          e%surrogate%logFileUnit,e%surrogate%lastMesg)
       ELSE
         e%nWarn=e%nWarn+1
         e%lastMesg=mesg
-        CALL exceptionMessage(EXCEPTION_WARNING,e%quiet,e%logFileActive, &
-                              e%logFileUnit,e%lastMesg)
+        toLog=(e%logFileActive .AND. e%verbose(EXCEPTION_WARNING))
+        CALL exceptionMessage(EXCEPTION_WARNING,e%quiet(EXCEPTION_WARNING), &
+          toLog,e%logFileUnit,e%lastMesg)
       ENDIF
     ENDSUBROUTINE raiseWarning
 !
@@ -640,17 +797,27 @@ MODULE ExceptionHandler
 !>
 !> The routine throws a warning if the debug output is enabled, otherwise
 !> remains silent.
-    SUBROUTINE raiseDebugWarning(e,mesg)
+!>
+    SUBROUTINE raiseDebug(e,mesg)
       CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
       CHARACTER(LEN=*),INTENT(IN) :: mesg
-
+      LOGICAL(SBK) :: toLog
       IF(ASSOCIATED(e%surrogate)) THEN
-        !CALL e%surrogate%raiseDebugWarning(mesg)
+        e%surrogate%nDebug=e%surrogate%nDebug+1
+        e%surrogate%lastMesg=mesg
+        toLog=(e%surrogate%logFileActive .AND. &
+          e%surrogate%verbose(EXCEPTION_DEBUG))
+        CALL exceptionMessage(EXCEPTION_DEBUG, &
+          e%surrogate%quiet(EXCEPTION_DEBUG),toLog, &
+          e%surrogate%logFileUnit,e%surrogate%lastMesg)
       ELSE
-        IF(e%debug) CALL e%raiseWarning(mesg)
+        e%nDebug=e%nDebug+1
+        e%lastMesg=mesg
+        toLog=(e%logFileActive .AND. e%verbose(EXCEPTION_DEBUG))
+        CALL exceptionMessage(EXCEPTION_DEBUG,e%quiet(EXCEPTION_DEBUG),toLog, &
+          e%logFileUnit,e%lastMesg)
       ENDIF
-
-    ENDSUBROUTINE raiseDebugWarning
+    ENDSUBROUTINE raiseDebug
 !
 !-------------------------------------------------------------------------------
 !> @brief Raise an error exception in the exception handler.
@@ -659,17 +826,26 @@ MODULE ExceptionHandler
 !>
 !> The routine adds one to the appropriate exception counter, reports the
 !> exception message and then potentially stops execution.
+!>
     SUBROUTINE raiseError(e,mesg)
       CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
       CHARACTER(LEN=*),INTENT(IN) :: mesg
-
+      LOGICAL(SBK) :: toLog
       IF(ASSOCIATED(e%surrogate)) THEN
-        !CALL e%surrogate%raiseError(mesg)
+        e%surrogate%nError=e%surrogate%nError+1
+        e%surrogate%lastMesg=mesg
+        toLog=(e%surrogate%logFileActive .AND. &
+          e%surrogate%verbose(EXCEPTION_ERROR))
+        CALL exceptionMessage(EXCEPTION_ERROR, &
+          e%surrogate%quiet(EXCEPTION_ERROR),toLog, &
+          e%surrogate%logFileUnit,e%surrogate%lastMesg)
+        CALL exceptionStop(e%surrogate%stopOnError)
       ELSE
         e%nError=e%nError+1
         e%lastMesg=mesg
-        CALL exceptionMessage(EXCEPTION_ERROR,e%quiet,e%logFileActive, &
-                              e%logFileUnit,e%lastMesg)
+        toLog=(e%logFileActive .AND. e%verbose(EXCEPTION_ERROR))
+        CALL exceptionMessage(EXCEPTION_ERROR,e%quiet(EXCEPTION_ERROR),toLog, &
+          e%logFileUnit,e%lastMesg)
         CALL exceptionStop(e%stopOnError)
       ENDIF
     ENDSUBROUTINE raiseError
@@ -682,42 +858,26 @@ MODULE ExceptionHandler
 !> The routine adds one to the appropriate exception counter, reports the
 !> exception message and then potentially stops execution.
 !> @note Fatal errors always halt execution.
+!>
     SUBROUTINE raiseFatalError(e,mesg)
       CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
       CHARACTER(LEN=*),INTENT(IN) :: mesg
-
+      LOGICAL(SBK) :: tmpQuiet
+      tmpQuiet=.FALSE.
       IF(ASSOCIATED(e%surrogate)) THEN
-        !CALL e%surrogate%raiseFatalError(mesg)
+        e%surrogate%nFatal=e%surrogate%nFatal+1
+        e%surrogate%lastMesg=mesg
+        CALL exceptionMessage(EXCEPTION_FATAL_ERROR,tmpQuiet, &
+          e%surrogate%logFileActive,e%surrogate%logFileUnit, &
+          e%surrogate%lastMesg)
       ELSE
         e%nFatal=e%nFatal+1
         e%lastMesg=mesg
-        CALL exceptionMessage(EXCEPTION_FATAL_ERROR,e%quiet,e%logFileActive, &
-                              e%logFileUnit,e%lastMesg)
-        CALL exceptionStop(.TRUE.)
+        CALL exceptionMessage(EXCEPTION_FATAL_ERROR,tmpQuiet,e%logFileActive, &
+          e%logFileUnit,e%lastMesg)
       ENDIF
+      CALL exceptionStop(.TRUE.)
     ENDSUBROUTINE raiseFatalError
-!
-!-------------------------------------------------------------------------------
-!> @brief Raise a failure exception in the exception handler.
-!> @param e the exception object
-!> @param mesg an informative message about the exception that was raised
-!>
-!> The routine adds one to the appropriate exception counter, reports the
-!> exception message and then potentially stops execution.
-    SUBROUTINE raiseFailure(e,mesg)
-      CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
-      CHARACTER(LEN=*),INTENT(IN) :: mesg
-
-      IF(ASSOCIATED(e%surrogate)) THEN
-        !CALL e%surrogate%raiseFailure(mesg)
-      ELSE
-        e%nFail=e%nFail+1
-        e%lastMesg=mesg
-        CALL exceptionMessage(EXCEPTION_FAILURE,e%quiet,e%logFileActive, &
-                              e%logFileUnit,e%lastMesg)
-        CALL exceptionStop(e%stopOnError)
-      ENDIF
-    ENDSUBROUTINE raiseFailure
 !
 !-------------------------------------------------------------------------------
 !> @brief A private routine for printing an exception message.
@@ -726,6 +886,7 @@ MODULE ExceptionHandler
 !> @param isLogActive whether or not the message will be output to the exception log file
 !> @param logUnit the output unit number for the exception log file
 !> @param mesg an informative message about the exception
+!>
     SUBROUTINE exceptionMessage(eCode,isQuiet,isLogActive,logUnit,mesg)
       INTEGER(SIK),INTENT(IN) :: eCode
       LOGICAL(SBK),INTENT(INOUT) :: isQuiet
@@ -748,10 +909,8 @@ MODULE ExceptionHandler
         CASE(EXCEPTION_FATAL_ERROR)
           WRITE(prefix,'(a)')  '#### EXCEPTION_FATAL_ERROR ####'
           isQuiet=.FALSE.
-        CASE(EXCEPTION_FAILURE)
-          WRITE(prefix,'(a)')  '#### EXCEPTION_FAILURE ####'
-        CASE DEFAULT
-          WRITE(prefix,'(a)')  'Illegal value for exception code.'
+        CASE(EXCEPTION_DEBUG)
+          WRITE(prefix,'(a)')  '#### EXCEPTION_DEBUG_MESG ####'
       ENDSELECT
 
       !Write to the default standard error output
@@ -790,6 +949,7 @@ MODULE ExceptionHandler
 !-------------------------------------------------------------------------------
 !> @brief Stops execution based on value of stopmode
 !> @param stopmode boolean to indicate whether or not to stop execution
+!>
     SUBROUTINE exceptionStop(stopmode)
 #ifdef HAVE_MPI
       INCLUDE 'mpif.h'
@@ -804,5 +964,29 @@ MODULE ExceptionHandler
       ENDIF
 #endif
     ENDSUBROUTINE exceptionStop
+!
+!-------------------------------------------------------------------------------
+!> @brief Copies the attributes from the surrogate to the passed exception
+!>        handler and nullifies the surrogate.
+!> @param stopmode boolean to indicate whether or not to stop execution
+!>
+    PURE SUBROUTINE copyFromSurrogate(e)
+      CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
+      TYPE(ExceptionHandlerType),POINTER :: tmpE
+      tmpE => e%surrogate
+      NULLIFY(e%surrogate)
+      e%stopOnError=tmpE%stopOnError
+      e%logFileActive=tmpE%logFileActive
+      e%quiet=tmpE%quiet
+      e%logFileUnit=tmpE%logFileUnit
+      e%nInfo=tmpE%nInfo
+      e%nWarn=tmpE%nWarn
+      e%nError=tmpE%nError
+      e%nFatal=tmpE%nFatal
+      e%nDebug=tmpE%nDebug
+      e%verbose=tmpE%verbose
+      e%lastMesg=tmpE%lastMesg
+      NULLIFY(tmpE)
+    ENDSUBROUTINE copyFromSurrogate
 !
 ENDMODULE ExceptionHandler

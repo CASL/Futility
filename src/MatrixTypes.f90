@@ -382,7 +382,7 @@ MODULE MatrixTypes
   TYPE(ParamType),PROTECTED,SAVE :: PETScMatrixType_reqParams, PETScMatrixType_optParams
   
   !> Exception Handler for use in MatrixTypes
-  TYPE(ExceptionHandlerType),POINTER,SAVE :: eMatrixType => NULL()
+  TYPE(ExceptionHandlerType),SAVE :: eMatrixType
   
   !> Name of module
   CHARACTER(LEN=*),PARAMETER :: modName='MATRIXTYPES'
@@ -402,7 +402,6 @@ MODULE MatrixTypes
       CLASS(ParamType),INTENT(IN) :: Params
       TYPE(ParamType) :: validParams
       INTEGER(SIK) :: n,nnz
-      LOGICAL(SBK) :: localalloc
       
       !Check to set up required and optional param lists.
       IF(.NOT.MatrixType_Paramsflag) CALL MatrixTypes_Declare_ValidParams()
@@ -416,13 +415,6 @@ MODULE MatrixTypes
       CALL validParams%get('MatrixType->nnz',nnz)
       CALL validParams%clear()
       
-      !Error checking of subroutine input
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eMatrixType)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eMatrixType)
-      ENDIF
-
       IF(.NOT. matrix%isInit) THEN
         IF((n < 1).OR.(nnz < 1))  THEN
           CALL eMatrixType%raiseError('Incorrect   input to '// &
@@ -447,8 +439,6 @@ MODULE MatrixTypes
         CALL eMatrixType%raiseError('Incorrect call to '// &
           modName//'::'//myName//' - MatrixType already initialized')
       ENDIF
-      
-      IF(localalloc) DEALLOCATE(eMatrixType)
     ENDSUBROUTINE init_SparseMatrixParam
 !
 !-------------------------------------------------------------------------------
@@ -462,7 +452,7 @@ MODULE MatrixTypes
       CLASS(ParamType),INTENT(IN) :: Params
       TYPE(ParamType) :: validParams
       INTEGER(SIK) :: n
-      LOGICAL(SBK) :: localalloc, isSym
+      LOGICAL(SBK) :: isSym
       
       !Check to set up required and optional param lists.
       IF(.NOT.MatrixType_Paramsflag) CALL MatrixTypes_Declare_ValidParams()
@@ -476,13 +466,6 @@ MODULE MatrixTypes
       CALL validParams%get('MatrixType->isSym',isSym)
       CALL validParams%clear()
       
-      !Error checking of subroutine input
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eMatrixType)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eMatrixType)
-      ENDIF
-
       IF(.NOT. matrix%isInit) THEN
         IF(n < 1) THEN
           CALL eMatrixType%raiseError('Incorrect input to '// &
@@ -502,8 +485,6 @@ MODULE MatrixTypes
         CALL eMatrixType%raiseError('Incorrect call to '// &
           modName//'::'//myName//' - MatrixType already initialized')
       ENDIF
-        
-      IF(localalloc) DEALLOCATE(eMatrixType)
     ENDSUBROUTINE init_TriDiagMatrixParam
 !
 !-------------------------------------------------------------------------------
@@ -516,8 +497,7 @@ MODULE MatrixTypes
       CLASS(DenseRectMatrixType),INTENT(INOUT) :: matrix
       CLASS(ParamType),INTENT(IN) :: Params
       TYPE(ParamType) :: validParams
-      INTEGER(SIK) :: n, m
-      LOGICAL(SBK) :: localalloc
+      INTEGER(SIK) :: n,m
       
       !Check to set up required and optional param lists.
       IF(.NOT.MatrixType_Paramsflag) CALL MatrixTypes_Declare_ValidParams()
@@ -530,13 +510,6 @@ MODULE MatrixTypes
       CALL validParams%get('MatrixType->n',n)
       CALL validParams%get('MatrixType->m',m)
       CALL validParams%clear()
-      
-      !Error checking of subroutine input
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eMatrixType)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eMatrixType)
-      ENDIF
       
       IF(.NOT. matrix%isInit) THEN
         IF(n < 1) THEN
@@ -557,8 +530,6 @@ MODULE MatrixTypes
         CALL eMatrixType%raiseError('Incorrect call to '// &
           modName//'::'//myName//' - MatrixType already initialized')
       ENDIF
-      
-      IF(localalloc) DEALLOCATE(eMatrixType)
     ENDSUBROUTINE init_DenseRectMatrixParam
 !
 !-------------------------------------------------------------------------------
@@ -572,7 +543,7 @@ MODULE MatrixTypes
       CLASS(ParamType),INTENT(IN) :: Params
       TYPE(ParamType) :: validParams
       INTEGER(SIK) :: n
-      LOGICAL(SBK) :: localalloc, isSym
+      LOGICAL(SBK) :: isSym
       
       !Check to set up required and optional param lists.
       IF(.NOT.MatrixType_Paramsflag) CALL MatrixTypes_Declare_ValidParams()
@@ -585,13 +556,6 @@ MODULE MatrixTypes
       CALL validParams%get('MatrixType->n',n)
       CALL validParams%get('MatrixType->isSym',isSym)
       CALL validParams%clear()
-      
-      !Error checking of subroutine input
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eMatrixType)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eMatrixType)
-      ENDIF
       
       IF(.NOT. matrix%isInit) THEN
         IF(n < 1) THEN
@@ -612,8 +576,6 @@ MODULE MatrixTypes
         CALL eMatrixType%raiseError('Incorrect call to '// &
           modName//'::'//myName//' - MatrixType already initialized')
       ENDIF
-      
-      IF(localalloc) DEALLOCATE(eMatrixType)
     ENDSUBROUTINE init_DenseSquareMatrixParam
 !
 !-------------------------------------------------------------------------------
@@ -628,20 +590,11 @@ MODULE MatrixTypes
       TYPE(ParamType) :: validParams
       INTEGER(SIK) :: n, matType, MPI_COMM_ID, nlocal
       INTEGER(SIK),ALLOCATABLE :: dnnz(:), onnz(:)
-      LOGICAL(SBK) :: localalloc, isSym
+      LOGICAL(SBK) :: isSym
       
 #ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: ierr
-#endif
-
-      !Error checking of subroutine input
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eMatrixType)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eMatrixType)
-      ENDIF
       
-#ifdef MPACT_HAVE_PETSC
       !Check to set up required and optional param lists.
       IF(.NOT.MatrixType_Paramsflag) CALL MatrixTypes_Declare_ValidParams()      
       !Validate against the reqParams and OptParams
@@ -711,7 +664,6 @@ MODULE MatrixTypes
               modName//'::'//myName//' - PETSc not enabled.  You will'// &
               'need to recompile with PETSc enabled to use this feature.')
 #endif
-      IF(localalloc) DEALLOCATE(eMatrixType)
     ENDSUBROUTINE init_PETScMatrixParam
 !
 !-------------------------------------------------------------------------------
@@ -782,19 +734,9 @@ MODULE MatrixTypes
     SUBROUTINE clear_PETScMatrixType(matrix)
       CHARACTER(LEN=*),PARAMETER :: myName='clear_PETScMatrixType'
       CLASS(PETScMatrixType),INTENT(INOUT) :: matrix
-      LOGICAL(SBK) :: localalloc
 #ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: ierr
-#endif
-
-      !Error checking of subroutine input
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eMatrixType)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eMatrixType)
-      ENDIF
       
-#ifdef MPACT_HAVE_PETSC
       IF(matrix%isInit) CALL MatDestroy(matrix%a,ierr)
       matrix%isInit=.FALSE.
       matrix%n=0
@@ -806,8 +748,6 @@ MODULE MatrixTypes
               modName//'::'//myName//' - PETSc not enabled.  You will'// &
               'need to recompile with PETSc enabled to use this feature.')
 #endif
-      IF(localalloc) DEALLOCATE(eMatrixType)
-      
     ENDSUBROUTINE clear_PETScMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -974,19 +914,9 @@ MODULE MatrixTypes
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(IN) :: setval
-      LOGICAL(SBK) :: localalloc
 #ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: ierr
-#endif
 
-      !Error checking of subroutine input
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eMatrixType)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eMatrixType)
-      ENDIF
-      
-#ifdef MPACT_HAVE_PETSC
       IF(matrix%isInit) THEN
         IF(((j <= matrix%n) .AND. (i <= matrix%n)) & 
           .AND. ((j > 0) .AND. (i > 0))) THEN
@@ -1002,7 +932,6 @@ MODULE MatrixTypes
               modName//'::'//myName//' - PETSc not enabled.  You will'// &
               'need to recompile with PETSc enabled to use this feature.')
 #endif
-      IF(localalloc) DEALLOCATE(eMatrixType)
     ENDSUBROUTINE set_PETScMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -1072,14 +1001,6 @@ MODULE MatrixTypes
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(INOUT) :: getval
-      LOGICAL(SBK) :: localalloc
-
-      !Error checking of subroutine input
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eMatrixType)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eMatrixType)
-      ENDIF
       
       getval=0.0_SRK
       IF(matrix%isInit) THEN
@@ -1089,8 +1010,6 @@ MODULE MatrixTypes
           getval=-1051._SRK
         ENDIF
       ENDIF
-
-      IF(localalloc) DEALLOCATE(eMatrixType)
     ENDSUBROUTINE get_DenseSquareMatrixtype
 !
 !-------------------------------------------------------------------------------
@@ -1145,19 +1064,9 @@ MODULE MatrixTypes
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(INOUT) :: getval
-      LOGICAL(SBK) :: localalloc
 #ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: ierr
-#endif
 
-      !Error checking of subroutine input
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eMatrixType)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eMatrixType)
-      ENDIF
-      
-#ifdef MPACT_HAVE_PETSC
       getval=0.0_SRK
       IF(matrix%isInit) THEN
         ! assemble matrix if necessary
@@ -1174,7 +1083,6 @@ MODULE MatrixTypes
               modName//'::'//myName//' - PETSc not enabled.  You will'// &
               'need to recompile with PETSc enabled to use this feature.')
 #endif
-      IF(localalloc) DEALLOCATE(eMatrixType)
     ENDSUBROUTINE get_PETScMatrixtype
 !
 !-------------------------------------------------------------------------------
@@ -1195,17 +1103,10 @@ MODULE MatrixTypes
       IF(PRESENT(ierr)) ierr=ierrc
 #else
       CHARACTER(LEN=*),PARAMETER :: myName='assemble_PETScMatrixType'
-      LOGICAL(SBK) :: localalloc
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eMatrixType)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eMatrixType)
-      ENDIF
+      IF(PRESENT(ierr)) ierr=-1
       CALL eMatrixType%raiseFatalError('Incorrect call to '// &
          modName//'::'//myName//' - PETSc not enabled.  You will'// &
          'need to recompile with PETSc enabled to use this feature.')
-      IF(localalloc) DEALLOCATE(eMatrixType)
 #endif
     ENDSUBROUTINE assemble_PETScMatrixType
 !
@@ -1236,17 +1137,9 @@ MODULE MatrixTypes
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx_in
       REAL(SRK),ALLOCATABLE :: tmpmat(:,:)
       INTEGER(SIK) :: i,j
-      LOGICAL(SBK) :: localalloc
       CHARACTER(LEN=1) :: t,ul,d
       INTEGER(SIK) :: incx
 
-      !Error checking of subroutine input
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eMatrixType)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eMatrixType)
-      ENDIF
-      
       IF(thisMatrix%isInit) THEN
         t='n'
         ul='n'
@@ -1337,8 +1230,6 @@ MODULE MatrixTypes
 #endif
         ENDSELECT
       ENDIF
-      
-      IF(localalloc) DEALLOCATE(eMatrixType)
     ENDSUBROUTINE matvec_MatrixType
 !
 !-------------------------------------------------------------------------------
@@ -1368,24 +1259,14 @@ MODULE MatrixTypes
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx_in
       REAL(SRK),ALLOCATABLE :: tmpmat(:,:),tmpvec(:),tmpy(:)
       INTEGER(SIK) :: i,j
-      LOGICAL(SBK) :: localalloc
+      CHARACTER(LEN=1) :: t,ul,d
+      INTEGER(SIK) :: incx
+      REAL(SRK) :: a,b
 #ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: iperr
       TYPE(PETScVectorType) :: dummy
       TYPE(ParamType) :: vecPList
 #endif
-      
-      CHARACTER(LEN=1) :: t,ul,d
-      INTEGER(SIK) :: incx
-      REAL(SRK) :: a,b
-      
-      !Error checking of subroutine input
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eMatrixType)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eMatrixType)
-      ENDIF
-      
       IF(thisMatrix%isInit) THEN
         t='n'
         ul='n'
@@ -1520,8 +1401,6 @@ MODULE MatrixTypes
         ENDSELECT
         
       ENDIF
-
-      IF(localalloc) DEALLOCATE(eMatrixType)
     ENDSUBROUTINE matvec_MatrixTypeVectorType
 !
 !-------------------------------------------------------------------------------
@@ -1734,18 +1613,9 @@ MODULE MatrixTypes
       INTEGER(SIK) :: i,j
       CHARACTER(LEN=1),OPTIONAL,INTENT(IN) :: transA
       CHARACTER(LEN=1),OPTIONAL,INTENT(IN) :: transB
-      LOGICAL(SBK) :: localalloc
-      
       CHARACTER(LEN=1) :: tA
       CHARACTER(LEN=1) :: tB
       
-      !Error checking of subroutine input
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eMatrixType)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eMatrixType)
-      ENDIF
-
       IF(A%isInit) THEN
         tA='n'
         IF(PRESENT(transA)) tA=transA
@@ -1950,8 +1820,6 @@ MODULE MatrixTypes
             ENDSELECT
         ENDSELECT         
       ENDIF
-  
-      IF(localalloc) DEALLOCATE(eMatrixType)
     ENDSUBROUTINE matmult_MatrixType
 !
 !-------------------------------------------------------------------------------

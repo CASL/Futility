@@ -239,7 +239,7 @@ MODULE ParallelEnv
   CHARACTER(LEN=*),PARAMETER :: modName='PARALLELENV'
 
   !> Exception Handler for the module
-  TYPE(ExceptionHandlerType),POINTER,SAVE :: eParEnv => NULL()
+  TYPE(ExceptionHandlerType),SAVE :: eParEnv
 !
 !===============================================================================
   CONTAINS
@@ -327,16 +327,8 @@ MODULE ParallelEnv
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n2
       INTEGER(SIK),INTENT(IN),OPTIONAL :: ipart
       INTEGER(SIK),ALLOCATABLE,INTENT(INOUT) :: idxmap(:)
-
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: i,j,k,n,iwt,idx,iproc,nidx,pid
       INTEGER(SIK),ALLOCATABLE :: wsum(:),sorted_idx(:,:),tmpwt(:),nwtproc(:)
-
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParEnv)) THEN
-        ALLOCATE(eParEnv)
-        localalloc=.TRUE.
-      ENDIF
 
       IF(PRESENT(n1)) THEN
         i=n1
@@ -417,7 +409,6 @@ MODULE ParallelEnv
         CALL eParEnv%raiseError(modName//'::'//myName// &
           ' - Parallel environment is not initialized!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eParEnv)
     ENDSUBROUTINE partition_greedy_ParEnvType
 !
 !-------------------------------------------------------------------------------
@@ -427,16 +418,10 @@ MODULE ParallelEnv
       CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
       INTEGER(SIK),INTENT(IN),OPTIONAL :: PEparam
       INTEGER(SIK) :: isinit,icomm
-      LOGICAL(SBK) :: localalloc,allpetsc
+      LOGICAL(SBK) :: allpetsc
       LOGICAL(SBK),ALLOCATABLE :: allpetsc2(:)
       
       IF(.NOT.myPE%initstat) THEN
-        localalloc=.FALSE.
-        IF(.NOT.ASSOCIATED(eParEnv)) THEN
-          ALLOCATE(eParEnv)
-          localalloc=.TRUE.
-        ENDIF
-
         icomm=PE_COMM_SELF
         IF(PRESENT(PEparam)) icomm=PEparam
 
@@ -504,7 +489,6 @@ MODULE ParallelEnv
         !Call PETSc Initialize
         IF(.NOT.petsc_isinit) CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
 #endif
-        IF(localalloc) DEALLOCATE(eParEnv)
         myPE%initstat=.TRUE.
       ENDIF
     ENDSUBROUTINE init_MPI_Env_type
@@ -516,21 +500,14 @@ MODULE ParallelEnv
     SUBROUTINE clear_MPI_Env_type(myPE)
       CHARACTER(LEN=*),PARAMETER :: myName='clear_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
-      LOGICAL(SBK) :: localalloc
 
       IF(myPE%initstat) THEN
 #ifdef HAVE_MPI
-        localalloc=.FALSE.
-        IF(.NOT.ASSOCIATED(eParEnv)) THEN
-          ALLOCATE(eParEnv)
-          localalloc=.TRUE.
-        ENDIF
         IF(myPE%comm /= MPI_COMM_WORLD .AND. myPE%comm /= MPI_COMM_SELF) THEN
           CALL MPI_Comm_free(myPE%comm,mpierr) !I think this is collective
           IF(mpierr /= MPI_SUCCESS) CALL eParEnv%raiseError(modName//'::'// &
             myName//' - call to MPI_Comm_free returned an error!')
         ENDIF
-        IF(localalloc) DEALLOCATE(eParEnv)
 #endif
         myPE%comm=-1
         myPE%nproc=-1
@@ -835,13 +812,8 @@ MODULE ParallelEnv
       INTEGER(SIK),INTENT(IN) :: nthreads
       CHARACTER(LEN=12) :: smpierr
       INTEGER(SIK) :: nerror,tmpcomm,commDims(3)
-      LOGICAL(SBK) :: localalloc,activeCommDim(3)
+      LOGICAL(SBK) :: activeCommDim(3)
 
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eParEnv)) THEN
-        ALLOCATE(eParEnv)
-        localalloc=.TRUE.
-      ENDIF
       nerror=eParEnv%getCounter(EXCEPTION_ERROR)
       CALL myPE%world%init(commWorld)
 
@@ -933,8 +905,6 @@ MODULE ParallelEnv
         ALLOCATE(myPE%ray); CALL myPE%ray%init(nthreads)
 #endif
       ENDIF
-
-      IF(localalloc) DEALLOCATE(eParEnv)
     ENDSUBROUTINE init_ParEnvType
 !
 !-------------------------------------------------------------------------------

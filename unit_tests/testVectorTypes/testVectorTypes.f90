@@ -36,7 +36,7 @@ PROGRAM testVectorTypes
   ALLOCATE(e)
   CALL e%setStopOnError(.FALSE.)
   CALL e%setQuietMode(.TRUE.)
-  eVectorType => e
+  CALL eVectorType%addSurrogate(e)
   
 #ifdef MPACT_HAVE_PETSC    
   CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
@@ -113,10 +113,8 @@ PROGRAM testVectorTypes
       
       !Perform test of init function
       !first check intended init path (m provided)
-      eVectorType => NULL()
       CALL pList%add('VectorType->n',10)
       CALL thisVector%init(pList)
-      eVectorType => e
       SELECTTYPE(thisVector)
         TYPE IS(RealVectorType)
           !check for success
@@ -720,12 +718,10 @@ PROGRAM testVectorTypes
       
       !Perform test of init function
       !first check intended init path (m provided)
-      eVectorType => NULL()
       CALL pList%clear()
       CALL pList%add('VectorType->n',10)
       CALL pList%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
       CALL thisVector%init(pList)
-      eVectorType => e
       SELECTTYPE(thisVector)
         TYPE IS(PETScVectorType)
           !check for success

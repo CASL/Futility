@@ -264,7 +264,7 @@ MODULE LinearSolverTypes
   ENDINTERFACE
 
   !> Exception Handler for use in MatrixTypes
-  TYPE(ExceptionHandlerType),POINTER,SAVE :: eLinearSolverType => NULL()
+  TYPE(ExceptionHandlerType),SAVE :: eLinearSolverType
 
   !> Name of module
   CHARACTER(LEN=*),PARAMETER :: modName='LINEARSOLVERTYPES'
@@ -296,7 +296,6 @@ MODULE LinearSolverTypes
       INTEGER(SIK) :: nz,npin,ngrp
       INTEGER(SIK) :: MPI_Comm_ID,numberOMP
       CHARACTER(LEN=256) :: timerName,ReqTPLTypeStr,TPLTypeStr,PreCondType
-      LOGICAL(SBK) :: localalloc
 #ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: ierr
 #endif
@@ -307,13 +306,6 @@ MODULE LinearSolverTypes
       !Validate against the reqParams and OptParams
       validParams=Params
       CALL validParams%validate(LinearSolverType_reqParams)
-
-      !Error checking of subroutine input
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eLinearSolverType)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eLinearSolverType)
-      ENDIF
 
       !Pull LS data from the parameter list
       CALL validParams%get('LinearSolverType->TPLType',TPLType)
@@ -409,7 +401,7 @@ MODULE LinearSolverTypes
 
         !print status of TPL post-heirarchy
         IF(ReqTPLType /= TPLType) THEN
-          CALL eLinearSolverType%raiseDebugWarning(modName//'::'// &
+          CALL eLinearSolverType%raiseDebug(modName//'::'// &
             myName//' - Requested TPL '//TRIM(ReqTPLTypeStr)// &
               ' is not enabled, will use '//TRIM(TPLTypeStr)//' solvers instead.')
         ENDIF
@@ -509,7 +501,7 @@ MODULE LinearSolverTypes
               !only GMRES can handle when sparse LS of size 1
               IF(n==1 .AND. matType == SPARSE .AND. solverMethod/= GMRES) THEN
                 solverMethod=GMRES
-                CALL eLinearSolverType%raiseDebugWarning(modName//'::'// &
+                CALL eLinearSolverType%raiseDebug(modName//'::'// &
                   myName//' - Only GMRES can handle sparse systems of size 1.  '// &
                   'Switching solver method to GMRES.')
               ENDIF
@@ -606,7 +598,6 @@ MODULE LinearSolverTypes
       CALL vecbPList%clear()
       CALL vecxPList%clear()
       CALL matPList%clear()
-      IF(localalloc) DEALLOCATE(eLinearSolverType)
     ENDSUBROUTINE init_LinearSolverType_Base
 !
 !-------------------------------------------------------------------------------
@@ -765,16 +756,9 @@ MODULE LinearSolverTypes
     SUBROUTINE solve_LinearSolverType_Direct(solver)
       CHARACTER(LEN=*),PARAMETER :: myName='solve_LinearSolverType_Direct'
       CLASS(LinearSolverType_Direct),INTENT(INOUT) :: solver
-      LOGICAL(SBK) :: localalloc
 #ifdef HAVE_PARDISO
       INTEGER(SIK) :: msglvl=0,nrhs=1,maxfct=1,mnum=1,error=0
 #endif
-
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eLinearSolverType)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eLinearSolverType)
-      ENDIF
       CALL solve_checkInput(solver)
       IF(solver%info == 0) THEN
         solver%info=-1
@@ -811,7 +795,7 @@ MODULE LinearSolverTypes
                   !Should not use direct method, go to CGNR
                   CALL solveCGNR(solver)
                   IF(solver%info == 0) &
-                    CALL eLinearSolverType%raiseDebugWarning(modName//'::'// &
+                    CALL eLinearSolverType%raiseDebug(modName//'::'// &
                       myName//'- GE method for dense rectangular system '// &
                         'and sparse system is not implemented, CGNR method '// &
                           'is used instead.')
@@ -850,7 +834,7 @@ MODULE LinearSolverTypes
                   !Should not use direct method, go to CGNR
                   CALL solveCGNR(solver)
                   IF(solver%info == 0) &
-                    CALL eLinearSolverType%raiseDebugWarning(modName//'::'// &
+                    CALL eLinearSolverType%raiseDebug(modName//'::'// &
                       myName//'- LU method for dense rectangular system '// &
                         'and sparse system is not implemented, CGNR method '// &
                           'is used instead.')
@@ -859,7 +843,6 @@ MODULE LinearSolverTypes
         ENDSELECT
         CALL solver%SolveTime%toc()
       ENDIF
-      IF(localalloc) DEALLOCATE(eLinearSolverType)
     ENDSUBROUTINE solve_LinearSolverType_Direct
 !
 !-------------------------------------------------------------------------------
@@ -871,17 +854,9 @@ MODULE LinearSolverTypes
     SUBROUTINE solve_LinearSolverType_Iterative(solver)
       CHARACTER(LEN=*),PARAMETER :: myName='solve_LinearSolverType_Iterative'
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
-      LOGICAL(SBK) :: localalloc
 #ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: ierr
 #endif
-
-      !Error checking of subroutine input
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eLinearSolverType)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eLinearSolverType)
-      ENDIF
       CALL solve_checkInput(solver)
       IF(solver%info == 0) THEN
         IF(.NOT. solver%hasX0) THEN
@@ -889,7 +864,7 @@ MODULE LinearSolverTypes
             CALL X%set(1.0_SRK)
           ENDSELECT
           solver%hasX0=.TRUE.
-          CALL eLinearSolverType%raiseDebugWarning(modName//'::'// &
+          CALL eLinearSolverType%raiseDebug(modName//'::'// &
             myName//'- Initial X0 is set to 1.')
         ENDIF
         CALL solver%SolveTime%tic()
@@ -914,7 +889,7 @@ MODULE LinearSolverTypes
                 CALL solvePLU_TriDiag(solver)
 
                 IF(solver%info == 0) &
-                  CALL eLinearSolverType%raiseDebugWarning(modName//'::'// &
+                  CALL eLinearSolverType%raiseDebug(modName//'::'// &
                     myName//'- BiCGSTAB method for tridiagonal system '// &
                       'is not implemented, GE method is used instead.')
 
@@ -924,7 +899,7 @@ MODULE LinearSolverTypes
                 CALL solveCGNR(solver)
 
                 IF(solver%info == 0) &
-                  CALL eLinearSolverType%raiseDebugWarning(modName//'::'// &
+                  CALL eLinearSolverType%raiseDebug(modName//'::'// &
                     myName//'- BiCGSTAB method for dense rectangular system '// &
                       'is not implemented, CGNR method is used instead.')
 
@@ -973,13 +948,13 @@ MODULE LinearSolverTypes
                 CALL solvePLU_TriDiag(solver)
 
                 IF(solver%info == 0) &
-                  CALL eLinearSolverType%raiseDebugWarning(modName//'::'// &
+                  CALL eLinearSolverType%raiseDebug(modName//'::'// &
                   myName//'- CGNR method for tridiagonal system '// &
                     'is not implemented, PLU method is used instead.')
               TYPE IS(SparseMatrixType)
                 CALL solveBiCGSTAB(solver)
                 IF(solver%info == 0) &
-                  CALL eLinearSolverType%raiseDebugWarning(modName//'::'// &
+                  CALL eLinearSolverType%raiseDebug(modName//'::'// &
                   myName//'- CGNR method for sparse system '// &
                     'is not implemented, BiCGSTAB method is used instead.')
 
@@ -1031,7 +1006,7 @@ MODULE LinearSolverTypes
                 CALL solvePLU_TriDiag(solver)
 
                 IF(solver%info == 0) &
-                  CALL eLinearSolverType%raiseDebugWarning(modName//'::'// &
+                  CALL eLinearSolverType%raiseDebug(modName//'::'// &
                   myName//'- GMRES method for tridiagonal system '// &
                     'is not implemented, PLU method is used instead.')
               TYPE IS(DenseRectMatrixType)
@@ -1040,7 +1015,7 @@ MODULE LinearSolverTypes
                 CALL solveCGNR(solver)
 
                 IF(solver%info == 0) &
-                  CALL eLinearSolverType%raiseDebugWarning(modName//'::'// &
+                  CALL eLinearSolverType%raiseDebug(modName//'::'// &
                     myName//'- GMRES method for dense rectangular system '// &
                       'is not implemented, CGNR method is used instead.')
 
@@ -1088,7 +1063,6 @@ MODULE LinearSolverTypes
         ENDSELECT
         CALL solver%SolveTime%toc()
       ENDIF
-      IF(localalloc) DEALLOCATE(eLinearSolverType)
     ENDSUBROUTINE solve_LinearSolverType_Iterative
 !
 !-------------------------------------------------------------------------------
@@ -1103,13 +1077,6 @@ MODULE LinearSolverTypes
       CHARACTER(LEN=*),PARAMETER :: myName='solve_checkInput'
       CLASS(LinearSolverType_Base),INTENT(INOUT) :: solver
 
-      LOGICAL(SBK) :: localalloc
-      !Error checking of subroutine input
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eLinearSolverType)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eLinearSolverType)
-      ENDIF
       solver%info=-1
       IF(solver%isInit) THEN
         IF(ALLOCATED(solver%A)) THEN
@@ -1149,7 +1116,6 @@ MODULE LinearSolverTypes
         CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
           '  - Linear solver object has not been initialized!')
       ENDIF
-      IF(localalloc) DEALLOCATE(eLinearSolverType)
     ENDSUBROUTINE solve_checkInput
 !
 !-------------------------------------------------------------------------------
@@ -1205,13 +1171,6 @@ MODULE LinearSolverTypes
 
       INTEGER(SIK) :: normType,maxIters,nRestart
       REAL(SRK) :: convTol
-      LOGICAL(SBK) :: localalloc
-
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eLinearSolverType)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eLinearSolverType)
-      ENDIF
 
       !Input check
       normType=normType_in
@@ -1219,25 +1178,25 @@ MODULE LinearSolverTypes
       maxIters=maxIters_in
       IF(PRESENT(nRestart_in)) nRestart=nRestart_in
       IF(normType <= -2) THEN
-        CALL eLinearSolverType%raiseDebugWarning(modName//'::'// &
+        CALL eLinearSolverType%raiseDebug(modName//'::'// &
           myName//' - Incorrect input, normType should not be less '// &
             'than -1. Default value is used!')
         normType=2
       ENDIF
       IF(convTol < 0._SRK .OR. convTol >= 1._SRK) THEN
-        CALL eLinearSolverType%raiseDebugWarning(modName//'::'// &
+        CALL eLinearSolverType%raiseDebug(modName//'::'// &
           myName//' - Incorrect input, convTol should be in '// &
             'the range of (0, 1). Default value is used!')
         convTol=0.001_SRK
       ENDIF
       IF(maxIters <= 1) THEN
-        CALL eLinearSolverType%raiseDebugWarning(modName//'::'// &
+        CALL eLinearSolverType%raiseDebug(modName//'::'// &
           myName//' - Incorrect input, maxIters should not be less '// &
             'than or equal to 1. Default value is used!')
         maxIters=1000
       ENDIF
       IF(nRestart <= 1 .OR. .NOT.PRESENT(nRestart_in)) THEN
-        CALL eLinearSolverType%raiseDebugWarning(modName//'::'// &
+        CALL eLinearSolverType%raiseDebug(modName//'::'// &
           myName//' - Incorrect input, nRestart should not be less '// &
             'than or equal to 1. Default value is used!')
         nRestart=30
@@ -1263,7 +1222,6 @@ MODULE LinearSolverTypes
 #endif
         ENDIF
       ENDIF
-      IF(localalloc) DEALLOCATE(eLinearSolverType)
     ENDSUBROUTINE setConv_LinearSolverType_Iterative
 !
 !-------------------------------------------------------------------------------
@@ -1750,13 +1708,7 @@ MODULE LinearSolverTypes
 
       INTEGER(SIK) :: i
       REAL(SRK) :: t
-      LOGICAL(SBK) :: diagDom,localalloc
-
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eLinearSolverType)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eLinearSolverType)
-      ENDIF
+      LOGICAL(SBK) :: diagDom
 
       !Check if M is allocated.
       IF(ALLOCATED(solver%M)) THEN
@@ -1807,12 +1759,11 @@ MODULE LinearSolverTypes
           ENDSELECT
 
           !Give the warning
-          IF(.NOT. diagDom) CALL eLinearSolverType%raiseDebugWarning(modName// &
+          IF(.NOT. diagDom) CALL eLinearSolverType%raiseDebug(modName// &
             '::'//myName//'- Tri-diagonal Matrix not diagonally dominant, '// &
               'solution might be not accurate')
         ENDSELECT
       ENDIF
-      IF(localalloc) DEALLOCATE(eLinearSolverType)
     ENDSUBROUTINE DecomposePLU_TriDiag
 
 
@@ -1999,17 +1950,9 @@ MODULE LinearSolverTypes
 !>
     SUBROUTINE DecomposePLU_DenseSquare(solver)
       CLASS(LinearSolverType_Direct),INTENT(INOUT) :: solver
-      TYPE(ParamType) :: pList
-
-      REAL(SRK) :: t
       INTEGER(SIK) :: N,i,irow
-      LOGICAL(SBK) :: localalloc
-
-      localalloc=.FALSE.
-      IF(.NOT.(ASSOCIATED(eLinearSolverType)))THEN
-        ALLOCATE(eLinearSolverType)
-        localalloc=.TRUE.
-      ENDIF
+      REAL(SRK) :: t
+      TYPE(ParamType) :: pList
 
       IF(ALLOCATED(solver%M)) THEN
         CALL solver%M%clear()
@@ -2065,7 +2008,6 @@ MODULE LinearSolverTypes
           solver%info=0
           solver%isDecomposed=.TRUE.
       ENDSELECT
-      IF(localalloc) DEALLOCATE(eLinearSolverType)
     ENDSUBROUTINE DecomposePLU_DenseSquare
 !-------------------------------------------------------------------------------
 !> @brief Solve dense square linear system by PLU method with decomposed matrix.
@@ -2076,16 +2018,8 @@ MODULE LinearSolverTypes
 !>
     SUBROUTINE SolvePLU_DenseSquare(solver)
       CLASS(LinearSolverType_Direct),INTENT(INOUT) :: solver
-
       REAL(SRK) :: t,thisb(solver%A%n),thisx(solver%A%n)
       INTEGER(SIK) :: N,irow,icol
-      LOGICAL(SBK) :: localalloc
-
-      localalloc=.FALSE.
-      IF(.NOT.(ASSOCIATED(eLinearSolverType)))THEN
-        ALLOCATE(eLinearSolverType)
-        localalloc=.TRUE.
-      ENDIF
 
       solver%info=-1
       IF(solver%isDecomposed) THEN
@@ -2127,7 +2061,6 @@ MODULE LinearSolverTypes
         ENDSELECT
         solver%info=0
       ENDIF
-      IF(localalloc) DEALLOCATE(eLinearSolverType)
     ENDSUBROUTINE SolvePLU_DenseSquare
 !
 !-------------------------------------------------------------------------------

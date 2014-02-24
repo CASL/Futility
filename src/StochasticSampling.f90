@@ -194,7 +194,7 @@ MODULE StochasticSampling
   ENDTYPE StochasticSamplingType
 
   !> Exception Handler for use in MatrixTypes
-  TYPE(ExceptionHandlerType),POINTER,SAVE :: eStochasticSampler => NULL()
+  TYPE(ExceptionHandlerType),SAVE :: eStochasticSampler
 !
 !===============================================================================
   CONTAINS
@@ -221,7 +221,6 @@ MODULE StochasticSampling
       TYPE(MPI_EnvType),INTENT(IN),OPTIONAL :: MPIparallelEnv
       TYPE(OMP_EnvType),INTENT(IN),OPTIONAL :: OMPparallelEnv
       
-      LOGICAL(SBK) :: localalloc
       INTEGER(SIK) :: mpirank,omprank,nproc,nthread
       INTEGER(SLK) :: myskip,period
       TYPE(RNGdataType) :: RNGdata
@@ -234,18 +233,12 @@ MODULE StochasticSampling
       
       RNGdata=generators(RNGid)
 
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(eStochasticSampler)) THEN
-        localalloc=.TRUE.
-        ALLOCATE(eStochasticSampler)
-      ENDIF
-
       IF(PRESENT(MPIparallelEnv)) THEN
         IF(MPIparallelEnv%isInit()) THEN
           mpirank=MPIparallelEnv%rank
           nproc=MPIparallelEnv%nproc
         ELSE
-          CALL eStochasticSampler%raiseDebugWarning(modName//'::'//myName// &
+          CALL eStochasticSampler%raiseDebug(modName//'::'//myName// &
             ' - MPI Env is not initialized, and will not be used.')
         ENDIF
       ENDIF
@@ -254,7 +247,7 @@ MODULE StochasticSampling
           omprank=OMPparallelEnv%rank
           nthread=OMPparallelEnv%nproc
         ELSE
-          CALL eStochasticSampler%raiseDebugWarning(modName//'::'//myName// &
+          CALL eStochasticSampler%raiseDebug(modName//'::'//myName// &
             ' - OMP Env is not initialized, and will not be used.')
         ENDIF
       ENDIF
@@ -286,7 +279,6 @@ MODULE StochasticSampling
       
       sampler%isInit=.TRUE.
       sampler%counter=0
-      IF(localalloc) DEALLOCATE(eStochasticSampler)
     ENDSUBROUTINE init_Sampler
 !
 !-------------------------------------------------------------------------------

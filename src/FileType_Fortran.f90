@@ -223,14 +223,8 @@ MODULE FileType_Fortran
       CHARACTER(LEN=MAX_PATH_LENGTH) :: fpath
       CHARACTER(LEN=MAX_FNAME_LENGTH) :: fname
       CHARACTER(LEN=MAX_FEXT_LENGTH) :: fext
-      LOGICAL(SBK) :: ostat,localalloc
+      LOGICAL(SBK) :: ostat
       INTEGER(SIK) :: oldcnt
-      
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(fileobj%e)) THEN
-        ALLOCATE(fileobj%e)
-        localalloc=.TRUE.
-      ENDIF
       
       !Initialize data
       statusval=''
@@ -437,7 +431,6 @@ MODULE FileType_Fortran
           fileobj%initstat=.TRUE.
         ENDIF
       ENDIF
-      IF(localalloc) DEALLOCATE(fileobj%e)
     ENDSUBROUTINE init_fortran_file
 !
 !-------------------------------------------------------------------------------
@@ -565,13 +558,7 @@ MODULE FileType_Fortran
       CHARACTER(LEN=9) :: actionvar
       CHARACTER(LEN=3) :: padvar
       INTEGER(SIK) :: reclval
-      LOGICAL(SBK) :: localalloc
       
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(file%e)) THEN
-        ALLOCATE(file%e)
-        localalloc=.TRUE.
-      ENDIF
       !Get the appropriate clause values for the OPEN statement
       IF(file%initstat) THEN
         IF(file%isOpen()) THEN
@@ -670,7 +657,6 @@ MODULE FileType_Fortran
         CALL file%e%raiseError(modName//'::'//myName//' - '// &
           'Cannot open file! Object has not been initialized!')
       ENDIF
-      IF(localalloc) DEALLOCATE(file%e)
     ENDSUBROUTINE open_fortran_file
 !
 !-------------------------------------------------------------------------------
@@ -681,13 +667,7 @@ MODULE FileType_Fortran
     SUBROUTINE close_fortran_file(file)
       CHARACTER(LEN=*),PARAMETER :: myName='CLOSE_FORTRAN_FILE'
       CLASS(FortranFileType),INTENT(INOUT) :: file
-      LOGICAL(SBK) :: localalloc
       
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(file%e)) THEN
-        ALLOCATE(file%e)
-        localalloc=.TRUE.
-      ENDIF
       IF(file%initstat) THEN
         IF(file%isOpen()) THEN
           CLOSE(UNIT=file%unitno,STATUS='KEEP',IOSTAT=ioerr)
@@ -701,13 +681,12 @@ MODULE FileType_Fortran
         ELSE
           WRITE(emesg,'(a,i4,a)') 'Cannot close file (UNIT=', &
             file%unitno,') File is not open!'
-          CALL file%e%raiseDebugWarning(modName//'::'//myName//' - '//emesg)
+          CALL file%e%raiseDebug(modName//'::'//myName//' - '//emesg)
         ENDIF
       ELSE
-        CALL file%e%raiseError(modName//'::'//myName//' - '// &
+        CALL file%e%raiseDebug(modName//'::'//myName//' - '// &
           'Cannot close file! File object has not been initialized!')
       ENDIF
-      IF(localalloc) DEALLOCATE(file%e)
     ENDSUBROUTINE close_fortran_file
 !
 !-------------------------------------------------------------------------------
@@ -718,13 +697,7 @@ MODULE FileType_Fortran
     SUBROUTINE delete_fortran_file(file)
       CHARACTER(LEN=*),PARAMETER :: myName='DELETE_FORTRAN_FILE'
       CLASS(FortranFileType),INTENT(INOUT) :: file
-      LOGICAL(SBK) :: localalloc
       
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(file%e)) THEN
-        ALLOCATE(file%e)
-        localalloc=.TRUE.
-      ENDIF
       IF(file%initstat) THEN
         IF(file%isOpen()) THEN
           CLOSE(UNIT=file%unitno,STATUS='DELETE',IOSTAT=ioerr)
@@ -754,10 +727,9 @@ MODULE FileType_Fortran
           ENDIF
         ENDIF
       ELSE
-        CALL file%e%raiseError(modName//'::'//myName//' - '// &
+        CALL file%e%raiseDebug(modName//'::'//myName//' - '// &
           'Cannot delete file! File object has not been initialized!')
       ENDIF
-      IF(localalloc) DEALLOCATE(file%e)
     ENDSUBROUTINE delete_fortran_file
 !
 !-------------------------------------------------------------------------------
@@ -766,13 +738,7 @@ MODULE FileType_Fortran
     SUBROUTINE rewind_fortran_file(file)
       CHARACTER(LEN=*),PARAMETER :: myName='REWIND_FORTRAN_FILE'
       CLASS(FortranFileType),INTENT(INOUT) :: file
-      LOGICAL(SBK) :: localalloc
       
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(file%e)) THEN
-        ALLOCATE(file%e)
-        localalloc=.TRUE.
-      ENDIF
       IF(file%initstat) THEN
         IF(file%isOpen()) THEN
           REWIND(UNIT=file%unitno,IOSTAT=ioerr)
@@ -785,13 +751,12 @@ MODULE FileType_Fortran
         ELSE
           WRITE(emesg,'(a,i4,a)') 'Cannot rewind file (UNIT=',file%unitno, &
             '). File not is not open!'
-          CALL file%e%raiseError(modName//'::'//myName//' - '//emesg)
+          CALL file%e%raiseDebug(modName//'::'//myName//' - '//emesg)
         ENDIF
       ELSE
-        CALL file%e%raiseError(modName//'::'//myName//' - '// &
+        CALL file%e%raiseDebug(modName//'::'//myName//' - '// &
           'Cannot rewind file! File object has not been initialized!')
       ENDIF
-      IF(localalloc) DEALLOCATE(file%e)
     ENDSUBROUTINE rewind_fortran_file
 !
 !-------------------------------------------------------------------------------
@@ -800,13 +765,7 @@ MODULE FileType_Fortran
     SUBROUTINE backspace_fortran_file(file)
       CHARACTER(LEN=*),PARAMETER :: myName='BACKSPACE_FORTRAN_FILE'
       CLASS(FortranFileType),INTENT(INOUT) :: file
-      LOGICAL(SBK) :: localalloc
       
-      localalloc=.FALSE.
-      IF(.NOT.ASSOCIATED(file%e)) THEN
-        ALLOCATE(file%e)
-        localalloc=.TRUE.
-      ENDIF
       IF(file%initstat) THEN
         IF(file%isOpen()) THEN
           BACKSPACE(UNIT=file%unitno,IOSTAT=ioerr)
@@ -820,13 +779,12 @@ MODULE FileType_Fortran
         ELSE
           WRITE(emesg,'(a,i4,a)') 'Cannot backspace file (UNIT=',file%unitno, &
             '). File not is not open!'
-          CALL file%e%raiseError(modName//'::'//myName//' - '//emesg)
+          CALL file%e%raiseDebug(modName//'::'//myName//' - '//emesg)
         ENDIF
       ELSE
-        CALL file%e%raiseError(modName//'::'// myName//' - '// &
+        CALL file%e%raiseDebug(modName//'::'// myName//' - '// &
           'Cannot backspace file! File object has not been initialized!')
       ENDIF
-      IF(localalloc) DEALLOCATE(file%e)
     ENDSUBROUTINE backspace_fortran_file
 !
 !-------------------------------------------------------------------------------

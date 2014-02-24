@@ -62,8 +62,8 @@ PROGRAM testLinearSolver
   !Configure exception handler for test
   CALL e%setStopOnError(.FALSE.)
   CALL e%setQuietMode(.TRUE.)
-  eParams => e
-  eLinearSolverType => e
+  CALL eParams%addSurrogate(e)
+  CALL eLinearSolverType%addSurrogate(e)
   CALL mpiTestEnv%init(PE_COMM_SELF)
 
   CREATE_TEST('Test Linear Solvers')
