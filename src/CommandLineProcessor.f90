@@ -337,8 +337,13 @@ MODULE CommandLineProcessor
     SUBROUTINE clearOpts(clp)
       CHARACTER(LEN=*),PARAMETER :: myName='clearOpts'
       CLASS(CmdLineProcType),INTENT(INOUT) :: clp
+      INTEGER(SIK) :: iopt
       clp%usage=''
       IF(ASSOCIATED(clp%opts)) THEN
+        DO iopt=SIZE(clp%opts),1,-1
+          clp%opts(iopt)%description=''
+          clp%opts(iopt)%name=''
+        ENDDO
         DEALLOCATE(clp%opts)
         clp%nopts=0
       ENDIF
@@ -401,8 +406,12 @@ MODULE CommandLineProcessor
     PURE SUBROUTINE clearCmdLine(clp)
       CHARACTER(LEN=*),PARAMETER :: myName='clearCmdLine'
       CLASS(CmdLineProcType),INTENT(INOUT) :: clp
+      INTEGER(SIK) :: iarg
       clp%cmdline=''
       IF(ASSOCIATED(clp%CmdLineArgs)) THEN
+        DO iarg=SIZE(clp%CmdLineArgs),1,-1
+          clp%CmdLineArgs(iarg)=''
+        ENDDO
         DEALLOCATE(clp%CmdLineArgs)
         clp%narg=0
       ENDIF
