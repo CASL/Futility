@@ -1533,8 +1533,8 @@ PROGRAM testSpaceFillingCurve
       nz_block=4
       CALL root%initSingle(1,nx,1,ny,1,nz,1,nz_block)
       DO i=1,nz_block
-        istt=REAL(i-1)*nz/nz_block+1
-        istp=REAL(i)*nz/nz_block
+        istt=(i-1)*nz/nz_block+1
+        istp=i*nz/nz_block
         child => root%addChild(1,nx,1,ny,istt,istp,nz/nz_block)
         DO ip=1,nz/nz_block
           child2 => child%addChild(1,nx,1,ny,ip,ip)
@@ -1574,6 +1574,7 @@ PROGRAM testSpaceFillingCurve
 
       bool=(root%subdomains(3)%subdomains(2)%istt == 176)
       ASSERT(bool, "Bad number of subdomains for subdomain.")
+      CALL root%clear()
     ENDSUBROUTINE testDeferredConst
 !
 ENDPROGRAM testSpaceFillingCurve
