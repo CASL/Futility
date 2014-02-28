@@ -885,6 +885,7 @@ PROGRAM testPreconditionerTypes
       IF(ALLOCATED(testVec_mg)) CALL testVec_mg%clear()
       IF(ALLOCATED(testBILU_1g)) CALL testBILU_1g%clear()
       IF(ALLOCATED(testBILU_mg)) CALL testBILU_mg%clear()
+      IF(ALLOCATED(testDenseMatrix)) CALL testDenseMatrix%clear()
       IF(ALLOCATED(testVector)) CALL testVector%clear()
        
       IF(ALLOCATED(testSparseMatrix)) DEALLOCATE(testSparseMatrix)
