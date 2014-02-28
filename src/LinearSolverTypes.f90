@@ -716,6 +716,7 @@ MODULE LinearSolverTypes
       solver%solverMethod=-1
       solver%hasX=.FALSE.
       solver%info=0
+      solver%PCTypeName=''
 
       CALL solver%SolveTime%ResetTimer()
       solver%isDecomposed=.FALSE.
