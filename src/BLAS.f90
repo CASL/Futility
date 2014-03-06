@@ -15,7 +15,7 @@
 ! manufacturer, or otherwise, does not necessarily constitute or imply its     !
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!> @brief The global module for collecting all public members of 
+!> @brief The global module for collecting all public members of
 !> other BLAS modules. This is the module that should be used elsewhere
 !> in the code.
 !>
@@ -28,7 +28,6 @@
 !>    @date 03/16/2012
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE BLAS
-
   USE BLAS1
   USE BLAS2
   USE BLAS3
