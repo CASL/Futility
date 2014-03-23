@@ -37,6 +37,7 @@ SET(UNIT_TEST_NAMES
     testSpaceFillingCurve
     testAllocs
     testParameterLists
+    testFileType_XML
     testIOutil
     testFileType_Base
     testFileType_Fortran

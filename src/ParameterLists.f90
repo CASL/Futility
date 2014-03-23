@@ -98,6 +98,7 @@ MODULE ParameterLists
   USE Strings
   USE ExceptionHandler
   USE IO_Strings
+  USE FileType_XML
 
   IMPLICIT NONE
   PRIVATE !Default private for module contents
@@ -8603,5 +8604,74 @@ MODULE ParameterLists
             '" already exists! Use set method or full parameter list path!')
       ENDIF
     ENDSUBROUTINE add_ParamType_SLK_a3
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE initFromXML(thisParam,fname)
+      CLASS(ParamType),INTENT(INOUT) :: thisParam
+      CHARACTER(LEN=*),INTENT(IN) :: fname
+      INTEGER(SIK) :: ic
+      TYPE(StringType) :: elname,tmpStr,typval
+      TYPE(XMLFileType) :: xmlFile
+      TYPE(XMLElementType),POINTER :: iXMLE,children(:),parent,nextXMLE
+      CLASS(ParamType),POINTER :: iParam
+      
+      SELECTTYPE(thisParam); TYPE IS(ParamType)
+        IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
+          !Initialize the XML file
+          CALL xmlfile%importFromDisk(fname)
+          iXMLE => xmlfile%root
+          iParam => thisParam%pdat
+          DO WHILE(ASSOCIATED(iXMLE))
+            !Process this iXMLE
+            elname=iXMLE%name
+            CALL toUPPER(elname)
+            IF(elname == 'PARAMETER') THEN
+              !Get the attribute type
+              tmpStr='type'
+              CALL iXMLE%getAttributeValue(tmpStr,typval)
+              CALL toUPPER(typval)
+              SELECTCASE(CHAR(typval))
+                CASE('BOOL')
+                CASE('INT')
+                CASE('DOUBLE')
+                CASE('STRING')
+                CASE('ARRAY(INT)')
+                CASE('ARRAY(DOUBLE)')
+                CASE('ARRAY(STRING)')
+              ENDSELECT
+            ELSEIF(elname == 'PARAMETERLIST') THEN
+              ALLOCATE(ParamType_List :: iParam)
+            ELSE
+              !Bad element name
+            ENDIF
+            
+            !Get the next XML element
+            NULLIFY(nextXMLE)
+            IF(iXMLE%hasChildren()) THEN
+              CALL iXMLE%getChildren(children)
+              nextXMLE => children(1)
+            ELSE
+              !Get the parent and go to the next child
+              findParent: DO WHILE(ASSOCIATED(iXMLE))
+                CALL iXMLE%getParent(parent)
+                CALL parent%getChildren(children)
+                DO ic=1,SIZE(children)-1
+                  IF(ASSOCIATED(iXMLE,children(ic))) THEN
+                    nextXMLE => children(ic+1)
+                    EXIT findParent
+                  ENDIF
+                ENDDO
+                IF(ASSOCIATED(iXMLE,children(ic))) iXMLE => parent
+              ENDDO findParent
+            ENDIF
+            iXMLE => nextXMLE
+          ENDDO
+        ELSE
+          !Must be uninitialized
+        ENDIF
+      CLASS DEFAULT
+        !Wrong type
+      ENDSELECT
+    ENDSUBROUTINE initFromXML
 !
 ENDMODULE ParameterLists
