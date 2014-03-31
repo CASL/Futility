@@ -15,20 +15,20 @@
 ! manufacturer, or otherwise, does not necessarily constitute or imply its     !
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!> @brief Utility module for I/O defines the derived type for an Input File 
+!> @brief Utility module for I/O defines the derived type for an Input File
 !> object.
 !>
 !> The input file type is an extension of the Fortran file type. Specifically it
 !> is an existing read-only text file. The purpose of the input file is provide
 !> input to the program to be read at run time. It provides additional methods
 !> for @ref FileType_Input::read_oneline "fgetl()" which gets one line of text
-!> from the file. There are also methods to allow one to set a file to echo 
+!> from the file. There are also methods to allow one to set a file to echo
 !> the input that's read to another file. It also provides the maximum length
 !> of one line of text from the input file. This module is considered to be
 !> an I/O utility module so it's public members should be accessed through @ref
 !> IOutil "IOutil". This module should not be used directly except when it is
-!> needed by another I/O utility module. This module is tested by 
-!> @c testIOutil.f90 and the coverage report can be found at the @ref 
+!> needed by another I/O utility module. This module is tested by
+!> @c testIOutil.f90 and the coverage report can be found at the @ref
 !> CodeCoverageReports "Code Coverage Reports" page. An example of how to use
 !> the input file type is provided below and in the test.
 !>
@@ -41,7 +41,7 @@
 !> @par EXAMPLES
 !> @code
 !> PROGRAM InpFileExample
-!> 
+!>
 !> USE IOutil
 !> IMPLICIT NONE
 !>
@@ -57,7 +57,7 @@
 !> !Set an output file for echoing the input
 !> CALL inpfile%setEchoUnit(25)
 !> CALL inpfile%setEchoStat(.TRUE.)
-!> 
+!>
 !> !Get a line of text from the input file
 !> oneline=inpfile%fgetl()
 !>
@@ -73,33 +73,33 @@
 !>   @date 08/21/2011
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE FileType_Input
-  
+
   USE ISO_FORTRAN_ENV
   USE IntrType
   USE FileType_Fortran
   IMPLICIT NONE
   PRIVATE
-  
+
   !List of Public Members
   PUBLIC :: MAX_INPUT_FILE_LINE_LEN
   PUBLIC :: InputFileType
-  
+
   INTEGER(SIK),PARAMETER :: MAX_INPUT_FILE_LINE_LEN=256
-  
+
   !> Module name for error messages
   CHARACTER(LEN=*),PARAMETER :: modName='FILETYPE_INPUT'
   !> Scratch variable for IOSTAT values
   INTEGER(SIK) :: ioerr
   !> Format for reading from input file
   CHARACTER(LEN=7) :: inpfmt=''
-  
+
   !> @brief Derived type object for an input file, it is an extension of the
   !> @ref FileType_Fortran "FortranFileType" object.
   !>
-  !> This type provides two new attributes to the @ref FileType_Fortran 
+  !> This type provides two new attributes to the @ref FileType_Fortran
   !> "FortranFileType" for an echo status and an echo unit. It overwrites the
-  !> methods for @ref FileType_Input::init_inp_file "initialize" and @ref 
-  !> FileType_Input::clear_inp_file "clear", and provides @ref 
+  !> methods for @ref FileType_Input::init_inp_file "initialize" and @ref
+  !> FileType_Input::clear_inp_file "clear", and provides @ref
   !> FileType_Input::read_oneline "fgetl", @ref FileType_Input::echo_inp_file
   !> "setEchoStat", and @ref FileType_Input::isecho_inp_file "getEchoStat".
   TYPE,EXTENDS(FortranFileType) :: InputFileType
@@ -145,7 +145,7 @@ MODULE FileType_Input
       !> @copydetails FileType_Input::backspace_inp_file
       PROCEDURE,PASS :: fbackspace => backspace_inp_file
   ENDTYPE InputFileType
-  
+
 !
 !===============================================================================
   CONTAINS
@@ -176,7 +176,7 @@ MODULE FileType_Input
       CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: pad
       INTEGER(SIK),OPTIONAL,INTENT(IN) :: recl
       CHARACTER(LEN=4) :: alen=''
-      
+
       IF(PRESENT(status)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
         ' - Optional input "STATUS" is being ignored. Value is "OLD".')
       IF(PRESENT(access)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
@@ -191,7 +191,7 @@ MODULE FileType_Input
         ' - Optional input "POSITION" is being ignored. Value is "REWIND".')
       IF(PRESENT(recl)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
         ' - Optional input "RECL" is being ignored. File is "SEQUENTIAL".')
-        
+
       !Initialize the input file
       CALL init_fortran_file(fileobj,unit,file,'OLD','SEQUENTIAL', &
         'FORMATTED','REWIND','READ')
@@ -248,7 +248,7 @@ MODULE FileType_Input
       CLASS(InputFileType),INTENT(INOUT) :: file
       CHARACTER(LEN=MAX_INPUT_FILE_LINE_LEN) :: oneline
       CHARACTER(LEN=4) :: sioerr,sunit
-      
+
       oneline=''
       IF(file%isOpen() .AND. .NOT.file%isEOF()) THEN
         READ(UNIT=file%getUnitNo(),FMT=inpfmt,IOSTAT=ioerr) oneline
@@ -256,7 +256,7 @@ MODULE FileType_Input
           file%lastprobe=file%probe
           IF(file%echostat) THEN
             WRITE(UNIT=file%echounit,FMT='(a)',IOSTAT=ioerr) TRIM(oneline)
-            IF(ioerr /= 0) THEN 
+            IF(ioerr /= 0) THEN
               WRITE(sioerr,'(i4)') ioerr; sioerr=ADJUSTL(sioerr)
               WRITE(sunit,'(i4)') file%echounit; sunit=ADJUSTL(sunit)
               CALL file%e%raiseError(modName//'::'//myName// &
@@ -300,7 +300,7 @@ MODULE FileType_Input
     ENDFUNCTION isecho_inp_file
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets the value of the echounit attribute of the inputu file type 
+!> @brief Sets the value of the echounit attribute of the inputu file type
 !> object.
 !> @param file the input file object
 !> @param iunit the unit number to use for the echo file.
@@ -335,7 +335,9 @@ MODULE FileType_Input
     PURE FUNCTION getProbe_inp_file(file) RESULT(c)
       CLASS(InputFileType),INTENT(IN) :: file
       CHARACTER(LEN=1) :: c
+
       c=file%probe
+
     ENDFUNCTION getProbe_inp_file
 !
 ENDMODULE FileType_Input
