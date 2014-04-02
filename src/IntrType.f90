@@ -652,7 +652,7 @@ MODULE IntrType
       LOGICAL(SBK) :: bool
       REAL(SSK) :: eps
       eps=MAX(ABS(r1),ABS(r2))*tol
-      IF(r1 == 0.0_SSK .OR. r1 == 0.0_SSK) eps=EPSS
+      IF(r1 == 0.0_SSK .OR. r1 == 0.0_SSK) eps=REAL(EPSS,SSK)
       bool=(ABS(r1-r2) <= eps)
     ENDFUNCTION softeqr_single
 !
@@ -702,3 +702,4 @@ MODULE IntrType
     ENDFUNCTION notequalto_logical
 !
 ENDMODULE IntrType
+
