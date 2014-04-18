@@ -57,20 +57,21 @@ MODULE ParallelEnv
 
   INTEGER,PARAMETER :: PE_COMM_SELF=MPI_COMM_SELF
   INTEGER,PARAMETER :: PE_COMM_WORLD=MPI_COMM_WORLD
-  INTEGER,PARAMETER :: UT_COMM_WORLD=2
+  INTEGER,PARAMETER :: PE_COMM_NULL=MPI_COMM_NULL
 #else
   INTEGER,PARAMETER :: PE_COMM_SELF=1
   INTEGER,PARAMETER :: PE_COMM_WORLD=0
-  INTEGER,PARAMETER :: UT_COMM_WORLD=2
+  INTEGER,PARAMETER :: PE_COMM_NULL=-1
 #endif
 
   PUBLIC :: PE_COMM_SELF
   PUBLIC :: PE_COMM_WORLD
-  PUBLIC :: UT_COMM_WORLD
+  PUBLIC :: PE_COMM_NULL
   PUBLIC :: MPI_EnvType
   PUBLIC :: OMP_EnvType
   PUBLIC :: ParallelEnvType
   PUBLIC :: eParEnv
+  PUBLIC :: ASSIGNMENT(=)
 
   TYPE,ABSTRACT :: ParEnvType
     !> Logical with initialization status
@@ -125,14 +126,23 @@ MODULE ParallelEnv
 !List of type bound procedures (methods) for the object
     CONTAINS
       !> @copybrief ParallelEnv::init_MPI_Env_type
-      !> @copydetails  ParallelEnv::init_MPI_Env_type
+      !> @copydetails ParallelEnv::init_MPI_Env_type
       PROCEDURE,PASS :: init => init_MPI_Env_type
       !> @copybrief ParallelEnv::clear_MPI_Env_type
-      !> @copydetails  ParallelEnv::clear_MPI_Env_type
+      !> @copydetails ParallelEnv::clear_MPI_Env_type
       PROCEDURE,PASS :: clear => clear_MPI_Env_type
       !> @copybrief ParallelEnv::barrier_MPI_Env_type
-      !> @copydetails  ParallelEnv::barrier_MPI_Env_type
+      !> @copydetails ParallelEnv::barrier_MPI_Env_type
       PROCEDURE,PASS :: barrier => barrier_MPI_Env_type
+      !> @copybrief ParallelEnv::gather_scalar_SLK_MPI_Env_type
+      !> @copydetails ParallelEnv::gather_scalar_SLK_MPI_Env_type
+      PROCEDURE,PASS,PRIVATE :: gather_scalar_SLK_MPI_Env_type
+      !> @copybrief ParallelEnv::gather_SLK_MPI_Env_type
+      !> @copydetails ParallelEnv::gather_SLK_MPI_Env_type
+      PROCEDURE,PASS,PRIVATE :: gather_SLK_MPI_Env_type
+      !>
+      GENERIC :: gather => gather_scalar_SLK_MPI_Env_type, &
+                           gather_SLK_MPI_Env_type
       !> @copybrief ParallelEnv::allReduceR_MPI_Env_type
       !> @copydetails  ParallelEnv::allReduceR_MPI_Env_type
       PROCEDURE,PASS :: allReduce => allReduceR_MPI_Env_type
@@ -231,9 +241,19 @@ MODULE ParallelEnv
   !  !> @copydetails ParallelEnv::allReduceMinI_MPI_Env_type
   !  MODULE PROCEDURE allReduceMinI_MPI_Env_type
   !ENDINTERFACE
-
+  
+  !> @brief Overloads the assignment operator for the ParallelEnvType.
+  !>
+  INTERFACE ASSIGNMENT(=)
+    !> @copybrief ParallelEnv::assign_ParEnvType
+    !> @copydetails ParallelEnv::assign_ParEnvType
+    MODULE PROCEDURE assign_ParEnvType
+  ENDINTERFACE
+  
   !> Private scratch variable for the mpierr
   INTEGER(SIK) :: mpierr
+  
+  INTEGER(SIK),SAVE :: MAX_PE_COMM_ID=1
 
   !> Module name
   CHARACTER(LEN=*),PARAMETER :: modName='PARALLELENV'
@@ -422,35 +442,33 @@ MODULE ParallelEnv
       LOGICAL(SBK),ALLOCATABLE :: allpetsc2(:)
       
       IF(.NOT.myPE%initstat) THEN
-        icomm=PE_COMM_SELF
+        icomm=PE_COMM_NULL
         IF(PRESENT(PEparam)) icomm=PEparam
 
 #ifdef HAVE_MPI
+        !Initialize MPI if it has not been initialized
         CALL MPI_Initialized(isinit,mpierr)
         IF(mpierr /= MPI_SUCCESS) CALL eParEnv%raiseError(modName//'::'// &
           myName//' - call to MPI_Initialized returned an error!')
-#else
-        isinit=0
-#endif
-
-        !Set the communicator
+        
         IF(isinit == 0) THEN
-#ifdef HAVE_MPI
           CALL MPI_Init(mpierr)
           IF(mpierr /= MPI_SUCCESS) CALL eParEnv%raiseError(modName//'::'// &
             myName//' - call to MPI_Init returned an error!')
-
-          !Default communicator is MPI_COMM_WORLD if MPI was not initialized
-          !Set communicator to MPI_COMM_SELF though if this was passed
-          !explicitly.
-          myPE%comm=MPI_COMM_WORLD
-          IF(icomm == MPI_COMM_SELF) myPE%comm=MPI_COMM_SELF
-#else
-          myPE%comm=1
-#endif
-        ELSE
-          myPE%comm=icomm
         ENDIF
+#endif
+
+        !Set the communicator
+        !Default is comm world
+        IF(icomm == PE_COMM_NULL) icomm=PE_COMM_WORLD
+#ifdef HAVE_MPI
+        !Create a duplicate of the passed communicator
+        CALL MPI_Comm_dup(icomm,myPE%comm,mpierr)
+#else
+        !Increment communicator to simulate duplication
+        MAX_PE_COMM_ID=MAX_PE_COMM_ID+1
+        myPE%comm=MAX_PE_COMM_ID+1
+#endif
 
         !Get Information about the communicator
 #ifdef HAVE_MPI
@@ -525,6 +543,69 @@ MODULE ParallelEnv
       IF(myPE%initstat) CALL MPI_Barrier(myPE%comm,mpierr)
 #endif
     ENDSUBROUTINE barrier_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine calls MPI_Barrier
+    SUBROUTINE gather_scalar_SLK_MPI_Env_type(myPE,sendbuf,recvbuf,root)
+      CHARACTER(LEN=*),PARAMETER :: myName='gather_scalar_SLK_MPI_Env_type'
+      CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
+      INTEGER(SLK),INTENT(IN) :: sendbuf
+      INTEGER(SLK),INTENT(INOUT) :: recvbuf(:)
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: root
+      INTEGER(SIK) :: rank
+      rank=0
+      IF(PRESENT(root)) rank=root
+      IF(0 <= rank .AND. rank <= myPE%nproc-1) THEN
+        IF(SIZE(recvbuf) >= myPE%nproc) THEN
+#ifdef HAVE_MPI
+          CALL MPI_Gather(sendbuf,1,MPI_INTEGER8,recvbuf,1,MPI_INTEGER8, &
+            rank,myPE%comm,mpierr)
+#else
+          recvbuf=sendbuf
+#endif
+        ELSE
+          CALL eParEnv%raiseError(modName//'::'//myName// &
+            ' - size of receive buffer is not large enough!')
+        ENDIF
+      ELSE
+        CALL eParEnv%raiseError(modName//'::'//myName// &
+          ' - Invalid rank!')
+      ENDIF
+    ENDSUBROUTINE gather_scalar_SLK_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine calls MPI_Barrier
+    SUBROUTINE gather_SLK_MPI_Env_type(myPE,sendbuf,recvbuf,root)
+      CHARACTER(LEN=*),PARAMETER :: myName='gather_scalar_SLK_MPI_Env_type'
+      CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
+      INTEGER(SLK),INTENT(IN) :: sendbuf(:)
+      INTEGER(SLK),INTENT(INOUT) :: recvbuf(:,:)
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: root
+      INTEGER(SIK) :: rank,count,i,j,n
+      rank=0
+      IF(PRESENT(root)) rank=root
+      count=SIZE(sendbuf)
+      IF(0 <= rank .AND. rank <= myPE%nproc-1) THEN
+        IF(SIZE(recvbuf) >= myPE%nproc*count) THEN
+#ifdef HAVE_MPI
+          CALL MPI_Gather(sendbuf,count,MPI_INTEGER8,recvbuf,count, &
+            MPI_INTEGER8,rank,myPE%comm,mpierr)
+#else
+          DO n=1,count
+            i=MOD(n-1,SIZE(recvbuf,DIM=1))+1
+            j=(n-1)/SIZE(recvbuf,DIM=1)+1
+            recvbuf(i,j)=sendbuf(n)
+          ENDDO
+#endif
+        ELSE
+          CALL eParEnv%raiseError(modName//'::'//myName// &
+            ' - size of receive buffer is not large enough!')
+        ENDIF
+      ELSE
+        CALL eParEnv%raiseError(modName//'::'//myName// &
+          ' - Invalid rank!')
+      ENDIF
+    ENDSUBROUTINE gather_SLK_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
 !> @brief Wrapper routine calls MPI_Allreduce and performs a sum of operation
@@ -755,6 +836,7 @@ MODULE ParallelEnv
 !
 !-------------------------------------------------------------------------------
 !> @brief Wrapper routine calls MPI_Finalize
+!>
     SUBROUTINE finalize_MPI_Env_type()
 #ifdef HAVE_MPI
       CALL MPI_Finalize(mpierr)
@@ -763,6 +845,7 @@ MODULE ParallelEnv
 !
 !-------------------------------------------------------------------------------
 !> @brief Function returns initialization status of an OMP_EnvType @e myPE.
+!>
     PURE FUNCTION getInitStat_OMP_Env_type(myPE) RESULT(bool)
       CLASS(OMP_EnvType),INTENT(IN) :: myPE
       LOGICAL(SBK) :: bool
@@ -771,6 +854,7 @@ MODULE ParallelEnv
 !
 !-------------------------------------------------------------------------------
 !> @brief Initializes an OpenMP environment type object.
+!>
     SUBROUTINE init_OMP_Env_type(myPE,PEparam)
       CLASS(OMP_EnvType),INTENT(INOUT) :: myPE
       INTEGER(SIK),INTENT(IN),OPTIONAL :: PEparam
@@ -791,6 +875,7 @@ MODULE ParallelEnv
 !
 !-------------------------------------------------------------------------------
 !> Clears the OpenMP environment type object
+!>
     SUBROUTINE clear_OMP_Env_type(myPE)
       CLASS(OMP_EnvType),INTENT(INOUT) :: myPE
       myPE%nproc=-1
@@ -909,7 +994,8 @@ MODULE ParallelEnv
 !
 !-------------------------------------------------------------------------------
 !> Clears the parallel environment type object
-    SUBROUTINE clear_ParEnvType(myPE)
+!>
+   SUBROUTINE clear_ParEnvType(myPE)
       CLASS(ParallelEnvType),INTENT(INOUT) :: myPE
 
       IF(ASSOCIATED(myPE%ray)) DEALLOCATE(myPE%ray)
@@ -922,11 +1008,13 @@ MODULE ParallelEnv
       IF(ASSOCIATED(myPE%space)) THEN
         CALL myPE%space%clear(); DEALLOCATE(myPE%space)
       ENDIF
+      CALL myPE%CartGridWorld%clear()
       CALL myPE%world%clear()
     ENDSUBROUTINE clear_ParEnvType
 !
 !-------------------------------------------------------------------------------
 !> Returns initialization status of the parallel environment type object
+!>
     PURE FUNCTION isInit_ParEnvType(myPE) RESULT(initStat)
       CLASS(ParallelEnvType),INTENT(IN) :: myPE
       LOGICAL(SBK) :: initStat
@@ -947,4 +1035,38 @@ MODULE ParallelEnv
 
     ENDFUNCTION isInit_ParEnvType
 !
+!-------------------------------------------------------------------------------
+!> @brief Overloaded assignment for ParEnvType
+!> @param pe1 the left hand side of assignment operator
+!> @param pe2 the right hand side of assignment operator
+!> 
+!> Performs a deep copy. This is to avoid undefined behavior of association
+!> of pointer attributes.
+!>
+    SUBROUTINE assign_ParEnvType(pe1,pe2)
+      TYPE(ParallelEnvType),INTENT(INOUT) :: pe1
+      TYPE(ParallelEnvType),INTENT(IN) :: pe2
+      
+      CALL clear_ParEnvType(pe1)
+      CALL pe1%world%init(pe2%world%comm)
+      CALL pe1%CartGridWorld%init(pe2%CartGridWorld%comm)
+      IF(ASSOCIATED(pe2%energy)) THEN
+        ALLOCATE(pe1%energy)
+        CALL pe1%energy%init(pe2%energy%comm)
+      ENDIF
+      IF(ASSOCIATED(pe2%space)) THEN
+        ALLOCATE(pe1%space)
+        CALL pe1%space%init(pe2%space%comm)
+      ENDIF
+      IF(ASSOCIATED(pe2%angle)) THEN
+        ALLOCATE(pe1%angle)
+        CALL pe1%angle%init(pe2%angle%comm)
+      ENDIF
+      IF(ASSOCIATED(pe2%ray)) THEN
+        ALLOCATE(pe1%ray)
+        pe1%ray=pe2%ray
+      ENDIF
+    ENDSUBROUTINE assign_ParEnvType
+!
 ENDMODULE ParallelEnv
+

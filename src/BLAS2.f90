@@ -3544,11 +3544,11 @@ MODULE BLAS2
       IF(PRESENT(incx_in)) THEN
         incx=incx_in
       ELSE
-        incx=1_SIK
+        incx=1
       ENDIF
       CALL strsv(uplo,trans,diag,n,a,lda,x,incx)
 #else
-      LOGICAL(SBK) :: ltrans, nounit
+      LOGICAL(SBK) :: nounit
       INTEGER(SIK) :: i,ix,j,jx,kx
       REAL(SSK) :: temp
       REAL(SSK),PARAMETER :: ZERO=0.0_SSK
@@ -3558,7 +3558,7 @@ MODULE BLAS2
       IF(PRESENT(incx_in)) THEN
         incx=incx_in
       ELSE
-        incx=1_SIK
+        incx=1
       ENDIF
       IF(n > 0 .AND. incx /= 0 .AND. &
           (trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
@@ -3566,20 +3566,20 @@ MODULE BLAS2
           (uplo == 'u' .OR. uplo == 'U' .OR. uplo == 'l' .OR. uplo == 'L') .AND. &
           (diag == 'u' .OR. diag == 'U' .OR. diag == 'n' .OR. diag == 'N')) THEN
 
-        IF (diag == 'n' .OR. diag == 'N') nounit=.TRUE.
+        IF(diag == 'n' .OR. diag == 'N') nounit=.TRUE.
  
-        IF (incx<=0) THEN
-            kx = 1 - (n-1)*incx
-        ELSEIF (incx/=1) THEN
-            kx = 1
-        END IF
+        IF(incx<=0) THEN
+            kx=1-(n-1)*incx
+        ELSEIF(incx/=1) THEN
+            kx=1
+        ENDIF
 
-        IF (trans == 'n' .OR. trans == 'N') THEN  ! Form  x := inv( A )*x.
-          IF (uplo == 'u' .OR. uplo == 'U') THEN  ! Upper triangular
-            IF (incx.EQ.1) THEN
-              DO j = n,1,-1
-                IF (x(j)/=ZERO) THEN
-                  IF (nounit) x(j)=x(j)/a(j,j)
+        IF(trans == 'n' .OR. trans == 'N') THEN  ! Form  x := inv( A )*x.
+          IF(uplo == 'u' .OR. uplo == 'U') THEN  ! Upper triangular
+            IF(incx.EQ.1) THEN
+              DO j=n,1,-1
+                IF(x(j) /= ZERO) THEN
+                  IF(nounit) x(j)=x(j)/a(j,j)
                   temp=x(j)
                   DO i=j-1,1,-1
                     x(i)=x(i)-temp*a(i,j)
@@ -3589,8 +3589,8 @@ MODULE BLAS2
             ELSE
               jx=kx+(n-1)*incx
               DO J=n,1,-1
-                IF (x(jx)/=ZERO) THEN
-                  IF (nounit) x(jx)=x(jx)/a(j,j)
+                IF(x(jx) /= ZERO) THEN
+                  IF(nounit) x(jx)=x(jx)/a(j,j)
                   temp=x(jx)
                   ix=jx
                   DO i=j-1,1,-1
@@ -3602,10 +3602,10 @@ MODULE BLAS2
               ENDDO
             ENDIF
           ELSE  ! Lower Triangular
-            IF (incx==1) THEN
+            IF(incx == 1) THEN
               DO j=1,n
-                IF (x(j)/=ZERO) THEN
-                  IF (nounit) x(j)=x(j)/a(j,j)
+                IF(x(j) /= ZERO) THEN
+                  IF(nounit) x(j)=x(j)/a(j,j)
                   temp=x(j)
                   DO i=j+1,n
                     x(i)=x(i)-temp*a(i,j)
@@ -3615,8 +3615,8 @@ MODULE BLAS2
             ELSE
               jx=kx
               DO j=1,n
-                IF (x(jx)/=ZERO) THEN
-                  IF (nounit) x(jx)=x(jx)/a(j,j)
+                IF(x(jx) /= ZERO) THEN
+                  IF(nounit) x(jx)=x(jx)/a(j,j)
                   temp=x(jx)
                   ix=jx
                   DO i=j+1,n
@@ -3629,14 +3629,14 @@ MODULE BLAS2
             ENDIF
           ENDIF
         ELSE  ! Form  x := inv( A**T )*x.
-          IF (uplo == 'u' .OR. uplo == 'U') THEN
-            IF (incx==1) THEN
+          IF(uplo == 'u' .OR. uplo == 'U') THEN
+            IF(incx == 1) THEN
               DO j=1,n
                 temp=x(j)
-                DO i=1,j - 1
+                DO i=1,j-1
                   temp=temp-a(i,j)*x(i)
                 ENDDO
-                IF (nounit) temp=temp/a(j,j)
+                IF(nounit) temp=temp/a(j,j)
                 x(j)=temp
               ENDDO
             ELSE
@@ -3648,19 +3648,19 @@ MODULE BLAS2
                   temp=temp-a(i,j)*x(ix)
                   ix=ix+incx
                 ENDDO
-                IF (nounit) temp=temp/a(j,j)
+                IF(nounit) temp=temp/a(j,j)
                 x(jx)=temp
                 jx=jx+incx
               ENDDO
             ENDIF
           ELSE  ! Lower Triangular
-            IF (incx==1) THEN
+            IF(incx == 1) THEN
               DO j=n,1,-1
                 temp=x(j)
-                DO i=n,j + 1,-1
+                DO i=n,j+1,-1
                   temp=temp-a(i,j)*x(i)
                 ENDDO
-                IF (nounit) temp=temp/a(j,j)
+                IF(nounit) temp=temp/a(j,j)
                 x(j)=temp
               ENDDO
             ELSE
@@ -3673,7 +3673,7 @@ MODULE BLAS2
                   temp=temp-a(i,j)*x(ix)
                   ix=ix-incx
                 ENDDO
-                IF (nounit) temp=temp/a(j,j)
+                IF(nounit) temp=temp/a(j,j)
                 x(jx)=temp
                 jx=jx-incx
               ENDDO
@@ -3731,11 +3731,11 @@ MODULE BLAS2
       IF(PRESENT(incx_in)) THEN
         incx=incx_in
       ELSE
-        incx=1_SIK
+        incx=1
       ENDIF
       CALL dtrsv(uplo,trans,diag,n,a,lda,x,incx)
 #else
-      LOGICAL(SBK) :: ltrans, nounit
+      LOGICAL(SBK) :: nounit
       INTEGER(SIK) :: i,ix,j,jx,kx
       REAL(SDK) :: temp
       REAL(SDK),PARAMETER :: ZERO=0.0_SSK
@@ -3746,7 +3746,7 @@ MODULE BLAS2
       IF(PRESENT(incx_in)) THEN
         incx=incx_in
       ELSE
-        incx=1_SIK
+        incx=1
       ENDIF
       IF(n > 0 .AND. incx /= 0 .AND. lda >= MAX(1,N) .AND. &
           (trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &

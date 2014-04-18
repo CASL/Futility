@@ -18,7 +18,8 @@
 PROGRAM testSpaceFillingCurve
 #include "UnitTest.h"
   USE UnitTest
-  USE Utils
+  USE IntrType
+  USE MortonOrdering
   
   IMPLICIT NONE
 

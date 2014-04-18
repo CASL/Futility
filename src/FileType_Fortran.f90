@@ -78,6 +78,7 @@ MODULE FileType_Fortran
       
   USE ISO_FORTRAN_ENV
   USE IntrType
+  USE Strings
   USE ExceptionHandler
   USE IO_Strings
   USE FileType_Base
@@ -90,6 +91,7 @@ MODULE FileType_Fortran
   PUBLIC :: clear_fortran_file
   PUBLIC :: rewind_fortran_file
   PUBLIC :: backspace_fortran_file
+  PUBLIC :: FortranFile_get_new_unit
   
   !> Module name for error messages
   CHARACTER(LEN=*),PARAMETER :: modName='FILETYPE_FORTRAN'
@@ -126,6 +128,9 @@ MODULE FileType_Fortran
 !
 !List of type bound procedures (methods) for the Fortran File type
     CONTAINS
+      !> @copybrief FileType_Fortran::FortranFile_get_new_unit
+      !> @copydetails FileType_Fortran::FortranFile_get_new_unit
+      PROCEDURE,NOPASS :: newUnitNo => FortranFile_get_new_unit
       !> @copybrief FileType_Fortran::init_fortran_file
       !> @copydetails FileType_Fortran::init_fortran_file
       PROCEDURE,PASS :: initialize => init_fortran_file
@@ -171,6 +176,9 @@ MODULE FileType_Fortran
       !> @copybrief FileType_Fortran::isInit_fortran_file
       !> @copydetails FileType_Fortran::isInit_fortran_file
       PROCEDURE,PASS :: isInit => isInit_fortran_file
+      !> @copybrief FileType_Fortran::setStatus_fortran_file
+      !> @copydetails FileType_Fortran::setStatus_fortran_file
+      PROCEDURE,PASS :: setStatus => setStatus_fortran_file
   ENDTYPE FortranFileType
 !
 !===============================================================================
@@ -201,11 +209,12 @@ MODULE FileType_Fortran
 !> specified. The values for DELIM and BLANK cannot be set. If the status of
 !> a file is specified as 'SCRATCH' or 'UNKNOWN' it is replaced with with
 !> the value 'REPLACE'. It is made public for use by other extended types.
+!>
     SUBROUTINE init_fortran_file(fileobj,unit,file,status,access,form, &
                                  position,action,pad,recl)
       CHARACTER(LEN=*),PARAMETER :: myName='INIT_FORTRAN_FILE'
       CLASS(FortranFileType),INTENT(INOUT) :: fileobj
-      INTEGER(SIK),INTENT(IN) :: unit
+      INTEGER(SIK),OPTIONAL,INTENT(IN) :: unit
       CHARACTER(LEN=*),INTENT(IN) :: file
       CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: status
       CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: access
@@ -220,9 +229,7 @@ MODULE FileType_Fortran
       CHARACTER(LEN=11) :: formval
       CHARACTER(LEN=9) :: actionval
       CHARACTER(LEN=3) :: padval
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: fpath
-      CHARACTER(LEN=MAX_FNAME_LENGTH) :: fname
-      CHARACTER(LEN=MAX_FEXT_LENGTH) :: fext
+      TYPE(StringType) :: fpath,fname,fext
       LOGICAL(SBK) :: ostat
       INTEGER(SIK) :: oldcnt
       
@@ -232,9 +239,6 @@ MODULE FileType_Fortran
       formval=''
       actionval=''
       padval=''
-      fpath=''
-      fname=''
-      fext=''
       
       oldcnt=fileobj%e%getCounter(EXCEPTION_ERROR)
       
@@ -244,31 +248,35 @@ MODULE FileType_Fortran
       ELSE
         !Initialize the file
         CALL getFileParts(file,fpath,fname,fext,fileobj%e)
-        CALL fileobj%setFilePath(fpath)
-        CALL fileobj%setFileName(fname)
-        CALL fileobj%setFileExt(fext)
+        CALL fileobj%setFilePath(CHAR(fpath))
+        CALL fileobj%setFileName(CHAR(fname))
+        CALL fileobj%setFileExt(CHAR(fext))
         
-        IF(unit == OUTPUT_UNIT) THEN
-          CALL fileobj%e%raiseError(modName//'::'//myName//' - Illegal '// &
-            'value for optional input argument UNIT! Value is equal to '// &
-              'default OUTPUT_UNIT.')
-        ELSEIF(unit == ERROR_UNIT) THEN
-          CALL fileobj%e%raiseError(modName//'::'//myName//' - Illegal '// &
-            'value for optional input argument UNIT! Value is equal to '// &
-              'default ERROR_UNIT.')
-        ELSEIF(unit == INPUT_UNIT) THEN
-          CALL fileobj%e%raiseError(modName//'::'//myName//' - Illegal '// &
-            'value for optional input argument UNIT! Value is equal to '// &
-              'default INPUT_UNIT.')
-        ELSE
-          INQUIRE(UNIT=unit,OPENED=ostat)
-          IF(ostat) THEN
+        IF(PRESENT(unit)) THEN
+          IF(unit == OUTPUT_UNIT) THEN
             CALL fileobj%e%raiseError(modName//'::'//myName//' - Illegal '// &
-              'value for optional input argument UNIT! Unit is being used'// &
-                ' by another file!')
+              'value for optional input argument UNIT! Value is equal to '// &
+                'default OUTPUT_UNIT.')
+          ELSEIF(unit == ERROR_UNIT) THEN
+            CALL fileobj%e%raiseError(modName//'::'//myName//' - Illegal '// &
+              'value for optional input argument UNIT! Value is equal to '// &
+                'default ERROR_UNIT.')
+          ELSEIF(unit == INPUT_UNIT) THEN
+            CALL fileobj%e%raiseError(modName//'::'//myName//' - Illegal '// &
+              'value for optional input argument UNIT! Value is equal to '// &
+                'default INPUT_UNIT.')
           ELSE
-            fileobj%unitno=unit
+            INQUIRE(UNIT=unit,OPENED=ostat)
+            IF(ostat) THEN
+              CALL fileobj%e%raiseError(modName//'::'//myName//' - Illegal '// &
+                'value for optional input argument UNIT! Unit is being used'// &
+                  ' by another file!')
+            ELSE
+              fileobj%unitno=unit
+            ENDIF
           ENDIF
+        ELSE
+          fileobj%unitno=fileobj%newUnitNo()
         ENDIF
         
         !STATUS clause for OPEN statement
@@ -440,6 +448,7 @@ MODULE FileType_Fortran
 !> @param ldel logical on whether or not to delete or close the file.
 !>
 !> Made public for use by other extended types.
+!>
     SUBROUTINE clear_fortran_file(file,ldel)
       CLASS(FortranFileType),INTENT(INOUT) :: file
       LOGICAL(SBK),OPTIONAL,INTENT(IN) :: ldel
@@ -474,7 +483,8 @@ MODULE FileType_Fortran
 !-------------------------------------------------------------------------------
 !> @brief gets the unit number used by the fortran file
 !> @param file the fortran file type object
-!> @returns val the value of the unit number    
+!> @returns val the value of the unit number
+!>
     PURE FUNCTION getUnitNo_fortran_file(file) RESULT(val)
       CLASS(FortranFileType),INTENT(IN) :: file
       INTEGER(SIK) :: val
@@ -485,6 +495,7 @@ MODULE FileType_Fortran
 !> @brief Returns whether or not the FORTRAN file is formatted text or binary.
 !> @param file the fortran file type object
 !> @returns bool TRUE/FALSE if the file is formatted
+!>
     PURE FUNCTION isFormatted_fortran_file(file) RESULT(bool)
       CLASS(FortranFileType),INTENT(IN) :: file
       LOGICAL(SBK) :: bool
@@ -496,6 +507,7 @@ MODULE FileType_Fortran
 !> access.
 !> @param file the fortran file type object
 !> @returns bool TRUE/FALSE if the file is direct access
+!>
     PURE FUNCTION isDirect_fortran_file(file) RESULT(bool)
       CLASS(FortranFileType),INTENT(IN) :: file
       LOGICAL(SBK) :: bool
@@ -506,6 +518,7 @@ MODULE FileType_Fortran
 !> @brief Returns the record length for a direct access file.
 !> @param file the fortran file type object
 !> @returns val the size of the records
+!>
     PURE FUNCTION getRecLen_fortran_file(file) RESULT(val)
       CLASS(FortranFileType),INTENT(IN) :: file
       INTEGER(SIK) :: val
@@ -516,6 +529,7 @@ MODULE FileType_Fortran
 !> @brief Returns whether or not the FORTRAN file has padded output.
 !> @param file the fortran file type object
 !> @returns bool TRUE/FALSE if the file is padded
+!>
     PURE FUNCTION isPadded_fortran_file(file) RESULT(bool)
       CLASS(FortranFileType),INTENT(IN) :: file
       LOGICAL(SBK) :: bool
@@ -526,6 +540,7 @@ MODULE FileType_Fortran
 !> @brief Returns whether or not the FORTRAN file is new.
 !> @param file the fortran file type object
 !> @returns bool TRUE/FALSE if the file is new
+!>
     PURE FUNCTION isNew_fortran_file(file) RESULT(bool)
       CLASS(FortranFileType),INTENT(IN) :: file
       LOGICAL(SBK) :: bool
@@ -538,6 +553,7 @@ MODULE FileType_Fortran
 !> @param file the fortran file type object
 !> @returns bool TRUE/FALSE if the file will be overwritten
 !> @note if isOverwrite is true, this implies the file is also new
+!>
     PURE FUNCTION isOverwrite_fortran_file(file) RESULT(bool)
       CLASS(FortranFileType),INTENT(IN) :: file
       LOGICAL(SBK) :: bool
@@ -549,6 +565,7 @@ MODULE FileType_Fortran
 !> @param file Fortran file object
 !>
 !> The various options for the open statement are assigned by the init routine.
+!>
     SUBROUTINE open_fortran_file(file)
       CHARACTER(LEN=*),PARAMETER :: myName='OPEN_FORTRAN_FILE'
       CLASS(FortranFileType),INTENT(INOUT) :: file
@@ -664,6 +681,7 @@ MODULE FileType_Fortran
 !> @param file Fortran file object
 !>
 !> File will not be deleted when closed.
+!>
     SUBROUTINE close_fortran_file(file)
       CHARACTER(LEN=*),PARAMETER :: myName='CLOSE_FORTRAN_FILE'
       CLASS(FortranFileType),INTENT(INOUT) :: file
@@ -694,6 +712,7 @@ MODULE FileType_Fortran
 !> @param file Fortran file object
 !>
 !> Tries to delete the file regardless fo whether or not it is open.
+!>
     SUBROUTINE delete_fortran_file(file)
       CHARACTER(LEN=*),PARAMETER :: myName='DELETE_FORTRAN_FILE'
       CLASS(FortranFileType),INTENT(INOUT) :: file
@@ -735,6 +754,7 @@ MODULE FileType_Fortran
 !-------------------------------------------------------------------------------
 !> @brief Use rewind on a fortran file object.
 !> @param file Fortran file object
+!>
     SUBROUTINE rewind_fortran_file(file)
       CHARACTER(LEN=*),PARAMETER :: myName='REWIND_FORTRAN_FILE'
       CLASS(FortranFileType),INTENT(INOUT) :: file
@@ -762,6 +782,7 @@ MODULE FileType_Fortran
 !-------------------------------------------------------------------------------
 !> @brief Use backspace on a fortran file object.
 !> @param file Fortran file object
+!>
     SUBROUTINE backspace_fortran_file(file)
       CHARACTER(LEN=*),PARAMETER :: myName='BACKSPACE_FORTRAN_FILE'
       CLASS(FortranFileType),INTENT(INOUT) :: file
@@ -790,10 +811,86 @@ MODULE FileType_Fortran
 !-------------------------------------------------------------------------------
 !> @brief Returns the value of file%initstat
 !> @param file Fortran file object
+!>
     PURE FUNCTION isInit_fortran_file(file) RESULT(bool)
       CLASS(FortranFileType),INTENT(IN) :: file
       LOGICAL(SBK) :: bool
       bool=file%initstat
     ENDFUNCTION isInit_fortran_file
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the status option for the file for the next call to open.
+!> @param file Fortran file object
+!> @param status the value of the status option
+!>
+!> The value of status is the same as that defined in the Fortran intrinsic OPEN
+!> statment ("OLD", "NEW", "UKNOWN", "REPLACE", "SCRATCH"). The latter three
+!> are all treated as replace. These correspond to the fopen implementation
+!> and how the value of STATUS is derived from the newstat and overwrite
+!> attribute.
+!>
+    SUBROUTINE setStatus_fortran_file(file,status)
+      CHARACTER(LEN=*),PARAMETER :: myName='setStatus_fortran_file'
+      CLASS(FortranFileType),INTENT(INOUT) :: file
+      CHARACTER(LEN=*),INTENT(IN) :: status
+      CHARACTER(LEN=LEN(status)) :: new_status
+      IF(file%initstat) THEN
+        IF(.NOT.file%isOpen()) THEN
+          new_status=status
+          CALL toUPPER(new_status)
+          SELECT CASE(new_status)
+            CASE('OLD') !File already exists
+              file%newstat=.FALSE.
+              file%overwrite=.FALSE.
+            CASE('NEW') !File does not exist and will be created
+              file%newstat=.TRUE.
+              file%overwrite=.FALSE.
+            CASE('SCRATCH','REPLACE','UNKNOWN')
+              file%newstat=.TRUE.
+              file%overwrite=.TRUE.
+            CASE DEFAULT
+              CALL file%e%raiseError(modName//'::'//myName//' - Illegal '// &
+                'value ('//status//') for input argument STATUS!')
+          ENDSELECT
+        ELSE
+          CALL file%e%raiseError(modName//'::'//myName//' - File status '// &
+            'cannot be changed while file is open!')
+        ENDIF
+      ELSE
+        CALL file%e%raiseError(modName//'::'//myName//' - File status '// &
+          'cannot be changed on uninitialized file!')
+      ENDIF
+    ENDSUBROUTINE setStatus_fortran_file
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns a unit number that is presently not in use.
+!> @param istt optional input for where to start searching for an unused unit
+!>        number
+!> @returns newlun a unit number that is not currently in use by this process
+!>
+    FUNCTION FortranFile_get_new_unit(istt) RESULT(newlun)
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: istt
+      INTEGER(SIK) :: newlun,isafe
+      LOGICAL(SBK) :: ostat
+      
+      newlun=MAX(MAX(OUTPUT_UNIT,ERROR_UNIT),INPUT_UNIT)+1
+      IF(PRESENT(istt)) newlun=istt
+      
+      INQUIRE(UNIT=newlun,OPENED=ostat)
+      isafe=0
+      DO WHILE(ostat)
+        newlun=newlun+1
+        isafe=isafe+1
+        INQUIRE(UNIT=newlun,OPENED=ostat)
+        
+        !Catch to prevent an infinite loop
+        !Return a bad value as apparently all unit numbers
+        !are in use.
+        IF(isafe == 100000) THEN
+          newlun=-666
+          EXIT
+        ENDIF
+      ENDDO
+    ENDFUNCTION FortranFile_get_new_unit
 !
 ENDMODULE FileType_Fortran

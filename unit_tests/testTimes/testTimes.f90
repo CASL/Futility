@@ -18,7 +18,8 @@
 PROGRAM testTimes
 #include "UnitTest.h"
   USE UnitTest
-  USE Utils
+  USE IntrType
+  USE Times
   
   IMPLICIT NONE
   

@@ -18,7 +18,9 @@
 PROGRAM testCmdLineProc
 #include "UnitTest.h"
   USE UnitTest
-  USE Utils
+  USE Strings
+  USE ExceptionHandler
+  USE CommandLineProcessor
   
   IMPLICIT NONE
 

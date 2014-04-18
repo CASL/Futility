@@ -18,7 +18,11 @@
 PROGRAM testVectorTypes
 #include "UnitTest.h"
   USE UnitTest
-  USE Utils
+  USE IntrType
+  USE ExceptionHandler
+  USE ParameterLists
+  USE ParallelEnv
+  USE VectorTypes
   
   IMPLICIT NONE
   

@@ -19,8 +19,10 @@ PROGRAM testParallelEnv
 #include "UnitTest.h"
   USE ISO_FORTRAN_ENV
 !$ USE OMP_LIB
-  USE UnitTest  
-  USE Utils
+  USE UnitTest
+  USE IntrType
+  USE ExceptionHandler
+  USE ParallelEnv
   
   IMPLICIT NONE
 
@@ -28,12 +30,10 @@ PROGRAM testParallelEnv
   INCLUDE 'mpif.h'
 #endif
 
-  TYPE(ParallelEnvType) :: testPE,testPE2,testPE3
-  TYPE(MPI_EnvType) :: testMPI,testMPI2
-  TYPE(OMP_EnvType) :: testOMP
+  TYPE(ExceptionHandlerType),TARGET :: e
+  TYPE(ParallelEnvType) :: testPE,testPE2
   
   INTEGER :: mpierr,myrank,mysize,tmp,stt,stp
-  INTEGER(SIK),ALLOCATABLE :: testIDX(:),testWGT(:)
   
 #ifdef HAVE_MPI
   CALL MPI_Init(mpierr)
@@ -47,325 +47,384 @@ PROGRAM testParallelEnv
   CALL eParEnv%setQuietMode(.TRUE.)
   CALL eParEnv%setStopOnError(.FALSE.)
   
-  IF(myrank == 0) THEN
-    WRITE(OUTPUT_UNIT,*) '==================================================='
-    WRITE(OUTPUT_UNIT,*) 'TESTING PARALLEL ENVIRONMENT...'
-    WRITE(OUTPUT_UNIT,*) '==================================================='
+  CREATE_TEST('PARALLEL ENVIRONMENT')
+  
+  REGISTER_SUBTEST('PARAMETERS',testParams)
+  REGISTER_SUBTEST('OMP_ENVTYPE',testOMPEnv)
+  REGISTER_SUBTEST('MPI_ENVTYPE',testMPIEnv)
+  REGISTER_SUBTEST('PARALLEL_ENVTYPE',testPE_Env)
+  
+  FINALIZE_TEST()
+  CALL testPE%world%finalize()
+!
+!===============================================================================
+  CONTAINS
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testParams()
+      INFO(0) 'PE_COMM_WORLD=',PE_COMM_WORLD
+      INFO(0) 'PE_COMM_SELF=',PE_COMM_SELF
+      INFO(0) 'PE_COMM_NULL=',PE_COMM_NULL
+#ifdef HAVE_MPI
+      ASSERT(PE_COMM_WORLD == MPI_COMM_WORLD,'PE_COMM_WORLD')
+      ASSERT(PE_COMM_SELF == MPI_COMM_SELF,'PE_COMM_SELF')
+      ASSERT(PE_COMM_NULL == MPI_COMM_NULL,'PE_COMM_NULL')
+#endif 
+    ENDSUBROUTINE testParams
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testOMPEnv()
+      TYPE(OMP_EnvType) :: testOMP
+        
+      COMPONENT_TEST('Uninit.')
+      ASSERT(testOMP%nproc == -1,'%nproc')
+      ASSERT(testOMP%rank == -1,'%rank')
+      ASSERT(.NOT.testOMP%master,'%master')
+      ASSERT(.NOT.testOMP%isInit(),'%isInit()')
+      
+      COMPONENT_TEST('%init()')
+      CALL testOMP%init()
+      ASSERT(testOMP%nproc == 1,'%nproc')
+      ASSERT(testOMP%rank == 0,'%rank')
+      ASSERT(testOMP%master,'%master')
+      ASSERT(testOMP%isInit(),'%isInit()')
+      
+      COMPONENT_TEST('%clear()')
+      CALL testOMP%clear()
+      ASSERT(testOMP%nproc == -1,'%nproc')
+      ASSERT(testOMP%rank == -1,'%rank')
+      ASSERT(.NOT.testOMP%master,'%master')
+      ASSERT(.NOT.testOMP%isInit(),'%isInit()')
+      
+!$    COMPONENT_TEST('With OpenMP')
+!$    CALL testOMP%init(1)
+!$    ASSERT(testOMP%nproc == 1,'%nproc')
+!$    ASSERT(testOMP%rank == 0,'%rank')
+!$    ASSERT(testOMP%master,'%master')
+!$    ASSERT(testOMP%isInit(),'%isInit()')
+!$    CALL testOMP%clear()
+!$
+!$    COMPONENT_TEST('Too many threads')
+!$    CALL testOMP%init(1000)
+!$    ASSERT(testOMP%nproc == omp_get_max_threads(),'%nproc')
+!$    ASSERT(testOMP%rank == 0,'%rank')
+!$    ASSERT(testOMP%master,'%master')
+!$    ASSERT(testOMP%isInit(),'%isInit()')
+!$    CALL testOMP%clear()
+    ENDSUBROUTINE testOMPEnv
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testMPIEnv()
+      INTEGER(SIK) :: ip,jp
+      INTEGER(SLK) :: sbuf(2)
+      INTEGER(SIK),ALLOCATABLE :: testIDX(:),testWGT(:)
+      INTEGER(SLK),ALLOCATABLE :: ranks(:),ranks2(:,:)
+      TYPE(MPI_EnvType) :: testMPI,testMPI2
+      
+      
+      COMPONENT_TEST('%isInit()')
+      ASSERT(testMPI%nproc == -1,'%nproc')
+      ASSERT(testMPI%rank == -1,'%rank')
+      ASSERT(.NOT.testMPI%master,'%master')
+      ASSERT(.NOT.testMPI%isInit(),'%isInit()')
+      
+      COMPONENT_TEST('%init(PE_COMM_WORLD)')
+      CALL testMPI%init(PE_COMM_WORLD)
+      ASSERT(testMPI%comm /= PE_COMM_WORLD,'%comm world')
+      ASSERT(testMPI%comm /= PE_COMM_SELF,'%comm self')
+      ASSERT(testMPI%comm /= PE_COMM_NULL,'%comm null')
+      ASSERT(testMPI%rank == myrank,'%rank')
+      ASSERT(testMPI%nproc > 0,'%nproc')
+      ASSERT(testMPI%isInit(),'%isInit()')
+      
+      COMPONENT_TEST('%init(PE_COMM_SELF)')
+      CALL testMPI2%init(PE_COMM_SELF)
+      ASSERT(testMPI2%comm /= PE_COMM_WORLD,'%comm world')
+      ASSERT(testMPI2%comm /= PE_COMM_SELF,'%comm self')
+      ASSERT(testMPI2%comm /= PE_COMM_NULL,'%comm null')
+      ASSERT(testMPI2%rank == 0,'%rank')
+      ASSERT(testMPI2%nproc == 1,'%nproc')
+      ASSERT(testMPI2%master,'%master')
+      ASSERT(testMPI2%isInit(),'%isInit()')
+      
+      COMPONENT_TEST('%clear()')
+      CALL testMPI2%clear()
+      ASSERT(testMPI2%nproc == -1,'%nproc')
+      ASSERT(testMPI2%rank == -1,'%rank')
+      ASSERT(.NOT.testMPI2%master,'%master')
+      ASSERT(.NOT.testMPI2%isInit(),'%isInit()')
+  
+      COMPONENT_TEST('%barrier()')
+      CALL testMPI%barrier()
+  
+      COMPONENT_TEST('%partition')
+      CALL testMPI2%init(testMPI%comm)
+      testMPI2%nproc=7
+      testMPI2%rank=0
+      CALL testMPI2%partition(N1=2,N2=25,ISTT=stt,ISTP=stp)
+      ASSERT(stt == 2,'istt (0,7)')
+      ASSERT(stp == 5,'istp (0,7)')
+      testMPI2%rank=1
+      CALL testMPI2%partition(N1=2,N2=25,ISTT=stt,ISTP=stp)
+      ASSERT(stt == 6,'istt (1,7)')
+      ASSERT(stp == 9,'istp (1,7)')
+      testMPI2%rank=2
+      CALL testMPI2%partition(N1=2,N2=25,ISTT=stt,ISTP=stp)
+      ASSERT(stt == 10,'istt (2,7)')
+      ASSERT(stp == 13,'istp (2,7)')
+      testMPI2%rank=3
+      CALL testMPI2%partition(N1=2,N2=25,ISTT=stt,ISTP=stp)
+      ASSERT(stt == 14,'istt (3,7)')
+      ASSERT(stp == 16,'istp (3,7)')
+      testMPI2%rank=4
+      CALL testMPI2%partition(N1=2,N2=25,ISTT=stt,ISTP=stp)
+      ASSERT(stt == 17,'istt (4,7)')
+      ASSERT(stp == 19,'istp (4,7)')
+      testMPI2%rank=5
+      CALL testMPI2%partition(N1=2,N2=25,ISTT=stt,ISTP=stp)
+      ASSERT(stt == 20,'istt (5,7)')
+      ASSERT(stp == 22,'istp (5,7)')
+      testMPI2%rank=6
+      CALL testMPI2%partition(N1=2,N2=25,ISTT=stt,ISTP=stp)
+      ASSERT(stt == 23,'istt (6,7)')
+      ASSERT(stp == 25,'istp (6,7)')
+      
+      testMPI2%nproc=10
+      ALLOCATE(testWGT(40))
+      testWGT=(/936,936,936,936,1722,1722,1722,1722,1722,1722,1722,1722,1916, &
+                1916,1916,1916,1944,1944,1944,1944,1916,1916,1916,1916,1571, &
+                1571,1571,1571,4122,4122,4122,4122,4266,4266,4266,4266,1850, &
+                1850,1850,1850/)
+      CALL testMPI2%partition(IWGT=testWGT,IPART=0,IDXMAP=testIDX)
+      ASSERT(ALL(testIDX == (/11,23,33/)),'testIDX 0')
+      CALL testMPI2%partition(IWGT=testWGT,IPART=1,IDXMAP=testIDX)
+      ASSERT(ALL(testIDX == (/12,24,34/)),'testIDX 1')
+      CALL testMPI2%partition(IWGT=testWGT,IPART=2,IDXMAP=testIDX)
+      ASSERT(ALL(testIDX == (/3,9,35,37/)),'testIDX 2')
+      CALL testMPI2%partition(IWGT=testWGT,IPART=3,IDXMAP=testIDX)
+      ASSERT(ALL(testIDX == (/4,10,36,38/)),'testIDX 3')
+      CALL testMPI2%partition(IWGT=testWGT,IPART=4,IDXMAP=testIDX)
+      ASSERT(ALL(testIDX == (/5,15,27,29/)),'testIDX 4')
+      CALL testMPI2%partition(IWGT=testWGT,IPART=5,IDXMAP=testIDX)
+      ASSERT(ALL(testIDX == (/6,16,28,30/)),'testIDX 5')
+      CALL testMPI2%partition(IWGT=testWGT,IDXMAP=testIDX)
+      ASSERT(ALL(testIDX == (/1,7,21,31/)),'testIDX 6')
+      CALL testMPI2%partition(IWGT=testWGT,IPART=7,IDXMAP=testIDX)
+      ASSERT(ALL(testIDX == (/2,8,22,32/)),'testIDX 7')
+      CALL testMPI2%partition(IWGT=testWGT,IPART=8,IDXMAP=testIDX)
+      ASSERT(ALL(testIDX == (/13,17,19,25,39/)),'testIDX 8')
+      CALL testMPI2%partition(IWGT=testWGT,N1=1,N2=40,IPART=9,IDXMAP=testIDX)
+      ASSERT(ALL(testIDX == (/14,18,20,26,40/)),'testIDX 9')
     
-    WRITE(OUTPUT_UNIT,*) 'TESTING OMP_ENVTYPE'
-    IF(testOMP%isInit()) THEN
-      WRITE(OUTPUT_UNIT,*) 'testOMP%isInit() FAILED!'
-      STOP 666
-    ENDIF
-    CALL testOMP%init()
-    IF(testOMP%nproc /= 1 .OR. testOMP%rank /= 0 .OR. &
-        .NOT.testOMP%isInit() .OR. .NOT.testOMP%master) THEN
-      WRITE(OUTPUT_UNIT,*) 'testOMP%init() FAILED!'
-      STOP 666
-    ELSE
-      WRITE(OUTPUT_UNIT,*) '  Passed: testOMP%isInit() (NO OMP)'
-      WRITE(OUTPUT_UNIT,*) '  Passed: testOMP%init() (NO OMP)'
-    ENDIF
-    CALL testOMP%clear()
-    IF(testOMP%nproc /= -1 .OR. testOMP%rank /= -1 .OR. &
-      testOMP%isInit() .OR. testOMP%master) THEN
-      WRITE(OUTPUT_UNIT,*) 'testOMP%clear() FAILED!'
-      STOP 666
-    ELSE
-      WRITE(*,*) '  Passed: testOMP%clear()'
-    ENDIF
-!$  CALL testOMP%init(1)
-!$  IF(testOMP%nproc /= 1 .OR. testOMP%rank /= 0 .OR. &
-!$     .NOT.testOMP%master) THEN
-!$    WRITE(OUTPUT_UNIT,*) 'testOMP%init(1) FAILED!'
-!$    STOP 666
-!$  ELSE
-!$    WRITE(OUTPUT_UNIT,*) '  Passed: testOMP%init(1)'
-!$  ENDIF
-!$  CALL testOMP%init(1000)
-!$  IF(testOMP%nproc /= omp_get_max_threads() .OR. testOMP%rank /= 0 .OR. &
-!$     .NOT.testOMP%master) THEN
-!$    WRITE(OUTPUT_UNIT,*) 'testOMP%init(1000) FAILED!'
-!$    STOP 666
-!$  ELSE
-!$    WRITE(OUTPUT_UNIT,*) '  Passed: testOMP%init(1000)'
-!$  ENDIF
-    WRITE(OUTPUT_UNIT,*) '---------------------------------------------------'
-  ENDIF
-  
-  IF(myrank == 0) WRITE(OUTPUT_UNIT,*) 'TESTING MPI_ENVTYPE'
-#ifdef HAVE_MPI
-    FLUSH(OUTPUT_UNIT)
-    CALL MPI_Barrier(MPI_COMM_WORLD,mpierr)
-#endif
-  IF(testMPI%isInit()) THEN
-    WRITE(OUTPUT_UNIT,*) myrank,'CALL testMPI%isInit() FAILED!'
-#ifdef HAVE_MPI
-    FLUSH(OUTPUT_UNIT)
-    CALL MPI_Abort(MPI_COMM_WORLD,666,mpierr)
-#else
-    STOP 666
-#endif
-  ELSE
-    IF(myrank == 0) WRITE(OUTPUT_UNIT,*) '  Passed: CALL testMPI%isInit()'
-#ifdef HAVE_MPI
-    FLUSH(OUTPUT_UNIT)
-    CALL MPI_Barrier(MPI_COMM_WORLD,mpierr)
-#endif
-  ENDIF
-#ifdef HAVE_MPI
-  CALL testMPI%init(MPI_COMM_WORLD)
-  IF(testMPI%comm /= MPI_COMM_WORLD .OR. testMPI%rank /= myrank &
-     .OR. testMPI%nproc == -1 .OR. .NOT.testMPI%isInit()) THEN
-    WRITE(OUTPUT_UNIT,*) myrank,'CALL testMPI%init(MPI_COMM_WORLD) FAILED!'
-    FLUSH(OUTPUT_UNIT)
-    CALL MPI_Abort(MPI_COMM_WORLD,666,mpierr)
-  ELSE
-    WRITE(OUTPUT_UNIT,*) '  Passed: CALL testMPI%init(MPI_COMM_WORLD)', &
-      testMPI%rank
-    FLUSH(OUTPUT_UNIT)
-    CALL MPI_Barrier(MPI_COMM_WORLD,mpierr)
-  ENDIF
-#else
-  WRITE(OUTPUT_UNIT,*) '  WARNING: EXECUTABLE NOT COMPILED FOR MPI'
-  CALL testMPI%init(PE_COMM_SELF)
-  IF(testMPI%comm /= 1 .OR. testMPI%nproc /= 1 .OR. testMPI%rank /= 0 &
-     .OR. .NOT.testMPI%master .OR. .NOT.testMPI%isInit()) THEN
-    WRITE(OUTPUT_UNIT,*) 'CALL testMPI%init(0) FAILED!'
-    STOP 666
-  ELSE
-    WRITE(OUTPUT_UNIT,*) '  Passed: CALL testMPI%init(0)'
-  ENDIF
-#endif
-  CALL testMPI%barrier()
-  IF(myrank == 0) WRITE(OUTPUT_UNIT,*) '  Passed: CALL testMPI%barrier()'
-  FLUSH(OUTPUT_UNIT)
-  CALL testMPI%barrier()
-  
-  CALL testMPI2%init(testMPI%comm)
-  IF(testMPI%master) THEN
-    testMPI2%nproc=7
-    testMPI2%rank=0
-    CALL testMPI2%partition(N1=2,N2=25,ISTT=stt,ISTP=stp)
-    IF(stt /= 2 .OR. stp /= 5) THEN
-      WRITE(OUTPUT_UNIT,*) testMPI2%rank,'CALL testMPI2%partition(...) FAILED!'
-#ifdef HAVE_MPI
-      FLUSH(OUTPUT_UNIT)
-      CALL MPI_Abort(MPI_COMM_WORLD,666,mpierr)
-#else
-      STOP 666
-#endif
-    ENDIF
-    testMPI2%rank=1
-    CALL testMPI2%partition(N1=2,N2=25,ISTT=stt,ISTP=stp)
-    IF(stt /= 6 .OR. stp /= 9) THEN
-      WRITE(OUTPUT_UNIT,*) testMPI2%rank,'CALL testMPI2%partition(...) FAILED!'
-#ifdef HAVE_MPI
-      FLUSH(OUTPUT_UNIT)
-      CALL MPI_Abort(MPI_COMM_WORLD,666,mpierr)
-#else
-      STOP 666
-#endif
-    ENDIF
-    testMPI2%rank=2
-    CALL testMPI2%partition(N1=2,N2=25,ISTT=stt,ISTP=stp)
-    IF(stt /= 10 .OR. stp /= 13) THEN
-      WRITE(OUTPUT_UNIT,*) testMPI2%rank,'CALL testMPI2%partition(...) FAILED!'
-#ifdef HAVE_MPI
-      FLUSH(OUTPUT_UNIT)
-      CALL MPI_Abort(MPI_COMM_WORLD,666,mpierr)
-#else
-      STOP 666
-#endif
-    ENDIF
-    testMPI2%rank=3
-    CALL testMPI2%partition(N1=2,N2=25,ISTT=stt,ISTP=stp)
-    IF(stt /= 14 .OR. stp /= 16) THEN
-      WRITE(OUTPUT_UNIT,*) testMPI2%rank,'CALL testMPI2%partition(...) FAILED!'
-#ifdef HAVE_MPI
-      FLUSH(OUTPUT_UNIT)
-      CALL MPI_Abort(MPI_COMM_WORLD,666,mpierr)
-#else
-      STOP 666
-#endif
-    ENDIF
-    testMPI2%rank=4
-    CALL testMPI2%partition(N1=2,N2=25,ISTT=stt,ISTP=stp)
-    IF(stt /= 17 .OR. stp /= 19) THEN
-      WRITE(OUTPUT_UNIT,*) testMPI2%rank,'CALL testMPI2%partition(...) FAILED!'
-#ifdef HAVE_MPI
-      FLUSH(OUTPUT_UNIT)
-      CALL MPI_Abort(MPI_COMM_WORLD,666,mpierr)
-#else
-      STOP 666
-#endif
-    ENDIF
-    testMPI2%rank=5
-    CALL testMPI2%partition(N1=2,N2=25,ISTT=stt,ISTP=stp)
-    IF(stt /= 20 .OR. stp /= 22) THEN
-      WRITE(OUTPUT_UNIT,*) testMPI2%rank,'CALL testMPI2%partition(...) FAILED!'
-#ifdef HAVE_MPI
-      FLUSH(OUTPUT_UNIT)
-      CALL MPI_Abort(MPI_COMM_WORLD,666,mpierr)
-#else
-      STOP 666
-#endif
-    ENDIF
-    testMPI2%rank=6
-    CALL testMPI2%partition(N1=2,N2=25,ISTT=stt,ISTP=stp)
-    IF(stt /= 23 .OR. stp /= 25) THEN
-      WRITE(OUTPUT_UNIT,*) testMPI2%rank,'CALL testMPI2%partition(...) FAILED!'
-#ifdef HAVE_MPI
-      FLUSH(OUTPUT_UNIT)
-      CALL MPI_Abort(MPI_COMM_WORLD,666,mpierr)
-#else
-      STOP 666
-#endif
-    ENDIF
-    
-    testMPI2%nproc=10
-    ALLOCATE(testWGT(40))
-    testWGT=(/936,936,936,936,1722,1722,1722,1722,1722,1722,1722,1722,1916, &
-              1916,1916,1916,1944,1944,1944,1944,1916,1916,1916,1916,1571, &
-              1571,1571,1571,4122,4122,4122,4122,4266,4266,4266,4266,1850, &
-              1850,1850,1850/)
-    CALL testMPI2%partition(IWGT=testWGT,IPART=0,IDXMAP=testIDX)
-    IF(ANY(testIDX /= (/11,23,33/))) THEN
-      WRITE(OUTPUT_UNIT,*) testMPI2%rank,'CALL testMPI2%partition(...) FAILED!'
-#ifdef HAVE_MPI
-      FLUSH(OUTPUT_UNIT)
-      CALL MPI_Abort(MPI_COMM_WORLD,666,mpierr)
-#else
-      STOP 666
-#endif
-    ENDIF
-    CALL testMPI2%partition(IWGT=testWGT,IPART=1,IDXMAP=testIDX)
-    IF(ANY(testIDX /= (/12,24,34/))) THEN
-      WRITE(OUTPUT_UNIT,*) testMPI2%rank,'CALL testMPI2%partition(...) FAILED!'
-#ifdef HAVE_MPI
-      FLUSH(OUTPUT_UNIT)
-      CALL MPI_Abort(MPI_COMM_WORLD,666,mpierr)
-#else
-      STOP 666
-#endif
-    ENDIF
-    CALL testMPI2%partition(IWGT=testWGT,IPART=2,IDXMAP=testIDX)
-    IF(ANY(testIDX /= (/3,9,35,37/))) THEN
-      WRITE(OUTPUT_UNIT,*) testMPI2%rank,'CALL testMPI2%partition(...) FAILED!'
-#ifdef HAVE_MPI
-      FLUSH(OUTPUT_UNIT)
-      CALL MPI_Abort(MPI_COMM_WORLD,666,mpierr)
-#else
-      STOP 666
-#endif
-    ENDIF
-    CALL testMPI2%partition(IWGT=testWGT,IPART=3,IDXMAP=testIDX)
-    IF(ANY(testIDX /= (/4,10,36,38/))) THEN
-      WRITE(OUTPUT_UNIT,*) testMPI2%rank,'CALL testMPI2%partition(...) FAILED!'
-#ifdef HAVE_MPI
-      FLUSH(OUTPUT_UNIT)
-      CALL MPI_Abort(MPI_COMM_WORLD,666,mpierr)
-#else
-      STOP 666
-#endif
-    ENDIF
-    CALL testMPI2%partition(IWGT=testWGT,IPART=4,IDXMAP=testIDX)
-    IF(ANY(testIDX /= (/5,15,27,29/))) THEN
-      WRITE(OUTPUT_UNIT,*) testMPI2%rank,'CALL testMPI2%partition(...) FAILED!'
-#ifdef HAVE_MPI
-      FLUSH(OUTPUT_UNIT)
-      CALL MPI_Abort(MPI_COMM_WORLD,666,mpierr)
-#else
-      STOP 666
-#endif
-    ENDIF
-    CALL testMPI2%partition(IWGT=testWGT,IPART=5,IDXMAP=testIDX)
-    IF(ANY(testIDX /= (/6,16,28,30/))) THEN
-      WRITE(OUTPUT_UNIT,*) testMPI2%rank,'CALL testMPI2%partition(...) FAILED!'
-#ifdef HAVE_MPI
-      FLUSH(OUTPUT_UNIT)
-      CALL MPI_Abort(MPI_COMM_WORLD,666,mpierr)
-#else
-      STOP 666
-#endif
-    ENDIF
-    CALL testMPI2%partition(IWGT=testWGT,IDXMAP=testIDX)
-    IF(ANY(testIDX /= (/1,7,21,31/))) THEN
-      WRITE(OUTPUT_UNIT,*) testMPI2%rank,'CALL testMPI2%partition(...) FAILED!'
-#ifdef HAVE_MPI
-      FLUSH(OUTPUT_UNIT)
-      CALL MPI_Abort(MPI_COMM_WORLD,666,mpierr)
-#else
-      STOP 666
-#endif
-    ENDIF
-    CALL testMPI2%partition(IWGT=testWGT,IPART=7,IDXMAP=testIDX)
-    IF(ANY(testIDX /= (/2,8,22,32/))) THEN
-      WRITE(OUTPUT_UNIT,*) testMPI2%rank,'CALL testMPI2%partition(...) FAILED!'
-#ifdef HAVE_MPI
-      FLUSH(OUTPUT_UNIT)
-      CALL MPI_Abort(MPI_COMM_WORLD,666,mpierr)
-#else
-      STOP 666
-#endif
-    ENDIF
-    CALL testMPI2%partition(IWGT=testWGT,IPART=8,IDXMAP=testIDX)
-    IF(ANY(testIDX /= (/13,17,19,25,39/))) THEN
-      WRITE(OUTPUT_UNIT,*) testMPI2%rank,'CALL testMPI2%partition(...) FAILED!'
-#ifdef HAVE_MPI
-      FLUSH(OUTPUT_UNIT)
-      CALL MPI_Abort(MPI_COMM_WORLD,666,mpierr)
-#else
-      STOP 666
-#endif
-    ENDIF
-    CALL testMPI2%partition(IWGT=testWGT,N1=1,N2=40,IPART=9,IDXMAP=testIDX)
-    IF(ANY(testIDX /= (/14,18,20,26,40/))) THEN
-      WRITE(OUTPUT_UNIT,*) testMPI2%rank,'CALL testMPI2%partition(...) FAILED!'
-#ifdef HAVE_MPI
-      FLUSH(OUTPUT_UNIT)
-      CALL MPI_Abort(MPI_COMM_WORLD,666,mpierr)
-#else
-      STOP 666
-#endif
-    ENDIF
-    
-    !Error Checking
-    CALL testMPI2%partition(IWGT=testWGT,N1=1,N2=40,IPART=100,IDXMAP=testIDX)
-    CALL testMPI2%partition(IWGT=testWGT,N1=41,N2=40,IDXMAP=testIDX)
-    CALL testMPI2%clear()
-    CALL testMPI2%partition(IWGT=testWGT,N1=1,N2=40,IDXMAP=testIDX)
-    WRITE(*,*) '  Passed: testMPI2%partition(...)'
-    FLUSH(OUTPUT_UNIT)
-  ENDIF
-  
-  CALL testMPI%barrier()
-  CALL testMPI%clear()
-  IF(testMPI%comm /= -1 .OR. testMPI%nproc /= -1 .OR. testMPI%rank /= -1 &
-     .OR. testMPI%master .OR. testMPI%isInit()) THEN
-    WRITE(OUTPUT_UNIT,*) myrank,'CALL testMPI%clear() FAILED!'
-#ifdef HAVE_MPI
-    FLUSH(OUTPUT_UNIT)
-    CALL MPI_Abort(MPI_COMM_WORLD,666,mpierr)
-#else
-    STOP 666
-#endif
-  ELSE
-    WRITE(OUTPUT_UNIT,*) '  Passed: CALL testMPI%clear()',myrank
-#ifdef HAVE_MPI
-    FLUSH(OUTPUT_UNIT)
-    CALL MPI_Barrier(MPI_COMM_WORLD,mpierr)
-#endif
-  ENDIF
-  IF(myrank == 0) WRITE(OUTPUT_UNIT,*) '---------------------------------------------------'
-  IF(myrank == 0) WRITE(OUTPUT_UNIT,*) 'TESTING PARENVTYPE'
-  
-#ifdef HAVE_MPI
-  FLUSH(OUTPUT_UNIT)
-  CALL MPI_Barrier(MPI_COMM_WORLD,mpierr)
-  CALL eParEnv%setStopOnError(.FALSE.)
-  CALL eParEnv%setQuietMode(.TRUE.)
-  CALL testPE%initialize(MPI_COMM_WORLD,0,0,0,0)
+      !Error Checking
+      CALL testMPI2%partition(IWGT=testWGT,N1=1,N2=40,IPART=100,IDXMAP=testIDX)
+      CALL testMPI2%partition(IWGT=testWGT,N1=41,N2=40,IDXMAP=testIDX)
+      CALL testMPI2%clear()
+      CALL testMPI2%partition(IWGT=testWGT,N1=1,N2=40,IDXMAP=testIDX)
+      
+      CALL testMPI%clear()
+      
+      COMPONENT_TEST('%gather')
+      !Need to test error conditions and 
+      !cases where SIZE(recvbuf) > SIZE(sbuf)*nproc
+      CALL testMPI%init(PE_COMM_WORLD)
+      ALLOCATE(ranks(testMPI%nproc))
+      ALLOCATE(ranks2(2,testMPI%nproc))
+      ranks=-1
+      ranks2=-1
+      CALL testMPI%gather(INT(testMPI%rank,SLK),ranks)
+      sbuf=(/testMPI%rank,-testMPI%rank/)
+      CALL testMPI%gather(sbuf,ranks2)
+      IF(testMPI%rank == 0) THEN
+        DO ip=1,testMPI%nproc
+          ASSERT(ranks(ip) == ip-1,'master ranks(ip)')
+          FINFO() ip-1,ranks(ip)
+          ASSERT(ALL(ranks2(:,ip) == (/ip-1,-ip+1/)),'master ranks2(ip)')
+          FINFO() ip-1,ranks2(:,ip)
+        ENDDO
+      ELSE
+        ASSERT(ALL(ranks == -1),'non-master ranks')
+        ASSERT(ALL(ranks2 == -1),'non-master ranks2')
+      ENDIF
+      DO ip=1,testMPI%nproc-1
+        ranks=-1
+        CALL testMPI%gather(INT(testMPI%rank,SLK),ranks,ip)
+        CALL testMPI%gather(sbuf,ranks2,ip)
+        IF(testMPI%rank == ip) THEN
+          DO jp=1,testMPI%nproc
+            ASSERT(ranks(jp) == jp-1,'master ranks(jp)')
+            FINFO() ip,jp-1,ranks(jp)
+            ASSERT(ALL(ranks2(:,jp) == (/jp-1,-jp+1/)),'master ranks2(jp)')
+            FINFO() ip,jp-1,ranks2(:,jp)
+          ENDDO
+        ELSE
+          ASSERT(ALL(ranks == -1),'non-ip ranks')
+          ASSERT(ALL(ranks2 == -1),'non-ip ranks2')
+        ENDIF
+      ENDDO
+    ENDSUBROUTINE testMPIEnv
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testPE_Env()
+      CALL eParEnv%setStopOnError(.FALSE.)
+      CALL eParEnv%setQuietMode(.TRUE.)
+      
+      !Test every line of isInit
+      COMPONENT_TEST('%isInit()')
+      ASSERT(.NOT.testPE%isInit(),'%isInit() 1')
+      CALL testPE%world%init(PE_COMM_SELF)
+      ASSERT(.NOT.testPE%isInit(),'%isInit() 2')
+      ALLOCATE(testPE%space)
+      ASSERT(.NOT.testPE%isInit(),'%isInit() 3')
+      CALL testPE%space%init(PE_COMM_SELF)
+      ASSERT(.NOT.testPE%isInit(),'%isInit() 4')
+      ALLOCATE(testPE%angle)
+      ASSERT(.NOT.testPE%isInit(),'%isInit() 5')
+      CALL testPE%angle%init(PE_COMM_SELF)
+      ASSERT(.NOT.testPE%isInit(),'%isInit() 6')
+      ALLOCATE(testPE%energy)
+      ASSERT(.NOT.testPE%isInit(),'%isInit() 7')
+      CALL testPE%energy%init(PE_COMM_SELF)
+      ALLOCATE(testPE%ray)
+      ASSERT(.NOT.testPE%isInit(),'%isInit() 8')
+      CALL testPE%ray%init()
+      ASSERT(testPE%isInit(),'%isInit() 9')
+      
+      COMPONENT_TEST('%clear()')
+      CALL testPE%clear()
+      ASSERT(.NOT.ASSOCIATED(testPE%energy),'%energy')
+      ASSERT(.NOT.ASSOCIATED(testPE%space),'%space')
+      ASSERT(.NOT.ASSOCIATED(testPE%angle),'%angle')
+      ASSERT(.NOT.ASSOCIATED(testPE%ray),'%ray')
+      ASSERT(.NOT.testPE%world%isInit(),'%isInit()')
+      
+      COMPONENT_TEST('%initialize(...)')
+      CALL testPE%initialize(PE_COMM_SELF,1,1,1,1)
+      ASSERT(testPE%world%comm /= PE_COMM_WORLD,'%world%comm world')
+      ASSERT(testPE%world%comm /= PE_COMM_SELF,'%world%comm self')
+      ASSERT(testPE%world%comm /= PE_COMM_NULL,'%world%comm null')
+      ASSERT(testPE%world%nproc == 1,'%world%nproc')
+      ASSERT(testPE%world%rank == 0,'%world%rank')
+      ASSERT(testPE%world%master,'%world%master')
+      ASSERT(testPE%world%isInit(),'%isInit()')
+      ASSERTFAIL(ASSOCIATED(testPE%energy),'%energy')
+      ASSERT(testPE%energy%comm /= PE_COMM_WORLD,'%energy%comm world')
+      ASSERT(testPE%energy%comm /= PE_COMM_SELF,'%energy%comm self')
+      ASSERT(testPE%energy%comm /= PE_COMM_NULL,'%energy%comm null')
+      ASSERT(testPE%energy%nproc == 1,'%energy%nproc')
+      ASSERT(testPE%energy%rank == 0,'%energy%rank')
+      ASSERT(testPE%energy%master,'%energy%master')
+      ASSERT(testPE%energy%isInit(),'%isInit()')
+      ASSERTFAIL(ASSOCIATED(testPE%space),'%space')
+      ASSERT(testPE%space%comm /= PE_COMM_WORLD,'%space%comm world')
+      ASSERT(testPE%space%comm /= PE_COMM_SELF,'%space%comm self')
+      ASSERT(testPE%space%comm /= PE_COMM_NULL,'%space%comm null')
+      ASSERT(testPE%space%nproc == 1,'%space%nproc')
+      ASSERT(testPE%space%rank == 0,'%space%rank')
+      ASSERT(testPE%space%master,'%space%master')
+      ASSERT(testPE%space%isInit(),'%isInit()')
+      ASSERTFAIL(ASSOCIATED(testPE%angle),'%angle')
+      ASSERT(testPE%angle%comm /= PE_COMM_WORLD,'%angle%comm world')
+      ASSERT(testPE%angle%comm /= PE_COMM_SELF,'%angle%comm self')
+      ASSERT(testPE%angle%comm /= PE_COMM_NULL,'%angle%comm null')
+      ASSERT(testPE%angle%nproc == 1,'%angle%nproc')
+      ASSERT(testPE%angle%rank == 0,'%angle%rank')
+      ASSERT(testPE%angle%master,'%angle%master')
+      ASSERT(testPE%angle%isInit(),'%isInit()')
+      ASSERTFAIL(ASSOCIATED(testPE%ray),'%ray')
+      ASSERT(testPE%ray%nproc == 1,'%ray%nproc')
+      ASSERT(testPE%ray%rank == 0,'%ray%rank')
+      ASSERT(testPE%ray%master,'%ray%master')
+      ASSERT(testPE%ray%isInit(),'%isInit()')
+      
+      COMPONENT_TEST('OPERATOR(=)')
+      testPE2=testPE
+      ASSERT(testPE2%world%comm /= testPE%world%comm,'world%comm')
+      ASSERT(testPE2%world%nproc == testPE%world%nproc,'%world%nproc')
+      ASSERT(testPE2%world%rank == testPE%world%rank,'%world%rank')
+      ASSERT(testPE2%world%master .EQV. testPE%world%master,'%world%master')
+      ASSERT(testPE2%world%isInit() .EQV. testPE%world%isInit(),'%isInit()')
+      ASSERTFAIL(ASSOCIATED(testPE2%energy),'%energy')
+      ASSERT(.NOT.ASSOCIATED(testPE2%energy,testPE%energy),'%energy')
+      ASSERT(testPE2%energy%comm /= PE_COMM_WORLD,'%energy%comm world')
+      ASSERT(testPE2%energy%comm /= PE_COMM_SELF,'%energy%comm self')
+      ASSERT(testPE2%energy%comm /= PE_COMM_NULL,'%energy%comm null')
+      ASSERT(testPE2%energy%comm /= testPE%energy%comm,'%energy%comm')
+      ASSERT(testPE2%energy%nproc == testPE%energy%nproc,'%energy%nproc')
+      ASSERT(testPE2%energy%rank == testPE%energy%rank,'%energy%rank')
+      ASSERT(testPE2%energy%master .EQV. testPE%energy%master,'%energy%master')
+      ASSERT(testPE2%energy%isInit() .EQV. testPE%energy%isInit(),'%isInit()')
+      ASSERTFAIL(ASSOCIATED(testPE2%space),'%space')
+      ASSERT(.NOT.ASSOCIATED(testPE2%space,testPE%space),'%space')
+      ASSERT(testPE2%space%comm /= PE_COMM_WORLD,'%space%comm world')
+      ASSERT(testPE2%space%comm /= PE_COMM_SELF,'%space%comm self')
+      ASSERT(testPE2%space%comm /= PE_COMM_NULL,'%space%comm null')
+      ASSERT(testPE2%space%comm /= testPE%space%comm,'%space%comm')
+      ASSERT(testPE2%space%nproc == testPE%space%nproc,'%space%nproc')
+      ASSERT(testPE2%space%rank == testPE%space%rank,'%space%rank')
+      ASSERT(testPE2%space%master .EQV. testPE%space%master,'%space%master')
+      ASSERT(testPE2%space%isInit() .EQV. testPE%space%isInit(),'%isInit()')
+      ASSERTFAIL(ASSOCIATED(testPE2%angle),'%angle')
+      ASSERT(.NOT.ASSOCIATED(testPE2%angle,testPE%angle),'%angle')
+      ASSERT(testPE2%angle%comm /= PE_COMM_WORLD,'%angle%comm world')
+      ASSERT(testPE2%angle%comm /= PE_COMM_SELF,'%angle%comm self')
+      ASSERT(testPE2%angle%comm /= PE_COMM_NULL,'%angle%comm null')
+      ASSERT(testPE2%angle%comm /= testPE%angle%comm,'%angle%comm')
+      ASSERT(testPE2%angle%nproc == testPE%angle%nproc,'%angle%nproc')
+      ASSERT(testPE2%angle%rank == testPE%angle%rank,'%angle%rank')
+      ASSERT(testPE2%angle%master .EQV. testPE%angle%master,'%angle%master')
+      ASSERT(testPE2%angle%isInit() .EQV. testPE%angle%isInit(),'%isInit()')
+      ASSERTFAIL(ASSOCIATED(testPE2%ray),'%ray')
+      ASSERT(.NOT.ASSOCIATED(testPE2%ray,testPE%ray),'%ray')
+      ASSERT(testPE2%ray%nproc == testPE%ray%nproc,'%ray%nproc')
+      ASSERT(testPE2%ray%rank == testPE%ray%rank,'%ray%rank')
+      ASSERT(testPE2%ray%master .EQV. testPE%ray%master,'%ray%master')
+      ASSERT(testPE2%ray%isInit() .EQV. testPE%ray%isInit(),'%isInit()')
+      CALL testPE2%clear()
+      ASSERT(testPE%world%comm /= PE_COMM_WORLD,'%world%comm world')
+      ASSERT(testPE%world%comm /= PE_COMM_SELF,'%world%comm self')
+      ASSERT(testPE%world%comm /= PE_COMM_NULL,'%world%comm null')
+      ASSERT(testPE%world%nproc == 1,'%world%nproc')
+      ASSERT(testPE%world%rank == 0,'%world%rank')
+      ASSERT(testPE%world%master,'%world%master')
+      ASSERT(testPE%world%isInit(),'%isInit()')
+      ASSERTFAIL(ASSOCIATED(testPE%energy),'%energy')
+      ASSERT(testPE%energy%comm /= PE_COMM_WORLD,'%energy%comm world')
+      ASSERT(testPE%energy%comm /= PE_COMM_SELF,'%energy%comm self')
+      ASSERT(testPE%energy%comm /= PE_COMM_NULL,'%energy%comm null')
+      ASSERT(testPE%energy%nproc == 1,'%energy%nproc')
+      ASSERT(testPE%energy%rank == 0,'%energy%rank')
+      ASSERT(testPE%energy%master,'%energy%master')
+      ASSERT(testPE%energy%isInit(),'%isInit()')
+      ASSERTFAIL(ASSOCIATED(testPE%space),'%space')
+      ASSERT(testPE%space%comm /= PE_COMM_WORLD,'%space%comm world')
+      ASSERT(testPE%space%comm /= PE_COMM_SELF,'%space%comm self')
+      ASSERT(testPE%space%comm /= PE_COMM_NULL,'%space%comm null')
+      ASSERT(testPE%space%nproc == 1,'%space%nproc')
+      ASSERT(testPE%space%rank == 0,'%space%rank')
+      ASSERT(testPE%space%master,'%space%master')
+      ASSERT(testPE%space%isInit(),'%isInit()')
+      ASSERTFAIL(ASSOCIATED(testPE%angle),'%angle')
+      ASSERT(testPE%angle%comm /= PE_COMM_WORLD,'%angle%comm world')
+      ASSERT(testPE%angle%comm /= PE_COMM_SELF,'%angle%comm self')
+      ASSERT(testPE%angle%comm /= PE_COMM_NULL,'%angle%comm null')
+      ASSERT(testPE%angle%nproc == 1,'%angle%nproc')
+      ASSERT(testPE%angle%rank == 0,'%angle%rank')
+      ASSERT(testPE%angle%master,'%angle%master')
+      ASSERT(testPE%angle%isInit(),'%isInit()')
+      ASSERTFAIL(ASSOCIATED(testPE%ray),'%ray')
+      ASSERT(testPE%ray%nproc == 1,'%ray%nproc')
+      ASSERT(testPE%ray%rank == 0,'%ray%rank')
+      ASSERT(testPE%ray%master,'%ray%master')
+      ASSERT(testPE%ray%isInit(),'%isInit()')
+      CALL testPE%clear()
+
+      !Error Checking coverage
+      CALL testPE%initialize(PE_COMM_WORLD,0,0,0,0)
+!      
+!Not sure if we want to every resurrect this stuff.
+!
+  !CALL testPE%initialize(PE_COMM_WORLD,0,0,0,0)    
   !CALL testPE%init(MPI_COMM_WORLD,mysize,1,1,1)
   !CALL testPE%world%barrier()
   !WRITE(OUTPUT_UNIT,*) myrank,testPE%space%rank,testPE%energy%rank,testPE%angle%rank
@@ -431,106 +490,6 @@ PROGRAM testParallelEnv
 !    FLUSH(OUTPUT_UNIT)
 !    CALL testPE3%world%barrier()
 !  ENDIF
-#else
-  !Test every line of isInit
-  IF(testPE%isInit()) THEN
-    WRITE(*,*) 'CALL testPE%isInit() world%isInit() FAILED!'
-    STOP 666
-  ENDIF
-  CALL testPE%world%init(0)
-  IF(testPE%isInit()) THEN
-    WRITE(*,*) 'CALL testPE%isInit() ASSOCIATED(space) FAILED!'
-    STOP 666
-  ENDIF
-  ALLOCATE(testPE%space)
-  IF(testPE%isInit()) THEN
-    WRITE(*,*) 'CALL testPE%isInit() space%isInit() FAILED!'
-    STOP 666
-  ENDIF
-  CALL testPE%space%init(0)
-  IF(testPE%isInit()) THEN
-    WRITE(*,*) 'CALL testPE%isInit() ASSOCIATED(angle) FAILED!'
-    STOP 666
-  ENDIF
-  ALLOCATE(testPE%angle)
-  IF(testPE%isInit()) THEN
-    WRITE(*,*) 'CALL testPE%isInit() angle%isInit() FAILED!'
-    STOP 666
-  ENDIF
-  CALL testPE%angle%init(0)
-  IF(testPE%isInit()) THEN
-    WRITE(*,*) 'CALL testPE%isInit() ASSOCIATED(energy) FAILED!'
-    STOP 666
-  ENDIF
-  ALLOCATE(testPE%energy)
-  IF(testPE%isInit()) THEN
-    WRITE(*,*) 'CALL testPE%isInit() energy%isInit() FAILED!'
-    STOP 666
-  ENDIF
-  CALL testPE%energy%init(0)
-  IF(testPE%isInit()) THEN
-    WRITE(*,*) 'CALL testPE%isInit() ASSOCIATED(ray) FAILED!'
-    STOP 666
-  ENDIF
-  ALLOCATE(testPE%ray)
-  IF(testPE%isInit()) THEN
-    WRITE(*,*) 'CALL testPE%isInit() ray%isInit() FAILED!'
-    STOP 666
-  ENDIF
-  CALL testPE%ray%init()
-  IF(.NOT.testPE%isInit()) THEN
-    WRITE(*,*) 'CALL testPE%isInit() FAILED!'
-    STOP 666
-  ELSE
-    WRITE(OUTPUT_UNIT,*) '  Passed: CALL testPE%isInit()'
-  ENDIF
-  CALL testPE%clear()
-  
-  CALL testPE%initialize(0,1,1,1,1)
-  IF(.NOT.testPE%isInit() .OR. testPE%world%comm /= 1 .OR. &
-     testPE%world%nproc /=1 .OR. testPE%world%rank /= 0 .OR. &
-     .NOT.testPE%world%master .OR. .NOT.testPE%energy%master .OR. &
-     .NOT.testPE%energy%isInit() .OR. testPE%energy%comm /= 1 .OR. &
-     testPE%energy%nproc /=1 .OR. testPE%energy%rank /= 0 .OR.  &
-     .NOT.testPE%space%isInit() .OR. testPE%space%comm /= 1 .OR. &
-     testPE%space%nproc /=1 .OR. testPE%space%rank /= 0 .OR. &
-     .NOT.testPE%space%master .OR. .NOT.testPE%angle%master .OR. &
-     .NOT.testPE%angle%isInit() .OR. testPE%angle%comm /= 1 .OR. &
-     testPE%angle%nproc /=1 .OR. testPE%angle%rank /= 0 .OR.  &
-     testPE%ray%nproc /= 1 .OR. testPE%ray%rank /= 0 .OR. &
-     .NOT.testPE%ray%master) THEN
-    WRITE(OUTPUT_UNIT,*) 'CALL testPE%init() FAILED!'
-    STOP 666
-  ELSE
-    WRITE(OUTPUT_UNIT,*) '  Passed: CALL testPE%init()'
-  ENDIF
-#endif
-  CALL testPE%clear()
-  IF(testPE%world%isInit() .OR. ASSOCIATED(testPE%space) .OR. &
-     ASSOCIATED(testPE%angle) .OR. ASSOCIATED(testPE%ray)) THEN
-    WRITE(OUTPUT_UNIT,*) 'CALL testPE%clear() FAILED!',myrank
-#ifdef HAVE_MPI
-    FLUSH(OUTPUT_UNIT)
-    CALL MPI_Abort(MPI_COMM_WORLD,666,mpierr)
-#else
-    STOP 666
-#endif
-  ELSE
-    WRITE(OUTPUT_UNIT,*) '  Passed: CALL testPE%clear()',myrank
-#ifdef HAVE_MPI
-    FLUSH(OUTPUT_UNIT)
-    CALL MPI_Barrier(MPI_COMM_WORLD,mpierr)
-#endif
-  ENDIF
-
-  IF(myrank == 0) THEN
-    WRITE(*,*) '==================================================='
-    WRITE(*,*) 'TESTING PARALLEL ENVIRONMENT PASSED!'
-    WRITE(*,*) '==================================================='
-  ENDIF
-#ifdef HAVE_MPI
-  FLUSH(OUTPUT_UNIT)
-  CALL MPI_Barrier(MPI_COMM_WORLD,mpierr)
-#endif
-  CALL testMPI%finalize()
+    ENDSUBROUTINE testPE_Env
+!
 ENDPROGRAM testParallelEnv

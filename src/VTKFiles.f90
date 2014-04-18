@@ -302,7 +302,7 @@ MODULE VTKFiles
                                  position,action,pad,recl)
       CHARACTER(LEN=*),PARAMETER :: myName='init_VTKLegFileType'
       CLASS(VTKLegFileType),INTENT(INOUT) :: fileobj
-      INTEGER(SIK),INTENT(IN) :: unit
+      INTEGER(SIK),OPTIONAL,INTENT(IN) :: unit
       CHARACTER(LEN=*),INTENT(IN) :: file
       CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: status
       CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: access
@@ -732,6 +732,7 @@ MODULE VTKFiles
 !> unnecessarily bloated. This routine sorts the point list, removes the
 !> redundant points, reconstructs the point list, and alters the node list to
 !> reflect the new point list.
+!>
     SUBROUTINE removeRedundantPts(thisVTKMesh)
       CLASS(VTKMeshType),INTENT(INOUT) :: thisVTKMesh
       LOGICAL(SBK),ALLOCATABLE :: isRedundant(:)

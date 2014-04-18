@@ -17,8 +17,15 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testLinearSolver
 #include "UnitTest.h"
-  USE UnitTest 
-  USE Utils
+  USE UnitTest
+  USE IntrType
+  USE ExceptionHandler
+  USE ParameterLists
+  USE ParallelEnv
+  USE VectorTypes
+  USE MatrixTypes
+  USE PreconditionerTypes
+  USE LinearSolverTypes
   
   IMPLICIT NONE
   

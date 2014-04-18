@@ -139,11 +139,12 @@ MODULE FileType_Log
 !> @param action Optional input is not used by this routine.
 !> @param pad Optional input is not used by this routine.
 !> @param recl Optional input is not used by this routine.
+!>
     SUBROUTINE init_log_file(fileobj,unit,file,status,access,form, &
                                  position,action,pad,recl)
       CHARACTER(LEN=*),PARAMETER :: myName='init_log_file'
       CLASS(LogFileType),INTENT(INOUT) :: fileobj
-      INTEGER(SIK),INTENT(IN) :: unit
+      INTEGER(SIK),OPTIONAL,INTENT(IN) :: unit
       CHARACTER(LEN=*),INTENT(IN) :: file
       CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: status
       CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: access
@@ -184,6 +185,7 @@ MODULE FileType_Log
 !> @brief Clears the log file object and resets its state to the unitialized
 !> state.
 !> @param file log file object.
+!>
     SUBROUTINE clear_log_file(file,ldel)
       CLASS(LogFileType),INTENT(INOUT) :: file
       LOGICAL(SBK),OPTIONAL,INTENT(IN) :: ldel
@@ -202,6 +204,7 @@ MODULE FileType_Log
 !>
 !> The echo status means that messages written be the log file will be echoed to
 !> standard output (e.g. the prompt).
+!>
     SUBROUTINE echo_log_file(file,bool)
       CLASS(LogFileType),INTENT(INOUT) :: file
       LOGICAL(SBK),INTENT(IN) :: bool
@@ -212,6 +215,7 @@ MODULE FileType_Log
 !> @brief Returns the echo status of the log file object
 !> @param file log file object.
 !> @returns bool the logical value of the echo status
+!> 
     PURE FUNCTION isecho_log_file(file) RESULT(bool)
       CLASS(LogFileType),INTENT(IN) :: file
       LOGICAL(SBK) :: bool

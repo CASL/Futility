@@ -56,8 +56,10 @@ TRIBITS_ADD_LIBRARY(Utils
       IO_Strings.f90
       FileType_Base.f90
       FileType_Fortran.f90
+      FileType_DA32.f90
       FileType_HDF5.f90
       FileType_Log.f90
+      FileType_Checkpoint.f90
       FileType_Input.f90
       VTKFiles.f90
       IOutil.f90
@@ -69,7 +71,6 @@ TRIBITS_ADD_LIBRARY(Utils
       LinearSolverTypes.f90
       StochasticSampling.f90
       Sorting.f90
-      Utils.f90
     DEPLIBS
       CUtils
 )

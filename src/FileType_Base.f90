@@ -44,39 +44,28 @@
 !>   @date 07/06/2011
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE FileType_Base
-      
   USE IntrType
+  USE Strings
   USE ExceptionHandler
   IMPLICIT NONE
   PRIVATE
   
   !List of Public Members
-  PUBLIC :: MAX_PATH_LENGTH
-  PUBLIC :: MAX_FNAME_LENGTH
-  PUBLIC :: MAX_FEXT_LENGTH
   PUBLIC :: BaseFileType
   PUBLIC :: clear_base_file
-  
-  !> The maximum allowable length for the path to a file.
-  INTEGER(SIK),PARAMETER :: MAX_PATH_LENGTH=256
-  !> The maximum allowable length for a file name
-  !> (with extension, excludes path)
-  INTEGER(SIK),PARAMETER :: MAX_FNAME_LENGTH=64
-  !> The maximum allowable length for the extension to a file
-  INTEGER(SIK),PARAMETER :: MAX_FEXT_LENGTH=16
   
   CHARACTER(LEN=*),PARAMETER :: modName='FILETYPE_BASE'
   
   !> @brief Base derived type for a file object
   !>
   !> This is an abstract type which means it has no basic implementation
-  TYPE, ABSTRACT :: BaseFileType
+  TYPE,ABSTRACT :: BaseFileType
     !> The path string to the file
-    CHARACTER(LEN=MAX_PATH_LENGTH),PRIVATE :: path=''
+    TYPE(StringType),PRIVATE :: path
     !> The name of the file (without the file extension)
-    CHARACTER(LEN=MAX_FNAME_LENGTH),PRIVATE :: name=''
+    TYPE(StringType),PRIVATE :: name
     !> The extension of the file name
-    CHARACTER(LEN=MAX_FEXT_LENGTH),PRIVATE :: ext=''
+    TYPE(StringType),PRIVATE :: ext
     !> Whether or not the file is open
     LOGICAL(SBK),PRIVATE :: openstat=.FALSE.
     !> Whether or not the end of file has been reached
@@ -142,15 +131,6 @@ MODULE FileType_Base
       !> @copydetails FileType_Base::isWrite_file
       PROCEDURE,PASS :: isWrite => isWrite_file
   ENDTYPE BaseFileType
-  
-  !> An abstract interface for type bound procedures for opening, closing,
-  !> and deleting a file.
-  ABSTRACT INTERFACE
-    SUBROUTINE FileBase_sub_absintfc(file)
-      IMPORT :: BaseFileType
-      CLASS(BaseFileType),INTENT(INOUT) :: file
-    ENDSUBROUTINE FileBase_sub_absintfc
-  ENDINTERFACE
 !
 !===============================================================================
   CONTAINS
@@ -159,6 +139,7 @@ MODULE FileType_Base
 !> @brief Sets the value for the path of the file name
 !>
 !> Cannot be done when the file is open.
+!>
     SUBROUTINE setFilePath_file(file,pathstr)
       CHARACTER(LEN=*),PARAMETER :: myName='setFilePath_file'
       CLASS(BaseFileType),INTENT(INOUT) :: file
@@ -167,9 +148,7 @@ MODULE FileType_Base
         CALL file%e%raiseError(modName//'::'//myName//' - '// &
           'Cannot change path of file while it is open!')
       ELSE
-        IF(LEN_TRIM(pathstr) > MAX_PATH_LENGTH) CALL file%e%raiseError( &
-          modName//'::'//myName//' - input string is too long to store!')
-        file%path=TRIM(pathstr)
+        file%path=TRIM(ADJUSTL(pathstr))
       ENDIF
     ENDSUBROUTINE setFilePath_file
 !
@@ -177,6 +156,7 @@ MODULE FileType_Base
 !> @brief Sets the value for the file name
 !>
 !> Cannot be done when the file is open.
+!>
     SUBROUTINE setFileName_file(file,namestr)
       CHARACTER(LEN=*),PARAMETER :: myName='setFileName_file'
       CLASS(BaseFileType),INTENT(INOUT) :: file
@@ -185,9 +165,7 @@ MODULE FileType_Base
         CALL file%e%raiseError(modName//'::'//myName//' - '// &
           'Cannot change name of file while it is open!')
       ELSE
-        IF(LEN_TRIM(namestr) > MAX_FNAME_LENGTH) CALL file%e%raiseError( &
-          modName//'::'//myName//' - input string is too long to store!')
-        file%name=TRIM(namestr)
+        file%name=TRIM(ADJUSTL(namestr))
       ENDIF
     ENDSUBROUTINE setFileName_file
 !
@@ -195,17 +173,16 @@ MODULE FileType_Base
 !> @brief Sets the value for the file name extension
 !>
 !> Cannot be done when the file is open.
+!>
     SUBROUTINE setFileExt_file(file,extstr)
       CHARACTER(LEN=*),PARAMETER :: myName='setFileExt_file'
       CLASS(BaseFileType),INTENT(INOUT) :: file
       CHARACTER(LEN=*),INTENT(IN) :: extstr
       IF(file%openstat) THEN
         CALL file%e%raiseError(modName//'::'//myName//' - '// &
-          'Cannot change extension of file while it is open!!')
+          'Cannot change extension of file while it is open!')
       ELSE
-        IF(LEN_TRIM(extstr) > MAX_FEXT_LENGTH) CALL file%e%raiseError( &
-          modName//'::'//myName//' - input string is too long to store!')
-        file%ext=TRIM(extstr)
+        file%ext=TRIM(ADJUSTL(extstr))
       ENDIF
     ENDSUBROUTINE setFileExt_file
 !
@@ -227,26 +204,15 @@ MODULE FileType_Base
 !> The file extension is everything in string after and including the last '.'
 !> character. If there is no '.' character in the file name then the extension
 !> is an empty string.
+!>
     SUBROUTINE getFileParts_file(file,path,fname,ext)
-      CHARACTER(LEN=*),PARAMETER :: myName='getFileParts_file'
       CLASS(BaseFileType),INTENT(INOUT) :: file
-      CHARACTER(LEN=*),INTENT(OUT) :: path
-      CHARACTER(LEN=*),INTENT(OUT) :: fname
-      CHARACTER(LEN=*),INTENT(OUT) :: ext
-      IF(LEN(path) < LEN_TRIM(file%path)) CALL file%e%raiseError(modName// &
-        '::'//myName//' - input string for PATH is not long enough to '// &
-          'contain full path!')
-      path=TRIM(file%path)
-      IF(LEN(fname) < LEN_TRIM(file%name)) CALL file%e%raiseError(modName// &
-        '::'//myName//' - input string for file name is not long enough to'// &
-          ' contain full path!')
-      IF(LEN_TRIM(file%name) == 0) CALL file%e%raiseWarning(modName//'::'// &
-        myName//' - the file name appears to be empty!')
-      fname=TRIM(file%name)
-      IF(LEN(ext) < LEN_TRIM(file%ext)) CALL file%e%raiseError(modName//'::'// &
-        myName//' - input string for EXTENSION is not long enough to '// &
-          'contain full string.')
-      ext=TRIM(file%ext)
+      TYPE(StringType),INTENT(OUT) :: path
+      TYPE(StringType),INTENT(OUT) :: fname
+      TYPE(StringType),INTENT(OUT) :: ext
+      path=file%path
+      fname=file%name
+      ext=file%ext
     ENDSUBROUTINE getFileParts_file
 !
 !-------------------------------------------------------------------------------
@@ -254,36 +220,40 @@ MODULE FileType_Base
 !> @param file the file object
 !> @param path output string containing just the path (includes file separator 
 !>        at the end)
+!>
     PURE FUNCTION getFilePath_file(file) RESULT(path)
       CLASS(BaseFileType),INTENT(IN) :: file
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
-      path=TRIM(file%path)
+      CHARACTER(LEN=file%path%ntrim) :: path
+      path=file%path
     ENDFUNCTION getFilePath_file
 !
 !-------------------------------------------------------------------------------
 !> @brief Get the file name of a file object.
 !> @param file the file object
 !> @param fname output string with the filename (excludes extension)
+!>
     PURE FUNCTION getFileName_file(file) RESULT(fname)
       CLASS(BaseFileType),INTENT(IN) :: file
-      CHARACTER(LEN=MAX_FNAME_LENGTH) :: fname
-      fname=TRIM(file%name)
+      CHARACTER(LEN=file%name%ntrim) :: fname
+      fname=file%name
     ENDFUNCTION getFileName_file
 !
 !-------------------------------------------------------------------------------
 !> @brief Get the file name extension of a file object
 !> @param file the file object
 !> @param ext output string with the filename extension (including the '.')
+!>
     PURE FUNCTION getFileExt_file(file) RESULT(ext)
       CLASS(BaseFileType),INTENT(IN) :: file
-      CHARACTER(LEN=MAX_FEXT_LENGTH) :: ext
-      ext=TRIM(file%ext)
+      CHARACTER(LEN=file%ext%ntrim) :: ext
+      ext=file%ext
     ENDFUNCTION getFileExt_file
 !
 !-------------------------------------------------------------------------------
 !> @brief Function to query if the file is currently open
 !> @param file the file object
 !> @returns bool a logical for the open status
+!>
     PURE FUNCTION isOpen_file(file) RESULT(bool)
       CLASS(BaseFileType),INTENT(IN) :: file
       LOGICAL(SBK) :: bool
@@ -294,6 +264,7 @@ MODULE FileType_Base
 !> @brief Function to query if the end of file has been reached.
 !> @param file the file object
 !> @returns bool a logical for the end of file status
+!>
     PURE FUNCTION isEOF_file(file) RESULT(bool)
       CLASS(BaseFileType),INTENT(IN) :: file
       LOGICAL(SBK) :: bool
@@ -304,6 +275,7 @@ MODULE FileType_Base
 !> @brief Function to query if the file was opened for writing.
 !> @param file the file object
 !> @returns bool a logical for the write status
+!>
     PURE FUNCTION isWrite_file(file) RESULT(bool)
       CLASS(BaseFileType),INTENT(IN) :: file
       LOGICAL(SBK) :: bool
@@ -314,6 +286,7 @@ MODULE FileType_Base
 !> @brief Function to query if the file was opened for reading.
 !> @param file the file object
 !> @returns bool a logical for the read status
+!>
     PURE FUNCTION isRead_file(file) RESULT(bool)
       CLASS(BaseFileType),INTENT(IN) :: file
       LOGICAL(SBK) :: bool
@@ -325,6 +298,7 @@ MODULE FileType_Base
 !> has been reached.
 !> 
 !> Cannot be changed if the file is closed.
+!>
     SUBROUTINE setEOFstat_file(file,bool)
       CHARACTER(LEN=*),PARAMETER :: myName='setEOFstat_file'
       CLASS(BaseFileType),INTENT(INOUT) :: file
@@ -343,6 +317,7 @@ MODULE FileType_Base
 !> There is no sufficient way to protect this attribute from being corrupted, 
 !> but this method, in general should NEVER be called unless it is within the
 !> fopen or fclose methods.
+!>
     SUBROUTINE setOpenStat_file(file,bool)
       CLASS(BaseFileType),INTENT(INOUT) :: file
       LOGICAL(SBK),INTENT(IN) :: bool
@@ -354,6 +329,7 @@ MODULE FileType_Base
 !> be opened for reading.
 !>
 !> Cannot be changed if the file is open.
+!>
     SUBROUTINE setReadStat_file(file,bool)
       CHARACTER(LEN=*),PARAMETER :: myName='setReadStat_file'
       CLASS(BaseFileType),INTENT(INOUT) :: file
@@ -371,6 +347,7 @@ MODULE FileType_Base
 !> be opened for writing.
 !>
 !> Cannot be changed if the file is open.
+!>
     SUBROUTINE setWriteStat_file(file,bool)
       CHARACTER(LEN=*),PARAMETER :: myName='setWriteStat_file'
       CLASS(BaseFileType),INTENT(INOUT) :: file
@@ -399,5 +376,17 @@ MODULE FileType_Base
       file%writestat=.FALSE.
       CALL file%e%reset()
     ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+!> @brief An abstract interface for type bound procedures for opening, closing,
+!> and deleting a file.
+!>
+!> This was previously defined as an abstract interface, but this caused link
+!> errors with Intel 12.1.5, so just changing it to an actual procedure. The
+!> Intel 12.1.5. link error is a compiler bug.
+!>
+    SUBROUTINE FileBase_sub_absintfc(file)
+      CLASS(BaseFileType),INTENT(INOUT) :: file
+    ENDSUBROUTINE FileBase_sub_absintfc
 !
 ENDMODULE FileType_Base

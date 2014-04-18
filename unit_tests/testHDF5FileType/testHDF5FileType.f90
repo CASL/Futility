@@ -19,7 +19,11 @@ PROGRAM testHDF5
 #include "UnitTest.h"
   USE ISO_FORTRAN_ENV
   USE UnitTest
-  USE Utils
+  USE IntrType
+  USE Strings
+  USE ExceptionHandler
+  USE ParallelEnv
+  USE FileType_HDF5
   
   IMPLICIT NONE
   
@@ -66,8 +70,8 @@ PROGRAM testHDF5
       refL1,refL2,refL3,refN1,refN2,refN3,refST1,refST2,refST3,refsets)
 
   FINALIZE_TEST()
-  CALL testMPI%finalize()
   CALL testMPI%clear()
+  CALL testMPI%finalize()
 
 !
 !===============================================================================

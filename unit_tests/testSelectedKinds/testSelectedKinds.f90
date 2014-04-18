@@ -18,7 +18,7 @@
 PROGRAM testSelectedKinds
 #include "UnitTest.h"
   USE UnitTest
-  USE Utils
+  USE IntrType
   
   IMPLICIT NONE
 

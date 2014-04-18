@@ -150,6 +150,9 @@ MODULE IO_Strings
   !> This interfaces is presently redundant but is provided on the
   !> assumption that it may be needed later.
   INTERFACE getFileParts
+    !> @copybrief IO_Strings::getFileParts_char
+    !> @copydetails IO_Strings::getFileParts_char
+    MODULE PROCEDURE getFileParts_char
     !> @copybrief IO_Strings::getFileParts_string
     !> @copydetails IO_Strings::getFileParts_string
     MODULE PROCEDURE getFileParts_string
@@ -171,7 +174,7 @@ MODULE IO_Strings
   !> assumption that it may be needed later.
   INTERFACE getFileName
     !> @copybrief IO_Strings::getFileName_string
-    !> @copydetails IO_Strings::getFileParts_string
+    !> @copydetails IO_Strings::getFileParts_char
     MODULE PROCEDURE getFileName_string
   ENDINTERFACE getFileName
   
@@ -706,32 +709,52 @@ MODULE IO_Strings
 !> character. If there is no '.' character in the file name then the extension
 !> is an empty string.
 !>
-    SUBROUTINE getFileParts_string(string,path,fname,ext,e)
+    SUBROUTINE getFileParts_char(string,path,fname,ext,e)
       CHARACTER(LEN=*),INTENT(IN) :: string
       CHARACTER(LEN=*),INTENT(OUT) :: path
       CHARACTER(LEN=*),INTENT(OUT) :: fname
       CHARACTER(LEN=*),INTENT(OUT) :: ext
+      TYPE(ExceptionHandlerType),INTENT(INOUT),OPTIONAL :: e
       INTEGER(SIK) :: i
-      TYPE(ExceptionHandlerType),OPTIONAL :: e
 
-      IF(PRESENT(e)) THEN
-        CALL getPath_string(string,path,e)
-        CALL getFileName_string(string,fname,e)
-      ELSE
-        CALL getPath_string(string,path)
-        CALL getFileName_string(string,fname)
-      ENDIF
+      CALL getPath_string(string,path,e)
+      CALL getFileName_string(string,fname,e)
       DO i=LEN_TRIM(fname),1,-1
         IF(fname(i:i) == DOT) THEN
           fname=fname(1:i-1)
           EXIT
         ENDIF
       ENDDO
-      IF(PRESENT(e)) THEN
-        CALL getFileNameExt_string(string,ext,e)
-      ELSE
-        CALL getFileNameExt_string(string,ext)
-      ENDIF
+      CALL getFileNameExt_string(string,ext,e)
+    ENDSUBROUTINE getFileParts_char
+!
+!-------------------------------------------------------------------------------
+!> @brief Separate the path and filename.
+!> @param string input that is a path and filename
+!> @param path output string containing just the path (includes file separator
+!>        at the end)
+!> @param fname output string with the filename
+!> @param ext output string with the filename extension (including the '.')
+!>
+!> This is a wrapper routine for @ref IO_Strings::getFileParts_char 
+!> "getFileParts_char".
+!>
+!> See also: @ref IO_Strings::getFileParts_char "getFileParts_char"
+!>
+    SUBROUTINE getFileParts_string(string,path,fname,ext,e)
+      CHARACTER(LEN=*),INTENT(IN) :: string
+      TYPE(StringType),INTENT(OUT) :: path
+      TYPE(StringType),INTENT(OUT) :: fname
+      TYPE(StringType),INTENT(OUT) :: ext
+      TYPE(ExceptionHandlerType),INTENT(INOUT),OPTIONAL :: e
+      CHARACTER(LEN=LEN(string)) :: pathchar
+      CHARACTER(LEN=LEN(string)) :: fnamechar
+      CHARACTER(LEN=LEN(string)) :: extchar
+      
+      CALL getFileParts_char(string,pathchar,fnamechar,extchar,e)
+      path=pathchar
+      fname=fnamechar
+      ext=extchar
     ENDSUBROUTINE getFileParts_string
 !
 !-------------------------------------------------------------------------------
@@ -862,6 +885,8 @@ MODULE IO_Strings
       stp=stt+LEN(string)
       line(stt:stp)=string
     ENDFUNCTION printCentered
+!
+!-------------------------------------------------------------------------------
 !> @brief Returns whether or not a substring @c pattern is found within @c 
 !> string array
 !> @param string the stringarray to search

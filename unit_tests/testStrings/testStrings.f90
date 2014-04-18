@@ -18,7 +18,8 @@
 PROGRAM testStrings
 #include "UnitTest.h"
   USE UnitTest  
-  USE Utils
+  USE IntrType
+  USE Strings
   
   IMPLICIT NONE
   

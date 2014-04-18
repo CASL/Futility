@@ -18,7 +18,8 @@
 PROGRAM testSorting
 #include "UnitTest.h"
   USE UnitTest
-  USE Utils
+  USE IntrType
+  USE Sorting
   
   IMPLICIT NONE
   

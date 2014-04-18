@@ -19,7 +19,8 @@ PROGRAM testExceptionHandler
 #include "UnitTest.h"
   USE ISO_FORTRAN_ENV
   USE UnitTest
-  USE Utils
+  USE IntrType
+  USE ExceptionHandler
   
   IMPLICIT NONE
 

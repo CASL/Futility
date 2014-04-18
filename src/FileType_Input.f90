@@ -162,11 +162,12 @@ MODULE FileType_Input
 !> @param action Optional input is not used by this routine.
 !> @param pad Optional input is not used by this routine.
 !> @param recl Optional input is not used by this routine.
+!>
     SUBROUTINE init_inp_file(fileobj,unit,file,status,access,form, &
                                  position,action,pad,recl)
       CHARACTER(LEN=*),PARAMETER :: myName='init_inp_file'
       CLASS(InputFileType),INTENT(INOUT) :: fileobj
-      INTEGER(SIK),INTENT(IN) :: unit
+      INTEGER(SIK),OPTIONAL,INTENT(IN) :: unit
       CHARACTER(LEN=*),INTENT(IN) :: file
       CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: status
       CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: access
@@ -205,6 +206,7 @@ MODULE FileType_Input
 !> @param file input file object.
 !>
 !> This is needed to reset probe.
+!>
     SUBROUTINE rewind_inp_file(file)
       CLASS(InputFileType),INTENT(INOUT) :: file
       file%probe=''
@@ -217,6 +219,7 @@ MODULE FileType_Input
 !> @param file input file object.
 !>
 !> This is needed to maintain the correct value for probe.
+!>
     SUBROUTINE backspace_inp_file(file)
       CLASS(InputFileType),INTENT(INOUT) :: file
       CALL backspace_fortran_file(file)
@@ -227,6 +230,7 @@ MODULE FileType_Input
 !> @brief Clears the log file object and resets its state to the unitialized
 !> state.
 !> @param file input file object.
+!> 
     SUBROUTINE clear_inp_file(file,ldel)
       CLASS(InputFileType),INTENT(INOUT) :: file
       LOGICAL(SBK),OPTIONAL,INTENT(IN) :: ldel
@@ -243,6 +247,7 @@ MODULE FileType_Input
 !> @brief Returns one line of text from the input file.
 !> @param file input file object
 !> @returns oneline a character of length MAX_INPUT_FILE_LINE_LEN
+!> 
     FUNCTION read_oneline_inp_file(file) RESULT(oneline)
       CHARACTER(LEN=*),PARAMETER :: myName='READ_ONELINE_INP_FILE'
       CLASS(InputFileType),INTENT(INOUT) :: file
@@ -283,6 +288,7 @@ MODULE FileType_Input
 !>
 !> The echo status means that lines read will be echoed to a specified file
 !> unit.
+!>
     SUBROUTINE echo_inp_file(file,bool)
       CLASS(InputFileType),INTENT(INOUT) :: file
       LOGICAL(SBK),INTENT(IN) :: bool
@@ -293,6 +299,7 @@ MODULE FileType_Input
 !> @brief Returns the echo status of the input file object
 !> @param file input file object
 !> @returns bool the logical value of the echo status
+!>
     PURE FUNCTION isecho_inp_file(file) RESULT(bool)
       CLASS(InputFileType),INTENT(IN) :: file
       LOGICAL(SBK) :: bool
@@ -304,6 +311,7 @@ MODULE FileType_Input
 !> object.
 !> @param file the input file object
 !> @param iunit the unit number to use for the echo file.
+!>
     SUBROUTINE setEchoUnit_inp_file(file,iunit)
       CHARACTER(LEN=*),PARAMETER :: myName='SETECHOUNIT_INP_FILE'
       CLASS(InputFileType),INTENT(INOUT) :: file
@@ -321,6 +329,7 @@ MODULE FileType_Input
 !> object.
 !> @param file the input file object
 !> @returns iunit the value of file%echounit
+!>
     PURE FUNCTION getEchoUnit_inp_file(file) RESULT(iunit)
       CLASS(InputFileType),INTENT(IN) :: file
       INTEGER(SIK) :: iunit
@@ -332,6 +341,7 @@ MODULE FileType_Input
 !> object.
 !> @param file the input file object
 !> @returns c the value of file%probe
+!>
     PURE FUNCTION getProbe_inp_file(file) RESULT(c)
       CLASS(InputFileType),INTENT(IN) :: file
       CHARACTER(LEN=1) :: c

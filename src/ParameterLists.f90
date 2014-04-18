@@ -92,6 +92,7 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE ParameterLists
 #include "UnitTest.h"
+  USE ISO_FORTRAN_ENV
   USE UnitTest
   USE IntrType
   USE Strings
@@ -105,6 +106,7 @@ MODULE ParameterLists
   PUBLIC :: eParams
   PUBLIC :: ParamType
   PUBLIC :: ASSIGNMENT(=)
+  PUBLIC :: OPERATOR(==)
   
   !> The module name
   CHARACTER(LEN=*),PARAMETER :: modName='PARAMETERLISTS'
@@ -448,6 +450,7 @@ MODULE ParameterLists
       PROCEDURE,PASS :: remove => remove_ParamType
       !> @copybrief ParameterLists::has_ParamType
       !> @copydoc ParameterLists::has_ParamType
+      PROCEDURE,PASS :: getNextParam => getNextParam_ParamType
       PROCEDURE,PASS :: has => has_ParamType
       !> @copybrief ParameterLists::validate_ParamType
       !> @copydoc ParameterLists::validate_ParamType
@@ -466,7 +469,7 @@ MODULE ParameterLists
   !> @brief Extended type of a ParamType for defining a list of parameters
   TYPE,EXTENDS(ParamType) :: ParamType_List
     !> The list of parameters
-    TYPE(ParamType),ALLOCATABLE :: plList(:)
+    TYPE(ParamType),ALLOCATABLE :: pList(:)
 !
 !List of type bound procedures
     CONTAINS
@@ -829,6 +832,12 @@ MODULE ParameterLists
     !> @copydoc ParameterLists::assign_ParamType
     MODULE PROCEDURE assign_ParamType
   ENDINTERFACE
+
+  INTERFACE OPERATOR(==)
+    !> @copybrief ParameterLists::isEqual_ParamType
+    !> @copydoc ParameterLists::isEqual_ParamType
+    MODULE PROCEDURE isEqual_ParamType
+  ENDINTERFACE
 !
 !===============================================================================
   CONTAINS
@@ -920,8 +929,8 @@ MODULE ParameterLists
               CALL thisParam%init(CHAR(p%name),p%val, &
                 CHAR(p%description))
             TYPE IS(ParamType_List)
-              IF(ALLOCATED(p%plList)) THEN
-                CALL thisParam%init(CHAR(p%name),p%plList, &
+              IF(ALLOCATED(p%pList)) THEN
+                CALL thisParam%init(CHAR(p%name),p%pList, &
                   CHAR(p%description))
               ELSE
                 !Allocate an empty list
@@ -938,8 +947,344 @@ MODULE ParameterLists
     ENDSUBROUTINE assign_ParamType
 !
 !-------------------------------------------------------------------------------
+!> @brief
+!> @param p1
+!> @param p2
+!> @returns bool
+!> 
+    RECURSIVE PURE FUNCTION isEqual_ParamType(p1,p2) RESULT(bool)
+      CLASS(ParamType),INTENT(IN) :: p1
+      CLASS(ParamType),INTENT(IN) :: p2
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: i,j,dims1(7),dims2(7)
+      bool=.FALSE.
+      IF(p1%name == p2%name) THEN
+        IF(SAME_TYPE_AS(p1,p2)) THEN
+          dims1=0
+          dims2=0
+          SELECTTYPE(p1)
+            TYPE IS(ParamType)
+              IF(ASSOCIATED(p1%pdat) .AND. ASSOCIATED(p2%pdat)) THEN
+                bool=isEqual_ParamType(p1%pdat,p2%pdat)
+              ELSE
+                bool=(ASSOCIATED(p1%pdat) .EQV. ASSOCIATED(p2%pdat))
+              ENDIF
+            TYPE IS(ParamType_List)
+              SELECTTYPE(p2); TYPE IS(ParamType_List)
+                bool=(ALLOCATED(p1%pList) .EQV. ALLOCATED(p2%pList))
+                IF(ALLOCATED(p1%pList) .AND. ALLOCATED(p2%pList)) THEN
+                  IF(SIZE(p1%pList) == SIZE(p2%pList)) THEN
+                    DO i=1,SIZE(p1%pList)
+                      bool=(isEqual_ParamType(p1%pList(i),p2%pList(i)).AND.bool)
+                      IF(.NOT.bool) EXIT
+                    ENDDO
+                  ENDIF
+                ENDIF
+              ENDSELECT
+            TYPE IS(ParamType_SSK)
+              SELECTTYPE(p2); TYPE IS(ParamType_SSK)
+                bool=(p1%val == p2%val)
+              ENDSELECT
+            TYPE IS(ParamType_SDK)
+              SELECTTYPE(p2); TYPE IS(ParamType_SDK)
+                bool=(p1%val == p2%val)
+              ENDSELECT
+            TYPE IS(ParamType_SNK)
+              SELECTTYPE(p2); TYPE IS(ParamType_SNK)
+                bool=(p1%val == p2%val)
+              ENDSELECT
+            TYPE IS(ParamType_SLK)
+              SELECTTYPE(p2); TYPE IS(ParamType_SLK)
+                bool=(p1%val == p2%val)
+              ENDSELECT
+            TYPE IS(ParamType_SBK)
+              SELECTTYPE(p2); TYPE IS(ParamType_SBK)
+                bool=(p1%val == p2%val)
+              ENDSELECT
+            TYPE IS(ParamType_STR)
+              SELECTTYPE(p2); TYPE IS(ParamType_STR)
+                bool=(p1%val == p2%val)
+              ENDSELECT
+            TYPE IS(ParamType_SSK_a1)
+              SELECTTYPE(p2); TYPE IS(ParamType_SSK_a1)
+                bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+                IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+                  IF(SIZE(p1%val) == SIZE(p2%val)) bool=ALL(p1%val == p2%val)
+                ENDIF
+              ENDSELECT
+            TYPE IS(ParamType_SDK_a1)
+              SELECTTYPE(p2); TYPE IS(ParamType_SDK_a1)
+                bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+                IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+                  IF(SIZE(p1%val) == SIZE(p2%val)) bool=ALL(p1%val == p2%val)
+                ENDIF
+              ENDSELECT
+            TYPE IS(ParamType_SNK_a1)
+              SELECTTYPE(p2); TYPE IS(ParamType_SNK_a1)
+                bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+                IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+                  IF(SIZE(p1%val) == SIZE(p2%val)) bool=ALL(p1%val == p2%val)
+                ENDIF
+              ENDSELECT
+            TYPE IS(ParamType_SLK_a1)
+              SELECTTYPE(p2); TYPE IS(ParamType_SLK_a1)
+                bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+                IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+                  IF(SIZE(p1%val) == SIZE(p2%val)) bool=ALL(p1%val == p2%val)
+                ENDIF
+              ENDSELECT
+            TYPE IS(ParamType_SBK_a1)
+              SELECTTYPE(p2); TYPE IS(ParamType_SBK_a1)
+                bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+                IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+                  IF(SIZE(p1%val) == SIZE(p2%val)) bool=ALL(p1%val .EQV. p2%val)
+                ENDIF
+              ENDSELECT
+            TYPE IS(ParamType_STR_a1)
+              SELECTTYPE(p2); TYPE IS(ParamType_STR_a1)
+                bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+                IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+                  IF(SIZE(p1%val) == SIZE(p2%val)) THEN
+                    DO i=1,SIZE(p1%val)
+                      bool=(bool .AND. p1%val(i) == p2%val(i))
+                      IF(.NOT.bool) EXIT
+                    ENDDO
+                  ENDIF
+                ENDIF
+              ENDSELECT
+            TYPE IS(ParamType_SSK_a2)
+              SELECTTYPE(p2); TYPE IS(ParamType_SSK_a2)
+                bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+                IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+                  dims1(1:2)=SHAPE(p1%val)
+                  dims2(1:2)=SHAPE(p2%val)
+                  IF(ALL(dims1(1:2) == dims2(1:2))) bool=ALL(p1%val == p2%val)
+                ENDIF
+              ENDSELECT
+            TYPE IS(ParamType_SDK_a2)
+              SELECTTYPE(p2); TYPE IS(ParamType_SDK_a2)
+                bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+                IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+                  dims1(1:2)=SHAPE(p1%val)
+                  dims2(1:2)=SHAPE(p2%val)
+                  IF(ALL(dims1(1:2) == dims2(1:2))) bool=ALL(p1%val == p2%val)
+                ENDIF
+              ENDSELECT
+            TYPE IS(ParamType_SNK_a2)
+              SELECTTYPE(p2); TYPE IS(ParamType_SNK_a2)
+                bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+                IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+                  dims1(1:2)=SHAPE(p1%val)
+                  dims2(1:2)=SHAPE(p2%val)
+                  IF(ALL(dims1(1:2) == dims2(1:2))) bool=ALL(p1%val == p2%val)
+                ENDIF
+              ENDSELECT
+            TYPE IS(ParamType_SLK_a2)
+              SELECTTYPE(p2); TYPE IS(ParamType_SLK_a2)
+                bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+                IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+                  dims1(1:2)=SHAPE(p1%val)
+                  dims2(1:2)=SHAPE(p2%val)
+                  IF(ALL(dims1(1:2) == dims2(1:2))) bool=ALL(p1%val == p2%val)
+                ENDIF
+              ENDSELECT
+            TYPE IS(ParamType_STR_a2)
+              SELECTTYPE(p2); TYPE IS(ParamType_STR_a2)
+                bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+                IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+                  dims1(1:2)=SHAPE(p1%val)
+                  dims2(1:2)=SHAPE(p2%val)
+                  IF(ALL(dims1(1:2) == dims2(1:2))) THEN
+                    DO j=1,SIZE(p1%val,DIM=2)
+                      DO i=1,SIZE(p1%val,DIM=1)
+                        bool=(bool .AND. p1%val(i,j) == p2%val(i,j))
+                        IF(.NOT.bool) EXIT
+                      ENDDO
+                      IF(.NOT.bool) EXIT
+                    ENDDO
+                  ENDIF
+                ENDIF
+              ENDSELECT
+            TYPE IS(ParamType_SSK_a3)
+              SELECTTYPE(p2); TYPE IS(ParamType_SSK_a3)
+                bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+                IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+                  dims1(1:3)=SHAPE(p1%val)
+                  dims2(1:3)=SHAPE(p2%val)
+                  IF(ALL(dims1(1:3) == dims2(1:3))) bool=ALL(p1%val == p2%val)
+                ENDIF
+              ENDSELECT
+            TYPE IS(ParamType_SDK_a3)
+              SELECTTYPE(p2); TYPE IS(ParamType_SDK_a3)
+                bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+                IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+                  dims1(1:3)=SHAPE(p1%val)
+                  dims2(1:3)=SHAPE(p2%val)
+                  IF(ALL(dims1(1:3) == dims2(1:3))) bool=ALL(p1%val == p2%val)
+                ENDIF
+              ENDSELECT
+            TYPE IS(ParamType_SNK_a3)
+              SELECTTYPE(p2); TYPE IS(ParamType_SNK_a3)
+                bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+                IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+                  dims1(1:3)=SHAPE(p1%val)
+                  dims2(1:3)=SHAPE(p2%val)
+                  IF(ALL(dims1(1:3) == dims2(1:3))) bool=ALL(p1%val == p2%val)
+                ENDIF
+              ENDSELECT
+            TYPE IS(ParamType_SLK_a3)
+              SELECTTYPE(p2); TYPE IS(ParamType_SLK_a3)
+                bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+                IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+                  dims1(1:3)=SHAPE(p1%val)
+                  dims2(1:3)=SHAPE(p2%val)
+                  IF(ALL(dims1(1:3) == dims2(1:3))) bool=ALL(p1%val == p2%val)
+                ENDIF
+              ENDSELECT
+          ENDSELECT
+        ENDIF
+      ENDIF
+    ENDFUNCTION isEqual_ParamType
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param thisParam
+!> @param addr
+!> @param param
+!>
+    SUBROUTINE getNextParam_ParamType(thisParam,addr,param)
+      CLASS(ParamType),TARGET,INTENT(IN) :: thisParam
+      TYPE(StringType),INTENT(INOUT) :: addr
+      CLASS(ParamType),POINTER,INTENT(OUT) :: param
+      
+      CHARACTER(LEN=addr%ntrim) :: addrIn,newAddr
+      INTEGER(SIK) :: istp,ip
+      TYPE(StringType) :: tmpAddr
+      CLASS(ParamType),POINTER :: tmpParam,nextParam,parentParam
+      
+      nextParam => NULL()
+      tmpAddr=''
+      addrIn=addr
+      IF(LEN_TRIM(addrIn) > 0) THEN
+        CALL get_ParamType(thisParam,TRIM(addrIn),tmpParam)
+        IF(ASSOCIATED(tmpParam)) THEN
+          !Check to make sure param is in thisParam
+          !if param is null that's ok too because we're guaranteed to
+          !be within thisParam
+          
+          SELECTTYPE(tp => tmpParam)
+            TYPE IS(ParamType_List)
+              !Return the first entry in the list
+              IF(ALLOCATED(tp%pList)) THEN
+                nextParam => tp%pList(1)%pdat
+                tmpAddr=TRIM(addrIn)//'->'//nextParam%name
+              ELSE
+                !This could be a null list within a list that still has
+                !entries so get the parent and 
+                !Get the parent list
+                newAddr=''
+                istp=INDEX(addrIn,'->',.TRUE.)-1
+                parentParam => NULL()
+                IF(istp > 0) THEN
+                  newAddr=addrIn(1:istp)
+                  CALL get_ParamType(thisParam,TRIM(newAddr),parentParam)
+                ENDIF
+                !Search for the next parameter or parameter list
+                parentSearch1: DO WHILE(ASSOCIATED(parentParam))
+                  
+                  !Search the parent list
+                  SELECTTYPE(pp => parentParam); TYPE IS(ParamType_List)
+                    DO ip=1,SIZE(pp%pList)-1
+                      IF(ASSOCIATED(pp%pList(ip)%pdat,tmpParam)) THEN
+                        !Get the next parameter in the list
+                        nextParam => pp%pList(ip+1)%pdat
+                        tmpAddr=TRIM(newAddr)//'->'//nextParam%name
+                        EXIT parentSearch1
+                      ENDIF
+                    ENDDO
+                    
+                    !Special case for when the current parameter is the
+                    !last parameter in the list
+                    IF(ASSOCIATED(pp%pList(ip)%pdat,tmpParam)) THEN
+                      !Go up another level and update the search
+                      tmpParam => parentParam
+                      istp=INDEX(newAddr,'->',.TRUE.)-1
+                      parentParam => NULL()
+                      IF(istp > 0) THEN
+                        newAddr=addrIn(1:istp)
+                        CALL get_ParamType(thisParam,TRIM(newAddr),parentParam)
+                      ENDIF
+                    ENDIF
+                  ENDSELECT
+                ENDDO parentSearch1
+              ENDIF
+            CLASS DEFAULT
+              !All other types
+              IF(ASSOCIATED(tp%pdat)) THEN
+                !Append the address and return the next parameter
+                nextParam => tp%pdat
+                tmpAddr=TRIM(addrIn)//'->'//nextParam%name
+              ELSE
+                !This was a leaf parameter, so move up one level in the list
+                
+                !Get the parent list
+                istp=INDEX(addrIn,'->',.TRUE.)-1
+                parentParam => NULL()
+                IF(istp > 0) THEN
+                  newAddr=addrIn(1:istp)
+                  CALL get_ParamType(thisParam,TRIM(newAddr),parentParam)
+                ENDIF
+                
+                !Search for the next parameter or parameter list
+                parentSearch2: DO WHILE(ASSOCIATED(parentParam))
+                  
+                  !Search the parent list
+                  SELECTTYPE(pp => parentParam); TYPE IS(ParamType_List)
+                    DO ip=1,SIZE(pp%pList)-1
+                      IF(ASSOCIATED(pp%pList(ip)%pdat,tmpParam)) THEN
+                        !Get the next parameter in the list
+                        nextParam => pp%pList(ip+1)%pdat
+                        tmpAddr=TRIM(newAddr)//'->'//nextParam%name
+                        EXIT parentSearch2
+                      ENDIF
+                    ENDDO
+                    
+                    !Special case for when the current parameter is the
+                    !last parameter in the list
+                    IF(ASSOCIATED(pp%pList(ip)%pdat,tmpParam)) THEN
+                      !Go up another level and update the search
+                      tmpParam => parentParam
+                      istp=INDEX(newAddr,'->',.TRUE.)-1
+                      parentParam => NULL()
+                      IF(istp > 0) THEN
+                        newAddr=addrIn(1:istp)
+                        CALL get_ParamType(thisParam,TRIM(newAddr),parentParam)
+                      ENDIF
+                    ENDIF
+                  ENDSELECT
+                ENDDO parentSearch2
+              ENDIF
+          ENDSELECT
+        ENDIF
+      ELSE
+        !No address is given so assume the client wants to start at the root
+        IF(LEN_TRIM(thisParam%name) > 0) THEN
+          tmpAddr=thisParam%name
+          nextParam => thisParam
+        ELSE
+          IF(ASSOCIATED(thisParam%pdat)) THEN
+            tmpAddr=thisParam%pdat%name
+            nextParam => thisParam%pdat
+          ENDIF
+        ENDIF
+      ENDIF
+      addr=tmpAddr
+      param => nextParam
+    ENDSUBROUTINE getNextParam_ParamType
+!
+!-------------------------------------------------------------------------------
 !> @brief Returns a pointer to a parameter whose name matches the given input
-!> name.
+!>        name.
 !> @param thisParam the parameter object to search for @c name
 !> @param name the name to locate in the parameter object
 !> @param param the pointer to the parameter object whose name matches @c name
@@ -987,17 +1332,17 @@ MODULE ParameterLists
             
               !Search the list for nextname (thisname must match parameter name)
               IF(TRIM(pname) == TRIM(thisname) .AND. &
-                ALLOCATED(thisParam%plList)) THEN
-                DO i=1,SIZE(thisParam%plList)
-                  CALL thisParam%plList(i)%getParam(TRIM(nextname),param)
+                ALLOCATED(thisParam%pList)) THEN
+                DO i=1,SIZE(thisParam%pList)
+                  CALL thisParam%pList(i)%getParam(TRIM(nextname),param)
                   IF(ASSOCIATED(param)) EXIT !Found it, stop searching
                 ENDDO
               ENDIF
             ELSE
               !Search for thisname within the list
-              IF(ALLOCATED(thisParam%plList)) THEN
-                DO i=1,SIZE(thisParam%plList)
-                  CALL thisParam%plList(i)%getParam(TRIM(thisname),param)
+              IF(ALLOCATED(thisParam%pList)) THEN
+                DO i=1,SIZE(thisParam%pList)
+                  CALL thisParam%pList(i)%getParam(TRIM(thisname),param)
                   IF(ASSOCIATED(param)) EXIT !Found it, stop searching
                 ENDDO
               ENDIF
@@ -1116,64 +1461,64 @@ MODULE ParameterLists
                 CALL add_ParamType(tmpParam,TRIM(nextname),newParam)
               ELSE
                 !Create a new entry in the list for the new parameter
-                IF(ALLOCATED(thisParam%plList)) THEN
-                  np=SIZE(thisParam%plList)
+                IF(ALLOCATED(thisParam%pList)) THEN
+                  np=SIZE(thisParam%pList)
               
                   !Copy the parameter list to a temporary
                   ALLOCATE(tmpList(np))
                   DO i=1,np
-                    CALL assign_ParamType(tmpList(i),thisParam%plList(i))
-                    CALL thisParam%plList(i)%clear()
+                    CALL assign_ParamType(tmpList(i),thisParam%pList(i))
+                    CALL thisParam%pList(i)%clear()
                   ENDDO
               
                   !Reallocate the parameter list and copy everything back
-                  DEALLOCATE(thisParam%plList)
-                  ALLOCATE(thisParam%plList(np+1))
+                  DEALLOCATE(thisParam%pList)
+                  ALLOCATE(thisParam%pList(np+1))
                   DO i=1,np
-                    CALL assign_ParamType(thisParam%plList(i),tmpList(i))
+                    CALL assign_ParamType(thisParam%pList(i),tmpList(i))
                     CALL tmpList(i)%clear()
                   ENDDO
                   DEALLOCATE(tmpList)
                   i=np+1
                 ELSE
                   !Allocate the list to 1 element
-                  ALLOCATE(thisParam%plList(1))
+                  ALLOCATE(thisParam%pList(1))
                   i=1
                 ENDIF
             
                 !Make recursive call to add the parameter in the new empty parameter
-                CALL add_ParamType(thisParam%plList(i),name,newParam)
+                CALL add_ParamType(thisParam%pList(i),name,newParam)
               ENDIF
             ENDIF
           ELSE
             !Create a new entry in the list for the new parameter
-            IF(ALLOCATED(thisParam%plList)) THEN
-              np=SIZE(thisParam%plList)
+            IF(ALLOCATED(thisParam%pList)) THEN
+              np=SIZE(thisParam%pList)
               
               !Copy the parameter list to a temporary
               ALLOCATE(tmpList(np))
               DO i=1,np
-                CALL assign_ParamType(tmpList(i),thisParam%plList(i))
-                CALL thisParam%plList(i)%clear()
+                CALL assign_ParamType(tmpList(i),thisParam%pList(i))
+                CALL thisParam%pList(i)%clear()
               ENDDO
               
               !Reallocate the parameter list and copy everything back
-              DEALLOCATE(thisParam%plList)
-              ALLOCATE(thisParam%plList(np+1))
+              DEALLOCATE(thisParam%pList)
+              ALLOCATE(thisParam%pList(np+1))
               DO i=1,np
-                CALL assign_ParamType(thisParam%plList(i),tmpList(i))
+                CALL assign_ParamType(thisParam%pList(i),tmpList(i))
                 CALL tmpList(i)%clear()
               ENDDO
               DEALLOCATE(tmpList)
               i=np+1
             ELSE
               !Allocate the list to 1 element
-              ALLOCATE(thisParam%plList(1))
+              ALLOCATE(thisParam%pList(1))
               i=1
             ENDIF
             
             !Make recursive call to add the parameter in the new empty parameter
-            CALL add_ParamType(thisParam%plList(i),name,newParam)
+            CALL add_ParamType(thisParam%pList(i),name,newParam)
           ENDIF
         CLASS DEFAULT
           CALL eParams%raiseError(modName//'::'//myName// &
@@ -1220,12 +1565,12 @@ MODULE ParameterLists
             
               !Search the list for nextname (thisname must match parameter name)
               IF(TRIM(pname) == TRIM(thisname)) THEN
-                IF(ALLOCATED(thisParam%plList)) THEN
-                  DO i=1,SIZE(thisParam%plList)
+                IF(ALLOCATED(thisParam%pList)) THEN
+                  DO i=1,SIZE(thisParam%pList)
                     !Try to remove the next name
-                    IF(ASSOCIATED(thisParam%plList(i)%pdat)) THEN
-                      CALL remove_ParamType(thisParam%plList(i),TRIM(nextname))
-                      IF(.NOT.ASSOCIATED(thisParam%plList(i)%pdat)) EXIT !success
+                    IF(ASSOCIATED(thisParam%pList(i)%pdat)) THEN
+                      CALL remove_ParamType(thisParam%pList(i),TRIM(nextname))
+                      IF(.NOT.ASSOCIATED(thisParam%pList(i)%pdat)) EXIT !success
                     ENDIF
                   ENDDO
                 ENDIF
@@ -1233,10 +1578,10 @@ MODULE ParameterLists
                 !Try another level down, this is not so efficient because
                 !there is no way to tell in which element the name might've
                 !been matched.
-                IF(ALLOCATED(thisParam%plList)) THEN
-                  DO i=1,SIZE(thisParam%plList)
-                    IF(ASSOCIATED(thisParam%plList(i)%pdat)) THEN
-                      SELECTTYPE(p=>thisParam%plList(i)%pdat)
+                IF(ALLOCATED(thisParam%pList)) THEN
+                  DO i=1,SIZE(thisParam%pList)
+                    IF(ASSOCIATED(thisParam%pList(i)%pdat)) THEN
+                      SELECTTYPE(p=>thisParam%pList(i)%pdat)
                          TYPE IS(ParamType_List); CALL remove_ParamType(p,name)
                       ENDSELECT
                     ENDIF
@@ -1245,12 +1590,12 @@ MODULE ParameterLists
               ENDIF
             ELSE
               !Search for thisname within the list
-              IF(ALLOCATED(thisParam%plList)) THEN
-                DO i=1,SIZE(thisParam%plList)
+              IF(ALLOCATED(thisParam%pList)) THEN
+                DO i=1,SIZE(thisParam%pList)
                   !Try to remove the next name
-                  IF(ASSOCIATED(thisParam%plList(i)%pdat)) THEN
-                    CALL remove_ParamType(thisParam%plList(i),TRIM(thisname))
-                    IF(.NOT.ASSOCIATED(thisParam%plList(i)%pdat)) EXIT !success
+                  IF(ASSOCIATED(thisParam%pList(i)%pdat)) THEN
+                    CALL remove_ParamType(thisParam%pList(i),TRIM(thisname))
+                    IF(.NOT.ASSOCIATED(thisParam%pList(i)%pdat)) EXIT !success
                   ENDIF
                 ENDDO
               ENDIF
@@ -1258,30 +1603,30 @@ MODULE ParameterLists
             
             !Garbage collection, shrink the current list to remove
             !empty values
-            IF(ALLOCATED(thisParam%plList)) THEN
+            IF(ALLOCATED(thisParam%pList)) THEN
               
               !Create temporary
-              np=SIZE(thisParam%plList)
+              np=SIZE(thisParam%pList)
               ALLOCATE(tmpList(np))
               
               !Copy to temporary
               npnew=0
               DO i=1,np
-                IF(ASSOCIATED(thisParam%plList(i)%pdat)) THEN
+                IF(ASSOCIATED(thisParam%pList(i)%pdat)) THEN
                   npnew=npnew+1
-                  CALL assign_ParamType(tmpList(npnew),thisParam%plList(i))
-                  CALL thisParam%plList(i)%clear()
+                  CALL assign_ParamType(tmpList(npnew),thisParam%pList(i))
+                  CALL thisParam%pList(i)%clear()
                 ENDIF
               ENDDO
               
               !Reallocate list
-              DEALLOCATE(thisParam%plList)
+              DEALLOCATE(thisParam%pList)
               IF(npnew > 0) THEN
-                ALLOCATE(thisParam%plList(npnew))
+                ALLOCATE(thisParam%pList(npnew))
               
                 !Copy non-empty values back to list
                 DO i=1,npnew
-                  CALL assign_ParamType(thisParam%plList(i),tmpList(i))
+                  CALL assign_ParamType(thisParam%pList(i),tmpList(i))
                   CALL tmpList(i)%clear()
                 ENDDO
               ENDIF
@@ -1432,18 +1777,18 @@ MODULE ParameterLists
           ENDIF
         TYPE IS(ParamType_List)
           !Loop over all parameters in the list and check each
-          IF(ALLOCATED(p%plList)) THEN
+          IF(ALLOCATED(p%pList)) THEN
             ntrue=0
-            DO i=1,SIZE(p%plList)
+            DO i=1,SIZE(p%pList)
               IF(PRESENT(isMatch)) THEN
-                IF(validateReq_ParamType(thisParam,p%plList(i), &
+                IF(validateReq_ParamType(thisParam,p%pList(i), &
                   prefix//p%name//'->',isMatch)) ntrue=ntrue+1
               ELSE
-                IF(validateReq_ParamType(thisParam,p%plList(i), &
+                IF(validateReq_ParamType(thisParam,p%pList(i), &
                   prefix//p%name//'->')) ntrue=ntrue+1
               ENDIF
             ENDDO
-            IF(ntrue == SIZE(p%plList)) isValid=.TRUE.
+            IF(ntrue == SIZE(p%pList)) isValid=.TRUE.
           ELSE
             !The required list is not allocated, which means we do not
             !check any of it's possible subparameters, but we must at least
@@ -1517,9 +1862,9 @@ MODULE ParameterLists
             CALL validateOpt_Paramtype(thisParam,p%pdat,prefix)
         TYPE IS(ParamType_List)
           !Loop over all parameters in the list and check each
-          IF(ALLOCATED(p%plList)) THEN
-            DO i=1,SIZE(p%plList)
-              CALL validateOpt_Paramtype(thisParam,p%plList(i), &
+          IF(ALLOCATED(p%pList)) THEN
+            DO i=1,SIZE(p%pList)
+              CALL validateOpt_Paramtype(thisParam,p%pList(i), &
                 prefix//p%name//'->')
             ENDDO
           ELSE
@@ -1596,12 +1941,12 @@ MODULE ParameterLists
           CALL reqParams%getParam(prefix//p%name,tmpParam)
           IF(ASSOCIATED(tmpParam)) THEN
             SELECTTYPE(tmpParam); TYPE IS(ParamType_List)
-              IF(ALLOCATED(tmpParam%plList)) THEN
+              IF(ALLOCATED(tmpParam%pList)) THEN
                 !The list in reqParams is allocated so check if the
                 !subparameters in this list are extraneous
-                IF(ALLOCATED(p%plList)) THEN
-                  DO i=1,SIZE(p%plList)
-                    CALL checkExtras_Paramtype(p%plList(i),reqParams, &
+                IF(ALLOCATED(p%pList)) THEN
+                  DO i=1,SIZE(p%pList)
+                    CALL checkExtras_Paramtype(p%pList(i),reqParams, &
                       optParams,prefix//p%name//'->')
                   ENDDO
                 ENDIF
@@ -1612,12 +1957,12 @@ MODULE ParameterLists
             CALL optParams%get(prefix//p%name,tmpParam)
             IF(ASSOCIATED(tmpParam)) THEN
               SELECTTYPE(tmpParam); TYPE IS(ParamType_List)
-                IF(ALLOCATED(tmpParam%plList)) THEN
+                IF(ALLOCATED(tmpParam%pList)) THEN
                   !The list in optParams is allocated so check if the
                   !subparameters in this list are extraneous
-                  IF(ALLOCATED(p%plList)) THEN
-                    DO i=1,SIZE(p%plList)
-                      CALL checkExtras_Paramtype(p%plList(i),reqParams, &
+                  IF(ALLOCATED(p%pList)) THEN
+                    DO i=1,SIZE(p%pList)
+                      CALL checkExtras_Paramtype(p%pList(i),reqParams, &
                         optParams,prefix//p%name//'->')
                     ENDDO
                   ENDIF
@@ -2093,9 +2438,9 @@ MODULE ParameterLists
           thisParam%pdat%dataType='TYPE(ParamType_List)'
           IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
           SELECTTYPE(p=>thisParam%pdat); TYPE IS(ParamType_List)
-            ALLOCATE(p%plList(SIZE(param)))
+            ALLOCATE(p%pList(SIZE(param)))
             DO i=1,SIZE(param)
-              CALL assign_ParamType(p%plList(i),param(i))
+              CALL assign_ParamType(p%pList(i),param(i))
             ENDDO
           ENDSELECT
         ELSE
@@ -2138,10 +2483,10 @@ MODULE ParameterLists
             ' :: '//thisParam%name//'= !'//thisParam%description
         ENDIF
       ENDIF
-      IF(ALLOCATED(thisParam%plList)) THEN  
-        DO j=1,SIZE(thisParam%plList)
-          IF(ASSOCIATED(thisParam%plList(j)%pdat)) &
-            CALL thisParam%plList(j)%pdat%edit(funit,i+3)
+      IF(ALLOCATED(thisParam%pList)) THEN  
+        DO j=1,SIZE(thisParam%pList)
+          IF(ASSOCIATED(thisParam%pList(j)%pdat)) &
+            CALL thisParam%pList(j)%pdat%edit(funit,i+3)
         ENDDO
       ENDIF
     ENDSUBROUTINE edit_ParamType_List
@@ -2158,11 +2503,11 @@ MODULE ParameterLists
       thisParam%name=''
       thisParam%dataType=''
       thisParam%description=''
-      IF(ALLOCATED(thisParam%plList)) THEN
-        DO i=1,SIZE(thisParam%plList)
-          CALL thisParam%plList(i)%clear()
+      IF(ALLOCATED(thisParam%pList)) THEN
+        DO i=1,SIZE(thisParam%pList)
+          CALL thisParam%pList(i)%clear()
         ENDDO
-        DEALLOCATE(thisParam%plList)
+        DEALLOCATE(thisParam%pList)
       ENDIF
     ENDSUBROUTINE clear_ParamType_List
 !
@@ -2192,19 +2537,19 @@ MODULE ParameterLists
           IF(thisParam%name == TRIM(name)) THEN
             IF(PRESENT(description)) thisParam%description=TRIM(description)
             
-            IF(ALLOCATED(thisParam%plList)) THEN
+            IF(ALLOCATED(thisParam%pList)) THEN
               !Clear the existing list
-              DO i=1,SIZE(thisParam%plList)
-                CALL thisParam%plList(i)%clear()
+              DO i=1,SIZE(thisParam%pList)
+                CALL thisParam%pList(i)%clear()
               ENDDO
-              DEALLOCATE(thisParam%plList)
+              DEALLOCATE(thisParam%pList)
             ENDIF
             
             !Assign the new list
             np=SIZE(paramlist)
-            ALLOCATE(thisParam%plList(np))
+            ALLOCATE(thisParam%pList(np))
             DO i=1,np
-              CALL assign_ParamType(thisParam%plList(i),paramlist(i))
+              CALL assign_ParamType(thisParam%pList(i),paramlist(i))
             ENDDO
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
@@ -2219,19 +2564,19 @@ MODULE ParameterLists
             SELECTTYPE(p=>tmpParam)
               TYPE IS(ParamType_List)
                 IF(PRESENT(description)) p%description=TRIM(description)
-                IF(ALLOCATED(p%plList)) THEN
+                IF(ALLOCATED(p%pList)) THEN
                   !Clear the existing list
-                  DO i=1,SIZE(p%plList)
-                    CALL p%plList(i)%clear()
+                  DO i=1,SIZE(p%pList)
+                    CALL p%pList(i)%clear()
                   ENDDO
-                  DEALLOCATE(p%plList)
+                  DEALLOCATE(p%pList)
                 ENDIF
             
                 !Assign the new list
                 np=SIZE(paramlist)
-                ALLOCATE(p%plList(np))
+                ALLOCATE(p%pList(np))
                 DO i=1,np
-                  CALL assign_ParamType(p%plList(i),paramlist(i))
+                  CALL assign_ParamType(p%pList(i),paramlist(i))
                 ENDDO
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
@@ -2270,7 +2615,7 @@ MODULE ParameterLists
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_List)
           IF(thisParam%name == TRIM(name)) THEN
-            np=SIZE(thisParam%plList)
+            np=SIZE(thisParam%pList)
             IF(SIZE(paramlist) < np) THEN
               !List lengths are unequal so choose the lesser
               CALL eParams%raiseWarning(modName//'::'//myName// &
@@ -2279,7 +2624,7 @@ MODULE ParameterLists
               np=SIZE(paramlist)
             ENDIF
             DO i=1,np
-              CALL assign_ParamType(paramlist(i),thisParam%plList(i))
+              CALL assign_ParamType(paramlist(i),thisParam%pList(i))
             ENDDO
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
@@ -2293,7 +2638,7 @@ MODULE ParameterLists
             !Parameter was found
             SELECTTYPE(p=>tmpParam)
               TYPE IS(ParamType_List)
-                np=SIZE(p%plList)
+                np=SIZE(p%pList)
                 IF(SIZE(paramlist) < np) THEN
                   !List lengths are unequal so choose the lesser
                   CALL eParams%raiseWarning(modName//'::'//myName// &
@@ -2302,7 +2647,7 @@ MODULE ParameterLists
                   np=SIZE(paramlist)
                 ENDIF
                 DO i=1,np
-                  CALL assign_ParamType(paramlist(i),p%plList(i))
+                  CALL assign_ParamType(paramlist(i),p%pList(i))
                 ENDDO
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
@@ -3473,7 +3818,7 @@ MODULE ParameterLists
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
-                    tmpParam%dataType//' and must be INTEGER(SSK)!')
+                    tmpParam%dataType//' and must be LOGICAL(SBK)!')
             ENDSELECT
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &

@@ -28,6 +28,12 @@ SET(UNIT_TEST_NAMES
     testAllocs
     testParameterLists
     testIOutil
+    testFileType_Base
+    testFileType_Fortran
+    testFileType_Input
+    testFileType_Log
+    testFileType_DA32
+    testFileType_Checkpoint
     testParallelEnv
     testExpTables
     testVTKFiles

@@ -93,7 +93,7 @@ MODULE FileType_HDF5
     !> Initialization status
     LOGICAL(SBK) :: isInit=.FALSE.
     !> Full path to the file
-    CHARACTER(LEN=MAX_PATH_LENGTH+MAX_FNAME_LENGTH+MAX_FEXT_LENGTH) :: fullname=''
+    TYPE(StringType) :: fullname
     !> Access mode for creating/opening file.
     CHARACTER(LEN=5) :: mode
     !> The unit number of the file
@@ -339,17 +339,15 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),INTENT(IN) :: filename
       CHARACTER(LEN=*),INTENT(IN) :: mode
 #ifdef MPACT_HAVE_HDF5
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: fpath
-      CHARACTER(LEN=MAX_FNAME_LENGTH) :: fname
-      CHARACTER(LEN=MAX_FEXT_LENGTH) :: fext
+      TYPE(StringType) :: fpath,fname,fext
       INTEGER(SIK) :: unitno
       LOGICAL(SBK) :: ostat
 #endif
 #ifdef MPACT_HAVE_HDF5
       CALL getFileParts(filename,fpath,fname,fext,thisHDF5File%e)
-      CALL thisHDF5File%setFilePath(fpath)
-      CALL thisHDF5File%setFileName(fname)
-      CALL thisHDF5File%setFileExt(fext)
+      CALL thisHDF5File%setFilePath(CHAR(fpath))
+      CALL thisHDF5File%setFileName(CHAR(fname))
+      CALL thisHDF5File%setFileExt(CHAR(fext))
 
       ! Store the access mode
       thisHDF5File%mode=mode
@@ -446,13 +444,15 @@ MODULE FileType_HDF5
       SELECTCASE(TRIM(file%mode))
       CASE('READ')
         acc=H5F_ACC_RDONLY_F
-        CALL h5fopen_f(file%fullname,acc,file%file_id,error,access_prp=plist_id)
+        CALL h5fopen_f(CHAR(file%fullname),acc,file%file_id,error, &
+          access_prp=plist_id)
       CASE('WRITE')
         acc=H5F_ACC_RDWR_F
-        CALL h5fopen_f(file%fullname,acc,file%file_id,error,access_prp=plist_id)
+        CALL h5fopen_f(CHAR(file%fullname),acc,file%file_id,error, &
+          access_prp=plist_id)
       CASE('NEW')
         acc=H5F_ACC_TRUNC_F
-        CALL h5fcreate_f(file%fullname,acc,file%file_id,error, &
+        CALL h5fcreate_f(CHAR(file%fullname),acc,file%file_id,error, &
             access_prp=plist_id)
       CASE DEFAULT
         CALL file%e%raiseError(modName//'::'//myName// &
@@ -544,7 +544,7 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),INTENT(IN) :: path
       CHARACTER(LEN=*),ALLOCATABLE,INTENT(INOUT) :: objs(:)
 #ifdef MPACT_HAVE_HDF5
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path2
+      TYPE(StringType) :: path2
       INTEGER(HSIZE_T) :: i
       INTEGER(HID_T) :: grp_id,error
       INTEGER :: store_type,nlinks,max_corder
@@ -557,7 +557,7 @@ MODULE FileType_HDF5
       ELSE
         path2=convertPath(path)
 
-        CALL h5gopen_f(thisHDF5File%file_id, path2, grp_id, error)
+        CALL h5gopen_f(thisHDF5File%file_id, CHAR(path2), grp_id, error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - Unable to open file.')
 
@@ -569,8 +569,8 @@ MODULE FileType_HDF5
         ALLOCATE(objs(nlinks))
 
         DO i=0,nlinks-1
-          CALL h5lget_name_by_idx_f(thisHDF5File%file_id, path2, H5_INDEX_NAME_F,&
-              H5_ITER_INC_F, i, objs(i+1), error)
+          CALL h5lget_name_by_idx_f(thisHDF5File%file_id,CHAR(path2), &
+              H5_INDEX_NAME_F,H5_ITER_INC_F,i,objs(i+1),error)
           IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - Unable to get object name.')
         ENDDO
@@ -595,7 +595,7 @@ MODULE FileType_HDF5
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: path
 #ifdef MPACT_HAVE_HDF5
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path2
+      TYPE(StringType) :: path2
       INTEGER(HID_T) :: group_id,error
 
       ! Make sure the object is initialized
@@ -613,7 +613,7 @@ MODULE FileType_HDF5
         path2=convertPath(path)
 
         ! Create the group
-        CALL h5gcreate_f(thisHDF5File%file_id,path2,group_id,error)
+        CALL h5gcreate_f(thisHDF5File%file_id,CHAR(path2),group_id,error)
 
         IF(error == 0) THEN
           ! Close the group
@@ -641,7 +641,7 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),INTENT(IN) :: path
       INTEGER(SIK) :: ngrp
 #ifdef MPACT_HAVE_HDF5
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path2
+      TYPE(StringType) :: path2
       INTEGER(HID_T) :: grp_id,error
       INTEGER :: store_type,nlinks,max_corder
 
@@ -654,11 +654,11 @@ MODULE FileType_HDF5
 
         path2=convertPath(path)
 
-        CALL h5gopen_f(thisHDF5File%file_id, path2, grp_id, error)
+        CALL h5gopen_f(thisHDF5File%file_id,CHAR(path2),grp_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - Could not open group in HDF5 file.')
 
-        CALL h5gget_info_f(grp_id, store_type, nlinks, max_corder, error)
+        CALL h5gget_info_f(grp_id, store_type,nlinks,max_corder,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - Could not get group info in HDF5 file.')
 
@@ -686,7 +686,7 @@ MODULE FileType_HDF5
       REAL(SDK),INTENT(IN) :: vals
       INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: gdims_in
 #ifdef MPACT_HAVE_HDF5
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(1) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=1
 
@@ -806,7 +806,7 @@ MODULE FileType_HDF5
       REAL(SDK),INTENT(IN) :: vals(:)
       INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: gdims_in
 #ifdef MPACT_HAVE_HDF5
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(1) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=1
 
@@ -925,7 +925,7 @@ MODULE FileType_HDF5
       REAL(SDK),INTENT(IN) :: vals(:,:)
       INTEGER(SIK),DIMENSION(2),INTENT(IN),OPTIONAL :: gdims_in
 #ifdef MPACT_HAVE_HDF5
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(2) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=2
 
@@ -1043,7 +1043,7 @@ MODULE FileType_HDF5
       REAL(SDK),INTENT(IN) :: vals(:,:,:)
       INTEGER(SIK),DIMENSION(3),INTENT(IN),OPTIONAL :: gdims_in
 #ifdef MPACT_HAVE_HDF5
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(3) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=3
 
@@ -1165,7 +1165,7 @@ MODULE FileType_HDF5
       REAL(SDK),INTENT(IN) :: vals(:,:,:,:)
       INTEGER(SIK),DIMENSION(4),INTENT(IN),OPTIONAL :: gdims_in
 #ifdef MPACT_HAVE_HDF5
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(4) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=4
 
@@ -1288,7 +1288,7 @@ MODULE FileType_HDF5
       REAL(SSK),INTENT(IN) :: vals
       INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: gdims_in
 #ifdef MPACT_HAVE_HDF5
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(1) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=1
 
@@ -1408,7 +1408,7 @@ MODULE FileType_HDF5
       REAL(SSK),INTENT(IN) :: vals(:)
       INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: gdims_in
 #ifdef MPACT_HAVE_HDF5
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(1) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=1
 
@@ -1527,7 +1527,7 @@ MODULE FileType_HDF5
       REAL(SSK),INTENT(IN) :: vals(:,:)
       INTEGER(SIK),DIMENSION(2),INTENT(IN),OPTIONAL :: gdims_in
 #ifdef MPACT_HAVE_HDF5
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(2) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=2
 
@@ -1647,7 +1647,7 @@ MODULE FileType_HDF5
       REAL(SSK),INTENT(IN) :: vals(:,:,:)
       INTEGER(SIK),DIMENSION(3),INTENT(IN),OPTIONAL :: gdims_in
 #ifdef MPACT_HAVE_HDF5
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(3) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=3
 
@@ -1768,7 +1768,7 @@ MODULE FileType_HDF5
       REAL(SSK),INTENT(IN) :: vals(:,:,:,:)
       INTEGER(SIK),DIMENSION(4),INTENT(IN),OPTIONAL :: gdims_in
 #ifdef MPACT_HAVE_HDF5
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(4) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=4
 
@@ -1892,7 +1892,7 @@ MODULE FileType_HDF5
       INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: gdims_in
 #ifdef MPACT_HAVE_HDF5
       CHARACTER :: valsc
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(1) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=1
 
@@ -2021,7 +2021,7 @@ MODULE FileType_HDF5
       INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: gdims_in
 #ifdef MPACT_HAVE_HDF5
       CHARACTER :: valsc(1:SIZE(vals))
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(SIK) :: i
       INTEGER(HSIZE_T),DIMENSION(1) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=1
@@ -2148,7 +2148,7 @@ MODULE FileType_HDF5
       INTEGER(SIK),DIMENSION(2),INTENT(IN),OPTIONAL :: gdims_in
 #ifdef MPACT_HAVE_HDF5
       CHARACTER :: valsc(SIZE(vals,DIM=1),SIZE(vals,DIM=2))
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(SIK) :: i,j
       INTEGER(HSIZE_T),DIMENSION(2) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=2
@@ -2275,7 +2275,7 @@ MODULE FileType_HDF5
       INTEGER(SIK),DIMENSION(3),INTENT(IN),OPTIONAL :: gdims_in
 #ifdef MPACT_HAVE_HDF5
       CHARACTER :: valsc(SIZE(vals,DIM=1),SIZE(vals,DIM=2),SIZE(vals,DIM=3))
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(SIK) :: i,j,k
       INTEGER(HSIZE_T),DIMENSION(3) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=3
@@ -2403,7 +2403,7 @@ MODULE FileType_HDF5
       INTEGER(SNK),INTENT(IN) :: vals
       INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: gdims_in
 #ifdef MPACT_HAVE_HDF5
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(1) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=1
 
@@ -2520,7 +2520,7 @@ MODULE FileType_HDF5
       INTEGER(SNK),INTENT(IN) :: vals(:)
       INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: gdims_in
 #ifdef MPACT_HAVE_HDF5
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(1) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=1
 
@@ -2638,7 +2638,7 @@ MODULE FileType_HDF5
       INTEGER(SNK),INTENT(IN) :: vals(:,:)
       INTEGER(SIK),DIMENSION(2),INTENT(IN),OPTIONAL :: gdims_in
 #ifdef MPACT_HAVE_HDF5
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(2) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=2
 
@@ -2757,7 +2757,7 @@ MODULE FileType_HDF5
       INTEGER(SNK),INTENT(IN) :: vals(:,:,:)
       INTEGER(SIK),DIMENSION(3),INTENT(IN),OPTIONAL :: gdims_in
 #ifdef MPACT_HAVE_HDF5
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(3) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=3
 
@@ -2880,7 +2880,7 @@ MODULE FileType_HDF5
       INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: gdims_in
 #ifdef MPACT_HAVE_HDF5
       REAL(SDK) :: vals
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(1) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=1
 
@@ -3005,7 +3005,7 @@ MODULE FileType_HDF5
       INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: gdims_in
 #ifdef MPACT_HAVE_HDF5
       REAL(SDK) :: vals(SIZE(valst))
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(1) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=1
 
@@ -3131,7 +3131,7 @@ MODULE FileType_HDF5
       INTEGER(SIK),DIMENSION(2),INTENT(IN),OPTIONAL :: gdims_in
 #ifdef MPACT_HAVE_HDF5
       REAL(SDK) :: vals(SIZE(valst,1),SIZE(valst,2))
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(2) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=2
 
@@ -3258,7 +3258,7 @@ MODULE FileType_HDF5
       INTEGER(SIK),DIMENSION(3),INTENT(IN),OPTIONAL :: gdims_in
 #ifdef MPACT_HAVE_HDF5
       REAL(SDK) :: vals(SIZE(valst,1),SIZE(valst,2),SIZE(valst,3))
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(3) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=3
 
@@ -3386,7 +3386,7 @@ MODULE FileType_HDF5
 #ifdef MPACT_HAVE_HDF5
       CHARACTER(LEN=LEN_TRIM(vals)) :: valss
       CHARACTER, ALLOCATABLE :: valsc(:)
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(SIK) :: i
       INTEGER(HSIZE_T),DIMENSION(1) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=1
@@ -3549,7 +3549,7 @@ MODULE FileType_HDF5
 #ifdef MPACT_HAVE_HDF5
       CHARACTER(LEN=length_max) :: valss
       CHARACTER :: valsc(length_max,SIZE(vals))
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(SIK) :: i,j
       INTEGER(HSIZE_T),DIMENSION(2) :: ldims,gdims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=2
@@ -3715,7 +3715,7 @@ MODULE FileType_HDF5
 #ifdef MPACT_HAVE_HDF5
       CHARACTER :: valsc(length_max,SIZE(vals,1),SIZE(vals,2))
       CHARACTER(LEN=length_max) :: valss
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(SIK) :: i,j,k
       INTEGER(HSIZE_T),DIMENSION(3) :: gdims,ldims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=3
@@ -3885,7 +3885,7 @@ MODULE FileType_HDF5
 #ifdef MPACT_HAVE_HDF5
       CHARACTER(LEN=length_max) :: valss
       CHARACTER :: valsc(length_max,SIZE(vals,1),SIZE(vals,2),SIZE(vals,3))
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(SIK) :: i,j,k,m
       INTEGER(HSIZE_T),DIMENSION(4) :: gdims,ldims,offset,one
       INTEGER(HID_T),PARAMETER :: rank=4
@@ -4022,7 +4022,7 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),INTENT(IN) :: vals
       INTEGER(SIK),INTENT(IN),OPTIONAL :: gdims_in
 #ifdef MPACT_HAVE_HDF5
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(1) :: ldims,offset,one,gdims
       INTEGER(HID_T),PARAMETER :: rank=1
 
@@ -4138,7 +4138,7 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SDK),INTENT(INOUT) :: vals
 #ifdef MPACT_HAVE_HDF5
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
       INTEGER(HID_T),PARAMETER :: rank=1
 
@@ -4209,7 +4209,7 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: vals(:)
 #ifdef MPACT_HAVE_HDF5
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
       INTEGER(HID_T),PARAMETER :: rank=1
 
@@ -4291,7 +4291,7 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:)
 #ifdef MPACT_HAVE_HDF5
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(2) :: dims,maxdims
       INTEGER(HID_T),PARAMETER :: rank=2
 
@@ -4372,7 +4372,7 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:)
 #ifdef MPACT_HAVE_HDF5
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(3) :: dims,maxdims
       INTEGER(HID_T),PARAMETER :: rank=3
 
@@ -4453,7 +4453,7 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:)
 #ifdef MPACT_HAVE_HDF5
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(4) :: dims,maxdims
       INTEGER(HID_T),PARAMETER :: rank=4
 
@@ -4534,7 +4534,7 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SDK),POINTER,INTENT(INOUT) :: vals(:,:,:,:)
 #ifdef MPACT_HAVE_HDF5
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(4) :: dims,maxdims
       INTEGER(HID_T),PARAMETER :: rank=4
 
@@ -4615,7 +4615,7 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SSK),INTENT(INOUT) :: vals
 #ifdef MPACT_HAVE_HDF5
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
       INTEGER(HID_T),PARAMETER :: rank=1
 
@@ -4686,7 +4686,7 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: vals(:)
 #ifdef MPACT_HAVE_HDF5
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
       INTEGER(HID_T),PARAMETER :: rank=1
 
@@ -4767,7 +4767,7 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:)
 #ifdef MPACT_HAVE_HDF5
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(2) :: dims,maxdims
       INTEGER(HID_T),PARAMETER :: rank=2
 
@@ -4848,7 +4848,7 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:)
 #ifdef MPACT_HAVE_HDF5
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(3) :: dims,maxdims
       INTEGER(HID_T),PARAMETER :: rank=3
 
@@ -4929,7 +4929,7 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:)
 #ifdef MPACT_HAVE_HDF5
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(4) :: dims,maxdims
       INTEGER(HID_T),PARAMETER :: rank=4
 
@@ -5010,7 +5010,7 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SNK),INTENT(INOUT) :: vals
 #ifdef MPACT_HAVE_HDF5
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
       INTEGER(HID_T),PARAMETER :: rank=1
 
@@ -5083,7 +5083,7 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: vals(:)
 #ifdef MPACT_HAVE_HDF5
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
       INTEGER(HID_T),PARAMETER :: rank=1
 
@@ -5164,7 +5164,7 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:)
 #ifdef MPACT_HAVE_HDF5
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(2) :: dims,maxdims
       INTEGER(HID_T),PARAMETER :: rank=2
 
@@ -5245,7 +5245,7 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:)
 #ifdef MPACT_HAVE_HDF5
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(3) :: dims,maxdims
       INTEGER(HID_T),PARAMETER :: rank=3
 
@@ -5328,7 +5328,7 @@ MODULE FileType_HDF5
       INTEGER(SLK),INTENT(INOUT) :: vals
 #ifdef MPACT_HAVE_HDF5
       REAL(SDK) :: valst
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
       INTEGER(HID_T),PARAMETER :: rank=1
 
@@ -5407,7 +5407,7 @@ MODULE FileType_HDF5
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: vals(:)
 #ifdef MPACT_HAVE_HDF5
       INTEGER(SNK),ALLOCATABLE :: valst(:)
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
       INTEGER(HID_T),PARAMETER :: rank=1
 
@@ -5497,7 +5497,7 @@ MODULE FileType_HDF5
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:)
 #ifdef MPACT_HAVE_HDF5
       INTEGER(SNK),ALLOCATABLE :: valst(:,:)
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(2) :: dims,maxdims
       INTEGER(HID_T),PARAMETER :: rank=2
 
@@ -5587,7 +5587,7 @@ MODULE FileType_HDF5
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:)
 #ifdef MPACT_HAVE_HDF5
       INTEGER(SNK),ALLOCATABLE :: valst(:,:,:)
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(3) :: dims,maxdims
       INTEGER(HID_T),PARAMETER :: rank=3
 
@@ -5676,7 +5676,7 @@ MODULE FileType_HDF5
       LOGICAL(SBK),INTENT(INOUT) :: vals
 #ifdef MPACT_HAVE_HDF5
       CHARACTER(LEN=1) :: valsc
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
       INTEGER(HID_T),PARAMETER :: rank=1
 
@@ -5756,7 +5756,7 @@ MODULE FileType_HDF5
       LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: vals(:)
 #ifdef MPACT_HAVE_HDF5
       CHARACTER,ALLOCATABLE :: valsc(:)
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER :: i
       INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
       INTEGER(HID_T),PARAMETER :: rank=1
@@ -5852,7 +5852,7 @@ MODULE FileType_HDF5
       LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:)
 #ifdef MPACT_HAVE_HDF5
       CHARACTER(LEN=1),ALLOCATABLE :: valsc(:,:)
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(SIK) :: i,j
       INTEGER(HSIZE_T),DIMENSION(2) :: dims,maxdims
       INTEGER(HID_T),PARAMETER :: rank=2
@@ -5948,7 +5948,7 @@ MODULE FileType_HDF5
       LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:)
 #ifdef MPACT_HAVE_HDF5
       CHARACTER(LEN=1),ALLOCATABLE :: valsc(:,:,:)
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(SIK) :: i,j,k
       INTEGER(HSIZE_T),DIMENSION(3) :: dims,maxdims
       INTEGER(HID_T),PARAMETER :: rank=3
@@ -6045,7 +6045,7 @@ MODULE FileType_HDF5
 #ifdef MPACT_HAVE_HDF5
       CHARACTER,ALLOCATABLE :: valsc(:)
       INTEGER(SIK) :: i
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
       INTEGER(HID_T),PARAMETER :: rank=1
 
@@ -6129,7 +6129,7 @@ MODULE FileType_HDF5
 #ifdef MPACT_HAVE_HDF5
       CHARACTER,ALLOCATABLE :: valsc(:,:)
       INTEGER(SIK) :: i,j
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(2) :: dims,maxdims
       INTEGER(HID_T),PARAMETER :: rank=2
 
@@ -6225,7 +6225,7 @@ MODULE FileType_HDF5
 #ifdef MPACT_HAVE_HDF5
       CHARACTER,ALLOCATABLE :: valsc(:,:,:)
       INTEGER(SIK) :: i,j,k
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(3) :: dims,maxdims
       INTEGER(HID_T),PARAMETER :: rank=3
 
@@ -6325,7 +6325,7 @@ MODULE FileType_HDF5
 #ifdef MPACT_HAVE_HDF5
       CHARACTER,ALLOCATABLE :: valsc(:,:,:,:)
       INTEGER(SIK) :: i,j,k,m
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(4) :: dims,maxdims
       INTEGER(HID_T),PARAMETER :: rank=4
 
@@ -6426,7 +6426,7 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),INTENT(INOUT) :: vals
 #ifdef MPACT_HAVE_HDF5
       CHARACTER,ALLOCATABLE :: valsc(:)
-      CHARACTER(LEN=MAX_PATH_LENGTH) :: path
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER :: i
       INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
       INTEGER(HID_T),PARAMETER :: rank=1
@@ -6501,13 +6501,13 @@ MODULE FileType_HDF5
 !>
     FUNCTION convertPath(path)
       CHARACTER(LEN=*),INTENT(IN) :: path
-      CHARACTER(LEN=80) :: convertpath
+      CHARACTER(LEN=LEN(path)+1) :: convertpath
 
       INTEGER :: ipos,ipos2,last,ind
 
       convertpath=''
 
-      last=len(trim(path))
+      last=LEN_TRIM(path)
       ! Split the path string by '->'
       ipos=1
       DO

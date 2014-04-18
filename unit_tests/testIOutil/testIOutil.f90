@@ -19,30 +19,24 @@ PROGRAM testIOutil
 #include "UnitTest.h"
   USE ISO_FORTRAN_ENV
   USE UnitTest
-  USE Utils
+  USE Strings
+  USE ExceptionHandler
+  USE IO_Strings
+  USE IOutil
   
   IMPLICIT NONE
   
-  TYPE(FortranFileType) :: testFile,testFile2
-  TYPE(LogFileType) :: testLogFile
-  TYPE(InputFileType) :: testInpFile
-  CHARACTER(LEN=MAX_INPUT_FILE_LINE_LEN) :: string,string1,string2,string3
+  CHARACTER(LEN=256) :: string,string1,string2,string3
   CHARACTER(LEN=1) :: shortstring1,shortstring2,shortstring3
-  INTEGER :: ioerr,i
-  LOGICAL :: lexist
   TYPE(ExceptionHandlerType),TARGET :: e
       
-  CREATE_TEST('IOutil')
+  CREATE_TEST('IOUTIL')
   
   CALL e%setStopOnError(.FALSE.)
   CALL e%setQuietMode(.TRUE.)
   
   REGISTER_SUBTEST('PARAMETERS',testParameters)
   REGISTER_SUBTEST('IO_Strings',testIO_Strings)
-  REGISTER_SUBTEST('FileType_Base',testBaseFileType)
-  REGISTER_SUBTEST('FileType_Fortran',testFortranFileType)
-  REGISTER_SUBTEST('FileType_Log',testLogFileType)
-  REGISTER_SUBTEST('FileType_Input',testInputFileType)
   REGISTER_SUBTEST('Run-time Environment',testRTEnv)
   
   FINALIZE_TEST()
@@ -52,10 +46,6 @@ PROGRAM testIOutil
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testParameters()
-      WRITE(*,*) '  Passed:          MAX_PATH_LENGTH = ',MAX_PATH_LENGTH
-      WRITE(*,*) '  Passed:         MAX_FNAME_LENGTH = ',MAX_FNAME_LENGTH
-      WRITE(*,*) '  Passed:          MAX_FEXT_LENGTH = ',MAX_FEXT_LENGTH
-      WRITE(*,*) '  Passed:  MAX_INPUT_FILE_LINE_LEN = ',MAX_INPUT_FILE_LINE_LEN
       WRITE(*,*) '  Passed:                    BLANK = '//BLANK
       WRITE(*,*) '  Passed:                     BANG = '//BANG
       WRITE(*,*) '  Passed:                      DOT = '//DOT
@@ -488,196 +478,6 @@ PROGRAM testIOutil
       CALL getFileParts(string,shortstring1,shortstring2,shortstring3)
       CALL getFileParts(string,shortstring1,shortstring2,shortstring3,e)
     ENDSUBROUTINE testIO_Strings
-!
-!-------------------------------------------------------------------------------
-    SUBROUTINE testBaseFileType()
-      CALL testFile%e%addSurrogate(e)
-      ASSERT(.NOT.(testFile%isRead()),'%isRead()')
-      ASSERT(.NOT.(testFile%isWrite()),'%isWrite()')
-      ASSERT(.NOT.(testFile%isEOF()),'%isEOF()')
-      ASSERT(.NOT.(testFile%isOpen()),'%isOpen()')
-      ASSERT(LEN_TRIM(testFile%getFilePath()) == 0,'%getFilePath() (empty)')
-      ASSERT(LEN_TRIM(testFile%getFileName()) == 0,'%getFileName() (empty)')
-      ASSERT(LEN_TRIM(testFile%getFileExt()) == 0,'%getFileExt() (empty)')
-      CALL testFile%getFileParts(string1,string2,string3)
-      ASSERT(LEN_TRIM(string1) == 0,'%getFileParts(...) path')
-      ASSERT(LEN_TRIM(string2) == 0,'%getFileParts(...) name')
-      ASSERT(LEN_TRIM(string3) == 0,'%getFileParts(...) ext')
-      CALL testFile%setFilePath('filepath/')
-      ASSERT(TRIM(testFile%getFilePath()) == 'filepath/','%getFilePath()')
-      CALL testFile%setFileName('filename')
-      ASSERT(TRIM(testFile%getFileName()) == 'filename','%getFileName()')
-      CALL testFile%setFileExt('.fext')
-      ASSERT(TRIM(testFile%getFileExt()) == '.fext','%getFileExt()')
-      CALL testFile%getFileParts(string1,string2,string3)
-      ASSERT(TRIM(string1) == 'filepath/','%getFileParts(...) path')
-      ASSERT(TRIM(string2) == 'filename','%getFileParts(...) name')
-      ASSERT(TRIM(string3) == '.fext','%getFileParts(...) ext')
-      CALL testFile%setReadStat(.TRUE.)
-      ASSERT(testFile%isRead(),'%setReadStat()')
-      CALL testFile%setWriteStat(.TRUE.)
-      ASSERT(testFile%isWrite(),'%setWriteStat()')
-
-      !Error checking and coverage
-      CALL testFile%getFileParts(string1(1:1),string2(1:1),string3(1:1))
-      string(MAX_INPUT_FILE_LINE_LEN:MAX_INPUT_FILE_LINE_LEN)='.'
-      CALL testFile%setFilePath(string)
-      CALL testFile%setFileName(string)
-      CALL testFile%setFileExt(string)
-      CALL testFile%setEOFstat(.TRUE.)
-      CALL testFile%setOpenStat(.TRUE.)
-      ASSERT(testFile%isOpen(),'%setOpenStat')
-      CALL testFile%setEOFstat(.TRUE.)
-      ASSERT(testFile%isEOF(),'%setEOFStat')
-      CALL testFile%setFilePath('filepath/')
-      CALL testFile%setFileName('filename')
-      CALL testFile%setFileExt('.fext')
-      CALL testFile%setEOFstat(.FALSE.)
-      CALL testFile%setReadStat(.FALSE.)
-      CALL testFile%setWriteStat(.FALSE.)
-      CALL testFile%setOpenStat(.FALSE.)
-    ENDSUBROUTINE testBaseFileType
-!
-!-------------------------------------------------------------------------------
-    SUBROUTINE testFortranFileType()
-      
-      COMPONENT_TEST('%clear()')
-      CALL testFile%clear()
-      !Configure exception handler for testing
-      CALL testFile%e%addSurrogate(e)
-      CALL testFile2%e%addSurrogate(e)
-      ASSERT(testFile%getUnitNo() == -1,'%getUnitNo()')
-      ASSERT(.NOT.(testFile%isFormatted()),'%isFormatted()')
-      ASSERT(.NOT.(testFile%isDirect()),'%isDirect()')
-      ASSERT(testFile%getRecLen() == -1,'%getRecLen()')
-      ASSERT(.NOT.(testFile%isPadded()),'%isPadded()')
-      ASSERT(.NOT.(testFile%isNew()),'%isNew()')
-      ASSERT(.NOT.(testFile%isOverwrite()),'%isOverwrite()')
-      
-      !Called for coverage/error checking
-      COMPONENT_TEST('%initialize()')
-      
-      CALL testFile%fopen()
-      CALL testFile%fclose()
-      CALL testFile%fdelete()
-      CALL testFile%frewind()
-      CALL testFile%fbackspace()
-      CALL testFile%initialize(UNIT=OUTPUT_UNIT,FILE='./testFile.txt',STATUS='OOPS',&
-        ACCESS='OOPS',FORM='OOPS',POSITION='OOPS',ACTION='OOPS',PAD='OOPS',RECL=-1)
-      CALL testFile%initialize(UNIT=ERROR_UNIT,FILE='./testFile.txt',STATUS='OLD',&
-        ACCESS='SEQUENTIAL',FORM='FORMATTED',POSITION='ASIS',ACTION='WRITE',PAD='NO')
-      CALL testFile%initialize(UNIT=INPUT_UNIT,FILE='./testFile.txt',STATUS='NEW',&
-        ACCESS='DIRECT',FORM='UNFORMATTED',POSITION='APPEND',ACTION='READ', &
-          PAD='YES')
-      CALL testFile%initialize(UNIT=OUTPUT_UNIT,FILE='oops.txt',STATUS='REPLACE', &
-        ACCESS='DIRECT',POSITION='REWIND',ACTION='READWRITE',RECL=100)
-      CALL testFile%initialize(UNIT=OUTPUT_UNIT,FILE='oops.txt',STATUS='SCRATCH')
-      CALL testFile%initialize(UNIT=OUTPUT_UNIT,FILE='oops.txt',STATUS='UNKNOWN')
-  
-      CALL testFile%initialize(UNIT=12,FILE='./testFile.txt',PAD='NO')
-      ASSERT(testFile%isInit(),'%isInit(...)')
-      ASSERT(TRIM(testFile%getFileName()) == 'testFile','%getFileName()')
-      
-      COMPONENT_TEST('%fopen()')
-      CALL testFile%fopen()
-      ASSERT(testFile%isOpen(),'testFile%fopen()')
-      
-      !Coverage/Error checking
-      CALL testFile%fopen()
-      CALL testFile2%initialize(UNIT=12,FILE='./testFile.txt')
-  
-      CALL testFile%fbackspace()
-      CALL testFile%frewind()
-      CALL testFile%fclose()
-      ASSERT(.NOT.(testFile%isOpen()),'%fclose()')
-      CALL testFile%fdelete()
-      INQUIRE(FILE='./testFile.txt',EXIST=lexist)
-      ASSERT(.NOT.lexist,'%fdelete()')
-      
-      !Coverage/Error checking
-      CALL testFile%fclose()
-      CALL testFile%fbackspace()
-      CALL testFile%frewind()
-      CALL testFile%setOpenStat(.TRUE.)
-      CALL testFile%fbackspace()
-      CALL testFile%frewind()
-      CALL testFile%initialize(UNIT=12,FILE='./testFile.txt')
-      CALL testFile2%initialize(UNIT=13,FILE='./testFile2',ACCESS='DIRECT', &
-        STATUS='NEW',FORM='UNFORMATTED',RECL=100*NUMERIC_STORAGE_SIZE, &
-          ACTION='WRITE')
-      CALL testFile2%fopen()
-      CALL testFile2%fdelete()
-      CALL testFile%clear()
-      CALL testFile%e%addSurrogate(e)
-      CALL testFile%initialize(UNIT=12,FILE='./testFile.txt',STATUS='OLD', &
-        ACCESS='DIRECT',ACTION='READ',RECL=100,FORM='FORMATTED')
-      CALL testFile%fopen()
-      CALL testFile%fdelete()
-      CALL testFile%clear()
-      CALL testFile%e%addSurrogate(e)
-      CALL testFile%initialize(UNIT=12,FILE='./testFile.txt',STATUS='OLD', &
-        ACTION='READ',FORM='UNFORMATTED')
-      CALL testFile%fopen()
-      CALL testFile%fdelete()
-      CALL testFile%clear()
-    ENDSUBROUTINE testFortranFileType
-!
-!-------------------------------------------------------------------------------
-    SUBROUTINE testLogFileType()
-      LOGICAL :: bool
-      ASSERT(.NOT.(testLogFile%isEcho()),'%isEcho()')
-      CALL testLogFile%setEcho(.TRUE.)
-      ASSERT(testLogFile%isEcho(),'%setEcho(...)')
-      CALL testLogFile%initialize(UNIT=66,FILE='./test.log')
-      ASSERT(TRIM(testLogFile%getFileName()) == 'test','%initialize(...)')
-      CALL testLogFile%fopen()
-      CALL testLogFile%message('Passed: CALL testLogFile%message(...)',.TRUE.,.TRUE.)
-      CALL testLogFile%message('Passed: CALL testLogFile%message(...)',.FALSE.,.TRUE.)
-      CALL testLogFile%clear(.FALSE.)
-      ASSERT(testLogFile%getUnitNo() == -1,'%clear')
-      CALL testFile%initialize(UNIT=66,FILE='./test.log',STATUS='OLD',ACTION='READ')
-      CALL testFile%fopen()
-      READ(66,'(a)') string
-      bool=(TRIM(string(12:LEN(string))) == ' Passed: CALL testLogFile%message(...)')
-      ASSERT(bool,'%message(...)')
-      CALL testFile%clear(.TRUE.)
-    ENDSUBROUTINE testLogFileType
-!
-!-------------------------------------------------------------------------------
-    SUBROUTINE testInputFileType()
-      CALL testInpFile%e%addSurrogate(e)
-      ASSERT(.NOT.(testInpFile%getEchoStat()),'%getEchoStat()')
-      ASSERT(testInpFile%getEchoUnit() == -1,'%getEchoUnit()')
-      CALL testInpFile%setEchoStat(.TRUE.)
-      ASSERT(testInpFile%getEchoStat(),'%setEchoStat(...)')
-      CALL testInpFile%setEchoUnit(0)
-      CALL testInpFile%setEchoUnit(25)
-      ASSERT(testInpFile%getEchoUnit() == 25,'%setEchoUnit(...)')
-      CALL testFile%initialize(UNIT=66,FILE='./test.inp',STATUS='REPLACE', &
-        ACTION='WRITE')
-      CALL testFile%fopen()
-      WRITE(testFile%getUnitNo(),'(a,i2)') 'sample oneline',1
-      CALL testFile%clear()
-      CALL testFile%initialize(UNIT=25,FILE='./test.out',STATUS='REPLACE', &
-        ACCESS='DIRECT',RECL=100,ACTION='WRITE')
-      CALL testFile%fopen()
-      CALL testInpFile%initialize(UNIT=46,FILE='./test.inp')
-      CALL testInpFile%fopen()
-      string=testInpFile%fgetl()
-      ASSERT(TRIM(string) == 'sample oneline 1','%fgetl()')
-      ASSERT(testInpFile%getProbe() == 's','%getProbe()')
-      CALL testInpFile%frewind()
-      ASSERT(LEN_TRIM(testInpFile%getProbe()) == 0,'%frewind()')
-      string=testInpFile%fgetl()
-      CALL testInpFile%fbackspace()
-      ASSERT(LEN_TRIM(testInpFile%getProbe()) == 0,'%fbackspace()')
-      CALL testFile%clear(.TRUE.)
-      CALL testInpFile%setEchoStat(.FALSE.)
-      string=testInpFile%fgetl()
-      CALL testInpFile%clear(.TRUE.)
-      ASSERT(testInpFile%getEchoUnit() == -1,'%clear() (echo unit)')
-      ASSERT(.NOT.(testInpFile%getEchostat()),'%clear() (echo stat)')
-    ENDSUBROUTINE testInputFileType
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testRTEnv()

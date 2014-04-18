@@ -18,7 +18,8 @@
 PROGRAM testBinaryTrees
 #include "UnitTest.h"
   USE UnitTest
-  USE Utils
+  USE IntrType
+  USE BinaryTrees
   
   IMPLICIT NONE
 

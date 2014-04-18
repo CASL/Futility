@@ -18,7 +18,8 @@
 PROGRAM testAllocs
 #include "UnitTest.h"
   USE UnitTest
-  USE Utils
+  USE IntrType
+  USE Allocs
   
   IMPLICIT NONE
   
@@ -45,9 +46,11 @@ PROGRAM testAllocs
   REGISTER_SUBTEST('testDOUBLEA()',testDOUBLEa)
   
   FINALIZE_TEST()
-  
+!
+!===============================================================================
   CONTAINS
-
+!
+!-------------------------------------------------------------------------------
     SUBROUTINE testAllocsError()
 
       CALL AllocsError(3_SIK,50.0_SRK)
@@ -55,7 +58,7 @@ PROGRAM testAllocs
   
     ENDSUBROUTINE testAllocsError
 !
-!===============================================================================
+!-------------------------------------------------------------------------------
     SUBROUTINE testGetMemUsageChar()
       
       ASSERT(ALLOC_MEMSTRING_LENGTH == 14_SIK,'ALLOC_MEMSTRING_LENGTH')
@@ -64,7 +67,7 @@ PROGRAM testAllocs
   
     ENDSUBROUTINE testGetMemUsageChar
 !
-!===============================================================================
+!-------------------------------------------------------------------------------
     SUBROUTINE testGetMemUsage()
       REAL(SDK) :: memory
       REAL(SRK),ALLOCATABLE :: tmpvar(:)
@@ -86,7 +89,7 @@ PROGRAM testAllocs
       
     ENDSUBROUTINE testGetMemUsage
 !
-!===============================================================================
+!-------------------------------------------------------------------------------
 ! Test allocation/deallocation for booleans
     SUBROUTINE testBOOLP()
       LOGICAL(SBK) :: test
@@ -471,7 +474,7 @@ PROGRAM testAllocs
       
     ENDSUBROUTINE testBOOLP
 !
-!===============================================================================
+!-------------------------------------------------------------------------------
 ! Test allocation/deallocation for booleans
     SUBROUTINE testBOOLA()
       LOGICAL(SBK),ALLOCATABLE :: bool1(:)
@@ -849,7 +852,7 @@ PROGRAM testAllocs
       
     ENDSUBROUTINE testBOOLA
 !
-!===============================================================================
+!-------------------------------------------------------------------------------
 ! Test allocation/deallocation for integers
     SUBROUTINE testINTP()
       INTEGER(SNK),POINTER :: int_1(:)
@@ -1229,7 +1232,7 @@ PROGRAM testAllocs
       
     ENDSUBROUTINE testINTP
 !
-!===============================================================================
+!-------------------------------------------------------------------------------
 ! Test allocation/deallocation for integers
     SUBROUTINE testINTA()
       INTEGER(SNK),ALLOCATABLE :: int_1(:)
@@ -1607,7 +1610,7 @@ PROGRAM testAllocs
       
     ENDSUBROUTINE testINTA
 !
-!===============================================================================
+!-------------------------------------------------------------------------------
 ! Test allocation/deallocation for integers
     SUBROUTINE testLONGINTP()
       INTEGER(SLK),POINTER :: lint1(:)
@@ -2000,7 +2003,7 @@ PROGRAM testAllocs
       
     ENDSUBROUTINE testLONGINTP
 !
-!===============================================================================
+!-------------------------------------------------------------------------------
 ! Test allocation/deallocation for integers
     SUBROUTINE testLONGINTA()
       INTEGER(SLK),ALLOCATABLE :: lint1(:)
@@ -2385,7 +2388,7 @@ PROGRAM testAllocs
       
     ENDSUBROUTINE testLONGINTA
 !
-!===============================================================================
+!-------------------------------------------------------------------------------
 ! Test allocation/deallocation for single precision
     SUBROUTINE testSINGLEP()
       REAL(SSK),POINTER :: sgl1(:)
@@ -2778,7 +2781,7 @@ PROGRAM testAllocs
       
     ENDSUBROUTINE testSINGLEP
 !
-!===============================================================================
+!-------------------------------------------------------------------------------
 ! Test allocation/deallocation for single precision
     SUBROUTINE testSINGLEA()
       REAL(SSK),ALLOCATABLE :: sgl1(:)
@@ -3163,7 +3166,7 @@ PROGRAM testAllocs
       
     ENDSUBROUTINE testSINGLEA
 !
-!===============================================================================
+!-------------------------------------------------------------------------------
 ! Test allocation/deallocation for single precision
     SUBROUTINE testDOUBLEP()
       REAL(SDK),POINTER :: dbl1(:)
@@ -3555,7 +3558,7 @@ PROGRAM testAllocs
       
     ENDSUBROUTINE testDOUBLEP
 !
-!===============================================================================
+!-------------------------------------------------------------------------------
 ! Test allocation/deallocation for single precision
     SUBROUTINE testDOUBLEA()
       REAL(SDK),ALLOCATABLE :: dbl1(:)
