@@ -60,6 +60,12 @@ MODULE FileType_Base
   !>
   !> This is an abstract type which means it has no basic implementation
   TYPE,ABSTRACT :: BaseFileType
+    !> The length of the path string for this file
+    INTEGER(SIK) :: pathlen=0
+    !> The length of the name string for this file
+    INTEGER(SIK) :: fnamelen=0
+    !> The length of the file name extension string for this file
+    INTEGER(SIK) :: extlen=0
     !> The path string to the file
     TYPE(StringType),PRIVATE :: path
     !> The name of the file (without the file extension)
@@ -149,6 +155,7 @@ MODULE FileType_Base
           'Cannot change path of file while it is open!')
       ELSE
         file%path=TRIM(ADJUSTL(pathstr))
+        file%pathlen=LEN_TRIM(file%path)
       ENDIF
     ENDSUBROUTINE setFilePath_file
 !
@@ -166,6 +173,7 @@ MODULE FileType_Base
           'Cannot change name of file while it is open!')
       ELSE
         file%name=TRIM(ADJUSTL(namestr))
+        file%fnamelen=LEN_TRIM(file%name)
       ENDIF
     ENDSUBROUTINE setFileName_file
 !
@@ -183,6 +191,7 @@ MODULE FileType_Base
           'Cannot change extension of file while it is open!')
       ELSE
         file%ext=TRIM(ADJUSTL(extstr))
+        file%extlen=LEN_TRIM(file%ext)
       ENDIF
     ENDSUBROUTINE setFileExt_file
 !
@@ -223,7 +232,7 @@ MODULE FileType_Base
 !>
     PURE FUNCTION getFilePath_file(file) RESULT(path)
       CLASS(BaseFileType),INTENT(IN) :: file
-      CHARACTER(LEN=file%path%ntrim) :: path
+      CHARACTER(LEN=file%pathlen) :: path
       path=file%path
     ENDFUNCTION getFilePath_file
 !
@@ -234,7 +243,7 @@ MODULE FileType_Base
 !>
     PURE FUNCTION getFileName_file(file) RESULT(fname)
       CLASS(BaseFileType),INTENT(IN) :: file
-      CHARACTER(LEN=file%name%ntrim) :: fname
+      CHARACTER(LEN=file%fnamelen) :: fname
       fname=file%name
     ENDFUNCTION getFileName_file
 !
@@ -245,7 +254,7 @@ MODULE FileType_Base
 !>
     PURE FUNCTION getFileExt_file(file) RESULT(ext)
       CLASS(BaseFileType),INTENT(IN) :: file
-      CHARACTER(LEN=file%ext%ntrim) :: ext
+      CHARACTER(LEN=file%extlen) :: ext
       ext=file%ext
     ENDFUNCTION getFileExt_file
 !

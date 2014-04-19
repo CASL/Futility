@@ -77,12 +77,6 @@ MODULE FileType_Checkpoint
   TYPE,ABSTRACT,EXTENDS(BaseFileType) :: CheckpointFileType
     !> The version of the checkpoint file.
     CHARACTER(LEN=3) :: version=''
-    !> The length of the path string for this file
-    INTEGER(SIK),PRIVATE :: pathlen=0
-    !> The length of the name string for this file
-    INTEGER(SIK),PRIVATE :: fnamelen=0
-    !> The length of the file name extension string for this file
-    INTEGER(SIK),PRIVATE :: extlen=0
     !> Initialization status for this file
     LOGICAL(SBK) :: isInit=.FALSE.
     !> Indicates whether or not exportFile is to be called when
