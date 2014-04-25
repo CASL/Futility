@@ -774,7 +774,7 @@ MODULE ExceptionHandler
       CHARACTER(LEN=*),INTENT(IN) :: mesg
       LOGICAL(SBK) :: toLog
       IF(ASSOCIATED(e%surrogate)) THEN
-        e%surrogate%nWarn=e%nWarn+1
+        e%surrogate%nWarn=e%surrogate%nWarn+1
         e%surrogate%lastMesg=mesg
         toLog=(e%surrogate%logFileActive .AND. &
           e%surrogate%verbose(EXCEPTION_WARNING))
