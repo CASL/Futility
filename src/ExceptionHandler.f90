@@ -160,11 +160,11 @@ MODULE ExceptionHandler
   !> provide interfaces to all the attributes.
   TYPE :: ExceptionHandlerType
     !> Defines whether or not to stop executaion when an error is raised
-    LOGICAL(SBK),PRIVATE :: stopOnError=.TRUE.
+    LOGICAL(SBK) :: stopOnError=.TRUE.
     !> Defines whether or not to report exceptions to a log file
-    LOGICAL(SBK),PRIVATE :: logFileActive=.FALSE.
+    LOGICAL(SBK) :: logFileActive=.FALSE.
     !> The output unit identifier for the log file
-    INTEGER(SIK),PRIVATE :: logFileUnit=666
+    INTEGER(SIK) :: logFileUnit=666
     !> The number of INFORMATION exceptions that have been raised
     INTEGER(SIK),PRIVATE :: nInfo=0
     !> The number of WARNING exceptions that have been raised
@@ -184,7 +184,7 @@ MODULE ExceptionHandler
     !> The last exception message that was reported
     CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH),PRIVATE :: lastMesg=''
     !> Surrogate exception handler to which most functions are delegated.
-    TYPE(ExceptionHandlerType),POINTER,PRIVATE :: surrogate => NULL()
+    TYPE(ExceptionHandlerType),POINTER :: surrogate => NULL()
 !
 !List of type bound procedures (methods) for the Exception Handler object
     CONTAINS
@@ -443,19 +443,22 @@ MODULE ExceptionHandler
       CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
       INTEGER(SIK),INTENT(IN) :: unit
       LOGICAL(SBK) :: tmpQuiet
-      IF(ASSOCIATED(e%surrogate)) CALL copyFromSurrogate(e)
-
-      !Try to set the log file unit number. Check that it is a valid
-      !value. If not display a warning.
-      IF(unit /= OUTPUT_UNIT .AND. unit /= ERROR_UNIT .AND. unit > 0) THEN
-        e%logFileUnit=unit
+      IF(ASSOCIATED(e%surrogate)) THEN
+        CALL setLogFileUnit(e%surrogate,unit) 
+!        CALL copyFromSurrogate(e)
       ELSE
-        e%lastMesg='Illegal unit number for log file. '// &
-                   'Log file unit not set.'
-        tmpQuiet=.FALSE.
-        e%nWarn=e%nWarn+1
-        CALL exceptionMessage(EXCEPTION_WARNING,tmpQuiet,.FALSE., &
-          ERROR_UNIT,e%lastMesg)
+        !Try to set the log file unit number. Check that it is a valid
+        !value. If not display a warning.
+        IF(unit /= OUTPUT_UNIT .AND. unit /= ERROR_UNIT .AND. unit > 0) THEN
+          e%logFileUnit=unit
+        ELSE
+          e%lastMesg='Illegal unit number for log file. '// &
+                     'Log file unit not set.'
+          tmpQuiet=.FALSE.
+          e%nWarn=e%nWarn+1
+          CALL exceptionMessage(EXCEPTION_WARNING,tmpQuiet,.FALSE., &
+            ERROR_UNIT,e%lastMesg)
+        ENDIF
       ENDIF
     ENDSUBROUTINE setLogFileUnit
 !
@@ -481,11 +484,15 @@ MODULE ExceptionHandler
     SUBROUTINE setLogActive(e,isactive)
       CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
       LOGICAL(SBK),INTENT(IN) :: isactive
-      IF(ASSOCIATED(e%surrogate)) CALL copyFromSurrogate(e)
-      IF(isactive) THEN
-        CALL e%checkLogFileOK()
+      IF(ASSOCIATED(e%surrogate)) THEN
+        CALL setLogActive(e%surrogate,isActive) 
       ELSE
-        e%logFileActive=.FALSE.
+        IF(isactive) THEN
+          CALL e%checkLogFileOK()
+          e%logFileActive=.TRUE.
+        ELSE
+          e%logFileActive=.FALSE.
+        ENDIF
       ENDIF
     ENDSUBROUTINE setLogActive
 !
