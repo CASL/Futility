@@ -118,7 +118,6 @@
 !>     as input.
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE ExceptionHandler
-!
   USE ISO_FORTRAN_ENV
   USE IntrType
 
@@ -160,11 +159,11 @@ MODULE ExceptionHandler
   !> provide interfaces to all the attributes.
   TYPE :: ExceptionHandlerType
     !> Defines whether or not to stop executaion when an error is raised
-    LOGICAL(SBK) :: stopOnError=.TRUE.
+    LOGICAL(SBK),PRIVATE :: stopOnError=.TRUE.
     !> Defines whether or not to report exceptions to a log file
-    LOGICAL(SBK) :: logFileActive=.FALSE.
+    LOGICAL(SBK),PRIVATE :: logFileActive=.FALSE.
     !> The output unit identifier for the log file
-    INTEGER(SIK) :: logFileUnit=666
+    INTEGER(SIK),PRIVATE :: logFileUnit=666
     !> The number of INFORMATION exceptions that have been raised
     INTEGER(SIK),PRIVATE :: nInfo=0
     !> The number of WARNING exceptions that have been raised
@@ -184,13 +183,16 @@ MODULE ExceptionHandler
     !> The last exception message that was reported
     CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH),PRIVATE :: lastMesg=''
     !> Surrogate exception handler to which most functions are delegated.
-    TYPE(ExceptionHandlerType),POINTER :: surrogate => NULL()
+    TYPE(ExceptionHandlerType),POINTER,PRIVATE :: surrogate => NULL()
 !
 !List of type bound procedures (methods) for the Exception Handler object
     CONTAINS
       !> @copybrief ExceptionHandler::addSurrogate
       !> @copydetails ExceptionHandler::addSurrogate
       PROCEDURE,PASS :: addSurrogate
+      !> @copybrief ExceptionHandler::getSurrogate
+      !> @copydetails ExceptionHandler::getSurrogate
+      PROCEDURE,PASS :: getSurrogate
       !> @copybrief ExceptionHandler::initCounter
       !> @copydetails ExceptionHandler::initCounter
       PROCEDURE,PASS :: initCounter
@@ -294,7 +296,12 @@ MODULE ExceptionHandler
   CONTAINS
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Overloads assignment operator
+!> @param e right hand side of assignment operator
+!> @param e2 left hand side of assignment operator
+!>
+!> Performs a deep copy of all attributes except the surrogate which is
+!> pointer associated.
 !>
     SUBROUTINE assign_etype(e,e2)
       TYPE(ExceptionHandlerType),INTENT(OUT) :: e
@@ -314,7 +321,12 @@ MODULE ExceptionHandler
     ENDSUBROUTINE assign_etype
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Routine to add a surrogate handler for a given handler
+!> @param e the exception handler
+!> @param e2 the surrogate handler
+!>
+!> This defers all calls of an exception handler to it's surrogate. Association
+!> with the surrogate is broken any time a "set" method is called.
 !>
     SUBROUTINE addSurrogate(e,e2)
       CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
@@ -322,6 +334,17 @@ MODULE ExceptionHandler
       e%surrogate => e2
       IF(ASSOCIATED(e2%surrogate)) e%surrogate => e2%surrogate
     ENDSUBROUTINE addSurrogate
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns a pointer to an exception handler's surrogate
+!> @param e the exception handler
+!> @param e2 the surrogate handler
+!>
+    SUBROUTINE getSurrogate(e,e2)
+      CLASS(ExceptionHandlerType),INTENT(IN) :: e
+      TYPE(ExceptionHandlerType),POINTER,INTENT(OUT) :: e2
+       e2 => e%surrogate
+    ENDSUBROUTINE getSurrogate
 !
 !-------------------------------------------------------------------------------
 !> @brief Initialize the exception counters for an exception object.
@@ -443,22 +466,19 @@ MODULE ExceptionHandler
       CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
       INTEGER(SIK),INTENT(IN) :: unit
       LOGICAL(SBK) :: tmpQuiet
-      IF(ASSOCIATED(e%surrogate)) THEN
-        CALL setLogFileUnit(e%surrogate,unit) 
-!        CALL copyFromSurrogate(e)
+      IF(ASSOCIATED(e%surrogate)) CALL copyFromSurrogate(e)
+      
+      !Try to set the log file unit number. Check that it is a valid
+      !value. If not display a warning.
+      IF(unit /= OUTPUT_UNIT .AND. unit /= ERROR_UNIT .AND. unit > 0) THEN
+        e%logFileUnit=unit
       ELSE
-        !Try to set the log file unit number. Check that it is a valid
-        !value. If not display a warning.
-        IF(unit /= OUTPUT_UNIT .AND. unit /= ERROR_UNIT .AND. unit > 0) THEN
-          e%logFileUnit=unit
-        ELSE
-          e%lastMesg='Illegal unit number for log file. '// &
-                     'Log file unit not set.'
-          tmpQuiet=.FALSE.
-          e%nWarn=e%nWarn+1
-          CALL exceptionMessage(EXCEPTION_WARNING,tmpQuiet,.FALSE., &
-            ERROR_UNIT,e%lastMesg)
-        ENDIF
+        e%lastMesg='Illegal unit number for log file. '// &
+                    'Log file unit not set.'
+        tmpQuiet=.FALSE.
+        e%nWarn=e%nWarn+1
+        CALL exceptionMessage(EXCEPTION_WARNING,tmpQuiet,.FALSE., &
+          ERROR_UNIT,e%lastMesg)
       ENDIF
     ENDSUBROUTINE setLogFileUnit
 !
@@ -484,15 +504,12 @@ MODULE ExceptionHandler
     RECURSIVE SUBROUTINE setLogActive(e,isactive)
       CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
       LOGICAL(SBK),INTENT(IN) :: isactive
-      IF(ASSOCIATED(e%surrogate)) THEN
-        CALL setLogActive(e%surrogate,isActive) 
+      IF(ASSOCIATED(e%surrogate)) CALL copyFromSurrogate(e)
+      IF(isactive) THEN
+        CALL e%checkLogFileOK()
+        e%logFileActive=.TRUE.
       ELSE
-        IF(isactive) THEN
-          CALL e%checkLogFileOK()
-          e%logFileActive=.TRUE.
-        ELSE
-          e%logFileActive=.FALSE.
-        ENDIF
+        e%logFileActive=.FALSE.
       ENDIF
     ENDSUBROUTINE setLogActive
 !

@@ -124,6 +124,9 @@ MODULE FileType_DA32
       !> @copybrief FileType_DA32::init_DA32_file
       !> @copydetails FileType_DA32::init_DA32_file
       PROCEDURE,PASS :: initialize => init_DA32_file
+      !> @copybrief FileType_DA32::getNextRec_DA32_file
+      !> @copydetails FileType_DA32::getNextRec_DA32_file
+      PROCEDURE,PASS :: getNextRec => getNextRec_DA32_file
       !> @copybrief FileType_DA32::readdat_char
       !> @copydetails FileType_DA32::readdat_char
       PROCEDURE,PASS,PRIVATE :: readdat_char
@@ -495,6 +498,21 @@ MODULE FileType_DA32
     ENDSUBROUTINE init_DA32_file
 !
 !-------------------------------------------------------------------------------
+!> @brief
+!> 
+    FUNCTION getNextRec_DA32_file(thisDA32) RESULT(next_rec)
+      CLASS(DA32FileType),INTENT(IN) :: thisDA32
+      INTEGER(SLK) :: next_rec
+      next_rec=1
+      IF(thisDA32%isInit()) THEN
+        IF(thisDA32%isOpen()) THEN
+          INQUIRE(thisDA32%getUnitNo(),NEXTREC=next_rec)
+          next_rec=next_rec*INT(WORDSREC,SLK)
+        ENDIF
+      ENDIF
+    ENDFUNCTION getNextRec_DA32_file
+!
+!-------------------------------------------------------------------------------
 !> @brief Reads a stream of records from a direct access file into a buffer
 !> @param thisDA32 the DA32 file type object to read data from
 !> @param rec the record index to begin reading from
@@ -557,7 +575,7 @@ MODULE FileType_DA32
       INTEGER(SIK),INTENT(OUT) :: ioerr
       INTEGER(SLK),INTENT(INOUT) :: nword
       INTEGER(SNK),INTENT(IN) :: dat(*)
-      INTEGER(SIK) :: i,irec,istt,istp,iword,nrec,nwrite
+      INTEGER(SLK) :: i,irec,istt,istp,iword,nrec,nwrite
       INTEGER(SNK) :: bufdat(WORDSREC)
             
       ioerr=0

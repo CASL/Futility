@@ -134,15 +134,33 @@ MODULE ParallelEnv
       !> @copybrief ParallelEnv::barrier_MPI_Env_type
       !> @copydetails ParallelEnv::barrier_MPI_Env_type
       PROCEDURE,PASS :: barrier => barrier_MPI_Env_type
-      !> @copybrief ParallelEnv::gather_scalar_SLK_MPI_Env_type
-      !> @copydetails ParallelEnv::gather_scalar_SLK_MPI_Env_type
-      PROCEDURE,PASS,PRIVATE :: gather_scalar_SLK_MPI_Env_type
-      !> @copybrief ParallelEnv::gather_SLK_MPI_Env_type
-      !> @copydetails ParallelEnv::gather_SLK_MPI_Env_type
-      PROCEDURE,PASS,PRIVATE :: gather_SLK_MPI_Env_type
+      !> @copybrief ParallelEnv::gather_SIK0_MPI_Env_type
+      !> @copydetails ParallelEnv::gather_SIK0_MPI_Env_type
+      PROCEDURE,PASS,PRIVATE :: gather_SIK0_MPI_Env_type
+      !> @copybrief ParallelEnv::gather_SLK0_MPI_Env_type
+      !> @copydetails ParallelEnv::gather_SLK0_MPI_Env_type
+      PROCEDURE,PASS,PRIVATE :: gather_SLK0_MPI_Env_type
+      !> @copybrief ParallelEnv::gather_SLK1_MPI_Env_type
+      !> @copydetails ParallelEnv::gather_SLK1_MPI_Env_type
+      PROCEDURE,PASS,PRIVATE :: gather_SLK1_MPI_Env_type
       !>
-      GENERIC :: gather => gather_scalar_SLK_MPI_Env_type, &
-                           gather_SLK_MPI_Env_type
+      GENERIC :: gather => gather_SIK0_MPI_Env_type, &
+                           gather_SLK0_MPI_Env_type, &
+                           gather_SLK1_MPI_Env_type
+      !> @copybrief ParallelEnv::scatter_SLK0_MPI_Env_type
+      !> @copydetails ParallelEnv::scatter_SLK0_MPI_Env_type
+      PROCEDURE,PASS,PRIVATE :: scatter_SLK0_MPI_Env_type
+      !> @copybrief ParallelEnv::scatter_SLK1_MPI_Env_type
+      !> @copydetails ParallelEnv::scatter_SLK1_MPI_Env_type
+      PROCEDURE,PASS,PRIVATE :: scatter_SLK1_MPI_Env_type
+      !> 
+      GENERIC :: scatter => scatter_SLK0_MPI_Env_type, &
+                            scatter_SLK1_MPI_Env_type
+      !> @copybrief ParallelEnv::bcast_SLK0_MPI_Env_type
+      !> @copydetails ParallelEnv::bcast_SLK0_MPI_Env_type
+      PROCEDURE,PASS,PRIVATE :: bcast_SLK0_MPI_Env_type
+      !>
+      GENERIC :: bcast => bcast_SLK0_MPI_Env_type
       !> @copybrief ParallelEnv::allReduceR_MPI_Env_type
       !> @copydetails  ParallelEnv::allReduceR_MPI_Env_type
       PROCEDURE,PASS :: allReduce => allReduceR_MPI_Env_type
@@ -215,33 +233,6 @@ MODULE ParallelEnv
       PROCEDURE,PASS :: clear => clear_ParEnvType
   ENDTYPE ParallelEnvType
 
-  !INTERFACE allReduce_MPI_Env_type
-  !  !> @copybrief ParallelEnv::allReduceR_MPI_Env_type
-  !  !> @copydetails ParallelEnv::allReduceR_MPI_Env_type
-  !  MODULE PROCEDURE allReduceR_MPI_Env_type
-  !  !> @copybrief ParallelEnv::allReduceI_MPI_Env_type
-  !  !> @copydetails ParallelEnv::allReduceI_MPI_Env_type
-  !  MODULE PROCEDURE allReduceI_MPI_Env_type
-  !ENDINTERFACE
-  !
-  !INTERFACE allReduceMax_MPI_Env_type
-  !  !> @copybrief ParallelEnv::allReduceMaxR_MPI_Env_type
-  !  !> @copydetails ParallelEnv::allReduceMaxR_MPI_Env_type
-  !  MODULE PROCEDURE allReduceMaxR_MPI_Env_type
-  !  !> @copybrief ParallelEnv::allReduceMaxI_MPI_Env_type
-  !  !> @copydetails ParallelEnv::allReduceMaxI_MPI_Env_type
-  !  MODULE PROCEDURE allReduceMaxI_MPI_Env_type
-  !ENDINTERFACE
-  !
-  !INTERFACE allReduceMin_MPI_Env_type
-  !  !> @copybrief ParallelEnv::allReduceMinR_MPI_Env_type
-  !  !> @copydetails ParallelEnv::allReduceMinR_MPI_Env_type
-  !  MODULE PROCEDURE allReduceMinR_MPI_Env_type
-  !  !> @copybrief ParallelEnv::allReduceMinI_MPI_Env_type
-  !  !> @copydetails ParallelEnv::allReduceMinI_MPI_Env_type
-  !  MODULE PROCEDURE allReduceMinI_MPI_Env_type
-  !ENDINTERFACE
-  
   !> @brief Overloads the assignment operator for the ParallelEnvType.
   !>
   INTERFACE ASSIGNMENT(=)
@@ -545,9 +536,38 @@ MODULE ParallelEnv
     ENDSUBROUTINE barrier_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
-!> @brief Wrapper routine calls MPI_Barrier
-    SUBROUTINE gather_scalar_SLK_MPI_Env_type(myPE,sendbuf,recvbuf,root)
-      CHARACTER(LEN=*),PARAMETER :: myName='gather_scalar_SLK_MPI_Env_type'
+!> @brief Wrapper routine calls MPI_Gather
+    SUBROUTINE gather_SIK0_MPI_Env_type(myPE,sendbuf,recvbuf,root)
+      CHARACTER(LEN=*),PARAMETER :: myName='gather_SIK0_MPI_Env_type'
+      CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
+      INTEGER(SIK),INTENT(IN) :: sendbuf
+      INTEGER(SIK),INTENT(INOUT) :: recvbuf(:)
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: root
+      INTEGER(SIK) :: rank
+      rank=0
+      IF(PRESENT(root)) rank=root
+      IF(0 <= rank .AND. rank <= myPE%nproc-1) THEN
+        IF(rank == myPE%rank) THEN
+          IF(SIZE(recvbuf) < myPE%nproc) &
+            CALL eParEnv%raiseError(modName//'::'//myName// &
+              ' - size of receive buffer is not large enough!')
+        ENDIF
+#ifdef HAVE_MPI
+        CALL MPI_Gather(sendbuf,1,MPI_INTEGER,recvbuf,1,MPI_INTEGER, &
+          rank,myPE%comm,mpierr)
+#else
+        recvbuf(1)=sendbuf
+#endif
+      ELSE
+        CALL eParEnv%raiseError(modName//'::'//myName// &
+          ' - Invalid rank!')
+      ENDIF
+    ENDSUBROUTINE gather_SIK0_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine calls MPI_Gather
+    SUBROUTINE gather_SLK0_MPI_Env_type(myPE,sendbuf,recvbuf,root)
+      CHARACTER(LEN=*),PARAMETER :: myName='gather_SLK0_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
       INTEGER(SLK),INTENT(IN) :: sendbuf
       INTEGER(SLK),INTENT(INOUT) :: recvbuf(:)
@@ -556,27 +576,27 @@ MODULE ParallelEnv
       rank=0
       IF(PRESENT(root)) rank=root
       IF(0 <= rank .AND. rank <= myPE%nproc-1) THEN
-        IF(SIZE(recvbuf) >= myPE%nproc) THEN
-#ifdef HAVE_MPI
-          CALL MPI_Gather(sendbuf,1,MPI_INTEGER8,recvbuf,1,MPI_INTEGER8, &
-            rank,myPE%comm,mpierr)
-#else
-          recvbuf=sendbuf
-#endif
-        ELSE
-          CALL eParEnv%raiseError(modName//'::'//myName// &
-            ' - size of receive buffer is not large enough!')
+        IF(rank == myPE%rank) THEN
+          IF(SIZE(recvbuf) < myPE%nproc) &
+            CALL eParEnv%raiseError(modName//'::'//myName// &
+              ' - size of receive buffer is not large enough!')
         ENDIF
+#ifdef HAVE_MPI
+        CALL MPI_Gather(sendbuf,1,MPI_INTEGER8,recvbuf,1,MPI_INTEGER8, &
+          rank,myPE%comm,mpierr)
+#else
+        recvbuf(1)=sendbuf
+#endif
       ELSE
         CALL eParEnv%raiseError(modName//'::'//myName// &
           ' - Invalid rank!')
       ENDIF
-    ENDSUBROUTINE gather_scalar_SLK_MPI_Env_type
+    ENDSUBROUTINE gather_SLK0_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
-!> @brief Wrapper routine calls MPI_Barrier
-    SUBROUTINE gather_SLK_MPI_Env_type(myPE,sendbuf,recvbuf,root)
-      CHARACTER(LEN=*),PARAMETER :: myName='gather_scalar_SLK_MPI_Env_type'
+!> @brief Wrapper routine calls MPI_Gather
+    SUBROUTINE gather_SLK1_MPI_Env_type(myPE,sendbuf,recvbuf,root)
+      CHARACTER(LEN=*),PARAMETER :: myName='gather_SLK1_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
       INTEGER(SLK),INTENT(IN) :: sendbuf(:)
       INTEGER(SLK),INTENT(INOUT) :: recvbuf(:,:)
@@ -586,26 +606,109 @@ MODULE ParallelEnv
       IF(PRESENT(root)) rank=root
       count=SIZE(sendbuf)
       IF(0 <= rank .AND. rank <= myPE%nproc-1) THEN
-        IF(SIZE(recvbuf) >= myPE%nproc*count) THEN
-#ifdef HAVE_MPI
-          CALL MPI_Gather(sendbuf,count,MPI_INTEGER8,recvbuf,count, &
-            MPI_INTEGER8,rank,myPE%comm,mpierr)
-#else
-          DO n=1,count
-            i=MOD(n-1,SIZE(recvbuf,DIM=1))+1
-            j=(n-1)/SIZE(recvbuf,DIM=1)+1
-            recvbuf(i,j)=sendbuf(n)
-          ENDDO
-#endif
-        ELSE
-          CALL eParEnv%raiseError(modName//'::'//myName// &
-            ' - size of receive buffer is not large enough!')
+        IF(rank == myPE%rank) THEN
+          IF(SIZE(recvbuf) < myPE%nproc*count) &
+            CALL eParEnv%raiseError(modName//'::'//myName// &
+              ' - size of receive buffer is not large enough!')
         ENDIF
+#ifdef HAVE_MPI
+        CALL MPI_Gather(sendbuf,count,MPI_INTEGER8,recvbuf,count, &
+          MPI_INTEGER8,rank,myPE%comm,mpierr)
+#else
+        DO n=1,count
+          i=MOD(n-1,SIZE(recvbuf,DIM=1))+1
+          j=(n-1)/SIZE(recvbuf,DIM=1)+1
+          recvbuf(i,j)=sendbuf(n)
+        ENDDO
+#endif
       ELSE
         CALL eParEnv%raiseError(modName//'::'//myName// &
           ' - Invalid rank!')
       ENDIF
-    ENDSUBROUTINE gather_SLK_MPI_Env_type
+    ENDSUBROUTINE gather_SLK1_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine calls MPI_Scatter
+    SUBROUTINE scatter_SLK0_MPI_Env_type(myPE,sendbuf,recvbuf,root)
+      CHARACTER(LEN=*),PARAMETER :: myName='scatter_SLK0_MPI_Env_type'
+      CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
+      INTEGER(SLK),INTENT(IN) :: sendbuf(:)
+      INTEGER(SLK),INTENT(INOUT) :: recvbuf
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: root
+      INTEGER(SIK) :: rank
+      rank=0
+      IF(PRESENT(root)) rank=root
+      IF(0 <= rank .AND. rank <= myPE%nproc-1) THEN
+        IF(rank == myPE%rank) THEN
+          IF(SIZE(sendbuf) < myPE%nproc) &
+            CALL eParEnv%raiseError(modName//'::'//myName// &
+              ' - size of send buffer is not large enough!')
+        ENDIF
+#ifdef HAVE_MPI
+        CALL MPI_Scatter(sendbuf,1,MPI_INTEGER8,recvbuf,1,MPI_INTEGER8, &
+          rank,myPE%comm,mpierr)
+#else
+        recvbuf=sendbuf(1)
+#endif
+      ELSE
+        CALL eParEnv%raiseError(modName//'::'//myName// &
+          ' - Invalid rank!')
+      ENDIF
+    ENDSUBROUTINE scatter_SLK0_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine calls MPI_Scatter
+    SUBROUTINE scatter_SLK1_MPI_Env_type(myPE,sendbuf,recvbuf,root)
+      CHARACTER(LEN=*),PARAMETER :: myName='scatter_SLK1_MPI_Env_type'
+      CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
+      INTEGER(SLK),INTENT(IN) :: sendbuf(:,:)
+      INTEGER(SLK),INTENT(INOUT) :: recvbuf(:)
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: root
+      INTEGER(SIK) :: rank,count,i,j,n
+      rank=0
+      IF(PRESENT(root)) rank=root
+      count=SIZE(recvbuf)
+      IF(0 <= rank .AND. rank <= myPE%nproc-1) THEN
+        IF(rank == myPE%rank) THEN
+          IF(SIZE(sendbuf) < myPE%nproc*count) &
+            CALL eParEnv%raiseError(modName//'::'//myName// &
+              ' - size of send buffer is not large enough!')
+        ENDIF
+#ifdef HAVE_MPI
+        CALL MPI_Scatter(sendbuf,count,MPI_INTEGER8,recvbuf,count, &
+          MPI_INTEGER8,rank,myPE%comm,mpierr)
+#else
+        DO n=1,count
+          i=MOD(n-1,SIZE(sendbuf,DIM=1))+1
+          j=(n-1)/SIZE(sendbuf,DIM=1)+1
+          recvbuf(n)=sendbuf(i,j)
+        ENDDO
+#endif
+      ELSE
+        CALL eParEnv%raiseError(modName//'::'//myName// &
+          ' - Invalid rank!')
+      ENDIF
+    ENDSUBROUTINE scatter_SLK1_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief
+    SUBROUTINE bcast_SLK0_MPI_Env_type(myPE,buf,root)
+      CHARACTER(LEN=*),PARAMETER :: myName='bcast_SLK0_MPI_Env_type'
+      CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
+      INTEGER(SLK),INTENT(IN) :: buf
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: root
+      INTEGER(SIK) :: rank
+      rank=0
+      IF(PRESENT(root)) rank=root
+      IF(0 <= rank .AND. rank <= myPE%nproc-1) THEN
+#ifdef HAVE_MPI
+        CALL MPI_Bcast(buf,1,MPI_INTEGER8,rank,myPE%comm,mpierr)
+#endif
+      ELSE
+        CALL eParEnv%raiseError(modName//'::'//myName// &
+          ' - Invalid rank!')
+      ENDIF
+    ENDSUBROUTINE bcast_SLK0_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
 !> @brief Wrapper routine calls MPI_Allreduce and performs a sum of operation

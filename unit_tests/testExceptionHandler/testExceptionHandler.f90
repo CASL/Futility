@@ -24,9 +24,10 @@ PROGRAM testExceptionHandler
   
   IMPLICIT NONE
 
-  TYPE(ExceptionHandlerType) :: testE,testE2
+  TYPE(ExceptionHandlerType),TARGET :: testE
+  TYPE(ExceptionHandlerType) :: testE2
+  TYPE(ExceptionHandlerType),POINTER :: testE3
   CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: mesg,mesg2
-  LOGICAL(SBK) :: bool
   
   CREATE_TEST('EXCEPTION HANDLER')
   
@@ -299,6 +300,10 @@ PROGRAM testExceptionHandler
       ASSERT(ALL(testE2%getCounterAll() == testE%getCounterAll()),'getCounterAll')
       ASSERT(testE2%getLastMessage() == testE%getLastMessage(),'getLastMessage')
       ASSERT(testE2%isLogActive() .EQV. testE%isLogActive(),'isLogActive')
+      
+      CALL testE2%getSurrogate(testE3)
+      ASSERT(ASSOCIATED(testE3,testE), 'getSurrogate')
+      
       CALL testE2%setQuietMode(.TRUE.)
       ASSERT(testE2%isQuietMode() .NEQV. testE%isQuietMode(),'isQuiet (NEQV)')
     ENDSUBROUTINE testSurrogate
