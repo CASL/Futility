@@ -439,7 +439,7 @@ MODULE ExceptionHandler
 !>
 !> This routine checks for a valid unit number.
 !>
-    SUBROUTINE setLogFileUnit(e,unit)
+    RECURSIVE SUBROUTINE setLogFileUnit(e,unit)
       CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
       INTEGER(SIK),INTENT(IN) :: unit
       LOGICAL(SBK) :: tmpQuiet
@@ -481,7 +481,7 @@ MODULE ExceptionHandler
 !> This routine has some error handling so the log file cannot be set to active
 !> if the log file unit is not open for writing as a sequential formatted file.
 !>
-    SUBROUTINE setLogActive(e,isactive)
+    RECURSIVE SUBROUTINE setLogActive(e,isactive)
       CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
       LOGICAL(SBK),INTENT(IN) :: isactive
       IF(ASSOCIATED(e%surrogate)) THEN
