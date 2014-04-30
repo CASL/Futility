@@ -455,7 +455,7 @@ MODULE FileType_Checkpoint
 !>
     PURE FUNCTION getFilePath_CheckpointFileType(file) RESULT(path)
       CLASS(CheckpointFileType),INTENT(IN) :: file
-      CHARACTER(LEN=file%pathlen) :: path
+      CHARACTER(LEN=MAX_FILE_STRING_LEN) :: path
       path=''
       IF(file%isInit) path=file%basefile%getFilePath()
     ENDFUNCTION getFilePath_CheckpointFileType
@@ -467,7 +467,7 @@ MODULE FileType_Checkpoint
 !>
     PURE FUNCTION getFileName_CheckpointFileType(file) RESULT(fname)
       CLASS(CheckpointFileType),INTENT(IN) :: file
-      CHARACTER(LEN=file%fnamelen) :: fname
+      CHARACTER(LEN=MAX_FILE_STRING_LEN) :: fname
       fname=''
       IF(file%isInit) fname=file%basefile%getFileName()
     ENDFUNCTION getFileName_CheckpointFileType
@@ -479,7 +479,7 @@ MODULE FileType_Checkpoint
 !>
     PURE FUNCTION getFileExt_CheckpointFileType(file) RESULT(ext)
       CLASS(CheckpointFileType),INTENT(IN) :: file
-      CHARACTER(LEN=file%extlen) :: ext
+      CHARACTER(LEN=MAX_FILE_STRING_LEN) :: ext
       ext=''
       IF(file%isInit) ext=file%basefile%getFileExt()
     ENDFUNCTION getFileExt_CheckpointFileType

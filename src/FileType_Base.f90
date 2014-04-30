@@ -52,9 +52,11 @@ MODULE FileType_Base
   
   !List of Public Members
   PUBLIC :: BaseFileType
+  PUBLIC :: MAX_FILE_STRING_LEN
   PUBLIC :: clear_base_file
   
   CHARACTER(LEN=*),PARAMETER :: modName='FILETYPE_BASE'
+  INTEGER(SIK),SAVE :: MAX_FILE_STRING_LEN=0
   
   !> @brief Base derived type for a file object
   !>
@@ -156,6 +158,7 @@ MODULE FileType_Base
       ELSE
         file%path=TRIM(ADJUSTL(pathstr))
         file%pathlen=LEN_TRIM(file%path)
+        MAX_FILE_STRING_LEN=MAX(MAX_FILE_STRING_LEN,file%pathlen)
       ENDIF
     ENDSUBROUTINE setFilePath_file
 !
@@ -174,6 +177,7 @@ MODULE FileType_Base
       ELSE
         file%name=TRIM(ADJUSTL(namestr))
         file%fnamelen=LEN_TRIM(file%name)
+        MAX_FILE_STRING_LEN=MAX(MAX_FILE_STRING_LEN,file%fnamelen)
       ENDIF
     ENDSUBROUTINE setFileName_file
 !
@@ -192,6 +196,7 @@ MODULE FileType_Base
       ELSE
         file%ext=TRIM(ADJUSTL(extstr))
         file%extlen=LEN_TRIM(file%ext)
+        MAX_FILE_STRING_LEN=MAX(MAX_FILE_STRING_LEN,file%extlen)
       ENDIF
     ENDSUBROUTINE setFileExt_file
 !
@@ -232,7 +237,7 @@ MODULE FileType_Base
 !>
     PURE FUNCTION getFilePath_file(file) RESULT(path)
       CLASS(BaseFileType),INTENT(IN) :: file
-      CHARACTER(LEN=file%pathlen) :: path
+      CHARACTER(LEN=MAX_FILE_STRING_LEN) :: path
       path=file%path
     ENDFUNCTION getFilePath_file
 !
@@ -243,7 +248,7 @@ MODULE FileType_Base
 !>
     PURE FUNCTION getFileName_file(file) RESULT(fname)
       CLASS(BaseFileType),INTENT(IN) :: file
-      CHARACTER(LEN=file%fnamelen) :: fname
+      CHARACTER(LEN=MAX_FILE_STRING_LEN) :: fname
       fname=file%name
     ENDFUNCTION getFileName_file
 !
@@ -254,7 +259,7 @@ MODULE FileType_Base
 !>
     PURE FUNCTION getFileExt_file(file) RESULT(ext)
       CLASS(BaseFileType),INTENT(IN) :: file
-      CHARACTER(LEN=file%extlen) :: ext
+      CHARACTER(LEN=MAX_FILE_STRING_LEN) :: ext
       ext=file%ext
     ENDFUNCTION getFileExt_file
 !
