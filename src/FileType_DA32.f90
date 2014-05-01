@@ -608,7 +608,10 @@ MODULE FileType_DA32
           bufdat(1:istp-istt+1)=dat(istt:istp)
           WRITE(UNIT=funit,REC=irec+i,IOSTAT=ioerr) bufdat
         ENDDO
-        IF(ioerr == 0) nwrite=nwrite+istp-istt+1
+        IF(ioerr == 0) THEN
+          nwrite=nwrite+istp-istt+1
+          FLUSH(funit)
+        ENDIF
       ENDIF
       nword=nwrite
     ENDSUBROUTINE writedat_basic
