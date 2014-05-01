@@ -325,20 +325,23 @@ PROGRAM testFileType_DA32
       testCHAR=''; n=0; ioerr=-1
       CALL testDA32File%readdat(REC=8_SLK,DAT=testCHAR,IOSTAT=ioerr,NREC=n)
       ASSERT(testCHAR == '12345 ','testCHAR value 1')
-      FINFO() testCHAR(6:6)
+      FINFO() '"'//testCHAR//'"'
       ASSERT(n == 2,'n')
       ASSERT(ioerr == 0,'ioerr')
       testCHAR=''; n=0; ioerr=-1
       CALL testDA32File%readdat(REC=8_SLK,DAT=testCHAR,IOSTAT=ioerr)
       ASSERT(TRIM(testCHAR) == '12345','testCHAR value 2')
+      FINFO() '"'//testCHAR//'"'
       ASSERT(ioerr == 0,'ioerr')
       testCHAR=''; n=0; ioerr=-1
       CALL testDA32File%readdat(REC=8_SLK,DAT=testCHAR,NREC=n)
       ASSERT(TRIM(testCHAR) == '12345','testCHAR value 3')
+      FINFO() '"'//testCHAR//'"'
       ASSERT(n == 2,'n')
       testCHAR=''; n=0; ioerr=-1
       CALL testDA32File%readdat(REC=8_SLK,DAT=testCHAR)
       ASSERT(TRIM(testCHAR) == '12345','testCHAR value 4')
+      FINFO() '"'//testCHAR//'"'
       
       COMPONENT_TEST('read big')
       CALL testDA32File%readdat(REC=512_SLK,DAT=test2SNK,IOSTAT=ioerr,NREC=n)

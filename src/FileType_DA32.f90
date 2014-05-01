@@ -645,10 +645,25 @@ MODULE FileType_DA32
         ioerr=0
         DO WHILE(nlen > 0)
           tmpdat=TRANSFER(dat(istt:istp),tmpdat)
+#if defined(__GFORTRAN__) && __GNUC__ == 4 && __GNUC_MINOR__ == 7
+          !With the GNU 4.7 compiler, when compiling with optimizations
+          !Something happens to the following block of code such that it is
+          !optimized incorrectly. This is a kluge to prevent the compiler
+          !from producing incorrect code with optimizations.
+          IF(MOD(istp-istt+1,CH2REC) > 0) THEN
+            n=(istp-istt+1)/CH2REC+1
+            CALL writedat_basic(thisDA32%getUnitNo(),irec,tmpdat,ioerr,n)
+          ELSE
+            n=(istp-istt+1)/CH2REC
+            CALL writedat_basic(thisDA32%getUnitNo(),irec,tmpdat,ioerr,n)
+          ENDIF
+#else
+          !This works with everything but 4.7.3 in release
           n=istp-istt+1
           n=n/CH2REC
           IF(MOD(istp-istt+1,CH2REC) > 0) n=n+1
           CALL writedat_basic(thisDA32%getUnitNo(),irec,tmpdat,ioerr,n)
+#endif
           IF(ioerr /= 0) EXIT
           irec=irec+n
           nlen=nlen-NBUFCH
