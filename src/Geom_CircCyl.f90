@@ -19,7 +19,7 @@
 !> geometry.
 !>
 !> This module provides a derived data types for a "circle" which must exist in
-!> 2-D space and a "cylinder" which must exist in 3-D space. The circle is 
+!> 2-D space and a "cylinder" which must exist in 3-D space. The circle is
 !> defined by a point for the center of rotation and a radius. The cylinder is
 !> defined by two points for the central axis of rotation and its total extent
 !> (if it is to be finite) and a radius. The cylinder is assumed to be a right
@@ -65,7 +65,7 @@ MODULE Geom_CircCyl
       !> @copydetails Geom_CircCyl::intersect_CircleType_and_LineType
       PROCEDURE,PASS :: intersectLine => intersect_CircleType_and_LineType
   ENDTYPE CircleType
-  
+
   !> @brief Type for a cylinder
   TYPE :: CylinderType
     !> The line segment that defines the center of rotation of the cylinder and
@@ -86,7 +86,7 @@ MODULE Geom_CircCyl
       !> @copydetails Geom_CircCyl::intersect_CylinderType_and_LineType
       PROCEDURE,PASS :: intersectLine => intersect_CylinderType_and_LineType
   ENDTYPE CylinderType
-  
+
   REAL(SRK),PARAMETER :: zero=0.0_SRK
   REAL(SRK),PARAMETER :: one=1.0_SRK
 !
@@ -165,7 +165,7 @@ MODULE Geom_CircCyl
       TYPE(PointType),INTENT(INOUT) :: p1
       TYPE(PointType),INTENT(INOUT) :: p2
       REAL(SRK) :: a,b,c,t1,t2,u(2),w(2),ra,discr
-      
+
       CALL p1%clear()
       CALL p2%clear()
       p1%dim=-1
@@ -233,7 +233,7 @@ MODULE Geom_CircCyl
 !>   -6: the segment is parallel to the cylinder's axis and totally inside it @n
 !>   -7: the segment is tangent to the cylinder @n
 !>   -8: the segment does not intersect the cylinder @n
-!> 
+!>
 !> The algorithm for finding the intersection is similar to that outlined
 !> in section 5.3.7 of "Real-Time Collision Detection" by Christer Ericson.
 !> The problem for the intersection is stated as a quadratic equation which is
@@ -251,33 +251,33 @@ MODULE Geom_CircCyl
 !>  \f[ a = \left(\vec{d}\cdot\vec{d}\right) \left(\vec{u}\cdot\vec{u}\right) - \left(\vec{u}\cdot\vec{d}\right)^2 \f]
 !>  \f[ b = \left(\vec{d}\cdot\vec{d}\right) \left(\vec{w}\cdot\vec{u}\right) - \left(\vec{u}\cdot\vec{d}\right) \left(\vec{w}\cdot\vec{d}\right) \f]
 !>  \f[ c = \left(\vec{d}\cdot\vec{d}\right) \left(\vec{w}\cdot\vec{w} - R^2\right) - \left(\vec{w}\cdot\vec{d}\right)^2 \f]
-!> 
+!>
 !> and
 !>
-!>  \f[ \vec{u} = \vec{B}-\vec{A} \f] 
-!>  \f[ \vec{d} = \vec{Q}-\vec{P} \f] 
-!>  \f[ \vec{w} = \vec{A}-\vec{P} \f] 
+!>  \f[ \vec{u} = \vec{B}-\vec{A} \f]
+!>  \f[ \vec{d} = \vec{Q}-\vec{P} \f]
+!>  \f[ \vec{w} = \vec{A}-\vec{P} \f]
 !>
 !> One then solves the quadratic equation for the roots of \f$ t \f$
 !> (where \f$ 0 <= t <= 1 \f$) and obtains the coordinates of the points as:
 !>
 !> \f[ \vec{L}(t)=\vec{A}+\vec{u} t \f]
 !>
-!> Intersections at the end-caps of the cylinder (called the P-surface and 
+!> Intersections at the end-caps of the cylinder (called the P-surface and
 !> Q-surface) have the values of t as:
 !>
-!> \f[ t_P = -\left(\vec{w}\cdot\vec{d}\right)/\left(\vec{u}\cdot\vec{d}\right) \f] 
-!> \f[ t_Q = \left(\vec{d}\cdot\vec{d}-\vec{w}\cdot\vec{d}\right)/\left(\vec{u}\cdot\vec{d}\right) \f] 
+!> \f[ t_P = -\left(\vec{w}\cdot\vec{d}\right)/\left(\vec{u}\cdot\vec{d}\right) \f]
+!> \f[ t_Q = \left(\vec{d}\cdot\vec{d}-\vec{w}\cdot\vec{d}\right)/\left(\vec{u}\cdot\vec{d}\right) \f]
 !>
     ELEMENTAL SUBROUTINE intersect_CylinderType_and_LineType(cyl,line,p1,p2)
       CLASS(CylinderType),INTENT(IN) :: cyl
       TYPE(LineType),INTENT(IN) :: line
       TYPE(PointType),INTENT(INOUT) :: p1
       TYPE(PointType),INTENT(INOUT) :: p2
-      
+
       REAL(SRK) :: u(3),w(3),d(3)
       REAL(SRK) :: ud,uw,uu,wd,dd,t1,t2,tp,tq,a,b,c,k,g1,g2,ra,discr
-      
+
       CALL p1%clear()
       CALL p2%clear()
       p1%dim=-1
@@ -287,30 +287,30 @@ MODULE Geom_CircCyl
         line%p(1)%dim == 3 .AND. line%p(2)%dim == 3 .AND. cyl%r > zero) THEN
         p1%dim=0
         p2%dim=0
-        
+
         !For a line defined by A->B compute B-A as slope for parametric eqn's
         !P(t)=A+u*t for a point on segment A->B.
         u(1)=line%p(2)%coord(1)-line%p(1)%coord(1)
         u(2)=line%p(2)%coord(2)-line%p(1)%coord(2)
         u(3)=line%p(2)%coord(3)-line%p(1)%coord(3)
-        
+
         !For a central axis of rotation defined by P->Q compute Q-P
         d(1)=cyl%axis%p(2)%coord(1)-cyl%axis%p(1)%coord(1)
         d(2)=cyl%axis%p(2)%coord(2)-cyl%axis%p(1)%coord(2)
         d(3)=cyl%axis%p(2)%coord(3)-cyl%axis%p(1)%coord(3)
-        
+
         !Vector of P->A, used to project A->B onto cylinder-local coordinate
         w(1)=line%p(1)%coord(1)-cyl%axis%p(1)%coord(1)
         w(2)=line%p(1)%coord(2)-cyl%axis%p(1)%coord(2)
         w(3)=line%p(1)%coord(3)-cyl%axis%p(1)%coord(3)
-        
+
         !Dot(u,d), length of A->B projected onto P->Q
         ud=u(1)*d(1)+u(2)*d(2)+u(3)*d(3)
         !Dot(w,d), length of P->A projected onto P->Q
         wd=w(1)*d(1)+w(2)*d(2)+w(3)*d(3)
         !Dot(d,d), length of P->Q
         dd=d(1)*d(1)+d(2)*d(2)+d(3)*d(3)
-        
+
         IF(wd < -EPSREAL .AND. wd+ud < -EPSREAL) THEN
           !The line segment is totally outside the P-surface
           p1%dim=-2
@@ -319,19 +319,19 @@ MODULE Geom_CircCyl
           !The line segment is totally outside the Q-surface
           p1%dim=-3
           p2%dim=-3
-        ELSE 
+        ELSE
           !At least one of the segment end points lies within interval spanned
           !by P->Q, or on opposite ends of P and Q
-          
+
           !Dot(u,u), length of A->B
           uu=u(1)*u(1)+u(2)*u(2)+u(3)*u(3)
           !Dot(u,w), projection of A->B into direction perpendicular to P->Q
           uw=u(1)*w(1)+u(2)*w(2)+u(3)*w(3)
-          
+
           a=dd*uu-ud*ud
           k=w(1)*w(1)+w(2)*w(2)+w(3)*w(3)-cyl%r*cyl%r
           c=dd*k-wd*wd
-          
+
           IF(ABS(a) < EPSREAL) THEN
 !Segment A->B is parallel to P->Q
             IF(c .APPROXEQA. zero) THEN
@@ -384,7 +384,7 @@ MODULE Geom_CircCyl
               g2=SQRT(discr)*ra
               t1=g1-g2
               t2=g1+g2
-              
+
               IF(zero < t1 .AND. t1 < one) THEN
                 !Intersection with the side of a cylinder
                 p1=line%p(1)
@@ -414,7 +414,7 @@ MODULE Geom_CircCyl
                   ENDIF
                 ENDIF
               ENDIF
-              
+
               IF(zero < t2 .AND. t2 < one) THEN
                 !Intersection with the side of a cylinder
                 p2=line%p(1)
@@ -444,7 +444,7 @@ MODULE Geom_CircCyl
                   ENDIF
                 ENDIF
               ENDIF
-              
+
             ENDIF
           ENDIF
         ENDIF

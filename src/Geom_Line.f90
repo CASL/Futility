@@ -19,7 +19,7 @@
 !>
 !> This module provides a derived data types for a "line" it is implicitly
 !> for 1-D, 2-D, or 3-D space and this is determined by its members.
-!> The line is defined by two points. The module also provides methods for 
+!> The line is defined by two points. The module also provides methods for
 !> constructing the line, clearing its members, and getting the length of the
 !> line, its midpoint, or an intersection with another line.
 !>
@@ -77,14 +77,14 @@ MODULE Geom_Line
       !> @copydetails GeomLine::distance_LineType_to_LineType
       PROCEDURE,PASS :: distance2Line => distance_LineType_to_LineType
   ENDTYPE LineType
-  
+
   !> @brief Generic interface for obtaining a midPoint
   INTERFACE midPoint
     !> @copybrief GeomLine::midPoint_LineType
     !> @copydetails GeomLine::midPoint_LineType
     MODULE PROCEDURE midPoint_LineType
   ENDINTERFACE midPoint
-  
+
   !> @brief Generic interface to use to find intersections
   INTERFACE intersect
     !> @copybrief GeomLine::intersect_LineType_and_LineType
@@ -100,7 +100,7 @@ MODULE Geom_Line
 !> @param sp the starting point of the line
 !> @param ep the end point of the line
 !> @returns line the LineType object
-!> 
+!>
 !> If sp and ep are not of the same type line is returned as NULL.
     ELEMENTAL SUBROUTINE init_LineType(line,sp,ep)
       CLASS(LineType),INTENT(INOUT) :: line
@@ -124,7 +124,7 @@ MODULE Geom_Line
 !-------------------------------------------------------------------------------
 !> @brief Returns the dimension of the LineType @e line
 !> @param line line segment of type @c LineType
-!> @returns @c n the dimension of LineType @c line 
+!> @returns @c n the dimension of LineType @c line
     ELEMENTAL FUNCTION dim_LineType(line) RESULT(n)
       CLASS(LineType),INTENT(IN) :: line
       INTEGER(SIK) :: n
@@ -223,11 +223,11 @@ MODULE Geom_Line
           p%coord(1)=p%coord(1)+s*u(1)
           p%coord(2)=p%coord(2)+s*u(2)
         ELSE
-          !would intersect if segments were infinite. Still store how close it 
-          !was though. this is useful for calling routines that might need to 
+          !would intersect if segments were infinite. Still store how close it
+          !was though. this is useful for calling routines that might need to
           !know that the point was close (i.e. Coarse ray trace)
           p=s1p0
-          p%dim=-3 
+          p%dim=-3
           p%coord(1)=p%coord(1)+s*u(1)
           p%coord(2)=p%coord(2)+s*u(2)
         ENDIF
@@ -250,12 +250,12 @@ MODULE Geom_Line
     ELEMENTAL FUNCTION intersect_lines3D(s1p0,s1p1,s2p0,s2p1) RESULT(p)
     TYPE(PointType),INTENT(IN) :: s1p0,s1p1,s2p0,s2p1
       TYPE(PointType) :: p
-      
+
       TYPE(LineType) :: s1,s2,dis
       REAL(SRK) :: mu1,mu2
       INTEGER(SIK) :: thisDim
       REAL(SRK) :: EPSREAL_LOCAL
-      
+
       EPSREAL_LOCAL=EPSREAL*100._SRK
       p%dim=-3
       s1%p(1)=s1p0
@@ -324,7 +324,7 @@ MODULE Geom_Line
           p13(1)=s1%p(1)%coord(1)-s2%p(1)%coord(1)
           p13(2)=s1%p(1)%coord(2)-s2%p(1)%coord(2)
           p13(3)=s1%p(1)%coord(3)-s2%p(1)%coord(3)
-        
+
           d1343=p13(1)*p43(1)+p13(2)*p43(2)+p13(3)*p43(3)
           d4321=p43(1)*p21(1)+p43(2)*p21(2)+p43(3)*p21(3)
           d1321=p13(1)*p21(1)+p13(2)*p21(2)+p13(3)*p21(3)
@@ -364,7 +364,7 @@ MODULE Geom_Line
 !> @returns @c d2 the minimum squared distance between the point and the line
 !> @note if @c d2<0, then there was a problem with the input arguments. If
 !> @c d2==0 than the point is on the segment.
-!> 
+!>
     ELEMENTAL FUNCTION distance_LineType_to_PointType(line,p) RESULT(d2)
       CLASS(LineType),INTENT(IN) :: line
       TYPE(PointType),INTENT(IN) :: p
@@ -383,13 +383,13 @@ MODULE Geom_Line
     ENDFUNCTION distance_LineType_to_PointType
 !
 !-------------------------------------------------------------------------------
-!> @brief Finds the shortest squared distance between a point and a segment in 
+!> @brief Finds the shortest squared distance between a point and a segment in
 !> 1-D.
 !> @param a start point of line segment
 !> @param b end point of line segment
 !> @param c the point to find the distance from line segment ab
 !> @returns @c d2 the minimum squared distance between the point and the line
-!> 
+!>
     ELEMENTAL FUNCTION distance1D_to_point(a,b,c) RESULT(d2)
       TYPE(PointType),INTENT(IN) :: a,b,c
       REAL(SRK) :: d2
@@ -403,24 +403,24 @@ MODULE Geom_Line
     ENDFUNCTION distance1D_to_point
 !
 !-------------------------------------------------------------------------------
-!> @brief Finds the shortest squared distance between a point and a segment in 
+!> @brief Finds the shortest squared distance between a point and a segment in
 !> 2-D.
 !> @param a start point of line segment
 !> @param b end point of line segment
 !> @param c the point to find the distance from line segment ab
 !> @returns @c d2 the minimum squared distance between the point and the line
-!> 
+!>
     ELEMENTAL FUNCTION distance2D_to_point(a,b,c) RESULT(d2)
       TYPE(PointType),INTENT(IN) :: a,b,c
       REAL(SRK) :: d2
       REAL(SRK) :: e,f
       REAL(SRK) :: ab(2),ac(2),bc(2)
-      
+
       ab(1)=b%coord(1)-a%coord(1)
       ab(2)=b%coord(2)-a%coord(2)
       ac(1)=c%coord(1)-a%coord(1)
       ac(2)=c%coord(2)-a%coord(2)
-      
+
       e=ac(1)*ab(1)+ac(2)*ab(2)
       IF(e <= 0.0_SRK) THEN
         !c projects onto ab outside a
@@ -440,26 +440,26 @@ MODULE Geom_Line
     ENDFUNCTION distance2D_to_point
 !
 !-------------------------------------------------------------------------------
-!> @brief Finds the shortest squared distance between a point and a segment in 
+!> @brief Finds the shortest squared distance between a point and a segment in
 !> 3-D.
 !> @param a start point of line segment
 !> @param b end point of line segment
 !> @param c the point to find the distance from line segment ab
 !> @returns @c d2 the minimum squared distance between the point and the line
-!> 
+!>
     ELEMENTAL FUNCTION distance3D_to_point(a,b,c) RESULT(d2)
       TYPE(PointType),INTENT(IN) :: a,b,c
       REAL(SRK) :: d2
       REAL(SRK) :: e,f
       REAL(SRK) :: ab(3),ac(3),bc(3)
-      
+
       ab(1)=b%coord(1)-a%coord(1)
       ab(2)=b%coord(2)-a%coord(2)
       ab(3)=b%coord(3)-a%coord(3)
       ac(1)=c%coord(1)-a%coord(1)
       ac(2)=c%coord(2)-a%coord(2)
       ac(3)=c%coord(3)-a%coord(3)
-      
+
       e=ac(1)*ab(1)+ac(2)*ab(2)+ac(3)*ab(3)
       IF(e <= 0.0_SRK) THEN
         !c projects onto ab outside a
