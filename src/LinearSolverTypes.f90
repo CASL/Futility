@@ -1141,6 +1141,7 @@ MODULE LinearSolverTypes
           DO i=1,solver%X%n
             CALL X%set(i,X0(i))
           ENDDO
+          CALL X%assemble()
         ENDSELECT
         solver%hasX0=.TRUE.
       ENDIF

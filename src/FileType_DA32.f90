@@ -3190,7 +3190,7 @@ MODULE FileType_DA32
 !> 
     FUNCTION FileRecSize(funit) RESULT(fsize)
       INTEGER(SIK),INTENT(IN) :: funit
-      INTEGER(SIK) :: fsize
+      INTEGER(SLK) :: fsize
       INQUIRE(UNIT=funit,SIZE=fsize)
       IF(fsize > 0) fsize=fsize*FILE_STORAGE_SIZE/(32*WORDSREC)
     ENDFUNCTION FileRecSize
