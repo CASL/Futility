@@ -105,6 +105,8 @@ MODULE IntrType
   PUBLIC :: OPERATOR(/=)
   PUBLIC :: SOFTEQ
   PUBLIC :: SOFTEQR
+  PUBLIC :: SOFTLE
+  PUBLIC :: SOFTGE
 !
 ! Variables
   !> @name Private Variables
@@ -275,6 +277,25 @@ MODULE IntrType
     !> @copybrief IntrType::softeqr_double
     MODULE PROCEDURE softeqr_double
   ENDINTERFACE
+  
+  !> @brief Interface for the operator for "soft less than or equal to" for intrinsic
+  !> types
+  INTERFACE SOFTLE
+    !> @copybrief IntrType::softle_single
+    MODULE PROCEDURE softle_single
+    !> @copybrief IntrType::softle_double
+    MODULE PROCEDURE softle_double
+  ENDINTERFACE
+  
+  !> @brief Interface for the operator for "soft greater than or equal to" for intrinsic
+  !> types
+  INTERFACE SOFTGE
+    !> @copybrief IntrType::softge_single
+    MODULE PROCEDURE softge_single
+    !> @copybrief IntrType::softge_double
+    MODULE PROCEDURE softge_double
+  ENDINTERFACE
+  
   
   !> @brief Overloads the Fortran intrinsic operator for comparing
   !> two logicals to see if they are equal
@@ -674,6 +695,70 @@ MODULE IntrType
       IF(r1 == 0.0_SSK .OR. r1 == 0.0_SSK) eps=EPSD
       bool=(ABS(r1-r2) <= eps)
     ENDFUNCTION softeqr_double
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation when comparing two single precision reals
+!> with SOFTLE
+!> @param r1 a single precision real number
+!> @param r2 a single precision real number
+!> @param tol a single precision real number
+!> @returns @c bool result of comparison
+!>
+    ELEMENTAL FUNCTION softle_single(r1,r2,tol) RESULT(bool)
+      REAL(SSK),INTENT(IN) :: r1
+      REAL(SSK),INTENT(IN) :: r2
+      REAL(SSK),INTENT(IN) :: tol
+      LOGICAL(SBK) :: bool
+      bool=(r1 <= r2+tol)
+    ENDFUNCTION softle_single
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation when comparing two double precision reals
+!> with SOFTLE
+!> @param r1 a double precision real number
+!> @param r2 a double precision real number
+!> @param tol a double precision real number
+!> @returns @c bool result of comparison
+!>
+    ELEMENTAL FUNCTION softle_double(r1,r2,tol) RESULT(bool)
+      REAL(SDK),INTENT(IN) :: r1
+      REAL(SDK),INTENT(IN) :: r2
+      REAL(SDK),INTENT(IN) :: tol
+      LOGICAL(SBK) :: bool
+      bool=(r1 <= r2+tol)
+    ENDFUNCTION softle_double
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation when comparing two single precision reals
+!> with SOFTGE
+!> @param r1 a single precision real number
+!> @param r2 a single precision real number
+!> @param tol a single precision real number
+!> @returns @c bool result of comparison
+!>
+    ELEMENTAL FUNCTION softge_single(r1,r2,tol) RESULT(bool)
+      REAL(SSK),INTENT(IN) :: r1
+      REAL(SSK),INTENT(IN) :: r2
+      REAL(SSK),INTENT(IN) :: tol
+      LOGICAL(SBK) :: bool
+      bool=(r1+tol >= r2)
+    ENDFUNCTION softge_single
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation when comparing two double precision reals
+!> with SOFTGE
+!> @param r1 a double precision real number
+!> @param r2 a double precision real number
+!> @param tol a double precision real number
+!> @returns @c bool result of comparison
+!>
+    ELEMENTAL FUNCTION softge_double(r1,r2,tol) RESULT(bool)
+      REAL(SDK),INTENT(IN) :: r1
+      REAL(SDK),INTENT(IN) :: r2
+      REAL(SDK),INTENT(IN) :: tol
+      LOGICAL(SBK) :: bool
+      bool=(r1+tol >= r2)
+    ENDFUNCTION softge_double
 !
 !-------------------------------------------------------------------------------
 !> @brief Defines the operation when comparing two logical variables
