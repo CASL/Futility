@@ -2405,6 +2405,10 @@ MODULE ParameterLists
             ENDIF
           ENDIF
           DEALLOCATE(tmpslka31); DEALLOCATE(tmpslka32)
+        TYPE IS(ParamType_List)
+          bool=SAME_TYPE_AS(thisParam,paramPtr)
+          ASSERT(bool,'ParamType_List for'//prefix//CHAR(thisParam%name))
+          FINFO() 'test value is ParamType_List, while ref value is not.'
         CLASS DEFAULT
           CONTINUE
       ENDSELECT
