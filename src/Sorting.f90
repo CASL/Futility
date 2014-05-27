@@ -40,6 +40,9 @@ MODULE Sorting
     !> @copybrief Sorting::Sort_1DInt
     !> @copydetails Sorting::Sort_1DInt
     MODULE PROCEDURE Sort_1DInt
+    !> @copybrief Sorting::Sort_2DInt
+    !> @copydetails Sorting::Sort_2DInt
+    MODULE PROCEDURE Sort_2DInt
   ENDINTERFACE Sort
 
 !
@@ -51,17 +54,19 @@ MODULE Sorting
 !>        data will be sorted in ascending/increasing order and returned.
 !> @param r A vector of unsorted reals
 !>
-    SUBROUTINE Sort_1DReal(r) 
+    PURE SUBROUTINE Sort_1DReal(r) 
       REAL(SRK),INTENT(INOUT) :: r(:)
       !LOGICAL(SBK),INTENT(IN),OPTIONAL :: reverse
       LOGICAL(SBK) :: sorted
-      INTEGER(SIK) :: i
+      INTEGER(SIK) :: i,ncomp
       REAL(SRK) :: tmp
       
       sorted=.FALSE.
+      ncomp=0
       DO WHILE(.NOT.sorted)
         sorted=.TRUE.
-        DO i=1,SIZE(r)-1
+        ncomp=ncomp+1
+        DO i=1,SIZE(r)-ncomp
           IF(r(i) > r(i+1)) THEN
             tmp=r(i+1)
             r(i+1)=r(i)
@@ -79,17 +84,19 @@ MODULE Sorting
 !>        returned.
 !> @param r A vector of unsorted integers
 !>
-    SUBROUTINE Sort_1DInt(r) 
+    PURE SUBROUTINE Sort_1DInt(r) 
       INTEGER(SIK),INTENT(INOUT) :: r(:)
       !LOGICAL(SBK),INTENT(IN),OPTIONAL :: reverse
       LOGICAL(SBK) :: sorted
-      INTEGER(SIK) :: i
+      INTEGER(SIK) :: i,ncomp
       INTEGER(SIK) :: tmp
       
       sorted=.FALSE.
+      ncomp=0
       DO WHILE(.NOT.sorted)
         sorted=.TRUE.
-        DO i=1,SIZE(r)-1
+        ncomp=ncomp+1
+        DO i=1,SIZE(r)-ncomp
           IF(r(i) > r(i+1)) THEN
             tmp=r(i+1)
             r(i+1)=r(i)
@@ -100,5 +107,41 @@ MODULE Sorting
       ENDDO
       
     ENDSUBROUTINE Sort_1DInt
+!
+!-------------------------------------------------------------------------------
+!> @brief A simple sorting algorithm for a 2-D integer array sort.  The 
+!>        arguments data will be sorted in ascending/increasing order and 
+!>        returned.
+!> @param r A 2-D array of unsorted integers
+!>
+    PURE SUBROUTINE Sort_2DInt(r) 
+      INTEGER(SIK),INTENT(INOUT) :: r(:,:)
+      !LOGICAL(SBK),INTENT(IN),OPTIONAL :: reverse
+      LOGICAL(SBK) :: sorted
+      INTEGER(SIK) :: i1,i2,j1,j2,ni,nj,n,ncomp
+      INTEGER(SIK) :: tmp
+      
+      sorted=.FALSE.
+      ni=SIZE(r,DIM=1)
+      nj=SIZE(r,DIM=2)
+      ncomp=0
+      DO WHILE(.NOT.sorted)
+        sorted=.TRUE.
+        ncomp=ncomp+1
+        DO n=1,ni*nj-ncomp
+          i1=MOD(n-1,ni)+1
+          j1=(n-1)/ni+1
+          i2=MOD(n,ni)+1
+          j2=(n)/ni+1
+          IF(r(i1,j1) > r(i2,j2)) THEN
+            tmp=r(i2,j2)
+            r(i2,j2)=r(i1,j1)
+            r(i1,j1)=tmp
+            sorted=.FALSE.
+          ENDIF
+        ENDDO
+      ENDDO
+      
+    ENDSUBROUTINE Sort_2DInt
 !
 ENDMODULE Sorting
