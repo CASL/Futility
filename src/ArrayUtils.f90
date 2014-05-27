@@ -44,6 +44,8 @@ MODULE ArrayUtils
   PUBLIC :: findEleHtAbove
   PUBLIC :: findEleHtBelow
   !PUBLIC :: findIntersection
+  !Need a routine in here that compares a 1-D array to a 2-D array for a given dimension
+  !to see if the 1-D array exists in the 2-D array...
   
   !> @brief Generic interface to the getAbsolute
   !>
@@ -305,7 +307,9 @@ MODULE ArrayUtils
         tmpr=r
       ENDIF
       loctol=EPSREAL*100.0_SRK
-      IF(PRESENT(tol)) loctol=tol
+      IF(PRESENT(tol)) THEN
+        IF((0.0_SRK < tol) .AND. (tol <= EPSREAL*1000.0_SRK)) loctol=tol
+      ENDIF
       
       !Find the number of unique entries
       CALL sort(tmpr)
@@ -426,7 +430,9 @@ MODULE ArrayUtils
         tmpr=r
       ENDIF
       loctol=EPSREAL*100.0_SRK
-      IF(PRESENT(tol)) loctol=tol
+      IF(PRESENT(tol)) THEN
+        IF((0.0_SRK < tol) .AND. (tol <= EPSREAL*1000.0_SRK)) loctol=tol
+      ENDIF
       
       !Find the number of unique entries
       CALL sort(tmpr)
@@ -559,7 +565,7 @@ MODULE ArrayUtils
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: delta2
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: deltaout
       LOGICAL(SBK) :: bool1,bool2
-      INTEGER(SIK) :: i,sr1,sr2,sout,tmpsout
+      INTEGER(SIK) :: i,j,sr1,sr2,sout,tmpsout
       REAL(SRK),ALLOCATABLE :: tmpout(:),tmp1(:),tmp2(:)
       
       !Process the first array if it is a delta
@@ -617,10 +623,19 @@ MODULE ArrayUtils
       ENDDO
       ALLOCATE(rout(sout))
       rout=0.0_SRK
+      rout(1)=tmpout(1)
+      j=2
       DO i=2,tmpsout
-        IF(tmpout(i-1) .APPROXEQ. tmpout(i)) sout=sout-1
+        IF(.NOT.(tmpout(i-1) .APPROXEQ. tmpout(i))) THEN
+          rout(j)=tmpout(i)
+          j=j+1
+        ENDIF
       ENDDO
-      
+      IF(PRESENT(deltaout)) THEN
+        IF(deltaout) THEN
+          CALL getDelta_1DReal(rout,rout)
+        ENDIF
+      ENDIF
     ENDSUBROUTINE getUnion_1DReal
 !
 !-------------------------------------------------------------------------------
