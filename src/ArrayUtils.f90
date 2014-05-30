@@ -263,15 +263,17 @@ MODULE ArrayUtils
       n=SIZE(r,DIM=1)
       IF(PRESENT(xi)) THEN
         ALLOCATE(rout(n))
+        DO i=n,2,-1
+          rout(i)=r(i)-r(i-1)
+        ENDDO
+        rout(1)=rout(1)-xi
       ELSE
         n=n-1
         ALLOCATE(rout(n))
+        DO i=n,1,-1
+          rout(i)=r(i+1)-r(i)
+        ENDDO
       ENDIF
-      DO i=n,2,-1
-        rout(i)=r(i)-r(i-1)
-      ENDDO
-      rout(1)=r(1)
-      IF(PRESENT(xi)) rout(1)=rout(1)-xi
     ENDSUBROUTINE getDelta_1DReal
 !
 !-------------------------------------------------------------------------------
