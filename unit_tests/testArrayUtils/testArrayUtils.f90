@@ -426,7 +426,7 @@ PROGRAM testArrayUtils
       tmprealarray(10)=5.0_SRK  !65.0
       bool=findLowBound(tmprealarray(2:10),-11.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 0.0_SRK
       ASSERT(bool,'Out of Lower Bounds')
-      boolfindLowBound(tmprealarray(2:10),101.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 0.0_SRK
+      bool=findLowBound(tmprealarray(2:10),101.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 0.0_SRK
       ASSERT(bool,'Out of Upper Bounds')
       bool=findLowBound(tmprealarray(2:10),-1.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. -10.0_SRK
       ASSERT(bool,'Lower Bound == -10.0')
