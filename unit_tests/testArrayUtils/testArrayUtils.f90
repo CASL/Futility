@@ -424,17 +424,28 @@ PROGRAM testArrayUtils
       tmprealarray(8)=20.0_SRK !40.0
       tmprealarray(9)=20.0_SRK !60.0
       tmprealarray(10)=5.0_SRK  !65.0
-      ASSERT(findLowBound(tmprealarray(2:10),-11.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 0.0_SRK,'Out of Lower Bounds')
-      ASSERT(findLowBound(tmprealarray(2:10),101.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 0.0_SRK,'Out of Upper Bounds')
-      ASSERT(findLowBound(tmprealarray(2:10),-1.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. -10.0_SRK,'Lower Bound == -10.0')
-      ASSERT(findLowBound(tmprealarray(2:10),1.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 0.0_SRK,'Lower Bound == 0.0')
-      ASSERT(findLowBound(tmprealarray(2:10),3.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 2.0_SRK,'Lower Bound == 2.0')
-      ASSERT(findLowBound(tmprealarray(2:10),8.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 6.0_SRK,'Lower Bound == 6.0')
-      ASSERT(findLowBound(tmprealarray(2:10),12.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 10.0_SRK,'Lower Bound == 10.0')
-      ASSERT(findLowBound(tmprealarray(2:10),18.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 15.0_SRK,'Lower Bound == 15.0')
-      ASSERT(findLowBound(tmprealarray(2:10),30.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 20.0_SRK,'Lower Bound == 20.0')
-      ASSERT(findLowBound(tmprealarray(2:10),50.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 40.0_SRK,'Lower Bound == 40.0')
-      ASSERT(findLowBound(tmprealarray(2:10),62.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 60.0_SRK,'Lower Bound == 60.0')
+      bool=findLowBound(tmprealarray(2:10),-11.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 0.0_SRK
+      ASSERT(bool,'Out of Lower Bounds')
+      boolfindLowBound(tmprealarray(2:10),101.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 0.0_SRK
+      ASSERT(bool,'Out of Upper Bounds')
+      bool=findLowBound(tmprealarray(2:10),-1.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. -10.0_SRK
+      ASSERT(bool,'Lower Bound == -10.0')
+      bool=findLowBound(tmprealarray(2:10),1.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 0.0_SRK
+      ASSERT(bool,'Lower Bound == 0.0')
+      bool=findLowBound(tmprealarray(2:10),3.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 2.0_SRK
+      ASSERT(bool,'Lower Bound == 2.0')
+      bool=findLowBound(tmprealarray(2:10),8.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 6.0_SRK
+      ASSERT(bool,'Lower Bound == 6.0')
+      bool=findLowBound(tmprealarray(2:10),12.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 10.0_SRK
+      ASSERT(bool,'Lower Bound == 10.0')
+      bool=findLowBound(tmprealarray(2:10),18.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 15.0_SRK
+      ASSERT(bool,'Lower Bound == 15.0')
+      bool=findLowBound(tmprealarray(2:10),30.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 20.0_SRK
+      ASSERT(bool,'Lower Bound == 20.0')
+      bool=findLowBound(tmprealarray(2:10),50.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 40.0_SRK
+      ASSERT(bool,'Lower Bound == 40.0')
+      bool=findLowBound(tmprealarray(2:10),62.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 60.0_SRK
+      ASSERT(bool,'Lower Bound == 60.0')
 !
 !
       COMPONENT_TEST('findUpBound 1-D Array')
@@ -526,17 +537,28 @@ PROGRAM testArrayUtils
       tmprealarray(8)=20.0_SRK !40.0
       tmprealarray(9)=20.0_SRK !60.0
       tmprealarray(10)=5.0_SRK  !65.0
-      ASSERT(findUpBound(tmprealarray(2:10),-11.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 0.0_SRK,'Out of Lower Bounds')
-      ASSERT(findUpBound(tmprealarray(2:10),101.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 0.0_SRK,'Out of Upper Bounds')
-      ASSERT(findUpBound(tmprealarray(2:10),-1.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 0.0_SRK,'Lower Bound == 0.0')
-      ASSERT(findUpBound(tmprealarray(2:10),1.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 2.0_SRK,'Lower Bound == 2.0')
-      ASSERT(findUpBound(tmprealarray(2:10),3.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 6.0_SRK,'Lower Bound == 6.0')
-      ASSERT(findUpBound(tmprealarray(2:10),8.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 10.0_SRK,'Lower Bound == 10.0')
-      ASSERT(findUpBound(tmprealarray(2:10),12.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 15.0_SRK,'Lower Bound == 15.0')
-      ASSERT(findUpBound(tmprealarray(2:10),18.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 20.0_SRK,'Lower Bound == 20.0')
-      ASSERT(findUpBound(tmprealarray(2:10),30.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 40.0_SRK,'Lower Bound == 40.0')
-      ASSERT(findUpBound(tmprealarray(2:10),50.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 60.0_SRK,'Lower Bound == 60.0')
-      ASSERT(findUpBound(tmprealarray(2:10),62.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 65.0_SRK,'Lower Bound == 65.0')
+      bool=findUpBound(tmprealarray(2:10),-11.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 0.0_SRK
+      ASSERT(bool,'Out of Lower Bounds')
+      bool=findUpBound(tmprealarray(2:10),101.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 0.0_SRK
+      ASSERT(bool,'Out of Upper Bounds')
+      bool=findUpBound(tmprealarray(2:10),-1.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 0.0_SRK
+      ASSERT(bool,'Lower Bound == 0.0')
+      bool=findUpBound(tmprealarray(2:10),1.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 2.0_SRK
+      ASSERT(bool,'Lower Bound == 2.0')
+      bool=findUpBound(tmprealarray(2:10),3.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 6.0_SRK
+      ASSERT(bool,'Lower Bound == 6.0')
+      bool=findUpBound(tmprealarray(2:10),8.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 10.0_SRK
+      ASSERT(bool,'Lower Bound == 10.0')
+      bool=findUpBound(tmprealarray(2:10),12.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 15.0_SRK
+      ASSERT(bool,'Lower Bound == 15.0')
+      bool=findUpBound(tmprealarray(2:10),18.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 20.0_SRK
+      ASSERT(bool,'Lower Bound == 20.0')
+      bool=findUpBound(tmprealarray(2:10),30.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 40.0_SRK
+      ASSERT(bool,'Lower Bound == 40.0')
+      bool=findUpBound(tmprealarray(2:10),50.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 60.0_SRK
+      ASSERT(bool,'Lower Bound == 60.0')
+      bool=findUpBound(tmprealarray(2:10),62.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 65.0_SRK
+      ASSERT(bool,'Lower Bound == 65.0')
 !
 !
       COMPONENT_TEST('findEleHtAbove 1-D Array')
@@ -626,17 +648,28 @@ PROGRAM testArrayUtils
       tmprealarray(8)=20.0_SRK !40.0
       tmprealarray(9)=20.0_SRK !60.0
       tmprealarray(10)=5.0_SRK  !65.0
-      ASSERT(findEleHtAbove(tmprealarray(2:10),-11.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 11.0_SRK,'Out of Lower Bounds')
-      ASSERT(findEleHtAbove(tmprealarray(2:10),101.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. -101.0_SRK,'Out of Upper Bounds')
-      ASSERT(findEleHtAbove(tmprealarray(2:10),-1.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 1.0_SRK,'Lower Bound == 1.0')
-      ASSERT(findEleHtAbove(tmprealarray(2:10),1.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 1.0_SRK,'Lower Bound == 1.0')
-      ASSERT(findEleHtAbove(tmprealarray(2:10),3.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 3.0_SRK,'Lower Bound == 3.0')
-      ASSERT(findEleHtAbove(tmprealarray(2:10),8.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 2.0_SRK,'Lower Bound == 2.0')
-      ASSERT(findEleHtAbove(tmprealarray(2:10),12.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 3.0_SRK,'Lower Bound == 3.0')
-      ASSERT(findEleHtAbove(tmprealarray(2:10),18.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 2.0_SRK,'Lower Bound == 2.0')
-      ASSERT(findEleHtAbove(tmprealarray(2:10),30.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 10.0_SRK,'Lower Bound == 10.0')
-      ASSERT(findEleHtAbove(tmprealarray(2:10),50.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 10.0_SRK,'Lower Bound == 10.0')
-      ASSERT(findEleHtAbove(tmprealarray(2:10),62.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 3.0_SRK,'Lower Bound == 3.0')
+      bool=findEleHtAbove(tmprealarray(2:10),-11.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 11.0_SRK
+      ASSERT(bool,'Out of Lower Bounds')
+      bool=findEleHtAbove(tmprealarray(2:10),101.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. -101.0_SRK
+      ASSERT(bool,'Out of Upper Bounds')
+      bool=findEleHtAbove(tmprealarray(2:10),-1.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 1.0_SRK
+      ASSERT(bool,'Lower Bound == 1.0')
+      bool=findEleHtAbove(tmprealarray(2:10),1.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 1.0_SRK
+      ASSERT(bool,'Lower Bound == 1.0')
+      bool=findEleHtAbove(tmprealarray(2:10),3.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 3.0_SRK
+      ASSERT(bool,'Lower Bound == 3.0')
+      bool=findEleHtAbove(tmprealarray(2:10),8.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 2.0_SRK
+      ASSERT(bool,'Lower Bound == 2.0')
+      bool=findEleHtAbove(tmprealarray(2:10),12.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 3.0_SRK
+      ASSERT(bool,'Lower Bound == 3.0')
+      bool=findEleHtAbove(tmprealarray(2:10),18.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 2.0_SRK
+      ASSERT(bool,'Lower Bound == 2.0')
+      bool=findEleHtAbove(tmprealarray(2:10),30.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 10.0_SRK
+      ASSERT(bool,'Lower Bound == 10.0')
+      bool=findEleHtAbove(tmprealarray(2:10),50.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 10.0_SRK
+      ASSERT(bool,'Lower Bound == 10.0')
+      bool=findEleHtAbove(tmprealarray(2:10),62.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 3.0_SRK
+      ASSERT(bool,'Lower Bound == 3.0')
 !
 !
       COMPONENT_TEST('findEleHtBelow 1-D Array')
@@ -726,17 +759,28 @@ PROGRAM testArrayUtils
       tmprealarray(8)=20.0_SRK !40.0
       tmprealarray(9)=20.0_SRK !60.0
       tmprealarray(10)=5.0_SRK  !65.0
-      ASSERT(findEleHtBelow(tmprealarray(2:10),-11.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. -11.0_SRK,'Out of Lower Bounds')
-      ASSERT(findEleHtBelow(tmprealarray(2:10),101.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 101.0_SRK,'Out of Upper Bounds')
-      ASSERT(findEleHtBelow(tmprealarray(2:10),-1.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 9.0_SRK,'Lower Bound == 9.0')
-      ASSERT(findEleHtBelow(tmprealarray(2:10),1.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 1.0_SRK,'Lower Bound == 1.0')
-      ASSERT(findEleHtBelow(tmprealarray(2:10),3.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 1.0_SRK,'Lower Bound == 1.0')
-      ASSERT(findEleHtBelow(tmprealarray(2:10),8.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 2.0_SRK,'Lower Bound == 2.0')
-      ASSERT(findEleHtBelow(tmprealarray(2:10),12.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 2.0_SRK,'Lower Bound == 2.0')
-      ASSERT(findEleHtBelow(tmprealarray(2:10),18.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 3.0_SRK,'Lower Bound == 3.0')
-      ASSERT(findEleHtBelow(tmprealarray(2:10),30.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 10.0_SRK,'Lower Bound == 10.0')
-      ASSERT(findEleHtBelow(tmprealarray(2:10),50.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 10.0_SRK,'Lower Bound == 10.0')
-      ASSERT(findEleHtBelow(tmprealarray(2:10),62.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 2.0_SRK,'Lower Bound == 2.0')
+      bool=findEleHtBelow(tmprealarray(2:10),-11.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. -11.0_SRK
+      ASSERT(bool,'Out of Lower Bounds')
+      bool=findEleHtBelow(tmprealarray(2:10),101.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 101.0_SRK
+      ASSERT(bool,'Out of Upper Bounds')
+      bool=findEleHtBelow(tmprealarray(2:10),-1.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 9.0_SRK
+      ASSERT(bool,'Lower Bound == 9.0')
+      bool=findEleHtBelow(tmprealarray(2:10),1.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 1.0_SRK
+      ASSERT(bool,'Lower Bound == 1.0')
+      bool=findEleHtBelow(tmprealarray(2:10),3.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 1.0_SRK
+      ASSERT(bool,'Lower Bound == 1.0')
+      bool=findEleHtBelow(tmprealarray(2:10),8.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 2.0_SRK
+      ASSERT(bool,'Lower Bound == 2.0')
+      bool=findEleHtBelow(tmprealarray(2:10),12.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 2.0_SRK
+      ASSERT(bool,'Lower Bound == 2.0')
+      bool=findEleHtBelow(tmprealarray(2:10),18.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 3.0_SRK
+      ASSERT(bool,'Lower Bound == 3.0')
+      bool=findEleHtBelow(tmprealarray(2:10),30.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 10.0_SRK
+      ASSERT(bool,'Lower Bound == 10.0')
+      bool=findEleHtBelow(tmprealarray(2:10),50.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 10.0_SRK
+      ASSERT(bool,'Lower Bound == 10.0')
+      bool=findEleHtBelow(tmprealarray(2:10),62.0_SRK,DELTA=.TRUE.,XI=-10.0_SRK) .APPROXEQA. 2.0_SRK
+      ASSERT(bool,'Lower Bound == 2.0')
     ENDSUBROUTINE test1DReals
 !
 !-------------------------------------------------------------------------------
