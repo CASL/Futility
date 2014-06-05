@@ -79,6 +79,11 @@ MODULE FileType_Checkpoint
     CHARACTER(LEN=3) :: version=''
     !> Initialization status for this file
     LOGICAL(SBK) :: isInit=.FALSE.
+    !> Logical to signal if the export routine was called from an interrupt
+    !> or called directly. This is to allow implementations of export to
+    !> know if it can make certain assumptions about the state of the program
+    !> or not.
+    LOGICAL(SBK),PRIVATE :: interrupted=.FALSE.
     !> Indicates whether or not exportFile is to be called when
     !> an interrupt signal is caught (not yet active) or when the interrupt
     !> file is detected.
@@ -113,6 +118,9 @@ MODULE FileType_Checkpoint
       !> @copybrief FileType_Checkpoint::checkForFileInterrupt
       !> @copydetails FileType_Checkpoint::checkForFileInterrupt
       PROCEDURE,PASS :: checkForFileInterrupt
+      !> @copybrief FileType_Checkpoint::calledFromInterrupt
+      !> @copydetails FileType_Checkpoint::calledFromInterrupt
+      PROCEDURE,PASS :: calledFromInterrupt
       !> @copybrief FileType_Checkpoint::clear_CheckpointFileType
       !> @copydetails FileType_Checkpoint::clear_CheckpointFileType
       PROCEDURE,PASS :: clear => clear_CheckpointFileType
@@ -292,9 +300,25 @@ MODULE FileType_Checkpoint
         file_exists=.FALSE.
         IF(LEN_TRIM(thisCPF%interrupt_file) > 0) &
           INQUIRE(FILE=TRIM(thisCPF%interrupt_file),EXIST=file_exists)
-        IF(file_exists) CALL thisCPF%exportFile()
+        IF(file_exists) THEN
+          thisCPF%interrupted=.TRUE.
+          CALL thisCPF%exportFile()
+          thisCPF%interrupted=.FALSE.
+        ENDIF
       ENDIF
     ENDSUBROUTINE checkForFileInterrupt
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns the status of the interrupted attribute
+!> @param thisCPF the checkpoint file object
+!> @returns logical indicating if the invocation of export was called through
+!>          an interrupt
+!>
+    PURE FUNCTION calledFromInterrupt(thisCPF) RESULT(bool)
+      CLASS(CheckpointFileType),INTENT(IN) :: thisCPF
+      LOGICAL(SBK) :: bool
+      bool=thisCPF%interrupted
+    ENDFUNCTION calledFromInterrupt
 !
 !-------------------------------------------------------------------------------
 !> @brief Clears the checkpoint file object
