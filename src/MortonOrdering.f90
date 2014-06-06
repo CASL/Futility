@@ -336,6 +336,7 @@ MODULE MortonOrdering
         child => node%subdomains(node%ndefined)
       ELSE
         ! Should probably throw an error
+        CONTINUE
       ENDIF
     ENDFUNCTION ZTree_addChild
 !
@@ -376,9 +377,7 @@ MODULE MortonOrdering
       LOGICAL(SBK) :: const
 
       const=.TRUE.
-      IF(PRESENT(construct)) THEN
-        const=construct
-      ENDIF
+      IF(PRESENT(construct)) const=construct
 
       !Check for valid input
       IF(.NOT.(istt < 0 .OR. x2 < x1 .OR. y2 < y1 .OR. z2 < z1 .OR. &
@@ -802,7 +801,7 @@ MODULE MortonOrdering
       nlevels=thisZTreeNode%getMaxLevels(0)
       IF(nlevels > 0) THEN
         IF(thisZTreeNode%getNDomains(nlevels) < &
-            thisZTreeNode%istpMax()-thisZTreeNode%istt+1) THEN
+            thisZTreeNode%istp-thisZTreeNode%istt+1) THEN
 
           !Restructure the last two levels of the Z-Tree
           idshift=0
