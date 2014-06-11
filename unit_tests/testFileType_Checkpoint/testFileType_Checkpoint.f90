@@ -26,6 +26,7 @@ MODULE DummyCPFile
   PUBLIC :: DummyCPFileType
   
   TYPE,EXTENDS(CheckpointFileType) :: DummyCPFileType
+    INTEGER(SIK) :: ninterrupts=0
     INTEGER(SIK) :: nexports=0
     INTEGER(SIK) :: nimports=0
     CONTAINS
@@ -52,6 +53,7 @@ CONTAINS
   SUBROUTINE exportFileDummy(thisCPF)
     CLASS(DummyCPFileType),INTENT(INOUT) :: thisCPF
     IF(thisCPF%isInit) thisCPF%nexports=thisCPF%nexports+1
+    IF(thisCPF%calledFromInterrupt()) thisCPF%ninterrupts=thisCPF%ninterrupts+1
   ENDSUBROUTINE exportFileDummy
 ENDMODULE DummyCPFile
 !===============================================================================
@@ -229,6 +231,9 @@ PROGRAM testFileType_Checkpoint
 !
 !-------------------------------------------------------------------------------
   SUBROUTINE testCPMethods()
+    COMPONENT_TEST('calledFromInterrupt')
+    ASSERT(.NOT.testCPFIle%calledFromInterrupt(),'%interrupt')
+    
     COMPONENT_TEST('importFile')
     CALL testCPFile%importFile()
     ASSERT(testCPFile%nimports == 1,'nimports')
@@ -236,6 +241,7 @@ PROGRAM testFileType_Checkpoint
     COMPONENT_TEST('exportFile')
     CALL testCPFile%exportFile()
     ASSERT(testCPFile%nexports == 1,'nexports')
+    ASSERT(testCPFile%ninterrupts == 0,'ninterrupts')
     
     COMPONENT_TEST('setInterruptFile')
     CALL testCPFile%setInterruptFile('do_export')
@@ -248,10 +254,12 @@ PROGRAM testFileType_Checkpoint
     COMPONENT_TEST('checkForFileInterrupt')
     CALL testCPFile%checkForFileInterrupt()
     ASSERT(testCPFile%nexports == 1,'nexports')
+    ASSERT(testCPFile%ninterrupts == 0,'ninterrupts')
     OPEN(UNIT=23,FILE='do_export')
     CLOSE(23)
     CALL testCPFile%checkForFileInterrupt()
     ASSERT(testCPFile%nexports == 2,'nexports')
+    ASSERT(testCPFile%ninterrupts == 1,'ninterrupts')
     OPEN(UNIT=23,FILE='do_export')
     CLOSE(23,STATUS='DELETE')
     

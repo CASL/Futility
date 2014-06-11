@@ -52,9 +52,9 @@ MODULE Geom_Points
   PUBLIC :: OPERATOR(==)
   PUBLIC :: OPERATOR(/=)
   PUBLIC :: OPERATOR(.APPROXEQA.)
-  
+
   INTEGER(SIK),PARAMETER :: MAX_COORD_STR_LEN=128
-  
+
   !> @brief The derived type for a point
   TYPE :: PointType
     !> The number of dimensions of space in which this point lives
@@ -74,12 +74,12 @@ MODULE Geom_Points
       !> @copydetails GeomPoints::coord2str_PointType
       PROCEDURE,PASS :: getCoordString => coord2str_PointType
   ENDTYPE PointType
-  
+
   !> A linked list type of points
   !>
   !> This is used by the ray trace routines that determine segment information
   TYPE :: LinkedListPointType
-    !> A sorting value for a comparison operation. This is most likely the 
+    !> A sorting value for a comparison operation. This is most likely the
     !> distance to a reference point.
     REAL(SRK) :: sortval=0.0_SRK
     !> The point type for this record in the list
@@ -95,7 +95,7 @@ MODULE Geom_Points
       !> @copydetails GeomPoints::insert_LinkedListPointType
       PROCEDURE,PASS :: insert => insert_LinkedListPointType
   ENDTYPE LinkedListPointType
-  
+
   !> @brief Generic interface for computing midpoint
   !>
   !> Adds the listed module procedures to the global interface name for midPoint
@@ -104,7 +104,7 @@ MODULE Geom_Points
     !> @copydetails GeomPoints::midPoint_2points
     MODULE PROCEDURE midPoint_2points
   ENDINTERFACE midPoint
-  
+
   !> @brief Generic interface for computing distance
   !>
   !> Adds the listed module procedures to the global interface name for Distance
@@ -113,7 +113,7 @@ MODULE Geom_Points
     !> @copydetails GeomPoints::distance_2points
     MODULE PROCEDURE distance_2points
   ENDINTERFACE Distance
-  
+
   !> @brief Generic interface for addition operator (+)
   !>
   !> Adds addition capability for point types
@@ -122,7 +122,7 @@ MODULE Geom_Points
     !> @copydetails GeomPoints::add_PointType
     MODULE PROCEDURE add_PointType
   ENDINTERFACE
-  
+
   !> @brief Generic interface for subtraction operator (-)
   !>
   !> Adds subtraction capability for point types
@@ -131,7 +131,7 @@ MODULE Geom_Points
     !> @copydetails GeomPoints::subtract_PointType
     MODULE PROCEDURE subtract_PointType
   ENDINTERFACE
-  
+
   !> @brief Generic interface for 'is equal to' operator (==)
   !>
   !> Adds 'is equal to' capability for point types
@@ -140,7 +140,7 @@ MODULE Geom_Points
     !> @copydetails GeomPoints::isequal_PointType
     MODULE PROCEDURE isequal_PointType
   ENDINTERFACE
-  
+
   !> @brief Generic interface for 'is not equal to' operator (/=)
   !>
   !> Adds 'is not equal to' capability for point types
@@ -149,8 +149,8 @@ MODULE Geom_Points
     !> @copydetails GeomPoints::notequal_PointType
     MODULE PROCEDURE notequal_PointType
   ENDINTERFACE
-  
-  !> @brief Generic interface for 'is approximately equal to' operator 
+
+  !> @brief Generic interface for 'is approximately equal to' operator
   !> (.APPROXEQA.)
   !>
   !> Adds 'is approximately equal to' capability for point types
@@ -202,7 +202,7 @@ MODULE Geom_Points
       INTEGER(SIK),INTENT(IN),OPTIONAL :: DIM
       REAL(SRK),INTENT(IN),OPTIONAL :: X,Y,Z
       REAL(SRK),INTENT(IN),OPTIONAL :: coord(:)
-      
+
       IF(.NOT.ALLOCATED(p%coord)) THEN !initialize only if its not already initialized
         IF(PRESENT(coord)) THEN
           p%dim=SIZE(coord)
@@ -359,7 +359,7 @@ MODULE Geom_Points
 !> @returns @c cstring the returned string
 !>
 !> The default format is '(a,100(es23.12,a))' this means the maximum dimension
-!> for the point is 100 for this routine. Should be changed to the value of 
+!> for the point is 100 for this routine. Should be changed to the value of
 !> p%dim
     ELEMENTAL FUNCTION coord2str_PointType(p,fmt_string) RESULT(cstring)
       CLASS(PointType),INTENT(IN) :: p
@@ -459,7 +459,7 @@ MODULE Geom_Points
       CLASS(LinkedListPointType),TARGET,INTENT(INOUT) :: firstPoint
       TYPE(LinkedListPointType),POINTER,INTENT(INOUT) :: thisPoint
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: markDuplicates
-      
+
       LOGICAL(SBK) :: mark=.FALSE.
       LOGICAL(SBK) :: linsert
       REAL(SRK) :: d
@@ -470,7 +470,7 @@ MODULE Geom_Points
       ELSE
         mark=.FALSE.
       ENDIF
-      
+
       IF(ASSOCIATED(thisPoint)) THEN
         SELECTTYPE(firstPoint); TYPE IS(LinkedListPointType)
           searchPoint1 => firstPoint
@@ -479,23 +479,23 @@ MODULE Geom_Points
             linsert=.TRUE.
             DO WHILE(linsert)
               searchPoint2 => searchPoint1%next
-              
-              !Do not allow for points that are approximately equal to 
-              !existing points in the list. 
+
+              !Do not allow for points that are approximately equal to
+              !existing points in the list.
               !
               !Because the sort value is distance, "approximately equal to"
               !should be use SQRT(dim)*EPSREAL instead of EPSREAL for the
               !tolerance. We use a value of 2 since this caputes SQRT(3) and
               !we don't really expect higher dimensions.
               !
-              !However, in practice this was determined to be too small of a 
-              !tolerance. It appears there are some cases where the approxeq 
-              !is satisfied for 2 of the 3 dimensions and because the surface 
-              !and line segment are nearly parallel the floating point error 
-              !in the 3rd dimension will be significantly larger. 
+              !However, in practice this was determined to be too small of a
+              !tolerance. It appears there are some cases where the approxeq
+              !is satisfied for 2 of the 3 dimensions and because the surface
+              !and line segment are nearly parallel the floating point error
+              !in the 3rd dimension will be significantly larger.
               !
-              !A new factor of 10 was arbitrarily chosen and may need to be 
-              !updated again if other degenerate cases are still encountered 
+              !A new factor of 10 was arbitrarily chosen and may need to be
+              !updated again if other degenerate cases are still encountered
               !to not be be correctly identified.
               IF(ABS(d-searchPoint1%sortval) <= 10._SRK*EPSREAL) THEN
                 IF(mark) THEN
@@ -505,7 +505,7 @@ MODULE Geom_Points
               ELSEIF(ABS(d-searchPoint2%sortval) <= 10._SRK*EPSREAL) THEN
                 IF(mark) THEN
                   searchPoint2%isDuplicate=.TRUE.
-                ENDIF 
+                ENDIF
                 linsert=.FALSE.
               ELSEIF(searchPoint1%sortval < d .AND. d < searchPoint2%sortval) THEN
                 thisPoint%next => searchPoint2

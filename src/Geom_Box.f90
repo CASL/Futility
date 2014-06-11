@@ -19,7 +19,7 @@
 !> geometry.
 !>
 !> This module presently provides a derived data type for an oriented bounding
-!> box (OBB). The OBB is defined by an origin point, an orientation matrix 
+!> box (OBB). The OBB is defined by an origin point, an orientation matrix
 !> indicating the directions and a vector indicating the extent of the box for
 !> each dimension. It is inherently a 3-D object, but can represent a 2-D surface
 !> in 3-D space or 2-D space. This is determined by the dimensionality of its
@@ -40,9 +40,9 @@ MODULE Geom_Box
   USE Geom_Points
   USE Geom_Line
   IMPLICIT NONE
-  
+
   PRIVATE
-!  
+!
 !List of public items
   PUBLIC OBBType
 
@@ -71,10 +71,10 @@ MODULE Geom_Box
 !===============================================================================
   CONTAINS
 !
-!-------------------------------------------------------------------------------  
+!-------------------------------------------------------------------------------
 !> @brief Clears an OBBType object's atrributes
 !> @param thisOBB the OBBType object to clear
-!>  
+!>
     ELEMENTAL SUBROUTINE clear_OBBType(thisOBB)
       CLASS(OBBType),INTENT(INOUT) :: thisOBB
       CALL thisOBB%p0%clear()
@@ -100,14 +100,14 @@ MODULE Geom_Box
       REAL(SRK),INTENT(IN) :: u1_in(:)
       REAL(SRK),INTENT(IN) :: u2_in(:)
       REAL(SRK),INTENT(IN),OPTIONAL :: u3_in(:)
-      
+
       REAL(SRK) :: u1(3),u2(3),u3(3)
       REAL(SRK) :: magn1,magn2,magn3,dotmp1,dotmp2,dotmp3,r
       INTEGER(SIK) :: ndim,nnon0
-      
+
       CALL thisOBB%clear()
       ndim=p0%dim
-      
+
       IF(SIZE(e_in) >= ndim .AND. SIZE(u1_in) >= ndim .AND. SIZE(u2_in) >= ndim) THEN
         u1=0.0_SRK
         u2=0.0_SRK
@@ -117,7 +117,7 @@ MODULE Geom_Box
             u1(2)=u1_in(2)
             u2(1)=u2_in(1)
             u2(2)=u2_in(2)
-          
+
             !Renormalize the vectors
             magn1=u1(1)*u1(1)+u1(2)*u1(2)
             magn2=u2(1)*u2(1)+u2(2)*u2(2)
@@ -132,7 +132,7 @@ MODULE Geom_Box
               u2(2)=u2(2)*r
             ENDIF
             dotmp1=u1(1)*u2(1)+u1(2)*u2(2)
-          
+
             !Check that the vector lengths are non-zero and at a right angle
             IF(magn1 > EPSREAL .AND. magn2 > EPSREAL .AND. ABS(dotmp1) < EPSREAL) THEN
               !Assign values to OBB
@@ -147,7 +147,7 @@ MODULE Geom_Box
           ENDIF
         ELSEIF(ndim == 3) THEN
           !OBB is 3-D
-          
+
           !Insure that at least 2 of the extents are non-zero
           nnon0=0
           IF(e_in(1) > 0.0_SRK) nnon0=nnon0+1
@@ -160,7 +160,7 @@ MODULE Geom_Box
             u2(1)=u2_in(1)
             u2(2)=u2_in(2)
             u2(3)=u2_in(3)
-            
+
             !Renormalize the vectors
             magn1=u1(1)*u1(1)+u1(2)*u1(2)+u1(3)*u1(3)
             magn2=u2(1)*u2(1)+u2(2)*u2(2)+u2(3)*u2(3)
@@ -177,7 +177,7 @@ MODULE Geom_Box
               u2(3)=u2(3)*r
             ENDIF
             dotmp1=u1(1)*u2(1)+u1(2)*u2(2)+u1(3)*u2(3)
-          
+
             magn3=1._SRK
             dotmp2=0._SRK
             dotmp3=0._SRK
@@ -208,7 +208,7 @@ MODULE Geom_Box
                 u3(3)=u3(3)*r
               ENDIF
             ENDIF
-            
+
             !Check that the vector lengths are non-zero and at a right angle
             IF(magn1 /= 0._SRK .AND. magn2 /= 0._SRK &
               .AND. magn3 /= 0._SRK .AND. ABS(dotmp1) < EPSREAL &
@@ -233,7 +233,7 @@ MODULE Geom_Box
     ENDSUBROUTINE set_OBBType
 !
 !-------------------------------------------------------------------------------
-!> @brief Determine the point(s) of intersection between an OBB and line 
+!> @brief Determine the point(s) of intersection between an OBB and line
 !> segment (if it exists)
 !> @param box the box to test to intersection
 !> @param line the line segment to test to intersection
@@ -262,28 +262,28 @@ MODULE Geom_Box
       REAL(SRK) :: coord(3),dir(3),dir_world(3),coord_new(3)
       REAL(SRK) :: tmin,tmax,invdir,t1,t2,t
       INTEGER(SIK) :: i,ndim
-      
+
       p1%dim=-1
       p2%dim=-1
-      
+
       !Check the box and line
       ndim=thisOBB%p0%dim
       IF(ndim == line%p(1)%dim .AND. ndim == line%p(2)%dim .AND. ndim > 1) THEN
         p1%dim=-3
         p2%dim=-3
-        
+
         IF(ndim == 2) THEN
 !2-D
           !Translate the coordinate into the OBB system.
           dir_world(1)=line%p(2)%coord(1)-line%p(1)%coord(1)
           dir_world(2)=line%p(2)%coord(2)-line%p(1)%coord(2)
-          
+
           coord(1)=line%p(1)%coord(1)-thisOBB%p0%coord(1)
           coord(2)=line%p(1)%coord(2)-thisOBB%p0%coord(2)
-          
+
           dir(1)=dir_world(1)*thisOBB%u(1,1)+dir_world(2)*thisOBB%u(2,1)
           dir(2)=dir_world(1)*thisOBB%u(1,2)+dir_world(2)*thisOBB%u(2,2)
-          
+
           coord_new(1)=coord(1)*thisOBB%u(1,1)+coord(2)*thisOBB%u(2,1)
           coord_new(2)=coord(1)*thisOBB%u(1,2)+coord(2)*thisOBB%u(2,2)
         ELSEIF(ndim == 3) THEN
@@ -292,18 +292,18 @@ MODULE Geom_Box
           dir_world(1)=line%p(2)%coord(1)-line%p(1)%coord(1)
           dir_world(2)=line%p(2)%coord(2)-line%p(1)%coord(2)
           dir_world(3)=line%p(2)%coord(3)-line%p(1)%coord(3)
-          
+
           coord(1)=line%p(1)%coord(1)-thisOBB%p0%coord(1)
           coord(2)=line%p(1)%coord(2)-thisOBB%p0%coord(2)
           coord(3)=line%p(1)%coord(3)-thisOBB%p0%coord(3)
-          
+
           dir(1)=dir_world(1)*thisOBB%u(1,1)+dir_world(2)*thisOBB%u(2,1)+ &
             dir_world(3)*thisOBB%u(3,1)
           dir(2)=dir_world(1)*thisOBB%u(1,2)+dir_world(2)*thisOBB%u(2,2)+ &
             dir_world(3)*thisOBB%u(3,2)
           dir(3)=dir_world(1)*thisOBB%u(1,3)+dir_world(2)*thisOBB%u(2,3)+ &
             dir_world(3)*thisOBB%u(3,3)
-          
+
           coord_new(1)=coord(1)*thisOBB%u(1,1)+coord(2)*thisOBB%u(2,1)+ &
             coord(3)*thisOBB%u(3,1)
           coord_new(2)=coord(1)*thisOBB%u(1,2)+coord(2)*thisOBB%u(2,2)+ &
@@ -311,12 +311,12 @@ MODULE Geom_Box
           coord_new(3)=coord(1)*thisOBB%u(1,3)+coord(2)*thisOBB%u(2,3)+ &
             coord(3)*thisOBB%u(3,3)
         ENDIF
-        
+
         tmin=-1._SRK
         tmax=1.e30_SRK
         DO i=1,ndim
           IF(ABS(dir(i)) < EPSREAL) THEN
-            !If segment is parallel to box, and if the coordinate for that 
+            !If segment is parallel to box, and if the coordinate for that
             !dimension is outside box then there is no intersection
             IF(coord_new(i) < 0._SRK-EPSREAL .OR. &
               coord_new(i) > thisOBB%e(i)+EPSREAL) RETURN
@@ -332,19 +332,19 @@ MODULE Geom_Box
             ENDIF
             IF(t1 > tmin) tmin=t1
             IF(t2 < tmax) tmax=t2
-            
+
             !Exit if intersection with box becomes empty
             IF(tmin > tmax) RETURN
           ENDIF
         ENDDO
-        
+
         !Segment intersects in all dimensions so compute the points
         !The first point lies on the segment
         p1=thisOBB%p0
         p1%coord(1)=line%p(1)%coord(1)+dir_world(1)*tmin
         p1%coord(2)=line%p(1)%coord(2)+dir_world(2)*tmin
         IF(ndim == 3) p1%coord(3)=line%p(1)%coord(3)+dir_world(3)*tmin
-        
+
         !The second point lies on the segment
         p2=thisOBB%p0
         p2%coord(1)=line%p(1)%coord(1)+dir_world(1)*tmax

@@ -263,15 +263,17 @@ MODULE ArrayUtils
       n=SIZE(r,DIM=1)
       IF(PRESENT(xi)) THEN
         ALLOCATE(rout(n))
+        DO i=n,2,-1
+          rout(i)=r(i)-r(i-1)
+        ENDDO
+        rout(1)=r(1)-xi
       ELSE
         n=n-1
         ALLOCATE(rout(n))
+        DO i=n,1,-1
+          rout(i)=r(i+1)-r(i)
+        ENDDO
       ENDIF
-      DO i=n,2,-1
-        rout(i)=r(i)-r(i-1)
-      ENDDO
-      rout(1)=r(1)
-      IF(PRESENT(xi)) rout(1)=rout(1)-xi
     ENDSUBROUTINE getDelta_1DReal
 !
 !-------------------------------------------------------------------------------
@@ -443,8 +445,12 @@ MODULE ArrayUtils
       ALLOCATE(rout(sout))
       rout=0.0_SRK
       rout(1)=tmpr(1)
+      sout=2
       DO i=2,n
-        IF(.NOT. SOFTEQ(tmpr(i-1),tmpr(i),loctol)) rout(i)=tmpr(i)
+        IF(.NOT. SOFTEQ(tmpr(i-1),tmpr(i),loctol)) THEN
+          rout(sout)=tmpr(i)
+          sout=sout+1
+        ENDIF
       ENDDO
       
       !Deallocate
@@ -488,8 +494,12 @@ MODULE ArrayUtils
       ALLOCATE(rout(sout))
       rout=0
       rout(1)=tmpr(1)
+      sout=2
       DO i=2,n
-        IF(tmpr(i-1) /= tmpr(i)) rout(i)=tmpr(i)
+        IF(tmpr(i-1) /= tmpr(i)) THEN
+          rout(sout)=tmpr(i)
+          sout=sout+1
+        ENDIF
       ENDDO
       !Deallocate
       DEALLOCATE(tmpr)
@@ -566,10 +576,11 @@ MODULE ArrayUtils
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: deltaout
       LOGICAL(SBK) :: bool1,bool2
       INTEGER(SIK) :: i,j,sr1,sr2,sout,tmpsout
-      REAL(SRK),ALLOCATABLE :: tmpout(:),tmp1(:),tmp2(:)
+      REAL(SRK),ALLOCATABLE :: tmpout(:),tmpout2(:),tmp1(:),tmp2(:)
       
       !Process the first array if it is a delta
       bool1=.FALSE.
+      sr1=SIZE(r1,DIM=1)
       IF(PRESENT(delta1)) THEN
         IF(delta1) THEN
           IF(PRESENT(xi1)) THEN
@@ -579,14 +590,11 @@ MODULE ArrayUtils
           ENDIF
           bool1=.TRUE.
           sr1=SIZE(tmp1,DIM=1)
-        ELSE
-          sr1=SIZE(r1,DIM=1)
         ENDIF
-      ELSE
-        sr1=SIZE(r1,DIM=1)
       ENDIF
       !Process the second array if it is a delta
       bool2=.FALSE.
+      sr2=SIZE(r2,DIM=1)
       IF(PRESENT(delta2)) THEN
         IF(delta2) THEN
           IF(PRESENT(xi2)) THEN
@@ -596,11 +604,7 @@ MODULE ArrayUtils
           ENDIF
           bool2=.TRUE.
           sr2=SIZE(tmp2,DIM=1)
-        ELSE
-          sr2=SIZE(r2,DIM=1)
         ENDIF
-      ELSE
-        sr2=SIZE(r2,DIM=1)
       ENDIF
       !Allocate the tmp array to the full size of the 2 arrays
       tmpsout=sr1+sr2
@@ -611,30 +615,39 @@ MODULE ArrayUtils
         tmpout(1:sr1)=r1
       ENDIF
       IF(bool2) THEN
-        tmpout(sr1+1:sr2)=tmp2
+        tmpout(sr1+1:tmpsout)=tmp2
       ELSE
-        tmpout(sr1+1:sr2)=r2
+        tmpout(sr1+1:tmpsout)=r2
       ENDIF
       !Sort the array components to make finding repeated values easy.
       CALL sort(tmpout)
       sout=tmpsout
+      !Find the number of repeated values
       DO i=2,tmpsout
         IF(tmpout(i-1) .APPROXEQ. tmpout(i)) sout=sout-1
       ENDDO
-      ALLOCATE(rout(sout))
-      rout=0.0_SRK
-      rout(1)=tmpout(1)
+      ALLOCATE(tmpout2(sout))
+      tmpout2=0.0_SRK
+      tmpout2(1)=tmpout(1)
       j=2
+      !Assign the non-repeated values
       DO i=2,tmpsout
         IF(.NOT.(tmpout(i-1) .APPROXEQ. tmpout(i))) THEN
-          rout(j)=tmpout(i)
+          tmpout2(j)=tmpout(i)
           j=j+1
         ENDIF
       ENDDO
+      !If the output requires a delta array, convert it.
       IF(PRESENT(deltaout)) THEN
         IF(deltaout) THEN
-          CALL getDelta_1DReal(rout,rout)
+          CALL getDelta_1DReal(tmpout2,rout)
+        ELSE
+          ALLOCATE(rout(sout))
+          rout=tmpout2
         ENDIF
+      ELSE
+        ALLOCATE(rout(sout))
+        rout=tmpout2
       ENDIF
     ENDSUBROUTINE getUnion_1DReal
 !
@@ -756,16 +769,74 @@ MODULE ArrayUtils
 !> @brief 
 !> @param r
 !>
-    PURE FUNCTION findIndex_1DInt(r,pos,xi,delta) RESULT(ind)
+    PURE FUNCTION findIndex_1DInt(r,pos,xi,delta,incl) RESULT(ind)
       INTEGER(SIK),INTENT(IN) :: r(:)
       INTEGER(SIK),INTENT(IN) :: pos
       INTEGER(SIK),INTENT(IN),OPTIONAL :: xi
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: delta
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: incl
       INTEGER(SIK) :: ind
-      REAL(SRK) :: tmp
-      ind=-1
-      tmp=1.0_SRK
+      INTEGER(SIK) :: n,i,l_incl
+      INTEGER(SIK) :: tmp(SIZE(r,DIM=1)+1)
       
+      !Initialize the tmp array and adjust for any offset xi
+      n=SIZE(r,DIM=1)
+      tmp=0
+      IF(PRESENT(xi)) THEN
+        tmp(1)=xi
+        tmp(2:n+1)=r
+        n=n+1
+      ELSE
+        tmp(1:n)=r
+      ENDIF
+      
+      !If the array is in increments/deltas and not full values
+      IF(PRESENT(delta)) THEN
+        IF(delta) THEN
+          DO i=2,SIZE(tmp,DIM=1)
+            tmp(i)=tmp(i-1)+tmp(i)
+          ENDDO
+        ENDIF
+      ENDIF
+      
+      !If the logic should be inclusive or exclusive
+      l_incl=0
+      IF(PRESENT(incl)) THEN
+        IF((0 <= incl) .AND. (incl <= 2)) l_incl=incl
+      ENDIF
+      
+      !Below the array
+      IF(pos < tmp(1)) THEN
+        ind=-1
+      !Above the array
+      ELSEIF(tmp(n) < pos) THEN
+        ind=-2
+      !Inbetween, error if on mesh
+      ELSEIF(l_incl == 0) THEN
+        IF(ANY(tmp == pos)) THEN
+          ind=-3
+        ELSEIF((tmp(1) < pos) .AND. (pos < tmp(n))) THEN
+          ind=1
+          DO WHILE(pos > tmp(ind))
+            ind=ind+1
+          ENDDO
+          ind=ind-1
+        ENDIF
+      !Inbetween, don't error on mesh
+      ELSEIF(l_incl > 0) THEN
+        IF((tmp(1) <= pos) .AND. (pos <= tmp(n))) THEN
+          ind=1
+          DO WHILE(pos > tmp(ind))
+            ind=ind+1
+            IF(ind > n) EXIT
+          ENDDO
+          ind=ind-1
+          IF((l_incl == 1) .AND. (pos == tmp(ind))) ind=ind-1
+          IF((l_incl == 1) .AND. (ind == 0)) ind=-1
+          IF((l_incl == 2) .AND. (ind == n)) ind=-2
+          IF(ind == n) ind=ind-1
+        ENDIF
+      ENDIF
     ENDFUNCTION findIndex_1DInt
 !
 !-------------------------------------------------------------------------------
