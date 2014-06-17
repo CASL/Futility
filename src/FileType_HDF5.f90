@@ -65,6 +65,7 @@ MODULE FileType_HDF5
   USE Strings
   USE ExceptionHandler
   USE IO_Strings
+  USE ParameterLists
   USE ParallelEnv
   USE FileType_Base
 
@@ -221,12 +222,15 @@ MODULE FileType_HDF5
       !> @copybrief FileType_HDF5::write_c1
       !> @copydoc FileType_HDF5::write_c1
       PROCEDURE,PASS,PRIVATE :: write_c1
+      !> @copybrief FileType_HDF5::write_pList
+      !> @copydoc FileType_HDF5::write_pList
+      PROCEDURE,PASS,PRIVATE :: write_pList
       !> Generic typebound interface for all @c write operations
       GENERIC :: fwrite => write_d0, write_d1, write_d2, write_d3, write_d4,   &
       write_s0, write_s1, write_s2, write_s3, write_s4, write_b0, write_b1,    &
       write_b2, write_b3, write_n0, write_n1, write_n2, write_n3, write_st0,    &
       write_st1_helper, write_st1, write_st2_helper, write_st2, write_st3_helper,   &
-      write_st3, write_l0, write_l1, write_l2, write_l3, write_c1
+      write_st3, write_l0, write_l1, write_l2, write_l3, write_c1, write_pList
       !> @copybrief FileType_HDF5::read_d0
       !> @copydoc FileType_HDF5::read_d0
       PROCEDURE,PASS,PRIVATE :: read_d0
@@ -4122,6 +4126,133 @@ MODULE FileType_HDF5
       ENDIF
 #endif
     ENDSUBROUTINE write_c1
+!
+!-------------------------------------------------------------------------------
+!> @brief Write a Parameter List object to a group
+!> @param thisHDF5File the HDF5FileType object to write to
+!> @param dsetname group name and path to write to
+!> @param vals data to write to group
+!> @param gdims_in shape of data to write with
+!>
+!> This routine writes a Parameter List object @c vals to a group of name
+!> and path @c dsetname using the shape @c gdims_in, if present.
+!>
+    SUBROUTINE write_pList(thisHDF5File,dsetname,vals,gdims_in)
+      IMPLICIT NONE
+      CHARACTER(LEN=*),PARAMETER :: myName='writec1_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
+      CHARACTER(LEN=*),INTENT(IN) :: dsetname
+      CLASS(ParamType),INTENT(IN) :: vals
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: gdims_in
+#ifdef MPACT_HAVE_HDF5
+      TYPE(StringType) :: address,path,root
+      CLASS(ParamType),POINTER :: nextParam
+      INTEGER(SNK) :: is0
+      INTEGER(SLK) :: id0
+      REAL(SSK) :: rs0
+      REAL(SDK) :: rd0
+      LOGICAL(SBK) :: l0
+      TYPE(StringType) :: st0
+      INTEGER(SNK),ALLOCATABLE :: is1(:)
+      INTEGER(SLK),ALLOCATABLE :: id1(:)
+      REAL(SSK),ALLOCATABLE :: rs1(:)
+      REAL(SDK),ALLOCATABLE :: rd1(:)
+      LOGICAL(SBK),ALLOCATABLE :: l1(:)
+      TYPE(StringType),ALLOCATABLE :: st1(:)
+      INTEGER(SNK),ALLOCATABLE :: is2(:,:)
+      INTEGER(SLK),ALLOCATABLE :: id2(:,:)
+      REAL(SSK),ALLOCATABLE :: rs2(:,:)
+      REAL(SDK),ALLOCATABLE :: rd2(:,:)
+      TYPE(StringType),ALLOCATABLE :: st2(:,:)
+      INTEGER(SNK),ALLOCATABLE :: is3(:,:,:)
+      INTEGER(SLK),ALLOCATABLE :: id3(:,:,:)
+      REAL(SSK),ALLOCATABLE :: rs3(:,:,:)
+      REAL(SDK),ALLOCATABLE :: rd3(:,:,:)
+
+        
+      ! Create root directory
+      root=convertPath(dsetname)
+      CALL thisHDF5File%mkdir(CHAR(root))
+
+      ! Begin iterating over PL
+      address=''
+      CALL vals%getNextParam(address,nextParam)
+      DO WHILE (ASSOCIATED(nextParam))
+        path=root//'/'//CHAR(address)
+        SELECTCASE(CHAR(nextParam%dataType))
+          CASE('TYPE(ParamType_List)')
+            CALL thisHDF5File%mkdir(CHAR(path))
+          CASE('REAL(SSK)')
+            CALL vals%get(CHAR(address),rs0)
+            CALL thisHDF5File%write_s0(CHAR(path),rs0)
+          CASE('REAL(SDK)')
+            CALL vals%get(CHAR(address),rd0)
+            CALL thisHDF5File%write_d0(CHAR(path),rd0)
+          CASE('INTEGER(SNK)')
+            CALL vals%get(CHAR(address),is0)
+            CALL thisHDF5File%write_n0(CHAR(path),is0)
+          CASE('INTEGER(SLK)')
+            CALL vals%get(CHAR(address),id0)
+            CALL thisHDF5File%write_l0(CHAR(path),id0)
+          CASE('LOGICAL(SBK)')
+            CALL vals%get(CHAR(address),l0)
+            CALL thisHDF5File%write_b0(CHAR(path),l0)
+          CASE('TYPE(StringType)')
+            CALL vals%get(CHAR(address),st0)
+            CALL thisHDF5File%write_st0(CHAR(path),st0)
+          CASE('1-D ARRAY REAL(SSK)')
+            CALL vals%get(CHAR(address),rs1)
+            CALL thisHDF5File%write_s1(CHAR(path),rs1)
+          CASE('1-D ARRAY REAL(SDK)')
+            CALL vals%get(CHAR(address),rd1)
+            CALL thisHDF5File%write_d1(CHAR(path),rd1)
+          CASE('1-D ARRAY INTEGER(SNK)')
+            CALL vals%get(CHAR(address),is1)
+            CALL thisHDF5File%write_n1(CHAR(path),is1)
+          CASE('1-D ARRAY INTEGER(SLK)')
+            CALL vals%get(CHAR(address),id1)
+            CALL thisHDF5File%write_l1(CHAR(path),id1)
+          CASE('1-D ARRAY LOGICAL(SBK)')
+            CALL vals%get(CHAR(address),l1)
+            CALL thisHDF5File%write_b1(CHAR(path),l1)
+          CASE('1-D ARRAY TYPE(StringType)')
+            CALL vals%get(CHAR(address),st1)
+            CALL thisHDF5File%write_st1_helper(CHAR(path),st1)
+          CASE('2-D ARRAY REAL(SSK)')
+            CALL vals%get(CHAR(address),rs2)
+            CALL thisHDF5File%write_s2(CHAR(path),rs2)
+          CASE('2-D ARRAY REAL(SDK)')
+            CALL vals%get(CHAR(address),rd2)
+            CALL thisHDF5File%write_d2(CHAR(path),rd2)
+          CASE('2-D ARRAY INTEGER(SNK)')
+            CALL vals%get(CHAR(address),is2)
+            CALL thisHDF5File%write_n2(CHAR(path),is2)
+          CASE('2-D ARRAY INTEGER(SLK)')
+            CALL vals%get(CHAR(address),id2)
+            CALL thisHDF5File%write_l2(CHAR(path),id2)
+          CASE('2-D ARRAY TYPE(StringType)')
+            CALL vals%get(CHAR(address),st2)
+            CALL thisHDF5File%write_st2_helper(CHAR(path),st2)
+          CASE('3-D ARRAY REAL(SSK)')
+            CALL vals%get(CHAR(address),rs3)
+            CALL thisHDF5File%write_s3(CHAR(path),rs3)
+          CASE('3-D ARRAY REAL(SDK)')
+            CALL vals%get(CHAR(address),rd3)
+            CALL thisHDF5File%write_d3(CHAR(path),rd3)
+          CASE('3-D ARRAY INTEGER(SNK)')
+            CALL vals%get(CHAR(address),is3)
+            CALL thisHDF5File%write_n3(CHAR(path),is3)
+          CASE('3-D ARRAY INTEGER(SLK)')
+            CALL vals%get(CHAR(address),id3)
+            CALL thisHDF5File%write_l3(CHAR(path),id3)
+          CASE DEFAULT
+            CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+              ' - Unrecognized Parameter Type '//CHAR(nextParam%dataType)//'.')
+        ENDSELECT
+        CALL vals%getNextParam(address,nextParam)
+      ENDDO
+#endif
+    ENDSUBROUTINE write_pList
 !
 !-------------------------------------------------------------------------------
 !> @brief Read a double from dataset
