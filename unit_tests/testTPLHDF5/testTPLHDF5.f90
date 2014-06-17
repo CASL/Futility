@@ -50,7 +50,7 @@ PROGRAM testTPLHDF5
   WRITE(*,*) '==================================================='
 
 #ifdef HAVE_MPI
-  CALL MPI_Finalize()
+  CALL MPI_Finalize(mpierr)
 #endif
 
 !
