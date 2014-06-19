@@ -33,7 +33,7 @@ PROGRAM testAllocsOOM
   CREATE_TEST('AllocsOOM')
   
   CALL eAllocs%setStopOnError(.FALSE.)
-  CALL eAllocs%setQuietMode(.TRUE.)
+  !CALL eAllocs%setQuietMode(.TRUE.)
   maxMem=0
   CALL getSysMemInfo(maxRam,maxSwap,memAvail)
   maxMem=maxRam+maxSwap
