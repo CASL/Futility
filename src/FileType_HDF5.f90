@@ -379,6 +379,11 @@ MODULE FileType_HDF5
       ! Open the HDF5 file
       CALL thisHDF5File%fopen()
 
+      ! If the file is NEW, change the mode to WRITE after
+      ! Creating it so we don't keep truncating it repeatedly.
+      IF(TRIM(thisHDF5File%mode) == 'NEW') &
+        thisHDF5File%mode='WRITE'
+
       ! Assign arbitrary UNIT number to file.  Used only for deleting file.
       unitno=99
       INQUIRE(UNIT=unitno,OPENED=ostat)
@@ -464,8 +469,12 @@ MODULE FileType_HDF5
       ENDSELECT
 
       CALL h5pclose_f(plist_id,error)
-      IF(error /= 0) CALL file%e%raiseError(modName//'::'//myName// &
-        ' - Unable to destroy property list.')
+      IF(error /= 0) THEN
+        CALL file%e%raiseError(modName//'::'//myName// &
+          ' - Unable to destroy property list.')
+      ELSE
+        CALL file%setOpenStat(.TRUE.)
+      ENDIF
 #endif
     ENDSUBROUTINE open_HDF5FileType
 !
@@ -485,8 +494,12 @@ MODULE FileType_HDF5
           '::'//myName//' - File object not initialized.')
       ELSE
         CALL h5fclose_f(file%file_id,error)
-        IF(error /= 0) CALL file%e%raiseError(modName//'::'//myName// &
-          ' - Unable to close HDF5 file.')
+        IF(error /= 0) THEN
+          CALL file%e%raiseError(modName//'::'//myName// &
+            ' - Unable to close HDF5 file.')
+        ELSE
+          CALL file%setOpenStat(.FALSE.)
+        ENDIF
       ENDIF
 #endif
     ENDSUBROUTINE close_HDF5FileType
