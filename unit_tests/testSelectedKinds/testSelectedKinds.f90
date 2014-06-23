@@ -19,7 +19,7 @@ PROGRAM testSelectedKinds
 #include "UnitTest.h"
   USE UnitTest
   USE IntrType
-  
+
   IMPLICIT NONE
 
   REAL(SSK) :: singlefloat
@@ -43,7 +43,7 @@ PROGRAM testSelectedKinds
   WRITE(*,*) '   EPSD = ',EPSD
   WRITE(*,*) 'EPSREAL = ',EPSREAL
   WRITE(*,*) '---------------------------------------------------'
-  
+
   CALL evalIntModel()
   CALL evalFPModel()
 !
@@ -94,7 +94,7 @@ PROGRAM testSelectedKinds
     STOP 666
   ENDIF
   WRITE(*,*) '  Passed: .APPROXEQ. (SINGLE PRECISION)'
-  
+
   IF(1.234567890123450_SDK .APPROXEQ. 1.234567890123465_SDK) THEN
     WRITE(*,*) '1.234567890123450_SDK .APPROXEQ. 1.234567890123465_SDK FAILED!'
     STOP 666
@@ -141,7 +141,7 @@ PROGRAM testSelectedKinds
   ENDIF
   WRITE(*,*) '  Passed: .APPROXEQ. (DOUBLE PRECISION)'
 !
-! Testing APPROXEQA  
+! Testing APPROXEQA
   WRITE(*,*) 'TESTING .APPROXEQA.'
   IF(1.234560_SSK .APPROXEQA. 1.234571_SSK) THEN
     WRITE(*,*) '1.234560_SSK .APPROXEQA. 1.234571_SSK FAILED!'
@@ -188,7 +188,7 @@ PROGRAM testSelectedKinds
     STOP 666
   ENDIF
   WRITE(*,*) '  Passed: .APPROXEQA. (SINGLE PRECISION)'
-  
+
   IF(1.234567890123450_SDK .APPROXEQA. 1.234567890123465_SDK) THEN
     WRITE(*,*) '1.234567890123450_SDK .APPROXEQA. 1.234567890123465_SDK FAILED!'
     STOP 666
@@ -282,7 +282,7 @@ PROGRAM testSelectedKinds
     STOP 666
   ENDIF
   WRITE(*,*) '  Passed: .APPROXEQR. (SINGLE PRECISION)'
-  
+
   IF(1.234567890123450_SDK .APPROXEQR. 1.234567890123465_SDK) THEN
     WRITE(*,*) '1.234567890123450_SDK .APPROXEQR. 1.234567890123465_SDK FAILED!'
     STOP 666
@@ -376,7 +376,7 @@ PROGRAM testSelectedKinds
     STOP 666
   ENDIF
   WRITE(*,*) '  Passed: .APPROXEQF. (SINGLE PRECISION)'
-  
+
   IF(1.234567890123450_SDK .APPROXEQF. 1.234567890123465_SDK) THEN
     WRITE(*,*) '1.234567890123450_SDK .APPROXEQF. 1.234567890123465_SDK FAILED!'
     STOP 666
@@ -422,7 +422,7 @@ PROGRAM testSelectedKinds
     STOP 666
   ENDIF
   WRITE(*,*) '  Passed: .APPROXEQF. (DOUBLE PRECISION)'
-!  
+!
 ! Testing APPROXLE
   WRITE(*,*) 'TESTING .APPROXLE.'
   IF(.NOT.(1.00000000000001_SDK .APPROXLE. 1._SDK) .OR. &
@@ -481,6 +481,44 @@ PROGRAM testSelectedKinds
   ELSE
     WRITE(*,*) '  Passed: CALL SOFTEQ(...) (SINGLE PRECISION)'
   ENDIF
+!
+! Test isNAN
+  WRITE(*,*) 'TESTING isNAN'
+  doublefloat=-1.0_SDK
+  IF(.NOT.(isNAN(REAL(SQRT(doublefloat),SDK))) .OR. &
+          (isNAN(REAL(SQRT(1.0_SDK),SDK)))) THEN
+    WRITE(*,*) 'CALL isNAN(...) (DOUBLE PRECISION) FAILED!'
+    STOP 666
+  ELSE
+    WRITE(*,*) '  Passed: CALL isNAN(...) (DOUBLE PRECISION)'
+  ENDIF
+  singlefloat=-1.0_SSK
+  IF(.NOT.(isNAN(REAL(SQRT(singlefloat),SSK))) .OR. &
+          (isNAN(REAL(SQRT(1.0_SSK),SSK)))) THEN
+    WRITE(*,*) 'CALL isNAN(...) (SINGLE PRECISION) FAILED!'
+    STOP 666
+  ELSE
+    WRITE(*,*) '  Passed: CALL isNAN(...) (SINGLE PRECISION)'
+  ENDIF
+!
+! Test isINF
+  WRITE(*,*) 'TESTING isINF'
+  doublefloat=0.0_SDK
+  IF(.NOT.(isINF(REAL(1.0_SDK/doublefloat,SDK))) .OR. &
+          (isINF(REAL(1.0_SDK,SDK)))) THEN
+    WRITE(*,*) 'CALL isINF(...) (DOUBLE PRECISION) FAILED!'
+    STOP 666
+  ELSE
+    WRITE(*,*) '  Passed: CALL isINF(...) (DOUBLE PRECISION)'
+  ENDIF
+  singlefloat=0.0_SDK
+  IF(.NOT.(isINF(REAL(1.0_SSK/singlefloat,SSK))) .OR. &
+          (isINF(REAL(1.0_SSK,SSK)))) THEN
+    WRITE(*,*) 'CALL isINF(...) (SINGLE PRECISION) FAILED!'
+    STOP 666
+  ELSE
+    WRITE(*,*) '  Passed: CALL isINF(...) (SINGLE PRECISION)'
+  ENDIF
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING SELECTED KINDS PASSED!'
   WRITE(*,*) '==================================================='
@@ -491,9 +529,9 @@ PROGRAM testSelectedKinds
 !-------------------------------------------------------------------------------
     SUBROUTINE evalFPModel()
       INTEGER :: id
-    
+
       WRITE(*,*) 'TESTING FLOATING POINT MODEL'
-      WRITE(*,*) 
+      WRITE(*,*)
       WRITE(*,'(a,i1,a)') ' REAL(',SSK,') :: singlefloat'
       WRITE(*,*) '      RADIX(singlefloat) = ',RADIX(singlefloat)
       WRITE(*,*) '     DIGITS(singlefloat) = ',DIGITS(singlefloat)
@@ -508,7 +546,7 @@ PROGRAM testSelectedKinds
         singlefloat=REAL(10**id,SSK)
         WRITE(*,'(a,i2.2,a,es13.6)') '            SPACING(1e',id,') = ',SPACING(singlefloat)
       ENDDO
-      
+
       WRITE(*,*)
       WRITE(*,'(a,i1,a)') ' REAL(',SDK,') :: doublefloat'
       WRITE(*,*) '      RADIX(doublefloat) = ',RADIX(doublefloat)
@@ -545,7 +583,7 @@ PROGRAM testSelectedKinds
       WRITE(*,*) '     DIGITS(doubleint) = ',DIGITS(doubleint)
       WRITE(*,*) '      RANGE(doubleint) = ',RANGE(doubleint)
       WRITE(*,*) '       HUGE(doubleint) = ',HUGE(doubleint)
-      
+
       WRITE(*,*) '---------------------------------------------------'
     ENDSUBROUTINE evalIntModel
 !
@@ -554,12 +592,12 @@ PROGRAM testSelectedKinds
       REAL(SDK),INTENT(IN) :: a,b
       LOGICAL(SBK) :: bool
       REAL(SDK) :: largest,eps
-      
+
       eps=MAX(ABS(a),ABS(b))*1.e-14_SDK
       IF(a == 0.0_SRK .OR. b == 0.0_SRK) eps=1.e-14_SDK
-      
+
       bool=(ABS(a-b) <= eps)
-      
+
       !CHARACTER(LEN=23) :: aString,bString
       !CHARACTER(LEN=8) :: expString
       !INTEGER(SNK) :: intA_left,intB_left,intA_exp,intB_exp,diffExp

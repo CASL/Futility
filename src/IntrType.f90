@@ -16,7 +16,7 @@
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief Module for specifying kind parameters for intrinsic data types
-!> 
+!>
 !> The kind parameters are to be used elsewhere throughout the code.
 !> The provided kinds are:
 !>   - SBK: Selected boolean Kind for the LOGICAL type.
@@ -28,10 +28,10 @@
 !>   - SRK: Selected Real Kind for the REAL type.
 !>
 !> The definitions of SRK and SIK can be changed based on the preprocessor
-!> symbols DBL and DBLINT respectively. If DBL is defined all real types are 
+!> symbols DBL and DBLINT respectively. If DBL is defined all real types are
 !> double precision (64-bit), if DBLINT is defined all integers are 64-bit.
 !> This module is tested using @c testSelectedKinds.f90. An example of how to
-!> use this module is given below, the unit test also shows how to use the 
+!> use this module is given below, the unit test also shows how to use the
 !> module.
 !>
 !> @par EXAMPLE
@@ -39,7 +39,7 @@
 !> PROGRAM
 !>   USE IntrType
 !>   IMPLICIT NONE
-!>  
+!>
 !>   LOGICAL(SBK) :: bool
 !>   INTEGER(SNK) :: i32bit
 !>   INTEGER(SLK) :: i64bit
@@ -47,7 +47,7 @@
 !>   REAL(SSK) :: r32bit !single precision
 !>   REAL(SDK) :: r64bit !double precision
 !>   REAL(SRK) :: r
-!>   
+!>
 !>   ! ... some executable code ...
 !>
 !> END PROGRAM
@@ -86,7 +86,7 @@
 !> - Add support for Fortran 2003 C-interoperable types.
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE IntrType
-      
+  USE ISO_C_BINDING
   IMPLICIT NONE
   PRIVATE !Default private for module contents
 !
@@ -107,6 +107,8 @@ MODULE IntrType
   PUBLIC :: SOFTEQR
   PUBLIC :: SOFTLE
   PUBLIC :: SOFTGE
+  PUBLIC :: isNAN
+  PUBLIC :: isINF
 !
 ! Variables
   !> @name Private Variables
@@ -115,57 +117,57 @@ MODULE IntrType
   !>
   !> Means the range of integers in -10^(N_INT_ORDER) to +10^(N_INT_ORDER)
   INTEGER,PARAMETER :: N_INT_ORDER=8
-  
+
   !> @brief Exponent for range of long integers.
   !>
   !> Means the range of integers in -10^(N_LONG_ORDER) to +10^(N_LONG_ORDER)
   INTEGER,PARAMETER :: N_LONG_ORDER=18
-  
+
   !> @brief Significant digits for single precision.
   INTEGER,PARAMETER :: N_SGL_DIGITS=6
-  
+
   !> @brief Significant digits for double precision.
   INTEGER,PARAMETER :: N_DBL_DIGITS=15
   !> @}
-  
+
   !> @brief LOGICAL (boolean) kind
   !>
   !> The selected logical kind. SBK is also an acronym for Selected Boolean
   !> Kind; the number of bytes of memory occupied by a logical variable.
   INTEGER,PARAMETER :: SBK=KIND(.TRUE.)
-  
+
   !> @brief INTEGER kind for normal (32-bit) integers
   !>
   !> The selected integer kind ensuring integers up to 10^(N_INT_ORDER)
   !> SNK is also an acronym for Selected Normal integer Kind.
   INTEGER,PARAMETER :: SNK=SELECTED_INT_KIND(N_INT_ORDER)
-  
+
   !> @brief INTEGER kind for long (64-bit) integers
   !>
   !> The selected integer kind ensuring integers up to 10^(N_INT_ORDER)
   !> SIK is also an acronym for Selected Long integer Kind.
   INTEGER,PARAMETER :: SLK=SELECTED_INT_KIND(N_LONG_ORDER)
-  
+
   !> @brief REAL kind for single precision (32-bit)
   !>
-  !> The selected real kind ensuring N_SGL_DIGITS precision on a given 
+  !> The selected real kind ensuring N_SGL_DIGITS precision on a given
   !> machine. SSK is also an acronym for Selected Single Kind; the number
   !> of bytes of memory occupied by a single precision floating point
   !> variable.
   INTEGER,PARAMETER :: SSK=SELECTED_REAL_KIND(N_SGL_DIGITS)
-  
+
   !> @brief REAL kind for double precision (64-bit)
   !>
   !> The kind type parameter ensuring N_DBL_DIGITS of precision on a given
   !> machine. SDK is also an acronym for Selected Double Kind; the number
   !> of bytes of memory occupied by a floating point variable.
   INTEGER,PARAMETER :: SDK=SELECTED_REAL_KIND(N_DBL_DIGITS)
-  
+
   !> @brief REAL kind
   !>
   !> The kind type parameter for REAL intrinsic types or floating point
   !> types. Also an acronym for Selected Real Kind; the number of bytes of
-  !> memory occupied by a floating point variable. Changing SRK=SSK means 
+  !> memory occupied by a floating point variable. Changing SRK=SSK means
   !> the code will use use single precision floating point arithmetic
   !> instead of double precision.
 #ifdef DBL
@@ -189,7 +191,7 @@ MODULE IntrType
   !>
   !> Only relevant for .APPROXEQ. operator
   REAL(SDK),PARAMETER :: EPSD=1.e-14_SDK
-  
+
   !> @brief The number of significant digits to use when comparing
   !> single precision real numbers
   !>
@@ -205,7 +207,7 @@ MODULE IntrType
 #else
   REAL(SDK),PARAMETER :: EPSREAL=EPSS
 #endif
-  
+
   !> @brief Interface for the operator for "approximately equals" for intrinsic
   !> real kinds. Compares significant decimal digits
   INTERFACE OPERATOR(.APPROXEQ.)
@@ -223,7 +225,7 @@ MODULE IntrType
     !> @copybrief IntrType::approxeq_abs_double
     MODULE PROCEDURE approxeq_abs_double
   ENDINTERFACE
-  
+
   !> @brief Interface for the operator for "approximately equals" for intrinsic
   !> real kinds. Performs relative comparison to EPSREAL
   INTERFACE OPERATOR(.APPROXEQR.)
@@ -232,7 +234,7 @@ MODULE IntrType
     !> @copybrief IntrType::approxeq_rel_double
     MODULE PROCEDURE approxeq_rel_double
   ENDINTERFACE
-    
+
   !> @brief Interface for the operator for "approximately equals" for intrinsic
   !> real kinds. Performs bitwise comparison allowing for 10 nearest floats.
   INTERFACE OPERATOR(.APPROXEQF.)
@@ -241,7 +243,7 @@ MODULE IntrType
     !> @copybrief IntrType::approxeq_ulp_double
     MODULE PROCEDURE approxeq_ulp_double
   ENDINTERFACE
-  
+
   !> @brief Interface for the operator for "approximately less than" for intrinsic
   !> types
   INTERFACE OPERATOR(.APPROXLE.)
@@ -250,7 +252,7 @@ MODULE IntrType
     !> @copybrief IntrType::approxle_double
     MODULE PROCEDURE approxle_double
   ENDINTERFACE
-  
+
   !> @brief Interface for the operator for "approximately greater than" for intrinsic
   !> types
   INTERFACE OPERATOR(.APPROXGE.)
@@ -259,7 +261,7 @@ MODULE IntrType
     !> @copybrief IntrType::approxge_double
     MODULE PROCEDURE approxge_double
   ENDINTERFACE
-  
+
   !> @brief Interface for the operator for "soft equivalence" for intrinsic
   !> types
   INTERFACE SOFTEQ
@@ -268,7 +270,7 @@ MODULE IntrType
     !> @copybrief IntrType::softeq_double
     MODULE PROCEDURE softeq_double
   ENDINTERFACE
-  
+
   !> @brief Interface for the operator for "soft relative equivalence" for intrinsic
   !> types
   INTERFACE SOFTEQR
@@ -277,7 +279,7 @@ MODULE IntrType
     !> @copybrief IntrType::softeqr_double
     MODULE PROCEDURE softeqr_double
   ENDINTERFACE
-  
+
   !> @brief Interface for the operator for "soft less than or equal to" for intrinsic
   !> types
   INTERFACE SOFTLE
@@ -286,7 +288,7 @@ MODULE IntrType
     !> @copybrief IntrType::softle_double
     MODULE PROCEDURE softle_double
   ENDINTERFACE
-  
+
   !> @brief Interface for the operator for "soft greater than or equal to" for intrinsic
   !> types
   INTERFACE SOFTGE
@@ -295,8 +297,56 @@ MODULE IntrType
     !> @copybrief IntrType::softge_double
     MODULE PROCEDURE softge_double
   ENDINTERFACE
-  
-  
+
+  !> @brief Interface for the function for isNAN for real
+  !> kinds
+  INTERFACE isNAN
+    !> @copybrief IntrType::isnan_single
+    MODULE PROCEDURE isnan_single
+    !> @copybrief IntrType::isnan_double
+    MODULE PROCEDURE isnan_double
+  ENDINTERFACE
+
+  !> @brief Interface for the function for isINF for real
+  !> kinds
+  INTERFACE isINF
+    !> @copybrief IntrType::isinf_single
+    MODULE PROCEDURE isinf_single
+    !> @copybrief IntrType::isinf_double
+    MODULE PROCEDURE isinf_double
+  ENDINTERFACE
+
+  !> Definition of external C interfaces defined in CUtils.
+  INTERFACE
+    FUNCTION isNAN_float_c(x) RESULT(bool) &
+      BIND(C,NAME="isNAN_float_c")
+      USE ISO_C_BINDING
+      REAL(C_FLOAT),INTENT(IN) :: x
+      INTEGER(C_INT) :: bool
+    ENDFUNCTION isNAN_float_c
+
+    FUNCTION isNAN_double_c(x) RESULT(bool) &
+      BIND(C,NAME="isNAN_double_c")
+      USE ISO_C_BINDING
+      REAL(C_DOUBLE),INTENT(IN) :: x
+      INTEGER(C_INT) :: bool
+    ENDFUNCTION isNAN_double_c
+
+    FUNCTION isINF_float_c(x) RESULT(bool) &
+      BIND(C,NAME="isINF_float_c")
+      USE ISO_C_BINDING
+      REAL(C_FLOAT),INTENT(IN) :: x
+      INTEGER(C_INT) :: bool
+    ENDFUNCTION isINF_float_c
+
+    FUNCTION isINF_double_c(x) RESULT(bool) &
+      BIND(C,NAME="isINF_double_c")
+      USE ISO_C_BINDING
+      REAL(C_DOUBLE),INTENT(IN) :: x
+      INTEGER(C_INT) :: bool
+    ENDFUNCTION isINF_double_c
+  ENDINTERFACE
+
   !> @brief Overloads the Fortran intrinsic operator for comparing
   !> two logicals to see if they are equal
   INTERFACE OPERATOR(==)
@@ -304,7 +354,7 @@ MODULE IntrType
     !> @copydetails IntrType::equalto_logical
     MODULE PROCEDURE equalto_logical
   ENDINTERFACE
-  
+
   !> @brief Overloads the Fortran intrinsic operator for comparing
   !> two logicals to see if they are not equal
   INTERFACE OPERATOR(/=)
@@ -325,11 +375,11 @@ MODULE IntrType
 !>
 !> In this module single precision numbers are defined as having 6 digits of
 !> precision. This function defines "approximately equals to" such that the
-!> numbers are allowed to by vary exactly 1.0 or less in the 6th significant 
+!> numbers are allowed to by vary exactly 1.0 or less in the 6th significant
 !> digit.
 !>
 !> This function works by "printing" the first 14 digits of a real
-!> and doing a string comparison to insure that the first 5 digits and the 
+!> and doing a string comparison to insure that the first 5 digits and the
 !> exponent agree exactly and the 6th and 7th digit are then converted to
 !> an integer and their absolute difference must then be less than or equal
 !> to 10.
@@ -342,15 +392,15 @@ MODULE IntrType
       INTEGER(SNK) :: intA_left,intB_left,intA_exp,intB_exp,diffExp
       INTEGER(SLK) :: intA_right,intB_right
       REAL(SSK) :: tol
-      
+
       !Convert to character variable
       WRITE(aString,'(es13.6E2)') a
       WRITE(bString,'(es13.6E2)') b
-      
+
       !First digit that is left of decimal
       READ(aString(1:2),'(i2)') intA_left
       READ(bString(1:2),'(i2)') intB_left
-      
+
       IF(intA_left == 0 .OR. intB_left == 0) THEN
         !Special case for 0, use absolute comparison
         bool=(ABS(a-b) <= EPSS)
@@ -361,7 +411,7 @@ MODULE IntrType
         READ(aString(11:13),'(i4)') intA_exp
         READ(bString(11:13),'(i4)') intB_exp
         diffExp=ABS(intA_exp-intB_exp)
-        
+
         IF(diffExp < 2) THEN
           IF(diffExp == 0 .AND. intA_left == intB_left) THEN
             !exponents are the same and left of decimal numbers are same,
@@ -389,11 +439,11 @@ MODULE IntrType
 !>
 !> In this module double precision numbers are defined as having 15 digits of
 !> precision. This function defines "approximately equals to" such that the
-!> numbers are allowed to by vary exactly 1.0 or less in the 15th significant 
+!> numbers are allowed to by vary exactly 1.0 or less in the 15th significant
 !> digit.
 !>
 !> This function works by "printing" the first 16 digits of a real
-!> and doing a string comparison to insure that the first 14 digits and the 
+!> and doing a string comparison to insure that the first 14 digits and the
 !> exponent agree exactly and the 15th and 16th digit are then converted to
 !> an integer and their absolute difference must then be less than or equal
 !> to 10.
@@ -406,15 +456,15 @@ MODULE IntrType
       INTEGER(SNK) :: intA_left,intB_left,intA_exp,intB_exp,diffExp
       INTEGER(SLK) :: intA_right,intB_right
       REAL(SDK) :: tol
-      
+
       !Convert to character variable
       WRITE(aString,'(es23.15E3)') a
       WRITE(bString,'(es23.15E3)') b
-      
+
       !First digit that is left of decimal
       READ(aString(1:2),'(i2)') intA_left
       READ(bString(1:2),'(i2)') intB_left
-      
+
       IF(intA_left == 0 .OR. intB_left == 0) THEN
         !Special case for 0, use absolute comparison
         bool=(ABS(a-b) <= EPSD)
@@ -425,7 +475,7 @@ MODULE IntrType
         READ(aString(20:23),'(i4)') intA_exp
         READ(bString(20:23),'(i4)') intB_exp
         diffExp=ABS(intA_exp-intB_exp)
-      
+
         IF(diffExp < 2) THEN
           IF(diffExp == 0 .AND. intA_left == intB_left) THEN
             !exponents are the same and left of decimal numbers are same,
@@ -759,6 +809,62 @@ MODULE IntrType
       LOGICAL(SBK) :: bool
       bool=(r1+tol >= r2)
     ENDFUNCTION softge_double
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation to determine if number is NAN
+!> @param x a single precision real number
+!> @returns @c bool result of comparison
+!>
+    FUNCTION isnan_single(x) RESULT(bool)
+      REAL(SSK),INTENT(IN) :: x
+      LOGICAL(SBK) :: bool
+      INTEGER(C_INT) :: c_bool
+      bool=.FALSE.
+      c_bool=isNAN_float_c(REAL(x,C_FLOAT))
+      IF(c_bool == 1) bool=.TRUE.
+    ENDFUNCTION isnan_single
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation to determine if number is NAN
+!> @param x a double precision real number
+!> @returns @c bool result of comparison
+!>
+    FUNCTION isnan_double(x) RESULT(bool)
+      REAL(SDK),INTENT(IN) :: x
+      LOGICAL(SBK) :: bool
+      INTEGER(C_INT) :: c_bool
+      bool=.FALSE.
+      c_bool=isNAN_double_c(REAL(x,C_DOUBLE))
+      IF(c_bool == 1) bool=.TRUE.
+    ENDFUNCTION isnan_double
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation to determine if number is INF
+!> @param x a single precision real number
+!> @returns @c bool result of comparison
+!>
+    FUNCTION isinf_single(x) RESULT(bool)
+      REAL(SSK),INTENT(IN) :: x
+      LOGICAL(SBK) :: bool
+      INTEGER(C_INT) :: c_bool
+      bool=.FALSE.
+      c_bool=isINF_float_c(REAL(x,C_FLOAT))
+      IF(c_bool == 1) bool=.TRUE.
+    ENDFUNCTION isinf_single
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation to determine if number is INF
+!> @param x a double precision real number
+!> @returns @c bool result of comparison
+!>
+    FUNCTION isINF_double(x) RESULT(bool)
+      REAL(SDK),INTENT(IN) :: x
+      LOGICAL(SBK) :: bool
+      INTEGER(C_INT) :: c_bool
+      bool=.FALSE.
+      c_bool=isINF_double_c(REAL(x,C_DOUBLE))
+      IF(c_bool == 1) bool=.TRUE.
+    ENDFUNCTION isinf_double
 !
 !-------------------------------------------------------------------------------
 !> @brief Defines the operation when comparing two logical variables
