@@ -2467,12 +2467,12 @@ MODULE ParameterLists
           ENDSELECT
         ELSE
           CALL eParams%raiseError(modName//'::'//myName// &
-            ' - "->" character is not allowed in name!')
+            ' - "->" symbol is not allowed in name!')
         ENDIF
       ELSE
         CALL eParams%raiseError(modName//'::'//myName// &
           ' - parameter '//thisParam%name//' is already initialized!'// &
-            ' Use set method instead!')
+            ' Use set method!')
       ENDIF
     ENDSUBROUTINE init_ParamType_List
 !
@@ -3597,7 +3597,7 @@ MODULE ParameterLists
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
-                    tmpParam%dataType//' and must be INTEGER(SSK)!')
+                    tmpParam%dataType//' and must be INTEGER(SLK)!')
             ENDSELECT
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
