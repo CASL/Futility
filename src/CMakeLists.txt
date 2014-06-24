@@ -1,7 +1,7 @@
 ################################################################################
 #
 # Description: CMake script to add the MPACT_Utils library.
-#              
+#
 #
 # Author: Derek Lax, Brendan Kochunas
 #   Date: 06/05/2012
@@ -14,14 +14,22 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
 IF(WIN32)
     TRIBITS_ADD_LIBRARY(CUtils
-        HEADERS getSysProcInfo.h
-        SOURCES getSysProcInfo.c
-        DEPLIBS Psapi 
+        HEADERS
+          getSysProcInfo.h
+          floatingpointchecks.h
+        SOURCES
+          getSysProcInfo.c
+          floatingpointchecks.c
+        DEPLIBS Psapi
     )
 ELSE()
     TRIBITS_ADD_LIBRARY(CUtils
-        HEADERS getSysProcInfo.h
-        SOURCES getSysProcInfo.c
+        HEADERS
+          getSysProcInfo.h
+          floatingpointchecks.h
+        SOURCES
+          getSysProcInfo.c
+          floatingpointchecks.c
     )
 ENDIF()
 

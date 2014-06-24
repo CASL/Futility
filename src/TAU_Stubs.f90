@@ -102,7 +102,6 @@
 !>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE TAU_Stubs
-
 !$ USE OMP_LIB
   USE ISO_FORTRAN_ENV
   USE ISO_C_BINDING
@@ -121,6 +120,8 @@ MODULE TAU_Stubs
   INCLUDE 'f90papi.h'
 #endif
 
+  INCLUDE 'getSysProcInfo_F.h'
+
 !
 !List of public members
   PUBLIC :: TauStubLibData
@@ -130,6 +131,8 @@ MODULE TAU_Stubs
   PUBLIC :: TAU_PROFILE_STOP
   PUBLIC :: TAU_PROFILE_EXIT
   PUBLIC :: TAUSTUB_CHECK_MEMORY
+  PUBLIC :: TAUSTUB_ENABLE_MEMORY_PROFILE
+  PUBLIC :: TAUSTUB_DISABLE_MEMORY_PROFILE
   
   !> @brief Derived type for defines a basic profiler.
   !>
@@ -138,12 +141,23 @@ MODULE TAU_Stubs
   !> called for the specific profiler.
   !>
   TYPE :: ProfilerType
+    PRIVATE
+    !> Number of times the region of code bounded by this profiler was profiled.
     INTEGER(SLK) :: num_calls=0
+    !> Indicates whether PROFILE_START has been called
     LOGICAL(SBK) :: isStart=.FALSE.
+    !> Whether or not this profiler is within an OpenMP region
     LOGICAL(SBK) :: inOMP=.FALSE.
+    !> The tic time for OpenMP unit is nanoseconds.
     REAL(SDK) :: ompTime=0.0_SDK
+    !> The name of this profiler
     TYPE(StringType) :: name
+    !> Timer to use when PAPI is not available
     TYPE(TimerType) :: timer
+    !> Counter for memory usage/allocation. Units are bytes. First entry
+    !> is cumulative allocation, second entry is temporary value.
+    INTEGER(C_LONG_LONG) :: memUsage(2,2)=0
+    !> Temporary array for storing counter values
     INTEGER(C_LONG_LONG),ALLOCATABLE :: tmpCounts(:,:)
     REAL(SDK),ALLOCATABLE :: papiCounts(:)
     TYPE(ProfilerType),POINTER :: nextProfiler => NULL()
@@ -163,14 +177,26 @@ MODULE TAU_Stubs
   !> of this type.
   !>
   TYPE :: TauStubModData
+    PRIVATE
+    !> Indicates if TAU_PROFILE_INIT() has been called
     LOGICAL(SBK) :: isInit=.FALSE.
+    !> Indicates whether or not to add memory profiling
+    LOGICAL(SBK) :: memProf=.FALSE.
     INTEGER(C_INT) :: PAPIEventSetHandle=-1
-    INTEGER(SIK) :: nMetrics=-1
+    !> Number of PAPI metrics being sampled
+    INTEGER(SIK) :: nPAPImetrics=0
+    !> Rank in MPI_COMM_WORLD
     INTEGER(SIK) :: rankWorld=-1
+    !> Number of threads available
     INTEGER(SLK) :: nthreads=-1
+    !> Estimate of overhead for time measurements for using TAU_PROFILE_START()
+    !> followed by TAU_PROFILE_STOP()
     REAL(SDK) :: tOverhead=-1.0_SDK
+    !> Overhead for PAPI metrics
     REAL(SDK),ALLOCATABLE :: metricOverhead(:)
+    !> Total number of profiles on each thread
     INTEGER(SIK),POINTER :: nProfiles(:)
+    !> All of the profile objects initialized for taking measurements
     TYPE(ProfilerDBType),POINTER :: threadProfilesDB(:)
   ENDTYPE TauStubModData
   
@@ -225,6 +251,25 @@ MODULE TAU_Stubs
     ENDSUBROUTINE TAU_PROFILE_INIT
 !
 !-------------------------------------------------------------------------------
+!> @brief Enables memory tracking for all regions that are profiled
+!>
+!> Should only be used once per execution.
+!>
+    SUBROUTINE TAUSTUB_ENABLE_MEMORY_PROFILE()
+      IF(TauStubLibData%isInit) TauStubLibData%memProf=.TRUE.
+    ENDSUBROUTINE TAUSTUB_ENABLE_MEMORY_PROFILE
+!
+!-------------------------------------------------------------------------------
+!> @brief Disables memory tracking for all regions that are profiled
+!>
+!> Not really needed, but maybe useful. Only needed if
+!> TAUSTUB_ENABLE_MEMORY_PROFILE is called more than once per program execution.
+!>
+    SUBROUTINE TAUSTUB_DISABLE_MEMORY_PROFILE()
+      IF(TauStubLibData%isInit) TauStubLibData%memProf=.FALSE.
+    ENDSUBROUTINE TAUSTUB_DISABLE_MEMORY_PROFILE
+!
+!-------------------------------------------------------------------------------
 !> @brief Initializes a profiler
 !> @param profileID the profiler ID
 !> @param profileName the name to give the region or event that is to be
@@ -252,9 +297,9 @@ MODULE TAU_Stubs
         ENDIF
         TauStubLibData%nProfiles(tid)=TauStubLibData%nProfiles(tid)+1
         newThreadProfiler%name=TRIM(ADJUSTL(name))
-        IF(TauStubLibData%nMetrics > 0) THEN
-          ALLOCATE(newThreadProfiler%papiCounts(TauStubLibData%nMetrics))
-          ALLOCATE(newThreadProfiler%tmpCounts(TauStubLibData%nMetrics,2))
+        IF(TauStubLibData%nPAPImetrics > 0) THEN
+          ALLOCATE(newThreadProfiler%papiCounts(TauStubLibData%nPAPImetrics))
+          ALLOCATE(newThreadProfiler%tmpCounts(TauStubLibData%nPAPImetrics,2))
           newThreadProfiler%papiCounts=0.0_SDK
           CALL newThreadProfiler%timer%ResetTimer()
         ENDIF
@@ -272,7 +317,7 @@ MODULE TAU_Stubs
       LOGICAL(SBK) :: inOMP
       INTEGER(SIK) :: it,tid
       INTEGER(C_INT) :: perr
-      INTEGER(C_LONG_LONG) :: ptime
+      INTEGER(C_LONG_LONG) :: ptime,values(12)
       TYPE(ProfilerType),POINTER :: activeThreadProfiler
       
       IF(profileID(1) > 0 .AND. profileID(1) <= TauStubLibData%nthreads) THEN
@@ -291,15 +336,27 @@ MODULE TAU_Stubs
               activeThreadProfiler => activeThreadProfiler%nextProfiler
             ENDDO
             activeThreadProfiler%isStart=.TRUE.
-            
 #ifdef HAVE_PAPI
-            IF(TauStubLibData%nMetrics > 0) THEN
+            IF(TauStubLibData%memProf) THEN
+              !Store as bytes
+              CALL PAPIF_get_dmem_info(values,perr)
+              activeThreadProfiler%memUsage(2,1)= &
+                values(PAPIF_DMEM_VMSIZE)*1024_C_LONG_LONG
+              activeThreadProfiler%memUsage(2,2)= &
+                values(PAPIF_DMEM_HIGH_WATER)*1024_C_LONG_LONG
+            ENDIF
+            IF(TauStubLibData%nPAPImetrics > 0) THEN
               CALL PAPIF_read(TauStubLibData%PAPIEventSetHandle, &
                 activeThreadProfiler%tmpCounts(:,1),perr)
             ENDIF
             CALL PAPIF_get_real_nsec(ptime)
             activeThreadProfiler%ompTime=REAL(ptime,SDK)
 #else
+            IF(TauStubLibData%memProf) THEN
+              CALL getProcMemInfo(values(1),values(2))
+              activeThreadProfiler%memUsage(2,1)=values(1)
+              activeThreadProfiler%memUsage(2,2)=values(2)
+            ENDIF
             activeThreadProfiler%inOMP=inOMP
             IF(.NOT.activeThreadProfiler%inOMP) THEN
               CALL activeThreadProfiler%timer%tic()
@@ -320,7 +377,7 @@ MODULE TAU_Stubs
       INTEGER(SIK),INTENT(IN) :: profileID(2)
       INTEGER(SIK) :: it,tid
       INTEGER(C_INT) :: perr
-      INTEGER(C_LONG_LONG) :: ptime
+      INTEGER(C_LONG_LONG) :: ptime,values(12)
       TYPE(ProfilerType),POINTER :: activeThreadProfiler
   
       IF(profileID(1) > 0 .AND. profileID(1) <= TauStubLibData%nthreads) THEN
@@ -333,7 +390,7 @@ MODULE TAU_Stubs
           IF(activeThreadProfiler%isStart) THEN
 #ifdef HAVE_PAPI
             CALL PAPIF_get_real_nsec(ptime)
-            IF(TauStubLibData%nMetrics > 0) THEN
+            IF(TauStubLibData%nPAPImetrics > 0) THEN
               CALL PAPIF_read(TauStubLibData%PAPIEventSetHandle, &
                 activeThreadProfiler%tmpCounts(:,2),perr)
               activeThreadProfiler%papiCounts=activeThreadProfiler%papiCounts+ &
@@ -343,6 +400,17 @@ MODULE TAU_Stubs
             activeThreadProfiler%timer%elapsedTime= &
               activeThreadProfiler%timer%elapsedTime+(REAL(ptime,SDK)- &
                 activeThreadProfiler%ompTime)*1.0e-9_SDK
+            IF(TauStubLibData%memProf) THEN
+              !Store as bytes
+              CALL PAPIF_get_dmem_info(values,perr)
+              activeThreadProfiler%memUsage(1,1)=activeThreadProfiler%memUsage(1,1)+ &
+                values(PAPIF_DMEM_VMSIZE)*1024_C_LONG_LONG- &
+                  activeThreadProfiler%memUsage(2,1)
+              CALL PAPIF_get_dmem_info(values,perr)
+              activeThreadProfiler%memUsage(1,2)=activeThreadProfiler%memUsage(1,2)+ &
+                values(PAPIF_DMEM_HIGH_WATER)*1024_C_LONG_LONG- &
+                  activeThreadProfiler%memUsage(2,2)
+            ENDIF
 #else
           
             IF(.NOT.activeThreadProfiler%inOMP) THEN
@@ -352,8 +420,14 @@ MODULE TAU_Stubs
 !$              activeThreadProfiler%timer%elapsedTime+OMP_GET_WTIME()- &
 !$                activeThreadProfiler%ompTime
             ENDIF
+            IF(TauStubLibData%memProf) THEN
+              CALL getProcMemInfo(values(1),values(2))
+              activeThreadProfiler%memUsage(1,1)=activeThreadProfiler%memUsage(1,1)+ &
+                values(1)-activeThreadProfiler%memUsage(2,1)
+              activeThreadProfiler%memUsage(1,2)=activeThreadProfiler%memUsage(1,2)+ &
+                values(2)-activeThreadProfiler%memUsage(2,2)
+            ENDIF
 #endif
-
             activeThreadProfiler%isStart=.FALSE.
             activeThreadProfiler%num_calls=activeThreadProfiler%num_calls+1
           ENDIF
@@ -363,17 +437,23 @@ MODULE TAU_Stubs
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE TAUSTUB_CHECK_MEMORY()
-#ifdef HAVE_PAPI
+
       LOGICAL(SBK),SAVE :: lfirst=.TRUE.
       INTEGER(C_LONG_LONG) :: values(12),memUsage(4)
       INTEGER(C_INT) :: perr
-      
-      
+#ifdef HAVE_PAPI
       CALL PAPIF_get_dmem_info(values,perr)
       memUsage(1)=values(PAPIF_DMEM_VMSIZE)
       memUsage(2)=values(PAPIF_DMEM_RESIDENT)
       memUsage(3)=values(PAPIF_DMEM_HIGH_WATER)
       memUsage(4)=values(PAPIF_DMEM_HEAP)
+#else
+      CALL getProcMemInfo(values(1),values(2))
+      memUsage(1)=values(1)/1024_C_LONG_LONG
+      memUsage(2)=values(1)/1024_C_LONG_LONG
+      memUsage(3)=values(2)/1024_C_LONG_LONG
+      memUsage(4)=0
+#endif
       WRITE(OUTPUT_UNIT,*)
       WRITE(OUTPUT_UNIT,*) '######## TAUSTUB_CHECK_MEMORY: Message Begin'
       WRITE(OUTPUT_UNIT,*) '     Virtual    |    Resident    |    HighWater   |      Heap'
@@ -382,7 +462,8 @@ MODULE TAU_Stubs
           //' | '//TRIM(getMemChar(memUsage(4)))
       WRITE(OUTPUT_UNIT,*) '######## TAUSTUB_CHECK_MEMORY: Message End'
       WRITE(OUTPUT_UNIT,*)
-#endif
+      FLUSH(OUTPUT_UNIT)
+
     ENDSUBROUTINE TAUSTUB_CHECK_MEMORY
 !
 !-------------------------------------------------------------------------------
@@ -402,24 +483,21 @@ MODULE TAU_Stubs
 !> probably better if you don't.
 !>
     SUBROUTINE TAU_PROFILE_EXIT()
-      
       LOGICAL(SBK) :: isopen
-      INTEGER(SIK) :: funit,i
+      INTEGER(SIK) :: funit,i,nMetrics
       INTEGER(SLK) :: it
       TYPE(StringType),ALLOCATABLE :: dirnames(:),eventNames(:)
 
 !$OMP BARRIER
+!$OMP MASTER
 !
 !Create directories for profiles
-#ifdef HAVE_PAPI
+      nMetrics=TauStubLibData%nPAPImetrics
+      IF(TauStubLibData%memProf) nMetrics=nMetrics+2
+      ALLOCATE(dirnames(0:nMetrics))
+      ALLOCATE(eventNames(0:nMetrics))
+
       CALL CreateProfDirs(dirnames,eventNames)
-#else
-      ALLOCATE(dirnames(0:0))
-      ALLOCATE(eventNames(0:0))
-      dirnames(0)='.'
-      eventNames(0)='LINUX_TIMERS'
-#endif
-!$OMP MASTER
 !
 !Get an open unit number for the file
       funit=723
@@ -440,9 +518,10 @@ MODULE TAU_Stubs
       ENDDO
       DEALLOCATE(TauStubLibData%nProfiles)
       TauStubLibData%nthreads=-1
-      TauStubLibData%nMetrics=-1
+      TauStubLibData%nPAPImetrics=-1
       TauStubLibData%rankWorld=-1
       TauStubLibData%tOverhead=-1.0_SDK
+      TauStubLibData%memProf=.FALSE.
       TauStubLibData%isInit=.FALSE.
       
 #ifdef HAVE_PAPI
@@ -500,8 +579,8 @@ MODULE TAU_Stubs
 #endif
               '<name>TAU_PROFILE_FORMAT</name><value>profile</value>'// &
              '</attribute>'
-            IF(TauStubLibData%nMetrics > 0) THEN
-              DO j=1,TauStubLibData%nMetrics
+            IF(TauStubLibData%nPAPImetrics > 0) THEN
+              DO j=1,TauStubLibData%nPAPImetrics
                 WRITE(tmpRstr,'(g11.5)') TauStubLibData%metricOverhead(j)
                 tline=tline//'<attribute>'//'<name>Est. overhead per call for '// &
                   CHAR(metric_name(j))//'</name><value>'//TRIM(ADJUSTL(tmpRstr))// &
@@ -528,6 +607,10 @@ MODULE TAU_Stubs
                 ELSE
                   WRITE(tmpRstr,'(g20.15)') ((activeProfiler%timer%getTimeReal())*1.e6_SDK)
                 ENDIF
+              ELSEIF(i == TauStubLibData%nPAPImetrics+1) THEN
+                WRITE(tmpRstr,'(g20.15)') activeProfiler%memUsage(1,1)
+              ELSEIF(i == TauStubLibData%nPAPImetrics+2) THEN
+                WRITE(tmpRstr,'(g20.15)') activeProfiler%memUsage(1,2)
               ELSE
                 WRITE(tmpRstr,'(g20.15)') activeProfiler%papiCounts(i)
               ENDIF
@@ -567,10 +650,72 @@ MODULE TAU_Stubs
     ENDSUBROUTINE Clear_ProfilerType
 !
 !-------------------------------------------------------------------------------
+!> @brief Create directories for profile output files of different metrics
+!>
+!> @param dirnames the directory name to store the profile files
+!> @param evenNames the names of the events/metrics that are going to be written
+!>
+!> Populates values in dirnames and eventNames. Strictly this routine is not
+!> F2003 compliant as the SYSTEM call is an extension.
+!>
+    SUBROUTINE CreateProfDirs(dirnames,eventNames)
+#ifdef __INTEL_COMPILER
+      USE IFPORT !For SYSTEM function
+#endif
+#ifdef WIN32
+      CHARACTER(LEN=*),PARAMETER :: mkdrCMD='mkdir '
+#else
+      CHARACTER(LEN=*),PARAMETER :: mkdrCMD='mkdir -p '
+#endif
+      CHARACTER(LEN=*),PARAMETER :: dirPrefix='MULTI__'
+      TYPE(StringType),INTENT(INOUT) :: dirnames(0:)
+      TYPE(StringType),INTENT(INOUT) :: eventNames(0:)
+#ifdef HAVE_PAPI
+      CHARACTER(KIND=C_CHAR,LEN=PAPI_MAX_STR_LEN) :: papi_eventName
+#endif
+      INTEGER(SIK) :: i,ierr,n
+      INTEGER(C_INT) :: nevents,perr
+      INTEGER(C_INT),ALLOCATABLE :: eventCodes(:)
+
+      dirnames(0)='.'
+      eventnames(0)='LINUX_TIMERS'
+      n=UBOUND(dirnames,DIM=1)
+      IF(n > 0) THEN
+        dirnames(0)=dirPrefix//'LINUX_TIMERS'
+        ierr=SYSTEM(mkdrCMD//CHAR(dirnames(0)))
+      ENDIF
+
+      IF(TauStubLibData%memProf) THEN
+        eventNames(n-1)='MEM_USAGE'
+        dirnames(n-1)=dirPrefix//'MEM_USAGE'
+        ierr=SYSTEM(mkdrCMD//CHAR(dirnames(n-1)))
+        eventNames(n)='MEM_HIGH_WATER'
+        dirnames(n)=dirPrefix//'MEM_HIGH_WATER'
+        ierr=SYSTEM(mkdrCMD//CHAR(dirnames(n)))
+      ENDIF
+
+#ifdef HAVE_PAPI
+      IF(TauStubLibData%nPAPImetrics > 0) THEN
+        ALLOCATE(eventCodes(TauStubLibData%nPAPImetrics))
+        nevents=TauStubLibData%nPAPImetrics
+        CALL PAPIF_list_events(TauStubLibData%PAPIEventSetHandle,eventCodes,&
+          nevents,perr)
+        DO i=1,TauStubLibData%nPAPImetrics
+          CALL PAPIF_event_code_to_name(eventCodes(i),papi_eventName,perr)
+          IF(perr == PAPI_OK) THEN
+            eventnames(i)=TRIM(papi_eventName)
+            dirnames(i)=dirPrefix//TRIM(papi_eventName)
+            ierr=SYSTEM(mkdrCMD//CHAR(dirnames(i)))
+          ENDIF
+        ENDDO
+      ENDIF
+#endif
+  ENDSUBROUTINE CreateProfDirs
+!
+!-------------------------------------------------------------------------------
 #ifdef HAVE_PAPI
     SUBROUTINE Set_PAPI_metrics()
       INTEGER(SIK) :: nlen
-
       CALL GET_ENVIRONMENT_VARIABLE('TAU_METRICS',LENGTH=nlen)
       CALL Init_PAPI_Event_Set(nlen)
     ENDSUBROUTINE Set_PAPI_metrics
@@ -626,7 +771,7 @@ MODULE TAU_Stubs
         CALL PAPIF_add_event(eventSet,PAPI_L2_DCM,perr)
         IF(perr == PAPI_OK) nevents=nevents+1
       ENDIF
-      TauStubLibData%nMetrics=nevents
+      TauStubLibData%nPAPImetrics=nevents
       CALL PAPIF_start(eventSet,perr)
     ENDSUBROUTINE Init_PAPI_Event_Set
 !
@@ -638,53 +783,7 @@ MODULE TAU_Stubs
         IAND(ISHFT(PAPI_VER_CURRENT,-16),255),'.', & !Minor Version
         IAND(ISHFT(PAPI_VER_CURRENT,-8),255),'.', &  !Revision
         IAND(PAPI_VER_CURRENT,255)                   !Increment
-    ENDFUNCTION 
-!
-!-------------------------------------------------------------------------------
-    SUBROUTINE CreateProfDirs(dirnames,eventNames)
-#ifdef __INTEL_COMPILER
-      USE IFPORT !For SYSTEM function
-#endif
-#ifdef WIN32
-      CHARACTER(LEN=*),PARAMETER :: mkdrCMD='mkdir '
-#else
-      CHARACTER(LEN=*),PARAMETER :: mkdrCMD='mkdir -p '
-#endif
-      CHARACTER(LEN=*),PARAMETER :: dirPrefix='MULTI__'
-      TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: dirnames(:)
-      TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: eventNames(:)
-      CHARACTER(KIND=C_CHAR,LEN=PAPI_MAX_STR_LEN) :: papi_eventName
-      INTEGER(SIK) :: i,ierr
-      INTEGER(C_INT) :: nevents,perr
-      INTEGER(C_INT),ALLOCATABLE :: eventCodes(:)
-      
-      IF(ALLOCATED(dirnames)) DEALLOCATE(dirnames)
-      IF(ALLOCATED(eventnames)) DEALLOCATE(eventnames)
-      ALLOCATE(dirnames(0:TauStubLibData%nMetrics))
-      ALLOCATE(eventnames(0:TauStubLibData%nMetrics))
-      dirnames(0)='.'
-      IF(TauStubLibData%nMetrics > 0) THEN
-        ALLOCATE(eventCodes(TauStubLibData%nMetrics))
-        nevents=TauStubLibData%nMetrics
-        CALL PAPIF_list_events(TauStubLibData%PAPIEventSetHandle,eventCodes,&
-          nevents,perr)
-        DO i=1,TauStubLibData%nMetrics
-          CALL PAPIF_event_code_to_name(eventCodes(i),papi_eventName,perr)
-          IF(perr == PAPI_OK) THEN
-            eventnames(i)=TRIM(papi_eventName)
-            dirnames(i)=dirPrefix//TRIM(papi_eventName)
-!$OMP MASTER
-            ierr=SYSTEM(mkdrCMD//CHAR(dirnames(i)))
-!$OMP END MASTER
-          ENDIF
-        ENDDO
-        dirnames(0)=dirPrefix//'LINUX_TIMERS'
-!$OMP MASTER
-        ierr=SYSTEM(mkdrCMD//CHAR(dirnames(0)))
-!$OMP END MASTER
-      ENDIF
-      eventnames(0)='LINUX_TIMERS'
-    ENDSUBROUTINE CreateProfDirs
+    ENDFUNCTION
 #endif
 !
 !-------------------------------------------------------------------------------
@@ -702,14 +801,14 @@ MODULE TAU_Stubs
       
       TauStubLibData%nProfiles(1)=1
       ALLOCATE(TauStubLibData%threadProfilesDB(1)%profiler)
-      IF(TauStubLibData%nMetrics > 0) THEN
+      IF(TauStubLibData%nPAPImetrics > 0) THEN
         ALLOCATE(TauStubLibData%threadProfilesDB(1)% &
-          profiler%papiCounts(TauStubLibData%nMetrics))
+          profiler%papiCounts(TauStubLibData%nPAPImetrics))
         TauStubLibData%threadProfilesDB(1)% &
           profiler%papiCounts=0.0_SDK
         ALLOCATE(TauStubLibData%threadProfilesDB(1)% &
-          profiler%tmpCounts(TauStubLibData%nMetrics,2))
-        ALLOCATE(TauStubLibData%metricOverhead(TauStubLibData%nMetrics))
+          profiler%tmpCounts(TauStubLibData%nPAPImetrics,2))
+        ALLOCATE(TauStubLibData%metricOverhead(TauStubLibData%nPAPImetrics))
       ENDIF
       
       !Estimate the overhead by repeatedly making 10000 start/stop calls
@@ -742,7 +841,7 @@ MODULE TAU_Stubs
       !TauStubLibData%tOverhead=1.e6_SDK*t/ &
       !  REAL(TauStubLibData%threadProfilesDB(1)%profiler%num_calls,SDK)
       
-      IF(TauStubLibData%nMetrics > 0) THEN
+      IF(TauStubLibData%nPAPImetrics > 0) THEN
         TauStubLibData%metricOverhead= &
           TauStubLibData%threadProfilesDB(1)%profiler%papiCounts/ &
             REAL(TauStubLibData%threadProfilesDB(1)%profiler%num_calls,SDK)

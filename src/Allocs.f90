@@ -116,6 +116,7 @@
 MODULE Allocs
 
   USE IntrType
+  USE Strings
   USE ExceptionHandler
      
   IMPLICIT NONE
@@ -140,7 +141,7 @@ MODULE Allocs
 ! Variables
   !> Maximum length of character string returned by 
   !> @ref Allocs::getMemUsageChar "getMemUsageChar"
-  INTEGER(SIK),PARAMETER :: ALLOC_MEMSTRING_LENGTH=14_SIK
+  INTEGER(SIK),PARAMETER :: ALLOC_MEMSTRING_LENGTH=14
   !> Global variable for tracking amount of memory allocated by module.
   REAL(SRK),SAVE :: Alloc_nbytes=0.0_SRK
   !> Exception handler for module
@@ -633,14 +634,20 @@ MODULE Allocs
     !> @copybrief Allocs::demalloc_ab7 @copydetails Allocs::demalloc_ab7
     MODULE PROCEDURE demalloc_ab7
   ENDINTERFACE
+  
+  !> Size of character variable for storing error messages returned from
+  !> ALLOCATE and DEALLOCATE statement.
+  INTEGER(SIK),PARAMETER :: ALLOC_ERRMSG_LEN=128
 !
 !===============================================================================
   CONTAINS
 !
+!-------------------------------------------------------------------------------
 !> @brief Function to get the memory usage as a string
 !>
 !> To see the current memory usage use the module global variable \e Alloc_nbytes
 !> when calling getMemUsageChar.
+!>
     FUNCTION getMemUsageChar_default() RESULT(memstring)
       CHARACTER(LEN=ALLOC_MEMSTRING_LENGTH) :: memstring
       CHARACTER(LEN=5) :: unit
@@ -665,12 +672,13 @@ MODULE Allocs
       WRITE(memstring,'(f8.2,a)') mem,' '//unit
     ENDFUNCTION getMemUsageChar_default
 !
-!===============================================================================
+!-------------------------------------------------------------------------------
 !> @brief Function to get the memory usage for input argument bytes as a string
 !> @param bytes the number of bytes
 !>
 !> To see the current memory usage use the module global variable \e Alloc_nbytes
 !> when calling getMemUsageChar.
+!>
     FUNCTION getMemUsageChar_bytes(bytes) RESULT(memstring)
       CHARACTER(LEN=ALLOC_MEMSTRING_LENGTH) :: memstring
       CHARACTER(LEN=5) :: unit
@@ -701,6 +709,7 @@ MODULE Allocs
 !>
 !> To see the current memory usage use the module global variable \e Alloc_nbytes
 !> when calling getMemUsageChar.
+!>
     SUBROUTINE getMemUsage(memory,units)
       CHARACTER(LEN=*),INTENT(IN) :: units
       REAL(SRK),INTENT(INOUT) :: memory
@@ -739,173 +748,103 @@ MODULE Allocs
 !>
 !> For more about the exception handler see the module @ref ExceptionHandler
 !> "ExceptionHandler"
-    SUBROUTINE AllocsError(err,req)
+!>
+    SUBROUTINE AllocsError(err,errmesg,req)
       INTEGER(SIK),INTENT(IN) :: err
+      CHARACTER(LEN=*),INTENT(IN) :: errmesg
       REAL(SRK),INTENT(IN) :: req
-      CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: alloc_mesg
+      CHARACTER(LEN=8) :: err_char
+      TYPE(StringType) :: alloc_mesg
       
       alloc_mesg=''
-      IF(err /= 0_SIK) THEN
-        WRITE(alloc_mesg,'(a,i4,a)') &
-          'ALLOCS: Memory Allocation Error. Attempted to allocate '// &
-          TRIM(getMemUsageChar_bytes(req))//' while using '// &
-          TRIM(getMemUsageChar_default())//'. ALLOCATE statement returned'// &
-          ' status code ',err,'.'
-        CALL eAllocs%raiseError(alloc_mesg)
+      IF(err /= 0) THEN
+        WRITE(err_char,'(i4)') err; err_char=ADJUSTL(err_char)
+        alloc_mesg='ALLOCS: Memory Allocation Error. Attempted to allocate '// &
+          TRIM(ADJUSTL(getMemUsageChar_bytes(req)))//'. ALLOCATE statement '// &
+          'returned STAT='//TRIM(err_char)//' ERRMSG="'//TRIM(errmesg)//'".'
+        CALL eAllocs%raiseError(CHAR(alloc_mesg))
       ENDIF
     ENDSUBROUTINE AllocsError
 !
 !===============================================================================
-! The following section contains all procedures for allocating pointers from 1
-! to n.
+! Allocate one dimensional pointers with lower bound index of 1
+!===============================================================================
 !
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 1 SINGLE precision pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
 !>
 !>Routine for allocating a rank 1 pointer array of type SINGLE 
 !>precision from 1 to \e n1.
+!>
     SUBROUTINE malloc_ps1(a,n1)
       INTEGER(SIK),INTENT(IN) :: n1
-      REAL(SSK),POINTER :: a(:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(n1 >= 1_SIK) THEN
-          ALLOCATE(a(n1),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SSK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
-          ELSE
-            bsize=REAL(SSK,SRK)
-            mysize=REAL(REAL(n1,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      REAL(SSK),POINTER,INTENT(INOUT) :: a(:)
+      CALL malloc_ps01(a,1,n1)
     ENDSUBROUTINE malloc_ps1
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 1 DOUBLE precision pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
 !>
 !> Routine for allocating a rank 1 pointer array of type DOUBLE 
 !> precision from 1 to \e n1.
+!>
     SUBROUTINE malloc_pd1(a,n1)
       INTEGER(SIK),INTENT(IN) :: n1
-      REAL(SDK),POINTER :: a(:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(n1 >= 1_SIK) THEN
-          ALLOCATE(a(n1),STAT=alloc_err)
-           IF(alloc_err == 0_SIK) THEN
-            a=0.0_SDK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
-          ELSE
-            bsize=REAL(SDK,SRK)
-            mysize=REAL(REAL(n1,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      REAL(SDK),POINTER,INTENT(INOUT) :: a(:)
+      CALL malloc_pd01(a,1,n1)
     ENDSUBROUTINE malloc_pd1
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 1 INTEGER pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
 !>
 !> Routine for allocating a rank 1 pointer array of type INTEGER 
 !> from 1 to \e n1.
+!>
     SUBROUTINE malloc_pi1(a,n1)
       INTEGER(SIK),INTENT(IN) :: n1
-      INTEGER(SNK),POINTER :: a(:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(n1 >= 1_SIK) THEN
-          ALLOCATE(a(n1),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SNK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
-          ELSE
-            bsize=REAL(SNK,SRK)
-            mysize=REAL(REAL(n1,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      INTEGER(SNK),POINTER,INTENT(INOUT) :: a(:)
+      CALL malloc_pi01(a,1,n1)
     ENDSUBROUTINE malloc_pi1
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 1 LONG integer pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
 !>
 !> Routine for allocating a rank 1 pointer array of type LONG integer 
 !> from 1 to \e n1.
+!>
     SUBROUTINE malloc_pl1(a,n1)
       INTEGER(SIK),INTENT(IN) :: n1
-      INTEGER(SLK),POINTER :: a(:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(n1 >= 1_SIK) THEN
-          ALLOCATE(a(n1),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SLK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
-          ELSE
-            bsize=REAL(SLK,SRK)
-            mysize=REAL(REAL(n1,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      INTEGER(SLK),POINTER,INTENT(INOUT) :: a(:)
+      CALL malloc_pl01(a,1,n1)
     ENDSUBROUTINE malloc_pl1
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 1 LOGICAL pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
 !>
 !> Routine for allocating a rank 1 pointer array of type LOGICAL 
 !> from 1 to \e n1.
+!>
     SUBROUTINE malloc_pb1(a,n1)
       INTEGER(SIK),INTENT(IN) :: n1
-      LOGICAL(SBK),POINTER :: a(:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(n1 >= 1_SIK) THEN
-          ALLOCATE(a(n1),STAT=alloc_err)
-           IF(alloc_err == 0_SIK) THEN
-            a=.FALSE.
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
-          ELSE
-            bsize=REAL(SBK,SRK)
-            mysize=REAL(REAL(n1,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      LOGICAL(SBK),POINTER,INTENT(INOUT) :: a(:)
+      CALL malloc_pb01(a,1,n1)
     ENDSUBROUTINE malloc_pb1
 !
-!-------------------------------------------------------------------------------
-! Allocate two dimensional pointers
+!===============================================================================
+! Allocate two dimensional pointers with lower bound index of 1
+!===============================================================================
 !
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 2 SINGLE precision pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
@@ -913,29 +852,14 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 2 pointer array of type SINGLE 
 !> precision from 1 to \e n1 and 1 to \e n2
+!>
     SUBROUTINE malloc_ps2(a,n1,n2)
       INTEGER(SIK),INTENT(IN) :: n1,n2
-      REAL(SSK),POINTER :: a(:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SSK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
-          ELSE
-            bsize=REAL(SSK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      REAL(SSK),POINTER,INTENT(INOUT) :: a(:,:)
+      CALL malloc_ps02(a,1,n1,1,n2)
     ENDSUBROUTINE malloc_ps2
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 2 DOUBLE precision pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
@@ -943,29 +867,14 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 2 pointer array of type DOUBLE 
 !> precision from 1 to \e n1 and 1 to \e n2
+!>
     SUBROUTINE malloc_pd2(a,n1,n2)
       INTEGER(SIK),INTENT(IN) :: n1,n2
-      REAL(SDK),POINTER :: a(:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SDK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
-          ELSE
-            bsize=REAL(SDK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      REAL(SDK),POINTER,INTENT(INOUT) :: a(:,:)
+      CALL malloc_pd02(a,1,n1,1,n2)
     ENDSUBROUTINE malloc_pd2
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 2 INTEGER pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
@@ -973,29 +882,14 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 2 pointer array of type INTEGER
 !> from 1 to \e n1 and 1 to \e n2
+!>
     SUBROUTINE malloc_pi2(a,n1,n2)
       INTEGER(SIK),INTENT(IN) :: n1,n2
-      INTEGER(SNK),POINTER :: a(:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SNK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
-          ELSE
-            bsize=REAL(SNK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      INTEGER(SNK),POINTER,INTENT(INOUT) :: a(:,:)
+      CALL malloc_pi02(a,1,n1,1,n2)
     ENDSUBROUTINE malloc_pi2
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 2 LONG integer pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
@@ -1003,29 +897,14 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 2 pointer array of type LONG integer
 !> from 1 to \e n1 and 1 to \e n2
+!>
     SUBROUTINE malloc_pl2(a,n1,n2)
       INTEGER(SIK),INTENT(IN) :: n1,n2
-      INTEGER(SLK),POINTER :: a(:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SLK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
-          ELSE
-            bsize=REAL(SlK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      INTEGER(SLK),POINTER,INTENT(INOUT) :: a(:,:)
+      CALL malloc_pl02(a,1,n1,1,n2)
     ENDSUBROUTINE malloc_pl2
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 2 LOGICAL pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
@@ -1033,31 +912,18 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 2 pointer array of type LOGICAL
 !> from 1 to \e n1 and 1 to \e n2
+!>
     SUBROUTINE malloc_pb2(a,n1,n2)
       INTEGER(SIK),INTENT(IN) :: n1,n2
-      LOGICAL(SBK),POINTER :: a(:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=.FALSE.
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
-          ELSE
-            bsize=REAL(SBK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      LOGICAL(SBK),POINTER,INTENT(INOUT) :: a(:,:)
+      CALL malloc_pb02(a,1,n1,1,n2)
     ENDSUBROUTINE malloc_pb2
 !
-!-------------------------------------------------------------------------------
-! Allocate three dimensional pointers
+!===============================================================================
+! Allocate three dimensional pointers with lower bound index of 1
+!===============================================================================
 !
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 3 SINGLE precision pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
@@ -1066,29 +932,14 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 3 pointer array of type SINGLE
 !> precision from 1 to \e n1, 1 to \e n2, and 1 to \e n3
+!>
     SUBROUTINE malloc_ps3(a,n1,n2,n3)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3
-      REAL(SSK),POINTER :: a(:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK .AND. n3 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SSK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
-          ELSE
-            bsize=REAL(SSK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      REAL(SSK),POINTER,INTENT(INOUT) :: a(:,:,:)
+      CALL malloc_ps03(a,1,n1,1,n2,1,n3)
     ENDSUBROUTINE malloc_ps3
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 3 DOUBLE precision pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
@@ -1097,29 +948,14 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 3 pointer array of type DOUBLE
 !> precision from 1 to \e n1, 1 to \e n2, and 1 to \e n3
+!>
     SUBROUTINE malloc_pd3(a,n1,n2,n3)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3
-      REAL(SDK),POINTER :: a(:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK .AND. n3 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SDK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
-          ELSE
-            bsize=REAL(SDK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      REAL(SDK),POINTER,INTENT(INOUT) :: a(:,:,:)
+      CALL malloc_pd03(a,1,n1,1,n2,1,n3)
     ENDSUBROUTINE malloc_pd3
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 3 INTEGER pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
@@ -1128,29 +964,14 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 3 pointer array of type INTEGER
 !> from 1 to \e n1, 1 to \e n2, and 1 to \e n3
+!>
     SUBROUTINE malloc_pi3(a,n1,n2,n3)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3
-      INTEGER(SNK),POINTER :: a(:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK .AND. n3 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SNK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
-          ELSE
-            bsize=REAL(SNK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      INTEGER(SNK),POINTER,INTENT(INOUT) :: a(:,:,:)
+      CALL malloc_pi03(a,1,n1,1,n2,1,n3)
     ENDSUBROUTINE malloc_pi3
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 3 LONG integer pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
@@ -1159,29 +980,14 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 3 pointer array of type LONG integer
 !> from 1 to \e n1, 1 to \e n2, and 1 to \e n3
+!>
     SUBROUTINE malloc_pl3(a,n1,n2,n3)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3
-      INTEGER(SLK),POINTER :: a(:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK .AND. n3 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SLK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
-          ELSE
-            bsize=REAL(SLK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      INTEGER(SLK),POINTER,INTENT(INOUT) :: a(:,:,:)
+      CALL malloc_pl03(a,1,n1,1,n2,1,n3)
     ENDSUBROUTINE malloc_pl3
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 3 LOGICAL pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
@@ -1190,31 +996,18 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 3 pointer array of type LOGICAL
 !> from 1 to \e n1, 1 to \e n2, and 1 to \e n3
+!>
     SUBROUTINE malloc_pb3(a,n1,n2,n3)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3
-      LOGICAL(SBK),POINTER :: a(:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK .AND. n3 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=.FALSE.
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
-          ELSE
-            bsize=REAL(SBK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      LOGICAL(SBK),POINTER,INTENT(INOUT) :: a(:,:,:)
+      CALL malloc_pb03(a,1,n1,1,n2,1,n3)
     ENDSUBROUTINE malloc_pb3
 !
-!-------------------------------------------------------------------------------
-! Allocate four dimensional pointers
+!===============================================================================
+! Allocate four dimensional pointers with lower bound index of 1
+!===============================================================================
 !
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 4 SINGLE precision pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
@@ -1224,31 +1017,14 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 4 pointer array of type SINGLE
 !> precision from 1 to \e n1, 1 to \e n2, 1 to \e n3, and 1 to \e n4
+!>
     SUBROUTINE malloc_ps4(a,n1,n2,n3,n4)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4
-      REAL(SSK),POINTER :: a(:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK .AND. &
-                             n3 >= 1_SIK .AND. n4 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SSK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
-          ELSE
-            bsize=REAL(SSK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      REAL(SSK),POINTER,INTENT(INOUT) :: a(:,:,:,:)
+      CALL malloc_ps04(a,1,n1,1,n2,1,n3,1,n4)
     ENDSUBROUTINE malloc_ps4
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 4 DOUBLE precision pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
@@ -1258,31 +1034,14 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 4 pointer array of type DOUBLE
 !> precision from 1 to \e n1, 1 to \e n2, 1 to \e n3, and 1 to \e n4
+!>
     SUBROUTINE malloc_pd4(a,n1,n2,n3,n4)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4
-      REAL(SDK),POINTER :: a(:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK .AND. &
-                             n3 >= 1_SIK .AND. n4 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SDK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
-          ELSE
-            bsize=REAL(SDK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      REAL(SDK),POINTER,INTENT(INOUT) :: a(:,:,:,:)
+      CALL malloc_pd04(a,1,n1,1,n2,1,n3,1,n4)
     ENDSUBROUTINE malloc_pd4
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 4 INTEGER pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
@@ -1292,31 +1051,14 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 4 pointer array of type INTEGER
 !> from 1 to \e n1, 1 to \e n2, 1 to \e n3, and 1 to \e n4
+!>
     SUBROUTINE malloc_pi4(a,n1,n2,n3,n4)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4
-      INTEGER(SNK),POINTER :: a(:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK .AND. &
-                             n3 >= 1_SIK .AND. n4 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SNK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
-          ELSE
-            bsize=REAL(SNK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      INTEGER(SNK),POINTER,INTENT(INOUT) :: a(:,:,:,:)
+      CALL malloc_pi04(a,1,n1,1,n2,1,n3,1,n4)
     ENDSUBROUTINE malloc_pi4
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 4 LONG integer pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
@@ -1326,31 +1068,14 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 4 pointer array of type LONG integer
 !> from 1 to \e n1, 1 to \e n2, 1 to \e n3, and 1 to \e n4
+!>
     SUBROUTINE malloc_pl4(a,n1,n2,n3,n4)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4
-      INTEGER(SLK),POINTER :: a(:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK .AND. &
-                             n3 >= 1_SIK .AND. n4 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SLK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
-          ELSE
-            bsize=REAL(SLK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      INTEGER(SLK),POINTER,INTENT(INOUT) :: a(:,:,:,:)
+      CALL malloc_pl04(a,1,n1,1,n2,1,n3,1,n4)
     ENDSUBROUTINE malloc_pl4
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 4 LOGICAL pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
@@ -1360,33 +1085,18 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 4 pointer array of type LOGICAL
 !> from 1 to \e n1, 1 to \e n2, 1 to \e n3, and 1 to \e n4
+!>
     SUBROUTINE malloc_pb4(a,n1,n2,n3,n4)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4
-      LOGICAL(SBK),POINTER :: a(:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK .AND. &
-                             n3 >= 1_SIK .AND. n4 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=.FALSE.
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
-          ELSE
-            bsize=REAL(SBK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      LOGICAL(SBK),POINTER,INTENT(INOUT) :: a(:,:,:,:)
+      CALL malloc_pb04(a,1,n1,1,n2,1,n3,1,n4)
     ENDSUBROUTINE malloc_pb4
 !
-!-------------------------------------------------------------------------------
-! Allocate five dimensional pointers
+!===============================================================================
+! Allocate five dimensional pointers with lower bound index of 1
+!===============================================================================
 !
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 5 SINGLE precision pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
@@ -1398,32 +1108,14 @@ MODULE Allocs
 !> Routine for allocating a rank 5 pointer array of type SINGLE
 !> precision from 1 to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3, 
 !> 1 to \e n4, and 1 to \e n5
+!>
     SUBROUTINE malloc_ps5(a,n1,n2,n3,n4,n5)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4,n5
-      REAL(SSK),POINTER :: a(:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK &
-                       .AND. n3 >= 1_SIK .AND. n4 >= 1_SIK &
-                                         .AND. n5 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4,n5),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SSK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
-          ELSE
-            bsize=REAL(SSK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*REAL(n5,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      REAL(SSK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:)
+      CALL malloc_ps05(a,1,n1,1,n2,1,n3,1,n4,1,n5)
     ENDSUBROUTINE malloc_ps5
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 5 DOUBLE precision pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
@@ -1435,32 +1127,14 @@ MODULE Allocs
 !> Routine for allocating a rank 5 pointer array of type DOUBLE
 !> precision from 1 to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3,
 !> 1 to \e n4, and 1 to \e n5
+!>
     SUBROUTINE malloc_pd5(a,n1,n2,n3,n4,n5)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4,n5
-      REAL(SDK),POINTER :: a(:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK &
-                       .AND. n3 >= 1_SIK .AND. n4 >= 1_SIK &
-                                         .AND. n5 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4,n5),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SDK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
-          ELSE
-            bsize=REAL(SDK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*REAL(n5,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      REAL(SDK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:)
+      CALL malloc_pd05(a,1,n1,1,n2,1,n3,1,n4,1,n5)
     ENDSUBROUTINE malloc_pd5
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 5 INTEGER pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
@@ -1472,32 +1146,14 @@ MODULE Allocs
 !> Routine for allocating a rank 5 pointer array of type INTEGER
 !> from 1 to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3, 1 to \e n4,
 !> and 1 to \e n5
+!>
     SUBROUTINE malloc_pi5(a,n1,n2,n3,n4,n5)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4,n5
-      INTEGER(SNK),POINTER :: a(:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK &
-                       .AND. n3 >= 1_SIK .AND. n4 >= 1_SIK &
-                                         .AND. n5 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4,n5),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SNK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
-          ELSE
-            bsize=REAL(SNK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*REAL(n5,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      INTEGER(SNK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:)
+      CALL malloc_pi05(a,1,n1,1,n2,1,n3,1,n4,1,n5)
     ENDSUBROUTINE malloc_pi5
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 5 LONG integer pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
@@ -1509,32 +1165,14 @@ MODULE Allocs
 !> Routine for allocating a rank 5 pointer array of type LONG integer
 !> from 1 to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3, 1 to \e n4,
 !> and 1 to \e n5
+!>
     SUBROUTINE malloc_pl5(a,n1,n2,n3,n4,n5)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4,n5
-      INTEGER(SLK),POINTER :: a(:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK &
-                       .AND. n3 >= 1_SIK .AND. n4 >= 1_SIK &
-                                         .AND. n5 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4,n5),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SLK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
-          ELSE
-            bsize=REAL(SLK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*REAL(n5,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      INTEGER(SLK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:)
+      CALL malloc_pl05(a,1,n1,1,n2,1,n3,1,n4,1,n5)
     ENDSUBROUTINE malloc_pl5
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 5 LOGICAL pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
@@ -1546,34 +1184,18 @@ MODULE Allocs
 !> Routine for allocating a rank 5 pointer array of type LOGICAL
 !> from 1 to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3, 1 to \e n4,
 !> and 1 to \e n5
+!>
     SUBROUTINE malloc_pb5(a,n1,n2,n3,n4,n5)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4,n5
-      LOGICAL(SBK),POINTER :: a(:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK &
-                       .AND. n3 >= 1_SIK .AND. n4 >= 1_SIK &
-                                         .AND. n5 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4,n5),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=.FALSE.
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
-          ELSE
-            bsize=REAL(SBK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*REAL(n5,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      LOGICAL(SBK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:)
+      CALL malloc_pb05(a,1,n1,1,n2,1,n3,1,n4,1,n5)
     ENDSUBROUTINE malloc_pb5
 !
-!-------------------------------------------------------------------------------
-! Allocate six dimensional pointers
+!===============================================================================
+! Allocate six dimensional pointers with lower bound index of 1
+!===============================================================================
 !
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 6 SINGLE precision pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
@@ -1586,32 +1208,14 @@ MODULE Allocs
 !> Routine for allocating a rank 6 pointer array of type SINGLE
 !> precision from 1 to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3,
 !> 1 to \e n4, 1 to \e n5, and 1 to \e n6.
+!>
     SUBROUTINE malloc_ps6(a,n1,n2,n3,n4,n5,n6)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4,n5,n6
-      REAL(SSK),POINTER :: a(:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK &
-                       .AND. n3 >= 1_SIK .AND. n4 >= 1_SIK &
-                       .AND. n5 >= 1_SIK .AND. n6 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4,n5,n6),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SSK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
-          ELSE
-            bsize=REAL(SSK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*REAL(n5,SRK)*REAL(n6,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      REAL(SSK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:,:)
+      CALL malloc_ps06(a,1,n1,1,n2,1,n3,1,n4,1,n5,1,n6)
     ENDSUBROUTINE malloc_ps6
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 6 DOUBLE precision pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
@@ -1624,32 +1228,14 @@ MODULE Allocs
 !> Routine for allocating a rank 6 pointer array of type DOUBLE
 !> precision from 1 to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3,
 !> 1 to \e n4, 1 to \e n5, and 1 to \e n6.
+!>
     SUBROUTINE malloc_pd6(a,n1,n2,n3,n4,n5,n6)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4,n5,n6
-      REAL(SDK),POINTER :: a(:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK &
-                       .AND. n3 >= 1_SIK .AND. n4 >= 1_SIK &
-                       .AND. n5 >= 1_SIK .AND. n6 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4,n5,n6),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SDK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
-          ELSE
-            bsize=REAL(SDK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*REAL(n5,SRK)*REAL(n6,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      REAL(SDK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:,:)
+      CALL malloc_pd06(a,1,n1,1,n2,1,n3,1,n4,1,n5,1,n6)
     ENDSUBROUTINE malloc_pd6
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 6 INTEGER pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
@@ -1662,32 +1248,14 @@ MODULE Allocs
 !> Routine for allocating a rank 6 pointer array of type INTEGER
 !> from 1 to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3, 1 to \e n4,
 !> 1 to \e n5, and 1 to \e n6.
+!>
     SUBROUTINE malloc_pi6(a,n1,n2,n3,n4,n5,n6)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4,n5,n6
-      INTEGER(SNK),POINTER :: a(:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK &
-                       .AND. n3 >= 1_SIK .AND. n4 >= 1_SIK &
-                       .AND. n5 >= 1_SIK .AND. n6 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4,n5,n6),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SNK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
-          ELSE
-            bsize=REAL(SNK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*REAL(n5,SRK)*REAL(n6,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      INTEGER(SNK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:,:)
+      CALL malloc_pi06(a,1,n1,1,n2,1,n3,1,n4,1,n5,1,n6)
     ENDSUBROUTINE malloc_pi6
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 6 LONG integer pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
@@ -1700,32 +1268,14 @@ MODULE Allocs
 !> Routine for allocating a rank 6 pointer array of type LONG integer
 !> from 1 to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3, 1 to \e n4,
 !> 1 to \e n5, and 1 to \e n6.
+!>
     SUBROUTINE malloc_pl6(a,n1,n2,n3,n4,n5,n6)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4,n5,n6
-      INTEGER(SLK),POINTER :: a(:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK &
-                       .AND. n3 >= 1_SIK .AND. n4 >= 1_SIK &
-                       .AND. n5 >= 1_SIK .AND. n6 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4,n5,n6),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SLK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
-          ELSE
-            bsize=REAL(SLK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*REAL(n5,SRK)*REAL(n6,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      INTEGER(SLK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:,:)
+      CALL malloc_pl06(a,1,n1,1,n2,1,n3,1,n4,1,n5,1,n6)
     ENDSUBROUTINE malloc_pl6
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 6 LOGICAL pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
@@ -1738,34 +1288,18 @@ MODULE Allocs
 !> Routine for allocating a rank 6 pointer array of type LOGICAL
 !> from 1 to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3, 1 to \e n4,
 !> 1 to \e n5, and 1 to \e n6.
+!>
     SUBROUTINE malloc_pb6(a,n1,n2,n3,n4,n5,n6)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4,n5,n6
-      LOGICAL(SBK),POINTER :: a(:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK &
-                       .AND. n3 >= 1_SIK .AND. n4 >= 1_SIK &
-                       .AND. n5 >= 1_SIK .AND. n6 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4,n5,n6),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=.FALSE.
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
-          ELSE
-            bsize=REAL(SBK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*REAL(n5,SRK)*REAL(n6,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      LOGICAL(SBK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:,:)
+      CALL malloc_pb06(a,1,n1,1,n2,1,n3,1,n4,1,n5,1,n6)
     ENDSUBROUTINE malloc_pb6
 !
-!-------------------------------------------------------------------------------
-! Allocate seven dimensional pointers
+!===============================================================================
+! Allocate seven dimensional pointers with lower bound index of 1
+!===============================================================================
 !
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 7 SINGLE precision pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
@@ -1779,34 +1313,14 @@ MODULE Allocs
 !> Routine for allocating a rank 7 pointer array of type SINGLE
 !> precision from 1 to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3,
 !> 1 to \e n4, 1 to \e n5,  1 to \e n6, and 1 to \e n7.
+!>
     SUBROUTINE malloc_ps7(a,n1,n2,n3,n4,n5,n6,n7)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4,n5,n6,n7
-      REAL(SSK),POINTER :: a(:,:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK &
-                       .AND. n3 >= 1_SIK .AND. n4 >= 1_SIK &
-                       .AND. n5 >= 1_SIK .AND. n6 >= 1_SIK &
-                                         .AND. n7 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4,n5,n6,n7),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SSK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
-          ELSE
-            bsize=REAL(SSK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*REAL(n5,SRK)*REAL(n6,SRK)* &
-                        REAL(n7,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      REAL(SSK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
+      CALL malloc_ps07(a,1,n1,1,n2,1,n3,1,n4,1,n5,1,n6,1,n7)
     ENDSUBROUTINE malloc_ps7
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 7 DOUBLE precision pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
@@ -1820,34 +1334,14 @@ MODULE Allocs
 !> Routine for allocating a rank 7 pointer array of type DOUBLE
 !> precision from 1 to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3,
 !> 1 to \e n4, 1 to \e n5,  1 to \e n6, and 1 to \e n7.
+!>
     SUBROUTINE malloc_pd7(a,n1,n2,n3,n4,n5,n6,n7)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4,n5,n6,n7
-      REAL(SDK),POINTER :: a(:,:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK &
-                       .AND. n3 >= 1_SIK .AND. n4 >= 1_SIK &
-                       .AND. n5 >= 1_SIK .AND. n6 >= 1_SIK &
-                                         .AND. n7 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4,n5,n6,n7),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SDK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
-          ELSE
-            bsize=REAL(SDK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*REAL(n5,SRK)*REAL(n6,SRK)* &
-                        REAL(n7,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      REAL(SDK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
+      CALL malloc_pd07(a,1,n1,1,n2,1,n3,1,n4,1,n5,1,n6,1,n7)
     ENDSUBROUTINE malloc_pd7
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 7 INTEGER pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
@@ -1861,34 +1355,14 @@ MODULE Allocs
 !> Routine for allocating a rank 7 pointer array of type INTEGER
 !> from 1 to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3, 1 to \e n4,
 !> 1 to \e n5, 1 to \e n6, and 1 to \e n7.
+!>
     SUBROUTINE malloc_pi7(a,n1,n2,n3,n4,n5,n6,n7)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4,n5,n6,n7
-      INTEGER(SNK),POINTER :: a(:,:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK &
-                       .AND. n3 >= 1_SIK .AND. n4 >= 1_SIK &
-                       .AND. n5 >= 1_SIK .AND. n6 >= 1_SIK &
-                                         .AND. n7 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4,n5,n6,n7),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SNK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
-          ELSE
-            bsize=REAL(SNK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*REAL(n5,SRK)*REAL(n6,SRK)* &
-                        REAL(n7,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      INTEGER(SNK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
+      CALL malloc_pi07(a,1,n1,1,n2,1,n3,1,n4,1,n5,1,n6,1,n7)
     ENDSUBROUTINE malloc_pi7
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 7 LONG integer pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
@@ -1902,34 +1376,14 @@ MODULE Allocs
 !> Routine for allocating a rank 7 pointer array of type LONG integer
 !> from 1 to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3, 1 to \e n4,
 !> 1 to \e n5, 1 to \e n6, and 1 to \e n7.
+!>
     SUBROUTINE malloc_pl7(a,n1,n2,n3,n4,n5,n6,n7)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4,n5,n6,n7
-      INTEGER(SLK),POINTER :: a(:,:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK &
-                       .AND. n3 >= 1_SIK .AND. n4 >= 1_SIK &
-                       .AND. n5 >= 1_SIK .AND. n6 >= 1_SIK &
-                                         .AND. n7 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4,n5,n6,n7),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SLK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
-          ELSE
-            bsize=REAL(SLK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*REAL(n5,SRK)*REAL(n6,SRK)* &
-                        REAL(n7,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      INTEGER(SLK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
+      CALL malloc_pl07(a,1,n1,1,n2,1,n3,1,n4,1,n5,1,n6,1,n7)
     ENDSUBROUTINE malloc_pl7
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 7 LOGICAL pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
@@ -1943,179 +1397,92 @@ MODULE Allocs
 !> Routine for allocating a rank 7 pointer array of type LOGICAL from 1
 !> to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3, 1 to \e n4, 1 to \e n5, 
 !> 1 to \e n6, and 1 to \e n7.
+!>
     SUBROUTINE malloc_pb7(a,n1,n2,n3,n4,n5,n6,n7)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4,n5,n6,n7
-      LOGICAL(SBK),POINTER :: a(:,:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK &
-                       .AND. n3 >= 1_SIK .AND. n4 >= 1_SIK &
-                       .AND. n5 >= 1_SIK .AND. n6 >= 1_SIK &
-                                         .AND. n7 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4,n5,n6,n7),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=.FALSE.
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
-          ELSE
-            bsize=REAL(SBK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*REAL(n5,SRK)*REAL(n6,SRK)* &
-                        REAL(n7,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      LOGICAL(SBK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
+      CALL malloc_pb07(a,1,n1,1,n2,1,n3,1,n4,1,n5,1,n6,1,n7)
     ENDSUBROUTINE malloc_pb7
 !
 !===============================================================================
-! The following section contains all procedures for allocating arrays from 1
-! to n.
+! Allocate one dimensional arrays with lower bound index of 1
+!===============================================================================
 !
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 1 SINGLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
 !>
-!>Routine for allocating a rank 1 allocatable array of type SINGLE 
-!>precision from 1 to \e n1.
+!> Routine for allocating a rank 1 allocatable array of type SINGLE 
+!> precision from 1 to \e n1.
+!>
     SUBROUTINE malloc_as1(a,n1)
       INTEGER(SIK),INTENT(IN) :: n1
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: a(:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(n1 >= 1_SIK) THEN
-          ALLOCATE(a(n1),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SSK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
-          ELSE
-            bsize=REAL(SSK,SRK)
-            mysize=REAL(REAL(n1,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      CALL malloc_as01(a,1,n1)
     ENDSUBROUTINE malloc_as1
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 1 DOUBLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
 !>
 !> Routine for allocating a rank 1 allocatable array of type DOUBLE 
 !> precision from 1 to \e n1.
+!>
     SUBROUTINE malloc_ad1(a,n1)
       INTEGER(SIK),INTENT(IN) :: n1
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: a(:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(n1 >= 1_SIK) THEN
-          ALLOCATE(a(n1),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SDK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
-          ELSE
-            bsize=REAL(SDK,SRK)
-            mysize=REAL(REAL(n1,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      CALL malloc_ad01(a,1,n1)
     ENDSUBROUTINE malloc_ad1
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 1 INTEGER allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
 !>
 !> Routine for allocating a rank 1 allocatable array of type INTEGER 
 !> from 1 to \e n1.
+!>
     SUBROUTINE malloc_ai1(a,n1)
       INTEGER(SIK),INTENT(IN) :: n1
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: a(:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(n1 >= 1_SIK) THEN
-          ALLOCATE(a(n1),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SNK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
-          ELSE
-            bsize=REAL(SNK,SRK)
-            mysize=REAL(REAL(n1,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      CALL malloc_ai01(a,1,n1)
     ENDSUBROUTINE malloc_ai1
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 1 LONG integer allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
 !>
 !> Routine for allocating a rank 1 allocatable array of type LONG integer 
 !> from 1 to \e n1.
+!>
     SUBROUTINE malloc_al1(a,n1)
       INTEGER(SIK),INTENT(IN) :: n1
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: a(:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(n1 >= 1_SIK) THEN
-          ALLOCATE(a(n1),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SLK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
-          ELSE
-            bsize=REAL(SLK,SRK)
-            mysize=REAL(REAL(n1,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      CALL malloc_al01(a,1,n1)
     ENDSUBROUTINE malloc_al1
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 1 LOGICAL allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
 !>
 !> Routine for allocating a rank 1 allocatable array of type LOGICAL 
 !> from 1 to \e n1.
+!>
     SUBROUTINE malloc_ab1(a,n1)
       INTEGER(SIK),INTENT(IN) :: n1
       LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: a(:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(n1 >= 1_SIK) THEN
-          ALLOCATE(a(n1),STAT=alloc_err)
-           IF(alloc_err == 0_SIK) THEN
-            a=.FALSE.
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
-          ELSE
-            bsize=REAL(SBK,SRK)
-            mysize=REAL(REAL(n1,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      CALL malloc_ab01(a,1,n1)
     ENDSUBROUTINE malloc_ab1
 !
-!-------------------------------------------------------------------------------
-! Allocate two dimensional pointers
+!===============================================================================
+! Allocate two dimensional arrays with lower bound index of 1
+!===============================================================================
 !
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 2 SINGLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
@@ -2123,28 +1490,14 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 2 allocatable array of type SINGLE 
 !> precision from 1 to \e n1 and 1 to \e n2
+!>
     SUBROUTINE malloc_as2(a,n1,n2)
       INTEGER(SIK),INTENT(IN) :: n1,n2
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: a(:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SSK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
-          ELSE
-            bsize=REAL(SSK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      CALL malloc_as02(a,1,n1,1,n2)
     ENDSUBROUTINE malloc_as2
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 2 DOUBLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
@@ -2152,28 +1505,14 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 2 allocatable array of type DOUBLE 
 !> precision from 1 to \e n1 and 1 to \e n2
+!>
     SUBROUTINE malloc_ad2(a,n1,n2)
       INTEGER(SIK),INTENT(IN) :: n1,n2
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: a(:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SDK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
-          ELSE
-            bsize=REAL(SDK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      CALL malloc_ad02(a,1,n1,1,n2)
     ENDSUBROUTINE malloc_ad2
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 2 INTEGER allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
@@ -2181,28 +1520,14 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 2 allocatable array of type INTEGER
 !> from 1 to \e n1 and 1 to \e n2
+!>
     SUBROUTINE malloc_ai2(a,n1,n2)
       INTEGER(SIK),INTENT(IN) :: n1,n2
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: a(:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SNK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
-          ELSE
-            bsize=REAL(SNK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      CALL malloc_ai02(a,1,n1,1,n2)
     ENDSUBROUTINE malloc_ai2
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 2 LONG integer allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
@@ -2210,28 +1535,14 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 2 allocatable array of type LONG integer
 !> from 1 to \e n1 and 1 to \e n2
+!>
     SUBROUTINE malloc_al2(a,n1,n2)
       INTEGER(SIK),INTENT(IN) :: n1,n2
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: a(:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SLK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
-          ELSE
-            bsize=REAL(SlK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      CALL malloc_al02(a,1,n1,1,n2)
     ENDSUBROUTINE malloc_al2
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 2 LOGICAL allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
@@ -2239,30 +1550,18 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 2 allocatable array of type LOGICAL
 !> from 1 to \e n1 and 1 to \e n2
+!>
     SUBROUTINE malloc_ab2(a,n1,n2)
       INTEGER(SIK),INTENT(IN) :: n1,n2
       LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: a(:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=.FALSE.
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
-          ELSE
-            bsize=REAL(SBK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      CALL malloc_ab02(a,1,n1,1,n2)
     ENDSUBROUTINE malloc_ab2
 !
-!-------------------------------------------------------------------------------
-! Allocate three dimensional pointers
+!===============================================================================
+! Allocate three dimensional arrays with lower bound index of 1
+!===============================================================================
 !
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 3 SINGLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
@@ -2271,28 +1570,14 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 3 allocatable array of type SINGLE
 !> precision from 1 to \e n1, 1 to \e n2, and 1 to \e n3
+!>
     SUBROUTINE malloc_as3(a,n1,n2,n3)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK .AND. n3 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SSK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
-          ELSE
-            bsize=REAL(SSK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      CALL malloc_as03(a,1,n1,1,n2,1,n3)
     ENDSUBROUTINE malloc_as3
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 3 DOUBLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
@@ -2301,28 +1586,14 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 3 allocatable array of type DOUBLE
 !> precision from 1 to \e n1, 1 to \e n2, and 1 to \e n3
+!>
     SUBROUTINE malloc_ad3(a,n1,n2,n3)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK .AND. n3 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SDK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
-          ELSE
-            bsize=REAL(SDK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      CALL malloc_ad03(a,1,n1,1,n2,1,n3)
     ENDSUBROUTINE malloc_ad3
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 3 INTEGER allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
@@ -2331,28 +1602,14 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 3 allocatable array of type INTEGER
 !> from 1 to \e n1, 1 to \e n2, and 1 to \e n3
+!>
     SUBROUTINE malloc_ai3(a,n1,n2,n3)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK .AND. n3 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SNK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
-          ELSE
-            bsize=REAL(SNK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      CALL malloc_ai03(a,1,n1,1,n2,1,n3)
     ENDSUBROUTINE malloc_ai3
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 3 LONG integer allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
@@ -2361,28 +1618,14 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 3 allocatable array of type LONG integer
 !> from 1 to \e n1, 1 to \e n2, and 1 to \e n3
+!>
     SUBROUTINE malloc_al3(a,n1,n2,n3)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK .AND. n3 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SLK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
-          ELSE
-            bsize=REAL(SLK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      CALL malloc_al03(a,1,n1,1,n2,1,n3)
     ENDSUBROUTINE malloc_al3
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 3 LOGICAL allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
@@ -2391,30 +1634,18 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 3 allocatable array of type LOGICAL
 !> from 1 to \e n1, 1 to \e n2, and 1 to \e n3
+!>
     SUBROUTINE malloc_ab3(a,n1,n2,n3)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3
       LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK .AND. n3 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=.FALSE.
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
-          ELSE
-            bsize=REAL(SBK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      CALL malloc_ab03(a,1,n1,1,n2,1,n3)
     ENDSUBROUTINE malloc_ab3
 !
-!-------------------------------------------------------------------------------
-! Allocate four dimensional pointers
+!===============================================================================
+! Allocate four dimensional arrays with lower bound index of 1
+!===============================================================================
 !
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 4 SINGLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
@@ -2424,30 +1655,14 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 4 allocatable array of type SINGLE
 !> precision from 1 to \e n1, 1 to \e n2, 1 to \e n3, and 1 to \e n4
+!>
     SUBROUTINE malloc_as4(a,n1,n2,n3,n4)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK .AND. &
-                             n3 >= 1_SIK .AND. n4 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SSK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
-          ELSE
-            bsize=REAL(SSK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      CALL malloc_as04(a,1,n1,1,n2,1,n3,1,n4)
     ENDSUBROUTINE malloc_as4
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 4 DOUBLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
@@ -2457,30 +1672,14 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 4 allocatable array of type DOUBLE
 !> precision from 1 to \e n1, 1 to \e n2, 1 to \e n3, and 1 to \e n4
+!>
     SUBROUTINE malloc_ad4(a,n1,n2,n3,n4)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK .AND. &
-                             n3 >= 1_SIK .AND. n4 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SDK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
-          ELSE
-            bsize=REAL(SDK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      CALL malloc_ad04(a,1,n1,1,n2,1,n3,1,n4)
     ENDSUBROUTINE malloc_ad4
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 4 INTEGER allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
@@ -2490,30 +1689,14 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 4 allocatable array of type INTEGER
 !> from 1 to \e n1, 1 to \e n2, 1 to \e n3, and 1 to \e n4
+!>
     SUBROUTINE malloc_ai4(a,n1,n2,n3,n4)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK .AND. &
-                             n3 >= 1_SIK .AND. n4 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SNK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
-          ELSE
-            bsize=REAL(SNK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      CALL malloc_ai04(a,1,n1,1,n2,1,n3,1,n4)
     ENDSUBROUTINE malloc_ai4
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 4 LONG integer allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
@@ -2523,30 +1706,14 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 4 allocatable array of type LONG integer
 !> from 1 to \e n1, 1 to \e n2, 1 to \e n3, and 1 to \e n4
+!>
     SUBROUTINE malloc_al4(a,n1,n2,n3,n4)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK .AND. &
-                             n3 >= 1_SIK .AND. n4 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SLK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
-          ELSE
-            bsize=REAL(SLK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      CALL malloc_al04(a,1,n1,1,n2,1,n3,1,n4)
     ENDSUBROUTINE malloc_al4
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 4 LOGICAL allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
@@ -2556,32 +1723,18 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 4 allocatable array of type LOGICAL
 !> from 1 to \e n1, 1 to \e n2, 1 to \e n3, and 1 to \e n4
+!>
     SUBROUTINE malloc_ab4(a,n1,n2,n3,n4)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4
       LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK .AND. &
-                             n3 >= 1_SIK .AND. n4 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=.FALSE.
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
-          ELSE
-            bsize=REAL(SBK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      CALL malloc_ab04(a,1,n1,1,n2,1,n3,1,n4)
     ENDSUBROUTINE malloc_ab4
 !
-!-------------------------------------------------------------------------------
-! Allocate five dimensional pointers
+!===============================================================================
+! Allocate five dimensional arrays with lower bound index of 1
+!===============================================================================
 !
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 5 SINGLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
@@ -2593,31 +1746,14 @@ MODULE Allocs
 !> Routine for allocating a rank 5 allocatable array of type SINGLE
 !> precision from 1 to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3, 
 !> 1 to \e n4, and 1 to \e n5
+!>
     SUBROUTINE malloc_as5(a,n1,n2,n3,n4,n5)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4,n5
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK &
-                       .AND. n3 >= 1_SIK .AND. n4 >= 1_SIK &
-                                         .AND. n5 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4,n5),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SSK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
-          ELSE
-            bsize=REAL(SSK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*REAL(n5,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      CALL malloc_as05(a,1,n1,1,n2,1,n3,1,n4,1,n5)
     ENDSUBROUTINE malloc_as5
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 5 DOUBLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
@@ -2629,31 +1765,14 @@ MODULE Allocs
 !> Routine for allocating a rank 5 allocatable array of type DOUBLE
 !> precision from 1 to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3,
 !> 1 to \e n4, and 1 to \e n5
+!>
     SUBROUTINE malloc_ad5(a,n1,n2,n3,n4,n5)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4,n5
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK &
-                       .AND. n3 >= 1_SIK .AND. n4 >= 1_SIK &
-                                         .AND. n5 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4,n5),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SDK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
-          ELSE
-            bsize=REAL(SDK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*REAL(n5,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      CALL malloc_ad05(a,1,n1,1,n2,1,n3,1,n4,1,n5)
     ENDSUBROUTINE malloc_ad5
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 5 INTEGER allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
@@ -2665,31 +1784,14 @@ MODULE Allocs
 !> Routine for allocating a rank 5 allocatable array of type INTEGER
 !> from 1 to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3, 1 to \e n4,
 !> and 1 to \e n5
+!>
     SUBROUTINE malloc_ai5(a,n1,n2,n3,n4,n5)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4,n5
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK &
-                       .AND. n3 >= 1_SIK .AND. n4 >= 1_SIK &
-                                         .AND. n5 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4,n5),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SNK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
-          ELSE
-            bsize=REAL(SNK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*REAL(n5,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      CALL malloc_ai05(a,1,n1,1,n2,1,n3,1,n4,1,n5)
     ENDSUBROUTINE malloc_ai5
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 5 LONG integer allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
@@ -2701,31 +1803,14 @@ MODULE Allocs
 !> Routine for allocating a rank 5 allocatable array of type LONG integer
 !> from 1 to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3, 1 to \e n4,
 !> and 1 to \e n5
+!>
     SUBROUTINE malloc_al5(a,n1,n2,n3,n4,n5)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4,n5
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK &
-                       .AND. n3 >= 1_SIK .AND. n4 >= 1_SIK &
-                                         .AND. n5 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4,n5),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SLK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
-          ELSE
-            bsize=REAL(SLK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*REAL(n5,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      CALL malloc_al05(a,1,n1,1,n2,1,n3,1,n4,1,n5)
     ENDSUBROUTINE malloc_al5
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 5 LOGICAL allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
@@ -2737,33 +1822,18 @@ MODULE Allocs
 !> Routine for allocating a rank 5 allocatable array of type LOGICAL
 !> from 1 to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3, 1 to \e n4,
 !> and 1 to \e n5
+!>
     SUBROUTINE malloc_ab5(a,n1,n2,n3,n4,n5)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4,n5
       LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK &
-                       .AND. n3 >= 1_SIK .AND. n4 >= 1_SIK &
-                                         .AND. n5 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4,n5),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=.FALSE.
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
-          ELSE
-            bsize=REAL(SBK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*REAL(n5,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      CALL malloc_ab05(a,1,n1,1,n2,1,n3,1,n4,1,n5)
     ENDSUBROUTINE malloc_ab5
 !
-!-------------------------------------------------------------------------------
-! Allocate six dimensional pointers
+!===============================================================================
+! Allocate six dimensional arrays with lower bound index of 1
+!===============================================================================
 !
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 6 SINGLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
@@ -2776,31 +1846,14 @@ MODULE Allocs
 !> Routine for allocating a rank 6 allocatable array of type SINGLE
 !> precision from 1 to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3,
 !> 1 to \e n4, 1 to \e n5, and 1 to \e n6.
+!>
     SUBROUTINE malloc_as6(a,n1,n2,n3,n4,n5,n6)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4,n5,n6
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK &
-                       .AND. n3 >= 1_SIK .AND. n4 >= 1_SIK &
-                       .AND. n5 >= 1_SIK .AND. n6 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4,n5,n6),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SSK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
-          ELSE
-            bsize=REAL(SSK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*REAL(n5,SRK)*REAL(n6,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      CALL malloc_as06(a,1,n1,1,n2,1,n3,1,n4,1,n5,1,n6)
     ENDSUBROUTINE malloc_as6
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 6 DOUBLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
@@ -2813,31 +1866,14 @@ MODULE Allocs
 !> Routine for allocating a rank 6 allocatable array of type DOUBLE
 !> precision from 1 to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3,
 !> 1 to \e n4, 1 to \e n5, and 1 to \e n6.
+!>
     SUBROUTINE malloc_ad6(a,n1,n2,n3,n4,n5,n6)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4,n5,n6
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK &
-                       .AND. n3 >= 1_SIK .AND. n4 >= 1_SIK &
-                       .AND. n5 >= 1_SIK .AND. n6 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4,n5,n6),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SDK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
-          ELSE
-            bsize=REAL(SDK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*REAL(n5,SRK)*REAL(n6,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      CALL malloc_ad06(a,1,n1,1,n2,1,n3,1,n4,1,n5,1,n6)
     ENDSUBROUTINE malloc_ad6
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 6 INTEGER allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
@@ -2850,31 +1886,14 @@ MODULE Allocs
 !> Routine for allocating a rank 6 allocatable array of type INTEGER
 !> from 1 to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3, 1 to \e n4,
 !> 1 to \e n5, and 1 to \e n6.
+!>
     SUBROUTINE malloc_ai6(a,n1,n2,n3,n4,n5,n6)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4,n5,n6
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK &
-                       .AND. n3 >= 1_SIK .AND. n4 >= 1_SIK &
-                       .AND. n5 >= 1_SIK .AND. n6 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4,n5,n6),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SNK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
-          ELSE
-            bsize=REAL(SNK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*REAL(n5,SRK)*REAL(n6,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      CALL malloc_ai06(a,1,n1,1,n2,1,n3,1,n4,1,n5,1,n6)
     ENDSUBROUTINE malloc_ai6
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 6 LONG integer allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
@@ -2887,31 +1906,14 @@ MODULE Allocs
 !> Routine for allocating a rank 6 allocatable array of type LONG integer
 !> from 1 to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3, 1 to \e n4,
 !> 1 to \e n5, and 1 to \e n6.
+!>
     SUBROUTINE malloc_al6(a,n1,n2,n3,n4,n5,n6)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4,n5,n6
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK &
-                       .AND. n3 >= 1_SIK .AND. n4 >= 1_SIK &
-                       .AND. n5 >= 1_SIK .AND. n6 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4,n5,n6),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SLK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
-          ELSE
-            bsize=REAL(SLK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*REAL(n5,SRK)*REAL(n6,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      CALL malloc_al06(a,1,n1,1,n2,1,n3,1,n4,1,n5,1,n6)
     ENDSUBROUTINE malloc_al6
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 6 LOGICAL allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
@@ -2924,33 +1926,18 @@ MODULE Allocs
 !> Routine for allocating a rank 6 allocatable array of type LOGICAL
 !> from 1 to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3, 1 to \e n4,
 !> 1 to \e n5, and 1 to \e n6.
+!>
     SUBROUTINE malloc_ab6(a,n1,n2,n3,n4,n5,n6)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4,n5,n6
       LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK &
-                       .AND. n3 >= 1_SIK .AND. n4 >= 1_SIK &
-                       .AND. n5 >= 1_SIK .AND. n6 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4,n5,n6),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=.FALSE.
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
-          ELSE
-            bsize=REAL(SBK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*REAL(n5,SRK)*REAL(n6,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      CALL malloc_ab06(a,1,n1,1,n2,1,n3,1,n4,1,n5,1,n6)
     ENDSUBROUTINE malloc_ab6
 !
-!-------------------------------------------------------------------------------
-! Allocate seven dimensional pointers
+!===============================================================================
+! Allocate seven dimensional arrays with lower bound index of 1
+!===============================================================================
 !
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 7 SINGLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
@@ -2964,33 +1951,14 @@ MODULE Allocs
 !> Routine for allocating a rank 7 allocatable array of type SINGLE
 !> precision from 1 to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3,
 !> 1 to \e n4, 1 to \e n5,  1 to \e n6, and 1 to \e n7.
+!>
     SUBROUTINE malloc_as7(a,n1,n2,n3,n4,n5,n6,n7)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4,n5,n6,n7
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK &
-                       .AND. n3 >= 1_SIK .AND. n4 >= 1_SIK &
-                       .AND. n5 >= 1_SIK .AND. n6 >= 1_SIK &
-                                         .AND. n7 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4,n5,n6,n7),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SSK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
-          ELSE
-            bsize=REAL(SSK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*REAL(n5,SRK)*REAL(n6,SRK)* &
-                        REAL(n7,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      CALL malloc_as07(a,1,n1,1,n2,1,n3,1,n4,1,n5,1,n6,1,n7)
     ENDSUBROUTINE malloc_as7
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 7 DOUBLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
@@ -3004,33 +1972,14 @@ MODULE Allocs
 !> Routine for allocating a rank 7 allocatable array of type DOUBLE
 !> precision from 1 to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3,
 !> 1 to \e n4, 1 to \e n5,  1 to \e n6, and 1 to \e n7.
+!>
     SUBROUTINE malloc_ad7(a,n1,n2,n3,n4,n5,n6,n7)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4,n5,n6,n7
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK &
-                       .AND. n3 >= 1_SIK .AND. n4 >= 1_SIK &
-                       .AND. n5 >= 1_SIK .AND. n6 >= 1_SIK &
-                                         .AND. n7 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4,n5,n6,n7),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SDK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
-          ELSE
-            bsize=REAL(SDK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*REAL(n5,SRK)*REAL(n6,SRK)* &
-                        REAL(n7,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      CALL malloc_ad07(a,1,n1,1,n2,1,n3,1,n4,1,n5,1,n6,1,n7)
     ENDSUBROUTINE malloc_ad7
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 7 INTEGER allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
@@ -3044,33 +1993,14 @@ MODULE Allocs
 !> Routine for allocating a rank 7 allocatable array of type INTEGER
 !> from 1 to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3, 1 to \e n4,
 !> 1 to \e n5, 1 to \e n6, and 1 to \e n7.
+!>
     SUBROUTINE malloc_ai7(a,n1,n2,n3,n4,n5,n6,n7)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4,n5,n6,n7
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK &
-                       .AND. n3 >= 1_SIK .AND. n4 >= 1_SIK &
-                       .AND. n5 >= 1_SIK .AND. n6 >= 1_SIK &
-                                         .AND. n7 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4,n5,n6,n7),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SNK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
-          ELSE
-            bsize=REAL(SNK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*REAL(n5,SRK)*REAL(n6,SRK)* &
-                        REAL(n7,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      CALL malloc_ai07(a,1,n1,1,n2,1,n3,1,n4,1,n5,1,n6,1,n7)
     ENDSUBROUTINE malloc_ai7
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 7 LONG integer allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
@@ -3084,33 +2014,14 @@ MODULE Allocs
 !> Routine for allocating a rank 7 allocatable array of type LONG integer
 !> from 1 to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3, 1 to \e n4,
 !> 1 to \e n5, 1 to \e n6, and 1 to \e n7.
+!>
     SUBROUTINE malloc_al7(a,n1,n2,n3,n4,n5,n6,n7)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4,n5,n6,n7
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK &
-                       .AND. n3 >= 1_SIK .AND. n4 >= 1_SIK &
-                       .AND. n5 >= 1_SIK .AND. n6 >= 1_SIK &
-                                         .AND. n7 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4,n5,n6,n7),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SLK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
-          ELSE
-            bsize=REAL(SLK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*REAL(n5,SRK)*REAL(n6,SRK)* &
-                        REAL(n7,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      CALL malloc_al07(a,1,n1,1,n2,1,n3,1,n4,1,n5,1,n6,1,n7)
     ENDSUBROUTINE malloc_al7
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 7 LOGICAL allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
@@ -3124,36 +2035,18 @@ MODULE Allocs
 !> Routine for allocating a rank 7 allocatable array of type LOGICAL from 1
 !> to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3, 1 to \e n4, 1 to \e n5, 
 !> 1 to \e n6, and 1 to \e n7.
+!>
     SUBROUTINE malloc_ab7(a,n1,n2,n3,n4,n5,n6,n7)
       INTEGER(SIK),INTENT(IN) :: n1,n2,n3,n4,n5,n6,n7
       LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err
-      REAL(SRK) :: mysize,bsize
-
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(n1 >= 1_SIK .AND. n2 >= 1_SIK &
-                       .AND. n3 >= 1_SIK .AND. n4 >= 1_SIK &
-                       .AND. n5 >= 1_SIK .AND. n6 >= 1_SIK &
-                                         .AND. n7 >= 1_SIK) THEN
-          ALLOCATE(a(n1,n2,n3,n4,n5,n6,n7),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=.FALSE.
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
-          ELSE
-            bsize=REAL(SBK,SRK)
-            mysize=REAL(REAL(n1,SRK)*REAL(n2,SRK)*REAL(n3,SRK)* &
-                        REAL(n4,SRK)*REAL(n5,SRK)*REAL(n6,SRK)* &
-                        REAL(n7,SRK)*bsize,SRK)
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
-        ENDIF
-      ENDIF
+      CALL malloc_ab07(a,1,n1,1,n2,1,n3,1,n4,1,n5,1,n6,1,n7)
     ENDSUBROUTINE malloc_ab7
 !
 !===============================================================================
-! The following section contains all procedures for allocating pointers from nb
-! to ne.
+! Allocate one dimensional pointers with arbitrary lower bound index
+!===============================================================================
 !
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 1 SINGLE precision pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -3161,29 +2054,28 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 1 pointer array of type SINGLE precision from
 !> \e nb1 to \e ne1.
+!>
     SUBROUTINE malloc_ps01(a,nb1,ne1)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1
-      REAL(SSK),POINTER :: a(:)
+      REAL(SSK),POINTER,INTENT(INOUT) :: a(:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(nb1 <= ne1) THEN
-          ALLOCATE(a(nb1:ne1),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SSK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
-          ELSE
-            bsize=REAL(SSK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ASSOCIATED(a) .AND. nb1 <= ne1) THEN
+        ALLOCATE(a(nb1:ne1),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0.0_SSK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
+        ELSE
+          bsize=REAL(SSK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_ps01
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 1 DOUBLE precision pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -3191,29 +2083,28 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 1 pointer array of type DOUBLE precision from
 !> \e nb1 to \e ne1.
+!>
     SUBROUTINE malloc_pd01(a,nb1,ne1)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1
-      REAL(SDK),POINTER :: a(:)
+      REAL(SDK),POINTER,INTENT(INOUT) :: a(:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(nb1 <= ne1) THEN
-          ALLOCATE(a(nb1:ne1),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SDK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
-          ELSE
-            bsize=REAL(SDK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ASSOCIATED(a) .AND. nb1 <= ne1) THEN
+        ALLOCATE(a(nb1:ne1),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0.0_SDK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
+        ELSE
+          bsize=REAL(SDK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_pd01
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 1 INTEGER pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -3221,29 +2112,28 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 1 pointer array of type INTEGER from
 !> \e nb1 to \e ne1.
+!>
     SUBROUTINE malloc_pi01(a,nb1,ne1)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1
-      INTEGER(SNK),POINTER :: a(:)
+      INTEGER(SNK),POINTER,INTENT(INOUT) :: a(:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(nb1 <= ne1) THEN
-          ALLOCATE(a(nb1:ne1),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SNK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
-          ELSE
-            bsize=REAL(SNK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ASSOCIATED(a) .AND. nb1 <= ne1) THEN
+        ALLOCATE(a(nb1:ne1),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0_SNK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
+        ELSE
+          bsize=REAL(SNK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_pi01
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 1 LONG integer pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -3251,29 +2141,28 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 1 pointer array of type LONG integer from
 !> \e nb1 to \e ne1.
+!>
     SUBROUTINE malloc_pl01(a,nb1,ne1)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1
-      INTEGER(SLK),POINTER :: a(:)
+      INTEGER(SLK),POINTER,INTENT(INOUT) :: a(:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(nb1 <= ne1) THEN
-          ALLOCATE(a(nb1:ne1),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SLK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
-          ELSE
-            bsize=REAL(SLK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ASSOCIATED(a) .AND. nb1 <= ne1) THEN
+        ALLOCATE(a(nb1:ne1),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0_SLK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
+        ELSE
+          bsize=REAL(SLK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_pl01
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 1 LOGICAL pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -3281,30 +2170,30 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 1 pointer array of type LOGICAL from
 !> \e nb1 to \e ne1.
+!>
     SUBROUTINE malloc_pb01(a,nb1,ne1)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1
-      LOGICAL(SBK),POINTER :: a(:)
+      LOGICAL(SBK),POINTER,INTENT(INOUT) :: a(:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(nb1 <= ne1) THEN
-          ALLOCATE(a(nb1:ne1),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=.FALSE.
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
-          ELSE
-            bsize=REAL(SBK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ASSOCIATED(a) .AND. nb1 <= ne1) THEN
+        ALLOCATE(a(nb1:ne1),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=.FALSE.
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
+        ELSE
+          bsize=REAL(SBK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_pb01
 !
-!-------------------------------------------------------------------------------
-! Allocate two dimensional pointers
+!===============================================================================
+! Allocate two dimensional pointers with arbitrary lower bound index
+!===============================================================================
 !
 !> @brief Allocates rank 2 SINGLE precision pointer array.
 !> @param a dummy argument for pointer array to be allocated
@@ -3315,30 +2204,29 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 2 pointer array of type SINGLE precision from
 !> \e nb1 to \e ne1 and \e nb2 to \e ne2.
+!>
     SUBROUTINE malloc_ps02(a,nb1,ne1,nb2,ne2)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2
-      REAL(SSK),POINTER :: a(:,:)
+      REAL(SSK),POINTER,INTENT(INOUT) :: a(:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(nb1 <= ne1 .AND. nb2 <= ne2) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SSK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
-          ELSE
-            bsize=REAL(SSK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ASSOCIATED(a) .AND. ALL((/nb1,nb2/) <= (/ne1,ne2/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0.0_SSK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
+        ELSE
+          bsize=REAL(SSK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_ps02
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 2 DOUBLE precision pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -3348,30 +2236,29 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 2 pointer array of type DOUBLE precision from
 !> \e nb1 to \e ne1 and \e nb2 to \e ne2.
+!>
     SUBROUTINE malloc_pd02(a,nb1,ne1,nb2,ne2)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2
-      REAL(SDK),POINTER :: a(:,:)
+      REAL(SDK),POINTER,INTENT(INOUT) :: a(:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(nb1 <= ne1 .AND. nb2 <= ne2) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SDK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
-          ELSE
-            bsize=REAL(SDK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ASSOCIATED(a) .AND. ALL((/nb1,nb2/) <= (/ne1,ne2/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0.0_SDK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
+        ELSE
+          bsize=REAL(SDK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_pd02
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 2 INTEGER pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -3381,30 +2268,29 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 2 pointer array of type INTEGER from
 !> \e nb1 to \e ne1 and \e nb2 to \e ne2.
+!>
     SUBROUTINE malloc_pi02(a,nb1,ne1,nb2,ne2)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2
-      INTEGER(SNK),POINTER :: a(:,:)
+      INTEGER(SNK),POINTER,INTENT(INOUT) :: a(:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(nb1 <= ne1 .AND. nb2 <= ne2) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SNK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
-          ELSE
-            bsize=REAL(SNK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ASSOCIATED(a) .AND. ALL((/nb1,nb2/) <= (/ne1,ne2/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0_SNK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
+        ELSE
+          bsize=REAL(SNK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_pi02
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 2 LONG integer pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -3414,30 +2300,29 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 2 pointer array of type LONG integer from
 !> \e nb1 to \e ne1 and \e nb2 to \e ne2.
+!>
     SUBROUTINE malloc_pl02(a,nb1,ne1,nb2,ne2)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2
-      INTEGER(SLK),POINTER :: a(:,:)
+      INTEGER(SLK),POINTER,INTENT(INOUT) :: a(:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(nb1 <= ne1 .AND. nb2 <= ne2) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SLK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
-          ELSE
-            bsize=REAL(SLK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ASSOCIATED(a) .AND. ALL((/nb1,nb2/) <= (/ne1,ne2/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0_SLK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
+        ELSE
+          bsize=REAL(SLK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_pl02
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 2 LOGICAL pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -3447,31 +2332,31 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 2 pointer array of type LOGICAL from
 !> \e nb1 to \e ne1 and \e nb2 to \e ne2.
+!>
     SUBROUTINE malloc_pb02(a,nb1,ne1,nb2,ne2)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2
-      LOGICAL(SBK),POINTER :: a(:,:)
+      LOGICAL(SBK),POINTER,INTENT(INOUT) :: a(:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(nb1 <= ne1 .AND. nb2 <= ne2) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=.FALSE.
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
-          ELSE
-            bsize=REAL(SBK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ASSOCIATED(a) .AND. ALL((/nb1,nb2/) <= (/ne1,ne2/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=.FALSE.
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
+        ELSE
+          bsize=REAL(SBK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_pb02
 !
-!-------------------------------------------------------------------------------
-! Allocate three dimensional pointers
+!===============================================================================
+! Allocate three dimensional pointers with arbitrary lower bound index
+!===============================================================================
 !
 !> @brief Allocates rank 3 SINGLE precision pointer array.
 !> @param a dummy argument for pointer array to be allocated
@@ -3484,31 +2369,30 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 3 pointer array of type SINGLE precision from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, and \e nb3 to \e ne3.
+!>
     SUBROUTINE malloc_ps03(a,nb1,ne1,nb2,ne2,nb3,ne3)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3
-      REAL(SSK),POINTER :: a(:,:,:)
+      REAL(SSK),POINTER,INTENT(INOUT) :: a(:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SSK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
-          ELSE
-            bsize=REAL(SSK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ASSOCIATED(a) .AND. ALL((/nb1,nb2,nb3/) <= (/ne1,ne2,ne3/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0.0_SSK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
+        ELSE
+          bsize=REAL(SSK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_ps03
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 3 DOUBLE precision pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -3520,31 +2404,30 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 3 pointer array of type DOUBLE precision from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, and \e nb3 to \e ne3.
+!>
     SUBROUTINE malloc_pd03(a,nb1,ne1,nb2,ne2,nb3,ne3)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3
-      REAL(SDK),POINTER :: a(:,:,:)
+      REAL(SDK),POINTER,INTENT(INOUT) :: a(:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SDK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
-          ELSE
-            bsize=REAL(SDK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ASSOCIATED(a) .AND. ALL((/nb1,nb2,nb3/) <= (/ne1,ne2,ne3/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0.0_SDK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
+        ELSE
+          bsize=REAL(SDK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_pd03
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 3 INTEGER pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -3556,31 +2439,30 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 3 pointer array of type INTEGER from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, and \e nb3 to \e ne3.
+!>
     SUBROUTINE malloc_pi03(a,nb1,ne1,nb2,ne2,nb3,ne3)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3
-      INTEGER(SNK),POINTER :: a(:,:,:)
+      INTEGER(SNK),POINTER,INTENT(INOUT) :: a(:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SNK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
-          ELSE
-            bsize=REAL(SNK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ASSOCIATED(a) .AND. ALL((/nb1,nb2,nb3/) <= (/ne1,ne2,ne3/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0_SNK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
+        ELSE
+          bsize=REAL(SNK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_pi03
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 3 LONG integer pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -3592,31 +2474,30 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 3 pointer array of type LONG integer from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, and \e nb3 to \e ne3.
+!>
     SUBROUTINE malloc_pl03(a,nb1,ne1,nb2,ne2,nb3,ne3)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3
-      INTEGER(SLK),POINTER :: a(:,:,:)
+      INTEGER(SLK),POINTER,INTENT(INOUT) :: a(:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SLK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
-          ELSE
-            bsize=REAL(SLK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ASSOCIATED(a) .AND. ALL((/nb1,nb2,nb3/) <= (/ne1,ne2,ne3/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0_SLK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
+        ELSE
+          bsize=REAL(SLK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_pl03
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 3 LOGICAL pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -3628,32 +2509,32 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 3 pointer array of type LOGICAL from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, and \e nb3 to \e ne3.
+!>
     SUBROUTINE malloc_pb03(a,nb1,ne1,nb2,ne2,nb3,ne3)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3
-      LOGICAL(SBK),POINTER :: a(:,:,:)
+      LOGICAL(SBK),POINTER,INTENT(INOUT) :: a(:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=.FALSE.
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
-          ELSE
-            bsize=REAL(SBK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ASSOCIATED(a) .AND. ALL((/nb1,nb2,nb3/) <= (/ne1,ne2,ne3/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=.FALSE.
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
+        ELSE
+          bsize=REAL(SBK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_pb03
 !
-!-------------------------------------------------------------------------------
-! Allocate four dimensional pointers
+!===============================================================================
+! Allocate four dimensional pointers with arbitrary lower bound index
+!===============================================================================
 !
 !> @brief Allocates rank 4 SINGLE precision pointer array.
 !> @param a dummy argument for pointer array to be allocated
@@ -3668,32 +2549,33 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 4 pointer array of type SINGLE precision from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, and \e nb4 to \e ne4.
+!>
     SUBROUTINE malloc_ps04(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4
-      REAL(SSK),POINTER :: a(:,:,:,:)
+      REAL(SSK),POINTER,INTENT(INOUT) :: a(:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SSK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
-          ELSE
-            bsize=REAL(SSK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ASSOCIATED(a) .AND. &
+        ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4), &
+          STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0.0_SSK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
+        ELSE
+          bsize=REAL(SSK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_ps04
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 4 DOUBLE precision pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -3707,32 +2589,33 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 4 pointer array of type DOUBLE precision from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, and \e nb4 to \e ne4.
+!>
     SUBROUTINE malloc_pd04(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4
-      REAL(SDK),POINTER :: a(:,:,:,:)
+      REAL(SDK),POINTER,INTENT(INOUT) :: a(:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SDK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
-          ELSE
-            bsize=REAL(SDK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ASSOCIATED(a) .AND. &
+        ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4), &
+          STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0.0_SDK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
+        ELSE
+          bsize=REAL(SDK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_pd04
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 4 INTEGER pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -3746,32 +2629,33 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 4 pointer array of type INTEGER from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, and \e nb4 to \e ne4.
+!>
     SUBROUTINE malloc_pi04(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4
-      INTEGER(SNK),POINTER :: a(:,:,:,:)
+      INTEGER(SNK),POINTER,INTENT(INOUT) :: a(:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SNK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
-          ELSE
-            bsize=REAL(SNK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ASSOCIATED(a) .AND. &
+        ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4), &
+          STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0_SNK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
+        ELSE
+          bsize=REAL(SNK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_pi04
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 4 LONG integer pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -3785,32 +2669,33 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 4 pointer array of type LONG integer from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, and \e nb4 to \e ne4.
+!>
     SUBROUTINE malloc_pl04(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4
-      INTEGER(SLK),POINTER :: a(:,:,:,:)
+      INTEGER(SLK),POINTER,INTENT(INOUT) :: a(:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SLK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
-          ELSE
-            bsize=REAL(SLK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ASSOCIATED(a) .AND. &
+        ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4), &
+          STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0_SLK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
+        ELSE
+          bsize=REAL(SLK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_pl04
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 4 INTEGER pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -3824,33 +2709,35 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 4 pointer array of type INTEGER from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, and \e nb4 to \e ne4.
+!>
     SUBROUTINE malloc_pb04(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4
-      LOGICAL(SBK),POINTER :: a(:,:,:,:)
+      LOGICAL(SBK),POINTER,INTENT(INOUT) :: a(:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=.FALSE.
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
-          ELSE
-            bsize=REAL(SBK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ASSOCIATED(a) .AND. &
+        ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4), &
+          STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=.FALSE.
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
+        ELSE
+          bsize=REAL(SBK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_pb04
 !
-!-------------------------------------------------------------------------------
-! Allocate five dimensional pointers
+!===============================================================================
+! Allocate five dimensional pointers with arbitrary lower bound index
+!===============================================================================
 !
 !> @brief Allocates rank 5 SINGLE precision pointer array.
 !> @param a dummy argument for pointer array to be allocated
@@ -3868,34 +2755,34 @@ MODULE Allocs
 !> Routine for allocating a rank 5 pointer array of type SINGLE precision from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
 !> and \e nb5 to \e ne5.
+!>
     SUBROUTINE malloc_ps05(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
-      REAL(SSK),POINTER :: a(:,:,:,:,:)
+      REAL(SSK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4 &
-                                                       .AND. nb5 <= ne5) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SSK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
-          ELSE
-            bsize=REAL(SSK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)+ &
-                   (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ASSOCIATED(a) .AND. &
+        ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5), &
+          STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0.0_SSK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
+        ELSE
+          bsize=REAL(SSK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)* &
+                 (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_ps05
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 5 DOUBLE precision pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -3912,34 +2799,34 @@ MODULE Allocs
 !> Routine for allocating a rank 5 pointer array of type DOUBLE precision from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
 !> and \e nb5 to \e ne5.
+!>
     SUBROUTINE malloc_pd05(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
-      REAL(SDK),POINTER :: a(:,:,:,:,:)
+      REAL(SDK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4 &
-                                                       .AND. nb5 <= ne5) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SDK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
-          ELSE
-            bsize=REAL(SDK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)+ &
-                   (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ASSOCIATED(a) .AND. &
+        ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5), &
+          STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0.0_SDK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
+        ELSE
+          bsize=REAL(SDK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)* &
+                 (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_pd05
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 5 INTEGER pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -3956,34 +2843,34 @@ MODULE Allocs
 !> Routine for allocating a rank 5 pointer array of type INTEGER from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
 !> and \e nb5 to \e ne5.
+!>
     SUBROUTINE malloc_pi05(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
-      INTEGER(SNK),POINTER :: a(:,:,:,:,:)
+      INTEGER(SNK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-        IF(.NOT.ASSOCIATED(a)) THEN
-          NULLIFY(a)
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4 &
-                                                       .AND. nb5 <= ne5) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SNK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
-          ELSE
-            bsize=REAL(SNK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)+ &
-                   (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ASSOCIATED(a) .AND. &
+        ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5), &
+          STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0_SNK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
+        ELSE
+          bsize=REAL(SNK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)* &
+                 (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_pi05
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 5 LONG integer pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -4000,34 +2887,34 @@ MODULE Allocs
 !> Routine for allocating a rank 5 pointer array of type LONG integer from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
 !> and \e nb5 to \e ne5.
+!>
     SUBROUTINE malloc_pl05(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
-      INTEGER(SLK),POINTER :: a(:,:,:,:,:)
+      INTEGER(SLK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-        IF(.NOT.ASSOCIATED(a)) THEN
-          NULLIFY(a)
-          IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4 &
-                                                       .AND. nb5 <= ne5) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SLK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
-          ELSE
-            bsize=REAL(SLK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)+ &
-                   (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ASSOCIATED(a) .AND. &
+        ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5), &
+          STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0_SLK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
+        ELSE
+          bsize=REAL(SLK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)* &
+                 (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_pl05
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 5 LOGICAL pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -4044,35 +2931,36 @@ MODULE Allocs
 !> Routine for allocating a rank 5 pointer array of type LOGICAL from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
 !> and \e nb5 to \e ne5.
+!>
     SUBROUTINE malloc_pb05(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
-      LOGICAL(SBK),POINTER :: a(:,:,:,:,:)
+      LOGICAL(SBK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4 &
-                                                       .AND. nb5 <= ne5) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=.FALSE.
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
-          ELSE
-            bsize=REAL(SBK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)+ &
-                   (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ASSOCIATED(a) .AND. &
+        ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5), &
+          STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=.FALSE.
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
+        ELSE
+          bsize=REAL(SBK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)* &
+                 (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_pb05
 !
-!-------------------------------------------------------------------------------
-! Allocate six dimensional pointers
+!===============================================================================
+! Allocate six dimensional pointers with arbitrary lower bound index
+!===============================================================================
 !
 !> @brief Allocates rank 6 SINGLE precision pointer array.
 !> @param a dummy argument for pointer array to be allocated
@@ -4092,37 +2980,36 @@ MODULE Allocs
 !> Routine for allocating a rank 6 pointer array of type SINGLE precision from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
 !> \e nb5 to \e ne5, and \e nb6 to \e ne6.
+!>
     SUBROUTINE malloc_ps06(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5,nb6,ne6)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
       INTEGER(SIK),INTENT(IN) :: nb6,ne6
-      REAL(SSK),POINTER :: a(:,:,:,:,:,:)
+      REAL(SSK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4 &
-                                       .AND. nb5 <= ne5 .AND. nb6 <= ne6) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-                     nb6:ne6),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SSK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
-          ELSE
-            bsize=REAL(SSK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)+ &
-                   (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)+ &
-                   (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ASSOCIATED(a) .AND. &
+        ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
+                   nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0.0_SSK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
+        ELSE
+          bsize=REAL(SSK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)* &
+                 (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)* &
+                 (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_ps06
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 6 DOUBLE precision pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -4141,37 +3028,36 @@ MODULE Allocs
 !> Routine for allocating a rank 6 pointer array of type DOUBLE precision from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
 !> \e nb5 to \e ne5, and \e nb6 to \e ne6.
+!>
     SUBROUTINE malloc_pd06(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5,nb6,ne6)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
       INTEGER(SIK),INTENT(IN) :: nb6,ne6
-      REAL(SDK),POINTER :: a(:,:,:,:,:,:)
+      REAL(SDK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4 &
-                                       .AND. nb5 <= ne5 .AND. nb6 <= ne6) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-                     nb6:ne6),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SDK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
-          ELSE
-            bsize=REAL(SDK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)+ &
-                   (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)+ &
-                   (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ASSOCIATED(a) .AND. &
+        ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
+                   nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0.0_SDK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
+        ELSE
+          bsize=REAL(SDK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)* &
+                 (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)* &
+                 (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_pd06
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 6 INTEGER pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -4190,37 +3076,36 @@ MODULE Allocs
 !> Routine for allocating a rank 6 pointer array of type INTEGER from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
 !> \e nb5 to \e ne5, and \e nb6 to \e ne6.
+!>
     SUBROUTINE malloc_pi06(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5,nb6,ne6)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
       INTEGER(SIK),INTENT(IN) :: nb6,ne6
-      INTEGER(SNK),POINTER :: a(:,:,:,:,:,:)
+      INTEGER(SNK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4 &
-                                       .AND. nb5 <= ne5 .AND. nb6 <= ne6) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-                     nb6:ne6),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SNK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
-          ELSE
-            bsize=REAL(SNK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)+ &
-                   (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)+ &
-                   (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ASSOCIATED(a) .AND. &
+        ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
+                   nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0_SNK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
+        ELSE
+          bsize=REAL(SNK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)* &
+                 (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)* &
+                 (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_pi06
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 6 INTEGER pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -4239,37 +3124,36 @@ MODULE Allocs
 !> Routine for allocating a rank 6 pointer array of type INTEGER from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
 !> \e nb5 to \e ne5, and \e nb6 to \e ne6.
+!>
     SUBROUTINE malloc_pl06(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5,nb6,ne6)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
       INTEGER(SIK),INTENT(IN) :: nb6,ne6
-      INTEGER(SLK),POINTER :: a(:,:,:,:,:,:)
+      INTEGER(SLK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4 &
-                                       .AND. nb5 <= ne5 .AND. nb6 <= ne6) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-                     nb6:ne6),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SLK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
-          ELSE
-            bsize=REAL(SLK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)+ &
-                   (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)+ &
-                   (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ASSOCIATED(a) .AND. &
+        ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
+                   nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0_SLK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
+        ELSE
+          bsize=REAL(SLK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)* &
+                 (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)* &
+                 (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_pl06
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 6 LOGICAL pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -4288,38 +3172,38 @@ MODULE Allocs
 !> Routine for allocating a rank 6 pointer array of type LOGICAL from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
 !> \e nb5 to \e ne5, and \e nb6 to \e ne6.
+!>
     SUBROUTINE malloc_pb06(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5,nb6,ne6)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
       INTEGER(SIK),INTENT(IN) :: nb6,ne6
-      LOGICAL(SBK),POINTER :: a(:,:,:,:,:,:)
+      LOGICAL(SBK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4 &
-                                       .AND. nb5 <= ne5 .AND. nb6 <= ne6) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-                     nb6:ne6),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=.FALSE.
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
-          ELSE
-            bsize=REAL(SBK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)+ &
-                   (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)+ &
-                   (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ASSOCIATED(a) .AND. &
+        ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
+                   nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=.FALSE.
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
+        ELSE
+          bsize=REAL(SBK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)* &
+                 (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)* &
+                 (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_pb06
 !
-!-------------------------------------------------------------------------------
-! Allocate seven dimensional pointers
+!===============================================================================
+! Allocate seven dimensional pointers with arbitrary lower bound index
+!===============================================================================
 !
 !> @brief Allocates rank 7 SINGLE precision pointer array.
 !> @param a dummy argument for pointer array to be allocated
@@ -4341,39 +3225,38 @@ MODULE Allocs
 !> Routine for allocating a rank 7 pointer array of type SINGLE precision from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
 !> \e nb5 to \e ne5, \e nb6 to \e ne6, and \e nb7 to \e ne7.
+!>
     SUBROUTINE malloc_ps07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
                            nb6,ne6,nb7,ne7)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
       INTEGER(SIK),INTENT(IN) :: nb6,ne6,nb7,ne7
-      REAL(SSK),POINTER :: a(:,:,:,:,:,:,:)
+      REAL(SSK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4 &
-                      .AND. nb5 <= ne5 .AND. nb6 <= ne6 .AND. nb7 <= ne7) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-                     nb6:ne6,nb7:ne7),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SSK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
-          ELSE
-            bsize=REAL(SSK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)+ &
-                   (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)+ &
-                   (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)+ &
-                   (REAL(ne7,SRK)-REAL(nb7,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ASSOCIATED(a) .AND. ALL((/nb1,nb2,nb3,nb4,nb5,nb6,nb7/) <= &
+        (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
+                   nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0.0_SSK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
+        ELSE
+          bsize=REAL(SSK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)* &
+                 (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)* &
+                 (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)* &
+                 (REAL(ne7,SRK)-REAL(nb7,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_ps07
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 7 DOUBLE precision pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -4394,39 +3277,38 @@ MODULE Allocs
 !> Routine for allocating a rank 7 pointer array of type DOUBLE precision from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
 !> \e nb5 to \e ne5, \e nb6 to \e ne6, and \e nb7 to \e ne7.
+!>
     SUBROUTINE malloc_pd07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
                            nb6,ne6,nb7,ne7)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
       INTEGER(SIK),INTENT(IN) :: nb6,ne6,nb7,ne7
-      REAL(SDK),POINTER :: a(:,:,:,:,:,:,:)
+      REAL(SDK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4 &
-                      .AND. nb5 <= ne5 .AND. nb6 <= ne6 .AND. nb7 <= ne7) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-                     nb6:ne6,nb7:ne7),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SDK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
-          ELSE
-            bsize=REAL(SDK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)+ &
-                   (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)+ &
-                   (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)+ &
-                   (REAL(ne7,SRK)-REAL(nb7,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ASSOCIATED(a) .AND. ALL((/nb1,nb2,nb3,nb4,nb5,nb6,nb7/) <= &
+        (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
+                   nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0.0_SDK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
+        ELSE
+          bsize=REAL(SDK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)* &
+                 (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)* &
+                 (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)* &
+                 (REAL(ne7,SRK)-REAL(nb7,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_pd07
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 7 INTEGER pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -4447,39 +3329,38 @@ MODULE Allocs
 !> Routine for allocating a rank 7 pointer array of type INTEGER from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
 !> \e nb5 to \e ne5, \e nb6 to \e ne6, and \e nb7 to \e ne7.
+!>
     SUBROUTINE malloc_pi07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
                            nb6,ne6,nb7,ne7)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
       INTEGER(SIK),INTENT(IN) :: nb6,ne6,nb7,ne7
-      INTEGER(SNK),POINTER :: a(:,:,:,:,:,:,:)
+      INTEGER(SNK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4 &
-                      .AND. nb5 <= ne5 .AND. nb6 <= ne6 .AND. nb7 <= ne7) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-                     nb6:ne6,nb7:ne7),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SNK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
-          ELSE
-            bsize=REAL(SNK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)+ &
-                   (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)+ &
-                   (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)+ &
-                   (REAL(ne7,SRK)-REAL(nb7,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ASSOCIATED(a) .AND. ALL((/nb1,nb2,nb3,nb4,nb5,nb6,nb7/) <= &
+        (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
+                   nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0_SNK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
+        ELSE
+          bsize=REAL(SNK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)* &
+                 (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)* &
+                 (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)* &
+                 (REAL(ne7,SRK)-REAL(nb7,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_pi07
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 7 LONG integer pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -4500,39 +3381,38 @@ MODULE Allocs
 !> Routine for allocating a rank 7 pointer array of type LONG integer from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
 !> \e nb5 to \e ne5, \e nb6 to \e ne6, and \e nb7 to \e ne7.
+!>
     SUBROUTINE malloc_pl07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
                            nb6,ne6,nb7,ne7)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
       INTEGER(SIK),INTENT(IN) :: nb6,ne6,nb7,ne7
-      INTEGER(SLK),POINTER :: a(:,:,:,:,:,:,:)
+      INTEGER(SLK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4 &
-                      .AND. nb5 <= ne5 .AND. nb6 <= ne6 .AND. nb7 <= ne7) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-                     nb6:ne6,nb7:ne7),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SLK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
-          ELSE
-            bsize=REAL(SLK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)+ &
-                   (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)+ &
-                   (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)+ &
-                   (REAL(ne7,SRK)-REAL(nb7,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ASSOCIATED(a) .AND. ALL((/nb1,nb2,nb3,nb4,nb5,nb6,nb7/) <= &
+        (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
+                   nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0_SLK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
+        ELSE
+          bsize=REAL(SLK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)* &
+                 (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)* &
+                 (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)* &
+                 (REAL(ne7,SRK)-REAL(nb7,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_pl07
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 7 LOGICAL pointer array.
 !> @param a dummy argument for pointer array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -4553,41 +3433,40 @@ MODULE Allocs
 !> Routine for allocating a rank 7 pointer array of type LOGICAL from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
 !> \e nb5 to \e ne5, \e nb6 to \e ne6, and \e nb7 to \e ne7.
+!>
     SUBROUTINE malloc_pb07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
                            nb6,ne6,nb7,ne7)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
       INTEGER(SIK),INTENT(IN) :: nb6,ne6,nb7,ne7
-      LOGICAL(SBK),POINTER :: a(:,:,:,:,:,:,:)
+      LOGICAL(SBK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ASSOCIATED(a)) THEN
-        NULLIFY(a)
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4 &
-                      .AND. nb5 <= ne5 .AND. nb6 <= ne6 .AND. nb7 <= ne7) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-                     nb6:ne6,nb7:ne7),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=.FALSE.
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
-          ELSE
-            bsize=REAL(SBK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)+ &
-                   (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)+ &
-                   (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)+ &
-                   (REAL(ne7,SRK)-REAL(nb7,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ASSOCIATED(a) .AND. ALL((/nb1,nb2,nb3,nb4,nb5,nb6,nb7/) <= &
+        (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
+                   nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=.FALSE.
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
+        ELSE
+          bsize=REAL(SBK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)* &
+                 (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)* &
+                 (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)* &
+                 (REAL(ne7,SRK)-REAL(nb7,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_pb07
 !
 !===============================================================================
-! The following section contains all procedures for allocating arrays from nb
-! to ne.
+! Allocate one dimensional arrays with arbitrary lower bound index
+!===============================================================================
 !
 !> @brief Allocates rank 1 SINGLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
@@ -4596,28 +3475,28 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 1 allocatable array of type SINGLE precision from
 !> \e nb1 to \e ne1.
+!>
     SUBROUTINE malloc_as01(a,nb1,ne1)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: a(:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(nb1 <= ne1) THEN
-          ALLOCATE(a(nb1:ne1),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SSK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
-          ELSE
-            bsize=REAL(SSK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ALLOCATED(a) .AND. nb1 <= ne1) THEN
+        ALLOCATE(a(nb1:ne1),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0.0_SSK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
+        ELSE
+          bsize=REAL(SSK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_as01
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 1 DOUBLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -4625,28 +3504,28 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 1 allocatable array of type DOUBLE precision from
 !> \e nb1 to \e ne1.
+!>
     SUBROUTINE malloc_ad01(a,nb1,ne1)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: a(:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(nb1 <= ne1) THEN
-          ALLOCATE(a(nb1:ne1),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SDK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
-          ELSE
-            bsize=REAL(SDK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ALLOCATED(a) .AND. nb1 <= ne1) THEN
+        ALLOCATE(a(nb1:ne1),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0.0_SDK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
+        ELSE
+          bsize=REAL(SDK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_ad01
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 1 INTEGER allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -4654,28 +3533,28 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 1 allocatable array of type INTEGER from
 !> \e nb1 to \e ne1.
+!>
     SUBROUTINE malloc_ai01(a,nb1,ne1)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: a(:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(nb1 <= ne1) THEN
-          ALLOCATE(a(nb1:ne1),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SNK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
-          ELSE
-            bsize=REAL(SNK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ALLOCATED(a) .AND. nb1 <= ne1) THEN
+        ALLOCATE(a(nb1:ne1),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0_SNK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
+        ELSE
+          bsize=REAL(SNK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_ai01
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 1 LONG integer allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -4683,28 +3562,28 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 1 allocatable array of type LONG integer from
 !> \e nb1 to \e ne1.
+!>
     SUBROUTINE malloc_al01(a,nb1,ne1)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: a(:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(nb1 <= ne1) THEN
-          ALLOCATE(a(nb1:ne1),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SLK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
-          ELSE
-            bsize=REAL(SLK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ALLOCATED(a) .AND. nb1 <= ne1) THEN
+        ALLOCATE(a(nb1:ne1),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0_SLK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
+        ELSE
+          bsize=REAL(SLK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_al01
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 1 LOGICAL allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -4712,29 +3591,30 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 1 allocatable array of type LOGICAL from
 !> \e nb1 to \e ne1.
+!>
     SUBROUTINE malloc_ab01(a,nb1,ne1)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1
       LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: a(:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(nb1 <= ne1) THEN
-          ALLOCATE(a(nb1:ne1),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=.FALSE.
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
-          ELSE
-            bsize=REAL(SBK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ALLOCATED(a) .AND. nb1 <= ne1) THEN
+        ALLOCATE(a(nb1:ne1),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=.FALSE.
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
+        ELSE
+          bsize=REAL(SBK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_ab01
 !
-!-------------------------------------------------------------------------------
-! Allocate two dimensional pointers
+!===============================================================================
+! Allocate two dimensional arrays with arbitrary lower bound index
+!===============================================================================
 !
 !> @brief Allocates rank 2 SINGLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
@@ -4745,29 +3625,29 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 2 allocatable array of type SINGLE precision from
 !> \e nb1 to \e ne1 and \e nb2 to \e ne2.
+!>
     SUBROUTINE malloc_as02(a,nb1,ne1,nb2,ne2)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: a(:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(nb1 <= ne1 .AND. nb2 <= ne2) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SSK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
-          ELSE
-            bsize=REAL(SSK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ALLOCATED(a) .AND. ALL((/nb1,nb2/) <= (/ne1,ne2/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0.0_SSK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
+        ELSE
+          bsize=REAL(SSK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_as02
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 2 DOUBLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -4777,29 +3657,29 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 2 allocatable array of type DOUBLE precision from
 !> \e nb1 to \e ne1 and \e nb2 to \e ne2.
+!>
     SUBROUTINE malloc_ad02(a,nb1,ne1,nb2,ne2)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: a(:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(nb1 <= ne1 .AND. nb2 <= ne2) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SDK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
-          ELSE
-            bsize=REAL(SDK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ALLOCATED(a) .AND. ALL((/nb1,nb2/) <= (/ne1,ne2/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0.0_SDK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
+        ELSE
+          bsize=REAL(SDK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_ad02
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 2 INTEGER allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -4809,29 +3689,29 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 2 allocatable array of type INTEGER from
 !> \e nb1 to \e ne1 and \e nb2 to \e ne2.
+!>
     SUBROUTINE malloc_ai02(a,nb1,ne1,nb2,ne2)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: a(:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(nb1 <= ne1 .AND. nb2 <= ne2) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SNK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
-          ELSE
-            bsize=REAL(SNK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ALLOCATED(a) .AND. ALL((/nb1,nb2/) <= (/ne1,ne2/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0_SNK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
+        ELSE
+          bsize=REAL(SNK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_ai02
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 2 LONG integer allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -4841,29 +3721,29 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 2 allocatable array of type LONG integer from
 !> \e nb1 to \e ne1 and \e nb2 to \e ne2.
+!>
     SUBROUTINE malloc_al02(a,nb1,ne1,nb2,ne2)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: a(:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(nb1 <= ne1 .AND. nb2 <= ne2) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SLK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
-          ELSE
-            bsize=REAL(SLK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ALLOCATED(a) .AND. ALL((/nb1,nb2/) <= (/ne1,ne2/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0_SLK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
+        ELSE
+          bsize=REAL(SLK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_al02
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 2 LOGICAL allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -4873,30 +3753,31 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 2 allocatable array of type LOGICAL from
 !> \e nb1 to \e ne1 and \e nb2 to \e ne2.
+!>
     SUBROUTINE malloc_ab02(a,nb1,ne1,nb2,ne2)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2
       LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: a(:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(nb1 <= ne1 .AND. nb2 <= ne2) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=.FALSE.
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
-          ELSE
-            bsize=REAL(SBK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ALLOCATED(a) .AND. ALL((/nb1,nb2/) <= (/ne1,ne2/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=.FALSE.
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
+        ELSE
+          bsize=REAL(SBK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_ab02
 !
-!-------------------------------------------------------------------------------
-! Allocate three dimensional pointers
+!===============================================================================
+! Allocate three dimensional arrays with arbitrary lower bound index
+!===============================================================================
 !
 !> @brief Allocates rank 3 SINGLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
@@ -4909,30 +3790,30 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 3 allocatable array of type SINGLE precision from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, and \e nb3 to \e ne3.
+!>
     SUBROUTINE malloc_as03(a,nb1,ne1,nb2,ne2,nb3,ne3)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SSK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
-          ELSE
-            bsize=REAL(SSK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ALLOCATED(a) .AND. ALL((/nb1,nb2,nb3/) <= (/ne1,ne2,ne3/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0.0_SSK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
+        ELSE
+          bsize=REAL(SSK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_as03
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 3 DOUBLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -4944,30 +3825,30 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 3 allocatable array of type DOUBLE precision from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, and \e nb3 to \e ne3.
+!>
     SUBROUTINE malloc_ad03(a,nb1,ne1,nb2,ne2,nb3,ne3)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SDK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
-          ELSE
-            bsize=REAL(SDK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ALLOCATED(a) .AND. ALL((/nb1,nb2,nb3/) <= (/ne1,ne2,ne3/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0.0_SDK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
+        ELSE
+          bsize=REAL(SDK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_ad03
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 3 INTEGER allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -4979,30 +3860,30 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 3 allocatable array of type INTEGER from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, and \e nb3 to \e ne3.
+!>
     SUBROUTINE malloc_ai03(a,nb1,ne1,nb2,ne2,nb3,ne3)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SNK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
-          ELSE
-            bsize=REAL(SNK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ALLOCATED(a) .AND. ALL((/nb1,nb2,nb3/) <= (/ne1,ne2,ne3/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0_SNK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
+        ELSE
+          bsize=REAL(SNK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_ai03
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 3 LONG integer allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -5014,30 +3895,30 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 3 allocatable array of type LONG integer from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, and \e nb3 to \e ne3.
+!>
     SUBROUTINE malloc_al03(a,nb1,ne1,nb2,ne2,nb3,ne3)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SLK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
-          ELSE
-            bsize=REAL(SLK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ALLOCATED(a) .AND. ALL((/nb1,nb2,nb3/) <= (/ne1,ne2,ne3/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0_SLK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
+        ELSE
+          bsize=REAL(SLK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_al03
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 3 LOGICAL allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -5049,31 +3930,32 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 3 allocatable array of type LOGICAL from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, and \e nb3 to \e ne3.
+!>
     SUBROUTINE malloc_ab03(a,nb1,ne1,nb2,ne2,nb3,ne3)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3
       LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=.FALSE.
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
-          ELSE
-            bsize=REAL(SBK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ALLOCATED(a) .AND. ALL((/nb1,nb2,nb3/) <= (/ne1,ne2,ne3/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=.FALSE.
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
+        ELSE
+          bsize=REAL(SBK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_ab03
 !
-!-------------------------------------------------------------------------------
-! Allocate four dimensional pointers
+!===============================================================================
+! Allocate four dimensional arrays with arbitrary lower bound index
+!===============================================================================
 !
 !> @brief Allocates rank 4 SINGLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
@@ -5088,31 +3970,33 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 4 allocatable array of type SINGLE precision from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, and \e nb4 to \e ne4.
+!>
     SUBROUTINE malloc_as04(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SSK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
-          ELSE
-            bsize=REAL(SSK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ALLOCATED(a) .AND. &
+        ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4), &
+          STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0.0_SSK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
+        ELSE
+          bsize=REAL(SSK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_as04
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 4 DOUBLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -5126,31 +4010,33 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 4 allocatable array of type DOUBLE precision from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, and \e nb4 to \e ne4.
+!>
     SUBROUTINE malloc_ad04(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SDK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
-          ELSE
-            bsize=REAL(SDK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ALLOCATED(a) .AND. &
+        ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4), &
+          STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0.0_SDK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
+        ELSE
+          bsize=REAL(SDK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_ad04
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 4 INTEGER allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -5164,31 +4050,33 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 4 allocatable array of type INTEGER from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, and \e nb4 to \e ne4.
+!>
     SUBROUTINE malloc_ai04(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SNK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
-          ELSE
-            bsize=REAL(SNK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ALLOCATED(a) .AND. &
+        ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4), &
+          STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0_SNK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
+        ELSE
+          bsize=REAL(SNK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_ai04
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 4 LONG integer allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -5202,31 +4090,33 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 4 allocatable array of type LONG integer from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, and \e nb4 to \e ne4.
+!>
     SUBROUTINE malloc_al04(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SLK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
-          ELSE
-            bsize=REAL(SLK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ALLOCATED(a) .AND. &
+        ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4), &
+          STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0_SLK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
+        ELSE
+          bsize=REAL(SLK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_al04
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 4 INTEGER allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -5240,32 +4130,35 @@ MODULE Allocs
 !>
 !> Routine for allocating a rank 4 allocatable array of type INTEGER from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, and \e nb4 to \e ne4.
+!>
     SUBROUTINE malloc_ab04(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4
       LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=.FALSE.
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
-          ELSE
-            bsize=REAL(SBK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ALLOCATED(a) .AND. &
+        ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4), &
+          STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=.FALSE.
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
+        ELSE
+          bsize=REAL(SBK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_ab04
 !
-!-------------------------------------------------------------------------------
-! Allocate five dimensional pointers
+!===============================================================================
+! Allocate five dimensional arrays with arbitrary lower bound index
+!===============================================================================
 !
 !> @brief Allocates rank 5 SINGLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
@@ -5283,33 +4176,34 @@ MODULE Allocs
 !> Routine for allocating a rank 5 allocatable array of type SINGLE precision from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
 !> and \e nb5 to \e ne5.
+!>
     SUBROUTINE malloc_as05(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4 &
-                                                       .AND. nb5 <= ne5) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SSK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
-          ELSE
-            bsize=REAL(SSK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)+ &
-                   (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ALLOCATED(a) .AND. &
+        ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5), &
+          STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0.0_SSK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
+        ELSE
+          bsize=REAL(SSK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)* &
+                 (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_as05
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 5 DOUBLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -5326,33 +4220,34 @@ MODULE Allocs
 !> Routine for allocating a rank 5 allocatable array of type DOUBLE precision from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
 !> and \e nb5 to \e ne5.
+!>
     SUBROUTINE malloc_ad05(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4 &
-                                                       .AND. nb5 <= ne5) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SDK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
-          ELSE
-            bsize=REAL(SDK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)+ &
-                   (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ALLOCATED(a) .AND. &
+        ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5), &
+          STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0.0_SDK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
+        ELSE
+          bsize=REAL(SDK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)* &
+                 (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_ad05
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 5 INTEGER allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -5369,33 +4264,34 @@ MODULE Allocs
 !> Routine for allocating a rank 5 allocatable array of type INTEGER from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
 !> and \e nb5 to \e ne5.
+!>
     SUBROUTINE malloc_ai05(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4 &
-                                                        .AND. nb5 <= ne5) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SNK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
-          ELSE
-            bsize=REAL(SNK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)+ &
-                   (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ALLOCATED(a) .AND. &
+        ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5), &
+          STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0_SNK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
+        ELSE
+          bsize=REAL(SNK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)* &
+                 (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_ai05
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 5 LONG integer allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -5412,33 +4308,34 @@ MODULE Allocs
 !> Routine for allocating a rank 5 allocatable array of type LONG integer from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
 !> and \e nb5 to \e ne5.
+!>
     SUBROUTINE malloc_al05(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-        IF(.NOT.ALLOCATED(a)) THEN
-          IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4 &
-                                                       .AND. nb5 <= ne5) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SLK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
-          ELSE
-            bsize=REAL(SLK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)+ &
-                   (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ALLOCATED(a) .AND. &
+        ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5), &
+          STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0_SLK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
+        ELSE
+          bsize=REAL(SLK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)* &
+                 (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_al05
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 5 LOGICAL allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -5455,34 +4352,36 @@ MODULE Allocs
 !> Routine for allocating a rank 5 allocatable array of type LOGICAL from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
 !> and \e nb5 to \e ne5.
+!>
     SUBROUTINE malloc_ab05(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
       LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4 &
-                                                       .AND. nb5 <= ne5) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=.FALSE.
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
-          ELSE
-            bsize=REAL(SBK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)+ &
-                   (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ALLOCATED(a) .AND. &
+        ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5), &
+          STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=.FALSE.
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
+        ELSE
+          bsize=REAL(SBK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)* &
+                 (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_ab05
 !
-!-------------------------------------------------------------------------------
-! Allocate six dimensional pointers
+!===============================================================================
+! Allocate six dimensional arrays with arbitrary lower bound index
+!===============================================================================
 !
 !> @brief Allocates rank 6 SINGLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
@@ -5502,36 +4401,36 @@ MODULE Allocs
 !> Routine for allocating a rank 6 allocatable array of type SINGLE precision from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
 !> \e nb5 to \e ne5, and \e nb6 to \e ne6.
+!>
     SUBROUTINE malloc_as06(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5,nb6,ne6)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
       INTEGER(SIK),INTENT(IN) :: nb6,ne6
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4 &
-                                       .AND. nb5 <= ne5 .AND. nb6 <= ne6) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-                     nb6:ne6),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SSK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
-          ELSE
-            bsize=REAL(SSK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)+ &
-                   (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)+ &
-                   (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ALLOCATED(a) .AND. &
+        ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
+                   nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0.0_SSK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
+        ELSE
+          bsize=REAL(SSK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)* &
+                 (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)* &
+                 (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_as06
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 6 DOUBLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -5550,36 +4449,36 @@ MODULE Allocs
 !> Routine for allocating a rank 6 allocatable array of type DOUBLE precision from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
 !> \e nb5 to \e ne5, and \e nb6 to \e ne6.
+!>
     SUBROUTINE malloc_ad06(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5,nb6,ne6)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
       INTEGER(SIK),INTENT(IN) :: nb6,ne6
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4 &
-                                       .AND. nb5 <= ne5 .AND. nb6 <= ne6) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-                     nb6:ne6),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SDK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
-          ELSE
-            bsize=REAL(SDK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)+ &
-                   (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)+ &
-                   (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ALLOCATED(a) .AND. &
+        ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
+                   nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0.0_SDK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
+        ELSE
+          bsize=REAL(SDK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)* &
+                 (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)* &
+                 (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_ad06
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 6 INTEGER allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -5598,36 +4497,36 @@ MODULE Allocs
 !> Routine for allocating a rank 6 allocatable array of type INTEGER from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
 !> \e nb5 to \e ne5, and \e nb6 to \e ne6.
+!>
     SUBROUTINE malloc_ai06(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5,nb6,ne6)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
       INTEGER(SIK),INTENT(IN) :: nb6,ne6
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4 &
-                                       .AND. nb5 <= ne5 .AND. nb6 <= ne6) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-                     nb6:ne6),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SNK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
-          ELSE
-            bsize=REAL(SNK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)+ &
-                   (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)+ &
-                   (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ALLOCATED(a) .AND. &
+        ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
+                   nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0_SNK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
+        ELSE
+          bsize=REAL(SNK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)* &
+                 (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)* &
+                 (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_ai06
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 6 INTEGER allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -5646,36 +4545,36 @@ MODULE Allocs
 !> Routine for allocating a rank 6 allocatable array of type INTEGER from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
 !> \e nb5 to \e ne5, and \e nb6 to \e ne6.
+!>
     SUBROUTINE malloc_al06(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5,nb6,ne6)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
       INTEGER(SIK),INTENT(IN) :: nb6,ne6
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4 &
-                                       .AND. nb5 <= ne5 .AND. nb6 <= ne6) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-                     nb6:ne6),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SLK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
-          ELSE
-            bsize=REAL(SLK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)+ &
-                   (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)+ &
-                   (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ALLOCATED(a) .AND. &
+        ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
+                   nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0_SLK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
+        ELSE
+          bsize=REAL(SLK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)* &
+                 (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)* &
+                 (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_al06
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 6 LOGICAL allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -5694,37 +4593,38 @@ MODULE Allocs
 !> Routine for allocating a rank 6 allocatable array of type LOGICAL from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
 !> \e nb5 to \e ne5, and \e nb6 to \e ne6.
+!>
     SUBROUTINE malloc_ab06(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5,nb6,ne6)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
       INTEGER(SIK),INTENT(IN) :: nb6,ne6
       LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4 &
-                                       .AND. nb5 <= ne5 .AND. nb6 <= ne6) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-                     nb6:ne6),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=.FALSE.
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
-          ELSE
-            bsize=REAL(SBK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)+ &
-                   (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)+ &
-                   (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ALLOCATED(a) .AND. &
+        ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
+                   nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=.FALSE.
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
+        ELSE
+          bsize=REAL(SBK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)* &
+                 (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)* &
+                 (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_ab06
 !
-!-------------------------------------------------------------------------------
-! Allocate seven dimensional pointers
+!===============================================================================
+! Allocate seven dimensional arrays with arbitrary lower bound index
+!===============================================================================
 !
 !> @brief Allocates rank 7 SINGLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
@@ -5746,38 +4646,38 @@ MODULE Allocs
 !> Routine for allocating a rank 7 allocatable array of type SINGLE precision from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
 !> \e nb5 to \e ne5, \e nb6 to \e ne6, and \e nb7 to \e ne7.
+!>
     SUBROUTINE malloc_as07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
                            nb6,ne6,nb7,ne7)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
       INTEGER(SIK),INTENT(IN) :: nb6,ne6,nb7,ne7
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4 &
-                      .AND. nb5 <= ne5 .AND. nb6 <= ne6 .AND. nb7 <= ne7) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-                     nb6:ne6,nb7:ne7),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SSK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
-          ELSE
-            bsize=REAL(SSK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)+ &
-                   (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)+ &
-                   (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)+ &
-                   (REAL(ne7,SRK)-REAL(nb7,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ALLOCATED(a) .AND. ALL((/nb1,nb2,nb3,nb4,nb5,nb6,nb7/) <= &
+        (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
+                   nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0.0_SSK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
+        ELSE
+          bsize=REAL(SSK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)* &
+                 (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)* &
+                 (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)* &
+                 (REAL(ne7,SRK)-REAL(nb7,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_as07
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 7 DOUBLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -5798,38 +4698,38 @@ MODULE Allocs
 !> Routine for allocating a rank 7 allocatable array of type DOUBLE precision from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
 !> \e nb5 to \e ne5, \e nb6 to \e ne6, and \e nb7 to \e ne7.
+!>
     SUBROUTINE malloc_ad07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
                            nb6,ne6,nb7,ne7)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
       INTEGER(SIK),INTENT(IN) :: nb6,ne6,nb7,ne7
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4 &
-                      .AND. nb5 <= ne5 .AND. nb6 <= ne6 .AND. nb7 <= ne7) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-                     nb6:ne6,nb7:ne7),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0.0_SDK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
-          ELSE
-            bsize=REAL(SDK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)+ &
-                   (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)+ &
-                   (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)+ &
-                   (REAL(ne7,SRK)-REAL(nb7,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ALLOCATED(a) .AND. ALL((/nb1,nb2,nb3,nb4,nb5,nb6,nb7/) <= &
+        (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
+                   nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0.0_SDK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
+        ELSE
+          bsize=REAL(SDK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)* &
+                 (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)* &
+                 (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)* &
+                 (REAL(ne7,SRK)-REAL(nb7,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_ad07
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 7 INTEGER allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -5850,38 +4750,38 @@ MODULE Allocs
 !> Routine for allocating a rank 7 allocatable array of type INTEGER from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
 !> \e nb5 to \e ne5, \e nb6 to \e ne6, and \e nb7 to \e ne7.
+!>
     SUBROUTINE malloc_ai07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
                            nb6,ne6,nb7,ne7)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
       INTEGER(SIK),INTENT(IN) :: nb6,ne6,nb7,ne7
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4 &
-                      .AND. nb5 <= ne5 .AND. nb6 <= ne6 .AND. nb7 <= ne7) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-                     nb6:ne6,nb7:ne7),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SNK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
-          ELSE
-            bsize=REAL(SNK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)+ &
-                   (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)+ &
-                   (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)+ &
-                   (REAL(ne7,SRK)-REAL(nb7,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ALLOCATED(a) .AND. ALL((/nb1,nb2,nb3,nb4,nb5,nb6,nb7/) <= &
+        (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
+                   nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0_SNK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
+        ELSE
+          bsize=REAL(SNK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)* &
+                 (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)* &
+                 (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)* &
+                 (REAL(ne7,SRK)-REAL(nb7,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_ai07
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 7 LONG integer allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -5902,38 +4802,38 @@ MODULE Allocs
 !> Routine for allocating a rank 7 allocatable array of type LONG integer from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
 !> \e nb5 to \e ne5, \e nb6 to \e ne6, and \e nb7 to \e ne7.
+!>
     SUBROUTINE malloc_al07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
                            nb6,ne6,nb7,ne7)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
       INTEGER(SIK),INTENT(IN) :: nb6,ne6,nb7,ne7
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4 &
-                      .AND. nb5 <= ne5 .AND. nb6 <= ne6 .AND. nb7 <= ne7) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-                     nb6:ne6,nb7:ne7),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=0_SLK
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
-          ELSE
-            bsize=REAL(SLK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)+ &
-                   (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)+ &
-                   (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)+ &
-                   (REAL(ne7,SRK)-REAL(nb7,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ALLOCATED(a) .AND. ALL((/nb1,nb2,nb3,nb4,nb5,nb6,nb7/) <= &
+        (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
+                   nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=0_SLK
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
+        ELSE
+          bsize=REAL(SLK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)* &
+                 (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)* &
+                 (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)* &
+                 (REAL(ne7,SRK)-REAL(nb7,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_al07
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Allocates rank 7 LOGICAL allocatable array.
 !> @param a dummy argument for allocatable array to be allocated
 !> @param nb1 beginning index of first dimension
@@ -5954,982 +4854,1121 @@ MODULE Allocs
 !> Routine for allocating a rank 7 allocatable array of type LOGICAL from
 !> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
 !> \e nb5 to \e ne5, \e nb6 to \e ne6, and \e nb7 to \e ne7.
+!>
     SUBROUTINE malloc_ab07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
                            nb6,ne6,nb7,ne7)
       INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
       INTEGER(SIK),INTENT(IN) :: nb6,ne6,nb7,ne7
       LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
       INTEGER(SIK) :: alloc_err
       REAL(SRK) :: mysize,bsize
 
-      IF(.NOT.ALLOCATED(a)) THEN
-        IF(nb1 <= ne1 .AND. nb2 <= ne2 .AND. nb3 <= ne3 .AND. nb4 <= ne4 &
-                      .AND. nb5 <= ne5 .AND. nb6 <= ne6 .AND. nb7 <= ne7) THEN
-          ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-                     nb6:ne6,nb7:ne7),STAT=alloc_err)
-          IF(alloc_err == 0_SIK) THEN
-            a=.FALSE.
-            Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
-          ELSE
-            bsize=REAL(SBK,SRK)
-            mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)+ &
-                   (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)+ &
-                   (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)+ &
-                   (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)+ &
-                   (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)+ &
-                   (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)+ &
-                   (REAL(ne7,SRK)-REAL(nb7,SRK)+1_SRK)*bsize
-            CALL AllocsError(alloc_err,mysize)
-          ENDIF
+      IF(.NOT.ALLOCATED(a) .AND. ALL((/nb1,nb2,nb3,nb4,nb5,nb6,nb7/) <= &
+        (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
+        ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
+                   nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
+          a=.FALSE.
+          Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
+        ELSE
+          bsize=REAL(SBK,SRK)
+          mysize=(REAL(ne1,SRK)-REAL(nb1,SRK)+1_SRK)* &
+                 (REAL(ne2,SRK)-REAL(nb2,SRK)+1_SRK)* &
+                 (REAL(ne3,SRK)-REAL(nb3,SRK)+1_SRK)* &
+                 (REAL(ne4,SRK)-REAL(nb4,SRK)+1_SRK)* &
+                 (REAL(ne5,SRK)-REAL(nb5,SRK)+1_SRK)* &
+                 (REAL(ne6,SRK)-REAL(nb6,SRK)+1_SRK)* &
+                 (REAL(ne7,SRK)-REAL(nb7,SRK)+1_SRK)*bsize
+          CALL AllocsError(alloc_err,alloc_errmsg,mysize)
         ENDIF
       ENDIF
     ENDSUBROUTINE malloc_ab07
 !
 !===============================================================================
-! The following section contains all procedures for deallocating pointers from 1
-! to n.
+! Deallocate one dimensional pointers
+!===============================================================================
 !
 !> @brief Deallocates rank 1 SINGLE precision pointer array.
 !> @param a dummy argument for pointer array to be deallocated
 !>
 !> Routine for deallocating a rank 1 pointer array of type SINGLE precision.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_ps1(a)
-      REAL(SSK),POINTER :: a(:)
-      INTEGER(SIK) :: alloc_err,mysize
+      REAL(SSK),POINTER,INTENT(INOUT) :: a(:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SSK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_ps1
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 1 DOUBLE precision pointer array.
 !> @param a dummy argument for pointer array to be deallocated
 !>
 !> Routine for deallocating a rank 1 pointer array of type DOUBLE precision.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_pd1(a)
-      REAL(SDK),POINTER :: a(:)
-      INTEGER(SIK) :: alloc_err,mysize
+      REAL(SDK),POINTER,INTENT(INOUT) :: a(:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SDK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_pd1
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 1 INTEGER pointer array.
 !> @param a dummy argument for pointer array to be deallocated
 !>
 !> Routine for deallocating a rank 1 pointer array of type INTEGER.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_pi1(a)
-      INTEGER(SNK),POINTER :: a(:)
-      INTEGER(SIK) :: alloc_err,mysize
+      INTEGER(SNK),POINTER,INTENT(INOUT) :: a(:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SNK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_pi1
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 1 LONG integer pointer array.
 !> @param a dummy argument for pointer array to be deallocated
 !>
 !> Routine for deallocating a rank 1 pointer array of type LONG integer.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_pl1(a)
-      INTEGER(SLK),POINTER :: a(:)
-      INTEGER(SIK) :: alloc_err,mysize
+      INTEGER(SLK),POINTER,INTENT(INOUT) :: a(:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SLK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_pl1
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 1 LOGICAL pointer array.
 !> @param a dummy argument for pointer array to be deallocated
 !>
 !> Routine for deallocating a rank 1 pointer array of type LOGICAL.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_pb1(a)
-      LOGICAL(SBK),POINTER :: a(:)
-      INTEGER(SIK) :: alloc_err,mysize
+      LOGICAL(SBK),POINTER,INTENT(INOUT) :: a(:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SBK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_pb1
 !
-!-------------------------------------------------------------------------------
-! Allocate two dimensional pointers
+!===============================================================================
+! Deallocate two dimensional pointers
+!===============================================================================
 !
 !> @brief Deallocates rank 2 SINGLE precision pointer array.
 !> @param a dummy argument for pointer array to be deallocated
 !>
 !> Routine for deallocating a rank 2 pointer array of type SINGLE precision.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_ps2(a)
-      REAL(SSK),POINTER :: a(:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      REAL(SSK),POINTER,INTENT(INOUT) :: a(:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SSK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_ps2
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 2 DOUBLE precision pointer array.
 !> @param a dummy argument for pointer array to be deallocated
 !>
 !> Routine for deallocating a rank 2 pointer array of type DOUBLE precision.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_pd2(a)
-      REAL(SDK),POINTER :: a(:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      REAL(SDK),POINTER,INTENT(INOUT) :: a(:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SDK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_pd2
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 2 INTEGER pointer array.
 !> @param a dummy argument for pointer array to be deallocated
 !>
 !> Routine for deallocating a rank 2 pointer array of type INTEGER.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_pi2(a)
-      INTEGER(SNK),POINTER :: a(:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      INTEGER(SNK),POINTER,INTENT(INOUT) :: a(:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SNK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_pi2
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 2 LONG integer pointer array.
 !> @param a dummy argument for pointer array to be deallocated
 !>
 !> Routine for deallocating a rank 2 pointer array of type LONG integer.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_pl2(a)
-      INTEGER(SLK),POINTER :: a(:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      INTEGER(SLK),POINTER,INTENT(INOUT) :: a(:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SLK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_pl2
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 2 LOGICAL pointer array.
 !> @param a dummy argument for pointer array to be deallocated
 !>
 !> Routine for deallocating a rank 2 pointer array of type LOGICAL.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_pb2(a)
-      LOGICAL(SBK),POINTER :: a(:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      LOGICAL(SBK),POINTER,INTENT(INOUT) :: a(:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SBK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_pb2
 !
-!-------------------------------------------------------------------------------
-! Allocate three dimensional pointers
+!===============================================================================
+! Deallocate three dimensional pointers
+!===============================================================================
 !
 !> @brief Deallocates rank 3 SINGLE precision pointer array.
 !> @param a dummy argument for pointer array to be deallocated
 !>
 !> Routine for deallocating a rank 3 pointer array of type SINGLE precision.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_ps3(a)
-      REAL(SSK),POINTER :: a(:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      REAL(SSK),POINTER,INTENT(INOUT) :: a(:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SSK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_ps3
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 3 DOUBLE precision pointer array.
 !> @param a dummy argument for pointer array to be deallocated
 !>
 !> Routine for deallocating a rank 3 pointer array of type DOUBLE precision.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_pd3(a)
-      REAL(SDK),POINTER :: a(:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      REAL(SDK),POINTER,INTENT(INOUT) :: a(:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SDK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_pd3
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 3 INTEGER pointer array.
 !> @param a dummy argument for pointer array to be deallocated
 !>
 !> Routine for deallocating a rank 3 pointer array of type INTEGER.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_pi3(a)
-      INTEGER(SNK),POINTER :: a(:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      INTEGER(SNK),POINTER,INTENT(INOUT) :: a(:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SNK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_pi3
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 3 LONG integer pointer array.
 !> @param a dummy argument for pointer array to be deallocated
 !>
 !> Routine for deallocating a rank 3 pointer array of type LONG integer.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_pl3(a)
-      INTEGER(SLK),POINTER :: a(:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      INTEGER(SLK),POINTER,INTENT(INOUT) :: a(:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SLK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_pl3
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 3 LOGICAL pointer array.
 !> @param a dummy argument for pointer array to be deallocated
 !>
 !> Routine for deallocating a rank 3 pointer array of type LOGICAL.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_pb3(a)
-      LOGICAL(SBK),POINTER :: a(:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      LOGICAL(SBK),POINTER,INTENT(INOUT) :: a(:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SBK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_pb3
 !
-!-------------------------------------------------------------------------------
-! Allocate four dimensional pointers
+!===============================================================================
+! Deallocate four dimensional pointers
+!===============================================================================
 !
 !> @brief Deallocates rank 4 SINGLE precision pointer array.
 !> @param a dummy argument for pointer array to be deallocated
 !>
 !> Routine for deallocating a rank 4 pointer array of type SINGLE precision.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_ps4(a)
-      REAL(SSK),POINTER :: a(:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      REAL(SSK),POINTER,INTENT(INOUT) :: a(:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SSK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_ps4
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 4 DOUBLE precision pointer array.
 !> @param a dummy argument for pointer array to be deallocated
 !>
 !> Routine for deallocating a rank 4 pointer array of type DOUBLE precision.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_pd4(a)
-      REAL(SDK),POINTER :: a(:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      REAL(SDK),POINTER,INTENT(INOUT) :: a(:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SDK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_pd4
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 4 INTEGER pointer array.
 !> @param a dummy argument for pointer array to be deallocated
 !>
 !> Routine for deallocating a rank 4 pointer array of type INTEGER.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_pi4(a)
-      INTEGER(SNK),POINTER :: a(:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      INTEGER(SNK),POINTER,INTENT(INOUT) :: a(:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SNK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_pi4
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 4 LONG integer pointer array.
 !> @param a dummy argument for pointer array to be deallocated
 !>
 !> Routine for deallocating a rank 4 pointer array of type LONG integer.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_pl4(a)
-      INTEGER(SLK),POINTER :: a(:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      INTEGER(SLK),POINTER,INTENT(INOUT) :: a(:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SLK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_pl4
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 4 LOGICAL pointer array.
 !> @param a dummy argument for pointer array to be deallocated
 !>
 !> Routine for deallocating a rank 4 pointer array of type LOGICAL.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_pb4(a)
-      LOGICAL(SBK),POINTER :: a(:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      LOGICAL(SBK),POINTER,INTENT(INOUT) :: a(:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SBK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_pb4
 !
-!-------------------------------------------------------------------------------
-! Allocate five dimensional pointers
+!===============================================================================
+! Deallocate five dimensional pointers
+!===============================================================================
 !
 !> @brief Deallocates rank 5 SINGLE precision pointer array.
 !> @param a dummy argument for pointer array to be deallocated
 !>
 !> Routine for deallocating a rank 5 pointer array of type SINGLE precision.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_ps5(a)
-      REAL(SSK),POINTER :: a(:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      REAL(SSK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SSK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_ps5
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 5 DOUBLE precision pointer array.
 !> @param a dummy argument for pointer array to be deallocated
 !>
 !> Routine for deallocating a rank 5 pointer array of type DOUBLE precision.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_pd5(a)
-      REAL(SDK),POINTER :: a(:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      REAL(SDK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SDK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_pd5
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 5 INTEGER pointer array.
 !> @param a dummy argument for pointer array to be deallocated
 !>
 !> Routine for deallocating a rank 5 pointer array of type INTEGER.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_pi5(a)
-      INTEGER(SNK),POINTER :: a(:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      INTEGER(SNK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SNK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_pi5
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 5 LONG integer pointer array.
 !> @param a dummy argument for pointer array to be deallocated
 !>
 !> Routine for deallocating a rank 5 pointer array of type LONG integer.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_pl5(a)
-      INTEGER(SLK),POINTER :: a(:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      INTEGER(SLK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SLK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_pl5
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 5 LOGICAL pointer array.
 !> @param a dummy argument for pointer array to be deallocated
 !>
 !> Routine for deallocating a rank 5 pointer array of type LOGICAL.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_pb5(a)
-      LOGICAL(SBK),POINTER :: a(:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      LOGICAL(SBK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SBK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_pb5
 !
-!-------------------------------------------------------------------------------
-! Allocate six dimensional pointers
+!===============================================================================
+! Deallocate six dimensional pointers
+!===============================================================================
 !
 !> @brief Deallocates rank 6 SINGLE precision pointer array.
 !> @param a dummy argument for pointer array to be deallocated
 !>
 !> Routine for deallocating a rank 6 pointer array of type SINGLE precision.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_ps6(a)
-      REAL(SSK),POINTER :: a(:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      REAL(SSK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SSK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_ps6
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 6 DOUBLE precision pointer array.
 !> @param a dummy argument for pointer array to be deallocated
 !>
 !> Routine for deallocating a rank 6 pointer array of type DOUBLE precision.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_pd6(a)
-      REAL(SDK),POINTER :: a(:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      REAL(SDK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SDK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_pd6
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 6 INTEGER pointer array.
 !> @param a dummy argument for pointer array to be deallocated
 !>
 !> Routine for deallocating a rank 6 pointer array of type INTEGER.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_pi6(a)
-      INTEGER(SNK),POINTER :: a(:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      INTEGER(SNK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SNK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_pi6
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 6 LONG integer pointer array.
 !> @param a dummy argument for pointer array to be deallocated
 !>
 !> Routine for deallocating a rank 6 pointer array of type LONG integer.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_pl6(a)
-      INTEGER(SLK),POINTER :: a(:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      INTEGER(SLK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SLK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_pl6
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 6 LOGICAL pointer array.
 !> @param a dummy argument for pointer array to be deallocated
 !>
 !> Routine for deallocating a rank 6 pointer array of type LOGICAL.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_pb6(a)
-      LOGICAL(SBK),POINTER :: a(:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      LOGICAL(SBK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SBK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_pb6
 !
-!-------------------------------------------------------------------------------
-! Allocate seven dimensional pointers
+!===============================================================================
+! Deallocate seven dimensional pointers
+!===============================================================================
 !
 !> @brief Deallocates rank 7 SINGLE precision pointer array.
 !> @param a dummy argument for pointer array to be deallocated
 !>
 !> Routine for deallocating a rank 7 pointer array of type SINGLE precision.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_ps7(a)
-      REAL(SSK),POINTER :: a(:,:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      REAL(SSK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SSK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_ps7
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 7 DOUBLE precision pointer array.
 !> @param a dummy argument for pointer array to be deallocated
 !>
 !> Routine for deallocating a rank 7 pointer array of type DOUBLE precision.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_pd7(a)
-      REAL(SDK),POINTER :: a(:,:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      REAL(SDK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SDK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_pd7
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 7 INTEGER pointer array.
 !> @param a dummy argument for pointer array to be deallocated
 !>
 !> Routine for deallocating a rank 7 pointer array of type INTEGER.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_pi7(a)
-      INTEGER(SNK),POINTER :: a(:,:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      INTEGER(SNK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SNK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_pi7
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 7 LONG integer pointer array.
 !> @param a dummy argument for pointer array to be deallocated
 !>
 !> Routine for deallocating a rank 7 pointer array of type LONG integer.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_pl7(a)
-      INTEGER(SLK),POINTER :: a(:,:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      INTEGER(SLK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SLK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_pl7
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 7 LOGICAL pointer array.
 !> @param a dummy argument for pointer array to be deallocated
 !>
 !> Routine for deallocating a rank 7 pointer array of type LOGICAL.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_pb7(a)
-      LOGICAL(SBK),POINTER :: a(:,:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      LOGICAL(SBK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SBK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_pb7
 !
 !===============================================================================
-! The following section contains all procedures for deallocating arrays from 1
-! to n.
+! Deallocate one dimensional arrays
+!===============================================================================
 !
 !> @brief Deallocates rank 1 SINGLE precision allocatable array.
 !> @param a dummy argument for pointer array to be deallocated
 !>
 !> Routine for deallocating a rank 1 allocatable array of type SINGLE precision.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_as1(a)
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: a(:)
-      INTEGER(SIK) :: alloc_err,mysize
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SSK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_as1
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 1 DOUBLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be deallocated
 !>
 !> Routine for deallocating a rank 1 allocatable array of type DOUBLE precision.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_ad1(a)
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: a(:)
-      INTEGER(SIK) :: alloc_err,mysize
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SDK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_ad1
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 1 INTEGER allocatable array.
 !> @param a dummy argument for allocatable array to be deallocated
 !>
 !> Routine for deallocating a rank 1 allocatable array of type INTEGER.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_ai1(a)
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: a(:)
-      INTEGER(SIK) :: alloc_err,mysize
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SNK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_ai1
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 1 LONG integer allocatable array.
 !> @param a dummy argument for allocatable array to be deallocated
 !>
 !> Routine for deallocating a rank 1 allocatable array of type LONG integer.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_al1(a)
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: a(:)
-      INTEGER(SIK) :: alloc_err,mysize
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SLK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_al1
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 1 LOGICAL allocatable array.
 !> @param a dummy argument for allocatable array to be deallocated
 !>
 !> Routine for deallocating a rank 1 allocatable array of type LOGICAL.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_ab1(a)
       LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: a(:)
-      INTEGER(SIK) :: alloc_err,mysize
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SBK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_ab1
 !
-!-------------------------------------------------------------------------------
-! Allocate two dimensional pointers
+!===============================================================================
+! Deallocate two dimensional arrays
+!===============================================================================
 !
 !> @brief Deallocates rank 2 SINGLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be deallocated
 !>
 !> Routine for deallocating a rank 2 allocatable array of type SINGLE precision.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_as2(a)
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: a(:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SSK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_as2
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 2 DOUBLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be deallocated
 !>
 !> Routine for deallocating a rank 2 allocatable array of type DOUBLE precision.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_ad2(a)
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: a(:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SDK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_ad2
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 2 INTEGER allocatable array.
 !> @param a dummy argument for allocatable array to be deallocated
 !>
 !> Routine for deallocating a rank 2 allocatable array of type INTEGER.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_ai2(a)
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: a(:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SNK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_ai2
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 2 LONG integer allocatable array.
 !> @param a dummy argument for allocatable array to be deallocated
 !>
 !> Routine for deallocating a rank 2 allocatable array of type LONG integer.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_al2(a)
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: a(:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SLK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_al2
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 2 LOGICAL allocatable array.
 !> @param a dummy argument for allocatable array to be deallocated
 !>
@@ -6937,550 +5976,632 @@ MODULE Allocs
 !> Only useful for modifying Alloc_nbytes.
     SUBROUTINE demalloc_ab2(a)
       LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: a(:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SBK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_ab2
 !
-!-------------------------------------------------------------------------------
-! Allocate three dimensional pointers
+!===============================================================================
+! Deallocate three dimensional arrays
+!===============================================================================
 !
 !> @brief Deallocates rank 3 SINGLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be deallocated
 !>
 !> Routine for deallocating a rank 3 allocatable array of type SINGLE precision.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_as3(a)
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SSK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_as3
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 3 DOUBLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be deallocated
 !>
 !> Routine for deallocating a rank 3 allocatable array of type DOUBLE precision.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_ad3(a)
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SDK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_ad3
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 3 INTEGER allocatable array.
 !> @param a dummy argument for allocatable array to be deallocated
 !>
 !> Routine for deallocating a rank 3 allocatable array of type INTEGER.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_ai3(a)
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SNK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_ai3
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 3 LONG integer allocatable array.
 !> @param a dummy argument for allocatable array to be deallocated
 !>
 !> Routine for deallocating a rank 3 allocatable array of type LONG integer.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_al3(a)
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SLK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_al3
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 3 LOGICAL allocatable array.
 !> @param a dummy argument for allocatable array to be deallocated
 !>
 !> Routine for deallocating a rank 3 allocatable array of type LOGICAL.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_ab3(a)
       LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SBK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_ab3
 !
-!-------------------------------------------------------------------------------
-! Allocate four dimensional pointers
+!===============================================================================
+! Deallocate four dimensional arrays
+!===============================================================================
 !
 !> @brief Deallocates rank 4 SINGLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be deallocated
 !>
 !> Routine for deallocating a rank 4 allocatable array of type SINGLE precision.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_as4(a)
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SSK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_as4
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 4 DOUBLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be deallocated
 !>
 !> Routine for deallocating a rank 4 allocatable array of type DOUBLE precision.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_ad4(a)
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SDK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_ad4
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 4 INTEGER allocatable array.
 !> @param a dummy argument for allocatable array to be deallocated
 !>
 !> Routine for deallocating a rank 4 allocatable array of type INTEGER.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_ai4(a)
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SNK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_ai4
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 4 LONG integer allocatable array.
 !> @param a dummy argument for allocatable array to be deallocated
 !>
 !> Routine for deallocating a rank 4 allocatable array of type LONG integer.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_al4(a)
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SLK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_al4
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 4 LOGICAL allocatable array.
 !> @param a dummy argument for allocatable array to be deallocated
 !>
 !> Routine for deallocating a rank 4 allocatable array of type LOGICAL.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_ab4(a)
       LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SBK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_ab4
 !
-!-------------------------------------------------------------------------------
-! Allocate five dimensional pointers
+!===============================================================================
+! Deallocate five dimensional arrays
+!===============================================================================
 !
 !> @brief Deallocates rank 5 SINGLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be deallocated
 !>
 !> Routine for deallocating a rank 5 allocatable array of type SINGLE precision.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_as5(a)
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SSK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_as5
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 5 DOUBLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be deallocated
 !>
 !> Routine for deallocating a rank 5 allocatable array of type DOUBLE precision.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_ad5(a)
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SDK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_ad5
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 5 INTEGER allocatable array.
 !> @param a dummy argument for allocatable array to be deallocated
 !>
 !> Routine for deallocating a rank 5 allocatable array of type INTEGER.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_ai5(a)
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SNK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_ai5
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 5 LONG integer allocatable array.
 !> @param a dummy argument for allocatable array to be deallocated
 !>
 !> Routine for deallocating a rank 5 allocatable array of type LONG integer.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_al5(a)
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SLK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_al5
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 5 LOGICAL allocatable array.
 !> @param a dummy argument for allocatable array to be deallocated
 !>
 !> Routine for deallocating a rank 5 allocatable array of type LOGICAL.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_ab5(a)
       LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SBK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_ab5
 !
-!-------------------------------------------------------------------------------
-! Allocate six dimensional pointers
+!===============================================================================
+! Deallocate six dimensional arrays
+!===============================================================================
 !
 !> @brief Deallocates rank 6 SINGLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be deallocated
 !>
 !> Routine for deallocating a rank 6 allocatable array of type SINGLE precision.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_as6(a)
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SSK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_as6
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 6 DOUBLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be deallocated
 !>
 !> Routine for deallocating a rank 6 allocatable array of type DOUBLE precision.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_ad6(a)
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SDK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_ad6
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 6 INTEGER allocatable array.
 !> @param a dummy argument for allocatable array to be deallocated
 !>
 !> Routine for deallocating a rank 6 allocatable array of type INTEGER.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_ai6(a)
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SNK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_ai6
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 6 LONG integer allocatable array.
 !> @param a dummy argument for allocatable array to be deallocated
 !>
 !> Routine for deallocating a rank 6 allocatable array of type LONG integer.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_al6(a)
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SLK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_al6
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 6 LOGICAL allocatable array.
 !> @param a dummy argument for allocatable array to be deallocated
 !>
 !> Routine for deallocating a rank 6 allocatable array of type LOGICAL.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_ab6(a)
       LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SBK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_ab6
 !
-!-------------------------------------------------------------------------------
-! Allocate seven dimensional pointers
+!===============================================================================
+! Deallocate seven dimensional arrays
+!===============================================================================
 !
 !> @brief Deallocates rank 7 SINGLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be deallocated
 !>
 !> Routine for deallocating a rank 7 allocatable array of type SINGLE precision.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_as7(a)
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SSK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_as7
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 7 DOUBLE precision allocatable array.
 !> @param a dummy argument for allocatable array to be deallocated
 !>
 !> Routine for deallocating a rank 7 allocatable array of type DOUBLE precision.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_ad7(a)
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SDK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_ad7
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 7 INTEGER allocatable array.
 !> @param a dummy argument for allocatable array to be deallocated
 !>
 !> Routine for deallocating a rank 7 allocatable array of type INTEGER.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_ai7(a)
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SNK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_ai7
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 7 LONG integer allocatable array.
 !> @param a dummy argument for allocatable array to be deallocated
 !>
 !> Routine for deallocating a rank 7 allocatable array of type LONG integer.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_al7(a)
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SLK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_al7
 !
-!----------------------------------------
+!-------------------------------------------------------------------------------
 !> @brief Deallocates rank 7 LOGICAL allocatable array.
 !> @param a dummy argument for allocatable array to be deallocated
 !>
 !> Routine for deallocating a rank 7 allocatable array of type LOGICAL.
 !> Only useful for modifying Alloc_nbytes.
+!>
     SUBROUTINE demalloc_ab7(a)
       LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
-      INTEGER(SIK) :: alloc_err,mysize
+      CHARACTER(LEN=ALLOC_ERRMSG_LEN) :: alloc_errmsg
+      INTEGER(SIK) :: alloc_err
+      INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
         mysize=SIZE(a)
-        DEALLOCATE(a,STAT=alloc_err)
-        IF(alloc_err == 0_SIK) THEN
+        DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
+        IF(alloc_err == 0) THEN
           Alloc_nbytes=Alloc_nbytes-mysize*SBK
         ELSE
-          CALL AllocsError(alloc_err,REAL(-mysize,SRK))
+          CALL AllocsError(alloc_err,alloc_errmsg,REAL(-mysize,SRK))
         ENDIF
       ENDIF
     ENDSUBROUTINE demalloc_ab7

@@ -53,7 +53,7 @@ PROGRAM testAllocs
 !-------------------------------------------------------------------------------
     SUBROUTINE testAllocsError()
 
-      CALL AllocsError(3_SIK,50.0_SRK)
+      CALL AllocsError(3_SIK,'test error message',50.0_SRK)
       ASSERT(SUM(eAllocs%getCounterAll()) == 1,'Allocs Error Handling')
   
     ENDSUBROUTINE testAllocsError

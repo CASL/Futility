@@ -1328,6 +1328,26 @@ PROGRAM testSpaceFillingCurve
       ASSERT(testZTree%subdomains(4)%istt == 17,'%subdomains(1)%istt 5x5x1')
       ASSERT(testZTree%subdomains(4)%istp == 25,'%subdomains(1)%istp 5x5x1')
 
+      !Test that flatten can be called after shaving.
+      rx=5
+      ry=5
+      rz=1
+      CALL testZTree%shave(rx,ry,rz)
+      CALL testZTree%flattenLeafs()
+      ASSERT(testZTree%getMaxLevels(0) == 2,'%getMaxLevels(0) 5x5x1-1')
+      ASSERT(testZTree%getNDomains(2) == 24,'%getNDomains(2) 5x5x1-1')
+      ASSERT(testZTree%subdomains(1)%nsubdomains == 4,'%subdomains(1)%nsubdomains 5x5x1-1')
+      ASSERT(testZTree%subdomains(1)%istt == 1,'%subdomains(1)%istt 5x5x1-1')
+      ASSERT(testZTree%subdomains(1)%istp == 4,'%subdomains(1)%istp 5x5x1-1')
+      ASSERT(testZTree%subdomains(2)%nsubdomains == 6,'%subdomains(1)%nsubdomains 5x5x1-1')
+      ASSERT(testZTree%subdomains(2)%istt == 5,'%subdomains(1)%istt 5x5x1-1')
+      ASSERT(testZTree%subdomains(2)%istp == 10,'%subdomains(1)%istp 5x5x1-1')
+      ASSERT(testZTree%subdomains(3)%nsubdomains == 6,'%subdomains(1)%nsubdomains 5x5x1-1')
+      ASSERT(testZTree%subdomains(3)%istt == 11,'%subdomains(1)%istt 5x5x1-1')
+      ASSERT(testZTree%subdomains(3)%istp == 16,'%subdomains(1)%istp 5x5x1-1')
+      ASSERT(testZTree%subdomains(4)%nsubdomains == 8,'%subdomains(1)%nsubdomains 5x5x1-1')
+      ASSERT(testZTree%subdomains(4)%istt == 17,'%subdomains(1)%istt 5x5x1-1')
+      ASSERT(testZTree%subdomains(4)%istp == 24,'%subdomains(1)%istp 5x5x1-1')
       CALL testZTree%clear()
     ENDSUBROUTINE testZTreeflattenLeafs
 !

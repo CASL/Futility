@@ -31,22 +31,23 @@ PROGRAM testParameterLists
   INTEGER(SNK) :: valsnk
   INTEGER(SLK) :: valslk
   LOGICAL(SBK) :: valsbk
+  CHARACTER(LEN=100) :: valchar
   TYPE(StringType) :: valstr
-  REAL(SSK),ALLOCATABLE :: valssk1a(:)
-  REAL(SDK),ALLOCATABLE :: valsdk1a(:)
-  INTEGER(SNK),ALLOCATABLE :: valsnk1a(:)
-  INTEGER(SLK),ALLOCATABLE :: valslk1a(:)
-  LOGICAL(SBK),ALLOCATABLE :: valsbk1a(:)
-  TYPE(StringType),ALLOCATABLE :: valstr1a(:)
-  REAL(SSK),ALLOCATABLE :: valssk2a(:,:)
-  REAL(SDK),ALLOCATABLE :: valsdk2a(:,:)
-  INTEGER(SNK),ALLOCATABLE :: valsnk2a(:,:)
-  INTEGER(SLK),ALLOCATABLE :: valslk2a(:,:)
-  TYPE(StringType),ALLOCATABLE :: valstr2a(:,:)
-  REAL(SSK),ALLOCATABLE :: valssk3a(:,:,:)
-  REAL(SDK),ALLOCATABLE :: valsdk3a(:,:,:)
-  INTEGER(SNK),ALLOCATABLE :: valsnk3a(:,:,:)
-  INTEGER(SLK),ALLOCATABLE :: valslk3a(:,:,:)
+  REAL(SSK),ALLOCATABLE :: valsska1(:)
+  REAL(SDK),ALLOCATABLE :: valsdka1(:)
+  INTEGER(SNK),ALLOCATABLE :: valsnka1(:)
+  INTEGER(SLK),ALLOCATABLE :: valslka1(:)
+  LOGICAL(SBK),ALLOCATABLE :: valsbka1(:)
+  TYPE(StringType),ALLOCATABLE :: valstra1(:)
+  REAL(SSK),ALLOCATABLE :: valsska2(:,:)
+  REAL(SDK),ALLOCATABLE :: valsdka2(:,:)
+  INTEGER(SNK),ALLOCATABLE :: valsnka2(:,:)
+  INTEGER(SLK),ALLOCATABLE :: valslka2(:,:)
+  TYPE(StringType),ALLOCATABLE :: valstra2(:,:)
+  REAL(SSK),ALLOCATABLE :: valsska3(:,:,:)
+  REAL(SDK),ALLOCATABLE :: valsdka3(:,:,:)
+  INTEGER(SNK),ALLOCATABLE :: valsnka3(:,:,:)
+  INTEGER(SLK),ALLOCATABLE :: valslka3(:,:,:)
   TYPE(ExceptionHandlerType),POINTER :: e
   
   TYPE(ParamType) :: testParam,testParam2,testParam3,testList(5),testList2(3)
@@ -66,27 +67,28 @@ PROGRAM testParameterLists
   REGISTER_SUBTEST('Scalar SDK',testSDK)
   REGISTER_SUBTEST('Scalar CHAR',testCHAR)
   REGISTER_SUBTEST('Scalar STR',testSTR)
-  REGISTER_SUBTEST('1-D SBK',testSBK1a)
-  REGISTER_SUBTEST('1-D SNK',testSNK1a)
-  REGISTER_SUBTEST('1-D SLK',testSLK1a)
-  REGISTER_SUBTEST('1-D SSK',testSSK1a)
-  REGISTER_SUBTEST('1-D SDK',testSDK1a)
-  REGISTER_SUBTEST('1-D STR',testSTR1a)
-  REGISTER_SUBTEST('2-D SNK',testSNK2a)
-  REGISTER_SUBTEST('2-D SLK',testSLK2a)
-  REGISTER_SUBTEST('2-D SSK',testSSK2a)
-  REGISTER_SUBTEST('2-D SDK',testSDK2a)
-  REGISTER_SUBTEST('2-D STR',testSTR2a)
-  REGISTER_SUBTEST('3-D SNK',testSNK3a)
-  REGISTER_SUBTEST('3-D SLK',testSLK3a)
-  REGISTER_SUBTEST('3-D SSK',testSSK3a)
-  REGISTER_SUBTEST('3-D SDK',testSDK3a)
+  REGISTER_SUBTEST('1-D SBK',testSBKa1)
+  REGISTER_SUBTEST('1-D SNK',testSNKa1)
+  REGISTER_SUBTEST('1-D SLK',testSLKa1)
+  REGISTER_SUBTEST('1-D SSK',testSSKa1)
+  REGISTER_SUBTEST('1-D SDK',testSDKa1)
+  REGISTER_SUBTEST('1-D STR',testSTRa1)
+  REGISTER_SUBTEST('2-D SNK',testSNKa2)
+  REGISTER_SUBTEST('2-D SLK',testSLKa2)
+  REGISTER_SUBTEST('2-D SSK',testSSKa2)
+  REGISTER_SUBTEST('2-D SDK',testSDKa2)
+  REGISTER_SUBTEST('2-D STR',testSTRa2)
+  REGISTER_SUBTEST('3-D SNK',testSNKa3)
+  REGISTER_SUBTEST('3-D SLK',testSLKa3)
+  REGISTER_SUBTEST('3-D SSK',testSSKa3)
+  REGISTER_SUBTEST('3-D SDK',testSDKa3)
   REGISTER_SUBTEST('ParameterList',testParamListType)
   REGISTER_SUBTEST('%add(...)',testAdd)
   REGISTER_SUBTEST('%has(...)',testHas)
-  REGISTER_SUBTEST('%getNextParam(...)',testGetNextParam)
   REGISTER_SUBTEST('%remove(...)',testRemove)
+  REGISTER_SUBTEST('%getNextParam(...)',testGetNextParam)
   REGISTER_SUBTEST('%validate(...)',testValidate)
+  REGISTER_SUBTEST('%verify(...)',testVerify)
   
   FINALIZE_TEST()
   CALL clear_test_vars()
@@ -107,7 +109,7 @@ PROGRAM testParameterLists
     ASSERT(LEN(testParam%name) == 0,'%name 1')
     ASSERT(LEN(testParam%datatype) == 0,'%datatype 1')
     ASSERT(LEN(testParam%description) == 0,'%description 1')
-    CALL testParam%init('testError->testSBK',.TRUE.,'The value is TRUE')
+    CALL testParam%init('testError->testSBK',valsbk,'The value is TRUE')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 2')
     ASSERT(LEN(testParam%name) == 0,'%name 2')
     ASSERT(LEN(testParam%datatype) == 0,'%datatype 2')
@@ -116,7 +118,7 @@ PROGRAM testParameterLists
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SBK'// &
       ' - "->" symbol is not allowed in name!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
-    CALL testParam%init('testSBK',.TRUE.,'The value is TRUE')
+    CALL testParam%init('testSBK',valsbk,'The value is TRUE')
     ASSERT(LEN(testParam%name) == 0,'%name 3')
     ASSERT(LEN(testParam%datatype) == 0,'%datatype 3')
     ASSERT(LEN(testParam%description) == 0,'%description 3')
@@ -124,7 +126,7 @@ PROGRAM testParameterLists
     ASSERT(testParam%pdat%name == 'testSBK','%pdat%name')
     ASSERT(testParam%pdat%datatype == 'LOGICAL(SBK)','%pdat%datatype')
     ASSERT(testParam%pdat%description == 'The value is TRUE','%pdat%description')
-    CALL testParam%init('testError',.TRUE.)
+    CALL testParam%init('testError',valsbk)
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SBK'// &
       ' - parameter is already initialized! Use set method!'
@@ -139,7 +141,7 @@ PROGRAM testParameterLists
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
     
     COMPONENT_TEST('%edit(...)')
-    CALL testParam%init('testSBK',.TRUE.,'The value is TRUE')
+    CALL testParam%init('testSBK',valsbk,'The value is TRUE')
     CALL testParam%edit(OUTPUT_UNIT,0)
     CALL testParam%clear()
     CALL testParam%init('testSBK',.TRUE.)
@@ -148,7 +150,7 @@ PROGRAM testParameterLists
     CALL testParam%edit(OUTPUT_UNIT,0)
     
     COMPONENT_TEST('%get(...)')
-    CALL testParam%init('testSBK',.TRUE.,'The value is TRUE')
+    CALL testParam%init('testSBK',valsbk,'The value is TRUE')
     CALL testParam%get('testSBK',someParam)
     ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
     CALL someParam%get('testSBK',valsbk)
@@ -185,6 +187,8 @@ PROGRAM testParameterLists
     ASSERT(testParam%pdat%name == 'testSBK','%name')
     ASSERT(testParam%pdat%description == 'The value is FALSE','%description')
     CALL someParam%set('testSBK',.TRUE.,'The value is TRUE')
+    CALL someParam%get('testSBK',valsbk)
+    ASSERT(valsbk,'valsbk')
     ASSERT(someParam%name == 'testSBK','someParam%name')
     ASSERT(someParam%datatype == 'LOGICAL(SBK)','someParam%datatype')
     ASSERT(someParam%description == 'The value is TRUE','someParam%description')
@@ -223,95 +227,125 @@ PROGRAM testParameterLists
 !-------------------------------------------------------------------------------
 !Test SNK support
   SUBROUTINE testSNK()
-    ALLOCATE(testParam2%pdat)
-    testParam2%pdat%name='testSNK'
+    CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
     valsnk=5_SNK
     !test init
+    
+    COMPONENT_TEST('%init(...)')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
+    ASSERT(LEN(testParam%name) == 0,'%name 1')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 1')
+    ASSERT(LEN(testParam%description) == 0,'%description 1')
     CALL testParam%init('testError->testSNK',valsnk,'The number 5')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 2')
+    ASSERT(LEN(testParam%name) == 0,'%name 2')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 2')
+    ASSERT(LEN(testParam%description) == 0,'%description 2')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SNK'// &
+      ' - "->" symbol is not allowed in name!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
     CALL testParam%init('testSNK',valsnk,'The number 5')
-    IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%init(...) %pdat (SNK) FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%name /= 'testSNK') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %name (SNK) FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%datatype /= 'INTEGER(SNK)') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %datatype (SNK) FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%description /= 'The number 5') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %description (SNK) FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam%edit(OUTPUT_UNIT,0) !test edit
+    ASSERT(LEN(testParam%name) == 0,'%name 3')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 3')
+    ASSERT(LEN(testParam%description) == 0,'%description 3')
+    ASSERT(ASSOCIATED(testParam%pdat),'%pdat 3')
+    ASSERT(testParam%pdat%name == 'testSNK','%pdat%name')
+    ASSERT(testParam%pdat%datatype == 'INTEGER(SNK)','%pdat%datatype')
+    ASSERT(testParam%pdat%description == 'The number 5','%pdat%description')
     CALL testParam%init('testError',valsnk)
-    WRITE(*,*) '  Passed: CALL testParam%init(...) (SNK)'
-  
-    !test get
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SNK'// &
+      ' - parameter is already initialized! Use set method!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
+    
+    !Test clear
+    COMPONENT_TEST('%clear()')
+    CALL testParam%clear()
+    ASSERT(LEN(testParam%name) == 0,'%name')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype')
+    ASSERT(LEN(testParam%description) == 0,'%description')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
+    
+    COMPONENT_TEST('%edit(...)')
+    CALL testParam%init('testSNK',valsnk,'The number 5')
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%init('testSNK',valsnk)
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    
+    COMPONENT_TEST('%get(...)')
+    CALL testParam%init('testSNK',valsnk,'The number 5')
     CALL testParam%get('testSNK',someParam)
-    IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSNK'',someParam) FAILED!'
-      STOP 666
-    ENDIF
+    ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
     CALL someParam%get('testSNK',valsnk)
-    IF(valsnk /= 5_SNK) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSNK'',valsnk) FAILED!'
-      STOP 666
-    ENDIF
-    valsnk=0_SNK
+    ASSERT(valsnk == 5,'someParam valsnk')
+    valsnk=0
     CALL testParam%get('testSNK',valsnk)
-    IF(valsnk /= 5_SNK) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSNK'',valsnk) FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam2%get('testSNK',valsnk)
+    ASSERT(valsnk == 5,'testParam valsnk')
     CALL testParam%get('testError',valsnk)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SNK'// &
+      ' - unable to locate parameter "testError" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
     CALL someParam%get('testError',valsnk)
-    WRITE(*,*) '  Passed: CALL testParam%get(...) (SNK)'
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SNK'// &
+      ' - parameter name mismatch "testError" in "testSNK"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSNK'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%get('testSNK',valsnk)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SNK'// &
+      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' must be INTEGER(SNK)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
+    CALL testParam2%clear()
   
     !test set
-    CALL someParam%set('testSNK',3_SNK,'The number 3')
+    COMPONENT_TEST('%set(...)')
+    valsnk=-4
+    CALL testParam%set('testSNK',valsnk,'The number -4')
     CALL testParam%get('testSNK',valsnk)
-    IF(valsnk /= 3_SNK .OR. someParam%description /= 'The number 3') THEN
-      WRITE(*,*) 'someParam%set(''testSNK'',3_SNK,''The number 3'') FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam%set('testSNK',5_SNK,'The number 5')
-    CALL testParam%get('testSNK',valsnk)
-    IF(valsnk /= 5_SNK .OR. someParam%description /= 'The number 5') THEN
-      WRITE(*,*) 'testParam%set(''testSNK'',5_SNK) FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam2%set('testSNK',valsnk)
-    CALL someParam%set('testError',valsnk)
-    CALL testParam%set('testError',valsnk)
-    WRITE(*,*) '  Passed: CALL testParam%set(...) (SNK)'
-  
-    !Test clear
-    CALL testParam%clear()
-    IF(LEN(testParam%name) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %name (SNK) FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%datatype) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %datatype (SNK) FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%description) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %description (SNK) FAILED!'
-      STOP 666
-    ENDIF
-    IF(ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%clear() %pdat (SNK) FAILED!'
-      STOP 666
-    ENDIF
-    WRITE(*,*) '  Passed: CALL testParam%clear() (SNK)'
-  
-    !test assignment
-    CALL testParam%init('testSNK',4_SNK)
+    ASSERT(valsnk == -4,'valsnk')
+    ASSERT(testParam%pdat%name == 'testSNK','%name')
+    ASSERT(testParam%pdat%description == 'The number -4','%description')
+    valsnk=3
+    CALL someParam%set('testSNK',valsnk,'The number 3')
+    CALL someParam%get('testSNK',valsnk)
+    ASSERT(valsnk == 3,'valsnk')
+    ASSERT(someParam%name == 'testSNK','someParam%name')
+    ASSERT(someParam%datatype == 'INTEGER(SNK)','someParam%datatype')
+    ASSERT(someParam%description == 'The number 3','someParam%description')
+    CALL someParam%set('testError',valsnk) !Name mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK -'// &
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSNK"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+    CALL testParam2%set('testSNK',valsnk) !Name not found
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK -'// &
+      ' unable to locate parameter "testSNK" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSNK'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%set('testSNK',valsnk) !Type mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK -'// &
+      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' and must be INTEGER(SNK)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
+    CALL testParam2%clear()
+    
     COMPONENT_TEST('Operators')
+    valsnk=4
+    CALL testParam%init('testSNK',valsnk)
     testParam2=testParam
     ASSERT(ASSOCIATED(testParam2%pdat),'ASSOCIATED %pdat')
     ASSERT(testParam2%pdat%name == 'testSNK','%name')
@@ -323,95 +357,125 @@ PROGRAM testParameterLists
 !-------------------------------------------------------------------------------
 !Test SLK support
   SUBROUTINE testSLK()
-    ALLOCATE(testParam2%pdat)
-    testParam2%pdat%name='testSLK'
+    CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
     valslk=5_SLK
     !test init
+    
+    COMPONENT_TEST('%init(...)')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
+    ASSERT(LEN(testParam%name) == 0,'%name 1')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 1')
+    ASSERT(LEN(testParam%description) == 0,'%description 1')
     CALL testParam%init('testError->testSLK',valslk,'The number 5')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 2')
+    ASSERT(LEN(testParam%name) == 0,'%name 2')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 2')
+    ASSERT(LEN(testParam%description) == 0,'%description 2')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SLK'// &
+      ' - "->" symbol is not allowed in name!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
     CALL testParam%init('testSLK',valslk,'The number 5')
-    IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%init(...) %pdat (SLK) FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%name /= 'testSLK') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %name (SLK) FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%datatype /= 'INTEGER(SLK)') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %datatype (SLK) FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%description /= 'The number 5') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %description (SLK) FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam%edit(OUTPUT_UNIT,0) !test edit
+    ASSERT(LEN(testParam%name) == 0,'%name 3')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 3')
+    ASSERT(LEN(testParam%description) == 0,'%description 3')
+    ASSERT(ASSOCIATED(testParam%pdat),'%pdat 3')
+    ASSERT(testParam%pdat%name == 'testSLK','%pdat%name')
+    ASSERT(testParam%pdat%datatype == 'INTEGER(SLK)','%pdat%datatype')
+    ASSERT(testParam%pdat%description == 'The number 5','%pdat%description')
     CALL testParam%init('testError',valslk)
-    WRITE(*,*) '  Passed: CALL testParam%init(...) (SLK)'
-  
-    !test get
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SLK'// &
+      ' - parameter is already initialized! Use set method!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
+    
+    !Test clear
+    COMPONENT_TEST('%clear()')
+    CALL testParam%clear()
+    ASSERT(LEN(testParam%name) == 0,'%name')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype')
+    ASSERT(LEN(testParam%description) == 0,'%description')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
+    
+    COMPONENT_TEST('%edit(...)')
+    CALL testParam%init('testSLK',valslk,'The number 5')
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%init('testSLK',valslk)
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    
+    COMPONENT_TEST('%get(...)')
+    CALL testParam%init('testSLK',valslk,'The number 5')
     CALL testParam%get('testSLK',someParam)
-    IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSLK'',someParam) FAILED!'
-      STOP 666
-    ENDIF
+    ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
     CALL someParam%get('testSLK',valslk)
-    IF(valslk /= 5_SLK) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSLK'',valslk) FAILED!'
-      STOP 666
-    ENDIF
-    valslk=0_SLK
+    ASSERT(valslk == 5_SLK,'someParam valslk')
+    valslk=0
     CALL testParam%get('testSLK',valslk)
-    IF(valslk /= 5_SLK) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSLK'',valslk) FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam2%get('testSLK',valslk)
+    ASSERT(valslk == 5_SLK,'testParam valslk')
     CALL testParam%get('testError',valslk)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SLK'// &
+      ' - unable to locate parameter "testError" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
     CALL someParam%get('testError',valslk)
-    WRITE(*,*) '  Passed: CALL testParam%get(...) (SLK)'
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SLK'// &
+      ' - parameter name mismatch "testError" in "testSLK"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSLK'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%get('testSLK',valslk)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SLK'// &
+      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' must be INTEGER(SLK)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
+    CALL testParam2%clear()
   
     !test set
-    CALL someParam%set('testSLK',3_SLK,'The number 3')
+    COMPONENT_TEST('%set(...)')
+    valslk=-4_SLK
+    CALL testParam%set('testSLK',valslk,'The number -4')
     CALL testParam%get('testSLK',valslk)
-    IF(valslk /= 3_SLK .OR. someParam%description /= 'The number 3') THEN
-      WRITE(*,*) 'someParam%set(''testSLK'',3_SLK,''The number 3'') FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam%set('testSLK',5_SLK,'The number 5')
-    CALL testParam%get('testSLK',valslk)
-    IF(valslk /= 5_SLK .OR. someParam%description /= 'The number 5') THEN
-      WRITE(*,*) 'testParam%set(''testSLK'',5_SLK) FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam2%set('testSLK',valslk)
-    CALL someParam%set('testError',valslk)
-    CALL testParam%set('testError',valslk)
-    WRITE(*,*) '  Passed: CALL testParam%set(...) (SLK)'
-  
-    !Test clear
-    CALL testParam%clear()
-    IF(LEN(testParam%name) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %name (SLK) FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%datatype) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %datatype (SLK) FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%description) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %description (SLK) FAILED!'
-      STOP 666
-    ENDIF
-    IF(ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%clear() %pdat (SLK) FAILED!'
-      STOP 666
-    ENDIF
-    WRITE(*,*) '  Passed: CALL testParam%clear() (SLK)'
-  
-    !test assignment
-    CALL testParam%init('testSLK',4_SLK)
+    ASSERT(valslk == -4_SLK,'valslk')
+    ASSERT(testParam%pdat%name == 'testSLK','%name')
+    ASSERT(testParam%pdat%description == 'The number -4','%description')
+    valslk=3_SLK
+    CALL someParam%set('testSLK',valslk,'The number 3')
+    CALL someParam%get('testSLK',valslk)
+    ASSERT(valslk == 3_SLK,'valslk')
+    ASSERT(someParam%name == 'testSLK','someParam%name')
+    ASSERT(someParam%datatype == 'INTEGER(SLK)','someParam%datatype')
+    ASSERT(someParam%description == 'The number 3','someParam%description')
+    CALL someParam%set('testError',valslk) !Name mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK -'// &
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSLK"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+    CALL testParam2%set('testSLK',valslk) !Name not found
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK -'// &
+      ' unable to locate parameter "testSLK" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSLK'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%set('testSLK',valslk) !Type mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK -'// &
+      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' and must be INTEGER(SLK)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
+    CALL testParam2%clear()
+    
     COMPONENT_TEST('Operators')
+    valslk=4_SLK
+    CALL testParam%init('testSLK',valslk)
     testParam2=testParam
     ASSERT(ASSOCIATED(testParam2%pdat),'ASSOCIATED %pdat')
     ASSERT(testParam2%pdat%name == 'testSLK','%name')
@@ -423,95 +487,125 @@ PROGRAM testParameterLists
 !-------------------------------------------------------------------------------
 !Test SSK support
   SUBROUTINE testSSK()
-    ALLOCATE(testParam2%pdat)
-    testParam2%pdat%name='testSSK'
+    CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
     valssk=5._SSK
     !test init
+    
+    COMPONENT_TEST('%init(...)')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
+    ASSERT(LEN(testParam%name) == 0,'%name 1')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 1')
+    ASSERT(LEN(testParam%description) == 0,'%description 1')
     CALL testParam%init('testError->testSSK',valssk,'The number 5.0')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 2')
+    ASSERT(LEN(testParam%name) == 0,'%name 2')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 2')
+    ASSERT(LEN(testParam%description) == 0,'%description 2')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SSK'// &
+      ' - "->" symbol is not allowed in name!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
     CALL testParam%init('testSSK',valssk,'The number 5.0')
-    IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%init(...) %pdat (SSK) FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%name /= 'testSSK') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %name (SSK) FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%datatype /= 'REAL(SSK)') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %datatype (SSK) FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%description /= 'The number 5.0') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %description (SSK) FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam%edit(OUTPUT_UNIT,0) !test edit
+    ASSERT(LEN(testParam%name) == 0,'%name 3')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 3')
+    ASSERT(LEN(testParam%description) == 0,'%description 3')
+    ASSERT(ASSOCIATED(testParam%pdat),'%pdat 3')
+    ASSERT(testParam%pdat%name == 'testSSK','%pdat%name')
+    ASSERT(testParam%pdat%datatype == 'REAL(SSK)','%pdat%datatype')
+    ASSERT(testParam%pdat%description == 'The number 5.0','%pdat%description')
     CALL testParam%init('testError',valssk)
-    WRITE(*,*) '  Passed: CALL testParam%init(...) (SSK)'
-  
-    !test get
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SSK'// &
+      ' - parameter is already initialized! Use set method!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
+    
+    !Test clear
+    COMPONENT_TEST('%clear()')
+    CALL testParam%clear()
+    ASSERT(LEN(testParam%name) == 0,'%name')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype')
+    ASSERT(LEN(testParam%description) == 0,'%description')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
+    
+    COMPONENT_TEST('%edit(...)')
+    CALL testParam%init('testSSK',valssk,'The number 5.0')
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%init('testSSK',valssk)
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    
+    COMPONENT_TEST('%get(...)')
+    CALL testParam%init('testSSK',valssk,'The number 5.0')
     CALL testParam%get('testSSK',someParam)
-    IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSSK'',someParam) FAILED!'
-      STOP 666
-    ENDIF
+    ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
     CALL someParam%get('testSSK',valssk)
-    IF(valssk /= 5.0_SSK) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSSK'',valssk) FAILED!'
-      STOP 666
-    ENDIF
-    valssk=0.0_SSK
+    ASSERT(valssk == 5._SSK,'someParam valssk')
+    valssk=0
     CALL testParam%get('testSSK',valssk)
-    IF(valssk /= 5.0_SSK) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSSK'',valssk) FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam2%get('testSSK',valssk)
+    ASSERT(valssk == 5._SSK,'testParam valssk')
     CALL testParam%get('testError',valssk)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SSK'// &
+      ' - unable to locate parameter "testError" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
     CALL someParam%get('testError',valssk)
-    WRITE(*,*) '  Passed: CALL testParam%get(...) (SSK)'
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SSK'// &
+      ' - parameter name mismatch "testError" in "testSSK"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSSK'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%get('testSSK',valssk)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SSK'// &
+      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' must be REAL(SSK)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
+    CALL testParam2%clear()
   
     !test set
-    CALL someParam%set('testSSK',3.0_SSK,'The number 3.0')
+    COMPONENT_TEST('%set(...)')
+    valssk=-4._SSK
+    CALL testParam%set('testSSK',valssk,'The number -4.0')
     CALL testParam%get('testSSK',valssk)
-    IF(valssk /= 3.0_SSK .OR. someParam%description /= 'The number 3.0') THEN
-      WRITE(*,*) 'someParam%set(''testSSK'',3.0_SSK,''The number 3.0'') FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam%set('testSSK',5.0_SSK,'The number 5.0')
-    CALL testParam%get('testSSK',valssk)
-    IF(valssk /= 5.0_SSK .OR. someParam%description /= 'The number 5.0') THEN
-      WRITE(*,*) 'testParam%set(''testSSK'',5.0_SSK) FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam2%set('testSSK',valssk)
-    CALL someParam%set('testError',valssk)
-    CALL testParam%set('testError',valssk)
-    WRITE(*,*) '  Passed: CALL testParam%set(...) (SSK)'
-  
-    !Test clear
-    CALL testParam%clear()
-    IF(LEN(testParam%name) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %name (SSK) FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%datatype) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %datatype (SSK) FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%description) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %description (SSK) FAILED!'
-      STOP 666
-    ENDIF
-    IF(ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%clear() %pdat (SSK) FAILED!'
-      STOP 666
-    ENDIF
-    WRITE(*,*) '  Passed: CALL testParam%clear() (SSK)'
-  
-    !test assignment
-    CALL testParam%init('testSSK',4.0_SSK)
+    ASSERT(valssk == -4_SSK,'valssk')
+    ASSERT(testParam%pdat%name == 'testSSK','%name')
+    ASSERT(testParam%pdat%description == 'The number -4.0','%description')
+    valssk=3._SSK
+    CALL someParam%set('testSSK',valssk,'The number 3.0')
+    CALL someParam%get('testSSK',valssk)
+    ASSERT(valssk == 3_SSK,'valssk')
+    ASSERT(someParam%name == 'testSSK','someParam%name')
+    ASSERT(someParam%datatype == 'REAL(SSK)','someParam%datatype')
+    ASSERT(someParam%description == 'The number 3.0','someParam%description')
+    CALL someParam%set('testError',valssk) !Name mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK -'// &
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSSK"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+    CALL testParam2%set('testSSK',valssk) !Name not found
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK -'// &
+      ' unable to locate parameter "testSSK" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSSK'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%set('testSSK',valssk) !Type mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK -'// &
+      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' and must be REAL(SSK)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
+    CALL testParam2%clear()
+    
     COMPONENT_TEST('Operators')
+    valssk=3.0_SSK
+    CALL testParam%init('testSSK',valssk)
     testParam2=testParam
     ASSERT(ASSOCIATED(testParam2%pdat),'ASSOCIATED %pdat')
     ASSERT(testParam2%pdat%name == 'testSSK','%name')
@@ -523,95 +617,125 @@ PROGRAM testParameterLists
 !-------------------------------------------------------------------------------
 !Test SDK support
   SUBROUTINE testSDK()
-    ALLOCATE(testParam2%pdat)
-    testParam2%pdat%name='testSDK'
+    CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
     valsdk=5._SDK
     !test init
+    
+    COMPONENT_TEST('%init(...)')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
+    ASSERT(LEN(testParam%name) == 0,'%name 1')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 1')
+    ASSERT(LEN(testParam%description) == 0,'%description 1')
     CALL testParam%init('testError->testSDK',valsdk,'The number 5.0')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 2')
+    ASSERT(LEN(testParam%name) == 0,'%name 2')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 2')
+    ASSERT(LEN(testParam%description) == 0,'%description 2')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SDK'// &
+      ' - "->" symbol is not allowed in name!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
     CALL testParam%init('testSDK',valsdk,'The number 5.0')
-    IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%init(...) %pdat (SDK) FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%name /= 'testSDK') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %name (SDK) FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%datatype /= 'REAL(SDK)') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %datatype (SDK) FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%description /= 'The number 5.0') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %description (SDK) FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam%edit(OUTPUT_UNIT,0) !test edit
+    ASSERT(LEN(testParam%name) == 0,'%name 3')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 3')
+    ASSERT(LEN(testParam%description) == 0,'%description 3')
+    ASSERT(ASSOCIATED(testParam%pdat),'%pdat 3')
+    ASSERT(testParam%pdat%name == 'testSDK','%pdat%name')
+    ASSERT(testParam%pdat%datatype == 'REAL(SDK)','%pdat%datatype')
+    ASSERT(testParam%pdat%description == 'The number 5.0','%pdat%description')
     CALL testParam%init('testError',valsdk)
-    WRITE(*,*) '  Passed: CALL testParam%init(...) (SDK)'
-  
-    !test get
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SDK'// &
+      ' - parameter is already initialized! Use set method!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
+    
+    !Test clear
+    COMPONENT_TEST('%clear()')
+    CALL testParam%clear()
+    ASSERT(LEN(testParam%name) == 0,'%name')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype')
+    ASSERT(LEN(testParam%description) == 0,'%description')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
+    
+    COMPONENT_TEST('%edit(...)')
+    CALL testParam%init('testSDK',valsdk,'The number 5.0')
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%init('testSDK',valsdk)
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    
+    COMPONENT_TEST('%get(...)')
+    CALL testParam%init('testSDK',valsdk,'The number 5.0')
     CALL testParam%get('testSDK',someParam)
-    IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSDK'',someParam) FAILED!'
-      STOP 666
-    ENDIF
+    ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
     CALL someParam%get('testSDK',valsdk)
-    IF(valsdk /= 5.0_SDK) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSDK'',valsdk) FAILED!'
-      STOP 666
-    ENDIF
-    valsdk=0.0_SDK
+    ASSERT(valsdk == 5._SDK,'someParam valsdk')
+    valsdk=0
     CALL testParam%get('testSDK',valsdk)
-    IF(valsdk /= 5.0_SDK) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSDK'',valsdk) FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam2%get('testSDK',valsdk)
+    ASSERT(valsdk == 5._SDK,'testParam valsdk')
     CALL testParam%get('testError',valsdk)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SDK'// &
+      ' - unable to locate parameter "testError" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
     CALL someParam%get('testError',valsdk)
-    WRITE(*,*) '  Passed: CALL testParam%get(...) (SDK)'
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SDK'// &
+      ' - parameter name mismatch "testError" in "testSDK"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSDK'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%get('testSDK',valsdk)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SDK'// &
+      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' must be REAL(SDK)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
+    CALL testParam2%clear()
   
     !test set
-    CALL someParam%set('testSDK',3.0_SDK,'The number 3.0')
+    COMPONENT_TEST('%set(...)')
+    valsdk=-4._SDK
+    CALL testParam%set('testSDK',valsdk,'The number -4.0')
     CALL testParam%get('testSDK',valsdk)
-    IF(valsdk /= 3.0_SDK .OR. someParam%description /= 'The number 3.0') THEN
-      WRITE(*,*) 'someParam%set(''testSDK'',3.0_SDK,''The number 3.0'') FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam%set('testSDK',5.0_SDK,'The number 5.0')
-    CALL testParam%get('testSDK',valsdk)
-    IF(valsdk /= 5.0_SDK .OR. someParam%description /= 'The number 5.0') THEN
-      WRITE(*,*) 'testParam%set(''testSDK'',5.0_SDK) FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam2%set('testSDK',valsdk)
-    CALL someParam%set('testError',valsdk)
-    CALL testParam%set('testError',valsdk)
-    WRITE(*,*) '  Passed: CALL testParam%set(...) (SDK)'
-  
-    !Test clear
-    CALL testParam%clear()
-    IF(LEN(testParam%name) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %name (SDK) FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%datatype) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %datatype (SDK) FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%description) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %description (SDK) FAILED!'
-      STOP 666
-    ENDIF
-    IF(ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%clear() %pdat (SDK) FAILED!'
-      STOP 666
-    ENDIF
-    WRITE(*,*) '  Passed: CALL testParam%clear() (SDK)'
-  
-    !test assignment
-    CALL testParam%init('testSDK',4.0_SDK)
+    ASSERT(valsdk == -4_SDK,'valsdk')
+    ASSERT(testParam%pdat%name == 'testSDK','%name')
+    ASSERT(testParam%pdat%description == 'The number -4.0','%description')
+    valsdk=3._SDK
+    CALL someParam%set('testSDK',valsdk,'The number 3.0')
+    CALL someParam%get('testSDK',valsdk)
+    ASSERT(valsdk == 3_SDK,'valsdk')
+    ASSERT(someParam%name == 'testSDK','someParam%name')
+    ASSERT(someParam%datatype == 'REAL(SDK)','someParam%datatype')
+    ASSERT(someParam%description == 'The number 3.0','someParam%description')
+    CALL someParam%set('testError',valsdk) !Name mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK -'// &
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSDK"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+    CALL testParam2%set('testSDK',valsdk) !Name not found
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK -'// &
+      ' unable to locate parameter "testSDK" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSDK'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%set('testSDK',valsdk) !Type mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK -'// &
+      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' and must be REAL(SDK)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
+    CALL testParam2%clear()
+    
     COMPONENT_TEST('Operators')
+    valsdk=3.0_SDK
+    CALL testParam%init('testSDK',valsdk)
     testParam2=testParam
     ASSERT(ASSOCIATED(testParam2%pdat),'ASSOCIATED %pdat')
     ASSERT(testParam2%pdat%name == 'testSDK','%name')
@@ -623,176 +747,255 @@ PROGRAM testParameterLists
 !-------------------------------------------------------------------------------
 !Test Character/StringType support
   SUBROUTINE testCHAR()
-    CHARACTER(LEN=100) :: valchar
-  
+    CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
+    valchar='test'
+    !test init
+    
+    COMPONENT_TEST('%init(...)')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
+    ASSERT(LEN(testParam%name) == 0,'%name 1')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 1')
+    ASSERT(LEN(testParam%description) == 0,'%description 1')
+    CALL testParam%init('testError->testCHAR',valchar,'The value is test')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 2')
+    ASSERT(LEN(testParam%name) == 0,'%name 2')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 2')
+    ASSERT(LEN(testParam%description) == 0,'%description 2')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_STR'// &
+      ' - "->" symbol is not allowed in name!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
+    CALL testParam%init('testCHAR',valchar,'The value is test')
+    ASSERT(LEN(testParam%name) == 0,'%name 3')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 3')
+    ASSERT(LEN(testParam%description) == 0,'%description 3')
+    ASSERT(ASSOCIATED(testParam%pdat),'%pdat 3')
+    ASSERT(testParam%pdat%name == 'testCHAR','%pdat%name')
+    ASSERT(testParam%pdat%datatype == 'TYPE(StringType)','%pdat%datatype')
+    ASSERT(testParam%pdat%description == 'The value is test','%pdat%description')
+    CALL testParam%init('testError',TRIM(valchar))
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_STR'// &
+      ' - parameter is already initialized! Use set method!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
+    
+    !Test clear
+    COMPONENT_TEST('%clear()')
+    CALL testParam%clear()
+    ASSERT(LEN(testParam%name) == 0,'%name')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype')
+    ASSERT(LEN(testParam%description) == 0,'%description')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
+    
+    COMPONENT_TEST('%edit(...)')
+    CALL testParam%init('testCHAR',TRIM(valchar),'The value is test')
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%init('testCHAR',TRIM(valchar))
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    
+    COMPONENT_TEST('%get(...)')
+    CALL testParam%init('testCHAR',TRIM(valchar),'The value is test')
+    CALL testParam%get('testCHAR',someParam)
+    ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
+    CALL someParam%get('testCHAR',valchar)
+    ASSERT(TRIM(valchar) == 'test','someParam valchar')
+    valchar='testing'
+    CALL testParam%get('testCHAR',valchar)
+    ASSERT(TRIM(valchar) == 'test','testParam valchar')
+    CALL testParam%get('testError',valchar)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_STR'// &
+      ' - unable to locate parameter "testError" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
+    CALL someParam%get('testError',valchar)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_STR'// &
+      ' - parameter name mismatch "testError" in "testCHAR"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
     ALLOCATE(testParam2%pdat)
-    testParam2%pdat%name='testSTR'
-    CALL testParam%init('testError->testSTR','''testing''','The value is testing')
-    CALL testParam%init('testSTR','''testing''','The value is testing')
-    IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%init(...) %pdat StringType (CHAR) FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%name /= 'testSTR') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %name StringType (CHAR) FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%datatype /= 'TYPE(StringType)') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %datatype StringType (CHAR) FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%description /= 'The value is testing') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %description StringType (CHAR) FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam%init('testSTR','''testing''')
-    WRITE(*,*) '  Passed: CALL testParam%init(...) StringType (CHAR)'
-  
-    !test get
-    valchar='test again'
-    CALL testParam%get('testSTR',valchar)
-    IF(TRIM(valchar) /= '''testing''') THEN
-      WRITE(*,*) 'CALL testParam%get(''testSTR'',valchar) FAILED!'
-      STOP 666
-    ENDIF
-    WRITE(*,*) '  Passed: CALL testParam%get(...) StringType (CHAR)'
+    testParam2%pdat%name='testCHAR'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%get('testCHAR',valchar)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_STR'// &
+      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' must be TYPE(StringType)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
+    CALL testParam2%clear()
   
     !test set
-    !For strings, they must be stored in a string type first, then passed in.
-    CALL testParam%set('testSTR','another test','The value is another test')
-    !Clear the variable to confirm it gets set.
-    valchar=''
-    CALL testParam%get('testSTR',valchar)
-    IF(valchar /= 'another test' .OR. testParam%pdat%description /= 'The value is another test') THEN
-      WRITE(*,*) 'testParam%set(''testSTR'',''another test'',''The value is another test'') FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam%set('testSTR','a different test')
-    CALL testParam%get('testSTR',valchar)
-    IF(TRIM(valchar) /= 'a different test') THEN
-      WRITE(*,*) 'testParam%set(''testSTR'',''a different test'') FAILED!'
-      STOP 666
-    ENDIF
-    WRITE(*,*) '  Passed: CALL testParam%set(...) StringType (CHAR)'
+    COMPONENT_TEST('%set(...)')
+    valchar='testing'
+    CALL testParam%set('testCHAR',valchar,'The value is testing')
+    CALL testParam%get('testCHAR',valchar)
+    ASSERT(TRIM(valchar) == 'testing','valchar')
+    ASSERT(testParam%pdat%name == 'testCHAR','%name')
+    ASSERT(testParam%pdat%description == 'The value is testing','%description')
+    valchar='more tests'
+    CALL someParam%set('testCHAR',TRIM(valchar),'The value is more tests')
+    CALL someParam%get('testCHAR',valchar)
+    ASSERT(TRIM(valchar) == 'more tests','valchar')
+    ASSERT(someParam%name == 'testCHAR','someParam%name')
+    ASSERT(someParam%datatype == 'TYPE(StringType)','someParam%datatype')
+    ASSERT(someParam%description == 'The value is more tests','someParam%description')
+    CALL someParam%set('testError',valchar) !Name mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_STR -'// &
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testCHAR"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+    CALL testParam2%set('testCHAR',TRIM(valchar)) !Name not found
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_STR -'// &
+      ' unable to locate parameter "testCHAR" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testCHAR'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%set('testCHAR',TRIM(valchar)) !Type mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_STR -'// &
+      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' and must be TYPE(StringType)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
+    CALL testParam2%clear()
     
-    CALL testParam%clear()
-    CALL testParam%add('testSTR','last test','actually second to last')
-    CALL testParam%get('testSTR',valchar)
-    IF(TRIM(valchar) /= 'last test') THEN
-      WRITE(*,*) 'testParam%set(''testSTR'',''last test'') FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam%clear()
-    CALL testParam%add('testSTR','seriously last test')
-    CALL testParam%get('testSTR',valchar)
-    IF(TRIM(valchar) /= 'seriously last test') THEN
-      WRITE(*,*) 'testParam%set(''testSTR'',''seriously last test'') FAILED!'
-      STOP 666
-    ENDIF
-    WRITE(*,*) '  Passed: CALL testParam%add(...) StringType (CHAR)'
+    COMPONENT_TEST('Operators')
+    valchar='last test'
+    CALL testParam%init('testCHAR',TRIM(valchar))
+    testParam2=testParam
+    ASSERT(ASSOCIATED(testParam2%pdat),'ASSOCIATED %pdat')
+    ASSERT(testParam2%pdat%name == 'testCHAR','%name')
+    ASSERT(testParam2%pdat%datatype == 'TYPE(StringType)','%datatype')
+    ASSERT(testParam2 == testParam,'OPERATOR(==)')
     CALL clear_test_vars()
   ENDSUBROUTINE testCHAR
 !
 !-------------------------------------------------------------------------------
 !Test StringType support
   SUBROUTINE testSTR()
+    CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
+    valstr='test'
+    !test init
     
+    COMPONENT_TEST('%init(...)')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
+    ASSERT(LEN(testParam%name) == 0,'%name 1')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 1')
+    ASSERT(LEN(testParam%description) == 0,'%description 1')
+    CALL testParam%init('testError->testSTR',valstr,'The value is test')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 2')
+    ASSERT(LEN(testParam%name) == 0,'%name 2')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 2')
+    ASSERT(LEN(testParam%description) == 0,'%description 2')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_STR'// &
+      ' - "->" symbol is not allowed in name!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
+    CALL testParam%init('testSTR',valstr,'The value is test')
+    ASSERT(LEN(testParam%name) == 0,'%name 3')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 3')
+    ASSERT(LEN(testParam%description) == 0,'%description 3')
+    ASSERT(ASSOCIATED(testParam%pdat),'%pdat 3')
+    ASSERT(testParam%pdat%name == 'testSTR','%pdat%name')
+    ASSERT(testParam%pdat%datatype == 'TYPE(StringType)','%pdat%datatype')
+    ASSERT(testParam%pdat%description == 'The value is test','%pdat%description')
+    CALL testParam%init('testError',TRIM(valstr))
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_STR'// &
+      ' - parameter is already initialized! Use set method!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
+    
+    !Test clear
+    COMPONENT_TEST('%clear()')
+    CALL testParam%clear()
+    ASSERT(LEN(testParam%name) == 0,'%name')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype')
+    ASSERT(LEN(testParam%description) == 0,'%description')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
+    
+    COMPONENT_TEST('%edit(...)')
+    CALL testParam%init('testSTR',TRIM(valstr),'The value is test')
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%init('testSTR',TRIM(valstr))
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    
+    COMPONENT_TEST('%get(...)')
+    CALL testParam%init('testSTR',TRIM(valstr),'The value is test')
+    CALL testParam%get('testSTR',someParam)
+    ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
+    CALL someParam%get('testSTR',valstr)
+    ASSERT(TRIM(valstr) == 'test','someParam valstr')
+    valstr='testing'
+    CALL testParam%get('testSTR',valstr)
+    ASSERT(TRIM(valstr) == 'test','testParam valstr')
+    CALL testParam%get('testError',valstr)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_STR'// &
+      ' - unable to locate parameter "testError" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
+    CALL someParam%get('testError',valstr)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_STR'// &
+      ' - parameter name mismatch "testError" in "testSTR"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
     ALLOCATE(testParam2%pdat)
     testParam2%pdat%name='testSTR'
-    valstr='''testing'''
-    !test init
-    CALL testParam%init('testError->testSTR',valstr,'The value is testing')
-    CALL testParam%init('testSTR',valstr,'The value is testing')
-    IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%init(...) %pdat StringType (STR) FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%name /= 'testSTR') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %name StringType (STR) FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%datatype /= 'TYPE(StringType)') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %datatype StringType (STR) FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%description /= 'The value is testing') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %description StringType (STR) FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    CALL testParam%init('testError',valstr)
-    WRITE(*,*) '  Passed: CALL testParam%init(...) StringType (STR)'
-  
-    !test get
-    CALL testParam%get('testSTR',someParam)
-    IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSTR'',someParam) FAILED!'
-      STOP 666
-    ENDIF
-    CALL someParam%get('testSTR',valstr)
-    IF(valstr /= '''testing''') THEN
-      WRITE(*,*) 'CALL someParam%get(''testSTR'',valstr) FAILED!'
-      STOP 666
-    ENDIF
-    valstr='test again'
-    CALL testParam%get('testSTR',valstr)
-    IF(valstr /= '''testing''') THEN
-      WRITE(*,*) 'CALL testParam%get(''testSTR'',valstr) FAILED!'
-      STOP 666
-    ENDIF
+    testParam2%pdat%datatype='test_type'
     CALL testParam2%get('testSTR',valstr)
-    CALL testParam%get('testError',valstr)
-    CALL someParam%get('testError',valstr)
-    WRITE(*,*) '  Passed: CALL testParam%get(...) StringType (STR)'
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_STR'// &
+      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' must be TYPE(StringType)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
+    CALL testParam2%clear()
   
     !test set
-    !For strings, they must be stored in a string type first, then passed in.
-    valstr='another test'
-    CALL someParam%set('testSTR',valstr,'The value is another test')
-    !Clear the variable to confirm it gets set.
-    valstr=''
+    COMPONENT_TEST('%set(...)')
+    valstr='testing'
+    CALL testParam%set('testSTR',valstr,'The value is testing')
     CALL testParam%get('testSTR',valstr)
-    IF(valstr /= 'another test' .OR. someParam%description /= 'The value is another test') THEN
-      WRITE(*,*) 'someParam%set(''testSTR'',''another test'',''The value is another test'') FAILED!'
-      STOP 666
-    ENDIF
-    valstr='a different test'
-    CALL testParam%set('testSTR',valstr,'The value is ''a different test''')
-    valstr=''
+    ASSERT(TRIM(valstr) == 'testing','valstr')
+    ASSERT(testParam%pdat%name == 'testSTR','%name')
+    ASSERT(testParam%pdat%description == 'The value is testing','%description')
+    valstr='more tests'
+    CALL someParam%set('testSTR',TRIM(valstr),'The value is more tests')
     CALL testParam%get('testSTR',valstr)
-    IF(valstr /= 'a different test' .OR. someParam%description /= 'The value is ''a different test''') THEN
-      WRITE(*,*) 'testParam%set(''testSTR'',''a different test'') FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam2%set('testSTR',valstr)
-    CALL someParam%set('testError',valstr)
-    CALL testParam%set('testError',valstr)
-    WRITE(*,*) '  Passed: CALL testParam%set(...) StringType (STR)'
-  
-    !Test clear
-    CALL testParam%clear()
-    IF(LEN(testParam%name) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %name StringType (STR) FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%datatype) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %datatype StringType (STR) FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%description) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %description StringType (STR) FAILED!'
-      STOP 666
-    ENDIF
-    IF(ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%clear() %pdat StringType (STR) FAILED!'
-      STOP 666
-    ENDIF
-    WRITE(*,*) '  Passed: CALL testParam%clear() StringType (STR)'
-  
-    !test assignment
-    valstr='assignment test'
-    CALL testParam%init('testSTR',valstr)
+    ASSERT(TRIM(valstr) == 'more tests','valstr')
+    ASSERT(someParam%name == 'testSTR','someParam%name')
+    ASSERT(someParam%datatype == 'TYPE(StringType)','someParam%datatype')
+    ASSERT(someParam%description == 'The value is more tests','someParam%description')
+    CALL someParam%set('testError',valstr) !Name mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_STR -'// &
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSTR"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+    CALL testParam2%set('testSTR',TRIM(valstr)) !Name not found
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_STR -'// &
+      ' unable to locate parameter "testSTR" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSTR'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%set('testSTR',TRIM(valstr)) !Type mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_STR -'// &
+      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' and must be TYPE(StringType)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
+    CALL testParam2%clear()
+    
     COMPONENT_TEST('Operators')
+    valstr='last test'
+    CALL testParam%init('testSTR',TRIM(valstr))
     testParam2=testParam
     ASSERT(ASSOCIATED(testParam2%pdat),'ASSOCIATED %pdat')
     ASSERT(testParam2%pdat%name == 'testSTR','%name')
@@ -803,2678 +1006,2887 @@ PROGRAM testParameterLists
 !
 !-------------------------------------------------------------------------------
 !Test 1-D Array SBK support
-  SUBROUTINE testSBK1a()
-    ALLOCATE(testParam2%pdat)
-    testParam2%pdat%name='testSBK1a'
-    ALLOCATE(valsbk1a(2))
-    valsbk1a(1)=.TRUE.
-    valsbk1a(2)=.FALSE.
+  SUBROUTINE testSBKa1()
+    CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
+    ALLOCATE(valsbka1(2))
+    valsbka1(1)=.TRUE.
+    valsbka1(2)=.FALSE.
     !test init
-    CALL testParam%init('testError->testSBK1a',valsbk1a,'The values .TRUE. & .FALSE.')
-    CALL testParam%init('testSBK1a',valsbk1a,'The values .TRUE. & .FALSE.')
-    IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%init(...) %pdat (SBK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%name /= 'testSBK1a') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %name (SBK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%datatype /= '1-D ARRAY LOGICAL(SBK)') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %datatype (SBK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%description /= 'The values .TRUE. & .FALSE.') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %description (SBK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    CALL testParam%init('testError',valsbk1a)
-    WRITE(*,*) '  Passed: CALL testParam%init(...) (SBK) 1-D'
-  
-    !test get
-    CALL testParam%get('testSBK1a',someParam)
-    IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSBK1a'',someParam) FAILED!'
-      STOP 666
-    ENDIF
-    !Test same size
-    CALL someParam%get('testSBK1a',valsbk1a)
-    IF(.NOT.valsbk1a(1) .OR. valsbk1a(2)) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSBK1a'',valsbk1a) FAILED!'
-      STOP 666
-    ENDIF
-    !Test different size size
-    DEALLOCATE(valsbk1a)
-    ALLOCATE(valsbk1a(1))
-    CALL someParam%get('testSBK1a',valsbk1a)
-    IF(.NOT.valsbk1a(1) .OR. valsbk1a(2)) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSBK1a'',valsbk1a) FAILED!'
-      STOP 666
-    ENDIF
-    valsbk1a=.FALSE.
-    CALL testParam%get('testSBK1a',valsbk1a)
-    IF(.NOT.valsbk1a(1) .OR. valsbk1a(2)) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSBK1a'',valsbk1a) FAILED!'
-      STOP 666
-    ENDIF
-    !Test with deallocated array
-    DEALLOCATE(valsbk1a)
-    CALL someParam%get('testSBK1a',valsbk1a)
-    IF(.NOT.valsbk1a(1) .OR. valsbk1a(2)) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSBK1a'',valsbk1a) FAILED!'
-      STOP 666
-    ENDIF
-    DEALLOCATE(valsbk1a)
-    CALL testParam%get('testSBK1a',valsbk1a)
-    IF(.NOT.valsbk1a(1) .OR. valsbk1a(2)) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSBK1a'',valsbk1a) FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam2%get('testSBK1a',valsbk1a)
-    CALL testParam%get('testError',valsbk1a)
-    CALL someParam%get('testError',valsbk1a)
-    WRITE(*,*) '  Passed: CALL testParam%get(...) (SBK) 1-D'
+    
+    COMPONENT_TEST('%init(...)')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
+    ASSERT(LEN(testParam%name) == 0,'%name 1')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 1')
+    ASSERT(LEN(testParam%description) == 0,'%description 1')
+    CALL testParam%init('testError->testSBKa1',valsbka1,'The values .TRUE. & .FALSE.')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 2')
+    ASSERT(LEN(testParam%name) == 0,'%name 2')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 2')
+    ASSERT(LEN(testParam%description) == 0,'%description 2')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SBK_a1'// &
+      ' - "->" symbol is not allowed in name!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
+    CALL testParam%init('testSBKa1',valsbka1,'The values .TRUE. & .FALSE.')
+    ASSERT(LEN(testParam%name) == 0,'%name 3')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 3')
+    ASSERT(LEN(testParam%description) == 0,'%description 3')
+    ASSERT(ASSOCIATED(testParam%pdat),'%pdat 3')
+    ASSERT(testParam%pdat%name == 'testSBKa1','%pdat%name')
+    ASSERT(testParam%pdat%datatype == '1-D ARRAY LOGICAL(SBK)','%pdat%datatype')
+    ASSERT(testParam%pdat%description == 'The values .TRUE. & .FALSE.','%pdat%description')
+    CALL testParam%init('testError',valsbka1)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SBK_a1'// &
+      ' - parameter is already initialized! Use set method!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
+    
+    !Test clear
+    COMPONENT_TEST('%clear()')
+    CALL testParam%clear()
+    ASSERT(LEN(testParam%name) == 0,'%name')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype')
+    ASSERT(LEN(testParam%description) == 0,'%description')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
+    
+    COMPONENT_TEST('%edit(...)')
+    CALL testParam%init('testSBKa1',valsbka1,'The values .TRUE. & .FALSE.')
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%init('testSBKa1',valsbka1)
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    
+    COMPONENT_TEST('%get(...)')
+    CALL testParam%init('testSBKa1',valsbka1,'The values .TRUE. & .FALSE.')
+    CALL testParam%get('testSBKa1',someParam)
+    ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
+    CALL someParam%get('testSBKa1',valsbka1)
+    ASSERT(SIZE(valsbka1,DIM=1) == 2,'someParam valsbka1 size 1')
+    ASSERT(valsbka1(1) .AND. .NOT. valsbka1(2),'someParam valsbka1 1')
+    DEALLOCATE(valsbka1)
+    ALLOCATE(valsbka1(1))
+    CALL someParam%get('testSBKa1',valsbka1)
+    ASSERT(SIZE(valsbka1,DIM=1) == 2,'someParam valsbka1 different size')
+    ASSERT(valsbka1(1) .AND. .NOT. valsbka1(2),'someParam valsbka1 2')
+    DEALLOCATE(valsbka1)
+    CALL someParam%get('testSBKa1',valsbka1)
+    ASSERT(SIZE(valsbka1,DIM=1) == 2,'someParam valsbka1 unallocated')
+    ASSERT(valsbka1(1) .AND. .NOT. valsbka1(2),'someParam valsbka1 3')
+    DEALLOCATE(valsbka1)
+    ALLOCATE(valsbka1(1))
+    CALL testParam%get('testSBKa1',valsbka1)
+    ASSERT(SIZE(valsbka1,DIM=1) == 2,'testParam valsbka1 size 1')
+    ASSERT(valsbka1(1) .AND. .NOT. valsbka1(2),'testParam valsbka1 1')
+    DEALLOCATE(valsbka1)
+    CALL testParam%get('testSBKa1',valsbka1)
+    ASSERT(SIZE(valsbka1,DIM=1) == 2,'testParam valsbka1 unallocated')
+    ASSERT(valsbka1(1) .AND. .NOT. valsbka1(2),'testParam valsbka1 2')
+    CALL testParam%get('testError',valsbka1)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SBK_a1'// &
+      ' - unable to locate parameter "testError" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
+    CALL someParam%get('testError',valsbka1)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SBK_a1'// &
+      ' - parameter name mismatch "testError" in "testSBKa1"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSBKa1'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%get('testSBKa1',valsbka1)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SBK_a1'// &
+      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' must be 1-D ARRAY LOGICAL(SBK)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
+    CALL testParam2%clear()
   
     !test set
+    COMPONENT_TEST('%set(...)')
+    CALL testParam%set('testSBKa1',(/.FALSE./),'The value is FALSE')
+    CALL testParam%get('testSBKa1',valsbka1)
+    ASSERT(testParam%pdat%name == 'testSBKa1','%name')
+    ASSERT(testParam%pdat%datatype == '1-D ARRAY LOGICAL(SBK)','testParam%datatype')
+    ASSERT(testParam%pdat%description == 'The value is FALSE','%description')
+    ASSERT(SIZE(valsbka1,DIM=1) == 1,'testParam valsbka1 size 1')
+    ASSERT(.NOT.valsbka1(1),'testParam valsbka1 1')
+    CALL testParam%set('testSBKa1',(/.TRUE.,.FALSE./),'The values .TRUE. & .FALSE.')
+    CALL testParam%get('testSBKa1',valsbka1)
+    ASSERT(SIZE(valsbka1,DIM=1) == 2,'testParam valsbka1 size 2')
+    ASSERT(valsbka1(1) .AND. .NOT. valsbka1(2),'testParam valsbka1 2')
+    ASSERT(testParam%pdat%description == 'The values .TRUE. & .FALSE.','%description')
     !
-    CALL someParam%set('testSBK1a',(/.FALSE.,.TRUE./),'The values .FALSE. and .TRUE.')
-    CALL testParam%get('testSBK1a',valsbk1a)
-    IF(valsbk1a(1) .OR. .NOT.valsbk1a(2) .OR. &
-        someParam%description /= 'The values .FALSE. and .TRUE.') THEN
-      WRITE(*,*) 'someParam%set(''testSBK1a'',(/.FALSE.,.TRUE./),''The values .FALSE. and .TRUE.'') FAILED!'
-      STOP 666
-    ENDIF
-    !Different size for test param
-    CALL testParam%set('testSBK1a',(/.TRUE./),'The value .TRUE.')
-    CALL testParam%get('testSBK1a',valsbk1a)
-    IF(.NOT.valsbk1a(1) .OR. SIZE(valsbk1a) /= 1_SIK .OR. &
-        someParam%description /= 'The value .TRUE.') THEN
-      WRITE(*,*) 'testParam%set(''testSBK1a'',.TRUE.) FAILED!'
-      STOP 666
-    ENDIF
-    !Different size for some param
-    CALL someParam%set('testSBK1a',(/.FALSE.,.TRUE.,.TRUE./),'The values .FALSE.,.TRUE., and .TRUE.')
-    CALL testParam%get('testSBK1a',valsbk1a)
-    IF(valsbk1a(1) .OR. .NOT.valsbk1a(2) .OR. &
-        .NOT.valsbk1a(3) .OR. SIZE(valsbk1a) /= 3_SIK .OR. &
-          someParam%description /= 'The values .FALSE.,.TRUE., and .TRUE.') THEN
-      WRITE(*,*) 'someParam%set(''testSBK1a'',(/.FALSE.,.TRUE.,.TRUE./),'// &
-        '''The values .FALSE.,.TRUE., and .TRUE.'') FAILED!'
-      STOP 666
-    ENDIF
-    !Same size for test param
-    CALL testParam%set('testSBK1a',(/.TRUE.,.TRUE.,.FALSE./),'The values .TRUE.,.TRUE., and .FALSE.')
-    CALL testParam%get('testSBK1a',valsbk1a)
-    IF(.NOT.valsbk1a(1) .OR. .NOT.valsbk1a(2) .OR. &
-        valsbk1a(3) .OR. SIZE(valsbk1a) /= 3_SIK .OR. &
-          someParam%description /= 'The values .TRUE.,.TRUE., and .FALSE.') THEN
-      WRITE(*,*) 'testParam%set(''testSBK1a'',(/.TRUE.,.TRUE.,.FALSE./),'// &
-       '''The values .TRUE.,.TRUE., and .FALSE.'') FAILED!'
-      STOP 666
-    ENDIF
+    CALL someParam%set('testSBKa1',(/.TRUE./),'The value is TRUE')
+    CALL someParam%get('testSBKa1',valsbka1)
+    ASSERT(someParam%name == 'testSBKa1','someParam%name')
+    ASSERT(someParam%datatype == '1-D ARRAY LOGICAL(SBK)','someParam%datatype')
+    ASSERT(someParam%description == 'The value is TRUE','someParam%description')
+    ASSERT(SIZE(valsbka1,DIM=1) == 1,'someParam valsbka1 size 1')
+    ASSERT(valsbka1(1),'someParam valsbka1 1')
+    CALL someParam%set('testSBKa1',(/.FALSE.,.TRUE./),'The values .FALSE. & .TRUE.')
+    CALL someParam%get('testSBKa1',valsbka1)
+    ASSERT(someParam%name == 'testSBKa1','someParam%name')
+    ASSERT(someParam%datatype == '1-D ARRAY LOGICAL(SBK)','someParam%datatype')
+    ASSERT(someParam%description == 'The values .FALSE. & .TRUE.','someParam%description')
+    ASSERT(SIZE(valsbka1,DIM=1) == 2,'someParam valsbka1 size 2')
+    ASSERT(.NOT.valsbka1(1) .AND. valsbka1(2),'testParam valsbka1 2')
+    !
+    CALL someParam%set('testError',(/.FALSE./)) !Name mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SBK_a1 -'// &
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSBKa1"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+    CALL testParam2%set('testSBKa1',(/.TRUE./)) !Name not found
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SBK_a1 -'// &
+      ' unable to locate parameter "testSBKa1" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSBKa1'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%set('testSBKa1',(/.TRUE./)) !Type mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SBK_a1 -'// &
+      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' and must be 1-D ARRAY LOGICAL(SBK)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
+    CALL testParam2%clear()
     
-    CALL testParam2%set('testSBK1a',valsbk1a)
-    CALL someParam%set('testError',valsbk1a)
-    CALL testParam%set('testError',valsbk1a)
-    WRITE(*,*) '  Passed: CALL testParam%set(...) (SBK) 1-D'
-  
-    !Test clear
-    CALL testParam%clear()
-    IF(LEN(testParam%name) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %name (SBK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%datatype) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %datatype (SBK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%description) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %description (SBK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%clear() %pdat (SBK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-
-    
-    WRITE(*,*) '  Passed: CALL testParam%clear() (SBK) 1-D'
-  
-    !test assignment
-    CALL testParam%init('testSBK1a',(/.TRUE./))
     COMPONENT_TEST('Operators')
+    CALL testParam%init('testSBKa1',(/.TRUE./))
     testParam2=testParam
     ASSERT(ASSOCIATED(testParam2%pdat),'ASSOCIATED %pdat')
-    ASSERT(testParam2%pdat%name == 'testSBK1a','%name')
-    ASSERT(testParam2%pdat%datatype ==  '1-D ARRAY LOGICAL(SBK)','%datatype')
+    ASSERT(testParam2%pdat%name == 'testSBKa1','%name')
+    ASSERT(testParam2%pdat%datatype == '1-D ARRAY LOGICAL(SBK)','%datatype')
     ASSERT(testParam2 == testParam,'OPERATOR(==)')
     CALL clear_test_vars()
-  ENDSUBROUTINE testSBK1a
+  ENDSUBROUTINE testSBKa1
 !
 !-------------------------------------------------------------------------------
 !Test 1-D Array SNK support
-  SUBROUTINE testSNK1a()
-    ALLOCATE(testParam2%pdat)
-    testParam2%pdat%name='testSNK1a'
-    ALLOCATE(valsnk1a(2))
-    valsnk1a(1)=5_SNK
-    valsnk1a(2)=7_SNK
+  SUBROUTINE testSNKa1()
+    CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
+    ALLOCATE(valsnka1(2))
+    valsnka1(1)=5_SNK
+    valsnka1(2)=7_SNK
     !test init
-    CALL testParam%init('testError->testSNK1a',valsnk1a,'The numbers 5 & 7')
-    CALL testParam%init('testSNK1a',valsnk1a,'The numbers 5 & 7')
-    IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%init(...) %pdat (SNK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%name /= 'testSNK1a') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %name (SNK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%datatype /= '1-D ARRAY INTEGER(SNK)') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %datatype (SNK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%description /= 'The numbers 5 & 7') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %description (SNK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    CALL testParam%init('testError',valsnk1a)
-    WRITE(*,*) '  Passed: CALL testParam%init(...) (SNK) 1-D'
-  
-    !test get
-    CALL testParam%get('testSNK1a',someParam)
-    IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSNK1a'',someParam) FAILED!'
-      STOP 666
-    ENDIF
-    !Test same size
-    CALL someParam%get('testSNK1a',valsnk1a)
-    IF(valsnk1a(1) /= 5_SNK .OR. valsnk1a(2) /= 7_SNK ) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSNK1a'',valsnk1a) FAILED!'
-      STOP 666
-    ENDIF
-    !Test different size size
-    DEALLOCATE(valsnk1a)
-    ALLOCATE(valsnk1a(1))
-    CALL someParam%get('testSNK1a',valsnk1a)
-    IF(valsnk1a(1) /= 5_SNK .OR. valsnk1a(2) /= 7_SNK ) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSNK1a'',valsnk1a) FAILED!'
-      STOP 666
-    ENDIF
-    valsnk1a=0_SNK
-    CALL testParam%get('testSNK1a',valsnk1a)
-    IF(valsnk1a(1) /= 5_SNK .OR. valsnk1a(2) /= 7_SNK ) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSNK1a'',valsnk1a) FAILED!'
-      STOP 666
-    ENDIF
-    !Test with deallocated array
-    DEALLOCATE(valsnk1a)
-    CALL someParam%get('testSNK1a',valsnk1a)
-    IF(valsnk1a(1) /= 5_SNK .OR. valsnk1a(2) /= 7_SNK ) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSNK1a'',valsnk1a) FAILED!'
-      STOP 666
-    ENDIF
-    DEALLOCATE(valsnk1a)
-    CALL testParam%get('testSNK1a',valsnk1a)
-    IF(valsnk1a(1) /= 5_SNK .OR. valsnk1a(2) /= 7_SNK ) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSNK1a'',valsnk1a) FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam2%get('testSNK1a',valsnk1a)
-    CALL testParam%get('testError',valsnk1a)
-    CALL someParam%get('testError',valsnk1a)
-    WRITE(*,*) '  Passed: CALL testParam%get(...) (SNK) 1-D'
+    
+    COMPONENT_TEST('%init(...)')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
+    ASSERT(LEN(testParam%name) == 0,'%name 1')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 1')
+    ASSERT(LEN(testParam%description) == 0,'%description 1')
+    CALL testParam%init('testError->testSNKa1',valsnka1,'The numbers 5 & 7')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 2')
+    ASSERT(LEN(testParam%name) == 0,'%name 2')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 2')
+    ASSERT(LEN(testParam%description) == 0,'%description 2')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SNK_a1'// &
+      ' - "->" symbol is not allowed in name!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
+    CALL testParam%init('testSNKa1',valsnka1,'The numbers 5 & 7')
+    ASSERT(LEN(testParam%name) == 0,'%name 3')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 3')
+    ASSERT(LEN(testParam%description) == 0,'%description 3')
+    ASSERT(ASSOCIATED(testParam%pdat),'%pdat 3')
+    ASSERT(testParam%pdat%name == 'testSNKa1','%pdat%name')
+    ASSERT(testParam%pdat%datatype == '1-D ARRAY INTEGER(SNK)','%pdat%datatype')
+    ASSERT(testParam%pdat%description == 'The numbers 5 & 7','%pdat%description')
+    CALL testParam%init('testError',valsnka1)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SNK_a1'// &
+      ' - parameter is already initialized! Use set method!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
+    
+    !Test clear
+    COMPONENT_TEST('%clear()')
+    CALL testParam%clear()
+    ASSERT(LEN(testParam%name) == 0,'%name')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype')
+    ASSERT(LEN(testParam%description) == 0,'%description')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
+    
+    COMPONENT_TEST('%edit(...)')
+    CALL testParam%init('testSNKa1',valsnka1,'The numbers 5 & 7')
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%init('testSNKa1',valsnka1)
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    
+    COMPONENT_TEST('%get(...)')
+    CALL testParam%init('testSNKa1',valsnka1,'The numbers 5 & 7')
+    CALL testParam%get('testSNKa1',someParam)
+    ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
+    CALL someParam%get('testSNKa1',valsnka1)
+    ASSERT(SIZE(valsnka1,DIM=1) == 2,'someParam valsnka1 size 1')
+    ASSERT(valsnka1(1) == 5 .AND. valsnka1(2) == 7,'someParam valsnka1 1')
+    DEALLOCATE(valsnka1)
+    ALLOCATE(valsnka1(1))
+    CALL someParam%get('testSNKa1',valsnka1)
+    ASSERT(SIZE(valsnka1,DIM=1) == 2,'someParam valsnka1 different size')
+    ASSERT(valsnka1(1) == 5 .AND. valsnka1(2) == 7,'someParam valsnka1 2')
+    DEALLOCATE(valsnka1)
+    CALL someParam%get('testSNKa1',valsnka1)
+    ASSERT(SIZE(valsnka1,DIM=1) == 2,'someParam valsnka1 unallocated')
+    ASSERT(valsnka1(1) == 5 .AND. valsnka1(2) == 7,'someParam valsnka1 3')
+    DEALLOCATE(valsnka1)
+    ALLOCATE(valsnka1(1))
+    CALL testParam%get('testSNKa1',valsnka1)
+    ASSERT(SIZE(valsnka1,DIM=1) == 2,'testParam valsnka1 size 1')
+    ASSERT(valsnka1(1) == 5 .AND. valsnka1(2) == 7,'testParam valsnka1 1')
+    DEALLOCATE(valsnka1)
+    CALL testParam%get('testSNKa1',valsnka1)
+    ASSERT(SIZE(valsnka1,DIM=1) == 2,'testParam valsnka1 unallocated')
+    ASSERT(valsnka1(1) == 5 .AND. valsnka1(2) == 7,'testParam valsnka1 2')
+    CALL testParam%get('testError',valsnka1)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SNK_a1'// &
+      ' - unable to locate parameter "testError" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
+    CALL someParam%get('testError',valsnka1)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SNK_a1'// &
+      ' - parameter name mismatch "testError" in "testSNKa1"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSNKa1'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%get('testSNKa1',valsnka1)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SNK_a1'// &
+      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' must be 1-D ARRAY INTEGER(SNK)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
+    CALL testParam2%clear()
   
     !test set
-    CALL someParam%set('testSNK1a',(/3_SNK,1_SNK/),'The number 3, and 1')
-    CALL testParam%get('testSNK1a',valsnk1a)
-    IF(valsnk1a(1) /= 3_SNK .OR. valsnk1a(2) /= 1_SNK .OR. &
-        someParam%description /= 'The number 3, and 1') THEN
-      WRITE(*,*) 'someParam%set(''testSNK1a'',(/3_SNK,1_SNK/),''The number 3, and 1'') FAILED!'
-      STOP 666
-    ENDIF
-    !Different size for test param
-    CALL testParam%set('testSNK1a',(/5_SNK/),'The number 5')
-    CALL testParam%get('testSNK1a',valsnk1a)
-    IF(valsnk1a(1) /= 5_SNK .OR. SIZE(valsnk1a) /= 1_SIK .OR. &
-        someParam%description /= 'The number 5') THEN
-      WRITE(*,*) 'testParam%set(''testSNK1a'',5_SNK) FAILED!'
-      STOP 666
-    ENDIF
-    !Different size for some param
-    CALL someParam%set('testSNK1a',(/10_SNK,10_SNK,20_SNK/),'The numbers 10, 10, and 20')
-    CALL testParam%get('testSNK1a',valsnk1a)
-    IF(valsnk1a(1) /= 10_SNK .OR. valsnk1a(2) /= 10_SNK .OR. &
-        valsnk1a(3) /= 20_SNK .OR. SIZE(valsnk1a) /= 3_SIK .OR. &
-          someParam%description /= 'The numbers 10, 10, and 20') THEN
-      WRITE(*,*) 'someParam%set(''testSNK1a'',(/10_SNK,10_SNK,20_SNK/),'// &
-        '''The numbers 10, 10, and 20'') FAILED!'
-      STOP 666
-    ENDIF
-    !Same size for test param
-    CALL testParam%set('testSNK1a',(/50_SNK,55_SNK,60_SNK/),'The numbers 50, 55, and 60')
-    CALL testParam%get('testSNK1a',valsnk1a)
-    IF(valsnk1a(1) /= 50_SNK .OR. valsnk1a(2) /= 55_SNK .OR. &
-        valsnk1a(3) /= 60_SNK .OR. SIZE(valsnk1a) /= 3_SIK .OR. &
-          someParam%description /= 'The numbers 50, 55, and 60') THEN
-      WRITE(*,*) 'testParam%set(''testSNK1a'',(/50_SNK,55_SNK,60_SNK/)) FAILED!'
-      STOP 666
-    ENDIF
+    COMPONENT_TEST('%set(...)')
+    CALL testParam%set('testSNKa1',(/-10/),'The number -10')
+    CALL testParam%get('testSNKa1',valsnka1)
+    ASSERT(testParam%pdat%name == 'testSNKa1','%name')
+    ASSERT(testParam%pdat%datatype == '1-D ARRAY INTEGER(SNK)','testParam%datatype')
+    ASSERT(testParam%pdat%description == 'The number -10','%description')
+    ASSERT(SIZE(valsnka1,DIM=1) == 1,'testParam valsnka1 size 1')
+    ASSERT(valsnka1(1) == -10,'testParam valsnka1 1')
+    CALL testParam%set('testSNKa1',(/3,-5/),'The numbers 3 & -5')
+    CALL testParam%get('testSNKa1',valsnka1)
+    ASSERT(SIZE(valsnka1,DIM=1) == 2,'testParam valsnka1 size 2')
+    ASSERT(valsnka1(1) == 3 .AND. valsnka1(2) == -5,'testParam valsnka1 2')
+    ASSERT(testParam%pdat%description == 'The numbers 3 & -5','%description')
+    !
+    CALL someParam%set('testSNKa1',(/-1/),'The number -1')
+    CALL someParam%get('testSNKa1',valsnka1)
+    ASSERT(someParam%name == 'testSNKa1','someParam%name')
+    ASSERT(someParam%datatype == '1-D ARRAY INTEGER(SNK)','someParam%datatype')
+    ASSERT(someParam%description == 'The number -1','someParam%description')
+    ASSERT(SIZE(valsnka1,DIM=1) == 1,'someParam valsnka1 size 1')
+    ASSERT(valsnka1(1) == -1,'someParam valsnka1 1')
+    CALL someParam%set('testSNKa1',(/5,7/),'The numbers 5 & 7')
+    CALL someParam%get('testSNKa1',valsnka1)
+    ASSERT(someParam%name == 'testSNKa1','someParam%name')
+    ASSERT(someParam%datatype == '1-D ARRAY INTEGER(SNK)','someParam%datatype')
+    ASSERT(someParam%description == 'The numbers 5 & 7','someParam%description')
+    ASSERT(SIZE(valsnka1,DIM=1) == 2,'someParam valsnka1 size 2')
+    ASSERT(valsnka1(1) == 5 .AND. valsnka1(2) == 7,'testParam valsnka1 2')
+    !
+    CALL someParam%set('testError',(/-1/)) !Name mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK_a1 -'// &
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSNKa1"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+    CALL testParam2%set('testSNKa1',(/-1/)) !Name not found
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK_a1 -'// &
+      ' unable to locate parameter "testSNKa1" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSNKa1'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%set('testSNKa1',(/-1/)) !Type mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK_a1 -'// &
+      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' and must be 1-D ARRAY INTEGER(SNK)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
+    CALL testParam2%clear()
     
-    CALL testParam2%set('testSNK1a',valsnk1a)
-    CALL someParam%set('testError',valsnk1a)
-    CALL testParam%set('testError',valsnk1a)
-    WRITE(*,*) '  Passed: CALL testParam%set(...) (SNK) 1-D'
-  
-    !Test clear
-    CALL testParam%clear()
-    IF(LEN(testParam%name) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %name (SNK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%datatype) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %datatype (SNK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%description) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %description (SNK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%clear() %pdat (SNK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-
-    
-    WRITE(*,*) '  Passed: CALL testParam%clear() (SNK) 1-D'
-  
-    !test assignment
-    CALL testParam%init('testSNK1a',(/4_SNK/))
     COMPONENT_TEST('Operators')
+    CALL testParam%init('testSNKa1',(/-1/))
     testParam2=testParam
     ASSERT(ASSOCIATED(testParam2%pdat),'ASSOCIATED %pdat')
-    ASSERT(testParam2%pdat%name == 'testSNK1a','%name')
+    ASSERT(testParam2%pdat%name == 'testSNKa1','%name')
     ASSERT(testParam2%pdat%datatype == '1-D ARRAY INTEGER(SNK)','%datatype')
     ASSERT(testParam2 == testParam,'OPERATOR(==)')
     CALL clear_test_vars()
-  ENDSUBROUTINE testSNK1a
+  ENDSUBROUTINE testSNKa1
 !
 !-------------------------------------------------------------------------------
 !Test 1-D Array SLK support
-  SUBROUTINE testSLK1a()
-    ALLOCATE(testParam2%pdat)
-    testParam2%pdat%name='testSLK1a'
-    ALLOCATE(valslk1a(2))
-    valslk1a(1)=6_SLK
-    valslk1a(2)=8_SLK
+  SUBROUTINE testSLKa1()
+    CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
+    ALLOCATE(valslka1(2))
+    valslka1(1)=5_SLK
+    valslka1(2)=7_SLK
     !test init
-    CALL testParam%init('testError->testSLK1a',valslk1a,'The numbers 6 & 8')
-    CALL testParam%init('testSLK1a',valslk1a,'The numbers 6 & 8')
-    IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%init(...) %pdat (SLK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%name /= 'testSLK1a') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %name (SLK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%datatype /= '1-D ARRAY INTEGER(SLK)') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %datatype (SLK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%description /= 'The numbers 6 & 8') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %description (SLK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    CALL testParam%init('testError',valslk1a)
-    WRITE(*,*) '  Passed: CALL testParam%init(...) (SLK) 1-D'
-  
-    !test get
-    CALL testParam%get('testSLK1a',someParam)
-    IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSLK1a'',someParam) FAILED!'
-      STOP 666
-    ENDIF
-    !Test same size
-    CALL someParam%get('testSLK1a',valslk1a)
-    IF(valslk1a(1) /= 6_SLK .OR. valslk1a(2) /= 8_SLK ) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSLK1a'',valslk1a) FAILED!'
-      STOP 666
-    ENDIF
-    !Test different size size
-    DEALLOCATE(valslk1a)
-    ALLOCATE(valslk1a(1))
-    CALL someParam%get('testSLK1a',valslk1a)
-    IF(valslk1a(1) /= 6_SLK .OR. valslk1a(2) /= 8_SLK ) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSLK1a'',valslk1a) FAILED!'
-      STOP 666
-    ENDIF
-    valslk1a=0_SLK
-    CALL testParam%get('testSLK1a',valslk1a)
-    IF(valslk1a(1) /= 6_SLK .OR. valslk1a(2) /= 8_SLK ) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSLK1a'',valslk1a) FAILED!'
-      STOP 666
-    ENDIF
-    !Test with deallocated array
-    DEALLOCATE(valslk1a)
-    CALL someParam%get('testSLK1a',valslk1a)
-    IF(valslk1a(1) /= 6_SLK .OR. valslk1a(2) /= 8_SLK ) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSLK1a'',valslk1a) FAILED!'
-      STOP 666
-    ENDIF
-    DEALLOCATE(valslk1a)
-    CALL testParam%get('testSLK1a',valslk1a)
-    IF(valslk1a(1) /= 6_SLK .OR. valslk1a(2) /= 8_SLK ) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSLK1a'',valslk1a) FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam2%get('testSLK1a',valslk1a)
-    CALL testParam%get('testError',valslk1a)
-    CALL someParam%get('testError',valslk1a)
-    WRITE(*,*) '  Passed: CALL testParam%get(...) (SLK) 1-D'
+    
+    COMPONENT_TEST('%init(...)')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
+    ASSERT(LEN(testParam%name) == 0,'%name 1')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 1')
+    ASSERT(LEN(testParam%description) == 0,'%description 1')
+    CALL testParam%init('testError->testSLKa1',valslka1,'The numbers 5 & 7')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 2')
+    ASSERT(LEN(testParam%name) == 0,'%name 2')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 2')
+    ASSERT(LEN(testParam%description) == 0,'%description 2')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SLK_a1'// &
+      ' - "->" symbol is not allowed in name!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
+    CALL testParam%init('testSLKa1',valslka1,'The numbers 5 & 7')
+    ASSERT(LEN(testParam%name) == 0,'%name 3')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 3')
+    ASSERT(LEN(testParam%description) == 0,'%description 3')
+    ASSERT(ASSOCIATED(testParam%pdat),'%pdat 3')
+    ASSERT(testParam%pdat%name == 'testSLKa1','%pdat%name')
+    ASSERT(testParam%pdat%datatype == '1-D ARRAY INTEGER(SLK)','%pdat%datatype')
+    ASSERT(testParam%pdat%description == 'The numbers 5 & 7','%pdat%description')
+    CALL testParam%init('testError',valslka1)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SLK_a1'// &
+      ' - parameter is already initialized! Use set method!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
+    
+    !Test clear
+    COMPONENT_TEST('%clear()')
+    CALL testParam%clear()
+    ASSERT(LEN(testParam%name) == 0,'%name')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype')
+    ASSERT(LEN(testParam%description) == 0,'%description')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
+    
+    COMPONENT_TEST('%edit(...)')
+    CALL testParam%init('testSLKa1',valslka1,'The numbers 5 & 7')
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%init('testSLKa1',valslka1)
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    
+    COMPONENT_TEST('%get(...)')
+    CALL testParam%init('testSLKa1',valslka1,'The numbers 5 & 7')
+    CALL testParam%get('testSLKa1',someParam)
+    ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
+    CALL someParam%get('testSLKa1',valslka1)
+    ASSERT(SIZE(valslka1,DIM=1) == 2,'someParam valslka1 size 1')
+    ASSERT(valslka1(1) == 5_SLK .AND. valslka1(2) == 7_SLK,'someParam valslka1 1')
+    DEALLOCATE(valslka1)
+    ALLOCATE(valslka1(1))
+    CALL someParam%get('testSLKa1',valslka1)
+    ASSERT(SIZE(valslka1,DIM=1) == 2,'someParam valslka1 different size')
+    ASSERT(valslka1(1) == 5_SLK .AND. valslka1(2) == 7_SLK,'someParam valslka1 2')
+    DEALLOCATE(valslka1)
+    CALL someParam%get('testSLKa1',valslka1)
+    ASSERT(SIZE(valslka1,DIM=1) == 2,'someParam valslka1 unallocated')
+    ASSERT(valslka1(1) == 5_SLK .AND. valslka1(2) == 7_SLK,'someParam valslka1 3')
+    DEALLOCATE(valslka1)
+    ALLOCATE(valslka1(1))
+    CALL testParam%get('testSLKa1',valslka1)
+    ASSERT(SIZE(valslka1,DIM=1) == 2,'testParam valslka1 size 1')
+    ASSERT(valslka1(1) == 5_SLK .AND. valslka1(2) == 7_SLK,'testParam valslka1 1')
+    DEALLOCATE(valslka1)
+    CALL testParam%get('testSLKa1',valslka1)
+    ASSERT(SIZE(valslka1,DIM=1) == 2,'testParam valslka1 unallocated')
+    ASSERT(valslka1(1) == 5_SLK .AND. valslka1(2) == 7_SLK,'testParam valslka1 2')
+    CALL testParam%get('testError',valslka1)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SLK_a1'// &
+      ' - unable to locate parameter "testError" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
+    CALL someParam%get('testError',valslka1)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SLK_a1'// &
+      ' - parameter name mismatch "testError" in "testSLKa1"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSLKa1'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%get('testSLKa1',valslka1)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SLK_a1'// &
+      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' must be 1-D ARRAY INTEGER(SLK)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
+    CALL testParam2%clear()
   
     !test set
-    CALL someParam%set('testSLK1a',(/3_SLK,1_SLK/),'The number 3, and 1')
-    CALL testParam%get('testSLK1a',valslk1a)
-    IF(valslk1a(1) /= 3_SLK .OR. valslk1a(2) /= 1_SLK .OR. &
-        someParam%description /= 'The number 3, and 1') THEN
-      WRITE(*,*) 'someParam%set(''testSLK1a'',(/3_SLK,1_SLK/),''The number 3, and 1'') FAILED!'
-      STOP 666
-    ENDIF
-    !Different size for test param
-    CALL testParam%set('testSLK1a',(/6_SLK/),'The number 6')
-    CALL testParam%get('testSLK1a',valslk1a)
-    IF(valslk1a(1) /= 6_SLK .OR. SIZE(valslk1a) /= 1_SIK .OR. &
-        someParam%description /= 'The number 6') THEN
-      WRITE(*,*) 'testParam%set(''testSLK1a'',6_SLK) FAILED!'
-      STOP 666
-    ENDIF
-    !Different size for some param
-    CALL someParam%set('testSLK1a',(/15_SLK,-15_SLK,20_SLK/),'The numbers 15, -15, and 20')
-    CALL testParam%get('testSLK1a',valslk1a)
-    IF(valslk1a(1) /= 15_SLK .OR. valslk1a(2) /= -15_SLK .OR. &
-        valslk1a(3) /= 20_SLK .OR. SIZE(valslk1a) /= 3_SIK .OR. &
-          someParam%description /= 'The numbers 15, -15, and 20') THEN
-      WRITE(*,*) 'someParam%set(''testSLK1a'',(/15_SLK,-15_SLK,20_SLK/),'// &
-        '''The numbers 15, -15, and 20'') FAILED!'
-      STOP 666
-    ENDIF
-    !Same size for test param
-    CALL testParam%set('testSLK1a',(/-50_SLK,-55_SLK,-60_SLK/),'The numbers -50, -55, and -60')
-    CALL testParam%get('testSLK1a',valslk1a)
-    IF(valslk1a(1) /= -50_SLK .OR. valslk1a(2) /= -55_SLK .OR. &
-        valslk1a(3) /= -60_SLK .OR. SIZE(valslk1a) /= 3_SIK .OR. &
-          someParam%description /= 'The numbers -50, -55, and -60') THEN
-      WRITE(*,*) 'testParam%set(''testSLK1a'',(/-50_SLK,-55_SLK,-60_SLK/)) FAILED!'
-      STOP 666
-    ENDIF
+    COMPONENT_TEST('%set(...)')
+    CALL testParam%set('testSLKa1',(/-10_SLK/),'The number -10')
+    CALL testParam%get('testSLKa1',valslka1)
+    ASSERT(testParam%pdat%name == 'testSLKa1','%name')
+    ASSERT(testParam%pdat%datatype == '1-D ARRAY INTEGER(SLK)','testParam%datatype')
+    ASSERT(testParam%pdat%description == 'The number -10','%description')
+    ASSERT(SIZE(valslka1,DIM=1) == 1,'testParam valslka1 size 1')
+    ASSERT(valslka1(1) == -10_SLK,'testParam valslka1 1')
+    CALL testParam%set('testSLKa1',(/3_SLK,-5_SLK/),'The numbers 3 & -5')
+    CALL testParam%get('testSLKa1',valslka1)
+    ASSERT(SIZE(valslka1,DIM=1) == 2,'testParam valslka1 size 2')
+    ASSERT(valslka1(1) == 3_SLK .AND. valslka1(2) == -5_SLK,'testParam valslka1 2')
+    ASSERT(testParam%pdat%description == 'The numbers 3 & -5','%description')
+    !
+    CALL someParam%set('testSLKa1',(/-1_SLK/),'The number -1')
+    CALL someParam%get('testSLKa1',valslka1)
+    ASSERT(someParam%name == 'testSLKa1','someParam%name')
+    ASSERT(someParam%datatype == '1-D ARRAY INTEGER(SLK)','someParam%datatype')
+    ASSERT(someParam%description == 'The number -1','someParam%description')
+    ASSERT(SIZE(valslka1,DIM=1) == 1,'someParam valslka1 size 1')
+    ASSERT(valslka1(1) == -1_SLK,'someParam valslka1 1')
+    CALL someParam%set('testSLKa1',(/5_SLK,7_SLK/),'The numbers 5 & 7')
+    CALL someParam%get('testSLKa1',valslka1)
+    ASSERT(someParam%name == 'testSLKa1','someParam%name')
+    ASSERT(someParam%datatype == '1-D ARRAY INTEGER(SLK)','someParam%datatype')
+    ASSERT(someParam%description == 'The numbers 5 & 7','someParam%description')
+    ASSERT(SIZE(valslka1,DIM=1) == 2,'someParam valslka1 size 2')
+    ASSERT(valslka1(1) == 5_SLK .AND. valslka1(2) == 7_SLK,'testParam valslka1 2')
+    !
+    CALL someParam%set('testError',(/-1_SLK/)) !Name mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK_a1 -'// &
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSLKa1"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+    CALL testParam2%set('testSLKa1',(/-1_SLK/)) !Name not found
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK_a1 -'// &
+      ' unable to locate parameter "testSLKa1" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSLKa1'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%set('testSLKa1',(/-1_SLK/)) !Type mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK_a1 -'// &
+      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' and must be 1-D ARRAY INTEGER(SLK)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
+    CALL testParam2%clear()
     
-    CALL testParam2%set('testSLK1a',valslk1a)
-    CALL someParam%set('testError',valslk1a)
-    CALL testParam%set('testError',valslk1a)
-    WRITE(*,*) '  Passed: CALL testParam%set(...) (SLK) 1-D'
-  
-    !Test clear
-    CALL testParam%clear()
-    IF(LEN(testParam%name) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %name (SLK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%datatype) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %datatype (SLK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%description) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %description (SLK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%clear() %pdat (SLK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-
-    
-    WRITE(*,*) '  Passed: CALL testParam%clear() (SLK) 1-D'
-  
-    !test assignment
-    CALL testParam%init('testSLK1a',(/4_SLK/))
     COMPONENT_TEST('Operators')
+    CALL testParam%init('testSLKa1',(/-1_SLK/))
     testParam2=testParam
     ASSERT(ASSOCIATED(testParam2%pdat),'ASSOCIATED %pdat')
-    ASSERT(testParam2%pdat%name == 'testSLK1a','%name')
+    ASSERT(testParam2%pdat%name == 'testSLKa1','%name')
     ASSERT(testParam2%pdat%datatype == '1-D ARRAY INTEGER(SLK)','%datatype')
     ASSERT(testParam2 == testParam,'OPERATOR(==)')
     CALL clear_test_vars()
-  ENDSUBROUTINE testSLK1a
+  ENDSUBROUTINE testSLKa1
 !
 !-------------------------------------------------------------------------------
 !Test 1-D Array SSK support
-  SUBROUTINE testSSK1a()
-    ALLOCATE(testParam2%pdat)
-    testParam2%pdat%name='testSSK1a'
-    ALLOCATE(valssk1a(2))
-    valssk1a(1)=5._SSK
-    valssk1a(2)=7._SSK
+  SUBROUTINE testSSKa1()
+    CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
+    LOGICAL(SBK) :: bool
+    ALLOCATE(valsska1(2))
+    valsska1(1)=5.0_SSK
+    valsska1(2)=7.0_SSK
     !test init
-    CALL testParam%init('testError->testSSK1a',valssk1a,'The numbers 5.0 & 7.0')
-    CALL testParam%init('testSSK1a',valssk1a,'The numbers 5.0 & 7.0')
-    IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%init(...) %pdat (SSK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%name /= 'testSSK1a') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %name (SSK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%datatype /= '1-D ARRAY REAL(SSK)') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %datatype (SSK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%description /= 'The numbers 5.0 & 7.0') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %description (SSK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    CALL testParam%init('testError',valssk1a)
-    WRITE(*,*) '  Passed: CALL testParam%init(...) (SSK) 1-D'
-  
-    !test get
-    CALL testParam%get('testSSK1a',someParam)
-    IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSSK1a'',someParam) FAILED!'
-      STOP 666
-    ENDIF
-    !Test same size
-    CALL someParam%get('testSSK1a',valssk1a)
-    IF(valssk1a(1) /= 5.0_SSK .OR. valssk1a(2) /= 7.0_SSK ) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSSK1a'',valssk1a) FAILED!'
-      STOP 666
-    ENDIF
-    !Test different size size
-    DEALLOCATE(valssk1a)
-    ALLOCATE(valssk1a(1))
-    CALL someParam%get('testSSK1a',valssk1a)
-    IF(valssk1a(1) /= 5.0_SSK .OR. valssk1a(2) /= 7.0_SSK ) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSSK1a'',valssk1a) FAILED!'
-      STOP 666
-    ENDIF
-    valssk1a=0.0_SSK
-    CALL testParam%get('testSSK1a',valssk1a)
-    IF(valssk1a(1) /= 5.0_SSK .OR. valssk1a(2) /= 7.0_SSK ) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSSK1a'',valssk1a) FAILED!'
-      STOP 666
-    ENDIF
-    !Test with deallocated array
-    DEALLOCATE(valssk1a)
-    CALL someParam%get('testSSK1a',valssk1a)
-    IF(valssk1a(1) /= 5.0_SSK .OR. valssk1a(2) /= 7.0_SSK ) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSSK1a'',valssk1a) FAILED!'
-      STOP 666
-    ENDIF
-    DEALLOCATE(valssk1a)
-    CALL testParam%get('testSSK1a',valssk1a)
-    IF(valssk1a(1) /= 5.0_SSK .OR. valssk1a(2) /= 7.0_SSK ) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSSK1a'',valssk1a) FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam2%get('testSSK1a',valssk1a)
-    CALL testParam%get('testError',valssk1a)
-    CALL someParam%get('testError',valssk1a)
-    WRITE(*,*) '  Passed: CALL testParam%get(...) (SSK) 1-D'
+    
+    COMPONENT_TEST('%init(...)')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
+    ASSERT(LEN(testParam%name) == 0,'%name 1')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 1')
+    ASSERT(LEN(testParam%description) == 0,'%description 1')
+    CALL testParam%init('testError->testSSKa1',valsska1,'The numbers 5.0 & 7.0')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 2')
+    ASSERT(LEN(testParam%name) == 0,'%name 2')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 2')
+    ASSERT(LEN(testParam%description) == 0,'%description 2')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SSK_a1'// &
+      ' - "->" symbol is not allowed in name!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
+    CALL testParam%init('testSSKa1',valsska1,'The numbers 5.0 & 7.0')
+    ASSERT(LEN(testParam%name) == 0,'%name 3')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 3')
+    ASSERT(LEN(testParam%description) == 0,'%description 3')
+    ASSERT(ASSOCIATED(testParam%pdat),'%pdat 3')
+    ASSERT(testParam%pdat%name == 'testSSKa1','%pdat%name')
+    ASSERT(testParam%pdat%datatype == '1-D ARRAY REAL(SSK)','%pdat%datatype')
+    ASSERT(testParam%pdat%description == 'The numbers 5.0 & 7.0','%pdat%description')
+    CALL testParam%init('testError',valsska1)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SSK_a1'// &
+      ' - parameter is already initialized! Use set method!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
+    
+    !Test clear
+    COMPONENT_TEST('%clear()')
+    CALL testParam%clear()
+    ASSERT(LEN(testParam%name) == 0,'%name')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype')
+    ASSERT(LEN(testParam%description) == 0,'%description')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
+    
+    COMPONENT_TEST('%edit(...)')
+    CALL testParam%init('testSSKa1',valsska1,'The numbers 5.0 & 7.0')
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%init('testSSKa1',valsska1)
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    
+    COMPONENT_TEST('%get(...)')
+    CALL testParam%init('testSSKa1',valsska1,'The numbers 5.0 & 7.0')
+    CALL testParam%get('testSSKa1',someParam)
+    ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
+    CALL someParam%get('testSSKa1',valsska1)
+    ASSERT(SIZE(valsska1,DIM=1) == 2,'someParam valsska1 size 1')
+    bool=ALL(valsska1 .APPROXEQA. (/5.0_SSK,7.0_SSK/))
+    ASSERT(bool,'someParam valsska1 1')
+    DEALLOCATE(valsska1)
+    ALLOCATE(valsska1(1))
+    CALL someParam%get('testSSKa1',valsska1)
+    ASSERT(SIZE(valsska1,DIM=1) == 2,'someParam valsska1 different size')
+    bool=ALL(valsska1 .APPROXEQA. (/5.0_SSK,7.0_SSK/))
+    ASSERT(bool,'someParam valsska1 2')
+    DEALLOCATE(valsska1)
+    CALL someParam%get('testSSKa1',valsska1)
+    ASSERT(SIZE(valsska1,DIM=1) == 2,'someParam valsska1 unallocated')
+    bool=ALL(valsska1 .APPROXEQA. (/5.0_SSK,7.0_SSK/))
+    ASSERT(bool,'someParam valsska1 3')
+    DEALLOCATE(valsska1)
+    ALLOCATE(valsska1(1))
+    CALL testParam%get('testSSKa1',valsska1)
+    ASSERT(SIZE(valsska1,DIM=1) == 2,'testParam valsska1 size 1')
+    bool=ALL(valsska1 .APPROXEQA. (/5.0_SSK,7.0_SSK/))
+    ASSERT(bool,'testParam valsska1 1')
+    DEALLOCATE(valsska1)
+    CALL testParam%get('testSSKa1',valsska1)
+    ASSERT(SIZE(valsska1,DIM=1) == 2,'testParam valsska1 unallocated')
+    bool=ALL(valsska1 .APPROXEQA. (/5.0_SSK,7.0_SSK/))
+    ASSERT(bool,'testParam valsska1 2')
+    CALL testParam%get('testError',valsska1)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SSK_a1'// &
+      ' - unable to locate parameter "testError" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
+    CALL someParam%get('testError',valsska1)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SSK_a1'// &
+      ' - parameter name mismatch "testError" in "testSSKa1"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSSKa1'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%get('testSSKa1',valsska1)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SSK_a1'// &
+      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' must be 1-D ARRAY REAL(SSK)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
+    CALL testParam2%clear()
   
     !test set
+    COMPONENT_TEST('%set(...)')
+    CALL testParam%set('testSSKa1',(/-10.0_SSK/),'The number -10.0')
+    CALL testParam%get('testSSKa1',valsska1)
+    ASSERT(testParam%pdat%name == 'testSSKa1','%name')
+    ASSERT(testParam%pdat%datatype == '1-D ARRAY REAL(SSK)','testParam%datatype')
+    ASSERT(testParam%pdat%description == 'The number -10.0','%description')
+    ASSERT(SIZE(valsska1,DIM=1) == 1,'testParam valsska1 size 1')
+    ASSERT(valsska1(1) .APPROXEQA. -10.0_SSK,'testParam valsska1 1')
+    CALL testParam%set('testSSKa1',(/3.0_SSK,-5.0_SSK/),'The numbers 3.0 & -5.0')
+    CALL testParam%get('testSSKa1',valsska1)
+    ASSERT(SIZE(valsska1,DIM=1) == 2,'testParam valsska1 size 2')
+    bool=ALL(valsska1 .APPROXEQA. (/3.0_SSK,-5.0_SSK/))
+    ASSERT(bool,'testParam valsska1 2')
+    ASSERT(testParam%pdat%description == 'The numbers 3.0 & -5.0','%description')
     !
-    CALL someParam%set('testSSK1a',(/3.0_SSK,1.0_SSK/),'The number 3.0, and 1.0')
-    CALL testParam%get('testSSK1a',valssk1a)
-    IF(valssk1a(1) /= 3.0_SSK .OR. valssk1a(2) /= 1.0_SSK .OR. &
-        someParam%description /= 'The number 3.0, and 1.0') THEN
-      WRITE(*,*) 'someParam%set(''testSSK1a'',(/3.0_SSK,1.0_SSK/),''The number 3.0, and 1.0'') FAILED!'
-      STOP 666
-    ENDIF
-    !Different size for test param
-    CALL testParam%set('testSSK1a',(/5.0_SSK/),'The number 5.0')
-    CALL testParam%get('testSSK1a',valssk1a)
-    IF(valssk1a(1) /= 5.0_SSK .OR. SIZE(valssk1a) /= 1_SIK .OR. &
-        someParam%description /= 'The number 5.0') THEN
-      WRITE(*,*) 'testParam%set(''testSSK1a'',5.0_SSK) FAILED!'
-      STOP 666
-    ENDIF
-    !Different size for some param
-    CALL someParam%set('testSSK1a',(/1.0_SSK,1.5_SSK,2.0_SSK/),'The numbers 1.0, 1.5, and 2.0')
-    CALL testParam%get('testSSK1a',valssk1a)
-    IF(valssk1a(1) /= 1.0_SSK .OR. valssk1a(2) /= 1.5_SSK .OR. &
-        valssk1a(3) /= 2.0_SSK .OR. SIZE(valssk1a) /= 3_SIK .OR. &
-          someParam%description /= 'The numbers 1.0, 1.5, and 2.0') THEN
-      WRITE(*,*) 'someParam%set(''testSSK1a'',(/1.0_SSK,1.5_SSK,2.0_SSK/),'// &
-        '''The numbers 1.0, 1.5, and 2.0'') FAILED!'
-      STOP 666
-    ENDIF
-    !Same size for test param
-    CALL testParam%set('testSSK1a',(/5.0_SSK,5.5_SSK,6.0_SSK/),'The numbers 5.0, 5.5, and 6.0')
-    CALL testParam%get('testSSK1a',valssk1a)
-    IF(valssk1a(1) /= 5.0_SSK .OR. valssk1a(2) /= 5.5_SSK .OR. &
-        valssk1a(3) /= 6.0_SSK .OR. SIZE(valssk1a) /= 3_SIK .OR. &
-          someParam%description /= 'The numbers 5.0, 5.5, and 6.0') THEN
-      WRITE(*,*) 'testParam%set(''testSSK1a'',5.0_SSK) FAILED!'
-      STOP 666
-    ENDIF
+    CALL someParam%set('testSSKa1',(/-1.0_SSK/),'The number -1.0')
+    CALL someParam%get('testSSKa1',valsska1)
+    ASSERT(someParam%name == 'testSSKa1','someParam%name')
+    ASSERT(someParam%datatype == '1-D ARRAY REAL(SSK)','someParam%datatype')
+    ASSERT(someParam%description == 'The number -1.0','someParam%description')
+    ASSERT(SIZE(valsska1,DIM=1) == 1,'someParam valsska1 size 1')
+    ASSERT(valsska1(1) .APPROXEQA. -1.0_SSK,'someParam valsska1 1')
+    CALL someParam%set('testSSKa1',(/5.0_SSK,7.0_SSK/),'The numbers 5.0 & 7.0')
+    CALL someParam%get('testSSKa1',valsska1)
+    ASSERT(someParam%name == 'testSSKa1','someParam%name')
+    ASSERT(someParam%datatype == '1-D ARRAY REAL(SSK)','someParam%datatype')
+    ASSERT(someParam%description == 'The numbers 5.0 & 7.0','someParam%description')
+    ASSERT(SIZE(valsska1,DIM=1) == 2,'someParam valsska1 size 2')
+    bool=ALL(valsska1 .APPROXEQA. (/5.0_SSK,7.0_SSK/))
+    ASSERT(bool,'testParam valsska1 2')
+    !
+    CALL someParam%set('testError',(/-1.0_SSK/)) !Name mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK_a1 -'// &
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSSKa1"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+    CALL testParam2%set('testSSKa1',(/-1.0_SSK/)) !Name not found
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK_a1 -'// &
+      ' unable to locate parameter "testSSKa1" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSSKa1'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%set('testSSKa1',(/-1.0_SSK/)) !Type mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK_a1 -'// &
+      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' and must be 1-D ARRAY REAL(SSK)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
+    CALL testParam2%clear()
     
-    CALL testParam2%set('testSSK1a',valssk1a)
-    CALL someParam%set('testError',valssk1a)
-    CALL testParam%set('testError',valssk1a)
-    WRITE(*,*) '  Passed: CALL testParam%set(...) (SSK) 1-D'
-  
-    !Test clear
-    CALL testParam%clear()
-    IF(LEN(testParam%name) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %name (SSK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%datatype) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %datatype (SSK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%description) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %description (SSK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%clear() %pdat (SSK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-
-    
-    WRITE(*,*) '  Passed: CALL testParam%clear() (SSK) 1-D'
-  
-    !test assignment
-    CALL testParam%init('testSSK1a',(/4.0_SSK/))
     COMPONENT_TEST('Operators')
+    CALL testParam%init('testSSKa1',(/-1.0_SSK/))
     testParam2=testParam
     ASSERT(ASSOCIATED(testParam2%pdat),'ASSOCIATED %pdat')
-    ASSERT(testParam2%pdat%name == 'testSSK1a','%name')
+    ASSERT(testParam2%pdat%name == 'testSSKa1','%name')
     ASSERT(testParam2%pdat%datatype == '1-D ARRAY REAL(SSK)','%datatype')
     ASSERT(testParam2 == testParam,'OPERATOR(==)')
     CALL clear_test_vars()
-  ENDSUBROUTINE testSSK1a
+  ENDSUBROUTINE testSSKa1
 !
 !-------------------------------------------------------------------------------
 !Test 1-D Array SDK support
-  SUBROUTINE testSDK1a()
-    ALLOCATE(testParam2%pdat)
-    testParam2%pdat%name='testSDK1a'
-    ALLOCATE(valsdk1a(2))
-    valsdk1a(1)=5.5_SDK
-    valsdk1a(2)=7.5_SDK
+  SUBROUTINE testSDKa1()
+    CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
+    LOGICAL(SBK) :: bool
+    ALLOCATE(valsdka1(2))
+    valsdka1(1)=5.0_SDK
+    valsdka1(2)=7.0_SDK
     !test init
-    CALL testParam%init('testError->testSDK1a',valsdk1a,'The numbers 5.5 & 7.5')
-    CALL testParam%init('testSDK1a',valsdk1a,'The numbers 5.5 & 7.5')
-    IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%init(...) %pdat (SDK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%name /= 'testSDK1a') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %name (SDK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%datatype /= '1-D ARRAY REAL(SDK)') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %datatype (SDK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%description /= 'The numbers 5.5 & 7.5') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %description (SDK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    CALL testParam%init('testError',valsdk1a)
-    WRITE(*,*) '  Passed: CALL testParam%init(...) (SDK) 1-D'
-  
-    !test get
-    CALL testParam%get('testSDK1a',someParam)
-    IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSDK1a'',someParam) FAILED!'
-      STOP 666
-    ENDIF
-    !Test same size
-    CALL someParam%get('testSDK1a',valsdk1a)
-    IF(valsdk1a(1) /= 5.5_SDK .OR. valsdk1a(2) /= 7.5_SDK ) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSDK1a'',valsdk1a) FAILED!'
-      STOP 666
-    ENDIF
-    !Test different size size
-    DEALLOCATE(valsdk1a)
-    ALLOCATE(valsdk1a(1))
-    CALL someParam%get('testSDK1a',valsdk1a)
-    IF(valsdk1a(1) /= 5.5_SDK .OR. valsdk1a(2) /= 7.5_SDK ) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSDK1a'',valsdk1a) FAILED!'
-      STOP 666
-    ENDIF
-    valsdk1a=0.0_SDK
-    CALL testParam%get('testSDK1a',valsdk1a)
-    IF(valsdk1a(1) /= 5.5_SDK .OR. valsdk1a(2) /= 7.5_SDK ) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSDK1a'',valsdk1a) FAILED!'
-      STOP 666
-    ENDIF
-    !Test with deallocated array
-    DEALLOCATE(valsdk1a)
-    CALL someParam%get('testSDK1a',valsdk1a)
-    IF(valsdk1a(1) /= 5.5_SDK .OR. valsdk1a(2) /= 7.5_SDK ) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSDK1a'',valsdk1a) FAILED!'
-      STOP 666
-    ENDIF
-    DEALLOCATE(valsdk1a)
-    CALL testParam%get('testSDK1a',valsdk1a)
-    IF(valsdk1a(1) /= 5.5_SDK .OR. valsdk1a(2) /= 7.5_SDK ) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSDK1a'',valsdk1a) FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam2%get('testSDK1a',valsdk1a)
-    CALL testParam%get('testError',valsdk1a)
-    CALL someParam%get('testError',valsdk1a)
-    WRITE(*,*) '  Passed: CALL testParam%get(...) (SDK) 1-D'
+    
+    COMPONENT_TEST('%init(...)')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
+    ASSERT(LEN(testParam%name) == 0,'%name 1')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 1')
+    ASSERT(LEN(testParam%description) == 0,'%description 1')
+    CALL testParam%init('testError->testSDKa1',valsdka1,'The numbers 5.0 & 7.0')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 2')
+    ASSERT(LEN(testParam%name) == 0,'%name 2')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 2')
+    ASSERT(LEN(testParam%description) == 0,'%description 2')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SDK_a1'// &
+      ' - "->" symbol is not allowed in name!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
+    CALL testParam%init('testSDKa1',valsdka1,'The numbers 5.0 & 7.0')
+    ASSERT(LEN(testParam%name) == 0,'%name 3')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 3')
+    ASSERT(LEN(testParam%description) == 0,'%description 3')
+    ASSERT(ASSOCIATED(testParam%pdat),'%pdat 3')
+    ASSERT(testParam%pdat%name == 'testSDKa1','%pdat%name')
+    ASSERT(testParam%pdat%datatype == '1-D ARRAY REAL(SDK)','%pdat%datatype')
+    ASSERT(testParam%pdat%description == 'The numbers 5.0 & 7.0','%pdat%description')
+    CALL testParam%init('testError',valsdka1)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SDK_a1'// &
+      ' - parameter is already initialized! Use set method!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
+    
+    !Test clear
+    COMPONENT_TEST('%clear()')
+    CALL testParam%clear()
+    ASSERT(LEN(testParam%name) == 0,'%name')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype')
+    ASSERT(LEN(testParam%description) == 0,'%description')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
+    
+    COMPONENT_TEST('%edit(...)')
+    CALL testParam%init('testSDKa1',valsdka1,'The numbers 5.0 & 7.0')
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%init('testSDKa1',valsdka1)
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    
+    COMPONENT_TEST('%get(...)')
+    CALL testParam%init('testSDKa1',valsdka1,'The numbers 5.0 & 7.0')
+    CALL testParam%get('testSDKa1',someParam)
+    ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
+    CALL someParam%get('testSDKa1',valsdka1)
+    ASSERT(SIZE(valsdka1,DIM=1) == 2,'someParam valsdka1 size 1')
+    bool=ALL(valsdka1 .APPROXEQA. (/5.0_SDK,7.0_SDK/))
+    ASSERT(bool,'someParam valsdka1 1')
+    DEALLOCATE(valsdka1)
+    ALLOCATE(valsdka1(1))
+    CALL someParam%get('testSDKa1',valsdka1)
+    ASSERT(SIZE(valsdka1,DIM=1) == 2,'someParam valsdka1 different size')
+    bool=ALL(valsdka1 .APPROXEQA. (/5.0_SDK,7.0_SDK/))
+    ASSERT(bool,'someParam valsdka1 2')
+    DEALLOCATE(valsdka1)
+    CALL someParam%get('testSDKa1',valsdka1)
+    ASSERT(SIZE(valsdka1,DIM=1) == 2,'someParam valsdka1 unallocated')
+    bool=ALL(valsdka1 .APPROXEQA. (/5.0_SDK,7.0_SDK/))
+    ASSERT(bool,'someParam valsdka1 3')
+    DEALLOCATE(valsdka1)
+    ALLOCATE(valsdka1(1))
+    CALL testParam%get('testSDKa1',valsdka1)
+    ASSERT(SIZE(valsdka1,DIM=1) == 2,'testParam valsdka1 size 1')
+    bool=ALL(valsdka1 .APPROXEQA. (/5.0_SDK,7.0_SDK/))
+    ASSERT(bool,'testParam valsdka1 1')
+    DEALLOCATE(valsdka1)
+    CALL testParam%get('testSDKa1',valsdka1)
+    ASSERT(SIZE(valsdka1,DIM=1) == 2,'testParam valsdka1 unallocated')
+    bool=ALL(valsdka1 .APPROXEQA. (/5.0_SDK,7.0_SDK/))
+    ASSERT(bool,'testParam valsdka1 2')
+    CALL testParam%get('testError',valsdka1)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SDK_a1'// &
+      ' - unable to locate parameter "testError" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
+    CALL someParam%get('testError',valsdka1)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SDK_a1'// &
+      ' - parameter name mismatch "testError" in "testSDKa1"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSDKa1'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%get('testSDKa1',valsdka1)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SDK_a1'// &
+      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' must be 1-D ARRAY REAL(SDK)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
+    CALL testParam2%clear()
   
     !test set
-    CALL someParam%set('testSDK1a',(/3.5_SDK,1.5_SDK/),'The number 3.5, and 1.5')
-    CALL testParam%get('testSDK1a',valsdk1a)
-    IF(valsdk1a(1) /= 3.5_SDK .OR. valsdk1a(2) /= 1.5_SDK .OR. &
-        someParam%description /= 'The number 3.5, and 1.5') THEN
-      WRITE(*,*) 'someParam%set(''testSDK1a'',(/3.5_SDK,1.5_SDK/),''The number 3.5, and 1.5'') FAILED!'
-      STOP 666
-    ENDIF
-    !Different size for test param
-    CALL testParam%set('testSDK1a',(/5.5_SDK/),'The number 5.5')
-    CALL testParam%get('testSDK1a',valsdk1a)
-    IF(valsdk1a(1) /= 5.5_SDK .OR. SIZE(valsdk1a) /= 1_SIK .OR. &
-        someParam%description /= 'The number 5.5') THEN
-      WRITE(*,*) 'testParam%set(''testSDK1a'',5.5_SDK) FAILED!'
-      STOP 666
-    ENDIF
-    !Different size for some param
-    CALL someParam%set('testSDK1a',(/10.0_SDK,10.5_SDK,20.0_SDK/),'The numbers 10.0, 10.5, and 20.0')
-    CALL testParam%get('testSDK1a',valsdk1a)
-    IF(valsdk1a(1) /= 10.0_SDK .OR. valsdk1a(2) /= 10.5_SDK .OR. &
-        valsdk1a(3) /= 20.0_SDK .OR. SIZE(valsdk1a) /= 3_SIK .OR. &
-          someParam%description /= 'The numbers 10.0, 10.5, and 20.0') THEN
-      WRITE(*,*) 'someParam%set(''testSDK1a'',(/10.0_SDK,10.5_SDK,20.0_SDK/),'// &
-        '''The numbers 10.0, 10.5, and 20.0'') FAILED!'
-      STOP 666
-    ENDIF
-    !Same size for test param
-    CALL testParam%set('testSDK1a',(/50.0_SDK,50.5_SDK,60.0_SDK/),'The numbers 50.0, 50.5, and 60.0')
-    CALL testParam%get('testSDK1a',valsdk1a)
-    IF(valsdk1a(1) /= 50.0_SDK .OR. valsdk1a(2) /= 50.5_SDK .OR. &
-        valsdk1a(3) /= 60.0_SDK .OR. SIZE(valsdk1a) /= 3_SIK .OR. &
-          someParam%description /= 'The numbers 50.0, 50.5, and 60.0') THEN
-      WRITE(*,*) 'testParam%set(''testSDK1a'',(/50.0_SDK,50.5_SDK,60.0_SDK/)) FAILED!'
-      STOP 666
-    ENDIF
+    COMPONENT_TEST('%set(...)')
+    CALL testParam%set('testSDKa1',(/-10.0_SDK/),'The number -10.0')
+    CALL testParam%get('testSDKa1',valsdka1)
+    ASSERT(testParam%pdat%name == 'testSDKa1','%name')
+    ASSERT(testParam%pdat%datatype == '1-D ARRAY REAL(SDK)','testParam%datatype')
+    ASSERT(testParam%pdat%description == 'The number -10.0','%description')
+    ASSERT(SIZE(valsdka1,DIM=1) == 1,'testParam valsdka1 size 1')
+    ASSERT(valsdka1(1) .APPROXEQA. -10.0_SDK,'testParam valsdka1 1')
+    CALL testParam%set('testSDKa1',(/3.0_SDK,-5.0_SDK/),'The numbers 3.0 & -5.0')
+    CALL testParam%get('testSDKa1',valsdka1)
+    ASSERT(SIZE(valsdka1,DIM=1) == 2,'testParam valsdka1 size 2')
+    bool=ALL(valsdka1 .APPROXEQA. (/3.0_SDK,-5.0_SDK/))
+    ASSERT(bool,'testParam valsdka1 2')
+    ASSERT(testParam%pdat%description == 'The numbers 3.0 & -5.0','%description')
+    !
+    CALL someParam%set('testSDKa1',(/-1.0_SDK/),'The number -1.0')
+    CALL someParam%get('testSDKa1',valsdka1)
+    ASSERT(someParam%name == 'testSDKa1','someParam%name')
+    ASSERT(someParam%datatype == '1-D ARRAY REAL(SDK)','someParam%datatype')
+    ASSERT(someParam%description == 'The number -1.0','someParam%description')
+    ASSERT(SIZE(valsdka1,DIM=1) == 1,'someParam valsdka1 size 1')
+    ASSERT(valsdka1(1) .APPROXEQA. -1.0_SDK,'someParam valsdka1 1')
+    CALL someParam%set('testSDKa1',(/5.0_SDK,7.0_SDK/),'The numbers 5.0 & 7.0')
+    CALL someParam%get('testSDKa1',valsdka1)
+    ASSERT(someParam%name == 'testSDKa1','someParam%name')
+    ASSERT(someParam%datatype == '1-D ARRAY REAL(SDK)','someParam%datatype')
+    ASSERT(someParam%description == 'The numbers 5.0 & 7.0','someParam%description')
+    ASSERT(SIZE(valsdka1,DIM=1) == 2,'someParam valsdka1 size 2')
+    bool=ALL(valsdka1 .APPROXEQA. (/5.0_SDK,7.0_SDK/))
+    ASSERT(bool,'testParam valsdka1 2')
+    !
+    CALL someParam%set('testError',(/-1.0_SDK/)) !Name mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK_a1 -'// &
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSDKa1"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+    CALL testParam2%set('testSDKa1',(/-1.0_SDK/)) !Name not found
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK_a1 -'// &
+      ' unable to locate parameter "testSDKa1" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSDKa1'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%set('testSDKa1',(/-1.0_SDK/)) !Type mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK_a1 -'// &
+      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' and must be 1-D ARRAY REAL(SDK)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
+    CALL testParam2%clear()
     
-    CALL testParam2%set('testSDK1a',valsdk1a)
-    CALL someParam%set('testError',valsdk1a)
-    CALL testParam%set('testError',valsdk1a)
-    WRITE(*,*) '  Passed: CALL testParam%set(...) (SDK) 1-D'
-  
-    !Test clear
-    CALL testParam%clear()
-    IF(LEN(testParam%name) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %name (SDK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%datatype) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %datatype (SDK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%description) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %description (SDK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%clear() %pdat (SDK) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    WRITE(*,*) '  Passed: CALL testParam%clear() (SDK) 1-D'
-  
-    !test assignment
-    CALL testParam%init('testSDK1a',valsdk1a)
     COMPONENT_TEST('Operators')
+    CALL testParam%init('testSDKa1',(/-1.0_SDK/))
     testParam2=testParam
     ASSERT(ASSOCIATED(testParam2%pdat),'ASSOCIATED %pdat')
-    ASSERT(testParam2%pdat%name == 'testSDK1a','%name')
+    ASSERT(testParam2%pdat%name == 'testSDKa1','%name')
     ASSERT(testParam2%pdat%datatype == '1-D ARRAY REAL(SDK)','%datatype')
     ASSERT(testParam2 == testParam,'OPERATOR(==)')
     CALL clear_test_vars()
-  ENDSUBROUTINE testSDK1a
+  ENDSUBROUTINE testSDKa1
 !
 !-------------------------------------------------------------------------------
 !Test 1-D array StringType support
-  SUBROUTINE testSTR1a()
-    
-    ALLOCATE(testParam2%pdat)
-    testParam2%pdat%name='testSTR1a'
-    ALLOCATE(valstr1a(2))
-    valstr1a(1)='''testing'''
-    valstr1a(2)='more testing'
+  SUBROUTINE testSTRa1()
+    CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
+    LOGICAL(SBK) :: bool
+    ALLOCATE(valstra1(2))
+    valstra1(1)='testing'
+    valstra1(2)='more testing'
     !test init
-    CALL testParam%init('testError->testSTR1a',valstr1a,'The value is testing and more testing')
-    CALL testParam%init('testSTR1a',valstr1a,'The value is testing and more testing')
-    IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%init(...) %pdat StringType (STR) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%name /= 'testSTR1a') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %name StringType (STR) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%datatype /= '1-D ARRAY TYPE(StringType)') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %datatype StringType (STR) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%description /= 'The value is testing and more testing') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %description StringType (STR) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    CALL testParam%init('testError',valstr1a)
-    WRITE(*,*) '  Passed: CALL testParam%init(...) StringType (STR)'
-  
-    !test get
-    CALL testParam%get('testSTR1a',someParam)
-    IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSTR1a'',someParam) FAILED!'
-      STOP 666
-    ENDIF
-    !Test same size
-    CALL someParam%get('testSTR1a',valstr1a)
-    IF(valstr1a(1) /= '''testing''' .OR. valstr1a(2) /= 'more testing' .OR. &
-        SIZE(valstr1a) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSTR1a'',valstr1a) FAILED!'
-      STOP 666
-    ENDIF
-    !Test different size size
-    DEALLOCATE(valstr1a)
-    ALLOCATE(valstr1a(1))
-    valstr1a(1)=''
-    CALL someParam%get('testSTR1a',valstr1a)
-    IF(valstr1a(1) /= '''testing''' .OR. valstr1a(2) /= 'more testing' .OR. &
-        SIZE(valstr1a) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSTR1a'',valstr1a) FAILED!'
-      STOP 666
-    ENDIF
-    DEALLOCATE(valstr1a)
-    ALLOCATE(valstr1a(10))
-    !valstr1a(1)='test again'
-    !valstr1a(2)='test again'
-    CALL testParam%get('testSTR1a',valstr1a)
-    IF(valstr1a(1) /= '''testing''' .OR. valstr1a(2) /= 'more testing' .OR. &
-        SIZE(valstr1a) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSTR1a'',valstr1a) FAILED!'
-      STOP 666
-    ENDIF
-    !Test with deallocated array
-    DEALLOCATE(valstr1a)
-    CALL someParam%get('testSTR1a',valstr1a)
-    IF(valstr1a(1) /= '''testing''' .OR. valstr1a(2) /= 'more testing' .OR. &
-        SIZE(valstr1a) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSTR1a'',valstr1a) FAILED!'
-      STOP 666
-    ENDIF
-    DEALLOCATE(valstr1a)
-    CALL testParam%get('testSTR1a',valstr1a)
-    IF(valstr1a(1) /= '''testing''' .OR. valstr1a(2) /= 'more testing' .OR. &
-        SIZE(valstr1a) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSTR1a'',valstr1a) FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam2%get('testSTR1a',valstr1a)
-    CALL testParam%get('testError',valstr1a)
-    CALL someParam%get('testError',valstr1a)
-    WRITE(*,*) '  Passed: CALL testParam%get(...) StringType (STR)'
-  
-    !test set
-    !For strings, they must be stored in a string type first, then passed in.
-    valstr1a(1)='another test'
-    valstr1a(2)='one more test'
-    CALL someParam%set('testSTR1a',valstr1a,'The value is another test and one more test')
-    !Clear the variable to confirm it gets set.
-    valstr1a(1)=''
-    valstr1a(2)=''
-    CALL testParam%get('testSTR1a',valstr1a)
-    IF(valstr1a(1) /= 'another test' .OR. valstr1a(2) /= 'one more test' .OR.  &
-        SIZE(valstr1a) /= 2_SIK .OR. &
-        someParam%description /= 'The value is another test and one more test') THEN
-      WRITE(*,*) 'someParam%set(''testSTR1a'',''valstr1a,'// &
-        ' The value is another test and one more test'') FAILED!'
-      STOP 666
-    ENDIF
-    !Different size for test param
-    DEALLOCATE(valstr1a)
-    ALLOCATE(valstr1a(1))
-    valstr1a(1)='a different size test'
-    CALL testParam%set('testSTR1a',valstr1a,'The value is a different size test')
-    DEALLOCATE(valstr1a)
-    ALLOCATE(valstr1a(2))
-    valstr1a(1)=''
-    valstr1a(2)=''
-    CALL testParam%get('testSTR1a',valstr1a)
-    IF(valstr1a(1) /= 'a different size test' .OR. SIZE(valstr1a) /= 1_SIK .OR. &
-        someParam%description /= 'The value is a different size test') THEN
-      WRITE(*,*) 'someParam%set(''testSTR1a'',''valstr1a,'// &
-        ' The value is a different size test'') FAILED!'
-      STOP 666
-    ENDIF
-    !Different size for some param
-    DEALLOCATE(valstr1a)
-    ALLOCATE(valstr1a(3))
-    valstr1a(1)='a same but different test'
-    valstr1a(2)='a same but different test'
-    valstr1a(3)='a same but different test'
-    CALL someParam%set('testSTR1a',valstr1a,'The value is a same but different test')
-    !Clear the variable to confirm it gets set.
-    DEALLOCATE(valstr1a)
-    ALLOCATE(valstr1a(2))
-    valstr1a(1)=''
-    valstr1a(2)=''
-    CALL testParam%get('testSTR1a',valstr1a)
-    IF(valstr1a(1) /= 'a same but different test' .OR. &
-         valstr1a(2) /= 'a same but different test' .OR. &
-           valstr1a(3) /= 'a same but different test' .OR. &
-             SIZE(valstr1a) /= 3_SIK .OR. &
-               someParam%description /= 'The value is a same but different test') THEN
-      WRITE(*,*) 'someParam%set(''testSTR1a'',''valstr1a,'// &
-        ' The value is a same but different test'') FAILED!'
-      STOP 666
-    ENDIF
-    !Same size for test param
-    valstr1a(1)='a different but same test'
-    valstr1a(2)='a different but same test'
-    valstr1a(3)='a different but same test'
-    CALL testParam%set('testSTR1a',valstr1a,'The value is a different but same test')
-    valstr1a(1)=''
-    valstr1a(2)=''
-    valstr1a(3)=''
-    CALL testParam%get('testSTR1a',valstr1a)
-    IF(valstr1a(1) /= 'a different but same test' .OR. &
-         valstr1a(2) /= 'a different but same test' .OR. &
-           valstr1a(3) /= 'a different but same test' .OR. &
-             SIZE(valstr1a) /= 3_SIK .OR. &
-               someParam%description /= 'The value is a different but same test') THEN
-      WRITE(*,*) 'testParam%set(''testSTR1a'',''a different but same test'') FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam2%set('testSTR1a',valstr1a)
-    CALL someParam%set('testError',valstr1a)
-    CALL testParam%set('testError',valstr1a)
-    WRITE(*,*) '  Passed: CALL testParam%set(...) StringType (STR)'
+    
+    COMPONENT_TEST('%init(...)')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
+    ASSERT(LEN(testParam%name) == 0,'%name 1')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 1')
+    ASSERT(LEN(testParam%description) == 0,'%description 1')
+    CALL testParam%init('testError->testSTRa1',valstra1,'The values are testing and more testing')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 2')
+    ASSERT(LEN(testParam%name) == 0,'%name 2')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 2')
+    ASSERT(LEN(testParam%description) == 0,'%description 2')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_STR_a1'// &
+      ' - "->" symbol is not allowed in name!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
+    CALL testParam%init('testSTRa1',valstra1,'The values are testing and more testing')
+    ASSERT(LEN(testParam%name) == 0,'%name 3')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 3')
+    ASSERT(LEN(testParam%description) == 0,'%description 3')
+    ASSERT(ASSOCIATED(testParam%pdat),'%pdat 3')
+    ASSERT(testParam%pdat%name == 'testSTRa1','%pdat%name')
+    ASSERT(testParam%pdat%datatype == '1-D ARRAY TYPE(StringType)','%pdat%datatype')
+    ASSERT(testParam%pdat%description == 'The values are testing and more testing','%pdat%description')
+    CALL testParam%init('testError',valstra1)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_STR_a1'// &
+      ' - parameter is already initialized! Use set method!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
     
     !Test clear
+    COMPONENT_TEST('%clear()')
     CALL testParam%clear()
-    IF(LEN(testParam%name) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %name StringType (STR) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%datatype) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %datatype StringType (STR) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%description) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %description StringType (STR) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%clear() %pdat StringType (STR) 1-D FAILED!'
-      STOP 666
-    ENDIF
-    WRITE(*,*) '  Passed: CALL testParam%clear() StringType (STR)'
+    ASSERT(LEN(testParam%name) == 0,'%name')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype')
+    ASSERT(LEN(testParam%description) == 0,'%description')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
+    
+    COMPONENT_TEST('%edit(...)')
+    CALL testParam%init('testSTRa1',valstra1,'The numbers 5.0 & 7.0')
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%init('testSTRa1',valstra1)
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    
+    COMPONENT_TEST('%get(...)')
+    CALL testParam%init('testSTRa1',valstra1,'The values are testing and more testing')
+    CALL testParam%get('testSTRa1',someParam)
+    ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
+    CALL someParam%get('testSTRa1',valstra1)
+    ASSERT(SIZE(valstra1,DIM=1) == 2,'someParam valstra1 size 1')
+    bool=valstra1(1) == 'testing' .AND. valstra1(2) == 'more testing'
+    ASSERT(bool,'someParam valstra1 1')
+    DEALLOCATE(valstra1)
+    ALLOCATE(valstra1(1))
+    CALL someParam%get('testSTRa1',valstra1)
+    ASSERT(SIZE(valstra1,DIM=1) == 2,'someParam valstra1 different size')
+    bool=valstra1(1) == 'testing' .AND. valstra1(2) == 'more testing'
+    ASSERT(bool,'someParam valstra1 2')
+    DEALLOCATE(valstra1)
+    CALL someParam%get('testSTRa1',valstra1)
+    ASSERT(SIZE(valstra1,DIM=1) == 2,'someParam valstra1 unallocated')
+    bool=valstra1(1) == 'testing' .AND. valstra1(2) == 'more testing'
+    ASSERT(bool,'someParam valstra1 3')
+    DEALLOCATE(valstra1)
+    ALLOCATE(valstra1(1))
+    CALL testParam%get('testSTRa1',valstra1)
+    ASSERT(SIZE(valstra1,DIM=1) == 2,'testParam valstra1 size 1')
+    bool=valstra1(1) == 'testing' .AND. valstra1(2) == 'more testing'
+    ASSERT(bool,'testParam valstra1 1')
+    DEALLOCATE(valstra1)
+    CALL testParam%get('testSTRa1',valstra1)
+    ASSERT(SIZE(valstra1,DIM=1) == 2,'testParam valstra1 unallocated')
+    bool=valstra1(1) == 'testing' .AND. valstra1(2) == 'more testing'
+    ASSERT(bool,'testParam valstra1 2')
+    CALL testParam%get('testError',valstra1)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_STR_a1'// &
+      ' - unable to locate parameter "testError" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
+    CALL someParam%get('testError',valstra1)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_STR_a1'// &
+      ' - parameter name mismatch "testError" in "testSTRa1"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSTRa1'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%get('testSTRa1',valstra1)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_STR_a1'// &
+      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' must be 1-D ARRAY TYPE(StringType)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
+    CALL testParam2%clear()
   
-    !test assignment
-    valstr1a(1)='assignment test1'
-    valstr1a(2)='assignment test2'
-    valstr1a(3)='assignment test3'
-    CALL testParam%init('testSTR1a',valstr1a)
+    !test set
+    COMPONENT_TEST('%set(...)')
+    valstra1(1)='another test'
+    valstra1(2)='one more test'
+    CALL testParam%set('testSTRa1',valstra1,'The values are another test and one more test')
+    valstra1(1)=''
+    valstra1(2)=''
+    CALL testParam%get('testSTRa1',valstra1)
+    ASSERT(testParam%pdat%name == 'testSTRa1','%name')
+    ASSERT(testParam%pdat%datatype == '1-D ARRAY TYPE(StringType)','testParam%datatype')
+    ASSERT(testParam%pdat%description == 'The values are another test and one more test','%description')
+    ASSERT(SIZE(valstra1,DIM=1) == 2,'testParam valstra1 size 1')
+    bool=valstra1(1) == 'another test' .AND. valstra1(2) == 'one more test'
+    ASSERT(bool,'testParam valstra1 1')
+    DEALLOCATE(valstra1)
+    ALLOCATE(valstra1(1))
+    valstra1(1)='a different size test'
+    CALL testParam%set('testSTRa1',valstra1,'The value a different size test')
+    DEALLOCATE(valstra1)
+    ALLOCATE(valstra1(2))
+    valstra1(1)=''
+    valstra1(2)=''
+    CALL testParam%get('testSTRa1',valstra1)
+    ASSERT(SIZE(valstra1,DIM=1) == 1,'testParam valstra1 size 2')
+    bool=valstra1(1) == 'a different size test'
+    ASSERT(bool,'testParam valstra1 2')
+    ASSERT(testParam%pdat%description == 'The value a different size test','%description')
+    !
+    DEALLOCATE(valstra1)
+    ALLOCATE(valstra1(2))
+    valstra1(1)='another test'
+    valstra1(2)='one more test'
+    CALL someParam%set('testSTRa1',valstra1,'The values are another test and one more test')
+    valstra1(1)=''
+    valstra1(2)=''
+    CALL someParam%get('testSTRa1',valstra1)
+    ASSERT(someParam%name == 'testSTRa1','someParam%name')
+    ASSERT(someParam%datatype == '1-D ARRAY TYPE(StringType)','someParam%datatype')
+    ASSERT(someParam%description == 'The values are another test and one more test','someParam%description')
+    ASSERT(SIZE(valstra1,DIM=1) == 2,'someParam valstra1 size 1')
+    bool=valstra1(1) == 'another test' .AND. valstra1(2) == 'one more test'
+    ASSERT(bool,'someParam valstra1 1')
+    DEALLOCATE(valstra1)
+    ALLOCATE(valstra1(1))
+    valstra1(1)='a different size test'
+    CALL someParam%set('testSTRa1',valstra1,'The value a different size test')
+    DEALLOCATE(valstra1)
+    ALLOCATE(valstra1(2))
+    valstra1(1)=''
+    valstra1(2)=''
+    CALL someParam%get('testSTRa1',valstra1)
+    ASSERT(someParam%name == 'testSTRa1','someParam%name')
+    ASSERT(someParam%datatype == '1-D ARRAY TYPE(StringType)','someParam%datatype')
+    ASSERT(someParam%description == 'The value a different size test','someParam%description')
+    ASSERT(SIZE(valstra1,DIM=1) == 1,'someParam valstra1 size 2')
+    bool=valstra1(1) == 'a different size test'
+    ASSERT(bool,'testParam valstra1 2')
+    !
+    CALL someParam%set('testError',valstra1) !Name mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_STR_a1 -'// &
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSTRa1"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+    CALL testParam2%set('testSTRa1',valstra1) !Name not found
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_STR_a1 -'// &
+      ' unable to locate parameter "testSTRa1" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSTRa1'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%set('testSTRa1',valstra1) !Type mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_STR_a1 -'// &
+      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' and must be 1-D ARRAY TYPE(StringType)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
+    CALL testParam2%clear()
+    
     COMPONENT_TEST('Operators')
+    CALL testParam%init('testSTRa1',valstra1)
     testParam2=testParam
     ASSERT(ASSOCIATED(testParam2%pdat),'ASSOCIATED %pdat')
-    ASSERT(testParam2%pdat%name == 'testSTR1a','%name')
+    ASSERT(testParam2%pdat%name == 'testSTRa1','%name')
     ASSERT(testParam2%pdat%datatype == '1-D ARRAY TYPE(StringType)','%datatype')
     ASSERT(testParam2 == testParam,'OPERATOR(==)')
     CALL clear_test_vars()
-  ENDSUBROUTINE testSTR1a
+  ENDSUBROUTINE testSTRa1
 !
 !-------------------------------------------------------------------------------
 !Test 2-D Array SNK support
-  SUBROUTINE testSNK2a()
-    ALLOCATE(testParam2%pdat)
-    testParam2%pdat%name='testSNK2a'
-    ALLOCATE(valsnk2a(2,2))
-    valsnk2a(1,1)=5_SNK
-    valsnk2a(2,1)=7_SNK
-    valsnk2a(1,2)=6_SNK
-    valsnk2a(2,2)=8_SNK
+  SUBROUTINE testSNKa2()
+    LOGICAL(SBK) :: bool
+    CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
+    ALLOCATE(valsnka2(2,2))
+    valsnka2(1,1)=5_SNK
+    valsnka2(2,1)=7_SNK
+    valsnka2(1,2)=6_SNK
+    valsnka2(2,2)=8_SNK
     !test init
-    CALL testParam%init('testError->testSNK2a',valsnk2a,'The numbers 5, 7, 6, & 8')
-    CALL testParam%init('testSNK2a',valsnk2a,'The numbers 5, 7, 6, & 8')
-    IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%init(...) %pdat (SNK) 2-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%name /= 'testSNK2a') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %name (SNK) 2-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%datatype /= '2-D ARRAY INTEGER(SNK)') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %datatype (SNK) 2-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%description /= 'The numbers 5, 7, 6, & 8') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %description (SNK) 2-D FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    CALL testParam%init('testError',valsnk2a)
-    WRITE(*,*) '  Passed: CALL testParam%init(...) (SNK) 2-D'
-  
-    !test get
-    CALL testParam%get('testSNK2a',someParam)
-    IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSNK2a'',someParam) FAILED!'
-      STOP 666
-    ENDIF
-    !Test same size
-    CALL someParam%get('testSNK2a',valsnk2a)
-    IF(valsnk2a(1,1) /= 5_SNK .OR. valsnk2a(2,1) /= 7_SNK .OR. &
-        valsnk2a(1,2) /= 6_SNK .OR. valsnk2a(2,2) /= 8_SNK .OR. &
-          SIZE(valsnk2a,1) /= 2_SIK .OR. SIZE(valsnk2a,2) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSNK2a'',valsnk2a) FAILED!'
-      STOP 666
-    ENDIF
-    !Test different size size
-    DEALLOCATE(valsnk2a)
-    ALLOCATE(valsnk2a(1,1))
-    CALL someParam%get('testSNK2a',valsnk2a)
-    IF(valsnk2a(1,1) /= 5_SNK .OR. valsnk2a(2,1) /= 7_SNK .OR. &
-        valsnk2a(1,2) /= 6_SNK .OR. valsnk2a(2,2) /= 8_SNK .OR. &
-          SIZE(valsnk2a,1) /= 2_SIK .OR. SIZE(valsnk2a,2) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSNK2a'',valsnk2a) FAILED!'
-      STOP 666
-    ENDIF
-    valsnk2a=0_SNK
-    CALL testParam%get('testSNK2a',valsnk2a)
-    IF(valsnk2a(1,1) /= 5_SNK .OR. valsnk2a(2,1) /= 7_SNK .OR. &
-        valsnk2a(1,2) /= 6_SNK .OR. valsnk2a(2,2) /= 8_SNK .OR. &
-          SIZE(valsnk2a,1) /= 2_SIK .OR. SIZE(valsnk2a,2) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSNK2a'',valsnk2a) FAILED!'
-      STOP 666
-    ENDIF
-    !Test with deallocated array
-    DEALLOCATE(valsnk2a)
-    CALL someParam%get('testSNK2a',valsnk2a)
-    IF(valsnk2a(1,1) /= 5_SNK .OR. valsnk2a(2,1) /= 7_SNK .OR. &
-        valsnk2a(1,2) /= 6_SNK .OR. valsnk2a(2,2) /= 8_SNK .OR. &
-          SIZE(valsnk2a,1) /= 2_SIK .OR. SIZE(valsnk2a,2) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSNK2a'',valsnk2a) FAILED!'
-      STOP 666
-    ENDIF
-    DEALLOCATE(valsnk2a)
-    CALL testParam%get('testSNK2a',valsnk2a)
-    IF(valsnk2a(1,1) /= 5_SNK .OR. valsnk2a(2,1) /= 7_SNK .OR. &
-        valsnk2a(1,2) /= 6_SNK .OR. valsnk2a(2,2) /= 8_SNK .OR. &
-          SIZE(valsnk2a,1) /= 2_SIK .OR. SIZE(valsnk2a,2) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSNK2a'',valsnk2a) FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam2%get('testSNK2a',valsnk2a)
-    CALL testParam%get('testError',valsnk2a)
-    CALL someParam%get('testError',valsnk2a)
-    WRITE(*,*) '  Passed: CALL testParam%get(...) (SNK) 2-D'
+    
+    COMPONENT_TEST('%init(...)')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
+    ASSERT(LEN(testParam%name) == 0,'%name 1')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 1')
+    ASSERT(LEN(testParam%description) == 0,'%description 1')
+    CALL testParam%init('testError->testSNKa2',valsnka2,'The numbers 5, 7, 6, & 8')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 2')
+    ASSERT(LEN(testParam%name) == 0,'%name 2')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 2')
+    ASSERT(LEN(testParam%description) == 0,'%description 2')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SNK_a2'// &
+      ' - "->" symbol is not allowed in name!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
+    CALL testParam%init('testSNKa2',valsnka2,'The numbers 5, 7, 6, & 8')
+    ASSERT(LEN(testParam%name) == 0,'%name 3')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 3')
+    ASSERT(LEN(testParam%description) == 0,'%description 3')
+    ASSERT(ASSOCIATED(testParam%pdat),'%pdat 3')
+    ASSERT(testParam%pdat%name == 'testSNKa2','%pdat%name')
+    ASSERT(testParam%pdat%datatype == '2-D ARRAY INTEGER(SNK)','%pdat%datatype')
+    ASSERT(testParam%pdat%description == 'The numbers 5, 7, 6, & 8','%pdat%description')
+    CALL testParam%init('testError',valsnka2)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SNK_a2'// &
+      ' - parameter is already initialized! Use set method!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
+    
+    !Test clear
+    COMPONENT_TEST('%clear()')
+    CALL testParam%clear()
+    ASSERT(LEN(testParam%name) == 0,'%name')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype')
+    ASSERT(LEN(testParam%description) == 0,'%description')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
+    
+    COMPONENT_TEST('%edit(...)')
+    CALL testParam%init('testSNKa2',valsnka2,'The numbers 5, 7, 6, & 8')
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%init('testSNKa2',valsnka2)
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    
+    COMPONENT_TEST('%get(...)')
+    CALL testParam%init('testSNKa2',valsnka2,'The numbers 5, 7, 6, & 8')
+    CALL testParam%get('testSNKa2',someParam)
+    ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
+    CALL someParam%get('testSNKa2',valsnka2)
+    bool=SIZE(valsnka2,DIM=1) == 2 .AND. SIZE(valsnka2,DIM=2) == 2
+    ASSERT(bool,'someParam valsnka2 size 1')
+    bool=valsnka2(1,1) == 5 .AND. valsnka2(2,1) == 7 .AND. valsnka2(1,2) == 6 .AND. valsnka2(2,2) == 8
+    ASSERT(bool,'someParam valsnka2 1')
+    DEALLOCATE(valsnka2)
+    ALLOCATE(valsnka2(1,1))
+    CALL someParam%get('testSNKa2',valsnka2)
+    bool=SIZE(valsnka2,DIM=1) == 2 .AND. SIZE(valsnka2,DIM=2) == 2
+    ASSERT(bool,'someParam valsnka2 different size')
+    bool=valsnka2(1,1) == 5 .AND. valsnka2(2,1) == 7 .AND. valsnka2(1,2) == 6 .AND. valsnka2(2,2) == 8
+    ASSERT(bool,'someParam valsnka2 2')
+    DEALLOCATE(valsnka2)
+    CALL someParam%get('testSNKa2',valsnka2)
+    bool=SIZE(valsnka2,DIM=1) == 2 .AND. SIZE(valsnka2,DIM=2) == 2
+    ASSERT(bool,'someParam valsnka2 unallocated')
+    bool=valsnka2(1,1) == 5 .AND. valsnka2(2,1) == 7 .AND. valsnka2(1,2) == 6 .AND. valsnka2(2,2) == 8
+    ASSERT(bool,'someParam valsnka2 3')
+    DEALLOCATE(valsnka2)
+    ALLOCATE(valsnka2(2,1))
+    CALL testParam%get('testSNKa2',valsnka2)
+    bool=SIZE(valsnka2,DIM=1) == 2 .AND. SIZE(valsnka2,DIM=2) == 2
+    ASSERT(bool,'testParam valsnka2 size 1')
+    bool=valsnka2(1,1) == 5 .AND. valsnka2(2,1) == 7 .AND. valsnka2(1,2) == 6 .AND. valsnka2(2,2) == 8
+    ASSERT(bool,'testParam valsnka2 1')
+    DEALLOCATE(valsnka2)
+    CALL testParam%get('testSNKa2',valsnka2)
+    bool=SIZE(valsnka2,DIM=1) == 2 .AND. SIZE(valsnka2,DIM=2) == 2
+    ASSERT(bool,'testParam valsnka2 unallocated')
+    bool=valsnka2(1,1) == 5 .AND. valsnka2(2,1) == 7 .AND. valsnka2(1,2) == 6 .AND. valsnka2(2,2) == 8
+    ASSERT(bool,'testParam valsnka2 2')
+    CALL testParam%get('testError',valsnka2)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SNK_a2'// &
+      ' - unable to locate parameter "testError" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
+    CALL someParam%get('testError',valsnka2)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SNK_a2'// &
+      ' - parameter name mismatch "testError" in "testSNKa2"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSNKa2'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%get('testSNKa2',valsnka2)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SNK_a2'// &
+      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' must be 2-D ARRAY INTEGER(SNK)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
+    CALL testParam2%clear()
   
     !test set
-    CALL someParam%set('testSNK2a',RESHAPE((/3_SNK,1_SNK,4_SNK,2_SNK/),(/2,2/)),'The numbers 3, 1, 4, and 2')
-    CALL testParam%get('testSNK2a',valsnk2a)
-    IF(valsnk2a(1,1) /= 3_SNK .OR. valsnk2a(2,1) /= 1_SNK .OR. &
-        valsnk2a(1,2) /= 4_SNK .OR. valsnk2a(2,2) /= 2_SNK .OR. &
-          SIZE(valsnk2a,1) /= 2_SIK .OR. SIZE(valsnk2a,2) /= 2_SIK .OR. &
-          someParam%description /= 'The numbers 3, 1, 4, and 2') THEN
-      WRITE(*,*) 'someParam%set(''testSNK2a'',(/3_SNK,1_SNK/),''The numbers 3, 1, 4, and 2'') FAILED!'
-      STOP 666
-    ENDIF
-    !Different size for test param
-    CALL testParam%set('testSNK2a',RESHAPE((/5_SNK/),(/1,1/)),'The number 5')
-    CALL testParam%get('testSNK2a',valsnk2a)
-    IF(valsnk2a(1,1) /= 5_SNK .OR. SIZE(valsnk2a,1) /= 1_SIK .OR. &
-        SIZE(valsnk2a,2) /= 1_SIK .OR. &
-          someParam%description /= 'The number 5') THEN
-      WRITE(*,*) 'testParam%set(''testSNK2a'',5_SNK) FAILED!'
-      STOP 666
-    ENDIF
-    !Different size for some param
-    CALL someParam%set('testSNK2a',RESHAPE((/10_SNK,10_SNK,20_SNK,-10_SNK,-10_SNK,-20_SNK/),(/3,2/)), &
-        'The numbers 10, 10, 20, -10, -10, and -20')
-    CALL testParam%get('testSNK2a',valsnk2a)
-    IF(valsnk2a(1,1) /= 10_SNK .OR. valsnk2a(2,1) /= 10_SNK .OR. &
-        valsnk2a(3,1) /= 20_SNK .OR. SIZE(valsnk2a,1) /= 3_SIK .OR. &
-          valsnk2a(1,2) /= -10_SNK .OR. valsnk2a(2,2) /= -10_SNK .OR. &
-            valsnk2a(3,2) /= -20_SNK .OR. SIZE(valsnk2a,2) /= 2_SIK .OR. &
-              someParam%description /= 'The numbers 10, 10, 20, -10, -10, and -20') THEN
-      WRITE(*,*) 'someParam%set(''testSNK2a'',(/10_SNK,10_SNK,20_SNK/,/-10_SNK,-10_SNK,-20_SNK/),'// &
-        '''The numbers 10, 10, 20, -10, -10, and -20'') FAILED!'
-      STOP 666
-    ENDIF
-    !Same size for test param
-    CALL testParam%set('testSNK2a',RESHAPE((/50_SNK,55_SNK,60_SNK,-50_SNK,-55_SNK,-60_SNK/),(/3,2/)), &
-      'The numbers 50, 55, 60, -50, -55, and -60')
-    CALL testParam%get('testSNK2a',valsnk2a)
-    IF(valsnk2a(1,1) /= 50_SNK .OR. valsnk2a(2,1) /= 55_SNK .OR. &
-        valsnk2a(3,1) /= 60_SNK .OR. SIZE(valsnk2a,1) /= 3_SIK .OR. &
-          valsnk2a(1,2) /= -50_SNK .OR. valsnk2a(2,2) /= -55_SNK .OR. &
-            valsnk2a(3,2) /= -60_SNK .OR. SIZE(valsnk2a,2) /= 2_SIK .OR. &
-              someParam%description /= 'The numbers 50, 55, 60, -50, -55, and -60') THEN
-      WRITE(*,*) 'testParam%set(''testSNK2a'',(/50_SNK,55_SNK,60_SNK/,/-50_SNK,-55_SNK,-60_SNK/)) FAILED!'
-      STOP 666
-    ENDIF
+    COMPONENT_TEST('%set(...)')
+    CALL testParam%set('testSNKa2',RESHAPE((/-10/),(/1,1/)),'The number -10')
+    CALL testParam%get('testSNKa2',valsnka2)
+    ASSERT(testParam%pdat%name == 'testSNKa2','%name')
+    ASSERT(testParam%pdat%datatype == '2-D ARRAY INTEGER(SNK)','testParam%datatype')
+    ASSERT(testParam%pdat%description == 'The number -10','%description')
+    bool=SIZE(valsnka2,DIM=1) == 1 .AND. SIZE(valsnka2,DIM=2) == 1
+    ASSERT(bool,'testParam valsnka2 size 1')
+    bool=valsnka2(1,1) == -10
+    ASSERT(bool,'testParam valsnka2 1')
+    CALL testParam%set('testSNKa2',RESHAPE((/3,-5/),(/2,1/)),'The numbers 3 & -5')
+    CALL testParam%get('testSNKa2',valsnka2)
+    bool=SIZE(valsnka2,DIM=1) == 2 .AND. SIZE(valsnka2,DIM=2) == 1
+    ASSERT(bool,'testParam valsnka2 size 2')
+    bool=valsnka2(1,1) == 3 .AND. valsnka2(2,1) == -5
+    ASSERT(bool,'testParam valsnka2 2')
+    ASSERT(testParam%pdat%description == 'The numbers 3 & -5','%description')
+    !
+    CALL someParam%set('testSNKa2',RESHAPE((/-10/),(/1,1/)),'The number -10')
+    CALL someParam%get('testSNKa2',valsnka2)
+    ASSERT(someParam%name == 'testSNKa2','someParam%name')
+    ASSERT(someParam%datatype == '2-D ARRAY INTEGER(SNK)','someParam%datatype')
+    ASSERT(someParam%description == 'The number -10','someParam%description')
+    bool=SIZE(valsnka2,DIM=1) == 1 .AND. SIZE(valsnka2,DIM=2) == 1
+    ASSERT(bool,'someParam valsnka2 size 1')
+    bool=valsnka2(1,1) == -10
+    ASSERT(bool,'someParam valsnka2 1')
+    CALL someParam%set('testSNKa2',RESHAPE((/5,7/),(/1,2/)),'The numbers 5 & 7')
+    CALL someParam%get('testSNKa2',valsnka2)
+    ASSERT(someParam%name == 'testSNKa2','someParam%name')
+    ASSERT(someParam%datatype == '2-D ARRAY INTEGER(SNK)','someParam%datatype')
+    ASSERT(someParam%description == 'The numbers 5 & 7','someParam%description')
+    bool=SIZE(valsnka2,DIM=1) == 1 .AND. SIZE(valsnka2,DIM=2) == 2
+    ASSERT(bool,'someParam valsnka2 size 2')
+    bool=valsnka2(1,1) == 5 .AND. valsnka2(1,2) == 7
+    ASSERT(bool,'testParam valsnka2 2')
+    !
+    CALL someParam%set('testError',RESHAPE((/-1/),(/1,1/))) !Name mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK_a2 -'// &
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSNKa2"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+    CALL testParam2%set('testSNKa2',RESHAPE((/-1/),(/1,1/))) !Name not found
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK_a2 -'// &
+      ' unable to locate parameter "testSNKa2" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSNKa2'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%set('testSNKa2',RESHAPE((/-1/),(/1,1/))) !Type mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK_a2 -'// &
+      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' and must be 2-D ARRAY INTEGER(SNK)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
+    CALL testParam2%clear()
     
-    CALL testParam2%set('testSNK2a',valsnk2a)
-    CALL someParam%set('testError',valsnk2a)
-    CALL testParam%set('testError',valsnk2a)
-    WRITE(*,*) '  Passed: CALL testParam%set(...) (SNK) 2-D'
-  
-    !Test clear
-    CALL testParam%clear()
-    IF(LEN(testParam%name) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %name (SNK) 2-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%datatype) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %datatype (SNK) 2-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%description) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %description (SNK) 2-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%clear() %pdat (SNK) 2-D FAILED!'
-      STOP 666
-    ENDIF
-
-    
-    WRITE(*,*) '  Passed: CALL testParam%clear() (SNK) 2-D'
-  
-    !test assignment
-    CALL testParam%init('testSNK2a',RESHAPE((/4_SNK/),(/1,1/)) )
     COMPONENT_TEST('Operators')
+    CALL testParam%init('testSNKa2',RESHAPE((/-1/),(/1,1/)))
     testParam2=testParam
     ASSERT(ASSOCIATED(testParam2%pdat),'ASSOCIATED %pdat')
-    ASSERT(testParam2%pdat%name == 'testSNK2a','%name')
-    ASSERT(testParam2%pdat%datatype ==  '2-D ARRAY INTEGER(SNK)','%datatype')
+    ASSERT(testParam2%pdat%name == 'testSNKa2','%name')
+    ASSERT(testParam2%pdat%datatype == '2-D ARRAY INTEGER(SNK)','%datatype')
     ASSERT(testParam2 == testParam,'OPERATOR(==)')
     CALL clear_test_vars()
-  ENDSUBROUTINE testSNK2a
+  ENDSUBROUTINE testSNKa2
 !
 !-------------------------------------------------------------------------------
 !Test 2-D Array SLK support
-  SUBROUTINE testSLK2a()
-    ALLOCATE(testParam2%pdat)
-    testParam2%pdat%name='testSLK2a'
-    ALLOCATE(valslk2a(2,2))
-    valslk2a(1,1)=6_SLK
-    valslk2a(2,1)=8_SLK
-    valslk2a(1,2)=7_SLK
-    valslk2a(2,2)=9_SLK
+  SUBROUTINE testSLKa2()
+    LOGICAL(SBK) :: bool
+    CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
+    ALLOCATE(valslka2(2,2))
+    valslka2(1,1)=5_SLK
+    valslka2(2,1)=7_SLK
+    valslka2(1,2)=6_SLK
+    valslka2(2,2)=8_SLK
     !test init
-    CALL testParam%init('testError->testSLK2a',valslk2a,'The numbers 6, 8, 7, & 9')
-    CALL testParam%init('testSLK2a',valslk2a,'The numbers 6, 8, 7, & 9')
-    IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%init(...) %pdat (SLK) 2-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%name /= 'testSLK2a') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %name (SLK) 2-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%datatype /= '2-D ARRAY INTEGER(SLK)') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %datatype (SLK) 2-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%description /= 'The numbers 6, 8, 7, & 9') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %description (SLK) 2-D FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    CALL testParam%init('testError',valslk2a)
-    WRITE(*,*) '  Passed: CALL testParam%init(...) (SLK) 2-D'
-  
-    !test get
-    CALL testParam%get('testSLK2a',someParam)
-    IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSLK2a'',someParam) FAILED!'
-      STOP 666
-    ENDIF
-    !Test same size
-    CALL someParam%get('testSLK2a',valslk2a)
-    IF(valslk2a(1,1) /= 6_SLK .OR. valslk2a(2,1) /= 8_SLK .OR. &
-        valslk2a(1,2) /= 7_SLK .OR. valslk2a(2,2) /= 9_SLK .OR. &
-          SIZE(valslk2a,1) /= 2_SIK .OR. SIZE(valslk2a,2) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSLK2a'',valslk2a) FAILED!'
-      STOP 666
-    ENDIF
-    !Test different size size
-    DEALLOCATE(valslk2a)
-    ALLOCATE(valslk2a(1,1))
-    CALL someParam%get('testSLK2a',valslk2a)
-    IF(valslk2a(1,1) /= 6_SLK .OR. valslk2a(2,1) /= 8_SLK .OR. &
-        valslk2a(1,2) /= 7_SLK .OR. valslk2a(2,2) /= 9_SLK .OR. &
-          SIZE(valslk2a,1) /= 2_SIK .OR. SIZE(valslk2a,2) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSLK2a'',valslk2a) FAILED!'
-      STOP 666
-    ENDIF
-    valslk2a=0_SLK
-    CALL testParam%get('testSLK2a',valslk2a)
-    IF(valslk2a(1,1) /= 6_SLK .OR. valslk2a(2,1) /= 8_SLK .OR. &
-        valslk2a(1,2) /= 7_SLK .OR. valslk2a(2,2) /= 9_SLK .OR. &
-          SIZE(valslk2a,1) /= 2_SIK .OR. SIZE(valslk2a,2) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSLK2a'',valslk2a) FAILED!'
-      STOP 666
-    ENDIF
-    !Test with deallocated array
-    DEALLOCATE(valslk2a)
-    CALL someParam%get('testSLK2a',valslk2a)
-    IF(valslk2a(1,1) /= 6_SLK .OR. valslk2a(2,1) /= 8_SLK .OR. &
-        valslk2a(1,2) /= 7_SLK .OR. valslk2a(2,2) /= 9_SLK .OR. &
-          SIZE(valslk2a,1) /= 2_SIK .OR. SIZE(valslk2a,2) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSLK2a'',valslk2a) FAILED!'
-      STOP 666
-    ENDIF
-    DEALLOCATE(valslk2a)
-    CALL testParam%get('testSLK2a',valslk2a)
-    IF(valslk2a(1,1) /= 6_SLK .OR. valslk2a(2,1) /= 8_SLK .OR. &
-        valslk2a(1,2) /= 7_SLK .OR. valslk2a(2,2) /= 9_SLK .OR. &
-          SIZE(valslk2a,1) /= 2_SIK .OR. SIZE(valslk2a,2) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSLK2a'',valslk2a) FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam2%get('testSLK2a',valslk2a)
-    CALL testParam%get('testError',valslk2a)
-    CALL someParam%get('testError',valslk2a)
-    WRITE(*,*) '  Passed: CALL testParam%get(...) (SLK) 2-D'
+    
+    COMPONENT_TEST('%init(...)')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
+    ASSERT(LEN(testParam%name) == 0,'%name 1')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 1')
+    ASSERT(LEN(testParam%description) == 0,'%description 1')
+    CALL testParam%init('testError->testSLKa2',valslka2,'The numbers 5, 7, 6, & 8')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 2')
+    ASSERT(LEN(testParam%name) == 0,'%name 2')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 2')
+    ASSERT(LEN(testParam%description) == 0,'%description 2')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SLK_a2'// &
+      ' - "->" symbol is not allowed in name!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
+    CALL testParam%init('testSLKa2',valslka2,'The numbers 5, 7, 6, & 8')
+    ASSERT(LEN(testParam%name) == 0,'%name 3')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 3')
+    ASSERT(LEN(testParam%description) == 0,'%description 3')
+    ASSERT(ASSOCIATED(testParam%pdat),'%pdat 3')
+    ASSERT(testParam%pdat%name == 'testSLKa2','%pdat%name')
+    ASSERT(testParam%pdat%datatype == '2-D ARRAY INTEGER(SLK)','%pdat%datatype')
+    ASSERT(testParam%pdat%description == 'The numbers 5, 7, 6, & 8','%pdat%description')
+    CALL testParam%init('testError',valslka2)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SLK_a2'// &
+      ' - parameter is already initialized! Use set method!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
+    
+    !Test clear
+    COMPONENT_TEST('%clear()')
+    CALL testParam%clear()
+    ASSERT(LEN(testParam%name) == 0,'%name')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype')
+    ASSERT(LEN(testParam%description) == 0,'%description')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
+    
+    COMPONENT_TEST('%edit(...)')
+    CALL testParam%init('testSLKa2',valslka2,'The numbers 5, 7, 6, & 8')
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%init('testSLKa2',valslka2)
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    
+    COMPONENT_TEST('%get(...)')
+    CALL testParam%init('testSLKa2',valslka2,'The numbers 5, 7, 6, & 8')
+    CALL testParam%get('testSLKa2',someParam)
+    ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
+    CALL someParam%get('testSLKa2',valslka2)
+    bool=SIZE(valslka2,DIM=1) == 2 .AND. SIZE(valslka2,DIM=2) == 2
+    ASSERT(bool,'someParam valslka2 size 1')
+    bool=valslka2(1,1) == 5_SLK .AND. valslka2(2,1) == 7_SLK .AND. &
+      valslka2(1,2) == 6_SLK .AND. valslka2(2,2) == 8_SLK
+    ASSERT(bool,'someParam valslka2 1')
+    DEALLOCATE(valslka2)
+    ALLOCATE(valslka2(1,1))
+    CALL someParam%get('testSLKa2',valslka2)
+    bool=SIZE(valslka2,DIM=1) == 2 .AND. SIZE(valslka2,DIM=2) == 2
+    ASSERT(bool,'someParam valslka2 different size')
+    bool=valslka2(1,1) == 5_SLK .AND. valslka2(2,1) == 7_SLK .AND. &
+      valslka2(1,2) == 6_SLK .AND. valslka2(2,2) == 8_SLK
+    ASSERT(bool,'someParam valslka2 2')
+    DEALLOCATE(valslka2)
+    CALL someParam%get('testSLKa2',valslka2)
+    bool=SIZE(valslka2,DIM=1) == 2 .AND. SIZE(valslka2,DIM=2) == 2
+    ASSERT(bool,'someParam valslka2 unallocated')
+    bool=valslka2(1,1) == 5_SLK .AND. valslka2(2,1) == 7_SLK .AND. &
+      valslka2(1,2) == 6_SLK .AND. valslka2(2,2) == 8_SLK
+    ASSERT(bool,'someParam valslka2 3')
+    DEALLOCATE(valslka2)
+    ALLOCATE(valslka2(2,1))
+    CALL testParam%get('testSLKa2',valslka2)
+    bool=SIZE(valslka2,DIM=1) == 2 .AND. SIZE(valslka2,DIM=2) == 2
+    ASSERT(bool,'testParam valslka2 size 1')
+    bool=valslka2(1,1) == 5_SLK .AND. valslka2(2,1) == 7_SLK .AND. &
+      valslka2(1,2) == 6_SLK .AND. valslka2(2,2) == 8_SLK
+    ASSERT(bool,'testParam valslka2 1')
+    DEALLOCATE(valslka2)
+    CALL testParam%get('testSLKa2',valslka2)
+    bool=SIZE(valslka2,DIM=1) == 2 .AND. SIZE(valslka2,DIM=2) == 2
+    ASSERT(bool,'testParam valslka2 unallocated')
+    bool=valslka2(1,1) == 5_SLK .AND. valslka2(2,1) == 7_SLK .AND. &
+      valslka2(1,2) == 6_SLK .AND. valslka2(2,2) == 8_SLK
+    ASSERT(bool,'testParam valslka2 2')
+    CALL testParam%get('testError',valslka2)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SLK_a2'// &
+      ' - unable to locate parameter "testError" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
+    CALL someParam%get('testError',valslka2)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SLK_a2'// &
+      ' - parameter name mismatch "testError" in "testSLKa2"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSLKa2'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%get('testSLKa2',valslka2)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SLK_a2'// &
+      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' must be 2-D ARRAY INTEGER(SLK)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
+    CALL testParam2%clear()
   
     !test set
-    CALL someParam%set('testSLK2a',RESHAPE((/3_SLK,1_SLK,4_SLK,2_SLK/),(/2,2/)),'The numbers 3, 1, 4 and 2')
-    CALL testParam%get('testSLK2a',valslk2a)
-    IF(valslk2a(1,1) /= 3_SLK .OR. valslk2a(2,1) /= 1_SLK .OR. &
-        valslk2a(1,2) /= 4_SLK .OR. valslk2a(2,2) /= 2_SLK .OR. &
-          SIZE(valslk2a,1) /= 2_SIK .OR. SIZE(valslk2a,2) /= 2_SIK .OR. &
-            someParam%description /= 'The numbers 3, 1, 4 and 2') THEN
-      WRITE(*,*) 'someParam%set(''testSLK2a'',(/3_SLK,1_SLK/,/4_SLK,2_SLK/),''The numbers 3, 1, 4 and 2'') FAILED!'
-      STOP 666
-    ENDIF
-    !Different size for test param
-    CALL testParam%set('testSLK2a',RESHAPE((/6_SLK/),(/1,1/)),'The number 6')
-    CALL testParam%get('testSLK2a',valslk2a)
-    IF(valslk2a(1,1) /= 6_SLK .OR. SIZE(valslk2a,1) /= 1_SIK .OR. &
-        SIZE(valslk2a,2) /= 1_SIK .OR. &
-          someParam%description /= 'The number 6') THEN
-      WRITE(*,*) 'testParam%set(''testSLK2a'',6_SLK) FAILED!'
-      STOP 666
-    ENDIF
-    !Different size for some param
-    CALL someParam%set('testSLK2a',RESHAPE((/15_SLK,-15_SLK,20_SLK,-15_SLK,15_SLK,-20_SLK/),(/3,2/)), &
-      'The numbers 15, -15, 20, -15, 15, and -20')
-    CALL testParam%get('testSLK2a',valslk2a)
-    IF(valslk2a(1,1) /= 15_SLK .OR. valslk2a(2,1) /= -15_SLK .OR. &
-        valslk2a(3,1) /= 20_SLK .OR. SIZE(valslk2a,1) /= 3_SIK .OR. &
-          valslk2a(1,2) /= -15_SLK .OR. valslk2a(2,2) /= 15_SLK .OR. &
-            valslk2a(3,2) /= -20_SLK .OR. SIZE(valslk2a,2) /= 2_SIK .OR. &
-              someParam%description /= 'The numbers 15, -15, 20, -15, 15, and -20') THEN
-      WRITE(*,*) 'someParam%set(''testSLK2a'',(/15_SLK,-15_SLK,20_SLK/,/-15_SLK,'// &
-        '15_SLK,-20_SLK/),''The numbers 15, -15, 20, -15, 15, and -20'') FAILED!'
-      STOP 666
-    ENDIF
-    !Same size for test param
-    CALL testParam%set('testSLK2a',RESHAPE((/-50_SLK,-55_SLK,-60_SLK,50_SLK,55_SLK,60_SLK/),(/3,2/)), &
-      'The numbers -50, -55, -60, 50, 55, and 60')
-    CALL testParam%get('testSLK2a',valslk2a)
-    IF(valslk2a(1,1) /= -50_SLK .OR. valslk2a(2,1) /= -55_SLK .OR. &
-        valslk2a(3,1) /= -60_SLK .OR. SIZE(valslk2a,1) /= 3_SIK .OR. &
-          valslk2a(1,2) /= 50_SLK .OR. valslk2a(2,2) /= 55_SLK .OR. &
-            valslk2a(3,2) /= 60_SLK .OR. SIZE(valslk2a,2) /= 2_SIK .OR. &
-              someParam%description /= 'The numbers -50, -55, -60, 50, 55, and 60') THEN
-      WRITE(*,*) 'testParam%set(''testSLK2a'',(/-50_SLK,-55_SLK,-60_SLK/,'// &
-        '/50_SLK,55_SLK,60_SLK/)) FAILED!'
-      STOP 666
-    ENDIF
+    COMPONENT_TEST('%set(...)')
+    CALL testParam%set('testSLKa2',RESHAPE((/-10_SLK/),(/1,1/)),'The number -10')
+    CALL testParam%get('testSLKa2',valslka2)
+    ASSERT(testParam%pdat%name == 'testSLKa2','%name')
+    ASSERT(testParam%pdat%datatype == '2-D ARRAY INTEGER(SLK)','testParam%datatype')
+    ASSERT(testParam%pdat%description == 'The number -10','%description')
+    bool=SIZE(valslka2,DIM=1) == 1 .AND. SIZE(valslka2,DIM=2) == 1
+    ASSERT(bool,'testParam valslka2 size 1')
+    bool=valslka2(1,1) == -10_SLK
+    ASSERT(bool,'testParam valslka2 1')
+    CALL testParam%set('testSLKa2',RESHAPE((/3_SLK,-5_SLK/),(/2,1/)),'The numbers 3 & -5')
+    CALL testParam%get('testSLKa2',valslka2)
+    bool=SIZE(valslka2,DIM=1) == 2 .AND. SIZE(valslka2,DIM=2) == 1
+    ASSERT(bool,'testParam valslka2 size 2')
+    bool=valslka2(1,1) == 3_SLK .AND. valslka2(2,1) == -5_SLK
+    ASSERT(bool,'testParam valslka2 2')
+    ASSERT(testParam%pdat%description == 'The numbers 3 & -5','%description')
+    !
+    CALL someParam%set('testSLKa2',RESHAPE((/-10_SLK/),(/1,1/)),'The number -10')
+    CALL someParam%get('testSLKa2',valslka2)
+    ASSERT(someParam%name == 'testSLKa2','someParam%name')
+    ASSERT(someParam%datatype == '2-D ARRAY INTEGER(SLK)','someParam%datatype')
+    ASSERT(someParam%description == 'The number -10','someParam%description')
+    bool=SIZE(valslka2,DIM=1) == 1 .AND. SIZE(valslka2,DIM=2) == 1
+    ASSERT(bool,'someParam valslka2 size 1')
+    bool=valslka2(1,1) == -10_SLK
+    ASSERT(bool,'someParam valslka2 1')
+    CALL someParam%set('testSLKa2',RESHAPE((/5_SLK,7_SLK/),(/1,2/)),'The numbers 5 & 7')
+    CALL someParam%get('testSLKa2',valslka2)
+    ASSERT(someParam%name == 'testSLKa2','someParam%name')
+    ASSERT(someParam%datatype == '2-D ARRAY INTEGER(SLK)','someParam%datatype')
+    ASSERT(someParam%description == 'The numbers 5 & 7','someParam%description')
+    bool=SIZE(valslka2,DIM=1) == 1 .AND. SIZE(valslka2,DIM=2) == 2
+    ASSERT(bool,'someParam valslka2 size 2')
+    bool=valslka2(1,1) == 5_SLK .AND. valslka2(1,2) == 7_SLK
+    ASSERT(bool,'testParam valslka2 2')
+    !
+    CALL someParam%set('testError',RESHAPE((/-1_SLK/),(/1,1/))) !Name mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK_a2 -'// &
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSLKa2"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+    CALL testParam2%set('testSLKa2',RESHAPE((/-1_SLK/),(/1,1/))) !Name not found
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK_a2 -'// &
+      ' unable to locate parameter "testSLKa2" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSLKa2'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%set('testSLKa2',RESHAPE((/-1_SLK/),(/1,1/))) !Type mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK_a2 -'// &
+      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' and must be 2-D ARRAY INTEGER(SLK)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
+    CALL testParam2%clear()
     
-    CALL testParam2%set('testSLK2a',valslk2a)
-    CALL someParam%set('testError',valslk2a)
-    CALL testParam%set('testError',valslk2a)
-    WRITE(*,*) '  Passed: CALL testParam%set(...) (SLK) 2-D'
-  
-    !Test clear
-    CALL testParam%clear()
-    IF(LEN(testParam%name) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %name (SLK) 2-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%datatype) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %datatype (SLK) 2-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%description) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %description (SLK) 2-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%clear() %pdat (SLK) 2-D FAILED!'
-      STOP 666
-    ENDIF
-
-    
-    WRITE(*,*) '  Passed: CALL testParam%clear() (SLK) 2-D'
-  
-    !test assignment
-    CALL testParam%init('testSLK2a',RESHAPE((/4_SLK/),(/1,1/)) )
     COMPONENT_TEST('Operators')
+    CALL testParam%init('testSLKa2',RESHAPE((/-1_SLK/),(/1,1/)))
     testParam2=testParam
     ASSERT(ASSOCIATED(testParam2%pdat),'ASSOCIATED %pdat')
-    ASSERT(testParam2%pdat%name == 'testSLK2a','%name')
-    ASSERT(testParam2%pdat%datatype ==  '2-D ARRAY INTEGER(SLK)','%datatype')
+    ASSERT(testParam2%pdat%name == 'testSLKa2','%name')
+    ASSERT(testParam2%pdat%datatype == '2-D ARRAY INTEGER(SLK)','%datatype')
     ASSERT(testParam2 == testParam,'OPERATOR(==)')
     CALL clear_test_vars()
-  ENDSUBROUTINE testSLK2a
+  ENDSUBROUTINE testSLKa2
 !
 !-------------------------------------------------------------------------------
 !Test 2-D Array SSK support
-  SUBROUTINE testSSK2a()
-    ALLOCATE(testParam2%pdat)
-    testParam2%pdat%name='testSSK2a'
-    ALLOCATE(valssk2a(2,2))
-    valssk2a(1,1)=5._SSK
-    valssk2a(2,1)=7._SSK
-    valssk2a(1,2)=6._SSK
-    valssk2a(2,2)=8._SSK
+  SUBROUTINE testSSKa2()
+    LOGICAL(SBK) :: bool
+    CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
+    ALLOCATE(valsska2(2,2))
+    valsska2(1,1)=5.0_SSK
+    valsska2(2,1)=7.0_SSK
+    valsska2(1,2)=6.0_SSK
+    valsska2(2,2)=8.0_SSK
     !test init
-    CALL testParam%init('testError->testSSK2a',valssk2a,'The numbers 5.0, 7.0, 6.0, & 8.0')
-    CALL testParam%init('testSSK2a',valssk2a,'The numbers 5.0, 7.0, 6.0, & 8.0')
-    IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%init(...) %pdat (SSK) 2-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%name /= 'testSSK2a') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %name (SSK) 2-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%datatype /= '2-D ARRAY REAL(SSK)') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %datatype (SSK) 2-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%description /= 'The numbers 5.0, 7.0, 6.0, & 8.0') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %description (SSK) 2-D FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    CALL testParam%init('testError',valssk2a)
-    WRITE(*,*) '  Passed: CALL testParam%init(...) (SSK) 2-D'
-  
-    !test get
-    CALL testParam%get('testSSK2a',someParam)
-    IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSSK2a'',someParam) FAILED!'
-      STOP 666
-    ENDIF
-    !Test same size
-    CALL someParam%get('testSSK2a',valssk2a)
-    IF(valssk2a(1,1) /= 5.0_SSK .OR. valssk2a(2,1) /= 7.0_SSK .OR. &
-        valssk2a(1,2) /= 6.0_SSK .OR. valssk2a(2,2) /= 8.0_SSK .OR. &
-          SIZE(valssk2a,1) /= 2_SIK .OR. SIZE(valssk2a,2) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSSK2a'',valssk2a) FAILED!'
-      STOP 666
-    ENDIF
-    !Test different size size
-    DEALLOCATE(valssk2a)
-    ALLOCATE(valssk2a(1,1))
-    CALL someParam%get('testSSK2a',valssk2a)
-    IF(valssk2a(1,1) /= 5.0_SSK .OR. valssk2a(2,1) /= 7.0_SSK .OR. &
-        valssk2a(1,2) /= 6.0_SSK .OR. valssk2a(2,2) /= 8.0_SSK .OR. &
-          SIZE(valssk2a,1) /= 2_SIK .OR. SIZE(valssk2a,2) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSSK2a'',valssk2a) FAILED!'
-      STOP 666
-    ENDIF
-    valssk2a=0.0_SSK
-    CALL testParam%get('testSSK2a',valssk2a)
-    IF(valssk2a(1,1) /= 5.0_SSK .OR. valssk2a(2,1) /= 7.0_SSK .OR. &
-        valssk2a(1,2) /= 6.0_SSK .OR. valssk2a(2,2) /= 8.0_SSK .OR. &
-          SIZE(valssk2a,1) /= 2_SIK .OR. SIZE(valssk2a,2) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSSK2a'',valssk2a) FAILED!'
-      STOP 666
-    ENDIF
-    !Test with deallocated array
-    DEALLOCATE(valssk2a)
-    CALL someParam%get('testSSK2a',valssk2a)
-    IF(valssk2a(1,1) /= 5.0_SSK .OR. valssk2a(2,1) /= 7.0_SSK .OR. &
-        valssk2a(1,2) /= 6.0_SSK .OR. valssk2a(2,2) /= 8.0_SSK .OR. &
-          SIZE(valssk2a,1) /= 2_SIK .OR. SIZE(valssk2a,2) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSSK2a'',valssk2a) FAILED!'
-      STOP 666
-    ENDIF
-    DEALLOCATE(valssk2a)
-    CALL testParam%get('testSSK2a',valssk2a)
-    IF(valssk2a(1,1) /= 5.0_SSK .OR. valssk2a(2,1) /= 7.0_SSK .OR. &
-        valssk2a(1,2) /= 6.0_SSK .OR. valssk2a(2,2) /= 8.0_SSK .OR. &
-          SIZE(valssk2a,1) /= 2_SIK .OR. SIZE(valssk2a,2) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSSK2a'',valssk2a) FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam2%get('testSSK2a',valssk2a)
-    CALL testParam%get('testError',valssk2a)
-    CALL someParam%get('testError',valssk2a)
-    WRITE(*,*) '  Passed: CALL testParam%get(...) (SSK) 2-D'
+    
+    COMPONENT_TEST('%init(...)')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
+    ASSERT(LEN(testParam%name) == 0,'%name 1')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 1')
+    ASSERT(LEN(testParam%description) == 0,'%description 1')
+    CALL testParam%init('testError->testSSKa2',valsska2,'The numbers 5, 7, 6, & 8')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 2')
+    ASSERT(LEN(testParam%name) == 0,'%name 2')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 2')
+    ASSERT(LEN(testParam%description) == 0,'%description 2')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SSK_a2'// &
+      ' - "->" symbol is not allowed in name!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
+    CALL testParam%init('testSSKa2',valsska2,'The numbers 5, 7, 6, & 8')
+    ASSERT(LEN(testParam%name) == 0,'%name 3')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 3')
+    ASSERT(LEN(testParam%description) == 0,'%description 3')
+    ASSERT(ASSOCIATED(testParam%pdat),'%pdat 3')
+    ASSERT(testParam%pdat%name == 'testSSKa2','%pdat%name')
+    ASSERT(testParam%pdat%datatype == '2-D ARRAY REAL(SSK)','%pdat%datatype')
+    ASSERT(testParam%pdat%description == 'The numbers 5, 7, 6, & 8','%pdat%description')
+    CALL testParam%init('testError',valsska2)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SSK_a2'// &
+      ' - parameter is already initialized! Use set method!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
+    
+    !Test clear
+    COMPONENT_TEST('%clear()')
+    CALL testParam%clear()
+    ASSERT(LEN(testParam%name) == 0,'%name')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype')
+    ASSERT(LEN(testParam%description) == 0,'%description')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
+    
+    COMPONENT_TEST('%edit(...)')
+    CALL testParam%init('testSSKa2',valsska2,'The numbers 5, 7, 6, & 8')
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%init('testSSKa2',valsska2)
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    
+    COMPONENT_TEST('%get(...)')
+    CALL testParam%init('testSSKa2',valsska2,'The numbers 5, 7, 6, & 8')
+    CALL testParam%get('testSSKa2',someParam)
+    ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
+    CALL someParam%get('testSSKa2',valsska2)
+    bool=SIZE(valsska2,DIM=1) == 2 .AND. SIZE(valsska2,DIM=2) == 2
+    ASSERT(bool,'someParam valsska2 size 1')
+    bool=valsska2(1,1) == 5.0_SSK .AND. valsska2(2,1) == 7.0_SSK .AND. &
+      valsska2(1,2) == 6.0_SSK .AND. valsska2(2,2) == 8.0_SSK
+    ASSERT(bool,'someParam valsska2 1')
+    DEALLOCATE(valsska2)
+    ALLOCATE(valsska2(1,1))
+    CALL someParam%get('testSSKa2',valsska2)
+    bool=SIZE(valsska2,DIM=1) == 2 .AND. SIZE(valsska2,DIM=2) == 2
+    ASSERT(bool,'someParam valsska2 different size')
+    bool=valsska2(1,1) == 5.0_SSK .AND. valsska2(2,1) == 7.0_SSK .AND. &
+      valsska2(1,2) == 6.0_SSK .AND. valsska2(2,2) == 8.0_SSK
+    ASSERT(bool,'someParam valsska2 2')
+    DEALLOCATE(valsska2)
+    CALL someParam%get('testSSKa2',valsska2)
+    bool=SIZE(valsska2,DIM=1) == 2 .AND. SIZE(valsska2,DIM=2) == 2
+    ASSERT(bool,'someParam valsska2 unallocated')
+    bool=valsska2(1,1) == 5.0_SSK .AND. valsska2(2,1) == 7.0_SSK .AND. &
+      valsska2(1,2) == 6.0_SSK .AND. valsska2(2,2) == 8.0_SSK
+    ASSERT(bool,'someParam valsska2 3')
+    DEALLOCATE(valsska2)
+    ALLOCATE(valsska2(2,1))
+    CALL testParam%get('testSSKa2',valsska2)
+    bool=SIZE(valsska2,DIM=1) == 2 .AND. SIZE(valsska2,DIM=2) == 2
+    ASSERT(bool,'testParam valsska2 size 1')
+    bool=valsska2(1,1) == 5.0_SSK .AND. valsska2(2,1) == 7.0_SSK .AND. &
+      valsska2(1,2) == 6.0_SSK .AND. valsska2(2,2) == 8.0_SSK
+    ASSERT(bool,'testParam valsska2 1')
+    DEALLOCATE(valsska2)
+    CALL testParam%get('testSSKa2',valsska2)
+    bool=SIZE(valsska2,DIM=1) == 2 .AND. SIZE(valsska2,DIM=2) == 2
+    ASSERT(bool,'testParam valsska2 unallocated')
+    bool=valsska2(1,1) == 5.0_SSK .AND. valsska2(2,1) == 7.0_SSK .AND. &
+      valsska2(1,2) == 6.0_SSK .AND. valsska2(2,2) == 8.0_SSK
+    ASSERT(bool,'testParam valsska2 2')
+    CALL testParam%get('testError',valsska2)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SSK_a2'// &
+      ' - unable to locate parameter "testError" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
+    CALL someParam%get('testError',valsska2)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SSK_a2'// &
+      ' - parameter name mismatch "testError" in "testSSKa2"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSSKa2'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%get('testSSKa2',valsska2)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SSK_a2'// &
+      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' must be 2-D ARRAY REAL(SSK)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
+    CALL testParam2%clear()
   
     !test set
+    COMPONENT_TEST('%set(...)')
+    CALL testParam%set('testSSKa2',RESHAPE((/-10.0_SSK/),(/1,1/)),'The number -10')
+    CALL testParam%get('testSSKa2',valsska2)
+    ASSERT(testParam%pdat%name == 'testSSKa2','%name')
+    ASSERT(testParam%pdat%datatype == '2-D ARRAY REAL(SSK)','testParam%datatype')
+    ASSERT(testParam%pdat%description == 'The number -10','%description')
+    bool=SIZE(valsska2,DIM=1) == 1 .AND. SIZE(valsska2,DIM=2) == 1
+    ASSERT(bool,'testParam valsska2 size 1')
+    bool=valsska2(1,1) == -10.0_SSK
+    ASSERT(bool,'testParam valsska2 1')
+    CALL testParam%set('testSSKa2',RESHAPE((/3.0_SSK,-5.0_SSK/),(/2,1/)),'The numbers 3 & -5')
+    CALL testParam%get('testSSKa2',valsska2)
+    bool=SIZE(valsska2,DIM=1) == 2 .AND. SIZE(valsska2,DIM=2) == 1
+    ASSERT(bool,'testParam valsska2 size 2')
+    bool=valsska2(1,1) == 3.0_SSK .AND. valsska2(2,1) == -5.0_SSK
+    ASSERT(bool,'testParam valsska2 2')
+    ASSERT(testParam%pdat%description == 'The numbers 3 & -5','%description')
     !
-    CALL someParam%set('testSSK2a',RESHAPE((/3.0_SSK,1.0_SSK,4.0_SSK,2.0_SSK/),(/2,2/) ),'The number 3.0, 1.0, 4.0, and 2.0')
-    CALL testParam%get('testSSK2a',valssk2a)
-    IF(valssk2a(1,1) /= 3.0_SSK .OR. valssk2a(2,1) /= 1.0_SSK .OR. &
-        valssk2a(1,2) /= 4.0_SSK .OR. valssk2a(2,2) /= 2.0_SSK .OR. &
-          SIZE(valssk2a,1) /= 2_SIK .OR. SIZE(valssk2a,2) /= 2_SIK .OR. &
-            someParam%description /= 'The number 3.0, 1.0, 4.0, and 2.0') THEN
-      WRITE(*,*) 'someParam%set(''testSSK2a'',(/3.0_SSK,1.0_SSK/,/4.0_SSK,2.0_SSK/),''The number 3.0, 1.0, 4.0, and 2.0'') FAILED!'
-      STOP 666
-    ENDIF
-    !Different size for test param
-    CALL testParam%set('testSSK2a',RESHAPE((/5.0_SSK/),(/1,1/)),'The number 5.0')
-    CALL testParam%get('testSSK2a',valssk2a)
-    IF(valssk2a(1,1) /= 5.0_SSK .OR. SIZE(valssk2a,1) /= 1_SIK .OR. &
-        SIZE(valssk2a,2) /= 1_SIK .OR. &
-          someParam%description /= 'The number 5.0') THEN
-      WRITE(*,*) 'testParam%set(''testSSK2a'',5.0_SSK) FAILED!'
-      STOP 666
-    ENDIF
-    !Different size for some param
-    CALL someParam%set('testSSK2a',RESHAPE((/1.0_SSK,1.5_SSK,2.0_SSK,-1.0_SSK,-1.5_SSK,-2.0_SSK/),(/3,2/)), &
-      'The numbers 1.0, 1.5, 2.0, -1.0, -1.5, and -2.0')
-    CALL testParam%get('testSSK2a',valssk2a)
-    IF(valssk2a(1,1) /= 1.0_SSK .OR. valssk2a(2,1) /= 1.5_SSK .OR. &
-        valssk2a(3,1) /= 2.0_SSK .OR. SIZE(valssk2a,1) /= 3_SIK .OR. &
-          valssk2a(1,2) /= -1.0_SSK .OR. valssk2a(2,2) /= -1.5_SSK .OR. &
-            valssk2a(3,2) /= -2.0_SSK .OR. SIZE(valssk2a,2) /= 2_SIK .OR. &
-              someParam%description /= 'The numbers 1.0, 1.5, 2.0, -1.0, -1.5, and -2.0') THEN
-      WRITE(*,*) 'someParam%set(''testSSK2a'',(/1.0_SSK,1.5_SSK,2.0_SSK/,/-1.0_SSK,'// &
-        '-1.5_SSK,-2.0_SSK/), ''The numbers 1.0, 1.5, 2.0, -1.0, -1.5, and -2.0'') FAILED!'
-      STOP 666
-    ENDIF
-    !Same size for test param
-    CALL testParam%set('testSSK2a',RESHAPE((/5.0_SSK,5.5_SSK,6.0_SSK,-5.0_SSK,-5.5_SSK,-6.0_SSK/),(/3,2/)), &
-      'The numbers 5.0, 5.5, 6.0, -5.0, -5.5, and -6.0')
-    CALL testParam%get('testSSK2a',valssk2a)
-    IF(valssk2a(1,1) /= 5.0_SSK .OR. valssk2a(2,1) /= 5.5_SSK .OR. &
-        valssk2a(3,1) /= 6.0_SSK .OR. SIZE(valssk2a,1) /= 3_SIK .OR. &
-          valssk2a(1,2) /= -5.0_SSK .OR. valssk2a(2,2) /= -5.5_SSK .OR. &
-            valssk2a(3,2) /= -6.0_SSK .OR. SIZE(valssk2a,2) /= 2_SIK .OR. &
-              someParam%description /= 'The numbers 5.0, 5.5, 6.0, -5.0, -5.5, and -6.0') THEN
-      WRITE(*,*) 'testParam%set(''testSSK2a'',5.0_SSK) FAILED!'
-      STOP 666
-    ENDIF
+    CALL someParam%set('testSSKa2',RESHAPE((/-10.0_SSK/),(/1,1/)),'The number -10')
+    CALL someParam%get('testSSKa2',valsska2)
+    ASSERT(someParam%name == 'testSSKa2','someParam%name')
+    ASSERT(someParam%datatype == '2-D ARRAY REAL(SSK)','someParam%datatype')
+    ASSERT(someParam%description == 'The number -10','someParam%description')
+    bool=SIZE(valsska2,DIM=1) == 1 .AND. SIZE(valsska2,DIM=2) == 1
+    ASSERT(bool,'someParam valsska2 size 1')
+    bool=valsska2(1,1) == -10.0_SSK
+    ASSERT(bool,'someParam valsska2 1')
+    CALL someParam%set('testSSKa2',RESHAPE((/5.0_SSK,7.0_SSK/),(/1,2/)),'The numbers 5 & 7')
+    CALL someParam%get('testSSKa2',valsska2)
+    ASSERT(someParam%name == 'testSSKa2','someParam%name')
+    ASSERT(someParam%datatype == '2-D ARRAY REAL(SSK)','someParam%datatype')
+    ASSERT(someParam%description == 'The numbers 5 & 7','someParam%description')
+    bool=SIZE(valsska2,DIM=1) == 1 .AND. SIZE(valsska2,DIM=2) == 2
+    ASSERT(bool,'someParam valsska2 size 2')
+    bool=valsska2(1,1) == 5.0_SSK .AND. valsska2(1,2) == 7.0_SSK
+    ASSERT(bool,'testParam valsska2 2')
+    !
+    CALL someParam%set('testError',RESHAPE((/-1.0_SSK/),(/1,1/))) !Name mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK_a2 -'// &
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSSKa2"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+    CALL testParam2%set('testSSKa2',RESHAPE((/-1.0_SSK/),(/1,1/))) !Name not found
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK_a2 -'// &
+      ' unable to locate parameter "testSSKa2" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSSKa2'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%set('testSSKa2',RESHAPE((/-1.0_SSK/),(/1,1/))) !Type mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK_a2 -'// &
+      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' and must be 2-D ARRAY REAL(SSK)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
+    CALL testParam2%clear()
     
-    CALL testParam2%set('testSSK2a',valssk2a)
-    CALL someParam%set('testError',valssk2a)
-    CALL testParam%set('testError',valssk2a)
-    WRITE(*,*) '  Passed: CALL testParam%set(...) (SSK) 2-D'
-  
-    !Test clear
-    CALL testParam%clear()
-    IF(LEN(testParam%name) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %name (SSK) 2-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%datatype) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %datatype (SSK) 2-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%description) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %description (SSK) 2-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%clear() %pdat (SSK) 2-D FAILED!'
-      STOP 666
-    ENDIF
-
-    
-    WRITE(*,*) '  Passed: CALL testParam%clear() (SSK) 2-D'
-  
-    !test assignment
-    CALL testParam%init('testSSK2a',RESHAPE((/4.0_SSK/),(/1,1/)) )
     COMPONENT_TEST('Operators')
+    CALL testParam%init('testSSKa2',RESHAPE((/-1.0_SSK/),(/1,1/)))
     testParam2=testParam
     ASSERT(ASSOCIATED(testParam2%pdat),'ASSOCIATED %pdat')
-    ASSERT(testParam2%pdat%name == 'testSSK2a','%name')
-    ASSERT(testParam2%pdat%datatype ==  '2-D ARRAY REAL(SSK)','%datatype')
+    ASSERT(testParam2%pdat%name == 'testSSKa2','%name')
+    ASSERT(testParam2%pdat%datatype == '2-D ARRAY REAL(SSK)','%datatype')
     ASSERT(testParam2 == testParam,'OPERATOR(==)')
     CALL clear_test_vars()
-  ENDSUBROUTINE testSSK2a
+  ENDSUBROUTINE testSSKa2
 !
 !-------------------------------------------------------------------------------
 !Test 2-D Array SDK support
-  SUBROUTINE testSDK2a()
-    ALLOCATE(testParam2%pdat)
-    testParam2%pdat%name='testSDK2a'
-    ALLOCATE(valsdk2a(2,2))
-    valsdk2a(1,1)=5.5_SDK
-    valsdk2a(2,1)=7.5_SDK
-    valsdk2a(1,2)=6.5_SDK
-    valsdk2a(2,2)=8.5_SDK
+  SUBROUTINE testSDKa2()
+    LOGICAL(SBK) :: bool
+    CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
+    ALLOCATE(valsdka2(2,2))
+    valsdka2(1,1)=5.0_SDK
+    valsdka2(2,1)=7.0_SDK
+    valsdka2(1,2)=6.0_SDK
+    valsdka2(2,2)=8.0_SDK
     !test init
-    CALL testParam%init('testError->testSDK2a',valsdk2a,'The numbers 5.5, 7.5, 6.5, & 8.5')
-    CALL testParam%init('testSDK2a',valsdk2a,'The numbers 5.5, 7.5, 6.5, & 8.5')
-    IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%init(...) %pdat (SDK) 2-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%name /= 'testSDK2a') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %name (SDK) 2-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%datatype /= '2-D ARRAY REAL(SDK)') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %datatype (SDK) 2-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%description /= 'The numbers 5.5, 7.5, 6.5, & 8.5') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %description (SDK) 2-D FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    CALL testParam%init('testError',valsdk2a)
-    WRITE(*,*) '  Passed: CALL testParam%init(...) (SDK) 2-D'
-  
-    !test get
-    CALL testParam%get('testSDK2a',someParam)
-    IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSDK2a'',someParam) FAILED!'
-      STOP 666
-    ENDIF
-    !Test same size
-    CALL someParam%get('testSDK2a',valsdk2a)
-    IF(valsdk2a(1,1) /= 5.5_SDK .OR. valsdk2a(2,1) /= 7.5_SDK .OR. &
-        valsdk2a(1,2) /= 6.5_SDK .OR. valsdk2a(2,2) /= 8.5_SDK .OR. &
-          SIZE(valsdk2a,1) /= 2_SIK .OR. SIZE(valsdk2a,2) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSDK2a'',valsdk2a) FAILED!'
-      STOP 666
-    ENDIF
-    !Test different size size
-    DEALLOCATE(valsdk2a)
-    ALLOCATE(valsdk2a(1,1))
-    CALL someParam%get('testSDK2a',valsdk2a)
-    IF(valsdk2a(1,1) /= 5.5_SDK .OR. valsdk2a(2,1) /= 7.5_SDK .OR. &
-        valsdk2a(1,2) /= 6.5_SDK .OR. valsdk2a(2,2) /= 8.5_SDK .OR. &
-          SIZE(valsdk2a,1) /= 2_SIK .OR. SIZE(valsdk2a,2) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSDK2a'',valsdk2a) FAILED!'
-      STOP 666
-    ENDIF
-    valsdk2a=0.0_SDK
-    CALL testParam%get('testSDK2a',valsdk2a)
-    IF(valsdk2a(1,1) /= 5.5_SDK .OR. valsdk2a(2,1) /= 7.5_SDK .OR. &
-        valsdk2a(1,2) /= 6.5_SDK .OR. valsdk2a(2,2) /= 8.5_SDK .OR. &
-          SIZE(valsdk2a,1) /= 2_SIK .OR. SIZE(valsdk2a,2) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSDK2a'',valsdk2a) FAILED!'
-      STOP 666
-    ENDIF
-    !Test with deallocated array
-    DEALLOCATE(valsdk2a)
-    CALL someParam%get('testSDK2a',valsdk2a)
-    IF(valsdk2a(1,1) /= 5.5_SDK .OR. valsdk2a(2,1) /= 7.5_SDK .OR. &
-        valsdk2a(1,2) /= 6.5_SDK .OR. valsdk2a(2,2) /= 8.5_SDK .OR. &
-          SIZE(valsdk2a,1) /= 2_SIK .OR. SIZE(valsdk2a,2) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSDK2a'',valsdk2a) FAILED!'
-      STOP 666
-    ENDIF
-    DEALLOCATE(valsdk2a)
-    CALL testParam%get('testSDK2a',valsdk2a)
-    IF(valsdk2a(1,1) /= 5.5_SDK .OR. valsdk2a(2,1) /= 7.5_SDK .OR. &
-        valsdk2a(1,2) /= 6.5_SDK .OR. valsdk2a(2,2) /= 8.5_SDK .OR. &
-          SIZE(valsdk2a,1) /= 2_SIK .OR. SIZE(valsdk2a,2) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSDK2a'',valsdk2a) FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam2%get('testSDK2a',valsdk2a)
-    CALL testParam%get('testError',valsdk2a)
-    CALL someParam%get('testError',valsdk2a)
-    WRITE(*,*) '  Passed: CALL testParam%get(...) (SDK) 2-D'
+    
+    COMPONENT_TEST('%init(...)')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
+    ASSERT(LEN(testParam%name) == 0,'%name 1')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 1')
+    ASSERT(LEN(testParam%description) == 0,'%description 1')
+    CALL testParam%init('testError->testSDKa2',valsdka2,'The numbers 5, 7, 6, & 8')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 2')
+    ASSERT(LEN(testParam%name) == 0,'%name 2')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 2')
+    ASSERT(LEN(testParam%description) == 0,'%description 2')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SDK_a2'// &
+      ' - "->" symbol is not allowed in name!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
+    CALL testParam%init('testSDKa2',valsdka2,'The numbers 5, 7, 6, & 8')
+    ASSERT(LEN(testParam%name) == 0,'%name 3')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 3')
+    ASSERT(LEN(testParam%description) == 0,'%description 3')
+    ASSERT(ASSOCIATED(testParam%pdat),'%pdat 3')
+    ASSERT(testParam%pdat%name == 'testSDKa2','%pdat%name')
+    ASSERT(testParam%pdat%datatype == '2-D ARRAY REAL(SDK)','%pdat%datatype')
+    ASSERT(testParam%pdat%description == 'The numbers 5, 7, 6, & 8','%pdat%description')
+    CALL testParam%init('testError',valsdka2)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SDK_a2'// &
+      ' - parameter is already initialized! Use set method!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
+    
+    !Test clear
+    COMPONENT_TEST('%clear()')
+    CALL testParam%clear()
+    ASSERT(LEN(testParam%name) == 0,'%name')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype')
+    ASSERT(LEN(testParam%description) == 0,'%description')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
+    
+    COMPONENT_TEST('%edit(...)')
+    CALL testParam%init('testSDKa2',valsdka2,'The numbers 5, 7, 6, & 8')
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%init('testSDKa2',valsdka2)
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    
+    COMPONENT_TEST('%get(...)')
+    CALL testParam%init('testSDKa2',valsdka2,'The numbers 5, 7, 6, & 8')
+    CALL testParam%get('testSDKa2',someParam)
+    ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
+    CALL someParam%get('testSDKa2',valsdka2)
+    bool=SIZE(valsdka2,DIM=1) == 2 .AND. SIZE(valsdka2,DIM=2) == 2
+    ASSERT(bool,'someParam valsdka2 size 1')
+    bool=valsdka2(1,1) == 5.0_SDK .AND. valsdka2(2,1) == 7.0_SDK .AND. &
+      valsdka2(1,2) == 6.0_SDK .AND. valsdka2(2,2) == 8.0_SDK
+    ASSERT(bool,'someParam valsdka2 1')
+    DEALLOCATE(valsdka2)
+    ALLOCATE(valsdka2(1,1))
+    CALL someParam%get('testSDKa2',valsdka2)
+    bool=SIZE(valsdka2,DIM=1) == 2 .AND. SIZE(valsdka2,DIM=2) == 2
+    ASSERT(bool,'someParam valsdka2 different size')
+    bool=valsdka2(1,1) == 5.0_SDK .AND. valsdka2(2,1) == 7.0_SDK .AND. &
+      valsdka2(1,2) == 6.0_SDK .AND. valsdka2(2,2) == 8.0_SDK
+    ASSERT(bool,'someParam valsdka2 2')
+    DEALLOCATE(valsdka2)
+    CALL someParam%get('testSDKa2',valsdka2)
+    bool=SIZE(valsdka2,DIM=1) == 2 .AND. SIZE(valsdka2,DIM=2) == 2
+    ASSERT(bool,'someParam valsdka2 unallocated')
+    bool=valsdka2(1,1) == 5.0_SDK .AND. valsdka2(2,1) == 7.0_SDK .AND. &
+      valsdka2(1,2) == 6.0_SDK .AND. valsdka2(2,2) == 8.0_SDK
+    ASSERT(bool,'someParam valsdka2 3')
+    DEALLOCATE(valsdka2)
+    ALLOCATE(valsdka2(2,1))
+    CALL testParam%get('testSDKa2',valsdka2)
+    bool=SIZE(valsdka2,DIM=1) == 2 .AND. SIZE(valsdka2,DIM=2) == 2
+    ASSERT(bool,'testParam valsdka2 size 1')
+    bool=valsdka2(1,1) == 5.0_SDK .AND. valsdka2(2,1) == 7.0_SDK .AND. &
+      valsdka2(1,2) == 6.0_SDK .AND. valsdka2(2,2) == 8.0_SDK
+    ASSERT(bool,'testParam valsdka2 1')
+    DEALLOCATE(valsdka2)
+    CALL testParam%get('testSDKa2',valsdka2)
+    bool=SIZE(valsdka2,DIM=1) == 2 .AND. SIZE(valsdka2,DIM=2) == 2
+    ASSERT(bool,'testParam valsdka2 unallocated')
+    bool=valsdka2(1,1) == 5.0_SDK .AND. valsdka2(2,1) == 7.0_SDK .AND. &
+      valsdka2(1,2) == 6.0_SDK .AND. valsdka2(2,2) == 8.0_SDK
+    ASSERT(bool,'testParam valsdka2 2')
+    CALL testParam%get('testError',valsdka2)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SDK_a2'// &
+      ' - unable to locate parameter "testError" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
+    CALL someParam%get('testError',valsdka2)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SDK_a2'// &
+      ' - parameter name mismatch "testError" in "testSDKa2"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSDKa2'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%get('testSDKa2',valsdka2)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SDK_a2'// &
+      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' must be 2-D ARRAY REAL(SDK)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
+    CALL testParam2%clear()
   
     !test set
-    CALL someParam%set('testSDK2a',RESHAPE((/3.5_SDK,1.5_SDK,4.5_SDK,2.5_SDK/),(/2,2/)), &
-        'The numbers 3.5, 1.5, 4.5, and 2.5')
-    CALL testParam%get('testSDK2a',valsdk2a)
-    IF(valsdk2a(1,1) /= 3.5_SDK .OR. valsdk2a(2,1) /= 1.5_SDK .OR. &
-        valsdk2a(1,2) /= 4.5_SDK .OR. valsdk2a(2,2) /= 2.5_SDK .OR. &
-          SIZE(valsdk2a,1) /= 2_SIK .OR. SIZE(valsdk2a,2) /= 2_SIK .OR. &
-          someParam%description /= 'The numbers 3.5, 1.5, 4.5, and 2.5') THEN
-      WRITE(*,*) 'someParam%set(''testSDK2a'',(/3.5_SDK,1.5_SDK/,/4.5_SDK,2.5_SDK/),'// &
-      '''The numbers 3.5, 1.5, 4.5, and 2.5'') FAILED!'
-      STOP 666
-    ENDIF
-    !Different size for test param
-    CALL testParam%set('testSDK2a',RESHAPE((/5.5_SDK/),(/1,1/)),'The number 5.5')
-    CALL testParam%get('testSDK2a',valsdk2a)
-    IF(valsdk2a(1,1) /= 5.5_SDK .OR. SIZE(valsdk2a,1) /= 1_SIK .OR. &
-        SIZE(valsdk2a,2) /= 1_SIK .OR. &
-          someParam%description /= 'The number 5.5') THEN
-      WRITE(*,*) 'testParam%set(''testSDK2a'',5.5_SDK) FAILED!'
-      STOP 666
-    ENDIF
-    !Different size for some param
-    CALL someParam%set('testSDK2a',RESHAPE((/10.0_SDK,10.5_SDK,20.0_SDK,-10.0_SDK,-10.5_SDK,-20.0_SDK/),(/3,2/)), &
-      'The numbers 10.0, 10.5, 20.0, -10.0, -10.5, and -20.0')
-    CALL testParam%get('testSDK2a',valsdk2a)
-    IF(valsdk2a(1,1) /= 10.0_SDK .OR. valsdk2a(2,1) /= 10.5_SDK .OR. &
-        valsdk2a(3,1) /= 20.0_SDK .OR. SIZE(valsdk2a,1) /= 3_SIK .OR. &
-          valsdk2a(1,2) /= -10.0_SDK .OR. valsdk2a(2,2) /= -10.5_SDK .OR. &
-            valsdk2a(3,2) /= -20.0_SDK .OR. SIZE(valsdk2a,2) /= 2_SIK .OR. &
-              someParam%description /= 'The numbers 10.0, 10.5, 20.0, -10.0, -10.5, and -20.0') THEN
-      WRITE(*,*) 'someParam%set(''testSDK2a'',(/10.0_SDK,10.5_SDK,20.0_SDK/,/-10.0_SDK'// &
-        ',-10.5_SDK,-20.0_SDK/),''The numbers 10.0, 10.5, and 20.0'') FAILED!'
-      STOP 666
-    ENDIF
-    !Same size for test param
-    CALL testParam%set('testSDK2a',RESHAPE((/50.0_SDK,50.5_SDK,60.0_SDK,-50.0_SDK,-50.5_SDK,-60.0_SDK/),(/3,2/)), &
-      'The numbers 50.0, 50.5, 60.0, -50.0, -50.5, and -60.0')
-    CALL testParam%get('testSDK2a',valsdk2a)
-    IF(valsdk2a(1,1) /= 50.0_SDK .OR. valsdk2a(2,1) /= 50.5_SDK .OR. &
-        valsdk2a(3,1) /= 60.0_SDK .OR. SIZE(valsdk2a,1) /= 3_SIK .OR. &
-          valsdk2a(1,2) /= -50.0_SDK .OR. valsdk2a(2,2) /= -50.5_SDK .OR. &
-            valsdk2a(3,2) /= -60.0_SDK .OR. SIZE(valsdk2a,2) /= 2_SIK .OR. &
-              someParam%description /= 'The numbers 50.0, 50.5, 60.0, -50.0, -50.5, and -60.0') THEN
-      WRITE(*,*) 'testParam%set(''testSDK2a'',(/50.0_SDK,50.5_SDK,60.0_SDK/)) FAILED!'
-      STOP 666
-    ENDIF
+    COMPONENT_TEST('%set(...)')
+    CALL testParam%set('testSDKa2',RESHAPE((/-10.0_SDK/),(/1,1/)),'The number -10')
+    CALL testParam%get('testSDKa2',valsdka2)
+    ASSERT(testParam%pdat%name == 'testSDKa2','%name')
+    ASSERT(testParam%pdat%datatype == '2-D ARRAY REAL(SDK)','testParam%datatype')
+    ASSERT(testParam%pdat%description == 'The number -10','%description')
+    bool=SIZE(valsdka2,DIM=1) == 1 .AND. SIZE(valsdka2,DIM=2) == 1
+    ASSERT(bool,'testParam valsdka2 size 1')
+    bool=valsdka2(1,1) == -10.0_SDK
+    ASSERT(bool,'testParam valsdka2 1')
+    CALL testParam%set('testSDKa2',RESHAPE((/3.0_SDK,-5.0_SDK/),(/2,1/)),'The numbers 3 & -5')
+    CALL testParam%get('testSDKa2',valsdka2)
+    bool=SIZE(valsdka2,DIM=1) == 2 .AND. SIZE(valsdka2,DIM=2) == 1
+    ASSERT(bool,'testParam valsdka2 size 2')
+    bool=valsdka2(1,1) == 3.0_SDK .AND. valsdka2(2,1) == -5.0_SDK
+    ASSERT(bool,'testParam valsdka2 2')
+    ASSERT(testParam%pdat%description == 'The numbers 3 & -5','%description')
+    !
+    CALL someParam%set('testSDKa2',RESHAPE((/-10.0_SDK/),(/1,1/)),'The number -10')
+    CALL someParam%get('testSDKa2',valsdka2)
+    ASSERT(someParam%name == 'testSDKa2','someParam%name')
+    ASSERT(someParam%datatype == '2-D ARRAY REAL(SDK)','someParam%datatype')
+    ASSERT(someParam%description == 'The number -10','someParam%description')
+    bool=SIZE(valsdka2,DIM=1) == 1 .AND. SIZE(valsdka2,DIM=2) == 1
+    ASSERT(bool,'someParam valsdka2 size 1')
+    bool=valsdka2(1,1) == -10.0_SDK
+    ASSERT(bool,'someParam valsdka2 1')
+    CALL someParam%set('testSDKa2',RESHAPE((/5.0_SDK,7.0_SDK/),(/1,2/)),'The numbers 5 & 7')
+    CALL someParam%get('testSDKa2',valsdka2)
+    ASSERT(someParam%name == 'testSDKa2','someParam%name')
+    ASSERT(someParam%datatype == '2-D ARRAY REAL(SDK)','someParam%datatype')
+    ASSERT(someParam%description == 'The numbers 5 & 7','someParam%description')
+    bool=SIZE(valsdka2,DIM=1) == 1 .AND. SIZE(valsdka2,DIM=2) == 2
+    ASSERT(bool,'someParam valsdka2 size 2')
+    bool=valsdka2(1,1) == 5.0_SDK .AND. valsdka2(1,2) == 7.0_SDK
+    ASSERT(bool,'testParam valsdka2 2')
+    !
+    CALL someParam%set('testError',RESHAPE((/-1.0_SDK/),(/1,1/))) !Name mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK_a2 -'// &
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSDKa2"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+    CALL testParam2%set('testSDKa2',RESHAPE((/-1.0_SDK/),(/1,1/))) !Name not found
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK_a2 -'// &
+      ' unable to locate parameter "testSDKa2" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSDKa2'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%set('testSDKa2',RESHAPE((/-1.0_SDK/),(/1,1/))) !Type mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK_a2 -'// &
+      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' and must be 2-D ARRAY REAL(SDK)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
+    CALL testParam2%clear()
     
-    CALL testParam2%set('testSDK2a',valsdk2a)
-    CALL someParam%set('testError',valsdk2a)
-    CALL testParam%set('testError',valsdk2a)
-    WRITE(*,*) '  Passed: CALL testParam%set(...) (SDK) 2-D'
-  
-    !Test clear
-    CALL testParam%clear()
-    IF(LEN(testParam%name) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %name (SDK) 2-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%datatype) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %datatype (SDK) 2-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%description) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %description (SDK) 2-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%clear() %pdat (SDK) 2-D FAILED!'
-      STOP 666
-    ENDIF
-
-    
-    WRITE(*,*) '  Passed: CALL testParam%clear() (SDK) 2-D'
-  
-    !test assignment
-    CALL testParam%init('testSDK2a',RESHAPE((/4.0_SDK/),(/1,1/)) )
     COMPONENT_TEST('Operators')
+    CALL testParam%init('testSDKa2',RESHAPE((/-1.0_SDK/),(/1,1/)))
     testParam2=testParam
     ASSERT(ASSOCIATED(testParam2%pdat),'ASSOCIATED %pdat')
-    ASSERT(testParam2%pdat%name == 'testSDK2a','%name')
-    ASSERT(testParam2%pdat%datatype ==  '2-D ARRAY REAL(SDK)','%datatype')
+    ASSERT(testParam2%pdat%name == 'testSDKa2','%name')
+    ASSERT(testParam2%pdat%datatype == '2-D ARRAY REAL(SDK)','%datatype')
     ASSERT(testParam2 == testParam,'OPERATOR(==)')
     CALL clear_test_vars()
-  ENDSUBROUTINE testSDK2a
+  ENDSUBROUTINE testSDKa2
 !
 !-------------------------------------------------------------------------------
 !Test 2-D array StringType support
-  SUBROUTINE testSTR2a()
-    ALLOCATE(testParam2%pdat)
-    testParam2%pdat%name='testSTR2a'
-    ALLOCATE(valstr2a(2,2))
-    valstr2a(1,1)='''testing'''
-    valstr2a(1,2)='more testing'
-    valstr2a(2,1)='''testing2'''
-    valstr2a(2,2)='more testing2'
+  SUBROUTINE testSTRa2()
+    LOGICAL(SBK) :: bool
+    CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
+    ALLOCATE(valstra2(2,2))
+    valstra2(1,1)='testing 1'
+    valstra2(2,1)='testing 2'
+    valstra2(1,2)='testing 3'
+    valstra2(2,2)='testing 4'
     !test init
-    CALL testParam%init('testError->testSTR2a',valstr2a,'The value is testing and more testing')
-    CALL testParam%init('testSTR2a',valstr2a,'The value is testing and more testing')
-    IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%init(...) %pdat StringType (STR) 2-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%name /= 'testSTR2a') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %name StringType (STR) 2-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%datatype /= '2-D ARRAY TYPE(StringType)') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %datatype StringType (STR) 2-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%description /= 'The value is testing and more testing') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %description StringType (STR) 2-D FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    CALL testParam%init('testError',valstr2a)
-    WRITE(*,*) '  Passed: CALL testParam%init(...) StringType (STR)'
-  
-    !test get
-    CALL testParam%get('testSTR2a',someParam)
-    IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSTR2a'',someParam) FAILED!'
-      STOP 666
-    ENDIF
-    !Test same size
-    CALL someParam%get('testSTR2a',valstr2a)
-    IF(valstr2a(1,1) /= '''testing''' .OR. valstr2a(1,2) /= 'more testing' .OR. &
-        valstr2a(2,1) /= '''testing2''' .OR. valstr2a(2,2) /= 'more testing2' .OR. &
-        SIZE(valstr2a,1) /= 2_SIK .OR. SIZE(valstr2a,2) /= 2_SIK ) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSTR2a'',valstr2a) FAILED!'
-      STOP 666
-    ENDIF
-    !Test different size size
-    DEALLOCATE(valstr2a)
-    ALLOCATE(valstr2a(1,1))
-    valstr2a(1,1)=''
-    CALL someParam%get('testSTR2a',valstr2a)
-    IF(valstr2a(1,1) /= '''testing''' .OR. valstr2a(1,2) /= 'more testing' .OR. &
-        valstr2a(2,1) /= '''testing2''' .OR. valstr2a(2,2) /= 'more testing2' .OR. &
-        SIZE(valstr2a,1) /= 2_SIK .OR. SIZE(valstr2a,2) /= 2_SIK ) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSTR2a'',valstr2a) FAILED!'
-      STOP 666
-    ENDIF
-    DEALLOCATE(valstr2a)
-    ALLOCATE(valstr2a(1,10))
-    !valstr1a(1)='test again'
-    !valstr1a(2)='test again'
-    CALL testParam%get('testSTR2a',valstr2a)
-    IF(valstr2a(1,1) /= '''testing''' .OR. valstr2a(1,2) /= 'more testing' .OR. &
-        valstr2a(2,1) /= '''testing2''' .OR. valstr2a(2,2) /= 'more testing2' .OR. &
-        SIZE(valstr2a,1) /= 2_SIK .OR. SIZE(valstr2a,2) /= 2_SIK ) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSTR2a'',valstr2a) FAILED!'
-      STOP 666
-    ENDIF
-    !Test with deallocated array
-    DEALLOCATE(valstr2a)
-    CALL someParam%get('testSTR2a',valstr2a)
-    IF(valstr2a(1,1) /= '''testing''' .OR. valstr2a(1,2) /= 'more testing' .OR. &
-        valstr2a(2,1) /= '''testing2''' .OR. valstr2a(2,2) /= 'more testing2' .OR. &
-        SIZE(valstr2a,1) /= 2_SIK .OR. SIZE(valstr2a,2) /= 2_SIK ) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSTR2a'',valstr2a) FAILED!'
-      STOP 666
-    ENDIF
-    DEALLOCATE(valstr2a)
-    CALL testParam%get('testSTR2a',valstr2a)
-    IF(valstr2a(1,1) /= '''testing''' .OR. valstr2a(1,2) /= 'more testing' .OR. &
-        valstr2a(2,1) /= '''testing2''' .OR. valstr2a(2,2) /= 'more testing2' .OR. &
-        SIZE(valstr2a,1) /= 2_SIK .OR. SIZE(valstr2a,2) /= 2_SIK ) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSTR2a'',valstr2a) FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam2%get('testSTR2a',valstr2a)
-    CALL testParam%get('testError',valstr2a)
-    CALL someParam%get('testError',valstr2a)
-    WRITE(*,*) '  Passed: CALL testParam%get(...) StringType (STR)'
-  
-    !test set
-    !For strings, they must be stored in a string type first, then passed in.
-    valstr2a(1,1)='another test'
-    valstr2a(1,2)='one more test'
-    valstr2a(2,1)='another test2'
-    valstr2a(2,2)='one more test2'
-    CALL someParam%set('testSTR2a',valstr2a,'The value is another test and one more test')
-    !Clear the variable to confirm it gets set.
-    valstr2a(1,1)=''
-    valstr2a(1,2)=''
-    valstr2a(2,1)=''
-    valstr2a(2,2)=''
-    CALL testParam%get('testSTR2a',valstr2a)
-    IF(valstr2a(1,1) /= 'another test' .OR. valstr2a(1,2) /= 'one more test' .OR.  &
-        valstr2a(2,1) /= 'another test2' .OR. valstr2a(2,2) /= 'one more test2' .OR.  &
-        SIZE(valstr2a,1) /= 2_SIK .OR. SIZE(valstr2a,2) /= 2_SIK .OR. &
-        someParam%description /= 'The value is another test and one more test') THEN
-      WRITE(*,*) 'someParam%set(''testSTR2a'',''valstr2a,'// &
-        ' The value is another test and one more test'') FAILED!'
-      STOP 666
-    ENDIF
-    !Different size for test param
-    DEALLOCATE(valstr2a)
-    ALLOCATE(valstr2a(1,2))
-    valstr2a(1,1)='a different size test'
-    valstr2a(1,2)='a different size test2'
-    CALL testParam%set('testSTR2a',valstr2a,'The value is a different size test')
-    DEALLOCATE(valstr2a)
-    ALLOCATE(valstr2a(1,2))
-    valstr2a(1,1)=''
-    valstr2a(1,2)=''
-    CALL testParam%get('testSTR2a',valstr2a)
-    IF(valstr2a(1,1) /= 'a different size test' .OR. SIZE(valstr2a,1) /= 1_SIK .OR. &
-        valstr2a(1,2) /= 'a different size test2' .OR. SIZE(valstr2a,2) /= 2_SIK .OR. &
-          someParam%description /= 'The value is a different size test') THEN
-      WRITE(*,*) 'someParam%set(''testSTR2a'',''valstr2a,'// &
-        ' The value is a different size test'') FAILED!'
-      STOP 666
-    ENDIF
-    !Different size for some param
-    DEALLOCATE(valstr2a)
-    ALLOCATE(valstr2a(3,1))
-    valstr2a(1,1)='a same but different test'
-    valstr2a(2,1)='a same but different test'
-    valstr2a(3,1)='a same but different test'
-    CALL someParam%set('testSTR2a',valstr2a,'The value is a same but different test')
-    !Clear the variable to confirm it gets set.
-    DEALLOCATE(valstr2a)
-    ALLOCATE(valstr2a(1,2))
-    valstr2a(1,1)=''
-    valstr2a(1,2)=''
-    CALL testParam%get('testSTR2a',valstr2a)
-    IF(valstr2a(1,1) /= 'a same but different test' .OR. &
-         valstr2a(2,1) /= 'a same but different test' .OR. &
-           valstr2a(3,1) /= 'a same but different test' .OR. &
-             SIZE(valstr2a,1) /= 3_SIK .OR. SIZE(valstr2a,2) /= 1_SIK .OR. &
-               someParam%description /= 'The value is a same but different test') THEN
-      WRITE(*,*) 'someParam%set(''testSTR2a'',''valstr2a,'// &
-        ' The value is a same but different test'') FAILED!'
-      STOP 666
-    ENDIF
-    !Same size for test param
-    valstr2a(1,1)='a different but same test'
-    valstr2a(2,1)='a different but same test'
-    valstr2a(3,1)='a different but same test'
-    CALL testParam%set('testSTR2a',valstr2a,'The value is a different but same test')
-    valstr2a(1,1)=''
-    valstr2a(2,1)=''
-    valstr2a(3,1)=''
-    CALL testParam%get('testSTR2a',valstr2a)
-    IF(valstr2a(1,1) /= 'a different but same test' .OR. &
-         valstr2a(2,1) /= 'a different but same test' .OR. &
-           valstr2a(3,1) /= 'a different but same test' .OR. &
-             SIZE(valstr2a,1) /= 3_SIK .OR. SIZE(valstr2a,2) /= 1_SIK .OR. &
-               someParam%description /= 'The value is a different but same test') THEN
-      WRITE(*,*) 'testParam%set(''testSTR2a'',''a different but same test'') FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam2%set('testSTR2a',valstr2a)
-    CALL someParam%set('testError',valstr2a)
-    CALL testParam%set('testError',valstr2a)
-    WRITE(*,*) '  Passed: CALL testParam%set(...) StringType (STR)'
+    
+    COMPONENT_TEST('%init(...)')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
+    ASSERT(LEN(testParam%name) == 0,'%name 1')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 1')
+    ASSERT(LEN(testParam%description) == 0,'%description 1')
+    CALL testParam%init('testError->testSTRa2',valstra2,'The values testing 1, 2, 3, & 4')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 2')
+    ASSERT(LEN(testParam%name) == 0,'%name 2')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 2')
+    ASSERT(LEN(testParam%description) == 0,'%description 2')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_STR_a2'// &
+      ' - "->" symbol is not allowed in name!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
+    CALL testParam%init('testSTRa2',valstra2,'The values testing 1, 2, 3, & 4')
+    ASSERT(LEN(testParam%name) == 0,'%name 3')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 3')
+    ASSERT(LEN(testParam%description) == 0,'%description 3')
+    ASSERT(ASSOCIATED(testParam%pdat),'%pdat 3')
+    ASSERT(testParam%pdat%name == 'testSTRa2','%pdat%name')
+    ASSERT(testParam%pdat%datatype == '2-D ARRAY TYPE(StringType)','%pdat%datatype')
+    ASSERT(testParam%pdat%description == 'The values testing 1, 2, 3, & 4','%pdat%description')
+    CALL testParam%init('testError',valstra2)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_STR_a2'// &
+      ' - parameter is already initialized! Use set method!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
     
     !Test clear
+    COMPONENT_TEST('%clear()')
     CALL testParam%clear()
-    IF(LEN(testParam%name) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %name StringType (STR) 2-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%datatype) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %datatype StringType (STR) 2-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%description) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %description StringType (STR) 2-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%clear() %pdat StringType (STR) 2-D FAILED!'
-      STOP 666
-    ENDIF
-    WRITE(*,*) '  Passed: CALL testParam%clear() StringType (STR)'
+    ASSERT(LEN(testParam%name) == 0,'%name')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype')
+    ASSERT(LEN(testParam%description) == 0,'%description')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
+    
+    COMPONENT_TEST('%edit(...)')
+    CALL testParam%init('testSTRa2',valstra2,'The values testing 1, 2, 3, & 4')
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%init('testSTRa2',valstra2)
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    
+    COMPONENT_TEST('%get(...)')
+    CALL testParam%init('testSTRa2',valstra2,'The values testing 1, 2, 3, & 4')
+    CALL testParam%get('testSTRa2',someParam)
+    ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
+    CALL someParam%get('testSTRa2',valstra2)
+    bool=SIZE(valstra2,DIM=1) == 2 .AND. SIZE(valstra2,DIM=2) == 2
+    ASSERT(bool,'someParam valstra2 size 1')
+    bool=valstra2(1,1) == 'testing 1' .AND. valstra2(2,1) == 'testing 2' .AND. &
+      valstra2(1,2) == 'testing 3' .AND. valstra2(2,2) == 'testing 4'
+    ASSERT(bool,'someParam valstra2 1')
+    DEALLOCATE(valstra2)
+    ALLOCATE(valstra2(1,1))
+    CALL someParam%get('testSTRa2',valstra2)
+    bool=SIZE(valstra2,DIM=1) == 2 .AND. SIZE(valstra2,DIM=2) == 2
+    ASSERT(bool,'someParam valstra2 different size')
+    bool=valstra2(1,1) == 'testing 1' .AND. valstra2(2,1) == 'testing 2' .AND. &
+      valstra2(1,2) == 'testing 3' .AND. valstra2(2,2) == 'testing 4'
+    ASSERT(bool,'someParam valstra2 2')
+    DEALLOCATE(valstra2)
+    CALL someParam%get('testSTRa2',valstra2)
+    bool=SIZE(valstra2,DIM=1) == 2 .AND. SIZE(valstra2,DIM=2) == 2
+    ASSERT(bool,'someParam valstra2 unallocated')
+    bool=valstra2(1,1) == 'testing 1' .AND. valstra2(2,1) == 'testing 2' .AND. &
+      valstra2(1,2) == 'testing 3' .AND. valstra2(2,2) == 'testing 4'
+    ASSERT(bool,'someParam valstra2 3')
+    DEALLOCATE(valstra2)
+    ALLOCATE(valstra2(2,1))
+    CALL testParam%get('testSTRa2',valstra2)
+    bool=SIZE(valstra2,DIM=1) == 2 .AND. SIZE(valstra2,DIM=2) == 2
+    ASSERT(bool,'testParam valstra2 size 1')
+    bool=valstra2(1,1) == 'testing 1' .AND. valstra2(2,1) == 'testing 2' .AND. &
+      valstra2(1,2) == 'testing 3' .AND. valstra2(2,2) == 'testing 4'
+    ASSERT(bool,'testParam valstra2 1')
+    DEALLOCATE(valstra2)
+    CALL testParam%get('testSTRa2',valstra2)
+    bool=SIZE(valstra2,DIM=1) == 2 .AND. SIZE(valstra2,DIM=2) == 2
+    ASSERT(bool,'testParam valstra2 unallocated')
+    bool=valstra2(1,1) == 'testing 1' .AND. valstra2(2,1) == 'testing 2' .AND. &
+      valstra2(1,2) == 'testing 3' .AND. valstra2(2,2) == 'testing 4'
+    ASSERT(bool,'testParam valstra2 2')
+    CALL testParam%get('testError',valstra2)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_STR_a2'// &
+      ' - unable to locate parameter "testError" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
+    CALL someParam%get('testError',valstra2)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_STR_a2'// &
+      ' - parameter name mismatch "testError" in "testSTRa2"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSTRa2'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%get('testSTRa2',valstra2)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_STR_a2'// &
+      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' must be 2-D ARRAY TYPE(StringType)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
+    CALL testParam2%clear()
   
-    !test assignment
-    valstr2a(1,1)='assignment test'
-    valstr2a(2,1)='assignment test2'
-    valstr2a(3,1)='assignment test3'
-    CALL testParam%init('testSTR2a',valstr2a)
+    !test set
+    COMPONENT_TEST('%set(...)')
+    DEALLOCATE(valstra2)
+    ALLOCATE(valstra2(1,1))
+    valstra2(1,1)='another test'
+    CALL testParam%set('testSTRa2',valstra2,'The value another test')
+    CALL testParam%get('testSTRa2',valstra2)
+    ASSERT(testParam%pdat%name == 'testSTRa2','%name')
+    ASSERT(testParam%pdat%datatype == '2-D ARRAY TYPE(StringType)','testParam%datatype')
+    ASSERT(testParam%pdat%description == 'The value another test','%description')
+    bool=SIZE(valstra2,DIM=1) == 1 .AND. SIZE(valstra2,DIM=2) == 1
+    ASSERT(bool,'testParam valstra2 size 1')
+    bool=valstra2(1,1) == 'another test'
+    ASSERT(bool,'testParam valstra2 1')
+    DEALLOCATE(valstra2)
+    ALLOCATE(valstra2(2,1))
+    valstra2(1,1)='test 1'
+    valstra2(2,1)='test 2'
+    CALL testParam%set('testSTRa2',valstra2,'The values test 1 & test 2')
+    CALL testParam%get('testSTRa2',valstra2)
+    bool=SIZE(valstra2,DIM=1) == 2 .AND. SIZE(valstra2,DIM=2) == 1
+    ASSERT(bool,'testParam valstra2 size 2')
+    bool=valstra2(1,1) == 'test 1' .AND. valstra2(2,1) == 'test 2'
+    ASSERT(bool,'testParam valstra2 2')
+    ASSERT(testParam%pdat%description == 'The values test 1 & test 2','%description')
+    !
+    DEALLOCATE(valstra2)
+    ALLOCATE(valstra2(1,1))
+    valstra2(1,1)='yet another test'
+    CALL someParam%set('testSTRa2',valstra2,'The value yet another test')
+    CALL someParam%get('testSTRa2',valstra2)
+    ASSERT(someParam%name == 'testSTRa2','someParam%name')
+    ASSERT(someParam%datatype == '2-D ARRAY TYPE(StringType)','someParam%datatype')
+    ASSERT(someParam%description == 'The value yet another test','someParam%description')
+    bool=SIZE(valstra2,DIM=1) == 1 .AND. SIZE(valstra2,DIM=2) == 1
+    ASSERT(bool,'someParam valstra2 size 1')
+    bool=valstra2(1,1) == 'yet another test'
+    ASSERT(bool,'someParam valstra2 1')
+    DEALLOCATE(valstra2)
+    ALLOCATE(valstra2(1,2))
+    valstra2(1,1)='final test 1'
+    valstra2(1,2)='final test 2'
+    CALL someParam%set('testSTRa2',valstra2,'The values final test 1 & final test 2')
+    CALL someParam%get('testSTRa2',valstra2)
+    ASSERT(someParam%name == 'testSTRa2','someParam%name')
+    ASSERT(someParam%datatype == '2-D ARRAY TYPE(StringType)','someParam%datatype')
+    ASSERT(someParam%description == 'The values final test 1 & final test 2','someParam%description')
+    bool=SIZE(valstra2,DIM=1) == 1 .AND. SIZE(valstra2,DIM=2) == 2
+    ASSERT(bool,'someParam valstra2 size 2')
+    bool=valstra2(1,1) == 'final test 1' .AND. valstra2(1,2) == 'final test 2'
+    ASSERT(bool,'testParam valstra2 2')
+    !
+    DEALLOCATE(valstra2)
+    ALLOCATE(valstra2(1,1))
+    valstra2(1,1)='test error'
+    CALL someParam%set('testError',valstra2) !Name mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_STR_a2 -'// &
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSTRa2"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+    CALL testParam2%set('testSTRa2',valstra2) !Name not found
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_STR_a2 -'// &
+      ' unable to locate parameter "testSTRa2" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSTRa2'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%set('testSTRa2',valstra2) !Type mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_STR_a2 -'// &
+      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' and must be 2-D ARRAY TYPE(StringType)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
+    CALL testParam2%clear()
+    
     COMPONENT_TEST('Operators')
+    DEALLOCATE(valstra2)
+    ALLOCATE(valstra2(1,1))
+    valstra2(1,1)='test operator'
+    CALL testParam%init('testSTRa2',valstra2)
     testParam2=testParam
     ASSERT(ASSOCIATED(testParam2%pdat),'ASSOCIATED %pdat')
-    ASSERT(testParam2%pdat%name == 'testSTR2a','%name')
-    ASSERT(testParam2%pdat%datatype ==  '2-D ARRAY TYPE(StringType)','%datatype')
+    ASSERT(testParam2%pdat%name == 'testSTRa2','%name')
+    ASSERT(testParam2%pdat%datatype == '2-D ARRAY TYPE(StringType)','%datatype')
     ASSERT(testParam2 == testParam,'OPERATOR(==)')
     CALL clear_test_vars()
-  ENDSUBROUTINE testSTR2a
+  ENDSUBROUTINE testSTRa2
 !
 !-------------------------------------------------------------------------------
 !Test 3-D Array SNK support
-  SUBROUTINE testSNK3a()
-    ALLOCATE(testParam2%pdat)
-    testParam2%pdat%name='testSNK3a'
-    ALLOCATE(valsnk3a(2,2,2))
-    valsnk3a(1,1,:)=5_SNK
-    valsnk3a(2,1,:)=7_SNK
-    valsnk3a(1,2,:)=6_SNK
-    valsnk3a(2,2,:)=8_SNK
+  SUBROUTINE testSNKa3()
+    LOGICAL(SBK) :: bool
+    CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
+    ALLOCATE(valsnka3(2,2,2))
+    valsnka3(1,1,:)=5_SNK
+    valsnka3(2,1,:)=7_SNK
+    valsnka3(1,2,:)=6_SNK
+    valsnka3(2,2,:)=8_SNK
     !test init
-    CALL testParam%init('testError->testSNK3a',valsnk3a,'The numbers 5, 7, 6, & 8')
-    CALL testParam%init('testSNK3a',valsnk3a,'The numbers 5, 7, 6, & 8')
-    IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%init(...) %pdat (SNK) 3-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%name /= 'testSNK3a') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %name (SNK) 3-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%datatype /= '3-D ARRAY INTEGER(SNK)') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %datatype (SNK) 3-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%description /= 'The numbers 5, 7, 6, & 8') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %description (SNK) 3-D FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    CALL testParam%init('testError',valsnk3a)
-    WRITE(*,*) '  Passed: CALL testParam%init(...) (SNK) 3-D'
-  
-    !test get
-    CALL testParam%get('testSNK3a',someParam)
-    IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSNK3a'',someParam) FAILED!'
-      STOP 666
-    ENDIF
-    !Test same size
-    CALL someParam%get('testSNK3a',valsnk3a)
-    IF(ANY(valsnk3a(1,1,:) /= 5_SNK) .OR. ANY(valsnk3a(2,1,:) /= 7_SNK) .OR. &
-        ANY(valsnk3a(1,2,:) /= 6_SNK) .OR. ANY(valsnk3a(2,2,:) /= 8_SNK) .OR. &
-          SIZE(valsnk3a,1) /= 2_SIK .OR. SIZE(valsnk3a,2) /= 2_SIK .OR. &
-            SIZE(valsnk3a,3) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSNK3a'',valsnk3a) FAILED!'
-      STOP 666
-    ENDIF
-    !Test different size size
-    DEALLOCATE(valsnk3a)
-    ALLOCATE(valsnk3a(1,1,1))
-    CALL someParam%get('testSNK3a',valsnk3a)
-    IF(ANY(valsnk3a(1,1,:) /= 5_SNK) .OR. ANY(valsnk3a(2,1,:) /= 7_SNK) .OR. &
-        ANY(valsnk3a(1,2,:) /= 6_SNK) .OR. ANY(valsnk3a(2,2,:) /= 8_SNK) .OR. &
-          SIZE(valsnk3a,1) /= 2_SIK .OR. SIZE(valsnk3a,2) /= 2_SIK .OR. &
-            SIZE(valsnk3a,3) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSNK3a'',valsnk3a) FAILED!'
-      STOP 666
-    ENDIF
-    valsnk3a=0_SNK
-    CALL testParam%get('testSNK3a',valsnk3a)
-    IF(ANY(valsnk3a(1,1,:) /= 5_SNK) .OR. ANY(valsnk3a(2,1,:) /= 7_SNK) .OR. &
-        ANY(valsnk3a(1,2,:) /= 6_SNK) .OR. ANY(valsnk3a(2,2,:) /= 8_SNK) .OR. &
-          SIZE(valsnk3a,1) /= 2_SIK .OR. SIZE(valsnk3a,2) /= 2_SIK .OR. &
-            SIZE(valsnk3a,3) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSNK3a'',valsnk3a) FAILED!'
-      STOP 666
-    ENDIF
-    !Test with deallocated array
-    DEALLOCATE(valsnk3a)
-    CALL someParam%get('testSNK3a',valsnk3a)
-    IF(ANY(valsnk3a(1,1,:) /= 5_SNK) .OR. ANY(valsnk3a(2,1,:) /= 7_SNK) .OR. &
-        ANY(valsnk3a(1,2,:) /= 6_SNK) .OR. ANY(valsnk3a(2,2,:) /= 8_SNK) .OR. &
-          SIZE(valsnk3a,1) /= 2_SIK .OR. SIZE(valsnk3a,2) /= 2_SIK .OR. &
-            SIZE(valsnk3a,3) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSNK3a'',valsnk3a) FAILED!'
-      STOP 666
-    ENDIF
-    DEALLOCATE(valsnk3a)
-    CALL testParam%get('testSNK3a',valsnk3a)
-    IF(ANY(valsnk3a(1,1,:) /= 5_SNK) .OR. ANY(valsnk3a(2,1,:) /= 7_SNK) .OR. &
-        ANY(valsnk3a(1,2,:) /= 6_SNK) .OR. ANY(valsnk3a(2,2,:) /= 8_SNK) .OR. &
-          SIZE(valsnk3a,1) /= 2_SIK .OR. SIZE(valsnk3a,2) /= 2_SIK .OR. &
-            SIZE(valsnk3a,3) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSNK3a'',valsnk3a) FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam2%get('testSNK3a',valsnk3a)
-    CALL testParam%get('testError',valsnk3a)
-    CALL someParam%get('testError',valsnk3a)
-    WRITE(*,*) '  Passed: CALL testParam%get(...) (SNK) 3-D'
+    
+    COMPONENT_TEST('%init(...)')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
+    ASSERT(LEN(testParam%name) == 0,'%name 1')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 1')
+    ASSERT(LEN(testParam%description) == 0,'%description 1')
+    CALL testParam%init('testError->testSNKa3',valsnka3,'The numbers 5, 7, 6, & 8')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 2')
+    ASSERT(LEN(testParam%name) == 0,'%name 2')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 2')
+    ASSERT(LEN(testParam%description) == 0,'%description 2')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SNK_a3'// &
+      ' - "->" symbol is not allowed in name!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
+    CALL testParam%init('testSNKa3',valsnka3,'The numbers 5, 7, 6, & 8')
+    ASSERT(LEN(testParam%name) == 0,'%name 3')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 3')
+    ASSERT(LEN(testParam%description) == 0,'%description 3')
+    ASSERT(ASSOCIATED(testParam%pdat),'%pdat 3')
+    ASSERT(testParam%pdat%name == 'testSNKa3','%pdat%name')
+    ASSERT(testParam%pdat%datatype == '3-D ARRAY INTEGER(SNK)','%pdat%datatype')
+    ASSERT(testParam%pdat%description == 'The numbers 5, 7, 6, & 8','%pdat%description')
+    CALL testParam%init('testError',valsnka3)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SNK_a3'// &
+      ' - parameter is already initialized! Use set method!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
+    
+    !Test clear
+    COMPONENT_TEST('%clear()')
+    CALL testParam%clear()
+    ASSERT(LEN(testParam%name) == 0,'%name')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype')
+    ASSERT(LEN(testParam%description) == 0,'%description')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
+    
+    COMPONENT_TEST('%edit(...)')
+    CALL testParam%init('testSNKa3',valsnka3,'The numbers 5, 7, 6, & 8')
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%init('testSNKa3',valsnka3)
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    
+    COMPONENT_TEST('%get(...)')
+    CALL testParam%init('testSNKa3',valsnka3,'The numbers 5, 7, 6, & 8')
+    CALL testParam%get('testSNKa3',someParam)
+    ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
+    CALL someParam%get('testSNKa3',valsnka3)
+    bool=SIZE(valsnka3,DIM=1) == 2 .AND. SIZE(valsnka3,DIM=2) == 2 .AND. SIZE(valsnka3,DIM=3) == 2
+    ASSERT(bool,'someParam valsnka3 size 1')
+    bool=ALL(valsnka3(1,1,:) == 5) .AND. ALL(valsnka3(2,1,:) == 7) &
+      .AND. ALL(valsnka3(1,2,:) == 6) .AND. ALL(valsnka3(2,2,:) == 8)
+    ASSERT(bool,'someParam valsnka3 1')
+    DEALLOCATE(valsnka3)
+    ALLOCATE(valsnka3(1,1,1))
+    CALL someParam%get('testSNKa3',valsnka3)
+    bool=SIZE(valsnka3,DIM=1) == 2 .AND. SIZE(valsnka3,DIM=2) == 2 .AND. SIZE(valsnka3,DIM=3) == 2
+    ASSERT(bool,'someParam valsnka3 different size')
+    bool=ALL(valsnka3(1,1,:) == 5) .AND. ALL(valsnka3(2,1,:) == 7) &
+      .AND. ALL(valsnka3(1,2,:) == 6) .AND. ALL(valsnka3(2,2,:) == 8)
+    ASSERT(bool,'someParam valsnka3 2')
+    DEALLOCATE(valsnka3)
+    CALL someParam%get('testSNKa3',valsnka3)
+    bool=SIZE(valsnka3,DIM=1) == 2 .AND. SIZE(valsnka3,DIM=2) == 2 .AND. SIZE(valsnka3,DIM=3) == 2
+    ASSERT(bool,'someParam valsnka3 unallocated')
+    bool=ALL(valsnka3(1,1,:) == 5) .AND. ALL(valsnka3(2,1,:) == 7) &
+      .AND. ALL(valsnka3(1,2,:) == 6) .AND. ALL(valsnka3(2,2,:) == 8)
+    ASSERT(bool,'someParam valsnka3 3')
+    DEALLOCATE(valsnka3)
+    ALLOCATE(valsnka3(2,2,1))
+    CALL testParam%get('testSNKa3',valsnka3)
+    bool=SIZE(valsnka3,DIM=1) == 2 .AND. SIZE(valsnka3,DIM=2) == 2 .AND. SIZE(valsnka3,DIM=3) == 2
+    ASSERT(bool,'testParam valsnka3 size 1')
+    bool=ALL(valsnka3(1,1,:) == 5) .AND. ALL(valsnka3(2,1,:) == 7) &
+      .AND. ALL(valsnka3(1,2,:) == 6) .AND. ALL(valsnka3(2,2,:) == 8)
+    ASSERT(bool,'testParam valsnka3 1')
+    DEALLOCATE(valsnka3)
+    CALL testParam%get('testSNKa3',valsnka3)
+    bool=SIZE(valsnka3,DIM=1) == 2 .AND. SIZE(valsnka3,DIM=2) == 2 .AND. SIZE(valsnka3,DIM=3) == 2
+    ASSERT(bool,'testParam valsnka3 unallocated')
+    bool=ALL(valsnka3(1,1,:) == 5) .AND. ALL(valsnka3(2,1,:) == 7) &
+      .AND. ALL(valsnka3(1,2,:) == 6) .AND. ALL(valsnka3(2,2,:) == 8)
+    ASSERT(bool,'testParam valsnka3 2')
+    CALL testParam%get('testError',valsnka3)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SNK_a3'// &
+      ' - unable to locate parameter "testError" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
+    CALL someParam%get('testError',valsnka3)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SNK_a3'// &
+      ' - parameter name mismatch "testError" in "testSNKa3"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSNKa3'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%get('testSNKa3',valsnka3)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SNK_a3'// &
+      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' must be 3-D ARRAY INTEGER(SNK)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
+    CALL testParam2%clear()
   
     !test set
-    CALL someParam%set('testSNK3a', &
-      RESHAPE((/3_SNK,1_SNK,4_SNK,2_SNK,3_SNK,1_SNK,4_SNK,2_SNK/), &
-        (/2,2,2/)),'The numbers 3, 1, 4, and 2')
-    CALL testParam%get('testSNK3a',valsnk3a)
-    IF(ANY(valsnk3a(1,1,:) /= 3_SNK) .OR. ANY(valsnk3a(2,1,:) /= 1_SNK) .OR. &
-        ANY(valsnk3a(1,2,:) /= 4_SNK) .OR. ANY(valsnk3a(2,2,:) /= 2_SNK) .OR. &
-          SIZE(valsnk3a,1) /= 2_SIK .OR. SIZE(valsnk3a,2) /= 2_SIK .OR. &
-            SIZE(valsnk3a,3) /= 2_SIK .OR. &
-              someParam%description /= 'The numbers 3, 1, 4, and 2') THEN
-      WRITE(*,*) 'someParam%set(''testSNK3a'',(/3_SNK,1_SNK/),''The numbers 3, 1, 4, and 2'') FAILED!'
-      STOP 666
-    ENDIF
-    !Different size for test param
-    CALL testParam%set('testSNK3a',RESHAPE((/5_SNK/),(/1,1,1/)),'The number 5')
-    CALL testParam%get('testSNK3a',valsnk3a)
-    IF(valsnk3a(1,1,1) /= 5_SNK .OR. SIZE(valsnk3a,1) /= 1_SIK .OR. &
-        SIZE(valsnk3a,2) /= 1_SIK .OR. SIZE(valsnk3a,3) /= 1_SIK .OR. &
-          someParam%description /= 'The number 5') THEN
-      WRITE(*,*) 'testParam%set(''testSNK3a'',5_SNK) FAILED!'
-      STOP 666
-    ENDIF
-    !Different size for some param
-    CALL someParam%set('testSNK3a', &
-      RESHAPE((/10_SNK,10_SNK,20_SNK,-10_SNK,-10_SNK,-20_SNK/),(/3,2,1/)), &
-        'The numbers 10, 10, 20, -10, -10, and -20')
-    CALL testParam%get('testSNK3a',valsnk3a)
-    IF(valsnk3a(1,1,1) /= 10_SNK .OR. valsnk3a(2,1,1) /= 10_SNK .OR. &
-        valsnk3a(3,1,1) /= 20_SNK .OR. SIZE(valsnk3a,1) /= 3_SIK .OR. &
-          valsnk3a(1,2,1) /= -10_SNK .OR. valsnk3a(2,2,1) /= -10_SNK .OR. &
-            valsnk3a(3,2,1) /= -20_SNK .OR. SIZE(valsnk3a,2) /= 2_SIK .OR. &
-              SIZE(valsnk3a,3) /= 1_SIK .OR. &
-                someParam%description /= 'The numbers 10, 10, 20, -10, -10, and -20') THEN
-      WRITE(*,*) 'someParam%set(''testSNK3a'',(/10_SNK,10_SNK,20_SNK,'// &
-        '-10_SNK,-10_SNK,-20_SNK/),''The numbers 10, 10, 20, -10, -10, and -20'') FAILED!'
-      STOP 666
-    ENDIF
-    !Same size for test param
-    CALL testParam%set('testSNK3a', &
-      RESHAPE((/50_SNK,55_SNK,60_SNK,-50_SNK,-55_SNK,-60_SNK/),(/3,2,1/)), &
-        'The numbers 50, 55, 60, -50, -55, and -60')
-    CALL testParam%get('testSNK3a',valsnk3a)
-    IF(valsnk3a(1,1,1) /= 50_SNK .OR. valsnk3a(2,1,1) /= 55_SNK .OR. &
-        valsnk3a(3,1,1) /= 60_SNK .OR. SIZE(valsnk3a,1) /= 3_SIK .OR. &
-          valsnk3a(1,2,1) /= -50_SNK .OR. valsnk3a(2,2,1) /= -55_SNK .OR. &
-            valsnk3a(3,2,1) /= -60_SNK .OR. SIZE(valsnk3a,2) /= 2_SIK .OR. &
-              SIZE(valsnk3a,3) /= 1_SIK .OR. &
-              someParam%description /= 'The numbers 50, 55, 60, -50, -55, and -60') THEN
-      WRITE(*,*) 'testParam%set(''testSNK3a'',(/50_SNK,55_SNK,60_SNK/,/-50_SNK,-55_SNK,-60_SNK/)) FAILED!'
-      STOP 666
-    ENDIF
+    COMPONENT_TEST('%set(...)')
+    CALL testParam%set('testSNKa3',RESHAPE((/-10/),(/1,1,1/)),'The number -10')
+    CALL testParam%get('testSNKa3',valsnka3)
+    ASSERT(testParam%pdat%name == 'testSNKa3','%name')
+    ASSERT(testParam%pdat%datatype == '3-D ARRAY INTEGER(SNK)','testParam%datatype')
+    ASSERT(testParam%pdat%description == 'The number -10','%description')
+    bool=SIZE(valsnka3,DIM=1) == 1 .AND. SIZE(valsnka3,DIM=2) == 1
+    ASSERT(bool,'testParam valsnka3 size 1')
+    bool=valsnka3(1,1,1) == -10
+    ASSERT(bool,'testParam valsnka3 1')
+    CALL testParam%set('testSNKa3',RESHAPE((/3,-5,3,-5/),(/2,2,1/)),'The numbers 3 & -5')
+    CALL testParam%get('testSNKa3',valsnka3)
+    bool=SIZE(valsnka3,DIM=1) == 2 .AND. SIZE(valsnka3,DIM=2) == 2 .AND. SIZE(valsnka3,DIM=3) == 1
+    ASSERT(bool,'testParam valsnka3 size 2')
+    bool=valsnka3(1,1,1) == 3 .AND. valsnka3(2,1,1) == -5 .AND. &
+      valsnka3(1,2,1) == 3 .AND. valsnka3(2,2,1) == -5
+    ASSERT(bool,'testParam valsnka3 2')
+    ASSERT(testParam%pdat%description == 'The numbers 3 & -5','%description')
+    !
+    CALL someParam%set('testSNKa3',RESHAPE((/-10/),(/1,1,1/)),'The number -10')
+    CALL someParam%get('testSNKa3',valsnka3)
+    ASSERT(someParam%name == 'testSNKa3','someParam%name')
+    ASSERT(someParam%datatype == '3-D ARRAY INTEGER(SNK)','someParam%datatype')
+    ASSERT(someParam%description == 'The number -10','someParam%description')
+    bool=SIZE(valsnka3,DIM=1) == 1 .AND. SIZE(valsnka3,DIM=2) == 1
+    ASSERT(bool,'someParam valsnka3 size 1')
+    bool=valsnka3(1,1,1) == -10
+    ASSERT(bool,'someParam valsnka3 1')
+    CALL someParam%set('testSNKa3',RESHAPE((/5,7/),(/1,1,2/)),'The numbers 5 & 7')
+    CALL someParam%get('testSNKa3',valsnka3)
+    ASSERT(someParam%name == 'testSNKa3','someParam%name')
+    ASSERT(someParam%datatype == '3-D ARRAY INTEGER(SNK)','someParam%datatype')
+    ASSERT(someParam%description == 'The numbers 5 & 7','someParam%description')
+    bool=SIZE(valsnka3,DIM=1) == 1 .AND. SIZE(valsnka3,DIM=2) == 1 .AND. SIZE(valsnka3,DIM=3) == 2
+    ASSERT(bool,'someParam valsnka3 size 2')
+    bool=valsnka3(1,1,1) == 5 .AND. valsnka3(1,1,2) == 7
+    ASSERT(bool,'testParam valsnka3 2')
+    !
+    CALL someParam%set('testError',RESHAPE((/-1/),(/1,1,1/))) !Name mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK_a3 -'// &
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSNKa3"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+    CALL testParam2%set('testSNKa3',RESHAPE((/-1/),(/1,1,1/))) !Name not found
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK_a3 -'// &
+      ' unable to locate parameter "testSNKa3" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSNKa3'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%set('testSNKa3',RESHAPE((/-1/),(/1,1,1/))) !Type mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK_a3 -'// &
+      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' and must be 3-D ARRAY INTEGER(SNK)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
+    CALL testParam2%clear()
     
-    CALL testParam2%set('testSNK3a',valsnk3a)
-    CALL someParam%set('testError',valsnk3a)
-    CALL testParam%set('testError',valsnk3a)
-    WRITE(*,*) '  Passed: CALL testParam%set(...) (SNK) 3-D'
-  
-    !Test clear
-    CALL testParam%clear()
-    IF(LEN(testParam%name) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %name (SNK) 3-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%datatype) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %datatype (SNK) 3-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%description) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %description (SNK) 3-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%clear() %pdat (SNK) 3-D FAILED!'
-      STOP 666
-    ENDIF
-
-    
-    WRITE(*,*) '  Passed: CALL testParam%clear() (SNK) 3-D'
-  
-    !test assignment
-    CALL testParam%init('testSNK3a',RESHAPE((/4_SNK/),(/1,1,1/)) )
     COMPONENT_TEST('Operators')
+    CALL testParam%init('testSNKa3',RESHAPE((/-1/),(/1,1,1/)))
     testParam2=testParam
     ASSERT(ASSOCIATED(testParam2%pdat),'ASSOCIATED %pdat')
-    ASSERT(testParam2%pdat%name == 'testSNK3a','%name')
-    ASSERT(testParam2%pdat%datatype ==  '3-D ARRAY INTEGER(SNK)','%datatype')
+    ASSERT(testParam2%pdat%name == 'testSNKa3','%name')
+    ASSERT(testParam2%pdat%datatype == '3-D ARRAY INTEGER(SNK)','%datatype')
     ASSERT(testParam2 == testParam,'OPERATOR(==)')
     CALL clear_test_vars()
-  ENDSUBROUTINE testSNK3a
+  ENDSUBROUTINE testSNKa3
 !
 !-------------------------------------------------------------------------------
 !Test 3-D Array SLK support
-  SUBROUTINE testSLK3a()
-    ALLOCATE(testParam2%pdat)
-    testParam2%pdat%name='testSLK3a'
-    ALLOCATE(valslk3a(2,2,2))
-    valslk3a(1,1,:)=6_SLK
-    valslk3a(2,1,:)=8_SLK
-    valslk3a(1,2,:)=7_SLK
-    valslk3a(2,2,:)=9_SLK
+  SUBROUTINE testSLKa3()
+    LOGICAL(SBK) :: bool
+    CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
+    ALLOCATE(valslka3(2,2,2))
+    valslka3(1,1,:)=5_SLK
+    valslka3(2,1,:)=7_SLK
+    valslka3(1,2,:)=6_SLK
+    valslka3(2,2,:)=8_SLK
     !test init
-    CALL testParam%init('testError->testSLK3a',valslk3a,'The numbers 6, 8, 7, & 9')
-    CALL testParam%init('testSLK3a',valslk3a,'The numbers 6, 8, 7, & 9')
-    IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%init(...) %pdat (SLK) 3-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%name /= 'testSLK3a') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %name (SLK) 3-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%datatype /= '3-D ARRAY INTEGER(SLK)') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %datatype (SLK) 3-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%description /= 'The numbers 6, 8, 7, & 9') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %description (SLK) 3-D FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    CALL testParam%init('testError',valslk3a)
-    WRITE(*,*) '  Passed: CALL testParam%init(...) (SLK) 3-D'
-  
-    !test get
-    CALL testParam%get('testSLK3a',someParam)
-    IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSLK3a'',someParam) FAILED!'
-      STOP 666
-    ENDIF
-    !Test same size
-    CALL someParam%get('testSLK3a',valslk3a)
-    IF(ANY(valslk3a(1,1,:) /= 6_SLK) .OR. ANY(valslk3a(2,1,:) /= 8_SLK) .OR. &
-        ANY(valslk3a(1,2,:) /= 7_SLK) .OR. ANY(valslk3a(2,2,:) /= 9_SLK) .OR. &
-          SIZE(valslk3a,1) /= 2_SIK .OR. SIZE(valslk3a,2) /= 2_SIK .OR. &
-            SIZE(valslk3a,3) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSLK3a'',valslk3a) FAILED!'
-      STOP 666
-    ENDIF
-    !Test different size size
-    DEALLOCATE(valslk3a)
-    ALLOCATE(valslk3a(1,1,1))
-    CALL someParam%get('testSLK3a',valslk3a)
-    IF(ANY(valslk3a(1,1,:) /= 6_SLK) .OR. ANY(valslk3a(2,1,:) /= 8_SLK) .OR. &
-        ANY(valslk3a(1,2,:) /= 7_SLK) .OR. ANY(valslk3a(2,2,:) /= 9_SLK) .OR. &
-          SIZE(valslk3a,1) /= 2_SIK .OR. SIZE(valslk3a,2) /= 2_SIK .OR. &
-            SIZE(valslk3a,3) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSLK3a'',valslk3a) FAILED!'
-      STOP 666
-    ENDIF
-    valslk3a=0_SLK
-    CALL testParam%get('testSLK3a',valslk3a)
-    IF(ANY(valslk3a(1,1,:) /= 6_SLK) .OR. ANY(valslk3a(2,1,:) /= 8_SLK) .OR. &
-        ANY(valslk3a(1,2,:) /= 7_SLK) .OR. ANY(valslk3a(2,2,:) /= 9_SLK) .OR. &
-          SIZE(valslk3a,1) /= 2_SIK .OR. SIZE(valslk3a,2) /= 2_SIK .OR. &
-            SIZE(valslk3a,3) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSLK3a'',valslk3a) FAILED!'
-      STOP 666
-    ENDIF
-    !Test with deallocated array
-    DEALLOCATE(valslk3a)
-    CALL someParam%get('testSLK3a',valslk3a)
-    IF(ANY(valslk3a(1,1,:) /= 6_SLK) .OR. ANY(valslk3a(2,1,:) /= 8_SLK) .OR. &
-        ANY(valslk3a(1,2,:) /= 7_SLK) .OR. ANY(valslk3a(2,2,:) /= 9_SLK) .OR. &
-          SIZE(valslk3a,1) /= 2_SIK .OR. SIZE(valslk3a,2) /= 2_SIK .OR. &
-            SIZE(valslk3a,3) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSLK3a'',valslk3a) FAILED!'
-      STOP 666
-    ENDIF
-    DEALLOCATE(valslk3a)
-    CALL testParam%get('testSLK3a',valslk3a)
-    IF(ANY(valslk3a(1,1,:) /= 6_SLK) .OR. ANY(valslk3a(2,1,:) /= 8_SLK) .OR. &
-        ANY(valslk3a(1,2,:) /= 7_SLK) .OR. ANY(valslk3a(2,2,:) /= 9_SLK) .OR. &
-          SIZE(valslk3a,1) /= 2_SIK .OR. SIZE(valslk3a,2) /= 2_SIK .OR. &
-            SIZE(valslk3a,3) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSLK3a'',valslk3a) FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam2%get('testSLK3a',valslk3a)
-    CALL testParam%get('testError',valslk3a)
-    CALL someParam%get('testError',valslk3a)
-    WRITE(*,*) '  Passed: CALL testParam%get(...) (SLK) 3-D'
+    
+    COMPONENT_TEST('%init(...)')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
+    ASSERT(LEN(testParam%name) == 0,'%name 1')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 1')
+    ASSERT(LEN(testParam%description) == 0,'%description 1')
+    CALL testParam%init('testError->testSLKa3',valslka3,'The numbers 5, 7, 6, & 8')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 2')
+    ASSERT(LEN(testParam%name) == 0,'%name 2')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 2')
+    ASSERT(LEN(testParam%description) == 0,'%description 2')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SLK_a3'// &
+      ' - "->" symbol is not allowed in name!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
+    CALL testParam%init('testSLKa3',valslka3,'The numbers 5, 7, 6, & 8')
+    ASSERT(LEN(testParam%name) == 0,'%name 3')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 3')
+    ASSERT(LEN(testParam%description) == 0,'%description 3')
+    ASSERT(ASSOCIATED(testParam%pdat),'%pdat 3')
+    ASSERT(testParam%pdat%name == 'testSLKa3','%pdat%name')
+    ASSERT(testParam%pdat%datatype == '3-D ARRAY INTEGER(SLK)','%pdat%datatype')
+    ASSERT(testParam%pdat%description == 'The numbers 5, 7, 6, & 8','%pdat%description')
+    CALL testParam%init('testError',valslka3)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SLK_a3'// &
+      ' - parameter is already initialized! Use set method!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
+    
+    !Test clear
+    COMPONENT_TEST('%clear()')
+    CALL testParam%clear()
+    ASSERT(LEN(testParam%name) == 0,'%name')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype')
+    ASSERT(LEN(testParam%description) == 0,'%description')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
+    
+    COMPONENT_TEST('%edit(...)')
+    CALL testParam%init('testSLKa3',valslka3,'The numbers 5, 7, 6, & 8')
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%init('testSLKa3',valslka3)
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    
+    COMPONENT_TEST('%get(...)')
+    CALL testParam%init('testSLKa3',valslka3,'The numbers 5, 7, 6, & 8')
+    CALL testParam%get('testSLKa3',someParam)
+    ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
+    CALL someParam%get('testSLKa3',valslka3)
+    bool=SIZE(valslka3,DIM=1) == 2 .AND. SIZE(valslka3,DIM=2) == 2 .AND. SIZE(valslka3,DIM=3) == 2
+    ASSERT(bool,'someParam valslka3 size 1')
+    bool=ALL(valslka3(1,1,:) == 5_SLK) .AND. ALL(valslka3(2,1,:) == 7_SLK) &
+      .AND. ALL(valslka3(1,2,:) == 6_SLK) .AND. ALL(valslka3(2,2,:) == 8_SLK)
+    ASSERT(bool,'someParam valslka3 1')
+    DEALLOCATE(valslka3)
+    ALLOCATE(valslka3(1,1,1))
+    CALL someParam%get('testSLKa3',valslka3)
+    bool=SIZE(valslka3,DIM=1) == 2 .AND. SIZE(valslka3,DIM=2) == 2 .AND. SIZE(valslka3,DIM=3) == 2
+    ASSERT(bool,'someParam valslka3 different size')
+    bool=ALL(valslka3(1,1,:) == 5_SLK) .AND. ALL(valslka3(2,1,:) == 7_SLK) &
+      .AND. ALL(valslka3(1,2,:) == 6_SLK) .AND. ALL(valslka3(2,2,:) == 8_SLK)
+    ASSERT(bool,'someParam valslka3 2')
+    DEALLOCATE(valslka3)
+    CALL someParam%get('testSLKa3',valslka3)
+    bool=SIZE(valslka3,DIM=1) == 2 .AND. SIZE(valslka3,DIM=2) == 2 .AND. SIZE(valslka3,DIM=3) == 2
+    ASSERT(bool,'someParam valslka3 unallocated')
+    bool=ALL(valslka3(1,1,:) == 5_SLK) .AND. ALL(valslka3(2,1,:) == 7_SLK) &
+      .AND. ALL(valslka3(1,2,:) == 6_SLK) .AND. ALL(valslka3(2,2,:) == 8_SLK)
+    ASSERT(bool,'someParam valslka3 3')
+    DEALLOCATE(valslka3)
+    ALLOCATE(valslka3(2,2,1))
+    CALL testParam%get('testSLKa3',valslka3)
+    bool=SIZE(valslka3,DIM=1) == 2 .AND. SIZE(valslka3,DIM=2) == 2 .AND. SIZE(valslka3,DIM=3) == 2
+    ASSERT(bool,'testParam valslka3 size 1')
+    bool=ALL(valslka3(1,1,:) == 5_SLK) .AND. ALL(valslka3(2,1,:) == 7_SLK) &
+      .AND. ALL(valslka3(1,2,:) == 6_SLK) .AND. ALL(valslka3(2,2,:) == 8_SLK)
+    ASSERT(bool,'testParam valslka3 1')
+    DEALLOCATE(valslka3)
+    CALL testParam%get('testSLKa3',valslka3)
+    bool=SIZE(valslka3,DIM=1) == 2 .AND. SIZE(valslka3,DIM=2) == 2 .AND. SIZE(valslka3,DIM=3) == 2
+    ASSERT(bool,'testParam valslka3 unallocated')
+    bool=ALL(valslka3(1,1,:) == 5_SLK) .AND. ALL(valslka3(2,1,:) == 7_SLK) &
+      .AND. ALL(valslka3(1,2,:) == 6_SLK) .AND. ALL(valslka3(2,2,:) == 8_SLK)
+    ASSERT(bool,'testParam valslka3 2')
+    CALL testParam%get('testError',valslka3)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SLK_a3'// &
+      ' - unable to locate parameter "testError" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
+    CALL someParam%get('testError',valslka3)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SLK_a3'// &
+      ' - parameter name mismatch "testError" in "testSLKa3"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSLKa3'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%get('testSLKa3',valslka3)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SLK_a3'// &
+      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' must be 3-D ARRAY INTEGER(SLK)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
+    CALL testParam2%clear()
   
     !test set
-    CALL someParam%set('testSLK3a', &
-      RESHAPE((/3_SLK,1_SLK,4_SLK,2_SLK,3_SLK,1_SLK,4_SLK,2_SLK/), &
-        (/2,2,2/)),'The numbers 3, 1, 4 and 2')
-    CALL testParam%get('testSLK3a',valslk3a)
-    IF(ANY(valslk3a(1,1,:) /= 3_SLK) .OR. ANY(valslk3a(2,1,:) /= 1_SLK) .OR. &
-        ANY(valslk3a(1,2,:) /= 4_SLK) .OR. ANY(valslk3a(2,2,:) /= 2_SLK) .OR. &
-          SIZE(valslk3a,1) /= 2_SIK .OR. SIZE(valslk3a,2) /= 2_SIK .OR. &
-            SIZE(valslk3a,3) /= 2_SIK .OR. &
-              someParam%description /= 'The numbers 3, 1, 4 and 2') THEN
-      WRITE(*,*) 'someParam%set(''testSLK3a'',(/3_SLK,1_SLK/,/4_SLK,2_SLK/),''The numbers 3, 1, 4 and 2'') FAILED!'
-      STOP 666
-    ENDIF
-    !Different size for test param
-    CALL testParam%set('testSLK3a',RESHAPE((/6_SLK/),(/1,1,1/)),'The number 6')
-    CALL testParam%get('testSLK3a',valslk3a)
-    IF(valslk3a(1,1,1) /= 6_SLK .OR. SIZE(valslk3a,1) /= 1_SIK .OR. &
-        SIZE(valslk3a,2) /= 1_SIK .OR. SIZE(valslk3a,3) /= 1_SIK .OR. &
-          someParam%description /= 'The number 6') THEN
-      WRITE(*,*) 'testParam%set(''testSLK3a'',6_SLK) FAILED!'
-      STOP 666
-    ENDIF
-    !Different size for some param
-    CALL someParam%set('testSLK3a', &
-      RESHAPE((/15_SLK,-15_SLK,20_SLK,-15_SLK,15_SLK,-20_SLK/), &
-        (/3,2,1/)),'The numbers 15, -15, 20, -15, 15, and -20')
-    CALL testParam%get('testSLK3a',valslk3a)
-    IF(valslk3a(1,1,1) /= 15_SLK .OR. valslk3a(2,1,1) /= -15_SLK .OR. &
-        valslk3a(3,1,1) /= 20_SLK .OR. SIZE(valslk3a,1) /= 3_SIK .OR. &
-          valslk3a(1,2,1) /= -15_SLK .OR. valslk3a(2,2,1) /= 15_SLK .OR. &
-            valslk3a(3,2,1) /= -20_SLK .OR. SIZE(valslk3a,2) /= 2_SIK .OR. &
-              SIZE(valslk3a,3) /= 1_SIK .OR. &
-              someParam%description /= 'The numbers 15, -15, 20, -15, 15, and -20') THEN
-      WRITE(*,*) 'someParam%set(''testSLK3a'',(/15_SLK,-15_SLK,20_SLK,-15_SLK,'// &
-        '15_SLK,-20_SLK/),''The numbers 15, -15, 20, -15, 15, and -20'') FAILED!'
-      STOP 666
-    ENDIF
-    !Same size for test param
-    CALL testParam%set('testSLK3a', &
-      RESHAPE((/-50_SLK,-55_SLK,-60_SLK,50_SLK,55_SLK,60_SLK/),(/3,2,1/)), &
-        'The numbers -50, -55, -60, 50, 55, and 60')
-    CALL testParam%get('testSLK3a',valslk3a)
-    IF(valslk3a(1,1,1) /= -50_SLK .OR. valslk3a(2,1,1) /= -55_SLK .OR. &
-        valslk3a(3,1,1) /= -60_SLK .OR. SIZE(valslk3a,1) /= 3_SIK .OR. &
-          valslk3a(1,2,1) /= 50_SLK .OR. valslk3a(2,2,1) /= 55_SLK .OR. &
-            valslk3a(3,2,1) /= 60_SLK .OR. SIZE(valslk3a,2) /= 2_SIK .OR. &
-              SIZE(valslk3a,3) /= 1_SIK .OR. &
-              someParam%description /= 'The numbers -50, -55, -60, 50, 55, and 60') THEN
-      WRITE(*,*) 'testParam%set(''testSLK3a'',(/-50_SLK,-55_SLK,-60_SLK,'// &
-        '50_SLK,55_SLK,60_SLK/)) FAILED!'
-      STOP 666
-    ENDIF
+    COMPONENT_TEST('%set(...)')
+    CALL testParam%set('testSLKa3',RESHAPE((/-10_SLK/),(/1,1,1/)),'The number -10')
+    CALL testParam%get('testSLKa3',valslka3)
+    ASSERT(testParam%pdat%name == 'testSLKa3','%name')
+    ASSERT(testParam%pdat%datatype == '3-D ARRAY INTEGER(SLK)','testParam%datatype')
+    ASSERT(testParam%pdat%description == 'The number -10','%description')
+    bool=SIZE(valslka3,DIM=1) == 1 .AND. SIZE(valslka3,DIM=2) == 1
+    ASSERT(bool,'testParam valslka3 size 1')
+    bool=valslka3(1,1,1) == -10
+    ASSERT(bool,'testParam valslka3 1')
+    CALL testParam%set('testSLKa3',RESHAPE((/3_SLK,-5_SLK,3_SLK,-5_SLK/),(/2,2,1/)),'The numbers 3 & -5')
+    CALL testParam%get('testSLKa3',valslka3)
+    bool=SIZE(valslka3,DIM=1) == 2 .AND. SIZE(valslka3,DIM=2) == 2 .AND. SIZE(valslka3,DIM=3) == 1
+    ASSERT(bool,'testParam valslka3 size 2')
+    bool=valslka3(1,1,1) == 3_SLK .AND. valslka3(2,1,1) == -5_SLK .AND. &
+      valslka3(1,2,1) == 3_SLK .AND. valslka3(2,2,1) == -5_SLK
+    ASSERT(bool,'testParam valslka3 2')
+    ASSERT(testParam%pdat%description == 'The numbers 3 & -5','%description')
+    !
+    CALL someParam%set('testSLKa3',RESHAPE((/-10_SLK/),(/1,1,1/)),'The number -10')
+    CALL someParam%get('testSLKa3',valslka3)
+    ASSERT(someParam%name == 'testSLKa3','someParam%name')
+    ASSERT(someParam%datatype == '3-D ARRAY INTEGER(SLK)','someParam%datatype')
+    ASSERT(someParam%description == 'The number -10','someParam%description')
+    bool=SIZE(valslka3,DIM=1) == 1 .AND. SIZE(valslka3,DIM=2) == 1
+    ASSERT(bool,'someParam valslka3 size 1')
+    bool=valslka3(1,1,1) == -10_SLK
+    ASSERT(bool,'someParam valslka3 1')
+    CALL someParam%set('testSLKa3',RESHAPE((/5_SLK,7_SLK/),(/1,1,2/)),'The numbers 5 & 7')
+    CALL someParam%get('testSLKa3',valslka3)
+    ASSERT(someParam%name == 'testSLKa3','someParam%name')
+    ASSERT(someParam%datatype == '3-D ARRAY INTEGER(SLK)','someParam%datatype')
+    ASSERT(someParam%description == 'The numbers 5 & 7','someParam%description')
+    bool=SIZE(valslka3,DIM=1) == 1 .AND. SIZE(valslka3,DIM=2) == 1 .AND. SIZE(valslka3,DIM=3) == 2
+    ASSERT(bool,'someParam valslka3 size 2')
+    bool=valslka3(1,1,1) == 5_SLK .AND. valslka3(1,1,2) == 7_SLK
+    ASSERT(bool,'testParam valslka3 2')
+    !
+    CALL someParam%set('testError',RESHAPE((/-1_SLK/),(/1,1,1/))) !Name mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK_a3 -'// &
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSLKa3"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+    CALL testParam2%set('testSLKa3',RESHAPE((/-1_SLK/),(/1,1,1/))) !Name not found
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK_a3 -'// &
+      ' unable to locate parameter "testSLKa3" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSLKa3'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%set('testSLKa3',RESHAPE((/-1_SLK/),(/1,1,1/))) !Type mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK_a3 -'// &
+      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' and must be 3-D ARRAY INTEGER(SLK)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
+    CALL testParam2%clear()
     
-    CALL testParam2%set('testSLK3a',valslk3a)
-    CALL someParam%set('testError',valslk3a)
-    CALL testParam%set('testError',valslk3a)
-    WRITE(*,*) '  Passed: CALL testParam%set(...) (SLK) 3-D'
-  
-    !Test clear
-    CALL testParam%clear()
-    IF(LEN(testParam%name) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %name (SLK) 3-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%datatype) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %datatype (SLK) 3-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%description) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %description (SLK) 3-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%clear() %pdat (SLK) 3-D FAILED!'
-      STOP 666
-    ENDIF
-
-    
-    WRITE(*,*) '  Passed: CALL testParam%clear() (SLK) 3-D'
-  
-    !test assignment
-    CALL testParam%init('testSLK3a',RESHAPE((/4_SLK/),(/1,1,1/)) )
     COMPONENT_TEST('Operators')
+    CALL testParam%init('testSLKa3',RESHAPE((/-1_SLK/),(/1,1,1/)))
     testParam2=testParam
     ASSERT(ASSOCIATED(testParam2%pdat),'ASSOCIATED %pdat')
-    ASSERT(testParam2%pdat%name == 'testSLK3a','%name')
-    ASSERT(testParam2%pdat%datatype ==  '3-D ARRAY INTEGER(SLK)','%datatype')
+    ASSERT(testParam2%pdat%name == 'testSLKa3','%name')
+    ASSERT(testParam2%pdat%datatype == '3-D ARRAY INTEGER(SLK)','%datatype')
     ASSERT(testParam2 == testParam,'OPERATOR(==)')
     CALL clear_test_vars()
-  ENDSUBROUTINE testSLK3a
+  ENDSUBROUTINE testSLKa3
 !
 !-------------------------------------------------------------------------------
 !Test 3-D Array SSK support
-  SUBROUTINE testSSK3a()
-    ALLOCATE(testParam2%pdat)
-    testParam2%pdat%name='testSSK3a'
-    ALLOCATE(valssk3a(2,2,2))
-    valssk3a(1,1,:)=5._SSK
-    valssk3a(2,1,:)=7._SSK
-    valssk3a(1,2,:)=6._SSK
-    valssk3a(2,2,:)=8._SSK
+  SUBROUTINE testSSKa3()
+    LOGICAL(SBK) :: bool
+    CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
+    ALLOCATE(valsska3(2,2,2))
+    valsska3(1,1,:)=5.0_SSK
+    valsska3(2,1,:)=7.0_SSK
+    valsska3(1,2,:)=6.0_SSK
+    valsska3(2,2,:)=8.0_SSK
     !test init
-    CALL testParam%init('testError->testSSK3a',valssk3a,'The numbers 5.0, 7.0, 6.0, & 8.0')
-    CALL testParam%init('testSSK3a',valssk3a,'The numbers 5.0, 7.0, 6.0, & 8.0')
-    IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%init(...) %pdat (SSK) 3-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%name /= 'testSSK3a') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %name (SSK) 3-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%datatype /= '3-D ARRAY REAL(SSK)') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %datatype (SSK) 3-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%description /= 'The numbers 5.0, 7.0, 6.0, & 8.0') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %description (SSK) 3-D FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    CALL testParam%init('testError',valssk3a)
-    WRITE(*,*) '  Passed: CALL testParam%init(...) (SSK) 3-D'
-  
-    !test get
-    CALL testParam%get('testSSK3a',someParam)
-    IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSSK3a'',someParam) FAILED!'
-      STOP 666
-    ENDIF
-    !Test same size
-    CALL someParam%get('testSSK3a',valssk3a)
-    IF(ANY(valssk3a(1,1,:) /= 5.0_SSK) .OR. ANY(valssk3a(2,1,:) /= 7.0_SSK) .OR. &
-        ANY(valssk3a(1,2,:) /= 6.0_SSK) .OR. ANY(valssk3a(2,2,:) /= 8.0_SSK) .OR. &
-          SIZE(valssk3a,1) /= 2_SIK .OR. SIZE(valssk3a,2) /= 2_SIK .OR. &
-            SIZE(valssk3a,3) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSSK3a'',valssk3a) FAILED!'
-      STOP 666
-    ENDIF
-    !Test different size size
-    DEALLOCATE(valssk3a)
-    ALLOCATE(valssk3a(1,1,1))
-    CALL someParam%get('testSSK3a',valssk3a)
-    IF(ANY(valssk3a(1,1,:) /= 5.0_SSK) .OR. ANY(valssk3a(2,1,:) /= 7.0_SSK) .OR. &
-        ANY(valssk3a(1,2,:) /= 6.0_SSK) .OR. ANY(valssk3a(2,2,:) /= 8.0_SSK) .OR. &
-          SIZE(valssk3a,1) /= 2_SIK .OR. SIZE(valssk3a,2) /= 2_SIK .OR. &
-            SIZE(valssk3a,3) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSSK3a'',valssk3a) FAILED!'
-      STOP 666
-    ENDIF
-    valssk3a=0.0_SSK
-    CALL testParam%get('testSSK3a',valssk3a)
-    IF(ANY(valssk3a(1,1,:) /= 5.0_SSK) .OR. ANY(valssk3a(2,1,:) /= 7.0_SSK) .OR. &
-        ANY(valssk3a(1,2,:) /= 6.0_SSK) .OR. ANY(valssk3a(2,2,:) /= 8.0_SSK) .OR. &
-          SIZE(valssk3a,1) /= 2_SIK .OR. SIZE(valssk3a,2) /= 2_SIK .OR. &
-            SIZE(valssk3a,3) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSSK3a'',valssk3a) FAILED!'
-      STOP 666
-    ENDIF
-    !Test with deallocated array
-    DEALLOCATE(valssk3a)
-    CALL someParam%get('testSSK3a',valssk3a)
-    IF(ANY(valssk3a(1,1,:) /= 5.0_SSK) .OR. ANY(valssk3a(2,1,:) /= 7.0_SSK) .OR. &
-        ANY(valssk3a(1,2,:) /= 6.0_SSK) .OR. ANY(valssk3a(2,2,:) /= 8.0_SSK) .OR. &
-          SIZE(valssk3a,1) /= 2_SIK .OR. SIZE(valssk3a,2) /= 2_SIK .OR. &
-            SIZE(valssk3a,3) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSSK3a'',valssk3a) FAILED!'
-      STOP 666
-    ENDIF
-    DEALLOCATE(valssk3a)
-    CALL testParam%get('testSSK3a',valssk3a)
-    IF(ANY(valssk3a(1,1,:) /= 5.0_SSK) .OR. ANY(valssk3a(2,1,:) /= 7.0_SSK) .OR. &
-        ANY(valssk3a(1,2,:) /= 6.0_SSK) .OR. ANY(valssk3a(2,2,:) /= 8.0_SSK) .OR. &
-          SIZE(valssk3a,1) /= 2_SIK .OR. SIZE(valssk3a,2) /= 2_SIK .OR. &
-            SIZE(valssk3a,3) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSSK3a'',valssk3a) FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam2%get('testSSK3a',valssk3a)
-    CALL testParam%get('testError',valssk3a)
-    CALL someParam%get('testError',valssk3a)
-    WRITE(*,*) '  Passed: CALL testParam%get(...) (SSK) 3-D'
+    
+    COMPONENT_TEST('%init(...)')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
+    ASSERT(LEN(testParam%name) == 0,'%name 1')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 1')
+    ASSERT(LEN(testParam%description) == 0,'%description 1')
+    CALL testParam%init('testError->testSSKa3',valsska3,'The numbers 5, 7, 6, & 8')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 2')
+    ASSERT(LEN(testParam%name) == 0,'%name 2')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 2')
+    ASSERT(LEN(testParam%description) == 0,'%description 2')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SSK_a3'// &
+      ' - "->" symbol is not allowed in name!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
+    CALL testParam%init('testSSKa3',valsska3,'The numbers 5, 7, 6, & 8')
+    ASSERT(LEN(testParam%name) == 0,'%name 3')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 3')
+    ASSERT(LEN(testParam%description) == 0,'%description 3')
+    ASSERT(ASSOCIATED(testParam%pdat),'%pdat 3')
+    ASSERT(testParam%pdat%name == 'testSSKa3','%pdat%name')
+    ASSERT(testParam%pdat%datatype == '3-D ARRAY REAL(SSK)','%pdat%datatype')
+    ASSERT(testParam%pdat%description == 'The numbers 5, 7, 6, & 8','%pdat%description')
+    CALL testParam%init('testError',valsska3)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SSK_a3'// &
+      ' - parameter is already initialized! Use set method!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
+    
+    !Test clear
+    COMPONENT_TEST('%clear()')
+    CALL testParam%clear()
+    ASSERT(LEN(testParam%name) == 0,'%name')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype')
+    ASSERT(LEN(testParam%description) == 0,'%description')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
+    
+    COMPONENT_TEST('%edit(...)')
+    CALL testParam%init('testSSKa3',valsska3,'The numbers 5, 7, 6, & 8')
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%init('testSSKa3',valsska3)
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    
+    COMPONENT_TEST('%get(...)')
+    CALL testParam%init('testSSKa3',valsska3,'The numbers 5, 7, 6, & 8')
+    CALL testParam%get('testSSKa3',someParam)
+    ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
+    CALL someParam%get('testSSKa3',valsska3)
+    bool=SIZE(valsska3,DIM=1) == 2 .AND. SIZE(valsska3,DIM=2) == 2 .AND. SIZE(valsska3,DIM=3) == 2
+    ASSERT(bool,'someParam valsska3 size 1')
+    bool=ALL(valsska3(1,1,:) == 5.0_SSK) .AND. ALL(valsska3(2,1,:) == 7.0_SSK) &
+      .AND. ALL(valsska3(1,2,:) == 6.0_SSK) .AND. ALL(valsska3(2,2,:) == 8.0_SSK)
+    ASSERT(bool,'someParam valsska3 1')
+    DEALLOCATE(valsska3)
+    ALLOCATE(valsska3(1,1,1))
+    CALL someParam%get('testSSKa3',valsska3)
+    bool=SIZE(valsska3,DIM=1) == 2 .AND. SIZE(valsska3,DIM=2) == 2 .AND. SIZE(valsska3,DIM=3) == 2
+    ASSERT(bool,'someParam valsska3 different size')
+    bool=ALL(valsska3(1,1,:) == 5.0_SSK) .AND. ALL(valsska3(2,1,:) == 7.0_SSK) &
+      .AND. ALL(valsska3(1,2,:) == 6.0_SSK) .AND. ALL(valsska3(2,2,:) == 8.0_SSK)
+    ASSERT(bool,'someParam valsska3 2')
+    DEALLOCATE(valsska3)
+    CALL someParam%get('testSSKa3',valsska3)
+    bool=SIZE(valsska3,DIM=1) == 2 .AND. SIZE(valsska3,DIM=2) == 2 .AND. SIZE(valsska3,DIM=3) == 2
+    ASSERT(bool,'someParam valsska3 unallocated')
+    bool=ALL(valsska3(1,1,:) == 5.0_SSK) .AND. ALL(valsska3(2,1,:) == 7.0_SSK) &
+      .AND. ALL(valsska3(1,2,:) == 6.0_SSK) .AND. ALL(valsska3(2,2,:) == 8.0_SSK)
+    ASSERT(bool,'someParam valsska3 3')
+    DEALLOCATE(valsska3)
+    ALLOCATE(valsska3(2,2,1))
+    CALL testParam%get('testSSKa3',valsska3)
+    bool=SIZE(valsska3,DIM=1) == 2 .AND. SIZE(valsska3,DIM=2) == 2 .AND. SIZE(valsska3,DIM=3) == 2
+    ASSERT(bool,'testParam valsska3 size 1')
+    bool=ALL(valsska3(1,1,:) == 5.0_SSK) .AND. ALL(valsska3(2,1,:) == 7.0_SSK) &
+      .AND. ALL(valsska3(1,2,:) == 6.0_SSK) .AND. ALL(valsska3(2,2,:) == 8.0_SSK)
+    ASSERT(bool,'testParam valsska3 1')
+    DEALLOCATE(valsska3)
+    CALL testParam%get('testSSKa3',valsska3)
+    bool=SIZE(valsska3,DIM=1) == 2 .AND. SIZE(valsska3,DIM=2) == 2 .AND. SIZE(valsska3,DIM=3) == 2
+    ASSERT(bool,'testParam valsska3 unallocated')
+    bool=ALL(valsska3(1,1,:) == 5.0_SSK) .AND. ALL(valsska3(2,1,:) == 7.0_SSK) &
+      .AND. ALL(valsska3(1,2,:) == 6.0_SSK) .AND. ALL(valsska3(2,2,:) == 8.0_SSK)
+    ASSERT(bool,'testParam valsska3 2')
+    CALL testParam%get('testError',valsska3)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SSK_a3'// &
+      ' - unable to locate parameter "testError" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
+    CALL someParam%get('testError',valsska3)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SSK_a3'// &
+      ' - parameter name mismatch "testError" in "testSSKa3"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSSKa3'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%get('testSSKa3',valsska3)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SSK_a3'// &
+      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' must be 3-D ARRAY REAL(SSK)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
+    CALL testParam2%clear()
   
     !test set
+    COMPONENT_TEST('%set(...)')
+    CALL testParam%set('testSSKa3',RESHAPE((/-10.0_SSK/),(/1,1,1/)),'The number -10')
+    CALL testParam%get('testSSKa3',valsska3)
+    ASSERT(testParam%pdat%name == 'testSSKa3','%name')
+    ASSERT(testParam%pdat%datatype == '3-D ARRAY REAL(SSK)','testParam%datatype')
+    ASSERT(testParam%pdat%description == 'The number -10','%description')
+    bool=SIZE(valsska3,DIM=1) == 1 .AND. SIZE(valsska3,DIM=2) == 1
+    ASSERT(bool,'testParam valsska3 size 1')
+    bool=valsska3(1,1,1) == -10
+    ASSERT(bool,'testParam valsska3 1')
+    CALL testParam%set('testSSKa3',RESHAPE((/3.0_SSK,-5.0_SSK,3.0_SSK,-5.0_SSK/),(/2,2,1/)),'The numbers 3 & -5')
+    CALL testParam%get('testSSKa3',valsska3)
+    bool=SIZE(valsska3,DIM=1) == 2 .AND. SIZE(valsska3,DIM=2) == 2 .AND. SIZE(valsska3,DIM=3) == 1
+    ASSERT(bool,'testParam valsska3 size 2')
+    bool=valsska3(1,1,1) == 3.0_SSK .AND. valsska3(2,1,1) == -5.0_SSK .AND. &
+      valsska3(1,2,1) == 3.0_SSK .AND. valsska3(2,2,1) == -5.0_SSK
+    ASSERT(bool,'testParam valsska3 2')
+    ASSERT(testParam%pdat%description == 'The numbers 3 & -5','%description')
     !
-    CALL someParam%set('testSSK3a', &
-      RESHAPE((/3.0_SSK,1.0_SSK,4.0_SSK,2.0_SSK,3.0_SSK,1.0_SSK,4.0_SSK,2.0_SSK/), &
-        (/2,2,2/) ), 'The number 3.0, 1.0, 4.0, and 2.0')
-    CALL testParam%get('testSSK3a',valssk3a)
-    IF(ANY(valssk3a(1,1,:) /= 3.0_SSK) .OR. ANY(valssk3a(2,1,:) /= 1.0_SSK) .OR. &
-        ANY(valssk3a(1,2,:) /= 4.0_SSK) .OR. ANY(valssk3a(2,2,:) /= 2.0_SSK) .OR. &
-          SIZE(valssk3a,1) /= 2_SIK .OR. SIZE(valssk3a,2) /= 2_SIK .OR. &
-            SIZE(valssk3a,3) /= 2_SIK .OR. &
-            someParam%description /= 'The number 3.0, 1.0, 4.0, and 2.0') THEN
-      WRITE(*,*) 'someParam%set(''testSSK3a'',(/3.0_SSK,1.0_SSK,4.0_SSK,2.0_SSK,3.0_SSK,'// &
-         '1.0_SSK,4.0_SSK,2.0_SSK/),''The number 3.0, 1.0, 4.0, and 2.0'') FAILED!'
-      STOP 666
-    ENDIF
-    !Different size for test param
-    CALL testParam%set('testSSK3a',RESHAPE((/5.0_SSK/),(/1,1,1/)),'The number 5.0')
-    CALL testParam%get('testSSK3a',valssk3a)
-    IF(valssk3a(1,1,1) /= 5.0_SSK .OR. SIZE(valssk3a,1) /= 1_SIK .OR. &
-        SIZE(valssk3a,2) /= 1_SIK .OR. SIZE(valssk3a,3) /= 1_SIK .OR. &
-          someParam%description /= 'The number 5.0') THEN
-      WRITE(*,*) 'testParam%set(''testSSK3a'',5.0_SSK) FAILED!'
-      STOP 666
-    ENDIF
-    !Different size for some param
-    CALL someParam%set('testSSK3a', &
-      RESHAPE((/1.0_SSK,1.5_SSK,2.0_SSK,-1.0_SSK,-1.5_SSK,-2.0_SSK/),(/3,2,1/)), &
-        'The numbers 1.0, 1.5, 2.0, -1.0, -1.5, and -2.0')
-    CALL testParam%get('testSSK3a',valssk3a)
-    IF(valssk3a(1,1,1) /= 1.0_SSK .OR. valssk3a(2,1,1) /= 1.5_SSK .OR. &
-        valssk3a(3,1,1) /= 2.0_SSK .OR. SIZE(valssk3a,1) /= 3_SIK .OR. &
-          valssk3a(1,2,1) /= -1.0_SSK .OR. valssk3a(2,2,1) /= -1.5_SSK .OR. &
-            valssk3a(3,2,1) /= -2.0_SSK .OR. SIZE(valssk3a,2) /= 2_SIK .OR. &
-              SIZE(valssk3a,3) /= 1_SIK .OR. &
-                someParam%description /= 'The numbers 1.0, 1.5, 2.0, -1.0, -1.5, and -2.0') THEN
-      WRITE(*,*) 'someParam%set(''testSSK3a'',(/1.0_SSK,1.5_SSK,2.0_SSK/,/-1.0_SSK,'// &
-        '-1.5_SSK,-2.0_SSK/), ''The numbers 1.0, 1.5, 2.0, -1.0, -1.5, and -2.0'') FAILED!'
-      STOP 666
-    ENDIF
-    !Same size for test param
-    CALL testParam%set('testSSK3a',RESHAPE((/5.0_SSK,5.5_SSK,6.0_SSK,-5.0_SSK,-5.5_SSK,-6.0_SSK/),(/3,2,1/)), &
-      'The numbers 5.0, 5.5, 6.0, -5.0, -5.5, and -6.0')
-    CALL testParam%get('testSSK3a',valssk3a)
-    IF(valssk3a(1,1,1) /= 5.0_SSK .OR. valssk3a(2,1,1) /= 5.5_SSK .OR. &
-        valssk3a(3,1,1) /= 6.0_SSK .OR. SIZE(valssk3a,1) /= 3_SIK .OR. &
-          valssk3a(1,2,1) /= -5.0_SSK .OR. valssk3a(2,2,1) /= -5.5_SSK .OR. &
-            valssk3a(3,2,1) /= -6.0_SSK .OR. SIZE(valssk3a,2) /= 2_SIK .OR. &
-              SIZE(valssk3a,3) /= 1_SIK .OR. &
-                someParam%description /= 'The numbers 5.0, 5.5, 6.0, -5.0, -5.5, and -6.0') THEN
-      WRITE(*,*) 'testParam%set(''testSSK3a'',5.0_SSK) FAILED!'
-      STOP 666
-    ENDIF
+    CALL someParam%set('testSSKa3',RESHAPE((/-10.0_SSK/),(/1,1,1/)),'The number -10')
+    CALL someParam%get('testSSKa3',valsska3)
+    ASSERT(someParam%name == 'testSSKa3','someParam%name')
+    ASSERT(someParam%datatype == '3-D ARRAY REAL(SSK)','someParam%datatype')
+    ASSERT(someParam%description == 'The number -10','someParam%description')
+    bool=SIZE(valsska3,DIM=1) == 1 .AND. SIZE(valsska3,DIM=2) == 1
+    ASSERT(bool,'someParam valsska3 size 1')
+    bool=valsska3(1,1,1) == -10.0_SSK
+    ASSERT(bool,'someParam valsska3 1')
+    CALL someParam%set('testSSKa3',RESHAPE((/5.0_SSK,7.0_SSK/),(/1,1,2/)),'The numbers 5 & 7')
+    CALL someParam%get('testSSKa3',valsska3)
+    ASSERT(someParam%name == 'testSSKa3','someParam%name')
+    ASSERT(someParam%datatype == '3-D ARRAY REAL(SSK)','someParam%datatype')
+    ASSERT(someParam%description == 'The numbers 5 & 7','someParam%description')
+    bool=SIZE(valsska3,DIM=1) == 1 .AND. SIZE(valsska3,DIM=2) == 1 .AND. SIZE(valsska3,DIM=3) == 2
+    ASSERT(bool,'someParam valsska3 size 2')
+    bool=valsska3(1,1,1) == 5.0_SSK .AND. valsska3(1,1,2) == 7.0_SSK
+    ASSERT(bool,'testParam valsska3 2')
+    !
+    CALL someParam%set('testError',RESHAPE((/-1.0_SSK/),(/1,1,1/))) !Name mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK_a3 -'// &
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSSKa3"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+    CALL testParam2%set('testSSKa3',RESHAPE((/-1.0_SSK/),(/1,1,1/))) !Name not found
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK_a3 -'// &
+      ' unable to locate parameter "testSSKa3" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSSKa3'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%set('testSSKa3',RESHAPE((/-1.0_SSK/),(/1,1,1/))) !Type mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK_a3 -'// &
+      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' and must be 3-D ARRAY REAL(SSK)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
+    CALL testParam2%clear()
     
-    CALL testParam2%set('testSSK3a',valssk3a)
-    CALL someParam%set('testError',valssk3a)
-    CALL testParam%set('testError',valssk3a)
-    WRITE(*,*) '  Passed: CALL testParam%set(...) (SSK) 3-D'
-  
-    !Test clear
-    CALL testParam%clear()
-    IF(LEN(testParam%name) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %name (SSK) 3-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%datatype) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %datatype (SSK) 3-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%description) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %description (SSK) 3-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%clear() %pdat (SSK) 3-D FAILED!'
-      STOP 666
-    ENDIF
-
-    
-    WRITE(*,*) '  Passed: CALL testParam%clear() (SSK) 3-D'
-  
-    !test assignment
-    CALL testParam%init('testSSK3a',RESHAPE((/4.0_SSK/),(/1,1,1/)) )
     COMPONENT_TEST('Operators')
+    CALL testParam%init('testSSKa3',RESHAPE((/-1.0_SSK/),(/1,1,1/)))
     testParam2=testParam
     ASSERT(ASSOCIATED(testParam2%pdat),'ASSOCIATED %pdat')
-    ASSERT(testParam2%pdat%name == 'testSSK3a','%name')
-    ASSERT(testParam2%pdat%datatype ==  '3-D ARRAY REAL(SSK)','%datatype')
+    ASSERT(testParam2%pdat%name == 'testSSKa3','%name')
+    ASSERT(testParam2%pdat%datatype == '3-D ARRAY REAL(SSK)','%datatype')
     ASSERT(testParam2 == testParam,'OPERATOR(==)')
     CALL clear_test_vars()
-  ENDSUBROUTINE testSSK3a
+  ENDSUBROUTINE testSSKa3
 !
 !-------------------------------------------------------------------------------
 !Test 3-D Array SDK support
-  SUBROUTINE testSDK3a()
-    ALLOCATE(testParam2%pdat)
-    testParam2%pdat%name='testSDK3a'
-    ALLOCATE(valsdk3a(2,2,2))
-    valsdk3a(1,1,:)=5.5_SDK
-    valsdk3a(2,1,:)=7.5_SDK
-    valsdk3a(1,2,:)=6.5_SDK
-    valsdk3a(2,2,:)=8.5_SDK
+  SUBROUTINE testSDKa3()
+    LOGICAL(SBK) :: bool
+    CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
+    ALLOCATE(valsdka3(2,2,2))
+    valsdka3(1,1,:)=5.0_SDK
+    valsdka3(2,1,:)=7.0_SDK
+    valsdka3(1,2,:)=6.0_SDK
+    valsdka3(2,2,:)=8.0_SDK
     !test init
-    CALL testParam%init('testError->testSDK3a',valsdk3a,'The numbers 5.5, 7.5, 6.5, & 8.5')
-    CALL testParam%init('testSDK3a',valsdk3a,'The numbers 5.5, 7.5, 6.5, & 8.5')
-    IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%init(...) %pdat (SDK) 3-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%name /= 'testSDK3a') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %name (SDK) 3-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%datatype /= '3-D ARRAY REAL(SDK)') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %datatype (SDK) 3-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%description /= 'The numbers 5.5, 7.5, 6.5, & 8.5') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %description (SDK) 3-D FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    CALL testParam%init('testError',valsdk3a)
-    WRITE(*,*) '  Passed: CALL testParam%init(...) (SDK) 3-D'
-  
-    !test get
-    CALL testParam%get('testSDK3a',someParam)
-    IF(.NOT.ASSOCIATED(someParam,testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSDK3a'',someParam) FAILED!'
-      STOP 666
-    ENDIF
-    !Test same size
-    CALL someParam%get('testSDK3a',valsdk3a)
-    IF(ANY(valsdk3a(1,1,:) /= 5.5_SDK) .OR. ANY(valsdk3a(2,1,:) /= 7.5_SDK) .OR. &
-        ANY(valsdk3a(1,2,:) /= 6.5_SDK) .OR. ANY(valsdk3a(2,2,:) /= 8.5_SDK) .OR. &
-          SIZE(valsdk3a,1) /= 2_SIK .OR. SIZE(valsdk3a,2) /= 2_SIK .OR. &
-            SIZE(valsdk3a,3) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSDK3a'',valsdk3a) FAILED!'
-      STOP 666
-    ENDIF
-    !Test different size size
-    DEALLOCATE(valsdk3a)
-    ALLOCATE(valsdk3a(1,1,1))
-    CALL someParam%get('testSDK3a',valsdk3a)
-    IF(ANY(valsdk3a(1,1,:) /= 5.5_SDK) .OR. ANY(valsdk3a(2,1,:) /= 7.5_SDK) .OR. &
-        ANY(valsdk3a(1,2,:) /= 6.5_SDK) .OR. ANY(valsdk3a(2,2,:) /= 8.5_SDK) .OR. &
-          SIZE(valsdk3a,1) /= 2_SIK .OR. SIZE(valsdk3a,2) /= 2_SIK .OR. &
-            SIZE(valsdk3a,3) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSDK3a'',valsdk3a) FAILED!'
-      STOP 666
-    ENDIF
-    valsdk3a=0.0_SDK
-    CALL testParam%get('testSDK3a',valsdk3a)
-    IF(ANY(valsdk3a(1,1,:) /= 5.5_SDK) .OR. ANY(valsdk3a(2,1,:) /= 7.5_SDK) .OR. &
-        ANY(valsdk3a(1,2,:) /= 6.5_SDK) .OR. ANY(valsdk3a(2,2,:) /= 8.5_SDK) .OR. &
-          SIZE(valsdk3a,1) /= 2_SIK .OR. SIZE(valsdk3a,2) /= 2_SIK .OR. &
-            SIZE(valsdk3a,3) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSDK3a'',valsdk3a) FAILED!'
-      STOP 666
-    ENDIF
-    !Test with deallocated array
-    DEALLOCATE(valsdk3a)
-    CALL someParam%get('testSDK3a',valsdk3a)
-    IF(ANY(valsdk3a(1,1,:) /= 5.5_SDK) .OR. ANY(valsdk3a(2,1,:) /= 7.5_SDK) .OR. &
-        ANY(valsdk3a(1,2,:) /= 6.5_SDK) .OR. ANY(valsdk3a(2,2,:) /= 8.5_SDK) .OR. &
-          SIZE(valsdk3a,1) /= 2_SIK .OR. SIZE(valsdk3a,2) /= 2_SIK .OR. &
-            SIZE(valsdk3a,3) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL someParam%get(''testSDK3a'',valsdk3a) FAILED!'
-      STOP 666
-    ENDIF
-    DEALLOCATE(valsdk3a)
-    CALL testParam%get('testSDK3a',valsdk3a)
-    IF(ANY(valsdk3a(1,1,:) /= 5.5_SDK) .OR. ANY(valsdk3a(2,1,:) /= 7.5_SDK) .OR. &
-        ANY(valsdk3a(1,2,:) /= 6.5_SDK) .OR. ANY(valsdk3a(2,2,:) /= 8.5_SDK) .OR. &
-          SIZE(valsdk3a,1) /= 2_SIK .OR. SIZE(valsdk3a,2) /= 2_SIK .OR. &
-            SIZE(valsdk3a,3) /= 2_SIK) THEN
-      WRITE(*,*) 'CALL testParam%get(''testSDK3a'',valsdk3a) FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam2%get('testSDK3a',valsdk3a)
-    CALL testParam%get('testError',valsdk3a)
-    CALL someParam%get('testError',valsdk3a)
-    WRITE(*,*) '  Passed: CALL testParam%get(...) (SDK) 3-D'
+    
+    COMPONENT_TEST('%init(...)')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
+    ASSERT(LEN(testParam%name) == 0,'%name 1')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 1')
+    ASSERT(LEN(testParam%description) == 0,'%description 1')
+    CALL testParam%init('testError->testSDKa3',valsdka3,'The numbers 5, 7, 6, & 8')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 2')
+    ASSERT(LEN(testParam%name) == 0,'%name 2')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 2')
+    ASSERT(LEN(testParam%description) == 0,'%description 2')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SDK_a3'// &
+      ' - "->" symbol is not allowed in name!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
+    CALL testParam%init('testSDKa3',valsdka3,'The numbers 5, 7, 6, & 8')
+    ASSERT(LEN(testParam%name) == 0,'%name 3')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 3')
+    ASSERT(LEN(testParam%description) == 0,'%description 3')
+    ASSERT(ASSOCIATED(testParam%pdat),'%pdat 3')
+    ASSERT(testParam%pdat%name == 'testSDKa3','%pdat%name')
+    ASSERT(testParam%pdat%datatype == '3-D ARRAY REAL(SDK)','%pdat%datatype')
+    ASSERT(testParam%pdat%description == 'The numbers 5, 7, 6, & 8','%pdat%description')
+    CALL testParam%init('testError',valsdka3)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SDK_a3'// &
+      ' - parameter is already initialized! Use set method!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
+    
+    !Test clear
+    COMPONENT_TEST('%clear()')
+    CALL testParam%clear()
+    ASSERT(LEN(testParam%name) == 0,'%name')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype')
+    ASSERT(LEN(testParam%description) == 0,'%description')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
+    
+    COMPONENT_TEST('%edit(...)')
+    CALL testParam%init('testSDKa3',valsdka3,'The numbers 5, 7, 6, & 8')
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%init('testSDKa3',valsdka3)
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    
+    COMPONENT_TEST('%get(...)')
+    CALL testParam%init('testSDKa3',valsdka3,'The numbers 5, 7, 6, & 8')
+    CALL testParam%get('testSDKa3',someParam)
+    ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
+    CALL someParam%get('testSDKa3',valsdka3)
+    bool=SIZE(valsdka3,DIM=1) == 2 .AND. SIZE(valsdka3,DIM=2) == 2 .AND. SIZE(valsdka3,DIM=3) == 2
+    ASSERT(bool,'someParam valsdka3 size 1')
+    bool=ALL(valsdka3(1,1,:) == 5.0_SDK) .AND. ALL(valsdka3(2,1,:) == 7.0_SDK) &
+      .AND. ALL(valsdka3(1,2,:) == 6.0_SDK) .AND. ALL(valsdka3(2,2,:) == 8.0_SDK)
+    ASSERT(bool,'someParam valsdka3 1')
+    DEALLOCATE(valsdka3)
+    ALLOCATE(valsdka3(1,1,1))
+    CALL someParam%get('testSDKa3',valsdka3)
+    bool=SIZE(valsdka3,DIM=1) == 2 .AND. SIZE(valsdka3,DIM=2) == 2 .AND. SIZE(valsdka3,DIM=3) == 2
+    ASSERT(bool,'someParam valsdka3 different size')
+    bool=ALL(valsdka3(1,1,:) == 5.0_SDK) .AND. ALL(valsdka3(2,1,:) == 7.0_SDK) &
+      .AND. ALL(valsdka3(1,2,:) == 6.0_SDK) .AND. ALL(valsdka3(2,2,:) == 8.0_SDK)
+    ASSERT(bool,'someParam valsdka3 2')
+    DEALLOCATE(valsdka3)
+    CALL someParam%get('testSDKa3',valsdka3)
+    bool=SIZE(valsdka3,DIM=1) == 2 .AND. SIZE(valsdka3,DIM=2) == 2 .AND. SIZE(valsdka3,DIM=3) == 2
+    ASSERT(bool,'someParam valsdka3 unallocated')
+    bool=ALL(valsdka3(1,1,:) == 5.0_SDK) .AND. ALL(valsdka3(2,1,:) == 7.0_SDK) &
+      .AND. ALL(valsdka3(1,2,:) == 6.0_SDK) .AND. ALL(valsdka3(2,2,:) == 8.0_SDK)
+    ASSERT(bool,'someParam valsdka3 3')
+    DEALLOCATE(valsdka3)
+    ALLOCATE(valsdka3(2,2,1))
+    CALL testParam%get('testSDKa3',valsdka3)
+    bool=SIZE(valsdka3,DIM=1) == 2 .AND. SIZE(valsdka3,DIM=2) == 2 .AND. SIZE(valsdka3,DIM=3) == 2
+    ASSERT(bool,'testParam valsdka3 size 1')
+    bool=ALL(valsdka3(1,1,:) == 5.0_SDK) .AND. ALL(valsdka3(2,1,:) == 7.0_SDK) &
+      .AND. ALL(valsdka3(1,2,:) == 6.0_SDK) .AND. ALL(valsdka3(2,2,:) == 8.0_SDK)
+    ASSERT(bool,'testParam valsdka3 1')
+    DEALLOCATE(valsdka3)
+    CALL testParam%get('testSDKa3',valsdka3)
+    bool=SIZE(valsdka3,DIM=1) == 2 .AND. SIZE(valsdka3,DIM=2) == 2 .AND. SIZE(valsdka3,DIM=3) == 2
+    ASSERT(bool,'testParam valsdka3 unallocated')
+    bool=ALL(valsdka3(1,1,:) == 5.0_SDK) .AND. ALL(valsdka3(2,1,:) == 7.0_SDK) &
+      .AND. ALL(valsdka3(1,2,:) == 6.0_SDK) .AND. ALL(valsdka3(2,2,:) == 8.0_SDK)
+    ASSERT(bool,'testParam valsdka3 2')
+    CALL testParam%get('testError',valsdka3)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SDK_a3'// &
+      ' - unable to locate parameter "testError" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
+    CALL someParam%get('testError',valsdka3)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SDK_a3'// &
+      ' - parameter name mismatch "testError" in "testSDKa3"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSDKa3'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%get('testSDKa3',valsdka3)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SDK_a3'// &
+      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' must be 3-D ARRAY REAL(SDK)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
+    CALL testParam2%clear()
   
     !test set
-    CALL someParam%set('testSDK3a', &
-      RESHAPE((/3.5_SDK,1.5_SDK,4.5_SDK,2.5_SDK,3.5_SDK,1.5_SDK,4.5_SDK,2.5_SDK/), &
-        (/2,2,2/)), 'The numbers 3.5, 1.5, 4.5, and 2.5')
-    CALL testParam%get('testSDK3a',valsdk3a)
-    IF(ANY(valsdk3a(1,1,:) /= 3.5_SDK) .OR. ANY(valsdk3a(2,1,:) /= 1.5_SDK) .OR. &
-        ANY(valsdk3a(1,2,:) /= 4.5_SDK) .OR. ANY(valsdk3a(2,2,:) /= 2.5_SDK) .OR. &
-          SIZE(valsdk3a,1) /= 2_SIK .OR. SIZE(valsdk3a,2) /= 2_SIK .OR. &
-            SIZE(valsdk3a,3) /= 2_SIK .OR. &
-              someParam%description /= 'The numbers 3.5, 1.5, 4.5, and 2.5') THEN
-      WRITE(*,*) 'someParam%set(''testSDK3a'',(/3.5_SDK,1.5_SDK/,/4.5_SDK,2.5_SDK/),'// &
-      '''The numbers 3.5, 1.5, 4.5, and 2.5'') FAILED!'
-      STOP 666
-    ENDIF
-    !Different size for test param
-    CALL testParam%set('testSDK3a',RESHAPE((/5.5_SDK/),(/1,1,1/)),'The number 5.5')
-    CALL testParam%get('testSDK3a',valsdk3a)
-    IF(valsdk3a(1,1,1) /= 5.5_SDK .OR. SIZE(valsdk3a,1) /= 1_SIK .OR. &
-        SIZE(valsdk3a,2) /= 1_SIK .OR. SIZE(valsdk3a,3) /= 1_SIK .OR. &
-          someParam%description /= 'The number 5.5') THEN
-      WRITE(*,*) 'testParam%set(''testSDK3a'',5.5_SDK) FAILED!'
-      STOP 666
-    ENDIF
-    !Different size for some param
-    CALL someParam%set('testSDK3a', &
-      RESHAPE((/10.0_SDK,10.5_SDK,20.0_SDK,-10.0_SDK,-10.5_SDK,-20.0_SDK/), & 
-        (/3,2,1/)),'The numbers 10.0, 10.5, 20.0, -10.0, -10.5, and -20.0')
-    CALL testParam%get('testSDK3a',valsdk3a)
-    IF(valsdk3a(1,1,1) /= 10.0_SDK .OR. valsdk3a(2,1,1) /= 10.5_SDK .OR. &
-        valsdk3a(3,1,1) /= 20.0_SDK .OR. SIZE(valsdk3a,1) /= 3_SIK .OR. &
-          valsdk3a(1,2,1) /= -10.0_SDK .OR. valsdk3a(2,2,1) /= -10.5_SDK .OR. &
-            valsdk3a(3,2,1) /= -20.0_SDK .OR. SIZE(valsdk3a,2) /= 2_SIK .OR. &
-              SIZE(valsdk3a,3) /= 1_SIK .OR. &
-                someParam%description /= 'The numbers 10.0, 10.5, 20.0, -10.0, -10.5, and -20.0') THEN
-      WRITE(*,*) 'someParam%set(''testSDK3a'',(/10.0_SDK,10.5_SDK,20.0_SDK/,/-10.0_SDK'// &
-        ',-10.5_SDK,-20.0_SDK/),''The numbers 10.0, 10.5, and 20.0'') FAILED!'
-      STOP 666
-    ENDIF
-    !Same size for test param
-    CALL testParam%set('testSDK3a', &
-      RESHAPE((/50.0_SDK,50.5_SDK,60.0_SDK,-50.0_SDK,-50.5_SDK,-60.0_SDK/), &
-        (/3,2,1/)),'The numbers 50.0, 50.5, 60.0, -50.0, -50.5, and -60.0')
-    CALL testParam%get('testSDK3a',valsdk3a)
-    IF(valsdk3a(1,1,1) /= 50.0_SDK .OR. valsdk3a(2,1,1) /= 50.5_SDK .OR. &
-        valsdk3a(3,1,1) /= 60.0_SDK .OR. SIZE(valsdk3a,1) /= 3_SIK .OR. &
-          valsdk3a(1,2,1) /= -50.0_SDK .OR. valsdk3a(2,2,1) /= -50.5_SDK .OR. &
-            valsdk3a(3,2,1) /= -60.0_SDK .OR. SIZE(valsdk3a,2) /= 2_SIK .OR. &
-              SIZE(valsdk3a,3) /= 1_SIK .OR. &
-                someParam%description /= 'The numbers 50.0, 50.5, 60.0, -50.0, -50.5, and -60.0') THEN
-      WRITE(*,*) 'testParam%set(''testSDK3a'',(/50.0_SDK,50.5_SDK,60.0_SDK/)) FAILED!'
-      STOP 666
-    ENDIF
+    COMPONENT_TEST('%set(...)')
+    CALL testParam%set('testSDKa3',RESHAPE((/-10.0_SDK/),(/1,1,1/)),'The number -10')
+    CALL testParam%get('testSDKa3',valsdka3)
+    ASSERT(testParam%pdat%name == 'testSDKa3','%name')
+    ASSERT(testParam%pdat%datatype == '3-D ARRAY REAL(SDK)','testParam%datatype')
+    ASSERT(testParam%pdat%description == 'The number -10','%description')
+    bool=SIZE(valsdka3,DIM=1) == 1 .AND. SIZE(valsdka3,DIM=2) == 1
+    ASSERT(bool,'testParam valsdka3 size 1')
+    bool=valsdka3(1,1,1) == -10
+    ASSERT(bool,'testParam valsdka3 1')
+    CALL testParam%set('testSDKa3',RESHAPE((/3.0_SDK,-5.0_SDK,3.0_SDK,-5.0_SDK/),(/2,2,1/)),'The numbers 3 & -5')
+    CALL testParam%get('testSDKa3',valsdka3)
+    bool=SIZE(valsdka3,DIM=1) == 2 .AND. SIZE(valsdka3,DIM=2) == 2 .AND. SIZE(valsdka3,DIM=3) == 1
+    ASSERT(bool,'testParam valsdka3 size 2')
+    bool=valsdka3(1,1,1) == 3.0_SDK .AND. valsdka3(2,1,1) == -5.0_SDK .AND. &
+      valsdka3(1,2,1) == 3.0_SDK .AND. valsdka3(2,2,1) == -5.0_SDK
+    ASSERT(bool,'testParam valsdka3 2')
+    ASSERT(testParam%pdat%description == 'The numbers 3 & -5','%description')
+    !
+    CALL someParam%set('testSDKa3',RESHAPE((/-10.0_SDK/),(/1,1,1/)),'The number -10')
+    CALL someParam%get('testSDKa3',valsdka3)
+    ASSERT(someParam%name == 'testSDKa3','someParam%name')
+    ASSERT(someParam%datatype == '3-D ARRAY REAL(SDK)','someParam%datatype')
+    ASSERT(someParam%description == 'The number -10','someParam%description')
+    bool=SIZE(valsdka3,DIM=1) == 1 .AND. SIZE(valsdka3,DIM=2) == 1
+    ASSERT(bool,'someParam valsdka3 size 1')
+    bool=valsdka3(1,1,1) == -10.0_SDK
+    ASSERT(bool,'someParam valsdka3 1')
+    CALL someParam%set('testSDKa3',RESHAPE((/5.0_SDK,7.0_SDK/),(/1,1,2/)),'The numbers 5 & 7')
+    CALL someParam%get('testSDKa3',valsdka3)
+    ASSERT(someParam%name == 'testSDKa3','someParam%name')
+    ASSERT(someParam%datatype == '3-D ARRAY REAL(SDK)','someParam%datatype')
+    ASSERT(someParam%description == 'The numbers 5 & 7','someParam%description')
+    bool=SIZE(valsdka3,DIM=1) == 1 .AND. SIZE(valsdka3,DIM=2) == 1 .AND. SIZE(valsdka3,DIM=3) == 2
+    ASSERT(bool,'someParam valsdka3 size 2')
+    bool=valsdka3(1,1,1) == 5.0_SDK .AND. valsdka3(1,1,2) == 7.0_SDK
+    ASSERT(bool,'testParam valsdka3 2')
+    !
+    CALL someParam%set('testError',RESHAPE((/-1.0_SDK/),(/1,1,1/))) !Name mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK_a3 -'// &
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSDKa3"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+    CALL testParam2%set('testSDKa3',RESHAPE((/-1.0_SDK/),(/1,1,1/))) !Name not found
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK_a3 -'// &
+      ' unable to locate parameter "testSDKa3" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testSDKa3'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%set('testSDKa3',RESHAPE((/-1.0_SDK/),(/1,1,1/))) !Type mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK_a3 -'// &
+      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' and must be 3-D ARRAY REAL(SDK)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
+    CALL testParam2%clear()
     
-    CALL testParam2%set('testSDK3a',valsdk3a)
-    CALL someParam%set('testError',valsdk3a)
-    CALL testParam%set('testError',valsdk3a)
-    WRITE(*,*) '  Passed: CALL testParam%set(...) (SDK) 3-D'
-  
-    !Test clear
-    CALL testParam%clear()
-    IF(LEN(testParam%name) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %name (SDK) 3-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%datatype) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %datatype (SDK) 3-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%description) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %description (SDK) 3-D FAILED!'
-      STOP 666
-    ENDIF
-    IF(ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%clear() %pdat (SDK) 3-D FAILED!'
-      STOP 666
-    ENDIF
-
-    
-    WRITE(*,*) '  Passed: CALL testParam%clear() (SDK) 3-D'
-  
-    !test assignment
-    CALL testParam%init('testSDK3a',RESHAPE((/4.0_SDK/),(/1,1,1/)) )
     COMPONENT_TEST('Operators')
+    CALL testParam%init('testSDKa3',RESHAPE((/-1.0_SDK/),(/1,1,1/)))
     testParam2=testParam
     ASSERT(ASSOCIATED(testParam2%pdat),'ASSOCIATED %pdat')
-    ASSERT(testParam2%pdat%name == 'testSDK3a','%name')
-    ASSERT(testParam2%pdat%datatype ==  '3-D ARRAY REAL(SDK)','%datatype')
+    ASSERT(testParam2%pdat%name == 'testSDKa3','%name')
+    ASSERT(testParam2%pdat%datatype == '3-D ARRAY REAL(SDK)','%datatype')
     ASSERT(testParam2 == testParam,'OPERATOR(==)')
     CALL clear_test_vars()
-  ENDSUBROUTINE testSDK3a
+  ENDSUBROUTINE testSDKa3
 !
 !-------------------------------------------------------------------------------
 !Test ParamList support
   SUBROUTINE testParamListType()
-    !Carry over from testSSK
-    CALL testParam%init('testSSK',4.0_SSK)
-    CALL testParam%get('testSSK',someParam)
-    someParam=testParam
-    !
+    LOGICAL(SBK) :: bool
+    CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
+    !test init
+    
+    COMPONENT_TEST('%init(...)')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
+    ASSERT(LEN(testParam%name) == 0,'%name 1')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 1')
+    ASSERT(LEN(testParam%description) == 0,'%description 1')
+    CALL testParam%init('testError->testPL',testlist,'The param list')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 2')
+    ASSERT(LEN(testParam%name) == 0,'%name 2')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 2')
+    ASSERT(LEN(testParam%description) == 0,'%description 2')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_List'// &
+      ' - "->" symbol is not allowed in name!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
+    CALL testParam%init('testSSK',valssk,'The number 5.0')
     testList(1)=testParam
     CALL testParam%clear()
-    CALL testParam2%clear()
+    CALL testParam%init('testPL',testList,'The param list')
+    
+    ASSERT(LEN(testParam%name) == 0,'%name 3')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype 3')
+    ASSERT(LEN(testParam%description) == 0,'%description 3')
+    ASSERT(ASSOCIATED(testParam%pdat),'%pdat 3')
+    ASSERT(testParam%pdat%name == 'testPL','%pdat%name')
+    ASSERT(testParam%pdat%datatype == 'TYPE(ParamType_List)','%pdat%datatype')
+    bool=TRIM(testParam%pdat%description) == 'The param list'
+    ASSERT(bool,'%pdat%description')
+    CALL testParam%init('testError',testList)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_List'// &
+      ' - parameter  is already initialized! Use set method!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
+    
+    !Test clear
+    COMPONENT_TEST('%clear()')
+    CALL testParam%clear()
+    ASSERT(LEN(testParam%name) == 0,'%name')
+    ASSERT(LEN(testParam%datatype) == 0,'%datatype')
+    ASSERT(LEN(testParam%description) == 0,'%description')
+    ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
+    
+    COMPONENT_TEST('%edit(...)')
+    CALL testParam%init('testSSK',5.0_SSK,'The number 5.0')
+    testList(1)=testParam
+    CALL testParam%clear()
+    CALL testParam%init('testSDK',5.0_SDK)
+    testList(2)=testParam
+    CALL testParam%clear()
+    CALL testParam%init('testPL',testList,'test edit')
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%init('testPL',testList)
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    CALL testParam%clear()
+    CALL testParam%edit(OUTPUT_UNIT,0)
+    
+    COMPONENT_TEST('%get(...)')
+    CALL testParam%get('',someParam)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType'// &
+      ' - cannot search for a blank name!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
+    CALL testParam%init('testPL',testList,'The param lists')
+    CALL testParam%get('testPL',someParam)
+    ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
+    CALL someParam%get('testPL',testList2)
+    bool=testList(1) == testList2(1) .AND. testList(2) == testList2(2)
+    ASSERT(bool,'someParam param lists')
+    CALL testList2(1)%clear()
+    CALL testList2(2)%clear()
+    CALL testParam%get('testPL',testList2)
+    bool=testList(1) == testList2(1) .AND. testList(2) == testList2(2)
+    ASSERT(bool,'testParam param lists')
+    CALL testParam%get('testError',testList2)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_List'// &
+      ' - unable to locate parameter "testError" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
+    CALL someParam%get('testError',testList2)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_List'// &
+      ' - parameter name mismatch "testError" in "testPL"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
     ALLOCATE(testParam2%pdat)
     testParam2%pdat%name='testPL'
-  
-    !test init
-    CALL testParam%init('testError->testPL',testList)
-    CALL testParam%init('testPL',testList,'A test parameter list')
-    IF(.NOT.ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%init(...) %pdat (List) FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%name /= 'testPL') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %name (List) FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%datatype /= 'TYPE(ParamType_List)') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %datatype (List) FAILED!'
-      STOP 666
-    ENDIF
-    IF(testParam%pdat%description /= 'A test parameter list') THEN
-      WRITE(*,*) 'CALL testParam%init(...) %description (List) FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam%edit(OUTPUT_UNIT,0) !test edit
-    CALL testParam%init('testError',testList,'A test parameter list')
-    WRITE(*,*) '  Passed: CALL testParam%init(...) (List)'
-  
-    !Test get
-    CALL testParam%get('testPL',someParam)
-    CALL someParam%get('testPL',testList)
-    IF(testList(1)%pdat%name /= 'testSSK') THEN
-      WRITE(*,*) 'CALL someParam%get(''testPL'',testList) FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam%get('testPL',testList)
-    IF(testList(1)%pdat%name /= 'testSSK') THEN
-      WRITE(*,*) 'CALL testParam%get(''testPL'',testList) FAILED!'
-      STOP 666
-    ENDIF
-    CALL someParam%get('testPL',testList2)
-    CALL testParam%get('testPL',testList2)
+    testParam2%pdat%datatype='test_type'
     CALL testParam2%get('testPL',testList2)
-    CALL testParam%get('testError',testList2)
-    CALL testParam%get('->testError',testList2)
-    CALL someParam%get('testError',testList2)
-    WRITE(*,*) '  Passed: CALL testParam%get(...) (List)'
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_List'// &
+      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' must be TYPE(ParamType_List)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
+    CALL testParam2%clear()
   
-    !Test set
-    !testList(2)=testList(1) GNU does not like this, seems to use the intrinsic assignment
-    !                        rather than the overloaded assignment and produces a run
-    !                        time error in memcopy instead of calling assign_ParamType.
-    testParam2=testList(1)
-    testList(2)=testParam2
-    testList(2)%pdat%name='testSSK2'
-    CALL someParam%set('testPL',testList,'A second list')
-    valssk=0.0_SSK
-    CALL testParam%edit(OUTPUT_UNIT)
-    CALL testParam%get('testSSK2',valssk)
-    IF(valssk /= 4.0_SSK .OR. someParam%description /= 'A second list') THEN
-      WRITE(*,*) 'CALL someParam%set(''testPL'',testList,''A second list'') FAILED!'
-      STOP 666
-    ENDIF
-    CALL testList(2)%clear()
-    CALL testParam%set('testPL',testList,'A test parameter list')
-    valssk=0.0_SSK
-    CALL testParam%get('testPL->testSSK2',valssk)
-    IF(valssk /= 0.0_SSK .OR. someParam%description /= 'A test parameter list') THEN
-      WRITE(*,*) 'CALL testParam%set(''testPL'',testList,''A test parameter list'') FAILED!'
-      STOP 666
-    ENDIF
-    CALL testParam%set('testPL',testList2)
-    CALL someParam%set('testPL',testList2)
-    CALL testParam2%set('testSSK',testList)
-    CALL someParam%set('testError',testList)
-    CALL testParam%set('testError',testList)
-    WRITE(*,*) '  Passed: CALL testParam%set(...) (List)'
-  
-    !test clear
-    CALL testParam%clear()
-    IF(LEN(testParam%name) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %name (List) FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%datatype) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %datatype (List) FAILED!'
-      STOP 666
-    ENDIF
-    IF(LEN(testParam%description) /= 0) THEN
-      WRITE(*,*) 'CALL testParam%clear() %description (List) FAILED!'
-      STOP 666
-    ENDIF
-    IF(ASSOCIATED(testParam%pdat)) THEN
-      WRITE(*,*) 'CALL testParam%clear() %pdat (List) FAILED!'
-      STOP 666
-    ENDIF
-    WRITE(*,*) '  Passed: CALL testParam%clear() (List)'
-  
-    !Test assignment
-    CALL testParam%init('testPL',testList)
+    !test set
+    COMPONENT_TEST('%set(...)')
+    testList2(1)=testList(1)
+    testList2(2)=testList(1)
+    CALL testParam%set('testPL',testList2,'The new param list')
+    CALL testList2(1)%clear()
+    CALL testList2(2)%clear()
+    CALL testParam%get('testPL',testList2)
+    bool=testList(1) == testList2(1) .AND. testList(1) == testList2(2)
+    ASSERT(bool,'param list')
+    ASSERT(testParam%pdat%name == 'testPL','%name')
+    ASSERT(testParam%pdat%description == 'The new param list','%description')
+    testList2(1)=testList(1)
+    testList2(2)=testList(1)
+    testList2(3)=testList(2)
+    CALL someParam%set('testPL',testList2,'The bigger param list')
+    CALL testList2(1)%clear()
+    CALL testList2(2)%clear()
+    CALL testList2(3)%clear()
+    CALL someParam%get('testPL',testList2)
+    bool=testList(1) == testList2(1) .AND. testList(1) == testList2(2) .AND. testList(2) == testList2(3)
+    ASSERT(bool,'param list')
+    ASSERT(someParam%name == 'testPL','someParam%name')
+    ASSERT(someParam%datatype == 'TYPE(ParamType_List)','%pdat%datatype')
+    ASSERT(someParam%description == 'The bigger param list','someParam%description')
+    CALL someParam%set('testError',testList2) !Name mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_List -'// &
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testPL"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+    CALL testParam2%set('testPL',testList2) !Name not found
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_List -'// &
+      ' unable to locate parameter "testPL" in ""!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
+    ALLOCATE(testParam2%pdat)
+    testParam2%pdat%name='testPL'
+    testParam2%pdat%datatype='test_type'
+    CALL testParam2%set('testPL',testList2) !Type mismatch
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_List -'// &
+      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' and must be TYPE(ParamType_List)!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
+    CALL testParam2%clear()
+    
     COMPONENT_TEST('Operators')
+    CALL testParam%init('testPL',testList2)
     testParam2=testParam
     ASSERT(ASSOCIATED(testParam2%pdat),'ASSOCIATED %pdat')
     ASSERT(testParam2%pdat%name == 'testPL','%name')
@@ -3485,97 +3897,341 @@ PROGRAM testParameterLists
 !
 !-------------------------------------------------------------------------------
   SUBROUTINE testAdd()
-    INTEGER(SNK) :: snk2(2,2),snk3(2,2,2)
-    INTEGER(SLK) :: slk2(2,2),slk3(2,2,2)
-    REAL(SSK) :: ssk2(2,2),ssk3(2,2,2)
-    REAL(SDK) :: sdk2(2,2),sdk3(2,2,2)
-    TYPE(StringType) :: str1(2),str2(2,2)
+    CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
+    LOGICAL(SBK) :: bool,sbk0
+    LOGICAL(SBK),ALLOCATABLE :: sbk1(:)
+    INTEGER(SNK) :: snk0
+    INTEGER(SNK),ALLOCATABLE :: snk1(:),snk2(:,:),snk3(:,:,:)
+    INTEGER(SLK) :: slk0
+    INTEGER(SLK),ALLOCATABLE :: slk1(:),slk2(:,:),slk3(:,:,:)
+    REAL(SSK) :: ssk0
+    REAL(SSK),ALLOCATABLE :: ssk1(:),ssk2(:,:),ssk3(:,:,:)
+    REAL(SDK) :: sdk0
+    REAL(SDK),ALLOCATABLE :: sdk1(:),sdk2(:,:),sdk3(:,:,:)
+    TYPE(StringType) :: str0
+    TYPE(StringType),ALLOCATABLE :: str1(:),str2(:,:)
   
-    !Testing addition of SSK routine
-    CALL testParam%add('testSSK',6.0_SSK)
-    !Testing addition of SSK routine, error for already existing parameter
-    CALL testParam%add('testSSK',9.0_SSK)
-    !Testing addition of SSK routine, error for not a parameter list
-    CALL testParam%add('testSSK2',7.0_SSK)
-    CALL testParam%clear()
-  
-    !Testing addition of SSK routine to parameter list
-    CALL testParam%add('testPL->testSSK',7.0_SSK)
-  
-    !Testing addition of multiple SSK parameters to parameter list
-    CALL testParam%add('testPL->testSSK2',8.0_SSK)
-  
-    !Testing addition of SDK routine to parameter list
-    CALL testParam%add('testPL->testSDK',1.0_SDK)
-  
-    !Testing addition of SNK routine to parameter list
-    CALL testParam%add('testPL->testSNK',2_SNK)
-  
-    !Testing addition of SLK routine to parameter list
-    CALL testParam%add('testPL->testSLK',3_SLK)
-  
+    
     !Testing addition of SBK routine to parameter list
     CALL testParam%add('testPL->testSBK',.TRUE.)
+    CALL testParam%add('testPL->testSBK2',.FALSE.,'comment')
+    CALL testParam%add('testPL->testSBK2',.FALSE.,'comment')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_SBK -'// &
+      ' parameter name "testPL->testSBK2" already exists! Use set method or full'// &
+        ' parameter list path!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
+    CALL testParam%get('testPL->testSBK',sbk0)
+    ASSERT(sbk0,'%add sbk0')
+    CALL testParam%get('testPL->testSBK2',sbk0)
+    ASSERT(.NOT.sbk0,'%add sbk0')
+    
+    !Testing addition of SSK routine to parameter list
+    CALL testParam%add('testPL->testSSK',7.0_SSK)
+    CALL testParam%add('testPL->testSSK2',8.0_SSK,'comment')
+    CALL testParam%add('testPL->testSSK2',8.0_SSK,'comment')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_SSK -'// &
+      ' parameter name "testPL->testSSK2" already exists! Use set method or full'// &
+        ' parameter list path!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
+    CALL testParam%get('testPL->testSSK',ssk0)
+    ASSERT(ssk0 .APPROXEQA. 7.0_SSK,'%add ssk0')
+    CALL testParam%get('testPL->testSSK2',ssk0)
+    ASSERT(ssk0 .APPROXEQA. 8.0_SSK,'%add ssk0')
+    
+    !Testing addition of SDK routine to parameter list
+    CALL testParam%add('testPL->testSDK',7.0_SDK)
+    CALL testParam%add('testPL->testSDK2',8.0_SDK,'comment')
+    CALL testParam%add('testPL->testSDK2',8.0_SDK,'comment')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_SDK -'// &
+      ' parameter name "testPL->testSDK2" already exists! Use set method or full'// &
+        ' parameter list path!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
+    CALL testParam%get('testPL->testSDK',sdk0)
+    ASSERT(sdk0 .APPROXEQA. 7.0_SDK,'%add sdk0')
+    CALL testParam%get('testPL->testSDK2',sdk0)
+    ASSERT(sdk0 .APPROXEQA. 8.0_SDK,'%add sdk0')
+  
+    !Testing addition of SNK routine to parameter list
+    CALL testParam%add('testPL->testSNK',7_SNK)
+    CALL testParam%add('testPL->testSNK2',8_SNK,'comment')
+    CALL testParam%add('testPL->testSNK2',8_SNK,'comment')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_SNK -'// &
+      ' parameter name "testPL->testSNK2" already exists! Use set method or full'// &
+        ' parameter list path!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
+    CALL testParam%get('testPL->testSNK',snk0)
+    ASSERT(snk0 == 7_SNK,'%add snk0')
+    CALL testParam%get('testPL->testSNK2',snk0)
+    ASSERT(snk0 == 8_SNK,'%add snk0')
+  
+    !Testing addition of SLK routine to parameter list
+    CALL testParam%add('testPL->testSLK',7_SLK)
+    CALL testParam%add('testPL->testSLK2',8_SLK,'comment')
+    CALL testParam%add('testPL->testSLK2',8_SLK,'comment')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_SLK -'// &
+      ' parameter name "testPL->testSLK2" already exists! Use set method or full'// &
+        ' parameter list path!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
+    CALL testParam%get('testPL->testSLK',slk0)
+    ASSERT(slk0 == 7_SLK,'%add slk0')
+    CALL testParam%get('testPL->testSLK2',slk0)
+    ASSERT(slk0 == 8_SLK,'%add slk0')
   
     !Testing addition of STR routine to parameter list
-    CALL testParam%add('testPL->testSTR','string1')
+    str0='string1'
+    CALL testParam%add('testPL->testSTR',str0)
+    str0='string2'
+    CALL testParam%add('testPL->testSTR2',str0,'comment')
+    CALL testParam%add('testPL->testSTR2',str0,'comment')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_STR -'// &
+      ' parameter name "testPL->testSTR2" already exists! Use set method or full'// &
+        ' parameter list path!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
+    CALL testParam%get('testPL->testSTR',str0)
+    ASSERT(str0 == 'string1','%add str0')
+    CALL testParam%get('testPL->testSTR2',str0)
+    ASSERT(str0 == 'string2','%add str0')
+    
+    !Testing addition of CHAR routine to parameter list
+    CALL testParam%add('testPL->testCHAR','char1')
+    CALL testParam%add('testPL->testCHAR2','char2','comment')
+    CALL testParam%add('testPL->testCHAR2','char2','comment')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_STR -'// &
+      ' parameter name "testPL->testCHAR2" already exists! Use set method or full'// &
+        ' parameter list path!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
+    CALL testParam%get('testPL->testCHAR',str0)
+    ASSERT(str0 == 'char1','%add char')
+    CALL testParam%get('testPL->testCHAR2',str0)
+    ASSERT(str0 == 'char2','%add char')
   
     !Testing addition of 1-D array SSK routine to parameter list
-    CALL testParam%add('testPL->testSSK1a',(/1.5_SSK,1.6_SSK/))
+    CALL testParam%add('testPL->testSSKa1',(/1.5_SSK,1.6_SSK/))
+    CALL testParam%add('testPL->testSSKa1_2',(/1.7_SSK,1.8_SSK/),'comment')
+    CALL testParam%add('testPL->testSSKa1_2',(/1.7_SSK,1.8_SSK/),'comment')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_SSK_a1 -'// &
+      ' parameter name "testPL->testSSKa1_2" already exists! Use set method or full'// &
+        ' parameter list path!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
+    CALL testParam%get('testPL->testSSKa1',ssk1)
+    ASSERT(ALL(ssk1 .APPROXEQA. (/1.5_SSK,1.6_SSK/)),'%add ssk1')
+    CALL testParam%get('testPL->testSSKa1_2',ssk1)
+    ASSERT(ALL(ssk1 .APPROXEQA. (/1.7_SSK,1.8_SSK/)),'%add ssk1')
     
     !Testing addition of 1-D array SDK routine to parameter list
-    CALL testParam%add('testPL->testSDK1a',(/2.5_SDK,2.6_SDK/))
+    CALL testParam%add('testPL->testSDKa1',(/2.5_SDK,2.6_SDK/))
+    CALL testParam%add('testPL->testSDKa1_2',(/2.7_SDK,2.8_SDK/),'comment')
+    CALL testParam%add('testPL->testSDKa1_2',(/2.7_SDK,2.8_SDK/),'comment')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_SDK_a1 -'// &
+      ' parameter name "testPL->testSDKa1_2" already exists! Use set method or full'// &
+        ' parameter list path!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
+    CALL testParam%get('testPL->testSDKa1',sdk1)
+    ASSERT(ALL(sdk1 .APPROXEQA. (/2.5_SDK,2.6_SDK/)),'%add sdk1')
+    CALL testParam%get('testPL->testSDKa1_2',sdk1)
+    ASSERT(ALL(sdk1 .APPROXEQA. (/2.7_SDK,2.8_SDK/)),'%add sdk1')
     
     !Testing addition of 1-D array SNK routine to parameter list
-    CALL testParam%add('testPL->testSNK1a',(/-2_SNK,-3_SNK/))
+    CALL testParam%add('testPL->testSNKa1',(/-2_SNK,-3_SNK/))
+    CALL testParam%add('testPL->testSNKa1_2',(/2_SNK,3_SNK/),'comment')
+    CALL testParam%add('testPL->testSNKa1_2',(/2_SNK,3_SNK/),'comment')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_SNK_a1 -'// &
+      ' parameter name "testPL->testSNKa1_2" already exists! Use set method or full'// &
+        ' parameter list path!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
+    CALL testParam%get('testPL->testSNKa1',snk1)
+    ASSERT(ALL(snk1 == (/-2_SNK,-3_SNK/)),'%add snk1')
+    CALL testParam%get('testPL->testSNKa1_2',snk1)
+    ASSERT(ALL(snk1 == (/2_SNK,3_SNK/)),'%add snk1')
     
     !Testing addition of 1-D array SLK routine to parameter list
-    CALL testParam%add('testPL->testSLK1a',(/-4_SLK,-5_SLK/))
+    CALL testParam%add('testPL->testSLKa1',(/-4_SLK,-5_SLK/))
+    CALL testParam%add('testPL->testSLKa1_2',(/4_SLK,5_SLK/),'comment')
+    CALL testParam%add('testPL->testSLKa1_2',(/4_SLK,5_SLK/),'comment')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_SLK_a1 -'// &
+      ' parameter name "testPL->testSLKa1_2" already exists! Use set method or full'// &
+        ' parameter list path!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
+    CALL testParam%get('testPL->testSLKa1',slk1)
+    ASSERT(ALL(slk1 == (/-4_SLK,-5_SLK/)),'%add slk1')
+    CALL testParam%get('testPL->testSLKa1_2',slk1)
+    ASSERT(ALL(slk1 == (/4_SLK,5_SLK/)),'%add slk1')
     
     !Testing addition of 1-D array SBK routine to parameter list
-    CALL testParam%add('testPL->testSBK1a',(/.TRUE.,.FALSE./))
+    CALL testParam%add('testPL->testSBKa1',(/.TRUE.,.FALSE./))
+    CALL testParam%add('testPL->testSBKa1_2',(/.FALSE.,.FALSE./),'comment')
+    CALL testParam%add('testPL->testSBKa1_2',(/.FALSE.,.FALSE./),'comment')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_SBK_a1 -'// &
+      ' parameter name "testPL->testSBKa1_2" already exists! Use set method or full'// &
+        ' parameter list path!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
+    CALL testParam%get('testPL->testSBKa1',sbk1)
+    ASSERT(sbk1(1) .AND. .NOT.sbk1(2),'%add sbk1')
+    CALL testParam%get('testPL->testSBKa1_2',sbk1)
+    ASSERT(.NOT.sbk1(1) .AND. .NOT.sbk1(2),'%add sbk1')
     
     !Testing addition of 1-D array STR routine to parameter list
+    ALLOCATE(str1(2))
     str1(1)='stringarray1'
     str1(2)='stringarray2'
-    CALL testParam%add('testPL->testSTR1a',str1)
+    CALL testParam%add('testPL->testSTRa1',str1)
+    str1(1)='stringarray3'
+    str1(2)='stringarray4'
+    CALL testParam%add('testPL->testSTRa1_2',str1,'comment')
+    CALL testParam%add('testPL->testSTRa1_2',str1,'comment')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_STR_a1 -'// &
+      ' parameter name "testPL->testSTRa1_2" already exists! Use set method or full'// &
+        ' parameter list path!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
+    CALL testParam%get('testPL->testSTRa1',str1)
+    bool=str1(1) == 'stringarray1' .AND. str1(2) == 'stringarray2'
+    ASSERT(bool,'%add str1')
+    CALL testParam%get('testPL->testSTRa1_2',str1)
+    bool=str1(1) == 'stringarray3' .AND. str1(2) == 'stringarray4'
+    ASSERT(bool,'%add str1')
     
     !Testing addition of 2-D array SSK routine to parameter list
+    ALLOCATE(ssk2(2,2))
     ssk2(1,1)=1.1_SSK
     ssk2(2,1)=2.1_SSK
     ssk2(1,2)=1.2_SSK
     ssk2(2,2)=2.2_SSK
-    CALL testParam%add('testPL->testSSK2a',ssk2)
+    CALL testParam%add('testPL->testSSKa2',ssk2)
+    ssk2(1,1)=3.1_SSK
+    ssk2(2,1)=4.1_SSK
+    ssk2(1,2)=3.2_SSK
+    ssk2(2,2)=4.2_SSK
+    CALL testParam%add('testPL->testSSKa2_2',ssk2,'comment')
+    CALL testParam%add('testPL->testSSKa2_2',ssk2,'comment')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_SSK_a2 -'// &
+      ' parameter name "testPL->testSSKa2_2" already exists! Use set method or full'// &
+        ' parameter list path!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
+    CALL testParam%get('testPL->testSSKa2',ssk2)
+    bool=ALL(ssk2 == RESHAPE((/1.1_SSK,2.1_SSK,1.2_SSK,2.2_SSK/),(/2,2/)))
+    ASSERT(bool,'%add ssk2')
+    CALL testParam%get('testPL->testSSKa2_2',ssk2)
+    bool=ALL(ssk2 == RESHAPE((/3.1_SSK,4.1_SSK,3.2_SSK,4.2_SSK/),(/2,2/)))
+    ASSERT(bool,'%add ssk2')
     
     !Testing addition of 2-D array SDK routine to parameter list
+    ALLOCATE(sdk2(2,2))
     sdk2(1,1)=11.0_SDK
     sdk2(2,1)=21.0_SDK
     sdk2(1,2)=12.0_SDK
     sdk2(2,2)=22.0_SDK
-    CALL testParam%add('testPL->testSDK2a',sdk2)
+    CALL testParam%add('testPL->testSDKa2',sdk2)
+    sdk2(1,1)=31.0_SDK
+    sdk2(2,1)=41.0_SDK
+    sdk2(1,2)=32.0_SDK
+    sdk2(2,2)=42.0_SDK
+    CALL testParam%add('testPL->testSDKa2_2',sdk2,'comment')
+    CALL testParam%add('testPL->testSDKa2_2',sdk2,'comment')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_SDK_a2 -'// &
+      ' parameter name "testPL->testSDKa2_2" already exists! Use set method or full'// &
+        ' parameter list path!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
+    CALL testParam%get('testPL->testSDKa2',sdk2)
+    bool=ALL(sdk2 == RESHAPE((/11._SDK,21._SDK,12._SDK,22._SDK/),(/2,2/)))
+    ASSERT(bool,'%add sdk2')
+    CALL testParam%get('testPL->testSDKa2_2',sdk2)
+    bool=ALL(sdk2 == RESHAPE((/31._SDK,41._SDK,32._SDK,42._SDK/),(/2,2/)))
+    ASSERT(bool,'%add sdk2')
     
     !Testing addition of 2-D array SNK routine to parameter list
+    ALLOCATE(snk2(2,2))
     snk2(1,1)=11
     snk2(2,1)=21
     snk2(1,2)=12
     snk2(2,2)=22
-    CALL testParam%add('testPL->testSNK2a',snk2)
+    CALL testParam%add('testPL->testSNKa2',snk2)
+    snk2(1,1)=31
+    snk2(2,1)=41
+    snk2(1,2)=32
+    snk2(2,2)=42
+    CALL testParam%add('testPL->testSNKa2_2',snk2,'comment')
+    CALL testParam%add('testPL->testSNKa2_2',snk2,'comment')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_SNK_a2 -'// &
+      ' parameter name "testPL->testSNKa2_2" already exists! Use set method or full'// &
+        ' parameter list path!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
+    CALL testParam%get('testPL->testSNKa2',snk2)
+    bool=ALL(snk2 == RESHAPE((/11_SNK,21_SNK,12_SNK,22_SNK/),(/2,2/)))
+    ASSERT(bool,'%add snk2')
+    CALL testParam%get('testPL->testSNKa2_2',snk2)
+    bool=ALL(snk2 == RESHAPE((/31_SNK,41_SNK,32_SNK,42_SNK/),(/2,2/)))
+    ASSERT(bool,'%add snk2')
     
     !Testing addition of 2-D array SLK routine to parameter list
+    ALLOCATE(slk2(2,2))
     slk2(1,1)=110
     slk2(2,1)=210
     slk2(1,2)=120
     slk2(2,2)=220
-    CALL testParam%add('testPL->testSLK2a',slk2)
+    CALL testParam%add('testPL->testSLKa2',slk2)
+    slk2(1,1)=310
+    slk2(2,1)=410
+    slk2(1,2)=320
+    slk2(2,2)=420
+    CALL testParam%add('testPL->testSLKa2_2',slk2,'comment')
+    CALL testParam%add('testPL->testSLKa2_2',slk2,'comment')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_SLK_a2 -'// &
+      ' parameter name "testPL->testSLKa2_2" already exists! Use set method or full'// &
+        ' parameter list path!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
+    CALL testParam%get('testPL->testSLKa2',slk2)
+    bool=ALL(slk2 == RESHAPE((/110_SLK,210_SLK,120_SLK,220_SLK/),(/2,2/)))
+    ASSERT(bool,'%add slk2')
+    CALL testParam%get('testPL->testSLKa2_2',slk2)
+    bool=ALL(slk2 == RESHAPE((/310_SLK,410_SLK,320_SLK,420_SLK/),(/2,2/)))
+    ASSERT(bool,'%add slk2')
     
     !Testing addition of 2-D array STR routine to parameter list
+    ALLOCATE(str2(2,2))
     str2(1,1)='stringarray1'
     str2(2,1)='stringarray2'
     str2(1,2)='stringarray3'
     str2(2,2)='stringarray4'
-    CALL testParam%add('testPL->testSTR2a',str2)
+    CALL testParam%add('testPL->testSTRa2',str2)
+    str2(1,1)='stringarray5'
+    str2(2,1)='stringarray6'
+    str2(1,2)='stringarray7'
+    str2(2,2)='stringarray8'
+    CALL testParam%add('testPL->testSTRa2_2',str2,'comment')
+    CALL testParam%add('testPL->testSTRa2_2',str2,'comment')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_STR_a2 -'// &
+      ' parameter name "testPL->testSTRa2_2" already exists! Use set method or full'// &
+        ' parameter list path!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
+    CALL testParam%get('testPL->testSTRa2',str2)
+    bool=str2(1,1) == 'stringarray1' .AND. str2(2,1) == 'stringarray2' .AND. &
+      str2(1,2) == 'stringarray3' .AND. str2(2,2) == 'stringarray4'
+    ASSERT(bool,'%add str2')
+    CALL testParam%get('testPL->testSTRa2_2',str2)
+    bool=str2(1,1) == 'stringarray5' .AND. str2(2,1) == 'stringarray6' .AND. &
+      str2(1,2) == 'stringarray7' .AND. str2(2,2) == 'stringarray8'
+    ASSERT(bool,'%add str2')
     
     !Testing addition of 3-D array SSK routine to parameter list
+    ALLOCATE(ssk3(2,2,2))
     ssk3(1,1,1)=1.11_SSK
     ssk3(2,1,1)=2.11_SSK
     ssk3(1,2,1)=1.21_SSK
@@ -3584,9 +4240,33 @@ PROGRAM testParameterLists
     ssk3(2,1,2)=2.12_SSK
     ssk3(1,2,2)=1.22_SSK
     ssk3(2,2,2)=2.22_SSK
-    CALL testParam%add('testPL->testSSK3a',ssk3)
+    CALL testParam%add('testPL->testSSKa3',ssk3)
+    ssk3(1,1,1)=3.11_SSK
+    ssk3(2,1,1)=4.11_SSK
+    ssk3(1,2,1)=3.21_SSK
+    ssk3(2,2,1)=4.21_SSK
+    ssk3(1,1,2)=3.12_SSK
+    ssk3(2,1,2)=4.12_SSK
+    ssk3(1,2,2)=3.22_SSK
+    ssk3(2,2,2)=4.22_SSK
+    CALL testParam%add('testPL->testSSKa3_2',ssk3,'comment')
+    CALL testParam%add('testPL->testSSKa3_2',ssk3,'comment')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_SSK_a3 -'// &
+      ' parameter name "testPL->testSSKa3_2" already exists! Use set method or full'// &
+        ' parameter list path!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
+    CALL testParam%get('testPL->testSSKa3',ssk3)
+    bool=ALL(ssk3 .APPROXEQA. RESHAPE((/1.11_SSK,2.11_SSK,1.21_SSK,2.21_SSK, &
+      1.12_SSK,2.12_SSK,1.22_SSK,2.22_SSK/),(/2,2,2/)))
+    ASSERT(bool,'%add ssk3')
+    CALL testParam%get('testPL->testSSKa3_2',ssk3)
+    bool=ALL(ssk3 .APPROXEQA. RESHAPE((/3.11_SSK,4.11_SSK,3.21_SSK,4.21_SSK, &
+      3.12_SSK,4.12_SSK,3.22_SSK,4.22_SSK/),(/2,2,2/)))
+    ASSERT(bool,'%add ssk3')
     
     !Testing addition of 3-D array SDK routine to parameter list
+    ALLOCATE(sdk3(2,2,2))
     sdk3(1,1,1)=11.1_SDK
     sdk3(2,1,1)=21.1_SDK
     sdk3(1,2,1)=12.1_SDK
@@ -3595,9 +4275,33 @@ PROGRAM testParameterLists
     sdk3(2,1,2)=21.2_SDK
     sdk3(1,2,2)=12.2_SDK
     sdk3(2,2,2)=22.2_SDK
-    CALL testParam%add('testPL->testSDK3a',sdk3)
+    CALL testParam%add('testPL->testSDKa3',sdk3)
+    sdk3(1,1,1)=31.1_SDK
+    sdk3(2,1,1)=41.1_SDK
+    sdk3(1,2,1)=32.1_SDK
+    sdk3(2,2,1)=42.1_SDK
+    sdk3(1,1,2)=31.2_SDK
+    sdk3(2,1,2)=41.2_SDK
+    sdk3(1,2,2)=32.2_SDK
+    sdk3(2,2,2)=42.2_SDK
+    CALL testParam%add('testPL->testSDKa3_2',sdk3,'comment')
+    CALL testParam%add('testPL->testSDKa3_2',sdk3,'comment')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_SDK_a3 -'// &
+      ' parameter name "testPL->testSDKa3_2" already exists! Use set method or full'// &
+        ' parameter list path!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
+    CALL testParam%get('testPL->testSDKa3',sdk3)
+    bool=ALL(sdk3 .APPROXEQA. RESHAPE((/11.1_SDK,21.1_SDK,12.1_SDK,22.1_SDK, &
+      11.2_SDK,21.2_SDK,12.2_SDK,22.2_SDK/),(/2,2,2/)))
+    ASSERT(bool,'%add sdk3')
+    CALL testParam%get('testPL->testSDKa3_2',sdk3)
+    bool=ALL(sdk3 .APPROXEQA. RESHAPE((/31.1_SDK,41.1_SDK,32.1_SDK,42.1_SDK, &
+      31.2_SDK,41.2_SDK,32.2_SDK,42.2_SDK/),(/2,2,2/)))
+    ASSERT(bool,'%add sdk3')
     
     !Testing addition of 3-D array SNK routine to parameter list
+    ALLOCATE(snk3(2,2,2))
     snk3(1,1,1)=111
     snk3(2,1,1)=211
     snk3(1,2,1)=121
@@ -3606,112 +4310,96 @@ PROGRAM testParameterLists
     snk3(2,1,2)=212
     snk3(1,2,2)=122
     snk3(2,2,2)=222
-    CALL testParam%add('testPL->testSNK3a',valsnk3a)
+    CALL testParam%add('testPL->testSNKa3',snk3)
+    snk3(1,1,1)=311
+    snk3(2,1,1)=411
+    snk3(1,2,1)=321
+    snk3(2,2,1)=421
+    snk3(1,1,2)=312
+    snk3(2,1,2)=412
+    snk3(1,2,2)=322
+    snk3(2,2,2)=422
+    CALL testParam%add('testPL->testSNKa3_2',snk3,'comment')
+    CALL testParam%add('testPL->testSNKa3_2',snk3,'comment')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_SNK_a3 -'// &
+      ' parameter name "testPL->testSNKa3_2" already exists! Use set method or full'// &
+        ' parameter list path!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
+    CALL testParam%get('testPL->testSNKa3',snk3)
+    bool=ALL(snk3 == RESHAPE((/111_SNK,211_SNK,121_SNK,221_SNK, &
+      112_SNK,212_SNK,122_SNK,222_SNK/),(/2,2,2/)))
+    ASSERT(bool,'%add snk3')
+    CALL testParam%get('testPL->testSNKa3_2',snk3)
+    bool=ALL(snk3 == RESHAPE((/311_SNK,411_SNK,321_SNK,421_SNK, &
+      312_SNK,412_SNK,322_SNK,422_SNK/),(/2,2,2/)))
+    ASSERT(bool,'%add snk3')
     
     !Testing addition of 3-D array SLK routine to parameter list
-    slk3(1,1,1)=1110
-    slk3(2,1,1)=2110
-    slk3(1,2,1)=1210
-    slk3(2,2,1)=2210
-    slk3(1,1,2)=1120
-    slk3(2,1,2)=2120
-    slk3(1,2,2)=1220
-    slk3(2,2,2)=2220
-    CALL testParam%add('testPL->testSLK3a',slk3)
+    ALLOCATE(slk3(2,2,2))
+    slk3(1,1,1)=111
+    slk3(2,1,1)=211
+    slk3(1,2,1)=121
+    slk3(2,2,1)=221
+    slk3(1,1,2)=112
+    slk3(2,1,2)=212
+    slk3(1,2,2)=122
+    slk3(2,2,2)=222
+    CALL testParam%add('testPL->testSLKa3',slk3)
+    slk3(1,1,1)=311
+    slk3(2,1,1)=411
+    slk3(1,2,1)=321
+    slk3(2,2,1)=421
+    slk3(1,1,2)=312
+    slk3(2,1,2)=412
+    slk3(1,2,2)=322
+    slk3(2,2,2)=422
+    CALL testParam%add('testPL->testSLKa3_2',slk3,'comment')
+    CALL testParam%add('testPL->testSLKa3_2',slk3,'comment')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_SLK_a3 -'// &
+      ' parameter name "testPL->testSLKa3_2" already exists! Use set method or full'// &
+        ' parameter list path!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
+    CALL testParam%get('testPL->testSLKa3',slk3)
+    bool=ALL(slk3 == RESHAPE((/111_SLK,211_SLK,121_SLK,221_SLK, &
+      112_SLK,212_SLK,122_SLK,222_SLK/),(/2,2,2/)))
+    ASSERT(bool,'%add slk3')
+    CALL testParam%get('testPL->testSLKa3_2',slk3)
+    bool=ALL(slk3 == RESHAPE((/311_SLK,411_SLK,321_SLK,421_SLK, &
+      312_SLK,412_SLK,322_SLK,422_SLK/),(/2,2,2/)))
+    ASSERT(bool,'%add slk3')
     
-    
-    !!Testing addition of SSK routine to parameter list with description
-    !CALL testParam%add('testPL2->testSSK',9.0_SSK,'Creates a new sublist')
-    !
-    !!Testing addition of SDK routine to parameter list with description
-    !CALL testParam%add('testPL2->testSDK',2.0_SDK,'Creates a new sublist')
-    !
-    !!Testing addition of SNK routine to parameter list with description
-    !CALL testParam%add('testPL2->testSNK',3_SNK,'Creates a new sublist')
-    !
-    !!Testing addition of SLK routine to parameter list with description
-    !CALL testParam%add('testPL2->testSLK',4_SLK,'Creates a new sublist')
-    !
-    !!Testing addition of SBK routine to parameter list with description
-    !CALL testParam%add('testPL2->testSBK',.FALSE.,'Creates a new sublist')
-    !
-    !!Testing addition of STR routine to parameter list with description
-    !valstr='string3'
-    !CALL testParam%add('testPL2->testSTR',valstr,'Creates a new sublist')
-    !
-    !!Testing addition of 1-D array SSK routine to parameter list with description
-    !valssk1a=2.5_SSK
-    !CALL testParam%add('testPL2->testSSK1a',valssk1a,'Creates a new sublist')
-    !
-    !!Testing addition of 1-D array SDK routine to parameter list with description
-    !valsdk1a=4.5_SDK
-    !CALL testParam%add('testPL2->testSDK1a',valsdk1a,'Creates a new sublist')
-    !
-    !!Testing addition of 1-D array SNK routine to parameter list with description
-    !valsnk1a=123_SNK
-    !CALL testParam%add('testPL2->testSNK1a',valsnk1a,'Creates a new sublist')
-    !
-    !!Testing addition of 1-D array SLK routine to parameter list with description
-    !valslk1a=-1230_SLK
-    !CALL testParam%add('testPL2->testSLK1a',valslk1a,'Creates a new sublist')
-    !
-    !!Testing addition of 1-D array SBK routine to parameter list with description
-    !valsbk1a=.FALSE.
-    !CALL testParam%add('testPL2->testSBK1a',valsbk1a,'Creates a new sublist')
-    !
-    !!Testing addition of 1-D array STR routine to parameter list with description
-    !valstr1a(1)='yet another stringarray1'
-    !valstr1a(2)='yet another stringarray2'
-    !CALL testParam%add('testPL2->testSTR1a',valstr1a,'Creates a new sublist')
-    !
-    !!Testing addition of 2-D array SSK routine to parameter list with description
-    !valssk2a=2.5_SSK
-    !CALL testParam%add('testPL2->testSSK2a',valssk2a,'Creates a new sublist')
-    !
-    !!Testing addition of 2-D array SDK routine to parameter list with description
-    !valsdk2a=4.5_SDK
-    !CALL testParam%add('testPL2->testSDK2a',valsdk2a,'Creates a new sublist')
-    !
-    !!Testing addition of 2-D array SNK routine to parameter list with description
-    !valsnk2a=123_SNK
-    !CALL testParam%add('testPL2->testSNK2a',valsnk2a,'Creates a new sublist')
-    !
-    !!Testing addition of 2-D array SLK routine to parameter list with description
-    !valslk2a=-1230_SLK
-    !CALL testParam%add('testPL2->testSLK2a',valslk2a,'Creates a new sublist')
-    !
-    !!Testing addition of 1-D array STR routine to parameter list with description
-    !valstr2a(1,1)='yet another stringarray1'
-    !valstr2a(1,2)='yet another stringarray2'
-    !valstr2a(2,1)='yet another stringarray3'
-    !valstr2a(2,2)='yet another stringarray4'
-    !CALL testParam%add('testPL2->testSTR2a',valstr2a,'Creates a new sublist')
-    !
-    !!Testing addition of 3-D array SSK routine to parameter list with description
-    !valssk3a=2.5_SSK
-    !CALL testParam%add('testPL2->testSSK3a',valssk3a,'Creates a new sublist')
-    !
-    !!Testing addition of 3-D array SDK routine to parameter list with description
-    !valsdk3a=4.5_SDK
-    !CALL testParam%add('testPL2->testSDK3a',valsdk3a,'Creates a new sublist')
-    !
-    !!Testing addition of 3-D array SNK routine to parameter list with description
-    !valsnk3a=123_SNK
-    !CALL testParam%add('testPL2->testSNK3a',valsnk3a,'Creates a new sublist')
-    !
-    !!Testing addition of 3-D array SLK routine to parameter list with description
-    !valslk3a=-1230_SLK
-    !CALL testParam%add('testPL2->testSLK3a',valslk3a,'Creates a new sublist')
-
-    !
-    !Calling %verify here to check all of the possible PL types
-    !
-    !testParam2=testParam
-    !CALL testParam%verify(testParam2,valsbk)
+    !Test adding of a bad paramtype
     !CALL testParam2%clear()
-    !!Testing the local exception handler while adding a parameter to another parameter
-    !CALL testParam2%add('testPL3->sublist1',testParam)
+    !ALLOCATE(testParam2%pdat)
+    !CALL testParam2%init('testAdd',RESHAPE((/-1.0_SDK/),(/1,1,1/))) 
+    !testParam%pdat%datatype='test_type'
+    !CALL testParam%add('testPL',testParam2) !Type mismatch
+    !msg=eParams%getLastMessage()
+    !refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType -'// &
+    !  ' cannot add parameter to type "test_type"!'
+    !ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
+    !CALL testParam2%clear()
+    
     CALL clear_test_vars()
+    !Deallocate locals
+    DEALLOCATE(sbk1)
+    DEALLOCATE(snk1)
+    DEALLOCATE(snk2)
+    DEALLOCATE(snk3)
+    DEALLOCATE(slk1)
+    DEALLOCATE(slk2)
+    DEALLOCATE(slk3)
+    DEALLOCATE(ssk1)
+    DEALLOCATE(ssk2)
+    DEALLOCATE(ssk3)
+    DEALLOCATE(sdk1)
+    DEALLOCATE(sdk2)
+    DEALLOCATE(sdk3)
+    DEALLOCATE(str1)
+    DEALLOCATE(str2)
+  
   ENDSUBROUTINE testAdd
 !
 !-------------------------------------------------------------------------------
@@ -3758,6 +4446,7 @@ PROGRAM testParameterLists
     CALL testParam%add('level 1->level 2->val 2',2.0)
     
     n=0
+    addr=''
     CALL testParam%getNextParam(addr,iParam)
     DO WHILE(ASSOCIATED(iParam))
       n=n+1
@@ -3768,150 +4457,96 @@ PROGRAM testParameterLists
       CALL testParam%getNextParam(addr,iParam)
     ENDDO
     ASSERT(n == 6,'number of iters')
+    
+    !Root search with a paramtype pointer.
+    n=0
+    CALL testParam%get('Level 1',someParam)
+    addr=''
+    CALL someParam%getNextParam(addr,iParam)
+    DO WHILE(ASSOCIATED(iParam))
+      n=n+1
+      ASSERT(refaddr(n) == addr,'addr')
+      FINFO() n,'"'//TRIM(refaddr(n))//'" "'//TRIM(addr)//'"'
+      ASSERT(refname(n) == iParam%name,'addr')
+      FINFO() n,'"'//TRIM(refname(n))//'" "'//TRIM(iParam%name)//'"'
+      CALL testParam%get(CHAR(addr),someParam)
+      CALL someParam%getNextParam(addr,iParam)
+    ENDDO
+    ASSERT(n == 1,'number of iters')
+    
+    !search with a non root starting point
+    n=2
+    addr='level 1->level 2'
+    CALL testParam%getNextParam(addr,iParam)
+    DO WHILE(ASSOCIATED(iParam))
+      n=n+1
+      ASSERT(refaddr(n) == addr,'addr')
+      FINFO() n,'"'//TRIM(refaddr(n))//'" "'//TRIM(addr)//'"'
+      ASSERT(refname(n) == iParam%name,'addr')
+      FINFO() n,'"'//TRIM(refname(n))//'" "'//TRIM(iParam%name)//'"'
+      CALL testParam%getNextParam(addr,iParam)
+    ENDDO
+    ASSERT(n == 6,'number of iters')
+    
+    !search for the last value in the list (Can't find out how to get to the uncovered code)
+    n=6
+    addr='level 1->val 3'
+    CALL testParam%getNextParam(addr,iParam)
+    DO WHILE(ASSOCIATED(iParam))
+      n=n+1
+      ASSERT(refaddr(n) == addr,'addr')
+      FINFO() n,'"'//TRIM(refaddr(n))//'" "'//TRIM(addr)//'"'
+      ASSERT(refname(n) == iParam%name,'addr')
+      FINFO() n,'"'//TRIM(refname(n))//'" "'//TRIM(iParam%name)//'"'
+      CALL testParam%getNextParam(addr,iParam)
+    ENDDO
+    ASSERT(n == 6,'number of iters')
+    
   ENDSUBROUTINE testGetNextParam
 !
 !-------------------------------------------------------------------------------
   SUBROUTINE testRemove()
-    !Setup list for test
+    CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
+  
+    someParam => NULL()
     
+    !Testing removal of parameter that doesn't exist
+    CALL testParam%remove('testSSK3')
+    !
+    !Testing removal of parameter that is erroneous, need to have a value before '->'
+    CALL testParam%remove('->error')
     
-    !!Testing removal of parameter that doesn't exist
-    !CALL testParam%remove('testSSK3')
-    !
-    !!Testing removal of parameter that is erroneous, need to have a value before '->'
-    !CALL testParam%remove('->error')
-    !!Testing the SSK removal routine
-    !CALL testParam%remove('testSSK')
-    !
-    !!Testing the SSK removal routine in a parameter list (with description)
-    !CALL testParam%remove('testPL2->testSSK2')
-    !
-    !!Testing the SDK removal routine in a parameter list (with description)
-    !CALL testParam%remove('testPL2->testSDK')
-    !
-    !!Testing the SNK removal routine in a parameter list (with description)
-    !CALL testParam%remove('testPL2->testSNK')
-    !
-    !!Testing the SLK removal routine in a parameter list (with description)
-    !CALL testParam%remove('testPL2->testSLK')
-    !
-    !!Testing the SBK removal routine in a parameter list (with description)
-    !CALL testParam%remove('testPL2->testSBK')
-    !
-    !!Testing the STR removal routine in a parameter list (with description)
-    !CALL testParam%remove('testPL2->testSTR')
-    !
-    !!Testing the 1-D array SSK removal routine in a parameter list (with description)
-    !CALL testParam%remove('testPL2->testSSK1a')
-    !
-    !!Testing the 1-D array SDK removal routine in a parameter list (with description)
-    !CALL testParam%remove('testPL2->testSDK1a')
-    !
-    !!Testing the 1-D array SNK removal routine in a parameter list (with description)
-    !CALL testParam%remove('testPL2->testSNK1a')
-    !
-    !!Testing the 1-D array SLK removal routine in a parameter list (with description)
-    !CALL testParam%remove('testPL2->testSLK1a')
-    !
-    !!Testing the 1-D array SBK removal routine in a parameter list (with description)
-    !CALL testParam%remove('testPL2->testSBK1a')
-    !
-    !!Testing the 1-D array STR removal routine in a parameter list (with description)
-    !CALL testParam%remove('testPL2->testSTR1a')
-    !
-    !!Testing the 2-D array SSK removal routine in a parameter list (with description)
-    !CALL testParam%remove('testPL2->testSSK2a')
-    !
-    !!Testing the 2-D array SDK removal routine in a parameter list (with description)
-    !CALL testParam%remove('testPL2->testSDK2a')
-    !
-    !!Testing the 2-D array SNK removal routine in a parameter list (with description)
-    !CALL testParam%remove('testPL2->testSNK2a')
-    !
-    !!Testing the 2-D array SLK removal routine in a parameter list (with description)
-    !CALL testParam%remove('testPL2->testSLK2a')
-    !
-    !!Testing the 2-D array STR removal routine in a parameter list (with description)
-    !CALL testParam%remove('testPL2->testSTR2a')
-    !
-    !!Testing the 3-D array SSK removal routine in a parameter list (with description)
-    !CALL testParam%remove('testPL2->testSSK3a')
-    !
-    !!Testing the 3-D array SDK removal routine in a parameter list (with description)
-    !CALL testParam%remove('testPL2->testSDK3a')
-    !
-    !!Testing the 3-D array SNK removal routine in a parameter list (with description)
-    !CALL testParam%remove('testPL2->testSNK3a')
-    !
-    !!Testing the 3-D array SLK removal routine in a parameter list (with description)
-    !CALL testParam%remove('testPL2->testSLK3a')
-    !
-    !!Testing the parameter list removal routine
-    !CALL testParam%remove('testPL2')
-    !
-    !!Testing the SSK removal routine in a parameter list 
-    !CALL testParam%remove('testPL->testSSK2')
-    !
-    !!Testing the SDK removal routine in a parameter list 
-    !CALL testParam%remove('testPL->testSDK')
-    !
-    !!Testing the SNK removal routine in a parameter list 
-    !CALL testParam%remove('testPL->testSNK')
-    !
-    !!Testing the SLK removal routine in a parameter list 
-    !CALL testParam%remove('testPL->testSLK')
-    !
-    !!Testing the SBK removal routine in a parameter list 
-    !CALL testParam%remove('testPL->testSBK')
-    !
-    !!Testing the STR removal routine in a parameter list 
-    !CALL testParam%remove('testPL->testSTR')
-    !
-    !!Testing the 1-D array SSK removal routine in a parameter list 
-    !CALL testParam%remove('testPL->testSSK1a')
-    !
-    !!Testing the 1-D array SDK removal routine in a parameter list 
-    !CALL testParam%remove('testPL->testSDK1a')
-    !
-    !!Testing the 1-D array SNK removal routine in a parameter list 
-    !CALL testParam%remove('testPL->testSNK1a')
-    !
-    !!Testing the 1-D array SLK removal routine in a parameter list 
-    !CALL testParam%remove('testPL->testSLK1a')
-    !
-    !!Testing the 1-D array SBK removal routine in a parameter list 
-    !CALL testParam%remove('testPL->testSBK1a')
-    !
-    !!Testing the 1-D array STR removal routine in a parameter list 
-    !CALL testParam%remove('testPL->testSTR1a')
-    !
-    !!Testing the 2-D array SSK removal routine in a parameter list 
-    !CALL testParam%remove('testPL->testSSK2a')
-    !
-    !!Testing the 2-D array SDK removal routine in a parameter list 
-    !CALL testParam%remove('testPL->testSDK2a')
-    !
-    !!Testing the 2-D array SNK removal routine in a parameter list 
-    !CALL testParam%remove('testPL->testSNK2a')
-    !
-    !!Testing the 2-D array SLK removal routine in a parameter list 
-    !CALL testParam%remove('testPL->testSLK2a')
-    !
-    !!Testing the 2-D array STR removal routine in a parameter list 
-    !CALL testParam%remove('testPL->testSTR2a')
-    !
-    !!Testing the 3-D array SSK removal routine in a parameter list 
-    !CALL testParam%remove('testPL->testSSK3a')
-    !
-    !!Testing the 3-D array SDK removal routine in a parameter list 
-    !CALL testParam%remove('testPL->testSDK3a')
-    !
-    !!Testing the 3-D array SNK removal routine in a parameter list 
-    !CALL testParam%remove('testPL->testSNK3a')
-    !
-    !!Testing the 3-D array SLK removal routine in a parameter list 
-    !CALL testParam%remove('testPL->testSLK3a')
-    !
+    !Testing removal of a blank
+    CALL testParam%remove('')
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::remove_ParamType -'// &
+      ' cannot search for a blank name!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'blank remove')
+    
+    !Set up actual values for removal
+    CALL testParam%add('TestList->testSSK',1.0_SSK)
+    CALL testParam%add('TestList->FirstList->testSSK',1.0_SSK)
+    CALL testParam%add('TestList->NextList->testSDK',1.0_SDK)
+    CALL testParam%add('TestList->OtherList->testSNK',1_SNK)
+    CALL testParam%add('TestList->OtherList->testSLK',1_SLK)
+    
+    !Remove parameter at end of list
+    CALL testParam%remove('TestList->NextList->testSDK')
+    ASSERT(.NOT.testParam%has('TestList->NextList->testSDK'),'remove parameter')
+    
+    !Remove empty PL
+    CALL testParam%remove('TestList->NextList')
+    ASSERT(.NOT.testParam%has('TestList->NextList'),'remove empty pl')
+    
+    !Remove a sublist
+    CALL testParam%remove('TestList->OtherList')
+    ASSERT(.NOT.testParam%has('TestList->OtherList'),'remove parameter list')
+    
+    !Remove everything
+    CALL testParam%remove('TestList')
+    ASSERT(.NOT.testParam%has('TestList'),'remove everything')
+    
+    CALL clear_test_vars()
   ENDSUBROUTINE testRemove
 !
 !-------------------------------------------------------------------------------
@@ -4000,6 +4635,251 @@ PROGRAM testParameterLists
     
     CALL clear_test_vars()
   ENDSUBROUTINE testValidate
+!
+!-------------------------------------------------------------------------------
+  SUBROUTINE testVerify()
+    CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
+    LOGICAL(SBK) :: bool,sbk0
+    LOGICAL(SBK),ALLOCATABLE :: sbk1(:)
+    INTEGER(SNK) :: snk0
+    INTEGER(SNK),ALLOCATABLE :: snk1(:),snk2(:,:),snk3(:,:,:)
+    INTEGER(SLK) :: slk0
+    INTEGER(SLK),ALLOCATABLE :: slk1(:),slk2(:,:),slk3(:,:,:)
+    REAL(SSK) :: ssk0
+    REAL(SSK),ALLOCATABLE :: ssk1(:),ssk2(:,:),ssk3(:,:,:)
+    REAL(SDK) :: sdk0
+    REAL(SDK),ALLOCATABLE :: sdk1(:),sdk2(:,:),sdk3(:,:,:)
+    TYPE(StringType) :: str0
+    TYPE(StringType),ALLOCATABLE :: str1(:),str2(:,:)
+  
+    
+    !Testing addition of SBK routine to parameter list
+    CALL testParam%add('testPL->testSBK',.TRUE.)
+    CALL testParam%add('testPL->testSBK2',.FALSE.,'comment')
+    
+    !Testing addition of SSK routine to parameter list
+    CALL testParam%add('testPL->testSSK',7.0_SSK)
+    CALL testParam%add('testPL->testSSK2',8.0_SSK,'comment')
+    
+    !Testing addition of SDK routine to parameter list
+    CALL testParam%add('testPL->testSDK',7.0_SDK)
+    CALL testParam%add('testPL->testSDK2',8.0_SDK,'comment')
+  
+    !Testing addition of SNK routine to parameter list
+    CALL testParam%add('testPL->testSNK',7_SNK)
+    CALL testParam%add('testPL->testSNK2',8_SNK,'comment')
+  
+    !Testing addition of SLK routine to parameter list
+    CALL testParam%add('testPL->testSLK',7_SLK)
+    CALL testParam%add('testPL->testSLK2',8_SLK,'comment')
+  
+    !Testing addition of STR routine to parameter list
+    str0='string1'
+    CALL testParam%add('testPL->testSTR',str0)
+    str0='string2'
+    CALL testParam%add('testPL->testSTR2',str0,'comment')
+    
+    !Testing addition of CHAR routine to parameter list
+    CALL testParam%add('testPL->testCHAR','char1')
+    CALL testParam%add('testPL->testCHAR2','char2','comment')
+  
+    !Testing addition of 1-D array SSK routine to parameter list
+    CALL testParam%add('testPL->testSSKa1',(/1.5_SSK,1.6_SSK/))
+    CALL testParam%add('testPL->testSSKa1_2',(/1.7_SSK,1.8_SSK/),'comment')
+    
+    !Testing addition of 1-D array SDK routine to parameter list
+    CALL testParam%add('testPL->testSDKa1',(/2.5_SDK,2.6_SDK/))
+    CALL testParam%add('testPL->testSDKa1_2',(/2.7_SDK,2.8_SDK/),'comment')
+    
+    !Testing addition of 1-D array SNK routine to parameter list
+    CALL testParam%add('testPL->testSNKa1',(/-2_SNK,-3_SNK/))
+    CALL testParam%add('testPL->testSNKa1_2',(/2_SNK,3_SNK/),'comment')
+    
+    !Testing addition of 1-D array SLK routine to parameter list
+    CALL testParam%add('testPL->testSLKa1',(/-4_SLK,-5_SLK/))
+    CALL testParam%add('testPL->testSLKa1_2',(/4_SLK,5_SLK/),'comment')
+    
+    !Testing addition of 1-D array SBK routine to parameter list
+    CALL testParam%add('testPL->testSBKa1',(/.TRUE.,.FALSE./))
+    CALL testParam%add('testPL->testSBKa1_2',(/.FALSE.,.FALSE./),'comment')
+    
+    !Testing addition of 1-D array STR routine to parameter list
+    ALLOCATE(str1(2))
+    str1(1)='stringarray1'
+    str1(2)='stringarray2'
+    CALL testParam%add('testPL->testSTRa1',str1)
+    str1(1)='stringarray3'
+    str1(2)='stringarray4'
+    CALL testParam%add('testPL->testSTRa1_2',str1,'comment')
+    
+    !Testing addition of 2-D array SSK routine to parameter list
+    ALLOCATE(ssk2(2,2))
+    ssk2(1,1)=1.1_SSK
+    ssk2(2,1)=2.1_SSK
+    ssk2(1,2)=1.2_SSK
+    ssk2(2,2)=2.2_SSK
+    CALL testParam%add('testPL->testSSKa2',ssk2)
+    ssk2(1,1)=3.1_SSK
+    ssk2(2,1)=4.1_SSK
+    ssk2(1,2)=3.2_SSK
+    ssk2(2,2)=4.2_SSK
+    CALL testParam%add('testPL->testSSKa2_2',ssk2,'comment')
+    
+    !Testing addition of 2-D array SDK routine to parameter list
+    ALLOCATE(sdk2(2,2))
+    sdk2(1,1)=11.0_SDK
+    sdk2(2,1)=21.0_SDK
+    sdk2(1,2)=12.0_SDK
+    sdk2(2,2)=22.0_SDK
+    CALL testParam%add('testPL->testSDKa2',sdk2)
+    sdk2(1,1)=31.0_SDK
+    sdk2(2,1)=41.0_SDK
+    sdk2(1,2)=32.0_SDK
+    sdk2(2,2)=42.0_SDK
+    CALL testParam%add('testPL->testSDKa2_2',sdk2,'comment')
+    
+    !Testing addition of 2-D array SNK routine to parameter list
+    ALLOCATE(snk2(2,2))
+    snk2(1,1)=11
+    snk2(2,1)=21
+    snk2(1,2)=12
+    snk2(2,2)=22
+    CALL testParam%add('testPL->testSNKa2',snk2)
+    snk2(1,1)=31
+    snk2(2,1)=41
+    snk2(1,2)=32
+    snk2(2,2)=42
+    CALL testParam%add('testPL->testSNKa2_2',snk2,'comment')
+    
+    !Testing addition of 2-D array SLK routine to parameter list
+    ALLOCATE(slk2(2,2))
+    slk2(1,1)=110
+    slk2(2,1)=210
+    slk2(1,2)=120
+    slk2(2,2)=220
+    CALL testParam%add('testPL->testSLKa2',slk2)
+    slk2(1,1)=310
+    slk2(2,1)=410
+    slk2(1,2)=320
+    slk2(2,2)=420
+    CALL testParam%add('testPL->testSLKa2_2',slk2,'comment')
+    
+    !Testing addition of 2-D array STR routine to parameter list
+    ALLOCATE(str2(2,2))
+    str2(1,1)='stringarray1'
+    str2(2,1)='stringarray2'
+    str2(1,2)='stringarray3'
+    str2(2,2)='stringarray4'
+    CALL testParam%add('testPL->testSTRa2',str2)
+    str2(1,1)='stringarray5'
+    str2(2,1)='stringarray6'
+    str2(1,2)='stringarray7'
+    str2(2,2)='stringarray8'
+    CALL testParam%add('testPL->testSTRa2_2',str2,'comment')
+    
+    !Testing addition of 3-D array SSK routine to parameter list
+    ALLOCATE(ssk3(2,2,2))
+    ssk3(1,1,1)=1.11_SSK
+    ssk3(2,1,1)=2.11_SSK
+    ssk3(1,2,1)=1.21_SSK
+    ssk3(2,2,1)=2.21_SSK
+    ssk3(1,1,2)=1.12_SSK
+    ssk3(2,1,2)=2.12_SSK
+    ssk3(1,2,2)=1.22_SSK
+    ssk3(2,2,2)=2.22_SSK
+    CALL testParam%add('testPL->testSSKa3',ssk3)
+    ssk3(1,1,1)=3.11_SSK
+    ssk3(2,1,1)=4.11_SSK
+    ssk3(1,2,1)=3.21_SSK
+    ssk3(2,2,1)=4.21_SSK
+    ssk3(1,1,2)=3.12_SSK
+    ssk3(2,1,2)=4.12_SSK
+    ssk3(1,2,2)=3.22_SSK
+    ssk3(2,2,2)=4.22_SSK
+    CALL testParam%add('testPL->testSSKa3_2',ssk3,'comment')
+    
+    !Testing addition of 3-D array SDK routine to parameter list
+    ALLOCATE(sdk3(2,2,2))
+    sdk3(1,1,1)=11.1_SDK
+    sdk3(2,1,1)=21.1_SDK
+    sdk3(1,2,1)=12.1_SDK
+    sdk3(2,2,1)=22.1_SDK
+    sdk3(1,1,2)=11.2_SDK
+    sdk3(2,1,2)=21.2_SDK
+    sdk3(1,2,2)=12.2_SDK
+    sdk3(2,2,2)=22.2_SDK
+    CALL testParam%add('testPL->testSDKa3',sdk3)
+    sdk3(1,1,1)=31.1_SDK
+    sdk3(2,1,1)=41.1_SDK
+    sdk3(1,2,1)=32.1_SDK
+    sdk3(2,2,1)=42.1_SDK
+    sdk3(1,1,2)=31.2_SDK
+    sdk3(2,1,2)=41.2_SDK
+    sdk3(1,2,2)=32.2_SDK
+    sdk3(2,2,2)=42.2_SDK
+    CALL testParam%add('testPL->testSDKa3_2',sdk3,'comment')
+    
+    !Testing addition of 3-D array SNK routine to parameter list
+    ALLOCATE(snk3(2,2,2))
+    snk3(1,1,1)=111
+    snk3(2,1,1)=211
+    snk3(1,2,1)=121
+    snk3(2,2,1)=221
+    snk3(1,1,2)=112
+    snk3(2,1,2)=212
+    snk3(1,2,2)=122
+    snk3(2,2,2)=222
+    CALL testParam%add('testPL->testSNKa3',snk3)
+    snk3(1,1,1)=311
+    snk3(2,1,1)=411
+    snk3(1,2,1)=321
+    snk3(2,2,1)=421
+    snk3(1,1,2)=312
+    snk3(2,1,2)=412
+    snk3(1,2,2)=322
+    snk3(2,2,2)=422
+    CALL testParam%add('testPL->testSNKa3_2',snk3,'comment')
+    
+    !Testing addition of 3-D array SLK routine to parameter list
+    ALLOCATE(slk3(2,2,2))
+    slk3(1,1,1)=111
+    slk3(2,1,1)=211
+    slk3(1,2,1)=121
+    slk3(2,2,1)=221
+    slk3(1,1,2)=112
+    slk3(2,1,2)=212
+    slk3(1,2,2)=122
+    slk3(2,2,2)=222
+    CALL testParam%add('testPL->testSLKa3',slk3)
+    slk3(1,1,1)=311
+    slk3(2,1,1)=411
+    slk3(1,2,1)=321
+    slk3(2,2,1)=421
+    slk3(1,1,2)=312
+    slk3(2,1,2)=412
+    slk3(1,2,2)=322
+    slk3(2,2,2)=422
+    CALL testParam%add('testPL->testSLKa3_2',slk3,'comment')
+    
+    !assign the same PL
+    testParam2=testParam
+    CALL testParam%verify(testParam2,bool)
+    ASSERT(bool,'%verify the copy')
+    
+    !Deallocate locals
+    DEALLOCATE(snk2)
+    DEALLOCATE(snk3)
+    DEALLOCATE(slk2)
+    DEALLOCATE(slk3)
+    DEALLOCATE(ssk2)
+    DEALLOCATE(ssk3)
+    DEALLOCATE(sdk2)
+    DEALLOCATE(sdk3)
+    DEALLOCATE(str1)
+    DEALLOCATE(str2)
+  
+    CALL clear_test_vars()
+  ENDSUBROUTINE testVerify
 !
 !-------------------------------------------------------------------------------
 !Clear all the test variables

@@ -52,7 +52,6 @@ PROGRAM testTAU_Stubs
   WRITE(*,*) tid,' profiler2=',profiler2
   CALL TAU_PROFILE_TIMER(profiler2,'Operation 2')
   WRITE(*,*) tid,' profiler2=',profiler2
-  WRITE(*,*) tid,'nProfiles=',TauStubLibData%nProfiles
   CALL TAU_PROFILE_START(profiler1)
   CALL sleep(1)
   CALL TAU_PROFILE_START(profiler2)

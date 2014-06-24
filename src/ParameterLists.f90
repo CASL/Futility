@@ -1147,10 +1147,28 @@ MODULE ParameterLists
     ENDFUNCTION isEqual_ParamType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param thisParam
-!> @param addr
-!> @param param
+!> @brief Routine can be used as an "iterator". It takes an absolute list
+!>        address and returns the next parameter encountered from the address.
+!> @param thisParam the parameter list to obtain the next parameter from
+!> @param addr the absolute address from which to find the next parameter
+!> @param param a pointer to the next parameter, value is null if the next
+!>        parameter does not exist.
+!>
+!> When @c addr is passed in empty then the root address is returned. To use
+!> This routine as an iterator, a loop of the following form should be written
+!> in the client code:
+!> @code
+!> TYPE(StringType) :: addr
+!> TYPE(ParameType) :: paramList
+!> CLASS(ParamType),POINTER :: nextParam
+!> addr=''
+!> CALL paramList%getNextParam(addr,nextParam)
+!> DO WHILE(ASSOCIATED(nextParam))
+!>   !Do stuff with nextParam
+!>   !...
+!>   CALL paramList%getNextParam(addr,nextParam)
+!> ENDDO
+!> @endcode
 !>
     SUBROUTINE getNextParam_ParamType(thisParam,addr,param)
       CLASS(ParamType),TARGET,INTENT(IN) :: thisParam
@@ -1164,7 +1182,7 @@ MODULE ParameterLists
       
       nextParam => NULL()
       tmpAddr=''
-      addrIn=addr
+      addrIn=TRIM(addr)
       IF(LEN_TRIM(addrIn) > 0) THEN
         CALL get_ParamType(thisParam,TRIM(addrIn),tmpParam)
         IF(ASSOCIATED(tmpParam)) THEN
@@ -2449,12 +2467,12 @@ MODULE ParameterLists
           ENDSELECT
         ELSE
           CALL eParams%raiseError(modName//'::'//myName// &
-            ' - "->" character is not allowed in name!')
+            ' - "->" symbol is not allowed in name!')
         ENDIF
       ELSE
         CALL eParams%raiseError(modName//'::'//myName// &
           ' - parameter '//thisParam%name//' is already initialized!'// &
-            ' Use set method instead!')
+            ' Use set method!')
       ENDIF
     ENDSUBROUTINE init_ParamType_List
 !
@@ -3579,7 +3597,7 @@ MODULE ParameterLists
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - parameter data type mismatch! Parameter type is '// &
-                    tmpParam%dataType//' and must be INTEGER(SSK)!')
+                    tmpParam%dataType//' and must be INTEGER(SLK)!')
             ENDSELECT
           ELSE
             CALL eParams%raiseError(modName//'::'//myName// &
