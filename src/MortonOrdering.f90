@@ -84,6 +84,8 @@ MODULE MortonOrdering
     INTEGER(SIK) :: ndefined=0
     !> The subdomains for the domain defined by this node
     TYPE(ZTreeNodeType),POINTER :: subdomains(:) => NULL()
+!
+!List of type bound procedures (methods) for the object
     CONTAINS
       !> @copybrief MortonOrdering::ZTree_Create
       !> @copydetails MortonOrdering::ZTree_Create
@@ -136,6 +138,9 @@ MODULE MortonOrdering
       !> @copybrief MortonOrdering::ZTree_Shave
       !> @copydetails MortonOrdering::ZTree_Shave
       PROCEDURE,PASS :: shave => ZTree_Shave
+      !> @copybrief MortonOrdering::ZTree_getAvailPartitions
+      !> @copydetails MortonOrdering::ZTree_getAvailPartitions
+      PROCEDURE,PASS :: getAvailPartitions => ZTree_getAvailPartitions
   ENDTYPE ZTreeNodeType
 !
 !===============================================================================
@@ -1065,6 +1070,29 @@ MODULE MortonOrdering
         ENDIF
       ENDIF
     ENDSUBROUTINE ZTree_Shave
+!
+!-------------------------------------------------------------------------------
+  PURE SUBROUTINE ZTree_getAvailPartitions(thisZTreeNode,avail_parts)
+    CLASS(ZTreeNodeType),INTENT(IN) :: thisZTreeNode
+    INTEGER(SIK),ALLOCATABLE,INTENT(INOUT) :: avail_parts(:)
+    INTEGER(SIK) :: il,nlevels
+    
+    IF(ALLOCATED(avail_parts)) DEALLOCATE(avail_parts)
+    
+    !Determine the number of levels for which there are partitions
+    nlevels=thisZTreeNode%getMaxLevels(0)
+    IF(nlevels > 0) THEN
+      ALLOCATE(avail_parts(nlevels))
+      DO il=1,nlevels-1
+        avail_parts(il)=thisZTreeNode%getNDomains(il)
+      ENDDO
+      
+      !The last level may be incomplete for some trees, so we just specify
+      !the last level as the total number of leafs in the tree
+      !(which is always valid)
+      avail_parts(nlevels)=thisZTreeNode%istp-thisZTreeNode%istt+1
+    ENDIF
+  ENDSUBROUTINE ZTree_getAvailPartitions
 !
 !-------------------------------------------------------------------------------
 !> @brief Partitions the global indexing within a "Z"-Tree. It returns the

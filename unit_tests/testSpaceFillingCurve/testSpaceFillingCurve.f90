@@ -46,6 +46,7 @@ PROGRAM testSpaceFillingCurve
   REGISTER_SUBTEST('Z-Tree %flattenLeafs(...)',testZTreeflattenLeafs)
   REGISTER_SUBTEST('Z-Tree %renumber(...)',testZTreeRenumber)
   REGISTER_SUBTEST('Z-Tree %shave(...)',testZTreeShave)
+  REGISTER_SUBTEST('Z-Tree %getAvailPartitions(...)',testZTreeAvailPartition)
   REGISTER_SUBTEST('Z-Tree %partition(...)',testZTreePartition)
   REGISTER_SUBTEST('Deferred construction',testDeferredConst)
 
@@ -1502,6 +1503,33 @@ PROGRAM testSpaceFillingCurve
 
       CALL testZTree%clear()
     ENDSUBROUTINE testZTreeAddtoLeafs
+!
+!-------------------------------------------------------------------------------
+!Test %partition
+    SUBROUTINE testZTreeAvailPartition()
+      INTEGER(SIK),ALLOCATABLE :: partitions(:)
+      
+      CALL testZTree%getAvailPartitions(partitions)
+      ASSERT(.NOT.ALLOCATED(partitions),'uninit.')
+      ALLOCATE(partitions(10)); partitions=0
+      CALL testZTree%getAvailPartitions(partitions)
+      ASSERT(.NOT.ALLOCATED(partitions),'uninit.')
+      CALL testZTree%init(1,4,1,4,1,4,1)
+      CALL testZTree%getAvailPartitions(partitions)
+      ASSERT(ALLOCATED(partitions),'ALLOCATED() 4x4x4')
+      ASSERT(SIZE(partitions) == 2,'ALLOCATED() 4x4x4')
+      ASSERT(partitions(1) == 8,'partitions(1)')
+      ASSERT(partitions(2) == 64,'partitions(2)')
+      CALL testZTree%clear()
+      CALL testZTree%init(1,4,1,4,1,5,1)
+      CALL testZTree%getAvailPartitions(partitions)
+      ASSERT(ALLOCATED(partitions),'ALLOCATED() 4x4x5')
+      ASSERT(SIZE(partitions) == 2,'ALLOCATED() 4x4x5')
+      ASSERT(partitions(1) == 8,'partitions(1)')
+      ASSERT(partitions(2) == 64,'partitions(2)')
+      ASSERT(partitions(3) == 80,'partitions(2)')
+      CALL testZTree%clear()
+    ENDSUBROUTINE testZTreeAvailPartition
 !
 !-------------------------------------------------------------------------------
 !Test %partition
