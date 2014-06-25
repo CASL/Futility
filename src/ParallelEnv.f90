@@ -1016,13 +1016,12 @@ MODULE ParallelEnv
         ' - input nenergy is less than 1!')
       IF(nthreads < 1) CALL eParEnv%raiseError(modName//'::'//myName// &
         ' - input nthreads is less than 1!')
-      IF(nenergy*nspace*nangle > myPE%world%nproc) &
+      IF(myPE%world%nproc < nenergy*nspace*nangle) &
         CALL eParEnv%raiseError(modName//'::'//myName//' - Number of '// &
-          'available MPI processes is insufficient to hold grid!')
-      IF(nenergy*nspace*nangle < myPE%world%nproc) &
-        CALL eParEnv%raiseWarning(modName//'::'//myName//' - Number of '// &
-          'available MPI processes is more than grid size, '// &
-            'some processes will not be used!')
+          'available MPI processes is less than specified in the input!')
+      IF(myPE%world%nproc > nenergy*nspace*nangle) &
+        CALL eParEnv%raiseError(modName//'::'//myName//' - Number of '// &
+          'available MPI processes is more than specified in the input!')
 
       IF(nerror == eParEnv%getCounter(EXCEPTION_ERROR)) THEN
         commDims(1)=nspace
