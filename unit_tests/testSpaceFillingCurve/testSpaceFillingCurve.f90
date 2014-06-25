@@ -1524,7 +1524,7 @@ PROGRAM testSpaceFillingCurve
       CALL testZTree%init(1,4,1,4,1,5,1)
       CALL testZTree%getAvailPartitions(partitions)
       ASSERT(ALLOCATED(partitions),'ALLOCATED() 4x4x5')
-      ASSERT(SIZE(partitions) == 2,'ALLOCATED() 4x4x5')
+      ASSERT(SIZE(partitions) == 3,'ALLOCATED() 4x4x5')
       ASSERT(partitions(1) == 8,'partitions(1)')
       ASSERT(partitions(2) == 64,'partitions(2)')
       ASSERT(partitions(3) == 80,'partitions(2)')
