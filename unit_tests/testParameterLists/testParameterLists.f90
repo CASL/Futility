@@ -4502,6 +4502,7 @@ PROGRAM testParameterLists
     ENDDO
     ASSERT(n == 6,'number of iters')
     
+    CALL clear_test_vars()
   ENDSUBROUTINE testGetNextParam
 !
 !-------------------------------------------------------------------------------
@@ -4551,14 +4552,19 @@ PROGRAM testParameterLists
 !
 !-------------------------------------------------------------------------------
   SUBROUTINE testValidate()
+    CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
+    
     !Setup reference list and test validation subroutines
     CALL testParam%add('TestReq->p1',0.0_SSK)
+    
     !test the null case for both params.
     CALL testParam%validate(testParam2,testParam3)
+    
     !Testing the assignment operation
     testParam3=testParam
     !test the null required param, but existing optional param
     CALL testParam%validate(testParam2,testParam3)
+    
     testParam2=testParam
     CALL testParam3%clear()
     !test existing required params with null optional params
@@ -4566,18 +4572,26 @@ PROGRAM testParameterLists
     CALL testParam2%add('TestReq->p2',0.1_SSK)
     !test only required params, no optional params
     CALL testParam%validate(testParam2)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::validateReq_ParamType -'// &
+      ' Failed to locate required parameter "TestReq->p2"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'testReq->p2 validate')
+    
     !Clear the test param, and test against an existing req param list
     CALL testParam%clear()
     CALL testParam%validate(testParam2)
+    
     !Setting the test param to have all the required params
     !This allows for optional params to be tested
     testParam=testParam2
     !Adding an extra parameter to the test list
     CALL testParam%add('TestReq->sublist1->p3',1.1_SSK)
     CALL testParam%validate(testParam2,testParam3)
+    
     !Adding the same extra parameter to the optional list
     CALL testParam3%add('TestReq->sublist1->p3',1.1_SSK)
     CALL testParam%validate(testParam2,testParam3)
+    
     !Making sure the req param has all the test param data
     testParam2=testParam
     !Clearing the options for now
@@ -4588,15 +4602,26 @@ PROGRAM testParameterLists
     testParam=testParam2
     !Valid Req parameters, covering the line for checkExtras_Paramtype w/o optional params (line 1538)
     CALL testParam%validate(testParam2)
+    
     !Valid Req parameters, covering different parameter type for optional input (lines 1424-1431)
     CALL testParam%add('TestReq->sublist1->sublist2->sublist3->opt3',5.0_SDK)
     CALL testParam%validate(testParam2,testParam3)
     CALL testParam3%add('TestReq->sublist1->sublist2->sublist3->opt3',5.0_SSK)
     CALL testParam%validate(testParam2,testParam3)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_WARNING #### - PARAMETERLISTS::validateOpt_ParamType -'// &
+      ' Optional parameter "TestReq->sublist1->sublist2->sublist3->opt3" has type'// &
+      ' "REAL(SDK)" and should be type "REAL(SSK)"!  It is being overriden with default value.'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'TestReq->sublist1->sublist2->sublist3->opt3 SSK validate optional input')
+    
     !Finds a meaningful REQ parameter, returns an associated parameter of a different type (lines 1337-1340)
     CALL testParam%add('TestReq->p6',6.0_SSK)
     CALL testParam2%add('TestReq->p6',6_SNK)
     CALL testParam%validate(testParam2,testParam3)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::validateReq_ParamType -'// &
+      ' Required parameter "TestReq->p6" has type "REAL(SSK)" and must be type "INTEGER(SNK)"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'TestReq->p6 SNK validate required input')
     CALL clear_test_vars()
     
     !Test param 2 is the required values, test param 3 is the optional
@@ -4612,16 +4637,23 @@ PROGRAM testParameterLists
   
     !Test param for an existing parameter list, but the pointer isn't associated (lines 1313-1315)
     CALL testParam%validate(testParam2,testParam3)
-  
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::validateReq_ParamType -'// &
+      ' Failed to locate required parameter "TestReq->p2->2far"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'TestReq->p2->2far validate failed to locate')
+    
     !Since an empty req param list exists, add a SLK parameter to test param 
     !so they aren't the same type  (lines 1319-1323)
     CALL testParam%add('TestReq->p2->2far',6_SLK)
     CALL testParam%validate(testParam2,testParam3)
-  
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::validateReq_ParamType -'// &
+      ' Required parameter "TestReq->p2->2far" has type "INTEGER(SLK)" and must be type "TYPE(ParamType_List)"!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'TestReq->p2->2far validate different type, PList')
+    
     !Remove the extra required parameters and add TestRq->p1 so the validate req params is true
     CALL testParam2%remove('TestReq->p2')
     CALL testParam%add('TestReq->p1',0.2_SSK)
-  
     !Setting up an optional param that has a parameter list but no associated pointer
     CALL testParam3%add('TestOpt->p2->2far->veryfar->veryveryfar',3.0_SDK)
     CALL testParam3%remove('TestOpt->p2->2far->veryfar->veryveryfar')
@@ -4629,9 +4661,20 @@ PROGRAM testParameterLists
     CALL testParam%add('TestOpt->p2->2far->veryfar',3.0_SSK)
     !Testing an optional param list against a parameter type (lines 1400-1410)
     CALL testParam%validate(testParam2,testParam3)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_WARNING #### - PARAMETERLISTS::validateOpt_ParamType -'// &
+      ' Optional parameter "TestOpt->p2->2far->veryfar" has type "REAL(SSK)" and'// &
+      ' should be type "TYPE(ParamType_List)"!  Since has no default value, it will remain unset!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'TestReq->p2->2far validate different type, PList')
+    
     CALL testParam%remove('TestOpt->p2->2far->veryfar')
     !Testing an unassociated test param from the remove statement above (lines 1388-1396)
     CALL testParam%validate(testParam2,testParam3)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_DEBUG_MESG #### - PARAMETERLISTS::validateOpt_ParamType -'// &
+      ' Failed to locate optional parameter "TestOpt->p2->2far->veryfar"! It is being'// &
+      ' added with no default value!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'TestOpt->p2->2far->veryfar validate different type, PList')
     
     CALL clear_test_vars()
   ENDSUBROUTINE testValidate
