@@ -38,6 +38,7 @@ PROGRAM testFileType_DA32
   REGISTER_SUBTEST('Read',testRead)
   REGISTER_SUBTEST('Write',testWrite)
   REGISTER_SUBTEST('%getPad2NextBlk()',testPad)
+  REGISTER_SUBTEST('%writeEmptyBlock()',testWMTBlock)
   
   FINALIZE_TEST()
 !
@@ -504,5 +505,26 @@ PROGRAM testFileType_DA32
         FINFO() i,testDA32File%getPad2NextBlk(INT(i,SLK))
       ENDDO
     ENDSUBROUTINE testPad
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testWMTBlock()
+      INTEGER(SIK) :: i,idum,ioerr
+      ioerr=0
+      CALL testDA32File%writeEmptyBlock(REC=1_SLK,IOSTAT=ioerr)
+      ASSERT(ioerr == IOSTAT_END,'Error check uninit')
+      CALL testDA32File%initialize(FILE='testReadfile.bin',STATUS='REPLACE', &
+        ACTION='READWRITE')
+      ioerr=0
+      CALL testDA32File%writeEmptyBlock(REC=1_SLK,IOSTAT=ioerr)
+      ASSERT(ioerr == IOSTAT_END,'Error check not open')
+      ioerr=0
+      CALL testDA32File%fopen()
+      CALL testDA32File%writeEmptyBlock(REC=1_SLK,IOSTAT=ioerr)
+      DO i=1,RECLSZ/RECL32
+        CALL testDA32File%readdat(REC=INT(i,SLK),DAT=idum,IOSTAT=ioerr)
+        ASSERT(idum == 0,'idum read-check')
+        ASSERT(ioerr == 0,'ioerr read-check')
+      ENDDO
+    ENDSUBROUTINE testWMTBlock
 !
 ENDPROGRAM testFileType_DA32
