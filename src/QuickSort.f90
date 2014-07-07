@@ -29,7 +29,15 @@ MODULE QuickSort
 
   !List of public members
   PUBLIC :: qsort
-  PUBLIC :: partition_array
+
+  INTERFACE qsort
+    !> @copybrief QuickSort::qsort_1DReal
+    !> @copydetails QuickSort::qsort_1DReal
+    MODULE PROCEDURE qsort_1DReal
+    !> @copybrief QuickSort::qsort_1DInt
+    !> @copydetails QuickSort::qsort_1DInt
+    MODULE PROCEDURE qsort_1DInt
+  ENDINTERFACE qsort
 
   !> Module name
   CHARACTER(LEN=*),PARAMETER :: modName='QuickSort'
@@ -47,7 +55,7 @@ MODULE QuickSort
 !> @param x The variable
 !> @param ans The return value
 !>
-    RECURSIVE SUBROUTINE qsort(A)
+    RECURSIVE SUBROUTINE qsort_1DInt(A)
       INTEGER(SIK),INTENT(INOUT) :: A(:)
 
       INTEGER(SIK) :: n,l,p
@@ -56,18 +64,67 @@ MODULE QuickSort
 
       IF (n>1) THEN
         p=FLOOR(RAND()*REAL(n,SRK),SIK)+1
-        CALL partition_array(A,p,l)
-        CALL qsort(A(1:l-1))
-        CALL qsort(A(l+1:n))
+        CALL partition_array_1DInt(A,p,l)
+        CALL qsort_1DInt(A(1:l-1))
+        CALL qsort_1DInt(A(l+1:n))
       ENDIF
     ENDSUBROUTINE
 
-    SUBROUTINE partition_array(A,p,i)
+    SUBROUTINE partition_array_1DInt(A,p,i)
       INTEGER(SIK),INTENT(INOUT) :: A(:)
       INTEGER(SIK),INTENT(IN) :: p
       INTEGER(SIK),INTENT(OUT) :: i
 
       INTEGER(SIK) :: j,n,tmp1,tmp2,pval
+
+      pval=A(p)
+      n=SIZE(A)
+      IF (p>1) THEN
+        tmp1=A(1)
+        tmp2=A(p)
+        A(1)=tmp2
+        A(p)=tmp1
+      ENDIF
+
+      i=2
+      DO j=2,n
+        IF (A(j)<pval) THEN
+          tmp1=A(i)
+          tmp2=A(j)
+          A(i)=tmp2
+          A(j)=tmp1
+          i=i+1
+        ENDIF
+      ENDDO
+      i=i-1
+      tmp1=A(1)
+      tmp2=A(i)
+      A(1)=tmp2
+      A(i)=tmp1
+    ENDSUBROUTINE
+
+    RECURSIVE SUBROUTINE qsort_1DReal(A)
+      REAL(SRK),INTENT(INOUT) :: A(:)
+
+      INTEGER(SIK) :: n,l,p
+
+      n=SIZE(A)
+
+      IF (n>1) THEN
+        p=FLOOR(RAND()*REAL(n,SRK),SIK)+1
+        CALL partition_array_1DReal(A,p,l)
+        CALL qsort_1DReal(A(1:l-1))
+        CALL qsort_1DReal(A(l+1:n))
+      ENDIF
+    ENDSUBROUTINE
+
+    SUBROUTINE partition_array_1DReal(A,p,i)
+      REAL(SRK),INTENT(INOUT) :: A(:)
+      INTEGER(SIK),INTENT(IN) :: p
+      INTEGER(SIK),INTENT(OUT) :: i
+
+      INTEGER(SIK) :: j,n
+      REAL(SRK) :: tmp1,tmp2,pval
 
       pval=A(p)
       n=SIZE(A)
