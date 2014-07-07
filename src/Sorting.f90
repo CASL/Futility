@@ -33,31 +33,21 @@ MODULE Sorting
   USE IntrType
   IMPLICIT NONE
 
-  PUBLIC :: Sort
-  PUBLIC :: qsort
+  PUBLIC :: sort
 
   !> @brief Generic interface to sort arrays.
   !>
-  INTERFACE Sort
-    !> @copybrief Sorting::Sort_1DReal
-    !> @copydetails Sorting::Sort_1DReal
-    MODULE PROCEDURE Sort_1DReal
-    !> @copybrief Sorting::Sort_1DInt
-    !> @copydetails Sorting::Sort_1DInt
-    MODULE PROCEDURE Sort_1DInt
-    !> @copybrief Sorting::Sort_2DInt
-    !> @copydetails Sorting::Sort_2DInt
-    MODULE PROCEDURE Sort_2DInt
-  ENDINTERFACE Sort
-
-  INTERFACE qsort
+  INTERFACE sort
     !> @copybrief QuickSort::qsort_1DReal
     !> @copydetails QuickSort::qsort_1DReal
     MODULE PROCEDURE qsort_1DReal
     !> @copybrief QuickSort::qsort_1DInt
     !> @copydetails QuickSort::qsort_1DInt
     MODULE PROCEDURE qsort_1DInt
-  ENDINTERFACE qsort
+    !> @copybrief QuickSort::sort_2DInt
+    !> @copydetails QuickSort::sort_2DInt
+    MODULE PROCEDURE sort_2DInt
+  ENDINTERFACE sort
 !
 !===============================================================================
   CONTAINS
@@ -163,7 +153,7 @@ MODULE Sorting
 !> @brief QuickSort 1D integer array
 !> @param A 1D integer array, modified in place and returned sorted
 !>
-    RECURSIVE SUBROUTINE qsort_1DInt(A)
+    PURE RECURSIVE SUBROUTINE qsort_1DInt(A)
       INTEGER(SIK),INTENT(INOUT) :: A(:)
 
       INTEGER(SIK) :: n,l,p
@@ -171,7 +161,7 @@ MODULE Sorting
       n=SIZE(A)
 
       IF (n>1) THEN
-        p=FLOOR(RAND()*REAL(n,SRK),SIK)+1
+        p=1  !FLOOR(RAND()*REAL(n,SRK),SIK)+1
         CALL partition_array_1DInt(A,p,l)
         CALL qsort_1DInt(A(1:l-1))
         CALL qsort_1DInt(A(l+1:n))
@@ -185,7 +175,7 @@ MODULE Sorting
 !> @param p Index of array element to partition with
 !> @param i Index of the partition element once A is partitioned
 !>
-    SUBROUTINE partition_array_1DInt(A,p,i)
+    PURE SUBROUTINE partition_array_1DInt(A,p,i)
       INTEGER(SIK),INTENT(INOUT) :: A(:)
       INTEGER(SIK),INTENT(IN) :: p
       INTEGER(SIK),INTENT(OUT) :: i
@@ -222,7 +212,7 @@ MODULE Sorting
 !> @brief QuickSort 1D real array
 !> @param A 1D real array, modified in place and returned sorted
 !>
-    RECURSIVE SUBROUTINE qsort_1DReal(A)
+    PURE RECURSIVE SUBROUTINE qsort_1DReal(A)
       REAL(SRK),INTENT(INOUT) :: A(:)
 
       INTEGER(SIK) :: n,l,p
@@ -230,7 +220,7 @@ MODULE Sorting
       n=SIZE(A)
 
       IF (n>1) THEN
-        p=FLOOR(RAND()*REAL(n,SRK),SIK)+1
+        p=1  !FLOOR(RAND()*REAL(n,SRK),SIK)+1
         CALL partition_array_1DReal(A,p,l)
         CALL qsort_1DReal(A(1:l-1))
         CALL qsort_1DReal(A(l+1:n))
@@ -244,7 +234,7 @@ MODULE Sorting
 !> @param p Index of array element to partition with
 !> @param i Index of the partition element once A is partitioned
 !>
-    SUBROUTINE partition_array_1DReal(A,p,i)
+    PURE SUBROUTINE partition_array_1DReal(A,p,i)
       REAL(SRK),INTENT(INOUT) :: A(:)
       INTEGER(SIK),INTENT(IN) :: p
       INTEGER(SIK),INTENT(OUT) :: i

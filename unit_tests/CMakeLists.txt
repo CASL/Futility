@@ -22,7 +22,6 @@ SET(UNIT_TEST_NAMES
     testStrings
     testTimes
     testGeom
-    testQuickSort
     testSorting
     testBinaryTrees
     testExceptionHandler
