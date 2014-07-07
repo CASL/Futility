@@ -56,6 +56,20 @@
 !> an integer multiple of WORDSREC, and unless it is changed the buffer size
 !> is the size of 1 KB (the same as a record in the file).
 !>
+!> A note on terminology (because I use some words interchangeably and its
+!> confusing).
+!>  - A @e block is chunk of data that constitutes a single record of a
+!>    Fortran direct access file. A block may have multiple words.
+!>  - A @e word is a single accesible data element within the read/write
+!>    interfaces of the DA32FileType. Words are typicially referred to as
+!>    elements of blocks.
+!>  - A @e record may refer to an accessible data element within the
+!>    DA32FileType (e.g. a word) but more likely refers to the Fortran direct
+!>    access file record (e.g. a specific block).
+!>
+!>  The least confusing way to refer to things is by blocks and words.
+!>
+!>
 !> @author Brendan Kochunas
 !>   @date 01/15/2014
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
