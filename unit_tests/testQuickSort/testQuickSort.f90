@@ -2,7 +2,7 @@ PROGRAM testQuickSort
 #include "UnitTest.h"
   USE UnitTest
   USE IntrType
-  USE QuickSort
+  USE Sorting
 
   IMPLICIT NONE
 !
@@ -28,30 +28,28 @@ PROGRAM testQuickSort
       LOGICAL(SBK) :: bool
       TYPE(TimerType) :: testTimer
 
-      n=100000000
+      DO j=1,7
+        n=10**j
+        ALLOCATE(A(n))
+        DO i=1,n
+          A(i)=INT(RAND()*REAL(n*100),SIK)
+        ENDDO
 
-    DO j=1,8
-      n=10**j
-      ALLOCATE(A(n))
-      DO i=1,n
-        A(i)=INT(RAND()*REAL(n*100),SIK)
+        CALL testTimer%tic()
+        CALL qsort(A)
+        CALL testTimer%toc()
+        bool=.TRUE.
+        DO i=1,n-1
+          IF (A(i)>A(i+1)) THEN
+            bool=.FALSE.
+            EXIT
+          ENDIF
+        ENDDO
+        ASSERT(bool,"qsort speed test")
+
+        WRITE(*,*) n, testTimer%elapsedtime
+        DEALLOCATE(A)
       ENDDO
-
-      CALL testTimer%tic()
-      CALL qsort(A)
-      CALL testTimer%toc()
-      bool=.TRUE.
-      DO i=1,n-1
-        IF (A(i)>A(i+1)) THEN
-          bool=.FALSE.
-          EXIT
-        ENDIF
-      ENDDO
-      ASSERT(bool,"qsort speed test")
-
-      WRITE(*,*) n, testTimer%elapsedtime
-      DEALLOCATE(A)
-    ENDDO
 
     ENDSUBROUTINE
 !
@@ -63,28 +61,28 @@ PROGRAM testQuickSort
       LOGICAL(SBK) :: bool
       TYPE(TimerType) :: testTimer
 
-    DO j=1,8
-      n=10**j
-      ALLOCATE(A(n))
-      DO i=1,n
-        A(i)=RAND()*REAL(n*100,SRK)
-      ENDDO
+      DO j=1,7
+        n=10**j
+        ALLOCATE(A(n))
+        DO i=1,n
+          A(i)=RAND()*REAL(n*100,SRK)
+        ENDDO
 
-      CALL testTimer%tic()
-      CALL qsort(A)
-      CALL testTimer%toc()
-      bool=.TRUE.
-      DO i=1,n-1
-        IF (A(i)>A(i+1)) THEN
-          bool=.FALSE.
-          EXIT
-        ENDIF
-      ENDDO
-      ASSERT(bool,"qsort speed test")
+        CALL testTimer%tic()
+        CALL qsort(A)
+        CALL testTimer%toc()
+        bool=.TRUE.
+        DO i=1,n-1
+          IF (A(i)>A(i+1)) THEN
+            bool=.FALSE.
+            EXIT
+          ENDIF
+        ENDDO
+        ASSERT(bool,"qsort speed test")
 
-      WRITE(*,*) n, testTimer%elapsedtime
-      DEALLOCATE(A)
-    ENDDO
+        WRITE(*,*) n, testTimer%elapsedtime
+        DEALLOCATE(A)
+      ENDDO
 
     ENDSUBROUTINE
 !
