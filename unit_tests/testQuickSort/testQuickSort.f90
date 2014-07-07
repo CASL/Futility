@@ -5,49 +5,14 @@ PROGRAM testQuickSort
   USE QuickSort
 
   IMPLICIT NONE
-
-  LOGICAL(SBK) :: bool
-  INTEGER(SIK) :: tmpintarray(10)
-  REAL(SRK) :: tmprealarray(10)
 !
 !Check the timer resolution
   CREATE_TEST('QUICKSORT')
 !
-  COMPONENT_TEST('1-D Real Array')
-  tmprealarray(1)=100.0_SRK
-  tmprealarray(2)=-5.0_SRK
-  tmprealarray(3)=60.0_SRK
-  tmprealarray(4)=10.0_SRK
-  tmprealarray(5)=45.0_SRK
-  tmprealarray(6)=-10.0_SRK
-  tmprealarray(7)=20.0_SRK
-  tmprealarray(8)=5.0_SRK
-  tmprealarray(9)=-30.0_SRK
-  tmprealarray(10)=20.0_SRK
+  REGISTER_SUBTEST('qsort Integer',testIntQSort)
+  REGISTER_SUBTEST('qsort Real',testRealQSort)
 
-  CALL qsort(tmprealarray)
-
-  bool=ALL(tmprealarray .APPROXEQ. (/-30.0_SRK,-10.0_SRK,-5.0_SRK,5.0_SRK,10.0_SRK, &
-    20.0_SRK,20.0_SRK,45.0_SRK,60.0_SRK,100.0_SRK/))
-  ASSERT(bool,'1-D array sort')
-
-  tmpintarray(1)=-5
-  tmpintarray(2)=100
-  tmpintarray(3)=60
-  tmpintarray(4)=10
-  tmpintarray(5)=45
-  tmpintarray(6)=-10
-  tmpintarray(7)=20
-  tmpintarray(8)=5
-  tmpintarray(9)=-30
-  tmpintarray(10)=20
-
-  CALL qsort(tmpintarray)
-
-  bool=ALL(tmpintarray == (/-30,-10,-5,5,10,20,20,45,60,100/))
-  ASSERT(bool,'1-D array qsort')
-
-  REGISTER_SUBTEST('Speed Test',testSpeed)
+!  REGISTER_SUBTEST('Speed Test',testSpeed)
   FINALIZE_TEST()
 !
 !
@@ -87,6 +52,51 @@ PROGRAM testQuickSort
       DEALLOCATE(A)
     ENDDO
 
+    ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testIntQSort
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: tmpintarray(10)
+
+      tmpintarray(1)=-5
+      tmpintarray(2)=100
+      tmpintarray(3)=60
+      tmpintarray(4)=10
+      tmpintarray(5)=45
+      tmpintarray(6)=-10
+      tmpintarray(7)=20
+      tmpintarray(8)=5
+      tmpintarray(9)=-30
+      tmpintarray(10)=20
+
+      CALL qsort(tmpintarray)
+
+      bool=ALL(tmpintarray == (/-30,-10,-5,5,10,20,20,45,60,100/))
+      ASSERT(bool,'1-D integer array qsort')
+    ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testRealQSort
+      LOGICAL(SBK) :: bool
+      REAL(SRK) :: tmprealarray(10)
+
+      tmprealarray(1)=100.0_SRK
+      tmprealarray(2)=-5.0_SRK
+      tmprealarray(3)=60.0_SRK
+      tmprealarray(4)=10.0_SRK
+      tmprealarray(5)=45.0_SRK
+      tmprealarray(6)=-10.0_SRK
+      tmprealarray(7)=20.0_SRK
+      tmprealarray(8)=5.0_SRK
+      tmprealarray(9)=-30.0_SRK
+      tmprealarray(10)=20.0_SRK
+
+      CALL qsort(tmprealarray)
+
+      bool=ALL(tmprealarray .APPROXEQ. (/-30.0_SRK,-10.0_SRK,-5.0_SRK,5.0_SRK,10.0_SRK, &
+        20.0_SRK,20.0_SRK,45.0_SRK,60.0_SRK,100.0_SRK/))
+      ASSERT(bool,'1-D real array qsort')
     ENDSUBROUTINE
 !
 ENDPROGRAM testQuickSort
