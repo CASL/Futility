@@ -13,7 +13,7 @@
 # The order of the names is reflective of the hierarchy of the code dependencies.
 # The tests at the beginning of the list have the least dependencies and the
 # the tests at the end have the most dependencies.
-# 
+#
 SET(UNIT_TEST_NAMES
     testUnitTest
     testSelectedKinds
@@ -22,6 +22,7 @@ SET(UNIT_TEST_NAMES
     testStrings
     testTimes
     testGeom
+    testQuickSort
     testSorting
     testBinaryTrees
     testExceptionHandler
