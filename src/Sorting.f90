@@ -206,7 +206,7 @@ MODULE Sorting
 
       n=SIZE(A)
 
-      IF (n>10) THEN
+      IF (n>50) THEN
         !median of 3 pivot
         c=n/2
         IF (A(c) < A(1)) CALL swap_int(A,c,1)
@@ -284,7 +284,7 @@ MODULE Sorting
 
       n=SIZE(A)
 
-      IF (n>10) THEN
+      IF (n>50) THEN
         !median of 3 pivot
         c=n/2
         IF (A(c) < A(1)) CALL swap_real(A,c,1)
