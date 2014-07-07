@@ -12,7 +12,8 @@ PROGRAM testQuickSort
   REGISTER_SUBTEST('qsort Integer',testIntQSort)
   REGISTER_SUBTEST('qsort Real',testRealQSort)
 
-!  REGISTER_SUBTEST('Speed Test',testSpeed)
+  REGISTER_SUBTEST('Speed Test - qsort int',testSpeedInt)
+  REGISTER_SUBTEST('Speed Test - qsort real',testSpeedReal)
   FINALIZE_TEST()
 !
 !
@@ -20,7 +21,7 @@ PROGRAM testQuickSort
   CONTAINS
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE testSpeed
+    SUBROUTINE testSpeedInt
       USE Times
       INTEGER(SIK),ALLOCATABLE :: A(:)
       INTEGER(SIK) :: n,i,j
@@ -29,11 +30,44 @@ PROGRAM testQuickSort
 
       n=100000000
 
-    DO j=1,10
+    DO j=1,8
       n=10**j
       ALLOCATE(A(n))
       DO i=1,n
         A(i)=INT(RAND()*REAL(n*100),SIK)
+      ENDDO
+
+      CALL testTimer%tic()
+      CALL qsort(A)
+      CALL testTimer%toc()
+      bool=.TRUE.
+      DO i=1,n-1
+        IF (A(i)>A(i+1)) THEN
+          bool=.FALSE.
+          EXIT
+        ENDIF
+      ENDDO
+      ASSERT(bool,"qsort speed test")
+
+      WRITE(*,*) n, testTimer%elapsedtime
+      DEALLOCATE(A)
+    ENDDO
+
+    ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testSpeedReal
+      USE Times
+      REAL(SRK),ALLOCATABLE :: A(:)
+      INTEGER(SIK) :: n,i,j
+      LOGICAL(SBK) :: bool
+      TYPE(TimerType) :: testTimer
+
+    DO j=1,8
+      n=10**j
+      ALLOCATE(A(n))
+      DO i=1,n
+        A(i)=RAND()*REAL(n*100,SRK)
       ENDDO
 
       CALL testTimer%tic()
