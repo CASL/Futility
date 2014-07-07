@@ -38,15 +38,15 @@ MODULE Sorting
   !> @brief Generic interface to sort arrays.
   !>
   INTERFACE sort
-    !> @copybrief QuickSort::qsort_1DReal
-    !> @copydetails QuickSort::qsort_1DReal
+    !> @copybrief Sorting::qsort_1DReal
+    !> @copydetails Sorting::qsort_1DReal
     MODULE PROCEDURE qsort_1DReal
-    !> @copybrief QuickSort::qsort_1DInt
-    !> @copydetails QuickSort::qsort_1DInt
+    !> @copybrief Sorting::qsort_1DInt
+    !> @copydetails Sorting::qsort_1DInt
     MODULE PROCEDURE qsort_1DInt
-    !> @copybrief QuickSort::sort_2DInt
-    !> @copydetails QuickSort::sort_2DInt
-    MODULE PROCEDURE sort_2DInt
+    !> @copybrief Sorting::bubble_sort_2DInt
+    !> @copydetails Sorting::bubble_sort_2DInt
+    MODULE PROCEDURE bubble_sort_2DInt
   ENDINTERFACE sort
 !
 !===============================================================================
@@ -57,7 +57,7 @@ MODULE Sorting
 !>        data will be sorted in ascending/increasing order and returned.
 !> @param r A vector of unsorted reals
 !>
-    PURE SUBROUTINE Sort_1DReal(r)
+    PURE SUBROUTINE bubble_sort_1DReal(r)
       REAL(SRK),INTENT(INOUT) :: r(:)
       !LOGICAL(SBK),INTENT(IN),OPTIONAL :: reverse
       LOGICAL(SBK) :: sorted
@@ -79,7 +79,7 @@ MODULE Sorting
         ENDDO
       ENDDO
 
-    ENDSUBROUTINE Sort_1DReal
+    ENDSUBROUTINE bubble_sort_1DReal
 !
 !-------------------------------------------------------------------------------
 !> @brief A simple sorting algorithm for a 1-D integer vector sort.  The
@@ -87,7 +87,7 @@ MODULE Sorting
 !>        returned.
 !> @param r A vector of unsorted integers
 !>
-    PURE SUBROUTINE Sort_1DInt(r)
+    PURE SUBROUTINE bubble_sort_1DInt(r)
       INTEGER(SIK),INTENT(INOUT) :: r(:)
       !LOGICAL(SBK),INTENT(IN),OPTIONAL :: reverse
       LOGICAL(SBK) :: sorted
@@ -109,7 +109,7 @@ MODULE Sorting
         ENDDO
       ENDDO
 
-    ENDSUBROUTINE Sort_1DInt
+    ENDSUBROUTINE bubble_sort_1DInt
 !
 !-------------------------------------------------------------------------------
 !> @brief A simple sorting algorithm for a 2-D integer array sort.  The
@@ -117,7 +117,7 @@ MODULE Sorting
 !>        returned.
 !> @param r A 2-D array of unsorted integers
 !>
-    PURE SUBROUTINE Sort_2DInt(r)
+    PURE SUBROUTINE bubble_sort_2DInt(r)
       INTEGER(SIK),INTENT(INOUT) :: r(:,:)
       !LOGICAL(SBK),INTENT(IN),OPTIONAL :: reverse
       LOGICAL(SBK) :: sorted
@@ -145,8 +145,9 @@ MODULE Sorting
         ENDDO
       ENDDO
 
-    ENDSUBROUTINE Sort_2DInt
-!
+    ENDSUBROUTINE bubble_sort_2DInt
+!-------------------------------------------------------------------------------
+!  Insert Sort
 !-------------------------------------------------------------------------------
 !> @brief Sorts a list of integers using the insert sort algorithm
 !> @param list the list to be sorted
@@ -157,12 +158,13 @@ MODULE Sorting
 
       n=SIZE(list)
 
-      DO i=1,n
+      DO i=2,n
         key = list(i)
         j=i-1
-        DO WHILE((j >= 1) .AND. (list(j) > key))
+        DO WHILE(list(j) > key)
           list(j+1) = list(j)
           j=j-1
+          IF (j < 1) EXIT
         ENDDO
         list(j+1)=key
       ENDDO
@@ -179,12 +181,13 @@ MODULE Sorting
 
       n=SIZE(list)
 
-      DO i=1,n
+      DO i=2,n
         key = list(i)
         j=i-1
-        DO WHILE((j >= 1) .AND. (list(j) > key))
+        DO WHILE(list(j) > key)
           list(j+1) = list(j)
           j=j-1
+          IF (j < 1) EXIT
         ENDDO
         list(j+1)=key
       ENDDO
@@ -216,7 +219,7 @@ MODULE Sorting
         CALL qsort_1DInt(A(1:l-1))
         CALL qsort_1DInt(A(l+1:n))
       ELSE
-        CALL sort_1Dint(A)
+        CALL insert_sort_int(A)
       ENDIF
     ENDSUBROUTINE
 !
@@ -294,7 +297,7 @@ MODULE Sorting
         CALL qsort_1DReal(A(1:l-1))
         CALL qsort_1DReal(A(l+1:n))
       ELSE
-        CALL sort_1Dreal(A)
+        CALL insert_sort_real(A)
       ENDIF
     ENDSUBROUTINE
 !
