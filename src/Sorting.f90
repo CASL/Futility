@@ -148,6 +148,49 @@ MODULE Sorting
     ENDSUBROUTINE Sort_2DInt
 !
 !-------------------------------------------------------------------------------
+!> @brief Sorts a list of integers using the insert sort algorithm
+!> @param list the list to be sorted
+    PURE SUBROUTINE insert_sort_int(list)
+      INTEGER(SIK),INTENT(INOUT) :: list(:)
+      !
+      INTEGER(SIK) :: key,i,j,n
+
+      n=SIZE(list)
+
+      DO i=1,n
+        key = list(i)
+        j=i-1
+        DO WHILE((j >= 1) .AND. (list(j) > key))
+          list(j+1) = list(j)
+          j=j-1
+        ENDDO
+        list(j+1)=key
+      ENDDO
+    ENDSUBROUTINE insert_sort_int
+!
+!-------------------------------------------------------------------------------
+!> @brief Sorts a list of integers using the insert sort algorithm
+!> @param list the list to be sorted
+    PURE SUBROUTINE insert_sort_real(list)
+      REAL(SRK),INTENT(INOUT) :: list(:)
+      !
+      REAL(SRK) :: key
+      INTEGER(SIK) :: i,j,n
+
+      n=SIZE(list)
+
+      DO i=1,n
+        key = list(i)
+        j=i-1
+        DO WHILE((j >= 1) .AND. (list(j) > key))
+          list(j+1) = list(j)
+          j=j-1
+        ENDDO
+        list(j+1)=key
+      ENDDO
+    ENDSUBROUTINE insert_sort_real
+!
+!-------------------------------------------------------------------------------
 !  QuickSort
 !-------------------------------------------------------------------------------
 !> @brief QuickSort 1D integer array
@@ -156,15 +199,24 @@ MODULE Sorting
     PURE RECURSIVE SUBROUTINE qsort_1DInt(A)
       INTEGER(SIK),INTENT(INOUT) :: A(:)
 
-      INTEGER(SIK) :: n,l,p
+      INTEGER(SIK) :: n,l,p,c
 
       n=SIZE(A)
 
-      IF (n>1) THEN
-        p=1  !FLOOR(RAND()*REAL(n,SRK),SIK)+1
+      IF (n>10) THEN
+        !median of 3 pivot
+        c=n/2
+        IF (A(c) < A(1)) CALL swap_int(A,c,1)
+        IF (A(n) < A(1)) CALL swap_int(A,1,n)
+        IF (A(n) < A(c)) CALL swap_int(A,c,n)
+        p=c
+       ! p=1  ! left most pivot
+       ! p=FLOOR(RAND()*REAL(n,SRK),SIK)+1  ! Randomized pivot
         CALL partition_array_1DInt(A,p,l)
         CALL qsort_1DInt(A(1:l-1))
         CALL qsort_1DInt(A(l+1:n))
+      ELSE
+        CALL sort_1Dint(A)
       ENDIF
     ENDSUBROUTINE
 !
@@ -180,32 +232,42 @@ MODULE Sorting
       INTEGER(SIK),INTENT(IN) :: p
       INTEGER(SIK),INTENT(OUT) :: i
 
-      INTEGER(SIK) :: j,n,tmp1,tmp2,pval
+      INTEGER(SIK) :: j,n,pval
 
       pval=A(p)
       n=SIZE(A)
       IF (p>1) THEN
-        tmp1=A(1)
-        tmp2=A(p)
-        A(1)=tmp2
-        A(p)=tmp1
+        ! if Mo3 sort, 1st element is smaller than pivot, don't throw away
+        CALL swap_int(A,1,2)
+        CALL swap_int(A,1,p)
       ENDIF
 
       i=2
       DO j=2,n
         IF (A(j)<pval) THEN
-          tmp1=A(i)
-          tmp2=A(j)
-          A(i)=tmp2
-          A(j)=tmp1
+          CALL swap_int(A,i,j)
           i=i+1
         ENDIF
       ENDDO
       i=i-1
-      tmp1=A(1)
-      tmp2=A(i)
-      A(1)=tmp2
-      A(i)=tmp1
+      CALL swap_int(A,1,i)
+    ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+!> @brief Swap location of 2 locations in 1D integer array.
+!> @param A 1D integer array, modified in place and returned partioned
+!> @param i Index of location 1
+!> @param j Index of location 2
+!>
+
+    PURE SUBROUTINE swap_int(A,i,j)
+      INTEGER(SIK),INTENT(INOUT) :: A(:)
+      INTEGER(SIK),INTENT(IN) :: i
+      INTEGER(SIK),INTENT(IN) :: j
+      INTEGER(SIK) :: tmp
+      tmp=A(i)
+      A(i)=A(j)
+      A(j)=tmp
     ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
@@ -215,15 +277,24 @@ MODULE Sorting
     PURE RECURSIVE SUBROUTINE qsort_1DReal(A)
       REAL(SRK),INTENT(INOUT) :: A(:)
 
-      INTEGER(SIK) :: n,l,p
+      INTEGER(SIK) :: n,l,p,c
 
       n=SIZE(A)
 
-      IF (n>1) THEN
-        p=1  !FLOOR(RAND()*REAL(n,SRK),SIK)+1
+      IF (n>10) THEN
+        !median of 3 pivot
+        c=n/2
+        IF (A(c) < A(1)) CALL swap_real(A,c,1)
+        IF (A(n) < A(1)) CALL swap_real(A,1,n)
+        IF (A(n) < A(c)) CALL swap_real(A,c,n)
+        p=c
+       ! p=1  ! left most pivot
+       ! p=FLOOR(RAND()*REAL(n,SRK),SIK)+1  ! Randomized pivot
         CALL partition_array_1DReal(A,p,l)
         CALL qsort_1DReal(A(1:l-1))
         CALL qsort_1DReal(A(l+1:n))
+      ELSE
+        CALL sort_1Dreal(A)
       ENDIF
     ENDSUBROUTINE
 !
@@ -240,32 +311,42 @@ MODULE Sorting
       INTEGER(SIK),INTENT(OUT) :: i
 
       INTEGER(SIK) :: j,n
-      REAL(SRK) :: tmp1,tmp2,pval
+      REAL(SRK) :: pval
 
       pval=A(p)
       n=SIZE(A)
       IF (p>1) THEN
-        tmp1=A(1)
-        tmp2=A(p)
-        A(1)=tmp2
-        A(p)=tmp1
+        ! if Mo3 sort, 1st element is smaller than pivot, don't throw away
+        CALL swap_real(A,1,2)
+        CALL swap_real(A,1,p)
       ENDIF
 
       i=2
       DO j=2,n
         IF (A(j)<pval) THEN
-          tmp1=A(i)
-          tmp2=A(j)
-          A(i)=tmp2
-          A(j)=tmp1
+          CALL swap_real(A,i,j)
           i=i+1
         ENDIF
       ENDDO
       i=i-1
-      tmp1=A(1)
-      tmp2=A(i)
-      A(1)=tmp2
-      A(i)=tmp1
+      CALL swap_real(A,1,i)
+    ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+!> @brief Swap location of 2 locations in 1D real array.
+!> @param A 1D real array, modified in place and returned partioned
+!> @param i Index of location 1
+!> @param j Index of location 2
+!>
+
+    PURE SUBROUTINE swap_real(A,i,j)
+      REAL(SRK),INTENT(INOUT) :: A(:)
+      INTEGER(SIK),INTENT(IN) :: i
+      INTEGER(SIK),INTENT(IN) :: j
+      REAL(SRK) :: tmp
+      tmp=A(i)
+      A(i)=A(j)
+      A(j)=tmp
     ENDSUBROUTINE
 !
 ENDMODULE Sorting

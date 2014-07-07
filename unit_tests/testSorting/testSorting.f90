@@ -10,6 +10,7 @@ PROGRAM testSorting
   CREATE_TEST('SORTING')
 !
   REGISTER_SUBTEST('sort Integer',testIntSort)
+  REGISTER_SUBTEST('sort Integer 2D',testInt2DSort)
   REGISTER_SUBTEST('sort Real',testRealSort)
 
   REGISTER_SUBTEST('Speed Test - sort int',testSpeedInt)
@@ -106,6 +107,41 @@ PROGRAM testSorting
 
       bool=ALL(tmpintarray == (/-30,-10,-5,5,10,20,20,45,60,100/))
       ASSERT(bool,'1-D integer array qsort')
+    ENDSUBROUTINE
+
+    SUBROUTINE testInt2DSort
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: tmpintarray2(5,5)
+
+      tmpintarray2(1,1)=-5
+      tmpintarray2(2,1)=100
+      tmpintarray2(3,1)=60
+      tmpintarray2(4,1)=10
+      tmpintarray2(5,1)=45
+      tmpintarray2(1,2)=-10
+      tmpintarray2(2,2)=20
+      tmpintarray2(3,2)=5
+      tmpintarray2(4,2)=-30
+      tmpintarray2(5,2)=20
+      tmpintarray2(1,3)=0
+      tmpintarray2(2,3)=-20
+      tmpintarray2(3,3)=-15
+      tmpintarray2(4,3)=30
+      tmpintarray2(5,3)=21
+      tmpintarray2(1,4)=4
+      tmpintarray2(2,4)=-16
+      tmpintarray2(3,4)=-50
+      tmpintarray2(4,4)=-30
+      tmpintarray2(5,4)=50
+      tmpintarray2(1,5)=53
+      tmpintarray2(2,5)=77
+      tmpintarray2(3,5)=88
+      tmpintarray2(4,5)=99
+      tmpintarray2(5,5)=35
+
+      CALL sort(tmpintarray2)
+      bool=ALL(tmpintarray2 == RESHAPE((/-50,-30,-30,-20,-16,-15,-10,-5,0,4,5,10,20,20,21,30,35,45,50,53,60,77,88,99,100/),(/5,5/)))
+      ASSERT(bool,'2-D array sort')
     ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
