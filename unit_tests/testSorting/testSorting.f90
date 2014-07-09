@@ -49,7 +49,7 @@ PROGRAM testSorting
             EXIT
           ENDIF
         ENDDO
-        ASSERT(bool,"qsort speed test")
+        ASSERT(bool,"qsort speed test - int")
 
         WRITE(*,*) n, testTimer%elapsedtime
         DEALLOCATE(A)
@@ -86,7 +86,7 @@ PROGRAM testSorting
             EXIT
           ENDIF
         ENDDO
-        ASSERT(bool,"qsort speed test")
+        ASSERT(bool,"qsort speed test - real")
 
         WRITE(*,*) n, testTimer%elapsedtime
         DEALLOCATE(A)
