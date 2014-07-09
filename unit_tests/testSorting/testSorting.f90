@@ -24,16 +24,19 @@ PROGRAM testSorting
 !-------------------------------------------------------------------------------
     SUBROUTINE testSpeedInt
       USE Times
+      USE StochasticSampling
       INTEGER(SIK),ALLOCATABLE :: A(:)
       INTEGER(SIK) :: n,i,j
       LOGICAL(SBK) :: bool
       TYPE(TimerType) :: testTimer
+      TYPE(StochasticSamplingType) :: myRNG
 
+      CALL myRNG%init(RNG_LEcuyer2)
       DO j=1,7
         n=10**j
         ALLOCATE(A(n))
         DO i=1,n
-          A(i)=INT(RAND()*REAL(n*100),SIK)
+          A(i)=INT(myRNG%rng()*REAL(n*100),SIK)
         ENDDO
 
         CALL testTimer%tic()
@@ -51,22 +54,26 @@ PROGRAM testSorting
         WRITE(*,*) n, testTimer%elapsedtime
         DEALLOCATE(A)
       ENDDO
+      CALL myRNG%clear()
 
     ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testSpeedReal
       USE Times
+      USE StochasticSampling
       REAL(SRK),ALLOCATABLE :: A(:)
       INTEGER(SIK) :: n,i,j
       LOGICAL(SBK) :: bool
       TYPE(TimerType) :: testTimer
+      TYPE(StochasticSamplingType) :: myRNG
 
+      CALL myRNG%init(RNG_LEcuyer2)
       DO j=1,7
         n=10**j
         ALLOCATE(A(n))
         DO i=1,n
-          A(i)=RAND()*REAL(n*100,SRK)
+          A(i)=myRNG%rng()*REAL(n*100,SRK)
         ENDDO
 
         CALL testTimer%tic()
@@ -84,6 +91,7 @@ PROGRAM testSorting
         WRITE(*,*) n, testTimer%elapsedtime
         DEALLOCATE(A)
       ENDDO
+      CALL myRNG%clear()
 
     ENDSUBROUTINE
 !
