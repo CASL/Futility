@@ -195,7 +195,11 @@ MODULE ExpTables
             ans=1._SRK-EXP(x)
           ENDSELECT
       ELSE
-        ans=1._SRK-EXP(x)
+        IF(x<-700._SRK) THEN
+          ans=1._SRK
+        ELSE
+          ans=1._SRK-EXP(x)
+        ENDIF
       ENDIF
     ENDFUNCTION
 !

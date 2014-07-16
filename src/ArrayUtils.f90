@@ -16,10 +16,10 @@
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief A Fortran 2003 module implementing some mesh/array utility functions.
-!>        Examples include searching for an index in a 1-D real array given a 
+!>        Examples include searching for an index in a 1-D real array given a
 !>        position, converting an index from one 1-D real array to another 1-D
 !>        real array, along with several others.
-!> 
+!>
 !> @par Module Dependencies
 !>  - @ref IntrType "IntrType": @copybrief IntrType
 !>
@@ -28,11 +28,11 @@
 !>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE ArrayUtils
-  
+
   USE IntrType
   USE Sorting
   IMPLICIT NONE
-  
+
   PUBLIC :: getAbsolute
   PUBLIC :: getDelta
   PUBLIC :: getUnique
@@ -46,7 +46,7 @@ MODULE ArrayUtils
   !PUBLIC :: findIntersection
   !Need a routine in here that compares a 1-D array to a 2-D array for a given dimension
   !to see if the 1-D array exists in the 2-D array...
-  
+
   !> @brief Generic interface to the getAbsolute
   !>
   INTERFACE getAbsolute
@@ -57,7 +57,7 @@ MODULE ArrayUtils
     !> @copydetails ArrayUtils::getAbsolute_1DInt
     MODULE PROCEDURE getAbsolute_1DInt
   ENDINTERFACE getAbsolute
-  
+
   !> @brief Generic interface to ...
   !>
   INTERFACE getDelta
@@ -65,7 +65,7 @@ MODULE ArrayUtils
     !> @copydetails ArrayUtils::getDelta_1DReal
     MODULE PROCEDURE getDelta_1DReal
   ENDINTERFACE getDelta
-  
+
   !> @brief Generic interface to ...
   !>
   INTERFACE getUnique
@@ -79,7 +79,7 @@ MODULE ArrayUtils
     !> @copydetails ArrayUtils::getUnique_2DInt
     MODULE PROCEDURE getUnique_2DInt
   ENDINTERFACE getUnique
-  
+
   !> @brief Generic interface to ...
   !>
   INTERFACE findNUnique
@@ -93,7 +93,7 @@ MODULE ArrayUtils
     !> @copydetails ArrayUtils::findNUnique_2DInt
     MODULE PROCEDURE findNUnique_2DInt
   ENDINTERFACE findNUnique
-  
+
   !> @brief Generic interface to ...
   !>
   INTERFACE getUnion
@@ -101,7 +101,7 @@ MODULE ArrayUtils
     !> @copydetails ArrayUtils::getUnion_1DReal
     MODULE PROCEDURE getUnion_1DReal
   ENDINTERFACE getUnion
-  
+
   !> @brief Generic interface to find the index in an array.
   !>
   INTERFACE findIndex
@@ -120,7 +120,7 @@ MODULE ArrayUtils
     !> @copydetails ArrayUtils::findLowBound_1DReal
     MODULE PROCEDURE findLowBound_1DReal
   ENDINTERFACE findLowBound
-  
+
   !> @brief Generic interface to ...
   !>
   INTERFACE findUpBound
@@ -128,7 +128,7 @@ MODULE ArrayUtils
     !> @copydetails ArrayUtils::findUpBound_1DReal
     MODULE PROCEDURE findUpBound_1DReal
   ENDINTERFACE findUpBound
-  
+
   !> @brief Generic interface to ...
   !>
   INTERFACE findEleHtAbove
@@ -136,7 +136,7 @@ MODULE ArrayUtils
     !> @copydetails ArrayUtils::findEleHtAbove_1DReal
     MODULE PROCEDURE findEleHtAbove_1DReal
   ENDINTERFACE findEleHtAbove
-  
+
   !> @brief Generic interface to ...
   !>
   INTERFACE findEleHtBelow
@@ -162,7 +162,7 @@ MODULE ArrayUtils
       REAL(SRK),ALLOCATABLE,INTENT(OUT) :: rout(:)
       REAL(SRK),INTENT(IN),OPTIONAL :: xi
       INTEGER(SIK) :: i,n
-      
+
       n=SIZE(r,DIM=1)
       IF(PRESENT(xi)) THEN
         n=n+1
@@ -194,7 +194,7 @@ MODULE ArrayUtils
       INTEGER(SIK),ALLOCATABLE,INTENT(OUT) :: rout(:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: xi
       INTEGER(SIK) :: i,n
-      
+
       n=SIZE(r,DIM=1)
       IF(PRESENT(xi)) THEN
         n=n+1
@@ -226,7 +226,7 @@ MODULE ArrayUtils
       INTEGER(SIK),ALLOCATABLE,INTENT(OUT) :: rout(:,:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: xi
       INTEGER(SIK) :: i,n
-      
+
       !n=SIZE(r,DIM=1)
       !IF(PRESENT(xi)) THEN
       !  n=n+1
@@ -246,9 +246,9 @@ MODULE ArrayUtils
 !
 !-------------------------------------------------------------------------------
 !> @brief This routine takes an array of absolute values that are assumed to be
-!>        in increasing order and finds the difference between successive (i.e. 
+!>        in increasing order and finds the difference between successive (i.e.
 !>        delta) values.  The bottom value can be adjusted using the optional xi
-!>        input.  The default is to use the first value in r as the starting 
+!>        input.  The default is to use the first value in r as the starting
 !>        point for the delta array.
 !> @param r The array of absolute values
 !> @param rout The output array of absolute values
@@ -259,7 +259,7 @@ MODULE ArrayUtils
       REAL(SRK),ALLOCATABLE,INTENT(OUT) :: rout(:)
       REAL(SRK),INTENT(IN),OPTIONAL :: xi
       INTEGER(SIK) :: i,n
-      
+
       n=SIZE(r,DIM=1)
       IF(PRESENT(xi)) THEN
         ALLOCATE(rout(n))
@@ -279,24 +279,24 @@ MODULE ArrayUtils
 !-------------------------------------------------------------------------------
 !> @brief This routine takes an array of reals and returns the number of unique
 !>        entries within a given tolerance for the equivalence of reals.  The
-!>        optional delta input is whether the array is composed of incremental 
-!>        values (deltas) or absolute values.  The optional tol input can 
+!>        optional delta input is whether the array is composed of incremental
+!>        values (deltas) or absolute values.  The optional tol input can
 !>        specifically decide the tolerance for whether two reals are unique.
 !> @param r The input array of reals
 !> @param delta The optional input for whether the array is incremental or not
 !> @param tol The tolerance for comparing two real values
 !> @param sout The number of unique entries in the array r.
 !>
-    PURE FUNCTION findNUnique_1DReal(r,delta,tol) RESULT(sout)
+    FUNCTION findNUnique_1DReal(r,delta,tol) RESULT(sout)
       REAL(SRK),INTENT(IN) :: r(:)
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: delta
       REAL(SRK),INTENT(IN),OPTIONAL :: tol
       INTEGER(SIK) :: sout
-      
+
       INTEGER(SIK) :: i,n
       REAL(SRK) :: loctol
       REAL(SRK),ALLOCATABLE :: tmpr(:)
-      
+
       n=SIZE(r,DIM=1)
       IF(PRESENT(delta)) THEN
         IF(delta) THEN
@@ -312,7 +312,7 @@ MODULE ArrayUtils
       IF(PRESENT(tol)) THEN
         IF((0.0_SRK < tol) .AND. (tol <= EPSREAL*1000.0_SRK)) loctol=tol
       ENDIF
-      
+
       !Find the number of unique entries
       CALL sort(tmpr)
       sout=1
@@ -324,21 +324,21 @@ MODULE ArrayUtils
     ENDFUNCTION findNUnique_1DReal
 !
 !-------------------------------------------------------------------------------
-!> @brief This routine takes a 1-D array of integers and returns the number of 
-!>        unique entries.  The optional delta input is whether the array is 
-!>        composed of incremental values (deltas) or absolute values.  
+!> @brief This routine takes a 1-D array of integers and returns the number of
+!>        unique entries.  The optional delta input is whether the array is
+!>        composed of incremental values (deltas) or absolute values.
 !> @param r The input array of integers
 !> @param delta The optional input for whether the array is incremental or not
 !> @param sout The number of unique entries in the array r.
 !>
-    PURE FUNCTION findNUnique_1DInt(r,delta) RESULT(sout)
+    FUNCTION findNUnique_1DInt(r,delta) RESULT(sout)
       INTEGER(SIK),INTENT(IN) :: r(:)
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: delta
       INTEGER(SIK) :: sout
-      
+
       INTEGER(SIK) :: i,n
       INTEGER(SIK),ALLOCATABLE :: tmpr(:)
-      
+
       n=SIZE(r,DIM=1)
       IF(PRESENT(delta)) THEN
         IF(delta) THEN
@@ -350,7 +350,7 @@ MODULE ArrayUtils
         ALLOCATE(tmpr(n))
         tmpr=r
       ENDIF
-      
+
       !Find the number of unique entries
       CALL sort(tmpr)
       sout=1
@@ -362,21 +362,21 @@ MODULE ArrayUtils
     ENDFUNCTION findNUnique_1DInt
 !
 !-------------------------------------------------------------------------------
-!> @brief This routine takes a 2-D array of integers and returns the number of 
-!>        unique entries.  The optional delta input is whether the array is 
-!>        composed of incremental values (deltas) or absolute values.  
+!> @brief This routine takes a 2-D array of integers and returns the number of
+!>        unique entries.  The optional delta input is whether the array is
+!>        composed of incremental values (deltas) or absolute values.
 !> @param r The input array of integers
 !> @param delta The optional input for whether the array is incremental or not
 !> @param sout The number of unique entries in the array r.
 !>
-    PURE FUNCTION findNUnique_2DInt(r,delta) RESULT(sout)
+    FUNCTION findNUnique_2DInt(r,delta) RESULT(sout)
       INTEGER(SIK),INTENT(IN) :: r(:,:)
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: delta
       INTEGER(SIK) :: sout
-      
+
       INTEGER(SIK) :: i,n
       INTEGER(SIK),ALLOCATABLE :: tmpr(:,:)
-      
+
       !n=SIZE(r,DIM=1)
       !IF(PRESENT(delta)) THEN
       !  IF(delta) THEN
@@ -402,24 +402,24 @@ MODULE ArrayUtils
 !-------------------------------------------------------------------------------
 !> @brief This routine takes an array of reals and returns the unique
 !>        entries within a given tolerance for the equivalence of reals.  The
-!>        optional delta input is whether the array is composed of incremental 
-!>        values (deltas) or absolute values.  The optional tol input can 
+!>        optional delta input is whether the array is composed of incremental
+!>        values (deltas) or absolute values.  The optional tol input can
 !>        specifically decide the tolerance for whether two reals are unique.
 !> @param r The input array of reals
 !> @param rout The 1-D array of unique entries in the array r.
 !> @param delta The optional input for whether the array is incremental or not
 !> @param tol The tolerance for comparing two real values
 !>
-    PURE SUBROUTINE getUnique_1DReal(r,rout,delta,tol)
+    SUBROUTINE getUnique_1DReal(r,rout,delta,tol)
       REAL(SRK),INTENT(IN) :: r(:)
       REAL(SRK),ALLOCATABLE,INTENT(OUT) :: rout(:)
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: delta
       REAL(SRK),INTENT(IN),OPTIONAL :: tol
-      
+
       INTEGER(SIK) :: i,n,sout
       REAL(SRK) :: loctol
       REAL(SRK),ALLOCATABLE :: tmpr(:)
-      
+
       n=SIZE(r,DIM=1)
       IF(PRESENT(delta)) THEN
         IF(delta) THEN
@@ -435,7 +435,7 @@ MODULE ArrayUtils
       IF(PRESENT(tol)) THEN
         IF((0.0_SRK < tol) .AND. (tol <= EPSREAL*1000.0_SRK)) loctol=tol
       ENDIF
-      
+
       !Find the number of unique entries
       CALL sort(tmpr)
       sout=1
@@ -452,7 +452,7 @@ MODULE ArrayUtils
           sout=sout+1
         ENDIF
       ENDDO
-      
+
       !Deallocate
       DEALLOCATE(tmpr)
     ENDSUBROUTINE getUnique_1DReal
@@ -460,7 +460,7 @@ MODULE ArrayUtils
 !-------------------------------------------------------------------------------
 !> @brief This routine takes an array of integers and returns the unique
 !>        entries.  The optional delta input is whether the array is composed of
-!>         incremental values (deltas) or absolute values.  
+!>         incremental values (deltas) or absolute values.
 !> @param r The input array of integers
 !> @param rout The 1-D array of unique entries in the array r.
 !> @param delta The optional input for whether the array is incremental or not
@@ -469,10 +469,10 @@ MODULE ArrayUtils
       INTEGER(SIK),INTENT(IN) :: r(:)
       INTEGER(SIK),ALLOCATABLE,INTENT(OUT) :: rout(:)
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: delta
-      
+
       INTEGER(SIK) :: i,n,sout
       INTEGER(SIK),ALLOCATABLE :: tmpr(:)
-      
+
       n=SIZE(r,DIM=1)
       IF(PRESENT(delta)) THEN
         IF(delta) THEN
@@ -484,7 +484,7 @@ MODULE ArrayUtils
         ALLOCATE(tmpr(n))
         tmpr=r
       ENDIF
-      
+
       !Find the number of unique entries
       CALL sort(tmpr)
       sout=1
@@ -508,7 +508,7 @@ MODULE ArrayUtils
 !-------------------------------------------------------------------------------
 !> @brief This routine takes a 2-D array of integers and returns the unique
 !>        entries.  The optional delta input is whether the array is composed of
-!>         incremental values (deltas) or absolute values.  
+!>         incremental values (deltas) or absolute values.
 !> @param r The input array of integers
 !> @param rout The 2-D array of unique entries in the array r.
 !> @param delta The optional input for whether the array is incremental or not
@@ -517,10 +517,10 @@ MODULE ArrayUtils
       INTEGER(SIK),INTENT(IN) :: r(:,:)
       INTEGER(SIK),ALLOCATABLE,INTENT(OUT) :: rout(:)
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: delta
-      
+
       INTEGER(SIK) :: i,n,sout
       INTEGER(SIK),ALLOCATABLE :: tmpr(:,:)
-      
+
       n=SIZE(r,DIM=1)
       IF(PRESENT(delta)) THEN
         IF(delta) THEN
@@ -532,7 +532,7 @@ MODULE ArrayUtils
         ALLOCATE(tmpr(n,n))
         tmpr=r
       ENDIF
-      
+
       !Find the number of unique entries
       CALL sort(tmpr)
       sout=1
@@ -559,8 +559,8 @@ MODULE ArrayUtils
 !> @param r1 The first array of reals
 !> @param r2 The second array of reals
 !> @param rout The output of the union of r1 and r2
-!> @param xi1 The optional offset for the first array 
-!> @param xi2 The optional offset for the second array 
+!> @param xi1 The optional offset for the first array
+!> @param xi2 The optional offset for the second array
 !> @param delta1 The optional flag if the first array is an incremental array
 !> @param delta2 The optional flag if the second array is an incremental array
 !> @param deltaout The optional flag if the output array is an incremental array
@@ -577,7 +577,7 @@ MODULE ArrayUtils
       LOGICAL(SBK) :: bool1,bool2
       INTEGER(SIK) :: i,j,sr1,sr2,sout,tmpsout
       REAL(SRK),ALLOCATABLE :: tmpout(:),tmpout2(:),tmp1(:),tmp2(:)
-      
+
       !Process the first array if it is a delta
       bool1=.FALSE.
       sr1=SIZE(r1,DIM=1)
@@ -652,9 +652,9 @@ MODULE ArrayUtils
     ENDSUBROUTINE getUnion_1DReal
 !
 !-------------------------------------------------------------------------------
-!> @brief This routine finds the index in array r in which the position pos 
+!> @brief This routine finds the index in array r in which the position pos
 !>        falls.  It has the optional for specifying the lower array bounds xi,
-!>        and whether the array is incremental or not.  It returns the array 
+!>        and whether the array is incremental or not.  It returns the array
 !>        index if it is found.  A -1 is returned for a position value lower
 !>        than the bottom array value and a -2 for a position value higher than
 !>        the top array value.  Behavior for a point that falls on a boundary
@@ -696,7 +696,7 @@ MODULE ArrayUtils
       INTEGER(SIK) :: ind
       INTEGER(SIK) :: i,n,l_incl
       REAL(SRK) :: tmp(SIZE(r,DIM=1)+1),l_tol
-      
+
       !Initialize the tmp array and adjust for any offset xi
       n=SIZE(r,DIM=1)
       tmp=0.0_SRK
@@ -707,7 +707,7 @@ MODULE ArrayUtils
       ELSE
         tmp(1:n)=r
       ENDIF
-      
+
       !If the array is in increments/deltas and not full values
       IF(PRESENT(delta)) THEN
         IF(delta) THEN
@@ -716,20 +716,20 @@ MODULE ArrayUtils
           ENDDO
         ENDIF
       ENDIF
-      
+
       !If the logic should be inclusive or exclusive
       l_incl=0
       IF(PRESENT(incl)) THEN
         IF((0 <= incl) .AND. (incl <= 2)) l_incl=incl
       ENDIF
-      
+
       !If there is a tolerance specified, assign it
       l_tol=EPSREAL
       IF(PRESENT(tol)) THEN
         !Give tolerance a range of say 1000*EPSREAL
         IF((0.0_SRK < tol) .AND. (tol <= EPSREAL*1000.0_SRK)) l_tol=tol
       ENDIF
-      
+
       !Below the array
       IF(pos < tmp(1)) THEN
         ind=-1
@@ -766,7 +766,7 @@ MODULE ArrayUtils
     ENDFUNCTION findIndex_1DReal
 !
 !-------------------------------------------------------------------------------
-!> @brief 
+!> @brief
 !> @param r
 !>
     PURE FUNCTION findIndex_1DInt(r,pos,xi,delta,incl) RESULT(ind)
@@ -778,7 +778,7 @@ MODULE ArrayUtils
       INTEGER(SIK) :: ind
       INTEGER(SIK) :: n,i,l_incl
       INTEGER(SIK) :: tmp(SIZE(r,DIM=1)+1)
-      
+
       !Initialize the tmp array and adjust for any offset xi
       n=SIZE(r,DIM=1)
       tmp=0
@@ -789,7 +789,7 @@ MODULE ArrayUtils
       ELSE
         tmp(1:n)=r
       ENDIF
-      
+
       !If the array is in increments/deltas and not full values
       IF(PRESENT(delta)) THEN
         IF(delta) THEN
@@ -798,13 +798,13 @@ MODULE ArrayUtils
           ENDDO
         ENDIF
       ENDIF
-      
+
       !If the logic should be inclusive or exclusive
       l_incl=0
       IF(PRESENT(incl)) THEN
         IF((0 <= incl) .AND. (incl <= 2)) l_incl=incl
       ENDIF
-      
+
       !Below the array
       IF(pos < tmp(1)) THEN
         ind=-1
@@ -841,8 +841,8 @@ MODULE ArrayUtils
 !
 !-------------------------------------------------------------------------------
 !> @brief This routine returns the nearest value of array r that is less than
-!>        position pos.  It has the optional for specifying the lower array 
-!>        bounds xi, and whether the array is incremental or not.  If the pos 
+!>        position pos.  It has the optional for specifying the lower array
+!>        bounds xi, and whether the array is incremental or not.  If the pos
 !>        value is not within array r, the return argument val will be 0.0_SRK.
 !> @param r The array in which to find the nearest lesser value
 !> @param pos The position for which to find the nearest lesser value
@@ -859,7 +859,7 @@ MODULE ArrayUtils
       INTEGER(SIK) :: ind
       INTEGER(SIK) :: i,n
       REAL(SRK) :: tmp(SIZE(r,DIM=1)+1)
-      
+
       !Initialize the tmp array and adjust for any offset xi
       val=0.0_SRK
       n=SIZE(r,DIM=1)
@@ -871,7 +871,7 @@ MODULE ArrayUtils
       ELSE
         tmp(1:n)=r
       ENDIF
-      
+
       !If the array is in increments/deltas and not full values
       IF(PRESENT(delta)) THEN
         IF(delta) THEN
@@ -880,7 +880,7 @@ MODULE ArrayUtils
           ENDDO
         ENDIF
       ENDIF
-      
+
       IF((tmp(1) .APPROXLE. pos) .AND. (pos .APPROXLE. tmp(n))) THEN
         ind=1
         DO WHILE(pos .APPROXGE. tmp(ind))
@@ -892,8 +892,8 @@ MODULE ArrayUtils
 !
 !-------------------------------------------------------------------------------
 !> @brief This routine returns the nearest value of array r that is greater than
-!>        position pos.  It has the optional for specifying the lower array 
-!>        bounds xi, and whether the array is incremental or not.  If the pos 
+!>        position pos.  It has the optional for specifying the lower array
+!>        bounds xi, and whether the array is incremental or not.  If the pos
 !>        value is not within array r, the return argument val will be 0.0_SRK.
 !> @param r The array in which to find the nearest greater value
 !> @param pos The position for which to find the nearest greater value
@@ -910,7 +910,7 @@ MODULE ArrayUtils
       INTEGER(SIK) :: ind
       INTEGER(SIK) :: i,n
       REAL(SRK) :: tmp(SIZE(r,DIM=1)+1)
-      
+
       !Initialize the tmp array and adjust for any offset xi
       val=0.0_SRK
       n=SIZE(r,DIM=1)
@@ -922,7 +922,7 @@ MODULE ArrayUtils
       ELSE
         tmp(1:n)=r
       ENDIF
-      
+
       !If the array is in increments/deltas and not full values
       IF(PRESENT(delta)) THEN
         IF(delta) THEN
@@ -931,7 +931,7 @@ MODULE ArrayUtils
           ENDDO
         ENDIF
       ENDIF
-      
+
       IF((tmp(1) .APPROXLE. pos) .AND. (pos .APPROXLE. tmp(n))) THEN
         ind=1
         DO WHILE(pos .APPROXGE. tmp(ind))
@@ -942,10 +942,10 @@ MODULE ArrayUtils
     ENDFUNCTION findUpBound_1DReal
 !
 !-------------------------------------------------------------------------------
-!> @brief This routine returns the difference of the nearest value of array r 
-!>        that is greater than position pos and position pos.  It has the 
-!>        optional for specifying the lower array bounds xi, and whether the 
-!>        array is incremental or not.  If the pos value is not within array r, 
+!> @brief This routine returns the difference of the nearest value of array r
+!>        that is greater than position pos and position pos.  It has the
+!>        optional for specifying the lower array bounds xi, and whether the
+!>        array is incremental or not.  If the pos value is not within array r,
 !>        the return argument val will be -pos.
 !> @param r The array in which to find the difference
 !> @param pos The position for which to find the difference
@@ -960,7 +960,7 @@ MODULE ArrayUtils
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: delta
       REAL(SRK) :: val
       REAL(SRK) :: tmp
-      
+
       IF(PRESENT(xi) .AND. PRESENT(delta)) THEN
         tmp=findUpBound(r,pos,XI=xi,delta=DELTA)
       ELSEIF(PRESENT(delta)) THEN
@@ -970,16 +970,16 @@ MODULE ArrayUtils
       ELSE
         tmp=findUpBound(r,pos)
       ENDIF
-      
+
       val=tmp-pos
-      
+
     ENDFUNCTION findEleHtAbove_1DReal
 !
 !-------------------------------------------------------------------------------
-!> @brief This routine returns the difference of position pos and the nearest 
-!>        value of array r that is lesser than position pos.  It has the 
-!>        optional for specifying the lower array bounds xi, and whether the 
-!>        array is incremental or not.  If the pos value is not within array r, 
+!> @brief This routine returns the difference of position pos and the nearest
+!>        value of array r that is lesser than position pos.  It has the
+!>        optional for specifying the lower array bounds xi, and whether the
+!>        array is incremental or not.  If the pos value is not within array r,
 !>        the return argument val will be -pos.
 !> @param r The array in which to find the difference
 !> @param pos The position for which to find the difference
@@ -994,7 +994,7 @@ MODULE ArrayUtils
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: delta
       REAL(SRK) :: val
       REAL(SRK) :: tmp
-      
+
       IF(PRESENT(xi) .AND. PRESENT(delta)) THEN
         tmp=findLowBound(r,pos,XI=xi,DELTA=delta)
       ELSEIF(PRESENT(delta)) THEN
@@ -1004,9 +1004,9 @@ MODULE ArrayUtils
       ELSE
         tmp=findLowBound(r,pos)
       ENDIF
-      
+
       val=pos-tmp
-      
+
     ENDFUNCTION findEleHtBelow_1DReal
 !
 ENDMODULE ArrayUtils

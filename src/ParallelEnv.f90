@@ -58,15 +58,18 @@ MODULE ParallelEnv
   INTEGER,PARAMETER :: PE_COMM_SELF=MPI_COMM_SELF
   INTEGER,PARAMETER :: PE_COMM_WORLD=MPI_COMM_WORLD
   INTEGER,PARAMETER :: PE_COMM_NULL=MPI_COMM_NULL
+  INTEGER,SAVE :: PE_COMM_DEFAULT=PE_COMM_WORLD
 #else
   INTEGER,PARAMETER :: PE_COMM_SELF=1
   INTEGER,PARAMETER :: PE_COMM_WORLD=0
   INTEGER,PARAMETER :: PE_COMM_NULL=-1
+  INTEGER,SAVE :: PE_COMM_DEFAULT=0
 #endif
 
   PUBLIC :: PE_COMM_SELF
   PUBLIC :: PE_COMM_WORLD
   PUBLIC :: PE_COMM_NULL
+  PUBLIC :: PE_COMM_DEFAULT
   PUBLIC :: MPI_EnvType
   PUBLIC :: OMP_EnvType
   PUBLIC :: ParallelEnvType
@@ -431,7 +434,7 @@ MODULE ParallelEnv
       INTEGER(SIK) :: isinit,icomm
       LOGICAL(SBK) :: allpetsc
       LOGICAL(SBK),ALLOCATABLE :: allpetsc2(:)
-      
+
       IF(.NOT.myPE%initstat) THEN
         icomm=PE_COMM_NULL
         IF(PRESENT(PEparam)) icomm=PEparam
@@ -451,7 +454,7 @@ MODULE ParallelEnv
 
         !Set the communicator
         !Default is comm world
-        IF(icomm == PE_COMM_NULL) icomm=PE_COMM_WORLD
+        IF(icomm == PE_COMM_NULL) icomm=PE_COMM_DEFAULT
 #ifdef HAVE_MPI
         !Create a duplicate of the passed communicator
         CALL MPI_Comm_dup(icomm,myPE%comm,mpierr)
@@ -1013,13 +1016,12 @@ MODULE ParallelEnv
         ' - input nenergy is less than 1!')
       IF(nthreads < 1) CALL eParEnv%raiseError(modName//'::'//myName// &
         ' - input nthreads is less than 1!')
-      IF(nenergy*nspace*nangle > myPE%world%nproc) &
+      IF(myPE%world%nproc < nenergy*nspace*nangle) &
         CALL eParEnv%raiseError(modName//'::'//myName//' - Number of '// &
-          'available MPI processes is insufficient to hold grid!')
-      IF(nenergy*nspace*nangle < myPE%world%nproc) &
-        CALL eParEnv%raiseWarning(modName//'::'//myName//' - Number of '// &
-          'available MPI processes is more than grid size, '// &
-            'some processes will not be used!')
+          'available MPI processes is less than specified in the input!')
+      IF(myPE%world%nproc > nenergy*nspace*nangle) &
+        CALL eParEnv%raiseError(modName//'::'//myName//' - Number of '// &
+          'available MPI processes is more than specified in the input!')
 
       IF(nerror == eParEnv%getCounter(EXCEPTION_ERROR)) THEN
         commDims(1)=nspace

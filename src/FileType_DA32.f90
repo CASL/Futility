@@ -56,6 +56,20 @@
 !> an integer multiple of WORDSREC, and unless it is changed the buffer size
 !> is the size of 1 KB (the same as a record in the file).
 !>
+!> A note on terminology (because I use some words interchangeably and its
+!> confusing).
+!>  - A @e block is chunk of data that constitutes a single record of a
+!>    Fortran direct access file. A block may have multiple words.
+!>  - A @e word is a single accesible data element within the read/write
+!>    interfaces of the DA32FileType. Words are typicially referred to as
+!>    elements of blocks.
+!>  - A @e record may refer to an accessible data element within the
+!>    DA32FileType (e.g. a word) but more likely refers to the Fortran direct
+!>    access file record (e.g. a specific block).
+!>
+!>  The least confusing way to refer to things is by blocks and words.
+!>
+!>
 !> @author Brendan Kochunas
 !>   @date 01/15/2014
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
@@ -121,6 +135,9 @@ MODULE FileType_DA32
       !> @copybrief FileType_DA32::getPad2NextBlk
       !> @copydetails FileType_DA32::getPad2NextBlk
       PROCEDURE,NOPASS :: getPad2NextBlk
+      !> @copybrief FileType_DA32::writeEmptyBlock
+      !> @copydetails FileType_DA32::writeEmptyBlock
+      PROCEDURE,PASS :: writeEmptyBlock
       !> @copybrief FileType_DA32::init_DA32_file
       !> @copydetails FileType_DA32::init_DA32_file
       PROCEDURE,PASS :: initialize => init_DA32_file
@@ -435,6 +452,35 @@ MODULE FileType_DA32
         IF(pad == INT(WORDSREC,SLK)) pad=0
       ENDIF
     ENDFUNCTION getPad2NextBlk
+!
+!-------------------------------------------------------------------------------
+!> @brief Writes an empty block of data to the file where IREC exists in the 
+!>        block
+!> @param thisDA32 the DA32FileType object
+!> @param irec the record number indicating the block in which to write data
+!> @param iostat optional argument to return IOSTAT value from WRITE statement
+!>
+!> The primary purpose of this routine is to write a block of data at the
+!> end of the file to set the maximum file size to facilitate faster writing
+!> in preceding records. If @c irec specifies a block of data in the file
+!> that has data written to it already it will be wiped, so caution is
+!> is recommended when using this method.
+!>
+    SUBROUTINE writeEmptyBlock(thisDA32,rec,iostat)
+      CLASS(DA32FileType),INTENT(IN) :: thisDA32
+      INTEGER(SNK),PARAMETER :: bufdat(WORDSREC)=0
+      INTEGER(SLK),INTENT(IN) :: rec
+      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+      INTEGER(SIK) :: ioerr
+      INTEGER(SLK) :: irec
+
+      ioerr=IOSTAT_END
+      IF(thisDA32%isInit().AND.thisDA32%isOpen().AND.thisDA32%isWrite()) THEN
+        irec=(rec-1)/WORDSREC+1
+        WRITE(UNIT=thisDA32%getUnitNo(),REC=irec,IOSTAT=ioerr) bufdat
+      ENDIF
+      IF(PRESENT(iostat)) iostat=ioerr
+    ENDSUBROUTINE writeEmptyBlock
 !
 !-------------------------------------------------------------------------------
 !> @brief Initializes a binary direct access file object.
