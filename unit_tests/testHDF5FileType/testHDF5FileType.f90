@@ -585,9 +585,10 @@ PROGRAM testHDF5
       ASSERT(i == 10,'ngrp_HDF5FileType')
       FINFO() i
  
-      CALL h5%fdelete()
+      !CALL h5%fdelete()
+      CALL h5%fclose()
       INQUIRE(FILE='writetest.h5',EXIST=exists)
-      ASSERT(.NOT.exists,'HDF5 object not properly deleted!')
+!      ASSERT(.NOT.exists,'HDF5 object not properly deleted!')
     ENDSUBROUTINE testHDF5FileTypeWrite
 !
 !-------------------------------------------------------------------------------

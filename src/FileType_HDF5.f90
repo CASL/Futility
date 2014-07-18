@@ -6234,6 +6234,9 @@ MODULE FileType_HDF5
       ENDIF
 #endif
     ENDSUBROUTINE read_st0
+!
+!-------------------------------------------------------------------------------
+#ifdef MPACT_HAVE_HDF5
     SUBROUTINE read_st0_helper(dset_id,type_id,valsc,h_dims,strlen)
       INTEGER(HID_T),INTENT(IN) :: dset_id,type_id
       CHARACTER(LEN=MAXSTRLEN),INTENT(INOUT) :: valsc
@@ -6250,6 +6253,7 @@ MODULE FileType_HDF5
       ENDDO
       valsc=TRIM(tmpstr)
     ENDSUBROUTINE read_st0_helper
+#endif
 !
 !-------------------------------------------------------------------------------
 !> @brief Read a rank-1 array of strings from dataset
