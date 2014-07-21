@@ -56,16 +56,16 @@ PROGRAM testHDF5
   REGISTER_SUBTEST("HDF5FileType Initialization Checks",testHDF5FileTypeCreateDelete)
   REGISTER_SUBTEST("HDF5FileType Error Checks",testHDF5FileTypeErrorCheck)
   REGISTER_SUBTEST("HDF5FileType Read",testHDF5FileTypeRead)
-!  IF(utest_nfail==0) THEN
+  IF(utest_nfail==0) THEN
     REGISTER_SUBTEST("HDF5FileType Write",testHDF5FileTypeWrite)
-!  ELSE
-!    WRITE(*,*) '-----------------------------------------------------'// &
-!        '--------------------'
-!    WRITE(*,*) "HDF5FileType Read subtest failed: HDF5FileType Write "// &
-!        "subtest will not run"
-!    WRITE(*,*) '-----------------------------------------------------'// &
-!        '--------------------'
-!  ENDIF
+  ELSE
+    WRITE(*,*) '-----------------------------------------------------'// &
+        '--------------------'
+    WRITE(*,*) "HDF5FileType Read subtest failed: HDF5FileType Write "// &
+        "subtest will not run"
+    WRITE(*,*) '-----------------------------------------------------'// &
+        '--------------------'
+  ENDIF
   DEALLOCATE(refD1,refD2,refD3,refD4,refS1,refS2,refS3,refS4,refB1,refB2,refB3,&
       refL1,refL2,refL3,refN1,refN2,refN3,refST1,refST2,refST3,refsets)
 
@@ -585,10 +585,9 @@ PROGRAM testHDF5
       ASSERT(i == 10,'ngrp_HDF5FileType')
       FINFO() i
  
-      !CALL h5%fdelete()
-      CALL h5%fclose()
+      CALL h5%fdelete()
       INQUIRE(FILE='writetest.h5',EXIST=exists)
-!      ASSERT(.NOT.exists,'HDF5 object not properly deleted!')
+      ASSERT(.NOT.exists,'HDF5 object not properly deleted!')
     ENDSUBROUTINE testHDF5FileTypeWrite
 !
 !-------------------------------------------------------------------------------
