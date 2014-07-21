@@ -61,6 +61,10 @@ MODULE FileType_HDF5
 #ifdef MPACT_HAVE_HDF5
   USE HDF5
 #endif
+
+
+
+
   USE IntrType
   USE Strings
   USE ExceptionHandler
@@ -78,6 +82,9 @@ MODULE FileType_HDF5
 
   !> Name of the module
   CHARACTER(LEN=*),PARAMETER :: modName='FileType_HDF5'
+
+  !> Set maximum string length
+  INTEGER(SIK),PARAMETER :: MAXSTRLEN=1024
 
   !> This type extends the base file type, and adds support for writing to and
   !List of Public Members
@@ -3395,7 +3402,7 @@ MODULE FileType_HDF5
 !> StringsTypes are represented as rank-1 arrays of characters.
 !>
     SUBROUTINE write_st0(thisHDF5File,dsetname,vals,gdims_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writec0_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: myName='writest0_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       TYPE(StringType),INTENT(IN) :: vals
@@ -3409,7 +3416,7 @@ MODULE FileType_HDF5
       INTEGER(HID_T),PARAMETER :: rank=1
 
       INTEGER :: error
-      INTEGER(HID_T) :: dspace_id,dset_id,gspace_id,plist_id
+      INTEGER(HID_T) :: dspace_id,dset_id,gspace_id,plist_id,type_id
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
@@ -3449,49 +3456,36 @@ MODULE FileType_HDF5
           gdims=ldims
         ENDIF
 
-        !Create an HDF5 parameter list for the dataset creation.
-        CALL h5pcreate_f(H5P_DATASET_CREATE_F,plist_id,error)
+        ! Set string length
+        CALL h5tcopy_f(H5T_NATIVE_CHARACTER,type_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create parameter list.')
+          ' - Could not copy type_id.')
+
+        CALL h5tset_size_f(type_id,INT(LEN(valss),SDK),error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Could not set string length.')
 
         ! Create the dataspace
         ! Global dataspace
-        CALL h5screate_simple_f(rank,gdims,gspace_id,error)
-        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create dataspace.')
-
-        ! Local dataspace
-        CALL h5screate_simple_f(rank,ldims,dspace_id,error)
+        CALL h5screate_f(H5S_SCALAR_F,dspace_id,error) 
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - Could not create dataspace.')
 
         ! Create the dataset
-        CALL h5dcreate_f(thisHDF5File%file_id, path, H5T_NATIVE_CHARACTER, &
-            gspace_id, dset_id,error)
+        CALL h5dcreate_f(thisHDF5File%file_id, path, type_id, &
+            dspace_id,dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - Could not create dataset:'//path)
 
-        ! Destroy the property list
-        CALL h5pclose_f(plist_id,error)
-        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not close parameter list.')
-
-        ! Select the global dataspace for the dataset
-        CALL h5dget_space_f(dset_id,gspace_id,error)
-        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not select global dataspace for the dataset.')
-
-        ! Create a property list for the write operation
-        CALL h5pcreate_f(H5P_DATASET_XFER_F,plist_id,error)
-        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create property list for write operation.')
-
         ! Write to the dataset
-        CALL h5dwrite_f(dset_id, H5T_NATIVE_CHARACTER, valsc, gdims, error, &
-            dspace_id,gspace_id,plist_id)
+        CALL h5dwrite_f(dset_id, type_id, valss, ldims, error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - Could not write to the dataset.')
               DEALLOCATE(valsc)
+
+        CALL h5tclose_f(type_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Could not close type_id.')
 
         ! Close the dataset
         CALL h5dclose_f(dset_id,error)
@@ -3502,14 +3496,6 @@ MODULE FileType_HDF5
         CALL h5sclose_f(dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - Could not close the dataspace.')
-
-        CALL h5sclose_f(gspace_id,error)
-        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not close the dataspace.')
-
-        CALL h5pclose_f(plist_id,error)
-        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not close the parameter list.')
       ENDIF
 #endif
     ENDSUBROUTINE write_st0
@@ -3525,7 +3511,7 @@ MODULE FileType_HDF5
 !> the value in @c length_max, and calls the @c fwrite routine.
 !>
     SUBROUTINE write_st1_helper(thisHDF5File,dsetname,vals,gdims_in)
-      CHARACTER(LEN=*),PARAMETER :: MyName='writec1helper_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: MyName='writest1helper_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       TYPE(StringType),ALLOCATABLE,INTENT(IN) :: vals(:)
@@ -3557,7 +3543,7 @@ MODULE FileType_HDF5
 !> StringsTypes are represented as rank-1 arrays of characters.
 !>
     SUBROUTINE write_st1(thisHDF5File,dsetname,vals,length_max,gdims_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writec1_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: myName='writest1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       TYPE(StringType),ALLOCATABLE,INTENT(IN) :: vals(:)
@@ -3689,7 +3675,7 @@ MODULE FileType_HDF5
 !> the value in @c length_max, and calls the @c fwrite routine.
 !>
     SUBROUTINE write_st2_helper(thisHDF5File,dsetname,vals,gdims_in)
-      CHARACTER(LEN=*),PARAMETER :: MyName='writec2helper_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: MyName='writest2helper_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       TYPE(StringType),ALLOCATABLE,INTENT(IN) :: vals(:,:)
@@ -3723,7 +3709,7 @@ MODULE FileType_HDF5
 !> StringsTypes are represented as rank-1 arrays of characters.
 !>
     SUBROUTINE write_st2(thisHDF5File,dsetname,vals,length_max,gdims_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writec2_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: myName='writest2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SIK),INTENT(IN) :: length_max
@@ -3857,7 +3843,7 @@ MODULE FileType_HDF5
 !> the value in @c length_max, and calls the @c fwrite routine.
 !>
     SUBROUTINE write_st3_helper(thisHDF5File,dsetname,vals,gdims_in)
-      CHARACTER(LEN=*),PARAMETER :: MyName='writec3helper_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: MyName='writest3helper_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       TYPE(StringType),ALLOCATABLE,INTENT(IN) :: vals(:,:,:)
@@ -3893,7 +3879,7 @@ MODULE FileType_HDF5
 !> StringsTypes are represented as rank-1 arrays of characters.
 !>
     SUBROUTINE write_st3(thisHDF5File,dsetname,vals,length_max,gdims_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writec3_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: myName='writest3_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       TYPE(StringType),ALLOCATABLE,INTENT(IN) :: vals(:,:,:)
@@ -6187,14 +6173,18 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       TYPE(StringType),INTENT(INOUT) :: vals
 #ifdef MPACT_HAVE_HDF5
-      CHARACTER,ALLOCATABLE :: valsc(:)
+      INTEGER(SIK),PARAMETER :: max_dims=1
+      INTEGER(HSIZE_T) :: h_dims(max_dims)
+!      CHARACTER,ALLOCATABLE :: valsc(:)
+      CHARACTER(LEN=MAXSTRLEN) :: valsc
       INTEGER(SIK) :: i
+      INTEGER(SIZE_T) :: strlen
       CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
       INTEGER(HID_T),PARAMETER :: rank=1
 
       INTEGER(HID_T) :: mem,ndims
-      INTEGER(HID_T) :: dspace_id,dset_id
+      INTEGER(HID_T) :: dspace_id,dset_id,type_id
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
@@ -6208,52 +6198,62 @@ MODULE FileType_HDF5
 
         ! Open the dataset
         CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
-
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - Failed to open dataset.')
 
         ! Get dataset dimensions for allocation
-        CALL h5dget_space_f(dset_id,dspace_id,error)
+        CALL h5dget_type_f(dset_id,type_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - Failed to obtain the dataspace.')
+
         ! Make sure the rank is right
-        CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+        CALL h5tget_size_f(type_id,strlen,error)
         IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - Failed to retrieve number of dataspace dimensions.')
-        IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Using wrong read function for rank.')
-
-        CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
-        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Failed to retrieve dataspace dimensions.')
-
-        ! Allocate character array
-        ALLOCATE(valsc(dims(1)))
-
-        ! Read the dataset
-        mem=H5T_NATIVE_CHARACTER
-        CALL h5dread_f(dset_id,mem,valsc,dims,error)
+        IF(strlen > MAXSTRLEN) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Insufficient string length to read data.')
+        CALL read_st0_helper(dset_id,type_id,valsc,h_dims,strlen)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - Failed to read data from dataset.')
 
         ! Convert to StringType
-        vals=''
-        DO i=1,SIZE(valsc)
-          vals=vals//valsc(i)
+        DO i=1,MAXSTRLEN
+          IF(ICHAR(valsc(i:i)) == 0) valsc(i:i)=' '
         ENDDO
+        vals=TRIM(valsc)
+
+        ! Close type_id
+        CALL h5tclose_f(type_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Failed to close type_id.')
 
         ! Close the dataset
         CALL h5dclose_f(dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - Failed to close dataset.')
-
-        ! Close the dataspace
-        CALL h5sclose_f(dspace_id,error)
-        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Failed to close dataspace.')
       ENDIF
 #endif
     ENDSUBROUTINE read_st0
+!
+!-------------------------------------------------------------------------------
+#ifdef MPACT_HAVE_HDF5
+    SUBROUTINE read_st0_helper(dset_id,type_id,valsc,h_dims,strlen)
+      INTEGER(HID_T),INTENT(IN) :: dset_id,type_id
+      CHARACTER(LEN=MAXSTRLEN),INTENT(INOUT) :: valsc
+      INTEGER(HSIZE_T),INTENT(IN) :: h_dims(:)
+      INTEGER(SLK),INTENT(IN) :: strlen
+      CHARACTER(LEN=strlen) :: tmpstr
+      INTEGER(SIK) :: i,error
+
+      tmpstr=' '
+        CALL h5dread_f(dset_id,type_id,tmpstr,h_dims,error)
+      IF(error /= 0) WRITE(*,*) 'crap'
+      DO i=1,LEN(tmpstr)
+        IF(ICHAR(tmpstr(i:i)) == 0) tmpstr(i:i)=' '
+      ENDDO
+      valsc=TRIM(tmpstr)
+    ENDSUBROUTINE read_st0_helper
+#endif
 !
 !-------------------------------------------------------------------------------
 !> @brief Read a rank-1 array of strings from dataset
