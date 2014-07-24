@@ -108,6 +108,7 @@ MODULE IO_Strings
   PUBLIC :: getFileParts
   PUBLIC :: nFields
   PUBLIC :: getField
+  PUBLIC :: getSubstring
   PUBLIC :: toUPPER
   PUBLIC :: strfind
   PUBLIC :: strmatch
@@ -145,6 +146,19 @@ MODULE IO_Strings
   !> Module Name for exception handler
   CHARACTER(LEN=*),PARAMETER :: modName='IO_STRINGS'
 
+  !> @brief Generic interface to remove comments from strings.
+  !>
+  !> This interfaces allows for the input argument to be either a
+  !> character array or a StringType.
+  INTERFACE stripComment
+    !> @copybrief IO_Strings::stripComment_char
+    !> @copydetails IO_Strings::stripComment_char
+    MODULE PROCEDURE stripComment_char
+    !> @copybrief IO_Strings::stripComment_string
+    !> @copydetails IO_Strings::stripComment_string
+    MODULE PROCEDURE stripComment_string
+  ENDINTERFACE stripComment
+
   !> @brief Generic interface to get the parts of the path-file name.
   !>
   !> This interfaces is presently redundant but is provided on the
@@ -174,7 +188,7 @@ MODULE IO_Strings
   !> assumption that it may be needed later.
   INTERFACE getFileName
     !> @copybrief IO_Strings::getFileName_string
-    !> @copydetails IO_Strings::getFileParts_char
+    !> @copydetails IO_Strings::getFileName_string
     MODULE PROCEDURE getFileName_string
   ENDINTERFACE getFileName
   
@@ -200,7 +214,6 @@ MODULE IO_Strings
     !> @copydetails IO_Strings::strmatch_string
     MODULE PROCEDURE strmatch_string
   ENDINTERFACE strmatch
-  
   
   !> @brief Generic interface for strrep
   !>
@@ -241,7 +254,7 @@ MODULE IO_Strings
     MODULE PROCEDURE nFields_string
   ENDINTERFACE nFields
   
-  !> @brief Generic interface for nFields
+  !> @brief Generic interface for getField
   !>
   !> This interfaces allows for the input argument to be either a
   !> character array or a StringType.
@@ -258,6 +271,12 @@ MODULE IO_Strings
     !> @copybrief IO_Strings::getField_char_string
     !> @copydetails IO_Strings::getField_char_string
     MODULE PROCEDURE getField_char_string
+    !> @copybrief IO_Strings::getField_string_int
+    !> @copydetails IO_Strings::getField_string_int
+    MODULE PROCEDURE getField_string_int
+    !> @copybrief IO_Strings::getField_string_real
+    !> @copydetails IO_Strings::getField_string_real
+    MODULE PROCEDURE getField_string_real
   ENDINTERFACE getField
   
   !> @brief Generic interface for strarraymatch
@@ -290,10 +309,52 @@ MODULE IO_Strings
   CONTAINS
 !
 !-------------------------------------------------------------------------------
-!> Strips the end of a line based on the comment symbol (BANG)
-!> @param string the string to strip any ending comments from
+!> Returns a StringType object which is a section of the input StringType object
+!> @param string the StringType object to get substring from
+!> @param substring the substring stored as a StringType object
+!> @param stt the index of input string at which the substring starts
+!> @param stp the index of input string at which the substring stops
 !>
-    PURE SUBROUTINE stripComment(string)
+    PURE SUBROUTINE getSubstring(string,substring,stt,stp)
+      TYPE(StringType),INTENT(IN) :: string
+      TYPE(StringType),INTENT(OUT) :: substring
+      INTEGER(SIK),INTENT(IN) :: stt,stp
+      INTEGER(SIK) :: i,sublen
+      CHARACTER(LEN=string%n) :: tempChar
+
+      IF(stp >= stt) THEN
+        IF(stp <= string%n) THEN
+          IF(stt > 0) THEN
+            sublen=stp-stt+1
+            ALLOCATE(substring%s(sublen))
+            substring%n=sublen
+            DO i=stt,stp
+              substring%s(i-stt+1)=string%s(i)
+            ENDDO
+            substring%ntrim=substring%n
+            DO i=sublen,1,-1
+              IF(substring%s(i) == ' ') THEN
+                substring%ntrim=substring%ntrim-1
+              ELSE
+                EXIT
+              ENDIF
+            ENDDO
+          ELSE
+            substring=string
+          ENDIF
+        ELSE
+          substring=string
+        ENDIF
+      ELSE
+        substring=' '  
+      ENDIF
+    ENDSUBROUTINE getSubstring
+!
+!-------------------------------------------------------------------------------
+!> Strips the end of a line based on the comment symbol (BANG)
+!> @param string the character array to strip any ending comments from
+!>
+    PURE SUBROUTINE stripComment_char(string)
       CHARACTER(LEN=*),INTENT(INOUT) :: string
       INTEGER(SIK) :: nBang,stt,stp
       INTEGER(SIK),ALLOCATABLE :: bangloc(:)
@@ -310,7 +371,32 @@ MODULE IO_Strings
         DEALLOCATE(bangloc)
       ENDIF
       string=string(stt:stp)
-    ENDSUBROUTINE stripComment
+    ENDSUBROUTINE stripComment_char
+!
+!-------------------------------------------------------------------------------
+!> Strips the end of a line based on the comment symbol (BANG)
+!> @param string the StringType object to strip any ending comments from
+!>
+    PURE SUBROUTINE stripComment_string(string)
+      TYPE(StringType),INTENT(INOUT) :: string
+      TYPE(StringType) :: tempString
+      INTEGER(SIK) :: nBang,stt,stp
+      INTEGER(SIK),ALLOCATABLE :: bangloc(:)
+
+      stt=1
+      stp=LEN(string)
+      IF(strmatch(string,BANG)) THEN
+        !Determine the location of the first '!' character and remove all
+        !text after this character (including the '!' character)
+        nBANG=nmatchstr(CHAR(string),BANG)
+        ALLOCATE(bangloc(nBANG))
+        bangloc=strfind(CHAR(string),BANG)
+        stp=bangloc(1)-1
+        DEALLOCATE(bangloc)
+      ENDIF
+      CALL getSubString(string,tempString,stt,stp)
+      string=tempString
+    ENDSUBROUTINE stripComment_string
 !
 !-------------------------------------------------------------------------------
 !> @brief Function returns the indices in a string where substring pattern
@@ -689,6 +775,46 @@ MODULE IO_Strings
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierrout
       CALL getField_char_char(i,CHAR(string),field,ierrout)
     ENDSUBROUTINE getField_string_char
+!
+!-------------------------------------------------------------------------------
+!> @brief Return the ith field of a string as an integer
+!> @param i the ith field
+!> @param string the input string
+!> @param field the output integer containing the ith field
+!> @param ierrout an optional return argument with the IOSTAT value
+!>
+!> See getField_char_string.
+!>
+    PURE SUBROUTINE getField_string_int(i,string,field,ierrout)
+      INTEGER(SIK),INTENT(IN) :: i
+      TYPE(StringType),INTENT(IN) :: string
+      INTEGER(SIK),INTENT(OUT) :: field
+      INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierrout
+      CHARACTER(LEN=LEN_TRIM(string)) :: char_field
+
+      CALL getField_char_char(i,CHAR(string),char_field,ierrout)
+      IF(ierrout == 0) READ(char_field,*,IOSTAT=ierrout) field 
+    ENDSUBROUTINE getField_string_int
+!
+!-------------------------------------------------------------------------------
+!> @brief Return the ith field of a string as a real
+!> @param i the ith field
+!> @param string the input string
+!> @param field the output real containing the ith field
+!> @param ierrout an optional return argument with the IOSTAT value
+!>
+!> See getField_char_string.
+!>
+    PURE SUBROUTINE getField_string_real(i,string,field,ierrout)
+      INTEGER(SIK),INTENT(IN) :: i
+      TYPE(StringType),INTENT(IN) :: string
+      REAL(SRK),INTENT(OUT) :: field
+      INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierrout
+      CHARACTER(LEN=LEN_TRIM(string)) :: char_field
+
+      CALL getField_char_char(i,CHAR(string),char_field,ierrout)
+      IF(ierrout == 0) READ(char_field,*,IOSTAT=ierrout) field 
+    ENDSUBROUTINE getField_string_real
 !
 !-------------------------------------------------------------------------------
 !> @brief Separate the path and filename.

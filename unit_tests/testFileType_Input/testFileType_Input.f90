@@ -19,13 +19,14 @@ PROGRAM testFileType_Input
 #include "UnitTest.h"
   USE ISO_FORTRAN_ENV
   USE UnitTest
+  USE Strings
   USE ExceptionHandler
   USE FileType_Fortran
   USE FileType_Input
   
   IMPLICIT NONE
   
-  CHARACTER(LEN=MAX_INPUT_FILE_LINE_LEN) :: string
+  TYPE(StringType) :: string
   TYPE(ExceptionHandlerType),TARGET :: e
   TYPE(FortranFileType) :: testFile
   TYPE(InputFileType) :: testInpFile
@@ -35,18 +36,12 @@ PROGRAM testFileType_Input
   CALL e%setStopOnError(.FALSE.)
   CALL e%setQuietMode(.TRUE.)
   
-  REGISTER_SUBTEST('PARAMETERS',testParameters)
   REGISTER_SUBTEST('InputFileType',testInputFileType)
   
   FINALIZE_TEST()
 !
 !===============================================================================
   CONTAINS
-!
-!-------------------------------------------------------------------------------
-    SUBROUTINE testParameters()
-      WRITE(*,*) '  Passed:  MAX_INPUT_FILE_LINE_LEN = ',MAX_INPUT_FILE_LINE_LEN
-    ENDSUBROUTINE testParameters
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testInputFileType()
@@ -69,17 +64,17 @@ PROGRAM testFileType_Input
       CALL testFile%fopen()
       CALL testInpFile%initialize(UNIT=46,FILE='./test.inp')
       CALL testInpFile%fopen()
-      string=testInpFile%fgetl()
+      CALL testInpFile%fgetl(string)
       ASSERT(TRIM(string) == 'sample oneline 1','%fgetl()')
       ASSERT(testInpFile%getProbe() == 's','%getProbe()')
       CALL testInpFile%frewind()
       ASSERT(LEN_TRIM(testInpFile%getProbe()) == 0,'%frewind()')
-      string=testInpFile%fgetl()
+      CALL testInpFile%fgetl(string)
       CALL testInpFile%fbackspace()
       ASSERT(LEN_TRIM(testInpFile%getProbe()) == 0,'%fbackspace()')
       CALL testFile%clear(.TRUE.)
       CALL testInpFile%setEchoStat(.FALSE.)
-      string=testInpFile%fgetl()
+      CALL testInpFile%fgetl(string)
       CALL testInpFile%clear(.TRUE.)
       ASSERT(testInpFile%getEchoUnit() == -1,'%clear() (echo unit)')
       ASSERT(.NOT.(testInpFile%getEchostat()),'%clear() (echo stat)')

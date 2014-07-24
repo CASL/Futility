@@ -46,7 +46,7 @@
 !> IMPLICIT NONE
 !>
 !> TYPE(InputFileType) :: inpfile
-!> CHARACTER(LEN=MAX_INPUT_FILE_LINE_LEN) :: oneline
+!> TYPE(StringType) :: oneline
 !>
 !> !Initialize the log file for errors
 !> CALL inpfileg%initialize(UNIT=50,FILE='test.inp')
@@ -59,7 +59,7 @@
 !> CALL inpfile%setEchoStat(.TRUE.)
 !>
 !> !Get a line of text from the input file
-!> oneline=inpfile%fgetl()
+!> CALL inpfile%fgetl(oneline)
 !>
 !> ! ... routines to parse one line of input ...
 !>
@@ -76,22 +76,18 @@ MODULE FileType_Input
 
   USE ISO_FORTRAN_ENV
   USE IntrType
+  USE Strings
   USE FileType_Fortran
   IMPLICIT NONE
   PRIVATE
 
   !List of Public Members
-  PUBLIC :: MAX_INPUT_FILE_LINE_LEN
   PUBLIC :: InputFileType
-
-  INTEGER(SIK),PARAMETER :: MAX_INPUT_FILE_LINE_LEN=256
 
   !> Module name for error messages
   CHARACTER(LEN=*),PARAMETER :: modName='FILETYPE_INPUT'
   !> Scratch variable for IOSTAT values
   INTEGER(SIK) :: ioerr
-  !> Format for reading from input file
-  CHARACTER(LEN=7) :: inpfmt=''
 
   !> @brief Derived type object for an input file, it is an extension of the
   !> @ref FileType_Fortran "FortranFileType" object.
@@ -176,7 +172,6 @@ MODULE FileType_Input
       CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: action
       CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: pad
       INTEGER(SIK),OPTIONAL,INTENT(IN) :: recl
-      CHARACTER(LEN=4) :: alen=''
 
       IF(PRESENT(status)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
         ' - Optional input "STATUS" is being ignored. Value is "OLD".')
@@ -196,9 +191,6 @@ MODULE FileType_Input
       !Initialize the input file
       CALL init_fortran_file(fileobj,unit,file,'OLD','SEQUENTIAL', &
         'FORMATTED','REWIND','READ')
-      WRITE(alen,'(i4)') MAX_INPUT_FILE_LINE_LEN
-      alen=ADJUSTL(alen)
-      WRITE(inpfmt,'(a)') '(a'//TRIM(alen)//')'
     ENDSUBROUTINE init_inp_file
 !
 !-------------------------------------------------------------------------------
@@ -246,40 +238,59 @@ MODULE FileType_Input
 !-------------------------------------------------------------------------------
 !> @brief Returns one line of text from the input file.
 !> @param file input file object
-!> @returns oneline a character of length MAX_INPUT_FILE_LINE_LEN
+!> @returns oneline StringType object storing a line of text from the input file.
 !> 
-    FUNCTION read_oneline_inp_file(file) RESULT(oneline)
+    SUBROUTINE read_oneline_inp_file(file,oneline)
       CHARACTER(LEN=*),PARAMETER :: myName='READ_ONELINE_INP_FILE'
       CLASS(InputFileType),INTENT(INOUT) :: file
-      CHARACTER(LEN=MAX_INPUT_FILE_LINE_LEN) :: oneline
+      TYPE(StringType),INTENT(OUT) :: oneline
+      CHARACTER(LEN=256) :: buffer
       CHARACTER(LEN=4) :: sioerr,sunit
+      INTEGER(SIK) :: buffer_size,eioerr
 
-      oneline=''
+      ioerr=0
       IF(file%isOpen() .AND. .NOT.file%isEOF()) THEN
-        READ(UNIT=file%getUnitNo(),FMT=inpfmt,IOSTAT=ioerr) oneline
-        IF(ioerr == 0) THEN
-          file%lastprobe=file%probe
-          IF(file%echostat) THEN
-            WRITE(UNIT=file%echounit,FMT='(a)',IOSTAT=ioerr) TRIM(oneline)
-            IF(ioerr /= 0) THEN
-              WRITE(sioerr,'(i4)') ioerr; sioerr=ADJUSTL(sioerr)
-              WRITE(sunit,'(i4)') file%echounit; sunit=ADJUSTL(sunit)
-              CALL file%e%raiseError(modName//'::'//myName// &
-                ' - Error echoing oneline to UNIT='//TRIM(sunit) //' (IOSTAT='// &
-                  TRIM(sioerr)//')!')
+        DO WHILE(ioerr /= IOSTAT_EOR .AND. ioerr /= IOSTAT_END)
+          !Repeatedly read chunks of current input file line into buffer
+          READ(UNIT=file%getUnitNo(),FMT='(a)',SIZE=buffer_size,ADVANCE='NO', &
+            IOSTAT=ioerr) buffer
+          IF(ioerr == IOSTAT_END) THEN
+            !End of file
+            CALL file%setEOFstat(.TRUE.)
+          ELSEIF(ioerr == IOSTAT_EOR) THEN
+            !Done reading line. Append last buffer to oneline.
+            oneline=oneline//TRIM(buffer)
+            file%lastprobe=file%probe
+            IF(file%echostat) THEN
+              WRITE(UNIT=file%echounit,FMT='(a)',IOSTAT=eioerr) TRIM(oneline)
+              IF(eioerr /= 0) THEN
+                WRITE(sioerr,'(i4)') eioerr; sioerr=ADJUSTL(sioerr)
+                WRITE(sunit,'(i4)') file%echounit; sunit=ADJUSTL(sunit)
+                CALL file%e%raiseError(modName//'::'//myName// &
+                  ' - Error echoing oneline to UNIT='//TRIM(sunit) //' (IOSTAT='// &
+                    TRIM(sioerr)//')!')
+              ENDIF
             ENDIF
+            oneline=TRIM(oneline)
+          ELSEIF(ioerr < IOSTAT_EOR) THEN
+            !Error reading line from input file
+            WRITE(sioerr,'(i4)') ioerr; sioerr=ADJUSTL(sioerr)
+            CALL file%e%raiseError(modName//'::'//myName// &
+              ' - Error reading one line from input file (IOSTAT='// &
+                TRIM(sioerr)//')!')
+          ELSE
+            !Still reading current line. Append buffer to oneline
+            oneline=oneline//buffer
           ENDIF
-        ELSEIF(ioerr == -1) THEN
-          CALL file%setEOFstat(.TRUE.)
-        ELSE
-          WRITE(sioerr,'(i4)') ioerr; sioerr=ADJUSTL(sioerr)
-          CALL file%e%raiseError(modName//'::'//myName// &
-            ' - Error reading one line from input file (IOSTAT='// &
-              TRIM(sioerr)//')!')
-        ENDIF
+        ENDDO
       ENDIF
-      file%probe=oneline(1:1)
-    ENDFUNCTION read_oneline_inp_file
+      IF(ALLOCATED(oneline%s)) THEN
+        file%probe=oneline%s(1)
+      ELSE
+        file%probe=''
+        oneline=' '
+      ENDIF
+    ENDSUBROUTINE read_oneline_inp_file
 !
 !-------------------------------------------------------------------------------
 !> @brief Sets the value of the echo status for when a line is read
