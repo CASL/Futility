@@ -57,14 +57,9 @@
 !>  - Make sure routines are safe (check for initialized object, etc.)
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE FileType_HDF5
-
 #ifdef MPACT_HAVE_HDF5
   USE HDF5
 #endif
-
-
-
-
   USE IntrType
   USE Strings
   USE ExceptionHandler
@@ -89,6 +84,7 @@ MODULE FileType_HDF5
   !> This type extends the base file type, and adds support for writing to and
   !List of Public Members
   PUBLIC :: HDF5FileType
+  PUBLIC :: HDF5FilePtrArrayType
 
   !> reading from HDF5 binary files. As implemented, there are three modes for
   !> accessing a file can be opened as: 'read' and 'write' and 'new'. Read mode
@@ -330,6 +326,12 @@ MODULE FileType_HDF5
       !> Generic typebound interface for pointer-based read operations
       GENERIC :: freadp => read_dp4
   ENDTYPE
+  
+  !> @brief Type that is a container so as to have an array of pointers to HDF5 files
+  TYPE :: HDF5FilePtrArrayType
+    !> @brief Pointer to a HDF5 file type
+    TYPE(HDF5FileType),POINTER :: h5 => NULL()
+  ENDTYPE HDF5FilePtrArrayType
 !
 !===============================================================================
   CONTAINS
