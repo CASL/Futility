@@ -114,6 +114,8 @@ MODULE ExpTables
     INTEGER(SIK) :: tableType=-1
     !> The number of intervals in the table
     INTEGER(SIK) :: nintervals=-1
+    !> The lower bound of the table index for x
+    INTEGER(SIK) :: minTable=0
     !> The value between two entries in the table (delta x)
     REAL(SRK) :: dx=0._SRK
     !> The reciprocal of dx
@@ -215,6 +217,7 @@ MODULE ExpTables
       IF(ALLOCATED(myET%table2D)) CALL demallocA(myET%table2D)
       myET%tableType=-1
       myET%nintervals=-1
+      myET%minTable=0
       myET%dx=0._SRK
       myET%rdx=0._SRK
       myET%dx2rd=0._SRK
@@ -353,6 +356,7 @@ MODULE ExpTables
         IF(nerror == eExpTable%getcounter(EXCEPTION_ERROR)) THEN
           minTable=minVal*nintervals
           maxTable=maxVal*nintervals
+          myET%minTable=minTable
           SELECTCASE(tableType)
             CASE (EXACT_EXP_TABLE)
               myET%tableType=EXACT_EXP_TABLE
