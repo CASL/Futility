@@ -89,7 +89,9 @@ MODULE LinearSolverTypes
 
 #ifdef MPACT_HAVE_PETSC
 #include <finclude/petsc.h>
-#undef IS !petscisdef.h defines the keyword IS, and it needs to be reset
+#include <petscversion.h>
+!petscisdef.h defines the keyword IS, and it needs to be reset
+#undef IS
 #endif
 
   PRIVATE
@@ -1168,7 +1170,13 @@ MODULE LinearSolverTypes
 #ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: ierr
       PetscInt  :: maxits,nrst
-      PetscReal :: rtol,abstol,dtol=PETSC_DEFAULT_DOUBLE_PRECISION
+      PetscReal :: rtol,abstol
+!Because PETSC doesn't like backwards compatability
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=5))
+      PetscReal :: dtol=PETSC_DEFAULT_REAL
+#else
+      PetscReal :: dtol=PETSC_DEFAULT_DOUBLE_PRECISION
+#endif
 #endif
 
       INTEGER(SIK) :: normType,maxIters,nRestart

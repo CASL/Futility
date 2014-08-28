@@ -18,10 +18,10 @@
 PROGRAM testParTPLPETSC
 
   IMPLICIT NONE
-  
+
 #include <finclude/petsc.h>
 #undef IS
-  
+
   !define precision kinds
   INTEGER,PARAMETER :: N_INT_ORDER=8
   INTEGER,PARAMETER :: N_LONG_ORDER=18
@@ -57,12 +57,12 @@ PROGRAM testParTPLPETSC
 #ifdef MPACT_HAVE_PETSC
   CALL testPETSC_KSP()
 #endif
-  
+
   CALL MPI_Barrier(MPI_COMM_WORLD,ierr)
   IF(rank == 0) WRITE(*,*) '==================================================='
   IF(rank == 0) WRITE(*,*) 'TESTING PETSC TPL PASSED!'
   IF(rank == 0) WRITE(*,*) '==================================================='
-  
+
   CALL PetscFinalize(ierr)
 
 !
@@ -77,7 +77,7 @@ PROGRAM testParTPLPETSC
     PetscReal :: rtol,abstol,dtol
     PetscInt  :: maxits,restart
     REAL(SRK) :: getval
-   
+
     !test KSPCreate
     CALL KSPCreate(MPI_COMM_WORLD,ksp,ierr)
     IF(ierr /= 0) THEN
@@ -86,7 +86,7 @@ PROGRAM testParTPLPETSC
     ENDIF
     CALL MPI_Barrier(MPI_COMM_WORLD,ierr)
     IF(rank == 0) WRITE(*,*) '  Passed: CALL KSPCreate(...)'
-    
+
     !test KSPCreateType
     CALL KSPSetType(ksp,KSPGMRES,ierr)
     IF(ierr /= 0) THEN
@@ -95,7 +95,7 @@ PROGRAM testParTPLPETSC
     ENDIF
     CALL MPI_Barrier(MPI_COMM_WORLD,ierr)
     IF(rank == 0) WRITE(*,*) '  Passed: CALL KSPSetType(...)'
-    
+
     !create matrix and vectors for solver
     ! A = [ 2 -1  0  0    b=[1.0
     !      -1  2 -1  0       1.2
@@ -136,8 +136,8 @@ PROGRAM testParTPLPETSC
     CALL VecSetFromOptions(x,ierr)
     CALL VecAssemblyBegin(x,ierr)
     CALL VecAssemblyEnd(x,ierr)
-    
-    !test KSPSetOperators 
+
+    !test KSPSetOperators
     CALL KSPSetOperators(ksp,A,A,DIFFERENT_NONZERO_PATTERN,ierr)
     IF(ierr /= 0) THEN
       WRITE(*,*) 'CALL KSPSetOperators(ksp,A,A,DIFFERENT_NONZERO_PATTERN,ierr) FAILED!'
@@ -145,7 +145,7 @@ PROGRAM testParTPLPETSC
     ENDIF
     CALL MPI_Barrier(MPI_COMM_WORLD,ierr)
     IF(rank == 0) WRITE(*,*) '  Passed: CALL KSPSetOperators(...)'
-    
+
     !test KSPSetFromOptions
     CALL KSPSetFromOptions(ksp,ierr)
     IF(ierr /= 0) THEN
@@ -154,11 +154,15 @@ PROGRAM testParTPLPETSC
     ENDIF
     CALL MPI_Barrier(MPI_COMM_WORLD,ierr)
     IF(rank == 0) WRITE(*,*) '  Passed: CALL KSPSetFromOptions(...)'
-    
+
     !test KSPSetTolerances (will need to test more)
     rtol=1E-12
     abstol=1E-12
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=5))
+    dtol=PETSC_DEFAULT_REAL
+#else
     dtol=PETSC_DEFAULT_DOUBLE_PRECISION
+#endif
     maxits=1000
     CALL KSPSetTolerances(ksp,rtol,abstol,dtol,maxits,ierr)
     IF(ierr /= 0) THEN
@@ -167,7 +171,7 @@ PROGRAM testParTPLPETSC
     ENDIF
     CALL MPI_Barrier(MPI_COMM_WORLD,ierr)
     IF(rank == 0) WRITE(*,*) '  Passed: CALL KSPSetTolerances(...)'
-    
+
     !test KSPGMRESSetRestart
     restart=50
     CALL KSPGMRESSetRestart(ksp,restart,ierr)
@@ -177,7 +181,7 @@ PROGRAM testParTPLPETSC
     ENDIF
     CALL MPI_Barrier(MPI_COMM_WORLD,ierr)
     IF(rank == 0) WRITE(*,*) '  Passed: CALL KSPGMRESSetRestart(...)'
-    
+
     !test KSPSolve
     CALL KSPSolve(ksp,b,x,ierr)
     IF(rank == 0) THEN
@@ -210,7 +214,7 @@ PROGRAM testParTPLPETSC
     ENDIF
     CALL MPI_Barrier(MPI_COMM_WORLD,ierr)
     IF(rank == 0) WRITE(*,*) '  Passed: CALL KSPSolve(...)'
-    
+
     CALL KSPDestroy(ksp,ierr)
     IF(ierr /= 0) THEN
       WRITE(*,*) 'CALL KSPDestroy(ksp,ierr) FAILED!'
@@ -218,7 +222,7 @@ PROGRAM testParTPLPETSC
     ENDIF
     CALL MPI_Barrier(MPI_COMM_WORLD,ierr)
     IF(rank == 0) WRITE(*,*) '  Passed: CALL KSPDestroy(...)'
-  
+
   ENDSUBROUTINE testPETSC_KSP
 
 

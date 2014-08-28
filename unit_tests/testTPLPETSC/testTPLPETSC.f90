@@ -18,10 +18,10 @@
 PROGRAM testTPLPETSC
 
   IMPLICIT NONE
-  
+
 #include <finclude/petsc.h>
 #undef IS
-  
+
   !define precision kinds
   INTEGER,PARAMETER :: N_INT_ORDER=8
   INTEGER,PARAMETER :: N_LONG_ORDER=18
@@ -58,11 +58,11 @@ PROGRAM testTPLPETSC
 #else
   WRITE(*,*) ' PETSC not enabled!'
 #endif
-  
+
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING PETSC TPL PASSED!'
   WRITE(*,*) '==================================================='
-  
+
   CALL PetscFinalize(ierr)
 
 !
@@ -76,17 +76,17 @@ PROGRAM testTPLPETSC
 
     !test VecCreate
     CALL VecCreate(MPI_COMM_WORLD,b,ierr)
-    IF(ierr /= 0) THEN 
+    IF(ierr /= 0) THEN
       WRITE(*,*) 'CALL VecCreate(MPI_COMM_WORLD,b,ierr) FAILED!'
       STOP 666
     ENDIF
     CALL VecCreate(MPI_COMM_WORLD,x,ierr)
-    IF(ierr /= 0) THEN 
+    IF(ierr /= 0) THEN
       WRITE(*,*) 'CALL VecCreate(MPI_COMM_WORLD,x,ierr) FAILED!'
       STOP 666
     ENDIF
     WRITE(*,*) '  Passed: CALL VecCreate(...)'
-    
+
     !test VecSetSizes
     CALL VecSetSizes(b,PETSC_DECIDE,3,ierr)
     IF(ierr /= 0) THEN
@@ -99,7 +99,7 @@ PROGRAM testTPLPETSC
       STOP 666
     ENDIF
     WRITE(*,*) '  Passed: CALL VecSetSizes(...)'
-    
+
     !test VecSetType
     CALL VecSetType(b,VECMPI,ierr)
     IF(ierr /= 0) THEN
@@ -112,7 +112,7 @@ PROGRAM testTPLPETSC
       STOP 666
     ENDIF
     WRITE(*,*) '  Passed: CALL VecSetType(...)'
-    
+
     !test VecSetFromOptions
     CALL VecSetFromOptions(b,ierr)
     IF(ierr /= 0) THEN
@@ -125,7 +125,7 @@ PROGRAM testTPLPETSC
       STOP 666
     ENDIF
     WRITE(*,*) '  Passed: CALL VecSetFromOptions(...)'
-    
+
     !first we will build a vector with the following values:
     ! b = [5
     !      7
@@ -148,20 +148,20 @@ PROGRAM testTPLPETSC
       STOP 666
     ENDIF
     WRITE(*,*) '  Passed: CALL VecSetValues(...)'
-    
+
     !test VecAssembly
     CALL VecAssemblyBegin(b,ierr)
-    IF(ierr /= 0) THEN 
+    IF(ierr /= 0) THEN
       WRITE(*,*) 'CALL VecAssemblyBegin(b,ierr) FAILED!'
       STOP 666
     ENDIF
     CALL VecAssemblyEnd(b,ierr)
-    IF(ierr /= 0) THEN 
+    IF(ierr /= 0) THEN
       WRITE(*,*) 'CALL VecAssemblyEnd(b,ierr) FAILED!'
       STOP 666
     ENDIF
     WRITE(*,*) '  Passed: CALL VecAssembly...(...)'
-    
+
     !test VecGetValues
     CALL VecGetValues(b,1,0,getval,ierr)
     IF(getval /= 5.0_SRK .OR. ierr /= 0) THEN
@@ -178,7 +178,7 @@ PROGRAM testTPLPETSC
       WRITE(*,*) 'CALL VecGetValues(b,1,2,getval,ierr) [VecSetValue] FAILED!'
       STOP 666
     ENDIF
-    
+
     !now we will test with all values set to 6:
     CALL VecSet(b,6.0_SRK,ierr)
     IF(ierr /= 0) THEN
@@ -203,12 +203,12 @@ PROGRAM testTPLPETSC
       STOP 666
     ENDIF
     WRITE(*,*) '  Passed: CALL VecSet(...)'
-    
+
     !we will now set up the following vectors to test the BLAS-related functions:
-    ! b = [4      x = [2  
+    ! b = [4      x = [2
     !      8           9
     !      3]          5]
-    
+
     !setup b
     CALL VecSetValue(b,0,4.0_SRK,INSERT_VALUES,ierr)
     CALL VecSetValue(b,1,8.0_SRK,INSERT_VALUES,ierr)
@@ -221,7 +221,7 @@ PROGRAM testTPLPETSC
     CALL VecSetValue(x,2,5.0_SRK,INSERT_VALUES,ierr)
     CALL VecAssemblyBegin(x,ierr)
     CALL VecAssemblyEnd(x,ierr)
-    
+
     !test VecNorm
     CALL VecNorm(b,NORM_1,getval,ierr)
     IF(getval /= 15.0_SRK .OR. ierr /= 0) THEN
@@ -239,12 +239,12 @@ PROGRAM testTPLPETSC
       STOP 666
     ENDIF
     CALL VecNorm(x,NORM_2,getval,ierr)
-    IF(getval /= 10.488088481701515_SRK .OR. ierr /= 0) THEN 
+    IF(getval /= 10.488088481701515_SRK .OR. ierr /= 0) THEN
       WRITE(*,*) 'CALL VecNorm(x,NORM_2,getval,ierr) FAILED!'
       STOP 666
     ENDIF
     WRITE(*,*) '  Passed: CALL VecNorm(...)'
-    
+
     CALL VecAXPY(b,3.0_SRK,x,ierr)
     CALL VecGetValues(b,1,0,getval,ierr)
     IF(getval /= 10.0_SRK .OR. ierr /= 0) THEN
@@ -262,7 +262,7 @@ PROGRAM testTPLPETSC
       STOP 666
     ENDIF
     WRITE(*,*) '  Passed: CALL VecAXPY(...)'
-    
+
     !test VecCopy by copying b into x
     CALL VecCopy(b,x,ierr)
     CALL VecGetValues(x,1,0,getval,ierr)
@@ -281,7 +281,7 @@ PROGRAM testTPLPETSC
       STOP 666
     ENDIF
     WRITE(*,*) '  Passed: CALL VecCopy(...)'
-    
+
     !reset b and x
     CALL VecSetValue(b,0,4.0_SRK,INSERT_VALUES,ierr)
     CALL VecSetValue(b,1,8.0_SRK,INSERT_VALUES,ierr)
@@ -293,7 +293,7 @@ PROGRAM testTPLPETSC
     CALL VecSetValue(x,2,5.0_SRK,INSERT_VALUES,ierr)
     CALL VecAssemblyBegin(x,ierr)
     CALL VecAssemblyEnd(x,ierr)
-    
+
     !test VecTDot
     CALL VecTDot(b,x,getval,ierr)
     IF(getval /= 95.0_SRK .OR. ierr /= 0) THEN
@@ -301,7 +301,7 @@ PROGRAM testTPLPETSC
       STOP 666
     ENDIF
     WRITE(*,*) '  Passed: CALL VecTDot(...)'
-    
+
     !test VecScale
     CALL VecScale(b,4.0_SRK,ierr)
     CALL VecGetValues(b,1,0,getval,ierr)
@@ -320,7 +320,7 @@ PROGRAM testTPLPETSC
       STOP 666
     ENDIF
     WRITE(*,*) '  Passed: CALL VecScale(...)'
-    
+
     !test VecSwap
     CALL VecSwap(b,x,ierr)
     CALL VecGetValues(b,1,0,getval,ierr)
@@ -353,7 +353,7 @@ PROGRAM testTPLPETSC
       WRITE(*,*) 'CALL VecGetValues(x,1,2,getval,ierr) [VecSwap] FAILED!'
       STOP 666
     ENDIF
-    
+
     !test VecDestroy
     CALL VecDestroy(b,ierr)
     IF(ierr /= 0) THEN
@@ -361,7 +361,7 @@ PROGRAM testTPLPETSC
       STOP 666
     ENDIF
     WRITE(*,*) '  Passed: CALL VecDestroy(...)'
-  
+
   ENDSUBROUTINE testPETSC_VEC
 !
 !-------------------------------------------------------------------------------
@@ -369,15 +369,15 @@ PROGRAM testTPLPETSC
     Vec :: b,x
     Mat :: A
     REAL(SRK) :: getval
-    
+
     !test MatCreate
     CALL MatCreate(MPI_COMM_WORLD,A,ierr)
-    IF(ierr /= 0) THEN 
+    IF(ierr /= 0) THEN
       WRITE(*,*) 'CALL MatCreate(MPI_COMM_WORLD,A,ierr) FAILED!'
       STOP 666
     ENDIF
     WRITE(*,*) '  Passed: CALL MatCreate(...)'
-    
+
     !test MatSetSizes
     CALL MatSetSizes(A,PETSC_DECIDE,PETSC_DECIDE,3,3,ierr)
     IF(ierr /= 0) THEN
@@ -385,7 +385,7 @@ PROGRAM testTPLPETSC
       STOP 666
     ENDIF
     WRITE(*,*) '  Passed: CALL MatSetSizes(...)'
-    
+
     !test MatSetType
     CALL MatSetType(A,MATMPIDENSE,ierr)
     IF(ierr /= 0) THEN
@@ -398,7 +398,7 @@ PROGRAM testTPLPETSC
       STOP 666
     ENDIF
     WRITE(*,*) '  Passed: CALL MatSetType(...)'
-    
+
     !test MatSetUp
     CALL MatSetUp(A,ierr)
     IF(ierr /= 0) THEN
@@ -406,7 +406,7 @@ PROGRAM testTPLPETSC
       STOP 666
     ENDIF
     WRITE(*,*) '  Passed: CALL MatSetUp(...)'
-    
+
     !using the 3x3 matrix that has been set up, insert the following values:
     ! A = [1 3 5
     !      6 2 8
@@ -458,7 +458,7 @@ PROGRAM testTPLPETSC
       STOP 666
     ENDIF
     WRITE(*,*) '  Passed: CALL MatSetValues(...)'
-    
+
     !test MatAssembly
     CALL MatAssemblyBegin(A,MAT_FINAL_ASSEMBLY,ierr)
     IF(ierr /= 0) THEN
@@ -466,12 +466,12 @@ PROGRAM testTPLPETSC
       STOP 666
     ENDIF
     CALL MatAssemblyEnd(A,MAT_FINAL_ASSEMBLY,ierr)
-    IF(ierr /= 0) THEN 
+    IF(ierr /= 0) THEN
       WRITE(*,*) 'CALL MatAssemblyEnd(A,MAT_FINAL_ASSEMBLY,ierr) FAILED!'
       STOP 666
     ENDIF
     WRITE(*,*) '  Passed: CALL MatAssembly...(...)'
-    
+
     !test MatGetValues
     CALL MatGetValues(A,1,0,1,0,getval,ierr)
     IF(getval /= 1.0_SRK .OR. ierr /= 0) THEN
@@ -493,7 +493,7 @@ PROGRAM testTPLPETSC
       WRITE(*,*) 'CALL MatGetValues(A,1,2,1,1,getval,ierr) FAILED!'
       STOP 666
     ENDIF
-    CALL MatGetValues(A,1,1,1,1,getval,ierr)     
+    CALL MatGetValues(A,1,1,1,1,getval,ierr)
     IF(getval /= 2.0_SRK .OR. ierr /= 0) THEN
       WRITE(*,*) 'CALL MatGetValues(A,1,2,1,2,getval,ierr) FAILED!'
       STOP 666
@@ -519,7 +519,7 @@ PROGRAM testTPLPETSC
       STOP 666
     ENDIF
     WRITE(*,*) '  Passed: CALL MatGetValues(...)'
-    
+
     !to test the following two interface, we need to set up two vectors:
     !setup b
     CALL VecCreate(MPI_COMM_WORLD,b,ierr)
@@ -534,7 +534,7 @@ PROGRAM testTPLPETSC
     CALL VecSetValue(x,0,6.0_SRK,INSERT_VALUES,ierr)
     CALL VecSetValue(x,1,2.0_SRK,INSERT_VALUES,ierr)
     CALL VecSetValue(x,2,4.0_SRK,INSERT_VALUES,ierr)
-    
+
     !test MatMult
     ! A = [1 3 5    x=[6
     !      6 2 8       2
@@ -556,7 +556,7 @@ PROGRAM testTPLPETSC
       STOP 666
     ENDIF
     WRITE(*,*) '  Passed: CALL MatMult(...)'
-    
+
     !test MatMultTransport
     CALL MatMultTranspose(A,x,b,ierr)
     CALL VecGetValues(b,1,0,getval,ierr)
@@ -575,7 +575,7 @@ PROGRAM testTPLPETSC
       STOP 666
     ENDIF
     WRITE(*,*) '  Passed: CALL MatMultTranspose(...)'
-    
+
     !test MatDestroy
     CALL MatDestroy(A,ierr)
     IF(ierr /= 0) WRITE(*,*) 'CALL MatDestroy(A,ierr) FAILED!'
@@ -591,7 +591,7 @@ PROGRAM testTPLPETSC
     PetscReal :: rtol,abstol,dtol
     PetscInt  :: maxits,restart
     REAL(SRK) :: getval
-   
+
     !test KSPCreate
     CALL KSPCreate(MPI_COMM_WORLD,ksp,ierr)
     IF(ierr /= 0) THEN
@@ -599,7 +599,7 @@ PROGRAM testTPLPETSC
       STOP 666
     ENDIF
     WRITE(*,*) '  Passed: CALL KSPCreate(...)'
-    
+
     !test KSPCreateType
     CALL KSPSetType(ksp,KSPBCGS,ierr)
     IF(ierr /= 0) THEN
@@ -617,7 +617,7 @@ PROGRAM testTPLPETSC
       STOP 666
     ENDIF
     WRITE(*,*) '  Passed: CALL KSPSetType(...)'
-    
+
     !create matrix and vectors for solver
     ! A = [9 3 5    b=[6
     !      6 8 2       2
@@ -655,15 +655,15 @@ PROGRAM testTPLPETSC
     CALL VecSetFromOptions(x,ierr)
     CALL VecAssemblyBegin(x,ierr)
     CALL VecAssemblyEnd(x,ierr)
-    
-    !test KSPSetOperators 
+
+    !test KSPSetOperators
     CALL KSPSetOperators(ksp,A,A,DIFFERENT_NONZERO_PATTERN,ierr)
     IF(ierr /= 0) THEN
       WRITE(*,*) 'CALL KSPSetOperators(ksp,A,A,DIFFERENT_NONZERO_PATTERN,ierr) FAILED!'
       STOP 666
     ENDIF
     WRITE(*,*) '  Passed: CALL KSPSetOperators(...)'
-    
+
     !test KSPSetFromOptions
     CALL KSPSetFromOptions(ksp,ierr)
     IF(ierr /= 0) THEN
@@ -671,11 +671,15 @@ PROGRAM testTPLPETSC
       STOP 666
     ENDIF
     WRITE(*,*) '  Passed: CALL KSPSetFromOptions(...)'
-    
+
     !test KSPSetTolerances (will need to test more)
     rtol=1E-12
     abstol=1E-12
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=5))
+    dtol=PETSC_DEFAULT_REAL
+#else
     dtol=PETSC_DEFAULT_DOUBLE_PRECISION
+#endif
     maxits=1000
     CALL KSPSetTolerances(ksp,rtol,abstol,dtol,maxits,ierr)
     IF(ierr /= 0) THEN
@@ -683,7 +687,7 @@ PROGRAM testTPLPETSC
       STOP 666
     ENDIF
     WRITE(*,*) '  Passed: CALL KSPSetTolerances(...)'
-    
+
     !test KSPGMRESSetRestart
     restart=50
     CALL KSPGMRESSetRestart(ksp,restart,ierr)
@@ -692,7 +696,7 @@ PROGRAM testTPLPETSC
       STOP 666
     ENDIF
     WRITE(*,*) '  Passed: CALL KSPGMRESSetRestart(...)'
-    
+
     !test KSPSolve
     CALL KSPSolve(ksp,b,x,ierr)
     CALL VecGetValues(x,1,0,getval,ierr)
@@ -711,14 +715,14 @@ PROGRAM testTPLPETSC
       STOP 666
     ENDIF
     WRITE(*,*) '  Passed: CALL KSPSolve(...)'
-    
+
     CALL KSPDestroy(ksp,ierr)
     IF(ierr /= 0) THEN
       WRITE(*,*) 'CALL KSPDestroy(ksp,ierr) FAILED!'
       STOP 666
     ENDIF
     WRITE(*,*) '  Passed: CALL KSPDestroy(...)'
-  
+
   ENDSUBROUTINE testPETSC_KSP
 
 
