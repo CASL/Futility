@@ -657,7 +657,11 @@ PROGRAM testTPLPETSC
     CALL VecAssemblyEnd(x,ierr)
 
     !test KSPSetOperators
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=5))
+    CALL KSPSetOperators(ksp,A,A,ierr)
+#else
     CALL KSPSetOperators(ksp,A,A,DIFFERENT_NONZERO_PATTERN,ierr)
+#endif
     IF(ierr /= 0) THEN
       WRITE(*,*) 'CALL KSPSetOperators(ksp,A,A,DIFFERENT_NONZERO_PATTERN,ierr) FAILED!'
       STOP 666

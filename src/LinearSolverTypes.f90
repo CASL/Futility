@@ -565,8 +565,12 @@ MODULE LinearSolverTypes
                 ENDSELECT
 
                 SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=5))
+                  CALL KSPSetOperators(solver%ksp,A%a,A%a,ierr)
+#else
                   CALL KSPSetOperators(solver%ksp,A%a,A%a, &
                     DIFFERENT_NONZERO_PATTERN,ierr)
+#endif
                 ENDSELECT
 
                 !set preconditioner
@@ -922,8 +926,12 @@ MODULE LinearSolverTypes
                 ENDSELECT
 
 !                SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
+!#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=5))
+!                  CALL KSPSetOperators(solver%ksp,A%a,A%a,ierr)
+!#else
 !                  CALL KSPSetOperators(solver%ksp,A%a,A%a, &
 !                    DIFFERENT_NONZERO_PATTERN,ierr)
+!#endif
 !                ENDSELECT
 !                CALL KSPSetFromOptions(solver%ksp,ierr)
 
@@ -977,8 +985,12 @@ MODULE LinearSolverTypes
                 ENDSELECT
 
 !                SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
+!#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=5))
+!                  CALL KSPSetOperators(solver%ksp,A%a,A%a,ierr)
+!#else
 !                  CALL KSPSetOperators(solver%ksp,A%a,A%a, &
 !                    DIFFERENT_NONZERO_PATTERN,ierr)
+!#endif
 !                ENDSELECT
 !                CALL KSPSetFromOptions(solver%ksp,ierr)
 
@@ -1038,8 +1050,12 @@ MODULE LinearSolverTypes
                 ENDSELECT
 
 !                SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
+!#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=5))
+!                  CALL KSPSetOperators(solver%ksp,A%a,A%a,ierr)
+!#else
 !                  CALL KSPSetOperators(solver%ksp,A%a,A%a, &
 !                    DIFFERENT_NONZERO_PATTERN,ierr)
+!#endif
 !                ENDSELECT
 !                CALL KSPSetFromOptions(solver%ksp,ierr)
 
