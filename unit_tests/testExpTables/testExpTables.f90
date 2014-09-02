@@ -16,14 +16,16 @@
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testExpTables
+#include "UnitTest.h"
+  USE UnitTest
   USE IntrType
   USE ExceptionHandler
   USE Allocs
   USE ParameterLists
   USE ExpTables
-  
+
   IMPLICIT NONE
-  
+
   TYPE(ExceptionHandlerType),TARGET :: e
   REAL(SRK) :: x,ans,err(5),xtest,x1,x2,x3,y1,y2,y3
   REAL(SRK) :: reftbl(-10000:0),reftbl2(-10000:0),reftbl3(-10000:0)
@@ -41,8 +43,8 @@ PROGRAM testExpTables
   WRITE(*,*) 'TESTING EXPTABLES...'
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING EXPONENTTABLETYPE'
-  
-  
+
+
   !Error checking
   CALL PL%clear()
   CALL testET1%initialize(PL)
@@ -80,7 +82,7 @@ PROGRAM testExpTables
   CALL testET1%initialize(PL)
   x=testET1%maxVal-0.5_SRK*testET1%dx
   ans=testET1%EXPT(x)
-  
+
   CALL PL%set('ExpTables -> errorflag',.FALSE.)
   CALL PL%remove('ExpTables -> error')
   x=-1.234567891012_SRK
@@ -185,7 +187,7 @@ PROGRAM testExpTables
     ENDIF
   ENDDO
   WRITE(*,*) '  Passed: CALL testET2(4)%initialize(...) LINEAR'
-  
+
   !For ORDER2_EXP_TABLE exponent function
   IF(.NOT.(testET2(5)%isinit .AND. testET2(5)%tableType == 5 &
     .AND. testET2(5)%nintervals == 1000 .AND. (testET2(5)%dx .APPROXEQ. 1.e-3_SRK) &
@@ -233,7 +235,7 @@ PROGRAM testExpTables
     ENDIF
   ENDDO
   WRITE(*,*) '  Passed: CALL testET2(5)%initialize(...) ORDER2'
-  
+
   err(:)=0.0_SRK
   CALL PL%set('ExpTables -> nintervals',100)
   CALL PL%set('ExpTables -> errorFlag',.TRUE.)
@@ -253,7 +255,7 @@ PROGRAM testExpTables
   ELSE
     WRITE(*,*) '  Passed: tableET%EXPT(x)'
   ENDIF
-  
+
   CALL testET1%clear()
   IF(.NOT.(.NOT.testET1%isinit .AND. testET1%tableType == -1 &
     .AND. testET1%nintervals == -1 .AND. (testET1%dx .APPROXEQ. 0._SRK) &
@@ -263,6 +265,14 @@ PROGRAM testExpTables
     WRITE(*,*) 'CALL testET1%clear() FAILED!'
     STOP 666
   ENDIF
+
+
+  CREATE_TEST("subtest POLAR_EXP_TABLE")
+
+  REGISTER_SUBTEST("testPOLAR_EXP_TABLE", testPOLAR_EXP_TABLE)
+
+  FINALIZE_TEST()
+
   WRITE(*,*) '  Passed: CALL testET1%clear()'
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING EXPTABLES COMPLETE!'
@@ -286,9 +296,9 @@ CONTAINS
       REAL(SRK) :: x(1000),ans(1000),err_input,err_result(1000),maxerr,dx
       INTEGER(SIK) :: nloops,j,i,ntype,nintervals,itype,maxi
       TYPE(ExpTableType) :: testET
-      
+
       ntype=5_SIK
-      
+
       !DO i=2,6
       !  nintervals(i)=nintervals(i-1)*10_SIK
       !ENDDO
@@ -351,7 +361,7 @@ CONTAINS
       WRITE(*,*)
       WRITE(*,*)
       WRITE(*,*) ' Getting performance measurements...'
-      
+
       !Set test input for number of evaluations and number of values to evaluate
       neval=100000
       nval=300
@@ -361,7 +371,7 @@ CONTAINS
       ALLOCATE(xval(1:nval))
       CALL RANDOM_NUMBER(xval)
       xval=xval*(-10._SRK)
-      
+
       CALL TAU_PROFILE_INIT()
       CALL TAU_PROFILE_TIMER(profiler1, 'EXACT EXP()')
       DO i=1,neval
@@ -372,7 +382,7 @@ CONTAINS
         ENDDO
         CALL TAU_PROFILE_STOP(profiler1)
       ENDDO
-      
+
       CALL TAU_PROFILE_TIMER(profiler2, 'EXACT EXP() Array Form')
       DO i=1,neval
         ans=REAL(i,SRK)
@@ -380,7 +390,7 @@ CONTAINS
         ans=ans+EXP(xval)
         CALL TAU_PROFILE_STOP(profiler2)
       ENDDO
-      
+
       CALL TAU_PROFILE_TIMER(profiler3, 'EXACT myTable%EXPT()')
       CALL myTable%initialize(EXACT_EXP_TABLE)
       DO i=1,neval
@@ -392,7 +402,7 @@ CONTAINS
         CALL TAU_PROFILE_STOP(profiler3)
       ENDDO
       CALL myTable%clear()
-      
+
       CALL TAU_PROFILE_TIMER(profiler4, 'LINEAR myTable%EXPT()')
       CALL myTable%initialize(LINEAR_EXP_TABLE)
       DO i=1,neval
@@ -404,7 +414,7 @@ CONTAINS
         CALL TAU_PROFILE_STOP(profiler4)
       ENDDO
       CALL myTable%clear()
-      
+
       CALL TAU_PROFILE_TIMER(profiler5, 'LINEAR EXPLICIT')
       CALL myTable%initialize(LINEAR_EXP_TABLE)
       DO i=1,neval
@@ -417,7 +427,7 @@ CONTAINS
         CALL TAU_PROFILE_STOP(profiler5)
       ENDDO
       CALL myTable%clear()
-      
+
       WRITE(*,*) ' Performance measurements completed'
 #else
       USE Times
@@ -429,12 +439,12 @@ CONTAINS
       TYPE(TimerType) :: testTimer
       TYPE(StochasticSamplingType) :: myRNG
 
-      CALL testTimer%setTimerHiResMode(.TRUE.) 
+      CALL testTimer%setTimerHiResMode(.TRUE.)
       CALL myRNG%init(RNG_LEcuyer2)
       WRITE(*,*)
       WRITE(*,*)
       WRITE(*,*) ' Getting performance measurements without TAU...'
-      
+
       !Set test input for number of evaluations and number of values to evaluate
       neval=1000000
       nval=3000
@@ -446,7 +456,7 @@ CONTAINS
         xval(j)=myRNG%rng()
       ENDDO
       xval=xval*(-10._SRK)
-            
+
       WRITE(*,*) 'EXACT myTable%EXPT()'
       CALL PL%add('ExpTables -> tabletype',EXACT_EXP_TABLE)
       CALL myTable%initialize(PL)
@@ -460,7 +470,7 @@ CONTAINS
       CALL testTimer%toc()
       WRITE(*,*) "Took: ", testTimer%elapsedtime
       CALL myTable%clear()
-      
+
       WRITE(*,*) 'LINEAR myTable%EXPT()'
       CALL PL%set('ExpTables -> tabletype',LINEAR_EXP_TABLE)
       CALL myTable%initialize(PL)
@@ -476,13 +486,13 @@ CONTAINS
       CALL myTable%clear()
       CALL PL%clear()
       CALL myRNG%clear()
-      
+
       WRITE(*,*) ' Performance measurements completed'
 #endif
     ENDSUBROUTINE perftest
 !
 !-------------------------------------------------------------------------------
-!This routine is here to test the performance and feasability of calculating 
+!This routine is here to test the performance and feasability of calculating
 !the function EXP(x) based on bitwise comparison and operations to see if there
 !is any noticable speedup.
     SUBROUTINE bitEXP()
@@ -494,7 +504,7 @@ CONTAINS
       INTEGER(SIK) :: xfixed,neval,nval,i
       !REAL(SSK),ALLOCATABLE :: ans(:),xval(:)
       REAL(SSK) :: ans,xval,logvals(27)
-      
+
       !Set test input for number of evaluations and number of values to evaluate
       !neval=1
       !nval=1
@@ -504,7 +514,7 @@ CONTAINS
       !ALLOCATE(xval(1:nval))
       !CALL RANDOM_NUMBER(xval)
       !xval=xval*(-10._SSK)
-      
+
       !Trial Negative values
       !logvals(1)=LOG(1.0_SSK/256.0_SSK)
       !logvals(2)=LOG(1.0_SSK/16.0_SSK)
@@ -557,7 +567,7 @@ CONTAINS
       logvals(25)=LOG(1.0000005_SSK)
       logvals(26)=LOG(1.0000002_SSK)
       logvals(27)=LOG(1.0000001_SSK)
-      
+
       x=-10._SSK
       xinit=EXP(x)
       y=4.54E-5_SSK
@@ -566,9 +576,9 @@ CONTAINS
       CALL printBit(xint)
       WRITE(*,*) 'Printing Y...'
       CALL printBit(yint)
-      
+
       !Get it to work for positive numbers first.
-      
+
       x=0.5_SSK
       xinit=EXP(x)
       y=1.0_SRK
@@ -605,12 +615,12 @@ CONTAINS
       !  WRITE(*,*) 'x=',x,'y=',y,'EXP(x)=',EXP(x)
       !  CALL printBit(xint)
       !ENDDO
-      
+
       !DO i=1,neval
-      !  
+      !
       !ENDDO
-      
-      
+
+
     ENDSUBROUTINE bitEXP
 !
 !-------------------------------------------------------------------------------
@@ -619,7 +629,7 @@ CONTAINS
 !notation for IEEE-754 single precision reals, and then prints the bits in the
 !corresponding order.  (Haven't expanded this to take into account endian-ness)
 !
-!The integer specified by the input should be "equivalenced" (shares the same 
+!The integer specified by the input should be "equivalenced" (shares the same
 !memory location with) a single precision real number.  Bit-wise operations are
 !only available through integers.
 !
@@ -627,7 +637,7 @@ CONTAINS
       INTEGER(SNK),INTENT(INOUT) :: int
       INTEGER(SIK) :: i,bprint(32)
       LOGICAL(SBK) :: flag(32)
-      
+
       bprint=0_SIK
       DO i=1,32
         !Apparently, there is a zero bit, who knew.
@@ -639,5 +649,64 @@ CONTAINS
       WRITE(*,'(a,32i1)') '       ',(bprint(i),i=32,1,-1)
       WRITE(*,*) '--------------------------------------'
     ENDSUBROUTINE printBit
+!
+!-------------------------------------------------------------------------------
+!This routine is here to test the performance and feasability of calculating
+!the function EXP(x) based on bitwise comparison and operations to see if there
+!is any noticable speedup.
+    SUBROUTINE testPOLAR_EXP_TABLE()
+      TYPE(ExpTableType) :: testET
+      TYPE(ParamType),SAVE :: PL
+      REAL(SRK),ALLOCATABLE :: rsinpol(:)
+      INTEGER(SIK) :: ipol,i
+      REAL(SRK) :: y,result,x
+
+      CALL PL%clear()
+      !Set names for required parameters
+      !Set defaults for optional parameters
+      CALL PL%add('ExpTables -> tabletype',POLAR_EXP_TABLE)
+      CALL PL%add('ExpTables -> minval',-10._SRK)
+      CALL PL%add('ExpTables -> maxval',0._SRK)
+      CALL PL%add('ExpTables -> nintervals',1000)
+      CALL PL%add('ExpTables -> error',0.0005_SRK)
+      CALL PL%add('ExpTables -> errorflag',.FALSE.)
+      ALLOCATE(rsinpol(3))
+      rsinpol=(/6.000672075_SRK,1.859748897_SRK,1.071864208_SRK/)
+      CALL PL%add('ExpTables -> RSIN_polars',rsinpol)
+
+      !Initialize the exponential table
+      CALL testET%initialize(PL)
+      !Error Checking
+      ASSERT(testET%nintervals==1000,"nintervals")
+      ASSERT(testET%tableType==POLAR_EXP_TABLE,"tableType")
+      ASSERT(testET%maxVal==0._SRK,"maxVal")
+      ASSERT(testET%minVal==-10._SRK,"minVal")
+      ASSERT(testET%minTable==-10000,"minTable")
+      FINFO() "minTable",testET%minTable
+      FINFO() "minTable_ref",-1000
+      ASSERT(testET%rdx==1000,"rdx")
+      ASSERT(testET%dx==0.001_SRK,"dx")
+      ASSERT(SOFTEQ(testET%tableErr,1.249999999E-007_SRK,1e-6_SRK),"tableErr")
+      FINFO() "tableErr",testET%tableErr
+      FINFO() "tableErr_ref",1.249999999E-007_SRk
+
+      DO ipol=1,3
+        x=-10.001_SRK
+        DO i=-10000,0
+          x=x+0.001_SRK
+          y=1._SRK-EXP(x*rsinpol(ipol))
+          result=testET%EXPT(x,ipol)
+          !Comparing the table lookup result with the system function evaluation
+          !instead of checking the coeff in the table themselves
+          ASSERT(SOFTEQ(result,y,1.249999999E-007_SRK),"resultOfFunctionCall")
+          FINFO() "tableLookUp",result,i,ipol
+          FINFO() "reference",y
+        ENDDO
+      ENDDO
+
+      DEALLOCATE(rsinpol)
+      CALL testET%clear()
+      CALL PL%clear()
+  ENDSUBROUTINE testPOLAR_EXP_TABLE
 !
 ENDPROGRAM testExpTables

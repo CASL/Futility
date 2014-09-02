@@ -19,7 +19,7 @@
 !>
 !> The point of this module is to assist in tracking memory usage for
 !> dynamically allocated pointer arrays and allocatable arrays used in the
-!> program. The module provides 6 interfaces to several subroutines for the 
+!> program. The module provides 6 interfaces to several subroutines for the
 !> programmer to use elsewhere in the code. The interfaces are intended to
 !> reduce the burden on programmer of writing different allocation statements
 !> for variables of different types, and to simplify the syntax for variables
@@ -39,12 +39,12 @@
 !>
 !> This module is tested using @c testAllocs.f90. An example of how to use this
 !> module is given below, the unit test also shows how to use the module.
-!> Code coverage documentation can be found on the @ref CodeCoverageReports 
+!> Code coverage documentation can be found on the @ref CodeCoverageReports
 !> page.
 !>
-!> @note Regarding parallelism, this module is also not thread safe. Although, 
-!> typically memory allocation of array variables does not need to be done 
-!> in parallel. Regarding usage within distributed memory programs 
+!> @note Regarding parallelism, this module is also not thread safe. Although,
+!> typically memory allocation of array variables does not need to be done
+!> in parallel. Regarding usage within distributed memory programs
 !> (e.g. MPI based programs), @ref Allocs::Alloc_nbytes "Alloc_nbytes" will be
 !> tracked independently by each process. So, if one wants to know the total
 !> memory used on all processes they will need to perform a REDUCE operation
@@ -57,7 +57,7 @@
 !> @par EXAMPLES
 !> @code
 !> PROGRAM ExampleAllocs
-!> 
+!>
 !>   USE IntrType
 !>   USE Allocs
 !>   IMPLICIT NONE
@@ -66,7 +66,7 @@
 !>   INTEGER(SIK),ALLOCATABLE :: myMatrix(:,:)
 !>
 !>   WRITE(*,*) ALLOC_MEMSTRING_LENGTH
-!> 
+!>
 !>   CALL eAllocs%setStopOnError(.FALSE.)
 !>
 !>   CALL dmallocA(myMatrix,500,500)
@@ -98,7 +98,7 @@
 !> @par
 !> (04/26/2011) - Brendan Kochunas
 !>   - Added explicit routines for INTEGER(4) and INTEGER(8).
-!>   - Changed the naming of public members to include "Allocs" to avoid 
+!>   - Changed the naming of public members to include "Allocs" to avoid
 !>     conflicts in global name space.
 !>   - Added @ref Allocs::demalloc "demalloc" interface for deallocating pointer
 !>     arrays.
@@ -118,7 +118,7 @@ MODULE Allocs
   USE IntrType
   USE Strings
   USE ExceptionHandler
-     
+
   IMPLICIT NONE
   PRIVATE !Default private for module contents
 !
@@ -139,7 +139,7 @@ MODULE Allocs
 #endif
 !
 ! Variables
-  !> Maximum length of character string returned by 
+  !> Maximum length of character string returned by
   !> @ref Allocs::getMemUsageChar "getMemUsageChar"
   INTEGER(SIK),PARAMETER :: ALLOC_MEMSTRING_LENGTH=14
   !> Global variable for tracking amount of memory allocated by module.
@@ -161,11 +161,11 @@ MODULE Allocs
 !
   !> @brief Generic interface for allocating a pointer array from 1 to \e n
   !>
-  !> Specifically, it allocates a pointer array of any rank 1 - 7 from 1 to 
+  !> Specifically, it allocates a pointer array of any rank 1 - 7 from 1 to
   !> \e ndim for each dimension of the array for single precision, double
   !> precision, integer, and logical data types.
   !>
-  !> The suffix s,d,i,l refers to data type: single precision, double 
+  !> The suffix s,d,i,l refers to data type: single precision, double
   !> precision, integer, logical. The number refers to the rank.
   INTERFACE dmallocP
     !> @copybrief Allocs::malloc_ps1 @copydetails Allocs::malloc_ps1
@@ -242,11 +242,11 @@ MODULE Allocs
 !
   !> @brief Generic interface for allocating an array from 1 to \e n
   !>
-  !> Specifically, it allocates an array of any rank 1 - 7 from 1 to 
+  !> Specifically, it allocates an array of any rank 1 - 7 from 1 to
   !> \e ndim for each dimension of the array for single precision, double
   !> precision, integer, and logical data types.
   !>
-  !> The suffix s,d,i,l refers to data type: single precision, double 
+  !> The suffix s,d,i,l refers to data type: single precision, double
   !> precision, integer, logical. The number refers to the rank.
   INTERFACE dmallocA
     !> @copybrief Allocs::malloc_as1 @copydetails Allocs::malloc_as1
@@ -323,8 +323,8 @@ MODULE Allocs
 !
   !> @brief Generic interface for allocating a pointer array from \e n to \e m
   !>
-  !>Specifically, it allocates a pointer array of any rank 1 - 7 from \e nbeg to \e nend 
-  !>for each dimension of the array for single precision, double precision, 
+  !>Specifically, it allocates a pointer array of any rank 1 - 7 from \e nbeg to \e nend
+  !>for each dimension of the array for single precision, double precision,
   !>integer, and logical data types.
   !>
   !>The suffix s,d,i,l refers to data type: single precision, double precision,
@@ -404,8 +404,8 @@ MODULE Allocs
 !
   !> @brief Generic interface for allocating an array from \e n to \e m
   !>
-  !>Specifically, it allocates an array of any rank 1 - 7 from \e nbeg to \e nend 
-  !>for each dimension of the array for single precision, double precision, 
+  !>Specifically, it allocates an array of any rank 1 - 7 from \e nbeg to \e nend
+  !>for each dimension of the array for single precision, double precision,
   !>integer, and logical data types.
   !>
   !>The suffix s,d,i,l refers to data type: single precision, double precision,
@@ -483,8 +483,8 @@ MODULE Allocs
     MODULE PROCEDURE malloc_ab07
   ENDINTERFACE
 !
-  !> @brief Generic interface for deallocating a pointer array. 
-  !> 
+  !> @brief Generic interface for deallocating a pointer array.
+  !>
   !> Defined for all intrinsic types of the kinds defined by IntrType
   INTERFACE demallocP
     !> @copybrief Allocs::demalloc_ps1 @copydetails Allocs::demalloc_ps1
@@ -559,8 +559,8 @@ MODULE Allocs
     MODULE PROCEDURE demalloc_pb7
   ENDINTERFACE
 !
-  !> @brief Generic interface for deallocating an allocatable array. 
-  !> 
+  !> @brief Generic interface for deallocating an allocatable array.
+  !>
   !> Defined for all intrinsic types of the kinds defined by IntrType
   INTERFACE demallocA
     !> @copybrief Allocs::demalloc_as1 @copydetails Allocs::demalloc_as1
@@ -634,7 +634,7 @@ MODULE Allocs
     !> @copybrief Allocs::demalloc_ab7 @copydetails Allocs::demalloc_ab7
     MODULE PROCEDURE demalloc_ab7
   ENDINTERFACE
-  
+
   !> Size of character variable for storing error messages returned from
   !> ALLOCATE and DEALLOCATE statement.
   INTEGER(SIK),PARAMETER :: ALLOC_ERRMSG_LEN=128
@@ -655,7 +655,7 @@ MODULE Allocs
       REAL(SRK),PARAMETER :: KB2bytes=1024_SRK
       REAL(SRK),PARAMETER :: MB2bytes=1048576_SRK
       REAL(SRK),PARAMETER :: GB2bytes=1073741824_SRK
-      
+
       bytes=Alloc_nbytes
       mem=bytes
       unit='bytes'
@@ -717,7 +717,7 @@ MODULE Allocs
       REAL(SRK),PARAMETER :: KB2bytes=1024_SRK
       REAL(SRK),PARAMETER :: MB2bytes=1048576_SRK
       REAL(SRK),PARAMETER :: GB2bytes=1073741824_SRK
-      
+
       ! Get memory usage for current process, then convert to bytes
       mem_string=getMemUsageChar_default()
       READ(mem_string,FMT='(f8.2,a)') memory,mem_unit
@@ -755,7 +755,7 @@ MODULE Allocs
       REAL(SRK),INTENT(IN) :: req
       CHARACTER(LEN=8) :: err_char
       TYPE(StringType) :: alloc_mesg
-      
+
       alloc_mesg=''
       IF(err /= 0) THEN
         WRITE(err_char,'(i4)') err; err_char=ADJUSTL(err_char)
@@ -775,7 +775,7 @@ MODULE Allocs
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
 !>
-!>Routine for allocating a rank 1 pointer array of type SINGLE 
+!>Routine for allocating a rank 1 pointer array of type SINGLE
 !>precision from 1 to \e n1.
 !>
     SUBROUTINE malloc_ps1(a,n1)
@@ -789,7 +789,7 @@ MODULE Allocs
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
 !>
-!> Routine for allocating a rank 1 pointer array of type DOUBLE 
+!> Routine for allocating a rank 1 pointer array of type DOUBLE
 !> precision from 1 to \e n1.
 !>
     SUBROUTINE malloc_pd1(a,n1)
@@ -803,7 +803,7 @@ MODULE Allocs
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
 !>
-!> Routine for allocating a rank 1 pointer array of type INTEGER 
+!> Routine for allocating a rank 1 pointer array of type INTEGER
 !> from 1 to \e n1.
 !>
     SUBROUTINE malloc_pi1(a,n1)
@@ -817,7 +817,7 @@ MODULE Allocs
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
 !>
-!> Routine for allocating a rank 1 pointer array of type LONG integer 
+!> Routine for allocating a rank 1 pointer array of type LONG integer
 !> from 1 to \e n1.
 !>
     SUBROUTINE malloc_pl1(a,n1)
@@ -831,7 +831,7 @@ MODULE Allocs
 !> @param a dummy argument for pointer array to be allocated
 !> @param n1 size of first dimension
 !>
-!> Routine for allocating a rank 1 pointer array of type LOGICAL 
+!> Routine for allocating a rank 1 pointer array of type LOGICAL
 !> from 1 to \e n1.
 !>
     SUBROUTINE malloc_pb1(a,n1)
@@ -850,7 +850,7 @@ MODULE Allocs
 !> @param n1 size of first dimension
 !> @param n2 size of second dimension
 !>
-!> Routine for allocating a rank 2 pointer array of type SINGLE 
+!> Routine for allocating a rank 2 pointer array of type SINGLE
 !> precision from 1 to \e n1 and 1 to \e n2
 !>
     SUBROUTINE malloc_ps2(a,n1,n2)
@@ -865,7 +865,7 @@ MODULE Allocs
 !> @param n1 size of first dimension
 !> @param n2 size of second dimension
 !>
-!> Routine for allocating a rank 2 pointer array of type DOUBLE 
+!> Routine for allocating a rank 2 pointer array of type DOUBLE
 !> precision from 1 to \e n1 and 1 to \e n2
 !>
     SUBROUTINE malloc_pd2(a,n1,n2)
@@ -1106,7 +1106,7 @@ MODULE Allocs
 !> @param n5 size of fifth dimension
 !>
 !> Routine for allocating a rank 5 pointer array of type SINGLE
-!> precision from 1 to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3, 
+!> precision from 1 to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3,
 !> 1 to \e n4, and 1 to \e n5
 !>
     SUBROUTINE malloc_ps5(a,n1,n2,n3,n4,n5)
@@ -1395,7 +1395,7 @@ MODULE Allocs
 !> @param n7 size of seventh dimension
 !>
 !> Routine for allocating a rank 7 pointer array of type LOGICAL from 1
-!> to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3, 1 to \e n4, 1 to \e n5, 
+!> to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3, 1 to \e n4, 1 to \e n5,
 !> 1 to \e n6, and 1 to \e n7.
 !>
     SUBROUTINE malloc_pb7(a,n1,n2,n3,n4,n5,n6,n7)
@@ -1413,7 +1413,7 @@ MODULE Allocs
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
 !>
-!> Routine for allocating a rank 1 allocatable array of type SINGLE 
+!> Routine for allocating a rank 1 allocatable array of type SINGLE
 !> precision from 1 to \e n1.
 !>
     SUBROUTINE malloc_as1(a,n1)
@@ -1427,7 +1427,7 @@ MODULE Allocs
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
 !>
-!> Routine for allocating a rank 1 allocatable array of type DOUBLE 
+!> Routine for allocating a rank 1 allocatable array of type DOUBLE
 !> precision from 1 to \e n1.
 !>
     SUBROUTINE malloc_ad1(a,n1)
@@ -1441,7 +1441,7 @@ MODULE Allocs
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
 !>
-!> Routine for allocating a rank 1 allocatable array of type INTEGER 
+!> Routine for allocating a rank 1 allocatable array of type INTEGER
 !> from 1 to \e n1.
 !>
     SUBROUTINE malloc_ai1(a,n1)
@@ -1455,7 +1455,7 @@ MODULE Allocs
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
 !>
-!> Routine for allocating a rank 1 allocatable array of type LONG integer 
+!> Routine for allocating a rank 1 allocatable array of type LONG integer
 !> from 1 to \e n1.
 !>
     SUBROUTINE malloc_al1(a,n1)
@@ -1469,7 +1469,7 @@ MODULE Allocs
 !> @param a dummy argument for allocatable array to be allocated
 !> @param n1 size of first dimension
 !>
-!> Routine for allocating a rank 1 allocatable array of type LOGICAL 
+!> Routine for allocating a rank 1 allocatable array of type LOGICAL
 !> from 1 to \e n1.
 !>
     SUBROUTINE malloc_ab1(a,n1)
@@ -1488,7 +1488,7 @@ MODULE Allocs
 !> @param n1 size of first dimension
 !> @param n2 size of second dimension
 !>
-!> Routine for allocating a rank 2 allocatable array of type SINGLE 
+!> Routine for allocating a rank 2 allocatable array of type SINGLE
 !> precision from 1 to \e n1 and 1 to \e n2
 !>
     SUBROUTINE malloc_as2(a,n1,n2)
@@ -1503,7 +1503,7 @@ MODULE Allocs
 !> @param n1 size of first dimension
 !> @param n2 size of second dimension
 !>
-!> Routine for allocating a rank 2 allocatable array of type DOUBLE 
+!> Routine for allocating a rank 2 allocatable array of type DOUBLE
 !> precision from 1 to \e n1 and 1 to \e n2
 !>
     SUBROUTINE malloc_ad2(a,n1,n2)
@@ -1744,7 +1744,7 @@ MODULE Allocs
 !> @param n5 size of fifth dimension
 !>
 !> Routine for allocating a rank 5 allocatable array of type SINGLE
-!> precision from 1 to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3, 
+!> precision from 1 to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3,
 !> 1 to \e n4, and 1 to \e n5
 !>
     SUBROUTINE malloc_as5(a,n1,n2,n3,n4,n5)
@@ -2033,7 +2033,7 @@ MODULE Allocs
 !> @param n7 size of seventh dimension
 !>
 !> Routine for allocating a rank 7 allocatable array of type LOGICAL from 1
-!> to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3, 1 to \e n4, 1 to \e n5, 
+!> to \e n1, 1 to \e n2, 1 to \e n3, 1 to \e n3, 1 to \e n4, 1 to \e n5,
 !> 1 to \e n6, and 1 to \e n7.
 !>
     SUBROUTINE malloc_ab7(a,n1,n2,n3,n4,n5,n6,n7)
@@ -2753,7 +2753,7 @@ MODULE Allocs
 !> @param ne5 ending index of fifth dimension
 !>
 !> Routine for allocating a rank 5 pointer array of type SINGLE precision from
-!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
+!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4,
 !> and \e nb5 to \e ne5.
 !>
     SUBROUTINE malloc_ps05(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5)
@@ -2797,7 +2797,7 @@ MODULE Allocs
 !> @param ne5 ending index of fifth dimension
 !>
 !> Routine for allocating a rank 5 pointer array of type DOUBLE precision from
-!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
+!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4,
 !> and \e nb5 to \e ne5.
 !>
     SUBROUTINE malloc_pd05(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5)
@@ -2841,7 +2841,7 @@ MODULE Allocs
 !> @param ne5 ending index of fifth dimension
 !>
 !> Routine for allocating a rank 5 pointer array of type INTEGER from
-!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
+!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4,
 !> and \e nb5 to \e ne5.
 !>
     SUBROUTINE malloc_pi05(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5)
@@ -2885,7 +2885,7 @@ MODULE Allocs
 !> @param ne5 ending index of fifth dimension
 !>
 !> Routine for allocating a rank 5 pointer array of type LONG integer from
-!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
+!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4,
 !> and \e nb5 to \e ne5.
 !>
     SUBROUTINE malloc_pl05(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5)
@@ -2929,7 +2929,7 @@ MODULE Allocs
 !> @param ne5 ending index of fifth dimension
 !>
 !> Routine for allocating a rank 5 pointer array of type LOGICAL from
-!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
+!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4,
 !> and \e nb5 to \e ne5.
 !>
     SUBROUTINE malloc_pb05(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5)
@@ -2978,7 +2978,7 @@ MODULE Allocs
 !> @param ne6 ending index of sixth dimension
 !>
 !> Routine for allocating a rank 6 pointer array of type SINGLE precision from
-!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
+!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4,
 !> \e nb5 to \e ne5, and \e nb6 to \e ne6.
 !>
     SUBROUTINE malloc_ps06(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5,nb6,ne6)
@@ -3026,7 +3026,7 @@ MODULE Allocs
 !> @param ne6 ending index of sixth dimension
 !>
 !> Routine for allocating a rank 6 pointer array of type DOUBLE precision from
-!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
+!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4,
 !> \e nb5 to \e ne5, and \e nb6 to \e ne6.
 !>
     SUBROUTINE malloc_pd06(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5,nb6,ne6)
@@ -3074,7 +3074,7 @@ MODULE Allocs
 !> @param ne6 ending index of sixth dimension
 !>
 !> Routine for allocating a rank 6 pointer array of type INTEGER from
-!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
+!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4,
 !> \e nb5 to \e ne5, and \e nb6 to \e ne6.
 !>
     SUBROUTINE malloc_pi06(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5,nb6,ne6)
@@ -3122,7 +3122,7 @@ MODULE Allocs
 !> @param ne6 ending index of sixth dimension
 !>
 !> Routine for allocating a rank 6 pointer array of type INTEGER from
-!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
+!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4,
 !> \e nb5 to \e ne5, and \e nb6 to \e ne6.
 !>
     SUBROUTINE malloc_pl06(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5,nb6,ne6)
@@ -3170,7 +3170,7 @@ MODULE Allocs
 !> @param ne6 ending index of sixth dimension
 !>
 !> Routine for allocating a rank 6 pointer array of type LOGICAL from
-!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
+!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4,
 !> \e nb5 to \e ne5, and \e nb6 to \e ne6.
 !>
     SUBROUTINE malloc_pb06(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5,nb6,ne6)
@@ -3223,7 +3223,7 @@ MODULE Allocs
 !> @param ne7 ending index of seventh dimension
 !>
 !> Routine for allocating a rank 7 pointer array of type SINGLE precision from
-!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
+!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4,
 !> \e nb5 to \e ne5, \e nb6 to \e ne6, and \e nb7 to \e ne7.
 !>
     SUBROUTINE malloc_ps07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
@@ -3275,7 +3275,7 @@ MODULE Allocs
 !> @param ne7 ending index of seventh dimension
 !>
 !> Routine for allocating a rank 7 pointer array of type DOUBLE precision from
-!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
+!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4,
 !> \e nb5 to \e ne5, \e nb6 to \e ne6, and \e nb7 to \e ne7.
 !>
     SUBROUTINE malloc_pd07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
@@ -3327,7 +3327,7 @@ MODULE Allocs
 !> @param ne7 ending index of seventh dimension
 !>
 !> Routine for allocating a rank 7 pointer array of type INTEGER from
-!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
+!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4,
 !> \e nb5 to \e ne5, \e nb6 to \e ne6, and \e nb7 to \e ne7.
 !>
     SUBROUTINE malloc_pi07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
@@ -3379,7 +3379,7 @@ MODULE Allocs
 !> @param ne7 ending index of seventh dimension
 !>
 !> Routine for allocating a rank 7 pointer array of type LONG integer from
-!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
+!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4,
 !> \e nb5 to \e ne5, \e nb6 to \e ne6, and \e nb7 to \e ne7.
 !>
     SUBROUTINE malloc_pl07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
@@ -3431,7 +3431,7 @@ MODULE Allocs
 !> @param ne7 ending index of seventh dimension
 !>
 !> Routine for allocating a rank 7 pointer array of type LOGICAL from
-!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
+!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4,
 !> \e nb5 to \e ne5, \e nb6 to \e ne6, and \e nb7 to \e ne7.
 !>
     SUBROUTINE malloc_pb07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
@@ -4174,7 +4174,7 @@ MODULE Allocs
 !> @param ne5 ending index of fifth dimension
 !>
 !> Routine for allocating a rank 5 allocatable array of type SINGLE precision from
-!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
+!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4,
 !> and \e nb5 to \e ne5.
 !>
     SUBROUTINE malloc_as05(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5)
@@ -4218,7 +4218,7 @@ MODULE Allocs
 !> @param ne5 ending index of fifth dimension
 !>
 !> Routine for allocating a rank 5 allocatable array of type DOUBLE precision from
-!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
+!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4,
 !> and \e nb5 to \e ne5.
 !>
     SUBROUTINE malloc_ad05(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5)
@@ -4262,7 +4262,7 @@ MODULE Allocs
 !> @param ne5 ending index of fifth dimension
 !>
 !> Routine for allocating a rank 5 allocatable array of type INTEGER from
-!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
+!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4,
 !> and \e nb5 to \e ne5.
 !>
     SUBROUTINE malloc_ai05(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5)
@@ -4306,7 +4306,7 @@ MODULE Allocs
 !> @param ne5 ending index of fifth dimension
 !>
 !> Routine for allocating a rank 5 allocatable array of type LONG integer from
-!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
+!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4,
 !> and \e nb5 to \e ne5.
 !>
     SUBROUTINE malloc_al05(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5)
@@ -4350,7 +4350,7 @@ MODULE Allocs
 !> @param ne5 ending index of fifth dimension
 !>
 !> Routine for allocating a rank 5 allocatable array of type LOGICAL from
-!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
+!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4,
 !> and \e nb5 to \e ne5.
 !>
     SUBROUTINE malloc_ab05(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5)
@@ -4399,7 +4399,7 @@ MODULE Allocs
 !> @param ne6 ending index of sixth dimension
 !>
 !> Routine for allocating a rank 6 allocatable array of type SINGLE precision from
-!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
+!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4,
 !> \e nb5 to \e ne5, and \e nb6 to \e ne6.
 !>
     SUBROUTINE malloc_as06(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5,nb6,ne6)
@@ -4447,7 +4447,7 @@ MODULE Allocs
 !> @param ne6 ending index of sixth dimension
 !>
 !> Routine for allocating a rank 6 allocatable array of type DOUBLE precision from
-!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
+!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4,
 !> \e nb5 to \e ne5, and \e nb6 to \e ne6.
 !>
     SUBROUTINE malloc_ad06(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5,nb6,ne6)
@@ -4495,7 +4495,7 @@ MODULE Allocs
 !> @param ne6 ending index of sixth dimension
 !>
 !> Routine for allocating a rank 6 allocatable array of type INTEGER from
-!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
+!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4,
 !> \e nb5 to \e ne5, and \e nb6 to \e ne6.
 !>
     SUBROUTINE malloc_ai06(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5,nb6,ne6)
@@ -4543,7 +4543,7 @@ MODULE Allocs
 !> @param ne6 ending index of sixth dimension
 !>
 !> Routine for allocating a rank 6 allocatable array of type INTEGER from
-!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
+!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4,
 !> \e nb5 to \e ne5, and \e nb6 to \e ne6.
 !>
     SUBROUTINE malloc_al06(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5,nb6,ne6)
@@ -4591,7 +4591,7 @@ MODULE Allocs
 !> @param ne6 ending index of sixth dimension
 !>
 !> Routine for allocating a rank 6 allocatable array of type LOGICAL from
-!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
+!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4,
 !> \e nb5 to \e ne5, and \e nb6 to \e ne6.
 !>
     SUBROUTINE malloc_ab06(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5,nb6,ne6)
@@ -4644,7 +4644,7 @@ MODULE Allocs
 !> @param ne7 ending index of seventh dimension
 !>
 !> Routine for allocating a rank 7 allocatable array of type SINGLE precision from
-!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
+!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4,
 !> \e nb5 to \e ne5, \e nb6 to \e ne6, and \e nb7 to \e ne7.
 !>
     SUBROUTINE malloc_as07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
@@ -4696,7 +4696,7 @@ MODULE Allocs
 !> @param ne7 ending index of seventh dimension
 !>
 !> Routine for allocating a rank 7 allocatable array of type DOUBLE precision from
-!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
+!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4,
 !> \e nb5 to \e ne5, \e nb6 to \e ne6, and \e nb7 to \e ne7.
 !>
     SUBROUTINE malloc_ad07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
@@ -4748,7 +4748,7 @@ MODULE Allocs
 !> @param ne7 ending index of seventh dimension
 !>
 !> Routine for allocating a rank 7 allocatable array of type INTEGER from
-!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
+!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4,
 !> \e nb5 to \e ne5, \e nb6 to \e ne6, and \e nb7 to \e ne7.
 !>
     SUBROUTINE malloc_ai07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
@@ -4800,7 +4800,7 @@ MODULE Allocs
 !> @param ne7 ending index of seventh dimension
 !>
 !> Routine for allocating a rank 7 allocatable array of type LONG integer from
-!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
+!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4,
 !> \e nb5 to \e ne5, \e nb6 to \e ne6, and \e nb7 to \e ne7.
 !>
     SUBROUTINE malloc_al07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
@@ -4852,7 +4852,7 @@ MODULE Allocs
 !> @param ne7 ending index of seventh dimension
 !>
 !> Routine for allocating a rank 7 allocatable array of type LOGICAL from
-!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4, 
+!> \e nb1 to \e ne1, \e nb2 to \e ne2, \e nb3 to \e ne3, \e nb4 to \e ne4,
 !> \e nb5 to \e ne5, \e nb6 to \e ne6, and \e nb7 to \e ne7.
 !>
     SUBROUTINE malloc_ab07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &

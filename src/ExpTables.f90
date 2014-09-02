@@ -42,6 +42,8 @@
 !>       based on the identity exp(x)*exp(y) = exp(x+y)
 !>  - @c LINEAR_EXP_TABLE table linear interpolates exp(x) as m*x+b
 !>  - @c ORDER2_EXP_TABLE is table does second order interpolation of exp(x)
+!>  - @c POLAR_EXP_TABLE table linear interpolates exp(x) as m*x+b
+!>       for each polar angle
 !>
 !> The tables are generally set up for the interval x=[-10,0] and can be
 !> specified for a given number of points in the table or a desired
@@ -64,6 +66,8 @@
 !> @par Revisions:
 !> (5/4/2012) - Dan Jabaay
 !>   - Modified tables to calculate 1-exp(x)
+!> (8/28/2014) - Jipu Wang
+!>   - Added polar angle dependent 3D exponential table
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE ExpTables
 
@@ -81,6 +85,7 @@ MODULE ExpTables
   PUBLIC :: TWO_LEVEL_EXP_TABLE
   PUBLIC :: LINEAR_EXP_TABLE
   PUBLIC :: ORDER2_EXP_TABLE
+  PUBLIC :: POLAR_EXP_TABLE
   PUBLIC :: ExpTableType
   PUBLIC :: eExpTable
   PUBLIC :: exptTbl
@@ -101,6 +106,9 @@ MODULE ExpTables
   INTEGER(SIK),PARAMETER :: LINEAR_EXP_TABLE=4
   !> Value indicating an exponential table with quadratic approximation
   INTEGER(SIK),PARAMETER :: ORDER2_EXP_TABLE=5
+  !> Value indicating an exponential table with polar angle dependence and
+  !> linear approximation
+  INTEGER(SIK),PARAMETER :: POLAR_EXP_TABLE=6
 
   !> @brief An exponential table type object
   !>
@@ -138,6 +146,9 @@ MODULE ExpTables
     REAL(SRK),ALLOCATABLE :: table3rd(:)
     !> Two dimensional table for better cache coherency
     REAL(SRK),ALLOCATABLE :: table2D(:,:)
+    !> Three dimensional table storing the slope and intercept
+    !> dimension([1(slope),2(intercept)],nx,npol)
+    REAL(SRK),ALLOCATABLE :: table3D(:,:,:)
 !
 !List of type bound prodedures
     CONTAINS
@@ -178,9 +189,11 @@ MODULE ExpTables
 !> @param x The variable
 !> @param ans The return value
 !>
-    ELEMENTAL FUNCTION EXPT(myET,x) RESULT(ans)
+    ELEMENTAL FUNCTION EXPT(myET,x,ipol) RESULT(ans)
+      CHARACTER(LEN=*),PARAMETER :: myName="EXPT"
       CLASS(ExpTableType),INTENT(IN) :: myET
       REAL(SRK),INTENT(IN) :: x
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: ipol
       REAL(SRK) :: ans
 
       IF(myET%minVal <= x .AND. x <= myET%maxVal) THEN
@@ -193,9 +206,17 @@ MODULE ExpTables
             ans=EXPT_Linear(myET,x)
           CASE (ORDER2_EXP_TABLE)
             ans=EXPT_TwoOrder(myET,x)
+          CASE (POLAR_EXP_TABLE)
+            IF(PRESENT(ipol)) THEN
+              ans=EXPT_Polar(myET,x,ipol)
+            ELSE
+!               CALL eExpTable%raiseError(modName//'::'//myName// &
+!                 ' - Polar angle index is not passed in to look'// &
+!                   ' up the polar angle dependent exponent table!')
+            ENDIF
           CASE DEFAULT
             ans=1._SRK-EXP(x)
-          ENDSELECT
+        ENDSELECT
       ELSE
         IF(x<-700._SRK) THEN
           ans=1._SRK
@@ -215,6 +236,7 @@ MODULE ExpTables
       IF(ALLOCATED(myET%table2rd)) CALL demallocA(myET%table2rd)
       IF(ALLOCATED(myET%table3rd)) CALL demallocA(myET%table3rd)
       IF(ALLOCATED(myET%table2D)) CALL demallocA(myET%table2D)
+      IF(ALLOCATED(myET%table3D)) CALL demallocA(myET%table3D)
       myET%tableType=-1
       myET%nintervals=-1
       myET%minTable=0
@@ -240,7 +262,8 @@ MODULE ExpTables
 !>   - <TT><'ExpTables -> tabletype'></TT> - Takes an integer as an input. The
 !>   integer is an enumeration specifying which table will be generated.  The
 !>   options are: EXACT_EXP_TABLE, SINGLE_LEVEL_EXP_TABLE, TWO_LEVEL_EXP_TABLE,
-!>   LINEAR_EXP_TABLE, and ORDER2_EXP_TABLE.  The default value is LINEAR_EXP_TABLE.
+!>   LINEAR_EXP_TABLE, ORDER2_EXP_TABLE, and POLAR_EXP_TABLE.
+!>   The default value is LINEAR_EXP_TABLE.
 !>   - <TT><'ExpTables -> minval'></TT> -
 !>   - <TT><'ExpTables -> maxval'></TT> -
 !>   - <TT><'ExpTables -> nintervals'></TT> -
@@ -258,6 +281,9 @@ MODULE ExpTables
       REAL(SRK) :: minVal,maxVal
       INTEGER(SIK) :: minTable,maxTable
       TYPE(ParamType) :: tmpList
+      INTEGER(SIK) :: ipol,npol
+      REAL(SRK) :: x1p,x2p
+      REAL(SRK),ALLOCATABLE :: rsinpol(:),y1p(:),y2p(:)
 
       !Initialize reference parameter lists
       IF(.NOT.ExpTableType_Paramsflag) CALL ExpTables_Declare_ValidParams()
@@ -273,13 +299,21 @@ MODULE ExpTables
         !
         !Default value for table type
         CALL tmpList%get('ExpTables -> tabletype',tableType)
-        IF(tableType > 5 .OR. tableType < 1) THEN
+        !tableType = POLAR_EXP_TABLE
+        IF(tableType > 6 .OR. tableType < 1) THEN
           CALL eExpTable%raiseDebug(modName//'::'//myName// &
             ' - Exponent table type is not correct input!'// &
               ' Using default table type!')
           !Get Default param
           CALL ExpTableType_optParams%get('ExpTables -> tabletype',tableType)
         ENDIF
+
+        IF(tableType == POLAR_EXP_TABLE) THEN
+          IF(.NOT.tmpList%has('ExpTables -> RSIN_polars')) &
+            CALL eExpTable%raiseError(modName//'::'//myName// &
+              ' - POLAR_EXP_TABLE type requires 1/sin(polar_angle) on input!')
+        ENDIF
+
         !Default value for minVal and maxVal
         minVal=0.0_SRK
         maxVal=0.0_SRK
@@ -328,7 +362,7 @@ MODULE ExpTables
               nintervals=NINT(ABS(0.5_SRK/tableErr))
             CASE (TWO_LEVEL_EXP_TABLE)
               nintervals=NINT(SQRT(ABS(0.5_SRK/tableErr)))
-            CASE (LINEAR_EXP_TABLE)
+            CASE (LINEAR_EXP_TABLE,POLAR_EXP_TABLE)
               nintervals=NINT(SQRT(ABS(0.125_SRK/tableErr)))
             CASE (ORDER2_EXP_TABLE)
               nintervals=NINT(ABS(9.630017699314371e-3_SRK/tableErr)**0.3333333333333333_SRK)
@@ -345,7 +379,7 @@ MODULE ExpTables
               tableErr=0.5_SRK/nintervals
             CASE (TWO_LEVEL_EXP_TABLE)
               tableErr=0.5_SRK/(nintervals*nintervals)
-            CASE (LINEAR_EXP_TABLE)
+            CASE (LINEAR_EXP_TABLE,POLAR_EXP_TABLE)
               tableErr=0.125_SRK/(nintervals*nintervals)
             CASE (ORDER2_EXP_TABLE)
               tableErr=9.630017699314371e-3_SRK/(nintervals*nintervals*nintervals)
@@ -456,7 +490,41 @@ MODULE ExpTables
                 y1=y2
                 y2=y3
               ENDDO
-          ENDSELECT
+            CASE(POLAR_EXP_TABLE)
+              CALL tmpList%get('ExpTables -> RSIN_polars',rsinpol)
+              npol=SIZE(rsinpol)
+              ALLOCATE(y1p(npol),y2p(npol))
+              CALL dmalloc0A(myET%table3D,1,2,minTable,maxTable,1,npol)
+              myET%nintervals=nintervals
+              myET%tableType=tableType
+              myET%maxVal=maxVal
+              myET%minVal=minVal
+              myET%minTable=minTable
+              myET%rdx=REAL(nintervals,SRK)
+              myET%dx=1._SRK/myET%rdx
+              myET%tableErr=tableErr
+              x1=minVal
+
+              DO ipol=1,npol
+                x1=minVal
+                y1=1._SRK-EXP(x1*rsinpol(ipol))
+                DO i=minTable,maxTable
+                  x2=x1+myET%dx
+                  y2=1._SRK-EXP(x2*rsinpol(ipol))
+                  myET%table3D(1,i,ipol)=(y2-y1)*myET%rdx
+                  myET%table3D(2,i,ipol)=y1-myET%table3D(1,i,ipol)*x1
+                  x1=x2
+                  y1=y2
+                ENDDO
+              ENDDO
+
+              !The following loop structure may not be necessary.
+!             DO ipol=1,npol
+!               DO i=minTable,maxTable
+!                 myET%table3D(1,i,ipol)=myET%table3D(1,i,ipol)*myET%dx
+!               ENDDO
+!             ENDDO
+            ENDSELECT
           myET%isinit=.TRUE.
           CALL tmpList%clear()
         ENDIF
@@ -529,6 +597,27 @@ MODULE ExpTables
       !ans=myET%table(i)*x+myET%table2rd(i)
       ans=myET%table2D(1,i)*x+myET%table2D(2,i)
     ENDFUNCTION EXPT_Linear
+!
+!-------------------------------------------------------------------------------
+!> @brief Exponential function evaluated by table with linear interpolation
+!> @param myET Exponential table type object
+!> @param x the value to evaluate
+!> @return ans the return value approximate to 1-EXP(x)
+!>
+!> It is assumed x is in the interval [myET%minVal,myET%maxVal], which is
+!> checked in the calling routine which is the only public interface to this
+!> routine.
+!>
+    ELEMENTAL FUNCTION EXPT_Polar(myET,x,ipol) RESULT(ans)
+      CLASS(ExpTableType),INTENT(IN) :: myET
+      REAL(SRK),INTENT(IN) :: x
+      INTEGER(SIK),INTENT(IN) :: ipol
+      REAL(SRK) :: ans
+      INTEGER(SIK) :: i
+      i=FLOOR(x*myET%rdx)
+      ans=myET%table3D(1,i,ipol)*x+myET%table3D(2,i,ipol)
+    ENDFUNCTION EXPT_Polar
+!
 !-------------------------------------------------------------------------------
 !> @brief Exponential function evaluated by table with second order
 !> interpolation
