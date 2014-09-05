@@ -227,7 +227,7 @@ PROGRAM testExpTables
       STOP 666
     ENDIF
   ENDDO
-  ALL()
+
   DO i=-10000,0
     IF(.NOT.SOFTEQ(reftbl3(i),testET2(5)%table3rd(i),1.0e-7_SRK)) THEN
       WRITE(istr,"(i6)")i;istr=ADJUSTL(istr)
