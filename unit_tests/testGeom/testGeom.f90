@@ -573,13 +573,13 @@ PROGRAM testGeom
       WRITE(*,*) 'TESTING LINETYPE (scalar)'
       
       !Initialize by hand
-      CALL line1%p(1)%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
-      CALL line1%p(2)%init(DIM=2,X=1.0_SRK,Y=1.0_SRK)
+      CALL line1%p1%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
+      CALL line1%p2%init(DIM=2,X=1.0_SRK,Y=1.0_SRK)
 !
 !Test clear
       CALL line1%clear()
-      IF(line1%p(1)%dim /= 0 .OR. line1%p(2)%dim /= 0 .OR. &
-        ALLOCATED(line1%p(1)%coord) .OR. ALLOCATED(line1%p(2)%coord)) THEN
+      IF(line1%p1%dim /= 0 .OR. line1%p2%dim /= 0 .OR. &
+        ALLOCATED(line1%p1%coord) .OR. ALLOCATED(line1%p2%coord)) THEN
         WRITE(*,*) 'CALL line1%clear() FAILED!'
         STOP 666
       ELSE
@@ -593,10 +593,10 @@ PROGRAM testGeom
       CALL point2%init(DIM=3,X=0.1_SRK,Y=0.2_SRK,Z=0.3_SRK)
       CALL point3%init(DIM=3,X=0.4_SRK,Y=0.5_SRK,Z=0.6_SRK)
       CALL line1%set(point2,point3)
-      IF(line1%p(1)%dim /= 3 .OR. line1%p(2)%dim /= 3 .OR. &
-        line1%p(1)%coord(1) /= 0.1_SRK .OR. line1%p(1)%coord(2) /= 0.2_SRK .OR. &
-          line1%p(1)%coord(3) /= 0.3_SRK .OR. line1%p(2)%coord(1) /= 0.4_SRK .OR. &
-            line1%p(2)%coord(2) /= 0.5_SRK .OR. line1%p(2)%coord(3) /= 0.6_SRK) THEN
+      IF(line1%p1%dim /= 3 .OR. line1%p2%dim /= 3 .OR. &
+        line1%p1%coord(1) /= 0.1_SRK .OR. line1%p1%coord(2) /= 0.2_SRK .OR. &
+          line1%p1%coord(3) /= 0.3_SRK .OR. line1%p2%coord(1) /= 0.4_SRK .OR. &
+            line1%p2%coord(2) /= 0.5_SRK .OR. line1%p2%coord(3) /= 0.6_SRK) THEN
         WRITE(*,*) 'CALL line1%set(...) FAILED!'
         STOP 666
       ELSE
@@ -606,8 +606,8 @@ PROGRAM testGeom
       
       !Redundant call to test input error
       CALL line1%set(point,point2)
-      IF(line1%p(1)%dim /= 0 .OR. line1%p(2)%dim /= 0 .OR. &
-        ALLOCATED(line1%p(1)%coord) .OR. ALLOCATED(line1%p(2)%coord)) THEN
+      IF(line1%p1%dim /= 0 .OR. line1%p2%dim /= 0 .OR. &
+        ALLOCATED(line1%p1%coord) .OR. ALLOCATED(line1%p2%coord)) THEN
         WRITE(*,*) 'CALL line1%set(...) FAILED!'
         STOP 666
       ENDIF
@@ -652,10 +652,10 @@ PROGRAM testGeom
 !Test intersect
       !2D
       CALL line1%clear()
-      CALL line1%p(1)%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
-      CALL line1%p(2)%init(DIM=2,X=0.0_SRK,Y=1.0_SRK)
-      CALL line2%p(1)%init(DIM=2,X=1.0_SRK,Y=0.0_SRK)
-      CALL line2%p(2)%init(DIM=2,X=1.0_SRK,Y=1.0_SRK)
+      CALL line1%p1%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
+      CALL line1%p2%init(DIM=2,X=0.0_SRK,Y=1.0_SRK)
+      CALL line2%p1%init(DIM=2,X=1.0_SRK,Y=0.0_SRK)
+      CALL line2%p2%init(DIM=2,X=1.0_SRK,Y=1.0_SRK)
       !Overlap
       point=line1%intersectLine(line1)
       IF(point%dim /= -2) THEN
@@ -671,10 +671,10 @@ PROGRAM testGeom
       !Normal
       CALL line1%clear()
       CALL line2%clear()
-      CALL line1%p(1)%init(COORD=(/0.0_SRK,0.0_SRK/))
-      CALL line1%p(2)%init(COORD=(/0.0_SRK,1.0_SRK/))
-      CALL line2%p(1)%init(COORD=(/-0.5_SRK,0.5_SRK/))
-      CALL line2%p(2)%init(COORD=(/1.0_SRK,0.5_SRK/))
+      CALL line1%p1%init(COORD=(/0.0_SRK,0.0_SRK/))
+      CALL line1%p2%init(COORD=(/0.0_SRK,1.0_SRK/))
+      CALL line2%p1%init(COORD=(/-0.5_SRK,0.5_SRK/))
+      CALL line2%p2%init(COORD=(/1.0_SRK,0.5_SRK/))
       point=line1%intersectLine(line2)
       IF(point%dim /= 2 .OR. .NOT.(point%coord(1) .APPROXEQ. 0.0_SRK) .OR. &
         .NOT.(point%coord(2) .APPROXEQ. 0.5_SRK)) THEN
@@ -684,10 +684,10 @@ PROGRAM testGeom
       !3D
       CALL line1%clear()
       CALL line2%clear()
-      CALL line1%p(1)%init(COORD=(/0.0_SRK,0.0_SRK,0.0_SRK/))
-      CALL line1%p(2)%init(COORD=(/1.0_SRK,1.0_SRK,1.0_SRK/))
-      CALL line2%p(1)%init(COORD=(/0.0_SRK,0.0_SRK,1.0_SRK/))
-      CALL line2%p(2)%init(COORD=(/1.0_SRK,0.0_SRK,1.0_SRK/))
+      CALL line1%p1%init(COORD=(/0.0_SRK,0.0_SRK,0.0_SRK/))
+      CALL line1%p2%init(COORD=(/1.0_SRK,1.0_SRK,1.0_SRK/))
+      CALL line2%p1%init(COORD=(/0.0_SRK,0.0_SRK,1.0_SRK/))
+      CALL line2%p2%init(COORD=(/1.0_SRK,0.0_SRK,1.0_SRK/))
       !Overlap
       point=line1%intersectLine(line1)
       IF(point%dim /= -2) THEN
@@ -703,10 +703,10 @@ PROGRAM testGeom
       !Normal
       CALL line1%clear()
       CALL line2%clear()
-      CALL line1%p(1)%init(COORD=(/0.0_SRK,0.0_SRK,0.0_SRK/))
-      CALL line1%p(2)%init(COORD=(/1.0_SRK,1.0_SRK,1.0_SRK/))
-      CALL line2%p(1)%init(COORD=(/1.0_SRK,0.0_SRK,0.0_SRK/))
-      CALL line2%p(2)%init(COORD=(/0.0_SRK,1.0_SRK,1.0_SRK/))
+      CALL line1%p1%init(COORD=(/0.0_SRK,0.0_SRK,0.0_SRK/))
+      CALL line1%p2%init(COORD=(/1.0_SRK,1.0_SRK,1.0_SRK/))
+      CALL line2%p1%init(COORD=(/1.0_SRK,0.0_SRK,0.0_SRK/))
+      CALL line2%p2%init(COORD=(/0.0_SRK,1.0_SRK,1.0_SRK/))
       point=line1%intersectLine(line2)
       IF(point%dim /= 3 .OR. .NOT.(point%coord(1) .APPROXEQ. 0.5_SRK) .OR. &
         .NOT.(point%coord(2) .APPROXEQ. 0.5_SRK) .OR. &
@@ -725,8 +725,8 @@ PROGRAM testGeom
         STOP 666
       ENDIF
       CALL line1%clear()
-      CALL line1%p(1)%init(DIM=1,X=0.5_SRK)
-      CALL line1%p(2)%init(DIM=1,X=0.0_SRK)
+      CALL line1%p1%init(DIM=1,X=0.5_SRK)
+      CALL line1%p2%init(DIM=1,X=0.0_SRK)
       point=line1%intersectLine(line1)
       IF(point%dim /= -2) THEN !1-D is collinear
         WRITE(*,*) '1-D line1%intersectLine(...) FAILED!'
@@ -735,10 +735,10 @@ PROGRAM testGeom
       
       CALL line1%clear()
       CALL line2%clear()
-      CALL line1%p(1)%init(COORD=(/0.0_SRK,0.0_SRK/))
-      CALL line1%p(2)%init(COORD=(/0.0_SRK,1.0_SRK/))
-      CALL line2%p(1)%init(COORD=(/-0.5_SRK,2.5_SRK/))
-      CALL line2%p(2)%init(COORD=(/1.0_SRK,2.5_SRK/))
+      CALL line1%p1%init(COORD=(/0.0_SRK,0.0_SRK/))
+      CALL line1%p2%init(COORD=(/0.0_SRK,1.0_SRK/))
+      CALL line2%p1%init(COORD=(/-0.5_SRK,2.5_SRK/))
+      CALL line2%p2%init(COORD=(/1.0_SRK,2.5_SRK/))
       point=line1%intersectLine(line2)
       IF(point%dim /= -3) THEN
         WRITE(*,*) 'line1%intersectLine(...) FAILED!'
@@ -749,12 +749,12 @@ PROGRAM testGeom
       CALL line1%clear()
       CALL line2%clear()
       CALL dis%clear()
-      CALL line1%p(1)%init(COORD=(/0.0_SRK,0.0_SRK/))
-      CALL line1%p(2)%init(COORD=(/0.0_SRK,1.0_SRK/))
-      CALL line2%p(1)%init(COORD=(/0.0_SRK,0.0_SRK,-1.0_SRK/))
-      CALL line2%p(2)%init(COORD=(/1.0_SRK,0.0_SRK,-1.0_SRK/))
+      CALL line1%p1%init(COORD=(/0.0_SRK,0.0_SRK/))
+      CALL line1%p2%init(COORD=(/0.0_SRK,1.0_SRK/))
+      CALL line2%p1%init(COORD=(/0.0_SRK,0.0_SRK,-1.0_SRK/))
+      CALL line2%p2%init(COORD=(/1.0_SRK,0.0_SRK,-1.0_SRK/))
       CALL line2%distance2Line(line1,dis,mu1,mu2)
-      IF(dis%p(1)%dim /= -1 .AND. dis%p(2)%dim /= -1) THEN
+      IF(dis%p1%dim /= -1 .AND. dis%p2%dim /= -1) THEN
         WRITE(*,*) 'line2%distance2Line(...) FAILED!'
         STOP 666
       ENDIF
@@ -762,22 +762,22 @@ PROGRAM testGeom
       CALL line1%clear()
       CALL line2%clear()
       CALL dis%clear()
-      CALL line1%p(1)%init(COORD=(/0.0_SRK,0.0_SRK,0.0_SRK/))
-      CALL line1%p(2)%init(COORD=(/0.0_SRK,0.0_SRK,0.0_SRK/))
-      CALL line2%p(1)%init(COORD=(/0.0_SRK,0.0_SRK,-1.0_SRK/))
-      CALL line2%p(2)%init(COORD=(/1.0_SRK,0.0_SRK,-1.0_SRK/))
+      CALL line1%p1%init(COORD=(/0.0_SRK,0.0_SRK,0.0_SRK/))
+      CALL line1%p2%init(COORD=(/0.0_SRK,0.0_SRK,0.0_SRK/))
+      CALL line2%p1%init(COORD=(/0.0_SRK,0.0_SRK,-1.0_SRK/))
+      CALL line2%p2%init(COORD=(/1.0_SRK,0.0_SRK,-1.0_SRK/))
       CALL line2%distance2Line(line1,dis,mu1,mu2)
-      IF(dis%p(1)%dim /= -1 .AND. dis%p(2)%dim /= -1) THEN
+      IF(dis%p1%dim /= -1 .AND. dis%p2%dim /= -1) THEN
         WRITE(*,*) 'line2%distance2Line(...) FAILED!'
         STOP 666
       ENDIF
       !Overlap
       CALL line1%clear()
       CALL dis%clear()
-      CALL line1%p(1)%init(COORD=(/0.0_SRK,0.0_SRK,-1.0_SRK/))
-      CALL line1%p(2)%init(COORD=(/1.0_SRK,0.0_SRK,-1.0_SRK/))
+      CALL line1%p1%init(COORD=(/0.0_SRK,0.0_SRK,-1.0_SRK/))
+      CALL line1%p2%init(COORD=(/1.0_SRK,0.0_SRK,-1.0_SRK/))
       CALL line2%distance2Line(line1,dis,mu1,mu2)
-      IF(dis%p(1)%dim /= -2 .AND. dis%p(2)%dim /= -2) THEN
+      IF(dis%p1%dim /= -2 .AND. dis%p2%dim /= -2) THEN
         WRITE(*,*) 'line2%distance2Line(...) FAILED!'
         STOP 666
       ENDIF
@@ -785,12 +785,12 @@ PROGRAM testGeom
       CALL line1%clear()
       CALL line2%clear()
       CALL dis%clear()
-      CALL line1%p(1)%init(COORD=(/0.0_SRK,0.0_SRK,0.0_SRK/))
-      CALL line1%p(2)%init(COORD=(/1.0_SRK,0.0_SRK,0.0_SRK/))
-      CALL line2%p(1)%init(COORD=(/0.0_SRK,0.0_SRK,-1.0_SRK/))
-      CALL line2%p(2)%init(COORD=(/1.0_SRK,0.0_SRK,-1.0_SRK/))
+      CALL line1%p1%init(COORD=(/0.0_SRK,0.0_SRK,0.0_SRK/))
+      CALL line1%p2%init(COORD=(/1.0_SRK,0.0_SRK,0.0_SRK/))
+      CALL line2%p1%init(COORD=(/0.0_SRK,0.0_SRK,-1.0_SRK/))
+      CALL line2%p2%init(COORD=(/1.0_SRK,0.0_SRK,-1.0_SRK/))
       CALL line2%distance2Line(line1,dis,mu1,mu2)
-      IF(dis%p(1)%dim /= -3 .AND. dis%p(2)%dim /= -3) THEN
+      IF(dis%p1%dim /= -3 .AND. dis%p2%dim /= -3) THEN
         WRITE(*,*) 'line2%distance2Line(...) FAILED!'
         STOP 666
       ENDIF
@@ -798,13 +798,13 @@ PROGRAM testGeom
       CALL line1%clear()
       CALL line2%clear()
       CALL dis%clear()
-      CALL line1%p(1)%init(COORD=(/0.0_SRK,0.0_SRK,0.0_SRK/))
-      CALL line1%p(2)%init(COORD=(/0.0_SRK,0.0_SRK,1.0_SRK/))
-      CALL line2%p(1)%init(COORD=(/0.0_SRK,0.0_SRK,-1.0_SRK/))
-      CALL line2%p(2)%init(COORD=(/1.0_SRK,0.0_SRK,-1.0_SRK/))
+      CALL line1%p1%init(COORD=(/0.0_SRK,0.0_SRK,0.0_SRK/))
+      CALL line1%p2%init(COORD=(/0.0_SRK,0.0_SRK,1.0_SRK/))
+      CALL line2%p1%init(COORD=(/0.0_SRK,0.0_SRK,-1.0_SRK/))
+      CALL line2%p2%init(COORD=(/1.0_SRK,0.0_SRK,-1.0_SRK/))
       CALL line2%distance2Line(line1,dis,mu1,mu2)
       IF(dis%getDim() /= 3 .OR. mu1 /= 0._SRK .OR. mu2 /= -1._SRK &
-        .OR. dis%p(1) /= line2%p(1) .OR. dis%length() > EPSREAL) THEN
+        .OR. dis%p1 /= line2%p1 .OR. dis%length() > EPSREAL) THEN
         WRITE(*,*) 'line2%distance2Line(...) FAILED!'
         STOP 666
       ENDIF
@@ -812,13 +812,13 @@ PROGRAM testGeom
       CALL line1%clear()
       CALL line2%clear()
       CALL dis%clear()
-      CALL line1%p(1)%init(COORD=(/0.0_SRK,0.0_SRK,0.0_SRK/))
-      CALL line1%p(2)%init(COORD=(/0.0_SRK,1.0_SRK,0.0_SRK/))
-      CALL line2%p(1)%init(COORD=(/0.0_SRK,0.0_SRK,-1.0_SRK/))
-      CALL line2%p(2)%init(COORD=(/1.0_SRK,0.0_SRK,-1.0_SRK/))
+      CALL line1%p1%init(COORD=(/0.0_SRK,0.0_SRK,0.0_SRK/))
+      CALL line1%p2%init(COORD=(/0.0_SRK,1.0_SRK,0.0_SRK/))
+      CALL line2%p1%init(COORD=(/0.0_SRK,0.0_SRK,-1.0_SRK/))
+      CALL line2%p2%init(COORD=(/1.0_SRK,0.0_SRK,-1.0_SRK/))
       CALL line2%distance2Line(line1,dis,mu1,mu2)
       IF(dis%getDim() /= 3 .OR. mu1 /= 0._SRK .OR. mu2 /= 0._SRK &
-        .OR. dis%p(1) /= line2%p(1) .OR. dis%p(2) /= line1%p(1)) THEN
+        .OR. dis%p1 /= line2%p1 .OR. dis%p2 /= line1%p1) THEN
         WRITE(*,*) 'line2%distance2Line(...) FAILED!'
         STOP 666
       ELSE
@@ -827,8 +827,8 @@ PROGRAM testGeom
       !Test for %distance2Point(...)
       CALL line1%clear()
       CALL point%clear()
-      CALL line1%p(1)%init(COORD=(/0.0_SRK/))
-      CALL line1%p(2)%init(COORD=(/1.0_SRK/))
+      CALL line1%p1%init(COORD=(/0.0_SRK/))
+      CALL line1%p2%init(COORD=(/1.0_SRK/))
       CALL point%init(COORD=(/-0.5_SRK/))
       IF(.NOT.(line1%distance2Point(point) .APPROXEQ. 0.25_SRK)) THEN
         WRITE(*,*) '1-D line1%distance2Point(...) FAILED!'
@@ -851,8 +851,8 @@ PROGRAM testGeom
       
       CALL line1%clear()
       CALL point%clear()
-      CALL line1%p(1)%init(COORD=(/0.0_SRK,0.0_SRK/))
-      CALL line1%p(2)%init(COORD=(/1.0_SRK,1.0_SRK/))
+      CALL line1%p1%init(COORD=(/0.0_SRK,0.0_SRK/))
+      CALL line1%p2%init(COORD=(/1.0_SRK,1.0_SRK/))
       CALL point%init(COORD=(/-0.5_SRK/))
       IF(line1%distance2Point(point) /= -1.0_SRK) THEN
         WRITE(*,*) '2-D line1%distance2Point(...) FAILED!'
@@ -887,8 +887,8 @@ PROGRAM testGeom
       
       CALL line1%clear()
       CALL point%clear()
-      CALL line1%p(1)%init(COORD=(/0.0_SRK,0.0_SRK,0.0_SRK/))
-      CALL line1%p(2)%init(COORD=(/1.0_SRK,1.0_SRK,1.0_SRK/))
+      CALL line1%p1%init(COORD=(/0.0_SRK,0.0_SRK,0.0_SRK/))
+      CALL line1%p2%init(COORD=(/1.0_SRK,1.0_SRK,1.0_SRK/))
       CALL point%init(COORD=(/0.5_SRK,0.5_SRK,0.5_SRK/))
       IF(.NOT.(line1%distance2Point(point) .APPROXEQ. 0.0_SRK)) THEN
         WRITE(*,*) '3-D line1%distance2Point(...) FAILED!'
@@ -1038,8 +1038,8 @@ PROGRAM testGeom
       
       !Test disjoint-ness
       CALL line1%clear()
-      CALL line1%p(1)%init(COORD=(/0._SRK,0._SRK,0._SRK/))
-      CALL line1%p(2)%init(COORD=(/0.1_SRK,0.1_SRK,0.1_SRK/))
+      CALL line1%p1%init(COORD=(/0._SRK,0._SRK,0._SRK/))
+      CALL line1%p2%init(COORD=(/0.1_SRK,0.1_SRK,0.1_SRK/))
       point2=plane1%intersectLine(line1)
       IF(point2%dim /= -3) THEN
         WRITE(*,*) 'plane%intersect(...) FAILED!'
@@ -1048,8 +1048,8 @@ PROGRAM testGeom
       
       !Test for collinearity
       CALL line1%clear()
-      CALL line1%p(1)%init(COORD=(/0.5_SRK,0.5_SRK,0.5_SRK/))
-      CALL line1%p(2)%init(COORD=(/0.75_SRK,0.75_SRK,0._SRK/))
+      CALL line1%p1%init(COORD=(/0.5_SRK,0.5_SRK,0.5_SRK/))
+      CALL line1%p2%init(COORD=(/0.75_SRK,0.75_SRK,0._SRK/))
       point2=plane1%intersectLine(line1)
       IF(point2%dim /= -2) THEN
         WRITE(*,*) 'plane%intersect(...) FAILED!'
@@ -1058,8 +1058,8 @@ PROGRAM testGeom
       
       !Test for parallel
       CALL line1%clear()
-      CALL line1%p(1)%init(COORD=(/0.4_SRK,0.4_SRK,0.4_SRK/))
-      CALL line1%p(2)%init(COORD=(/0.65_SRK,0.65_SRK,-0.1_SRK/))
+      CALL line1%p1%init(COORD=(/0.4_SRK,0.4_SRK,0.4_SRK/))
+      CALL line1%p2%init(COORD=(/0.65_SRK,0.65_SRK,-0.1_SRK/))
       point2=plane1%intersectLine(line1)
       IF(point2%dim /= -3) THEN
         WRITE(*,*) 'plane%intersect(...) FAILED!'
@@ -1067,8 +1067,8 @@ PROGRAM testGeom
       ENDIF
       
       CALL line1%clear()
-      CALL line1%p(1)%init(COORD=(/0.0_SRK,0.0_SRK,0.0_SRK/))
-      CALL line1%p(2)%init(COORD=(/1.0_SRK,1.0_SRK,1.0_SRK/))
+      CALL line1%p1%init(COORD=(/0.0_SRK,0.0_SRK,0.0_SRK/))
+      CALL line1%p2%init(COORD=(/1.0_SRK,1.0_SRK,1.0_SRK/))
       point2=plane1%intersectLine(line1)
       IF(point2%dim /= 3 .OR. ANY(.NOT.(point2%coord .APPROXEQ. 0.5_SRK))) THEN
         WRITE(*,*) 'plane1%intersect(...) FAILED!'
@@ -1086,8 +1086,8 @@ PROGRAM testGeom
       ENDIF
       
       CALL line2%clear
-      CALL line2%p(1)%init(COORD=(/-0.5_SRK,2.5_SRK/))
-      CALL line2%p(2)%init(COORD=(/1.0_SRK,2.5_SRK/))
+      CALL line2%p1%init(COORD=(/-0.5_SRK,2.5_SRK/))
+      CALL line2%p2%init(COORD=(/1.0_SRK,2.5_SRK/))
       point2=plane1%intersectLine(line2)
       IF(point2%dim /= -1) THEN
         WRITE(*,*) 'plane%intersect(...) FAILED!'
@@ -1108,8 +1108,8 @@ PROGRAM testGeom
       CALL plane1%set((/1.0_SRK,1.0_SRK,1.0_SRK/),point)
       planes=plane1
       CALL line1%clear()
-      CALL line1%p(1)%init(COORD=(/0.0_SRK,0.0_SRK,0.0_SRK/))
-      CALL line1%p(2)%init(COORD=(/1.0_SRK,1.0_SRK,1.0_SRK/))
+      CALL line1%p1%init(COORD=(/0.0_SRK,0.0_SRK,0.0_SRK/))
+      CALL line1%p2%init(COORD=(/1.0_SRK,1.0_SRK,1.0_SRK/))
       points=planes%intersectLine(line1)
       IF(points(1)%dim /= 3 .OR. ANY(.NOT.(points(1)%coord .APPROXEQ. 0.5_SRK)) .OR. &
         points(2)%dim /= 3 .OR. ANY(.NOT.(points(2)%coord .APPROXEQ. 0.5_SRK))) THEN
@@ -1186,8 +1186,8 @@ PROGRAM testGeom
       CALL circle1%set(point,0.4225_SRK)
       
       !Test disjoint (pointing away)
-      CALL line1%p(1)%init(DIM=2,X=0.3_SRK,Y=0.4_SRK)
-      CALL line1%p(2)%init(DIM=2,X=0.4_SRK,Y=0.5_SRK)
+      CALL line1%p1%init(DIM=2,X=0.3_SRK,Y=0.4_SRK)
+      CALL line1%p2%init(DIM=2,X=0.4_SRK,Y=0.5_SRK)
       CALL circle1%intersectLine(line1,point2,point3)
       IF(point2%dim /= -2 .OR. point3%dim /= -2) THEN
         WRITE(*,*) 'CALL circle1%intersectLine(...) (disjoint 1) FAILED!'
@@ -1196,8 +1196,8 @@ PROGRAM testGeom
       CALL line1%clear()
       
       !Test disjoint (ray misses)
-      CALL line1%p(1)%init(DIM=2,X=-0.4_SRK,Y=0.4_SRK)
-      CALL line1%p(2)%init(DIM=2,X=-0.1_SRK,Y=0.5_SRK)
+      CALL line1%p1%init(DIM=2,X=-0.4_SRK,Y=0.4_SRK)
+      CALL line1%p2%init(DIM=2,X=-0.1_SRK,Y=0.5_SRK)
       CALL circle1%intersectLine(line1,point2,point3)
       IF(point2%dim /= -2 .OR. point3%dim /= -2) THEN
         WRITE(*,*) 'CALL circle1%intersectLine(...) (disjoint 1) FAILED!'
@@ -1206,8 +1206,8 @@ PROGRAM testGeom
       CALL line1%clear()
       
       !Test tangent
-      CALL line1%p(1)%init(DIM=2,X=0.4225_SRK,Y=0.4_SRK)
-      CALL line1%p(2)%init(DIM=2,X=0.4225_SRK,Y=-0.5_SRK)
+      CALL line1%p1%init(DIM=2,X=0.4225_SRK,Y=0.4_SRK)
+      CALL line1%p2%init(DIM=2,X=0.4225_SRK,Y=-0.5_SRK)
       CALL circle1%intersectLine(line1,point2,point3)
       IF(point2%dim /= -3 .OR. point3%dim /= -3) THEN
         WRITE(*,*) 'CALL circle1%intersectLine(...) (tangent) FAILED!'
@@ -1216,8 +1216,8 @@ PROGRAM testGeom
       CALL line1%clear()
       
       !Test totally inside
-      CALL line1%p(1)%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
-      CALL line1%p(2)%init(DIM=2,X=0.1_SRK,Y=0.1_SRK)
+      CALL line1%p1%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
+      CALL line1%p2%init(DIM=2,X=0.1_SRK,Y=0.1_SRK)
       CALL circle1%intersectLine(line1,point2,point3)
       IF(point2%dim /= 0 .OR. point3%dim /= 0) THEN
         WRITE(*,*) 'CALL circle1%intersectLine(...) (inside) FAILED!'
@@ -1226,8 +1226,8 @@ PROGRAM testGeom
       CALL line1%clear()
       
       !Test 1 point of intersection
-      CALL line1%p(1)%init(DIM=2,X=-0.4_SRK,Y=-0.3_SRK)
-      CALL line1%p(2)%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
+      CALL line1%p1%init(DIM=2,X=-0.4_SRK,Y=-0.3_SRK)
+      CALL line1%p2%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
       CALL circle1%intersectLine(line1,point2,point3)
       IF(ANY(.NOT.(point2%coord .APPROXEQ. (/-0.3380_SRK,-0.2535_SRK/))) &
         .OR. point3%dim /= 0) THEN
@@ -1237,8 +1237,8 @@ PROGRAM testGeom
       CALL line1%clear()
       
       !Test 2 points of intersection
-      CALL line1%p(1)%init(DIM=2,X=-0.3_SRK,Y=-0.4_SRK)
-      CALL line1%p(2)%init(DIM=2,X=0.4_SRK,Y=0.2_SRK)
+      CALL line1%p1%init(DIM=2,X=-0.3_SRK,Y=-0.4_SRK)
+      CALL line1%p2%init(DIM=2,X=0.4_SRK,Y=0.2_SRK)
       CALL circle1%intersectLine(line1,point2,point3)
       IF(ANY(.NOT.(point2%coord .APPROXEQ. (/-0.239446595040736_SRK,-0.348097081463488_SRK/))) &
         .OR. ANY(.NOT.(point3%coord .APPROXEQ. (/0.380623065628971_SRK,0.183391199110547_SRK/)))) THEN
@@ -1255,14 +1255,14 @@ PROGRAM testGeom
       CALL point2%clear()
       CALL point2%init(DIM=3,X=0.1_SRK,Y=0.2_SRK,Z=0.3_SRK)
       CALL point3%init(DIM=3,X=0.1_SRK,Y=0.2_SRK,Z=1.3_SRK)
-      cylinder1%axis%p(1)=point2
-      cylinder1%axis%p(2)=point2
+      cylinder1%axis%p1=point2
+      cylinder1%axis%p2=point2
       cylinder1%r=1.0_SRK
       
       CALL cylinder1%clear()
-      IF(cylinder1%r /= 0.0_SRK .OR. cylinder1%axis%p(1)%dim /= 0 .OR. &
-        ALLOCATED(cylinder1%axis%p(1)%coord) .OR. cylinder1%axis%p(2)%dim /= 0 .OR. &
-          ALLOCATED(cylinder1%axis%p(2)%coord)) THEN
+      IF(cylinder1%r /= 0.0_SRK .OR. cylinder1%axis%p1%dim /= 0 .OR. &
+        ALLOCATED(cylinder1%axis%p1%coord) .OR. cylinder1%axis%p2%dim /= 0 .OR. &
+          ALLOCATED(cylinder1%axis%p2%coord)) THEN
         WRITE(*,*) 'CALL cylinder1%clear() FAILED!'
         STOP 666
       ELSE
@@ -1272,32 +1272,32 @@ PROGRAM testGeom
 !Test set
       !Error check
       CALL cylinder1%set(point,point3,1.0_SRK)
-      IF(cylinder1%r /= 0.0_SRK .OR. cylinder1%axis%p(1)%dim /= 0 .OR. &
-        ALLOCATED(cylinder1%axis%p(1)%coord) .OR. cylinder1%axis%p(2)%dim /= 0 .OR. &
-          ALLOCATED(cylinder1%axis%p(2)%coord)) THEN
+      IF(cylinder1%r /= 0.0_SRK .OR. cylinder1%axis%p1%dim /= 0 .OR. &
+        ALLOCATED(cylinder1%axis%p1%coord) .OR. cylinder1%axis%p2%dim /= 0 .OR. &
+          ALLOCATED(cylinder1%axis%p2%coord)) THEN
         WRITE(*,*) 'CALL cylinder1%set(...) FAILED!'
         STOP 666
       ENDIF
       CALL cylinder1%set(point3,point3,1.0_SRK)
-      IF(cylinder1%r /= 0.0_SRK .OR. cylinder1%axis%p(1)%dim /= 0 .OR. &
-        ALLOCATED(cylinder1%axis%p(1)%coord) .OR. cylinder1%axis%p(2)%dim /= 0 .OR. &
-          ALLOCATED(cylinder1%axis%p(2)%coord)) THEN
+      IF(cylinder1%r /= 0.0_SRK .OR. cylinder1%axis%p1%dim /= 0 .OR. &
+        ALLOCATED(cylinder1%axis%p1%coord) .OR. cylinder1%axis%p2%dim /= 0 .OR. &
+          ALLOCATED(cylinder1%axis%p2%coord)) THEN
         WRITE(*,*) 'CALL cylinder1%set(...) FAILED!'
         STOP 666
       ENDIF
       CALL cylinder1%set(point2,point3,-1.0_SRK)
-      IF(cylinder1%r /= 0.0_SRK .OR. cylinder1%axis%p(1)%dim /= 0 .OR. &
-        ALLOCATED(cylinder1%axis%p(1)%coord) .OR. cylinder1%axis%p(2)%dim /= 0 .OR. &
-          ALLOCATED(cylinder1%axis%p(2)%coord)) THEN
+      IF(cylinder1%r /= 0.0_SRK .OR. cylinder1%axis%p1%dim /= 0 .OR. &
+        ALLOCATED(cylinder1%axis%p1%coord) .OR. cylinder1%axis%p2%dim /= 0 .OR. &
+          ALLOCATED(cylinder1%axis%p2%coord)) THEN
         WRITE(*,*) 'CALL cylinder1%set(...) FAILED!'
         STOP 666
       ENDIF
       !Real test
       CALL cylinder1%set(point2,point3,1.0_SRK)
-      IF(cylinder1%r /= 1.0_SRK .OR. cylinder1%axis%p(1)%dim /= 3 .OR. &
-        ANY(cylinder1%axis%p(1)%coord /= (/0.1_SRK,0.2_SRK,0.3_SRK/)) .OR. &
-          cylinder1%axis%p(2)%dim /= 3 .OR. &
-            ANY(cylinder1%axis%p(2)%coord /= (/0.1_SRK,0.2_SRK,1.3_SRK/))) THEN
+      IF(cylinder1%r /= 1.0_SRK .OR. cylinder1%axis%p1%dim /= 3 .OR. &
+        ANY(cylinder1%axis%p1%coord /= (/0.1_SRK,0.2_SRK,0.3_SRK/)) .OR. &
+          cylinder1%axis%p2%dim /= 3 .OR. &
+            ANY(cylinder1%axis%p2%coord /= (/0.1_SRK,0.2_SRK,1.3_SRK/))) THEN
         WRITE(*,*) 'CALL cylinder1%set(...) FAILED!'
         STOP 666
       ELSE
@@ -1316,13 +1316,13 @@ PROGRAM testGeom
       
       !Reference cylinder for all cases.
       cylinder1%r=1.0_SRK
-      CALL cylinder1%axis%p(1)%init(DIM=3,X=0.1_SRK,Y=-0.2_SRK,Z=0.0_SRK)
-      CALL cylinder1%axis%p(2)%init(DIM=3,X=0.1_SRK,Y=-0.2_SRK,Z=1.0_SRK)
+      CALL cylinder1%axis%p1%init(DIM=3,X=0.1_SRK,Y=-0.2_SRK,Z=0.0_SRK)
+      CALL cylinder1%axis%p2%init(DIM=3,X=0.1_SRK,Y=-0.2_SRK,Z=1.0_SRK)
       CALL line1%clear()
       
       !Test totally "outside" P-surface
-      CALL line1%p(1)%init(DIM=3,X=2.0_SRK,Y=2.0_SRK,Z=-0.5_SRK)
-      CALL line1%p(2)%init(DIM=3,X=2.0_SRK,Y=2.0_SRK,Z=-1.5_SRK)
+      CALL line1%p1%init(DIM=3,X=2.0_SRK,Y=2.0_SRK,Z=-0.5_SRK)
+      CALL line1%p2%init(DIM=3,X=2.0_SRK,Y=2.0_SRK,Z=-1.5_SRK)
       CALL cylinder1%intersectLine(line1,point2,point3)
       IF(point2%dim /= -2 .OR. point3%dim /= -2) THEN
         WRITE(*,*) 'CALL cylinder1%intersectLine(...) (outside P) FAILED!'
@@ -1331,8 +1331,8 @@ PROGRAM testGeom
       CALL line1%clear()
       
       !Test totally "outside" Q-surface
-      CALL line1%p(1)%init(DIM=3,X=2.0_SRK,Y=2.0_SRK,Z=10.5_SRK)
-      CALL line1%p(2)%init(DIM=3,X=2.0_SRK,Y=2.0_SRK,Z=1.5_SRK)
+      CALL line1%p1%init(DIM=3,X=2.0_SRK,Y=2.0_SRK,Z=10.5_SRK)
+      CALL line1%p2%init(DIM=3,X=2.0_SRK,Y=2.0_SRK,Z=1.5_SRK)
       CALL cylinder1%intersectLine(line1,point2,point3)
       IF(point2%dim /= -3 .OR. point3%dim /= -3) THEN
         WRITE(*,*) 'CALL cylinder1%intersectLine(...) (outside Q) FAILED!'
@@ -1341,8 +1341,8 @@ PROGRAM testGeom
       CALL line1%clear()
       
       !Test parallel on cylinder surface
-      CALL line1%p(1)%init(DIM=3,X=0.1_SRK,Y=-1.2_SRK,Z=-0.5_SRK)
-      CALL line1%p(2)%init(DIM=3,X=0.1_SRK,Y=-1.2_SRK,Z=1.5_SRK)
+      CALL line1%p1%init(DIM=3,X=0.1_SRK,Y=-1.2_SRK,Z=-0.5_SRK)
+      CALL line1%p2%init(DIM=3,X=0.1_SRK,Y=-1.2_SRK,Z=1.5_SRK)
       CALL cylinder1%intersectLine(line1,point2,point3)
       IF(point2%dim /= -4 .OR. point3%dim /= -4) THEN
         WRITE(*,*) 'CALL cylinder1%intersectLine(...) (parallel on surface) FAILED!'
@@ -1351,8 +1351,8 @@ PROGRAM testGeom
       CALL line1%clear()
       
       !Test parallel outside radius
-      CALL line1%p(1)%init(DIM=3,X=2.0_SRK,Y=2.0_SRK,Z=-0.5_SRK)
-      CALL line1%p(2)%init(DIM=3,X=2.0_SRK,Y=2.0_SRK,Z=1.5_SRK)
+      CALL line1%p1%init(DIM=3,X=2.0_SRK,Y=2.0_SRK,Z=-0.5_SRK)
+      CALL line1%p2%init(DIM=3,X=2.0_SRK,Y=2.0_SRK,Z=1.5_SRK)
       CALL cylinder1%intersectLine(line1,point2,point3)
       IF(point2%dim /= -5 .OR. point3%dim /= -5) THEN
         WRITE(*,*) 'CALL cylinder1%intersectLine(...) (parallel outside) FAILED!'
@@ -1361,8 +1361,8 @@ PROGRAM testGeom
       CALL line1%clear()
       
       !Test parallel totally inside
-      CALL line1%p(1)%init(DIM=3,X=0.0_SRK,Y=0.2_SRK,Z=0.2_SRK)
-      CALL line1%p(2)%init(DIM=3,X=0.0_SRK,Y=0.2_SRK,Z=0.5_SRK)
+      CALL line1%p1%init(DIM=3,X=0.0_SRK,Y=0.2_SRK,Z=0.2_SRK)
+      CALL line1%p2%init(DIM=3,X=0.0_SRK,Y=0.2_SRK,Z=0.5_SRK)
       CALL cylinder1%intersectLine(line1,point2,point3)
       IF(point2%dim /= -6 .OR. point3%dim /= -6) THEN
         WRITE(*,*) 'CALL cylinder1%intersectLine(...) (parallel inside) FAILED!'
@@ -1371,8 +1371,8 @@ PROGRAM testGeom
       CALL line1%clear()
       
       !Test parallel both intersections
-      CALL line1%p(1)%init(DIM=3,X=0.0_SRK,Y=0.0_SRK,Z=-0.5_SRK)
-      CALL line1%p(2)%init(DIM=3,X=0.0_SRK,Y=0.0_SRK,Z=1.5_SRK)
+      CALL line1%p1%init(DIM=3,X=0.0_SRK,Y=0.0_SRK,Z=-0.5_SRK)
+      CALL line1%p2%init(DIM=3,X=0.0_SRK,Y=0.0_SRK,Z=1.5_SRK)
       CALL cylinder1%intersectLine(line1,point2,point3)
       IF(ANY(.NOT.(point2%coord .APPROXEQ. (/0.0_SRK,0.0_SRK,0.0_SRK/))) .OR. &
         ANY(.NOT.(point3%coord .APPROXEQ. (/0.0_SRK,0.0_SRK,1.0_SRK/)))) THEN
@@ -1382,8 +1382,8 @@ PROGRAM testGeom
       CALL line1%clear()
       
       !Test not parallel and tangent
-      CALL line1%p(1)%init(DIM=3,X=-1.1_SRK,Y=-1.2_SRK,Z=0.5_SRK)
-      CALL line1%p(2)%init(DIM=3,X=1.1_SRK,Y=-1.2_SRK,Z=0.5_SRK)
+      CALL line1%p1%init(DIM=3,X=-1.1_SRK,Y=-1.2_SRK,Z=0.5_SRK)
+      CALL line1%p2%init(DIM=3,X=1.1_SRK,Y=-1.2_SRK,Z=0.5_SRK)
       CALL cylinder1%intersectLine(line1,point2,point3)
       IF(point2%dim /= -7 .OR. point3%dim /= -7) THEN
         WRITE(*,*) 'CALL cylinder1%intersectLine(...) (disjoint) FAILED!'
@@ -1392,8 +1392,8 @@ PROGRAM testGeom
       CALL line1%clear()
       
       !Test not parallel and disjoint
-      CALL line1%p(1)%init(DIM=3,X=0.1_SRK,Y=2.0_SRK,Z=0.5_SRK)
-      CALL line1%p(2)%init(DIM=3,X=1.1_SRK,Y=2.0_SRK,Z=1.5_SRK)
+      CALL line1%p1%init(DIM=3,X=0.1_SRK,Y=2.0_SRK,Z=0.5_SRK)
+      CALL line1%p2%init(DIM=3,X=1.1_SRK,Y=2.0_SRK,Z=1.5_SRK)
       CALL cylinder1%intersectLine(line1,point2,point3)
       IF(point2%dim /= -8 .OR. point3%dim /= -8) THEN
         WRITE(*,*) 'CALL cylinder1%intersectLine(...) (disjoint) FAILED!'
@@ -1402,8 +1402,8 @@ PROGRAM testGeom
       CALL line1%clear()
       
       !Test not parallel outside no intersection
-      CALL line1%p(1)%init(DIM=3,X=0.1_SRK,Y=2.0_SRK,Z=-0.5_SRK)
-      CALL line1%p(2)%init(DIM=3,X=0.1_SRK,Y=2.5_SRK,Z=1.5_SRK)
+      CALL line1%p1%init(DIM=3,X=0.1_SRK,Y=2.0_SRK,Z=-0.5_SRK)
+      CALL line1%p2%init(DIM=3,X=0.1_SRK,Y=2.5_SRK,Z=1.5_SRK)
       CALL cylinder1%intersectLine(line1,point2,point3)
       IF(point2%dim /= 0 .OR. point3%dim /= 0) THEN
         WRITE(*,*) 'CALL cylinder1%intersectLine(...) (no intersection) FAILED!'
@@ -1412,8 +1412,8 @@ PROGRAM testGeom
       CALL line1%clear()
       
       !Test not parallel intersection with P-surface only
-      CALL line1%p(1)%init(DIM=3,X=0.0_SRK,Y=0.0_SRK,Z=-0.5_SRK)
-      CALL line1%p(2)%init(DIM=3,X=0.0_SRK,Y=0.5_SRK,Z=0.5_SRK)
+      CALL line1%p1%init(DIM=3,X=0.0_SRK,Y=0.0_SRK,Z=-0.5_SRK)
+      CALL line1%p2%init(DIM=3,X=0.0_SRK,Y=0.5_SRK,Z=0.5_SRK)
       CALL cylinder1%intersectLine(line1,point2,point3)
       IF(ANY(.NOT.(point2%coord .APPROXEQ. (/0.0_SRK,0.25_SRK,0.0_SRK/))) .OR. &
         point3%dim /= 0) THEN
@@ -1423,8 +1423,8 @@ PROGRAM testGeom
       CALL line1%clear()
       
       !Test not parallel intersection with Q-surface only
-      CALL line1%p(1)%init(DIM=3,X=0.0_SRK,Y=0.0_SRK,Z=0.5_SRK)
-      CALL line1%p(2)%init(DIM=3,X=0.0_SRK,Y=0.5_SRK,Z=1.5_SRK)
+      CALL line1%p1%init(DIM=3,X=0.0_SRK,Y=0.0_SRK,Z=0.5_SRK)
+      CALL line1%p2%init(DIM=3,X=0.0_SRK,Y=0.5_SRK,Z=1.5_SRK)
       CALL cylinder1%intersectLine(line1,point2,point3)
       IF(ANY(.NOT.(point3%coord .APPROXEQ. (/0.0_SRK,0.25_SRK,1.0_SRK/))) .OR. &
         point2%dim /= 0) THEN
@@ -1434,8 +1434,8 @@ PROGRAM testGeom
       CALL line1%clear()
       
       !Test not parallel intersection with both PQ-surfaces
-      CALL line1%p(1)%init(DIM=3,X=0.0_SRK,Y=0.5_SRK,Z=1.5_SRK)
-      CALL line1%p(2)%init(DIM=3,X=0.0_SRK,Y=0.0_SRK,Z=-0.5_SRK)
+      CALL line1%p1%init(DIM=3,X=0.0_SRK,Y=0.5_SRK,Z=1.5_SRK)
+      CALL line1%p2%init(DIM=3,X=0.0_SRK,Y=0.0_SRK,Z=-0.5_SRK)
       CALL cylinder1%intersectLine(line1,point2,point3)
       IF(ANY(.NOT.(point3%coord .APPROXEQ. (/0.0_SRK,0.125_SRK,0.0_SRK/))) .OR. &
         ANY(.NOT.(point2%coord .APPROXEQ. (/0.0_SRK,0.375_SRK,1.0_SRK/)))) THEN
@@ -1445,8 +1445,8 @@ PROGRAM testGeom
       CALL line1%clear()
       
       !Test not parallel intersection with cylinder once
-      CALL line1%p(1)%init(DIM=3,X=0.0_SRK,Y=0.0_SRK,Z=0.5_SRK)
-      CALL line1%p(2)%init(DIM=3,X=0.0_SRK,Y=1.5_SRK,Z=0.5_SRK)
+      CALL line1%p1%init(DIM=3,X=0.0_SRK,Y=0.0_SRK,Z=0.5_SRK)
+      CALL line1%p2%init(DIM=3,X=0.0_SRK,Y=1.5_SRK,Z=0.5_SRK)
       CALL cylinder1%intersectLine(line1,point2,point3)
       IF(ANY(.NOT.(point3%coord .APPROXEQ. (/0.0_SRK,0.794987437106620_SRK,0.5_SRK/))) .OR. &
         point2%dim /= 0) THEN
@@ -1456,8 +1456,8 @@ PROGRAM testGeom
       CALL line1%clear()
       
       !Test not parallel intersection with cylinder twice
-      CALL line1%p(1)%init(DIM=3,X=0.0_SRK,Y=-1.5_SRK,Z=0.5_SRK)
-      CALL line1%p(2)%init(DIM=3,X=0.0_SRK,Y=1.5_SRK,Z=0.5_SRK)
+      CALL line1%p1%init(DIM=3,X=0.0_SRK,Y=-1.5_SRK,Z=0.5_SRK)
+      CALL line1%p2%init(DIM=3,X=0.0_SRK,Y=1.5_SRK,Z=0.5_SRK)
       CALL cylinder1%intersectLine(line1,point2,point3)
       IF(ANY(.NOT.(point3%coord .APPROXEQ. (/0.0_SRK,0.794987437106620_SRK,0.5_SRK/))) .OR. &
         ANY(.NOT.(point2%coord .APPROXEQ. (/0.0_SRK,-1.194987437106620_SRK,0.5_SRK/)))) THEN
@@ -1510,8 +1510,8 @@ PROGRAM testGeom
 !
 !Test intersection
       CALL line1%clear()
-      CALL line1%p(1)%init(DIM=2,X=-1.0_SRK,Y=-1.0_SRK)
-      CALL line1%p(2)%init(DIM=2,X=1.0_SRK,Y=1.0_SRK)
+      CALL line1%p1%init(DIM=2,X=-1.0_SRK,Y=-1.0_SRK)
+      CALL line1%p2%init(DIM=2,X=1.0_SRK,Y=1.0_SRK)
       CALL circles%intersectLine(line1,points,points2)
       IF(ANY(.NOT.(points(1)%coord .APPROXEQ. -0.2_SRK)) .OR. &
         ANY(.NOT.(points2(1)%coord .APPROXEQ. 0.5_SRK)) .OR. &
@@ -1532,17 +1532,17 @@ PROGRAM testGeom
       CALL point2%clear()
       CALL point2%init(DIM=3,X=0.1_SRK,Y=-0.2_SRK,Z=0.0_SRK)
       CALL point3%init(DIM=3,X=0.1_SRK,Y=-0.2_SRK,Z=1.0_SRK)
-      cylinders(1)%axis%p(1)=point2
-      cylinders(1)%axis%p(2)=point2
+      cylinders(1)%axis%p1=point2
+      cylinders(1)%axis%p2=point2
       cylinders(1)%r=1.0_SRK
       cylinders(2)=cylinders(1)
       
       CALL cylinders%clear()
-      IF(cylinders(1)%r /= 0.0_SRK .OR. cylinders(1)%axis%p(1)%dim /= 0 .OR. &
-        ALLOCATED(cylinders(1)%axis%p(1)%coord) .OR. cylinders(1)%axis%p(2)%dim /= 0 .OR. &
-          ALLOCATED(cylinders(1)%axis%p(2)%coord) .OR. cylinders(2)%r /= 0.0_SRK .OR. &
-           cylinders(2)%axis%p(1)%dim /= 0 .OR. ALLOCATED(cylinders(2)%axis%p(1)%coord) .OR. &
-             cylinders(2)%axis%p(2)%dim /= 0 .OR. ALLOCATED(cylinders(2)%axis%p(2)%coord)) THEN
+      IF(cylinders(1)%r /= 0.0_SRK .OR. cylinders(1)%axis%p1%dim /= 0 .OR. &
+        ALLOCATED(cylinders(1)%axis%p1%coord) .OR. cylinders(1)%axis%p2%dim /= 0 .OR. &
+          ALLOCATED(cylinders(1)%axis%p2%coord) .OR. cylinders(2)%r /= 0.0_SRK .OR. &
+           cylinders(2)%axis%p1%dim /= 0 .OR. ALLOCATED(cylinders(2)%axis%p1%coord) .OR. &
+             cylinders(2)%axis%p2%dim /= 0 .OR. ALLOCATED(cylinders(2)%axis%p2%coord)) THEN
         WRITE(*,*) 'CALL cylinders%clear() FAILED!'
         STOP 666
       ELSE
@@ -1554,14 +1554,14 @@ PROGRAM testGeom
       CALL cylinders%set(point2,point3,(/1.0_SRK,1.5_SRK/))
 !      CALL cylinders(1)%set(point2,point3,1.0_SRK)
 !      CALL cylinders(2)%set(point2,point3,1.5_SRK)
-      IF(cylinders(1)%r /= 1.0_SRK .OR. cylinders(1)%axis%p(1)%dim /= 3 .OR. &
-        ANY(cylinders(1)%axis%p(1)%coord /= (/0.1_SRK,-0.2_SRK,0.0_SRK/)) .OR. &
-          cylinders(1)%axis%p(2)%dim /= 3 .OR. &
-            ANY(cylinders(1)%axis%p(2)%coord /= (/0.1_SRK,-0.2_SRK,1.0_SRK/)) .OR. &
-         cylinders(2)%r /= 1.5_SRK .OR. cylinders(2)%axis%p(1)%dim /= 3 .OR. &
-        ANY(cylinders(2)%axis%p(1)%coord /= (/0.1_SRK,-0.2_SRK,0.0_SRK/)) .OR. &
-          cylinders(2)%axis%p(2)%dim /= 3 .OR. &
-            ANY(cylinders(2)%axis%p(2)%coord /= (/0.1_SRK,-0.2_SRK,1.0_SRK/))) THEN
+      IF(cylinders(1)%r /= 1.0_SRK .OR. cylinders(1)%axis%p1%dim /= 3 .OR. &
+        ANY(cylinders(1)%axis%p1%coord /= (/0.1_SRK,-0.2_SRK,0.0_SRK/)) .OR. &
+          cylinders(1)%axis%p2%dim /= 3 .OR. &
+            ANY(cylinders(1)%axis%p2%coord /= (/0.1_SRK,-0.2_SRK,1.0_SRK/)) .OR. &
+         cylinders(2)%r /= 1.5_SRK .OR. cylinders(2)%axis%p1%dim /= 3 .OR. &
+        ANY(cylinders(2)%axis%p1%coord /= (/0.1_SRK,-0.2_SRK,0.0_SRK/)) .OR. &
+          cylinders(2)%axis%p2%dim /= 3 .OR. &
+            ANY(cylinders(2)%axis%p2%coord /= (/0.1_SRK,-0.2_SRK,1.0_SRK/))) THEN
         WRITE(*,*) 'CALL cylinders%set(...) FAILED!'
         STOP 666
       ELSE
@@ -1570,8 +1570,8 @@ PROGRAM testGeom
 !
 !Test intersectLine
       CALL line1%clear()
-      CALL line1%p(1)%init(DIM=3,X=0.0_SRK,Y=-2.5_SRK,Z=0.5_SRK)
-      CALL line1%p(2)%init(DIM=3,X=0.0_SRK,Y=2.5_SRK,Z=0.5_SRK)
+      CALL line1%p1%init(DIM=3,X=0.0_SRK,Y=-2.5_SRK,Z=0.5_SRK)
+      CALL line1%p2%init(DIM=3,X=0.0_SRK,Y=2.5_SRK,Z=0.5_SRK)
       CALL cylinders%intersectLine(line1,points2,points3)
       IF(ANY(.NOT.(points3(1)%coord .APPROXEQ. (/0.0_SRK,0.794987437106620_SRK,0.5_SRK/))) .OR. &
         ANY(.NOT.(points2(1)%coord .APPROXEQ. (/0.0_SRK,-1.194987437106620_SRK,0.5_SRK/))) .OR. &

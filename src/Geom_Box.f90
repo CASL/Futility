@@ -268,18 +268,18 @@ MODULE Geom_Box
 
       !Check the box and line
       ndim=thisOBB%p0%dim
-      IF(ndim == line%p(1)%dim .AND. ndim == line%p(2)%dim .AND. ndim > 1) THEN
+      IF(ndim == line%p1%dim .AND. ndim == line%p2%dim .AND. ndim > 1) THEN
         p1%dim=-3
         p2%dim=-3
 
         IF(ndim == 2) THEN
 !2-D
           !Translate the coordinate into the OBB system.
-          dir_world(1)=line%p(2)%coord(1)-line%p(1)%coord(1)
-          dir_world(2)=line%p(2)%coord(2)-line%p(1)%coord(2)
+          dir_world(1)=line%p2%coord(1)-line%p1%coord(1)
+          dir_world(2)=line%p2%coord(2)-line%p1%coord(2)
 
-          coord(1)=line%p(1)%coord(1)-thisOBB%p0%coord(1)
-          coord(2)=line%p(1)%coord(2)-thisOBB%p0%coord(2)
+          coord(1)=line%p1%coord(1)-thisOBB%p0%coord(1)
+          coord(2)=line%p1%coord(2)-thisOBB%p0%coord(2)
 
           dir(1)=dir_world(1)*thisOBB%u(1,1)+dir_world(2)*thisOBB%u(2,1)
           dir(2)=dir_world(1)*thisOBB%u(1,2)+dir_world(2)*thisOBB%u(2,2)
@@ -289,13 +289,13 @@ MODULE Geom_Box
         ELSEIF(ndim == 3) THEN
 !3-D
           !Translate the coordinate into the OBB system.
-          dir_world(1)=line%p(2)%coord(1)-line%p(1)%coord(1)
-          dir_world(2)=line%p(2)%coord(2)-line%p(1)%coord(2)
-          dir_world(3)=line%p(2)%coord(3)-line%p(1)%coord(3)
+          dir_world(1)=line%p2%coord(1)-line%p1%coord(1)
+          dir_world(2)=line%p2%coord(2)-line%p1%coord(2)
+          dir_world(3)=line%p2%coord(3)-line%p1%coord(3)
 
-          coord(1)=line%p(1)%coord(1)-thisOBB%p0%coord(1)
-          coord(2)=line%p(1)%coord(2)-thisOBB%p0%coord(2)
-          coord(3)=line%p(1)%coord(3)-thisOBB%p0%coord(3)
+          coord(1)=line%p1%coord(1)-thisOBB%p0%coord(1)
+          coord(2)=line%p1%coord(2)-thisOBB%p0%coord(2)
+          coord(3)=line%p1%coord(3)-thisOBB%p0%coord(3)
 
           dir(1)=dir_world(1)*thisOBB%u(1,1)+dir_world(2)*thisOBB%u(2,1)+ &
             dir_world(3)*thisOBB%u(3,1)
@@ -341,15 +341,15 @@ MODULE Geom_Box
         !Segment intersects in all dimensions so compute the points
         !The first point lies on the segment
         p1=thisOBB%p0
-        p1%coord(1)=line%p(1)%coord(1)+dir_world(1)*tmin
-        p1%coord(2)=line%p(1)%coord(2)+dir_world(2)*tmin
-        IF(ndim == 3) p1%coord(3)=line%p(1)%coord(3)+dir_world(3)*tmin
+        p1%coord(1)=line%p1%coord(1)+dir_world(1)*tmin
+        p1%coord(2)=line%p1%coord(2)+dir_world(2)*tmin
+        IF(ndim == 3) p1%coord(3)=line%p1%coord(3)+dir_world(3)*tmin
 
         !The second point lies on the segment
         p2=thisOBB%p0
-        p2%coord(1)=line%p(1)%coord(1)+dir_world(1)*tmax
-        p2%coord(2)=line%p(1)%coord(2)+dir_world(2)*tmax
-        IF(ndim == 3) p2%coord(3)=line%p(1)%coord(3)+dir_world(3)*tmax
+        p2%coord(1)=line%p1%coord(1)+dir_world(1)*tmax
+        p2%coord(2)=line%p1%coord(2)+dir_world(2)*tmax
+        IF(ndim == 3) p2%coord(3)=line%p1%coord(3)+dir_world(3)*tmax
       ENDIF
     ENDSUBROUTINE intersect_OBBType_and_LineType
 !

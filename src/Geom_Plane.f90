@@ -131,14 +131,14 @@ MODULE Geom_Plane
       point%dim=-1
       !Verify dummy arguments have data
       IF((plane%v0%dim == 3 .AND. ALLOCATED(plane%v0%coord)) .AND. &
-        (line%p(1)%dim == 3 .AND. ALLOCATED(line%p(1)%coord)) .AND. &
-          (line%p(2)%dim == 3 .AND. ALLOCATED(line%p(2)%coord))) THEN
-        u(1)=line%p(2)%coord(1)-line%p(1)%coord(1)
-        u(2)=line%p(2)%coord(2)-line%p(1)%coord(2)
-        u(3)=line%p(2)%coord(3)-line%p(1)%coord(3)
-        w(1)=line%p(1)%coord(1)-plane%v0%coord(1)
-        w(2)=line%p(1)%coord(2)-plane%v0%coord(2)
-        w(3)=line%p(1)%coord(3)-plane%v0%coord(3)
+        (line%p1%dim == 3 .AND. ALLOCATED(line%p1%coord)) .AND. &
+          (line%p2%dim == 3 .AND. ALLOCATED(line%p2%coord))) THEN
+        u(1)=line%p2%coord(1)-line%p1%coord(1)
+        u(2)=line%p2%coord(2)-line%p1%coord(2)
+        u(3)=line%p2%coord(3)-line%p1%coord(3)
+        w(1)=line%p1%coord(1)-plane%v0%coord(1)
+        w(2)=line%p1%coord(2)-plane%v0%coord(2)
+        w(3)=line%p1%coord(3)-plane%v0%coord(3)
         d=plane%n(1)*u(1)+plane%n(2)*u(2)+plane%n(3)*u(3)
         n=-(plane%n(1)*w(1)+plane%n(2)*w(2)+plane%n(3)*w(3))
         IF(ABS(d) < EPSREAL) THEN
@@ -151,7 +151,7 @@ MODULE Geom_Plane
           s=n/d
           IF(0._SRK <= s .AND. s <= 1._SRK) THEN
             !Compute the intersection
-            point=line%p(1)
+            point=line%p1
             point%coord(1)=point%coord(1)+s*u(1)
             point%coord(2)=point%coord(2)+s*u(2)
             point%coord(3)=point%coord(3)+s*u(3)

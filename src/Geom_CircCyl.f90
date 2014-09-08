@@ -170,12 +170,12 @@ MODULE Geom_CircCyl
       CALL p2%clear()
       p1%dim=-1
       p2%dim=-1
-      IF(circle%c%dim == 2 .AND. line%p(1)%dim == 2 .AND. &
-        line%p(2)%dim == 2 .AND. circle%r > 0.0_SRK) THEN
-        u(1)=line%p(2)%coord(1)-line%p(1)%coord(1)
-        u(2)=line%p(2)%coord(2)-line%p(1)%coord(2)
-        w(1)=line%p(1)%coord(1)-circle%c%coord(1)
-        w(2)=line%p(1)%coord(2)-circle%c%coord(2)
+      IF(circle%c%dim == 2 .AND. line%p1%dim == 2 .AND. &
+        line%p2%dim == 2 .AND. circle%r > 0.0_SRK) THEN
+        u(1)=line%p2%coord(1)-line%p1%coord(1)
+        u(2)=line%p2%coord(2)-line%p1%coord(2)
+        w(1)=line%p1%coord(1)-circle%c%coord(1)
+        w(2)=line%p1%coord(2)-circle%c%coord(2)
         b=w(1)*u(1)+w(2)*u(2)
         c=w(1)*w(1)+w(2)*w(2)-circle%r*circle%r
         IF(c > zero .AND. b > zero) THEN
@@ -200,12 +200,12 @@ MODULE Geom_CircCyl
             t1=(-b-discr)*ra
             t2=(-b+discr)*ra
             IF(zero < t1 .AND. t1 < one) THEN
-              p1=line%p(1)
+              p1=line%p1
               p1%coord(1)=p1%coord(1)+u(1)*t1
               p1%coord(2)=p1%coord(2)+u(2)*t1
             ENDIF
             IF(zero < t2 .AND. t2 < one) THEN
-              p2=line%p(1)
+              p2=line%p1
               p2%coord(1)=p2%coord(1)+u(1)*t2
               p2%coord(2)=p2%coord(2)+u(2)*t2
             ENDIF
@@ -283,26 +283,26 @@ MODULE Geom_CircCyl
       p1%dim=-1
       p2%dim=-1
       !Check for valid input
-      IF(cyl%axis%p(1)%dim == 3 .AND. cyl%axis%p(2)%dim == 3 .AND. &
-        line%p(1)%dim == 3 .AND. line%p(2)%dim == 3 .AND. cyl%r > zero) THEN
+      IF(cyl%axis%p1%dim == 3 .AND. cyl%axis%p2%dim == 3 .AND. &
+        line%p1%dim == 3 .AND. line%p2%dim == 3 .AND. cyl%r > zero) THEN
         p1%dim=0
         p2%dim=0
 
         !For a line defined by A->B compute B-A as slope for parametric eqn's
         !P(t)=A+u*t for a point on segment A->B.
-        u(1)=line%p(2)%coord(1)-line%p(1)%coord(1)
-        u(2)=line%p(2)%coord(2)-line%p(1)%coord(2)
-        u(3)=line%p(2)%coord(3)-line%p(1)%coord(3)
+        u(1)=line%p2%coord(1)-line%p1%coord(1)
+        u(2)=line%p2%coord(2)-line%p1%coord(2)
+        u(3)=line%p2%coord(3)-line%p1%coord(3)
 
         !For a central axis of rotation defined by P->Q compute Q-P
-        d(1)=cyl%axis%p(2)%coord(1)-cyl%axis%p(1)%coord(1)
-        d(2)=cyl%axis%p(2)%coord(2)-cyl%axis%p(1)%coord(2)
-        d(3)=cyl%axis%p(2)%coord(3)-cyl%axis%p(1)%coord(3)
+        d(1)=cyl%axis%p2%coord(1)-cyl%axis%p1%coord(1)
+        d(2)=cyl%axis%p2%coord(2)-cyl%axis%p1%coord(2)
+        d(3)=cyl%axis%p2%coord(3)-cyl%axis%p1%coord(3)
 
         !Vector of P->A, used to project A->B onto cylinder-local coordinate
-        w(1)=line%p(1)%coord(1)-cyl%axis%p(1)%coord(1)
-        w(2)=line%p(1)%coord(2)-cyl%axis%p(1)%coord(2)
-        w(3)=line%p(1)%coord(3)-cyl%axis%p(1)%coord(3)
+        w(1)=line%p1%coord(1)-cyl%axis%p1%coord(1)
+        w(2)=line%p1%coord(2)-cyl%axis%p1%coord(2)
+        w(3)=line%p1%coord(3)-cyl%axis%p1%coord(3)
 
         !Dot(u,d), length of A->B projected onto P->Q
         ud=u(1)*d(1)+u(2)*d(2)+u(3)*d(3)
@@ -346,14 +346,14 @@ MODULE Geom_CircCyl
               !Segment is inside cylinder, check end-caps
               IF(wd < zero .OR. wd+ud < zero) THEN !segment intersects P-surface
                 tp=-wd/ud
-                p1=line%p(1)
+                p1=line%p1
                 p1%coord(1)=p1%coord(1)+tp*u(1)
                 p1%coord(2)=p1%coord(2)+tp*u(2)
                 p1%coord(3)=p1%coord(3)+tp*u(3)
               ENDIF
               IF(wd > dd .OR. wd+ud > dd) THEN !segment intersects Q-surface
                 tq=(dd-wd)/ud
-                p2=line%p(1)
+                p2=line%p1
                 p2%coord(1)=p2%coord(1)+tq*u(1)
                 p2%coord(2)=p2%coord(2)+tq*u(2)
                 p2%coord(3)=p2%coord(3)+tq*u(3)
@@ -387,7 +387,7 @@ MODULE Geom_CircCyl
 
               IF(zero < t1 .AND. t1 < one) THEN
                 !Intersection with the side of a cylinder
-                p1=line%p(1)
+                p1=line%p1
                 p1%coord(1)=p1%coord(1)+t1*u(1)
                 p1%coord(2)=p1%coord(2)+t1*u(2)
                 p1%coord(3)=p1%coord(3)+t1*u(3)
@@ -397,7 +397,7 @@ MODULE Geom_CircCyl
                   IF(((k+tp*(2._SRK*uw+tp*uu)) < zero) .AND.  &
                     (zero < tp .AND. tp < one)) THEN
                     !Intersection with P-surface
-                    p1=line%p(1)
+                    p1=line%p1
                     p1%coord(1)=p1%coord(1)+tp*u(1)
                     p1%coord(2)=p1%coord(2)+tp*u(2)
                     p1%coord(3)=p1%coord(3)+tp*u(3)
@@ -407,7 +407,7 @@ MODULE Geom_CircCyl
                   IF(((k+dd-2._SRK*wd+tq*(2._SRK*(uw-ud)+tq*uu)) < zero) .AND. &
                     (zero < tq .AND. tq < one)) THEN
                     !Intersection with Q-surface
-                    p1=line%p(1)
+                    p1=line%p1
                     p1%coord(1)=p1%coord(1)+tq*u(1)
                     p1%coord(2)=p1%coord(2)+tq*u(2)
                     p1%coord(3)=p1%coord(3)+tq*u(3)
@@ -417,7 +417,7 @@ MODULE Geom_CircCyl
 
               IF(zero < t2 .AND. t2 < one) THEN
                 !Intersection with the side of a cylinder
-                p2=line%p(1)
+                p2=line%p1
                 p2%coord(1)=p2%coord(1)+t2*u(1)
                 p2%coord(2)=p2%coord(2)+t2*u(2)
                 p2%coord(3)=p2%coord(3)+t2*u(3)
@@ -427,7 +427,7 @@ MODULE Geom_CircCyl
                   IF(((k+tp*(2._SRK*uw+tp*uu)) < zero) .AND.  &
                     (zero < tp .AND. tp < one)) THEN
                     !Intersection with P-surface
-                    p2=line%p(1)
+                    p2=line%p1
                     p2%coord(1)=p2%coord(1)+tp*u(1)
                     p2%coord(2)=p2%coord(2)+tp*u(2)
                     p2%coord(3)=p2%coord(3)+tp*u(3)
@@ -437,7 +437,7 @@ MODULE Geom_CircCyl
                   IF(((k+dd-2._SRK*wd+tq*(2._SRK*(uw-ud)+tq*uu)) < zero) .AND. &
                     (zero < tq .AND. tq < one)) THEN
                     !Intersection with Q-surface
-                    p2=line%p(1)
+                    p2=line%p1
                     p2%coord(1)=p2%coord(1)+tq*u(1)
                     p2%coord(2)=p2%coord(2)+tq*u(2)
                     p2%coord(3)=p2%coord(3)+tq*u(3)

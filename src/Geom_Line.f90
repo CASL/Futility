@@ -39,8 +39,8 @@ MODULE Geom_Line
 !
 ! List of Public items
   PUBLIC :: LineType
-  PUBLIC :: midPoint
-  PUBLIC :: intersect
+!  PUBLIC :: midPoint
+!  PUBLIC :: intersect
 
   !> @brief Type for a Line
   !>
@@ -48,7 +48,8 @@ MODULE Geom_Line
   TYPE :: LineType
     !> The points definint the line segment p(1) is the starting point
     !> p(2) is the ending point
-    TYPE(PointType) :: p(2)
+    TYPE(PointType) :: p1
+    TYPE(PointType) :: p2
 !
 !List of type bound procedures
     CONTAINS
@@ -69,6 +70,7 @@ MODULE Geom_Line
       PROCEDURE,PASS :: midPoint => midPoint_LineType
       !> @copybrief GeomLine::intersect_LineType_and_LineType
       !> @copydetails GeomLine::intersect_LineType_and_LineType
+      PROCEDURE,PASS :: intersect => intersect_LineType_and_LineType
       PROCEDURE,PASS :: intersectLine => intersect_LineType_and_LineType
       !> @copybrief GeomLine::distance_LineType_to_PointType
       !> @copydetails GeomLine::distance_LineType_to_PointType
@@ -78,19 +80,19 @@ MODULE Geom_Line
       PROCEDURE,PASS :: distance2Line => distance_LineType_to_LineType
   ENDTYPE LineType
 
-  !> @brief Generic interface for obtaining a midPoint
-  INTERFACE midPoint
-    !> @copybrief GeomLine::midPoint_LineType
-    !> @copydetails GeomLine::midPoint_LineType
-    MODULE PROCEDURE midPoint_LineType
-  ENDINTERFACE midPoint
-
-  !> @brief Generic interface to use to find intersections
-  INTERFACE intersect
-    !> @copybrief GeomLine::intersect_LineType_and_LineType
-    !> @copydetails GeomLine::intersect_LineType_and_LineType
-    MODULE PROCEDURE intersect_LineType_and_LineType
-  ENDINTERFACE intersect
+!  !> @brief Generic interface for obtaining a midPoint
+!  INTERFACE midPoint
+!    !> @copybrief GeomLine::midPoint_LineType
+!    !> @copydetails GeomLine::midPoint_LineType
+!    MODULE PROCEDURE midPoint_LineType
+!  ENDINTERFACE midPoint
+!
+!  !> @brief Generic interface to use to find intersections
+!  INTERFACE intersect
+!    !> @copybrief GeomLine::intersect_LineType_and_LineType
+!    !> @copydetails GeomLine::intersect_LineType_and_LineType
+!    MODULE PROCEDURE intersect_LineType_and_LineType
+!  ENDINTERFACE intersect
 !
 !===============================================================================
   CONTAINS
@@ -107,8 +109,8 @@ MODULE Geom_Line
       TYPE(PointType),INTENT(IN) :: sp,ep
       CALL line%clear()
       IF(sp%dim == ep%dim .AND. sp%dim > 0) THEN
-        line%p(1)=sp
-        line%p(2)=ep
+        line%p1=sp
+        line%p2=ep
       ENDIF
     ENDSUBROUTINE init_LineType
 !
@@ -117,8 +119,8 @@ MODULE Geom_Line
 !> @param line line segment of type @c LineType
     ELEMENTAL SUBROUTINE clear_LineType(line)
       CLASS(LineType),INTENT(INOUT) :: line
-      CALL line%p(1)%clear()
-      CALL line%p(2)%clear()
+      CALL line%p1%clear()
+      CALL line%p2%clear()
     ENDSUBROUTINE clear_LineType
 !
 !-------------------------------------------------------------------------------
@@ -129,7 +131,7 @@ MODULE Geom_Line
       CLASS(LineType),INTENT(IN) :: line
       INTEGER(SIK) :: n
       n=0
-      IF(line%p(1)%dim == line%p(2)%dim .AND. line%p(1)%dim > 0) n=line%p(1)%dim
+      IF(line%p1%dim == line%p2%dim .AND. line%p1%dim > 0) n=line%p1%dim
     ENDFUNCTION dim_LineType
 !
 !-------------------------------------------------------------------------------
@@ -139,7 +141,7 @@ MODULE Geom_Line
     ELEMENTAL FUNCTION length_LineType(line) RESULT(length)
       CLASS(LineType),INTENT(IN) :: line
       REAL(SRK) :: length
-      length=Distance(line%p(1),line%p(2))
+      length=Distance(line%p1,line%p2)
     ENDFUNCTION length_LineType
 !
 !-------------------------------------------------------------------------------
@@ -149,7 +151,7 @@ MODULE Geom_Line
     ELEMENTAL FUNCTION midPoint_LineType(line) RESULT(p)
       CLASS(LineType),INTENT(IN) :: line
       TYPE(PointType) :: p
-      p=midPoint(line%p(1),line%p(2))
+      p=midPoint(line%p1,line%p2)
     ENDFUNCTION midPoint_LineType
 !
 !-------------------------------------------------------------------------------
@@ -168,15 +170,15 @@ MODULE Geom_Line
       TYPE(LineType),INTENT(IN) :: l2
       TYPE(PointType) :: p
       p%dim=-1
-      IF(l1%p(1)%dim == l1%p(2)%dim .AND. l2%p(1)%dim == l2%p(2)%dim .AND. &
-        l1%p(1)%dim == l2%p(1)%dim .AND. l1%p(1)%dim > 0) THEN
-        SELECTCASE(l1%p(1)%dim)
+      IF(l1%p1%dim == l1%p2%dim .AND. l2%p1%dim == l2%p2%dim .AND. &
+        l1%p1%dim == l2%p1%dim .AND. l1%p1%dim > 0) THEN
+        SELECTCASE(l1%p1%dim)
           CASE(1)
             p%dim=-2 !Always collinear/overlap
           CASE(2)
-            p=intersect_lines2D(l1%p(1),l1%p(2),l2%p(1),l2%p(2))
+            p=intersect_lines2D(l1%p1,l1%p2,l2%p1,l2%p2)
           CASE(3)
-            p=intersect_lines3D(l1%p(1),l1%p(2),l2%p(1),l2%p(2))
+            p=intersect_lines3D(l1%p1,l1%p2,l2%p1,l2%p2)
         ENDSELECT
       ENDIF
     ENDFUNCTION intersect_LineType_and_LineType
@@ -258,17 +260,17 @@ MODULE Geom_Line
 
       EPSREAL_LOCAL=EPSREAL*100._SRK
       p%dim=-3
-      s1%p(1)=s1p0
-      s1%p(2)=s1p1
-      s2%p(1)=s2p0
-      s2%p(2)=s2p1
+      s1%p1=s1p0
+      s1%p2=s1p1
+      s2%p1=s2p0
+      s2%p2=s2p1
       CALL distance_LineType_to_LineType(s1,s2,dis,mu1,mu2)
-      thisDim=dis%p(1)%dim
+      thisDim=dis%p1%dim
       IF(thisDim > 0) THEN
         IF(0._SRK-EPSREAL_LOCAL <= mu1 .AND. mu1 <= 1._SRK+EPSREAL_LOCAL &
           .AND. 0._SRK-EPSREAL_LOCAL <= mu2 .AND. mu2 <= 1._SRK+EPSREAL_LOCAL &
             .AND. dis%length() < EPSREAL_LOCAL) THEN
-          p=dis%p(1)
+          p=dis%p1
         ENDIF
       ELSEIF(thisDim == -2) THEN
         p%dim=-2
@@ -283,7 +285,7 @@ MODULE Geom_Line
 !> @param mu1 the position of the start point of dis on the s1
 !> @param mu2 the position of the end point of dis on the s2
 !> @returns @c dis the shortest segment between s1 and s2 (if it exists)
-!> @note a return code is assigned to dis%p(1)%dim and dis%p(2)%dim indicating
+!> @note a return code is assigned to dis%p1%dim and dis%p2%dim indicating
 !>   the type of result.
 !>   -3: the line segments are parallel
 !>   -2: the line segments overlap
@@ -294,8 +296,8 @@ MODULE Geom_Line
 !>
 !> Calculates the line segment 'dis' that is the shortest route between
 !> two line segments s1 and s2. Calculate also the values of mu1 and mu1 where
-!>    dis%p(1) = s1%p(1) + mu1 (s1%p(2) - s1%p(1))
-!>    dis%p(2) = s2%p(1) + mu2 (s2%p(1) - s2%p(1))
+!>    dis%p1 = s1%p1 + mu1 (s1%p2 - s1%p1)
+!>    dis%p2 = s2%p1 + mu2 (s2%p1 - s2%p1)
 !>
     ELEMENTAL SUBROUTINE distance_LineType_to_LineType(s1,s2,dis,mu1,mu2)
       CLASS(LineType),INTENT(IN) :: s1
@@ -308,22 +310,22 @@ MODULE Geom_Line
       REAL(SRK) :: d1343,d4321,d1321,d4343,d2121
       REAL(SRK) :: denom,numer,d
 
-      dis%p(1)%dim=-1
-      dis%p(2)%dim=-1
+      dis%p1%dim=-1
+      dis%p2%dim=-1
       IF(s1%getdim() == 3 .AND. s2%getdim() == 3) THEN
-        p21(1)=s1%p(2)%coord(1)-s1%p(1)%coord(1)
-        p21(2)=s1%p(2)%coord(2)-s1%p(1)%coord(2)
-        p21(3)=s1%p(2)%coord(3)-s1%p(1)%coord(3)
-        p43(1)=s2%p(2)%coord(1)-s2%p(1)%coord(1)
-        p43(2)=s2%p(2)%coord(2)-s2%p(1)%coord(2)
-        p43(3)=s2%p(2)%coord(3)-s2%p(1)%coord(3)
+        p21(1)=s1%p2%coord(1)-s1%p1%coord(1)
+        p21(2)=s1%p2%coord(2)-s1%p1%coord(2)
+        p21(3)=s1%p2%coord(3)-s1%p1%coord(3)
+        p43(1)=s2%p2%coord(1)-s2%p1%coord(1)
+        p43(2)=s2%p2%coord(2)-s2%p1%coord(2)
+        p43(3)=s2%p2%coord(3)-s2%p1%coord(3)
         !Check the line segment
         IF((ABS(p21(1)) > EPSREAL .OR. ABS(p21(2)) > EPSREAL &
           .OR. ABS(p21(3)) > EPSREAL) .AND. (ABS(p43(1)) > EPSREAL &
             .OR. ABS(p43(2)) > EPSREAL .OR. ABS(p43(3)) > EPSREAL)) THEN
-          p13(1)=s1%p(1)%coord(1)-s2%p(1)%coord(1)
-          p13(2)=s1%p(1)%coord(2)-s2%p(1)%coord(2)
-          p13(3)=s1%p(1)%coord(3)-s2%p(1)%coord(3)
+          p13(1)=s1%p1%coord(1)-s2%p1%coord(1)
+          p13(2)=s1%p1%coord(2)-s2%p1%coord(2)
+          p13(3)=s1%p1%coord(3)-s2%p1%coord(3)
 
           d1343=p13(1)*p43(1)+p13(2)*p43(2)+p13(3)*p43(3)
           d4321=p43(1)*p21(1)+p43(2)*p21(2)+p43(3)*p21(3)
@@ -332,26 +334,26 @@ MODULE Geom_Line
           d2121=p21(1)*p21(1)+p21(2)*p21(2)+p21(3)*p21(3)
           denom=d2121*d4343-d4321*d4321
           IF(denom < EPSREAL) THEN
-            dis%p(1)%dim=-3
-            dis%p(2)%dim=-3
+            dis%p1%dim=-3
+            dis%p2%dim=-3
             d=ABS(p13(1)*p21(1)+p13(2)*p21(2)+p13(3)*p21(3))
-            CALL line%set(s1%p(1),s2%p(1))
+            CALL line%set(s1%p1,s2%p1)
             IF(ABS(d-line%length()*s1%length()) < EPSREAL) THEN
-              dis%p(1)%dim=-2
-              dis%p(2)%dim=-2
+              dis%p1%dim=-2
+              dis%p2%dim=-2
             ENDIF
           ELSE
             numer=d1343*d4321-d1321*d4343
             mu1=numer/denom
             mu2=(d1343+d4321*mu1)/d4343
-            dis%p(1)=s1%p(1)
-            dis%p(1)%coord(1)=s1%p(1)%coord(1)+mu1*p21(1)
-            dis%p(1)%coord(2)=s1%p(1)%coord(2)+mu1*p21(2)
-            dis%p(1)%coord(3)=s1%p(1)%coord(3)+mu1*p21(3)
-            dis%p(2)=s2%p(1)
-            dis%p(2)%coord(1)=s2%p(1)%coord(1)+mu2*p43(1)
-            dis%p(2)%coord(2)=s2%p(1)%coord(2)+mu2*p43(2)
-            dis%p(2)%coord(3)=s2%p(1)%coord(3)+mu2*p43(3)
+            dis%p1=s1%p1
+            dis%p1%coord(1)=s1%p1%coord(1)+mu1*p21(1)
+            dis%p1%coord(2)=s1%p1%coord(2)+mu1*p21(2)
+            dis%p1%coord(3)=s1%p1%coord(3)+mu1*p21(3)
+            dis%p2=s2%p1
+            dis%p2%coord(1)=s2%p1%coord(1)+mu2*p43(1)
+            dis%p2%coord(2)=s2%p1%coord(2)+mu2*p43(2)
+            dis%p2%coord(3)=s2%p1%coord(3)+mu2*p43(3)
           ENDIF
         ENDIF
       ENDIF
@@ -370,14 +372,14 @@ MODULE Geom_Line
       TYPE(PointType),INTENT(IN) :: p
       REAL(SRK) :: d2
       d2=-1._SRK
-      IF(line%p(1)%dim == line%p(2)%dim .AND. line%p(1)%dim == p%dim) THEN
+      IF(line%p1%dim == line%p2%dim .AND. line%p1%dim == p%dim) THEN
         SELECTCASE(p%dim)
           CASE(1)
-            d2=distance1D_to_point(line%p(1),line%p(2),p)
+            d2=distance1D_to_point(line%p1,line%p2,p)
           CASE(2)
-            d2=distance2D_to_point(line%p(1),line%p(2),p)
+            d2=distance2D_to_point(line%p1,line%p2,p)
           CASE(3)
-            d2=distance3D_to_point(line%p(1),line%p(2),p)
+            d2=distance3D_to_point(line%p1,line%p2,p)
         ENDSELECT
       ENDIF
     ENDFUNCTION distance_LineType_to_PointType
