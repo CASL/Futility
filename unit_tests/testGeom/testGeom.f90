@@ -931,12 +931,12 @@ PROGRAM testGeom
       CALL lines%set(points2,points3)
 !      CALL lines(1)%set(points2(1),points3(1))
 !      CALL lines(2)%set(points2(2),points3(2))
-      IF(lines(1)%p(1)%dim /= 3 .OR. lines(1)%p(2)%dim /= 3 .OR. & 
-        ANY(.NOT.(lines(1)%p(1)%coord .APPROXEQ. (/0.5_SRK,0.6_SRK,0.7_SRK/))) .OR. &
-        ANY(.NOT.(lines(1)%p(2)%coord .APPROXEQ. (/0.6_SRK,0.7_SRK,0.8_SRK/))) .OR. &
-        lines(2)%p(1)%dim /= 2 .OR. lines(2)%p(2)%dim /= 2 .OR. &
-        ANY(.NOT.(lines(2)%p(1)%coord .APPROXEQ. (/0.5_SRK,0.6_SRK/))) .OR. &
-        ANY(.NOT.(lines(2)%p(2)%coord .APPROXEQ. (/0.6_SRK,0.7_SRK/)))) THEN
+      IF(lines(1)%p1%dim /= 3 .OR. lines(1)%p2%dim /= 3 .OR. & 
+        ANY(.NOT.(lines(1)%p1%coord .APPROXEQ. (/0.5_SRK,0.6_SRK,0.7_SRK/))) .OR. &
+        ANY(.NOT.(lines(1)%p2%coord .APPROXEQ. (/0.6_SRK,0.7_SRK,0.8_SRK/))) .OR. &
+        lines(2)%p1%dim /= 2 .OR. lines(2)%p2%dim /= 2 .OR. &
+        ANY(.NOT.(lines(2)%p1%coord .APPROXEQ. (/0.5_SRK,0.6_SRK/))) .OR. &
+        ANY(.NOT.(lines(2)%p2%coord .APPROXEQ. (/0.6_SRK,0.7_SRK/)))) THEN
         WRITE(*,*) 'CALL lines%set(...) FAILED!'
         STOP 666
       ELSE
@@ -995,10 +995,10 @@ PROGRAM testGeom
       ENDIF
       
       CALL lines%clear()
-      IF((lines(1)%p(1)%dim /= 0) .OR. (lines(1)%p(2)%dim /= 0) .OR. &
-         (lines(2)%p(1)%dim /= 0) .OR. (lines(2)%p(2)%dim /= 0) .OR. &
-         ALLOCATED(lines(1)%p(1)%coord) .OR. ALLOCATED(lines(1)%p(2)%coord) .OR. &
-         ALLOCATED(lines(2)%p(1)%coord) .OR. ALLOCATED(lines(2)%p(2)%coord)) THEN
+      IF((lines(1)%p1%dim /= 0) .OR. (lines(1)%p2%dim /= 0) .OR. &
+         (lines(2)%p1%dim /= 0) .OR. (lines(2)%p2%dim /= 0) .OR. &
+         ALLOCATED(lines(1)%p1%coord) .OR. ALLOCATED(lines(1)%p2%coord) .OR. &
+         ALLOCATED(lines(2)%p1%coord) .OR. ALLOCATED(lines(2)%p2%coord)) THEN
         WRITE(*,*) 'lines%clear(...) FAILED!'
         STOP 666
       ELSE
