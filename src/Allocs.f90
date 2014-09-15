@@ -2063,6 +2063,7 @@ MODULE Allocs
       REAL(SRK) :: mysize,bsize
 
       IF(.NOT.ASSOCIATED(a) .AND. nb1 <= ne1) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
           a=0.0_SSK
@@ -2092,6 +2093,7 @@ MODULE Allocs
       REAL(SRK) :: mysize,bsize
 
       IF(.NOT.ASSOCIATED(a) .AND. nb1 <= ne1) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
           a=0.0_SDK
@@ -2121,6 +2123,7 @@ MODULE Allocs
       REAL(SRK) :: mysize,bsize
 
       IF(.NOT.ASSOCIATED(a) .AND. nb1 <= ne1) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
           a=0_SNK
@@ -2150,6 +2153,7 @@ MODULE Allocs
       REAL(SRK) :: mysize,bsize
 
       IF(.NOT.ASSOCIATED(a) .AND. nb1 <= ne1) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
           a=0_SLK
@@ -2179,6 +2183,7 @@ MODULE Allocs
       REAL(SRK) :: mysize,bsize
 
       IF(.NOT.ASSOCIATED(a) .AND. nb1 <= ne1) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
           a=.FALSE.
@@ -2213,6 +2218,7 @@ MODULE Allocs
       REAL(SRK) :: mysize,bsize
 
       IF(.NOT.ASSOCIATED(a) .AND. ALL((/nb1,nb2/) <= (/ne1,ne2/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
           a=0.0_SSK
@@ -2245,6 +2251,7 @@ MODULE Allocs
       REAL(SRK) :: mysize,bsize
 
       IF(.NOT.ASSOCIATED(a) .AND. ALL((/nb1,nb2/) <= (/ne1,ne2/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
           a=0.0_SDK
@@ -2277,6 +2284,7 @@ MODULE Allocs
       REAL(SRK) :: mysize,bsize
 
       IF(.NOT.ASSOCIATED(a) .AND. ALL((/nb1,nb2/) <= (/ne1,ne2/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
           a=0_SNK
@@ -2309,6 +2317,7 @@ MODULE Allocs
       REAL(SRK) :: mysize,bsize
 
       IF(.NOT.ASSOCIATED(a) .AND. ALL((/nb1,nb2/) <= (/ne1,ne2/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
           a=0_SLK
@@ -2341,6 +2350,7 @@ MODULE Allocs
       REAL(SRK) :: mysize,bsize
 
       IF(.NOT.ASSOCIATED(a) .AND. ALL((/nb1,nb2/) <= (/ne1,ne2/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
           a=.FALSE.
@@ -2378,6 +2388,7 @@ MODULE Allocs
       REAL(SRK) :: mysize,bsize
 
       IF(.NOT.ASSOCIATED(a) .AND. ALL((/nb1,nb2,nb3/) <= (/ne1,ne2,ne3/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
           a=0.0_SSK
@@ -2413,6 +2424,7 @@ MODULE Allocs
       REAL(SRK) :: mysize,bsize
 
       IF(.NOT.ASSOCIATED(a) .AND. ALL((/nb1,nb2,nb3/) <= (/ne1,ne2,ne3/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
           a=0.0_SDK
@@ -2448,6 +2460,7 @@ MODULE Allocs
       REAL(SRK) :: mysize,bsize
 
       IF(.NOT.ASSOCIATED(a) .AND. ALL((/nb1,nb2,nb3/) <= (/ne1,ne2,ne3/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
           a=0_SNK
@@ -2483,6 +2496,7 @@ MODULE Allocs
       REAL(SRK) :: mysize,bsize
 
       IF(.NOT.ASSOCIATED(a) .AND. ALL((/nb1,nb2,nb3/) <= (/ne1,ne2,ne3/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
           a=0_SLK
@@ -2518,6 +2532,7 @@ MODULE Allocs
       REAL(SRK) :: mysize,bsize
 
       IF(.NOT.ASSOCIATED(a) .AND. ALL((/nb1,nb2,nb3/) <= (/ne1,ne2,ne3/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
           a=.FALSE.
@@ -2559,6 +2574,7 @@ MODULE Allocs
 
       IF(.NOT.ASSOCIATED(a) .AND. &
         ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4), &
           STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -2599,6 +2615,7 @@ MODULE Allocs
 
       IF(.NOT.ASSOCIATED(a) .AND. &
         ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4), &
           STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -2639,6 +2656,7 @@ MODULE Allocs
 
       IF(.NOT.ASSOCIATED(a) .AND. &
         ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4), &
           STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -2679,6 +2697,7 @@ MODULE Allocs
 
       IF(.NOT.ASSOCIATED(a) .AND. &
         ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4), &
           STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -2719,6 +2738,7 @@ MODULE Allocs
 
       IF(.NOT.ASSOCIATED(a) .AND. &
         ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4), &
           STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -2765,6 +2785,7 @@ MODULE Allocs
 
       IF(.NOT.ASSOCIATED(a) .AND. &
         ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5), &
           STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -2809,6 +2830,7 @@ MODULE Allocs
 
       IF(.NOT.ASSOCIATED(a) .AND. &
         ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5), &
           STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -2853,6 +2875,7 @@ MODULE Allocs
 
       IF(.NOT.ASSOCIATED(a) .AND. &
         ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5), &
           STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -2897,6 +2920,7 @@ MODULE Allocs
 
       IF(.NOT.ASSOCIATED(a) .AND. &
         ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5), &
           STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -2941,6 +2965,7 @@ MODULE Allocs
 
       IF(.NOT.ASSOCIATED(a) .AND. &
         ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5), &
           STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -2991,6 +3016,7 @@ MODULE Allocs
 
       IF(.NOT.ASSOCIATED(a) .AND. &
         ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
                    nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -3039,6 +3065,7 @@ MODULE Allocs
 
       IF(.NOT.ASSOCIATED(a) .AND. &
         ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
                    nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -3087,6 +3114,7 @@ MODULE Allocs
 
       IF(.NOT.ASSOCIATED(a) .AND. &
         ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
                    nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -3135,6 +3163,7 @@ MODULE Allocs
 
       IF(.NOT.ASSOCIATED(a) .AND. &
         ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
                    nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -3183,6 +3212,7 @@ MODULE Allocs
 
       IF(.NOT.ASSOCIATED(a) .AND. &
         ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
                    nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -3237,6 +3267,7 @@ MODULE Allocs
 
       IF(.NOT.ASSOCIATED(a) .AND. ALL((/nb1,nb2,nb3,nb4,nb5,nb6,nb7/) <= &
         (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
                    nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -3289,6 +3320,7 @@ MODULE Allocs
 
       IF(.NOT.ASSOCIATED(a) .AND. ALL((/nb1,nb2,nb3,nb4,nb5,nb6,nb7/) <= &
         (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
                    nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -3341,6 +3373,7 @@ MODULE Allocs
 
       IF(.NOT.ASSOCIATED(a) .AND. ALL((/nb1,nb2,nb3,nb4,nb5,nb6,nb7/) <= &
         (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
                    nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -3393,6 +3426,7 @@ MODULE Allocs
 
       IF(.NOT.ASSOCIATED(a) .AND. ALL((/nb1,nb2,nb3,nb4,nb5,nb6,nb7/) <= &
         (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
                    nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -3445,6 +3479,7 @@ MODULE Allocs
 
       IF(.NOT.ASSOCIATED(a) .AND. ALL((/nb1,nb2,nb3,nb4,nb5,nb6,nb7/) <= &
         (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
                    nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -3484,6 +3519,7 @@ MODULE Allocs
       REAL(SRK) :: mysize,bsize
 
       IF(.NOT.ALLOCATED(a) .AND. nb1 <= ne1) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
           a=0.0_SSK
@@ -3513,6 +3549,7 @@ MODULE Allocs
       REAL(SRK) :: mysize,bsize
 
       IF(.NOT.ALLOCATED(a) .AND. nb1 <= ne1) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
           a=0.0_SDK
@@ -3542,6 +3579,7 @@ MODULE Allocs
       REAL(SRK) :: mysize,bsize
 
       IF(.NOT.ALLOCATED(a) .AND. nb1 <= ne1) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
           a=0_SNK
@@ -3571,6 +3609,7 @@ MODULE Allocs
       REAL(SRK) :: mysize,bsize
 
       IF(.NOT.ALLOCATED(a) .AND. nb1 <= ne1) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
           a=0_SLK
@@ -3600,6 +3639,7 @@ MODULE Allocs
       REAL(SRK) :: mysize,bsize
 
       IF(.NOT.ALLOCATED(a) .AND. nb1 <= ne1) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
           a=.FALSE.
@@ -3634,6 +3674,7 @@ MODULE Allocs
       REAL(SRK) :: mysize,bsize
 
       IF(.NOT.ALLOCATED(a) .AND. ALL((/nb1,nb2/) <= (/ne1,ne2/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
           a=0.0_SSK
@@ -3666,6 +3707,7 @@ MODULE Allocs
       REAL(SRK) :: mysize,bsize
 
       IF(.NOT.ALLOCATED(a) .AND. ALL((/nb1,nb2/) <= (/ne1,ne2/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
           a=0.0_SDK
@@ -3698,6 +3740,7 @@ MODULE Allocs
       REAL(SRK) :: mysize,bsize
 
       IF(.NOT.ALLOCATED(a) .AND. ALL((/nb1,nb2/) <= (/ne1,ne2/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
           a=0_SNK
@@ -3730,6 +3773,7 @@ MODULE Allocs
       REAL(SRK) :: mysize,bsize
 
       IF(.NOT.ALLOCATED(a) .AND. ALL((/nb1,nb2/) <= (/ne1,ne2/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
           a=0_SLK
@@ -3762,6 +3806,7 @@ MODULE Allocs
       REAL(SRK) :: mysize,bsize
 
       IF(.NOT.ALLOCATED(a) .AND. ALL((/nb1,nb2/) <= (/ne1,ne2/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
           a=.FALSE.
@@ -3799,6 +3844,7 @@ MODULE Allocs
       REAL(SRK) :: mysize,bsize
 
       IF(.NOT.ALLOCATED(a) .AND. ALL((/nb1,nb2,nb3/) <= (/ne1,ne2,ne3/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
           a=0.0_SSK
@@ -3834,6 +3880,7 @@ MODULE Allocs
       REAL(SRK) :: mysize,bsize
 
       IF(.NOT.ALLOCATED(a) .AND. ALL((/nb1,nb2,nb3/) <= (/ne1,ne2,ne3/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
           a=0.0_SDK
@@ -3869,6 +3916,7 @@ MODULE Allocs
       REAL(SRK) :: mysize,bsize
 
       IF(.NOT.ALLOCATED(a) .AND. ALL((/nb1,nb2,nb3/) <= (/ne1,ne2,ne3/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
           a=0_SNK
@@ -3904,6 +3952,7 @@ MODULE Allocs
       REAL(SRK) :: mysize,bsize
 
       IF(.NOT.ALLOCATED(a) .AND. ALL((/nb1,nb2,nb3/) <= (/ne1,ne2,ne3/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
           a=0_SLK
@@ -3939,6 +3988,7 @@ MODULE Allocs
       REAL(SRK) :: mysize,bsize
 
       IF(.NOT.ALLOCATED(a) .AND. ALL((/nb1,nb2,nb3/) <= (/ne1,ne2,ne3/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
           a=.FALSE.
@@ -3980,6 +4030,7 @@ MODULE Allocs
 
       IF(.NOT.ALLOCATED(a) .AND. &
         ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4), &
           STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -4020,6 +4071,7 @@ MODULE Allocs
 
       IF(.NOT.ALLOCATED(a) .AND. &
         ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4), &
           STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -4060,6 +4112,7 @@ MODULE Allocs
 
       IF(.NOT.ALLOCATED(a) .AND. &
         ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4), &
           STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -4100,6 +4153,7 @@ MODULE Allocs
 
       IF(.NOT.ALLOCATED(a) .AND. &
         ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4), &
           STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -4140,6 +4194,7 @@ MODULE Allocs
 
       IF(.NOT.ALLOCATED(a) .AND. &
         ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4), &
           STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -4186,6 +4241,7 @@ MODULE Allocs
 
       IF(.NOT.ALLOCATED(a) .AND. &
         ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5), &
           STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -4230,6 +4286,7 @@ MODULE Allocs
 
       IF(.NOT.ALLOCATED(a) .AND. &
         ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5), &
           STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -4274,6 +4331,7 @@ MODULE Allocs
 
       IF(.NOT.ALLOCATED(a) .AND. &
         ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5), &
           STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -4318,6 +4376,7 @@ MODULE Allocs
 
       IF(.NOT.ALLOCATED(a) .AND. &
         ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5), &
           STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -4362,6 +4421,7 @@ MODULE Allocs
 
       IF(.NOT.ALLOCATED(a) .AND. &
         ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5), &
           STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -4412,6 +4472,7 @@ MODULE Allocs
 
       IF(.NOT.ALLOCATED(a) .AND. &
         ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
                    nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -4460,6 +4521,7 @@ MODULE Allocs
 
       IF(.NOT.ALLOCATED(a) .AND. &
         ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
                    nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -4508,6 +4570,7 @@ MODULE Allocs
 
       IF(.NOT.ALLOCATED(a) .AND. &
         ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
                    nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -4556,6 +4619,7 @@ MODULE Allocs
 
       IF(.NOT.ALLOCATED(a) .AND. &
         ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
                    nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -4604,6 +4668,7 @@ MODULE Allocs
 
       IF(.NOT.ALLOCATED(a) .AND. &
         ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
                    nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -4658,6 +4723,7 @@ MODULE Allocs
 
       IF(.NOT.ALLOCATED(a) .AND. ALL((/nb1,nb2,nb3,nb4,nb5,nb6,nb7/) <= &
         (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
                    nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -4710,6 +4776,7 @@ MODULE Allocs
 
       IF(.NOT.ALLOCATED(a) .AND. ALL((/nb1,nb2,nb3,nb4,nb5,nb6,nb7/) <= &
         (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
                    nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -4762,6 +4829,7 @@ MODULE Allocs
 
       IF(.NOT.ALLOCATED(a) .AND. ALL((/nb1,nb2,nb3,nb4,nb5,nb6,nb7/) <= &
         (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
                    nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -4814,6 +4882,7 @@ MODULE Allocs
 
       IF(.NOT.ALLOCATED(a) .AND. ALL((/nb1,nb2,nb3,nb4,nb5,nb6,nb7/) <= &
         (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
                    nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -4866,6 +4935,7 @@ MODULE Allocs
 
       IF(.NOT.ALLOCATED(a) .AND. ALL((/nb1,nb2,nb3,nb4,nb5,nb6,nb7/) <= &
         (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
+        alloc_errmsg=''
         ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
                    nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -4902,6 +4972,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -4926,6 +4997,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -4950,6 +5022,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -4974,6 +5047,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -4998,6 +5072,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5025,6 +5100,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5049,6 +5125,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5073,6 +5150,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5097,6 +5175,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5121,6 +5200,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5148,6 +5228,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5172,6 +5253,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5196,6 +5278,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5220,6 +5303,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5244,6 +5328,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5271,6 +5356,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5295,6 +5381,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5319,6 +5406,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5343,6 +5431,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5367,6 +5456,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5394,6 +5484,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5418,6 +5509,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5442,6 +5534,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5466,6 +5559,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5490,6 +5584,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5517,6 +5612,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5541,6 +5637,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5565,6 +5662,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5589,6 +5687,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5613,6 +5712,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5640,6 +5740,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5664,6 +5765,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5688,6 +5790,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5712,6 +5815,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5736,6 +5840,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ASSOCIATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5763,6 +5868,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5787,6 +5893,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5811,6 +5918,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5835,6 +5943,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5859,6 +5968,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5886,6 +5996,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5910,6 +6021,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5934,6 +6046,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5958,6 +6071,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -5981,6 +6095,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -6008,6 +6123,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -6032,6 +6148,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -6056,6 +6173,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -6080,6 +6198,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -6104,6 +6223,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -6131,6 +6251,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -6155,6 +6276,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -6179,6 +6301,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -6203,6 +6326,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -6227,6 +6351,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -6254,6 +6379,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -6278,6 +6404,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -6302,6 +6429,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -6326,6 +6454,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -6350,6 +6479,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -6377,6 +6507,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -6401,6 +6532,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -6425,6 +6557,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -6449,6 +6582,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -6473,6 +6607,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -6500,6 +6635,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -6524,6 +6660,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -6548,6 +6685,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -6572,6 +6710,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
@@ -6596,6 +6735,7 @@ MODULE Allocs
       INTEGER(SLK) :: mysize
 
       IF(ALLOCATED(a)) THEN
+        alloc_errmsg=''
         mysize=SIZE(a)
         DEALLOCATE(a,STAT=alloc_err,ERRMSG=alloc_errmsg)
         IF(alloc_err == 0) THEN
