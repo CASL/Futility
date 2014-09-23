@@ -352,7 +352,7 @@ MODULE FileType_HDF5
 #ifdef MPACT_HAVE_HDF5
       TYPE(StringType) :: fpath,fname,fext
       INTEGER(SIK) :: unitno
-      LOGICAL(SBK) :: ostat
+      LOGICAL(SBK) :: ostat,exists
 #endif
 #ifdef MPACT_HAVE_HDF5
       CALL getFileParts(filename,fpath,fname,fext,thisHDF5File%e)
@@ -365,9 +365,23 @@ MODULE FileType_HDF5
       CALL toUPPER(thisHDF5File%mode)
       SELECTCASE(TRIM(thisHDF5File%mode))
       CASE('READ')
-        CALL thisHDF5File%setWriteStat(.FALSE.)
+        INQUIRE(FILE=filename,EXIST=exists)
+        IF(exists) THEN
+          CALL thisHDF5File%setWriteStat(.FALSE.)
+        ELSE
+          CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+            ' - HDF5 file '//filename//' is being opened with '// &
+            'mode READ but does not exist.')
+        ENDIF
       CASE('WRITE')
-        CALL thisHDF5File%setWriteStat(.TRUE.)
+        INQUIRE(FILE=filename,EXIST=exists)
+        IF(exists) THEN
+          CALL thisHDF5File%setWriteStat(.TRUE.)
+        ELSE
+          CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+            ' - HDF5 file '//filename//' is being opened with '// &
+            'mode READ but does not exist.')
+        ENDIF
       CASE('NEW')
         CALL thisHDF5File%setWriteStat(.TRUE.)
       CASE DEFAULT
