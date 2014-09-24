@@ -15,7 +15,7 @@
 ! manufacturer, or otherwise, does not necessarily constitute or imply its     !
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-PROGRAM testHDF5
+PROGRAM testFileType_ParHDF5
 #include "UnitTest.h"
   USE ISO_FORTRAN_ENV
   USE UnitTest
@@ -26,6 +26,10 @@ PROGRAM testHDF5
   USE FileType_HDF5
   
   IMPLICIT NONE
+
+#ifdef HAVE_MPI
+  INCLUDE 'mpif.h'
+#endif
   
   !TYPE(ExceptionHandlerType),TARGET,SAVE :: e
   TYPE(MPI_EnvType) :: testMPI
@@ -54,7 +58,6 @@ PROGRAM testHDF5
   CREATE_TEST("HDF File Type")
   
   CALL testHDF5FileTypeSetup()
-  REGISTER_SUBTEST("HDF5FileType Uninit Checks",testHDF5FileTypeUninit)
   REGISTER_SUBTEST("HDF5FileType Initialization Checks",testHDF5FileTypeCreateDelete)
   REGISTER_SUBTEST("HDF5FileType Error Checks",testHDF5FileTypeErrorCheck)
   REGISTER_SUBTEST("HDF5FileType Read",testHDF5FileTypeRead)
@@ -172,55 +175,37 @@ PROGRAM testHDF5
     ENDSUBROUTINE testHDF5FileTypeSetup
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE testHDF5FileTypeUninit()
-      TYPE(HDF5FileType) :: h5
-      ASSERT(.NOT.h5%isinit,'%isinit')
-      ASSERT(.NOT.h5%isNew(),'%newstat')
-      ASSERT(h5%fullname%n == 0,'%fullname')
-      ASSERT(h5%getUnitNo() == -1,'%unitno')
-      ASSERT(h5%file_id == 0,'%file_id')
-    ENDSUBROUTINE testHDF5FileTypeUninit
-!
-!-------------------------------------------------------------------------------
     SUBROUTINE testHDF5FileTypeCreateDelete()
       TYPE(HDF5FileType) :: h5
-      INTEGER(SIK) :: unitno
 
-      CALL h5%e%setQuietMode(.TRUE.)
       CALL h5%init('createdeletetest.h5','NEW')
 
       ASSERT(h5%isinit,'HDF5 object no properly initialized')
-      CALL h5%fopen()
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR) == 0,'hdf5_filetype%fopen')
+      IF(h5%isinit) exists=.TRUE.
+
       CALL h5%fclose()
       ASSERT(h5%e%getCounter(EXCEPTION_ERROR) == 0,'hdf5_filetype%fclose')
       CALL h5%clear()
       ASSERT(.NOT.h5%isinit,'HDF5 object not properly cleared.')
-      
       CALL h5%init('createdeletetest.h5','WRITE')
-      CALL h5%fopen()
       ASSERT(h5%isWrite(),'HDF object %isWrite() should be .TRUE.')
       CALL h5%mkdir('testGroup')
       ASSERT(h5%e%getCounter(EXCEPTION_ERROR) == 0,'hdf5_filetype%init ''WRITE''')
       CALL h5%clear()
-      
       CALL h5%init('createdeletetest.h5','READ')
-      CALL h5%fopen()
       ASSERT(.NOT.(h5%isWrite()),'HDF object %isWrite() should be .FALSE.')
       CALL h5%e%setStopOnError(.FALSE.)
       CALL h5%mkdir('testGroup')
       ASSERT(h5%e%getCounter(EXCEPTION_ERROR) == 1,'hdf5_filetype%init ''READ''')
       FINFO() h5%e%getCounter(EXCEPTION_ERROR)
       CALL h5%fdelete()
-      ASSERT(h5%isinit,'HDF5 object still initialized after deletion.')
+      INQUIRE(FILE='createdeletetest.h5',EXIST=exists)
+      ASSERT(.NOT.h5%isinit,'HDF5 object still initialized after deletion.')
       ASSERT(.NOT.exists,'HDF5 object not properly deleted without being cleared.')
-      CALL h5%clear()
-      ASSERT(.NOT.h5%isinit,'HDF5 object not properly cleared.')
       
       CALL h5%init('createdeletetest.h5','NEW')
-      CALL h5%fopen()
       IF(h5%isinit) exists=.TRUE.
-      CALL h5%clear(LDEL=.TRUE.)
+      CALL h5%fdelete()
       INQUIRE(FILE='createdeletetest.h5',EXIST=exists)
       ASSERT(.NOT.exists,'HDF5 object not properly deleted after begin cleared.')
 
@@ -229,14 +214,10 @@ PROGRAM testHDF5
 !-------------------------------------------------------------------------------
     SUBROUTINE testHDF5FileTypeErrorCheck()
       TYPE(HDF5FileType) :: h5
-      INTEGER(SIK) :: nerror
       CHARACTER(LEN=32),ALLOCATABLE :: tmpchar(:)
       REAL(SDK),POINTER :: d4ptr(:,:,:,:)
 
       CALL h5%e%setQuietMode(.TRUE.)
-      !Adding the *2 for now to get the test passing.  Since the simplification,
-      !the pre and post routines have two %isinit checks.  All these checks are 
-      !mostly redundant now though, one check checks the same code as all of them now.
       CALL h5%fwrite('groupR->memD0',refD0)
       ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==1,'%write_d0 %isinit check')
       CALL h5%fwrite('groupR->memD1',refD1,SHAPE(refD1))
@@ -295,6 +276,7 @@ PROGRAM testHDF5
       ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==28,'%mkdir %isinit check')
       CALL h5%ls('groupR',tmpchar)
       ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==29,'%ls %isinit check')
+
       
       CALL h5%fread('groupR->memD0',refD0)
       ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==30,'%write_d0 %isinit check')
@@ -351,7 +333,8 @@ PROGRAM testHDF5
       CALL h5%fread('groupST->memST3',refST3)
       ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==56,'%write_st3 %isinit check')
 
-      CALL h5%clear(.TRUE.)
+
+
     ENDSUBROUTINE testHDF5FileTypeErrorCheck
 !
 !-------------------------------------------------------------------------------
@@ -376,7 +359,6 @@ PROGRAM testHDF5
       COMPONENT_TEST('%fwrite with gdims')
       ! Create a RW access file. Existing file overwritten
       CALL h5%init('writetest.h5','NEW')
-      CALL h5%fopen()
 
       ! Test writing with the gdims arguments
       CALL h5%mkdir('groupR')
@@ -411,7 +393,7 @@ PROGRAM testHDF5
       CALL h5%fwrite('groupST->memST3',refST3,SHAPE(refST3))
       CALL h5%mkdir('groupC')
       CALL h5%fwrite('groupC->memC1',refC1,LEN(refC1))
-     
+      
       CALL h5%fread('groupR->memD0',testD0)
       ASSERT(testD0==refD0,'D0 Write Failure with gdims_in')
       CALL h5%fread('groupR->memD1',testD1)
@@ -459,7 +441,6 @@ PROGRAM testHDF5
       ASSERT(ALL(testB3.EQV.refB3),'B3 Write Failure with gdims_in')
       CALL h5%fread('groupST->memST0',testST0)
       ASSERT(testST0==refST0,'ST0 Write Failure with gdims_in')
-      FINFO() ":"//testST0//":   :"//refST0//":"
       CALL h5%fread('groupST->memST1',testST1)
       checkwrite=.TRUE.
       DO i=1,SIZE(refST1)
@@ -493,11 +474,10 @@ PROGRAM testHDF5
       FINFO() i
 
       ! Delete the file
-      CALL h5%clear(.TRUE.)
+      CALL h5%fdelete()
 
       COMPONENT_TEST('%fwrite without gdims')
       CALL h5%init('writetest.h5','NEW')
-      CALL h5%fopen()
 
       ! Test writing without the gdims arguments
       CALL h5%mkdir('groupR')
@@ -611,6 +591,7 @@ PROGRAM testHDF5
       i=h5%ngrp('groupR')
       ASSERT(i == 10,'ngrp_HDF5FileType')
       FINFO() i
+ 
       CALL h5%fdelete()
       INQUIRE(FILE='writetest.h5',EXIST=exists)
       ASSERT(.NOT.exists,'HDF5 object not properly deleted!')
@@ -639,8 +620,6 @@ PROGRAM testHDF5
 
 !  Begin test
       CALL h5%init('readtest.h5','READ')
-      CALL h5%fopen()
-      !CALL h5%e%setQuietMode('.FALSE.')
 
       CALL h5%ls('groupR',sets)
       DO i=1,SIZE(sets)
@@ -729,7 +708,7 @@ PROGRAM testHDF5
             testL3,testB1,testB2,testB3,testST1,testST2,testST3,testN1,testN2, &
             testN3,testD4,testS4,testDP4)
 
-      CALL h5%clear(.TRUE.)
+      CALL h5%clear()
       ASSERT(.NOT.h5%isinit, 'HDF5 object not properly cleared!')
 
     ENDSUBROUTINE testHDF5FileTypeRead
@@ -744,4 +723,4 @@ PROGRAM testHDF5
 !
 !-------------------------------------------------------------------------------
 
-ENDPROGRAM testHDF5
+ENDPROGRAM testFileType_ParHDF5 

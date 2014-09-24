@@ -82,6 +82,13 @@ IF(${PACKAGE_NAME}_ENABLE_HDF5)
         testHDF5FileType
         testTPLHDF5
         )
+    # add test for MPI if enabled
+    IF (${PACKAGE_NAME}_ENABLE_MPI)
+        SET(UNIT_TEST_NAMES
+            ${UNIT_TEST_NAMES}
+            testFileType_ParHDF5
+            )
+    ENDIF()
 ENDIF()
 
 FOREACH(test ${UNIT_TEST_NAMES})
