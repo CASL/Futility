@@ -367,7 +367,7 @@ PROGRAM testHDF5
       REAL(SSK) :: testS0
       INTEGER(SLK) :: testL0
       INTEGER(SNK) :: testN0
-      LOGICAL(SBK) :: testB0
+      LOGICAL(SBK) :: testB0,bool
       CHARACTER(LEN=32) :: testC1
       TYPE(StringType) :: testST0
       INTEGER(SIK) :: i,j,k
@@ -611,6 +611,51 @@ PROGRAM testHDF5
       i=h5%ngrp('groupR')
       ASSERT(i == 10,'ngrp_HDF5FileType')
       FINFO() i
+     
+      COMPONENT_TEST('%pathExists')
+      !Add some sub-groups
+      CALL h5%mkdir('groupC->anotherGroup')
+      CALL h5%mkdir('groupC->anotherGroup->moreGroups')
+      CALL h5%mkdir('groupC->anotherGroup->moreGroups->almostLastGroup')
+      CALL h5%mkdir('groupC->anotherGroup->moreGroups->lastGroup')
+      !Check valid paths
+      ASSERT(h5%pathExists('groupC'),'%pathExists(groupC)')
+      ASSERT(h5%pathExists('groupC->anotherGroup'),'%pathExists(groupC->anotherGroup)')
+      bool=h5%pathExists('groupC->anotherGroup->moreGroups')
+      ASSERT(bool,'%pathExists(groupC->anotherGroup->moreGroups)')
+      bool=h5%pathExists('groupC->anotherGroup->moreGroups->almostLastGroup')
+      ASSERT(bool,'%pathExists(groupC->anotherGroup->moreGroups->almostLastGroup)')
+      bool=h5%pathExists('groupC->anotherGroup->moreGroups->lastGroup')
+      ASSERT(bool,'%pathExists(groupC->anotherGroup->moreGroups->lastGroup)')
+      ASSERT(h5%pathExists('groupC->memC1'),'%pathExists(groupC->memC1)')
+ 
+      !Check for invalid paths
+      ASSERT(.NOT.h5%pathExists('groupBlah'),'%pathExists(groupBlah)')
+      ASSERT(.NOT.h5%pathExists('groupC->blahGroup'),'%pathExists(groupC->blahGroup)')
+      bool=.NOT.h5%pathExists('groupC->anotherGroup->moreBlahGroups')
+      ASSERT(bool,'%pathExists(groupC->anotherGroup->moreBlahGroups)')
+      ASSERT(.NOT.h5%pathExists('groupC->memCBlah'),'%pathExists(groupC->memCBlah)')
+ 
+      !COMPONENT_TEST('%hasGroup')
+      !!Check the groups it has
+      !ASSERT(h5%hasGroup('groupB'),'%hasGroup("GroupB")')
+      !ASSERT(h5%hasGroup('groupC'),'%hasGroup("GroupC")')
+      !ASSERT(h5%hasGroup('groupST'),'%hasGroup("GroupST")')
+      !ASSERT(h5%hasGroup('groupR'),'%hasGroup("GroupR")')
+      !ASSERT(h5%hasGroup('groupI'),'%hasGroup("GroupI")')
+      !ASSERT(h5%hasGroup('groupC->anotherGroup'),'%hasGroup("GroupC->anotherGroup")')
+      !bool=h5%hasGroup('groupC->anotherGroup->moreGroups')
+      !ASSERT(bool,'%hasGroup("GroupC->anotherGroup->moreGroups")')
+
+      !!Check for non-existent groups
+      !ASSERT(.NOT.h5%hasGroup('groupST->memST3'),'%hasGroup("GroupST->memST3")')
+      !ASSERT(.NOT.h5%hasGroup('memST3'),'%hasGroup("memST4")')
+      !ASSERT(.NOT.h5%hasGroup('groupC->badGroup'),'%hasGroup("GroupC->badGroup")')
+      !bool=.NOT.h5%hasGroup('groupC->anotherGroup->blah')
+      !ASSERT(bool,'%hasGroup("GroupC->anotherGroup->blah")')
+      !bool=.NOT.h5%hasGroup('groupC->anotherGroup->blah->')
+      !ASSERT(bool,'%hasGroup("GroupC->anotherGroup->blah->")')
+
       CALL h5%fdelete()
       INQUIRE(FILE='writetest.h5',EXIST=exists)
       ASSERT(.NOT.exists,'HDF5 object not properly deleted!')
@@ -729,7 +774,7 @@ PROGRAM testHDF5
             testL3,testB1,testB2,testB3,testST1,testST2,testST3,testN1,testN2, &
             testN3,testD4,testS4,testDP4)
 
-      CALL h5%clear(.TRUE.)
+      CALL h5%clear()
       ASSERT(.NOT.h5%isinit, 'HDF5 object not properly cleared!')
 
     ENDSUBROUTINE testHDF5FileTypeRead

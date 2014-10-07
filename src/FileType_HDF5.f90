@@ -150,6 +150,12 @@ MODULE FileType_HDF5
       !> @copybrief FileType_HDF5::ngrp_HDF5FileType
       !> @copydetails FileType_HDF5::ngrp_HDF5FileType
       PROCEDURE,PASS :: ngrp => ngrp_HDF5FileType
+      !!> @copybrief FileType_HDF5::hasgrp_HDF5FileType
+      !!> @copydetails FileType_HDF5::hasgrp_HDF5FileType
+      !PROCEDURE,PASS :: hasGroup => hasgrp_HDF5FileType
+      !> @copybrief FileType_HDF5::pathexists_HDF5FileType
+      !> @copydetails FileType_HDF5::pathexists_HDF5FileType
+      PROCEDURE,PASS :: pathExists => pathexists_HDF5FileType
       !> @copybrief FileType_HDF5::write_d0
       !> @copydoc FileType_HDF5::write_d0
       PROCEDURE,PASS,PRIVATE :: write_d0
@@ -804,6 +810,111 @@ MODULE FileType_HDF5
     ENDFUNCTION ngrp_HDF5FileType
 !
 !-------------------------------------------------------------------------------
+!> @brief Returns whether the group exists in the file or not.
+!> @param thisHDF5File the HDF5FileType object to interrogate
+!> @param path the group in the file to check if it exists
+!> @param bool the logical result of whether the specified group exists.
+!>
+!> This function returns a logical corresponding to whether the group specified
+!> by @c path exists or not.  This function assumes a group path, and is not 
+!> expected to parse the path to see if there is a dataset at the end that needs
+!> to be removed, although that may be useful functionality at some point.
+!>
+!> So, after reading through the HDF5 manual, there doesn't seem to be a clean
+!> way to interrogate an HDF5 path ("link") object to see to what type of object
+!> it links.  You can check if the object at the end of the link object exists
+!> via h5oexists_by_name_f, but to know whether it is a group, dataset, or 
+!> datatype is uglier.  You need the identifier, not the path, so that means
+!> trying to open the group, dataset, or datatype, and enduring the subsequent
+!> errors, which is unsatisfying.  Commenting out for now.
+!>
+!    FUNCTION hasgrp_HDF5FileType(thisHDF5File,path) RESULT(bool)
+!      CHARACTER(LEN=*),PARAMETER :: myName='hasgrp_HDF5FileType'
+!      CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
+!      CHARACTER(LEN=*),INTENT(IN) :: path
+!      LOGICAL(SBK) :: bool
+!#ifdef MPACT_HAVE_HDF5
+!      TYPE(StringType) :: path2
+!      INTEGER(HID_T) :: grp_id,error
+!      INTEGER :: arrow,arrowstt 
+!
+!      ! Make sure the object is initialized, and opened
+!      bool=.FALSE.
+!      IF(thisHDF5File%isinit .AND. thisHDF5File%isOpen()) THEN
+!        bool=thisHDF5File%pathExists(path)
+!        IF(bool) THEN
+!          
+!        arrow=1
+!        !Loop over all sub groups to make sure they exist
+!        DO WHILE (arrow > -1)
+!          WRITE(*,*) "Before IF block="//path
+!          arrow=INDEX(path(arrow:),'->')-1
+!          WRITE(*,*) "INDEX result=",arrow
+!          IF(arrow == -1) THEN
+!            WRITE(*,*) "in the -1 ="//path
+!            path2=convertPath(path)
+!          ELSE
+!            WRITE(*,*) path(:arrow)
+!            path2=convertPath(path(:arrow))
+!            arrow=arrow+3
+!          ENDIF
+!          CALL h5lexists_f(thisHDF5File%file_id,CHAR(path2),bool,error)
+!          WRITE(*,*) "Result of h5lexists=",CHAR(path2),bool
+!          IF(.NOT.bool) EXIT
+!        ENDDO
+!        !If all subgroups exist, check the last
+!        IF(bool
+!      ENDIF
+!#else
+!      bool=.FALSE.
+!#endif
+!    ENDFUNCTION hasgrp_HDF5FileType
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns whether the path exists in the file or not.
+!> @param thisHDF5File the HDF5FileType object to interrogate
+!> @param path the path in the file to check if it exists
+!> @param bool the logical result of whether the specified path exists.
+!>
+!> This function returns a logical corresponding to whether the specified
+!> @c path exists or not. 
+!>
+    FUNCTION pathexists_HDF5FileType(thisHDF5File,path) RESULT(bool)
+      CHARACTER(LEN=*),PARAMETER :: myName='hasgrp_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
+      CHARACTER(LEN=*),INTENT(IN) :: path
+      LOGICAL(SBK) :: bool
+#ifdef MPACT_HAVE_HDF5
+      TYPE(StringType) :: path2
+      INTEGER(HID_T) :: grp_id,error
+      INTEGER :: nextpos,oldpos
+
+      ! Make sure the object is initialized, and opened
+      bool=.FALSE.
+      IF(thisHDF5File%isinit .AND. thisHDF5File%isOpen()) THEN
+        nextpos=1
+        oldpos=0
+        !Loop over all sub paths to make sure they exist
+        DO WHILE (nextpos > -1)
+          nextpos=INDEX(path(nextpos:),'->')-1
+          IF(nextpos == -1) THEN
+            path2=convertPath(path)
+          ELSE
+            path2=convertPath(path(:nextpos+oldpos))
+            nextpos=nextpos+oldpos+3
+          ENDIF
+          CALL h5lexists_f(thisHDF5File%file_id,CHAR(path2),bool,error)
+          IF(.NOT.bool) EXIT
+          oldpos=nextpos-1
+        ENDDO
+      ENDIF
+#else
+      bool=.FALSE.
+#endif
+    ENDFUNCTION pathexists_HDF5FileType
+
+!
+!-------------------------------------------------------------------------------
 !> @brief Write a double to a dataset
 !> @param thisHDF5File the HDF5FileType object to write to
 !> @param dsetname dataset name and path to write to
@@ -828,7 +939,6 @@ MODULE FileType_HDF5
 
       INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
       INTEGER(SIK) :: dim
-      TYPE(ParamType) :: Params
       
       ! stash offset
       offset(1)=0
@@ -880,7 +990,6 @@ MODULE FileType_HDF5
       INTEGER(HID_T),PARAMETER :: rank=1
 
       INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
-      TYPE(ParamType) :: Params
 
       ! stash offset
       offset(1)=LBOUND(vals,1)-1
@@ -932,7 +1041,6 @@ MODULE FileType_HDF5
       INTEGER(HID_T),PARAMETER :: rank=2
 
       INTEGER(HID_T) :: mem,dspace_id,gspace_id,dset_id,plist_id
-      TYPE(ParamType) :: Params
 
       ! stash offset
       offset(1)=LBOUND(vals,1)-1
@@ -985,7 +1093,6 @@ MODULE FileType_HDF5
       INTEGER(HID_T),PARAMETER :: rank=3
 
       INTEGER(HID_T) :: mem,dspace_id,gspace_id,dset_id,plist_id
-      TYPE(ParamType) :: Params
 
       ! stash offset
       offset(1)=LBOUND(vals,1)-1
@@ -1039,7 +1146,6 @@ MODULE FileType_HDF5
       INTEGER(HID_T),PARAMETER :: rank=4
 
       INTEGER(HID_T) :: mem,dspace_id,gspace_id,dset_id,plist_id
-      TYPE(ParamType) :: Params
 
       ! stash offset
       offset(1)=LBOUND(vals,1)-1
@@ -1095,7 +1201,6 @@ MODULE FileType_HDF5
       INTEGER(HID_T),PARAMETER :: rank=1
 
       INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
-      TYPE(ParamType) :: Params
 
       ! stash offset
       offset(1)=0
@@ -1147,7 +1252,6 @@ MODULE FileType_HDF5
       INTEGER(HID_T),PARAMETER :: rank=1
 
       INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
-      TYPE(ParamType) :: Params
 
       ! stash offset
       offset(1)=LBOUND(vals,1)-1
@@ -1199,7 +1303,6 @@ MODULE FileType_HDF5
       INTEGER(HID_T),PARAMETER :: rank=2
 
       INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
-      TYPE(ParamType) :: Params
 
       ! stash offset
       offset(1)=LBOUND(vals,1)-1
@@ -1252,7 +1355,6 @@ MODULE FileType_HDF5
       INTEGER(HID_T),PARAMETER :: rank=3
 
       INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
-      TYPE(ParamType) :: Params
 
       ! stash offset
       offset(1)=LBOUND(vals,1)-1
@@ -1306,7 +1408,6 @@ MODULE FileType_HDF5
       INTEGER(HID_T),PARAMETER :: rank=4
 
       INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
-      TYPE(ParamType) :: Params
 
       ! stash offset
       offset(1)=LBOUND(vals,1)-1
@@ -1363,7 +1464,6 @@ MODULE FileType_HDF5
       INTEGER(HID_T),PARAMETER :: rank=1
 
       INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
-      TYPE(ParamType) :: Params
 
       ! stash offset
       offset(1)=0
@@ -1423,7 +1523,6 @@ MODULE FileType_HDF5
       INTEGER(HID_T),PARAMETER :: rank=1
 
       INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
-      TYPE(ParamType) :: Params
 
       ! stash offset
       offset(1)=LBOUND(vals,1)-1
@@ -1481,7 +1580,6 @@ MODULE FileType_HDF5
       INTEGER(HID_T),PARAMETER :: rank=2
 
       INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
-      TYPE(ParamType) :: Params
 
       ! stash offset
       offset(1)=LBOUND(vals,1)-1
@@ -1539,7 +1637,6 @@ MODULE FileType_HDF5
       INTEGER(HID_T),PARAMETER :: rank=3
 
       INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
-      TYPE(ParamType) :: Params
 
       ! stash offset
       offset(1)=LBOUND(vals,1)-1
@@ -1597,7 +1694,6 @@ MODULE FileType_HDF5
       INTEGER(HID_T),PARAMETER :: rank=1
 
       INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
-      TYPE(ParamType) :: Params
 
       ! stash offset
       offset(1)=0
@@ -1648,7 +1744,6 @@ MODULE FileType_HDF5
       INTEGER(HID_T),PARAMETER :: rank=1
 
       INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
-      TYPE(ParamType) :: Params
 
       ! stash offset
       offset(1)=LBOUND(vals,1)-1
@@ -1700,7 +1795,6 @@ MODULE FileType_HDF5
       INTEGER(HID_T),PARAMETER :: rank=2
 
       INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
-      TYPE(ParamType) :: Params
 
       ! stash offset
       offset(1)=LBOUND(vals,1)-1
@@ -1753,7 +1847,6 @@ MODULE FileType_HDF5
       INTEGER(HID_T),PARAMETER :: rank=3
 
       INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
-      TYPE(ParamType) :: Params
 
       ! stash offset
       offset(1)=LBOUND(vals,1)-1
@@ -1810,7 +1903,6 @@ MODULE FileType_HDF5
       INTEGER(HID_T),PARAMETER :: rank=1
 
       INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
-      TYPE(ParamType) :: Params
 
       ! stash offset
       offset(1)=0
@@ -1866,7 +1958,6 @@ MODULE FileType_HDF5
       INTEGER(HID_T),PARAMETER :: rank=1
 
       INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
-      TYPE(ParamType) :: Params
 
       ! stash offset
       offset(1)=LBOUND(vals,1)-1
@@ -1923,7 +2014,6 @@ MODULE FileType_HDF5
       INTEGER(HID_T),PARAMETER :: rank=2
 
       INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
-      TYPE(ParamType) :: Params
 
       ! stash offset
       offset(1)=LBOUND(vals,1)-1
@@ -1981,7 +2071,6 @@ MODULE FileType_HDF5
       INTEGER(HID_T),PARAMETER :: rank=3
 
       INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
-      TYPE(ParamType) :: Params
 
       ! stash offset
       offset(1)=LBOUND(vals,1)-1
@@ -2042,7 +2131,6 @@ MODULE FileType_HDF5
 
       INTEGER :: error
       INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id,type_id
-      TYPE(ParamType) :: Params
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
@@ -2199,7 +2287,6 @@ MODULE FileType_HDF5
 
       INTEGER :: error
       INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
-      TYPE(ParamType) :: Params
 
       path=dsetname
       ! Fill character array
@@ -2306,7 +2393,6 @@ MODULE FileType_HDF5
 
       INTEGER :: error
       INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
-      TYPE(ParamType) :: Params
 
       path=dsetname
        DO k=1,SIZE(vals,2)
@@ -2417,7 +2503,6 @@ MODULE FileType_HDF5
 
       INTEGER :: error
       INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
-      TYPE(ParamType) :: Params
 
       path=dsetname
       DO l=1,SIZE(vals,3)
@@ -2490,7 +2575,6 @@ MODULE FileType_HDF5
       INTEGER(HID_T),PARAMETER :: rank=1
 
       INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
-      TYPE(ParamType) :: Params
 
       ! stash offset
       offset(1)=1
