@@ -102,6 +102,8 @@ MODULE FileType_HDF5
   TYPE,EXTENDS(BaseFileType) :: HDF5FileType
     !> Initialization status
     LOGICAL(SBK) :: isInit=.FALSE.
+    !> Whether or not the file uses compression for writing
+    LOGICAL(SBK) :: hasCompression=.FALSE.
     !> The 'new' status of a file
     LOGICAL(SBK),PRIVATE :: newstat=.FALSE.
     !> Full path to the file
@@ -362,20 +364,22 @@ MODULE FileType_HDF5
 !> @param thisHDF5File the object to be initialized
 !> @param filename the relative path to the file on the filesystem
 !> @param mode the access mode. Can be 'READ', 'WRITE' or 'NEW'
+!> @param cmpStr (optional) the identifier for the compression mode
 !>
 !> This routine initializes an HDF5 file object by setting the objects
 !> attributes, initializing the HDF5 library interface and calling the @c open
 !> routine.
 !>
-    SUBROUTINE init_HDF5FileType(thisHDF5File,filename,mode)
+    SUBROUTINE init_HDF5FileType(thisHDF5File,filename,mode,useZlib)
       CHARACTER(LEN=*),PARAMETER :: myName='init_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: filename
       CHARACTER(LEN=*),INTENT(IN) :: mode
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: useZlib
 #ifdef MPACT_HAVE_HDF5
       TYPE(StringType) :: fpath,fname,fext,mode_in
       INTEGER(SIK) :: unitno
-      LOGICAL(SBK) :: ostat,exists
+      LOGICAL(SBK) :: ostat,exists,lcmp
 #endif
 #ifdef MPACT_HAVE_HDF5
       IF(.NOT.thisHDF5File%isinit) THEN
@@ -383,6 +387,8 @@ MODULE FileType_HDF5
         CALL thisHDF5File%setFilePath(CHAR(fpath))
         CALL thisHDF5File%setFileName(CHAR(fname))
         CALL thisHDF5File%setFileExt(CHAR(fext))
+
+        IF(PRESENT(useZlib)) thisHDF5File%hasCompression=useZlib
 
         ! Store the access mode
         mode_in=mode
@@ -482,6 +488,7 @@ MODULE FileType_HDF5
 #endif
         thisHDF5File%isinit=.FALSE.
         thisHDF5File%newstat=.FALSE.
+        thisHDF5File%hasCompression=.FALSE.
         thisHDF5File%fullname=''
         thisHDF5File%unitno=-1
         CALL clear_base_file(thisHDF5File)
@@ -958,7 +965,8 @@ MODULE FileType_HDF5
       IF(PRESENT(cnt_in)) cnt=cnt_in
 
       mem=H5T_NATIVE_DOUBLE
-      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id,gspace_id,plist_id,error,cnt,offset)
+      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
+        gspace_id,plist_id,error,cnt,offset)
       IF(error == 0) THEN
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)  
         CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
@@ -1009,7 +1017,8 @@ MODULE FileType_HDF5
       IF(PRESENT(cnt_in)) cnt=cnt_in
 
       mem=H5T_NATIVE_DOUBLE
-      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id,gspace_id,plist_id,error,cnt,offset)
+      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
+        gspace_id,plist_id,error,cnt,offset)
       IF(error == 0) THEN
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id) 
         CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
@@ -1061,7 +1070,8 @@ MODULE FileType_HDF5
       IF(PRESENT(cnt_in)) cnt=cnt_in
 
       mem=H5T_NATIVE_DOUBLE
-      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id,gspace_id,plist_id,error,cnt,offset)
+      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
+        gspace_id,plist_id,error,cnt,offset)
       IF(error == 0) THEN
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id) 
         CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
@@ -1114,7 +1124,8 @@ MODULE FileType_HDF5
       IF(PRESENT(cnt_in)) cnt=cnt_in
 
       mem=H5T_NATIVE_DOUBLE
-      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id,gspace_id,plist_id,error,cnt,offset)
+      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
+        gspace_id,plist_id,error,cnt,offset)
       IF(error == 0) THEN 
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id) 
         CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
@@ -1169,7 +1180,8 @@ MODULE FileType_HDF5
 
       !Commented out since we don't have a 4 dimensional parameter list... yet.
       mem=H5T_NATIVE_DOUBLE
-      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id,gspace_id,plist_id,error,cnt,offset)
+      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
+        gspace_id,plist_id,error,cnt,offset)
       IF(error == 0) THEN
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id) 
         CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
@@ -1220,7 +1232,8 @@ MODULE FileType_HDF5
       IF(PRESENT(cnt_in)) cnt=cnt_in
 
       mem=H5T_NATIVE_REAL
-      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id,gspace_id,plist_id,error,cnt,offset)
+      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
+        gspace_id,plist_id,error,cnt,offset)
       IF(error == 0) THEN
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id) 
         CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
@@ -1271,7 +1284,8 @@ MODULE FileType_HDF5
       IF(PRESENT(cnt_in)) cnt=cnt_in
 
       mem=H5T_NATIVE_REAL
-      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id,gspace_id,plist_id,error,cnt,offset)
+      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
+        gspace_id,plist_id,error,cnt,offset)
       IF(error == 0) THEN
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id) 
         CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
@@ -1323,7 +1337,8 @@ MODULE FileType_HDF5
       IF(PRESENT(cnt_in)) cnt=cnt_in
 
       mem=H5T_NATIVE_REAL
-      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id,gspace_id,plist_id,error,cnt,offset)
+      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
+        gspace_id,plist_id,error,cnt,offset)
       IF(error == 0) THEN
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id) 
         CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
@@ -1376,7 +1391,8 @@ MODULE FileType_HDF5
       IF(PRESENT(cnt_in)) cnt=cnt_in
 
       mem=H5T_NATIVE_REAL
-      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id,gspace_id,plist_id,error,cnt,offset)
+      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
+        gspace_id,plist_id,error,cnt,offset)
       IF(error == 0) THEN
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id) 
         CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
@@ -1430,7 +1446,8 @@ MODULE FileType_HDF5
       IF(PRESENT(cnt_in)) cnt=cnt_in
 
       mem=H5T_NATIVE_REAL
-      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id,gspace_id,plist_id,error,cnt,offset)
+      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
+        gspace_id,plist_id,error,cnt,offset)
       IF(error == 0) THEN
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id) 
         CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
@@ -1488,7 +1505,8 @@ MODULE FileType_HDF5
         charvals='F'
       ENDIF
       mem=H5T_NATIVE_CHARACTER
-      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id,gspace_id,plist_id,error,cnt,offset)
+      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
+        gspace_id,plist_id,error,cnt,offset)
       IF(error == 0) THEN
         CALL h5dwrite_f(dset_id,mem,charvals,gdims,error,dspace_id,gspace_id,plist_id) 
         CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
@@ -1546,7 +1564,8 @@ MODULE FileType_HDF5
         charvals(i:i)='T'
       END FORALL
       mem=H5T_NATIVE_CHARACTER
-      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id,gspace_id,plist_id,error,cnt,offset)
+      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
+        gspace_id,plist_id,error,cnt,offset)
       IF(error == 0) THEN
         CALL h5dwrite_f(dset_id,mem,charvals,gdims,error,dspace_id,gspace_id,plist_id) 
         CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
@@ -1604,7 +1623,8 @@ MODULE FileType_HDF5
         charvals(i,j)='T'
       END FORALL
       mem=H5T_NATIVE_CHARACTER
-      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id,gspace_id,plist_id,error,cnt,offset)
+      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
+        gspace_id,plist_id,error,cnt,offset)
       IF(error == 0) THEN
         CALL h5dwrite_f(dset_id,mem,charvals,gdims,error,dspace_id,gspace_id,plist_id) 
         CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
@@ -1663,7 +1683,8 @@ MODULE FileType_HDF5
         charvals(i,j,k)='T'
       END FORALL
       mem=H5T_NATIVE_CHARACTER
-      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id,gspace_id,plist_id,error,cnt,offset)
+      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
+        gspace_id,plist_id,error,cnt,offset)
       IF(error == 0) THEN
         CALL h5dwrite_f(dset_id,mem,charvals,gdims,error,dspace_id,gspace_id,plist_id) 
         CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
@@ -1713,7 +1734,8 @@ MODULE FileType_HDF5
       IF(PRESENT(cnt_in)) cnt=cnt_in
 
       mem=H5T_NATIVE_INTEGER
-      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id,gspace_id,plist_id,error,cnt,offset)
+      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
+        gspace_id,plist_id,error,cnt,offset)
       IF(error == 0) THEN
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id) 
         CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
@@ -1763,7 +1785,8 @@ MODULE FileType_HDF5
       IF(PRESENT(cnt_in)) cnt=cnt_in
 
       mem=H5T_NATIVE_INTEGER
-      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id,gspace_id,plist_id,error,cnt,offset)
+      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
+        gspace_id,plist_id,error,cnt,offset)
       IF(error == 0) THEN
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id) 
         CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
@@ -1815,7 +1838,8 @@ MODULE FileType_HDF5
       IF(PRESENT(cnt_in)) cnt=cnt_in
 
       mem=H5T_NATIVE_INTEGER
-      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id,gspace_id,plist_id,error,cnt,offset)
+      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
+        gspace_id,plist_id,error,cnt,offset)
       IF(error == 0) THEN
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id) 
         CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
@@ -1868,7 +1892,8 @@ MODULE FileType_HDF5
       IF(PRESENT(cnt_in)) cnt=cnt_in
 
       mem=H5T_NATIVE_INTEGER
-      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id,gspace_id,plist_id,error,cnt,offset)
+      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
+        gspace_id,plist_id,error,cnt,offset)
       IF(error == 0) THEN
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id) 
         CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
@@ -1922,7 +1947,8 @@ MODULE FileType_HDF5
       IF(PRESENT(cnt_in)) cnt=cnt_in
 
       mem=H5T_STD_I64LE
-      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id,gspace_id,plist_id,error,cnt,offset)
+      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
+        gspace_id,plist_id,error,cnt,offset)
       mem=H5T_NATIVE_DOUBLE
       vals=DBLE(valst)
       IF(error == 0) THEN
@@ -1977,7 +2003,8 @@ MODULE FileType_HDF5
       IF(PRESENT(cnt_in)) cnt=cnt_in
         
       mem=H5T_STD_I64LE
-      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id,gspace_id,plist_id,error,cnt,offset)
+      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
+        gspace_id,plist_id,error,cnt,offset)
       mem=H5T_NATIVE_DOUBLE
       vals=DBLE(valst)
       IF(error == 0) THEN
@@ -2034,7 +2061,8 @@ MODULE FileType_HDF5
       IF(PRESENT(cnt_in)) cnt=cnt_in
 
       mem=H5T_STD_I64LE
-      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id,gspace_id,plist_id,error,cnt,offset)
+      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
+        gspace_id,plist_id,error,cnt,offset)
       mem=H5T_NATIVE_DOUBLE
       vals=DBLE(valst)
       IF(error == 0) THEN
@@ -2092,7 +2120,8 @@ MODULE FileType_HDF5
       IF(PRESENT(cnt_in)) cnt=cnt_in
 
       mem=H5T_STD_I64LE
-      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id,gspace_id,plist_id,error,cnt,offset)
+      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
+        gspace_id,plist_id,error,cnt,offset)
       mem=H5T_NATIVE_DOUBLE
       vals=DBLE(valst)
       IF(error == 0) THEN
@@ -2320,7 +2349,8 @@ MODULE FileType_HDF5
       IF(PRESENT(cnt_in)) cnt=cnt_in
 
       mem=H5T_NATIVE_CHARACTER
-      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id,gspace_id,plist_id,error,cnt,offset)
+      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
+        gspace_id,plist_id,error,cnt,offset)
       IF(error == 0) THEN
         CALL h5dwrite_f(dset_id,mem,charval,gdims,error,dspace_id,gspace_id,plist_id) 
         CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
@@ -2428,7 +2458,8 @@ MODULE FileType_HDF5
       IF(PRESENT(cnt_in)) cnt=cnt_in
         
       mem=H5T_NATIVE_CHARACTER
-      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id,gspace_id,plist_id,error,cnt,offset)
+      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
+        gspace_id,plist_id,error,cnt,offset)
       IF(error == 0) THEN
         CALL h5dwrite_f(dset_id,mem,charval,gdims,error,dspace_id,gspace_id,plist_id) 
         CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
@@ -2542,7 +2573,8 @@ MODULE FileType_HDF5
 
       !Rank 3 string types don't exist on PL ... yet.
       mem=H5T_NATIVE_CHARACTER
-      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id,gspace_id,plist_id,error,cnt,offset)
+      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
+        gspace_id,plist_id,error,cnt,offset)
       IF(error == 0) THEN
         CALL h5dwrite_f(dset_id,mem,charval,gdims,error,dspace_id,gspace_id,plist_id) 
         CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
@@ -2594,7 +2626,8 @@ MODULE FileType_HDF5
       IF(PRESENT(cnt_in)) cnt=cnt_in
 
       mem=H5T_NATIVE_CHARACTER
-      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id,gspace_id,plist_id,error,cnt,offset)
+      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
+        gspace_id,plist_id,error,cnt,offset)
       IF(error == 0) THEN
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id) 
         CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
@@ -4135,6 +4168,8 @@ MODULE FileType_HDF5
       INTEGER(HSSIZE_T),INTENT(IN) :: offset(:)
      
       INTEGER(HID_T) :: file_id 
+      INTEGER(HSIZE_T) :: cdims(rank)
+
       error=0
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
@@ -4181,9 +4216,25 @@ MODULE FileType_HDF5
         CALL h5screate_simple_f(rank,ldims,dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - Could not create dataspace.')
-      
+
+        ! Setup the DSpace creation property list to use ZLIB compression
+        ! (requires chunking).
+        !
+        ! Do not compress on scalar data sets.
+        IF(thisHDF5File%hasCompression .AND. &
+          .NOT.(rank == 1 .AND. gdims(1) == 1)) THEN
+
+          !Compute optimal chunk size and specify in property list.
+          CALL compute_chunk_size(gdims,cdims)
+          CALL h5pset_chunk_f(plist_id,rank,cdims,error)
+
+          !Do not presently support user defined compression levels, just level 5
+          !5 seems like a good trade-off of speed vs. compression ratio.
+          CALL h5pset_deflate_f(plist_id,5,error)
+        ENDIF
+
         ! Create the dataset
-        CALL h5dcreate_f(file_id,path,mem,gspace_id,dset_id,error)
+        CALL h5dcreate_f(file_id,path,mem,gspace_id,dset_id,error,dcpl_id=plist_id)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - Could not create dataset:'//path)
 
@@ -4349,6 +4400,28 @@ MODULE FileType_HDF5
           ' - Failed to close dataspace.')
 !      ENDIF
     ENDSUBROUTINE postRead
+!
+!-------------------------------------------------------------------------------
+!> @brief Computes the optimal chunk size for a data set for writing with
+!>        compression.
+!> @param gdims the global dimensions of the data set
+!> @param cdims the chunk dimensions to use
+!>
+!> Presently we take the lazy approach and just use gdims.
+!> A more optimal approach would be to get chunks with an aspect ratio near 1
+!> for all dimensions and then size this appropriately so the chunk size works
+!> well in the I/O system's and HDF5 library's buffer and cache sizes.
+!>
+    SUBROUTINE compute_chunk_size(gdims,cdims)
+      INTEGER(HSIZE_T),INTENT(IN) :: gdims(:)
+      INTEGER(HSIZE_T),INTENT(OUT) :: cdims(:)
+
+      !Lazy
+      cdims=gdims
+    ENDSUBROUTINE compute_chunk_size
+
+
 #endif
 !
 ENDMODULE FileType_HDF5
+
