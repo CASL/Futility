@@ -8,7 +8,6 @@
 #
 ################################################################################
 
-INCLUDE(TribitsLibraryMacros)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 

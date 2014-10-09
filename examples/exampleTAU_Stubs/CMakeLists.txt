@@ -10,7 +10,6 @@
 #   Date: 04/21/2011
 #
 ################################################################################
-INCLUDE(TribitsAddExecutableAndTest)
 
 SET(EXAMPLENAME exampleTAU_Stubs)
 
