@@ -2602,7 +2602,7 @@ MODULE ParameterLists
                 ENDDO
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be TYPE(ParamType_List)!')
             ENDSELECT
           ELSE
@@ -2673,7 +2673,7 @@ MODULE ParameterLists
                 ENDDO
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be TYPE(ParamType_List)!')
             ENDSELECT
           ELSE
@@ -2867,7 +2867,7 @@ MODULE ParameterLists
                 IF(PRESENT(description)) p%description=TRIM(description)
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be REAL(SSK)!')
             ENDSELECT
           ELSE
@@ -2915,7 +2915,7 @@ MODULE ParameterLists
                 val=p%val
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be REAL(SSK)!')
             ENDSELECT
           ELSE
@@ -3110,7 +3110,7 @@ MODULE ParameterLists
                 IF(PRESENT(description)) p%description=TRIM(description)
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be REAL(SDK)!')
             ENDSELECT
           ELSE
@@ -3158,7 +3158,7 @@ MODULE ParameterLists
                 val=p%val
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be REAL(SDK)!')
             ENDSELECT
           ELSE
@@ -3353,7 +3353,7 @@ MODULE ParameterLists
                 IF(PRESENT(description)) p%description=TRIM(description)
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be INTEGER(SNK)!')
             ENDSELECT
           ELSE
@@ -3401,7 +3401,7 @@ MODULE ParameterLists
                 val=p%val
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be INTEGER(SNK)!')
             ENDSELECT
           ELSE
@@ -3596,7 +3596,7 @@ MODULE ParameterLists
                 IF(PRESENT(description)) p%description=TRIM(description)
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be INTEGER(SLK)!')
             ENDSELECT
           ELSE
@@ -3644,7 +3644,7 @@ MODULE ParameterLists
                 val=p%val
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be INTEGER(SLK)!')
             ENDSELECT
           ELSE
@@ -3839,7 +3839,7 @@ MODULE ParameterLists
                 IF(PRESENT(description)) p%description=TRIM(description)
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be LOGICAL(SBK)!')
             ENDSELECT
           ELSE
@@ -3887,7 +3887,7 @@ MODULE ParameterLists
                 val=p%val
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be LOGICAL(SBK)!')
             ENDSELECT
           ELSE
@@ -4076,7 +4076,7 @@ MODULE ParameterLists
                 IF(PRESENT(description)) p%description=TRIM(description)
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be TYPE(StringType)!')
             ENDSELECT
           ELSE
@@ -4124,7 +4124,7 @@ MODULE ParameterLists
                 val=p%val
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be TYPE(StringType)!')
             ENDSELECT
           ELSE
@@ -4434,7 +4434,7 @@ MODULE ParameterLists
                 IF(PRESENT(description)) p%description=TRIM(description)
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be 1-D ARRAY REAL(SSK)!')
             ENDSELECT
           ELSE
@@ -4500,7 +4500,7 @@ MODULE ParameterLists
                 ENDIF
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be 1-D ARRAY REAL(SSK)!')
             ENDSELECT
           ELSE
@@ -4713,7 +4713,7 @@ MODULE ParameterLists
                 IF(PRESENT(description)) p%description=TRIM(description)
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be 1-D ARRAY REAL(SDK)!')
             ENDSELECT
           ELSE
@@ -4779,7 +4779,7 @@ MODULE ParameterLists
                 ENDIF
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be 1-D ARRAY REAL(SDK)!')
             ENDSELECT
           ELSE
@@ -4991,7 +4991,7 @@ MODULE ParameterLists
                 IF(PRESENT(description)) p%description=TRIM(description)
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be 1-D ARRAY INTEGER(SNK)!')
             ENDSELECT
           ELSE
@@ -5057,7 +5057,7 @@ MODULE ParameterLists
                 ENDIF
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be 1-D ARRAY INTEGER(SNK)!')
             ENDSELECT
           ELSE
@@ -5269,7 +5269,7 @@ MODULE ParameterLists
                 IF(PRESENT(description)) p%description=TRIM(description)
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be 1-D ARRAY INTEGER(SLK)!')
             ENDSELECT
           ELSE
@@ -5335,7 +5335,7 @@ MODULE ParameterLists
                 ENDIF
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be 1-D ARRAY INTEGER(SLK)!')
             ENDSELECT
           ELSE
@@ -5543,7 +5543,7 @@ MODULE ParameterLists
                 IF(PRESENT(description)) p%description=TRIM(description)
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be 1-D ARRAY LOGICAL(SBK)!')
             ENDSELECT
           ELSE
@@ -5609,7 +5609,7 @@ MODULE ParameterLists
                 ENDIF
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be 1-D ARRAY LOGICAL(SBK)!')
             ENDSELECT
           ELSE
@@ -5819,7 +5819,7 @@ MODULE ParameterLists
                 IF(PRESENT(description)) p%description=TRIM(description)
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be 1-D ARRAY TYPE(StringType)!')
             ENDSELECT
           ELSE
@@ -5885,7 +5885,7 @@ MODULE ParameterLists
                 ENDIF
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be 1-D ARRAY TYPE(StringType)!')
             ENDSELECT
           ELSE
@@ -6104,7 +6104,7 @@ MODULE ParameterLists
                 IF(PRESENT(description)) p%description=TRIM(description)
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be 2-D ARRAY REAL(SSK)!')
             ENDSELECT
           ELSE
@@ -6172,7 +6172,7 @@ MODULE ParameterLists
                 ENDIF
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be 2-D ARRAY REAL(SSK)!')
             ENDSELECT
           ELSE
@@ -6386,7 +6386,7 @@ MODULE ParameterLists
                 IF(PRESENT(description)) p%description=TRIM(description)
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be 2-D ARRAY REAL(SDK)!')
             ENDSELECT
           ELSE
@@ -6454,7 +6454,7 @@ MODULE ParameterLists
                 ENDIF
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be 2-D ARRAY REAL(SDK)!')
             ENDSELECT
           ELSE
@@ -6668,7 +6668,7 @@ MODULE ParameterLists
                 IF(PRESENT(description)) p%description=TRIM(description)
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be 2-D ARRAY INTEGER(SNK)!')
             ENDSELECT
           ELSE
@@ -6736,7 +6736,7 @@ MODULE ParameterLists
                 ENDIF
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be 2-D ARRAY INTEGER(SNK)!')
             ENDSELECT
           ELSE
@@ -6950,7 +6950,7 @@ MODULE ParameterLists
                 IF(PRESENT(description)) p%description=TRIM(description)
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be 2-D ARRAY INTEGER(SLK)!')
             ENDSELECT
           ELSE
@@ -7018,7 +7018,7 @@ MODULE ParameterLists
                 ENDIF
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be 2-D ARRAY INTEGER(SLK)!')
             ENDSELECT
           ELSE
@@ -7242,7 +7242,7 @@ MODULE ParameterLists
                 IF(PRESENT(description)) p%description=TRIM(description)
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be 2-D ARRAY TYPE(StringType)!')
             ENDSELECT
           ELSE
@@ -7310,7 +7310,7 @@ MODULE ParameterLists
                 ENDIF
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be 2-D ARRAY TYPE(StringType)!')
             ENDSELECT
           ELSE
@@ -7533,7 +7533,7 @@ MODULE ParameterLists
                 IF(PRESENT(description)) p%description=TRIM(description)
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be 3-D ARRAY REAL(SSK)!')
             ENDSELECT
           ELSE
@@ -7605,7 +7605,7 @@ MODULE ParameterLists
                 ENDIF
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be 3-D ARRAY REAL(SSK)!')
             ENDSELECT
           ELSE
@@ -7823,7 +7823,7 @@ MODULE ParameterLists
                 IF(PRESENT(description)) p%description=TRIM(description)
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be 3-D ARRAY REAL(SDK)!')
             ENDSELECT
           ELSE
@@ -7895,7 +7895,7 @@ MODULE ParameterLists
                 ENDIF
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be 3-D ARRAY REAL(SDK)!')
             ENDSELECT
           ELSE
@@ -8113,7 +8113,7 @@ MODULE ParameterLists
                 IF(PRESENT(description)) p%description=TRIM(description)
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be 3-D ARRAY INTEGER(SNK)!')
             ENDSELECT
           ELSE
@@ -8185,7 +8185,7 @@ MODULE ParameterLists
                 ENDIF
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be 3-D ARRAY INTEGER(SNK)!')
             ENDSELECT
           ELSE
@@ -8403,7 +8403,7 @@ MODULE ParameterLists
                 IF(PRESENT(description)) p%description=TRIM(description)
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be 3-D ARRAY INTEGER(SLK)!')
             ENDSELECT
           ELSE
@@ -8475,7 +8475,7 @@ MODULE ParameterLists
                 ENDIF
               CLASS DEFAULT
                 CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - parameter data type mismatch! Parameter type is '// &
+                  ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
                     tmpParam%dataType//' and must be 3-D ARRAY INTEGER(SLK)!')
             ENDSELECT
           ELSE
