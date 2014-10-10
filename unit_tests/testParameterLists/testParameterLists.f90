@@ -174,7 +174,7 @@ PROGRAM testParameterLists
     CALL testParam2%get('testSBK',valsbk)
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SBK'// &
-      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' - parameter data type mismatch! Parameter testSBK type is test_type and'// &
       ' must be LOGICAL(SBK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
@@ -209,7 +209,7 @@ PROGRAM testParameterLists
     CALL testParam2%set('testSBK',.TRUE.) !Type mismatch
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SBK -'// &
-      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' parameter data type mismatch! Parameter testSBK type is test_type'// &
       ' and must be LOGICAL(SBK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
@@ -301,7 +301,7 @@ PROGRAM testParameterLists
     CALL testParam2%get('testSNK',valsnk)
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SNK'// &
-      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' - parameter data type mismatch! Parameter testSNK type is test_type and'// &
       ' must be INTEGER(SNK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
@@ -338,7 +338,7 @@ PROGRAM testParameterLists
     CALL testParam2%set('testSNK',valsnk) !Type mismatch
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK -'// &
-      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' parameter data type mismatch! Parameter testSNK type is test_type'// &
       ' and must be INTEGER(SNK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
@@ -431,7 +431,7 @@ PROGRAM testParameterLists
     CALL testParam2%get('testSLK',valslk)
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SLK'// &
-      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' - parameter data type mismatch! Parameter testSLK type is test_type and'// &
       ' must be INTEGER(SLK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
@@ -468,7 +468,7 @@ PROGRAM testParameterLists
     CALL testParam2%set('testSLK',valslk) !Type mismatch
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK -'// &
-      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' parameter data type mismatch! Parameter testSLK type is test_type'// &
       ' and must be INTEGER(SLK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
@@ -561,7 +561,7 @@ PROGRAM testParameterLists
     CALL testParam2%get('testSSK',valssk)
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SSK'// &
-      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' - parameter data type mismatch! Parameter testSSK type is test_type and'// &
       ' must be REAL(SSK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
@@ -598,7 +598,7 @@ PROGRAM testParameterLists
     CALL testParam2%set('testSSK',valssk) !Type mismatch
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK -'// &
-      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' parameter data type mismatch! Parameter testSSK type is test_type'// &
       ' and must be REAL(SSK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
@@ -691,7 +691,7 @@ PROGRAM testParameterLists
     CALL testParam2%get('testSDK',valsdk)
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SDK'// &
-      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' - parameter data type mismatch! Parameter testSDK type is test_type and'// &
       ' must be REAL(SDK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
@@ -728,7 +728,7 @@ PROGRAM testParameterLists
     CALL testParam2%set('testSDK',valsdk) !Type mismatch
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK -'// &
-      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' parameter data type mismatch! Parameter testSDK type is test_type'// &
       ' and must be REAL(SDK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
@@ -821,7 +821,7 @@ PROGRAM testParameterLists
     CALL testParam2%get('testCHAR',valchar)
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_STR'// &
-      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' - parameter data type mismatch! Parameter testCHAR type is test_type and'// &
       ' must be TYPE(StringType)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
@@ -858,7 +858,7 @@ PROGRAM testParameterLists
     CALL testParam2%set('testCHAR',TRIM(valchar)) !Type mismatch
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_STR -'// &
-      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' parameter data type mismatch! Parameter testCHAR type is test_type'// &
       ' and must be TYPE(StringType)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
@@ -951,7 +951,7 @@ PROGRAM testParameterLists
     CALL testParam2%get('testSTR',valstr)
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_STR'// &
-      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' - parameter data type mismatch! Parameter testSTR type is test_type and'// &
       ' must be TYPE(StringType)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
@@ -988,7 +988,7 @@ PROGRAM testParameterLists
     CALL testParam2%set('testSTR',TRIM(valstr)) !Type mismatch
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_STR -'// &
-      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' parameter data type mismatch! Parameter testSTR type is test_type'// &
       ' and must be TYPE(StringType)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
@@ -1099,7 +1099,7 @@ PROGRAM testParameterLists
     CALL testParam2%get('testSBKa1',valsbka1)
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SBK_a1'// &
-      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' - parameter data type mismatch! Parameter testSBKa1 type is test_type and'// &
       ' must be 1-D ARRAY LOGICAL(SBK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
@@ -1151,7 +1151,7 @@ PROGRAM testParameterLists
     CALL testParam2%set('testSBKa1',(/.TRUE./)) !Type mismatch
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SBK_a1 -'// &
-      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' parameter data type mismatch! Parameter testSBKa1 type is test_type'// &
       ' and must be 1-D ARRAY LOGICAL(SBK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
@@ -1261,7 +1261,7 @@ PROGRAM testParameterLists
     CALL testParam2%get('testSNKa1',valsnka1)
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SNK_a1'// &
-      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' - parameter data type mismatch! Parameter testSNKa1 type is test_type and'// &
       ' must be 1-D ARRAY INTEGER(SNK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
@@ -1313,7 +1313,7 @@ PROGRAM testParameterLists
     CALL testParam2%set('testSNKa1',(/-1/)) !Type mismatch
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK_a1 -'// &
-      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' parameter data type mismatch! Parameter testSNKa1 type is test_type'// &
       ' and must be 1-D ARRAY INTEGER(SNK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
@@ -1423,7 +1423,7 @@ PROGRAM testParameterLists
     CALL testParam2%get('testSLKa1',valslka1)
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SLK_a1'// &
-      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' - parameter data type mismatch! Parameter testSLKa1 type is test_type and'// &
       ' must be 1-D ARRAY INTEGER(SLK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
@@ -1475,7 +1475,7 @@ PROGRAM testParameterLists
     CALL testParam2%set('testSLKa1',(/-1_SLK/)) !Type mismatch
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK_a1 -'// &
-      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' parameter data type mismatch! Parameter testSLKa1 type is test_type'// &
       ' and must be 1-D ARRAY INTEGER(SLK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
@@ -1591,7 +1591,7 @@ PROGRAM testParameterLists
     CALL testParam2%get('testSSKa1',valsska1)
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SSK_a1'// &
-      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' - parameter data type mismatch! Parameter testSSKa1 type is test_type and'// &
       ' must be 1-D ARRAY REAL(SSK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
@@ -1645,7 +1645,7 @@ PROGRAM testParameterLists
     CALL testParam2%set('testSSKa1',(/-1.0_SSK/)) !Type mismatch
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK_a1 -'// &
-      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' parameter data type mismatch! Parameter testSSKa1 type is test_type'// &
       ' and must be 1-D ARRAY REAL(SSK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
@@ -1761,7 +1761,7 @@ PROGRAM testParameterLists
     CALL testParam2%get('testSDKa1',valsdka1)
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SDK_a1'// &
-      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' - parameter data type mismatch! Parameter testSDKa1 type is test_type and'// &
       ' must be 1-D ARRAY REAL(SDK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
@@ -1815,7 +1815,7 @@ PROGRAM testParameterLists
     CALL testParam2%set('testSDKa1',(/-1.0_SDK/)) !Type mismatch
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK_a1 -'// &
-      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' parameter data type mismatch! Parameter testSDKa1 type is test_type'// &
       ' and must be 1-D ARRAY REAL(SDK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
@@ -1931,7 +1931,7 @@ PROGRAM testParameterLists
     CALL testParam2%get('testSTRa1',valstra1)
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_STR_a1'// &
-      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' - parameter data type mismatch! Parameter testSTRa1 type is test_type and'// &
       ' must be 1-D ARRAY TYPE(StringType)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
@@ -2011,7 +2011,7 @@ PROGRAM testParameterLists
     CALL testParam2%set('testSTRa1',valstra1) !Type mismatch
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_STR_a1 -'// &
-      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' parameter data type mismatch! Parameter testSTRa1 type is test_type'// &
       ' and must be 1-D ARRAY TYPE(StringType)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
@@ -2134,7 +2134,7 @@ PROGRAM testParameterLists
     CALL testParam2%get('testSNKa2',valsnka2)
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SNK_a2'// &
-      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' - parameter data type mismatch! Parameter testSNKa2 type is test_type and'// &
       ' must be 2-D ARRAY INTEGER(SNK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
@@ -2194,7 +2194,7 @@ PROGRAM testParameterLists
     CALL testParam2%set('testSNKa2',RESHAPE((/-1/),(/1,1/))) !Type mismatch
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK_a2 -'// &
-      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' parameter data type mismatch! Parameter testSNKa2 type is test_type'// &
       ' and must be 2-D ARRAY INTEGER(SNK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
@@ -2322,7 +2322,7 @@ PROGRAM testParameterLists
     CALL testParam2%get('testSLKa2',valslka2)
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SLK_a2'// &
-      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' - parameter data type mismatch! Parameter testSLKa2 type is test_type and'// &
       ' must be 2-D ARRAY INTEGER(SLK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
@@ -2382,7 +2382,7 @@ PROGRAM testParameterLists
     CALL testParam2%set('testSLKa2',RESHAPE((/-1_SLK/),(/1,1/))) !Type mismatch
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK_a2 -'// &
-      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' parameter data type mismatch! Parameter testSLKa2 type is test_type'// &
       ' and must be 2-D ARRAY INTEGER(SLK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
@@ -2510,7 +2510,7 @@ PROGRAM testParameterLists
     CALL testParam2%get('testSSKa2',valsska2)
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SSK_a2'// &
-      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' - parameter data type mismatch! Parameter testSSKa2 type is test_type and'// &
       ' must be 2-D ARRAY REAL(SSK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
@@ -2570,7 +2570,7 @@ PROGRAM testParameterLists
     CALL testParam2%set('testSSKa2',RESHAPE((/-1.0_SSK/),(/1,1/))) !Type mismatch
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK_a2 -'// &
-      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' parameter data type mismatch! Parameter testSSKa2 type is test_type'// &
       ' and must be 2-D ARRAY REAL(SSK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
@@ -2698,7 +2698,7 @@ PROGRAM testParameterLists
     CALL testParam2%get('testSDKa2',valsdka2)
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SDK_a2'// &
-      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' - parameter data type mismatch! Parameter testSDKa2 type is test_type and'// &
       ' must be 2-D ARRAY REAL(SDK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
@@ -2758,7 +2758,7 @@ PROGRAM testParameterLists
     CALL testParam2%set('testSDKa2',RESHAPE((/-1.0_SDK/),(/1,1/))) !Type mismatch
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK_a2 -'// &
-      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' parameter data type mismatch! Parameter testSDKa2 type is test_type'// &
       ' and must be 2-D ARRAY REAL(SDK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
@@ -2886,7 +2886,7 @@ PROGRAM testParameterLists
     CALL testParam2%get('testSTRa2',valstra2)
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_STR_a2'// &
-      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' - parameter data type mismatch! Parameter testSTRa2 type is test_type and'// &
       ' must be 2-D ARRAY TYPE(StringType)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
@@ -2963,7 +2963,7 @@ PROGRAM testParameterLists
     CALL testParam2%set('testSTRa2',valstra2) !Type mismatch
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_STR_a2 -'// &
-      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' parameter data type mismatch! Parameter testSTRa2 type is test_type'// &
       ' and must be 2-D ARRAY TYPE(StringType)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
@@ -3094,7 +3094,7 @@ PROGRAM testParameterLists
     CALL testParam2%get('testSNKa3',valsnka3)
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SNK_a3'// &
-      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' - parameter data type mismatch! Parameter testSNKa3 type is test_type and'// &
       ' must be 3-D ARRAY INTEGER(SNK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
@@ -3155,7 +3155,7 @@ PROGRAM testParameterLists
     CALL testParam2%set('testSNKa3',RESHAPE((/-1/),(/1,1,1/))) !Type mismatch
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK_a3 -'// &
-      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' parameter data type mismatch! Parameter testSNKa3 type is test_type'// &
       ' and must be 3-D ARRAY INTEGER(SNK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
@@ -3283,7 +3283,7 @@ PROGRAM testParameterLists
     CALL testParam2%get('testSLKa3',valslka3)
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SLK_a3'// &
-      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' - parameter data type mismatch! Parameter testSLKa3 type is test_type and'// &
       ' must be 3-D ARRAY INTEGER(SLK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
@@ -3344,7 +3344,7 @@ PROGRAM testParameterLists
     CALL testParam2%set('testSLKa3',RESHAPE((/-1_SLK/),(/1,1,1/))) !Type mismatch
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK_a3 -'// &
-      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' parameter data type mismatch! Parameter testSLKa3 type is test_type'// &
       ' and must be 3-D ARRAY INTEGER(SLK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
@@ -3472,7 +3472,7 @@ PROGRAM testParameterLists
     CALL testParam2%get('testSSKa3',valsska3)
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SSK_a3'// &
-      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' - parameter data type mismatch! Parameter testSSKa3 type is test_type and'// &
       ' must be 3-D ARRAY REAL(SSK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
@@ -3533,7 +3533,7 @@ PROGRAM testParameterLists
     CALL testParam2%set('testSSKa3',RESHAPE((/-1.0_SSK/),(/1,1,1/))) !Type mismatch
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK_a3 -'// &
-      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' parameter data type mismatch! Parameter testSSKa3 type is test_type'// &
       ' and must be 3-D ARRAY REAL(SSK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
@@ -3661,7 +3661,7 @@ PROGRAM testParameterLists
     CALL testParam2%get('testSDKa3',valsdka3)
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SDK_a3'// &
-      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' - parameter data type mismatch! Parameter testSDKa3 type is test_type and'// &
       ' must be 3-D ARRAY REAL(SDK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
@@ -3722,7 +3722,7 @@ PROGRAM testParameterLists
     CALL testParam2%set('testSDKa3',RESHAPE((/-1.0_SDK/),(/1,1,1/))) !Type mismatch
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK_a3 -'// &
-      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' parameter data type mismatch! Parameter testSDKa3 type is test_type'// &
       ' and must be 3-D ARRAY REAL(SDK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
@@ -3833,7 +3833,7 @@ PROGRAM testParameterLists
     CALL testParam2%get('testPL',testList2)
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_List'// &
-      ' - parameter data type mismatch! Parameter type is test_type and'// &
+      ' - parameter data type mismatch! Parameter testPL type is test_type and'// &
       ' must be TYPE(ParamType_List)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
@@ -3880,7 +3880,7 @@ PROGRAM testParameterLists
     CALL testParam2%set('testPL',testList2) !Type mismatch
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_List -'// &
-      ' parameter data type mismatch! Parameter type is test_type'// &
+      ' parameter data type mismatch! Parameter testPL type is test_type'// &
       ' and must be TYPE(ParamType_List)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
