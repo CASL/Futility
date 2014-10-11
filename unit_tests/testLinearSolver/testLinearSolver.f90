@@ -3346,10 +3346,10 @@ CONTAINS
         STOP 666
       ENDIF
       CALL thisLS%A%clear()
+      DEALLOCATE(thisX)
             
 #endif
       CALL thisLS%clear()
-      DEALLOCATE(thisX)
       
     ENDSUBROUTINE testIterativeSolve_GMRES
 !
