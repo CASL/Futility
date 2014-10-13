@@ -169,6 +169,7 @@ CONTAINS
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
         !first build one by hand to test
         thisLS%isInit=.TRUE.
+        thisLS%TPLType=PETSC
         thisLS%solverMethod=1
         thisLS%info=2
         thisLS%normType=2
@@ -2158,6 +2159,7 @@ CONTAINS
       ENDIF
       
       DEALLOCATE(thisB)
+      DEALLOCATE(thisX)
       CALL thisLS%A%clear()
       CALL thisLS%clear()
       
@@ -2257,6 +2259,7 @@ CONTAINS
       ENDIF
       CALL thisLS%clear()
       DEALLOCATE(thisB)
+      DEALLOCATE(thisX)
 #endif
  
       DEALLOCATE(thisLS)
@@ -3127,6 +3130,7 @@ CONTAINS
       ENDIF
      
       DEALLOCATE(thisB)
+      DEALLOCATE(thisX)
       CALL thisLS%clear()
       
 #ifdef MPACT_HAVE_PETSC
@@ -3242,6 +3246,7 @@ CONTAINS
         STOP 666
       ENDIF
       
+      DEALLOCATE(thisX)
       DEALLOCATE(thisB)
       CALL thisLS%A%clear()
       CALL thisLS%clear()
@@ -3341,10 +3346,10 @@ CONTAINS
         STOP 666
       ENDIF
       CALL thisLS%A%clear()
+      DEALLOCATE(thisX)
             
 #endif
       CALL thisLS%clear()
-      DEALLOCATE(thisX)
       
     ENDSUBROUTINE testIterativeSolve_GMRES
 !
