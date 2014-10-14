@@ -1978,6 +1978,84 @@ MODULE MatrixTypes
     SUBROUTINE transpose_SparseMatrixType(matrix)
       CHARACTER(LEN=*),PARAMETER :: myName='transpose_SparseMatrixType'
       CLASS(SparseMatrixType),INTENT(INOUT) :: matrix
+
+      INTEGER(SIK),ALLOCATABLE :: tmp_ia(:),tmp_ja(:),A(:,:),tmp(:),Row(:,:),n_Row(:)
+      REAL(SRK),ALLOCATABLE :: tmp_a(:)
+      INTEGER(SIK) :: nnz,i,j,n,nnz_index,row_max,nnz_index_old,index_i
+      n=Matrix%n
+      nnz=Matrix%nnz
+      ALLOCATE(tmp_ia(SIZE(Matrix%ia)))
+      ALLOCATE(tmp_ja(SIZE(Matrix%ja)))
+      ALLOCATE(tmp_a(SIZE(Matrix%a)))
+      ALLOCATE(A(nnz,2))
+      ALLOCATE(tmp(nnz))
+
+      ! A is defined as A(nnz,1:2),first index is i, and second is j
+      nnz_index=0
+      DO i=1,n
+        DO j=Matrix%ia(i),Matrix%ia(i+1)-1
+          nnz_index=nnz_index+1
+          A(nnz_index,1)=i
+          A(nnz_index,2)=Matrix%ja(j)
+        ENDDO
+      ENDDO
+
+      !Transpose A
+      tmp=A(:,1)
+      A(:,1)=A(:,2)
+      A(:,2)=tmp
+
+      ! reorder A by i and then j
+
+      !sort A by the first index
+      !Row(i,j), i is the ith row, j is the nnz index base on column in that row.
+
+      ALLOCATE(n_Row(n))
+      n_Row=0
+      DO i=1,nnz
+        index_i=A(i,1)
+        n_Row(index_i)=n_Row(index_i)+1
+      ENDDO
+      row_max=MAXVAL(n_Row)
+
+      ALLOCATE(Row(n,row_max))
+      n_Row=0
+      DO i=1,nnz
+        index_i=A(i,1)
+        n_Row(index_i)=n_Row(index_i)+1
+        Row(index_i,n_Row(index_i))=i
+      ENDDO
+
+      !add new
+      tmp_ia=0
+      tmp_ja=0
+      tmp_a=0.0_SRK
+
+      tmp_ia(1)=1
+      DO i=1,n
+        tmp_ia(i+1)=tmp_ia(i)+n_Row(i)
+      ENDDO
+
+      nnz_index=0
+      DO i=1,n
+        DO j=1,n_Row(i)
+          nnz_index=nnz_index+1
+          nnz_index_old=Row(i,j)
+          tmp_ja(nnz_index)=A(nnz_index_old,2)
+          tmp_a(nnz_index)=Matrix%a(nnz_index_old)
+        ENDDO
+      ENDDO
+      Matrix%a=tmp_a
+      Matrix%ia=tmp_ia
+      Matrix%ja=tmp_ja
+
+      DEALLOCATE(tmp_ia)
+      DEALLOCATE(tmp_ja)
+      DEALLOCATE(tmp_a)
+      DEALLOCATE(A)
+      DEALLOCATE(tmp)
+      DEALLOCATE(n_Row)
+      DEALLOCATE(Row)
     ENDSUBROUTINE transpose_SparseMatrixType
 !
 !-------------------------------------------------------------------------------

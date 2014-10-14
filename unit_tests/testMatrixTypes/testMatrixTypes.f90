@@ -25,49 +25,50 @@ PROGRAM testMatrixTypes
   USE ParallelEnv
   USE VectorTypes
   USE MatrixTypes
-  
+
   IMPLICIT NONE
-  
+
 #ifdef MPACT_HAVE_PETSC
 #include <finclude/petsc.h>
 #undef IS
   PetscErrorCode  :: ierr
 #endif
-  
+
   TYPE(ExceptionHandlerType),TARGET :: e
   TYPE(ParamType) :: pList,optListMat,vecPList
-  
+
   !Configure exception handler for test
   CALL e%setStopOnError(.FALSE.)
   CALL e%setQuietMode(.TRUE.)
   CALL eParams%addSurrogate(e)
   CALL eMatrixType%addSurrogate(e)
-  
+
   !Set up optional PL
   CALL optListMat%add('MatrixType->nnz',-1_SNK)
   CALL optListMat%add('MatrixType->isSym',.FALSE.)
   CALL optListMat%add('MatrixType->matType',SPARSE)
   CALL optListMat%add('MatrixType->MPI_Comm_ID',PE_COMM_SELF)
-  
+
   !Set up vector PL
   CALL vecPList%add('VectorType -> n',1)
   CALL vecPList%add('VectorType -> MPI_Comm_ID',PE_COMM_SELF)
-  
-#ifdef MPACT_HAVE_PETSC    
+
+#ifdef MPACT_HAVE_PETSC
   CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
 #endif
 
-  CREATE_TEST('Test Matrix Types') 
+  CREATE_TEST('Test Matrix Types')
   REGISTER_SUBTEST('TestMatrix',testMatrix)
+  REGISTER_SUBTEST('TestTranspose',testTransposeMatrix)
   FINALIZE_TEST()
-  
+
   CALL optListMat%clear()
   CALL vecPList%clear()
   CALL pList%clear()
   CALL MatrixTypes_Clear_ValidParams()
   CALL VectorType_Clear_ValidParams()
-  
-#ifdef MPACT_HAVE_PETSC    
+
+#ifdef MPACT_HAVE_PETSC
   CALL PetscFinalize(ierr)
 #endif
 !
@@ -102,7 +103,7 @@ PROGRAM testMatrixTypes
       CALL xPETScVector%init(vecPList)
       CALL yPETScVector%init(vecPlist)
 #endif
-      
+
       SELECTTYPE(thisMatrix)
         TYPE IS(SparseMatrixType)
 !Test for sparse matrices
@@ -119,10 +120,10 @@ PROGRAM testMatrixTypes
           ALLOCATE(thisMatrix%ja(100))
           thisMatrix%ia(101)=101
       ENDSELECT
-        
+
       !clear it
       CALL thisMatrix%clear()
-        
+
       SELECTTYPE(thisMatrix)
         TYPE IS(SparseMatrixType)
           !check for success
@@ -139,9 +140,9 @@ PROGRAM testMatrixTypes
           ENDIF
           WRITE(*,*) '  Passed: CALL sparse%clear()'
       ENDSELECT
-          
-      !check init 
-      
+
+      !check init
+
       ! build parameter list
       CALL pList%add('MatrixType->n',10_SNK)
       CALL pList%add('MatrixType->nnz',10_SNK)
@@ -161,10 +162,10 @@ PROGRAM testMatrixTypes
             WRITE(*,*) 'CALL sparse%init(...) FAILED!'
             STOP 666
           ENDIF
-      ENDSELECT  
+      ENDSELECT
       CALL thisMatrix%clear()
       CALL pList%clear()
-        
+
       !now check init without m being provided
       CALL pList%add('MatrixType->n',10_SNK)
       CALL pList%validate(pList,optListMat)
@@ -174,7 +175,7 @@ PROGRAM testMatrixTypes
         STOP 666
       ENDIF
       CALL thisMatrix%clear()
-        
+
       !init it twice so on 2nd init, isInit==.TRUE.
       CALL thisMatrix%init(pList)
       SELECTTYPE(thisMatrix)
@@ -239,7 +240,7 @@ PROGRAM testMatrixTypes
       ia_vals(2)=3
       ia_vals(3)=4
       ia_vals(4)=7
-      
+
       ! build parameter list
       CALL pList%clear()
       CALL pList%add('MatrixType->n',3_SNK)
@@ -247,7 +248,7 @@ PROGRAM testMatrixTypes
       CALL pList%validate(pList,optListMat)
       CALL thisMatrix%clear()
       CALL thisMatrix%init(pList)
-        
+
       SELECTTYPE(thisMatrix)
         TYPE IS(SparseMatrixType)
           CALL thisMatrix%setShape(1,1,1._SRK)
@@ -325,7 +326,7 @@ PROGRAM testMatrixTypes
             WRITE(*,*) 'CALL sparse%setShape(...) FAILED!'
             STOP 666
           ENDIF
-          !test check to see if i,j of new entry are below and to the right 
+          !test check to see if i,j of new entry are below and to the right
           !of previous i.j
           CALL thisMatrix%clear()
           CALL thisMatrix%init(pList)
@@ -355,7 +356,7 @@ PROGRAM testMatrixTypes
           CALL thisMatrix%setShape(3,2)
           CALL thisMatrix%setShape(3,3)
       ENDSELECT
-      
+
       !use set to update the values
       CALL thisMatrix%set(1,1,1._SRK)
       CALL thisMatrix%set(1,3,2._SRK)
@@ -380,7 +381,7 @@ PROGRAM testMatrixTypes
             ENDIF
           ENDDO
       ENDSELECT
-      
+
       !Test BLAS_matvec
       x=1.0_SRK
       y=1.0_SRK
@@ -593,10 +594,10 @@ PROGRAM testMatrixTypes
       FINFO() 'Result:',yRealVector%b(1:7:2),'Solution:',dummyvec
 
       WRITE(*,*) '  Passed: CALL BLAS_matvec(...) sparse-matrix'
-      
+
       !Test BLAS_matmult when SparseMatType is supported.
       CALL testMatrixMultSparse()
-      
+
       !off-nominal tests
       !pass matrix w/out setshape
       CALL thisMatrix%clear()
@@ -636,14 +637,14 @@ PROGRAM testMatrixTypes
       CALL pList%add('MatrixType->nnz',6_SNK)
       CALL thisMatrix%clear()
       CALL thisMatrix%init(pList)
-        
+
       SELECTTYPE(thisMatrix)
         TYPE IS(SparseMatrixType)
           CALL thisMatrix%setShape(1,1)
           CALL thisMatrix%setShape(2,2)
       ENDSELECT
       CALL thisMatrix%set(1,2,1._SRK)
-        
+
       SELECTTYPE(thisMatrix)
         TYPE IS(SparseMatrixType)
           DO i=1,SIZE(thisMatrix%a)
@@ -654,7 +655,7 @@ PROGRAM testMatrixTypes
           ENDDO
           WRITE(*,*) '  Passed: CALL sparse%set(...)'
       ENDSELECT
-      
+
       !Perform test of functionality of get function
       ![1 0 2]
       ![0 0 3]
@@ -702,27 +703,27 @@ PROGRAM testMatrixTypes
         TYPE IS(SparseMatrixType)
           CALL thisMatrix%get(4,2,dummy)
           IF(dummy /= -1051._SRK) THEN
-            WRITE(*,*) 'CALL sparse%get(...) FAILED!' 
+            WRITE(*,*) 'CALL sparse%get(...) FAILED!'
             STOP 666
           ENDIF
           CALL thisMatrix%get(-1,2,dummy)
           IF(dummy/=-1051._SRK) THEN
-            WRITE(*,*) 'CALL sparse%get(...) FAILED!' 
+            WRITE(*,*) 'CALL sparse%get(...) FAILED!'
             STOP 666
           ENDIF
           CALL thisMatrix%get(2,-1,dummy)
           IF(dummy/=-1051._SRK) THEN
-            WRITE(*,*) 'CALL sparse%get(...) FAILED!' 
+            WRITE(*,*) 'CALL sparse%get(...) FAILED!'
             STOP 666
           ENDIF
       ENDSELECT
       !test get with uninit, make sure no crash.
       CALL thisMatrix%clear()
       SELECTTYPE(thisMatrix)
-        TYPE IS(SparseMatrixType)      
+        TYPE IS(SparseMatrixType)
           CALL thisMatrix%get(1,1,dummy)
           IF(dummy /= 0.0_SRK) THEN
-            WRITE(*,*) 'CALL sparse%get(...) FAILED!' 
+            WRITE(*,*) 'CALL sparse%get(...) FAILED!'
             STOP 666
           ENDIF
       ENDSELECT
@@ -730,7 +731,7 @@ PROGRAM testMatrixTypes
       WRITE(*,*) '  Passed: CALL sparse%get(...)'
       DEALLOCATE(thisMatrix)
 !
-!Test for dense square matrices        
+!Test for dense square matrices
       ALLOCATE(DenseSquareMatrixType :: thisMatrix)
       SELECTTYPE(thisMatrix)
         TYPE IS(DenseSquareMatrixType)
@@ -752,8 +753,8 @@ PROGRAM testMatrixTypes
           ENDIF
           WRITE(*,*) '  Passed: CALL densesquare%clear()'
       ENDSELECT
-      
-      !check init     
+
+      !check init
       CALL pList%clear()
       CALL pList%add('MatrixType->n',10_SNK)
       CALL pList%add('MatrixType->isSym',.FALSE.)
@@ -771,7 +772,7 @@ PROGRAM testMatrixTypes
             WRITE(*,*) 'CALL densesquare%init(...) FAILED!'
             STOP 666
           ENDIF
-      ENDSELECT  
+      ENDSELECT
       CALL thisMatrix%clear()
       CALL pList%clear()
       CALL pList%add('MatrixType->n',10_SNK)
@@ -849,7 +850,7 @@ PROGRAM testMatrixTypes
             STOP 666
           ENDIF
       ENDSELECT
-      
+
       !Test BLAS_matvec
       x=1.0_SRK
       y=1.0_SRK
@@ -1061,9 +1062,9 @@ PROGRAM testMatrixTypes
       bool=ALL(yRealVector%b(7:1:-2) .APPROXEQA. dummyvec)
       ASSERT(bool,'BLAS_matvec(THISMATRIX,X%b,Y%b,TRANS=''T'',UPLO=''L'',DIAG=''N'',INCX_IN=-2_SIK')
       FINFO() 'Result:',yRealVector%b(7:1:-2),'Solution:',dummyvec
-      
+
       CALL testMatrixMultSquare()
-      
+
       CALL pList%clear()
       CALL pList%add('MatrixType->n',2_SNK)
       CALL pList%add('MatrixType->isSym',.FALSE.)
@@ -1081,10 +1082,10 @@ PROGRAM testMatrixTypes
             WRITE(*,*) 'CALL densesquare%set(...) FAILED!'
             STOP 666
           ENDIF
-      ENDSELECT    
+      ENDSELECT
       !check matrix that hasnt been init, i,j out of bounds
       CALL thisMatrix%clear()
-      CALL thisMatrix%set(1,1,1._SRK) 
+      CALL thisMatrix%set(1,1,1._SRK)
       CALL thisMatrix%clear()
       CALL thisMatrix%init(pList)
       CALL thisMatrix%set(-1,1,1._SRK)
@@ -1094,7 +1095,7 @@ PROGRAM testMatrixTypes
       !no crash? good
       CALL thisMatrix%clear()
       WRITE(*,*) '  Passed: CALL densesquare%set(...)'
-      
+
       !Perform test of functionality of get function
       ![1 0 2]
       ![0 0 3]
@@ -1146,24 +1147,24 @@ PROGRAM testMatrixTypes
         TYPE IS(DenseSquareMatrixType)
           CALL thisMatrix%get(4,2,dummy)
           IF(dummy /= -1051._SRK) THEN
-            WRITE(*,*) 'CALL densesquare%get(...) FAILED!' 
+            WRITE(*,*) 'CALL densesquare%get(...) FAILED!'
             STOP 666
           ENDIF
           CALL thisMatrix%get(-1,2,dummy)
           IF(dummy/=-1051._SRK) THEN
-            WRITE(*,*) 'CALL densesquare%get(...) FAILED!' 
+            WRITE(*,*) 'CALL densesquare%get(...) FAILED!'
             STOP 666
           ENDIF
           CALL thisMatrix%get(2,-1,dummy)
           IF(dummy/=-1051._SRK) THEN
-            WRITE(*,*) 'CALL densesquare%get(...) FAILED!' 
+            WRITE(*,*) 'CALL densesquare%get(...) FAILED!'
             STOP 666
           ENDIF
       ENDSELECT
       !test get with uninit, make sure no crash.
       CALL thisMatrix%clear()
       SELECTTYPE(thisMatrix)
-        TYPE IS(DenseSquareMatrixType)      
+        TYPE IS(DenseSquareMatrixType)
           CALL thisMatrix%get(1,1,dummy)
           IF(dummy /= 0.0_SRK) THEN
             WRITE(*,*) 'CALL densesquare%get(...) FAILED!' !column one check
@@ -1196,7 +1197,7 @@ PROGRAM testMatrixTypes
         WRITE(*,*) "CALL BLAS_matvec(...) -tridiag FAILED!"
         STOP 666
       ENDIF
-      
+
       CALL thisMatrix%clear()
       SELECTTYPE(thisMatrix)
         TYPE IS(TriDiagMatrixType)
@@ -1208,7 +1209,7 @@ PROGRAM testMatrixTypes
           ENDIF
           WRITE(*,*) '  Passed: CALL tridiag%clear()'
       ENDSELECT
-      !check init      
+      !check init
       CALL pList%clear()
       CALL pList%add('MatrixType->n',10_SNK)
       CALL pList%add('MatrixType->isSym',.FALSE.)
@@ -1240,7 +1241,7 @@ PROGRAM testMatrixTypes
             WRITE(*,*) 'CALL tridiag%init(...) FAILED!'
             STOP 666
           ENDIF
-      ENDSELECT    
+      ENDSELECT
       CALL thisMatrix%clear()
       !test with double init (isInit==true on 2nd try)
       CALL pList%clear()
@@ -1370,7 +1371,7 @@ PROGRAM testMatrixTypes
       ENDSELECT
       !check matrix that hasnt been init, i,j out of bounds
       CALL thisMatrix%clear()
-      CALL thisMatrix%set(1,1,1._SRK) 
+      CALL thisMatrix%set(1,1,1._SRK)
       CALL thisMatrix%clear()
       CALL pList%clear()
       CALL pList%add('MatrixType->n',4_SNK)
@@ -1383,7 +1384,7 @@ PROGRAM testMatrixTypes
       !no crash? good
       CALL thisMatrix%clear()
       WRITE(*,*) '  Passed: CALL tridiag%set(...)'
-      
+
       !Perform test of functionality of get function
       ![1 2 0]
       ![4 0 3]
@@ -1432,24 +1433,24 @@ PROGRAM testMatrixTypes
         TYPE IS(TriDiagMatrixType)
           CALL thisMatrix%get(4,2,dummy)
           IF(dummy /= -1051._SRK) THEN
-            WRITE(*,*) 'CALL tridiag%get(...) FAILED!' 
+            WRITE(*,*) 'CALL tridiag%get(...) FAILED!'
             STOP 666
           ENDIF
           CALL thisMatrix%get(-1,2,dummy)
           IF(dummy/=-1051._SRK) THEN
-            WRITE(*,*) 'CALL tridiag%get(...) FAILED!' 
+            WRITE(*,*) 'CALL tridiag%get(...) FAILED!'
             STOP 666
           ENDIF
           CALL thisMatrix%get(2,-1,dummy)
           IF(dummy/=-1051._SRK) THEN
-            WRITE(*,*) 'CALL tridiag%get(...) FAILED!' 
+            WRITE(*,*) 'CALL tridiag%get(...) FAILED!'
             STOP 666
           ENDIF
       ENDSELECT
       !test get with uninit, make sure no crash.
       CALL thisMatrix%clear()
       SELECTTYPE(thisMatrix)
-        TYPE IS(TriDiagMatrixType)      
+        TYPE IS(TriDiagMatrixType)
           dummy=0.0_SRK
           CALL thisMatrix%get(1,1,dummy)
           IF(dummy /= 0.0_SRK) THEN
@@ -1539,9 +1540,9 @@ PROGRAM testMatrixTypes
         STOP 666
       ENDIF
       CALL thisMatrix%clear()
-      
+
       WRITE(*,*) '  Passed: CALL denserect%init(...)'
-            
+
       !check set
       !test normal use case (symmetric and nonsymmetric)
       !want to build:
@@ -1567,7 +1568,7 @@ PROGRAM testMatrixTypes
             ENDIF
           ENDDO
       ENDSELECT
-      
+
       !Test BLAS_matvec
       x=1.0_SRK
       y=1.0_SRK
@@ -1633,17 +1634,17 @@ PROGRAM testMatrixTypes
       CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xRealVector,BETA=2.0_SRK,Y=yRealVector)
       CALL yRealVector%get(y)
       IF(ANY(.NOT.(y .APPROXEQ. (/14._SRK,32._SRK,1._SRK/)))) THEN
-        WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xRealVector,BETA=2.0_SRK,Y=yRealVector)", & 
+        WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xRealVector,BETA=2.0_SRK,Y=yRealVector)", &
                    " -denserect FAILED!"
         STOP 666
       ENDIF
       WRITE(*,*) '  Passed: CALL BLAS_matvec(...) denserect-matrix'
-      
+
       CALL testMatrixMultRect()
-      
+
       !check matrix that hasnt been init, i,j out of bounds
       CALL thisMatrix%clear()
-      CALL thisMatrix%set(1,1,1._SRK) 
+      CALL thisMatrix%set(1,1,1._SRK)
       CALL thisMatrix%clear()
       CALL pList%clear()
       CALL pList%add('MatrixType->n',2_SNK)
@@ -1656,7 +1657,7 @@ PROGRAM testMatrixTypes
       !no crash? good
       CALL thisMatrix%clear()
       WRITE(*,*) '  Passed: CALL denserect%set(...)'
-      
+
       !Perform test of functionality of get function
       ![1 0 2]
       ![4 5 3]
@@ -1699,39 +1700,39 @@ PROGRAM testMatrixTypes
         TYPE IS(DenseRectMatrixType)
           CALL thisMatrix%get(4,2,dummy)
           IF(dummy /= -1051._SRK) THEN
-            WRITE(*,*) 'CALL densesquare%get(...) FAILED!' 
+            WRITE(*,*) 'CALL densesquare%get(...) FAILED!'
             STOP 666
           ENDIF
           CALL thisMatrix%get(-1,2,dummy)
           IF(dummy/=-1051._SRK) THEN
-            WRITE(*,*) 'CALL densesquare%get(...) FAILED!' 
+            WRITE(*,*) 'CALL densesquare%get(...) FAILED!'
             STOP 666
           ENDIF
           CALL thisMatrix%get(2,-1,dummy)
           IF(dummy/=-1051._SRK) THEN
-            WRITE(*,*) 'CALL densesquare%get(...) FAILED!' 
+            WRITE(*,*) 'CALL densesquare%get(...) FAILED!'
             STOP 666
           ENDIF
       ENDSELECT
       !test get with uninit, make sure no crash.
       CALL thisMatrix%clear()
       SELECTTYPE(thisMatrix)
-        TYPE IS(DenseRectMatrixType)    
-          dummy=0.0_SRK        
+        TYPE IS(DenseRectMatrixType)
+          dummy=0.0_SRK
           CALL thisMatrix%get(1,1,dummy)
           IF(dummy /= 0.0_SRK) THEN
-            WRITE(*,*) 'CALL densesquare%get(...) FAILED!' 
+            WRITE(*,*) 'CALL densesquare%get(...) FAILED!'
             STOP 666
           ENDIF
       ENDSELECT
       CALL thisMatrix%clear()
       WRITE(*,*) '  Passed: CALL densesquare%get(...)'
       DEALLOCATE(thisMatrix)
-      
-!Test for PETSc matrices (if necessary)
-#ifdef MPACT_HAVE_PETSC  
 
-!Test for PETSc sparsematrices 
+!Test for PETSc matrices (if necessary)
+#ifdef MPACT_HAVE_PETSC
+
+!Test for PETSc sparsematrices
       ALLOCATE(PETScMatrixType :: thisMatrix)
       SELECTTYPE(thisMatrix)
         TYPE IS(PETScMatrixType)
@@ -1780,7 +1781,7 @@ PROGRAM testMatrixTypes
             WRITE(*,*) 'CALL petscsparse%init(...) FAILED!'
             STOP 666
           ENDIF
-      ENDSELECT  
+      ENDSELECT
       CALL thisMatrix%clear()
       CALL pList%clear()
       CALL pList%add('MatrixType->n',10_SNK)
@@ -1829,7 +1830,7 @@ PROGRAM testMatrixTypes
       ENDIF
       CALL thisMatrix%clear()
       WRITE(*,*) '  Passed: CALL petscsparse%init(...)'
-      
+
       !check set
       !test normal use case (symmetric and nonsymmetric)
       !want to build:
@@ -1850,7 +1851,7 @@ PROGRAM testMatrixTypes
           CALL MatAssemblyBegin(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
           CALL MatAssemblyEnd(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
           thisMatrix%isAssembled=.TRUE.
-          
+
           CALL MatGetValues(thisMatrix%a,1,0,1,0,dummy,ierr)
           IF(dummy/=1._SRK)THEN
             WRITE(*,*) 'CALL petscsparse%set(...) FAILED!'
@@ -1868,7 +1869,7 @@ PROGRAM testMatrixTypes
           ENDIF
       ENDSELECT
       CALL thisMatrix%clear()
-     
+
       CALL pList%clear()
       CALL pList%add('MatrixType->n',2_SNK)
       CALL pList%add('MatrixType->isSym',.FALSE.)
@@ -1885,7 +1886,7 @@ PROGRAM testMatrixTypes
           CALL MatAssemblyBegin(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
           CALL MatAssemblyEnd(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
           thisMatrix%isAssembled=.TRUE.
-          
+
           CALL MatGetValues(thisMatrix%a,1,0,1,0,dummy,ierr)
           IF(dummy/=1._SRK)THEN
             WRITE(*,*) 'CALL petscsparse%set(...) FAILED!'
@@ -1906,10 +1907,10 @@ PROGRAM testMatrixTypes
             WRITE(*,*) 'CALL petscsparse%set(...) FAILED!'
             STOP 666
           ENDIF
-      ENDSELECT    
+      ENDSELECT
       !check matrix that hasnt been init, i,j out of bounds
       CALL thisMatrix%clear()
-      CALL thisMatrix%set(1,1,1._SRK) 
+      CALL thisMatrix%set(1,1,1._SRK)
       CALL thisMatrix%clear()
       CALL thisMatrix%init(pList)
       CALL thisMatrix%set(-1,1,1._SRK)
@@ -1918,7 +1919,7 @@ PROGRAM testMatrixTypes
       CALL thisMatrix%set(1,5,1._SRK)
       !no crash? good
       WRITE(*,*) '  Passed: CALL petscsparse%set(...)'
-      
+
       CALL thisMatrix%clear()
       CALL pList%clear()
       CALL pList%add('MatrixType->n',3_SNK)
@@ -2057,12 +2058,12 @@ PROGRAM testMatrixTypes
       CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xPETScVector,BETA=2.0_SRK,Y=yPETScVector) !Error check uninit
       CALL yPETScVector%get(y)
       IF(ANY(.NOT.(y .APPROXEQ. (/2._SRK,2._SRK,2._SRK/)))) THEN
-        WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xPETScVector,BETA=2.0_SRK,Y=yPETScVector)", & 
+        WRITE(*,*) "CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xPETScVector,BETA=2.0_SRK,Y=yPETScVector)", &
                    " -petscsparse FAILED!"
         STOP 666
       ENDIF
       WRITE(*,*) '  Passed: CALL BLAS_matvec(...) petscsparse-matrix'
-      
+
       !Perform test of functionality of get function
       ![1 0 2]
       ![0 0 3]
@@ -2073,7 +2074,7 @@ PROGRAM testMatrixTypes
       CALL pList%add('MatrixType->isSym',.FALSE.)
       CALL pList%add('MatrixType->mattype',SPARSE)
       CALL pList%validate(pList,optListMat)
-      CALL thisMatrix%init(pList) ! non-symmetric (0), sparse (0) 
+      CALL thisMatrix%init(pList) ! non-symmetric (0), sparse (0)
       SELECTTYPE(thisMatrix)
         TYPE IS(PETScMatrixType)
           CALL thisMatrix%set(1,1,1._SRK)
@@ -2115,24 +2116,24 @@ PROGRAM testMatrixTypes
         TYPE IS(PETScMatrixType)
           CALL thisMatrix%get(4,2,dummy)
           IF(dummy /= -1051._SRK) THEN
-            WRITE(*,*) 'CALL petscsparse%get(...) FAILED!' 
+            WRITE(*,*) 'CALL petscsparse%get(...) FAILED!'
             STOP 666
           ENDIF
           CALL thisMatrix%get(-1,2,dummy)
           IF(dummy/=-1051._SRK) THEN
-            WRITE(*,*) 'CALL petscsparse%get(...) FAILED!' 
+            WRITE(*,*) 'CALL petscsparse%get(...) FAILED!'
             STOP 666
           ENDIF
           CALL thisMatrix%get(2,-1,dummy)
           IF(dummy/=-1051._SRK) THEN
-            WRITE(*,*) 'CALL petscsparse%get(...) FAILED!' 
+            WRITE(*,*) 'CALL petscsparse%get(...) FAILED!'
             STOP 666
           ENDIF
       ENDSELECT
       !test get with uninit, make sure no crash.
       CALL thisMatrix%clear()
       SELECTTYPE(thisMatrix)
-        TYPE IS(PETScMatrixType)      
+        TYPE IS(PETScMatrixType)
           CALL thisMatrix%get(1,1,dummy)
           IF(dummy /= 0.0_SRK) THEN
             WRITE(*,*) 'CALL petscsparse%get(...) FAILED!'
@@ -2143,7 +2144,7 @@ PROGRAM testMatrixTypes
       WRITE(*,*) '  Passed: CALL petscsparse%get(...)'
       DEALLOCATE(thisMatrix)
 
-!Test for PETSc dense square matrices        
+!Test for PETSc dense square matrices
       ALLOCATE(PETScMatrixType :: thisMatrix)
       SELECTTYPE(thisMatrix)
         TYPE IS(PETScMatrixType)
@@ -2192,7 +2193,7 @@ PROGRAM testMatrixTypes
             WRITE(*,*) 'CALL petscdense%init(...) FAILED!'
             STOP 666
           ENDIF
-      ENDSELECT  
+      ENDSELECT
       CALL thisMatrix%clear()
       CALL pList%clear()
       CALL pList%add('MatrixType->n',10_SNK)
@@ -2229,7 +2230,7 @@ PROGRAM testMatrixTypes
       ENDSELECT
       CALL thisMatrix%clear()
       WRITE(*,*) '  Passed: CALL petscdense%init(...)'
-      
+
       !check set
       !test normal use case (symmetric and nonsymmetric)
       !want to build:
@@ -2250,7 +2251,7 @@ PROGRAM testMatrixTypes
           CALL MatAssemblyBegin(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
           CALL MatAssemblyEnd(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
           thisMatrix%isAssembled=.TRUE.
-          
+
           CALL MatGetValues(thisMatrix%a,1,0,1,0,dummy,ierr)
           IF(dummy/=1._SRK)THEN
             WRITE(*,*) 'CALL petscdense%set(...) FAILED!'
@@ -2268,7 +2269,7 @@ PROGRAM testMatrixTypes
           ENDIF
       ENDSELECT
       CALL thisMatrix%clear()
-      
+
       CALL pList%clear()
       CALL pList%add('MatrixType->n',2_SNK)
       CALL pList%add('MatrixType->isSym',.FALSE.)
@@ -2285,7 +2286,7 @@ PROGRAM testMatrixTypes
           CALL MatAssemblyBegin(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
           CALL MatAssemblyEnd(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
           thisMatrix%isAssembled=.TRUE.
-          
+
           CALL MatGetValues(thisMatrix%a,1,0,1,0,dummy,ierr)
           IF(dummy/=1._SRK)THEN
             WRITE(*,*) 'CALL petscdense%set(...) FAILED!'
@@ -2306,10 +2307,10 @@ PROGRAM testMatrixTypes
             WRITE(*,*) 'CALL petscdense%set(...) FAILED!'
             STOP 666
           ENDIF
-      ENDSELECT    
+      ENDSELECT
       !check matrix that hasnt been init, i,j out of bounds
       CALL thisMatrix%clear()
-      CALL thisMatrix%set(1,1,1._SRK) 
+      CALL thisMatrix%set(1,1,1._SRK)
       CALL thisMatrix%clear()
       CALL pList%clear()
       CALL pList%add('MatrixType->n',2_SNK)
@@ -2323,7 +2324,7 @@ PROGRAM testMatrixTypes
       CALL thisMatrix%set(1,5,1._SRK)
       !no crash? good
       WRITE(*,*) '  Passed: CALL petscdense%set(...)'
-      
+
       !Test BLAS_matvec
       CALL thisMatrix%clear()
       CALL pList%clear()
@@ -2468,7 +2469,7 @@ PROGRAM testMatrixTypes
         STOP 666
       ENDIF
       WRITE(*,*) '  Passed: CALL BLAS_matvec(...) petscdense-matrix'
-      
+
       !Perform test of functionality of get function
       ![1 0 2]
       ![0 0 3]
@@ -2521,24 +2522,24 @@ PROGRAM testMatrixTypes
         TYPE IS(PETScMatrixType)
           CALL thisMatrix%get(4,2,dummy)
           IF(dummy /= -1051._SRK) THEN
-            WRITE(*,*) 'CALL petscdensesquare%get(...) FAILED!' 
+            WRITE(*,*) 'CALL petscdensesquare%get(...) FAILED!'
             STOP 666
           ENDIF
           CALL thisMatrix%get(-1,2,dummy)
           IF(dummy/=-1051._SRK) THEN
-            WRITE(*,*) 'CALL petscdensesquare%get(...) FAILED!' 
+            WRITE(*,*) 'CALL petscdensesquare%get(...) FAILED!'
             STOP 666
           ENDIF
           CALL thisMatrix%get(2,-1,dummy)
           IF(dummy/=-1051._SRK) THEN
-            WRITE(*,*) 'CALL petscdensesquare%get(...) FAILED!' 
+            WRITE(*,*) 'CALL petscdensesquare%get(...) FAILED!'
             STOP 666
           ENDIF
       ENDSELECT
       !test get with uninit, make sure no crash.
       CALL thisMatrix%clear()
       SELECTTYPE(thisMatrix)
-        TYPE IS(PETScMatrixType)      
+        TYPE IS(PETScMatrixType)
           CALL thisMatrix%get(1,1,dummy)
           IF(dummy /= 0.0_SRK) THEN
             WRITE(*,*) 'CALL petscdensesquare%get(...) FAILED!'
@@ -2546,9 +2547,9 @@ PROGRAM testMatrixTypes
           ENDIF
       ENDSELECT
       CALL thisMatrix%clear()
-      
+
       WRITE(*,*) '  Passed: CALL petscdensesquare%get(...)'
-      
+
       DEALLOCATE(thisMatrix)
       CALL xPETScVector%clear()
       CALL yPETScVector%clear()
@@ -2563,7 +2564,7 @@ PROGRAM testMatrixTypes
       CLASS(MatrixType),ALLOCATABLE :: bmat
       CLASS(MatrixType),ALLOCATABLE :: cmat
       INTEGER(SIK) :: i,j
-      REAL(SRK) :: ALPHA,BETA,dummy  
+      REAL(SRK) :: ALPHA,BETA,dummy
 
 #ifdef MPACT_HAVE_PETSC
       !
@@ -2583,7 +2584,7 @@ PROGRAM testMatrixTypes
       CALL thisMtrx%set(2,2,1._SRK)
       CALL thisMtrx%set(2,3,1._SRK)
       CALL thisMtrx%set(3,3,1._SRK)
-      
+
       ALLOCATE(PETScMatrixType :: bmat)
       ALLOCATE(PETScMatrixType :: cmat)
       CALL bmat%init(pList)  !symmetric
@@ -2600,7 +2601,7 @@ PROGRAM testMatrixTypes
       CALL cmat%set(2,2,3._SRK)
       CALL cmat%set(2,3,3._SRK)
       CALL cmat%set(3,3,3._SRK)
-      
+
       BETA=1.0_SRK
       ALPHA=1.0_SRK
       ! A: Square  B: Square  C: Square  alpha & beta
@@ -2686,7 +2687,7 @@ PROGRAM testMatrixTypes
       CLASS(MatrixType),ALLOCATABLE :: cmat
       INTEGER(SIK) :: i,j
       REAL(SRK) :: ALPHA,BETA,dummy
-      
+
       !Test BLAS_matmult
       !
       !1.) A: Square  B: Square  C: Square     ----------------------------
@@ -2703,7 +2704,7 @@ PROGRAM testMatrixTypes
       CALL thisMtrx%set(2,2,1._SRK)
       CALL thisMtrx%set(2,3,1._SRK)
       CALL thisMtrx%set(3,3,1._SRK)
-      
+
       ALLOCATE(DenseSquareMatrixType :: bmat)
       ALLOCATE(DenseSquareMatrixType :: cmat)
       CALL bmat%init(pList)  !symmetric
@@ -2720,7 +2721,7 @@ PROGRAM testMatrixTypes
       CALL cmat%set(2,2,3._SRK)
       CALL cmat%set(2,3,3._SRK)
       CALL cmat%set(3,3,3._SRK)
-      
+
       BETA=1.0_SRK
       ALPHA=1.0_SRK
       ! A: Square  B: Square  C: Square  alpha & beta
@@ -2801,7 +2802,7 @@ PROGRAM testMatrixTypes
       CALL pList%clear()
       CALL pList%add('MatrixType->n',3_SNK)
       CALL pList%add('MatrixType->m',3_SNK)
-      CALL cmat%init(pList)  
+      CALL cmat%init(pList)
       CALL cmat%set(1,1,3._SRK)
       CALL cmat%set(1,2,3._SRK)
       CALL cmat%set(1,3,3._SRK)
@@ -2811,7 +2812,7 @@ PROGRAM testMatrixTypes
       CALL cmat%set(3,1,3._SRK)
       CALL cmat%set(3,2,3._SRK)
       CALL cmat%set(3,3,3._SRK)
-      
+
       ! A: Square  B: Square  C: Rect  alpha & beta
       CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA)
       SELECTTYPE(cmat)
@@ -2881,7 +2882,7 @@ PROGRAM testMatrixTypes
           STOP 666
       ENDSELECT
       WRITE(*,*) '  Passed: CALL BLAS_matmult(...) A=DS B=DS C=DR'
-    
+
       !
       !3.) A: Square  B: Rect  C: Square    ----------------------------
       !
@@ -2904,7 +2905,7 @@ PROGRAM testMatrixTypes
       CALL pList%clear()
       CALL pList%add('MatrixType->n',3_SNK)
       CALL pList%add('MatrixType->m',3_SNK)
-      CALL bmat%init(pList)  
+      CALL bmat%init(pList)
       CALL bmat%set(1,1,1._SRK)
       CALL bmat%set(1,2,0._SRK)
       CALL bmat%set(1,3,0._SRK)
@@ -2914,7 +2915,7 @@ PROGRAM testMatrixTypes
       CALL bmat%set(3,1,0._SRK)
       CALL bmat%set(3,2,0._SRK)
       CALL bmat%set(3,3,1._SRK)
-      
+
       ! A: Square  B: Rect  C: Square  alpha & beta
       CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA)
       SELECTTYPE(cmat)
@@ -2993,7 +2994,7 @@ PROGRAM testMatrixTypes
       CALL pList%clear()
       CALL pList%add('MatrixType->n',3_SNK)
       CALL pList%add('MatrixType->m',3_SNK)
-      CALL cmat%init(pList)  
+      CALL cmat%init(pList)
       CALL cmat%set(1,1,3._SRK)
       CALL cmat%set(1,2,3._SRK)
       CALL cmat%set(1,3,3._SRK)
@@ -3003,7 +3004,7 @@ PROGRAM testMatrixTypes
       CALL cmat%set(3,1,3._SRK)
       CALL cmat%set(3,2,3._SRK)
       CALL cmat%set(3,3,3._SRK)
-      
+
       ! A: Square  B: Rect  C: Rect  alpha & beta
       CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA)
       SELECTTYPE(cmat)
@@ -3096,7 +3097,7 @@ PROGRAM testMatrixTypes
       CALL thisMtrx%set(2,2,1._SRK)
       CALL thisMtrx%set(2,3,1._SRK)
       CALL thisMtrx%set(3,3,1._SRK)
-      
+
       ALLOCATE(PETScMatrixType :: bmat)
       ALLOCATE(PETScMatrixType :: cmat)
       CALL bmat%init(pList)  !symmetric
@@ -3113,7 +3114,7 @@ PROGRAM testMatrixTypes
       CALL cmat%set(2,2,3._SRK)
       CALL cmat%set(2,3,3._SRK)
       CALL cmat%set(3,3,3._SRK)
-      
+
       BETA=1.0_SRK
       ALPHA=1.0_SRK
       ! A: Square  B: Square  C: Square  alpha & beta
@@ -3190,9 +3191,9 @@ PROGRAM testMatrixTypes
       ENDSELECT
       WRITE(*,*) '  Passed: CALL BLAS_matmult(...) A=PETSC B=PETSC C=PETSC'
 #endif
-      
+
     ENDSUBROUTINE  testMatrixMultSquare
-    
+
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testMatrixMultRect()
@@ -3201,8 +3202,8 @@ PROGRAM testMatrixTypes
       CLASS(MatrixType),ALLOCATABLE :: cmat
       INTEGER(SIK) :: i,j
       REAL(SRK) :: ALPHA,BETA
-    
-      
+
+
       !Test BLAS_matmult
       !
       !1.) A: Rect  B: Square  C: Square     ----------------------------
@@ -3222,7 +3223,7 @@ PROGRAM testMatrixTypes
       CALL thisMtrx%set(3,1,1._SRK)
       CALL thisMtrx%set(3,2,1._SRK)
       CALL thisMtrx%set(3,3,1._SRK)
-      
+
       ALLOCATE(DenseSquareMatrixType :: bmat)
       ALLOCATE(DenseSquareMatrixType :: cmat)
       CALL pList%clear()
@@ -3237,7 +3238,7 @@ PROGRAM testMatrixTypes
       CALL bmat%set(3,3,1._SRK)
       CALL pList%clear()
       CALL pList%add('MatrixType->n',3_SNK)
-      CALL pList%add('MatrixType->isSym',.TRUE.) 
+      CALL pList%add('MatrixType->isSym',.TRUE.)
       CALL cmat%init(pList)  !symmetric
       CALL cmat%set(1,1,3._SRK)
       CALL cmat%set(1,2,3._SRK)
@@ -3245,7 +3246,7 @@ PROGRAM testMatrixTypes
       CALL cmat%set(2,2,3._SRK)
       CALL cmat%set(2,3,3._SRK)
       CALL cmat%set(3,3,3._SRK)
-      
+
       BETA=1.0_SRK
       ALPHA=1.0_SRK
       ! A: Rect  B: Square  C: Square  alpha & beta
@@ -3326,7 +3327,7 @@ PROGRAM testMatrixTypes
       CALL pList%clear()
       CALL pList%add('MatrixType->n',3_SNK)
       CALL pList%add('MatrixType->m',3_SNK)
-      CALL cmat%init(pList)  
+      CALL cmat%init(pList)
       CALL cmat%set(1,1,3._SRK)
       CALL cmat%set(1,2,3._SRK)
       CALL cmat%set(1,3,3._SRK)
@@ -3336,7 +3337,7 @@ PROGRAM testMatrixTypes
       CALL cmat%set(3,1,3._SRK)
       CALL cmat%set(3,2,3._SRK)
       CALL cmat%set(3,3,3._SRK)
-      
+
       ! A: Rect  B: Square  C: Rect  alpha & beta
       CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA)
       SELECTTYPE(cmat)
@@ -3406,7 +3407,7 @@ PROGRAM testMatrixTypes
           STOP 666
       ENDSELECT
       WRITE(*,*) '  Passed: CALL BLAS_matmult(...) A=DR B=DS C=DR'
-    
+
       !
       !3.) A: Rect  B: Rect  C: Square    ----------------------------
       !
@@ -3429,7 +3430,7 @@ PROGRAM testMatrixTypes
       CALL pList%clear()
       CALL pList%add('MatrixType->n',3_SNK)
       CALL pList%add('MatrixType->m',3_SNK)
-      CALL bmat%init(pList)  
+      CALL bmat%init(pList)
       CALL bmat%set(1,1,1._SRK)
       CALL bmat%set(1,2,0._SRK)
       CALL bmat%set(1,3,0._SRK)
@@ -3439,7 +3440,7 @@ PROGRAM testMatrixTypes
       CALL bmat%set(3,1,0._SRK)
       CALL bmat%set(3,2,0._SRK)
       CALL bmat%set(3,3,1._SRK)
-      
+
       ! A: Rect  B: Rect  C: Square  alpha & beta
       CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA)
       SELECTTYPE(cmat)
@@ -3518,7 +3519,7 @@ PROGRAM testMatrixTypes
       CALL pList%clear()
       CALL pList%add('MatrixType->n',3_SNK)
       CALL pList%add('MatrixType->m',3_SNK)
-      CALL cmat%init(pList)  
+      CALL cmat%init(pList)
       CALL cmat%set(1,1,3._SRK)
       CALL cmat%set(1,2,3._SRK)
       CALL cmat%set(1,3,3._SRK)
@@ -3528,7 +3529,7 @@ PROGRAM testMatrixTypes
       CALL cmat%set(3,1,3._SRK)
       CALL cmat%set(3,2,3._SRK)
       CALL cmat%set(3,3,3._SRK)
-      
+
       ! A: Rect  B: Rect  C: Rect  alpha & beta
       CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA)
       SELECTTYPE(cmat)
@@ -3605,4 +3606,29 @@ PROGRAM testMatrixTypes
       CALL thisMtrx%clear()
       DEALLOCATE(thisMtrx)
     ENDSUBROUTINE  testMatrixMultRect
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testTransposeMatrix()
+      CLASS(SparseMatrixType),ALLOCATABLE :: testA
+      LOGICAL(SBK) :: bool
+      ALLOCATE(SparseMatrixType :: testA)
+      testA%n=4
+      testA%nnz=6
+      ALLOCATE(testA%ia(5))
+      ALLOCATE(testA%ja(6))
+      ALLOCATE(testA%a(6))
+
+      testA%ia(:)=(/1,2,4,5,7/)
+      testA%ja(:)=(/2,1,4,4,1,4/)
+      testA%a(:)=(/1.0_SRK,2.0_SRK,3.0_SRK,4.0_SRK,5.0_SRK,6.0_SRK/)
+
+      CALL testA%transpose()
+      bool=ALL(testA%ia(:) == (/1,3,4,4,7/))
+      ASSERT(bool,"wrong ia")
+      bool=ALL(testA%ja(:) == (/2,4,1,2,3,4/))
+      ASSERT(bool,"wrong ja")
+      bool=ALL(testA%a(:) .APPROXEQ. (/2.0_SRK,5.0_SRK,1.0_SRK,3.0_SRK,4.0_SRK,6.0_SRK/))
+      ASSERT(bool,"wrong a")
+    ENDSUBROUTINE testTransposeMatrix
+!
 ENDPROGRAM testMatrixTypes
