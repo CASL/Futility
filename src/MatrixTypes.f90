@@ -2070,7 +2070,6 @@ MODULE MatrixTypes
       PetscErrorCode  :: iperr
       CALL MatTranspose(matrix%a,MAT_REUSE_MATRIX,matrix%a,iperr)
 #else
-      CHARACTER(LEN=*),PARAMETER :: myName='transpose_PETScMatrixType'
       CALL eMatrixType%raiseFatalError('Incorrect call to '// &
          modName//'::'//myName//' - PETSc not enabled.  You will'// &
          'need to recompile with PETSc enabled to use this feature.')
