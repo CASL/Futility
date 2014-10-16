@@ -3611,16 +3611,25 @@ PROGRAM testMatrixTypes
     SUBROUTINE testTransposeMatrix()
       CLASS(SparseMatrixType),ALLOCATABLE :: testA
       LOGICAL(SBK) :: bool
+      REAL(SRK) :: TEMPA(4,4),tmp_real
+      INTEGER(SIK) :: i,j
+      REAL(SRK),ALLOCATABLE :: x(:),y(:)
+      TYPE(ParamType) :: tmpPlist
       ALLOCATE(SparseMatrixType :: testA)
-      testA%n=4
-      testA%nnz=6
-      ALLOCATE(testA%ia(5))
-      ALLOCATE(testA%ja(6))
-      ALLOCATE(testA%a(6))
 
-      testA%ia(:)=(/1,2,4,5,7/)
-      testA%ja(:)=(/2,1,4,4,1,4/)
-      testA%a(:)=(/1.0_SRK,2.0_SRK,3.0_SRK,4.0_SRK,5.0_SRK,6.0_SRK/)
+
+      CALL Plist%clear()
+      CALL tmpPlist%add('MatrixType->n',4_SIK)
+      CALL tmpPlist%add('MatrixType->matType',SPARSE)
+      CALL tmpPlist%add('MatrixType->nnz',6_SIK)
+
+      CALL testA%init(tmpPlist)
+      CALL testA%setShape(1,2,1.0_SRK)
+      CALL testA%setShape(2,1,2.0_SRK)
+      CALL testA%setShape(2,4,3.0_SRK)
+      CALL testA%setShape(3,4,4.0_SRK)
+      CALL testA%setShape(4,1,5.0_SRK)
+      CALL testA%setShape(4,4,6.0_SRK)
 
       CALL testA%transpose()
       bool=ALL(testA%ia(:) == (/1,3,4,4,7/))
@@ -3629,6 +3638,7 @@ PROGRAM testMatrixTypes
       ASSERT(bool,"wrong ja")
       bool=ALL(testA%a(:) .APPROXEQ. (/2.0_SRK,5.0_SRK,1.0_SRK,3.0_SRK,4.0_SRK,6.0_SRK/))
       ASSERT(bool,"wrong a")
+      CALL tmpPlist%clear()
     ENDSUBROUTINE testTransposeMatrix
 !
 ENDPROGRAM testMatrixTypes
