@@ -2068,6 +2068,7 @@ MODULE MatrixTypes
       CLASS(PETScMatrixType),INTENT(INOUT) :: matrix
 #ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: iperr
+      IF(.NOT.matrix%isAssembled) CALL matrix%assemble()
       CALL MatTranspose(matrix%a,MAT_REUSE_MATRIX,matrix%a,iperr)
 #else
       CALL eMatrixType%raiseFatalError('Incorrect call to '// &
