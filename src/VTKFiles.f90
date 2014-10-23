@@ -541,6 +541,8 @@ MODULE VTKFiles
                 WRITE(sint,'(i64)') myVTKFile%mesh%numPoints; sint=ADJUSTL(sint)
                 WRITE(funit,'(a)') 'POINTS '//TRIM(sint)//' float'
                 DO i=1,myVTKFile%mesh%numPoints
+!                  WRITE(*,'(i0,a1,3es17.8)') i,':',myVTKFile%mesh%x(i), &
+!                    myVTKFile%mesh%y(i),myVTKFile%mesh%z(i)
                   WRITE(funit,'(3es17.8)') myVTKFile%mesh%x(i), &
                     myVTKFile%mesh%y(i),myVTKFile%mesh%z(i)
                 ENDDO
