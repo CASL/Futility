@@ -52,7 +52,7 @@
 !> (03/28/2013) - Aaron Graham
 !>   - Added delete routine
 !> (10/01/2014) - Dan Jabaay
-!>   - Cleaned up the write routines by making things more generalized.
+!>   - Cleaned up the read and write routines by making things more generalized.
 !>   - Added more object state checking.
 !> @todo
 !>  - Implement MPI/Parallel HDF5
@@ -412,7 +412,7 @@ MODULE FileType_HDF5
             ELSE
               CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
                 ' - HDF5 file '//filename//' is being opened with '// &
-                'mode READ but does not exist.')
+                'mode WRITE but does not exist.')
             ENDIF
           CASE('NEW')
             CALL thisHDF5File%setWriteStat(.TRUE.)
@@ -517,7 +517,7 @@ MODULE FileType_HDF5
           ' - Unable to create property list for open operation.')
 
         ! Decide what access type to use
-        IF(file%newstat) THEN
+        IF(file%isNew()) THEN
           acc=H5F_ACC_TRUNC_F
           CALL h5fcreate_f(CHAR(file%fullname),acc,file%file_id,error, &
             access_prp=plist_id)
