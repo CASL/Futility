@@ -227,8 +227,9 @@ PROGRAM testParTPLPETSC
     ENDIF
     CALL MPI_Barrier(MPI_COMM_WORLD,ierr)
     IF(rank == 0) WRITE(*,*) '  Passed: CALL KSPDestroy(...)'
-
+    CALL MatDestroy(A,ierr)
+    CALL VecDestroy(b,ierr)
+    CALL VecDestroy(x,ierr)
   ENDSUBROUTINE testPETSC_KSP
-
 
 ENDPROGRAM testParTPLPETSC
