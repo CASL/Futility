@@ -275,6 +275,9 @@ MODULE Geom_Line
       ELSEIF(thisDim == -2) THEN
         p%dim=-2
       ENDIF
+      CALL s1%clear()
+      CALL s2%clear()
+      CALL dis%clear()
     ENDFUNCTION intersect_lines3D
 !
 !-------------------------------------------------------------------------------
@@ -342,6 +345,7 @@ MODULE Geom_Line
               dis%p1%dim=-2
               dis%p2%dim=-2
             ENDIF
+            CALL line%clear()
           ELSE
             numer=d1343*d4321-d1321*d4343
             mu1=numer/denom
