@@ -384,6 +384,9 @@ MODULE FileType_Base
       file%path=''
       file%name=''
       file%ext=''
+      file%pathlen=0
+      file%fnamelen=0
+      file%extlen=0
       file%openstat=.FALSE.
       file%EOFstat=.FALSE.
       file%readstat=.FALSE.
