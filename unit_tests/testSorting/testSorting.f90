@@ -13,6 +13,9 @@ PROGRAM testSorting
   REGISTER_SUBTEST('sort Integer 2D',testInt2DSort)
   REGISTER_SUBTEST('sort Real',testRealSort)
 
+  REGISTER_SUBTEST('bubble sort',testBubbleSort)
+  REGISTER_SUBTEST('insertion sort',testInsertSort)
+
   REGISTER_SUBTEST('Speed Test - sort int',testSpeedInt)
   REGISTER_SUBTEST('Speed Test - sort real',testSpeedReal)
   FINALIZE_TEST()
@@ -22,7 +25,7 @@ PROGRAM testSorting
   CONTAINS
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE testSpeedInt
+    SUBROUTINE testSpeedInt()
       USE Times
       USE StochasticSampling
       INTEGER(SIK),ALLOCATABLE :: A(:)
@@ -55,11 +58,10 @@ PROGRAM testSorting
         DEALLOCATE(A)
       ENDDO
       CALL myRNG%clear()
-
-    ENDSUBROUTINE
+    ENDSUBROUTINE testSpeedInt
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE testSpeedReal
+    SUBROUTINE testSpeedReal()
       USE Times
       USE StochasticSampling
       REAL(SRK),ALLOCATABLE :: A(:)
@@ -92,11 +94,90 @@ PROGRAM testSorting
         DEALLOCATE(A)
       ENDDO
       CALL myRNG%clear()
-
-    ENDSUBROUTINE
+    ENDSUBROUTINE testSpeedReal
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE testIntSort
+    SUBROUTINE testBubbleSort()
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: tmpintarray(10)
+      REAL(SRK) :: tmprealarray(10)
+      
+      tmpintarray(1)=-5
+      tmpintarray(2)=100
+      tmpintarray(3)=60
+      tmpintarray(4)=10
+      tmpintarray(5)=45
+      tmpintarray(6)=-10
+      tmpintarray(7)=20
+      tmpintarray(8)=5
+      tmpintarray(9)=-30
+      tmpintarray(10)=20
+
+      CALL bubble_sort(tmpintarray)
+
+      bool=ALL(tmpintarray == (/-30,-10,-5,5,10,20,20,45,60,100/))
+      ASSERT(bool,'1-D integer array')
+
+      tmprealarray(1)=100.0_SRK
+      tmprealarray(2)=-5.0_SRK
+      tmprealarray(3)=60.0_SRK
+      tmprealarray(4)=10.0_SRK
+      tmprealarray(5)=45.0_SRK
+      tmprealarray(6)=-10.0_SRK
+      tmprealarray(7)=20.0_SRK
+      tmprealarray(8)=5.0_SRK
+      tmprealarray(9)=-30.0_SRK
+      tmprealarray(10)=20.0_SRK
+
+      CALL bubble_sort(tmprealarray)
+
+      bool=ALL(tmprealarray .APPROXEQ. (/-30.0_SRK,-10.0_SRK,-5.0_SRK,5.0_SRK,10.0_SRK, &
+        20.0_SRK,20.0_SRK,45.0_SRK,60.0_SRK,100.0_SRK/))
+      ASSERT(bool,'1-D real array')
+    ENDSUBROUTINE testBubbleSort
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testInsertSort()
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: tmpintarray(10)
+      REAL(SRK) :: tmprealarray(10)
+
+      tmpintarray(1)=-5
+      tmpintarray(2)=100
+      tmpintarray(3)=60
+      tmpintarray(4)=10
+      tmpintarray(5)=45
+      tmpintarray(6)=-10
+      tmpintarray(7)=20
+      tmpintarray(8)=5
+      tmpintarray(9)=-30
+      tmpintarray(10)=20
+
+      CALL insert_sort(tmpintarray)
+
+      bool=ALL(tmpintarray == (/-30,-10,-5,5,10,20,20,45,60,100/))
+      ASSERT(bool,'1-D integer array')
+
+      tmprealarray(1)=100.0_SRK
+      tmprealarray(2)=-5.0_SRK
+      tmprealarray(3)=60.0_SRK
+      tmprealarray(4)=10.0_SRK
+      tmprealarray(5)=45.0_SRK
+      tmprealarray(6)=-10.0_SRK
+      tmprealarray(7)=20.0_SRK
+      tmprealarray(8)=5.0_SRK
+      tmprealarray(9)=-30.0_SRK
+      tmprealarray(10)=20.0_SRK
+
+      CALL insert_sort(tmprealarray)
+
+      bool=ALL(tmprealarray .APPROXEQ. (/-30.0_SRK,-10.0_SRK,-5.0_SRK,5.0_SRK,10.0_SRK, &
+        20.0_SRK,20.0_SRK,45.0_SRK,60.0_SRK,100.0_SRK/))
+      ASSERT(bool,'1-D real array')
+    ENDSUBROUTINE testInsertSort
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testIntSort()
       LOGICAL(SBK) :: bool
       INTEGER(SIK) :: tmpintarray(10)
 
@@ -115,9 +196,10 @@ PROGRAM testSorting
 
       bool=ALL(tmpintarray == (/-30,-10,-5,5,10,20,20,45,60,100/))
       ASSERT(bool,'1-D integer array qsort')
-    ENDSUBROUTINE
-
-    SUBROUTINE testInt2DSort
+    ENDSUBROUTINE testIntSort
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testInt2DSort()
       LOGICAL(SBK) :: bool
       INTEGER(SIK) :: tmpintarray2(5,5)
 
@@ -150,10 +232,10 @@ PROGRAM testSorting
       CALL sort(tmpintarray2)
       bool=ALL(tmpintarray2 == RESHAPE((/-50,-30,-30,-20,-16,-15,-10,-5,0,4,5,10,20,20,21,30,35,45,50,53,60,77,88,99,100/),(/5,5/)))
       ASSERT(bool,'2-D array sort')
-    ENDSUBROUTINE
+    ENDSUBROUTINE testInt2DSort
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE testRealSort
+    SUBROUTINE testRealSort()
       LOGICAL(SBK) :: bool
       REAL(SRK) :: tmprealarray(10)
 
@@ -173,6 +255,6 @@ PROGRAM testSorting
       bool=ALL(tmprealarray .APPROXEQ. (/-30.0_SRK,-10.0_SRK,-5.0_SRK,5.0_SRK,10.0_SRK, &
         20.0_SRK,20.0_SRK,45.0_SRK,60.0_SRK,100.0_SRK/))
       ASSERT(bool,'1-D real array qsort')
-    ENDSUBROUTINE
+    ENDSUBROUTINE testRealSort
 !
 ENDPROGRAM testSorting
