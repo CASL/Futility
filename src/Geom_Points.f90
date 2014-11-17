@@ -52,6 +52,7 @@ MODULE Geom_Points
   PUBLIC :: OPERATOR(==)
   PUBLIC :: OPERATOR(/=)
   PUBLIC :: OPERATOR(.APPROXEQA.)
+  PUBLIC :: ASSIGNMENT(=)
 
   INTEGER(SIK),PARAMETER :: MAX_COORD_STR_LEN=128
 
@@ -158,6 +159,16 @@ MODULE Geom_Points
     !> @copybrief GeomPoints::approxequal_PointType
     !> @copydetails GeomPoints::approxequal_PointType
     MODULE PROCEDURE approxequal_PointType
+  ENDINTERFACE
+
+  !> @brief Generic interface for assignment operator (=)
+  !>
+  !> Adds assignment capability for point types. Done primarily to help
+  !> eliminate valgrind errors in VERA.
+  INTERFACE ASSIGNMENT(=)
+    !> @copybrief GeomPoints::assign_PointType
+    !> @copydetails GeomPoints::assign_PointType
+    MODULE PROCEDURE assign_PointType
   ENDINTERFACE
 !
 !===============================================================================
@@ -350,6 +361,30 @@ MODULE Geom_Points
       IF(p0%dim == p1%dim .AND. p0%dim > 0) &
         bool=ALL(p0%coord .APPROXEQA. p1%coord)
     ENDFUNCTION approxequal_PointType
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the assignment operation between two points
+!> e.g. p0 = p1
+!> @param p0 the first point to be assigned to
+!> @param p1 the second point to be assigned from
+!>
+!> Function is elemental so it can be used on an array of points.
+    PURE SUBROUTINE assign_PointType(p0,p1)
+      TYPE(PointType),INTENT(INOUT) :: p0
+      TYPE(PointType),INTENT(IN) :: p1
+
+      IF(p0%dim == p1%dim .AND. p1%dim > 0) THEN
+        p0%coord=p1%coord
+      ELSEIF(p0%dim /= p1%dim .AND. p1%dim > 0) THEN
+        IF(ALLOCATED(p0%coord)) DEALLOCATE(p0%coord)
+        p0%dim=p1%dim
+        ALLOCATE(p0%coord(p0%dim))
+        p0%coord=p1%coord
+      ELSE
+        p0%dim=p1%dim
+        IF(ALLOCATED(p0%coord)) DEALLOCATE(p0%coord)
+      ENDIF
+    ENDSUBROUTINE assign_PointType
 !
 !-------------------------------------------------------------------------------
 !> @brief Return the coordinates as a string
