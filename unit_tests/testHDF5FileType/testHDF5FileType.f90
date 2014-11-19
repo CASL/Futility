@@ -369,7 +369,8 @@ PROGRAM testHDF5
       INTEGER(SLK) :: testL0
       INTEGER(SNK) :: testN0
       LOGICAL(SBK) :: testB0,bool
-      CHARACTER(LEN=32) :: testC1
+      CHARACTER(LEN=32) :: testC1,testC2
+      CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
       TYPE(StringType) :: testST0
       INTEGER(SIK) :: i,j,k
       LOGICAL(SBK) :: checkwrite
@@ -637,6 +638,32 @@ PROGRAM testHDF5
       ASSERT(bool,'%pathExists(groupC->anotherGroup->moreBlahGroups)')
       ASSERT(.NOT.h5%pathExists('groupC->memCBlah'),'%pathExists(groupC->memCBlah)')
  
+      COMPONENT_TEST('%createHardLink')
+      CALL h5%fwrite('groupC->anotherGroup->memC1',refC1)
+      CALL h5%createHardLink('groupC->anotherGroup->memC1', &
+        'groupC->anotherGroup->moreGroups->almostLastGroup->memC2')
+      CALL h5%fread('groupC->anotherGroup->memC1',testC1)
+      CALL h5%fread('groupC->anotherGroup->moreGroups->almostLastGroup->memC2',testC2)
+      ASSERT(testC1 == testC2,'Valid Hardlink')
+      CALL h5%e%setQuietMode(.TRUE.)
+      CALL h5%e%setStopOnError(.FALSE.)
+      CALL h5%createHardLink('groupThatDoesNotExist->memC1','groupC->anotherGroup->moreGroups')
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::createHardLink_HDF5FileType '// &
+        '- Target of new link must exist in file!'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Non-existant Target Link')
+      FINFO() "   msg="//TRIM(msg)
+      FINFO() "refmsg="//TRIM(refmsg)
+      CALL h5%createHardLink('groupC->memC1','groupC->anotherGroup->moreGroups')
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::createHardLink_HDF5FileType '// &
+        '- Location of new link already exists!' 
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Pre-existing New Link')
+      FINFO() "   msg="//TRIM(msg)
+      FINFO() "refmsg="//TRIM(refmsg)
+
+      CALL h5%e%setQuietMode(.FALSE.)
+      CALL h5%e%setStopOnError(.TRUE.)
       !CALL h5%fdelete()
       !INQUIRE(FILE='writetest.h5',EXIST=exists)
       !ASSERT(.NOT.exists,'HDF5 object not properly deleted!')
