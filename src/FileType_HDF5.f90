@@ -158,6 +158,9 @@ MODULE FileType_HDF5
       !> @copybrief FileType_HDF5::pathexists_HDF5FileType
       !> @copydetails FileType_HDF5::pathexists_HDF5FileType
       PROCEDURE,PASS :: pathExists => pathexists_HDF5FileType
+      !> @copybrief FileType_HDF5::createHardLink_HDF5FileType
+      !> @copydetails FileType_HDF5::createHardLink_HDF5FileType
+      PROCEDURE,PASS :: createHardLink => createHardLink_HDF5FileType
       !> @copybrief FileType_HDF5::write_d0
       !> @copydoc FileType_HDF5::write_d0
       PROCEDURE,PASS,PRIVATE :: write_d0
@@ -887,7 +890,7 @@ MODULE FileType_HDF5
 !> @c path exists or not. 
 !>
     FUNCTION pathexists_HDF5FileType(thisHDF5File,path) RESULT(bool)
-      CHARACTER(LEN=*),PARAMETER :: myName='hasgrp_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: myName='pathexists_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: path
       LOGICAL(SBK) :: bool
@@ -919,7 +922,47 @@ MODULE FileType_HDF5
       bool=.FALSE.
 #endif
     ENDFUNCTION pathexists_HDF5FileType
+!
+!-------------------------------------------------------------------------------
+!> @brief 
+!> @param thisHDF5File the HDF5FileType object to interrogate
+!> @param source_path the path in the file to create a link to
+!> @param link_path
+!>
+!>
+    SUBROUTINE createHardLink_HDF5FileType(thisHDF5File,source_path,link_path)
+      CHARACTER(LEN=*),PARAMETER :: myName='createHardLink_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
+      CHARACTER(LEN=*),INTENT(IN) :: source_path
+      CHARACTER(LEN=*),INTENT(IN) :: link_path
+#ifdef MPACT_HAVE_HDF5
+      INTEGER(HID_T) :: src_obj_id,h5err
+      TYPE(StringType) :: spath,lpath
 
+      IF(pathexists_HDF5FileType(thisHDF5File,source_path)) THEN
+        IF(.NOT.pathexists_HDF5FileType(thisHDF5File,link_path)) THEN
+          spath=convertPath(source_path)
+          lpath=convertPath(link_path)
+
+          !Get the source object ID
+          CALL H5Oopen_f(thisHDF5File%file_id,CHAR(spath),src_obj_id,h5err)
+
+          !Create the link target object ID
+          CALL H5Lcreate_hard_f(src_obj_id,CHAR(spath),thisHDF5File%file_id, &
+            CHAR(lpath),h5err)
+
+          !Close the source object
+          CALL H5Oclose_f(src_obj_id,h5err)
+        ELSE
+          CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+            ' - Location of new link already exists!')
+        ENDIF
+      ELSE
+        CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Target of new link must exist in file!')
+      ENDIF
+#endif
+    ENDSUBROUTINE createHardLink_HDF5FileType
 !
 !-------------------------------------------------------------------------------
 !> @brief Write a double to a dataset
