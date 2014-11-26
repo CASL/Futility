@@ -33,7 +33,7 @@
 !> contents of parameter, clearing the contents of a parameter, getting or
 !> setting values of existing parameters (or subparameters) and the ability to
 !> add or delete parameters nested within other parameters.
-!> 
+!>
 !> The parameters are searched and matched using the name attribute and the
 !> matching is not case sensitive.
 !>
@@ -71,9 +71,9 @@
 !> @par EXAMPLE
 !> @code
 !> PROGRAM
-!> 
+!>
 !>   IMPLICIT NONE
-!>   
+!>
 !>
 !> END PROGRAM
 !> @endcode
@@ -88,7 +88,7 @@
 !>   - Added has function to return if the parameter list has a given parameter
 !>   (10/22/2013) - Dan Jabaay
 !>   - Added the %verify subroutine for validating two parameter lists and then
-!>     checking that all of the values in the parameter list are equal.  
+!>     checking that all of the values in the parameter list are equal.
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE ParameterLists
 #include "UnitTest.h"
@@ -98,7 +98,7 @@ MODULE ParameterLists
   USE Strings
   USE ExceptionHandler
   USE IO_Strings
-  
+
   IMPLICIT NONE
   PRIVATE !Default private for module contents
 !
@@ -107,13 +107,14 @@ MODULE ParameterLists
   PUBLIC :: ParamType
   PUBLIC :: ASSIGNMENT(=)
   PUBLIC :: OPERATOR(==)
-  
+
   !> The module name
   CHARACTER(LEN=*),PARAMETER :: modName='PARAMETERLISTS'
-  
+  INTEGER(SIK),PARAMETER :: MAX_1D_LEN=10
+
   !> Exception handler for the module
   TYPE(ExceptionHandlerType),SAVE :: eParams
-  
+
   !> @brief Derived type for a parameter object
   !>
   !> This is an object which encapsulates a polymorphic value which so that the
@@ -465,7 +466,7 @@ MODULE ParameterLists
       !> @copydoc ParameterLists::clear_ParamType
       PROCEDURE,PASS :: clear => clear_ParamType
   ENDTYPE ParamType
-  
+
   !> @brief Extended type of a ParamType for defining a list of parameters
   TYPE,EXTENDS(ParamType) :: ParamType_List
     !> The list of parameters
@@ -480,7 +481,7 @@ MODULE ParameterLists
       !> @copydoc ParameterLists::clear_ParamType_List
       PROCEDURE,PASS :: clear => clear_ParamType_List
   ENDTYPE ParamType_List
-  
+
   !> @brief Extended type of a ParamType for defining a parameter that
   !> is a single precision real scalar
   TYPE,EXTENDS(ParamType) :: ParamType_SSK
@@ -496,7 +497,7 @@ MODULE ParameterLists
       !> @copydoc ParameterLists::clear_ParamType_SSK
       PROCEDURE,PASS :: clear => clear_ParamType_SSK
   ENDTYPE ParamType_SSK
-  
+
   !> @brief Extended type of a ParamType for defining a parameter that
   !> is a double precision real scalar
   TYPE,EXTENDS(ParamType) :: ParamType_SDK
@@ -512,7 +513,7 @@ MODULE ParameterLists
       !> @copydoc ParameterLists::clear_ParamType_SDK
       PROCEDURE,PASS :: clear => clear_ParamType_SDK
   ENDTYPE ParamType_SDK
-  
+
   !> @brief Extended type of a ParamType for defining a parameter that
   !> is a 32-bit integer scalar
   TYPE,EXTENDS(ParamType) :: ParamType_SNK
@@ -528,7 +529,7 @@ MODULE ParameterLists
       !> @copydoc ParameterLists::clear_ParamType_SNK
       PROCEDURE,PASS :: clear => clear_ParamType_SNK
   ENDTYPE ParamType_SNK
-  
+
   !> @brief Extended type of a ParamType for defining a parameter that
   !> is a 64-bit integer scalar
   TYPE,EXTENDS(ParamType) :: ParamType_SLK
@@ -579,7 +580,7 @@ MODULE ParameterLists
 !----------------------------------------------------------------------
 !     One-Dimensional Arrays
 !----------------------------------------------------------------------
-  !> @brief Extended type of a ParamType for defining a one dimensional 
+  !> @brief Extended type of a ParamType for defining a one dimensional
   !> array parameter of single precision reals
   TYPE,EXTENDS(ParamType) :: ParamType_SSK_a1
     !> The value of the parameter
@@ -594,8 +595,8 @@ MODULE ParameterLists
       !> @copydoc ParameterLists::clear_ParamType_SSK_a1
       PROCEDURE,PASS :: clear => clear_ParamType_SSK_a1
   ENDTYPE ParamType_SSK_a1
-  
-  !> @brief Extended type of a ParamType for defining a one dimensional 
+
+  !> @brief Extended type of a ParamType for defining a one dimensional
   !> array parameter of double precision reals
   TYPE,EXTENDS(ParamType) :: ParamType_SDK_a1
     !> The value of the parameter
@@ -610,8 +611,8 @@ MODULE ParameterLists
       !> @copydoc ParameterLists::clear_ParamType_SDK_a1
       PROCEDURE,PASS :: clear => clear_ParamType_SDK_a1
   ENDTYPE ParamType_SDK_a1
-  
-  !> @brief Extended type of a ParamType for defining a one dimensional 
+
+  !> @brief Extended type of a ParamType for defining a one dimensional
   !> array parameter of 32-bit integers
   TYPE,EXTENDS(ParamType) :: ParamType_SNK_a1
     !> The value of the parameter
@@ -626,8 +627,8 @@ MODULE ParameterLists
       !> @copydoc ParameterLists::clear_ParamType_SNK_a1
       PROCEDURE,PASS :: clear => clear_ParamType_SNK_a1
   ENDTYPE ParamType_SNK_a1
-  
-  !> @brief Extended type of a ParamType for defining a one dimensional 
+
+  !> @brief Extended type of a ParamType for defining a one dimensional
   !> array parameter of 64-bit integers
   TYPE,EXTENDS(ParamType) :: ParamType_SLK_a1
     !> The value of the parameter
@@ -642,8 +643,8 @@ MODULE ParameterLists
       !> @copydoc ParameterLists::clear_ParamType_SLK_a1
       PROCEDURE,PASS :: clear => clear_ParamType_SLK_a1
   ENDTYPE ParamType_SLK_a1
-  
-  !> @brief Extended type of a ParamType for defining a one dimensional 
+
+  !> @brief Extended type of a ParamType for defining a one dimensional
   !> array parameter of single precision reals
   TYPE,EXTENDS(ParamType) :: ParamType_SBK_a1
     !> The value of the parameter
@@ -659,7 +660,7 @@ MODULE ParameterLists
       PROCEDURE,PASS :: clear => clear_ParamType_SBK_a1
   ENDTYPE ParamType_SBK_a1
 
-  !> @brief Extended type of a ParamType for defining a one dimensional 
+  !> @brief Extended type of a ParamType for defining a one dimensional
   !> array parameter that is a string derived type
   TYPE,EXTENDS(ParamType) :: ParamType_STR_a1
     !> The value of the parameter
@@ -678,7 +679,7 @@ MODULE ParameterLists
 !----------------------------------------------------------------------
 !     Two-Dimensional Arrays
 !----------------------------------------------------------------------
-  !> @brief Extended type of a ParamType for defining a two dimensional 
+  !> @brief Extended type of a ParamType for defining a two dimensional
   !> array parameter of single precision reals
   TYPE,EXTENDS(ParamType) :: ParamType_SSK_a2
     !> The value of the parameter
@@ -693,8 +694,8 @@ MODULE ParameterLists
       !> @copydoc ParameterLists::clear_ParamType_SSK_a2
       PROCEDURE,PASS :: clear => clear_ParamType_SSK_a2
   ENDTYPE ParamType_SSK_a2
-  
-  !> @brief Extended type of a ParamType for defining a two dimensional 
+
+  !> @brief Extended type of a ParamType for defining a two dimensional
   !> array parameter of double precision reals
   TYPE,EXTENDS(ParamType) :: ParamType_SDK_a2
     !> The value of the parameter
@@ -709,8 +710,8 @@ MODULE ParameterLists
       !> @copydoc ParameterLists::clear_ParamType_SDK_a2
       PROCEDURE,PASS :: clear => clear_ParamType_SDK_a2
   ENDTYPE ParamType_SDK_a2
-  
-  !> @brief Extended type of a ParamType for defining a two dimensional 
+
+  !> @brief Extended type of a ParamType for defining a two dimensional
   !> array parameter of 32-bit integers
   TYPE,EXTENDS(ParamType) :: ParamType_SNK_a2
     !> The value of the parameter
@@ -725,8 +726,8 @@ MODULE ParameterLists
       !> @copydoc ParameterLists::clear_ParamType_SNK_a2
       PROCEDURE,PASS :: clear => clear_ParamType_SNK_a2
   ENDTYPE ParamType_SNK_a2
-  
-  !> @brief Extended type of a ParamType for defining a two dimensional 
+
+  !> @brief Extended type of a ParamType for defining a two dimensional
   !> array parameter of 64-bit integers
   TYPE,EXTENDS(ParamType) :: ParamType_SLK_a2
     !> The value of the parameter
@@ -741,8 +742,8 @@ MODULE ParameterLists
       !> @copydoc ParameterLists::clear_ParamType_SLK_a2
       PROCEDURE,PASS :: clear => clear_ParamType_SLK_a2
   ENDTYPE ParamType_SLK_a2
-  
-  !> @brief Extended type of a ParamType for defining a two dimensional 
+
+  !> @brief Extended type of a ParamType for defining a two dimensional
   !> array parameter that is a string derived type
   TYPE,EXTENDS(ParamType) :: ParamType_STR_a2
     !> The value of the parameter
@@ -760,7 +761,7 @@ MODULE ParameterLists
 !----------------------------------------------------------------------
 !     Three-Dimensional Arrays
 !----------------------------------------------------------------------
-  !> @brief Extended type of a ParamType for defining a three dimensional 
+  !> @brief Extended type of a ParamType for defining a three dimensional
   !> array parameter of single precision reals
   TYPE,EXTENDS(ParamType) :: ParamType_SSK_a3
     !> The value of the parameter
@@ -775,8 +776,8 @@ MODULE ParameterLists
       !> @copydoc ParameterLists::clear_ParamType_SSK_a3
       PROCEDURE,PASS :: clear => clear_ParamType_SSK_a3
   ENDTYPE ParamType_SSK_a3
-  
-  !> @brief Extended type of a ParamType for defining a three dimensional 
+
+  !> @brief Extended type of a ParamType for defining a three dimensional
   !> array parameter of double precision reals
   TYPE,EXTENDS(ParamType) :: ParamType_SDK_a3
     !> The value of the parameter
@@ -791,8 +792,8 @@ MODULE ParameterLists
       !> @copydoc ParameterLists::clear_ParamType_SDK_a3
       PROCEDURE,PASS :: clear => clear_ParamType_SDK_a3
   ENDTYPE ParamType_SDK_a3
-  
-  !> @brief Extended type of a ParamType for defining a three dimensional 
+
+  !> @brief Extended type of a ParamType for defining a three dimensional
   !> array parameter of 32-bit integers
   TYPE,EXTENDS(ParamType) :: ParamType_SNK_a3
     !> The value of the parameter
@@ -807,8 +808,8 @@ MODULE ParameterLists
       !> @copydoc ParameterLists::clear_ParamType_SNK_a3
       PROCEDURE,PASS :: clear => clear_ParamType_SNK_a3
   ENDTYPE ParamType_SNK_a3
-  
-  !> @brief Extended type of a ParamType for defining a three dimensional 
+
+  !> @brief Extended type of a ParamType for defining a three dimensional
   !> array parameter of 64-bit integers
   TYPE,EXTENDS(ParamType) :: ParamType_SLK_a3
     !> The value of the parameter
@@ -847,7 +848,7 @@ MODULE ParameterLists
 !> @param thisParam the ParamType object to be assigned
 !> @param param the ParamType object to assign
 !>
-!> This routine clears the @c thisParam which must be a declared as a 
+!> This routine clears the @c thisParam which must be a declared as a
 !> <TT>TYPE(ParamType)</TT> in the client code. @c param may be anything. As
 !> new extended types of the @c ParamType are defined in this module this
 !> will need to be updated with a new <TT>TYPE IS()</TT> block. This should
@@ -857,7 +858,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),PARAMETER :: myName='assign_ParamType'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CLASS(ParamType),INTENT(IN) :: param
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType)
           IF(ASSOCIATED(thisParam%pdat)) CALL thisParam%clear()
@@ -951,7 +952,7 @@ MODULE ParameterLists
 !> @param p1
 !> @param p2
 !> @returns bool
-!> 
+!>
     RECURSIVE PURE FUNCTION isEqual_ParamType(p1,p2) RESULT(bool)
       CLASS(ParamType),INTENT(IN) :: p1
       CLASS(ParamType),INTENT(IN) :: p2
@@ -1174,12 +1175,12 @@ MODULE ParameterLists
       CLASS(ParamType),TARGET,INTENT(IN) :: thisParam
       TYPE(StringType),INTENT(INOUT) :: addr
       CLASS(ParamType),POINTER,INTENT(OUT) :: param
-      
+
       CHARACTER(LEN=addr%ntrim) :: addrIn,newAddr
       INTEGER(SIK) :: istp,ip
       TYPE(StringType) :: tmpAddr
       CLASS(ParamType),POINTER :: tmpParam,nextParam,parentParam
-      
+
       nextParam => NULL()
       tmpAddr=''
       addrIn=TRIM(addr)
@@ -1189,7 +1190,7 @@ MODULE ParameterLists
           !Check to make sure param is in thisParam
           !if param is null that's ok too because we're guaranteed to
           !be within thisParam
-          
+
           SELECTTYPE(tp => tmpParam)
             TYPE IS(ParamType_List)
               !Return the first entry in the list
@@ -1198,7 +1199,7 @@ MODULE ParameterLists
                 tmpAddr=TRIM(addrIn)//'->'//nextParam%name
               ELSE
                 !This could be a null list within a list that still has
-                !entries so get the parent and 
+                !entries so get the parent and
                 !Get the parent list
                 newAddr=''
                 istp=INDEX(addrIn,'->',.TRUE.)-1
@@ -1209,7 +1210,7 @@ MODULE ParameterLists
                 ENDIF
                 !Search for the next parameter or parameter list
                 parentSearch1: DO WHILE(ASSOCIATED(parentParam))
-                  
+
                   !Search the parent list
                   SELECTTYPE(pp => parentParam); TYPE IS(ParamType_List)
                     DO ip=1,SIZE(pp%pList)-1
@@ -1220,7 +1221,7 @@ MODULE ParameterLists
                         EXIT parentSearch1
                       ENDIF
                     ENDDO
-                    
+
                     !Special case for when the current parameter is the
                     !last parameter in the list
                     IF(ASSOCIATED(pp%pList(ip)%pdat,tmpParam)) THEN
@@ -1244,7 +1245,7 @@ MODULE ParameterLists
                 tmpAddr=TRIM(addrIn)//'->'//nextParam%name
               ELSE
                 !This was a leaf parameter, so move up one level in the list
-                
+
                 !Get the parent list
                 istp=INDEX(addrIn,'->',.TRUE.)-1
                 parentParam => NULL()
@@ -1252,10 +1253,10 @@ MODULE ParameterLists
                   newAddr=addrIn(1:istp)
                   CALL get_ParamType(thisParam,TRIM(newAddr),parentParam)
                 ENDIF
-                
+
                 !Search for the next parameter or parameter list
                 parentSearch2: DO WHILE(ASSOCIATED(parentParam))
-                  
+
                   !Search the parent list
                   SELECTTYPE(pp => parentParam); TYPE IS(ParamType_List)
                     DO ip=1,SIZE(pp%pList)-1
@@ -1266,7 +1267,7 @@ MODULE ParameterLists
                         EXIT parentSearch2
                       ENDIF
                     ENDDO
-                    
+
                     !Special case for when the current parameter is the
                     !last parameter in the list
                     IF(ASSOCIATED(pp%pList(ip)%pdat,tmpParam)) THEN
@@ -1314,10 +1315,10 @@ MODULE ParameterLists
 !> To indicate accessing a parameter in a sublist the symbol "->" is used. For
 !> example "Some list -> some parameter". Name matching is @b not case sensitive
 !> and names can have spaces and leading or trailing whitespace. Input names to
-!> this procedure cannot be blank or "->somename" or 
+!> this procedure cannot be blank or "->somename" or
 !> "firstname -> -> secondname".
 !>
-!> This routine is primarily used by all @c set and @c get routines of the 
+!> This routine is primarily used by all @c set and @c get routines of the
 !> extended types.
 !>
     RECURSIVE SUBROUTINE get_ParamType(thisParam,name,param)
@@ -1328,7 +1329,7 @@ MODULE ParameterLists
       CHARACTER(LEN=LEN(name)) :: thisname,nextname,pname
       INTEGER(SIK) :: ipos,i
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       ipos=INDEX(name,'->')
       thisname=name
       nextname=''
@@ -1337,7 +1338,7 @@ MODULE ParameterLists
         nextname=ADJUSTL(name(ipos+2:LEN(name)))
       ENDIF
       pname=''
-      
+
       param => NULL()
       IF(LEN_TRIM(thisname) > 0) THEN
         SELECTTYPE(thisParam)
@@ -1347,7 +1348,7 @@ MODULE ParameterLists
               IF(LEN(pname) >= LEN_TRIM(thisParam%name)) pname=thisParam%name
               CALL toUPPER(pname)
               CALL toUPPER(thisname)
-            
+
               !Search the list for nextname (thisname must match parameter name)
               IF(TRIM(pname) == TRIM(thisname) .AND. &
                 ALLOCATED(thisParam%pList)) THEN
@@ -1404,12 +1405,12 @@ MODULE ParameterLists
 !> @param name the name of the parameter list within @c thisParam to put the new
 !>        parameter
 !> @param newParam the new parameter to add to thisParam
-!> 
+!>
 !> If @c name contains directions to sublists that do not exist these parameter
 !> lists will automatically be created. Full paths should be used with this
 !> routine to avoid unintentional matching or partial paths of parameters that
 !> may have the same names in different lists. When accessing sublists names can
-!> be repeated, so long as the full path is still unique. If @c name matches a 
+!> be repeated, so long as the full path is still unique. If @c name matches a
 !> parameter name that is not a list it will produce an error. When @c name is
 !> blank it is added to the list at the current level.
 !>
@@ -1425,7 +1426,7 @@ MODULE ParameterLists
       INTEGER(SIK) :: ipos,i,np
       TYPE(ParamType),ALLOCATABLE :: tmpList(:)
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType)
           IF(ASSOCIATED(thisParam%pdat)) THEN
@@ -1436,7 +1437,7 @@ MODULE ParameterLists
               !Create a new list on thisParam
               ALLOCATE(ParamType_List :: thisParam%pdat)
               thisParam%pdat%datatype='TYPE(ParamType_List)'
-              
+
               !Determine the name for the list and the next name
               ipos=INDEX(name,'->')
               IF(ipos > 0) THEN
@@ -1463,7 +1464,7 @@ MODULE ParameterLists
               thisname=TRIM(ADJUSTL(name))
               nextname=''
             ENDIF
-            
+
             pname=thisParam%name
             CALL toUPPER(thisname)
             CALL toUPPER(pname)
@@ -1481,14 +1482,14 @@ MODULE ParameterLists
                 !Create a new entry in the list for the new parameter
                 IF(ALLOCATED(thisParam%pList)) THEN
                   np=SIZE(thisParam%pList)
-              
+
                   !Copy the parameter list to a temporary
                   ALLOCATE(tmpList(np))
                   DO i=1,np
                     CALL assign_ParamType(tmpList(i),thisParam%pList(i))
                     CALL thisParam%pList(i)%clear()
                   ENDDO
-              
+
                   !Reallocate the parameter list and copy everything back
                   DEALLOCATE(thisParam%pList)
                   ALLOCATE(thisParam%pList(np+1))
@@ -1503,7 +1504,7 @@ MODULE ParameterLists
                   ALLOCATE(thisParam%pList(1))
                   i=1
                 ENDIF
-            
+
                 !Make recursive call to add the parameter in the new empty parameter
                 CALL add_ParamType(thisParam%pList(i),name,newParam)
               ENDIF
@@ -1512,14 +1513,14 @@ MODULE ParameterLists
             !Create a new entry in the list for the new parameter
             IF(ALLOCATED(thisParam%pList)) THEN
               np=SIZE(thisParam%pList)
-              
+
               !Copy the parameter list to a temporary
               ALLOCATE(tmpList(np))
               DO i=1,np
                 CALL assign_ParamType(tmpList(i),thisParam%pList(i))
                 CALL thisParam%pList(i)%clear()
               ENDDO
-              
+
               !Reallocate the parameter list and copy everything back
               DEALLOCATE(thisParam%pList)
               ALLOCATE(thisParam%pList(np+1))
@@ -1534,7 +1535,7 @@ MODULE ParameterLists
               ALLOCATE(thisParam%pList(1))
               i=1
             ENDIF
-            
+
             !Make recursive call to add the parameter in the new empty parameter
             CALL add_ParamType(thisParam%pList(i),name,newParam)
           ENDIF
@@ -1551,7 +1552,7 @@ MODULE ParameterLists
 !> @param name the name of the parameter to be removed from @c thisParam
 !>
 !> If @c name cannot be matched then nothing is removed. The @c name cannot
-!> be blank or contain entries like "->somename" or 
+!> be blank or contain entries like "->somename" or
 !> "firstname -> -> secondname". If partial paths are used for @c name then
 !> the first parameter encountered with a matching name is removed.
 !>
@@ -1562,7 +1563,7 @@ MODULE ParameterLists
       CHARACTER(LEN=LEN(name)) :: thisname,nextname,pname
       INTEGER(SIK) :: i,ipos,np,npnew
       TYPE(ParamType),ALLOCATABLE :: tmpList(:)
-      
+
       ipos=INDEX(name,'->')
       thisname=name
       nextname=''
@@ -1571,7 +1572,7 @@ MODULE ParameterLists
         nextname=ADJUSTL(name(ipos+2:LEN(name)))
       ENDIF
       pname=''
-      
+
       IF(LEN_TRIM(thisname) > 0) THEN
         SELECTTYPE(thisParam)
           TYPE IS(ParamType_List)
@@ -1580,7 +1581,7 @@ MODULE ParameterLists
               IF(LEN(pname) >= LEN_TRIM(thisParam%name)) pname=thisParam%name
               CALL toUPPER(pname)
               CALL toUPPER(thisname)
-            
+
               !Search the list for nextname (thisname must match parameter name)
               IF(TRIM(pname) == TRIM(thisname)) THEN
                 IF(ALLOCATED(thisParam%pList)) THEN
@@ -1618,15 +1619,15 @@ MODULE ParameterLists
                 ENDDO
               ENDIF
             ENDIF
-            
+
             !Garbage collection, shrink the current list to remove
             !empty values
             IF(ALLOCATED(thisParam%pList)) THEN
-              
+
               !Create temporary
               np=SIZE(thisParam%pList)
               ALLOCATE(tmpList(np))
-              
+
               !Copy to temporary
               npnew=0
               DO i=1,np
@@ -1636,12 +1637,12 @@ MODULE ParameterLists
                   CALL thisParam%pList(i)%clear()
                 ENDIF
               ENDDO
-              
+
               !Reallocate list
               DEALLOCATE(thisParam%pList)
               IF(npnew > 0) THEN
                 ALLOCATE(thisParam%pList(npnew))
-              
+
                 !Copy non-empty values back to list
                 DO i=1,npnew
                   CALL assign_ParamType(thisParam%pList(i),tmpList(i))
@@ -1683,7 +1684,7 @@ MODULE ParameterLists
 !> @param hasname the logical which returns if @c name is present
 !>
 !> If @c name cannot be matched then FALSE is returned. The @c name cannot
-!> be blank or contain entries like "->somename" or 
+!> be blank or contain entries like "->somename" or
 !> "firstname -> -> secondname".
 !>
     FUNCTION has_ParamType(thisParam,name) RESULT(hasname)
@@ -1694,7 +1695,7 @@ MODULE ParameterLists
       CHARACTER(LEN=LEN(name)) :: tmpname
       INTEGER(SIK) :: ipos
       CLASS(ParamType),POINTER :: tmpParam => NULL()
-      
+
       hasname=.FALSE.
       tmpname=name
       ipos=INDEX(tmpname,'->')
@@ -1707,11 +1708,11 @@ MODULE ParameterLists
         tmpname=ADJUSTL(tmpname(ipos+2:LEN(tmpname)))
         ipos=INDEX(tmpname,'->')
       ENDDO
-        
+
       !Search for the parameter name
       CALL thisParam%getParam(name,tmpParam)
       hasname=ASSOCIATED(tmpParam)
-      
+
       tmpParam => NULL()
     ENDFUNCTION has_ParamType
 !
@@ -1731,7 +1732,7 @@ MODULE ParameterLists
       INTEGER(SIK),INTENT(IN) :: funit
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
       INTEGER(SIK) :: i
-      
+
       i=3
       IF(PRESENT(indent)) i=i+indent
       IF(ASSOCIATED(thisParam%pdat)) &
@@ -1758,15 +1759,15 @@ MODULE ParameterLists
     ENDSUBROUTINE clear_ParamType
 !
 !-------------------------------------------------------------------------------
-!> @brief Searches a parameter (thisParam) for a set of required parameters 
-!> (reqParams) and determines if all the required parameters are present and 
+!> @brief Searches a parameter (thisParam) for a set of required parameters
+!> (reqParams) and determines if all the required parameters are present and
 !> of the correct type.
 !> @param thisParam the parameter to validate against reqParams
-!> @param reqParams the set of required parameters that must appear in 
+!> @param reqParams the set of required parameters that must appear in
 !>        @c thisParam
 !> @param prefix a prefix path for the parameter's full path name
 !> @returns isValid logical indicating that all the required parameters exist
-!>          in @c thisParam and are of the correct type. 
+!>          in @c thisParam and are of the correct type.
 !>
     RECURSIVE FUNCTION validateReq_ParamType(thisParam,reqParams,prefix,isMatch) &
       RESULT(isValid)
@@ -1778,7 +1779,7 @@ MODULE ParameterLists
       LOGICAL(SBK) :: isValid
       INTEGER(SIK) :: i,ntrue
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       isValid=.FALSE.
 !
 !Loop over all required params in reqParams and search thisParam for
@@ -1848,12 +1849,12 @@ MODULE ParameterLists
     ENDFUNCTION validateReq_ParamType
 !
 !-------------------------------------------------------------------------------
-!> @brief Searches a parameter (thisParam) for a set of optional parameters 
-!> (optParams) when an optional parameter is present. It also checks the type. 
-!> If an optional parameter is not present or has the wrong type it is reset 
+!> @brief Searches a parameter (thisParam) for a set of optional parameters
+!> (optParams) when an optional parameter is present. It also checks the type.
+!> If an optional parameter is not present or has the wrong type it is reset
 !> with the default value.
 !> @param thisParam the parameter to validate against reqParams
-!> @param optParams the set of optional parameters that must appear in 
+!> @param optParams the set of optional parameters that must appear in
 !>        @c thisParam
 !> @param prefix a prefix path for the parameter's full path name
 !>
@@ -1864,7 +1865,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       INTEGER(SIK) :: i,nprefix
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       nprefix=LEN(prefix)
       IF(nprefix > 1) THEN
         IF('->' == prefix(LEN(prefix)-1:LEN(prefix)) ) &
@@ -1929,13 +1930,13 @@ MODULE ParameterLists
    ENDSUBROUTINE validateOpt_ParamType
 !
 !-------------------------------------------------------------------------------
-!> @brief Compares a parameter list to another parameter list and reports any 
-!> extra parameters that are in the first list and not the second list or the 
+!> @brief Compares a parameter list to another parameter list and reports any
+!> extra parameters that are in the first list and not the second list or the
 !> third (optional) list.
 !> @param thisParam the parameter in which to check for extra parameters
-!> @param reqParams the set of required parameters that must appear in 
+!> @param reqParams the set of required parameters that must appear in
 !>        @c thisParam
-!> @param optParams the set of optional parameters that must appear in 
+!> @param optParams the set of optional parameters that must appear in
 !>        @c thisParam
 !> @param prefix a prefix path for the parameter's full path name
 !>
@@ -1947,7 +1948,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: prefix
       INTEGER(SIK) :: i
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       i=0
       SELECTTYPE(p=>thisParam)
         TYPE IS(ParamType)
@@ -2007,7 +2008,7 @@ MODULE ParameterLists
     ENDSUBROUTINE checkExtras_Paramtype
 !
 !-------------------------------------------------------------------------------
-!> @brief 
+!> @brief
 !> @param thisParam
 !> @param reqParams
 !> @param optParams
@@ -2020,13 +2021,13 @@ MODULE ParameterLists
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: printExtras
       LOGICAL(SBK) :: isValid
       TYPE(ParamType) :: nullParam
-      
+
       !Assume the list is valid, check it only if the required parameter
       !list is not empty.
       isValid=.TRUE.
       IF(ASSOCIATED(reqParams%pdat)) &
         isValid=validateReq_ParamType(thisParam,reqParams,'')
-      
+
       IF(isValid) THEN
         IF(PRESENT(optParams)) THEN
           CALL validateOpt_Paramtype(thisParam,optParams,'')
@@ -2057,7 +2058,7 @@ MODULE ParameterLists
       CLASS(ParamType),INTENT(IN) :: reqParams
       LOGICAL(SBK),INTENT(OUT) :: isMatch
       LOGICAL(SBK) :: isValid
-      
+
       !Assume the list is valid, check it only if the required parameter
       !list is not empty.
       isValid=.TRUE.
@@ -2067,7 +2068,7 @@ MODULE ParameterLists
     ENDSUBROUTINE verify_Paramtype
 !
 !-------------------------------------------------------------------------------
-!> @brief This function assumes that thisParam and thatParam are of the same 
+!> @brief This function assumes that thisParam and thatParam are of the same
 !>        extended ParamType.  It also assumes that there is a "gettable" value
 !>        that is of thisParam%name on the ParamType.  This function determines
 !>        the extended type, then "gets" the appropriate parameter from both
@@ -2103,7 +2104,7 @@ MODULE ParameterLists
       TYPE(StringType) :: tmpstr1,tmpstr2
       TYPE(StringType),ALLOCATABLE :: tmpstra11(:),tmpstra21(:,:)
       TYPE(StringType),ALLOCATABLE :: tmpstra12(:),tmpstra22(:,:)
-      
+
       !Point to the intent(in) param to use the get function
       paramPtr => NULL()
       bool=.FALSE.
@@ -2438,9 +2439,9 @@ MODULE ParameterLists
 !> @param name the name of the parameter
 !> @param param an array or list of parameters
 !> @param description an optional description for this parameter
-!> 
+!>
 !> This routine is not recursive, so it is like setting a scalar parameter.
-!> Therefore the name cannot contain the "->" symbol to indicate access to a 
+!> Therefore the name cannot contain the "->" symbol to indicate access to a
 !> sub-list. @c thisParam must not already be inititalized.
 !>
     SUBROUTINE init_ParamType_List(thisParam,name,param,description)
@@ -2450,7 +2451,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       INTEGER(SIK) :: ipos,i
-      
+
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
         ipos=INDEX(name,'->')
@@ -2492,7 +2493,7 @@ MODULE ParameterLists
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
       CHARACTER(LEN=12) :: fmt
       INTEGER(SIK) :: i,j
-      
+
       IF(LEN_TRIM(thisParam%name) > 0) THEN
         i=1
         IF(PRESENT(indent)) i=i+indent
@@ -2505,7 +2506,7 @@ MODULE ParameterLists
             ' :: '//thisParam%name//'= !'//thisParam%description
         ENDIF
       ENDIF
-      IF(ALLOCATED(thisParam%pList)) THEN  
+      IF(ALLOCATED(thisParam%pList)) THEN
         DO j=1,SIZE(thisParam%pList)
           IF(ASSOCIATED(thisParam%pList(j)%pdat)) &
             CALL thisParam%pList(j)%pdat%edit(funit,i+3)
@@ -2516,9 +2517,9 @@ MODULE ParameterLists
 !-------------------------------------------------------------------------------
 !> @brief Clears a parameter list type
 !> @param thisParam the parameter list object to clear
-!> 
+!>
 !> This routine recursively clears all subparameters in this list.
-!> 
+!>
     SUBROUTINE clear_ParamType_List(thisParam)
       CLASS(ParamType_List),INTENT(INOUT) :: thisParam
       INTEGER(SIK) :: i
@@ -2535,7 +2536,7 @@ MODULE ParameterLists
 !
 !-------------------------------------------------------------------------------
 !> @brief Sets the value of an existing parameter list to a new value.
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will be to set the new value of @c paramlist
 !> @param name the name of an existing parameter to set the value of
 !> @param paramlist the new value to set for the parameter
@@ -2544,7 +2545,7 @@ MODULE ParameterLists
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a parameter list then an error is produced.
-!> 
+!>
     SUBROUTINE set_ParamType_List(thisParam,name,paramlist,description)
       CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_List'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
@@ -2553,12 +2554,12 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       INTEGER(SIK) :: np,i
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_List)
           IF(thisParam%name == TRIM(name)) THEN
             IF(PRESENT(description)) thisParam%description=TRIM(description)
-            
+
             IF(ALLOCATED(thisParam%pList)) THEN
               !Clear the existing list
               DO i=1,SIZE(thisParam%pList)
@@ -2566,7 +2567,7 @@ MODULE ParameterLists
               ENDDO
               DEALLOCATE(thisParam%pList)
             ENDIF
-            
+
             !Assign the new list
             np=SIZE(paramlist)
             ALLOCATE(thisParam%pList(np))
@@ -2593,7 +2594,7 @@ MODULE ParameterLists
                   ENDDO
                   DEALLOCATE(p%pList)
                 ENDIF
-            
+
                 !Assign the new list
                 np=SIZE(paramlist)
                 ALLOCATE(p%pList(np))
@@ -2615,12 +2616,12 @@ MODULE ParameterLists
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the array or list of parameters for a specified parameter name
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will have it's value returned
 !> @param name the name of the parameter to return the value of
 !> @param paramlist the current value of the parameter with @c name
-!> 
-!> If a parameter with @c name is not found an error is produced. If the 
+!>
+!> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a parameter list then an error is produced.
 !> If the length of @c paramlist is less then the size of the parameter list
 !> of the parameter with name matching @c name, then not all values are returned
@@ -2633,7 +2634,7 @@ MODULE ParameterLists
       TYPE(ParamType),INTENT(INOUT) :: paramlist(:)
       INTEGER(SIK) :: i,np
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_List)
           IF(thisParam%name == TRIM(name)) THEN
@@ -2690,16 +2691,16 @@ MODULE ParameterLists
 !> @param name the location and name of the new parameter
 !> @param param the list of parameters that will be added
 !> @param description an optional input for a description of the new parameter
-!> 
+!>
 !> This routine creates a new parameter within @c thisParam with @c name.
-!> @c name may contain a full or partial path to the new parameter. If @c name 
+!> @c name may contain a full or partial path to the new parameter. If @c name
 !> can be matched to an existing parameter in @c thisParam an error is produced
 !> If @c name contains a full path for which intermediate lists do not exist
 !> then this lists are created in the process of adding the new parameter.
 !> If @c thisParam is not initialized and @c name does not contain a "->"
-!> symbol then this routine behaves equivalently to 
+!> symbol then this routine behaves equivalently to
 !> @ref ParameterLists::init_ParamType_List "initParamList".
-!> 
+!>
     SUBROUTINE add_ParamType_List(thisParam,name,param,description)
       CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_List'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
@@ -2710,10 +2711,10 @@ MODULE ParameterLists
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
-      
+
       IF(.NOT.ASSOCIATED(tmpParam)) THEN
         prevname=''
         thisname=ADJUSTL(name)
@@ -2722,14 +2723,14 @@ MODULE ParameterLists
           prevname=ADJUSTL(name(1:ipos-1))
           thisname=ADJUSTL(name(ipos+2:LEN(name)))
         ENDIF
-      
+
         !Initialize the new parameter
         IF(PRESENT(description)) THEN
           CALL init_ParamType_List(newParam,thisname,param,description)
         ELSE
           CALL init_ParamType_List(newParam,thisname,param)
         ENDIF
-        
+
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
         CALL newParam%clear()
@@ -2746,9 +2747,9 @@ MODULE ParameterLists
 !> @param name the name of the parameter
 !> @param param a scalar single precision real
 !> @param description an optional description for this parameter
-!> 
+!>
 !> This routine is not recursive, so it is like setting a scalar parameter.
-!> Therefore the name cannot contain the "->" symbol to indicate access to a 
+!> Therefore the name cannot contain the "->" symbol to indicate access to a
 !> sub-list. @c thisParam must not already be inititalized.
 !>
     SUBROUTINE init_ParamType_SSK(thisParam,name,param,description)
@@ -2758,7 +2759,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       INTEGER(SIK) :: ipos
-      
+
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
         ipos=INDEX(name,'->')
@@ -2798,7 +2799,7 @@ MODULE ParameterLists
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
       CHARACTER(LEN=12) :: fmt
       INTEGER(SIK) :: i
-      
+
       i=1
       IF(PRESENT(indent)) i=i+indent
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
@@ -2815,7 +2816,7 @@ MODULE ParameterLists
 !-------------------------------------------------------------------------------
 !> @brief Clears a scalar single precision real valued parameter
 !> @param thisParam the scalar single precision real valued parameter to clear
-!> 
+!>
     SUBROUTINE clear_ParamType_SSK(thisParam)
       CLASS(ParamType_SSK),INTENT(INOUT) :: thisParam
       thisParam%val=0.0_SSK
@@ -2825,9 +2826,9 @@ MODULE ParameterLists
     ENDSUBROUTINE clear_ParamType_SSK
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets the value of an existing scalar single precision real valued 
+!> @brief Sets the value of an existing scalar single precision real valued
 !> parameter to a new value.
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will be to set the new value of @c param
 !> @param name the name of an existing parameter to set the value of
 !> @param param the new value to set for the parameter
@@ -2845,7 +2846,7 @@ MODULE ParameterLists
       REAL(SSK),INTENT(IN) :: param
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SSK)
           IF(thisParam%name == TRIM(name)) THEN
@@ -2880,12 +2881,12 @@ MODULE ParameterLists
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the scalar single precision real value for a specified parameter
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will have it's value returned
 !> @param name the name of the parameter to return the value of
 !> @param val the current value of the parameter with @c name
-!> 
-!> If a parameter with @c name is not found an error is produced. If the 
+!>
+!> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a scalar single precision real valued parameter
 !> then an error is produced.
 !>
@@ -2895,7 +2896,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       REAL(SSK),INTENT(INOUT) :: val
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SSK)
           IF(thisParam%name == TRIM(name)) THEN
@@ -2933,16 +2934,16 @@ MODULE ParameterLists
 !> @param name the location and name of the new parameter
 !> @param param the single precision real value of the new parameter
 !> @param description an optional input for a description of the new parameter
-!> 
+!>
 !> This routine creates a new parameter within @c thisParam with @c name.
-!> @c name may contain a full or partial path to the new parameter. If @c name 
+!> @c name may contain a full or partial path to the new parameter. If @c name
 !> can be matched to an existing parameter in @c thisParam an error is produced
 !> If @c name contains a full path for which intermediate lists do not exist
 !> then this lists are created in the process of adding the new parameter.
 !> If @c thisParam is not initialized and @c name does not contain a "->"
-!> symbol then this routine behaves equivalently to 
+!> symbol then this routine behaves equivalently to
 !> @ref ParameterLists::init_ParamType_SSK "initSSK".
-!> 
+!>
     SUBROUTINE add_ParamType_SSK(thisParam,name,param,description)
       CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SSK'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
@@ -2953,10 +2954,10 @@ MODULE ParameterLists
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
-      
+
       IF(.NOT.ASSOCIATED(tmpParam)) THEN
         prevname=''
         thisname=ADJUSTL(name)
@@ -2965,14 +2966,14 @@ MODULE ParameterLists
           prevname=ADJUSTL(name(1:ipos-1))
           thisname=ADJUSTL(name(ipos+2:LEN(name)))
         ENDIF
-      
+
         !Initialize the new parameter
         IF(PRESENT(description)) THEN
           CALL init_ParamType_SSK(newParam,thisname,param,description)
         ELSE
           CALL init_ParamType_SSK(newParam,thisname,param)
         ENDIF
-        
+
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
         CALL newParam%clear()
@@ -2989,9 +2990,9 @@ MODULE ParameterLists
 !> @param name the name of the parameter
 !> @param param a scalar double precision real
 !> @param description an optional description for this parameter
-!> 
+!>
 !> This routine is not recursive, so it is like setting a scalar parameter.
-!> Therefore the name cannot contain the "->" symbol to indicate access to a 
+!> Therefore the name cannot contain the "->" symbol to indicate access to a
 !> sub-list. @c thisParam must not already be inititalized.
 !>
     SUBROUTINE init_ParamType_SDK(thisParam,name,param,description)
@@ -3001,7 +3002,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       INTEGER(SIK) :: ipos
-      
+
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
         ipos=INDEX(name,'->')
@@ -3041,7 +3042,7 @@ MODULE ParameterLists
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
       CHARACTER(LEN=12) :: fmt
       INTEGER(SIK) :: i
-      
+
       i=1
       IF(PRESENT(indent)) i=i+indent
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
@@ -3058,7 +3059,7 @@ MODULE ParameterLists
 !-------------------------------------------------------------------------------
 !> @brief Clears a scalar double precision real valued parameter
 !> @param thisParam the scalar double precision real valued parameter to clear
-!> 
+!>
     SUBROUTINE clear_ParamType_SDK(thisParam)
       CLASS(ParamType_SDK),INTENT(INOUT) :: thisParam
       thisParam%val=0.0_SDK
@@ -3068,9 +3069,9 @@ MODULE ParameterLists
     ENDSUBROUTINE clear_ParamType_SDK
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets the value of an existing scalar double precision real valued 
+!> @brief Sets the value of an existing scalar double precision real valued
 !> parameter to a new value.
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will be to set the new value of @c param
 !> @param name the name of an existing parameter to set the value of
 !> @param param the new value to set for the parameter
@@ -3088,7 +3089,7 @@ MODULE ParameterLists
       REAL(SDK),INTENT(IN) :: param
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SDK)
           IF(thisParam%name == TRIM(name)) THEN
@@ -3123,12 +3124,12 @@ MODULE ParameterLists
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the scalar double precision real value for a specified parameter
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will have it's value returned
 !> @param name the name of the parameter to return the value of
 !> @param val the current value of the parameter with @c name
-!> 
-!> If a parameter with @c name is not found an error is produced. If the 
+!>
+!> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a scalar double precision real valued parameter
 !> then an error is produced.
 !>
@@ -3138,7 +3139,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       REAL(SDK),INTENT(INOUT) :: val
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SDK)
           IF(thisParam%name == TRIM(name)) THEN
@@ -3176,16 +3177,16 @@ MODULE ParameterLists
 !> @param name the location and name of the new parameter
 !> @param param the double precision real value of the new parameter
 !> @param description an optional input for a description of the new parameter
-!> 
+!>
 !> This routine creates a new parameter within @c thisParam with @c name.
-!> @c name may contain a full or partial path to the new parameter. If @c name 
+!> @c name may contain a full or partial path to the new parameter. If @c name
 !> can be matched to an existing parameter in @c thisParam an error is produced
 !> If @c name contains a full path for which intermediate lists do not exist
 !> then this lists are created in the process of adding the new parameter.
 !> If @c thisParam is not initialized and @c name does not contain a "->"
-!> symbol then this routine behaves equivalently to 
+!> symbol then this routine behaves equivalently to
 !> @ref ParameterLists::init_ParamType_SDK "initSDK".
-!> 
+!>
     SUBROUTINE add_ParamType_SDK(thisParam,name,param,description)
       CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SDK'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
@@ -3196,10 +3197,10 @@ MODULE ParameterLists
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
-      
+
       IF(.NOT.ASSOCIATED(tmpParam)) THEN
         prevname=''
         thisname=ADJUSTL(name)
@@ -3208,14 +3209,14 @@ MODULE ParameterLists
           prevname=ADJUSTL(name(1:ipos-1))
           thisname=ADJUSTL(name(ipos+2:LEN(name)))
         ENDIF
-      
+
         !Initialize the new parameter
         IF(PRESENT(description)) THEN
           CALL init_ParamType_SDK(newParam,thisname,param,description)
         ELSE
           CALL init_ParamType_SDK(newParam,thisname,param)
         ENDIF
-        
+
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
         CALL newParam%clear()
@@ -3232,9 +3233,9 @@ MODULE ParameterLists
 !> @param name the name of the parameter
 !> @param param a scalar 32-bit integer
 !> @param description an optional description for this parameter
-!> 
+!>
 !> This routine is not recursive, so it is like setting a scalar parameter.
-!> Therefore the name cannot contain the "->" symbol to indicate access to a 
+!> Therefore the name cannot contain the "->" symbol to indicate access to a
 !> sub-list. @c thisParam must not already be inititalized.
 !>
     SUBROUTINE init_ParamType_SNK(thisParam,name,param,description)
@@ -3244,7 +3245,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       INTEGER(SIK) :: ipos
-      
+
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
         ipos=INDEX(name,'->')
@@ -3284,7 +3285,7 @@ MODULE ParameterLists
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
       CHARACTER(LEN=12) :: fmt
       INTEGER(SIK) :: i
-      
+
       i=1
       IF(PRESENT(indent)) i=i+indent
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
@@ -3301,7 +3302,7 @@ MODULE ParameterLists
 !-------------------------------------------------------------------------------
 !> @brief Clears a scalar 32-bit integer valued parameter
 !> @param thisParam the scalar 32-bit integer valued parameter to clear
-!> 
+!>
     SUBROUTINE clear_ParamType_SNK(thisParam)
       CLASS(ParamType_SNK),INTENT(INOUT) :: thisParam
       thisParam%val=0_SNK
@@ -3311,9 +3312,9 @@ MODULE ParameterLists
     ENDSUBROUTINE clear_ParamType_SNK
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets the value of an existing scalar 32-bit integer valued 
+!> @brief Sets the value of an existing scalar 32-bit integer valued
 !> parameter to a new value.
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will be to set the new value of @c param
 !> @param name the name of an existing parameter to set the value of
 !> @param param the new value to set for the parameter
@@ -3331,7 +3332,7 @@ MODULE ParameterLists
       INTEGER(SNK),INTENT(IN) :: param
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SNK)
           IF(thisParam%name == TRIM(name)) THEN
@@ -3366,12 +3367,12 @@ MODULE ParameterLists
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the scalar 32-bit integer value for a specified parameter
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will have it's value returned
 !> @param name the name of the parameter to return the value of
 !> @param val the current value of the parameter with @c name
-!> 
-!> If a parameter with @c name is not found an error is produced. If the 
+!>
+!> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a scalar 32-bit integer valued parameter
 !> then an error is produced.
 !>
@@ -3381,7 +3382,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       INTEGER(SNK),INTENT(INOUT) :: val
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SNK)
           IF(thisParam%name == TRIM(name)) THEN
@@ -3419,16 +3420,16 @@ MODULE ParameterLists
 !> @param name the location and name of the new parameter
 !> @param param the 32-bit integer value of the new parameter
 !> @param description an optional input for a description of the new parameter
-!> 
+!>
 !> This routine creates a new parameter within @c thisParam with @c name.
-!> @c name may contain a full or partial path to the new parameter. If @c name 
+!> @c name may contain a full or partial path to the new parameter. If @c name
 !> can be matched to an existing parameter in @c thisParam an error is produced
 !> If @c name contains a full path for which intermediate lists do not exist
 !> then this lists are created in the process of adding the new parameter.
 !> If @c thisParam is not initialized and @c name does not contain a "->"
-!> symbol then this routine behaves equivalently to 
+!> symbol then this routine behaves equivalently to
 !> @ref ParameterLists::init_ParamType_SNK "initSNK".
-!> 
+!>
     SUBROUTINE add_ParamType_SNK(thisParam,name,param,description)
       CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SNK'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
@@ -3439,10 +3440,10 @@ MODULE ParameterLists
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
-      
+
       IF(.NOT.ASSOCIATED(tmpParam)) THEN
         prevname=''
         thisname=ADJUSTL(name)
@@ -3451,14 +3452,14 @@ MODULE ParameterLists
           prevname=ADJUSTL(name(1:ipos-1))
           thisname=ADJUSTL(name(ipos+2:LEN(name)))
         ENDIF
-      
+
         !Initialize the new parameter
         IF(PRESENT(description)) THEN
           CALL init_ParamType_SNK(newParam,thisname,param,description)
         ELSE
           CALL init_ParamType_SNK(newParam,thisname,param)
         ENDIF
-        
+
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
         CALL newParam%clear()
@@ -3475,9 +3476,9 @@ MODULE ParameterLists
 !> @param name the name of the parameter
 !> @param param a scalar 64-bit integer
 !> @param description an optional description for this parameter
-!> 
+!>
 !> This routine is not recursive, so it is like setting a scalar parameter.
-!> Therefore the name cannot contain the "->" symbol to indicate access to a 
+!> Therefore the name cannot contain the "->" symbol to indicate access to a
 !> sub-list. @c thisParam must not already be inititalized.
 !>
     SUBROUTINE init_ParamType_SLK(thisParam,name,param,description)
@@ -3487,7 +3488,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       INTEGER(SIK) :: ipos
-      
+
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
         ipos=INDEX(name,'->')
@@ -3527,7 +3528,7 @@ MODULE ParameterLists
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
       CHARACTER(LEN=12) :: fmt
       INTEGER(SIK) :: i
-      
+
       i=1
       IF(PRESENT(indent)) i=i+indent
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
@@ -3544,7 +3545,7 @@ MODULE ParameterLists
 !-------------------------------------------------------------------------------
 !> @brief Clears a scalar 64-bit integer valued parameter
 !> @param thisParam the scalar 64-bit integer valued parameter to clear
-!> 
+!>
     SUBROUTINE clear_ParamType_SLK(thisParam)
       CLASS(ParamType_SLK),INTENT(INOUT) :: thisParam
       thisParam%val=0_SLK
@@ -3554,9 +3555,9 @@ MODULE ParameterLists
     ENDSUBROUTINE clear_ParamType_SLK
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets the value of an existing scalar 64-bit integer valued 
+!> @brief Sets the value of an existing scalar 64-bit integer valued
 !> parameter to a new value.
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will be to set the new value of @c param
 !> @param name the name of an existing parameter to set the value of
 !> @param param the new value to set for the parameter
@@ -3574,7 +3575,7 @@ MODULE ParameterLists
       INTEGER(SLK),INTENT(IN) :: param
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SLK)
           IF(thisParam%name == TRIM(name)) THEN
@@ -3609,12 +3610,12 @@ MODULE ParameterLists
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the scalar 64-bit integer value for a specified parameter
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will have it's value returned
 !> @param name the name of the parameter to return the value of
 !> @param val the current value of the parameter with @c name
-!> 
-!> If a parameter with @c name is not found an error is produced. If the 
+!>
+!> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a scalar 64-bit integer valued parameter
 !> then an error is produced.
 !>
@@ -3624,7 +3625,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       INTEGER(SLK),INTENT(INOUT) :: val
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SLK)
           IF(thisParam%name == TRIM(name)) THEN
@@ -3662,16 +3663,16 @@ MODULE ParameterLists
 !> @param name the location and name of the new parameter
 !> @param param the 64-bit integer value of the new parameter
 !> @param description an optional input for a description of the new parameter
-!> 
+!>
 !> This routine creates a new parameter within @c thisParam with @c name.
-!> @c name may contain a full or partial path to the new parameter. If @c name 
+!> @c name may contain a full or partial path to the new parameter. If @c name
 !> can be matched to an existing parameter in @c thisParam an error is produced
 !> If @c name contains a full path for which intermediate lists do not exist
 !> then this lists are created in the process of adding the new parameter.
 !> If @c thisParam is not initialized and @c name does not contain a "->"
-!> symbol then this routine behaves equivalently to 
+!> symbol then this routine behaves equivalently to
 !> @ref ParameterLists::init_ParamType_SLK "initSLK".
-!> 
+!>
     SUBROUTINE add_ParamType_SLK(thisParam,name,param,description)
       CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SLK'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
@@ -3682,10 +3683,10 @@ MODULE ParameterLists
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
-      
+
       IF(.NOT.ASSOCIATED(tmpParam)) THEN
         prevname=''
         thisname=ADJUSTL(name)
@@ -3694,14 +3695,14 @@ MODULE ParameterLists
           prevname=ADJUSTL(name(1:ipos-1))
           thisname=ADJUSTL(name(ipos+2:LEN(name)))
         ENDIF
-      
+
         !Initialize the new parameter
         IF(PRESENT(description)) THEN
           CALL init_ParamType_SLK(newParam,thisname,param,description)
         ELSE
           CALL init_ParamType_SLK(newParam,thisname,param)
         ENDIF
-        
+
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
         CALL newParam%clear()
@@ -3718,9 +3719,9 @@ MODULE ParameterLists
 !> @param name the name of the parameter
 !> @param param a scalar logical
 !> @param description an optional description for this parameter
-!> 
+!>
 !> This routine is not recursive, so it is like setting a scalar parameter.
-!> Therefore the name cannot contain the "->" symbol to indicate access to a 
+!> Therefore the name cannot contain the "->" symbol to indicate access to a
 !> sub-list. @c thisParam must not already be inititalized.
 !>
     SUBROUTINE init_ParamType_SBK(thisParam,name,param,description)
@@ -3730,7 +3731,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       INTEGER(SIK) :: ipos
-      
+
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
         ipos=INDEX(name,'->')
@@ -3770,7 +3771,7 @@ MODULE ParameterLists
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
       CHARACTER(LEN=12) :: fmt
       INTEGER(SIK) :: i
-      
+
       i=1
       IF(PRESENT(indent)) i=i+indent
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
@@ -3787,7 +3788,7 @@ MODULE ParameterLists
 !-------------------------------------------------------------------------------
 !> @brief Clears a scalar logical valued parameter
 !> @param thisParam the scalar logical valued parameter to clear
-!> 
+!>
     SUBROUTINE clear_ParamType_SBK(thisParam)
       CLASS(ParamType_SBK),INTENT(INOUT) :: thisParam
       thisParam%val=.FALSE.
@@ -3797,9 +3798,9 @@ MODULE ParameterLists
     ENDSUBROUTINE clear_ParamType_SBK
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets the value of an existing scalar logical valued 
+!> @brief Sets the value of an existing scalar logical valued
 !> parameter to a new value.
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will be to set the new value of @c param
 !> @param name the name of an existing parameter to set the value of
 !> @param param the new value to set for the parameter
@@ -3817,7 +3818,7 @@ MODULE ParameterLists
       LOGICAL(SBK),INTENT(IN) :: param
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SBK)
           IF(thisParam%name == TRIM(name)) THEN
@@ -3852,12 +3853,12 @@ MODULE ParameterLists
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the scalar logical value for a specified parameter
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will have it's value returned
 !> @param name the name of the parameter to return the value of
 !> @param val the current value of the parameter with @c name
-!> 
-!> If a parameter with @c name is not found an error is produced. If the 
+!>
+!> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a scalar logical valued parameter
 !> then an error is produced.
 !>
@@ -3867,7 +3868,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       LOGICAL(SBK),INTENT(INOUT) :: val
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SBK)
           IF(thisParam%name == TRIM(name)) THEN
@@ -3905,16 +3906,16 @@ MODULE ParameterLists
 !> @param name the location and name of the new parameter
 !> @param param the logical value of the new parameter
 !> @param description an optional input for a description of the new parameter
-!> 
+!>
 !> This routine creates a new parameter within @c thisParam with @c name.
-!> @c name may contain a full or partial path to the new parameter. If @c name 
+!> @c name may contain a full or partial path to the new parameter. If @c name
 !> can be matched to an existing parameter in @c thisParam an error is produced
 !> If @c name contains a full path for which intermediate lists do not exist
 !> then this lists are created in the process of adding the new parameter.
 !> If @c thisParam is not initialized and @c name does not contain a "->"
-!> symbol then this routine behaves equivalently to 
+!> symbol then this routine behaves equivalently to
 !> @ref ParameterLists::init_ParamType_SBK "initSBK".
-!> 
+!>
     SUBROUTINE add_ParamType_SBK(thisParam,name,param,description)
       CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SBK'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
@@ -3925,10 +3926,10 @@ MODULE ParameterLists
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
-      
+
       IF(.NOT.ASSOCIATED(tmpParam)) THEN
         prevname=''
         thisname=ADJUSTL(name)
@@ -3937,14 +3938,14 @@ MODULE ParameterLists
           prevname=ADJUSTL(name(1:ipos-1))
           thisname=ADJUSTL(name(ipos+2:LEN(name)))
         ENDIF
-      
+
         !Initialize the new parameter
         IF(PRESENT(description)) THEN
           CALL init_ParamType_SBK(newParam,thisname,param,description)
         ELSE
           CALL init_ParamType_SBK(newParam,thisname,param)
         ENDIF
-        
+
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
         CALL newParam%clear()
@@ -3961,9 +3962,9 @@ MODULE ParameterLists
 !> @param name the name of the parameter
 !> @param param a string derived type
 !> @param description an optional description for this parameter
-!> 
+!>
 !> This routine is not recursive, so it is like setting a scalar parameter.
-!> Therefore the name cannot contain the "->" symbol to indicate access to a 
+!> Therefore the name cannot contain the "->" symbol to indicate access to a
 !> sub-list. @c thisParam must not already be inititalized.
 !>
     SUBROUTINE init_ParamType_STR(thisParam,name,param,description)
@@ -3973,7 +3974,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       INTEGER(SIK) :: ipos
-      
+
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
         ipos=INDEX(name,'->')
@@ -4008,7 +4009,7 @@ MODULE ParameterLists
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
       CHARACTER(LEN=12) :: fmt
       INTEGER(SIK) :: i
-      
+
       i=1
       IF(PRESENT(indent)) i=i+indent
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
@@ -4025,7 +4026,7 @@ MODULE ParameterLists
 !-------------------------------------------------------------------------------
 !> @brief Clears a string derived type parameter
 !> @param thisParam the string derived type parameter to clear
-!> 
+!>
     SUBROUTINE clear_ParamType_STR(thisParam)
       CLASS(ParamType_STR),INTENT(INOUT) :: thisParam
       thisParam%val=''         !Not sure how to clear this since it doesn't have a clear routine!
@@ -4036,7 +4037,7 @@ MODULE ParameterLists
 !
 !-------------------------------------------------------------------------------
 !> @brief Sets the value of an existing string derived type parameter to a new value.
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will be to set the new value of @c param
 !> @param name the name of an existing parameter to set the value of
 !> @param param the new value to set for the parameter
@@ -4054,7 +4055,7 @@ MODULE ParameterLists
       TYPE(StringType),INTENT(IN) :: param
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_STR)
           IF(thisParam%name == TRIM(name)) THEN
@@ -4089,12 +4090,12 @@ MODULE ParameterLists
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the string derived type for a specified parameter
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will have it's value returned
 !> @param name the name of the parameter to return the value of
 !> @param val the current value of the parameter with @c name
-!> 
-!> If a parameter with @c name is not found an error is produced. If the 
+!>
+!> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a string derived type parameter
 !> then an error is produced.
 !>
@@ -4104,7 +4105,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       TYPE(StringType),INTENT(INOUT) :: val
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_STR)
           IF(thisParam%name == TRIM(name)) THEN
@@ -4141,16 +4142,16 @@ MODULE ParameterLists
 !> @param name the location and name of the new parameter
 !> @param param the string derived type of the new parameter
 !> @param description an optional input for a description of the new parameter
-!> 
+!>
 !> This routine creates a new parameter within @c thisParam with @c name.
-!> @c name may contain a full or partial path to the new parameter. If @c name 
+!> @c name may contain a full or partial path to the new parameter. If @c name
 !> can be matched to an existing parameter in @c thisParam an error is produced
 !> If @c name contains a full path for which intermediate lists do not exist
 !> then this lists are created in the process of adding the new parameter.
 !> If @c thisParam is not initialized and @c name does not contain a "->"
-!> symbol then this routine behaves equivalently to 
+!> symbol then this routine behaves equivalently to
 !> @ref ParameterLists::init_ParamType_STR "initSTR".
-!> 
+!>
     SUBROUTINE add_ParamType_STR(thisParam,name,param,description)
       CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_STR'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
@@ -4161,10 +4162,10 @@ MODULE ParameterLists
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
-      
+
       IF(.NOT.ASSOCIATED(tmpParam)) THEN
         prevname=''
         thisname=ADJUSTL(name)
@@ -4173,14 +4174,14 @@ MODULE ParameterLists
           prevname=ADJUSTL(name(1:ipos-1))
           thisname=ADJUSTL(name(ipos+2:LEN(name)))
         ENDIF
-      
+
         !Initialize the new parameter
         IF(PRESENT(description)) THEN
           CALL init_ParamType_STR(newParam,thisname,param,description)
         ELSE
           CALL init_ParamType_STR(newParam,thisname,param)
         ENDIF
-        
+
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
         CALL newParam%clear()
@@ -4205,7 +4206,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       TYPE(StringType) :: s
-      
+
       s=param
       IF(PRESENT(description)) THEN
         CALL init_ParamType_STR(thisParam,name,s,description)
@@ -4218,7 +4219,7 @@ MODULE ParameterLists
 !-------------------------------------------------------------------------------
 !> @brief Wrapper for set_ParamType_STR to pass a character string instead of
 !> a string type
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will be to set the new value of @c param
 !> @param name the name of an existing parameter to set the value of
 !> @param param the new value to set for the parameter
@@ -4231,7 +4232,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: param
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       TYPE(StringType) :: s
-      
+
       s=param
       IF(PRESENT(description)) THEN
         CALL set_ParamType_STR(thisParam,name,s,description)
@@ -4255,7 +4256,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: param
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       TYPE(StringType) :: s
-      
+
       s=param
       IF(PRESENT(description)) THEN
         CALL add_ParamType_STR(thisParam,name,s,description)
@@ -4268,7 +4269,7 @@ MODULE ParameterLists
 !-------------------------------------------------------------------------------
 !> @brief Wrapper for get_ParamType_STR to pass a character string instead of
 !> a string type
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will have it's value returned
 !> @param name the name of the parameter to return the value of
 !> @param val the current value of the parameter with @c name
@@ -4279,25 +4280,25 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(INOUT) :: val
       TYPE(StringType) :: s
-      
+
       CALL get_ParamType_STR(thisParam,name,s)
       val=s
       s=''
     ENDSUBROUTINE get_ParamType_CHAR
 !1111111111111111111111111111111111111111111111111111111111111111111111111111111
-!        One Dimensional Arrays    
+!        One Dimensional Arrays
 !1111111111111111111111111111111111111111111111111111111111111111111111111111111
 !
 !-------------------------------------------------------------------------------
-!> @brief Initializes a ParamType object as a one dimensional array of single 
+!> @brief Initializes a ParamType object as a one dimensional array of single
 !>        precision reals
 !> @param thisParam the parameter to initialize
 !> @param name the name of the parameter
 !> @param param a one dimensional array of single precision reals
 !> @param description an optional description for this parameter
-!> 
+!>
 !> This routine is not recursive, so it is like setting a one dimensional array of parameter.
-!> Therefore the name cannot contain the "->" symbol to indicate access to a 
+!> Therefore the name cannot contain the "->" symbol to indicate access to a
 !> sub-list. @c thisParam must not already be inititalized.
 !>
     SUBROUTINE init_ParamType_SSK_a1(thisParam,name,param,description)
@@ -4307,7 +4308,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       INTEGER(SIK) :: ipos
-      
+
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
         ipos=INDEX(name,'->')
@@ -4333,7 +4334,7 @@ MODULE ParameterLists
 !
 !-------------------------------------------------------------------------------
 !> @brief Edits a one dimensional array of single precision real valued parameters
-!> @param thisParam the one dimensional array of single precision real valued 
+!> @param thisParam the one dimensional array of single precision real valued
 !>        parameters to edit
 !> @param funit the unit number to edit the parameter to
 !> @param indent optional indicates the number of blank spaces to precede the
@@ -4350,31 +4351,42 @@ MODULE ParameterLists
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
       CHARACTER(LEN=12) :: fmt,fmt2
       INTEGER(SIK) :: i,j,k
-      
+
       i=1
       j=5
       IF(PRESENT(indent)) i=i+indent
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
-      IF(LEN_TRIM(thisParam%description) == 0) THEN
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g13.7)') &
-          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val(1)
-      ELSE
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g13.7,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val(1), &
-            ' !'//thisParam%description
-      ENDIF
+      WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g13.7)',ADVANCE='NO') &
+        thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val(1)
       j=j+LEN(thisParam%dataType)+LEN(thisParam%name)
       WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
-      DO k=2,SIZE(thisParam%val)
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,g13.7)') &
-          thisParam%val(k)
-      ENDDO
+      IF(SIZE(thisParam%val)>MAX_1D_LEN) THEN
+        DO k=2,SIZE(thisParam%val)
+          WRITE(UNIT=funit,FMT='(", ",g13.7)',ADVANCE='NO') thisParam%val(k)
+        ENDDO
+
+        IF(LEN_TRIM(thisParam%description) == 0) THEN
+          WRITE(funit,*)
+        ELSE
+          WRITE(UNIT=funit,FMT='(a)') ' !'//thisParam%description
+        ENDIF
+      ELSE
+        IF(LEN_TRIM(thisParam%description) == 0) THEN
+          WRITE(funit,*)
+        ELSE
+          WRITE(UNIT=funit,FMT='(a)') ' !'//thisParam%description
+        ENDIF
+        DO k=2,SIZE(thisParam%val)
+          WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,g13.7)') &
+            thisParam%val(k)
+        ENDDO
+      ENDIF
     ENDSUBROUTINE edit_ParamType_SSK_a1
 !
 !-------------------------------------------------------------------------------
 !> @brief Clears a one dimensional array of single precision real valued parameter
 !> @param thisParam the one dimensional array of single precision real valued parameter to clear
-!> 
+!>
     SUBROUTINE clear_ParamType_SSK_a1(thisParam)
       CLASS(ParamType_SSK_a1),INTENT(INOUT) :: thisParam
       DEALLOCATE(thisParam%val)
@@ -4384,9 +4396,9 @@ MODULE ParameterLists
     ENDSUBROUTINE clear_ParamType_SSK_a1
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets the value of an existing one dimensional array of single precision real valued 
+!> @brief Sets the value of an existing one dimensional array of single precision real valued
 !> parameter to a new value.
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will be to set the new value of @c param
 !> @param name the name of an existing parameter to set the value of
 !> @param param the new value to set for the parameter
@@ -4404,7 +4416,7 @@ MODULE ParameterLists
       REAL(SSK),INTENT(IN) :: param(:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SSK_a1)
           IF(thisParam%name == TRIM(name)) THEN
@@ -4447,12 +4459,12 @@ MODULE ParameterLists
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the one dimensional array of single precision real value for a specified parameter
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will have it's value returned
 !> @param name the name of the parameter to return the value of
 !> @param val the current value of the parameter with @c name
-!> 
-!> If a parameter with @c name is not found an error is produced. If the 
+!>
+!> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a one dimensional array of single precision real valued parameter
 !> then an error is produced.
 !>
@@ -4462,7 +4474,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: val(:)
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SSK_a1)
           IF(thisParam%name == TRIM(name)) THEN
@@ -4518,16 +4530,16 @@ MODULE ParameterLists
 !> @param name the location and name of the new parameter
 !> @param param the single precision real value of the new parameter
 !> @param description an optional input for a description of the new parameter
-!> 
+!>
 !> This routine creates a new parameter within @c thisParam with @c name.
-!> @c name may contain a full or partial path to the new parameter. If @c name 
+!> @c name may contain a full or partial path to the new parameter. If @c name
 !> can be matched to an existing parameter in @c thisParam an error is produced
 !> If @c name contains a full path for which intermediate lists do not exist
 !> then this lists are created in the process of adding the new parameter.
 !> If @c thisParam is not initialized and @c name does not contain a "->"
-!> symbol then this routine behaves equivalently to 
+!> symbol then this routine behaves equivalently to
 !> @ref ParameterLists::init_ParamType_SSK "initSSK".
-!> 
+!>
     SUBROUTINE add_ParamType_SSK_a1(thisParam,name,param,description)
       CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SSK_a1'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
@@ -4538,10 +4550,10 @@ MODULE ParameterLists
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
-      
+
       IF(.NOT.ASSOCIATED(tmpParam)) THEN
         prevname=''
         thisname=ADJUSTL(name)
@@ -4550,14 +4562,14 @@ MODULE ParameterLists
           prevname=ADJUSTL(name(1:ipos-1))
           thisname=ADJUSTL(name(ipos+2:LEN(name)))
         ENDIF
-      
+
         !Initialize the new parameter
         IF(PRESENT(description)) THEN
           CALL init_ParamType_SSK_a1(newParam,thisname,param,description)
         ELSE
           CALL init_ParamType_SSK_a1(newParam,thisname,param)
         ENDIF
-        
+
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
         CALL newParam%clear()
@@ -4574,9 +4586,9 @@ MODULE ParameterLists
 !> @param name the name of the parameter
 !> @param param a one dimensional array of double precision real
 !> @param description an optional description for this parameter
-!> 
+!>
 !> This routine is not recursive, so it is like setting a one dimensional array of parameter.
-!> Therefore the name cannot contain the "->" symbol to indicate access to a 
+!> Therefore the name cannot contain the "->" symbol to indicate access to a
 !> sub-list. @c thisParam must not already be inititalized.
 !>
     SUBROUTINE init_ParamType_SDK_a1(thisParam,name,param,description)
@@ -4586,7 +4598,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       INTEGER(SIK) :: ipos
-      
+
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
         ipos=INDEX(name,'->')
@@ -4628,32 +4640,43 @@ MODULE ParameterLists
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
       CHARACTER(LEN=12) :: fmt,fmt2
       INTEGER(SIK) :: i,j,k
-      
+
       i=1
       j=5
       IF(PRESENT(indent)) i=i+indent
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
-      IF(LEN_TRIM(thisParam%description) == 0) THEN
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g20.14)') &
-          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val(1)
-      ELSE
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g20.14,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val(1), &
-            ' !'//thisParam%description
-      ENDIF
+      WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g20.14)',ADVANCE='NO') &
+        thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val(1)
       j=j+LEN(thisParam%dataType)+LEN(thisParam%name)
       WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
-      DO k=2,SIZE(thisParam%val)
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,g20.14)') &
-          thisParam%val(k)
-      ENDDO
-      
+      IF(SIZE(thisParam%val)>MAX_1D_LEN) THEN
+        DO k=2,SIZE(thisParam%val)
+          WRITE(UNIT=funit,FMT='(", ",g20.14)',ADVANCE='NO') thisParam%val(k)
+        ENDDO
+
+        IF(LEN_TRIM(thisParam%description) == 0) THEN
+          WRITE(funit,*)
+        ELSE
+          WRITE(UNIT=funit,FMT='(a)') ' !'//thisParam%description
+        ENDIF
+      ELSE
+        IF(LEN_TRIM(thisParam%description) == 0) THEN
+          WRITE(funit,*)
+        ELSE
+          WRITE(UNIT=funit,FMT='(a)') ' !'//thisParam%description
+        ENDIF
+        DO k=2,SIZE(thisParam%val)
+          WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,g20.14)') &
+            thisParam%val(k)
+        ENDDO
+      ENDIF
+
     ENDSUBROUTINE edit_ParamType_SDK_a1
 !
 !-------------------------------------------------------------------------------
 !> @brief Clears a one dimensional array of double precision real valued parameter
 !> @param thisParam the one dimensional array of double precision real valued parameter to clear
-!> 
+!>
     SUBROUTINE clear_ParamType_SDK_a1(thisParam)
       CLASS(ParamType_SDK_a1),INTENT(INOUT) :: thisParam
       DEALLOCATE(thisParam%val)
@@ -4663,9 +4686,9 @@ MODULE ParameterLists
     ENDSUBROUTINE clear_ParamType_SDK_a1
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets the value of an existing one dimensional array of double precision real valued 
+!> @brief Sets the value of an existing one dimensional array of double precision real valued
 !> parameter to a new value.
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will be to set the new value of @c param
 !> @param name the name of an existing parameter to set the value of
 !> @param param the new value to set for the parameter
@@ -4683,7 +4706,7 @@ MODULE ParameterLists
       REAL(SDK),INTENT(IN) :: param(:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SDK_a1)
           IF(thisParam%name == TRIM(name)) THEN
@@ -4726,12 +4749,12 @@ MODULE ParameterLists
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the one dimensional array of double precision real value for a specified parameter
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will have it's value returned
 !> @param name the name of the parameter to return the value of
 !> @param val the current value of the parameter with @c name
-!> 
-!> If a parameter with @c name is not found an error is produced. If the 
+!>
+!> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a one dimensional array of double precision real valued parameter
 !> then an error is produced.
 !>
@@ -4741,7 +4764,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: val(:)
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SDK_a1)
           IF(thisParam%name == TRIM(name)) THEN
@@ -4797,16 +4820,16 @@ MODULE ParameterLists
 !> @param name the location and name of the new parameter
 !> @param param the double precision real value of the new parameter
 !> @param description an optional input for a description of the new parameter
-!> 
+!>
 !> This routine creates a new parameter within @c thisParam with @c name.
-!> @c name may contain a full or partial path to the new parameter. If @c name 
+!> @c name may contain a full or partial path to the new parameter. If @c name
 !> can be matched to an existing parameter in @c thisParam an error is produced
 !> If @c name contains a full path for which intermediate lists do not exist
 !> then this lists are created in the process of adding the new parameter.
 !> If @c thisParam is not initialized and @c name does not contain a "->"
-!> symbol then this routine behaves equivalently to 
+!> symbol then this routine behaves equivalently to
 !> @ref ParameterLists::init_ParamType_SDK "initSDK".
-!> 
+!>
     SUBROUTINE add_ParamType_SDK_a1(thisParam,name,param,description)
       CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SDK_a1'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
@@ -4817,10 +4840,10 @@ MODULE ParameterLists
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
-      
+
       IF(.NOT.ASSOCIATED(tmpParam)) THEN
         prevname=''
         thisname=ADJUSTL(name)
@@ -4829,14 +4852,14 @@ MODULE ParameterLists
           prevname=ADJUSTL(name(1:ipos-1))
           thisname=ADJUSTL(name(ipos+2:LEN(name)))
         ENDIF
-      
+
         !Initialize the new parameter
         IF(PRESENT(description)) THEN
           CALL init_ParamType_SDK_a1(newParam,thisname,param,description)
         ELSE
           CALL init_ParamType_SDK_a1(newParam,thisname,param)
         ENDIF
-        
+
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
         CALL newParam%clear()
@@ -4853,9 +4876,9 @@ MODULE ParameterLists
 !> @param name the name of the parameter
 !> @param param a one dimensional array of 32-bit integer
 !> @param description an optional description for this parameter
-!> 
+!>
 !> This routine is not recursive, so it is like setting a one dimensional array of parameter.
-!> Therefore the name cannot contain the "->" symbol to indicate access to a 
+!> Therefore the name cannot contain the "->" symbol to indicate access to a
 !> sub-list. @c thisParam must not already be inititalized.
 !>
     SUBROUTINE init_ParamType_SNK_a1(thisParam,name,param,description)
@@ -4865,7 +4888,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       INTEGER(SIK) :: ipos
-      
+
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
         ipos=INDEX(name,'->')
@@ -4907,31 +4930,41 @@ MODULE ParameterLists
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
       CHARACTER(LEN=12) :: fmt,fmt2
       INTEGER(SIK) :: i,j,k
-      
+
       i=1
       j=5
       IF(PRESENT(indent)) i=i+indent
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
-      IF(LEN_TRIM(thisParam%description) == 0) THEN
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g13.7)') &
+      WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g13.7)',ADVANCE='NO') &
           thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val(1)
-      ELSE
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g13.7,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val(1), &
-            ' !'//thisParam%description
-      ENDIF
       j=j+LEN(thisParam%dataType)+LEN(thisParam%name)
       WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
-      DO k=2,SIZE(thisParam%val)
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,g13.7)') &
-          thisParam%val(k)
-      ENDDO
+      IF(SIZE(thisParam%val)>MAX_1D_LEN) THEN
+        DO k=2,SIZE(thisParam%val)
+          WRITE(UNIT=funit,FMT='(", ",g13.7)',ADVANCE='NO') thisParam%val(k)
+        ENDDO
+        IF(LEN_TRIM(thisParam%description) == 0) THEN
+          WRITE(funit,*)
+        ELSE
+          WRITE(UNIT=funit,FMT='(a)') ' !'//thisParam%description
+        ENDIF
+      ELSE
+        IF(LEN_TRIM(thisParam%description) == 0) THEN
+          WRITE(funit,*)
+        ELSE
+          WRITE(UNIT=funit,FMT='(a)') ' !'//thisParam%description
+        ENDIF
+        DO k=2,SIZE(thisParam%val)
+          WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,g13.7)') &
+            thisParam%val(k)
+        ENDDO
+      ENDIF
     ENDSUBROUTINE edit_ParamType_SNK_a1
 !
 !-------------------------------------------------------------------------------
 !> @brief Clears a one dimensional array of 32-bit integer valued parameter
 !> @param thisParam the one dimensional array of 32-bit integer valued parameter to clear
-!> 
+!>
     SUBROUTINE clear_ParamType_SNK_a1(thisParam)
       CLASS(ParamType_SNK_a1),INTENT(INOUT) :: thisParam
       DEALLOCATE(thisParam%val)
@@ -4941,9 +4974,9 @@ MODULE ParameterLists
     ENDSUBROUTINE clear_ParamType_SNK_a1
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets the value of an existing one dimensional array of 32-bit integer valued 
+!> @brief Sets the value of an existing one dimensional array of 32-bit integer valued
 !> parameter to a new value.
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will be to set the new value of @c param
 !> @param name the name of an existing parameter to set the value of
 !> @param param the new value to set for the parameter
@@ -4961,7 +4994,7 @@ MODULE ParameterLists
       INTEGER(SNK),INTENT(IN) :: param(:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SNK_a1)
           IF(thisParam%name == TRIM(name)) THEN
@@ -5004,12 +5037,12 @@ MODULE ParameterLists
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the one dimensional array of 32-bit integer value for a specified parameter
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will have it's value returned
 !> @param name the name of the parameter to return the value of
 !> @param val the current value of the parameter with @c name
-!> 
-!> If a parameter with @c name is not found an error is produced. If the 
+!>
+!> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a one dimensional array of 32-bit integer valued parameter
 !> then an error is produced.
 !>
@@ -5019,7 +5052,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: val(:)
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SNK_a1)
           IF(thisParam%name == TRIM(name)) THEN
@@ -5075,16 +5108,16 @@ MODULE ParameterLists
 !> @param name the location and name of the new parameter
 !> @param param the 32-bit integer value of the new parameter
 !> @param description an optional input for a description of the new parameter
-!> 
+!>
 !> This routine creates a new parameter within @c thisParam with @c name.
-!> @c name may contain a full or partial path to the new parameter. If @c name 
+!> @c name may contain a full or partial path to the new parameter. If @c name
 !> can be matched to an existing parameter in @c thisParam an error is produced
 !> If @c name contains a full path for which intermediate lists do not exist
 !> then this lists are created in the process of adding the new parameter.
 !> If @c thisParam is not initialized and @c name does not contain a "->"
-!> symbol then this routine behaves equivalently to 
+!> symbol then this routine behaves equivalently to
 !> @ref ParameterLists::init_ParamType_SNK "initSNK".
-!> 
+!>
     SUBROUTINE add_ParamType_SNK_a1(thisParam,name,param,description)
       CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SNK_a1'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
@@ -5095,10 +5128,10 @@ MODULE ParameterLists
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
-      
+
       IF(.NOT.ASSOCIATED(tmpParam)) THEN
         prevname=''
         thisname=ADJUSTL(name)
@@ -5107,14 +5140,14 @@ MODULE ParameterLists
           prevname=ADJUSTL(name(1:ipos-1))
           thisname=ADJUSTL(name(ipos+2:LEN(name)))
         ENDIF
-      
+
         !Initialize the new parameter
         IF(PRESENT(description)) THEN
           CALL init_ParamType_SNK_a1(newParam,thisname,param,description)
         ELSE
           CALL init_ParamType_SNK_a1(newParam,thisname,param)
         ENDIF
-        
+
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
         CALL newParam%clear()
@@ -5131,9 +5164,9 @@ MODULE ParameterLists
 !> @param name the name of the parameter
 !> @param param a one dimensional array of 64-bit integer
 !> @param description an optional description for this parameter
-!> 
+!>
 !> This routine is not recursive, so it is like setting a one dimensional array of parameter.
-!> Therefore the name cannot contain the "->" symbol to indicate access to a 
+!> Therefore the name cannot contain the "->" symbol to indicate access to a
 !> sub-list. @c thisParam must not already be inititalized.
 !>
     SUBROUTINE init_ParamType_SLK_a1(thisParam,name,param,description)
@@ -5143,7 +5176,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       INTEGER(SIK) :: ipos
-      
+
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
         ipos=INDEX(name,'->')
@@ -5185,31 +5218,42 @@ MODULE ParameterLists
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
       CHARACTER(LEN=12) :: fmt,fmt2
       INTEGER(SIK) :: i,j,k
-      
+
       i=1
       j=5
       IF(PRESENT(indent)) i=i+indent
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
-      IF(LEN_TRIM(thisParam%description) == 0) THEN
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g20.14)') &
-          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val(1)
-      ELSE
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g20.14,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val(1), &
-            ' !'//thisParam%description
-      ENDIF
+      WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g20.14)',ADVANCE='NO') &
+        thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val(1)
       j=j+LEN(thisParam%dataType)+LEN(thisParam%name)
       WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
-      DO k=2,SIZE(thisParam%val)
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,g20.14)') &
-          thisParam%val(k)
-      ENDDO
+      IF(SIZE(thisParam%val)>MAX_1D_LEN) THEN
+        DO k=2,SIZE(thisParam%val)
+          WRITE(UNIT=funit,FMT='(", ",g20.14)',ADVANCE='NO') thisParam%val(k)
+        ENDDO
+
+        IF(LEN_TRIM(thisParam%description) == 0) THEN
+          WRITE(funit,*)
+        ELSE
+          WRITE(UNIT=funit,FMT='(a)') ' !'//thisParam%description
+        ENDIF
+      ELSE
+        IF(LEN_TRIM(thisParam%description) == 0) THEN
+          WRITE(funit,*)
+        ELSE
+          WRITE(UNIT=funit,FMT='(a)') ' !'//thisParam%description
+        ENDIF
+        DO k=2,SIZE(thisParam%val)
+          WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,g20.14)') &
+            thisParam%val(k)
+        ENDDO
+      ENDIF
     ENDSUBROUTINE edit_ParamType_SLK_a1
 !
 !-------------------------------------------------------------------------------
 !> @brief Clears a one dimensional array of 64-bit integer valued parameter
 !> @param thisParam the one dimensional array of 64-bit integer valued parameter to clear
-!> 
+!>
     SUBROUTINE clear_ParamType_SLK_a1(thisParam)
       CLASS(ParamType_SLK_a1),INTENT(INOUT) :: thisParam
       DEALLOCATE(thisParam%val)
@@ -5219,9 +5263,9 @@ MODULE ParameterLists
     ENDSUBROUTINE clear_ParamType_SLK_a1
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets the value of an existing one dimensional array of 64-bit integer valued 
+!> @brief Sets the value of an existing one dimensional array of 64-bit integer valued
 !> parameter to a new value.
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will be to set the new value of @c param
 !> @param name the name of an existing parameter to set the value of
 !> @param param the new value to set for the parameter
@@ -5239,7 +5283,7 @@ MODULE ParameterLists
       INTEGER(SLK),INTENT(IN) :: param(:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SLK_a1)
           IF(thisParam%name == TRIM(name)) THEN
@@ -5282,12 +5326,12 @@ MODULE ParameterLists
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the one dimensional array of 64-bit integer value for a specified parameter
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will have it's value returned
 !> @param name the name of the parameter to return the value of
 !> @param val the current value of the parameter with @c name
-!> 
-!> If a parameter with @c name is not found an error is produced. If the 
+!>
+!> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a one dimensional array of 64-bit integer valued parameter
 !> then an error is produced.
 !>
@@ -5297,7 +5341,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: val(:)
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SLK_a1)
           IF(thisParam%name == TRIM(name)) THEN
@@ -5353,16 +5397,16 @@ MODULE ParameterLists
 !> @param name the location and name of the new parameter
 !> @param param the 64-bit integer value of the new parameter
 !> @param description an optional input for a description of the new parameter
-!> 
+!>
 !> This routine creates a new parameter within @c thisParam with @c name.
-!> @c name may contain a full or partial path to the new parameter. If @c name 
+!> @c name may contain a full or partial path to the new parameter. If @c name
 !> can be matched to an existing parameter in @c thisParam an error is produced
 !> If @c name contains a full path for which intermediate lists do not exist
 !> then this lists are created in the process of adding the new parameter.
 !> If @c thisParam is not initialized and @c name does not contain a "->"
-!> symbol then this routine behaves equivalently to 
+!> symbol then this routine behaves equivalently to
 !> @ref ParameterLists::init_ParamType_SLK "initSLK".
-!> 
+!>
     SUBROUTINE add_ParamType_SLK_a1(thisParam,name,param,description)
       CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SLK_a1'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
@@ -5373,10 +5417,10 @@ MODULE ParameterLists
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
-      
+
       IF(.NOT.ASSOCIATED(tmpParam)) THEN
         prevname=''
         thisname=ADJUSTL(name)
@@ -5385,14 +5429,14 @@ MODULE ParameterLists
           prevname=ADJUSTL(name(1:ipos-1))
           thisname=ADJUSTL(name(ipos+2:LEN(name)))
         ENDIF
-      
+
         !Initialize the new parameter
         IF(PRESENT(description)) THEN
           CALL init_ParamType_SLK_a1(newParam,thisname,param,description)
         ELSE
           CALL init_ParamType_SLK_a1(newParam,thisname,param)
         ENDIF
-        
+
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
         CALL newParam%clear()
@@ -5409,9 +5453,9 @@ MODULE ParameterLists
 !> @param name the name of the parameter
 !> @param param a one dimensional array of logicals
 !> @param description an optional description for this parameter
-!> 
+!>
 !> This routine is not recursive, so it is like setting a one dimensional array of parameter.
-!> Therefore the name cannot contain the "->" symbol to indicate access to a 
+!> Therefore the name cannot contain the "->" symbol to indicate access to a
 !> sub-list. @c thisParam must not already be inititalized.
 !>
     SUBROUTINE init_ParamType_SBK_a1(thisParam,name,param,description)
@@ -5421,7 +5465,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       INTEGER(SIK) :: ipos
-      
+
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
         ipos=INDEX(name,'->')
@@ -5447,7 +5491,7 @@ MODULE ParameterLists
 !
 !-------------------------------------------------------------------------------
 !> @brief Edits a one dimensional array of logical valued parameters
-!> @param thisParam the one dimensional array of logical valued 
+!> @param thisParam the one dimensional array of logical valued
 !>        parameters to edit
 !> @param funit the unit number to edit the parameter to
 !> @param indent optional indicates the number of blank spaces to precede the
@@ -5459,31 +5503,43 @@ MODULE ParameterLists
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
       CHARACTER(LEN=12) :: fmt,fmt2
       INTEGER(SIK) :: i,j,k
-      
+
       i=1
       j=5
       IF(PRESENT(indent)) i=i+indent
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
-      IF(LEN_TRIM(thisParam%description) == 0) THEN
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,l3)') &
-          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val(1)
-      ELSE
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,l3,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val(1), &
-            ' !'//thisParam%description
-      ENDIF
+      WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,l3)',ADVANCE='NO') &
+        thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val(1)
       j=j+LEN(thisParam%dataType)+LEN(thisParam%name)
       WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
-      DO k=2,SIZE(thisParam%val)
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,l3)') &
-          thisParam%val(k)
-      ENDDO
+      IF(SIZE(thisParam%val)>MAX_1D_LEN) THEN
+        DO k=2,SIZE(thisParam%val)
+          WRITE(UNIT=funit,FMT='(", ",l3)',ADVANCE='NO') &
+            thisParam%val(k)
+        ENDDO
+
+        IF(LEN_TRIM(thisParam%description) == 0) THEN
+          WRITE(funit,*)
+        ELSE
+          WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,l3,a)') ' !'//thisParam%description
+        ENDIF
+      ELSE
+        IF(LEN_TRIM(thisParam%description) == 0) THEN
+          WRITE(funit,*)
+        ELSE
+          WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,l3,a)') ' !'//thisParam%description
+        ENDIF
+        DO k=2,SIZE(thisParam%val)
+          WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,l3)') &
+            thisParam%val(k)
+        ENDDO
+      ENDIF
     ENDSUBROUTINE edit_ParamType_SBK_a1
 !
 !-------------------------------------------------------------------------------
 !> @brief Clears a one dimensional array of logical valued parameter
 !> @param thisParam the one dimensional array of logical valued parameter to clear
-!> 
+!>
     SUBROUTINE clear_ParamType_SBK_a1(thisParam)
       CLASS(ParamType_SBK_a1),INTENT(INOUT) :: thisParam
       DEALLOCATE(thisParam%val)
@@ -5493,9 +5549,9 @@ MODULE ParameterLists
     ENDSUBROUTINE clear_ParamType_SBK_a1
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets the value of an existing one dimensional array of logical valued 
+!> @brief Sets the value of an existing one dimensional array of logical valued
 !> parameter to a new value.
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will be to set the new value of @c param
 !> @param name the name of an existing parameter to set the value of
 !> @param param the new value to set for the parameter
@@ -5513,7 +5569,7 @@ MODULE ParameterLists
       LOGICAL(SBK),INTENT(IN) :: param(:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SBK_a1)
           IF(thisParam%name == TRIM(name)) THEN
@@ -5556,12 +5612,12 @@ MODULE ParameterLists
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the one dimensional array of logical value for a specified parameter
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will have it's value returned
 !> @param name the name of the parameter to return the value of
 !> @param val the current value of the parameter with @c name
-!> 
-!> If a parameter with @c name is not found an error is produced. If the 
+!>
+!> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a one dimensional array of logical valued parameter
 !> then an error is produced.
 !>
@@ -5571,7 +5627,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: val(:)
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SBK_a1)
           IF(thisParam%name == TRIM(name)) THEN
@@ -5627,16 +5683,16 @@ MODULE ParameterLists
 !> @param name the location and name of the new parameter
 !> @param param the logical value of the new parameter
 !> @param description an optional input for a description of the new parameter
-!> 
+!>
 !> This routine creates a new parameter within @c thisParam with @c name.
-!> @c name may contain a full or partial path to the new parameter. If @c name 
+!> @c name may contain a full or partial path to the new parameter. If @c name
 !> can be matched to an existing parameter in @c thisParam an error is produced
 !> If @c name contains a full path for which intermediate lists do not exist
 !> then this lists are created in the process of adding the new parameter.
 !> If @c thisParam is not initialized and @c name does not contain a "->"
-!> symbol then this routine behaves equivalently to 
+!> symbol then this routine behaves equivalently to
 !> @ref ParameterLists::init_ParamType_SBK "initSBK".
-!> 
+!>
     SUBROUTINE add_ParamType_SBK_a1(thisParam,name,param,description)
       CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SBK_a1'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
@@ -5647,10 +5703,10 @@ MODULE ParameterLists
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
-      
+
       IF(.NOT.ASSOCIATED(tmpParam)) THEN
         prevname=''
         thisname=ADJUSTL(name)
@@ -5659,14 +5715,14 @@ MODULE ParameterLists
           prevname=ADJUSTL(name(1:ipos-1))
           thisname=ADJUSTL(name(ipos+2:LEN(name)))
         ENDIF
-      
+
         !Initialize the new parameter
         IF(PRESENT(description)) THEN
           CALL init_ParamType_SBK_a1(newParam,thisname,param,description)
         ELSE
           CALL init_ParamType_SBK_a1(newParam,thisname,param)
         ENDIF
-        
+
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
         CALL newParam%clear()
@@ -5683,9 +5739,9 @@ MODULE ParameterLists
 !> @param name the name of the parameter
 !> @param param a 1-D array string derived type
 !> @param description an optional description for this parameter
-!> 
+!>
 !> This routine is not recursive, so it is like setting a scalar parameter.
-!> Therefore the name cannot contain the "->" symbol to indicate access to a 
+!> Therefore the name cannot contain the "->" symbol to indicate access to a
 !> sub-list. @c thisParam must not already be inititalized.
 !>
     SUBROUTINE init_ParamType_STR_a1(thisParam,name,param,description)
@@ -5695,7 +5751,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       INTEGER(SIK) :: ipos
-      
+
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
         ipos=INDEX(name,'->')
@@ -5731,32 +5787,44 @@ MODULE ParameterLists
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
       CHARACTER(LEN=12) :: fmt,fmt2
       INTEGER(SIK) :: i,j,k
-      
+
       i=1
       j=5
       IF(PRESENT(indent)) i=i+indent
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
-      IF(LEN_TRIM(thisParam%description) == 0) THEN
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'='//CHAR(thisParam%val(1))
-      ELSE
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'='//CHAR(thisParam%val(1))// &
-            ' !'//thisParam%description
-      ENDIF
+      WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)',ADVANCE='NO') &
+            thisParam%dataType//' :: '//thisParam%name//'='//CHAR(thisParam%val(1))
       j=j+LEN(thisParam%dataType)+LEN(thisParam%name)
       WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
-      DO k=2,SIZE(thisParam%val)
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,a)') &
-          CHAR(thisParam%val(k))
-      ENDDO
-      
+
+      IF (SIZE(thisParam%val)>MAX_1D_LEN) THEN
+        DO k=2,SIZE(thisParam%val)
+          WRITE(UNIT=funit,FMT='(", ",a)',ADVANCE='NO') CHAR(thisParam%val(k))
+        ENDDO
+
+        IF(LEN_TRIM(thisParam%description) == 0) THEN
+          WRITE(funit,*)
+        ELSE
+          WRITE(UNIT=funit,FMT='(a)') " !"//thisParam%description
+        ENDIF
+      ELSE
+        IF(LEN_TRIM(thisParam%description) == 0) THEN
+          WRITE(funit,*)
+        ELSE
+          WRITE(UNIT=funit,FMT='(a)') " !"//thisParam%description
+        ENDIF
+        DO k=2,SIZE(thisParam%val)
+          WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,a)') &
+            CHAR(thisParam%val(k))
+        ENDDO
+      ENDIF
+
     ENDSUBROUTINE edit_ParamType_STR_a1
 !
 !-------------------------------------------------------------------------------
 !> @brief Clears a string derived type parameter
 !> @param thisParam the string derived type parameter to clear
-!> 
+!>
     SUBROUTINE clear_ParamType_STR_a1(thisParam)
       CLASS(ParamType_STR_a1),INTENT(INOUT) :: thisParam
       INTEGER(SIK) :: i
@@ -5771,7 +5839,7 @@ MODULE ParameterLists
 !
 !-------------------------------------------------------------------------------
 !> @brief Sets the value of an existing string derived type parameter to a new value.
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will be to set the new value of @c param
 !> @param name the name of an existing parameter to set the value of
 !> @param param the new value to set for the parameter
@@ -5789,7 +5857,7 @@ MODULE ParameterLists
       TYPE(StringType),INTENT(IN) :: param(:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_STR_a1)
           IF(thisParam%name == TRIM(name)) THEN
@@ -5832,12 +5900,12 @@ MODULE ParameterLists
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the string derived type for a specified parameter
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will have it's value returned
 !> @param name the name of the parameter to return the value of
 !> @param val the current value of the parameter with @c name
-!> 
-!> If a parameter with @c name is not found an error is produced. If the 
+!>
+!> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a string derived type parameter
 !> then an error is produced.
 !>
@@ -5847,7 +5915,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: val(:)
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_STR_a1)
           IF(thisParam%name == TRIM(name)) THEN
@@ -5902,16 +5970,16 @@ MODULE ParameterLists
 !> @param name the location and name of the new parameter
 !> @param param the string derived type of the new parameter
 !> @param description an optional input for a description of the new parameter
-!> 
+!>
 !> This routine creates a new parameter within @c thisParam with @c name.
-!> @c name may contain a full or partial path to the new parameter. If @c name 
+!> @c name may contain a full or partial path to the new parameter. If @c name
 !> can be matched to an existing parameter in @c thisParam an error is produced
 !> If @c name contains a full path for which intermediate lists do not exist
 !> then this lists are created in the process of adding the new parameter.
 !> If @c thisParam is not initialized and @c name does not contain a "->"
-!> symbol then this routine behaves equivalently to 
+!> symbol then this routine behaves equivalently to
 !> @ref ParameterLists::init_ParamType_STR_a1 "initSTR".
-!> 
+!>
     SUBROUTINE add_ParamType_STR_a1(thisParam,name,param,description)
       CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_STR_a1'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
@@ -5922,10 +5990,10 @@ MODULE ParameterLists
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
-      
+
       IF(.NOT.ASSOCIATED(tmpParam)) THEN
         prevname=''
         thisname=ADJUSTL(name)
@@ -5934,14 +6002,14 @@ MODULE ParameterLists
           prevname=ADJUSTL(name(1:ipos-1))
           thisname=ADJUSTL(name(ipos+2:LEN(name)))
         ENDIF
-      
+
         !Initialize the new parameter
         IF(PRESENT(description)) THEN
           CALL init_ParamType_STR_a1(newParam,thisname,param,description)
         ELSE
           CALL init_ParamType_STR_a1(newParam,thisname,param)
         ENDIF
-        
+
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
         CALL newParam%clear()
@@ -5953,19 +6021,19 @@ MODULE ParameterLists
     ENDSUBROUTINE add_ParamType_STR_a1
 !
 !2222222222222222222222222222222222222222222222222222222222222222222222222222222
-!        Two Dimensional Arrays    
+!        Two Dimensional Arrays
 !2222222222222222222222222222222222222222222222222222222222222222222222222222222
 !
 !-------------------------------------------------------------------------------
-!> @brief Initializes a ParamType object as a two dimensional array of single 
+!> @brief Initializes a ParamType object as a two dimensional array of single
 !>        precision reals
 !> @param thisParam the parameter to initialize
 !> @param name the name of the parameter
 !> @param param a two dimensional array of single precision reals
 !> @param description an optional description for this parameter
-!> 
+!>
 !> This routine is not recursive, so it is like setting a two dimensional array of parameter.
-!> Therefore the name cannot contain the "->" symbol to indicate access to a 
+!> Therefore the name cannot contain the "->" symbol to indicate access to a
 !> sub-list. @c thisParam must not already be inititalized.
 !>
     SUBROUTINE init_ParamType_SSK_a2(thisParam,name,param,description)
@@ -5975,7 +6043,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       INTEGER(SIK) :: ipos
-      
+
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
         ipos=INDEX(name,'->')
@@ -6001,7 +6069,7 @@ MODULE ParameterLists
 !
 !-------------------------------------------------------------------------------
 !> @brief Edits a two dimensional array of single precision real valued parameters
-!> @param thisParam the two dimensional array of single precision real valued 
+!> @param thisParam the two dimensional array of single precision real valued
 !>        parameters to edit
 !> @param funit the unit number to edit the parameter to
 !> @param indent optional indicates the number of blank spaces to precede the
@@ -6018,7 +6086,7 @@ MODULE ParameterLists
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
       CHARACTER(LEN=12) :: fmt,fmt2,fmt3
       INTEGER(SIK) :: i,j,k,l
-      
+
       i=1
       j=6
       IF(PRESENT(indent)) i=i+indent
@@ -6042,7 +6110,7 @@ MODULE ParameterLists
 !-------------------------------------------------------------------------------
 !> @brief Clears a two dimensional array of single precision real valued parameter
 !> @param thisParam the two dimensional array of single precision real valued parameter to clear
-!> 
+!>
     SUBROUTINE clear_ParamType_SSK_a2(thisParam)
       CLASS(ParamType_SSK_a2),INTENT(INOUT) :: thisParam
       DEALLOCATE(thisParam%val)
@@ -6052,9 +6120,9 @@ MODULE ParameterLists
     ENDSUBROUTINE clear_ParamType_SSK_a2
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets the value of an existing two dimensional array of single precision real valued 
+!> @brief Sets the value of an existing two dimensional array of single precision real valued
 !> parameter to a new value.
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will be to set the new value of @c param
 !> @param name the name of an existing parameter to set the value of
 !> @param param the new value to set for the parameter
@@ -6072,7 +6140,7 @@ MODULE ParameterLists
       REAL(SSK),INTENT(IN) :: param(:,:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SSK_a2)
           IF(thisParam%name == TRIM(name)) THEN
@@ -6117,12 +6185,12 @@ MODULE ParameterLists
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the two dimensional array of single precision real value for a specified parameter
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will have it's value returned
 !> @param name the name of the parameter to return the value of
 !> @param val the current value of the parameter with @c name
-!> 
-!> If a parameter with @c name is not found an error is produced. If the 
+!>
+!> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a two dimensional array of single precision real valued parameter
 !> then an error is produced.
 !>
@@ -6132,7 +6200,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: val(:,:)
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SSK_a2)
           IF(thisParam%name == TRIM(name)) THEN
@@ -6190,16 +6258,16 @@ MODULE ParameterLists
 !> @param name the location and name of the new parameter
 !> @param param the single precision real value of the new parameter
 !> @param description an optional input for a description of the new parameter
-!> 
+!>
 !> This routine creates a new parameter within @c thisParam with @c name.
-!> @c name may contain a full or partial path to the new parameter. If @c name 
+!> @c name may contain a full or partial path to the new parameter. If @c name
 !> can be matched to an existing parameter in @c thisParam an error is produced
 !> If @c name contains a full path for which intermediate lists do not exist
 !> then this lists are created in the process of adding the new parameter.
 !> If @c thisParam is not initialized and @c name does not contain a "->"
-!> symbol then this routine behaves equivalently to 
+!> symbol then this routine behaves equivalently to
 !> @ref ParameterLists::init_ParamType_SSK "initSSK".
-!> 
+!>
     SUBROUTINE add_ParamType_SSK_a2(thisParam,name,param,description)
       CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SSK_a2'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
@@ -6210,10 +6278,10 @@ MODULE ParameterLists
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
-      
+
       IF(.NOT.ASSOCIATED(tmpParam)) THEN
         prevname=''
         thisname=ADJUSTL(name)
@@ -6222,14 +6290,14 @@ MODULE ParameterLists
           prevname=ADJUSTL(name(1:ipos-1))
           thisname=ADJUSTL(name(ipos+2:LEN(name)))
         ENDIF
-      
+
         !Initialize the new parameter
         IF(PRESENT(description)) THEN
           CALL init_ParamType_SSK_a2(newParam,thisname,param,description)
         ELSE
           CALL init_ParamType_SSK_a2(newParam,thisname,param)
         ENDIF
-        
+
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
         CALL newParam%clear()
@@ -6246,9 +6314,9 @@ MODULE ParameterLists
 !> @param name the name of the parameter
 !> @param param a two dimensional array of double precision real
 !> @param description an optional description for this parameter
-!> 
+!>
 !> This routine is not recursive, so it is like setting a two dimensional array of parameter.
-!> Therefore the name cannot contain the "->" symbol to indicate access to a 
+!> Therefore the name cannot contain the "->" symbol to indicate access to a
 !> sub-list. @c thisParam must not already be inititalized.
 !>
     SUBROUTINE init_ParamType_SDK_a2(thisParam,name,param,description)
@@ -6258,7 +6326,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       INTEGER(SIK) :: ipos
-      
+
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
         ipos=INDEX(name,'->')
@@ -6300,7 +6368,7 @@ MODULE ParameterLists
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
       CHARACTER(LEN=12) :: fmt,fmt2,fmt3
       INTEGER(SIK) :: i,j,k,l
-      
+
       i=1
       j=6
       IF(PRESENT(indent)) i=i+indent
@@ -6324,7 +6392,7 @@ MODULE ParameterLists
 !-------------------------------------------------------------------------------
 !> @brief Clears a two dimensional array of double precision real valued parameter
 !> @param thisParam the two dimensional array of double precision real valued parameter to clear
-!> 
+!>
     SUBROUTINE clear_ParamType_SDK_a2(thisParam)
       CLASS(ParamType_SDK_a2),INTENT(INOUT) :: thisParam
       DEALLOCATE(thisParam%val)
@@ -6334,9 +6402,9 @@ MODULE ParameterLists
     ENDSUBROUTINE clear_ParamType_SDK_a2
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets the value of an existing two dimensional array of double precision real valued 
+!> @brief Sets the value of an existing two dimensional array of double precision real valued
 !> parameter to a new value.
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will be to set the new value of @c param
 !> @param name the name of an existing parameter to set the value of
 !> @param param the new value to set for the parameter
@@ -6354,7 +6422,7 @@ MODULE ParameterLists
       REAL(SDK),INTENT(IN) :: param(:,:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SDK_a2)
           IF(thisParam%name == TRIM(name)) THEN
@@ -6399,12 +6467,12 @@ MODULE ParameterLists
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the two dimensional array of double precision real value for a specified parameter
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will have it's value returned
 !> @param name the name of the parameter to return the value of
 !> @param val the current value of the parameter with @c name
-!> 
-!> If a parameter with @c name is not found an error is produced. If the 
+!>
+!> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a two dimensional array of double precision real valued parameter
 !> then an error is produced.
 !>
@@ -6414,7 +6482,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: val(:,:)
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SDK_a2)
           IF(thisParam%name == TRIM(name)) THEN
@@ -6472,16 +6540,16 @@ MODULE ParameterLists
 !> @param name the location and name of the new parameter
 !> @param param the double precision real value of the new parameter
 !> @param description an optional input for a description of the new parameter
-!> 
+!>
 !> This routine creates a new parameter within @c thisParam with @c name.
-!> @c name may contain a full or partial path to the new parameter. If @c name 
+!> @c name may contain a full or partial path to the new parameter. If @c name
 !> can be matched to an existing parameter in @c thisParam an error is produced
 !> If @c name contains a full path for which intermediate lists do not exist
 !> then this lists are created in the process of adding the new parameter.
 !> If @c thisParam is not initialized and @c name does not contain a "->"
-!> symbol then this routine behaves equivalently to 
+!> symbol then this routine behaves equivalently to
 !> @ref ParameterLists::init_ParamType_SDK "initSDK".
-!> 
+!>
     SUBROUTINE add_ParamType_SDK_a2(thisParam,name,param,description)
       CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SDK_a2'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
@@ -6492,10 +6560,10 @@ MODULE ParameterLists
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
-      
+
       IF(.NOT.ASSOCIATED(tmpParam)) THEN
         prevname=''
         thisname=ADJUSTL(name)
@@ -6504,14 +6572,14 @@ MODULE ParameterLists
           prevname=ADJUSTL(name(1:ipos-1))
           thisname=ADJUSTL(name(ipos+2:LEN(name)))
         ENDIF
-      
+
         !Initialize the new parameter
         IF(PRESENT(description)) THEN
           CALL init_ParamType_SDK_a2(newParam,thisname,param,description)
         ELSE
           CALL init_ParamType_SDK_a2(newParam,thisname,param)
         ENDIF
-        
+
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
         CALL newParam%clear()
@@ -6528,9 +6596,9 @@ MODULE ParameterLists
 !> @param name the name of the parameter
 !> @param param a two dimensional array of 32-bit integer
 !> @param description an optional description for this parameter
-!> 
+!>
 !> This routine is not recursive, so it is like setting a two dimensional array of parameter.
-!> Therefore the name cannot contain the "->" symbol to indicate access to a 
+!> Therefore the name cannot contain the "->" symbol to indicate access to a
 !> sub-list. @c thisParam must not already be inititalized.
 !>
     SUBROUTINE init_ParamType_SNK_a2(thisParam,name,param,description)
@@ -6540,7 +6608,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       INTEGER(SIK) :: ipos
-      
+
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
         ipos=INDEX(name,'->')
@@ -6582,7 +6650,7 @@ MODULE ParameterLists
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
       CHARACTER(LEN=12) :: fmt,fmt2,fmt3
       INTEGER(SIK) :: i,j,k,l
-      
+
       i=1
       j=6
       IF(PRESENT(indent)) i=i+indent
@@ -6606,7 +6674,7 @@ MODULE ParameterLists
 !-------------------------------------------------------------------------------
 !> @brief Clears a two dimensional array of 32-bit integer valued parameter
 !> @param thisParam the two dimensional array of 32-bit integer valued parameter to clear
-!> 
+!>
     SUBROUTINE clear_ParamType_SNK_a2(thisParam)
       CLASS(ParamType_SNK_a2),INTENT(INOUT) :: thisParam
       DEALLOCATE(thisParam%val)
@@ -6616,9 +6684,9 @@ MODULE ParameterLists
     ENDSUBROUTINE clear_ParamType_SNK_a2
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets the value of an existing two dimensional array of 32-bit integer valued 
+!> @brief Sets the value of an existing two dimensional array of 32-bit integer valued
 !> parameter to a new value.
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will be to set the new value of @c param
 !> @param name the name of an existing parameter to set the value of
 !> @param param the new value to set for the parameter
@@ -6636,7 +6704,7 @@ MODULE ParameterLists
       INTEGER(SNK),INTENT(IN) :: param(:,:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SNK_a2)
           IF(thisParam%name == TRIM(name)) THEN
@@ -6681,12 +6749,12 @@ MODULE ParameterLists
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the two dimensional array of 32-bit integer value for a specified parameter
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will have it's value returned
 !> @param name the name of the parameter to return the value of
 !> @param val the current value of the parameter with @c name
-!> 
-!> If a parameter with @c name is not found an error is produced. If the 
+!>
+!> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a two dimensional array of 32-bit integer valued parameter
 !> then an error is produced.
 !>
@@ -6696,7 +6764,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: val(:,:)
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SNK_a2)
           IF(thisParam%name == TRIM(name)) THEN
@@ -6754,16 +6822,16 @@ MODULE ParameterLists
 !> @param name the location and name of the new parameter
 !> @param param the 32-bit integer value of the new parameter
 !> @param description an optional input for a description of the new parameter
-!> 
+!>
 !> This routine creates a new parameter within @c thisParam with @c name.
-!> @c name may contain a full or partial path to the new parameter. If @c name 
+!> @c name may contain a full or partial path to the new parameter. If @c name
 !> can be matched to an existing parameter in @c thisParam an error is produced
 !> If @c name contains a full path for which intermediate lists do not exist
 !> then this lists are created in the process of adding the new parameter.
 !> If @c thisParam is not initialized and @c name does not contain a "->"
-!> symbol then this routine behaves equivalently to 
+!> symbol then this routine behaves equivalently to
 !> @ref ParameterLists::init_ParamType_SNK "initSNK".
-!> 
+!>
     SUBROUTINE add_ParamType_SNK_a2(thisParam,name,param,description)
       CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SNK_a2'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
@@ -6774,10 +6842,10 @@ MODULE ParameterLists
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
-      
+
       IF(.NOT.ASSOCIATED(tmpParam)) THEN
         prevname=''
         thisname=ADJUSTL(name)
@@ -6786,14 +6854,14 @@ MODULE ParameterLists
           prevname=ADJUSTL(name(1:ipos-1))
           thisname=ADJUSTL(name(ipos+2:LEN(name)))
         ENDIF
-      
+
         !Initialize the new parameter
         IF(PRESENT(description)) THEN
           CALL init_ParamType_SNK_a2(newParam,thisname,param,description)
         ELSE
           CALL init_ParamType_SNK_a2(newParam,thisname,param)
         ENDIF
-        
+
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
         CALL newParam%clear()
@@ -6810,9 +6878,9 @@ MODULE ParameterLists
 !> @param name the name of the parameter
 !> @param param a two dimensional array of 64-bit integer
 !> @param description an optional description for this parameter
-!> 
+!>
 !> This routine is not recursive, so it is like setting a two dimensional array of parameter.
-!> Therefore the name cannot contain the "->" symbol to indicate access to a 
+!> Therefore the name cannot contain the "->" symbol to indicate access to a
 !> sub-list. @c thisParam must not already be inititalized.
 !>
     SUBROUTINE init_ParamType_SLK_a2(thisParam,name,param,description)
@@ -6822,7 +6890,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       INTEGER(SIK) :: ipos
-      
+
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
         ipos=INDEX(name,'->')
@@ -6864,7 +6932,7 @@ MODULE ParameterLists
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
       CHARACTER(LEN=12) :: fmt,fmt2,fmt3
       INTEGER(SIK) :: i,j,k,l
-      
+
       i=1
       j=6
       IF(PRESENT(indent)) i=i+indent
@@ -6888,7 +6956,7 @@ MODULE ParameterLists
 !-------------------------------------------------------------------------------
 !> @brief Clears a two dimensional array of 64-bit integer valued parameter
 !> @param thisParam the two dimensional array of 64-bit integer valued parameter to clear
-!> 
+!>
     SUBROUTINE clear_ParamType_SLK_a2(thisParam)
       CLASS(ParamType_SLK_a2),INTENT(INOUT) :: thisParam
       DEALLOCATE(thisParam%val)
@@ -6898,9 +6966,9 @@ MODULE ParameterLists
     ENDSUBROUTINE clear_ParamType_SLK_a2
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets the value of an existing two dimensional array of 64-bit integer valued 
+!> @brief Sets the value of an existing two dimensional array of 64-bit integer valued
 !> parameter to a new value.
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will be to set the new value of @c param
 !> @param name the name of an existing parameter to set the value of
 !> @param param the new value to set for the parameter
@@ -6918,7 +6986,7 @@ MODULE ParameterLists
       INTEGER(SLK),INTENT(IN) :: param(:,:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SLK_a2)
           IF(thisParam%name == TRIM(name)) THEN
@@ -6963,12 +7031,12 @@ MODULE ParameterLists
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the two dimensional array of 64-bit integer value for a specified parameter
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will have it's value returned
 !> @param name the name of the parameter to return the value of
 !> @param val the current value of the parameter with @c name
-!> 
-!> If a parameter with @c name is not found an error is produced. If the 
+!>
+!> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a two dimensional array of 64-bit integer valued parameter
 !> then an error is produced.
 !>
@@ -6978,7 +7046,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: val(:,:)
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SLK_a2)
           IF(thisParam%name == TRIM(name)) THEN
@@ -7036,16 +7104,16 @@ MODULE ParameterLists
 !> @param name the location and name of the new parameter
 !> @param param the 64-bit integer value of the new parameter
 !> @param description an optional input for a description of the new parameter
-!> 
+!>
 !> This routine creates a new parameter within @c thisParam with @c name.
-!> @c name may contain a full or partial path to the new parameter. If @c name 
+!> @c name may contain a full or partial path to the new parameter. If @c name
 !> can be matched to an existing parameter in @c thisParam an error is produced
 !> If @c name contains a full path for which intermediate lists do not exist
 !> then this lists are created in the process of adding the new parameter.
 !> If @c thisParam is not initialized and @c name does not contain a "->"
-!> symbol then this routine behaves equivalently to 
+!> symbol then this routine behaves equivalently to
 !> @ref ParameterLists::init_ParamType_SLK "initSLK".
-!> 
+!>
     SUBROUTINE add_ParamType_SLK_a2(thisParam,name,param,description)
       CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SLK_a2'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
@@ -7056,10 +7124,10 @@ MODULE ParameterLists
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
-      
+
       IF(.NOT.ASSOCIATED(tmpParam)) THEN
         prevname=''
         thisname=ADJUSTL(name)
@@ -7068,14 +7136,14 @@ MODULE ParameterLists
           prevname=ADJUSTL(name(1:ipos-1))
           thisname=ADJUSTL(name(ipos+2:LEN(name)))
         ENDIF
-      
+
         !Initialize the new parameter
         IF(PRESENT(description)) THEN
           CALL init_ParamType_SLK_a2(newParam,thisname,param,description)
         ELSE
           CALL init_ParamType_SLK_a2(newParam,thisname,param)
         ENDIF
-        
+
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
         CALL newParam%clear()
@@ -7092,9 +7160,9 @@ MODULE ParameterLists
 !> @param name the name of the parameter
 !> @param param a 2-D array string derived type
 !> @param description an optional description for this parameter
-!> 
+!>
 !> This routine is not recursive, so it is like setting a scalar parameter.
-!> Therefore the name cannot contain the "->" symbol to indicate access to a 
+!> Therefore the name cannot contain the "->" symbol to indicate access to a
 !> sub-list. @c thisParam must not already be inititalized.
 !>
     SUBROUTINE init_ParamType_STR_a2(thisParam,name,param,description)
@@ -7104,7 +7172,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       INTEGER(SIK) :: ipos
-      
+
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
         ipos=INDEX(name,'->')
@@ -7144,7 +7212,7 @@ MODULE ParameterLists
       INTEGER(SIK) :: i,j,k,l
       !Compiler problem for gnu-4.6.3.  It is fixed in gnu-4.7.0.
       !CHARACTER(LEN=MAXVAL(LEN(thisParam%val))) :: tmpstr(SIZE(thisParam%val))
-      
+
       i=1
       j=6
       IF(PRESENT(indent)) i=i+indent
@@ -7169,13 +7237,13 @@ MODULE ParameterLists
         WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,'//TRIM(fmt3)//'a)') &
            (TRIM(CHAR(thisParam%val(l,k)))//' ',l=1,SIZE(thisParam%val,1) )
       ENDDO
-      
+
     ENDSUBROUTINE edit_ParamType_STR_a2
 !
 !-------------------------------------------------------------------------------
 !> @brief Clears a string derived type parameter
 !> @param thisParam the string derived type parameter to clear
-!> 
+!>
     SUBROUTINE clear_ParamType_STR_a2(thisParam)
       CLASS(ParamType_STR_a2),INTENT(INOUT) :: thisParam
       INTEGER(SIK) :: i,j
@@ -7192,7 +7260,7 @@ MODULE ParameterLists
 !
 !-------------------------------------------------------------------------------
 !> @brief Sets the value of an existing string derived type parameter to a new value.
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will be to set the new value of @c param
 !> @param name the name of an existing parameter to set the value of
 !> @param param the new value to set for the parameter
@@ -7210,7 +7278,7 @@ MODULE ParameterLists
       TYPE(StringType),INTENT(IN) :: param(:,:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_STR_a2)
           IF(thisParam%name == TRIM(name)) THEN
@@ -7255,12 +7323,12 @@ MODULE ParameterLists
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the string derived type for a specified parameter
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will have it's value returned
 !> @param name the name of the parameter to return the value of
 !> @param val the current value of the parameter with @c name
-!> 
-!> If a parameter with @c name is not found an error is produced. If the 
+!>
+!> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a string derived type parameter
 !> then an error is produced.
 !>
@@ -7270,7 +7338,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: val(:,:)
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_STR_a2)
           IF(thisParam%name == TRIM(name)) THEN
@@ -7327,16 +7395,16 @@ MODULE ParameterLists
 !> @param name the location and name of the new parameter
 !> @param param the string derived type of the new parameter
 !> @param description an optional input for a description of the new parameter
-!> 
+!>
 !> This routine creates a new parameter within @c thisParam with @c name.
-!> @c name may contain a full or partial path to the new parameter. If @c name 
+!> @c name may contain a full or partial path to the new parameter. If @c name
 !> can be matched to an existing parameter in @c thisParam an error is produced
 !> If @c name contains a full path for which intermediate lists do not exist
 !> then this lists are created in the process of adding the new parameter.
 !> If @c thisParam is not initialized and @c name does not contain a "->"
-!> symbol then this routine behaves equivalently to 
+!> symbol then this routine behaves equivalently to
 !> @ref ParameterLists::init_ParamType_STR_a2 "initSTR".
-!> 
+!>
     SUBROUTINE add_ParamType_STR_a2(thisParam,name,param,description)
       CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_STR_a2'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
@@ -7347,10 +7415,10 @@ MODULE ParameterLists
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
-      
+
       IF(.NOT.ASSOCIATED(tmpParam)) THEN
         prevname=''
         thisname=ADJUSTL(name)
@@ -7359,14 +7427,14 @@ MODULE ParameterLists
           prevname=ADJUSTL(name(1:ipos-1))
           thisname=ADJUSTL(name(ipos+2:LEN(name)))
         ENDIF
-      
+
         !Initialize the new parameter
         IF(PRESENT(description)) THEN
           CALL init_ParamType_STR_a2(newParam,thisname,param,description)
         ELSE
           CALL init_ParamType_STR_a2(newParam,thisname,param)
         ENDIF
-        
+
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
         CALL newParam%clear()
@@ -7378,19 +7446,19 @@ MODULE ParameterLists
     ENDSUBROUTINE add_ParamType_STR_a2
 !
 !3333333333333333333333333333333333333333333333333333333333333333333333333333333
-!        Three Dimensional Arrays    
+!        Three Dimensional Arrays
 !3333333333333333333333333333333333333333333333333333333333333333333333333333333
 !
 !-------------------------------------------------------------------------------
-!> @brief Initializes a ParamType object as a three dimensional array of single 
+!> @brief Initializes a ParamType object as a three dimensional array of single
 !>        precision reals
 !> @param thisParam the parameter to initialize
 !> @param name the name of the parameter
 !> @param param a three dimensional array of single precision reals
 !> @param description an optional description for this parameter
-!> 
+!>
 !> This routine is not recursive, so it is like setting a three dimensional array of parameter.
-!> Therefore the name cannot contain the "->" symbol to indicate access to a 
+!> Therefore the name cannot contain the "->" symbol to indicate access to a
 !> sub-list. @c thisParam must not already be inititalized.
 !>
     SUBROUTINE init_ParamType_SSK_a3(thisParam,name,param,description)
@@ -7400,7 +7468,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       INTEGER(SIK) :: ipos
-      
+
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
         ipos=INDEX(name,'->')
@@ -7426,7 +7494,7 @@ MODULE ParameterLists
 !
 !-------------------------------------------------------------------------------
 !> @brief Edits a three dimensional array of single precision real valued parameters
-!> @param thisParam the three dimensional array of single precision real valued 
+!> @param thisParam the three dimensional array of single precision real valued
 !>        parameters to edit
 !> @param funit the unit number to edit the parameter to
 !> @param indent optional indicates the number of blank spaces to precede the
@@ -7443,7 +7511,7 @@ MODULE ParameterLists
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
       CHARACTER(LEN=12) :: fmt,fmt2,fmt3
       INTEGER(SIK) :: i,j,k,l,m
-      
+
       i=1
       j=6
       IF(PRESENT(indent)) i=i+indent
@@ -7469,7 +7537,7 @@ MODULE ParameterLists
 !-------------------------------------------------------------------------------
 !> @brief Clears a three dimensional array of single precision real valued parameter
 !> @param thisParam the three dimensional array of single precision real valued parameter to clear
-!> 
+!>
     SUBROUTINE clear_ParamType_SSK_a3(thisParam)
       CLASS(ParamType_SSK_a3),INTENT(INOUT) :: thisParam
       DEALLOCATE(thisParam%val)
@@ -7479,9 +7547,9 @@ MODULE ParameterLists
     ENDSUBROUTINE clear_ParamType_SSK_a3
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets the value of an existing three dimensional array of single precision real valued 
+!> @brief Sets the value of an existing three dimensional array of single precision real valued
 !> parameter to a new value.
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will be to set the new value of @c param
 !> @param name the name of an existing parameter to set the value of
 !> @param param the new value to set for the parameter
@@ -7499,7 +7567,7 @@ MODULE ParameterLists
       REAL(SSK),INTENT(IN) :: param(:,:,:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SSK_a3)
           IF(thisParam%name == TRIM(name)) THEN
@@ -7546,12 +7614,12 @@ MODULE ParameterLists
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the three dimensional array of single precision real value for a specified parameter
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will have it's value returned
 !> @param name the name of the parameter to return the value of
 !> @param val the current value of the parameter with @c name
-!> 
-!> If a parameter with @c name is not found an error is produced. If the 
+!>
+!> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a three dimensional array of single precision real valued parameter
 !> then an error is produced.
 !>
@@ -7561,7 +7629,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:)
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SSK_a3)
           IF(thisParam%name == TRIM(name)) THEN
@@ -7623,16 +7691,16 @@ MODULE ParameterLists
 !> @param name the location and name of the new parameter
 !> @param param the single precision real value of the new parameter
 !> @param description an optional input for a description of the new parameter
-!> 
+!>
 !> This routine creates a new parameter within @c thisParam with @c name.
-!> @c name may contain a full or partial path to the new parameter. If @c name 
+!> @c name may contain a full or partial path to the new parameter. If @c name
 !> can be matched to an existing parameter in @c thisParam an error is produced
 !> If @c name contains a full path for which intermediate lists do not exist
 !> then this lists are created in the process of adding the new parameter.
 !> If @c thisParam is not initialized and @c name does not contain a "->"
-!> symbol then this routine behaves equivalently to 
+!> symbol then this routine behaves equivalently to
 !> @ref ParameterLists::init_ParamType_SSK "initSSK".
-!> 
+!>
     SUBROUTINE add_ParamType_SSK_a3(thisParam,name,param,description)
       CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SSK_a3'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
@@ -7643,10 +7711,10 @@ MODULE ParameterLists
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
-      
+
       IF(.NOT.ASSOCIATED(tmpParam)) THEN
         prevname=''
         thisname=ADJUSTL(name)
@@ -7655,14 +7723,14 @@ MODULE ParameterLists
           prevname=ADJUSTL(name(1:ipos-1))
           thisname=ADJUSTL(name(ipos+2:LEN(name)))
         ENDIF
-      
+
         !Initialize the new parameter
         IF(PRESENT(description)) THEN
           CALL init_ParamType_SSK_a3(newParam,thisname,param,description)
         ELSE
           CALL init_ParamType_SSK_a3(newParam,thisname,param)
         ENDIF
-        
+
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
         CALL newParam%clear()
@@ -7679,9 +7747,9 @@ MODULE ParameterLists
 !> @param name the name of the parameter
 !> @param param a three dimensional array of double precision real
 !> @param description an optional description for this parameter
-!> 
+!>
 !> This routine is not recursive, so it is like setting a three dimensional array of parameter.
-!> Therefore the name cannot contain the "->" symbol to indicate access to a 
+!> Therefore the name cannot contain the "->" symbol to indicate access to a
 !> sub-list. @c thisParam must not already be inititalized.
 !>
     SUBROUTINE init_ParamType_SDK_a3(thisParam,name,param,description)
@@ -7691,7 +7759,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       INTEGER(SIK) :: ipos
-      
+
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
         ipos=INDEX(name,'->')
@@ -7733,7 +7801,7 @@ MODULE ParameterLists
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
       CHARACTER(LEN=12) :: fmt,fmt2,fmt3
       INTEGER(SIK) :: i,j,k,l,m
-      
+
       i=1
       j=6
       IF(PRESENT(indent)) i=i+indent
@@ -7759,7 +7827,7 @@ MODULE ParameterLists
 !-------------------------------------------------------------------------------
 !> @brief Clears a three dimensional array of double precision real valued parameter
 !> @param thisParam the three dimensional array of double precision real valued parameter to clear
-!> 
+!>
     SUBROUTINE clear_ParamType_SDK_a3(thisParam)
       CLASS(ParamType_SDK_a3),INTENT(INOUT) :: thisParam
       DEALLOCATE(thisParam%val)
@@ -7769,9 +7837,9 @@ MODULE ParameterLists
     ENDSUBROUTINE clear_ParamType_SDK_a3
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets the value of an existing three dimensional array of double precision real valued 
+!> @brief Sets the value of an existing three dimensional array of double precision real valued
 !> parameter to a new value.
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will be to set the new value of @c param
 !> @param name the name of an existing parameter to set the value of
 !> @param param the new value to set for the parameter
@@ -7789,7 +7857,7 @@ MODULE ParameterLists
       REAL(SDK),INTENT(IN) :: param(:,:,:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SDK_a3)
           IF(thisParam%name == TRIM(name)) THEN
@@ -7836,12 +7904,12 @@ MODULE ParameterLists
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the three dimensional array of double precision real value for a specified parameter
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will have it's value returned
 !> @param name the name of the parameter to return the value of
 !> @param val the current value of the parameter with @c name
-!> 
-!> If a parameter with @c name is not found an error is produced. If the 
+!>
+!> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a three dimensional array of double precision real valued parameter
 !> then an error is produced.
 !>
@@ -7851,7 +7919,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:)
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SDK_a3)
           IF(thisParam%name == TRIM(name)) THEN
@@ -7913,16 +7981,16 @@ MODULE ParameterLists
 !> @param name the location and name of the new parameter
 !> @param param the double precision real value of the new parameter
 !> @param description an optional input for a description of the new parameter
-!> 
+!>
 !> This routine creates a new parameter within @c thisParam with @c name.
-!> @c name may contain a full or partial path to the new parameter. If @c name 
+!> @c name may contain a full or partial path to the new parameter. If @c name
 !> can be matched to an existing parameter in @c thisParam an error is produced
 !> If @c name contains a full path for which intermediate lists do not exist
 !> then this lists are created in the process of adding the new parameter.
 !> If @c thisParam is not initialized and @c name does not contain a "->"
-!> symbol then this routine behaves equivalently to 
+!> symbol then this routine behaves equivalently to
 !> @ref ParameterLists::init_ParamType_SDK "initSDK".
-!> 
+!>
     SUBROUTINE add_ParamType_SDK_a3(thisParam,name,param,description)
       CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SDK_a3'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
@@ -7933,10 +8001,10 @@ MODULE ParameterLists
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
-      
+
       IF(.NOT.ASSOCIATED(tmpParam)) THEN
         prevname=''
         thisname=ADJUSTL(name)
@@ -7945,14 +8013,14 @@ MODULE ParameterLists
           prevname=ADJUSTL(name(1:ipos-1))
           thisname=ADJUSTL(name(ipos+2:LEN(name)))
         ENDIF
-      
+
         !Initialize the new parameter
         IF(PRESENT(description)) THEN
           CALL init_ParamType_SDK_a3(newParam,thisname,param,description)
         ELSE
           CALL init_ParamType_SDK_a3(newParam,thisname,param)
         ENDIF
-        
+
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
         CALL newParam%clear()
@@ -7969,9 +8037,9 @@ MODULE ParameterLists
 !> @param name the name of the parameter
 !> @param param a three dimensional array of 32-bit integer
 !> @param description an optional description for this parameter
-!> 
+!>
 !> This routine is not recursive, so it is like setting a three dimensional array of parameter.
-!> Therefore the name cannot contain the "->" symbol to indicate access to a 
+!> Therefore the name cannot contain the "->" symbol to indicate access to a
 !> sub-list. @c thisParam must not already be inititalized.
 !>
     SUBROUTINE init_ParamType_SNK_a3(thisParam,name,param,description)
@@ -7981,7 +8049,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       INTEGER(SIK) :: ipos
-      
+
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
         ipos=INDEX(name,'->')
@@ -8023,7 +8091,7 @@ MODULE ParameterLists
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
       CHARACTER(LEN=12) :: fmt,fmt2,fmt3
       INTEGER(SIK) :: i,j,k,l,m
-      
+
       i=1
       j=6
       IF(PRESENT(indent)) i=i+indent
@@ -8049,7 +8117,7 @@ MODULE ParameterLists
 !-------------------------------------------------------------------------------
 !> @brief Clears a three dimensional array of 32-bit integer valued parameter
 !> @param thisParam the three dimensional array of 32-bit integer valued parameter to clear
-!> 
+!>
     SUBROUTINE clear_ParamType_SNK_a3(thisParam)
       CLASS(ParamType_SNK_a3),INTENT(INOUT) :: thisParam
       DEALLOCATE(thisParam%val)
@@ -8059,9 +8127,9 @@ MODULE ParameterLists
     ENDSUBROUTINE clear_ParamType_SNK_a3
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets the value of an existing three dimensional array of 32-bit integer valued 
+!> @brief Sets the value of an existing three dimensional array of 32-bit integer valued
 !> parameter to a new value.
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will be to set the new value of @c param
 !> @param name the name of an existing parameter to set the value of
 !> @param param the new value to set for the parameter
@@ -8079,7 +8147,7 @@ MODULE ParameterLists
       INTEGER(SNK),INTENT(IN) :: param(:,:,:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SNK_a3)
           IF(thisParam%name == TRIM(name)) THEN
@@ -8126,12 +8194,12 @@ MODULE ParameterLists
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the three dimensional array of 32-bit integer value for a specified parameter
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will have it's value returned
 !> @param name the name of the parameter to return the value of
 !> @param val the current value of the parameter with @c name
-!> 
-!> If a parameter with @c name is not found an error is produced. If the 
+!>
+!> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a three dimensional array of 32-bit integer valued parameter
 !> then an error is produced.
 !>
@@ -8141,7 +8209,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:)
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SNK_a3)
           IF(thisParam%name == TRIM(name)) THEN
@@ -8203,16 +8271,16 @@ MODULE ParameterLists
 !> @param name the location and name of the new parameter
 !> @param param the 32-bit integer value of the new parameter
 !> @param description an optional input for a description of the new parameter
-!> 
+!>
 !> This routine creates a new parameter within @c thisParam with @c name.
-!> @c name may contain a full or partial path to the new parameter. If @c name 
+!> @c name may contain a full or partial path to the new parameter. If @c name
 !> can be matched to an existing parameter in @c thisParam an error is produced
 !> If @c name contains a full path for which intermediate lists do not exist
 !> then this lists are created in the process of adding the new parameter.
 !> If @c thisParam is not initialized and @c name does not contain a "->"
-!> symbol then this routine behaves equivalently to 
+!> symbol then this routine behaves equivalently to
 !> @ref ParameterLists::init_ParamType_SNK "initSNK".
-!> 
+!>
     SUBROUTINE add_ParamType_SNK_a3(thisParam,name,param,description)
       CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SNK_a3'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
@@ -8223,10 +8291,10 @@ MODULE ParameterLists
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
-      
+
       IF(.NOT.ASSOCIATED(tmpParam)) THEN
         prevname=''
         thisname=ADJUSTL(name)
@@ -8235,14 +8303,14 @@ MODULE ParameterLists
           prevname=ADJUSTL(name(1:ipos-1))
           thisname=ADJUSTL(name(ipos+2:LEN(name)))
         ENDIF
-      
+
         !Initialize the new parameter
         IF(PRESENT(description)) THEN
           CALL init_ParamType_SNK_a3(newParam,thisname,param,description)
         ELSE
           CALL init_ParamType_SNK_a3(newParam,thisname,param)
         ENDIF
-        
+
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
         CALL newParam%clear()
@@ -8259,9 +8327,9 @@ MODULE ParameterLists
 !> @param name the name of the parameter
 !> @param param a three dimensional array of 64-bit integer
 !> @param description an optional description for this parameter
-!> 
+!>
 !> This routine is not recursive, so it is like setting a three dimensional array of parameter.
-!> Therefore the name cannot contain the "->" symbol to indicate access to a 
+!> Therefore the name cannot contain the "->" symbol to indicate access to a
 !> sub-list. @c thisParam must not already be inititalized.
 !>
     SUBROUTINE init_ParamType_SLK_a3(thisParam,name,param,description)
@@ -8271,7 +8339,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       INTEGER(SIK) :: ipos
-      
+
       IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
         !Check that '->' character is not in name
         ipos=INDEX(name,'->')
@@ -8313,7 +8381,7 @@ MODULE ParameterLists
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
       CHARACTER(LEN=12) :: fmt,fmt2,fmt3
       INTEGER(SIK) :: i,j,k,l,m
-      
+
       i=1
       j=6
       IF(PRESENT(indent)) i=i+indent
@@ -8339,7 +8407,7 @@ MODULE ParameterLists
 !-------------------------------------------------------------------------------
 !> @brief Clears a three dimensional array of 64-bit integer valued parameter
 !> @param thisParam the three dimensional array of 64-bit integer valued parameter to clear
-!> 
+!>
     SUBROUTINE clear_ParamType_SLK_a3(thisParam)
       CLASS(ParamType_SLK_a3),INTENT(INOUT) :: thisParam
       DEALLOCATE(thisParam%val)
@@ -8349,9 +8417,9 @@ MODULE ParameterLists
     ENDSUBROUTINE clear_ParamType_SLK_a3
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets the value of an existing three dimensional array of 64-bit integer valued 
+!> @brief Sets the value of an existing three dimensional array of 64-bit integer valued
 !> parameter to a new value.
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will be to set the new value of @c param
 !> @param name the name of an existing parameter to set the value of
 !> @param param the new value to set for the parameter
@@ -8369,7 +8437,7 @@ MODULE ParameterLists
       INTEGER(SLK),INTENT(IN) :: param(:,:,:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SLK_a3)
           IF(thisParam%name == TRIM(name)) THEN
@@ -8416,12 +8484,12 @@ MODULE ParameterLists
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the three dimensional array of 64-bit integer value for a specified parameter
-!> @param thisParam the parameter in which an existing parameter with name 
+!> @param thisParam the parameter in which an existing parameter with name
 !>        matching @c name will have it's value returned
 !> @param name the name of the parameter to return the value of
 !> @param val the current value of the parameter with @c name
-!> 
-!> If a parameter with @c name is not found an error is produced. If the 
+!>
+!> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a three dimensional array of 64-bit integer valued parameter
 !> then an error is produced.
 !>
@@ -8431,7 +8499,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:)
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       SELECTTYPE(thisParam)
         TYPE IS(ParamType_SLK_a3)
           IF(thisParam%name == TRIM(name)) THEN
@@ -8493,16 +8561,16 @@ MODULE ParameterLists
 !> @param name the location and name of the new parameter
 !> @param param the 64-bit integer value of the new parameter
 !> @param description an optional input for a description of the new parameter
-!> 
+!>
 !> This routine creates a new parameter within @c thisParam with @c name.
-!> @c name may contain a full or partial path to the new parameter. If @c name 
+!> @c name may contain a full or partial path to the new parameter. If @c name
 !> can be matched to an existing parameter in @c thisParam an error is produced
 !> If @c name contains a full path for which intermediate lists do not exist
 !> then this lists are created in the process of adding the new parameter.
 !> If @c thisParam is not initialized and @c name does not contain a "->"
-!> symbol then this routine behaves equivalently to 
+!> symbol then this routine behaves equivalently to
 !> @ref ParameterLists::init_ParamType_SLK "initSLK".
-!> 
+!>
     SUBROUTINE add_ParamType_SLK_a3(thisParam,name,param,description)
       CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SLK_a3'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
@@ -8513,10 +8581,10 @@ MODULE ParameterLists
       INTEGER(SIK) :: ipos
       TYPE(ParamType) :: newParam
       CLASS(ParamType),POINTER :: tmpParam
-      
+
       !Search for the name to make sure it does not exist
       CALL get_ParamType(thisParam,name,tmpParam)
-      
+
       IF(.NOT.ASSOCIATED(tmpParam)) THEN
         prevname=''
         thisname=ADJUSTL(name)
@@ -8525,14 +8593,14 @@ MODULE ParameterLists
           prevname=ADJUSTL(name(1:ipos-1))
           thisname=ADJUSTL(name(ipos+2:LEN(name)))
         ENDIF
-      
+
         !Initialize the new parameter
         IF(PRESENT(description)) THEN
           CALL init_ParamType_SLK_a3(newParam,thisname,param,description)
         ELSE
           CALL init_ParamType_SLK_a3(newParam,thisname,param)
         ENDIF
-        
+
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
         CALL newParam%clear()
@@ -8542,5 +8610,5 @@ MODULE ParameterLists
             '" already exists! Use set method or full parameter list path!')
       ENDIF
     ENDSUBROUTINE add_ParamType_SLK_a3
-!    
+!
 ENDMODULE ParameterLists
