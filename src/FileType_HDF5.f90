@@ -358,6 +358,14 @@ MODULE FileType_HDF5
     !> @brief Pointer to a HDF5 file type
     TYPE(HDF5FileType),POINTER :: h5 => NULL()
   ENDTYPE HDF5FilePtrArrayType
+
+  !> Variable for keeping track of the number of hdf5 files initialized
+  !> This variable will be used in logic to call the h5close_f(error)
+  !> which closes the interface.  
+  INTEGER(SIK),SAVE :: nhdf5fileinuse=0
+  !> Variable to make sure that the hdf5 interface was opened, and thus
+  !> can then be closed.
+  LOGICAL(SBK),SAVE :: lhdf5intfcopen=.FALSE.
 !
 !===============================================================================
   CONTAINS
@@ -446,6 +454,8 @@ MODULE FileType_HDF5
           ENDIF
         ENDDO
         thisHDF5File%isinit=.TRUE.
+        nhdf5fileinuse=nhdf5fileinuse+1
+        lhdf5intfcopen=.TRUE.
       ELSE
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - HDF5file '//thisHDF5File%getFileName()// &
@@ -485,9 +495,16 @@ MODULE FileType_HDF5
 
         ! Close the HDF5 interface. This can only be done once all calls to the
         ! HDF5 library are complete.
-        CALL h5close_f(error)
-        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Unable to close HDF5 INTERFACE.')
+        nhdf5fileinuse=nhdf5fileinuse-1
+        IF(lhdf5intfcopen .AND. (nhdf5fileinuse == 0)) THEN
+          CALL h5close_f(error)
+          IF(error /= 0) THEN
+            CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+              ' - Unable to close HDF5 INTERFACE.')
+          ELSE
+            lhdf5intfcopen=.FALSE.
+          ENDIF
+        ENDIF
 #endif
         thisHDF5File%isinit=.FALSE.
         thisHDF5File%newstat=.FALSE.
