@@ -214,6 +214,7 @@ PROGRAM testHDF5
       FINFO() h5%e%getCounter(EXCEPTION_ERROR)
       CALL h5%fdelete()
       ASSERT(h5%isinit,'HDF5 object still initialized after deletion.')
+      INQUIRE(FILE='createdeletetest.h5',EXIST=exists)
       ASSERT(.NOT.exists,'HDF5 object not properly deleted without being cleared.')
       CALL h5%clear()
       ASSERT(.NOT.h5%isinit,'HDF5 object not properly cleared.')
