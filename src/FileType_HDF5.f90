@@ -956,6 +956,17 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: src_obj_id,h5err
       TYPE(StringType) :: spath,lpath
 
+      INTERFACE
+        FUNCTION H5Oclose(object_id) RESULT(herr_t) &
+          BIND(C,NAME="H5Oclose")
+          USE ISO_C_BINDING
+          USE HDF5
+          INTEGER(HID_T),VALUE :: object_id
+          INTEGER :: herr_t
+        ENDFUNCTION H5Oclose
+      ENDINTERFACE
+
+
       IF(pathexists_HDF5FileType(thisHDF5File,source_path)) THEN
         IF(.NOT.pathexists_HDF5FileType(thisHDF5File,link_path)) THEN
           spath=convertPath(source_path)
@@ -969,7 +980,8 @@ MODULE FileType_HDF5
             CHAR(lpath),h5err)
 
           !Close the source object
-          CALL H5Oclose_f(src_obj_id,h5err)
+          !CALL H5Oclose_f(src_obj_id,h5err)
+          h5err=H5Oclose(src_obj_id)
         ELSE
           CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
             ' - Location of new link already exists!')
