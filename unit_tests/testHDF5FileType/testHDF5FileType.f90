@@ -54,6 +54,7 @@ PROGRAM testHDF5
   CREATE_TEST("HDF File Type")
   
   CALL testHDF5FileTypeSetup()
+  CALL HDF5Open()
   REGISTER_SUBTEST("HDF5FileType Uninit Checks",testHDF5FileTypeUninit)
   REGISTER_SUBTEST("HDF5FileType Initialization Checks",testHDF5FileTypeCreateDelete)
   REGISTER_SUBTEST("HDF5FileType Error Checks",testHDF5FileTypeErrorCheck)
@@ -72,6 +73,7 @@ PROGRAM testHDF5
   DEALLOCATE(refD1,refD2,refD3,refD4,refS1,refS2,refS3,refS4,refB1,refB2,refB3,&
       refL1,refL2,refL3,refN1,refN2,refN3,refST1,refST2,refST3,refsets)
 
+  CALL HDF5Close()
   FINALIZE_TEST()
   CALL testMPI%clear()
   CALL testMPI%finalize()

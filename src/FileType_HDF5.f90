@@ -73,10 +73,6 @@ MODULE FileType_HDF5
   IMPLICIT NONE
   PRIVATE
 
-!#ifdef HAVE_MPI
-!  INCLUDE 'mpif.h'
-!#endif
-
 #ifdef MPACT_HAVE_HDF5
   INTEGER(HID_T),PRIVATE :: error
 #endif
@@ -91,6 +87,8 @@ MODULE FileType_HDF5
   !List of Public Members
   PUBLIC :: HDF5FileType
   PUBLIC :: HDF5FilePtrArrayType
+  PUBLIC :: HDF5Open
+  PUBLIC :: HDF5Close
 
   !> reading from HDF5 binary files. As implemented, there are three modes for
   !> accessing a file can be opened as: 'read' and 'write' and 'new'. Read mode
@@ -365,10 +363,24 @@ MODULE FileType_HDF5
   INTEGER(SIK),SAVE :: nhdf5fileinuse=0
   !> Variable to make sure that the hdf5 interface was opened, and thus
   !> can then be closed.
-  LOGICAL(SBK),SAVE :: lhdf5intfcopen=.FALSE.
+  LOGICAL(SBK),SAVE :: libh5Open=.FALSE.
 !
 !===============================================================================
   CONTAINS
+!
+!-------------------------------------------------------------------------------
+  SUBROUTINE HDF5Open()
+    INTEGER(SIK) :: herr
+    IF(.NOT.libh5Open) CALL H5open_f(herr)
+    IF(herr == 0) libh5Open=.TRUE.
+  ENDSUBROUTINE HDF5Open
+!
+!-------------------------------------------------------------------------------
+  SUBROUTINE HDF5Close()
+    INTEGER(SIK) :: herr
+    IF(libh5Open) CALL H5close_f(herr)
+    IF(herr == 0) libh5Open=.FALSE.
+  ENDSUBROUTINE HDF5Close
 !
 !-------------------------------------------------------------------------------
 !> @brief Initializes an HDF5 file object.
@@ -438,9 +450,7 @@ MODULE FileType_HDF5
 
         ! Initialize the HDF5 interface. This needs be done before any other calls
         ! to the HF5 interface can be made.
-        CALL h5open_f(error)
-        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not initialize HDF5 INTERFACE.')
+        CALL HDF5Open()
 
         ! Assign arbitrary UNIT number to file.  Used only for deleting file.
         unitno=99
@@ -455,7 +465,6 @@ MODULE FileType_HDF5
         ENDDO
         thisHDF5File%isinit=.TRUE.
         nhdf5fileinuse=nhdf5fileinuse+1
-        lhdf5intfcopen=.TRUE.
       ELSE
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - HDF5file '//thisHDF5File%getFileName()// &
@@ -496,15 +505,7 @@ MODULE FileType_HDF5
         ! Close the HDF5 interface. This can only be done once all calls to the
         ! HDF5 library are complete.
         nhdf5fileinuse=nhdf5fileinuse-1
-        IF(lhdf5intfcopen .AND. (nhdf5fileinuse == 0)) THEN
-          CALL h5close_f(error)
-          IF(error /= 0) THEN
-            CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-              ' - Unable to close HDF5 INTERFACE.')
-          ELSE
-            lhdf5intfcopen=.FALSE.
-          ENDIF
-        ENDIF
+        IF(libh5Open .AND. (nhdf5fileinuse == 0)) CALL HDF5Close()
 #endif
         thisHDF5File%isinit=.FALSE.
         thisHDF5File%newstat=.FALSE.
