@@ -371,14 +371,20 @@ MODULE FileType_HDF5
 !-------------------------------------------------------------------------------
   SUBROUTINE HDF5Open()
     INTEGER(SIK) :: herr
+    herr=-1
+#ifdef MPACT_HAVE_HDF5
     IF(.NOT.libh5Open) CALL H5open_f(herr)
+#endif
     IF(herr == 0) libh5Open=.TRUE.
   ENDSUBROUTINE HDF5Open
 !
 !-------------------------------------------------------------------------------
   SUBROUTINE HDF5Close()
     INTEGER(SIK) :: herr
+    herr=-1
+#ifdef MPACT_HAVE_HDF5
     IF(libh5Open) CALL H5close_f(herr)
+#endif
     IF(herr == 0) libh5Open=.FALSE.
   ENDSUBROUTINE HDF5Close
 !
