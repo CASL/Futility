@@ -4370,17 +4370,19 @@ PROGRAM testParameterLists
       312_SLK,412_SLK,322_SLK,422_SLK/),(/2,2,2/)))
     ASSERT(bool,'%add slk3')
     
-    !Test adding of a bad paramtype
-    !CALL testParam2%clear()
-    !ALLOCATE(testParam2%pdat)
-    !CALL testParam2%init('testAdd',RESHAPE((/-1.0_SDK/),(/1,1,1/))) 
-    !testParam%pdat%datatype='test_type'
-    !CALL testParam%add('testPL',testParam2) !Type mismatch
-    !msg=eParams%getLastMessage()
-    !refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType -'// &
-    !  ' cannot add parameter to type "test_type"!'
-    !ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
-    !CALL testParam2%clear()
+    !CALL testList(1)%add('item 1',0)
+    !CALL testList(2)%add('item 2',0)
+    CALL testParam%add('testPL->testList',testList,'this is a test list')
+    CALL testParam%add('testPL->testList2',testList2)
+    CALL testParam%add('testPL->testList2',testList)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_List -'// &
+      ' parameter name "testPL->testList2" already exists! Use set method or full'// &
+        ' parameter list path!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add (list)')
+    CALL testParam%get('testPL->testList',someParam)
+    ASSERT(someParam%name == 'testList','%addList (name)')
+    ASSERT(someParam%datatype == 'TYPE(ParamType_List)','%addList (datatype)')
     
     CALL clear_test_vars()
     !Deallocate locals
@@ -4591,6 +4593,7 @@ PROGRAM testParameterLists
     !Adding the same extra parameter to the optional list
     CALL testParam3%add('TestReq->sublist1->p3',1.1_SSK)
     CALL testParam%validate(testParam2,testParam3)
+    CALL testParam%validate(testParam2,testParam3,.TRUE.)
     
     !Making sure the req param has all the test param data
     testParam2=testParam
