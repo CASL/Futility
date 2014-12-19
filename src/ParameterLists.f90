@@ -1323,12 +1323,13 @@ MODULE ParameterLists
 !>
     RECURSIVE SUBROUTINE get_ParamType(thisParam,name,param)
       CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType'
-      CLASS(ParamType),INTENT(IN) :: thisParam
+      CLASS(ParamType),TARGET,INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       CLASS(ParamType),POINTER,INTENT(INOUT) :: param
       CHARACTER(LEN=LEN(name)) :: thisname,nextname,pname
       INTEGER(SIK) :: ipos,i
       CLASS(ParamType),POINTER :: tmpParam
+      LOGICAL(SBK),SAVE :: partial_match=.TRUE.
 
       ipos=INDEX(name,'->')
       thisname=name
@@ -1343,41 +1344,58 @@ MODULE ParameterLists
       IF(LEN_TRIM(thisname) > 0) THEN
         SELECTTYPE(thisParam)
           TYPE IS(ParamType_List)
+            CALL toUPPER(thisname)
             IF(LEN_TRIM(nextname) > 0) THEN
               !Set names to upper case for matching
               IF(LEN(pname) >= LEN_TRIM(thisParam%name)) pname=thisParam%name
               CALL toUPPER(pname)
-              CALL toUPPER(thisname)
 
               !Search the list for nextname (thisname must match parameter name)
               IF(TRIM(pname) == TRIM(thisname) .AND. &
                 ALLOCATED(thisParam%pList)) THEN
                 DO i=1,SIZE(thisParam%pList)
-                  CALL thisParam%pList(i)%getParam(TRIM(nextname),param)
+                  !CALL thisParam%pList(i)%getParam(TRIM(nextname),param)
+                  IF(ASSOCIATED(thisParam%pList(i)%pdat)) &
+                    CALL get_ParamType(thisParam%pList(i)%pdat, &
+                      TRIM(nextname),param)
                   IF(ASSOCIATED(param)) EXIT !Found it, stop searching
                 ENDDO
               ENDIF
             ELSE
-              !Search for thisname within the list
-              IF(ALLOCATED(thisParam%pList)) THEN
-                DO i=1,SIZE(thisParam%pList)
-                  CALL thisParam%pList(i)%getParam(TRIM(thisname),param)
-                  IF(ASSOCIATED(param)) EXIT !Found it, stop searching
-                ENDDO
+              !End of search list, check search name against list name
+              pname=thisParam%name
+              CALL toUPPER(pname)
+              IF(TRIM(pname) == TRIM(thisname)) THEN
+                !Search name is thisParam's name
+                param => thisParam
+              ELSE
+                !Search for thisname within the list
+                IF(ALLOCATED(thisParam%pList) .AND. partial_match) THEN
+                  DO i=1,SIZE(thisParam%pList)
+                    IF(ASSOCIATED(thisParam%pList(i)%pdat)) &
+                      CALL get_ParamType(thisParam%pList(i)%pdat, &
+                        TRIM(thisname),param)
+                    IF(ASSOCIATED(param)) EXIT !Found it, stop searching
+                  ENDDO
+                ENDIF
               ENDIF
             ENDIF
           CLASS DEFAULT
+            CALL toUPPER(thisname)
             IF(ASSOCIATED(thisParam%pdat)) THEN
               !Set names to upper case for matching
               IF(LEN(pname) >= LEN_TRIM(thisParam%pdat%name)) &
                 pname=thisParam%pdat%name
               CALL toUPPER(pname)
-              CALL toUPPER(thisname)
+              
               IF(TRIM(pname) == TRIM(thisname)) THEN
                 !Found the match
                 tmpParam => thisParam%pdat
                 IF(LEN_TRIM(nextname) > 0) THEN
-                  CALL tmpParam%getParam(name,param)
+                  !Set partial matching to off
+                  partial_match=.FALSE.
+                  CALL get_ParamType(tmpParam,name,param)
+                  partial_match=.TRUE.
                 ELSE
                   param => tmpParam
                   NULLIFY(tmpParam)
@@ -1388,9 +1406,13 @@ MODULE ParameterLists
                 IF(ASSOCIATED(param) .AND. LEN_TRIM(nextname) > 0) THEN
                   tmpParam => param
                   param => NULL()
-                  CALL tmpParam%getParam(name,param)
+                  CALL get_ParamType(tmpParam,name,param)
                 ENDIF
               ENDIF
+            ELSE
+              pname=thisParam%name
+              CALL toUPPER(pname)
+              IF(TRIM(pname) == TRIM(thisname)) param => thisParam
             ENDIF
         ENDSELECT
       ELSE
@@ -1689,11 +1711,12 @@ MODULE ParameterLists
 !>
     FUNCTION has_ParamType(thisParam,name) RESULT(hasname)
       CHARACTER(LEN=*),PARAMETER :: myName='has_ParamType'
-      CLASS(ParamType),INTENT(IN) :: thisParam
+      CLASS(ParamType),TARGET,INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       LOGICAL(SBK) :: hasname
       CHARACTER(LEN=LEN(name)) :: tmpname
       INTEGER(SIK) :: ipos
+      TYPE(ParamType) :: listContainer
       CLASS(ParamType),POINTER :: tmpParam => NULL()
 
       hasname=.FALSE.
@@ -1710,7 +1733,13 @@ MODULE ParameterLists
       ENDDO
 
       !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
+      SELECTTYPE(thisParam)
+        TYPE IS(ParamType_List)
+          listContainer%pdat => thisParam
+          CALL get_ParamType(listContainer,name,tmpParam)
+        CLASS DEFAULT
+          CALL get_ParamType(thisParam,name,tmpParam)
+      ENDSELECT
       hasname=ASSOCIATED(tmpParam)
 
       tmpParam => NULL()

@@ -89,6 +89,7 @@ PROGRAM testParameterLists
   REGISTER_SUBTEST('%getNextParam(...)',testGetNextParam)
   REGISTER_SUBTEST('%validate(...)',testValidate)
   REGISTER_SUBTEST('%verify(...)',testVerify)
+  REGISTER_SUBTEST('Partial Matching',testPartialMatch)
   
   FINALIZE_TEST()
   CALL clear_test_vars()
@@ -4462,7 +4463,7 @@ PROGRAM testParameterLists
     
     !Root search with a paramtype pointer.
     n=0
-    CALL testParam%get('Level 1',someParam)
+    CALL testParam%get('level 1',someParam)
     addr=''
     CALL someParam%getNextParam(addr,iParam)
     DO WHILE(ASSOCIATED(iParam))
@@ -4471,10 +4472,9 @@ PROGRAM testParameterLists
       FINFO() n,'"'//TRIM(refaddr(n))//'" "'//TRIM(addr)//'"'
       ASSERT(refname(n) == iParam%name,'addr')
       FINFO() n,'"'//TRIM(refname(n))//'" "'//TRIM(iParam%name)//'"'
-      CALL testParam%get(CHAR(addr),someParam)
       CALL someParam%getNextParam(addr,iParam)
     ENDDO
-    ASSERT(n == 1,'number of iters')
+    ASSERT(n == 6,'number of iters')
     
     !search with a non root starting point
     n=2
@@ -4926,6 +4926,24 @@ PROGRAM testParameterLists
   
     CALL clear_test_vars()
   ENDSUBROUTINE testVerify
+!
+!-------------------------------------------------------------------------------
+!Test to make sure we've eliminated a long standing bug.
+  SUBROUTINE testPartialMatch()
+
+    CALL testParam%clear()
+    CALL testParam%add('List->sublist->a',1)
+    ASSERT(testParam%has('a'),'partial match no list')
+    ASSERT(.NOT.testParam%has('List->a'),'no partial match')
+    ASSERT(testParam%has('sublist->a'),'partial sublist match')
+
+    CALL testParam%get('List',someParam)
+    ASSERT(someParam%has('a'),'partial match no list (pointer)')
+    ASSERT(.NOT.someParam%has('List->a'),'no partial match (pointer)')
+    ASSERT(someParam%has('sublist->a'),'partial sublist match (pointer)')
+
+    CALL testParam%clear()
+  ENDSUBROUTINE testPartialMatch
 !
 !-------------------------------------------------------------------------------
 !Clear all the test variables
