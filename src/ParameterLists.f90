@@ -1410,7 +1410,7 @@ MODULE ParameterLists
                 ENDIF
               ENDIF
             ELSE
-              pname=thisParam%name
+              IF(LEN(pname) >= LEN_TRIM(thisParam%name)) pname=thisParam%name
               CALL toUPPER(pname)
               IF(TRIM(pname) == TRIM(thisname)) param => thisParam
             ENDIF
