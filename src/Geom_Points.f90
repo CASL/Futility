@@ -372,17 +372,11 @@ MODULE Geom_Points
     PURE SUBROUTINE assign_PointType(p0,p1)
       TYPE(PointType),INTENT(INOUT) :: p0
       TYPE(PointType),INTENT(IN) :: p1
-
-      IF(p0%dim == p1%dim .AND. p1%dim > 0) THEN
+      p0%dim=p1%dim
+      IF(ALLOCATED(p0%coord)) DEALLOCATE(p0%coord)
+      IF(ALLOCATED(p1%coord)) THEN
+        ALLOCATE(p0%coord(SIZE(p1%coord)))
         p0%coord=p1%coord
-      ELSEIF(p0%dim /= p1%dim .AND. p1%dim > 0) THEN
-        IF(ALLOCATED(p0%coord)) DEALLOCATE(p0%coord)
-        p0%dim=p1%dim
-        ALLOCATE(p0%coord(p0%dim))
-        p0%coord=p1%coord
-      ELSE
-        p0%dim=p1%dim
-        IF(ALLOCATED(p0%coord)) DEALLOCATE(p0%coord)
       ENDIF
     ENDSUBROUTINE assign_PointType
 !
