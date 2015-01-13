@@ -279,6 +279,16 @@ MODULE VTKFiles
       !> @copydetails VTKFiles::writeScalarData_VTKLegFileType
       PROCEDURE,PASS :: writeScalarData => writeScalarData_VTKLegFileType
   ENDTYPE VTKLegFileType
+
+  !> @brief Generic interface for assignment operator (=)
+  !>
+  !> Adds assignment capability for VTKMeshType
+  !> Main purpose is for valgrind errors in VERA builds.
+  INTERFACE ASSIGNMENT(=)
+    !> @copybrief VTKFiles::assign_VTKMeshType
+    !> @copydetails VTKFiles::assign_VTKMeshType
+    MODULE PROCEDURE assign_VTKMeshType
+  ENDINTERFACE
   
   TYPE(ExceptionHandlerType),SAVE :: eVTK
 !
@@ -416,6 +426,46 @@ MODULE VTKFiles
       myVTKData%dataSetType=0
       IF(ALLOCATED(myVTKData%dataList)) DEALLOCATE(myVTKData%dataList)
     ENDSUBROUTINE clear_VTKDataType
+!
+!-------------------------------------------------------------------------------
+!> @brief Assigns one VTK Mesh object to another.
+!> @param thisVTKMeshType the VTK Data object being assigned to
+!> @param thatVTKMeshType the VTK Data object being assigned from
+!>
+    SUBROUTINE assign_VTKMeshType(thisVTKMeshType,thatVTKMeshType)
+      TYPE(VTKMeshType),INTENT(INOUT) :: thisVTKMeshType
+      TYPE(VTKMeshType),INTENT(IN) :: thatVTKMeshType
+
+      IF(thisVTKMeshType%isInit) CALL clear_VTKMeshType(thisVTKMeshType)
+      IF(thatVTKMeshType%isInit) THEN
+        thisVTKMeshType%meshType=thatVTKMeshType%meshType
+        thisVTKMeshType%numcells=thatVTKMeshType%numcells
+        thisVTKMeshType%numpoints=thatVTKMeshType%numpoints
+        thisVTKMeshType%dims=thatVTKMeshType%dims
+        IF(ALLOCATED(thatVTKMeshType%cellList)) THEN
+          ALLOCATE(thisVTKMeshType%cellList(SIZE(thatVTKMeshType%cellList)))
+          thisVTKMeshType%cellList=thatVTKMeshType%cellList
+        ENDIF
+        IF(ALLOCATED(thatVTKMeshType%nodeList)) THEN
+          ALLOCATE(thisVTKMeshType%nodeList(SIZE(thatVTKMeshType%nodeList)))
+          thisVTKMeshType%nodeList=thatVTKMeshType%nodeList
+        ENDIF
+        IF(ALLOCATED(thatVTKMeshType%x)) THEN
+          ALLOCATE(thisVTKMeshType%x(SIZE(thatVTKMeshType%x)))
+          thisVTKMeshType%x=thatVTKMeshType%x
+        ENDIF
+        IF(ALLOCATED(thatVTKMeshType%y)) THEN
+          ALLOCATE(thisVTKMeshType%y(SIZE(thatVTKMeshType%y)))
+          thisVTKMeshType%y=thatVTKMeshType%y
+        ENDIF
+        IF(ALLOCATED(thatVTKMeshType%z)) THEN
+          ALLOCATE(thisVTKMeshType%z(SIZE(thatVTKMeshType%z)))
+          thisVTKMeshType%z=thatVTKMeshType%z
+        ENDIF
+        thisVTKMeshType%isInit=thatVTKMeshType%isInit
+      ENDIF
+
+    ENDSUBROUTINE assign_VTKMeshType
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a VTK mesh to VTK Legacy file
