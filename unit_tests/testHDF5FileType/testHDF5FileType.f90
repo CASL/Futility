@@ -667,6 +667,8 @@ PROGRAM testHDF5
 
       CALL h5%e%setQuietMode(.FALSE.)
       CALL h5%e%setStopOnError(.TRUE.)
+      
+      CALL h5%clear(.TRUE.)
       !CALL h5%fdelete()
       !INQUIRE(FILE='writetest.h5',EXIST=exists)
       !ASSERT(.NOT.exists,'HDF5 object not properly deleted!')
@@ -929,6 +931,8 @@ PROGRAM testHDF5
       i=h5%ngrp('groupR')
       ASSERT(i == 10,'ngrp_HDF5FileType')
       FINFO() i
+      !Clear variables
+      CALL h5%clear(.TRUE.)
      
     ENDSUBROUTINE testCompress
 !
