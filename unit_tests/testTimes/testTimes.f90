@@ -26,6 +26,7 @@ PROGRAM testTimes
   TYPE(TimerType) :: testTimer
   
   INTEGER :: idum1,idum2,idum3,ioerr
+  LOGICAL(SBK) :: bool
   CHARACTER(LEN=1) :: adum1,adum2
   CHARACTER(LEN=5) :: adum3
   CHARACTER(LEN=2) :: adum4
@@ -66,7 +67,27 @@ PROGRAM testTimes
   ASSERT(.NOT.(idum1 < 1 .OR. idum1 > 31),'day')
   ASSERT(idum2 > 0,'year')
   ASSERT(adum4(1:1) == ',','month')
-  
+ 
+!Test getTimeFromDate 
+  COMPONENT_TEST('getTimeFromDate')
+  bool=getTimeFromDate('12/01/1990','12/02/1990') .APPROXEQA. 1.0_SRK
+  ASSERT(bool,'check Defaults')
+  bool=getTimeFromDate('12/1/1990','12/2/1990','HOUR') .APPROXEQA. 24.0_SRK
+  ASSERT(bool,'check HOUR and MM/D/YYYY fmt')
+  bool=getTimeFromDate('1/1/1990','1/2/1990','MIN') .APPROXEQA. 1440.0_SRK
+  ASSERT(bool,'check MIN and M/D/YYYY fmt')
+  bool=getTimeFromDate('1/10/1990','1/11/1990','SEC') .APPROXEQA. 86400.0_SRK
+  ASSERT(bool,'check SEC and M/DD/YYYY fmt')
+  bool=getTimeFromDate('1990/12/01','1994/12/01','DAY') .APPROXEQA. 1461.0_SRK
+  ASSERT(bool,'check DAY, YYYY/MM/DD fmt and leapyear calls')
+  bool=getTimeFromDate('1990/12/1','1998/12/1','DAY') .APPROXEQA. 2922.0_SRK
+  ASSERT(bool,'check DAY, YYYY/MM/D fmt and leapyear calls')
+  bool=getTimeFromDate('1990/1/01','2002/1/01','DAY') .APPROXEQA. 4383.0_SRK
+  ASSERT(bool,'check DAY, YYYY/M/DD fmt and leapyear calls')
+  bool=getTimeFromDate('1890/1/1','1906/1/1','DAY') .APPROXEQA. 5843.0_SRK
+  ASSERT(bool,'check DAY, YYYY/M/D fmt and leapyear calls')
+
+!Test getClockTime
   COMPONENT_TEST('getClockTime()')
   idum1=0
   idum2=0

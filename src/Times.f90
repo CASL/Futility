@@ -85,7 +85,7 @@
 MODULE Times
   USE IntrType
   USE Strings
-  
+  USE IO_Strings  
   IMPLICIT NONE
   PRIVATE !Default private for module contents
 !
@@ -574,17 +574,102 @@ MODULE Times
       
       REAL(SRK) :: time
       INTEGER(SIK) :: Date1year,Date1month,Date1day,Date2year,Date2month,Date2day
-      INTEGER(SIK) :: i,ind1,ind2,total1,total2,leapdays
+      INTEGER(SIK) :: i,ind1,ind2,total1,total2,leapdays,tmpint
       !> The number of days per month.
       INTEGER(SIK) :: dayspermonth(12)=(/31,28,31,30,31,30,31,31,30,31,30,31/)
       CHARACTER(LEN=LEN(Date1_inp)) :: Date1
       CHARACTER(LEN=LEN(Date2_inp)) :: Date2
       CHARACTER(LEN=2) :: tmp2
       CHARACTER(LEN=4) :: tmp4
+      CHARACTER(LEN=10) :: tmpdate
       TYPE(StringType) :: outputunit,fmt1,fmt2
   
       time=0.0_SRK
       IF(LEN_TRIM(Date1_inp) > 0 .AND. LEN_TRIM(Date2_inp) > 0) THEN
+        !Set up Default Formats
+        ind1=INDEX(Date1_inp,FSLASH)
+        !Has a slash
+        IF(ind1 > 0) THEN
+          !Front part is the year
+          IF(ind1 == 5) THEN
+            IF(LEN_TRIM(Date1_inp) == 10) THEN
+              fmt1='YYYY/MM/DD'
+            ELSEIF(LEN_TRIM(Date1_inp) == 8) THEN
+              fmt1='YYYY/M/D'
+            ELSE
+              IF(INDEX(Date1_inp,FSLASH,.TRUE.) == 8) THEN
+                fmt1='YYYY/MM/D'
+              ELSE
+                fmt1='YYYY/M/DD'
+              ENDIF
+            ENDIF
+          ELSE
+            IF(LEN_TRIM(Date1_inp) == 10) THEN
+              fmt1='MM/DD/YYYY'
+            ELSEIF(LEN_TRIM(Date1_inp) == 8) THEN
+              fmt1='M/D/YYYY'
+            ELSE
+              IF(INDEX(Date1_inp,FSLASH) == 3) THEN
+                fmt1='MM/D/YYYY'
+              ELSE
+                fmt1='M/DD/YYYY'
+              ENDIF
+            ENDIF
+          ENDIF
+        !No slash, so the easy logical check is which set of 4 is greater than 1231 to find the year.
+        !Not all enclusive.
+        ELSE
+          tmpdate=Date1_inp
+          READ(tmpdate,'(i8)')  tmpint
+          !Last 4 digits are the year
+          IF(MOD(tmpint,10000) > 1231) THEN
+            fmt1='MMDDYYYY'
+          ELSE
+            fmt1='YYYYMMDD'
+          ENDIF
+        ENDIF
+
+        ind1=INDEX(Date2_inp,FSLASH)
+        !Has a slash
+        IF(ind1 > 0) THEN
+          !Front part is the year
+          IF(ind1 == 5) THEN
+            IF(LEN_TRIM(Date2_inp) == 10) THEN
+              fmt2='YYYY/MM/DD'
+            ELSEIF(LEN_TRIM(Date2_inp) == 8) THEN
+              fmt2='YYYY/M/D'
+            ELSE
+              IF(INDEX(Date2_inp,FSLASH,.TRUE.) == 8) THEN
+                fmt2='YYYY/MM/D'
+              ELSE
+                fmt2='YYYY/M/DD'
+              ENDIF
+            ENDIF
+          ELSE
+            IF(LEN_TRIM(Date2_inp) == 10) THEN
+              fmt2='MM/DD/YYYY'
+            ELSEIF(LEN_TRIM(Date2_inp) == 8) THEN
+              fmt2='M/D/YYYY'
+            ELSE
+              IF(INDEX(Date2_inp,FSLASH) == 3) THEN
+                fmt2='MM/D/YYYY'
+              ELSE
+                fmt2='M/DD/YYYY'
+              ENDIF
+            ENDIF
+          ENDIF
+        !No slash, so the easy logical check is which set of 4 is greater than 1231 to find the year.
+        !Not all enclusive.
+        ELSE
+          tmpdate=Date2_inp
+          READ(tmpdate,'(i8)') tmpint
+          !Last 4 digits are the year
+          IF(MOD(tmpint,10000) > 1231) THEN
+            fmt2='MMDDYYYY'
+          ELSE
+            fmt2='YYYYMMDD'
+          ENDIF
+        ENDIF
 
         !Set the optional inputs if they are present
         Date1=Date1_inp
@@ -594,15 +679,13 @@ MODULE Times
           IF(outputunit_inp == 'HOUR' .OR. outputunit_inp == 'MIN' .OR. &
             outputunit_inp == 'SEC') outputunit=outputunit_inp
         ENDIF
-        fmt1='MM/DD/YYYY'
         IF(PRESENT(fmt1_inp)) THEN
-          IF(fmt1_inp == 'MM/DD/YYYY' .OR. fmt1_inp == 'YYYY/MM/DD' .OR. &
-            fmt1_inp == 'MMDDYYYY' .OR. fmt1_inp == 'YYYYMMDD') fmt1=fmt1_inp
+          IF((INDEX(fmt1_inp,"Y") > 0) .AND. (INDEX(fmt1_inp,"M") > 0) .AND. &
+            (INDEX(fmt1_inp,"D") > 0)) fmt1=fmt1_inp
         ENDIF
-        fmt2='MM/DD/YYYY'
         IF(PRESENT(fmt2_inp)) THEN
-          IF(fmt2_inp == 'MM/DD/YYYY' .OR. fmt2_inp == 'YYYY/MM/DD' .OR. &
-            fmt2_inp == 'MMDDYYYY' .OR. fmt2_inp == 'YYYYMMDD') fmt2=fmt2_inp
+          IF((INDEX(fmt2_inp,"Y") > 0) .AND. (INDEX(fmt2_inp,"M") > 0) .AND. &
+            (INDEX(fmt2_inp,"D") > 0)) fmt2=fmt2_inp
         ENDIF
 
         !Process the strings
