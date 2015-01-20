@@ -1106,7 +1106,7 @@ MODULE LinearSolverTypes
                   IF(A%n /= solver%b%n .OR. A%m /= solver%X%n &
                     .OR. A%n < 1 .OR. A%m < 1) THEN
                     CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
-                      '  - The size of the matrix and vector do not comform!')
+                      '  - The size of the matrix and vector do not conform!')
                   ELSE
                     solver%info=0
                   ENDIF
@@ -1114,7 +1114,7 @@ MODULE LinearSolverTypes
                   IF(A%n /= solver%b%n .OR. A%n /= solver%X%n &
                     .OR. A%n < 1) THEN
                     CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
-                      '  - The size of the matrix and vector do not comform!')
+                      '  - The size of the matrix and vector do not conform!')
                   ELSE
                     solver%info=0
                   ENDIF
@@ -1125,7 +1125,7 @@ MODULE LinearSolverTypes
             ENDIF
           ELSE
             CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
-              '  - The unknows X has not been associated!')
+              '  - The unknowns X has not been associated!')
           ENDIF
         ELSE
           CALL eLinearSolverType%raiseError(ModName//'::'//myName// &

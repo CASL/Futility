@@ -2675,6 +2675,9 @@ PROGRAM testMatrixTypes
           WRITE(*,*) "    cmat returned as incorrect matrix type"
           STOP 666
       ENDSELECT
+      CALL thisMtrx%clear()
+      CALL bmat%clear()
+      CALL cmat%clear()
       WRITE(*,*) '  Passed: CALL BLAS_matmult(...) A=PETSC B=PETSC C=PETSC'
 #endif
     ENDSUBROUTINE  testMatrixMultSparse
@@ -3188,6 +3191,9 @@ PROGRAM testMatrixTypes
           WRITE(*,*) "    cmat returned as incorrect matrix type"
           STOP 666
       ENDSELECT
+      CALL thisMtrx%clear()
+      CALL bmat%clear()
+      CALL cmat%clear()
       WRITE(*,*) '  Passed: CALL BLAS_matmult(...) A=PETSC B=PETSC C=PETSC'
 #endif
       
