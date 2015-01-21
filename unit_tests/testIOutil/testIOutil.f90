@@ -58,6 +58,7 @@ PROGRAM testIOutil
     SUBROUTINE testIO_Strings()
       LOGICAL :: bool
       INTEGER :: stat
+      INTEGER,ALLOCATABLE :: tmpint(:)
       CHARACTER(LEN=32) :: char
       TYPE(StringType) :: tmpStr,tmpStr2,tmpStrArray(10)
       
@@ -86,9 +87,17 @@ PROGRAM testIOutil
       ASSERT(nmatchstr('t e s t',' ') == 3 ,'t e s t')
       
       COMPONENT_TEST('strfind')
-      ASSERT(ALL(strfind('stesting','test') == (/2/)),'testing')
-      ASSERT(SIZE(strfind('TEAM','I')) == 0,'TEAM')
-      ASSERT(ALL(strfind('t e s t',' ') == (/2,4,6/)),'t e s t')
+      CALL strfind('stesting','test',tmpint)
+      ASSERTFAIL(SIZE(tmpint) == 1,'testing SIZE')
+      ASSERT(ALL(tmpint == (/2/)),'testing')
+      DEALLOCATE(tmpint)
+      CALL strfind('TEAM','I',tmpint)
+      ASSERTFAIL(SIZE(tmpint) == 0,'TEAM')
+      DEALLOCATE(tmpint)
+      CALL strfind('t e s t',' ',tmpint)
+      ASSERTFAIL(SIZE(tmpint) == 3,'t e s t SIZE')
+      ASSERT(ALL(tmpint == (/2,4,6/)),'t e s t')
+      DEALLOCATE(tmpint)
       
       COMPONENT_TEST('strrep')
       string='testing'
