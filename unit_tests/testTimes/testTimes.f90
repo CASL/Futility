@@ -86,6 +86,8 @@ PROGRAM testTimes
   ASSERT(bool,'check DAY, YYYY/M/DD fmt and leapyear calls')
   bool=getTimeFromDate('1890/1/1','1906/1/1','DAY') .APPROXEQA. 5843.0_SRK
   ASSERT(bool,'check DAY, YYYY/M/D fmt and leapyear calls')
+  bool=getTimeFromDate('09/05/1997','10/05/1997','SEC') .APPROXEQA. 2678400.0_SRK
+  ASSERT(bool,'check SEC 09/05/1997 and 10/05/1997')
 
 !Test getClockTime
   COMPONENT_TEST('getClockTime()')

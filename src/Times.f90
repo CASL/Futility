@@ -716,12 +716,13 @@ MODULE Times
 
         leapdays=countleapyears(0,1,1,Date2year,Date2month,Date2day)
         total2=0
-        DO i=1,Date1month
+        DO i=1,Date2month
           total2=total2+dayspermonth(i)
         ENDDO
         total2=Date2year*365+leapdays+total2+Date2day
 
         time=REAL(total2-total1,SRK)
+
         IF(outputunit == 'HOUR') THEN
           time=time*24.0_SRK
         ELSEIF(outputunit == 'MIN') THEN
