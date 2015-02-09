@@ -691,18 +691,12 @@ MODULE LinearSolverTypes
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
 #ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: ierr
+      IF(solver%TPLType==PETSC .AND. solver%isInit) &
+        CALL KSPDestroy(solver%ksp,ierr)
 #endif
 
-!      CALL solver%MPIparallelEnv%clear()
-!      CALL solver%OMPparallelEnv%clear()
-      IF(ALLOCATED(solver%PreCondType)) THEN
-        CALL solver%PreCondType%clear()
-        DEALLOCATE(solver%PrecondType)
-      ENDIF
-      IF(ALLOCATED(solver%A)) THEN
-        CALL solver%A%clear()
-        DEALLOCATE(solver%A)
-      ENDIF
+      CALL solver%MPIparallelEnv%clear()
+      CALL solver%OMPparallelEnv%clear()
       IF(ALLOCATED(solver%X)) THEN
         CALL solver%X%clear()
         DEALLOCATE(solver%X)
@@ -711,13 +705,19 @@ MODULE LinearSolverTypes
         CALL solver%b%clear()
         DEALLOCATE(solver%b)
       ENDIF
+      IF(ALLOCATED(solver%PreCondType)) THEN
+        CALL solver%PreCondType%clear()
+        DEALLOCATE(solver%PrecondType)
+      ENDIF
+      IF(ALLOCATED(solver%A)) THEN
+        CALL solver%A%clear()
+        DEALLOCATE(solver%A)
+      ENDIF
       IF(ALLOCATED(solver%M)) THEN
         CALL solver%M%clear()
         DEALLOCATE(solver%M)
       ENDIF
-#ifdef MPACT_HAVE_PETSC
-      IF(solver%TPLType==PETSC .AND. solver%isInit) CALL KSPDestroy(solver%ksp,ierr)
-#endif
+
       solver%isInit=.FALSE.
       solver%solverMethod=-1
       solver%hasX=.FALSE.
