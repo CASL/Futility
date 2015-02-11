@@ -2802,129 +2802,6 @@ CONTAINS
       CALL thisLS%clear()
       DEALLOCATE(thisX)
       
-      COMPONENT_TEST('SparseMatrixType, Preconditioned')
-      !With preconditioned GMRES
-      !The sparse matrix type
-      
-      ! initialize linear system
-      CALL pList%clear()
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
-      CALL pList%add('LinearSolverType->solverMethod',GMRES)
-      CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-      CALL pList%add('LinearSolverType->numberOMP',1_SNK)
-      CALL pList%add('LinearSolverType->timerName','testTimer')
-      CALL pList%add('LinearSolverType->matType',SPARSE)
-      CALL pList%add('LinearSolverType->A->MatrixType->n',9_SNK)
-      CALL pList%add('LinearSolverType->A->MatrixType->nnz',33_SNK)
-      CALL pList%add('LinearSolverType->x->VectorType->n',9_SNK)
-      CALL pList%add('LinearSolverType->b->VectorType->n',9_SNK)
-      CALL pList%add('LinearSolverType->PCType','ILU')
-      CALL pList%add('LinearSolverType->PCIters',-1)
-      CALL pList%add('LinearSolverType->PCSetup',0)
-      CALL pList%validate(pList,optListLS)
-      CALL thisLS%init(pList)
-      
-      !A =  4    -1     0    -1     0     0     0     0     0
-      !    -1     4    -1     0    -1     0     0     0     0
-      !     0    -1     4     0     0    -1     0     0     0
-      !    -1     0     0     4    -1     0    -1     0     0
-      !     0    -1     0    -1     4    -1     0    -1     0
-      !     0     0    -1     0    -1     4     0     0    -1
-      !     0     0     0    -1     0     0     4    -1     0
-      !     0     0     0     0    -1     0    -1     4    -1
-      !     0     0     0     0     0    -1     0    -1     4
-      SELECTTYPE(A => thisLS%A); TYPE IS(SparseMatrixType)
-          CALL A%setShape(1,1, 4.0_SRK)
-          CALL A%setShape(1,2,-1.0_SRK)
-          CALL A%setShape(1,4,-1.0_SRK)
-          CALL A%setShape(2,1,-1.0_SRK)
-          CALL A%setShape(2,2, 4.0_SRK)
-          CALL A%setShape(2,3,-1.0_SRK)
-          CALL A%setShape(2,5,-1.0_SRK)
-          CALL A%setShape(3,2,-1.0_SRK)
-          CALL A%setShape(3,3, 4.0_SRK)
-          CALL A%setShape(3,6,-1.0_SRK)
-          CALL A%setShape(4,1,-1.0_SRK)
-          CALL A%setShape(4,4, 4.0_SRK)
-          CALL A%setShape(4,5,-1.0_SRK)
-          CALL A%setShape(4,7,-1.0_SRK)
-          CALL A%setShape(5,2,-1.0_SRK)
-          CALL A%setShape(5,4,-1.0_SRK)
-          CALL A%setShape(5,5, 4.0_SRK)
-          CALL A%setShape(5,6,-1.0_SRK)
-          CALL A%setShape(5,8,-1.0_SRK)
-          CALL A%setShape(6,3,-1.0_SRK)
-          CALL A%setShape(6,5,-1.0_SRK)
-          CALL A%setShape(6,6, 4.0_SRK)
-          CALL A%setShape(6,9,-1.0_SRK)
-          CALL A%setShape(7,4,-1.0_SRK)
-          CALL A%setShape(7,7, 4.0_SRK)
-          CALL A%setShape(7,8,-1.0_SRK)
-          CALL A%setShape(8,5,-1.0_SRK)
-          CALL A%setShape(8,7,-1.0_SRK)
-          CALL A%setShape(8,8, 4.0_SRK)
-          CALL A%setShape(8,9,-1.0_SRK)
-          CALL A%setShape(9,6,-1.0_SRK)
-          CALL A%setShape(9,8,-1.0_SRK)
-          CALL A%setShape(9,9, 4.0_SRK)
-      ENDSELECT
-
-      SELECTTYPE(thisLS); TYPE IS(LinearSolvertype_Iterative)
-        CALL thisLS%setupPC()
-      ENDSELECT
-      
-      ! build X0 and set it to 1.0s
-      ALLOCATE(thisX(9))
-      thisX=1.0_SRK
-      
-      SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-          CALL thisLS%setX0(thisX)
-      ENDSELECT
-
-      SELECTTYPE(b => thisLS%b); TYPE IS(RealVectorType)
-        CALL b%set(1.0_SRK)
-      ENDSELECT
-
-      !set iterations and convergence information and build/set M
-      SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1000_SIK,30_SIK)
-      ENDSELECT
-      
-      !solve it
-      CALL thisLS%solve()
-      
-      !Store expected solution (from MATLAB) in B
-      ALLOCATE(thisB(9))
-      thisB(1)=0.6875_SRK
-      thisB(2)=0.875_SRK
-      thisB(3)=0.6875_SRK
-      thisB(4)=0.875_SRK
-      thisB(5)=1.125_SRK
-      thisB(6)=0.875_SRK
-      thisB(7)=0.6875_SRK
-      thisB(8)=0.875_SRK
-      thisB(9)=0.6875_SRK
-      !multiply by 10,000 so we can match first five places.
-      thisB=10000.0_SRK*thisB
-      match=.TRUE.
-      DO i=1,SIZE(thisB)
-        SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
-          IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
-          ALLOCATE(dummyvec(X%n))
-          CALL X%get(dummyvec)
-          IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
-            WRITE(*,*) 'Calculated:',dummyvec(i)*10000._SRK,'Solution:',thisB(i)
-            match=.FALSE.
-            EXIT
-          ENDIF
-        ENDSELECT
-      ENDDO
-      ASSERT(match,'CALL Iterative%solve() -GMRES FAILED!')
-      
-      DEALLOCATE(thisB)
-      DEALLOCATE(thisX)
-      CALL thisLS%clear()
-      
     !test with A being densesquare
       COMPONENT_TEST('DenseRectMatrixType')
       ! initialize linear system
@@ -2939,9 +2816,6 @@ CONTAINS
       CALL pList%add('LinearSolverType->A->MatrixType->isSym',.TRUE.)
       CALL pList%add('LinearSolverType->x->VectorType->n',9_SNK)
       CALL pList%add('LinearSolverType->b->VectorType->n',9_SNK)
-      CALL pList%add('LinearSolverType->PCType','NOPC')
-      CALL pList%add('LinearSolverType->PCIters',0)
-      CALL pList%add('LinearSolverType->PCSetup',0)
       CALL pList%validate(pList,optListLS)
       CALL thisLS%init(pList)
       

@@ -325,17 +325,17 @@ MODULE LinearSolverTypes
       CALL validParams%get('LinearSolverType->b->VectorType',pListPtr)
       vecbPList=pListPtr
       ! Check for Preconditioner Data
-      IF(validParams%has('LinearSolverType->PCType')) THEN
-        CALL validParams%get('LinearSolverType->PCType',PreCondType)
-        CALL ValidParams%get('LinearSolverType->PCIters',pciters)
-        CALL validParams%get('LinearSolverType->PCSetup',pcsetup)
-        !get extra data necessary for BILU
-        CALL validParams%get('LinearSolverType->nPlane',nz)
-        CALL validParams%get('LinearSolverType->nPin',npin)
-        CALL validParams%get('LinearSolverType->nGrp',ngrp)
-      ELSE
+!      IF(validParams%has('LinearSolverType->PCType')) THEN
+!        CALL validParams%get('LinearSolverType->PCType',PreCondType)
+!        CALL ValidParams%get('LinearSolverType->PCIters',pciters)
+!        CALL validParams%get('LinearSolverType->PCSetup',pcsetup)
+!        !get extra data necessary for BILU
+!        CALL validParams%get('LinearSolverType->nPlane',nz)
+!        CALL validParams%get('LinearSolverType->nPin',npin)
+!        CALL validParams%get('LinearSolverType->nGrp',ngrp)
+!      ELSE
         PreCondType='NOPC'
-      ENDIF
+!      ENDIF
       !add mpi communicator to parameter lists
       CALL matPList%add('MatrixType->MPI_Comm_ID',MPI_Comm_ID)
       CALL vecxPList%add('VectorType->MPI_Comm_ID',MPI_Comm_ID)
