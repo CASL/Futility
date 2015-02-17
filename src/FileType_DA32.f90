@@ -701,9 +701,19 @@ MODULE FileType_DA32
           IF(MOD(istp-istt+1,CH2REC) > 0) THEN
             n=(istp-istt+1)/CH2REC+1
             CALL writedat_basic(thisDA32%getUnitNo(),irec,tmpdat,ioerr,n)
+            IF(ioerr /= 0) EXIT
+            irec=irec+n
+            nlen=nlen-NBUFCH
+            istt=istp+1
+            istp=MIN(nlen,NBUFCH)+istt-1
           ELSE
             n=(istp-istt+1)/CH2REC
             CALL writedat_basic(thisDA32%getUnitNo(),irec,tmpdat,ioerr,n)
+            IF(ioerr /= 0) EXIT
+            irec=irec+n
+            nlen=nlen-NBUFCH
+            istt=istp+1
+            istp=MIN(nlen,NBUFCH)+istt-1
           ENDIF
 #else
           !This should ways work, but optimizers are stupid.
@@ -711,12 +721,13 @@ MODULE FileType_DA32
           n=n/CH2REC
           IF(MOD(istp-istt+1,CH2REC) > 0) n=n+1
           CALL writedat_basic(thisDA32%getUnitNo(),irec,tmpdat,ioerr,n)
-#endif
+
           IF(ioerr /= 0) EXIT
           irec=irec+n
           nlen=nlen-NBUFCH
           istt=istp+1
           istp=MIN(nlen,NBUFCH)+istt-1
+#endif
         ENDDO
       ENDIF
       IF(PRESENT(iostat)) iostat=ioerr
