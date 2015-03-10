@@ -4384,7 +4384,7 @@ PROGRAM testParameterLists
     CALL testParam%get('testPL->testList',someParam)
     ASSERT(someParam%name == 'testList','%addList (name)')
     ASSERT(someParam%datatype == 'TYPE(ParamType_List)','%addList (datatype)')
-    
+
     CALL clear_test_vars()
     !Deallocate locals
     DEALLOCATE(sbk1)
@@ -4402,7 +4402,6 @@ PROGRAM testParameterLists
     DEALLOCATE(sdk3)
     DEALLOCATE(str1)
     DEALLOCATE(str2)
-  
   ENDSUBROUTINE testAdd
 !
 !-------------------------------------------------------------------------------
@@ -4419,6 +4418,13 @@ PROGRAM testParameterLists
     ASSERT(testParam%has('testPL'),'testPL')
     ASSERT(testParam%has('testPL->testSDK'),'testPL->testSDK')
     ASSERT(.NOT.testParam%has('testPL->shenanigans'),'shenanigans')
+
+    !Confirm bug fix for incorrect matching from string truncation
+    CALL testParam%clear()
+    CALL testParam%add('testPL->testPL_10->num_10',10_SNK)
+    ASSERT(testParam%has('testPL->testPL_10'),'%has(testPL->testPL_10)')
+    ASSERT(.NOT.testParam%has('testPL->testPL_1'),'%has(testPL->testPL_1)')
+
     CALL clear_test_vars()
   ENDSUBROUTINE testHas
 !

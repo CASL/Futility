@@ -1363,7 +1363,8 @@ MODULE ParameterLists
               ENDIF
             ELSE
               !End of search list, check search name against list name
-              pname=thisParam%name
+              IF(LEN(pname) >= LEN_TRIM(thisParam%name)) &
+                pname=thisParam%name
               CALL toUPPER(pname)
               IF(TRIM(pname) == TRIM(thisname)) THEN
                 !Search name is thisParam's name
