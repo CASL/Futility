@@ -848,8 +848,10 @@ MODULE ParallelEnv
       INTEGER(SIK),INTENT(IN) :: n
       REAL(SRK),INTENT(INOUT) :: x(*)
 #ifdef HAVE_MPI
-      REAL(SRK) :: rbuf(n)
+!      REAL(SRK) :: rbuf(n)
+      REAL(SRK),ALLOCATABLE :: rbuf(:)
       IF(myPE%initstat) THEN
+        ALLOCATE(rbuf(n))
 #ifdef DBL
 
         CALL MPI_Allreduce(x,rbuf,n,MPI_DOUBLE_PRECISION,MPI_SUM, &
@@ -865,6 +867,7 @@ MODULE ParallelEnv
           !Copy the result to the output argument
           CALL BLAS_copy(n,rbuf,1,x,1)
         ENDIF
+        DEALLOCATE(rbuf)
       ENDIF
 #endif
     ENDSUBROUTINE allReduceR_MPI_Env_type
