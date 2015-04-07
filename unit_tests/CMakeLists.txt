@@ -17,6 +17,7 @@
 SET(UNIT_TEST_NAMES
     testUnitTest
     testSelectedKinds
+    testWaterSatProperties
     testArrayUtils
     testExtendedMath
     testBLAS
