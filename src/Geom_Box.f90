@@ -24,7 +24,7 @@
 !> each dimension. It is inherently a 3-D object, but can represent a 2-D surface
 !> in 3-D space or 2-D space. This is determined by the dimensionality of its
 !> member starting point. The module also provides methods for constructing and
-!> clearing the OBB, and intersecting it with a line.
+!> clearing the BoxType, and intersecting it with a line.
 !>
 !> @par Module Dependencies
 !>  - @ref IntrType "IntrType": @copybrief IntrType
@@ -44,10 +44,10 @@ MODULE Geom_Box
   PRIVATE
 !
 !List of public items
-  PUBLIC OBBType
+  PUBLIC BoxType
 
   !> @brief Type for a Box
-  TYPE OBBType
+  TYPE BoxType
     !> The start corner point
     TYPE(PointType) :: p0
     !> The vector that points in the direction of the first dimension
@@ -57,44 +57,44 @@ MODULE Geom_Box
     !
     !List of type bound procedures
     CONTAINS
-      !> @copybrief Geom_Box::set_OBBType
-      !> @copydetail Geom_Box::set_OBBType
-      PROCEDURE,PASS :: set => set_OBBType
-      !> @copybrief Geom_Box::clear_OBBType
-      !> @copydetail Geom_Box::clear_OBBType
-      PROCEDURE,PASS :: clear => clear_OBBType
-      !> @copybrief Geom_Box::intersect_OBBType_and_LineType
-      !> @copydetail Geom_Box::intersect_OBBType_and_LineType
-      PROCEDURE,PASS :: intersectLine => intersect_OBBType_and_LineType
-  ENDTYPE OBBType
+      !> @copybrief Geom_Box::set_BoxType
+      !> @copydetail Geom_Box::set_BoxType
+      PROCEDURE,PASS :: set => set_BoxType
+      !> @copybrief Geom_Box::clear_BoxType
+      !> @copydetail Geom_Box::clear_BoxType
+      PROCEDURE,PASS :: clear => clear_BoxType
+      !> @copybrief Geom_Box::intersect_BoxType_and_LineType
+      !> @copydetail Geom_Box::intersect_BoxType_and_LineType
+      PROCEDURE,PASS :: intersectLine => intersect_BoxType_and_LineType
+  ENDTYPE BoxType
 !
 !===============================================================================
   CONTAINS
 !
 !-------------------------------------------------------------------------------
-!> @brief Clears an OBBType object's atrributes
-!> @param thisOBB the OBBType object to clear
+!> @brief Clears an BoxType object's atrributes
+!> @param thisOBB the BoxType object to clear
 !>
-    ELEMENTAL SUBROUTINE clear_OBBType(thisOBB)
-      CLASS(OBBType),INTENT(INOUT) :: thisOBB
-      CALL thisOBB%p0%clear()
-      thisOBB%u=0.0_SRK
-      thisOBB%e=0.0_SRK
-    ENDSUBROUTINE clear_OBBType
+    ELEMENTAL SUBROUTINE clear_BoxType(thisBox)
+      CLASS(BoxType),INTENT(INOUT) :: thisBox
+      CALL thisBox%p0%clear()
+      thisBox%u=0.0_SRK
+      thisBox%e=0.0_SRK
+    ENDSUBROUTINE clear_BoxType
 !
 !-------------------------------------------------------------------------------
 !> @brief Sets a BoxType object's atrributes
 !> @param box the BoxType object to set
 !> @param p0 the start corner point of the box
 !> @param e_in the extent of every dimension
-!> @param u1_in the vector that points to the first dimention
-!> @param u2_in the vector that points to the second dimention
-!> @param u3_in the vector that points to the third dimention (optional)
+!> @param u1_in the vector that points to the first dimension
+!> @param u2_in the vector that points to the second dimension
+!> @param u3_in the vector that points to the third dimension (optional)
 !>
 !> If the box is in 2D space, the parameter "u3_in" will be useless.
 !>
-   PURE SUBROUTINE set_OBBType(thisOBB,p0,e_in,u1_in,u2_in,u3_in)
-      CLASS(OBBType),INTENT(INOUT) :: thisOBB
+   PURE SUBROUTINE set_BoxType(thisBox,p0,e_in,u1_in,u2_in,u3_in)
+      CLASS(BoxType),INTENT(INOUT) :: thisBox
       TYPE(PointType),INTENT(IN) :: p0
       REAL(SRK),INTENT(IN) :: e_in(:)
       REAL(SRK),INTENT(IN) :: u1_in(:)
@@ -105,7 +105,7 @@ MODULE Geom_Box
       REAL(SRK) :: magn1,magn2,magn3,dotmp1,dotmp2,dotmp3,r
       INTEGER(SIK) :: ndim,nnon0
 
-      CALL thisOBB%clear()
+      CALL thisBox%clear()
       ndim=p0%dim
 
       IF(SIZE(e_in) >= ndim .AND. SIZE(u1_in) >= ndim .AND. SIZE(u2_in) >= ndim) THEN
@@ -136,13 +136,13 @@ MODULE Geom_Box
             !Check that the vector lengths are non-zero and at a right angle
             IF(magn1 > EPSREAL .AND. magn2 > EPSREAL .AND. ABS(dotmp1) < EPSREAL) THEN
               !Assign values to OBB
-              thisOBB%p0=p0
-              thisOBB%u(1,1)=u1(1)
-              thisOBB%u(2,1)=u1(2)
-              thisOBB%u(1,2)=u2(1)
-              thisOBB%u(2,2)=u2(2)
-              thisOBB%e(1)=e_in(1)
-              thisOBB%e(2)=e_in(2)
+              thisBox%p0=p0
+              thisBox%u(1,1)=u1(1)
+              thisBox%u(2,1)=u1(2)
+              thisBox%u(1,2)=u2(1)
+              thisBox%u(2,2)=u2(2)
+              thisBox%e(1)=e_in(1)
+              thisBox%e(2)=e_in(2)
             ENDIF
           ENDIF
         ELSEIF(ndim == 3) THEN
@@ -213,24 +213,24 @@ MODULE Geom_Box
             IF(magn1 /= 0._SRK .AND. magn2 /= 0._SRK &
               .AND. magn3 /= 0._SRK .AND. ABS(dotmp1) < EPSREAL &
                 .AND. ABS(dotmp2) < EPSREAL .AND. ABS(dotmp3) < EPSREAL) THEN
-              thisOBB%p0=p0
-              thisOBB%u(1,1)=u1(1)
-              thisOBB%u(2,1)=u1(2)
-              thisOBB%u(3,1)=u1(3)
-              thisOBB%u(1,2)=u2(1)
-              thisOBB%u(2,2)=u2(2)
-              thisOBB%u(3,2)=u2(3)
-              thisOBB%u(1,3)=u3(1)
-              thisOBB%u(2,3)=u3(2)
-              thisOBB%u(3,3)=u3(3)
-              thisOBB%e(1)=e_in(1)
-              thisOBB%e(2)=e_in(2)
-              thisOBB%e(3)=e_in(3)
+              thisBox%p0=p0
+              thisBox%u(1,1)=u1(1)
+              thisBox%u(2,1)=u1(2)
+              thisBox%u(3,1)=u1(3)
+              thisBox%u(1,2)=u2(1)
+              thisBox%u(2,2)=u2(2)
+              thisBox%u(3,2)=u2(3)
+              thisBox%u(1,3)=u3(1)
+              thisBox%u(2,3)=u3(2)
+              thisBox%u(3,3)=u3(3)
+              thisBox%e(1)=e_in(1)
+              thisBox%e(2)=e_in(2)
+              thisBox%e(3)=e_in(3)
             ENDIF
           ENDIF
         ENDIF
       ENDIF
-    ENDSUBROUTINE set_OBBType
+    ENDSUBROUTINE set_BoxType
 !
 !-------------------------------------------------------------------------------
 !> @brief Determine the point(s) of intersection between an OBB and line
@@ -254,8 +254,8 @@ MODULE Geom_Box
 !> The problem for the intersection is stated as a ray and an axis-aligned
 !> bounding box (AABB) and has been adapted for a segment and an OBB.
 !>
-    ELEMENTAL SUBROUTINE intersect_OBBType_and_LineType(thisOBB,line,p1,p2)
-      CLASS(OBBType),INTENT(IN) :: thisOBB
+    ELEMENTAL SUBROUTINE intersect_BoxType_and_LineType(thisBox,line,p1,p2)
+      CLASS(BoxType),INTENT(IN) :: thisBox
       TYPE(LineType),INTENT(IN) :: line
       TYPE(PointType),INTENT(INOUT) :: p1,p2
 
@@ -267,7 +267,7 @@ MODULE Geom_Box
       p2%dim=-1
 
       !Check the box and line
-      ndim=thisOBB%p0%dim
+      ndim=thisBox%p0%dim
       IF(ndim == line%p1%dim .AND. ndim == line%p2%dim .AND. ndim > 1) THEN
         p1%dim=-3
         p2%dim=-3
@@ -278,14 +278,14 @@ MODULE Geom_Box
           dir_world(1)=line%p2%coord(1)-line%p1%coord(1)
           dir_world(2)=line%p2%coord(2)-line%p1%coord(2)
 
-          coord(1)=line%p1%coord(1)-thisOBB%p0%coord(1)
-          coord(2)=line%p1%coord(2)-thisOBB%p0%coord(2)
+          coord(1)=line%p1%coord(1)-thisBox%p0%coord(1)
+          coord(2)=line%p1%coord(2)-thisBox%p0%coord(2)
 
-          dir(1)=dir_world(1)*thisOBB%u(1,1)+dir_world(2)*thisOBB%u(2,1)
-          dir(2)=dir_world(1)*thisOBB%u(1,2)+dir_world(2)*thisOBB%u(2,2)
+          dir(1)=dir_world(1)*thisBox%u(1,1)+dir_world(2)*thisBox%u(2,1)
+          dir(2)=dir_world(1)*thisBox%u(1,2)+dir_world(2)*thisBox%u(2,2)
 
-          coord_new(1)=coord(1)*thisOBB%u(1,1)+coord(2)*thisOBB%u(2,1)
-          coord_new(2)=coord(1)*thisOBB%u(1,2)+coord(2)*thisOBB%u(2,2)
+          coord_new(1)=coord(1)*thisBox%u(1,1)+coord(2)*thisBox%u(2,1)
+          coord_new(2)=coord(1)*thisBox%u(1,2)+coord(2)*thisBox%u(2,2)
         ELSEIF(ndim == 3) THEN
 !3-D
           !Translate the coordinate into the OBB system.
@@ -293,23 +293,23 @@ MODULE Geom_Box
           dir_world(2)=line%p2%coord(2)-line%p1%coord(2)
           dir_world(3)=line%p2%coord(3)-line%p1%coord(3)
 
-          coord(1)=line%p1%coord(1)-thisOBB%p0%coord(1)
-          coord(2)=line%p1%coord(2)-thisOBB%p0%coord(2)
-          coord(3)=line%p1%coord(3)-thisOBB%p0%coord(3)
+          coord(1)=line%p1%coord(1)-thisBox%p0%coord(1)
+          coord(2)=line%p1%coord(2)-thisBox%p0%coord(2)
+          coord(3)=line%p1%coord(3)-thisBox%p0%coord(3)
 
-          dir(1)=dir_world(1)*thisOBB%u(1,1)+dir_world(2)*thisOBB%u(2,1)+ &
-            dir_world(3)*thisOBB%u(3,1)
-          dir(2)=dir_world(1)*thisOBB%u(1,2)+dir_world(2)*thisOBB%u(2,2)+ &
-            dir_world(3)*thisOBB%u(3,2)
-          dir(3)=dir_world(1)*thisOBB%u(1,3)+dir_world(2)*thisOBB%u(2,3)+ &
-            dir_world(3)*thisOBB%u(3,3)
+          dir(1)=dir_world(1)*thisBox%u(1,1)+dir_world(2)*thisBox%u(2,1)+ &
+            dir_world(3)*thisBox%u(3,1)
+          dir(2)=dir_world(1)*thisBox%u(1,2)+dir_world(2)*thisBox%u(2,2)+ &
+            dir_world(3)*thisBox%u(3,2)
+          dir(3)=dir_world(1)*thisBox%u(1,3)+dir_world(2)*thisBox%u(2,3)+ &
+            dir_world(3)*thisBox%u(3,3)
 
-          coord_new(1)=coord(1)*thisOBB%u(1,1)+coord(2)*thisOBB%u(2,1)+ &
-            coord(3)*thisOBB%u(3,1)
-          coord_new(2)=coord(1)*thisOBB%u(1,2)+coord(2)*thisOBB%u(2,2)+ &
-            coord(3)*thisOBB%u(3,2)
-          coord_new(3)=coord(1)*thisOBB%u(1,3)+coord(2)*thisOBB%u(2,3)+ &
-            coord(3)*thisOBB%u(3,3)
+          coord_new(1)=coord(1)*thisBox%u(1,1)+coord(2)*thisBox%u(2,1)+ &
+            coord(3)*thisBox%u(3,1)
+          coord_new(2)=coord(1)*thisBox%u(1,2)+coord(2)*thisBox%u(2,2)+ &
+            coord(3)*thisBox%u(3,2)
+          coord_new(3)=coord(1)*thisBox%u(1,3)+coord(2)*thisBox%u(2,3)+ &
+            coord(3)*thisBox%u(3,3)
         ENDIF
 
         tmin=-1._SRK
@@ -319,11 +319,11 @@ MODULE Geom_Box
             !If segment is parallel to box, and if the coordinate for that
             !dimension is outside box then there is no intersection
             IF(coord_new(i) < 0._SRK-EPSREAL .OR. &
-              coord_new(i) > thisOBB%e(i)+EPSREAL) RETURN
+              coord_new(i) > thisBox%e(i)+EPSREAL) RETURN
           ELSE
             invdir=1._SRK/dir(i)
             t1=(-coord_new(i))*invdir
-            t2=(thisOBB%e(i)-coord_new(i))*invdir
+            t2=(thisBox%e(i)-coord_new(i))*invdir
             !Make t1 be the closer of the two intersections
             IF(t1 > t2) THEN
               t=t2
@@ -340,17 +340,17 @@ MODULE Geom_Box
 
         !Segment intersects in all dimensions so compute the points
         !The first point lies on the segment
-        p1=thisOBB%p0
+        p1=thisBox%p0
         p1%coord(1)=line%p1%coord(1)+dir_world(1)*tmin
         p1%coord(2)=line%p1%coord(2)+dir_world(2)*tmin
         IF(ndim == 3) p1%coord(3)=line%p1%coord(3)+dir_world(3)*tmin
 
         !The second point lies on the segment
-        p2=thisOBB%p0
+        p2=thisBox%p0
         p2%coord(1)=line%p1%coord(1)+dir_world(1)*tmax
         p2%coord(2)=line%p1%coord(2)+dir_world(2)*tmax
         IF(ndim == 3) p2%coord(3)=line%p1%coord(3)+dir_world(3)*tmax
       ENDIF
-    ENDSUBROUTINE intersect_OBBType_and_LineType
+    ENDSUBROUTINE intersect_BoxType_and_LineType
 !
 ENDMODULE Geom_Box

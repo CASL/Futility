@@ -30,7 +30,7 @@ PROGRAM testGeom
   TYPE(PlaneType) :: plane1,planes(2)
   TYPE(CircleType) :: circle1,circles(2)
   TYPE(CylinderType) :: cylinder1,cylinders(2)
-  TYPE(OBBType) :: box,boxs(2)
+  TYPE(BoxType) :: box,boxs(2)
   INTEGER(SIK) :: ldim(2),i,ioerr
   REAL(SRK) :: d,s(2),mu1,mu2,mu1s(2),mu2s(2)
   REAL(SRK) :: e_2d(2),e_3d(3),u1_2d(2),u2_2d(2),u3_2d(2)
@@ -1243,7 +1243,7 @@ PROGRAM testGeom
 !-------------------------------------------------------------------------------    
     SUBROUTINE TestBox
       WRITE(*,*) '---------------------------------------------------'
-      WRITE(*,*) 'TESTING OBBTYPE (scalar)'
+      WRITE(*,*) 'TESTING BoxType (scalar)'
     !Test for clear
       CALL point%init(DIM=3,X=0.1_SRK,Y=0.2_SRK,Z=0.3_SRK)
       box%p0=point

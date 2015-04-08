@@ -37,6 +37,7 @@
 MODULE Geom_CircCyl
 
   USE IntrType
+  USE Constants_Conversion
   USE Geom_Points
   USE Geom_Line
   IMPLICIT NONE
@@ -52,6 +53,10 @@ MODULE Geom_CircCyl
     TYPE(PointType) :: c
     !> The radius of the circle
     REAL(SRK) :: r=0.0_SRK
+    !> The starting theta angle
+    REAL(SRK) :: thetastt=0.0_SRK
+    !> The stopping theta angle
+    REAL(SRK) :: thetastp=0.0_SRK
 !
 !List of type bound procedures
     CONTAINS
@@ -73,6 +78,10 @@ MODULE Geom_CircCyl
     TYPE(LineType) :: axis
     !> The radius of the circle
     REAL(SRK) :: r=0.0_SRK
+    !> The starting theta angle
+    REAL(SRK) :: thetastt=0.0_SRK
+    !> The stopping theta angle
+    REAL(SRK) :: thetastp=0.0_SRK
 !
 !List of type bound procedures
     CONTAINS
@@ -87,8 +96,6 @@ MODULE Geom_CircCyl
       PROCEDURE,PASS :: intersectLine => intersect_CylinderType_and_LineType
   ENDTYPE CylinderType
 
-  REAL(SRK),PARAMETER :: zero=0.0_SRK
-  REAL(SRK),PARAMETER :: one=1.0_SRK
 !
 !===============================================================================
   CONTAINS
@@ -98,14 +105,20 @@ MODULE Geom_CircCyl
 !> @param circ the CircleType object to set
 !> @param p a point for the center of rotation (must be 2-D)
 !> @param r the radius of the circle
-    ELEMENTAL SUBROUTINE set_CircleType(circ,p,r)
+    ELEMENTAL SUBROUTINE set_CircleType(circ,p,r,angstt,angstp)
       CLASS(CircleType),INTENT(INOUT) :: circ
       TYPE(PointType),INTENT(IN) :: p
       REAL(SRK),INTENT(IN) :: r
+      REAL(SRK),INTENT(IN),OPTIONAL :: angstt
+      REAL(SRK),INTENT(IN),OPTIONAL :: angstp
       CALL circ%clear()
-      IF(p%dim == 2 .AND. r > zero) THEN
+      IF(p%dim == 2 .AND. r > ZERO) THEN
         circ%c=p
         circ%r=r
+        circ%thetastt=ZERO
+        circ%thetastp=TWOPI
+        IF(PRESENT(angstt)) circ%thetastt=angstt
+        IF(PRESENT(angstp)) circ%thetastp=angstp
       ENDIF
     ENDSUBROUTINE set_CircleType
 !
@@ -115,7 +128,9 @@ MODULE Geom_CircCyl
     ELEMENTAL SUBROUTINE clear_CircleType(circ)
       CLASS(CircleType),INTENT(INOUT) :: circ
       CALL circ%c%clear()
-      circ%r=zero
+      circ%r=ZERO
+      circ%thetastt=ZERO
+      circ%thetastp=ZERO
     ENDSUBROUTINE clear_CircleType
 !
 !-------------------------------------------------------------------------------
@@ -125,15 +140,21 @@ MODULE Geom_CircCyl
 !>        (must be 3-D)
 !> @param q a point for the "top" of the central axis of rotation (must be 3-D)
 !> @param r the radius of the cylinder
-    ELEMENTAL SUBROUTINE set_CylinderType(cyl,p,q,r)
+    ELEMENTAL SUBROUTINE set_CylinderType(cyl,p,q,r,angstt,angstp)
       CLASS(CylinderType),INTENT(INOUT) :: cyl
       TYPE(PointType),INTENT(IN) :: p
       TYPE(PointType),INTENT(IN) :: q
       REAL(SRK),INTENT(IN) :: r
+      REAL(SRK),INTENT(IN),OPTIONAL :: angstt
+      REAL(SRK),INTENT(IN),OPTIONAL :: angstp
       CALL cyl%clear()
-      IF(p%dim == 3 .AND. .NOT.(p .APPROXEQA. q)  .AND. r > zero) THEN
+      IF(p%dim == 3 .AND. .NOT.(p .APPROXEQA. q)  .AND. r > ZERO) THEN
         CALL cyl%axis%set(p,q)
         cyl%r=r
+        cyl%thetastt=ZERO
+        cyl%thetastp=TWOPI
+        IF(PRESENT(angstt)) cyl%thetastt=angstt
+        IF(PRESENT(angstp)) cyl%thetastp=angstp
       ENDIF
     ENDSUBROUTINE set_CylinderType
 !
@@ -143,7 +164,9 @@ MODULE Geom_CircCyl
     ELEMENTAL SUBROUTINE clear_CylinderType(cyl)
       CLASS(CylinderType),INTENT(INOUT) :: cyl
       CALL cyl%axis%clear()
-      cyl%r=zero
+      cyl%r=ZERO
+      cyl%thetastt=ZERO
+      cyl%thetastp=ZERO
     ENDSUBROUTINE clear_CylinderType
 !
 !-------------------------------------------------------------------------------
