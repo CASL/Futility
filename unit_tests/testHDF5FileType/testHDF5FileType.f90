@@ -24,9 +24,9 @@ PROGRAM testHDF5
   USE ExceptionHandler
   USE ParallelEnv
   USE FileType_HDF5
-  
+
   IMPLICIT NONE
-  
+
   !TYPE(ExceptionHandlerType),TARGET,SAVE :: e
   TYPE(MPI_EnvType) :: testMPI
   INTEGER(SIK) :: mpierr,mysize,myrank
@@ -52,7 +52,7 @@ PROGRAM testHDF5
   IF(testMPI%rank /= 0)  utest_master=.FALSE.
 
   CREATE_TEST("HDF File Type")
-  
+
   CALL testHDF5FileTypeSetup()
   CALL HDF5Open()
   REGISTER_SUBTEST("HDF5FileType Uninit Checks",testHDF5FileTypeUninit)
@@ -160,7 +160,7 @@ PROGRAM testHDF5
         ENDDO
       ENDDO
       refC1='MPACT string test'; refC1=ADJUSTL(refC1)
-      
+
       refsets(1)='memD0'
       refsets(2)='memD1'
       refsets(3)='memD2'
@@ -171,7 +171,7 @@ PROGRAM testHDF5
       refsets(8)='memS2'
       refsets(9)='memS3'
       refsets(10)='memS4'
-    
+
     ENDSUBROUTINE testHDF5FileTypeSetup
 !
 !-------------------------------------------------------------------------------
@@ -199,14 +199,14 @@ PROGRAM testHDF5
       ASSERT(h5%e%getCounter(EXCEPTION_ERROR) == 0,'hdf5_filetype%fclose')
       CALL h5%clear()
       ASSERT(.NOT.h5%isinit,'HDF5 object not properly cleared.')
-      
+
       CALL h5%init('createdeletetest.h5','WRITE')
       CALL h5%fopen()
       ASSERT(h5%isWrite(),'HDF object %isWrite() should be .TRUE.')
       CALL h5%mkdir('testGroup')
       ASSERT(h5%e%getCounter(EXCEPTION_ERROR) == 0,'hdf5_filetype%init ''WRITE''')
       CALL h5%clear()
-      
+
       CALL h5%init('createdeletetest.h5','READ')
       CALL h5%fopen()
       ASSERT(.NOT.(h5%isWrite()),'HDF object %isWrite() should be .FALSE.')
@@ -220,7 +220,7 @@ PROGRAM testHDF5
       ASSERT(.NOT.exists,'HDF5 object not properly deleted without being cleared.')
       CALL h5%clear()
       ASSERT(.NOT.h5%isinit,'HDF5 object not properly cleared.')
-      
+
       CALL h5%init('createdeletetest.h5','NEW')
       CALL h5%fopen()
       IF(h5%isinit) exists=.TRUE.
@@ -239,7 +239,7 @@ PROGRAM testHDF5
 
       CALL h5%e%setQuietMode(.TRUE.)
       !Adding the *2 for now to get the test passing.  Since the simplification,
-      !the pre and post routines have two %isinit checks.  All these checks are 
+      !the pre and post routines have two %isinit checks.  All these checks are
       !mostly redundant now though, one check checks the same code as all of them now.
       CALL h5%fwrite('groupR->memD0',refD0)
       ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==1,'%write_d0 %isinit check')
@@ -299,7 +299,7 @@ PROGRAM testHDF5
       ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==28,'%mkdir %isinit check')
       CALL h5%ls('groupR',tmpchar)
       ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==29,'%ls %isinit check')
-      
+
       CALL h5%fread('groupR->memD0',refD0)
       ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==30,'%write_d0 %isinit check')
       CALL h5%fread('groupR->memD1',refD1)
@@ -416,7 +416,7 @@ PROGRAM testHDF5
       CALL h5%fwrite('groupST->memST3',refST3,SHAPE(refST3))
       CALL h5%mkdir('groupC')
       CALL h5%fwrite('groupC->memC1',refC1,LEN(refC1))
-     
+
       CALL h5%fread('groupR->memD0',testD0)
       ASSERT(testD0==refD0,'D0 Write Failure with gdims_in')
       CALL h5%fread('groupR->memD1',testD1)
@@ -488,7 +488,7 @@ PROGRAM testHDF5
           ENDDO
         ENDDO
       ENDDO
-      ASSERT(checkwrite,'ST3 Write Failure with gdims_in')      
+      ASSERT(checkwrite,'ST3 Write Failure with gdims_in')
       CALL h5%fread('groupC->memC1',testC1)
       ASSERT(TRIM(testC1)==TRIM(refC1),'C1 Write Failure with gdims_in')
       FINFO() ':'//testC1//':  :'//refC1//':'
@@ -537,7 +537,7 @@ PROGRAM testHDF5
       CALL h5%fwrite('groupST->memST2',refST2)
       CALL h5%fwrite('groupST->memST3',refST3)
       CALL h5%fwrite('groupC->memC1',refC1)
-      
+
       CALL h5%fread('groupR->memD0',testD0)
       ASSERT(testD0==refD0,'D0 Write Failure')
       CALL h5%fread('groupR->memD1',testD1)
@@ -609,14 +609,14 @@ PROGRAM testHDF5
           ENDDO
         ENDDO
       ENDDO
-      ASSERT(checkwrite,'ST3 Write Failure')      
+      ASSERT(checkwrite,'ST3 Write Failure')
       CALL h5%fread('groupC->memC1',testC1)
       ASSERT(testC1==refC1,'C1 Write Failure')
       FINFO() "testC1=",testC1,":refC1=",refC1,":"
       i=h5%ngrp('groupR')
       ASSERT(i == 10,'ngrp_HDF5FileType')
       FINFO() i
-     
+
       COMPONENT_TEST('%pathExists')
       !Add some sub-groups
       CALL h5%mkdir('groupC->anotherGroup')
@@ -633,14 +633,14 @@ PROGRAM testHDF5
       bool=h5%pathExists('groupC->anotherGroup->moreGroups->lastGroup')
       ASSERT(bool,'%pathExists(groupC->anotherGroup->moreGroups->lastGroup)')
       ASSERT(h5%pathExists('groupC->memC1'),'%pathExists(groupC->memC1)')
- 
+
       !Check for invalid paths
       ASSERT(.NOT.h5%pathExists('groupBlah'),'%pathExists(groupBlah)')
       ASSERT(.NOT.h5%pathExists('groupC->blahGroup'),'%pathExists(groupC->blahGroup)')
       bool=.NOT.h5%pathExists('groupC->anotherGroup->moreBlahGroups')
       ASSERT(bool,'%pathExists(groupC->anotherGroup->moreBlahGroups)')
       ASSERT(.NOT.h5%pathExists('groupC->memCBlah'),'%pathExists(groupC->memCBlah)')
- 
+
       COMPONENT_TEST('%createHardLink')
       CALL h5%fwrite('groupC->anotherGroup->memC1',refC1)
       CALL h5%createHardLink('groupC->anotherGroup->memC1', &
@@ -660,7 +660,7 @@ PROGRAM testHDF5
       CALL h5%createHardLink('groupC->memC1','groupC->anotherGroup->moreGroups')
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::createHardLink_HDF5FileType '// &
-        '- Location of new link already exists!' 
+        '- Location of new link already exists!'
       ASSERT(TRIM(msg) == TRIM(refmsg),'Pre-existing New Link')
       FINFO() "   msg="//TRIM(msg)
       FINFO() "refmsg="//TRIM(refmsg)
@@ -668,7 +668,8 @@ PROGRAM testHDF5
       CALL h5%e%setQuietMode(.FALSE.)
       CALL h5%e%setStopOnError(.TRUE.)
 
-      CALL h5%clear(.TRUE.)
+      !CALL h5%clear(.TRUE.)
+      CALL h5%clear()
       !CALL h5%fdelete()
       !INQUIRE(FILE='writetest.h5',EXIST=exists)
       !ASSERT(.NOT.exists,'HDF5 object not properly deleted!')
@@ -731,7 +732,7 @@ PROGRAM testHDF5
       CALL h5%fwrite('groupST->memST3',refST3,SHAPE(refST3))
       CALL h5%mkdir('groupC')
       CALL h5%fwrite('groupC->memC1',refC1,LEN(refC1))
-     
+
       CALL h5%fread('groupR->memD0',testD0)
       ASSERT(testD0==refD0,'D0 Write Failure with gdims_in')
       CALL h5%fread('groupR->memD1',testD1)
@@ -803,7 +804,7 @@ PROGRAM testHDF5
           ENDDO
         ENDDO
       ENDDO
-      ASSERT(checkwrite,'ST3 Write Failure with gdims_in')      
+      ASSERT(checkwrite,'ST3 Write Failure with gdims_in')
       CALL h5%fread('groupC->memC1',testC1)
       ASSERT(TRIM(testC1)==TRIM(refC1),'C1 Write Failure with gdims_in')
       FINFO() ':'//testC1//':  :'//refC1//':'
@@ -852,7 +853,7 @@ PROGRAM testHDF5
       CALL h5%fwrite('groupST->memST2',refST2)
       CALL h5%fwrite('groupST->memST3',refST3)
       CALL h5%fwrite('groupC->memC1',refC1)
-      
+
       CALL h5%fread('groupR->memD0',testD0)
       ASSERT(testD0==refD0,'D0 Write Failure')
       CALL h5%fread('groupR->memD1',testD1)
@@ -924,7 +925,7 @@ PROGRAM testHDF5
           ENDDO
         ENDDO
       ENDDO
-      ASSERT(checkwrite,'ST3 Write Failure')      
+      ASSERT(checkwrite,'ST3 Write Failure')
       CALL h5%fread('groupC->memC1',testC1)
       ASSERT(testC1==refC1,'C1 Write Failure')
       FINFO() "testC1=",testC1,":refC1=",refC1,":"
@@ -934,7 +935,7 @@ PROGRAM testHDF5
 
       !Clear variables
       CALL h5%clear(.TRUE.)
-     
+
     ENDSUBROUTINE testCompress
 !
 !-------------------------------------------------------------------------------
@@ -1019,6 +1020,7 @@ PROGRAM testHDF5
       ASSERT(ALL(testB3.EQV.refB3),'B3 Read Failure')
       CALL h5%fread('groupST->memST0',testST0)
       ASSERT(testST0==refST0,'ST0 Read Failure')
+      FINFO() "test: "//CHAR(testST0), "ref: "//CHAR(refST0)
       CALL h5%fread('groupST->memST1',testST1)
       checkread=.TRUE.
       DO i=1,SIZE(refST1)
@@ -1042,7 +1044,33 @@ PROGRAM testHDF5
           ENDDO
         ENDDO
       ENDDO
-      ASSERT(checkread,'ST3 Read Failure')
+      CALL h5%fread('groupST->memCA0',testST0)
+      ASSERT(testST0==refST0,'CA0 Read Failure')
+      FINFO() "test: "//CHAR(testST0), "ref: "//CHAR(refST0)
+      CALL h5%fread('groupST->memCA1',testST1)
+      checkread=.TRUE.
+      DO i=1,SIZE(refST1)
+        IF(testST1(i)/=refST1(i)) checkread=.FALSE.
+      ENDDO
+      ASSERT(checkread,'CA1 Read Failure')
+      CALL h5%fread('groupST->memCA2',testST2)
+      checkread=.TRUE.
+      DO i=1,SIZE(refST2,1)
+        DO j=1,SIZE(refST2,2)
+          IF(testST2(i,j)/=refST2(i,j)) checkread=.FALSE.
+        ENDDO
+      ENDDO
+      ASSERT(checkread,'CA2 Read Failure')
+      CALL h5%fread('groupST->memCA3',testST3)
+      checkread=.TRUE.
+      DO i=1,SIZE(refST3,1)
+        DO j=1,SIZE(refST3,2)
+          DO k=1,SIZE(refST3,3)
+            IF(testST3(i,j,k)/=refST3(i,j,k)) checkread=.FALSE.
+          ENDDO
+        ENDDO
+      ENDDO
+      ASSERT(checkread,'CA3 Read Failure')
       CALL h5%fread('groupC->memC1',testC1)
       ASSERT(testC1 == refC1,'C1 Read Failure')
 
