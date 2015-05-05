@@ -361,6 +361,13 @@ PROGRAM testTPLPETSC
       STOP 666
     ENDIF
     WRITE(*,*) '  Passed: CALL VecDestroy(...)'
+    CALL VecDestroy(x,ierr)
+    IF(ierr /= 0) THEN
+      WRITE(*,*) 'CALL VecDestroy(b,ierr) FAILED!'
+      STOP 666
+    ENDIF
+    WRITE(*,*) '  Passed: CALL VecDestroy(...)'
+
 
   ENDSUBROUTINE testPETSC_VEC
 !
@@ -580,6 +587,8 @@ PROGRAM testTPLPETSC
     CALL MatDestroy(A,ierr)
     IF(ierr /= 0) WRITE(*,*) 'CALL MatDestroy(A,ierr) FAILED!'
     WRITE(*,*) '  Passed: CALL MatDestroy(...)'
+    CALL VecDestroy(b,ierr)
+    CALL VecDestroy(x,ierr)
 
   ENDSUBROUTINE testPETSC_MAT
 !
@@ -726,7 +735,9 @@ PROGRAM testTPLPETSC
       STOP 666
     ENDIF
     WRITE(*,*) '  Passed: CALL KSPDestroy(...)'
-
+    CALL MatDestroy(A,ierr)
+    CALL VecDestroy(b,ierr)
+    CALL VecDestroy(x,ierr)
   ENDSUBROUTINE testPETSC_KSP
 
 

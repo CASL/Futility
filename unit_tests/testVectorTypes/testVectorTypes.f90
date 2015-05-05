@@ -1328,6 +1328,7 @@ PROGRAM testVectorTypes
       WRITE(*,*) '  Passed: CALL petscvec%getRange(...)'
       
       DEALLOCATE(thisVector)
+      CALL pList%clear()
 #else
   ! Never mind, these are fatal errors apparently.
   !    !Call PETSc objects for code coverage.  
@@ -2797,6 +2798,7 @@ PROGRAM testVectorTypes
     DEALLOCATE(xVector)
     DEALLOCATE(yVector)
     DEALLOCATE(aVector)
+    CALL pList%clear()
 #endif
     ENDSUBROUTINE testBLAS1Interface
 !

@@ -9,7 +9,6 @@
 #   Date: 06/05/2012
 #
 ################################################################################
-INCLUDE(TribitsSubPackageMacros)
 TRIBITS_SUBPACKAGE(Utils) 
 ADD_SUBDIRECTORY(src)
 TRIBITS_ADD_TEST_DIRECTORIES(unit_tests)

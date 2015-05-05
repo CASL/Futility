@@ -364,9 +364,7 @@ MODULE IO_Strings
       IF(strmatch(string,BANG)) THEN
         !Determine the location of the first '!' character and remove all
         !text after this character (including the '!' character)
-        nBANG=nmatchstr(string,BANG)
-        ALLOCATE(bangloc(nBANG))
-        bangloc=strfind(string,BANG)
+        CALL strfind(string,BANG,bangloc)
         stp=bangloc(1)-1
         DEALLOCATE(bangloc)
       ENDIF
@@ -388,9 +386,7 @@ MODULE IO_Strings
       IF(strmatch(string,BANG)) THEN
         !Determine the location of the first '!' character and remove all
         !text after this character (including the '!' character)
-        nBANG=nmatchstr(CHAR(string),BANG)
-        ALLOCATE(bangloc(nBANG))
-        bangloc=strfind(CHAR(string),BANG)
+        CALL strfind(CHAR(string),BANG,bangloc)
         stp=bangloc(1)-1
         DEALLOCATE(bangloc)
       ENDIF
@@ -405,13 +401,14 @@ MODULE IO_Strings
 !> @param pattern the substring to look for within string
 !> @returns indices a vector with the indices in string where pattern starts
 !>
-    PURE FUNCTION strfind(string,pattern) RESULT(indices)
+    PURE SUBROUTINE strfind(string,pattern,indices)
       CHARACTER(LEN=*),INTENT(IN) :: string
       CHARACTER(LEN=*),INTENT(IN) :: pattern
-      INTEGER(SIK) :: indices(nmatchstr(string,pattern))
+      INTEGER(SIK),ALLOCATABLE,INTENT(OUT) :: indices(:)
       INTEGER(SIK) :: i,n
 
       n=0
+      ALLOCATE(indices(nmatchstr(string,pattern)))
       DO i=1,LEN(string)
         IF(i+LEN(pattern)-1 > LEN(string)) EXIT
         IF(string(i:i+LEN(pattern)-1) == pattern) THEN
@@ -419,7 +416,7 @@ MODULE IO_Strings
           indices(n)=i
         ENDIF
       ENDDO
-    ENDFUNCTION strfind
+    ENDSUBROUTINE strfind
 !
 !-------------------------------------------------------------------------------
 !> @brief Returns the total number of times the substring @c pattern is found in
@@ -503,8 +500,8 @@ MODULE IO_Strings
       CHARACTER(LEN=*),INTENT(IN) :: findp
       CHARACTER(LEN=*),INTENT(IN) :: repp
       CHARACTER(LEN=LEN(string)) :: string2
-      INTEGER(SIK) :: n,indices(nmatchstr(string,findp))
-      INTEGER(SIK) :: i,stt,stp,dlen,slen,rlen,flen,tlen
+      INTEGER(SIK),ALLOCATABLE :: indices(:)
+      INTEGER(SIK) :: i,n,stt,stp,dlen,slen,rlen,flen,tlen
 
       slen=LEN(string)
       tlen=LEN_TRIM(string)
@@ -513,7 +510,7 @@ MODULE IO_Strings
       dlen=rlen-flen
       string2=string
       n=nmatchstr(string,findp)
-      indices=strfind(string,findp)
+      CALL strfind(string,findp,indices)
       IF(slen >= tlen+n*dlen) THEN
         DO i=1,n
           stt=indices(i)
@@ -525,6 +522,7 @@ MODULE IO_Strings
           ENDIF
         ENDDO
       ENDIF
+      DEALLOCATE(indices)
     ENDSUBROUTINE strrep_char_char_char
 !
 !-------------------------------------------------------------------------------

@@ -165,6 +165,9 @@ MODULE ParallelEnv
       !> @copybrief ParallelEnv::bcast_SSK2_MPI_Env_type
       !> @copydetails ParallelEnv::bcast_SSK2_MPI_Env_type
       PROCEDURE,PASS,PRIVATE :: bcast_SSK2_MPI_Env_type
+      !> @copybrief ParallelEnv::bcast_SDK1_MPI_Env_type
+      !> @copydetails ParallelEnv::bcast_SDK1_MPI_Env_type
+      PROCEDURE,PASS,PRIVATE :: bcast_SDK1_MPI_Env_type
       !> @copybrief ParallelEnv::bcast_SDK2_MPI_Env_type
       !> @copydetails ParallelEnv::bcast_SDK2_MPI_Env_type
       PROCEDURE,PASS,PRIVATE :: bcast_SDK2_MPI_Env_type
@@ -177,6 +180,7 @@ MODULE ParallelEnv
       !>
       GENERIC :: bcast => bcast_SLK0_MPI_Env_type, &
                           bcast_SSK2_MPI_Env_type, &
+                          bcast_SDK1_MPI_Env_type, &
                           bcast_SDK2_MPI_Env_type, &
                           bcast_SSK4_MPI_Env_type, &
                           bcast_SDK4_MPI_Env_type
@@ -751,6 +755,26 @@ MODULE ParallelEnv
 !
 !-------------------------------------------------------------------------------
 !> @brief
+    SUBROUTINE bcast_SDK1_MPI_Env_type(myPE,buf,root)
+      CHARACTER(LEN=*),PARAMETER :: myName='bcast_SDK1_MPI_Env_type'
+      CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
+      REAL(SDK),INTENT(IN) :: buf(:)
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: root
+      INTEGER(SIK) :: rank
+      rank=0
+      IF(PRESENT(root)) rank=root
+      IF(0 <= rank .AND. rank <= myPE%nproc-1) THEN
+#ifdef HAVE_MPI
+        CALL MPI_Bcast(buf,SIZE(buf),MPI_REAL8,rank,myPE%comm,mpierr)
+#endif
+      ELSE
+        CALL eParEnv%raiseError(modName//'::'//myName// &
+          ' - Invalid rank!')
+      ENDIF
+    ENDSUBROUTINE bcast_SDK1_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief
     SUBROUTINE bcast_SDK2_MPI_Env_type(myPE,buf,root)
       CHARACTER(LEN=*),PARAMETER :: myName='bcast_SDK2_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
@@ -824,8 +848,10 @@ MODULE ParallelEnv
       INTEGER(SIK),INTENT(IN) :: n
       REAL(SRK),INTENT(INOUT) :: x(*)
 #ifdef HAVE_MPI
-      REAL(SRK) :: rbuf(n)
+!      REAL(SRK) :: rbuf(n)
+      REAL(SRK),ALLOCATABLE :: rbuf(:)
       IF(myPE%initstat) THEN
+        ALLOCATE(rbuf(n))
 #ifdef DBL
 
         CALL MPI_Allreduce(x,rbuf,n,MPI_DOUBLE_PRECISION,MPI_SUM, &
@@ -841,6 +867,7 @@ MODULE ParallelEnv
           !Copy the result to the output argument
           CALL BLAS_copy(n,rbuf,1,x,1)
         ENDIF
+        DEALLOCATE(rbuf)
       ENDIF
 #endif
     ENDSUBROUTINE allReduceR_MPI_Env_type

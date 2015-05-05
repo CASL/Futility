@@ -105,6 +105,9 @@ PROGRAM testFileType_Base
       ASSERT(TRIM(str1) == 'filepath/','%getFileParts(...) path')
       ASSERT(TRIM(str2) == 'filename','%getFileParts(...) name')
       ASSERT(TRIM(str3) == '.fext','%getFileParts(...) ext')
+      CALL testFile%setFilePath('')
+      CALL testFile%setFileName('')
+      CALL testFile%setFileExt('')
     ENDSUBROUTINE testNames
 !
 !-------------------------------------------------------------------------------

@@ -230,6 +230,7 @@ MODULE FileType_Input
       file%echounit=-1
       file%echostat=.FALSE.
       file%probe=''
+      file%lastprobe=''
       bool=.FALSE.
       IF(PRESENT(ldel)) bool=ldel
       CALL clear_fortran_file(file,bool)

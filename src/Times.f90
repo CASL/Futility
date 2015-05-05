@@ -85,7 +85,7 @@
 MODULE Times
   USE IntrType
   USE Strings
-  
+  USE IO_Strings  
   IMPLICIT NONE
   PRIVATE !Default private for module contents
 !
@@ -93,6 +93,7 @@ MODULE Times
   PUBLIC :: TimerType
   PUBLIC :: getDate
   PUBLIC :: getClockTime
+  PUBLIC :: getTimeFromDate
   PUBLIC :: MAXLEN_TIME_STRING
   PUBLIC :: MAXLEN_DATE_STRING
   PUBLIC :: MAXLEN_CLOCK_STRING
@@ -239,6 +240,8 @@ MODULE Times
   !> potential expense of portability as SYSTEM_CLOCK is only defined
   !> for the default type integer.
   INTEGER :: count_max_lo
+  
+ 
 !
 !===============================================================================
   CONTAINS
@@ -559,5 +562,204 @@ MODULE Times
       myTimer%time=tstring
       myTimer%unit=tunit
     ENDSUBROUTINE SetTimeAndUnits
+!
+!-------------------------------------------------------------------------------
+!> @brief     
+    FUNCTION getTimeFromDate(Date1_inp,Date2_inp,outputunit_inp,fmt1_inp,fmt2_inp) RESULT(time)
+      CHARACTER(LEN=*),INTENT(IN) :: Date1_inp
+      CHARACTER(LEN=*),INTENT(IN) :: Date2_inp
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: outputunit_inp
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: fmt1_inp
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: fmt2_inp
+      
+      REAL(SRK) :: time
+      INTEGER(SIK) :: Date1year,Date1month,Date1day,Date2year,Date2month,Date2day
+      INTEGER(SIK) :: i,ind1,ind2,total1,total2,leapdays,tmpint
+      !> The number of days per month.
+      INTEGER(SIK) :: dayspermonth(12)=(/31,28,31,30,31,30,31,31,30,31,30,31/)
+      CHARACTER(LEN=LEN(Date1_inp)) :: Date1
+      CHARACTER(LEN=LEN(Date2_inp)) :: Date2
+      CHARACTER(LEN=2) :: tmp2
+      CHARACTER(LEN=4) :: tmp4
+      CHARACTER(LEN=10) :: tmpdate
+      TYPE(StringType) :: outputunit,fmt1,fmt2
+  
+      time=0.0_SRK
+      IF(LEN_TRIM(Date1_inp) > 0 .AND. LEN_TRIM(Date2_inp) > 0) THEN
+        !Set up Default Formats
+        ind1=INDEX(Date1_inp,FSLASH)
+        !Has a slash
+        IF(ind1 > 0) THEN
+          !Front part is the year
+          IF(ind1 == 5) THEN
+            IF(LEN_TRIM(Date1_inp) == 10) THEN
+              fmt1='YYYY/MM/DD'
+            ELSEIF(LEN_TRIM(Date1_inp) == 8) THEN
+              fmt1='YYYY/M/D'
+            ELSE
+              IF(INDEX(Date1_inp,FSLASH,.TRUE.) == 8) THEN
+                fmt1='YYYY/MM/D'
+              ELSE
+                fmt1='YYYY/M/DD'
+              ENDIF
+            ENDIF
+          ELSE
+            IF(LEN_TRIM(Date1_inp) == 10) THEN
+              fmt1='MM/DD/YYYY'
+            ELSEIF(LEN_TRIM(Date1_inp) == 8) THEN
+              fmt1='M/D/YYYY'
+            ELSE
+              IF(INDEX(Date1_inp,FSLASH) == 3) THEN
+                fmt1='MM/D/YYYY'
+              ELSE
+                fmt1='M/DD/YYYY'
+              ENDIF
+            ENDIF
+          ENDIF
+        !No slash, so the easy logical check is which set of 4 is greater than 1231 to find the year.
+        !Not all enclusive.
+        ELSE
+          tmpdate=Date1_inp
+          READ(tmpdate,'(i8)')  tmpint
+          !Last 4 digits are the year
+          IF(MOD(tmpint,10000) > 1231) THEN
+            fmt1='MMDDYYYY'
+          ELSE
+            fmt1='YYYYMMDD'
+          ENDIF
+        ENDIF
+
+        ind1=INDEX(Date2_inp,FSLASH)
+        !Has a slash
+        IF(ind1 > 0) THEN
+          !Front part is the year
+          IF(ind1 == 5) THEN
+            IF(LEN_TRIM(Date2_inp) == 10) THEN
+              fmt2='YYYY/MM/DD'
+            ELSEIF(LEN_TRIM(Date2_inp) == 8) THEN
+              fmt2='YYYY/M/D'
+            ELSE
+              IF(INDEX(Date2_inp,FSLASH,.TRUE.) == 8) THEN
+                fmt2='YYYY/MM/D'
+              ELSE
+                fmt2='YYYY/M/DD'
+              ENDIF
+            ENDIF
+          ELSE
+            IF(LEN_TRIM(Date2_inp) == 10) THEN
+              fmt2='MM/DD/YYYY'
+            ELSEIF(LEN_TRIM(Date2_inp) == 8) THEN
+              fmt2='M/D/YYYY'
+            ELSE
+              IF(INDEX(Date2_inp,FSLASH) == 3) THEN
+                fmt2='MM/D/YYYY'
+              ELSE
+                fmt2='M/DD/YYYY'
+              ENDIF
+            ENDIF
+          ENDIF
+        !No slash, so the easy logical check is which set of 4 is greater than 1231 to find the year.
+        !Not all enclusive.
+        ELSE
+          tmpdate=Date2_inp
+          READ(tmpdate,'(i8)') tmpint
+          !Last 4 digits are the year
+          IF(MOD(tmpint,10000) > 1231) THEN
+            fmt2='MMDDYYYY'
+          ELSE
+            fmt2='YYYYMMDD'
+          ENDIF
+        ENDIF
+
+        !Set the optional inputs if they are present
+        Date1=Date1_inp
+        Date2=Date2_inp
+        outputunit='DAY'
+        IF(PRESENT(outputunit_inp)) THEN
+          IF(outputunit_inp == 'HOUR' .OR. outputunit_inp == 'MIN' .OR. &
+            outputunit_inp == 'SEC') outputunit=outputunit_inp
+        ENDIF
+        IF(PRESENT(fmt1_inp)) THEN
+          IF((INDEX(fmt1_inp,"Y") > 0) .AND. (INDEX(fmt1_inp,"M") > 0) .AND. &
+            (INDEX(fmt1_inp,"D") > 0)) fmt1=fmt1_inp
+        ENDIF
+        IF(PRESENT(fmt2_inp)) THEN
+          IF((INDEX(fmt2_inp,"Y") > 0) .AND. (INDEX(fmt2_inp,"M") > 0) .AND. &
+            (INDEX(fmt2_inp,"D") > 0)) fmt2=fmt2_inp
+        ENDIF
+
+        !Process the strings
+        ind1=INDEX(fmt1,'Y'); ind2=INDEX(fmt1,'Y',.TRUE.)
+        READ(Date1(ind1:ind2),'(i4)') Date1year
+        ind1=INDEX(fmt1,'M'); ind2=INDEX(fmt1,'M',.TRUE.)
+        READ(Date1(ind1:ind2),'(i2)') Date1month
+        ind1=INDEX(fmt1,'D'); ind2=INDEX(fmt1,'D',.TRUE.)
+        READ(Date1(ind1:ind2),'(i2)') Date1day
+        ind1=INDEX(fmt2,'Y'); ind2=INDEX(fmt2,'Y',.TRUE.)
+        READ(Date2(ind1:ind2),'(i4)') Date2year
+        ind1=INDEX(fmt2,'M'); ind2=INDEX(fmt2,'M',.TRUE.)
+        READ(Date2(ind1:ind2),'(i2)') Date2month
+        ind1=INDEX(fmt2,'D'); ind2=INDEX(fmt2,'D',.TRUE.)
+        READ(Date2(ind1:ind2),'(i2)') Date2day
+
+        !Convert years and months to days from 0.
+        !Get the number of leap days
+        leapdays=countleapyears(0,1,1,Date1year,Date1month,Date1day)
+        !We may need to adjust the leap days depending if the date 
+        !is on an actual leap day...
+        !IF(Date1month == 2 .AND. Date1day == 29)
+        total1=0
+        DO i=1,Date1month
+          total1=total1+dayspermonth(i)
+        ENDDO
+        total1=Date1year*365+leapdays+total1+Date1day
+
+        leapdays=countleapyears(0,1,1,Date2year,Date2month,Date2day)
+        total2=0
+        DO i=1,Date2month
+          total2=total2+dayspermonth(i)
+        ENDDO
+        total2=Date2year*365+leapdays+total2+Date2day
+
+        time=REAL(total2-total1,SRK)
+
+        IF(outputunit == 'HOUR') THEN
+          time=time*24.0_SRK
+        ELSEIF(outputunit == 'MIN') THEN
+          time=time*1440.0_SRK
+        ELSEIF(outputunit == 'SEC') THEN
+          time=time*86400.0_SRK
+        ENDIF
+      ENDIF
+    ENDFUNCTION getTimeFromDate
+!
+!-------------------------------------------------------------------------------
+!> @brief Routine that calculates the number of leap days between two years
+!> @param yearstt Starting year
+!> @param yearstp Stopping year
+!> @param ndays resulting number of leap days between the two years.
+!>
+    FUNCTION countleapyears(yearstt,monthstt,daystt,yearstp,monthstp,daystp) RESULT(ndays)
+      INTEGER(SIK),INTENT(IN) :: yearstt
+      INTEGER(SIK),INTENT(IN) :: monthstt
+      INTEGER(SIK),INTENT(IN) :: daystt
+      INTEGER(SIK),INTENT(IN) :: yearstp
+      INTEGER(SIK),INTENT(IN) :: monthstp
+      INTEGER(SIK),INTENT(IN) :: daystp
+      INTEGER(SIK) :: ndays
+      
+      INTEGER(SIK) :: i
+      ndays=0
+      !Count the number of leap years from 0
+      DO i=yearstt,yearstp
+        IF(i == yearstt .AND. monthstt > 2) CYCLE
+        IF(i == yearstp .AND. (monthstp < 2 .OR. (monthstp == 2 .AND. daystp <= 28))) CYCLE
+        IF((MOD(i,4) == 0) .AND. (MOD(i,100) /= 0)) THEN
+          ndays=ndays+1
+        ELSEIF((MOD(i,4) == 0) .AND. (MOD(i,100) == 0) .AND. MOD(i,400) == 0) THEN
+          ndays=ndays+1
+        ENDIF
+      ENDDO
+    ENDFUNCTION countleapyears
 !
 ENDMODULE Times

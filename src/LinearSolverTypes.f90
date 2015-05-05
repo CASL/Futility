@@ -316,6 +316,7 @@ MODULE LinearSolverTypes
       CALL validParams%get('LinearSolverType->numberOMP',numberOMP)
       CALL validParams%get('LinearSolverType->timerName',timerName)
       CALL validParams%get('LinearSolverType->matType',matType)
+      CALL validParams%add('LinearSolverType->MatrixType->matType',matType)
       ! pull data for matrix and vector parameter lists
       CALL validParams%get('LinearSolverType->A->MatrixType',pListPtr)
       matPList=pListPtr
@@ -324,17 +325,17 @@ MODULE LinearSolverTypes
       CALL validParams%get('LinearSolverType->b->VectorType',pListPtr)
       vecbPList=pListPtr
       ! Check for Preconditioner Data
-      IF(validParams%has('LinearSolverType->PCType')) THEN
-        CALL validParams%get('LinearSolverType->PCType',PreCondType)
-        CALL ValidParams%get('LinearSolverType->PCIters',pciters)
-        CALL validParams%get('LinearSolverType->PCSetup',pcsetup)
-        !get extra data necessary for BILU
-        CALL validParams%get('LinearSolverType->nPlane',nz)
-        CALL validParams%get('LinearSolverType->nPin',npin)
-        CALL validParams%get('LinearSolverType->nGrp',ngrp)
-      ELSE
+!      IF(validParams%has('LinearSolverType->PCType')) THEN
+!        CALL validParams%get('LinearSolverType->PCType',PreCondType)
+!        CALL ValidParams%get('LinearSolverType->PCIters',pciters)
+!        CALL validParams%get('LinearSolverType->PCSetup',pcsetup)
+!        !get extra data necessary for BILU
+!        CALL validParams%get('LinearSolverType->nPlane',nz)
+!        CALL validParams%get('LinearSolverType->nPin',npin)
+!        CALL validParams%get('LinearSolverType->nGrp',ngrp)
+!      ELSE
         PreCondType='NOPC'
-      ENDIF
+!      ENDIF
       !add mpi communicator to parameter lists
       CALL matPList%add('MatrixType->MPI_Comm_ID',MPI_Comm_ID)
       CALL vecxPList%add('VectorType->MPI_Comm_ID',MPI_Comm_ID)
@@ -691,18 +692,12 @@ MODULE LinearSolverTypes
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
 #ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: ierr
+      IF(solver%TPLType==PETSC .AND. solver%isInit) &
+        CALL KSPDestroy(solver%ksp,ierr)
 #endif
 
-!      CALL solver%MPIparallelEnv%clear()
-!      CALL solver%OMPparallelEnv%clear()
-      IF(ALLOCATED(solver%PreCondType)) THEN
-        CALL solver%PreCondType%clear()
-        DEALLOCATE(solver%PrecondType)
-      ENDIF
-      IF(ALLOCATED(solver%A)) THEN
-        CALL solver%A%clear()
-        DEALLOCATE(solver%A)
-      ENDIF
+      CALL solver%MPIparallelEnv%clear()
+      CALL solver%OMPparallelEnv%clear()
       IF(ALLOCATED(solver%X)) THEN
         CALL solver%X%clear()
         DEALLOCATE(solver%X)
@@ -711,13 +706,19 @@ MODULE LinearSolverTypes
         CALL solver%b%clear()
         DEALLOCATE(solver%b)
       ENDIF
+      IF(ALLOCATED(solver%PreCondType)) THEN
+        CALL solver%PreCondType%clear()
+        DEALLOCATE(solver%PrecondType)
+      ENDIF
+      IF(ALLOCATED(solver%A)) THEN
+        CALL solver%A%clear()
+        DEALLOCATE(solver%A)
+      ENDIF
       IF(ALLOCATED(solver%M)) THEN
         CALL solver%M%clear()
         DEALLOCATE(solver%M)
       ENDIF
-#ifdef MPACT_HAVE_PETSC
-      IF(solver%TPLType==PETSC .AND. solver%isInit) CALL KSPDestroy(solver%ksp,ierr)
-#endif
+
       solver%isInit=.FALSE.
       solver%solverMethod=-1
       solver%hasX=.FALSE.
@@ -1106,7 +1107,7 @@ MODULE LinearSolverTypes
                   IF(A%n /= solver%b%n .OR. A%m /= solver%X%n &
                     .OR. A%n < 1 .OR. A%m < 1) THEN
                     CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
-                      '  - The size of the matrix and vector do not comform!')
+                      '  - The size of the matrix and vector do not conform!')
                   ELSE
                     solver%info=0
                   ENDIF
@@ -1114,7 +1115,7 @@ MODULE LinearSolverTypes
                   IF(A%n /= solver%b%n .OR. A%n /= solver%X%n &
                     .OR. A%n < 1) THEN
                     CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
-                      '  - The size of the matrix and vector do not comform!')
+                      '  - The size of the matrix and vector do not conform!')
                   ELSE
                     solver%info=0
                   ENDIF
@@ -1125,7 +1126,7 @@ MODULE LinearSolverTypes
             ENDIF
           ELSE
             CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
-              '  - The unknows X has not been associated!')
+              '  - The unknowns X has not been associated!')
           ENDIF
         ELSE
           CALL eLinearSolverType%raiseError(ModName//'::'//myName// &

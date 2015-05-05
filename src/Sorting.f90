@@ -34,6 +34,8 @@ MODULE Sorting
   IMPLICIT NONE
 
   PUBLIC :: sort
+  PUBLIC :: insert_sort
+  PUBLIC :: bubble_sort
 
   !> @brief Generic interface to sort arrays.
   !>
@@ -48,6 +50,33 @@ MODULE Sorting
     !> @copydetails Sorting::bubble_sort_2DInt
     MODULE PROCEDURE bubble_sort_2DInt
   ENDINTERFACE sort
+
+
+  !> @brief Generic interface to sort arrays with insertion sort.
+  !>
+  INTERFACE insert_sort
+    !> @copybrief Sorting::insert_sort_int
+    !> @copydetails Sorting::insert_sort_int
+    MODULE PROCEDURE insert_sort_int
+    !> @copybrief Sorting::insert_sort_real
+    !> @copydetails Sorting::insert_sort_real
+    MODULE PROCEDURE insert_sort_real
+  ENDINTERFACE insert_sort
+
+
+  !> @brief Generic interface to sort arrays with bubble sort.
+  !>  
+  INTERFACE bubble_sort
+    !> @copybrief Sorting::bubble_sort_1DReal
+    !> @copydetails Sorting::bubble_sort_1DReal
+    MODULE PROCEDURE bubble_sort_1DReal
+    !> @copybrief Sorting::bubble_sort_1DInt
+    !> @copydetails Sorting::bubble_sort_1DInt
+    MODULE PROCEDURE bubble_sort_1DInt
+    !> @copybrief Sorting::bubble_sort_2DInt
+    !> @copydetails Sorting::bubble_sort_2DInt
+    MODULE PROCEDURE bubble_sort_2DInt
+  ENDINTERFACE bubble_sort
 !
 !===============================================================================
   CONTAINS
