@@ -26,7 +26,7 @@ MODULE WaterSatProperties
   PUBLIC :: WaterSatProperties_GetTemp
   PUBLIC :: WaterSatProperties_GetVapDens
   PUBLIC :: WaterSatProperties_GetLiqDens
-
+  !> Pressure is in MPa, Densities in g/cc or kg/m^3, Temp looks to be in Kelvin.
   INTEGER(SIK),PARAMETER :: PRESSURE=1,RHOL=2,RHOV=3
   LOGICAL(SBK),SAVE :: initTables=.FALSE.
   REAL(SRK),DIMENSION(3,274:647),SAVE :: eostable=0
