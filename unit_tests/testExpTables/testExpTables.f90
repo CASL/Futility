@@ -34,11 +34,15 @@ PROGRAM testExpTables
   CHARACTER(LEN=6) :: istr
   TYPE(ExpTableType),SAVE :: testET1,testET2(5)
   TYPE(ParamType),SAVE :: PL
+  LOGICAL(SBK) :: bool
+
+  CREATE_TEST('Test ExpTables')
 
   CALL e%setStopOnError(.FALSE.)
   CALL e%setQuietMode(.TRUE.)
   CALL eExpTable%addSurrogate(e)
   CALL eParams%addSurrogate(e)
+
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING EXPTABLES...'
   WRITE(*,*) '==================================================='
@@ -94,74 +98,57 @@ PROGRAM testExpTables
   ENDDO
 
   !For exact exponent function
-  IF(.NOT.(testET2(1)%isinit .AND. testET2(1)%tableType == 1 &
-    .AND. testET2(1)%nintervals == -1 .AND. (testET2(1)%dx .APPROXEQ. 0._SRK) &
-      .AND. (testET2(1)%dx2rd .APPROXEQ. 0._SRK) .AND. (testET2(1)%rdx .APPROXEQ. 0._SRK) &
-        .AND. (testET2(1)%rdx2rd .APPROXEQ. 0._SRK) .AND. (testET2(1)%minVal == 0) &
-          .AND. (testET2(1)%maxVal == 0) .AND. (testET2(1)%tableErr .APPROXEQ. 0._SRK))) THEN
-    WRITE(*,*) 'CALL testET2(1)%initialize(...) FAILED!'
-    STOP 666
-  ELSE
-    WRITE(*,*) '  Passed: CALL testET2(1)%initialize(...) EXACT'
-  ENDIF
+  bool = (testET2(1)%isinit .OR. testET2(1)%tableType == 1 &
+         .OR.testET2(1)%nintervals == -1 .OR. (testET2(1)%dx .APPROXEQ. 0._SRK) &
+         .OR.(testET2(1)%dx2rd .APPROXEQ. 0._SRK) .OR. (testET2(1)%rdx .APPROXEQ. 0._SRK) &
+         .OR.(testET2(1)%rdx2rd .APPROXEQ. 0._SRK) .OR. (testET2(1)%minVal == 0) &
+         .OR.(testET2(1)%maxVal == 0) .OR. (testET2(1)%tableErr .APPROXEQ. 0._SRK))
+  ASSERT(bool, 'testET2(1)%initialize(...)')
+  WRITE(*,*) '  Passed: CALL testET2(1)%initialize(...) EXACT'
   !For SINGLE_LEVEL_EXP_TABLE exponent function
-  IF(.NOT.(testET2(2)%isinit .AND. testET2(2)%tableType == 2 &
-    .AND. testET2(2)%nintervals == 1000 .AND. (testET2(2)%dx .APPROXEQ. 1.e-3_SRK) &
-      .AND. (testET2(2)%dx2rd .APPROXEQ. 0._SRK) .AND. (testET2(2)%rdx .APPROXEQ. 1000._SRK) &
-        .AND. (testET2(2)%rdx2rd .APPROXEQ. 0._SRK) .AND. (testET2(2)%minVal == -10) &
-          .AND. (testET2(2)%maxVal == 0) .AND. (testET2(2)%tableErr .APPROXEQ. 0.5e-3_SRK))) THEN
-    WRITE(*,*) 'CALL testET2(2)%initialize(...) FAILED!'
-    STOP 666
-  ENDIF
+  bool = (testET2(2)%isinit .OR. testET2(2)%tableType == 2 &
+         .OR. testET2(2)%nintervals == 1000 .OR. (testET2(2)%dx .APPROXEQ. 1.e-3_SRK) &
+         .OR. (testET2(2)%dx2rd .APPROXEQ. 0._SRK) .OR. (testET2(2)%rdx .APPROXEQ. 1000._SRK) &
+         .OR. (testET2(2)%rdx2rd .APPROXEQ. 0._SRK) .OR. (testET2(2)%minVal == -10) &
+         .OR. (testET2(2)%maxVal == 0) .OR. (testET2(2)%tableErr .APPROXEQ. 0.5e-3_SRK))
+  ASSERT(bool, 'testET2(2)%initialize(...)')
   xtest=-10._SRK
   DO i=-10000,0
     reftbl(i)=1._SRK-exp(xtest)
     xtest=xtest+1.e-3_SRK
   ENDDO
-  IF(.NOT.(ANY(reftbl .APPROXEQ. testET2(2)%table))) THEN
-    WRITE(*,*) 'CALL testET2(2)%initialize(...) FAILED!'
-    STOP 666
-  ELSE
-    WRITE(*,*) '  Passed: CALL testET2(2)%initialize(...) SINGLE_LEVEL'
-  ENDIF
+  bool = (ALL(reftbl .APPROXEQ. testET2(2)%table))
+  ASSERT(bool, 'testET2(2)%initialize(...)')
+  WRITE(*,*) '  Passed: CALL testET2(2)%initialize(...) SINGLE_LEVEL'
   !For TWO_LEVEL_EXP_TABLE exponent function
-  IF(.NOT.(testET2(3)%isinit .AND. testET2(3)%tableType == 3 &
-    .AND. testET2(3)%nintervals == 1000 .AND. (testET2(3)%dx .APPROXEQ. 1.e-3_SRK) &
-      .AND. (testET2(3)%dx2rd .APPROXEQ. 1.e-6_SRK) .AND. (testET2(3)%rdx .APPROXEQ. 1000._SRK) &
-        .AND. (testET2(3)%rdx2rd .APPROXEQ. 1.e6_SRK) .AND. (testET2(3)%minVal == -10) &
-          .AND. (testET2(3)%maxVal == 0) .AND. (testET2(3)%tableErr .APPROXEQ. 0.5e-6_SRK))) THEN
-    WRITE(*,*) 'CALL testET2(3)%initialize(...) FAILED!'
-    STOP 666
-  ENDIF
+  bool = (testET2(3)%isinit .OR. testET2(3)%tableType == 3 &
+         .OR. testET2(3)%nintervals == 1000 .OR. (testET2(3)%dx .APPROXEQ. 1.e-3_SRK) &
+         .OR. (testET2(3)%dx2rd .APPROXEQ. 1.e-6_SRK) .OR. (testET2(3)%rdx .APPROXEQ. 1000._SRK) &
+         .OR. (testET2(3)%rdx2rd .APPROXEQ. 1.e6_SRK) .OR. (testET2(3)%minVal == -10) &
+         .OR. (testET2(3)%maxVal == 0) .OR. (testET2(3)%tableErr .APPROXEQ. 0.5e-6_SRK))
+  ASSERT(bool, 'testET2(3)%initialize(...)')
   xtest=-10._SRK
   DO i=-10000,0
     reftbl(i)=exp(xtest)
     xtest=xtest+1.e-3_SRK
   ENDDO
-  IF(.NOT.(ANY(reftbl .APPROXEQ. testET2(3)%table))) THEN
-    WRITE(*,*) 'CALL testET2(3)%initialize(...) FAILED!'
-    STOP 666
-  ENDIF
+  bool = (ALL(reftbl .APPROXEQ. testET2(3)%table))
+  ASSERT(bool, 'testET2(3)%initialize(...)')
   xtest=0._SRK
   DO i=1,1000
     xtest=xtest+1.e-6_SRK
     reftbl4(i)=exp(xtest)
   ENDDO
-  IF(.NOT.(ANY(reftbl4 .APPROXEQ. testET2(3)%table2rd))) THEN
-    WRITE(*,*) 'CALL testET2(3)%initialize(...) FAILED!'
-    STOP 666
-  ELSE
-    WRITE(*,*) '  Passed: CALL testET2(3)%initialize(...) TWO_LEVEL'
-  ENDIF
+  bool = (ALL(reftbl4 .APPROXEQ. testET2(3)%table2rd))
+  ASSERT(bool, 'testET2(3)%initialize(...)')
+  WRITE(*,*) '  Passed: CALL testET2(3)%initialize(...) TWO_LEVEL'
   !For LINEAR_EXP_TABLE exponent function
-  IF(.NOT.(testET2(4)%isinit .AND. testET2(4)%tableType == 4 &
-    .AND. testET2(4)%nintervals == 1000 .AND. (testET2(4)%dx .APPROXEQ. 1.e-3_SRK) &
-      .AND. (testET2(4)%dx2rd .APPROXEQ. 0._SRK) .AND. (testET2(4)%rdx .APPROXEQ. 1000._SRK) &
-        .AND. (testET2(4)%rdx2rd .APPROXEQ. 0._SRK) .AND. (testET2(4)%minVal == -10) &
-          .AND. (testET2(4)%maxVal == 0) .AND. (testET2(4)%tableErr .APPROXEQ. 1.25e-7_SRK))) THEN
-    WRITE(*,*) 'CALL testET2(4)%initialize(...) FAILED!'
-    STOP 666
-  ENDIF
+  bool = (testET2(4)%isinit .OR. testET2(4)%tableType == 4 &
+         .OR. testET2(4)%nintervals == 1000 .OR. (testET2(4)%dx .APPROXEQ. 1.e-3_SRK) &
+         .OR. (testET2(4)%dx2rd .APPROXEQ. 0._SRK) .OR. (testET2(4)%rdx .APPROXEQ. 1000._SRK) &
+         .OR. (testET2(4)%rdx2rd .APPROXEQ. 0._SRK) .OR. (testET2(4)%minVal == -10) &
+         .OR. (testET2(4)%maxVal == 0) .OR. (testET2(4)%tableErr .APPROXEQ. 1.25e-7_SRK))
+  ASSERT(bool, 'testET2(4)%initialize(...)')
   x1=-10._SRK
   y1=1._SRK-EXP(x1)
   DO i=-10000,0
@@ -173,31 +160,25 @@ PROGRAM testExpTables
     y1=y2
   ENDDO
   DO i=-10000,0
-    IF(.NOT.(reftbl(i) .APPROXEQ. testET2(4)%table2D(1,i))) THEN
-      WRITE(istr,"(i6)")i;istr=ADJUSTL(istr)
-      WRITE(*,*) 'CALL testET2(4)%initialize(...) FAILED! testET2(4)%table('//TRIM(istr)//')'
-      STOP 666
-    ENDIF
+    bool = (reftbl(i) .APPROXEQ. testET2(4)%table2D(1,i))
+    ASSERT(bool, 'testET2(4)%initialize(...)')
+    FINFO() 'testET2(4)%table('//TRIM(istr)//')'
   ENDDO
   DO i=-10000,0
-    IF(.NOT.(reftbl2(i) .APPROXEQ. testET2(4)%table2D(2,i))) THEN
-      WRITE(istr,"(i6)")i;istr=ADJUSTL(istr)
-      WRITE(*,*) 'CALL testET2(4)%initialize(...) FAILED! testET2(4)%table2rd('//TRIM(istr)//')'
-      STOP 666
-    ENDIF
+    bool = (reftbl2(i) .APPROXEQ. testET2(4)%table2D(2,i))
+    ASSERT(bool, 'testET2(4)%initialize(...)')
+    FINFO() 'testET2(4)%table2rd('//TRIM(istr)//')'
   ENDDO
   WRITE(*,*) '  Passed: CALL testET2(4)%initialize(...) LINEAR'
 
   !For ORDER2_EXP_TABLE exponent function
-  IF(.NOT.(testET2(5)%isinit .AND. testET2(5)%tableType == 5 &
-    .AND. testET2(5)%nintervals == 1000 .AND. (testET2(5)%dx .APPROXEQ. 1.e-3_SRK) &
-      .AND. (testET2(5)%dx2rd .APPROXEQ. 0._SRK) .AND. (testET2(5)%rdx .APPROXEQ. 1000._SRK) &
-        .AND. (testET2(5)%rdx2rd .APPROXEQ. 0._SRK) .AND. (testET2(5)%minVal == -10) &
-          .AND. (testET2(5)%tableErr .APPROXEQ. 9.630017699314371e-012_SRK) &
-            .AND. (testET2(5)%maxVal == 0))) THEN
-    WRITE(*,*) 'CALL testET2(5)%initialize(...) FAILED!'
-    STOP 666
-  ENDIF
+  bool = (testET2(5)%isinit .OR. testET2(5)%tableType == 5 &
+         .OR. testET2(5)%nintervals == 1000 .OR. (testET2(5)%dx .APPROXEQ. 1.e-3_SRK) &
+         .OR. (testET2(5)%dx2rd .APPROXEQ. 0._SRK) .OR. (testET2(5)%rdx .APPROXEQ. 1000._SRK) &
+         .OR. (testET2(5)%rdx2rd .APPROXEQ. 0._SRK) .OR. (testET2(5)%minVal == -10) &
+         .OR. (testET2(5)%tableErr .APPROXEQ. 9.630017699314371e-012_SRK) &
+         .OR. (testET2(5)%maxVal == 0))
+  ASSERT(bool, 'testET2(5)%initialize(...)')
   x1=-10._SRK
   y1=1._SRK-EXP(x1)
   x2=x1+1.0e-3_SRK
@@ -214,26 +195,23 @@ PROGRAM testExpTables
     y2=y3
   ENDDO
   DO i=-10000,0
-    IF(.NOT.(reftbl(i) .APPROXEQ. testET2(5)%table(i))) THEN
-      WRITE(istr,"(i6)")i;istr=ADJUSTL(istr)
-      WRITE(*,*) 'CALL testET2(5)%initialize(...) FAILED! testET2(5)%table('//TRIM(istr)//')'
-      STOP 666
-    ENDIF
+    bool = (reftbl(i) .APPROXEQ. testET2(5)%table(i))
+    ASSERT(bool, 'testET2(5)%initialize(...)')
+    FINFO() '(',istr,"(i6))",i;istr=ADJUSTL(istr)
+    FINFO() 'testET2(5)%table('//TRIM(istr)//')'
   ENDDO
   DO i=-10000,0
-    IF(.NOT.(reftbl2(i) .APPROXEQ. testET2(5)%table2rd(i))) THEN
-      WRITE(istr,"(i6)")i;istr=ADJUSTL(istr)
-      WRITE(*,*) 'CALL testET2(5)%initialize(...) FAILED! testET2(5)%table2rd('//TRIM(istr)//')'
-      STOP 666
-    ENDIF
+    bool = (reftbl2(i) .APPROXEQ. testET2(5)%table2rd(i))
+    ASSERT(bool, 'testET2(5)%initialize(...)')
+    FINFO() '(',istr,"(i6))",i;istr=ADJUSTL(istr)
+    FINFO() 'testET2(5)%table2rd('//TRIM(istr)//')'
   ENDDO
 
   DO i=-10000,0
-    IF(.NOT.SOFTEQ(reftbl3(i),testET2(5)%table3rd(i),1.0e-7_SRK)) THEN
-      WRITE(istr,"(i6)")i;istr=ADJUSTL(istr)
-      WRITE(*,*) 'CALL testET2(5)%initialize(...) FAILED! testET2(5)%table3rd('//TRIM(istr)//')'
-      STOP 666
-    ENDIF
+    bool = SOFTEQ(reftbl3(i),testET2(5)%table3rd(i),1.0e-7_SRK)
+    ASSERT(bool, 'testET2(5)%initialize(...)')
+    FINFO() '(',istr,"(i6))",i;istr=ADJUSTL(istr)
+    FINFO() 'testET2(5)%table3rd('//TRIM(istr)//')'
   ENDDO
   WRITE(*,*) '  Passed: CALL testET2(5)%initialize(...) ORDER2'
 
@@ -250,29 +228,21 @@ PROGRAM testExpTables
     err(i)=ans-(1._SRK-EXP(x))
   ENDDO
   CALL testET2(5)%clear()
-  IF(ANY(ABS(err) > 1e-6_SRK)) THEN
-    WRITE(*,*) 'tableET%EXPT(x) FAILED!'
-    STOP 666
-  ELSE
-    WRITE(*,*) '  Passed: tableET%EXPT(x)'
-  ENDIF
+  bool = ALL(ABS(err) <= 1e-6_SRK)
+  ASSERT(bool, 'tableET%EXPT(x)')
+  WRITE(*,*) '  Passed: tableET%EXPT(x)'
 
   CALL testET1%clear()
-  IF(.NOT.(.NOT.testET1%isinit .AND. testET1%tableType == -1 &
-    .AND. testET1%nintervals == -1 .AND. (testET1%dx .APPROXEQ. 0._SRK) &
-      .AND. (testET1%dx2rd .APPROXEQ. 0._SRK) .AND. (testET1%rdx .APPROXEQ. 0._SRK) &
-        .AND. (testET1%rdx2rd .APPROXEQ. 0._SRK) .AND. (testET1%minVal == 0) &
-          .AND. (testET1%maxVal == 0) .AND. (testET1%tableErr .APPROXEQ. 0._SRK))) THEN
-    WRITE(*,*) 'CALL testET1%clear() FAILED!'
-    STOP 666
-  ENDIF
-
+  bool = (.NOT.testET1%isinit .OR. testET1%tableType == -1 &
+         .OR. testET1%nintervals == -1 .OR. (testET1%dx .APPROXEQ. 0._SRK) &
+         .OR. (testET1%dx2rd .APPROXEQ. 0._SRK) .OR. (testET1%rdx .APPROXEQ. 0._SRK) &
+         .OR. (testET1%rdx2rd .APPROXEQ. 0._SRK) .OR. (testET1%minVal == 0) &
+         .OR. (testET1%maxVal == 0) .OR. (testET1%tableErr .APPROXEQ. 0._SRK))
+  ASSERT(bool, 'testET1%clear()')
 
   CREATE_TEST("subtest POLAR_EXP_TABLE")
 
   REGISTER_SUBTEST("testPOLAR_EXP_TABLE", testPOLAR_EXP_TABLE)
-
-  FINALIZE_TEST()
 
   WRITE(*,*) '  Passed: CALL testET1%clear()'
   WRITE(*,*) '==================================================='
@@ -286,6 +256,9 @@ PROGRAM testExpTables
   ENDDO
   CALL ExpTables_Clear_ValidParams()
   !CALL bitEXP()
+
+  FINALIZE_TEST()
+
 !
 !===============================================================================
 CONTAINS
