@@ -24,7 +24,7 @@
 !> each dimension. It is inherently a 3-D object, but can represent a 2-D surface
 !> in 3-D space or 2-D space. This is determined by the dimensionality of its
 !> member starting point. The module also provides methods for constructing and
-!> clearing the BoxType, and intersecting it with a line.
+!> clearing the OBBoxType, and intersecting it with a line.
 !>
 !> @par Module Dependencies
 !>  - @ref IntrType "IntrType": @copybrief IntrType
@@ -44,10 +44,10 @@ MODULE Geom_Box
   PRIVATE
 !
 !List of public items
-  PUBLIC BoxType
+  PUBLIC OBBoxType
 
   !> @brief Type for a Box
-  TYPE BoxType
+  TYPE OBBoxType
     !> The start corner point
     TYPE(PointType) :: p0
     !> The vector that points in the direction of the first dimension
@@ -57,34 +57,34 @@ MODULE Geom_Box
     !
     !List of type bound procedures
     CONTAINS
-      !> @copybrief Geom_Box::set_BoxType
-      !> @copydetail Geom_Box::set_BoxType
-      PROCEDURE,PASS :: set => set_BoxType
-      !> @copybrief Geom_Box::clear_BoxType
-      !> @copydetail Geom_Box::clear_BoxType
-      PROCEDURE,PASS :: clear => clear_BoxType
-      !> @copybrief Geom_Box::intersect_BoxType_and_LineType
-      !> @copydetail Geom_Box::intersect_BoxType_and_LineType
-      PROCEDURE,PASS :: intersectLine => intersect_BoxType_and_LineType
-  ENDTYPE BoxType
+      !> @copybrief Geom_Box::set_OBBoxType
+      !> @copydetail Geom_Box::set_OBBoxType
+      PROCEDURE,PASS :: set => set_OBBoxType
+      !> @copybrief Geom_Box::clear_OBBoxType
+      !> @copydetail Geom_Box::clear_OBBoxType
+      PROCEDURE,PASS :: clear => clear_OBBoxType
+      !> @copybrief Geom_Box::intersect_OBBoxType_and_LineType
+      !> @copydetail Geom_Box::intersect_OBBoxType_and_LineType
+      PROCEDURE,PASS :: intersectLine => intersect_OBBoxType_and_LineType
+  ENDTYPE OBBoxType
 !
 !===============================================================================
   CONTAINS
 !
 !-------------------------------------------------------------------------------
-!> @brief Clears an BoxType object's atrributes
-!> @param thisOBB the BoxType object to clear
+!> @brief Clears an OBBoxType object's atrributes
+!> @param thisOBB the OBBoxType object to clear
 !>
-    ELEMENTAL SUBROUTINE clear_BoxType(thisBox)
-      CLASS(BoxType),INTENT(INOUT) :: thisBox
+    ELEMENTAL SUBROUTINE clear_OBBoxType(thisBox)
+      CLASS(OBBoxType),INTENT(INOUT) :: thisBox
       CALL thisBox%p0%clear()
       thisBox%u=0.0_SRK
       thisBox%e=0.0_SRK
-    ENDSUBROUTINE clear_BoxType
+    ENDSUBROUTINE clear_OBBoxType
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets a BoxType object's atrributes
-!> @param box the BoxType object to set
+!> @brief Sets a OBBoxType object's atrributes
+!> @param box the OBBoxType object to set
 !> @param p0 the start corner point of the box
 !> @param e_in the extent of every dimension
 !> @param u1_in the vector that points to the first dimension
@@ -93,8 +93,8 @@ MODULE Geom_Box
 !>
 !> If the box is in 2D space, the parameter "u3_in" will be useless.
 !>
-   PURE SUBROUTINE set_BoxType(thisBox,p0,e_in,u1_in,u2_in,u3_in)
-      CLASS(BoxType),INTENT(INOUT) :: thisBox
+   PURE SUBROUTINE set_OBBoxType(thisBox,p0,e_in,u1_in,u2_in,u3_in)
+      CLASS(OBBoxType),INTENT(INOUT) :: thisBox
       TYPE(PointType),INTENT(IN) :: p0
       REAL(SRK),INTENT(IN) :: e_in(:)
       REAL(SRK),INTENT(IN) :: u1_in(:)
@@ -230,7 +230,7 @@ MODULE Geom_Box
           ENDIF
         ENDIF
       ENDIF
-    ENDSUBROUTINE set_BoxType
+    ENDSUBROUTINE set_OBBoxType
 !
 !-------------------------------------------------------------------------------
 !> @brief Determine the point(s) of intersection between an OBB and line
@@ -254,8 +254,8 @@ MODULE Geom_Box
 !> The problem for the intersection is stated as a ray and an axis-aligned
 !> bounding box (AABB) and has been adapted for a segment and an OBB.
 !>
-    ELEMENTAL SUBROUTINE intersect_BoxType_and_LineType(thisBox,line,p1,p2)
-      CLASS(BoxType),INTENT(IN) :: thisBox
+    ELEMENTAL SUBROUTINE intersect_OBBoxType_and_LineType(thisBox,line,p1,p2)
+      CLASS(OBBoxType),INTENT(IN) :: thisBox
       TYPE(LineType),INTENT(IN) :: line
       TYPE(PointType),INTENT(INOUT) :: p1,p2
 
@@ -351,6 +351,6 @@ MODULE Geom_Box
         p2%coord(2)=line%p1%coord(2)+dir_world(2)*tmax
         IF(ndim == 3) p2%coord(3)=line%p1%coord(3)+dir_world(3)*tmax
       ENDIF
-    ENDSUBROUTINE intersect_BoxType_and_LineType
+    ENDSUBROUTINE intersect_OBBoxType_and_LineType
 !
 ENDMODULE Geom_Box
