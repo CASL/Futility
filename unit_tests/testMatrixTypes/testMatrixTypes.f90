@@ -25,49 +25,49 @@ PROGRAM testMatrixTypes
   USE ParallelEnv
   USE VectorTypes
   USE MatrixTypes
-  
+
   IMPLICIT NONE
-  
+
 #ifdef MPACT_HAVE_PETSC
 #include <finclude/petsc.h>
 #undef IS
   PetscErrorCode  :: ierr
 #endif
-  
+
   TYPE(ExceptionHandlerType),TARGET :: e
   TYPE(ParamType) :: pList,optListMat,vecPList
-  
+
   !Configure exception handler for test
   CALL e%setStopOnError(.FALSE.)
   CALL e%setQuietMode(.TRUE.)
   CALL eParams%addSurrogate(e)
   CALL eMatrixType%addSurrogate(e)
-  
+
   !Set up optional PL
   CALL optListMat%add('MatrixType->nnz',-1_SNK)
   CALL optListMat%add('MatrixType->isSym',.FALSE.)
   CALL optListMat%add('MatrixType->matType',SPARSE)
   CALL optListMat%add('MatrixType->MPI_Comm_ID',PE_COMM_SELF)
-  
+
   !Set up vector PL
   CALL vecPList%add('VectorType -> n',1)
   CALL vecPList%add('VectorType -> MPI_Comm_ID',PE_COMM_SELF)
-  
-#ifdef MPACT_HAVE_PETSC    
+
+#ifdef MPACT_HAVE_PETSC
   CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
 #endif
 
-  CREATE_TEST('Test Matrix Types') 
+  CREATE_TEST('Test Matrix Types')
   REGISTER_SUBTEST('TestMatrix',testMatrix)
   FINALIZE_TEST()
-  
+
   CALL optListMat%clear()
   CALL vecPList%clear()
   CALL pList%clear()
   CALL MatrixTypes_Clear_ValidParams()
   CALL VectorType_Clear_ValidParams()
-  
-#ifdef MPACT_HAVE_PETSC    
+
+#ifdef MPACT_HAVE_PETSC
   CALL PetscFinalize(ierr)
 #endif
 !
@@ -102,7 +102,7 @@ PROGRAM testMatrixTypes
       CALL xPETScVector%init(vecPList)
       CALL yPETScVector%init(vecPlist)
 #endif
-      
+
       SELECTTYPE(thisMatrix)
         TYPE IS(SparseMatrixType)
 !Test for sparse matrices
@@ -119,10 +119,10 @@ PROGRAM testMatrixTypes
           ALLOCATE(thisMatrix%ja(100))
           thisMatrix%ia(101)=101
       ENDSELECT
-        
+
       !clear it
       CALL thisMatrix%clear()
-        
+
       SELECTTYPE(thisMatrix)
         TYPE IS(SparseMatrixType)
           !check for success
@@ -135,9 +135,9 @@ PROGRAM testMatrixTypes
           ASSERT(bool, 'sparse%clear()')
           WRITE(*,*) '  Passed: CALL sparse%clear()'
       ENDSELECT
-          
-      !check init 
-      
+
+      !check init
+
       ! build parameter list
       CALL pList%add('MatrixType->n',10_SNK)
       CALL pList%add('MatrixType->nnz',10_SNK)
@@ -153,10 +153,10 @@ PROGRAM testMatrixTypes
           bool = ((SIZE(thisMatrix%a) == 10).OR.(SIZE(thisMatrix%ja) == 10)) &
             .OR.((SIZE(thisMatrix%ia) == 11).OR.(thisMatrix%ia(11) == 11))
           ASSERT(bool, 'sparse%init(...)')
-      ENDSELECT  
+      ENDSELECT
       CALL thisMatrix%clear()
       CALL pList%clear()
-        
+
       !now check init without m being provided
       CALL pList%add('MatrixType->n',10_SNK)
       CALL pList%validate(pList,optListMat)
@@ -164,7 +164,7 @@ PROGRAM testMatrixTypes
       bool = .NOT. thisMatrix%isInit
       ASSERT(bool, 'sparse%init(...)')
       CALL thisMatrix%clear()
-        
+
       !init it twice so on 2nd init, isInit==.TRUE.
       CALL thisMatrix%init(pList)
       SELECTTYPE(thisMatrix)
@@ -217,7 +217,7 @@ PROGRAM testMatrixTypes
       ia_vals(2)=3
       ia_vals(3)=4
       ia_vals(4)=7
-      
+
       ! build parameter list
       CALL pList%clear()
       CALL pList%add('MatrixType->n',3_SNK)
@@ -225,7 +225,7 @@ PROGRAM testMatrixTypes
       CALL pList%validate(pList,optListMat)
       CALL thisMatrix%clear()
       CALL thisMatrix%init(pList)
-        
+
       SELECTTYPE(thisMatrix)
         TYPE IS(SparseMatrixType)
           CALL thisMatrix%setShape(1,1,1._SRK)
@@ -282,7 +282,7 @@ PROGRAM testMatrixTypes
           CALL thisMatrix%init(pList)
           CALL thisMatrix%setShape(4,1,2._SRK) !i>n
           ASSERT(thisMatrix%a(1) /= 2._SRK, 'sparse%setShape(...)')
-          !test check to see if i,j of new entry are below and to the right 
+          !test check to see if i,j of new entry are below and to the right
           !of previous i.j
           CALL thisMatrix%clear()
           CALL thisMatrix%init(pList)
@@ -306,7 +306,7 @@ PROGRAM testMatrixTypes
           CALL thisMatrix%setShape(3,2)
           CALL thisMatrix%setShape(3,3)
       ENDSELECT
-      
+
       !use set to update the values
       CALL thisMatrix%set(1,1,1._SRK)
       CALL thisMatrix%set(1,3,2._SRK)
@@ -327,7 +327,7 @@ PROGRAM testMatrixTypes
             ENDIF
           ENDDO
       ENDSELECT
-      
+
       !Test BLAS_matvec
       x=1.0_SRK
       y=1.0_SRK
@@ -527,10 +527,10 @@ PROGRAM testMatrixTypes
       FINFO() 'Result:',yRealVector%b(1:7:2),'Solution:',dummyvec
 
       WRITE(*,*) '  Passed: CALL BLAS_matvec(...) sparse-matrix'
-      
+
       !Test BLAS_matmult when SparseMatType is supported.
       CALL testMatrixMultSparse()
-      
+
       !off-nominal tests
       !pass matrix w/out setshape
       CALL thisMatrix%clear()
@@ -567,14 +567,14 @@ PROGRAM testMatrixTypes
       CALL pList%add('MatrixType->nnz',6_SNK)
       CALL thisMatrix%clear()
       CALL thisMatrix%init(pList)
-        
+
       SELECTTYPE(thisMatrix)
         TYPE IS(SparseMatrixType)
           CALL thisMatrix%setShape(1,1)
           CALL thisMatrix%setShape(2,2)
       ENDSELECT
       CALL thisMatrix%set(1,2,1._SRK)
-        
+
       SELECTTYPE(thisMatrix)
         TYPE IS(SparseMatrixType)
           DO i=1,SIZE(thisMatrix%a)
@@ -582,7 +582,7 @@ PROGRAM testMatrixTypes
           ENDDO
           WRITE(*,*) '  Passed: CALL sparse%set(...)'
       ENDSELECT
-      
+
       !Perform test of functionality of get function
       ![1 0 2]
       ![0 0 3]
@@ -637,7 +637,7 @@ PROGRAM testMatrixTypes
       !test get with uninit, make sure no crash.
       CALL thisMatrix%clear()
       SELECTTYPE(thisMatrix)
-        TYPE IS(SparseMatrixType)      
+        TYPE IS(SparseMatrixType)
           CALL thisMatrix%get(1,1,dummy)
           bool = dummy == 0.0_SRK
           ASSERT(bool, 'sparse%get(...)')
@@ -646,7 +646,7 @@ PROGRAM testMatrixTypes
       WRITE(*,*) '  Passed: CALL sparse%get(...)'
       DEALLOCATE(thisMatrix)
 !
-!Test for dense square matrices        
+!Test for dense square matrices
       ALLOCATE(DenseSquareMatrixType :: thisMatrix)
       SELECTTYPE(thisMatrix)
         TYPE IS(DenseSquareMatrixType)
@@ -666,8 +666,8 @@ PROGRAM testMatrixTypes
           ASSERT(bool, 'densesquare%clear()')
           WRITE(*,*) '  Passed: CALL densesquare%clear()'
       ENDSELECT
-      
-      !check init     
+
+      !check init
       CALL pList%clear()
       CALL pList%add('MatrixType->n',10_SNK)
       CALL pList%add('MatrixType->isSym',.FALSE.)
@@ -681,7 +681,7 @@ PROGRAM testMatrixTypes
           bool = (SIZE(thisMatrix%a,1) == 10) .AND. &
                  (SIZE(thisMatrix%a,2) == 10)
           ASSERT(bool, 'densesquare%init(...)')
-      ENDSELECT  
+      ENDSELECT
       CALL thisMatrix%clear()
       CALL pList%clear()
       CALL pList%add('MatrixType->n',10_SNK)
@@ -749,7 +749,7 @@ PROGRAM testMatrixTypes
               .AND.(thisMatrix%a(2,2)==3._SRK))
           ASSERT(bool, 'densesquare%set(...)')
       ENDSELECT
-      
+
       !Test BLAS_matvec
       x=1.0_SRK
       y=1.0_SRK
@@ -939,9 +939,9 @@ PROGRAM testMatrixTypes
       bool=ALL(yRealVector%b(7:1:-2) .APPROXEQA. dummyvec)
       ASSERT(bool,'BLAS_matvec(THISMATRIX,X%b,Y%b,TRANS=''T'',UPLO=''L'',DIAG=''N'',INCX_IN=-2_SIK')
       FINFO() 'Result:',yRealVector%b(7:1:-2),'Solution:',dummyvec
-      
+
       CALL testMatrixMultSquare()
-      
+
       CALL pList%clear()
       CALL pList%add('MatrixType->n',2_SNK)
       CALL pList%add('MatrixType->isSym',.FALSE.)
@@ -957,10 +957,10 @@ PROGRAM testMatrixTypes
               .AND.((thisMatrix%a(2,1)==2._SRK) &
               .AND.(thisMatrix%a(2,2)==3._SRK))
           ASSERT(bool, 'densesquare%set(...)')
-      ENDSELECT    
+      ENDSELECT
       !check matrix that hasnt been init, i,j out of bounds
       CALL thisMatrix%clear()
-      CALL thisMatrix%set(1,1,1._SRK) 
+      CALL thisMatrix%set(1,1,1._SRK)
       CALL thisMatrix%clear()
       CALL thisMatrix%init(pList)
       CALL thisMatrix%set(-1,1,1._SRK)
@@ -970,7 +970,7 @@ PROGRAM testMatrixTypes
       !no crash? good
       CALL thisMatrix%clear()
       WRITE(*,*) '  Passed: CALL densesquare%set(...)'
-      
+
       !Perform test of functionality of get function
       ![1 0 2]
       ![0 0 3]
@@ -1029,7 +1029,7 @@ PROGRAM testMatrixTypes
       !test get with uninit, make sure no crash.
       CALL thisMatrix%clear()
       SELECTTYPE(thisMatrix)
-        TYPE IS(DenseSquareMatrixType)      
+        TYPE IS(DenseSquareMatrixType)
           CALL thisMatrix%get(1,1,dummy)
           bool = dummy == 0.0_SRK
           ASSERT(bool, 'densesquare%get(...)')
@@ -1056,7 +1056,7 @@ PROGRAM testMatrixTypes
       CALL yRealVector%get(y)
       bool = ALL((y .APPROXEQ. (/2._SRK,2._SRK,2._SRK/)))
       ASSERT(bool, 'BLAS_matvec(...) -tridiag')
-      
+
       CALL thisMatrix%clear()
       SELECTTYPE(thisMatrix)
         TYPE IS(TriDiagMatrixType)
@@ -1066,7 +1066,7 @@ PROGRAM testMatrixTypes
           ASSERT(bool, 'tridiag%clear()')
           WRITE(*,*) '  Passed: CALL tridiag%clear()'
       ENDSELECT
-      !check init      
+      !check init
       CALL pList%clear()
       CALL pList%add('MatrixType->n',10_SNK)
       CALL pList%add('MatrixType->isSym',.FALSE.)
@@ -1091,7 +1091,7 @@ PROGRAM testMatrixTypes
           bool = ((thisMatrix%isInit).AND.(thisMatrix%n == 10)) &
               .AND.(thisMatrix%isSymmetric)
           ASSERT(bool, 'tridiag%init(...)')
-      ENDSELECT    
+      ENDSELECT
       CALL thisMatrix%clear()
       !test with double init (isInit==true on 2nd try)
       CALL pList%clear()
@@ -1195,7 +1195,7 @@ PROGRAM testMatrixTypes
       ENDSELECT
       !check matrix that hasnt been init, i,j out of bounds
       CALL thisMatrix%clear()
-      CALL thisMatrix%set(1,1,1._SRK) 
+      CALL thisMatrix%set(1,1,1._SRK)
       CALL thisMatrix%clear()
       CALL pList%clear()
       CALL pList%add('MatrixType->n',4_SNK)
@@ -1208,7 +1208,7 @@ PROGRAM testMatrixTypes
       !no crash? good
       CALL thisMatrix%clear()
       WRITE(*,*) '  Passed: CALL tridiag%set(...)'
-      
+
       !Perform test of functionality of get function
       ![1 2 0]
       ![4 0 3]
@@ -1264,7 +1264,7 @@ PROGRAM testMatrixTypes
       !test get with uninit, make sure no crash.
       CALL thisMatrix%clear()
       SELECTTYPE(thisMatrix)
-        TYPE IS(TriDiagMatrixType)      
+        TYPE IS(TriDiagMatrixType)
           dummy=0.0_SRK
           CALL thisMatrix%get(1,1,dummy)
           bool = dummy == 0.0_SRK
@@ -1340,9 +1340,9 @@ PROGRAM testMatrixTypes
       bool = .NOT.thisMatrix%isInit
       ASSERT(bool, 'denserect%init(...)')
       CALL thisMatrix%clear()
-      
+
       WRITE(*,*) '  Passed: CALL denserect%init(...)'
-            
+
       !check set
       !test normal use case (symmetric and nonsymmetric)
       !want to build:
@@ -1366,7 +1366,7 @@ PROGRAM testMatrixTypes
             ASSERT(bool, 'denserect%set(...)')
           ENDDO
       ENDSELECT
-      
+
       !Test BLAS_matvec
       x=1.0_SRK
       y=1.0_SRK
@@ -1418,12 +1418,12 @@ PROGRAM testMatrixTypes
       FINFO() 'BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xRealVector,BETA=2.0_SRK,Y=yRealVector)",'
       FINFO() '-denserect'
       WRITE(*,*) '  Passed: CALL BLAS_matvec(...) denserect-matrix'
-      
+
       CALL testMatrixMultRect()
-      
+
       !check matrix that hasnt been init, i,j out of bounds
       CALL thisMatrix%clear()
-      CALL thisMatrix%set(1,1,1._SRK) 
+      CALL thisMatrix%set(1,1,1._SRK)
       CALL thisMatrix%clear()
       CALL pList%clear()
       CALL pList%add('MatrixType->n',2_SNK)
@@ -1436,7 +1436,7 @@ PROGRAM testMatrixTypes
       !no crash? good
       CALL thisMatrix%clear()
       WRITE(*,*) '  Passed: CALL denserect%set(...)'
-      
+
       !Perform test of functionality of get function
       ![1 0 2]
       ![4 5 3]
@@ -1486,8 +1486,8 @@ PROGRAM testMatrixTypes
       !test get with uninit, make sure no crash.
       CALL thisMatrix%clear()
       SELECTTYPE(thisMatrix)
-        TYPE IS(DenseRectMatrixType)    
-          dummy=0.0_SRK        
+        TYPE IS(DenseRectMatrixType)
+          dummy=0.0_SRK
           CALL thisMatrix%get(1,1,dummy)
           bool = dummy == 0.0_SRK
           ASSERT(bool, 'densesquare%get(...)')
@@ -1495,11 +1495,11 @@ PROGRAM testMatrixTypes
       CALL thisMatrix%clear()
       WRITE(*,*) '  Passed: CALL densesquare%get(...)'
       DEALLOCATE(thisMatrix)
-      
-!Test for PETSc matrices (if necessary)
-#ifdef MPACT_HAVE_PETSC  
 
-!Test for PETSc sparsematrices 
+!Test for PETSc matrices (if necessary)
+#ifdef MPACT_HAVE_PETSC
+
+!Test for PETSc sparsematrices
       ALLOCATE(PETScMatrixType :: thisMatrix)
       SELECTTYPE(thisMatrix)
         TYPE IS(PETScMatrixType)
@@ -1537,7 +1537,7 @@ PROGRAM testMatrixTypes
           CALL MatGetSize(thisMatrix%a,matsize1,matsize2,ierr)
           bool = (matsize1 == 10) .AND. (matsize2 == 10)
           ASSERT(bool, 'petscsparse%init(...)')
-      ENDSELECT  
+      ENDSELECT
       CALL thisMatrix%clear()
       CALL pList%clear()
       CALL pList%add('MatrixType->n',10_SNK)
@@ -1580,7 +1580,7 @@ PROGRAM testMatrixTypes
       ASSERT(bool, 'petscsparse%init(...)')
       CALL thisMatrix%clear()
       WRITE(*,*) '  Passed: CALL petscsparse%init(...)'
-      
+
       !check set
       !test normal use case (symmetric and nonsymmetric)
       !want to build:
@@ -1601,7 +1601,7 @@ PROGRAM testMatrixTypes
           CALL MatAssemblyBegin(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
           CALL MatAssemblyEnd(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
           thisMatrix%isAssembled=.TRUE.
-          
+
           CALL MatGetValues(thisMatrix%a,1,0,1,0,dummy,ierr)
           bool = dummy==1._SRK
           ASSERT(bool, 'petscsparse%set(...)')
@@ -1613,7 +1613,7 @@ PROGRAM testMatrixTypes
           ASSERT(bool, 'petscsparse%set(...)')
       ENDSELECT
       CALL thisMatrix%clear()
-     
+
       CALL pList%clear()
       CALL pList%add('MatrixType->n',2_SNK)
       CALL pList%add('MatrixType->isSym',.FALSE.)
@@ -1630,7 +1630,7 @@ PROGRAM testMatrixTypes
           CALL MatAssemblyBegin(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
           CALL MatAssemblyEnd(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
           thisMatrix%isAssembled=.TRUE.
-          
+
           CALL MatGetValues(thisMatrix%a,1,0,1,0,dummy,ierr)
           bool = dummy==1._SRK
           ASSERT(bool, 'petscsparse%set(...)')
@@ -1643,10 +1643,10 @@ PROGRAM testMatrixTypes
           CALL MatGetValues(thisMatrix%a,1,1,1,1,dummy,ierr)
           bool = dummy==3._SRK
           ASSERT(bool, 'petscsparse%set(...)')
-      ENDSELECT    
+      ENDSELECT
       !check matrix that hasnt been init, i,j out of bounds
       CALL thisMatrix%clear()
-      CALL thisMatrix%set(1,1,1._SRK) 
+      CALL thisMatrix%set(1,1,1._SRK)
       CALL thisMatrix%clear()
       CALL thisMatrix%init(pList)
       CALL thisMatrix%set(-1,1,1._SRK)
@@ -1655,7 +1655,7 @@ PROGRAM testMatrixTypes
       CALL thisMatrix%set(1,5,1._SRK)
       !no crash? good
       WRITE(*,*) '  Passed: CALL petscsparse%set(...)'
-      
+
       CALL thisMatrix%clear()
       CALL pList%clear()
       CALL pList%add('MatrixType->n',3_SNK)
@@ -1690,7 +1690,7 @@ PROGRAM testMatrixTypes
       y=1.0_SRK
       CALL BLAS_matvec(THISMATRIX=thisMatrix,trans='t',X=x,Y=y)
       bool = ALL((y .APPROXEQ. (/6._SRK,10._SRK,12._SRK/)))
-      ASSERT(bool, 'BLAS_matvec(THISMATRIX=thisMatrix,trans='t',X=x,Y=y) -petscsparse')
+      ASSERT(bool, "BLAS_matvec(THISMATRIX=thisMatrix,trans='t',X=x,Y=y) -petscsparse")
       CALL yRealVector%set(1.0_SRK)
       CALL BLAS_matvec(THISMATRIX=thisMatrix,trans='t',X=xRealVector,Y=yRealVector)
       CALL yRealVector%get(y)
@@ -1700,7 +1700,7 @@ PROGRAM testMatrixTypes
       CALL BLAS_matvec(THISMATRIX=thisMatrix,trans='t',X=xPETScVector,Y=yPETScVector)
       CALL yPETScVector%get(y)
       bool = ALL((y .APPROXEQ. (/6._SRK,10._SRK,12._SRK/)))
-      ASSERT(bool, 'BLAS_matvec(THISMATRIX=thisMatrix,trans='t',X=xPETScVector,Y=yPETScVector) -petscsparse')
+      ASSERT(bool, "BLAS_matvec(THISMATRIX=thisMatrix,trans='t',X=xPETScVector,Y=yPETScVector) -petscsparse")
       y=1.0_SRK
       CALL BLAS_matvec(THISMATRIX=thisMatrix,X=x,BETA=2.0_SRK,Y=y)
       bool = ALL((y .APPROXEQ. (/5._SRK,9._SRK,17._SRK/)))
@@ -1755,7 +1755,7 @@ PROGRAM testMatrixTypes
       CALL yRealVector%get(y)
       bool = ALL((y .APPROXEQ. (/2._SRK,2._SRK,2._SRK/)))
       ASSERT(bool, 'BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xRealVector,BETA=2.0_SRK,Y=yRealVector)')
-      FINFO() -petscsparse
+      FINFO() '-petscsparse'
       CALL yPETScVector%set(2._SRK)
       CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xPETScVector,BETA=2.0_SRK,Y=yPETScVector) !Error check uninit
       CALL yPETScVector%get(y)
@@ -1763,7 +1763,7 @@ PROGRAM testMatrixTypes
       ASSERT(bool, 'BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xPETScVector,BETA=2.0_SRK,Y=yPETScVector)')
       FINFO() '-petscsparse'
       WRITE(*,*) '  Passed: CALL BLAS_matvec(...) petscsparse-matrix'
-      
+
       !Perform test of functionality of get function
       ![1 0 2]
       ![0 0 3]
@@ -1774,7 +1774,7 @@ PROGRAM testMatrixTypes
       CALL pList%add('MatrixType->isSym',.FALSE.)
       CALL pList%add('MatrixType->mattype',SPARSE)
       CALL pList%validate(pList,optListMat)
-      CALL thisMatrix%init(pList) ! non-symmetric (0), sparse (0) 
+      CALL thisMatrix%init(pList) ! non-symmetric (0), sparse (0)
       SELECTTYPE(thisMatrix)
         TYPE IS(PETScMatrixType)
           CALL thisMatrix%set(1,1,1._SRK)
@@ -1798,13 +1798,16 @@ PROGRAM testMatrixTypes
                  (dummyvec(2) == 0._SRK) .AND. &
                  (dummyvec(3) == 4._SRK)
           ASSERT(bool, 'petscsparse%get(...)')
-          bool = (dummyvec(4) /= 0._SRK) .AND. &
-                 (dummyvec(5) /= 0._SRK) .AND. &
-                 (dummyvec(6) /= 5._SRK)
+          bool = (dummyvec(4) == 0._SRK) .AND. &
+                 (dummyvec(5) == 0._SRK) .AND. &
+                 (dummyvec(6) == 5._SRK)
           ASSERT(bool, 'petscsparse%get(...)')
-          bool = (dummyvec(7) /= 2._SRK) .AND. &
-                 (dummyvec(8) /= 3._SRK) .AND. &
-                 (dummyvec(9) /= 6._SRK)
+          FINFO() dummyvec(4:6)
+          bool = (dummyvec(7) == 2._SRK) .AND. &
+                 (dummyvec(8) == 3._SRK) .AND. &
+                 (dummyvec(9) == 6._SRK)
+          ASSERT(bool, 'petscsparse%get(...)')
+          FINFO() dummyvec(7:9)
       ENDSELECT
       !test with out of bounds i,j, make sure no crash.
       SELECTTYPE(thisMatrix)
@@ -1822,7 +1825,7 @@ PROGRAM testMatrixTypes
       !test get with uninit, make sure no crash.
       CALL thisMatrix%clear()
       SELECTTYPE(thisMatrix)
-        TYPE IS(PETScMatrixType)      
+        TYPE IS(PETScMatrixType)
           CALL thisMatrix%get(1,1,dummy)
           bool = dummy == 0.0_SRK
           ASSERT(bool, 'petscsparse%get(...)')
@@ -1831,7 +1834,7 @@ PROGRAM testMatrixTypes
       WRITE(*,*) '  Passed: CALL petscsparse%get(...)'
       DEALLOCATE(thisMatrix)
 
-!Test for PETSc dense square matrices        
+!Test for PETSc dense square matrices
       ALLOCATE(PETScMatrixType :: thisMatrix)
       SELECTTYPE(thisMatrix)
         TYPE IS(PETScMatrixType)
@@ -1870,7 +1873,7 @@ PROGRAM testMatrixTypes
           CALL MatGetSize(thisMatrix%a,matsize1,matsize2,ierr)
           bool = (matsize1 == 10) .AND. (matsize2 == 10)
           ASSERT(bool, 'petscdense%init(...)')
-      ENDSELECT  
+      ENDSELECT
       CALL thisMatrix%clear()
       CALL pList%clear()
       CALL pList%add('MatrixType->n',10_SNK)
@@ -1903,7 +1906,7 @@ PROGRAM testMatrixTypes
       ENDSELECT
       CALL thisMatrix%clear()
       WRITE(*,*) '  Passed: CALL petscdense%init(...)'
-      
+
       !check set
       !test normal use case (symmetric and nonsymmetric)
       !want to build:
@@ -1924,7 +1927,7 @@ PROGRAM testMatrixTypes
           CALL MatAssemblyBegin(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
           CALL MatAssemblyEnd(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
           thisMatrix%isAssembled=.TRUE.
-          
+
           CALL MatGetValues(thisMatrix%a,1,0,1,0,dummy,ierr)
           bool = dummy==1._SRK
           ASSERT(bool, 'petscdense%set(...)')
@@ -1936,7 +1939,7 @@ PROGRAM testMatrixTypes
           ASSERT(bool, 'petscdense%set(...)')
       ENDSELECT
       CALL thisMatrix%clear()
-      
+
       CALL pList%clear()
       CALL pList%add('MatrixType->n',2_SNK)
       CALL pList%add('MatrixType->isSym',.FALSE.)
@@ -1953,7 +1956,7 @@ PROGRAM testMatrixTypes
           CALL MatAssemblyBegin(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
           CALL MatAssemblyEnd(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
           thisMatrix%isAssembled=.TRUE.
-          
+
           CALL MatGetValues(thisMatrix%a,1,0,1,0,dummy,ierr)
           bool = dummy==1._SRK
           ASSERT(bool, 'petscdense%set(...)')
@@ -1966,10 +1969,10 @@ PROGRAM testMatrixTypes
           CALL MatGetValues(thisMatrix%a,1,1,1,1,dummy,ierr)
           bool = dummy==3._SRK
           ASSERT(bool, 'petscdense%set(...)')
-      ENDSELECT    
+      ENDSELECT
       !check matrix that hasnt been init, i,j out of bounds
       CALL thisMatrix%clear()
-      CALL thisMatrix%set(1,1,1._SRK) 
+      CALL thisMatrix%set(1,1,1._SRK)
       CALL thisMatrix%clear()
       CALL pList%clear()
       CALL pList%add('MatrixType->n',2_SNK)
@@ -1983,7 +1986,7 @@ PROGRAM testMatrixTypes
       CALL thisMatrix%set(1,5,1._SRK)
       !no crash? good
       WRITE(*,*) '  Passed: CALL petscdense%set(...)'
-      
+
       !Test BLAS_matvec
       CALL thisMatrix%clear()
       CALL pList%clear()
@@ -2019,7 +2022,7 @@ PROGRAM testMatrixTypes
       y=1.0_SRK
       CALL BLAS_matvec(THISMATRIX=thisMatrix,trans='t',X=x,Y=y)
       bool = ALL((y .APPROXEQ. (/6._SRK,10._SRK,12._SRK/)))
-      ASSERT(bool, 'BLAS_matvec(THISMATRIX=thisMatrix,trans='t',X=x,Y=y) -petscdense')
+      ASSERT(bool, "BLAS_matvec(THISMATRIX=thisMatrix,trans='t',X=x,Y=y) -petscdense")
       CALL yRealVector%set(1.0_SRK)
       CALL BLAS_matvec(THISMATRIX=thisMatrix,trans='t',X=xRealVector,Y=yRealVector)
       CALL yRealVector%get(y)
@@ -2092,7 +2095,7 @@ PROGRAM testMatrixTypes
       ASSERT(bool, 'BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xPETScVector,BETA=2.0_SRK,Y=yPETScVector)')
       FINFO() '-petscdense'
       WRITE(*,*) '  Passed: CALL BLAS_matvec(...) petscdense-matrix'
-      
+
       !Perform test of functionality of get function
       ![1 0 2]
       ![0 0 3]
@@ -2152,15 +2155,15 @@ PROGRAM testMatrixTypes
       !test get with uninit, make sure no crash.
       CALL thisMatrix%clear()
       SELECTTYPE(thisMatrix)
-        TYPE IS(PETScMatrixType)      
+        TYPE IS(PETScMatrixType)
           CALL thisMatrix%get(1,1,dummy)
           bool = dummy == 0.0_SRK
           ASSERT(bool, 'petscdensesquare%get(...)')
       ENDSELECT
       CALL thisMatrix%clear()
-      
+
       WRITE(*,*) '  Passed: CALL petscdensesquare%get(...)'
-      
+
       DEALLOCATE(thisMatrix)
       CALL xPETScVector%clear()
       CALL yPETScVector%clear()
@@ -2175,7 +2178,7 @@ PROGRAM testMatrixTypes
       CLASS(MatrixType),ALLOCATABLE :: bmat
       CLASS(MatrixType),ALLOCATABLE :: cmat
       INTEGER(SIK) :: i,j
-      REAL(SRK) :: ALPHA,BETA,dummy  
+      REAL(SRK) :: ALPHA,BETA,dummy
       LOGICAL(SBK) :: bool
 
 #ifdef MPACT_HAVE_PETSC
@@ -2196,7 +2199,7 @@ PROGRAM testMatrixTypes
       CALL thisMtrx%set(2,2,1._SRK)
       CALL thisMtrx%set(2,3,1._SRK)
       CALL thisMtrx%set(3,3,1._SRK)
-      
+
       ALLOCATE(PETScMatrixType :: bmat)
       ALLOCATE(PETScMatrixType :: cmat)
       CALL bmat%init(pList)  !symmetric
@@ -2213,7 +2216,7 @@ PROGRAM testMatrixTypes
       CALL cmat%set(2,2,3._SRK)
       CALL cmat%set(2,3,3._SRK)
       CALL cmat%set(3,3,3._SRK)
-      
+
       BETA=1.0_SRK
       ALPHA=1.0_SRK
       ! A: Square  B: Square  C: Square  alpha & beta
@@ -2223,7 +2226,7 @@ PROGRAM testMatrixTypes
           DO i=1,cmat%n
             DO j=1,cmat%n
               CALL cmat%get(i,j,dummy)
-              bool = (dummy .APPROXEQ. 4._SRK) 
+              bool = (dummy .APPROXEQ. 4._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) -All PETSc')
             ENDDO
           ENDDO
@@ -2239,7 +2242,7 @@ PROGRAM testMatrixTypes
           DO i=1,cmat%n
             DO j=1,cmat%n
               CALL cmat%get(i,j,dummy)
-              bool = (dummy .APPROXEQ. 5._SRK) 
+              bool = (dummy .APPROXEQ. 5._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) -All PETSc')
             ENDDO
           ENDDO
@@ -2255,7 +2258,7 @@ PROGRAM testMatrixTypes
           DO i=1,cmat%n
             DO j=1,cmat%n
               CALL cmat%get(i,j,dummy)
-              bool = (dummy .APPROXEQ. 6._SRK) 
+              bool = (dummy .APPROXEQ. 6._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) -All PETSc')
             ENDDO
           ENDDO
@@ -2271,7 +2274,7 @@ PROGRAM testMatrixTypes
           DO i=1,cmat%n
             DO j=1,cmat%n
               CALL cmat%get(i,j,dummy)
-              bool = (dummy .APPROXEQ. 7._SRK) 
+              bool = (dummy .APPROXEQ. 7._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) -All PETSc')
             ENDDO
           ENDDO
@@ -2295,7 +2298,7 @@ PROGRAM testMatrixTypes
       INTEGER(SIK) :: i,j
       REAL(SRK) :: ALPHA,BETA,dummy
       LOGICAL(SBK) :: bool
-      
+
       !Test BLAS_matmult
       !
       !1.) A: Square  B: Square  C: Square     ----------------------------
@@ -2312,7 +2315,7 @@ PROGRAM testMatrixTypes
       CALL thisMtrx%set(2,2,1._SRK)
       CALL thisMtrx%set(2,3,1._SRK)
       CALL thisMtrx%set(3,3,1._SRK)
-      
+
       ALLOCATE(DenseSquareMatrixType :: bmat)
       ALLOCATE(DenseSquareMatrixType :: cmat)
       CALL bmat%init(pList)  !symmetric
@@ -2329,7 +2332,7 @@ PROGRAM testMatrixTypes
       CALL cmat%set(2,2,3._SRK)
       CALL cmat%set(2,3,3._SRK)
       CALL cmat%set(3,3,3._SRK)
-      
+
       BETA=1.0_SRK
       ALPHA=1.0_SRK
       ! A: Square  B: Square  C: Square  alpha & beta
@@ -2338,7 +2341,7 @@ PROGRAM testMatrixTypes
         TYPE IS(DenseSquareMatrixType)
           DO i=1,cmat%n
             DO j=1,cmat%n
-              bool = (cmat%a(i,j) .APPROXEQ. 4._SRK) 
+              bool = (cmat%a(i,j) .APPROXEQ. 4._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) -DS DS DS')
             ENDDO
           ENDDO
@@ -2353,7 +2356,7 @@ PROGRAM testMatrixTypes
         TYPE IS(DenseSquareMatrixType)
           DO i=1,cmat%n
             DO j=1,cmat%n
-              bool = (cmat%a(i,j) .APPROXEQ. 5._SRK) 
+              bool = (cmat%a(i,j) .APPROXEQ. 5._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) -DS DS DS')
             ENDDO
           ENDDO
@@ -2368,7 +2371,7 @@ PROGRAM testMatrixTypes
         TYPE IS(DenseSquareMatrixType)
           DO i=1,cmat%n
             DO j=1,cmat%n
-              bool = (cmat%a(i,j) .APPROXEQ. 6._SRK) 
+              bool = (cmat%a(i,j) .APPROXEQ. 6._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) -DS DS DS')
             ENDDO
           ENDDO
@@ -2383,7 +2386,7 @@ PROGRAM testMatrixTypes
         TYPE IS(DenseSquareMatrixType)
           DO i=1,cmat%n
             DO j=1,cmat%n
-              bool = (cmat%a(i,j) .APPROXEQ. 7._SRK) 
+              bool = (cmat%a(i,j) .APPROXEQ. 7._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) -DS DS DS')
             ENDDO
           ENDDO
@@ -2402,7 +2405,7 @@ PROGRAM testMatrixTypes
       CALL pList%clear()
       CALL pList%add('MatrixType->n',3_SNK)
       CALL pList%add('MatrixType->m',3_SNK)
-      CALL cmat%init(pList)  
+      CALL cmat%init(pList)
       CALL cmat%set(1,1,3._SRK)
       CALL cmat%set(1,2,3._SRK)
       CALL cmat%set(1,3,3._SRK)
@@ -2412,14 +2415,14 @@ PROGRAM testMatrixTypes
       CALL cmat%set(3,1,3._SRK)
       CALL cmat%set(3,2,3._SRK)
       CALL cmat%set(3,3,3._SRK)
-      
+
       ! A: Square  B: Square  C: Rect  alpha & beta
       CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA)
       SELECTTYPE(cmat)
         TYPE IS(DenseRectMatrixType)
           DO i=1,cmat%n
             DO j=1,cmat%n
-              bool = (cmat%a(i,j) .APPROXEQ. 4._SRK) 
+              bool = (cmat%a(i,j) .APPROXEQ. 4._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) -DS DS DR')
             ENDDO
           ENDDO
@@ -2434,7 +2437,7 @@ PROGRAM testMatrixTypes
         TYPE IS(DenseRectMatrixType)
           DO i=1,cmat%n
             DO j=1,cmat%n
-              bool = (cmat%a(i,j) .APPROXEQ. 5._SRK) 
+              bool = (cmat%a(i,j) .APPROXEQ. 5._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) -DS DS DR')
             ENDDO
           ENDDO
@@ -2449,7 +2452,7 @@ PROGRAM testMatrixTypes
         TYPE IS(DenseRectMatrixType)
           DO i=1,cmat%n
             DO j=1,cmat%n
-              bool = (cmat%a(i,j) .APPROXEQ. 6._SRK) 
+              bool = (cmat%a(i,j) .APPROXEQ. 6._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) -DS DS DR')
             ENDDO
           ENDDO
@@ -2464,7 +2467,7 @@ PROGRAM testMatrixTypes
         TYPE IS(DenseRectMatrixType)
           DO i=1,cmat%n
             DO j=1,cmat%n
-              bool = (cmat%a(i,j) .APPROXEQ. 7._SRK) 
+              bool = (cmat%a(i,j) .APPROXEQ. 7._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) -DS DS DR')
             ENDDO
           ENDDO
@@ -2474,7 +2477,7 @@ PROGRAM testMatrixTypes
           STOP 666
       ENDSELECT
       WRITE(*,*) '  Passed: CALL BLAS_matmult(...) A=DS B=DS C=DR'
-    
+
       !
       !3.) A: Square  B: Rect  C: Square    ----------------------------
       !
@@ -2497,7 +2500,7 @@ PROGRAM testMatrixTypes
       CALL pList%clear()
       CALL pList%add('MatrixType->n',3_SNK)
       CALL pList%add('MatrixType->m',3_SNK)
-      CALL bmat%init(pList)  
+      CALL bmat%init(pList)
       CALL bmat%set(1,1,1._SRK)
       CALL bmat%set(1,2,0._SRK)
       CALL bmat%set(1,3,0._SRK)
@@ -2507,14 +2510,14 @@ PROGRAM testMatrixTypes
       CALL bmat%set(3,1,0._SRK)
       CALL bmat%set(3,2,0._SRK)
       CALL bmat%set(3,3,1._SRK)
-      
+
       ! A: Square  B: Rect  C: Square  alpha & beta
       CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA)
       SELECTTYPE(cmat)
         TYPE IS(DenseSquareMatrixType)
           DO i=1,cmat%n
             DO j=1,cmat%n
-              bool = (cmat%a(i,j) .APPROXEQ. 4._SRK) 
+              bool = (cmat%a(i,j) .APPROXEQ. 4._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) -DS DR DS')
             ENDDO
           ENDDO
@@ -2529,7 +2532,7 @@ PROGRAM testMatrixTypes
         TYPE IS(DenseSquareMatrixType)
           DO i=1,cmat%n
             DO j=1,cmat%n
-              bool = (cmat%a(i,j) .APPROXEQ. 5._SRK) 
+              bool = (cmat%a(i,j) .APPROXEQ. 5._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) -DS DR DS')
             ENDDO
           ENDDO
@@ -2544,7 +2547,7 @@ PROGRAM testMatrixTypes
         TYPE IS(DenseSquareMatrixType)
           DO i=1,cmat%n
             DO j=1,cmat%n
-              bool = (cmat%a(i,j) .APPROXEQ. 6._SRK) 
+              bool = (cmat%a(i,j) .APPROXEQ. 6._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) -DS DR DS')
             ENDDO
           ENDDO
@@ -2559,7 +2562,7 @@ PROGRAM testMatrixTypes
         TYPE IS(DenseSquareMatrixType)
           DO i=1,cmat%n
             DO j=1,cmat%n
-              bool = (cmat%a(i,j) .APPROXEQ. 7._SRK) 
+              bool = (cmat%a(i,j) .APPROXEQ. 7._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) -DS DR DS')
             ENDDO
           ENDDO
@@ -2578,7 +2581,7 @@ PROGRAM testMatrixTypes
       CALL pList%clear()
       CALL pList%add('MatrixType->n',3_SNK)
       CALL pList%add('MatrixType->m',3_SNK)
-      CALL cmat%init(pList)  
+      CALL cmat%init(pList)
       CALL cmat%set(1,1,3._SRK)
       CALL cmat%set(1,2,3._SRK)
       CALL cmat%set(1,3,3._SRK)
@@ -2588,14 +2591,14 @@ PROGRAM testMatrixTypes
       CALL cmat%set(3,1,3._SRK)
       CALL cmat%set(3,2,3._SRK)
       CALL cmat%set(3,3,3._SRK)
-      
+
       ! A: Square  B: Rect  C: Rect  alpha & beta
       CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA)
       SELECTTYPE(cmat)
         TYPE IS(DenseRectMatrixType)
           DO i=1,cmat%n
             DO j=1,cmat%n
-              bool = (cmat%a(i,j) .APPROXEQ. 4._SRK) 
+              bool = (cmat%a(i,j) .APPROXEQ. 4._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) -DS DR DR')
             ENDDO
           ENDDO
@@ -2610,7 +2613,7 @@ PROGRAM testMatrixTypes
         TYPE IS(DenseRectMatrixType)
           DO i=1,cmat%n
             DO j=1,cmat%n
-              bool = (cmat%a(i,j) .APPROXEQ. 5._SRK) 
+              bool = (cmat%a(i,j) .APPROXEQ. 5._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) -DS DR DR')
             ENDDO
           ENDDO
@@ -2625,7 +2628,7 @@ PROGRAM testMatrixTypes
         TYPE IS(DenseRectMatrixType)
           DO i=1,cmat%n
             DO j=1,cmat%n
-              bool = (cmat%a(i,j) .APPROXEQ. 6._SRK) 
+              bool = (cmat%a(i,j) .APPROXEQ. 6._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) -DS DR DR')
             ENDDO
           ENDDO
@@ -2640,7 +2643,7 @@ PROGRAM testMatrixTypes
         TYPE IS(DenseRectMatrixType)
           DO i=1,cmat%n
             DO j=1,cmat%n
-              bool = (cmat%a(i,j) .APPROXEQ. 7._SRK) 
+              bool = (cmat%a(i,j) .APPROXEQ. 7._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) -DS DR DR')
             ENDDO
           ENDDO
@@ -2673,7 +2676,7 @@ PROGRAM testMatrixTypes
       CALL thisMtrx%set(2,2,1._SRK)
       CALL thisMtrx%set(2,3,1._SRK)
       CALL thisMtrx%set(3,3,1._SRK)
-      
+
       ALLOCATE(PETScMatrixType :: bmat)
       ALLOCATE(PETScMatrixType :: cmat)
       CALL bmat%init(pList)  !symmetric
@@ -2690,7 +2693,7 @@ PROGRAM testMatrixTypes
       CALL cmat%set(2,2,3._SRK)
       CALL cmat%set(2,3,3._SRK)
       CALL cmat%set(3,3,3._SRK)
-      
+
       BETA=1.0_SRK
       ALPHA=1.0_SRK
       ! A: Square  B: Square  C: Square  alpha & beta
@@ -2700,7 +2703,7 @@ PROGRAM testMatrixTypes
           DO i=1,cmat%n
             DO j=1,cmat%n
               CALL cmat%get(i,j,dummy)
-              bool = (dummy .APPROXEQ. 4._SRK) 
+              bool = (dummy .APPROXEQ. 4._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) -All PETSc')
             ENDDO
           ENDDO
@@ -2716,7 +2719,7 @@ PROGRAM testMatrixTypes
           DO i=1,cmat%n
             DO j=1,cmat%n
               CALL cmat%get(i,j,dummy)
-              bool = (dummy .APPROXEQ. 5._SRK) 
+              bool = (dummy .APPROXEQ. 5._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) -All PETSc')
             ENDDO
           ENDDO
@@ -2732,7 +2735,7 @@ PROGRAM testMatrixTypes
           DO i=1,cmat%n
             DO j=1,cmat%n
               CALL cmat%get(i,j,dummy)
-              bool = (dummy .APPROXEQ. 6._SRK) 
+              bool = (dummy .APPROXEQ. 6._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) -All PETSc')
             ENDDO
           ENDDO
@@ -2748,7 +2751,7 @@ PROGRAM testMatrixTypes
           DO i=1,cmat%n
             DO j=1,cmat%n
               CALL cmat%get(i,j,dummy)
-              bool = (dummy .APPROXEQ. 7._SRK) 
+              bool = (dummy .APPROXEQ. 7._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) -All PETSc')
             ENDDO
           ENDDO
@@ -2762,9 +2765,9 @@ PROGRAM testMatrixTypes
       CALL cmat%clear()
       WRITE(*,*) '  Passed: CALL BLAS_matmult(...) A=PETSC B=PETSC C=PETSC'
 #endif
-      
+
     ENDSUBROUTINE  testMatrixMultSquare
-    
+
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testMatrixMultRect()
@@ -2774,7 +2777,7 @@ PROGRAM testMatrixTypes
       INTEGER(SIK) :: i,j
       REAL(SRK) :: ALPHA,BETA
       LOGICAL(SBK) :: bool
-      
+
       !Test BLAS_matmult
       !
       !1.) A: Rect  B: Square  C: Square     ----------------------------
@@ -2794,7 +2797,7 @@ PROGRAM testMatrixTypes
       CALL thisMtrx%set(3,1,1._SRK)
       CALL thisMtrx%set(3,2,1._SRK)
       CALL thisMtrx%set(3,3,1._SRK)
-      
+
       ALLOCATE(DenseSquareMatrixType :: bmat)
       ALLOCATE(DenseSquareMatrixType :: cmat)
       CALL pList%clear()
@@ -2809,7 +2812,7 @@ PROGRAM testMatrixTypes
       CALL bmat%set(3,3,1._SRK)
       CALL pList%clear()
       CALL pList%add('MatrixType->n',3_SNK)
-      CALL pList%add('MatrixType->isSym',.TRUE.) 
+      CALL pList%add('MatrixType->isSym',.TRUE.)
       CALL cmat%init(pList)  !symmetric
       CALL cmat%set(1,1,3._SRK)
       CALL cmat%set(1,2,3._SRK)
@@ -2817,7 +2820,7 @@ PROGRAM testMatrixTypes
       CALL cmat%set(2,2,3._SRK)
       CALL cmat%set(2,3,3._SRK)
       CALL cmat%set(3,3,3._SRK)
-      
+
       BETA=1.0_SRK
       ALPHA=1.0_SRK
       ! A: Rect  B: Square  C: Square  alpha & beta
@@ -2826,7 +2829,7 @@ PROGRAM testMatrixTypes
         TYPE IS(DenseSquareMatrixType)
           DO i=1,cmat%n
             DO j=1,cmat%n
-              bool = (cmat%a(i,j) .APPROXEQ. 4._SRK) 
+              bool = (cmat%a(i,j) .APPROXEQ. 4._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) -DR DS DS')
             ENDDO
           ENDDO
@@ -2841,7 +2844,7 @@ PROGRAM testMatrixTypes
         TYPE IS(DenseSquareMatrixType)
           DO i=1,cmat%n
             DO j=1,cmat%n
-              bool = (cmat%a(i,j) .APPROXEQ. 5._SRK) 
+              bool = (cmat%a(i,j) .APPROXEQ. 5._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) -DR DS DS')
             ENDDO
           ENDDO
@@ -2856,7 +2859,7 @@ PROGRAM testMatrixTypes
         TYPE IS(DenseSquareMatrixType)
           DO i=1,cmat%n
             DO j=1,cmat%n
-              bool = (cmat%a(i,j) .APPROXEQ. 6._SRK) 
+              bool = (cmat%a(i,j) .APPROXEQ. 6._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) -DR DS DS')
             ENDDO
           ENDDO
@@ -2871,7 +2874,7 @@ PROGRAM testMatrixTypes
         TYPE IS(DenseSquareMatrixType)
           DO i=1,cmat%n
             DO j=1,cmat%n
-              bool = (cmat%a(i,j) .APPROXEQ. 7._SRK) 
+              bool = (cmat%a(i,j) .APPROXEQ. 7._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) -DR DS DS')
             ENDDO
           ENDDO
@@ -2890,7 +2893,7 @@ PROGRAM testMatrixTypes
       CALL pList%clear()
       CALL pList%add('MatrixType->n',3_SNK)
       CALL pList%add('MatrixType->m',3_SNK)
-      CALL cmat%init(pList)  
+      CALL cmat%init(pList)
       CALL cmat%set(1,1,3._SRK)
       CALL cmat%set(1,2,3._SRK)
       CALL cmat%set(1,3,3._SRK)
@@ -2900,14 +2903,14 @@ PROGRAM testMatrixTypes
       CALL cmat%set(3,1,3._SRK)
       CALL cmat%set(3,2,3._SRK)
       CALL cmat%set(3,3,3._SRK)
-      
+
       ! A: Rect  B: Square  C: Rect  alpha & beta
       CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA)
       SELECTTYPE(cmat)
         TYPE IS(DenseRectMatrixType)
           DO i=1,cmat%n
             DO j=1,cmat%n
-              bool = (cmat%a(i,j) .APPROXEQ. 4._SRK) 
+              bool = (cmat%a(i,j) .APPROXEQ. 4._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) -DR DS DR')
             ENDDO
           ENDDO
@@ -2922,7 +2925,7 @@ PROGRAM testMatrixTypes
         TYPE IS(DenseRectMatrixType)
           DO i=1,cmat%n
             DO j=1,cmat%n
-              bool = (cmat%a(i,j) .APPROXEQ. 5._SRK) 
+              bool = (cmat%a(i,j) .APPROXEQ. 5._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) -DR DS DR')
             ENDDO
           ENDDO
@@ -2937,7 +2940,7 @@ PROGRAM testMatrixTypes
         TYPE IS(DenseRectMatrixType)
           DO i=1,cmat%n
             DO j=1,cmat%n
-              bool = (cmat%a(i,j) .APPROXEQ. 6._SRK) 
+              bool = (cmat%a(i,j) .APPROXEQ. 6._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) -DR DS DR')
             ENDDO
           ENDDO
@@ -2952,7 +2955,7 @@ PROGRAM testMatrixTypes
         TYPE IS(DenseRectMatrixType)
           DO i=1,cmat%n
             DO j=1,cmat%n
-              bool = (cmat%a(i,j) .APPROXEQ. 7._SRK) 
+              bool = (cmat%a(i,j) .APPROXEQ. 7._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) -DR DS DR')
             ENDDO
           ENDDO
@@ -2962,7 +2965,7 @@ PROGRAM testMatrixTypes
           STOP 666
       ENDSELECT
       WRITE(*,*) '  Passed: CALL BLAS_matmult(...) A=DR B=DS C=DR'
-    
+
       !
       !3.) A: Rect  B: Rect  C: Square    ----------------------------
       !
@@ -2985,7 +2988,7 @@ PROGRAM testMatrixTypes
       CALL pList%clear()
       CALL pList%add('MatrixType->n',3_SNK)
       CALL pList%add('MatrixType->m',3_SNK)
-      CALL bmat%init(pList)  
+      CALL bmat%init(pList)
       CALL bmat%set(1,1,1._SRK)
       CALL bmat%set(1,2,0._SRK)
       CALL bmat%set(1,3,0._SRK)
@@ -2995,14 +2998,14 @@ PROGRAM testMatrixTypes
       CALL bmat%set(3,1,0._SRK)
       CALL bmat%set(3,2,0._SRK)
       CALL bmat%set(3,3,1._SRK)
-      
+
       ! A: Rect  B: Rect  C: Square  alpha & beta
       CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA)
       SELECTTYPE(cmat)
         TYPE IS(DenseSquareMatrixType)
           DO i=1,cmat%n
             DO j=1,cmat%n
-              bool = (cmat%a(i,j) .APPROXEQ. 4._SRK) 
+              bool = (cmat%a(i,j) .APPROXEQ. 4._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) -DR DR DS')
             ENDDO
           ENDDO
@@ -3017,7 +3020,7 @@ PROGRAM testMatrixTypes
         TYPE IS(DenseSquareMatrixType)
           DO i=1,cmat%n
             DO j=1,cmat%n
-              bool = (cmat%a(i,j) .APPROXEQ. 5._SRK) 
+              bool = (cmat%a(i,j) .APPROXEQ. 5._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) -DR DR DS')
             ENDDO
           ENDDO
@@ -3032,7 +3035,7 @@ PROGRAM testMatrixTypes
         TYPE IS(DenseSquareMatrixType)
           DO i=1,cmat%n
             DO j=1,cmat%n
-              bool = (cmat%a(i,j) .APPROXEQ. 6._SRK) 
+              bool = (cmat%a(i,j) .APPROXEQ. 6._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) -DR DR DS')
             ENDDO
           ENDDO
@@ -3065,7 +3068,7 @@ PROGRAM testMatrixTypes
       CALL pList%clear()
       CALL pList%add('MatrixType->n',3_SNK)
       CALL pList%add('MatrixType->m',3_SNK)
-      CALL cmat%init(pList)  
+      CALL cmat%init(pList)
       CALL cmat%set(1,1,3._SRK)
       CALL cmat%set(1,2,3._SRK)
       CALL cmat%set(1,3,3._SRK)
@@ -3075,14 +3078,14 @@ PROGRAM testMatrixTypes
       CALL cmat%set(3,1,3._SRK)
       CALL cmat%set(3,2,3._SRK)
       CALL cmat%set(3,3,3._SRK)
-      
+
       ! A: Rect  B: Rect  C: Rect  alpha & beta
       CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA)
       SELECTTYPE(cmat)
         TYPE IS(DenseRectMatrixType)
           DO i=1,cmat%n
             DO j=1,cmat%n
-              bool = (cmat%a(i,j) .APPROXEQ. 4._SRK) 
+              bool = (cmat%a(i,j) .APPROXEQ. 4._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) -DR DR DR')
             ENDDO
           ENDDO
@@ -3097,7 +3100,7 @@ PROGRAM testMatrixTypes
         TYPE IS(DenseRectMatrixType)
           DO i=1,cmat%n
             DO j=1,cmat%n
-              bool = (cmat%a(i,j) .APPROXEQ. 5._SRK) 
+              bool = (cmat%a(i,j) .APPROXEQ. 5._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) -DR DR DR')
             ENDDO
           ENDDO
@@ -3112,7 +3115,7 @@ PROGRAM testMatrixTypes
         TYPE IS(DenseRectMatrixType)
           DO i=1,cmat%n
             DO j=1,cmat%n
-              bool = (cmat%a(i,j) .APPROXEQ. 6._SRK) 
+              bool = (cmat%a(i,j) .APPROXEQ. 6._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) -DR DR DR')
             ENDDO
           ENDDO
@@ -3127,7 +3130,7 @@ PROGRAM testMatrixTypes
         TYPE IS(DenseRectMatrixType)
           DO i=1,cmat%n
             DO j=1,cmat%n
-              bool = (cmat%a(i,j) .APPROXEQ. 7._SRK) 
+              bool = (cmat%a(i,j) .APPROXEQ. 7._SRK)
               ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) -DR DR DR')
             ENDDO
           ENDDO
