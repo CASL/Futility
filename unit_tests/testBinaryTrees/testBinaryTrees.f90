@@ -41,107 +41,51 @@ PROGRAM testBinaryTrees
   CALL BurnBinaryTree(t)
   CALL CreateBinaryTreeRmDup(t,(/4,8,4,6,7,2,1/))
   ASSERT(t%val == 4, 'CreateBinaryTreeRmDup(t,...)')
-!  IF(t%val /= 4) THEN
-!    WRITE(*,*) 'CALL CreateBinaryTreeRmDup(t,...) FAILED!'
-!    STOP 666
-!  ELSE
   WRITE(*,*) '  Passed: CALL CreateBinaryTreeRmDup(t,...)'
-!  ENDIF
   CALL BurnBinaryTree(t)
   CALL CreateBinaryTree(t,(/8,3,4,6,7,2,1/))
   ASSERT(t%val == 8, 'CreateBinaryTree(t,...)')
-!  IF(t%val /= 8) THEN
-!    WRITE(*,*) 'CALL CreateBinaryTree(t,...) FAILED!'
-!    STOP 666
-!  ELSE
   WRITE(*,*) '  Passed: CALL CreateBinaryTree(t,...)'
-!  ENDIF
   CALL CreateBinaryTree(t,(/8,3,4,6,7,2,1/))
   bool = .NOT.(.NOT.t%match(2) .AND. t%match(10) .AND. .NOT.t%match(4))
   ASSERT(bool, 't%match(...)')
-!  IF(.NOT.t%match(2) .AND. t%match(10) .AND. .NOT.t%match(4)) THEN
-!    WRITE(*,*) 't%match(...) FAILED!'
-!    STOP 666
-!  ELSE
   WRITE(*,*) '  Passed: t%match(...)'
-!  ENDIF
 
   CALL BurnBinaryTree(t)
   ASSERT(.NOT.ASSOCIATED(t), 'BurnBinaryTree(t)')
-!  IF(ASSOCIATED(t)) THEN
-!    WRITE(*,*) 'CALL BurnBinaryTree(t) FAILED!'
-!    STOP 666
-!  ELSE
   WRITE(*,*) '  Passed: CALL BurnBinaryTree(t)'
-!  ENDIF
   WRITE(*,*) '---------------------------------------------------'
   
   WRITE(*,*) 'TESTING INDEXED BINARY TREE'
   CALL CreateBinaryTreeRmDup(t2,(/4,8,4,6,7,2,1/),1,7)
   ASSERT(t2%val == 4, 'CreateBinaryTreeRmDup(t,...)')
-!  IF(t2%val /= 4) THEN
-!    WRITE(*,*) 'CALL CreateBinaryTreeRmDup(t,...) FAILED!'
-!    STOP 666
-!  ELSE
   WRITE(*,*) '  Passed: CALL CreateBinaryTreeRmDup(t,...)'
-!  ENDIF
   CALL BurnBinaryTree(t2)
   CALL CreateBinaryTree(t2,(/8,3,4,6,7,2,1/))
   ASSERT(t2%val == 8, 'CreateBinaryTree(t2,...)')
-!  IF(t2%val /= 8) THEN
-!    WRITE(*,*) 'CALL CreateBinaryTree(t2,...) FAILED!'
-!    STOP 666
-!  ELSE
   WRITE(*,*) '  Passed: CALL CreateBinaryTree(t2,...)'
-!  ENDIF
   CALL CreateBinaryTree(t2,(/8,3,4,6,7,2,1/),1,7)
   bool = .NOT.(.NOT.t2%match(2) .AND. t2%match(10) .AND. .NOT.t2%match(4))
   ASSERT(bool, 't2%match(...)')
-!  IF(.NOT.t2%match(2) .AND. t2%match(10) .AND. .NOT.t2%match(4)) THEN
-!    WRITE(*,*) 't2%match(...) FAILED!'
-!    STOP 666
-!  ELSE
   WRITE(*,*) '  Passed: t2%match(...)'
-!  ENDIF
   bool = .NOT.(t2%findIndex(4) /= 3 .AND. t2%findIndex(2) /= 6 .AND. &
-     t2%findIndex(10) /= -1)
+               t2%findIndex(10) /= -1)
   ASSERT(bool, 't2%findIndex(...)')
-!  IF(t2%findIndex(4) /= 3 .AND. t2%findIndex(2) /= 6 .AND. &
-!     t2%findIndex(10) /= -1) THEN
-!    WRITE(*,*) 't2%findIndex(...) FAILED!'
-!    STOP 666
-!  ELSE
   WRITE(*,*) '  Passed: t2%findIndex(...)'
-!  ENDIF
 
   CALL BurnBinaryTree(t2)
   ASSERT(.NOT.ASSOCIATED(t), 'BurnBinaryTree(t2)')
-!  IF(ASSOCIATED(t)) THEN
-!    WRITE(*,*) 'CALL BurnBinaryTree(t2) FAILED!'
-!    STOP 666
-!  ELSE
   WRITE(*,*) '  Passed: CALL BurnBinaryTree(t2)'
-!  ENDIF
   
   CALL SortedBinaryTree(t2,1,(/1,2,3,4,5,6/))
   bool = .NOT.((t2%val /= 4 .AND. t2%index /= 4) .AND. &
-     (t2%left%val /= 2 .AND. t2%left%index /= 2) .AND. &
-     (t2%right%val /= 6 .AND. t2%right%index /= 6) .AND. &
-     (t2%left%left%val /= 1 .AND. t2%left%left%index /= 1) .AND. &
-     (t2%left%right%val /= 3 .AND. t2%left%right%index /= 3) .AND. &
-     (t2%right%left%val /= 5 .AND. t2%right%left%index /= 5))
+               (t2%left%val /= 2 .AND. t2%left%index /= 2) .AND. &
+               (t2%right%val /= 6 .AND. t2%right%index /= 6) .AND. &
+               (t2%left%left%val /= 1 .AND. t2%left%left%index /= 1) .AND. &
+               (t2%left%right%val /= 3 .AND. t2%left%right%index /= 3) .AND. &
+               (t2%right%left%val /= 5 .AND. t2%right%left%index /= 5))
   ASSERT(bool, 'SortedBinaryTree(...)')
-!  IF((t2%val /= 4 .AND. t2%index /= 4) .AND. &
-!     (t2%left%val /= 2 .AND. t2%left%index /= 2) .AND. &
-!     (t2%right%val /= 6 .AND. t2%right%index /= 6) .AND. &
-!     (t2%left%left%val /= 1 .AND. t2%left%left%index /= 1) .AND. &
-!     (t2%left%right%val /= 3 .AND. t2%left%right%index /= 3) .AND. &
-!     (t2%right%left%val /= 5 .AND. t2%right%left%index /= 5)) THEN
-!     WRITE(*,*) 'CALL SortedBinaryTree(...) FAILED!'
-!     STOP 666
-!  ELSE
   WRITE(*,*) '  Passed: CALL SortedBinaryTree(...)'
-!  ENDIF
   CALL BurnBinaryTree(t2)
   WRITE(*,*) '---------------------------------------------------'
 
