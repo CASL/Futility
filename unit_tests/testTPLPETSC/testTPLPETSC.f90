@@ -83,61 +83,29 @@ USE UnitTest
     !test VecCreate
     CALL VecCreate(MPI_COMM_WORLD,b,ierr)
     ASSERT(ierr == 0, 'VecCreate(MPI_COMM_WORLD,b,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecCreate(MPI_COMM_WORLD,b,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     CALL VecCreate(MPI_COMM_WORLD,x,ierr)
     ASSERT(ierr == 0, 'VecCreate(MPI_COMM_WORLD,x,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecCreate(MPI_COMM_WORLD,x,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     WRITE(*,*) '  Passed: CALL VecCreate(...)'
 
     !test VecSetSizes
     CALL VecSetSizes(b,PETSC_DECIDE,3,ierr)
     ASSERT(ierr == 0, 'VecSetSizes(b,PETSC_DECIDE,3,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecSetSizes(b,PETSC_DECIDE,3,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     CALL VecSetSizes(x,PETSC_DECIDE,3,ierr)
     ASSERT(ierr == 0, 'VecSetSizes(x,PETSC_DECIDE,3,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecSetSizes(x,PETSC_DECIDE,3,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     WRITE(*,*) '  Passed: CALL VecSetSizes(...)'
 
     !test VecSetType
     CALL VecSetType(b,VECMPI,ierr)
     ASSERT(ierr == 0, 'VecSetType(b,VECMPI,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecSetType(b,VECMPI,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     CALL VecSetType(x,VECMPI,ierr)
     ASSERT(ierr == 0, 'VecSetType(x,VECMPI,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecSetType(x,VECMPI,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     WRITE(*,*) '  Passed: CALL VecSetType(...)'
 
     !test VecSetFromOptions
     CALL VecSetFromOptions(b,ierr)
     ASSERT(ierr == 0, 'VecSetFromOptions(b,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecSetFromOptions(b,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     CALL VecSetFromOptions(x,ierr)
     ASSERT(ierr == 0, 'VecSetFromOptions(x,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecSetFromOptions(x,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     WRITE(*,*) '  Passed: CALL VecSetFromOptions(...)'
 
     !first we will build a vector with the following values:
@@ -148,92 +116,44 @@ USE UnitTest
     !test VecSetValue
     CALL VecSetValue(b,0,5.0_SRK,INSERT_VALUES,ierr)
     ASSERT(ierr == 0, 'VecSetValue(b,0,5.0_SRK,INSERT_VALUES,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecSetValue(b,0,5.0_SRK,INSERT_VALUES,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     CALL VecSetValue(b,1,7.0_SRK,INSERT_VALUES,ierr)
     ASSERT(ierr == 0, 'VecSetValue(b,1,7.0_SRK,INSERT_VALUES,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecSetValue(b,1,7.0_SRK,INSERT_VALUES,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     CALL VecSetValue(b,2,2.0_SRK,INSERT_VALUES,ierr)
     ASSERT(ierr == 0, 'VecSetValue(b,2,2.0_SRK,INSERT_VALUES,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecSetValue(b,2,2.0_SRK,INSERT_VALUES,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     WRITE(*,*) '  Passed: CALL VecSetValues(...)'
 
     !test VecAssembly
     CALL VecAssemblyBegin(b,ierr)
     ASSERT(ierr == 0, 'VecAssemblyBegin(b,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecAssemblyBegin(b,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     CALL VecAssemblyEnd(b,ierr)
     ASSERT(ierr == 0, 'VecAssemblyEnd(b,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecAssemblyEnd(b,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     WRITE(*,*) '  Passed: CALL VecAssembly...(...)'
 
     !test VecGetValues
     CALL VecGetValues(b,1,0,getval,ierr)
     bool = .NOT.(getval /= 5.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'VecGetValues(b,1,0,getval,ierr) [VecSetValue]')
-!    IF(getval /= 5.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecGetValues(b,1,0,getval,ierr) [VecSetValue] FAILED!'
-!      STOP 666
-!    ENDIF
     CALL VecGetValues(b,1,1,getval,ierr)
     bool = .NOT.(getval /= 7.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'VecGetValues(b,1,1,getval,ierr) [VecSetValue]')
-!    IF(getval /= 7.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecGetValues(b,1,1,getval,ierr) [VecSetValue] FAILED!'
-!      STOP 666
-!    ENDIF
     CALL VecGetValues(b,1,2,getval,ierr)
     bool = .NOT.(getval /= 2.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'VecGetValues(b,1,2,getval,ierr) [VecSetValue]')
-!    IF(getval /= 2.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecGetValues(b,1,2,getval,ierr) [VecSetValue] FAILED!'
-!      STOP 666
-!    ENDIF
 
     !now we will test with all values set to 6:
     CALL VecSet(b,6.0_SRK,ierr)
     ASSERT(ierr == 0, 'VecSet(b,6.0_SRK,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecSet(b,6.0_SRK,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     CALL VecAssemblyBegin(b,ierr)
     CALL VecAssemblyEnd(b,ierr)
     CALL VecGetValues(b,1,0,getval,ierr)
     bool = .NOT.(getval /= 6.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'VecGetValues(b,1,0,getval,ierr) [VecSet]')
-!    IF(getval /= 6.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecGetValues(b,1,0,getval,ierr) [VecSet] FAILED!'
-!      STOP 666
-!    ENDIF
     CALL VecGetValues(b,1,1,getval,ierr)
     bool = .NOT.(getval /= 6.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'VecGetValues(b,1,1,getval,ierr) [VecSet]')
-!    IF(getval /= 6.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecGetValues(b,1,1,getval,ierr) [VecSet] FAILED!'
-!      STOP 666
-!    ENDIF
     CALL VecGetValues(b,1,2,getval,ierr)
     bool = .NOT.(getval /= 6.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'VecGetValues(b,1,2,getval,ierr) [VecSet]')
-!    IF(getval /= 6.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecGetValues(b,1,2,getval,ierr) [VecSet] FAILED!'
-!      STOP 666
-!    ENDIF
     WRITE(*,*) '  Passed: CALL VecSet(...)'
 
     !we will now set up the following vectors to test the BLAS-related functions:
@@ -258,55 +178,27 @@ USE UnitTest
     CALL VecNorm(b,NORM_1,getval,ierr)
     bool = .NOT.(getval /= 15.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'VecNorm(b,NORM_1,getval,ierr)')
-!    IF(getval /= 15.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecNorm(b,NORM_1,getval,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     CALL VecNorm(x,NORM_1,getval,ierr)
     bool = .NOT.(getval /= 16.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'VecNorm(x,NORM_1,getval,ierr)')
-!    IF(getval /= 16.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecNorm(x,NORM_1,getval,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     CALL VecNorm(b,NORM_2,getval,ierr)
     bool = .NOT.(getval /= 9.4339811320566032_SRK .OR. ierr /= 0)
     ASSERT(bool, 'VecNorm(b,NORM_2,getval,ierr)')
-!    IF(getval /= 9.4339811320566032_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecNorm(b,NORM_2,getval,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     CALL VecNorm(x,NORM_2,getval,ierr)
     bool = .NOT.(getval /= 10.488088481701515_SRK .OR. ierr /= 0)
     ASSERT(bool, 'VecNorm(x,NORM_2,getval,ierr)')
-!    IF(getval /= 10.488088481701515_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecNorm(x,NORM_2,getval,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     WRITE(*,*) '  Passed: CALL VecNorm(...)'
 
     CALL VecAXPY(b,3.0_SRK,x,ierr)
     CALL VecGetValues(b,1,0,getval,ierr)
     bool = .NOT.(getval /= 10.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'VecGetValues(b,1,0,getval,ierr) [VecAXPY]')
-!    IF(getval /= 10.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecGetValues(b,1,0,getval,ierr) [VecAXPY] FAILED!'
-!      STOP 666
-!    ENDIF
     CALL VecGetValues(b,1,1,getval,ierr)
     bool = .NOT.(getval /= 35.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'VecGetValues(b,1,1,getval,ierr) [VecAXPY]')
-!    IF(getval /= 35.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecGetValues(b,1,1,getval,ierr) [VecAXPY] FAILED!'
-!      STOP 666
-!    ENDIF
     CALL VecGetValues(b,1,2,getval,ierr)
     bool = .NOT.(getval /= 18.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'VecGetValues(b,1,2,getval,ierr) [VecAXPY]')
-!    IF(getval /= 18.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecGetValues(b,1,2,getval,ierr) [VecAXPY] FAILED!'
-!      STOP 666
-!    ENDIF
     WRITE(*,*) '  Passed: CALL VecAXPY(...)'
 
     !test VecCopy by copying b into x
@@ -314,24 +206,12 @@ USE UnitTest
     CALL VecGetValues(x,1,0,getval,ierr)
     bool = .NOT.(getval /= 10.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'VecGetValues(x,1,0,getval,ierr) [VecCopy]')
-!    IF(getval /= 10.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecGetValues(x,1,0,getval,ierr) [VecCopy] FAILED!'
-!      STOP 666
-!    ENDIF
     CALL VecGetValues(x,1,1,getval,ierr)
     bool = .NOT.(getval /= 35.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'VecGetValues(x,1,1,getval,ierr) [VecCopy]')
-!    IF(getval /= 35.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecGetValues(x,1,1,getval,ierr) [VecCopy] FAILED!'
-!      STOP 666
-!    ENDIF
     CALL VecGetValues(x,1,2,getval,ierr)
     bool = .NOT.(getval /= 18.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'VecGetValues(x,1,2,getval,ierr) [VecCopy]')
-!    IF(getval /= 18.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecGetValues(x,1,2,getval,ierr) [VecCopy] FAILED!'
-!      STOP 666
-!    ENDIF
     WRITE(*,*) '  Passed: CALL VecCopy(...)'
 
     !reset b and x
@@ -350,10 +230,6 @@ USE UnitTest
     CALL VecTDot(b,x,getval,ierr)
     bool = .NOT.(getval /= 95.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'VecTDot(b,x,getval,ierr)')
-!    IF(getval /= 95.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecTDot(b,x,getval,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     WRITE(*,*) '  Passed: CALL VecTDot(...)'
 
     !test VecScale
@@ -361,24 +237,12 @@ USE UnitTest
     CALL VecGetValues(b,1,0,getval,ierr)
     bool = .NOT.(getval /= 16.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'VecGetValues(b,1,0,getval,ierr) [VecScale]')
-!    IF(getval /= 16.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecGetValues(b,1,0,getval,ierr) [VecScale] FAILED!'
-!      STOP 666
-!    ENDIF
     CALL VecGetValues(b,1,1,getval,ierr)
     bool = .NOT.(getval /= 32.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'VecGetValues(b,1,1,getval,ierr) [VecScale]')
-!    IF(getval /= 32.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecGetValues(b,1,1,getval,ierr) [VecScale] FAILED!'
-!      STOP 666
-!    ENDIF
     CALL VecGetValues(b,1,2,getval,ierr)
     bool = .NOT.(getval /= 12.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'VecGetValues(b,1,2,getval,ierr) [VecScale]')
-!    IF(getval /= 12.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecGetValues(b,1,2,getval,ierr) [VecScale] FAILED!'
-!      STOP 666
-!    ENDIF
     WRITE(*,*) '  Passed: CALL VecScale(...)'
 
     !test VecSwap
@@ -386,60 +250,28 @@ USE UnitTest
     CALL VecGetValues(b,1,0,getval,ierr)
     bool = .NOT.(getval /= 2.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'VecGetValues(b,1,0,getval,ierr) [VecSwap]')
-!    IF(getval /= 2.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecGetValues(b,1,0,getval,ierr) [VecSwap] FAILED!'
-!      STOP 666
-!    ENDIF
     CALL VecGetValues(b,1,1,getval,ierr)
     bool = .NOT.(getval /= 9.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'VecGetValues(b,1,1,getval,ierr) [VecSwap]')
-!    IF(getval /= 9.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecGetValues(b,1,1,getval,ierr) [VecSwap] FAILED!'
-!      STOP 666
-!    ENDIF
     CALL VecGetValues(b,1,2,getval,ierr)
     bool = .NOT.(getval /= 5.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'VecGetValues(b,1,2,getval,ierr) [VecSwap]')
-!    IF(getval /= 5.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecGetValues(b,1,2,getval,ierr) [VecSwap] FAILED!'
-!      STOP 666
-!    ENDIF
     CALL VecGetValues(x,1,0,getval,ierr)
     bool = .NOT.(getval /= 16.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'VecGetValues(x,1,0,getval,ierr) [VecSwap]')
-!    IF(getval /= 16.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecGetValues(x,1,0,getval,ierr) [VecSwap] FAILED!'
-!      STOP 666
-!    ENDIF
     CALL VecGetValues(x,1,1,getval,ierr)
     bool = .NOT.(getval /= 32.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'VecGetValues(x,1,1,getval,ierr) [VecSwap]')
-!    IF(getval /= 32.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecGetValues(x,1,1,getval,ierr) [VecSwap] FAILED!'
-!      STOP 666
-!    ENDIF
     CALL VecGetValues(x,1,2,getval,ierr)
     bool = .NOT.(getval /= 12.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'VecGetValues(x,1,2,getval,ierr) [VecSwap]')
-!    IF(getval /= 12.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecGetValues(x,1,2,getval,ierr) [VecSwap] FAILED!'
-!      STOP 666
-!    ENDIF
 
     !test VecDestroy
     CALL VecDestroy(b,ierr)
     ASSERT(ierr == 0, 'VecDestroy(b,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecDestroy(b,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     WRITE(*,*) '  Passed: CALL VecDestroy(...)'
     CALL VecDestroy(x,ierr)
     ASSERT(ierr == 0, 'VecDestroy(b,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecDestroy(b,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     WRITE(*,*) '  Passed: CALL VecDestroy(...)'
 
 
@@ -455,43 +287,23 @@ USE UnitTest
     !test MatCreate
     CALL MatCreate(MPI_COMM_WORLD,A,ierr)
     ASSERT(ierr == 0, 'MatCreate(MPI_COMM_WORLD,A,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL MatCreate(MPI_COMM_WORLD,A,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     WRITE(*,*) '  Passed: CALL MatCreate(...)'
 
     !test MatSetSizes
     CALL MatSetSizes(A,PETSC_DECIDE,PETSC_DECIDE,3,3,ierr)
     ASSERT(ierr == 0, 'MatSetSizes(A,PETSC_DECIDE,PETSC_DECIDE,3,3,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL MatSetSizes(A,PETSC_DECIDE,PETSC_DECIDE,3,3,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     WRITE(*,*) '  Passed: CALL MatSetSizes(...)'
 
     !test MatSetType
     CALL MatSetType(A,MATMPIDENSE,ierr)
     ASSERT(ierr == 0, 'MatSetType(A,MATMPIDENSE,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL MatSetType(A,MATMPIDENSE,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     CALL MatSetType(A,MATMPIAIJ,ierr)
     ASSERT(ierr == 0, 'MatSetType(A,MATMPIAIJ,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL MatSetType(A,MATMPIAIJ,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     WRITE(*,*) '  Passed: CALL MatSetType(...)'
 
     !test MatSetUp
     CALL MatSetUp(A,ierr)
     ASSERT(ierr == 0, 'MatSetUp(A,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL MatSetUp(A,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     WRITE(*,*) '  Passed: CALL MatSetUp(...)'
 
     !using the 3x3 matrix that has been set up, insert the following values:
@@ -501,139 +313,59 @@ USE UnitTest
     !test MatSetValues
     CALL MatSetValues(A,1,0,1,0,1.0_SRK,INSERT_VALUES,ierr)
     ASSERT(ierr == 0, 'MatSetValues(A,1,0,1,0,1.0_SRK,INSERT_VALUES,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL MatSetValues(A,1,0,1,0,1.0_SRK,INSERT_VALUES,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     CALL MatSetValues(A,1,0,1,1,3.0_SRK,INSERT_VALUES,ierr)
     ASSERT(ierr == 0, 'MatSetValues(A,1,0,1,1,3.0_SRK,INSERT_VALUES,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL MatSetValues(A,1,0,1,1,3.0_SRK,INSERT_VALUES,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     CALL MatSetValues(A,1,0,1,2,5.0_SRK,INSERT_VALUES,ierr)
     ASSERT(ierr == 0, 'MatSetValues(A,1,0,1,2,5.0_SRK,INSERT_VALUES,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL MatSetValues(A,1,0,1,2,5.0_SRK,INSERT_VALUES,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     CALL MatSetValues(A,1,1,1,0,6.0_SRK,INSERT_VALUES,ierr)
     ASSERT(ierr == 0, 'MatSetValues(A,1,1,1,0,6.0_SRK,INSERT_VALUES,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL MatSetValues(A,1,1,1,0,6.0_SRK,INSERT_VALUES,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     CALL MatSetValues(A,1,1,1,1,2.0_SRK,INSERT_VALUES,ierr)
     ASSERT(ierr == 0, 'MatSetValues(A,1,1,1,1,2.0_SRK,INSERT_VALUES,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL MatSetValues(A,1,1,1,1,2.0_SRK,INSERT_VALUES,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     CALL MatSetValues(A,1,1,1,2,8.0_SRK,INSERT_VALUES,ierr)
     ASSERT(ierr == 0, 'MatSetValues(A,1,1,1,2,8.0_SRK,INSERT_VALUES,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL MatSetValues(A,1,1,1,2,8.0_SRK,INSERT_VALUES,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     CALL MatSetValues(A,1,2,1,0,5.0_SRK,INSERT_VALUES,ierr)
     ASSERT(ierr == 0, 'MatSetValues(A,1,2,1,0,5.0_SRK,INSERT_VALUES,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL MatSetValues(A,1,2,1,0,5.0_SRK,INSERT_VALUES,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     CALL MatSetValues(A,1,2,1,1,2.0_SRK,INSERT_VALUES,ierr)
     ASSERT(ierr == 0, 'MatSetValues(A,1,2,1,1,2.0_SRK,INSERT_VALUES,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL MatSetValues(A,1,2,1,1,2.0_SRK,INSERT_VALUES,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     CALL MatSetValues(A,1,2,1,2,4.0_SRK,INSERT_VALUES,ierr)
     ASSERT(ierr == 0, 'MatSetValues(A,1,2,1,2,4.0_SRK,INSERT_VALUES,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL MatSetValues(A,1,2,1,2,4.0_SRK,INSERT_VALUES,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     WRITE(*,*) '  Passed: CALL MatSetValues(...)'
 
     !test MatAssembly
     CALL MatAssemblyBegin(A,MAT_FINAL_ASSEMBLY,ierr)
     ASSERT(ierr == 0, 'MatAssemblyBegin(A,MAT_FINAL_ASSEMBLY,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL MatAssemblyBegin(A,MAT_FINAL_ASSEMBLY,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     CALL MatAssemblyEnd(A,MAT_FINAL_ASSEMBLY,ierr)
     ASSERT(ierr == 0, 'MatAssemblyEnd(A,MAT_FINAL_ASSEMBLY,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL MatAssemblyEnd(A,MAT_FINAL_ASSEMBLY,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     WRITE(*,*) '  Passed: CALL MatAssembly...(...)'
 
     !test MatGetValues
     CALL MatGetValues(A,1,0,1,0,getval,ierr)
     bool = .NOT.(getval /= 1.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'MatGetValues(A,1,1,1,1,getval,ierr)')
-!    IF(getval /= 1.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL MatGetValues(A,1,1,1,1,getval,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     CALL MatGetValues(A,1,0,1,1,getval,ierr)
     bool = .NOT.(getval /= 3.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'MatGetValues(A,1,1,1,2,getval,ierr)')
-!    IF(getval /= 3.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL MatGetValues(A,1,1,1,2,getval,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     CALL MatGetValues(A,1,0,1,2,getval,ierr)
     bool = .NOT.(getval /= 5.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'MatGetValues(A,1,1,1,3,getval,ierr)')
-!    IF(getval /= 5.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL MatGetValues(A,1,1,1,3,getval,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     CALL MatGetValues(A,1,1,1,0,getval,ierr)
     bool = .NOT.(getval /= 6.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'MatGetValues(A,1,2,1,1,getval,ierr)')
-!    IF(getval /= 6.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL MatGetValues(A,1,2,1,1,getval,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     CALL MatGetValues(A,1,1,1,1,getval,ierr)
     bool = .NOT.(getval /= 2.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'MatGetValues(A,1,2,1,2,getval,ierr)')
-!    IF(getval /= 2.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL MatGetValues(A,1,2,1,2,getval,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     CALL MatGetValues(A,1,1,1,2,getval,ierr)
     bool = .NOT.(getval /= 8.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'MatGetValues(A,1,2,1,3,getval,ierr)')
-!    IF(getval /= 8.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL MatGetValues(A,1,2,1,3,getval,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     CALL MatGetValues(A,1,2,1,0,getval,ierr)
     bool = .NOT.(getval /= 5.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'MatGetValues(A,1,3,1,1,getval,ierr)')
-!    IF(getval /= 5.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL MatGetValues(A,1,3,1,1,getval,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     CALL MatGetValues(A,1,2,1,1,getval,ierr)
     bool = .NOT.(getval /= 2.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'MatGetValues(A,1,3,1,2,getval,ierr)')
-!    IF(getval /= 2.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL MatGetValues(A,1,3,1,2,getval,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     CALL MatGetValues(A,1,2,1,2,getval,ierr)
     bool = .NOT.(getval /= 4.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'MatGetValues(A,1,3,1,3,getval,ierr)')
-!    IF(getval /= 4.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL MatGetValues(A,1,3,1,3,getval,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     WRITE(*,*) '  Passed: CALL MatGetValues(...)'
 
     !to test the following two interface, we need to set up two vectors:
@@ -659,24 +391,12 @@ USE UnitTest
     CALL VecGetValues(b,1,0,getval,ierr)
     bool = .NOT.(getval /= 32.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'VecGetValues(b,1,0,getval,ierr)  [MatMult]')
-!    IF(getval /= 32.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecGetValues(b,1,0,getval,ierr) [MatMult] FAILED!'
-!      STOP 666
-!    ENDIF
     CALL VecGetValues(b,1,1,getval,ierr)
     bool = .NOT.(getval /= 72.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'VecGetValues(b,1,1,getval,ierr) [MatMult]')
-!    IF(getval /= 72.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecGetValues(b,1,1,getval,ierr) [MatMult] FAILED!'
-!      STOP 666
-!    ENDIF
     CALL VecGetValues(b,1,2,getval,ierr)
     bool = .NOT.(getval /= 50.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'VecGetValues(b,1,2,getval,ierr) [MatMult]')
-!    IF(getval /= 50.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecGetValues(b,1,2,getval,ierr) [MatMult] FAILED!'
-!      STOP 666
-!    ENDIF
     WRITE(*,*) '  Passed: CALL MatMult(...)'
 
     !test MatMultTransport
@@ -684,24 +404,12 @@ USE UnitTest
     CALL VecGetValues(b,1,0,getval,ierr)
     bool = .NOT.(getval /= 38.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'VecGetValues(b,1,0,getval,ierr) [MatMultTranspose]')
-!    IF(getval /= 38.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecGetValues(b,1,0,getval,ierr) [MatMultTranspose] FAILED!'
-!      STOP 666
-!    ENDIF
     CALL VecGetValues(b,1,1,getval,ierr)
     bool = .NOT.(getval /= 30.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'VecGetValues(b,1,1,getval,ierr) [MatMultTranspose]')
-!    IF(getval /= 30.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecGetValues(b,1,1,getval,ierr) [MatMultTranspose] FAILED!'
-!      STOP 666
-!    ENDIF
     CALL VecGetValues(b,1,2,getval,ierr)
     bool = .NOT.(getval /= 62.0_SRK .OR. ierr /= 0)
     ASSERT(bool, 'VecGetValues(b,1,2,getval,ierr) [MatMultTranspose]')
-!    IF(getval /= 62.0_SRK .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecGetValues(b,1,2,getval,ierr) [MatMultTranspose] FAILED!'
-!      STOP 666
-!    ENDIF
     WRITE(*,*) '  Passed: CALL MatMultTranspose(...)'
 
     !test MatDestroy
@@ -726,31 +434,15 @@ USE UnitTest
     !test KSPCreate
     CALL KSPCreate(MPI_COMM_WORLD,ksp,ierr)
     ASSERT(ierr == 0, 'KSPCreate(MPI_COMM_WORLD,ksp,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL KSPCreate(MPI_COMM_WORLD,ksp,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     WRITE(*,*) '  Passed: CALL KSPCreate(...)'
 
     !test KSPCreateType
     CALL KSPSetType(ksp,KSPBCGS,ierr)
     ASSERT(ierr == 0, 'KSPSetType(solver%ksp,KSPBCGS,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL KSPSetType(solver%ksp,KSPBCGS,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     CALL KSPSetType(ksp,KSPCGNE,ierr)
     ASSERT(ierr == 0, 'KSPSetType(solver%ksp,KSPCGNE,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL KSPSetType(solver%ksp,KSPCGNE,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     CALL KSPSetType(ksp,KSPGMRES,ierr)
     ASSERT(ierr == 0, 'KSPSetType(solver%ksp,KSPGMRES,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL KSPSetType(solver%ksp,KSPGMRES,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     WRITE(*,*) '  Passed: CALL KSPSetType(...)'
 
     !create matrix and vectors for solver
@@ -798,19 +490,11 @@ USE UnitTest
     CALL KSPSetOperators(ksp,A,A,DIFFERENT_NONZERO_PATTERN,ierr)
 #endif
     ASSERT(ierr == 0, 'KSPSetOperators(ksp,A,A,DIFFERENT_NONZERO_PATTERN,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL KSPSetOperators(ksp,A,A,DIFFERENT_NONZERO_PATTERN,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     WRITE(*,*) '  Passed: CALL KSPSetOperators(...)'
 
     !test KSPSetFromOptions
     CALL KSPSetFromOptions(ksp,ierr)
     ASSERT(ierr == 0, 'KSPSetFromOptions(ksp,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL KSPSetFromOptions(ksp,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     WRITE(*,*) '  Passed: CALL KSPSetFromOptions(...)'
 
     !test KSPSetTolerances (will need to test more)
@@ -824,20 +508,12 @@ USE UnitTest
     maxits=1000
     CALL KSPSetTolerances(ksp,rtol,abstol,dtol,maxits,ierr)
     ASSERT(ierr == 0, 'KSPSetTolerances(ksp,rtol,abstol,dtol,maxits,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL KSPSetTolerances(ksp,rtol,abstol,dtol,maxits,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     WRITE(*,*) '  Passed: CALL KSPSetTolerances(...)'
 
     !test KSPGMRESSetRestart
     restart=50
     CALL KSPGMRESSetRestart(ksp,restart,ierr)
     ASSERT(ierr == 0, 'KSPGMRESSetRestart(ksp,restart,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL KSPGMRESSetRestart(ksp,restart,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     WRITE(*,*) '  Passed: CALL KSPGMRESSetRestart(...)'
 
     !test KSPSolve
@@ -845,32 +521,16 @@ USE UnitTest
     CALL VecGetValues(x,1,0,getval,ierr)
     bool = .NOT.(ABS(getval-0.4_SRK)>1E-13 .OR. ierr /= 0)
     ASSERT(bool, 'VecGetValues(x,1,0,getval,ierr) [KSPSolve]')
-!    IF(ABS(getval-0.4_SRK)>1E-13 .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecGetValues(x,1,0,getval,ierr) [KSPSolve] FAILED!'
-!      STOP 666
-!    ENDIF
     CALL VecGetValues(x,1,1,getval,ierr)
     bool = .NOT.(ABS(getval+0.2_SRK)>1E-13 .OR. ierr /= 0)
     ASSERT(bool, 'VecGetValues(x,1,1,getval,ierr) [KSPSolve]')
-!    IF(ABS(getval+0.2_SRK)>1E-13 .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecGetValues(x,1,1,getval,ierr) [KSPSolve] FAILED!'
-!      STOP 666
-!    ENDIF
     CALL VecGetValues(x,1,2,getval,ierr)
     bool = .NOT.(ABS(getval-0.6_SRK)>1E-13 .OR. ierr /= 0)
     ASSERT(bool, 'VecGetValues(x,1,2,getval,ierr) [KSPSolve]')
-!    IF(ABS(getval-0.6_SRK)>1E-13 .OR. ierr /= 0) THEN
-!      WRITE(*,*) 'CALL VecGetValues(x,1,2,getval,ierr) [KSPSolve] FAILED!'
-!      STOP 666
-!    ENDIF
     WRITE(*,*) '  Passed: CALL KSPSolve(...)'
 
     CALL KSPDestroy(ksp,ierr)
     ASSERT(ierr == 0, 'KSPDestroy(ksp,ierr)')
-!    IF(ierr /= 0) THEN
-!      WRITE(*,*) 'CALL KSPDestroy(ksp,ierr) FAILED!'
-!      STOP 666
-!    ENDIF
     WRITE(*,*) '  Passed: CALL KSPDestroy(...)'
     CALL MatDestroy(A,ierr)
     CALL VecDestroy(b,ierr)
