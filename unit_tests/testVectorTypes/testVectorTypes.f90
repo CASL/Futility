@@ -1758,7 +1758,8 @@ PROGRAM testVectorTypes
     bool = ((dummyvec(1) .APPROXEQ. 28._SRK) .AND. &
             (dummyvec(2) .APPROXEQ. -5._SRK) .AND. &
             (dummyvec(3) .APPROXEQ. 36._SRK))
-    ASSERT(bool, 'BLAS_axpy(THISVECTOR=xVector,NEWVECTOR=yVector,A=a,N=xVector%n,INCX=1,INCY=1) -scalar_a [PETSC]')
+    ASSERT(bool, 'BLAS_axpy')
+    FINFO() '(THISVECTOR=xVector,NEWVECTOR=yVector,A=a,N=xVector%n,INCX=1,INCY=1) -scalar_a [PETSC]'
     CALL yVector%set(1,3.0_SRK)
     CALL yVector%set(2,5.0_SRK)
     CALL yVector%set(3,1.0_SRK)
@@ -1767,7 +1768,8 @@ PROGRAM testVectorTypes
     bool = (dummyvec(1) .APPROXEQ. 28._SRK) .AND. &
             (dummyvec(2) .APPROXEQ. -5._SRK) .AND. &
             (dummyvec(3) .APPROXEQ. 36._SRK)
-    ASSERT(bool, 'BLAS_axpy(THISVECTOR=xVector,NEWVECTOR=yVector,A=a,N=xVector%n,INCX=1) -scalar_a [PETSC]')
+    ASSERT(bool, 'BLAS_axpy')
+    FINFO() '(THISVECTOR=xVector,NEWVECTOR=yVector,A=a,N=xVector%n,INCX=1) -scalar_a [PETSC]'
     CALL yVector%set(1,3.0_SRK)
     CALL yVector%set(2,5.0_SRK)
     CALL yVector%set(3,1.0_SRK)
@@ -1776,7 +1778,8 @@ PROGRAM testVectorTypes
     bool = ((dummyvec(1) .APPROXEQ. 28._SRK) .AND. &
             (dummyvec(2) .APPROXEQ. -5._SRK) .AND. &
             (dummyvec(3) .APPROXEQ. 36._SRK))
-    ASSERT(bool, 'BLAS_axpy(THISVECTOR=xVector,NEWVECTOR=yVector,A=a,N=xVector%n,INCY=1) -scalar_a [PETSC]')
+    ASSERT(bool, 'BLAS_axpy')
+    FINFO() '(THISVECTOR=xVector,NEWVECTOR=yVector,A=a,N=xVector%n,INCY=1) -scalar_a [PETSC]'
     CALL yVector%set(1,3.0_SRK)
     CALL yVector%set(2,5.0_SRK)
     CALL yVector%set(3,1.0_SRK)
@@ -1785,7 +1788,8 @@ PROGRAM testVectorTypes
     bool = ((dummyvec(1) .APPROXEQ. 28._SRK) .AND. &
             (dummyvec(2) .APPROXEQ. -5._SRK) .AND. &
             (dummyvec(3) .APPROXEQ. 36._SRK))
-    ASSERT(bool, 'BLAS_axpy(THISVECTOR=xVector,NEWVECTOR=yVector,A=a,N=xVector%n) -scalar_a [PETSC]')
+    ASSERT(bool, 'BLAS_axpy')
+    FINFO() '(THISVECTOR=xVector,NEWVECTOR=yVector,A=a,N=xVector%n) -scalar_a [PETSC]'
     CALL yVector%set(1,3.0_SRK)
     CALL yVector%set(2,5.0_SRK)
     CALL yVector%set(3,1.0_SRK)
@@ -1815,8 +1819,9 @@ PROGRAM testVectorTypes
     bool = ((dummyvec(1) .APPROXEQ. 33._SRK) .AND. &
             (dummyvec(2) .APPROXEQ. -3._SRK) .AND. &
             (dummyvec(3) .APPROXEQ. 15._SRK))
-    ASSERT(bool, "BLAS_axpy(THISVECTOR=xVector,NEWVECTOR=yVector,AVECTOR=aVector,N=xVector%n,INCX=1,INCY=1)")
-    FINFO() "-vector_a [PETSC]"
+    ASSERT(bool, "BLAS_axpy")
+    FINFO() "(THISVECTOR=xVector,NEWVECTOR=yVector,AVECTOR=aVector,N=xVector%n,INCX=1,INCY=1)"
+    FINFO() " -vector_a [PETSC]"
     CALL yVector%set(1,3.0_SRK)
     CALL yVector%set(2,5.0_SRK)
     CALL yVector%set(3,1.0_SRK)
@@ -1825,7 +1830,8 @@ PROGRAM testVectorTypes
     bool = ((dummyvec(1) .APPROXEQ. 33._SRK) .AND. &
             (dummyvec(2) .APPROXEQ. -3._SRK) .AND. &
             (dummyvec(3) .APPROXEQ. 15._SRK))
-    ASSERT(bool, 'BLAS_axpy(THISVECTOR=xVector,NEWVECTOR=yVector,AVECTOR=aVector,N=xVector%n,INCX=1) -vector_a [PETSC]')
+    ASSERT(bool, 'BLAS_axpy')
+    FINFO() '(THISVECTOR=xVector,NEWVECTOR=yVector,AVECTOR=aVector,N=xVector%n,INCX=1) -vector_a [PETSC]'
     CALL yVector%set(1,3.0_SRK)
     CALL yVector%set(2,5.0_SRK)
     CALL yVector%set(3,1.0_SRK)
@@ -1834,7 +1840,8 @@ PROGRAM testVectorTypes
     bool = (dummyvec(1) .APPROXEQ. 33._SRK) .AND. &
             (dummyvec(2) .APPROXEQ. -3._SRK) .AND. &
             (dummyvec(3) .APPROXEQ. 15._SRK)
-    ASSERT(bool, 'BLAS_axpy(THISVECTOR=xVector,NEWVECTOR=yVector,AVECTOR=aVector,N=xVector%n,INCY=1) -vector_a [PETSC]')
+    ASSERT(bool, 'BLAS_axpy')
+    FINFO() '(THISVECTOR=xVector,NEWVECTOR=yVector,AVECTOR=aVector,N=xVector%n,INCY=1) -vector_a [PETSC]'
     CALL yVector%set(1,3.0_SRK)
     CALL yVector%set(2,5.0_SRK)
     CALL yVector%set(3,1.0_SRK)
@@ -1843,7 +1850,8 @@ PROGRAM testVectorTypes
     bool = ((dummyvec(1) .APPROXEQ. 33._SRK) .AND. &
             (dummyvec(2) .APPROXEQ. -3._SRK) .AND. &
             (dummyvec(3) .APPROXEQ. 15._SRK))
-    ASSERT(bool, 'BLAS_axpy(THISVECTOR=xVector,NEWVECTOR=yVector,AVECTOR=aVector,N=xVector%n) -vector_a [PETSC]')
+    ASSERT(bool, 'BLAS_axpy')
+    FINFO() '(THISVECTOR=xVector,NEWVECTOR=yVector,AVECTOR=aVector,N=xVector%n) -vector_a [PETSC]'
     CALL yVector%set(1,3.0_SRK)
     CALL yVector%set(2,5.0_SRK)
     CALL yVector%set(3,1.0_SRK)
@@ -1852,7 +1860,8 @@ PROGRAM testVectorTypes
     bool = (dummyvec(1) .APPROXEQ. 33._SRK) .AND. &
             (dummyvec(2) .APPROXEQ. -3._SRK) .AND. &
             (dummyvec(3) .APPROXEQ. 15._SRK)
-    ASSERT(bool, 'BLAS_axpy(THISVECTOR=xVector,NEWVECTOR=yVector,AVECTOR=aVector) -vector_a [PETSC]')
+    ASSERT(bool, 'BLAS_axpy')
+    FINFO() '(THISVECTOR=xVector,NEWVECTOR=yVector,AVECTOR=aVector) -vector_a [PETSC]'
     WRITE(*,*) '  Passed: CALL BLAS_axpy(...) -vector_a [PETSC]'
     
     !Test BLAS_copy
@@ -1867,7 +1876,8 @@ PROGRAM testVectorTypes
     bool = (dummyvec(1) .APPROXEQ. 1.0_SRK) .AND. &
             (dummyvec(2) .APPROXEQ. 3.0_SRK) .AND. &
             (dummyvec(3) .APPROXEQ. 7.0_SRK)
-    ASSERT(bool, 'BLAS_copy(THISVECTOR=xVector,NEWVECTOR=yVector,N=xVector%n,INCX=1,INCY=1) [PETSC]')
+    ASSERT(bool, 'BLAS_copy')
+    FINFO() '(THISVECTOR=xVector,NEWVECTOR=yVector,N=xVector%n,INCX=1,INCY=1) [PETSC]'
     CALL yVector%set(0.0_SRK)
     CALL BLAS_copy(THISVECTOR=xVector,NEWVECTOR=yVector,INCX=1,INCY=1)
     CALL yVector%get(dummyvec)
