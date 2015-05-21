@@ -116,9 +116,12 @@ PROGRAM testExpTables
   DO i=-10000,0
     reftbl(i)=1._SRK-exp(xtest)
     xtest=xtest+1.e-3_SRK
+    ASSERT(reftbl(i) .APPROXEQ. testET2(2)%table(i), 'testET2(2)%initialize(...)')
+    FINFO() i
   ENDDO
-  bool = (ALL(reftbl .APPROXEQ. testET2(2)%table))
-  ASSERT(bool, 'testET2(2)%initialize(...)')
+  !Failed in intel release due to compiler optimizations
+!  bool = (ALL(reftbl .APPROXEQ. testET2(2)%table))
+!  ASSERT(bool, 'testET2(2)%initialize(...)')
   WRITE(*,*) '  Passed: CALL testET2(2)%initialize(...) SINGLE_LEVEL'
   !For TWO_LEVEL_EXP_TABLE exponent function
   bool = (testET2(3)%isinit .OR. testET2(3)%tableType == 3 &
@@ -131,9 +134,14 @@ PROGRAM testExpTables
   DO i=-10000,0
     reftbl(i)=exp(xtest)
     xtest=xtest+1.e-3_SRK
+    ASSERT(reftbl(i) .APPROXEQ. testET2(3)%table(i), 'testET2(3)%initialize(...)')
+    FINFO() i
   ENDDO
-  bool = (ALL(reftbl .APPROXEQ. testET2(3)%table))
-  ASSERT(bool, 'testET2(3)%initialize(...)')
+  !Failed in intel release due to compiler optimizations
+  !bool = (ALL(reftbl .APPROXEQ. testET2(3)%table))
+  !ASSERT(bool, 'testET2(3)%initialize(...)')
+  FINFO() testET2(3)%table
+  FINFO() reftbl
   xtest=0._SRK
   DO i=1,1000
     xtest=xtest+1.e-6_SRK
