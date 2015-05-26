@@ -148,15 +148,13 @@ CONTAINS
 
       !check results
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Direct)
-        IF(thisLS%isInit .OR. thisLS%solverMethod /= -1                 &
-          .OR. thisLS%isDecomposed .OR. ALLOCATED(thisLS%A)             &
-          .OR. ALLOCATED(thisLS%X) .OR. thisLS%info /= 0                &
-          .OR. ALLOCATED(thisLS%b) .OR. ALLOCATED(thisLS%IPIV)          &
-          .OR. ALLOCATED(thisLS%M) .OR. thisLS%MPIparallelEnv%isInit()  &
-          .OR. thisLS%OMPparallelEnv%isInit()) THEN
-          WRITE(*,*) 'CALL Direct%clear(...) FAILED!'
-          STOP 666
-        ENDIF
+        bool = .NOT.thisLS%isInit .AND. thisLS%solverMethod == -1                   &
+          .AND. .NOT.thisLS%isDecomposed .AND. .NOT.ALLOCATED(thisLS%A)             &
+          .AND. .NOT.ALLOCATED(thisLS%X) .AND. thisLS%info == 0                     &
+          .AND. .NOT.ALLOCATED(thisLS%b) .AND. .NOT.ALLOCATED(thisLS%IPIV)          &
+          .AND. .NOT.ALLOCATED(thisLS%M) .AND. .NOT.thisLS%MPIparallelEnv%isInit()  &
+          .AND. .NOT.thisLS%OMPparallelEnv%isInit()
+        ASSERT(bool, 'Direct%clear(...)')
       ENDSELECT
       DEALLOCATE(thisLS)
 
@@ -233,6 +231,7 @@ CONTAINS
     SUBROUTINE testInit()
       CLASS(LinearSolverType_Base),ALLOCATABLE :: thisLS
       INTEGER(SIK) :: nerrors1,nerrors2
+      LOGICAL(SBK) :: bool
    !test Direct
       ALLOCATE(LinearSolverType_Direct :: thisLS)
 
@@ -291,13 +290,11 @@ CONTAINS
       CALL pList%validate(pList,optListLS)
       CALL thisLS%init(pList)
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Direct)
-        IF(.NOT. (thisLS%isInit .AND. thisLS%solverMethod == 1 &
-           .AND. thisLS%MPIparallelEnv%isInit()                &
-           .AND. thisLS%OMPparallelEnv%isInit()                &
-           .AND. thisLS%SolveTime%getTimerName() == 'testTimer')) THEN
-          WRITE(*,*) 'CALL Direct%init(...) FAILED!'
-          STOP 666
-        ENDIF
+        bool = (thisLS%isInit .OR. thisLS%solverMethod /= 1        &
+           .OR. .NOT.thisLS%MPIparallelEnv%isInit()                &
+           .OR. .NOT.thisLS%OMPparallelEnv%isInit()                &
+           .OR. thisLS%SolveTime%getTimerName() /= 'testTimer')
+        ASSERT(bool, 'Direct%init(...)')
       ENDSELECT
       CALL thisLS%clear()
 
@@ -315,13 +312,11 @@ CONTAINS
       CALL pList%validate(pList,optListLS)
       CALL thisLS%init(pList)
       SELECTTYPE(thisLS); TYPE IS (LinearSolverType_Direct)
-        IF(.NOT. (thisLS%isInit .AND. thisLS%solverMethod == 1 &
+        bool = (thisLS%isInit .AND. thisLS%solverMethod == 1 &
            .AND. thisLS%MPIparallelEnv%isInit()                &
            .AND. thisLS%OMPparallelEnv%isInit()                &
-           .AND. thisLS%SolveTime%getTimerName() == 'LinearSolver Timer')) THEN
-          WRITE(*,*) 'CALL Direct%init(...) FAILED!'
-          STOP 666
-        ENDIF
+           .AND. thisLS%SolveTime%getTimerName() == 'LinearSolver Timer')
+        ASSERT(bool, 'Direct%init(...)')
       ENDSELECT
       CALL thisLS%clear()
       DEALLOCATE(thisLS)
@@ -393,35 +388,33 @@ CONTAINS
       CALL thisLS%init(pList)
       SELECTTYPE(thisLS); TYPE IS(LinearSolvertype_Iterative)
 
-        IF(.NOT. (thisLS%isInit .AND. thisLS%solverMethod == 1 &
+        bool = (thisLS%isInit .AND. thisLS%solverMethod == 1 &
            .AND. thisLS%MPIparallelEnv%isInit() &
            .AND. thisLS%OMPparallelEnv%isInit() &
-           .AND. thisLS%SolveTime%getTimerName() == 'testTimer')) THEN
-          WRITE(*,*) 'CALL Iterative%init(...) FAILED!'
-          STOP 666
-        ELSE
+           .AND. thisLS%SolveTime%getTimerName() == 'testTimer')
+        ASSERT(bool, 'Iterative%init(...)')
           ! Check uninitialized A
-          CALL thisLS%A%clear()
-          nerrors1=e%getCounter(EXCEPTION_ERROR)
-          CALL thisLS%setupPC()
-          nerrors2=e%getCounter(EXCEPTION_ERROR)
-          ASSERT(nerrors2 == nerrors1+1,'LS%setupPC PC%A%isInit check')
-          FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
-          ! Check deallocated A
-          DEALLOCATE(thisLS%A)
-          nerrors1=e%getCounter(EXCEPTION_ERROR)
-          CALL thisLS%setupPC()
-          nerrors2=e%getCounter(EXCEPTION_ERROR)
-          ASSERT(nerrors2 == nerrors1+1,'LS%setupPC ALLOCATED(PC%A) check')
-          FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
-          ! Check uninitialized linear solver
-          CALL thisLS%clear()
-          nerrors1=e%getCounter(EXCEPTION_ERROR)
-          CALL thisLS%setupPC()
-          nerrors2=e%getCounter(EXCEPTION_ERROR)
-          ASSERT(nerrors2 == nerrors1+1,'LS%setupPC ALLOCATED(PC%A) check')
-          FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
-        ENDIF
+        CALL thisLS%A%clear()
+        nerrors1=e%getCounter(EXCEPTION_ERROR)
+        CALL thisLS%setupPC()
+        nerrors2=e%getCounter(EXCEPTION_ERROR)
+        ASSERT(nerrors2 == nerrors1+1,'LS%setupPC PC%A%isInit check')
+        FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
+        ! Check deallocated A
+        DEALLOCATE(thisLS%A)
+        nerrors1=e%getCounter(EXCEPTION_ERROR)
+        CALL thisLS%setupPC()
+        nerrors2=e%getCounter(EXCEPTION_ERROR)
+        ASSERT(nerrors2 == nerrors1+1,'LS%setupPC ALLOCATED(PC%A) check')
+        FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
+        ! Check uninitialized linear solver
+        CALL thisLS%clear()
+        nerrors1=e%getCounter(EXCEPTION_ERROR)
+        CALL thisLS%setupPC()
+        nerrors2=e%getCounter(EXCEPTION_ERROR)
+        ASSERT(nerrors2 == nerrors1+1,'LS%setupPC ALLOCATED(PC%A) check')
+        FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
+!        ENDIF
       ENDSELECT
       CALL thisLS%clear()
 
@@ -439,13 +432,11 @@ CONTAINS
       CALL pList%validate(pList,optListLS)
       CALL thisLS%init(pList)
       SELECTTYPE(thisLS); TYPE IS (LinearSolverType_Iterative)
-        IF(.NOT. (thisLS%isInit .AND. thisLS%solverMethod == 1 &
+        bool = (thisLS%isInit .AND. thisLS%solverMethod == 1 &
            .AND. thisLS%MPIparallelEnv%isInit() &
            .AND. thisLS%OMPparallelEnv%isInit() &
-           .AND. thisLS%SolveTime%getTimerName() == 'LinearSolver Timer')) THEN
-          WRITE(*,*) 'CALL Iterative%init(...) FAILED!'
-          STOP 666
-        ENDIF
+           .AND. thisLS%SolveTime%getTimerName() == 'LinearSolver Timer')
+        ASSERT(bool, 'Iterative%init(...)')
       ENDSELECT
       CALL thisLS%clear()
       DEALLOCATE(thisLS)
@@ -455,6 +446,7 @@ CONTAINS
 !-------------------------------------------------------------------------------
     SUBROUTINE testUpdatedA()
       CLASS(LinearSolverType_Base),ALLOCATABLE :: thisLS
+      LOGICAL(SBK) :: bool
 
     !test Direct
       ALLOCATE(LinearSolverType_Direct :: thisLS)
@@ -488,11 +480,9 @@ CONTAINS
       CALL thisLS%updatedA()
       !Check
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Direct)
-        IF(ALLOCATED(thisLS%M) .OR. thisLS%isDecomposed &
-          .OR. ALLOCATED(thisLS%IPIV)) THEN
-          WRITE(*,*) 'CALL Direct%updatedA() FAILED!'
-          STOP 666
-        ENDIF
+        bool = .NOT.ALLOCATED(thisLS%M) .AND. .NOT.thisLS%isDecomposed &
+          .AND. .NOT.ALLOCATED(thisLS%IPIV)
+        ASSERT(bool, 'Direct%updatedA()')
       ENDSELECT
       CALL thisLS%clear()
       DEALLOCATE(thisLS)
@@ -527,10 +517,8 @@ CONTAINS
 
       !Check
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-        IF(thisLS%isDecomposed .OR. ALLOCATED(thisLS%M)) THEN
-          WRITE(*,*) 'CALL Iterative%updatedA() FAILED!'
-          STOP 666
-        ENDIF
+        bool = .NOT.thisLS%isDecomposed .AND. .NOT.ALLOCATED(thisLS%M)
+        ASSERT(bool, 'Iterative%updatedA()')
       ENDSELECT
       CALL thisLS%clear()
       DEALLOCATE(thisLS)
@@ -541,6 +529,7 @@ CONTAINS
     SUBROUTINE testDirectSolve()
       CLASS(LinearSolverType_Base),ALLOCATABLE :: thisLS
       REAL(SRK),ALLOCATABLE :: dummyvec(:)
+      LOGICAL(SBK) :: bool
 
       ALLOCATE(LinearSolverType_Direct :: thisLS)
 
@@ -639,14 +628,12 @@ CONTAINS
         IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
         ALLOCATE(dummyvec(X%n))
         CALL X%get(dummyvec)
-        IF(.NOT.((dummyvec(1) .APPROXEQ. 1._SRK) &
+        bool = ((dummyvec(1) .APPROXEQ. 1._SRK) &
            .AND. (dummyvec(2) .APPROXEQ. 1._SRK) &
            .AND. (dummyvec(3) .APPROXEQ. 1._SRK) &
            .AND. (dummyvec(4) .APPROXEQ. 1._SRK) &
-           .AND. (thisLS%info == 0) )) THEN
-          WRITE(*,*) 'CALL Direct%solve() -LU method FAILED!'
-          STOP 666
-        ENDIF
+           .AND. (thisLS%info == 0) )
+        ASSERT(bool, 'Direct%solve() -LU method')
       ENDSELECT
       CALL thisLS%clear()
 
@@ -691,7 +678,7 @@ CONTAINS
       !  [-.25 3.75 -1]
       !  [ 0   -.267  3.7333]
       SELECTTYPE(M => thisLS%M); TYPE IS(TriDiagMatrixType)
-        IF(.NOT.((M%a(1,1) .APPROXEQ.  0.0_SRK)  &
+        bool = ((M%a(1,1) .APPROXEQ.  0.0_SRK)  &
            .AND. (M%a(1,2) .APPROXEQ. -0.25_SRK) &
            .AND. (M%a(1,3) .APPROXEQ. -0.266666666666666666_SRK) &
            .AND. (M%a(2,1) .APPROXEQ.  0.25_SRK) &
@@ -700,10 +687,8 @@ CONTAINS
            .AND. (M%a(3,1) .APPROXEQ. -1.0_SRK)  &
            .AND. (M%a(3,2) .APPROXEQ. -1.0_SRK)  &
            .AND. (M%a(3,3) .APPROXEQ.  0.0_SRK)  &
-           .AND. thisLS%isDecomposed)) THEN
-          WRITE(*,*) 'CALL Direct%solve() -LU method FAILED!'
-          STOP 666
-        ENDIF
+           .AND. thisLS%isDecomposed)
+        ASSERT(bool, 'Direct%solve() -LU method')
       ENDSELECT
 
       !Check X
@@ -711,13 +696,11 @@ CONTAINS
         IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
         ALLOCATE(dummyvec(X%n))
         CALL X%get(dummyvec)
-        IF(.NOT. ((dummyvec(1) .APPROXEQ. 0.46428571428571430_SRK) &
+        bool = ((dummyvec(1) .APPROXEQ. 0.46428571428571430_SRK) &
            .AND.  (dummyvec(2) .APPROXEQ. 0.85714285714285721_SRK) &
            .AND.  (dummyvec(3) .APPROXEQ. 0.96428571428571430_SRK) &
-           .AND.   thisLS%info == 0)) THEN
-          WRITE(*,*) 'CALL Direct%solve() -LU method FAILED!'
-          STOP 666
-        ENDIF
+           .AND.   thisLS%info == 0)
+        ASSERT(bool, 'Direct%solve() -LU method')
       ENDSELECT
 
 
@@ -728,13 +711,11 @@ CONTAINS
         IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
         ALLOCATE(dummyvec(X%n))
         CALL X%get(dummyvec)
-        IF(.NOT. ((dummyvec(1) .APPROXEQ. 0.46428571428571430_SRK) &
+        bool = ((dummyvec(1) .APPROXEQ. 0.46428571428571430_SRK) &
            .AND.  (dummyvec(2) .APPROXEQ. 0.85714285714285721_SRK) &
            .AND.  (dummyvec(3) .APPROXEQ. 0.96428571428571430_SRK) &
-           .AND.   thisLS%isDecomposed)) THEN
-          WRITE(*,*) 'CALL Direct%solve() -LU method FAILED!'
-          STOP 666
-        ENDIF
+           .AND.   thisLS%isDecomposed)
+        ASSERT(bool, 'Direct%solve() -LU method')
       ENDSELECT
       CALL thisLS%A%clear()
       CALL thisLS%clear()
@@ -806,11 +787,9 @@ CONTAINS
       !solve it
       CALL thisLS%solve()
 
-      IF(thisLS%info /= 0) THEN
-        WRITE(*,*) thisLS%info
-        WRITE(*,*) 'CALL Direct%solve() -GE method FAILED!'
-        STOP 666
-      ENDIF
+      bool = thisLS%info == 0
+      ASSERT(bool, 'Direct%solve() -GE method')
+      FINFO() thisLS%info
       CALL thisLS%clear()
 
       !DenseRect matrix, just make sure that it could go to CGNR.
@@ -857,10 +836,8 @@ CONTAINS
 
       ! solve it
       CALL thisLS%solve()
-      IF(thisLS%info /= 0) THEN
-        WRITE(*,*) 'CALL Direct%solve() -GE method FAILED!'
-        STOP 666
-      ENDIF
+      bool = thisLS%info == 0
+      ASSERT(bool, 'Direct%solve() -GE method')
       CALL thisLS%clear()
 
     !Test LU (Dense square matrix and tridiagonal matrix
@@ -906,10 +883,8 @@ CONTAINS
 
       ! solve it
       CALL thisLS%solve()
-      IF(thisLS%info /= -1) THEN
-        WRITE(*,*) 'CALL Direct%solve() -LU method FAILED!'
-        STOP 666
-      ENDIF
+      bool = thisLS%info == -1
+      ASSERT(bool, 'Direct%solve() -LU method')
       CALL thisLS%clear()
 
       ! Normal Case (non-singular)
@@ -956,7 +931,7 @@ CONTAINS
       !   [1/3    2  -2]
       !   [2/3 -1/2  -9]
       SELECTTYPE(M => thisLS%M); TYPE IS(DenseSquareMatrixType)
-        IF(.NOT.((M%A(1,1) .APPROXEQ.   3._SRK) &
+        bool = ((M%A(1,1) .APPROXEQ.   3._SRK) &
            .AND. (M%A(1,2) .APPROXEQ.   6._SRK) &
            .AND. (M%A(1,3) .APPROXEQ.   9._SRK) &
            .AND. (M%A(2,1) .APPROXEQ.   1._SRK/3._SRK) &
@@ -964,20 +939,16 @@ CONTAINS
            .AND. (M%A(2,3) .APPROXEQ.  -2._SRK) &
            .AND. (M%A(3,1) .APPROXEQ.   2._SRK/3._SRK) &
            .AND. (M%A(3,2) .APPROXEQ. -0.5_SRK) &
-           .AND. (M%A(3,3) .APPROXEQ.  -9._SRK) )) THEN
-          WRITE(*,*) 'CALL Direct%solve() -LU method FAILED!'
-          STOP 666
-        ENDIF
+           .AND. (M%A(3,3) .APPROXEQ.  -9._SRK) )
+        ASSERT(bool, 'Direct%solve() -LU method')
       ENDSELECT
 
       ! check IPIV: IPIV=[3 3 0]
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Direct)
-        IF(    thisLS%IPIV(1) /= 3 &
-          .OR. thisLS%IPIV(2) /= 3 &
-          .OR. thisLS%IPIV(3) /= 0 ) THEN
-          WRITE(*,*) 'CALL Direct%solve() -LU method FAILED!'
-          STOP 666
-        ENDIF
+        bool = thisLS%IPIV(1) == 3 &
+               .AND. thisLS%IPIV(2) == 3 &
+               .AND. thisLS%IPIV(3) == 0 
+        ASSERT(bool, 'Direct%solve() -LU method')
       ENDSELECT
 
       ! check X
@@ -985,13 +956,11 @@ CONTAINS
         IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
         ALLOCATE(dummyvec(X%n))
         CALL X%get(dummyvec)
-        IF(.NOT.((dummyvec(1) .APPROXEQ. 1._SRK) &
+        bool = ((dummyvec(1) .APPROXEQ. 1._SRK) &
            .AND. (dummyvec(2) .APPROXEQ. 2._SRK) &
            .AND. (dummyvec(3) .APPROXEQ. 3._SRK) &
-           .AND. (thisLS%info == 0))) THEN
-          WRITE(*,*) 'CALL Direct%solve() -LU method FAILED!'
-          STOP 666
-        ENDIF
+           .AND. (thisLS%info == 0))
+        ASSERT(bool, 'Direct%solve() -LU method')
       ENDSELECT
 
       ! reset right hand side and solve it again
@@ -1008,13 +977,11 @@ CONTAINS
         IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
         ALLOCATE(dummyvec(X%n))
         CALL X%get(dummyvec)
-        IF(.NOT.((dummyvec(1) .APPROXEQ. 3._SRK) &
+        bool = ((dummyvec(1) .APPROXEQ. 3._SRK) &
            .AND. (dummyvec(2) .APPROXEQ. 2._SRK) &
            .AND. (dummyvec(3) .APPROXEQ. 1._SRK) &
-           .AND. (thisLS%info == 0))) THEN
-          WRITE(*,*) 'CALL Direct%solve() -LU method FAILED!'
-          STOP 666
-        ENDIF
+           .AND. (thisLS%info == 0))
+        ASSERT(bool, 'Direct%solve() -LU method')
       ENDSELECT
       CALL thisLS%clear()
 
@@ -1053,10 +1020,8 @@ CONTAINS
 
       CALL thisLS%solve()
       !Check
-      IF(thisLS%info /= -1) THEN
-        WRITE(*,*) 'CALL Direct%solve() -LU method FAILED!'
-        STOP 666
-      ENDIF
+      bool = thisLS%info == -1
+      ASSERT(bool, 'Direct%solve() -LU method')
       CALL thisLS%clear()
 
       ! Tridiagonal (non-singular case)
@@ -1099,7 +1064,7 @@ CONTAINS
       !  [-.25 3.75 -1]
       !  [ 0   -.267  3.7333]
       SELECTTYPE(M => thisLS%M); TYPE IS(TriDiagMatrixType)
-        IF(.NOT.((M%a(1,1) .APPROXEQ.  0.0_SRK)  &
+        bool = ((M%a(1,1) .APPROXEQ.  0.0_SRK)  &
            .AND. (M%a(1,2) .APPROXEQ. -.25_SRK)  &
            .AND. (M%a(1,3) .APPROXEQ. -0.266666666666666666_SRK) &
            .AND. (M%a(2,1) .APPROXEQ. 0.25_SRK)  &
@@ -1108,10 +1073,8 @@ CONTAINS
            .AND. (M%a(3,1) .APPROXEQ. -1.0_SRK)  &
            .AND. (M%a(3,2) .APPROXEQ. -1.0_SRK)  &
            .AND. (M%a(3,3) .APPROXEQ.  0.0_SRK)  &
-           .AND. thisLS%isDecomposed)) THEN
-          WRITE(*,*) 'CALL Direct%solve() -LU method FAILED!'
-          STOP 666
-        ENDIF
+           .AND. thisLS%isDecomposed)
+        ASSERT(bool, 'Direct%solve() -LU method')
       ENDSELECT
 
       !Check X
@@ -1119,13 +1082,11 @@ CONTAINS
         IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
         ALLOCATE(dummyvec(X%n))
         CALL X%get(dummyvec)
-        IF(.NOT. ((dummyvec(1) .APPROXEQ. 0.46428571428571430_SRK) &
+        bool = ((dummyvec(1) .APPROXEQ. 0.46428571428571430_SRK) &
            .AND.  (dummyvec(2) .APPROXEQ. 0.85714285714285721_SRK) &
            .AND.  (dummyvec(3) .APPROXEQ. 0.96428571428571430_SRK) &
-           .AND.   thisLS%info == 0)) THEN
-          WRITE(*,*) 'CALL Direct%solve() -LU method FAILED!'
-          STOP 666
-        ENDIF
+           .AND.   thisLS%info == 0)
+        ASSERT(bool, 'Direct%solve() -LU method')
       ENDSELECT
 
       !Reset X, and solve it again
@@ -1133,13 +1094,11 @@ CONTAINS
         CALL X%set(1.0_SRK)
         CALL thisLS%solve()
         CALL X%get(dummyvec)
-        IF(.NOT. ((dummyvec(1) .APPROXEQ. 0.46428571428571430_SRK) &
+        bool = ((dummyvec(1) .APPROXEQ. 0.46428571428571430_SRK) &
            .AND.  (dummyvec(2) .APPROXEQ. 0.85714285714285721_SRK) &
            .AND.  (dummyvec(3) .APPROXEQ. 0.96428571428571430_SRK) &
-           .AND.   thisLS%isDecomposed)) THEN
-          WRITE(*,*) 'CALL Direct%solve() -LU method FAILED!'
-          STOP 666
-        ENDIF
+           .AND.   thisLS%isDecomposed)
+        ASSERT(bool, 'Direct%solve() -LU method')
       ENDSELECT
       CALL thisLS%clear()
 
@@ -1244,10 +1203,8 @@ CONTAINS
       ! solve it
       CALL thisLS%solve()
 
-      IF(thisLS%info /= 0) THEN
-        WRITE(*,*) 'CALL Direct%solve() -LU method FAILED!'
-        STOP 666
-      ENDIF
+      bool = thisLS%info == 0
+      ASSERT(bool, 'Direct%solve() -LU method')
       CALL thisLS%clear()
 
       !DenseRect matrix, just make sure that it could go to CGNR.
@@ -1291,10 +1248,8 @@ CONTAINS
 
       !Solve it
       CALL thisLS%solve()
-      IF(thisLS%info /= 0) THEN
-        WRITE(*,*) 'CALL Direct%solve() -LU method FAILED!'
-        STOP 666
-      ENDIF
+      bool = thisLS%info == 0
+      ASSERT(bool, 'Direct%solve() -LU method')
       CALL thisLS%clear()
 
 #ifdef HAVE_PARDISO
@@ -1341,13 +1296,11 @@ CONTAINS
         IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
         ALLOCATE(dummyvec(X%n))
         CALL X%get(dummyvec)
-        IF(.NOT. (SOFTEQ(dummyvec(1),1._SRK,1E-14_SRK)  &
+        bool = (SOFTEQ(dummyvec(1),1._SRK,1E-14_SRK)  &
            .AND.  SOFTEQ(dummyvec(2),2._SRK,1E-14_SRK)  &
            .AND.  SOFTEQ(dummyvec(3),3._SRK,1E-14_SRK)) &
-           .AND. thisLS%info == 0) THEN
-          WRITE(*,*) 'CALL PARDISODirect%solve() FAILED!'
-          STOP 666
-        ENDIF
+           .OR. thisLS%info /= 0
+        ASSERT(bool, 'PARDISODirect%solve()')
       ENDSELECT
       CALL thisLS%clear()
 
@@ -1394,13 +1347,11 @@ CONTAINS
         IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
         ALLOCATE(dummyvec(X%n))
         CALL X%get(dummyvec)
-        IF(.NOT. (SOFTEQ(dummyvec(1),1._SRK,1E-14_SRK)  &
+        bool = (SOFTEQ(dummyvec(1),1._SRK,1E-14_SRK)  &
            .AND.  SOFTEQ(dummyvec(2),2._SRK,1E-14_SRK)  &
            .AND.  SOFTEQ(dummyvec(3),3._SRK,1E-14_SRK)) &
-           .AND. thisLS%info == 0) THEN
-          WRITE(*,*) 'CALL PARDISODirect%solve() FAILED!'
-          STOP 666
-        ENDIF
+           .OR. thisLS%info /= 0
+        ASSERT(bool, 'PARDISODirect%solve()')
       ENDSELECT
 #endif
 
@@ -1414,6 +1365,7 @@ CONTAINS
     SUBROUTINE testQRSolve()
       CLASS(LinearSolverType_Base),ALLOCATABLE :: thisLS
       REAL(SRK),ALLOCATABLE :: dummyvec(:)
+      LOGICAL(SBK) :: bool
 
       ALLOCATE(LinearSolverType_Direct :: thisLS)
 
@@ -1488,6 +1440,8 @@ WRITE(*,*) thisLS%info
       REAL(SRK),ALLOCATABLE :: resid_soln(:),dummyvec(:)
       TYPE(RealVectorType) :: resid
       INTEGER(SIK) :: i
+      LOGICAL(SBK) :: bool
+
 #ifdef MPACT_HAVE_PETSC
       PetscReal :: rtol,abstol,dtol
       PetscInt  :: maxits,restart
@@ -1525,11 +1479,9 @@ WRITE(*,*) thisLS%info
       !test case that is expected to work, thisX has already been allocated
       SELECTTYPE(thisLS); TYPE IS (LinearSolverType_Iterative)
         CALL thisLS%setX0(thisX2)
-        IF(.NOT. (ALLOCATED(thisLS%X) .AND. ASSOCIATED(thisX2) &
-           .AND.  thisLS%hasX0)) THEN
-          WRITE(*,*) 'CALL Iterative%setX0(...) FAILED!'
-          STOP 666
-        ENDIF
+        bool = (ALLOCATED(thisLS%X) .AND. ASSOCIATED(thisX2) &
+           .AND.  thisLS%hasX0)
+        ASSERT(bool, 'Iterative%setX0(...)')
       ENDSELECT
       DEALLOCATE(thisX2)
       CALL thisLS%clear()
@@ -1563,11 +1515,9 @@ WRITE(*,*) thisLS%info
       !test case that is expected to work, thisX has already been allocated
       SELECTTYPE(thisLS); TYPE IS (LinearSolverType_Iterative)
         CALL thisLS%setX0(thisX2)
-        IF(.NOT. (ALLOCATED(thisLS%X) .AND. ASSOCIATED(thisX2) &
-           .AND.  thisLS%hasX0)) THEN
-          WRITE(*,*) 'CALL PETScIterative%setX0(...) FAILED!'
-          STOP 666
-        ENDIF
+        bool = (ALLOCATED(thisLS%X) .AND. ASSOCIATED(thisX2) &
+           .AND.  thisLS%hasX0)
+        ASSERT(bool, 'PETScIterative%setX0(...)')
       ENDSELECT
       DEALLOCATE(thisX2)
       CALL thisLS%clear()
@@ -1594,22 +1544,18 @@ WRITE(*,*) thisLS%info
         CALL thisLS%setConv(-2,-0.1_SRK,-1,-1)
         CALL thisLS%setConv(-2,1.1_SRK,-1,-1)
         !Check if default value is used
-        IF(thisLS%maxIters /= 1000_SIK .OR. thisLS%normType /= 2_SIK &
-          .OR. thisLS%convTol /= 0.001_SRK .OR. thisLS%nRestart /= 30_SIK) THEN
-          WRITE(*,*) thisLS%maxIters, thisLS%normType, thisLS%convTol, thisLS%nRestart
-          WRITE(*,*) 'CALL Iterative%setConv(...) FAILED!'
-          STOP 666
-        ENDIF
+        bool = thisLS%maxIters == 1000_SIK .AND. thisLS%normType == 2_SIK &
+          .AND. thisLS%convTol == 0.001_SRK .AND. thisLS%nRestart == 30_SIK
+        ASSERT(bool, 'Iterative%setConv(...)')
+        FINFO() thisLS%maxIters, thisLS%normType, thisLS%convTol, thisLS%nRestart
       ENDSELECT
 
       !Correct input
       SELECTTYPE(thisLS); TYPE IS (LinearSolverType_Iterative)
         CALL thisLS%setConv(1_SIK,0.01_SRK,100_SIK,10_SIK)
-        IF(thisLS%maxIters /= 100_SIK .OR. thisLS%normType /= 1_SIK &
-          .OR. thisLS%convTol /= 0.01_SRK .OR. thisLS%nRestart /= 10_SIK) THEN
-          WRITE(*,*) 'CALL Iterative%setConv(...) FAILED!'
-          STOP 666
-        ENDIF
+        bool = thisLS%maxIters == 100_SIK .AND. thisLS%normType == 1_SIK &
+          .AND. thisLS%convTol == 0.01_SRK .AND. thisLS%nRestart == 10_SIK
+        ASSERT(bool, 'Iterative%setConv(...)')
       ENDSELECT
       CALL thisLS%clear()
 
@@ -1638,11 +1584,9 @@ WRITE(*,*) thisLS%info
         CALL KSPGetTolerances(thisLS%ksp,rtol,abstol,dtol,maxits,ierr)
 !        CALL KSPGMRESGetRestart(thisLS%ksp,restart,ierr)
         restart=30
-        IF(maxits /= 1000_SIK .OR. rtol /= 0.001_SRK &
-           .OR. abstol /= 0.001_SRK .OR. restart /= 30_SIK) THEN
-          WRITE(*,*) 'CALL PETScIterative%setConv(...) FAILED!'
-          STOP 666
-        ENDIF
+        bool = maxits == 1000_SIK .AND. rtol == 0.001_SRK &
+           .AND. abstol == 0.001_SRK .AND. restart == 30_SIK
+        ASSERT(bool, 'PETScIterative%setConv(...)')
       ENDSELECT
 
       !Correct input
@@ -1651,11 +1595,9 @@ WRITE(*,*) thisLS%info
         CALL KSPGetTolerances(thisLS%ksp,rtol,abstol,dtol,maxits,ierr)
 !        CALL KSPGMRESGetRestart(thisLS%ksp,restart,ierr)
         restart=10
-        IF(maxits /= 100_SIK .OR. rtol /= 0.01_SRK &
-           .OR. abstol /= 0.01_SRK .OR. restart /= 10_SIK) THEN
-          WRITE(*,*) 'CALL PETScIterative%setConv(...) FAILED2!'
-          STOP 666
-        ENDIF
+        bool = maxits == 100_SIK .AND. rtol == 0.01_SRK &
+           .AND. abstol == 0.01_SRK .AND. restart == 10_SIK
+        ASSERT(bool, 'PETScIterative%setConv(...)')
       ENDSELECT
       CALL thisLS%clear()
 #endif
@@ -1776,10 +1718,8 @@ WRITE(*,*) thisLS%info
         IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
         ALLOCATE(dummyvec(resid%n))
         CALL resid%get(dummyvec)
-        IF(.NOT.(dummyvec(i) .APPROXEQ. resid_soln(i))) THEN
-          WRITE(*,*) 'CALL Iterative%getResidual(...) FAILED!'
-          STOP 666
-        ENDIF
+        bool = (dummyvec(i) .APPROXEQ. resid_soln(i))
+        ASSERT(bool, 'Iterative%getResidual(...)')
       ENDDO
 
       CALL thisLS%clear()
@@ -1794,7 +1734,7 @@ WRITE(*,*) thisLS%info
       REAL(SRK),ALLOCATABLE :: thisB(:),dummyvec(:)
       REAL(SRK),POINTER :: thisX(:)
       INTEGER(SIK) :: i
-      LOGICAL(SBK) :: match
+      LOGICAL(SBK) :: match, bool
 
       ALLOCATE(LinearSolverType_Iterative :: thisLS)
 
@@ -1906,10 +1846,7 @@ WRITE(*,*) thisLS%info
           ENDIF
         ENDSELECT
       ENDDO
-      IF(.NOT. match) THEN
-        WRITE(*,*) 'CALL Iterative%solve() -BICGSTAB FAILED!'
-        STOP 666
-      ENDIF
+      ASSERT(match, 'Iterative%solve() -BICGSTAB')
 
       DEALLOCATE(thisB)
       CALL thisLS%A%clear()
@@ -1987,10 +1924,7 @@ WRITE(*,*) thisLS%info
           ENDIF
         ENDSELECT
       ENDDO
-      IF(.NOT. match) THEN
-        WRITE(*,*) 'CALL Iterative%solve() - BiCGSTAB FAILED!'
-        STOP 666
-      ENDIF
+      ASSERT(match, 'Iterative%solve() - BiCGSTAB')
       !test to see how it performs with an already decomposed M
       !reset X to 1.0s
       match=.TRUE.
@@ -2007,10 +1941,7 @@ WRITE(*,*) thisLS%info
           ENDIF
         ENDSELECT
       ENDDO
-      IF(.NOT. match) THEN
-        WRITE(*,*) 'CALL Iterative%solve() - BiCGSTAB FAILED!'
-        STOP 666
-      ENDIF
+      ASSERT(match, 'Iterative%solve() - BiCGSTAB')
       CALL thisLS%clear()
       DEALLOCATE(thisB)
 
@@ -2050,10 +1981,8 @@ WRITE(*,*) thisLS%info
 
       CALL thisLS%solve()
 
-      IF(thisLS%info /= 0) THEN
-        WRITE(*,*) 'CALL Iterative%solve() - BiCGSTAB FAILED!'
-        STOP 666
-      ENDIF
+      bool = thisLS%info == 0
+      ASSERT(bool, 'Iterative%solve() - BiCGSTAB')
       CALL thisLS%clear()
       DEALLOCATE(thisX)
 
@@ -2105,10 +2034,8 @@ WRITE(*,*) thisLS%info
       !Solve it
       CALL thisLS%solve()
 
-      IF(thisLS%info /= 0) THEN
-        WRITE(*,*) 'CALL Iterative%solve() -BiCGSTAB method FAILED!'
-        STOP 666
-      ENDIF
+      bool = thisLS%info == 0
+      ASSERT(bool, 'Iterative%solve() -BiCGSTAB method')
 
       DEALLOCATE(thisX)
       CALL thisLS%clear()
@@ -2220,10 +2147,7 @@ WRITE(*,*) thisLS%info
           ENDIF
         ENDSELECT
       ENDDO
-      IF(.NOT. match) THEN
-        WRITE(*,*) 'CALL PETScIterative%solve() -BICGSTAB FAILED!'
-        STOP 666
-      ENDIF
+      ASSERT(match, 'PETScIterative%solve() -BICGSTAB')
 
       DEALLOCATE(thisB)
       DEALLOCATE(thisX)
@@ -2300,10 +2224,7 @@ WRITE(*,*) thisLS%info
           ENDIF
         ENDSELECT
       ENDDO
-      IF(.NOT. match) THEN
-        WRITE(*,*) 'CALL PETSCIterative%solve() -BiCGSTAB FAILED!'
-        STOP 666
-      ENDIF
+      ASSERT(match, 'PETSCIterative%solve() -BiCGSTAB')
       !test to see how it performs with an already decomposed M
       !reset X to 1.0s
       match=.TRUE.
@@ -2320,10 +2241,7 @@ WRITE(*,*) thisLS%info
           ENDIF
         ENDSELECT
       ENDDO
-      IF(.NOT. match) THEN
-        WRITE(*,*) 'CALL PETSCIterative%solve() -BiCGSTAB FAILED!'
-        STOP 666
-      ENDIF
+      ASSERT(match, 'PETSCIterative%solve() -BiCGSTAB')
       CALL thisLS%clear()
       DEALLOCATE(thisB)
       DEALLOCATE(thisX)
@@ -2338,6 +2256,7 @@ WRITE(*,*) thisLS%info
       CLASS(LinearSolverType_Base),ALLOCATABLE :: thisLS
       REAL(SRK),ALLOCATABLE :: thisB(:),dummyvec(:)
       REAL(SRK),POINTER :: thisX(:)
+      LOGICAL(SBK) :: bool
 
       ALLOCATE(LinearSolverType_Iterative :: thisLS)
 
@@ -2387,10 +2306,8 @@ WRITE(*,*) thisLS%info
 
       CALL thisLS%solve()
 
-      IF(thisLS%info /= -1) THEN
-        WRITE(*,*)'CALL Iterative%solve() -CGNR FAILED!'
-        STOP 666
-      ENDIF
+      bool = thisLS%info == -1
+      ASSERT(bool, 'Iterative%solve() -CGNR')
 
       DEALLOCATE(thisX)
       CALL thisLS%clear()
@@ -2448,11 +2365,9 @@ WRITE(*,*) thisLS%info
         IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
         ALLOCATE(dummyvec(X%n))
         CALL X%get(dummyvec)
-        IF(.NOT.(SOFTEQ(dummyvec(1),2._SRK/3._SRK,1.0E-13_SRK) &
-           .AND. SOFTEQ(dummyvec(2),0.5_SRK,1.0E-13_SRK))) THEN
-          WRITE(*,*)'CALL Iterative%solve() FAILED!'
-          STOP 666
-        ENDIF
+        bool = (SOFTEQ(dummyvec(1),2._SRK/3._SRK,1.0E-13_SRK) &
+           .AND. SOFTEQ(dummyvec(2),0.5_SRK,1.0E-13_SRK))
+        ASSERT(bool, 'Iterative%solve()')
       ENDSELECT
 
       DEALLOCATE(thisX)
@@ -2504,13 +2419,11 @@ WRITE(*,*) thisLS%info
         IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
         ALLOCATE(dummyvec(X%n))
         CALL X%get(dummyvec)
-        IF(.NOT. ((dummyvec(1) .APPROXEQ. 0.46428571428571430_SRK) &
-           .AND.  (dummyvec(2) .APPROXEQ. 0.85714285714285721_SRK) &
-           .AND.  (dummyvec(3) .APPROXEQ. 0.96428571428571430_SRK) &
-           .AND.   thisLS%info == 0)) THEN
-          WRITE(*,*) 'CALL Iterative%solve() -CGNR method FAILED!'
-          STOP 666
-        ENDIF
+        bool = ((dummyvec(1) .APPROXEQ. 0.46428571428571430_SRK) &
+               .AND.  (dummyvec(2) .APPROXEQ. 0.85714285714285721_SRK) &
+               .AND.  (dummyvec(3) .APPROXEQ. 0.96428571428571430_SRK) &
+               .AND.   thisLS%info == 0)
+        ASSERT(bool, 'Iterative%solve() -CGNR method')
       ENDSELECT
 
       CALL thisLS%clear()
@@ -2567,13 +2480,11 @@ WRITE(*,*) thisLS%info
         IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
         ALLOCATE(dummyvec(X%n))
         CALL X%get(dummyvec)
-        IF(.NOT. ((dummyvec(1) .APPROXEQ. 0.46428571428571430_SRK) &
+        bool = ((dummyvec(1) .APPROXEQ. 0.46428571428571430_SRK) &
            .AND.  (dummyvec(2) .APPROXEQ. 0.85714285714285721_SRK) &
            .AND.  (dummyvec(3) .APPROXEQ. 0.96428571428571430_SRK) &
-           .AND.   thisLS%info == 0)) THEN
-          WRITE(*,*) 'CALL Iterative%solve() -CGNR method FAILED!'
-          STOP 666
-        ENDIF
+           .AND.   thisLS%info == 0)
+        ASSERT(bool, 'Iterative%solve() -CGNR method')
       ENDSELECT
 
       DEALLOCATE(thisX)
@@ -2615,10 +2526,8 @@ WRITE(*,*) thisLS%info
 
       CALL thisLS%solve()
 
-      IF(thisLS%info /= 0) THEN
-        WRITE(*,*) 'CALL Iterative%solve() - BiCGSTAB FAILED!'
-        STOP 666
-      ENDIF
+      bool = thisLS%info == 0
+      ASSERT(bool, 'Iterative%solve() - BiCGSTAB')
 
       CALL thisLS%clear()
 
@@ -2669,13 +2578,11 @@ WRITE(*,*) thisLS%info
         IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
         ALLOCATE(dummyvec(X%n))
         CALL X%get(dummyvec)
-        IF(.NOT. ((dummyvec(1) .APPROXEQ. 0.46428571428571430_SRK) &
+        bool = ((dummyvec(1) .APPROXEQ. 0.46428571428571430_SRK) &
            .AND.  (dummyvec(2) .APPROXEQ. 0.85714285714285721_SRK) &
            .AND.  (dummyvec(3) .APPROXEQ. 0.96428571428571430_SRK) &
-           .AND.   thisLS%info == 0)) THEN
-          WRITE(*,*) 'CALL PETScIterative%solve() -CGNR method FAILED!'
-          STOP 666
-        ENDIF
+           .AND.   thisLS%info == 0)
+        ASSERT(bool, 'PETScIterative%solve() -CGNR method')
       ENDSELECT
 
       CALL thisLS%clear()
@@ -2731,13 +2638,11 @@ WRITE(*,*) thisLS%info
         IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
         ALLOCATE(dummyvec(X%n))
         CALL X%get(dummyvec)
-        IF(.NOT. ((dummyvec(1) .APPROXEQ. 0.46428571428571430_SRK) &
+        bool = ((dummyvec(1) .APPROXEQ. 0.46428571428571430_SRK) &
            .AND.  (dummyvec(2) .APPROXEQ. 0.85714285714285721_SRK) &
            .AND.  (dummyvec(3) .APPROXEQ. 0.96428571428571430_SRK) &
-           .AND.   thisLS%info == 0)) THEN
-          WRITE(*,*) 'CALL PETScIterative%solve() -CGNR method FAILED!'
-          STOP 666
-        ENDIF
+           .AND.   thisLS%info == 0)
+        ASSERT(bool, 'PETScIterative%solve() -CGNR method')
       ENDSELECT
 
       DEALLOCATE(thisX)
@@ -2755,7 +2660,7 @@ WRITE(*,*) thisLS%info
       REAL(SRK),ALLOCATABLE :: thisB(:),dummyvec(:)
       REAL(SRK),POINTER :: thisX(:)
       INTEGER(SIK) :: i
-      LOGICAL(SBK) :: match
+      LOGICAL(SBK) :: match, bool
 
       ALLOCATE(LinearSolverType_Iterative :: thisLS)
 
@@ -2945,10 +2850,7 @@ WRITE(*,*) thisLS%info
           ENDIF
         ENDSELECT
       ENDDO
-      IF(.NOT. match) THEN
-        WRITE(*,*) 'CALL Iterative%solve() - GMRES FAILED!'
-        STOP 666
-      ENDIF
+      ASSERT(match, 'Iterative%solve() - GMRES')
       !test to see how it performs with an already decomposed M
       !reset X to 1.0s
       match=.TRUE.
@@ -2965,10 +2867,7 @@ WRITE(*,*) thisLS%info
           ENDIF
         ENDSELECT
       ENDDO
-      IF(.NOT. match) THEN
-        WRITE(*,*) 'CALL Iterative%solve() - GMRES FAILED!'
-        STOP 666
-      ENDIF
+      ASSERT(match, 'Iterative%solve() - GMRES')
       CALL thisLS%A%clear()
       CALL thisLS%clear()
 
@@ -3009,10 +2908,8 @@ WRITE(*,*) thisLS%info
 
       CALL thisLS%solve()
 
-      IF(thisLS%info /= 0) THEN
-        WRITE(*,*) 'CALL Iterative%solve() - GMRES FAILED!'
-        STOP 666
-      ENDIF
+      bool = thisLS%info == 0
+      ASSERT(bool, 'Iterative%solve() - GMRES')
       CALL thisLS%A%clear()
       CALL thisLS%clear()
       DEALLOCATE(thisX)
@@ -3065,10 +2962,8 @@ WRITE(*,*) thisLS%info
       !Solve it
       CALL thisLS%solve()
 
-      IF(thisLS%info /= 0) THEN
-        WRITE(*,*) 'CALL Iterative%solve() -GMRES method FAILED!'
-        STOP 666
-      ENDIF
+      bool = thisLS%info == 0
+      ASSERT(bool, 'Iterative%solve() -GMRES method')
 
       DEALLOCATE(thisB)
       DEALLOCATE(thisX)
@@ -3182,10 +3077,7 @@ WRITE(*,*) thisLS%info
           ENDIF
         ENDSELECT
       ENDDO
-      IF(.NOT. match) THEN
-        WRITE(*,*) 'CALL PETScIterative%solve() -BICGSTAB FAILED!'
-        STOP 666
-      ENDIF
+      ASSERT(match, 'PETScIterative%solve() -BICGSTAB')
 
       DEALLOCATE(thisX)
       DEALLOCATE(thisB)
@@ -3262,10 +3154,7 @@ WRITE(*,*) thisLS%info
           ENDIF
         ENDSELECT
       ENDDO
-      IF(.NOT. match) THEN
-        WRITE(*,*) 'CALL PETScIterative%solve() - GMRES FAILED!'
-        STOP 666
-      ENDIF
+      ASSERT(match, 'PETScIterative%solve() - GMRES')
       !test to see how it performs with an already decomposed M
       !reset X to 1.0s
       match=.TRUE.
@@ -3282,10 +3171,7 @@ WRITE(*,*) thisLS%info
           ENDIF
         ENDSELECT
       ENDDO
-      IF(.NOT. match) THEN
-        WRITE(*,*) 'CALL PETScIterative%solve() - GMRES FAILED!'
-        STOP 666
-      ENDIF
+      ASSERT(match, 'PETScIterative%solve() - GMRES')
       CALL thisLS%A%clear()
       DEALLOCATE(thisX)
 
@@ -3299,6 +3185,7 @@ WRITE(*,*) thisLS%info
       INTEGER(SIK) :: normType
       REAL(SRK),DIMENSION(10) :: x
       REAL(SRK) :: norm
+      LOGICAL(SBK) :: bool
       !set up x
       x=(/0._SRK,-1._SRK,2._SRK,-3._SRK,4._SRK, &
           -5._SRK,6._SRK,-7._SRK,8._SRK,-9._SRK/)
@@ -3306,45 +3193,35 @@ WRITE(*,*) thisLS%info
       normType=1 !taxicab norm, just the absolute sum of these.
       !expected answer = 45
       CALL LNorm(x,normType,norm)
-      IF(.NOT. (norm .APPROXEQ. 45._SRK)) THEN
-        WRITE(*,*) 'CALL LNorm() - 1-NORM FAILED!'
-        STOP 666
-      ENDIF
+      bool = (norm .APPROXEQ. 45._SRK)
+      ASSERT(bool, 'LNorm() - 1-NORM')
       !test normType 2
       normType=2 !Euclidean norm
       !expected answer = 16.88194301613413218312
       CALL LNorm(x,normType,norm)
-      IF(.NOT. (norm .APPROXEQ. 16.88194301613413218312_SRK)) THEN
-        WRITE(*,*) 'CALL LNorm() - 2-NORM FAILED!'
-        STOP 666
-      ENDIF
+      bool = (norm .APPROXEQ. 16.88194301613413218312_SRK)
+      ASSERT(bool, 'LNorm() - 2-NORM')
       !test normType -1
       normType=-1 !Infinite norm
       CALL LNorm(x,normType,norm)
       !expected answer = 9.0
-      IF(.NOT. (norm .APPROXEQ. 9.0_SRK)) THEN
-        WRITE(*,*) 'CALL LNorm() - INFINITE-NORM FAILED!'
-        WRITE(*,*) norm
-        STOP 666
-      ENDIF
+      bool = (norm .APPROXEQ. 9.0_SRK)
+      ASSERT(bool, 'LNorm() - INFINITE-NORM')
+      FINFO() norm
       !test normType 3 (just some p-norm)
       normType=3 !L-norm, w/ L=3
       CALL LNorm(x,normType,norm)
       !expected answer = 12.65148997952623864269
-      IF(.NOT. (norm .APPROXEQ. 12.65148997952623864269_SRK)) THEN
-        WRITE(*,*) 'CALL LNorm() - L-NORM FAILED!'
-        WRITE(*,*) norm
-        STOP 666
-      ENDIF
+      bool = (norm .APPROXEQ. 12.65148997952623864269_SRK)
+      ASSERT(bool, 'LNorm() - L-NORM')
+      FINFO() norm
       !test an invalid norm (<=-2)
       normType=-2
       CALL LNorm(x,normType,norm)
       !expected answer = 0.0
-      IF(.NOT. (norm == 0.0_SRK)) THEN
-        WRITE(*,*) 'CALL LNorm() - L-NORM FAILED!'
-        WRITE(*,*) norm
-        STOP 666
-      ENDIF
+      bool = (norm == 0.0_SRK)
+      ASSERT(bool, 'LNorm() - L-NORM')
+      FINFO() norm
     ENDSUBROUTINE testNorms
 
 ENDPROGRAM testLinearSolver
