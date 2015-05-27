@@ -195,8 +195,8 @@ MODULE Geom_CircCyl
       p2%dim=-1
       IF(circle%c%dim == 2 .AND. line%p1%dim == 2 .AND. &
         line%p2%dim == 2 .AND. circle%r > 0.0_SRK) THEN
-        u(1)=line%p2%coord(1)-line%p1%coord(1)
-        u(2)=line%p2%coord(2)-line%p1%coord(2)
+        u(1)=line%p2%coord(1)-line%p1%coord(1)  !dx
+        u(2)=line%p2%coord(2)-line%p1%coord(2)  !dy
         w(1)=line%p1%coord(1)-circle%c%coord(1)
         w(2)=line%p1%coord(2)-circle%c%coord(2)
         b=w(1)*u(1)+w(2)*u(2)
@@ -205,7 +205,7 @@ MODULE Geom_CircCyl
           p1%dim=-2
           p2%dim=-2
         ELSE
-          a=u(1)*u(1)+u(2)*u(2)
+          a=u(1)*u(1)+u(2)*u(2) !dr^2
           discr=b*b-a*c
           IF(discr < -EPSREAL) THEN
             !Disjoint

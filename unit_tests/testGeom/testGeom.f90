@@ -20,6 +20,7 @@ PROGRAM testGeom
   USE ISO_FORTRAN_ENV  
   USE UnitTest
   USE IntrType
+  USE Constants_Conversion
   USE Geom
   
   IMPLICIT NONE
@@ -958,10 +959,38 @@ PROGRAM testGeom
       CALL line1%p1%init(DIM=2,X=-0.3_SRK,Y=-0.4_SRK)
       CALL line1%p2%init(DIM=2,X=0.4_SRK,Y=0.2_SRK)
       CALL circle1%intersectLine(line1,point2,point3)
-      bool = .NOT.(ANY(.NOT.(point2%coord .APPROXEQ. (/-0.239446595040736_SRK,-0.348097081463488_SRK/))) &
-                   .OR. ANY(.NOT.(point3%coord .APPROXEQ. (/0.380623065628971_SRK,0.183391199110547_SRK/))))
-      ASSERT(bool, 'circle1%intersectLine(...) (2-points)')
-      WRITE(*,*) '  Passed: CALL circle1%intersectLine(...)'
+      IF(ANY(.NOT.(point2%coord .APPROXEQ. (/-0.239446595040736_SRK,-0.348097081463488_SRK/))) &
+        .OR. ANY(.NOT.(point3%coord .APPROXEQ. (/0.380623065628971_SRK,0.183391199110547_SRK/)))) THEN
+        WRITE(*,*) 'CALL circle1%intersectLine(...) (2-points) FAILED!'
+        STOP 666
+      ENDIF
+      CALL line1%clear()
+      
+      !Test 1 point of intersection for arc
+      CALL circle1%clear()
+      CALL line1%p1%init(DIM=2,X=-0.4_SRK,Y=-0.3_SRK)
+      CALL line1%p2%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
+      CALL circle1%set(point,0.4225_SRK,ANGSTT=PI,ANGSTP=TWOPI)
+      CALL circle1%intersectLine(line1,point2,point3)
+      IF(ANY(.NOT.(point2%coord .APPROXEQ. (/-0.3380_SRK,-0.2535_SRK/))) &
+        .OR. point3%dim /= 0) THEN
+        WRITE(*,*) 'CALL circle1%intersectLine(...) (arc 1-point) FAILED!'
+        STOP 666
+      ENDIF
+      CALL line1%clear()
+      
+      !Test 2 points of intersection for arc
+      CALL line1%p1%init(DIM=2,X=-0.3_SRK,Y=-0.4_SRK)
+      CALL line1%p2%init(DIM=2,X=0.4_SRK,Y=-0.2_SRK)
+      CALL circle1%intersectLine(line1,point2,point3)
+      IF(ANY(.NOT.(point2%coord .APPROXEQ. (/-0.239446595040736_SRK,-0.348097081463488_SRK/))) &
+        .OR. ANY(.NOT.(point3%coord .APPROXEQ. (/0.380623065628971_SRK,0.183391199110547_SRK/)))) THEN
+        WRITE(*,*) 'CALL circle1%intersectLine(...) (arc 2-points) FAILED!'
+        STOP 666
+      ELSE
+        WRITE(*,*) '  Passed: CALL circle1%intersectLine(...)'
+      ENDIF
+      
       WRITE(*,*) '---------------------------------------------------'
       WRITE(*,*) 'TESTING CYLINDERTYPE (scalar)'
 !
