@@ -46,6 +46,7 @@ MODULE Geom_CircCyl
 ! List of Public items
   PUBLIC :: CircleType
   PUBLIC :: CylinderType
+  PUBLIC :: OPERATOR(==)
 
   !> @brief Type for a circle
   TYPE :: CircleType
@@ -69,6 +70,9 @@ MODULE Geom_CircCyl
       !> @copybrief Geom_CircCyl::intersect_CircleType_and_LineType
       !> @copydetails Geom_CircCyl::intersect_CircleType_and_LineType
       PROCEDURE,PASS :: intersectLine => intersect_CircleType_and_LineType
+      !> @copybrief Geom_CircCyl::hasPoint_CircleType
+      !> @copydetails Geom_CircCyl::hasPoint_CircleType
+      PROCEDURE,PASS :: hasPoint => hasPoint_CircleType
   ENDTYPE CircleType
 
   !> @brief Type for a cylinder
@@ -95,7 +99,18 @@ MODULE Geom_CircCyl
       !> @copydetails Geom_CircCyl::intersect_CylinderType_and_LineType
       PROCEDURE,PASS :: intersectLine => intersect_CylinderType_and_LineType
   ENDTYPE CylinderType
-
+  
+  !> @brief Generic interface for 'is equal to' operator (==)
+  !>
+  !> Adds 'is equal to' capability for Circle types
+  INTERFACE OPERATOR(==)
+    !> @copybrief Geom_CircCyl::isequal_CircleType
+    !> @copydetails Geom_CircCyl::isequal_CircleType
+    MODULE PROCEDURE isequal_CircleType
+    !> @copybrief Geom_CircCyl::isequal_CylinderType
+    !> @copydetails Geom_CircCyl::isequal_CylinderType
+    MODULE PROCEDURE isequal_CylinderType
+  ENDINTERFACE
 !
 !===============================================================================
   CONTAINS
@@ -467,11 +482,69 @@ MODULE Geom_CircCyl
                   ENDIF
                 ENDIF
               ENDIF
-
             ENDIF
           ENDIF
         ENDIF
       ENDIF
     ENDSUBROUTINE intersect_CylinderType_and_LineType
+!
+!-------------------------------------------------------------------------------
+!> @brief Determines whether a point lies within a circle type.
+!> @param circle the circle type to test for intersection
+!> @param point the first to query
+    ELEMENTAL FUNCTION hasPoint_CircleType(circle,point) RESULT(bool)
+      CLASS(CircleType),INTENT(IN) :: circle
+      TYPE(PointType),INTENT(IN) :: point
+      LOGICAL(SBK) :: bool
+      REAL(SRK) :: x,y,cosstt,cosstp,sinstt,sinstp
+      bool=.FALSE.
+      x=point%coord(1)-circle%c%coord(1)
+      y=point%coord(2)-circle%c%coord(2)
+      IF((x*x+y*y) <= circle%r) THEN
+        IF((circle%thetastt /= ZERO) .OR. &
+            (circle%thetastp /= TWOPI))THEN
+          cosstt=COS(circle%thetastt)
+          cosstp=COS(circle%thetastp)
+          sinstt=SIN(circle%thetastt)
+          sinstp=SIN(circle%thetastp)
+          IF(COS(circle%thetastt)*circle%r*y >= SIN(circle%thetastt)*circle%r*x) &
+            bool=COS(circle%thetastp)*circle%r*y <= SIN(circle%thetastp)*circle%r*x
+        ELSE
+          bool=.TRUE.
+        ENDIF
+      ENDIF
+    ENDFUNCTION hasPoint_CircleType
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the 'is equal to' operation between two circles e.g. @c 
+!>        circ1 == circ2
+!> @param p0 the first circle
+!> @param p1 the second circle
+!> @returns @c bool the boolean result of the operation
+!>
+!> Function is elemental so it can be used on an array of circles.
+    ELEMENTAL FUNCTION isequal_CircleType(c0,c1) RESULT(bool)
+      TYPE(CircleType),INTENT(IN) :: c0,c1
+      LOGICAL(SBK) :: bool
+      bool=.FALSE.
+      IF((c0%r .APPROXEQA. c1%r) .AND. (c0%thetastt .APPROXEQA. c1%thetastt) .AND. &
+        (c0%thetastp .APPROXEQA. c1%thetastp)) bool=(c0%c == c1%c)
+    ENDFUNCTION isequal_CircleType
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the 'is equal to' operation between two cylinders e.g. @c 
+!>        cyl1 == cyl2
+!> @param p0 the first cylinder
+!> @param p1 the second cylinder
+!> @returns @c bool the boolean result of the operation
+!>
+!> Function is elemental so it can be used on an array of cylinders.
+    ELEMENTAL FUNCTION isequal_CylinderType(c0,c1) RESULT(bool)
+      TYPE(CylinderType),INTENT(IN) :: c0,c1
+      LOGICAL(SBK) :: bool
+      bool=.FALSE.
+      IF((c0%r .APPROXEQA. c1%r) .AND. (c0%thetastt .APPROXEQA. c1%thetastt) .AND. &
+        (c0%thetastp .APPROXEQA. c1%thetastp)) bool=(c0%axis == c1%axis)
+    ENDFUNCTION isequal_CylinderType
 !
 ENDMODULE Geom_CircCyl

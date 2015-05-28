@@ -39,12 +39,14 @@ MODULE Geom_Box
   USE IntrType
   USE Geom_Points
   USE Geom_Line
+  USE Geom_Plane
   IMPLICIT NONE
 
   PRIVATE
 !
 !List of public items
   PUBLIC OBBoxType
+  PUBLIC :: OPERATOR(==)
 
   !> @brief Type for a Box
   TYPE OBBoxType
@@ -66,7 +68,22 @@ MODULE Geom_Box
       !> @copybrief Geom_Box::intersect_OBBoxType_and_LineType
       !> @copydetail Geom_Box::intersect_OBBoxType_and_LineType
       PROCEDURE,PASS :: intersectLine => intersect_OBBoxType_and_LineType
+      !> @copybrief Geom_Box::getLines_OBBoxType
+      !> @copydetail Geom_Box::getLines_OBBoxType
+      PROCEDURE,PASS :: getLines => getLines_OBBoxType
+      !> @copybrief Geom_Box::getPlanes_OBBoxType
+      !> @copydetail Geom_Box::getPlanes_OBBoxType
+      PROCEDURE,PASS :: getPlanes => getPlanes_OBBoxType
   ENDTYPE OBBoxType
+  
+  !> @brief Generic interface for 'is equal to' operator (==)
+  !>
+  !> Adds 'is equal to' capability for OBBox types
+  INTERFACE OPERATOR(==)
+    !> @copybrief Geom_Box::isequal_OBBoxType
+    !> @copydetails Geom_Box::isequal_OBBoxType
+    MODULE PROCEDURE isequal_OBBoxType
+  ENDINTERFACE
 !
 !===============================================================================
   CONTAINS
@@ -352,5 +369,84 @@ MODULE Geom_Box
         IF(ndim == 3) p2%coord(3)=line%p1%coord(3)+dir_world(3)*tmax
       ENDIF
     ENDSUBROUTINE intersect_OBBoxType_and_LineType
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns the lines the make up a OBBoxType object
+!> @param box the OBBoxType object to decompose
+!> @param lines the array of line types to be returned
+!>
+!> Only works for 2-D currently.
+!>
+   PURE SUBROUTINE getLines_OBBoxType(thisBox,lines)
+     CLASS(OBBoxType),INTENT(INOUT) :: thisBox
+     TYPE(LineType),INTENT(OUT),ALLOCATABLE :: lines(:)
+     
+     IF(thisBox%p0%dim == 2) THEN
+       ALLOCATE(lines(4))
+       lines(1)%p1=thisBox%p0
+       lines(4)%p2=thisBox%p0
+       CALL lines(1)%p2%init(X=thisBox%p0%coord(1)+thisBox%u(1,1)*thisBox%e(1), &
+         Y=thisBox%p0%coord(2)+thisBox%u(2,1)*thisBox%e(1))
+       lines(2)%p1=lines(1)%p2
+       CALL lines(2)%p2%init(X=lines(2)%p1%coord(1)+thisBox%u(1,2)*thisBox%e(2), &
+         Y=lines(2)%p1%coord(2)+thisBox%u(2,2)*thisBox%e(2))
+       lines(3)%p1=lines(2)%p2
+       CALL lines(3)%p2%init(X=thisBox%p0%coord(1)+thisBox%u(1,2)*thisBox%e(2), &
+         Y=thisBox%p0%coord(2)+thisBox%u(2,2)*thisBox%e(2))
+       lines(4)%p1=lines(3)%p2
+     !ELSE
+     ENDIF
+   ENDSUBROUTINE getLines_OBBoxType
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns the lines the make up a OBBoxType object
+!> @param box the OBBoxType object to decompose
+!> @param lines the array of line types to be returned
+!>
+!> Only works for 3-D currently.
+!>
+   PURE SUBROUTINE getPlanes_OBBoxType(thisBox,planes)
+     CLASS(OBBoxType),INTENT(INOUT) :: thisBox
+     TYPE(PlaneType),INTENT(OUT),ALLOCATABLE :: planes(:)
+     TYPE(PointType) :: tmpPt
+     
+     IF(thisBox%p0%dim == 3) THEN
+       ALLOCATE(planes(6))
+       planes(1)%v0=thisBox%p0
+       planes(1)%n=thisBox%u(:,1)
+       planes(2)%v0=thisBox%p0
+       planes(1)%n=thisBox%u(:,2)
+       planes(3)%v0=thisBox%p0
+       planes(1)%n=thisBox%u(:,3)
+       CALL tmpPt%init(X=thisBox%p0%coord(1)+thisBox%u(1,1)*thisBox%e(1)+ &
+         thisBox%u(1,2)*thisBox%e(2)+thisBox%u(1,3)*thisBox%e(3), &
+         Y=thisBox%p0%coord(2)+thisBox%u(2,1)*thisBox%e(1)+ &
+         thisBox%u(2,2)*thisBox%e(2)+thisBox%u(2,3)*thisBox%e(3), &
+         Z=thisBox%p0%coord(3)+thisBox%u(3,1)*thisBox%e(1)+ &
+         thisBox%u(3,2)*thisBox%e(2)+thisBox%u(3,3)*thisBox%e(3))
+       planes(4)%v0=tmpPt
+       planes(4)%n=thisBox%u(:,1) !Does this need to be made negative?
+       planes(5)%v0=tmpPt
+       planes(4)%n=thisBox%u(:,2) !Does this need to be made negative?
+       planes(6)%v0=tmpPt
+       planes(4)%n=thisBox%u(:,3) !Does this need to be made negative?
+     !ELSE
+     ENDIF
+   ENDSUBROUTINE getPlanes_OBBoxType
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the 'is equal to' operation between two OBBoxes e.g. @c b0==b1
+!> @param p0 the first box
+!> @param p1 the second box
+!> @returns @c bool the boolean result of the operation
+!>
+!> Function is elemental so it can be used on an array of boxes.
+    ELEMENTAL FUNCTION isequal_OBBoxType(b0,b1) RESULT(bool)
+      TYPE(OBBoxType),INTENT(IN) :: b0,b1
+      LOGICAL(SBK) :: bool
+      bool=.FALSE.
+      IF(b0%p0 == b1%p0 .AND. ALL(b0%u .APPROXEQA. b1%u)) &
+        bool=ALL(b0%e.APPROXEQA. b1%e)
+    ENDFUNCTION isequal_OBBoxType
 !
 ENDMODULE Geom_Box

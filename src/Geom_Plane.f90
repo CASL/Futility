@@ -42,6 +42,7 @@ MODULE Geom_Plane
 ! List of Public items
   PUBLIC :: PlaneType
   PUBLIC :: intersect
+  PUBLIC :: OPERATOR(==)
 
   !> @brief Type for a Plane defined by a normal vector @c n and a point @c v0.
   TYPE :: PlaneType
@@ -72,6 +73,15 @@ MODULE Geom_Plane
     !> @copydetails GeomPlane::intersect_PlaneType_and_LineType
     MODULE PROCEDURE intersect_PlaneType_and_LineType
   ENDINTERFACE intersect 
+  
+  !> @brief Generic interface for 'is equal to' operator (==)
+  !>
+  !> Adds 'is equal to' capability for Plane types
+  INTERFACE OPERATOR(==)
+    !> @copybrief Geom_Plane::isequal_PlaneType
+    !> @copydetails Geom_Plane::isequal_PlaneType
+    MODULE PROCEDURE isequal_PlaneType
+  ENDINTERFACE
 !
 !===============================================================================
   CONTAINS
@@ -161,5 +171,20 @@ MODULE Geom_Plane
         ENDIF
       ENDIF
     ENDFUNCTION intersect_PlaneType_and_LineType
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the 'is equal to' operation between two planes e.g. @c 
+!>        plane1 == plane2
+!> @param p0 the first plane
+!> @param p1 the second plane
+!> @returns @c bool the boolean result of the operation
+!>
+!> Function is elemental so it can be used on an array of planes.
+    ELEMENTAL FUNCTION isequal_PlaneType(p0,p1) RESULT(bool)
+      TYPE(PlaneType),INTENT(IN) :: p0,p1
+      LOGICAL(SBK) :: bool
+      bool=.FALSE.
+      IF(ALL(p0%n .APPROXEQA. p1%n)) bool=(p0%v0 == p1%v0)
+    ENDFUNCTION isequal_PlaneType
 !
 ENDMODULE Geom_Plane

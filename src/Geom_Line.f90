@@ -39,6 +39,7 @@ MODULE Geom_Line
 !
 ! List of Public items
   PUBLIC :: LineType
+  PUBLIC :: OPERATOR(==)
 !  PUBLIC :: midPoint
 !  PUBLIC :: intersect
 
@@ -93,6 +94,15 @@ MODULE Geom_Line
 !    !> @copydetails GeomLine::intersect_LineType_and_LineType
 !    MODULE PROCEDURE intersect_LineType_and_LineType
 !  ENDINTERFACE intersect
+
+  !> @brief Generic interface for 'is equal to' operator (==)
+  !>
+  !> Adds 'is equal to' capability for Line types
+  INTERFACE OPERATOR(==)
+    !> @copybrief Geom_Line::isequal_LineType
+    !> @copydetails Geom_Line::isequal_LineType
+    MODULE PROCEDURE isequal_LineType
+  ENDINTERFACE
 !
 !===============================================================================
   CONTAINS
@@ -484,5 +494,20 @@ MODULE Geom_Line
         ENDIF
       ENDIF
     ENDFUNCTION distance3D_to_point
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the 'is equal to' operation between two circles e.g. @c 
+!>        circ1 == circ2
+!> @param p0 the first circle
+!> @param p1 the second circle
+!> @returns @c bool the boolean result of the operation
+!>
+!> Function is elemental so it can be used on an array of circles.
+    ELEMENTAL FUNCTION isequal_LineType(l0,l1) RESULT(bool)
+      TYPE(LineType),INTENT(IN) :: l0,l1
+      LOGICAL(SBK) :: bool
+      bool=.FALSE.
+      IF(l0%p1 == l1%p1) bool=l0%p2 == l1%p2
+    ENDFUNCTION isequal_LineType
 !
 ENDMODULE Geom_Line

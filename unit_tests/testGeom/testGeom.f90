@@ -28,10 +28,10 @@ PROGRAM testGeom
   TYPE(PointType) :: point,point2,point3,points(2),points2(2),points3(2)
   TYPE(LinkedListPointType),POINTER :: firstPoint,thisPoint
   TYPE(LineType) :: line1,line2,lines(2),dis,diss(2)
-  TYPE(PlaneType) :: plane1,planes(2)
-  TYPE(CircleType) :: circle1,circles(2)
-  TYPE(CylinderType) :: cylinder1,cylinders(2)
-  TYPE(OBBoxType) :: box,boxs(2)
+  TYPE(PlaneType) :: plane1,plane2,planes(2)
+  TYPE(CircleType) :: circle1,circle2,circles(2)
+  TYPE(CylinderType) :: cylinder1,cylinder2,cylinders(2)
+  TYPE(OBBoxType) :: box,box2,boxs(2)
   INTEGER(SIK) :: ldim(2),i,ioerr
   REAL(SRK) :: d,s(2),mu1,mu2,mu1s(2),mu2s(2)
   REAL(SRK) :: e_2d(2),e_3d(3),u1_2d(2),u2_2d(2),u3_2d(2)
@@ -39,32 +39,24 @@ PROGRAM testGeom
   CHARACTER(LEN=MAX_COORD_STR_LEN) :: tempstr
   LOGICAL(SBK) :: bool
   
-  WRITE(*,*) '==================================================='
-  WRITE(*,*) 'TESTING GEOM...'
-  WRITE(*,*) '==================================================='
-
   CREATE_TEST('Test Geom')
   
-  CALL TestPoints()
-  CALL TestLine()
-  CALL TestPlane()
-  CALL TestCircle_and_Cylinder()
-  CALL TestBox()
+  REGISTER_SUBTEST('Test Points',TestPoints)
+  REGISTER_SUBTEST('Test Lines',TestLine)
+  REGISTER_SUBTEST('Test Plane',TestPlane)
+  REGISTER_SUBTEST('Test Circle and Cylinder',TestCircle_and_Cylinder)
+  REGISTER_SUBTEST('Test Box',TestBox)
 
   FINALIZE_TEST()
-  
-  WRITE(*,*) '==================================================='
-  WRITE(*,*) 'TESTING GEOM PASSED!'
-  WRITE(*,*) '==================================================='
 !
 !===============================================================================
   CONTAINS
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE TestPoints
-      WRITE(*,*) 'TESTING POINTTYPE (scalar)'
       
       !Initialize by hand
+      COMPONENT_TEST('%clear()')
       !or point=PointType(2,(/0.5_SRK,0.3_SRK/))
       point%dim=1
       ALLOCATE(point%coord(1))
@@ -78,10 +70,10 @@ PROGRAM testGeom
       CALL point%clear() !Test redundant call doesn't have an error
 !      
 !Test initialization
+      COMPONENT_TEST('%init()')
       CALL point%init(DIM=1,X=0.5_SRK) !test 1-D
       bool = .NOT.(point%dim /= 1 .OR. point%coord(1) /= 0.5_SRK)
       ASSERT(bool, 'point%init(DIM=1,X=0.5)')
-      WRITE(*,*) '  Passed: CALL point%init(DIM=1,X=0.5)'
       
       !Test redundant call
       CALL point%init(DIM=2,X=0.6_SRK,Y=0.7_SRK)
@@ -93,14 +85,12 @@ PROGRAM testGeom
       bool = .NOT.(point%dim /= 2 .OR. point%coord(1) /= 0.2_SRK .OR. &
               point%coord(2) /= 0.3_SRK)
       ASSERT(bool, 'point%init(DIM=2,X=0.2_SRK,Y=0.3_SRK)')
-      WRITE(*,*) '  Passed: CALL point%init(DIM=2,X=0.2_SRK,Y=0.3_SRK)'
       CALL point%clear()
       
       CALL point%init(DIM=3,X=0.7_SRK,Y=0.8_SRK,Z=0.9_SRK) !test 3-D
       bool = .NOT.(point%dim /= 3 .OR. point%coord(1) /= 0.7_SRK .OR. &
                    point%coord(2) /= 0.8_SRK .OR. point%coord(3) /= 0.9_SRK)
       ASSERT(bool, 'point%init(DIM=3,X=0.7_SRK,Y=0.8_SRK,Z=0.9_SRK)')
-      WRITE(*,*) '  Passed: CALL point%init(DIM=3,X=0.7_SRK,Y=0.8_SRK,Z=0.9_SRK)'
       CALL point%clear()
       
       CALL point%init(COORD=(/1.7_SRK,1.8_SRK,1.9_SRK,1.0_SRK/)) !test N-D
@@ -108,9 +98,9 @@ PROGRAM testGeom
                    point%coord(2) /= 1.8_SRK .OR. point%coord(3) /= 1.9_SRK .OR. &
                    point%coord(4) /= 1.0_SRK)
       ASSERT(bool, 'point%init(COORD=(/.../))')
-      WRITE(*,*) '  Passed: CALL point%init(COORD=(/.../))'
 !      
 !Test getCoordString
+      COMPONENT_TEST('%getCoordString()')
       bool = .NOT.(TRIM(point%getCoordString()) /= '( 1.70000000000000E+00, '// &
                         '1.80000000000000E+00, 1.90000000000000E+00, '// &
                         '1.00000000000000E+00)' .OR. TRIM(point%getCoordString( &
@@ -123,14 +113,13 @@ PROGRAM testGeom
       bool = .NOT.(LEN_TRIM(point2%getCoordString()) /= 0)
 #endif
       ASSERT(bool, 'point%getCoordString(...))')
-      WRITE(*,*) '  Passed: CALL point%getCoordString(...)'
 !
 !Test Distance
+      COMPONENT_TEST('Distance()')
       CALL point2%init(DIM=1,X=0.5_SRK)
       CALL point3%init(DIM=1,X=0.1_SRK)
       d=Distance(point2,point3)
       ASSERT(d == 0.4_SRK, '1-D Distance(...)') !Check 1-D
-      WRITE(*,*) '  Passed: 1-D Distance(...)'
       CALL point2%clear()
       CALL point3%clear()
       
@@ -139,7 +128,6 @@ PROGRAM testGeom
       d=Distance(point2,point3)
       bool = d .APPROXEQ. 0.447213595499958_SRK
       ASSERT(bool, '2-D Distance(...)')
-      WRITE(*,*) '  Passed: 2-D Distance(...)'
       CALL point2%clear()
       CALL point3%clear()
       
@@ -148,7 +136,6 @@ PROGRAM testGeom
       d=Distance(point2,point3)
       bool = d .APPROXEQ. 0.748331477354788_SRK
       ASSERT(bool, '3-D Distance(...)')
-      WRITE(*,*) '  Passed: 3-D Distance(...)'
       
       !Redundant call to test error check
       ASSERT(Distance(point2,point) == 0.0_SRK, 'Distance(point2,point)')
@@ -160,18 +147,17 @@ PROGRAM testGeom
       d=Distance(point2,point3)
       bool = d .APPROXEQ. 1.09544511501033_SRK
       ASSERT(bool, 'N-D Distance(...)')
-      WRITE(*,*) '  Passed: N-D Distance(...)'
       CALL point2%clear()
       CALL point3%clear()
       d=Distance(point2,point3) !Test for empty points
 !
 !Test midpoint
+      COMPONENT_TEST('midPoint()')
       CALL point2%init(DIM=1,X=0.5_SRK)
       CALL point3%init(DIM=1,X=0.1_SRK)
       point=midPoint(point2,point3)
       bool = point%coord(1) .APPROXEQ. 0.3_SRK
       ASSERT(bool, '1-D midPoint(...)')
-      WRITE(*,*) '  Passed: 1-D midPoint(...)'
       CALL point2%clear()
       CALL point3%clear()
       
@@ -182,7 +168,6 @@ PROGRAM testGeom
       bool = .NOT.(.NOT.(point%coord(1) .APPROXEQ. 0.4_SRK) .OR. &
                    .NOT.(point%coord(2) .APPROXEQ. 0.4_SRK))
       ASSERT(bool, '2-D midPoint(...)')
-      WRITE(*,*) '  Passed: 2-D midPoint(...)'
       CALL point2%clear()
       CALL point3%clear()
       
@@ -194,7 +179,6 @@ PROGRAM testGeom
                    .NOT.(point%coord(2) .APPROXEQ. 0.4_SRK) .OR. &
                    .NOT.(point%coord(3) .APPROXEQ. 0.4_SRK))
       ASSERT(bool, '3-D midPoint(...)')
-      WRITE(*,*) '  Passed: 3-D midPoint(...)'
       CALL point2%clear()
       CALL point3%clear()
       
@@ -209,18 +193,17 @@ PROGRAM testGeom
                    .NOT.(point%coord(3) .APPROXEQ. 0.4_SRK) .OR. &
                    .NOT.(point%coord(4) .APPROXEQ. 0.4_SRK))
       ASSERT(bool, 'N-D midPoint(...)')
-      WRITE(*,*) '  Passed: N-D midPoint(...)'
       CALL point2%clear()
       CALL point3%clear()
       point=midPoint(point2,point3) !Test for empty points
 !
 !Test Operators
+      COMPONENT_TEST('OPERATOR(+)')
       CALL point2%init(DIM=1,X=0.5_SRK)
       CALL point3%init(DIM=1,X=0.1_SRK)
       point=point2+point3
       bool = .NOT.(point%dim /= 1 .OR. point%coord(1) /= 0.6_SRK)
       ASSERT(bool, '1-D PointType')
-      WRITE(*,*) '  Passed: 1-D PointType OPERATOR(+)'
       CALL point2%clear()
       CALL point3%clear()
       
@@ -229,7 +212,6 @@ PROGRAM testGeom
       point=point2+point3
       bool = .NOT.(point%dim /= 2 .OR. ANY(point%coord /= 0.8_SRK))
       ASSERT(bool, '2-D PointType OPERATOR(+)')
-      WRITE(*,*) '  Passed: 2-D PointType OPERATOR(+)'
       CALL point2%clear()
       CALL point3%clear()
       
@@ -238,7 +220,6 @@ PROGRAM testGeom
       point=point2+point3
       bool = .NOT.(point%dim /= 3 .OR. ANY(.NOT.(point%coord .APPROXEQ. 0.8_SRK)))
       ASSERT(bool, '3-D PointType OPERATOR(+)')
-      WRITE(*,*) '  Passed: 3-D PointType OPERATOR(+)'
       CALL point2%clear()
       CALL point3%clear()
       
@@ -247,7 +228,6 @@ PROGRAM testGeom
       point=point2+point3
       bool = .NOT.(point%dim /= 4 .OR. ANY(.NOT.(point%coord .APPROXEQ. 0.8_SRK)))
       ASSERT(bool, 'N-D PointType OPERATOR(+)')
-      WRITE(*,*) '  Passed: N-D PointType OPERATOR(+)'
       CALL point2%clear()
       CALL point3%clear()
       
@@ -261,12 +241,12 @@ PROGRAM testGeom
       ASSERT(bool, 'Mismatched PointType OPERATOR(+)')
       
       !Test subtraction
+      COMPONENT_TEST('OPERATOR(-)')
       CALL point2%init(DIM=1,X=0.5_SRK)
       CALL point3%init(DIM=1,X=0.1_SRK)
       point=point2-point3
       bool = .NOT.(point%dim /= 1 .OR. point%coord(1) /= 0.4_SRK)
       ASSERT(bool, '1-D PointType OPERATOR(-)')
-      WRITE(*,*) '  Passed: 1-D PointType OPERATOR(-)'
 !      ENDIF
       CALL point2%clear()
       CALL point3%clear()
@@ -277,7 +257,6 @@ PROGRAM testGeom
       bool = .NOT.(point%dim /= 2 .OR. .NOT.(point%coord(1) .APPROXEQ. 0.2_SRK) .OR. &
                    .NOT.(point%coord(2) .APPROXEQ. 0.4_SRK))
       ASSERT(bool, '2-D PointType OPERATOR(-)')
-      WRITE(*,*) '  Passed: 2-D PointType OPERATOR(-)'
       CALL point2%clear()
       CALL point3%clear()
       
@@ -288,7 +267,6 @@ PROGRAM testGeom
                    .NOT.(point%coord(2) .APPROXEQ. 0.4_SRK) .OR. &
                    .NOT.(point%coord(3) .APPROXEQ. 0.6_SRK))
       ASSERT(bool, '3-D PointType OPERATOR(-)')
-      WRITE(*,*) '  Passed: 3-D PointType OPERATOR(-)'
       CALL point2%clear()
       CALL point3%clear()
       
@@ -300,7 +278,6 @@ PROGRAM testGeom
                    .NOT.(point%coord(3) .APPROXEQ. 0.6_SRK) .OR. &
                    .NOT.(point%coord(4) .APPROXEQ. 0.8_SRK))
       ASSERT(bool, 'N-D PointType OPERATOR(-)')
-      WRITE(*,*) '  Passed: N-D PointType OPERATOR(-)'
       CALL point2%clear()
       CALL point3%clear()
       
@@ -313,24 +290,24 @@ PROGRAM testGeom
       bool = .NOT.(point2%dim /= 0 .OR. ALLOCATED(point2%coord))
       ASSERT(bool, 'Mismatched PointType OPERATOR(-)')
       
+      COMPONENT_TEST('OPERATOR(==)')
       CALL point2%init(DIM=4,COORD=(/0.5_SRK,0.6_SRK,0.7_SRK,0.8_SRK/))
       CALL point3%init(DIM=4,COORD=(/0.5_SRK,0.6_SRK,0.7_SRK,0.80000000000002_SRK/))
       point=point2
       bool = .NOT.(.NOT.(point == point2) .OR. point == point3)
       ASSERT(bool, 'PointType OPERATOR(==)')
-      WRITE(*,*) '  Passed: PointType OPERATOR(==)'
+      
+      COMPONENT_TEST('OPERATOR(/=)')
       bool = .NOT.((point /= point2) .OR. .NOT.(point /= point3))
       ASSERT(bool, 'PointType OPERATOR(/=)')
-      WRITE(*,*) '  Passed: PointType OPERATOR(/=)'
+      
+      COMPONENT_TEST('OPERATOR(.APPROXEQ.)')
       point2%coord(4)=0.80000000000001_SRK
       bool = .NOT.(.NOT.(point .APPROXEQA. point2) .OR. (point .APPROXEQA. point3))
       ASSERT(bool, 'PointType OPERATOR(.APPROXEQ.)')
-      WRITE(*,*) '  Passed: PointType OPERATOR(.APPROXEQ.)'
       CALL point2%clear()
       CALL point3%clear()
       
-      WRITE(*,*) '---------------------------------------------------'
-      WRITE(*,*) 'TESTING POINTTYPE (arrays)'
 #ifdef __GFORTRAN__
       WRITE(*,*) 'ELEMENTAL METHODS FOR NON-SCALAR BASE OBJECTS NOT YET SUPPORTED BY COMPILER'
 #else
@@ -338,13 +315,14 @@ PROGRAM testGeom
       points=point
 !      
 !Test clear routine
+      COMPONENT_TEST('Elemental %clear()')
       CALL points%clear()
       bool = .NOT.(ANY(points%dim /= 0) .OR. ALLOCATED(points(1)%coord) .OR. &
                    ALLOCATED(points(2)%coord))
       ASSERT(bool, 'point%clear()')
-      WRITE(*,*) '  Passed: CALL points%clear()'
 !
 !Test distance routine
+      COMPONENT_TEST('Elemental Distance()')
       CALL points(1)%init(DIM=3,X=0.5_SRK,Y=0.6_SRK,Z=0.7_SRK)
       CALL points2(1)%init(DIM=3,X=0.3_SRK,Y=0.2_SRK,Z=0.1_SRK)
       CALL points(2)%init(DIM=2,X=0.5_SRK,Y=0.6_SRK)
@@ -353,9 +331,9 @@ PROGRAM testGeom
       bool = .NOT.(.NOT.(s(1) .APPROXEQ. 0.748331477354788_SRK) .OR. &
                    .NOT.(s(2) .APPROXEQ. 0.447213595499958_SRK))
       ASSERT(bool, 'Distance(...)')
-      WRITE(*,*) '  Passed: Distance(...)'
 !
 !Test midPoint routine
+      COMPONENT_TEST('Elemental Midpoint()')
       CALL points(1)%init(DIM=3,X=0.5_SRK,Y=0.6_SRK,Z=0.7_SRK)
       CALL points2(1)%init(DIM=3,X=0.3_SRK,Y=0.2_SRK,Z=0.1_SRK)
       CALL points(2)%init(DIM=2,X=0.5_SRK,Y=0.6_SRK)
@@ -364,11 +342,11 @@ PROGRAM testGeom
       bool = .NOT.(ANY(.NOT.(points3(1)%coord .APPROXEQ. 0.4_SRK)) .OR. &
                    ANY(.NOT.(points3(2)%coord .APPROXEQ. 0.4_SRK)))
       ASSERT(bool, 'midPoint(...)')
-      WRITE(*,*) '  Passed: midPoint(...)'
 #endif
 !
 !Test Operators
       !Addition
+      COMPONENT_TEST('Elemental OPERATOR(+)')
       CALL points(1)%init(DIM=3,X=0.5_SRK,Y=0.6_SRK,Z=0.7_SRK)
       CALL points2(1)%init(DIM=3,X=0.3_SRK,Y=0.2_SRK,Z=0.1_SRK)
       CALL points(2)%init(DIM=2,X=0.5_SRK,Y=0.6_SRK)
@@ -377,9 +355,9 @@ PROGRAM testGeom
       bool = .NOT.(ANY(.NOT.(points3(1)%coord .APPROXEQ. 0.8_SRK)) .OR. &
                    ANY(.NOT.(points3(2)%coord .APPROXEQ. 0.8_SRK)))
       ASSERT(bool, 'PointType Array OPERATOR(+)')
-      WRITE(*,*) '  Passed: PointType Array OPERATOR(+)'
       
       !Subtraction
+      COMPONENT_TEST('Elemental OPERATOR(-)')
       points3=points-points2
       bool = .NOT.(.NOT.(points3(1)%coord(1) .APPROXEQ. 0.2_SRK) .OR. &
                    .NOT.(points3(1)%coord(2) .APPROXEQ. 0.4_SRK) .OR. &
@@ -387,20 +365,20 @@ PROGRAM testGeom
                    .NOT.(points3(2)%coord(1) .APPROXEQ. 0.2_SRK) .OR. &
                    .NOT.(points3(2)%coord(2) .APPROXEQ. 0.4_SRK))
       ASSERT(bool, 'PointType Array OPERATOR(-)')
-      WRITE(*,*) '  Passed: PointType Array OPERATOR(-)'
       
       !Equal to
+      COMPONENT_TEST('Elemental OPERATOR(==)')
       points3=points
       bool = .NOT.(ANY(.NOT.(points == points3)) .OR. ANY(points2 == points))
       ASSERT(bool, 'PointType Array OPERATOR(==)')
-      WRITE(*,*) '  Passed: PointType Array OPERATOR(==)'
       
       !Not equal to
+      COMPONENT_TEST('Elemental OPERATOR(/=)')
       bool = .NOT.(ANY(.NOT.(points2 /= points)) .OR. ANY(points /= points3))
       ASSERT(bool, 'PointType Array OPERATOR(/=)')
-      WRITE(*,*) '  Passed: PointType Array OPERATOR(/=)'
       
       !Approximately equal to
+      COMPONENT_TEST('Elemental OPERATOR(.APPROXEQ.)')
       points3=points
       points2=points
       points2(1)%coord(1)=0.50000000000002_SRK
@@ -409,11 +387,9 @@ PROGRAM testGeom
       points3(2)%coord(1)=0.50000000000001_SRK
       bool = .NOT.(ANY(.NOT.(points .APPROXEQA. points3)) .OR. ANY(points2 .APPROXEQA. points))
       ASSERT(bool, 'PointType Array OPERATOR(.APPROXEQ.)')
-      WRITE(*,*) '  Passed: PointType Array OPERATOR(.APPROXEQ.)'
-      WRITE(*,*) '---------------------------------------------------'
 !
 !Test linked list of points
-      WRITE(*,*) 'TESTING LINKEDLISTPOINTTYPE'
+      COMPONENT_TEST('LinkedListPointType %insert()')
       ALLOCATE(firstPoint)
       thisPoint => firstPoint
       DO i=1,5
@@ -441,20 +417,17 @@ PROGRAM testGeom
       CALL firstPoint%insert(thisPoint)
       bool = .NOT.(ASSOCIATED(thisPoint) .OR. firstPoint%next%sortval /= 1.5_SRK)
       ASSERT(bool, 'firstPoint%insert(thisPoint)')
-      WRITE(*,*) '  Passed: CALL firstPoint%insert(thisPoint)'
 
+      COMPONENT_TEST('LinkedListPointType %clear()')
       CALL ClearLinkedListPointType(firstPoint)
       ASSERT(.NOT.ASSOCIATED(firstPoint), 'ClearLinkedListPointType(...)')
-      WRITE(*,*) '  Passed: CALL ClearLinkedListPointType(...)'
-      WRITE(*,*) '---------------------------------------------------'
     ENDSUBROUTINE TestPoints
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE TestLine
 !The LineType constructor allocates sp and ep, care should
 !be taken not to code memory leaks. This is why clearPoints() exists.
-      WRITE(*,*) 'TESTING LINETYPE (scalar)'
-      
+      COMPONENT_TEST('%clear()')
       !Initialize by hand
       CALL line1%p1%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
       CALL line1%p2%init(DIM=2,X=1.0_SRK,Y=1.0_SRK)
@@ -464,12 +437,12 @@ PROGRAM testGeom
       bool = .NOT.(line1%p1%dim /= 0 .OR. line1%p2%dim /= 0 .OR. &
                    ALLOCATED(line1%p1%coord) .OR. ALLOCATED(line1%p2%coord))
       ASSERT(bool, 'line1%clear()')
-      WRITE(*,*) '  Passed: CALL line1%clear()'
       
       !Redundant call to clear
       CALL line1%clear()
 !      
 !Test init
+      COMPONENT_TEST('%init()')
       CALL point2%init(DIM=3,X=0.1_SRK,Y=0.2_SRK,Z=0.3_SRK)
       CALL point3%init(DIM=3,X=0.4_SRK,Y=0.5_SRK,Z=0.6_SRK)
       CALL line1%set(point2,point3)
@@ -478,7 +451,6 @@ PROGRAM testGeom
                    line1%p1%coord(3) /= 0.3_SRK .OR. line1%p2%coord(1) /= 0.4_SRK .OR. &
                    line1%p2%coord(2) /= 0.5_SRK .OR. line1%p2%coord(3) /= 0.6_SRK)
       ASSERT(bool, 'line1%set(...)')
-      WRITE(*,*) '  Passed: CALL line1%set(...)'
       CALL line1%clear()
       
       !Redundant call to test input error
@@ -488,30 +460,31 @@ PROGRAM testGeom
       ASSERT(bool, 'line1%set(...)')
 !
 !Test getDim
+      COMPONENT_TEST('%getDim()')
       CALL line1%set(point2,point3)
       ASSERT(line1%getDim() == 3, 'line1%getDim()')
-      WRITE(*,*) '  Passed: line1%getDim()'
       CALL line1%clear()
       
       !Redundant call to test input error
       ASSERT(line1%getDim() == 0, 'line1%getDim()')
 !      
 !Test length
+      COMPONENT_TEST('%length()')
       CALL line1%set(point2,point3)
       d=line1%length()
       ASSERT(d .APPROXEQ. 0.519615242270663_SRK, 'line1%length()')
-      WRITE(*,*) '  Passed: line1%length()'
 !
 !Test midpoint
+      COMPONENT_TEST('%midpoint()')
       point=line1%midpoint()
       bool = .NOT.(point%dim /= 3 .OR. .NOT.(point%coord(1) .APPROXEQ. 0.25_SRK) .OR. &
                    .NOT.(point%coord(2) .APPROXEQ. 0.35_SRK) .OR. &
                    .NOT.(point%coord(3) .APPROXEQ. 0.45_SRK))
       ASSERT(bool, 'line1%midpoint()')
-      WRITE(*,*) '  Passed: line1%midpoint()'
 !
 !Test intersect
       !2D
+      COMPONENT_TEST('%intersectLine()')
       CALL line1%clear()
       CALL line1%p1%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
       CALL line1%p2%init(DIM=2,X=0.0_SRK,Y=1.0_SRK)
@@ -559,7 +532,6 @@ PROGRAM testGeom
                    .NOT.(point%coord(2) .APPROXEQ. 0.5_SRK) .OR. &
                    .NOT.(point%coord(3) .APPROXEQ. 0.5_SRK))
       ASSERT(bool, 'line1%intersectLine(...)')
-      WRITE(*,*) '  Passed: line1%intersectLine(...)'
 
       !Redundant calls to test error checking.
       CALL line2%clear()
@@ -579,7 +551,9 @@ PROGRAM testGeom
       CALL line2%p2%init(COORD=(/1.0_SRK,2.5_SRK/))
       point=line1%intersectLine(line2)
       ASSERT(point%dim == -3, 'line1%intersectLine(...)')
-      !Test for %distance2Line(...)
+      
+!Test for %distance2Line(...)
+      COMPONENT_TEST('%distance2Line()')
       !Line dimension error check
       CALL line1%clear()
       CALL line2%clear()
@@ -645,8 +619,9 @@ PROGRAM testGeom
       bool = .NOT.(dis%getDim() /= 3 .OR. mu1 /= 0._SRK .OR. mu2 /= 0._SRK &
                    .OR. dis%p1 /= line2%p1 .OR. dis%p2 /= line1%p1)
       ASSERT(bool, 'line2%distance2Line(...)')
-      WRITE(*,*) '  Passed: line2%distangce2Line(...)'
-      !Test for %distance2Point(...)
+      
+!Test for %distance2Point(...)
+      COMPONENT_TEST('%distance2Point()')
       CALL line1%clear()
       CALL point%clear()
       CALL line1%p1%init(COORD=(/0.0_SRK/))
@@ -662,7 +637,6 @@ PROGRAM testGeom
       CALL point%init(COORD=(/1.5_SRK/))
       bool = line1%distance2Point(point) .APPROXEQ. 0.25_SRK
       ASSERT(bool, '1-D line1%distance2Point(...)')
-      WRITE(*,*) '  Passed: 1-D line1%distance2Point(...)'
       
       CALL line1%clear()
       CALL point%clear()
@@ -685,7 +659,6 @@ PROGRAM testGeom
       CALL point%init(COORD=(/-0.5_SRK,-1.0_SRK/))
       bool = line1%distance2Point(point) .APPROXEQ. 1.25_SRK
       ASSERT(bool, '2-D line1%distance2Point(...)')
-      WRITE(*,*) '  Passed: 2-D line1%distance2Point(...)'
       
       CALL line1%clear()
       CALL point%clear()
@@ -706,10 +679,22 @@ PROGRAM testGeom
       CALL point%init(COORD=(/0.0_SRK,0.0_SRK,-1.0_SRK/))
       bool = line1%distance2Point(point) .APPROXEQ. 1.0_SRK
       ASSERT(bool, '3-D line1%distance2Point(...)')
-      WRITE(*,*) '  Passed: 3-D line1%distance2Point(...)'
       
-      WRITE(*,*) '---------------------------------------------------'
-      WRITE(*,*) 'TESTING LINETYPE (arrays)'
+      !Test for equivalence operation
+      COMPONENT_TEST('OPERATOR(==)')
+      line2=line1
+      ASSERT(line1 == line2,'3-D line equivalence')
+      CALL line1%clear()
+      CALL line2%clear()
+      CALL line1%p1%init(COORD=(/0.0_SRK,0.0_SRK/))
+      CALL line1%p2%init(COORD=(/1.0_SRK,1.0_SRK/))
+      line2=line1
+      ASSERT(line1 == line2,'2-D line equivalence')
+      CALL line2%clear()
+      CALL line2%p1%init(COORD=(/0.0_SRK,0.0_SRK,0.0_SRK/))
+      CALL line2%p2%init(COORD=(/1.0_SRK,1.0_SRK,1.0_SRK/))
+      ASSERT(.NOT.(line1 == line2),'2-D and 3-D line non-equivalence')
+      
 #ifdef __GFORTRAN__
       WRITE(*,*) 'ELEMENTAL METHODS FOR NON-SCALAR BASE OBJECTS NOT YET SUPPORTED BY COMPILER'
 #else
@@ -721,6 +706,7 @@ PROGRAM testGeom
       points3(1)%coord=points3(1)%coord+0.1_SRK
       points3(2)%coord=points3(2)%coord+0.1_SRK
 !This no longer works with Intel 12
+      COMPONENT_TEST('Elemental %set()')
       CALL lines%set(points2,points3)
 !      CALL lines(1)%set(points2(1),points3(1))
 !      CALL lines(2)%set(points2(2),points3(2))
@@ -731,29 +717,28 @@ PROGRAM testGeom
                   ANY(.NOT.(lines(2)%p1%coord .APPROXEQ. (/0.5_SRK,0.6_SRK/))) .OR. &
                   ANY(.NOT.(lines(2)%p2%coord .APPROXEQ. (/0.6_SRK,0.7_SRK/))))
       ASSERT(bool, 'lines%set(...)')
-      WRITE(*,*) '  Passed: CALL lines%set(...)'
       
+      COMPONENT_TEST('Elemental %getDim()')
       ldim=lines%getDim()
       bool = .NOT.(ldim(1) /= 3 .OR. ldim(2) /= 2)
       ASSERT(bool, 'lines%getDim()')
-      WRITE(*,*) '  Passed: CALL lines%getDim()'
       
+      COMPONENT_TEST('Elemental %length()')
       s=lines%length()
       bool = .NOT.(.NOT.(s(1) .APPROXEQ. 0.173205080756888_SRK) .OR. &
                    .NOT.(s(2) .APPROXEQ. 0.141421356237309_SRK))
       ASSERT(bool, 'lines%length()')
-      WRITE(*,*) '  Passed: lines%length()'
       
+      COMPONENT_TEST('Elemental %midPoint()')
       points=lines%midPoint()
       bool = .NOT.(ANY(.NOT.(points(1)%coord .APPROXEQ. (/0.55_SRK,0.65_SRK,0.75_SRK/))) .OR. &
                    ANY(.NOT.(points(2)%coord .APPROXEQ. (/0.55_SRK,0.65_SRK/))))
       ASSERT(bool, 'lines%midPoint()')
-      WRITE(*,*) '  Passed: lines%midPoint()'
       
+      COMPONENT_TEST('Elemental %intersectLine()')
       points=lines%intersectLine(lines)
       bool = .NOT.(points(1)%dim /= -2 .OR. points(2)%dim /= -2)
       ASSERT(bool, 'lines%intersectLine(...)')
-      WRITE(*,*) '  Passed: lines%intersectLine(...)'
       
      !diss=lines%distance2Line(lines)
      ! IF(diss(1)%p(1)%dim /= -2 .OR. diss(2)%p(1)%dim /= -2) THEN
@@ -763,29 +748,28 @@ PROGRAM testGeom
      !   WRITE(*,*) '  Passed: lines%distance2Line(...)'
      ! ENDIF
      !
+      COMPONENT_TEST('Elemental %distance2Point()')
       points=lines%midPoint()
       s=lines%distance2Point(points)
       bool = .NOT.(ANY(.NOT.(s .APPROXEQ. 0.0_SRK)))
       ASSERT(bool, 'lines%distance2Point(...)')
-      WRITE(*,*) '  Passed: lines%distance2Point(...)'
       
+      COMPONENT_TEST('Elemental %clear()')
       CALL lines%clear()
       bool = .NOT.((lines(1)%p1%dim /= 0) .OR. (lines(1)%p2%dim /= 0) .OR. &
                    (lines(2)%p1%dim /= 0) .OR. (lines(2)%p2%dim /= 0) .OR. &
                    ALLOCATED(lines(1)%p1%coord) .OR. ALLOCATED(lines(1)%p2%coord) .OR. &
                    ALLOCATED(lines(2)%p1%coord) .OR. ALLOCATED(lines(2)%p2%coord))
       ASSERT(bool, 'lines%clear(...)')
-      WRITE(*,*) '  Passed: lines%clear(...)'
 #endif
-      WRITE(*,*) '---------------------------------------------------'
     ENDSUBROUTINE TestLine
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE TestPlane
       REAL(SRK) :: n(3)
-      WRITE(*,*) 'TESTING PLANETYPE (scalar)'
 !
 !Test clear
+      COMPONENT_TEST('%clear()')
       CALL point%clear()
       CALL point%init(COORD=(/0.5_SRK,0.5_SRK,0.5_SRK/))
       plane1%n=(/1.0_SRK,1.0_SRK,1.0_SRK/)
@@ -794,15 +778,16 @@ PROGRAM testGeom
       bool = .NOT.(ANY(plane1%n /= 0.0_SRK) .OR. plane1%v0%dim /= 0 .OR. &
                    ALLOCATED(plane1%v0%coord))
       ASSERT(bool, 'plane1%clear()')
-      WRITE(*,*) '  Passed: CALL plane1%clear()'
+      
+      COMPONENT_TEST('%set()')
       n=(/1.0_SRK,1.0_SRK,1.0_SRK/)
       CALL plane1%set(n,point)
       bool = .NOT.(ANY(plane1%v0%coord /= 0.5_SRK) .OR. ANY(.NOT.(plane1%n .APPROXEQ. &
                    (/1._SRK/SQRT(3.0_SRK),1._SRK/SQRT(3.0_SRK),1._SRK/SQRT(3.0_SRK)/))))
       ASSERT(bool, 'plane1%set(...)')
-      WRITE(*,*) '  Passed: CALL plane1%set(...)'
       
       !Test disjoint-ness
+      COMPONENT_TEST('%intersect()')
       CALL line1%clear()
       CALL line1%p1%init(COORD=(/0._SRK,0._SRK,0._SRK/))
       CALL line1%p2%init(COORD=(/0.1_SRK,0.1_SRK,0.1_SRK/))
@@ -829,7 +814,6 @@ PROGRAM testGeom
       point2=plane1%intersectLine(line1)
       bool = .NOT.(point2%dim /= 3 .OR. ANY(.NOT.(point2%coord .APPROXEQ. 0.5_SRK)))
       ASSERT(bool, 'plane1%intersect(...)')
-      WRITE(*,*) '  Passed: plane1%intersect(...)'
 
       !Test for bad input
       CALL line1%clear()
@@ -845,11 +829,22 @@ PROGRAM testGeom
       CALL plane1%clear()
       point2=plane1%intersectLine(line2)
       ASSERT(point2%dim == -1, 'plane%intersect(...)')
-      WRITE(*,*) '---------------------------------------------------'
-      WRITE(*,*) 'TESTING PLANETYPE (arrays)'
+      
+      !Test for equivalence operation
+      COMPONENT_TEST('OPERATOR(==)')
+      CALL point%clear()
+      CALL point%init(COORD=(/0.5_SRK,0.5_SRK,0.5_SRK/))
+      n=(/1.0_SRK,1.0_SRK,1.0_SRK/)
+      CALL plane1%set(n,point)
+      plane2=plane1
+      ASSERT(plane1 == plane2,'plane equivalence')
+      CALL plane2%set((/1.0_SRK,0.0_SRK,1.0_SRK/),point)
+      ASSERT(.NOT.(plane1 == plane2),'plane non-equivalence')
+      
 #ifdef __GFORTRAN__
       WRITE(*,*) 'ELEMENTAL METHODS FOR NON-SCALAR BASE OBJECTS NOT YET SUPPORTED BY COMPILER'
 #else      
+      COMPONENT_TEST('Elemental %set()')
       CALL plane1%set((/1.0_SRK,1.0_SRK,1.0_SRK/),point)
       planes=plane1
       CALL line1%clear()
@@ -859,23 +854,21 @@ PROGRAM testGeom
       bool = .NOT.(points(1)%dim /= 3 .OR. ANY(.NOT.(points(1)%coord .APPROXEQ. 0.5_SRK)) .OR. &
                    points(2)%dim /= 3 .OR. ANY(.NOT.(points(2)%coord .APPROXEQ. 0.5_SRK)))
       ASSERT(bool, 'planes%intersect(...)')
-      WRITE(*,*) '  Passed: planes%intersect(...)'
       
+      COMPONENT_TEST('Elemental %clear()')
       CALL planes%clear()
       bool = .NOT.(ANY(planes(1)%n /= 0.0_SRK) .OR. planes(1)%v0%dim /= 0 .OR. &
                    ALLOCATED(planes(1)%v0%coord) .OR. ANY(planes(2)%n /= 0.0_SRK) .OR. &
                    planes(2)%v0%dim /= 0 .OR. ALLOCATED(planes(2)%v0%coord))
       ASSERT(bool, 'planes%clear()')
-      WRITE(*,*) '  Passed: CALL planes%clear()'
-      WRITE(*,*) '---------------------------------------------------'
 #endif
     ENDSUBROUTINE TestPlane
 !
 !-------------------------------------------------------------------------------    
     SUBROUTINE TestCircle_and_Cylinder
-      WRITE(*,*) 'TESTING CIRCLETYPE (scalar)'
 !
 !Test clear
+      COMPONENT_TEST('Circle %clear()')
       CALL point%clear()
       CALL point2%clear()
       CALL point%init(DIM=2,X=0.1_SRK,Y=0.2_SRK)
@@ -885,10 +878,10 @@ PROGRAM testGeom
       bool = .NOT.(circle1%r /= 0.0_SRK .OR. circle1%c%dim /= 0 .OR. &
                    ALLOCATED(circle1%c%coord))
       ASSERT(bool, 'circle1%clear()')
-      WRITE(*,*) '  Passed: CALL circle1%clear()'
 !
 !Test set
       !Error check
+      COMPONENT_TEST('Circle %set()')
       CALL circle1%set(point2,0.5_SRK)
       bool = .NOT.(circle1%r /= 0.0_SRK .OR. circle1%c%dim /= 0 .OR. &
                    ALLOCATED(circle1%c%coord))
@@ -902,9 +895,9 @@ PROGRAM testGeom
       bool = .NOT.(circle1%r /= 0.5_SRK .OR. circle1%c%dim /= 2 .OR. &
                    circle1%c%coord(1) /= 0.1_SRK .OR. circle1%c%coord(2) /= 0.2_SRK)
       ASSERT(bool, 'circle1%set(...)')
-      WRITE(*,*) '  Passed: CALL circle1%set(...)'
 !
 !Test intersect
+      COMPONENT_TEST('Circle %intersectLine()')
       CALL point%clear()
       CALL circle1%clear()
       CALL line1%clear()
@@ -959,11 +952,9 @@ PROGRAM testGeom
       CALL line1%p1%init(DIM=2,X=-0.3_SRK,Y=-0.4_SRK)
       CALL line1%p2%init(DIM=2,X=0.4_SRK,Y=0.2_SRK)
       CALL circle1%intersectLine(line1,point2,point3)
-      IF(ANY(.NOT.(point2%coord .APPROXEQ. (/-0.239446595040736_SRK,-0.348097081463488_SRK/))) &
-        .OR. ANY(.NOT.(point3%coord .APPROXEQ. (/0.380623065628971_SRK,0.183391199110547_SRK/)))) THEN
-        WRITE(*,*) 'CALL circle1%intersectLine(...) (2-points) FAILED!'
-        STOP 666
-      ENDIF
+      bool=ALL(point2%coord .APPROXEQ. (/-0.239446595040736_SRK,-0.348097081463488_SRK/)) &
+        .AND. ALL(point3%coord .APPROXEQ. (/0.380623065628971_SRK,0.183391199110547_SRK/))
+      ASSERT(bool,'circle1%intersectLine(...) (2-points)')
       CALL line1%clear()
       
       !Test 1 point of intersection for arc
@@ -972,29 +963,107 @@ PROGRAM testGeom
       CALL line1%p2%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
       CALL circle1%set(point,0.4225_SRK,ANGSTT=PI,ANGSTP=TWOPI)
       CALL circle1%intersectLine(line1,point2,point3)
-      IF(ANY(.NOT.(point2%coord .APPROXEQ. (/-0.3380_SRK,-0.2535_SRK/))) &
-        .OR. point3%dim /= 0) THEN
-        WRITE(*,*) 'CALL circle1%intersectLine(...) (arc 1-point) FAILED!'
-        STOP 666
-      ENDIF
+      bool = ALL(point2%coord .APPROXEQ. (/-0.3380_SRK,-0.2535_SRK/)) &
+        .AND. point3%dim == 0
+      ASSERT(bool,'circle1%intersectLine(...) (arc 1-point)')
       CALL line1%clear()
       
       !Test 2 points of intersection for arc
-      CALL line1%p1%init(DIM=2,X=-0.3_SRK,Y=-0.4_SRK)
-      CALL line1%p2%init(DIM=2,X=0.4_SRK,Y=-0.2_SRK)
+      CALL circle1%clear()
+      CALL line1%p1%init(DIM=2,X=-0.3_SRK,Y=0.4_SRK)
+      CALL line1%p2%init(DIM=2,X=0.4_SRK,Y=0.2_SRK)
+      CALL circle1%set(point,0.4225_SRK,ANGSTT=ZERO,ANGSTP=PI)
       CALL circle1%intersectLine(line1,point2,point3)
-      IF(ANY(.NOT.(point2%coord .APPROXEQ. (/-0.239446595040736_SRK,-0.348097081463488_SRK/))) &
-        .OR. ANY(.NOT.(point3%coord .APPROXEQ. (/0.380623065628971_SRK,0.183391199110547_SRK/)))) THEN
-        WRITE(*,*) 'CALL circle1%intersectLine(...) (arc 2-points) FAILED!'
-        STOP 666
-      ELSE
-        WRITE(*,*) '  Passed: CALL circle1%intersectLine(...)'
-      ENDIF
+      bool = ALL(point2%coord .APPROXEQA. (/-0.200892135566299_SRK,0.371683467304657_SRK/)) &
+        .AND. ALL(point3%coord .APPROXEQA. (/0.3669298714153550_SRK,0.209448608167041_SRK/))
+      ASSERT(bool,'circle1%intersectLine(...) (arc 2-points)')
       
-      WRITE(*,*) '---------------------------------------------------'
-      WRITE(*,*) 'TESTING CYLINDERTYPE (scalar)'
+      !Test missed intersection for arc
+      !CALL circle1%clear()
+      !CALL point2%clear()
+      !CALL point3%clear()
+      !CALL line1%p1%init(DIM=2,X=-0.3_SRK,Y=0.4_SRK)
+      !CALL line1%p2%init(DIM=2,X=0.4_SRK,Y=0.2_SRK)
+      !CALL circle1%set(point,0.4225_SRK,ANGSTT=PI,ANGSTP=TWOPI)
+      !CALL circle1%intersectLine(line1,point2,point3)
+      !bool = (point2%dim == 0) .AND. (point3%dim == 0)
+      !ASSERT(bool,'circle1%intersectLine(...) (arc miss)')
+      !FINFO() point2%dim, point2%coord
+      !FINFO() point3%dim, point3%coord
+      
+!Test hasPoint
+      COMPONENT_TEST('Circle %hasPoint()')
+      CALL point%clear()
+      CALL point%init(COORD=(/1.5_SRK,1.5_SRK/))
+      CALL circle2%set(point,0.4225_SRK)
+      CALL point%clear()
+      CALL point%init(COORD=(/1.6_SRK,1.6_SRK/))
+      ASSERT(circle2%hasPoint(point),'Circle internal point, Q1')
+      CALL point%clear()
+      CALL point%init(COORD=(/1.4_SRK,1.6_SRK/))
+      ASSERT(circle2%hasPoint(point),'Circle internal point, Q2')
+      CALL point%clear()
+      CALL point%init(COORD=(/1.4_SRK,1.4_SRK/))
+      ASSERT(circle2%hasPoint(point),'Circle internal point, Q3')
+      CALL point%clear()
+      CALL point%init(COORD=(/1.6_SRK,1.4_SRK/))
+      ASSERT(circle2%hasPoint(point),'Circle internal point, Q4')
+      CALL point%clear()
+      CALL point%init(COORD=(/0.0_SRK,0.0_SRK/))
+      ASSERT(.NOT.circle2%hasPoint(point),'Circle external point')
+      
+      !Test half circle
+      CALL point%clear()
+      CALL point%init(COORD=(/-1.5_SRK,-1.5_SRK/))
+      CALL circle2%set(point,0.4225_SRK,ANGSTT=ZERO,ANGSTP=PI)
+      ASSERT(circle2%hasPoint(circle2%c),'Circle Arc Centroid')
+      CALL point%clear()
+      CALL point%init(COORD=(/-1.4_SRK,-1.4_SRK/))
+      ASSERT(circle2%hasPoint(point),'Circle Arc internal point, Q1')
+      CALL point%clear()
+      CALL point%init(COORD=(/-1.6_SRK,-1.4_SRK/))
+      ASSERT(circle2%hasPoint(point),'Circle Arc internal point, Q2')
+      CALL point%clear()
+      CALL point%init(COORD=(/-1.6_SRK,-1.6_SRK/))
+      ASSERT(.NOT.circle2%hasPoint(point),'Circle Arc external point, Q3')
+      CALL point%clear()
+      CALL point%init(COORD=(/-1.4_SRK,-1.6_SRK/))
+      ASSERT(.NOT.circle2%hasPoint(point),'Circle Arc external point, Q4')
+      
+      !Test odd arc
+      CALL point%clear()
+      CALL point%init(COORD=(/-1.5_SRK,1.5_SRK/))
+      CALL circle2%set(point,0.4225_SRK,ANGSTT=QTRPI,ANGSTP=QTRPI+HALFPI)
+      ASSERT(circle2%hasPoint(circle2%c),'Circle Arc Centroid')
+      CALL point%clear()
+      CALL point%init(COORD=(/-1.4_SRK,1.6_SRK/))
+      ASSERT(circle2%hasPoint(point),'Circle Arc internal point on bndy, Q1')
+      CALL point%clear()
+      CALL point%init(COORD=(/-1.4_SRK,1.5_SRK/))
+      ASSERT(.NOT.circle2%hasPoint(point),'Circle Arc external point, Q1')
+      CALL point%clear()
+      CALL point%init(COORD=(/-1.6_SRK,1.6_SRK/))
+      ASSERT(circle2%hasPoint(point),'Circle Arc internal point on bndy, Q2')
+      CALL point%clear()
+      CALL point%init(COORD=(/-1.6_SRK,1.5_SRK/))
+      ASSERT(.NOT.circle2%hasPoint(point),'Circle Arc external point on bndy, Q2')
+      CALL point%clear()
+      CALL point%init(COORD=(/-1.6_SRK,1.4_SRK/))
+      ASSERT(.NOT.circle2%hasPoint(point),'Circle Arc external point, Q3')
+      CALL point%clear()
+      CALL point%init(COORD=(/-1.4_SRK,1.4_SRK/))
+      ASSERT(.NOT.circle2%hasPoint(point),'Circle Arc external point, Q4')
+      
+      !
+      !Test for equivalence operation (implicitly tests assignment operation)
+      COMPONENT_TEST('OPERATOR(==)')
+      circle2=circle1
+      ASSERT(circle1 == circle2,'circle equivalence')
+      circle2%r=0.2_SRK
+      ASSERT(.NOT.(circle1 == circle2),'circle non-equivalence')
 !
 !Test clear
+      COMPONENT_TEST('Cylinder %clear()')
       CALL point3%clear()
       CALL point2%clear()
       CALL point2%init(DIM=3,X=0.1_SRK,Y=0.2_SRK,Z=0.3_SRK)
@@ -1008,9 +1077,9 @@ PROGRAM testGeom
                    ALLOCATED(cylinder1%axis%p1%coord) .OR. cylinder1%axis%p2%dim /= 0 .OR. &
                    ALLOCATED(cylinder1%axis%p2%coord))
       ASSERT(bool, 'cylinder1%clear()')
-      WRITE(*,*) '  Passed: CALL cylinder1%clear()'
 !
 !Test set
+      COMPONENT_TEST('Cylinder %set()')
       !Error check
       CALL cylinder1%set(point,point3,1.0_SRK)
       bool = .NOT.(cylinder1%r /= 0.0_SRK .OR. cylinder1%axis%p1%dim /= 0 .OR. &
@@ -1034,11 +1103,10 @@ PROGRAM testGeom
                    cylinder1%axis%p2%dim /= 3 .OR. &
                    ANY(cylinder1%axis%p2%coord /= (/0.1_SRK,0.2_SRK,1.3_SRK/)))
       ASSERT(bool, 'cylinder1%set(...)')
-      WRITE(*,*) '  Passed: CALL cylinder1%set(...)'
       CALL cylinder1%clear()
 !
 !Test intersection
-      
+      COMPONENT_TEST('Cylinder %intersectLine()')
       !Test bad input
       CALL cylinder1%intersectLine(line1,point2,point3)
       bool = .NOT.(point2%dim /= -1 .OR. point3%dim /= -1)
@@ -1166,9 +1234,13 @@ PROGRAM testGeom
       bool = .NOT.(ANY(.NOT.(point3%coord .APPROXEQ. (/0.0_SRK,0.794987437106620_SRK,0.5_SRK/))) .OR. &
                    ANY(.NOT.(point2%coord .APPROXEQ. (/0.0_SRK,-1.194987437106620_SRK,0.5_SRK/))))
       ASSERT(bool, 'cylinder1%intersectLine(...) (cyl-2)')
-      WRITE(*,*) '  Passed: CALL cylinder1%intersectLine(...)'
-      CALL line1%clear()
-      WRITE(*,*) '---------------------------------------------------'
+      
+      !Test for equivalence operation (implicitly tests assignment operation)
+      COMPONENT_TEST('OPERATOR(==)')
+      cylinder2=cylinder1
+      ASSERT(cylinder1 == cylinder2,'cylinder equivalence')
+      cylinder2%r=0.5_SRK
+      ASSERT(.NOT.(cylinder1 == cylinder2),'cylinder non-equivalence')
       
 #ifdef __GFORTRAN__
       WRITE(*,*) 'ELEMENTAL METHODS FOR NON-SCALAR BASE OBJECTS NOT YET SUPPORTED BY COMPILER'
@@ -1176,6 +1248,7 @@ PROGRAM testGeom
       WRITE(*,*) 'TESTING CIRCLETYPE (arrays)'
 !
 !Test clear
+      COMPONENT_TEST('Elemental Circle %clear()')
       CALL point%clear()
       CALL point2%clear()
       CALL point%init(DIM=2,X=0.1_SRK,Y=0.2_SRK)
@@ -1188,9 +1261,9 @@ PROGRAM testGeom
                    ALLOCATED(circles(1)%c%coord) .OR. circles(2)%r /= 0.0_SRK .OR. &
                    circles(2)%c%dim /= 0 .OR. ALLOCATED(circles(2)%c%coord))
       ASSERT(bool, 'circles%clear()')
-      WRITE(*,*) '  Passed: CALL circles%clear()'
 !
 !Test set
+      COMPONENT_TEST('Elemental Circle %set()')
       CALL point%init(DIM=2,X=0.1_SRK,Y=0.2_SRK)
 !This no longer works with Intel 12
       CALL circles%set(point,(/0.5_SRK,0.6_SRK/))
@@ -1201,9 +1274,9 @@ PROGRAM testGeom
                    ANY(circles(2)%c%coord /= (/0.1_SRK,0.2_SRK/)) .OR. &
                    circles(1)%c%dim /= 2 .OR. circles(2)%c%dim /= 2)
       ASSERT(bool, 'circles%set(...)')
-      WRITE(*,*) '  Passed: CALL circles%set(...)'
 !
 !Test intersection
+      COMPONENT_TEST('Elemental Circle %intersectLine()')
       CALL line1%clear()
       CALL line1%p1%init(DIM=2,X=-1.0_SRK,Y=-1.0_SRK)
       CALL line1%p2%init(DIM=2,X=1.0_SRK,Y=1.0_SRK)
@@ -1214,13 +1287,9 @@ PROGRAM testGeom
                    ANY(.NOT.(points(2)%coord .APPROXEQ. -0.271307488658817_SRK)) .OR. &
                    ANY(.NOT.(points2(2)%coord .APPROXEQ. 0.571307488658817_SRK)))
       ASSERT(bool, 'circles%intersectLine(...)')
-      WRITE(*,*) '  Passed: CALL circles%intersectLine(...)'
-      
-      WRITE(*,*) '---------------------------------------------------'
-      
-      WRITE(*,*) 'TESTING CYLINDERTYPE (arrays)'
 !
 !Test Clear
+      COMPONENT_TEST('Elemental Cylinder %clear()')
       CALL point3%clear()
       CALL point2%clear()
       CALL point2%init(DIM=3,X=0.1_SRK,Y=-0.2_SRK,Z=0.0_SRK)
@@ -1237,9 +1306,9 @@ PROGRAM testGeom
                    cylinders(2)%axis%p1%dim /= 0 .OR. ALLOCATED(cylinders(2)%axis%p1%coord) .OR. &
                    cylinders(2)%axis%p2%dim /= 0 .OR. ALLOCATED(cylinders(2)%axis%p2%coord))
       ASSERT(bool, 'cylinders%clear()')
-      WRITE(*,*) '  Passed: CALL cylinders%clear()'
 !
 !Test set
+      COMPONENT_TEST('Elemental Cylinder %set()')
 !This no longer works with Intel 12
       CALL cylinders%set(point2,point3,(/1.0_SRK,1.5_SRK/))
 !      CALL cylinders(1)%set(point2,point3,1.0_SRK)
@@ -1253,9 +1322,9 @@ PROGRAM testGeom
                    cylinders(2)%axis%p2%dim /= 3 .OR. &
                    ANY(cylinders(2)%axis%p2%coord /= (/0.1_SRK,-0.2_SRK,1.0_SRK/)))
       ASSERT(bool, 'cylinders%set(...)')
-      WRITE(*,*) '  Passed: CALL cylinders%set(...)'
 !
 !Test intersectLine
+      COMPONENT_TEST('Elemental Cylinder %intersectLine()')
       CALL line1%clear()
       CALL line1%p1%init(DIM=3,X=0.0_SRK,Y=-2.5_SRK,Z=0.5_SRK)
       CALL line1%p2%init(DIM=3,X=0.0_SRK,Y=2.5_SRK,Z=0.5_SRK)
@@ -1265,15 +1334,13 @@ PROGRAM testGeom
                    ANY(.NOT.(points3(2)%coord .APPROXEQ. (/0.0_SRK,1.296662954709577_SRK,0.5_SRK/))) .OR. &
                    ANY(.NOT.(points2(2)%coord .APPROXEQ. (/0.0_SRK,-1.696662954709577_SRK,0.5_SRK/))))
       ASSERT(bool, 'cylinders%intersectLine(...)')
-      WRITE(*,*) '  Passed: CALL cylinders%intersectLine(...)'
 #endif
     ENDSUBROUTINE TestCircle_and_Cylinder
 !
 !-------------------------------------------------------------------------------    
     SUBROUTINE TestBox
-      WRITE(*,*) '---------------------------------------------------'
-      WRITE(*,*) 'TESTING OBBoxType (scalar)'
     !Test for clear
+      COMPONENT_TEST('%clear()')
       CALL point%init(DIM=3,X=0.1_SRK,Y=0.2_SRK,Z=0.3_SRK)
       box%p0=point
 !      ALLOCATE(box%u(3,3),box%e(3))
@@ -1286,8 +1353,9 @@ PROGRAM testGeom
       bool = .NOT.(ANY(box%u /= 0.0_SRK) .OR. ANY(box%e /= 0.0_SRK) &
                    .OR. box%p0%dim /= 0 .OR. ALLOCATED(box%p0%coord))
       ASSERT(bool, 'box%clear()')
-      WRITE(*,*) '  Passed: CALL box%clear()'
+      
     !Test for set
+      COMPONENT_TEST('%set()')
       !input check
       CALL box%clear()
       CALL point%clear()
@@ -1331,8 +1399,9 @@ PROGRAM testGeom
                   .OR. ANY(.NOT.(box%u(:,2) .APPROXEQ. u2_3d/SQRT(2._SRK))) &
                   .OR. ANY(.NOT.(box%u(:,3) .APPROXEQ. u3_3d*0.5_SRK)) )
       ASSERT(bool, 'box%set(...)')
-      WRITE(*,*) '  Passed: Call box%set()'
+
     !Test for intersection
+      COMPONENT_TEST('%intersectLine()')
       !Bad input
       CALL box%clear()
       CALL line1%clear()
@@ -1539,15 +1608,19 @@ PROGRAM testGeom
       CALL box%intersectLine(line1,points2(1),points2(2))
       bool = .NOT.(points2(1)%dim /= -3 .AND. points2(2)%dim /= -3)
       ASSERT(bool, 'box%intersectLine(...)')
-      WRITE(*,*) '  Passed: CALL box%intersectLine()'
-
-      WRITE(*,*) '---------------------------------------------------'
-      WRITE(*,*) 'TESTING OBBoxType (arrays)'
+      
+      !Test for equivalence operation (implicitly tests assignment operation)
+      COMPONENT_TEST('OPERATOR(==)')
+      box2=box
+      ASSERT(box == box2,'box equivalence')
+      box2%u(:,1)=(/0.0_SRK,1.0_SRK,0.0_SRK/)
+      ASSERT(.NOT.(box == box2),'box non-equivalence')
 !
 #ifdef __GFORTRAN__
       WRITE(*,*) 'ELEMENTAL METHODS FOR NON-SCALAR BASE OBJECTS NOT YET SUPPORTED BY COMPILER'
 #else
     !Test for clear
+      COMPONENT_TEST('Elemental %clear()')
       CALL boxs(1)%clear()
       CALL boxs(2)%clear()
       CALL point%clear()
@@ -1563,8 +1636,9 @@ PROGRAM testGeom
                    .OR. ANY(boxs(2)%u /= 0.0_SRK).OR. ANY(boxs(2)%e /= 0.0_SRK) &
                    .OR. boxs(2)%p0%dim /= 0 .OR. ALLOCATED(boxs(2)%p0%coord))
       ASSERT(bool, 'box%clear()')
-      WRITE(*,*) '  Passed: CALL box%clear()'
+
     !Test for intersection
+      COMPONENT_TEST('Elemental %intersectLine()')
       CALL boxs(1)%set(point,(/SQRT(2._SRK),8._SRK/),u1_2d,u2_2d)
       boxs(2)=boxs(1)
       
@@ -1583,7 +1657,6 @@ PROGRAM testGeom
                    .OR. .NOT.(ANY(points2(2)%coord .APPROXEQ. (/0._SRK,2._SRK/))) &
                    .OR. .NOT.(ANY(points3(2)%coord .APPROXEQ. (/0._SRK,4._SRK/))))
       ASSERT(bool, 'box%intersectLine(...)')
-      WRITE(*,*) '  Passed: CALL box%intersectLine()'
 #endif
     ENDSUBROUTINE
 
