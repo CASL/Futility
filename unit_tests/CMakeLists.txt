@@ -18,6 +18,7 @@ SET(UNIT_TEST_NAMES
     testUnitTest
     testSelectedKinds
     testArrayUtils
+    testExtendedMath
     testBLAS
     testStrings
     testTimes
