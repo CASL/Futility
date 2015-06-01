@@ -103,6 +103,7 @@ MODULE IntrType
   PUBLIC :: OPERATOR(.APPROXGE.)
   PUBLIC :: OPERATOR(==)
   PUBLIC :: OPERATOR(/=)
+  PUBLIC :: ASSIGNMENT(=)
   PUBLIC :: SOFTEQ
   PUBLIC :: SOFTEQR
   PUBLIC :: SOFTLE
@@ -361,6 +362,30 @@ MODULE IntrType
     !> @copybrief IntrType::notequalto_logical
     !> @copydetails IntrType::notequalto_logical
     MODULE PROCEDURE notequalto_logical
+  ENDINTERFACE
+
+  INTERFACE ASSIGNMENT(=)
+    !> @copybrief IntrType::assign_char_to_int
+    !> @copydetails IntrType::assign_char_to_int
+    MODULE PROCEDURE assign_char_to_int
+    !> @copybrief IntrType::assign_char_to_bool
+    !> @copydetails IntrType::assign_char_to_bool
+    MODULE PROCEDURE assign_char_to_bool
+    !> @copybrief IntrType::assign_char_to_double
+    !> @copydetails IntrType::assign_char_to_double
+    MODULE PROCEDURE assign_char_to_double
+    !> @copybrief IntrType::assign_char_to_string
+    !> @copydetails IntrType::assign_char_to_string
+!    MODULE PROCEDURE assign_char_to_string
+!    !> @copybrief IntrType::assign_char_to_array_int
+!    !> @copydetails IntrType::assign_char_to_array_int
+!    MODULE PROCEDURE assign_char_to_array_int
+!    !> @copybrief IntrType::assign_char_to_array_double
+!    !> @copydetails IntrType::assign_char_to_array_double
+!    MODULE PROCEDURE assign_char_to_array_double
+!    !> @copybrief IntrType::assign_char_to_array_string
+!    !> @copydetails IntrType::assign_char_to_array_string
+!    MODULE PROCEDURE assign_char_to_array_string
   ENDINTERFACE
 !
 !===============================================================================
@@ -891,6 +916,108 @@ MODULE IntrType
       LOGICAL(SBK) :: bool
       bool=(l1 .NEQV. l2)
     ENDFUNCTION notequalto_logical
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing an assignment of a string to an
+!> integer with the = operator
+!> @param i the integer value
+!> @param c the character value
+!> @returns i integer value of c
+!>
+!> This assigns an int with a value held in a string
+!>
+    ELEMENTAL SUBROUTINE assign_char_to_int(i,c)
+      INTEGER(SNK),INTENT(OUT) :: i
+      CHARACTER(LEN=*),INTENT(IN) :: c
+      READ(c, '(I16)') i
+    ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing an assignment of a string to a
+!> logical variable
+!> @param l the logical value
+!> @param c the character value
+!> @returns s the logical value of c
+!>
+    ELEMENTAL SUBROUTINE assign_char_to_bool(l,c)
+      LOGICAL(SBK),INTENT(OUT) :: l
+      CHARACTER(LEN=*),INTENT(IN) :: c
+      IF(c == 'true') THEN
+        l = .TRUE.
+      ELSE
+        l = .FALSE.
+      ENDIF
+    ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing an assignment of a string to a
+!> single precision real variable
+!> @param s the real value
+!> @param c the character value
+!> @returns s the logical value of c
+!>
+    ELEMENTAL SUBROUTINE assign_char_to_single(s,c)
+      REAL(SSK),INTENT(OUT) :: s
+      CHARACTER(LEN=*),INTENT(IN) :: c
+      READ(c, '(I16)') s
+    ENDSUBROUTINE
+
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing an assignment of a string to a
+!> double precision real variable
+!> @param d the real value
+!> @param c the character value
+!> @returns d the logical value of c
+!>
+    ELEMENTAL SUBROUTINE assign_char_to_double(d,c)
+      REAL(SDK),INTENT(OUT) :: d
+      CHARACTER(LEN=*),INTENT(IN) :: c
+      READ(c, '(i16)') d
+    ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing an assignment of a character
+!> string to an array of doubles
+!> @param d the array of doubles
+!> @param c the character value
+!TODO arrays
+    ELEMENTAL SUBROUTINE assign_char_to_array_int(iArr,c)
+      REAL(SDK),INTENT(OUT) :: iArr
+      CHARACTER(LEN=*),INTENT(IN) :: c
+!      READ(c, '(i16)') iArr
+    ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing an assignment of a character
+!> string to an array of doubles
+!> @param d the array of doubles
+!> @param c the character value
+!TODO arrays
+    ELEMENTAL SUBROUTINE assign_char_to_array_double(dArr,c)
+      REAL(SDK),INTENT(OUT) :: dArr
+      CHARACTER(LEN=*),INTENT(IN) :: c
+!      READ(c, '(i16)') dArr
+    ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing an assignment of a character
+!> string to a StringType variable
+!> @param str the logical value
+!> @param c the character value
+!> @returns str the logical value of c
+!>
+!    ELEMENTAL SUBROUTINE assign_char_to_string(str,c)
+!      TYPE(StringType),INTENT(OUT) :: str
+!      CHARACTER(LEN=*),INTENT(IN) :: c
+!      str = CHAR(c)
+!    ENDSUBROUTINE
+
+!    ELEMENTAL FUNCTION assign_char_to_array_int(iArr,c) RESULT(iArr)
+!    ELEMENTAL FUNCTION assign_char_to_single_arr(sArr,c) RESULT(sArr)
+!    ELEMENTAL FUNCTION assign_char_to_double_arr(dArr,c) RESULT(dArr)
+!    ELEMENTAL FUNCTION assign_char_to_string_arr(dArr,c) RESULT(dArr)
+
 !
 ENDMODULE IntrType
 
