@@ -21,6 +21,7 @@ PROGRAM testGeom
   USE UnitTest
   USE IntrType
   USE Constants_Conversion
+  USE ParameterLists
   USE Geom
   
   IMPLICIT NONE
@@ -40,6 +41,8 @@ PROGRAM testGeom
   LOGICAL(SBK) :: bool
   
   CREATE_TEST('Test Geom')
+  CALL eParams%setQuietMode(.TRUE.)
+  CALL eParams%setStopOnError(.FALSE.)
   
   REGISTER_SUBTEST('Test Points',TestPoints)
   REGISTER_SUBTEST('Test Lines',TestLine)
@@ -425,6 +428,7 @@ PROGRAM testGeom
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE TestLine
+      TYPE(ParamType) :: params
 !The LineType constructor allocates sp and ep, care should
 !be taken not to code memory leaks. This is why clearPoints() exists.
       COMPONENT_TEST('%clear()')
@@ -434,7 +438,7 @@ PROGRAM testGeom
 !
 !Test clear
       CALL line1%clear()
-      bool = .NOT.(line1%p1%dim /= 0 .OR. line1%p2%dim /= 0 .OR. &
+      bool=.NOT.(line1%p1%dim /= 0 .OR. line1%p2%dim /= 0 .OR. &
                    ALLOCATED(line1%p1%coord) .OR. ALLOCATED(line1%p2%coord))
       ASSERT(bool, 'line1%clear()')
       
@@ -446,10 +450,10 @@ PROGRAM testGeom
       CALL point2%init(DIM=3,X=0.1_SRK,Y=0.2_SRK,Z=0.3_SRK)
       CALL point3%init(DIM=3,X=0.4_SRK,Y=0.5_SRK,Z=0.6_SRK)
       CALL line1%set(point2,point3)
-      bool = .NOT.(line1%p1%dim /= 3 .OR. line1%p2%dim /= 3 .OR. &
-                   line1%p1%coord(1) /= 0.1_SRK .OR. line1%p1%coord(2) /= 0.2_SRK .OR. &
-                   line1%p1%coord(3) /= 0.3_SRK .OR. line1%p2%coord(1) /= 0.4_SRK .OR. &
-                   line1%p2%coord(2) /= 0.5_SRK .OR. line1%p2%coord(3) /= 0.6_SRK)
+      bool=.NOT.(line1%p1%dim /= 3 .OR. line1%p2%dim /= 3 .OR. &
+                 line1%p1%coord(1) /= 0.1_SRK .OR. line1%p1%coord(2) /= 0.2_SRK .OR. &
+                 line1%p1%coord(3) /= 0.3_SRK .OR. line1%p2%coord(1) /= 0.4_SRK .OR. &
+                 line1%p2%coord(2) /= 0.5_SRK .OR. line1%p2%coord(3) /= 0.6_SRK)
       ASSERT(bool, 'line1%set(...)')
       CALL line1%clear()
       
@@ -458,6 +462,29 @@ PROGRAM testGeom
       bool = .NOT.(line1%p1%dim /= 0 .OR. line1%p2%dim /= 0 .OR. &
                    ALLOCATED(line1%p1%coord) .OR. ALLOCATED(line1%p2%coord))
       ASSERT(bool, 'line1%set(...)')
+      CALL line1%clear()
+      
+      CALL newGeom(params,line1)
+      bool=.NOT.(line1%p1%dim /= 0 .OR. line1%p2%dim /= 0 .OR. &
+                 ALLOCATED(line1%p1%coord) .OR. ALLOCATED(line1%p2%coord))
+      ASSERT(bool, 'CALL newGeom(params,line1) (empty params)')
+      CALL params%add('LineGeom->StartPoint',1)
+      CALL params%add('LineGeom->EndPoint',3)
+      CALL newGeom(params,line1)
+      bool=.NOT.(line1%p1%dim /= 0 .OR. line1%p2%dim /= 0 .OR. &
+                 ALLOCATED(line1%p1%coord) .OR. ALLOCATED(line1%p2%coord))
+      ASSERT(bool, 'CALL newGeom(params,line1) (badparams)')
+      CALL params%clear()
+      CALL params%add('LineGeom->StartPoint',point2%coord)
+      CALL params%add('LineGeom->EndPoint',point3%coord)
+      CALL newGeom(params,line1)
+      bool=.NOT.(line1%p1%dim /= 3 .OR. line1%p2%dim /= 3 .OR. &
+                 line1%p1%coord(1) /= 0.1_SRK .OR. line1%p1%coord(2) /= 0.2_SRK .OR. &
+                 line1%p1%coord(3) /= 0.3_SRK .OR. line1%p2%coord(1) /= 0.4_SRK .OR. &
+                 line1%p2%coord(2) /= 0.5_SRK .OR. line1%p2%coord(3) /= 0.6_SRK)
+      ASSERT(bool, 'CALL newGeom(params,line1)')
+      CALL params%clear()
+      CALL line1%clear()
 !
 !Test getDim
       COMPONENT_TEST('%getDim()')
@@ -791,6 +818,7 @@ PROGRAM testGeom
 !-------------------------------------------------------------------------------
     SUBROUTINE TestPlane
       REAL(SRK) :: n(3)
+      TYPE(ParamType) :: params
 !
 !Test clear
       COMPONENT_TEST('%clear()')
@@ -809,6 +837,25 @@ PROGRAM testGeom
       bool = .NOT.(ANY(plane1%v0%coord /= 0.5_SRK) .OR. ANY(.NOT.(plane1%n .APPROXEQ. &
                    (/1._SRK/SQRT(3.0_SRK),1._SRK/SQRT(3.0_SRK),1._SRK/SQRT(3.0_SRK)/))))
       ASSERT(bool, 'plane1%set(...)')
+      CALL plane1%clear()
+      
+      CALL newGeom(params,plane1)
+      bool = .NOT.(ANY(plane1%n /= 0.0_SRK) .OR. plane1%v0%dim /= 0 .OR. &
+                   ALLOCATED(plane1%v0%coord))
+      ASSERT(bool, 'CALL newGeom(params,plane1) (empty params)')
+      CALL params%add('PlaneGeom->Point',1)
+      CALL params%add('PlaneGeom->NormalVector',3)
+      CALL newGeom(params,plane1)
+      bool = .NOT.(ANY(plane1%n /= 0.0_SRK) .OR. plane1%v0%dim /= 0 .OR. &
+                   ALLOCATED(plane1%v0%coord))
+      ASSERT(bool, 'CALL newGeom(params,plane1) (bad params)')
+      CALL params%clear()
+      CALL params%add('PlaneGeom->Point',point%coord)
+      CALL params%add('PlaneGeom->NormalVector',n)
+      CALL newGeom(params,plane1)
+      bool = .NOT.(ANY(plane1%v0%coord /= 0.5_SRK) .OR. ANY(.NOT.(plane1%n .APPROXEQ. &
+                   (/1._SRK/SQRT(3.0_SRK),1._SRK/SQRT(3.0_SRK),1._SRK/SQRT(3.0_SRK)/))))
+      ASSERT(bool, 'CALL newGeom(params,plane1)')
       
       !Test disjoint-ness
       COMPONENT_TEST('%intersect()')
@@ -890,6 +937,7 @@ PROGRAM testGeom
 !
 !-------------------------------------------------------------------------------    
     SUBROUTINE TestCircle_and_Cylinder
+      TYPE(ParamType) :: params
 !
 !Test clear
       COMPONENT_TEST('Circle %clear()')
@@ -907,21 +955,43 @@ PROGRAM testGeom
       !Error check
       COMPONENT_TEST('Circle %set()')
       CALL circle1%set(point2,0.5_SRK)
-      bool = .NOT.(circle1%r /= 0.0_SRK .OR. circle1%c%dim /= 0 .OR. &
-                   ALLOCATED(circle1%c%coord))
+      bool=.NOT.(circle1%r /= 0.0_SRK .OR. circle1%c%dim /= 0 .OR. &
+                 ALLOCATED(circle1%c%coord))
       ASSERT(bool, 'circle1%set(...)')
       CALL circle1%set(point,-0.5_SRK)
-      bool = .NOT.(circle1%r /= 0.0_SRK .OR. circle1%c%dim /= 0 .OR. &
-                   ALLOCATED(circle1%c%coord))
+      bool=.NOT.(circle1%r /= 0.0_SRK .OR. circle1%c%dim /= 0 .OR. &
+                 ALLOCATED(circle1%c%coord))
       ASSERT(bool, 'circle1%set(...)')
       !Real case
       CALL circle1%set(point,0.5_SRK)
-      bool = .NOT.(circle1%r /= 0.5_SRK .OR. circle1%c%dim /= 2 .OR. &
-                   circle1%c%coord(1) /= 0.1_SRK .OR. circle1%c%coord(2) /= 0.2_SRK)
+      bool=.NOT.(circle1%r /= 0.5_SRK .OR. circle1%c%dim /= 2 .OR. &
+                 circle1%c%coord(1) /= 0.1_SRK .OR. circle1%c%coord(2) /= 0.2_SRK)
       ASSERT(bool, 'circle1%set(...)')
+      CALL circle1%clear()
+      
+      CALL newGeom(params,circle1)
+      bool=.NOT.(circle1%r /= 0.0_SRK .OR. circle1%c%dim /= 0 .OR. &
+                 ALLOCATED(circle1%c%coord))
+      ASSERT(bool, 'CALL newGeom(params,circle1) (empty params)')
+      CALL params%add('CircleGeom -> Radius',1)
+      CALL params%add('CircleGeom -> Centroid',2)
+      CALL params%add('CircleGeom -> StartingAngle',.FALSE.)
+      CALL params%add('CircleGeom -> StoppingAngle',(/0.0,0.0/))
+      CALL newGeom(params,circle1)
+      bool=.NOT.(circle1%r /= 0.0_SRK .OR. circle1%c%dim /= 0 .OR. &
+                 ALLOCATED(circle1%c%coord))
+      ASSERT(bool, 'CALL newGeom(params,circle1) (bad params)')
+      CALL params%clear()
+      CALL params%add('CircleGeom -> Radius',0.5_SRK)
+      CALL params%add('CircleGeom -> Centroid',point%coord)
+      CALL newGeom(params,circle1)
+      bool=.NOT.(circle1%r /= 0.5_SRK .OR. circle1%c%dim /= 2 .OR. &
+                 circle1%c%coord(1) /= 0.1_SRK .OR. circle1%c%coord(2) /= 0.2_SRK)
+      ASSERT(bool, 'CALL newGeom(params,circle1)')
+      CALL params%clear()
 !
 !Test intersect
-      COMPONENT_TEST('Circle %intersectLine()')
+      COMPONENT_TEST('Circle%intersectLine()')
       CALL point%clear()
       CALL circle1%clear()
       CALL line1%clear()
@@ -1177,6 +1247,33 @@ PROGRAM testGeom
                    ANY(cylinder1%axis%p2%coord /= (/0.1_SRK,0.2_SRK,1.3_SRK/)))
       ASSERT(bool, 'cylinder1%set(...)')
       CALL cylinder1%clear()
+      
+      CALL newGeom(params,cylinder1)
+      bool=.NOT.(cylinder1%r /= 0.0_SRK .OR. cylinder1%axis%p1%dim /= 0 .OR. &
+                 ALLOCATED(cylinder1%axis%p1%coord) .OR. cylinder1%axis%p2%dim /= 0 .OR. &
+                 ALLOCATED(cylinder1%axis%p2%coord))
+      ASSERT(bool,'CALL newGeom(params,cylinder1) (empty params)')
+      CALL params%add('CylinderGeom -> Radius',1)
+      CALL params%add('CylinderGeom -> BottomCentroid',2)
+      CALL params%add('CylinderGeom -> TopCentroid',3)
+      CALL params%add('CylinderGeom -> StartingAngle',.FALSE.)
+      CALL params%add('CylinderGeom -> StoppingAngle',(/0.0,0.0/))
+      CALL newGeom(params,cylinder1)
+      bool=.NOT.(cylinder1%r /= 0.0_SRK .OR. cylinder1%axis%p1%dim /= 0 .OR. &
+                 ALLOCATED(cylinder1%axis%p1%coord) .OR. cylinder1%axis%p2%dim /= 0 .OR. &
+                 ALLOCATED(cylinder1%axis%p2%coord))
+      ASSERT(bool,'CALL newGeom(params,cylinder1) (bad params)')
+      CALL params%clear()
+      CALL params%add('CylinderGeom -> Radius',1.0_SRK)
+      CALL params%add('CylinderGeom -> BottomCentroid',point2%coord)
+      CALL params%add('CylinderGeom -> TopCentroid',point3%coord)
+      CALL newGeom(params,cylinder1)
+      bool=.NOT.(cylinder1%r /= 1.0_SRK .OR. cylinder1%axis%p1%dim /= 3 .OR. &
+                 ANY(cylinder1%axis%p1%coord /= (/0.1_SRK,0.2_SRK,0.3_SRK/)) .OR. &
+                 cylinder1%axis%p2%dim /= 3 .OR. &
+                 ANY(cylinder1%axis%p2%coord /= (/0.1_SRK,0.2_SRK,1.3_SRK/)))
+      ASSERT(bool,'CALL newGeom(params,cylinder1)')
+      CALL params%clear()
 !
 !Test intersection
       COMPONENT_TEST('Cylinder %intersectLine()')
@@ -1412,6 +1509,7 @@ PROGRAM testGeom
 !
 !-------------------------------------------------------------------------------    
     SUBROUTINE TestBox
+      TYPE(ParamType) :: params
     !Test for clear
       COMPONENT_TEST('%clear()')
       CALL point%init(DIM=3,X=0.1_SRK,Y=0.2_SRK,Z=0.3_SRK)
@@ -1425,7 +1523,7 @@ PROGRAM testGeom
       
       bool = .NOT.(ANY(box%u /= 0.0_SRK) .OR. ANY(box%e /= 0.0_SRK) &
                    .OR. box%p0%dim /= 0 .OR. ALLOCATED(box%p0%coord))
-      ASSERT(bool, 'box%clear()')
+      ASSERT(bool,'box%clear()')
       
     !Test for set
       COMPONENT_TEST('%set()')
@@ -1472,6 +1570,33 @@ PROGRAM testGeom
                   .OR. ANY(.NOT.(box%u(:,2) .APPROXEQ. u2_3d/SQRT(2._SRK))) &
                   .OR. ANY(.NOT.(box%u(:,3) .APPROXEQ. u3_3d*0.5_SRK)) )
       ASSERT(bool, 'box%set(...)')
+      CALL box%clear()
+      
+      CALL newGeom(params,box)
+      bool = .NOT.(ANY(box%u /= 0.0_SRK) .OR. ANY(box%e /= 0.0_SRK) &
+                   .OR. box%p0%dim /= 0 .OR. ALLOCATED(box%p0%coord))
+      ASSERT(bool, 'CALL newGeom(params,box) (empty params)')
+      CALL params%add('BoxGeom -> CornerPoint',1)
+      CALL params%add('BoxGeom -> Vector1',5)
+      CALL params%add('BoxGeom -> Vector2',1)
+      CALL params%add('BoxGeom -> ExtentVector',0)
+      CALL newGeom(params,box)
+      bool = .NOT.(ANY(box%u /= 0.0_SRK) .OR. ANY(box%e /= 0.0_SRK) &
+                   .OR. box%p0%dim /= 0 .OR. ALLOCATED(box%p0%coord))
+      ASSERT(bool, 'CALL newGeom(params,box) (bad params)')
+      CALL params%clear()
+      CALL params%add('BoxGeom -> CornerPoint',point%coord)
+      CALL params%add('BoxGeom -> Vector1',u1_3d)
+      CALL params%add('BoxGeom -> Vector2',u2_3d)
+      CALL params%add('BoxGeom -> Vector3',u3_3d)
+      CALL params%add('BoxGeom -> ExtentVector',e_3d)
+      CALL newGeom(params,box)
+      bool = .NOT.(box%p0 /= point .OR. ANY(box%e /= e_3d) &
+                  .OR. ANY(.NOT.(box%u(:,1) .APPROXEQ. u1_3d/SQRT(2._SRK))) &
+                  .OR. ANY(.NOT.(box%u(:,2) .APPROXEQ. u2_3d/SQRT(2._SRK))) &
+                  .OR. ANY(.NOT.(box%u(:,3) .APPROXEQ. u3_3d*0.5_SRK)) )
+      ASSERT(bool, 'CALL newGeom(params,box)')
+      CALL params%clear()
 
     !Test for intersection
       COMPONENT_TEST('%intersectLine()')
