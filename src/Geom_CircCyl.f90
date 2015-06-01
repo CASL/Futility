@@ -126,6 +126,7 @@ MODULE Geom_CircCyl
       REAL(SRK),INTENT(IN) :: r
       REAL(SRK),INTENT(IN),OPTIONAL :: angstt
       REAL(SRK),INTENT(IN),OPTIONAL :: angstp
+      REAL(SRK) :: dtheta
       CALL circ%clear()
       IF(p%dim == 2 .AND. r > ZERO) THEN
         circ%c=p
@@ -134,6 +135,15 @@ MODULE Geom_CircCyl
         circ%thetastp=TWOPI
         IF(PRESENT(angstt)) circ%thetastt=angstt
         IF(PRESENT(angstp)) circ%thetastp=angstp
+        dtheta=circ%thetastp-circ%thetastt
+        IF(dtheta .APPROXGE. TWOPI) THEN
+          circ%thetastt=ZERO
+          circ%thetastp=TWOPI
+        ENDIF
+        !circ%cosstt=COS(circ%thetastt)
+        !circ%sinstt=SIN(circ%thetastt)
+        !circ%cosstp=COS(circ%thetastp)
+        !circ%sinstp=SIN(circ%thetastp)
       ENDIF
     ENDSUBROUTINE set_CircleType
 !
@@ -162,6 +172,7 @@ MODULE Geom_CircCyl
       REAL(SRK),INTENT(IN) :: r
       REAL(SRK),INTENT(IN),OPTIONAL :: angstt
       REAL(SRK),INTENT(IN),OPTIONAL :: angstp
+      REAL(SRK) :: dtheta
       CALL cyl%clear()
       IF(p%dim == 3 .AND. .NOT.(p .APPROXEQA. q)  .AND. r > ZERO) THEN
         CALL cyl%axis%set(p,q)
@@ -170,6 +181,11 @@ MODULE Geom_CircCyl
         cyl%thetastp=TWOPI
         IF(PRESENT(angstt)) cyl%thetastt=angstt
         IF(PRESENT(angstp)) cyl%thetastp=angstp
+        dtheta=cyl%thetastp-cyl%thetastt
+        IF(dtheta .APPROXGE. TWOPI) THEN
+          cyl%thetastt=ZERO
+          cyl%thetastp=TWOPI
+        ENDIF
       ENDIF
     ENDSUBROUTINE set_CylinderType
 !
@@ -496,19 +512,26 @@ MODULE Geom_CircCyl
       CLASS(CircleType),INTENT(IN) :: circle
       TYPE(PointType),INTENT(IN) :: point
       LOGICAL(SBK) :: bool
-      REAL(SRK) :: x,y,cosstt,cosstp,sinstt,sinstp
+      REAL(SRK) :: x,y,dtheta ,cosstt,cosstp,sinstt,sinstp
       bool=.FALSE.
       x=point%coord(1)-circle%c%coord(1)
       y=point%coord(2)-circle%c%coord(2)
+      dtheta=circle%thetastp-circle%thetastt
       IF((x*x+y*y) <= circle%r) THEN
-        IF((circle%thetastt /= ZERO) .OR. &
-            (circle%thetastp /= TWOPI))THEN
+        IF(dtheta .APPROXLE. PI)THEN
           cosstt=COS(circle%thetastt)
           cosstp=COS(circle%thetastp)
           sinstt=SIN(circle%thetastt)
           sinstp=SIN(circle%thetastp)
-          IF(COS(circle%thetastt)*circle%r*y >= SIN(circle%thetastt)*circle%r*x) &
-            bool=COS(circle%thetastp)*circle%r*y <= SIN(circle%thetastp)*circle%r*x
+          IF(COS(circle%thetastt)*y .APPROXGE. SIN(circle%thetastt)*x) &
+            bool=COS(circle%thetastp)*y .APPROXLE. SIN(circle%thetastp)*x
+        ELSEIF(dtheta < TWOPI) THEN
+          cosstt=COS(circle%thetastt)
+          cosstp=COS(circle%thetastp)
+          sinstt=SIN(circle%thetastt)
+          sinstp=SIN(circle%thetastp)
+          bool=(COS(circle%thetastt)*y .APPROXGE. SIN(circle%thetastt)*x) &
+            .OR. (COS(circle%thetastp)*y .APPROXLE. SIN(circle%thetastp)*x)
         ELSE
           bool=.TRUE.
         ENDIF

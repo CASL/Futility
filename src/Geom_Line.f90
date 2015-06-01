@@ -79,6 +79,12 @@ MODULE Geom_Line
       !> @copybrief GeomLine::distance_LineType_to_LineType
       !> @copydetails GeomLine::distance_LineType_to_LineType
       PROCEDURE,PASS :: distance2Line => distance_LineType_to_LineType
+      !> @copybrief GeomLine::pointIsLeft_LineType
+      !> @copydetails GeomLine::pointIsLeft_LineType
+      PROCEDURE,PASS :: pointIsLeft => pointIsLeft_LineType
+      !> @copybrief GeomLine::pointIsRight_LineType
+      !> @copydetails GeomLine::pointIsRight_LineType
+      PROCEDURE,PASS :: pointIsRight => pointIsRight_LineType
   ENDTYPE LineType
 
 !  !> @brief Generic interface for obtaining a midPoint
@@ -496,13 +502,47 @@ MODULE Geom_Line
     ENDFUNCTION distance3D_to_point
 !
 !-------------------------------------------------------------------------------
-!> @brief Defines the 'is equal to' operation between two circles e.g. @c 
-!>        circ1 == circ2
-!> @param p0 the first circle
-!> @param p1 the second circle
+!> @brief Determines whether a point is to the left of the line.
+!> @param line the line object
+!> @param pt the point object
 !> @returns @c bool the boolean result of the operation
 !>
-!> Function is elemental so it can be used on an array of circles.
+!> Function is elemental so it can be used on an array of lines.
+    ELEMENTAL FUNCTION pointIsLeft_LineType(line,pt) RESULT(bool)
+      CLASS(LineType),INTENT(IN) :: line
+      TYPE(PointType),INTENT(IN) :: pt
+      LOGICAL(SBK) :: bool
+      bool=.FALSE.
+      IF((pt%dim > 1) .AND. (line%getDim() > 1)) &
+        bool=(line%p2%coord(1)-line%p1%coord(1))*(pt%coord(2)-line%p1%coord(2))- &
+          (line%p2%coord(2)-line%p1%coord(2))*(pt%coord(1)-line%p1%coord(1)) > 0.0_SRK
+    ENDFUNCTION pointIsLeft_LineType
+!
+!-------------------------------------------------------------------------------
+!> @brief Determines whether a point is to the right of the line.
+!> @param line the line object
+!> @param pt the point object
+!> @returns @c bool the boolean result of the operation
+!>
+!> Function is elemental so it can be used on an array of lines.
+    ELEMENTAL FUNCTION pointIsRight_LineType(line,pt) RESULT(bool)
+      CLASS(LineType),INTENT(IN) :: line
+      TYPE(PointType),INTENT(IN) :: pt
+      LOGICAL(SBK) :: bool
+      bool=.FALSE.
+      IF((pt%dim > 1) .AND. (line%getDim() > 1)) &
+        bool=(line%p2%coord(1)-line%p1%coord(1))*(pt%coord(2)-line%p1%coord(2))- &
+          (line%p2%coord(2)-line%p1%coord(2))*(pt%coord(1)-line%p1%coord(1)) < 0.0_SRK
+    ENDFUNCTION pointIsRight_LineType
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the 'is equal to' operation between two lines e.g. @c 
+!>        l0 == l1
+!> @param p0 the first line
+!> @param p1 the second line
+!> @returns @c bool the boolean result of the operation
+!>
+!> Function is elemental so it can be used on an array of lines.
     ELEMENTAL FUNCTION isequal_LineType(l0,l1) RESULT(bool)
       TYPE(LineType),INTENT(IN) :: l0,l1
       LOGICAL(SBK) :: bool
