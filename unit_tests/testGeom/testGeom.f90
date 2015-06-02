@@ -26,7 +26,8 @@ PROGRAM testGeom
   
   IMPLICIT NONE
   
-  TYPE(PointType) :: point,point2,point3,points(2),points2(2),points3(2)
+  TYPE(PointType) :: point,point1,point2,point3,point4
+  TYPE(PointType) :: points(2),points2(2),points3(2)
   TYPE(LinkedListPointType),POINTER :: firstPoint,thisPoint
   TYPE(LineType) :: line1,line2,lines(2),dis,diss(2)
   TYPE(PlaneType) :: plane1,plane2,planes(2)
@@ -1051,39 +1052,134 @@ PROGRAM testGeom
       ASSERT(bool,'circle1%intersectLine(...) (2-points)')
       CALL line1%clear()
       
-      !Test 1 point of intersection for arc
+      COMPONENT_TEST('Arc Intersect')
+      CALL point%clear()
       CALL circle1%clear()
-      CALL line1%p1%init(DIM=2,X=-0.4_SRK,Y=-0.3_SRK)
-      CALL line1%p2%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
-      CALL circle1%set(point,0.4225_SRK,ANGSTT=PI,ANGSTP=TWOPI)
-      CALL circle1%intersectLine(line1,point2,point3)
-      bool = ALL(point2%coord .APPROXEQ. (/-0.3380_SRK,-0.2535_SRK/)) &
-        .AND. point3%dim == 0
-      ASSERT(bool,'circle1%intersectLine(...) (arc 1-point)')
+      CALL point%init(DIM=2,X=ZERO,Y=ZERO)
+      CALL circle1%set(point,1.0_SRK,ANGSTT=ZERO,ANGSTP=HALFPI)
+      !Test 1
+      CALL line1%p1%init(DIM=2,X=-2.0_SRK,Y=1.5_SRK)
+      CALL line1%p2%init(DIM=2,X=2.0_SRK,Y=-2.5_SRK)
+      CALL circle1%intersectArcLine(line1,point1,point2,point3,point4)
+      bool=(point1%dim == 0 .AND. .NOT.ALLOCATED(point1%coord) .AND. &
+            point2%dim == 0 .AND. .NOT.ALLOCATED(point2%coord) .AND. &
+            point3%dim == -3 .AND. ALLOCATED(point3%coord) .AND. &
+            point4%dim == -3 .AND. ALLOCATED(point4%coord))
+      ASSERT(bool,'arc test 1 (no points)')
+      !Test 2
       CALL line1%clear()
-      
-      !Test 2 points of intersection for arc
-      CALL circle1%clear()
-      CALL line1%p1%init(DIM=2,X=-0.3_SRK,Y=0.4_SRK)
-      CALL line1%p2%init(DIM=2,X=0.4_SRK,Y=0.2_SRK)
-      CALL circle1%set(point,0.4225_SRK,ANGSTT=ZERO,ANGSTP=PI)
-      CALL circle1%intersectLine(line1,point2,point3)
-      bool = ALL(point2%coord .APPROXEQA. (/-0.200892135566299_SRK,0.371683467304657_SRK/)) &
-        .AND. ALL(point3%coord .APPROXEQA. (/0.3669298714153550_SRK,0.209448608167041_SRK/))
-      ASSERT(bool,'circle1%intersectLine(...) (arc 2-points)')
-      
-      !Test missed intersection for arc
-      !CALL circle1%clear()
-      !CALL point2%clear()
-      !CALL point3%clear()
-      !CALL line1%p1%init(DIM=2,X=-0.3_SRK,Y=0.4_SRK)
-      !CALL line1%p2%init(DIM=2,X=0.4_SRK,Y=0.2_SRK)
-      !CALL circle1%set(point,0.4225_SRK,ANGSTT=PI,ANGSTP=TWOPI)
-      !CALL circle1%intersectLine(line1,point2,point3)
-      !bool = (point2%dim == 0) .AND. (point3%dim == 0)
-      !ASSERT(bool,'circle1%intersectLine(...) (arc miss)')
-      !FINFO() point2%dim, point2%coord
-      !FINFO() point3%dim, point3%coord
+      CALL line1%p1%init(DIM=2,X=-2.0_SRK,Y=0.5_SRK)
+      CALL line1%p2%init(DIM=2,X=2.0_SRK,Y=0.5_SRK)
+      CALL circle1%intersectArcLine(line1,point1,point2,point3,point4)
+      bool=(point1%dim == 0 .AND. .NOT.ALLOCATED(point1%coord) .AND. &
+            point2%dim == 2 .AND. ALL(point2%coord .APPROXEQ. (/SQRT(0.75_SRK),0.5_SRK/)) .AND. &
+            point3%dim == -3 .AND. .NOT.ALLOCATED(point3%coord) .AND. &
+            point4%dim == 2 .AND. ALL(point4%coord .APPROXEQ. (/0.0_SRK,0.5_SRK/)))
+      ASSERT(bool,'arc test 2 (arc and line)')
+      !Test 3
+      CALL line1%clear()
+      CALL line1%p1%init(DIM=2,Y=2.0_SRK,X=0.5_SRK)
+      CALL line1%p2%init(DIM=2,Y=-2.0_SRK,X=0.5_SRK)
+      CALL circle1%intersectArcLine(line1,point1,point2,point3,point4)
+      bool=(point1%dim == 2 .AND. ALL(point1%coord .APPROXEQ. (/0.5_SRK,SQRT(0.75_SRK)/)) .AND. &
+            point2%dim == 0 .AND. .NOT.ALLOCATED(point2%coord) .AND. &
+            point3%dim == 2 .AND. ALL(point3%coord .APPROXEQ. (/0.5_SRK,0.0_SRK/)) .AND. &
+            point4%dim == -3 .AND. .NOT.ALLOCATED(point4%coord))
+      ASSERT(bool,'arc test 3 (arc and line)')
+      !Test 4
+      CALL line1%clear()
+      CALL line1%p1%init(DIM=2,X=-2.0_SRK,Y=2.5_SRK)
+      CALL line1%p2%init(DIM=2,X=2.0_SRK,Y=-1.5_SRK)
+      CALL circle1%intersectArcLine(line1,point1,point2,point3,point4)
+      bool=(point1%dim == 0 .AND. .NOT.ALLOCATED(point1%coord) .AND. &
+            point2%dim == 0 .AND. .NOT.ALLOCATED(point2%coord) .AND. &
+            point3%dim == 2 .AND. ALL(point3%coord .APPROXEQ. (/0.5_SRK,0.0_SRK/)) .AND. &
+            point4%dim == 2 .AND. ALL(point4%coord .APPROXEQ. (/0.0_SRK,0.5_SRK/)))
+      ASSERT(bool,'arc test 4 (line and line)')
+      !Test 5
+      CALL line1%clear()
+      CALL line1%p1%init(DIM=2,X=0.5_SRK,Y=-0.1_SRK)
+      CALL line1%p2%init(DIM=2,X=0.5_SRK,Y=0.1_SRK)
+      CALL circle1%intersectArcLine(line1,point1,point2,point3,point4)
+      bool=(point1%dim == 0 .AND. .NOT.ALLOCATED(point1%coord) .AND. &
+            point2%dim == 0 .AND. .NOT.ALLOCATED(point2%coord) .AND. &
+            point3%dim == 2 .AND. ALL(point3%coord .APPROXEQ. (/0.5_SRK,0.0_SRK/)) .AND. &
+            point4%dim == -3 .AND. .NOT.ALLOCATED(point2%coord))
+      ASSERT(bool,'arc test 5 (one line inside)')
+      !Test 6
+      CALL line1%clear()
+      CALL line1%p1%init(DIM=2,X=0.5_SRK,Y=-2.0_SRK)
+      CALL line1%p2%init(DIM=2,X=0.5_SRK,Y=0.1_SRK)
+      CALL circle1%intersectArcLine(line1,point1,point2,point3,point4)
+      bool=(point1%dim == 0 .AND. .NOT.ALLOCATED(point1%coord) .AND. &
+            point2%dim == 0 .AND. .NOT.ALLOCATED(point2%coord) .AND. &
+            point3%dim == 2 .AND. ALL(point3%coord .APPROXEQ. (/0.5_SRK,0.0_SRK/)) .AND. &
+            point4%dim == -3 .AND. .NOT.ALLOCATED(point2%coord))
+      ASSERT(bool,'arc test 6 (one line over)')
+      !Test 7
+      CALL line1%clear()
+      CALL line1%p1%init(DIM=2,X=-2.0_SRK,Y=2.0_SRK)
+      CALL line1%p2%init(DIM=2,X=2.0_SRK,Y=-2.0_SRK)
+      CALL circle1%intersectArcLine(line1,point1,point2,point3,point4)
+      bool=(point1%dim == 0 .AND. .NOT.ALLOCATED(point1%coord) .AND. &
+            point2%dim == 0 .AND. .NOT.ALLOCATED(point2%coord) .AND. &
+            point3%dim == -3 .AND. ALL(point3%coord .APPROXEQ. (/0.0_SRK,0.0_SRK/)) .AND. &
+            point4%dim == -3 .AND. ALL(point4%coord .APPROXEQ. (/0.0_SRK,0.0_SRK/)))
+      ASSERT(bool,'arc test 7 (origin corner)')
+      !Test 8
+      CALL line1%clear()
+      CALL line1%p1%init(DIM=2,X=2.0_SRK,Y=1.0_SRK)
+      CALL line1%p2%init(DIM=2,X=-2.0_SRK,Y=-3.0_SRK)
+      CALL circle1%intersectArcLine(line1,point1,point2,point3,point4)
+      bool=(point1%dim == 0 .AND. .NOT.ALLOCATED(point1%coord) .AND. &
+            point2%dim == 0 .AND. .NOT.ALLOCATED(point2%coord) .AND. &
+            point3%dim == -3 .AND. ALL(point3%coord .APPROXEQ. (/1.0_SRK,0.0_SRK/)) .AND. &
+            point4%dim == -3 .AND. ALL(point4%coord .APPROXEQ. (/0.0_SRK,-1.0_SRK/)))
+      ASSERT(bool,'arc test 8 (arc corner)')
+      !Test 9
+      CALL line1%clear()
+      CALL line1%p1%init(DIM=2,X=-2.0_SRK,Y=2.5_SRK)
+      CALL line1%p2%init(DIM=2,X=2.0_SRK,Y=-1.5_SRK)
+      circle1%thetastt=HALFPI
+      circle1%thetastp=TWOPI
+      CALL circle1%intersectArcLine(line1,point1,point2,point3,point4)
+      bool=(point1%dim == 2 .AND. ALL(point1%coord .APPROXEQ. (/-0.411437827766148_SRK,0.911437827766148_SRK/)) .AND. &
+            point2%dim == 2 .AND. ALL(point2%coord .APPROXEQ. (/0.911437827766148_SRK,-0.411437827766148_SRK/)) .AND. &
+            point3%dim == 2 .AND. ALL(point3%coord .APPROXEQ. (/0.0_SRK,0.5_SRK/)) .AND. &
+            point4%dim == 2 .AND. ALL(point4%coord .APPROXEQ. (/0.5_SRK,0.0_SRK/)))
+      ASSERT(bool,'arc test 9 (pacman)')
+      !Test 10
+      CALL line1%clear()
+      CALL line1%p1%init(DIM=2,X=0.0_SRK,Y=-0.1_SRK)
+      CALL line1%p2%init(DIM=2,X=0.0_SRK,Y=2.0_SRK)
+      CALL circle1%intersectArcLine(line1,point1,point2,point3,point4)
+      bool=(point1%dim == 0 .AND. .NOT.ALLOCATED(point1%coord) .AND. &
+            point2%dim == 0 .AND. .NOT.ALLOCATED(point2%coord) .AND. &
+            point3%dim == -3 .AND. .NOT.ALLOCATED(point3%coord) .AND. &
+            point4%dim == -3 .AND. ALL(point4%coord .APPROXEQ. (/0.0_SRK,0.0_SRK/)))
+      ASSERT(bool,'arc test 10 (y-axis)')
+      !Test 11
+      circle1%thetastt=ZERO
+      circle1%thetastp=HALFPI
+      CALL line1%clear()
+      CALL line1%p1%init(DIM=2,X=-2.0_SRK,Y=-2.0_SRK)
+      CALL line1%p2%init(DIM=2,X=2.0_SRK,Y=2.0_SRK)
+      CALL circle1%intersectArcLine(line1,point1,point2,point3,point4)
+      bool=(point1%dim == 0 .AND. .NOT.ALLOCATED(point1%coord) .AND. &
+            point2%dim == 2 .AND. ALL(point2%coord .APPROXEQ. (/SQRT(0.5_SRK),SQRT(0.5_SRK)/)) .AND. &
+            point3%dim == 2 .AND. ALL(point3%coord .APPROXEQ. (/0.0_SRK,0.0_SRK/)) .AND. &
+            point4%dim == -3 .AND. ALL(point4%coord .APPROXEQ. (/0.0_SRK,0.0_SRK/)))
+      ASSERT(bool,'arc test 11 (through origin)')
+      !Test 12
+      CALL line1%clear()
+      CALL line1%p1%init(DIM=2,X=-2.0_SRK,Y=1.5_SRK)
+      CALL line1%p2%init(DIM=2,X=2.0_SRK,Y=-0.5_SRK)
+      CALL circle1%intersectArcLine(line1,point1,point2,point3,point4)
+      bool=(point1%dim == 0 .AND. .NOT.ALLOCATED(point1%coord) .AND. &
+            point2%dim == 0 .AND. .NOT.ALLOCATED(point2%coord) .AND. &
+            point3%dim == 2 .AND. ALL(point3%coord .APPROXEQ. (/1.0_SRK,0.0_SRK/)) .AND. &
+            point4%dim == 2 .AND. ALL(point4%coord .APPROXEQ. (/0.0_SRK,0.5_SRK/)))
+      ASSERT(bool,'arc test 12 (corner side)')
       
 !Test hasPoint
       COMPONENT_TEST('Circle %hasPoint()')
@@ -1274,6 +1370,7 @@ PROGRAM testGeom
                  ANY(cylinder1%axis%p2%coord /= (/0.1_SRK,0.2_SRK,1.3_SRK/)))
       ASSERT(bool,'CALL newGeom(params,cylinder1)')
       CALL params%clear()
+      CALL cylinder1%clear()
 !
 !Test intersection
       COMPONENT_TEST('Cylinder %intersectLine()')
@@ -1286,6 +1383,7 @@ PROGRAM testGeom
       cylinder1%r=1.0_SRK
       CALL cylinder1%axis%p1%init(DIM=3,X=0.1_SRK,Y=-0.2_SRK,Z=0.0_SRK)
       CALL cylinder1%axis%p2%init(DIM=3,X=0.1_SRK,Y=-0.2_SRK,Z=1.0_SRK)
+      cylinder1%thetastp=TWOPI
       CALL line1%clear()
       
       !Test totally "outside" P-surface
@@ -1404,6 +1502,17 @@ PROGRAM testGeom
       bool = .NOT.(ANY(.NOT.(point3%coord .APPROXEQ. (/0.0_SRK,0.794987437106620_SRK,0.5_SRK/))) .OR. &
                    ANY(.NOT.(point2%coord .APPROXEQ. (/0.0_SRK,-1.194987437106620_SRK,0.5_SRK/))))
       ASSERT(bool, 'cylinder1%intersectLine(...) (cyl-2)')
+      
+      !Test missed intersection for slice of cylinder
+      !cylinder1%thetastt=HALFPI
+      !cylinder1%thetastp=PI
+      !CALL line1%p1%init(DIM=3,X=-2.0_SRK,Y=-1.0_SRK,Z=0.44_SRK)
+      !CALL line1%p2%init(DIM=3,X=2.0_SRK,Y=0.0_SRK,Z=0.55_SRK)
+      !CALL cylinder1%intersectLine(line1,point2,point3)
+      !bool = (point2%dim == 0) .AND. (point3%dim == 0)
+      !ASSERT(bool,'cylinder1%intersectLine(...) (arc miss)')
+      !FINFO() point2%dim, point2%coord
+      !FINFO() point3%dim, point3%coord
       
       !Test for equivalence operation (implicitly tests assignment operation)
       COMPONENT_TEST('OPERATOR(==)')

@@ -70,6 +70,9 @@ MODULE Geom_CircCyl
       !> @copybrief Geom_CircCyl::intersect_CircleType_and_LineType
       !> @copydetails Geom_CircCyl::intersect_CircleType_and_LineType
       PROCEDURE,PASS :: intersectLine => intersect_CircleType_and_LineType
+      !> @copybrief Geom_CircCyl::intersect_ArcCircleType_and_LineType
+      !> @copydetails Geom_CircCyl::intersect_ArcCircleType_and_LineType
+      PROCEDURE,PASS :: intersectArcLine => intersect_ArcCircleType_and_LineType
       !> @copybrief Geom_CircCyl::hasPoint_CircleType
       !> @copydetails Geom_CircCyl::hasPoint_CircleType
       PROCEDURE,PASS :: hasPoint => hasPoint_CircleType
@@ -253,12 +256,12 @@ MODULE Geom_CircCyl
             discr=SQRT(discr)
             t1=(-b-discr)*ra
             t2=(-b+discr)*ra
-            IF(zero < t1 .AND. t1 < one) THEN
+            IF(ZERO < t1 .AND. t1 < ONE) THEN
               p1=line%p1
               p1%coord(1)=p1%coord(1)+u(1)*t1
               p1%coord(2)=p1%coord(2)+u(2)*t1
             ENDIF
-            IF(zero < t2 .AND. t2 < one) THEN
+            IF(ZERO < t2 .AND. t2 < ONE) THEN
               p2=line%p1
               p2%coord(1)=p2%coord(1)+u(1)*t2
               p2%coord(2)=p2%coord(2)+u(2)*t2
@@ -267,6 +270,144 @@ MODULE Geom_CircCyl
         ENDIF
       ENDIF
     ENDSUBROUTINE intersect_CircleType_and_LineType
+!
+!-------------------------------------------------------------------------------
+!> @brief Determines point(s) of intersection between a line and circle (if any)
+!> @param circle the circle type to test for intersection
+!> @param line the line type thats being tested against the circle
+!> @param p1 the first point of intersection (if it exists)
+!> @param p2 the second point of intersection (if it exists)
+!> @note a return code is assigned to @c p1%dim and @c p2%dim indicating the type of
+!> intersection. @n
+!>  > 0: success; an intersection point was found @n
+!> == 0: no intersection was found (intersection outside segment) @n
+!>   -1: problem with dummy arguments passed to routine @n
+!>   -2: line is not directed toward circle (disjoint) @n
+!>   -3: line segment is tangent @n
+    ELEMENTAL SUBROUTINE intersect_ArcCircleType_and_LineType(circle,line,p1,p2,p3,p4)
+      CLASS(CircleType),INTENT(IN) :: circle
+      TYPE(LineType),INTENT(IN) :: line
+      TYPE(PointType),INTENT(INOUT) :: p1
+      TYPE(PointType),INTENT(INOUT) :: p2
+      TYPE(PointType),INTENT(INOUT) :: p3
+      TYPE(PointType),INTENT(INOUT) :: p4
+      LOGICAL(SBK) :: arcTest
+      REAL(SRK) :: a,b,c,t1,t2,u(2),w(2),ra,discr,theta,c0(2),c1(2),c2(2)
+      TYPE(LineType) :: arcLine
+
+      CALL p1%clear()
+      CALL p2%clear()
+      CALL p3%clear()
+      CALL p4%clear()
+      p1%dim=-1
+      p2%dim=-1
+      p3%dim=-1
+      p4%dim=-1
+      IF(circle%c%dim == 2 .AND. line%p1%dim == 2 .AND. &
+        line%p2%dim == 2 .AND. circle%r > 0.0_SRK) THEN
+        u(1)=line%p2%coord(1)-line%p1%coord(1)  !dx
+        u(2)=line%p2%coord(2)-line%p1%coord(2)  !dy
+        w(1)=line%p1%coord(1)-circle%c%coord(1)
+        w(2)=line%p1%coord(2)-circle%c%coord(2)
+        b=w(1)*u(1)+w(2)*u(2)
+        c=w(1)*w(1)+w(2)*w(2)-circle%r*circle%r
+        IF(c > zero .AND. b > zero) THEN
+          p1%dim=-2
+          p2%dim=-2
+        ELSE
+          a=u(1)*u(1)+u(2)*u(2) !dr^2
+          discr=b*b-a*c
+          arcTest=(circle%thetastt /= ZERO .OR. circle%thetastp /= TWOPI)
+          IF(discr < -EPSREAL) THEN
+            !Disjoint
+            p1%dim=-2
+            p2%dim=-2
+          ELSEIF(discr .APPROXEQA. zero) THEN
+            !Tangent
+            p1%dim=-3
+            p2%dim=-3
+          ELSE
+            p1%dim=0
+            p2%dim=0
+            ra=one/a
+            discr=SQRT(discr)
+            t1=(-b-discr)*ra
+            t2=(-b+discr)*ra
+            IF(ZERO < t1 .AND. t1 < ONE) THEN
+              p1=line%p1
+              p1%coord(1)=p1%coord(1)+u(1)*t1
+              p1%coord(2)=p1%coord(2)+u(2)*t1
+              IF(arcTest) THEN
+                theta=HALFPI
+                IF(p1%coord(2) < ZERO) theta=-theta
+                IF(p1%coord(1) /= ZERO) theta=ATAN(p1%coord(2)/p1%coord(1))
+                IF(p1%coord(1) < ZERO) theta=theta+PI
+                IF(theta < ZERO) theta=theta+TWOPI
+                IF((theta .APPROXLE. circle%thetastt) .OR. (circle%thetastp .APPROXLE. theta)) &
+                  CALL p1%clear()
+              ENDIF
+            ENDIF
+            IF(ZERO < t2 .AND. t2 < ONE) THEN
+              p2=line%p1
+              p2%coord(1)=p2%coord(1)+u(1)*t2
+              p2%coord(2)=p2%coord(2)+u(2)*t2
+              IF(arcTest) THEN
+                theta=HALFPI
+                IF(p2%coord(2) < ZERO) theta=-theta
+                IF(p2%coord(1) /= ZERO) theta=ATAN(p2%coord(2)/p2%coord(1))
+                IF(p2%coord(1) < ZERO) theta=theta+PI
+                IF(theta < ZERO) theta=theta+TWOPI
+                IF((theta .APPROXLE. circle%thetastt) .OR. (circle%thetastp .APPROXLE. theta)) &
+                  CALL p2%clear()
+              ENDIF
+            ENDIF
+          ENDIF
+          IF(arcTest) THEN
+            !Test for intersection with segments between center of rotation
+            !and ends of arc
+            arcLine%p1=circle%c
+            c0=circle%c%coord
+            c1(1)=c0(1)+circle%r*COS(circle%thetastt)
+            c1(2)=c0(2)+circle%r*SIN(circle%thetastt)
+            c2(1)=c0(1)+circle%r*COS(circle%thetastp)
+            c2(2)=c0(2)+circle%r*SIN(circle%thetastp)
+            CALL arcLine%p2%init(DIM=2,X=c1(1),Y=c1(2))
+            p3=arcLine%intersect(line)
+            arcLine%p2%coord=c2
+            p4=arcLine%intersect(line)
+
+            IF(p1%dim /= 2 .AND. p2%dim /= 2) THEN
+              !No other intersections, therefore we check p3 and p4
+              !to find out if either lies on a corner of the wedge
+              IF(p3%dim == 2) THEN
+                IF(p4%dim < 0) THEN
+                  !The other surface is co-linear or disjoint
+                  !so we mark this as co-linear or disjoint
+                  IF(ALL(p3%coord .APPROXEQA. c0) .OR. &
+                     ALL(p3%coord .APPROXEQA. c1) .OR. &
+                     ALL(p3%coord .APPROXEQA. c2)) p3%dim=p4%dim
+                ELSEIF(p4%dim == 2) THEN
+                  IF(ALL(p3%coord .APPROXEQA. p4%coord)) THEN
+                    p3%dim=-3
+                    p4%dim=-3
+                  ENDIF
+                ENDIF
+              ELSEIF(p3%dim < 0) THEN
+                !The other surface is co-linear or disjoint
+                !so we mark this as co-linear or disjoint
+                IF(ALL(p4%coord .APPROXEQA. c0) .OR. &
+                   ALL(p4%coord .APPROXEQA. c1) .OR. &
+                   ALL(p4%coord .APPROXEQA. c2)) p4%dim=p3%dim
+              ENDIF
+            ELSE
+              IF(p3%dim == 2 .AND. p4%dim == 2) THEN
+                IF(ALL(p3%coord .APPROXEQA. p4%coord)) p4%dim=-3
+              ENDIF
+            ENDIF
+          ENDIF
+        ENDIF
+      ENDIF
+    ENDSUBROUTINE intersect_ArcCircleType_and_LineType
 !
 !-------------------------------------------------------------------------------
 !> @brief Determines the points of intersection between a line and a cylinder
@@ -323,14 +464,17 @@ MODULE Geom_CircCyl
 !> \f[ t_P = -\left(\vec{w}\cdot\vec{d}\right)/\left(\vec{u}\cdot\vec{d}\right) \f]
 !> \f[ t_Q = \left(\vec{d}\cdot\vec{d}-\vec{w}\cdot\vec{d}\right)/\left(\vec{u}\cdot\vec{d}\right) \f]
 !>
+!> @TODO: Create sister routine to work with partial cylinders
+!>
     ELEMENTAL SUBROUTINE intersect_CylinderType_and_LineType(cyl,line,p1,p2)
       CLASS(CylinderType),INTENT(IN) :: cyl
       TYPE(LineType),INTENT(IN) :: line
       TYPE(PointType),INTENT(INOUT) :: p1
       TYPE(PointType),INTENT(INOUT) :: p2
-
+      LOGICAL(SBK) :: arcTest
       REAL(SRK) :: u(3),w(3),d(3)
       REAL(SRK) :: ud,uw,uu,wd,dd,t1,t2,tp,tq,a,b,c,k,g1,g2,ra,discr
+      !REAL(SRK) :: x(2),theta
 
       CALL p1%clear()
       CALL p2%clear()
@@ -439,6 +583,7 @@ MODULE Geom_CircCyl
               t1=g1-g2
               t2=g1+g2
 
+              arcTest=(cyl%thetastt /= ZERO .OR. cyl%thetastp /= TWOPI)
               IF(zero < t1 .AND. t1 < one) THEN
                 !Intersection with the side of a cylinder
                 p1=line%p1
