@@ -45,12 +45,28 @@ MODULE Geom
   USE ParameterLists
 
   IMPLICIT NONE
+  PRIVATE
 
-  PRIVATE :: newGeom_line
-  PRIVATE :: newGeom_plane
-  PRIVATE :: newGeom_box
-  PRIVATE :: newGeom_circ
-  PRIVATE :: newGeom_cyl
+  PUBLIC :: newGeom
+
+  PUBLIC :: MAX_COORD_STR_LEN
+  PUBLIC :: PointType
+  PUBLIC :: LinkedListPointType
+  PUBLIC :: LineType
+  PUBLIC :: PlaneType
+  PUBLIC :: CircleType
+  PUBLIC :: CylinderType
+  PUBLIC :: OBBoxType
+  PUBLIC :: ABBoxType
+  PUBLIC :: Distance
+  PUBLIC :: midPoint
+  PUBLIC :: ClearLinkedListPointType
+  PUBLIC :: OPERATOR(+)
+  PUBLIC :: OPERATOR(-)
+  PUBLIC :: OPERATOR(==)
+  PUBLIC :: OPERATOR(/=)
+  PUBLIC :: OPERATOR(.APPROXEQA.)
+  PUBLIC :: ASSIGNMENT(=)
 
   INTERFACE newGeom
     !> @copybrief Geom::newGeom_line

@@ -46,6 +46,7 @@ MODULE Geom_Box
 !
 !List of public items
   PUBLIC OBBoxType
+  PUBLIC ABBoxType
   PUBLIC :: OPERATOR(==)
 
   !> @brief Type for a Box
@@ -79,6 +80,37 @@ MODULE Geom_Box
       PROCEDURE,PASS :: inside => inside_OBBoxType
   ENDTYPE OBBoxType
   
+  !> @breif Lightweight type for axis-aligned box
+  !>
+  !> Derived type for storing a simple axis-aligned box. This is used to bound
+  !> each of the cuboids for the cartesian mesh overlay.
+  TYPE :: ABBoxType
+    !> Minimum x extent of the box
+    REAL(SRK) :: xMin=0.0_SRK
+    !> Maximum x extent of the box
+    REAL(SRK) :: xMax=0.0_SRK
+    !> Minimum y extent of the box
+    REAL(SRK) :: yMin=0.0_SRK
+    !> Maximum y extent of the box
+    REAL(SRK) :: yMax=0.0_SRK
+    !> Is the origin of our coordinate system inside of the box
+    LOGICAL(SBK) :: isOrigin=.FALSE.
+    !> If the box has been assigned values
+    LOGICAL(SBK) :: isSet=.FALSE.
+!
+!List of type bound procedure for the object
+    CONTAINS
+      !> @copybrief Geom_Box::inside_ABBoxType
+      !> @copydetail Geom_Box::inside_ABBoxType
+      PROCEDURE,PASS :: inside => inside_ABBoxType
+      !> @copybrief Geom_Box::set_ABBoxType
+      !> @copydetail Geom_Box::set_ABBoxType
+      PROCEDURE,PASS :: set => set_ABBoxType
+      !> @copybrief Geom_Box::clear_ABBoxType
+      !> @copydetail Geom_Box::clear_ABBoxType
+      PROCEDURE,PASS :: clear => clear_ABBoxType
+  ENDTYPE ABBoxType  
+    
   !> @brief Generic interface for 'is equal to' operator (==)
   !>
   !> Adds 'is equal to' capability for OBBox types
@@ -486,5 +518,58 @@ MODULE Geom_Box
       IF(b0%p0 == b1%p0 .AND. ALL(b0%u .APPROXEQA. b1%u)) &
         bool=ALL(b0%e.APPROXEQA. b1%e)
     ENDFUNCTION isequal_OBBoxType
+!
+!-------------------------------------------------------------------------------
+!> @brief Constructor for the ABBoxType
+!> @param thisABB the ABBoxType object to be initialized
+!> @param xMin the minimum x-extent of the box
+!> @param xMax the maximum x-extent of the box
+!> @param yMin the minimum y-extent of the box
+!> @param yMax the maximum y-extent of the box
+!> 
+!> This routine sets the attributes of a ABBoxType object.
+    ELEMENTAL SUBROUTINE set_ABBoxType(thisABB,xMin,xMax,yMin,yMax)
+      CLASS(ABBoxType),INTENT(INOUT) :: thisABB
+      REAL(SRK),INTENT(IN) :: xMin,xMax,yMin,yMax
+      thisABB%xMin=xMin
+      thisABB%xMax=xMax
+      thisABB%yMin=yMin
+      thisABB%yMax=yMax
+      thisABB%isSet=.TRUE.
+      thisABB%isOrigin=((xMin <= 0.0_SRK) .AND. (xMax >= 0.0_SRK) .AND. &
+        (yMin <= 0.0_SRK) .AND. (yMax >= 0.0_SRK))
+    ENDSUBROUTINE set_ABBoxType
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears the attributes of a ABBoxType object
+!> @param thisABB the ABBoxType object to be cleared
+!>
+    ELEMENTAL SUBROUTINE clear_ABBoxType(thisABB)
+      CLASS(ABBoxType),INTENT(INOUT) :: thisABB
+      thisABB%xMin=0.0_SRK
+      thisABB%xMax=0.0_SRK
+      thisABB%yMin=0.0_SRK
+      thisABB%yMax=0.0_SRK
+      thisABB%isSet=.FALSE.
+      thisABB%isOrigin=.FALSE.
+    ENDSUBROUTINE clear_ABBoxType
+!
+!-------------------------------------------------------------------------------
+!> @brief Tests if a point is inside a box
+!> @param thisABB the box
+!> @param p the point
+!> @returns inside .TRUE. if p is inside the box.
+!> 
+    ELEMENTAL FUNCTION inside_ABBoxType(thisABB,p) RESULT(inside)
+      CLASS(ABBoxType),INTENT(IN) :: thisABB
+      TYPE(PointType),INTENT(IN) :: p
+      REAL(SRK),PARAMETER :: fuzz=1e-6_SRK
+      LOGICAL(SBK) :: inside
+      inside=.FALSE.
+      IF(p%dim > 1) inside=((p%coord(1) > thisABB%xMin-fuzz) .AND. &
+        (p%coord(1) < thisABB%xMax+fuzz) .AND. &
+        (p%coord(2) > thisABB%yMin-fuzz) .AND. &
+        (p%coord(2) < thisABB%yMax+fuzz))
+    ENDFUNCTION inside_ABBoxType
 !
 ENDMODULE Geom_Box
