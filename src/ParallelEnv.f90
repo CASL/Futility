@@ -171,6 +171,9 @@ MODULE ParallelEnv
       !> @copybrief ParallelEnv::bcast_SDK2_MPI_Env_type
       !> @copydetails ParallelEnv::bcast_SDK2_MPI_Env_type
       PROCEDURE,PASS,PRIVATE :: bcast_SDK2_MPI_Env_type
+      !> @copybrief ParallelEnv::bcast_SDK3_MPI_Env_type
+      !> @copydetails ParallelEnv::bcast_SDK3_MPI_Env_type
+      PROCEDURE,PASS,PRIVATE :: bcast_SDK3_MPI_Env_type
       !> @copybrief ParallelEnv::bcast_SSK4_MPI_Env_type
       !> @copydetails ParallelEnv::bcast_SSK4_MPI_Env_type
       PROCEDURE,PASS,PRIVATE :: bcast_SSK4_MPI_Env_type
@@ -182,6 +185,7 @@ MODULE ParallelEnv
                           bcast_SSK2_MPI_Env_type, &
                           bcast_SDK1_MPI_Env_type, &
                           bcast_SDK2_MPI_Env_type, &
+                          bcast_SDK3_MPI_Env_type, &
                           bcast_SSK4_MPI_Env_type, &
                           bcast_SDK4_MPI_Env_type
       !> @copybrief ParallelEnv::allReduceR_MPI_Env_type
@@ -792,6 +796,26 @@ MODULE ParallelEnv
           ' - Invalid rank!')
       ENDIF
     ENDSUBROUTINE bcast_SDK2_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief
+    SUBROUTINE bcast_SDK3_MPI_Env_type(myPE,buf,root)
+      CHARACTER(LEN=*),PARAMETER :: myName='bcast_SDK3_MPI_Env_type'
+      CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
+      REAL(SDK),INTENT(IN) :: buf(:,:,:)
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: root
+      INTEGER(SIK) :: rank
+      rank=0
+      IF(PRESENT(root)) rank=root
+      IF(0 <= rank .AND. rank <= myPE%nproc-1) THEN
+#ifdef HAVE_MPI
+        CALL MPI_Bcast(buf,SIZE(buf),MPI_REAL8,rank,myPE%comm,mpierr)
+#endif
+      ELSE
+        CALL eParEnv%raiseError(modName//'::'//myName// &
+          ' - Invalid rank!')
+      ENDIF
+    ENDSUBROUTINE bcast_SDK3_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
 !> @brief
