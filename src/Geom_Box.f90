@@ -74,9 +74,9 @@ MODULE Geom_Box
       !> @copybrief Geom_Box::getPlanes_OBBoxType
       !> @copydetail Geom_Box::getPlanes_OBBoxType
       PROCEDURE,PASS :: getPlanes => getPlanes_OBBoxType
-      !> @copybrief Geom_Box::hasPoint_OBBoxType
-      !> @copydetail Geom_Box::hasPoint_OBBoxType
-      PROCEDURE,PASS :: hasPoint => hasPoint_OBBoxType
+      !> @copybrief Geom_Box::inside_OBBoxType
+      !> @copydetail Geom_Box::inside_OBBoxType
+      PROCEDURE,PASS :: inside => inside_OBBoxType
   ENDTYPE OBBoxType
   
   !> @brief Generic interface for 'is equal to' operator (==)
@@ -444,7 +444,7 @@ MODULE Geom_Box
 !>
 !> Only works for 2-D currently.
 !>
-   ELEMENTAL FUNCTION hasPoint_OBBoxType(thisBox,point) RESULT(bool)
+   ELEMENTAL FUNCTION inside_OBBoxType(thisBox,point) RESULT(bool)
      CLASS(OBBoxType),INTENT(IN) :: thisBox
      TYPE(PointType),INTENT(IN) :: point
      LOGICAL(SBK) :: bool
@@ -470,7 +470,7 @@ MODULE Geom_Box
        ENDIF
      ELSEIF(point%dim == 3) THEN
      ENDIF
-   ENDFUNCTION hasPoint_OBBoxType
+   ENDFUNCTION inside_OBBoxType
 !
 !-------------------------------------------------------------------------------
 !> @brief Defines the 'is equal to' operation between two OBBoxes e.g. @c b0==b1

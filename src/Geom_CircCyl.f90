@@ -73,9 +73,9 @@ MODULE Geom_CircCyl
       !> @copybrief Geom_CircCyl::intersect_ArcCircleType_and_LineType
       !> @copydetails Geom_CircCyl::intersect_ArcCircleType_and_LineType
       PROCEDURE,PASS :: intersectArcLine => intersect_ArcCircleType_and_LineType
-      !> @copybrief Geom_CircCyl::hasPoint_CircleType
-      !> @copydetails Geom_CircCyl::hasPoint_CircleType
-      PROCEDURE,PASS :: hasPoint => hasPoint_CircleType
+      !> @copybrief Geom_CircCyl::inside_CircleType
+      !> @copydetails Geom_CircCyl::inside_CircleType
+      PROCEDURE,PASS :: inside => inside_CircleType
   ENDTYPE CircleType
 
   !> @brief Type for a cylinder
@@ -653,7 +653,7 @@ MODULE Geom_CircCyl
 !> @brief Determines whether a point lies within a circle type.
 !> @param circle the circle type to test for intersection
 !> @param point the first to query
-    ELEMENTAL FUNCTION hasPoint_CircleType(circle,point) RESULT(bool)
+    ELEMENTAL FUNCTION inside_CircleType(circle,point) RESULT(bool)
       CLASS(CircleType),INTENT(IN) :: circle
       TYPE(PointType),INTENT(IN) :: point
       LOGICAL(SBK) :: bool
@@ -681,7 +681,7 @@ MODULE Geom_CircCyl
           bool=.TRUE.
         ENDIF
       ENDIF
-    ENDFUNCTION hasPoint_CircleType
+    ENDFUNCTION inside_CircleType
 !
 !-------------------------------------------------------------------------------
 !> @brief Defines the 'is equal to' operation between two circles e.g. @c 
