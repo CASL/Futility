@@ -1916,6 +1916,37 @@ PROGRAM testGeom
       bool = .NOT.(points2(1)%dim /= -3 .AND. points2(2)%dim /= -3)
       ASSERT(bool, 'box%intersectLine(...)')
       
+!
+!Test hasPoint      
+      COMPONENT_TEST('%hasPoint()')
+      CALL box%clear()
+      CALL point%clear()
+      CALL point%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
+      u1_2d=(/1.0_SRK,0.0_SRK/)
+      u2_2d=(/0.0_SRK,1.0_SRK/)
+      CALL box%set(point,(/4.0_SRK,4.0_SRK/),u1_2d,u2_2d)
+      CALL point%clear()
+      CALL point%init(DIM=2,X=2.5_SRK,Y=1.6_SRK)
+      ASSERT(box%hasPoint(point),'%hasPoint')
+      CALL point%clear()
+      CALL point%init(DIM=2,X=-10.0_SRK,Y=-0.5_SRK)
+      ASSERT(.NOT.box%hasPoint(point),'%hasPoint')
+      
+      CALL box%clear()
+      CALL point%clear()
+      CALL point%init(DIM=2,X=0.5_SRK,Y=0.5_SRK)
+      u1_2d=(/1.0_SRK,1.0_SRK/)
+      u2_2d=(/-1.0_SRK,1.0_SRK/)
+      CALL box%set(point,(/4.0_SRK,4.0_SRK/),u1_2d,u2_2d)
+      CALL point%clear()
+      CALL point%init(DIM=2,X=0.5_SRK,Y=1.6_SRK)
+      ASSERT(box%hasPoint(point),'%hasPoint')
+      CALL point%clear()
+      CALL point%init(DIM=2,X=0.0_SRK,Y=-0.5_SRK)
+      ASSERT(.NOT.box%hasPoint(point),'%hasPoint')
+      
+
+      
       !Test for equivalence operation (implicitly tests assignment operation)
       COMPONENT_TEST('OPERATOR(==)')
       box2=box

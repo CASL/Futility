@@ -74,6 +74,9 @@ MODULE Geom_Box
       !> @copybrief Geom_Box::getPlanes_OBBoxType
       !> @copydetail Geom_Box::getPlanes_OBBoxType
       PROCEDURE,PASS :: getPlanes => getPlanes_OBBoxType
+      !> @copybrief Geom_Box::hasPoint_OBBoxType
+      !> @copydetail Geom_Box::hasPoint_OBBoxType
+      PROCEDURE,PASS :: hasPoint => hasPoint_OBBoxType
   ENDTYPE OBBoxType
   
   !> @brief Generic interface for 'is equal to' operator (==)
@@ -433,6 +436,41 @@ MODULE Geom_Box
      !ELSE
      ENDIF
    ENDSUBROUTINE getPlanes_OBBoxType
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns the lines the make up a OBBoxType object
+!> @param box the OBBoxType object to decompose
+!> @param lines the array of line types to be returned
+!>
+!> Only works for 2-D currently.
+!>
+   ELEMENTAL FUNCTION hasPoint_OBBoxType(thisBox,point) RESULT(bool)
+     CLASS(OBBoxType),INTENT(IN) :: thisBox
+     TYPE(PointType),INTENT(IN) :: point
+     LOGICAL(SBK) :: bool
+     TYPE(PointType) :: px,py
+     REAL(SRK) :: pxmag,pymag,pxproj,pyproj
+     
+     bool=.FALSE.
+     IF(point%dim == 2) THEN
+       CALL px%init(DIM=2,X=thisBox%u(1,1)*thisBox%e(1), &
+         Y=thisBox%u(2,1)*thisBox%e(1))
+       CALL py%init(DIM=2,X=thisBox%u(1,2)*thisBox%e(2), &
+         Y=thisBox%u(2,2)*thisBox%e(2))
+       pxmag=(px%coord(1)-thisBox%p0%coord(1))*(px%coord(1)-thisBox%p0%coord(1))+&
+         (px%coord(2)-thisBox%p0%coord(2))*(px%coord(2)-thisBox%p0%coord(2))
+       pymag=(py%coord(1)-thisBox%p0%coord(1))*(py%coord(1)-thisBox%p0%coord(1))+&
+         (py%coord(2)-thisBox%p0%coord(2))*(py%coord(2)-thisBox%p0%coord(2))
+       pxproj=(px%coord(1)-thisBox%p0%coord(1))*(point%coord(1)-thisBox%p0%coord(1))+ &
+         (px%coord(2)-thisBox%p0%coord(2))*(point%coord(2)-thisBox%p0%coord(2))
+       IF((0.0_SRK .APPROXLE. pxproj) .AND. (pxproj .APPROXLE. pxmag)) THEN
+         pyproj=(py%coord(1)-thisBox%p0%coord(1))*(point%coord(1)-thisBox%p0%coord(1))+ &
+         (py%coord(2)-thisBox%p0%coord(2))*(point%coord(2)-thisBox%p0%coord(2))
+         bool=(0.0_SRK .APPROXLE. pyproj) .AND. (pyproj .APPROXLE. pymag)
+       ENDIF
+     ELSEIF(point%dim == 3) THEN
+     ENDIF
+   ENDFUNCTION hasPoint_OBBoxType
 !
 !-------------------------------------------------------------------------------
 !> @brief Defines the 'is equal to' operation between two OBBoxes e.g. @c b0==b1
