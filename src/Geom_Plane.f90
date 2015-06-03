@@ -32,16 +32,15 @@
 !>    @date 8/26/2011
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE Geom_Plane
-
   USE IntrType
   USE Geom_Points
   USE Geom_Line
+
   IMPLICIT NONE
   PRIVATE !Default contents of module to private
 !
 ! List of Public items
   PUBLIC :: PlaneType
-  PUBLIC :: intersect
   PUBLIC :: OPERATOR(==)
 
   !> @brief Type for a Plane defined by a normal vector @c n and a point @c v0.
@@ -64,15 +63,6 @@ MODULE Geom_Plane
       !> @copydetails GeomPlane::intersect_PlaneType_and_LineType
       PROCEDURE,PASS :: intersectLine => intersect_PlaneType_and_LineType
   ENDTYPE PlaneType
-  
-  !> @brief Generic interface to use to find intersections
-  !>
-  !> Adding intersection of a plane and a line segment
-  INTERFACE intersect
-    !> @copybrief GeomPlane::intersect_PlaneType_and_LineType
-    !> @copydetails GeomPlane::intersect_PlaneType_and_LineType
-    MODULE PROCEDURE intersect_PlaneType_and_LineType
-  ENDINTERFACE intersect 
   
   !> @brief Generic interface for 'is equal to' operator (==)
   !>

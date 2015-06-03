@@ -35,8 +35,8 @@
 !>     polymorphic types, so it requires less Fortran 2003 features.
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE Geom_Points
-
   USE IntrType
+
   IMPLICIT NONE
   PRIVATE !Default contents of module to private
 !

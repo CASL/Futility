@@ -35,11 +35,11 @@
 !>    @date 11/02/2011
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE Geom_CircCyl
-
   USE IntrType
   USE Constants_Conversion
   USE Geom_Points
   USE Geom_Line
+
   IMPLICIT NONE
   PRIVATE !Default contents of module to private
 !

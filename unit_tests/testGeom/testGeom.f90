@@ -49,7 +49,7 @@ PROGRAM testGeom
   REGISTER_SUBTEST('Test Lines',TestLine)
   REGISTER_SUBTEST('Test Plane',TestPlane)
   REGISTER_SUBTEST('Test Circle and Cylinder',TestCircle_and_Cylinder)
-  REGISTER_SUBTEST('Test Box',TestBox)
+  REGISTER_SUBTEST('Test OB Box',TestOBBox)
 
   FINALIZE_TEST()
 !
@@ -1617,7 +1617,7 @@ PROGRAM testGeom
     ENDSUBROUTINE TestCircle_and_Cylinder
 !
 !-------------------------------------------------------------------------------    
-    SUBROUTINE TestBox
+    SUBROUTINE TestOBBox
       TYPE(ParamType) :: params
     !Test for clear
       COMPONENT_TEST('%clear()')

@@ -31,17 +31,15 @@
 !>    @date 5/26/2011
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE Geom_Line
-
   USE IntrType
   USE Geom_Points
+
   IMPLICIT NONE
   PRIVATE !Default contents of module to private
 !
 ! List of Public items
   PUBLIC :: LineType
   PUBLIC :: OPERATOR(==)
-!  PUBLIC :: midPoint
-!  PUBLIC :: intersect
 
   !> @brief Type for a Line
   !>
@@ -86,20 +84,6 @@ MODULE Geom_Line
       !> @copydetails GeomLine::pointIsRight_LineType
       PROCEDURE,PASS :: pointIsRight => pointIsRight_LineType
   ENDTYPE LineType
-
-!  !> @brief Generic interface for obtaining a midPoint
-!  INTERFACE midPoint
-!    !> @copybrief GeomLine::midPoint_LineType
-!    !> @copydetails GeomLine::midPoint_LineType
-!    MODULE PROCEDURE midPoint_LineType
-!  ENDINTERFACE midPoint
-!
-!  !> @brief Generic interface to use to find intersections
-!  INTERFACE intersect
-!    !> @copybrief GeomLine::intersect_LineType_and_LineType
-!    !> @copydetails GeomLine::intersect_LineType_and_LineType
-!    MODULE PROCEDURE intersect_LineType_and_LineType
-!  ENDINTERFACE intersect
 
   !> @brief Generic interface for 'is equal to' operator (==)
   !>
