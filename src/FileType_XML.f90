@@ -159,11 +159,10 @@ MODULE FileType_XML
 !Empty Element
         IF(tagEnd == tagBegin) THEN
           !Get the element Name
-          thisXMLE%name= &
-            getTagName(cachedFile(iTag(1,tagBegin):iTag(2,tagBegin)),ierr)
+          CALL getTagName(cachedFile(iTag(1,tagBegin):iTag(2,tagBegin)),ierr,thisXMLE%name)
           
           !Process the attributes
-          tmpStr=charArrytoStr(cachedFile(iTag(1,tagBegin):iTag(2,tagBegin)))
+          CALL charArrytoStr(cachedFile(iTag(1,tagBegin):iTag(2,tagBegin)), tmpStr)
           CALL processTagAttributes(CHAR(tmpStr),thisXMLE%nAttr, &
             thisXMLE%attr_names,thisXMLE%attr_values,ierr)
           IF(ierr /= 0) THEN
@@ -178,16 +177,15 @@ MODULE FileType_XML
         IF(tagEnd > tagBegin) THEN
           IF(iTag(3,tagEnd) == END_TAG) THEN
             !Verify matching element names
-            startTagName= &
-              getTagName(cachedFile(iTag(1,tagBegin):iTag(2,tagBegin)),ierr)
-            endTagName=getTagName(cachedFile(iTag(1,tagEnd):iTag(2,tagEnd)), &
-              ierr)
+            CALL getTagName(cachedFile(iTag(1,tagBegin):iTag(2,tagBegin)),ierr,startTagName)
+            CALL getTagName(cachedFile(iTag(1,tagEnd):iTag(2,tagEnd)), &
+              ierr,endTagName)
             IF(startTagName == endTagName .AND. ierr == 0) THEN
               !Store the name
               thisXMLE%name=startTagName
               
               !Process attributes
-              tmpStr=charArrytoStr(cachedFile(iTag(1,tagBegin):iTag(2,tagBegin)))
+              CALL charArrytoStr(cachedFile(iTag(1,tagBegin):iTag(2,tagBegin)),tmpStr)
               CALL processTagAttributes(CHAR(tmpStr),thisXMLE%nAttr, &
                 thisXMLE%attr_names,thisXMLE%attr_values,ierr)
               IF(ierr /= 0) THEN
@@ -204,12 +202,13 @@ MODULE FileType_XML
                   !Find the tag begin and end for the child
                   CALL thisXMLE%children(ichild)%init(cachedFile,iTag,lines, &
                     childTags(1,iChild),childTags(2,iChild))
-                  thisXMLE%children(iChild)%parent => thisXMLE
+                  SELECTTYPE(xmle => thisXMLE)
+                    TYPE IS(XMLElementType); thisXMLE%children(ichild)%parent => xmle
+                  ENDSELECT
                 ENDDO
               ELSE
                 !Store Content
-                thisXMLE%content= &
-                  charArrytoStr(cachedFile(iTag(2,tagBegin)+1:iTag(1,tagEnd)-1))
+                CALL charArrytoStr(cachedFile(iTag(2,tagBegin)+1:iTag(1,tagEnd)-1),thisXMLE%content)
                 thisXMLE%content=TRIM(thisXMLE%content)
               ENDIF
             ELSE
@@ -656,7 +655,9 @@ MODULE FileType_XML
           CALL processXMLDecl(thisXMLFile)
           
           !Cache the file for processing
-          CALL cacheXMLFile(thisXMLFile,nchars,cachedFile)
+          SELECTTYPE(thisXMLFile); TYPE IS(XMLFileType)
+            CALL cacheXMLFile(thisXMLFile,nchars,cachedFile)
+          ENDSELECT
           
           !Count the number of markup characters "<" and ">" and lines
           nopen=0
@@ -692,7 +693,7 @@ MODULE FileType_XML
                 lines(nlines)=ic
               ENDIF
             ENDDO
-          
+
             !Verify that they are all matching (interleaved)
             DO i=1,nTags
               IF(itag(1,i) > itag(2,i)) THEN
@@ -704,7 +705,7 @@ MODULE FileType_XML
             
             DO i=1,nTags
               !Create temporary string
-              tagStr=charArrytoStr(cachedFile(itag(1,i):itag(2,i)))
+              CALL charArrytoStr(cachedFile(itag(1,i):itag(2,i)), tagStr)
               itag(3,i)=BAD_TAG
               !Determine tag types
               IF(INDEX(tagStr,'<?') == 1) THEN
@@ -1030,10 +1031,10 @@ MODULE FileType_XML
 !> -3: illegal character in tag name
 !> -4: tag name starts with "xml"
 !>
-    FUNCTION getTagName(fullTag,ierr) RESULT(sname)
+    SUBROUTINE getTagName(fullTag,ierr,sname)
       CHARACTER(LEN=1),INTENT(IN) :: fullTag(:)
       INTEGER(SIK),INTENT(INOUT) :: ierr
-      TYPE(StringType) :: sname
+      TYPE(StringType),INTENT(INOUT) :: sname
       CHARACTER(LEN=3) :: xml
       INTEGER(SIK) :: nchar,istp,inamechar,i,charval,istt
       sname=''
@@ -1080,7 +1081,7 @@ MODULE FileType_XML
           ENDDO
           IF(istp == 0) istp=nchar-1
           IF(istp > 0) THEN
-            sname=charArrytoStr(fullTag(istt:istp))
+            CALL charArrytoStr(fullTag(istt:istp), sname)
             ierr=0
           ELSE
             ierr=-3 !Illegal character in tag name
@@ -1091,7 +1092,7 @@ MODULE FileType_XML
       ELSE
         ierr=-1 !Bad Tag
       ENDIF
-    ENDFUNCTION getTagName
+    ENDSUBROUTINE getTagName
 !
 !-------------------------------------------------------------------------------
 !> @brief For a given XML element extract the tag information
@@ -1287,38 +1288,38 @@ MODULE FileType_XML
 !> @param i2 the ending index
 !> @returns val the substring
 !>
-    PURE FUNCTION getSubString(s,i1,i2) RESULT(val)
-      TYPE(StringType),INTENT(IN) :: s
-      INTEGER(SIK),INTENT(IN) :: i1
-      INTEGER(SIK),INTENT(IN) :: i2
-      TYPE(StringType) :: val
-      CHARACTER(LEN=s%n) :: tmpChar
-      INTEGER(SIK) :: i
-    
-      val=''
-      IF(i1 < i2 .AND. i2-i1+1 < s%n) THEN
-        tmpChar=''
-        DO i=i1,i2
-          tmpChar(i:i)=s%s(i)
-        ENDDO
-        val=TRIM(tmpChar)
-      ENDIF
-    ENDFUNCTION getSubString
+!    PURE FUNCTION getSubString(s,i1,i2) RESULT(val)
+!      TYPE(StringType),INTENT(IN) :: s
+!      INTEGER(SIK),INTENT(IN) :: i1
+!      INTEGER(SIK),INTENT(IN) :: i2
+!      TYPE(StringType) :: val
+!      CHARACTER(LEN=s%n) :: tmpChar
+!      INTEGER(SIK) :: i
+!    
+!      val=''
+!      IF(i1 < i2 .AND. i2-i1+1 < s%n) THEN
+!        tmpChar=''
+!        DO i=i1,i2
+!          tmpChar(i:i)=s%s(i)
+!        ENDDO
+!        val=TRIM(tmpChar)
+!      ENDIF
+!    ENDFUNCTION getSubString
 !
 !-------------------------------------------------------------------------------
 !> @brief Converts a character array to a string
 !> @param charry an array of characters
 !> @returns s a string type
 !>
-    PURE FUNCTION charArryToStr(charry) RESULT(s)
+    PURE SUBROUTINE charArryToStr(charry, s)
       CHARACTER(LEN=1),INTENT(IN) :: charry(:)
-      TYPE(StringType) :: s
+      TYPE(StringType),INTENT(INOUT) :: s
       CHARACTER(LEN=SIZE(charry)) :: tmpChar
       INTEGER(SIK) :: i
       DO i=1,SIZE(charry)
         tmpChar(i:i)=charry(i)
       ENDDO
       s=tmpChar
-    ENDFUNCTION charArryToStr
+    ENDSUBROUTINE charArryToStr
 !
 ENDMODULE FileType_XML
