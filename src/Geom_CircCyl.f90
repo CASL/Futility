@@ -70,6 +70,9 @@ MODULE Geom_CircCyl
       !> @copybrief Geom_CircCyl::intersect_CircleType_and_LineType
       !> @copydetails Geom_CircCyl::intersect_CircleType_and_LineType
       PROCEDURE,PASS :: intersectLine => intersect_CircleType_and_LineType
+      !> @copybrief Geom_CircCyl::intersect_CircleType_and_CircleType
+      !> @copydetails Geom_CircCyl::intersect_CircleType_and_CircleType
+      PROCEDURE,PASS :: intersectCircle => intersect_CircleType_and_CircleType
       !> @copybrief Geom_CircCyl::intersect_ArcCircleType_and_LineType
       !> @copydetails Geom_CircCyl::intersect_ArcCircleType_and_LineType
       PROCEDURE,PASS :: intersectArcLine => intersect_ArcCircleType_and_LineType
@@ -270,6 +273,106 @@ MODULE Geom_CircCyl
         ENDIF
       ENDIF
     ENDSUBROUTINE intersect_CircleType_and_LineType
+!
+!-------------------------------------------------------------------------------
+!> @brief Determines point(s) of intersection between two circles (if any)
+!> @param c1 first circle type to test for intersection
+!> @param c2 second circle type to test for intersection
+!> @param p1 first point of intersection if it exists
+!> @param p2 second point of intersection if it exists
+!> @note a return code is assigned to @c p1%dim and @c p2%dim indicating the type of
+!> intersection. @n
+!> ==  2: success; Two points of intersection  found @n
+!> == -1: uninitialized circle 
+!> == -2: no intersection points found (disjoint) @n
+!> == -3: The circles are tangent @n
+!> == -4: The circles are overlapped @n
+    ELEMENTAL SUBROUTINE intersect_CircleType_and_CircleType(c1,c2,p1,p2)
+      CLASS(CircleType),INTENT(IN)  :: c1,c2
+      TYPE(PointType),INTENT(INOUT) :: p1,p2
+      TYPE(PointType)               :: v1
+      REAL(SRK)                     :: d,s,m
+      REAL(SRK)                     :: dx,dy,dx2,dy2,dr2
+      REAL(SRK)                     :: t1,t2,a,b,c
+      REAL(SRK)                     :: x1,x2,y1,y2
+
+      CALL p1%clear()
+      CALL p1%clear()
+      p1%dim=-1
+      p2%dim=-1
+
+      IF(c1%c%dim==2 .AND. c2%c%dim==2 .AND. &
+        c1%r > 0.0_SRK .AND. c2%r > 0.0_SRK) THEN
+        d=Distance(c1%c,c2%c)
+        s=c1%r+c2%r
+        IF(d > s) THEN
+          p1%dim=-2
+          p2%dim=-2
+        ELSEIF(d .APPROXEQ. s) THEN
+          !Tangent
+          v1=c2%c-c1%c
+          m=SQRT(v1%coord(1)*v1%coord(1)+v1%coord(2)*v1%coord(2))
+          v1%coord(1)=v1%coord(1)/m
+          v1%coord(2)=v1%coord(2)/m
+          CALL p1%init(DIM=2,X=ZERO,Y=ZERO)
+          p1%coord(1)=c1%c%coord(1)+v1%coord(1)*c1%r
+          p1%coord(2)=c1%c%coord(2)+v1%coord(2)*c1%r
+          p1%dim=-3
+          p2=p1
+        ELSE
+          IF(c1%c == c2%c) THEN
+            p1%dim=-4
+            p2%dim=-4
+          ELSE
+            dx=c2%c%coord(1)-c1%c%coord(1)
+            dy=c2%c%coord(2)-c1%c%coord(2)
+            dr2=(c1%r*c1%r-c2%r*c2%r)
+            dx2=(c1%c%coord(1)*c1%c%coord(1)-c2%c%coord(1)*c2%c%coord(1))
+            dy2=(c1%c%coord(2)*c1%c%coord(2)-c2%c%coord(2)*c2%c%coord(2))
+            IF(c1%c%coord(1) == c2%c%coord(1)) THEN
+              t1=(dr2-dx2-dy2)/(2.0_SRK*dy)
+              t2=dx/dy
+              !Set up quadratic equation
+              a=(1.0_SRK+t2*t2)
+              b=(2.0_SRK*t2*c1%c%coord(2)-2.0_SRK*c1%c%coord(1)-2.0_SRK*t1*t2)
+              c=(t1*t1+c1%c%coord(1)*c1%c%coord(1)+c1%c%coord(2)*c1%c%coord(2))
+              c=c-2.0_SRK*t1*c1%c%coord(2)-c1%r*c1%r
+              IF(4.0_SRK*a*c > b*b) THEN
+                p1%dim=-4
+                p2%dim=-4
+              ELSE
+                CALL p1%init(DIM=2,X=ZERO,Y=ZERO)
+                p2=p1
+                p1%coord(1)=(-b+SQRT(b*b-4.0_SRK*a*c))/(2.0_SRK*a)
+                p1%coord(2)=t1-p1%coord(1)*t2
+                p2%coord(1)=(-b-SQRT(b*b-4.0_SRK*a*c))/(2.0_SRK*a)
+                p2%coord(2)=t1-p2%coord(1)*t2
+              ENDIF
+            ELSE
+              t1=(dr2-dx2-dy2)/(2.0_SRK*dx)
+              t2=dy/dx
+
+              !Set up quadratic equation
+              a=(1.0_SRK+t2*t2)
+              b=(2.0_SRK*t2*c1%c%coord(1)-2.0_SRK*c1%c%coord(2)-2.0_SRK*t1*t2)
+              c=(t1*t1+c1%c%coord(1)*c1%c%coord(1)+c1%c%coord(2)*c1%c%coord(2))
+              c=c-2.0_SRK*t1*c1%c%coord(1)-c1%r*c1%r
+              IF(4.0_SRK*a*c > b*b) THEN
+                p1%dim=-4
+                p2%dim=-4
+              ELSE
+                CALL p1%init(DIM=2,X=ZERO,Y=ZERO)
+                p2=p1
+                p1%coord(2)=(-b+SQRT(b*b-4.0_SRK*a*c))/(2.0_SRK*a)
+                p1%coord(1)=t1-p1%coord(2)*t2
+                p2%coord(2)=(-b-SQRT(b*b-4.0_SRK*a*c))/(2.0_SRK*a)
+                p2%coord(1)=t1-p2%coord(2)*t2
+              ENDIF
+            ENDIF
+          ENDIF
+        ENDIF
+      ENDIF
+    ENDSUBROUTINE intersect_CircleType_and_CircleType
 !
 !-------------------------------------------------------------------------------
 !> @brief Determines point(s) of intersection between a line and circle (if any)
