@@ -57,6 +57,8 @@ TRIBITS_ADD_LIBRARY(Utils
       Geom_Plane.f90
       Geom_CircCyl.f90
       Geom_Box.f90
+      Geom_Graph.f90
+      Geom_Poly.f90
       Geom.f90
       ExceptionHandler.f90
       Allocs.f90
