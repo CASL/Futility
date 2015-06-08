@@ -23,6 +23,13 @@ SET(UNIT_TEST_NAMES
     testBLAS
     testStrings
     testTimes
+    testGeom_Points
+    testGeom_Line
+    testGeom_Plane
+    testGeom_CircCyl
+    testGeom_Box
+    testGeom_Graph
+    testGeom_Poly
     testGeom
     testSorting
     testBinaryTrees
