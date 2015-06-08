@@ -35,7 +35,6 @@
 !>    @date 03/19/2012
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE Geom_Box
-
   USE IntrType
   USE Geom_Points
   USE Geom_Line
