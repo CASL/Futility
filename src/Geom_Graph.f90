@@ -36,11 +36,21 @@ MODULE Geom_Graph
   
   !> @brief a Planar Graph
   TYPE :: GraphType
-    !>
+    !> A list of vertices in the graph.
+    !> The list is sorted lexicographically
+    !> e.g. V_i with (x_i,y_i) and V_i+1 with (x_i+1,y_i+1) then
+    !> x_i < x_i+1 or if x_i == x_i+1 then y_i < y_i+1
+    !> The insert vertex routine inserts the vertex in order. Duplicate points
+    !> are not stored.
     REAL(SRK),ALLOCATABLE :: vertices(:,:)
-    !>
+    !> Matrix indicating connectivity of graph
+    !> 0 means no connection, 1 means linear connection,
+    !> -1 means quadratic connection. Diagonal is 0 and matrix is symmetric.
+    !> size is (nvertices,nvertices)
     INTEGER(SIK),ALLOCATABLE :: edgeMatrix(:,:)
-    !>
+    !> Similar to edgeMatrix component except for entries with -1 it stores
+    !> the center of rotation and radius to define the quadratic edge.
+    !> size is (3,nvertices,nvertices)
     REAL(SRK),ALLOCATABLE :: quadEdges(:,:,:)
     CONTAINS
       !> @copybrief Geom_Graph::nVert_graphType
@@ -52,6 +62,9 @@ MODULE Geom_Graph
       !> @copybrief Geom_Graph::getVertIndex_graphType
       !> @copydetails Geom_Graph::getVertIndex_graphType
       PROCEDURE,PASS :: getVertIndex => getVertIndex_graphType
+      !> @copybrief Geom_Graph::nAdjacent_graphType
+      !> @copydetails Geom_Graph::nAdjacent_graphType
+      PROCEDURE,PASS :: nAdjacent => nAdjacent_graphType
       !> @copybrief Geom_Graph::insertVertex_graphType
       !> @copydetails Geom_Graph::insertVertex_graphType
       PROCEDURE,PASS :: insertVertex => insertVertex_graphType
@@ -61,6 +74,18 @@ MODULE Geom_Graph
       !> @copybrief Geom_Graph::defineQuadEdge_graphType
       !> @copydetails Geom_Graph::defineQuadEdge_graphType
       PROCEDURE,PASS :: defineQuadraticEdge => defineQuadEdge_graphType
+      !> @copybrief Geom_Graph::removeVertex_graphType
+      !> @copydetails Geom_Graph::removeVertex_graphType
+      PROCEDURE,PASS :: removeVertex => removeVertex_graphType
+      !> @copybrief Geom_Graph::removeVertex_idx_graphType
+      !> @copydetails Geom_Graph::removeVertex_idx_graphType
+      PROCEDURE,PASS :: removeVertexI => removeVertex_idx_graphType
+      !> @copybrief Geom_Graph::removeEdge_graphType
+      !> @copydetails Geom_Graph::removeEdge_graphType
+      PROCEDURE,PASS :: removeEdge => removeEdge_graphType
+      !> @copybrief Geom_Graph::removeVertex_idx_graphType
+      !> @copydetails Geom_Graph::removeVertex_idx_graphType
+      PROCEDURE,PASS :: removeEdgeIJ => removeEdge_IJ_graphType
       !> @copybrief Geom_Graph::getMCB_graphType
       !> @copydetails Geom_Graph::getMCB_graphType
       PROCEDURE,PASS :: getMCB => getMCB_graphType
@@ -127,6 +152,35 @@ MODULE Geom_Graph
         ENDIF
       ENDDO
     ENDFUNCTION getVertIndex_graphType
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param
+!>
+!>
+!>
+    ELEMENTAL FUNCTION nAdjacent_graphType(thisGraph,i) RESULT(n)
+      CLASS(GraphType),INTENT(IN) :: thisGraph
+      INTEGER(SIK),INTENT(IN) :: i
+      INTEGER(SIK) :: n
+      n=0
+      IF(ALLOCATED(thisGraph%edgeMatrix)) THEN
+        IF(0 < i .AND. i < SIZE(thisGraph%edgeMatrix,DIM=2)+1) &
+          n=SUM(ABS(thisGraph%edgeMatrix(:,i)))
+      ENDIF
+    ENDFUNCTION nAdjacent_graphType
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param
+!>
+!>
+!>
+    ELEMENTAL FUNCTION isFilament_graphType(thisGraph) RESULT(bool)
+      CLASS(GraphType),INTENT(IN) :: thisGraph
+      LOGICAL(SBK) :: bool
+      bool=.FALSE.
+    ENDFUNCTION isFilament_graphType
 !
 !-------------------------------------------------------------------------------
 !> @brief
@@ -230,7 +284,7 @@ MODULE Geom_Graph
 !>
 !>
 !>
-    SUBROUTINE defineEdge_graphType(thisGraph,coord1,coord2)
+    PURE SUBROUTINE defineEdge_graphType(thisGraph,coord1,coord2)
       CLASS(GraphType),INTENT(INOUT) :: thisGraph
       REAL(SRK),INTENT(IN) :: coord1(2)
       REAL(SRK),INTENT(IN) :: coord2(2)
@@ -249,7 +303,7 @@ MODULE Geom_Graph
 !>
 !>
 !>
-    SUBROUTINE defineQuadEdge_graphType(thisGraph,coord1,coord2,c0,r)
+    PURE SUBROUTINE defineQuadEdge_graphType(thisGraph,coord1,coord2,c0,r)
       CLASS(GraphType),INTENT(INOUT) :: thisGraph
       REAL(SRK),INTENT(IN) :: coord1(2)
       REAL(SRK),INTENT(IN) :: coord2(2)
@@ -290,9 +344,234 @@ MODULE Geom_Graph
 !>
 !>
 !>
+    SUBROUTINE removeVertex_graphType(thisGraph,v)
+      CLASS(GraphType),INTENT(INOUT) :: thisGraph
+      REAL(SRK),INTENT(IN) :: v(2)
+      INTEGER(SIK) :: i
+      i=getVertIndex_graphType(thisGraph,v)
+      CALL removeVertex_idx_graphType(thisGraph,i)
+    ENDSUBROUTINE removeVertex_graphType
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param
+!>
+!>
+!>
+    SUBROUTINE removeVertex_idx_graphType(thisGraph,idx)
+      CLASS(GraphType),INTENT(INOUT) :: thisGraph
+      INTEGER(SIK),INTENT(IN) :: idx
+      
+      INTEGER(SIK) :: i,j,n
+      INTEGER(SIK),ALLOCATABLE :: tmpEdge(:,:)
+      REAL(SRK),ALLOCATABLE :: tmpVert(:,:),tmpQE(:,:,:)
+      
+      
+      n=nVert_graphType(thisGraph)
+      IF(0 < idx .AND. idx <= n) THEN
+        CALL dmallocA(tmpVert,2,n-1)
+        CALL dmallocA(tmpEdge,n-1,n-1)
+        CALL dmallocA(tmpQE,3,n-1,n-1)
+        
+        DO i=1,idx-1
+          tmpVert(:,i)=thisGraph%vertices(:,i)
+          DO j=1,idx-1
+            tmpEdge(j,i)=thisGraph%edgeMatrix(j,i)
+            tmpQE(:,j,i)=thisGraph%quadEdges(:,j,i)
+          ENDDO
+          DO j=idx+1,n
+            tmpEdge(j-1,i)=thisGraph%edgeMatrix(j,i)
+            tmpQE(:,j-1,i)=thisGraph%quadEdges(:,j,i)
+          ENDDO
+        ENDDO
+        
+        DO i=idx+1,n
+          tmpVert(:,i-1)=thisGraph%vertices(:,i)
+          DO j=1,idx-1
+            tmpEdge(j,i-1)=thisGraph%edgeMatrix(j,i)
+            tmpQE(:,j,i-1)=thisGraph%quadEdges(:,j,i)
+          ENDDO
+          DO j=idx+1,n
+            tmpEdge(j-1,i-1)=thisGraph%edgeMatrix(j,i)
+            tmpQE(:,j-1,i-1)=thisGraph%quadEdges(:,j,i)
+          ENDDO
+        ENDDO
+        
+        CALL thisGraph%clear()
+        CALL MOVE_ALLOC(tmpVert,thisGraph%vertices)
+        CALL MOVE_ALLOC(tmpEdge,thisGraph%edgeMatrix)
+        CALL MOVE_ALLOC(tmpQE,thisGraph%quadEdges)
+      ENDIF
+    ENDSUBROUTINE removeVertex_idx_graphType
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param
+!>
+!>
+!>
+    PURE SUBROUTINE removeEdge_graphType(thisGraph,c1,c2)
+      CLASS(GraphType),INTENT(INOUT) :: thisGraph
+      REAL(SRK),INTENT(IN) :: c1(2)
+      REAL(SRK),INTENT(IN) :: c2(2)
+      
+      INTEGER(SIK) :: v1,v2
+      
+      v1=getVertIndex_graphType(thisGraph,c1)
+      v2=getVertIndex_graphType(thisGraph,c2)
+      IF(v1 > 0 .AND. v2 > 0) THEN
+        thisGraph%edgeMatrix(v1,v2)=0
+        thisGraph%edgeMatrix(v2,v1)=0
+        thisGraph%quadEdges(:,v1,v2)=0.0_SRK
+        thisGraph%quadEdges(:,v2,v1)=0.0_SRK
+      ENDIF
+    ENDSUBROUTINE removeEdge_graphType
+   
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param
+!>
+!>
+!>
+    ELEMENTAL SUBROUTINE removeEdge_IJ_graphType(thisGraph,i,j)
+      CLASS(GraphType),INTENT(INOUT) :: thisGraph
+      INTEGER(SIK),INTENT(IN) :: i
+      INTEGER(SIK),INTENT(IN) :: j
+      
+      INTEGER(SIK) :: n
+      
+      n=nVert_graphType(thisGraph)+1
+      IF(i > 0 .AND. j > 0 .AND. i < n .AND. j < n) THEN
+        thisGraph%edgeMatrix(i,j)=0
+        thisGraph%edgeMatrix(j,i)=0
+        thisGraph%quadEdges(:,i,j)=0.0_SRK
+        thisGraph%quadEdges(:,j,i)=0.0_SRK
+      ENDIF
+    ENDSUBROUTINE removeEdge_IJ_graphType
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param
+!>
+!>
+!>
+    SUBROUTINE removeFilament_vertIdx_graphType(thisGraph,i)
+      CLASS(GraphType),INTENT(INOUT) :: thisGraph
+      INTEGER(SIK),INTENT(IN) :: i
+      
+      LOGICAL(SBK) :: loop2
+      INTEGER(SIK) :: j,n,nAdj,nVerts
+      INTEGER(SIK),ALLOCATABLE :: filVerts(:)
+      
+      n=nVert_graphType(thisGraph)
+      ALLOCATE(filVerts(n))
+      IF(0 < i .AND. i <= n) THEN
+        nVerts=0
+        nAdj=nAdjacent_graphType(thisGraph,i)
+        DO WHILE(nAdj == 1)
+          loop2=.TRUE.
+          DO j=1,i-1
+            IF(thisGraph%edgeMatrix(j,i) /= 0) THEN
+              loop2=.FALSE.
+              nVerts=nVerts+1
+              filVerts(nVerts)=j
+              EXIT
+            ENDIF
+          ENDDO
+          IF(loop2) THEN
+            DO j=i+1,n
+              IF(thisGraph%edgeMatrix(j,i) /= 0) THEN
+                nVerts=nVerts+1
+                filVerts(nVerts)=j
+                EXIT
+              ENDIF
+            ENDDO
+          ENDIF
+        ENDDO
+        
+        DO j=1,nVerts
+          CALL removeVertex_idx_graphType(thisGraph,filVerts(j))
+        ENDDO
+      ENDIF
+    ENDSUBROUTINE removeFilament_vertIdx_graphType
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param
+!>
+!>
+!>
+    SUBROUTINE removeFilament_graph_graphType(thisGraph,subgraph)
+      CLASS(GraphType),INTENT(INOUT) :: thisGraph
+      CLASS(GraphType),INTENT(IN) :: subgraph
+      
+    ENDSUBROUTINE removeFilament_graph_graphType
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param
+!>
+!>
+!>
+    SUBROUTINE extractPrimitive_graphType(thisGraph,v0,subgraph)
+      CLASS(GraphType),INTENT(INOUT) :: thisGraph
+      INTEGER(SIK) :: v0
+      CLASS(GraphType),INTENT(IN) :: subgraph
+      
+    ENDSUBROUTINE extractPrimitive_graphType
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param
+!>
+!>
+!>
     SUBROUTINE getMCB_graphType(thisGraph,cycles)
       CLASS(GraphType),INTENT(IN) :: thisGraph
       TYPE(GraphType),ALLOCATABLE :: cycles(:)
+      
+      INTEGER(SIK) :: i,n,nadj,ncycles
+      TYPE(GraphType) :: g,primeGraph
+      TYPE(GraphType),ALLOCATABLE :: tmpCycles(:)
+      
+      IF(ALLOCATED(cycles)) THEN
+        DO i=1,n
+          CALL cycles(i)%clear()
+        ENDDO
+        DEALLOCATE(cycles)
+      ENDIF
+      SELECTTYPE(thisGraph); TYPE IS(GraphType)
+        g=thisGraph
+      ENDSELECT
+      ncycles=0
+      DO WHILE(g%nVert() > 0)
+        nadj=nAdjacent_graphType(g,1)
+        IF(nadj == 0) THEN
+          CALL removeVertex_idx_graphType(g,1)
+        ELSEIF(nadj == 1) THEN
+          CALL removeFilament_vertIdx_graphType(g,1)
+        ELSE
+          CALL extractPrimitive_graphType(g,1,primeGraph)
+          IF(isFilament_GraphType(primeGraph)) THEN
+            CALL removeFilament_graph_graphType(g,primeGraph)
+          ELSE
+            !Found minimum cycle, so add it to basis
+            ncycles=ncycles+1
+            ALLOCATE(tmpCycles(ncycles))
+            DO i=1,ncycles-1
+              tmpCycles(i)=cycles(i)
+              CALL cycles(i)%clear()
+            ENDDO
+            tmpCycles(ncycles)=primeGraph
+            DEALLOCATE(cycles)
+            CALL MOVE_ALLOC(tmpCycles,cycles)
+          ENDIF
+          CALL removeEdge_GraphType(g,primeGraph%vertices(:,1), &
+            primeGraph%vertices(:,2))
+          CALL primeGraph%clear()
+        ENDIF
+      ENDDO
     ENDSUBROUTINE getMCB_graphType
 !
 !-------------------------------------------------------------------------------

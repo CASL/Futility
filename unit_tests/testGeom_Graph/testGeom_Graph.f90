@@ -37,6 +37,10 @@ PROGRAM testGeom_Graph
   REGISTER_SUBTEST('%getVertIndex',testGetVertIndex)
   REGISTER_SUBTEST('%defineEdge',testDefineEdge)
   REGISTER_SUBTEST('%defineQuadEdge',testDefineQuadEdge)
+  REGISTER_SUBTEST('%nAdjacent',testNAdjacent)
+  REGISTER_SUBTEST('%removeVertex',testRemVert)
+  REGISTER_SUBTEST('%removeEdge',testRemEdge)
+  !REGISTER_SUBTEST('',)
   REGISTER_SUBTEST('%getMCB',testGetMCB)
 
   FINALIZE_TEST()
@@ -269,8 +273,6 @@ PROGRAM testGeom_Graph
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testDefineEdge()
-      LOGICAL(SBK) :: bool
-      INTEGER(SIK) :: i,j,n
       REAL(SRK) :: testCoord(2,6)
 
       testCoord(:,1)=(/1.0_SRK,2.0_SRK/)
@@ -297,28 +299,17 @@ PROGRAM testGeom_Graph
       ASSERT(ALL(testGraph%edgeMatrix == 0),'missing point 2')
       
       !Valid Point
-      n=testGraph%nVert()
       CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,1))
       ASSERT(testGraph%edgeMatrix(1,2) == 1,'edge 1')
       ASSERT(testGraph%nEdge() == 1,'nEdge')
-      DO i=1,n
-        ASSERT(testGraph%edgeMatrix(i,i) == 0,'diagonal')
-        DO j=i+1,n
-          ASSERT(testGraph%edgeMatrix(i,j) == testGraph%edgeMatrix(j,i),'symmetry')
-        ENDDO
-      ENDDO
+      CALL symEdgeCheck()
 
       !Test Resize
       COMPONENT_TEST('Post Insertion')
       CALL testGraph%insertVertex(testCoord(:,2))
       ASSERT(testGraph%edgeMatrix(1,3) == 1,'edge 1')
       ASSERT(testGraph%nEdge() == 1,'nEdge')
-      DO i=1,n
-        ASSERT(testGraph%edgeMatrix(i,i) == 0,'diagonal')
-        DO j=i+1,n
-          ASSERT(testGraph%edgeMatrix(i,j) == testGraph%edgeMatrix(j,i),'symmetry')
-        ENDDO
-      ENDDO
+      CALL symEdgeCheck()
 
       CALL testGraph%clear()
     ENDSUBROUTINE testDefineEdge
@@ -327,7 +318,6 @@ PROGRAM testGeom_Graph
     SUBROUTINE testDefineQuadEdge()
       REAL(SRK),PARAMETER :: r=1.0_SRK,c0(2)=0.0_SRK  
       LOGICAL(SBK) :: bool
-      INTEGER(SIK) :: i,j,n
       REAL(SRK) :: testCoord(2,5)
 
       testCoord(:,1)=(/-1.0_SRK,0.0_SRK/)
@@ -362,17 +352,7 @@ PROGRAM testGeom_Graph
       ASSERT(testGraph%edgeMatrix(1,2) == -1,'edge 1')
       bool=ALL(testGraph%quadEdges(:,1,2) == (/c0(1),c0(2),r/))
       ASSERT(bool,'quadEdge 1')
-      n=testGraph%nVert()
-      DO i=1,n
-        ASSERT(testGraph%edgeMatrix(i,i) == 0,'e diagonal')
-        bool=ALL(testGraph%quadEdges(:,i,i) .APPROXEQ. 0.0_SRK)
-        ASSERT(bool,'qe diagonal')
-        DO j=i+1,n
-          ASSERT(testGraph%edgeMatrix(i,j) == testGraph%edgeMatrix(j,i),'e symmetry')
-          bool=ALL(testGraph%quadEdges(:,i,j) .APPROXEQ. testGraph%quadEdges(:,j,i))
-          ASSERT(bool,'qe symmetry')
-        ENDDO
-      ENDDO
+      CALL symEdgeCheck()
       
       COMPONENT_TEST('Post vertex append')
       CALL testGraph%insertVertex(testCoord(:,3))
@@ -380,17 +360,7 @@ PROGRAM testGeom_Graph
       ASSERT(testGraph%edgeMatrix(1,2) == -1,'edge 1')
       bool=ALL(testGraph%quadEdges(:,1,2) == (/c0(1),c0(2),r/))
       ASSERT(bool,'quadEdge 1')
-      n=testGraph%nVert()
-      DO i=1,n
-        ASSERT(testGraph%edgeMatrix(i,i) == 0,'e diagonal')
-        bool=ALL(testGraph%quadEdges(:,i,i) .APPROXEQ. 0.0_SRK)
-        ASSERT(bool,'qe diagonal')
-        DO j=i+1,n
-          ASSERT(testGraph%edgeMatrix(i,j) == testGraph%edgeMatrix(j,i),'e symmetry')
-          bool=ALL(testGraph%quadEdges(:,i,j) .APPROXEQ. testGraph%quadEdges(:,j,i))
-          ASSERT(bool,'qe symmetry')
-        ENDDO
-      ENDDO
+      CALL symEdgeCheck()
       CALL testGraph%defineQuadraticEdge(testCoord(:,2),testCoord(:,3),c0,r)
       ASSERT(testGraph%nEdge() == 2,'nEdge')
       ASSERT(testGraph%edgeMatrix(1,2) == -1,'edge 1')
@@ -399,17 +369,7 @@ PROGRAM testGeom_Graph
       ASSERT(testGraph%edgeMatrix(2,3) == -1,'edge 2')
       bool=ALL(testGraph%quadEdges(:,2,3) == (/c0(1),c0(2),r/))
       ASSERT(bool,'quadEdge 2')
-      n=testGraph%nVert()
-      DO i=1,n
-        ASSERT(testGraph%edgeMatrix(i,i) == 0,'e diagonal')
-        bool=ALL(testGraph%quadEdges(:,i,i) .APPROXEQ. 0.0_SRK)
-        ASSERT(bool,'qe diagonal')
-        DO j=i+1,n
-          ASSERT(testGraph%edgeMatrix(i,j) == testGraph%edgeMatrix(j,i),'e symmetry')
-          bool=ALL(testGraph%quadEdges(:,i,j) .APPROXEQ. testGraph%quadEdges(:,j,i))
-          ASSERT(bool,'qe symmetry')
-        ENDDO
-      ENDDO
+      CALL symEdgeCheck()
 
       COMPONENT_TEST('Post vertex insertion')
       CALL testGraph%insertVertex(testCoord(:,4))
@@ -420,17 +380,7 @@ PROGRAM testGeom_Graph
       ASSERT(testGraph%edgeMatrix(2,4) == -1,'edge 2')
       bool=ALL(testGraph%quadEdges(:,2,4) == (/c0(1),c0(2),r/))
       ASSERT(bool,'quadEdge 2')
-      n=testGraph%nVert()
-      DO i=1,n
-        ASSERT(testGraph%edgeMatrix(i,i) == 0,'e diagonal')
-        bool=ALL(testGraph%quadEdges(:,i,i) .APPROXEQ. 0.0_SRK)
-        ASSERT(bool,'qe diagonal')
-        DO j=i+1,n
-          ASSERT(testGraph%edgeMatrix(i,j) == testGraph%edgeMatrix(j,i),'e symmetry')
-          bool=ALL(testGraph%quadEdges(:,i,j) .APPROXEQ. testGraph%quadEdges(:,j,i))
-          ASSERT(bool,'qe symmetry')
-        ENDDO
-      ENDDO
+      CALL symEdgeCheck()
       
       COMPONENT_TEST('Mixed edges')
       CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,4))
@@ -448,17 +398,7 @@ PROGRAM testGeom_Graph
       ASSERT(testGraph%edgeMatrix(3,4) == 1,'edge 4')
       bool=ALL(testGraph%quadEdges(:,3,4) == 0.0_SRK)
       ASSERT(bool,'quadEdge 4')
-      n=testGraph%nVert()
-      DO i=1,n
-        ASSERT(testGraph%edgeMatrix(i,i) == 0,'e diagonal')
-        bool=ALL(testGraph%quadEdges(:,i,i) .APPROXEQ. 0.0_SRK)
-        ASSERT(bool,'qe diagonal')
-        DO j=i+1,n
-          ASSERT(testGraph%edgeMatrix(i,j) == testGraph%edgeMatrix(j,i),'e symmetry')
-          bool=ALL(testGraph%quadEdges(:,i,j) .APPROXEQ. testGraph%quadEdges(:,j,i))
-          ASSERT(bool,'qe symmetry')
-        ENDDO
-      ENDDO
+      CALL symEdgeCheck()
 
       COMPONENT_TEST('Mixed edge post insertion')
       CALL testGraph%insertVertex(testCoord(:,5))
@@ -475,24 +415,285 @@ PROGRAM testGeom_Graph
       ASSERT(testGraph%edgeMatrix(4,5) == 1,'edge 4')
       bool=ALL(testGraph%quadEdges(:,4,5) == 0.0_SRK)
       ASSERT(bool,'quadEdge 4')
-      n=testGraph%nVert()
-      DO i=1,n
-        ASSERT(testGraph%edgeMatrix(i,i) == 0,'e diagonal')
-        bool=ALL(testGraph%quadEdges(:,i,i) .APPROXEQ. 0.0_SRK)
-        ASSERT(bool,'qe diagonal')
-        DO j=i+1,n
-          ASSERT(testGraph%edgeMatrix(i,j) == testGraph%edgeMatrix(j,i),'e symmetry')
-          bool=ALL(testGraph%quadEdges(:,i,j) .APPROXEQ. testGraph%quadEdges(:,j,i))
-          ASSERT(bool,'qe symmetry')
-        ENDDO
-      ENDDO
+      CALL symEdgeCheck()
 
+      COMPONENT_TEST('Vertices not on circle')
+      CALL testGraph%defineQuadraticEdge(testCoord(:,1),testCoord(:,5),c0,r)
+      ASSERT(testGraph%nEdge() == 4,'nEdge')
+      ASSERT(testGraph%edgeMatrix(1,3) == -1,'edge 1')
+      bool=ALL(testGraph%quadEdges(:,1,3) == (/c0(1),c0(2),r/))
+      ASSERT(bool,'quadEdge 1')
+      ASSERT(testGraph%edgeMatrix(3,5) == -1,'edge 2')
+      bool=ALL(testGraph%quadEdges(:,3,5) == (/c0(1),c0(2),r/))
+      ASSERT(bool,'quadEdge 2')
+      ASSERT(testGraph%edgeMatrix(1,4) == 1,'edge 3')
+      bool=ALL(testGraph%quadEdges(:,1,4) == 0.0_SRK)
+      ASSERT(bool,'quadEdge 3')
+      ASSERT(testGraph%edgeMatrix(4,5) == 1,'edge 4')
+      bool=ALL(testGraph%quadEdges(:,4,5) == 0.0_SRK)
+      ASSERT(bool,'quadEdge 4')
+      ASSERT(testGraph%edgeMatrix(1,2) == 0,'edge 5')
+      bool=ALL(testGraph%quadEdges(:,1,2) == 0.0_SRK)
+      ASSERT(bool,'quadEdge 5')
+      CALL symEdgeCheck()
+      
       CALL testGraph%clear()
     ENDSUBROUTINE testDefineQuadEdge
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testNAdjacent()
+      INTEGER(SIK) :: i
+      REAL(SRK) :: testCoord(2,9),c0(2),r
+      
+      !Setup test graph
+      testCoord(:,1)=(/0.0_SRK,-1.0_SRK/)
+      testCoord(:,2)=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,3)=(/1.0_SRK,0.0_SRK/)
+      testCoord(:,4)=(/1.25_SRK,0.5_SRK/)
+      testCoord(:,5)=(/1.50_SRK,-0.5_SRK/)
+      testCoord(:,6)=(/1.51_SRK,-1.0_SRK/)
+      testCoord(:,7)=(/1.52_SRK,-0.75_SRK/)
+      testCoord(:,8)=(/1.53_SRK,-0.50_SRK/)
+      testCoord(:,9)=(/1.54_SRK,0.50_SRK/)
+      c0=(/0.5_SRK,0.0_SRK/)
+      r=0.5_SRK
+      DO i=1,9
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineQuadraticEdge(testCoord(:,2),testCoord(:,3),c0,r)
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,5))
+      CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,6))
+      CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,7))
+      CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,8))
+      CALL testGraph%defineEdge(testCoord(:,8),testCoord(:,9))
+      
+      ASSERT(testGraph%nAdjacent(0) == 0,'0')
+      ASSERT(testGraph%nAdjacent(10) == 0,'n+1')
+      
+      ASSERT(testGraph%nAdjacent(1) == 0,'v1')
+      ASSERT(testGraph%nAdjacent(2) == 1,'v2')
+      ASSERT(testGraph%nAdjacent(3) == 3,'v3')
+      ASSERT(testGraph%nAdjacent(4) == 1,'v4')
+      ASSERT(testGraph%nAdjacent(5) == 4,'v5')
+      ASSERT(testGraph%nAdjacent(6) == 1,'v6')
+      ASSERT(testGraph%nAdjacent(7) == 1,'v7')
+      ASSERT(testGraph%nAdjacent(8) == 2,'v8')
+      ASSERT(testGraph%nAdjacent(9) == 1,'v9')
+
+      CALL testGraph%clear()
+    ENDSUBROUTINE testNAdjacent
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testRemVert()
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: i
+      REAL(SRK) :: testCoord(2,9),c0(2),r
+      
+      !Setup test graph
+      testCoord(:,1)=(/0.0_SRK,-1.0_SRK/)
+      testCoord(:,2)=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,3)=(/1.0_SRK,0.0_SRK/)
+      testCoord(:,4)=(/1.25_SRK,0.5_SRK/)
+      testCoord(:,5)=(/1.50_SRK,-0.5_SRK/)
+      testCoord(:,6)=(/1.51_SRK,-1.0_SRK/)
+      testCoord(:,7)=(/1.52_SRK,-0.75_SRK/)
+      testCoord(:,8)=(/1.53_SRK,-0.50_SRK/)
+      testCoord(:,9)=(/1.54_SRK,0.50_SRK/)
+      c0=(/0.5_SRK,0.0_SRK/)
+      r=0.5_SRK
+      DO i=1,9
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineQuadraticEdge(testCoord(:,2),testCoord(:,3),c0,r)
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,5))
+      CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,6))
+      CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,7))
+      CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,8))
+      CALL testGraph%defineEdge(testCoord(:,8),testCoord(:,9))
+      
+      COMPONENT_TEST('Bad Vertices')
+      CALL testGraph%removeVertexI(0)
+      ASSERT(testGraph%nVert() == 9,'nvert 0')
+      ASSERT(testGraph%nEdge() == 7,'nedge 0')
+      CALL testGraph%removeVertexI(10)
+      ASSERT(testGraph%nVert() == 9,'nvert n+1')
+      ASSERT(testGraph%nEdge() == 7,'nedge n+1')
+      CALL testGraph%removeVertex(c0)
+      ASSERT(testGraph%nVert() == 9,'nvert (1,1)')
+      ASSERT(testGraph%nEdge() == 7,'nedge (1,1)')
+      
+      COMPONENT_TEST('Isolated vertex')
+      CALL testGraph%removeVertexI(1)
+      ASSERT(testGraph%nVert() == 8,'nvert')
+      ASSERT(testGraph%nEdge() == 7,'nedge')
+      ASSERT(testGraph%edgeMatrix(1,2) == -1,'E(1,2)')
+      ASSERT(testGraph%edgeMatrix(2,3) == 1,'E(2,3)')
+      ASSERT(testGraph%edgeMatrix(2,4) == 1,'E(2,4)')
+      ASSERT(testGraph%edgeMatrix(4,5) == 1,'E(4,5)')
+      ASSERT(testGraph%edgeMatrix(4,6) == 1,'E(4,6)')
+      ASSERT(testGraph%edgeMatrix(4,7) == 1,'E(4,7)')
+      ASSERT(testGraph%edgeMatrix(7,8) == 1,'E(7,8)')
+      bool=ALL(testGraph%quadEdges(:,1,2) == (/c0(1),c0(2),r/))
+      ASSERT(bool,'QE(1,2)')
+      CALL symEdgeCheck()
+      
+      COMPONENT_TEST('V5')
+      CALL testGraph%removeVertex(testCoord(:,5))
+      ASSERT(testGraph%nVert() == 7,'nvert')
+      ASSERT(testGraph%nEdge() == 3,'nedge')
+      ASSERT(testGraph%edgeMatrix(1,2) == -1,'E(1,2)')
+      ASSERT(testGraph%edgeMatrix(2,3) == 1,'E(2,3)')
+      ASSERT(testGraph%edgeMatrix(6,7) == 1,'E(6,7)')
+      bool=ALL(testGraph%quadEdges(:,1,2) == (/c0(1),c0(2),r/))
+      ASSERT(bool,'QE(1,2)')
+      CALL symEdgeCheck()
+
+      COMPONENT_TEST('Endpoint')
+      CALL testGraph%removeVertexI(1)
+      ASSERT(testGraph%nVert() == 6,'nvert')
+      ASSERT(testGraph%nEdge() == 2,'nedge')
+      ASSERT(testGraph%edgeMatrix(1,2) == 1,'E(1,2)')
+      ASSERT(testGraph%edgeMatrix(5,6) == 1,'E(5,6)')
+      CALL symEdgeCheck()
+
+      CALL testGraph%clear()
+      CALL testGraph%removeVertexI(1)
+    ENDSUBROUTINE testRemVert
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testRemEdge()
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: i
+      REAL(SRK) :: testCoord(2,9),c0(2),r
+      
+      !Setup test graph
+      testCoord(:,1)=(/0.0_SRK,-1.0_SRK/)
+      testCoord(:,2)=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,3)=(/1.0_SRK,0.0_SRK/)
+      testCoord(:,4)=(/1.25_SRK,0.5_SRK/)
+      testCoord(:,5)=(/1.50_SRK,-0.5_SRK/)
+      testCoord(:,6)=(/1.51_SRK,-1.0_SRK/)
+      testCoord(:,7)=(/1.52_SRK,-0.75_SRK/)
+      testCoord(:,8)=(/1.53_SRK,-0.50_SRK/)
+      testCoord(:,9)=(/1.54_SRK,0.50_SRK/)
+      c0=(/0.5_SRK,0.0_SRK/)
+      r=0.5_SRK
+      DO i=1,9
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineQuadraticEdge(testCoord(:,2),testCoord(:,3),c0,r)
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,5))
+      CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,6))
+      CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,7))
+      CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,8))
+      CALL testGraph%defineEdge(testCoord(:,8),testCoord(:,9))
+      
+      COMPONENT_TEST('Bad Points')
+      CALL testGraph%removeEdgeIJ(0,1)
+      ASSERT(testGraph%nEdge() == 7,'nedge (0,1)')
+      CALL testGraph%removeEdgeIJ(1,0)
+      ASSERT(testGraph%nEdge() == 7,'nedge (1,0)')
+      CALL testGraph%removeEdgeIJ(10,1)
+      ASSERT(testGraph%nEdge() == 7,'nedge (10,1)')
+      CALL testGraph%removeEdgeIJ(1,10)
+      ASSERT(testGraph%nEdge() == 7,'nedge (1,10)')
+      CALL testGraph%removeEdge(c0,testCoord(:,2))
+      ASSERT(testGraph%nEdge() == 7,'nedge (c0,2)')
+      CALL testGraph%removeEdge(testCoord(:,2),c0)
+      ASSERT(testGraph%nEdge() == 7,'nedge (2,c0)')
+      
+      COMPONENT_TEST('Same Vertex')
+      CALL testGraph%removeEdgeIJ(1,1)
+      ASSERT(testGraph%nEdge() == 7,'nedge')
+      ASSERT(testGraph%edgeMatrix(2,3) == -1,'E(2,3)')
+      ASSERT(testGraph%edgeMatrix(3,4) == 1,'E(3,4)')
+      ASSERT(testGraph%edgeMatrix(3,5) == 1,'E(3,5)')
+      ASSERT(testGraph%edgeMatrix(5,6) == 1,'E(5,6)')
+      ASSERT(testGraph%edgeMatrix(5,7) == 1,'E(5,7)')
+      ASSERT(testGraph%edgeMatrix(5,8) == 1,'E(5,8)')
+      ASSERT(testGraph%edgeMatrix(8,9) == 1,'E(8,9)')
+      bool=ALL(testGraph%quadEdges(:,2,3) == (/c0(1),c0(2),r/))
+      ASSERT(bool,'QE(2,3)')
+      CALL symEdgeCheck()
+      
+      COMPONENT_TEST('Non-existent edge (IJ)')
+      CALL testGraph%removeEdgeIJ(1,2)
+      ASSERT(testGraph%nEdge() == 7,'nedge')
+      ASSERT(testGraph%edgeMatrix(2,3) == -1,'E(2,3)')
+      ASSERT(testGraph%edgeMatrix(3,4) == 1,'E(3,4)')
+      ASSERT(testGraph%edgeMatrix(3,5) == 1,'E(3,5)')
+      ASSERT(testGraph%edgeMatrix(5,6) == 1,'E(5,6)')
+      ASSERT(testGraph%edgeMatrix(5,7) == 1,'E(5,7)')
+      ASSERT(testGraph%edgeMatrix(5,8) == 1,'E(5,8)')
+      ASSERT(testGraph%edgeMatrix(8,9) == 1,'E(8,9)')
+      bool=ALL(testGraph%quadEdges(:,2,3) == (/c0(1),c0(2),r/))
+      ASSERT(bool,'QE(2,3)')
+      CALL symEdgeCheck()
+
+      COMPONENT_TEST('Non-existent edge')
+      CALL testGraph%removeEdge(testCoord(:,4),testCoord(:,5))
+      ASSERT(testGraph%nEdge() == 7,'nedge')
+      ASSERT(testGraph%edgeMatrix(2,3) == -1,'E(2,3)')
+      ASSERT(testGraph%edgeMatrix(3,4) == 1,'E(3,4)')
+      ASSERT(testGraph%edgeMatrix(3,5) == 1,'E(3,5)')
+      ASSERT(testGraph%edgeMatrix(5,6) == 1,'E(5,6)')
+      ASSERT(testGraph%edgeMatrix(5,7) == 1,'E(5,7)')
+      ASSERT(testGraph%edgeMatrix(5,8) == 1,'E(5,8)')
+      ASSERT(testGraph%edgeMatrix(8,9) == 1,'E(8,9)')
+      bool=ALL(testGraph%quadEdges(:,2,3) == (/c0(1),c0(2),r/))
+      ASSERT(bool,'QE(2,3)')
+      CALL symEdgeCheck()
+      
+      COMPONENT_TEST('Valid Edge')
+      CALL testGraph%removeEdge(testCoord(:,3),testCoord(:,4))
+      ASSERT(testGraph%nEdge() == 6,'nedge')
+      ASSERT(testGraph%edgeMatrix(2,3) == -1,'E(2,3)')
+      ASSERT(testGraph%edgeMatrix(3,5) == 1,'E(3,5)')
+      ASSERT(testGraph%edgeMatrix(5,6) == 1,'E(5,6)')
+      ASSERT(testGraph%edgeMatrix(5,7) == 1,'E(5,7)')
+      ASSERT(testGraph%edgeMatrix(5,8) == 1,'E(5,8)')
+      ASSERT(testGraph%edgeMatrix(8,9) == 1,'E(8,9)')
+      bool=ALL(testGraph%quadEdges(:,2,3) == (/c0(1),c0(2),r/))
+      ASSERT(bool,'QE(2,3)')
+      CALL symEdgeCheck()
+
+      COMPONENT_TEST('Valid Edge (IJ)')
+      CALL testGraph%removeEdgeIJ(2,3)
+      ASSERT(testGraph%nEdge() == 5,'nedge')
+      ASSERT(testGraph%edgeMatrix(3,5) == 1,'E(3,5)')
+      ASSERT(testGraph%edgeMatrix(5,6) == 1,'E(5,6)')
+      ASSERT(testGraph%edgeMatrix(5,7) == 1,'E(5,7)')
+      ASSERT(testGraph%edgeMatrix(5,8) == 1,'E(5,8)')
+      ASSERT(testGraph%edgeMatrix(8,9) == 1,'E(8,9)')
+      CALL symEdgeCheck()
+
+      CALL testGraph%clear()
+      CALL testGraph%removeEdgeIJ(2,3)
+    ENDSUBROUTINE testRemEdge
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testGetMCB()
       ASSERT(.FALSE.,'TEST NOT IMPLEMENTED!')
     ENDSUBROUTINE testGetMCB
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE symEdgeCheck()
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: i,j,n
+      n=testGraph%nVert()
+      DO i=1,n
+        ASSERT(testGraph%edgeMatrix(i,i) == 0,'E(i,i)')
+        bool=ALL(testGraph%quadEdges(:,i,i) == 0.0_SRK)
+        ASSERT(bool,'QE(i,i)')
+        DO j=i+1,n
+          ASSERT(testGraph%edgeMatrix(i,j) == testGraph%edgeMatrix(j,i),'E symmetry')
+          bool=ALL(testGraph%quadEdges(:,i,j) == testGraph%quadEdges(:,j,i))
+          ASSERT(bool,'QE symmetry')
+        ENDDO
+      ENDDO
+    ENDSUBROUTINE symEdgeCheck
 !
 ENDPROGRAM testGeom_Graph
