@@ -15,21 +15,12 @@
 ! manufacturer, or otherwise, does not necessarily constitute or imply its     !
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!> @brief A Fortran 2003 module defining a polygon type and a "polygonize"
-!> method.
+!> @brief A Fortran 2003 module defining a graph type.
 !>
-!> This module provides a derived data types for a "circle" which must exist in
-!> 2-D space and a "cylinder" which must exist in 3-D space. The circle is
-!> defined by a point for the center of rotation and a radius. The cylinder is
-!> defined by two points for the central axis of rotation and its total extent
-!> (if it is to be finite) and a radius. The cylinder is assumed to be a right
-!> cylinder. The module also provides methods for constructing and destructing
-!> these types and routines for intersecting lines with their bodies.
 !>
 !> @par Module Dependencies
 !>  - @ref IntrType "IntrType": @copybrief IntrType
-!>  - @ref Geom_Points "Geom_Points": @copybrief Geom_Points
-!>  - @ref Geom_Line "Geom_Line": @copybrief Geom_Line
+!>  - @ref Allocs "Allocs": @copybrief Allocs
 !>
 !> @author Brendan Kochunas
 !>    @date 06/06/2015
@@ -43,34 +34,38 @@ MODULE Geom_Graph
   
   PUBLIC :: GraphType
   
+  !> @brief a Planar Graph
   TYPE :: GraphType
     !>
     REAL(SRK),ALLOCATABLE :: vertices(:,:)
     !>
     INTEGER(SIK),ALLOCATABLE :: edgeMatrix(:,:)
     !>
-    REAL(SRK),ALLOCATABLE :: quadEdges(:,:)
+    REAL(SRK),ALLOCATABLE :: quadEdges(:,:,:)
     CONTAINS
-      !> @copybrief
-      !> @copydetails
+      !> @copybrief Geom_Graph::nVert_graphType
+      !> @copydetails Geom_Graph::nVert_graphType
       PROCEDURE,PASS :: nVert => nVert_graphType
-      !> @copybrief
-      !> @copydetails
+      !> @copybrief Geom_Graph::nEdge_graphType
+      !> @copydetails Geom_Graph::nEdge_graphType
       PROCEDURE,PASS :: nEdge => nEdge_graphType
-      !> @copybrief 
-      !> @copydetails
+      !> @copybrief Geom_Graph::getVertIndex_graphType
+      !> @copydetails Geom_Graph::getVertIndex_graphType
+      PROCEDURE,PASS :: getVertIndex => getVertIndex_graphType
+      !> @copybrief Geom_Graph::insertVertex_graphType
+      !> @copydetails Geom_Graph::insertVertex_graphType
       PROCEDURE,PASS :: insertVertex => insertVertex_graphType
-      !> @copybrief 
-      !> @copydetails
+      !> @copybrief Geom_Graph::defineEdge_graphType
+      !> @copydetails Geom_Graph::defineEdge_graphType
       PROCEDURE,PASS :: defineEdge => defineEdge_graphType
-      !> @copybrief 
-      !> @copydetails
+      !> @copybrief Geom_Graph::defineQuadEdge_graphType
+      !> @copydetails Geom_Graph::defineQuadEdge_graphType
       PROCEDURE,PASS :: defineQuadraticEdge => defineQuadEdge_graphType
-      !> @copybrief 
-      !> @copydetails
+      !> @copybrief Geom_Graph::getMCB_graphType
+      !> @copydetails Geom_Graph::getMCB_graphType
       PROCEDURE,PASS :: getMCB => getMCB_graphType
-      !> @copybrief 
-      !> @copydetails
+      !> @copybrief Geom_Graph::clear_graphType
+      !> @copydetails Geom_Graph::clear_graphType
       PROCEDURE,PASS :: clear => clear_graphType
   ENDTYPE GraphType
 !
@@ -109,12 +104,42 @@ MODULE Geom_Graph
 !>
 !>
 !>
+    PURE FUNCTION getVertIndex_graphType(thisGraph,coord) RESULT(idx)
+      CLASS(GraphType),INTENT(IN) :: thisGraph
+      REAL(SRK),INTENT(IN) :: coord(2)
+      INTEGER(SIK) :: idx
+      INTEGER(SIK) :: i,j,n
+      idx=-1
+      n=nVert_graphType(thisGraph)
+      DO i=1,n
+        IF(coord(1) .APPROXEQA. thisGraph%vertices(1,i)) THEN
+          IF(coord(2) .APPROXEQA. thisGraph%vertices(2,i)) THEN
+            idx=i
+          ELSE
+            DO j=i+1,n
+              IF(coord(2) .APPROXEQA. thisGraph%vertices(2,j)) THEN
+                idx=j
+                EXIT
+              ENDIF
+            ENDDO
+          ENDIF
+          EXIT
+        ENDIF
+      ENDDO
+    ENDFUNCTION getVertIndex_graphType
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param
+!>
+!>
+!>
     SUBROUTINE insertVertex_graphType(thisGraph,coord)
       CLASS(GraphType),INTENT(INOUT) :: thisGraph
       REAL(SRK),INTENT(IN) :: coord(2)
       INTEGER(SIK) :: i,j,n,k
       INTEGER(SIK),ALLOCATABLE :: tmpE(:,:)
-      REAL(SRK),ALLOCATABLE :: tmpVertices(:,:)
+      REAL(SRK),ALLOCATABLE :: tmpVertices(:,:),tmpQE(:,:,:)
       IF(ALLOCATED(thisGraph%vertices)) THEN
         n=SIZE(thisGraph%vertices,DIM=2)
         CALL dmallocA(tmpVertices,2,n+1)
@@ -155,35 +180,47 @@ MODULE Geom_Graph
           CALL demallocA(thisGraph%vertices)
           CALL MOVE_ALLOC(tmpVertices,thisGraph%vertices)
           
-          !Expand Edge Matrix
+          !Expand Edge Matrices
           CALL dmallocA(tmpE,n+1,n+1)
+          CALL dmallocA(tmpQE,3,n+1,n+1)
           DO j=1,k-1
             DO i=1,k-1
               tmpE(i,j)=thisGraph%edgeMatrix(i,j)
               tmpE(j,i)=thisGraph%edgeMatrix(j,i)
+              tmpQE(:,i,j)=thisGraph%quadEdges(:,i,j)
+              tmpQE(:,j,i)=thisGraph%quadEdges(:,j,i)
             ENDDO
             DO i=k+1,n+1
               tmpE(i,j)=thisGraph%edgeMatrix(i-1,j)
               tmpE(j,i)=thisGraph%edgeMatrix(j,i-1)
+              tmpQE(:,i,j)=thisGraph%quadEdges(:,i-1,j)
+              tmpQE(:,j,i)=thisGraph%quadEdges(:,j,i-1)
             ENDDO
           ENDDO
           DO j=k+1,n+1
             DO i=1,k-1
               tmpE(i,j)=thisGraph%edgeMatrix(i,j-1)
               tmpE(j,i)=thisGraph%edgeMatrix(j-1,i)
+              tmpQE(:,i,j)=thisGraph%quadEdges(:,i,j-1)
+              tmpQE(:,j,i)=thisGraph%quadEdges(:,j-1,i)
             ENDDO
             DO i=k+1,n+1
               tmpE(i,j)=thisGraph%edgeMatrix(i-1,j-1)
               tmpE(j,i)=thisGraph%edgeMatrix(j-1,i-1)
+              tmpQE(:,i,j)=thisGraph%quadEdges(:,i-1,j-1)
+              tmpQE(:,j,i)=thisGraph%quadEdges(:,j-1,i-1)
             ENDDO
           ENDDO
           CALL demallocA(thisGraph%edgeMatrix)
           CALL MOVE_ALLOC(tmpE,thisGraph%edgeMatrix)
+          CALL demallocA(thisGraph%quadEdges)
+          CALL MOVE_ALLOC(tmpQE,thisGraph%quadEdges)
         ENDIF
       ELSE
         CALL dmallocA(thisGraph%vertices,2,1)
         thisGraph%vertices(:,1)=coord
         CALL dmallocA(thisGraph%edgeMatrix,1,1)
+        CALL dmallocA(thisGraph%quadEdges,3,1,1)
       ENDIF
     ENDSUBROUTINE insertVertex_graphType
 !
@@ -197,47 +234,12 @@ MODULE Geom_Graph
       CLASS(GraphType),INTENT(INOUT) :: thisGraph
       REAL(SRK),INTENT(IN) :: coord1(2)
       REAL(SRK),INTENT(IN) :: coord2(2)
-      INTEGER(SIK) :: i,j,n,v1,v2
-      
-      IF(ALLOCATED(thisGraph%vertices) .AND. &
-        .NOT.ALL(coord1 .APPROXEQA. coord2)) THEN
-        n=SIZE(thisGraph%vertices,DIM=2)
-        v1=0
-        v2=0
-        DO i=1,n
-          IF(coord1(1) .APPROXEQA. thisGraph%vertices(1,i)) THEN
-            IF(coord1(2) .APPROXEQA. thisGraph%vertices(2,i)) THEN
-              v1=i
-            ELSE
-              DO j=i+1,n
-                IF(coord1(2) .APPROXEQA. thisGraph%vertices(2,i)) THEN
-                  v1=j
-                  EXIT
-                ENDIF
-              ENDDO
-            ENDIF
-            EXIT
-          ENDIF
-        ENDDO
-        DO i=1,n
-          IF(coord2(1) .APPROXEQA. thisGraph%vertices(1,i)) THEN
-            IF(coord2(2) .APPROXEQA. thisGraph%vertices(2,i)) THEN
-              v2=i
-            ELSE
-              DO j=i+1,n
-                IF(coord2(2) .APPROXEQA. thisGraph%vertices(2,i)) THEN
-                  v2=j
-                  EXIT
-                ENDIF
-              ENDDO
-            ENDIF
-            EXIT
-          ENDIF
-        ENDDO
-        IF(v1 > 0 .AND. v2 > 0) THEN
-          thisGraph%edgeMatrix(v1,v2)=1
-          thisGraph%edgeMatrix(v2,v1)=1
-        ENDIF
+      INTEGER(SIK) :: v1,v2
+      v1=getVertIndex_graphType(thisGraph,coord1)
+      v2=getVertIndex_graphType(thisGraph,coord2)
+      IF(v1 > 0 .AND. v2 > 0 .AND. v1 /= v2) THEN
+        thisGraph%edgeMatrix(v1,v2)=1
+        thisGraph%edgeMatrix(v2,v1)=1
       ENDIF
     ENDSUBROUTINE defineEdge_graphType
 !
@@ -253,6 +255,33 @@ MODULE Geom_Graph
       REAL(SRK),INTENT(IN) :: coord2(2)
       REAL(SRK),INTENT(IN) :: c0(2)
       REAL(SRK),INTENT(IN) :: r
+      
+      INTEGER(SIK) :: v1,v2
+      REAL(SRK) :: x1,y1,x2,y2,r1,r2,rsq
+      
+      !Check that coord1 and coord2 exist on circle
+      x1=coord1(1)-c0(1)
+      y1=coord1(2)-c0(2)
+      r1=x1*x1+y1*y1
+      x2=coord2(1)-c0(1)
+      y2=coord2(2)-c0(2)
+      r2=x2*x2+y2*y2
+      rsq=r*r
+      IF((rsq .APPROXEQA. r1) .AND. (rsq .APPROXEQA. r2)) THEN
+        v1=getVertIndex_graphType(thisGraph,coord1)
+        v2=getVertIndex_graphType(thisGraph,coord2)
+        IF(v1 > 0 .AND. v2 > 0 .AND. v1 /= v2) THEN
+          !Update edge matrix
+          thisGraph%edgeMatrix(v1,v2)=-1
+          thisGraph%edgeMatrix(v2,v1)=-1
+
+          !Store circle info in quadEdges
+          thisGraph%quadEdges(1:2,v1,v2)=c0
+          thisGraph%quadEdges(3,v1,v2)=r
+          thisGraph%quadEdges(1:2,v2,v1)=c0
+          thisGraph%quadEdges(3,v2,v1)=r
+        ENDIF
+      ENDIF
     ENDSUBROUTINE defineQuadEdge_graphType
 !
 !-------------------------------------------------------------------------------
