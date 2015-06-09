@@ -37,10 +37,14 @@ PROGRAM testGeom_Graph
   REGISTER_SUBTEST('%getVertIndex',testGetVertIndex)
   REGISTER_SUBTEST('%defineEdge',testDefineEdge)
   REGISTER_SUBTEST('%defineQuadEdge',testDefineQuadEdge)
+  REGISTER_SUBTEST('%editToVTK',testVTK)
   REGISTER_SUBTEST('%nAdjacent',testNAdjacent)
+  REGISTER_SUBTEST('%getAdjacentVert',testGetAdjVert)
+  REGISTER_SUBTEST('%getCWMostVert',testCWVert)
+  REGISTER_SUBTEST('%getCCWMostVert',testCCWVert)
   REGISTER_SUBTEST('%removeVertex',testRemVert)
   REGISTER_SUBTEST('%removeEdge',testRemEdge)
-  !REGISTER_SUBTEST('',)
+  REGISTER_SUBTEST('%removeFilament',testRemFil)
   REGISTER_SUBTEST('%getMCB',testGetMCB)
 
   FINALIZE_TEST()
@@ -441,6 +445,40 @@ PROGRAM testGeom_Graph
     ENDSUBROUTINE testDefineQuadEdge
 !
 !-------------------------------------------------------------------------------
+    SUBROUTINE testVTK()
+      INTEGER(SIK) :: i
+      REAL(SRK) :: testCoord(2,9),c0(2),r
+      
+      !Setup test graph
+      testCoord(:,1)=(/0.0_SRK,-1.0_SRK/)
+      testCoord(:,2)=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,3)=(/1.0_SRK,0.0_SRK/)
+      testCoord(:,4)=(/1.25_SRK,0.5_SRK/)
+      testCoord(:,5)=(/1.50_SRK,-0.5_SRK/)
+      testCoord(:,6)=(/1.75_SRK,-1.0_SRK/)
+      testCoord(:,7)=(/2.00_SRK,-0.75_SRK/)
+      testCoord(:,8)=(/2.25_SRK,-0.25_SRK/)
+      testCoord(:,9)=(/3.00_SRK,-0.10_SRK/)
+      c0=(/0.5_SRK,0.0_SRK/)
+      r=0.5_SRK
+      DO i=1,9
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineQuadraticEdge(testCoord(:,2),testCoord(:,3),c0,r)
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,5))
+      CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,6))
+      CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,7))
+      CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,8))
+      CALL testGraph%defineEdge(testCoord(:,6),testCoord(:,7))
+      CALL testGraph%defineEdge(testCoord(:,8),testCoord(:,9))
+      
+      CALL testGraph%editToVTK('testVTK.vtk')
+
+      CALL testGraph%clear()
+    ENDSUBROUTINE testVTK
+!
+!-------------------------------------------------------------------------------
     SUBROUTINE testNAdjacent()
       INTEGER(SIK) :: i
       REAL(SRK) :: testCoord(2,9),c0(2),r
@@ -483,6 +521,126 @@ PROGRAM testGeom_Graph
 
       CALL testGraph%clear()
     ENDSUBROUTINE testNAdjacent
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testGetAdjVert()
+      INTEGER(SIK) :: i
+      REAL(SRK) :: testCoord(2,9),c0(2),r
+      
+      !Setup test graph
+      testCoord(:,1)=(/0.0_SRK,-1.0_SRK/)
+      testCoord(:,2)=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,3)=(/1.0_SRK,0.0_SRK/)
+      testCoord(:,4)=(/1.25_SRK,0.5_SRK/)
+      testCoord(:,5)=(/1.50_SRK,-0.5_SRK/)
+      testCoord(:,6)=(/1.51_SRK,-1.0_SRK/)
+      testCoord(:,7)=(/1.52_SRK,-0.75_SRK/)
+      testCoord(:,8)=(/1.53_SRK,-0.50_SRK/)
+      testCoord(:,9)=(/1.54_SRK,0.50_SRK/)
+      c0=(/0.5_SRK,0.0_SRK/)
+      r=0.5_SRK
+      DO i=1,9
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineQuadraticEdge(testCoord(:,2),testCoord(:,3),c0,r)
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,5))
+      CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,6))
+      CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,7))
+      CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,8))
+      CALL testGraph%defineEdge(testCoord(:,8),testCoord(:,9))
+      
+      ASSERT(testGraph%getAdjacentVert(0,1) == 0,'0')
+      ASSERT(testGraph%getAdjacentVert(10,1) == 0,'n+1')
+      ASSERT(testGraph%getAdjacentVert(1,0) == 0,'edge 0')
+      ASSERT(testGraph%getAdjacentVert(1,10) == 0,'edge 10')
+
+      ASSERT(testGraph%getAdjacentVert(1,1) == 0,'(1,1)')
+      ASSERT(testGraph%getAdjacentVert(2,1) == 3,'(2,1)')
+      ASSERT(testGraph%getAdjacentVert(2,2) == 0,'(2,2)')
+      ASSERT(testGraph%getAdjacentVert(3,1) == 2,'(3,1)')
+      ASSERT(testGraph%getAdjacentVert(3,2) == 4,'(3,2)')
+      ASSERT(testGraph%getAdjacentVert(3,3) == 5,'(3,3)')
+      ASSERT(testGraph%getAdjacentVert(3,4) == 0,'(3,4)')
+      ASSERT(testGraph%getAdjacentVert(4,1) == 3,'(4,1)')
+      ASSERT(testGraph%getAdjacentVert(4,2) == 0,'(4,2)')
+      ASSERT(testGraph%getAdjacentVert(5,1) == 3,'(5,1)')
+      ASSERT(testGraph%getAdjacentVert(5,2) == 6,'(5,2)')
+      ASSERT(testGraph%getAdjacentVert(5,3) == 7,'(5,3)')
+      ASSERT(testGraph%getAdjacentVert(5,4) == 8,'(5,4)')
+      ASSERT(testGraph%getAdjacentVert(5,5) == 0,'(5,5)')
+      ASSERT(testGraph%getAdjacentVert(6,1) == 5,'(6,1)')
+      ASSERT(testGraph%getAdjacentVert(6,2) == 0,'(6,2)')
+      ASSERT(testGraph%getAdjacentVert(7,1) == 5,'(7,1)')
+      ASSERT(testGraph%getAdjacentVert(7,2) == 0,'(7,2)')
+      ASSERT(testGraph%getAdjacentVert(8,1) == 5,'(8,1)')
+      ASSERT(testGraph%getAdjacentVert(8,2) == 9,'(8,2)')
+      ASSERT(testGraph%getAdjacentVert(8,3) == 0,'(8,3)')
+      ASSERT(testGraph%getAdjacentVert(9,1) == 8,'(9,1)')
+      ASSERT(testGraph%getAdjacentVert(9,2) == 0,'(9,2)')
+
+      CALL testGraph%clear()
+    ENDSUBROUTINE testGetAdjVert
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testCWVert()
+      INTEGER(SIK) :: i
+      REAL(SRK) :: testCoord(2,9),c0(2),r
+      
+      !Setup test graph
+      testCoord(:,1)=(/0.0_SRK,-1.0_SRK/)
+      testCoord(:,2)=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,3)=(/1.0_SRK,0.0_SRK/)
+      testCoord(:,4)=(/1.25_SRK,0.5_SRK/)
+      testCoord(:,5)=(/1.50_SRK,-0.5_SRK/)
+      testCoord(:,6)=(/1.75_SRK,-1.0_SRK/)
+      testCoord(:,7)=(/2.00_SRK,-0.75_SRK/)
+      testCoord(:,8)=(/2.25_SRK,-0.25_SRK/)
+      testCoord(:,9)=(/3.00_SRK,-0.10_SRK/)
+      c0=(/0.5_SRK,0.0_SRK/)
+      r=0.5_SRK
+      DO i=1,9
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineQuadraticEdge(testCoord(:,2),testCoord(:,3),c0,r)
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,5))
+      CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,6))
+      CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,7))
+      CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,8))
+      CALL testGraph%defineEdge(testCoord(:,6),testCoord(:,7))
+      CALL testGraph%defineEdge(testCoord(:,8),testCoord(:,9))
+
+      COMPONENT_TEST('Bad verts')
+      ASSERT(testGraph%getCWMostVert(0,1) == 0,'(0,1)')
+      ASSERT(testGraph%getCWMostVert(10,1) == 0,'(10,1)')
+      ASSERT(testGraph%getCWMostVert(1,-1) == 0,'(1,-1)')
+      ASSERT(testGraph%getCWMostVert(1,10) == 0,'(1,10)')
+
+      COMPONENT_TEST('Isolated vert')
+      ASSERT(testGraph%getCWMostVert(1,1) == 0,'')
+
+      COMPONENT_TEST('End vert')
+      ASSERT(testGraph%getCWMostVert(0,2) == 3,'(0,2)')
+      ASSERT(testGraph%getCWMostVert(1,2) == 0,'(1,2)')
+      ASSERT(testGraph%getCWMostVert(2,2) == 3,'(2,2)')
+      ASSERT(testGraph%getCWMostVert(3,2) == 0,'(3,2)')
+
+      COMPONENT_TEST('Branch vert')
+      ASSERT(testGraph%getCWMostVert(0,3) == 5,'(0,3)')
+      ASSERT(testGraph%getCWMostVert(1,3) == 0,'(1,3)')
+      ASSERT(testGraph%getCWMostVert(2,3) == 5,'(2,3)')
+      ASSERT(testGraph%getCWMostVert(3,3) == 5,'(3,3)')
+      ASSERT(testGraph%getCWMostVert(4,3) == 2,'(4,3)')
+      ASSERT(testGraph%getCWMostVert(5,3) == 4,'(5,3)')
+      
+      CALL testGraph%clear()
+    ENDSUBROUTINE testCWVert
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testCCWVert()
+      ASSERT(.FALSE.,'TEST NOT IMPLEMENTED!')
+    ENDSUBROUTINE testCCWVert
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testRemVert()
@@ -673,6 +831,100 @@ PROGRAM testGeom_Graph
       CALL testGraph%clear()
       CALL testGraph%removeEdgeIJ(2,3)
     ENDSUBROUTINE testRemEdge
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testRemFil()
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: i
+      REAL(SRK) :: testCoord(2,9),c0(2),r
+      
+      !Setup test graph
+      testCoord(:,1)=(/0.0_SRK,-1.0_SRK/)
+      testCoord(:,2)=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,3)=(/1.0_SRK,0.0_SRK/)
+      testCoord(:,4)=(/1.25_SRK,0.5_SRK/)
+      testCoord(:,5)=(/1.50_SRK,-0.5_SRK/)
+      testCoord(:,6)=(/1.51_SRK,-1.0_SRK/)
+      testCoord(:,7)=(/1.52_SRK,-0.75_SRK/)
+      testCoord(:,8)=(/1.53_SRK,-0.50_SRK/)
+      testCoord(:,9)=(/1.54_SRK,0.50_SRK/)
+      c0=(/0.5_SRK,0.0_SRK/)
+      r=0.5_SRK
+      DO i=1,9
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineQuadraticEdge(testCoord(:,2),testCoord(:,3),c0,r)
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,5))
+      CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,6))
+      CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,7))
+      CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,8))
+      CALL testGraph%defineEdge(testCoord(:,8),testCoord(:,9))
+      CALL testGraph%defineEdge(testCoord(:,6),testCoord(:,7))
+      CALL testGraph%editToVTK('testRemFil_0.vtk')
+      
+      COMPONENT_TEST('Branch point')
+      CALL testGraph%removeFilamentFromVert(5)
+      ASSERT(testGraph%nVert() == 9,'nvert')
+      ASSERT(testGraph%nEdge() == 8,'nedge')
+      ASSERT(testGraph%edgeMatrix(2,3) == -1,'E(2,3)')
+      ASSERT(testGraph%edgeMatrix(3,4) == 1,'E(3,4)')
+      ASSERT(testGraph%edgeMatrix(3,5) == 1,'E(3,5)')
+      ASSERT(testGraph%edgeMatrix(5,6) == 1,'E(5,6)')
+      ASSERT(testGraph%edgeMatrix(5,7) == 1,'E(5,7)')
+      ASSERT(testGraph%edgeMatrix(5,8) == 1,'E(5,8)')
+      ASSERT(testGraph%edgeMatrix(6,7) == 1,'E(6,7)')
+      ASSERT(testGraph%edgeMatrix(8,9) == 1,'E(8,9)')
+      bool=ALL(testGraph%quadEdges(:,2,3) == (/c0(1),c0(2),r/))
+      ASSERT(bool,'QE(2,3)')
+      CALL symEdgeCheck()
+      CALL testGraph%editToVTK('testRemFil_1.vtk')
+      
+      COMPONENT_TEST('Isolated point')
+      CALL testGraph%removeFilamentFromVert(1)
+      ASSERT(testGraph%nVert() == 9,'nvert')
+      ASSERT(testGraph%nEdge() == 8,'nedge')
+      ASSERT(testGraph%edgeMatrix(2,3) == -1,'E(2,3)')
+      ASSERT(testGraph%edgeMatrix(3,4) == 1,'E(3,4)')
+      ASSERT(testGraph%edgeMatrix(3,5) == 1,'E(3,5)')
+      ASSERT(testGraph%edgeMatrix(5,6) == 1,'E(5,6)')
+      ASSERT(testGraph%edgeMatrix(5,7) == 1,'E(5,7)')
+      ASSERT(testGraph%edgeMatrix(5,8) == 1,'E(5,8)')
+      ASSERT(testGraph%edgeMatrix(6,7) == 1,'E(6,7)')
+      ASSERT(testGraph%edgeMatrix(8,9) == 1,'E(8,9)')
+      bool=ALL(testGraph%quadEdges(:,2,3) == (/c0(1),c0(2),r/))
+      ASSERT(bool,'QE(2,3)')
+      CALL symEdgeCheck()
+      CALL testGraph%editToVTK('testRemFil_2.vtk')
+      
+      COMPONENT_TEST('1 vert')
+      CALL testGraph%removeFilamentFromVert(2)
+      ASSERT(testGraph%nVert() == 8,'nvert')
+      ASSERT(testGraph%nEdge() == 7,'nedge')
+      ASSERT(testGraph%edgeMatrix(3,4) == 1,'E(3,4)')
+      ASSERT(testGraph%edgeMatrix(3,5) == 1,'E(3,5)')
+      ASSERT(testGraph%edgeMatrix(5,6) == 1,'E(5,6)')
+      ASSERT(testGraph%edgeMatrix(5,7) == 1,'E(5,7)')
+      ASSERT(testGraph%edgeMatrix(5,8) == 1,'E(5,8)')
+      ASSERT(testGraph%edgeMatrix(6,7) == 1,'E(6,7)')
+      ASSERT(testGraph%edgeMatrix(8,9) == 1,'E(8,9)')
+      CALL symEdgeCheck()
+      CALL testGraph%editToVTK('testRemFil_3.vtk')
+      
+      COMPONENT_TEST('2 verts')
+      CALL testGraph%removeFilamentFromVert(9)
+      ASSERT(testGraph%nVert() == 6,'nvert')
+      ASSERT(testGraph%nEdge() == 5,'nedge')
+      ASSERT(testGraph%edgeMatrix(3,4) == 1,'E(3,4)')
+      ASSERT(testGraph%edgeMatrix(3,5) == 1,'E(3,5)')
+      ASSERT(testGraph%edgeMatrix(5,6) == 1,'E(5,6)')
+      ASSERT(testGraph%edgeMatrix(5,7) == 1,'E(5,7)')
+      ASSERT(testGraph%edgeMatrix(6,7) == 1,'E(6,7)')
+      CALL symEdgeCheck()
+      CALL testGraph%editToVTK('testRemFil_4.vtk')
+      
+      CALL testGraph%clear()
+    ENDSUBROUTINE testRemFil
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testGetMCB()

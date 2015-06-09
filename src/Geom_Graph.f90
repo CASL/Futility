@@ -28,6 +28,7 @@
 MODULE Geom_Graph
   USE IntrType
   USE Allocs
+  USE VTKFiles
   
   IMPLICIT NONE
   PRIVATE
@@ -65,6 +66,15 @@ MODULE Geom_Graph
       !> @copybrief Geom_Graph::nAdjacent_graphType
       !> @copydetails Geom_Graph::nAdjacent_graphType
       PROCEDURE,PASS :: nAdjacent => nAdjacent_graphType
+      !> @copybrief Geom_Graph::getAdjacentVert_graphType
+      !> @copydetails Geom_Graph::getAdjacentVert_graphType
+      PROCEDURE,PASS :: getAdjacentVert => getAdjacentVert_graphType
+      !> @copybrief Geom_Graph::getCWMostVert_graphType
+      !> @copydetails Geom_Graph::getCWMostVert_graphType
+      PROCEDURE,PASS :: getCWMostVert => getCWMostVert_graphType
+      !> @copybrief Geom_Graph::getCCWMostVert_graphType
+      !> @copydetails Geom_Graph::getCCWMostVert_graphType
+      PROCEDURE,PASS :: getCCWMostVert => getCCWMostVert_graphType
       !> @copybrief Geom_Graph::insertVertex_graphType
       !> @copydetails Geom_Graph::insertVertex_graphType
       PROCEDURE,PASS :: insertVertex => insertVertex_graphType
@@ -86,9 +96,15 @@ MODULE Geom_Graph
       !> @copybrief Geom_Graph::removeVertex_idx_graphType
       !> @copydetails Geom_Graph::removeVertex_idx_graphType
       PROCEDURE,PASS :: removeEdgeIJ => removeEdge_IJ_graphType
+      !> @copybrief Geom_Graph::removeFilament_vertIdx_graphType
+      !> @copydetails Geom_Graph::removeFilament_vertIdx_graphType
+      PROCEDURE,PASS :: removeFilamentFromVert => removeFilament_vertIdx_graphType
       !> @copybrief Geom_Graph::getMCB_graphType
       !> @copydetails Geom_Graph::getMCB_graphType
       PROCEDURE,PASS :: getMCB => getMCB_graphType
+      !> @copybrief Geom_Graph::editToVTK_graphType
+      !> @copydetails Geom_Graph::editToVTK_graphType
+      PROCEDURE,PASS :: editToVTK => editToVTK_graphType
       !> @copybrief Geom_Graph::clear_graphType
       !> @copydetails Geom_Graph::clear_graphType
       PROCEDURE,PASS :: clear => clear_graphType
@@ -176,11 +192,154 @@ MODULE Geom_Graph
 !>
 !>
 !>
-    ELEMENTAL FUNCTION isFilament_graphType(thisGraph) RESULT(bool)
+    ELEMENTAL FUNCTION getAdjacentVert_graphType(thisGraph,v0,i) RESULT(v1)
+      CLASS(GraphType),INTENT(IN) :: thisGraph
+      INTEGER(SIK),INTENT(IN) :: v0
+      INTEGER(SIK),INTENT(IN) :: i
+      INTEGER(SIK) :: v1
+      INTEGER(SIK) :: j,n,nVert
+      
+      v1=0
+      nVert=nVert_graphType(thisGraph)
+      IF(0 < v0 .AND. v0 < nVert+1) THEN
+        IF(0 < i .AND. i < SUM(ABS(thisGraph%edgeMatrix(:,v0)))+1) THEN
+          n=0
+          DO j=1,nVert
+            IF(thisGraph%edgeMatrix(j,v0) /= 0) n=n+1
+            IF(n == i) THEN
+              v1=j
+              EXIT
+            ENDIF
+          ENDDO
+        ENDIF
+      ENDIF
+    ENDFUNCTION getAdjacentVert_graphType
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param
+!>
+!>
+!>
+    ELEMENTAL FUNCTION getCWMostVert_graphType(thisGraph,v0,vCurr) RESULT(vNext)
+      CLASS(GraphType),INTENT(IN) :: thisGraph
+      INTEGER(SIK),INTENT(IN) :: vCurr
+      INTEGER(SIK),INTENT(IN) :: v0
+      LOGICAL(SBK) :: isVCurrConvex,badEdge
+      INTEGER(SIK) :: vNext,vPrev,vi,i,n,nVert,nAdj
+      REAL(SRK) :: dcurr(2),dnext(2),di(2)
+
+      vNext=0
+      nVert=nVert_graphType(thisGraph)
+      vPrev=v0
+      IF(vPrev == vCurr) vPrev=0
+      IF(0 < vCurr .AND. vCurr <= nVert .AND. 0 <= vPrev .AND. vPrev <= nVert) THEN
+        badEdge=.FALSE.
+        IF(vPrev > 0) badEdge=thisGraph%edgeMatrix(vCurr,vPrev) == 0
+
+        IF(.NOT.badEdge) THEN
+          nAdj=nAdjacent_graphType(thisGraph,vCurr)
+          IF(nAdj == 1) THEN
+            !Shortcut for 1 adjacent vert
+            vNext=getAdjacentVert_graphType(thisGraph,vCurr,1)
+            IF(vNext == vPrev) vNext=0
+          ELSEIF(nAdj > 1) THEN
+            !Get default vNext (first vertice found that is not vPrev)
+            DO i=1,nAdj
+              vi=getAdjacentVert_graphType(thisGraph,vCurr,i)
+              IF(vi /= vPrev) THEN
+                vNext=vi
+                EXIT
+              ENDIF
+            ENDDO
+
+            IF(nAdj > 2) THEN
+              !Search other vertices
+              dcurr=thisGraph%vertices(:,vCurr)-(/0.0_SRK,-1.0_SRK/)
+              IF(vPrev > 0) dcurr=thisGraph%vertices(:,vCurr)- &
+                thisGraph%vertices(:,vPrev)
+              dnext=thisGraph%vertices(:,vNext)-thisGraph%vertices(:,vCurr)
+              isVCurrConvex=(dnext(1)*dcurr(2)-dnext(2)*dcurr(1) <= 0.0_SRK)
+              DO i=1,nAdj
+                vi=getAdjacentVert_graphType(thisGraph,vCurr,i)
+                IF(vi /= vPrev .AND. vi /= vNext) THEN
+                  di=thisGraph%vertices(:,vi)-thisGraph%vertices(:,vCurr)
+                  IF(isVCurrConvex) THEN
+                    IF(dcurr(1)*di(2)-dcurr(2)*di(1) < 0.0_SRK .OR. &
+                       dnext(1)*di(2)-dnext(2)*di(1) < 0.0_SRK) THEN
+                      vNext=vi
+                      dnext=di
+                      isVCurrConvex=(dnext(1)*dcurr(2)-dnext(2)*dcurr(1) <= 0.0_SRK)
+                    ENDIF
+                  ELSE
+                    IF(dcurr(1)*di(2)-dcurr(2)*di(1) < 0.0_SRK .AND. &
+                       dnext(1)*di(2)-dnext(2)*di(1) < 0.0_SRK) THEN
+                      vNext=vi
+                      dnext=di
+                      isVCurrConvex=(dnext(1)*dcurr(2)-dnext(2)*dcurr(1) <= 0.0_SRK)
+                    ENDIF
+                  ENDIF
+                ENDIF
+              ENDDO
+              !End searching over vertices
+            ENDIF
+
+          ENDIF
+        ENDIF
+      ENDIF
+    ENDFUNCTION getCWMostVert_graphType
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param
+!>
+!>
+!>
+    ELEMENTAL FUNCTION getCCWMostVert_graphType(thisGraph,v0) RESULT(v1)
+      CLASS(GraphType),INTENT(IN) :: thisGraph
+      INTEGER(SIK),INTENT(IN) :: v0
+      INTEGER(SIK) :: v1
+      INTEGER(SIK) :: j,n,nVert
+      
+      v1=0
+      nVert=nVert_graphType(thisGraph)
+      IF(0 < v0 .AND. v0 < nVert+1) THEN
+        IF(SUM(ABS(thisGraph%edgeMatrix(:,v0))) > 0) THEN
+          
+        ENDIF
+      ENDIF
+    ENDFUNCTION getCCWMostVert_graphType
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param
+!>
+!>
+!>
+    ELEMENTAL FUNCTION isMinimumCycle_graphType(thisGraph) RESULT(bool)
       CLASS(GraphType),INTENT(IN) :: thisGraph
       LOGICAL(SBK) :: bool
+      LOGICAL(SBK) :: isMinCyc
+      INTEGER(SIK) :: i,n,currVert
       bool=.FALSE.
-    ENDFUNCTION isFilament_graphType
+      n=nVert_graphType(thisGraph)
+      IF(n > 2) THEN
+        isMinCyc=.TRUE. !Assume true
+        DO i=1,n !Verify all vertices have 2 neighbors
+          IF(nAdjacent_graphType(thisGraph,i) /= 2) THEN
+            isMinCyc=.FALSE.
+          ENDIF
+        ENDDO
+        IF(isMinCyc) THEN
+          !Traverse the graph and ensure you return to start point
+          DO i=1,n
+            
+          ENDDO
+          IF(currVert /= 1) isMinCyc=.FALSE.
+        ENDIF
+        bool=isMinCyc
+      ENDIF
+    ENDFUNCTION isMinimumCycle_graphType
 !
 !-------------------------------------------------------------------------------
 !> @brief
@@ -461,38 +620,45 @@ MODULE Geom_Graph
       INTEGER(SIK),INTENT(IN) :: i
       
       LOGICAL(SBK) :: loop2
-      INTEGER(SIK) :: j,n,nAdj,nVerts
+      INTEGER(SIK) :: j,n,nAdj,v0,v1
       INTEGER(SIK),ALLOCATABLE :: filVerts(:)
       
       n=nVert_graphType(thisGraph)
       ALLOCATE(filVerts(n))
       IF(0 < i .AND. i <= n) THEN
-        nVerts=0
-        nAdj=nAdjacent_graphType(thisGraph,i)
+        !nVerts=0
+        v0=i
+        nAdj=nAdjacent_graphType(thisGraph,v0)
         DO WHILE(nAdj == 1)
-          loop2=.TRUE.
-          DO j=1,i-1
-            IF(thisGraph%edgeMatrix(j,i) /= 0) THEN
-              loop2=.FALSE.
-              nVerts=nVerts+1
-              filVerts(nVerts)=j
-              EXIT
-            ENDIF
-          ENDDO
-          IF(loop2) THEN
-            DO j=i+1,n
-              IF(thisGraph%edgeMatrix(j,i) /= 0) THEN
-                nVerts=nVerts+1
-                filVerts(nVerts)=j
-                EXIT
-              ENDIF
-            ENDDO
-          ENDIF
+          
+          v1=getAdjacentVert_graphType(thisGraph,v0,1)
+          CALL removeVertex_idx_graphType(thisGraph,v0)
+          v0=v1
+          nAdj=nAdjacent_graphType(thisGraph,v0)
+          !loop2=.TRUE.
+          !DO j=1,i-1
+          !  IF(thisGraph%edgeMatrix(j,i) /= 0) THEN
+          !    loop2=.FALSE.
+          !    nVerts=nVerts+1
+          !    filVerts(nVerts)=j
+          !    EXIT
+          !  ENDIF
+          !ENDDO
+          !IF(loop2) THEN
+          !  nVerts=0
+          !  DO j=i+1,n
+          !    IF(thisGraph%edgeMatrix(j,i) /= 0) THEN
+          !      nVerts=nVerts+1
+          !      filVerts(nVerts)=j
+          !      EXIT
+          !    ENDIF
+          !  ENDDO
+          !ENDIF
         ENDDO
         
-        DO j=1,nVerts
-          CALL removeVertex_idx_graphType(thisGraph,filVerts(j))
-        ENDDO
+        !DO j=1,nVerts
+        !  CALL removeVertex_idx_graphType(thisGraph,filVerts(j))
+        !ENDDO
       ENDIF
     ENDSUBROUTINE removeFilament_vertIdx_graphType
 !
@@ -553,9 +719,7 @@ MODULE Geom_Graph
           CALL removeFilament_vertIdx_graphType(g,1)
         ELSE
           CALL extractPrimitive_graphType(g,1,primeGraph)
-          IF(isFilament_GraphType(primeGraph)) THEN
-            CALL removeFilament_graph_graphType(g,primeGraph)
-          ELSE
+          IF(isMinimumCycle_graphType(primeGraph)) THEN
             !Found minimum cycle, so add it to basis
             ncycles=ncycles+1
             ALLOCATE(tmpCycles(ncycles))
@@ -566,6 +730,8 @@ MODULE Geom_Graph
             tmpCycles(ncycles)=primeGraph
             DEALLOCATE(cycles)
             CALL MOVE_ALLOC(tmpCycles,cycles)
+          ELSE
+            CALL removeFilament_graph_graphType(g,primeGraph)
           ENDIF
           CALL removeEdge_GraphType(g,primeGraph%vertices(:,1), &
             primeGraph%vertices(:,2))
@@ -573,6 +739,80 @@ MODULE Geom_Graph
         ENDIF
       ENDDO
     ENDSUBROUTINE getMCB_graphType
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param
+!>
+!>
+!>
+    SUBROUTINE editToVTK_graphType(thisGraph,fname,unitNo)
+      CLASS(GraphType),INTENT(INOUT) :: thisGraph
+      CHARACTER(LEN=*),INTENT(IN) :: fname
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: unitNo
+      
+      INTEGER(SIK) :: i,j,nvert,nedge,n
+      TYPE(VTKMeshType) :: vtkMesh
+      TYPE(VTKLegFileType) :: vtkFile
+
+      nvert=nVert_graphType(thisGraph)
+      IF(nvert > 0) THEN
+        vtkMesh%meshType=VTK_UNSTRUCTURED_GRID
+        vtkMesh%dims=nvert
+        vtkMesh%numPoints=nvert
+        ALLOCATE(vtkMesh%x(nvert))
+        ALLOCATE(vtkMesh%y(nvert))
+        ALLOCATE(vtkMesh%z(nvert))
+        DO i=1,nvert
+          vtkMesh%x(i)=thisGraph%vertices(1,i)
+          vtkMesh%y(i)=thisGraph%vertices(2,i)
+          vtkMesh%z(i)=0.0_SRK
+        ENDDO
+        nedge=nEdge_graphType(thisGraph)
+
+        !Set up cell list (edges only)
+        vtkMesh%numCells=nedge
+        ALLOCATE(vtkMesh%cellList(vtkMesh%numCells))
+        DO i=1,vtkMesh%numCells
+          vtkMesh%cellList(i)=VTK_LINE
+        ENDDO
+
+        !vtkMesh%numCells=nedge+nvert
+        !ALLOCATE(vtkMesh%cellList(vtkMesh%numCells))
+        !DO i=1,nvert
+        !  vtkMesh%cellList(i)=VTK_VERTEX
+        !ENDDO
+        !DO i=nvert+1,vtkMesh%numCells
+        !  vtkMesh%cellList(i)=VTK_LINE
+        !ENDDO
+
+        !Set up node list
+        IF(nedge > 0) THEN
+          n=0
+          ALLOCATE(vtkMesh%nodelist(2*nedge))
+          DO i=1,nvert
+            DO j=i+1,nvert
+              IF(ABS(thisGraph%edgeMatrix(i,j)) == 1) THEN
+                n=n+1
+                vtkMesh%nodelist(n)=i-1
+                n=n+1
+                vtkMesh%nodelist(n)=j-1
+              ENDIF
+            ENDDO
+          ENDDO
+          vtkMesh%isInit=.TRUE.
+          
+          !Write data to file
+          CALL vtkFile%initialize(UNIT=unitNo,FILE=TRIM(fname))
+          CALL vtkFile%writeMesh(vtkMesh)
+        ENDIF
+        
+
+        !Clear local objects
+        CALL vtkFile%clear()
+        CALL vtkMesh%clear()
+      ENDIF
+    ENDSUBROUTINE editToVTK_graphType
 !
 !-------------------------------------------------------------------------------
 !> @brief
