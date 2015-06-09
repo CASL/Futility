@@ -295,17 +295,70 @@ MODULE Geom_Graph
 !>
 !>
 !>
-    ELEMENTAL FUNCTION getCCWMostVert_graphType(thisGraph,v0) RESULT(v1)
+    ELEMENTAL FUNCTION getCCWMostVert_graphType(thisGraph,v0,vCurr) RESULT(vNext)
       CLASS(GraphType),INTENT(IN) :: thisGraph
+      INTEGER(SIK),INTENT(IN) :: vCurr
       INTEGER(SIK),INTENT(IN) :: v0
-      INTEGER(SIK) :: v1
-      INTEGER(SIK) :: j,n,nVert
-      
-      v1=0
+      LOGICAL(SBK) :: isVCurrConvex,badEdge
+      INTEGER(SIK) :: vNext,vPrev,vi,i,n,nVert,nAdj
+      REAL(SRK) :: dcurr(2),dnext(2),di(2)
+
+      vNext=0
       nVert=nVert_graphType(thisGraph)
-      IF(0 < v0 .AND. v0 < nVert+1) THEN
-        IF(SUM(ABS(thisGraph%edgeMatrix(:,v0))) > 0) THEN
-          
+      vPrev=v0
+      IF(vPrev == vCurr) vPrev=0
+      IF(0 < vCurr .AND. vCurr <= nVert .AND. 0 <= vPrev .AND. vPrev <= nVert) THEN
+        badEdge=.FALSE.
+        IF(vPrev > 0) badEdge=thisGraph%edgeMatrix(vCurr,vPrev) == 0
+
+        IF(.NOT.badEdge) THEN
+          nAdj=nAdjacent_graphType(thisGraph,vCurr)
+          IF(nAdj == 1) THEN
+            !Shortcut for 1 adjacent vert
+            vNext=getAdjacentVert_graphType(thisGraph,vCurr,1)
+            IF(vNext == vPrev) vNext=0
+          ELSEIF(nAdj > 1) THEN
+            !Get default vNext (first vertice found that is not vPrev)
+            DO i=1,nAdj
+              vi=getAdjacentVert_graphType(thisGraph,vCurr,i)
+              IF(vi /= vPrev) THEN
+                vNext=vi
+                EXIT
+              ENDIF
+            ENDDO
+
+            IF(nAdj > 2) THEN
+              !Search other vertices
+              dcurr=thisGraph%vertices(:,vCurr)-(/0.0_SRK,-1.0_SRK/)
+              IF(vPrev > 0) dcurr=thisGraph%vertices(:,vCurr)- &
+                thisGraph%vertices(:,vPrev)
+              dnext=thisGraph%vertices(:,vNext)-thisGraph%vertices(:,vCurr)
+              isVCurrConvex=(dnext(1)*dcurr(2)-dnext(2)*dcurr(1) <= 0.0_SRK)
+              DO i=1,nAdj
+                vi=getAdjacentVert_graphType(thisGraph,vCurr,i)
+                IF(vi /= vPrev .AND. vi /= vNext) THEN
+                  di=thisGraph%vertices(:,vi)-thisGraph%vertices(:,vCurr)
+                  IF(isVCurrConvex) THEN
+                    IF(dcurr(1)*di(2)-dcurr(2)*di(1) > 0.0_SRK .AND. &
+                       dnext(1)*di(2)-dnext(2)*di(1) > 0.0_SRK) THEN
+                      vNext=vi
+                      dnext=di
+                      isVCurrConvex=(dnext(1)*dcurr(2)-dnext(2)*dcurr(1) <= 0.0_SRK)
+                    ENDIF
+                  ELSE
+                    IF(dcurr(1)*di(2)-dcurr(2)*di(1) > 0.0_SRK .OR. &
+                       dnext(1)*di(2)-dnext(2)*di(1) > 0.0_SRK) THEN
+                      vNext=vi
+                      dnext=di
+                      isVCurrConvex=(dnext(1)*dcurr(2)-dnext(2)*dcurr(1) <= 0.0_SRK)
+                    ENDIF
+                  ENDIF
+                ENDIF
+              ENDDO
+              !End searching over vertices
+            ENDIF
+
+          ENDIF
         ENDIF
       ENDIF
     ENDFUNCTION getCCWMostVert_graphType

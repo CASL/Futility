@@ -639,7 +639,57 @@ PROGRAM testGeom_Graph
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testCCWVert()
-      ASSERT(.FALSE.,'TEST NOT IMPLEMENTED!')
+      INTEGER(SIK) :: i
+      REAL(SRK) :: testCoord(2,9),c0(2),r
+      
+      !Setup test graph
+      testCoord(:,1)=(/0.0_SRK,-1.0_SRK/)
+      testCoord(:,2)=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,3)=(/1.0_SRK,0.0_SRK/)
+      testCoord(:,4)=(/1.25_SRK,0.5_SRK/)
+      testCoord(:,5)=(/1.50_SRK,-0.5_SRK/)
+      testCoord(:,6)=(/1.75_SRK,-1.0_SRK/)
+      testCoord(:,7)=(/2.00_SRK,-0.75_SRK/)
+      testCoord(:,8)=(/2.25_SRK,-0.25_SRK/)
+      testCoord(:,9)=(/3.00_SRK,-0.10_SRK/)
+      c0=(/0.5_SRK,0.0_SRK/)
+      r=0.5_SRK
+      DO i=1,9
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineQuadraticEdge(testCoord(:,2),testCoord(:,3),c0,r)
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,5))
+      CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,6))
+      CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,7))
+      CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,8))
+      CALL testGraph%defineEdge(testCoord(:,6),testCoord(:,7))
+      CALL testGraph%defineEdge(testCoord(:,8),testCoord(:,9))
+
+      COMPONENT_TEST('Bad verts')
+      ASSERT(testGraph%getCCWMostVert(0,1) == 0,'(0,1)')
+      ASSERT(testGraph%getCCWMostVert(10,1) == 0,'(10,1)')
+      ASSERT(testGraph%getCCWMostVert(1,-1) == 0,'(1,-1)')
+      ASSERT(testGraph%getCCWMostVert(1,10) == 0,'(1,10)')
+
+      COMPONENT_TEST('Isolated vert')
+      ASSERT(testGraph%getCCWMostVert(1,1) == 0,'')
+
+      COMPONENT_TEST('End vert')
+      ASSERT(testGraph%getCCWMostVert(0,2) == 3,'(0,2)')
+      ASSERT(testGraph%getCCWMostVert(1,2) == 0,'(1,2)')
+      ASSERT(testGraph%getCCWMostVert(2,2) == 3,'(2,2)')
+      ASSERT(testGraph%getCCWMostVert(3,2) == 0,'(3,2)')
+
+      COMPONENT_TEST('Branch vert')
+      ASSERT(testGraph%getCCWMostVert(0,3) == 2,'(0,3)')
+      ASSERT(testGraph%getCCWMostVert(1,3) == 0,'(1,3)')
+      ASSERT(testGraph%getCCWMostVert(2,3) == 4,'(2,3)')
+      ASSERT(testGraph%getCCWMostVert(3,3) == 2,'(3,3)')
+      ASSERT(testGraph%getCCWMostVert(4,3) == 5,'(4,3)')
+      ASSERT(testGraph%getCCWMostVert(5,3) == 2,'(5,3)')
+
+      CALL testGraph%clear()
     ENDSUBROUTINE testCCWVert
 !
 !-------------------------------------------------------------------------------
