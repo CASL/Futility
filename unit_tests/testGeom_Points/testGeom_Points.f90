@@ -22,6 +22,7 @@ PROGRAM testGeom_Points
   USE IntrType
   USE Constants_Conversion
   USE ParameterLists
+  USE Geom_Points
   USE Geom
   
   IMPLICIT NONE
@@ -189,8 +190,90 @@ PROGRAM testGeom_Points
       CALL point3%clear()
       point=midPoint(point2,point3) !Test for empty points
 !
+!Test innerAngle
+      COMPONENT_TEST('innerAngle()')
+      CALL point%clear()
+      CALL point%init(DIM=2,X=0.0_SRK,Y=2.0_SRK)
+      CALL point2%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
+      CALL point3%init(DIM=2,X=5.0_SRK,Y=0.0_SRK)
+      ASSERT(innerAngle(point,point2,point3) .APPROXEQA. HALFPI,'90 right angle')
+      CALL point%clear()
+      CALL point2%clear()
+      CALL point3%clear()
+      CALL point%init(DIM=2,X=1.75_SRK,Y=2.134189828107240_SRK)
+      CALL point2%init(DIM=2,X=0.25_SRK,Y=1.5_SRK)
+      CALL point3%init(DIM=2,X=1.75_SRK,Y=0.865810171892757_SRK)
+      ASSERT(innerAngle(point,point2,point3) .APPROXEQA. 0.8_SRK,'acute angle')
+      CALL point%clear()
+      CALL point2%clear()
+      CALL point3%clear()
+      CALL point%init(DIM=2,X=1.5_SRK+2.0_SRK*COS(QTRPI*0.25_SRK), &
+        Y=0.5_SRK+2.0_SRK*SIN(QTRPI*0.25_SRK))
+      CALL point2%init(DIM=2,X=1.5_SRK,Y=0.5_SRK)
+      CALL point3%init(DIM=2,X=1.5_SRK+4.0_SRK*COS(QTRPI*0.25_SRK), &
+        Y=0.5_SRK+4.0_SRK*SIN(-QTRPI*0.25_SRK))
+      ASSERT(innerAngle(point,point2,point3) .APPROXEQA. QTRPI*0.5_SRK,'45 acute angle')
+      CALL point%clear()
+      CALL point2%clear()
+      CALL point3%clear()
+      CALL point%init(DIM=2,X=-40.0_SRK,Y=61.5_SRK)
+      CALL point2%init(DIM=2,X=20.0_SRK,Y=1.5_SRK)
+      CALL point3%init(DIM=2,X=60.0_SRK,Y=1.5_SRK)
+      ASSERT(innerAngle(point,point2,point3) .APPROXEQA. PI-QTRPI,'135 obtuse angle')
+      CALL point%clear()
+      CALL point2%clear()
+      CALL point3%clear()
+      CALL point%init(DIM=2,X=-40.0_SRK,Y=0.5_SRK)
+      CALL point2%init(DIM=2,X=20.0_SRK,Y=0.5_SRK)
+      CALL point3%init(DIM=2,X=60.0_SRK,Y=0.5_SRK)
+      ASSERT(innerAngle(point,point2,point3) .APPROXEQA. PI,'180 straight angle')
+!
+!Test outerAngle
+      COMPONENT_TEST('outerAngle()')
+      CALL point%clear()
+      CALL point2%clear()
+      CALL point3%clear()
+      CALL point%init(DIM=2,X=0.0_SRK,Y=2.0_SRK)
+      CALL point2%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
+      CALL point3%init(DIM=2,X=5.0_SRK,Y=0.0_SRK)
+      ASSERT(outerAngle(point,point2,point3) .APPROXEQA. TWOPI-HALFPI,'270 right angle')
+      CALL point%clear()
+      CALL point2%clear()
+      CALL point3%clear()
+      CALL point%init(DIM=2,X=1.75_SRK,Y=2.134189828107240_SRK)
+      CALL point2%init(DIM=2,X=0.25_SRK,Y=1.5_SRK)
+      CALL point3%init(DIM=2,X=1.75_SRK,Y=0.865810171892757_SRK)
+      ASSERT(outerAngle(point,point2,point3) .APPROXEQA. TWOPI-0.8_SRK,'acute angle')
+      CALL point%clear()
+      CALL point2%clear()
+      CALL point3%clear()
+      CALL point%init(DIM=2,X=1.5_SRK+2.0_SRK*COS(QTRPI*0.25_SRK), &
+        Y=0.5_SRK+2.0_SRK*SIN(QTRPI*0.25_SRK))
+      CALL point2%init(DIM=2,X=1.5_SRK,Y=0.5_SRK)
+      CALL point3%init(DIM=2,X=1.5_SRK+4.0_SRK*COS(QTRPI*0.25_SRK), &
+        Y=0.5_SRK+4.0_SRK*SIN(-QTRPI*0.25_SRK))
+      ASSERT(outerAngle(point,point2,point3) .APPROXEQA. TWOPI-QTRPI*0.5_SRK,'315 acute angle')
+      CALL point%clear()
+      CALL point2%clear()
+      CALL point3%clear()
+      CALL point%init(DIM=2,X=-40.0_SRK,Y=61.5_SRK)
+      CALL point2%init(DIM=2,X=20.0_SRK,Y=1.5_SRK)
+      CALL point3%init(DIM=2,X=60.0_SRK,Y=1.5_SRK)
+      ASSERT(outerAngle(point,point2,point3) .APPROXEQA. PI+QTRPI,'225 obtuse angle')
+      CALL point%clear()
+      CALL point2%clear()
+      CALL point3%clear()
+      CALL point%init(DIM=2,X=-40.0_SRK,Y=0.5_SRK)
+      CALL point2%init(DIM=2,X=20.0_SRK,Y=0.5_SRK)
+      CALL point3%init(DIM=2,X=60.0_SRK,Y=0.5_SRK)
+      ASSERT(outerAngle(point,point2,point3) .APPROXEQA. PI,'180 straight angle')
+      
+!
 !Test Operators
       COMPONENT_TEST('OPERATOR(+)')
+      CALL point%clear()
+      CALL point2%clear()
+      CALL point3%clear()
       CALL point2%init(DIM=1,X=0.5_SRK)
       CALL point3%init(DIM=1,X=0.1_SRK)
       point=point2+point3
