@@ -42,6 +42,7 @@ PROGRAM testGeom_Graph
   REGISTER_SUBTEST('%getAdjacentVert',testGetAdjVert)
   REGISTER_SUBTEST('%getCWMostVert',testCWVert)
   REGISTER_SUBTEST('%getCCWMostVert',testCCWVert)
+  REGISTER_SUBTEST('%isMinimumCycle',testIsMinCyc)
   REGISTER_SUBTEST('%removeVertex',testRemVert)
   REGISTER_SUBTEST('%removeEdge',testRemEdge)
   REGISTER_SUBTEST('%removeFilament',testRemFil)
@@ -693,6 +694,67 @@ PROGRAM testGeom_Graph
     ENDSUBROUTINE testCCWVert
 !
 !-------------------------------------------------------------------------------
+    SUBROUTINE testIsMinCyc()
+      INTEGER(SIK) :: i
+      REAL(SRK) :: testCoord(2,9)
+      
+      COMPONENT_TEST('Empty graph')
+      ASSERT(.NOT.testGraph%isMinimumCycle(),'empty')
+      
+      COMPONENT_TEST('No edges')
+      !Setup test graph 1 (no minimum cycle)
+      testCoord(:,1)=(/0.0_SRK,-1.0_SRK/)
+      testCoord(:,2)=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,3)=(/1.0_SRK,0.0_SRK/)
+      testCoord(:,4)=(/1.25_SRK,0.5_SRK/)
+      testCoord(:,5)=(/1.50_SRK,-0.5_SRK/)
+      testCoord(:,6)=(/1.75_SRK,-1.0_SRK/)
+      testCoord(:,7)=(/2.00_SRK,-0.75_SRK/)
+      testCoord(:,8)=(/2.25_SRK,-0.25_SRK/)
+      testCoord(:,9)=(/3.00_SRK,-0.10_SRK/)
+      DO i=1,9
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      ASSERT(.NOT.testGraph%isMinimumCycle(),'iso')
+      
+      COMPONENT_TEST('Filament')
+      CALL testGraph%defineEdge(testCoord(:,2),testCoord(:,3))
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,5))
+      ASSERT(.NOT.testGraph%isMinimumCycle(),'iso')
+      
+      COMPONENT_TEST('Cycle w/ filaments')
+      CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,6))
+      CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,7))
+      CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,8))
+      CALL testGraph%defineEdge(testCoord(:,6),testCoord(:,7))
+      CALL testGraph%defineEdge(testCoord(:,8),testCoord(:,9))
+      ASSERT(.NOT.testGraph%isMinimumCycle(),'iso')
+      
+      COMPONENT_TEST('Polygon')
+      CALL testGraph%clear()
+      !Setup test graph 2 (polygon)
+      testCoord(:,1)=(/-1.0_SRK,0.0_SRK/)
+      testCoord(:,2)=(/0.0_SRK,-1.0_SRK/)
+      testCoord(:,3)=(/1.0_SRK,0.0_SRK/)
+      testCoord(:,4)=(/0.5_SRK,0.5_SRK/)
+      testCoord(:,5)=(/0.0_SRK,1.0_SRK/)
+      DO i=1,5
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
+      CALL testGraph%defineEdge(testCoord(:,2),testCoord(:,3))
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
+      CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,5))
+      CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,1))
+      ASSERT(testGraph%isMinimumCycle(),'pentagon')
+      CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,2))
+      ASSERT(.NOT.testGraph%isMinimumCycle(),'two-cycle')
+      
+      CALL testGraph%clear()
+    ENDSUBROUTINE testIsMinCyc
+!
+!-------------------------------------------------------------------------------
     SUBROUTINE testRemVert()
       LOGICAL(SBK) :: bool
       INTEGER(SIK) :: i
@@ -913,8 +975,8 @@ PROGRAM testGeom_Graph
       CALL testGraph%defineEdge(testCoord(:,6),testCoord(:,7))
       CALL testGraph%editToVTK('testRemFil_0.vtk')
       
-      COMPONENT_TEST('Branch point')
-      CALL testGraph%removeFilamentFromVert(5)
+      COMPONENT_TEST('Branch point (no edge)')
+      CALL testGraph%removeFilamentFromVert(5,5)
       ASSERT(testGraph%nVert() == 9,'nvert')
       ASSERT(testGraph%nEdge() == 8,'nedge')
       ASSERT(testGraph%edgeMatrix(2,3) == -1,'E(2,3)')
@@ -931,7 +993,7 @@ PROGRAM testGeom_Graph
       CALL testGraph%editToVTK('testRemFil_1.vtk')
       
       COMPONENT_TEST('Isolated point')
-      CALL testGraph%removeFilamentFromVert(1)
+      CALL testGraph%removeFilamentFromVert(1,1)
       ASSERT(testGraph%nVert() == 9,'nvert')
       ASSERT(testGraph%nEdge() == 8,'nedge')
       ASSERT(testGraph%edgeMatrix(2,3) == -1,'E(2,3)')
@@ -948,31 +1010,38 @@ PROGRAM testGeom_Graph
       CALL testGraph%editToVTK('testRemFil_2.vtk')
       
       COMPONENT_TEST('1 vert')
-      CALL testGraph%removeFilamentFromVert(2)
+      CALL testGraph%removeFilamentFromVert(2,2)
       ASSERT(testGraph%nVert() == 8,'nvert')
       ASSERT(testGraph%nEdge() == 7,'nedge')
-      ASSERT(testGraph%edgeMatrix(3,4) == 1,'E(3,4)')
-      ASSERT(testGraph%edgeMatrix(3,5) == 1,'E(3,5)')
-      ASSERT(testGraph%edgeMatrix(5,6) == 1,'E(5,6)')
-      ASSERT(testGraph%edgeMatrix(5,7) == 1,'E(5,7)')
-      ASSERT(testGraph%edgeMatrix(5,8) == 1,'E(5,8)')
-      ASSERT(testGraph%edgeMatrix(6,7) == 1,'E(6,7)')
-      ASSERT(testGraph%edgeMatrix(8,9) == 1,'E(8,9)')
+      ASSERT(testGraph%edgeMatrix(2,3) == 1,'E(3,4)')
+      ASSERT(testGraph%edgeMatrix(2,4) == 1,'E(3,5)')
+      ASSERT(testGraph%edgeMatrix(4,5) == 1,'E(5,6)')
+      ASSERT(testGraph%edgeMatrix(4,6) == 1,'E(5,7)')
+      ASSERT(testGraph%edgeMatrix(4,7) == 1,'E(5,8)')
+      ASSERT(testGraph%edgeMatrix(5,6) == 1,'E(6,7)')
+      ASSERT(testGraph%edgeMatrix(7,8) == 1,'E(8,9)')
       CALL symEdgeCheck()
       CALL testGraph%editToVTK('testRemFil_3.vtk')
       
       COMPONENT_TEST('2 verts')
-      CALL testGraph%removeFilamentFromVert(9)
+      CALL testGraph%removeFilamentFromVert(8,8)
       ASSERT(testGraph%nVert() == 6,'nvert')
       ASSERT(testGraph%nEdge() == 5,'nedge')
-      ASSERT(testGraph%edgeMatrix(3,4) == 1,'E(3,4)')
-      ASSERT(testGraph%edgeMatrix(3,5) == 1,'E(3,5)')
-      ASSERT(testGraph%edgeMatrix(5,6) == 1,'E(5,6)')
-      ASSERT(testGraph%edgeMatrix(5,7) == 1,'E(5,7)')
-      ASSERT(testGraph%edgeMatrix(6,7) == 1,'E(6,7)')
+      ASSERT(testGraph%edgeMatrix(2,3) == 1,'E(3,4)')
+      ASSERT(testGraph%edgeMatrix(2,4) == 1,'E(3,5)')
+      ASSERT(testGraph%edgeMatrix(4,5) == 1,'E(5,6)')
+      ASSERT(testGraph%edgeMatrix(4,6) == 1,'E(5,7)')
+      ASSERT(testGraph%edgeMatrix(5,6) == 1,'E(6,7)')
+      !ASSERT(testGraph%edgeMatrix(3,4) == 1,'E(3,4)')
+      !ASSERT(testGraph%edgeMatrix(3,5) == 1,'E(3,5)')
+      !ASSERT(testGraph%edgeMatrix(5,6) == 1,'E(5,6)')
+      !ASSERT(testGraph%edgeMatrix(5,7) == 1,'E(5,7)')
+      !ASSERT(testGraph%edgeMatrix(6,7) == 1,'E(6,7)')
       CALL symEdgeCheck()
       CALL testGraph%editToVTK('testRemFil_4.vtk')
       
+      COMPONENT_TEST('Branch point (w/ edge)')
+      CALL testGraph%removeFilamentFromVert(2,3)
       CALL testGraph%clear()
     ENDSUBROUTINE testRemFil
 !

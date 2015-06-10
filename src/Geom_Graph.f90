@@ -75,6 +75,9 @@ MODULE Geom_Graph
       !> @copybrief Geom_Graph::getCCWMostVert_graphType
       !> @copydetails Geom_Graph::getCCWMostVert_graphType
       PROCEDURE,PASS :: getCCWMostVert => getCCWMostVert_graphType
+      !> @copybrief Geom_Graph::isMinimumCycle_graphType
+      !> @copydetails Geom_Graph::isMinimumCycle_graphType
+      PROCEDURE,PASS :: isMinimumCycle => isMinimumCycle_graphType
       !> @copybrief Geom_Graph::insertVertex_graphType
       !> @copydetails Geom_Graph::insertVertex_graphType
       PROCEDURE,PASS :: insertVertex => insertVertex_graphType
@@ -373,7 +376,7 @@ MODULE Geom_Graph
       CLASS(GraphType),INTENT(IN) :: thisGraph
       LOGICAL(SBK) :: bool
       LOGICAL(SBK) :: isMinCyc
-      INTEGER(SIK) :: i,n,currVert
+      INTEGER(SIK) :: i,n,vCurr,vPrev,vi
       bool=.FALSE.
       n=nVert_graphType(thisGraph)
       IF(n > 2) THEN
@@ -383,13 +386,18 @@ MODULE Geom_Graph
             isMinCyc=.FALSE.
           ENDIF
         ENDDO
-        IF(isMinCyc) THEN
-          !Traverse the graph and ensure you return to start point
-          DO i=1,n
-            
-          ENDDO
-          IF(currVert /= 1) isMinCyc=.FALSE.
-        ENDIF
+        !IF(isMinCyc) THEN
+        !  !Traverse the graph and ensure you return to start point
+        !  !(Not sure if this is actually necessary)
+        !  vPrev=0
+        !  vCurr=1
+        !  DO i=2,n
+        !    vi=getCWMostVert_graphType(thisGraph,vPrev,vCurr)
+        !    vPrev=vCurr
+        !    vCurr=vi
+        !  ENDDO
+        !  IF(vCurr /= 1) isMinCyc=.FALSE.
+        !ENDIF
         bool=isMinCyc
       ENDIF
     ENDFUNCTION isMinimumCycle_graphType
@@ -668,50 +676,33 @@ MODULE Geom_Graph
 !>
 !>
 !>
-    SUBROUTINE removeFilament_vertIdx_graphType(thisGraph,i)
+    SUBROUTINE removeFilament_vertIdx_graphType(thisGraph,i0,i1)
       CLASS(GraphType),INTENT(INOUT) :: thisGraph
-      INTEGER(SIK),INTENT(IN) :: i
+      INTEGER(SIK),INTENT(IN) :: i0
+      INTEGER(SIK),INTENT(IN) :: i1
       
-      LOGICAL(SBK) :: loop2
-      INTEGER(SIK) :: j,n,nAdj,v0,v1
-      INTEGER(SIK),ALLOCATABLE :: filVerts(:)
+      INTEGER(SIK) :: n,nAdj,v0,v1
+      REAL(SRK) :: xy(2)
       
       n=nVert_graphType(thisGraph)
-      ALLOCATE(filVerts(n))
-      IF(0 < i .AND. i <= n) THEN
-        !nVerts=0
-        v0=i
+      IF(0 < i0 .AND. i0 <= n .AND. 0 < i1 .AND. i1 <= n) THEN
+        v0=i0
+        v1=i1
         nAdj=nAdjacent_graphType(thisGraph,v0)
-        DO WHILE(nAdj == 1)
-          
-          v1=getAdjacentVert_graphType(thisGraph,v0,1)
-          CALL removeVertex_idx_graphType(thisGraph,v0)
+        IF(nAdj > 2 .AND. v1 /= v0) THEN
+          CALL removeEdge_IJ_graphType(thisGraph,v0,v1)
           v0=v1
           nAdj=nAdjacent_graphType(thisGraph,v0)
-          !loop2=.TRUE.
-          !DO j=1,i-1
-          !  IF(thisGraph%edgeMatrix(j,i) /= 0) THEN
-          !    loop2=.FALSE.
-          !    nVerts=nVerts+1
-          !    filVerts(nVerts)=j
-          !    EXIT
-          !  ENDIF
-          !ENDDO
-          !IF(loop2) THEN
-          !  nVerts=0
-          !  DO j=i+1,n
-          !    IF(thisGraph%edgeMatrix(j,i) /= 0) THEN
-          !      nVerts=nVerts+1
-          !      filVerts(nVerts)=j
-          !      EXIT
-          !    ENDIF
-          !  ENDDO
-          !ENDIF
+          IF(nAdj == 1) v1=getAdjacentVert_graphType(thisGraph,v0,1)
+        ENDIF
+        DO WHILE(nAdj == 1)
+          v1=getAdjacentVert_graphType(thisGraph,v0,1)
+          xy=thisGraph%vertices(:,v1)
+          CALL removeVertex_idx_graphType(thisGraph,v0)
+          v0=getVertIndex_graphType(thisGraph,xy)
+          nAdj=nAdjacent_graphType(thisGraph,v0)
         ENDDO
-        
-        !DO j=1,nVerts
-        !  CALL removeVertex_idx_graphType(thisGraph,filVerts(j))
-        !ENDDO
+        IF(nAdj == 0) CALL removeVertex_idx_graphType(thisGraph,v0)
       ENDIF
     ENDSUBROUTINE removeFilament_vertIdx_graphType
 !
@@ -769,7 +760,7 @@ MODULE Geom_Graph
         IF(nadj == 0) THEN
           CALL removeVertex_idx_graphType(g,1)
         ELSEIF(nadj == 1) THEN
-          CALL removeFilament_vertIdx_graphType(g,1)
+          CALL removeFilament_vertIdx_graphType(g,1,1)
         ELSE
           CALL extractPrimitive_graphType(g,1,primeGraph)
           IF(isMinimumCycle_graphType(primeGraph)) THEN
