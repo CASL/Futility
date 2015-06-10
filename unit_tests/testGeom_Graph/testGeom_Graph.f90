@@ -441,7 +441,23 @@ PROGRAM testGeom_Graph
       bool=ALL(testGraph%quadEdges(:,1,2) == 0.0_SRK)
       ASSERT(bool,'quadEdge 5')
       CALL symEdgeCheck()
-      
+
+      COMPONENT_TEST('Circle inflection')
+      CALL testGraph%clear()
+      CALL testGraph%insertVertex(testCoord(:,1))
+      CALL testGraph%insertVertex(testCoord(:,2))
+      CALL testGraph%insertVertex(testCoord(:,3))
+      CALL testGraph%defineQuadraticEdge(testCoord(:,1),testCoord(:,2),c0,-r)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,1),testCoord(:,3),c0,-r)
+      ASSERT(testGraph%nEdge() == 2,'nEdge')
+      ASSERT(testGraph%edgeMatrix(1,2) == -1,'edge 1')
+      bool=ALL(testGraph%quadEdges(:,1,2) == (/c0(1),c0(2),r/))
+      ASSERT(bool,'quadEdge 1')
+      ASSERT(testGraph%edgeMatrix(1,3) == -1,'edge 2')
+      bool=ALL(testGraph%quadEdges(:,1,3) == (/c0(1),c0(2),-r/))
+      ASSERT(bool,'quadEdge 2')
+      CALL symEdgeCheck()
+
       CALL testGraph%clear()
     ENDSUBROUTINE testDefineQuadEdge
 !

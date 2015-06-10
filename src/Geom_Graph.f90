@@ -384,20 +384,9 @@ MODULE Geom_Graph
         DO i=1,n !Verify all vertices have 2 neighbors
           IF(nAdjacent_graphType(thisGraph,i) /= 2) THEN
             isMinCyc=.FALSE.
+            EXIT
           ENDIF
         ENDDO
-        !IF(isMinCyc) THEN
-        !  !Traverse the graph and ensure you return to start point
-        !  !(Not sure if this is actually necessary)
-        !  vPrev=0
-        !  vCurr=1
-        !  DO i=2,n
-        !    vi=getCWMostVert_graphType(thisGraph,vPrev,vCurr)
-        !    vPrev=vCurr
-        !    vCurr=vi
-        !  ENDDO
-        !  IF(vCurr /= 1) isMinCyc=.FALSE.
-        !ENDIF
         bool=isMinCyc
       ENDIF
     ENDFUNCTION isMinimumCycle_graphType
@@ -531,29 +520,42 @@ MODULE Geom_Graph
       REAL(SRK),INTENT(IN) :: r
       
       INTEGER(SIK) :: v1,v2
-      REAL(SRK) :: x1,y1,x2,y2,r1,r2,rsq
+      REAL(SRK) :: x1,y1,x2,y2,r1,r2,rsq,d
       
       !Check that coord1 and coord2 exist on circle
-      x1=coord1(1)-c0(1)
-      y1=coord1(2)-c0(2)
-      r1=x1*x1+y1*y1
-      x2=coord2(1)-c0(1)
-      y2=coord2(2)-c0(2)
-      r2=x2*x2+y2*y2
-      rsq=r*r
-      IF((rsq .APPROXEQA. r1) .AND. (rsq .APPROXEQA. r2)) THEN
-        v1=getVertIndex_graphType(thisGraph,coord1)
-        v2=getVertIndex_graphType(thisGraph,coord2)
-        IF(v1 > 0 .AND. v2 > 0 .AND. v1 /= v2) THEN
-          !Update edge matrix
-          thisGraph%edgeMatrix(v1,v2)=-1
-          thisGraph%edgeMatrix(v2,v1)=-1
+      IF(.NOT.(r .APPROXEQA. 0.0_SRK)) THEN
+        x1=coord1(1)-c0(1)
+        y1=coord1(2)-c0(2)
+        r1=x1*x1+y1*y1
+        x2=coord2(1)-c0(1)
+        y2=coord2(2)-c0(2)
+        r2=x2*x2+y2*y2
+        rsq=r*r
+        IF((rsq .APPROXEQA. r1) .AND. (rsq .APPROXEQA. r2)) THEN
+          v1=getVertIndex_graphType(thisGraph,coord1)
+          v2=getVertIndex_graphType(thisGraph,coord2)
+          IF(v1 > 0 .AND. v2 > 0 .AND. v1 /= v2) THEN
+            !Update edge matrix
+            thisGraph%edgeMatrix(v1,v2)=-1
+            thisGraph%edgeMatrix(v2,v1)=-1
 
-          !Store circle info in quadEdges
-          thisGraph%quadEdges(1:2,v1,v2)=c0
-          thisGraph%quadEdges(3,v1,v2)=r
-          thisGraph%quadEdges(1:2,v2,v1)=c0
-          thisGraph%quadEdges(3,v2,v1)=r
+            !Store circle info in quadEdges
+            thisGraph%quadEdges(1:2,v1,v2)=c0
+            thisGraph%quadEdges(3,v1,v2)=ABS(r)
+
+            !Check for semi-circle and determine which half of circle
+            !connects the points
+            r1=(x2-x1)
+            r1=r1*r1
+            r2=(y2-y1)
+            r2=r2*r2
+            d=SQRT(r1+r2)
+            IF(d .APPROXEQA. 2.0_SRK*ABS(r)) &
+              thisGraph%quadEdges(3,v1,v2)=r !sign of r indicates which half
+                                             !of semi-circle, all other cases
+                                             !traverse shorter arc between points
+            thisGraph%quadEdges(:,v2,v1)=thisGraph%quadEdges(:,v1,v2)
+          ENDIF
         ENDIF
       ENDIF
     ENDSUBROUTINE defineQuadEdge_graphType
