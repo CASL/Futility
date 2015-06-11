@@ -34,7 +34,7 @@
 !>  - @ref Geom_Line "Geom_CircCyl": @copybrief Geom_CircCyl
 !>  - @ref Geom_Line "Geom_Graph": @copybrief Geom_Graph
 !>
-!> @author Brendan Kochunas, Dan Jabaay
+!> @author Brendan Kochunas and Dan Jabaay
 !>    @date 06/06/2015
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE Geom_Poly
@@ -54,26 +54,22 @@ MODULE Geom_Poly
 
   !> @brief Type used to describe a polygon.
   !>
-  !> Derived type that forms a linked list of PolygonVertexType objects to
-  !> describe a polygon. The insert method assumes that the polygon is convex,
-  !> and sorts the vertices by angle to force the polygon to be ordered in CCW
-  !> order. This is needed for the algorithm that is used to calculate the area
-  !> of the polygon. The finalize method points the last element to the first.
-  !> This makes the area calculation a lot cleaner.
   TYPE :: PolygonType
     !> Bool for if the object is initialized
     LOGICAL :: isInit=.FALSE.
     !> Area of the polygon
     REAL(SRK) :: area=0.0_SRK
-    !> The number of elements in the linked list of vertices
+    !> The number of elements in the list of vertices
     INTEGER(SIK) :: nVert=0 
-    !> The number of elements in the linked list of edges
-    INTEGER(SIK) :: nEdge=0 
-    !> The list of vertices
+    !> The number of elements in the list of edges
+    INTEGER(SIK) :: nQuadEdge=0 
+    !> The list of vertices SIZE(nvert)
     TYPE(PointType),ALLOCATABLE :: vert(:)
-    !> The list of edges by the vert index (SIZE 2,nvert)
+    !> The list of edges by the vert index SIZE (2,nvert)
     INTEGER(SIK),ALLOCATABLE :: edge(:,:)
-    !> The list of quadratic edges (circles) (SIZE 3,nEdge)
+    !> Map to move from the number of quad edges to the edge index SIZE(nQuadEdge)
+    INTEGER(SIK),ALLOCATABLE :: quad2edge(:)
+    !> The list of quadratic edges (circles) SIZE (3,nQuadEdge)
     REAL(SRK),ALLOCATABLE :: quadEdge(:,:)
 !
 !List of type bound procedure for the object
@@ -90,12 +86,6 @@ MODULE Geom_Poly
       !> @copybrief Geom_Poly::intersect_PolygonType
       !> @copydetails Geom_Poly::intersect_PolygonType
       PROCEDURE,PASS :: intersectLine => intersectLine_PolygonType
-!      !> Placeholder for insertion routine
-!      PROCEDURE,PASS :: insert => insert_PolygonType
-!      !> Placeholder for the finilize routine (points last element at first)
-!      PROCEDURE,PASS :: finalize => finalize_PolygonType
-!      !> Placeholder for interior point routine
-!      PROCEDURE,PASS :: interior => interior_PolygonType
   ENDTYPE PolygonType
     
   INTERFACE Polygonize
@@ -114,76 +104,95 @@ MODULE Geom_Poly
       CLASS(PolygonType) :: thisPoly
       TYPE(GraphType) :: thatGraph
       
-      INTEGER(SIK) :: i,icurr,inextold,inext,nvert
+      INTEGER(SIK) :: i,icurr,inextold,inext,iedge,iquad
       REAL(SRK) :: a,r,h,R1,coeff
       TYPE(PointType) :: point
       TYPE(LineType) :: line
       
       !Check if thatGraph is closed (i.e. each vertex has only two neighbors)
-      !Pick the starting vertex, loop over all vertices until back to the original,
-      !  calculating angles for each set of three. Increment nElem.
-      IF(ALLOCATED(thatGraph%vertices)) THEN
-        !IF(thatGraph%isMinSet()) THEN
-          !Get the number of vertices and edges (equal, since it's a minimum cycle)
-          thisPoly%nVert=thatGraph%nVert()
-          thisPoly%nEdge=thatGraph%nVert()
-          ALLOCATE(thisPoly%vert(thisPoly%nVert))
-          ALLOCATE(thisPoly%edge(2,thisPoly%nEdge))
-          CALL dmallocA(thisPoly%quadEdge,3,thisPoly%nEdge)
-          thisPoly%quadEdge=0.0_SRK
-          !Setup initial points
+      IF(ALLOCATED(thatGraph%vertices) .AND. thatGraph%isMinimumCycle()) THEN
+        !Get the number of vertices and edges (equal, since it's a minimum cycle)
+        thisPoly%nVert=thatGraph%nVert()
+        ALLOCATE(thisPoly%vert(thisPoly%nVert))
+        CALL dmallocA(thisPoly%edge,2,thisPoly%nVert)
+        !Setup initial points and edge point
+        !Need to use the edgeMatrix to find the neighboring points, can't assume ordered.
+        CALL thisPoly%vert(1)%init(DIM=2,X=thatGraph%vertices(1,1), &
+          Y=thatGraph%vertices(2,1))
+        thisPoly%edge(1,1)=1
+        !Loop over all vertices in the graphtype in CW ordering.
+        inext=thatGraph%getCWMostVert(0,1)
+        inextold=1
+        icurr=1
+        DO i=2,thisPoly%nVert
+          CALL thisPoly%vert(i)%init(DIM=2,X=thatGraph%vertices(1,inext), &
+            Y=thatGraph%vertices(2,inext))
+          !Using the CW-th point, the area calc will be negative.  Hence the ABS()
+          thisPoly%area=thisPoly%area+thisPoly%vert(i-1)%coord(1)* &
+            thisPoly%vert(i)%coord(2)-thisPoly%vert(i-1)%coord(2)* &
+            thisPoly%vert(i)%coord(1)
+          !Set the edge
+          thisPoly%edge(2,i-1)=i
+          thisPoly%edge(1,i)=i
+          !Check if it's a quadratic edge to count
+          IF(thatGraph%quadEdges(3,icurr,inext) > 0.0_SRK) thisPoly%nQuadEdge=thisPoly%nQuadEdge+1
+          inextold=inext
+          !Get the next vertex using the neighbor call
+          inext=thatGraph%getCWMostVert(icurr,inext)
+          icurr=inextold
+        ENDDO
+        !Set last edge
+        thisPoly%edge(2,thisPoly%nVert)=1
+        thisPoly%area=thisPoly%area+thisPoly%vert(thisPoly%nVert)%coord(1)* &
+          thisPoly%vert(1)%coord(2)-thisPoly%vert(thisPoly%nVert)%coord(2)* &
+          thisPoly%vert(1)%coord(1)
+        !Check if it's a quadratic edge to count
+        IF(thatGraph%quadEdges(3,1,icurr) > 0.0_SRK) thisPoly%nQuadEdge=thisPoly%nQuadEdge+1
+        !Last component of the area calc.
+        thisPoly%area=ABS(thisPoly%area*0.5_SRK)
           
-          !Need to use the edgeMatrix to find the neighboring points, can't assume ordered.
-          CALL thisPoly%vert(1)%init(DIM=2,X=thatGraph%vertices(1,1), &
-            Y=thatGraph%vertices(2,1))
-          thisPoly%edge(1,1)=1
-          !Loop over all vertices in the graphtype in CW ordering.
+        !Setup the quadratic edges if necessary
+        IF(thisPoly%nQuadEdge > 0) THEN
+          CALL dmallocA(thisPoly%quadEdge,3,thisPoly%nQuadEdge)
+          CALL dmallocA(thisPoly%quad2edge,thisPoly%nQuadEdge)
+          thisPoly%quad2edge=0
+          thisPoly%quadEdge=0.0_SRK
           inext=thatGraph%getCWMostVert(0,1)
           inextold=1
           icurr=1
-          DO i=2,thisPoly%nVert
-            !Get the next vertex using the neighbor call
-            !Using the CCW-th point, the area calc will be positive.  CW would be negative.
-            CALL thisPoly%vert(i)%init(DIM=2,X=thatGraph%vertices(1,inext), &
-              Y=thatGraph%vertices(2,inext))
-            thisPoly%area=thisPoly%area+thisPoly%vert(i-1)%coord(1)* &
-              thisPoly%vert(i)%coord(2)-thisPoly%vert(i-1)%coord(2)* &
-              thisPoly%vert(i)%coord(1)
-            !Set the edge
-            thisPoly%edge(2,i-1)=i
-            thisPoly%edge(1,i)=i
-            !Check if it's a quadratic edge and assign
-            IF(thatGraph%quadEdges(3,icurr,inext) > 0.0_SRK) &
-              thisPoly%quadEdge(:,i-1)=thatGraph%quadEdges(:,icurr,inext)
+          iquad=0
+          DO i=2,thisPoly%nvert
+            IF(thatGraph%quadEdges(3,icurr,inext) > 0.0_SRK) THEN
+              iquad=iquad+1
+              thisPoly%quadEdge(:,iquad)=thatGraph%quadEdges(:,icurr,inext)
+              thisPoly%quad2edge(iquad)=i-1
+            ENDIF
             inextold=inext
             inext=thatGraph%getCWMostVert(icurr,inext)
             icurr=inextold
           ENDDO
-          !Set last edge
-          thisPoly%edge(2,thisPoly%nVert)=1
-          thisPoly%area=thisPoly%area+thisPoly%vert(thisPoly%nVert)%coord(1)* &
-            thisPoly%vert(1)%coord(2)-thisPoly%vert(thisPoly%nVert)%coord(2)* &
-            thisPoly%vert(1)%coord(1)
-          !Check if it's a quadratic edge and assign
-          IF(thatGraph%quadEdges(3,1,icurr) > 0.0_SRK) &
-            thisPoly%quadEdge(:,thisPoly%nVert)=thatGraph%quadEdges(:,1,icurr)
-          !Last component of the area calc.
-          thisPoly%area=ABS(thisPoly%area*0.5_SRK)
+          IF(thatGraph%quadEdges(3,1,icurr) > 0.0_SRK) THEN
+            iquad=iquad+1
+            thisPoly%quadEdge(:,iquad)=thatGraph%quadEdges(:,1,icurr)
+            thisPoly%quad2edge(iquad)=thisPoly%nvert
+          ENDIF
+            
           
           !Now do the chord area checks, because they're all positive values.
-          DO i=1,thisPoly%nEdge
+          DO i=1,thisPoly%nQuadEdge
             coeff=1.0_SRK
             IF(thisPoly%quadEdge(3,i) > 0.0_SRK) THEN
               CALL point%init(DIM=2,X=thisPoly%quadEdge(1,i), &
                 Y=thisPoly%quadEdge(2,i))
               !Setup line to test whether to add or subtract
-              CALL line%set(thisPoly%vert(thisPoly%edge(1,i)), &
-                thisPoly%vert(thisPoly%edge(2,i)))
+              iedge=thisPoly%quad2edge(i)
+              CALL line%set(thisPoly%vert(thisPoly%edge(1,iedge)), &
+                thisPoly%vert(thisPoly%edge(2,iedge)))
               !Modify area - taken from Wolfram's circular segment calculation.
               R1=thisPoly%quadEdge(3,i)
               !Calculate "a"
-              a=distance(thisPoly%vert(thisPoly%edge(1,i)), &
-                thisPoly%vert(thisPoly%edge(2,i)))
+              a=distance(thisPoly%vert(thisPoly%edge(1,iedge)), &
+                thisPoly%vert(thisPoly%edge(2,iedge)))
               !Calculate "r"
               r=0.5_SRK*SQRT(4.0_SRK*R1*R1-a*a)
               !Calculate "h"
@@ -194,8 +203,8 @@ MODULE Geom_Poly
                 (R1-h)*SQRT(2*R1*h-h*h))
             ENDIF
           ENDDO
-          thisPoly%isinit=.TRUE.
-        !ENDIF
+        ENDIF
+        thisPoly%isinit=.TRUE.
       ENDIF
       
     ENDSUBROUTINE set_PolygonType
@@ -213,33 +222,122 @@ MODULE Geom_Poly
         CALL thisPorygon%vert(i)%clear()
       ENDDO
       IF(ALLOCATED(thisPorygon%vert)) DEALLOCATE(thisPorygon%vert)
-      IF(ALLOCATED(thisPorygon%edge)) DEALLOCATE(thisPorygon%edge)
+      IF(ALLOCATED(thisPorygon%edge)) CALL demallocA(thisPorygon%edge)
+      IF(ALLOCATED(thisPorygon%quad2edge)) CALL demallocA(thisPorygon%quad2edge)
       CALL demallocA(thisPorygon%quadEdge)
       thisPorygon%nVert=0
-      thisPorygon%nEdge=0
+      thisPorygon%nQuadEdge=0
       thisPorygon%area=0.0_SRK
       thisPorygon%isinit=.FALSE.
     ENDSUBROUTINE clear_PolygonType
 !
 !-------------------------------------------------------------------------------
-!> @brief 
-!> @param
+!> @brief This routine determines whether a point lies within an arbitrary 
+!> polygon.  The processes by which this can be done are the ray tracing "count
+!> number" approach, or the winding number approach.  After researching the 
+!> problem, it was determined that the winding number provides the best solution
+!> in the case that the polygon is non-convex.  A paper was found by Hormann and 
+!> Agathos describing several approaches.  This routine applies the winding 
+!> number algorithm 6 from their paper:
+!> http://www.inf.usi.ch/hormann/papers/Hormann.2001.TPI.pdf
 !>
-    ELEMENTAL FUNCTION inside_PolygonType(thisPolygon,point) RESULT(bool)
-      CLASS(PolygonType),INTENT(IN) :: thisPolygon
+!> @param thisPoly The polygon type used in the query
+!> @param point The point type to check if it lies inside the polygontype
+!> @param bool The logical result of this operation.  TRUE if the point is inside.
+!>
+!> NOTES: Working on getting this functional with quadratic edges.
+    ELEMENTAL FUNCTION inside_PolygonType(thisPoly,point) RESULT(bool)
+      CLASS(PolygonType),INTENT(IN) :: thisPoly
       TYPE(PointType),INTENT(IN) :: point
-      LOGICAL(SBK) :: bool
-      INTEGER(SIK) :: i
+      LOGICAL(SBK) :: bool,inPoly,inCirc,outCirc
+      INTEGER(SIK) :: i,wn,istt,istp,iedge
+      TYPE(PointType) :: centroid
+      TYPE(LineType) :: line
+      TYPE(CircleType) :: circ
       
-      !Traverse through all the edges, test the point to see if it is always
-      !to the left (or right) of the lines since we will be ordering them.
-      !Only applies to convex polygons.
       bool=.FALSE.
-      IF(thisPolygon%isinit) THEN
-        DO i=1,thisPolygon%nEdge
-          !Create line
-          !
+      wn=0
+      DO i=1,thisPoly%nVert
+        istt=thisPoly%edge(1,i)
+        istp=thisPoly%edge(2,i)
+        !Crossing
+        IF((thisPoly%vert(istt)%coord(2) < point%coord(2)) /= &
+          (thisPoly%vert(istp)%coord(2) < point%coord(2))) THEN
+          !P_i(x) >= R(x)
+          IF(thisPoly%vert(istt)%coord(1) .APPROXGE. point%coord(1)) THEN
+            !P_i+1(x) > R(x)
+            IF(thisPoly%vert(istp)%coord(1) > point%coord(1)) THEN
+              IF(thisPoly%vert(istp)%coord(2) > thisPoly%vert(istt)%coord(2)) THEN
+                wn=wn+1
+              ELSE
+                wn=wn-1
+              ENDIF
+            ELSE !det() > 0.0_SRK .EQV. P_i+1(y) > P_i(y), right_crossing
+              !(P_i(x)-R(x))*(P_i+1(y)-R(y))-(P_i+1(x)-R(x))*(P_i(y)-R(y))
+              IF(((thisPoly%vert(istt)%coord(1)-point%coord(1))* &
+                (thisPoly%vert(istp)%coord(2)-point%coord(2))- &
+                  (thisPoly%vert(istp)%coord(1)-point%coord(1))* &
+                (thisPoly%vert(istt)%coord(2)-point%coord(2)) > 0.0_SRK) .EQV. &
+                  (thisPoly%vert(istp)%coord(2) > point%coord(2))) THEN
+                !modify wn
+                IF(thisPoly%vert(istp)%coord(2) > thisPoly%vert(istt)%coord(2)) THEN
+                  wn=wn+1
+                ELSE
+                  wn=wn-1
+                ENDIF
+              ENDIF
+            ENDIF
+          ELSE
+            IF(thisPoly%vert(istp)%coord(1) > point%coord(1)) THEN
+              !det() > 0.0_SRK .EQV. P_i+1(y) > P_i(y), right_crossing
+              !(P_i(x)-R(x))*(P_i+1(y)-R(y))-(P_i+1(x)-R(x))*(P_i(y)-R(y))
+              IF(((thisPoly%vert(istt)%coord(1)-point%coord(1))* &
+                (thisPoly%vert(istp)%coord(2)-point%coord(2))- &
+                  (thisPoly%vert(istp)%coord(1)-point%coord(1))* &
+                (thisPoly%vert(istt)%coord(2)-point%coord(2)) > 0.0_SRK) .EQV. &
+                  (thisPoly%vert(istp)%coord(2) > point%coord(2))) THEN
+                !modify wn
+                IF(thisPoly%vert(istp)%coord(2) > thisPoly%vert(istt)%coord(2)) THEN
+                  wn=wn+1
+                ELSE
+                  wn=wn-1
+                ENDIF
+              ENDIF
+            ENDIF
+          ENDIF
+        ENDIF
+      ENDDO
+      inPoly=(wn /= 0)
+      
+      !Now check the quadratic edges if there are any
+      inCirc=.FALSE.
+      outCirc=.TRUE.
+      IF(thisPoly%nQuadEdge > 0) THEN
+        DO i=1,thisPoly%nQuadEdge
+          iedge=thisPoly%quad2edge(i)
+          CALL centroid%init(DIM=2,X=thisPoly%quadEdge(1,i),Y=thisPoly%quadEdge(2,i))
+          CALL line%set(thisPoly%vert(thisPoly%edge(1,iedge)), &
+            thisPoly%vert(thisPoly%edge(2,iedge)))
+          CALL circ%set(centroid,thisPoly%quadEdge(3,i))
+          !Check if the centroid is on the interior or exterior of the edge
+          IF(line%pointIsRight(centroid) .AND. .NOT. inCirc) THEN
+            !Quad edge extends outside the polygon.  
+            !Check if the point is to the left of the edge and inside the circle
+            inCirc=line%pointIsLeft(point) .AND. circ%inside(point)
+          ELSEIF(line%pointIsLeft(centroid) .AND. outCirc) THEN
+            !Quad edge extends inside the polygon.  
+            !Check if the point is to the right of the edge and outside the circle
+            outCirc=line%pointIsRight(point) .AND. .NOT.circ%inside(point)
+          ENDIF
+          CALL circ%clear()
+          CALL line%clear()
+          CALL centroid%clear()
         ENDDO
+        !Logic for the cases where there is inside and outside circles.
+        bool=(inPoly .OR. inCirc) .AND. outCirc
+      !If just straight edges
+      ELSE
+        bool=inPoly
       ENDIF
     ENDFUNCTION inside_PolygonType
 !
@@ -247,16 +345,145 @@ MODULE Geom_Poly
 !> @brief
 !> @param
 !>
-    ELEMENTAL SUBROUTINE intersectLine_PolygonType(thisPolygon,line,p1,p2)
+    SUBROUTINE intersectLine_PolygonType(thisPolygon,line,points)
       CLASS(PolygonType),INTENT(IN) :: thisPolygon
       TYPE(LineType),INTENT(IN) :: line
-      TYPE(PointType),INTENT(INOUT) :: p1,p2
+      TYPE(PointType),ALLOCATABLE,INTENT(INOUT) :: points(:)
+      INTEGER(SIK) :: i,j,iedge,ipoint,npoints
+      REAL(SRK) :: angstart,angstop,x,y
+      TYPE(PointType) :: centroid,refpoint
+      TYPE(PointType),ALLOCATABLE :: tmppoints(:)
+      TYPE(LineType),ALLOCATABLE :: lines(:)
+      TYPE(CircleType),ALLOCATABLE :: circles(:)
       
-      !Test the line with all the edges, make sure they aren't co-linear
-      !Get the intersections from the line_line_intersect routine.
-      !Should only need two points for convex geometry polygons.
-      !If one of the edges is quadratic, calculate the point from the coefficients
+      !Clear the output variable if it's allocated
+      IF(ALLOCATED(points)) THEN
+        DO i=1,SIZE(points)
+          CALL points(i)%clear()
+        ENDDO
+        DEALLOCATE(points)
+      ENDIF
       
+      !Construct line and circle types locally
+      ALLOCATE(lines(thisPolygon%nVert))
+      IF(thisPolygon%nQuadEdge > 0) ALLOCATE(circles(thisPolygon%nQuadEdge))
+      
+      DO i=1,thisPolygon%nVert
+        CALL lines(i)%set(thisPolygon%vert(thisPolygon%edge(1,i)), &
+          thisPolygon%vert(thisPolygon%edge(2,i)))
+      ENDDO
+      DO i=1,thisPolygon%nQuadEdge
+        CALL centroid%init(DIM=2,X=thisPolygon%quadEdge(1,i), &
+          Y=thisPolygon%quadEdge(2,i))
+        !Need to get the starting and stopping angles...
+        refpoint=centroid
+        refpoint%coord(1)=refpoint%coord(1)+1.0_SRK
+        iedge=thisPolygon%quad2edge(i)
+        !Starting angle uses the line endpoint
+        IF(lines(iedge)%pointIsRight(centroid)) THEN
+          !starting angle is in quadrant 3 or 4
+          IF(lines(iedge)%p2%coord(2) .APPROXLE. centroid%coord(2)) THEN
+            angstart=outerAngle(lines(iedge)%p2,centroid,refpoint)
+          ELSE
+            angstart=innerAngle(lines(iedge)%p2,centroid,refpoint)
+          ENDIF
+          !stopping angle is in quadrant 3 or 4
+          IF(lines(iedge)%p1%coord(2) .APPROXLE. centroid%coord(2)) THEN
+            angstop=outerAngle(lines(iedge)%p1,centroid,refpoint)
+          ELSE
+            angstop=innerAngle(lines(iedge)%p1,centroid,refpoint)
+          ENDIF
+        !Starting angle uses the line startpoint
+        ELSE
+          !starting angle is in quadrant 3 or 4
+          IF(lines(iedge)%p1%coord(2) .APPROXLE. centroid%coord(2)) THEN
+            angstart=outerAngle(lines(iedge)%p1,centroid,refpoint)
+          ELSE
+            angstart=innerAngle(lines(iedge)%p1,centroid,refpoint)
+          ENDIF
+          !stopping angle is in quadrant 3 or 4
+          IF(lines(iedge)%p2%coord(2) .APPROXLE. centroid%coord(2)) THEN
+            angstop=outerAngle(lines(iedge)%p2,centroid,refpoint)
+          ELSE
+            angstop=innerAngle(lines(iedge)%p2,centroid,refpoint)
+          ENDIF
+        ENDIF
+        CALL circles(i)%set(centroid,thisPolygon%quadEdge(3,i), &
+          ANGSTT=angstart,ANGSTP=angstop)
+        CALL centroid%clear()
+        CALL refpoint%clear()
+      ENDDO
+      !Make tmppoints the max possible size
+      ALLOCATE(tmppoints(thisPolygon%nVert+3*thisPolygon%nQuadEdge))
+      
+      !Test the line with all the edges, 
+      !Intersect circles first if necessary
+      ipoint=1
+      DO i=1,thisPolygon%nQuadEdge
+        CALL circles(i)%intersectArcLine(line,tmppoints(ipoint), &
+          tmppoints(ipoint+1),tmppoints(ipoint+2),tmppoints(ipoint+3))
+        !Check if the points are on the circle
+        DO j=0,3
+          IF(tmppoints(ipoint+j)%DIM == 2) THEN
+            !If it's not on the circle, clear it.
+            x=tmppoints(ipoint+j)%coord(1)-circles(i)%c%coord(1)
+            y=tmppoints(ipoint+j)%coord(2)-circles(i)%c%coord(2)
+            IF(.NOT.(x*x+y*y .APPROXEQA. circles(i)%r*circles(i)%r)) &
+              CALL tmppoints(ipoint+j)%clear()
+          ENDIF
+        ENDDO
+        ipoint=ipoint+4
+      ENDDO
+      
+      !Intersect the remaining lines if necessary
+      IF(thisPolygon%nQuadEdge > 0) THEN
+        DO i=1,SIZE(lines)
+          !Intersect the line
+          IF(ALL(i /= thisPolygon%quad2edge)) THEN 
+            tmppoints(ipoint)=lines(i)%intersectLine(line)
+            ipoint=ipoint+1
+          ENDIF
+        ENDDO
+      ELSE
+        DO i=1,SIZE(lines)
+          tmppoints(ipoint)=lines(i)%intersectLine(line)
+          ipoint=ipoint+1
+        ENDDO
+      ENDIF
+      
+      !Find all the good points
+      npoints=0
+      DO i=1,SIZE(tmppoints)
+        IF(tmppoints(i)%dim == 2) npoints=npoints+1
+      ENDDO
+      IF(npoints > 0) THEN
+        ALLOCATE(points(npoints))
+      
+        !Size the final points array and copy the good points
+        ipoint=1
+        DO i=1,SIZE(tmppoints)
+          IF(tmppoints(i)%dim == 2) THEN
+            points(ipoint)=tmppoints(i)
+            ipoint=ipoint+1
+          ENDIF
+        ENDDO
+      ENDIF
+      
+      !Clear local types
+      DO i=SIZE(tmppoints),1,-1
+        CALL tmppoints(i)%clear()
+      ENDDO
+      DEALLOCATE(tmppoints)
+      DO i=SIZE(lines),1,-1
+        CALL lines(i)%clear()
+      ENDDO
+      DEALLOCATE(lines)
+      IF(ALLOCATED(circles)) THEN
+        DO i=SIZE(circles),1,-1
+          CALL circles(i)%clear()
+        ENDDO
+        DEALLOCATE(circles)
+      ENDIF
     ENDSUBROUTINE intersectLine_PolygonType
 !
 !-------------------------------------------------------------------------------
