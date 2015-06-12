@@ -71,6 +71,10 @@ MODULE Geom_Poly
     INTEGER(SIK),ALLOCATABLE :: quad2edge(:)
     !> The list of quadratic edges (circles) SIZE (3,nQuadEdge)
     REAL(SRK),ALLOCATABLE :: quadEdge(:,:)
+    !>
+    TYPE(PolygonType),POINTER :: nextPoly => NULL()
+    !>
+    TYPE(PolygonType),POINTER :: subRegions => NULL()
 !
 !List of type bound procedure for the object
     CONTAINS
@@ -86,8 +90,14 @@ MODULE Geom_Poly
       !> @copybrief Geom_Poly::intersect_PolygonType
       !> @copydetails Geom_Poly::intersect_PolygonType
       PROCEDURE,PASS :: intersectLine => intersectLine_PolygonType
+      !> @copybrief Geom_Poly::isSimple_PolygonType
+      !> @copydetails Geom_Poly::isSimple_PolygonType
+      PROCEDURE,PASS :: isSimple => isSimple_PolygonType
+      !> @copybrief Geom_Poly::subtractSubVolume_PolygonType
+      !> @copydetails Geom_Poly::subtractSubVolume_PolygonType
+      PROCEDURE,PASS :: subtractSubVolume => subtractSubVolume_PolygonType
   ENDTYPE PolygonType
-    
+
   INTERFACE Polygonize
     MODULE PROCEDURE Polygonize_Circle
     MODULE PROCEDURE Polygonize_OBBox2D
@@ -206,29 +216,28 @@ MODULE Geom_Poly
         ENDIF
         thisPoly%isinit=.TRUE.
       ENDIF
-      
     ENDSUBROUTINE set_PolygonType
 !
 !-------------------------------------------------------------------------------
 !> @brief
 !> @param
 !>
-    SUBROUTINE clear_PolygonType(thisPorygon)
-      CLASS(PolygonType),INTENT(INOUT) :: thisPorygon
+    SUBROUTINE clear_PolygonType(thisPolygon)
+      CLASS(PolygonType),INTENT(INOUT) :: thisPolygon
       INTEGER(SIK) :: i
     
       !Clear the vertex data
-      DO i=thisPorygon%nVert,1,-1
-        CALL thisPorygon%vert(i)%clear()
+      DO i=thisPolygon%nVert,1,-1
+        CALL thisPolygon%vert(i)%clear()
       ENDDO
-      IF(ALLOCATED(thisPorygon%vert)) DEALLOCATE(thisPorygon%vert)
-      IF(ALLOCATED(thisPorygon%edge)) CALL demallocA(thisPorygon%edge)
-      IF(ALLOCATED(thisPorygon%quad2edge)) CALL demallocA(thisPorygon%quad2edge)
-      CALL demallocA(thisPorygon%quadEdge)
-      thisPorygon%nVert=0
-      thisPorygon%nQuadEdge=0
-      thisPorygon%area=0.0_SRK
-      thisPorygon%isinit=.FALSE.
+      IF(ALLOCATED(thisPolygon%vert)) DEALLOCATE(thisPolygon%vert)
+      IF(ALLOCATED(thisPolygon%edge)) CALL demallocA(thisPolygon%edge)
+      IF(ALLOCATED(thisPolygon%quad2edge)) CALL demallocA(thisPolygon%quad2edge)
+      CALL demallocA(thisPolygon%quadEdge)
+      thisPolygon%nVert=0
+      thisPolygon%nQuadEdge=0
+      thisPolygon%area=0.0_SRK
+      thisPolygon%isinit=.FALSE.
     ENDSUBROUTINE clear_PolygonType
 !
 !-------------------------------------------------------------------------------
@@ -246,6 +255,7 @@ MODULE Geom_Poly
 !> @param bool The logical result of this operation.  TRUE if the point is inside.
 !>
 !> NOTES: Working on getting this functional with quadratic edges.
+!>
     ELEMENTAL FUNCTION inside_PolygonType(thisPoly,point) RESULT(bool)
       CLASS(PolygonType),INTENT(IN) :: thisPoly
       TYPE(PointType),INTENT(IN) :: point
@@ -345,7 +355,7 @@ MODULE Geom_Poly
 !> @brief
 !> @param
 !>
-    SUBROUTINE intersectLine_PolygonType(thisPolygon,line,points)
+    PURE SUBROUTINE intersectLine_PolygonType(thisPolygon,line,points)
       CLASS(PolygonType),INTENT(IN) :: thisPolygon
       TYPE(LineType),INTENT(IN) :: line
       TYPE(PointType),ALLOCATABLE,INTENT(INOUT) :: points(:)
@@ -485,6 +495,71 @@ MODULE Geom_Poly
         DEALLOCATE(circles)
       ENDIF
     ENDSUBROUTINE intersectLine_PolygonType
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param
+!>
+!>
+!>
+    ELEMENTAL FUNCTION isSimple_PolygonType(thisPoly) RESULT(bool)
+      CLASS(PolygonType),INTENT(IN) :: thisPoly
+      LOGICAL(SBK) :: bool
+      bool=ASSOCIATED(thisPoly%subRegions)
+    ENDFUNCTION isSimple_PolygonType
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param
+!>
+!>
+!>
+    SUBROUTINE subtractSubVolume_PolygonType(thisPoly,subPoly)
+      CLASS(PolygonType),INTENT(INOUT) :: thisPoly
+      TYPE(PolygonType),TARGET,INTENT(IN) :: subPoly
+      LOGICAL(SBK) :: allIn
+      INTEGER(SIK) :: i,v1,v2
+      REAL(SRK) :: a(2),b(2),c(2),r,ac(2),bc(2),m(2),scal
+      TYPE(PointType) :: arcMidPoint
+      TYPE(PolygonType),POINTER :: lastSubPoly
+      
+      IF(thisPoly%isInit .AND. subPoly%isInit) THEN
+        allIn=.TRUE.
+        !Check that all vertices are inside the bounding polygon
+        DO i=1,subPoly%nVert
+          allIn=(allIn .AND. inside_PolygonType(thisPoly,subPoly%vert(i)))
+        ENDDO
+        
+        !Check quadratic edges to make sure their outermost point is still
+        !inside the bounding polygon
+        IF(allIn) THEN
+          DO i=1,subPoly%nQuadEdge
+            v1=thisPoly%edge(1,thisPoly%quad2Edge(i))
+            v2=thisPoly%edge(2,thisPoly%quad2Edge(i))
+            a=thisPoly%vert(v1)%coord
+            b=thisPoly%vert(v2)%coord
+            c=thisPoly%quadEdge(1:2,i)
+            r=thisPoly%quadEdge(3,i)
+          
+            m=a+b-2.0_SRK*c
+            scal=r/SQRT(m(1)*m(1)+m(2)*m(2))
+            m=m*scal
+            m=m+c
+            CALL arcMidPoint%init(COORD=m)
+            allIn=(allIn .AND. inside_PolygonType(thisPoly,arcMidPoint))
+          ENDDO
+        ENDIF
+        
+        IF(allIn) THEN
+          lastSubPoly => thisPoly%subRegions
+          DO WHILE(ASSOCIATED(lastSubPoly))
+            lastSubPoly => lastSubPoly%nextPoly
+          ENDDO
+          lastSubPoly => subPoly
+          thisPoly%area=thisPoly%area-subPoly%area
+        ENDIF
+      ENDIF
+    ENDSUBROUTINE subtractSubVolume_PolygonType
 !
 !-------------------------------------------------------------------------------
 !> @brief
