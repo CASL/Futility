@@ -559,6 +559,18 @@ PROGRAM testGeom_Poly
       CALL line%set(point1,point2)
       CALL testPolyType%intersectLine(line,points)
       ASSERTFAIL(SIZE(points) == 4,'npoints for crossing whole geom')
+      bool=(points(1)%coord(1) .APPROXEQA. -2.65831239517770_SRK) .AND. &
+        (points(1)%coord(2) .APPROXEQA. -1.5_SRK)
+      ASSERT(bool,'point 1 on convex circle 1')
+      bool=(points(2)%coord(1) .APPROXEQA. 1.602084238343640_SRK) .AND. &
+        (points(2)%coord(2) .APPROXEQA. -1.5_SRK)
+      ASSERT(bool,'point 1 on concave circle 3')
+      bool=(points(3)%coord(1) .APPROXEQA. -1.32287565553230_SRK) .AND. &
+        (points(3)%coord(2) .APPROXEQA. -1.5_SRK)
+      ASSERT(bool,'point 1 on concave circle 4')
+      bool=(points(4)%coord(1) .APPROXEQA. 1.32287565553230_SRK) .AND. &
+        (points(4)%coord(2) .APPROXEQA. -1.5_SRK)
+      ASSERT(bool,'point 2 on concave circle 4')
       
     ENDSUBROUTINE testIntersectLine
 

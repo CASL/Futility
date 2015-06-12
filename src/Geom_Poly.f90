@@ -259,7 +259,7 @@ MODULE Geom_Poly
     ELEMENTAL FUNCTION inside_PolygonType(thisPoly,point) RESULT(bool)
       CLASS(PolygonType),INTENT(IN) :: thisPoly
       TYPE(PointType),INTENT(IN) :: point
-      LOGICAL(SBK) :: bool,inPoly,inCirc,outCirc
+      LOGICAL(SBK) :: bool,inPoly,inConvexCirc,inConcaveCirc
       INTEGER(SIK) :: i,wn,istt,istp,iedge
       TYPE(PointType) :: centroid
       TYPE(LineType) :: line
@@ -320,8 +320,8 @@ MODULE Geom_Poly
       inPoly=(wn /= 0)
       
       !Now check the quadratic edges if there are any
-      inCirc=.FALSE.
-      outCirc=.TRUE.
+      inConvexCirc=.FALSE.
+      inConcaveCirc=.FALSE.
       IF(thisPoly%nQuadEdge > 0) THEN
         DO i=1,thisPoly%nQuadEdge
           iedge=thisPoly%quad2edge(i)
@@ -330,21 +330,21 @@ MODULE Geom_Poly
             thisPoly%vert(thisPoly%edge(2,iedge)))
           CALL circ%set(centroid,thisPoly%quadEdge(3,i))
           !Check if the centroid is on the interior or exterior of the edge
-          IF(line%pointIsRight(centroid) .AND. .NOT. inCirc) THEN
+          IF(line%pointIsRight(centroid) .AND. .NOT. inConvexCirc) THEN
             !Quad edge extends outside the polygon.  
             !Check if the point is to the left of the edge and inside the circle
-            inCirc=line%pointIsLeft(point) .AND. circ%inside(point)
-          ELSEIF(line%pointIsLeft(centroid) .AND. outCirc) THEN
+            inConvexCirc=line%pointIsLeft(point) .AND. circ%inside(point)
+          ELSEIF(line%pointIsLeft(centroid) .AND. .NOT. inConcaveCirc) THEN
             !Quad edge extends inside the polygon.  
             !Check if the point is to the right of the edge and outside the circle
-            outCirc=line%pointIsRight(point) .AND. .NOT.circ%inside(point)
+            inConcaveCirc=line%pointIsRight(point) .AND. circ%inside(point)
           ENDIF
           CALL circ%clear()
           CALL line%clear()
           CALL centroid%clear()
         ENDDO
         !Logic for the cases where there is inside and outside circles.
-        bool=(inPoly .OR. inCirc) .AND. outCirc
+        bool=(inPoly .OR. inConvexCirc) .AND. .NOT. inConcaveCirc
       !If just straight edges
       ELSE
         bool=inPoly
