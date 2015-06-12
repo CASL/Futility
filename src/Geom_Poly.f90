@@ -114,7 +114,7 @@ MODULE Geom_Poly
       CLASS(PolygonType) :: thisPoly
       TYPE(GraphType) :: thatGraph
       
-      INTEGER(SIK) :: i,icurr,inextold,inext,iedge,iquad
+      INTEGER(SIK) :: i,icw,iccw,icurr,inextold,inext,iedge,iquad
       REAL(SRK) :: a,r,h,R1,coeff
       TYPE(PointType) :: point
       TYPE(LineType) :: line
@@ -130,8 +130,15 @@ MODULE Geom_Poly
         CALL thisPoly%vert(1)%init(DIM=2,X=thatGraph%vertices(1,1), &
           Y=thatGraph%vertices(2,1))
         thisPoly%edge(1,1)=1
-        !Loop over all vertices in the graphtype in CW ordering.
-        inext=thatGraph%getCWMostVert(0,1)
+        !Loop over all vertices in the graphtype in CW ordering.  
+        !Logic here is for when we have our next point directly above the starting point.
+        iccw=thatGraph%getCCWMostVert(0,1)
+        icw=thatGraph%getCWMostVert(0,1)
+        IF(thatGraph%vertices(2,icw) > thatGraph%vertices(2,iccw)) THEN
+          inext=icw
+        ELSE
+          inext=iccw
+        ENDIF
         inextold=1
         icurr=1
         DO i=2,thisPoly%nVert
@@ -148,7 +155,7 @@ MODULE Geom_Poly
           IF(thatGraph%quadEdges(3,icurr,inext) > 0.0_SRK) thisPoly%nQuadEdge=thisPoly%nQuadEdge+1
           inextold=inext
           !Get the next vertex using the neighbor call
-          inext=thatGraph%getCWMostVert(icurr,inext)
+          inext=thatGraph%getCCWMostVert(icurr,inext)
           icurr=inextold
         ENDDO
         !Set last edge
@@ -167,7 +174,15 @@ MODULE Geom_Poly
           CALL dmallocA(thisPoly%quad2edge,thisPoly%nQuadEdge)
           thisPoly%quad2edge=0
           thisPoly%quadEdge=0.0_SRK
-          inext=thatGraph%getCWMostVert(0,1)
+          !Loop over all vertices in the graphtype in CW ordering.  
+          !Logic here is for when we have our next point directly above the starting point.
+          iccw=thatGraph%getCCWMostVert(0,1)
+          icw=thatGraph%getCWMostVert(0,1)
+          IF(thatGraph%vertices(2,icw) > thatGraph%vertices(2,iccw)) THEN
+            inext=icw
+          ELSE
+            inext=iccw
+          ENDIF
           inextold=1
           icurr=1
           iquad=0
@@ -178,7 +193,7 @@ MODULE Geom_Poly
               thisPoly%quad2edge(iquad)=i-1
             ENDIF
             inextold=inext
-            inext=thatGraph%getCWMostVert(icurr,inext)
+            inext=thatGraph%getCCWMostVert(icurr,inext)
             icurr=inextold
           ENDDO
           IF(thatGraph%quadEdges(3,1,icurr) > 0.0_SRK) THEN
