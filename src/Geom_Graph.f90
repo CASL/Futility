@@ -35,6 +35,7 @@ MODULE Geom_Graph
 
   PUBLIC :: GraphType
   PUBLIC :: OPERATOR(+)
+  PUBLIC :: OPERATOR(==)
 
   !> @brief a Planar Graph
   TYPE :: GraphType
@@ -120,6 +121,12 @@ MODULE Geom_Graph
     !> @copybrief Geom_Graph::add_graphType
     !> @copydetails Geom_Graph::add_graphType
     MODULE PROCEDURE add_graphType
+  ENDINTERFACE
+  
+  INTERFACE OPERATOR(==)
+    !> @copybrief Geom_Graph::isequal_graphType
+    !> @copydetails Geom_Graph::isequal_graphType
+    MODULE PROCEDURE isequal_graphType
   ENDINTERFACE
 !
 !===============================================================================
@@ -987,5 +994,37 @@ MODULE Geom_Graph
         ENDDO
       ENDDO
     ENDFUNCTION add_GraphType
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param
+!>
+    FUNCTION isequal_GraphType(g0,g1) RESULT(bool)
+      TYPE(GraphType),INTENT(IN) :: g0
+      TYPE(GraphType),INTENT(IN) :: g1
+      LOGICAL(SBK) :: bool
+      
+      bool=.FALSE.
+      IF((ALLOCATED(g0%isCycleEdge) .EQV. ALLOCATED(g1%isCycleEdge)) .AND. &
+        (ALLOCATED(g0%vertices) .EQV. ALLOCATED(g1%vertices)) .AND. &
+        (ALLOCATED(g0%edgeMatrix) .EQV. ALLOCATED(g1%edgeMatrix)) .AND. &
+        (ALLOCATED(g0%quadEdges) .EQV. ALLOCATED(g1%quadEdges))) THEN
+        IF(SIZE(g0%isCycleEdge,DIM=1) == SIZE(g1%isCycleEdge,DIM=1) .AND. &
+            SIZE(g0%isCycleEdge,DIM=2) == SIZE(g1%isCycleEdge,DIM=2) .AND. &
+            SIZE(g0%vertices,DIM=1) == SIZE(g1%vertices,DIM=1) .AND. &
+            SIZE(g0%vertices,DIM=2) == SIZE(g1%vertices,DIM=2) .AND. &
+            SIZE(g0%edgeMatrix,DIM=1) == SIZE(g1%edgeMatrix,DIM=1) .AND. &
+            SIZE(g0%edgeMatrix,DIM=2) == SIZE(g1%edgeMatrix,DIM=2) .AND. &
+            SIZE(g0%quadEdges,DIM=1) == SIZE(g1%quadEdges,DIM=1) .AND. &
+            SIZE(g0%quadEdges,DIM=2) == SIZE(g1%quadEdges,DIM=2) .AND. &
+            SIZE(g0%quadEdges,DIM=3) == SIZE(g1%quadEdges,DIM=3)) THEN
+          bool=.TRUE.
+          IF(ALLOCATED(g0%isCycleEdge) .AND. ALLOCATED(g1%isCycleEdge)) bool=bool .AND. ALL(g0%isCycleEdge .EQV. g1%isCycleEdge)
+          bool=bool .AND. ALL(g0%vertices .APPROXEQA. g1%vertices) .AND. &
+            ALL(g0%edgeMatrix == g1%edgeMatrix) .AND. &
+            ALL(g0%quadEdges .APPROXEQA. g1%quadEdges)
+        ENDIF
+      ENDIF
+   ENDFUNCTION isequal_GraphType
 !
 ENDMODULE Geom_Graph
