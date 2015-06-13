@@ -24,6 +24,7 @@ PROGRAM testGeom_Poly
   USE ParameterLists
   USE Geom_Points
   USE Geom_Line
+  USE Geom_CircCyl
   USE Geom_Box
   USE Geom_Graph
   USE Geom_Poly
@@ -482,7 +483,7 @@ PROGRAM testGeom_Poly
       TYPE(PointType) :: point1,point2
       TYPE(PointType),ALLOCATABLE :: points(:)
       TYPE(LineType) :: line
-      
+
 !Setup test graph - isosceles triangle
       testCoord(:,1)=(/-1.0_SRK,-1.0_SRK/)
       testCoord(:,2)=(/1.0_SRK,-1.0_SRK/)
@@ -493,7 +494,7 @@ PROGRAM testGeom_Poly
       CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
       CALL testGraph%defineEdge(testCoord(:,2),testCoord(:,3))
       CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,1))
-      
+
       CALL testPolyType%set(testGraph)
       ASSERTFAIL(testPolyType%isinit,'%isinit')
       CALL point1%init(DIM=2,X=-1.0_SRK,Y=0.0_SRK)
@@ -507,7 +508,7 @@ PROGRAM testGeom_Poly
       bool=(points(2)%coord(1) .APPROXEQA. 0.6666666666666667_SRK) .AND. &
         (points(2)%coord(2) .APPROXEQA. 0.0_SRK)
       ASSERT(bool,'point 2 intersection')
-      
+
       CALL point1%clear()
       CALL point2%clear()
       CALL line%clear()
@@ -516,7 +517,7 @@ PROGRAM testGeom_Poly
       CALL line%set(point1,point2)
       CALL testPolyType%intersectLine(line,points)
       ASSERT(.NOT.ALLOCATED(points),'npoints for miss case')
-      
+
       CALL point1%clear()
       CALL point2%clear()
       CALL line%clear()
@@ -528,7 +529,7 @@ PROGRAM testGeom_Poly
       bool=(points(1)%coord(1) .APPROXEQA. 0.66666666666666667_SRK) .AND. &
         (points(1)%coord(2) .APPROXEQA. 0.0_SRK)
       ASSERT(bool,'point 1 intersection')
-      
+
 !Setup test graph - quadralateral with quadratic edge
       CALL testGraph%clear()
       CALL testPolyType%clear()
@@ -555,7 +556,7 @@ PROGRAM testGeom_Poly
       c0=(/0.0_SRK,-4.0_SRK/)
       CALL testGraph%defineQuadraticEdge(testCoord(:,4), &
         testCoord(:,1),c0,SQRT(8.0_SRK))
-      
+
       CALL testPolyType%set(testGraph)
       ASSERTFAIL(testPolyType%isinit,'%isinit')
       CALL point1%clear()
@@ -572,7 +573,7 @@ PROGRAM testGeom_Poly
       bool=(points(2)%coord(1) .APPROXEQA. 4.0_SRK-SQRT(8.0_SRK)) .AND. &
         (points(2)%coord(2) .APPROXEQA. 0.0_SRK)
       ASSERT(bool,'point 2 intersection')
-      
+
       CALL point1%clear()
       CALL point2%clear()
       CALL line%clear()
@@ -593,7 +594,6 @@ PROGRAM testGeom_Poly
       bool=(points(4)%coord(1) .APPROXEQA. 1.32287565553230_SRK) .AND. &
         (points(4)%coord(2) .APPROXEQA. -1.5_SRK)
       ASSERT(bool,'point 2 on concave circle 4')
-      
     ENDSUBROUTINE testIntersectLine
 !
 !-------------------------------------------------------------------------------
@@ -601,35 +601,35 @@ PROGRAM testGeom_Poly
       TYPE(PointType) :: testpoint
       TYPE(OBBoxType) :: testbox
       TYPE(CircleType) :: testcircle
-      
+
       !polygonize a box
       CALL testpoint%init(DIM=2,X=1.0_SRK,Y=1.0_SRK)
       CALL testBox%set(testpoint,(/4.0_SRK*SQRT(2.0_SRK),2.0_SRK*SQRT(2.0_SRK)/), &
         (/-1.0_SRK,1.0_SRK/),(/1.0_SRK,1.0_SRK/))
-      testPolyType=Polygonize(textbox)
+      CALL Polygonize(testbox,testPolyType)
       ASSERTFAIL(testPolyType%isinit,'init polygon from box')
       ASSERT(testPolyType%nVert == 4,'%nVert')
       ASSERT(testPolyType%nQuadEdge == 0,'%nQuadEdge')
       bool=(testPolyType%vert(1)%coord(1) .APPROXEQA. -3.0_SRK) .AND. &
-        testPolyType%vert(1)%coord(2) .APPROXEQA. 5.0_SRK)
+        (testPolyType%vert(1)%coord(2) .APPROXEQA. 5.0_SRK)
       ASSERT(bool,'%vert(1)')
       bool=(testPolyType%vert(2)%coord(1) .APPROXEQA. -1.0_SRK) .AND. &
-        testPolyType%vert(2)%coord(2) .APPROXEQA. 7.0_SRK)
+        (testPolyType%vert(2)%coord(2) .APPROXEQA. 7.0_SRK)
       ASSERT(bool,'%vert(2)')
       bool=(testPolyType%vert(3)%coord(1) .APPROXEQA. 3.0_SRK) .AND. &
-        testPolyType%vert(3)%coord(2) .APPROXEQA. 3.0_SRK)
+        (testPolyType%vert(3)%coord(2) .APPROXEQA. 3.0_SRK)
       ASSERT(bool,'%vert(3)')
       bool=(testPolyType%vert(4)%coord(1) .APPROXEQA. 1.0_SRK) .AND. &
-        testPolyType%vert(4)%coord(2) .APPROXEQA. 1.0_SRK)
+        (testPolyType%vert(4)%coord(2) .APPROXEQA. 1.0_SRK)
       ASSERT(bool,'%vert(4)')
       CALL testpoint%clear()
       CALL testbox%clear()
       CALL testPolyType%clear()
-      
+
       !polygonize a circle
       CALL testpoint%init(DIM=2,X=1.0_SRK,Y=1.0_SRK)
       CALL testcircle%set(testpoint,2.0_SRK*SQRT(2.0_SRK))
-      testPolyType=Polygonize(testcircle)
+      CALL Polygonize(testcircle,testPolyType)
       ASSERTFAIL(testPolyType%isinit,'init polygon from circle')
       ASSERT(testPolyType%nVert == 4,'%nVert')
       ASSERT(testPolyType%nQuadEdge == 4,'%nQuadEdge')
@@ -639,7 +639,7 @@ PROGRAM testGeom_Poly
       ASSERT(bool,'%quadEdge(1)')
       bool=(testPolyType%quadEdge(1,2) .APPROXEQA. 1.0_SRK) .AND. &
         (testPolyType%quadEdge(2,2) .APPROXEQA. 1.0_SRK) .AND. &
-        (testPolyType%quadEdge(3,2) .APPROXEQA. 2.0_SRK*SQRT(2.0_SRK)r)
+        (testPolyType%quadEdge(3,2) .APPROXEQA. 2.0_SRK*SQRT(2.0_SRK))
       ASSERT(bool,'%quadEdge(2)')
       bool=(testPolyType%quadEdge(1,3) .APPROXEQA. 1.0_SRK) .AND. &
         (testPolyType%quadEdge(2,3) .APPROXEQA. 1.0_SRK) .AND. &
@@ -652,33 +652,31 @@ PROGRAM testGeom_Poly
       CALL testpoint%clear()
       CALL testcircle%clear()
       CALL testPolyType%clear()
-      
+
       !Polygonize an arc
       CALL testpoint%init(DIM=2,X=1.0_SRK,Y=1.0_SRK)
       CALL testcircle%set(testpoint,2.0_SRK*SQRT(2.0_SRK),ANGSTT=TWOPI-QTRPI,ANGSTP=QTRPI)
-      testPolyType=Polygonize(testcircle)
+      CALL Polygonize(testcircle,testPolyType)
       ASSERTFAIL(testPolyType%isinit,'init polygon from arc circle')
       ASSERT(testPolyType%nVert == 3,'%nVert')
       ASSERT(testPolyType%nQuadEdge == 1,'%nQuadEdge')
       bool=(testPolyType%vert(1)%coord(1) .APPROXEQA. 1.0_SRK) .AND. &
-        testPolyType%vert(1)%coord(2) .APPROXEQA. 1.0_SRK)
+        (testPolyType%vert(1)%coord(2) .APPROXEQA. 1.0_SRK)
       ASSERT(bool,'%vert(1)')
       bool=(testPolyType%vert(2)%coord(1) .APPROXEQA. 3.0_SRK) .AND. &
-        testPolyType%vert(2)%coord(2) .APPROXEQA. 3.0_SRK)
+        (testPolyType%vert(2)%coord(2) .APPROXEQA. 3.0_SRK)
       ASSERT(bool,'%vert(2)')
       bool=(testPolyType%vert(3)%coord(1) .APPROXEQA. 3.0_SRK) .AND. &
-        testPolyType%vert(3)%coord(2) .APPROXEQA. -1.0_SRK)
+        (testPolyType%vert(3)%coord(2) .APPROXEQA. -1.0_SRK)
       ASSERT(bool,'%vert(3)')
       bool=(testPolyType%quadEdge(1,1) .APPROXEQA. 1.0_SRK) .AND. &
         (testPolyType%quadEdge(2,1) .APPROXEQA. 1.0_SRK) .AND. &
         (testPolyType%quadEdge(3,1) .APPROXEQA. 2.0_SRK*SQRT(2.0_SRK))
       ASSERT(bool,'%quadEdge(1)')
-      
+
       CALL testpoint%clear()
       CALL testcircle%clear()
       CALL testPolyType%clear()
-      
     ENDSUBROUTINE testPolygonize
-
 !
 ENDPROGRAM testGeom_Poly

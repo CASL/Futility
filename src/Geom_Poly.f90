@@ -41,16 +41,18 @@ MODULE Geom_Poly
   USE IntrType
   USE Allocs
   USE Constants_Conversion
+  USE Geom_Graph
   USE Geom_Points
   USE Geom_Line
   USE Geom_Plane
   USE Geom_CircCyl
-  USE Geom_Graph
+  USE Geom_Box
   
   IMPLICIT NONE
   PRIVATE
   
   PUBLIC :: PolygonType
+  PUBLIC :: Polygonize
 
   !> @brief Type used to describe a polygon.
   !>
@@ -96,11 +98,15 @@ MODULE Geom_Poly
       !> @copybrief Geom_Poly::subtractSubVolume_PolygonType
       !> @copydetails Geom_Poly::subtractSubVolume_PolygonType
       PROCEDURE,PASS :: subtractSubVolume => subtractSubVolume_PolygonType
+      !> @copybrief Geom_Poly::generateGraph_PolygonType
+      !> @copydetails Geom_Poly::generateGraph_PolygonType
+      PROCEDURE,PASS :: generateGraph => generateGraph_PolygonType
   ENDTYPE PolygonType
 
   INTERFACE Polygonize
     MODULE PROCEDURE Polygonize_Circle
-    MODULE PROCEDURE Polygonize_OBBox2D
+    MODULE PROCEDURE Polygonize_OBBox
+    MODULE PROCEDURE Polygonize_ABBox
   ENDINTERFACE
 !
 !===============================================================================
@@ -534,7 +540,7 @@ MODULE Geom_Poly
       TYPE(PolygonType),TARGET,INTENT(IN) :: subPoly
       LOGICAL(SBK) :: allIn
       INTEGER(SIK) :: i,v1,v2
-      REAL(SRK) :: a(2),b(2),c(2),r,ac(2),bc(2),m(2),scal
+      REAL(SRK) :: a(2),b(2),c(2),m(2),r,scal
       TYPE(PointType) :: arcMidPoint
       TYPE(PolygonType),POINTER :: lastSubPoly
       
@@ -582,82 +588,40 @@ MODULE Geom_Poly
 !>
 !>
 !>
-    SUBROUTINE Polygonize_Circle(circle,lines,polygons)
-      TYPE(CircleType),INTENT(IN) :: circle
-      TYPE(LineType),INTENT(IN) :: lines(:)
-      TYPE(PolygonType),ALLOCATABLE,INTENT(INOUT) :: polygons(:)
-      
-      INTEGER(SIK) :: i,nlines,npoints,npoly
-      INTEGER(SIK),ALLOCATABLE :: nsegP(:)
-      REAL(SRK) :: thetap,d
-      TYPE(LinkedListPointType),ALLOCATABLE :: geomObjIntersections(:)
-      TYPE(GraphType) :: graph
-      TYPE(GraphType),ALLOCATABLE :: cycles(:)
-      
-!      IF(ALLOCATED(polygons)) THEN
-!        DO i=1,SIZE(polygons)
-!!          CALL polygons(i)%clear()
-!        ENDDO
-!        DEALLOCATE(polygons)
-!      ENDIF
-!      nlines=SIZE(lines)
-!!
-!!Determine all intersections and construct as graph
-!      ALLOCATE(geomObjIntersections(0:nlines))
-!      !Determine line-circle intersections
-!      DO i=1,SIZE(lines)
-!        CALL circle%intersectLine(lines(i),p1,p2)
-!        IF(p1%dim == 2) THEN
-!          thetap=circle%calcThetaOfPoint(p1)
-!          CALL graph%insertVertex(p1%coord(1:2))
-!          CALL geomObjIntersections(0)%insertPoint(p1,thetap)
-!        ENDIF
-!        IF(p2%dim == 2) THEN
-!          npoints=npoints+1
-!          thetap=circle%calcThetaOfPoint(p2)
-!          CALL graph%insertVertex(p2%coord(1:2))
-!          CALL geomObjIntersections(0)%insertPoint(p2,thetap)
-!        ENDIF
-!      ENDDO
-!      !Define edges in graph from intersections with circle
-!      curPoint => geomObjIntersections(0)%firstPoint
-!      CALL graph%defineQuadraticEdge(curPoint,geomObjIntersections(0)%lastPoint)
-!      DO WHILE(.NOT.ASSOCIATED(firstPoint,geomObjIntersections(0)%lastPoint))
-!        CALL graph%defineQuadraticEdge(curPoint,curPoint%nextPoint,circle%r,circle%c)
-!        curPoint => curPoint%nextPoint
-!      ENDDO
-!
-!      !Update graph for all line-line intersections
-!      DO i=1,SIZE(lines)
-!        DO j=i+1,SIZE(lines)
-!          p1=lines(i)%intersectLine(lines(j))
-!          IF(p1%dim == 2) THEN
-!            IF(cirlc%inside(p1)) THEN
-!              npoints=npoints+1
-!              CALL graph%insertVertex(p1%coord(1:2))
-!              d=lines(i)%distance2Point(p1)
-!              CALL geomObjIntersections(i)%insertPoint(p1,d)
-!            ENDIF
-!          ENDIF
-!          CALL p1%clear()
-!        ENDDO
-!      ENDDO
-!      DO i=1,nlines
-!        curPoint => geomObjIntersections(i)%firstPoint
-!        DO WHILE(.NOT.ASSOCIATED(curPoint,geomObjIntersections(i)%lastPoint))
-!          CALL graph%defineEdge(curPoint,curPoint%nextPoint)
-!          curPoint => curPoint%nextPoint
-!        ENDDO
-!      ENDDO
-!      
-!      
-!      CALL graph%getMCB(cycles)
-!      npoly=SIZE(cycles)
-!      ALLOCATE(polygons(npoly))
-!      DO i=1,npoly
-!        CALL init_PolygonFromCycle(polygons(i),cycles(i))
-!      ENDDO
-    ENDSUBROUTINE Polygonize_Circle
+    SUBROUTINE generateGraph_PolygonType(thisPoly,g)
+      CLASS(PolygonType),INTENT(IN) :: thisPoly
+      TYPE(GraphType),INTENT(INOUT) :: g
+      LOGICAL(SBK),ALLOCATABLE :: isQuadEdge(:)
+      INTEGER(SIK) :: i,j,v0,v1
+      REAL(SRK) :: r,c(2)
+      REAL(SRK),ALLOCATABLE :: verts(:,:)
+      CALL g%clear()
+
+      IF(thisPoly%isInit) THEN
+        ALLOCATE(verts(2,thisPoly%nVert))
+        DO i=1,thisPoly%nVert
+          verts(:,i)=thisPoly%vert(i)%coord(1:2)
+          CALL g%insertVertex(verts(:,i))
+        ENDDO
+        ALLOCATE(isQuadEdge(thisPoly%nVert)); isQuadEdge=.FALSE.
+        DO i=1,thisPoly%nQuadEdge
+          j=thisPoly%quad2edge(i)
+          isQuadEdge(j)=.TRUE.
+          c=thisPoly%quadEdge(1:2,i)
+          r=thisPoly%quadEdge(3,i)
+          v0=thisPoly%edge(1,j)
+          v1=thisPoly%edge(2,j)
+          CALL g%defineQuadraticEdge(verts(:,v0),verts(:,v1),c,r)
+        ENDDO
+        DO i=1,thisPoly%nVert
+          IF(.NOT.isQuadEdge(i)) THEN
+            v0=thisPoly%edge(1,i)
+            v1=thisPoly%edge(2,i)
+            CALL g%defineEdge(verts(:,v0),verts(:,v1))
+          ENDIF
+        ENDDO
+      ENDIF
+    ENDSUBROUTINE generateGraph_PolygonType
 !
 !-------------------------------------------------------------------------------
 !> @brief
@@ -665,10 +629,117 @@ MODULE Geom_Poly
 !>
 !>
 !>
-    SUBROUTINE Polygonize_OBBox2D(obBox,lines,polygons)
-      TYPE(CircleType),INTENT(IN) :: obBox
-      TYPE(LineType),INTENT(IN) :: lines(:)
-      TYPE(PolygonType),ALLOCATABLE,INTENT(INOUT) :: polygons(:)
-    ENDSUBROUTINE Polygonize_OBBox2D
+    SUBROUTINE Polygonize_Circle(circle,polygon)
+      TYPE(CircleType),INTENT(IN) :: circle
+      TYPE(PolygonType),INTENT(INOUT) :: polygon
+      REAL(SRK) :: v0(2),v1(2),v2(2),v3(2),r,c(2)
+      TYPE(GraphType) :: g
+
+      CALL polygon%clear()
+      IF(circle%r > 0.0_SRK .AND. circle%c%dim == 2) THEN
+        r=circle%r
+        c=circle%c%coord(1:2)
+        IF((circle%thetastt .APPROXEQA. 0.0_SRK) .AND. &
+           (circle%thetastp .APPROXEQA. TWOPI)) THEN
+          
+          v0(1)=c(1)-r; v0(2)=c(2)
+          v1(1)=c(1); v1(2)=c(2)+r
+          v2(1)=c(1)+r; v2(2)=c(2)
+          v3(1)=c(1); v3(2)=c(2)-r
+
+          CALL g%insertVertex(v0)
+          CALL g%insertVertex(v1)
+          CALL g%insertVertex(v2)
+          CALL g%insertVertex(v3)
+          CALL g%defineQuadraticEdge(v0,v1,c,r)
+          CALL g%defineQuadraticEdge(v1,v2,c,r)
+          CALL g%defineQuadraticEdge(v2,v3,c,r)
+          CALL g%defineQuadraticEdge(v0,v3,c,r)
+        ELSE
+          v0(1)=c(1); v0(2)=c(2)
+          v1(1)=c(1)+r*COS(circle%thetastt)
+          v1(2)=c(2)+r*SIN(circle%thetastt)
+          v2(1)=c(1)+r*COS(circle%thetastp)
+          v2(2)=c(2)+r*SIN(circle%thetastp)
+
+          CALL g%insertVertex(v0)
+          CALL g%insertVertex(v1)
+          CALL g%insertVertex(v2)
+          CALL g%defineEdge(v0,v1)
+          CALL g%defineEdge(v0,v2)
+          CALL g%defineQuadraticEdge(v1,v2,c,r)
+        ENDIF
+
+        CALL polygon%set(g)
+        CALL g%clear()
+      ENDIF
+    ENDSUBROUTINE Polygonize_Circle
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param
+!>
+!> Not sure if this is correct.
+!>
+    SUBROUTINE Polygonize_OBBox(obBox,polygon)
+      TYPE(OBBoxType),INTENT(IN) :: obBox
+      TYPE(PolygonType),INTENT(INOUT) :: polygon
+      REAL(SRK) :: v0(2),v1(2),v2(2),v3(2)
+      TYPE(GraphType) :: g
+
+      CALL polygon%clear()
+      IF(obBox%p0%dim > 1) THEN
+        v0(1)=obBox%p0%coord(1); v0(2)=obBox%p0%coord(2)
+        v1(1)=v0(1)+obBox%u(1,1)*obBox%e(1)
+        v1(2)=v0(2)+obBox%u(2,1)*obBox%e(1)
+        v2(1)=v0(1)+obBox%u(1,2)*obBox%e(2)
+        v2(2)=v0(2)+obBox%u(2,2)*obBox%e(2)
+        v3(1)=v0(1)+obBox%u(1,1)*obBox%e(1)+obBox%u(1,2)*obBox%e(2)
+        v3(2)=v0(2)+obBox%u(2,1)*obBox%e(1)+obBox%u(2,2)*obBox%e(2)
+
+        CALL g%insertVertex(v0)
+        CALL g%insertVertex(v1)
+        CALL g%insertVertex(v2)
+        CALL g%insertVertex(v3)
+        CALL g%defineEdge(v0,v1)
+        CALL g%defineEdge(v0,v2)
+        CALL g%defineEdge(v2,v3)
+        CALL g%defineEdge(v1,v3)
+
+        CALL polygon%set(g)
+        CALL g%clear()
+      ENDIF
+    ENDSUBROUTINE Polygonize_OBBox
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param
+!>
+!>
+!>
+    SUBROUTINE Polygonize_ABBox(abBox,polygon)
+      TYPE(ABBoxType),INTENT(IN) :: abBox
+      TYPE(PolygonType),INTENT(INOUT) :: polygon
+      REAL(SRK) :: v0(2),v1(2),v2(2),v3(2)
+      TYPE(GraphType) :: g
+
+      CALL polygon%clear()
+
+      v0(1)=abBox%xMin; v0(2)=abBox%yMin
+      v1(1)=abBox%xMin; v1(2)=abBox%yMax
+      v2(1)=abBox%xMax; v2(2)=abBox%yMax
+      v3(1)=abBox%xMax; v3(2)=abBox%yMin
+      CALL g%insertVertex(v0)
+      CALL g%insertVertex(v1)
+      CALL g%insertVertex(v2)
+      CALL g%insertVertex(v3)
+      CALL g%defineEdge(v0,v1)
+      CALL g%defineEdge(v1,v2)
+      CALL g%defineEdge(v2,v3)
+      CALL g%defineEdge(v3,v0)
+      
+      CALL polygon%set(g)
+      CALL g%clear()
+    ENDSUBROUTINE Polygonize_ABBox
 !
 ENDMODULE Geom_Poly
