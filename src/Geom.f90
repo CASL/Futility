@@ -37,11 +37,13 @@
 MODULE Geom
   USE IntrType
   USE Constants_Conversion
+  USE Geom_Graph
   USE Geom_Points
   USE Geom_Line
   USE Geom_Plane
   USE Geom_CircCyl
   USE Geom_Box
+  USE Geom_Poly
   USE ParameterLists
 
   IMPLICIT NONE
@@ -49,6 +51,7 @@ MODULE Geom
 
   PUBLIC :: newGeom
 
+  PUBLIC :: GraphType
   PUBLIC :: MAX_COORD_STR_LEN
   PUBLIC :: PointType
   PUBLIC :: LinkedListPointType
@@ -58,9 +61,11 @@ MODULE Geom
   PUBLIC :: CylinderType
   PUBLIC :: OBBoxType
   PUBLIC :: ABBoxType
+  PUBLIC :: PolygonType
   PUBLIC :: Distance
   PUBLIC :: midPoint
   PUBLIC :: ClearLinkedListPointType
+  PUBLIC :: Polygonize
   PUBLIC :: OPERATOR(+)
   PUBLIC :: OPERATOR(-)
   PUBLIC :: OPERATOR(==)
@@ -84,6 +89,9 @@ MODULE Geom
     !> @copybrief Geom::newGeom_cyl
     !> @copydetails Geom::newGeom_cyl
     MODULE PROCEDURE newGeom_cyl
+    !> @copybrief Geom::newGeom_poly
+    !> @copydetails Geom::newGeom_poly
+    MODULE PROCEDURE newGeom_poly
   ENDINTERFACE
 !
 !===============================================================================
@@ -201,5 +209,36 @@ MODULE Geom
     IF(ALLOCATED(c1)) CALL p1%init(COORD=c1)
     CALL geom%set(p0,p1,r,theta1,theta2)
   ENDSUBROUTINE newGeom_cyl
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param params
+!> @param geom
+!>
+  SUBROUTINE newGeom_poly(params,geom)
+    TYPE(ParamType),INTENT(IN) :: params
+    TYPE(PolygonType),INTENT(INOUT) :: geom
+    CHARACTER(LEN=8) :: ivchar
+    INTEGER(SIK) :: i,n
+    REAL(SRK),ALLOCATABLE :: vert(:),vPrev(:)
+    TYPE(GraphType) :: tmpG
+    CALL params%get('PolygonGeom->nVert',n)
+    IF(n > 2) THEN
+      CALL params%get('PolygonGeom->vertex 1',vert)
+      CALL tmpG%insertVertex(vert)
+      DO i=2,n
+        CALL MOVE_ALLOC(vert,vPrev)
+        WRITE(ivchar,*) i; ivchar=ADJUSTL(ivchar)
+        CALL params%get('PolygonGeom->vertex '//TRIM(ivchar),vert)
+        CALL tmpG%insertVertex(vert)
+        CALL tmpG%defineEdge(vPrev,vert)
+      ENDDO
+      CALL params%get('PolygonGeom->vertex 1',vPrev)
+      CALL tmpG%defineEdge(vPrev,vert)
+      
+      CALL geom%set(tmpG)
+      CALL tmpG%clear()
+    ENDIF
+  ENDSUBROUTINE newGeom_poly
 !
 ENDMODULE Geom
