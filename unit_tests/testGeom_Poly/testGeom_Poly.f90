@@ -45,6 +45,7 @@ PROGRAM testGeom_Poly
   REGISTER_SUBTEST('Test Inside',testInside)
   REGISTER_SUBTEST('Test IntersectLine',testIntersectLine)
   REGISTER_SUBTEST('Test Polygonize',testPolygonize)
+  REGISTER_SUBTEST('Test GenerateGraph',testGenerateGraph)
 
   FINALIZE_TEST()
 !
@@ -700,5 +701,50 @@ PROGRAM testGeom_Poly
       CALL testcircle%clear()
       CALL testPolyType%clear()
     ENDSUBROUTINE testPolygonize
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testGenerateGraph
+      INTEGER(SIK) :: i,inext
+      REAL(SRK) :: testCoord(2,9),c0(2),r
+      TYPE(PointType) :: point1,point2
+      TYPE(GraphType) :: testGraph2
+      
+      CALL testGraph%clear()
+      CALL testPolyType%clear()
+      testCoord(:,1)=(/-3.0_SRK,3.0_SRK/)
+      testCoord(:,2)=(/3.0_SRK,3.0_SRK/)
+      testCoord(:,3)=(/3.0_SRK,0.0_SRK/)
+      testCoord(:,4)=(/2.0_SRK,2.0_SRK/)
+      testCoord(:,5)=(/2.0_SRK,-2.0_SRK/)
+      testCoord(:,6)=(/-2.0_SRK,-2.0_SRK/)
+      testCoord(:,7)=(/-2.0_SRK,2.0_SRK/)
+      DO i=1,7
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
+      CALL testGraph%defineEdge(testCoord(:,2),testCoord(:,3))
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
+      CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,5))
+      CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,6))
+      CALL testGraph%defineEdge(testCoord(:,6),testCoord(:,7))
+      CALL testGraph%defineEdge(testCoord(:,7),testCoord(:,1))
+      c0=(/0.0_SRK,1.0_SRK/)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,1), &
+        testCoord(:,2),c0,SQRT(13.0_SRK))
+      c0=(/4.0_SRK,0.0_SRK/)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,4), &
+        testCoord(:,5),c0,SQRT(8.0_SRK))
+      c0=(/0.0_SRK,-4.0_SRK/)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,5), &
+        testCoord(:,6),c0,SQRT(8.0_SRK))
+      c0=(/-1.0_SRK,0.0_SRK/)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,6), &
+        testCoord(:,7),c0,SQRT(5.0_SRK))
+      CALL testPolyType%set(testGraph)
+      ASSERTFAIL(testPolyType%isinit,'%isinit')
+      CALL testPolyType%generateGraph(testGraph2)
+      ASSERT(testGraph == testGraph2,'Graph is equal')
+      
+    ENDSUBROUTINE testGenerateGraph
 !
 ENDPROGRAM testGeom_Poly
