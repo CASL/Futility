@@ -599,14 +599,15 @@ PROGRAM testGeom_Poly
 !-------------------------------------------------------------------------------
     SUBROUTINE testPolygonize()
       TYPE(PointType) :: testpoint
-      TYPE(OBBoxType) :: testbox
+      TYPE(ABBoxType) :: testABbox
+      TYPE(OBBoxType) :: testOBbox
       TYPE(CircleType) :: testcircle
 
-      !polygonize a box
+      !polygonize an OB box
       CALL testpoint%init(DIM=2,X=1.0_SRK,Y=1.0_SRK)
-      CALL testBox%set(testpoint,(/4.0_SRK*SQRT(2.0_SRK),2.0_SRK*SQRT(2.0_SRK)/), &
+      CALL testOBbox%set(testpoint,(/4.0_SRK*SQRT(2.0_SRK),2.0_SRK*SQRT(2.0_SRK)/), &
         (/-1.0_SRK,1.0_SRK/),(/1.0_SRK,1.0_SRK/))
-      CALL Polygonize(testbox,testPolyType)
+      CALL Polygonize(testOBbox,testPolyType)
       ASSERTFAIL(testPolyType%isinit,'init polygon from box')
       ASSERT(testPolyType%nVert == 4,'%nVert')
       ASSERT(testPolyType%nQuadEdge == 0,'%nQuadEdge')
@@ -623,7 +624,28 @@ PROGRAM testGeom_Poly
         (testPolyType%vert(4)%coord(2) .APPROXEQA. 1.0_SRK)
       ASSERT(bool,'%vert(4)')
       CALL testpoint%clear()
-      CALL testbox%clear()
+      CALL testOBbox%clear()
+      CALL testPolyType%clear()
+
+      !polygonize an AB box
+      CALL testABbox%set(-4.0_SRK,2.0_SRK,1.0_SRK,3.0_SRK)
+      CALL Polygonize(testABbox,testPolyType)
+      ASSERTFAIL(testPolyType%isinit,'init polygon from AB box')
+      ASSERT(testPolyType%nVert == 4,'%nVert')
+      ASSERT(testPolyType%nQuadEdge == 0,'%nQuadEdge')
+      bool=(testPolyType%vert(1)%coord(1) .APPROXEQA. -4.0_SRK) .AND. &
+        (testPolyType%vert(1)%coord(2) .APPROXEQA. 1.0_SRK)
+      ASSERT(bool,'%vert(1)')
+      bool=(testPolyType%vert(2)%coord(1) .APPROXEQA. -4.0_SRK) .AND. &
+        (testPolyType%vert(2)%coord(2) .APPROXEQA. 3.0_SRK)
+      ASSERT(bool,'%vert(2)')
+      bool=(testPolyType%vert(3)%coord(1) .APPROXEQA. 2.0_SRK) .AND. &
+        (testPolyType%vert(3)%coord(2) .APPROXEQA. 3.0_SRK)
+      ASSERT(bool,'%vert(3)')
+      bool=(testPolyType%vert(4)%coord(1) .APPROXEQA. 2.0_SRK) .AND. &
+        (testPolyType%vert(4)%coord(2) .APPROXEQA. 1.0_SRK)
+      ASSERT(bool,'%vert(4)')
+      CALL testABbox%clear()
       CALL testPolyType%clear()
 
       !polygonize a circle
