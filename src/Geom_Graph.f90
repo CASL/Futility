@@ -34,6 +34,7 @@ MODULE Geom_Graph
   PRIVATE
 
   PUBLIC :: GraphType
+  PUBLIC :: OPERATOR(+)
 
   !> @brief a Planar Graph
   TYPE :: GraphType
@@ -114,6 +115,12 @@ MODULE Geom_Graph
       !> @copydetails Geom_Graph::clear_graphType
       PROCEDURE,PASS :: clear => clear_graphType
   ENDTYPE GraphType
+
+  INTERFACE OPERATOR(+)
+    !> @copybrief Geom_Graph::add_graphType
+    !> @copydetails Geom_Graph::add_graphType
+    MODULE PROCEDURE add_graphType
+  ENDINTERFACE
 !
 !===============================================================================
   CONTAINS
@@ -231,7 +238,7 @@ MODULE Geom_Graph
       INTEGER(SIK),INTENT(IN) :: vCurr
       INTEGER(SIK),INTENT(IN) :: v0
       LOGICAL(SBK) :: isVCurrConvex,badEdge
-      INTEGER(SIK) :: vNext,vPrev,vi,i,n,nVert,nAdj
+      INTEGER(SIK) :: vNext,vPrev,vi,i,nVert,nAdj
       REAL(SRK) :: dcurr(2),dnext(2),di(2)
 
       vNext=0
@@ -301,7 +308,7 @@ MODULE Geom_Graph
       INTEGER(SIK),INTENT(IN) :: vCurr
       INTEGER(SIK),INTENT(IN) :: v0
       LOGICAL(SBK) :: isVCurrConvex,badEdge
-      INTEGER(SIK) :: vNext,vPrev,vi,i,n,nVert,nAdj
+      INTEGER(SIK) :: vNext,vPrev,vi,i,nVert,nAdj
       REAL(SRK) :: dcurr(2),dnext(2),di(2)
 
       vNext=0
@@ -370,7 +377,7 @@ MODULE Geom_Graph
       CLASS(GraphType),INTENT(IN) :: thisGraph
       LOGICAL(SBK) :: bool
       LOGICAL(SBK) :: isMinCyc
-      INTEGER(SIK) :: i,n,vCurr,vPrev,vi
+      INTEGER(SIK) :: i,n
       bool=.FALSE.
       n=nVert_graphType(thisGraph)
       IF(n > 2) THEN
@@ -950,5 +957,35 @@ MODULE Geom_Graph
       CALL demallocA(thisGraph%edgeMatrix)
       CALL demallocA(thisGraph%quadEdges)
     ENDSUBROUTINE clear_graphType
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param
+!>
+!>
+!>
+    FUNCTION add_GraphType(g0,g1) RESULT(g)
+      TYPE(GraphType),INTENT(IN) :: g0
+      TYPE(GraphType),INTENT(IN) :: g1
+      TYPE(GraphType) :: g
+      INTEGER(SIK) :: i,j,n
+      
+      CALL clear_graphType(g)
+      g=g0
+      n=nVert_graphType(g1)
+      DO i=1,n
+        CALL insertVertex_graphType(g,g1%vertices(:,i))
+      ENDDO
+      DO j=1,n
+        DO i=j+1,n
+          IF(g1%edgeMatrix(i,j) == 1) THEN
+            CALL defineEdge_graphType(g,g1%vertices(:,i),g1%vertices(:,j))
+          ELSEIF(g1%edgeMatrix(i,j) == -1) THEN
+            CALL defineQuadEdge_graphType(g,g1%vertices(:,i),g1%vertices(:,j), &
+              g1%quadEdges(1:2,i,j),g1%quadEdges(3,i,j))
+          ENDIF
+        ENDDO
+      ENDDO
+    ENDFUNCTION add_GraphType
 !
 ENDMODULE Geom_Graph
