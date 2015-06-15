@@ -33,6 +33,7 @@ PROGRAM testGeom
   TYPE(CircleType) :: circle1
   TYPE(CylinderType) :: cylinder1
   TYPE(OBBoxType) :: box
+  TYPE(PolygonType) :: poly
   REAL(SRK) :: e_3d(3)
   REAL(SRK) :: u1_3d(3),u2_3d(3),u3_3d(3)
   REAL(SRK) :: n(3)
@@ -186,5 +187,26 @@ PROGRAM testGeom
     bool = .NOT.(ANY(plane1%v0%coord /= 0.5_SRK) .OR. ANY(.NOT.(plane1%n .APPROXEQ. &
                  (/1._SRK/SQRT(3.0_SRK),1._SRK/SQRT(3.0_SRK),1._SRK/SQRT(3.0_SRK)/))))
     ASSERT(bool, 'CALL newGeom(params,plane1)')
+    
+    !Test newGeom for Polygon
+    CALL params%add('PolygonGeom->nVert',7)
+    CALL params%add('PolygonGeom->vertex 1',(/-3.0_SRK,3.0_SRK/))
+    CALL params%add('PolygonGeom->vertex 2',(/3.0_SRK,3.0_SRK/))
+    CALL params%add('PolygonGeom->vertex 3',(/3.0_SRK,0.0_SRK/))
+    CALL params%add('PolygonGeom->vertex 4',(/2.0_SRK,2.0_SRK/))
+    CALL params%add('PolygonGeom->vertex 5',(/2.0_SRK,-2.0_SRK/))
+    CALL params%add('PolygonGeom->vertex 6',(/-2.0_SRK,-2.0_SRK/))
+    CALL params%add('PolygonGeom->vertex 7',(/-2.0_SRK,2.0_SRK/))
+    CALL newGeom(params,poly)
+    ASSERTFAIL(poly%isinit,'%isinit')
+    bool=(poly%nVert == 7) .AND. &
+      ALL(poly%vert(1)%coord .APPROXEQA. (/-3.0_SRK,3.0_SRK/)) .AND. &
+      ALL(poly%vert(2)%coord .APPROXEQA. (/3.0_SRK,3.0_SRK/)) .AND. &
+      ALL(poly%vert(3)%coord .APPROXEQA. (/3.0_SRK,0.0_SRK/)) .AND. &
+      ALL(poly%vert(4)%coord .APPROXEQA. (/2.0_SRK,2.0_SRK/)) .AND. &
+      ALL(poly%vert(5)%coord .APPROXEQA. (/2.0_SRK,-2.0_SRK/)) .AND. &
+      ALL(poly%vert(6)%coord .APPROXEQA. (/-2.0_SRK,-2.0_SRK/)) .AND. &
+      ALL(poly%vert(7)%coord .APPROXEQA. (/-2.0_SRK,2.0_SRK/))
+    ASSERT(bool,'CALL newGeom(params,poly) (simple)')
   ENDSUBROUTINE
 ENDPROGRAM testGeom

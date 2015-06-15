@@ -219,23 +219,28 @@ MODULE Geom
     TYPE(ParamType),INTENT(IN) :: params
     TYPE(PolygonType),INTENT(INOUT) :: geom
     CHARACTER(LEN=8) :: ivchar
-    INTEGER(SIK) :: i,n
+    INTEGER(SIK) :: i,n,m
     REAL(SRK),ALLOCATABLE :: vert(:),vPrev(:)
     TYPE(GraphType) :: tmpG
     CALL params%get('PolygonGeom->nVert',n)
+    CALL params%get('PolygonGeom->nQuad',m)
     IF(n > 2) THEN
       CALL params%get('PolygonGeom->vertex 1',vert)
       CALL tmpG%insertVertex(vert)
       DO i=2,n
         CALL MOVE_ALLOC(vert,vPrev)
-        WRITE(ivchar,*) i; ivchar=ADJUSTL(ivchar)
+        WRITE(ivchar,'(i8)') i; ivchar=ADJUSTL(ivchar)
         CALL params%get('PolygonGeom->vertex '//TRIM(ivchar),vert)
         CALL tmpG%insertVertex(vert)
         CALL tmpG%defineEdge(vPrev,vert)
       ENDDO
       CALL params%get('PolygonGeom->vertex 1',vPrev)
       CALL tmpG%defineEdge(vPrev,vert)
-      
+      DO i=1,m
+        WRITE(ivchar,'(i8)') i; ivchar=ADJUSTL(ivchar)
+        CALL params%get('PolygonGeom->quad edge '//TRIM(ivchar)
+        !Set the quadratic edge data
+      ENDDO
       CALL geom%set(tmpG)
       CALL tmpG%clear()
     ENDIF
