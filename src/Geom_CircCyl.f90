@@ -443,7 +443,8 @@ MODULE Geom_CircCyl
               IF(arcTest) THEN
                 theta=HALFPI
                 IF(p1%coord(2)-circle%c%coord(2) < ZERO) theta=-theta
-                IF(p1%coord(1)-circle%c%coord(1) /= ZERO) theta=ATAN((p1%coord(2)-circle%c%coord(2))/(p1%coord(1)-circle%c%coord(1)))
+                IF(p1%coord(1)-circle%c%coord(1) /= ZERO) &
+                  theta=ATAN((p1%coord(2)-circle%c%coord(2))/(p1%coord(1)-circle%c%coord(1)))
                 IF(p1%coord(1)-circle%c%coord(1) < ZERO) theta=theta+PI
                 IF(theta < ZERO) theta=theta+TWOPI
                 IF((theta .APPROXLE. circle%thetastt) .OR. (circle%thetastp .APPROXLE. theta)) &
@@ -457,7 +458,8 @@ MODULE Geom_CircCyl
               IF(arcTest) THEN
                 theta=HALFPI
                 IF(p2%coord(2)-circle%c%coord(2) < ZERO) theta=-theta
-                IF(p2%coord(1)-circle%c%coord(1) /= ZERO) theta=ATAN((p2%coord(2)-circle%c%coord(2))/(p2%coord(1)-circle%c%coord(1)))
+                IF(p2%coord(1)-circle%c%coord(1) /= ZERO) &
+                  theta=ATAN((p2%coord(2)-circle%c%coord(2))/(p2%coord(1)-circle%c%coord(1)))
                 IF(p2%coord(1)-circle%c%coord(1) < ZERO) theta=theta+PI
                 IF(theta < ZERO) theta=theta+TWOPI
                 IF((theta .APPROXLE. circle%thetastt) .OR. (circle%thetastp .APPROXLE. theta)) &
