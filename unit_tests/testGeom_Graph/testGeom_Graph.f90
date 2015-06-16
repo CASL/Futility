@@ -48,6 +48,7 @@ PROGRAM testGeom_Graph
   REGISTER_SUBTEST('%removeFilament',testRemFil)
   REGISTER_SUBTEST('%getMCB',testGetMCB)
   REGISTER_SUBTEST('OPERATOR(==)',testIsEqual)
+  REGISTER_SUBTEST('OPERATOR(+)',testAddition)
 
   FINALIZE_TEST()
 !
@@ -1262,7 +1263,60 @@ PROGRAM testGeom_Graph
       ASSERT(testGraph == testGraph2,'Equal Graphs')
       testGraph2%vertices(1,1)=-1.0_SRK
       ASSERT(.NOT.(testGraph == testGraph2),'Non-Equal Graphs')
+      
+      CALL testGraph%clear()
+      CALL testGraph2%clear()
     ENDSUBROUTINE testIsEqual
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testAddition()
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: i
+      REAL(SRK) :: testCoord(2,9),c0(2),r
+      TYPE(GraphType) :: testGraph3,testGraph4
+      
+      !Test graph1
+      testCoord(:,1)=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,2)=(/0.0_SRK,1.0_SRK/)
+      testCoord(:,3)=(/1.0_SRK,0.0_SRK/)
+      testCoord(:,4)=(/1.0_SRK,1.0_SRK/)
+      testCoord(:,5)=(/2.0_SRK,0.0_SRK/)
+      testCoord(:,6)=(/2.0_SRK,1.0_SRK/)
+      testCoord(:,7)=(/2.0_SRK,2.0_SRK/)
+      DO i=1,4
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
+      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,3))
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
+      CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,2))
+      !test graph2
+      CALL testGraph2%insertVertex(testCoord(:,5))
+      CALL testGraph2%insertVertex(testCoord(:,6))
+      CALL testGraph2%defineEdge(testCoord(:,4),testCoord(:,6))
+      CALL testGraph2%defineEdge(testCoord(:,3),testCoord(:,5))
+      CALL testGraph2%defineEdge(testCoord(:,5),testCoord(:,6))      
+      CALL testGraph2%insertVertex(testCoord(:,7))
+      CALL testGraph2%defineEdge(testCoord(:,6),testCoord(:,7))
+      !Test graph4
+      DO i=1,4
+        CALL testGraph4%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph4%defineEdge(testCoord(:,1),testCoord(:,2))
+      CALL testGraph4%defineEdge(testCoord(:,1),testCoord(:,3))
+      CALL testGraph4%defineEdge(testCoord(:,3),testCoord(:,4))
+      CALL testGraph4%defineEdge(testCoord(:,4),testCoord(:,2))
+      CALL testGraph4%insertVertex(testCoord(:,5))
+      CALL testGraph4%insertVertex(testCoord(:,6))
+      CALL testGraph4%defineEdge(testCoord(:,4),testCoord(:,6))
+      CALL testGraph4%defineEdge(testCoord(:,3),testCoord(:,5))
+      CALL testGraph4%defineEdge(testCoord(:,5),testCoord(:,6))      
+      CALL testGraph4%insertVertex(testCoord(:,7))
+      CALL testGraph4%defineEdge(testCoord(:,6),testCoord(:,7))
+      
+      testGraph3=testGraph+testGraph2
+      ASSERT(testGraph3 == testGraph4,'addition')
+    ENDSUBROUTINE testAddition
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE symEdgeCheck()
