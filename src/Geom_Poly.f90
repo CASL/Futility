@@ -280,7 +280,7 @@ MODULE Geom_Poly
 !>
 !> NOTES: Working on getting this functional with quadratic edges.
 !>
-    RECURSIVE FUNCTION inside_PolygonType(thisPoly,point) RESULT(bool)
+    PURE RECURSIVE FUNCTION inside_PolygonType(thisPoly,point) RESULT(bool)
       CLASS(PolygonType),INTENT(IN) :: thisPoly
       TYPE(PointType),INTENT(IN) :: point
       LOGICAL(SBK) :: bool,inPoly,inConvexCirc,inConcaveCirc
