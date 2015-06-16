@@ -1291,27 +1291,26 @@ PROGRAM testGeom_Graph
       CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
       CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,2))
       !test graph2
+      CALL testGraph2%insertVertex(testCoord(:,1))
       CALL testGraph2%insertVertex(testCoord(:,5))
       CALL testGraph2%insertVertex(testCoord(:,6))
-      CALL testGraph2%defineEdge(testCoord(:,4),testCoord(:,6))
-      CALL testGraph2%defineEdge(testCoord(:,3),testCoord(:,5))
-      CALL testGraph2%defineEdge(testCoord(:,5),testCoord(:,6))      
       CALL testGraph2%insertVertex(testCoord(:,7))
+      CALL testGraph2%defineEdge(testCoord(:,7),testCoord(:,8))
+      CALL testGraph2%defineEdge(testCoord(:,5),testCoord(:,6))
       CALL testGraph2%defineEdge(testCoord(:,6),testCoord(:,7))
       !Test graph4
       DO i=1,4
         CALL testGraph4%insertVertex(testCoord(:,i))
       ENDDO
+      CALL testGraph4%insertVertex(testCoord(:,5))
+      CALL testGraph4%insertVertex(testCoord(:,6))
+      CALL testGraph4%insertVertex(testCoord(:,7))
       CALL testGraph4%defineEdge(testCoord(:,1),testCoord(:,2))
       CALL testGraph4%defineEdge(testCoord(:,1),testCoord(:,3))
       CALL testGraph4%defineEdge(testCoord(:,3),testCoord(:,4))
       CALL testGraph4%defineEdge(testCoord(:,4),testCoord(:,2))
-      CALL testGraph4%insertVertex(testCoord(:,5))
-      CALL testGraph4%insertVertex(testCoord(:,6))
-      CALL testGraph4%defineEdge(testCoord(:,4),testCoord(:,6))
-      CALL testGraph4%defineEdge(testCoord(:,3),testCoord(:,5))
+      CALL testGraph4%defineEdge(testCoord(:,7),testCoord(:,1))
       CALL testGraph4%defineEdge(testCoord(:,5),testCoord(:,6))      
-      CALL testGraph4%insertVertex(testCoord(:,7))
       CALL testGraph4%defineEdge(testCoord(:,6),testCoord(:,7))
       
       testGraph3=testGraph+testGraph2
