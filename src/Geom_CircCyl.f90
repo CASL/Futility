@@ -497,7 +497,7 @@ MODULE Geom_CircCyl
                     p4%dim=-3
                   ENDIF
                 ENDIF
-              ELSEIF(p3%dim < 0) THEN
+              ELSEIF(p3%dim < 0 .AND. p4%dim > 0) THEN
                 !The other surface is co-linear or disjoint
                 !so we mark this as co-linear or disjoint
                 IF(ALL(p4%coord .APPROXEQA. c0) .OR. &
