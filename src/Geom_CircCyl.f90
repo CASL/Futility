@@ -294,7 +294,6 @@ MODULE Geom_CircCyl
       REAL(SRK)                     :: d,s,m
       REAL(SRK)                     :: dx,dy,dx2,dy2,dr2
       REAL(SRK)                     :: t1,t2,a,b,c
-      REAL(SRK)                     :: x1,x2,y1,y2
 
       CALL p1%clear()
       CALL p1%clear()
