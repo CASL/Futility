@@ -89,9 +89,12 @@ MODULE Geom_Poly
       !> @copybrief Geom_Poly::inside_PolygonType
       !> @copydetails Geom_Poly::inside_PolygonType
       PROCEDURE,PASS :: inside => inside_PolygonType
-      !> @copybrief Geom_Poly::intersect_PolygonType
-      !> @copydetails Geom_Poly::intersect_PolygonType
+      !> @copybrief Geom_Poly::intersectLine_PolygonType
+      !> @copydetails Geom_Poly::intersectLine_PolygonType
       PROCEDURE,PASS :: intersectLine => intersectLine_PolygonType
+      !> @copybrief Geom_Poly::intersectPoly_PolygonType
+      !> @copydetails Geom_Poly::intersectPoly_PolygonType
+      PROCEDURE,PASS :: intersectPoly => intersectPoly_PolygonType
       !> @copybrief Geom_Poly::isSimple_PolygonType
       !> @copydetails Geom_Poly::isSimple_PolygonType
       PROCEDURE,PASS :: isSimple => isSimple_PolygonType
@@ -277,7 +280,7 @@ MODULE Geom_Poly
 !>
 !> NOTES: Working on getting this functional with quadratic edges.
 !>
-    ELEMENTAL FUNCTION inside_PolygonType(thisPoly,point) RESULT(bool)
+    RECURSIVE FUNCTION inside_PolygonType(thisPoly,point) RESULT(bool)
       CLASS(PolygonType),INTENT(IN) :: thisPoly
       TYPE(PointType),INTENT(IN) :: point
       LOGICAL(SBK) :: bool,inPoly,inConvexCirc,inConcaveCirc
@@ -366,6 +369,9 @@ MODULE Geom_Poly
         ENDDO
         !Logic for the cases where there is inside and outside circles.
         bool=(inPoly .OR. inConvexCirc) .AND. .NOT. inConcaveCirc
+        !Logic for inside the polygon and outside the subregions
+        IF(thisPoly%isSimple()) &
+          bool=bool .AND. .NOT.inside_PolygonType(thisPoly%subregions,point)
       !If just straight edges
       ELSE
         bool=inPoly
@@ -380,9 +386,8 @@ MODULE Geom_Poly
       CLASS(PolygonType),INTENT(IN) :: thisPolygon
       TYPE(LineType),INTENT(IN) :: line
       TYPE(PointType),ALLOCATABLE,INTENT(INOUT) :: points(:)
-      INTEGER(SIK) :: i,j,iedge,ipoint,npoints
-      REAL(SRK) :: angstart,angstop,x,y
-      TYPE(PointType) :: centroid,refpoint
+      INTEGER(SIK) :: i,j,ipoint,npoints
+      REAL(SRK) :: x,y
       TYPE(PointType),ALLOCATABLE :: tmppoints(:)
       TYPE(LineType),ALLOCATABLE :: lines(:)
       TYPE(CircleType),ALLOCATABLE :: circles(:)
@@ -404,45 +409,7 @@ MODULE Geom_Poly
           thisPolygon%vert(thisPolygon%edge(2,i)))
       ENDDO
       DO i=1,thisPolygon%nQuadEdge
-        CALL centroid%init(DIM=2,X=thisPolygon%quadEdge(1,i), &
-          Y=thisPolygon%quadEdge(2,i))
-        !Need to get the starting and stopping angles...
-        refpoint=centroid
-        refpoint%coord(1)=refpoint%coord(1)+1.0_SRK
-        iedge=thisPolygon%quad2edge(i)
-        !Starting angle uses the line endpoint
-        IF(lines(iedge)%pointIsRight(centroid)) THEN
-          !starting angle is in quadrant 3 or 4
-          IF(lines(iedge)%p2%coord(2) .APPROXLE. centroid%coord(2)) THEN
-            angstart=outerAngle(lines(iedge)%p2,centroid,refpoint)
-          ELSE
-            angstart=innerAngle(lines(iedge)%p2,centroid,refpoint)
-          ENDIF
-          !stopping angle is in quadrant 3 or 4
-          IF(lines(iedge)%p1%coord(2) .APPROXLE. centroid%coord(2)) THEN
-            angstop=outerAngle(lines(iedge)%p1,centroid,refpoint)
-          ELSE
-            angstop=innerAngle(lines(iedge)%p1,centroid,refpoint)
-          ENDIF
-        !Starting angle uses the line startpoint
-        ELSE
-          !starting angle is in quadrant 3 or 4
-          IF(lines(iedge)%p1%coord(2) .APPROXLE. centroid%coord(2)) THEN
-            angstart=outerAngle(lines(iedge)%p1,centroid,refpoint)
-          ELSE
-            angstart=innerAngle(lines(iedge)%p1,centroid,refpoint)
-          ENDIF
-          !stopping angle is in quadrant 3 or 4
-          IF(lines(iedge)%p2%coord(2) .APPROXLE. centroid%coord(2)) THEN
-            angstop=outerAngle(lines(iedge)%p2,centroid,refpoint)
-          ELSE
-            angstop=innerAngle(lines(iedge)%p2,centroid,refpoint)
-          ENDIF
-        ENDIF
-        CALL circles(i)%set(centroid,thisPolygon%quadEdge(3,i), &
-          ANGSTT=angstart,ANGSTP=angstop)
-        CALL centroid%clear()
-        CALL refpoint%clear()
+        CALL createArcFromQuad(thisPolygon,i,circles(i))
       ENDDO
       !Make tmppoints the max possible size
       ALLOCATE(tmppoints(thisPolygon%nVert+3*thisPolygon%nQuadEdge))
@@ -516,6 +483,153 @@ MODULE Geom_Poly
         DEALLOCATE(circles)
       ENDIF
     ENDSUBROUTINE intersectLine_PolygonType
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param
+!>
+    PURE SUBROUTINE intersectPoly_PolygonType(thisPoly,thatPoly,points)
+      CLASS(PolygonType),INTENT(IN) :: thisPoly
+      TYPE(PolygonType),INTENT(IN) :: thatPoly
+      TYPE(PointType),ALLOCATABLE,INTENT(INOUT) :: points(:)
+      INTEGER(SIK) :: i,j,k,ipoint,npoints
+      REAL(SRK) :: x,y
+      TYPE(PointType),ALLOCATABLE :: tmppoints(:)
+      TYPE(LineType),ALLOCATABLE :: theseLines(:),thoseLines(:)
+      TYPE(CircleType),ALLOCATABLE :: theseCircs(:),thoseCircs(:)
+      
+      IF(thisPoly%isinit .AND. thatPoly%isinit) THEN
+        !Set up all the lines for both polygons
+        ALLOCATE(theseLines(thisPoly%nVert))
+        ALLOCATE(thoseLines(thatPoly%nVert))
+        IF(thisPoly%nQuadEdge > 0) ALLOCATE(theseCircs(thisPoly%nQuadEdge))
+        IF(thatPoly%nQuadEdge > 0) ALLOCATE(thoseCircs(thatPoly%nQuadEdge))
+        ALLOCATE(tmppoints(thisPoly%nVert*thatPoly%nVert+4*thisPoly%nQuadEdge*thatPoly%nVert+ &
+          4*thatPoly%nQuadEdge*thisPoly%nVert+2*thisPoly%nQuadEdge*thatPoly%nQuadEdge))
+        DO i=1,thisPoly%nVert
+          IF(thisPoly%nQuadEdge > 0) THEN
+            IF(ALL(thisPoly%quad2edge /= i)) CALL theseLines(i)%set(thisPoly%vert(thisPoly%edge(1,i)), &
+              thisPoly%vert(thisPoly%edge(2,i)))
+          ELSE
+            CALL theseLines(i)%set(thisPoly%vert(thisPoly%edge(1,i)), &
+              thisPoly%vert(thisPoly%edge(2,i)))
+          ENDIF
+        ENDDO
+        DO i=1,thatPoly%nVert
+          IF(thatPoly%nQuadEdge > 0) THEN
+            IF(ALL(thatPoly%quad2edge /= i)) CALL thoseLines(i)%set(thatPoly%vert(thatPoly%edge(1,i)), &
+              thatPoly%vert(thatPoly%edge(2,i)))
+          ELSE
+            CALL thoseLines(i)%set(thatPoly%vert(thatPoly%edge(1,i)), &
+              thatPoly%vert(thatPoly%edge(2,i)))
+          ENDIF
+        ENDDO
+        DO i=1,thisPoly%nQuadEdge
+          CALL createArcFromQuad(thisPoly,i,theseCircs(i))
+        ENDDO
+        DO i=1,thatPoly%nQuadEdge
+          CALL createArcFromQuad(thatPoly,i,thoseCircs(i))
+        ENDDO
+        
+        !Nested do-loops for intersecting all lines with lines
+        ipoint=1
+        !TheseLines
+        DO i=1,thisPoly%nVert
+          !ThoseLines
+          DO j=1,thatPoly%nVert
+            IF((theseLines(i)%p1%dim == 2) .AND. (thoseLines(j)%p1%dim == 2)) THEN
+              tmppoints(ipoint)=theseLines(i)%intersect(thoseLines(j))
+              ipoint=ipoint+1
+            ENDIF
+          ENDDO
+          !All lines with the other circles
+          DO j=1,thatPoly%nQuadEdge
+            CALL thoseCircs(j)%intersectArcLine(theseLines(i),tmppoints(ipoint), &
+              tmppoints(ipoint+1),tmppoints(ipoint+2),tmppoints(ipoint+3))
+            !Check if the points are on the circle
+            DO k=0,3
+              IF(tmppoints(ipoint+k)%DIM == 2) THEN
+                !If it's not on the circle, clear it.
+                x=tmppoints(ipoint+k)%coord(1)-thoseCircs(i)%c%coord(1)
+                y=tmppoints(ipoint+k)%coord(2)-thoseCircs(i)%c%coord(2)
+                IF(.NOT.(x*x+y*y .APPROXEQA. thoseCircs(i)%r*thoseCircs(i)%r)) &
+                  CALL tmppoints(ipoint+k)%clear()
+              ENDIF
+            ENDDO
+            ipoint=ipoint+4
+          ENDDO
+        ENDDO
+        !All circles with the other circles  (May need to improve this intersection routine for arcs...
+        !TheseCircs
+        DO i=1,thisPoly%nQuadEdge
+          DO j=1,thatPoly%nVert
+            CALL theseCircs(i)%intersectArcLine(thoseLines(j),tmppoints(ipoint), &
+              tmppoints(ipoint+1),tmppoints(ipoint+2),tmppoints(ipoint+3))
+            !Check if the points are on the circle
+            DO k=0,3
+              IF(tmppoints(ipoint+k)%DIM == 2) THEN
+                !If it's not on the circle, clear it.
+                x=tmppoints(ipoint+k)%coord(1)-theseCircs(i)%c%coord(1)
+                y=tmppoints(ipoint+k)%coord(2)-theseCircs(i)%c%coord(2)
+                IF(.NOT.(x*x+y*y .APPROXEQA. theseCircs(i)%r*theseCircs(i)%r)) &
+                  CALL tmppoints(ipoint+k)%clear()
+              ENDIF
+            ENDDO
+            ipoint=ipoint+4
+          ENDDO
+          !ThoseCircs
+          DO j=1,thatPoly%nQuadEdge
+            CALL theseCircs(i)%intersectCircle(thoseCircs(j),tmppoints(ipoint), &
+              tmppoints(ipoint+1))
+            ipoint=ipoint+2
+          ENDDO
+        ENDDO
+        !Clear the first set of lines
+        DO i=1,thisPoly%nVert
+          CALL theseLines(i)%clear()
+        ENDDO
+        !Clear the first set of circles
+        DO i=1,thisPoly%nQuadEdge
+          CALL theseCircs(i)%clear()
+        ENDDO
+        !Clear the rest of the circles
+        DO j=1,thatPoly%nQuadEdge
+          CALL thoseCircs(j)%clear()
+        ENDDO
+        !Clear the rest of the lines.
+        DO j=1,thatPoly%nVert
+          CALL thoseLines(j)%clear()
+        ENDDO
+        !How to handle subregion intersections?  Do we just eliminate the points that are %inside the subregion?
+        
+        !Get the reduced set of points that were actual intersections.  
+        !Eliminate duplicate points.
+        DO i=1,SIZE(tmppoints)
+          DO j=i+1,SIZE(tmppoints)
+            IF(tmppoints(i) == tmppoints(j)) CALL tmppoints(j)%clear()
+          ENDDO
+        ENDDO
+        npoints=0
+        DO i=1,SIZE(tmppoints)
+          IF(tmppoints(i)%dim == 2) npoints=npoints+1
+        ENDDO
+        ALLOCATE(points(npoints))
+        ipoint=1
+        DO i=1,SIZE(tmppoints)
+          IF(tmppoints(i)%dim == 2) THEN
+            points(ipoint)=tmppoints(i)
+            ipoint=ipoint+1
+          ENDIF
+          CALL tmppoints(i)%clear()
+        ENDDO
+        
+        !Clear stuff
+        DEALLOCATE(tmppoints)
+        DEALLOCATE(theseLines,thoseLines)
+        IF(ALLOCATED(theseCircs)) DEALLOCATE(theseCircs)
+        IF(ALLOCATED(thoseCircs)) DEALLOCATE(thoseCircs)
+      ENDIF
+    ENDSUBROUTINE intersectPoly_PolygonType
 !
 !-------------------------------------------------------------------------------
 !> @brief
@@ -741,5 +855,65 @@ MODULE Geom_Poly
       CALL polygon%set(g)
       CALL g%clear()
     ENDSUBROUTINE Polygonize_ABBox
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param
+!>
+    PURE SUBROUTINE createArcFromQuad(thisPoly,iquad,circle)
+      TYPE(PolygonType),INTENT(IN) :: thisPoly
+      INTEGER(SIK),INTENT(IN) :: iquad
+      TYPE(CircleType),INTENT(INOUT) :: circle
+      INTEGER(SIK) :: iedge
+      REAL(SRK) :: angstart,angstop
+      TYPE(PointType) :: centroid,refpoint
+      TYPE(LineType) :: edge
+      
+      IF((thisPoly%nQuadEdge > 0) .AND. (0 < iquad) .AND. & 
+          (iquad <= thisPoly%nQuadEdge)) THEN
+        iedge=thisPoly%quad2edge(iquad)
+        CALL edge%set(thisPoly%vert(thisPoly%edge(1,iedge)), &
+          thisPoly%vert(thisPoly%edge(2,iedge)))
+        CALL centroid%init(DIM=2,X=thisPoly%quadEdge(1,iquad), &
+          Y=thisPoly%quadEdge(2,iquad))
+        !Need to get the starting and stopping angles...
+        refpoint=centroid
+        refpoint%coord(1)=refpoint%coord(1)+1.0_SRK
+        !Starting angle uses the line endpoint
+        IF(edge%pointIsRight(centroid)) THEN
+          !starting angle is in quadrant 3 or 4
+          IF(edge%p2%coord(2) .APPROXLE. centroid%coord(2)) THEN
+            angstart=outerAngle(edge%p2,centroid,refpoint)
+          ELSE
+            angstart=innerAngle(edge%p2,centroid,refpoint)
+          ENDIF
+          !stopping angle is in quadrant 3 or 4
+          IF(edge%p1%coord(2) .APPROXLE. centroid%coord(2)) THEN
+            angstop=outerAngle(edge%p1,centroid,refpoint)
+          ELSE
+            angstop=innerAngle(edge%p1,centroid,refpoint)
+          ENDIF
+        !Starting angle uses the line startpoint
+        ELSE
+          !starting angle is in quadrant 3 or 4
+          IF(edge%p1%coord(2) .APPROXLE. centroid%coord(2)) THEN
+            angstart=outerAngle(edge%p1,centroid,refpoint)
+          ELSE
+            angstart=innerAngle(edge%p1,centroid,refpoint)
+          ENDIF
+          !stopping angle is in quadrant 3 or 4
+          IF(edge%p2%coord(2) .APPROXLE. centroid%coord(2)) THEN
+            angstop=outerAngle(edge%p2,centroid,refpoint)
+          ELSE
+            angstop=innerAngle(edge%p2,centroid,refpoint)
+          ENDIF
+        ENDIF
+        CALL circle%set(centroid,thisPoly%quadEdge(3,iquad), &
+          ANGSTT=angstart,ANGSTP=angstop)
+        CALL centroid%clear()
+        CALL refpoint%clear()
+        CALL edge%clear()
+      ENDIF
+    ENDSUBROUTINE createArcFromQuad
 !
 ENDMODULE Geom_Poly
