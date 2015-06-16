@@ -861,7 +861,7 @@ MODULE Geom_Poly
 !> @param
 !>
     PURE SUBROUTINE createArcFromQuad(thisPoly,iquad,circle)
-      TYPE(PolygonType),INTENT(IN) :: thisPoly
+      CLASS(PolygonType),INTENT(IN) :: thisPoly
       INTEGER(SIK),INTENT(IN) :: iquad
       TYPE(CircleType),INTENT(INOUT) :: circle
       INTEGER(SIK) :: iedge
