@@ -238,7 +238,7 @@ MODULE Geom
       CALL tmpG%defineEdge(vPrev,vert)
       DO i=1,m
         WRITE(ivchar,'(i8)') i; ivchar=ADJUSTL(ivchar)
-        CALL params%get('PolygonGeom->quad edge '//TRIM(ivchar)
+        !CALL params%get('PolygonGeom->quad edge '//TRIM(ivchar))
         !Set the quadratic edge data
       ENDDO
       CALL geom%set(tmpG)
