@@ -29,6 +29,9 @@ MODULE Geom_Graph
   USE IntrType
   USE Allocs
   USE VTKFiles
+  USE Geom_Points
+  USE Geom_Line
+  USE Geom_CircCyl
 
   IMPLICIT NONE
   PRIVATE
@@ -112,6 +115,12 @@ MODULE Geom_Graph
       !> @copybrief Geom_Graph::editToVTK_graphType
       !> @copydetails Geom_Graph::editToVTK_graphType
       PROCEDURE,PASS :: editToVTK => editToVTK_graphType
+      !> @copybrief Geom_Graph::combine_graphType
+      !> @copydetails Geom_Graph::combine_graphType
+      PROCEDURE,PASS :: combineGraph => combine_graphType
+      !> @copybrief Geom_Graph::triangulateVerts_graphType
+      !> @copydetails Geom_Graph::triangulateVerts_graphType
+      PROCEDURE,PASS :: triangulateVerts => triangulateVerts_graphType
       !> @copybrief Geom_Graph::clear_graphType
       !> @copydetails Geom_Graph::clear_graphType
       PROCEDURE,PASS :: clear => clear_graphType
@@ -971,6 +980,116 @@ MODULE Geom_Graph
 !>
 !>
 !>
+    SUBROUTINE combine_GraphType(thisGraph,g0)
+      CLASS(GraphType),INTENT(INOUT) :: thisGraph
+      TYPE(GraphType),INTENT(IN) :: g0
+      TYPE(GraphType) :: g
+      INTEGER(SIK) :: i,j,k,l,n,n0
+      REAL(SRK) :: a(2),b(2),c(2),d(2)
+      TYPE(PointType) :: p1,p2,p3,p4
+      TYPE(LineType) :: l1,l2
+      TYPE(CircleType) :: c1,c2
+      
+      g=thisGraph
+      n=nVert_graphType(g)
+      n0=nVert_graphType(g0)
+      CALL l1%p1%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
+      CALL l1%p2%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
+      CALL l2%p1%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
+      CALL l2%p2%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
+      !DO i=1,n0
+      !  DO j=i+1,n0
+      !    IF(g0%edgeMatrix(j,i) /= 0) THEN
+      !      a=g0%vertices(:,j)
+      !      b=g0%vertices(:,i)
+      !      DO k=1,n
+      !        DO l=k+1,n
+      !          IF(g%edgeMatrix(l,k) /= 0) THEN
+      !            c=g%vertices(:,k)
+      !            d=g%vertices(:,l)
+      !            
+      !            !Do these edges intersect...ugh
+      !            itype=g0%edgeMatrix(j,i)+g%edgeMatrix(l,k)
+      !            SELECTCASE(itype)
+      !              CASE(-2) !Circle-Circle
+      !                p1%coord=g0%quadEdges(1:2,j,i)
+      !                alp1=
+      !                alp2=
+      !                c1%set(p1,g0%quadEdges(3,j,i),alp1,alp2)
+      !                p1%coord=g%quadEdges(1:2,l,k)
+      !                alp1=
+      !                alp2=
+      !                c2%set(p1,g%quadEdges(3,l,k),alp1,alp2)
+      !                
+      !                c1%intersectCircle(c2,p1,p2)
+      !              CASE(0)  !Line and Circle
+      !                IF(g0%edgeMatrix(j,i) < 0) THEN
+      !                  p1%coord=g0%quadEdges(1:2,j,i)
+      !                  alp1=
+      !                  alp2=
+      !                  CALL c1%set(p1,g0%quadEdges(3,j,i),alp1,alp2)
+      !                  l1%p1%coord=a
+      !                  l1%p2%coord=b
+      !                ELSE
+      !                  p1%coord=g%quadEdges(1:2,l,k)
+      !                  alp1=
+      !                  alp2=
+      !                  CALL c1%set(p1,g%quadEdges(3,l,k),alp1,alp2)
+      !                  l1%p1%coord=c
+      !                  l1%p2%coord=d
+      !                ENDIF
+      !                CALL c1%arcLineIntersect(l1,p1,p2,p3,p4)
+      !                IF(p1%dim == 2) THEN
+      !                  
+      !                ENDIF
+      !                IF(p2%dim == 2) THEN
+      !                  
+      !                ENDIF
+      !              CASE(2)  !Line-Line
+      !                l1%p1%coord=a
+      !                l1%p2%coord=b
+      !                l1%p1%coord=c
+      !                l1%p2%coord=d
+      !                CALL l1%intersectLine(l2,p1)
+      !                IF(p1%dim == 2) THEN
+      !                  
+      !                ENDIF
+      !            ENDSELECT
+      !          ENDIF
+      !        ENDDO
+      !      ENDDO
+      !    ENDIF
+      !  ENDDO
+      !ENDDO
+      CALL l1%clear()
+      CALL l2%clear()
+      CALL p1%clear()
+      CALL p2%clear()
+      CALL p3%clear()
+      CALL p4%clear()
+    ENDSUBROUTINE combine_GraphType
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param
+!>
+!>
+!>
+    SUBROUTINE triangulateVerts_graphType(thisGraph)
+      CLASS(GraphType),INTENT(INOUT) :: thisGraph
+      
+      thisGraph%edgeMatrix=0
+      
+      !Perform Delaunay Triangulation of 2-D point cloud
+      
+    ENDSUBROUTINE triangulateVerts_graphType
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param
+!>
+!>
+!>
     FUNCTION add_GraphType(g0,g1) RESULT(g)
       TYPE(GraphType),INTENT(IN) :: g0
       TYPE(GraphType),INTENT(IN) :: g1
@@ -1019,7 +1138,8 @@ MODULE Geom_Graph
             SIZE(g0%quadEdges,DIM=2) == SIZE(g1%quadEdges,DIM=2) .AND. &
             SIZE(g0%quadEdges,DIM=3) == SIZE(g1%quadEdges,DIM=3)) THEN
           bool=.TRUE.
-          IF(ALLOCATED(g0%isCycleEdge) .AND. ALLOCATED(g1%isCycleEdge)) bool=bool .AND. ALL(g0%isCycleEdge .EQV. g1%isCycleEdge)
+          IF(ALLOCATED(g0%isCycleEdge) .AND. ALLOCATED(g1%isCycleEdge)) &
+            bool=bool .AND. ALL(g0%isCycleEdge .EQV. g1%isCycleEdge)
           bool=bool .AND. ALL(g0%vertices .APPROXEQA. g1%vertices) .AND. &
             ALL(g0%edgeMatrix == g1%edgeMatrix) .AND. &
             ALL(g0%quadEdges .APPROXEQA. g1%quadEdges)
