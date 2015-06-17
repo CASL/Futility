@@ -65,6 +65,8 @@ MODULE Geom_Poly
     INTEGER(SIK) :: nVert=0 
     !> The number of elements in the list of edges
     INTEGER(SIK) :: nQuadEdge=0 
+    !> Centroid of the polygon
+    TYPE(PointType) :: centroid
     !> The list of vertices SIZE(nvert)
     TYPE(PointType),ALLOCATABLE :: vert(:)
     !> The list of edges by the vert index SIZE (2,nvert)
@@ -119,14 +121,22 @@ MODULE Geom_Poly
 !> @brief
 !> @param
 !>
+!> Note:  References for the calculation of the centroid include:
+!> http://mathworld.wolfram.com/CircularSegment.html for the circular sector 
+!> portion, https://en.wikipedia.org/wiki/Centroid for Centroid of a polygon
+!> specified by vertices, and 
+!> http://www.slideshare.net/coolzero2012/centroids-moments-of-inertia for 
+!> how to set up the super-position of these elements altogether.
+!>
     SUBROUTINE set_PolygonType(thisPoly,thatGraph)
       CLASS(PolygonType) :: thisPoly
       TYPE(GraphType) :: thatGraph
       
       INTEGER(SIK) :: i,icw,iccw,icurr,inextold,inext,iedge,iquad
-      REAL(SRK) :: a,r,h,R1,coeff
+      REAL(SRK) :: a,r,h,R1,coeff,subarea,xcent,ycent,halftheta,sinhalftheta,sectorcent
       TYPE(PointType) :: point
       TYPE(LineType) :: line
+      TYPE(CircleType) :: circle
       
       !Check if thatGraph is closed (i.e. each vertex has only two neighbors)
       IF(ALLOCATED(thatGraph%vertices) .AND. thatGraph%isMinimumCycle()) THEN
@@ -150,13 +160,18 @@ MODULE Geom_Poly
         ENDIF
         inextold=1
         icurr=1
+        xcent=0.0_SRK; ycent=0.0_SRK
         DO i=2,thisPoly%nVert
           CALL thisPoly%vert(i)%init(DIM=2,X=thatGraph%vertices(1,inext), &
             Y=thatGraph%vertices(2,inext))
           !Using the CW-th point, the area calc will be negative.  Hence the ABS()
-          thisPoly%area=thisPoly%area+thisPoly%vert(i-1)%coord(1)* &
+          subarea=thisPoly%vert(i-1)%coord(1)* &
             thisPoly%vert(i)%coord(2)-thisPoly%vert(i-1)%coord(2)* &
             thisPoly%vert(i)%coord(1)
+          thisPoly%area=thisPoly%area+subarea
+          !When calculating the weighted means, we subtract because we're going CW instead of CCW
+          xcent=xcent-subarea*(thisPoly%vert(i-1)%coord(1)+thisPoly%vert(i)%coord(1))
+          ycent=ycent-subarea*(thisPoly%vert(i-1)%coord(2)+thisPoly%vert(i)%coord(2))
           !Set the edge
           thisPoly%edge(2,i-1)=i
           thisPoly%edge(1,i)=i
@@ -169,14 +184,21 @@ MODULE Geom_Poly
         ENDDO
         !Set last edge
         thisPoly%edge(2,thisPoly%nVert)=1
-        thisPoly%area=thisPoly%area+thisPoly%vert(thisPoly%nVert)%coord(1)* &
+        subarea=thisPoly%vert(thisPoly%nVert)%coord(1)* &
           thisPoly%vert(1)%coord(2)-thisPoly%vert(thisPoly%nVert)%coord(2)* &
           thisPoly%vert(1)%coord(1)
+        thisPoly%area=thisPoly%area+subarea
+        !When calculating the weighted means, we subtract because we're going CW instead of CCW
+        xcent=xcent-subarea*(thisPoly%vert(thisPoly%nVert)%coord(1)+thisPoly%vert(1)%coord(1))
+        ycent=ycent-subarea*(thisPoly%vert(thisPoly%nVert)%coord(2)+thisPoly%vert(1)%coord(2))
+        
         !Check if it's a quadratic edge to count
         IF(thatGraph%quadEdges(3,1,icurr) > 0.0_SRK) thisPoly%nQuadEdge=thisPoly%nQuadEdge+1
         !Last component of the area calc.
         thisPoly%area=ABS(thisPoly%area*0.5_SRK)
-          
+        xcent=xcent/6.0_SRK
+        ycent=ycent/6.0_SRK
+        
         !Setup the quadratic edges if necessary
         IF(thisPoly%nQuadEdge > 0) THEN
           CALL dmallocA(thisPoly%quadEdge,3,thisPoly%nQuadEdge)
@@ -211,11 +233,11 @@ MODULE Geom_Poly
             thisPoly%quad2edge(iquad)=thisPoly%nvert
           ENDIF
             
-          
           !Now do the chord area checks, because they're all positive values.
           DO i=1,thisPoly%nQuadEdge
             coeff=1.0_SRK
             IF(thisPoly%quadEdge(3,i) > 0.0_SRK) THEN
+              CALL createArcFromQuad(thisPoly,i,circle)
               CALL point%init(DIM=2,X=thisPoly%quadEdge(1,i), &
                 Y=thisPoly%quadEdge(2,i))
               !Setup line to test whether to add or subtract
@@ -233,11 +255,27 @@ MODULE Geom_Poly
               h=R1-r
               !Calculate Chord Sector area (Arc area - triangle area)
               IF(line%pointIsLeft(point)) coeff=-1.0_SRK
-              thisPoly%area=thisPoly%area+coeff*(R1*R1*ACOS((R1-h)/R1)- &
+              subarea=coeff*(R1*R1*ACOS(1.0_SRK-h/R1)- &
                 (R1-h)*SQRT(2*R1*h-h*h))
+              thisPoly%area=thisPoly%area+subarea
+              !Get theta from law of cosines, Use it to compute x centroid.  y cent is 0.0_SRK
+              halftheta=0.5_SRK*ACOS((-a*a)/(2*R1*R1)+1.0_SRK)
+              sinhalftheta=SIN(halftheta)
+              sectorcent=2.0_SRK/3.0_SRK*R1*R1*R1* &
+                sinhalftheta*sinhalftheta*sinhalftheta
+                
+              !Rotate the centroid from the reference frame of x,0 to the acutal geom.
+              !When calculating the weighted means, we subtract because we're going CW instead of CCW
+              xcent=xcent-coeff*(sectorcent*COS(halftheta+circle%thetastt))
+              ycent=ycent-coeff*(sectorcent*SIN(halftheta+circle%thetastt))
+              
+              !Clear things
+              CALL circle%clear()
+              CALL line%clear()
             ENDIF
           ENDDO
         ENDIF
+        CALL thisPoly%centroid%init(DIM=2,X=xcent/thisPoly%area,Y=ycent/thisPoly%area)
         thisPoly%isinit=.TRUE.
       ENDIF
     ENDSUBROUTINE set_PolygonType
@@ -261,6 +299,7 @@ MODULE Geom_Poly
       thisPolygon%nVert=0
       thisPolygon%nQuadEdge=0
       thisPolygon%area=0.0_SRK
+      CALL thisPolygon%centroid%clear()
       thisPolygon%isinit=.FALSE.
     ENDSUBROUTINE clear_PolygonType
 !

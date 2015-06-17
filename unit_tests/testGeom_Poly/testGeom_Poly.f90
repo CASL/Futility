@@ -45,7 +45,7 @@ PROGRAM testGeom_Poly
   REGISTER_SUBTEST('Test Subtract Sub-Volume',testSubtractSubVol)
   REGISTER_SUBTEST('Test Inside',testInside)
   REGISTER_SUBTEST('Test IntersectLine',testIntersectLine)
-  REGISTER_SUBTEST('Test IntersectPoly',testIntersectPoly)
+  !REGISTER_SUBTEST('Test IntersectPoly',testIntersectPoly)
   REGISTER_SUBTEST('Test Polygonize',testPolygonize)
   REGISTER_SUBTEST('Test GenerateGraph',testGenerateGraph)
 
@@ -98,9 +98,9 @@ PROGRAM testGeom_Poly
       REAL(SRK) :: testCoord(2,9),c0(2),r
       
       !Setup test graph - isosceles triangle
-      testCoord(:,1)=(/-1.0_SRK,-1.0_SRK/)
-      testCoord(:,2)=(/1.0_SRK,-1.0_SRK/)
-      testCoord(:,3)=(/0.0_SRK,2.0_SRK/)
+      testCoord(:,1)=(/-1.0_SRK,-2.0_SRK/)
+      testCoord(:,2)=(/1.0_SRK,-2.0_SRK/)
+      testCoord(:,3)=(/0.0_SRK,1.0_SRK/)
       DO i=1,3
         CALL testGraph%insertVertex(testCoord(:,i))
       ENDDO
@@ -129,6 +129,9 @@ PROGRAM testGeom_Poly
       ASSERT(ALL(testPolyType%edge(:,2) == (/2,3/)),'triangle %edge(:,2)')
       ASSERT(ALL(testPolyType%edge(:,3) == (/3,1/)),'triangle %edge(:,3)')
       ASSERT(testPolyType%area .APPROXEQA. 3.0_SRK,'%area')
+      bool=(testPolyType%centroid%coord(1) .APPROXEQA. 0.0_SRK) .AND. &
+        (testPolyType%centroid%coord(2) .APPROXEQA. -1.0_SRK)
+      ASSERT(bool,'%centroid')
       
       CALL testGraph%clear()
       CALL testPolyType%clear()
@@ -160,6 +163,9 @@ PROGRAM testGeom_Poly
       ASSERT(ALL(testPolyType%edge(:,3) == (/3,4/)),'rectangle %edge(:,3)')
       ASSERT(ALL(testPolyType%edge(:,4) == (/4,1/)),'rectangle %edge(:,4)')
       ASSERT(testPolyType%area .APPROXEQA. 18.0_SRK,'%area')
+      bool=(testPolyType%centroid%coord(1) .APPROXEQA. -0.5_SRK) .AND. &
+        (testPolyType%centroid%coord(2) .APPROXEQA. 1.0_SRK)
+      ASSERT(bool,'%centroid')
       
       CALL testGraph%clear()
       CALL testPolyType%clear()
@@ -212,6 +218,9 @@ PROGRAM testGeom_Poly
         (/0.0_SRK,0.0_SRK, SQRT(8.0_SRK)/))
       ASSERT(bool,'square-circ %quadEdge(:,4)')
       ASSERT(testPolyType%area .APPROXEQA. 25.13274122871835_SRK,'%area')
+      bool=(testPolyType%centroid%coord(1) .APPROXEQA. 0.0_SRK) .AND. &
+        (testPolyType%centroid%coord(2) .APPROXEQA. 0.0_SRK)
+      ASSERT(bool,'%centroid')
       
       !CALL testGraph%clear()
       !CALL testPolyType%clear()
@@ -286,6 +295,9 @@ PROGRAM testGeom_Poly
         (/4.0_SRK,0.0_SRK,SQRT(8.0_SRK)/))
       ASSERT(bool,'square-quad %quadEdge(:,1)')
       ASSERT(testPolyType%area .APPROXEQA. 16.0_SRK-2.28318530717959_SRK,'%area')
+      bool=(testPolyType%centroid%coord(1) .APPROXEQA. -0.388817189177665_SRK) .AND. &
+        (testPolyType%centroid%coord(2) .APPROXEQA. 0.0_SRK)
+      ASSERT(bool,'%centroid')
       
       CALL testGraph%clear()
       CALL testPolyType%clear()
@@ -669,6 +681,7 @@ PROGRAM testGeom_Poly
     ENDSUBROUTINE testIntersectLine
 !
 !-------------------------------------------------------------------------------
+!
     SUBROUTINE testIntersectPoly()
       INTEGER(SIK) :: i,inext
       REAL(SRK) :: testCoord(2,9),c0(2),r
