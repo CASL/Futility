@@ -25,14 +25,15 @@
 MODULE ExtendedMath
 
   USE IntrType
+  USE Constants_Conversion
   IMPLICIT NONE
   PRIVATE
 
   PUBLIC :: GAMMAF
   PUBLIC :: Rational_Fraction
   PUBLIC :: GreatestCommonDivisor
-
-  REAL(SRK),PARAMETER,PRIVATE :: PI=3.141592653589793_SRK
+  PUBLIC :: ATAN2PI
+  
 
   CONTAINS
 !
@@ -135,7 +136,7 @@ MODULE ExtendedMath
       tmpnum=num
       num=coef(lev-1)*num+denom
       denom=tmpnum
-      IF(lev>2) THEN
+      IF(lev > 2) THEN
         CALL simplify_rat_frac(coef,lev-1,num,denom)
       ENDIF
     ENDSUBROUTINE simplify_rat_frac
@@ -158,7 +159,7 @@ MODULE ExtendedMath
 
       a=0; b=0; c=0
 
-      IF(a1>0 .AND. a2>0) THEN
+      IF(a1 > 0 .AND. a2 > 0) THEN
         IF(a1 < a2) THEN
           a=a2
           b=a1
@@ -169,12 +170,20 @@ MODULE ExtendedMath
 
         DO
           c=MOD(a,b)
-          IF(c==0) EXIT
+          IF(c == 0) EXIT
           a=b
           b=c
         ENDDO
       ENDIF
     ENDFUNCTION GreatestCommonDivisor
-
+!
+!-------------------------------------------------------------------------------
+    ELEMENTAL FUNCTION ATAN2PI(x,y) RESULT(theta)
+      REAL(SRK),INTENT(IN) :: x
+      REAL(SRK),INTENT(IN) :: y
+      REAL(SRK) :: theta
+      theta=ATAN2(y,x)
+      IF(theta < 0) theta=TWOPI+theta
+    ENDFUNCTION ATAN2PI
 !
 ENDMODULE ExtendedMath
