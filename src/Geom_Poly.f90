@@ -91,6 +91,9 @@ MODULE Geom_Poly
       !> @copybrief Geom_Poly::inside_PolygonType
       !> @copydetails Geom_Poly::inside_PolygonType
       PROCEDURE,PASS :: inside => inside_PolygonType
+      !> @copybrief Geom_Poly::onSurface_PolygonType
+      !> @copydetails Geom_Poly::onSurface_PolygonType
+      PROCEDURE,PASS :: onSurface => onSurface_PolygonType
       !> @copybrief Geom_Poly::intersectLine_PolygonType
       !> @copydetails Geom_Poly::intersectLine_PolygonType
       PROCEDURE,PASS :: intersectLine => intersectLine_PolygonType
@@ -317,8 +320,6 @@ MODULE Geom_Poly
 !> @param point The point type to check if it lies inside the polygontype
 !> @param bool The logical result of this operation.  TRUE if the point is inside.
 !>
-!> NOTES: Working on getting this functional with quadratic edges.
-!>
     PURE RECURSIVE FUNCTION inside_PolygonType(thisPoly,point) RESULT(bool)
       CLASS(PolygonType),INTENT(IN) :: thisPoly
       TYPE(PointType),INTENT(IN) :: point
@@ -416,6 +417,76 @@ MODULE Geom_Poly
         bool=inPoly
       ENDIF
     ENDFUNCTION inside_PolygonType
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param thisPoly The polygon type used in the query
+!> @param point The point type to check if it lies on the surface of the 
+!>        polygontype
+!> @param bool The logical result of this operation.  TRUE if the point is on 
+!>        the surface.
+!>
+    PURE RECURSIVE FUNCTION onSurface_PolygonType(thisPoly,point) RESULT(bool)
+      CLASS(PolygonType),INTENT(IN) :: thisPoly
+      TYPE(PointType),INTENT(IN) :: point
+      INTEGER(SIK) :: i
+      REAL(SRK) :: d
+      TYPE(PointType) :: centroid
+      TYPE(LineType) :: line
+      
+      IF(thisPoly%isinit .AND. point%dim == 2) THEN
+        bool=.FALSE.
+        !Check straight lines.
+        DO i=1,thisPoly%nVert
+          IF(thisPoly%nQuadEdge > 0) THEN
+            IF(ALL(thisPoly%quad2edge /= i)) THEN
+              CALL line%set(thisPoly%vert(thisPoly%edge(1,i)), &
+                thisPoly%vert(thisPoly%edge(2,i)))
+              d=line%distance2Point(point)
+            ENDIF
+          ELSE
+            CALL line%set(thisPoly%vert(thisPoly%edge(1,i)), &
+              thisPoly%vert(thisPoly%edge(2,i)))
+            d=line%distance2Point(point)
+          ENDIF
+          IF(d .APPROXEQA. 0.0_SRK) THEN
+            bool=.TRUE.
+            EXIT
+          ENDIF
+          CALL line%clear()
+        ENDDO
+        
+        !Check quadratic edges now if need be
+        IF(.NOT.bool .AND. thisPoly%nQuadEdge > 0) THEN
+          DO i=1,thisPoly%nQuadEdge
+            !First check if the point is on the surface of the circle
+            IF(((point%coord(1)-thisPoly%quadEdge(1,i))* &
+              (point%coord(1)-thisPoly%quadEdge(1,i))+ &
+              (point%coord(2)-thisPoly%quadEdge(2,i))* &
+              (point%coord(2)-thisPoly%quadEdge(2,i))) .APPROXEQA. &
+                (thisPoly%quadEdge(3,i)*thisPoly%quadEdge(3,i))) THEN
+              !Check if the point is within the arc range 
+              CALL centroid%init(DIM=2,X=thisPoly%quadEdge(1,i), &
+                Y=thisPoly%quadEdge(2,i))
+              iedge=thisPoly%quad2edge(i)
+              CALL line%set(thisPoly%vert(thisPoly%edge(1,iedge)), &
+                thisPoly%vert(thisPoly%edge(2,iedge)))
+              !If the centroid is on the left, the valid portion of the 
+              !arc lies to the right of the line.  Also, check the end points.
+              IF(line%pointIsLeft(centroid)) THEN
+                bool=line%pointIsRight(point) .OR. &
+                  (point == line%p1) .OR. (point == line%p2)
+              !If the centroid is on the right, the valid portion of the 
+              !arc lies to the left of the line.  Also, check the end points.
+              ELSE
+                bool=line%pointIsLeft(point) .OR. &
+                  (point == line%p1) .OR. (point == line%p2)
+              ENDIF
+            ENDIF
+          ENDDO
+        ENDIF
+      ENDIF
+    ENDFUNCTION onSurface_PolygonType
 !
 !-------------------------------------------------------------------------------
 !> @brief
