@@ -390,7 +390,7 @@ MODULE Geom_Points
 !> @param p1 the second point to be assigned from
 !>
 !> Function is elemental so it can be used on an array of points.
-    PURE SUBROUTINE assign_PointType(p0,p1)
+    ELEMENTAL SUBROUTINE assign_PointType(p0,p1)
       TYPE(PointType),INTENT(INOUT) :: p0
       TYPE(PointType),INTENT(IN) :: p1
       p0%dim=p1%dim
