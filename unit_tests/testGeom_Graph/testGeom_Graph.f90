@@ -200,11 +200,72 @@ PROGRAM testGeom_Graph
       ASSERT(bool,'%edgeMatrix size vertices')
 
       CALL testGraph%clear()
+      
+      COMPONENT_TEST('Vertical Lines')
+      testCoord(:,1)=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,2)=(/0.0_SRK,0.5_SRK/)
+      testCoord(:,3)=(/0.0_SRK,1.0_SRK/)
+      testCoord(:,4)=(/1.0_SRK,0.0_SRK/)
+      testCoord(:,5)=(/1.0_SRK,0.5_SRK/)
+      testCoord(:,6)=(/1.0_SRK,1.0_SRK/)
+      CALL testGraph%insertVertex(testCoord(:,1))
+      ASSERTFAIL(ALLOCATED(testGraph%vertices),'ALLOCATED(%vertices) 1')
+      ASSERT(SIZE(testGraph%vertices,DIM=1) == 2,'SIZE(%vertices,DIM=1) 1')
+      ASSERT(SIZE(testGraph%vertices,DIM=2) == 1,'SIZE(%vertices,DIM=2) 1')
+      bool=ALL(testGraph%vertices(:,1) == testCoord(:,1))
+      ASSERT(bool,'%vertices (values) 1')
+      CALL testGraph%insertVertex(testCoord(:,3))
+      ASSERTFAIL(ALLOCATED(testGraph%vertices),'ALLOCATED(%vertices) 2')
+      ASSERT(SIZE(testGraph%vertices,DIM=1) == 2,'SIZE(%vertices,DIM=1) 2')
+      ASSERT(SIZE(testGraph%vertices,DIM=2) == 2,'SIZE(%vertices,DIM=2) 2')
+      bool=ALL(testGraph%vertices(:,1) == testCoord(:,1)) .AND. &
+           ALL(testGraph%vertices(:,2) == testCoord(:,3))
+      ASSERT(bool,'%vertices (values) 2')
+      CALL testGraph%insertVertex(testCoord(:,4))
+      ASSERTFAIL(ALLOCATED(testGraph%vertices),'ALLOCATED(%vertices) 3')
+      ASSERT(SIZE(testGraph%vertices,DIM=1) == 2,'SIZE(%vertices,DIM=1) 3')
+      ASSERT(SIZE(testGraph%vertices,DIM=2) == 3,'SIZE(%vertices,DIM=2) 3')
+      bool=ALL(testGraph%vertices(:,1) == testCoord(:,1)) .AND. &
+           ALL(testGraph%vertices(:,2) == testCoord(:,3)) .AND. &
+           ALL(testGraph%vertices(:,3) == testCoord(:,4))
+      ASSERT(bool,'%vertices (values) 3')
+      CALL testGraph%insertVertex(testCoord(:,6))
+      ASSERTFAIL(ALLOCATED(testGraph%vertices),'ALLOCATED(%vertices) 4')
+      ASSERT(SIZE(testGraph%vertices,DIM=1) == 2,'SIZE(%vertices,DIM=1) 4')
+      ASSERT(SIZE(testGraph%vertices,DIM=2) == 4,'SIZE(%vertices,DIM=2) 4')
+      bool=ALL(testGraph%vertices(:,1) == testCoord(:,1)) .AND. &
+           ALL(testGraph%vertices(:,2) == testCoord(:,3)) .AND. &
+           ALL(testGraph%vertices(:,3) == testCoord(:,4)) .AND. &
+           ALL(testGraph%vertices(:,4) == testCoord(:,6))
+      ASSERT(bool,'%vertices (values) 4')
+      CALL testGraph%insertVertex(testCoord(:,2))
+      ASSERTFAIL(ALLOCATED(testGraph%vertices),'ALLOCATED(%vertices) 5')
+      ASSERT(SIZE(testGraph%vertices,DIM=1) == 2,'SIZE(%vertices,DIM=1) 5')
+      ASSERT(SIZE(testGraph%vertices,DIM=2) == 5,'SIZE(%vertices,DIM=2) 5')
+      bool=ALL(testGraph%vertices(:,1) == testCoord(:,1)) .AND. &
+           ALL(testGraph%vertices(:,2) == testCoord(:,2)) .AND. &
+           ALL(testGraph%vertices(:,3) == testCoord(:,3)) .AND. &
+           ALL(testGraph%vertices(:,4) == testCoord(:,4)) .AND. &
+           ALL(testGraph%vertices(:,5) == testCoord(:,6))
+      ASSERT(bool,'%vertices (values) 5')
+      CALL testGraph%insertVertex(testCoord(:,5))
+      ASSERTFAIL(ALLOCATED(testGraph%vertices),'ALLOCATED(%vertices) 6')
+      ASSERT(SIZE(testGraph%vertices,DIM=1) == 2,'SIZE(%vertices,DIM=1) 6')
+      ASSERT(SIZE(testGraph%vertices,DIM=2) == 6,'SIZE(%vertices,DIM=2) 6')
+      bool=ALL(testGraph%vertices == testCoord)
+      ASSERT(bool,'%vertices (values) 6')
+      CALL testGraph%insertVertex(testCoord(:,5))
+      ASSERTFAIL(ALLOCATED(testGraph%vertices),'ALLOCATED(%vertices) 6')
+      ASSERT(SIZE(testGraph%vertices,DIM=1) == 2,'SIZE(%vertices,DIM=1) 6')
+      ASSERT(SIZE(testGraph%vertices,DIM=2) == 6,'SIZE(%vertices,DIM=2) 6')
+      bool=ALL(testGraph%vertices == testCoord)
+      ASSERT(bool,'%vertices (values) 6')
+      CALL testGraph%clear()
     ENDSUBROUTINE testInsertVertex
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testGetVertIndex()
-      REAL(SRK) :: testCoord(2,6)
+      REAL(SRK) :: testCoord(2,7)
 
       testCoord(:,1)=(/1.0_SRK,2.0_SRK/)
       testCoord(:,2)=(/2.0_SRK,0.0_SRK/)
@@ -275,6 +336,51 @@ PROGRAM testGeom_Graph
       ASSERT(testGraph%getVertIndex(testCoord(:,5)) ==  5,'5')
       ASSERT(testGraph%getVertIndex(testCoord(:,6)) ==  6,'6')
 
+      CALL testGraph%clear()
+      
+      COMPONENT_TEST('Vertical Lines')
+      testCoord(:,1)=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,2)=(/0.0_SRK,0.5_SRK/)
+      testCoord(:,3)=(/0.0_SRK,1.0_SRK/)
+      testCoord(:,4)=(/1.0_SRK,0.0_SRK/)
+      testCoord(:,5)=(/1.0_SRK,0.5_SRK/)
+      testCoord(:,6)=(/1.0_SRK,1.0_SRK/)
+      testCoord(:,7)=(/0.5_SRK,0.5_SRK/)
+      CALL testGraph%insertVertex(testCoord(:,1))
+      ASSERT(testGraph%getVertIndex(testCoord(:,1)) ==  1,'1 (1)')
+      CALL testGraph%insertVertex(testCoord(:,3))
+      ASSERT(testGraph%getVertIndex(testCoord(:,1)) ==  1,'1 (2)')
+      ASSERT(testGraph%getVertIndex(testCoord(:,3)) ==  2,'2 (2)')
+      CALL testGraph%insertVertex(testCoord(:,4))
+      ASSERT(testGraph%getVertIndex(testCoord(:,1)) ==  1,'1 (3)')
+      ASSERT(testGraph%getVertIndex(testCoord(:,3)) ==  2,'2 (3)')
+      ASSERT(testGraph%getVertIndex(testCoord(:,4)) ==  3,'3 (3)')
+      CALL testGraph%insertVertex(testCoord(:,6))
+      ASSERT(testGraph%getVertIndex(testCoord(:,1)) ==  1,'1 (4)')
+      ASSERT(testGraph%getVertIndex(testCoord(:,3)) ==  2,'2 (4)')
+      ASSERT(testGraph%getVertIndex(testCoord(:,4)) ==  3,'3 (4)')
+      ASSERT(testGraph%getVertIndex(testCoord(:,6)) ==  4,'4 (4)')
+      CALL testGraph%insertVertex(testCoord(:,2))
+      ASSERT(testGraph%getVertIndex(testCoord(:,1)) ==  1,'1 (5)')
+      ASSERT(testGraph%getVertIndex(testCoord(:,2)) ==  2,'2 (5)')
+      ASSERT(testGraph%getVertIndex(testCoord(:,3)) ==  3,'3 (5)')
+      ASSERT(testGraph%getVertIndex(testCoord(:,4)) ==  4,'4 (5)')
+      ASSERT(testGraph%getVertIndex(testCoord(:,6)) ==  5,'5 (5)')
+      CALL testGraph%insertVertex(testCoord(:,5))
+      ASSERT(testGraph%getVertIndex(testCoord(:,1)) ==  1,'1 (6)')
+      ASSERT(testGraph%getVertIndex(testCoord(:,2)) ==  2,'2 (6)')
+      ASSERT(testGraph%getVertIndex(testCoord(:,3)) ==  3,'3 (6)')
+      ASSERT(testGraph%getVertIndex(testCoord(:,4)) ==  4,'4 (6)')
+      ASSERT(testGraph%getVertIndex(testCoord(:,5)) ==  5,'5 (6)')
+      ASSERT(testGraph%getVertIndex(testCoord(:,6)) ==  6,'6 (6)')
+      CALL testGraph%insertVertex(testCoord(:,7))
+      ASSERT(testGraph%getVertIndex(testCoord(:,1)) ==  1,'1 (7)')
+      ASSERT(testGraph%getVertIndex(testCoord(:,2)) ==  2,'2 (7)')
+      ASSERT(testGraph%getVertIndex(testCoord(:,3)) ==  3,'3 (7)')
+      ASSERT(testGraph%getVertIndex(testCoord(:,7)) ==  4,'4 (7)')
+      ASSERT(testGraph%getVertIndex(testCoord(:,4)) ==  5,'5 (7)')
+      ASSERT(testGraph%getVertIndex(testCoord(:,5)) ==  6,'6 (7)')
+      ASSERT(testGraph%getVertIndex(testCoord(:,6)) ==  7,'7 (7)')
       CALL testGraph%clear()
     ENDSUBROUTINE testGetVertIndex
 !
@@ -1334,4 +1440,4 @@ PROGRAM testGeom_Graph
       ENDDO
     ENDSUBROUTINE symEdgeCheck
 !
-ENDPROGRAM testGeom_Graph
+  ENDPROGRAM testGeom_Graph

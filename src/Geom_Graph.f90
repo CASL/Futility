@@ -28,6 +28,7 @@
 MODULE Geom_Graph
   USE IntrType
   USE Allocs
+  USE ExtendedMath
   USE VTKFiles
   USE Geom_Points
   USE Geom_Line
@@ -186,6 +187,7 @@ MODULE Geom_Graph
             idx=i
           ELSE
             DO j=i+1,n
+              IF(.NOT.(coord(1) .APPROXEQA. thisGraph%vertices(1,j))) EXIT
               IF(coord(2) .APPROXEQA. thisGraph%vertices(2,j)) THEN
                 idx=j
                 EXIT
@@ -417,74 +419,81 @@ MODULE Geom_Graph
     SUBROUTINE insertVertex_graphType(thisGraph,coord)
       CLASS(GraphType),INTENT(INOUT) :: thisGraph
       REAL(SRK),INTENT(IN) :: coord(2)
-      INTEGER(SIK) :: i,j,n,k
+      INTEGER(SIK) :: i,j,n,k,idx
       INTEGER(SIK),ALLOCATABLE :: tmpE(:,:)
       REAL(SRK),ALLOCATABLE :: tmpVertices(:,:),tmpQE(:,:,:)
       IF(ALLOCATED(thisGraph%vertices)) THEN
         n=SIZE(thisGraph%vertices,DIM=2)
         CALL dmallocA(tmpVertices,2,n+1)
         j=0
+        k=0
         DO i=1,n
           IF(coord(1) <= thisGraph%vertices(1,i)) THEN
             IF(coord(1) .APPROXEQA. thisGraph%vertices(1,i)) THEN
               IF(coord(2) .APPROXEQA. thisGraph%vertices(2,i)) THEN
-                k=-1 !Duplicate vertex
+                idx=-1 !Duplicate vertex
               ELSEIF(coord(2) < thisGraph%vertices(2,i)) THEN                
-                k=i !Before i
+                idx=i !Before i
               ELSE
                 !After i
                 DO j=i+1,n
                   !Find index for end of sequence with same x value
                   IF(.NOT.(coord(1) .APPROXEQA. thisGraph%vertices(1,j))) EXIT
                 ENDDO
+                j=j-1
+
                 !Search on y through sequence of same x
-                DO k=i+1,j-1
-                  IF(coord(2) < thisGraph%vertices(2,k)) EXIT
+                DO k=i+1,j
+                  IF(coord(2) .APPROXEQA. thisGraph%vertices(2,k)) THEN
+                    idx=-1
+                    EXIT
+                  ELSEIF(coord(2) < thisGraph%vertices(2,k)) THEN
+                    idx=k
+                    EXIT
+                  ENDIF
                 ENDDO
+                IF(k == j+1) idx=k
               ENDIF
             ELSE
-              k=i !Before i
+              idx=i !Before i
             ENDIF
             EXIT
           ENDIF
         ENDDO
         IF(j /= 0) i=j
-        IF(i == n+1) THEN
-          k=n+1 !Last point
-          i=n
-        ENDIF
-        IF(k > 0) THEN
-          IF(k > 1) tmpVertices(:,1:k-1)=thisGraph%vertices(:,1:i-1)
-          tmpVertices(:,k)=coord
-          tmpVertices(:,k+1:n+1)=thisGraph%vertices(:,i:n)
+        IF(i == n+1) idx=n+1 !Last point
+        IF(idx > 0) THEN
+          IF(idx > 1) tmpVertices(:,1:idx-1)=thisGraph%vertices(:,1:idx-1)
+          tmpVertices(:,idx)=coord
+          IF(idx <= n) tmpVertices(:,idx+1:n+1)=thisGraph%vertices(:,idx:n)
           CALL demallocA(thisGraph%vertices)
           CALL MOVE_ALLOC(tmpVertices,thisGraph%vertices)
           
           !Expand Edge Matrices
           CALL dmallocA(tmpE,n+1,n+1)
           CALL dmallocA(tmpQE,3,n+1,n+1)
-          DO j=1,k-1
-            DO i=1,k-1
+          DO j=1,idx-1
+            DO i=1,idx-1
               tmpE(i,j)=thisGraph%edgeMatrix(i,j)
               tmpE(j,i)=thisGraph%edgeMatrix(j,i)
               tmpQE(:,i,j)=thisGraph%quadEdges(:,i,j)
               tmpQE(:,j,i)=thisGraph%quadEdges(:,j,i)
             ENDDO
-            DO i=k+1,n+1
+            DO i=idx+1,n+1
               tmpE(i,j)=thisGraph%edgeMatrix(i-1,j)
               tmpE(j,i)=thisGraph%edgeMatrix(j,i-1)
               tmpQE(:,i,j)=thisGraph%quadEdges(:,i-1,j)
               tmpQE(:,j,i)=thisGraph%quadEdges(:,j,i-1)
             ENDDO
           ENDDO
-          DO j=k+1,n+1
-            DO i=1,k-1
+          DO j=idx+1,n+1
+            DO i=1,idx-1
               tmpE(i,j)=thisGraph%edgeMatrix(i,j-1)
               tmpE(j,i)=thisGraph%edgeMatrix(j-1,i)
               tmpQE(:,i,j)=thisGraph%quadEdges(:,i,j-1)
               tmpQE(:,j,i)=thisGraph%quadEdges(:,j-1,i)
             ENDDO
-            DO i=k+1,n+1
+            DO i=idx+1,n+1
               tmpE(i,j)=thisGraph%edgeMatrix(i-1,j-1)
               tmpE(j,i)=thisGraph%edgeMatrix(j-1,i-1)
               tmpQE(:,i,j)=thisGraph%quadEdges(:,i-1,j-1)
@@ -980,87 +989,137 @@ MODULE Geom_Graph
 !>
 !>
 !>
-    SUBROUTINE combine_GraphType(thisGraph,g0)
+    SUBROUTINE combine_GraphType(thisGraph,g)
       CLASS(GraphType),INTENT(INOUT) :: thisGraph
-      TYPE(GraphType),INTENT(IN) :: g0
-      TYPE(GraphType) :: g
-      INTEGER(SIK) :: i,j,k,l,n,n0
-      REAL(SRK) :: a(2),b(2),c(2),d(2)
+      TYPE(GraphType),INTENT(IN) :: g
+      TYPE(GraphType) :: g0,g1,lineAB
+      INTEGER(SIK) :: i,j,n,nAdj,v1,v2
+      REAL(SRK) :: a(2),b(2),c(2),d(2),alp1,alp2
       TYPE(PointType) :: p1,p2,p3,p4
       TYPE(LineType) :: l1,l2
       TYPE(CircleType) :: c1,c2
-      
-      g=thisGraph
-      n=nVert_graphType(g)
-      n0=nVert_graphType(g0)
+
+      SELECTTYPE(thisGraph); TYPE IS(GraphType)
+        CALL assign_GraphType(g0,thisGraph)
+      ENDSELECT
+      CALL assign_GraphType(g1,g)
       CALL l1%p1%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
       CALL l1%p2%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
       CALL l2%p1%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
       CALL l2%p2%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
-      !DO i=1,n0
-      !  DO j=i+1,n0
-      !    IF(g0%edgeMatrix(j,i) /= 0) THEN
-      !      a=g0%vertices(:,j)
-      !      b=g0%vertices(:,i)
-      !      DO k=1,n
-      !        DO l=k+1,n
-      !          IF(g%edgeMatrix(l,k) /= 0) THEN
-      !            c=g%vertices(:,k)
-      !            d=g%vertices(:,l)
-      !            
-      !            !Do these edges intersect...ugh
-      !            itype=g0%edgeMatrix(j,i)+g%edgeMatrix(l,k)
-      !            SELECTCASE(itype)
-      !              CASE(-2) !Circle-Circle
-      !                p1%coord=g0%quadEdges(1:2,j,i)
-      !                alp1=
-      !                alp2=
-      !                c1%set(p1,g0%quadEdges(3,j,i),alp1,alp2)
-      !                p1%coord=g%quadEdges(1:2,l,k)
-      !                alp1=
-      !                alp2=
-      !                c2%set(p1,g%quadEdges(3,l,k),alp1,alp2)
-      !                
-      !                c1%intersectCircle(c2,p1,p2)
-      !              CASE(0)  !Line and Circle
-      !                IF(g0%edgeMatrix(j,i) < 0) THEN
-      !                  p1%coord=g0%quadEdges(1:2,j,i)
-      !                  alp1=
-      !                  alp2=
-      !                  CALL c1%set(p1,g0%quadEdges(3,j,i),alp1,alp2)
-      !                  l1%p1%coord=a
-      !                  l1%p2%coord=b
-      !                ELSE
-      !                  p1%coord=g%quadEdges(1:2,l,k)
-      !                  alp1=
-      !                  alp2=
-      !                  CALL c1%set(p1,g%quadEdges(3,l,k),alp1,alp2)
-      !                  l1%p1%coord=c
-      !                  l1%p2%coord=d
-      !                ENDIF
-      !                CALL c1%arcLineIntersect(l1,p1,p2,p3,p4)
-      !                IF(p1%dim == 2) THEN
-      !                  
-      !                ENDIF
-      !                IF(p2%dim == 2) THEN
-      !                  
-      !                ENDIF
-      !              CASE(2)  !Line-Line
-      !                l1%p1%coord=a
-      !                l1%p2%coord=b
-      !                l1%p1%coord=c
-      !                l1%p2%coord=d
-      !                CALL l1%intersectLine(l2,p1)
-      !                IF(p1%dim == 2) THEN
-      !                  
-      !                ENDIF
-      !            ENDSELECT
-      !          ENDIF
-      !        ENDDO
-      !      ENDDO
-      !    ENDIF
-      !  ENDDO
-      !ENDDO
+      DO WHILE(nEdge_graphType(g1) > 0)
+        n=nVert_graphType(g1)
+        v1=0; v2=0
+        outer: DO i=1,n
+          DO j=i+1,n
+            IF(g1%edgeMatrix(j,i) /= 0) THEN
+              v1=i
+              v2=j
+              EXIT outer
+            ENDIF
+          ENDDO
+        ENDDO outer
+
+        IF(v1 > 0 .AND. v2 > 0) THEN
+          a=g1%vertices(:,v1)
+          b=g1%vertices(:,v2)
+          CALL insertVertex_graphType(lineAB,a)
+          CALL insertVertex_graphType(lineAB,b)
+          IF(g1%edgeMatrix(v1,v2) == -1) THEN
+            p1%coord=g1%quadEdges(1:2,v1,v2)
+            alp1=ATAN2PI(b(1)-p1%coord(1),b(2)-p1%coord(2))
+            alp2=ATAN2PI(a(1)-p1%coord(1),a(2)-p1%coord(2))
+            CALL c1%set(p1,ABS(g1%quadEdges(3,v1,v2)),alp1,alp2)
+            !Compute arc midpoint
+          ELSE
+            l1%p1%coord=a
+            l1%p2%coord=b
+          ENDIF
+
+          n=nVert_graphType(thisGraph)
+          DO i=1,n
+            DO j=i+1,n
+              IF(thisGraph%edgeMatrix(j,i) /= 0) THEN
+                c=thisGraph%vertices(:,i)
+                d=thisGraph%vertices(:,j)
+              ENDIF
+              IF(thisGraph%edgeMatrix(j,i) == 1) THEN
+                l2%p1%coord=c
+                l2%p2%coord=d
+                IF(c1%r == 0.0_SRK) THEN
+                  p1=l1%intersectLine(l2)
+                  IF(p1%dim == 2) THEN
+                    CALL removeEdge_graphType(g0,c,d)
+                    CALL insertVertex_graphType(g0,p1%coord)
+                    CALL defineEdge_graphType(g0,c,p1%coord)
+                    CALL defineEdge_graphType(g0,d,p1%coord)
+                    CALL insertVertex_graphType(lineAB,p1%coord)
+                  ENDIF
+                ELSE
+                  !circle-line
+                  CALL c1%intersectArcLine(l2,p1,p2,p3,p4)
+                  IF(p1%dim == 2 .AND. p2%dim == 2) THEN
+                    CALL removeEdge_graphType(g0,c,d)
+                    CALL insertVertex_graphType(g0,p1%coord)
+                    CALL insertVertex_graphType(g0,p2%coord)
+                    CALL defineEdge_graphType(g0,p1%coord,p2%coord)
+                    CALL defineEdge_graphType(g0,c,p1%coord) !?
+                    CALL defineEdge_graphType(g0,d,p2%coord) !?
+                    CALL insertVertex_graphType(lineAB,p1%coord)
+                    CALL insertVertex_graphType(lineAB,p2%coord)
+                  ELSE
+                    IF(p1%dim /= 2 .AND. p2%dim == 2) p1=p2
+                    IF(p1%dim == 2) THEN
+                      CALL removeEdge_graphType(g0,c,d)
+                      CALL insertVertex_graphType(g0,p1%coord)
+                      CALL defineEdge_graphType(g0,c,p1%coord)
+                      CALL defineEdge_graphType(g0,d,p1%coord)
+                      CALL insertVertex_graphType(lineAB,p1%coord)
+                    ENDIF
+                  ENDIF
+                ENDIF
+              ELSEIF(thisGraph%edgeMatrix(j,i) == -1) THEN
+                p1%coord=thisGraph%quadEdges(1:2,i,j)
+                alp1=ATAN2PI(d(1)-p1%coord(1),d(2)-p1%coord(2))
+                alp2=ATAN2PI(c(1)-p1%coord(1),c(2)-p1%coord(2))
+                CALL c2%set(p1,ABS(g0%quadEdges(3,i,j)),alp1,alp2)
+                IF(c1%r == 0.0_SRK) THEN
+                  !line-circle
+
+                ELSE
+                  !circle-circle
+
+                ENDIF
+              ENDIF
+            ENDDO
+          ENDDO
+          IF(c1%r == 0.0_SRK) THEN
+            DO i=2,nVert_graphType(lineAB)
+              CALL defineEdge_graphType(g0,lineAB%vertices(:,i-1), &
+                lineAB%vertices(:,i)) 
+            ENDDO
+          ELSE
+            DO i=2,nVert_graphType(lineAB)
+              CALL defineQuadEdge_graphType(g0,lineAB%vertices(:,i-1), &
+                lineAB%vertices(:,i),c1%c%coord,c1%r) 
+            ENDDO
+          ENDIF
+          SELECTTYPE(thisGraph); TYPE IS(GraphType)
+            CALL assign_GraphType(thisGraph,g0)
+          ENDSELECT
+          CALL c1%clear()
+          CALL clear_graphType(lineAB)
+        ENDIF
+
+        !Remove the edge
+        CALL removeEdge_IJ_graphType(g1,v1,v2)
+        !Remove any isoloated vertices
+        nAdj=nAdjacent_graphType(g,v1)
+        IF(nAdj == 0) CALL removeVertex_idx_graphType(g1,v1)
+        v2=getVertIndex_graphType(g1,b)
+        nAdj=nAdjacent_graphType(g1,v2)
+        IF(nAdj == 0) CALL removeVertex_idx_graphType(g1,v2)
+      ENDDO
       CALL l1%clear()
       CALL l2%clear()
       CALL p1%clear()
@@ -1083,6 +1142,28 @@ MODULE Geom_Graph
       !Perform Delaunay Triangulation of 2-D point cloud
       
     ENDSUBROUTINE triangulateVerts_graphType
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param
+!>
+!>
+!>
+    SUBROUTINE assign_GraphType(g0,g1)
+      TYPE(GraphType),INTENT(INOUT) :: g0
+      TYPE(GraphType),INTENT(IN) :: g1
+      INTEGER(SIK) :: n
+      CALL clear_graphType(g0)
+      n=nVert_GraphType(g1)
+      IF(n > 0) THEN
+        CALL dmallocA(g0%vertices,2,n)
+        CALL dmallocA(g0%edgeMatrix,n,n)
+        CALL dmallocA(g0%quadEdges,3,n,n)
+        g0%vertices=g1%vertices
+        g0%edgeMatrix=g1%edgeMatrix
+        g0%quadEdges=g1%quadEdges
+      ENDIF
+    ENDSUBROUTINE assign_GraphType
 !
 !-------------------------------------------------------------------------------
 !> @brief
