@@ -53,6 +53,7 @@ MODULE Geom_Poly
   
   PUBLIC :: PolygonType
   PUBLIC :: Polygonize
+  PUBLIC :: OPERATOR(==)
 
   !> @brief Type used to describe a polygon.
   !>
@@ -115,6 +116,12 @@ MODULE Geom_Poly
     MODULE PROCEDURE Polygonize_Circle
     MODULE PROCEDURE Polygonize_OBBox
     MODULE PROCEDURE Polygonize_ABBox
+  ENDINTERFACE
+  
+  INTERFACE OPERATOR(==)
+    !> @copybrief Geom_Poly::isequal_PolygonType
+    !> @copydetails Geom_Poly::isequal_PolygonType
+    MODULE PROCEDURE isequal_PolygonType
   ENDINTERFACE
 !
 !===============================================================================
@@ -429,7 +436,8 @@ MODULE Geom_Poly
     PURE RECURSIVE FUNCTION onSurface_PolygonType(thisPoly,point) RESULT(bool)
       CLASS(PolygonType),INTENT(IN) :: thisPoly
       TYPE(PointType),INTENT(IN) :: point
-      INTEGER(SIK) :: i
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: i,iedge
       REAL(SRK) :: d
       TYPE(PointType) :: centroid
       TYPE(LineType) :: line
@@ -764,7 +772,7 @@ MODULE Geom_Poly
       TYPE(PolygonType),TARGET,INTENT(IN) :: subPoly
       LOGICAL(SBK) :: allIn
       INTEGER(SIK) :: i,v1,v2
-      REAL(SRK) :: a(2),b(2),c(2),m(2),r,scal
+      REAL(SRK) :: a(2),b(2),c(2),m(2),r,scal,cent(2)
       TYPE(PointType) :: arcMidPoint
       TYPE(PolygonType),POINTER :: lastSubPoly
       
@@ -801,7 +809,14 @@ MODULE Geom_Poly
             lastSubPoly => lastSubPoly%nextPoly
           ENDDO
           lastSubPoly => subPoly
+          cent(1)=thisPoly%centroid%coord(1)*thisPoly%area- &
+            subPoly%centroid%coord(1)*subPoly%area
+          cent(2)=thisPoly%centroid%coord(2)*thisPoly%area- &
+            subPoly%centroid%coord(2)*subPoly%area
           thisPoly%area=thisPoly%area-subPoly%area
+          CALL thisPoly%centroid%clear()
+          CALL thisPoly%centroid%init(DIM=2,X=cent(1)/thisPoly%area, &
+            Y=cent(2)/thisPoly%area)
         ENDIF
       ENDIF
     ENDSUBROUTINE subtractSubVolume_PolygonType
@@ -965,6 +980,40 @@ MODULE Geom_Poly
       CALL polygon%set(g)
       CALL g%clear()
     ENDSUBROUTINE Polygonize_ABBox
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param
+!>
+    PURE RECURSIVE FUNCTION isequal_PolygonType(p1,p2) RESULT(bool)
+      TYPE(PolygonType),INTENT(IN) :: p1
+      TYPE(PolygonType),INTENT(IN) :: p2
+      LOGICAL(SBK) :: bool
+      
+      bool=.FALSE.
+      IF(p1%isinit .AND. p2%isinit) THEN
+        IF((p1%area .APPROXEQA. p2%area) .AND. (p1%nVert == p2%nVert) .AND. &
+          (p1%nQuadEdge == p2%nQuadEdge) .AND. (p1%centroid == p2%centroid) .AND. &
+          (SIZE(p1%vert) == SIZE(p2%vert)) .AND. & 
+          (SIZE(p1%edge,DIM=1) == SIZE(p2%edge,DIM=1)) .AND. &
+          (SIZE(p1%edge,DIM=2) == SIZE(p2%edge,DIM=2)) .AND. &
+          (SIZE(p1%quad2edge) == SIZE(p2%quad2edge)) .AND. &
+          (SIZE(p1%quadEdge,DIM=1) == SIZE(p2%quadEdge,DIM=1)) .AND. &
+          (SIZE(p1%quadEdge,DIM=2) == SIZE(p2%quadEdge,DIM=2)) .AND. &
+          (ASSOCIATED(p1%nextPoly) .EQV. ASSOCIATED(p2%nextPoly)) .AND. &
+            (ASSOCIATED(p1%subRegions) .EQV. ASSOCIATED(p2%subRegions))) THEN
+          !
+          bool=ALL(p1%vert == p2%vert) .AND. ALL(p1%edge == p2%edge) .AND. &
+            ALL(p1%quad2edge == p2%quad2edge) .AND. &
+            ALL(p1%quadEdge .APPROXEQA. p2%quadEdge)
+          IF(bool .AND. ASSOCIATED(p1%nextPoly)) THEN
+            bool=isequal_PolygonType(p1%nextPoly,p2%nextPoly)
+            IF(bool .AND. ASSOCIATED(p1%subRegions)) &
+              bool=isequal_PolygonType(p1%subRegions,p2%subRegions)
+          ENDIF
+        ENDIF
+      ENDIF
+    ENDFUNCTION isequal_PolygonType
 !
 !-------------------------------------------------------------------------------
 !> @brief
