@@ -385,7 +385,7 @@ PROGRAM testGeom_Poly
       ASSERT(.NOT.testPolyType%inside(point),'outside triangle')
       CALL point%clear()
       CALL point%init(DIM=2,X=-0.5_SRK,Y=-1.0_SRK)
-      ASSERT(.NOT.testPolyType%inside(point),'on bottom edge triangle')
+      ASSERT(testPolyType%inside(point),'on bottom edge triangle')
       
       !Setup test graph - quadralateral
       CALL testGraph%clear()

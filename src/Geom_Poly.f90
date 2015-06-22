@@ -310,6 +310,8 @@ MODULE Geom_Poly
       thisPolygon%nQuadEdge=0
       thisPolygon%area=0.0_SRK
       CALL thisPolygon%centroid%clear()
+      thisPolygon%subregions => NULL()
+      thisPolygon%nextPoly => NULL()
       thisPolygon%isinit=.FALSE.
     ENDSUBROUTINE clear_PolygonType
 !
@@ -337,90 +339,109 @@ MODULE Geom_Poly
       TYPE(CircleType) :: circ
       
       bool=.FALSE.
-      wn=0
-      DO i=1,thisPoly%nVert
-        istt=thisPoly%edge(1,i)
-        istp=thisPoly%edge(2,i)
-        !Crossing
-        IF((thisPoly%vert(istt)%coord(2) < point%coord(2)) /= &
-          (thisPoly%vert(istp)%coord(2) < point%coord(2))) THEN
-          !P_i(x) >= R(x)
-          IF(thisPoly%vert(istt)%coord(1) .APPROXGE. point%coord(1)) THEN
-            !P_i+1(x) > R(x)
-            IF(thisPoly%vert(istp)%coord(1) > point%coord(1)) THEN
-              IF(thisPoly%vert(istp)%coord(2) > thisPoly%vert(istt)%coord(2)) THEN
-                wn=wn+1
+      IF(thisPoly%nVert > 0) THEN
+        !Check if point is a vertex
+        inPoly=(point%coord(1) .APPROXEQA. thisPoly%vert(1)%coord(1)) .AND. &
+          (point%coord(2) .APPROXEQA. thisPoly%vert(1)%coord(2))
+        IF(.NOT.inPoly) THEN
+          wn=0
+          DO i=1,thisPoly%nVert
+            istt=thisPoly%edge(1,i)
+            istp=thisPoly%edge(2,i)
+            !Check if next vertex is matched
+            IF(point%coord(2) .APPROXEQA. thisPoly%vert(istp)%coord(2)) THEN
+              IF(point%coord(2) .APPROXEQA. thisPoly%vert(istp)%coord(2)) THEN
+                wn=100 !Evaluates to true after loop
+                EXIT
               ELSE
-                wn=wn-1
-              ENDIF
-            ELSE !det() > 0.0_SRK .EQV. P_i+1(y) > P_i(y), right_crossing
-              !(P_i(x)-R(x))*(P_i+1(y)-R(y))-(P_i+1(x)-R(x))*(P_i(y)-R(y))
-              IF(((thisPoly%vert(istt)%coord(1)-point%coord(1))* &
-                (thisPoly%vert(istp)%coord(2)-point%coord(2))- &
-                  (thisPoly%vert(istp)%coord(1)-point%coord(1))* &
-                (thisPoly%vert(istt)%coord(2)-point%coord(2)) > 0.0_SRK) .EQV. &
-                  (thisPoly%vert(istp)%coord(2) > point%coord(2))) THEN
-                !modify wn
-                IF(thisPoly%vert(istp)%coord(2) > thisPoly%vert(istt)%coord(2)) THEN
-                  wn=wn+1
-                ELSE
-                  wn=wn-1
+                IF((point%coord(2) .APPROXEQA. thisPoly%vert(istt)%coord(2)) .AND. &
+                  (thisPoly%vert(istt)%coord(1) < point%coord(1)) .EQV. &
+                  (thisPoly%vert(istp)%coord(1) > point%coord(1))) THEN
+                  wn=200 !Evaluates to true after loop
+                  EXIT
                 ENDIF
               ENDIF
             ENDIF
-          ELSE
-            IF(thisPoly%vert(istp)%coord(1) > point%coord(1)) THEN
-              !det() > 0.0_SRK .EQV. P_i+1(y) > P_i(y), right_crossing
-              !(P_i(x)-R(x))*(P_i+1(y)-R(y))-(P_i+1(x)-R(x))*(P_i(y)-R(y))
-              IF(((thisPoly%vert(istt)%coord(1)-point%coord(1))* &
-                (thisPoly%vert(istp)%coord(2)-point%coord(2))- &
-                  (thisPoly%vert(istp)%coord(1)-point%coord(1))* &
-                (thisPoly%vert(istt)%coord(2)-point%coord(2)) > 0.0_SRK) .EQV. &
-                  (thisPoly%vert(istp)%coord(2) > point%coord(2))) THEN
-                !modify wn
-                IF(thisPoly%vert(istp)%coord(2) > thisPoly%vert(istt)%coord(2)) THEN
-                  wn=wn+1
-                ELSE
-                  wn=wn-1
+            !Crossing
+            IF((thisPoly%vert(istt)%coord(2) < point%coord(2)) /= &
+              (thisPoly%vert(istp)%coord(2) < point%coord(2))) THEN
+              !P_i(x) >= R(x)
+              IF(thisPoly%vert(istt)%coord(1) .APPROXGE. point%coord(1)) THEN
+                !P_i+1(x) > R(x)
+                IF(thisPoly%vert(istp)%coord(1) > point%coord(1)) THEN
+                  IF(thisPoly%vert(istp)%coord(2) > thisPoly%vert(istt)%coord(2)) THEN
+                    wn=wn+1
+                  ELSE
+                    wn=wn-1
+                  ENDIF
+                ELSE !det() > 0.0_SRK .EQV. P_i+1(y) > P_i(y), right_crossing
+                  !(P_i(x)-R(x))*(P_i+1(y)-R(y))-(P_i+1(x)-R(x))*(P_i(y)-R(y))
+                  IF(((thisPoly%vert(istt)%coord(1)-point%coord(1))* &
+                    (thisPoly%vert(istp)%coord(2)-point%coord(2))- &
+                      (thisPoly%vert(istp)%coord(1)-point%coord(1))* &
+                    (thisPoly%vert(istt)%coord(2)-point%coord(2)) > 0.0_SRK) .EQV. &
+                      (thisPoly%vert(istp)%coord(2) > point%coord(2))) THEN
+                    !modify wn
+                    IF(thisPoly%vert(istp)%coord(2) > thisPoly%vert(istt)%coord(2)) THEN
+                      wn=wn+1
+                    ELSE
+                      wn=wn-1
+                    ENDIF
+                  ENDIF
+                ENDIF
+              ELSE
+                IF(thisPoly%vert(istp)%coord(1) > point%coord(1)) THEN
+                  !det() > 0.0_SRK .EQV. P_i+1(y) > P_i(y), right_crossing
+                  !(P_i(x)-R(x))*(P_i+1(y)-R(y))-(P_i+1(x)-R(x))*(P_i(y)-R(y))
+                  IF(((thisPoly%vert(istt)%coord(1)-point%coord(1))* &
+                    (thisPoly%vert(istp)%coord(2)-point%coord(2))- &
+                      (thisPoly%vert(istp)%coord(1)-point%coord(1))* &
+                    (thisPoly%vert(istt)%coord(2)-point%coord(2)) > 0.0_SRK) .EQV. &
+                      (thisPoly%vert(istp)%coord(2) > point%coord(2))) THEN
+                    !modify wn
+                    IF(thisPoly%vert(istp)%coord(2) > thisPoly%vert(istt)%coord(2)) THEN
+                      wn=wn+1
+                    ELSE
+                      wn=wn-1
+                    ENDIF
+                  ENDIF
                 ENDIF
               ENDIF
             ENDIF
-          ENDIF
+          ENDDO
+          inPoly=(wn /= 0)
         ENDIF
-      ENDDO
-      inPoly=(wn /= 0)
       
-      !Now check the quadratic edges if there are any
-      inConvexCirc=.FALSE.
-      inConcaveCirc=.FALSE.
-      IF(thisPoly%nQuadEdge > 0) THEN
-        DO i=1,thisPoly%nQuadEdge
-          iedge=thisPoly%quad2edge(i)
-          CALL centroid%init(DIM=2,X=thisPoly%quadEdge(1,i),Y=thisPoly%quadEdge(2,i))
-          CALL line%set(thisPoly%vert(thisPoly%edge(1,iedge)), &
-            thisPoly%vert(thisPoly%edge(2,iedge)))
-          CALL circ%set(centroid,thisPoly%quadEdge(3,i))
-          !Check if the centroid is on the interior or exterior of the edge
-          IF(line%pointIsRight(centroid) .AND. .NOT. inConvexCirc) THEN
-            !Quad edge extends outside the polygon.  
-            !Check if the point is to the left of the edge and inside the circle
-            inConvexCirc=line%pointIsLeft(point) .AND. circ%inside(point)
-          ELSEIF(line%pointIsLeft(centroid) .AND. .NOT. inConcaveCirc) THEN
-            !Quad edge extends inside the polygon.  
-            !Check if the point is to the right of the edge and outside the circle
-            inConcaveCirc=line%pointIsRight(point) .AND. circ%inside(point)
-          ENDIF
-          CALL circ%clear()
-          CALL line%clear()
-          CALL centroid%clear()
-        ENDDO
-        !Logic for the cases where there is inside and outside circles.
-        bool=(inPoly .OR. inConvexCirc) .AND. .NOT. inConcaveCirc
-        !Logic for inside the polygon and outside the subregions
-        IF(thisPoly%isSimple()) &
-          bool=bool .AND. .NOT.inside_PolygonType(thisPoly%subregions,point)
-      !If just straight edges
-      ELSE
+        !Now check the quadratic edges if there are any
+        IF(thisPoly%nQuadEdge > 0) THEN
+          inConvexCirc=.FALSE.
+          inConcaveCirc=.FALSE.
+          DO i=1,thisPoly%nQuadEdge
+            iedge=thisPoly%quad2edge(i)
+            CALL centroid%init(DIM=2,X=thisPoly%quadEdge(1,i),Y=thisPoly%quadEdge(2,i))
+            CALL line%set(thisPoly%vert(thisPoly%edge(1,iedge)), &
+              thisPoly%vert(thisPoly%edge(2,iedge)))
+            CALL circ%set(centroid,thisPoly%quadEdge(3,i))
+            !Check if the centroid is on the interior or exterior of the edge
+            IF(line%pointIsRight(centroid) .AND. .NOT. inConvexCirc) THEN
+              !Quad edge extends outside the polygon.  
+              !Check if the point is to the left of the edge and inside the circle
+              inConvexCirc=line%pointIsLeft(point) .AND. circ%inside(point)
+            ELSEIF(line%pointIsLeft(centroid) .AND. .NOT. inConcaveCirc) THEN
+              !Quad edge extends inside the polygon.  
+              !Check if the point is to the right of the edge and outside the circle
+              inConcaveCirc=line%pointIsRight(point) .AND. circ%inside(point)
+            ENDIF
+            CALL circ%clear()
+            CALL line%clear()
+            CALL centroid%clear()
+          ENDDO
+          !Logic for the cases where there is inside and outside circles.
+          inPoly=(inPoly .OR. inConvexCirc) .AND. .NOT.inConcaveCirc
+          !Logic for inside the polygon and outside the subregions
+          IF(inPoly .AND. .NOT.thisPoly%isSimple()) &
+            inPoly=.NOT.inside_PolygonType(thisPoly%subregions,point)
+        ENDIF
         bool=inPoly
       ENDIF
     ENDFUNCTION inside_PolygonType
@@ -758,7 +779,7 @@ MODULE Geom_Poly
     ELEMENTAL FUNCTION isSimple_PolygonType(thisPoly) RESULT(bool)
       CLASS(PolygonType),INTENT(IN) :: thisPoly
       LOGICAL(SBK) :: bool
-      bool=ASSOCIATED(thisPoly%subRegions)
+      bool=.NOT.ASSOCIATED(thisPoly%subRegions)
     ENDFUNCTION isSimple_PolygonType
 !
 !-------------------------------------------------------------------------------
@@ -772,34 +793,37 @@ MODULE Geom_Poly
       TYPE(PolygonType),TARGET,INTENT(IN) :: subPoly
       LOGICAL(SBK) :: allIn
       INTEGER(SIK) :: i,v1,v2
-      REAL(SRK) :: a(2),b(2),c(2),m(2),r,scal,cent(2)
-      TYPE(PointType) :: arcMidPoint
+      REAL(SRK) :: a(2),b(2),c(2),m(2),r,scal,cent(2),alp1,alp2,theta
+      TYPE(PointType) :: arcPoint
       TYPE(PolygonType),POINTER :: lastSubPoly
       
       IF(thisPoly%isInit .AND. subPoly%isInit) THEN
         allIn=.TRUE.
         !Check that all vertices are inside the bounding polygon
         DO i=1,subPoly%nVert
-          allIn=(allIn .AND. inside_PolygonType(thisPoly,subPoly%vert(i)))
+          allIn=(allIn .AND. inside_PolygonType(thisPoly,subPoly%vert(i)) &
+            .AND. .NOT.onSurface_Polygontype(thisPoly,subPoly%vert(i)))
+          IF(.NOT.allIN) EXIT
         ENDDO
         
         !Check quadratic edges to make sure their outermost point is still
         !inside the bounding polygon
         IF(allIn) THEN
           DO i=1,subPoly%nQuadEdge
-            v1=thisPoly%edge(1,thisPoly%quad2Edge(i))
-            v2=thisPoly%edge(2,thisPoly%quad2Edge(i))
-            a=thisPoly%vert(v1)%coord
-            b=thisPoly%vert(v2)%coord
-            c=thisPoly%quadEdge(1:2,i)
-            r=thisPoly%quadEdge(3,i)
-          
-            m=a+b-2.0_SRK*c
-            scal=r/SQRT(m(1)*m(1)+m(2)*m(2))
-            m=m*scal
-            m=m+c
-            CALL arcMidPoint%init(COORD=m)
-            allIn=(allIn .AND. inside_PolygonType(thisPoly,arcMidPoint))
+            v1=subPoly%edge(1,subPoly%quad2Edge(i))
+            v2=subPoly%edge(2,subPoly%quad2Edge(i))
+            a=subPoly%vert(v1)%coord
+            b=subPoly%vert(v2)%coord
+            c=subPoly%quadEdge(1:2,i)
+            r=subPoly%quadEdge(3,i)
+
+            !TODO: Determine M or determine if curved surface crosses bounding volume
+            !m=??
+            
+            CALL arcPoint%init(COORD=m)
+            allIn=(allIn .AND. inside_PolygonType(thisPoly,arcPoint) &
+              .AND. .NOT.onSurface_Polygontype(thisPoly,arcPoint))
+            IF(.NOT.allIn) EXIT
           ENDDO
         ENDIF
         
