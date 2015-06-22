@@ -250,6 +250,11 @@ MODULE Geom_CircCyl
             p2%dim=-2
           ELSEIF(discr .APPROXEQA. zero) THEN
             !Tangent
+            ra=one/a
+            t1=-ra*b
+            p1=line%p1
+            p1%coord(1)=p1%coord(1)+u(1)*t1
+            p1%coord(2)=p1%coord(2)+u(2)*t1
             p1%dim=-3
             p2%dim=-3
           ELSE
