@@ -27,8 +27,9 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE Geom_Graph
   USE IntrType
-  USE Allocs
+  USE Constants_Conversion
   USE ExtendedMath
+  USE Allocs
   USE VTKFiles
   USE Geom_Points
   USE Geom_Line
@@ -994,8 +995,11 @@ MODULE Geom_Graph
       TYPE(GraphType),INTENT(IN) :: g
       TYPE(GraphType) :: g0,g1,lineAB
       INTEGER(SIK) :: i,j,n,nAdj,v1,v2
-      REAL(SRK) :: a(2),b(2),c(2),d(2),alp1,alp2
-      TYPE(PointType) :: p1,p2,p3,p4
+      INTEGER(SIK),ALLOCATABLE :: cwVerts(:)
+      REAL(SRK) :: alp1,alp2,theta,theta_shift,r,scal,x1,y1,r2
+      REAL(SRK) :: a(2),b(2),c(2),d(2),m(2)
+      REAL(SRK),ALLOCATABLE :: vTheta(:)
+      TYPE(PointType) :: p0,p1,p2,p3,p4
       TYPE(LineType) :: l1,l2
       TYPE(CircleType) :: c1,c2
 
@@ -1007,6 +1011,7 @@ MODULE Geom_Graph
       CALL l1%p2%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
       CALL l2%p1%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
       CALL l2%p2%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
+      CALL p0%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
       DO WHILE(nEdge_graphType(g1) > 0)
         n=nVert_graphType(g1)
         v1=0; v2=0
@@ -1026,11 +1031,54 @@ MODULE Geom_Graph
           CALL insertVertex_graphType(lineAB,a)
           CALL insertVertex_graphType(lineAB,b)
           IF(g1%edgeMatrix(v1,v2) == -1) THEN
-            p1%coord=g1%quadEdges(1:2,v1,v2)
-            alp1=ATAN2PI(b(1)-p1%coord(1),b(2)-p1%coord(2))
-            alp2=ATAN2PI(a(1)-p1%coord(1),a(2)-p1%coord(2))
-            CALL c1%set(p1,ABS(g1%quadEdges(3,v1,v2)),alp1,alp2)
+            p0%coord=g1%quadEdges(1:2,v1,v2)
+            r=g1%quadEdges(3,v1,v2)
+            alp1=ATAN2PI(a(1)-p0%coord(1),a(2)-p0%coord(2))
+            alp2=ATAN2PI(b(1)-p0%coord(1),b(2)-p0%coord(2))
+            
+            !Insure we are traversing the shorter arc on the circle
+            IF(ABS(alp1-alp2) .APPROXEQA. PI) THEN  
+              !Semi-circle, for this case we must look at sign of r
+              IF(r < 0.0_SRK) THEN
+                CALL c1%set(p0,ABS(r),alp1,alp2)
+              ELSE
+                CALL c1%set(p0,ABS(r),alp2,alp1)
+              ENDIF
+            ELSE
+              !Distance between alpha_1 and alpha_2 is < PI
+              IF(a(2) .APPROXEQA. p0%coord(2)) THEN
+                IF(b(2) > a(2)) THEN
+                  CALL c1%set(p0,ABS(r),alp2,alp1)
+                ELSE
+                  CALL c1%set(p0,ABS(r),alp1,alp2)
+                ENDIF
+              ELSEIF(a(2) < p0%coord(2)) THEN
+                CALL c1%set(p0,ABS(r),alp1,alp2)
+              ELSE
+                CALL c1%set(p0,ABS(r),alp2,alp1)
+              ENDIF
+            ENDIF
+            
             !Compute arc midpoint
+            m=a+b-2.0_SRK*p0%coord
+            scal=SQRT(m(1)*m(1)+m(2)*m(2))
+            IF(scal .APPROXEQA. 0.0_SRK) THEN
+              !Half circle. Lame.
+              theta=0.5_SRK*(alp1+alp2)
+              !Adjust theta for the appropriate half of the circle
+              IF(.NOT.((c1%thetastt .APPROXLE. theta) .AND. &
+                       (theta .APPROXLE. c1%thetastp))) theta=theta-PI
+              m(1)=c1%r*COS(theta)
+              m(2)=c1%r*SIN(theta)
+            ELSE
+              scal=ABS(r)/scal
+              m=m*scal
+            ENDIF
+            m=m+c1%c%coord
+            
+            !Compute theta shift so that thetastp > thetastt when crossing x+ axis
+            theta_shift=0.0_SRK
+            IF(c1%thetastt > c1%thetastp) theta_shift=TWOPI
           ELSE
             l1%p1%coord=a
             l1%p2%coord=b
@@ -1044,6 +1092,7 @@ MODULE Geom_Graph
                 d=thisGraph%vertices(:,j)
               ENDIF
               IF(thisGraph%edgeMatrix(j,i) == 1) THEN
+                l2%p1%dim=2; l2%p2%dim=2
                 l2%p1%coord=c
                 l2%p2%coord=d
                 IF(c1%r == 0.0_SRK) THEN
@@ -1057,16 +1106,81 @@ MODULE Geom_Graph
                   ENDIF
                 ELSE
                   !circle-line
-                  CALL c1%intersectArcLine(l2,p1,p2,p3,p4)
+                  CALL c1%intersectLine(l2,p1,p2)
+
+                  !Count tangent points
+                  IF(p1%dim == -3) p1%dim=2
+
+                  !Check for intersections on ends of line segments
+                  IF(p1%dim == 0) THEN
+                    x1=c(1)-c1%c%coord(1)
+                    y1=c(2)-c1%c%coord(2)
+                    r2=x1*x1+y1*y1
+                    IF(r2 .APPROXEQA. c1%r*c1%r) THEN
+                      p1=l2%p1
+                      l2%p1%dim=0
+                    ELSE
+                      x1=d(1)-c1%c%coord(1)
+                      y1=d(2)-c1%c%coord(2)
+                      r2=x1*x1+y1*y1
+                      IF(r2 .APPROXEQA. c1%r*c1%r) THEN
+                        p1=l2%p2
+                        l2%p2%dim=0
+                      ENDIF
+                    ENDIF
+                  ENDIF
+                  IF(l2%p1%dim == 2 .AND. p2%dim == 0) THEN
+                    x1=c(1)-c1%c%coord(1)
+                    y1=c(2)-c1%c%coord(2)
+                    r2=x1*x1+y1*y1
+                    IF(r2 .APPROXEQA. c1%r*c1%r) THEN
+                      p2=l2%p1
+                      l2%p1%dim=0
+                    ENDIF
+                  ELSEIF(l2%p2%dim == 2 .AND. p2%dim == 0) THEN
+                    x1=d(1)-c1%c%coord(1)
+                    y1=d(2)-c1%c%coord(2)
+                    r2=x1*x1+y1*y1
+                    IF(r2 .APPROXEQA. c1%r*c1%r) THEN
+                      p2=l2%p2
+                      l2%p2%dim=0
+                    ENDIF
+                  ENDIF
+
+                  !Filter points for interval of theta on arc. (might have bugs?)
+                  IF(p1%dim == 2) THEN
+                    theta=ATAN2PI(p1%coord(1)-c1%c%coord(1), &
+                                  p1%coord(2)-c1%c%coord(2))
+                    IF(p1%coord(2)-c1%c%coord(2) .APPROXGE. 0.0_SRK) &
+                      theta=theta+theta_shift
+                    IF(.NOT.((c1%thetastt .APPROXLE. theta) .AND. &
+                      (theta .APPROXLE. c1%thetastp+theta_shift))) CALL p1%clear()
+                  ENDIF
+                  IF(p2%dim == 2) THEN
+                    theta=ATAN2PI(p2%coord(1)-c1%c%coord(1), &
+                                  p2%coord(2)-c1%c%coord(2))
+                    IF(p2%coord(2)-c1%c%coord(2) .APPROXGE. 0.0_SRK) &
+                      theta=theta+theta_shift
+                    IF(.NOT.((c1%thetastt .APPROXLE. theta) .AND. &
+                      (theta .APPROXLE. c1%thetastp+theta_shift))) CALL p2%clear()
+                  ENDIF
                   IF(p1%dim == 2 .AND. p2%dim == 2) THEN
                     CALL removeEdge_graphType(g0,c,d)
                     CALL insertVertex_graphType(g0,p1%coord)
                     CALL insertVertex_graphType(g0,p2%coord)
+                    !Cord intersecting circle
                     CALL defineEdge_graphType(g0,p1%coord,p2%coord)
-                    CALL defineEdge_graphType(g0,c,p1%coord) !?
-                    CALL defineEdge_graphType(g0,d,p2%coord) !?
+                    CALL defineEdge_graphType(g0,c,p1%coord) !is p1 always closer to c?
+                    CALL defineEdge_graphType(g0,d,p2%coord) !is p2 always closer to d?
                     CALL insertVertex_graphType(lineAB,p1%coord)
                     CALL insertVertex_graphType(lineAB,p2%coord)
+
+                    !Add midpoint of arc (keeps graph sane)
+                    !Need to store edge information here, because normal point sorting
+                    !on graph type does not implicitly keep points ordered for arcs
+                    CALL insertVertex_graphType(lineAB,m)
+                    CALL defineEdge_graphType(lineAB,m,p1%coord)
+                    CALL defineEdge_graphType(lineAB,m,p2%coord)
                   ELSE
                     IF(p1%dim /= 2 .AND. p2%dim == 2) p1=p2
                     IF(p1%dim == 2) THEN
@@ -1079,34 +1193,62 @@ MODULE Geom_Graph
                   ENDIF
                 ENDIF
               ELSEIF(thisGraph%edgeMatrix(j,i) == -1) THEN
-                p1%coord=thisGraph%quadEdges(1:2,i,j)
-                alp1=ATAN2PI(d(1)-p1%coord(1),d(2)-p1%coord(2))
-                alp2=ATAN2PI(c(1)-p1%coord(1),c(2)-p1%coord(2))
-                CALL c2%set(p1,ABS(g0%quadEdges(3,i,j)),alp1,alp2)
+                p0%coord=thisGraph%quadEdges(1:2,i,j)
+                alp1=ATAN2PI(d(1)-p0%coord(1),d(2)-p0%coord(2))
+                alp2=ATAN2PI(c(1)-p0%coord(1),c(2)-p0%coord(2))
+                CALL c2%set(p0,ABS(g0%quadEdges(3,i,j)),alp1,alp2)
                 IF(c1%r == 0.0_SRK) THEN
                   !line-circle
 
                 ELSE
-                  !circle-circle
+                  !circle-circle (F-this)
 
                 ENDIF
               ENDIF
             ENDDO
           ENDDO
           IF(c1%r == 0.0_SRK) THEN
+            CALL insertVertex_graphType(g0,lineAB%vertices(:,1))
             DO i=2,nVert_graphType(lineAB)
+              CALL insertVertex_graphType(g0,lineAB%vertices(:,i))
               CALL defineEdge_graphType(g0,lineAB%vertices(:,i-1), &
                 lineAB%vertices(:,i)) 
             ENDDO
           ELSE
-            DO i=2,nVert_graphType(lineAB)
-              CALL defineQuadEdge_graphType(g0,lineAB%vertices(:,i-1), &
-                lineAB%vertices(:,i),c1%c%coord,c1%r) 
+            !Sort vertices in clock-wise order.
+            n=nVert_graphType(lineAB)
+            ALLOCATE(cwVerts(n)); cwVerts=0
+            ALLOCATE(vTheta(n));
+            DO i=1,n
+              vTheta(i)=ATAN2PI(lineAB%vertices(1,i)-c1%c%coord(1), &
+                lineAB%vertices(2,i)-c1%c%coord(2))
             ENDDO
+            IF(c1%thetastt > c1%thetastp) THEN
+              !This arc crosses the positive x-axis, shift some angles by 2*PI
+              !so vertex theta's can be ordered sequentially.
+              DO i=1,n
+                IF((0.0_SRK .APPROXLE. vTheta(i)) .AND. vTheta(i) < c1%thetastt) &
+                  vTheta(i)=vTheta(i)+TWOPI
+              ENDDO
+            ENDIF
+            DO i=1,n
+              cwVerts(i)=MINLOC(vTheta,DIM=1)
+              vTheta(cwVerts(i))=HUGE(vTheta(1))
+            ENDDO
+            
+            !Add vertices in CW-order and define edges
+            CALL insertVertex_graphType(g0,lineAB%vertices(:,cwVerts(1)))
+            DO i=2,nVert_graphType(lineAB)
+              CALL insertVertex_graphType(g0,lineAB%vertices(:,cwVerts(i)))
+              CALL defineQuadEdge_graphType(g0,lineAB%vertices(:,cwVerts(i-1)), &
+                lineAB%vertices(:,cwVerts(i)),c1%c%coord,c1%r)
+            ENDDO
+            DEALLOCATE(vTheta,cwVerts)
           ENDIF
           SELECTTYPE(thisGraph); TYPE IS(GraphType)
             CALL assign_GraphType(thisGraph,g0)
           ENDSELECT
+          !CALL editToVTK_graphType(thisGraph,'tmpG.vtk')
           CALL c1%clear()
           CALL clear_graphType(lineAB)
         ENDIF
@@ -1114,18 +1256,23 @@ MODULE Geom_Graph
         !Remove the edge
         CALL removeEdge_IJ_graphType(g1,v1,v2)
         !Remove any isoloated vertices
-        nAdj=nAdjacent_graphType(g,v1)
+        nAdj=nAdjacent_graphType(g1,v1)
         IF(nAdj == 0) CALL removeVertex_idx_graphType(g1,v1)
         v2=getVertIndex_graphType(g1,b)
         nAdj=nAdjacent_graphType(g1,v2)
         IF(nAdj == 0) CALL removeVertex_idx_graphType(g1,v2)
       ENDDO
-      CALL l1%clear()
-      CALL l2%clear()
+      CALL p0%clear()
       CALL p1%clear()
       CALL p2%clear()
       CALL p3%clear()
       CALL p4%clear()
+      CALL l1%clear()
+      CALL l2%clear()
+      CALL c1%clear()
+      CALL clear_graphType(lineAB)
+      CALL clear_graphType(g0)
+      CALL clear_graphType(g1)
     ENDSUBROUTINE combine_GraphType
 !
 !-------------------------------------------------------------------------------
