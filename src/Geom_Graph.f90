@@ -469,7 +469,6 @@ MODULE Geom_Graph
           IF(idx <= n) tmpVertices(:,idx+1:n+1)=thisGraph%vertices(:,idx:n)
           CALL demallocA(thisGraph%vertices)
           CALL MOVE_ALLOC(tmpVertices,thisGraph%vertices)
-          
           !Expand Edge Matrices
           CALL dmallocA(tmpE,n+1,n+1)
           CALL dmallocA(tmpQE,3,n+1,n+1)
@@ -935,7 +934,6 @@ MODULE Geom_Graph
           vtkMesh%z(i)=0.0_SRK
         ENDDO
         nedge=nEdge_graphType(thisGraph)
-
         !Set up cell list (edges only isoloated verteces are ommitted)
         vtkMesh%numCells=nedge
         ALLOCATE(vtkMesh%cellList(vtkMesh%numCells))
@@ -1275,18 +1273,172 @@ MODULE Geom_Graph
     ENDSUBROUTINE combine_GraphType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
-!>
-!>
+!> @brief Takes cloud of points and computes Delaunay triangulation
+!> @param thisGraph the graph containing the cloud of points
 !>
     SUBROUTINE triangulateVerts_graphType(thisGraph)
       CLASS(GraphType),INTENT(INOUT) :: thisGraph
+
+      TYPE(PointType) :: p0,p1,PointI
+      TYPE(CircleType) :: circumCirc
+      INTEGER(SIK) :: nVert,nTri,nEdges,i,j,k
+      INTEGER(SIK),ALLOCATABLE :: V1(:),V2(:),V3(:)
+      INTEGER(SIK),ALLOCATABLE :: polEdges(:,:)
+      REAL(SRK) :: xMin,xMax,yMin,yMax,dx,dy,dm,xMid,yMid
+      REAL(SRK) :: x1,x2,x3,y1,y2,y3,r1,r2,r3,x0,y0,a,bx,by,c,rad
+      REAL(SRK),ALLOCATABLE :: verts(:,:)
+      LOGICAL(SBK), ALLOCATABLE :: complete(:)
+
+      LOGICAL(SBK) :: incircum
+      REAL(SRK) :: drsqr, m1,m2,mx1,mx2,my1,my2,r,rsqr,xc,yc
+      CHARACTER(len=22) :: tmpname
       
       thisGraph%edgeMatrix=0
+      nVert=thisGraph%nVert()
       
-      !Perform Delaunay Triangulation of 2-D point cloud
-      
+      !Maximum of n-2 triangles...n+1 with super-triangle
+      ALLOCATE(V1(6*nVert+6),V2(6*nVert+6),V3(6*nVert+6))
+      V1=0
+      V2=0
+      V3=0
+      ALLOCATE(polEdges(2,6*nVert+6))
+      polEdges=0
+      ALLOCATE(complete(3*nVert+2))
+      complete=.FALSE.
+      !Make a copy of vertices before adding in super-triangle
+      ALLOCATE(verts(2,nVert))
+      verts=thisGraph%vertices
+      !Find the minimum and maximum x-values in the graph
+      xMin=thisGraph%vertices(1,1)
+      yMin=thisGraph%vertices(2,1)
+      xMax=xMin
+      yMax=yMin
+      DO i=2,nVert
+        xMin=MIN(xMin,thisGraph%vertices(1,i))
+        xMax=MAX(xMax,thisGraph%vertices(1,i))
+        yMin=MIN(yMin,thisGraph%vertices(2,i))
+        yMax=MAX(yMax,thisGraph%vertices(2,i))
+      ENDDO
+
+      dx=xMax-xMin
+      dy=yMax-yMin
+      dm=MAX(dx,dy)
+      xMid=(xMin+xMax)/2.0_SRK
+      yMid=(yMin+yMax)/2.0_SRK
+
+      !Add super triangle vertices(triangle contains all other points)
+      CALL thisGraph%insertVertex((/xMid-20.0_SRK*dm, yMid-dm/))
+      CALL thisGraph%insertVertex((/xMid,yMid+20.0_SRK*dm/))
+      CALL thisGraph%insertVertex((/xMid+20.0_SRK*dm,yMid-dm/))
+
+      V1(1)=thisGraph%getVertIndex((/xMid-20.0_SRK*dm, yMid-dm/))
+      V2(1)=thisGraph%getVertIndex((/xMid,yMid+20.0_SRK*dm/))
+      V3(1)=thisGraph%getVertIndex((/xMid+20.0_SRK*dm,yMid-dm/))
+      complete=.FALSE.
+      nTri=1
+
+      DO i=1,nVert
+        nEdges=0
+        j=0
+        DO WHILE(j < nTri)!Loop until j>nTri
+          j=j+1
+          IF(.NOT. complete(j)) THEN
+            !Check to see if it is inside the circumcircle
+            !of triangle j
+            x1=thisGraph%vertices(1,V1(j))
+            x2=thisGraph%vertices(1,V2(j))
+            x3=thisGraph%vertices(1,V3(j))
+            y1=thisGraph%vertices(2,V1(j))
+            y2=thisGraph%vertices(2,V2(j))
+            y3=thisGraph%vertices(2,V3(j))
+
+            r1=x1*x1+y1*y1
+            r2=x2*x2+y2*y2
+            r3=x3*x3+y3*y3
+
+            a=x1*(y2-y3)-y1*(x2-x3)+(x2*y3-x3*y2)
+            bx=r1*(y3-y2)+y1*(r2-r3)+(r3*y2-r2*y3)
+            by=r1*(x2-x3)-x1*(r2-r3)+(r2*x3-r3*x2)
+            c=r1*(x3*y2-x2*y3)+x1*(r2*y3-r3*y2)+y1*(r3*x2-r2*x3)
+
+            xc=-bx/(2.0_SRK*a)
+            yc=-by/(2.0_SRK*a)
+
+            dx=x1-xc
+            dy=y1-yc
+            r=SQRT(dx*dx+dy*dy)
+
+
+            dx=verts(1,i)-xc
+            dy=verts(2,i)-yc
+
+            rad=SQRT(dx*dx+dy*dy)
+            incircum=.FALSE.
+            IF(rad < r .AND. .NOT.(r .APPROXEQA. rad)) incircum=.TRUE.
+            IF(verts(1,i) > xc+r) THEN
+              !Sweeping left to right, this triangle
+              !will never be looked at again
+              complete(j)=.TRUE.
+              CYCLE
+            ENDIF
+            IF(incircum) THEN
+              polEdges(1,nEdges+1)=V1(j)
+              polEdges(2,nEdges+1)=V2(j)
+              polEdges(1,nEdges+2)=V2(j)
+              polEdges(2,nEdges+2)=V3(j)
+              polEdges(1,nEdges+3)=V3(j)
+              polEdges(2,nEdges+3)=V1(j)
+
+              V1(j)=V1(nTri)
+              V2(j)=V2(nTri)
+              V3(j)=V3(nTri)
+              complete(j)=complete(nTri)
+              nEdges=nEdges+3
+              nTri=nTri-1
+              j=j-1
+            ENDIF
+          ENDIF
+        ENDDO
+
+        !If any edges are repeated, they are not on the edge polygon
+        !don't need to be considered
+        DO j=1,nEdges-1
+          IF(.NOT. ALL(polEdges(:,j) == 0)) THEN
+            DO k=j+1,nEdges
+              IF( .NOT. ALL(polEdges(:,k) == 0)) THEN
+                IF(polEdges(1,j) == polEdges(2,k) & 
+                  .AND. polEdges(2,j) == polEdges(1,k)) THEN
+                  polEdges(:,j)=0
+                  polEdges(:,k)=0
+                ENDIF
+              ENDIF
+            ENDDO
+          ENDIF 
+        ENDDO
+        !Update triangle list
+        DO j=1,nEdges
+          IF(.NOT. ALL(polEdges(:,j) == 0)) THEN
+            nTri=nTri+1
+            V1(nTri)=polEdges(1,j)
+            V2(nTri)=polEdges(2,j)
+            V3(nTri)=thisGraph%getVertIndex(verts(:,i))
+            complete(nTri)=.FALSE.
+          ENDIF
+        ENDDO
+      ENDDO !End loop over each vertex
+      !Create edges of final triangulation
+      DO i=1,nTri
+        CALL thisGraph%defineEdge(thisGraph%vertices(:,V1(i)), & 
+          thisGraph%vertices(:,V2(i)))
+        CALL thisGraph%defineEdge(thisGraph%vertices(:,V2(i)), & 
+          thisGraph%vertices(:,V3(i)))
+        CALL thisGraph%defineEdge(thisGraph%vertices(:,V3(i)), & 
+          thisGraph%vertices(:,V1(i)))
+      ENDDO
+      !Remove superTriangle from arrays
+      CALL thisGraph%removeVertex((/xMid-20.0_SRK*dm, yMid-dm/))
+      CALL thisGraph%removeVertex((/xMid,yMid+20.0_SRK*dm/))
+      CALL thisGraph%removeVertex((/xMid+20.0_SRK*dm,yMid-dm/))
     ENDSUBROUTINE triangulateVerts_graphType
 !
 !-------------------------------------------------------------------------------

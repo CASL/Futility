@@ -31,6 +31,7 @@
 !>  - @ref Geom_Points "Geom_Points": @copybrief Geom_Points
 !>  - @ref Geom_Line "Geom_Line": @copybrief Geom_Line
 !>  - @ref Geom_Line "Geom_Plane": @copybrief Geom_Plane
+!>  - @ref Geom_Box "Geom_Box": @copybrief Geom_Box 
 !>  - @ref Geom_Line "Geom_CircCyl": @copybrief Geom_CircCyl
 !>  - @ref Geom_Line "Geom_Graph": @copybrief Geom_Graph
 !>
@@ -45,6 +46,7 @@ MODULE Geom_Poly
   USE Geom_Points
   USE Geom_Line
   USE Geom_Plane
+  USE Geom_Box
   USE Geom_CircCyl
   USE Geom_Box
   
