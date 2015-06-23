@@ -37,6 +37,7 @@
 MODULE Geom_CircCyl
   USE IntrType
   USE Constants_Conversion
+  USE ExtendedMath
   USE Geom_Points
   USE Geom_Line
 
@@ -399,7 +400,7 @@ MODULE Geom_CircCyl
       TYPE(PointType),INTENT(INOUT) :: p3
       TYPE(PointType),INTENT(INOUT) :: p4
       LOGICAL(SBK) :: arcTest
-      REAL(SRK) :: a,b,c,t1,t2,u(2),w(2),ra,discr,theta,c0(2),c1(2),c2(2)
+      REAL(SRK) :: a,b,c,t1,t2,u(2),w(2),ra,discr,theta,theta_shift,c0(2),c1(2),c2(2)
       TYPE(LineType) :: arcLine
 
       CALL p1%clear()
@@ -445,14 +446,14 @@ MODULE Geom_CircCyl
               p1%coord(1)=p1%coord(1)+u(1)*t1
               p1%coord(2)=p1%coord(2)+u(2)*t1
               IF(arcTest) THEN
-                theta=HALFPI
-                IF(p1%coord(2)-circle%c%coord(2) < ZERO) theta=-theta
-                IF(p1%coord(1)-circle%c%coord(1) /= ZERO) &
-                  theta=ATAN((p1%coord(2)-circle%c%coord(2))/(p1%coord(1)-circle%c%coord(1)))
-                IF(p1%coord(1)-circle%c%coord(1) < ZERO) theta=theta+PI
-                IF(theta < ZERO) theta=theta+TWOPI
-                IF((theta .APPROXLE. circle%thetastt) .OR. (circle%thetastp .APPROXLE. theta)) &
-                  CALL p1%clear()
+                theta_shift=0.0_SRK
+                theta=ATAN2PI((p1%coord(1)-circle%c%coord(1)),(p1%coord(2)-circle%c%coord(2)))
+                IF(circle%thetastt > circle%thetastp) THEN
+                  theta_shift=TWOPI
+                  IF(p1%coord(2)-circle%c%coord(2) > 0.0_SRK) theta=theta+TWOPI
+                ENDIF
+                IF((theta .APPROXLE. circle%thetastt) .OR. &
+                  ((circle%thetastp+theta_shift) .APPROXLE. theta)) CALL p1%clear()
               ENDIF
             ENDIF
             IF(ZERO < t2 .AND. t2 < ONE) THEN
@@ -460,14 +461,14 @@ MODULE Geom_CircCyl
               p2%coord(1)=p2%coord(1)+u(1)*t2
               p2%coord(2)=p2%coord(2)+u(2)*t2
               IF(arcTest) THEN
-                theta=HALFPI
-                IF(p2%coord(2)-circle%c%coord(2) < ZERO) theta=-theta
-                IF(p2%coord(1)-circle%c%coord(1) /= ZERO) &
-                  theta=ATAN((p2%coord(2)-circle%c%coord(2))/(p2%coord(1)-circle%c%coord(1)))
-                IF(p2%coord(1)-circle%c%coord(1) < ZERO) theta=theta+PI
-                IF(theta < ZERO) theta=theta+TWOPI
-                IF((theta .APPROXLE. circle%thetastt) .OR. (circle%thetastp .APPROXLE. theta)) &
-                  CALL p2%clear()
+                theta_shift=0.0_SRK
+                theta=ATAN2PI((p2%coord(1)-circle%c%coord(1)),(p2%coord(2)-circle%c%coord(2)))
+                IF(circle%thetastt > circle%thetastp) THEN
+                  theta_shift=TWOPI
+                  IF(p2%coord(2)-circle%c%coord(2) > 0.0_SRK) theta=theta+TWOPI
+                ENDIF
+                IF((theta .APPROXLE. circle%thetastt) .OR. &
+                  (circle%thetastp+theta_shift .APPROXLE. theta)) CALL p2%clear()
               ENDIF
             ENDIF
           ENDIF

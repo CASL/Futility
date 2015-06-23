@@ -346,6 +346,20 @@ PROGRAM testGeom_CircCyl
             point3%dim == 2 .AND. ALL(point3%coord .APPROXEQ. (/1.0_SRK,0.0_SRK/)) .AND. &
             point4%dim == 2 .AND. ALL(point4%coord .APPROXEQ. (/0.0_SRK,0.5_SRK/)))
       ASSERT(bool,'arc test 12 (corner side)')
+      !Test 13
+      CALL point%clear()
+      CALL circle1%clear()
+      CALL line1%clear()
+      CALL point%init(DIM=2,X=1.0_SRK,Y=1.0_SRK)
+      CALL circle1%set(point,1.0_SRK,ANGSTT=TWOPI-QTRPI,ANGSTP=QTRPI)
+      CALL line1%p1%init(DIM=2,X=1.8_SRK,Y=2.5_SRK)
+      CALL line1%p2%init(DIM=2,X=1.8_SRK,Y=0.0_SRK)
+      CALL circle1%intersectArcLine(line1,point1,point2,point3,point4)
+      bool=(point1%dim == 2 .AND. ALL(point1%coord .APPROXEQA. (/1.8_SRK,1.6_SRK/)) .AND. &
+            point2%dim == 2 .AND. ALL(point2%coord .APPROXEQA. (/1.8_SRK,0.4_SRK/)) .AND. &
+            point3%dim == -3 .AND. ALLOCATED(point3%coord) .AND. &
+            point4%dim == -3 .AND. ALLOCATED(point4%coord))
+      ASSERT(bool,'arc test 13 (arc crosses theta=0 (thetastt > thetastp))')
       
 !Test hasPoint
       COMPONENT_TEST('Circle %inside()')
