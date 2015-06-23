@@ -285,11 +285,11 @@ MODULE Geom_Graph
             ENDDO
 
             !Search other vertices
-            dcurr=thisGraph%vertices(:,vCurr)-(/0.0_SRK,-1.0_SRK/)
+            dcurr=(/0.0_SRK,-1.0_SRK/)
             IF(vPrev > 0) dcurr=thisGraph%vertices(:,vCurr)- &
               thisGraph%vertices(:,vPrev)
             dnext=thisGraph%vertices(:,vNext)-thisGraph%vertices(:,vCurr)
-            isVCurrConvex=(dnext(1)*dcurr(2)-dnext(2)*dcurr(1) <= 0.0_SRK)
+            isVCurrConvex=(dnext(1)*dcurr(2)-dnext(2)*dcurr(1) .APPROXLE. 0.0_SRK)
             DO i=1,nAdj
               vi=getAdjacentVert_graphType(thisGraph,vCurr,i)
               IF(vi /= vPrev .AND. vi /= vNext) THEN
@@ -299,14 +299,14 @@ MODULE Geom_Graph
                       dnext(1)*di(2)-dnext(2)*di(1) < 0.0_SRK) THEN
                     vNext=vi
                     dnext=di
-                    isVCurrConvex=(dnext(1)*dcurr(2)-dnext(2)*dcurr(1) <= 0.0_SRK)
+                    isVCurrConvex=(dnext(1)*dcurr(2)-dnext(2)*dcurr(1) .APPROXLE. 0.0_SRK)
                   ENDIF
                 ELSE
                   IF(dcurr(1)*di(2)-dcurr(2)*di(1) < 0.0_SRK .AND. &
                       dnext(1)*di(2)-dnext(2)*di(1) < 0.0_SRK) THEN
                     vNext=vi
                     dnext=di
-                    isVCurrConvex=(dnext(1)*dcurr(2)-dnext(2)*dcurr(1) <= 0.0_SRK)
+                    isVCurrConvex=(dnext(1)*dcurr(2)-dnext(2)*dcurr(1) .APPROXLE. 0.0_SRK)
                   ENDIF
                 ENDIF
               ENDIF
@@ -355,11 +355,11 @@ MODULE Geom_Graph
             ENDDO
 
             !Search other vertices
-            dcurr=thisGraph%vertices(:,vCurr)-(/0.0_SRK,-1.0_SRK/)
+            dcurr=(/0.0_SRK,-1.0_SRK/)
             IF(vPrev > 0) dcurr=thisGraph%vertices(:,vCurr)- &
               thisGraph%vertices(:,vPrev)
             dnext=thisGraph%vertices(:,vNext)-thisGraph%vertices(:,vCurr)
-            isVCurrConvex=(dnext(1)*dcurr(2)-dnext(2)*dcurr(1) <= 0.0_SRK)
+            isVCurrConvex=(dnext(1)*dcurr(2)-dnext(2)*dcurr(1) .APPROXLE. 0.0_SRK)
             DO i=1,nAdj
               vi=getAdjacentVert_graphType(thisGraph,vCurr,i)
               IF(vi /= vPrev .AND. vi /= vNext) THEN
@@ -369,14 +369,14 @@ MODULE Geom_Graph
                       dnext(1)*di(2)-dnext(2)*di(1) > 0.0_SRK) THEN
                     vNext=vi
                     dnext=di
-                    isVCurrConvex=(dnext(1)*dcurr(2)-dnext(2)*dcurr(1) <= 0.0_SRK)
+                    isVCurrConvex=(dnext(1)*dcurr(2)-dnext(2)*dcurr(1) .APPROXLE. 0.0_SRK)
                   ENDIF
                 ELSE
                   IF(dcurr(1)*di(2)-dcurr(2)*di(1) > 0.0_SRK .OR. &
                       dnext(1)*di(2)-dnext(2)*di(1) > 0.0_SRK) THEN
                     vNext=vi
                     dnext=di
-                    isVCurrConvex=(dnext(1)*dcurr(2)-dnext(2)*dcurr(1) <= 0.0_SRK)
+                    isVCurrConvex=(dnext(1)*dcurr(2)-dnext(2)*dcurr(1) .APPROXLE. 0.0_SRK)
                   ENDIF
                 ENDIF
               ENDIF
@@ -881,7 +881,6 @@ MODULE Geom_Graph
       CALL dmallocA(g%isCycleEdge,n,n)
       ncycles=0
       DO WHILE(nVert_graphType(g) > 0)
-        CALL editToVTK_graphType(g,'testMCB.vtk')
         nadj=nAdjacent_graphType(g,1)
         IF(nadj == 0) THEN
           CALL removeVertex_idx_graphType(g,1)
