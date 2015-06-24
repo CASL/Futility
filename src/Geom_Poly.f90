@@ -157,8 +157,9 @@ MODULE Geom_Poly
   CONTAINS
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief This routine initialies the polygon type from a point graph type.
+!> @param thisPoly The polygon type to be initialized.
+!> @param thatGraph The graphtype from which to initialize the polygon.
 !>
 !> Note:  References for the calculation of the centroid include:
 !> http://mathworld.wolfram.com/CircularSegment.html for the circular sector 
@@ -320,8 +321,9 @@ MODULE Geom_Poly
     ENDSUBROUTINE set_PolygonType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief The routine clears all of the attributes and deallocates the arrays
+!>        for the polygon type.
+!> @param thisPolygon The routine to be cleared.
 !>
     SUBROUTINE clear_PolygonType(thisPolygon)
       CLASS(PolygonType),INTENT(INOUT) :: thisPolygon
@@ -476,7 +478,10 @@ MODULE Geom_Poly
     ENDFUNCTION point_inside_PolygonType
 !
 !-------------------------------------------------------------------------------
-!> @brief 
+!> @brief This routine determines if one polygon is within another. The first 
+!>        polygon's surface boundaries are inclusive. So if the exact same 
+!>        polygon where given for both arguments, the result of the operation 
+!>        would be TRUE.
 !>
 !> @param thisPoly The polygon type used in the query
 !> @param thatPoly The polygon type to check if it lies inside the polygontype
@@ -640,7 +645,8 @@ MODULE Geom_Poly
     ENDFUNCTION polygon_inside_PolygonType
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief This routine determines if a given point lies on the surface of a 
+!>        given polygon.
 !> @param thisPoly The polygon type used in the query
 !> @param point The point type to check if it lies on the surface of the 
 !>        polygontype
@@ -711,8 +717,20 @@ MODULE Geom_Poly
     ENDFUNCTION onSurface_PolygonType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief Function to determine if a line intersects a polygon. This routine 
+!>        tests the lines intersecting with lines and lines intersecting with
+!>        arc circles.  If any of these intersection routines return a point with 
+!>        a positive dimension variable, an intersection has occurred and will 
+!>        return TRUE.  If all of the intersection routines return 0 or an error 
+!>        code, the polygons are presumed to not intersect.
+!>
+!>        It should be noted that this routine presumes that a colinear
+!>        intersection does not constitute an intersection.  This can be changed
+!>        by modifying the logic to test a point returning from the intersection 
+!>        routines if it has a dimension matching the colinear error code.
+!> @param thisPoly The first polygon type 
+!> @param line The line type to intersect with the polygon
+!> @param bool The logical result of the operation
 !>
     PURE FUNCTION doesLineIntersect_PolygonType(thisPolygon,line) RESULT(bool)
       CLASS(PolygonType),INTENT(IN) :: thisPolygon
@@ -807,8 +825,22 @@ MODULE Geom_Poly
     ENDFUNCTION doesLineIntersect_PolygonType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief Function to determine if two polygons intersect each other. This 
+!>        routine tests the lines intersecting with lines, lines intersecting
+!>        with arc circles, arc circles intersecting with lines, and arc-circles
+!>        intersecting with arc-circles.  If any of these intersection routines
+!>        return a point with a positive dimension variable, an intersection
+!>        has occurred and will return TRUE.  If all of the intersection routines
+!>        return 0 or an error code, the polygons are presumed to not intersect.
+!>
+!>        It should be noted that this routine presumes that a tangential 
+!>        intersection does not constitute an intersection.  This can be changed
+!>        by modifying the logic to test a point returning from the circle 
+!>        intersection routines if it has a dimension matching the tangent error
+!>        code.
+!> @param thisPoly The first polygon type 
+!> @param thatPoly The second polygon type to intersect with the first
+!> @param bool The logical result of the operation
 !>
     PURE FUNCTION doesPolyIntersect_PolygonType(thisPoly,thatPoly) RESULT(bool)
       CLASS(PolygonType),INTENT(IN) :: thisPoly
@@ -950,8 +982,6 @@ MODULE Geom_Poly
 !> @brief
 !> @param
 !>
-!>
-!>
     ELEMENTAL FUNCTION isSimple_PolygonType(thisPoly) RESULT(bool)
       CLASS(PolygonType),INTENT(IN) :: thisPoly
       LOGICAL(SBK) :: bool
@@ -959,10 +989,12 @@ MODULE Geom_Poly
     ENDFUNCTION isSimple_PolygonType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
-!>
-!>
+!> @brief Determines whether a polygon meets the criteria for being a circle.
+!>        In short, the number of vertices (and edges implicitly) must equal
+!>        the number of quadratic edges.  The quadratic edges must all be equal
+!>        to one another as well.
+!> @param thisPoly The polygon type to query
+!> @param bool The logical result of the operation
 !>
     ELEMENTAL FUNCTION isCircle_PolygonType(thisPoly) RESULT(bool)
       CLASS(PolygonType),INTENT(IN) :: thisPoly
@@ -1236,20 +1268,22 @@ MODULE Geom_Poly
     ENDSUBROUTINE intersectPoly_PolygonType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief This routine will query a polygon type, check if it meets the criteria
+!>        to be a circle, and if so it will return the radius for the circle.
+!> @param thisPoly The polygon type from which to get the radius
+!> @param r The radius if thisPoly is a circle.  It will be 0.0 for all other
+!>        cases.
 !>
     ELEMENTAL FUNCTION getRadius_PolygonType(thisPoly) RESULT(r)
       CLASS(PolygonType),INTENT(IN) :: thisPoly
       REAL(SRK) :: r
+      r=0.0_SRK
       IF(thisPoly%isCircle()) r=thisPoly%quadEdge(3,1)
     ENDFUNCTION getRadius_PolygonType
 !
 !-------------------------------------------------------------------------------
 !> @brief
 !> @param
-!>
-!>
 !>
     SUBROUTINE subtractSubVolume_PolygonType(thisPoly,subPoly)
       CLASS(PolygonType),INTENT(INOUT) :: thisPoly
@@ -1311,55 +1345,7 @@ MODULE Geom_Poly
                   prevPoly => iPoly
                   iPoly => prevPoly%nextPoly
                 ENDDO
-                !
-                !
-                !
-                !
-                !iPoly%nextPoly => subPoly
-                !iPoly => NULL()
-                !lastSubPoly => thisPoly%subRegions
-                !lfirstsub=.TRUE.
-                !ALLOCATE(newSubReg)
-                !newSubReg%nextPoly => nextNewSubReg
-                !DO WHILE(ASSOCIATED(lastSubPoly))
-                !  !Subpoly overlays an existing subregion!
-                !  IF(subPoly%boundsPoly(lastSubPoly)) THEN
-                !    area=thisPoly%area+lastSubPoly%area
-                !    !add the centroid back to this Poly
-                !    thisPoly%centroid%coord(1)=(thisPoly%centroid%coord(1)* &
-                !      thisPoly%area+lastSubPoly%area*lastSubPoly%centroid%coord(1))/ &
-                !      area
-                !    thisPoly%centroid%coord(2)=(thisPoly%centroid%coord(2)* &
-                !      thisPoly%area+lastSubPoly%area*lastSubPoly%centroid%coord(2))/ &
-                !      area
-                !    !add the area back to thisPoly
-                !    thisPoly%area=area
-                !    !Clear the subregion?  Or just nullify it?
-                !    !IF(lfirstsub) THEN
-                !    !  prevSubPoly => thisPoly%subRegions
-                !    !ELSE
-                !    !  prevSubPoly => prevSubPoly%nextPoly
-                !    !ENDIF
-                !    !Shift the rest of the pointers
-                !    iPoly => lastSubPoly
-                !    lastSubPoly => lastSubPoly%nextPoly
-                !  !No overlap, loop as normal.
-                !  ELSE
-                !    nextNewSubReg => lastSubPoly
-                !    !nextNewSubReg%nextPoly => nextNewSubReg
-                !    !IF(lfirstsub) THEN
-                !    !  newSubReg%nextPoly => thisPoly%subRegions
-                !    !ELSE
-                !    !  newSubReg => %nextPoly
-                !    !ENDIF
-                !    iPoly => lastSubPoly
-                !    lastSubPoly => lastSubPoly%nextPoly
-                !  ENDIF
-                !  IF(lfirstsub) lfirstsub=.FALSE.
-                !ENDDO
               ENDIF
-              !thisPoly%subRegions => newSubReg%nextPoly
-              !DEALLOCATE(newSubReg)
             ENDIF
             IF(.NOT.lintersect) THEN
               cent(1)=thisPoly%centroid%coord(1)*thisPoly%area- &
@@ -1377,10 +1363,11 @@ MODULE Geom_Poly
     ENDSUBROUTINE subtractSubVolume_PolygonType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
-!>
-!>
+!> @brief This routine will take polygon type and return the graphtype object
+!>        to which it corresponds.  That graphtype could then be used to
+!>        initialize the same polygon.
+!> @param thisPoly The polygon type object to be transcribed into a graph type
+!> @param g The corresponding graphtype to thisPoly
 !>
     SUBROUTINE generateGraph_PolygonType(thisPoly,g)
       CLASS(PolygonType),INTENT(IN) :: thisPoly
@@ -1418,10 +1405,9 @@ MODULE Geom_Poly
     ENDSUBROUTINE generateGraph_PolygonType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
-!>
-!>
+!> @brief This routine will return a polygon type for a given circular geometry.
+!> @param circle The circle type to be turned into a polygon
+!> @param polygon The polygon type that corresponds to the circle type.
 !>
     SUBROUTINE Polygonize_Circle(circle,polygon)
       TYPE(CircleType),INTENT(IN) :: circle
@@ -1470,8 +1456,9 @@ MODULE Geom_Poly
     ENDSUBROUTINE Polygonize_Circle
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief This routine will return a polygon type for a given OBBox  geometry.
+!> @param obBox The OBBox type to be turned into a polygon
+!> @param polygon The polygon type that corresponds to the OBBox type.
 !>
 !> Not sure if this is correct.
 !>
@@ -1506,10 +1493,9 @@ MODULE Geom_Poly
     ENDSUBROUTINE Polygonize_OBBox
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
-!>
-!>
+!> @brief This routine will return a polygon type for a given ABBox  geometry.
+!> @param abBox The ABBox type to be turned into a polygon
+!> @param polygon The polygon type that corresponds to the ABBox type.
 !>
     SUBROUTINE Polygonize_ABBox(abBox,polygon)
       TYPE(ABBoxType),INTENT(IN) :: abBox
@@ -1537,8 +1523,11 @@ MODULE Geom_Poly
     ENDSUBROUTINE Polygonize_ABBox
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief An overloaded operator routine to determine if two polygon types are
+!>        equivalent.
+!> @param p1 The first polygon type to compare
+!> @param p2 The second polygon type to compare
+!> @param bool The logical result of the operation
 !>
     PURE RECURSIVE FUNCTION isequal_PolygonType(p1,p2) RESULT(bool)
       TYPE(PolygonType),INTENT(IN) :: p1
@@ -1574,30 +1563,11 @@ MODULE Geom_Poly
     ENDFUNCTION isequal_PolygonType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
-!>
-    !RECURSIVE SUBROUTINE assignNextPoly(thisPoly,subPoly)
-    !  CLASS(PolygonType),INTENT(INOUT) :: thisPoly
-    !  TYPE(PolygonType),INTENT(IN),POINTER :: subPoly
-    !  
-    !  IF(.NOT.ASSOCIATED(thisPoly%subRegions) .AND. &
-    !      .NOT.ASSOCIATED(thisPoly%nextPoly)) THEN
-    !    thisPoly%subRegions => subPoly
-    !  ELSEIF(ASSOCIATED(thisPoly%subRegions)) THEN
-    !    CALL assignNextPoly(thisPoly%subRegions,subPoly)
-    !  ELSE
-    !    IF(ASSOCIATED(thisPoly%nextPoly)) THEN
-    !      CALL assignNextPoly(thisPoly%nextPoly,subPoly)
-    !    ELSE
-    !      
-    !    ENDIF
-    !  ENDIF
-    !ENDSUBROUTINE assignNextPoly
-!
-!-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief This is a local subroutine to create an arc-circle from a specified
+!>        quadratic edge for a given polygon type
+!> @param thisPoly The polygon type from which to create the arc-circle
+!> @param iquad The desired quadratic edge index to convert to a circle type
+!> @param circle The circle type created from the polygon's quadratic edge
 !>
     PURE SUBROUTINE createArcFromQuad(thisPoly,iquad,circle)
       CLASS(PolygonType),INTENT(IN) :: thisPoly

@@ -331,6 +331,9 @@ PROGRAM testGeom_Poly
       ASSERTFAIL(testPolyType%isinit,'%isinit')
       CALL testPolyType%subtractSubVolume(testPolyType)
       ASSERT(.NOT.ASSOCIATED(testPolyType%subRegions),'%subRegions')
+      ASSERT(testPolyType%area .APPROXEQA. 20.0_SRK,'%area')
+      bool=ALL(testPolyType%centroid%coord .APPROXEQA. (/0.0_SRK,0.5_SRK/))
+      ASSERT(bool,'%centroid')
       
       !Case 4, subtract a valid subregion
       CALL testGraph%clear()
@@ -353,8 +356,9 @@ PROGRAM testGeom_Poly
       ASSERTFAIL(ASSOCIATED(testPolyType%subRegions),'%subRegions')
       ASSERT(testPolyType%subRegions == testPoly2,'equivalence of %subRegions')
       ASSERT(testPolyType%area .APPROXEQA. 17.0_SRK,'%area')
-      ASSERT(ALL(testPoly2%centroid%coord .APPROXEQA. (/0.0_SRK,0.0_SRK/)),'%centroid')
+      ASSERT(ALL(testPolyType%centroid%coord .APPROXEQA. (/0.0_SRK,0.5882352941176471_SRK/)),'%centroid')
       testPolyType%area=testPolyType%area+testPolyType%subRegions%area
+      testPolyType%centroid%coord(2)=0.5_SRK
       CALL testPolyType%subRegions%clear()
       testPolyType%subRegions => NULL()
       
@@ -380,44 +384,6 @@ PROGRAM testGeom_Poly
       CALL testPolyType%subtractSubVolume(testPoly2)
       ASSERT(.NOT.ASSOCIATED(testPolyType%subRegions),'%subRegions')
       
-      !Case 5, 2 rectangles in quadralateral
-      CALL testPoly2%clear()
-      CALL testGraph%clear()
-      !Setup test graph - rectangle
-      testCoord(:,1)=(/-1.0_SRK,1.0_SRK/)
-      testCoord(:,2)=(/-1.0_SRK,2.0_SRK/)
-      testCoord(:,3)=(/1.0_SRK,2.0_SRK/)
-      testCoord(:,4)=(/1.0_SRK,1.0_SRK/)
-      DO i=1,4
-        CALL testGraph%insertVertex(testCoord(:,i))
-      ENDDO
-      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
-      CALL testGraph%defineEdge(testCoord(:,2),testCoord(:,3))
-      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
-      CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,1))
-      CALL testPoly2%set(testGraph)
-      CALL testGraph%clear()
-      !Setup test graph - rectangle
-      testCoord(:,1)=(/-1.0_SRK,-1.0_SRK/)
-      testCoord(:,2)=(/-1.0_SRK,0.0_SRK/)
-      testCoord(:,3)=(/1.0_SRK,0.0_SRK/)
-      testCoord(:,4)=(/1.0_SRK,-1.0_SRK/)
-      DO i=1,4
-        CALL testGraph%insertVertex(testCoord(:,i))
-      ENDDO
-      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
-      CALL testGraph%defineEdge(testCoord(:,2),testCoord(:,3))
-      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
-      CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,1))
-      CALL testPoly3%set(testGraph)
-      ASSERTFAIL(testPolyType%isinit,'%isinit')
-      ASSERTFAIL(testPoly2%isinit,'%isinit')
-      CALL testPolyType%subtractSubVolume(testPoly2)
-      ASSERT(ASSOCIATED(testPolyType%subRegions),'%subRegions')
-      CALL testPolyType%subtractSubVolume(testPoly3)
-      ASSERT(ASSOCIATED(testPolyType%subRegions%nextPoly),'%subRegions%nextPoly')
-      ASSERT(testPolyType%area .APPROXEQA. 16.0_SRK,'%area')
-      
       !Case 8, subtracting a rectangle that intersects with other subregions
       CALL testGraph%clear()
       !Setup test graph - rectangle
@@ -434,8 +400,8 @@ PROGRAM testGeom_Poly
       CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,1))
       CALL testPoly4%set(testGraph)
       CALL testPolyType%subtractSubVolume(testPoly4)
-      bool=.NOT.ASSOCIATED(testPolyType%subRegions%nextPoly%nextPoly)
-      ASSERT(bool,'%subRegions%nextPoly%nextPoly')
+      bool=.NOT.ASSOCIATED(testPolyType%subRegions%nextPoly)
+      ASSERT(bool,'%subRegions%nextPoly')
       
       !Case 6, subtracting a smaller rectangle within a larger subregions
       !Reinit base polygon
@@ -473,6 +439,11 @@ PROGRAM testGeom_Poly
       CALL testPoly2%set(testGraph)
       ASSERTFAIL(testPoly2%isinit,'%isinit')
       CALL testPolyType%subtractSubVolume(testPoly2)
+      ASSERT(ASSOCIATED(testPolyType%subRegions),'%subRegions')
+      ASSERT(testPolyType%area .APPROXEQA. 18.0_SRK,'%area')
+      bool=ALL(testPolyType%centroid%coord .APPROXEQA. (/0.0_SRK,0.3888888888888889_SRK/))
+      ASSERT(bool,'%centroid')
+      
       !Setup test graph - rectangle
       testCoord(:,1)=(/-0.5_SRK,1.1_SRK/)
       testCoord(:,2)=(/-0.5_SRK,1.9_SRK/)
@@ -510,13 +481,16 @@ PROGRAM testGeom_Poly
       CALL testPolyType%subtractSubVolume(testPoly3)
       ASSERT(ASSOCIATED(testPolyType%subRegions),'%subRegions')
       ASSERT(ASSOCIATED(testPolyType%subRegions%nextPoly),'%subRegions%nextPoly')
+      ASSERT(testPolyType%area .APPROXEQA. 17.0_SRK,'%area')
+      bool=ALL(testPolyType%centroid%coord .APPROXEQA. (/0.0_SRK,0.4411764705882353_SRK/))
+      ASSERT(bool,'%centroid')
       
       CALL testGraph%clear()
       !Setup test graph - rectangle
-      testCoord(:,1)=(/-1.5_SRK,-1.5_SRK/)
-      testCoord(:,2)=(/-1.5_SRK,2.5_SRK/)
-      testCoord(:,3)=(/1.5_SRK,2.5_SRK/)
-      testCoord(:,4)=(/1.5_SRK,-1.5_SRK/)
+      testCoord(:,1)=(/-1.5_SRK,-1.25_SRK/)
+      testCoord(:,2)=(/-1.5_SRK,2.75_SRK/)
+      testCoord(:,3)=(/1.5_SRK,2.75_SRK/)
+      testCoord(:,4)=(/1.5_SRK,-1.25_SRK/)
       DO i=1,4
         CALL testGraph%insertVertex(testCoord(:,i))
       ENDDO
@@ -529,6 +503,9 @@ PROGRAM testGeom_Poly
       CALL testPolyType%subtractSubVolume(testPoly4)
       ASSERT(ASSOCIATED(testPolyType%subRegions),'%subRegions')
       ASSERT(.NOT.ASSOCIATED(testPolyType%subRegions%nextPoly),'%subRegions%nextPoly')
+      ASSERT(testPolyType%area .APPROXEQA. 8.0_SRK,'%area')
+      bool=ALL(testPolyType%centroid%coord .APPROXEQA. (/0.0_SRK,0.125_SRK/))
+      ASSERT(bool,'%centroid')
       
       CALL testPoly2%clear()
       CALL testPolyType%clear()
