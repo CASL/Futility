@@ -91,21 +91,36 @@ MODULE Geom_Poly
       !> @copybrief Geom_Poly::clear_PolygonType
       !> @copydetails Geom_Poly::clear_PolygonType
       PROCEDURE,PASS :: clear => clear_PolygonType
-      !> @copybrief Geom_Poly::inside_PolygonType
-      !> @copydetails Geom_Poly::inside_PolygonType
-      PROCEDURE,PASS :: inside => inside_PolygonType
+      !> @copybrief Geom_Poly::point_inside_PolygonType
+      !> @copydetails Geom_Poly::point_inside_PolygonType
+      PROCEDURE,PASS :: pointInside => point_inside_PolygonType
+      !> @copybrief Geom_Poly::polygon_inside_PolygonType
+      !> @copydetails Geom_Poly::polygon_inside_PolygonType
+      PROCEDURE,PASS :: boundsPoly => polygon_inside_PolygonType
       !> @copybrief Geom_Poly::onSurface_PolygonType
       !> @copydetails Geom_Poly::onSurface_PolygonType
       PROCEDURE,PASS :: onSurface => onSurface_PolygonType
+      !> @copybrief Geom_Poly::doesLineIntersect_PolygonType
+      !> @copydetails Geom_Poly::doesLineIntersect_PolygonType
+      PROCEDURE,PASS :: doesLineIntersect => doesLineIntersect_PolygonType
+      !> @copybrief Geom_Poly::doesPolyIntersect_PolygonType
+      !> @copydetails Geom_Poly::doesPolyIntersect_PolygonType
+      PROCEDURE,PASS :: doesPolyIntersect => doesPolyIntersect_PolygonType
+      !> @copybrief Geom_Poly::isSimple_PolygonType
+      !> @copydetails Geom_Poly::isSimple_PolygonType
+      PROCEDURE,PASS :: isSimple => isSimple_PolygonType
+      !> @copybrief Geom_Poly::isCircle_PolygonType
+      !> @copydetails Geom_Poly::isCircle_PolygonType
+      PROCEDURE,PASS :: isCircle => isCircle_PolygonType
       !> @copybrief Geom_Poly::intersectLine_PolygonType
       !> @copydetails Geom_Poly::intersectLine_PolygonType
       PROCEDURE,PASS :: intersectLine => intersectLine_PolygonType
       !> @copybrief Geom_Poly::intersectPoly_PolygonType
       !> @copydetails Geom_Poly::intersectPoly_PolygonType
       PROCEDURE,PASS :: intersectPoly => intersectPoly_PolygonType
-      !> @copybrief Geom_Poly::isSimple_PolygonType
-      !> @copydetails Geom_Poly::isSimple_PolygonType
-      PROCEDURE,PASS :: isSimple => isSimple_PolygonType
+      !> @copybrief Geom_Poly::getRadius_PolygonType
+      !> @copydetails Geom_Poly::getRadius_PolygonType
+      PROCEDURE,PASS :: getRadius => getRadius_PolygonType
       !> @copybrief Geom_Poly::subtractSubVolume_PolygonType
       !> @copydetails Geom_Poly::subtractSubVolume_PolygonType
       PROCEDURE,PASS :: subtractSubVolume => subtractSubVolume_PolygonType
@@ -120,6 +135,18 @@ MODULE Geom_Poly
     MODULE PROCEDURE Polygonize_ABBox
   ENDINTERFACE
   
+  !No need to make this public... yet.
+  !!> @brief
+  !INTERFACE inside_PolygonType
+  !  !> @copybrief Geom_Poly::polygon_inside_PolygonType
+  !  !> @copydetails Geom_Poly::polygon_inside_PolygonType
+  !  MODULE PROCEDURE polygon_inside_PolygonType
+  !  !> @copybrief Geom_Poly::point_inside_PolygonType
+  !  !> @copydetails Geom_Poly::point_inside_PolygonType
+  !  MODULE PROCEDURE point_inside_PolygonType
+  !ENDINTERFACE
+  
+  !> @brief
   INTERFACE OPERATOR(==)
     !> @copybrief Geom_Poly::isequal_PolygonType
     !> @copydetails Geom_Poly::isequal_PolygonType
@@ -331,7 +358,7 @@ MODULE Geom_Poly
 !> @param point The point type to check if it lies inside the polygontype
 !> @param bool The logical result of this operation.  TRUE if the point is inside.
 !>
-    PURE RECURSIVE FUNCTION inside_PolygonType(thisPoly,point) RESULT(bool)
+    PURE RECURSIVE FUNCTION point_inside_PolygonType(thisPoly,point) RESULT(bool)
       CLASS(PolygonType),INTENT(IN) :: thisPoly
       TYPE(PointType),INTENT(IN) :: point
       LOGICAL(SBK) :: bool,inPoly,inConvexCirc,inConcaveCirc
@@ -442,11 +469,175 @@ MODULE Geom_Poly
           inPoly=(inPoly .OR. inConvexCirc) .AND. .NOT.inConcaveCirc
           !Logic for inside the polygon and outside the subregions
           IF(inPoly .AND. .NOT.thisPoly%isSimple()) &
-            inPoly=.NOT.inside_PolygonType(thisPoly%subregions,point)
+            inPoly=.NOT.point_inside_PolygonType(thisPoly%subregions,point)
         ENDIF
         bool=inPoly
       ENDIF
-    ENDFUNCTION inside_PolygonType
+    ENDFUNCTION point_inside_PolygonType
+!
+!-------------------------------------------------------------------------------
+!> @brief 
+!>
+!> @param thisPoly The polygon type used in the query
+!> @param thatPoly The polygon type to check if it lies inside the polygontype
+!> @param bool The logical result of this operation.  TRUE if the point is inside.
+!>
+    PURE RECURSIVE FUNCTION polygon_inside_PolygonType(thisPoly,thatPoly) RESULT(bool)
+      CLASS(PolygonType),INTENT(IN) :: thisPoly
+      TYPE(PolygonType),INTENT(IN) :: thatPoly
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: i,j,k,ipoint,npoints
+      REAL(SRK) :: x,y
+      TYPE(PointType),ALLOCATABLE :: tmppoints(:)
+      TYPE(LineType),ALLOCATABLE :: theseLines(:),thoseLines(:)
+      TYPE(CircleType),ALLOCATABLE :: theseCircs(:),thoseCircs(:)
+      
+      bool=.FALSE.
+      IF(thisPoly%isinit .AND. thatPoly%isinit) THEN
+        bool=.TRUE.
+        !Set up all the lines for both polygons
+        ALLOCATE(theseLines(thisPoly%nVert))
+        ALLOCATE(thoseLines(thatPoly%nVert))
+        IF(thisPoly%nQuadEdge > 0) ALLOCATE(theseCircs(thisPoly%nQuadEdge))
+        IF(thatPoly%nQuadEdge > 0) ALLOCATE(thoseCircs(thatPoly%nQuadEdge))
+        ALLOCATE(tmppoints(thisPoly%nVert*thatPoly%nVert+4*thisPoly%nQuadEdge*thatPoly%nVert+ &
+          4*thatPoly%nQuadEdge*thisPoly%nVert+2*thisPoly%nQuadEdge*thatPoly%nQuadEdge))
+        DO i=1,thisPoly%nVert
+          IF(thisPoly%nQuadEdge > 0) THEN
+            IF(ALL(thisPoly%quad2edge /= i)) CALL theseLines(i)%set(thisPoly%vert(thisPoly%edge(1,i)), &
+              thisPoly%vert(thisPoly%edge(2,i)))
+          ELSE
+            CALL theseLines(i)%set(thisPoly%vert(thisPoly%edge(1,i)), &
+              thisPoly%vert(thisPoly%edge(2,i)))
+          ENDIF
+        ENDDO
+        DO i=1,thatPoly%nVert
+          !Make sure all of those points are inside thisPoly!
+          IF(.NOT.thisPoly%pointInside(thatPoly%vert(i))) THEN
+            bool=.FALSE.
+            EXIT
+          ENDIF
+          IF(thatPoly%nQuadEdge > 0) THEN
+            IF(ALL(thatPoly%quad2edge /= i)) CALL thoseLines(i)%set(thatPoly%vert(thatPoly%edge(1,i)), &
+              thatPoly%vert(thatPoly%edge(2,i)))
+          ELSE
+            CALL thoseLines(i)%set(thatPoly%vert(thatPoly%edge(1,i)), &
+              thatPoly%vert(thatPoly%edge(2,i)))
+          ENDIF
+        ENDDO
+        DO i=1,thisPoly%nQuadEdge
+          CALL createArcFromQuad(thisPoly,i,theseCircs(i))
+        ENDDO
+        DO i=1,thatPoly%nQuadEdge
+          CALL createArcFromQuad(thatPoly,i,thoseCircs(i))
+        ENDDO
+        
+        !Nested do-loops for intersecting all lines with lines
+        ipoint=1
+        !TheseLines
+        Line: DO i=1,thisPoly%nVert
+          !ThoseLines
+          DO j=1,thatPoly%nVert
+            IF((theseLines(i)%p1%dim == 2) .AND. (thoseLines(j)%p1%dim == 2)) THEN
+              tmppoints(ipoint)=theseLines(i)%intersect(thoseLines(j))
+              !Found an intersection!  Polygon is outside!
+              IF(tmppoints(ipoint)%dim > 0) THEN
+                bool=.FALSE.
+                EXIT Line
+              ENDIF
+              ipoint=ipoint+1
+            ENDIF
+          ENDDO
+          !All lines with the other circles
+          DO j=1,thatPoly%nQuadEdge
+            IF(theseLines(i)%p1%dim == 2) THEN
+              CALL thoseCircs(j)%intersectArcLine(theseLines(i),tmppoints(ipoint), &
+                tmppoints(ipoint+1),tmppoints(ipoint+2),tmppoints(ipoint+3))
+              !Check if the points are on the circle
+              DO k=0,3
+                IF(tmppoints(ipoint+k)%DIM == 2) THEN
+                  !If it's not on the circle, clear it.
+                  x=tmppoints(ipoint+k)%coord(1)-thoseCircs(j)%c%coord(1)
+                  y=tmppoints(ipoint+k)%coord(2)-thoseCircs(j)%c%coord(2)
+                  IF(.NOT.(x*x+y*y .APPROXEQA. thoseCircs(j)%r*thoseCircs(j)%r)) &
+                    CALL tmppoints(ipoint+k)%clear()
+                ENDIF
+                !Found an intersection!  Polygon is outside!
+                IF(tmppoints(ipoint+k)%dim > 0) THEN
+                  bool=.FALSE.
+                  EXIT Line
+                ENDIF
+              ENDDO
+              ipoint=ipoint+4
+            ENDIF
+          ENDDO
+        ENDDO Line
+        !All circles with the other circles  (May need to improve this intersection routine for arcs...
+        !TheseCircs
+        IF(bool) THEN
+          Quad: DO i=1,thisPoly%nQuadEdge
+            DO j=1,thatPoly%nVert
+              CALL theseCircs(i)%intersectArcLine(thoseLines(j),tmppoints(ipoint), &
+                tmppoints(ipoint+1),tmppoints(ipoint+2),tmppoints(ipoint+3))
+              !Check if the points are on the circle
+              DO k=0,3
+                IF(tmppoints(ipoint+k)%DIM == 2) THEN
+                  !If it's not on the circle, clear it.
+                  x=tmppoints(ipoint+k)%coord(1)-theseCircs(i)%c%coord(1)
+                  y=tmppoints(ipoint+k)%coord(2)-theseCircs(i)%c%coord(2)
+                  IF(.NOT.(x*x+y*y .APPROXEQA. theseCircs(i)%r*theseCircs(i)%r)) &
+                    CALL tmppoints(ipoint+k)%clear()
+                ENDIF
+                !Found an intersection!  Polygon is outside!
+                IF(tmppoints(ipoint+k)%dim > 0) THEN
+                  bool=.FALSE.
+                  EXIT Quad
+                ENDIF
+              ENDDO
+              ipoint=ipoint+4
+            ENDDO
+            !ThoseCircs
+            DO j=1,thatPoly%nQuadEdge
+              CALL theseCircs(i)%intersectCircle(thoseCircs(j),tmppoints(ipoint), &
+                tmppoints(ipoint+1))
+              !Found an intersection!  Polygon is outside!
+              IF((tmppoints(ipoint)%dim > 0) .OR. (tmppoints(ipoint+1)%dim > 0)) THEN
+                bool=.FALSE.
+                EXIT Quad
+              ENDIF
+              ipoint=ipoint+2
+            ENDDO
+          ENDDO Quad
+        ENDIF
+        !Check subregions to make sure the polygon does not intersect them (totally outside)
+        !IF(bool
+        !Clear the first set of lines
+        DO i=1,thisPoly%nVert
+          CALL theseLines(i)%clear()
+        ENDDO
+        !Clear the first set of circles
+        DO i=1,thisPoly%nQuadEdge
+          CALL theseCircs(i)%clear()
+        ENDDO
+        !Clear the rest of the circles
+        DO j=1,thatPoly%nQuadEdge
+          CALL thoseCircs(j)%clear()
+        ENDDO
+        !Clear the rest of the lines.
+        DO j=1,thatPoly%nVert
+          CALL thoseLines(j)%clear()
+        ENDDO
+        DO i=1,SIZE(tmppoints)
+          CALL tmppoints(i)%clear()
+        ENDDO
+        
+        !Clear stuff
+        DEALLOCATE(tmppoints)
+        DEALLOCATE(theseLines,thoseLines)
+        IF(ALLOCATED(theseCircs)) DEALLOCATE(theseCircs)
+        IF(ALLOCATED(thoseCircs)) DEALLOCATE(thoseCircs)
+      ENDIF
+    ENDFUNCTION polygon_inside_PolygonType
 !
 !-------------------------------------------------------------------------------
 !> @brief
@@ -518,6 +709,272 @@ MODULE Geom_Poly
         ENDIF
       ENDIF
     ENDFUNCTION onSurface_PolygonType
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param
+!>
+    PURE FUNCTION doesLineIntersect_PolygonType(thisPolygon,line) RESULT(bool)
+      CLASS(PolygonType),INTENT(IN) :: thisPolygon
+      TYPE(LineType),INTENT(IN) :: line
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: i,j,ipoint,npoints
+      REAL(SRK) :: x,y
+      TYPE(PointType),ALLOCATABLE :: tmppoints(:)
+      TYPE(LineType),ALLOCATABLE :: lines(:)
+      TYPE(CircleType),ALLOCATABLE :: circles(:)
+      
+      bool=.FALSE.
+      
+      !Construct line and circle types locally
+      ALLOCATE(lines(thisPolygon%nVert))
+      IF(thisPolygon%nQuadEdge > 0) ALLOCATE(circles(thisPolygon%nQuadEdge))
+      
+      DO i=1,thisPolygon%nVert
+        CALL lines(i)%set(thisPolygon%vert(thisPolygon%edge(1,i)), &
+          thisPolygon%vert(thisPolygon%edge(2,i)))
+      ENDDO
+      DO i=1,thisPolygon%nQuadEdge
+        CALL createArcFromQuad(thisPolygon,i,circles(i))
+      ENDDO
+      !Make tmppoints the max possible size
+      ALLOCATE(tmppoints(thisPolygon%nVert+3*thisPolygon%nQuadEdge))
+      
+      !Test the line with all the edges, 
+      !Intersect circles first if necessary
+      ipoint=1
+      Quad: DO i=1,thisPolygon%nQuadEdge
+        CALL circles(i)%intersectArcLine(line,tmppoints(ipoint), &
+          tmppoints(ipoint+1),tmppoints(ipoint+2),tmppoints(ipoint+3))
+        !Check if the points are on the circle
+        DO j=0,3
+          IF(tmppoints(ipoint+j)%DIM == 2) THEN
+            !If it's not on the circle, clear it.
+            x=tmppoints(ipoint+j)%coord(1)-circles(i)%c%coord(1)
+            y=tmppoints(ipoint+j)%coord(2)-circles(i)%c%coord(2)
+            IF(.NOT.(x*x+y*y .APPROXEQA. circles(i)%r*circles(i)%r)) &
+              CALL tmppoints(ipoint+j)%clear()
+            IF(tmppoints(ipoint+j)%dim > 0) THEN
+              bool=.TRUE.
+              EXIT Quad
+            ENDIF
+          ENDIF
+        ENDDO
+        ipoint=ipoint+4
+      ENDDO Quad
+      
+      !Intersect the remaining lines if necessary
+      IF(.NOT.bool) THEN
+        IF(thisPolygon%nQuadEdge > 0) THEN
+          DO i=1,SIZE(lines)
+            !Intersect the line
+            IF(ALL(i /= thisPolygon%quad2edge)) THEN 
+              tmppoints(ipoint)=lines(i)%intersectLine(line)
+              IF(tmppoints(ipoint)%dim > 0) THEN
+                bool=.TRUE.
+                EXIT
+              ENDIF
+              ipoint=ipoint+1
+            ENDIF
+          ENDDO
+        ELSE
+          DO i=1,SIZE(lines)
+            tmppoints(ipoint)=lines(i)%intersectLine(line)
+            IF(tmppoints(ipoint)%dim > 0) THEN
+              bool=.TRUE.
+              EXIT
+            ENDIF
+            ipoint=ipoint+1
+          ENDDO
+        ENDIF
+      ENDIF
+      
+      !Clear local types
+      DO i=SIZE(tmppoints),1,-1
+        CALL tmppoints(i)%clear()
+      ENDDO
+      DEALLOCATE(tmppoints)
+      DO i=SIZE(lines),1,-1
+        CALL lines(i)%clear()
+      ENDDO
+      DEALLOCATE(lines)
+      IF(ALLOCATED(circles)) THEN
+        DO i=SIZE(circles),1,-1
+          CALL circles(i)%clear()
+        ENDDO
+        DEALLOCATE(circles)
+      ENDIF
+    ENDFUNCTION doesLineIntersect_PolygonType
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param
+!>
+    PURE FUNCTION doesPolyIntersect_PolygonType(thisPoly,thatPoly) RESULT(bool)
+      CLASS(PolygonType),INTENT(IN) :: thisPoly
+      TYPE(PolygonType),INTENT(IN) :: thatPoly
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: i,j,k
+      REAL(SRK) :: x,y
+      TYPE(PointType) :: tmppoints(4)
+      TYPE(LineType),ALLOCATABLE :: theseLines(:),thoseLines(:)
+      TYPE(CircleType),ALLOCATABLE :: theseCircs(:),thoseCircs(:)
+      
+      bool=.FALSE.
+      
+      IF(thisPoly%isinit .AND. thatPoly%isinit) THEN
+        !Set up all the lines for both polygons
+        ALLOCATE(theseLines(thisPoly%nVert))
+        ALLOCATE(thoseLines(thatPoly%nVert))
+        IF(thisPoly%nQuadEdge > 0) ALLOCATE(theseCircs(thisPoly%nQuadEdge))
+        IF(thatPoly%nQuadEdge > 0) ALLOCATE(thoseCircs(thatPoly%nQuadEdge))
+        DO i=1,thisPoly%nVert
+          IF(thisPoly%nQuadEdge > 0) THEN
+            IF(ALL(thisPoly%quad2edge /= i)) CALL theseLines(i)%set(thisPoly%vert(thisPoly%edge(1,i)), &
+              thisPoly%vert(thisPoly%edge(2,i)))
+          ELSE
+            CALL theseLines(i)%set(thisPoly%vert(thisPoly%edge(1,i)), &
+              thisPoly%vert(thisPoly%edge(2,i)))
+          ENDIF
+        ENDDO
+        DO i=1,thatPoly%nVert
+          IF(thatPoly%nQuadEdge > 0) THEN
+            IF(ALL(thatPoly%quad2edge /= i)) CALL thoseLines(i)%set(thatPoly%vert(thatPoly%edge(1,i)), &
+              thatPoly%vert(thatPoly%edge(2,i)))
+          ELSE
+            CALL thoseLines(i)%set(thatPoly%vert(thatPoly%edge(1,i)), &
+              thatPoly%vert(thatPoly%edge(2,i)))
+          ENDIF
+        ENDDO
+        DO i=1,thisPoly%nQuadEdge
+          CALL createArcFromQuad(thisPoly,i,theseCircs(i))
+        ENDDO
+        DO i=1,thatPoly%nQuadEdge
+          CALL createArcFromQuad(thatPoly,i,thoseCircs(i))
+        ENDDO
+        
+        !Nested do-loops for intersecting all lines with lines
+        !TheseLines
+        Line: DO i=1,thisPoly%nVert
+          !ThoseLines
+          DO j=1,thatPoly%nVert
+            IF((theseLines(i)%p1%dim == 2) .AND. (thoseLines(j)%p1%dim == 2)) THEN
+              tmppoints(1)=theseLines(i)%intersect(thoseLines(j))
+              IF(tmppoints(1)%dim > 0) THEN
+                bool=.TRUE.
+                EXIT Line
+              ENDIF
+            ENDIF
+          ENDDO
+          !All lines with the those circles
+          DO j=1,thatPoly%nQuadEdge
+            CALL thoseCircs(j)%intersectArcLine(theseLines(i),tmppoints(1), &
+              tmppoints(2),tmppoints(3),tmppoints(4))
+            !Check if the points are on the circle
+            DO k=1,4
+              IF(tmppoints(k)%DIM == 2) THEN
+                !If it's not on the circle, clear it.
+                x=tmppoints(k)%coord(1)-thoseCircs(j)%c%coord(1)
+                y=tmppoints(k)%coord(2)-thoseCircs(j)%c%coord(2)
+                IF(.NOT.(x*x+y*y .APPROXEQA. thoseCircs(j)%r*thoseCircs(j)%r)) &
+                  CALL tmppoints(k)%clear()
+                IF(tmppoints(k)%dim > 0) THEN
+                  bool=.TRUE.
+                  EXIT Line
+                ENDIF
+              ENDIF
+            ENDDO
+          ENDDO
+        ENDDO Line
+        !All circles with the other circles  (May need to improve this intersection routine for arcs...
+        !TheseCircs
+        IF(.NOT. bool) THEN
+          Quad: DO i=1,thisPoly%nQuadEdge
+            DO j=1,thatPoly%nVert
+              CALL theseCircs(i)%intersectArcLine(thoseLines(j),tmppoints(1), &
+                tmppoints(2),tmppoints(3),tmppoints(4))
+              !Check if the points are on the circle
+              DO k=1,4
+                IF(tmppoints(k)%DIM == 2) THEN
+                  !If it's not on the circle, clear it.
+                  x=tmppoints(k)%coord(1)-theseCircs(i)%c%coord(1)
+                  y=tmppoints(k)%coord(2)-theseCircs(i)%c%coord(2)
+                  IF(.NOT.(x*x+y*y .APPROXEQA. theseCircs(i)%r*theseCircs(i)%r)) &
+                    CALL tmppoints(k)%clear()
+                  IF(tmppoints(k)%dim > 0) THEN
+                    bool=.TRUE.
+                    EXIT Quad
+                  ENDIF
+                ENDIF
+              ENDDO
+            ENDDO
+            !ThoseCircs
+            DO j=1,thatPoly%nQuadEdge
+              CALL theseCircs(i)%intersectCircle(thoseCircs(j),tmppoints(1), &
+                tmppoints(2))
+              IF(tmppoints(1)%dim > 0 .OR. tmppoints(2)%dim > 0) THEN
+                bool=.TRUE.
+                EXIT Quad
+              ENDIF
+            ENDDO
+          ENDDO Quad
+        ENDIF
+        !Clear the first set of lines
+        DO i=1,thisPoly%nVert
+          CALL theseLines(i)%clear()
+        ENDDO
+        !Clear the first set of circles
+        DO i=1,thisPoly%nQuadEdge
+          CALL theseCircs(i)%clear()
+        ENDDO
+        !Clear the rest of the circles
+        DO j=1,thatPoly%nQuadEdge
+          CALL thoseCircs(j)%clear()
+        ENDDO
+        !Clear the rest of the lines.
+        DO j=1,thatPoly%nVert
+          CALL thoseLines(j)%clear()
+        ENDDO
+        DO i=1,4
+          CALL tmppoints(i)%clear()
+        ENDDO
+        
+        !Clear stuff
+        DEALLOCATE(theseLines,thoseLines)
+        IF(ALLOCATED(theseCircs)) DEALLOCATE(theseCircs)
+        IF(ALLOCATED(thoseCircs)) DEALLOCATE(thoseCircs)
+      ENDIF
+    ENDFUNCTION doesPolyIntersect_PolygonType
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param
+!>
+!>
+!>
+    ELEMENTAL FUNCTION isSimple_PolygonType(thisPoly) RESULT(bool)
+      CLASS(PolygonType),INTENT(IN) :: thisPoly
+      LOGICAL(SBK) :: bool
+      bool=.NOT.ASSOCIATED(thisPoly%subRegions)
+    ENDFUNCTION isSimple_PolygonType
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param
+!>
+!>
+!>
+    ELEMENTAL FUNCTION isCircle_PolygonType(thisPoly) RESULT(bool)
+      CLASS(PolygonType),INTENT(IN) :: thisPoly
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: i
+      IF(thisPoly%nVert == thisPoly%nQuadEdge) THEN
+        bool=.TRUE.
+        DO i=2,thisPoly%nQuadEdge
+          bool=bool .AND. ALL(thisPoly%quadEdge(:,i) .APPROXEQA. thisPoly%quadEdge(:,1))
+        ENDDO
+      ENDIF
+    ENDFUNCTION isCircle_PolygonType
 !
 !-------------------------------------------------------------------------------
 !> @brief
@@ -683,7 +1140,7 @@ MODULE Geom_Poly
               ipoint=ipoint+1
             ENDIF
           ENDDO
-          !All lines with the other circles
+          !All lines with the those circles
           DO j=1,thatPoly%nQuadEdge
             CALL thoseCircs(j)%intersectArcLine(theseLines(i),tmppoints(ipoint), &
               tmppoints(ipoint+1),tmppoints(ipoint+2),tmppoints(ipoint+3))
@@ -691,9 +1148,9 @@ MODULE Geom_Poly
             DO k=0,3
               IF(tmppoints(ipoint+k)%DIM == 2) THEN
                 !If it's not on the circle, clear it.
-                x=tmppoints(ipoint+k)%coord(1)-thoseCircs(i)%c%coord(1)
-                y=tmppoints(ipoint+k)%coord(2)-thoseCircs(i)%c%coord(2)
-                IF(.NOT.(x*x+y*y .APPROXEQA. thoseCircs(i)%r*thoseCircs(i)%r)) &
+                x=tmppoints(ipoint+k)%coord(1)-thoseCircs(j)%c%coord(1)
+                y=tmppoints(ipoint+k)%coord(2)-thoseCircs(j)%c%coord(2)
+                IF(.NOT.(x*x+y*y .APPROXEQA. thoseCircs(j)%r*thoseCircs(j)%r)) &
                   CALL tmppoints(ipoint+k)%clear()
               ENDIF
             ENDDO
@@ -754,15 +1211,21 @@ MODULE Geom_Poly
         DO i=1,SIZE(tmppoints)
           IF(tmppoints(i)%dim == 2) npoints=npoints+1
         ENDDO
-        ALLOCATE(points(npoints))
-        ipoint=1
-        DO i=1,SIZE(tmppoints)
-          IF(tmppoints(i)%dim == 2) THEN
-            points(ipoint)=tmppoints(i)
-            ipoint=ipoint+1
-          ENDIF
-          CALL tmppoints(i)%clear()
-        ENDDO
+        IF(npoints > 0) THEN
+          ALLOCATE(points(npoints))
+          ipoint=1
+          DO i=1,SIZE(tmppoints)
+            IF(tmppoints(i)%dim == 2) THEN
+              points(ipoint)=tmppoints(i)
+              ipoint=ipoint+1
+            ENDIF
+            CALL tmppoints(i)%clear()
+          ENDDO
+        ELSE
+          DO i=1,SIZE(tmppoints)
+            CALL tmppoints(i)%clear()
+          ENDDO
+        ENDIF
         
         !Clear stuff
         DEALLOCATE(tmppoints)
@@ -776,13 +1239,11 @@ MODULE Geom_Poly
 !> @brief
 !> @param
 !>
-!>
-!>
-    ELEMENTAL FUNCTION isSimple_PolygonType(thisPoly) RESULT(bool)
+    ELEMENTAL FUNCTION getRadius_PolygonType(thisPoly) RESULT(r)
       CLASS(PolygonType),INTENT(IN) :: thisPoly
-      LOGICAL(SBK) :: bool
-      bool=.NOT.ASSOCIATED(thisPoly%subRegions)
-    ENDFUNCTION isSimple_PolygonType
+      REAL(SRK) :: r
+      IF(thisPoly%isCircle()) r=thisPoly%quadEdge(3,1)
+    ENDFUNCTION getRadius_PolygonType
 !
 !-------------------------------------------------------------------------------
 !> @brief
@@ -793,56 +1254,124 @@ MODULE Geom_Poly
     SUBROUTINE subtractSubVolume_PolygonType(thisPoly,subPoly)
       CLASS(PolygonType),INTENT(INOUT) :: thisPoly
       TYPE(PolygonType),TARGET,INTENT(IN) :: subPoly
-      LOGICAL(SBK) :: allIn
+      LOGICAL(SBK) :: bool,trueInside,lintersect,lfirstsub
       INTEGER(SIK) :: i,v1,v2
-      REAL(SRK) :: a(2),b(2),c(2),m(2),r,scal,cent(2),alp1,alp2,theta
+      REAL(SRK) :: a(2),b(2),c(2),m(2),r,scal,cent(2),alp1,alp2,theta,area
       TYPE(PointType) :: arcPoint
-      TYPE(PolygonType),POINTER :: lastSubPoly
+      TYPE(PolygonType),POINTER :: lastSubPoly,iPoly,prevPoly,newSubReg,nextNewSubReg
       
       IF(thisPoly%isInit .AND. subPoly%isInit) THEN
-        allIn=.TRUE.
-        !Check that all vertices are inside the bounding polygon
-        DO i=1,subPoly%nVert
-          allIn=(allIn .AND. inside_PolygonType(thisPoly,subPoly%vert(i)) &
-            .AND. .NOT.onSurface_Polygontype(thisPoly,subPoly%vert(i)))
-          IF(.NOT.allIN) EXIT
-        ENDDO
-        
-        !Check quadratic edges to make sure their outermost point is still
-        !inside the bounding polygon
-        IF(allIn) THEN
-          DO i=1,subPoly%nQuadEdge
-            v1=subPoly%edge(1,subPoly%quad2Edge(i))
-            v2=subPoly%edge(2,subPoly%quad2Edge(i))
-            a=subPoly%vert(v1)%coord
-            b=subPoly%vert(v2)%coord
-            c=subPoly%quadEdge(1:2,i)
-            r=subPoly%quadEdge(3,i)
-
-            !TODO: Determine M or determine if curved surface crosses bounding volume
-            !m=??
-            
-            CALL arcPoint%init(COORD=m)
-            allIn=(allIn .AND. inside_PolygonType(thisPoly,arcPoint) &
-              .AND. .NOT.onSurface_Polygontype(thisPoly,arcPoint))
-            IF(.NOT.allIn) EXIT
+        IF(thisPoly%boundsPoly(subPoly)) THEN
+          !Make sure the vertices are not on the surface
+          trueInside=.TRUE.
+          DO i=1,subPoly%nVert
+            IF(thisPoly%onSurface(subPoly%vert(i))) THEN
+              trueInside=.FALSE.
+              EXIT
+            ENDIF
           ENDDO
-        ENDIF
-        
-        IF(allIn) THEN
-          lastSubPoly => thisPoly%subRegions
-          DO WHILE(ASSOCIATED(lastSubPoly))
-            lastSubPoly => lastSubPoly%nextPoly
-          ENDDO
-          lastSubPoly => subPoly
-          cent(1)=thisPoly%centroid%coord(1)*thisPoly%area- &
-            subPoly%centroid%coord(1)*subPoly%area
-          cent(2)=thisPoly%centroid%coord(2)*thisPoly%area- &
-            subPoly%centroid%coord(2)*subPoly%area
-          thisPoly%area=thisPoly%area-subPoly%area
-          CALL thisPoly%centroid%clear()
-          CALL thisPoly%centroid%init(DIM=2,X=cent(1)/thisPoly%area, &
-            Y=cent(2)/thisPoly%area)
+          !If the subpoly is actually inside thisPoly
+          IF(trueInside) THEN
+            lintersect=.FALSE.
+            IF(.NOT.ASSOCIATED(thisPoly%subRegions)) THEN
+              thisPoly%subRegions => subPoly
+            ELSE
+              !Intersection check - if intersects a subregions, do not subtract
+              iPoly => NULL()
+              lastSubPoly => thisPoly%subRegions
+              DO WHILE(ASSOCIATED(lastSubPoly))
+                lintersect=lastSubPoly%doesPolyIntersect(subPoly)
+                IF(lintersect) EXIT
+                iPoly => lastSubPoly
+                lastSubPoly => lastSubPoly%nextPoly
+              ENDDO
+              !Overlap check - if subPoly overlaps subregions, remove overlapped regions
+              IF(.NOT.lintersect) THEN
+                iPoly => subPoly
+                iPoly%nextPoly => thisPoly%subRegions
+                !subPoly%nextPoly => thisPoly%subRegions
+                thisPoly%subRegions => iPoly
+                prevPoly => thisPoly%subRegions
+                iPoly => prevPoly%nextPoly
+                DO WHILE(ASSOCIATED(iPoly))
+                  IF(subPoly%boundsPoly(iPoly)) THEN
+                    area=thisPoly%area+iPoly%area
+                    !add the centroid back to this Poly
+                    thisPoly%centroid%coord(1)=(thisPoly%centroid%coord(1)* &
+                      thisPoly%area+iPoly%area*iPoly%centroid%coord(1))/ &
+                      area
+                    thisPoly%centroid%coord(2)=(thisPoly%centroid%coord(2)* &
+                      thisPoly%area+iPoly%area*iPoly%centroid%coord(2))/ &
+                      area
+                    !add the area back to thisPoly
+                    thisPoly%area=area
+                    prevPoly%nextPoly => iPoly%nextPoly
+                    iPoly => prevPoly
+                  ENDIF
+                  prevPoly => iPoly
+                  iPoly => prevPoly%nextPoly
+                ENDDO
+                !
+                !
+                !
+                !
+                !iPoly%nextPoly => subPoly
+                !iPoly => NULL()
+                !lastSubPoly => thisPoly%subRegions
+                !lfirstsub=.TRUE.
+                !ALLOCATE(newSubReg)
+                !newSubReg%nextPoly => nextNewSubReg
+                !DO WHILE(ASSOCIATED(lastSubPoly))
+                !  !Subpoly overlays an existing subregion!
+                !  IF(subPoly%boundsPoly(lastSubPoly)) THEN
+                !    area=thisPoly%area+lastSubPoly%area
+                !    !add the centroid back to this Poly
+                !    thisPoly%centroid%coord(1)=(thisPoly%centroid%coord(1)* &
+                !      thisPoly%area+lastSubPoly%area*lastSubPoly%centroid%coord(1))/ &
+                !      area
+                !    thisPoly%centroid%coord(2)=(thisPoly%centroid%coord(2)* &
+                !      thisPoly%area+lastSubPoly%area*lastSubPoly%centroid%coord(2))/ &
+                !      area
+                !    !add the area back to thisPoly
+                !    thisPoly%area=area
+                !    !Clear the subregion?  Or just nullify it?
+                !    !IF(lfirstsub) THEN
+                !    !  prevSubPoly => thisPoly%subRegions
+                !    !ELSE
+                !    !  prevSubPoly => prevSubPoly%nextPoly
+                !    !ENDIF
+                !    !Shift the rest of the pointers
+                !    iPoly => lastSubPoly
+                !    lastSubPoly => lastSubPoly%nextPoly
+                !  !No overlap, loop as normal.
+                !  ELSE
+                !    nextNewSubReg => lastSubPoly
+                !    !nextNewSubReg%nextPoly => nextNewSubReg
+                !    !IF(lfirstsub) THEN
+                !    !  newSubReg%nextPoly => thisPoly%subRegions
+                !    !ELSE
+                !    !  newSubReg => %nextPoly
+                !    !ENDIF
+                !    iPoly => lastSubPoly
+                !    lastSubPoly => lastSubPoly%nextPoly
+                !  ENDIF
+                !  IF(lfirstsub) lfirstsub=.FALSE.
+                !ENDDO
+              ENDIF
+              !thisPoly%subRegions => newSubReg%nextPoly
+              !DEALLOCATE(newSubReg)
+            ENDIF
+            IF(.NOT.lintersect) THEN
+              cent(1)=thisPoly%centroid%coord(1)*thisPoly%area- &
+                subPoly%centroid%coord(1)*subPoly%area
+              cent(2)=thisPoly%centroid%coord(2)*thisPoly%area- &
+                subPoly%centroid%coord(2)*subPoly%area
+              thisPoly%area=thisPoly%area-subPoly%area
+              CALL thisPoly%centroid%clear()
+              CALL thisPoly%centroid%init(DIM=2,X=cent(1)/thisPoly%area, &
+                Y=cent(2)/thisPoly%area)
+            ENDIF
+          ENDIF
         ENDIF
       ENDIF
     ENDSUBROUTINE subtractSubVolume_PolygonType
@@ -1043,6 +1572,28 @@ MODULE Geom_Poly
         ENDIF
       ENDIF
     ENDFUNCTION isequal_PolygonType
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param
+!>
+    !RECURSIVE SUBROUTINE assignNextPoly(thisPoly,subPoly)
+    !  CLASS(PolygonType),INTENT(INOUT) :: thisPoly
+    !  TYPE(PolygonType),INTENT(IN),POINTER :: subPoly
+    !  
+    !  IF(.NOT.ASSOCIATED(thisPoly%subRegions) .AND. &
+    !      .NOT.ASSOCIATED(thisPoly%nextPoly)) THEN
+    !    thisPoly%subRegions => subPoly
+    !  ELSEIF(ASSOCIATED(thisPoly%subRegions)) THEN
+    !    CALL assignNextPoly(thisPoly%subRegions,subPoly)
+    !  ELSE
+    !    IF(ASSOCIATED(thisPoly%nextPoly)) THEN
+    !      CALL assignNextPoly(thisPoly%nextPoly,subPoly)
+    !    ELSE
+    !      
+    !    ENDIF
+    !  ENDIF
+    !ENDSUBROUTINE assignNextPoly
 !
 !-------------------------------------------------------------------------------
 !> @brief
