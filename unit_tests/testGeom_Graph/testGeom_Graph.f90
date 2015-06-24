@@ -48,6 +48,7 @@ PROGRAM testGeom_Graph
   REGISTER_SUBTEST('%removeFilament',testRemFil)
   REGISTER_SUBTEST('%getMCB',testGetMCB)
   REGISTER_SUBTEST('%combineGraph',testCombine)
+  REGISTER_SUBTEST('%TriangulateVerts',testTriangulate)
   !REGISTER_SUBTEST('OPERATOR(==)',testIsEqual)
   !REGISTER_SUBTEST('OPERATOR(+)',testAddition)
 
@@ -2090,6 +2091,43 @@ PROGRAM testGeom_Graph
       CALL g2%clear()
       CALL testGraph%clear()
     ENDSUBROUTINE testCombine
+!
+!-------------------------------------------------------------------------------    
+    SUBROUTINE testTriangulate
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: i,j,n
+      REAL(SRK) :: testCoord(2,9)
+      TYPE(GraphType),ALLOCATABLE :: cycles(:)
+      
+      !Setup test graph
+      testCoord(:,1)=(/0.0_SRK,-1.0_SRK/)
+      testCoord(:,2)=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,3)=(/1.0_SRK,0.0_SRK/)
+      testCoord(:,4)=(/1.25_SRK,0.5_SRK/)
+      testCoord(:,5)=(/1.50_SRK,-0.5_SRK/)
+      testCoord(:,6)=(/1.75_SRK,-1.0_SRK/)
+      testCoord(:,7)=(/2.00_SRK,-0.75_SRK/)
+      testCoord(:,8)=(/2.25_SRK,-0.25_SRK/)
+      testCoord(:,9)=(/3.00_SRK,-0.10_SRK/)
+
+      CALL testGraph%clear()
+      DO i=1,9
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%TriangulateVerts()
+      CALL testGraph%editToVTK('Triangulate.vtk')
+      n=0
+      DO i=1,9
+        DO j=i+1,9
+          IF(testGraph%edgeMatrix(i,j) == 1) n=n+1
+        ENDDO
+      ENDDO
+      bool=(n == 19)
+      ASSERT(bool,'Wrong number of edges')
+      CALL testGraph%getMCB(cycles)
+      bool=(SIZE(cycles) == 11)
+      ASSERT(bool,'Wrong number of triangles')
+    ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE symEdgeCheck()
