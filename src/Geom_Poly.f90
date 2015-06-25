@@ -358,16 +358,25 @@ MODULE Geom_Poly
 !>
 !> @param thisPoly The polygon type used in the query
 !> @param point The point type to check if it lies inside the polygontype
+!> @param isSub Optional logical of whether or not it is a recursive subregion check.
 !> @param bool The logical result of this operation.  TRUE if the point is inside.
 !>
-    PURE RECURSIVE FUNCTION point_inside_PolygonType(thisPoly,point) RESULT(bool)
+    PURE RECURSIVE FUNCTION point_inside_PolygonType(thisPoly,point,isSub) RESULT(bool)
       CLASS(PolygonType),INTENT(IN) :: thisPoly
       TYPE(PointType),INTENT(IN) :: point
-      LOGICAL(SBK) :: bool,inPoly,inConvexCirc,inConcaveCirc
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: isSub
+      LOGICAL(SBK) :: bool,inPoly,inConvexCirc,inConcaveCirc,isSubReg
       INTEGER(SIK) :: i,wn,istt,istp,iedge
       TYPE(PointType) :: centroid
       TYPE(LineType) :: line
       TYPE(CircleType) :: circ
+      CLASS(PolygonType),POINTER :: nPoly
+
+      IF(PRESENT(isSub)) THEN
+        isSubReg=isSub
+      ELSE
+        isSubReg=.FALSE.
+      ENDIF
       
       bool=.FALSE.
       IF(thisPoly%nVert > 0) THEN
@@ -469,9 +478,15 @@ MODULE Geom_Poly
           ENDDO
           !Logic for the cases where there is inside and outside circles.
           inPoly=(inPoly .OR. inConvexCirc) .AND. .NOT.inConcaveCirc
+        ENDIF
+
+        IF(.NOT. isSubReg) THEN
           !Logic for inside the polygon and outside the subregions
           IF(inPoly .AND. .NOT.thisPoly%isSimple()) &
-            inPoly=.NOT.point_inside_PolygonType(thisPoly%subregions,point)
+            inPoly=.NOT.point_inside_PolygonType(thisPoly%subregions,point,.TRUE.)
+          
+        ELSEIF(ASSOCIATED(thisPoly%nextPoly)) THEN
+          inPoly=inPoly .OR. point_inside_PolygonType(thisPoly%nextPoly,point,.TRUE.)
         ENDIF
         bool=inPoly
       ENDIF
