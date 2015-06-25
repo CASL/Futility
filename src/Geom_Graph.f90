@@ -39,6 +39,7 @@ MODULE Geom_Graph
   PRIVATE
 
   PUBLIC :: GraphType
+  PUBLIC :: ASSIGNMENT(=)
   PUBLIC :: OPERATOR(+)
   PUBLIC :: OPERATOR(==)
 
@@ -138,6 +139,12 @@ MODULE Geom_Graph
     !> @copybrief Geom_Graph::isequal_graphType
     !> @copydetails Geom_Graph::isequal_graphType
     MODULE PROCEDURE isequal_graphType
+  ENDINTERFACE
+    
+  INTERFACE ASSIGNMENT(=)
+    !> @copybrief Geom_Graph::assign_graphType
+    !> @copydetails Geom_Graph::assign_graphType
+    MODULE PROCEDURE assign_graphType
   ENDINTERFACE
 !
 !===============================================================================
@@ -1191,12 +1198,139 @@ MODULE Geom_Graph
                 ENDIF
               ELSEIF(thisGraph%edgeMatrix(j,i) == -1) THEN
                 p0%coord=thisGraph%quadEdges(1:2,i,j)
-                alp1=ATAN2PI(d(1)-p0%coord(1),d(2)-p0%coord(2))
-                alp2=ATAN2PI(c(1)-p0%coord(1),c(2)-p0%coord(2))
-                CALL c2%set(p0,ABS(g0%quadEdges(3,i,j)),alp1,alp2)
+                r=thisGraph%quadEdges(3,i,j)
+                alp1=ATAN2PI(c(1)-p0%coord(1),c(2)-p0%coord(2))
+                alp2=ATAN2PI(d(1)-p0%coord(1),d(2)-p0%coord(2))
+                !Insure we are traversing the shorter arc on the circle
+                IF(ABS(alp1-alp2) .APPROXEQA. PI) THEN  
+                  !Semi-circle, for this case we must look at sign of r
+                  IF(r < 0.0_SRK) THEN
+                    CALL c2%set(p0,ABS(r),alp1,alp2)
+                  ELSE
+                    CALL c2%set(p0,ABS(r),alp2,alp1)
+                  ENDIF
+                ELSE
+                  !Distance between alpha_1 and alpha_2 is < PI
+                  IF(c(2) .APPROXEQA. p0%coord(2)) THEN
+                    IF(d(2) > c(2)) THEN
+                      CALL c2%set(p0,ABS(r),alp2,alp1)
+                    ELSE
+                      CALL c2%set(p0,ABS(r),alp1,alp2)
+                    ENDIF
+                  ELSEIF(c(2) < p0%coord(2)) THEN
+                    CALL c2%set(p0,ABS(r),alp1,alp2)
+                  ELSE
+                    CALL c2%set(p0,ABS(r),alp2,alp1)
+                  ENDIF
+                ENDIF
                 IF(c1%r == 0.0_SRK) THEN
                   !line-circle
+                  CALL c2%intersectLine(l1,p1,p2)
 
+                  !Count tangent points
+                  IF(p1%dim == -3) p1%dim=2
+
+                  !Check for intersections on ends of line segments
+                  IF(p1%dim == 0) THEN
+                    x1=a(1)-c2%c%coord(1)
+                    y1=a(2)-c2%c%coord(2)
+                    r2=x1*x1+y1*y1
+                    IF(r2 .APPROXEQA. c2%r*c2%r) THEN
+                      p1=l1%p1
+                      l1%p1%dim=0
+                    ELSE
+                      x1=b(1)-c2%c%coord(1)
+                      y1=b(2)-c2%c%coord(2)
+                      r2=x1*x1+y1*y1
+                      IF(r2 .APPROXEQA. c2%r*c2%r) THEN
+                        p1=l1%p2
+                        l1%p2%dim=0
+                      ENDIF
+                    ENDIF
+                  ENDIF
+                  IF(l1%p1%dim == 2 .AND. p2%dim == 0) THEN
+                    x1=a(1)-c2%c%coord(1)
+                    y1=a(2)-c2%c%coord(2)
+                    r2=x1*x1+y1*y1
+                    IF(r2 .APPROXEQA. c2%r*c2%r) THEN
+                      p2=l1%p1
+                      l1%p1%dim=0
+                    ENDIF
+                  ELSEIF(l1%p2%dim == 2 .AND. p2%dim == 0) THEN
+                    x1=b(1)-c2%c%coord(1)
+                    y1=b(2)-c2%c%coord(2)
+                    r2=x1*x1+y1*y1
+                    IF(r2 .APPROXEQA. c2%r*c2%r) THEN
+                      p2=l1%p2
+                      l1%p2%dim=0
+                    ENDIF
+                  ENDIF
+
+                  !Filter points for interval of theta on arc. (might have bugs?)
+                  theta_shift=0.0_SRK
+                  IF(c2%thetastt > c2%thetastp) theta_shift=TWOPI
+                  IF(p1%dim == 2) THEN
+                    theta=ATAN2PI(p1%coord(1)-c2%c%coord(1), &
+                                  p1%coord(2)-c2%c%coord(2))
+                    IF(p1%coord(2)-c2%c%coord(2) .APPROXGE. 0.0_SRK) &
+                      theta=theta+theta_shift
+                    IF(.NOT.((c2%thetastt .APPROXLE. theta) .AND. &
+                      (theta .APPROXLE. c2%thetastp+theta_shift))) CALL p1%clear()
+                  ENDIF
+                  IF(p2%dim == 2) THEN
+                    theta=ATAN2PI(p2%coord(1)-c2%c%coord(1), &
+                                  p2%coord(2)-c2%c%coord(2))
+                    IF(p2%coord(2)-c2%c%coord(2) .APPROXGE. 0.0_SRK) &
+                      theta=theta+theta_shift
+                    IF(.NOT.((c2%thetastt .APPROXLE. theta) .AND. &
+                      (theta .APPROXLE. c2%thetastp+theta_shift))) CALL p2%clear()
+                  ENDIF
+                  IF(p1%dim == 2 .AND. p2%dim == 2) THEN
+                    !Compute arc midpoint
+                    m=c+d-2.0_SRK*p0%coord
+                    scal=SQRT(m(1)*m(1)+m(2)*m(2))
+                    IF(scal .APPROXEQA. 0.0_SRK) THEN
+                      !Half circle. Lame.
+                      theta=0.5_SRK*(alp1+alp2)
+                      !Adjust theta for the appropriate half of the circle
+                      IF(.NOT.((c2%thetastt .APPROXLE. theta) .AND. &
+                               (theta .APPROXLE. c2%thetastp))) theta=theta-PI
+                      m(1)=c2%r*COS(theta)
+                      m(2)=c2%r*SIN(theta)
+                    ELSE
+                      scal=ABS(r)/scal
+                      m=m*scal
+                    ENDIF
+                    m=m+c2%c%coord
+                    
+                    CALL removeEdge_graphType(g0,c,d)
+                    CALL insertVertex_graphType(g0,p1%coord)
+                    CALL insertVertex_graphType(g0,p2%coord)
+                    
+                    !Add midpoint of arc (keeps graph sane)
+                    !p1 and p2 are connected by a straight point and an arc
+                    CALL insertVertex_graphType(g0,m)
+                    CALL defineQuadEdge_graphType(g0,m,p1%coord,c2%c%coord,c2%r)
+                    CALL defineQuadEdge_graphType(g0,m,p2%coord,c2%c%coord,c2%r)
+                    
+                    !Cord intersecting circle
+                    CALL defineEdge_graphType(g0,p1%coord,p2%coord)
+                    !is p1 always closer to c?
+                    CALL defineQuadEdge_graphType(g0,c,p1%coord,c2%c%coord,c2%r)
+                    !is p2 always closer to d?
+                    CALL defineQuadEdge_graphType(g0,d,p2%coord,c2%c%coord,c2%r)
+                    CALL insertVertex_graphType(lineAB,p1%coord)
+                    CALL insertVertex_graphType(lineAB,p2%coord)
+                  ELSE
+                    IF(p1%dim /= 2 .AND. p2%dim == 2) p1=p2
+                    IF(p1%dim == 2) THEN
+                      CALL removeEdge_graphType(g0,c,d)
+                      CALL insertVertex_graphType(g0,p1%coord)
+                      CALL defineQuadEdge_graphType(g0,c,p1%coord,c2%c%coord,c2%r)
+                      CALL defineQuadEdge_graphType(g0,d,p1%coord,c2%c%coord,c2%r)
+                      CALL insertVertex_graphType(lineAB,p1%coord)
+                    ENDIF
+                  ENDIF
                 ELSE
                   !circle-circle (F-this)
 
