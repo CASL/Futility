@@ -436,10 +436,11 @@ MODULE Geom_Graph
         j=0
         k=0
         DO i=1,n
-          IF(coord(1) <= thisGraph%vertices(1,i)) THEN
+          IF(coord(1) .APPROXLE. thisGraph%vertices(1,i)) THEN
             IF(coord(1) .APPROXEQA. thisGraph%vertices(1,i)) THEN
               IF(coord(2) .APPROXEQA. thisGraph%vertices(2,i)) THEN
                 idx=-1 !Duplicate vertex
+                EXIT
               ELSEIF(coord(2) < thisGraph%vertices(2,i)) THEN                
                 idx=i !Before i
               ELSE
