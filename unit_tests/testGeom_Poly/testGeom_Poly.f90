@@ -445,6 +445,7 @@ PROGRAM testGeom_Poly
       ASSERT(bool,'%centroid')
       
       !Setup test graph - rectangle
+      CALL testGraph%clear()
       testCoord(:,1)=(/-0.5_SRK,1.1_SRK/)
       testCoord(:,2)=(/-0.5_SRK,1.9_SRK/)
       testCoord(:,3)=(/0.5_SRK,1.9_SRK/)

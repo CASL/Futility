@@ -1302,7 +1302,7 @@ MODULE Geom_Poly
 !>
     SUBROUTINE subtractSubVolume_PolygonType(thisPoly,subPoly)
       CLASS(PolygonType),INTENT(INOUT) :: thisPoly
-      TYPE(PolygonType),TARGET,INTENT(IN) :: subPoly
+      TYPE(PolygonType),TARGET,INTENT(INOUT) :: subPoly
       LOGICAL(SBK) :: bool,trueInside,lintersect,lfirstsub
       INTEGER(SIK) :: i,v1,v2
       REAL(SRK) :: a(2),b(2),c(2),m(2),r,scal,cent(2),alp1,alp2,theta,area
@@ -1336,10 +1336,11 @@ MODULE Geom_Poly
               ENDDO
               !Overlap check - if subPoly overlaps subregions, remove overlapped regions
               IF(.NOT.lintersect) THEN
-                iPoly => subPoly
-                iPoly%nextPoly => thisPoly%subRegions
-                !subPoly%nextPoly => thisPoly%subRegions
-                thisPoly%subRegions => iPoly
+                !iPoly => subPoly
+                !iPoly%nextPoly => thisPoly%subRegions
+                !thisPoly%subRegions => iPoly
+                subPoly%nextPoly => thisPoly%subRegions
+                thisPoly%subRegions => subPoly
                 prevPoly => thisPoly%subRegions
                 iPoly => prevPoly%nextPoly
                 DO WHILE(ASSOCIATED(iPoly))
