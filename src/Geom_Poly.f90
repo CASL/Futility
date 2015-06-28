@@ -672,6 +672,7 @@ MODULE Geom_Poly
       CLASS(PolygonType),INTENT(IN) :: thisPoly
       TYPE(PointType),INTENT(IN) :: point
       LOGICAL(SBK) :: bool
+      LOGICAL(SBK) :: isQuadEdge
       INTEGER(SIK) :: i,iedge
       REAL(SRK) :: d
       TYPE(PointType) :: centroid
@@ -679,28 +680,36 @@ MODULE Geom_Poly
       
       IF(thisPoly%isinit .AND. point%dim == 2) THEN
         bool=.FALSE.
-        !Check straight lines.
+        !Check if its one of the vertices
         DO i=1,thisPoly%nVert
-          IF(thisPoly%nQuadEdge > 0) THEN
-            IF(ALL(thisPoly%quad2edge /= i)) THEN
-              CALL line%set(thisPoly%vert(thisPoly%edge(1,i)), &
-                thisPoly%vert(thisPoly%edge(2,i)))
-              d=line%distance2Point(point)
-            ENDIF
-          ELSE
-            CALL line%set(thisPoly%vert(thisPoly%edge(1,i)), &
-              thisPoly%vert(thisPoly%edge(2,i)))
-            d=line%distance2Point(point)
-          ENDIF
-          IF(d .APPROXEQA. 0.0_SRK) THEN
+          IF(ALL(point%coord .APPROXEQA. thisPoly%vert(i)%coord)) THEN
             bool=.TRUE.
             EXIT
           ENDIF
-          CALL line%clear()
         ENDDO
         
-        !Check quadratic edges now if need be
+        IF(.NOT.bool) THEN
+          !Check straight edges.
+          DO i=1,thisPoly%nVert
+            isQuadEdge=.FALSE.
+            IF(thisPoly%nQuadEdge > 0) THEN
+              IF(ANY(thisPoly%quad2edge == i)) isQuadEdge=.TRUE.
+            ENDIF
+            IF(.NOT.isQuadEdge) THEN
+              CALL line%set(thisPoly%vert(thisPoly%edge(1,i)), &
+                thisPoly%vert(thisPoly%edge(2,i)))
+              d=line%distance2Point(point)
+              IF(d .APPROXEQA. 0.0_SRK) THEN
+                bool=.TRUE.
+                EXIT
+              ENDIF
+            ENDIF
+          ENDDO
+          CALL line%clear()
+        ENDIF
+
         IF(.NOT.bool .AND. thisPoly%nQuadEdge > 0) THEN
+          !Check quadratic edges
           DO i=1,thisPoly%nQuadEdge
             !First check if the point is on the surface of the circle
             IF(((point%coord(1)-thisPoly%quadEdge(1,i))* &
@@ -714,17 +723,18 @@ MODULE Geom_Poly
               iedge=thisPoly%quad2edge(i)
               CALL line%set(thisPoly%vert(thisPoly%edge(1,iedge)), &
                 thisPoly%vert(thisPoly%edge(2,iedge)))
-              !If the centroid is on the left, the valid portion of the 
-              !arc lies to the right of the line.  Also, check the end points.
               IF(line%pointIsLeft(centroid)) THEN
-                bool=line%pointIsRight(point) .OR. &
-                  (point == line%p1) .OR. (point == line%p2)
-              !If the centroid is on the right, the valid portion of the 
-              !arc lies to the left of the line.  Also, check the end points.
+                !Centroid is on the left, the valid portion of the 
+                !arc lies to the right of the line.
+                bool=line%pointIsRight(point)
               ELSE
-                bool=line%pointIsLeft(point) .OR. &
-                  (point == line%p1) .OR. (point == line%p2)
+                !Centroid is on the right, the valid portion of the 
+                !arc lies to the left of the line.
+                bool=line%pointIsLeft(point)
               ENDIF
+              CALL centroid%clear()
+              CALL line%clear()
+              IF(bool) EXIT
             ENDIF
           ENDDO
         ENDIF
