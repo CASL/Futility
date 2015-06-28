@@ -480,11 +480,12 @@ MODULE Geom_Poly
           inPoly=(inPoly .OR. inConvexCirc) .AND. .NOT.inConcaveCirc
         ENDIF
 
-        IF(.NOT. isSubReg) THEN
+        IF(.NOT.isSubReg) THEN
           !Logic for inside the polygon and outside the subregions
-          IF(inPoly .AND. .NOT.thisPoly%isSimple()) &
-            inPoly=.NOT.point_inside_PolygonType(thisPoly%subregions,point,.TRUE.)
-          
+          IF(inPoly .AND. .NOT.thisPoly%isSimple()) THEN
+            inPoly=.NOT.point_inside_PolygonType(thisPoly%subregions,point,.TRUE.) &
+              .OR. onSurface_PolygonType(thisPoly%subregions,point)
+          ENDIF
         ELSEIF(ASSOCIATED(thisPoly%nextPoly)) THEN
           inPoly=inPoly .OR. point_inside_PolygonType(thisPoly%nextPoly,point,.TRUE.)
         ENDIF
@@ -1395,15 +1396,20 @@ MODULE Geom_Poly
 !> @param thisPoly The polygon type object to be transcribed into a graph type
 !> @param g The corresponding graphtype to thisPoly
 !>
-    SUBROUTINE generateGraph_PolygonType(thisPoly,g)
+    RECURSIVE SUBROUTINE generateGraph_PolygonType(thisPoly,g,incSubReg)
       CLASS(PolygonType),INTENT(IN) :: thisPoly
       TYPE(GraphType),INTENT(INOUT) :: g
+      LOGICAL(SBK),OPTIONAL :: incSubReg
+
+      LOGICAL(SBK) :: includeSubRegions
       LOGICAL(SBK),ALLOCATABLE :: isQuadEdge(:)
       INTEGER(SIK) :: i,j,v0,v1
       REAL(SRK) :: r,c(2)
       REAL(SRK),ALLOCATABLE :: verts(:,:)
-      CALL g%clear()
+      TYPE(GraphType) :: subGraph
+      TYPE(PolygonType),POINTER :: iPoly
 
+      CALL g%clear()
       IF(thisPoly%isInit) THEN
         ALLOCATE(verts(2,thisPoly%nVert))
         DO i=1,thisPoly%nVert
@@ -1427,6 +1433,18 @@ MODULE Geom_Poly
             CALL g%defineEdge(verts(:,v0),verts(:,v1))
           ENDIF
         ENDDO
+
+        !Add subregions to graph
+        includeSubRegions=.TRUE.
+        IF(PRESENT(incSubReg)) includeSubRegions=incSubReg
+        IF(includeSubRegions) THEN
+          iPoly => thisPoly%subregions
+          DO WHILE(ASSOCIATED(iPoly))
+            CALL generateGraph_PolygonType(iPoly,subGraph,.FALSE.)
+            CALL g%combineGraph(subGraph)
+            iPoly => iPoly%nextPoly
+          ENDDO
+        ENDIF
       ENDIF
     ENDSUBROUTINE generateGraph_PolygonType
 !
