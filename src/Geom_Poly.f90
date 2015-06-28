@@ -390,13 +390,13 @@ MODULE Geom_Poly
             istp=thisPoly%edge(2,i)
             !Check if next vertex is matched
             IF(point%coord(2) .APPROXEQA. thisPoly%vert(istp)%coord(2)) THEN
-              IF(point%coord(2) .APPROXEQA. thisPoly%vert(istp)%coord(2)) THEN
+              IF(point%coord(1) .APPROXEQA. thisPoly%vert(istp)%coord(1)) THEN
                 wn=100 !Evaluates to true after loop
                 EXIT
               ELSE
                 IF((point%coord(2) .APPROXEQA. thisPoly%vert(istt)%coord(2)) .AND. &
-                  (thisPoly%vert(istt)%coord(1) < point%coord(1)) .EQV. &
-                  (thisPoly%vert(istp)%coord(1) > point%coord(1))) THEN
+                  (thisPoly%vert(istt)%coord(1) < point%coord(1) .EQV. &
+                   thisPoly%vert(istp)%coord(1) > point%coord(1))) THEN
                   wn=200 !Evaluates to true after loop
                   EXIT
                 ENDIF
