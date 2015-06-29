@@ -30,7 +30,7 @@ PROGRAM testGeom_Line
   TYPE(PointType) :: points(2),points2(2),points3(2)
   TYPE(LineType) :: line1,line2,lines(2),dis,diss(2)
   INTEGER(SIK) :: ldim(2),i,ioerr
-  REAL(SRK) :: d,mu1,mu2
+  REAL(SRK) :: d,mu1,mu2,s(2)
   LOGICAL(SBK) :: bool
   
   CREATE_TEST('Test Geom')

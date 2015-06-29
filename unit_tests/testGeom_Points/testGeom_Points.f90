@@ -31,7 +31,7 @@ PROGRAM testGeom_Points
   TYPE(PointType) :: points(2),points2(2),points3(2)
   TYPE(LinkedListPointType),POINTER :: firstPoint,thisPoint
   INTEGER(SIK) :: i
-  REAL(SRK) :: d
+  REAL(SRK) :: d,s(2)
   LOGICAL(SBK) :: bool
   
   CREATE_TEST('Test Geom')
