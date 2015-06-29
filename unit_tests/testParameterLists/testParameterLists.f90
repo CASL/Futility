@@ -4402,6 +4402,19 @@ PROGRAM testParameterLists
     DEALLOCATE(sdk3)
     DEALLOCATE(str1)
     DEALLOCATE(str2)
+    
+    COMPONENT_TEST('Misplaced sublist')
+    CALL testParam%add('A -> B',1)
+    CALL testParam%add('A -> C',1.0_SRK)
+    CALL testParam%add('A -> Sub A -> D',1)
+    CALL testParam%add('A -> Sub A -> Sub B -> Sub C -> X',1.0_SRK)
+    CALL testParam%add('A -> Sub A -> Sub B -> Sub C -> Y',0.0_SRK)
+    CALL testParam%add('A -> Sub A -> Sub B -> Sub C -> Sub D -> n',5)
+    CALL testParam%add('A -> Sub D -> bad location',0)
+    ASSERT(testParam%has('A -> Sub D -> bad location'),'bad location')
+    bool=testParam%has('A -> Sub A -> Sub B -> Sub C -> Sub D -> bad location')
+    ASSERT(.NOT.bool,'bad location')
+    CALL testParam%clear()
   ENDSUBROUTINE testAdd
 !
 !-------------------------------------------------------------------------------

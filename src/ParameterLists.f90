@@ -1445,7 +1445,8 @@ MODULE ParameterLists
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       CLASS(ParamType),INTENT(IN) :: newParam
-      CHARACTER(LEN=LEN(name)) :: thisname,nextname,pname
+      LOGICAL(SBK),SAVE :: lsubListSearch=.TRUE.
+      CHARACTER(LEN=LEN(name)) :: thisname,nextname,pname,listName
       INTEGER(SIK) :: ipos,i,np
       TYPE(ParamType),ALLOCATABLE :: tmpList(:)
       CLASS(ParamType),POINTER :: tmpParam
@@ -1470,13 +1471,15 @@ MODULE ParameterLists
                 thisParam%pdat%name=TRIM(ADJUSTL(name))
                 nextname=''
               ENDIF
-              CALL add_ParamType(thisParam%pdat,TRIM(nextname),newParam)
+              CALL add_ParamType(thisParam%pdat,nextname,newParam)
             ELSE
               !assign newParam to thisParam
               CALL assign_ParamType(thisParam,newParam)
             ENDIF
           ENDIF
         TYPE IS(ParamType_List)
+          np=0
+          IF(ALLOCATED(thisParam%pList)) np=SIZE(thisParam%pList)
           IF(LEN_TRIM(name) > 0) THEN
             !Check if the name matches this list
             ipos=INDEX(name,'->')
@@ -1492,25 +1495,41 @@ MODULE ParameterLists
             CALL toUPPER(thisname)
             CALL toUPPER(pname)
             IF(TRIM(pname) == TRIM(thisname)) THEN
-              !The name refers to the list in thisParam
-              CALL add_ParamType(thisParam,TRIM(nextname),newParam)
+              !only search if it's not the last name in the
+              !full address. last name is guaranteed not to exist
+              !and this prevents accidental partial matching in sublists.
+              lsubListSearch=INDEX(TRIM(nextName),'->') > 0
+              CALL add_ParamType(thisParam,nextname,newParam)
+              lsubListSearch=.TRUE.
             ELSE
-              !Search for thisname within this list
+              !Search for thisname within...
               NULLIFY(tmpParam)
-              CALL thisParam%getParam(TRIM(thisname),tmpParam)
+              IF(lsubListSearch) THEN
+                !...all sub-entries.
+                CALL get_ParamType(thisParam,TRIM(thisname),tmpParam)
+              ELSE
+                !...just this list
+                DO i=1,np
+                  listName=''
+                  IF(ASSOCIATED(thisParam%pList(i)%pdat)) &
+                    listName=TRIM(thisParam%pList(i)%pdat%name)
+                  CALL toUPPER(listName)
+                  IF(listName == TRIM(thisName)) &
+                    tmpParam => thisParam%pList(i)%pdat
+                ENDDO
+              ENDIF
+
               IF(ASSOCIATED(tmpParam)) THEN
                 !Found parameter with matching name
-                CALL add_ParamType(tmpParam,TRIM(nextname),newParam)
+                CALL add_ParamType(tmpParam,nextname,newParam)
               ELSE
                 !Create a new entry in the list for the new parameter
-                IF(ALLOCATED(thisParam%pList)) THEN
-                  np=SIZE(thisParam%pList)
-
+                IF(np > 0) THEN
                   !Copy the parameter list to a temporary
                   ALLOCATE(tmpList(np))
                   DO i=1,np
                     CALL assign_ParamType(tmpList(i),thisParam%pList(i))
-                    CALL thisParam%pList(i)%clear()
+                    CALL clear_ParamType(thisParam%pList(i))
                   ENDDO
 
                   !Reallocate the parameter list and copy everything back
@@ -1518,7 +1537,7 @@ MODULE ParameterLists
                   ALLOCATE(thisParam%pList(np+1))
                   DO i=1,np
                     CALL assign_ParamType(thisParam%pList(i),tmpList(i))
-                    CALL tmpList(i)%clear()
+                    CALL clear_ParamType(tmpList(i))
                   ENDDO
                   DEALLOCATE(tmpList)
                   i=np+1
@@ -1534,8 +1553,7 @@ MODULE ParameterLists
             ENDIF
           ELSE
             !Create a new entry in the list for the new parameter
-            IF(ALLOCATED(thisParam%pList)) THEN
-              np=SIZE(thisParam%pList)
+            IF(np > 0) THEN
 
               !Copy the parameter list to a temporary
               ALLOCATE(tmpList(np))
