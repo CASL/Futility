@@ -2455,6 +2455,7 @@ PROGRAM testGeom_Graph
       REAL(SRK) :: testCoord(2,9),c0(2),r
       TYPE(GraphType) :: g2
 
+      CALL testGraph%clear()
       testCoord(:,1)=(/0.0_SRK,0.0_SRK/)
       testCoord(:,2)=(/0.0_SRK,1.0_SRK/)
       testCoord(:,3)=(/1.0_SRK,0.0_SRK/)
@@ -2477,7 +2478,17 @@ PROGRAM testGeom_Graph
       CALL testGraph%insertVertex(testCoord(:,7))
       CALL testGraph%defineEdge(testCoord(:,6),testCoord(:,7))
       !Graph2
-      g2=testGraph
+      DO i=1,7
+        CALL g2%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL g2%defineEdge(testCoord(:,1),testCoord(:,2))
+      CALL g2%defineEdge(testCoord(:,1),testCoord(:,3))
+      CALL g2%defineEdge(testCoord(:,3),testCoord(:,4))
+      CALL g2%defineEdge(testCoord(:,4),testCoord(:,2))
+      CALL g2%defineEdge(testCoord(:,4),testCoord(:,6))
+      CALL g2%defineEdge(testCoord(:,3),testCoord(:,5))
+      CALL g2%defineEdge(testCoord(:,5),testCoord(:,6))      
+      CALL g2%defineEdge(testCoord(:,6),testCoord(:,7))
       ASSERT(testGraph == g2,'Equal Graphs')
       g2%vertices(1,1)=-1.0_SRK
       ASSERT(.NOT.(testGraph == g2),'Non-Equal Graphs')

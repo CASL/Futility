@@ -1666,9 +1666,7 @@ MODULE Geom_Graph
         (ALLOCATED(g0%vertices) .EQV. ALLOCATED(g1%vertices)) .AND. &
         (ALLOCATED(g0%edgeMatrix) .EQV. ALLOCATED(g1%edgeMatrix)) .AND. &
         (ALLOCATED(g0%quadEdges) .EQV. ALLOCATED(g1%quadEdges))) THEN
-        IF(SIZE(g0%isCycleEdge,DIM=1) == SIZE(g1%isCycleEdge,DIM=1) .AND. &
-            SIZE(g0%isCycleEdge,DIM=2) == SIZE(g1%isCycleEdge,DIM=2) .AND. &
-            SIZE(g0%vertices,DIM=1) == SIZE(g1%vertices,DIM=1) .AND. &
+        IF(SIZE(g0%vertices,DIM=1) == SIZE(g1%vertices,DIM=1) .AND. &
             SIZE(g0%vertices,DIM=2) == SIZE(g1%vertices,DIM=2) .AND. &
             SIZE(g0%edgeMatrix,DIM=1) == SIZE(g1%edgeMatrix,DIM=1) .AND. &
             SIZE(g0%edgeMatrix,DIM=2) == SIZE(g1%edgeMatrix,DIM=2) .AND. &
@@ -1676,7 +1674,15 @@ MODULE Geom_Graph
             SIZE(g0%quadEdges,DIM=2) == SIZE(g1%quadEdges,DIM=2) .AND. &
             SIZE(g0%quadEdges,DIM=3) == SIZE(g1%quadEdges,DIM=3)) THEN
           bool=.TRUE.
-          bool=ALL(g0%vertices .APPROXEQA. g1%vertices) .AND. &
+          IF(ALLOCATED(g0%isCycleEdge)) THEN 
+            IF(SIZE(g0%isCycleEdge,DIM=1) == SIZE(g1%isCycleEdge,DIM=1) .AND. &
+               SIZE(g0%isCycleEdge,DIM=2) == SIZE(g1%isCycleEdge,DIM=2)) THEN 
+              bool=.TRUE.
+            ELSE
+              bool=.FALSE.
+            ENDIF
+          ENDIF
+          bool=bool .AND. ALL(g0%vertices .APPROXEQA. g1%vertices) .AND. &
             ALL(g0%edgeMatrix == g1%edgeMatrix) .AND. &
             ALL(g0%quadEdges .APPROXEQA. g1%quadEdges)
         ENDIF
