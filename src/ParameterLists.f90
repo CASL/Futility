@@ -3484,11 +3484,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_SNK(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_SNK(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_SNK(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
@@ -3727,11 +3723,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_SLK(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_SLK(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_SLK(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
@@ -3970,11 +3962,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_SBK(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_SBK(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_SBK(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
@@ -4206,11 +4194,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_STR(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_STR(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_STR(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
@@ -4238,11 +4222,7 @@ MODULE ParameterLists
       TYPE(StringType) :: s
 
       s=param
-      IF(PRESENT(description)) THEN
-        CALL init_ParamType_STR(thisParam,name,s,description)
-      ELSE
-        CALL init_ParamType_STR(thisParam,name,s)
-      ENDIF
+      CALL init_ParamType_STR(thisParam,name,s,description)
       s=''
     ENDSUBROUTINE init_ParamType_CHAR
 !
@@ -4594,11 +4574,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_SSK_a1(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_SSK_a1(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_SSK_a1(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
@@ -4884,11 +4860,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_SDK_a1(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_SDK_a1(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_SDK_a1(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
@@ -5172,11 +5144,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_SNK_a1(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_SNK_a1(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_SNK_a1(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
@@ -5461,11 +5429,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_SLK_a1(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_SLK_a1(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_SLK_a1(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
@@ -5747,11 +5711,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_SBK_a1(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_SBK_a1(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_SBK_a1(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
@@ -6034,11 +5994,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_STR_a1(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_STR_a1(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_STR_a1(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
@@ -6322,11 +6278,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_SSK_a2(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_SSK_a2(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_SSK_a2(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
@@ -6604,11 +6556,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_SDK_a2(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_SDK_a2(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_SDK_a2(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
@@ -6886,11 +6834,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_SNK_a2(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_SNK_a2(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_SNK_a2(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
@@ -7168,11 +7112,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_SLK_a2(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_SLK_a2(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_SLK_a2(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
@@ -7459,11 +7399,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_STR_a2(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_STR_a2(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_STR_a2(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
@@ -7755,11 +7691,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_SSK_a3(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_SSK_a3(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_SSK_a3(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
@@ -8045,11 +7977,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_SDK_a3(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_SDK_a3(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_SDK_a3(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
@@ -8335,11 +8263,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_SNK_a3(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_SNK_a3(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_SNK_a3(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
@@ -8625,11 +8549,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_SLK_a3(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_SLK_a3(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_SLK_a3(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
