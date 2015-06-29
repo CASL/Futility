@@ -1539,6 +1539,7 @@ PROGRAM testGeom_Poly
       REAL(SRK) :: testCoord(2,9),c0(2),r
       TYPE(PointType) :: point1,point2
       TYPE(GraphType) :: testGraph2
+      TYPE(PolygonType) :: testPoly2
       
       CALL testGraph%clear()
       CALL testPolyType%clear()
@@ -1576,6 +1577,53 @@ PROGRAM testGeom_Poly
       CALL testPolyType%generateGraph(testGraph2)
       ASSERT(testGraph == testGraph2,'Graph is equal')
       
+      !Setup subregion graph - square with a full circle
+      CALL testGraph2%clear()
+      testCoord(:,1)=(/-1.0_SRK,-1.0_SRK/)/SQRT(2.0_SRK)
+      testCoord(:,2)=(/-1.0_SRK,1.0_SRK/)/SQRT(2.0_SRK)
+      testCoord(:,3)=(/1.0_SRK,1.0_SRK/)/SQRT(2.0_SRK)
+      testCoord(:,4)=(/1.0_SRK,-1.0_SRK/)/SQRT(2.0_SRK)
+      c0=(/0.0_SRK,0.0_SRK/)
+      DO i=1,4
+        CALL testGraph2%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph2%defineEdge(testCoord(:,1),testCoord(:,2))
+      CALL testGraph2%defineEdge(testCoord(:,2),testCoord(:,3))
+      CALL testGraph2%defineEdge(testCoord(:,3),testCoord(:,4))
+      CALL testGraph2%defineEdge(testCoord(:,4),testCoord(:,1))
+      CALL testGraph2%defineQuadraticEdge(testCoord(:,1), &
+        testCoord(:,2),c0,1.0_SRK)
+      CALL testGraph2%defineQuadraticEdge(testCoord(:,2), &
+        testCoord(:,3),c0,1.0_SRK)
+      CALL testGraph2%defineQuadraticEdge(testCoord(:,3), &
+        testCoord(:,4),c0,1.0_SRK)
+      CALL testGraph2%defineQuadraticEdge(testCoord(:,4), &
+        testCoord(:,1),c0,1.0_SRK)
+      CALL testPoly2%clear()
+      CALL testPoly2%set(testGraph2)
+      ASSERTFAIL(testPoly2%isinit,'%isinit')
+      CALL testPolyType%subtractSubVolume(testPoly2)
+      ASSERTFAIL(ASSOCIATED(testPolyType%subRegions),'%subRegions')
+      
+      !Add the subregion graph to the main reference graph
+      DO i=1,4
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
+      CALL testGraph%defineEdge(testCoord(:,2),testCoord(:,3))
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
+      CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,1))
+      CALL testGraph%defineQuadraticEdge(testCoord(:,1), &
+        testCoord(:,2),c0,1.0_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,2), &
+        testCoord(:,3),c0,1.0_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,3), &
+        testCoord(:,4),c0,1.0_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,4), &
+        testCoord(:,1),c0,1.0_SRK)
+      
+      CALL testPolyType%generateGraph(testGraph2)
+      ASSERT(testGraph == testGraph2,'Graph with sub-region is equal')
     ENDSUBROUTINE testGenerateGraph
 !
 ENDPROGRAM testGeom_Poly
