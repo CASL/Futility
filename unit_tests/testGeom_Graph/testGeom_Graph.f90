@@ -37,6 +37,7 @@ PROGRAM testGeom_Graph
   REGISTER_SUBTEST('%getVertIndex',testGetVertIndex)
   REGISTER_SUBTEST('%defineEdge',testDefineEdge)
   REGISTER_SUBTEST('%defineQuadEdge',testDefineQuadEdge)
+  REGISTER_SUBTEST('%getMidPointOnEdge',testGetMidPoint)
   REGISTER_SUBTEST('ASSIGNMENT(=)',testAssign)
   REGISTER_SUBTEST('%editToVTK',testVTK)
   REGISTER_SUBTEST('%nAdjacent',testNAdjacent)
@@ -571,6 +572,147 @@ PROGRAM testGeom_Graph
 
       CALL testGraph%clear()
     ENDSUBROUTINE testDefineQuadEdge
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testGetMidPoint()
+      INTEGER(SIK) :: i
+      REAL(SRK) :: testCoord(2,4),c(2),r,m(2)
+
+      COMPONENT_TEST('Straight Edge')
+      testCoord(:,1)=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,2)=(/0.0_SRK,1.0_SRK/)
+      testCoord(:,3)=(/1.0_SRK,0.0_SRK/)
+      testCoord(:,4)=(/1.0_SRK,1.0_SRK/)
+      DO i=1,4
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
+      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,3))
+      CALL testGraph%defineEdge(testCoord(:,2),testCoord(:,4))
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
+
+      CALL testGraph%getMidPointOnEdge(1,2,m)
+      ASSERT(ALL(m .APPROXEQ. (/0.0_SRK,0.5_SRK/)),'(1,2)')
+      CALL testGraph%getMidPointOnEdge(1,3,m)
+      ASSERT(ALL(m .APPROXEQ. (/0.5_SRK,0.0_SRK/)),'(1,3)')
+      CALL testGraph%getMidPointOnEdge(1,4,m)
+      ASSERT(ALL(m .APPROXEQ. -HUGE(r)),'(1,4)')
+      CALL testGraph%getMidPointOnEdge(2,3,m)
+      ASSERT(ALL(m .APPROXEQ. -HUGE(r)),'(2,3)')
+      CALL testGraph%getMidPointOnEdge(2,4,m)
+      ASSERT(ALL(m .APPROXEQ. (/0.5_SRK,1.0_SRK/)),'(2,4)')
+      CALL testGraph%getMidPointOnEdge(3,4,m)
+      ASSERT(ALL(m .APPROXEQ. (/1.0_SRK,0.5_SRK/)),'(3,4)')
+      CALL testGraph%clear()
+
+      COMPONENT_TEST('Quarter-Circle')
+      testCoord(:,1)=(/-1.0_SRK,0.0_SRK/)
+      testCoord(:,2)=(/0.0_SRK,-1.0_SRK/)
+      testCoord(:,3)=(/0.0_SRK,1.0_SRK/)
+      testCoord(:,4)=(/1.0_SRK,0.0_SRK/)
+      DO i=1,4
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      c=0.0_SRK
+      r=1.0_SRK
+      CALL testGraph%defineQuadraticEdge(testCoord(:,1),testCoord(:,2),c,r)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,1),testCoord(:,3),c,r)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,2),testCoord(:,4),c,r)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,3),testCoord(:,4),c,r)
+      CALL testGraph%getMidPointOnEdge(1,2,m)
+      ASSERT(ALL(m .APPROXEQ. (/-SQRT(0.5_SRK),-SQRT(0.5_SRK)/)),'(1,2)')
+      CALL testGraph%getMidPointOnEdge(1,3,m)
+      ASSERT(ALL(m .APPROXEQ. (/-SQRT(0.5_SRK),SQRT(0.5_SRK)/)),'(1,3)')
+      CALL testGraph%getMidPointOnEdge(1,4,m)
+      ASSERT(ALL(m .APPROXEQ. -HUGE(r)),'(1,4)')
+      CALL testGraph%getMidPointOnEdge(2,3,m)
+      ASSERT(ALL(m .APPROXEQ. -HUGE(r)),'(2,3)')
+      CALL testGraph%getMidPointOnEdge(2,4,m)
+      ASSERT(ALL(m .APPROXEQ. (/SQRT(0.5_SRK),-SQRT(0.5_SRK)/)),'(2,4)')
+      CALL testGraph%getMidPointOnEdge(3,4,m)
+      ASSERT(ALL(m .APPROXEQ. (/SQRT(0.5_SRK),SQRT(0.5_SRK)/)),'(3,4)')
+      CALL testGraph%clear()
+
+      COMPONENT_TEST('Half-Circle Top')
+      testCoord(:,1)=(/-1.0_SRK,0.0_SRK/)
+      testCoord(:,2)=(/0.0_SRK,-1.0_SRK/)
+      testCoord(:,3)=(/1.0_SRK,0.0_SRK/)
+      DO i=1,3
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      c=0.0_SRK
+      r=1.0_SRK
+      CALL testGraph%defineQuadraticEdge(testCoord(:,1),testCoord(:,2),c,r)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,1),testCoord(:,3),c,r)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,2),testCoord(:,3),c,r)
+      CALL testGraph%getMidPointOnEdge(1,2,m)
+      ASSERT(ALL(m .APPROXEQ. (/-SQRT(0.5_SRK),-SQRT(0.5_SRK)/)),'(1,2)')
+      CALL testGraph%getMidPointOnEdge(1,3,m)
+      ASSERT(ALL(m .APPROXEQ. (/0.0_SRK,1.0_SRK/)),'(1,3)')
+      CALL testGraph%getMidPointOnEdge(2,3,m)
+      ASSERT(ALL(m .APPROXEQ. (/SQRT(0.5_SRK),-SQRT(0.5_SRK)/)),'(2,3)')
+      CALL testGraph%clear()
+
+      COMPONENT_TEST('Half-Circle Left')
+      testCoord(:,1)=(/0.0_SRK,-1.0_SRK/)
+      testCoord(:,2)=(/0.0_SRK,1.0_SRK/)
+      testCoord(:,3)=(/1.0_SRK,0.0_SRK/)
+      DO i=1,3
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      c=0.0_SRK
+      r=1.0_SRK
+      CALL testGraph%defineQuadraticEdge(testCoord(:,1),testCoord(:,2),c,r)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,1),testCoord(:,3),c,r)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,2),testCoord(:,3),c,r)
+      CALL testGraph%getMidPointOnEdge(1,2,m)
+      ASSERT(ALL(m .APPROXEQ. (/-1.0_SRK,0.0_SRK/)),'(1,2)')
+      CALL testGraph%getMidPointOnEdge(1,3,m)
+      ASSERT(ALL(m .APPROXEQ. (/SQRT(0.5_SRK),-SQRT(0.5_SRK)/)),'(1,3)')
+      CALL testGraph%getMidPointOnEdge(2,3,m)
+      ASSERT(ALL(m .APPROXEQ. (/SQRT(0.5_SRK),SQRT(0.5_SRK)/)),'(2,3)')
+      CALL testGraph%clear()
+
+      COMPONENT_TEST('Half-Circle Bottom')
+      testCoord(:,1)=(/-1.0_SRK,0.0_SRK/)
+      testCoord(:,2)=(/0.0_SRK,1.0_SRK/)
+      testCoord(:,3)=(/1.0_SRK,0.0_SRK/)
+      DO i=1,3
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      c=0.0_SRK
+      r=1.0_SRK
+      CALL testGraph%defineQuadraticEdge(testCoord(:,1),testCoord(:,2),c,r)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,1),testCoord(:,3),c,-r)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,2),testCoord(:,3),c,r)
+      CALL testGraph%getMidPointOnEdge(1,2,m)
+      ASSERT(ALL(m .APPROXEQ. (/-SQRT(0.5_SRK),SQRT(0.5_SRK)/)),'(1,2)')
+      CALL testGraph%getMidPointOnEdge(1,3,m)
+      ASSERT(ALL(m .APPROXEQ. (/0.0_SRK,-1.0_SRK/)),'(1,3)')
+      CALL testGraph%getMidPointOnEdge(2,3,m)
+      ASSERT(ALL(m .APPROXEQ. (/SQRT(0.5_SRK),SQRT(0.5_SRK)/)),'(2,3)')
+      CALL testGraph%clear()
+
+      COMPONENT_TEST('Half-Circle Right')
+      testCoord(:,1)=(/-1.0_SRK,0.0_SRK/)
+      testCoord(:,2)=(/0.0_SRK,-1.0_SRK/)
+      testCoord(:,3)=(/0.0_SRK,1.0_SRK/)
+      DO i=1,3
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      c=0.0_SRK
+      r=1.0_SRK
+      CALL testGraph%defineQuadraticEdge(testCoord(:,1),testCoord(:,2),c,r)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,1),testCoord(:,3),c,r)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,2),testCoord(:,3),c,-r)
+      CALL testGraph%getMidPointOnEdge(1,2,m)
+      ASSERT(ALL(m .APPROXEQ. (/-SQRT(0.5_SRK),-SQRT(0.5_SRK)/)),'(1,2)')
+      CALL testGraph%getMidPointOnEdge(1,3,m)
+      ASSERT(ALL(m .APPROXEQ. (/-SQRT(0.5_SRK),SQRT(0.5_SRK)/)),'(1,3)')
+      CALL testGraph%getMidPointOnEdge(2,3,m)
+      ASSERT(ALL(m .APPROXEQ. (/1.0_SRK,0.0_SRK/)),'(2,3)')
+      CALL testGraph%clear()
+    ENDSUBROUTINE testGetMidPoint
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testVTK()

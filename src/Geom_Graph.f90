@@ -85,6 +85,9 @@ MODULE Geom_Graph
       !> @copybrief Geom_Graph::getCCWMostVert_graphType
       !> @copydetails Geom_Graph::getCCWMostVert_graphType
       PROCEDURE,PASS :: getCCWMostVert => getCCWMostVert_graphType
+      !> @copybrief Geom_Graph::getMidPointOnEdge_graphType
+      !> @copydetails Geom_Graph::getMidPointOnEdge_graphType
+      PROCEDURE,PASS :: getMidPointOnEdge => getMidPointOnEdge_graphType
       !> @copybrief Geom_Graph::isMinimumCycle_graphType
       !> @copydetails Geom_Graph::isMinimumCycle_graphType
       PROCEDURE,PASS :: isMinimumCycle => isMinimumCycle_graphType
@@ -593,6 +596,55 @@ MODULE Geom_Graph
         ENDIF
       ENDIF
     ENDSUBROUTINE defineQuadEdge_graphType
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param
+!>
+!>
+!>
+    PURE SUBROUTINE getMidPointOnEdge_graphType(thisGraph,v1,v2,m)
+      CLASS(GraphType),INTENT(INOUT) :: thisGraph
+      INTEGER(SIK),INTENT(IN) :: v1
+      INTEGER(SIK),INTENT(IN) :: v2
+      REAL(SRK),INTENT(INOUT) :: m(2)
+
+      INTEGER(SIK) :: n
+      REAL(SRK) :: a(2),b(2),c(2),r,alp1,alp2,theta,scal
+
+      m=-HUGE(m)
+      n=nVert_graphType(thisGraph)+1
+      IF(v1 > 0 .AND. v2 > 0 .AND. v1 < n .AND. v2 < n) THEN
+        IF(thisGraph%edgeMatrix(v1,v2) == 1) THEN
+          m=thisGraph%vertices(:,v1)+thisGraph%vertices(:,v2)
+          m=0.5_SRK*m
+        ELSEIF(thisGraph%edgeMatrix(v1,v2) == -1) THEN
+          a=thisGraph%vertices(:,v1)
+          b=thisGraph%vertices(:,v2)
+          c=thisGraph%quadEdges(1:2,v1,v2)
+          r=thisGraph%quadEdges(3,v1,v2)
+          m=a+b-2.0_SRK*c
+          scal=SQRT(m(1)*m(1)+m(2)*m(2))
+          IF(scal .APPROXEQA. 0.0_SRK) THEN
+            !Half circle. Lame. Find theta of midpoint
+            alp1=ATAN2PI(a(1)-c(1),a(2)-c(2))
+            alp2=ATAN2PI(b(1)-c(1),b(2)-c(2))
+            theta=0.5_SRK*(alp1+alp2)
+
+            !Adjust theta for the appropriate half of the circle
+            IF(alp2 > alp1) theta=theta-PI
+            IF(r < 0.0_SRK) theta=theta-PI
+
+            m(1)=ABS(r)*COS(theta)
+            m(2)=ABS(r)*SIN(theta)
+          ELSE
+            scal=ABS(r)/scal
+            m=m*scal
+          ENDIF
+          m=m+c
+        ENDIF
+      ENDIF
+    ENDSUBROUTINE getMidPointOnEdge_graphType
 !
 !-------------------------------------------------------------------------------
 !> @brief
@@ -1417,9 +1469,9 @@ MODULE Geom_Graph
       TYPE(PointType) :: p0,p1,PointI
       TYPE(CircleType) :: circumCirc
       INTEGER(SIK) :: nVert,nTri,nEdges,i,j,k
-      INTEGER(SIK),ALLOCATABLE :: V1(:),V2(:),V3(:)
+      INTEGER(SIK),ALLOCATABLE :: v1(:),v2(:),v3(:)
       INTEGER(SIK),ALLOCATABLE :: polEdges(:,:)
-      REAL(SRK) :: xMin,xMax,yMin,yMax,dx,dy,dm,xMid,yMid
+      REAL(SRK) :: xMin,xMax,yMin,yMax,dx,dy,dm,xMid,yMid,superTri(2,3)
       REAL(SRK) :: x1,x2,x3,y1,y2,y3,r1,r2,r3,x0,y0,a,bx,by,c,rad
       REAL(SRK),ALLOCATABLE :: verts(:,:)
       LOGICAL(SBK), ALLOCATABLE :: complete(:)
@@ -1432,10 +1484,10 @@ MODULE Geom_Graph
       nVert=thisGraph%nVert()
       
       !Maximum of n-2 triangles...n+1 with super-triangle
-      ALLOCATE(V1(6*nVert+6),V2(6*nVert+6),V3(6*nVert+6))
-      V1=0
-      V2=0
-      V3=0
+      ALLOCATE(v1(6*nVert+6),v2(6*nVert+6),v3(6*nVert+6))
+      v1=0
+      v2=0
+      v3=0
       ALLOCATE(polEdges(2,6*nVert+6))
       polEdges=0
       ALLOCATE(complete(3*nVert+2))
@@ -1462,30 +1514,33 @@ MODULE Geom_Graph
       yMid=(yMin+yMax)/2.0_SRK
 
       !Add super triangle vertices(triangle contains all other points)
-      CALL thisGraph%insertVertex((/xMid-20.0_SRK*dm, yMid-dm/))
-      CALL thisGraph%insertVertex((/xMid,yMid+20.0_SRK*dm/))
-      CALL thisGraph%insertVertex((/xMid+20.0_SRK*dm,yMid-dm/))
+      superTri(:,1)=(/xMid-20.0_SRK*dm,yMid-dm/)
+      superTri(:,2)=(/xMid,yMid+20.0_SRK*dm/)
+      superTri(:,3)=(/xMid+20.0_SRK*dm,yMid-dm/)
+      CALL thisGraph%insertVertex(superTri(:,1))
+      CALL thisGraph%insertVertex(superTri(:,2))
+      CALL thisGraph%insertVertex(superTri(:,3))
 
-      V1(1)=thisGraph%getVertIndex((/xMid-20.0_SRK*dm, yMid-dm/))
-      V2(1)=thisGraph%getVertIndex((/xMid,yMid+20.0_SRK*dm/))
-      V3(1)=thisGraph%getVertIndex((/xMid+20.0_SRK*dm,yMid-dm/))
+      v1(1)=thisGraph%getVertIndex(superTri(:,1))
+      v2(1)=thisGraph%getVertIndex(superTri(:,2))
+      v3(1)=thisGraph%getVertIndex(superTri(:,3))
       complete=.FALSE.
       nTri=1
 
       DO i=1,nVert
         nEdges=0
         j=0
-        DO WHILE(j < nTri)!Loop until j>nTri
+        DO WHILE(j < nTri) !Loop until j>nTri
           j=j+1
           IF(.NOT. complete(j)) THEN
             !Check to see if it is inside the circumcircle
             !of triangle j
-            x1=thisGraph%vertices(1,V1(j))
-            x2=thisGraph%vertices(1,V2(j))
-            x3=thisGraph%vertices(1,V3(j))
-            y1=thisGraph%vertices(2,V1(j))
-            y2=thisGraph%vertices(2,V2(j))
-            y3=thisGraph%vertices(2,V3(j))
+            x1=thisGraph%vertices(1,v1(j))
+            x2=thisGraph%vertices(1,v2(j))
+            x3=thisGraph%vertices(1,v3(j))
+            y1=thisGraph%vertices(2,v1(j))
+            y2=thisGraph%vertices(2,v2(j))
+            y3=thisGraph%vertices(2,v3(j))
 
             r1=x1*x1+y1*y1
             r2=x2*x2+y2*y2
@@ -1503,7 +1558,6 @@ MODULE Geom_Graph
             dy=y1-yc
             r=SQRT(dx*dx+dy*dy)
 
-
             dx=verts(1,i)-xc
             dy=verts(2,i)-yc
 
@@ -1517,16 +1571,16 @@ MODULE Geom_Graph
               CYCLE
             ENDIF
             IF(incircum) THEN
-              polEdges(1,nEdges+1)=V1(j)
-              polEdges(2,nEdges+1)=V2(j)
-              polEdges(1,nEdges+2)=V2(j)
-              polEdges(2,nEdges+2)=V3(j)
-              polEdges(1,nEdges+3)=V3(j)
-              polEdges(2,nEdges+3)=V1(j)
+              polEdges(1,nEdges+1)=v1(j)
+              polEdges(2,nEdges+1)=v2(j)
+              polEdges(1,nEdges+2)=v2(j)
+              polEdges(2,nEdges+2)=v3(j)
+              polEdges(1,nEdges+3)=v3(j)
+              polEdges(2,nEdges+3)=v1(j)
 
-              V1(j)=V1(nTri)
-              V2(j)=V2(nTri)
-              V3(j)=V3(nTri)
+              v1(j)=v1(nTri)
+              v2(j)=v2(nTri)
+              v3(j)=v3(nTri)
               complete(j)=complete(nTri)
               nEdges=nEdges+3
               nTri=nTri-1
@@ -1554,26 +1608,26 @@ MODULE Geom_Graph
         DO j=1,nEdges
           IF(.NOT. ALL(polEdges(:,j) == 0)) THEN
             nTri=nTri+1
-            V1(nTri)=polEdges(1,j)
-            V2(nTri)=polEdges(2,j)
-            V3(nTri)=thisGraph%getVertIndex(verts(:,i))
+            v1(nTri)=polEdges(1,j)
+            v2(nTri)=polEdges(2,j)
+            v3(nTri)=thisGraph%getVertIndex(verts(:,i))
             complete(nTri)=.FALSE.
           ENDIF
         ENDDO
       ENDDO !End loop over each vertex
       !Create edges of final triangulation
       DO i=1,nTri
-        CALL thisGraph%defineEdge(thisGraph%vertices(:,V1(i)), & 
-          thisGraph%vertices(:,V2(i)))
-        CALL thisGraph%defineEdge(thisGraph%vertices(:,V2(i)), & 
-          thisGraph%vertices(:,V3(i)))
-        CALL thisGraph%defineEdge(thisGraph%vertices(:,V3(i)), & 
-          thisGraph%vertices(:,V1(i)))
+        CALL thisGraph%defineEdge(thisGraph%vertices(:,v1(i)), & 
+          thisGraph%vertices(:,v2(i)))
+        CALL thisGraph%defineEdge(thisGraph%vertices(:,v2(i)), & 
+          thisGraph%vertices(:,v3(i)))
+        CALL thisGraph%defineEdge(thisGraph%vertices(:,v3(i)), & 
+          thisGraph%vertices(:,v1(i)))
       ENDDO
       !Remove superTriangle from arrays
-      CALL thisGraph%removeVertex((/xMid-20.0_SRK*dm, yMid-dm/))
-      CALL thisGraph%removeVertex((/xMid,yMid+20.0_SRK*dm/))
-      CALL thisGraph%removeVertex((/xMid+20.0_SRK*dm,yMid-dm/))
+      CALL thisGraph%removeVertex(superTri(:,1))
+      CALL thisGraph%removeVertex(superTri(:,2))
+      CALL thisGraph%removeVertex(superTri(:,3))
     ENDSUBROUTINE triangulateVerts_graphType
 !
 !-------------------------------------------------------------------------------
