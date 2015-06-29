@@ -100,6 +100,7 @@ PROGRAM testGeom_Poly
     SUBROUTINE testSet()
       INTEGER(SIK) :: i,inext
       REAL(SRK) :: testCoord(2,9),c0(2),r
+      TYPE(PolygonType) :: refRect
       
       !Setup test graph - isosceles triangle
       testCoord(:,1)=(/-1.0_SRK,-2.0_SRK/)
@@ -170,6 +171,23 @@ PROGRAM testGeom_Poly
       bool=(testPolyType%centroid%coord(1) .APPROXEQA. -0.5_SRK) .AND. &
         (testPolyType%centroid%coord(2) .APPROXEQA. 1.0_SRK)
       ASSERT(bool,'%centroid')
+
+      refRect%isInit=.TRUE.
+      refRect%area=6.0_SRK*3.0_SRK
+      refRect%nVert=4
+      ALLOCATE(refRect%vert(4))
+      DO i=1,4
+        CALL refRect%vert(i)%init(COORD=testCoord(:,i))
+      ENDDO
+      ALLOCATE(refRect%edge(2,4))
+      refRect%edge(:,1)=(/1,2/)
+      refRect%edge(:,2)=(/2,3/)
+      refRect%edge(:,3)=(/3,4/)
+      refRect%edge(:,4)=(/4,1/)
+      refRect%nQuadEdge=0
+      CALL refRect%centroid%init(COORD=(/-0.5_SRK,1.0_SRK/))
+      bool=(testPolyType == refRect)
+      ASSERT(bool,'== rectangle')
       
       CALL testGraph%clear()
       CALL testPolyType%clear()

@@ -1592,17 +1592,19 @@ MODULE Geom_Poly
           (SIZE(p1%vert) == SIZE(p2%vert)) .AND. & 
           (SIZE(p1%edge,DIM=1) == SIZE(p2%edge,DIM=1)) .AND. &
           (SIZE(p1%edge,DIM=2) == SIZE(p2%edge,DIM=2)) .AND. &
-          (SIZE(p1%quad2edge) == SIZE(p2%quad2edge)) .AND. &
-          (SIZE(p1%quadEdge,DIM=1) == SIZE(p2%quadEdge,DIM=1)) .AND. &
-          (SIZE(p1%quadEdge,DIM=2) == SIZE(p2%quadEdge,DIM=2)) .AND. &
           (ASSOCIATED(p1%nextPoly) .EQV. ASSOCIATED(p2%nextPoly)) .AND. &
             (ASSOCIATED(p1%subRegions) .EQV. ASSOCIATED(p2%subRegions))) THEN
           !
           bool=ALL(p1%vert .APPROXEQA. p2%vert) .AND. ALL(p1%edge == p2%edge) 
           bool=bool .AND. (ALLOCATED(p1%quad2edge) .EQV. ALLOCATED(p2%quad2edge))
           IF(bool .AND. ALLOCATED(p1%quad2edge)) THEN
-            bool=bool .AND. ALL(p1%quad2edge == p2%quad2edge) .AND. &
-              ALL(p1%quadEdge .APPROXEQA. p2%quadEdge)
+            IF(SIZE(p1%quadEdge,DIM=1) == SIZE(p2%quadEdge,DIM=1) .AND. &
+               SIZE(p1%quadEdge,DIM=2) == SIZE(p2%quadEdge,DIM=2)) THEN
+              bool=bool .AND. ALL(p1%quad2edge == p2%quad2edge) .AND. &
+                ALL(p1%quadEdge .APPROXEQA. p2%quadEdge)
+            ELSE
+              bool=.FALSE.
+            ENDIF
           ENDIF
           IF(bool .AND. ASSOCIATED(p1%nextPoly)) THEN
             bool=isequal_PolygonType(p1%nextPoly,p2%nextPoly)
