@@ -25,7 +25,7 @@ PROGRAM testGeom_Graph
   
   IMPLICIT NONE
   
-  TYPE(GraphType) :: testGraph,testGraph2
+  TYPE(GraphType) :: testGraph
   
   CREATE_TEST('TEST GEOM_GRAPH')
   
@@ -51,7 +51,7 @@ PROGRAM testGeom_Graph
   REGISTER_SUBTEST('%getMCB',testGetMCB)
   REGISTER_SUBTEST('%combineGraph',testCombine)
   REGISTER_SUBTEST('%TriangulateVerts',testTriangulate)
-  !REGISTER_SUBTEST('OPERATOR(==)',testIsEqual)
+  REGISTER_SUBTEST('OPERATOR(==)',testIsEqual)
   !REGISTER_SUBTEST('OPERATOR(+)',testAddition)
 
   FINALIZE_TEST()
@@ -1556,104 +1556,6 @@ PROGRAM testGeom_Graph
     ENDSUBROUTINE testGetMCB
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE testIsEqual()
-      LOGICAL(SBK) :: bool
-      INTEGER(SIK) :: i
-      REAL(SRK) :: testCoord(2,9),c0(2),r
-      testCoord(:,1)=(/0.0_SRK,0.0_SRK/)
-      testCoord(:,2)=(/0.0_SRK,1.0_SRK/)
-      testCoord(:,3)=(/1.0_SRK,0.0_SRK/)
-      testCoord(:,4)=(/1.0_SRK,1.0_SRK/)
-      testCoord(:,5)=(/2.0_SRK,0.0_SRK/)
-      testCoord(:,6)=(/2.0_SRK,1.0_SRK/)
-      testCoord(:,7)=(/2.0_SRK,2.0_SRK/)
-      DO i=1,4
-        CALL testGraph%insertVertex(testCoord(:,i))
-      ENDDO
-      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
-      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,3))
-      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
-      CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,2))
-      CALL testGraph%insertVertex(testCoord(:,5))
-      CALL testGraph%insertVertex(testCoord(:,6))
-      CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,6))
-      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,5))
-      CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,6))      
-      CALL testGraph%insertVertex(testCoord(:,7))
-      CALL testGraph%defineEdge(testCoord(:,6),testCoord(:,7))
-      !Graph2
-      DO i=1,4
-        CALL testGraph2%insertVertex(testCoord(:,i))
-      ENDDO
-      CALL testGraph2%defineEdge(testCoord(:,1),testCoord(:,2))
-      CALL testGraph2%defineEdge(testCoord(:,1),testCoord(:,3))
-      CALL testGraph2%defineEdge(testCoord(:,3),testCoord(:,4))
-      CALL testGraph2%defineEdge(testCoord(:,4),testCoord(:,2))
-      CALL testGraph2%insertVertex(testCoord(:,5))
-      CALL testGraph2%insertVertex(testCoord(:,6))
-      CALL testGraph2%defineEdge(testCoord(:,4),testCoord(:,6))
-      CALL testGraph2%defineEdge(testCoord(:,3),testCoord(:,5))
-      CALL testGraph2%defineEdge(testCoord(:,5),testCoord(:,6))      
-      CALL testGraph2%insertVertex(testCoord(:,7))
-      CALL testGraph2%defineEdge(testCoord(:,6),testCoord(:,7))
-      ASSERT(testGraph == testGraph2,'Equal Graphs')
-      testGraph2%vertices(1,1)=-1.0_SRK
-      ASSERT(.NOT.(testGraph == testGraph2),'Non-Equal Graphs')
-      
-      CALL testGraph%clear()
-      CALL testGraph2%clear()
-    ENDSUBROUTINE testIsEqual
-!
-!-------------------------------------------------------------------------------
-    SUBROUTINE testAddition()
-      LOGICAL(SBK) :: bool
-      INTEGER(SIK) :: i
-      REAL(SRK) :: testCoord(2,9),c0(2),r
-      TYPE(GraphType) :: testGraph3,testGraph4
-      
-      !Test graph1
-      testCoord(:,1)=(/0.0_SRK,0.0_SRK/)
-      testCoord(:,2)=(/0.0_SRK,1.0_SRK/)
-      testCoord(:,3)=(/1.0_SRK,0.0_SRK/)
-      testCoord(:,4)=(/1.0_SRK,1.0_SRK/)
-      testCoord(:,5)=(/2.0_SRK,0.0_SRK/)
-      testCoord(:,6)=(/2.0_SRK,1.0_SRK/)
-      testCoord(:,7)=(/2.0_SRK,2.0_SRK/)
-      DO i=1,4
-        CALL testGraph%insertVertex(testCoord(:,i))
-      ENDDO
-      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
-      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,3))
-      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
-      CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,2))
-      !test graph2
-      CALL testGraph2%insertVertex(testCoord(:,1))
-      CALL testGraph2%insertVertex(testCoord(:,5))
-      CALL testGraph2%insertVertex(testCoord(:,6))
-      CALL testGraph2%insertVertex(testCoord(:,7))
-      CALL testGraph2%defineEdge(testCoord(:,7),testCoord(:,8))
-      CALL testGraph2%defineEdge(testCoord(:,5),testCoord(:,6))
-      CALL testGraph2%defineEdge(testCoord(:,6),testCoord(:,7))
-      !Test graph4
-      DO i=1,4
-        CALL testGraph4%insertVertex(testCoord(:,i))
-      ENDDO
-      CALL testGraph4%insertVertex(testCoord(:,5))
-      CALL testGraph4%insertVertex(testCoord(:,6))
-      CALL testGraph4%insertVertex(testCoord(:,7))
-      CALL testGraph4%defineEdge(testCoord(:,1),testCoord(:,2))
-      CALL testGraph4%defineEdge(testCoord(:,1),testCoord(:,3))
-      CALL testGraph4%defineEdge(testCoord(:,3),testCoord(:,4))
-      CALL testGraph4%defineEdge(testCoord(:,4),testCoord(:,2))
-      CALL testGraph4%defineEdge(testCoord(:,7),testCoord(:,1))
-      CALL testGraph4%defineEdge(testCoord(:,5),testCoord(:,6))      
-      CALL testGraph4%defineEdge(testCoord(:,6),testCoord(:,7))
-      
-      testGraph3=testGraph+testGraph2
-      ASSERT(testGraph3 == testGraph4,'addition')
-    ENDSUBROUTINE testAddition
-!
-!-------------------------------------------------------------------------------
     SUBROUTINE testCombine()
       LOGICAL(SBK) :: bool
       REAL(SRK) :: testCoord(2,4),c(2),r
@@ -2458,6 +2360,43 @@ PROGRAM testGeom_Graph
     ENDSUBROUTINE testCombine
 !
 !-------------------------------------------------------------------------------    
+    SUBROUTINE testTriangulate
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: i,j,n
+      REAL(SRK) :: testCoord(2,9)
+      TYPE(GraphType),ALLOCATABLE :: cycles(:)
+      
+      !Setup test graph
+      testCoord(:,1)=(/0.0_SRK,-1.0_SRK/)
+      testCoord(:,2)=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,3)=(/1.0_SRK,0.0_SRK/)
+      testCoord(:,4)=(/1.25_SRK,0.5_SRK/)
+      testCoord(:,5)=(/1.50_SRK,-0.5_SRK/)
+      testCoord(:,6)=(/1.75_SRK,-1.0_SRK/)
+      testCoord(:,7)=(/2.00_SRK,-0.75_SRK/)
+      testCoord(:,8)=(/2.25_SRK,-0.25_SRK/)
+      testCoord(:,9)=(/3.00_SRK,-0.10_SRK/)
+
+      CALL testGraph%clear()
+      DO i=1,9
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%TriangulateVerts()
+      CALL testGraph%editToVTK('Triangulate.vtk')
+      n=0
+      DO i=1,9
+        DO j=i+1,9
+          IF(testGraph%edgeMatrix(i,j) == 1) n=n+1
+        ENDDO
+      ENDDO
+      bool=(n == 19)
+      ASSERT(bool,'Wrong number of edges')
+      CALL testGraph%getMCB(cycles)
+      bool=(SIZE(cycles) == 11)
+      ASSERT(bool,'Wrong number of triangles')
+    ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------    
     SUBROUTINE testAssign()
       INTEGER(SIK) :: i
       REAL(SRK) :: testCoord(2,9),c0(2),r
@@ -2509,42 +2448,43 @@ PROGRAM testGeom_Graph
       CALL g2%clear()
     ENDSUBROUTINE testAssign
 !
-!-------------------------------------------------------------------------------    
-    SUBROUTINE testTriangulate
+!-------------------------------------------------------------------------------
+    SUBROUTINE testIsEqual()
       LOGICAL(SBK) :: bool
-      INTEGER(SIK) :: i,j,n
-      REAL(SRK) :: testCoord(2,9)
-      TYPE(GraphType),ALLOCATABLE :: cycles(:)
-      
-      !Setup test graph
-      testCoord(:,1)=(/0.0_SRK,-1.0_SRK/)
-      testCoord(:,2)=(/0.0_SRK,0.0_SRK/)
-      testCoord(:,3)=(/1.0_SRK,0.0_SRK/)
-      testCoord(:,4)=(/1.25_SRK,0.5_SRK/)
-      testCoord(:,5)=(/1.50_SRK,-0.5_SRK/)
-      testCoord(:,6)=(/1.75_SRK,-1.0_SRK/)
-      testCoord(:,7)=(/2.00_SRK,-0.75_SRK/)
-      testCoord(:,8)=(/2.25_SRK,-0.25_SRK/)
-      testCoord(:,9)=(/3.00_SRK,-0.10_SRK/)
+      INTEGER(SIK) :: i
+      REAL(SRK) :: testCoord(2,9),c0(2),r
+      TYPE(GraphType) :: g2
 
-      CALL testGraph%clear()
-      DO i=1,9
+      testCoord(:,1)=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,2)=(/0.0_SRK,1.0_SRK/)
+      testCoord(:,3)=(/1.0_SRK,0.0_SRK/)
+      testCoord(:,4)=(/1.0_SRK,1.0_SRK/)
+      testCoord(:,5)=(/2.0_SRK,0.0_SRK/)
+      testCoord(:,6)=(/2.0_SRK,1.0_SRK/)
+      testCoord(:,7)=(/2.0_SRK,2.0_SRK/)
+      DO i=1,4
         CALL testGraph%insertVertex(testCoord(:,i))
       ENDDO
-      CALL testGraph%TriangulateVerts()
-      CALL testGraph%editToVTK('Triangulate.vtk')
-      n=0
-      DO i=1,9
-        DO j=i+1,9
-          IF(testGraph%edgeMatrix(i,j) == 1) n=n+1
-        ENDDO
-      ENDDO
-      bool=(n == 19)
-      ASSERT(bool,'Wrong number of edges')
-      CALL testGraph%getMCB(cycles)
-      bool=(SIZE(cycles) == 11)
-      ASSERT(bool,'Wrong number of triangles')
-    ENDSUBROUTINE
+      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
+      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,3))
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
+      CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,2))
+      CALL testGraph%insertVertex(testCoord(:,5))
+      CALL testGraph%insertVertex(testCoord(:,6))
+      CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,6))
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,5))
+      CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,6))      
+      CALL testGraph%insertVertex(testCoord(:,7))
+      CALL testGraph%defineEdge(testCoord(:,6),testCoord(:,7))
+      !Graph2
+      g2=testGraph
+      ASSERT(testGraph == g2,'Equal Graphs')
+      g2%vertices(1,1)=-1.0_SRK
+      ASSERT(.NOT.(testGraph == g2),'Non-Equal Graphs')
+      
+      CALL testGraph%clear()
+      CALL g2%clear()
+    ENDSUBROUTINE testIsEqual
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE symEdgeCheck()
@@ -2562,5 +2502,54 @@ PROGRAM testGeom_Graph
         ENDDO
       ENDDO
     ENDSUBROUTINE symEdgeCheck
+!!
+!!-------------------------------------------------------------------------------
+!    SUBROUTINE testAddition()
+!      LOGICAL(SBK) :: bool
+!      INTEGER(SIK) :: i
+!      REAL(SRK) :: testCoord(2,9),c0(2),r
+!      TYPE(GraphType) :: testGraph2,testGraph3,testGraph4
+!      
+!      !Test graph1
+!      testCoord(:,1)=(/0.0_SRK,0.0_SRK/)
+!      testCoord(:,2)=(/0.0_SRK,1.0_SRK/)
+!      testCoord(:,3)=(/1.0_SRK,0.0_SRK/)
+!      testCoord(:,4)=(/1.0_SRK,1.0_SRK/)
+!      testCoord(:,5)=(/2.0_SRK,0.0_SRK/)
+!      testCoord(:,6)=(/2.0_SRK,1.0_SRK/)
+!      testCoord(:,7)=(/2.0_SRK,2.0_SRK/)
+!      DO i=1,4
+!        CALL testGraph%insertVertex(testCoord(:,i))
+!      ENDDO
+!      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
+!      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,3))
+!      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
+!      CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,2))
+!      !test graph2
+!      CALL testGraph2%insertVertex(testCoord(:,1))
+!      CALL testGraph2%insertVertex(testCoord(:,5))
+!      CALL testGraph2%insertVertex(testCoord(:,6))
+!      CALL testGraph2%insertVertex(testCoord(:,7))
+!      CALL testGraph2%defineEdge(testCoord(:,7),testCoord(:,8))
+!      CALL testGraph2%defineEdge(testCoord(:,5),testCoord(:,6))
+!      CALL testGraph2%defineEdge(testCoord(:,6),testCoord(:,7))
+!      !Test graph4
+!      DO i=1,4
+!        CALL testGraph4%insertVertex(testCoord(:,i))
+!      ENDDO
+!      CALL testGraph4%insertVertex(testCoord(:,5))
+!      CALL testGraph4%insertVertex(testCoord(:,6))
+!      CALL testGraph4%insertVertex(testCoord(:,7))
+!      CALL testGraph4%defineEdge(testCoord(:,1),testCoord(:,2))
+!      CALL testGraph4%defineEdge(testCoord(:,1),testCoord(:,3))
+!      CALL testGraph4%defineEdge(testCoord(:,3),testCoord(:,4))
+!      CALL testGraph4%defineEdge(testCoord(:,4),testCoord(:,2))
+!      CALL testGraph4%defineEdge(testCoord(:,7),testCoord(:,1))
+!      CALL testGraph4%defineEdge(testCoord(:,5),testCoord(:,6))      
+!      CALL testGraph4%defineEdge(testCoord(:,6),testCoord(:,7))
+!      
+!      testGraph3=testGraph+testGraph2
+!      ASSERT(testGraph3 == testGraph4,'addition')
+!    ENDSUBROUTINE testAddition
 !
   ENDPROGRAM testGeom_Graph

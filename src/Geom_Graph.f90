@@ -40,8 +40,8 @@ MODULE Geom_Graph
 
   PUBLIC :: GraphType
   PUBLIC :: ASSIGNMENT(=)
-  PUBLIC :: OPERATOR(+)
   PUBLIC :: OPERATOR(==)
+  !PUBLIC :: OPERATOR(+)
 
   !> @brief a Planar Graph
   TYPE :: GraphType
@@ -132,23 +132,23 @@ MODULE Geom_Graph
       PROCEDURE,PASS :: clear => clear_graphType
   ENDTYPE GraphType
 
-  INTERFACE OPERATOR(+)
-    !> @copybrief Geom_Graph::add_graphType
-    !> @copydetails Geom_Graph::add_graphType
-    MODULE PROCEDURE add_graphType
-  ENDINTERFACE
-  
-  INTERFACE OPERATOR(==)
-    !> @copybrief Geom_Graph::isequal_graphType
-    !> @copydetails Geom_Graph::isequal_graphType
-    MODULE PROCEDURE isequal_graphType
-  ENDINTERFACE
-    
   INTERFACE ASSIGNMENT(=)
     !> @copybrief Geom_Graph::assign_graphType
     !> @copydetails Geom_Graph::assign_graphType
     MODULE PROCEDURE assign_graphType
   ENDINTERFACE
+
+  INTERFACE OPERATOR(==)
+    !> @copybrief Geom_Graph::isequal_graphType
+    !> @copydetails Geom_Graph::isequal_graphType
+    MODULE PROCEDURE isequal_graphType
+  ENDINTERFACE
+
+  !INTERFACE OPERATOR(+)
+  !  !> @copybrief Geom_Graph::add_graphType
+  !  !> @copydetails Geom_Graph::add_graphType
+  !  MODULE PROCEDURE add_graphType
+  !ENDINTERFACE
 !
 !===============================================================================
   CONTAINS
@@ -1656,37 +1656,7 @@ MODULE Geom_Graph
 !> @brief
 !> @param
 !>
-!>
-!>
-    FUNCTION add_GraphType(g0,g1) RESULT(g)
-      TYPE(GraphType),INTENT(IN) :: g0
-      TYPE(GraphType),INTENT(IN) :: g1
-      TYPE(GraphType) :: g
-      INTEGER(SIK) :: i,j,n
-      
-      CALL clear_graphType(g)
-      g=g0
-      n=nVert_graphType(g1)
-      DO i=1,n
-        CALL insertVertex_graphType(g,g1%vertices(:,i))
-      ENDDO
-      DO j=1,n
-        DO i=j+1,n
-          IF(g1%edgeMatrix(i,j) == 1) THEN
-            CALL defineEdge_graphType(g,g1%vertices(:,i),g1%vertices(:,j))
-          ELSEIF(g1%edgeMatrix(i,j) == -1) THEN
-            CALL defineQuadEdge_graphType(g,g1%vertices(:,i),g1%vertices(:,j), &
-              g1%quadEdges(1:2,i,j),g1%quadEdges(3,i,j))
-          ENDIF
-        ENDDO
-      ENDDO
-    ENDFUNCTION add_GraphType
-!
-!-------------------------------------------------------------------------------
-!> @brief
-!> @param
-!>
-    FUNCTION isequal_GraphType(g0,g1) RESULT(bool)
+    ELEMENTAL FUNCTION isequal_GraphType(g0,g1) RESULT(bool)
       TYPE(GraphType),INTENT(IN) :: g0
       TYPE(GraphType),INTENT(IN) :: g1
       LOGICAL(SBK) :: bool
@@ -1706,13 +1676,41 @@ MODULE Geom_Graph
             SIZE(g0%quadEdges,DIM=2) == SIZE(g1%quadEdges,DIM=2) .AND. &
             SIZE(g0%quadEdges,DIM=3) == SIZE(g1%quadEdges,DIM=3)) THEN
           bool=.TRUE.
-          IF(ALLOCATED(g0%isCycleEdge) .AND. ALLOCATED(g1%isCycleEdge)) &
-            bool=bool .AND. ALL(g0%isCycleEdge .EQV. g1%isCycleEdge)
-          bool=bool .AND. ALL(g0%vertices .APPROXEQA. g1%vertices) .AND. &
+          bool=ALL(g0%vertices .APPROXEQA. g1%vertices) .AND. &
             ALL(g0%edgeMatrix == g1%edgeMatrix) .AND. &
             ALL(g0%quadEdges .APPROXEQA. g1%quadEdges)
         ENDIF
       ENDIF
-   ENDFUNCTION isequal_GraphType
+    ENDFUNCTION isequal_GraphType
+!!
+!!-------------------------------------------------------------------------------
+!!> @brief
+!!> @param
+!!>
+!!>
+!!>
+!    FUNCTION add_GraphType(g0,g1) RESULT(g)
+!      TYPE(GraphType),INTENT(IN) :: g0
+!      TYPE(GraphType),INTENT(IN) :: g1
+!      TYPE(GraphType) :: g
+!      INTEGER(SIK) :: i,j,n
+!      
+!      CALL clear_graphType(g)
+!      g=g0
+!      n=nVert_graphType(g1)
+!      DO i=1,n
+!        CALL insertVertex_graphType(g,g1%vertices(:,i))
+!      ENDDO
+!      DO j=1,n
+!        DO i=j+1,n
+!          IF(g1%edgeMatrix(i,j) == 1) THEN
+!            CALL defineEdge_graphType(g,g1%vertices(:,i),g1%vertices(:,j))
+!          ELSEIF(g1%edgeMatrix(i,j) == -1) THEN
+!            CALL defineQuadEdge_graphType(g,g1%vertices(:,i),g1%vertices(:,j), &
+!              g1%quadEdges(1:2,i,j),g1%quadEdges(3,i,j))
+!          ENDIF
+!        ENDDO
+!      ENDDO
+!    ENDFUNCTION add_GraphType
 !
 ENDMODULE Geom_Graph
