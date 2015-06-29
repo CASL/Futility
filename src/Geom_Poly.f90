@@ -739,6 +739,13 @@ MODULE Geom_Poly
             ENDIF
           ENDDO
         ENDIF
+        IF(.NOT.bool) THEN
+          IF(ASSOCIATED(thisPoly%subRegions)) THEN
+            bool=thisPoly%subRegions%onSurface(point)
+          ELSEIF(ASSOCIATED(thisPoly%nextPoly)) THEN
+            bool=thisPoly%nextPoly%onSurface(point)
+          ENDIF
+        ENDIF
       ENDIF
     ENDFUNCTION onSurface_PolygonType
 !

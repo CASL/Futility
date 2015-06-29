@@ -43,6 +43,7 @@ PROGRAM testGeom_Poly
   REGISTER_SUBTEST('Test Clear',testClear)
   REGISTER_SUBTEST('Test Set',testSet)
   REGISTER_SUBTEST('Test Subtract Sub-Volume',testSubtractSubVol)
+  REGISTER_SUBTEST('Test Point onSurface',testPointOnSurface)
   REGISTER_SUBTEST('Test Point Inside',testPointInside)
   REGISTER_SUBTEST('Test Poly Inside',testPolyInside)
   REGISTER_SUBTEST('Test DoesLineIntersect',testDoesLineIntersect)
@@ -513,6 +514,137 @@ PROGRAM testGeom_Poly
     ENDSUBROUTINE testSubtractSubVol
 !
 !-------------------------------------------------------------------------------
+    SUBROUTINE testPointOnSurface()
+      INTEGER(SIK) :: i,inext
+      REAL(SRK) :: testCoord(2,9),c0(2),r
+      TYPE(PointType) :: point
+      TYPE(PolygonType) :: testPoly2,testPoly3,testPoly4
+      
+      !Case 1, subtract itself
+      !Setup test graph - quadralateral
+      CALL testGraph%clear()
+      CALL testPolyType%clear()
+      testCoord(:,1)=(/-2.0_SRK,-2.0_SRK/)
+      testCoord(:,2)=(/-2.0_SRK,3.0_SRK/)
+      testCoord(:,3)=(/2.0_SRK,3.0_SRK/)
+      testCoord(:,4)=(/2.0_SRK,-2.0_SRK/)
+      DO i=1,4
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
+      CALL testGraph%defineEdge(testCoord(:,2),testCoord(:,3))
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
+      CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,1))
+      CALL testPolyType%set(testGraph)
+      ASSERTFAIL(testPolyType%isinit,'%isinit')
+      CALL testPolyType%subtractSubVolume(testPolyType)
+      ASSERT(.NOT.ASSOCIATED(testPolyType%subRegions),'%subRegions')
+      ASSERT(testPolyType%area .APPROXEQA. 20.0_SRK,'%area')
+      bool=ALL(testPolyType%centroid%coord .APPROXEQA. (/0.0_SRK,0.5_SRK/))
+      ASSERT(bool,'%centroid')
+      
+      !Case 4, subtract a valid subregion
+      CALL testGraph%clear()
+      !Setup test graph - isosceles triangle
+      testCoord(:,1)=(/-1.0_SRK,-1.0_SRK/)
+      testCoord(:,2)=(/1.0_SRK,-1.0_SRK/)
+      testCoord(:,3)=(/0.0_SRK,2.0_SRK/)
+      DO i=1,3
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
+      CALL testGraph%defineEdge(testCoord(:,2),testCoord(:,3))
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,1))
+      c0=(/0.0_SRK,1.0_SRK/)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,1), &
+        testCoord(:,2),c0,SQRT(5.0_SRK))
+      CALL testPoly2%set(testGraph)
+      
+      !Triangle is fully inside quadralateral
+      ASSERTFAIL(testPoly2%isinit,'%isinit')
+      CALL testPolyType%subtractSubVolume(testPoly2)
+      !Test valid subtractSubVolume
+      ASSERTFAIL(ASSOCIATED(testPolyType%subRegions),'%subRegions')
+      
+      !Outer surfaces
+      CALL point%clear()
+      CALL point%init(DIM=2,X=-2.0_SRK,Y=0.0_SRK)
+      ASSERT(testPolyType%onSurface(point),'West Outer Edge')
+      CALL point%clear()
+      CALL point%init(DIM=2,X=-2.1_SRK,Y=0.0_SRK)
+      ASSERT(.NOT.testPolyType%onSurface(point),'Beyond West Outer Edge')
+      CALL point%clear()
+      CALL point%init(DIM=2,X=-1.9_SRK,Y=0.0_SRK)
+      ASSERT(.NOT.testPolyType%onSurface(point),'Inside West Outer Edge')
+      CALL point%clear()
+      CALL point%init(DIM=2,X=0.0_SRK,Y=3.0_SRK)
+      ASSERT(testPolyType%onSurface(point),'North Outer Edge')
+      CALL point%clear()
+      CALL point%init(DIM=2,X=0.0_SRK,Y=3.1_SRK)
+      ASSERT(.NOT.testPolyType%onSurface(point),'Beyond North Outer Edge')
+      CALL point%clear()
+      CALL point%init(DIM=2,X=0.0_SRK,Y=2.9_SRK)
+      ASSERT(.NOT.testPolyType%onSurface(point),'Inside North Outer Edge')
+      CALL point%clear()
+      CALL point%init(DIM=2,X=2.0_SRK,Y=0.0_SRK)
+      ASSERT(testPolyType%onSurface(point),'East Outer Edge')
+      CALL point%clear()
+      CALL point%init(DIM=2,X=2.1_SRK,Y=0.0_SRK)
+      ASSERT(.NOT.testPolyType%onSurface(point),'Beyond East Outer Edge')
+      CALL point%clear()
+      CALL point%init(DIM=2,X=1.9_SRK,Y=0.0_SRK)
+      ASSERT(.NOT.testPolyType%onSurface(point),'Inside East Outer Edge')
+      CALL point%clear()
+      CALL point%init(DIM=2,X=0.0_SRK,Y=-2.0_SRK)
+      ASSERT(testPolyType%onSurface(point),'South Outer Edge')
+      CALL point%clear()
+      CALL point%init(DIM=2,X=0.0_SRK,Y=-2.1_SRK)
+      ASSERT(.NOT.testPolyType%onSurface(point),'Beyond South Outer Edge')
+      CALL point%clear()
+      CALL point%init(DIM=2,X=0.0_SRK,Y=-1.9_SRK)
+      ASSERT(.NOT.testPolyType%onSurface(point),'Inside South Outer Edge')
+      !Outer corners
+      ASSERT(testPolyType%onSurface(testPolyType%vert(1)),'South-West Corner')
+      ASSERT(testPolyType%onSurface(testPolyType%vert(2)),'North-West Corner')
+      ASSERT(testPolyType%onSurface(testPolyType%vert(3)),'North-East Corner')
+      ASSERT(testPolyType%onSurface(testPolyType%vert(4)),'South-East Corner')
+      
+      !Sub-region tests.
+      CALL point%clear()
+      CALL point%init(DIM=2,X=-0.3333333333333333_SRK,Y=1.0_SRK)
+      ASSERT(testPolyType%onSurface(point),'1st Inner Edge')
+      CALL point%clear()
+      CALL point%init(DIM=2,X=-0.3433333333333333_SRK,Y=1.0_SRK)
+      ASSERT(.NOT.testPolyType%onSurface(point),'Beyond 1st Inner Edge')
+      CALL point%clear()
+      CALL point%init(DIM=2,X=-0.3233333333333333_SRK,Y=1.0_SRK)
+      ASSERT(.NOT.testPolyType%onSurface(point),'Inside 1st Inner Edge')
+      CALL point%clear()
+      CALL point%init(DIM=2,X=0.3333333333333333_SRK,Y=1.0_SRK)
+      ASSERT(testPolyType%onSurface(point),'2nd Inner Edge')
+      CALL point%clear()
+      CALL point%init(DIM=2,X=0.3433333333333333_SRK,Y=1.0_SRK)
+      ASSERT(.NOT.testPolyType%onSurface(point),'Beyond 2nd Inner Edge')
+      CALL point%clear()
+      CALL point%init(DIM=2,X=0.3233333333333333_SRK,Y=1.0_SRK)
+      ASSERT(.NOT.testPolyType%onSurface(point),'Inside 2nd Inner Edge')
+      CALL point%clear()
+      CALL point%init(DIM=2,X=0.0_SRK,Y=-SQRT(5.0_SRK)+1.0_SRK)
+      ASSERT(testPolyType%onSurface(point),'3rd Inner Edge')
+      CALL point%clear()
+      CALL point%init(DIM=2,X=0.0_SRK,Y=-SQRT(5.0_SRK)+0.9_SRK)
+      ASSERT(.NOT.testPolyType%onSurface(point),'Beyond 3rd Inner Edge')
+      CALL point%clear()
+      CALL point%init(DIM=2,X=0.0_SRK,Y=-SQRT(5.0_SRK)+1.1_SRK)
+      ASSERT(.NOT.testPolyType%onSurface(point),'Inside 3rd Inner Edge')
+      !Inner corners
+      ASSERT(testPolyType%onSurface(testPolyType%subregions%vert(1)),'1st Inner Corner')
+      ASSERT(testPolyType%onSurface(testPolyType%subregions%vert(2)),'2nd Inner Corner')
+      ASSERT(testPolyType%onSurface(testPolyType%subregions%vert(3)),'3rd Inner Corner')
+      
+    ENDSUBROUTINE testPointOnSurface
+!
+!-------------------------------------------------------------------------------
     SUBROUTINE testPointInside()
       INTEGER(SIK) :: i,inext
       REAL(SRK) :: testCoord(2,9),c0(2),r
@@ -704,10 +836,10 @@ PROGRAM testGeom_Poly
       
       CALL testGraph%clear()
       !Setup test graph - square with a full circle
-      testCoord(:,1)=(/-1.0_SRK,-1.0_SRK/)
-      testCoord(:,2)=(/-1.0_SRK,1.0_SRK/)
-      testCoord(:,3)=(/1.0_SRK,1.0_SRK/)
-      testCoord(:,4)=(/1.0_SRK,-1.0_SRK/)
+      testCoord(:,1)=(/-1.0_SRK,-1.0_SRK/)/SQRT(2.0_SRK)
+      testCoord(:,2)=(/-1.0_SRK,1.0_SRK/)/SQRT(2.0_SRK)
+      testCoord(:,3)=(/1.0_SRK,1.0_SRK/)/SQRT(2.0_SRK)
+      testCoord(:,4)=(/1.0_SRK,-1.0_SRK/)/SQRT(2.0_SRK)
       c0=(/0.0_SRK,0.0_SRK/)
       DO i=1,4
         CALL testGraph%insertVertex(testCoord(:,i))
@@ -717,23 +849,48 @@ PROGRAM testGeom_Poly
       CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
       CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,1))
       CALL testGraph%defineQuadraticEdge(testCoord(:,1), &
-        testCoord(:,2),c0,SQRT(1.0_SRK))
+        testCoord(:,2),c0,1.0_SRK)
       CALL testGraph%defineQuadraticEdge(testCoord(:,2), &
-        testCoord(:,3),c0,SQRT(1.0_SRK))
+        testCoord(:,3),c0,1.0_SRK)
       CALL testGraph%defineQuadraticEdge(testCoord(:,3), &
-        testCoord(:,4),c0,SQRT(1.0_SRK))
+        testCoord(:,4),c0,1.0_SRK)
       CALL testGraph%defineQuadraticEdge(testCoord(:,4), &
-        testCoord(:,1),c0,SQRT(1.0_SRK))
+        testCoord(:,1),c0,1.0_SRK)
       CALL testPoly2%set(testGraph)
       ASSERTFAIL(testPoly2%isinit,'%isinit')
-      !CALL testPolyType%subtractSubVolume(testPoly2)
-      !ASSERTFAIL(ASSOCIATED(testPolyType%subRegions),'%subRegions')
-      !CALL point%clear()
-      !CALL point%init(DIM=2,X=-0.9_SRK,Y=0.9_SRK)
-      !ASSERT(.NOT.testPolyType%pointInside(point),'20:Inside subvolume poly (out)')
-      !CALL point%clear()
-      !CALL point%init(DIM=2,X=0.5_SRK,Y=2.0_SRK)
-      !ASSERT(testPolyType%pointInside(point),'21:outside subvolume poly')
+      CALL testPolyType%subtractSubVolume(testPoly2)
+      ASSERTFAIL(ASSOCIATED(testPolyType%subRegions),'%subRegions')
+      CALL point%clear()
+      CALL point%init(DIM=2,X=-0.6_SRK,Y=0.6_SRK)
+      ASSERT(.NOT.testPolyType%pointInside(point),'20:Inside subvolume poly (out)')
+      CALL point%clear()
+      CALL point%init(DIM=2,X=0.5_SRK,Y=1.0_SRK)
+      ASSERT(testPolyType%pointInside(point),'21:outside subvolume poly')
+      !Sub-Region vertices
+      CALL point%clear()
+      CALL point%init(DIM=2,X=-1.0_SRK/SQRT(2.0_SRK),Y=-1.0_SRK/SQRT(2.0_SRK))
+      ASSERT(testPolyType%pointInside(point),'22: SW vertex subvolume poly')
+      CALL point%clear()
+      CALL point%init(DIM=2,X=-1.0_SRK/SQRT(2.0_SRK),Y=1.0_SRK/SQRT(2.0_SRK))
+      ASSERT(testPolyType%pointInside(point),'23: NW vertex subvolume poly')
+      CALL point%clear()
+      CALL point%init(DIM=2,X=1.0_SRK/SQRT(2.0_SRK),Y=1.0_SRK/SQRT(2.0_SRK))
+      ASSERT(testPolyType%pointInside(point),'24: NE vertex subvolume poly')
+      CALL point%clear()
+      CALL point%init(DIM=2,X=1.0_SRK/SQRT(2.0_SRK),Y=-1.0_SRK/SQRT(2.0_SRK))
+      ASSERT(testPolyType%pointInside(point),'25: SE vertex subvolume poly')
+      CALL point%clear()
+      CALL point%init(DIM=2,X=-1.0_SRK,Y=0.0_SRK)
+      ASSERT(testPolyType%pointInside(point),'26: West Edge subvolume poly')
+      CALL point%clear()
+      CALL point%init(DIM=2,X=0.0_SRK,Y=1.0_SRK)
+      ASSERT(testPolyType%pointInside(point),'27: North Edge subvolume poly')
+      CALL point%clear()
+      CALL point%init(DIM=2,X=1.0_SRK,Y=0.0_SRK)
+      ASSERT(testPolyType%pointInside(point),'28: East Edge subvolume poly')
+      CALL point%clear()
+      CALL point%init(DIM=2,X=0.0_SRK,Y=-1.0_SRK)
+      ASSERT(testPolyType%pointInside(point),'29: South Edge subvolume poly')
       
       CALL testGraph%clear()
       CALL testPolyType%clear()
