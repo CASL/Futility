@@ -551,7 +551,8 @@ MODULE Geom_Poly
             ELSEIF(line%pointIsLeft(centroid) .AND. .NOT. inConcaveCirc) THEN
               !Quad edge extends inside the polygon.  
               !Check if the point is to the right of the edge and outside the circle
-              inConcaveCirc=line%pointIsRight(point) .AND. circ%inside(point)
+              inConcaveCirc=line%pointIsRight(point) .AND. &
+                (circ%inside(point) .AND. .NOT.circ%onSurface(point))
             ENDIF
             CALL circ%clear()
             CALL line%clear()
