@@ -169,8 +169,8 @@ MODULE Geom_Poly
 !> how to set up the super-position of these elements altogether.
 !>
     SUBROUTINE set_PolygonType(thisPoly,thatGraph)
-      CLASS(PolygonType) :: thisPoly
-      TYPE(GraphType) :: thatGraph
+      CLASS(PolygonType),INTENT(INOUT) :: thisPoly
+      TYPE(GraphType),INTENT(IN) :: thatGraph
       
       INTEGER(SIK) :: i,icw,iccw,icurr,inextold,inext,iedge,iquad
       REAL(SRK) :: a,r,h,R1,coeff,subarea,xcent,ycent,halftheta,sinhalftheta,sectorcent
@@ -179,6 +179,7 @@ MODULE Geom_Poly
       TYPE(CircleType) :: circle
       
       !Check if thatGraph is closed (i.e. each vertex has only two neighbors)
+      CALL clear_PolygonType(thisPoly)
       IF(ALLOCATED(thatGraph%vertices) .AND. thatGraph%isMinimumCycle()) THEN
         !Get the number of vertices and edges (equal, since it's a minimum cycle)
         thisPoly%nVert=thatGraph%nVert()
@@ -347,6 +348,143 @@ MODULE Geom_Poly
     ENDSUBROUTINE clear_PolygonType
 !
 !-------------------------------------------------------------------------------
+!> @brief
+!> @param
+!>
+    ELEMENTAL FUNCTION isSimple_PolygonType(thisPoly) RESULT(bool)
+      CLASS(PolygonType),INTENT(IN) :: thisPoly
+      LOGICAL(SBK) :: bool
+      bool=.NOT.ASSOCIATED(thisPoly%subRegions)
+    ENDFUNCTION isSimple_PolygonType
+!
+!-------------------------------------------------------------------------------
+!> @brief Determines whether a polygon meets the criteria for being a circle.
+!>        In short, the number of vertices (and edges implicitly) must equal
+!>        the number of quadratic edges.  The quadratic edges must all be equal
+!>        to one another as well.
+!> @param thisPoly The polygon type to query
+!> @param bool The logical result of the operation
+!>
+    ELEMENTAL FUNCTION isCircle_PolygonType(thisPoly) RESULT(bool)
+      CLASS(PolygonType),INTENT(IN) :: thisPoly
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: i
+      IF(thisPoly%nVert == thisPoly%nQuadEdge) THEN
+        bool=.TRUE.
+        DO i=2,thisPoly%nQuadEdge
+          bool=bool .AND. ALL(thisPoly%quadEdge(:,i) .APPROXEQA. thisPoly%quadEdge(:,1))
+        ENDDO
+      ENDIF
+    ENDFUNCTION isCircle_PolygonType
+!
+!-------------------------------------------------------------------------------
+!> @brief This routine will query a polygon type, check if it meets the criteria
+!>        to be a circle, and if so it will return the radius for the circle.
+!> @param thisPoly The polygon type from which to get the radius
+!> @param r The radius if thisPoly is a circle.  It will be 0.0 for all other
+!>        cases.
+!>
+    ELEMENTAL FUNCTION getRadius_PolygonType(thisPoly) RESULT(r)
+      CLASS(PolygonType),INTENT(IN) :: thisPoly
+      REAL(SRK) :: r
+      r=0.0_SRK
+      IF(thisPoly%isCircle()) r=thisPoly%quadEdge(3,1)
+    ENDFUNCTION getRadius_PolygonType
+!
+!-------------------------------------------------------------------------------
+!> @brief This routine determines if a given point lies on the surface of a 
+!>        given polygon.
+!> @param thisPoly The polygon type used in the query
+!> @param point The point type to check if it lies on the surface of the 
+!>        polygontype
+!> @param bool The logical result of this operation.  TRUE if the point is on 
+!>        the surface.
+!>
+    PURE RECURSIVE FUNCTION onSurface_PolygonType(thisPoly,point,incSubReg) RESULT(bool)
+      CLASS(PolygonType),INTENT(IN) :: thisPoly
+      TYPE(PointType),INTENT(IN) :: point
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: incSubReg
+      LOGICAL(SBK) :: bool
+      LOGICAL(SBK) :: isQuadEdge,includeSubRegions
+      INTEGER(SIK) :: i,iedge
+      REAL(SRK) :: d
+      TYPE(PointType) :: centroid
+      TYPE(LineType) :: line
+      TYPE(PolygonType),POINTER :: iPoly
+      
+      IF(thisPoly%isinit .AND. point%dim == 2) THEN
+        bool=.FALSE.
+        !Check if its one of the vertices
+        DO i=1,thisPoly%nVert
+          IF(ALL(point%coord .APPROXEQA. thisPoly%vert(i)%coord)) THEN
+            bool=.TRUE.
+            EXIT
+          ENDIF
+        ENDDO
+        
+        IF(.NOT.bool) THEN
+          !Check straight edges.
+          DO i=1,thisPoly%nVert
+            isQuadEdge=.FALSE.
+            IF(thisPoly%nQuadEdge > 0) THEN
+              IF(ANY(thisPoly%quad2edge == i)) isQuadEdge=.TRUE.
+            ENDIF
+            IF(.NOT.isQuadEdge) THEN
+              CALL line%set(thisPoly%vert(thisPoly%edge(1,i)), &
+                thisPoly%vert(thisPoly%edge(2,i)))
+              d=line%distance2Point(point)
+              IF(d .APPROXEQA. 0.0_SRK) THEN
+                bool=.TRUE.
+                EXIT
+              ENDIF
+            ENDIF
+          ENDDO
+          CALL line%clear()
+        ENDIF
+
+        IF(.NOT.bool .AND. thisPoly%nQuadEdge > 0) THEN
+          !Check quadratic edges
+          DO i=1,thisPoly%nQuadEdge
+            !First check if the point is on the surface of the circle
+            IF(((point%coord(1)-thisPoly%quadEdge(1,i))* &
+              (point%coord(1)-thisPoly%quadEdge(1,i))+ &
+              (point%coord(2)-thisPoly%quadEdge(2,i))* &
+              (point%coord(2)-thisPoly%quadEdge(2,i))) .APPROXEQA. &
+                (thisPoly%quadEdge(3,i)*thisPoly%quadEdge(3,i))) THEN
+              !Check if the point is within the arc range 
+              CALL centroid%init(DIM=2,X=thisPoly%quadEdge(1,i), &
+                Y=thisPoly%quadEdge(2,i))
+              iedge=thisPoly%quad2edge(i)
+              CALL line%set(thisPoly%vert(thisPoly%edge(1,iedge)), &
+                thisPoly%vert(thisPoly%edge(2,iedge)))
+              IF(line%pointIsLeft(centroid)) THEN
+                !Centroid is on the left, the valid portion of the 
+                !arc lies to the right of the line.
+                bool=line%pointIsRight(point)
+              ELSE
+                !Centroid is on the right, the valid portion of the 
+                !arc lies to the left of the line.
+                bool=line%pointIsLeft(point)
+              ENDIF
+              CALL centroid%clear()
+              CALL line%clear()
+              IF(bool) EXIT
+            ENDIF
+          ENDDO
+        ENDIF
+        IF(.NOT.bool) THEN
+          includeSubRegions=.TRUE.
+          IF(PRESENT(incSubReg)) includeSubRegions=incSubReg
+          IF(ASSOCIATED(thisPoly%subregions) .AND. includeSubRegions) THEN
+            bool=onSurface_PolygonType(thisPoly%subregions,point,.FALSE.)
+          ELSEIF(ASSOCIATED(thisPoly%nextPoly)) THEN
+            bool=onSurface_PolygonType(thisPoly%nextPoly,point,.FALSE.)
+          ENDIF
+        ENDIF
+      ENDIF
+    ENDFUNCTION onSurface_PolygonType
+!
+!-------------------------------------------------------------------------------
 !> @brief This routine determines whether a point lies within an arbitrary 
 !> polygon.  The processes by which this can be done are the ray tracing "count
 !> number" approach, or the winding number approach.  After researching the 
@@ -365,85 +503,74 @@ MODULE Geom_Poly
       CLASS(PolygonType),INTENT(IN) :: thisPoly
       TYPE(PointType),INTENT(IN) :: point
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: isSub
-      LOGICAL(SBK) :: bool,inPoly,inConvexCirc,inConcaveCirc,isSubReg
+      LOGICAL(SBK) :: bool
+      LOGICAL(SBK) :: lw,lcrossing,lright_crossing,inPoly
+      LOGICAL(SBK) :: inConvexCirc,inConcaveCirc,isSubReg
       INTEGER(SIK) :: i,wn,istt,istp,iedge
+      REAL(SRK) :: det,r(2),pi(2),pnext(2) !,rad,w
       TYPE(PointType) :: centroid
       TYPE(LineType) :: line
       TYPE(CircleType) :: circ
       CLASS(PolygonType),POINTER :: nPoly
 
-      IF(PRESENT(isSub)) THEN
-        isSubReg=isSub
-      ELSE
-        isSubReg=.FALSE.
-      ENDIF
-      
+      isSubReg=.FALSE.
+      IF(PRESENT(isSub)) isSubReg=isSub
+
       bool=.FALSE.
-      IF(thisPoly%nVert > 0) THEN
-        !Check if point is a vertex
+      IF(thisPoly%nVert > 0 .AND. point%dim == 2) THEN
         inPoly=(point%coord(1) .APPROXEQA. thisPoly%vert(1)%coord(1)) .AND. &
           (point%coord(2) .APPROXEQA. thisPoly%vert(1)%coord(2))
         IF(.NOT.inPoly) THEN
+          r=point%coord
           wn=0
-          DO i=1,thisPoly%nVert
-            istt=thisPoly%edge(1,i)
-            istp=thisPoly%edge(2,i)
+          DO i=thisPoly%nVert,1,-1
+            pi=thisPoly%vert(thisPoly%edge(2,i))%coord
+            pnext=thisPoly%vert(thisPoly%edge(1,i))%coord
+            
             !Check if next vertex is matched
-            IF(point%coord(2) .APPROXEQA. thisPoly%vert(istp)%coord(2)) THEN
-              IF(point%coord(1) .APPROXEQA. thisPoly%vert(istp)%coord(1)) THEN
-                wn=100 !Evaluates to true after loop
+            IF(r(2) .APPROXEQA. pnext(2)) THEN
+              IF(r(1) .APPROXEQA. pnext(1)) THEN
+                wn=100 !Evaluates to true after loop (vertex)
                 EXIT
               ELSE
-                IF((point%coord(2) .APPROXEQA. thisPoly%vert(istt)%coord(2)) .AND. &
-                  (thisPoly%vert(istt)%coord(1) < point%coord(1) .EQV. &
-                   thisPoly%vert(istp)%coord(1) > point%coord(1))) THEN
-                  wn=200 !Evaluates to true after loop
+                !Is it on the edge?
+                IF((r(2) .APPROXEQA. pi(2)) .AND. &
+                  (pi(1) < r(1) .EQV. pnext(1) > r(1))) THEN
+                  wn=200 !Evaluates to true after loop (edge)
                   EXIT
                 ENDIF
               ENDIF
             ENDIF
-            !Crossing
-            IF((thisPoly%vert(istt)%coord(2) < point%coord(2)) /= &
-              (thisPoly%vert(istp)%coord(2) < point%coord(2))) THEN
-              !P_i(x) >= R(x)
-              IF(thisPoly%vert(istt)%coord(1) .APPROXGE. point%coord(1)) THEN
-                !P_i+1(x) > R(x)
-                IF(thisPoly%vert(istp)%coord(1) > point%coord(1)) THEN
-                  IF(thisPoly%vert(istp)%coord(2) > thisPoly%vert(istt)%coord(2)) THEN
-                    wn=wn+1
-                  ELSE
-                    wn=wn-1
-                  ENDIF
-                ELSE !det() > 0.0_SRK .EQV. P_i+1(y) > P_i(y), right_crossing
+            !P_i(y) < R(y) /= P_i+1(y) < R(y)
+            lcrossing=(pi(2) .APPROXGE. r(2)) .NEQV. (pnext(2) .APPROXGE. r(2))
+            IF(lcrossing) THEN
+              IF(pi(1) .APPROXGE. r(1)) THEN !P_i(x) >= R(x)
+                IF(.NOT.(pnext(1) .APPROXLE. r(1))) THEN !P_i+1(x) > R(x)
+                  lw=.NOT.(pnext(2) .APPROXLE. pi(2))
+                  wn=wn+2*ABS(TRANSFER(lw,wn))-1
+                ELSE 
                   !(P_i(x)-R(x))*(P_i+1(y)-R(y))-(P_i+1(x)-R(x))*(P_i(y)-R(y))
-                  IF(((thisPoly%vert(istt)%coord(1)-point%coord(1))* &
-                    (thisPoly%vert(istp)%coord(2)-point%coord(2))- &
-                      (thisPoly%vert(istp)%coord(1)-point%coord(1))* &
-                    (thisPoly%vert(istt)%coord(2)-point%coord(2)) > 0.0_SRK) .EQV. &
-                      (thisPoly%vert(istp)%coord(2) > point%coord(2))) THEN
+                  det=(pi(1)-r(1))*(pnext(2)-r(2))-(pnext(1)-r(1))*(pi(2)-r(2))
+                  !det() > 0.0_SRK .EQV. P_i+1(y) > P_i(y), right_crossing
+                  lright_crossing=(det .APPROXLE. 0.0_SRK) .EQV. &
+                    (pnext(2) .APPROXLE. r(2))
+                  IF(lright_crossing) THEN
                     !modify wn
-                    IF(thisPoly%vert(istp)%coord(2) > thisPoly%vert(istt)%coord(2)) THEN
-                      wn=wn+1
-                    ELSE
-                      wn=wn-1
-                    ENDIF
+                    lw=.NOT.(pnext(2) .APPROXLE. pi(2))
+                    wn=wn+2*ABS(TRANSFER(lw,wn))-1
                   ENDIF
                 ENDIF
               ELSE
-                IF(thisPoly%vert(istp)%coord(1) > point%coord(1)) THEN
-                  !det() > 0.0_SRK .EQV. P_i+1(y) > P_i(y), right_crossing
+                IF(.NOT.(pnext(1) .APPROXLE. r(1))) THEN !P_i+1(x) > R(x)
                   !(P_i(x)-R(x))*(P_i+1(y)-R(y))-(P_i+1(x)-R(x))*(P_i(y)-R(y))
-                  IF(((thisPoly%vert(istt)%coord(1)-point%coord(1))* &
-                    (thisPoly%vert(istp)%coord(2)-point%coord(2))- &
-                      (thisPoly%vert(istp)%coord(1)-point%coord(1))* &
-                    (thisPoly%vert(istt)%coord(2)-point%coord(2)) > 0.0_SRK) .EQV. &
-                      (thisPoly%vert(istp)%coord(2) > point%coord(2))) THEN
+                  det=(pi(1)-r(1))*(pnext(2)-r(2))-(pnext(1)-r(1))*(pi(2)-r(2))
+                  !det() > 0.0_SRK .EQV. P_i+1(y) > P_i(y), right_crossing
+                  lright_crossing=(det .APPROXLE. 0.0_SRK) .EQV. &
+                    (pnext(2) .APPROXLE. r(2))
+                  IF(lright_crossing) THEN
                     !modify wn
-                    IF(thisPoly%vert(istp)%coord(2) > thisPoly%vert(istt)%coord(2)) THEN
-                      wn=wn+1
-                    ELSE
-                      wn=wn-1
-                    ENDIF
+                    lw=.NOT.(pnext(2) .APPROXLE. pi(2))
+                    wn=wn+2*ABS(TRANSFER(lw,wn))-1
                   ENDIF
                 ENDIF
               ENDIF
@@ -451,6 +578,10 @@ MODULE Geom_Poly
           ENDDO
           inPoly=(wn /= 0)
         ENDIF
+
+        !We need this statement until the winding algorithm can be fixed
+        !For special edge cases.
+        IF(.NOT.inPoly) inPoly=onSurface_PolygonType(thisPoly,point)
       
         !Now check the quadratic edges if there are any
         IF(thisPoly%nQuadEdge > 0) THEN
@@ -659,95 +790,6 @@ MODULE Geom_Poly
         IF(ALLOCATED(thoseCircs)) DEALLOCATE(thoseCircs)
       ENDIF
     ENDFUNCTION polygon_inside_PolygonType
-!
-!-------------------------------------------------------------------------------
-!> @brief This routine determines if a given point lies on the surface of a 
-!>        given polygon.
-!> @param thisPoly The polygon type used in the query
-!> @param point The point type to check if it lies on the surface of the 
-!>        polygontype
-!> @param bool The logical result of this operation.  TRUE if the point is on 
-!>        the surface.
-!>
-    PURE RECURSIVE FUNCTION onSurface_PolygonType(thisPoly,point) RESULT(bool)
-      CLASS(PolygonType),INTENT(IN) :: thisPoly
-      TYPE(PointType),INTENT(IN) :: point
-      LOGICAL(SBK) :: bool
-      LOGICAL(SBK) :: isQuadEdge
-      INTEGER(SIK) :: i,iedge
-      REAL(SRK) :: d
-      TYPE(PointType) :: centroid
-      TYPE(LineType) :: line
-      
-      IF(thisPoly%isinit .AND. point%dim == 2) THEN
-        bool=.FALSE.
-        !Check if its one of the vertices
-        DO i=1,thisPoly%nVert
-          IF(ALL(point%coord .APPROXEQA. thisPoly%vert(i)%coord)) THEN
-            bool=.TRUE.
-            EXIT
-          ENDIF
-        ENDDO
-        
-        IF(.NOT.bool) THEN
-          !Check straight edges.
-          DO i=1,thisPoly%nVert
-            isQuadEdge=.FALSE.
-            IF(thisPoly%nQuadEdge > 0) THEN
-              IF(ANY(thisPoly%quad2edge == i)) isQuadEdge=.TRUE.
-            ENDIF
-            IF(.NOT.isQuadEdge) THEN
-              CALL line%set(thisPoly%vert(thisPoly%edge(1,i)), &
-                thisPoly%vert(thisPoly%edge(2,i)))
-              d=line%distance2Point(point)
-              IF(d .APPROXEQA. 0.0_SRK) THEN
-                bool=.TRUE.
-                EXIT
-              ENDIF
-            ENDIF
-          ENDDO
-          CALL line%clear()
-        ENDIF
-
-        IF(.NOT.bool .AND. thisPoly%nQuadEdge > 0) THEN
-          !Check quadratic edges
-          DO i=1,thisPoly%nQuadEdge
-            !First check if the point is on the surface of the circle
-            IF(((point%coord(1)-thisPoly%quadEdge(1,i))* &
-              (point%coord(1)-thisPoly%quadEdge(1,i))+ &
-              (point%coord(2)-thisPoly%quadEdge(2,i))* &
-              (point%coord(2)-thisPoly%quadEdge(2,i))) .APPROXEQA. &
-                (thisPoly%quadEdge(3,i)*thisPoly%quadEdge(3,i))) THEN
-              !Check if the point is within the arc range 
-              CALL centroid%init(DIM=2,X=thisPoly%quadEdge(1,i), &
-                Y=thisPoly%quadEdge(2,i))
-              iedge=thisPoly%quad2edge(i)
-              CALL line%set(thisPoly%vert(thisPoly%edge(1,iedge)), &
-                thisPoly%vert(thisPoly%edge(2,iedge)))
-              IF(line%pointIsLeft(centroid)) THEN
-                !Centroid is on the left, the valid portion of the 
-                !arc lies to the right of the line.
-                bool=line%pointIsRight(point)
-              ELSE
-                !Centroid is on the right, the valid portion of the 
-                !arc lies to the left of the line.
-                bool=line%pointIsLeft(point)
-              ENDIF
-              CALL centroid%clear()
-              CALL line%clear()
-              IF(bool) EXIT
-            ENDIF
-          ENDDO
-        ENDIF
-        IF(.NOT.bool) THEN
-          IF(ASSOCIATED(thisPoly%subRegions)) THEN
-            bool=thisPoly%subRegions%onSurface(point)
-          ELSEIF(ASSOCIATED(thisPoly%nextPoly)) THEN
-            bool=thisPoly%nextPoly%onSurface(point)
-          ENDIF
-        ENDIF
-      ENDIF
-    ENDFUNCTION onSurface_PolygonType
 !
 !-------------------------------------------------------------------------------
 !> @brief Function to determine if a line intersects a polygon. This routine 
@@ -1015,36 +1057,6 @@ MODULE Geom_Poly
 !> @brief
 !> @param
 !>
-    ELEMENTAL FUNCTION isSimple_PolygonType(thisPoly) RESULT(bool)
-      CLASS(PolygonType),INTENT(IN) :: thisPoly
-      LOGICAL(SBK) :: bool
-      bool=.NOT.ASSOCIATED(thisPoly%subRegions)
-    ENDFUNCTION isSimple_PolygonType
-!
-!-------------------------------------------------------------------------------
-!> @brief Determines whether a polygon meets the criteria for being a circle.
-!>        In short, the number of vertices (and edges implicitly) must equal
-!>        the number of quadratic edges.  The quadratic edges must all be equal
-!>        to one another as well.
-!> @param thisPoly The polygon type to query
-!> @param bool The logical result of the operation
-!>
-    ELEMENTAL FUNCTION isCircle_PolygonType(thisPoly) RESULT(bool)
-      CLASS(PolygonType),INTENT(IN) :: thisPoly
-      LOGICAL(SBK) :: bool
-      INTEGER(SIK) :: i
-      IF(thisPoly%nVert == thisPoly%nQuadEdge) THEN
-        bool=.TRUE.
-        DO i=2,thisPoly%nQuadEdge
-          bool=bool .AND. ALL(thisPoly%quadEdge(:,i) .APPROXEQA. thisPoly%quadEdge(:,1))
-        ENDDO
-      ENDIF
-    ENDFUNCTION isCircle_PolygonType
-!
-!-------------------------------------------------------------------------------
-!> @brief
-!> @param
-!>
     PURE SUBROUTINE intersectLine_PolygonType(thisPolygon,line,points)
       CLASS(PolygonType),INTENT(IN) :: thisPolygon
       TYPE(LineType),INTENT(IN) :: line
@@ -1301,20 +1313,6 @@ MODULE Geom_Poly
     ENDSUBROUTINE intersectPoly_PolygonType
 !
 !-------------------------------------------------------------------------------
-!> @brief This routine will query a polygon type, check if it meets the criteria
-!>        to be a circle, and if so it will return the radius for the circle.
-!> @param thisPoly The polygon type from which to get the radius
-!> @param r The radius if thisPoly is a circle.  It will be 0.0 for all other
-!>        cases.
-!>
-    ELEMENTAL FUNCTION getRadius_PolygonType(thisPoly) RESULT(r)
-      CLASS(PolygonType),INTENT(IN) :: thisPoly
-      REAL(SRK) :: r
-      r=0.0_SRK
-      IF(thisPoly%isCircle()) r=thisPoly%quadEdge(3,1)
-    ENDFUNCTION getRadius_PolygonType
-!
-!-------------------------------------------------------------------------------
 !> @brief
 !> @param
 !>
@@ -1406,7 +1404,7 @@ MODULE Geom_Poly
     RECURSIVE SUBROUTINE generateGraph_PolygonType(thisPoly,g,incSubReg)
       CLASS(PolygonType),INTENT(IN) :: thisPoly
       TYPE(GraphType),INTENT(INOUT) :: g
-      LOGICAL(SBK),OPTIONAL :: incSubReg
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: incSubReg
 
       LOGICAL(SBK) :: includeSubRegions
       LOGICAL(SBK),ALLOCATABLE :: isQuadEdge(:)

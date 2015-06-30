@@ -42,10 +42,10 @@ PROGRAM testGeom_Poly
   REGISTER_SUBTEST('Test Uninitialized',testUninit)
   REGISTER_SUBTEST('Test Clear',testClear)
   REGISTER_SUBTEST('Test Set',testSet)
-  REGISTER_SUBTEST('Test Subtract Sub-Volume',testSubtractSubVol)
   REGISTER_SUBTEST('Test Point onSurface',testPointOnSurface)
   REGISTER_SUBTEST('Test Point Inside',testPointInside)
   REGISTER_SUBTEST('Test Poly Inside',testPolyInside)
+  REGISTER_SUBTEST('Test Subtract Sub-Volume',testSubtractSubVol)
   REGISTER_SUBTEST('Test DoesLineIntersect',testDoesLineIntersect)
   REGISTER_SUBTEST('Test DoesPolyIntersect',testDoesPolyIntersect)
   REGISTER_SUBTEST('Test IntersectLine',testIntersectLine)
@@ -664,6 +664,7 @@ PROGRAM testGeom_Poly
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testPointInside()
+      LOGICAL(SBK) :: bool
       INTEGER(SIK) :: i,inext
       REAL(SRK) :: testCoord(2,9),c0(2),r
       TYPE(PointType) :: point
@@ -702,11 +703,39 @@ PROGRAM testGeom_Poly
       CALL point%clear()
       CALL point%init(DIM=2,X=-0.5_SRK,Y=-1.0_SRK)
       ASSERT(testPolyType%pointInside(point),'on bottom edge')
-      
-      COMPONENT_TEST('Quadrilateral')
-      !Setup test graph - quadralateral
       CALL testGraph%clear()
       CALL testPolyType%clear()
+      CALL point%clear()
+
+      COMPONENT_TEST('Square')
+      testCoord(:,1)=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,2)=(/0.0_SRK,1.0_SRK/)
+      testCoord(:,3)=(/1.0_SRK,1.0_SRK/)
+      testCoord(:,4)=(/1.0_SRK,0.0_SRK/)
+      DO i=1,4
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
+      CALL testGraph%defineEdge(testCoord(:,2),testCoord(:,3))
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
+      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,4))
+      CALL testPolyType%set(testGraph)
+      CALL point%init(DIM=2,X=0.0_SRK,Y=0.5_SRK)
+      ASSERT(testPolyType%pointInside(point),'left edge')
+      CALL point%clear()
+      CALL point%init(DIM=2,X=0.5_SRK,Y=1.0_SRK)
+      ASSERT(testPolyType%pointInside(point),'top edge')
+      CALL point%clear()
+      CALL point%init(DIM=2,X=1.0_SRK,Y=0.5_SRK)
+      ASSERT(testPolyType%pointInside(point),'right edge')
+      CALL point%clear()
+      CALL point%init(DIM=2,X=0.5_SRK,Y=0.0_SRK)
+      ASSERT(testPolyType%pointInside(point),'bottom edge')
+      CALL testGraph%clear()
+      CALL testPolyType%clear()
+
+      COMPONENT_TEST('Quadrilateral')
+      !Setup test graph - quadralateral
       testCoord(:,1)=(/-3.0_SRK,-3.0_SRK/)
       testCoord(:,2)=(/-1.0_SRK,2.0_SRK/)
       testCoord(:,3)=(/2.0_SRK,3.0_SRK/)
@@ -718,8 +747,6 @@ PROGRAM testGeom_Poly
       CALL testGraph%defineEdge(testCoord(:,2),testCoord(:,3))
       CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
       CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,1))
-      
-      
       CALL testPolyType%set(testGraph)
       ASSERTFAIL(testPolyType%isinit,'%isinit')
       CALL point%clear()
@@ -757,9 +784,9 @@ PROGRAM testGeom_Poly
       CALL point%clear()
       CALL point%init(DIM=2,X=3.0_SRK,Y=3.0_SRK)
       ASSERT(.NOT.testPolyType%pointInside(point),'outside bugfix')
-      
-      
+
       !Setup test graph - quadralateral with quadratic edge
+      COMPONENT_TEST('Quad Edges')
       CALL testGraph%clear()
       CALL testPolyType%clear()
       testCoord(:,1)=(/-3.0_SRK,3.0_SRK/)
@@ -791,7 +818,6 @@ PROGRAM testGeom_Poly
       c0=(/-1.0_SRK,0.0_SRK/)
       CALL testGraph%defineQuadraticEdge(testCoord(:,6), &
         testCoord(:,7),c0,SQRT(5.0_SRK))
-      
       CALL testPolyType%set(testGraph)
       ASSERTFAIL(testPolyType%isinit,'%isinit')
       CALL point%clear()
@@ -851,9 +877,9 @@ PROGRAM testGeom_Poly
       CALL point%clear()
       CALL point%init(DIM=2,X=0.0_SRK,Y=5.0_SRK)
       ASSERT(.NOT.testPolyType%pointInside(point),'19:Outside Poly and North QuadEdge (out)')
-      
       CALL testGraph%clear()
-      !Setup test graph - square with a full circle
+
+      COMPONENT_TEST('Circular Hole')
       testCoord(:,1)=(/-1.0_SRK,-1.0_SRK/)/SQRT(2.0_SRK)
       testCoord(:,2)=(/-1.0_SRK,1.0_SRK/)/SQRT(2.0_SRK)
       testCoord(:,3)=(/1.0_SRK,1.0_SRK/)/SQRT(2.0_SRK)
@@ -862,10 +888,6 @@ PROGRAM testGeom_Poly
       DO i=1,4
         CALL testGraph%insertVertex(testCoord(:,i))
       ENDDO
-      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
-      CALL testGraph%defineEdge(testCoord(:,2),testCoord(:,3))
-      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
-      CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,1))
       CALL testGraph%defineQuadraticEdge(testCoord(:,1), &
         testCoord(:,2),c0,1.0_SRK)
       CALL testGraph%defineQuadraticEdge(testCoord(:,2), &
@@ -909,8 +931,30 @@ PROGRAM testGeom_Poly
       CALL point%clear()
       CALL point%init(DIM=2,X=0.0_SRK,Y=-1.0_SRK)
       ASSERT(testPolyType%pointInside(point),'29: South Edge subvolume poly')
-      
       CALL testGraph%clear()
+      CALL testPolyType%clear()
+      CALL point%clear()
+
+      COMPONENT_TEST('Circle 4p')
+      testCoord(:,1)=(/-0.564_SRK,0.0_SRK/)
+      testCoord(:,2)=(/0.0_SRK,0.564_SRK/)
+      testCoord(:,3)=(/0.564_SRK,0.0_SRK/)
+      testCoord(:,4)=(/0.0_SRK,-0.564_SRK/)
+      c0=(/6.943559581994459E-018_SRK,1.388711916398892E-017_SRK/)
+      DO i=1,4
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineQuadraticEdge(testCoord(:,1), &
+        testCoord(:,2),c0,0.564_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,2), &
+        testCoord(:,3),c0,0.564_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,3), &
+        testCoord(:,4),c0,0.564_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,4), &
+        testCoord(:,1),c0,0.564_SRK)
+      CALL testPolyType%set(testGraph)
+      CALL point%init(DIM=2,X=-0.264_SRK,Y=0.0_SRK)
+      ASSERT(testPolyType%pointInside(point),'circle')
       CALL testPolyType%clear()
       CALL point%clear()
     ENDSUBROUTINE testPointInside
