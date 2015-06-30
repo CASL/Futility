@@ -1086,6 +1086,9 @@ MODULE Geom_Poly
       npoints=0
       DO i=1,SIZE(tmppoints)
         IF(tmppoints(i)%dim == 2) npoints=npoints+1
+        DO j=i+1,SIZE(tmppoints)
+          IF(tmppoints(j) .APPROXEQA. tmppoints(i)) CALL tmppoints(j)%clear()
+        ENDDO
       ENDDO
       IF(npoints > 0) THEN
         ALLOCATE(points(npoints))

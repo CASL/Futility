@@ -1354,6 +1354,30 @@ PROGRAM testGeom_Poly
         (points(1)%coord(2) .APPROXEQA. 0.0_SRK)
       ASSERT(bool,'point 1 intersection')
 
+      CALL point1%clear()
+      CALL point2%clear()
+      CALL line%clear()
+      CALL point1%init(DIM=2,X=-1.0_SRK,Y=-1.0_SRK)
+      CALL point2%init(DIM=2,X=1.0_SRK,Y=0.0_SRK)
+      CALL line%set(point1,point2)
+      CALL testPolyType%intersectLine(line,points)
+      ASSERTFAIL(SIZE(points) == 2,'npoints for vertex end point')
+      bool=(points(1)%coord(1) .APPROXEQA. -1.0_SRK) .AND. &
+        (points(1)%coord(2) .APPROXEQA. -1.0_SRK)
+      ASSERT(bool,'point 1 intersection')
+
+      CALL point1%clear()
+      CALL point2%clear()
+      CALL line%clear()
+      CALL point1%init(DIM=2,X=0.0_SRK,Y=3.0_SRK)
+      CALL point2%init(DIM=2,X=0.0_SRK,Y=-2.0_SRK)
+      CALL line%set(point1,point2)
+      CALL testPolyType%intersectLine(line,points)
+      ASSERTFAIL(SIZE(points) == 2,'npoints for through vertex')
+      bool=(points(1)%coord(1) .APPROXEQA. 0.0_SRK) .AND. &
+        (points(1)%coord(2) .APPROXEQA. 2.0_SRK)
+      ASSERT(bool,'point 1 intersection')
+
 !Setup test graph - quadralateral with quadratic edge
       CALL testGraph%clear()
       CALL testPolyType%clear()
