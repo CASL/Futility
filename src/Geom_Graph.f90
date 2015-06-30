@@ -1167,6 +1167,10 @@ MODULE Geom_Graph
 
                   !Count tangent points
                   IF(p1%dim == -3) p1%dim=2
+                  IF(p1%dim == 0 .AND. p2%dim == 2) THEN
+                    p1=p2
+                    CALL p2%clear()
+                  ENDIF
 
                   !Check for intersections on ends of line segments
                   IF(p1%dim == 0) THEN
@@ -1282,6 +1286,10 @@ MODULE Geom_Graph
 
                   !Count tangent points
                   IF(p1%dim == -3) p1%dim=2
+                  IF(p1%dim == 0 .AND. p2%dim == 2) THEN
+                    p1=p2
+                    CALL p2%clear()
+                  ENDIF
 
                   !Check for intersections on ends of line segments
                   IF(p1%dim == 0) THEN
@@ -1384,6 +1392,7 @@ MODULE Geom_Graph
                       CALL insertVertex_graphType(lineAB,p1%coord)
                     ENDIF
                   ENDIF
+                  l1%p1%dim=2; l1%p2%dim=2
                 ELSE
                   !circle-circle (F-this)
 
