@@ -503,7 +503,7 @@ MODULE Geom_Poly
       TYPE(PointType),INTENT(IN) :: point
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: isSub
       LOGICAL(SBK) :: bool
-      LOGICAL(SBK) :: inConvexCirc,inConcaveCirc,isSubReg,inPoly
+      LOGICAL(SBK) :: inConvexCirc,inConcaveCirc,isSubReg,inPoly,lpix,lpnextx
       INTEGER(SIK) :: i,iedge
       REAL(SRK) :: r,w,wm,pi(2),pnext(2)
       TYPE(PointType) :: centroid
@@ -519,18 +519,18 @@ MODULE Geom_Poly
         DO i=1,thisPoly%nVert
           pi=thisPoly%vert(thisPoly%edge(1,i))%coord-point%coord
           pnext=thisPoly%vert(thisPoly%edge(2,i))%coord-point%coord
+          lpix=(pi(2) .APPROXEQA. 0.0_SRK) .AND. .NOT.(pi(1) .APPROXLE. 0.0_SRK)
+          lpnextx=(pnext(2) .APPROXEQA. 0.0_SRK) .AND. .NOT.(pnext(1) .APPROXLE. 0.0_SRK)
           IF(.NOT.(pi(2)*pnext(2) .APPROXGE. 0.0_SRK)) THEN
             r=pi(1)+pi(2)*(pnext(1)-pi(1))/(pi(2)-pnext(2))
             IF(.NOT.(r .APPROXLE. 0.0_SRK)) THEN !r > 0
               wm=REAL(ABS(TRANSFER(.NOT.(pi(2) .APPROXGE. 0.0_SRK),1)),SRK)
               w=w+2.0_SRK*wm-1.0_SRK
             ENDIF
-          ELSEIF((pi(2) .APPROXEQA. 0.0_SRK) .AND. &
-                 .NOT.(pi(1) .APPROXLE. 0.0_SRK)) THEN
+          ELSEIF(lpix .AND. .NOT.lpnextx) THEN
             wm=REAL(ABS(TRANSFER(.NOT.(pnext(2) .APPROXLE. 0.0_SRK),1)),SRK)
             w=w+wm-0.5_SRK
-          ELSEIF((pnext(2) .APPROXEQA. 0.0_SRK) .AND. &
-                 .NOT.(pnext(1) .APPROXLE. 0.0_SRK)) THEN
+          ELSEIF(lpnextx .AND. .NOT.lpix) THEN
             wm=REAL(ABS(TRANSFER(.NOT.(pi(2) .APPROXGE. 0.0_SRK),1)),SRK)
             w=w+wm-0.5_SRK
           ENDIF
@@ -573,7 +573,7 @@ MODULE Geom_Poly
           !Logic for inside the polygon and outside the subregions
           IF(inPoly .AND. .NOT.thisPoly%isSimple()) THEN
             inPoly=.NOT.point_inside_PolygonType(thisPoly%subregions,point,.TRUE.) &
-              .OR. onSurface_PolygonType(thisPoly%subregions,point)
+              .OR. onSurface_PolygonType(thisPoly%subregions,point,.FALSE.)
           ENDIF
         ELSEIF(ASSOCIATED(thisPoly%nextPoly)) THEN
           inPoly=inPoly .OR. point_inside_PolygonType(thisPoly%nextPoly,point,.TRUE.)
