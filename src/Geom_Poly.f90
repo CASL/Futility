@@ -477,7 +477,7 @@ MODULE Geom_Poly
           IF(PRESENT(incSubReg)) includeSubRegions=incSubReg
           IF(ASSOCIATED(thisPoly%subregions) .AND. includeSubRegions) THEN
             bool=onSurface_PolygonType(thisPoly%subregions,point,.FALSE.)
-          ELSEIF(ASSOCIATED(thisPoly%nextPoly)) THEN
+          ELSEIF(ASSOCIATED(thisPoly%nextPoly) .AND. .NOT.includeSubRegions) THEN
             bool=onSurface_PolygonType(thisPoly%nextPoly,point,.FALSE.)
           ENDIF
         ENDIF
@@ -580,7 +580,7 @@ MODULE Geom_Poly
         ENDIF
 
         !We need this statement until the winding algorithm can be fixed
-        !For special edge cases.
+        !for special edge cases.
         IF(.NOT.inPoly) inPoly=onSurface_PolygonType(thisPoly,point)
       
         !Now check the quadratic edges if there are any
@@ -634,7 +634,7 @@ MODULE Geom_Poly
 !> @param thatPoly The polygon type to check if it lies inside the polygontype
 !> @param bool The logical result of this operation.  TRUE if the point is inside.
 !>
-    PURE RECURSIVE FUNCTION polygon_inside_PolygonType(thisPoly,thatPoly) RESULT(bool)
+    PURE FUNCTION polygon_inside_PolygonType(thisPoly,thatPoly) RESULT(bool)
       CLASS(PolygonType),INTENT(IN) :: thisPoly
       TYPE(PolygonType),INTENT(IN) :: thatPoly
       LOGICAL(SBK) :: bool
