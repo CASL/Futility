@@ -194,11 +194,7 @@ MODULE Geom_Poly
         !Logic here is for when we have our next point directly above the starting point.
         iccw=thatGraph%getCCWMostVert(0,1)
         icw=thatGraph%getCWMostVert(0,1)
-        IF(thatGraph%vertices(2,icw) > thatGraph%vertices(2,iccw)) THEN
-          inext=icw
-        ELSE
-          inext=iccw
-        ENDIF
+        inext=iccw
         inextold=1
         icurr=1
         xcent=0.0_SRK; ycent=0.0_SRK
@@ -250,11 +246,7 @@ MODULE Geom_Poly
           !Logic here is for when we have our next point directly above the starting point.
           iccw=thatGraph%getCCWMostVert(0,1)
           icw=thatGraph%getCWMostVert(0,1)
-          IF(thatGraph%vertices(2,icw) > thatGraph%vertices(2,iccw)) THEN
-            inext=icw
-          ELSE
-            inext=iccw
-          ENDIF
+          inext=iccw
           inextold=1
           icurr=1
           iquad=0
