@@ -80,6 +80,9 @@ MODULE Geom_CircCyl
       !> @copybrief Geom_CircCyl::inside_CircleType
       !> @copydetails Geom_CircCyl::inside_CircleType
       PROCEDURE,PASS :: inside => inside_CircleType
+      !> @copybrief Geom_CircCyl::onSurface_CircleType
+      !> @copydetails Geom_CircCyl::onSurface_CircleType
+      PROCEDURE,PASS :: onSurface => onSurface_CircleType
   ENDTYPE CircleType
 
   !> @brief Type for a cylinder
@@ -772,7 +775,7 @@ MODULE Geom_CircCyl
       x=point%coord(1)-circle%c%coord(1)
       y=point%coord(2)-circle%c%coord(2)
       dtheta=circle%thetastp-circle%thetastt
-      IF((x*x+y*y) <= circle%r*circle%r) THEN
+      IF((x*x+y*y) .APPROXLE. circle%r*circle%r) THEN
         IF(dtheta .APPROXLE. PI)THEN
           cosstt=COS(circle%thetastt)
           cosstp=COS(circle%thetastp)
@@ -792,6 +795,28 @@ MODULE Geom_CircCyl
         ENDIF
       ENDIF
     ENDFUNCTION inside_CircleType
+!
+!-------------------------------------------------------------------------------
+!> @brief Determines whether a point lies within a circle type.
+!> @param circle the circle type to test for intersection
+!> @param point the first to query
+    ELEMENTAL FUNCTION onSurface_CircleType(circle,point) RESULT(bool)
+      CLASS(CircleType),INTENT(IN) :: circle
+      TYPE(PointType),INTENT(IN) :: point
+      LOGICAL(SBK) :: bool
+      REAL(SRK) :: x,y,theta,theta_shift
+      bool=.FALSE.
+      x=point%coord(1)-circle%c%coord(1)
+      y=point%coord(2)-circle%c%coord(2)
+      IF((x*x+y*y) .APPROXEQA. circle%r*circle%r) THEN
+        theta=ATAN2PI(x,y)
+        theta_shift=0.0_SRK
+        IF(circle%thetastt > circle%thetastp) theta_shift=TWOPI
+        IF(y .APPROXGE. 0.0_SRK) theta=theta+theta_shift
+        bool=(circle%thetastt .APPROXLE. theta) .AND. &
+             (theta .APPROXLE. circle%thetastp+theta_shift)
+      ENDIF
+    ENDFUNCTION onSurface_CircleType
 !
 !-------------------------------------------------------------------------------
 !> @brief Defines the 'is equal to' operation between two circles e.g. @c 
