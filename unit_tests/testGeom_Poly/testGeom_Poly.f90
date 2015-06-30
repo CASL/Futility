@@ -665,7 +665,7 @@ PROGRAM testGeom_Poly
       INTEGER(SIK) :: i,inext
       REAL(SRK) :: testCoord(2,9),c0(2),r
       TYPE(PointType) :: point
-      TYPE(PolygonType),TARGET :: testPoly2
+      TYPE(PolygonType),TARGET :: testPoly2,testPoly3
       
       COMPONENT_TEST('Triangle')
       CALL testPolyType%clear()
@@ -968,6 +968,62 @@ PROGRAM testGeom_Poly
       CALL point%init(DIM=2,X=0.264_SRK,Y=0.0_SRK)
       ASSERT(testPolyType%pointInside(point),'circle')
       CALL testPolyType%clear()
+
+      COMPONENT_TEST('Sub-Sub-Region')
+      testCoord(:,1)=(/-0.8_SRK,-0.8_SRK/)
+      testCoord(:,2)=(/-0.8_SRK,0.8_SRK/)
+      testCoord(:,3)=(/0.8_SRK,0.8_SRK/)
+      testCoord(:,4)=(/0.8_SRK,-0.8_SRK/)
+      DO i=1,4
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
+      CALL testGraph%defineEdge(testCoord(:,2),testCoord(:,3))
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
+      CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,1))
+      CALL testPolyType%clear()
+      CALL testPolyType%set(testGraph)
+      CALL testGraph%clear()
+      testCoord(:,1)=(/-0.5_SRK,-0.5_SRK/)
+      testCoord(:,2)=(/-0.5_SRK,0.5_SRK/)
+      testCoord(:,3)=(/0.5_SRK,0.5_SRK/)
+      testCoord(:,4)=(/0.5_SRK,-0.5_SRK/)
+      DO i=1,4
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
+      CALL testGraph%defineEdge(testCoord(:,2),testCoord(:,3))
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
+      CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,1))
+      CALL testPoly2%clear()
+      CALL testPoly2%set(testGraph)
+      CALL testGraph%clear()
+      testCoord(:,1)=(/-0.3_SRK,-0.3_SRK/)
+      testCoord(:,2)=(/-0.3_SRK,0.3_SRK/)
+      testCoord(:,3)=(/0.3_SRK,0.3_SRK/)
+      testCoord(:,4)=(/0.3_SRK,-0.3_SRK/)
+      DO i=1,4
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
+      CALL testGraph%defineEdge(testCoord(:,2),testCoord(:,3))
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
+      CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,1))
+      CALL testPoly3%clear()
+      CALL testPoly3%set(testGraph)
+      CALL testGraph%clear()
+
+      testPolyType%subRegions => testPoly2
+      testPoly2%subRegions => testPoly3
+
+      CALL point%clear()
+      CALL point%init(COORD=(/-0.3_SRK,0.0_SRK/))
+      ASSERT(.NOT.testPolyType%pointInside(point),'on Sub-Sub-Region surface')
+      point%coord=(/-0.4_SRK,0.0_SRK/)
+      ASSERT(.NOT.testPolyType%pointInside(point),'in Sub-Region')
+      point%coord=(/-0.2_SRK,0.0_SRK/)
+      ASSERT(.NOT.testPolyType%pointInside(point),'in Sub-Sub-Region')
+
     ENDSUBROUTINE testPointInside
 !
 !-------------------------------------------------------------------------------
