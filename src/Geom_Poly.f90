@@ -410,7 +410,6 @@ MODULE Geom_Poly
       REAL(SRK) :: d
       TYPE(PointType) :: centroid
       TYPE(LineType) :: line
-      TYPE(PolygonType),POINTER :: iPoly
       
       IF(thisPoly%isinit .AND. point%dim == 2) THEN
         bool=.FALSE.
@@ -489,10 +488,10 @@ MODULE Geom_Poly
 !> polygon.  The processes by which this can be done are the ray tracing "count
 !> number" approach, or the winding number approach.  After researching the 
 !> problem, it was determined that the winding number provides the best solution
-!> in the case that the polygon is non-convex.  A paper was found by Hormann and 
-!> Agathos describing several approaches.  This routine applies the winding 
-!> number algorithm 6 from their paper:
-!> http://www.inf.usi.ch/hormann/papers/Hormann.2001.TPI.pdf
+!> in the case that the polygon is non-convex.  A paper was found by Alciatore
+!> and Miranda describing a simple axis-crossing method.  This routine applies
+!> the axis-crossing winding number from their paper:
+!> http://www.engr.colostate.edu/~dga/dga/papers/point_in_polygon.pdf
 !>
 !> @param thisPoly The polygon type used in the query
 !> @param point The point type to check if it lies inside the polygontype
@@ -504,81 +503,40 @@ MODULE Geom_Poly
       TYPE(PointType),INTENT(IN) :: point
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: isSub
       LOGICAL(SBK) :: bool
-      LOGICAL(SBK) :: lw,lcrossing,lright_crossing,inPoly
-      LOGICAL(SBK) :: inConvexCirc,inConcaveCirc,isSubReg
-      INTEGER(SIK) :: i,wn,istt,istp,iedge
-      REAL(SRK) :: det,r(2),pi(2),pnext(2) !,rad,w
+      LOGICAL(SBK) :: inConvexCirc,inConcaveCirc,isSubReg,inPoly
+      INTEGER(SIK) :: i,iedge
+      REAL(SRK) :: r,w,wm,pi(2),pnext(2)
       TYPE(PointType) :: centroid
       TYPE(LineType) :: line
       TYPE(CircleType) :: circ
-      CLASS(PolygonType),POINTER :: nPoly
 
       isSubReg=.FALSE.
       IF(PRESENT(isSub)) isSubReg=isSub
 
       bool=.FALSE.
       IF(thisPoly%nVert > 0 .AND. point%dim == 2) THEN
-        inPoly=(point%coord(1) .APPROXEQA. thisPoly%vert(1)%coord(1)) .AND. &
-          (point%coord(2) .APPROXEQA. thisPoly%vert(1)%coord(2))
-        IF(.NOT.inPoly) THEN
-          r=point%coord
-          wn=0
-          DO i=thisPoly%nVert,1,-1
-            pi=thisPoly%vert(thisPoly%edge(2,i))%coord
-            pnext=thisPoly%vert(thisPoly%edge(1,i))%coord
-            
-            !Check if next vertex is matched
-            IF(r(2) .APPROXEQA. pnext(2)) THEN
-              IF(r(1) .APPROXEQA. pnext(1)) THEN
-                wn=100 !Evaluates to true after loop (vertex)
-                EXIT
-              ELSE
-                !Is it on the edge?
-                IF((r(2) .APPROXEQA. pi(2)) .AND. &
-                  (pi(1) < r(1) .EQV. pnext(1) > r(1))) THEN
-                  wn=200 !Evaluates to true after loop (edge)
-                  EXIT
-                ENDIF
-              ENDIF
+        w=0.0_SRK
+        DO i=1,thisPoly%nVert
+          pi=thisPoly%vert(thisPoly%edge(1,i))%coord-point%coord
+          pnext=thisPoly%vert(thisPoly%edge(2,i))%coord-point%coord
+          IF(.NOT.(pi(2)*pnext(2) .APPROXGE. 0.0_SRK)) THEN
+            r=pi(1)+pi(2)*(pnext(1)-pi(1))/(pi(2)-pnext(2))
+            IF(.NOT.(r .APPROXLE. 0.0_SRK)) THEN !r > 0
+              wm=REAL(ABS(TRANSFER(.NOT.(pi(2) .APPROXGE. 0.0_SRK),1)),SRK)
+              w=w+2.0_SRK*wm-1.0_SRK
             ENDIF
-            !P_i(y) < R(y) /= P_i+1(y) < R(y)
-            lcrossing=(pi(2) .APPROXGE. r(2)) .NEQV. (pnext(2) .APPROXGE. r(2))
-            IF(lcrossing) THEN
-              IF(pi(1) .APPROXGE. r(1)) THEN !P_i(x) >= R(x)
-                IF(.NOT.(pnext(1) .APPROXLE. r(1))) THEN !P_i+1(x) > R(x)
-                  lw=.NOT.(pnext(2) .APPROXLE. pi(2))
-                  wn=wn+2*ABS(TRANSFER(lw,wn))-1
-                ELSE 
-                  !(P_i(x)-R(x))*(P_i+1(y)-R(y))-(P_i+1(x)-R(x))*(P_i(y)-R(y))
-                  det=(pi(1)-r(1))*(pnext(2)-r(2))-(pnext(1)-r(1))*(pi(2)-r(2))
-                  !det() > 0.0_SRK .EQV. P_i+1(y) > P_i(y), right_crossing
-                  lright_crossing=(det .APPROXLE. 0.0_SRK) .EQV. &
-                    (pnext(2) .APPROXLE. r(2))
-                  IF(lright_crossing) THEN
-                    !modify wn
-                    lw=.NOT.(pnext(2) .APPROXLE. pi(2))
-                    wn=wn+2*ABS(TRANSFER(lw,wn))-1
-                  ENDIF
-                ENDIF
-              ELSE
-                IF(.NOT.(pnext(1) .APPROXLE. r(1))) THEN !P_i+1(x) > R(x)
-                  !(P_i(x)-R(x))*(P_i+1(y)-R(y))-(P_i+1(x)-R(x))*(P_i(y)-R(y))
-                  det=(pi(1)-r(1))*(pnext(2)-r(2))-(pnext(1)-r(1))*(pi(2)-r(2))
-                  !det() > 0.0_SRK .EQV. P_i+1(y) > P_i(y), right_crossing
-                  lright_crossing=(det .APPROXLE. 0.0_SRK) .EQV. &
-                    (pnext(2) .APPROXLE. r(2))
-                  IF(lright_crossing) THEN
-                    !modify wn
-                    lw=.NOT.(pnext(2) .APPROXLE. pi(2))
-                    wn=wn+2*ABS(TRANSFER(lw,wn))-1
-                  ENDIF
-                ENDIF
-              ENDIF
-            ENDIF
-          ENDDO
-          inPoly=(wn /= 0)
-        ENDIF
-
+          ELSEIF((pi(2) .APPROXEQA. 0.0_SRK) .AND. &
+                 .NOT.(pi(1) .APPROXLE. 0.0_SRK)) THEN
+            wm=REAL(ABS(TRANSFER(.NOT.(pnext(2) .APPROXLE. 0.0_SRK),1)),SRK)
+            w=w+wm-0.5_SRK
+          ELSEIF((pnext(2) .APPROXEQA. 0.0_SRK) .AND. &
+                 .NOT.(pnext(1) .APPROXLE. 0.0_SRK)) THEN
+            wm=REAL(ABS(TRANSFER(.NOT.(pi(2) .APPROXGE. 0.0_SRK),1)),SRK)
+            w=w+wm-0.5_SRK
+          ENDIF
+        ENDDO
+        inPoly=.NOT.(w .APPROXEQA. 0.0_SRK)
+        
         !We need this statement until the winding algorithm can be fixed
         !for special edge cases.
         IF(.NOT.inPoly) inPoly=onSurface_PolygonType(thisPoly,point)
@@ -638,7 +596,7 @@ MODULE Geom_Poly
       CLASS(PolygonType),INTENT(IN) :: thisPoly
       TYPE(PolygonType),INTENT(IN) :: thatPoly
       LOGICAL(SBK) :: bool
-      INTEGER(SIK) :: i,j,k,ipoint,npoints
+      INTEGER(SIK) :: i,j,k,ipoint
       REAL(SRK) :: x,y
       TYPE(PointType),ALLOCATABLE :: tmppoints(:)
       TYPE(LineType),ALLOCATABLE :: theseLines(:),thoseLines(:)
@@ -811,7 +769,7 @@ MODULE Geom_Poly
       CLASS(PolygonType),INTENT(IN) :: thisPolygon
       TYPE(LineType),INTENT(IN) :: line
       LOGICAL(SBK) :: bool
-      INTEGER(SIK) :: i,j,ipoint,npoints
+      INTEGER(SIK) :: i,j,ipoint
       REAL(SRK) :: x,y
       TYPE(PointType),ALLOCATABLE :: tmppoints(:)
       TYPE(LineType),ALLOCATABLE :: lines(:)
@@ -1319,11 +1277,10 @@ MODULE Geom_Poly
     SUBROUTINE subtractSubVolume_PolygonType(thisPoly,subPoly)
       CLASS(PolygonType),INTENT(INOUT) :: thisPoly
       TYPE(PolygonType),TARGET,INTENT(INOUT) :: subPoly
-      LOGICAL(SBK) :: bool,trueInside,lintersect,lfirstsub
-      INTEGER(SIK) :: i,v1,v2
-      REAL(SRK) :: a(2),b(2),c(2),m(2),r,scal,cent(2),alp1,alp2,theta,area
-      TYPE(PointType) :: arcPoint
-      TYPE(PolygonType),POINTER :: lastSubPoly,iPoly,prevPoly,newSubReg,nextNewSubReg
+      LOGICAL(SBK) :: trueInside,lintersect
+      INTEGER(SIK) :: i
+      REAL(SRK) :: cent(2),area
+      TYPE(PolygonType),POINTER :: lastSubPoly,iPoly,prevPoly
       
       IF(thisPoly%isInit .AND. subPoly%isInit) THEN
         IF(thisPoly%boundsPoly(subPoly)) THEN

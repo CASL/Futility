@@ -536,7 +536,7 @@ PROGRAM testGeom_Poly
       INTEGER(SIK) :: i,inext
       REAL(SRK) :: testCoord(2,9),c0(2),r
       TYPE(PointType) :: point
-      TYPE(PolygonType) :: testPoly2,testPoly3,testPoly4
+      TYPE(PolygonType),TARGET :: testPoly2,testPoly3,testPoly4
       
       !Case 1, subtract itself
       !Setup test graph - quadralateral
@@ -580,9 +580,7 @@ PROGRAM testGeom_Poly
       
       !Triangle is fully inside quadralateral
       ASSERTFAIL(testPoly2%isinit,'%isinit')
-      CALL testPolyType%subtractSubVolume(testPoly2)
-      !Test valid subtractSubVolume
-      ASSERTFAIL(ASSOCIATED(testPolyType%subRegions),'%subRegions')
+      testPolyType%subregions => testPoly2
       
       !Outer surfaces
       CALL point%clear()
@@ -659,7 +657,6 @@ PROGRAM testGeom_Poly
       ASSERT(testPolyType%onSurface(testPolyType%subregions%vert(1)),'1st Inner Corner')
       ASSERT(testPolyType%onSurface(testPolyType%subregions%vert(2)),'2nd Inner Corner')
       ASSERT(testPolyType%onSurface(testPolyType%subregions%vert(3)),'3rd Inner Corner')
-      
     ENDSUBROUTINE testPointOnSurface
 !
 !-------------------------------------------------------------------------------
@@ -668,7 +665,7 @@ PROGRAM testGeom_Poly
       INTEGER(SIK) :: i,inext
       REAL(SRK) :: testCoord(2,9),c0(2),r
       TYPE(PointType) :: point
-      TYPE(PolygonType) :: testPoly2
+      TYPE(PolygonType),TARGET :: testPoly2
       
       COMPONENT_TEST('Triangle')
       CALL testPolyType%clear()
@@ -898,8 +895,7 @@ PROGRAM testGeom_Poly
         testCoord(:,1),c0,1.0_SRK)
       CALL testPoly2%set(testGraph)
       ASSERTFAIL(testPoly2%isinit,'%isinit')
-      CALL testPolyType%subtractSubVolume(testPoly2)
-      ASSERTFAIL(ASSOCIATED(testPolyType%subRegions),'%subRegions')
+      testPolyType%subRegions => testPoly2
       CALL point%clear()
       CALL point%init(DIM=2,X=-0.6_SRK,Y=0.6_SRK)
       ASSERT(.NOT.testPolyType%pointInside(point),'20:Inside subvolume poly (out)')
@@ -955,8 +951,10 @@ PROGRAM testGeom_Poly
       CALL testPolyType%set(testGraph)
       CALL point%init(DIM=2,X=-0.264_SRK,Y=0.0_SRK)
       ASSERT(testPolyType%pointInside(point),'circle')
-      CALL testPolyType%clear()
       CALL point%clear()
+      CALL point%init(DIM=2,X=0.264_SRK,Y=0.0_SRK)
+      ASSERT(testPolyType%pointInside(point),'circle')
+      CALL testPolyType%clear()
     ENDSUBROUTINE testPointInside
 !
 !-------------------------------------------------------------------------------
