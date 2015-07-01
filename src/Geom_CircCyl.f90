@@ -806,15 +806,18 @@ MODULE Geom_CircCyl
       LOGICAL(SBK) :: bool
       REAL(SRK) :: x,y,theta,theta_shift
       bool=.FALSE.
-      x=point%coord(1)-circle%c%coord(1)
-      y=point%coord(2)-circle%c%coord(2)
-      IF((x*x+y*y) .APPROXEQA. circle%r*circle%r) THEN
-        theta=ATAN2PI(x,y)
-        theta_shift=0.0_SRK
-        IF(circle%thetastt > circle%thetastp) theta_shift=TWOPI
-        IF(y .APPROXGE. 0.0_SRK) theta=theta+theta_shift
-        bool=(circle%thetastt .APPROXLE. theta) .AND. &
-             (theta .APPROXLE. circle%thetastp+theta_shift)
+      IF(point%dim == 2 .AND. circle%r > 0.0_SRK) THEN
+        x=point%coord(1)-circle%c%coord(1)
+        y=point%coord(2)-circle%c%coord(2)
+        IF((x*x+y*y) .APPROXEQA. circle%r*circle%r) THEN
+          theta=ATAN2PI(x,y)
+          theta_shift=0.0_SRK
+          IF(circle%thetastt > circle%thetastp) theta_shift=TWOPI
+          IF(y > 0.0_SRK .OR. ((y .APPROXEQA. 0.0_SRK) .AND. &
+            (x .APPROXGE. 0.0_SRK))) theta=theta+theta_shift
+          bool=(circle%thetastt .APPROXLE. theta) .AND. &
+               (theta .APPROXLE. circle%thetastp+theta_shift)
+        ENDIF
       ENDIF
     ENDFUNCTION onSurface_CircleType
 !
