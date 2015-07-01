@@ -235,7 +235,6 @@ MODULE Geom_Poly
         thisPoly%area=ABS(thisPoly%area*0.5_SRK)
         xcent=xcent/6.0_SRK
         ycent=ycent/6.0_SRK
-        
         !Setup the quadratic edges if necessary
         IF(thisPoly%nQuadEdge > 0) THEN
           CALL dmallocA(thisPoly%quadEdge,3,thisPoly%nQuadEdge)
@@ -292,11 +291,10 @@ MODULE Geom_Poly
                 (R1-h)*SQRT(2*R1*h-h*h))
               thisPoly%area=thisPoly%area+subarea
               !Get theta from law of cosines, Use it to compute x centroid.  y cent is 0.0_SRK
-              halftheta=0.5_SRK*ACOS((-a*a)/(2*R1*R1)+1.0_SRK)
+              halftheta=0.5_SRK*ACOS((-a*a)/(2.0_SRK*R1*R1)+1.0_SRK)
               sinhalftheta=SIN(halftheta)
               sectorcent=2.0_SRK/3.0_SRK*R1*R1*R1* &
-                sinhalftheta*sinhalftheta*sinhalftheta
-                
+                 sinhalftheta*sinhalftheta*sinhalftheta
               !Rotate the centroid from the reference frame of x,0 to the acutal geom.
               !When calculating the weighted means, we subtract because we're going CW instead of CCW
               xcent=xcent-coeff*(sectorcent*COS(halftheta+circle%thetastt))
@@ -305,6 +303,7 @@ MODULE Geom_Poly
               !Clear things
               CALL circle%clear()
               CALL line%clear()
+              CALL point%clear()
             ENDIF
           ENDDO
         ENDIF
