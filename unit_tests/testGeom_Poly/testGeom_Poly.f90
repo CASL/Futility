@@ -856,12 +856,8 @@ PROGRAM testGeom_Poly
       DO i=1,7
         CALL testGraph%insertVertex(testCoord(:,i))
       ENDDO
-      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
       CALL testGraph%defineEdge(testCoord(:,2),testCoord(:,3))
       CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
-      CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,5))
-      CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,6))
-      CALL testGraph%defineEdge(testCoord(:,6),testCoord(:,7))
       CALL testGraph%defineEdge(testCoord(:,7),testCoord(:,1))
       c0=(/0.0_SRK,1.0_SRK/)
       CALL testGraph%defineQuadraticEdge(testCoord(:,1), &
@@ -934,6 +930,12 @@ PROGRAM testGeom_Poly
       CALL point%clear()
       CALL point%init(DIM=2,X=0.0_SRK,Y=5.0_SRK)
       ASSERT(.NOT.testPolyType%pointInside(point),'19:Outside Poly and North QuadEdge (out)')
+      CALL point%clear()
+      CALL point%init(DIM=2,X=0.0_SRK,Y=-1.17157287525381_SRK)
+      ASSERT(testPolyType%pointInside(point),'20:On bottom QuadEdge (in)')
+      CALL point%clear()
+      CALL point%init(DIM=2,X=-3.23606797749979_SRK,Y=0.0_SRK)
+      ASSERT(testPolyType%pointInside(point),'21:On left QuadEdge (in)')
       CALL testGraph%clear()
 
       COMPONENT_TEST('Circular Hole')
