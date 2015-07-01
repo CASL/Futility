@@ -171,13 +171,13 @@ MODULE Geom_Poly
     SUBROUTINE set_PolygonType(thisPoly,thatGraph)
       CLASS(PolygonType),INTENT(INOUT) :: thisPoly
       TYPE(GraphType),INTENT(IN) :: thatGraph
-      
+      REAL(SRK),PARAMETER :: FOURTHIRD=4.0_SRK/3.0_SRK
       INTEGER(SIK) :: i,icw,iccw,icurr,inextold,inext,iedge,iquad
-      REAL(SRK) :: a,r,h,R1,coeff,subarea,xcent,ycent,halftheta,sinhalftheta,sectorcent
+      REAL(SRK) :: R1,coeff,subarea,xcent,ycent,theta,halftheta,sinhalftheta,tsint,rcent
       TYPE(PointType) :: point
       TYPE(LineType) :: line
       TYPE(CircleType) :: circle
-      
+
       !Check if thatGraph is closed (i.e. each vertex has only two neighbors)
       CALL clear_PolygonType(thisPoly)
       IF(ALLOCATED(thatGraph%vertices) .AND. thatGraph%isMinimumCycle()) THEN
@@ -228,7 +228,7 @@ MODULE Geom_Poly
         !When calculating the weighted means, we subtract because we're going CW instead of CCW
         xcent=xcent-subarea*(thisPoly%vert(thisPoly%nVert)%coord(1)+thisPoly%vert(1)%coord(1))
         ycent=ycent-subarea*(thisPoly%vert(thisPoly%nVert)%coord(2)+thisPoly%vert(1)%coord(2))
-        
+
         !Check if it's a quadratic edge to count
         IF(thatGraph%quadEdges(3,1,icurr) > 0.0_SRK) thisPoly%nQuadEdge=thisPoly%nQuadEdge+1
         !Last component of the area calc.
@@ -264,10 +264,9 @@ MODULE Geom_Poly
             thisPoly%quadEdge(:,iquad)=thatGraph%quadEdges(:,1,icurr)
             thisPoly%quad2edge(iquad)=thisPoly%nvert
           ENDIF
-            
+
           !Now do the chord area checks, because they're all positive values.
           DO i=1,thisPoly%nQuadEdge
-            coeff=1.0_SRK
             IF(thisPoly%quadEdge(3,i) > 0.0_SRK) THEN
               CALL createArcFromQuad(thisPoly,i,circle)
               CALL point%init(DIM=2,X=thisPoly%quadEdge(1,i), &
@@ -276,30 +275,31 @@ MODULE Geom_Poly
               iedge=thisPoly%quad2edge(i)
               CALL line%set(thisPoly%vert(thisPoly%edge(1,iedge)), &
                 thisPoly%vert(thisPoly%edge(2,iedge)))
-              !Modify area - taken from Wolfram's circular segment calculation.
+
               R1=thisPoly%quadEdge(3,i)
-              !Calculate "a"
-              a=distance(thisPoly%vert(thisPoly%edge(1,iedge)), &
-                thisPoly%vert(thisPoly%edge(2,iedge)))
-              !Calculate "r"
-              r=0.5_SRK*SQRT(4.0_SRK*R1*R1-a*a)
-              !Calculate "h"
-              h=R1-r
+
               !Calculate Chord Sector area (Arc area - triangle area)
+              coeff=1.0_SRK
               IF(line%pointIsLeft(point)) coeff=-1.0_SRK
-              subarea=coeff*(R1*R1*ACOS(1.0_SRK-h/R1)- &
-                (R1-h)*SQRT(2*R1*h-h*h))
+              theta=ABS(circle%thetastp-circle%thetastt)
+              IF(.NOT.(theta .APPROXLE. PI)) theta=theta-PI
+              tsint=theta-SIN(theta)
+              halftheta=0.5_SRK*theta
+              sinhalftheta=SIN(0.5_SRK*theta)
+
+              !Compute area of circular segment
+              subarea=coeff*R1*R1*0.5_SRK*tsint
+              !Compute radial position of centroid in circular segment
+              rcent=FOURTHIRD*R1*sinhalftheta*sinhalftheta*sinhalftheta/tsint
+
+              !Add to sum of area
               thisPoly%area=thisPoly%area+subarea
-              !Get theta from law of cosines, Use it to compute x centroid.  y cent is 0.0_SRK
-              halftheta=0.5_SRK*ACOS((-a*a)/(2.0_SRK*R1*R1)+1.0_SRK)
-              sinhalftheta=SIN(halftheta)
-              sectorcent=2.0_SRK/3.0_SRK*R1*R1*R1* &
-                 sinhalftheta*sinhalftheta*sinhalftheta
-              !Rotate the centroid from the reference frame of x,0 to the acutal geom.
-              !When calculating the weighted means, we subtract because we're going CW instead of CCW
-              xcent=xcent-coeff*(sectorcent*COS(halftheta+circle%thetastt))
-              ycent=ycent-coeff*(sectorcent*SIN(halftheta+circle%thetastt))
-              
+
+              !Add to centroid numerator (area waited centroids)
+              !convert radial centroid to x,y coordinates
+              xcent=xcent+subarea*(rcent*COS(halftheta+circle%thetastt)+circle%c%coord(1))
+              ycent=ycent+subarea*(rcent*SIN(halftheta+circle%thetastt)+circle%c%coord(2))
+
               !Clear things
               CALL circle%clear()
               CALL line%clear()

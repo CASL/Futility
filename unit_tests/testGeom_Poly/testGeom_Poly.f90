@@ -294,11 +294,9 @@ PROGRAM testGeom_Poly
       ENDDO
       CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
       CALL testGraph%defineEdge(testCoord(:,2),testCoord(:,3))
-      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
       CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,1))
       CALL testGraph%defineQuadraticEdge(testCoord(:,3), &
         testCoord(:,4),c0,SQRT(8.0_SRK))
-      
       CALL testPolyType%set(testGraph)
       ASSERT(testPolyType%isinit,'rectangle %isinit')
       bool=ALL(testPolyType%vert(1)%coord .APPROXEQA. testCoord(:,1))
@@ -317,13 +315,10 @@ PROGRAM testGeom_Poly
         (/4.0_SRK,0.0_SRK,SQRT(8.0_SRK)/))
       ASSERT(bool,'square-quad %quadEdge(:,1)')
       ASSERT(testPolyType%area .APPROXEQA. 16.0_SRK-2.28318530717959_SRK,'%area')
-      bool=(testPolyType%centroid%coord(1) .APPROXEQA. -0.388817189177665_SRK) .AND. &
+      bool=(testPolyType%centroid%coord(1) .APPROXEQA. -0.27698908095432_SRK) .AND. &
         (testPolyType%centroid%coord(2) .APPROXEQA. 0.0_SRK)
       ASSERT(bool,'%centroid')
       FINFO() testPolyType%centroid%coord
-      
-      CALL testGraph%clear()
-      CALL testPolyType%clear()
 
       CALL testGraph%clear()
       CALL testPolyType%clear()
@@ -332,17 +327,18 @@ PROGRAM testGeom_Poly
       testCoord(:,2)=(/-2.0_SRK,2.0_SRK/)
       testCoord(:,3)=(/2.0_SRK,2.0_SRK/)
       testCoord(:,4)=(/2.0_SRK,-2.0_SRK/)
-      c0=(/4.0_SRK,0.0_SRK/)
       DO i=1,4
         CALL testGraph%insertVertex(testCoord(:,i))
       ENDDO
+      c0=(/0.0_SRK,0.0_SRK/)
       CALL testGraph%defineQuadraticEdge(testCoord(:,1),testCoord(:,2), &
-         (/0.0_SRK,0.0_SRK/),SQRT(8.0_SRK))
+         c0,SQRT(8.0_SRK))
       CALL testGraph%defineEdge(testCoord(:,2),testCoord(:,3))
       CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,1))
+      c0=(/4.0_SRK,0.0_SRK/)
       CALL testGraph%defineQuadraticEdge(testCoord(:,3), &
         testCoord(:,4),c0,SQRT(8.0_SRK))
-      
+
       CALL testPolyType%set(testGraph)
       ASSERTFAIL(testPolyType%isinit,'rectangle %isinit')
       bool=ALL(testPolyType%vert(1)%coord .APPROXEQA. testCoord(:,1))
@@ -364,12 +360,13 @@ PROGRAM testGeom_Poly
         (/4.0_SRK,0.0_SRK,SQRT(8.0_SRK)/))
       ASSERT(bool,'square-2quad %quadEdge(:,2)')
       ASSERT(testPolyType%area .APPROXEQA. 16.0_SRK,'%area')
-!       bool=(testPolyType%centroid%coord(1) .APPROXEQA. -2.0_SRK*0.388817189177665_SRK) .AND. &
-!         (testPolyType%centroid%coord(2) .APPROXEQA. 0.0_SRK)
-!       ASSERT(bool,'%centroid')
-!       FINFO() testPolyType%centroid%coord
+       bool=(testPolyType%centroid%coord(1) .APPROXEQA. -0.5707963267949_SRK) .AND. &
+         (testPolyType%centroid%coord(2) .APPROXEQA. 0.0_SRK)
+       ASSERT(bool,'%centroid')
+       FINFO() testPolyType%centroid%coord
 
-
+      CALL testGraph%clear()
+      CALL testPolyType%clear()
     ENDSUBROUTINE testSet
 !
 !-------------------------------------------------------------------------------
