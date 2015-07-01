@@ -643,8 +643,16 @@ MODULE Geom_Poly
           DO j=1,thatPoly%nVert
             IF((theseLines(i)%p1%dim == 2) .AND. (thoseLines(j)%p1%dim == 2)) THEN
               tmppoints(ipoint)=theseLines(i)%intersect(thoseLines(j))
-              !Found an intersection!  Polygon is outside!
               IF(tmppoints(ipoint)%dim > 0) THEN
+                !Clear the point if it happens to be one of the segment endpoints
+                IF((tmpPoints(ipoint) .APPROXEQA. theseLines(i)%p1) .OR. &
+                   (tmpPoints(ipoint) .APPROXEQA. theseLines(i)%p2) .OR. &
+                   (tmpPoints(ipoint) .APPROXEQA. thoseLines(j)%p1) .OR. &
+                   (tmpPoints(ipoint) .APPROXEQA. thoseLines(j)%p2)) &
+                  CALL tmpPoints(ipoint)%clear()
+              ENDIF
+              IF(tmppoints(ipoint)%dim > 0) THEN
+                !Found an intersection! Polygon is outside!
                 bool=.FALSE.
                 EXIT Line
               ENDIF
@@ -685,10 +693,13 @@ MODULE Geom_Poly
               !Check if the points are on the circle
               DO k=0,3
                 IF(tmppoints(ipoint+k)%DIM == 2) THEN
-                  !If it's not on the circle, clear it.
+                  !If it's not on the circle, clear it. OR
+                  !If it is an end-point of thoseLines, clear it
                   x=tmppoints(ipoint+k)%coord(1)-theseCircs(i)%c%coord(1)
                   y=tmppoints(ipoint+k)%coord(2)-theseCircs(i)%c%coord(2)
-                  IF(.NOT.(x*x+y*y .APPROXEQA. theseCircs(i)%r*theseCircs(i)%r)) &
+                  IF(.NOT.(x*x+y*y .APPROXEQA. theseCircs(i)%r*theseCircs(i)%r) .OR. &
+                     (tmpPoints(ipoint+k) .APPROXEQA. thoseLines(j)%p1) .OR. &
+                     (tmpPoints(ipoint+k) .APPROXEQA. thoseLines(j)%p2)) &
                     CALL tmppoints(ipoint+k)%clear()
                 ENDIF
                 !Found an intersection!  Polygon is outside!
