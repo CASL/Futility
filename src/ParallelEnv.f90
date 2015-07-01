@@ -209,6 +209,12 @@ MODULE ParallelEnv
       !> @copydetails  ParallelEnv::allReduceMinI_MPI_Env_type
       PROCEDURE,PASS :: allReduceMinI => allReduceMinI_MPI_Env_type
       !GENERIC :: allReduceMin => allReduceMinR_MPI_Env_type,allReduceMinI_MPI_Env_type
+      !> @copybrief ParallelEnv::reduceMaxLoc_MPI_Env_type
+      !> @copydetails  ParallelEnv::reduceMaxLoc_MPI_Env_type
+      PROCEDURE,PASS :: reduceMaxLoc => reduceMaxLocR_MPI_Env_type
+      !> @copybrief ParallelEnv::reduceMinLoc_MPI_Env_type
+      !> @copydetails  ParallelEnv::reduceMinLoc_MPI_Env_type
+      PROCEDURE,PASS :: reduceMinLoc => reduceMinLocR_MPI_Env_type
       !> @copybrief ParallelEnv::trueForAll_MPI_Env_type
       !> @copydetails  ParallelEnv::trueForAll_MPI_Env_type
       PROCEDURE,PASS :: trueForAll => trueForAll_MPI_Env_type
@@ -965,6 +971,96 @@ MODULE ParallelEnv
       ENDIF
 #endif
     ENDSUBROUTINE allReduceMinR_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine calls MPI_reduce and performs a maxloc operation
+!> for a real array.
+!> @param myPE the MPI parallel environment
+!> @param n the number of data elements to communicate
+!> @param x the partial array to be returned as the max array
+!> @param i the partial array of indices to be returned
+!> @param root the process on which to store the reduction
+!>
+!> This routine only performs a maxloc operation and only for reals.
+!>
+    SUBROUTINE reduceMaxLocR_MPI_Env_type(myPE,n,x,i,root)
+      CHARACTER(LEN=*),PARAMETER :: myName='reduceMaxLocR_MPI_Env_type'
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
+      INTEGER(SIK),INTENT(IN) :: n
+      REAL(SRK),INTENT(INOUT) :: x(*)
+      INTEGER(SLK),INTENT(INOUT) :: i(*)
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: root
+#ifdef HAVE_MPI
+      REAL(SRK) :: sbuf(2,n)
+      REAL(SRK) :: rbuf(2,n)
+      INTEGER(SIK) :: rank
+      IF(myPE%initstat) THEN
+        sbuf(1,:)=x(1:n)
+        sbuf(2,:)=i(1:n)
+        rank=0
+        IF(PRESENT(root)) rank=root
+#ifdef DBL
+        CALL MPI_Allreduce(sbuf,rbuf,n,MPI_2DOUBLE_PRECISION,MPI_MAXLOC, &
+          rank,mpierr)
+#else
+        CALL MPI_Allreduce(sbus,rbuf,n,MPI_2REAL,MPI_MAXLOC,rank,mpierr)
+#endif
+        IF(mpierr /= MPI_SUCCESS) THEN
+          CALL eParEnv%raiseError(modName//'::'// &
+            myName//' - call to MPI_AllreduceMax returned an error!')
+        ELSE
+          !Copy the result to the output argument
+          x(1:n)=rbuf(1,:)
+          i(1:n)=rbuf(2,:)
+        ENDIF
+      ENDIF
+#endif
+    ENDSUBROUTINE reduceMaxLocR_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine calls MPI_reduce and performs a minloc operation
+!> for a real array.
+!> @param myPE the MPI parallel environment
+!> @param n the number of data elements to communicate
+!> @param x the partial array to be returned as the min array
+!> @param i the partial array of indices to be returned
+!> @param root the process on which to store the reduction
+!>
+!> This routine only performs a min operation and only for reals.
+!>
+    SUBROUTINE reduceMinLocR_MPI_Env_type(myPE,n,x,i,root)
+      CHARACTER(LEN=*),PARAMETER :: myName='reduceMinLocR_MPI_Env_type'
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
+      INTEGER(SIK),INTENT(IN) :: n
+      REAL(SRK),INTENT(INOUT) :: x(*)
+      INTEGER(SLK),INTENT(INOUT) :: i(*)
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: root
+#ifdef HAVE_MPI
+      REAL(SRK) :: sbuf(2,n)
+      REAL(SRK) :: rbuf(2,n)
+      INTEGER(SIK) :: rank
+      IF(myPE%initstat) THEN
+        sbuf(1,:)=x(1:n)
+        sbuf(2,:)=i(1:n)
+        rank=0
+        IF(PRESENT(root)) rank=root
+#ifdef DBL
+        CALL MPI_Allreduce(sbuf,rbuf,n,MPI_2DOUBLE_PRECISION,MPI_MINLOC, &
+          rank,mpierr)
+#else
+        CALL MPI_Allreduce(sbus,rbuf,n,MPI_2REAL,MPI_MINLOC,rank,mpierr)
+#endif
+        IF(mpierr /= MPI_SUCCESS) THEN
+          CALL eParEnv%raiseError(modName//'::'// &
+            myName//' - call to MPI_AllreduceMin returned an error!')
+        ELSE
+          !Copy the result to the output argument
+          x(1:n)=rbuf(1,:)
+          i(1:n)=rbuf(2,:)
+        ENDIF
+      ENDIF
+#endif
+    ENDSUBROUTINE reduceMinLocR_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
 !> @brief Wrapper routine calls MPI_Allreduce and performs a sum of operation
