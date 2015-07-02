@@ -1001,9 +1001,9 @@ MODULE ParallelEnv
         IF(PRESENT(root)) rank=root
 #ifdef DBL
         CALL MPI_Allreduce(sbuf,rbuf,n,MPI_2DOUBLE_PRECISION,MPI_MAXLOC, &
-          rank,mpierr)
+          myPE%comm,mpierr)
 #else
-        CALL MPI_Allreduce(sbus,rbuf,n,MPI_2REAL,MPI_MAXLOC,rank,mpierr)
+        CALL MPI_Allreduce(sbuf,rbuf,n,MPI_2REAL,MPI_MAXLOC,myPE%comm,mpierr)
 #endif
         IF(mpierr /= MPI_SUCCESS) THEN
           CALL eParEnv%raiseError(modName//'::'// &
@@ -1046,9 +1046,9 @@ MODULE ParallelEnv
         IF(PRESENT(root)) rank=root
 #ifdef DBL
         CALL MPI_Allreduce(sbuf,rbuf,n,MPI_2DOUBLE_PRECISION,MPI_MINLOC, &
-          rank,mpierr)
+          myPE%comm,mpierr)
 #else
-        CALL MPI_Allreduce(sbus,rbuf,n,MPI_2REAL,MPI_MINLOC,rank,mpierr)
+        CALL MPI_Allreduce(sbuf,rbuf,n,MPI_2REAL,MPI_MINLOC,myPE%comm,mpierr)
 #endif
         IF(mpierr /= MPI_SUCCESS) THEN
           CALL eParEnv%raiseError(modName//'::'// &
