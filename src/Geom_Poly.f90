@@ -584,7 +584,7 @@ MODULE Geom_Poly
 !> @param thatPoly The polygon type to check if it lies inside the polygontype
 !> @param bool The logical result of this operation.  TRUE if the point is inside.
 !>
-    PURE FUNCTION polygon_inside_PolygonType(thisPoly,thatPoly) RESULT(bool)
+    FUNCTION polygon_inside_PolygonType(thisPoly,thatPoly) RESULT(bool)
       CLASS(PolygonType),INTENT(IN) :: thisPoly
       TYPE(PolygonType),INTENT(IN) :: thatPoly
       LOGICAL(SBK) :: bool
@@ -593,6 +593,7 @@ MODULE Geom_Poly
       TYPE(PointType),ALLOCATABLE :: tmppoints(:)
       TYPE(LineType),ALLOCATABLE :: theseLines(:),thoseLines(:)
       TYPE(CircleType),ALLOCATABLE :: theseCircs(:),thoseCircs(:)
+      TYPE(PolygonType),POINTER :: subPoly
       
       bool=.FALSE.
       IF(thisPoly%isinit .AND. thatPoly%isinit) THEN
@@ -633,7 +634,6 @@ MODULE Geom_Poly
         DO i=1,thatPoly%nQuadEdge
           CALL createArcFromQuad(thatPoly,i,thoseCircs(i))
         ENDDO
-        
         !Nested do-loops for intersecting all lines with lines
         ipoint=1
         !TheseLines
@@ -722,9 +722,22 @@ MODULE Geom_Poly
             ENDDO
           ENDDO Quad
         ENDIF
+
+        IF(bool) THEN
+          subPoly => thisPoly%subRegions
+          DO WHILE(ASSOCIATED(subPoly))
+            IF(subPoly%doesPolyIntersect(thatPoly)) THEN
+              bool=.FALSE.
+              EXIT
+            ENDIF
+            subPoly => subPoly%nextPoly
+          ENDDO
+          subPoly => NULL()
+        ENDIF
         
         !Check if thatPoly's centroid is inside thisPoly
-        IF(bool .AND. .NOT. thisPoly%pointInside(thatPoly%centroid)) bool=.FALSE.
+        IF(bool .AND. (.NOT. thisPoly%pointInside(thatPoly%centroid) .AND. & 
+           thatPoly%pointInside(thatPoly%centroid))) bool=.FALSE.
 
         !Clear the first set of lines
         DO i=1,thisPoly%nVert
@@ -891,7 +904,6 @@ MODULE Geom_Poly
       TYPE(CircleType),ALLOCATABLE :: theseCircs(:),thoseCircs(:)
       
       bool=.FALSE.
-      
       IF(thisPoly%isinit .AND. thatPoly%isinit) THEN
         !Set up all the lines for both polygons
         ALLOCATE(theseLines(thisPoly%nVert))
@@ -956,6 +968,7 @@ MODULE Geom_Poly
             ENDDO
           ENDDO
         ENDDO Line
+        
         !All circles with the other circles  (May need to improve this intersection routine for arcs...
         !TheseCircs
         IF(.NOT. bool) THEN
