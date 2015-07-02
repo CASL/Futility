@@ -903,11 +903,12 @@ MODULE Geom_Graph
         nAdj=nAdjacent_graphType(thisGraph,vCurr)
         DO WHILE(nAdj == 2)
           IF(getAdjacentVert_graphType(thisGraph,vCurr,1) /= vNext) THEN
+            vNext=vCurr
             vCurr=getAdjacentVert_graphType(thisGraph,vCurr,1)
           ELSE
+            vNext=vCurr
             vCurr=getAdjacentVert_graphType(thisGraph,vCurr,2)
           ENDIF
-          vNext=vCurr
           nAdj=nAdjacent_graphType(thisGraph,vCurr)
         ENDDO
         CALL removeFilament_vertIdx_graphType(thisGraph,vCurr,vNext)
