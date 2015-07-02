@@ -722,8 +722,10 @@ MODULE Geom_Poly
             ENDDO
           ENDDO Quad
         ENDIF
-        !Check subregions to make sure the polygon does not intersect them (totally outside)
-        !IF(bool
+        
+        !Check if thatPoly's centroid is inside thisPoly
+        IF(bool .AND. .NOT. thisPoly%pointInside(thatPoly%centroid)) bool=.FALSE.
+
         !Clear the first set of lines
         DO i=1,thisPoly%nVert
           CALL theseLines(i)%clear()
