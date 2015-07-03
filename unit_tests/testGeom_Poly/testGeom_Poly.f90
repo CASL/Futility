@@ -42,16 +42,16 @@ PROGRAM testGeom_Poly
   REGISTER_SUBTEST('Test Uninitialized',testUninit)
   REGISTER_SUBTEST('Test Clear',testClear)
   REGISTER_SUBTEST('Test Set',testSet)
+  REGISTER_SUBTEST('Test Polygonize',testPolygonize)
+  REGISTER_SUBTEST('Test GenerateGraph',testGenerateGraph)
+  REGISTER_SUBTEST('Test IntersectLine',testIntersectLine)
   REGISTER_SUBTEST('Test Point onSurface',testPointOnSurface)
   REGISTER_SUBTEST('Test Point Inside',testPointInside)
   REGISTER_SUBTEST('Test Poly Inside',testPolyInside)
   REGISTER_SUBTEST('Test Subtract Sub-Volume',testSubtractSubVol)
   REGISTER_SUBTEST('Test DoesLineIntersect',testDoesLineIntersect)
   REGISTER_SUBTEST('Test DoesPolyIntersect',testDoesPolyIntersect)
-  REGISTER_SUBTEST('Test IntersectLine',testIntersectLine)
   !REGISTER_SUBTEST('Test IntersectPoly',testIntersectPoly)
-  REGISTER_SUBTEST('Test Polygonize',testPolygonize)
-  REGISTER_SUBTEST('Test GenerateGraph',testGenerateGraph)
 
   FINALIZE_TEST()
 !
@@ -1709,6 +1709,9 @@ PROGRAM testGeom_Poly
       ASSERT(testPolyType%doesPolyIntersect(testPoly2),'vertices on edge')
       ASSERT(testPoly2%doesPolyIntersect(testPolyType),'reverse vertices on edge')
 
+      CALL testGraph%clear()
+      CALL testPolyType%clear()
+      CALL testPoly2%clear()
     ENDSUBROUTINE testDoesPolyIntersect
 !
 !-------------------------------------------------------------------------------
@@ -1719,7 +1722,7 @@ PROGRAM testGeom_Poly
       TYPE(PointType),ALLOCATABLE :: points(:)
       TYPE(LineType) :: line
 
-!Setup test graph - isosceles triangle
+      COMPONENT_TEST('Iso. Triangle')
       testCoord(:,1)=(/-1.0_SRK,-1.0_SRK/)
       testCoord(:,2)=(/1.0_SRK,-1.0_SRK/)
       testCoord(:,3)=(/0.0_SRK,2.0_SRK/)
@@ -1736,7 +1739,8 @@ PROGRAM testGeom_Poly
       CALL point2%init(DIM=2,X=1.0_SRK,Y=0.0_SRK)
       CALL line%set(point1,point2)
       CALL testPolyType%intersectLine(line,points)
-      ASSERTFAIL(SIZE(points) == 2,'npoints for crossing whole geom')
+      ASSERTFAIL(ALLOCATED(points),'alloc(points)')
+      ASSERT(SIZE(points) == 2,'SIZE()')
       bool=(points(1)%coord(1) .APPROXEQA. -0.6666666666666667_SRK) .AND. &
         (points(1)%coord(2) .APPROXEQA. 0.0_SRK)
       ASSERT(bool,'point 1 intersection')
@@ -1744,52 +1748,92 @@ PROGRAM testGeom_Poly
         (points(2)%coord(2) .APPROXEQA. 0.0_SRK)
       ASSERT(bool,'point 2 intersection')
 
-      CALL point1%clear()
-      CALL point2%clear()
-      CALL line%clear()
-      CALL point1%init(DIM=2,X=-1.0_SRK,Y=3.0_SRK)
-      CALL point2%init(DIM=2,X=1.0_SRK,Y=3.0_SRK)
-      CALL line%set(point1,point2)
+      line%p1%coord=(/-1.0_SRK,3.0_SRK/)
+      line%p2%coord=(/1.0_SRK,3.0_SRK/)
       CALL testPolyType%intersectLine(line,points)
       ASSERT(.NOT.ALLOCATED(points),'npoints for miss case')
 
-      CALL point1%clear()
-      CALL point2%clear()
-      CALL line%clear()
-      CALL point1%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
-      CALL point2%init(DIM=2,X=1.0_SRK,Y=0.0_SRK)
-      CALL line%set(point1,point2)
+      line%p1%coord=(/0.0_SRK,0.0_SRK/)
+      line%p2%coord=(/1.0_SRK,0.0_SRK/)
       CALL testPolyType%intersectLine(line,points)
       ASSERTFAIL(SIZE(points) == 1,'npoints for one side crossing')
       bool=(points(1)%coord(1) .APPROXEQA. 0.66666666666666667_SRK) .AND. &
         (points(1)%coord(2) .APPROXEQA. 0.0_SRK)
       ASSERT(bool,'point 1 intersection')
 
-      CALL point1%clear()
-      CALL point2%clear()
-      CALL line%clear()
-      CALL point1%init(DIM=2,X=-1.0_SRK,Y=-1.0_SRK)
-      CALL point2%init(DIM=2,X=1.0_SRK,Y=0.0_SRK)
-      CALL line%set(point1,point2)
+      line%p1%coord=(/-1.0_SRK,2.0_SRK/)
+      line%p2%coord=(/1.0_SRK,2.0_SRK/)
       CALL testPolyType%intersectLine(line,points)
-      ASSERTFAIL(SIZE(points) == 2,'npoints for vertex end point')
-      bool=(points(1)%coord(1) .APPROXEQA. -1.0_SRK) .AND. &
-        (points(1)%coord(2) .APPROXEQA. -1.0_SRK)
-      ASSERT(bool,'point 1 intersection')
-
-      CALL point1%clear()
-      CALL point2%clear()
-      CALL line%clear()
-      CALL point1%init(DIM=2,X=0.0_SRK,Y=3.0_SRK)
-      CALL point2%init(DIM=2,X=0.0_SRK,Y=-2.0_SRK)
-      CALL line%set(point1,point2)
-      CALL testPolyType%intersectLine(line,points)
-      ASSERTFAIL(SIZE(points) == 2,'npoints for through vertex')
+      ASSERTFAIL(ALLOCATED(points),'1 p through vertex')
+      ASSERT(SIZE(points) == 1,'npoints for through vertex')
       bool=(points(1)%coord(1) .APPROXEQA. 0.0_SRK) .AND. &
         (points(1)%coord(2) .APPROXEQA. 2.0_SRK)
       ASSERT(bool,'point 1 intersection')
 
-!Setup test graph - quadralateral with quadratic edge
+      line%p1%coord=(/-1.0_SRK,-1.0_SRK/)
+      line%p2%coord=(/0.66666666666666667_SRK,0.0_SRK/)
+      CALL testPolyType%intersectLine(line,points)
+      ASSERTFAIL(ALLOCATED(points),'2 p through vertex/edge')
+      ASSERT(SIZE(points) == 2,'npoints for through vertex/edge')
+      bool=(points(1)%coord(1) .APPROXEQA. -1.0_SRK) .AND. &
+        (points(1)%coord(2) .APPROXEQA. -1.0_SRK)
+      ASSERT(bool,'point 1 intersection v/e')
+      bool=(points(2)%coord(1) .APPROXEQA. 0.66666666666666667_SRK) .AND. &
+        (points(2)%coord(2) .APPROXEQA. 0.0_SRK)
+      ASSERT(bool,'point 2 intersection v/e')
+      
+      line%p1%coord=(/-1.0_SRK,-1.0_SRK/)
+      line%p2%coord=(/0.0_SRK,-1.0_SRK/)
+      CALL testPolyType%intersectLine(line,points)
+      ASSERTFAIL(.NOT.ALLOCATED(points),'npoints for coincident edge')
+
+      COMPONENT_TEST('Circle')
+      CALL testGraph%clear()
+      CALL testPolyType%clear()
+      testCoord(:,1)=(/-1.0_SRK,0.0_SRK/)
+      testCoord(:,2)=(/0.0_SRK,1.0_SRK/)
+      testCoord(:,3)=(/1.0_SRK,0.0_SRK/)
+      testCoord(:,4)=(/0.0_SRK,-1.0_SRK/)
+      DO i=1,4
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      c0=(/0.0_SRK,0.0_SRK/)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,1),testCoord(:,2),c0,1.0_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,2),testCoord(:,3),c0,1.0_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,3),testCoord(:,4),c0,1.0_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,4),testCoord(:,1),c0,1.0_SRK)
+      CALL testPolyType%set(testGraph)
+      line%p1%coord=(/-2.0_SRK,0.0_SRK/)
+      line%p2%coord=(/2.0_SRK,0.0_SRK/)
+      CALL testPolyType%intersectLine(line,points)
+      ASSERTFAIL(ALLOCATED(points),'alloc(points)')
+      ASSERT(SIZE(points) == 2,'size(points)')
+      ASSERT(ALL(points(1)%coord .APPROXEQ. (/-1.0_SRK,0.0_SRK/)),'(-1,0)')
+      ASSERT(ALL(points(2)%coord .APPROXEQ. (/1.0_SRK,0.0_SRK/)),'(1,0)')
+      line%p1%coord=(/-2.0_SRK,-2.0_SRK/)
+      line%p2%coord=(/2.0_SRK,2.0_SRK/)
+      CALL testPolyType%intersectLine(line,points)
+      ASSERTFAIL(ALLOCATED(points),'alloc(points)')
+      ASSERT(SIZE(points) == 2,'size(points)')
+      bool=ALL(points(2)%coord .APPROXEQ. (/-SQRT(0.5_SRK),-SQRT(0.5_SRK)/))
+      ASSERT(bool,'(-SQRT(0.5),-SQRT(0.5))')
+      bool=ALL(points(1)%coord .APPROXEQ. (/SQRT(0.5_SRK),SQRT(0.5_SRK)/))
+      ASSERT(bool,'(SQRT(0.5),SQRT(0.5))')
+      line%p1%coord=(/-1.0_SRK,-2.0_SRK/)
+      line%p2%coord=(/-1.0_SRK,2.0_SRK/)
+      CALL testPolyType%intersectLine(line,points)
+      ASSERTFAIL(ALLOCATED(points),'alloc(points)')
+      ASSERT(SIZE(points) == 1,'size(points)')
+      ASSERT(ALL(points(1)%coord .APPROXEQ. (/-1.0_SRK,0.0_SRK/)),'(-1,0) tangent')
+      line%p1%coord=(/-1.0_SRK,0.0_SRK/)
+      line%p2%coord=(/0.0_SRK,-1.0_SRK/)
+      CALL testPolyType%intersectLine(line,points)
+      ASSERTFAIL(ALLOCATED(points),'alloc(points)')
+      ASSERT(SIZE(points) == 2,'size(points)')
+      ASSERT(ALL(points(1)%coord .APPROXEQ. (/-1.0_SRK,0.0_SRK/)),'(-1,0)')
+      ASSERT(ALL(points(2)%coord .APPROXEQ. (/0.0_SRK,-1.0_SRK/)),'(0,-1)')
+
+      COMPONENT_TEST('Quad')
       CALL testGraph%clear()
       CALL testPolyType%clear()
       testCoord(:,1)=(/-2.0_SRK,-2.0_SRK/)
@@ -2119,6 +2163,8 @@ PROGRAM testGeom_Poly
       
       CALL testPolyType%generateGraph(testGraph2)
       ASSERT(testGraph == testGraph2,'Graph with sub-region is equal')
+      CALL testGraph%clear()
+      CALL testPolyType%clear()
     ENDSUBROUTINE testGenerateGraph
 !
 ENDPROGRAM testGeom_Poly

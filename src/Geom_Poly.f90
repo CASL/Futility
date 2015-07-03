@@ -1037,8 +1037,8 @@ MODULE Geom_Poly
       CLASS(PolygonType),INTENT(IN) :: thisPolygon
       TYPE(LineType),INTENT(IN) :: line
       TYPE(PointType),ALLOCATABLE,INTENT(INOUT) :: points(:)
-      INTEGER(SIK) :: i,j,ipoint,npoints
-      REAL(SRK) :: x,y
+      INTEGER(SIK) :: i,j,ipoint,npoints,nlines,narcs,maxpoints
+      TYPE(PointType) :: p1,p2
       TYPE(PointType),ALLOCATABLE :: tmppoints(:)
       TYPE(LineType),ALLOCATABLE :: lines(:)
       TYPE(CircleType),ALLOCATABLE :: circles(:)
@@ -1051,90 +1051,125 @@ MODULE Geom_Poly
         DEALLOCATE(points)
       ENDIF
       
-      !Construct line and circle types locally
-      ALLOCATE(lines(thisPolygon%nVert))
-      IF(thisPolygon%nQuadEdge > 0) ALLOCATE(circles(thisPolygon%nQuadEdge))
-      
-      DO i=1,thisPolygon%nVert
-        CALL lines(i)%set(thisPolygon%vert(thisPolygon%edge(1,i)), &
-          thisPolygon%vert(thisPolygon%edge(2,i)))
-      ENDDO
-      DO i=1,thisPolygon%nQuadEdge
-        CALL createArcFromQuad(thisPolygon,i,circles(i))
-      ENDDO
-      !Make tmppoints the max possible size
-      ALLOCATE(tmppoints(thisPolygon%nVert+3*thisPolygon%nQuadEdge))
-      
-      !Test the line with all the edges, 
-      !Intersect circles first if necessary
-      ipoint=1
-      DO i=1,thisPolygon%nQuadEdge
-        CALL circles(i)%intersectArcLine(line,tmppoints(ipoint), &
-          tmppoints(ipoint+1),tmppoints(ipoint+2),tmppoints(ipoint+3))
-        !Check if the points are on the circle
-        DO j=0,3
-          IF(tmppoints(ipoint+j)%DIM == 2) THEN
-            !If it's not on the circle, clear it.
-            x=tmppoints(ipoint+j)%coord(1)-circles(i)%c%coord(1)
-            y=tmppoints(ipoint+j)%coord(2)-circles(i)%c%coord(2)
-            IF(.NOT.(x*x+y*y .APPROXEQA. circles(i)%r*circles(i)%r)) &
-              CALL tmppoints(ipoint+j)%clear()
-          ENDIF
+      !Determine local array sizes
+      nlines=thisPolygon%nVert-thisPolygon%nQuadEdge
+      narcs=thisPolygon%nQuadEdge
+      maxPoints=nlines+2*narcs
+
+      IF(maxPoints > 0) THEN
+        ALLOCATE(tmppoints(maxPoints))
+
+        !Setup lines and circles
+        IF(nlines > 0) ALLOCATE(lines(nlines))
+        IF(narcs > 0) THEN
+          ALLOCATE(circles(narcs))
+          j=0
+          DO i=1,thisPolygon%nVert
+            IF(.NOT.ANY(thisPolygon%quad2edge == i)) THEN
+              j=j+1
+              CALL lines(j)%set(thisPolygon%vert(thisPolygon%edge(1,i)), &
+                thisPolygon%vert(thisPolygon%edge(2,i)))
+            ENDIF
+          ENDDO
+        ELSE
+          DO i=1,thisPolygon%nVert
+            CALL lines(i)%set(thisPolygon%vert(thisPolygon%edge(1,i)), &
+              thisPolygon%vert(thisPolygon%edge(2,i)))
+          ENDDO
+        ENDIF
+        DO i=1,narcs
+          CALL createArcFromQuad(thisPolygon,i,circles(i))
         ENDDO
-        ipoint=ipoint+4
-      ENDDO
+
+        !Test against lines
+        npoints=0
+        IF(nlines > 0) THEN
+          DO i=1,nlines
+            p1=lines(i)%intersectLine(line)
+            IF(p1%dim == 2) THEN
+              npoints=npoints+1
+              tmpPoints(npoints)=p1
+            ELSEIF(p1%dim == -2) THEN
+              !Line overlaps edge of polygon, record 0 points
+              npoints=0
+              narcs=0 !Do not test arcs either
+              EXIT
+            ENDIF
+            CALL p1%clear()
+          ENDDO
+        ENDIF
       
-      !Intersect the remaining lines if necessary
-      IF(thisPolygon%nQuadEdge > 0) THEN
-        DO i=1,SIZE(lines)
-          !Intersect the line
-          IF(ALL(i /= thisPolygon%quad2edge)) THEN 
-            tmppoints(ipoint)=lines(i)%intersectLine(line)
-            ipoint=ipoint+1
-          ENDIF
-        ENDDO
-      ELSE
-        DO i=1,SIZE(lines)
-          tmppoints(ipoint)=lines(i)%intersectLine(line)
-          ipoint=ipoint+1
-        ENDDO
-      ENDIF
+        !Test against arcs
+        IF(narcs > 0) THEN
+          DO i=1,narcs
+            CALL circles(i)%intersectLine(line,p1,p2)
+            IF(p1%dim == -3) p1%dim=2 !Include tangent points
+            
+            !If line segment end points are on circle, intersections
+            !are not returned, so we handle that special case here.
+            IF(p1%dim == 0 .AND. circles(i)%onSurface(line%p1)) &
+              p1=line%p1
+            IF(p2%dim == 0 .AND. circles(i)%onSurface(line%p2)) &
+              p2=line%p2
+
+            !Exclude points not in the arc
+            IF(.NOT.circles(i)%onSurface(p1)) CALL p1%clear()
+            IF(.NOT.circles(i)%onSurface(p2)) CALL p2%clear()
+            
+            IF(p1%dim == 2) THEN
+              npoints=npoints+1
+              tmpPoints(npoints)=p1
+            ENDIF
+            IF(p2%dim == 2) THEN
+              npoints=npoints+1
+              tmpPoints(npoints)=p2
+            ENDIF
+          ENDDO
+        ENDIF
+
+        IF(npoints > 0) THEN
+          !Remove duplicate points
+          DO i=1,npoints
+            DO j=i+1,npoints
+              IF(tmppoints(j) .APPROXEQA. tmppoints(i)) CALL tmppoints(j)%clear()
+            ENDDO
+          ENDDO
+        
+          ipoint=0
+          DO i=1,npoints
+            IF(tmpPoints(i)%dim == 2) ipoint=ipoint+1
+          ENDDO
+
+          !Set output variable
+          ALLOCATE(points(ipoint))
+          ipoint=0
+          DO i=1,npoints
+            IF(tmpPoints(i)%dim == 2) THEN
+              ipoint=ipoint+1
+              points(ipoint)=tmpPoints(i)
+            ENDIF
+          ENDDO
+        ENDIF
       
-      !Find all the good points
-      npoints=0
-      DO i=1,SIZE(tmppoints)
-        IF(tmppoints(i)%dim == 2) npoints=npoints+1
-        DO j=i+1,SIZE(tmppoints)
-          IF(tmppoints(j) .APPROXEQA. tmppoints(i)) CALL tmppoints(j)%clear()
-        ENDDO
-      ENDDO
-      IF(npoints > 0) THEN
-        ALLOCATE(points(npoints))
-      
-        !Size the final points array and copy the good points
-        ipoint=1
-        DO i=1,SIZE(tmppoints)
-          IF(tmppoints(i)%dim == 2) THEN
-            points(ipoint)=tmppoints(i)
-            ipoint=ipoint+1
-          ENDIF
-        ENDDO
-      ENDIF
-      
-      !Clear local types
-      DO i=SIZE(tmppoints),1,-1
-        CALL tmppoints(i)%clear()
-      ENDDO
-      DEALLOCATE(tmppoints)
-      DO i=SIZE(lines),1,-1
-        CALL lines(i)%clear()
-      ENDDO
-      DEALLOCATE(lines)
-      IF(ALLOCATED(circles)) THEN
-        DO i=SIZE(circles),1,-1
-          CALL circles(i)%clear()
-        ENDDO
-        DEALLOCATE(circles)
+        !Clear local types
+        IF(ALLOCATED(tmpPoints)) THEN
+          DO i=1,SIZE(tmpPoints)
+            CALL tmpPoints(i)%clear()
+          ENDDO
+          DEALLOCATE(tmpPoints)
+        ENDIF
+        IF(ALLOCATED(lines)) THEN
+          DO i=SIZE(lines),1,-1
+            CALL lines(i)%clear()
+          ENDDO
+          DEALLOCATE(lines)
+        ENDIF
+        IF(ALLOCATED(circles)) THEN
+          DO i=SIZE(circles),1,-1
+            CALL circles(i)%clear()
+          ENDDO
+          DEALLOCATE(circles)
+        ENDIF
       ENDIF
     ENDSUBROUTINE intersectLine_PolygonType
 !
