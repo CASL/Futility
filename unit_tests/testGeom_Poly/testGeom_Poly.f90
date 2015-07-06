@@ -57,6 +57,7 @@ PROGRAM testGeom_Poly
   
   REGISTER_SUBTEST('Test Polygonize',testPolygonize)
   REGISTER_SUBTEST('Test GenerateGraph',testGenerateGraph)
+  REGISTER_SUBTEST('Test Operator(==)',testEquivalence)
 
   FINALIZE_TEST()
 !
@@ -2342,5 +2343,171 @@ PROGRAM testGeom_Poly
       CALL testGraph%clear()
       CALL testPolyType%clear()
     ENDSUBROUTINE testGenerateGraph
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testEquivalence()
+      INTEGER(SIK) :: i
+      REAL(SRK) :: testCoord(2,9),c0(2),r
+      TYPE(PolygonType) :: testPoly2,testPoly3
+      
+      CALL testPolyType%clear()
+      CALL testGraph%clear()
+      !Setup test graph - isosceles triangle
+      testCoord(:,1)=(/-1.0_SRK,-2.0_SRK/)
+      testCoord(:,2)=(/1.0_SRK,-2.0_SRK/)
+      testCoord(:,3)=(/0.0_SRK,1.0_SRK/)
+      DO i=1,3
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
+      CALL testGraph%defineEdge(testCoord(:,2),testCoord(:,3))
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,1))
+      
+      CALL testPolyType%set(testGraph)
+      !Set up polygon by hand
+      testPoly2%isinit=.TRUE.
+      testPoly2%nvert=3
+      ALLOCATE(testPoly2%vert(3))
+      CALL testPoly2%vert(1)%init(COORD=(/-1.0_SRK,-2.0_SRK/))
+      CALL testPoly2%vert(2)%init(COORD=(/0.0_SRK,1.0_SRK/))
+      CALL testPoly2%vert(3)%init(COORD=(/1.0_SRK,-2.0_SRK/))
+      testPoly2%nQuadEdge=0
+      ALLOCATE(testPoly2%edge(2,3))
+      testPoly2%edge(:,1)=(/1,2/)
+      testPoly2%edge(:,2)=(/2,3/)
+      testPoly2%edge(:,3)=(/3,1/)
+      testPoly2%area=3.0_SRK
+      CALL testPoly2%centroid%init(COORD=(/0.0_SRK,-1.0_SRK/))
+      
+      ASSERT(testPolyType == testPoly2,'triangle poly')
+      testPoly2%isinit=.FALSE.
+      ASSERT(.NOT.(testPolyType == testPoly2),'triangle poly, %isinit')
+      testPoly2%isinit=.TRUE.
+      testPoly2%vert(1)%coord(1)=-2.0_SRK
+      ASSERT(.NOT.(testPolyType == testPoly2),'triangle poly, %vert(1)%coord(1)')
+      testPoly2%vert(1)%coord(1)=-1.0_SRK
+      testPoly2%edge(:,1)=(/2,1/)
+      ASSERT(.NOT.(testPolyType == testPoly2),'triangle poly, %edge(:,1)')
+      testPoly2%edge(:,1)=(/1,2/)
+      testPoly2%area=4.0_SRK
+      ASSERT(.NOT.(testPolyType == testPoly2),'triangle poly, %area')
+      testPoly2%area=3.0_SRK
+      testPoly2%centroid%coord(1)=-1.0_SRK
+      ASSERT(.NOT.(testPolyType == testPoly2),'triangle poly, %centroid%coord(1)')
+      
+      CALL testPoly2%clear()
+      
+      CALL testGraph%clear()
+      CALL testPolyType%clear()
+      c0=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,1)=(/-2.0_SRK,0.0_SRK/)
+      testCoord(:,2)=(/0.0_SRK,2.0_SRK/)
+      testCoord(:,3)=(/2.0_SRK,0.0_SRK/)
+      testCoord(:,4)=(/0.0_SRK,-2.0_SRK/)
+      DO i=1,4
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineQuadraticEdge(testCoord(:,1),testCoord(:,2),c0,2.0_SRK)
+      CALL testGraph%defineEdge(testCoord(:,2),testCoord(:,3))
+      CALL testGraph%defineQuadraticEdge(testCoord(:,3),testCoord(:,4),c0,2.0_SRK)
+      CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,1))
+      CALL testPolyType%set(testGraph)
+      
+      !Set up polygon by hand
+      testPoly2%isinit=.TRUE.
+      testPoly2%nvert=4
+      ALLOCATE(testPoly2%vert(4))
+      CALL testPoly2%vert(1)%init(COORD=(/-2.0_SRK,0.0_SRK/))
+      CALL testPoly2%vert(2)%init(COORD=(/0.0_SRK,2.0_SRK/))
+      CALL testPoly2%vert(3)%init(COORD=(/2.0_SRK,0.0_SRK/))
+      CALL testPoly2%vert(4)%init(COORD=(/0.0_SRK,-2.0_SRK/))
+      ALLOCATE(testPoly2%edge(2,4))
+      testPoly2%edge(:,1)=(/1,2/)
+      testPoly2%edge(:,2)=(/2,3/)
+      testPoly2%edge(:,3)=(/3,4/)
+      testPoly2%edge(:,4)=(/4,1/)
+      testPoly2%nQuadEdge=2
+      ALLOCATE(testPoly2%quadEdge(3,2))
+      testPoly2%quadEdge(:,1)=(/0.0_SRK,0.0_SRK,2.0_SRK/)
+      testPoly2%quadEdge(:,2)=(/0.0_SRK,0.0_SRK,2.0_SRK/)
+      ALLOCATE(testPoly2%quad2edge(2))
+      testPoly2%quad2edge(1)=1
+      testPoly2%quad2edge(2)=3
+      testPoly2%area=2.0_SRK*PI+4.0_SRK
+      CALL testPoly2%centroid%init(COORD=(/0.0_SRK,0.0_SRK/))
+      
+      ASSERT(testPolyType == testPoly2,'quad edge poly')
+      testPoly2%isinit=.FALSE.
+      ASSERT(.NOT.(testPolyType == testPoly2),'quad edge poly, %isinit')
+      testPoly2%isinit=.TRUE.
+      testPoly2%nvert=3
+      ASSERT(.NOT.(testPolyType == testPoly2),'quad edge poly, %nvert')
+      testPoly2%nvert=4
+      testPoly2%vert(1)%coord(1)=-3.0_SRK
+      ASSERT(.NOT.(testPolyType == testPoly2),'quad edge poly, %vert(1)%coord(1)')
+      testPoly2%vert(1)%coord(1)=-2.0_SRK
+      testPoly2%edge(:,1)=(/2,1/)
+      ASSERT(.NOT.(testPolyType == testPoly2),'quad edge poly, %edge(:,1)')
+      testPoly2%edge(:,1)=(/1,2/)
+      testPoly2%nQuadEdge=4
+      ASSERT(.NOT.(testPolyType == testPoly2),'quad edge poly, %nQuadEdge')
+      testPoly2%nQuadEdge=2
+      testPoly2%quad2edge(1)=2
+      ASSERT(.NOT.(testPolyType == testPoly2),'quad edge poly, %quad2edge')
+      testPoly2%quad2edge(1)=1
+      testPoly2%quadEdge(:,1)=(/1.0_SRK,1.0_SRK,1.0_SRK/)
+      ASSERT(.NOT.(testPolyType == testPoly2),'quad edge poly, %quadEdge')
+      testPoly2%quadEdge(:,1)=(/0.0_SRK,0.0_SRK,2.0_SRK/)
+      testPoly2%area=4.0_SRK
+      ASSERT(.NOT.(testPolyType == testPoly2),'quad edge poly, %area')
+      testPoly2%area=2.0_SRK*PI+4.0_SRK
+      testPoly2%centroid%coord(1)=-1.0_SRK
+      ASSERT(.NOT.(testPolyType == testPoly2),'quad edge poly, %centroid%coord(1)')
+      testPoly2%centroid%coord(1)=0.0_SRK
+      
+      CALL testGraph%clear()
+      c0=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,1)=(/-1.0_SRK,0.0_SRK/)
+      testCoord(:,2)=(/0.0_SRK,1.0_SRK/)
+      testCoord(:,3)=(/1.0_SRK,0.0_SRK/)
+      testCoord(:,4)=(/0.0_SRK,-1.0_SRK/)
+      DO i=1,4
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
+      CALL testGraph%defineEdge(testCoord(:,2),testCoord(:,3))
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
+      CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,1))
+      CALL testPoly3%set(testGraph)
+      CALL testGraph%clear()
+      
+      CALL testPolyType%subtractSubVolume(testPoly3)
+      
+      ALLOCATE(testPoly2%subRegions)
+      testPoly2%subRegions%isinit=.TRUE.
+      testPoly2%subRegions%nvert=4
+      ALLOCATE(testPoly2%subRegions%vert(4))
+      CALL testPoly2%subRegions%vert(1)%init(COORD=(/-1.0_SRK,0.0_SRK/))
+      CALL testPoly2%subRegions%vert(2)%init(COORD=(/0.0_SRK,1.0_SRK/))
+      CALL testPoly2%subRegions%vert(3)%init(COORD=(/1.0_SRK,0.0_SRK/))
+      CALL testPoly2%subRegions%vert(4)%init(COORD=(/0.0_SRK,-1.0_SRK/))
+      ALLOCATE(testPoly2%subRegions%edge(2,4))
+      testPoly2%subRegions%edge(:,1)=(/1,2/)
+      testPoly2%subRegions%edge(:,2)=(/2,3/)
+      testPoly2%subRegions%edge(:,3)=(/3,4/)
+      testPoly2%subRegions%edge(:,4)=(/4,1/)
+      testPoly2%subRegions%area=2.0_SRK
+      testPoly2%area=testPoly2%area-2.0_SRK
+      CALL testPoly2%subRegions%centroid%init(COORD=(/0.0_SRK,0.0_SRK/))
+      
+      ASSERT(testPolyType == testPoly2,'subregion poly')
+      
+      CALL testPoly3%clear()
+      CALL testPoly2%subRegions%clear()
+      DEALLOCATE(testPoly2%subRegions)
+      CALL testPoly2%clear()
+      CALL testPolyType%clear()
+      
+    ENDSUBROUTINE testEquivalence
 !
 ENDPROGRAM testGeom_Poly
