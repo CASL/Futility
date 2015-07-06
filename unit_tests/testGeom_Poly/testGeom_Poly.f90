@@ -52,6 +52,11 @@ PROGRAM testGeom_Poly
   REGISTER_SUBTEST('%doesLineIntersect',testDoesLineIntersect)
   REGISTER_SUBTEST('%doesPolyIntersect',testDoesPolyIntersect)
   !REGISTER_SUBTEST('Test IntersectPoly',testIntersectPoly)
+  REGISTER_SUBTEST('Test isCircle',testIsCircle)
+  REGISTER_SUBTEST('Test GetRadius',testGetRadius)
+  
+  REGISTER_SUBTEST('Test Polygonize',testPolygonize)
+  REGISTER_SUBTEST('Test GenerateGraph',testGenerateGraph)
 
   FINALIZE_TEST()
 !
@@ -1723,6 +1728,9 @@ PROGRAM testGeom_Poly
       TYPE(LineType) :: line
 
       COMPONENT_TEST('Iso. Triangle')
+      CALL testPolyType%clear()
+      CALL testGraph%clear()
+!Setup test graph - isosceles triangle
       testCoord(:,1)=(/-1.0_SRK,-1.0_SRK/)
       testCoord(:,2)=(/1.0_SRK,-1.0_SRK/)
       testCoord(:,3)=(/0.0_SRK,2.0_SRK/)
@@ -1734,6 +1742,7 @@ PROGRAM testGeom_Poly
       CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,1))
 
       CALL testPolyType%set(testGraph)
+      CALL testGraph%clear()
       ASSERTFAIL(testPolyType%isinit,'%isinit')
       CALL point1%init(DIM=2,X=-1.0_SRK,Y=0.0_SRK)
       CALL point2%init(DIM=2,X=1.0_SRK,Y=0.0_SRK)
@@ -1966,6 +1975,173 @@ PROGRAM testGeom_Poly
       ASSERT(bool,'%point(6)')
       
     ENDSUBROUTINE testIntersectPoly
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testIsCircle()
+      INTEGER(SIK) :: i,inext
+      REAL(SRK) :: testCoord(2,9),c0(2),r
+    
+      !Test 4 point polygon-circle
+      CALL testGraph%clear()
+      CALL testPolyType%clear()
+      c0=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,1)=(/-2.0_SRK,0.0_SRK/)
+      testCoord(:,2)=(/0.0_SRK,2.0_SRK/)
+      testCoord(:,3)=(/2.0_SRK,0.0_SRK/)
+      testCoord(:,4)=(/0.0_SRK,-2.0_SRK/)
+      DO i=1,4
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineQuadraticEdge(testCoord(:,1),testCoord(:,2),c0,2.0_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,2),testCoord(:,3),c0,2.0_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,3),testCoord(:,4),c0,2.0_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,4),testCoord(:,1),c0,2.0_SRK)
+      CALL testPolyType%set(testGraph)
+      CALL testGraph%clear()
+      ASSERTFAIL(testPolyType%isinit,'%isinit')
+      ASSERT(testPolyType%isCircle(),'%isCircle, 4-point')
+      CALL testPolyType%clear()
+      
+      !Test uninitialized poly
+      ASSERT(.NOT.testPolyType%isCircle(),'%isCircle, uninit')
+      
+      !Test 3 point polygon-circle
+      testCoord(:,1)=(/3.0_SRK,-4.0_SRK/)
+      testCoord(:,2)=(/-3.0_SRK,-4.0_SRK/)
+      testCoord(:,3)=(/0.0_SRK,5.0_SRK/)
+      DO i=1,3
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineQuadraticEdge(testCoord(:,1),testCoord(:,2),c0,5.0_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,2),testCoord(:,3),c0,5.0_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,3),testCoord(:,1),c0,5.0_SRK)
+      CALL testPolyType%set(testGraph)
+      CALL testGraph%clear()
+      ASSERTFAIL(testPolyType%isinit,'%isinit')
+      ASSERT(testPolyType%isCircle(),'%isCircle, 3-point')
+      CALL testPolyType%clear()
+      
+      !Test non-circle quad edges
+      CALL testGraph%clear()
+      c0=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,1)=(/-2.0_SRK,0.0_SRK/)
+      testCoord(:,2)=(/0.0_SRK,2.0_SRK/)
+      testCoord(:,3)=(/2.0_SRK,0.0_SRK/)
+      testCoord(:,4)=(/0.0_SRK,-2.0_SRK/)
+      DO i=1,4
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineQuadraticEdge(testCoord(:,1),testCoord(:,2),c0,2.0_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,2),testCoord(:,3),c0,2.0_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,3),testCoord(:,4),c0,2.0_SRK)
+      CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,1))
+      CALL testPolyType%set(testGraph)
+      CALL testGraph%clear()
+      ASSERTFAIL(testPolyType%isinit,'%isinit')
+      ASSERT(.NOT.testPolyType%isCircle(),'%isCircle, missing quad edge')
+      
+      !Test non-circle, no quad edges
+      CALL testGraph%clear()
+      c0=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,1)=(/-2.0_SRK,0.0_SRK/)
+      testCoord(:,2)=(/0.0_SRK,2.0_SRK/)
+      testCoord(:,3)=(/2.0_SRK,0.0_SRK/)
+      testCoord(:,4)=(/0.0_SRK,-2.0_SRK/)
+      DO i=1,4
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
+      CALL testGraph%defineEdge(testCoord(:,2),testCoord(:,3))
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
+      CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,1))
+      CALL testPolyType%set(testGraph)
+      CALL testGraph%clear()
+      ASSERTFAIL(testPolyType%isinit,'%isinit')
+      ASSERT(.NOT.testPolyType%isCircle(),'%isCircle, no quad edges')
+    ENDSUBROUTINE testIsCircle
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testGetRadius()
+      INTEGER(SIK) :: i,inext
+      REAL(SRK) :: testCoord(2,9),c0(2),r
+    
+      !Test 4 point polygon-circle
+      CALL testGraph%clear()
+      c0=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,1)=(/-2.0_SRK,0.0_SRK/)
+      testCoord(:,2)=(/0.0_SRK,2.0_SRK/)
+      testCoord(:,3)=(/2.0_SRK,0.0_SRK/)
+      testCoord(:,4)=(/0.0_SRK,-2.0_SRK/)
+      DO i=1,4
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineQuadraticEdge(testCoord(:,1),testCoord(:,2),c0,2.0_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,2),testCoord(:,3),c0,2.0_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,3),testCoord(:,4),c0,2.0_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,4),testCoord(:,1),c0,2.0_SRK)
+      CALL testPolyType%set(testGraph)
+      CALL testGraph%clear()
+      ASSERTFAIL(testPolyType%isinit,'%isinit')
+      ASSERT(testPolyType%getRadius() .APPROXEQA. 2.0_SRK,'%getRadius, 4-point')
+      CALL testPolyType%clear()
+      
+      !Test uninitialized poly
+      ASSERT(testPolyType%getRadius() .APPROXEQA. 0.0_SRK,'%getRadius, uninit')
+      
+      !Test 3 point polygon-circle
+      testCoord(:,1)=(/3.0_SRK,-4.0_SRK/)
+      testCoord(:,2)=(/-3.0_SRK,-4.0_SRK/)
+      testCoord(:,3)=(/0.0_SRK,5.0_SRK/)
+      DO i=1,3
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineQuadraticEdge(testCoord(:,1),testCoord(:,2),c0,5.0_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,2),testCoord(:,3),c0,5.0_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,3),testCoord(:,1),c0,5.0_SRK)
+      CALL testPolyType%set(testGraph)
+      CALL testGraph%clear()
+      ASSERTFAIL(testPolyType%isinit,'%isinit')
+      ASSERT(testPolyType%getRadius() .APPROXEQA. 5.0_SRK,'%getRadius, 3-point')
+      CALL testPolyType%clear()
+      
+      !Test non-circle quad edges
+      CALL testGraph%clear()
+      c0=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,1)=(/-2.0_SRK,0.0_SRK/)
+      testCoord(:,2)=(/0.0_SRK,2.0_SRK/)
+      testCoord(:,3)=(/2.0_SRK,0.0_SRK/)
+      testCoord(:,4)=(/0.0_SRK,-2.0_SRK/)
+      DO i=1,4
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineQuadraticEdge(testCoord(:,1),testCoord(:,2),c0,2.0_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,2),testCoord(:,3),c0,2.0_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,3),testCoord(:,4),c0,2.0_SRK)
+      CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,1))
+      CALL testPolyType%set(testGraph)
+      CALL testGraph%clear()
+      ASSERTFAIL(testPolyType%isinit,'%isinit')
+      ASSERT(testPolyType%getRadius() .APPROXEQA. 0.0_SRK,'%getRadius, missing quad edge')
+      
+      !Test non-circle, no quad edges
+      CALL testGraph%clear()
+      c0=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,1)=(/-2.0_SRK,0.0_SRK/)
+      testCoord(:,2)=(/0.0_SRK,2.0_SRK/)
+      testCoord(:,3)=(/2.0_SRK,0.0_SRK/)
+      testCoord(:,4)=(/0.0_SRK,-2.0_SRK/)
+      DO i=1,4
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
+      CALL testGraph%defineEdge(testCoord(:,2),testCoord(:,3))
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
+      CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,1))
+      CALL testPolyType%set(testGraph)
+      CALL testGraph%clear()
+      ASSERTFAIL(testPolyType%isinit,'%isinit')
+      ASSERT(testPolyType%getRadius() .APPROXEQA. 0.0_SRK,'%getRadius, no quad edges')
+    ENDSUBROUTINE testGetRadius
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testPolygonize()

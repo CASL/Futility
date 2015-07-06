@@ -360,7 +360,8 @@ MODULE Geom_Poly
       CLASS(PolygonType),INTENT(IN) :: thisPoly
       LOGICAL(SBK) :: bool
       INTEGER(SIK) :: i
-      IF(thisPoly%nVert == thisPoly%nQuadEdge) THEN
+      bool=.FALSE.
+      IF(thisPoly%isinit .AND. (thisPoly%nVert == thisPoly%nQuadEdge)) THEN
         bool=.TRUE.
         DO i=2,thisPoly%nQuadEdge
           bool=bool .AND. ALL(thisPoly%quadEdge(:,i) .APPROXEQA. thisPoly%quadEdge(:,1))
