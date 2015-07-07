@@ -455,8 +455,8 @@ MODULE Geom_CircCyl
                   theta_shift=TWOPI
                   IF(p1%coord(2)-circle%c%coord(2) > 0.0_SRK) theta=theta+TWOPI
                 ENDIF
-                IF((theta .APPROXLE. circle%thetastt) .OR. &
-                  ((circle%thetastp+theta_shift) .APPROXLE. theta)) CALL p1%clear()
+                IF(.NOT.(theta .APPROXGE. circle%thetastt) .OR. &
+                  .NOT.(circle%thetastp+theta_shift .APPROXGE. theta)) CALL p1%clear()
               ENDIF
             ENDIF
             IF(ZERO < t2 .AND. t2 < ONE) THEN
@@ -470,8 +470,8 @@ MODULE Geom_CircCyl
                   theta_shift=TWOPI
                   IF(p2%coord(2)-circle%c%coord(2) > 0.0_SRK) theta=theta+TWOPI
                 ENDIF
-                IF((theta .APPROXLE. circle%thetastt) .OR. &
-                  (circle%thetastp+theta_shift .APPROXLE. theta)) CALL p2%clear()
+                IF(.NOT.(theta .APPROXGE. circle%thetastt) .OR. &
+                  .NOT.(circle%thetastp+theta_shift .APPROXGE. theta)) CALL p2%clear()
               ENDIF
             ENDIF
           ENDIF
