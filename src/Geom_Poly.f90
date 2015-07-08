@@ -808,18 +808,19 @@ MODULE Geom_Poly
         ENDIF
       
         !Clear the first set of lines
-        DO i=1,SIZE(Lines)
-          CALL Lines(i)%clear()
-        ENDDO
-        
+        IF(ALLOCATED(Lines)) THEN
+          DO i=1,SIZE(Lines)
+            CALL Lines(i)%clear()
+          ENDDO
+          DEALLOCATE(Lines)
+        ENDIF
         !Clear the first set of circles
-        DO i=1,SIZE(Circs)
-          CALL Circs(i)%clear()
-        ENDDO
-        
-        !Clear stuff
-        IF(ALLOCATED(Lines)) DEALLOCATE(Lines)
-        IF(ALLOCATED(Circs)) DEALLOCATE(Circs)
+        IF(ALLOCATED(Circs)) THEN
+          DO i=1,SIZE(Circs)
+            CALL Circs(i)%clear()
+          ENDDO
+          DEALLOCATE(Circs)
+        ENDIF
       ENDIF
     ENDFUNCTION polygon_inside_PolygonType
 !
@@ -1135,18 +1136,19 @@ MODULE Geom_Poly
       ENDIF
       
       !Clear the first set of lines
-      DO i=1,SIZE(Lines)
-        CALL Lines(i)%clear()
-      ENDDO
-        
+      IF(ALLOCATED(Lines)) THEN
+        DO i=1,SIZE(Lines)
+          CALL Lines(i)%clear()
+        ENDDO
+        DEALLOCATE(Lines)
+      ENDIF
       !Clear the first set of circles
-      DO i=1,SIZE(Circs)
-        CALL Circs(i)%clear()
-      ENDDO
-        
-      !Clear stuff
-      IF(ALLOCATED(Lines)) DEALLOCATE(Lines)
-      IF(ALLOCATED(Circs)) DEALLOCATE(Circs)
+      IF(ALLOCATED(Circs)) THEN
+        DO i=1,SIZE(Circs)
+          CALL Circs(i)%clear()
+        ENDDO
+        DEALLOCATE(Circs)
+      ENDIF
     ENDFUNCTION doesPolyIntersect_PolygonType
 !
 !-------------------------------------------------------------------------------
