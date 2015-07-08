@@ -589,211 +589,409 @@ MODULE Geom_Poly
       CLASS(PolygonType),INTENT(IN) :: thisPoly
       TYPE(PolygonType),INTENT(IN) :: thatPoly
       LOGICAL(SBK) :: bool
-      INTEGER(SIK) :: i,j,k
+      INTEGER(SIK) :: i,j,k,iedge
       REAL(SRK) :: x,y
       TYPE(PointType) :: p1,p2
-      TYPE(LineType),ALLOCATABLE :: theseLines(:),thoseLines(:)
-      TYPE(CircleType),ALLOCATABLE :: theseCircs(:),thoseCircs(:)
-      TYPE(PolygonType),POINTER :: subPoly
+      TYPE(LineType) :: tmpLine
+      TYPE(LineType),ALLOCATABLE :: Lines(:)
+      TYPE(CircleType) :: tmpCirc
+      TYPE(CircleType),ALLOCATABLE :: Circs(:)
+      TYPE(PolygonType),POINTER :: iPoly,lastSubPoly
       
       bool=.FALSE.
+      
       IF(thisPoly%isinit .AND. thatPoly%isinit) THEN
         bool=.TRUE.
-        !Set up all the lines for both polygons
-        ALLOCATE(theseLines(thisPoly%nVert))
-        ALLOCATE(thoseLines(thatPoly%nVert))
-        IF(thisPoly%nQuadEdge > 0) ALLOCATE(theseCircs(thisPoly%nQuadEdge))
-        IF(thatPoly%nQuadEdge > 0) ALLOCATE(thoseCircs(thatPoly%nQuadEdge))
-        DO i=1,thisPoly%nVert
-          IF(thisPoly%nQuadEdge > 0) THEN
-            IF(ALL(thisPoly%quad2edge /= i)) CALL theseLines(i)%set(thisPoly%vert(thisPoly%edge(1,i)), &
-              thisPoly%vert(thisPoly%edge(2,i)))
-          ELSE
-            CALL theseLines(i)%set(thisPoly%vert(thisPoly%edge(1,i)), &
-              thisPoly%vert(thisPoly%edge(2,i)))
-          ENDIF
-        ENDDO
+        !1. make sure all vertices are inside bounding polygon
         DO i=1,thatPoly%nVert
           !Make sure all of those points are inside thisPoly!
           IF(.NOT.thisPoly%pointInside(thatPoly%vert(i))) THEN
             bool=.FALSE.
             EXIT
           ENDIF
-          IF(thatPoly%nQuadEdge > 0) THEN
-            IF(ALL(thatPoly%quad2edge /= i)) CALL thoseLines(i)%set(thatPoly%vert(thatPoly%edge(1,i)), &
-              thatPoly%vert(thatPoly%edge(2,i)))
-          ELSE
-            CALL thoseLines(i)%set(thatPoly%vert(thatPoly%edge(1,i)), &
-              thatPoly%vert(thatPoly%edge(2,i)))
-          ENDIF
         ENDDO
-        DO i=1,thisPoly%nQuadEdge
-          CALL createArcFromQuad(thisPoly,i,theseCircs(i))
-        ENDDO
-        DO i=1,thatPoly%nQuadEdge
-          CALL createArcFromQuad(thatPoly,i,thoseCircs(i))
-        ENDDO
-        !Nested do-loops for intersecting all lines with lines
-        !TheseLines
+        !2. Check intersections between combinations of edges of two polygons (ignore intersections that are vertices)
         IF(bool) THEN
-          Line: DO i=1,thisPoly%nVert
-            !ThoseLines
-            DO j=1,thatPoly%nVert
-              IF((theseLines(i)%p1%dim == 2) .AND. (thoseLines(j)%p1%dim == 2)) THEN
-                p1=theseLines(i)%intersect(thoseLines(j))
-                IF(p1%dim > 0) THEN
-                  !Clear the point if it happens to be one of the segment endpoints
-                  IF((p1 .APPROXEQA. theseLines(i)%p1) .OR. &
-                     (p1 .APPROXEQA. theseLines(i)%p2) .OR. &
-                     (p1 .APPROXEQA. thoseLines(j)%p1) .OR. &
-                     (p1 .APPROXEQA. thoseLines(j)%p2)) &
-                    CALL p1%clear()
-                ENDIF
-                IF(p1%dim > 0) THEN
-                  !Found an intersection! Polygon is outside!
-                  bool=.FALSE.
-                  EXIT Line
-                ENDIF
+          ALLOCATE(Lines(thisPoly%nVert-thisPoly%nQuadEdge))
+          IF(thisPoly%nQuadEdge > 0) ALLOCATE(Circs(thisPoly%nQuadEdge))
+          j=1
+          !Set up the lines for thisPoly
+          DO i=1,thisPoly%nVert
+            IF(thisPoly%nQuadEdge > 0) THEN
+              IF(ALL(thisPoly%quad2edge /= i)) THEN
+                CALL Lines(j)%set(thisPoly%vert(thisPoly%edge(1,i)), &
+                  thisPoly%vert(thisPoly%edge(2,i)))
+                j=j+1
               ENDIF
+            ELSE
+              CALL Lines(j)%set(thisPoly%vert(thisPoly%edge(1,i)), &
+                thisPoly%vert(thisPoly%edge(2,i)))
+              j=j+1
+            ENDIF
+          ENDDO
+          !Set up circles/arcs
+          DO i=1,thisPoly%nQuadEdge
+            CALL createArcFromQuad(thisPoly,i,Circs(i))
+          ENDDO
+          !Test for line-line intersections
+          Line: DO i=1,thisPoly%nVert-thisPoly%nQuadEdge
+            !Loop over straight edges
+            DO j=1,thatPoly%nVert
+              CALL p1%clear()
+              CALL p2%clear()
+              IF(thatPoly%nQuadEdge > 0) THEN
+                IF(ALL(thatPoly%quad2edge /= j)) THEN
+                  CALL tmpLine%set(thatPoly%vert(thatPoly%edge(1,j)), &
+                    thatPoly%vert(thatPoly%edge(2,j)))
+                  p1=Lines(i)%intersectLine(tmpLine)
+                ENDIF
+              ELSE
+                CALL tmpLine%set(thatPoly%vert(thatPoly%edge(1,j)), &
+                  thatPoly%vert(thatPoly%edge(2,j)))
+                p1=Lines(i)%intersectLine(tmpLine)
+              ENDIF
+              !Check if there was an intersection
+              IF(p1%dim > 0) THEN
+                !Clear the point if it happens to be one of the segment endpoints
+                IF((p1 .APPROXEQA. Lines(i)%p1) .OR. &
+                   (p1 .APPROXEQA. Lines(i)%p2) .OR. &
+                   (p1 .APPROXEQA. tmpLine%p1) .OR. &
+                   (p1 .APPROXEQA. tmpLine%p2)) &
+                  CALL p1%clear()
+              ENDIF
+              IF(p1%dim > 0) THEN
+                !Found an intersection! Polygon is outside!
+                bool=.FALSE.
+                EXIT Line
+              ENDIF
+              CALL tmpLine%clear()
             ENDDO
-            !All lines with the other circles
+            !Check for line-circle intersections
             DO j=1,thatPoly%nQuadEdge
-              IF(theseLines(i)%p1%dim == 2) THEN
+              CALL createArcFromQuad(thatPoly,j,tmpCirc)
+              CALL tmpCirc%intersectLine(Lines(i),p1,p2)
               
-                CALL thoseCircs(j)%intersectLine(theseLines(i),p1,p2)
-                IF(p1%dim == -3) p1%dim=2 !Include tangent points
-            
-                !If line segment end points are on circle, intersections
-                !are not returned, so we handle that special case here.
-                IF(p1%dim == 0 .AND. thoseCircs(j)%onSurface(theseLines(i)%p1)) &
-                  p1=theseLines(i)%p1
-                IF(p2%dim == 0 .AND. thoseCircs(j)%onSurface(theseLines(i)%p2)) &
-                  p2=theseLines(i)%p2
-
-                !Exclude points not in the arc
-                IF(.NOT.thoseCircs(j)%onSurface(p1)) CALL p1%clear()
-                IF(.NOT.thoseCircs(j)%onSurface(p2)) CALL p2%clear()
-            
-                IF((p1%dim > 0) .OR. (p2%dim > 0)) THEN
-                  bool=.FALSE.
-                  EXIT Line
-                ENDIF
-                
-                !CALL thoseCircs(j)%intersectArcLine(theseLines(i),tmppoints(ipoint), &
-                !  tmppoints(ipoint+1),tmppoints(ipoint+2),tmppoints(ipoint+3))
-                !Check if the points are on the circle
-                !DO k=0,3
-                !  IF(tmppoints(ipoint+k)%dim == 2) THEN
-                !    !If it's not on the circle, clear it.
-                !    x=tmppoints(ipoint+k)%coord(1)-thoseCircs(j)%c%coord(1)
-                !    y=tmppoints(ipoint+k)%coord(2)-thoseCircs(j)%c%coord(2)
-                !    IF(.NOT.(x*x+y*y .APPROXEQA. thoseCircs(j)%r*thoseCircs(j)%r)) &
-                !      CALL tmppoints(ipoint+k)%clear()
-                !  ENDIF
-                !  !Found an intersection!  Polygon is outside!
-                !  IF(tmppoints(ipoint+k)%dim > 0) THEN
-                !    bool=.FALSE.
-                !    EXIT Line
-                !  ENDIF
-                !ENDDO
-              ENDIF
-            ENDDO
-          ENDDO Line
-        ENDIF
-        !All circles with the other circles  (May need to improve this intersection routine for arcs...
-        !TheseCircs
-        IF(bool) THEN
-          Quad: DO i=1,thisPoly%nQuadEdge
-            DO j=1,thatPoly%nVert
-              CALL theseCircs(i)%intersectLine(thoseLines(j),p1,p2)
               IF(p1%dim == -3) p1%dim=2 !Include tangent points
             
               !If line segment end points are on circle, intersections
               !are not returned, so we handle that special case here.
-              IF(p1%dim == 0 .AND. theseCircs(i)%onSurface(thoseLines(j)%p1)) &
-                p1=thoseLines(j)%p1
-              IF(p2%dim == 0 .AND. theseCircs(i)%onSurface(thoseLines(j)%p2)) &
-                p2=thoseLines(j)%p2
+              IF(p1%dim == 0 .AND. tmpCirc%onSurface(Lines(i)%p1)) &
+                p1=Lines(i)%p1
+              IF(p2%dim == 0 .AND. tmpCirc%onSurface(Lines(i)%p2)) &
+                p2=Lines(i)%p2
 
-              !Exclude points not in the arc
-              IF(.NOT.theseCircs(i)%onSurface(p1)) CALL p1%clear()
-              IF(.NOT.theseCircs(i)%onSurface(p2)) CALL p2%clear()
+              iedge=thatPoly%quad2edge(j)
+              !Exclude points not in the arc, or the endpoints
+              IF(.NOT.tmpCirc%onSurface(p1) .OR. &
+                (Lines(i)%p1 .APPROXEQA. p1) .OR. &
+                (Lines(i)%p2 .APPROXEQA. p1).OR. &
+                (thatPoly%vert(thatPoly%edge(1,iedge)) .APPROXEQA. p1) .OR. &
+                (thatPoly%vert(thatPoly%edge(2,iedge)) .APPROXEQA. p1)) CALL p1%clear()
+              IF(.NOT.tmpCirc%onSurface(p2) .OR. &
+                (Lines(i)%p1 .APPROXEQA. p2) .OR. &
+                (Lines(i)%p2 .APPROXEQA. p2) .OR. &
+                (thatPoly%vert(thatPoly%edge(1,iedge)) .APPROXEQA. p2) .OR. &
+                (thatPoly%vert(thatPoly%edge(2,iedge)) .APPROXEQA. p2)) CALL p2%clear()
             
               IF((p1%dim > 0) .OR. (p2%dim > 0)) THEN
                 bool=.FALSE.
-                EXIT Quad
-              ENDIF
-                
-              !CALL theseCircs(i)%intersectArcLine(thoseLines(j),tmppoints(ipoint), &
-              !  tmppoints(ipoint+1),tmppoints(ipoint+2),tmppoints(ipoint+3))
-              !!Check if the points are on the circle
-              !DO k=0,3
-              !  IF(tmppoints(ipoint+k)%DIM == 2) THEN
-              !    !If it's not on the circle, clear it. OR
-              !    !If it is an end-point of thoseLines, clear it
-              !    x=tmppoints(ipoint+k)%coord(1)-theseCircs(i)%c%coord(1)
-              !    y=tmppoints(ipoint+k)%coord(2)-theseCircs(i)%c%coord(2)
-              !    IF(.NOT.(x*x+y*y .APPROXEQA. theseCircs(i)%r*theseCircs(i)%r) .OR. &
-              !       (tmpPoints(ipoint+k) .APPROXEQA. thoseLines(j)%p1) .OR. &
-              !       (tmpPoints(ipoint+k) .APPROXEQA. thoseLines(j)%p2)) &
-              !      CALL tmppoints(ipoint+k)%clear()
-              !  ENDIF
-              !  !Found an intersection!  Polygon is outside!
-              !  IF(tmppoints(ipoint+k)%dim > 0) THEN
-              !    bool=.FALSE.
-              !    EXIT Quad
-              !  ENDIF
-              !ENDDO
-            ENDDO
-            !ThoseCircs
-            DO j=1,thatPoly%nQuadEdge
-              CALL theseCircs(i)%intersectCircle(thoseCircs(j),p1,p2)
-              !Found an intersection!  Polygon is outside!
-              IF((p1%dim > 0) .OR. (p2%dim > 0)) THEN
-                bool=.FALSE.
-                EXIT Quad
+                EXIT Line
               ENDIF
             ENDDO
-          ENDDO Quad
-        ENDIF
+          ENDDO Line
+          IF(bool) THEN
+            !Test for circle-line intersections
+            Quad: DO i=1,thisPoly%nQuadEdge
+              !Loop over straight edges
+              DO j=1,thatPoly%nVert
+                CALL p1%clear()
+                CALL p2%clear()
+                IF(thatPoly%nQuadEdge > 0) THEN
+                  IF(ALL(thatPoly%quad2edge /= i)) THEN
+                    CALL tmpLine%set(thatPoly%vert(thatPoly%edge(1,j)), &
+                      thatPoly%vert(thatPoly%edge(2,j)))
+                    CALL Circs(i)%intersectLine(tmpLine,p1,p2)
+                  ELSE
+                    CYCLE
+                  ENDIF
+                ELSE
+                  CALL tmpLine%set(thatPoly%vert(thatPoly%edge(1,j)), &
+                    thatPoly%vert(thatPoly%edge(2,j)))
+                  CALL Circs(i)%intersectLine(tmpLine,p1,p2)
+                ENDIF
+              
+                IF(p1%dim == -3) p1%dim=2 !Include tangent points
+            
+                !If line segment end points are on circle, intersections
+                !are not returned, so we handle that special case here.
+                IF(p1%dim == 0 .AND. Circs(i)%onSurface(tmpLine%p1)) &
+                  p1=tmpLine%p1
+                IF(p2%dim == 0 .AND. Circs(i)%onSurface(tmpLine%p2)) &
+                  p2=tmpLine%p2
 
-        IF(bool) THEN
-          subPoly => thisPoly%subRegions
-          DO WHILE(ASSOCIATED(subPoly))
-            IF(subPoly%doesPolyIntersect(thatPoly)) THEN
-              bool=.FALSE.
-              EXIT
-            ENDIF
-            subPoly => subPoly%nextPoly
-          ENDDO
-          subPoly => NULL()
+                !Exclude points not in the arc, or the endpoints
+                IF(.NOT.Circs(i)%onSurface(p1) .OR. &
+                  (tmpLine%p1 .APPROXEQA. p1) .OR. &
+                  (tmpLine%p2 .APPROXEQA. p1)) CALL p1%clear()
+                IF(.NOT.Circs(i)%onSurface(p2) .OR. &
+                  (tmpLine%p1 .APPROXEQA. p2) .OR. &
+                  (tmpLine%p2 .APPROXEQA. p2)) CALL p2%clear()
+            
+                IF((p1%dim > 0) .OR. (p2%dim > 0)) THEN
+                  bool=.FALSE.
+                  EXIT Quad
+                ENDIF
+                CALL tmpLine%clear()
+              ENDDO
+              !Loop over quadratic edges
+              DO j=1,thatPoly%nQuadEdge
+                CALL createArcFromQuad(thatPoly,j,tmpCirc)
+                CALL tmpCirc%intersectCircle(Circs(i),p1,p2)
+              
+                IF(p1%dim == -3) p1%dim=2 !Include tangent points
+            
+                iedge=thatPoly%quad2edge(j)
+                !Exclude points not in the arc, or the endpoints
+                IF(.NOT.tmpCirc%onSurface(p1) .OR. &
+                  (thatPoly%vert(thatPoly%edge(1,iedge)) .APPROXEQA. p1) .OR. &
+                  (thatPoly%vert(thatPoly%edge(2,iedge)) .APPROXEQA. p1)) CALL p1%clear()
+                IF(.NOT.tmpCirc%onSurface(p2) .OR. &
+                  (thatPoly%vert(thatPoly%edge(1,iedge)) .APPROXEQA. p2) .OR. &
+                  (thatPoly%vert(thatPoly%edge(2,iedge)) .APPROXEQA. p2)) CALL p2%clear()
+            
+                IF((p1%dim > 0) .OR. (p2%dim > 0)) THEN
+                  bool=.FALSE.
+                  EXIT Quad
+                ENDIF
+                CALL tmpCirc%clear()
+              ENDDO
+            ENDDO Quad
+          ENDIF
         ENDIF
-        
-        !Check if thatPoly's centroid is inside thisPoly
-        IF(bool .AND. (.NOT. thisPoly%pointInside(thatPoly%centroid) .AND. & 
+        !3. make sure smaller polygon centroid is inside larger polygon
+        IF(bool) THEN
+          IF((.NOT. thisPoly%pointInside(thatPoly%centroid) .AND. & 
            thatPoly%pointInside(thatPoly%centroid))) bool=.FALSE.
+        ENDIF
+        !4. Evaluate against subregions (for each subregion)
+        IF(bool) THEN
+          IF(ASSOCIATED(thisPoly%subregions)) THEN
+            iPoly => NULL()
+            lastSubPoly => thisPoly%subRegions
+            sub: DO WHILE(ASSOCIATED(lastSubPoly))
+              !  A. Check that all vertices of polygon are subregion%onSurface .EQV. subregion%inside
+              DO i=1,thatPoly%nVert
+                IF(lastSubPoly%onSurface(thatPoly%vert(i)) .NEQV. &
+                    lastSubPoly%pointInside(thatPoly%vert(i))) THEN
+                  bool=.FALSE.
+                  EXIT sub
+                ENDIF
+              ENDDO
+              !  B. Check that there are no intersections between edges of polygons (ignore intersections that are vertices)
+              IF(lastSubPoly%doesPolyIntersect(thatPoly)) THEN
+                bool=.FALSE.
+                EXIT
+              ENDIF
+              !  C. make sure centroid is outside
+              !IF(lastSubPoly%pointInside(thatPoly%centroid)) THEN
+              !  bool=.FALSE.
+              !  EXIT
+              !ENDIF
+              iPoly => lastSubPoly
+              lastSubPoly => lastSubPoly%nextPoly
+            ENDDO sub
+          ENDIF
+        ENDIF
+      
+      !IF(thisPoly%isinit .AND. thatPoly%isinit) THEN
+      !  bool=.TRUE.
+      !  !Set up all the lines for both polygons
+      !  ALLOCATE(theseLines(thisPoly%nVert))
+      !  ALLOCATE(thoseLines(thatPoly%nVert))
+      !  IF(thisPoly%nQuadEdge > 0) ALLOCATE(theseCircs(thisPoly%nQuadEdge))
+      !  IF(thatPoly%nQuadEdge > 0) ALLOCATE(thoseCircs(thatPoly%nQuadEdge))
+      !  DO i=1,thisPoly%nVert
+      !    IF(thisPoly%nQuadEdge > 0) THEN
+      !      IF(ALL(thisPoly%quad2edge /= i)) CALL theseLines(i)%set(thisPoly%vert(thisPoly%edge(1,i)), &
+      !        thisPoly%vert(thisPoly%edge(2,i)))
+      !    ELSE
+      !      CALL theseLines(i)%set(thisPoly%vert(thisPoly%edge(1,i)), &
+      !        thisPoly%vert(thisPoly%edge(2,i)))
+      !    ENDIF
+      !  ENDDO
+      !  DO i=1,thatPoly%nVert
+      !    !Make sure all of those points are inside thisPoly!
+      !    IF(.NOT.thisPoly%pointInside(thatPoly%vert(i))) THEN
+      !      bool=.FALSE.
+      !      EXIT
+      !    ENDIF
+      !    IF(thatPoly%nQuadEdge > 0) THEN
+      !      IF(ALL(thatPoly%quad2edge /= i)) CALL thoseLines(i)%set(thatPoly%vert(thatPoly%edge(1,i)), &
+      !        thatPoly%vert(thatPoly%edge(2,i)))
+      !    ELSE
+      !      CALL thoseLines(i)%set(thatPoly%vert(thatPoly%edge(1,i)), &
+      !        thatPoly%vert(thatPoly%edge(2,i)))
+      !    ENDIF
+      !  ENDDO
+      !  DO i=1,thisPoly%nQuadEdge
+      !    CALL createArcFromQuad(thisPoly,i,theseCircs(i))
+      !  ENDDO
+      !  DO i=1,thatPoly%nQuadEdge
+      !    CALL createArcFromQuad(thatPoly,i,thoseCircs(i))
+      !  ENDDO
+      !  !Nested do-loops for intersecting all lines with lines
+      !  !TheseLines
+      !  IF(bool) THEN
+      !    Line: DO i=1,thisPoly%nVert
+      !      !ThoseLines
+      !      DO j=1,thatPoly%nVert
+      !        IF((theseLines(i)%p1%dim == 2) .AND. (thoseLines(j)%p1%dim == 2)) THEN
+      !          p1=theseLines(i)%intersect(thoseLines(j))
+      !          IF(p1%dim > 0) THEN
+      !            !Clear the point if it happens to be one of the segment endpoints
+      !            IF((p1 .APPROXEQA. theseLines(i)%p1) .OR. &
+      !               (p1 .APPROXEQA. theseLines(i)%p2) .OR. &
+      !               (p1 .APPROXEQA. thoseLines(j)%p1) .OR. &
+      !               (p1 .APPROXEQA. thoseLines(j)%p2)) &
+      !              CALL p1%clear()
+      !          ENDIF
+      !          IF(p1%dim > 0) THEN
+      !            !Found an intersection! Polygon is outside!
+      !            bool=.FALSE.
+      !            EXIT Line
+      !          ENDIF
+      !        ENDIF
+      !      ENDDO
+      !      !All lines with the other circles
+      !      DO j=1,thatPoly%nQuadEdge
+      !        IF(theseLines(i)%p1%dim == 2) THEN
+      !        
+      !          CALL thoseCircs(j)%intersectLine(theseLines(i),p1,p2)
+      !          IF(p1%dim == -3) p1%dim=2 !Include tangent points
+      !      
+      !          !If line segment end points are on circle, intersections
+      !          !are not returned, so we handle that special case here.
+      !          IF(p1%dim == 0 .AND. thoseCircs(j)%onSurface(theseLines(i)%p1)) &
+      !            p1=theseLines(i)%p1
+      !          IF(p2%dim == 0 .AND. thoseCircs(j)%onSurface(theseLines(i)%p2)) &
+      !            p2=theseLines(i)%p2
+      !
+      !          !Exclude points not in the arc
+      !          IF(.NOT.thoseCircs(j)%onSurface(p1)) CALL p1%clear()
+      !          IF(.NOT.thoseCircs(j)%onSurface(p2)) CALL p2%clear()
+      !      
+      !          IF((p1%dim > 0) .OR. (p2%dim > 0)) THEN
+      !            bool=.FALSE.
+      !            EXIT Line
+      !          ENDIF
+      !          
+      !          !CALL thoseCircs(j)%intersectArcLine(theseLines(i),tmppoints(ipoint), &
+      !          !  tmppoints(ipoint+1),tmppoints(ipoint+2),tmppoints(ipoint+3))
+      !          !Check if the points are on the circle
+      !          !DO k=0,3
+      !          !  IF(tmppoints(ipoint+k)%dim == 2) THEN
+      !          !    !If it's not on the circle, clear it.
+      !          !    x=tmppoints(ipoint+k)%coord(1)-thoseCircs(j)%c%coord(1)
+      !          !    y=tmppoints(ipoint+k)%coord(2)-thoseCircs(j)%c%coord(2)
+      !          !    IF(.NOT.(x*x+y*y .APPROXEQA. thoseCircs(j)%r*thoseCircs(j)%r)) &
+      !          !      CALL tmppoints(ipoint+k)%clear()
+      !          !  ENDIF
+      !          !  !Found an intersection!  Polygon is outside!
+      !          !  IF(tmppoints(ipoint+k)%dim > 0) THEN
+      !          !    bool=.FALSE.
+      !          !    EXIT Line
+      !          !  ENDIF
+      !          !ENDDO
+      !        ENDIF
+      !      ENDDO
+      !    ENDDO Line
+      !  ENDIF
+      !  !All circles with the other circles  (May need to improve this intersection routine for arcs...
+      !  !TheseCircs
+      !  IF(bool) THEN
+      !    Quad: DO i=1,thisPoly%nQuadEdge
+      !      DO j=1,thatPoly%nVert
+      !        CALL theseCircs(i)%intersectLine(thoseLines(j),p1,p2)
+      !        IF(p1%dim == -3) p1%dim=2 !Include tangent points
+      !      
+      !        !If line segment end points are on circle, intersections
+      !        !are not returned, so we handle that special case here.
+      !        IF(p1%dim == 0 .AND. theseCircs(i)%onSurface(thoseLines(j)%p1)) &
+      !          p1=thoseLines(j)%p1
+      !        IF(p2%dim == 0 .AND. theseCircs(i)%onSurface(thoseLines(j)%p2)) &
+      !          p2=thoseLines(j)%p2
+      !
+      !        !Exclude points not in the arc
+      !        IF(.NOT.theseCircs(i)%onSurface(p1)) CALL p1%clear()
+      !        IF(.NOT.theseCircs(i)%onSurface(p2)) CALL p2%clear()
+      !      
+      !        IF((p1%dim > 0) .OR. (p2%dim > 0)) THEN
+      !          bool=.FALSE.
+      !          EXIT Quad
+      !        ENDIF
+      !          
+      !        !CALL theseCircs(i)%intersectArcLine(thoseLines(j),tmppoints(ipoint), &
+      !        !  tmppoints(ipoint+1),tmppoints(ipoint+2),tmppoints(ipoint+3))
+      !        !!Check if the points are on the circle
+      !        !DO k=0,3
+      !        !  IF(tmppoints(ipoint+k)%DIM == 2) THEN
+      !        !    !If it's not on the circle, clear it. OR
+      !        !    !If it is an end-point of thoseLines, clear it
+      !        !    x=tmppoints(ipoint+k)%coord(1)-theseCircs(i)%c%coord(1)
+      !        !    y=tmppoints(ipoint+k)%coord(2)-theseCircs(i)%c%coord(2)
+      !        !    IF(.NOT.(x*x+y*y .APPROXEQA. theseCircs(i)%r*theseCircs(i)%r) .OR. &
+      !        !       (tmpPoints(ipoint+k) .APPROXEQA. thoseLines(j)%p1) .OR. &
+      !        !       (tmpPoints(ipoint+k) .APPROXEQA. thoseLines(j)%p2)) &
+      !        !      CALL tmppoints(ipoint+k)%clear()
+      !        !  ENDIF
+      !        !  !Found an intersection!  Polygon is outside!
+      !        !  IF(tmppoints(ipoint+k)%dim > 0) THEN
+      !        !    bool=.FALSE.
+      !        !    EXIT Quad
+      !        !  ENDIF
+      !        !ENDDO
+      !      ENDDO
+      !      !ThoseCircs
+      !      DO j=1,thatPoly%nQuadEdge
+      !        CALL theseCircs(i)%intersectCircle(thoseCircs(j),p1,p2)
+      !        !Found an intersection!  Polygon is outside!
+      !        IF((p1%dim > 0) .OR. (p2%dim > 0)) THEN
+      !          bool=.FALSE.
+      !          EXIT Quad
+      !        ENDIF
+      !      ENDDO
+      !    ENDDO Quad
+      !  ENDIF
+
+        !IF(bool) THEN
+        !  subPoly => thisPoly%subRegions
+        !  DO WHILE(ASSOCIATED(subPoly))
+        !    IF(subPoly%doesPolyIntersect(thatPoly)) THEN
+        !      bool=.FALSE.
+        !      EXIT
+        !    ENDIF
+        !    subPoly => subPoly%nextPoly
+        !  ENDDO
+        !  subPoly => NULL()
+        !ENDIF
+        !
+        !!Check if thatPoly's centroid is inside thisPoly
+        !IF(bool .AND. (.NOT. thisPoly%pointInside(thatPoly%centroid) .AND. & 
+        !   thatPoly%pointInside(thatPoly%centroid))) bool=.FALSE.
 
         !Clear the first set of lines
-        DO i=1,thisPoly%nVert
-          CALL theseLines(i)%clear()
+        DO i=1,SIZE(Lines)
+          CALL Lines(i)%clear()
         ENDDO
+        
         !Clear the first set of circles
-        DO i=1,thisPoly%nQuadEdge
-          CALL theseCircs(i)%clear()
-        ENDDO
-        !Clear the rest of the circles
-        DO j=1,thatPoly%nQuadEdge
-          CALL thoseCircs(j)%clear()
-        ENDDO
-        !Clear the rest of the lines.
-        DO j=1,thatPoly%nVert
-          CALL thoseLines(j)%clear()
+        DO i=1,SIZE(Circs)
+          CALL Circs(i)%clear()
         ENDDO
         
         !Clear stuff
-        DEALLOCATE(theseLines,thoseLines)
-        IF(ALLOCATED(theseCircs)) DEALLOCATE(theseCircs)
-        IF(ALLOCATED(thoseCircs)) DEALLOCATE(thoseCircs)
+        IF(ALLOCATED(Lines)) DEALLOCATE(Lines)
+        IF(ALLOCATED(Circs)) DEALLOCATE(Circs)
       ENDIF
     ENDFUNCTION polygon_inside_PolygonType
 !
@@ -927,171 +1125,351 @@ MODULE Geom_Poly
       CLASS(PolygonType),INTENT(IN) :: thisPoly
       TYPE(PolygonType),INTENT(IN) :: thatPoly
       LOGICAL(SBK) :: bool
-      INTEGER(SIK) :: i,j,k
+      INTEGER(SIK) :: i,j,k,iedge
       REAL(SRK) :: x,y
       TYPE(PointType) :: p1,p2
-      TYPE(LineType),ALLOCATABLE :: theseLines(:),thoseLines(:)
-      TYPE(CircleType),ALLOCATABLE :: theseCircs(:),thoseCircs(:)
+      TYPE(LineType) :: tmpLine
+      TYPE(LineType),ALLOCATABLE :: Lines(:),theseLines(:),thoseLines(:)
+      TYPE(CircleType) :: tmpCirc
+      TYPE(CircleType),ALLOCATABLE :: Circs(:),theseCircs(:),thoseCircs(:)
       
       bool=.FALSE.
+      
       IF(thisPoly%isinit .AND. thatPoly%isinit) THEN
-        !Set up all the lines for both polygons
-        ALLOCATE(theseLines(thisPoly%nVert))
-        ALLOCATE(thoseLines(thatPoly%nVert))
-        IF(thisPoly%nQuadEdge > 0) ALLOCATE(theseCircs(thisPoly%nQuadEdge))
-        IF(thatPoly%nQuadEdge > 0) ALLOCATE(thoseCircs(thatPoly%nQuadEdge))
+        !2. Check intersections between combinations of edges of two polygons (ignore intersections that are vertices)
+        ALLOCATE(Lines(thisPoly%nVert-thisPoly%nQuadEdge))
+        IF(thisPoly%nQuadEdge > 0) ALLOCATE(Circs(thisPoly%nQuadEdge))
+        j=1
+        !Set up the lines for thisPoly
         DO i=1,thisPoly%nVert
           IF(thisPoly%nQuadEdge > 0) THEN
-            IF(ALL(thisPoly%quad2edge /= i)) CALL theseLines(i)%set(thisPoly%vert(thisPoly%edge(1,i)), &
-              thisPoly%vert(thisPoly%edge(2,i)))
-          ELSE
-            CALL theseLines(i)%set(thisPoly%vert(thisPoly%edge(1,i)), &
-              thisPoly%vert(thisPoly%edge(2,i)))
-          ENDIF
-        ENDDO
-        DO i=1,thatPoly%nVert
-          IF(thatPoly%nQuadEdge > 0) THEN
-            IF(ALL(thatPoly%quad2edge /= i)) CALL thoseLines(i)%set(thatPoly%vert(thatPoly%edge(1,i)), &
-              thatPoly%vert(thatPoly%edge(2,i)))
-          ELSE
-            CALL thoseLines(i)%set(thatPoly%vert(thatPoly%edge(1,i)), &
-              thatPoly%vert(thatPoly%edge(2,i)))
-          ENDIF
-        ENDDO
-        DO i=1,thisPoly%nQuadEdge
-          CALL createArcFromQuad(thisPoly,i,theseCircs(i))
-        ENDDO
-        DO i=1,thatPoly%nQuadEdge
-          CALL createArcFromQuad(thatPoly,i,thoseCircs(i))
-        ENDDO
-        
-        !Nested do-loops for intersecting all lines with lines
-        !TheseLines
-        Line: DO i=1,thisPoly%nVert
-          !ThoseLines
-          DO j=1,thatPoly%nVert
-            IF((theseLines(i)%p1%dim == 2) .AND. (thoseLines(j)%p1%dim == 2)) THEN
-              p1=theseLines(i)%intersect(thoseLines(j))
-              IF(p1%dim > 0) THEN
-                bool=.TRUE.
-                EXIT Line
-              ENDIF
+            IF(ALL(thisPoly%quad2edge /= i)) THEN
+              CALL Lines(j)%set(thisPoly%vert(thisPoly%edge(1,i)), &
+                thisPoly%vert(thisPoly%edge(2,i)))
+              j=j+1
             ENDIF
+          ELSE
+            CALL Lines(j)%set(thisPoly%vert(thisPoly%edge(1,i)), &
+              thisPoly%vert(thisPoly%edge(2,i)))
+            j=j+1
+          ENDIF
+        ENDDO
+        !Set up circles/arcs
+        DO i=1,thisPoly%nQuadEdge
+          CALL createArcFromQuad(thisPoly,i,Circs(i))
+        ENDDO
+        !Test for line-line intersections
+        Line: DO i=1,thisPoly%nVert-thisPoly%nQuadEdge
+          !Loop over straight edges
+          DO j=1,thatPoly%nVert
+            CALL p1%clear()
+            CALL p2%clear()
+            IF(thatPoly%nQuadEdge > 0) THEN
+              IF(ALL(thatPoly%quad2edge /= j)) THEN
+                CALL tmpLine%set(thatPoly%vert(thatPoly%edge(1,j)), &
+                  thatPoly%vert(thatPoly%edge(2,j)))
+                p1=Lines(i)%intersectLine(tmpLine)
+              ENDIF
+            ELSE
+              CALL tmpLine%set(thatPoly%vert(thatPoly%edge(1,j)), &
+                thatPoly%vert(thatPoly%edge(2,j)))
+              p1=Lines(i)%intersectLine(tmpLine)
+            ENDIF
+            !Check if there was an intersection
+            IF(p1%dim > 0) THEN
+              !Clear the point if it happens to be one of the segment endpoints
+              IF((p1 .APPROXEQA. Lines(i)%p1) .OR. &
+                 (p1 .APPROXEQA. Lines(i)%p2) .OR. &
+                 (p1 .APPROXEQA. tmpLine%p1) .OR. &
+                 (p1 .APPROXEQA. tmpLine%p2)) &
+                CALL p1%clear()
+            ENDIF
+            IF(p1%dim > 0) THEN
+              !Found an intersection! Polygon is outside!
+              bool=.TRUE.
+              EXIT Line
+            ENDIF
+            CALL tmpLine%clear()
           ENDDO
-          !All lines with the those circles
+          !Check for line-circle intersections
           DO j=1,thatPoly%nQuadEdge
-            CALL thoseCircs(j)%intersectLine(theseLines(i),p1,p2)
+            CALL createArcFromQuad(thatPoly,j,tmpCirc)
+            CALL tmpCirc%intersectLine(Lines(i),p1,p2)
+              
             IF(p1%dim == -3) p1%dim=2 !Include tangent points
             
             !If line segment end points are on circle, intersections
             !are not returned, so we handle that special case here.
-            IF(p1%dim == 0 .AND. thoseCircs(j)%onSurface(theseLines(i)%p1)) &
-              p1=theseLines(i)%p1
-            IF(p2%dim == 0 .AND. thoseCircs(j)%onSurface(theseLines(i)%p2)) &
-              p2=theseLines(i)%p2
+            IF(p1%dim == 0 .AND. tmpCirc%onSurface(Lines(i)%p1)) &
+              p1=Lines(i)%p1
+            IF(p2%dim == 0 .AND. tmpCirc%onSurface(Lines(i)%p2)) &
+              p2=Lines(i)%p2
 
-            !Exclude points not in the arc
-            IF(.NOT.thoseCircs(i)%onSurface(p1)) CALL p1%clear()
-            IF(.NOT.thoseCircs(i)%onSurface(p2)) CALL p2%clear()
+            !Exclude points not in the arc, or the endpoints
+            IF(.NOT.tmpCirc%onSurface(p1) .OR. &
+              (Lines(i)%p1 .APPROXEQA. p1) .OR. &
+              (Lines(i)%p2 .APPROXEQA. p1)) CALL p1%clear()
+            IF(.NOT.tmpCirc%onSurface(p2) .OR. &
+              (Lines(i)%p1 .APPROXEQA. p2) .OR. &
+              (Lines(i)%p2 .APPROXEQA. p2)) CALL p2%clear()
             
             IF((p1%dim > 0) .OR. (p2%dim > 0)) THEN
-              bool=.FALSE.
+              bool=.TRUE.
               EXIT Line
             ENDIF
-            !CALL thoseCircs(j)%intersectArcLine(theseLines(i),tmppoints(1), &
-            !  tmppoints(2),tmppoints(3),tmppoints(4))
-            !!Check if the points are on the circle
-            !DO k=1,4
-            !  IF(tmppoints(k)%DIM == 2) THEN
-            !    !If it's not on the circle, clear it.
-            !    x=tmppoints(k)%coord(1)-thoseCircs(j)%c%coord(1)
-            !    y=tmppoints(k)%coord(2)-thoseCircs(j)%c%coord(2)
-            !    IF(.NOT.(x*x+y*y .APPROXEQA. thoseCircs(j)%r*thoseCircs(j)%r)) &
-            !      CALL tmppoints(k)%clear()
-            !    IF(tmppoints(k)%dim > 0) THEN
-            !      bool=.TRUE.
-            !      EXIT Line
-            !    ENDIF
-            !  ENDIF
-            !ENDDO
           ENDDO
         ENDDO Line
-        
-        !All circles with the other circles  (May need to improve this intersection routine for arcs...
-        !TheseCircs
-        IF(.NOT. bool) THEN
+        IF(.NOT.bool) THEN
+          !Test for circle-line intersections
           Quad: DO i=1,thisPoly%nQuadEdge
+            !Loop over straight edges
             DO j=1,thatPoly%nVert
-              CALL theseCircs(i)%intersectLine(thoseLines(j),p1,p2)
+              CALL p1%clear()
+              CALL p2%clear()
+              IF(thatPoly%nQuadEdge > 0) THEN
+                IF(ALL(thatPoly%quad2edge /= j)) THEN
+                  CALL tmpLine%set(thatPoly%vert(thatPoly%edge(1,j)), &
+                    thatPoly%vert(thatPoly%edge(2,j)))
+                  CALL Circs(i)%intersectLine(tmpLine,p1,p2)
+                ELSE
+                  CYCLE
+                ENDIF
+              ELSE
+                CALL tmpLine%set(thatPoly%vert(thatPoly%edge(1,j)), &
+                  thatPoly%vert(thatPoly%edge(2,j)))
+                CALL Circs(i)%intersectLine(tmpLine,p1,p2)
+              ENDIF
+              
+              
               IF(p1%dim == -3) p1%dim=2 !Include tangent points
             
               !If line segment end points are on circle, intersections
               !are not returned, so we handle that special case here.
-              IF(p1%dim == 0 .AND. theseCircs(i)%onSurface(thoseLines(j)%p1)) &
-                p1=thoseLines(j)%p1
-              IF(p2%dim == 0 .AND. theseCircs(i)%onSurface(thoseLines(j)%p2)) &
-                p2=thoseLines(j)%p2
+              IF(p1%dim == 0 .AND. Circs(i)%onSurface(tmpLine%p1)) &
+                p1=tmpLine%p1
+              IF(p2%dim == 0 .AND. Circs(i)%onSurface(tmpLine%p2)) &
+                p2=tmpLine%p2
 
-              !Exclude points not in the arc
-              IF(.NOT.theseCircs(i)%onSurface(p1)) CALL p1%clear()
-              IF(.NOT.theseCircs(i)%onSurface(p2)) CALL p2%clear()
+              !Exclude points not in the arc, or the endpoints
+              IF(.NOT.Circs(i)%onSurface(p1) .OR. &
+                (tmpLine%p1 .APPROXEQA. p1) .OR. &
+                (tmpLine%p2 .APPROXEQA. p1)) CALL p1%clear()
+              IF(.NOT.Circs(i)%onSurface(p2) .OR. &
+                (tmpLine%p1 .APPROXEQA. p2) .OR. &
+                (tmpLine%p2 .APPROXEQA. p2)) CALL p2%clear()
             
               IF((p1%dim > 0) .OR. (p2%dim > 0)) THEN
-                bool=.FALSE.
-                EXIT Quad
-              ENDIF
-              !CALL theseCircs(i)%intersectArcLine(thoseLines(j),tmppoints(1), &
-              !  tmppoints(2),tmppoints(3),tmppoints(4))
-              !!Check if the points are on the circle
-              !DO k=1,4
-              !  IF(tmppoints(k)%DIM == 2) THEN
-              !    !If it's not on the circle, clear it.
-              !    x=tmppoints(k)%coord(1)-theseCircs(i)%c%coord(1)
-              !    y=tmppoints(k)%coord(2)-theseCircs(i)%c%coord(2)
-              !    IF(.NOT.(x*x+y*y .APPROXEQA. theseCircs(i)%r*theseCircs(i)%r)) &
-              !      CALL tmppoints(k)%clear()
-              !    IF(tmppoints(k)%dim > 0) THEN
-              !      bool=.TRUE.
-              !      EXIT Quad
-              !    ENDIF
-              !  ENDIF
-              !ENDDO
-            ENDDO
-            !ThoseCircs
-            DO j=1,thatPoly%nQuadEdge
-              CALL theseCircs(i)%intersectCircle(thoseCircs(j),p1,p2)
-              IF(p1%dim > 0 .OR. p2%dim > 0) THEN
                 bool=.TRUE.
                 EXIT Quad
               ENDIF
+              CALL tmpLine%clear()
+            ENDDO
+            !Loop over quadratic edges
+            DO j=1,thatPoly%nQuadEdge
+              CALL createArcFromQuad(thatPoly,j,tmpCirc)
+              CALL tmpCirc%intersectCircle(Circs(i),p1,p2)
+              
+              IF(p1%dim == -3) p1%dim=2 !Include tangent points
+            
+              iedge=thatPoly%quad2edge(j)
+              !Exclude points not in the arc, or the endpoints
+              IF(.NOT.tmpCirc%onSurface(p1) .OR. &
+                (thatPoly%vert(thatPoly%edge(1,iedge)) .APPROXEQA. p1) .OR. &
+                (thatPoly%vert(thatPoly%edge(2,iedge)) .APPROXEQA. p1)) CALL p1%clear()
+              IF(.NOT.tmpCirc%onSurface(p2) .OR. &
+                (thatPoly%vert(thatPoly%edge(1,iedge)) .APPROXEQA. p2) .OR. &
+                (thatPoly%vert(thatPoly%edge(2,iedge)) .APPROXEQA. p2)) CALL p2%clear()
+            
+              IF((p1%dim > 0) .OR. (p2%dim > 0)) THEN
+                bool=.TRUE.
+                EXIT Quad
+              ENDIF
+              CALL tmpCirc%clear()
             ENDDO
           ENDDO Quad
         ENDIF
-        !Clear the first set of lines
-        DO i=1,thisPoly%nVert
-          CALL theseLines(i)%clear()
-        ENDDO
-        !Clear the first set of circles
-        DO i=1,thisPoly%nQuadEdge
-          CALL theseCircs(i)%clear()
-        ENDDO
-        !Clear the rest of the circles
-        DO j=1,thatPoly%nQuadEdge
-          CALL thoseCircs(j)%clear()
-        ENDDO
-        !Clear the rest of the lines.
-        DO j=1,thatPoly%nVert
-          CALL thoseLines(j)%clear()
-        ENDDO
-        !DO i=1,4
-        !  CALL tmppoints(i)%clear()
-        !ENDDO
-        
-        !Clear stuff
-        DEALLOCATE(theseLines,thoseLines)
-        IF(ALLOCATED(theseCircs)) DEALLOCATE(theseCircs)
-        IF(ALLOCATED(thoseCircs)) DEALLOCATE(thoseCircs)
+        !4. Evaluate against subregions (for each subregion)
+        !IF(.NOT.bool) THEN
+        !  IF(ASSOCIATED(thisPoly%subregions)) THEN
+        !    iPoly => NULL()
+        !    lastSubPoly => thisPoly%subRegions
+        !    DO WHILE(ASSOCIATED(lastSubPoly))
+        !      !  B. Check that there are no intersections between edges of polygons (ignore intersections that are vertices)
+        !      IF(doesPolyIntersect_PolygonType(lastSubPoly,thatPoly)) THEN
+        !        bool=.TRUE.
+        !        EXIT
+        !      ENDIF
+        !      iPoly => lastSubPoly
+        !      lastSubPoly => lastSubPoly%nextPoly
+        !    ENDDO sub
+        !  ENDIF
+        !ENDIF
       ENDIF
+      
+      !bool=.FALSE.
+      !IF(thisPoly%isinit .AND. thatPoly%isinit) THEN
+      !  !Set up all the lines for both polygons
+      !  ALLOCATE(theseLines(thisPoly%nVert))
+      !  ALLOCATE(thoseLines(thatPoly%nVert))
+      !  IF(thisPoly%nQuadEdge > 0) ALLOCATE(theseCircs(thisPoly%nQuadEdge))
+      !  IF(thatPoly%nQuadEdge > 0) ALLOCATE(thoseCircs(thatPoly%nQuadEdge))
+      !  DO i=1,thisPoly%nVert
+      !    IF(thisPoly%nQuadEdge > 0) THEN
+      !      IF(ALL(thisPoly%quad2edge /= i)) CALL theseLines(i)%set(thisPoly%vert(thisPoly%edge(1,i)), &
+      !        thisPoly%vert(thisPoly%edge(2,i)))
+      !    ELSE
+      !      CALL theseLines(i)%set(thisPoly%vert(thisPoly%edge(1,i)), &
+      !        thisPoly%vert(thisPoly%edge(2,i)))
+      !    ENDIF
+      !  ENDDO
+      !  DO i=1,thatPoly%nVert
+      !    IF(thatPoly%nQuadEdge > 0) THEN
+      !      IF(ALL(thatPoly%quad2edge /= i)) CALL thoseLines(i)%set(thatPoly%vert(thatPoly%edge(1,i)), &
+      !        thatPoly%vert(thatPoly%edge(2,i)))
+      !    ELSE
+      !      CALL thoseLines(i)%set(thatPoly%vert(thatPoly%edge(1,i)), &
+      !        thatPoly%vert(thatPoly%edge(2,i)))
+      !    ENDIF
+      !  ENDDO
+      !  DO i=1,thisPoly%nQuadEdge
+      !    CALL createArcFromQuad(thisPoly,i,theseCircs(i))
+      !  ENDDO
+      !  DO i=1,thatPoly%nQuadEdge
+      !    CALL createArcFromQuad(thatPoly,i,thoseCircs(i))
+      !  ENDDO
+      !  
+      !  !Nested do-loops for intersecting all lines with lines
+      !  !TheseLines
+      !  Line: DO i=1,thisPoly%nVert
+      !    !ThoseLines
+      !    DO j=1,thatPoly%nVert
+      !      IF((theseLines(i)%p1%dim == 2) .AND. (thoseLines(j)%p1%dim == 2)) THEN
+      !        p1=theseLines(i)%intersect(thoseLines(j))
+      !        IF(p1%dim > 0) THEN
+      !          bool=.TRUE.
+      !          EXIT Line
+      !        ENDIF
+      !      ENDIF
+      !    ENDDO
+      !    !All lines with the those circles
+      !    DO j=1,thatPoly%nQuadEdge
+      !      CALL thoseCircs(j)%intersectLine(theseLines(i),p1,p2)
+      !      IF(p1%dim == -3) p1%dim=2 !Include tangent points
+      !      
+      !      !If line segment end points are on circle, intersections
+      !      !are not returned, so we handle that special case here.
+      !      IF(p1%dim == 0 .AND. thoseCircs(j)%onSurface(theseLines(i)%p1)) &
+      !        p1=theseLines(i)%p1
+      !      IF(p2%dim == 0 .AND. thoseCircs(j)%onSurface(theseLines(i)%p2)) &
+      !        p2=theseLines(i)%p2
+      !
+      !      !Exclude points not in the arc, or if they are arc vertices
+      !      IF(.NOT.thoseCircs(j)%onSurface(p1) .OR. &
+      !        (p1 .APPROXEQA. theseLines(i)%p1)  .OR. &
+      !        (p1 .APPROXEQA. theseLines(i)%p2)) CALL p1%clear()
+      !      
+      !      IF(.NOT.thoseCircs(j)%onSurface(p2).OR. &
+      !        (p2 .APPROXEQA. theseLines(i)%p1)  .OR. &
+      !        (p2 .APPROXEQA. theseLines(i)%p2)) CALL p2%clear()
+      !      
+      !      IF((p1%dim > 0) .OR. (p2%dim > 0)) THEN
+      !        bool=.FALSE.
+      !        EXIT Line
+      !      ENDIF
+      !      !CALL thoseCircs(j)%intersectArcLine(theseLines(i),tmppoints(1), &
+      !      !  tmppoints(2),tmppoints(3),tmppoints(4))
+      !      !!Check if the points are on the circle
+      !      !DO k=1,4
+      !      !  IF(tmppoints(k)%DIM == 2) THEN
+      !      !    !If it's not on the circle, clear it.
+      !      !    x=tmppoints(k)%coord(1)-thoseCircs(j)%c%coord(1)
+      !      !    y=tmppoints(k)%coord(2)-thoseCircs(j)%c%coord(2)
+      !      !    IF(.NOT.(x*x+y*y .APPROXEQA. thoseCircs(j)%r*thoseCircs(j)%r)) &
+      !      !      CALL tmppoints(k)%clear()
+      !      !    IF(tmppoints(k)%dim > 0) THEN
+      !      !      bool=.TRUE.
+      !      !      EXIT Line
+      !      !    ENDIF
+      !      !  ENDIF
+      !      !ENDDO
+      !    ENDDO
+      !  ENDDO Line
+      !  
+      !  !All circles with the other circles  (May need to improve this intersection routine for arcs...
+      !  !TheseCircs
+      !  IF(.NOT. bool) THEN
+      !    Quad: DO i=1,thisPoly%nQuadEdge
+      !      DO j=1,thatPoly%nVert
+      !        CALL theseCircs(i)%intersectLine(thoseLines(j),p1,p2)
+      !        IF(p1%dim == -3) p1%dim=2 !Include tangent points
+      !      
+      !        !If line segment end points are on circle, intersections
+      !        !are not returned, so we handle that special case here.
+      !        IF(p1%dim == 0 .AND. theseCircs(i)%onSurface(thoseLines(j)%p1)) &
+      !          p1=thoseLines(j)%p1
+      !        IF(p2%dim == 0 .AND. theseCircs(i)%onSurface(thoseLines(j)%p2)) &
+      !          p2=thoseLines(j)%p2
+      !
+      !        !Exclude points not in the arc
+      !        IF(.NOT.theseCircs(i)%onSurface(p1)) CALL p1%clear()
+      !        IF(.NOT.theseCircs(i)%onSurface(p2)) CALL p2%clear()
+      !      
+      !        IF((p1%dim > 0) .OR. (p2%dim > 0)) THEN
+      !          bool=.FALSE.
+      !          EXIT Quad
+      !        ENDIF
+      !        !CALL theseCircs(i)%intersectArcLine(thoseLines(j),tmppoints(1), &
+      !        !  tmppoints(2),tmppoints(3),tmppoints(4))
+      !        !!Check if the points are on the circle
+      !        !DO k=1,4
+      !        !  IF(tmppoints(k)%DIM == 2) THEN
+      !        !    !If it's not on the circle, clear it.
+      !        !    x=tmppoints(k)%coord(1)-theseCircs(i)%c%coord(1)
+      !        !    y=tmppoints(k)%coord(2)-theseCircs(i)%c%coord(2)
+      !        !    IF(.NOT.(x*x+y*y .APPROXEQA. theseCircs(i)%r*theseCircs(i)%r)) &
+      !        !      CALL tmppoints(k)%clear()
+      !        !    IF(tmppoints(k)%dim > 0) THEN
+      !        !      bool=.TRUE.
+      !        !      EXIT Quad
+      !        !    ENDIF
+      !        !  ENDIF
+      !        !ENDDO
+      !      ENDDO
+      !      !ThoseCircs
+      !      DO j=1,thatPoly%nQuadEdge
+      !        CALL theseCircs(i)%intersectCircle(thoseCircs(j),p1,p2)
+      !        IF(p1%dim > 0 .OR. p2%dim > 0) THEN
+      !          bool=.TRUE.
+      !          EXIT Quad
+      !        ENDIF
+      !      ENDDO
+      !    ENDDO Quad
+      !  ENDIF
+      !  !Clear the first set of lines
+      !  DO i=1,thisPoly%nVert
+      !    CALL theseLines(i)%clear()
+      !  ENDDO
+      !  !Clear the first set of circles
+      !  DO i=1,thisPoly%nQuadEdge
+      !    CALL theseCircs(i)%clear()
+      !  ENDDO
+      !  !Clear the rest of the circles
+      !  DO j=1,thatPoly%nQuadEdge
+      !    CALL thoseCircs(j)%clear()
+      !  ENDDO
+      !  !Clear the rest of the lines.
+      !  DO j=1,thatPoly%nVert
+      !    CALL thoseLines(j)%clear()
+      !  ENDDO
+      !  !DO i=1,4
+      !  !  CALL tmppoints(i)%clear()
+      !  !ENDDO
+      !  
+      !  !Clear stuff
+      !  DEALLOCATE(theseLines,thoseLines)
+      !  IF(ALLOCATED(theseCircs)) DEALLOCATE(theseCircs)
+      !  IF(ALLOCATED(thoseCircs)) DEALLOCATE(thoseCircs)
+      !ENDIF
     ENDFUNCTION doesPolyIntersect_PolygonType
 !
 !-------------------------------------------------------------------------------
