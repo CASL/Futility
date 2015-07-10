@@ -579,75 +579,85 @@ MODULE ArrayUtils
       REAL(SRK),ALLOCATABLE :: tmpout(:),tmpout2(:),tmp1(:),tmp2(:)
 
       !Process the first array if it is a delta
-      bool1=.FALSE.
-      sr1=SIZE(r1,DIM=1)
-      IF(PRESENT(delta1)) THEN
-        IF(delta1) THEN
-          IF(PRESENT(xi1)) THEN
-            CALL getAbsolute_1DReal(r1,tmp1,XI=xi1)
-          ELSE
-            CALL getAbsolute_1DReal(r1,tmp1)
+      IF(SIZE(r1) > 0 .AND. SIZE(r2) == 0) THEN
+        ALLOCATE(rout(SIZE(r1)))
+        rout=r1
+        !Need checks for delta in, xi1, and delta out
+      ELSEIF(SIZE(r1) == 0 .AND. SIZE(r2) > 0) THEN
+        ALLOCATE(rout(SIZE(r2)))
+        rout=r2
+        !Need checks for delta in, xi2, and delta out
+      ELSEIF(SIZE(r1) > 0 .AND. SIZE(r2) > 0) THEN
+        bool1=.FALSE.
+        sr1=SIZE(r1,DIM=1)
+        IF(PRESENT(delta1)) THEN
+          IF(delta1) THEN
+            IF(PRESENT(xi1)) THEN
+              CALL getAbsolute_1DReal(r1,tmp1,XI=xi1)
+            ELSE
+              CALL getAbsolute_1DReal(r1,tmp1)
+            ENDIF
+            bool1=.TRUE.
+            sr1=SIZE(tmp1,DIM=1)
           ENDIF
-          bool1=.TRUE.
-          sr1=SIZE(tmp1,DIM=1)
         ENDIF
-      ENDIF
-      !Process the second array if it is a delta
-      bool2=.FALSE.
-      sr2=SIZE(r2,DIM=1)
-      IF(PRESENT(delta2)) THEN
-        IF(delta2) THEN
-          IF(PRESENT(xi2)) THEN
-            CALL getAbsolute_1DReal(r2,tmp2,XI=xi2)
-          ELSE
-            CALL getAbsolute_1DReal(r2,tmp2)
+        !Process the second array if it is a delta
+        bool2=.FALSE.
+        sr2=SIZE(r2,DIM=1)
+        IF(PRESENT(delta2)) THEN
+          IF(delta2) THEN
+            IF(PRESENT(xi2)) THEN
+              CALL getAbsolute_1DReal(r2,tmp2,XI=xi2)
+            ELSE
+              CALL getAbsolute_1DReal(r2,tmp2)
+            ENDIF
+            bool2=.TRUE.
+            sr2=SIZE(tmp2,DIM=1)
           ENDIF
-          bool2=.TRUE.
-          sr2=SIZE(tmp2,DIM=1)
         ENDIF
-      ENDIF
-      !Allocate the tmp array to the full size of the 2 arrays
-      tmpsout=sr1+sr2
-      ALLOCATE(tmpout(tmpsout))
-      IF(bool1) THEN
-        tmpout(1:sr1)=tmp1
-      ELSE
-        tmpout(1:sr1)=r1
-      ENDIF
-      IF(bool2) THEN
-        tmpout(sr1+1:tmpsout)=tmp2
-      ELSE
-        tmpout(sr1+1:tmpsout)=r2
-      ENDIF
-      !Sort the array components to make finding repeated values easy.
-      CALL sort(tmpout)
-      sout=tmpsout
-      !Find the number of repeated values
-      DO i=2,tmpsout
-        IF(tmpout(i-1) .APPROXEQ. tmpout(i)) sout=sout-1
-      ENDDO
-      ALLOCATE(tmpout2(sout))
-      tmpout2=0.0_SRK
-      tmpout2(1)=tmpout(1)
-      j=2
-      !Assign the non-repeated values
-      DO i=2,tmpsout
-        IF(.NOT.(tmpout(i-1) .APPROXEQ. tmpout(i))) THEN
-          tmpout2(j)=tmpout(i)
-          j=j+1
+        !Allocate the tmp array to the full size of the 2 arrays
+        tmpsout=sr1+sr2
+        ALLOCATE(tmpout(tmpsout))
+        IF(bool1) THEN
+          tmpout(1:sr1)=tmp1
+        ELSE
+          tmpout(1:sr1)=r1
         ENDIF
-      ENDDO
-      !If the output requires a delta array, convert it.
-      IF(PRESENT(deltaout)) THEN
-        IF(deltaout) THEN
-          CALL getDelta_1DReal(tmpout2,rout)
+        IF(bool2) THEN
+          tmpout(sr1+1:tmpsout)=tmp2
+        ELSE
+          tmpout(sr1+1:tmpsout)=r2
+        ENDIF
+        !Sort the array components to make finding repeated values easy.
+        CALL sort(tmpout)
+        sout=tmpsout
+        !Find the number of repeated values
+        DO i=2,tmpsout
+          IF(tmpout(i-1) .APPROXEQ. tmpout(i)) sout=sout-1
+        ENDDO
+        ALLOCATE(tmpout2(sout))
+        tmpout2=0.0_SRK
+        tmpout2(1)=tmpout(1)
+        j=2
+        !Assign the non-repeated values
+        DO i=2,tmpsout
+          IF(.NOT.(tmpout(i-1) .APPROXEQ. tmpout(i))) THEN
+            tmpout2(j)=tmpout(i)
+            j=j+1
+          ENDIF
+        ENDDO
+        !If the output requires a delta array, convert it.
+        IF(PRESENT(deltaout)) THEN
+          IF(deltaout) THEN
+            CALL getDelta_1DReal(tmpout2,rout)
+          ELSE
+            ALLOCATE(rout(sout))
+            rout=tmpout2
+          ENDIF
         ELSE
           ALLOCATE(rout(sout))
           rout=tmpout2
         ENDIF
-      ELSE
-        ALLOCATE(rout(sout))
-        rout=tmpout2
       ENDIF
     ENDSUBROUTINE getUnion_1DReal
 !
