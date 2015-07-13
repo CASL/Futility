@@ -4413,8 +4413,25 @@ PROGRAM testParameterLists
     CALL testParam%add('A -> Sub D -> bad location',0)
     ASSERT(testParam%has('A -> Sub D -> bad location'),'bad location')
     bool=testParam%has('A -> Sub A -> Sub B -> Sub C -> Sub D -> bad location')
-    ASSERT(.NOT.bool,'bad location')
+    ASSERT(.NOT.bool,'not bad location')
     CALL testParam%clear()
+    
+    
+    CALL testParam%add('A -> B',1)
+    CALL testParam%add('A -> C',1.0_SRK)
+    CALL testParam%add('A -> Sub A -> D',1)
+    CALL testParam%add('A -> Sub A -> Sub B -> Sub C -> X',1.0_SRK)
+    CALL testParam%add('A -> Sub A -> Sub B -> Sub C -> Y',0.0_SRK)
+    CALL testParam%add('A -> Sub A -> Sub B -> Sub C -> Sub D -> n',5)
+    CALL testParam2%add('someParam -> x',0)
+    CALL testParam2%add('someParam -> y',1)
+    CALL testParam2%get('someParam',someParam)
+    CALL testParam%add('A -> Sub D -> bad location 2',someParam)
+    ASSERT(testParam%has('A -> Sub D -> bad location 2'),'bad location 2')
+    bool=testParam%has('A -> Sub A -> Sub B -> Sub C -> Sub D -> bad location 2')
+    ASSERT(.NOT.bool,'not bad location 2')
+    CALL testParam%clear()
+    CALL testParam2%clear()
   ENDSUBROUTINE testAdd
 !
 !-------------------------------------------------------------------------------

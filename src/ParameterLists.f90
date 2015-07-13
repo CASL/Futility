@@ -1498,7 +1498,7 @@ MODULE ParameterLists
               !only search if it's not the last name in the
               !full address. last name is guaranteed not to exist
               !and this prevents accidental partial matching in sublists.
-              lsubListSearch=INDEX(TRIM(nextName),'->') > 0
+              lsubListSearch=.FALSE.
               CALL add_ParamType(thisParam,nextname,newParam)
               lsubListSearch=.TRUE.
             ELSE
