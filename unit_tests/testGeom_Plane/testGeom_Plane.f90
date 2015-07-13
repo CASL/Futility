@@ -67,7 +67,7 @@ PROGRAM testGeom_Plane
       bool = .NOT.(ANY(plane1%v0%coord /= 0.5_SRK) .OR. ANY(.NOT.(plane1%n .APPROXEQ. &
                    (/1._SRK/SQRT(3.0_SRK),1._SRK/SQRT(3.0_SRK),1._SRK/SQRT(3.0_SRK)/))))
       ASSERT(bool, 'plane1%set(...)')
-      CALL plane1%clear()
+      !CALL plane1%clear()
       
       !Test disjoint-ness
       COMPONENT_TEST('%intersect()')
@@ -121,14 +121,16 @@ PROGRAM testGeom_Plane
       CALL plane1%set(n,point)
       plane2=plane1
       ASSERT(plane1 == plane2,'plane equivalence')
-      CALL plane2%set((/1.0_SRK,0.0_SRK,1.0_SRK/),point)
+      n=(/1.0_SRK,0.0_SRK,1.0_SRK/)
+      CALL plane2%set(n,point)
       ASSERT(.NOT.(plane1 == plane2),'plane non-equivalence')
       
 #ifdef __GFORTRAN__
       WRITE(*,*) 'ELEMENTAL METHODS FOR NON-SCALAR BASE OBJECTS NOT YET SUPPORTED BY COMPILER'
 #else      
       COMPONENT_TEST('Elemental %set()')
-      CALL plane1%set((/1.0_SRK,1.0_SRK,1.0_SRK/),point)
+      n=(/1.0_SRK,1.0_SRK,1.0_SRK/)
+      CALL plane1%set(n,point)
       planes=plane1
       CALL line1%clear()
       CALL line1%p1%init(COORD=(/0.0_SRK,0.0_SRK,0.0_SRK/))
