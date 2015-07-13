@@ -701,9 +701,12 @@ MODULE Geom_Graph
           ENDDO
         ENDDO
         CALL clear_graphType(thisGraph)
-        CALL MOVE_ALLOC(tmpVert,thisGraph%vertices)
-        CALL MOVE_ALLOC(tmpEdge,thisGraph%edgeMatrix)
-        CALL MOVE_ALLOC(tmpQE,thisGraph%quadEdges)
+        IF(ALLOCATED(tmpVert)) &
+          CALL MOVE_ALLOC(tmpVert,thisGraph%vertices)
+        IF(ALLOCATED(tmpEdge)) &
+          CALL MOVE_ALLOC(tmpEdge,thisGraph%edgeMatrix)
+        IF(ALLOCATED(tmpQE)) &
+          CALL MOVE_ALLOC(tmpQE,thisGraph%quadEdges)
       ENDIF
     ENDSUBROUTINE removeVertex_idx_graphType
 !
