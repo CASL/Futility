@@ -281,8 +281,7 @@ MODULE Geom_Poly
               !Calculate Chord Sector area (Arc area - triangle area)
               coeff=1.0_SRK
               IF(line%pointIsLeft(point)) coeff=-1.0_SRK
-              theta=ABS(circle%thetastp-circle%thetastt)
-              IF(.NOT.(theta .APPROXLE. PI)) theta=theta-PI
+              theta=circle%thetastp-circle%thetastt !Guaranteed to be on (0,PI]
               tsint=theta-SIN(theta)
               halftheta=0.5_SRK*theta
               sinhalftheta=SIN(0.5_SRK*theta)
@@ -1777,13 +1776,13 @@ MODULE Geom_Poly
         !Starting angle uses the line endpoint
         IF(edge%pointIsRight(centroid)) THEN
           !starting angle is in quadrant 3 or 4
-          IF(edge%p2%coord(2) .APPROXLE. centroid%coord(2)) THEN
+          IF(.NOT.(edge%p2%coord(2) .APPROXGE. centroid%coord(2))) THEN
             angstart=outerAngle(edge%p2,centroid,refpoint)
           ELSE
             angstart=innerAngle(edge%p2,centroid,refpoint)
           ENDIF
           !stopping angle is in quadrant 3 or 4
-          IF(edge%p1%coord(2) .APPROXLE. centroid%coord(2)) THEN
+          IF(.NOT.(edge%p1%coord(2) .APPROXGE. centroid%coord(2))) THEN
             angstop=outerAngle(edge%p1,centroid,refpoint)
           ELSE
             angstop=innerAngle(edge%p1,centroid,refpoint)
@@ -1791,18 +1790,19 @@ MODULE Geom_Poly
         !Starting angle uses the line startpoint
         ELSE
           !starting angle is in quadrant 3 or 4
-          IF(edge%p1%coord(2) .APPROXLE. centroid%coord(2)) THEN
+          IF(.NOT.(edge%p1%coord(2) .APPROXGE. centroid%coord(2))) THEN
             angstart=outerAngle(edge%p1,centroid,refpoint)
           ELSE
             angstart=innerAngle(edge%p1,centroid,refpoint)
           ENDIF
           !stopping angle is in quadrant 3 or 4
-          IF(edge%p2%coord(2) .APPROXLE. centroid%coord(2)) THEN
+          IF(.NOT.(edge%p2%coord(2) .APPROXGE. centroid%coord(2))) THEN
             angstop=outerAngle(edge%p2,centroid,refpoint)
           ELSE
             angstop=innerAngle(edge%p2,centroid,refpoint)
           ENDIF
         ENDIF
+        IF(angstop < angstart) angstop=angstop+TWOPI
         CALL circle%set(centroid,thisPoly%quadEdge(3,iquad), &
           ANGSTT=angstart,ANGSTP=angstop)
         CALL centroid%clear()
