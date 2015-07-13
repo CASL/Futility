@@ -130,6 +130,18 @@ PROGRAM testGeom_Line
       bool = .NOT.(point%dim /= 2 .OR. .NOT.(point%coord(1) .APPROXEQ. 0.0_SRK) .OR. &
                    .NOT.(point%coord(2) .APPROXEQ. 0.5_SRK))
       ASSERT(bool, 'line1%intersectLine(...)')
+
+      !Test for within rounding error of intersect
+      CALL line1%clear()
+      CALL line2%clear()
+      CALL line1%p1%init(COORD=(/0.23706666666670007_SRK,-0.3041650000000002_SRK/))     
+      CALL line1%p2%init(COORD=(/0.23706666666670007_SRK, 0.64833499999999977_SRK/))     
+      CALL line2%p1%init(COORD=(/-0.11302999999999996_SRK,-0.30416500000000024_SRK/))     
+      CALL line2%p2%init(COORD=(/0.93725999999999998_SRK,-0.30416500000000024_SRK/))
+      point=line1%intersectLine(line2)
+      ASSERT(point%dim == 2,'line1%intersectLine(...)')
+      bool=ALL(point%coord .APPROXEQ. (/0.23706666666670007_SRK,-0.3041650000000002_SRK/))
+      ASSERT(bool,'%coord')
       !3D
       CALL line1%clear()
       CALL line2%clear()

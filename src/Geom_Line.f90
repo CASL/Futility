@@ -218,8 +218,8 @@ MODULE Geom_Line
       ELSE
         s=s/d
         t=t/d
-        IF((0._SRK <= s .AND. s <= 1.0_SRK) .AND. &
-           (0._SRK <= t .AND. t <= 1.0_SRK)) THEN
+        IF(((0._SRK .APPROXLE. s) .AND. (s .APPROXLE. 1.0_SRK)) .AND. &
+           ((0._SRK .APPROXLE. t) .AND. (t .APPROXLE. 1.0_SRK))) THEN
           !Success, intersection point was found.
           p=s1p0
           p%coord(1)=p%coord(1)+s*u(1)
