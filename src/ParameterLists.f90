@@ -1514,8 +1514,10 @@ MODULE ParameterLists
                   IF(ASSOCIATED(thisParam%pList(i)%pdat)) &
                     listName=TRIM(thisParam%pList(i)%pdat%name)
                   CALL toUPPER(listName)
-                  IF(listName == TRIM(thisName)) &
+                  IF(TRIM(listName) == TRIM(thisName)) THEN
                     tmpParam => thisParam%pList(i)%pdat
+                    EXIT
+                  ENDIF
                 ENDDO
               ENDIF
 
