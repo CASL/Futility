@@ -1557,30 +1557,53 @@ MODULE ParameterLists
             !Create a new entry in the list for the new parameter
             IF(np > 0) THEN
 
-              !Copy the parameter list to a temporary
-              ALLOCATE(tmpList(np))
+              !Search within the list to avoid duplicates.
+              IF(LEN_TRIM(newParam%name) == 0 .AND. ASSOCIATED(newParam%pdat)) THEN
+                thisname=newParam%pdat%name
+              ELSE
+                thisname=newParam%name
+              ENDIF
+              CALL toUPPER(thisName)
+              NULLIFY(tmpParam)
               DO i=1,np
-                CALL assign_ParamType(tmpList(i),thisParam%pList(i))
-                CALL thisParam%pList(i)%clear()
+                listName=''
+                IF(ASSOCIATED(thisParam%pList(i)%pdat)) &
+                  listName=TRIM(thisParam%pList(i)%pdat%name)
+                CALL toUPPER(listName)
+                IF(TRIM(listName) == TRIM(thisName)) THEN
+                  tmpParam => thisParam%pList(i)%pdat
+                  EXIT
+                ENDIF
               ENDDO
+              
+              IF(.NOT.ASSOCIATED(tmpParam)) THEN
+                !Copy the parameter list to a temporary
+                ALLOCATE(tmpList(np))
+                DO i=1,np
+                  CALL assign_ParamType(tmpList(i),thisParam%pList(i))
+                  CALL thisParam%pList(i)%clear()
+                ENDDO
 
-              !Reallocate the parameter list and copy everything back
-              DEALLOCATE(thisParam%pList)
-              ALLOCATE(thisParam%pList(np+1))
-              DO i=1,np
-                CALL assign_ParamType(thisParam%pList(i),tmpList(i))
-                CALL tmpList(i)%clear()
-              ENDDO
-              DEALLOCATE(tmpList)
-              i=np+1
+                !Reallocate the parameter list and copy everything back
+                DEALLOCATE(thisParam%pList)
+                ALLOCATE(thisParam%pList(np+1))
+                DO i=1,np
+                  CALL assign_ParamType(thisParam%pList(i),tmpList(i))
+                  CALL tmpList(i)%clear()
+                ENDDO
+                DEALLOCATE(tmpList)
+                i=np+1
+                CALL add_ParamType(thisParam%pList(i),name,newParam)
+              ELSE
+                CALL eParams%raiseError(modName//'::'//myName// &
+                  ' - parameter name "'//TRIM(thisname)// &
+                  '" already exists! Use set method!')
+              ENDIF
             ELSE
               !Allocate the list to 1 element
               ALLOCATE(thisParam%pList(1))
-              i=1
+              CALL add_ParamType(thisParam%pList(1),name,newParam)
             ENDIF
-
-            !Make recursive call to add the parameter in the new empty parameter
-            CALL add_ParamType(thisParam%pList(i),name,newParam)
           ENDIF
         CLASS DEFAULT
           CALL eParams%raiseError(modName//'::'//myName// &

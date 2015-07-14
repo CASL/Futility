@@ -4430,6 +4430,12 @@ PROGRAM testParameterLists
     ASSERT(testParam%has('A -> Sub D -> bad location 2'),'bad location 2')
     bool=testParam%has('A -> Sub A -> Sub B -> Sub C -> Sub D -> bad location 2')
     ASSERT(.NOT.bool,'not bad location 2')
+    !Redundant Add
+    CALL testParam%add('A -> Sub D -> bad location 2',someParam)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType -'// &
+      ' parameter name "SOMEPARAM" already exists! Use set method!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add (param)')
     CALL testParam%clear()
     CALL testParam2%clear()
   ENDSUBROUTINE testAdd
