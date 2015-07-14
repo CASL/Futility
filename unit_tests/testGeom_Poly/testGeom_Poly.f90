@@ -43,22 +43,18 @@ PROGRAM testGeom_Poly
   REGISTER_SUBTEST('%clear',testClear)
   REGISTER_SUBTEST('%set',testSet)
   REGISTER_SUBTEST('Polygonize',testPolygonize)
+  REGISTER_SUBTEST('%isCircle',testIsCircle)
+  REGISTER_SUBTEST('%GetRadius',testGetRadius)
   REGISTER_SUBTEST('%generateGraph',testGenerateGraph)
   REGISTER_SUBTEST('%intersectLine',testIntersectLine)
+  REGISTER_SUBTEST('%doesLineIntersect',testDoesLineIntersect)
   REGISTER_SUBTEST('%onSurface',testPointOnSurface)
   REGISTER_SUBTEST('%pointInside',testPointInside)
   REGISTER_SUBTEST('%boundsPoly',testPolyInside)
-  REGISTER_SUBTEST('%subtractSubVolume',testSubtractSubVol)
-  REGISTER_SUBTEST('%doesLineIntersect',testDoesLineIntersect)
   REGISTER_SUBTEST('%doesPolyIntersect',testDoesPolyIntersect)
-  !REGISTER_SUBTEST('Test IntersectPoly',testIntersectPoly)
-  REGISTER_SUBTEST('Test isCircle',testIsCircle)
-  REGISTER_SUBTEST('Test GetRadius',testGetRadius)
+  REGISTER_SUBTEST('%subtractSubVolume',testSubtractSubVol)
+  REGISTER_SUBTEST('Operator(==)',testEquivalence)
   
-  REGISTER_SUBTEST('Test Polygonize',testPolygonize)
-  REGISTER_SUBTEST('Test GenerateGraph',testGenerateGraph)
-  REGISTER_SUBTEST('Test Operator(==)',testEquivalence)
-
   FINALIZE_TEST()
 !
 !===============================================================================
