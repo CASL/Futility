@@ -419,13 +419,13 @@ MODULE Geom_Box
        ALLOCATE(lines(4))
        lines(1)%p1=thisBox%p0
        lines(4)%p2=thisBox%p0
-       CALL lines(1)%p2%init(X=thisBox%p0%coord(1)+thisBox%u(1,1)*thisBox%e(1), &
+       CALL lines(1)%p2%init(DIM=2,X=thisBox%p0%coord(1)+thisBox%u(1,1)*thisBox%e(1), &
          Y=thisBox%p0%coord(2)+thisBox%u(2,1)*thisBox%e(1))
        lines(2)%p1=lines(1)%p2
-       CALL lines(2)%p2%init(X=lines(2)%p1%coord(1)+thisBox%u(1,2)*thisBox%e(2), &
+       CALL lines(2)%p2%init(DIM=2,X=lines(2)%p1%coord(1)+thisBox%u(1,2)*thisBox%e(2), &
          Y=lines(2)%p1%coord(2)+thisBox%u(2,2)*thisBox%e(2))
        lines(3)%p1=lines(2)%p2
-       CALL lines(3)%p2%init(X=thisBox%p0%coord(1)+thisBox%u(1,2)*thisBox%e(2), &
+       CALL lines(3)%p2%init(DIM=2,X=thisBox%p0%coord(1)+thisBox%u(1,2)*thisBox%e(2), &
          Y=thisBox%p0%coord(2)+thisBox%u(2,2)*thisBox%e(2))
        lines(4)%p1=lines(3)%p2
      !ELSE
