@@ -1906,7 +1906,6 @@ PROGRAM testGeom_Poly
     ENDSUBROUTINE testIntersectLine
 !
 !-------------------------------------------------------------------------------
-!
     SUBROUTINE testIntersectPoly()
       INTEGER(SIK) :: i,inext
       REAL(SRK) :: testCoord(2,9),c0(2),r
