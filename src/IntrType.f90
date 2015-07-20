@@ -371,6 +371,9 @@ MODULE IntrType
     !> @copybrief IntrType::assign_char_to_bool
     !> @copydetails IntrType::assign_char_to_bool
     MODULE PROCEDURE assign_char_to_bool
+    !> @copybrief IntrType::assign_char_to_single
+    !> @copydetails IntrType::assign_char_to_single
+    MODULE PROCEDURE assign_char_to_single
     !> @copybrief IntrType::assign_char_to_double
     !> @copydetails IntrType::assign_char_to_double
     MODULE PROCEDURE assign_char_to_double
@@ -929,7 +932,7 @@ MODULE IntrType
     ELEMENTAL SUBROUTINE assign_char_to_int(i,c)
       INTEGER(SNK),INTENT(OUT) :: i
       CHARACTER(LEN=*),INTENT(IN) :: c
-      READ(c, '(I16)') i
+      READ(c, '(I12)') i
     ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
@@ -939,13 +942,13 @@ MODULE IntrType
 !> @param c the character value
 !> @returns s the logical value of c
 !>
-    ELEMENTAL SUBROUTINE assign_char_to_bool(l,c)
-      LOGICAL(SBK),INTENT(OUT) :: l
+    ELEMENTAL SUBROUTINE assign_char_to_bool(b,c)
+      LOGICAL(SBK),INTENT(OUT) :: b
       CHARACTER(LEN=*),INTENT(IN) :: c
       IF(c == 'true') THEN
-        l = .TRUE.
+        b = .TRUE.
       ELSE
-        l = .FALSE.
+        b = .FALSE.
       ENDIF
     ENDSUBROUTINE
 !
@@ -959,7 +962,9 @@ MODULE IntrType
     ELEMENTAL SUBROUTINE assign_char_to_single(s,c)
       REAL(SSK),INTENT(OUT) :: s
       CHARACTER(LEN=*),INTENT(IN) :: c
-      READ(c, '(I16)') s
+      INTEGER(SNK) :: tmpInt
+
+      READ(c, '(f19.0)') s
     ENDSUBROUTINE
 
 !
@@ -973,7 +978,9 @@ MODULE IntrType
     ELEMENTAL SUBROUTINE assign_char_to_double(d,c)
       REAL(SDK),INTENT(OUT) :: d
       CHARACTER(LEN=*),INTENT(IN) :: c
-      READ(c, '(i16)') d
+      INTEGER(SLK) :: tmpInt
+
+      READ(c, '(d35.0)') d
     ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
