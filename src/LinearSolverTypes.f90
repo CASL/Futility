@@ -316,7 +316,7 @@ MODULE LinearSolverTypes
       CALL validParams%get('LinearSolverType->numberOMP',numberOMP)
       CALL validParams%get('LinearSolverType->timerName',timerName)
       CALL validParams%get('LinearSolverType->matType',matType)
-      CALL validParams%add('LinearSolverType->MatrixType->matType',matType)
+      CALL validParams%add('LinearSolverType->A->MatrixType->matType',matType)
       ! pull data for matrix and vector parameter lists
       CALL validParams%get('LinearSolverType->A->MatrixType',pListPtr)
       matPList=pListPtr
@@ -338,6 +338,7 @@ MODULE LinearSolverTypes
 !      ENDIF
       !add mpi communicator to parameter lists
       CALL matPList%add('MatrixType->MPI_Comm_ID',MPI_Comm_ID)
+
       CALL vecxPList%add('VectorType->MPI_Comm_ID',MPI_Comm_ID)
       CALL vecbPList%add('VectorType->MPI_Comm_ID',MPI_Comm_ID)
       !pull size from source vector
