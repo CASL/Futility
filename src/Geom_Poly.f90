@@ -494,7 +494,7 @@ MODULE Geom_Poly
       TYPE(PointType),INTENT(IN) :: point
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: isSub
       LOGICAL(SBK) :: bool
-      LOGICAL(SBK) :: inConvexCirc,inConcaveCirc,isSubReg,inPoly,lpix,lpnextx
+      LOGICAL(SBK) :: inConvexCirc,inConcaveCirc,isSubReg,inPoly,lpix,lpnextx,onLine
       INTEGER(SIK) :: i,iedge
       REAL(SRK) :: r,w,wm,pi(2),pnext(2)
       TYPE(PointType) :: centroid
@@ -542,15 +542,17 @@ MODULE Geom_Poly
             CALL line%set(thisPoly%vert(thisPoly%edge(1,iedge)), &
               thisPoly%vert(thisPoly%edge(2,iedge)))
             CALL circ%set(centroid,thisPoly%quadEdge(3,i))
+            !If it's approximately on the line consider it in the arc
+            onLine=(line%distance2Point(point) .APPROXEQA. 0.0_SRK)
             !Check if the centroid is on the interior or exterior of the edge
             IF(line%pointIsRight(centroid) .AND. .NOT. inConvexCirc) THEN
               !Quad edge extends outside the polygon.  
               !Check if the point is to the left of the edge and inside the circle
-              inConvexCirc=line%pointIsLeft(point) .AND. circ%inside(point)
+              inConvexCirc=(line%pointIsLeft(point) .OR. onLine) .AND. circ%inside(point)
             ELSEIF(line%pointIsLeft(centroid) .AND. .NOT. inConcaveCirc) THEN
               !Quad edge extends inside the polygon.  
               !Check if the point is to the right of the edge and outside the circle
-              inConcaveCirc=line%pointIsRight(point) .AND. &
+              inConcaveCirc=(line%pointIsRight(point) .OR. onLine) .AND. &
                 (circ%inside(point) .AND. .NOT.circ%onSurface(point))
             ENDIF
             CALL circ%clear()

@@ -1072,6 +1072,53 @@ PROGRAM testGeom_Poly
       point%coord=(/-0.2_SRK,0.0_SRK/)
       ASSERT(.NOT.testPolyType%pointInside(point),'in Sub-Sub-Region')
 
+      !Test failed control rodlet geometry
+      c0=(/-0.64833500000000022_SRK,-0.72018071428571528_SRK/)
+      testCoord(:,1)=(/-0.82359500000000019_SRK,-0.72018071428571528_SRK/)
+      testCoord(:,2)=(/-0.64833500000000022_SRK,-0.54492071428571531_SRK/)
+      testCoord(:,3)=(/-0.47307500000000025_SRK,-0.72018071428571528_SRK/)
+      testCoord(:,4)=(/-0.64833500000000022_SRK,-0.89544071428571526_SRK/)
+      CALL testGraph%clear()
+      DO i=1,4
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineQuadraticEdge(testCoord(:,1),testCoord(:,2),c0,0.17526000000000000_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,2),testCoord(:,3),c0,0.17526000000000000_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,3),testCoord(:,4),c0,0.17526000000000000_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,4),testCoord(:,1),c0,0.17526000000000000_SRK)
+
+      CALL testPolyType%clear()
+      CALL testPolyType%set(testGraph)
+
+      ASSERT(testPolyType%isInit,'%isInit')
+
+      CALL point%clear()
+      CALL point%init(COORD=(/-0.56070500000000034_SRK,-0.80781071428571538_SRK/))
+      ASSERT(testPolyType%pointInside(point),'on vert line')
+
+      !Test rodlet 2
+      c0=(/-0.64833500000000022_SRK,0.33537071428571341_SRK/)
+      testCoord(:,1)=(/-0.82359500000000019_SRK,0.33537071428571341_SRK/)     
+      testCoord(:,2)=(/-0.64833500000000022_SRK,0.51063071428571338_SRK/)     
+      testCoord(:,3)=(/-0.47307500000000025_SRK,0.33537071428571341_SRK/)     
+      testCoord(:,4)=(/-0.64833500000000022_SRK,0.16011071428571341_SRK/)
+      CALL testGraph%clear()
+      DO i=1,4
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineQuadraticEdge(testCoord(:,1),testCoord(:,2),c0,0.17526000000000000_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,2),testCoord(:,3),c0,0.17526000000000000_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,3),testCoord(:,4),c0,0.17526000000000000_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,4),testCoord(:,1),c0,0.17526000000000000_SRK)
+
+      CALL testPolyType%clear()
+      CALL testPolyType%set(testGraph)
+
+      CALL point%clear()
+      CALL point%init(COORD=(/-0.56070500000000023_SRK,0.24774071428571345_SRK/))
+      ASSERTFAIL(testPolyType%isInit,'%isInit')
+      ASSERT(testPolyType%pointInside(point),'slightly off vert line')
+
     ENDSUBROUTINE testPointInside
 !
 !-------------------------------------------------------------------------------
