@@ -110,6 +110,8 @@ MODULE IntrType
   PUBLIC :: SOFTGE
   PUBLIC :: isNAN
   PUBLIC :: isINF
+  PUBLIC :: char_to_int_array
+  PUBLIC :: char_to_double_array
 !
 ! Variables
   !> @name Private Variables
@@ -985,13 +987,40 @@ MODULE IntrType
 !
 !-------------------------------------------------------------------------------
 !> @brief Defines the operation for performing an assignment of a character
-!> string to an array of doubles
-!> @param d the array of doubles
+!> string to an array of integers
+!> @param iArr the array of integers
 !> @param c the character value
 !TODO arrays
     ELEMENTAL SUBROUTINE assign_char_to_array_int(iArr,c)
-      REAL(SDK),INTENT(OUT) :: iArr
+      INTEGER(SIK),INTENT(OUT) :: iArr
       CHARACTER(LEN=*),INTENT(IN) :: c
+      CHARACTER(LEN=50) :: tmpStr
+      INTEGER(SIK) :: tmpInt
+      INTEGER(SIK) :: i,j,k
+
+      j=1
+      k=1 ! iArr index
+      DO i=2,LEN(c)-1
+        IF(c(i:i) /= ',') THEN
+          tmpStr(j:j)=c(i:i)
+          j=j+1
+        ELSE
+          tmpStr=tmpStr(1:j)
+          READ(tmpStr, '(I12)') tmpInt
+          !iArr(k:k)=tmpInt
+          !Read string into integer
+          !How to have it only read a certain amount?
+          j=1
+          k=k+1
+        ENDIF
+      ENDDO
+      !for char : c
+      !  if char != ','
+      !    push to tmpStr
+      !  else
+      !    convert tmpStr to int
+      !    add int to iArr
+      !end
 !      READ(c, '(i16)') iArr
     ENDSUBROUTINE
 !
@@ -1006,25 +1035,135 @@ MODULE IntrType
       CHARACTER(LEN=*),INTENT(IN) :: c
 !      READ(c, '(i16)') dArr
     ENDSUBROUTINE
-!
-!-------------------------------------------------------------------------------
-!> @brief Defines the operation for performing an assignment of a character
-!> string to a StringType variable
-!> @param str the logical value
-!> @param c the character value
-!> @returns str the logical value of c
-!>
-!    ELEMENTAL SUBROUTINE assign_char_to_string(str,c)
-!      TYPE(StringType),INTENT(OUT) :: str
-!      CHARACTER(LEN=*),INTENT(IN) :: c
-!      str = CHAR(c)
-!    ENDSUBROUTINE
 
 !    ELEMENTAL FUNCTION assign_char_to_array_int(iArr,c) RESULT(iArr)
 !    ELEMENTAL FUNCTION assign_char_to_single_arr(sArr,c) RESULT(sArr)
 !    ELEMENTAL FUNCTION assign_char_to_double_arr(dArr,c) RESULT(dArr)
 !    ELEMENTAL FUNCTION assign_char_to_string_arr(dArr,c) RESULT(dArr)
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    FUNCTION countArrayElts(charArr) RESULT(numElts)
+      INTEGER(SIK) :: numElts
+      CHARACTER(LEN=*),INTENT(IN) :: charArr
+      INTEGER(SIK) :: i
+
+      numElts=0
+      IF(LEN(charArr) /= 2) THEN
+        DO i=2,LEN(charArr)-1
+          IF(charArr(i:i) == ',') THEN
+            numElts=numElts+1
+          ENDIF
+        ENDDO
+        numElts=numElts+1
+      ENDIF
+    ENDFUNCTION countArrayElts
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing an assignment of a character
+!> string to an array of integers
+!> @param iArr the array of integers
+!> @param c the character value
+    SUBROUTINE char_to_int_array(iArr,c)
+      INTEGER(SIK),ALLOCATABLE,INTENT(OUT) :: iArr(:)
+      CHARACTER(LEN=*),INTENT(IN) :: c
+      CHARACTER(LEN=50) :: tmpStr
+      INTEGER(SIK) :: tmpInt
+      INTEGER(SIK) :: numElts
+      INTEGER(SIK) :: i,j,k,commas
+
+      numElts=countArrayElts(c)
+      !Empty array case
+      IF(numElts == 0) THEN
+        RETURN
+      ENDIF
+
+      j=0
+      k=1 ! iArr index
+      ALLOCATE(iArr(numElts))
+      DO i=2,LEN(c)
+        IF(c(i:i) /= ',' .AND. c(i:i) /= '}') THEN
+          j=j+1
+          tmpStr(j:j)=c(i:i)
+        ELSE
+          tmpStr=tmpStr(1:j)
+          READ(tmpStr, '(I12)') tmpInt
+          iArr(k:k)=tmpInt
+          j=0
+          k=k+1
+        ENDIF
+      ENDDO
+    ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing an assignment of a character
+!> string to an array of doubles
+!> @param dArr the array of doubles
+!> @param c the character value
+    SUBROUTINE char_to_double_array(dArr,c)
+      REAL(SDK),ALLOCATABLE,INTENT(OUT) :: dArr(:)
+      CHARACTER(LEN=*),INTENT(IN) :: c
+      CHARACTER(LEN=50) :: tmpStr
+      REAL(SDK) :: tmpDouble
+      INTEGER(SIK) :: numElts
+      INTEGER(SIK) :: i,j,k
+
+      numElts=countArrayElts(c)
+      !Empty array case
+      IF(numElts == 0) THEN
+        RETURN
+      ENDIF
+
+      j=0
+      k=1 ! dArr index
+      ALLOCATE(dArr(numElts))
+      DO i=2,LEN(c)
+        IF(c(i:i) /= ',' .AND. c(i:i) /= '}') THEN
+          j=j+1
+          tmpStr(j:j)=c(i:i)
+        ELSE
+          tmpStr=tmpStr(1:j)
+          READ(tmpStr, '(F35.0)') tmpDouble
+          dArr(k:k)=tmpDouble
+          j=0
+          k=k+1
+        ENDIF
+      ENDDO
+    ENDSUBROUTINE char_to_double_array
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing an assignment of a character
+!> string to an array of strings
+!> @param dArr the array of strings
+!> @param c the character value
+!    SUBROUTINE char_to_string_array(sArr,c)
+!      TYPE(StringType),ALLOCATABLE,INTENT(OUT) :: sArr(:)
+!      CHARACTER(LEN=*),INTENT(IN) :: c
+!      CHARACTER(LEN=50) :: tmpStr
+!      TYPE(StringType) :: tmpElt
+!      INTEGER(SIK) :: numElts
+!      INTEGER(SIK) :: i,j,k
+!
+!      numElts=countArrayElts(c)
+!      !Empty array case
+!      IF(numElts == 0) THEN
+!        RETURN
+!      ENDIF
+!
+!      j=0
+!      k=1 ! dArr index
+!      ALLOCATE(dArr(numElts))
+!      DO i=2,LEN(c)
+!        IF(c(i:i) /= ',' .AND. c(i:i) /= '}') THEN
+!          j=j+1
+!          tmpStr(j:j)=c(i:i)
+!        ELSE
+!          tmpElt=tmpElt(1:j)
+!          sArr(k:k)=tmpStr
+!          j=0
+!          k=k+1
+!        ENDIF
+!      ENDDO
+!    ENDSUBROUTINE char_to_string_array
 !
 ENDMODULE IntrType
 
