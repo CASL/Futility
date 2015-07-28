@@ -153,7 +153,11 @@ MODULE Geom
     IF(params%has('BoxGeom -> Vector3')) &
       CALL params%get('BoxGeom -> Vector3',v3)  
     IF(ALLOCATED(c0)) CALL p0%init(COORD=c0)
-    CALL geom%set(p0,extent,v1,v2,v3)
+    IF(ALLOCATED(v3)) THEN
+      CALL geom%set(p0,extent,v1,v2,v3)
+    ELSE
+      CALL geom%set(p0,extent,v1,v2)
+    ENDIF
   ENDSUBROUTINE newGeom_box
 !
 !-------------------------------------------------------------------------------
