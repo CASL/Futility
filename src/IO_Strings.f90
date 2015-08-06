@@ -120,7 +120,9 @@ MODULE IO_Strings
   PUBLIC :: stripComment
   PUBLIC :: SlashRep
   PUBLIC :: printCentered
-  
+  !
+  !PUBLIC :: charToStringArray
+
   !> Character representing a space symbol
   CHARACTER(LEN=*),PARAMETER :: BLANK=" "
   !> Character representing a comment symbol
@@ -1193,5 +1195,50 @@ MODULE IO_Strings
 #endif
       ENDDO
     ENDSUBROUTINE SlashRep
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing an assignment of a character
+!> string to an array of strings
+!> @param dArr the array of strings
+!> @param c the character value
+!    SUBROUTINE charToStringArray(sArr,c)
+!      TYPE(StringType),ALLOCATABLE,INTENT(OUT) :: sArr(:)
+!      TYPE(StringType),INTENT(IN) :: c
+!      CHARACTER(LEN=100) :: tmpStr
+!      TYPE(StringType) :: tmpElt
+!      INTEGER(SIK) :: numElts
+!      INTEGER(SIK) :: i,j,k
+!
+!      numElts=0
+!      IF(LEN(c) /= 2) THEN
+!        DO i=2,(c%n-1)
+!          IF(c(i) == ',') THEN
+!            numElts=numElts+1
+!          ENDIF
+!        ENDDO
+!        numElts=numElts+1
+!      ENDIF
+!
+!      !Empty array case
+!      IF(numElts == 0) THEN
+!        RETURN
+!      ENDIF
+!
+!      j=0
+!      k=1 !sArr index
+!      ALLOCATE(sArr(numElts))
+!      DO i=2,LEN(c)
+!        IF(c(i) /= ',' .AND. c(i) /= '}') THEN
+!          j=j+1
+!          tmpStr(j:j)=c(i)
+!        ELSE
+!          tmpStr=tmpStr(1:j)
+!          tmpElt=tmpStr
+!          sArr(k:k)=tmpElt
+!          j=0
+!          k=k+1
+!        ENDIF
+!      ENDDO
+!    ENDSUBROUTINE charToStringArray
 !
 ENDMODULE IO_Strings

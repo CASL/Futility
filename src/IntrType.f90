@@ -1048,6 +1048,7 @@ MODULE IntrType
       INTEGER(SIK) :: i
 
       numElts=0
+      !If length is 2, array is empty
       IF(LEN(charArr) /= 2) THEN
         DO i=2,LEN(charArr)-1
           IF(charArr(i:i) == ',') THEN
@@ -1129,41 +1130,6 @@ MODULE IntrType
         ENDIF
       ENDDO
     ENDSUBROUTINE char_to_double_array
-!
-!-------------------------------------------------------------------------------
-!> @brief Defines the operation for performing an assignment of a character
-!> string to an array of strings
-!> @param dArr the array of strings
-!> @param c the character value
-!    SUBROUTINE char_to_string_array(sArr,c)
-!      TYPE(StringType),ALLOCATABLE,INTENT(OUT) :: sArr(:)
-!      CHARACTER(LEN=*),INTENT(IN) :: c
-!      CHARACTER(LEN=50) :: tmpStr
-!      TYPE(StringType) :: tmpElt
-!      INTEGER(SIK) :: numElts
-!      INTEGER(SIK) :: i,j,k
-!
-!      numElts=countArrayElts(c)
-!      !Empty array case
-!      IF(numElts == 0) THEN
-!        RETURN
-!      ENDIF
-!
-!      j=0
-!      k=1 ! dArr index
-!      ALLOCATE(dArr(numElts))
-!      DO i=2,LEN(c)
-!        IF(c(i:i) /= ',' .AND. c(i:i) /= '}') THEN
-!          j=j+1
-!          tmpStr(j:j)=c(i:i)
-!        ELSE
-!          tmpElt=tmpElt(1:j)
-!          sArr(k:k)=tmpStr
-!          j=0
-!          k=k+1
-!        ENDIF
-!      ENDDO
-!    ENDSUBROUTINE char_to_string_array
 !
 ENDMODULE IntrType
 

@@ -219,6 +219,7 @@ MODULE ParameterLists
                  initSBK,initSTR,initCHAR,initSSKa1,initSDKa1,initSNKa1, &
                  initSLKa1,initSBKa1,initSTRa1,initSSKa2,initSDKa2,initSNKa2, &
                  initSLKa2,initSTRa2,initSSKa3,initSDKa3,initSNKa3,initSLKa3
+      PROCEDURE,PASS :: initFromXML
       !> @copybrief ParameterLists::set_ParamType_List
       !> @copydoc ParameterLists::set_ParamType_List
       PROCEDURE,PASS,PRIVATE :: setParamList => set_ParamType_List
@@ -466,6 +467,7 @@ MODULE ParameterLists
       !> @copybrief ParameterLists::clear_ParamType
       !> @copydoc ParameterLists::clear_ParamType
       PROCEDURE,PASS :: clear => clear_ParamType
+  PROCEDURE :: procXMLTree
   ENDTYPE ParamType
 
   !> @brief Extended type of a ParamType for defining a list of parameters
@@ -8606,66 +8608,184 @@ MODULE ParameterLists
     ENDSUBROUTINE add_ParamType_SLK_a3
 !
 !-------------------------------------------------------------------------------
+    RECURSIVE SUBROUTINE procXMLTree(thisParam,parent,currentPath)
+      TYPE(ParamType),POINTER :: pList(:)
+      CLASS(ParamType),POINTER :: Params
+      CLASS(ParamType),INTENT(INOUT) :: thisParam
+      TYPE(StringType),INTENT(IN) :: currentPath
+      TYPE(XMLElementType),POINTER :: iXMLE,children(:),parent,nextXMLE
+      TYPE(StringType) :: elname,tmpStr,typval,attrVal,nameVal,tmpPath
+      INTEGER(SIK) :: ic
+
+      LOGICAL(SBK) :: boolVal
+      INTEGER(SIK) :: intVal,tmpInt
+      REAL(SDK) :: doubleVal
+      TYPE(StringType) :: strVal
+      INTEGER(SIK),ALLOCATABLE :: intArry(:)
+      REAL(SDK),ALLOCATABLE :: doubleArry(:)
+      TYPE(StringType),ALLOCATABLE :: strArry(:)
+
+      !NULLIFY(pList)
+      CALL parent%getChildren(children)
+      !Check to see if it's an empty parameter list
+      IF(.NOT.ASSOCIATED(children)) THEN
+        !Add param list to path
+        tmpStr='name'
+        CALL iXMLE%getAttributeValue(tmpStr,nameVal)
+        tmpPath=currentPath//' -> '//nameVal
+        CALL thisParam%add(TRIM(tmpPath),pList)
+        RETURN
+      ENDIF
+
+      DO ic=1,SIZE(children)
+        tmpPath=currentPath//' -> '
+        iXMLE => children(ic)
+
+        elname=iXMLE%name
+        CALL toUPPER(elname)
+        IF(elname == 'PARAMETER') THEN
+          tmpStr='type'
+          CALL iXMLE%getAttributeValue(tmpStr,typval)
+          CALL toUPPER(typval)
+          tmpStr='value'
+          CALL iXMLE%getAttributeValue(tmpStr,attrVal)
+          tmpStr='name'
+          CALL iXMLE%getAttributeValue(tmpStr,nameVal)
+          tmpPath=tmpPath//nameVal
+          SELECTCASE(CHAR(typval))
+            CASE('BOOL')
+              boolVal=CHAR(attrVal)
+              CALL thisParam%add(CHAR(tmpPath),boolVal)
+            CASE('INT')
+              intVal=CHAR(attrVal)
+              CALL thisParam%add(CHAR(tmpPath),intVal)
+            CASE('DOUBLE')
+              doubleVal=CHAR(attrVal)
+              CALL thisParam%add(CHAR(tmpPath),doubleVal)
+            CASE('STRING')
+              strVal=attrVal
+              CALL thisParam%add(CHAR(tmpPath),strVal)
+            CASE('ARRAY(INT)')
+              CALL char_to_int_array(intArry,CHAR(attrVal))
+              CALL thisParam%add(CHAR(tmpPath),intArry)
+            CASE('ARRAY(DOUBLE)')
+              CALL char_to_double_array(doubleArry,CHAR(attrVal))
+              CALL thisParam%add(CHAR(tmpPath),doubleArry)
+            CASE('ARRAY(STRING)')
+              !strArry=CHAR(attrVal)
+              !CALL char_to_string_array(strArry,CHAR(attrVal))
+            CASE DEFAULT
+              !Bad element type
+          ENDSELECT
+        ELSE IF(elname == 'PARAMETERLIST') THEN
+          !Add to list (without arrow)
+          tmpStr='name'
+          CALL iXMLE%getAttributeValue(tmpStr,nameVal)
+          tmpPath=tmpPath//nameVal
+          CALL procXMLTree(thisParam,iXMLE,tmpPath)
+        ENDIF
+      ENDDO
+
+    ENDSUBROUTINE procXMLTree
+!
+!-------------------------------------------------------------------------------
     SUBROUTINE initFromXML(thisParam,fname)
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: fname
       INTEGER(SIK) :: ic
-      TYPE(StringType) :: elname,tmpStr,typval
+      TYPE(StringType) :: elname,tmpStr,typval,attrVal,nameVal
       TYPE(XMLFileType) :: xmlFile
       TYPE(XMLElementType),POINTER :: iXMLE,children(:),parent,nextXMLE
       CLASS(ParamType),POINTER :: iParam
-      
+      TYPE(StringType) :: currentPath
+
+      LOGICAL(SBK) :: boolVal
+      INTEGER(SIK) :: intVal
+      REAL(SDK) :: doubleVal
+      TYPE(StringType) :: strVal
+      INTEGER(SIK),ALLOCATABLE :: intArry(:)
+      REAL(SDK),ALLOCATABLE :: doubleArry(:)
+      TYPE(StringType),ALLOCATABLE :: strArry(:)
+      TYPE(StringType) :: pathName,tmpPath
+
       SELECTTYPE(thisParam); TYPE IS(ParamType)
         IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
           !Initialize the XML file
           CALL xmlfile%importFromDisk(fname)
           iXMLE => xmlfile%root
           iParam => thisParam%pdat
-          DO WHILE(ASSOCIATED(iXMLE))
-            !Process this iXMLE
-            elname=iXMLE%name
-            CALL toUPPER(elname)
-            IF(elname == 'PARAMETER') THEN
-              !Get the attribute type
-              tmpStr='type'
-              CALL iXMLE%getAttributeValue(tmpStr,typval)
-              CALL toUPPER(typval)
-              SELECTCASE(CHAR(typval))
-                CASE('BOOL')
-                CASE('INT')
-                CASE('DOUBLE')
-                CASE('STRING')
-                CASE('ARRAY(INT)')
-                CASE('ARRAY(DOUBLE)')
-                CASE('ARRAY(STRING)')
-              ENDSELECT
-            ELSEIF(elname == 'PARAMETERLIST') THEN
-              ALLOCATE(ParamType_List :: iParam)
-            ELSE
-              !Bad element name
-            ENDIF
-            
-            !Get the next XML element
-            NULLIFY(nextXMLE)
-            IF(iXMLE%hasChildren()) THEN
-              CALL iXMLE%getChildren(children)
-              nextXMLE => children(1)
-            ELSE
-              !Get the parent and go to the next child
-              findParent: DO WHILE(ASSOCIATED(iXMLE))
-                CALL iXMLE%getParent(parent)
-                CALL parent%getChildren(children)
-                DO ic=1,SIZE(children)-1
-                  IF(ASSOCIATED(iXMLE,children(ic))) THEN
-                    nextXMLE => children(ic+1)
-                    EXIT findParent
-                  ENDIF
-                ENDDO
-                IF(ASSOCIATED(iXMLE,children(ic))) iXMLE => parent
-              ENDDO findParent
-            ENDIF
-            iXMLE => nextXMLE
-          ENDDO
+          !tmpStr='name'
+          !CALL iXMLE%getAttributeValue(tmpStr,nameVal)
+          !currentPath=nameVal
+          CALL iXMLE%getChildren(children)
+          tmpStr='name'
+          CALL iXMLE%getAttributeValue(tmpStr,nameVal)
+          currentPath=nameVal
+          CALL procXMLTree(thisParam,iXMLE,currentPath)
+  CALL thisParam%edit(6)
+          !CALL thisParam%add(iParam,elname,
+!  !CALL procXMLTree(iXMLE, currentPath)
+!          DO WHILE(ASSOCIATED(iXMLE))
+!            !Process this iXMLE
+!            elname=iXMLE%name
+!            CALL toUPPER(elname)
+!            IF(elname == 'PARAMETER') THEN
+!              !Get the attribute type
+!              tmpStr='type'
+!              CALL iXMLE%getAttributeValue(tmpStr,typval)
+!              CALL toUPPER(typval)
+!              !Get the attribute value
+!              tmpStr='value'
+!              CALL iXMLE%getAttributeValue(tmpStr,attrVal)
+!              SELECTCASE(CHAR(typval))
+!                CASE('BOOL')
+!                  boolVal=CHAR(attrVal)
+!                  !thisParam%add(boolVal)
+!                CASE('INT')
+!                  intVal=CHAR(attrVal)
+!                CASE('DOUBLE')
+!                  doubleVal=CHAR(attrVal)
+!                CASE('STRING')
+!                  strVal=attrVal
+!                CASE('ARRAY(INT)')
+!                  CALL char_to_int_array(intArry,CHAR(attrVal))
+!                CASE('ARRAY(DOUBLE)')
+!                  CALL char_to_double_array(doubleArry,CHAR(attrVal))
+!                CASE('ARRAY(STRING)')
+!                  !strArry=CHAR(attrVal)
+!                  !CALL char_to_string_array(strArry,CHAR(attrVal))
+!              ENDSELECT
+!            ELSEIF(elname == 'PARAMETERLIST') THEN
+!              ALLOCATE(ParamType_List :: iParam)
+!              tmpStr='name'
+!              CALL iXMLE%getAttributeValue(tmpStr,elname)
+!              !CALL thisParam%add(iParam,elname,
+!              !iParam%init(elname,
+!            ELSE
+!              !Bad element name
+!            ENDIF
+!
+!            !Get the next XML element
+!            NULLIFY(nextXMLE)
+!            IF(iXMLE%hasChildren()) THEN !It's a ParameterList
+!              CALL iXMLE%getChildren(children)
+!              nextXMLE => children(1)
+!            ELSE
+!              !Get the parent and go to the next child
+!              findParent: DO WHILE(ASSOCIATED(iXMLE))
+!                CALL iXMLE%getParent(parent)
+!                CALL parent%getChildren(children)
+!                DO ic=1,SIZE(children)-1
+!                  IF(ASSOCIATED(iXMLE,children(ic))) THEN
+!                    nextXMLE => children(ic+1)
+!                    EXIT findParent
+!                  ENDIF
+!                ENDDO
+!                IF(ASSOCIATED(iXMLE,children(ic))) iXMLE => parent
+!              ENDDO findParent
+!            ENDIF
+!            iXMLE => nextXMLE
+!          ENDDO
         ELSE
           !Must be uninitialized
         ENDIF
@@ -8674,4 +8794,40 @@ MODULE ParameterLists
       ENDSELECT
     ENDSUBROUTINE initFromXML
 !
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing an assignment of a character
+!> string to an array of strings
+!> @param sArr the array of strings
+!> @param c the character value
+!    SUBROUTINE char_to_string_array(sArr,c)
+!      TYPE(StringType),ALLOCATABLE,INTENT(OUT) :: sArr(:)
+!      CHARACTER(LEN=*),INTENT(IN) :: c
+!      CHARACTER(LEN=50) :: tmpStr
+!      TYPE(StringType) :: tmpElt
+!      INTEGER(SIK) :: numElts
+!      INTEGER(SIK) :: i,j,k
+!
+!      numElts=countArrayElts(c)
+!      !Empty array case
+!      IF(numElts == 0) THEN
+!        RETURN
+!      ENDIF
+!
+!      j=0
+!      k=1 ! sArr index
+!      ALLOCATE(dArr(numElts))
+!      DO i=2,LEN(c)
+!        IF(c(i:i) /= ',' .AND. c(i:i) /= '}') THEN
+!          j=j+1
+!          tmpStr(j:j)=c(i:i)
+!        ELSE
+!          tmpElt=tmpElt(1:j)
+!          sArr(k:k)=tmpElt
+!          j=0
+!          k=k+1
+!        ENDIF
+!      ENDDO
+!    ENDSUBROUTINE char_to_string_array
+!
 ENDMODULE ParameterLists
+
