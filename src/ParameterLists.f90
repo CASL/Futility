@@ -8635,6 +8635,7 @@ MODULE ParameterLists
       IF(.NOT.ASSOCIATED(children)) THEN
         ALLOCATE(pList(0))
         CALL thisParam%add(CHAR(currentPath),pList)
+        DEALLOCATE(pList)
         RETURN
       ENDIF
 
@@ -8664,8 +8665,7 @@ MODULE ParameterLists
               doubleVal=CHAR(attrVal)
               CALL thisParam%add(CHAR(tmpPath),doubleVal)
             CASE('STRING')
-              strVal=attrVal
-              CALL thisParam%add(CHAR(tmpPath),strVal)
+              CALL thisParam%add(CHAR(tmpPath),attrVal)
             CASE('ARRAY(INT)')
               CALL char_to_int_array(intArry,CHAR(attrVal))
               CALL thisParam%add(CHAR(tmpPath),intArry)
@@ -8673,8 +8673,8 @@ MODULE ParameterLists
               CALL char_to_double_array(doubleArry,CHAR(attrVal))
               CALL thisParam%add(CHAR(tmpPath),doubleArry)
             CASE('ARRAY(STRING)')
-              !strArry=CHAR(attrVal)
-              !CALL char_to_string_array(strArry,CHAR(attrVal))
+              CALL char_to_string_array(strArry,CHAR(attrVal))
+              CALL thisParam%add(CHAR(tmpPath),strArry)
             CASE DEFAULT
               !Bad element type
           ENDSELECT
@@ -8794,7 +8794,8 @@ MODULE ParameterLists
         !Wrong type
       ENDSELECT
     ENDSUBROUTINE initFromXML
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!-------------------------------------------------------------------------------
     FUNCTION countArrayElts(charArr) RESULT(numElts)
       INTEGER(SIK) :: numElts
       CHARACTER(LEN=*),INTENT(IN) :: charArr
@@ -8802,7 +8803,7 @@ MODULE ParameterLists
 
       numElts=0
       !If length is 2, array is empty
-      IF(LEN(charArr) /= 2) THEN
+      IF(LEN(charArr) > 2) THEN
         DO i=2,LEN(charArr)-1
           IF(charArr(i:i) == ',') THEN
             numElts=numElts+1
@@ -8896,27 +8897,27 @@ MODULE ParameterLists
       TYPE(StringType) :: tmpElt
       INTEGER(SIK) :: numElts
       INTEGER(SIK) :: i,j,k
-!
-!      numElts=countArrayElts(c)
-!      !Empty array case
-!      IF(numElts == 0) THEN
-!        RETURN
-!      ENDIF
-!
-!      j=0
-!      k=1 ! sArr index
-!      ALLOCATE(dArr(numElts))
-!      DO i=2,LEN(c)
-!        IF(c(i:i) /= ',' .AND. c(i:i) /= '}') THEN
-!          j=j+1
-!          tmpStr(j:j)=c(i:i)
-!        ELSE
-!          tmpElt=tmpElt(1:j)
-!          sArr(k:k)=tmpElt
-!          j=0
-!          k=k+1
-!        ENDIF
-!      ENDDO
+
+      numElts=countArrayElts(c)
+      !Empty array case
+      IF(numElts == 0) THEN
+        RETURN
+      ENDIF
+
+      j=0
+      k=1 ! sArr index
+      ALLOCATE(sArr(numElts))
+      DO i=2,LEN(c)
+        IF(c(i:i) /= ',' .AND. c(i:i) /= '}') THEN
+          j=j+1
+          tmpStr(j:j)=c(i:i)
+        ELSE
+          tmpElt=tmpStr(1:j)
+          sArr(k:k)=tmpElt
+          j=0
+          k=k+1
+        ENDIF
+      ENDDO
     ENDSUBROUTINE char_to_string_array
 !
 ENDMODULE ParameterLists
