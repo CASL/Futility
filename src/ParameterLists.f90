@@ -8613,16 +8613,15 @@ MODULE ParameterLists
 !
 !-------------------------------------------------------------------------------
     RECURSIVE SUBROUTINE procXMLTree(thisParam,parent,currentPath)
-      TYPE(ParamType),POINTER :: pList(:)
-      CLASS(ParamType),POINTER :: Params
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       TYPE(StringType),INTENT(IN) :: currentPath
       TYPE(XMLElementType),POINTER :: iXMLE,children(:),parent,nextXMLE
+      TYPE(ParamType),POINTER :: pList(:)
       TYPE(StringType) :: elname,tmpStr,typval,attrVal,nameVal,tmpPath
       INTEGER(SIK) :: ic
 
       LOGICAL(SBK) :: boolVal
-      INTEGER(SIK) :: intVal,tmpInt
+      INTEGER(SIK) :: intVal
       REAL(SDK) :: doubleVal
       TYPE(StringType) :: strVal
       INTEGER(SIK),ALLOCATABLE :: intArry(:)
@@ -8694,99 +8693,21 @@ MODULE ParameterLists
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: fname
       INTEGER(SIK) :: ic
-      TYPE(StringType) :: elname,tmpStr,typval,attrVal,nameVal
+      TYPE(StringType) :: tmpStr,typval,nameVal
       TYPE(XMLFileType) :: xmlFile
-      TYPE(XMLElementType),POINTER :: iXMLE,children(:),parent,nextXMLE
-      CLASS(ParamType),POINTER :: iParam
+      TYPE(XMLElementType),POINTER :: iXMLE
       TYPE(StringType) :: currentPath
-
-      LOGICAL(SBK) :: boolVal
-      INTEGER(SIK) :: intVal
-      REAL(SDK) :: doubleVal
-      TYPE(StringType) :: strVal
-      INTEGER(SIK),ALLOCATABLE :: intArry(:)
-      REAL(SDK),ALLOCATABLE :: doubleArry(:)
-      TYPE(StringType),ALLOCATABLE :: strArry(:)
-      TYPE(StringType) :: pathName,tmpPath
 
       SELECTTYPE(thisParam); TYPE IS(ParamType)
         IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
           !Initialize the XML file
           CALL xmlfile%importFromDisk(fname)
           iXMLE => xmlfile%root
-          iParam => thisParam%pdat
-          !tmpStr='name'
-          !CALL iXMLE%getAttributeValue(tmpStr,nameVal)
-          !currentPath=nameVal
-          CALL iXMLE%getChildren(children)
           tmpStr='name'
           CALL iXMLE%getAttributeValue(tmpStr,nameVal)
           currentPath=nameVal
           CALL procXMLTree(thisParam,iXMLE,currentPath)
   CALL thisParam%edit(6)
-          !CALL thisParam%add(iParam,elname,
-!  !CALL procXMLTree(iXMLE, currentPath)
-!          DO WHILE(ASSOCIATED(iXMLE))
-!            !Process this iXMLE
-!            elname=iXMLE%name
-!            CALL toUPPER(elname)
-!            IF(elname == 'PARAMETER') THEN
-!              !Get the attribute type
-!              tmpStr='type'
-!              CALL iXMLE%getAttributeValue(tmpStr,typval)
-!              CALL toUPPER(typval)
-!              !Get the attribute value
-!              tmpStr='value'
-!              CALL iXMLE%getAttributeValue(tmpStr,attrVal)
-!              SELECTCASE(CHAR(typval))
-!                CASE('BOOL')
-!                  boolVal=CHAR(attrVal)
-!                  !thisParam%add(boolVal)
-!                CASE('INT')
-!                  intVal=CHAR(attrVal)
-!                CASE('DOUBLE')
-!                  doubleVal=CHAR(attrVal)
-!                CASE('STRING')
-!                  strVal=attrVal
-!                CASE('ARRAY(INT)')
-!                  CALL char_to_int_array(intArry,CHAR(attrVal))
-!                CASE('ARRAY(DOUBLE)')
-!                  CALL char_to_double_array(doubleArry,CHAR(attrVal))
-!                CASE('ARRAY(STRING)')
-!                  !strArry=CHAR(attrVal)
-!                  !CALL char_to_string_array(strArry,CHAR(attrVal))
-!              ENDSELECT
-!            ELSEIF(elname == 'PARAMETERLIST') THEN
-!              ALLOCATE(ParamType_List :: iParam)
-!              tmpStr='name'
-!              CALL iXMLE%getAttributeValue(tmpStr,elname)
-!              !CALL thisParam%add(iParam,elname,
-!              !iParam%init(elname,
-!            ELSE
-!              !Bad element name
-!            ENDIF
-!
-!            !Get the next XML element
-!            NULLIFY(nextXMLE)
-!            IF(iXMLE%hasChildren()) THEN !It's a ParameterList
-!              CALL iXMLE%getChildren(children)
-!              nextXMLE => children(1)
-!            ELSE
-!              !Get the parent and go to the next child
-!              findParent: DO WHILE(ASSOCIATED(iXMLE))
-!                CALL iXMLE%getParent(parent)
-!                CALL parent%getChildren(children)
-!                DO ic=1,SIZE(children)-1
-!                  IF(ASSOCIATED(iXMLE,children(ic))) THEN
-!                    nextXMLE => children(ic+1)
-!                    EXIT findParent
-!                  ENDIF
-!                ENDDO
-!                IF(ASSOCIATED(iXMLE,children(ic))) iXMLE => parent
-!              ENDDO findParent
-!            ENDIF
-!            iXMLE => nextXMLE
-!          ENDDO
         ELSE
           !Must be uninitialized
         ENDIF
