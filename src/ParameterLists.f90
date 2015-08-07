@@ -8625,15 +8625,12 @@ MODULE ParameterLists
       REAL(SDK),ALLOCATABLE :: doubleArry(:)
       TYPE(StringType),ALLOCATABLE :: strArry(:)
 
-      !NULLIFY(pList)
+      NULLIFY(pList)
       CALL parent%getChildren(children)
       !Check to see if it's an empty parameter list
       IF(.NOT.ASSOCIATED(children)) THEN
-        !Add param list to path
-        tmpStr='name'
-        CALL iXMLE%getAttributeValue(tmpStr,nameVal)
-        tmpPath=currentPath//' -> '//nameVal
-        CALL thisParam%add(TRIM(tmpPath),pList)
+        ALLOCATE(pList(0))
+        CALL thisParam%add(CHAR(currentPath),pList)
         RETURN
       ENDIF
 
