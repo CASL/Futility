@@ -15,6 +15,40 @@
 ! manufacturer, or otherwise, does not necessarily constitute or imply its     !
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
+!> @brief Module provides water properties at saturation conditions.
+!> 
+!> The module provides interfaces to retrieve the saturation properties of
+!> water give teh temperature or pressure:
+!>  - pressure at a given temperature
+!>  - temperature at a given pressure
+!>  - liquid density at a given pressure or temperature
+!>  - vapor density at a given pressure or temperature
+!>
+!> The properties have the following units:
+!>  - temperature - Kelvin
+!>  - pressure - psia
+!>  - density - g/cc
+!>
+!> In evaluating the table the properties are linearly interpolated. The
+!> table uses 1 degree K increments and covers virtually the full range
+!> of saturation temperatures.
+!>
+!> If invalid inputs are given to any of the interfaces, the resulting value
+!> of the output property is -HUGE(0.0_SRK).
+!>
+!> Reference:
+!>  1. E.W. Lemmon, M.O. McLinden and D.G. Friend, "Thermophysical Properties
+!>     of Fluid Systems" in NIST Chemistry WebBook, NIST Standard Reference
+!>     Database Number 69, Eds. P.J. Linstrom and W.G. Mallard, National
+!>     Institute of Standards and Technology, Gaithersburg MD, 20899,
+!>     http://webbook.nist.gov, (retrieved April 7, 2015).
+!>
+!> @par Module Dependencies
+!>  - @ref IntrType "IntrType": @copybrief IntrType
+!>
+!> @author Brendan Kochunas
+!>   @date 4/07/2015
+!> 
 MODULE WaterSatProperties
   USE IntrType
   
@@ -26,7 +60,7 @@ MODULE WaterSatProperties
   PUBLIC :: WaterSatProperties_GetTemp
   PUBLIC :: WaterSatProperties_GetVapDens
   PUBLIC :: WaterSatProperties_GetLiqDens
-  !> Pressure is in MPa, Densities in g/cc or kg/m^3, Temp looks to be in Kelvin.
+
   INTEGER(SIK),PARAMETER :: PRESSURE=1,RHOL=2,RHOV=3
   LOGICAL(SBK),SAVE :: initTables=.FALSE.
   REAL(SRK),DIMENSION(3,274:647),SAVE :: eostable=0
