@@ -155,7 +155,7 @@ MODULE Geom
     IF(ALLOCATED(c0)) CALL p0%init(COORD=c0)
     IF(ALLOCATED(v3)) THEN
       CALL geom%set(p0,extent,v1,v2,v3)
-    ELSE
+    ELSEIF(ALLOCATED(v1) .AND. ALLOCATED(v2)) THEN
       CALL geom%set(p0,extent,v1,v2)
     ENDIF
   ENDSUBROUTINE newGeom_box
@@ -226,6 +226,8 @@ MODULE Geom
     INTEGER(SIK) :: i,n,m
     REAL(SRK),ALLOCATABLE :: vert(:),vPrev(:)
     TYPE(GraphType) :: tmpG
+
+    n=0; m=0
     CALL params%get('PolygonGeom->nVert',n)
     CALL params%get('PolygonGeom->nQuad',m)
     IF(n > 2) THEN
