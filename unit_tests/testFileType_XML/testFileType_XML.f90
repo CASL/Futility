@@ -25,11 +25,11 @@ PROGRAM testXMLFileType
   
   TYPE(XMLFileType) :: testXMLFile
   
-  ALLOCATE(testXMLFile%e)
+  !ALLOCATE(testXMLFile%e)
   
   CALL testXMLFile%importFromDisk('./testFile.xml')
   CALL testXMLFile%exportToDisk('./testWrite.xml')
   
-  DEALLOCATE(testXMLFile%e)
+  !DEALLOCATE(testXMLFile%e)
 !
 ENDPROGRAM testXMLFileType

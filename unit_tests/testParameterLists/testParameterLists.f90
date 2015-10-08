@@ -90,6 +90,8 @@ PROGRAM testParameterLists
   REGISTER_SUBTEST('%validate(...)',testValidate)
   REGISTER_SUBTEST('%verify(...)',testVerify)
   REGISTER_SUBTEST('Partial Matching',testPartialMatch)
+
+  REGISTER_SUBTEST('%initFromXML',testInitFromXML)
   
   FINALIZE_TEST()
   CALL clear_test_vars()
@@ -4986,6 +4988,14 @@ PROGRAM testParameterLists
 
     CALL testParam%clear()
   ENDSUBROUTINE testPartialMatch
+
+!
+!-------------------------------------------------------------------------------
+  SUBROUTINE testInitFromXML()
+
+    CALL testParam%clear()
+    CALL testParam%initFromXML('testFile.xml')
+  ENDSUBROUTINE testInitFromXML
 !
 !-------------------------------------------------------------------------------
 !Clear all the test variables
