@@ -8689,7 +8689,7 @@ MODULE ParameterLists
     ENDSUBROUTINE procXMLTree
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE initFromXML(thisParam,fname)
+    SUBROUTINE initFromXML(thisParam, fname)
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: fname
       INTEGER(SIK) :: ic
@@ -8707,7 +8707,7 @@ MODULE ParameterLists
           CALL iXMLE%getAttributeValue(tmpStr,nameVal)
           currentPath=nameVal
           CALL procXMLTree(thisParam,iXMLE,currentPath)
-  CALL thisParam%edit(6)
+  !CALL thisParam%edit(6)
         ELSE
           !Must be uninitialized
         ENDIF
