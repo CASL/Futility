@@ -26,6 +26,7 @@ PROGRAM testGeom_Graph
   IMPLICIT NONE
   
   TYPE(GraphType) :: testGraph
+  TYPE(DAGraphType) :: testDAGraph
   
   CREATE_TEST('TEST GEOM_GRAPH')
   
@@ -53,7 +54,18 @@ PROGRAM testGeom_Graph
   REGISTER_SUBTEST('%TriangulateVerts',testTriangulate)
   REGISTER_SUBTEST('OPERATOR(==)',testIsEqual)
   !REGISTER_SUBTEST('OPERATOR(+)',testAddition)
-
+  
+  CREATE_TEST('TEST Directed Acyclic Graph')
+  REGISTER_SUBTEST('Uninit',testDAGUninit)
+  REGISTER_SUBTEST('%clear',testDAGClear)
+  REGISTER_SUBTEST('%init',testDAGinit)
+  REGISTER_SUBTEST('%defineEdge',testDAGDefineEdge)
+  REGISTER_SUBTEST('%removeEdge',testDAGRemoveEdge)
+  REGISTER_SUBTEST('%insertNode',testDAGinsertNode)
+  REGISTER_SUBTEST('%removeNode',testDAGremoveNode)
+  REGISTER_SUBTEST('%isStartNode',testDAGisStartNode)
+  REGISTER_SUBTEST('%testDAGgetNextStartNode',testDAGgetNextStartNode)
+  REGISTER_SUBTEST('%KATS',testDAGKATS)
   FINALIZE_TEST()
 !
 !===============================================================================
@@ -2562,5 +2574,237 @@ PROGRAM testGeom_Graph
 !      testGraph3=testGraph+testGraph2
 !      ASSERT(testGraph3 == testGraph4,'addition')
 !    ENDSUBROUTINE testAddition
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testDAGUninit()
+      ASSERT(testDAGraph%n == 0,'%n')
+      ASSERT(.NOT.ALLOCATED(testDAGraph%nodes),'%nodes')
+      ASSERT(.NOT.ALLOCATED(testDAGraph%edgeMatrix),'%edgeMatrix')
+    ENDSUBROUTINE testDAGUninit
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testDAGClear()
+      ALLOCATE(testDAGraph%nodes(1))
+      ALLOCATE(testDAGraph%edgeMatrix(1,1))
+      testDAGraph%n=1
+      CALL testDAGraph%clear()
+      CALL testDAGUninit()
+    ENDSUBROUTINE testDAGClear
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testDAGInit()
+      INTEGER(SIK),ALLOCATABLE :: nodes(:)
+      
+      CALL testDAGraph%init(0,nodes)
+      CALL testDAGUninit()
+      
+      CALL testDAGraph%init(5,nodes)
+      CALL testDAGUninit()
+      
+      ALLOCATE(nodes(5))
+      nodes(1)=2; nodes(2)=3; nodes(3)=4; nodes(4)=5; nodes(5)=6
+      
+      CALL testDAGraph%init(4,nodes)
+      CALL testDAGUninit()
+      
+      CALL testDAGraph%init(5,nodes)
+      
+      ASSERT(testDAGraph%n == 5,'%n')
+      ASSERT(ALL(testDAGraph%nodes == (/2,3,4,5,6/)),'%nodes')
+      ASSERT(ALL(testDAGraph%edgeMatrix == 0),'%edgeMatrix')
+      DEALLOCATE(nodes)
+    ENDSUBROUTINE testDAGInit
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testDAGDefineEdge()
+      INTEGER(SIK),ALLOCATABLE :: edges(:,:)
+      
+      ALLOCATE(edges(5,5))
+      edges=0
+      
+      CALL testDAGraph%defineEdge(0,0)
+      ASSERT(ALL(testDAGraph%edgeMatrix == edges),'%null edge')
+      
+      CALL testDAGraph%defineEdge(2,3)
+      edges(1,2)=1
+      ASSERT(ALL(testDAGraph%edgeMatrix == edges),'%edge(1,2)')
+      
+      CALL testDAGraph%defineEdge(5,3)
+      edges(4,2)=1
+      ASSERT(ALL(testDAGraph%edgeMatrix == edges),'%edge(4,2)')
+      
+      CALL testDAGraph%defineEdge(2,4)
+      edges(1,3)=1
+      ASSERT(ALL(testDAGraph%edgeMatrix == edges),'%edge(1,3)')
+      
+      CALL testDAGraph%defineEdge(2,5)
+      edges(1,4)=1
+      ASSERT(ALL(testDAGraph%edgeMatrix == edges),'%edge(1,4)')
+      
+      CALL testDAGraph%defineEdge(3,4)
+      edges(2,3)=1
+      ASSERT(ALL(testDAGraph%edgeMatrix == edges),'%edge(2,3)')
+      
+      CALL testDAGraph%defineEdge(5,6)
+      edges(4,5)=1
+      ASSERT(ALL(testDAGraph%edgeMatrix == edges),'%edge(4,5)')
+      
+      DEALLOCATE(edges)
+    ENDSUBROUTINE testDAGDefineEdge
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testDAGRemoveEdge()
+      INTEGER(SIK),ALLOCATABLE :: edges(:,:)
+      
+      ALLOCATE(edges(5,5))
+      edges=0
+      edges(1,2)=1
+      edges(4,2)=1
+      edges(1,3)=1
+      edges(1,4)=1
+      edges(2,3)=1
+      edges(4,5)=1
+      
+      CALL testDAGraph%removeEdge(2,3)
+      edges(1,2)=0
+      ASSERT(ALL(testDAGraph%edgeMatrix == edges),'%edge(1,2)')
+      
+      CALL testDAGraph%removeEdge(5,3)
+      edges(4,2)=0
+      ASSERT(ALL(testDAGraph%edgeMatrix == edges),'%edge(4,2)')
+      
+      CALL testDAGraph%removeEdge(2,4)
+      edges(1,3)=0
+      ASSERT(ALL(testDAGraph%edgeMatrix == edges),'%edge(1,3)')
+      
+      !Redundant call
+      CALL testDAGraph%removeEdge(2,4)
+      ASSERT(ALL(testDAGraph%edgeMatrix == edges),'%edge(1,3)')
+      
+      CALL testDAGraph%defineEdge(2,3)
+      CALL testDAGraph%defineEdge(5,3)
+      CALL testDAGraph%defineEdge(2,4)
+      
+      DEALLOCATE(edges)
+    ENDSUBROUTINE testDAGRemoveEdge
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testDAGinsertNode()
+      INTEGER(SIK),ALLOCATABLE :: edges(:,:)
+      
+      ALLOCATE(edges(6,6))
+      edges=0
+      edges(1,3)=1
+      edges(1,4)=1
+      edges(1,5)=1
+      edges(3,4)=1
+      edges(5,3)=1
+      edges(5,6)=1
+      CALL testDAGraph%insertNode(7,2)
+      ASSERT(testDAGraph%n == 6,'%n')
+      ASSERT(ALL(testDAGraph%nodes == (/2,7,3,4,5,6/)),'%nodes')
+      ASSERT(ALL(testDAGraph%edgeMatrix == edges),'%edgeMatrix')
+      DEALLOCATE(edges)
+      
+      ALLOCATE(edges(7,7))
+      edges=0
+      edges(2,4)=1
+      edges(2,5)=1
+      edges(2,6)=1
+      edges(4,5)=1
+      edges(6,4)=1
+      edges(6,7)=1
+      CALL testDAGraph%insertNode(8)
+      ASSERT(testDAGraph%n == 7,'%n')
+      ASSERT(ALL(testDAGraph%nodes == (/8,2,7,3,4,5,6/)),'%nodes')
+      ASSERT(ALL(testDAGraph%edgeMatrix == edges),'%edgeMatrix')
+      DEALLOCATE(edges)
+    ENDSUBROUTINE testDAGinsertNode
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testDAGremoveNode()
+      INTEGER(SIK),ALLOCATABLE :: edges(:,:)
+      
+      ALLOCATE(edges(6,6))
+      edges=0
+      edges(2,3)=1
+      edges(2,4)=1
+      edges(2,5)=1
+      edges(3,4)=1
+      edges(5,3)=1
+      edges(5,6)=1
+      CALL testDAGraph%removeNode(ID=7)
+      ASSERT(testDAGraph%n == 6,'%n')
+      ASSERT(ALL(testDAGraph%nodes == (/8,2,3,4,5,6/)),'%nodes')
+      ASSERT(ALL(testDAGraph%edgeMatrix == edges),'%edgeMatrix')
+      DEALLOCATE(edges)
+      
+      ALLOCATE(edges(5,5))
+      edges=0
+      edges(1,2)=1
+      edges(1,3)=1
+      edges(1,4)=1
+      edges(2,3)=1
+      edges(4,2)=1
+      edges(4,5)=1
+      CALL testDAGraph%removeNode(IND=1)
+      ASSERT(testDAGraph%n == 5,'%n')
+      ASSERT(ALL(testDAGraph%nodes == (/2,3,4,5,6/)),'%nodes')
+      ASSERT(ALL(testDAGraph%edgeMatrix == edges),'%edgeMatrix')
+      DEALLOCATE(edges)
+    ENDSUBROUTINE testDAGremoveNode
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testDAGisStartNode()
+      
+      ASSERT(testDAGraph%isStartNode(ID=2),'%isStartNode(ID=2)')
+      ASSERT(.NOT.testDAGraph%isStartNode(ID=3),'%isStartNode(ID=3)')
+      ASSERT(.NOT.testDAGraph%isStartNode(ID=4),'%isStartNode(ID=4)')
+      ASSERT(.NOT.testDAGraph%isStartNode(ID=5),'%isStartNode(ID=5)')
+      ASSERT(.NOT.testDAGraph%isStartNode(ID=6),'%isStartNode(ID=6)')
+      
+      ASSERT(testDAGraph%isStartNode(IND=1),'%isStartNode(ID=1)')
+      ASSERT(.NOT.testDAGraph%isStartNode(IND=2),'%isStartNode(ID=2)')
+      ASSERT(.NOT.testDAGraph%isStartNode(IND=3),'%isStartNode(ID=3)')
+      ASSERT(.NOT.testDAGraph%isStartNode(IND=4),'%isStartNode(ID=4)')
+      ASSERT(.NOT.testDAGraph%isStartNode(IND=5),'%isStartNode(ID=5)')
+    ENDSUBROUTINE testDAGisStartNode
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testDAGgetNextStartNode()
+      INTEGER(SIK) :: ID
+      INTEGER(SIK),ALLOCATABLE :: old(:)
+      
+      ALLOCATE(old(5))
+      old=0
+      CALL testDAGraph%getNextStartNode(old,ID)
+      ASSERT(ID == 2,'Start Node is 2')
+      ASSERT(ALL(old == (/2,0,0,0,0/)),'old list')
+      
+      CALL testDAGraph%getNextStartNode(old,ID)
+      ASSERT(ID == 0,'No other start node')
+      ASSERT(ALL(old == (/2,0,0,0,0/)),'old list')
+      
+    ENDSUBROUTINE testDAGgetNextStartNode
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testDAGKATS()
+    
+      CALL testDAGraph%clear()
+      CALL testDAGraph%init(8,(/10,9,2,8,11,3,5,7/))
+      CALL testDAGraph%defineEdge(3,8)
+      CALL testDAGraph%defineEdge(3,10)
+      CALL testDAGraph%defineEdge(5,11)
+      CALL testDAGraph%defineEdge(7,11)
+      CALL testDAGraph%defineEdge(7,8)
+      CALL testDAGraph%defineEdge(11,2)
+      CALL testDAGraph%defineEdge(11,9)
+      CALL testDAGraph%defineEdge(11,10)
+      CALL testDAGraph%defineEdge(8,9)
+      
+      CALL testDAGraph%KATS()
+      ASSERT(ALL(testDAGraph%nodes == (/2,9,10,11,8,7,5,3/)),'%sorted')
+      
+    ENDSUBROUTINE testDAGKATS
 !
   ENDPROGRAM testGeom_Graph
