@@ -5147,6 +5147,8 @@ PROGRAM testParameterLists
     TYPE(StringType) :: str0
     TYPE(StringType),ALLOCATABLE :: str1(:),str2(:,:)
   
+    CALL testParam%verify(testParam2,bool)
+    ASSERT(bool,'empty lists')
     
     !Testing addition of SBK routine to parameter list
     CALL testParam%add('testPL->testSBK',.TRUE.)
@@ -5355,12 +5357,18 @@ PROGRAM testParameterLists
     slk3(1,2,2)=322
     slk3(2,2,2)=422
     CALL testParam%add('testPL->testSLKa3_2',slk3,'comment')
-    
+
     !assign the same PL
     testParam2=testParam
     CALL testParam%verify(testParam2,bool)
-    ASSERT(bool,'%verify the copy')
-    
+    ASSERT(bool,'verify the copy')
+
+    CALL testParam2%clear()
+    CALL testParam%verify(testParam2,bool)
+    ASSERT(.NOT.bool,'arg uninit')
+    CALL testParam2%verify(testParam,bool)
+    ASSERT(.NOT.bool,'this uninit')
+
     !Deallocate locals
     DEALLOCATE(snk2)
     DEALLOCATE(snk3)

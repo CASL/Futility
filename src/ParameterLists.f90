@@ -2657,8 +2657,11 @@ MODULE ParameterLists
       !list is not empty.
       isValid=.TRUE.
       isMatch=.FALSE.
-      IF(ASSOCIATED(reqParams%pdat)) &
+      IF(ASSOCIATED(reqParams%pdat)) THEN
         isValid=validateReq_ParamType(thisParam,reqParams,'',isMatch)
+      ELSE
+        isMatch=.NOT.ASSOCIATED(thisParam%pdat)
+      ENDIF
     ENDSUBROUTINE verify_Paramtype
 !
 !-------------------------------------------------------------------------------
