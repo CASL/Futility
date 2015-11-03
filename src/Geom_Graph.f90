@@ -2052,6 +2052,7 @@ MODULE Geom_Graph
         CALL thisGraph%getNextStartNode(oldIDs,ID)
       ENDDO
       IF(ALL(thisGraph%edgeMatrix == 0)) thisGraph=sortedGraph
+      !IF(ALL(thisGraph%edgeMatrix == 0)) CALL assign_DAGraphType(thisGraph,sortedGraph)
       DEALLOCATE(oldIDs)
     ENDSUBROUTINE KATS_DAGraphType
 !
@@ -2060,8 +2061,8 @@ MODULE Geom_Graph
 !> @param
 !>
     SUBROUTINE assign_DAGraphType(g0,g1)
-      TYPE(DAGraphType),INTENT(INOUT) :: g0
-      TYPE(DAGraphType),INTENT(IN) :: g1
+      CLASS(DAGraphType),INTENT(INOUT) :: g0
+      CLASS(DAGraphType),INTENT(IN) :: g1
       INTEGER(SIK) :: n
       CALL clear_DAGraphType(g0)
       IF(g1%n > 0) THEN
