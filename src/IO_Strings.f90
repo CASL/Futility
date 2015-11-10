@@ -114,6 +114,7 @@ MODULE IO_Strings
   PUBLIC :: strmatch
   PUBLIC :: strarraymatch
   PUBLIC :: strarraymatchind
+  PUBLIC :: strarrayeqind
   PUBLIC :: nmatchstr
   PUBLIC :: strrep
   PUBLIC :: stripComment
@@ -304,6 +305,19 @@ MODULE IO_Strings
     !> @copydetails IO_Strings::strarraymatchind_string
     MODULE PROCEDURE strarraymatchind_string
   ENDINTERFACE strarraymatchind
+
+  !> @brief Generic interface for strarrayeq
+  !>
+  !> This interfaces allows for the input argument to be either a
+  !> character array or a StringType.
+  INTERFACE strarrayeqind
+    !> @copybrief IO_Strings::strarrayeqind_char
+    !> @copydetails IO_Strings::strarrayeqind_char
+    MODULE PROCEDURE strarrayeqind_char
+    !> @copybrief IO_Strings::strarrayeqind_string
+    !> @copydetails IO_Strings::strarrayeqind_string
+    MODULE PROCEDURE strarrayeqind_string
+  ENDINTERFACE strarrayeqind
 !
 !===============================================================================      
   CONTAINS
@@ -1102,13 +1116,66 @@ MODULE IO_Strings
       
       ind=-1
       DO i=1,SIZE(string,DIM=1)
-        bool=strmatch(CHAR(string(i)),pattern)
+        bool=strmatch(string(i),pattern)
         IF(bool) THEN
           ind=i
           EXIT
         ENDIF
       ENDDO
     ENDFUNCTION strarraymatchind_string
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns the index where a substring @c pattern is found that equals @c
+!> string array.
+!> @param string the stringarray to search
+!> @param pattern the substring to find
+!> @returns ind the index in string array @c string where the substring was
+!> found.
+!>
+!> @note Does not handle trailing spaces that can be eliminated by TRIM() so
+!> strings should be trimmed when passing into function.
+!>
+    PURE FUNCTION strarrayeqind_char(string,pattern) RESULT(ind)
+      CHARACTER(LEN=*),INTENT(IN) :: string(:)
+      CHARACTER(LEN=*),INTENT(IN) :: pattern
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: i,ind
+
+      ind=-1
+      DO i=1,SIZE(string,DIM=1)
+        bool=string(i) == pattern
+        IF(bool) THEN
+          ind=i
+          EXIT
+        ENDIF
+      ENDDO
+    ENDFUNCTION strarrayeqind_char
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns the index where a substring @c pattern is found within @c
+!> string array.
+!> @param string the stringarray to search
+!> @param pattern the substring to find
+!> @returns bool whether or not @c pattern was found in @c string
+!>
+!> @note Does not handle trailing spaces that can be eliminated by TRIM() so
+!> strings should be trimmed when passing into function.
+!>
+    PURE FUNCTION strarrayeqind_string(string,pattern) RESULT(ind)
+      TYPE(StringType),INTENT(IN) :: string(:)
+      CHARACTER(LEN=*),INTENT(IN) :: pattern
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: i,ind
+
+      ind=-1
+      DO i=1,SIZE(string,DIM=1)
+        bool=CHAR(string(i)) == pattern
+        IF(bool) THEN
+          ind=i
+          EXIT
+        ENDIF
+      ENDDO
+    ENDFUNCTION strarrayeqind_string
 !
 !-------------------------------------------------------------------------------
 !> @brief Private routine replaces slash character in file path names with 
