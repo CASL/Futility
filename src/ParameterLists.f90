@@ -458,6 +458,7 @@ MODULE ParameterLists
       !> @copybrief ParameterLists::has_ParamType
       !> @copydoc ParameterLists::has_ParamType
       PROCEDURE,PASS :: getNextParam => getNextParam_ParamType
+      PROCEDURE,PASS :: getSubPL => getSubParam_List
       PROCEDURE,PASS :: has => has_ParamType
       !> @copybrief ParameterLists::validate_ParamType
       !> @copydoc ParameterLists::validate_ParamType
@@ -1307,6 +1308,79 @@ MODULE ParameterLists
       addr=tmpAddr
       param => nextParam
     ENDSUBROUTINE getNextParam_ParamType
+
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE getSubParam_List(thisParam,addr,param)
+      CLASS(ParamType),TARGET,INTENT(IN) :: thisParam
+      TYPE(StringType),INTENT(IN) :: addr
+      CLASS(ParamType),POINTER,INTENT(INOUT) :: param
+
+      CHARACTER(LEN=addr%ntrim) :: addrIn,newAddr,parentAddr
+      INTEGER(SIK) :: istp,ip,ip2,i,i2
+      TYPE(StringType) :: tmpAddr
+      CLASS(ParamType),POINTER :: tmpParam,nextParam,parentParam
+      LOGICAL(SBK) :: isList=.FALSE., listFound=.FALSE.
+      nextParam => NULL()
+      tmpAddr=''
+      addrIn=TRIM(addr)
+      IF(LEN_TRIM(addrIn) > 0) THEN
+        !Address passed in is the parent list
+        CALL get_ParamType(thisParam,TRIM(addrIn),tmpParam)
+        IF(ASSOCIATED(tmpParam)) THEN
+          !Check to make sure param is in thisParam
+          !if param is null that's ok too because we're guaranteed to
+          !be within thisParam
+
+          SELECTTYPE(tp => tmpParam)
+            TYPE IS(ParamType_List)
+              IF(ALLOCATED(tp%pList)) THEN
+                !Search the PL for a sublist
+                sublistSearch: DO i=1,SIZE(tp%pList)
+                  !If passed in sublist is null, get the first sub parameter list
+                  IF(.NOT. ASSOCIATED(param)) THEN
+                    nextParam => tp%pList(i)%pdat
+                    SELECTTYPE(np => nextParam); TYPE IS(ParamType_List)
+                      tmpAddr=TRIM(addrIn)//'->'//nextParam%name
+                      EXIT sublistSearch
+                    ENDSELECT
+                  ENDIF
+                  IF(ASSOCIATED(tp%pList(i)%pdat,param)) THEN
+                    !Search the rest of the list 
+                    DO i2=i+1,SIZE(tp%pList)
+                      nextParam => tp%pList(i2)%pdat
+                      SELECTTYPE(np => nextParam); TYPE IS(ParamType_List)
+                        tmpAddr=TRIM(addrIn)//'->'//nextParam%name
+                        EXIT sublistSearch
+                      ENDSELECT
+                    ENDDO
+                  ENDIF
+                ENDDO sublistSearch
+              ELSE 
+                !Return NULL if parent list is empty
+                write(*,*) "Nothing in list"
+                nextParam => NULL()
+              ENDIF
+            CLASS DEFAULT
+              !If a non-list ParamType was passed in, just return NULL
+              nextParam => NULL()
+          ENDSELECT
+        ENDIF
+      ELSE
+        !No address is given so assume the client wants to start at the root
+        IF(LEN_TRIM(thisParam%name) > 0) THEN
+          tmpAddr=thisParam%name
+          nextParam => thisParam
+        ELSE
+          IF(ASSOCIATED(thisParam%pdat)) THEN
+            tmpAddr=thisParam%pdat%name
+            nextParam => thisParam%pdat
+          ENDIF
+        ENDIF
+      ENDIF
+      param => nextParam
+    ENDSUBROUTINE getSubParam_List
+
 !
 !-------------------------------------------------------------------------------
 !> @brief Returns a pointer to a parameter whose name matches the given input
@@ -2311,6 +2385,7 @@ MODULE ParameterLists
               ASSERT(bool, prefix//CHAR(thisParam%name))
               FINFO() 'test values=',CHAR(tmpstra11(i))
               FINFO() 'ref. values=',CHAR(tmpstra12(i))
+              FINFO() i
               IF(.NOT. bool) EXIT
             ENDDO
             !clear?
