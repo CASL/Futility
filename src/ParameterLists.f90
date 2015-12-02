@@ -1311,6 +1311,32 @@ MODULE ParameterLists
 
 !
 !-------------------------------------------------------------------------------
+!> @brief Routine can be used as an "iterator" over sublists one level deep.
+!>        It takes an absolute list address a sublist and returns the next
+!>        sublist
+!> @param thisParam the parent parameter list to obtain the next sublist from
+!> @param addr the absolute address of the parent list
+!> @param param a pointer to the next sublist, if null the first sublist will
+!>        be returned
+!>
+!> To use this routine as an iterator, a loop of the following form should be
+!> written in the client code:
+!> @code
+!> TYPE(StringType) :: addr
+!> TYPE(ParameType) :: paramList
+!> CLASS(ParamType),POINTER :: nextParam
+!> TYPE(ParamType) :: iterPL
+!> addr=''
+!> nextParam => NULL()
+!> CALL paramList%getSubPL(addr,nextParam)
+!> DO WHILE(ASSOCIATED(nextParam))
+!>   iterPL=nextParam
+!>   !Do stuff with nextParam
+!>   !...
+!>   CALL paramList%getSubPL(addr,nextParam)
+!> ENDDO
+!> @endcode
+!>
     SUBROUTINE getSubParam_List(thisParam,addr,param)
       CLASS(ParamType),TARGET,INTENT(IN) :: thisParam
       TYPE(StringType),INTENT(IN) :: addr
@@ -8782,7 +8808,6 @@ MODULE ParameterLists
           CALL iXMLE%getAttributeValue(tmpStr,nameVal)
           currentPath=nameVal
           CALL procXMLTree(thisParam,iXMLE,currentPath)
-  !CALL thisParam%edit(6)
         ELSE
           !Must be uninitialized
         ENDIF

@@ -4992,9 +4992,32 @@ PROGRAM testParameterLists
 !
 !-------------------------------------------------------------------------------
   SUBROUTINE testInitFromXML()
+    TYPE(StringType) :: str
+    TYPE(StringType),ALLOCATABLE :: astr(:)
+    INTEGER(SIK) :: tmpint
+    LOGICAL(SBK) :: bool
+
+    str='CASL AMA Benchmark Problem 2 - Fuel Lattice - Public'
+    CALL testParam2%add('CASEID->case_id',TRIM(str))
+    tmpint=10
+    CALL testParam2%add('CASEID->STATE->testVal',tmpint)
+    str='qtr'
+    CALL testParam2%add('CASEID->STATE->sym',str)
+    ALLOCATE(astr(1))
+    astr(1)='LAT1'
+    CALL testParam2%add('CASEID->ASSEMBLIES->Assembly_ASSY1->axial_labels',astr)
+    DEALLOCATE(astr)
+    CALL testParam2%add('CASEID->ASSEMBLIES->ASSEMBLY_ASSY1->SpacerGrids',testParam3)
+    str='ASSY1'
+    CALL testParam2%add('CASEID->ASSEMBLIES->label',str)
 
     CALL testParam%clear()
-    CALL testParam%initFromXML('testFile.xml')
+    CALL testParam%initFromXML('testInit.xml')
+    CALL testParam%verify(testParam2,bool)
+    ASSERT(bool,"init from XML file")
+
+    CALL testParam%clear()
+    CALL testParam2%clear()
   ENDSUBROUTINE testInitFromXML
 !
 !-------------------------------------------------------------------------------
