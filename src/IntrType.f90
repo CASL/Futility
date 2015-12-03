@@ -368,6 +368,9 @@ MODULE IntrType
     !> @copybrief IntrType::assign_char_to_int
     !> @copydetails IntrType::assign_char_to_int
     MODULE PROCEDURE assign_char_to_int
+    !> @copybrief IntrType::assign_char_to_longint
+    !> @copydetails IntrType::assign_char_to_longint
+    MODULE PROCEDURE assign_char_to_longint
     !> @copybrief IntrType::assign_char_to_bool
     !> @copydetails IntrType::assign_char_to_bool
     MODULE PROCEDURE assign_char_to_bool
@@ -932,8 +935,32 @@ MODULE IntrType
     ELEMENTAL SUBROUTINE assign_char_to_int(i,c)
       INTEGER(SNK),INTENT(OUT) :: i
       CHARACTER(LEN=*),INTENT(IN) :: c
-      READ(c, '(I12)') i
-    ENDSUBROUTINE
+      INTEGER(SIK) :: tmpInt
+      CHARACTER(LEN=4) :: fmt
+      tmpInt=LEN(c)
+      WRITE(fmt,'(i4)') tmpInt; fmt=ADJUSTL(fmt)
+      READ(c, '(I'//TRIM(fmt)//')') i
+    ENDSUBROUTINE assign_char_to_int
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing an assignment of a string to a
+!> long integer with the = operator
+!> @param i the long integer value
+!> @param c the character value
+!> @returns i integer value of c
+!>
+!> This assigns an int with a value held in a string
+!>
+    ELEMENTAL SUBROUTINE assign_char_to_longint(i,c)
+      INTEGER(SLK),INTENT(OUT) :: i
+      CHARACTER(LEN=*),INTENT(IN) :: c
+      INTEGER(SIK) :: tmpInt
+      CHARACTER(LEN=4) :: fmt
+      tmpInt=LEN(c)
+      WRITE(fmt,'(i4)') tmpInt; fmt=ADJUSTL(fmt)
+      READ(c, '(I'//TRIM(fmt)//')') i
+    ENDSUBROUTINE assign_char_to_longint
+
 !
 !-------------------------------------------------------------------------------
 !> @brief Defines the operation for performing an assignment of a string to a
@@ -950,7 +977,7 @@ MODULE IntrType
       ELSE
         b = .FALSE.
       ENDIF
-    ENDSUBROUTINE
+    ENDSUBROUTINE assign_char_to_bool
 !
 !-------------------------------------------------------------------------------
 !> @brief Defines the operation for performing an assignment of a string to a
@@ -962,10 +989,12 @@ MODULE IntrType
     ELEMENTAL SUBROUTINE assign_char_to_single(s,c)
       REAL(SSK),INTENT(OUT) :: s
       CHARACTER(LEN=*),INTENT(IN) :: c
-      INTEGER(SNK) :: tmpInt
-
-      READ(c, '(f19.0)') s
-    ENDSUBROUTINE
+      INTEGER(SIK) :: tmpInt
+      CHARACTER(LEN=4) :: fmt
+      tmpInt=LEN(c)
+      WRITE(fmt,'(i4)') tmpInt; fmt=ADJUSTL(fmt)
+      READ(c, '(f'//TRIM(fmt)//'.0)') s
+    ENDSUBROUTINE assign_char_to_single
 
 !
 !-------------------------------------------------------------------------------
@@ -978,10 +1007,12 @@ MODULE IntrType
     ELEMENTAL SUBROUTINE assign_char_to_double(d,c)
       REAL(SDK),INTENT(OUT) :: d
       CHARACTER(LEN=*),INTENT(IN) :: c
-      INTEGER(SLK) :: tmpInt
-
-      READ(c, '(d35.0)') d
-    ENDSUBROUTINE
+      INTEGER(SIK) :: tmpInt
+      CHARACTER(LEN=4) :: fmt
+      tmpInt=LEN(c)
+      WRITE(fmt,'(i4)') tmpInt; fmt=ADJUSTL(fmt)
+      READ(c, '(d'//TRIM(fmt)//'.0)') d
+    ENDSUBROUTINE assign_char_to_double
 !
 !-------------------------------------------------------------------------------
 !> @brief Defines the operation for performing an assignment of a character
@@ -989,38 +1020,38 @@ MODULE IntrType
 !> @param iArr the array of integers
 !> @param c the character value
 !TODO arrays
-    ELEMENTAL SUBROUTINE assign_char_to_array_int(iArr,c)
-      INTEGER(SIK),INTENT(OUT) :: iArr
-      CHARACTER(LEN=*),INTENT(IN) :: c
-      CHARACTER(LEN=50) :: tmpStr
-      INTEGER(SIK) :: tmpInt
-      INTEGER(SIK) :: i,j,k
-
-      j=1
-      k=1 ! iArr index
-      DO i=2,LEN(c)-1
-        IF(c(i:i) /= ',') THEN
-          tmpStr(j:j)=c(i:i)
-          j=j+1
-        ELSE
-          tmpStr=tmpStr(1:j)
-          READ(tmpStr, '(I12)') tmpInt
-          !iArr(k:k)=tmpInt
-          !Read string into integer
-          !How to have it only read a certain amount?
-          j=1
-          k=k+1
-        ENDIF
-      ENDDO
-      !for char : c
-      !  if char != ','
-      !    push to tmpStr
-      !  else
-      !    convert tmpStr to int
-      !    add int to iArr
-      !end
-!      READ(c, '(i16)') iArr
-    ENDSUBROUTINE
+!    SUBROUTINE assign_char_to_array_int(iArr,c)
+!      INTEGER(SIK),INTENT(OUT) :: iArr
+!      CHARACTER(LEN=*),INTENT(IN) :: c
+!      CHARACTER(LEN=50) :: tmpStr
+!      INTEGER(SIK) :: tmpInt
+!      INTEGER(SIK) :: i,j,k
+!
+!      j=1
+!      k=1 ! iArr index
+!      DO i=2,LEN(c)-1
+!        IF(c(i:i) /= ',') THEN
+!          tmpStr(j:j)=c(i:i)
+!          j=j+1
+!        ELSE
+!          tmpStr=tmpStr(1:j)
+!          READ(tmpStr, '(I12)') tmpInt
+!          !iArr(k:k)=tmpInt
+!          !Read string into integer
+!          !How to have it only read a certain amount?
+!          j=1
+!          k=k+1
+!        ENDIF
+!      ENDDO
+!      !for char : c
+!      !  if char != ','
+!      !    push to tmpStr
+!      !  else
+!      !    convert tmpStr to int
+!      !    add int to iArr
+!      !end
+!!      READ(c, '(i16)') iArr
+!    ENDSUBROUTINE
 !
 
 ENDMODULE IntrType
