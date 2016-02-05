@@ -56,6 +56,7 @@ MODULE Constants_Conversion
   !INTEGER(SIK),PARAMETER :: SOUTH=4
   !INTEGER(SIK),PARAMETER :: BOTTOM=5
   !INTEGER(SIK),PARAMETER :: TOP=6
-  
+  !> Conversion factor from MPa to psia (should move to constants conversion)
+  REAL(SRK),PARAMETER :: MPa2PSIA=145.0_SRK+377.0_SRK/9990.0_SRK
   
 ENDMODULE Constants_Conversion

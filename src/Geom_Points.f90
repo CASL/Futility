@@ -35,8 +35,9 @@
 !>     polymorphic types, so it requires less Fortran 2003 features.
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE Geom_Points
-
   USE IntrType
+  USE Constants_Conversion
+  
   IMPLICIT NONE
   PRIVATE !Default contents of module to private
 !
@@ -47,6 +48,8 @@ MODULE Geom_Points
   PUBLIC :: ClearLinkedListPointType
   PUBLIC :: Distance
   PUBLIC :: midPoint
+  PUBLIC :: innerAngle
+  PUBLIC :: outerAngle
   PUBLIC :: OPERATOR(+)
   PUBLIC :: OPERATOR(-)
   PUBLIC :: OPERATOR(==)
@@ -97,6 +100,24 @@ MODULE Geom_Points
       PROCEDURE,PASS :: insert => insert_LinkedListPointType
   ENDTYPE LinkedListPointType
 
+  !> @brief Generic interface for computing innerAngle
+  !>
+  !> Adds the listed module procedures to the global interface name for innerAngle
+  INTERFACE innerAngle
+    !> @copybrief GeomPoints::innerAngle_3points
+    !> @copydetails GeomPoints::innerAngle_3points
+    MODULE PROCEDURE innerAngle_3points
+  ENDINTERFACE innerAngle
+  
+  !> @brief Generic interface for computing outerAngle
+  !>
+  !> Adds the listed module procedures to the global interface name for outerAngle
+  INTERFACE outerAngle
+    !> @copybrief GeomPoints::outerAngle_3points
+    !> @copydetails GeomPoints::outerAngle_3points
+    MODULE PROCEDURE outerAngle_3points
+  ENDINTERFACE outerAngle
+  
   !> @brief Generic interface for computing midpoint
   !>
   !> Adds the listed module procedures to the global interface name for midPoint
@@ -369,7 +390,7 @@ MODULE Geom_Points
 !> @param p1 the second point to be assigned from
 !>
 !> Function is elemental so it can be used on an array of points.
-    PURE SUBROUTINE assign_PointType(p0,p1)
+    ELEMENTAL SUBROUTINE assign_PointType(p0,p1)
       TYPE(PointType),INTENT(INOUT) :: p0
       TYPE(PointType),INTENT(IN) :: p1
       p0%dim=p1%dim
@@ -474,6 +495,93 @@ MODULE Geom_Points
         ENDSELECT
       ENDIF
     ENDFUNCTION midPoint_2points
+!
+!-------------------------------------------------------------------------------
+!> @brief Computes the interior angle between three points in up to three 
+!>        dimensions, where the points exist like:
+!>   ^   * p0
+!>    \   \  
+!>     v1  \
+!>          \     v2->
+!>        p1 *----------* p2
+!> @param p0 the first point
+!> @param p1 the second point
+!> @param p2 the third point
+!> @returns @c angle the angle between @c p0, @c p1, and @c p2
+!>
+!>  Equation implemented:
+!> theta=ACOS(DOT(v1,v2)/(|v1|*|v2|))
+!>
+!> Function is elemental so it can be used on an array of points.
+    ELEMENTAL FUNCTION innerAngle_3points(p0,p1,p2) RESULT(angle)
+      TYPE(PointType),INTENT(IN) :: p0,p1,p2
+      REAL(SRK) :: vec1(3),vec2(3),angle,d1,d2
+      IF((p0%dim > 1) .AND. (p0%dim == p1%dim) .AND. (p1%dim == p2%dim)) THEN
+        !Explicit unrolling for lower order expected dimensions
+        vec1=0.0_SRK; vec2=0.0_SRK
+        d1=distance(p0,p1)
+        d2=distance(p2,p1)
+        SELECTCASE(p0%dim)
+          CASE(2)
+            vec1(1)=p0%coord(1)-p1%coord(1)
+            vec1(2)=p0%coord(2)-p1%coord(2)
+            vec2(1)=p2%coord(1)-p1%coord(1)
+            vec2(2)=p2%coord(2)-p1%coord(2)
+            angle=ACOS((vec1(1)*vec2(1)+vec1(2)*vec2(2))/(d1*d2))
+          CASE(3)
+            vec1(1)=p0%coord(1)-p1%coord(1)
+            vec1(2)=p0%coord(2)-p1%coord(2)
+            vec1(3)=p0%coord(3)-p1%coord(3)
+            vec2(1)=p2%coord(1)-p1%coord(1)
+            vec2(2)=p2%coord(2)-p1%coord(2)
+            vec2(3)=p2%coord(3)-p1%coord(3)
+            angle=ACOS((vec1(1)*vec2(1)+vec1(2)*vec2(2)+vec1(3)*vec2(3))/ &
+              (d1*d2))
+        ENDSELECT
+      ENDIF
+    ENDFUNCTION innerAngle_3points
+!
+!-------------------------------------------------------------------------------
+!> @brief Computes the exterior angle between three points in up to three 
+!>        dimensions, where the points exist like:
+!>   ^   * p0
+!>    \   \  
+!>     v1  \
+!>          \     v2->
+!>        p1 *----------* p2
+!> @param p0 the first point
+!> @param p1 the second point
+!> @param p2 the third point
+!> @returns @c angle the angle between @c p0, @c p1, and @c p2
+!>
+!> Function is elemental so it can be used on an array of points.
+    ELEMENTAL FUNCTION outerAngle_3points(p0,p1,p2) RESULT(angle)
+      TYPE(PointType),INTENT(IN) :: p0,p1,p2
+      REAL(SRK) :: vec1(3),vec2(3),angle,d1,d2
+      IF((p0%dim > 1) .AND. (p0%dim == p1%dim) .AND. (p1%dim == p2%dim)) THEN
+        !Explicit unrolling for lower order expected dimensions
+        vec1=0.0_SRK; vec2=0.0_SRK
+        d1=distance(p0,p1)
+        d2=distance(p2,p1)
+        SELECTCASE(p0%dim)
+          CASE(2)
+            vec1(1)=p0%coord(1)-p1%coord(1)
+            vec1(2)=p0%coord(2)-p1%coord(2)
+            vec2(1)=p2%coord(1)-p1%coord(1)
+            vec2(2)=p2%coord(2)-p1%coord(2)
+            angle=TWOPI-ACOS((vec1(1)*vec2(1)+vec1(2)*vec2(2))/(d1*d2))
+          CASE(3)
+            vec1(1)=p0%coord(1)-p1%coord(1)
+            vec1(2)=p0%coord(2)-p1%coord(2)
+            vec1(3)=p0%coord(3)-p1%coord(3)
+            vec2(1)=p2%coord(1)-p1%coord(1)
+            vec2(2)=p2%coord(2)-p1%coord(2)
+            vec2(3)=p2%coord(3)-p1%coord(3)
+            angle=TWOPI-ACOS((vec1(1)*vec2(1)+vec1(2)*vec2(2)+vec1(3)*vec2(3))/ &
+              (d1*d2))
+        ENDSELECT
+      ENDIF
+    ENDFUNCTION outerAngle_3points
 !
 !-------------------------------------------------------------------------------
 !> @brief Inserts a point into a linked list of points.

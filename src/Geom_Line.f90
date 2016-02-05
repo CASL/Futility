@@ -31,16 +31,15 @@
 !>    @date 5/26/2011
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE Geom_Line
-
   USE IntrType
   USE Geom_Points
+
   IMPLICIT NONE
   PRIVATE !Default contents of module to private
 !
 ! List of Public items
   PUBLIC :: LineType
-!  PUBLIC :: midPoint
-!  PUBLIC :: intersect
+  PUBLIC :: OPERATOR(==)
 
   !> @brief Type for a Line
   !>
@@ -78,21 +77,22 @@ MODULE Geom_Line
       !> @copybrief GeomLine::distance_LineType_to_LineType
       !> @copydetails GeomLine::distance_LineType_to_LineType
       PROCEDURE,PASS :: distance2Line => distance_LineType_to_LineType
+      !> @copybrief GeomLine::pointIsLeft_LineType
+      !> @copydetails GeomLine::pointIsLeft_LineType
+      PROCEDURE,PASS :: pointIsLeft => pointIsLeft_LineType
+      !> @copybrief GeomLine::pointIsRight_LineType
+      !> @copydetails GeomLine::pointIsRight_LineType
+      PROCEDURE,PASS :: pointIsRight => pointIsRight_LineType
   ENDTYPE LineType
 
-!  !> @brief Generic interface for obtaining a midPoint
-!  INTERFACE midPoint
-!    !> @copybrief GeomLine::midPoint_LineType
-!    !> @copydetails GeomLine::midPoint_LineType
-!    MODULE PROCEDURE midPoint_LineType
-!  ENDINTERFACE midPoint
-!
-!  !> @brief Generic interface to use to find intersections
-!  INTERFACE intersect
-!    !> @copybrief GeomLine::intersect_LineType_and_LineType
-!    !> @copydetails GeomLine::intersect_LineType_and_LineType
-!    MODULE PROCEDURE intersect_LineType_and_LineType
-!  ENDINTERFACE intersect
+  !> @brief Generic interface for 'is equal to' operator (==)
+  !>
+  !> Adds 'is equal to' capability for Line types
+  INTERFACE OPERATOR(==)
+    !> @copybrief Geom_Line::isequal_LineType
+    !> @copydetails Geom_Line::isequal_LineType
+    MODULE PROCEDURE isequal_LineType
+  ENDINTERFACE
 !
 !===============================================================================
   CONTAINS
@@ -218,8 +218,8 @@ MODULE Geom_Line
       ELSE
         s=s/d
         t=t/d
-        IF((0._SRK <= s .AND. s <= 1.0_SRK) .AND. &
-           (0._SRK <= t .AND. t <= 1.0_SRK)) THEN
+        IF(((0._SRK .APPROXLE. s) .AND. (s .APPROXLE. 1.0_SRK)) .AND. &
+           ((0._SRK .APPROXLE. t) .AND. (t .APPROXLE. 1.0_SRK))) THEN
           !Success, intersection point was found.
           p=s1p0
           p%coord(1)=p%coord(1)+s*u(1)
@@ -484,5 +484,54 @@ MODULE Geom_Line
         ENDIF
       ENDIF
     ENDFUNCTION distance3D_to_point
+!
+!-------------------------------------------------------------------------------
+!> @brief Determines whether a point is to the left of the line.
+!> @param line the line object
+!> @param pt the point object
+!> @returns @c bool the boolean result of the operation
+!>
+!> Function is elemental so it can be used on an array of lines.
+    ELEMENTAL FUNCTION pointIsLeft_LineType(line,pt) RESULT(bool)
+      CLASS(LineType),INTENT(IN) :: line
+      TYPE(PointType),INTENT(IN) :: pt
+      LOGICAL(SBK) :: bool
+      bool=.FALSE.
+      IF((pt%dim > 1) .AND. (line%getDim() > 1)) &
+        bool=(line%p2%coord(1)-line%p1%coord(1))*(pt%coord(2)-line%p1%coord(2))- &
+          (line%p2%coord(2)-line%p1%coord(2))*(pt%coord(1)-line%p1%coord(1)) > 0.0_SRK
+    ENDFUNCTION pointIsLeft_LineType
+!
+!-------------------------------------------------------------------------------
+!> @brief Determines whether a point is to the right of the line.
+!> @param line the line object
+!> @param pt the point object
+!> @returns @c bool the boolean result of the operation
+!>
+!> Function is elemental so it can be used on an array of lines.
+    ELEMENTAL FUNCTION pointIsRight_LineType(line,pt) RESULT(bool)
+      CLASS(LineType),INTENT(IN) :: line
+      TYPE(PointType),INTENT(IN) :: pt
+      LOGICAL(SBK) :: bool
+      bool=.FALSE.
+      IF((pt%dim > 1) .AND. (line%getDim() > 1)) &
+        bool=(line%p2%coord(1)-line%p1%coord(1))*(pt%coord(2)-line%p1%coord(2))- &
+          (line%p2%coord(2)-line%p1%coord(2))*(pt%coord(1)-line%p1%coord(1)) < 0.0_SRK
+    ENDFUNCTION pointIsRight_LineType
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the 'is equal to' operation between two lines e.g. @c 
+!>        l0 == l1
+!> @param p0 the first line
+!> @param p1 the second line
+!> @returns @c bool the boolean result of the operation
+!>
+!> Function is elemental so it can be used on an array of lines.
+    ELEMENTAL FUNCTION isequal_LineType(l0,l1) RESULT(bool)
+      TYPE(LineType),INTENT(IN) :: l0,l1
+      LOGICAL(SBK) :: bool
+      bool=.FALSE.
+      IF(l0%p1 == l1%p1) bool=l0%p2 == l1%p2
+    ENDFUNCTION isequal_LineType
 !
 ENDMODULE Geom_Line

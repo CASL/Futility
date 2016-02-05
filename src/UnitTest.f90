@@ -510,7 +510,7 @@ MODULE UnitTest
       INTEGER :: i
       
       DO i=LEN(file),1,-1
-        IF(file(i:i) == '\') EXIT
+        IF(file(i:i) == ACHAR(92)) EXIT
       ENDDO
       name=file(i+1:LEN(file))
     ENDFUNCTION

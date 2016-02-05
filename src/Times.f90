@@ -416,16 +416,21 @@ MODULE Times
 !> "%elapsedtime" as a string in HHMMSS format.
 !> @param myTimer input argument, a @ref Times::TimerType "TimerType" variable
 !> @returns hh_mm_ss, the elapsed time as a string (hhh:mm:ss or mmm:ss.ss)
-    FUNCTION getTimeHHMMSS(myTimer) RESULT(hh_mm_ss)
+    FUNCTION getTimeHHMMSS(myTimer,tsec) RESULT(hh_mm_ss)
       REAL(SDK),PARAMETER :: half=0.5_SDK
       CLASS(TimerType),INTENT(IN) :: myTimer
+      REAL(SRK),INTENT(IN),OPTIONAL :: tsec 
       CHARACTER(LEN=MAXLEN_ETIME) :: hh_mm_ss
       INTEGER(SIK) :: it,hrs,hr1,hr2,mins,min1,min2,secs,sec1,sec2
       REAL(SRK) :: t,sfrac
 !
 !hhmmss='mmm:ss.ss'
 !hhmmss='hhh:mm:ss'
-      t=myTimer%elapsedtime
+      IF(PRESENT(tsec)) THEN
+        t=tsec
+      ELSE
+        t=myTimer%elapsedtime
+      ENDIF
       
       it=INT(t,SIK)
       hrs=it/3600_SIK                   ! Total number of hours

@@ -41,6 +41,8 @@ TRIBITS_ADD_LIBRARY(Utils
       UnitTest.f90
       IntrType.f90
       Constants_Conversion.f90
+      ExtendedMath.f90
+      WaterSatProperties.f90
       BLAS1.f90
       BLAS2.f90
       BLAS3.f90
@@ -55,6 +57,8 @@ TRIBITS_ADD_LIBRARY(Utils
       Geom_Plane.f90
       Geom_CircCyl.f90
       Geom_Box.f90
+      Geom_Graph.f90
+      Geom_Poly.f90
       Geom.f90
       ExceptionHandler.f90
       Allocs.f90
@@ -65,6 +69,7 @@ TRIBITS_ADD_LIBRARY(Utils
       FileType_Fortran.f90
       FileType_DA32.f90
       FileType_HDF5.f90
+      FileType_XML.f90
       FileType_Log.f90
       FileType_Checkpoint.f90
       FileType_Input.f90

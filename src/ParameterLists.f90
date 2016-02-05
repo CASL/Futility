@@ -98,6 +98,7 @@ MODULE ParameterLists
   USE Strings
   USE ExceptionHandler
   USE IO_Strings
+  USE FileType_XML
 
   IMPLICIT NONE
   PRIVATE !Default private for module contents
@@ -107,6 +108,10 @@ MODULE ParameterLists
   PUBLIC :: ParamType
   PUBLIC :: ASSIGNMENT(=)
   PUBLIC :: OPERATOR(==)
+
+  PUBLIC :: char_to_int_array
+  PUBLIC :: char_to_double_array
+  PUBLIC :: char_to_string_array
 
   !> The module name
   CHARACTER(LEN=*),PARAMETER :: modName='PARAMETERLISTS'
@@ -218,6 +223,7 @@ MODULE ParameterLists
                  initSBK,initSTR,initCHAR,initSSKa1,initSDKa1,initSNKa1, &
                  initSLKa1,initSBKa1,initSTRa1,initSSKa2,initSDKa2,initSNKa2, &
                  initSLKa2,initSTRa2,initSSKa3,initSDKa3,initSNKa3,initSLKa3
+      PROCEDURE,PASS :: initFromXML
       !> @copybrief ParameterLists::set_ParamType_List
       !> @copydoc ParameterLists::set_ParamType_List
       PROCEDURE,PASS,PRIVATE :: setParamList => set_ParamType_List
@@ -452,6 +458,7 @@ MODULE ParameterLists
       !> @copybrief ParameterLists::has_ParamType
       !> @copydoc ParameterLists::has_ParamType
       PROCEDURE,PASS :: getNextParam => getNextParam_ParamType
+      PROCEDURE,PASS :: getSubPL => getSubParam_List
       PROCEDURE,PASS :: has => has_ParamType
       !> @copybrief ParameterLists::validate_ParamType
       !> @copydoc ParameterLists::validate_ParamType
@@ -465,6 +472,7 @@ MODULE ParameterLists
       !> @copybrief ParameterLists::clear_ParamType
       !> @copydoc ParameterLists::clear_ParamType
       PROCEDURE,PASS :: clear => clear_ParamType
+  PROCEDURE :: procXMLTree
   ENDTYPE ParamType
 
   !> @brief Extended type of a ParamType for defining a list of parameters
@@ -1300,6 +1308,105 @@ MODULE ParameterLists
       addr=tmpAddr
       param => nextParam
     ENDSUBROUTINE getNextParam_ParamType
+
+!
+!-------------------------------------------------------------------------------
+!> @brief Routine can be used as an "iterator" over sublists one level deep.
+!>        It takes an absolute list address a sublist and returns the next
+!>        sublist
+!> @param thisParam the parent parameter list to obtain the next sublist from
+!> @param addr the absolute address of the parent list
+!> @param param a pointer to the next sublist, if null the first sublist will
+!>        be returned
+!>
+!> To use this routine as an iterator, a loop of the following form should be
+!> written in the client code:
+!> @code
+!> TYPE(StringType) :: addr
+!> TYPE(ParameType) :: paramList
+!> CLASS(ParamType),POINTER :: nextParam
+!> TYPE(ParamType) :: iterPL
+!> addr=''
+!> nextParam => NULL()
+!> CALL paramList%getSubPL(addr,nextParam)
+!> DO WHILE(ASSOCIATED(nextParam))
+!>   iterPL=nextParam
+!>   !Do stuff with nextParam
+!>   !...
+!>   CALL paramList%getSubPL(addr,nextParam)
+!> ENDDO
+!> @endcode
+!>
+    SUBROUTINE getSubParam_List(thisParam,addr,param)
+      CLASS(ParamType),TARGET,INTENT(IN) :: thisParam
+      TYPE(StringType),INTENT(IN) :: addr
+      CLASS(ParamType),POINTER,INTENT(INOUT) :: param
+
+      CHARACTER(LEN=addr%ntrim) :: addrIn,newAddr,parentAddr
+      INTEGER(SIK) :: istp,ip,ip2,i,i2
+      TYPE(StringType) :: tmpAddr
+      CLASS(ParamType),POINTER :: tmpParam,nextParam,parentParam
+      LOGICAL(SBK) :: isList=.FALSE., listFound=.FALSE.
+      nextParam => NULL()
+      tmpAddr=''
+      addrIn=TRIM(addr)
+      IF(LEN_TRIM(addrIn) > 0) THEN
+        !Address passed in is the parent list
+        CALL get_ParamType(thisParam,TRIM(addrIn),tmpParam)
+        IF(ASSOCIATED(tmpParam)) THEN
+          !Check to make sure param is in thisParam
+          !if param is null that's ok too because we're guaranteed to
+          !be within thisParam
+
+          SELECTTYPE(tp => tmpParam)
+            TYPE IS(ParamType_List)
+              IF(ALLOCATED(tp%pList)) THEN
+                !Search the PL for a sublist
+                sublistSearch: DO i=1,SIZE(tp%pList)
+                  !If passed in sublist is null, get the first sub parameter list
+                  IF(.NOT. ASSOCIATED(param)) THEN
+                    nextParam => tp%pList(i)%pdat
+                    SELECTTYPE(np => nextParam); TYPE IS(ParamType_List)
+                      tmpAddr=TRIM(addrIn)//'->'//nextParam%name
+                      EXIT sublistSearch
+                    ENDSELECT
+                  ENDIF
+                  IF(ASSOCIATED(tp%pList(i)%pdat,param)) THEN
+                    !Search the rest of the list 
+                    DO i2=i+1,SIZE(tp%pList)
+                      nextParam => tp%pList(i2)%pdat
+                      SELECTTYPE(np => nextParam); TYPE IS(ParamType_List)
+                        tmpAddr=TRIM(addrIn)//'->'//nextParam%name
+                        EXIT sublistSearch
+                      ENDSELECT
+                    ENDDO
+                  ENDIF
+                ENDDO sublistSearch
+              ELSE 
+                !Return NULL if parent list is empty
+                write(*,*) "Nothing in list"
+                nextParam => NULL()
+              ENDIF
+            CLASS DEFAULT
+              !If a non-list ParamType was passed in, just return NULL
+              nextParam => NULL()
+          ENDSELECT
+        ENDIF
+      ELSE
+        !No address is given so assume the client wants to start at the root
+        IF(LEN_TRIM(thisParam%name) > 0) THEN
+          tmpAddr=thisParam%name
+          nextParam => thisParam
+        ELSE
+          IF(ASSOCIATED(thisParam%pdat)) THEN
+            tmpAddr=thisParam%pdat%name
+            nextParam => thisParam%pdat
+          ENDIF
+        ENDIF
+      ENDIF
+      param => nextParam
+    ENDSUBROUTINE getSubParam_List
+
 !
 !-------------------------------------------------------------------------------
 !> @brief Returns a pointer to a parameter whose name matches the given input
@@ -1445,7 +1552,8 @@ MODULE ParameterLists
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       CLASS(ParamType),INTENT(IN) :: newParam
-      CHARACTER(LEN=LEN(name)) :: thisname,nextname,pname
+      LOGICAL(SBK),SAVE :: lsubListSearch=.TRUE.
+      CHARACTER(LEN=LEN(name)) :: thisname,nextname,pname,listName
       INTEGER(SIK) :: ipos,i,np
       TYPE(ParamType),ALLOCATABLE :: tmpList(:)
       CLASS(ParamType),POINTER :: tmpParam
@@ -1470,13 +1578,15 @@ MODULE ParameterLists
                 thisParam%pdat%name=TRIM(ADJUSTL(name))
                 nextname=''
               ENDIF
-              CALL add_ParamType(thisParam%pdat,TRIM(nextname),newParam)
+              CALL add_ParamType(thisParam%pdat,nextname,newParam)
             ELSE
               !assign newParam to thisParam
               CALL assign_ParamType(thisParam,newParam)
             ENDIF
           ENDIF
         TYPE IS(ParamType_List)
+          np=0
+          IF(ALLOCATED(thisParam%pList)) np=SIZE(thisParam%pList)
           IF(LEN_TRIM(name) > 0) THEN
             !Check if the name matches this list
             ipos=INDEX(name,'->')
@@ -1492,25 +1602,43 @@ MODULE ParameterLists
             CALL toUPPER(thisname)
             CALL toUPPER(pname)
             IF(TRIM(pname) == TRIM(thisname)) THEN
-              !The name refers to the list in thisParam
-              CALL add_ParamType(thisParam,TRIM(nextname),newParam)
+              !only search if it's not the last name in the
+              !full address. last name is guaranteed not to exist
+              !and this prevents accidental partial matching in sublists.
+              lsubListSearch=.FALSE.
+              CALL add_ParamType(thisParam,nextname,newParam)
+              lsubListSearch=.TRUE.
             ELSE
-              !Search for thisname within this list
+              !Search for thisname within...
               NULLIFY(tmpParam)
-              CALL thisParam%getParam(TRIM(thisname),tmpParam)
+              IF(lsubListSearch) THEN
+                !...all sub-entries.
+                CALL get_ParamType(thisParam,TRIM(thisname),tmpParam)
+              ELSE
+                !...just this list
+                DO i=1,np
+                  listName=''
+                  IF(ASSOCIATED(thisParam%pList(i)%pdat)) &
+                    listName=TRIM(thisParam%pList(i)%pdat%name)
+                  CALL toUPPER(listName)
+                  IF(TRIM(listName) == TRIM(thisName)) THEN
+                    tmpParam => thisParam%pList(i)%pdat
+                    EXIT
+                  ENDIF
+                ENDDO
+              ENDIF
+
               IF(ASSOCIATED(tmpParam)) THEN
                 !Found parameter with matching name
-                CALL add_ParamType(tmpParam,TRIM(nextname),newParam)
+                CALL add_ParamType(tmpParam,nextname,newParam)
               ELSE
                 !Create a new entry in the list for the new parameter
-                IF(ALLOCATED(thisParam%pList)) THEN
-                  np=SIZE(thisParam%pList)
-
+                IF(np > 0) THEN
                   !Copy the parameter list to a temporary
                   ALLOCATE(tmpList(np))
                   DO i=1,np
                     CALL assign_ParamType(tmpList(i),thisParam%pList(i))
-                    CALL thisParam%pList(i)%clear()
+                    CALL clear_ParamType(thisParam%pList(i))
                   ENDDO
 
                   !Reallocate the parameter list and copy everything back
@@ -1518,7 +1646,7 @@ MODULE ParameterLists
                   ALLOCATE(thisParam%pList(np+1))
                   DO i=1,np
                     CALL assign_ParamType(thisParam%pList(i),tmpList(i))
-                    CALL tmpList(i)%clear()
+                    CALL clear_ParamType(tmpList(i))
                   ENDDO
                   DEALLOCATE(tmpList)
                   i=np+1
@@ -1534,33 +1662,55 @@ MODULE ParameterLists
             ENDIF
           ELSE
             !Create a new entry in the list for the new parameter
-            IF(ALLOCATED(thisParam%pList)) THEN
-              np=SIZE(thisParam%pList)
+            IF(np > 0) THEN
 
-              !Copy the parameter list to a temporary
-              ALLOCATE(tmpList(np))
+              !Search within the list to avoid duplicates.
+              IF(LEN_TRIM(newParam%name) == 0 .AND. ASSOCIATED(newParam%pdat)) THEN
+                thisname=newParam%pdat%name
+              ELSE
+                thisname=newParam%name
+              ENDIF
+              CALL toUPPER(thisName)
+              NULLIFY(tmpParam)
               DO i=1,np
-                CALL assign_ParamType(tmpList(i),thisParam%pList(i))
-                CALL thisParam%pList(i)%clear()
+                listName=''
+                IF(ASSOCIATED(thisParam%pList(i)%pdat)) &
+                  listName=TRIM(thisParam%pList(i)%pdat%name)
+                CALL toUPPER(listName)
+                IF(TRIM(listName) == TRIM(thisName)) THEN
+                  tmpParam => thisParam%pList(i)%pdat
+                  EXIT
+                ENDIF
               ENDDO
+              
+              IF(.NOT.ASSOCIATED(tmpParam)) THEN
+                !Copy the parameter list to a temporary
+                ALLOCATE(tmpList(np))
+                DO i=1,np
+                  CALL assign_ParamType(tmpList(i),thisParam%pList(i))
+                  CALL thisParam%pList(i)%clear()
+                ENDDO
 
-              !Reallocate the parameter list and copy everything back
-              DEALLOCATE(thisParam%pList)
-              ALLOCATE(thisParam%pList(np+1))
-              DO i=1,np
-                CALL assign_ParamType(thisParam%pList(i),tmpList(i))
-                CALL tmpList(i)%clear()
-              ENDDO
-              DEALLOCATE(tmpList)
-              i=np+1
+                !Reallocate the parameter list and copy everything back
+                DEALLOCATE(thisParam%pList)
+                ALLOCATE(thisParam%pList(np+1))
+                DO i=1,np
+                  CALL assign_ParamType(thisParam%pList(i),tmpList(i))
+                  CALL tmpList(i)%clear()
+                ENDDO
+                DEALLOCATE(tmpList)
+                i=np+1
+                CALL add_ParamType(thisParam%pList(i),name,newParam)
+              ELSE
+                CALL eParams%raiseError(modName//'::'//myName// &
+                  ' - parameter name "'//TRIM(thisname)// &
+                  '" already exists! Use set method!')
+              ENDIF
             ELSE
               !Allocate the list to 1 element
               ALLOCATE(thisParam%pList(1))
-              i=1
+              CALL add_ParamType(thisParam%pList(1),name,newParam)
             ENDIF
-
-            !Make recursive call to add the parameter in the new empty parameter
-            CALL add_ParamType(thisParam%pList(i),name,newParam)
           ENDIF
         CLASS DEFAULT
           CALL eParams%raiseError(modName//'::'//myName// &
@@ -2261,6 +2411,7 @@ MODULE ParameterLists
               ASSERT(bool, prefix//CHAR(thisParam%name))
               FINFO() 'test values=',CHAR(tmpstra11(i))
               FINFO() 'ref. values=',CHAR(tmpstra12(i))
+              FINFO() i
               IF(.NOT. bool) EXIT
             ENDDO
             !clear?
@@ -3484,11 +3635,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_SNK(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_SNK(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_SNK(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
@@ -3727,11 +3874,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_SLK(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_SLK(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_SLK(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
@@ -3970,11 +4113,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_SBK(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_SBK(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_SBK(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
@@ -4206,11 +4345,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_STR(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_STR(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_STR(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
@@ -4238,11 +4373,7 @@ MODULE ParameterLists
       TYPE(StringType) :: s
 
       s=param
-      IF(PRESENT(description)) THEN
-        CALL init_ParamType_STR(thisParam,name,s,description)
-      ELSE
-        CALL init_ParamType_STR(thisParam,name,s)
-      ENDIF
+      CALL init_ParamType_STR(thisParam,name,s,description)
       s=''
     ENDSUBROUTINE init_ParamType_CHAR
 !
@@ -4594,11 +4725,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_SSK_a1(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_SSK_a1(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_SSK_a1(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
@@ -4884,11 +5011,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_SDK_a1(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_SDK_a1(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_SDK_a1(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
@@ -5172,11 +5295,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_SNK_a1(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_SNK_a1(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_SNK_a1(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
@@ -5461,11 +5580,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_SLK_a1(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_SLK_a1(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_SLK_a1(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
@@ -5747,11 +5862,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_SBK_a1(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_SBK_a1(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_SBK_a1(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
@@ -6034,11 +6145,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_STR_a1(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_STR_a1(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_STR_a1(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
@@ -6322,11 +6429,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_SSK_a2(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_SSK_a2(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_SSK_a2(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
@@ -6604,11 +6707,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_SDK_a2(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_SDK_a2(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_SDK_a2(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
@@ -6886,11 +6985,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_SNK_a2(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_SNK_a2(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_SNK_a2(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
@@ -7168,11 +7263,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_SLK_a2(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_SLK_a2(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_SLK_a2(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
@@ -7459,11 +7550,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_STR_a2(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_STR_a2(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_STR_a2(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
@@ -7755,11 +7842,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_SSK_a3(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_SSK_a3(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_SSK_a3(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
@@ -8045,11 +8128,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_SDK_a3(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_SDK_a3(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_SDK_a3(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
@@ -8335,11 +8414,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_SNK_a3(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_SNK_a3(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_SNK_a3(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
@@ -8625,11 +8700,7 @@ MODULE ParameterLists
         ENDIF
 
         !Initialize the new parameter
-        IF(PRESENT(description)) THEN
-          CALL init_ParamType_SLK_a3(newParam,thisname,param,description)
-        ELSE
-          CALL init_ParamType_SLK_a3(newParam,thisname,param)
-        ENDIF
+        CALL init_ParamType_SLK_a3(newParam,thisname,param,description)
 
         !Add the new parameter to thisParam
         CALL add_ParamType(thisParam,prevname,newParam)
@@ -8641,4 +8712,234 @@ MODULE ParameterLists
       ENDIF
     ENDSUBROUTINE add_ParamType_SLK_a3
 !
+!-------------------------------------------------------------------------------
+    RECURSIVE SUBROUTINE procXMLTree(thisParam,parent,currentPath)
+      CLASS(ParamType),INTENT(INOUT) :: thisParam
+      TYPE(StringType),INTENT(IN) :: currentPath
+      TYPE(XMLElementType),POINTER :: iXMLE,children(:),parent,nextXMLE
+      TYPE(ParamType),POINTER :: pList(:)
+      TYPE(StringType) :: elname,tmpStr,typval,attrVal,nameVal,tmpPath
+      INTEGER(SIK) :: ic
+
+      LOGICAL(SBK) :: boolVal
+      INTEGER(SIK) :: intVal
+      REAL(SDK) :: doubleVal
+      TYPE(StringType) :: strVal
+      INTEGER(SIK),ALLOCATABLE :: intArry(:)
+      REAL(SDK),ALLOCATABLE :: doubleArry(:)
+      TYPE(StringType),ALLOCATABLE :: strArry(:)
+
+      NULLIFY(pList)
+      CALL parent%getChildren(children)
+      !Check to see if it's an empty parameter list
+      IF(.NOT.ASSOCIATED(children)) THEN
+        ALLOCATE(pList(0))
+        CALL thisParam%add(CHAR(currentPath),pList)
+        DEALLOCATE(pList)
+        RETURN
+      ENDIF
+
+      DO ic=1,SIZE(children)
+        tmpPath=currentPath//' -> '
+        iXMLE => children(ic)
+
+        elname=iXMLE%name
+        CALL toUPPER(elname)
+        IF(elname == 'PARAMETER') THEN
+          tmpStr='type'
+          CALL iXMLE%getAttributeValue(tmpStr,typval)
+          CALL toUPPER(typval)
+          tmpStr='value'
+          CALL iXMLE%getAttributeValue(tmpStr,attrVal)
+          tmpStr='name'
+          CALL iXMLE%getAttributeValue(tmpStr,nameVal)
+          tmpPath=tmpPath//nameVal
+          SELECTCASE(CHAR(typval))
+            CASE('BOOL')
+              boolVal=CHAR(attrVal)
+              CALL thisParam%add(CHAR(tmpPath),boolVal)
+            CASE('INT')
+              intVal=CHAR(attrVal)
+              CALL thisParam%add(CHAR(tmpPath),intVal)
+            CASE('DOUBLE')
+              doubleVal=CHAR(attrVal)
+              CALL thisParam%add(CHAR(tmpPath),doubleVal)
+            CASE('STRING')
+              CALL thisParam%add(CHAR(tmpPath),attrVal)
+            CASE('ARRAY(INT)')
+              CALL char_to_int_array(intArry,CHAR(attrVal))
+              CALL thisParam%add(CHAR(tmpPath),intArry)
+            CASE('ARRAY(DOUBLE)')
+              CALL char_to_double_array(doubleArry,CHAR(attrVal))
+              CALL thisParam%add(CHAR(tmpPath),doubleArry)
+            CASE('ARRAY(STRING)')
+              CALL char_to_string_array(strArry,CHAR(attrVal))
+              CALL thisParam%add(CHAR(tmpPath),strArry)
+            CASE DEFAULT
+              !Bad element type
+          ENDSELECT
+        ELSE IF(elname == 'PARAMETERLIST') THEN
+          !Add to list (without arrow)
+          tmpStr='name'
+          CALL iXMLE%getAttributeValue(tmpStr,nameVal)
+          tmpPath=tmpPath//nameVal
+          CALL procXMLTree(thisParam,iXMLE,tmpPath)
+        ENDIF
+      ENDDO
+
+    ENDSUBROUTINE procXMLTree
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE initFromXML(thisParam, fname)
+      CLASS(ParamType),INTENT(INOUT) :: thisParam
+      CHARACTER(LEN=*),INTENT(IN) :: fname
+      INTEGER(SIK) :: ic
+      TYPE(StringType) :: tmpStr,typval,nameVal
+      TYPE(XMLFileType) :: xmlFile
+      TYPE(XMLElementType),POINTER :: iXMLE
+      TYPE(StringType) :: currentPath
+
+      SELECTTYPE(thisParam); TYPE IS(ParamType)
+        IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
+          !Initialize the XML file
+          CALL xmlfile%importFromDisk(fname)
+          iXMLE => xmlfile%root
+          tmpStr='name'
+          CALL iXMLE%getAttributeValue(tmpStr,nameVal)
+          currentPath=nameVal
+          CALL procXMLTree(thisParam,iXMLE,currentPath)
+        ELSE
+          !Must be uninitialized
+        ENDIF
+      CLASS DEFAULT
+        !Wrong type
+      ENDSELECT
+    ENDSUBROUTINE initFromXML
+!
+!-------------------------------------------------------------------------------
+    FUNCTION countArrayElts(charArr) RESULT(numElts)
+      INTEGER(SIK) :: numElts
+      CHARACTER(LEN=*),INTENT(IN) :: charArr
+      INTEGER(SIK) :: i
+
+      numElts=0
+      !If length is 2, array is empty
+      IF(LEN(charArr) > 2) THEN
+        DO i=2,LEN(charArr)-1
+          IF(charArr(i:i) == ',') THEN
+            numElts=numElts+1
+          ENDIF
+        ENDDO
+        numElts=numElts+1
+      ENDIF
+    ENDFUNCTION countArrayElts
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing an assignment of a character
+!> string to an array of integers
+!> @param iArr the array of integers
+!> @param c the character value
+    SUBROUTINE char_to_int_array(iArr,c)
+      INTEGER(SIK),ALLOCATABLE,INTENT(OUT) :: iArr(:)
+      CHARACTER(LEN=*),INTENT(IN) :: c
+      CHARACTER(LEN=50) :: tmpStr
+      INTEGER(SIK) :: tmpInt
+      INTEGER(SIK) :: numElts
+      INTEGER(SIK) :: i,j,k,commas
+
+      numElts=countArrayElts(c)
+      !Empty array case
+      IF(numElts == 0) THEN
+        RETURN
+      ENDIF
+
+      j=0
+      k=1 ! iArr index
+      ALLOCATE(iArr(numElts))
+      DO i=2,LEN(c)
+        IF(c(i:i) /= ',' .AND. c(i:i) /= '}') THEN
+          j=j+1
+          tmpStr(j:j)=c(i:i)
+        ELSE
+          tmpStr=tmpStr(1:j)
+          READ(tmpStr, '(I12)') tmpInt
+          iArr(k:k)=tmpInt
+          j=0
+          k=k+1
+        ENDIF
+      ENDDO
+    ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing an assignment of a character
+!> string to an array of doubles
+!> @param dArr the array of doubles
+!> @param c the character value
+    SUBROUTINE char_to_double_array(dArr,c)
+      REAL(SDK),ALLOCATABLE,INTENT(OUT) :: dArr(:)
+      CHARACTER(LEN=*),INTENT(IN) :: c
+      CHARACTER(LEN=50) :: tmpStr
+      REAL(SDK) :: tmpDouble
+      INTEGER(SIK) :: numElts
+      INTEGER(SIK) :: i,j,k
+
+      numElts=countArrayElts(c)
+      !Empty array case
+      IF(numElts == 0) THEN
+        RETURN
+      ENDIF
+
+      j=0
+      k=1 ! dArr index
+      ALLOCATE(dArr(numElts))
+      DO i=2,LEN(c)
+        IF(c(i:i) /= ',' .AND. c(i:i) /= '}') THEN
+          j=j+1
+          tmpStr(j:j)=c(i:i)
+        ELSE
+          tmpStr=tmpStr(1:j)
+          READ(tmpStr, '(F35.0)') tmpDouble
+          dArr(k:k)=tmpDouble
+          j=0
+          k=k+1
+        ENDIF
+      ENDDO
+    ENDSUBROUTINE char_to_double_array
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing an assignment of a character
+!> string to an array of strings
+!> @param sArr the array of strings
+!> @param c the character value
+    SUBROUTINE char_to_string_array(sArr,c)
+      TYPE(StringType),ALLOCATABLE,INTENT(OUT) :: sArr(:)
+      CHARACTER(LEN=*),INTENT(IN) :: c
+      CHARACTER(LEN=50) :: tmpStr
+      TYPE(StringType) :: tmpElt
+      INTEGER(SIK) :: numElts
+      INTEGER(SIK) :: i,j,k
+
+      numElts=countArrayElts(c)
+      !Empty array case
+      IF(numElts == 0) THEN
+        RETURN
+      ENDIF
+
+      j=0
+      k=1 ! sArr index
+      ALLOCATE(sArr(numElts))
+      DO i=2,LEN(c)
+        IF(c(i:i) /= ',' .AND. c(i:i) /= '}') THEN
+          j=j+1
+          tmpStr(j:j)=c(i:i)
+        ELSE
+          tmpElt=tmpStr(1:j)
+          sArr(k:k)=tmpElt
+          j=0
+          k=k+1
+        ENDIF
+      ENDDO
+    ENDSUBROUTINE char_to_string_array
+!
 ENDMODULE ParameterLists
+

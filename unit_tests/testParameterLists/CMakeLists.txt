@@ -11,4 +11,12 @@
 #
 ################################################################################
 INCLUDE(MPACT_CreateUnitTest)
+INCLUDE(MPACT_CopyFiles)
+
+SET(ADDITIONAL_FILES
+    testInit.xml
+)
+
 MPACT_CreateUnitTest(testParameterLists)
+MPACT_CopyFiles(ADDITIONAL_FILES)
+UNSET(ADDITIONAL_FILES)

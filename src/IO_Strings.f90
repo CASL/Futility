@@ -114,12 +114,15 @@ MODULE IO_Strings
   PUBLIC :: strmatch
   PUBLIC :: strarraymatch
   PUBLIC :: strarraymatchind
+  PUBLIC :: strarrayeqind
   PUBLIC :: nmatchstr
   PUBLIC :: strrep
   PUBLIC :: stripComment
   PUBLIC :: SlashRep
   PUBLIC :: printCentered
-  
+  !
+  !PUBLIC :: charToStringArray
+
   !> Character representing a space symbol
   CHARACTER(LEN=*),PARAMETER :: BLANK=" "
   !> Character representing a comment symbol
@@ -304,6 +307,19 @@ MODULE IO_Strings
     !> @copydetails IO_Strings::strarraymatchind_string
     MODULE PROCEDURE strarraymatchind_string
   ENDINTERFACE strarraymatchind
+
+  !> @brief Generic interface for strarrayeq
+  !>
+  !> This interfaces allows for the input argument to be either a
+  !> character array or a StringType.
+  INTERFACE strarrayeqind
+    !> @copybrief IO_Strings::strarrayeqind_char
+    !> @copydetails IO_Strings::strarrayeqind_char
+    MODULE PROCEDURE strarrayeqind_char
+    !> @copybrief IO_Strings::strarrayeqind_string
+    !> @copydetails IO_Strings::strarrayeqind_string
+    MODULE PROCEDURE strarrayeqind_string
+  ENDINTERFACE strarrayeqind
 !
 !===============================================================================      
   CONTAINS
@@ -1102,13 +1118,66 @@ MODULE IO_Strings
       
       ind=-1
       DO i=1,SIZE(string,DIM=1)
-        bool=strmatch(CHAR(string(i)),pattern)
+        bool=strmatch(string(i),pattern)
         IF(bool) THEN
           ind=i
           EXIT
         ENDIF
       ENDDO
     ENDFUNCTION strarraymatchind_string
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns the index where a substring @c pattern is found that equals @c
+!> string array.
+!> @param string the stringarray to search
+!> @param pattern the substring to find
+!> @returns ind the index in string array @c string where the substring was
+!> found.
+!>
+!> @note Does not handle trailing spaces that can be eliminated by TRIM() so
+!> strings should be trimmed when passing into function.
+!>
+    PURE FUNCTION strarrayeqind_char(string,pattern) RESULT(ind)
+      CHARACTER(LEN=*),INTENT(IN) :: string(:)
+      CHARACTER(LEN=*),INTENT(IN) :: pattern
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: i,ind
+
+      ind=-1
+      DO i=1,SIZE(string,DIM=1)
+        bool=string(i) == pattern
+        IF(bool) THEN
+          ind=i
+          EXIT
+        ENDIF
+      ENDDO
+    ENDFUNCTION strarrayeqind_char
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns the index where a substring @c pattern is found within @c
+!> string array.
+!> @param string the stringarray to search
+!> @param pattern the substring to find
+!> @returns bool whether or not @c pattern was found in @c string
+!>
+!> @note Does not handle trailing spaces that can be eliminated by TRIM() so
+!> strings should be trimmed when passing into function.
+!>
+    PURE FUNCTION strarrayeqind_string(string,pattern) RESULT(ind)
+      TYPE(StringType),INTENT(IN) :: string(:)
+      CHARACTER(LEN=*),INTENT(IN) :: pattern
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: i,ind
+
+      ind=-1
+      DO i=1,SIZE(string,DIM=1)
+        bool=CHAR(string(i)) == pattern
+        IF(bool) THEN
+          ind=i
+          EXIT
+        ENDIF
+      ENDDO
+    ENDFUNCTION strarrayeqind_string
 !
 !-------------------------------------------------------------------------------
 !> @brief Private routine replaces slash character in file path names with 
@@ -1126,5 +1195,50 @@ MODULE IO_Strings
 #endif
       ENDDO
     ENDSUBROUTINE SlashRep
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing an assignment of a character
+!> string to an array of strings
+!> @param dArr the array of strings
+!> @param c the character value
+!    SUBROUTINE charToStringArray(sArr,c)
+!      TYPE(StringType),ALLOCATABLE,INTENT(OUT) :: sArr(:)
+!      TYPE(StringType),INTENT(IN) :: c
+!      CHARACTER(LEN=100) :: tmpStr
+!      TYPE(StringType) :: tmpElt
+!      INTEGER(SIK) :: numElts
+!      INTEGER(SIK) :: i,j,k
+!
+!      numElts=0
+!      IF(LEN(c) /= 2) THEN
+!        DO i=2,(c%n-1)
+!          IF(c(i) == ',') THEN
+!            numElts=numElts+1
+!          ENDIF
+!        ENDDO
+!        numElts=numElts+1
+!      ENDIF
+!
+!      !Empty array case
+!      IF(numElts == 0) THEN
+!        RETURN
+!      ENDIF
+!
+!      j=0
+!      k=1 !sArr index
+!      ALLOCATE(sArr(numElts))
+!      DO i=2,LEN(c)
+!        IF(c(i) /= ',' .AND. c(i) /= '}') THEN
+!          j=j+1
+!          tmpStr(j:j)=c(i)
+!        ELSE
+!          tmpStr=tmpStr(1:j)
+!          tmpElt=tmpStr
+!          sArr(k:k)=tmpElt
+!          j=0
+!          k=k+1
+!        ENDIF
+!      ENDDO
+!    ENDSUBROUTINE charToStringArray
 !
 ENDMODULE IO_Strings

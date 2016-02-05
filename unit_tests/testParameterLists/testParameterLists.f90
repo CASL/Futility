@@ -90,6 +90,8 @@ PROGRAM testParameterLists
   REGISTER_SUBTEST('%validate(...)',testValidate)
   REGISTER_SUBTEST('%verify(...)',testVerify)
   REGISTER_SUBTEST('Partial Matching',testPartialMatch)
+
+  REGISTER_SUBTEST('%initFromXML',testInitFromXML)
   
   FINALIZE_TEST()
   CALL clear_test_vars()
@@ -4402,6 +4404,42 @@ PROGRAM testParameterLists
     DEALLOCATE(sdk3)
     DEALLOCATE(str1)
     DEALLOCATE(str2)
+    
+    COMPONENT_TEST('Misplaced sublist')
+    CALL testParam%add('A -> B',1)
+    CALL testParam%add('A -> C',1.0_SRK)
+    CALL testParam%add('A -> Sub A -> D',1)
+    CALL testParam%add('A -> Sub A -> Sub B -> Sub C -> X',1.0_SRK)
+    CALL testParam%add('A -> Sub A -> Sub B -> Sub C -> Y',0.0_SRK)
+    CALL testParam%add('A -> Sub A -> Sub B -> Sub C -> Sub D -> n',5)
+    CALL testParam%add('A -> Sub D -> bad location',0)
+    ASSERT(testParam%has('A -> Sub D -> bad location'),'bad location')
+    bool=testParam%has('A -> Sub A -> Sub B -> Sub C -> Sub D -> bad location')
+    ASSERT(.NOT.bool,'not bad location')
+    CALL testParam%clear()
+    
+    
+    CALL testParam%add('A -> B',1)
+    CALL testParam%add('A -> C',1.0_SRK)
+    CALL testParam%add('A -> Sub A -> D',1)
+    CALL testParam%add('A -> Sub A -> Sub B -> Sub C -> X',1.0_SRK)
+    CALL testParam%add('A -> Sub A -> Sub B -> Sub C -> Y',0.0_SRK)
+    CALL testParam%add('A -> Sub A -> Sub B -> Sub C -> Sub D -> n',5)
+    CALL testParam2%add('someParam -> x',0)
+    CALL testParam2%add('someParam -> y',1)
+    CALL testParam2%get('someParam',someParam)
+    CALL testParam%add('A -> Sub D -> bad location 2',someParam)
+    ASSERT(testParam%has('A -> Sub D -> bad location 2'),'bad location 2')
+    bool=testParam%has('A -> Sub A -> Sub B -> Sub C -> Sub D -> bad location 2')
+    ASSERT(.NOT.bool,'not bad location 2')
+    !Redundant Add
+    CALL testParam%add('A -> Sub D -> bad location 2',someParam)
+    msg=eParams%getLastMessage()
+    refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType -'// &
+      ' parameter name "SOMEPARAM" already exists! Use set method!'
+    ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add (param)')
+    CALL testParam%clear()
+    CALL testParam2%clear()
   ENDSUBROUTINE testAdd
 !
 !-------------------------------------------------------------------------------
@@ -4950,6 +4988,37 @@ PROGRAM testParameterLists
 
     CALL testParam%clear()
   ENDSUBROUTINE testPartialMatch
+
+!
+!-------------------------------------------------------------------------------
+  SUBROUTINE testInitFromXML()
+    TYPE(StringType) :: str
+    TYPE(StringType),ALLOCATABLE :: astr(:)
+    INTEGER(SIK) :: tmpint
+    LOGICAL(SBK) :: bool
+
+    str='CASL AMA Benchmark Problem 2 - Fuel Lattice - Public'
+    CALL testParam2%add('CASEID->case_id',TRIM(str))
+    tmpint=10
+    CALL testParam2%add('CASEID->STATE->testVal',tmpint)
+    str='qtr'
+    CALL testParam2%add('CASEID->STATE->sym',str)
+    ALLOCATE(astr(1))
+    astr(1)='LAT1'
+    CALL testParam2%add('CASEID->ASSEMBLIES->Assembly_ASSY1->axial_labels',astr)
+    DEALLOCATE(astr)
+    CALL testParam2%add('CASEID->ASSEMBLIES->ASSEMBLY_ASSY1->SpacerGrids',testParam3)
+    str='ASSY1'
+    CALL testParam2%add('CASEID->ASSEMBLIES->label',str)
+
+    CALL testParam%clear()
+    CALL testParam%initFromXML('testInit.xml')
+    CALL testParam%verify(testParam2,bool)
+    ASSERT(bool,"init from XML file")
+
+    CALL testParam%clear()
+    CALL testParam2%clear()
+  ENDSUBROUTINE testInitFromXML
 !
 !-------------------------------------------------------------------------------
 !Clear all the test variables

@@ -156,7 +156,7 @@ MODULE ParallelEnv
       !> @copybrief ParallelEnv::scatter_SLK1_MPI_Env_type
       !> @copydetails ParallelEnv::scatter_SLK1_MPI_Env_type
       PROCEDURE,PASS,PRIVATE :: scatter_SLK1_MPI_Env_type
-      !> 
+      !>
       GENERIC :: scatter => scatter_SLK0_MPI_Env_type, &
                             scatter_SLK1_MPI_Env_type
       !> @copybrief ParallelEnv::bcast_SLK0_MPI_Env_type
@@ -171,6 +171,12 @@ MODULE ParallelEnv
       !> @copybrief ParallelEnv::bcast_SDK2_MPI_Env_type
       !> @copydetails ParallelEnv::bcast_SDK2_MPI_Env_type
       PROCEDURE,PASS,PRIVATE :: bcast_SDK2_MPI_Env_type
+      !> @copybrief ParallelEnv::bcast_SSK3_MPI_Env_type
+      !> @copydetails ParallelEnv::bcast_SSK3_MPI_Env_type
+      PROCEDURE,PASS,PRIVATE :: bcast_SSK3_MPI_Env_type
+      !> @copybrief ParallelEnv::bcast_SDK3_MPI_Env_type
+      !> @copydetails ParallelEnv::bcast_SDK3_MPI_Env_type
+      PROCEDURE,PASS,PRIVATE :: bcast_SDK3_MPI_Env_type
       !> @copybrief ParallelEnv::bcast_SSK4_MPI_Env_type
       !> @copydetails ParallelEnv::bcast_SSK4_MPI_Env_type
       PROCEDURE,PASS,PRIVATE :: bcast_SSK4_MPI_Env_type
@@ -182,6 +188,8 @@ MODULE ParallelEnv
                           bcast_SSK2_MPI_Env_type, &
                           bcast_SDK1_MPI_Env_type, &
                           bcast_SDK2_MPI_Env_type, &
+                          bcast_SSK3_MPI_Env_type, &
+                          bcast_SDK3_MPI_Env_type, &
                           bcast_SSK4_MPI_Env_type, &
                           bcast_SDK4_MPI_Env_type
       !> @copybrief ParallelEnv::allReduceR_MPI_Env_type
@@ -205,6 +213,12 @@ MODULE ParallelEnv
       !> @copydetails  ParallelEnv::allReduceMinI_MPI_Env_type
       PROCEDURE,PASS :: allReduceMinI => allReduceMinI_MPI_Env_type
       !GENERIC :: allReduceMin => allReduceMinR_MPI_Env_type,allReduceMinI_MPI_Env_type
+      !> @copybrief ParallelEnv::reduceMaxLoc_MPI_Env_type
+      !> @copydetails  ParallelEnv::reduceMaxLoc_MPI_Env_type
+      PROCEDURE,PASS :: reduceMaxLoc => reduceMaxLocR_MPI_Env_type
+      !> @copybrief ParallelEnv::reduceMinLoc_MPI_Env_type
+      !> @copydetails  ParallelEnv::reduceMinLoc_MPI_Env_type
+      PROCEDURE,PASS :: reduceMinLoc => reduceMinLocR_MPI_Env_type
       !> @copybrief ParallelEnv::trueForAll_MPI_Env_type
       !> @copydetails  ParallelEnv::trueForAll_MPI_Env_type
       PROCEDURE,PASS :: trueForAll => trueForAll_MPI_Env_type
@@ -263,10 +277,10 @@ MODULE ParallelEnv
     !> @copydetails ParallelEnv::assign_ParEnvType
     MODULE PROCEDURE assign_ParEnvType
   ENDINTERFACE
-  
+
   !> Private scratch variable for the mpierr
   INTEGER(SIK) :: mpierr
-  
+
   INTEGER(SIK),SAVE :: MAX_PE_COMM_ID=1
 
   !> Module name
@@ -464,7 +478,7 @@ MODULE ParallelEnv
         CALL MPI_Initialized(isinit,mpierr)
         IF(mpierr /= MPI_SUCCESS) CALL eParEnv%raiseError(modName//'::'// &
           myName//' - call to MPI_Initialized returned an error!')
-        
+
         IF(isinit == 0) THEN
           CALL MPI_Init(mpierr)
           IF(mpierr /= MPI_SUCCESS) CALL eParEnv%raiseError(modName//'::'// &
@@ -795,6 +809,46 @@ MODULE ParallelEnv
 !
 !-------------------------------------------------------------------------------
 !> @brief
+    SUBROUTINE bcast_SSK3_MPI_Env_type(myPE,buf,root)
+      CHARACTER(LEN=*),PARAMETER :: myName='bcast_SSK3_MPI_Env_type'
+      CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
+      REAL(SSK),INTENT(IN) :: buf(:,:,:)
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: root
+      INTEGER(SIK) :: rank
+      rank=0
+      IF(PRESENT(root)) rank=root
+      IF(0 <= rank .AND. rank <= myPE%nproc-1) THEN
+#ifdef HAVE_MPI
+        CALL MPI_Bcast(buf,SIZE(buf),MPI_REAL4,rank,myPE%comm,mpierr)
+#endif
+      ELSE
+        CALL eParEnv%raiseError(modName//'::'//myName// &
+          ' - Invalid rank!')
+      ENDIF
+    ENDSUBROUTINE bcast_SSK3_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief
+    SUBROUTINE bcast_SDK3_MPI_Env_type(myPE,buf,root)
+      CHARACTER(LEN=*),PARAMETER :: myName='bcast_SDK3_MPI_Env_type'
+      CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
+      REAL(SDK),INTENT(IN) :: buf(:,:,:)
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: root
+      INTEGER(SIK) :: rank
+      rank=0
+      IF(PRESENT(root)) rank=root
+      IF(0 <= rank .AND. rank <= myPE%nproc-1) THEN
+#ifdef HAVE_MPI
+        CALL MPI_Bcast(buf,SIZE(buf),MPI_REAL8,rank,myPE%comm,mpierr)
+#endif
+      ELSE
+        CALL eParEnv%raiseError(modName//'::'//myName// &
+          ' - Invalid rank!')
+      ENDIF
+    ENDSUBROUTINE bcast_SDK3_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief
     SUBROUTINE bcast_SSK4_MPI_Env_type(myPE,buf,root)
       CHARACTER(LEN=*),PARAMETER :: myName='bcast_SSK4_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
@@ -941,6 +995,96 @@ MODULE ParallelEnv
       ENDIF
 #endif
     ENDSUBROUTINE allReduceMinR_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine calls MPI_reduce and performs a maxloc operation
+!> for a real array.
+!> @param myPE the MPI parallel environment
+!> @param n the number of data elements to communicate
+!> @param x the partial array to be returned as the max array
+!> @param i the partial array of indices to be returned
+!> @param root the process on which to store the reduction
+!>
+!> This routine only performs a maxloc operation and only for reals.
+!>
+    SUBROUTINE reduceMaxLocR_MPI_Env_type(myPE,n,x,i,root)
+      CHARACTER(LEN=*),PARAMETER :: myName='reduceMaxLocR_MPI_Env_type'
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
+      INTEGER(SIK),INTENT(IN) :: n
+      REAL(SRK),INTENT(INOUT) :: x(*)
+      INTEGER(SLK),INTENT(INOUT) :: i(*)
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: root
+#ifdef HAVE_MPI
+      REAL(SRK) :: sbuf(2,n)
+      REAL(SRK) :: rbuf(2,n)
+      INTEGER(SIK) :: rank
+      IF(myPE%initstat) THEN
+        sbuf(1,:)=x(1:n)
+        sbuf(2,:)=i(1:n)
+        rank=0
+        IF(PRESENT(root)) rank=root
+#ifdef DBL
+        CALL MPI_Allreduce(sbuf,rbuf,n,MPI_2DOUBLE_PRECISION,MPI_MAXLOC, &
+          myPE%comm,mpierr)
+#else
+        CALL MPI_Allreduce(sbuf,rbuf,n,MPI_2REAL,MPI_MAXLOC,myPE%comm,mpierr)
+#endif
+        IF(mpierr /= MPI_SUCCESS) THEN
+          CALL eParEnv%raiseError(modName//'::'// &
+            myName//' - call to MPI_AllreduceMax returned an error!')
+        ELSE
+          !Copy the result to the output argument
+          x(1:n)=rbuf(1,:)
+          i(1:n)=rbuf(2,:)
+        ENDIF
+      ENDIF
+#endif
+    ENDSUBROUTINE reduceMaxLocR_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine calls MPI_reduce and performs a minloc operation
+!> for a real array.
+!> @param myPE the MPI parallel environment
+!> @param n the number of data elements to communicate
+!> @param x the partial array to be returned as the min array
+!> @param i the partial array of indices to be returned
+!> @param root the process on which to store the reduction
+!>
+!> This routine only performs a min operation and only for reals.
+!>
+    SUBROUTINE reduceMinLocR_MPI_Env_type(myPE,n,x,i,root)
+      CHARACTER(LEN=*),PARAMETER :: myName='reduceMinLocR_MPI_Env_type'
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
+      INTEGER(SIK),INTENT(IN) :: n
+      REAL(SRK),INTENT(INOUT) :: x(*)
+      INTEGER(SLK),INTENT(INOUT) :: i(*)
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: root
+#ifdef HAVE_MPI
+      REAL(SRK) :: sbuf(2,n)
+      REAL(SRK) :: rbuf(2,n)
+      INTEGER(SIK) :: rank
+      IF(myPE%initstat) THEN
+        sbuf(1,:)=x(1:n)
+        sbuf(2,:)=i(1:n)
+        rank=0
+        IF(PRESENT(root)) rank=root
+#ifdef DBL
+        CALL MPI_Allreduce(sbuf,rbuf,n,MPI_2DOUBLE_PRECISION,MPI_MINLOC, &
+          myPE%comm,mpierr)
+#else
+        CALL MPI_Allreduce(sbuf,rbuf,n,MPI_2REAL,MPI_MINLOC,myPE%comm,mpierr)
+#endif
+        IF(mpierr /= MPI_SUCCESS) THEN
+          CALL eParEnv%raiseError(modName//'::'// &
+            myName//' - call to MPI_AllreduceMin returned an error!')
+        ELSE
+          !Copy the result to the output argument
+          x(1:n)=rbuf(1,:)
+          i(1:n)=rbuf(2,:)
+        ENDIF
+      ENDIF
+#endif
+    ENDSUBROUTINE reduceMinLocR_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
 !> @brief Wrapper routine calls MPI_Allreduce and performs a sum of operation
@@ -1124,7 +1268,7 @@ MODULE ParallelEnv
       INTEGER(SIK),INTENT(IN) :: nangle
       INTEGER(SIK),INTENT(IN) :: nenergy
       INTEGER(SIK),INTENT(IN) :: nthreads
-      CHARACTER(LEN=12) :: smpierr
+      CHARACTER(LEN=12) :: smpierr, nproc, selproc
       INTEGER(SIK) :: nerror,tmpcomm,commDims(3)
       LOGICAL(SBK) :: activeCommDim(3)
 
@@ -1139,12 +1283,16 @@ MODULE ParallelEnv
         ' - input nenergy is less than 1!')
       IF(nthreads < 1) CALL eParEnv%raiseError(modName//'::'//myName// &
         ' - input nthreads is less than 1!')
+      WRITE(nproc,'(i12)') myPE%world%nproc
+      WRITE(selproc,'(i12)') nenergy*nspace*nangle
       IF(myPE%world%nproc < nenergy*nspace*nangle) &
         CALL eParEnv%raiseError(modName//'::'//myName//' - Number of '// &
-          'available MPI processes is less than specified in the input!')
+          'available MPI processes ('//TRIM(ADJUSTL(nproc))//') is less than '// &
+          'specified in the input ('//TRIM(ADJUSTL(selproc))//')!')
       IF(myPE%world%nproc > nenergy*nspace*nangle) &
         CALL eParEnv%raiseError(modName//'::'//myName//' - Number of '// &
-          'available MPI processes is more than specified in the input!')
+          'available MPI processes ('//TRIM(ADJUSTL(nproc))//') is more than '// &
+          'specified in the input ('//TRIM(ADJUSTL(selproc))//')!')
 
       IF(nerror == eParEnv%getCounter(EXCEPTION_ERROR)) THEN
         commDims(1)=nspace
@@ -1267,14 +1415,14 @@ MODULE ParallelEnv
 !> @brief Overloaded assignment for ParEnvType
 !> @param pe1 the left hand side of assignment operator
 !> @param pe2 the right hand side of assignment operator
-!> 
+!>
 !> Performs a deep copy. This is to avoid undefined behavior of association
 !> of pointer attributes.
 !>
     SUBROUTINE assign_ParEnvType(pe1,pe2)
       TYPE(ParallelEnvType),INTENT(INOUT) :: pe1
       TYPE(ParallelEnvType),INTENT(IN) :: pe2
-      
+
       CALL clear_ParEnvType(pe1)
       CALL pe1%world%init(pe2%world%comm)
       CALL pe1%CartGridWorld%init(pe2%CartGridWorld%comm)

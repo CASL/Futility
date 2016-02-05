@@ -107,7 +107,7 @@ MODULE LinearSolverTypes
   PUBLIC :: LinearSolverType_Clear_ValidParams
 
   !> Number of direct solver solution methodologies - for error checking
-  INTEGER(SIK),PARAMETER :: MAX_DIRECT_SOLVER_METHODS=2
+  INTEGER(SIK),PARAMETER :: MAX_DIRECT_SOLVER_METHODS=3
   !> Number of iterative solver solution methodologies - for error checking
   INTEGER(SIK),PARAMETER :: MAX_IT_SOLVER_METHODS=3
   !> set enumeration scheme for TPLs
@@ -115,7 +115,7 @@ MODULE LinearSolverTypes
   !> set enumeration scheme for iterative solver methods
   INTEGER(SIK),PARAMETER,PUBLIC :: BICGSTAB=1,CGNR=2,GMRES=3
   !> set enumeration scheme for direct solver methods
-  INTEGER(SIK),PARAMETER,PUBLIC :: GE=1,LU=2
+  INTEGER(SIK),PARAMETER,PUBLIC :: GE=1,LU=2,QR=3
 
 
   !> @brief the base linear solver type
@@ -316,7 +316,7 @@ MODULE LinearSolverTypes
       CALL validParams%get('LinearSolverType->numberOMP',numberOMP)
       CALL validParams%get('LinearSolverType->timerName',timerName)
       CALL validParams%get('LinearSolverType->matType',matType)
-      CALL validParams%add('LinearSolverType->MatrixType->matType',matType)
+      CALL validParams%add('LinearSolverType->A->MatrixType->matType',matType)
       ! pull data for matrix and vector parameter lists
       CALL validParams%get('LinearSolverType->A->MatrixType',pListPtr)
       matPList=pListPtr
@@ -338,6 +338,7 @@ MODULE LinearSolverTypes
 !      ENDIF
       !add mpi communicator to parameter lists
       CALL matPList%add('MatrixType->MPI_Comm_ID',MPI_Comm_ID)
+
       CALL vecxPList%add('VectorType->MPI_Comm_ID',MPI_Comm_ID)
       CALL vecbPList%add('VectorType->MPI_Comm_ID',MPI_Comm_ID)
       !pull size from source vector
@@ -847,6 +848,15 @@ MODULE LinearSolverTypes
                         'and sparse system is not implemented, CGNR method '// &
                           'is used instead.')
                 ENDIF
+            ENDSELECT
+          CASE(QR)
+            SELECTTYPE(A => solver%A)
+              TYPE IS(DenseRectMatrixType)
+                CALL solveQR_Dense(solver)
+
+              CLASS DEFAULT
+                  CALL eLinearSolverType%raiseError('Incorrect call to '// &
+                    modName//'::'//myName//' - QR only supported for DensRet Matrix.')
             ENDSELECT
         ENDSELECT
         CALL solver%SolveTime%toc()
@@ -1968,6 +1978,7 @@ MODULE LinearSolverTypes
       ENDDO
       solver%info=0
     ENDSUBROUTINE solveGE_DenseSquare
+!
 !-------------------------------------------------------------------------------
 !> @brief Decompose a dense square system into a upper triangular matrix and a
 !> lower triangular matrix.
@@ -2239,6 +2250,74 @@ MODULE LinearSolverTypes
       CALL pList%clear()
       CALL pList2%clear()
     ENDSUBROUTINE solveCGNR
+!
+!-------------------------------------------------------------------------------
+!> @brief Solve a dense rectangular system using QR factorization
+!> @param solver The LinearSolverType object
+!>
+!> This routine solves the rectangular linear system by QR method. It only
+!> works when the number of equations is larger than the number of the unknowns.
+!> IF not solver%info will return -1.
+!>
+    SUBROUTINE solveQR_Dense(solver)
+      CLASS(LinearSolverType_Direct),INTENT(INOUT) :: solver
+
+      REAL(SRK),ALLOCATABLE :: thisa(:,:)
+      REAL(SRK),ALLOCATABLE :: thisb(:),u(:)
+      INTEGER(SIK) :: M,N,i,j,icol,irow
+      REAL(SRK) :: alpha, beta,t,tmpxval
+
+      M=0
+      N=0
+      SELECTTYPE(A => solver%A); TYPE IS(DenseRectMatrixType)
+        M=A%m
+        N=A%n
+        ALLOCATE(thisa(N,M))
+        thisa=A%A
+      ENDSELECT
+
+      ALLOCATE(thisb(N))
+      ALLOCATE(u(N))
+      SELECTTYPE(b => solver%b); TYPE IS(RealVectorType)
+        thisb=b%b
+      ENDSELECT
+
+      solver%info=-1
+
+      DO i=1,M
+        u(:)=0.0_SRK
+        u(i:N)=thisA(i:N,i)
+        alpha=BLAS_nrm2(N,u)*u(i)/ABS(u(i))
+        u(i)=u(i)+alpha
+        !reuse alpha for <u,u>
+        alpha=BLAS_dot(N,u,u)
+        beta=-2.0_SRK*BLAS_dot(N,u,thisb)/alpha
+        CALL BLAS_axpy(N,beta,u,thisb)
+        DO j=i,M
+          beta=-2.0_SRK*BLAS_dot(N,u,thisA(:,j))/alpha
+          CALL BLAS_axpy(N,beta,u,thisA(:,j))
+        ENDDO
+      ENDDO
+
+      !Perform backward substitution
+      IF(thisa(M,M) .APPROXEQA. 0._SRK) RETURN
+      SELECTTYPE(X => solver%X); TYPE IS(RealVectorType)
+        CALL X%set(M,thisb(M)/thisa(M,M))
+      ENDSELECT
+      DO irow=M-1,1,-1
+        t=0._SRK
+        DO icol=irow+1,M
+          SELECTTYPE(X => solver%X); TYPE IS(RealVectorType)
+            CALL X%get(icol,tmpxval)
+            t=t+thisa(irow,icol)*tmpxval
+           ENDSELECT
+        ENDDO
+         SELECTTYPE(X => solver%X); TYPE IS(RealVectorType)
+           CALL X%set(irow,(thisb(irow)-t)/thisa(irow,irow))
+         ENDSELECT
+      ENDDO
+      solver%info=0
+    ENDSUBROUTINE solveQR_Dense
 !
 !-------------------------------------------------------------------------------
 !> @brief Find the L-norm of a given vector.

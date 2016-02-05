@@ -17,10 +17,19 @@
 SET(UNIT_TEST_NAMES
     testUnitTest
     testSelectedKinds
+    testWaterSatProperties
     testArrayUtils
+    testExtendedMath
     testBLAS
     testStrings
     testTimes
+    testGeom_Points
+    testGeom_Line
+    testGeom_Plane
+    testGeom_CircCyl
+    testGeom_Box
+    testGeom_Graph
+    testGeom_Poly
     testGeom
     testSorting
     testBinaryTrees
@@ -28,6 +37,7 @@ SET(UNIT_TEST_NAMES
     testSpaceFillingCurve
     testAllocs
     testParameterLists
+    testFileType_XML
     testIOutil
     testFileType_Base
     testFileType_Fortran
