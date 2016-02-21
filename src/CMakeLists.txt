@@ -81,6 +81,7 @@ TRIBITS_ADD_LIBRARY(Utils
       VectorTypes.f90
       PreconditionerTypes.f90
       LinearSolverTypes.f90
+      EigenvalueSolverTypes.f90
       StochasticSampling.f90
       Sorting.f90
       ArrayUtils.f90
