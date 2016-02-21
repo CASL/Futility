@@ -50,7 +50,6 @@ MODULE EigenvalueSolverTypes
   USE MatrixTypes
   USE PreconditionerTypes
   USE Strings
-  USE IOUtil
   IMPLICIT NONE
 
 #ifdef MPACT_HAVE_PETSC
@@ -70,10 +69,6 @@ MODULE EigenvalueSolverTypes
   PUBLIC :: eEigenvalueSolverType
   PUBLIC :: EigenvalueSolverType_Base
   PUBLIC :: EigenvalueSolverType_SLEPc
-
-!  PUBLIC :: LinearSolverType_reqParams,LinearSolverType_optParams
-!  PUBLIC :: LinearSolverType_Declare_ValidParams
-!  PUBLIC :: LinearSolverType_Clear_ValidParams
 
   !> set enumeration scheme for TPLs
   INTEGER(SIK),PARAMETER,PUBLIC :: SLEPC=0,TRILINOS=1,NATIVE=4
@@ -113,9 +108,9 @@ MODULE EigenvalueSolverTypes
     CONTAINS
       !> Deferred routine for initializing the eigenvalue solver system
       PROCEDURE(evsolver_init_sub_absintfc),DEFERRED,PASS :: init
-      !> Deferred routine for clearing the linear solver
+      !> Deferred routine for clearing the eigenvalue solver
       PROCEDURE(evsolver_sub_absintfc),DEFERRED,PASS :: clear
-      !> Deferred routine for solving the linear system
+      !> Deferred routine for solving the eigenvalue system
       PROCEDURE(evsolver_sub_absintfc),DEFERRED,PASS :: solve
       !> Routine for setting A and B for eigenvalue solver system
       PROCEDURE,PASS :: setMat => setMat_EigenvalueSolverType_Base
@@ -201,7 +196,7 @@ MODULE EigenvalueSolverTypes
 !> @param OMPparallelEnv The OMP environment description
 !> @param TimerName The name of the timer to be used for querying (optional)
 !>
-!> This routine initializes the data spaces for the direct linear solver.
+!> This routine initializes the data spaces for the SLEPc eigenvalue solver.
 !>
     SUBROUTINE init_EigenvalueSolverType_SLEPc(solver,MPIEnv,Params)
       CHARACTER(LEN=*),PARAMETER :: myName='init_EigenvalueSolverType_SLEPc'
