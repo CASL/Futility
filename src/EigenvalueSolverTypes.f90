@@ -226,14 +226,14 @@ MODULE EigenvalueSolverTypes
       nlocal=0
       solvertype=-1
       !Pull Data from Parameter List
-      CALL validParams%get('EigenType->n',n)
-      CALL validParams%get('EigenType->nlocal',nlocal)
-      CALL validParams%get('EigenType->solver',solvertype)
-      CALL validParams%get('EigenType->preconditioner',pctype)
-      CALL validParams%get('EigenType->tolerance',tol)
-      CALL validParams%get('EigenType->max_iterations',maxit)
-      IF(validParams%has('EigenType->SLEPc->cmdline_options')) &
-        CALL validParams%get('EigenType->SLEPc->cmdline_options',clops)
+      CALL validParams%get('EigenvalueSolverType->n',n)
+      CALL validParams%get('EigenvalueSolverType->nlocal',nlocal)
+      CALL validParams%get('EigenvalueSolverType->solver',solvertype)
+      CALL validParams%get('EigenvalueSolverType->preconditioner',pctype)
+      CALL validParams%get('EigenvalueSolverType->tolerance',tol)
+      CALL validParams%get('EigenvalueSolverType->max_iterations',maxit)
+      IF(validParams%has('EigenvalueSolverType->SLEPc->cmdline_options')) &
+        CALL validParams%get('EigenvalueSolverType->SLEPc->cmdline_options',clops)
 
       IF(.NOT. solver%isInit) THEN
         IF(n < 1) THEN

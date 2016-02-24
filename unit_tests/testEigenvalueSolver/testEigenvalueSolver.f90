@@ -37,12 +37,12 @@ PROGRAM testEigenvalueSolver
 #endif
   !> set up default parameter list
   CALL optList%clear()
-  CALL optList%add('EigenType->n',2_SIK)
-  CALL optList%add('EigenType->nlocal',2_SIK)
-  CALL optList%add('EigenType->solver',ARNOLDI)
-  CALL optList%add('EigenType->preconditioner','none')
-  CALL optList%add('EigenType->tolerance',1.0e-8_SRK)
-  CALL optList%add('EigenType->max_iterations',2_SIK)
+  CALL optList%add('EigenvalueSolverType->n',2_SIK)
+  CALL optList%add('EigenvalueSolverType->nlocal',2_SIK)
+  CALL optList%add('EigenvalueSolverType->solver',ARNOLDI)
+  CALL optList%add('EigenvalueSolverType->preconditioner','none')
+  CALL optList%add('EigenvalueSolverType->tolerance',1.0e-8_SRK)
+  CALL optList%add('EigenvalueSolverType->max_iterations',2_SIK)
 
   !Configure exception handler for test
   CALL e%setStopOnError(.FALSE.)
