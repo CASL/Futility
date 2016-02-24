@@ -133,7 +133,7 @@ MODULE LinearSolverTypes
     !> Initialization status of X (only needed for PETSc)
     LOGICAL(SBK) :: hasX=.FALSE.
     !> Pointer to the MatrixType A
-    CLASS(MatrixType),ALLOCATABLE :: A
+    CLASS(MatrixType),POINTER :: A => NULL()
     !> Right-hand side vector, b
     CLASS(VectorType),ALLOCATABLE :: b
     !> Pointer to solution vector, x
@@ -286,10 +286,11 @@ MODULE LinearSolverTypes
 !>
 !> This routine initializes the data spaces for the direct linear solver.
 !>
-    SUBROUTINE init_LinearSolverType_Base(solver,Params)
+    SUBROUTINE init_LinearSolverType_Base(solver,Params,A)
       CHARACTER(LEN=*),PARAMETER :: myName='init_LinearSolverType_Base'
       CLASS(LinearSolverType_Base),INTENT(INOUT) :: solver
       TYPE(ParamType),INTENT(IN) :: Params
+      CLASS(MatrixType),POINTER,INTENT(INOUT),OPTIONAL :: A
       CLASS(ParamType),POINTER :: pListPtr
       TYPE(ParamType) :: validParams,matPList,vecxPList,vecbPList
       ! local variables
@@ -411,15 +412,15 @@ MODULE LinearSolverTypes
         ENDIF
 
         ! allocate and initialize matrix (A)
-        IF(.NOT.ALLOCATED(solver%A)) THEN
+        IF(.NOT.ASSOCIATED(solver%A)) THEN
           IF(TPLType == PETSC) THEN ! PETSc solver requires special PETSc type
             ALLOCATE(PETScMatrixType :: solver%A)
           ELSEIF(TPLType == PARDISO_MKL) THEN ! PARDISO only uses sparse matrices
             ALLOCATE(SparseMatrixType :: solver%A)
 #ifdef HAVE_PARDISO
-            SELECTTYPE(solver); TYPE IS(LinearSolverType_Direct)
-              solver%mtype=11 ! real and nonsymmetric
-            ENDSELECT
+           SELECTTYPE(solver); TYPE IS(LinearSolverType_Direct)
+             solver%mtype=11 ! real and nonsymmetric
+           ENDSELECT
 #endif
             IF(matType /= SPARSE) THEN
               CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
@@ -437,6 +438,7 @@ MODULE LinearSolverTypes
             ENDIF
           ENDIF
           CALL solver%A%init(matPList)
+          IF(PRESENT(A)) A=>solver%A
         ELSE
           CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
             '  - MatrixType A not allocated!')
@@ -620,7 +622,7 @@ MODULE LinearSolverTypes
       CHARACTER(LEN=*),PARAMETER :: myName='setup_PreCond_LinearSolverType_Iterative'
 
       IF(solver%isinit) THEN
-        IF(ALLOCATED(solver%A)) THEN
+        IF(ASSOCIATED(solver%A)) THEN
           IF(solver%A%isInit) THEN
             ! Set up PreconditionerType
             CALL solver%PreCondType%clear()
@@ -661,9 +663,9 @@ MODULE LinearSolverTypes
       IF(ALLOCATED(solver%pt))    DEALLOCATE(solver%pt)
       solver%phase=-1
 #endif
-      IF(ALLOCATED(solver%A)) THEN
+      IF(ASSOCIATED(solver%A)) THEN
         CALL solver%A%clear()
-        DEALLOCATE(solver%A)
+        NULLIFY(solver%A)
       ENDIF
       IF(ALLOCATED(solver%X)) THEN
         CALL solver%X%clear()
@@ -711,9 +713,9 @@ MODULE LinearSolverTypes
         CALL solver%PreCondType%clear()
         DEALLOCATE(solver%PrecondType)
       ENDIF
-      IF(ALLOCATED(solver%A)) THEN
+      IF(ASSOCIATED(solver%A)) THEN
         CALL solver%A%clear()
-        DEALLOCATE(solver%A)
+        NULLIFY(solver%A)
       ENDIF
       IF(ALLOCATED(solver%M)) THEN
         CALL solver%M%clear()
@@ -1109,7 +1111,7 @@ MODULE LinearSolverTypes
 
       solver%info=-1
       IF(solver%isInit) THEN
-        IF(ALLOCATED(solver%A)) THEN
+        IF(ASSOCIATED(solver%A)) THEN
           IF(ALLOCATED(solver%X)) THEN
             IF(ALLOCATED(solver%b)) THEN
               SELECTTYPE(A=>solver%A)
@@ -1272,7 +1274,7 @@ MODULE LinearSolverTypes
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
       TYPE(RealVectorType),INTENT(INOUT) :: resid
       !input check
-      IF(solver%isInit .AND. ALLOCATED(solver%b) .AND. ALLOCATED(solver%A) &
+      IF(solver%isInit .AND. ALLOCATED(solver%b) .AND. ASSOCIATED(solver%A) &
         .AND. ALLOCATED(solver%X) .AND. resid%n > 0) THEN
         !Written assuming A is not decomposed.  Which is accurate, the correct
         !solve function will contain the decomposed A.
