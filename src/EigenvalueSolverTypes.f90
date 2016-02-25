@@ -73,7 +73,7 @@ MODULE EigenvalueSolverTypes
   !> set enumeration scheme for TPLs
   INTEGER(SIK),PARAMETER,PUBLIC :: SLEPC=0,TRILINOS=1,NATIVE=4
   !> set enumeration scheme for solver methods
-  INTEGER(SIK),PARAMETER,PUBLIC :: POWER=0,JD=1,GD=2,ARNOLDI=3
+  INTEGER(SIK),PARAMETER,PUBLIC :: POWER_IT=0,JD=1,GD=2,ARNOLDI=3
 
   !> @brief the base eigenvalue solver type
   TYPE,ABSTRACT :: EigenvalueSolverType_Base
@@ -100,7 +100,7 @@ MODULE EigenvalueSolverTypes
     !> Pointer to the MatrixType B
     CLASS(MatrixType),POINTER :: B => NULL()
     !> Pointer to solution vector, x
-    CLASS(VectorType),ALLOCATABLE :: X
+    CLASS(VectorType),POINTER :: X
     !> Timer to measure solution time
     TYPE(TimerType) :: SolveTime
   !
@@ -272,7 +272,7 @@ MODULE EigenvalueSolverTypes
           CALL eEigenvalueSolverType%raiseError(modName//'::'//myName// &
             ' - SLEPc failed to initialize.')
         SELECTCASE(solvertype)
-          CASE(POWER)
+          CASE(POWER_IT)
             CALL EPSSetType(solver%eps,EPSPOWER,ierr)
           CASE(JD)
             CALL EPSSetType(solver%eps,EPSJD,ierr)
