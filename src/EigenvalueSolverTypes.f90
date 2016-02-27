@@ -208,7 +208,11 @@ MODULE EigenvalueSolverTypes
       REAL(SRK) :: tol
       LOGICAL(SBK) :: clops
       TYPE(STRINGType) :: pctype
-
+#ifdef MPACT_HAVE_SLEPC
+      ST :: st
+      KSP :: ksp
+      PC :: pc
+#endif
       !Check to set up required and optional param lists.
       !IF(.NOT.EigenType_Paramsflag) CALL EigenType_Declare_ValidParams()
 
@@ -296,9 +300,16 @@ MODULE EigenvalueSolverTypes
               ' - SLEPc failed to set solver type')
 
         !TODO: Need to set PC type
+        CALL EPSGetST(solver%eps,st,ierr)
         !get KSP
-        !ksptype()
+        CALL STGetKSP(st,ksp,ierr)
+        CALL KSPSetType(ksp,KSPBCGS,ierr)
         !ksp pc
+        CALL KSPGetPC(ksp,pc,ierr)
+        !CALL PCSetType(pc,PCHYPRE,ierr)
+        !CALL PCHYPRESetType(pc,"pilut",ierr)
+        CALL PCSetType(pc,PCBJACOBI,ierr)
+        !CALL PCSetReusePreconditioner(pc,PETSC_TRUE,ierr)
         !set KSP
 #else
         CALL eEigenvalueSolverType%raiseError(modName//'::'//myName// &
