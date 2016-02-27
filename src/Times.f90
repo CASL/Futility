@@ -17,14 +17,14 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief Utility module providing timers and clock information.
 !>
-!> This module provides a Fortran 2003 object for timing code and providing 
-!> clock information. Timing is preformed by interfacing with the 
-!> @c SYSTEM_CLOCK Fortran intrinsic subroutine. A timer can be set to high or 
+!> This module provides a Fortran 2003 object for timing code and providing
+!> clock information. Timing is preformed by interfacing with the
+!> @c SYSTEM_CLOCK Fortran intrinsic subroutine. A timer can be set to high or
 !> low resolution. The default is high resolution which makes use of long
 !> integers for interfacing with the intrinsic subroutine @c SYSTEM_CLOCK.
 !> All the object attributes are private but type bound procedures are provided
 !> to interface with the object attributes. The date and clock routines can be
-!> accessed independently of a timer. This module is tested using @c 
+!> accessed independently of a timer. This module is tested using @c
 !> testTimes.f90. An example of how to use this object is given below, the unit
 !> test also shows how to use the object. Code coverage documentation can be
 !> found on the @ref CodeCoverageReports page.
@@ -35,7 +35,7 @@
 !> @par EXAMPLES
 !> @code
 !> PROGRAM TestTimerExample
-!> 
+!>
 !>   USE Times
 !>   IMPLICIT NONE
 !>
@@ -47,7 +47,7 @@
 !>
 !>   !give the timer a name
 !>   CALL myTimer%setTimerName('My Timer')
-!> 
+!>
 !>   WRITE(*,*) 'Calculation started at '//getClockTime()//' on '//getDate()
 !>
 !>   !Start timing
@@ -78,14 +78,14 @@
 !>   - Put under test
 !> @par
 !> (06/23/2011) - Brendan Kochunas
-!>   - Removed interfaces for module timers and active timer and made timer 
+!>   - Removed interfaces for module timers and active timer and made timer
 !>     object procedures type-bound.
 !>   - Updated unit test.
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE Times
   USE IntrType
   USE Strings
-  USE IO_Strings  
+  USE IO_Strings
   IMPLICIT NONE
   PRIVATE !Default private for module contents
 !
@@ -97,7 +97,7 @@ MODULE Times
   PUBLIC :: MAXLEN_TIME_STRING
   PUBLIC :: MAXLEN_DATE_STRING
   PUBLIC :: MAXLEN_CLOCK_STRING
-  
+
   !> Maximum length of character string for the reported time
   INTEGER(SIK),PARAMETER :: MAXLEN_TIME_STRING=18
   !> Maximum length of character string for the reported date
@@ -106,7 +106,7 @@ MODULE Times
   INTEGER(SIK),PARAMETER :: MAXLEN_ETIME=9
   !> Maximum length of character string for the reported clock time
   INTEGER(SIK),PARAMETER :: MAXLEN_CLOCK_STRING=8
-      
+
   !> @brief Derived Datatype for the Timer data object
   !>
   !> This is the data object is used to define default timers within the
@@ -116,14 +116,14 @@ MODULE Times
   TYPE :: TimerType
     !> @brief Descriptive name for the timer
     TYPE(StringType),PRIVATE :: name
-    !> @brief Clock cycle count value for start of the timer (set by 
+    !> @brief Clock cycle count value for start of the timer (set by
     !> @ref Times::tic "tic")
     INTEGER(SLK),PRIVATE :: count=0_SDK
     !> @brief The elapsed time recorded for this timer in seconds.
     REAL(SDK) :: elapsedtime=0_SDK
     !> @brief The time recorded by this timer given as a string.
     CHARACTER(LEN=9),PRIVATE :: time=''
-    !> @brief The units for the time given in @ref Times::TimerType::time 
+    !> @brief The units for the time given in @ref Times::TimerType::time
     !> "%time", also a string.
     CHARACTER(LEN=9),PRIVATE :: unit=''
     !> @brief indicates if the timer is high resolution
@@ -184,7 +184,7 @@ MODULE Times
       !> @copydetails Times::getTimeChar
       PROCEDURE,PASS :: getTimeChar
   ENDTYPE TimerType
-    
+
   !> @brief The current value of the processor clock (for HI-RES timer)
   !>
   !> First output argument of the intrinsic Fortran subroutine SYSTEM_CLOCK.
@@ -193,7 +193,7 @@ MODULE Times
   !> potential expense of portability as SYSTEM_CLOCK is only defined
   !> for the default type integer.
   INTEGER(SLK) :: count_hi
-  
+
   !> @brief The rate of processor clock counts per second (for HI-RES timer)
   !>
   !> Second output argument of the intrinsic Fortran subroutine
@@ -202,7 +202,7 @@ MODULE Times
   !> potential expense of portability as SYSTEM_CLOCK is only defined
   !> for the default type integer.
   INTEGER(SLK) :: rate_hi
-  
+
   !> @brief The total number of processor clock counts before rollover.
   !> (for HI-RES timer)
   !>
@@ -212,7 +212,7 @@ MODULE Times
   !> potential expense of portability as SYSTEM_CLOCK is only defined
   !> for the default type integer.
   INTEGER(SLK) :: count_max_hi
-  
+
   !> @brief The current value of the processor clock (for HI-RES timer)
   !>
   !> First output argument of the intrinsic Fortran subroutine SYSTEM_CLOCK.
@@ -221,7 +221,7 @@ MODULE Times
   !> potential expense of portability as SYSTEM_CLOCK is only defined
   !> for the default type integer.
   INTEGER :: count_lo
-  
+
   !> @brief The rate of processor clock counts per second (for LO-RES timer)
   !>
   !> Second output argument of the intrinsic Fortran subroutine
@@ -230,7 +230,7 @@ MODULE Times
   !> potential expense of portability as SYSTEM_CLOCK is only defined
   !> for the default type integer.
   INTEGER :: rate_lo
-  
+
   !> @brief The total number of processor clock counts before rollover.
   !> (for LO-RES timer)
   !>
@@ -240,8 +240,8 @@ MODULE Times
   !> potential expense of portability as SYSTEM_CLOCK is only defined
   !> for the default type integer.
   INTEGER :: count_max_lo
-  
- 
+
+
 !
 !===============================================================================
   CONTAINS
@@ -259,7 +259,7 @@ MODULE Times
       hh=atime(1:2)
       mm=atime(3:4)
       ss=atime(5:6)
-      
+
       clocktime=hh//':'//mm//':'//ss
     ENDFUNCTION getClockTime
 !
@@ -286,7 +286,7 @@ MODULE Times
       ELSE
         fmt=1
       ENDIF
-      
+
       strdate=''
       CALL DATE_AND_TIME(adate)
       yy=adate(1:4)
@@ -388,7 +388,7 @@ MODULE Times
     ENDFUNCTION getTimerHiResMode
 !
 !-------------------------------------------------------------------------------
-!> @brief Function returns the value of @ref Times::TimerType::elapsedtime 
+!> @brief Function returns the value of @ref Times::TimerType::elapsedtime
 !> "%elapsedtime" as a real type.
 !> @param myTimer input argument, a @ref Times::TimerType "TimerType" variable
 !> @returns time, the elapsed time (REAL type) unit is seconds
@@ -399,7 +399,7 @@ MODULE Times
     ENDFUNCTION getTimeReal
 !
 !-------------------------------------------------------------------------------
-!> @brief Subroutine returns the value of @ref Times::TimerType::elapsedtime 
+!> @brief Subroutine returns the value of @ref Times::TimerType::elapsedtime
 !> "%elapsedtime" as a string with units.
 !> @param myTimer input argument, a @ref Times::TimerType "TimerType" variable
 !> @returns time output argument, the elapsed time as a string
@@ -412,14 +412,14 @@ MODULE Times
     ENDFUNCTION getTimeChar
 !
 !-------------------------------------------------------------------------------
-!> @brief Function returns the value of @ref Times::TimerType::elapsedtime 
+!> @brief Function returns the value of @ref Times::TimerType::elapsedtime
 !> "%elapsedtime" as a string in HHMMSS format.
 !> @param myTimer input argument, a @ref Times::TimerType "TimerType" variable
 !> @returns hh_mm_ss, the elapsed time as a string (hhh:mm:ss or mmm:ss.ss)
     FUNCTION getTimeHHMMSS(myTimer,tsec) RESULT(hh_mm_ss)
       REAL(SDK),PARAMETER :: half=0.5_SDK
       CLASS(TimerType),INTENT(IN) :: myTimer
-      REAL(SRK),INTENT(IN),OPTIONAL :: tsec 
+      REAL(SRK),INTENT(IN),OPTIONAL :: tsec
       CHARACTER(LEN=MAXLEN_ETIME) :: hh_mm_ss
       INTEGER(SIK) :: it,hrs,hr1,hr2,mins,min1,min2,secs,sec1,sec2
       REAL(SRK) :: t,sfrac
@@ -431,31 +431,31 @@ MODULE Times
       ELSE
         t=myTimer%elapsedtime
       ENDIF
-      
+
       it=INT(t,SIK)
       hrs=it/3600_SIK                   ! Total number of hours
       hr1=hrs/10_SIK                    ! 10's digit of hours
       hr2=MOD(hrs,10_SIK)               ! 1's digit of hours
-      
+
       mins=(it-hrs*3600_SIK)/60_SIK     ! Total number of minutes
       min1=mins/10_SIK                  ! 10's digit of minutes
       min2=MOD(mins,10_SIK)             ! 1's digit of minutes
-      
+
       secs=it-hrs*3600_SIK-mins*60_SIK  ! Total number of seconds
       sec1=secs/10_SIK                  ! 10's digit of seconds
       sec2=MOD(secs,10_SIK)             ! 1's digit of seconds
-      
+
       sfrac=t-it
       ! fraction of whole seconds
       IF(sfrac > 0.99_SRK) sfrac=0.99_SRK
-      
+
       IF(hrs > 0_SIK) THEN
         ! round up to next whole second
         !IF(sfrac >= half) sec2=sec2+1_SIK
         IF(sfrac >= half .AND. sec2 < 9) sec2=sec2+1_SIK
-        WRITE(hh_mm_ss,'(i2.2,i1.1,2(":",2i1.1))') hr1,hr2,min1,min2,sec1,sec2
+        WRITE(hh_mm_ss,'(i2,i1.1,2(":",2i1.1))') hr1,hr2,min1,min2,sec1,sec2
       ELSE
-        WRITE(hh_mm_ss,'(i2.2,i1.1,":",2i1.1,f3.2)') min1,min2,sec1,sec2,sfrac
+        WRITE(hh_mm_ss,'(i2,i1.1,":",2i1.1,f3.2)') min1,min2,sec1,sec2,sfrac
       ENDIF
     ENDFUNCTION getTimeHHMMSS
 !
@@ -495,7 +495,7 @@ MODULE Times
     SUBROUTINE toc(myTimer)
       CLASS(TimerType),INTENT(INOUT) :: myTimer
       INTEGER(SLK) :: count,rate,count_max
-      
+
       IF(myTimer%count2sec > 0.0_SDK) THEN
         IF(myTimer%HiResTimer) THEN
           CALL SYSTEM_CLOCK(count_hi,rate_hi,count_max_hi)
@@ -523,8 +523,8 @@ MODULE Times
 !> @param myTimer dummy argument of timer to be reset
 !>
 !> @ref Times::TimerType::name "%name" is cleared, @ref Times::TimerType::count
-!> "%count" is reset and @ref Times::TimerType::elapsedtime "%elapsedtime" is 
-!> set to 0. @ref Times::TimerType::time "%time" and @ref 
+!> "%count" is reset and @ref Times::TimerType::elapsedtime "%elapsedtime" is
+!> set to 0. @ref Times::TimerType::time "%time" and @ref
 !> Times::TimerType::unit "%unit" are set based on %elapsedtime=0
     SUBROUTINE ResetTimer(myTimer)
       CLASS(TimerType),INTENT(INOUT) :: myTimer
@@ -537,7 +537,7 @@ MODULE Times
     ENDSUBROUTINE ResetTimer
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets the @ref Times::TimerType::time "%time" and @ref 
+!> @brief Sets the @ref Times::TimerType::time "%time" and @ref
 !> Times::TimerType::unit "%unit" of timer, @e myTimer
 !> @param myTimer dummy argument of the timer
 !>
@@ -569,14 +569,14 @@ MODULE Times
     ENDSUBROUTINE SetTimeAndUnits
 !
 !-------------------------------------------------------------------------------
-!> @brief     
+!> @brief
     FUNCTION getTimeFromDate(Date1_inp,Date2_inp,outputunit_inp,fmt1_inp,fmt2_inp) RESULT(time)
       CHARACTER(LEN=*),INTENT(IN) :: Date1_inp
       CHARACTER(LEN=*),INTENT(IN) :: Date2_inp
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: outputunit_inp
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: fmt1_inp
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: fmt2_inp
-      
+
       REAL(SRK) :: time
       INTEGER(SIK) :: Date1year,Date1month,Date1day,Date2year,Date2month,Date2day
       INTEGER(SIK) :: i,ind1,ind2,total1,total2,leapdays,tmpint
@@ -588,7 +588,7 @@ MODULE Times
       CHARACTER(LEN=4) :: tmp4
       CHARACTER(LEN=10) :: tmpdate
       TYPE(StringType) :: outputunit,fmt1,fmt2
-  
+
       time=0.0_SRK
       IF(LEN_TRIM(Date1_inp) > 0 .AND. LEN_TRIM(Date2_inp) > 0) THEN
         !Set up Default Formats
@@ -710,7 +710,7 @@ MODULE Times
         !Convert years and months to days from 0.
         !Get the number of leap days
         leapdays=countleapyears(0,1,1,Date1year,Date1month,Date1day)
-        !We may need to adjust the leap days depending if the date 
+        !We may need to adjust the leap days depending if the date
         !is on an actual leap day...
         !IF(Date1month == 2 .AND. Date1day == 29)
         total1=0
@@ -752,7 +752,7 @@ MODULE Times
       INTEGER(SIK),INTENT(IN) :: monthstp
       INTEGER(SIK),INTENT(IN) :: daystp
       INTEGER(SIK) :: ndays
-      
+
       INTEGER(SIK) :: i
       ndays=0
       !Count the number of leap years from 0
