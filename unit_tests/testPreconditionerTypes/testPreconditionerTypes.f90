@@ -895,7 +895,7 @@ PROGRAM testPreconditionerTypes
       Vec :: x
       Vec :: b
       PetscErrorCode :: ierr
-#endif
+
       INTEGER(SIK) :: i,niters
       REAL(SRK) :: val,resid
 
@@ -905,7 +905,6 @@ PROGRAM testPreconditionerTypes
       ASSERT(ASSOCIATED(PETSC_PCSHELL_setup),'setup associated')
       ASSERT(ASSOCIATED(PETSC_PCSHELL_apply),'apply associated')
 
-#ifdef MPACT_HAVE_PETSC
       CALL KSPCreate(MPI_COMM_WORLD,ksp,ierr)
       CALL KSPSetType(ksp,KSPGMRES,ierr)
       CALL KSPGetPC(ksp,pc,ierr)
@@ -1020,6 +1019,7 @@ PROGRAM testPreconditionerTypes
       CALL VecDestroy(b,ierr)
       CALL MatDestroy(myData%M,ierr)
       CALL KSPDestroy(ksp,ierr)
+
       PETSC_PCSHELL_setup=>NULL()
       PETSC_PCSHELL_apply=>NULL()
 #endif
@@ -1042,7 +1042,7 @@ PROGRAM testPreconditionerTypes
 !
     SUBROUTINE smart_PCShell_setup(err)
       INTEGER(SIK),INTENT(OUT) :: err
-
+#ifdef MPACT_HAVE_PETSC
       CALL MatCreate(MPI_COMM_WORLD,myData%M,ierr)
       CALL MatSetSizes(myData%M,3,3,3,3,ierr)
       CALL MatSetType(myData%M,MATMPIAIJ,ierr)
@@ -1058,6 +1058,7 @@ PROGRAM testPreconditionerTypes
       CALL MatSetValues(myData%M,1,2,1,2,0.75_SRK,INSERT_VALUES,ierr)
       CALL MatAssemblyBegin(myData%M,MAT_FINAL_ASSEMBLY,ierr)
       CALL MatAssemblyEnd(myData%M,MAT_FINAL_ASSEMBLY,ierr)
+#endif
       WRITE(*,*) "I am defining exact answer"
       err=0
     ENDSUBROUTINE smart_PCShell_setup
@@ -1068,11 +1069,13 @@ PROGRAM testPreconditionerTypes
       INTEGER(SIK),INTENT(OUT) :: err
       WRITE(*,*) "I am applying exact answer"
       err=-1
+#ifdef MPACT_HAVE_PETSC
       SELECTTYPE(xin); TYPE IS(PETScVectorType)
         SELECTTYPE(xout); TYPE IS(PETScVectorType)
           CALL MatMult(myData%M,xin%b,xout%b,err)
         ENDSELECT
       ENDSELECT
+#endif
     ENDSUBROUTINE smart_PCShell_apply
 
 !
