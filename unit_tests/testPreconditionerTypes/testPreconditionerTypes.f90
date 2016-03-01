@@ -16,6 +16,8 @@
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE dummyPCShell
+  USE IntrType
+  USE VectorTypes
 #ifdef MPACT_HAVE_PETSC
 #include <finclude/petsc.h>
 #undef IS
@@ -25,7 +27,60 @@ MODULE dummyPCShell
 
   TYPE(pcshell_data) :: myData
 #endif
-
+  CONTAINS
+!
+    SUBROUTINE dummy_PCShell_setup(err)
+      INTEGER(SIK),INTENT(OUT) :: err
+      WRITE(*,*) "I am setting up something useless"
+      err=0
+    ENDSUBROUTINE dummy_PCShell_setup
+!
+    SUBROUTINE dummy_PCShell_apply(xin,xout,err)
+      CLASS(VectorType),INTENT(INOUT) :: xin
+      CLASS(VectorType),INTENT(INOUT) :: xout
+      INTEGER(SIK),INTENT(OUT) :: err
+      WRITE(*,*) "I am not doing anything useful"
+      CALL BLAS_copy(xin,xout)
+      err=0
+    ENDSUBROUTINE dummy_PCShell_apply
+!
+    SUBROUTINE smart_PCShell_setup(err)
+      INTEGER(SIK),INTENT(OUT) :: err
+#ifdef MPACT_HAVE_PETSC
+      CALL MatCreate(MPI_COMM_WORLD,myData%M,ierr)
+      CALL MatSetSizes(myData%M,3,3,3,3,ierr)
+      CALL MatSetType(myData%M,MATMPIAIJ,ierr)
+      CALL MatSetUp(myData%M,ierr)
+      CALL MatSetValues(myData%M,1,0,1,0,0.75_SRK,INSERT_VALUES,ierr)
+      CALL MatSetValues(myData%M,1,0,1,1,0.50_SRK,INSERT_VALUES,ierr)
+      CALL MatSetValues(myData%M,1,0,1,2,0.25_SRK,INSERT_VALUES,ierr)
+      CALL MatSetValues(myData%M,1,1,1,0,0.50_SRK,INSERT_VALUES,ierr)
+      CALL MatSetValues(myData%M,1,1,1,1,1.00_SRK,INSERT_VALUES,ierr)
+      CALL MatSetValues(myData%M,1,1,1,2,0.50_SRK,INSERT_VALUES,ierr)
+      CALL MatSetValues(myData%M,1,2,1,0,0.25_SRK,INSERT_VALUES,ierr)
+      CALL MatSetValues(myData%M,1,2,1,1,0.50_SRK,INSERT_VALUES,ierr)
+      CALL MatSetValues(myData%M,1,2,1,2,0.75_SRK,INSERT_VALUES,ierr)
+      CALL MatAssemblyBegin(myData%M,MAT_FINAL_ASSEMBLY,ierr)
+      CALL MatAssemblyEnd(myData%M,MAT_FINAL_ASSEMBLY,ierr)
+#endif
+      WRITE(*,*) "I am defining exact answer"
+      err=0
+    ENDSUBROUTINE smart_PCShell_setup
+!
+    SUBROUTINE smart_PCShell_apply(xin,xout,err)
+      CLASS(VectorType),INTENT(INOUT) :: xin
+      CLASS(VectorType),INTENT(INOUT) :: xout
+      INTEGER(SIK),INTENT(OUT) :: err
+      WRITE(*,*) "I am applying exact answer"
+      err=-1
+#ifdef MPACT_HAVE_PETSC
+      SELECTTYPE(xin); TYPE IS(PETScVectorType)
+        SELECTTYPE(xout); TYPE IS(PETScVectorType)
+          CALL MatMult(myData%M,xin%b,xout%b,err)
+        ENDSELECT
+      ENDSELECT
+#endif
+    ENDSUBROUTINE smart_PCShell_apply
 ENDMODULE
 
 PROGRAM testPreconditionerTypes
@@ -1024,60 +1079,6 @@ PROGRAM testPreconditionerTypes
       PETSC_PCSHELL_apply=>NULL()
 #endif
     ENDSUBROUTINE testPCShell
-!
-    SUBROUTINE dummy_PCShell_setup(err)
-      INTEGER(SIK),INTENT(OUT) :: err
-      WRITE(*,*) "I am setting up something useless"
-      err=0
-    ENDSUBROUTINE dummy_PCShell_setup
-!
-    SUBROUTINE dummy_PCShell_apply(xin,xout,err)
-      CLASS(VectorType),INTENT(INOUT) :: xin
-      CLASS(VectorType),INTENT(INOUT) :: xout
-      INTEGER(SIK),INTENT(OUT) :: err
-      WRITE(*,*) "I am not doing anything useful"
-      CALL BLAS_copy(xin,xout)
-      err=0
-    ENDSUBROUTINE dummy_PCShell_apply
-!
-    SUBROUTINE smart_PCShell_setup(err)
-      INTEGER(SIK),INTENT(OUT) :: err
-#ifdef MPACT_HAVE_PETSC
-      CALL MatCreate(MPI_COMM_WORLD,myData%M,ierr)
-      CALL MatSetSizes(myData%M,3,3,3,3,ierr)
-      CALL MatSetType(myData%M,MATMPIAIJ,ierr)
-      CALL MatSetUp(myData%M,ierr)
-      CALL MatSetValues(myData%M,1,0,1,0,0.75_SRK,INSERT_VALUES,ierr)
-      CALL MatSetValues(myData%M,1,0,1,1,0.50_SRK,INSERT_VALUES,ierr)
-      CALL MatSetValues(myData%M,1,0,1,2,0.25_SRK,INSERT_VALUES,ierr)
-      CALL MatSetValues(myData%M,1,1,1,0,0.50_SRK,INSERT_VALUES,ierr)
-      CALL MatSetValues(myData%M,1,1,1,1,1.00_SRK,INSERT_VALUES,ierr)
-      CALL MatSetValues(myData%M,1,1,1,2,0.50_SRK,INSERT_VALUES,ierr)
-      CALL MatSetValues(myData%M,1,2,1,0,0.25_SRK,INSERT_VALUES,ierr)
-      CALL MatSetValues(myData%M,1,2,1,1,0.50_SRK,INSERT_VALUES,ierr)
-      CALL MatSetValues(myData%M,1,2,1,2,0.75_SRK,INSERT_VALUES,ierr)
-      CALL MatAssemblyBegin(myData%M,MAT_FINAL_ASSEMBLY,ierr)
-      CALL MatAssemblyEnd(myData%M,MAT_FINAL_ASSEMBLY,ierr)
-#endif
-      WRITE(*,*) "I am defining exact answer"
-      err=0
-    ENDSUBROUTINE smart_PCShell_setup
-!
-    SUBROUTINE smart_PCShell_apply(xin,xout,err)
-      CLASS(VectorType),INTENT(INOUT) :: xin
-      CLASS(VectorType),INTENT(INOUT) :: xout
-      INTEGER(SIK),INTENT(OUT) :: err
-      WRITE(*,*) "I am applying exact answer"
-      err=-1
-#ifdef MPACT_HAVE_PETSC
-      SELECTTYPE(xin); TYPE IS(PETScVectorType)
-        SELECTTYPE(xout); TYPE IS(PETScVectorType)
-          CALL MatMult(myData%M,xin%b,xout%b,err)
-        ENDSELECT
-      ENDSELECT
-#endif
-    ENDSUBROUTINE smart_PCShell_apply
-
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE clearTest()
