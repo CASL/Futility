@@ -18,69 +18,97 @@
 MODULE dummyPCShell
   USE IntrType
   USE VectorTypes
+  USE MatrixTypes
+  USE PreconditionerTypes
 #ifdef MPACT_HAVE_PETSC
 #include <finclude/petsc.h>
 #undef IS
-  TYPE :: pcshell_data
-    Mat :: M
-  ENDTYPE pcshell_data
-
-  TYPE(pcshell_data) :: myData
 #endif
+  TYPE,EXTENDS(PreconditionerType) :: dummyPCType
+#ifdef MPACT_HAVE_PETSC
+    Mat :: M
+#endif
+    CONTAINS
+      PROCEDURE,PASS :: init => init_dummyPC
+      PROCEDURE,PASS :: clear => clear_dummyPC
+      PROCEDURE,PASS :: setup => setup_dummyPC
+      PROCEDURE,PASS :: apply => apply_dummyPC
+  ENDTYPE dummyPCType
+
+  TYPE,EXTENDS(dummyPCType) :: smartPCType
+    CONTAINS
+      PROCEDURE,PASS :: setup => setup_smartPC
+      PROCEDURE,PASS :: apply => apply_smartPC
+  ENDTYPE smartPCType
+
   CONTAINS
 !
-    SUBROUTINE dummy_PCShell_setup(err)
-      INTEGER(SIK),INTENT(OUT) :: err
-      WRITE(*,*) "I am setting up something useless"
-      err=0
-    ENDSUBROUTINE dummy_PCShell_setup
-!
-    SUBROUTINE dummy_PCShell_apply(xin,xout,err)
-      CLASS(VectorType),INTENT(INOUT) :: xin
-      CLASS(VectorType),INTENT(INOUT) :: xout
-      INTEGER(SIK),INTENT(OUT) :: err
-      WRITE(*,*) "I am not doing anything useful"
-      CALL BLAS_copy(xin,xout)
-      err=0
-    ENDSUBROUTINE dummy_PCShell_apply
-!
-    SUBROUTINE smart_PCShell_setup(err)
-      INTEGER(SIK),INTENT(OUT) :: err
+    SUBROUTINE init_dummyPC(thisPC,A)
+      CLASS(dummyPCType),INTENT(INOUT) :: thisPC
+      CLASS(MatrixType),TARGET,INTENT(IN),OPTIONAL :: A
 #ifdef MPACT_HAVE_PETSC
-      CALL MatCreate(MPI_COMM_WORLD,myData%M,ierr)
-      CALL MatSetSizes(myData%M,3,3,3,3,ierr)
-      CALL MatSetType(myData%M,MATMPIAIJ,ierr)
-      CALL MatSetUp(myData%M,ierr)
-      CALL MatSetValues(myData%M,1,0,1,0,0.75_SRK,INSERT_VALUES,ierr)
-      CALL MatSetValues(myData%M,1,0,1,1,0.50_SRK,INSERT_VALUES,ierr)
-      CALL MatSetValues(myData%M,1,0,1,2,0.25_SRK,INSERT_VALUES,ierr)
-      CALL MatSetValues(myData%M,1,1,1,0,0.50_SRK,INSERT_VALUES,ierr)
-      CALL MatSetValues(myData%M,1,1,1,1,1.00_SRK,INSERT_VALUES,ierr)
-      CALL MatSetValues(myData%M,1,1,1,2,0.50_SRK,INSERT_VALUES,ierr)
-      CALL MatSetValues(myData%M,1,2,1,0,0.25_SRK,INSERT_VALUES,ierr)
-      CALL MatSetValues(myData%M,1,2,1,1,0.50_SRK,INSERT_VALUES,ierr)
-      CALL MatSetValues(myData%M,1,2,1,2,0.75_SRK,INSERT_VALUES,ierr)
-      CALL MatAssemblyBegin(myData%M,MAT_FINAL_ASSEMBLY,ierr)
-      CALL MatAssemblyEnd(myData%M,MAT_FINAL_ASSEMBLY,ierr)
+      PetscErrorCode  :: ierr
+      CALL MatCreate(MPI_COMM_WORLD,thisPC%M,ierr)
+#endif
+      thisPC%isInit=.TRUE.
+    ENDSUBROUTINE init_dummyPC
+!
+    SUBROUTINE clear_dummyPC(thisPC)
+      CLASS(dummyPCType),INTENT(INOUT) :: thisPC
+#ifdef MPACT_HAVE_PETSC
+      PetscErrorCode  :: ierr
+      CALL MatDestroy(thisPC%M,ierr)
+#endif
+      thisPC%isInit=.FALSE.
+    ENDSUBROUTINE clear_dummyPC
+!
+    SUBROUTINE setup_dummyPC(thisPC)
+      CLASS(dummyPCType),INTENT(INOUT) :: thisPC
+      WRITE(*,*) "I am setting up something useless"
+    ENDSUBROUTINE setup_dummyPC
+!
+    SUBROUTINE apply_dummyPC(thisPC,v)
+      CLASS(dummyPCType),INTENT(INOUT) :: thisPC
+      CLASS(VectorType),INTENT(INOUT) :: v
+      WRITE(*,*) "I am not doing anything useful"
+    ENDSUBROUTINE apply_dummyPC
+!
+    SUBROUTINE setup_smartPC(thisPC)
+      CLASS(smartPCType),INTENT(INOUT) :: thisPC
+#ifdef MPACT_HAVE_PETSC
+      PetscErrorCode  :: ierr
+      CALL MatSetSizes(thisPC%M,3,3,3,3,ierr)
+      CALL MatSetType(thisPC%M,MATMPIAIJ,ierr)
+      CALL MatSetUp(thisPC%M,ierr)
+      CALL MatSetValues(thisPC%M,1,0,1,0,0.75_SRK,INSERT_VALUES,ierr)
+      CALL MatSetValues(thisPC%M,1,0,1,1,0.50_SRK,INSERT_VALUES,ierr)
+      CALL MatSetValues(thisPC%M,1,0,1,2,0.25_SRK,INSERT_VALUES,ierr)
+      CALL MatSetValues(thisPC%M,1,1,1,0,0.50_SRK,INSERT_VALUES,ierr)
+      CALL MatSetValues(thisPC%M,1,1,1,1,1.00_SRK,INSERT_VALUES,ierr)
+      CALL MatSetValues(thisPC%M,1,1,1,2,0.50_SRK,INSERT_VALUES,ierr)
+      CALL MatSetValues(thisPC%M,1,2,1,0,0.25_SRK,INSERT_VALUES,ierr)
+      CALL MatSetValues(thisPC%M,1,2,1,1,0.50_SRK,INSERT_VALUES,ierr)
+      CALL MatSetValues(thisPC%M,1,2,1,2,0.75_SRK,INSERT_VALUES,ierr)
+      CALL MatAssemblyBegin(thisPC%M,MAT_FINAL_ASSEMBLY,ierr)
+      CALL MatAssemblyEnd(thisPC%M,MAT_FINAL_ASSEMBLY,ierr)
 #endif
       WRITE(*,*) "I am defining exact answer"
-      err=0
-    ENDSUBROUTINE smart_PCShell_setup
+    ENDSUBROUTINE setup_smartPC
 !
-    SUBROUTINE smart_PCShell_apply(xin,xout,err)
-      CLASS(VectorType),INTENT(INOUT) :: xin
-      CLASS(VectorType),INTENT(INOUT) :: xout
-      INTEGER(SIK),INTENT(OUT) :: err
-      WRITE(*,*) "I am applying exact answer"
-      err=-1
+    SUBROUTINE apply_smartPC(thisPC,v)
+      CLASS(smartPCType),INTENT(INOUT) :: thisPC
+      CLASS(VectorType),INTENT(INOUT) :: v
 #ifdef MPACT_HAVE_PETSC
-      SELECTTYPE(xin); TYPE IS(PETScVectorType)
-        SELECTTYPE(xout); TYPE IS(PETScVectorType)
-          CALL MatMult(myData%M,xin%b,xout%b,err)
-        ENDSELECT
+      Vec :: tmp
+      PetscErrorCode  :: ierr
+      SELECTTYPE(v); TYPE IS(PETScVectorType)
+        CALL VecDuplicate(v%b,tmp,ierr)
+        CALL VecCopy(v%b,tmp,ierr)
+        CALL MatMult(thisPC%M,tmp,v%b,ierr)
       ENDSELECT
 #endif
-    ENDSUBROUTINE smart_PCShell_apply
+      WRITE(*,*) "I am applying exact answer"
+    ENDSUBROUTINE apply_smartPC
 ENDMODULE
 
 PROGRAM testPreconditionerTypes
@@ -953,12 +981,15 @@ PROGRAM testPreconditionerTypes
 
       INTEGER(SIK) :: i,niters
       REAL(SRK) :: val,resid
+      CLASS(PreconditionerType),POINTER :: shellPC
 
-      PETSC_PCSHELL_setup=>dummy_PCShell_setup
-      PETSC_PCSHELL_apply=>dummy_PCShell_apply
+      ALLOCATE(dummyPCType :: shellPC)
+      CALL shellPC%init()
 
-      ASSERT(ASSOCIATED(PETSC_PCSHELL_setup),'setup associated')
-      ASSERT(ASSOCIATED(PETSC_PCSHELL_apply),'apply associated')
+      PETSC_PCSHELL_PC=>shellPC
+
+      ASSERT(ASSOCIATED(PETSC_PCSHELL_PC),'preconditioner associated')
+      ASSERT(PETSC_PCSHELL_PC%isInit,'preconditioner isInit')
 
       CALL KSPCreate(MPI_COMM_WORLD,ksp,ierr)
       CALL KSPSetType(ksp,KSPGMRES,ierr)
@@ -1025,12 +1056,18 @@ PROGRAM testPreconditionerTypes
       ENDDO
       CALL KSPDestroy(ksp,ierr)
 
-      !modify pc to be exact inverse
-      PETSC_PCSHELL_setup=>smart_PCShell_setup
-      PETSC_PCSHELL_apply=>smart_PCShell_apply
+      CALL shellPC%clear()
+      DEALLOCATE(shellPC)
+      NULLIFY(PETSC_PCSHELL_PC)
 
-      ASSERT(ASSOCIATED(PETSC_PCSHELL_setup),'setup associated')
-      ASSERT(ASSOCIATED(PETSC_PCSHELL_apply),'apply associated')
+
+      ALLOCATE(smartPCType :: shellPC)
+      CALL shellPC%init()
+      !modify pc to be exact inverse
+      PETSC_PCSHELL_PC=>shellPC
+
+      ASSERT(ASSOCIATED(PETSC_PCSHELL_PC),'preconditioner associated')
+      ASSERT(PETSC_PCSHELL_PC%isInit,'preconditioner isInit')
       !setup ksp again
       CALL KSPCreate(MPI_COMM_WORLD,ksp,ierr)
       CALL KSPSetType(ksp,KSPGMRES,ierr)
@@ -1072,11 +1109,9 @@ PROGRAM testPreconditionerTypes
       CALL MatDestroy(A,ierr)
       CALL VecDestroy(x,ierr)
       CALL VecDestroy(b,ierr)
-      CALL MatDestroy(myData%M,ierr)
       CALL KSPDestroy(ksp,ierr)
-
-      PETSC_PCSHELL_setup=>NULL()
-      PETSC_PCSHELL_apply=>NULL()
+      CALL shellPC%clear()
+      NULLIFY(PETSC_PCSHELL_PC)
 #endif
     ENDSUBROUTINE testPCShell
 !

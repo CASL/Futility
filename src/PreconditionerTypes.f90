@@ -77,8 +77,7 @@ MODULE PreconditionerTypes
   PUBLIC :: PETSC_PCSHELL_SETUP_extern
   PUBLIC :: PETSC_PCSHELL_APPLY_extern
 
-  PUBLIC :: PETSC_PCSHELL_setup
-  PUBLIC :: PETSC_PCSHELL_apply
+  PUBLIC :: PETSC_PCSHELL_PC
 #endif
 
   TYPE,ABSTRACT :: PreConditionerType
@@ -129,7 +128,7 @@ MODULE PreconditionerTypes
     SUBROUTINE precond_init_absintfc(thisPC,A)
       IMPORT :: PreconditionerType,Matrixtype
       CLASS(PreconditionerType),INTENT(INOUT) :: thisPC
-      CLASS(MatrixType),TARGET,INTENT(IN) :: A
+      CLASS(MatrixType),TARGET,INTENT(IN),OPTIONAL :: A
     ENDSUBROUTINE precond_init_absintfc
   ENDINTERFACE
 
@@ -160,8 +159,7 @@ MODULE PreconditionerTypes
   ENDINTERFACE
 
 #ifdef MPACT_HAVE_PETSC
-  PROCEDURE(setup_absintfc),POINTER :: PETSC_PCSHELL_setup => NULL()
-  PROCEDURE(apply_absintfc),POINTER :: PETSC_PCSHELL_apply => NULL()
+  CLASS(PreConditionerType),POINTER :: PETSC_PCSHELL_PC => NULL()
 
   ABSTRACT INTERFACE
     SUBROUTINE setup_absintfc(err)
@@ -195,7 +193,7 @@ MODULE PreconditionerTypes
     SUBROUTINE init_LU_PreCondtype(thisPC,A)
       CHARACTER(LEN=*),PARAMETER :: myName='init_LU_PreCondType'
       CLASS(LU_PrecondType),INTENT(INOUT) :: thisPC
-      CLASS(MatrixType),ALLOCATABLE,TARGET,INTENT(IN) :: A
+      CLASS(MatrixType),ALLOCATABLE,TARGET,INTENT(IN),OPTIONAL :: A
       INTEGER(SIK) :: col,row,j,nU,nL,nnzU,nnzL
       INTEGER(SIK) :: X
       REAL(SRK) :: val
@@ -205,7 +203,7 @@ MODULE PreconditionerTypes
         CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
           ' - Preconditioner is already initialized!')
       ELSE
-        IF(.NOT.(ALLOCATED(A))) THEN
+        IF(.NOT. PRESENT(A) .OR. .NOT.(ALLOCATED(A))) THEN
           CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
             ' - Matrix being used for LU Preconditioner is not allocated!')
         ELSE
@@ -1571,8 +1569,8 @@ MODULE PreconditionerTypes
       PC :: pc
       PetscErrorCode :: err
 
-      err=-1
-      IF(ASSOCIATED(PETSC_PCSHELL_setup)) CALL PETSC_PCSHELL_setup(err)
+      err=0
+      IF(ASSOCIATED(PETSC_PCSHELL_PC) .AND. PETSC_PCSHELL_PC%isInit) CALL PETSC_PCSHELL_PC%setup()
 
     ENDSUBROUTINE PETSC_PCSHELL_SETUP_extern
 
@@ -1584,22 +1582,20 @@ MODULE PreconditionerTypes
 
       PetscErrorCode :: ierr
       INTEGER(SIK) :: n
-      TYPE(PETScVectorType) :: x_in, x_out
+      TYPE(PETScVectorType) :: v
 
       err=-1
-      IF(ASSOCIATED(PETSC_PCSHELL_apply)) THEN
+      IF(ASSOCIATED(PETSC_PCSHELL_PC) .AND. PETSC_PCSHELL_PC%isInit) THEN
         n=0
         CALL VecGetSize(xin,n,ierr)
+        IF(ierr==0) CALL VecCopy(xin,xout,ierr)
 
-        x_in%isInit=.TRUE.
-        x_out%isInit=.TRUE.
-        x_in%n=n
-        x_out%n=n
-        x_in%b=xin
-        x_out%b=xout
+        v%isInit=.TRUE.
+        v%n=n
+        v%b=xout
 
         err=ierr
-        IF(err==0) CALL PETSC_PCSHELL_apply(x_in,x_out,err)
+        IF(err==0) CALL PETSC_PCSHELL_PC%apply(v)
       ENDIF
 
     ENDSUBROUTINE PETSC_PCSHELL_APPLY_extern
