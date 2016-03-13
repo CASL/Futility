@@ -605,6 +605,12 @@ MODULE LinearSolverTypes
                 CALL eLinearSolverType%raiseError('Incorrect call to '// &
                   modName//'::'//myName//' - invalid value of solverMethod')
 #endif
+              ELSE
+                IF(solver%PCTypeName=='DEFAULT') THEN
+                  solver%PCTypeName='NOPC'
+                  solver%pciters=0
+                  solver%pcsetup=0
+                ENDIF
               ENDIF
 
               !assign values to solver
