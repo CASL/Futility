@@ -326,17 +326,17 @@ MODULE LinearSolverTypes
       CALL validParams%get('LinearSolverType->b->VectorType',pListPtr)
       vecbPList=pListPtr
       ! Check for Preconditioner Data
-!      IF(validParams%has('LinearSolverType->PCType')) THEN
-!        CALL validParams%get('LinearSolverType->PCType',PreCondType)
-!        CALL ValidParams%get('LinearSolverType->PCIters',pciters)
-!        CALL validParams%get('LinearSolverType->PCSetup',pcsetup)
+      IF(validParams%has('LinearSolverType->PCType')) THEN
+        CALL validParams%get('LinearSolverType->PCType',PreCondType)
+        CALL ValidParams%get('LinearSolverType->PCIters',pciters)
+        CALL validParams%get('LinearSolverType->PCSetup',pcsetup)
 !        !get extra data necessary for BILU
 !        CALL validParams%get('LinearSolverType->nPlane',nz)
 !        CALL validParams%get('LinearSolverType->nPin',npin)
 !        CALL validParams%get('LinearSolverType->nGrp',ngrp)
-!      ELSE
+      ELSE
         PreCondType='NOPC'
-!      ENDIF
+      ENDIF
       !add mpi communicator to parameter lists
       CALL matPList%add('MatrixType->MPI_Comm_ID',MPI_Comm_ID)
 
@@ -580,10 +580,24 @@ MODULE LinearSolverTypes
                 !set preconditioner
                 IF((solver%solverMethod == GMRES) .OR. (solver%solverMethod == BICGSTAB)) THEN
                   CALL KSPGetPC(solver%ksp,solver%pc,ierr)
-                  CALL PCSetType(solver%pc,PCBJACOBI,ierr)
-                  CALL PetscOptionsSetValue("sub_ksp_type","preonly",ierr)
-                  CALL PetscOptionsSetValue("sub_pc_type","ilu",ierr)
-                  CALL PCSetFromOptions(solver%pc,ierr)
+                  IF(TRIM(PreCondType)=='SOR') THEN
+                    CALL PCSetType(solver%pc,PCSOR,ierr)
+                  ELSEIF(TRIM(PreCondType)=='JACOBI') THEN
+                    CALL PCSetType(solver%pc,PCJACOBI,ierr)
+                  ELSEIF(TRIM(PreCondType)=='BJACOBI') THEN
+                    CALL PCSetType(solver%pc,PCJACOBI,ierr)
+                  ELSEIF(TRIM(PreCondType)=='SHELL') THEN
+                    CALL PCSetType(solver%pc,PCSHELL,ierr)
+                    CALL PCShellSetSetup(solver%pc,PETSC_PCSHELL_setup_extern,ierr)
+                    CALL PCShellSetApply(solver%pc,PETSC_PCSHELL_apply_extern,ierr)
+                  ELSEIF(TRIM(PreCondType)=='NOPC') THEN
+                    CALL PCSetType(solver%pc,PCNONE,ierr)
+                  ELSE   ! Regardless of what else is set, we'll use block-jacobi ILU
+                    CALL PCSetType(solver%pc,PCBJACOBI,ierr)
+                    CALL PetscOptionsSetValue("-sub_ksp_type","preonly",ierr)
+                    CALL PetscOptionsSetValue("-sub_pc_type","ilu",ierr)
+                    CALL PCSetFromOptions(solver%pc,ierr)
+                  ENDIF
                 ENDIF
                 CALL KSPSetFromOptions(solver%ksp,ierr)
 
