@@ -76,9 +76,9 @@ MODULE PreconditionerTypes
 #ifdef MPACT_HAVE_PETSC
   PUBLIC :: PETSC_PCSHELL_SETUP_extern
   PUBLIC :: PETSC_PCSHELL_APPLY_extern
+#endif
 
   PUBLIC :: PETSC_PCSHELL_PC
-#endif
 
   TYPE,ABSTRACT :: PreConditionerType
     LOGICAL(SBK) :: isInit=.FALSE.
@@ -158,22 +158,7 @@ MODULE PreconditionerTypes
     ENDSUBROUTINE precond_LU_absintfc
   ENDINTERFACE
 
-#ifdef MPACT_HAVE_PETSC
   CLASS(PreConditionerType),POINTER :: PETSC_PCSHELL_PC => NULL()
-
-  ABSTRACT INTERFACE
-    SUBROUTINE setup_absintfc(err)
-      IMPORT :: SIK
-      INTEGER(SIK),INTENT(OUT) :: err
-    ENDSUBROUTINE setup_absintfc
-    SUBROUTINE apply_absintfc(xin,xout,err)
-      IMPORT :: SIK, VectorType
-      CLASS(VectorType),INTENT(INOUT) :: xin
-      CLASS(VectorType),INTENT(INOUT) :: xout
-      INTEGER(SIK),INTENT(OUT) :: err
-    ENDSUBROUTINE apply_absintfc
-  ENDINTERFACE
-#endif
 
   !> set enumeration scheme for BILU preconditioners
   INTEGER(SIK),PARAMETER,PUBLIC :: BILU=0,BILUSGS=1
