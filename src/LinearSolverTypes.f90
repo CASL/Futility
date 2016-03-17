@@ -588,19 +588,20 @@ MODULE LinearSolverTypes
                     CALL PCSetType(solver%pc,PCSOR,ierr)
                   ELSEIF(TRIM(PreCondType)=='JACOBI') THEN
                     CALL PCSetType(solver%pc,PCJACOBI,ierr)
-                  ELSEIF(TRIM(PreCondType)=='BJACOBI') THEN
-                    CALL PCSetType(solver%pc,PCJACOBI,ierr)
-                  ELSEIF(TRIM(PreCondType)=='SHELL') THEN
-                    CALL PCSetType(solver%pc,PCSHELL,ierr)
-                    CALL PCShellSetSetup(solver%pc,PETSC_PCSHELL_setup_extern,ierr)
-                    CALL PCShellSetApply(solver%pc,PETSC_PCSHELL_apply_extern,ierr)
-                  ELSEIF(TRIM(PreCondType)=='NOPC') THEN
-                    CALL PCSetType(solver%pc,PCNONE,ierr)
-                  ELSE   ! Regardless of what else is set, we'll use block-jacobi ILU
+                  ELSEIF(TRIM(PreCondType)=='BJACOBI_ILU') THEN
                     CALL PCSetType(solver%pc,PCBJACOBI,ierr)
                     CALL PetscOptionsSetValue("-sub_ksp_type","preonly",ierr)
                     CALL PetscOptionsSetValue("-sub_pc_type","ilu",ierr)
                     CALL PCSetFromOptions(solver%pc,ierr)
+                  ELSEIF(TRIM(PreCondType)=='SHELL') THEN
+                    CALL PCSetType(solver%pc,PCSHELL,ierr)
+                    CALL PCShellSetSetup(solver%pc,PETSC_PCSHELL_setup_extern,ierr)
+                    CALL PCShellSetApply(solver%pc,PETSC_PCSHELL_apply_extern,ierr)
+! Disabling nopc option for PETSC because it breaks a lot of things
+!                  ELSEIF(TRIM(PreCondType)=='NOPC') THEN
+!                    CALL PCSetType(solver%pc,PCNONE,ierr)
+                  ELSE   ! Regardless of what else is set, we'll use block-jacobi ILU
+                    CALL PCSetType(solver%pc,PCBJACOBI,ierr)
                   ENDIF
                 ENDIF
                 CALL KSPSetFromOptions(solver%ksp,ierr)
