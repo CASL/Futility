@@ -1,7 +1,25 @@
+!++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
+!                              Copyright (C) 2012                              !
+!                   The Regents of the University of Michigan                  !
+!              MPACT Development Group and Prof. Thomas J. Downar              !
+!                             All rights reserved.                             !
+!                                                                              !
+! Copyright is reserved to the University of Michigan for purposes of          !
+! controlled dissemination, commercialization through formal licensing, or     !
+! other disposition. The University of Michigan nor any of their employees,    !
+! makes any warranty, express or implied, or assumes any liability or          !
+! responsibility for the accuracy, completeness, or usefulness of any          !
+! information, apparatus, product, or process disclosed, or represents that    !
+! its use would not infringe privately owned rights. Reference herein to any   !
+! specific commercial products, process, or service by trade name, trademark,  !
+! manufacturer, or otherwise, does not necessarily constitute or imply its     !
+! endorsement, recommendation, or favoring by the University of Michigan.      !
+!++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testSorting
 #include "UnitTest.h"
   USE UnitTest
   USE IntrType
+  USE Strings
   USE Sorting
 
   IMPLICIT NONE
@@ -99,24 +117,12 @@ PROGRAM testSorting
 !-------------------------------------------------------------------------------
     SUBROUTINE testBubbleSort()
       LOGICAL(SBK) :: bool
-      INTEGER(SIK) :: tmpintarray(10)
-      REAL(SRK) :: tmprealarray(10)
-      
-      tmpintarray(1)=-5
-      tmpintarray(2)=100
-      tmpintarray(3)=60
-      tmpintarray(4)=10
-      tmpintarray(5)=45
-      tmpintarray(6)=-10
-      tmpintarray(7)=20
-      tmpintarray(8)=5
-      tmpintarray(9)=-30
-      tmpintarray(10)=20
+      INTEGER(SIK) :: tmpintarray(10),tmpint1a(10)
+      REAL(SRK) :: tmprealarray(10),tmpreal1a(10)
+      TYPE(StringType) :: tmpstrarray(10)
 
-      CALL bubble_sort(tmpintarray)
-
-      bool=ALL(tmpintarray == (/-30,-10,-5,5,10,20,20,45,60,100/))
-      ASSERT(bool,'1-D integer array')
+      !Real sorting
+      COMPONENT_TEST('Sort 1-D Real array')
 
       tmprealarray(1)=100.0_SRK
       tmprealarray(2)=-5.0_SRK
@@ -134,6 +140,292 @@ PROGRAM testSorting
       bool=ALL(tmprealarray .APPROXEQ. (/-30.0_SRK,-10.0_SRK,-5.0_SRK,5.0_SRK,10.0_SRK, &
         20.0_SRK,20.0_SRK,45.0_SRK,60.0_SRK,100.0_SRK/))
       ASSERT(bool,'1-D real array')
+
+      COMPONENT_TEST('Sort 1-D Real + 1-D Real array')
+
+      tmprealarray(1)=100.0_SRK
+      tmprealarray(2)=-5.0_SRK
+      tmprealarray(3)=60.0_SRK
+      tmprealarray(4)=10.0_SRK
+      tmprealarray(5)=45.0_SRK
+      tmprealarray(6)=-10.0_SRK
+      tmprealarray(7)=20.0_SRK
+      tmprealarray(8)=5.0_SRK
+      tmprealarray(9)=-30.0_SRK
+      tmprealarray(10)=20.0_SRK
+      tmpreal1a(1)=10.0_SRK
+      tmpreal1a(2)=1.0_SRK
+      tmpreal1a(3)=15.0_SRK
+      tmpreal1a(4)=-5.0_SRK
+      tmpreal1a(5)=-12.0_SRK
+      tmpreal1a(6)=0.0_SRK
+      tmpreal1a(7)=100.0_SRK
+      tmpreal1a(8)=45.0_SRK
+      tmpreal1a(9)=3.0_SRK
+      tmpreal1a(10)=75.0_SRK
+      
+      CALL bubble_sort(tmprealarray,tmpreal1a)
+
+      bool=ALL(tmprealarray .APPROXEQ. (/-30.0_SRK,-10.0_SRK,-5.0_SRK,5.0_SRK,10.0_SRK, &
+        20.0_SRK,20.0_SRK,45.0_SRK,60.0_SRK,100.0_SRK/))
+      ASSERT(bool,'1-D real array')
+
+      bool=ALL(tmpreal1a .APPROXEQ. (/3.0_SRK,0.0_SRK,1.0_SRK,45.0_SRK,-5.0_SRK, &
+        100.0_SRK,75.0_SRK,-12.0_SRK,15.0_SRK,10.0_SRK/))
+      ASSERT(bool,'1-D real array')
+
+      !Reverse the argument order for a new result
+      tmprealarray(1)=100.0_SRK
+      tmprealarray(2)=-5.0_SRK
+      tmprealarray(3)=60.0_SRK
+      tmprealarray(4)=10.0_SRK
+      tmprealarray(5)=45.0_SRK
+      tmprealarray(6)=-10.0_SRK
+      tmprealarray(7)=20.0_SRK
+      tmprealarray(8)=5.0_SRK
+      tmprealarray(9)=-30.0_SRK
+      tmprealarray(10)=20.0_SRK
+      tmpreal1a(1)=10.0_SRK
+      tmpreal1a(2)=1.0_SRK
+      tmpreal1a(3)=15.0_SRK
+      tmpreal1a(4)=-5.0_SRK
+      tmpreal1a(5)=-12.0_SRK
+      tmpreal1a(6)=0.0_SRK
+      tmpreal1a(7)=100.0_SRK
+      tmpreal1a(8)=45.0_SRK
+      tmpreal1a(9)=3.0_SRK
+      tmpreal1a(10)=75.0_SRK
+
+      CALL bubble_sort(tmpreal1a,tmprealarray)
+
+      bool=ALL(tmpreal1a .APPROXEQ. (/-12.0_SRK,-5.0_SRK,0.0_SRK,1.0_SRK,3.0_SRK, &
+        10.0_SRK,15.0_SRK,45.0_SRK,75.0_SRK,100.0_SRK/))
+      ASSERT(bool,'1-D real array')
+
+      bool=ALL(tmprealarray .APPROXEQ. (/45.0_SRK,10.0_SRK,-10.0_SRK,-5.0_SRK,-30.0_SRK, &
+        100.0_SRK,60.0_SRK,5.0_SRK,20.0_SRK,20.0_SRK/))
+      ASSERT(bool,'1-D real array')
+
+      COMPONENT_TEST('Sort 1-D Real + 1-D Int array')
+
+      tmprealarray(1)=100.0_SRK
+      tmprealarray(2)=-5.0_SRK
+      tmprealarray(3)=60.0_SRK
+      tmprealarray(4)=10.0_SRK
+      tmprealarray(5)=45.0_SRK
+      tmprealarray(6)=-10.0_SRK
+      tmprealarray(7)=20.0_SRK
+      tmprealarray(8)=5.0_SRK
+      tmprealarray(9)=-30.0_SRK
+      tmprealarray(10)=20.0_SRK
+      tmpint1a(1)=10
+      tmpint1a(2)=1
+      tmpint1a(3)=15
+      tmpint1a(4)=-5
+      tmpint1a(5)=-12
+      tmpint1a(6)=0
+      tmpint1a(7)=100
+      tmpint1a(8)=45
+      tmpint1a(9)=3
+      tmpint1a(10)=75
+
+      CALL bubble_sort(tmprealarray,tmpint1a,.TRUE.)
+
+      bool=ALL(tmprealarray .APPROXEQ. (/-30.0_SRK,-10.0_SRK,-5.0_SRK,5.0_SRK,10.0_SRK, &
+        20.0_SRK,20.0_SRK,45.0_SRK,60.0_SRK,100.0_SRK/))
+      ASSERT(bool,'1-D real array')
+
+      bool=ALL(tmpint1a == (/3,0,1,45,-5,100,75,-12,15,10/))
+      ASSERT(bool,'1-D int array')
+
+      COMPONENT_TEST('Sort 1-D Real + 1-D String array')
+
+      tmpreal1a(1)=9.0_SRK
+      tmpreal1a(2)=3.0_SRK
+      tmpreal1a(3)=5.0_SRK
+      tmpreal1a(4)=0.0_SRK
+      tmpreal1a(5)=4.0_SRK
+      tmpreal1a(6)=1.0_SRK
+      tmpreal1a(7)=2.0_SRK
+      tmpreal1a(8)=8.0_SRK
+      tmpreal1a(9)=7.0_SRK
+      tmpreal1a(10)=6.0_SRK
+      tmpstrarray(1)='g'
+      tmpstrarray(2)='!'
+      tmpstrarray(3)='and'
+      tmpstrarray(4)='or'
+      tmpstrarray(5)='da'
+      tmpstrarray(6)='yes'
+      tmpstrarray(7)='si'
+      tmpstrarray(8)='oui'
+      tmpstrarray(9)='string'
+      tmpstrarray(10)=''
+
+      CALL bubble_sort(tmpreal1a,tmpstrarray)
+
+      bool=ALL(tmpreal1a == (/0.0_SRK,1.0_SRK,2.0_SRK,3.0_SRK,4.0_SRK,5.0_SRK,6.0_SRK,7.0_SRK,8.0_SRK,9.0_SRK/))
+      ASSERT(bool,'1-D real array')
+
+      ASSERT(tmpstrarray(1) == 'or','1-D string array 1')
+      ASSERT(tmpstrarray(2) == 'yes','1-D string array 1')
+      ASSERT(tmpstrarray(3) == 'si','1-D string array 1')
+      ASSERT(tmpstrarray(4) == '!','1-D string array 1')
+      ASSERT(tmpstrarray(5) == 'da','1-D string array 1')
+      ASSERT(tmpstrarray(6) == 'and','1-D string array 1')
+      ASSERT(tmpstrarray(7) == '','1-D string array 1')
+      ASSERT(tmpstrarray(8) == 'string','1-D string array 1')
+      ASSERT(tmpstrarray(9) == 'oui','1-D string array 1')
+      ASSERT(tmpstrarray(10) == 'g','1-D string array 1')
+
+      !Integer sorting
+      COMPONENT_TEST('Sort 1-D Int array')
+      tmpintarray(1)=-5
+      tmpintarray(2)=100
+      tmpintarray(3)=60
+      tmpintarray(4)=10
+      tmpintarray(5)=45
+      tmpintarray(6)=-10
+      tmpintarray(7)=20
+      tmpintarray(8)=5
+      tmpintarray(9)=-30
+      tmpintarray(10)=20
+
+      CALL bubble_sort(tmpintarray)
+
+      bool=ALL(tmpintarray == (/-30,-10,-5,5,10,20,20,45,60,100/))
+      ASSERT(bool,'1-D integer array')
+
+      COMPONENT_TEST('Sort 1-D Int + 1-D Real array')
+
+      tmpintarray(1)=-5
+      tmpintarray(2)=100
+      tmpintarray(3)=60
+      tmpintarray(4)=10
+      tmpintarray(5)=45
+      tmpintarray(6)=-10
+      tmpintarray(7)=20
+      tmpintarray(8)=5
+      tmpintarray(9)=-30
+      tmpintarray(10)=20
+      tmprealarray(1)=100.0_SRK
+      tmprealarray(2)=-5.0_SRK
+      tmprealarray(3)=60.0_SRK
+      tmprealarray(4)=10.0_SRK
+      tmprealarray(5)=45.0_SRK
+      tmprealarray(6)=-10.0_SRK
+      tmprealarray(7)=20.0_SRK
+      tmprealarray(8)=5.0_SRK
+      tmprealarray(9)=-30.0_SRK
+      tmprealarray(10)=20.0_SRK
+
+      CALL bubble_sort(tmprealarray,tmpintarray,.FALSE.)
+
+      bool=ALL(tmpintarray == (/-30,-10,-5,5,10,20,20,45,60,100/))
+      ASSERT(bool,'1-D integer array')
+
+      bool=ALL(tmprealarray .APPROXEQA. (/-30.0_SRK,-10.0_SRK,100.0_SRK,5.0_SRK, &
+         10.0_SRK,20.0_SRK,20.0_SRK,45.0_SRK,60.0_SRK,-5.0_SRK/))
+      ASSERT(bool,'1-D real array')
+
+      COMPONENT_TEST('Sort 1-D Int + 1-D Int array')
+      tmpintarray(1)=-5
+      tmpintarray(2)=100
+      tmpintarray(3)=60
+      tmpintarray(4)=10
+      tmpintarray(5)=45
+      tmpintarray(6)=-10
+      tmpintarray(7)=20
+      tmpintarray(8)=5
+      tmpintarray(9)=-30
+      tmpintarray(10)=20
+      tmpint1a(1)=5
+      tmpint1a(2)=8
+      tmpint1a(3)=6
+      tmpint1a(4)=2
+      tmpint1a(5)=0
+      tmpint1a(6)=4
+      tmpint1a(7)=9
+      tmpint1a(8)=7
+      tmpint1a(9)=1
+      tmpint1a(10)=3
+
+      CALL bubble_sort(tmpintarray,tmpint1a)
+
+      bool=ALL(tmpintarray == (/-30,-10,-5,5,10,20,20,45,60,100/))
+      ASSERT(bool,'1-D integer array')
+
+      bool=ALL(tmpint1a == (/1,4,5,7,2,9,3,0,6,8/))
+      ASSERT(bool,'1-D integer array')
+
+      !Reverse the argument order for new results
+      tmpintarray(1)=-5
+      tmpintarray(2)=100
+      tmpintarray(3)=60
+      tmpintarray(4)=10
+      tmpintarray(5)=45
+      tmpintarray(6)=-10
+      tmpintarray(7)=20
+      tmpintarray(8)=5
+      tmpintarray(9)=-30
+      tmpintarray(10)=20
+      tmpint1a(1)=5
+      tmpint1a(2)=8
+      tmpint1a(3)=6
+      tmpint1a(4)=2
+      tmpint1a(5)=0
+      tmpint1a(6)=4
+      tmpint1a(7)=9
+      tmpint1a(8)=7
+      tmpint1a(9)=1
+      tmpint1a(10)=3
+
+      CALL bubble_sort(tmpint1a,tmpintarray)
+
+      bool=ALL(tmpint1a == (/0,1,2,3,4,5,6,7,8,9/))
+      ASSERT(bool,'1-D integer array')
+
+      bool=ALL(tmpintarray == (/45,-30,10,20,-10,-5,60,5,100,20/))
+      ASSERT(bool,'1-D integer array')
+
+      COMPONENT_TEST('Sort 1-D Int + 1-D String array')
+
+      tmpint1a(1)=5
+      tmpint1a(2)=8
+      tmpint1a(3)=6
+      tmpint1a(4)=2
+      tmpint1a(5)=0
+      tmpint1a(6)=4
+      tmpint1a(7)=9
+      tmpint1a(8)=7
+      tmpint1a(9)=1
+      tmpint1a(10)=3
+      tmpstrarray(1)='g'
+      tmpstrarray(2)='!'
+      tmpstrarray(3)='and'
+      tmpstrarray(4)='or'
+      tmpstrarray(5)='da'
+      tmpstrarray(6)='yes'
+      tmpstrarray(7)='si'
+      tmpstrarray(8)='oui'
+      tmpstrarray(9)='string'
+      tmpstrarray(10)=''
+
+
+      CALL bubble_sort(tmpint1a,tmpstrarray)
+
+      bool=ALL(tmpint1a == (/0,1,2,3,4,5,6,7,8,9/))
+      ASSERT(bool,'1-D integer array')
+
+      ASSERT(tmpstrarray(1) == 'da','1-D string array 1')
+      ASSERT(tmpstrarray(2) == 'string','1-D string array 1')
+      ASSERT(tmpstrarray(3) == 'or','1-D string array 1')
+      ASSERT(tmpstrarray(4) == '','1-D string array 1')
+      ASSERT(tmpstrarray(5) == 'yes','1-D string array 1')
+      ASSERT(tmpstrarray(6) == 'g','1-D string array 1')
+      ASSERT(tmpstrarray(7) == 'and','1-D string array 1')
+      ASSERT(tmpstrarray(8) == 'oui','1-D string array 1')
+      ASSERT(tmpstrarray(9) == '!','1-D string array 1')
+      ASSERT(tmpstrarray(10) == 'si','1-D string array 1')
     ENDSUBROUTINE testBubbleSort
 !
 !-------------------------------------------------------------------------------

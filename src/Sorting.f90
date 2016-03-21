@@ -27,10 +27,14 @@
 !>   (07/06/2014) - Benjamin Collins
 !>   - Added additional interface for qsort (QuickSort) to give better
 !>           performance when needed
+!>   (3/16/2016) - Dan Jabaay
+!>   - Added sorting of one array based on the sorting of another.  This
+!>     functionality will help with more applicable sorting cases.
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE Sorting
 
   USE IntrType
+  USE Strings
   IMPLICIT NONE
 
   PUBLIC :: sort
@@ -49,6 +53,18 @@ MODULE Sorting
     !> @copybrief Sorting::bubble_sort_2DInt
     !> @copydetails Sorting::bubble_sort_2DInt
     MODULE PROCEDURE bubble_sort_2DInt
+    !> @copybrief Sorting::bubble_sort_1DReal_1DReal
+    !> @copydetails Sorting::bubble_sort_1DReal_1DReal
+    MODULE PROCEDURE bubble_sort_1DReal_1DReal
+    !> @copybrief Sorting::bubble_sort_1DReal_1DInt
+    !> @copydetails Sorting::bubble_sort_1DReal_1DInt
+    MODULE PROCEDURE bubble_sort_1DReal_1DInt
+    !> @copybrief Sorting::bubble_sort_1DInt_1DInt
+    !> @copydetails Sorting::bubble_sort_1DInt_1DInt
+    MODULE PROCEDURE bubble_sort_1DInt_1DInt
+    !> @copybrief Sorting::bubble_sort_1DInt_1DStr
+    !> @copydetails Sorting::bubble_sort_1DInt_1DStr
+    MODULE PROCEDURE bubble_sort_1DInt_1DStr
   ENDINTERFACE sort
 
 
@@ -76,6 +92,22 @@ MODULE Sorting
     !> @copybrief Sorting::bubble_sort_2DInt
     !> @copydetails Sorting::bubble_sort_2DInt
     MODULE PROCEDURE bubble_sort_2DInt
+    !> @copybrief Sorting::bubble_sort_1DReal_1DReal
+    !> @copydetails Sorting::bubble_sort_1DReal_1DReal
+    MODULE PROCEDURE bubble_sort_1DReal_1DReal
+    !> @copybrief Sorting::bubble_sort_1DReal_1DInt
+    !> @copydetails Sorting::bubble_sort_1DReal_1DInt
+    MODULE PROCEDURE bubble_sort_1DReal_1DInt
+    !> @copybrief Sorting::bubble_sort_1DReal_1DStr
+    !> @copydetails Sorting::bubble_sort_1DReal_1DStr
+    MODULE PROCEDURE bubble_sort_1DReal_1DStr
+    !> @copybrief Sorting::bubble_sort_1DInt_1DInt
+    !> @copydetails Sorting::bubble_sort_1DInt_1DInt
+    MODULE PROCEDURE bubble_sort_1DInt_1DInt
+    !> @copybrief Sorting::bubble_sort_1DInt_1DStr
+    !> @copydetails Sorting::bubble_sort_1DInt_1DStr
+    MODULE PROCEDURE bubble_sort_1DInt_1DStr
+
   ENDINTERFACE bubble_sort
 !
 !===============================================================================
@@ -175,6 +207,263 @@ MODULE Sorting
       ENDDO
 
     ENDSUBROUTINE bubble_sort_2DInt
+!
+!-------------------------------------------------------------------------------
+!> @brief A simple sorting algorithm for a 2 1-D array sorting.  The first array's
+!>        data will be sorted in ascending/increasing order and returned.  The
+!>        second array's data will be sorted positionally based on the first arrays
+!>        sorting.
+!> @example
+!>        real1=(/5.0_SRK,-1.0_SRK,10.0_SRK/)
+!>        real2=(/-1.0_SRK,-2.0_SRK,-3.0_SRK/)
+!>        CALL bubble_sort_1DReal_1Dreal(real1,real2)
+!>        real1=(/-1.0_SRK,5.0_SRK,10.0_SRK/)
+!>        real2=(/-2.0_SRK,-1.0_SRK,-3.0_SRK/)
+!>        !Reverse the arguments
+!>        CALL bubble_sort_1DReal_1Dreal(real2,real1)
+!>        real1=(/10.0_SRK,-1.0_SRK,5.0_SRK/)
+!>        real2=(/-3.0_SRK,-2.0_SRK,-1.0_SRK/)
+!> @param real1 A 1-D array of unsorted reals
+!> @param real2 A 1-D array of unsorted reals
+!>
+    PURE SUBROUTINE bubble_sort_1DReal_1DReal(real1,real2)
+      REAL(SRK),INTENT(INOUT) :: real1(:)
+      REAL(SRK),INTENT(INOUT) :: real2(:)
+      !LOGICAL(SBK),INTENT(IN),OPTIONAL :: reverse
+      LOGICAL(SBK) :: sorted
+      INTEGER(SIK) :: i,ni,nr,ncomp
+      REAL(SRK) :: tmpr
+
+      sorted=.FALSE.
+      ni=SIZE(real1,DIM=1)
+      nr=SIZE(real2,DIM=1)
+      ncomp=0
+      IF(ni == nr) THEN
+        DO WHILE(.NOT.sorted)
+          sorted=.TRUE.
+          ncomp=ncomp+1
+          DO i=1,ni-ncomp
+            IF(real1(i) > real1(i+1)) THEN
+              tmpr=real1(i+1)
+              real1(i+1)=real1(i)
+              real1(i)=tmpr
+              tmpr=real2(i+1)
+              real2(i+1)=real2(i)
+              real2(i)=tmpr
+              sorted=.FALSE.
+            ENDIF
+          ENDDO
+        ENDDO
+      ENDIF
+    ENDSUBROUTINE bubble_sort_1DReal_1DReal
+!
+!-------------------------------------------------------------------------------
+!> @brief A simple sorting algorithm for a 2 1-D array sorting.  The first array's
+!>        data will be sorted in ascending/increasing order and returned.  The
+!>        second array's data will be sorted positionally based on the first arrays
+!>        sorting.
+!> @example
+!>        real1=(/5.0_SRK,-1.0_SRK,10.0_SRK/)
+!>        int1=(/-1.0_SRK,-2.0_SRK,-3.0_SRK/)
+!>        CALL bubble_sort_1DReal_1DInt(real1,int1)
+!>        real1=(/-1.0_SRK,5.0_SRK,10.0_SRK/)
+!>        int1=(/-2.0_SRK,-1.0_SRK,-3.0_SRK/)
+!> @param real1 A 1-D array of unsorted reals
+!> @param int1 A 1-D array of unsorted integers
+!>
+    PURE SUBROUTINE bubble_sort_1DReal_1DInt(real1,int1,sortreal)
+      REAL(SRK),INTENT(INOUT) :: real1(:)
+      INTEGER(SIK),INTENT(INOUT) :: int1(:)
+      LOGICAL(SBK),INTENT(IN) :: sortreal
+      !LOGICAL(SBK),INTENT(IN),OPTIONAL :: reverse
+      LOGICAL(SBK) :: sorted
+      INTEGER(SIK) :: i,ni,nr,ncomp,tmpi
+      REAL(SRK) :: tmpr
+
+      sorted=.FALSE.
+      ni=SIZE(real1,DIM=1)
+      nr=SIZE(int1,DIM=1)
+      ncomp=0
+      IF(ni == nr) THEN
+        IF(sortreal) THEN
+          DO WHILE(.NOT.sorted)
+            sorted=.TRUE.
+            ncomp=ncomp+1
+            DO i=1,ni-ncomp
+              IF(real1(i) > real1(i+1)) THEN
+                tmpr=real1(i+1)
+                real1(i+1)=real1(i)
+                real1(i)=tmpr
+                tmpi=int1(i+1)
+                int1(i+1)=int1(i)
+                int1(i)=tmpi
+                sorted=.FALSE.
+              ENDIF
+            ENDDO
+          ENDDO
+        ELSE
+          DO WHILE(.NOT.sorted)
+            sorted=.TRUE.
+            ncomp=ncomp+1
+            DO i=1,ni-ncomp
+              IF(int1(i) > int1(i+1)) THEN
+                tmpi=int1(i+1)
+                int1(i+1)=int1(i)
+                int1(i)=tmpi
+                tmpr=real1(i+1)
+                real1(i+1)=real1(i)
+                real1(i)=tmpr
+                sorted=.FALSE.
+              ENDIF
+            ENDDO
+          ENDDO
+        ENDIF
+      ENDIF
+    ENDSUBROUTINE bubble_sort_1DReal_1DInt
+!
+!-------------------------------------------------------------------------------
+!> @brief A simple sorting algorithm for a 2 1-D array sorting.  The first array's
+!>        data will be sorted in ascending/increasing order and returned.  The
+!>        second array's data will be sorted positionally based on the first arrays
+!>        sorting.
+!> @example
+!>        real1=(/5,-1,10/)
+!>        str1=(/'g','a','d'/)
+!>        CALL bubble_sort_1DReal_1DStr(real1,str1)
+!>        real1=(/-1,5,10/)
+!>        str1=(/'a','g','d'/)
+!> @param real1 A 1-D array of unsorted reals
+!> @param str1 A 1-D array of unsorted strings
+!>
+    PURE SUBROUTINE bubble_sort_1DReal_1DStr(real1,str1)
+      REAL(SRK),INTENT(INOUT) :: real1(:)
+      TYPE(StringType),INTENT(INOUT) :: str1(:)
+      !LOGICAL(SBK),INTENT(IN),OPTIONAL :: reverse
+      LOGICAL(SBK) :: sorted
+      INTEGER(SIK) :: i,ni,nr,n,ncomp
+      INTEGER(SIK) :: tmpi
+      REAL(SRK) :: tmpr
+      TYPE(StringType) :: tmpstr
+
+      sorted=.FALSE.
+      ni=SIZE(real1,DIM=1)
+      nr=SIZE(str1,DIM=1)
+      ncomp=0
+      IF(ni == nr) THEN
+        DO WHILE(.NOT.sorted)
+          sorted=.TRUE.
+          ncomp=ncomp+1
+          DO i=1,ni-ncomp
+            IF(real1(i) > real1(i+1)) THEN
+              tmpi=real1(i+1)
+              real1(i+1)=real1(i)
+              real1(i)=tmpi
+              tmpstr=str1(i+1)
+              str1(i+1)=str1(i)
+              str1(i)=tmpstr
+              sorted=.FALSE.
+            ENDIF
+          ENDDO
+        ENDDO
+      ENDIF
+    ENDSUBROUTINE bubble_sort_1DReal_1DStr
+!
+!-------------------------------------------------------------------------------
+!> @brief A simple sorting algorithm for a 2 1-D array sorting.  The first array's
+!>        data will be sorted in ascending/increasing order and returned.  The
+!>        second array's data will be sorted positionally based on the first arrays
+!>        sorting.
+!> @example
+!>        int1=(/5,-1,10/)
+!>        int2=(/-1,-2,-3/)
+!>        CALL bubble_sort_1DInt_1DInt(int1,int2)
+!>        int1=(/-1,5,10/)
+!>        int2=(/-2,-1,-3/)
+!>        !Reverse the arguments
+!>        CALL bubble_sort_1DInt_1DInt(int2,int1)
+!>        int1=(/10,-1,5/)
+!>        int2=(/-3,-2,-1/)
+!> @param real1 A 1-D array of unsorted reals
+!> @param real2 A 1-D array of unsorted reals
+!>
+    PURE SUBROUTINE bubble_sort_1DInt_1DInt(int1,int2)
+      INTEGER(SIK),INTENT(INOUT) :: int1(:)
+      INTEGER(SIK),INTENT(INOUT) :: int2(:)
+      !LOGICAL(SBK),INTENT(IN),OPTIONAL :: reverse
+      LOGICAL(SBK) :: sorted
+      INTEGER(SIK) :: i,ni,nr,n,ncomp
+      INTEGER(SIK) :: tmpi
+      REAL(SRK) :: tmpr
+
+      sorted=.FALSE.
+      ni=SIZE(int1,DIM=1)
+      nr=SIZE(int2,DIM=1)
+      ncomp=0
+      IF(ni == nr) THEN
+        DO WHILE(.NOT.sorted)
+          sorted=.TRUE.
+          ncomp=ncomp+1
+          DO i=1,ni-ncomp
+            IF(int1(i) > int1(i+1)) THEN
+              tmpi=int1(i+1)
+              int1(i+1)=int1(i)
+              int1(i)=tmpi
+              tmpr=int2(i+1)
+              int2(i+1)=int2(i)
+              int2(i)=tmpr
+              sorted=.FALSE.
+            ENDIF
+          ENDDO
+        ENDDO
+      ENDIF
+    ENDSUBROUTINE bubble_sort_1DInt_1DInt
+!
+!-------------------------------------------------------------------------------
+!> @brief A simple sorting algorithm for a 2 1-D array sorting.  The first array's
+!>        data will be sorted in ascending/increasing order and returned.  The
+!>        second array's data will be sorted positionally based on the first arrays
+!>        sorting.
+!> @example
+!>        int1=(/5,-1,10/)
+!>        str1=(/'g','a','d'/)
+!>        CALL bubble_sort_1DInt_1DStr(int1,str1)
+!>        int1=(/-1,5,10/)
+!>        str1=(/'a','g','d'/)
+!> @param int1 A 1-D array of unsorted integers
+!> @param str1 A 1-D array of unsorted strings
+!>
+    PURE SUBROUTINE bubble_sort_1DInt_1DStr(int1,str1)
+      INTEGER(SIK),INTENT(INOUT) :: int1(:)
+      TYPE(StringType),INTENT(INOUT) :: str1(:)
+      !LOGICAL(SBK),INTENT(IN),OPTIONAL :: reverse
+      LOGICAL(SBK) :: sorted
+      INTEGER(SIK) :: i,ni,nr,n,ncomp
+      INTEGER(SIK) :: tmpi
+      REAL(SRK) :: tmpr
+      TYPE(StringType) :: tmpstr
+
+      sorted=.FALSE.
+      ni=SIZE(int1,DIM=1)
+      nr=SIZE(str1,DIM=1)
+      ncomp=0
+      IF(ni == nr) THEN
+        DO WHILE(.NOT.sorted)
+          sorted=.TRUE.
+          ncomp=ncomp+1
+          DO i=1,ni-ncomp
+            IF(int1(i) > int1(i+1)) THEN
+              tmpi=int1(i+1)
+              int1(i+1)=int1(i)
+              int1(i)=tmpi
+              tmpstr=str1(i+1)
+              str1(i+1)=str1(i)
+              str1(i)=tmpstr
+              sorted=.FALSE.
+            ENDIF
+          ENDDO
+        ENDDO
+      ENDIF
+    ENDSUBROUTINE bubble_sort_1DInt_1DStr
 !-------------------------------------------------------------------------------
 !  Insert Sort
 !-------------------------------------------------------------------------------
@@ -250,7 +539,7 @@ MODULE Sorting
       ELSE
         CALL insert_sort_int(A)
       ENDIF
-    ENDSUBROUTINE
+    ENDSUBROUTINE qsort_1DInt
 !
 !-------------------------------------------------------------------------------
 !> @brief Partition method 1D integer array.  For a given partion, sorts values
@@ -283,7 +572,7 @@ MODULE Sorting
       ENDDO
       i=i-1
       CALL swap_int(A,1,i)
-    ENDSUBROUTINE
+    ENDSUBROUTINE partition_array_1DInt
 !
 !-------------------------------------------------------------------------------
 !> @brief Swap location of 2 locations in 1D integer array.
@@ -300,7 +589,7 @@ MODULE Sorting
       tmp=A(i)
       A(i)=A(j)
       A(j)=tmp
-    ENDSUBROUTINE
+    ENDSUBROUTINE swap_int
 !
 !-------------------------------------------------------------------------------
 !> @brief QuickSort 1D real array
@@ -328,7 +617,7 @@ MODULE Sorting
       ELSE
         CALL insert_sort_real(A)
       ENDIF
-    ENDSUBROUTINE
+    ENDSUBROUTINE qsort_1DReal
 !
 !-------------------------------------------------------------------------------
 !> @brief Partition method 1D real array.  For a given partion, sorts values
@@ -362,7 +651,7 @@ MODULE Sorting
       ENDDO
       i=i-1
       CALL swap_real(A,1,i)
-    ENDSUBROUTINE
+    ENDSUBROUTINE partition_array_1DReal
 !
 !-------------------------------------------------------------------------------
 !> @brief Swap location of 2 locations in 1D real array.
@@ -379,6 +668,6 @@ MODULE Sorting
       tmp=A(i)
       A(i)=A(j)
       A(j)=tmp
-    ENDSUBROUTINE
+    ENDSUBROUTINE swap_real
 !
 ENDMODULE Sorting
