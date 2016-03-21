@@ -53,6 +53,7 @@ SET(UNIT_TEST_NAMES
     testMatrixTypes
     testPreconditionerTypes
     testLinearSolver
+    testEigenvalueSolver
     testStochasticSampler
 )
 

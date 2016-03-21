@@ -15,6 +15,102 @@
 ! manufacturer, or otherwise, does not necessarily constitute or imply its     !
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
+MODULE dummyPCShell
+  USE IntrType
+  USE VectorTypes
+  USE MatrixTypes
+  USE PreconditionerTypes
+#ifdef MPACT_HAVE_PETSC
+#include <finclude/petsc.h>
+#undef IS
+#endif
+  TYPE,EXTENDS(PreconditionerType) :: dummyPCType
+#ifdef MPACT_HAVE_PETSC
+    Mat :: M
+#endif
+    CONTAINS
+      PROCEDURE,PASS :: init => init_dummyPC
+      PROCEDURE,PASS :: clear => clear_dummyPC
+      PROCEDURE,PASS :: setup => setup_dummyPC
+      PROCEDURE,PASS :: apply => apply_dummyPC
+  ENDTYPE dummyPCType
+
+  TYPE,EXTENDS(dummyPCType) :: smartPCType
+    CONTAINS
+      PROCEDURE,PASS :: setup => setup_smartPC
+      PROCEDURE,PASS :: apply => apply_smartPC
+  ENDTYPE smartPCType
+
+  CONTAINS
+!
+    SUBROUTINE init_dummyPC(thisPC,A)
+      CLASS(dummyPCType),INTENT(INOUT) :: thisPC
+      CLASS(MatrixType),TARGET,INTENT(IN),OPTIONAL :: A
+#ifdef MPACT_HAVE_PETSC
+      PetscErrorCode  :: ierr
+      CALL MatCreate(MPI_COMM_WORLD,thisPC%M,ierr)
+#endif
+      thisPC%isInit=.TRUE.
+    ENDSUBROUTINE init_dummyPC
+!
+    SUBROUTINE clear_dummyPC(thisPC)
+      CLASS(dummyPCType),INTENT(INOUT) :: thisPC
+#ifdef MPACT_HAVE_PETSC
+      PetscErrorCode  :: ierr
+      CALL MatDestroy(thisPC%M,ierr)
+#endif
+      thisPC%isInit=.FALSE.
+    ENDSUBROUTINE clear_dummyPC
+!
+    SUBROUTINE setup_dummyPC(thisPC)
+      CLASS(dummyPCType),INTENT(INOUT) :: thisPC
+      WRITE(*,*) "I am setting up something useless"
+    ENDSUBROUTINE setup_dummyPC
+!
+    SUBROUTINE apply_dummyPC(thisPC,v)
+      CLASS(dummyPCType),INTENT(INOUT) :: thisPC
+      CLASS(VectorType),INTENT(INOUT) :: v
+      WRITE(*,*) "I am not doing anything useful"
+    ENDSUBROUTINE apply_dummyPC
+!
+    SUBROUTINE setup_smartPC(thisPC)
+      CLASS(smartPCType),INTENT(INOUT) :: thisPC
+#ifdef MPACT_HAVE_PETSC
+      PetscErrorCode  :: ierr
+      CALL MatSetSizes(thisPC%M,3,3,3,3,ierr)
+      CALL MatSetType(thisPC%M,MATMPIAIJ,ierr)
+      CALL MatSetUp(thisPC%M,ierr)
+      CALL MatSetValues(thisPC%M,1,0,1,0,0.75_SRK,INSERT_VALUES,ierr)
+      CALL MatSetValues(thisPC%M,1,0,1,1,0.50_SRK,INSERT_VALUES,ierr)
+      CALL MatSetValues(thisPC%M,1,0,1,2,0.25_SRK,INSERT_VALUES,ierr)
+      CALL MatSetValues(thisPC%M,1,1,1,0,0.50_SRK,INSERT_VALUES,ierr)
+      CALL MatSetValues(thisPC%M,1,1,1,1,1.00_SRK,INSERT_VALUES,ierr)
+      CALL MatSetValues(thisPC%M,1,1,1,2,0.50_SRK,INSERT_VALUES,ierr)
+      CALL MatSetValues(thisPC%M,1,2,1,0,0.25_SRK,INSERT_VALUES,ierr)
+      CALL MatSetValues(thisPC%M,1,2,1,1,0.50_SRK,INSERT_VALUES,ierr)
+      CALL MatSetValues(thisPC%M,1,2,1,2,0.75_SRK,INSERT_VALUES,ierr)
+      CALL MatAssemblyBegin(thisPC%M,MAT_FINAL_ASSEMBLY,ierr)
+      CALL MatAssemblyEnd(thisPC%M,MAT_FINAL_ASSEMBLY,ierr)
+#endif
+      WRITE(*,*) "I am defining exact answer"
+    ENDSUBROUTINE setup_smartPC
+!
+    SUBROUTINE apply_smartPC(thisPC,v)
+      CLASS(smartPCType),INTENT(INOUT) :: thisPC
+      CLASS(VectorType),INTENT(INOUT) :: v
+#ifdef MPACT_HAVE_PETSC
+      Vec :: tmp
+      PetscErrorCode  :: ierr
+      SELECTTYPE(v); TYPE IS(PETScVectorType)
+        CALL VecDuplicate(v%b,tmp,ierr)
+        CALL VecCopy(v%b,tmp,ierr)
+        CALL MatMult(thisPC%M,tmp,v%b,ierr)
+      ENDSELECT
+#endif
+      WRITE(*,*) "I am applying exact answer"
+    ENDSUBROUTINE apply_smartPC
+ENDMODULE
+
 PROGRAM testPreconditionerTypes
 #include "UnitTest.h"
 
@@ -28,18 +124,17 @@ PROGRAM testPreconditionerTypes
   USE VectorTypes
   USE MatrixTypes
   USE PreconditionerTypes
+  USE dummyPCShell
   IMPLICIT NONE
 
 #ifdef MPACT_HAVE_PETSC
-#include <finclude/petsc.h>
-#undef IS
   PetscErrorCode  :: ierr
 #else
 #ifdef HAVE_MPI
   INCLUDE 'mpif.h'
 #endif
 #endif
-  
+
   TYPE(ExceptionHandlerType),TARGET :: e
   TYPE(ParamType) :: PListMat,PListVec
   CLASS(MatrixType),ALLOCATABLE :: testSparseMatrix,testDenseMatrix,testMatrix
@@ -59,8 +154,8 @@ PROGRAM testPreconditionerTypes
   CALL e%setQuietMode(.TRUE.)
   CALL eParams%addSurrogate(e)
   CALL ePreCondType%addSurrogate(e)
-  
-#ifdef MPACT_HAVE_PETSC    
+
+#ifdef MPACT_HAVE_PETSC
   CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
 #endif
 
@@ -70,21 +165,21 @@ PROGRAM testPreconditionerTypes
   REGISTER_SUBTEST('Test ILU Preconditioner Type',testILU_PreCondType)
   CALL clearTest()
 
-
+  REGISTER_SUBTEST('Test PCShell',testPCShell)
 !#ifdef MPACT_HAVE_PETSC
 !  !test BILU petsc
 !  CALL setupBILUTest(0)
 !  REGISTER_SUBTEST('Test BILU Preconditioner Type (petsc)',testBILU_PreCondType)
-!  CALL clearTest()  
+!  CALL clearTest()
 !#endif
 !  !test BILU sparse
 !  CALL setupBILUTest(1)
 !  REGISTER_SUBTEST('Test BILU Preconditioner Type (sparse)',testBILU_PreCondType)
-!  CALL clearTest() 
-  
+!  CALL clearTest()
+
   FINALIZE_TEST()
-  
-#ifdef MPACT_HAVE_PETSC    
+
+#ifdef MPACT_HAVE_PETSC
   CALL PetscFinalize(ierr)
 #endif
 #ifdef HAVE_MPI
@@ -102,7 +197,7 @@ PROGRAM testPreconditionerTypes
       !Set up Vector
       CALL PListVec%add('VectorType->n',10_SIK)
       ALLOCATE(RealVectorType :: testVector)
-      CALL testVector%init(PListVec)      
+      CALL testVector%init(PListVec)
 
       !Set up Matrices
       CALL PListMat%add('MatrixType->nnz',40) ! Will be a 10x10, 5-stripe matrix
@@ -189,11 +284,11 @@ PROGRAM testPreconditionerTypes
 
       CALL testLU%init(testDenseMatrix)
       SELECTTYPE(LU => testLU%LU); TYPE IS(DenseSquareMatrixType)
-        CALL LU%clear()        
-        nerrors1=e%getCounter(EXCEPTION_ERROR)        
-        CALL testLU%setup()        
-        nerrors2=e%getCounter(EXCEPTION_ERROR)        
-        ASSERT(nerrors2 == nerrors1+1,'setup_LU_Preconditioner PC%LU%isInit check')        
+        CALL LU%clear()
+        nerrors1=e%getCounter(EXCEPTION_ERROR)
+        CALL testLU%setup()
+        nerrors2=e%getCounter(EXCEPTION_ERROR)
+        ASSERT(nerrors2 == nerrors1+1,'setup_LU_Preconditioner PC%LU%isInit check')
         FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
 ! This test is commented out for the time being
 ! A workaround had to be implemented in gnu, and a petsc build still fails
@@ -214,7 +309,7 @@ PROGRAM testPreconditionerTypes
 !      CALL testLU%apply(testDummy)
 !      nerrors2=e%getCounter(EXCEPTION_ERROR)
 !      ASSERT(nerrors2 == nerrors1+1,'applpy_LU_Preconditioner PC%isInit check')
-!      FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1      
+!      FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
 
 !      CALL testLU%init(testDenseMatrix)
 !      nerrors1=e%getCounter(EXCEPTION_ERROR)
@@ -251,7 +346,7 @@ PROGRAM testPreconditionerTypes
 
       COMPONENT_TEST('ILU_PreCondType, DenseMatrixType')
       IF(testDenseMatrix%isInit .AND. testVector%isInit) THEN
-        
+
         ! Check %init
         CALL testLU%init(testDenseMatrix)
         ASSERT(testLU%isInit,'DenseSquareMatrixType ILU%isInit')
@@ -282,7 +377,7 @@ PROGRAM testPreconditionerTypes
             ENDDO
           ENDDO
         ENDSELECT
-          
+
         ! Check %apply
         SELECTTYPE(testVector); TYPE IS(RealVectorType)
           tempVector=testVector
@@ -290,7 +385,7 @@ PROGRAM testPreconditionerTypes
         CALL testLU%apply(tempVector)
         ASSERT(ALL(tempVector%b .APPROXEQA. tmpreal2),'DenseSquareMatrixType ILU%apply(vector)')
         FINFO() 'Result:',tempVector%b,'Solution:',tmpreal2
-        
+
 
         ! Check %clear
         CALL testLU%clear()
@@ -301,7 +396,7 @@ PROGRAM testPreconditionerTypes
         ASSERT(testSparseMatrix%isInit,'TestDenseMatrix Initialization')
         ASSERT(testVector%isInit,'TestVector Initialization')
       ENDIF
-        
+
       COMPONENT_TEST('ILU_PreCondType, SparseMatrixType')
       ! Check %init
       CALL testLU%init(testSparseMatrix)
@@ -361,7 +456,7 @@ PROGRAM testPreconditionerTypes
 #else
   comm=PE_COMM_WORLD
 #endif
-      !!!setup 1g stuff      
+      !!!setup 1g stuff
       nPlane=3
       nPin=9
       nGrp=1
@@ -371,13 +466,13 @@ PROGRAM testPreconditionerTypes
       !Set up Vector
       CALL PListVec%clear()
       CALL PListVec%add('VectorType->n',N)
-      CALL PListVec%add('VectorType->MPI_Comm_ID',comm) 
+      CALL PListVec%add('VectorType->MPI_Comm_ID',comm)
       IF(index == 0) THEN
         ALLOCATE(PETScVectorType :: testVec_1g)
       ELSE
         ALLOCATE(RealVectorType :: testVec_1g)
       ENDIF
-      CALL testVec_1g%init(PListVec) 
+      CALL testVec_1g%init(PListVec)
 
       !Set up Matrix
       CALL PListMat%clear()
@@ -392,7 +487,7 @@ PROGRAM testPreconditionerTypes
         ALLOCATE(SparseMatrixType :: testBILU_1g)
       ENDIF
       CALL testBILU_1g%init(PListMat)
-        
+
       ! Fill Matrix from File
       OPEN(unit=111,file="matrices/1g_matrix.txt",status='old')
       READ(111,*,iostat=iostatus)
@@ -411,7 +506,7 @@ PROGRAM testPreconditionerTypes
         CALL testBILU_1g%assemble()
       ENDSELECT
 
-      !!!setup mg stuff      
+      !!!setup mg stuff
       nPlane=3
       nPin=9
       nGrp=56
@@ -421,13 +516,13 @@ PROGRAM testPreconditionerTypes
       !Set up Vector
       CALL PListVec%clear()
       CALL PListVec%add('VectorType->n',N)
-      CALL PListVec%add('VectorType->MPI_Comm_ID',comm)    
+      CALL PListVec%add('VectorType->MPI_Comm_ID',comm)
       IF(index == 0) THEN
         ALLOCATE(PETScVectorType :: testVec_mg)
       ELSE
         ALLOCATE(RealVectorType :: testVec_mg)
       ENDIF
-      CALL testVec_mg%init(PListVec) 
+      CALL testVec_mg%init(PListVec)
 
       !Set up Matrix
       CALL PListMat%clear()
@@ -442,7 +537,7 @@ PROGRAM testPreconditionerTypes
         ALLOCATE(SparseMatrixType :: testBILU_mg)
       ENDIF
       CALL testBILU_mg%init(PListMat)
-        
+
       ! Fill Matrix from File
       OPEN(unit=111,file="matrices/mg_matrix.txt",status='old')
       READ(111,*,iostat=iostatus)
@@ -473,27 +568,27 @@ PROGRAM testPreconditionerTypes
       TYPE(ParamType) :: pList
       CLASS(MatrixType),ALLOCATABLE :: refBILU_L,refBILU_U
       REAL(SRK),ALLOCATABLE :: refF0(:,:,:),refE(:,:),refW(:,:),refNS(:,:)
-      
+
       COMPONENT_TEST('BILU Preconditioner Type (1g)')
       IF(ALLOCATED(testBILU_1g) .AND. ALLOCATED(testVec_1g)) THEN
         IF(testBILU_1g%isInit .AND. testVec_1g%isInit) THEN
           ALLOCATE(BILU_PreCondType :: testLU)
-          
+
           nPlane=3
           nPin=9
           nGrp=1
           X=SQRT(REAL(nPin))
-          
+
           !set some values (to be moved into init at some point)
           SELECTTYPE(pc => testLU); TYPE IS(BILU_PreCondType)
             pc%nPlane=nPlane
             pc%nPin=nPin
-            pc%nGrp=nGrp    
+            pc%nGrp=nGrp
           ENDSELECT
-  
-          !initialize        
+
+          !initialize
           CALL testLU%init(testBILU_1g)
-          
+
           ! Check %init
           ASSERT(testLU%isInit,'BILU Preconditioner %isInit')
           ASSERT(ASSOCIATED(testLU%A),'BILU Preconditioner ASSOCIATED(LU%A)')
@@ -506,7 +601,7 @@ PROGRAM testPreconditionerTypes
             ASSERT(ALLOCATED(pc%E),'BILU Preconditioner ALLOCATED(LU%E)')
             ASSERT(ALLOCATED(pc%W),'BILU Preconditioner ALLOCATED(LU%W)')
           ENDSELECT
-  
+
           ! Check %setup
           CALL testLU%setup()
 
@@ -515,7 +610,7 @@ PROGRAM testPreconditionerTypes
 !              DO col=1,A%n
 !                CALL A%get(row,col,tmpval)
 !                IF(tmpval /= 0.0_SRK) WRITE(670,'(2I7,ES25.15)') row,col,tmpval
-!              ENDDO         
+!              ENDDO
 !            ENDDO
 !          ENDSELECT
 !          SELECTTYPE(A => testLU%U); CLASS IS(MatrixType)
@@ -523,10 +618,10 @@ PROGRAM testPreconditionerTypes
 !              DO col=1,A%n
 !                CALL A%get(row,col,tmpval)
 !                IF(tmpval /= 0.0_SRK) WRITE(671,'(2I7,ES20.10)') row,col,tmpval
-!              ENDDO         
+!              ENDDO
 !            ENDDO
 !          ENDSELECT
-          
+
           !setup ref L
           CALL PListMat%clear()
           CALL PListMat%add('MatrixType->matType',SPARSE)
@@ -556,13 +651,13 @@ PROGRAM testPreconditionerTypes
                     ASSERT( ABS(tmpval-reftmpval) < 1E-12_SRK,"BILU_L failed")
                     FINFO() row,col,tmpval,reftmpval,ABS(tmpval-reftmpval)
                   ENDIF
-                ENDDO                  
+                ENDDO
               ENDDO
             ENDSELECT
           ENDSELECT
           CALL refBILU_L%clear()
           DEALLOCATE(refBILU_L)
-  
+
           !setup ref U
           CALL PListMat%clear()
           CALL PListMat%add('MatrixType->matType',SPARSE)
@@ -592,13 +687,13 @@ PROGRAM testPreconditionerTypes
                     !ASSERT( ABS(tmpval-reftmpval) < 1E-12_SRK,"BILU_U failed")
                     !FINFO() row,col,tmpval,reftmpval,ABS(tmpval-reftmpval)
                   ENDIF
-                ENDDO         
+                ENDDO
               ENDDO
             ENDSELECT
           ENDSELECT
           CALL refBILU_U%clear()
           DEALLOCATE(refBILU_U)
-          
+
           !!!check extra data needed for apply
           SELECTTYPE(pc => testLU); TYPE IS(BILU_PreCondType)
             ! setup ref F0
@@ -615,11 +710,11 @@ PROGRAM testPreconditionerTypes
             ! check F0
             DO row=1,pc%nPlane*pc%nPin
               ASSERT( ABS(pc%F0(row,1,1)-refF0(row,1,1)) < 1E-12_SRK,'F0 not correct')
-              FINFO() row,pc%F0(row,1,1),refF0(row,1,1),ABS(pc%F0(row,1,1)-refF0(row,1,1)) 
+              FINFO() row,pc%F0(row,1,1),refF0(row,1,1),ABS(pc%F0(row,1,1)-refF0(row,1,1))
             ENDDO
             DEALLOCATE(refF0)
           ENDSELECT
-          
+
           SELECTTYPE(pc => testLU); TYPE IS(BILU_PreCondType)
             ! setup ref EW
             ALLOCATE(refE(pc%nPlane*X,pc%nGrp*(X-1)))
@@ -677,28 +772,28 @@ PROGRAM testPreconditionerTypes
             ENDDO
             DEALLOCATE(refW)
           ENDSELECT
-          
+
           SELECTTYPE(pc => testLU); TYPE IS(BILU_PreCondType)
             ! setup ref NS
             ALLOCATE(refNS(pc%nPlane,pc%nGrp*X*(x-1)))
-            refNS(1,1)=-31.684170810000001_SRK     
-            refNS(1,2)=-35.263759227000001_SRK     
-            refNS(1,3)=-31.684170810000001_SRK     
-            refNS(1,4)=-31.684170810000001_SRK     
-            refNS(1,5)=-35.263759227000001_SRK     
-            refNS(1,6)=-31.684170810000001_SRK     
-            refNS(2,1)=-31.686085396646412_SRK     
-            refNS(2,2)=-35.265011903834456_SRK     
-            refNS(2,3)=-31.686025045836693_SRK     
-            refNS(2,4)=-31.687038645731004_SRK     
-            refNS(2,5)=-35.264477419331939_SRK     
-            refNS(2,6)=-31.693134448199206_SRK     
-            refNS(3,1)=-31.686079082894786_SRK     
-            refNS(3,2)=-35.265013403216770_SRK     
-            refNS(3,3)=-31.686075014157939_SRK     
-            refNS(3,4)=-31.687007010082439_SRK     
-            refNS(3,5)=-35.264510703459905_SRK     
-            refNS(3,6)=-31.692945891849245_SRK    
+            refNS(1,1)=-31.684170810000001_SRK
+            refNS(1,2)=-35.263759227000001_SRK
+            refNS(1,3)=-31.684170810000001_SRK
+            refNS(1,4)=-31.684170810000001_SRK
+            refNS(1,5)=-35.263759227000001_SRK
+            refNS(1,6)=-31.684170810000001_SRK
+            refNS(2,1)=-31.686085396646412_SRK
+            refNS(2,2)=-35.265011903834456_SRK
+            refNS(2,3)=-31.686025045836693_SRK
+            refNS(2,4)=-31.687038645731004_SRK
+            refNS(2,5)=-35.264477419331939_SRK
+            refNS(2,6)=-31.693134448199206_SRK
+            refNS(3,1)=-31.686079082894786_SRK
+            refNS(3,2)=-35.265013403216770_SRK
+            refNS(3,3)=-31.686075014157939_SRK
+            refNS(3,4)=-31.687007010082439_SRK
+            refNS(3,5)=-35.264510703459905_SRK
+            refNS(3,6)=-31.692945891849245_SRK
             ! check N
             DO row=1,pc%nPlane
               DO col=1,pc%nGrp*X*(x-1)
@@ -715,10 +810,10 @@ PROGRAM testPreconditionerTypes
             ENDDO
             DEALLOCATE(refNS)
           ENDSELECT
-  
+
           ! Check %apply
 !          CALL testLU%apply(testVec_1g)
-  
+
           ! Check %clear
           CALL testLU%clear()
           ASSERT(.NOT.(testLU%isInit),'BILU Preconditioner .NOT.(lu%isInit)')
@@ -734,42 +829,42 @@ PROGRAM testPreconditionerTypes
         ASSERT(ALLOCATED(testBILU_1g),'TestMatrix Allocation')
         ASSERT(ALLOCATED(testVec_1g),'TestVector Allocation')
       ENDIF
-      
+
       COMPONENT_TEST('BILU Preconditioner Type (mg)')
       IF(ALLOCATED(testBILU_mg) .AND. ALLOCATED(testVec_mg)) THEN
         IF(testBILU_mg%isInit .AND. testVec_mg%isInit) THEN
           ALLOCATE(BILU_PreCondType :: testLU)
-          
+
           nPlane=3
           nPin=9
           nGrp=56
-          
+
           !set some values (to be moved into init at some point)
           SELECTTYPE(pc => testLU); TYPE IS(BILU_PreCondType)
             pc%nPlane=nPlane
             pc%nPin=nPin
-            pc%nGrp=nGrp    
+            pc%nGrp=nGrp
           ENDSELECT
-  
-          !initialize        
+
+          !initialize
           CALL testLU%init(testBILU_mg)
-          
+
           ! Check %init
           ASSERT(testLU%isInit,'BILU Preconditioner %isInit')
           ASSERT(ASSOCIATED(testLU%A),'BILU Preconditioner ASSOCIATED(LU%A)')
           ASSERT(testLU%L%isInit,'BILU Preconditioner %L%isInit')
           ASSERT(testLU%U%isInit,'BILU Preconditioner %U%isInit')
-  
+
           ! Check %setup
           CALL testLU%setup()
-          
+
 
 !          SELECTTYPE(A => testLU%L); CLASS IS(MatrixType)
 !            DO row=1,A%n
 !              DO col=1,A%n
 !                CALL A%get(row,col,tmpval)
 !                IF(tmpval /= 0.0_SRK) WRITE(690,'(2I7,ES25.15)') row,col,tmpval
-!              ENDDO         
+!              ENDDO
 !            ENDDO
 !          ENDSELECT
 !          SELECTTYPE(A => testLU%U); CLASS IS(MatrixType)
@@ -777,10 +872,10 @@ PROGRAM testPreconditionerTypes
 !              DO col=1,A%n
 !                CALL A%get(row,col,tmpval)
 !                IF(tmpval /= 0.0_SRK) WRITE(691,'(2I7,ES20.10)') row,col,tmpval
-!              ENDDO         
+!              ENDDO
 !            ENDDO
 !          ENDSELECT
-          
+
           !setup ref L
           CALL PListMat%clear()
           CALL PListMat%add('MatrixType->matType',SPARSE)
@@ -810,13 +905,13 @@ PROGRAM testPreconditionerTypes
                     ASSERT( ABS(tmpval-reftmpval) < 1E-12_SRK,"BILU_L failed")
                     FINFO() row,col,tmpval,reftmpval,ABS(tmpval-reftmpval)
                   ENDIF
-                ENDDO         
+                ENDDO
               ENDDO
             ENDSELECT
           ENDSELECT
           CALL refBILU_L%clear()
           DEALLOCATE(refBILU_L)
-  
+
           !setup ref U
           CALL PListMat%clear()
           CALL PListMat%add('MatrixType->matType',SPARSE)
@@ -846,16 +941,16 @@ PROGRAM testPreconditionerTypes
                     !ASSERT( ABS(tmpval-reftmpval) < 1E-12_SRK,"BILU_U failed")
                     !FINFO() row,col,tmpval,reftmpval,ABS(tmpval-reftmpval)
                   ENDIF
-                ENDDO         
+                ENDDO
               ENDDO
             ENDSELECT
           ENDSELECT
           CALL refBILU_U%clear()
           DEALLOCATE(refBILU_U)
-  
+
           ! Check %apply
 !          CALL testLU%apply(testVec_mg)
-  
+
           ! Check %clear
           CALL testLU%clear()
           ASSERT(.NOT.(testLU%isInit),'BILU Preconditioner .NOT.(lu%isInit)')
@@ -875,6 +970,152 @@ PROGRAM testPreconditionerTypes
     ENDSUBROUTINE testBILU_PreCondtype
 !
 !-------------------------------------------------------------------------------
+    SUBROUTINE testPCShell()
+#ifdef MPACT_HAVE_PETSC
+      KSP :: ksp
+      PC  :: pc
+      Mat :: A
+      Vec :: x
+      Vec :: b
+      PetscErrorCode :: ierr
+
+      INTEGER(SIK) :: i,niters
+      REAL(SRK) :: val,resid
+      CLASS(PreconditionerType),POINTER :: shellPC
+
+      ALLOCATE(dummyPCType :: shellPC)
+      CALL shellPC%init()
+
+      PETSC_PCSHELL_PC=>shellPC
+
+      ASSERT(ASSOCIATED(PETSC_PCSHELL_PC),'preconditioner associated')
+      ASSERT(PETSC_PCSHELL_PC%isInit,'preconditioner isInit')
+
+      CALL KSPCreate(MPI_COMM_WORLD,ksp,ierr)
+      CALL KSPSetType(ksp,KSPGMRES,ierr)
+      CALL KSPGetPC(ksp,pc,ierr)
+      CALL PCSetType(pc,PCSHELL,ierr)
+      CALL PCShellSetApply(pc,PETSC_PCSHELL_apply_extern,ierr)
+      CALL PCShellSetSetup(pc,PETSC_PCSHELL_setup_extern,ierr)
+
+      CALL MatCreate(MPI_COMM_WORLD,A,ierr)
+      CALL MatSetSizes(A,3,3,3,3,ierr)
+      CALL MatSetType(A,MATMPIAIJ,ierr)
+      CALL MatSetUp(A,ierr)
+      CALL MatSetValues(A,1,0,1,0,2.0_SRK,INSERT_VALUES,ierr)
+      CALL MatSetValues(A,1,1,1,1,2.0_SRK,INSERT_VALUES,ierr)
+      CALL MatSetValues(A,1,2,1,2,2.0_SRK,INSERT_VALUES,ierr)
+      CALL MatSetValues(A,1,0,1,1,-1.0_SRK,INSERT_VALUES,ierr)
+      CALL MatSetValues(A,1,1,1,0,-1.0_SRK,INSERT_VALUES,ierr)
+      CALL MatSetValues(A,1,1,1,2,-1.0_SRK,INSERT_VALUES,ierr)
+      CALL MatSetValues(A,1,2,1,1,-1.0_SRK,INSERT_VALUES,ierr)
+      CALL MatAssemblyBegin(A,MAT_FINAL_ASSEMBLY,ierr)
+      CALL MatAssemblyEnd(A,MAT_FINAL_ASSEMBLY,ierr)
+
+      !setup b
+      CALL VecCreate(MPI_COMM_WORLD,b,ierr)
+      CALL VecSetSizes(b,3,3,ierr)
+      CALL VecSetType(b,VECMPI,ierr)
+      CALL VecSetValue(b,0,1.0_SRK,INSERT_VALUES,ierr)
+      CALL VecSetValue(b,1,1.0_SRK,INSERT_VALUES,ierr)
+      CALL VecSetValue(b,2,1.0_SRK,INSERT_VALUES,ierr)
+      CALL VecAssemblyBegin(b,ierr)
+      CALL VecAssemblyEnd(b,ierr)
+
+      !set initial x
+      CALL VecCreate(MPI_COMM_WORLD,x,ierr)
+      CALL VecSetSizes(x,3,3,ierr)
+      CALL VecSetType(x,VECMPI,ierr)
+      CALL VecSetValue(x,0,0.0_SRK,INSERT_VALUES,ierr)
+      CALL VecSetValue(x,1,0.0_SRK,INSERT_VALUES,ierr)
+      CALL VecSetValue(x,2,0.0_SRK,INSERT_VALUES,ierr)
+      CALL VecAssemblyBegin(x,ierr)
+      CALL VecAssemblyEnd(x,ierr)
+
+      !set up ksp operators
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=5))
+      CALL KSPSetOperators(ksp,A,A,ierr)
+#else
+      CALL KSPSetOperators(ksp,A,A,DIFFERENT_NONZERO_PATTERN,ierr)
+#endif
+      !solve ksp, get number of iterations
+      CALL KSPSolve(ksp,b,x,ierr)
+      CALL KSPGetIterationNumber(ksp,niters,ierr)
+      CALL KSPGetResidualNorm(ksp,resid,ierr)
+      ASSERT(niters==2,'ksp niters')
+      FINFO() niters,resid
+      val=-1.0
+      DO i=1,3
+        CALL VecGetValues(x,1,i-1,val,ierr)
+        IF(i==2) THEN
+          ASSERT(val.APPROXEQ.2.0_SRK,'ksp sol')
+        ELSE
+          ASSERT(val.APPROXEQ.1.5_SRK,'ksp sol')
+        ENDIF
+        FINFO() i, val
+      ENDDO
+      CALL KSPDestroy(ksp,ierr)
+
+      CALL shellPC%clear()
+      DEALLOCATE(shellPC)
+      NULLIFY(PETSC_PCSHELL_PC)
+
+
+      ALLOCATE(smartPCType :: shellPC)
+      CALL shellPC%init()
+      !modify pc to be exact inverse
+      PETSC_PCSHELL_PC=>shellPC
+
+      ASSERT(ASSOCIATED(PETSC_PCSHELL_PC),'preconditioner associated')
+      ASSERT(PETSC_PCSHELL_PC%isInit,'preconditioner isInit')
+      !setup ksp again
+      CALL KSPCreate(MPI_COMM_WORLD,ksp,ierr)
+      CALL KSPSetType(ksp,KSPGMRES,ierr)
+      CALL KSPGetPC(ksp,pc,ierr)
+      CALL PCSetType(pc,PCSHELL,ierr)
+      CALL PCShellSetApply(pc,PETSC_PCSHELL_apply_extern,ierr)
+      CALL PCShellSetSetup(pc,PETSC_PCSHELL_setup_extern,ierr)
+      !set up ksp operators
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=5))
+      CALL KSPSetOperators(ksp,A,A,ierr)
+#else
+      CALL KSPSetOperators(ksp,A,A,DIFFERENT_NONZERO_PATTERN,ierr)
+#endif
+
+      !reset x0
+      CALL VecSetValue(x,0,0.0_SRK,INSERT_VALUES,ierr)
+      CALL VecSetValue(x,1,0.0_SRK,INSERT_VALUES,ierr)
+      CALL VecSetValue(x,2,0.0_SRK,INSERT_VALUES,ierr)
+      CALL VecAssemblyBegin(x,ierr)
+      CALL VecAssemblyEnd(x,ierr)
+
+      !solve and ensure it converges in 1 iteration
+      CALL KSPSolve(ksp,b,x,ierr)
+      CALL KSPGetIterationNumber(ksp,niters,ierr)
+      CALL KSPGetResidualNorm(ksp,resid,ierr)
+      ASSERT(niters==1,'ksp niters')
+      FINFO() niters,resid
+      val=-1.0
+      DO i=1,3
+        CALL VecGetValues(x,1,i-1,val,ierr)
+        IF(i==2) THEN
+          ASSERT(val.APPROXEQ.2.0_SRK,'ksp sol')
+        ELSE
+          ASSERT(val.APPROXEQ.1.5_SRK,'ksp sol')
+        ENDIF
+        FINFO() i, val
+      ENDDO
+
+      CALL MatDestroy(A,ierr)
+      CALL VecDestroy(x,ierr)
+      CALL VecDestroy(b,ierr)
+      CALL KSPDestroy(ksp,ierr)
+      CALL shellPC%clear()
+      NULLIFY(PETSC_PCSHELL_PC)
+#endif
+    ENDSUBROUTINE testPCShell
+!
+!-------------------------------------------------------------------------------
     SUBROUTINE clearTest()
 
       CALL PListMat%clear()
@@ -887,7 +1128,7 @@ PROGRAM testPreconditionerTypes
       IF(ALLOCATED(testBILU_mg)) CALL testBILU_mg%clear()
       IF(ALLOCATED(testDenseMatrix)) CALL testDenseMatrix%clear()
       IF(ALLOCATED(testVector)) CALL testVector%clear()
-       
+
       IF(ALLOCATED(testSparseMatrix)) DEALLOCATE(testSparseMatrix)
       IF(ALLOCATED(testVec_1g)) DEALLOCATE(testVec_1g)
       IF(ALLOCATED(testVec_mg)) DEALLOCATE(testVec_mg)
@@ -895,7 +1136,7 @@ PROGRAM testPreconditionerTypes
       IF(ALLOCATED(testBILU_mg)) DEALLOCATE(testBILU_mg)
       IF(ALLOCATED(testDenseMatrix)) DEALLOCATE(testDenseMatrix)
       IF(ALLOCATED(testVector)) DEALLOCATE(testVector)
-     
+
 
     ENDSUBROUTINE clearTest
 !

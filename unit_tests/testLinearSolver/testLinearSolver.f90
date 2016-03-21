@@ -149,7 +149,7 @@ CONTAINS
       !check results
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Direct)
         bool = .NOT.thisLS%isInit .AND. thisLS%solverMethod == -1                   &
-          .AND. .NOT.thisLS%isDecomposed .AND. .NOT.ALLOCATED(thisLS%A)             &
+          .AND. .NOT.thisLS%isDecomposed .AND. .NOT.ASSOCIATED(thisLS%A)            &
           .AND. .NOT.ALLOCATED(thisLS%X) .AND. thisLS%info == 0                     &
           .AND. .NOT.ALLOCATED(thisLS%b) .AND. .NOT.ALLOCATED(thisLS%IPIV)          &
           .AND. .NOT.ALLOCATED(thisLS%M) .AND. .NOT.thisLS%MPIparallelEnv%isInit()  &
@@ -212,7 +212,7 @@ CONTAINS
       !check results
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
         bool=thisLS%isInit .OR.thisLS%solverMethod == 1                  &
-            .OR. ALLOCATED(thisLS%M) .OR. ALLOCATED(thisLS%A)            &
+            .OR. ALLOCATED(thisLS%M) .OR. ASSOCIATED(thisLS%A)           &
             .OR. ALLOCATED(thisLS%X) .OR. thisLS%info /= 0               &
 !            .OR. thisLS%MPIparallelEnv%isInit()                          &
 !            .OR. thisLS%OMPparallelEnv%isInit()                          &
@@ -947,7 +947,7 @@ CONTAINS
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Direct)
         bool = thisLS%IPIV(1) == 3 &
                .AND. thisLS%IPIV(2) == 3 &
-               .AND. thisLS%IPIV(3) == 0 
+               .AND. thisLS%IPIV(3) == 0
         ASSERT(bool, 'Direct%solve() -LU method')
       ENDSELECT
 

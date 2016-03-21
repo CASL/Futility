@@ -533,7 +533,11 @@ MODULE ParallelEnv
           DEALLOCATE(allpetsc2)
         ENDIF
         !Call PETSc Initialize
+#ifdef MPACT_HAVE_SLEPC
+        IF(.NOT.petsc_isinit) CALL SlepcInitialize(PETSC_NULL_CHARACTER,ierr)
+#else
         IF(.NOT.petsc_isinit) CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
+#endif
 #endif
         myPE%initstat=.TRUE.
       ENDIF
