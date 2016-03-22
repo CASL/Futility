@@ -15,119 +15,156 @@
 ! manufacturer, or otherwise, does not necessarily constitute or imply its     !
 ! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
+!> @brief Module defines an object for representing an XML file.
+!>
+!> This module reads an XML file and stores the element information as
+!> character information in a doubly-linked list/tree. Outside of the
+!> initialization the only other functionality is for traversing the elements.
+!> This type is basically used by the parameter list type to provide an
+!> alternative way of initializing a parameter list.
+!>
+!> @par Module Dependencies
+!>  - ISO_FORTRAN_ENV: intrinsic module
+!>  - @ref IntrType "IntrType": @copybrief IntrType
+!>  - @ref Strings "Strings": @copybrief Strings
+!>  - @ref IO_Strings "IO_Strings": @copybrief IO_Strings
+!>  - @ref FileType_Base "FileType_Base": @copybrief FileType_Base
+!>
+!> @author Brendan Kochunas
+!>   @date 03/23/2014
+!++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE FileType_XML
   USE ISO_FORTRAN_ENV
   USE IntrType
   USE Strings
   USE IO_Strings
   USE FileType_Base
-  
+
   IMPLICIT NONE
   PRIVATE  
-  
+
   PUBLIC :: XMLElementType
   PUBLIC :: XMLFileType
-  
-  !>
+
+  !> Character constant for a single space
   CHARACTER(LEN=1),PARAMETER :: SP=' '
-  !>
+  !> Character constant for a carraige return
   CHARACTER(LEN=1),PARAMETER :: CR=CHAR(13)
-  !>
+  !> Character constant for a line feed
   CHARACTER(LEN=1),PARAMETER :: LF=CHAR(10)
-  !>
+  !> Character constant for a tab
   CHARACTER(LEN=1),PARAMETER :: TB=CHAR(9)
-  
-  !>
+
+  !> Module local constant for indicating a bad tag
   INTEGER(SIK) :: BAD_TAG=-1
-  !>
+  !> Module local constant for indicating the start of a tag
   INTEGER(SIK) :: START_TAG=1
-  !>
+  !> Module local constant for indicating the end of a tag
   INTEGER(SIK) :: END_TAG=2
-  !>
+  !> Module local constant for indicating an empty tag
   INTEGER(SIK) :: EMPTY_ELEMENT_TAG=3
-  !>
+  !> Module local constant for indicating comment tag
   INTEGER(SIK) :: COMMENT_TAG=4
-  !>
+  !> Module local constant for indicating ??? tag
   INTEGER(SIK) :: PROCESSING_INST_TAG=5
-  !>
+  !> Module local constant for indicating a declaration tag
+  !> the declaration tag, is usually the first tag in the file.
   INTEGER(SIK) :: DECLARATION_TAG=6
-  
-  !>
+
+  !> Derived type for an XML element
   TYPE :: XMLElementType
-    !>
+    !> The number of attributes defined on the element
     INTEGER(SIK),PRIVATE :: nAttr=0
-    !>
+    !> The name of the element
     TYPE(StringType) :: name
-    !>
+    !> The content of the element (excluding attributes)
     TYPE(StringType) :: content
-    !>
+    !> The names of the attributes on this element
     TYPE(StringType),ALLOCATABLE,PRIVATE :: attr_names(:)
-    !>
+    !> The corresponding values of the attributes on this element
     TYPE(StringType),ALLOCATABLE,PRIVATE :: attr_values(:)
-    !>
+    !> The parent element of this XML element
     TYPE(XMLElementType),POINTER,PRIVATE :: parent => NULL()
-    !>
+    !> The child elements of this element
     TYPE(XMLElementType),POINTER,PRIVATE :: children(:) => NULL()
 !
 !List of type bound procedures
     CONTAINS
-      !>
+      !> @copybrief FileType_XML::init_XMLElementType
+      !> @copydoc FileType_XML::init_XMLElementType
       PROCEDURE,PASS :: init => init_XMLElementType
-      !>
+      !> @copybrief FileType_XML::write_XMLElementType
+      !> @copydoc FileType_XML::write_XMLElementType
       PROCEDURE,PASS :: fwrite => write_XMLElementType
-      !>
+      !> @copybrief FileType_XML::clear_XMLElementType
+      !> @copydoc FileType_XML::clear_XMLElementType
       PROCEDURE,PASS :: clear => clear_XMLElementType
-      !>
+      !> @copybrief FileType_XML::isEmpty_XMLElementType
+      !> @copydoc FileType_XML::isEmpty_XMLElementType
       PROCEDURE,PASS :: isEmpty => isEmpty_XMLElementType
-      !>
+      !> @copybrief FileType_XML::hasParent_XMLElementType
+      !> @copydoc FileType_XML::hasParent_XMLElementType
       PROCEDURE,PASS :: hasParent => hasParent_XMLElementType
-      !>
+      !> @copybrief FileType_XML::getParent_XMLElementType
+      !> @copydoc FileType_XML::getParent_XMLElementType
       PROCEDURE,PASS :: getParent => getParent_XMLElementType
-      !>
+      !> @copybrief FileType_XML::hasChildren_XMLElementType
+      !> @copydoc FileType_XML::hasChildren_XMLElementType
       PROCEDURE,PASS :: hasChildren => hasChildren_XMLElementType
-      !>
+      !> @copybrief FileType_XML::getChildren_XMLElementType
+      !> @copydoc FileType_XML::getChildren_XMLElementType
       PROCEDURE,PASS :: getChildren => getChildren_XMLElementType
-      !>
+      !> @copybrief FileType_XML::getAttributes_XMLElementType
+      !> @copydoc FileType_XML::getAttributes_XMLElementType
       PROCEDURE,PASS :: getAttributes => getAttributes_XMLElementType
-      !>
+      !> @copybrief FileType_XML::getAttributeValue_XMLElementType
+      !> @copydoc FileType_XML::getAttributeValue_XMLElementType
       PROCEDURE,PASS :: getAttributeValue => getAttributeValue_XMLElementType
-      !>
+      !> @copybrief FileType_XML::getContent_XMLElementType
+      !> @copydoc FileType_XML::getContent_XMLElementType
       PROCEDURE,PASS :: getContent => getContent_XMLElementType
   ENDTYPE XMLElementType
-  
-  !>
+
+  !> The XML File type
   TYPE,EXTENDS(BaseFileType) :: XMLFileType
-    !>
+    !> Logical indicating if file was initialized
     LOGICAL(SBK) :: isInit=.FALSE.
-    !>
+    !> The unit number assigned to the file
     INTEGER(SIK) :: unitNo=-1
-    !>
+    !> The XML version
     REAL(SRK) :: version=1.0_SRK
-    !>
+    !> The XML file encoding
     CHARACTER(LEN=32) :: encoding='UTF-8'
     !>
     LOGICAL(SBK) :: standalone=.FALSE.
-    !>
+    !> The root XML element of the file
     TYPE(XMLElementType),POINTER :: root => NULL()
 !
 !List of type bound procedures
     CONTAINS
-      !> 
+      !> @copybrief FileType_XML::init_XMLFileType
+      !> @copydoc FileType_XML::init_XMLFileType
       PROCEDURE,PASS :: init => init_XMLFileType
-      !>
+      !> @copybrief FileType_XML::clear_XMLFileType
+      !> @copydoc FileType_XML::clear_XMLFileType
       PROCEDURE,PASS :: clear => clear_XMLFileType
-      !> 
+      !> @copybrief FileType_XML::fopen_XMLFileType
+      !> @copydoc FileType_XML::fopen_XMLFileType
       PROCEDURE,PASS :: fopen => fopen_XMLFileType
-      !> 
+      !> @copybrief FileType_XML::fclose_XMLFileType
+      !> @copydoc FileType_XML::fclose_XMLFileType
       PROCEDURE,PASS :: fclose => fclose_XMLFileType
-      !> 
+      !> @copybrief FileType_XML::fdelete_XMLFileType
+      !> @copydoc FileType_XML::fdelete_XMLFileType
       PROCEDURE,PASS :: fdelete => fdelete_XMLFileType
-      !> 
+      !> @copybrief FileType_XML::importFromDisk_XMLFileType
+      !> @copydoc FileType_XML::importFromDisk_XMLFileType
       PROCEDURE,PASS :: importFromDisk => importFromDisk_XMLFileType
-      !>
+      !> @copybrief FileType_XML::exportToDisk_XMLFileType
+      !> @copydoc FileType_XML::exportToDisk_XMLFileType
       PROCEDURE,PASS :: exportToDisk => exportToDisk_XMLFileType
   ENDTYPE XMLFileType
-    
+
   CHARACTER(LEN=*),PARAMETER :: modName='FILETYPE_XML'
 !
 !===============================================================================
@@ -988,29 +1025,43 @@ MODULE FileType_XML
       TYPE(XMLFileType),INTENT(INOUT) :: thisXMLFile
       INTEGER(SIK),INTENT(OUT) :: nchars
       CHARACTER(LEN=1),ALLOCATABLE,INTENT(INOUT) :: fileCache(:)
-      CHARACTER(LEN=1) :: tmpChar
-      INTEGER(SIK) :: i,ierr
-    
+      CHARACTER(LEN=1024) :: tmpChar
+      INTEGER(SIK) :: i,j,ierr
+
       IF(ALLOCATED(fileCache)) DEALLOCATE(fileCache)
       REWIND(thisXMLFile%unitNo)
-      
+
       ierr=0
       nchars=0
       DO WHILE(ierr /= IOSTAT_END)
-        nchars=nchars+1
-        READ(thisXMLFile%unitNo,'(a1)',ADVANCE='NO',IOSTAT=ierr) tmpChar
+        READ(thisXMLFile%unitNo,'(a1024)',ADVANCE='NO',IOSTAT=ierr) tmpChar
+        IF(ierr == 0) THEN
+          nchars=nchars+1024
+        ELSEIF(ierr == IOSTAT_EOR) THEN
+          nchars=nchars+LEN_TRIM(tmpChar)+1
+        ENDIF
       ENDDO
-    
-      IF(nchars < 1000000) THEN
+
+      IF(nchars > 0) THEN
         ALLOCATE(fileCache(nchars))
         REWIND(thisXMLFile%unitNo)
-      
+
         ierr=0
         i=0
         DO WHILE(ierr /= IOSTAT_END)
-          i=i+1
-          READ(thisXMLFile%unitNo,'(a1)',ADVANCE='NO',IOSTAT=ierr) fileCache(i)
-          IF(ierr == IOSTAT_EOR) fileCache(i)=LF
+          READ(thisXMLFile%unitNo,'(a1024)',ADVANCE='NO',IOSTAT=ierr) tmpChar
+          IF(ierr == 0) THEN
+            DO j=1,1024
+              fileCache(i+j)=tmpChar(j:j)
+            ENDDO
+            i=i+1024
+          ELSEIF(ierr == IOSTAT_EOR) THEN
+            DO j=1,LEN_TRIM(tmpChar)
+              fileCache(i+j)=tmpChar(j:j)
+            ENDDO
+            fileCache(i+j)=LF
+            i=i+j
+          ENDIF
         ENDDO
         CALL thisXMLFile%fclose()
       ELSE

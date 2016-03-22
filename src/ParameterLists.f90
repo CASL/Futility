@@ -8808,8 +8808,7 @@ MODULE ParameterLists
           CALL iXMLE%getAttributeValue(tmpStr,nameVal)
           currentPath=nameVal
           CALL procXMLTree(thisParam,iXMLE,currentPath)
-        ELSE
-          !Must be uninitialized
+          CALL xmlfile%clear()
         ENDIF
       CLASS DEFAULT
         !Wrong type
