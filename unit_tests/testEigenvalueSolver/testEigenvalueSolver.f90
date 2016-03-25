@@ -24,6 +24,7 @@ PROGRAM testEigenvalueSolver
   TYPE(MPI_EnvType) :: mpiTestEnv
   TYPE(ParamType) :: pList, optList
   TYPE(EigenvalueSolverType_SLEPc) :: testEVS
+  TYPE(PETScMatrixType) :: A, B
 
 #ifdef MPACT_HAVE_PETSC
 #include <finclude/petsc.h>
@@ -68,6 +69,8 @@ PROGRAM testEigenvalueSolver
 
   CALL pList%clear()
   CALL optList%clear()
+  CALL A%clear()
+  CALL B%clear()
 
 #ifdef MPACT_HAVE_PETSC
   CALL PetscFinalize(ierr)
@@ -111,7 +114,6 @@ CONTAINS
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testSetMat()
-      TYPE(PETScMatrixType) :: A, B
       CALL plist%clear()
       CALL plist%add('MatrixType->n',2_SIK)
       CALL plist%add('MatrixType->nlocal',2_SIK)
@@ -127,11 +129,6 @@ CONTAINS
       CALL B%set(2,2,0.184_SRK)
       CALL A%set(1,1,0.0015_SRK)
       CALL A%set(1,2,0.325_SRK)
-WRITE(*,*) "A and B setup"
-CALL A%assemble()
-WRITE(*,*) "A is assembled"
-CALL B%assemble()
-WRITE(*,*) "B is assembled"
 
       CALL testEVS%setMat(A,B)
 
@@ -146,9 +143,8 @@ WRITE(*,*) "B is assembled"
     SUBROUTINE testSolve()
       REAL(SRK) :: kerr
       REAL(SRK) :: flux(2)
-WRITE(*,*) "Calling Solve"
+
       CALL testEVS%solve()
-WRITE(*,*) "Solve Complete"
       kerr=testEVS%k - (0.0015_SRK+0.117_SRK*0.325_SRK/0.184_SRK)/0.1208_SRK
       ASSERT(ABS(kerr)<=1.0E-8_SRK,'%solve k')
       FINFO() testEVS%k, kerr
