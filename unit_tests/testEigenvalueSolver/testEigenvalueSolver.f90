@@ -69,8 +69,9 @@ PROGRAM testEigenvalueSolver
 
   CALL pList%clear()
   CALL optList%clear()
-  CALL A%clear()
-  CALL B%clear()
+
+  IF(A%isInit) CALL A%clear()
+  IF(B%isInit) CALL B%clear()
 
 #ifdef MPACT_HAVE_PETSC
   CALL PetscFinalize(ierr)
