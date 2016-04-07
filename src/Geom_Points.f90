@@ -634,12 +634,12 @@ MODULE Geom_Points
               !A new factor of 10 was arbitrarily chosen and may need to be
               !updated again if other degenerate cases are still encountered
               !to not be be correctly identified.
-              IF(ABS(d-searchPoint1%sortval) <= 10._SRK*EPSREAL) THEN
+              IF(ABS(d-searchPoint1%sortval) <= 100._SRK*EPSREAL) THEN
                 IF(mark) THEN
                   searchPoint1%isDuplicate=.TRUE.
                 ENDIF
                 linsert=.FALSE.
-              ELSEIF(ABS(d-searchPoint2%sortval) <= 10._SRK*EPSREAL) THEN
+              ELSEIF(ABS(d-searchPoint2%sortval) <= 100._SRK*EPSREAL) THEN
                 IF(mark) THEN
                   searchPoint2%isDuplicate=.TRUE.
                 ENDIF
