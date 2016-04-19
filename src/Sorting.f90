@@ -343,7 +343,7 @@ MODULE Sorting
       INTEGER(SIK) :: i,ni,nr,n,ncomp
       INTEGER(SIK) :: tmpi
       REAL(SRK) :: tmpr
-      TYPE(StringType) :: tmpstr
+      TYPE(StringType) :: tmpstr,tmpstr2
 
       sorted=.FALSE.
       ni=SIZE(real1,DIM=1)
@@ -359,7 +359,8 @@ MODULE Sorting
               real1(i+1)=real1(i)
               real1(i)=tmpi
               tmpstr=str1(i+1)
-              str1(i+1)=str1(i)
+              tmpstr2=str1(i)
+              str1(i+1)=tmpstr2
               str1(i)=tmpstr
               sorted=.FALSE.
             ENDIF
@@ -440,7 +441,7 @@ MODULE Sorting
       INTEGER(SIK) :: i,ni,nr,n,ncomp
       INTEGER(SIK) :: tmpi
       REAL(SRK) :: tmpr
-      TYPE(StringType) :: tmpstr
+      TYPE(StringType) :: tmpstr,tmpstr2
 
       sorted=.FALSE.
       ni=SIZE(int1,DIM=1)
@@ -456,7 +457,8 @@ MODULE Sorting
               int1(i+1)=int1(i)
               int1(i)=tmpi
               tmpstr=str1(i+1)
-              str1(i+1)=str1(i)
+              tmpstr2=str1(i)
+              str1(i+1)=tmpstr2
               str1(i)=tmpstr
               sorted=.FALSE.
             ENDIF
