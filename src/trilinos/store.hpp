@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <map>
+#include "Teuchos_RCP.hpp"
 #ifdef HAVE_MPI
 #include "Epetra_MpiComm.h"
 #include <mpi.h>
@@ -27,7 +28,7 @@ public:
     Epetra_SerialComm Comm;
 #endif
     Epetra_Map emap;
-    Epetra_Vector evec;
+    Teuchos::RCP<Epetra_Vector> evec;
 
     EpetraVecCnt(int n, int nloc, int rawComm) :
 #ifdef HAVE_MPI
@@ -36,10 +37,12 @@ public:
         //Comm(),
 #endif
         emap(n,nloc,1,Comm),
-        evec(emap)
+        evec(new Epetra_Vector(emap))
     {
-        evec.PutScalar(0.);
+        evec->PutScalar(0.);
     }
+
+    double &operator[](int i){ return (*evec)[i];}
 };
 
 class EpetraVecStore {
@@ -54,29 +57,40 @@ public:
     int new_data(const int n, const int nloc, const int rawComm) {
         std::cout << n << " " << nloc << " " << rawComm << std::endl;
         things_[cid]=new EpetraVecCnt(n,nloc,rawComm);
-        if(verbose) std::cout << things_[cid]->evec.MyLength() <<std::endl;
+        if(verbose) std::cout << things_[cid]->evec->MyLength() <<std::endl;
         cid++;
         return cid-1;
     }
 
     int set_data(const int id, const int *i, const double *val) {
         if(verbose) std::cout << "replacing location " << i[0] << " with value " << val[0] <<std::endl;
-        return things_[id]->evec.ReplaceGlobalValues(1,val,i);
+        return things_[id]->evec->ReplaceGlobalValues(1,val,i);
     }
 
     int get_data(const int id, const int i, double &val) {
-        val = things_[id]->evec[i-1];
-        return 0;
+        int lid=things_[id]->emap.LID(i);
+        if(lid>=0){
+            val = (*things_[id])[lid];
+            return 0;
+        }
+        else return lid;
     }
 
+    //TODO: eventually send a string in
     int edit_data(const int id) {
-        return EpetraExt::VectorToMatlabFile("myvector.m",(things_[id]->evec));
+        std::cout << "calling routine" << std::endl;
+        return EpetraExt::VectorToMatlabFile("myvector.m",*(things_[id]->evec));
+    }
+
+    Teuchos::RCP<Epetra_Vector> get_vec(const int id){
+        return things_[id]->evec;
     }
 
 private:
         int cid;
         map<int, EpetraVecCnt*> things_;
 };
+
 
 class EpetraMatCnt{
 public:
@@ -86,7 +100,7 @@ public:
     Epetra_SerialComm Comm;
 #endif
     Epetra_Map emap;
-    Epetra_CrsMatrix emat;
+    Teuchos::RCP<Epetra_CrsMatrix> emat;
 
     EpetraMatCnt(int n, int nloc, int rnnz, int rawComm) :
 #ifdef HAVE_MPI
@@ -95,7 +109,7 @@ public:
         //Comm(),
 #endif
         emap(n,nloc,1,Comm),
-        emat(Copy,emap,rnnz)
+        emat(new Epetra_CrsMatrix(Copy,emap,rnnz))
     {}
 };
 
@@ -114,18 +128,32 @@ public:
         return cid-1;
     }
 
-    int set_data(const int id, const int i, const int nnz, const int *j, const double *val) {
-        return things_[id]->emat.ReplaceGlobalValues(i,nnz,val,j);
+    int set_data(const int id, const int i, const int nnz, const int j[], const double val[]) {
+        std::cout << "a " << id << " " << i << " " << nnz << " " << j[0] << " " << val[0] << std::endl;
+        return things_[id]->emat->InsertGlobalValues(i,nnz,val,j);
+    }
+
+    int assemble_data(const int id){
+        return things_[id]->emat->FillComplete();
     }
 
     //defering this for a while
     //int get_data(const int id, const int i, double &val) {
-    //    val = things_[id]->emat[i-1];
+    //    val = things_[id]->emat[i-1];   Need to overload this like the vector
     //    return 0;
     //}
 
     int edit_data(const int id) {
-        return EpetraExt::RowMatrixToMatlabFile("mymatrix.m",(things_[id]->emat));
+        return EpetraExt::RowMatrixToMatlabFile("mymatrix.m",*(things_[id]->emat));
+    }
+
+    int normF_data(const int id, double &x) {
+        x=things_[id]->emat->NormFrobenius();
+        return 0;
+    }
+
+    Teuchos::RCP<Epetra_CrsMatrix> get_mat(const int id){
+        return things_[id]->emat;
     }
 
 private:
