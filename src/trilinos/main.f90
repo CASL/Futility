@@ -6,10 +6,10 @@ PROGRAM ben_thing
   include 'mpif.h'
   include 'store_interface.h'
 
-  INTEGER(C_INT) :: rank, size, n, nlocal, nval, idX, idR, idL, ierr, i, p, j(3)
+  INTEGER(C_INT) :: rank, size, n, nlocal, nval, idX, idR, idL, eid, pcid, ierr, i, p, j(3)
   REAL(C_DOUBLE) :: x, a(3)
 
-  n=32
+  n=128
   call MPI_INIT(ierr)
   call MPI_COMM_SIZE(MPI_COMM_WORLD, size, ierr)
   call MPI_COMM_RANK(MPI_COMM_WORLD, rank, ierr)
@@ -18,7 +18,6 @@ PROGRAM ben_thing
   nlocal=n/size
 
   CALL ForPETRA_VecInit(idX,n,nlocal,MPI_COMM_WORLD)
-  WRITE(*,*)idX
 
   do i=rank*nlocal+1,(rank+1)*nlocal
     x=real(i)+0.01
@@ -38,10 +37,7 @@ PROGRAM ben_thing
   ENDDO
 
   CALL ForPETRA_MatInit(idL,n,nlocal,3,MPI_COMM_WORLD)
-  WRITE(*,*)idL
-
   CALL ForPETRA_MatInit(idR,n,nlocal,3,MPI_COMM_WORLD)
-  WRITE(*,*)idR
 
   do i=rank*nlocal+1,(rank+1)*nlocal
     if(i==1) THEN
@@ -69,14 +65,32 @@ PROGRAM ben_thing
   CALL ForPETRA_MatAssemble(idL)
   CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
   CALL ForPETRA_MatNormF(idL,x)
-  IF(rank==0) WRITE(*,*) x
+  IF(rank==0) WRITE(*,*) x, sqrt(REAL(n))
   CALL ForPETRA_MatNormF(idR,x)
-  IF(rank==0) WRITE(*,*) x
+  IF(rank==0) WRITE(*,*) x, sqrt(REAL(4*n+2*(n-1)))
   CALL ForPETRA_MatEdit(idL)
 !  CALL ForPETRA_MatEdit(idR)
-  !WRITE(*,*) "-------------------------------------------------"
-  !WRITE(*,*)
-  CALL test_solve(idL,idR,idX)
+  IF(rank==0) WRITE(*,*) "-------------------------------------------------"
+  IF(rank==0) WRITE(*,*)
+  CALL Anasazi_Init(eid)
+  CALL Preconditioner_Init(pcid)
+  CALL Preconditioner_Setup(pcid,idR)
+  CALL Anasazi_SetMat(eid,idR,idL)
+  CALL Anasazi_SetX(eid,idX)
+  CALL Anasazi_SetPC(eid,pcid)
+
+  CALL Anasazi_Solve(eid)
+
+  DO p=0,size-1
+    if(rank==p)THEN
+      WRITE(*,*) "Proc: ", p
+      DO i=rank*nlocal+1,(rank+1)*nlocal
+        CALL ForPETRA_VecGet(idX,i,x)
+        WRITE(*,*) i, x
+      ENDDO
+    ENDIF
+    CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
+  ENDDO
 
   CALL MPACT_Trilinos_Finalize()
 ENDPROGRAM ben_thing

@@ -55,15 +55,12 @@ public:
     }
 
     int new_data(const int n, const int nloc, const int rawComm) {
-        std::cout << n << " " << nloc << " " << rawComm << std::endl;
         things_[cid]=new EpetraVecCnt(n,nloc,rawComm);
-        if(verbose) std::cout << things_[cid]->evec->MyLength() <<std::endl;
         cid++;
         return cid-1;
     }
 
     int set_data(const int id, const int *i, const double *val) {
-        if(verbose) std::cout << "replacing location " << i[0] << " with value " << val[0] <<std::endl;
         return things_[id]->evec->ReplaceGlobalValues(1,val,i);
     }
 
@@ -78,7 +75,6 @@ public:
 
     //TODO: eventually send a string in
     int edit_data(const int id) {
-        std::cout << "calling routine" << std::endl;
         return EpetraExt::VectorToMatlabFile("myvector.m",*(things_[id]->evec));
     }
 
@@ -111,6 +107,12 @@ public:
         emap(n,nloc,1,Comm),
         emat(new Epetra_CrsMatrix(Copy,emap,rnnz))
     {}
+
+    ~EpetraMatCnt(){
+        //delete Comm;
+        //delete emap;
+        //delete emat;
+    }
 };
 
 class EpetraMatStore {
@@ -129,7 +131,6 @@ public:
     }
 
     int set_data(const int id, const int i, const int nnz, const int j[], const double val[]) {
-        std::cout << "a " << id << " " << i << " " << nnz << " " << j[0] << " " << val[0] << std::endl;
         return things_[id]->emat->InsertGlobalValues(i,nnz,val,j);
     }
 

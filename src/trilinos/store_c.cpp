@@ -1,34 +1,45 @@
 #include "store.hpp"
 #include "store_solvers.hpp"
+#include "store_pc.hpp"
 
 EpetraVecStore *evec = nullptr;
 EpetraMatStore *emat = nullptr;
 AnasaziStore   *aeig = nullptr;
+BelosStore     *bels = nullptr;
+PCStore        *pcst = nullptr;
 
 extern "C" void MPACT_Trilinos_Init() {
     assert(!evec);
     assert(!emat);
+    assert(!aeig);
+    assert(!bels);
+    assert(!pcst);
     if(verbose) std::cout << "Initializing data store" << std::endl;
     evec = new EpetraVecStore();
     emat = new EpetraMatStore();
     aeig = new AnasaziStore();
+    bels = new BelosStore();
+    pcst = new PCStore();
 }
 
 extern "C" void MPACT_Trilinos_Finalize() {
     if(verbose) std::cout << "Deleting data store" << std::endl;
+    delete aeig;
+    delete bels;
+    delete pcst;
     delete evec;
     delete emat;
-    delete aeig;
 }
 
+//------------------------------------------------------------------------------
+//Vector
+//------------------------------------------------------------------------------
 extern "C" void ForPETRA_VecInit( int &id, const int n, const int nlocal, const int Comm ) {
     id = evec->new_data(n,nlocal,Comm);
 }
 
 extern "C" void ForPETRA_VecSet(const int id, const int i, const double val) {
-    if(verbose) std::cout << "Adding location " << i << " with value " << val <<std::endl;
     int ierr = evec->set_data(id,&i,&val);
-    std::cout << ierr << std::endl;
     assert(ierr==0);
 }
 
@@ -42,14 +53,15 @@ extern "C" void ForPETRA_VecEdit(const int id) {
     assert(ierr==0);
 }
 
+//------------------------------------------------------------------------------
 //Matrix
+//------------------------------------------------------------------------------
 extern "C" void ForPETRA_MatInit( int &id, const int n, const int nlocal, const int rnnz, const int Comm ) {
     id = emat->new_data(n,nlocal,rnnz,Comm);
 }
 
 extern "C" void ForPETRA_MatSet(const int id, const int i, const int nnz, const int j[], const double val[]) {
     int ierr = emat->set_data(id,i,nnz,j,val);
-    std::cout << id << " " << i << " " << nnz << " " << j[0] << " " << val[0] << " " << ierr << std::endl;
     assert(ierr==0);
 }
 
@@ -74,12 +86,44 @@ extern "C" void ForPETRA_MatNormF(const int id, double &val) {
     assert(ierr==0);
 }
 
-extern "C" void test_solve(const int idLHS, const int idRHS, const int idX) {
-    int id=aeig->new_data();
-    std::cout << id << std::endl;
+//------------------------------------------------------------------------------
+//Anasazi
+//------------------------------------------------------------------------------
+extern "C" void Anasazi_Init( int &id) {
+    id = aeig->new_data();
+}
 
+extern "C" void Anasazi_SetMat( const int id, const int idLHS, const int idRHS) {
     aeig->setMat_data(id,emat->get_mat(idLHS),emat->get_mat(idRHS));
-    aeig->setX0_data(id,evec->get_vec(idX));
-    aeig->solve(id);
+}
 
+extern "C" void Anasazi_SetPC( const int id, const int idpc) {
+    aeig->setPC_data(id,pcst->get_pc(idpc));
+}
+
+extern "C" void Anasazi_SetX( const int id, const int idX) {
+    aeig->setX0_data(id,evec->get_vec(idX));
+}
+
+extern "C" void Anasazi_Solve( int id) {
+    aeig->solve(id);
+}
+
+//------------------------------------------------------------------------------
+//Belos
+//------------------------------------------------------------------------------
+extern "C" void Belos_Init( int &id) {
+    id = bels->new_data();
+}
+
+//------------------------------------------------------------------------------
+//Preconditioner
+//------------------------------------------------------------------------------
+extern "C" void Preconditioner_Init( int &id) {
+    id = pcst->new_data();
+}
+
+extern "C" void Preconditioner_Setup( const int id, const int idM ) {
+    pcst->setupPC_data(id,emat->get_mat(idM));
+    //std::cout << (pcst->get_pc(pid))->Label() << std::endl;
 }
