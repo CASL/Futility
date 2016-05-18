@@ -89,6 +89,10 @@
 !>   (10/22/2013) - Dan Jabaay
 !>   - Added the %verify subroutine for validating two parameter lists and then
 !>     checking that all of the values in the parameter list are equal.
+!>   (05/18/2016) - Dan Jabaay
+!>   - Added the %getString subroutine that returns any parameter as a string
+!>     of the same dimension.  (e.g. will return a 1-D array of reals as a 1-D
+!>     array of strings.)
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE ParameterLists
 #include "UnitTest.h"
@@ -455,11 +459,29 @@ MODULE ParameterLists
       !> @copybrief ParameterLists::remove_ParamType
       !> @copydoc ParameterLists::remove_ParamType
       PROCEDURE,PASS :: remove => remove_ParamType
+      !> @copybrief ParameterLists::getString_ParamType_scalar
+      !> @copydoc ParameterLists::getString_scalar_ParamType_scalar
+      PROCEDURE,PASS,PRIVATE :: getString_scalar => getString_ParamType_scalar
+      !> @copybrief ParameterLists::getString_ParamType_a1
+      !> @copydoc ParameterLists::getString_ParamType_a1
+      PROCEDURE,PASS,PRIVATE :: getString_a1 => getString_ParamType_a1
+      !> @copybrief ParameterLists::getString_ParamType_a2
+      !> @copydoc ParameterLists::getString_ParamType_a2
+      PROCEDURE,PASS,PRIVATE :: getString_a2 => getString_ParamType_a2
+      !> @copybrief ParameterLists::getString_ParamType_a3
+      !> @copydoc ParameterLists::getString_ParamType_a3
+      PROCEDURE,PASS,PRIVATE :: getString_a3 => getString_ParamType_a3
+      !> Generic type bound interface for all @c getString operations
+      GENERIC :: getString => getString_scalar,getString_a1,getString_a2,getString_a3
       !> @copybrief ParameterLists::has_ParamType
       !> @copydoc ParameterLists::has_ParamType
-      PROCEDURE,PASS :: getNextParam => getNextParam_ParamType
-      PROCEDURE,PASS :: getSubPL => getSubParam_List
       PROCEDURE,PASS :: has => has_ParamType
+      !> @copybrief ParameterLists::getNextParam_ParamType
+      !> @copydoc ParameterLists::getNextParam_ParamType
+      PROCEDURE,PASS :: getNextParam => getNextParam_ParamType
+      !> @copybrief ParameterLists::getSubParam_List
+      !> @copydoc ParameterLists::getSubParam_List
+      PROCEDURE,PASS :: getSubPL => getSubParam_List
       !> @copybrief ParameterLists::validate_ParamType
       !> @copydoc ParameterLists::validate_ParamType
       PROCEDURE,PASS :: validate => validate_ParamType
@@ -1848,6 +1870,311 @@ MODULE ParameterLists
           ' - cannot search for a blank name!')
       ENDIF
     ENDSUBROUTINE remove_ParamType
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param thisParam
+!> @param name
+!> @param hasname
+!>
+    SUBROUTINE getString_ParamType_scalar(thisParam,name,string,sskfmt,sdkfmt)
+      CHARACTER(LEN=*),PARAMETER :: myName='getString_ParamType_scalar'
+      CLASS(ParamType),TARGET,INTENT(IN) :: thisParam
+      CHARACTER(LEN=*),INTENT(IN) :: name
+      TYPE(StringType),INTENT(OUT) :: string
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: sskfmt
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: sdkfmt
+      CLASS(ParamType),POINTER :: param
+      CHARACTER(LEN=16) :: sskfmtDef,sdkfmtDef
+      CHARACTER(LEN=128) :: tmpchar
+
+      IF(PRESENT(sskfmt)) THEN
+        sskfmtDef=sskfmt
+      ELSE
+        sskfmtDef='(es14.6)'
+      ENDIF
+      IF(PRESENT(sdkfmt)) THEN
+        sdkfmtDef=sdkfmt
+      ELSE
+        sdkfmtDef='(es23.15)'
+      ENDIF
+      string=''
+      CALL thisParam%get(name,param)
+      IF(ASSOCIATED(param)) THEN
+        SELECTTYPE(param)
+          TYPE IS(ParamType_List)
+            !Error, can't do anything with a Plist.
+          TYPE IS(ParamType_SSK)
+            WRITE(tmpchar,TRIM(sskfmtDef)) param%val
+          TYPE IS(ParamType_SDK)
+            WRITE(tmpchar,TRIM(sdkfmtDef)) param%val
+          TYPE IS(ParamType_SNK)
+            WRITE(tmpchar,'(i0)') param%val
+          TYPE IS(ParamType_SLK)
+            WRITE(tmpchar,'(i0)') param%val
+          TYPE IS(ParamType_SBK)
+            WRITE(tmpchar,'(L1)') param%val
+          TYPE IS(ParamType_STR)
+            tmpchar=param%val
+          CLASS DEFAULT
+            !Error, not a scalar...
+        ENDSELECT
+        string=TRIM(ADJUSTL(tmpchar))
+      ENDIF
+    ENDSUBROUTINE getString_ParamType_scalar
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param thisParam
+!> @param name
+!> @param hasname
+!>
+    SUBROUTINE getString_ParamType_a1(thisParam,name,string,sskfmt,sdkfmt)
+      CHARACTER(LEN=*),PARAMETER :: myName='getString_ParamType_a1'
+      CLASS(ParamType),TARGET,INTENT(IN) :: thisParam
+      CHARACTER(LEN=*),INTENT(IN) :: name
+      TYPE(StringType),ALLOCATABLE,INTENT(OUT) :: string(:)
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: sskfmt
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: sdkfmt
+      CLASS(ParamType),POINTER :: param
+      CHARACTER(LEN=16) :: sskfmtDef,sdkfmtDef
+      CHARACTER(LEN=128) :: tmpchar
+      INTEGER(SIK) :: i
+
+      IF(PRESENT(sskfmt)) THEN
+        sskfmtDef=sskfmt
+      ELSE
+        sskfmtDef='(es14.6)'
+      ENDIF
+      IF(PRESENT(sdkfmt)) THEN
+        sdkfmtDef=sdkfmt
+      ELSE
+        sdkfmtDef='(es23.15)'
+      ENDIF
+      CALL thisParam%get(name,param)
+      IF(ALLOCATED(string)) DEALLOCATE(string)
+      IF(ASSOCIATED(param)) THEN
+        SELECTTYPE(param)
+          TYPE IS(ParamType_List)
+            !Error, can't do anything with a Plist.
+          TYPE IS(ParamType_SSK_a1)
+            ALLOCATE(string(SIZE(param%val,DIM=1)))
+            DO i=1,SIZE(param%val)
+              WRITE(tmpchar,TRIM(sskfmtDef)) param%val(i)
+              string(i)=TRIM(ADJUSTL(tmpchar))
+            ENDDO
+          TYPE IS(ParamType_SDK_a1)
+            ALLOCATE(string(SIZE(param%val,DIM=1)))
+            DO i=1,SIZE(param%val)
+              WRITE(tmpchar,TRIM(sdkfmtDef)) param%val(i)
+              string(i)=TRIM(ADJUSTL(tmpchar))
+            ENDDO
+          TYPE IS(ParamType_SNK_a1)
+            ALLOCATE(string(SIZE(param%val,DIM=1)))
+            DO i=1,SIZE(param%val)
+              WRITE(tmpchar,'(i0)') param%val(i)
+              string(i)=TRIM(ADJUSTL(tmpchar))
+            ENDDO
+          TYPE IS(ParamType_SLK_a1)
+            ALLOCATE(string(SIZE(param%val,DIM=1)))
+            DO i=1,SIZE(param%val)
+              WRITE(tmpchar,'(i0)') param%val(i)
+              string(i)=TRIM(ADJUSTL(tmpchar))
+            ENDDO
+          TYPE IS(ParamType_SBK_a1)
+            ALLOCATE(string(SIZE(param%val,DIM=1)))
+            DO i=1,SIZE(param%val)
+              WRITE(tmpchar,'(L1)') param%val(i)
+              string(i)=TRIM(ADJUSTL(tmpchar))
+            ENDDO
+          TYPE IS(ParamType_STR_a1)
+            ALLOCATE(string(SIZE(param%val,DIM=1)))
+            DO i=1,SIZE(param%val)
+              string(i)=param%val(i)
+            ENDDO
+          CLASS DEFAULT
+            !Error, not a scalar...
+        ENDSELECT
+      ENDIF
+    ENDSUBROUTINE getString_ParamType_a1
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param thisParam
+!> @param name
+!> @param hasname
+!>
+    SUBROUTINE getString_ParamType_a2(thisParam,name,string,sskfmt,sdkfmt)
+      CHARACTER(LEN=*),PARAMETER :: myName='getString_ParamType_a2'
+      CLASS(ParamType),TARGET,INTENT(IN) :: thisParam
+      CHARACTER(LEN=*),INTENT(IN) :: name
+      TYPE(StringType),ALLOCATABLE,INTENT(OUT) :: string(:,:)
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: sskfmt
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: sdkfmt
+      CLASS(ParamType),POINTER :: param
+      CHARACTER(LEN=16) :: sskfmtDef,sdkfmtDef
+      CHARACTER(LEN=128) :: tmpchar
+      INTEGER(SIK) :: i,j
+
+      IF(PRESENT(sskfmt)) THEN
+        sskfmtDef=sskfmt
+      ELSE
+        sskfmtDef='(es14.6)'
+      ENDIF
+      IF(PRESENT(sdkfmt)) THEN
+        sdkfmtDef=sdkfmt
+      ELSE
+        sdkfmtDef='(es23.15)'
+      ENDIF
+      CALL thisParam%get(name,param)
+      IF(ALLOCATED(string)) DEALLOCATE(string)
+      IF(ASSOCIATED(param)) THEN
+        SELECTTYPE(param)
+          TYPE IS(ParamType_List)
+            !Error, can't do anything with a Plist.
+          TYPE IS(ParamType_SSK_a2)
+            ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2)))
+            DO j=1,SIZE(param%val,DIM=2)
+              DO i=1,SIZE(param%val,DIM=1)
+                WRITE(tmpchar,TRIM(sskfmtDef)) param%val(i,j)
+                string(i,j)=TRIM(ADJUSTL(tmpchar))
+              ENDDO
+            ENDDO
+          TYPE IS(ParamType_SDK_a2)
+            ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2)))
+            DO j=1,SIZE(param%val,DIM=2)
+              DO i=1,SIZE(param%val,DIM=1)
+                WRITE(tmpchar,TRIM(sdkfmtDef)) param%val(i,j)
+                string(i,j)=TRIM(ADJUSTL(tmpchar))
+              ENDDO
+            ENDDO
+          TYPE IS(ParamType_SNK_a2)
+            ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2)))
+            DO j=1,SIZE(param%val,DIM=2)
+              DO i=1,SIZE(param%val,DIM=1)
+                WRITE(tmpchar,'(i0)') param%val(i,j)
+                string(i,j)=TRIM(ADJUSTL(tmpchar))
+              ENDDO
+            ENDDO
+          TYPE IS(ParamType_SLK_a2)
+            ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2)))
+            DO j=1,SIZE(param%val,DIM=2)
+              DO i=1,SIZE(param%val,DIM=1)
+                WRITE(tmpchar,'(i0)') param%val(i,j)
+                string(i,j)=TRIM(ADJUSTL(tmpchar))
+              ENDDO
+            ENDDO
+!          TYPE IS(ParamType_SBK_a2)
+!            ALLOCATE(string(SIZE(param%val))
+!            DO i=1,SIZE(param%val)
+!              WRITE(tmpchar,'(L1)') param%val(i)
+!              string(i)=TRIM(ADJUSTL(tmpchar))
+!            ENDDO
+          TYPE IS(ParamType_STR_a2)
+            ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2)))
+            DO j=1,SIZE(param%val,DIM=2)
+              DO i=1,SIZE(param%val,DIM=1)
+                string(i,j)=param%val(i,j)
+              ENDDO
+            ENDDO
+          CLASS DEFAULT
+            !Error, not a scalar...
+        ENDSELECT
+      ENDIF
+    ENDSUBROUTINE getString_ParamType_a2
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param thisParam
+!> @param name
+!> @param hasname
+!>
+    SUBROUTINE getString_ParamType_a3(thisParam,name,string,sskfmt,sdkfmt)
+      CHARACTER(LEN=*),PARAMETER :: myName='getString_ParamType_a3'
+      CLASS(ParamType),TARGET,INTENT(IN) :: thisParam
+      CHARACTER(LEN=*),INTENT(IN) :: name
+      TYPE(StringType),ALLOCATABLE,INTENT(OUT) :: string(:,:,:)
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: sskfmt
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: sdkfmt
+      CLASS(ParamType),POINTER :: param
+      CHARACTER(LEN=16) :: sskfmtDef,sdkfmtDef
+      CHARACTER(LEN=128) :: tmpchar
+      INTEGER(SIK) :: i,j,k
+
+      IF(PRESENT(sskfmt)) THEN
+        sskfmtDef=sskfmt
+      ELSE
+        sskfmtDef='(es14.6)'
+      ENDIF
+      IF(PRESENT(sdkfmt)) THEN
+        sdkfmtDef=sdkfmt
+      ELSE
+        sdkfmtDef='(es23.15)'
+      ENDIF
+      CALL thisParam%get(name,param)
+      IF(ALLOCATED(string)) DEALLOCATE(string)
+      IF(ASSOCIATED(param)) THEN
+        SELECTTYPE(param)
+          TYPE IS(ParamType_List)
+            !Error, can't do anything with a Plist.
+          TYPE IS(ParamType_SSK_a3)
+            ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2),SIZE(param%val,DIM=3)))
+            DO k=1,SIZE(param%val,DIM=3)
+              DO j=1,SIZE(param%val,DIM=2)
+                DO i=1,SIZE(param%val,DIM=1)
+                  WRITE(tmpchar,TRIM(sskfmtDef)) param%val(i,j,k)
+                  string(i,j,k)=TRIM(ADJUSTL(tmpchar))
+                ENDDO
+              ENDDO
+            ENDDO
+          TYPE IS(ParamType_SDK_a3)
+            ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2),SIZE(param%val,DIM=3)))
+            DO k=1,SIZE(param%val,DIM=3)
+              DO j=1,SIZE(param%val,DIM=2)
+                DO i=1,SIZE(param%val,DIM=1)
+                  WRITE(tmpchar,TRIM(sdkfmtDef)) param%val(i,j,k)
+                  string(i,j,k)=TRIM(ADJUSTL(tmpchar))
+                ENDDO
+              ENDDO
+            ENDDO
+          TYPE IS(ParamType_SNK_a3)
+            ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2),SIZE(param%val,DIM=3)))
+            DO k=1,SIZE(param%val,DIM=3)
+              DO j=1,SIZE(param%val,DIM=2)
+                DO i=1,SIZE(param%val,DIM=1)
+                  WRITE(tmpchar,'(i0)') param%val(i,j,k)
+                  string(i,j,k)=TRIM(ADJUSTL(tmpchar))
+                ENDDO
+              ENDDO
+            ENDDO
+          TYPE IS(ParamType_SLK_a3)
+            ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2),SIZE(param%val,DIM=3)))
+            DO k=1,SIZE(param%val,DIM=3)
+              DO j=1,SIZE(param%val,DIM=2)
+                DO i=1,SIZE(param%val,DIM=1)
+                  WRITE(tmpchar,'(i0)') param%val(i,j,k)
+                  string(i,j,k)=TRIM(ADJUSTL(tmpchar))
+                ENDDO
+              ENDDO
+            ENDDO
+!          TYPE IS(ParamType_SBK_a3)
+!            ALLOCATE(string(SIZE(param%val))
+!            DO i=1,SIZE(param%val)
+!              WRITE(tmpchar,'(L1)') param%val(i)
+!              string(i)=TRIM(ADJUSTL(tmpchar))
+!            ENDDO
+!          TYPE IS(ParamType_STR_a3)
+!            ALLOCATE(string(SIZE(param%val))
+!            DO j=1,SIZE(param%val,DIM=2))
+!              DO i=1,SIZE(param%val,DIM=1))
+!                string(i,j)=param%val(i,j)
+!              ENDDO
+!            ENDDO
+          CLASS DEFAULT
+            !Error, not a scalar...
+        ENDSELECT
+      ENDIF
+    ENDSUBROUTINE getString_ParamType_a3
 !
 !-------------------------------------------------------------------------------
 !> @brief Determines if a parameter with a given name exists in a parameter object.

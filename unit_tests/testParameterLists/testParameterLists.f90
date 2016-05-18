@@ -84,6 +84,7 @@ PROGRAM testParameterLists
   REGISTER_SUBTEST('3-D SDK',testSDKa3)
   REGISTER_SUBTEST('ParameterList',testParamListType)
   REGISTER_SUBTEST('%add(...)',testAdd)
+  REGISTER_SUBTEST('%getString(...)',testGetString)
   REGISTER_SUBTEST('%has(...)',testHas)
   REGISTER_SUBTEST('%remove(...)',testRemove)
   REGISTER_SUBTEST('%getNextParam(...)',testGetNextParam)
@@ -4457,6 +4458,318 @@ PROGRAM testParameterLists
     ! CALL testParam3%clear()
     ! someParam => NULL()
   ENDSUBROUTINE testAdd
+!
+!-------------------------------------------------------------------------------
+  SUBROUTINE testGetString()
+    CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
+    LOGICAL(SBK) :: bool,sbk0
+    LOGICAL(SBK),ALLOCATABLE :: sbk1(:)
+    INTEGER(SNK) :: snk0
+    INTEGER(SNK),ALLOCATABLE :: snk1(:),snk2(:,:),snk3(:,:,:)
+    INTEGER(SLK) :: slk0
+    INTEGER(SLK),ALLOCATABLE :: slk1(:),slk2(:,:),slk3(:,:,:)
+    REAL(SSK) :: ssk0
+    REAL(SSK),ALLOCATABLE :: ssk1(:),ssk2(:,:),ssk3(:,:,:)
+    REAL(SDK) :: sdk0
+    REAL(SDK),ALLOCATABLE :: sdk1(:),sdk2(:,:),sdk3(:,:,:)
+    TYPE(StringType) :: tmpstr,str0
+    TYPE(StringType),ALLOCATABLE :: str1(:),str2(:,:),str3(:,:,:)
+    TYPE(StringType),ALLOCATABLE :: tmpstr1(:),tmpstr2(:,:),tmpstr3(:,:,:)
+
+
+    !Testing addition of SBK routine to parameter list
+    CALL testParam%add('testPL->testSBK',.TRUE.)
+    CALL testParam%add('testPL->testSBK2',.FALSE.,'comment')
+    CALL testParam%add('testPL->testSSK',7.0_SSK)
+    CALL testParam%add('testPL->testSSK2',8.0_SSK,'comment')
+    CALL testParam%add('testPL->testSDK',7.0_SDK)
+    CALL testParam%add('testPL->testSDK2',8.0_SDK,'comment')
+    CALL testParam%add('testPL->testSNK',7_SNK)
+    CALL testParam%add('testPL->testSNK2',8_SNK,'comment')
+    CALL testParam%add('testPL->testSLK',7_SLK)
+    CALL testParam%add('testPL->testSLK2',8_SLK,'comment')
+    str0='string1'
+    CALL testParam%add('testPL->testSTR',str0)
+    str0='string2'
+    CALL testParam%add('testPL->testSTR2',str0,'comment')
+    CALL testParam%add('testPL->testCHAR','char1')
+    CALL testParam%add('testPL->testCHAR2','char2','comment')
+    !1-D
+    CALL testParam%add('testPL->testSSKa1',(/1.5_SSK,1.6_SSK/))
+    CALL testParam%add('testPL->testSSKa1_2',(/1.7_SSK,1.8_SSK/),'comment')
+    CALL testParam%add('testPL->testSDKa1',(/2.5_SDK,2.6_SDK/))
+    CALL testParam%add('testPL->testSDKa1_2',(/2.7_SDK,2.8_SDK/),'comment')
+    CALL testParam%add('testPL->testSNKa1',(/-2_SNK,-3_SNK/))
+    CALL testParam%add('testPL->testSNKa1_2',(/2_SNK,3_SNK/),'comment')
+    CALL testParam%add('testPL->testSLKa1',(/-4_SLK,-5_SLK/))
+    CALL testParam%add('testPL->testSLKa1_2',(/4_SLK,5_SLK/),'comment')
+    CALL testParam%add('testPL->testSBKa1',(/.TRUE.,.FALSE./))
+    CALL testParam%add('testPL->testSBKa1_2',(/.FALSE.,.FALSE./),'comment')
+    ALLOCATE(str1(2))
+    str1(1)='stringarray1'; str1(2)='stringarray2'
+    CALL testParam%add('testPL->testSTRa1',str1)
+    str1(1)='stringarray3'; str1(2)='stringarray4'
+    CALL testParam%add('testPL->testSTRa1_2',str1,'comment')
+    !2-D
+    ALLOCATE(ssk2(2,2))
+    ssk2(1,1)=1.1_SSK; ssk2(2,1)=2.1_SSK
+    ssk2(1,2)=1.2_SSK; ssk2(2,2)=2.2_SSK
+    CALL testParam%add('testPL->testSSKa2',ssk2)
+    ssk2(1,1)=3.1_SSK; ssk2(2,1)=4.1_SSK
+    ssk2(1,2)=3.2_SSK; ssk2(2,2)=4.2_SSK
+    CALL testParam%add('testPL->testSSKa2_2',ssk2,'comment')
+    ALLOCATE(sdk2(2,2))
+    sdk2(1,1)=11.0_SDK; sdk2(2,1)=21.0_SDK
+    sdk2(1,2)=12.0_SDK; sdk2(2,2)=22.0_SDK
+    CALL testParam%add('testPL->testSDKa2',sdk2)
+    sdk2(1,1)=31.0_SDK; sdk2(2,1)=41.0_SDK
+    sdk2(1,2)=32.0_SDK; sdk2(2,2)=42.0_SDK
+    CALL testParam%add('testPL->testSDKa2_2',sdk2,'comment')
+    ALLOCATE(snk2(2,2))
+    snk2(1,1)=11; snk2(2,1)=21
+    snk2(1,2)=12; snk2(2,2)=22
+    CALL testParam%add('testPL->testSNKa2',snk2)
+    snk2(1,1)=31; snk2(2,1)=41
+    snk2(1,2)=32; snk2(2,2)=42
+    CALL testParam%add('testPL->testSNKa2_2',snk2,'comment')
+    ALLOCATE(slk2(2,2))
+    slk2(1,1)=110; slk2(2,1)=210
+    slk2(1,2)=120; slk2(2,2)=220
+    CALL testParam%add('testPL->testSLKa2',slk2)
+    slk2(1,1)=310; slk2(2,1)=410
+    slk2(1,2)=320; slk2(2,2)=420
+    CALL testParam%add('testPL->testSLKa2_2',slk2,'comment')
+    ALLOCATE(str2(2,2))
+    str2(1,1)='stringarray1'; str2(2,1)='stringarray2'
+    str2(1,2)='stringarray3'; str2(2,2)='stringarray4'
+    CALL testParam%add('testPL->testSTRa2',str2)
+    str2(1,1)='stringarray5'; str2(2,1)='stringarray6'
+    str2(1,2)='stringarray7'; str2(2,2)='stringarray8'
+    CALL testParam%add('testPL->testSTRa2_2',str2,'comment')
+    !3-D
+    ALLOCATE(ssk3(2,2,2))
+    ssk3(1,1,1)=1.11_SSK; ssk3(2,1,1)=2.11_SSK
+    ssk3(1,2,1)=1.21_SSK; ssk3(2,2,1)=2.21_SSK
+    ssk3(1,1,2)=1.12_SSK; ssk3(2,1,2)=2.12_SSK
+    ssk3(1,2,2)=1.22_SSK; ssk3(2,2,2)=2.22_SSK
+    CALL testParam%add('testPL->testSSKa3',ssk3)
+    ssk3(1,1,1)=3.11_SSK; ssk3(2,1,1)=4.11_SSK
+    ssk3(1,2,1)=3.21_SSK; ssk3(2,2,1)=4.21_SSK
+    ssk3(1,1,2)=3.12_SSK; ssk3(2,1,2)=4.12_SSK
+    ssk3(1,2,2)=3.22_SSK; ssk3(2,2,2)=4.22_SSK
+    CALL testParam%add('testPL->testSSKa3_2',ssk3,'comment')
+    ALLOCATE(sdk3(2,2,2))
+    sdk3(1,1,1)=11.1_SDK; sdk3(2,1,1)=21.1_SDK
+    sdk3(1,2,1)=12.1_SDK; sdk3(2,2,1)=22.1_SDK
+    sdk3(1,1,2)=11.2_SDK; sdk3(2,1,2)=21.2_SDK
+    sdk3(1,2,2)=12.2_SDK; sdk3(2,2,2)=22.2_SDK
+    CALL testParam%add('testPL->testSDKa3',sdk3)
+    sdk3(1,1,1)=31.1_SDK; sdk3(2,1,1)=41.1_SDK
+    sdk3(1,2,1)=32.1_SDK; sdk3(2,2,1)=42.1_SDK
+    sdk3(1,1,2)=31.2_SDK; sdk3(2,1,2)=41.2_SDK
+    sdk3(1,2,2)=32.2_SDK; sdk3(2,2,2)=42.2_SDK
+    CALL testParam%add('testPL->testSDKa3_2',sdk3,'comment')
+    ALLOCATE(snk3(2,2,2))
+    snk3(1,1,1)=111; snk3(2,1,1)=211
+    snk3(1,2,1)=121; snk3(2,2,1)=221
+    snk3(1,1,2)=112; snk3(2,1,2)=212
+    snk3(1,2,2)=122; snk3(2,2,2)=222
+    CALL testParam%add('testPL->testSNKa3',snk3)
+    snk3(1,1,1)=311; snk3(2,1,1)=411
+    snk3(1,2,1)=321; snk3(2,2,1)=421
+    snk3(1,1,2)=312; snk3(2,1,2)=412
+    snk3(1,2,2)=322; snk3(2,2,2)=422
+    CALL testParam%add('testPL->testSNKa3_2',snk3,'comment')
+    ALLOCATE(slk3(2,2,2))
+    slk3(1,1,1)=111; slk3(2,1,1)=211
+    slk3(1,2,1)=121; slk3(2,2,1)=221
+    slk3(1,1,2)=112; slk3(2,1,2)=212
+    slk3(1,2,2)=122; slk3(2,2,2)=222
+    CALL testParam%add('testPL->testSLKa3',slk3)
+    slk3(1,1,1)=311; slk3(2,1,1)=411
+    slk3(1,2,1)=321; slk3(2,2,1)=421
+    slk3(1,1,2)=312; slk3(2,1,2)=412
+    slk3(1,2,2)=322; slk3(2,2,2)=422
+    CALL testParam%add('testPL->testSLKa3_2',slk3,'comment')
+    ALLOCATE(str3(2,2,2))
+
+    !Test scalars.
+    CALL testParam%getString('testPL->testSBK',tmpstr)
+    ASSERT(tmpstr == 'T','testSBK string')
+    CALL testParam%getString('testPL->testSBK2',tmpstr)
+    ASSERT(tmpstr == 'F','testSBK2 string')
+    CALL testParam%getString('testPL->testSSK',tmpstr)
+    ASSERT(tmpstr == '7.000000E+00','testSSK string')
+    CALL testParam%getString('testPL->testSSK2',tmpstr)
+    ASSERT(tmpstr == '8.000000E+00','testSSK2 string')
+    CALL testParam%getString('testPL->testSDK',tmpstr)
+    ASSERT(tmpstr == '7.000000000000000E+00','testSDK string')
+    CALL testParam%getString('testPL->testSDK2',tmpstr)
+    ASSERT(tmpstr == '8.000000000000000E+00','testSDK2 string')
+    CALL testParam%getString('testPL->testSNK',tmpstr)
+    ASSERT(tmpstr == '7','testSNK string')
+    CALL testParam%getString('testPL->testSNK2',tmpstr)
+    ASSERT(tmpstr == '8','testSNK2 string')
+    CALL testParam%getString('testPL->testSLK',tmpstr)
+    ASSERT(tmpstr == '7','testSLK string')
+    CALL testParam%getString('testPL->testSLK2',tmpstr)
+    ASSERT(tmpstr == '8','testSLK2 string')
+    CALL testParam%getString('testPL->testSTR',tmpstr)
+    ASSERT(tmpstr == 'string1','testSTR string')
+    CALL testParam%getString('testPL->testSTR2',tmpstr)
+    ASSERT(tmpstr == 'string2','testSTR2 string')
+    CALL testParam%getString('testPL->testCHAR',tmpstr)
+    ASSERT(tmpstr == 'char1','testCHAR string')
+    CALL testParam%getString('testPL->testCHAR2',tmpstr)
+    ASSERT(tmpstr == 'char2','testCHAR2 string')
+
+    !Test 1-D arrays
+    CALL testParam%getString('testPL->testSSKa1',tmpstr1)
+    str1(1)='1.500000E+00'; str1(2)='1.600000E+00'
+    ASSERT(ALL(tmpstr1,str1),'testSSKa1 string')
+    CALL testParam%getString('testPL->testSSKa1_2',tmpstr1)
+    str1(1)='1.700000E+00'; str1(2)='1.800000E+00'
+    ASSERT(ALL(tmpstr1,str1),'testSSKa1_2 string')
+    CALL testParam%getString('testPL->testSDKa1',tmpstr1)
+    str1(1)='2.500000000000000E+00'; str1(2)='2.600000000000000E+00'
+    ASSERT(ALL(tmpstr1,str1),'testSDKa1 string')
+    CALL testParam%getString('testPL->testSDKa1_2',tmpstr1)
+    str1(1)='2.700000000000000E+00'; str1(2)='2.800000000000000E+00'
+    ASSERT(ALL(tmpstr1,str1),'testSDKa1_2 string')
+    CALL testParam%getString('testPL->testSNKa1',tmpstr1)
+    str1(1)='-2'; str1(2)='-3'
+    ASSERT(ALL(tmpstr1,str1),'testSNKa1 string')
+    CALL testParam%getString('testPL->testSNKa1_2',tmpstr1)
+    str1(1)='2'; str1(2)='3'
+    ASSERT(ALL(tmpstr1,str1),'testSNKa1_2 string')
+    CALL testParam%getString('testPL->testSLKa1',tmpstr1)
+    str1(1)='-4'; str1(2)='-5'
+    ASSERT(ALL(tmpstr1,str1),'testSLKa1 string')
+    CALL testParam%getString('testPL->testSLKa1_2',tmpstr1)
+    str1(1)='4'; str1(2)='5'
+    ASSERT(ALL(tmpstr1,str1),'testSLKa1_2 string')
+    CALL testParam%getString('testPL->testSBKa1',tmpstr1)
+    str1(1)='T'; str1(2)='F'
+    ASSERT(ALL(tmpstr1,str1),'testSBKa1 string')
+    CALL testParam%getString('testPL->testSBKa1_2',tmpstr1)
+    str1(1)='F'; str1(2)='F'
+    ASSERT(ALL(tmpstr1,str1),'testSBKa1_2 string')
+    CALL testParam%getString('testPL->testSTRa1',tmpstr1)
+    str1(1)='stringarray1'; str1(2)='stringarray2'
+    ASSERT(ALL(tmpstr1,str1),'testSTRa1 string')
+    CALL testParam%getString('testPL->testSTRa1_2',tmpstr1)
+    str1(1)='stringarray3'; str1(2)='stringarray4'
+    ASSERT(ALL(tmpstr1,str1),'testSTRa1_2 string')
+
+    !Test 2-D arrays
+    CALL testParam%getString('testPL->testSSKa2',tmpstr2)
+    str2(1,1)='1.100000E+00'; str2(2,1)='2.100000E+00'
+    str2(1,2)='1.200000E+00'; str2(2,2)='2.200000E+00'
+    ASSERT(ALL(tmpstr2,str2),'testSSKa2 string')
+    CALL testParam%getString('testPL->testSSKa2_2',tmpstr2)
+    str2(1,1)='3.100000E+00'; str2(2,1)='4.100000E+00'
+    str2(1,2)='3.200000E+00'; str2(2,2)='4.200000E+00'
+    ASSERT(ALL(tmpstr2,str2),'testSSKa2_2 string')
+    CALL testParam%getString('testPL->testSDKa2',tmpstr2)
+    str2(1,1)='1.100000000000000E+01'; str2(2,1)='2.100000000000000E+01'
+    str2(1,2)='1.200000000000000E+01'; str2(2,2)='2.200000000000000E+01'
+    ASSERT(ALL(tmpstr2,str2),'testSDKa2 string')
+    CALL testParam%getString('testPL->testSDKa2_2',tmpstr2)
+    str2(1,1)='3.100000000000000E+01'; str2(2,1)='4.100000000000000E+01'
+    str2(1,2)='3.200000000000000E+01'; str2(2,2)='4.200000000000000E+01'
+    ASSERT(ALL(tmpstr2,str2),'testSDKa2_2 string')
+    CALL testParam%getString('testPL->testSNKa2',tmpstr2)
+    str2(1,1)='11'; str2(2,1)='21'
+    str2(1,2)='12'; str2(2,2)='22'
+    ASSERT(ALL(tmpstr2,str2),'testSNKa2 string')
+    CALL testParam%getString('testPL->testSNKa2_2',tmpstr2)
+    str2(1,1)='31'; str2(2,1)='41'
+    str2(1,2)='32'; str2(2,2)='42'
+    ASSERT(ALL(tmpstr2,str2),'testSNKa2_2 string')
+    CALL testParam%getString('testPL->testSLKa2',tmpstr2)
+    str2(1,1)='110'; str2(2,1)='210'
+    str2(1,2)='120'; str2(2,2)='220'
+    ASSERT(ALL(tmpstr2,str2),'testSLKa2 string')
+    CALL testParam%getString('testPL->testSLKa2_2',tmpstr2)
+    str2(1,1)='310'; str2(2,1)='410'
+    str2(1,2)='320'; str2(2,2)='420'
+    ASSERT(ALL(tmpstr2,str2),'testSLKa2_2 string')
+    CALL testParam%getString('testPL->testSTRa2',tmpstr2)
+    str2(1,1)='stringarray1'; str2(2,1)='stringarray2'
+    str2(1,2)='stringarray3'; str2(2,2)='stringarray4'
+    ASSERT(ALL(tmpstr2,str2),'testSTRa2 string')
+    CALL testParam%getString('testPL->testSTRa2_2',tmpstr2)
+    str2(1,1)='stringarray5'; str2(2,1)='stringarray6'
+    str2(1,2)='stringarray7'; str2(2,2)='stringarray8'
+    ASSERT(ALL(tmpstr2,str2),'testSTRa2_2 string')
+
+    !Test 3-D arrays
+    CALL testParam%getString('testPL->testSSKa3',tmpstr3)
+    str3(1,1,1)='1.110000E+00'; str3(2,1,1)='2.110000E+00'
+    str3(1,2,1)='1.210000E+00'; str3(2,2,1)='2.210000E+00'
+    str3(1,1,2)='1.120000E+00'; str3(2,1,2)='2.120000E+00'
+    str3(1,2,2)='1.220000E+00'; str3(2,2,2)='2.220000E+00'
+    ASSERT(ALL(tmpstr3,str3),'testSSKa3 string')
+    CALL testParam%getString('testPL->testSSKa3_2',tmpstr3)
+    str3(1,1,1)='3.110000E+00'; str3(2,1,1)='4.110000E+00'
+    str3(1,2,1)='3.210000E+00'; str3(2,2,1)='4.210000E+00'
+    str3(1,1,2)='3.120000E+00'; str3(2,1,2)='4.120000E+00'
+    str3(1,2,2)='3.220000E+00'; str3(2,2,2)='4.220000E+00'
+    ASSERT(ALL(tmpstr3,str3),'testSSKa3_2 string')
+    CALL testParam%getString('testPL->testSDKa3',tmpstr3)
+    str3(1,1,1)='1.110000000000000E+01'; str3(2,1,1)='2.110000000000000E+01'
+    str3(1,2,1)='1.210000000000000E+01'; str3(2,2,1)='2.210000000000000E+01'
+    str3(1,1,2)='1.120000000000000E+01'; str3(2,1,2)='2.120000000000000E+01'
+    str3(1,2,2)='1.220000000000000E+01'; str3(2,2,2)='2.220000000000000E+01'
+    ASSERT(ALL(tmpstr3,str3),'testSDKa3 string')
+    FINFO() CHAR(tmpstr3(1,1,1))
+    CALL testParam%getString('testPL->testSDKa3_2',tmpstr3)
+    str3(1,1,1)='3.110000000000000E+01'; str3(2,1,1)='4.110000000000000E+01'
+    str3(1,2,1)='3.210000000000000E+01'; str3(2,2,1)='4.210000000000000E+01'
+    str3(1,1,2)='3.120000000000000E+01'; str3(2,1,2)='4.120000000000000E+01'
+    str3(1,2,2)='3.220000000000000E+01'; str3(2,2,2)='4.220000000000000E+01'
+    ASSERT(ALL(tmpstr3,str3),'testSDKa3_2 string')
+    CALL testParam%getString('testPL->testSNKa3',tmpstr3)
+    str3(1,1,1)='111'; str3(2,1,1)='211'
+    str3(1,2,1)='121'; str3(2,2,1)='221'
+    str3(1,1,2)='112'; str3(2,1,2)='212'
+    str3(1,2,2)='122'; str3(2,2,2)='222'
+    ASSERT(ALL(tmpstr3,str3),'testSNKa3 string')
+    CALL testParam%getString('testPL->testSNKa3_2',tmpstr3)
+    str3(1,1,1)='311'; str3(2,1,1)='411'
+    str3(1,2,1)='321'; str3(2,2,1)='421'
+    str3(1,1,2)='312'; str3(2,1,2)='412'
+    str3(1,2,2)='322'; str3(2,2,2)='422'
+    ASSERT(ALL(tmpstr3,str3),'testSNKa3_2 string')
+    CALL testParam%getString('testPL->testSLKa3',tmpstr3)
+    str3(1,1,1)='111'; str3(2,1,1)='211'
+    str3(1,2,1)='121'; str3(2,2,1)='221'
+    str3(1,1,2)='112'; str3(2,1,2)='212'
+    str3(1,2,2)='122'; str3(2,2,2)='222'
+    ASSERT(ALL(tmpstr3,str3),'testSLKa3 string')
+    CALL testParam%getString('testPL->testSLKa3_2',tmpstr3)
+    str3(1,1,1)='311'; str3(2,1,1)='411'
+    str3(1,2,1)='321'; str3(2,2,1)='421'
+    str3(1,1,2)='312'; str3(2,1,2)='412'
+    str3(1,2,2)='322'; str3(2,2,2)='422'
+    ASSERT(ALL(tmpstr3,str3),'testSLKa3_2 string')
+
+    CALL clear_test_vars()
+    !Deallocate locals
+    DEALLOCATE(snk2)
+    DEALLOCATE(snk3)
+    DEALLOCATE(slk2)
+    DEALLOCATE(slk3)
+    DEALLOCATE(ssk2)
+    DEALLOCATE(ssk3)
+    DEALLOCATE(sdk2)
+    DEALLOCATE(sdk3)
+    DEALLOCATE(str1)
+    DEALLOCATE(str2)
+
+    CALL testParam%clear()
+    CALL testParam2%clear()
+  ENDSUBROUTINE testGetString
 !
 !-------------------------------------------------------------------------------
   SUBROUTINE testHas()
