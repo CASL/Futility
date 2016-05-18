@@ -94,6 +94,8 @@
 !> @par Revisions:
 !>   (10/25/2013) - Dan Jabaay
 !>   - Overloaded Instrinsic ALL and ANY operators
+!>   (05/18/2016) - Dan Jabaay
+!>   - Added overloading of ALL for 1-D, 2-D, and 3-D arrays.
 !>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE Strings
@@ -227,6 +229,16 @@ MODULE Strings
     !!> @copybrief Strings::ALL_StringType_StringTypeArray
     !!> @copydetails Strings::ALL_StringType_StringTypeArray
     !MODULE PROCEDURE ALL_StringType_StringTypeArray
+! at some point, add the ALL(1-D == scalar)...
+    !> @copybrief Strings::ALL_StringType1a_StringType1a
+    !> @copydetails Strings::ALL_StringType1a_StringType1a
+    MODULE PROCEDURE ALL_StringType1a_StringType1a
+    !> @copybrief Strings::ALL_StringType2a_StringType2a
+    !> @copydetails Strings::ALL_StringType2a_StringType2a
+    MODULE PROCEDURE ALL_StringType2a_StringType2a
+    !> @copybrief Strings::ALL_StringType3a_StringType3a
+    !> @copydetails Strings::ALL_StringType3a_StringType3a
+    MODULE PROCEDURE ALL_StringType3a_StringType3a
   ENDINTERFACE
   
   !> @brief Overloads the assignment operator.
@@ -242,6 +254,7 @@ MODULE Strings
     !> @copybrief Strings::assign_StringType_to_StringType
     !> @copydetails Strings::assign_StringType_to_StringType
     MODULE PROCEDURE assign_StringType_to_StringType
+!Need to try and overload 1-D array assignments.
   ENDINTERFACE
   
   !> @brief Overloads the Fortran intrinsic operator for concatenating
@@ -615,6 +628,147 @@ MODULE Strings
         bool=ALL_StringTypeArray_char(thisStr,CHAR(s))
       ENDIF
     ENDFUNCTION ALL_StringTypeArray_StringType
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns the boolean of comparison of all of the contents of the array
+!> of string types to string type s where all entries in the array need to
+!> equal s.
+!> @param thisStr the array of string objects
+!> @param s the string type to check against
+!> @param not the optional argument to invert the logic of the operation
+!> @returns bool the logical result of the operation
+!>
+!> The intent is that this behaves exactly the same way as the intrinsic
+!> function @c ANY does for character variables.
+!>
+    PURE FUNCTION ALL_StringType1a_StringType1a(thisStr,s,not) RESULT(bool)
+      TYPE(StringType),INTENT(IN) :: thisStr(:)
+      TYPE(StringType),INTENT(IN) :: s(:)
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: not
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: i
+
+      bool=.FALSE.
+      IF(SIZE(thisStr,DIM=1) == SIZE(s,DIM=1)) THEN
+        bool=.TRUE.
+        IF(PRESENT(not)) THEN
+          IF(not) THEN
+            DO i=1,SIZE(s,DIM=1)
+              bool=bool .AND. (thisStr(i) /= s(i))
+            ENDDO
+          ELSE
+            DO i=1,SIZE(s,DIM=1)
+              bool=bool .AND. (thisStr(i) == s(i))
+            ENDDO
+          ENDIF
+        ELSE
+          DO i=1,SIZE(s,DIM=1)
+            bool=bool .AND. (thisStr(i) == s(i))
+          ENDDO
+        ENDIF
+      ENDIF
+    ENDFUNCTION ALL_StringType1a_StringType1a
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns the boolean of comparison of all of the contents of the array
+!> of string types to string type s where all entries in the array need to
+!> equal s.
+!> @param thisStr the array of string objects
+!> @param s the string type to check against
+!> @param not the optional argument to invert the logic of the operation
+!> @returns bool the logical result of the operation
+!>
+!> The intent is that this behaves exactly the same way as the intrinsic
+!> function @c ANY does for character variables.
+!>
+    PURE FUNCTION ALL_StringType2a_StringType2a(thisStr,s,not) RESULT(bool)
+      TYPE(StringType),INTENT(IN) :: thisStr(:,:)
+      TYPE(StringType),INTENT(IN) :: s(:,:)
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: not
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: i,j
+
+      bool=.FALSE.
+      IF((SIZE(thisStr,DIM=1) == SIZE(s,DIM=1)) .AND. &
+         (SIZE(thisStr,DIM=2) == SIZE(s,DIM=2))) THEN
+        bool=.TRUE.
+        IF(PRESENT(not)) THEN
+          IF(not) THEN
+            DO j=1,SIZE(s,DIM=2)
+              DO i=1,SIZE(s,DIM=1)
+                bool=bool .AND. (thisStr(i,j) /= s(i,j))
+              ENDDO
+            ENDDO
+          ELSE
+            DO j=1,SIZE(s,DIM=2)
+              DO i=1,SIZE(s,DIM=1)
+                bool=bool .AND. (thisStr(i,j) == s(i,j))
+              ENDDO
+            ENDDO
+          ENDIF
+        ELSE
+          DO j=1,SIZE(s,DIM=2)
+            DO i=1,SIZE(s,DIM=1)
+              bool=bool .AND. (thisStr(i,j) == s(i,j))
+            ENDDO
+          ENDDO
+        ENDIF
+      ENDIF
+    ENDFUNCTION ALL_StringType2a_StringType2a
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns the boolean of comparison of all of the contents of the array
+!> of string types to string type s where all entries in the array need to
+!> equal s.
+!> @param thisStr the array of string objects
+!> @param s the string type to check against
+!> @param not the optional argument to invert the logic of the operation
+!> @returns bool the logical result of the operation
+!>
+!> The intent is that this behaves exactly the same way as the intrinsic
+!> function @c ANY does for character variables.
+!>
+    PURE FUNCTION ALL_StringType3a_StringType3a(thisStr,s,not) RESULT(bool)
+      TYPE(StringType),INTENT(IN) :: thisStr(:,:,:)
+      TYPE(StringType),INTENT(IN) :: s(:,:,:)
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: not
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: i,j,k
+
+      bool=.FALSE.
+      IF((SIZE(thisStr,DIM=1) == SIZE(s,DIM=1)) .AND. &
+         (SIZE(thisStr,DIM=2) == SIZE(s,DIM=2)) .AND. &
+         (SIZE(thisStr,DIM=3) == SIZE(s,DIM=3))) THEN
+        bool=.TRUE.
+        IF(PRESENT(not)) THEN
+          IF(not) THEN
+            DO k=1,SIZE(s,DIM=3)
+              DO j=1,SIZE(s,DIM=2)
+                DO i=1,SIZE(s,DIM=1)
+                  bool=bool .AND. (thisStr(i,j,k) /= s(i,j,k))
+                ENDDO
+              ENDDO
+            ENDDO
+          ELSE
+            DO k=1,SIZE(s,DIM=3)
+              DO j=1,SIZE(s,DIM=2)
+                DO i=1,SIZE(s,DIM=1)
+                  bool=bool .AND. (thisStr(i,j,k) == s(i,j,k))
+                ENDDO
+              ENDDO
+            ENDDO
+          ENDIF
+        ELSE
+          DO k=1,SIZE(s,DIM=3)
+            DO j=1,SIZE(s,DIM=2)
+              DO i=1,SIZE(s,DIM=1)
+                bool=bool .AND. (thisStr(i,j,k) == s(i,j,k))
+              ENDDO
+            ENDDO
+          ENDDO
+        ENDIF
+      ENDIF
+    ENDFUNCTION ALL_StringType3a_StringType3a
 !
 !-------------------------------------------------------------------------------
 !> @brief Returns the boolean of comparison of all of the contents of the array 
