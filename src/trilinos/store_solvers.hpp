@@ -86,7 +86,7 @@ public:
     }
 
     int setPC_data(const int id, Teuchos::RCP<Epetra_Operator> pc) {
-        if(verbose) std::cout << pc->Label() << std::endl;
+        std::cout << pc->Label() << std::endl;
         things_[id].pc=pc;
         things_[id].haspc=true;
         return 0;
@@ -103,7 +103,6 @@ public:
         bool problem_set = problem->setProblem();
         assert(problem_set);
 
-
         Anasazi::GeneralizedDavidsonSolMgr<double,Epetra_MultiVector,Epetra_Operator> solver(
             problem, things_[id].anasazi_db);
 
@@ -118,8 +117,13 @@ public:
         things_[id].x->Update(1.0,*(solution.Evecs),0.0);
         //things_[id].x=Teuchos::rcp((*solution.Evecs)(0));
 
-        std::cout << things_[id].keff << std::endl;
+        //std::cout << things_[id].keff << std::endl;
 
+        return 0;
+    }
+
+    int getEigenvalue_data(const int id,double &keff) {
+        keff=things_[id].keff;
         return 0;
     }
 

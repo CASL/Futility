@@ -18,7 +18,7 @@
 
 using std::map;
 
-bool verbose=true;
+bool verbose=false;
 
 class EpetraVecCnt{
 public:
@@ -39,7 +39,7 @@ public:
         emap(n,nloc,1,Comm),
         evec(new Epetra_Vector(emap))
     {
-        evec->PutScalar(0.);
+        evec->PutScalar(1.);
     }
 
     double &operator[](int i){ return (*evec)[i];}
@@ -64,6 +64,10 @@ public:
         return things_[id]->evec->ReplaceGlobalValues(1,val,i);
     }
 
+    int setall_data(const int id, const double val) {
+        return things_[id]->evec->PutScalar(val);
+    }
+
     int get_data(const int id, const int i, double &val) {
         int lid=things_[id]->emap.LID(i);
         if(lid>=0){
@@ -73,9 +77,32 @@ public:
         else return lid;
     }
 
+    int copy_data(const int id, const int idfrom) {
+        *(things_[id]->evec)= *(things_[idfrom]->evec);
+        return 0;
+    }
+
+    int axpy_data(const int id, const int idx, const double a, const double b) {
+        return things_[id]->evec->Update(a,*(things_[idx]->evec),b);
+    }
+
+    int norm1_data(const int id, double val[]) {
+        int ierr = things_[id]->evec->MeanValue(val);
+        val[0]*=double(things_[id]->evec->GlobalLength());
+        return ierr;
+    }
+
+    int max_data(const int id, double val[]) {
+        return things_[id]->evec->MaxValue(val);
+    }
+
+    int scale_data(const int id, double val) {
+        return things_[id]->evec->Scale(val);
+    }
+
     //TODO: eventually send a string in
-    int edit_data(const int id) {
-        return EpetraExt::VectorToMatlabFile("myvector.m",*(things_[id]->evec));
+    int edit_data(const int id, const char name[]) {
+        return EpetraExt::VectorToMatlabFile(name,*(things_[id]->evec));
     }
 
     Teuchos::RCP<Epetra_Vector> get_vec(const int id){
@@ -97,6 +124,7 @@ public:
 #endif
     Epetra_Map emap;
     Teuchos::RCP<Epetra_CrsMatrix> emat;
+    bool b_asy=false;
 
     EpetraMatCnt(int n, int nloc, int rnnz, int rawComm) :
 #ifdef HAVE_MPI
@@ -131,10 +159,19 @@ public:
     }
 
     int set_data(const int id, const int i, const int nnz, const int j[], const double val[]) {
-        return things_[id]->emat->InsertGlobalValues(i,nnz,val,j);
+        //std::cout << id << " - " << i << " - " << nnz << " - " << things_[id]->b_asy << std::endl;
+        //for (int it = 0; it < nnz; it++) { std::cout << j[it] << " ";}
+        //std::cout << std::endl;
+        //for (int it = 0; it < nnz; it++) { std::cout << val[it]<< " ";}
+        //std::cout << std::endl;
+        int ierr = things_[id]->emat->InsertGlobalValues(i,nnz,val,j);
+        if(ierr!=0) ierr = things_[id]->emat->ReplaceGlobalValues(i,nnz,val,j);
+        //std::cout << ierr << std::endl;
+        return ierr;
     }
 
     int assemble_data(const int id){
+        things_[id]->b_asy=true;
         return things_[id]->emat->FillComplete();
     }
 
@@ -144,8 +181,12 @@ public:
     //    return 0;
     //}
 
-    int edit_data(const int id) {
-        return EpetraExt::RowMatrixToMatlabFile("mymatrix.m",*(things_[id]->emat));
+    int matvec_data(const int id, const bool trans, Teuchos::RCP<Epetra_Vector> x, Teuchos::RCP<Epetra_Vector> y){
+        return things_[id]->emat->Multiply(trans,*x,*y);
+    }
+
+    int edit_data(const int id,const char name[]) {
+        return EpetraExt::RowMatrixToMatlabFile(name,*(things_[id]->emat));
     }
 
     int normF_data(const int id, double &x) {

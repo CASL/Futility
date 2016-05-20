@@ -21,7 +21,7 @@
 !> square and rectangle dense matrix types, and a square tridiagonal matrix
 !> type. Presently, the dense matrices are all assumed to be stored in a general
 !> format as opposed to packed, banded, or upper/lower triangular formats.
-!> Interfaces to BLAS routines for matrix-vector multiplication and 
+!> Interfaces to BLAS routines for matrix-vector multiplication and
 !> matrix-matrix multiplication are also added to the global generic interfaces
 !> for @ref BLAS2::BLAS_matvec "BLAS_matvec" and BLAS_matmat interfaces.
 !>
@@ -68,7 +68,7 @@
 !>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE MatrixTypes
-
+  USE ISO_C_BINDING
   USE IntrType
   USE ExceptionHandler
   USE Allocs
@@ -82,6 +82,7 @@ MODULE MatrixTypes
 #include <finclude/petsc.h>
 #undef IS
 #endif
+#include "trilinos/store_interface.h"
 
   PRIVATE
 !
@@ -94,23 +95,25 @@ MODULE MatrixTypes
   PUBLIC :: DenseRectMatrixType
   PUBLIC :: TriDiagMatrixType
   PUBLIC :: SparseMatrixType
+  PUBLIC :: DistributedMatrixType
   PUBLIC :: PETScMatrixType
+  PUBLIC :: TrilinosMatrixType
   PUBLIC :: BLAS_matvec
   PUBLIC :: BLAS_matmult
   PUBLIC :: SparseMatrixType_reqParams,SparseMatrixType_optParams
   PUBLIC :: TriDiagMatrixType_reqParams,TriDiagMatrixType_optParams
   PUBLIC :: DenseRectMatrixType_reqParams,DenseRectMatrixType_optParams
   PUBLIC :: DenseSquareMatrixType_reqParams,DenseSquareMatrixType_optParams
-  PUBLIC :: PETScMatrixType_reqParams,PETScMatrixType_optParams
+  PUBLIC :: DistributedMatrixType_reqParams,DistributedMatrixType_optParams
   PUBLIC :: MatrixTypes_Declare_ValidParams
   PUBLIC :: MatrixTypes_Clear_ValidParams
-  
+
   !> set enumeration scheme for matrix types
   INTEGER(SIK),PUBLIC :: SPARSE=0,TRIDIAG=1,DENSESQUARE=2,DENSERECT=3
-  
+
   !> @brief the base matrix type
   TYPE,ABSTRACT :: MatrixType
-    !> Initialization status 
+    !> Initialization status
     LOGICAL(SBK) :: isInit=.FALSE.
     !> Number of rows in the matrix
     INTEGER(SIK) :: n=0
@@ -125,7 +128,7 @@ MODULE MatrixTypes
       PROCEDURE(matrix_set_sub_absintfc),DEFERRED,PASS :: set
       !> Deferred routine for getting a matrix value
       PROCEDURE(matrix_get_sub_absintfc),DEFERRED,PASS :: get
-  ENDTYPE MatrixType    
+  ENDTYPE MatrixType
 !
 !List of Abstract Interfaces
   !> Explicitly defines the interface for the clear routine of all matrix types
@@ -135,7 +138,7 @@ MODULE MatrixTypes
       CLASS(MatrixType),INTENT(INOUT) :: matrix
     ENDSUBROUTINE matrix_sub_absintfc
   ENDINTERFACE
-  
+
   !> Explicitly defines the interface for the init routine of all matrix types
   !> with parameter list
   ABSTRACT INTERFACE
@@ -145,7 +148,7 @@ MODULE MatrixTypes
       CLASS(ParamType),INTENT(IN) :: Params
     ENDSUBROUTINE matrix_init_param_sub_absintfc
   ENDINTERFACE
-  
+
   !> Explicitly defines the interface for the set routine of all matrix types
   ABSTRACT INTERFACE
     SUBROUTINE matrix_set_sub_absintfc(matrix,i,j,setval)
@@ -156,7 +159,7 @@ MODULE MatrixTypes
       REAL(SRK),INTENT(IN) :: setval
     ENDSUBROUTINE matrix_set_sub_absintfc
   ENDINTERFACE
-  
+
   !> Explicitly defines the interface for the get routine of all matrix types
   ABSTRACT INTERFACE
     SUBROUTINE matrix_get_sub_absintfc(matrix,i,j,getval)
@@ -167,22 +170,22 @@ MODULE MatrixTypes
       REAL(SRK),INTENT(INOUT) :: getval
     ENDSUBROUTINE matrix_get_sub_absintfc
   ENDINTERFACE
-    
+
   !> @brief The extended type of matrices for square matrices
   TYPE,ABSTRACT,EXTENDS(MatrixType) :: SquareMatrixType
     !> Indicates whether or not the matrix is symmetric
     LOGICAL(SBK) :: isSymmetric=.FALSE.
   ENDTYPE SquareMatrixType
-  
+
   !> @brief The extended type for rectangular matrices
   TYPE,ABSTRACT,EXTENDS(MatrixType) :: RectMatrixType
     !> The number of columns
     INTEGER(SIK) :: m=0
   ENDTYPE RectMatrixType
-  
+
   !> @brief The extended type for PETSc matrices
-  TYPE,EXTENDS(SquareMatrixType) :: PETScMatrixType
-  
+  TYPE,ABSTRACT,EXTENDS(SquareMatrixType) :: DistributedMatrixType
+
     !> creation status
     LOGICAL(SBK) :: isCreated=.FALSE.
     !> assembly status
@@ -191,7 +194,23 @@ MODULE MatrixTypes
     INTEGER(SIK) :: comm=-1
     !> number of local values
     INTEGER(SIK) :: nlocal
-    
+!
+!List of Type Bound Procedures
+    CONTAINS
+      !> Deferred routine for assembling a matrix
+      PROCEDURE(distmatrix_assemble_absintfc),DEFERRED,PASS :: assemble
+  ENDTYPE DistributedMatrixType
+
+  !> Explicitly defines the interface for assembling a distributed matrix
+  ABSTRACT INTERFACE
+    SUBROUTINE distmatrix_assemble_absintfc(thisMatrix,ierr)
+      IMPORT :: SIK,DistributedMatrixType
+      CLASS(DistributedMatrixType),INTENT(INOUT) :: thisMatrix
+      INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
+    ENDSUBROUTINE distmatrix_assemble_absintfc
+  ENDINTERFACE
+
+  TYPE,EXTENDS(DistributedMatrixType) :: PETScMatrixType
 #ifdef MPACT_HAVE_PETSC
     Mat :: A
 #endif
@@ -217,9 +236,40 @@ MODULE MatrixTypes
       !> @copydetails MatrixTypes::assemble_PETScMatrixType
       PROCEDURE,PASS :: assemble => assemble_PETScMatrixType
   ENDTYPE PETScMatrixType
-  
+
+  TYPE,EXTENDS(DistributedMatrixType) :: TrilinosMatrixType
+#ifdef MPACT_HAVE_Trilinos
+    INTEGER(SIK) :: A
+    INTEGER(SIK) :: currow
+    INTEGER(SIK) :: ncol
+    INTEGER(SIK),ALLOCATABLE :: jloc(:)
+    REAL(SRK),ALLOCATABLE :: aloc(:)
+#endif
+!
+!List of Type Bound Procedures
+    CONTAINS
+      !> @copybrief MatrixTypes::clear_TrilinosMatrixType
+      !> @copydetails MatrixTypes::clear_TrilinosMatrixType
+      PROCEDURE,PASS :: clear => clear_TrilinosMatrixType
+      !> @copybrief MatrixTypes::init_TrilinosMatrixType
+      !> @copydetails MatrixTypes::init_TrilinosMatrixType
+      PROCEDURE,PASS :: init => init_TrilinosMatrixParam
+      !> @copybrief MatrixTypes::set_TrilinosMatrixType
+      !> @copydetails MatrixTypes::set_TrilinosMatrixType
+      PROCEDURE,PASS :: set => set_TrilinosMatrixType
+      !> @copybrief MatrixTypes::set_TrilinosMatrixType
+      !> @copydetails MatrixTypes::set_TrilinosMatrixType
+      PROCEDURE,PASS :: setShape => setShape_TrilinosMatrixType
+      !> @copybrief MatrixTypes::get_TrilinosMatrixType
+      !> @copydetails MatrixTypes::get_TrilinosMatrixType
+      PROCEDURE,PASS :: get => get_TrilinosMatrixType
+      !> @copybrief MatrixTypes::assemble_TrilinosMatrixType
+      !> @copydetails MatrixTypes::assemble_TrilinosMatrixType
+      PROCEDURE,PASS :: assemble => assemble_TrilinosMatrixType
+  ENDTYPE TrilinosMatrixType
+
   !> @brief The extended type for dense square matrices
-  !> 
+  !>
   !> This does not add a significant functionality over the intrinsic
   !> allocatable arrays that are part of the Fortran language. It
   !> is provided so as to be able to use the BLAS interfaces adapted
@@ -244,14 +294,14 @@ MODULE MatrixTypes
       !> @copydetails MatrixTypes::get_DenseSquareMatrixType
       PROCEDURE,PASS :: get => get_DenseSquareMatrixType
   ENDTYPE DenseSquareMatrixType
-  
+
   !> @brief The extended type for dense rectangular matrices
   TYPE,EXTENDS(RectMatrixType) :: DenseRectMatrixType
     !> The values of the matrix
     REAL(SRK),ALLOCATABLE :: a(:,:)
 !
 !List of Type Bound Procedures
-    CONTAINS 
+    CONTAINS
       !> @copybrief MatrixTypes::clear_DenseRectMatrixType
       !> @copydetails MatrixTypes::clear_DenseRectMatrixType
       PROCEDURE,PASS :: clear => clear_DenseRectMatrixType
@@ -265,12 +315,12 @@ MODULE MatrixTypes
       !> @copydetails MatrixTypes::get_DenseRectMatrixType
       PROCEDURE,PASS :: get => get_DenseRectMatrixType
   ENDTYPE DenseRectMatrixType
-  
+
   !I think this may need to be revisited
   !> @brief The extended type for tri-diagonal square matrices
   TYPE,EXTENDS(SquareMatrixType) :: TriDiagMatrixType
     !> The values of the matrix
-    REAL(SRK),ALLOCATABLE :: a(:,:) 
+    REAL(SRK),ALLOCATABLE :: a(:,:)
 !
 !List of Type Bound Procedures
     CONTAINS
@@ -287,10 +337,10 @@ MODULE MatrixTypes
       !> @copydetails MatrixTypes::get_TriDiagMatrixType
       PROCEDURE,PASS :: get => get_TriDiagMatrixType
   ENDTYPE TriDiagMatrixType
-  
+
   !> @brief The basic sparse matrix type
-  !> 
-  !> Matrix uses compressed sparse row storage format, 
+  !>
+  !> Matrix uses compressed sparse row storage format,
   !> as defined by Intel's MKL
   TYPE,EXTENDS(MatrixType) :: SparseMatrixType
     !> Number of non-zero entries in the matrix
@@ -302,14 +352,14 @@ MODULE MatrixTypes
     !> The values of the matrix
     REAL(SRK),ALLOCATABLE :: a(:) !values
     !> A counter for the current location in a(:) and ja(:)
-    INTEGER(SIK) :: jCount=0 
+    INTEGER(SIK) :: jCount=0
     !> A variable to store the previous row entered in set_shape
     INTEGER(SIK) :: iPrev=0
     !> A variable to store the previous column entered in set_shape
     INTEGER(SIK) :: jPrev=0
 !
 !List of Type Bound Procedures
-    CONTAINS 
+    CONTAINS
       !> @copybrief MatrixTypes::clear_SparseMatrixType
       !> @copydetails MatrixTypes::clear_SparseMatrixType
       PROCEDURE,PASS :: clear => clear_SparseMatrixType
@@ -326,7 +376,7 @@ MODULE MatrixTypes
       !> @copydetails MatrixTypes::get_SparseMatrixType
       PROCEDURE,PASS :: get => get_SparseMatrixType
   ENDTYPE SparseMatrixType
-  
+
   !> @brief Adds to the @ref BLAS2::BLAS_matvec "BLAS_matvec" interface so that
   !> the matrix types defined in this module are also supported.
   INTERFACE BLAS_matvec
@@ -356,34 +406,34 @@ MODULE MatrixTypes
     !> @copydetails MatrixTypes::dtrsv_all_sparse
 !    MODULE PROCEDURE dtrsv_all_sparse
 !  ENDINTERFACE trsv_sparse
-  
+
   !> Logical flag to check whether the required and optional parameter lists
   !> have been created yet for the Matrix Types.
   LOGICAL(SBK),SAVE :: MatrixType_Paramsflag=.FALSE.
-  
+
   !> The parameter lists to use when validating a parameter list for
   !> initialization for a Sparse Matrix Type.
   TYPE(ParamType),PROTECTED,SAVE :: SparseMatrixType_reqParams, SparseMatrixType_optParams
-  
+
   !> The parameter lists to use when validating a parameter list for
   !> initialization for a Tri-Diagonal Matrix Type.
   TYPE(ParamType),PROTECTED,SAVE :: TriDiagMatrixType_reqParams, TriDiagMatrixType_optParams
-  
+
   !> The parameter lists to use when validating a parameter list for
   !> initialization for a Dense Rectangular Matrix Type.
   TYPE(ParamType),PROTECTED,SAVE :: DenseRectMatrixType_reqParams, DenseRectMatrixType_optParams
-  
+
   !> The parameter lists to use when validating a parameter list for
   !> initialization for a Dense Square Matrix Type.
   TYPE(ParamType),PROTECTED,SAVE :: DenseSquareMatrixType_reqParams, DenseSquareMatrixType_optParams
-  
+
   !> The parameter lists to use when validating a parameter list for
-  !> initialization for a PETSc Matrix Type.
-  TYPE(ParamType),PROTECTED,SAVE :: PETScMatrixType_reqParams, PETScMatrixType_optParams
-  
+  !> initialization for a Distributed Matrix Type.
+  TYPE(ParamType),PROTECTED,SAVE :: DistributedMatrixType_reqParams, DistributedMatrixType_optParams
+
   !> Exception Handler for use in MatrixTypes
   TYPE(ExceptionHandlerType),SAVE :: eMatrixType
-  
+
   !> Name of module
   CHARACTER(LEN=*),PARAMETER :: modName='MATRIXTYPES'
 
@@ -402,19 +452,19 @@ MODULE MatrixTypes
       CLASS(ParamType),INTENT(IN) :: Params
       TYPE(ParamType) :: validParams
       INTEGER(SIK) :: n,nnz
-      
+
       !Check to set up required and optional param lists.
       IF(.NOT.MatrixType_Paramsflag) CALL MatrixTypes_Declare_ValidParams()
-      
+
       !Validate against the reqParams and OptParams
       validParams=Params
       CALL validParams%validate(SparseMatrixType_reqParams)
-      
+
       ! Pull Data From Parameter List
       CALL validParams%get('MatrixType->n',n)
       CALL validParams%get('MatrixType->nnz',nnz)
       CALL validParams%clear()
-      
+
       IF(.NOT. matrix%isInit) THEN
         IF((n < 1).OR.(nnz < 1))  THEN
           CALL eMatrixType%raiseError('Incorrect   input to '// &
@@ -453,19 +503,19 @@ MODULE MatrixTypes
       TYPE(ParamType) :: validParams
       INTEGER(SIK) :: n
       LOGICAL(SBK) :: isSym
-      
+
       !Check to set up required and optional param lists.
       IF(.NOT.MatrixType_Paramsflag) CALL MatrixTypes_Declare_ValidParams()
-      
+
       !Validate against the reqParams and OptParams
       validParams=Params
       CALL validParams%validate(TriDiagMatrixType_reqParams)
-      
+
       ! Pull Data From Parameter List
       CALL validParams%get('MatrixType->n',n)
       CALL validParams%get('MatrixType->isSym',isSym)
       CALL validParams%clear()
-      
+
       IF(.NOT. matrix%isInit) THEN
         IF(n < 1) THEN
           CALL eMatrixType%raiseError('Incorrect input to '// &
@@ -498,19 +548,19 @@ MODULE MatrixTypes
       CLASS(ParamType),INTENT(IN) :: Params
       TYPE(ParamType) :: validParams
       INTEGER(SIK) :: n,m
-      
+
       !Check to set up required and optional param lists.
       IF(.NOT.MatrixType_Paramsflag) CALL MatrixTypes_Declare_ValidParams()
-      
+
       !Validate against the reqParams and OptParams
       validParams=Params
       CALL validParams%validate(DenseRectMatrixType_reqParams)
-      
+
       ! Pull Data From Parameter List
       CALL validParams%get('MatrixType->n',n)
       CALL validParams%get('MatrixType->m',m)
       CALL validParams%clear()
-      
+
       IF(.NOT. matrix%isInit) THEN
         IF(n < 1) THEN
           CALL eMatrixType%raiseError('Incorrect input to '// &
@@ -544,19 +594,19 @@ MODULE MatrixTypes
       TYPE(ParamType) :: validParams
       INTEGER(SIK) :: n
       LOGICAL(SBK) :: isSym
-      
+
       !Check to set up required and optional param lists.
       IF(.NOT.MatrixType_Paramsflag) CALL MatrixTypes_Declare_ValidParams()
-      
+
       !Validate against the reqParams and OptParams
       validParams=Params
       CALL validParams%validate(DenseSquareMatrixType_reqParams)
-      
+
       ! Pull Data From Parameter List
       CALL validParams%get('MatrixType->n',n)
       CALL validParams%get('MatrixType->isSym',isSym)
       CALL validParams%clear()
-      
+
       IF(.NOT. matrix%isInit) THEN
         IF(n < 1) THEN
           CALL eMatrixType%raiseError('Incorrect input to '// &
@@ -591,16 +641,16 @@ MODULE MatrixTypes
       INTEGER(SIK) :: n, matType, MPI_COMM_ID, nlocal
       INTEGER(SIK),ALLOCATABLE :: dnnz(:), onnz(:)
       LOGICAL(SBK) :: isSym
-      
+
 #ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: ierr
-      
+
       !Check to set up required and optional param lists.
-      IF(.NOT.MatrixType_Paramsflag) CALL MatrixTypes_Declare_ValidParams()      
+      IF(.NOT.MatrixType_Paramsflag) CALL MatrixTypes_Declare_ValidParams()
       !Validate against the reqParams and OptParams
       validParams=Params
-      CALL validParams%validate(PETScMatrixType_reqParams,PETScMatrixType_optParams)
-      
+      CALL validParams%validate(DistributedMatrixType_reqParams,DistributedMatrixType_optParams)
+
       ! Pull Data From Parameter List
       CALL validParams%get('MatrixType->n',n)
       CALL validParams%get('MatrixType->isSym',isSym)
@@ -638,7 +688,7 @@ MODULE MatrixTypes
           ELSE
             CALL MatSetSizes(matrix%a,nlocal,nlocal,matrix%n,matrix%n,ierr)
           ENDIF
-          
+
           IF (matType == SPARSE) THEN
             CALL MatSetType(matrix%a,MATMPIAIJ,ierr)
           ELSEIF (matType == DENSESQUARE) THEN
@@ -648,7 +698,7 @@ MODULE MatrixTypes
               modName//'::'//myName//' - Only sparse and dense square '// &
               'matrices are available with PETSc.')
           ENDIF
-          
+
           IF(MINVAL(dnnz) > 0_SIK .AND. MINVAL(onnz) > 0_SIK) THEN
             CALL MatMPIAIJSetPreallocation(matrix%A,0,dnnz,0,onnz,ierr)
           ELSE
@@ -667,6 +717,96 @@ MODULE MatrixTypes
     ENDSUBROUTINE init_PETScMatrixParam
 !
 !-------------------------------------------------------------------------------
+!> @brief Initializes Trilinos Matrix Type with a Parameter List
+!> @param matrix the matrix type to act on
+!> @param pList the parameter list
+!>
+    SUBROUTINE init_TrilinosMatrixParam(matrix,Params)
+      CHARACTER(LEN=*),PARAMETER :: myName='init_TrilinosMatrixParam'
+      CLASS(TrilinosMatrixType),INTENT(INOUT) :: matrix
+      CLASS(ParamType),INTENT(IN) :: Params
+      TYPE(ParamType) :: validParams
+      INTEGER(SIK) :: n, matType, MPI_COMM_ID, nlocal, ierr, rnnz
+      INTEGER(SIK),ALLOCATABLE :: dnnz(:), onnz(:)
+      LOGICAL(SBK) :: isSym
+
+#ifdef MPACT_HAVE_Trilinos
+
+      !Check to set up required and optional param lists.
+      IF(.NOT.MatrixType_Paramsflag) CALL MatrixTypes_Declare_ValidParams()
+      !Validate against the reqParams and OptParams
+      validParams=Params
+      CALL validParams%validate(DistributedMatrixType_reqParams,DistributedMatrixType_optParams)
+
+      ! Pull Data From Parameter List
+      CALL validParams%get('MatrixType->n',n)
+      CALL validParams%get('MatrixType->isSym',isSym)
+      CALL validParams%get('MatrixType->matType',matType)
+      CALL validParams%get('MatrixType->MPI_COMM_ID',MPI_COMM_ID)
+      CALL validParams%get('MatrixType->nlocal',nlocal)
+      ALLOCATE(dnnz(nlocal))
+      ALLOCATE(onnz(nlocal))
+      CALL validParams%get('MatrixType->dnnz',dnnz)
+      CALL validParams%get('MatrixType->onnz',onnz)
+      CALL validParams%clear()
+
+      rnnz=MAXVAL(dnnz)+MAXVAL(onnz)
+
+      IF(.NOT. matrix%isInit) THEN
+        IF(n < 1) THEN
+          CALL eMatrixType%raiseError('Incorrect input to '// &
+            modName//'::'//myName//' - Number of rows (n) must be '// &
+              'greater than 0!')
+        ELSEIF(nlocal < 1) THEN
+          CALL eMatrixType%raiseError('Incorrect input to '// &
+            modName//'::'//myName//' - Number of local rows (nlocal) must '// &
+              'be greater than 0!')
+        ELSEIF(rnnz < 1) THEN
+          CALL eMatrixType%raiseError('Incorrect input to '// &
+            modName//'::'//myName//' - Number of non-zero elements (dnnz,onnz) '// &
+              'must be greater than 0!')
+        ELSEIF(isSym) THEN
+          CALL eMatrixType%raiseError('Incorrect input to '// &
+            modName//'::'//myName//' - Symmetric matrices are not supported.')
+        ELSE
+          matrix%isInit=.TRUE.
+          matrix%n=n
+          matrix%comm=MPI_COMM_ID
+          matrix%isAssembled=.FALSE.
+          matrix%nlocal=nlocal
+          matrix%currow=0
+          matrix%ncol=0
+          ALLOCATE(matrix%jloc(rnnz))
+          ALLOCATE(matrix%aloc(rnnz))
+          IF(isSym) THEN
+            matrix%isSymmetric=.TRUE.
+          ELSE
+            matrix%isSymmetric=.FALSE.
+          ENDIF
+          IF(.NOT.matrix%isCreated) THEN
+            CALL ForPETRA_MatInit(matrix%A,n,nlocal,rnnz,MPI_COMM_WORLD)
+            matrix%isCreated=.TRUE.
+          ENDIF
+
+          IF (matType /= SPARSE) THEN
+            CALL eMatrixType%raiseError('Invalid matrix type in '// &
+              modName//'::'//myName//' - Only sparse square '// &
+              'matrices are available with Trilinos.')
+          ENDIF
+        ENDIF
+      ELSE
+        CALL eMatrixType%raiseError('Incorrect call to '// &
+          modName//'::'//myName//' - MatrixType already initialized')
+      ENDIF
+#else
+      CALL eMatrixType%raiseFatalError('Incorrect call to '// &
+              modName//'::'//myName//' - Trilinos not enabled.  You will'// &
+              'need to recompile with Trilinos enabled to use this feature.')
+#endif
+    ENDSUBROUTINE init_TrilinosMatrixParam
+
+!
+!-------------------------------------------------------------------------------
 !> @brief Clears the sparse matrix
 !> @param matrix the matrix type to act on
 !>
@@ -682,7 +822,7 @@ MODULE MatrixTypes
       IF(ALLOCATED(matrix%ia)) CALL demallocA(matrix%ia)
       IF(ALLOCATED(matrix%ja)) CALL demallocA(matrix%ja)
       IF(ALLOCATED(matrix%a)) CALL demallocA(matrix%a)
-      IF(MatrixType_Paramsflag) CALL MatrixTypes_Clear_ValidParams()    
+      IF(MatrixType_Paramsflag) CALL MatrixTypes_Clear_ValidParams()
     ENDSUBROUTINE clear_SparseMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -696,7 +836,7 @@ MODULE MatrixTypes
       matrix%n=0
       matrix%isSymmetric=.FALSE.
       IF(ALLOCATED(matrix%a)) CALL demallocA(matrix%a)
-      IF(MatrixType_Paramsflag) CALL MatrixTypes_Clear_ValidParams()   
+      IF(MatrixType_Paramsflag) CALL MatrixTypes_Clear_ValidParams()
     ENDSUBROUTINE clear_DenseSquareMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -710,7 +850,7 @@ MODULE MatrixTypes
       matrix%n=0
       matrix%isSymmetric=.FALSE.
       IF(ALLOCATED(matrix%a)) CALL demallocA(matrix%a)
-      IF(MatrixType_Paramsflag) CALL MatrixTypes_Clear_ValidParams()  
+      IF(MatrixType_Paramsflag) CALL MatrixTypes_Clear_ValidParams()
      ENDSUBROUTINE clear_TriDiagMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -724,7 +864,7 @@ MODULE MatrixTypes
       matrix%n=0
       matrix%m=0
       IF(ALLOCATED(matrix%a)) CALL demallocA(matrix%a)
-      IF(MatrixType_Paramsflag) CALL MatrixTypes_Clear_ValidParams()  
+      IF(MatrixType_Paramsflag) CALL MatrixTypes_Clear_ValidParams()
     ENDSUBROUTINE clear_DenseRectMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -736,7 +876,7 @@ MODULE MatrixTypes
       CLASS(PETScMatrixType),INTENT(INOUT) :: matrix
 #ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: ierr
-      
+
       IF(matrix%isInit) CALL MatDestroy(matrix%a,ierr)
       matrix%isInit=.FALSE.
       matrix%n=0
@@ -749,6 +889,33 @@ MODULE MatrixTypes
               'need to recompile with PETSc enabled to use this feature.')
 #endif
     ENDSUBROUTINE clear_PETScMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears the Trilinos sparse matrix
+!> @param matrix the matrix type to act on
+!>
+    SUBROUTINE clear_TrilinosMatrixType(matrix)
+      CHARACTER(LEN=*),PARAMETER :: myName='clear_TrilinosMatrixType'
+      CLASS(TrilinosMatrixType),INTENT(INOUT) :: matrix
+#ifdef MPACT_HAVE_Trilinos
+
+      !TODO add routine to clear memory
+      matrix%A=-1
+      matrix%isInit=.FALSE.
+      matrix%n=0
+      matrix%isAssembled=.FALSE.
+      matrix%isCreated=.FALSE.
+      matrix%isSymmetric=.FALSE.
+      DEALLOCATE(matrix%jloc)
+      DEALLOCATE(matrix%aloc)
+      matrix%currow=0
+      matrix%ncol=0
+#else
+      CALL eMatrixType%raiseFatalError('Incorrect call to '// &
+              modName//'::'//myName//' - Trilinos not enabled.  You will'// &
+              'need to recompile with Trilinos enabled to use this feature.')
+#endif
+    ENDSUBROUTINE clear_TrilinosMatrixType
 !
 !-------------------------------------------------------------------------------
 !> @brief Sets the values in the sparse matrix
@@ -768,7 +935,7 @@ MODULE MatrixTypes
       REAL(SRK),INTENT(IN) :: setval
       INTEGER(SIK) :: ja_index
       LOGICAL(SBK) :: found_ja
-      
+
       IF(matrix%isInit) THEN
         IF(((matrix%jCount > 0).AND.(i <= matrix%n)) &
             .AND. ((j > 0) .AND. (i > 0))) THEN
@@ -778,7 +945,7 @@ MODULE MatrixTypes
           DO ja_index=matrix%ia(i),matrix%ia(i+1)-1
             IF(matrix%ja(ja_index) == j) THEN
               found_ja=.TRUE.
-              EXIT          
+              EXIT
             ENDIF
           ENDDO
           IF(found_ja) matrix%a(ja_index)=setval
@@ -800,7 +967,7 @@ MODULE MatrixTypes
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(IN) :: setval
       IF(matrix%isInit) THEN
-        IF(((j <= matrix%n) .AND. (i <= matrix%n)) & 
+        IF(((j <= matrix%n) .AND. (i <= matrix%n)) &
           .AND. ((j > 0) .AND. (i > 0))) THEN
           matrix%a(i,j)=setval
           IF(matrix%isSymmetric) matrix%a(j,i)=setval
@@ -868,7 +1035,7 @@ MODULE MatrixTypes
 !> This routine learns the shape of the CSR format matrix.
 !> The matrix must be supplied in row-major order, any entries not in this form
 !> will be ignored.
-!> 
+!>
     SUBROUTINE set_shape_SparseMatrixType(matrix,i,j,setval)
       CHARACTER(LEN=*),PARAMETER :: myName='set_shape_SparseMatrixType'
       CLASS(SparseMatrixType),INTENT(INOUT) :: matrix
@@ -876,14 +1043,14 @@ MODULE MatrixTypes
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),OPTIONAL,INTENT(IN) :: setval
       LOGICAL(SBK) :: ijOK
-      
+
       IF(matrix%isInit) THEN
         IF((i <= matrix%n) .AND. ((j > 0) .AND. (i > 0))) THEN
           !enforce entering values in row-major order
           !first check to see if this is a new row or not (ia(i)>0)
           !If it is, then we have to comprae new j with previous j
           ijOK=.FALSE.
-          IF((matrix%jCount < matrix%nnz) & 
+          IF((matrix%jCount < matrix%nnz) &
             .AND.((matrix%iPrev == i).AND.(matrix%jPrev < j))) THEN
             ijOK=.TRUE.
           ELSEIF(matrix%iPrev < i) THEN
@@ -918,7 +1085,7 @@ MODULE MatrixTypes
       PetscErrorCode  :: ierr
 
       IF(matrix%isInit) THEN
-        IF(((j <= matrix%n) .AND. (i <= matrix%n)) & 
+        IF(((j <= matrix%n) .AND. (i <= matrix%n)) &
           .AND. ((j > 0) .AND. (i > 0))) THEN
           CALL MatSetValues(matrix%a,1,i-1,1,j-1,setval,INSERT_VALUES,ierr)
           IF(matrix%isSymmetric) THEN
@@ -933,6 +1100,91 @@ MODULE MatrixTypes
               'need to recompile with PETSc enabled to use this feature.')
 #endif
     ENDSUBROUTINE set_PETScMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the values in the Trilinos matrix
+!> @param declares the matrix type to act on
+!> @param i the ith location in the matrix
+!> @param j the jth location in the matrix
+!> @param setval the value to be set
+!>
+    SUBROUTINE set_TrilinosMatrixType(matrix,i,j,setval)
+      CHARACTER(LEN=*),PARAMETER :: myName='set_TrilinosMatrixType'
+      CLASS(TrilinosMatrixType),INTENT(INOUT) :: matrix
+      INTEGER(SIK),INTENT(IN) :: i
+      INTEGER(SIK),INTENT(IN) :: j
+      REAL(SRK),INTENT(IN) :: setval
+#ifdef MPACT_HAVE_Trilinos
+      INTEGER(SIK)  :: ierr
+
+      IF(matrix%isInit) THEN
+        IF(((j <= matrix%n) .AND. (i <= matrix%n)) &
+          .AND. ((j > 0) .AND. (i > 0))) THEN
+          IF(i==matrix%currow) THEN
+            matrix%ncol=matrix%ncol+1
+            matrix%jloc(matrix%ncol)=j
+            matrix%aloc(matrix%ncol)=setval
+          ELSE
+            IF(matrix%currow>0) CALL ForPETRA_MatSet(matrix%A,matrix%currow,matrix%ncol,matrix%jloc,matrix%aloc)
+            matrix%jloc=0
+            matrix%aloc=0.0_SRK
+            !Need to store index from the incomming data
+            matrix%ncol=1
+            matrix%jloc(1)=j
+            matrix%aloc(1)=setval
+            matrix%currow=i
+          ENDIF
+!TODO
+          matrix%isAssembled=.FALSE.
+        ENDIF
+      ENDIF
+#else
+      CALL eMatrixType%raiseFatalError('Incorrect call to '// &
+              modName//'::'//myName//' - Trilinos not enabled.  You will'// &
+              'need to recompile with Trilinos enabled to use this feature.')
+#endif
+    ENDSUBROUTINE set_TrilinosMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the values in the Trilinos matrix
+!> @param declares the matrix type to act on
+!> @param i the ith location in the matrix
+!> @param j the jth location in the matrix
+!> @param setval the value to be set
+!>
+    SUBROUTINE setShape_TrilinosMatrixType(matrix,i,j,setval)
+      CHARACTER(LEN=*),PARAMETER :: myName='set_TrilinosMatrixType'
+      CLASS(TrilinosMatrixType),INTENT(INOUT) :: matrix
+      INTEGER(SIK),INTENT(IN) :: i
+      INTEGER(SIK),INTENT(IN) :: j
+      REAL(SRK),INTENT(IN) :: setval
+#ifdef MPACT_HAVE_Trilinos
+      INTEGER(SIK)  :: ierr
+
+      IF(matrix%isInit) THEN
+        IF(((j <= matrix%n) .AND. (i <= matrix%n)) &
+          .AND. ((j > 0) .AND. (i > 0))) THEN
+          IF(i==matrix%currow) THEN
+            matrix%ncol=matrix%ncol+1
+            matrix%jloc(matrix%ncol)=j
+            matrix%aloc(matrix%ncol)=setval
+          ELSE
+            IF(matrix%currow>0) CALL ForPETRA_MatSet(matrix%A,i,matrix%ncol,matrix%jloc,matrix%aloc)
+            matrix%aloc=0.0_SRK
+            matrix%jloc=0
+            matrix%ncol=0
+            matrix%currow=i
+          ENDIF
+!TODO
+          matrix%isAssembled=.FALSE.
+        ENDIF
+      ENDIF
+#else
+      CALL eMatrixType%raiseFatalError('Incorrect call to '// &
+              modName//'::'//myName//' - Trilinos not enabled.  You will'// &
+              'need to recompile with Trilinos enabled to use this feature.')
+#endif
+    ENDSUBROUTINE setShape_TrilinosMatrixType
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the values in the tridiagonal matrix
@@ -978,7 +1230,7 @@ MODULE MatrixTypes
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(INOUT) :: getval
       IF(matrix%isInit) THEN
-        IF(((j <= matrix%m) .AND. (i <= matrix%n)) .AND. ((j > 0) .AND. (i > 0))) THEN 
+        IF(((j <= matrix%m) .AND. (i <= matrix%n)) .AND. ((j > 0) .AND. (i > 0))) THEN
           getval=matrix%a(i,j)
         ELSE
           getval=-1051._SRK
@@ -992,7 +1244,7 @@ MODULE MatrixTypes
 !> @param i the ith location in the matrix
 !> @param j the jth location in the matrix
 !>
-!> This routine gets the values of the sparse matrix.  If the (i,j) location is 
+!> This routine gets the values of the sparse matrix.  If the (i,j) location is
 !> out of bounds, then -1051.0 (an arbitrarily chosen key) is returned.
 !>
     SUBROUTINE get_DenseSquareMatrixType(matrix,i,j,getval)
@@ -1001,7 +1253,7 @@ MODULE MatrixTypes
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(INOUT) :: getval
-      
+
       getval=0.0_SRK
       IF(matrix%isInit) THEN
         IF((i <= matrix%n) .AND. (j <= matrix%n) .AND. ((j > 0) .AND. (i > 0))) THEN
@@ -1030,7 +1282,7 @@ MODULE MatrixTypes
       INTEGER(SIK) :: ja_index
       LOGICAL(SBK) :: found_ja
       REAL(SRK),INTENT(INOUT) :: getval
-      
+
       getval=0.0_SRK
       IF(matrix%isInit) THEN
         IF(((matrix%jCount > 0).AND.(i <= matrix%n)) &
@@ -1039,7 +1291,7 @@ MODULE MatrixTypes
           DO ja_index=matrix%ia(i),matrix%ia(i+1)-1
             IF(matrix%ja(ja_index) == j) THEN
               found_ja=.TRUE.
-              EXIT          
+              EXIT
             ENDIF
           ENDDO
           IF(found_ja) getval=matrix%a(ja_index)
@@ -1055,7 +1307,7 @@ MODULE MatrixTypes
 !> @param i the ith location in the matrix
 !> @param j the jth location in the matrix
 !>
-!> This routine gets the values of the sparse matrix.  If the (i,j) location is 
+!> This routine gets the values of the sparse matrix.  If the (i,j) location is
 !> out of bounds, then -1051.0 (an arbitrarily chosen key) is returned.
 !>
     SUBROUTINE get_PETScMatrixType(matrix,i,j,getval)
@@ -1071,7 +1323,7 @@ MODULE MatrixTypes
       IF(matrix%isInit) THEN
         ! assemble matrix if necessary
         IF (.NOT.(matrix%isAssembled)) CALL matrix%assemble()
-      
+
         IF((i <= matrix%n) .AND. (j <= matrix%n) .AND. ((j > 0) .AND. (i > 0))) THEN
           CALL MatGetValues(matrix%a,1,i-1,1,j-1,getval,ierr)
         ELSE
@@ -1092,7 +1344,7 @@ MODULE MatrixTypes
       INTEGER(SIK) :: ierrc
 #ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: iperr
-      
+
       ierrc=0
       IF(.NOT.thisMatrix%isAssembled) THEN
         CALL MatAssemblyBegin(thisMatrix%a,MAT_FINAL_ASSEMBLY,iperr)
@@ -1111,10 +1363,73 @@ MODULE MatrixTypes
     ENDSUBROUTINE assemble_PETScMatrixType
 !
 !-------------------------------------------------------------------------------
+!> @brief Gets the values in the Trilinos matrix - presently untested
+!> @param declare the matrix type to act on
+!> @param i the ith location in the matrix
+!> @param j the jth location in the matrix
+!>
+!> This routine gets the values of the sparse matrix.  If the (i,j) location is
+!> out of bounds, then -1051.0 (an arbitrarily chosen key) is returned.
+!>
+    SUBROUTINE get_TrilinosMatrixType(matrix,i,j,getval)
+      CHARACTER(LEN=*),PARAMETER :: myName='get_TrilinosMatrixType'
+      CLASS(TrilinosMatrixType),INTENT(INOUT) :: matrix
+      INTEGER(SIK),INTENT(IN) :: i
+      INTEGER(SIK),INTENT(IN) :: j
+      REAL(SRK),INTENT(INOUT) :: getval
+#ifdef MPACT_HAVE_Trilinos
+      INTEGER(SIK)  :: ierr
+
+      getval=0.0_SRK
+      IF(matrix%isInit) THEN
+        ! assemble matrix if necessary
+        IF (.NOT.(matrix%isAssembled)) CALL matrix%assemble()
+
+        IF((i <= matrix%n) .AND. (j <= matrix%n) .AND. ((j > 0) .AND. (i > 0))) THEN
+!TODO
+        ENDIF
+      ENDIF
+#else
+      CALL eMatrixType%raiseFatalError('Incorrect call to '// &
+              modName//'::'//myName//' - Trilinos not enabled.  You will'// &
+              'need to recompile with Trilinos enabled to use this feature.')
+#endif
+    ENDSUBROUTINE get_TrilinosMatrixtype
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE assemble_TrilinosMatrixType(thisMatrix,ierr)
+      CLASS(TrilinosMatrixType),INTENT(INOUT) :: thisMatrix
+      INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
+      INTEGER(SIK) :: ierrc
+#ifdef MPACT_HAVE_Trilinos
+      INTEGER(SIK) :: iperr
+
+      ierrc=0
+      IF(.NOT.thisMatrix%isAssembled) THEN
+        CALL ForPETRA_MatSet(thisMatrix%A,thisMatrix%currow,thisMatrix%ncol,thisMatrix%jloc,thisMatrix%aloc)
+        thisMatrix%aloc=0.0_SRK
+        thisMatrix%jloc=0
+        thisMatrix%ncol=0
+        thisMatrix%currow=0
+        CALL ForPETRA_MatAssemble(thisMatrix%A)
+        thisMatrix%isAssembled=.TRUE.
+        ierrc=0
+      ENDIF
+      IF(PRESENT(ierr)) ierr=ierrc
+#else
+      CHARACTER(LEN=*),PARAMETER :: myName='assemble_TrilinosMatrixType'
+      IF(PRESENT(ierr)) ierr=-1
+      CALL eMatrixType%raiseFatalError('Incorrect call to '// &
+         modName//'::'//myName//' - Trilinos not enabled.  You will'// &
+         'need to recompile with Trilinos enabled to use this feature.')
+#endif
+    ENDSUBROUTINE assemble_TrilinosMatrixType
+!
+!-------------------------------------------------------------------------------
 !> @brief Subroutine provides an interface to matrix vector multiplication for
 !> the MatrixType.
-!> @param trans single character input indicating whether or not to use the 
-!>        transpose of @c A              
+!> @param trans single character input indicating whether or not to use the
+!>        transpose of @c A
 !> @param thisMatrix derived matrix type.
 !> @param alpha the scalar used to scale @c x
 !> @param x the vector to multiply with @c A
@@ -1149,7 +1464,7 @@ MODULE MatrixTypes
         IF(PRESENT(uplo)) ul=uplo
         IF(PRESENT(diag)) d=diag
         IF(PRESENT(incx_in)) incx=incx_in
-        
+
         SELECTTYPE(thisMatrix)
           TYPE IS(DenseSquareMatrixType)
             IF(ul /= 'n') THEN
@@ -1208,7 +1523,7 @@ MODULE MatrixTypes
                 CALL thisMatrix%get(i,j,tmpmat(i,j))
               ENDDO
             ENDDO
-          
+
             IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
               CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
                 alpha,tmpmat,thisMatrix%n,x,1,beta,y,1)
@@ -1228,6 +1543,9 @@ MODULE MatrixTypes
                modName//'::'//myName//' - PETSc not enabled.  You will'// &
                'need to recompile with PETSc enabled to use this feature.')
 #endif
+        CLASS DEFAULT
+          CALL eMatrixType%raiseFatalError('Incorrect call to '// &
+               modName//'::'//myName//' - Too lazy to implement interface.')
         ENDSELECT
       ENDIF
     ENDSUBROUTINE matvec_MatrixType
@@ -1235,8 +1553,8 @@ MODULE MatrixTypes
 !-------------------------------------------------------------------------------
 !> @brief Subroutine provides an interface to matrix vector multiplication for
 !> the MatrixType.
-!> @param trans single character input indicating whether or not to use the 
-!>        transpose of @c A              
+!> @param trans single character input indicating whether or not to use the
+!>        transpose of @c A
 !> @param thisMatrix derived matrix type.
 !> @param alpha the scalar used to scale @c x
 !> @param x the vector to multiply with @c A
@@ -1262,10 +1580,13 @@ MODULE MatrixTypes
       CHARACTER(LEN=1) :: t,ul,d
       INTEGER(SIK) :: incx
       REAL(SRK) :: a,b
+      TYPE(ParamType) :: vecPList
 #ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: iperr
       TYPE(PETScVectorType) :: dummy
-      TYPE(ParamType) :: vecPList
+#endif
+#ifdef MPACT_HAVE_Trilinos
+      TYPE(TrilinosVectorType) :: tdummy
 #endif
       IF(thisMatrix%isInit) THEN
         t='n'
@@ -1280,7 +1601,7 @@ MODULE MatrixTypes
         IF(PRESENT(incx_in)) incx=incx_in
         IF(PRESENT(alpha)) a=alpha
         IF(PRESENT(beta))  b=beta
-        
+
         SELECTTYPE(x); TYPE IS(RealVectorType)
           SELECTTYPE(y); TYPE IS(RealVectorType)
             SELECTTYPE(thisMatrix)
@@ -1361,16 +1682,17 @@ MODULE MatrixTypes
                 ENDIF
                 ! set into return vector
                 CALL y%set(tmpy)
-#else 
+#else
                 CALL eMatrixType%raiseFatalError('Incorrect call to '// &
                    modName//'::'//myName//' - PETSc not enabled.  You will'// &
                    'need to recompile with PETSc enabled to use this feature.')
 #endif
+              CLASS DEFAULT
+                CALL eMatrixType%raiseFatalError('Incorrect call to '// &
+                     modName//'::'//myName//' - Too lazy to implement interface.')
             ENDSELECT
           ENDSELECT
-        ENDSELECT
-        
-        SELECTTYPE(x); TYPE IS(PETScVectorType)
+        TYPE IS(PETScVectorType)
           SELECTTYPE(y); TYPE IS(PETScVectorType)
             SELECTTYPE(thisMatrix); TYPE IS(PETScMatrixType)
 #ifdef MPACT_HAVE_PETSC
@@ -1398,16 +1720,47 @@ MODULE MatrixTypes
 #endif
             ENDSELECT
           ENDSELECT
+        TYPE IS(TrilinosVectorType)
+          SELECTTYPE(y); TYPE IS(TrilinosVectorType)
+            SELECTTYPE(thisMatrix); TYPE IS(TrilinosMatrixType)
+#ifdef MPACT_HAVE_Trilinos
+                CALL vecPList%add('VectorType -> n',y%n)
+                CALL vecPList%add('VectorType -> MPI_Comm_ID',y%comm)
+                CALL vecPList%add('VectorType -> nlocal',x%nlocal)
+                CALL tdummy%init(vecPList)
+                IF(.NOT.x%isAssembled) CALL x%assemble()
+                IF(.NOT.y%isAssembled) CALL y%assemble()
+                IF(.NOT.thisMatrix%isAssembled) CALL thisMatrix%assemble()
+                IF(t == 'n') THEN
+                  CALL ForPETRA_MatMult(thisMatrix%a,LOGICAL(.FALSE.,1),x%b,tdummy%b)
+                ELSE
+                  CALL ForPETRA_MatMult(thisMatrix%a,LOGICAL(.TRUE.,1),x%b,tdummy%b)
+                ENDIF
+                CALL BLAS_scal(tdummy,a)
+                CALL BLAS_scal(y,b)
+                CALL BLAS_axpy(tdummy,y)
+                CALL vecPList%clear()
+                CALL tdummy%clear()
+#else
+                CALL eMatrixType%raiseFatalError('Incorrect call to '// &
+                   modName//'::'//myName//' - Trilinos not enabled.  You will'// &
+                   'need to recompile with Trilinos enabled to use this feature.')
+#endif
+            ENDSELECT
+          ENDSELECT
+        CLASS DEFAULT
+                CALL eMatrixType%raiseFatalError('Incorrect call to '// &
+                    modName//'::'//myName//' - Too lazy to implement interface.')
         ENDSELECT
-        
+
       ENDIF
     ENDSUBROUTINE matvec_MatrixTypeVectorType
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine solves a sparse triangular matrix linear system.
-!> @param uplo single character input indicating if an upper (U) or lower (L) 
+!> @param uplo single character input indicating if an upper (U) or lower (L)
 !>        maxtrix is stored in @c A
-!> @param trans single character input indicating whether or not to use the 
+!> @param trans single character input indicating whether or not to use the
 !>        transpose of @c A
 !> @param diag single character input indicating whether or not a unity
 !>        diagonal is used
@@ -1451,11 +1804,11 @@ MODULE MatrixTypes
         ELSEIF(incx /= 1) THEN
           kx=1 ! Elements stored from lowest index to highest
         ENDIF
-        
+
         ! Don't use transpose of matrix
         IF (trans == 'n' .OR. trans == 'N') THEN  ! Form  x := inv( A )*x.
           ! Multiply by upper triangular part of matrix
-          IF (uplo == 'u' .OR. uplo == 'U') THEN 
+          IF (uplo == 'u' .OR. uplo == 'U') THEN
             ! Elements of x are stored in increments of 1
             IF(incx == 1) THEN
               DO i=n,1,-1
@@ -1595,10 +1948,10 @@ MODULE MatrixTypes
 !> @param C a derived matrix type to add to the product of @c A and @c B
 !>          If C is not initialized when the subroutine is called, it will be
 !>          initialized and set to all zeros
-!> @param transA single character input indicating whether or not to use the 
-!>        transpose of @c A              
+!> @param transA single character input indicating whether or not to use the
+!>        transpose of @c A
 !> @param alpha the scalar used to scale the product of @c A and @cB
-!> @param transB single character input indicating whether or not to use the 
+!> @param transB single character input indicating whether or not to use the
 !>        transpose of @c B
 !> @param beta the scalar used to scale @c C
 !>
@@ -1615,7 +1968,7 @@ MODULE MatrixTypes
       CHARACTER(LEN=1),OPTIONAL,INTENT(IN) :: transB
       CHARACTER(LEN=1) :: tA
       CHARACTER(LEN=1) :: tB
-      
+
       IF(A%isInit) THEN
         tA='n'
         IF(PRESENT(transA)) tA=transA
@@ -1639,7 +1992,7 @@ MODULE MatrixTypes
 !            C%a=0.0_SRK
 !        ENDSELECT
 !      ENDIF
-        
+
       IF(A%isInit .AND. B%isInit .AND. C%isInit) THEN
         SELECTTYPE(A)
           TYPE IS(DenseSquareMatrixType)
@@ -1799,14 +2152,14 @@ MODULE MatrixTypes
                     ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
                       CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,tmpA,tmpB,tmpC)
                     ENDIF
-                    
+
                     ! put into return matrix
                     DO i=1,C%n
                       DO j=1,C%n
                         CALL C%set(i,j,tmpC(i,j))
                       ENDDO
                     ENDDO
-                    
+
                     DEALLOCATE(tmpA)
                     DEALLOCATE(tmpB)
                     DEALLOCATE(tmpC)
@@ -1815,15 +2168,18 @@ MODULE MatrixTypes
                        modName//'::'//myName//' - PETSc not enabled.  You will'// &
                        'need to recompile with PETSc enabled to use this feature.')
 #endif
-                    
+
                 ENDSELECT
             ENDSELECT
-        ENDSELECT         
+          TYPE IS(TrilinosMatrixType)
+            CALL eMatrixType%raiseFatalError('Incorrect call to '// &
+                 modName//'::'//myName//' - Too lazy to implement interface.')
+        ENDSELECT
       ENDIF
     ENDSUBROUTINE matmult_MatrixType
 !
 !-------------------------------------------------------------------------------
-!> @brief Subroutine that sets up the default parameter lists for the all 
+!> @brief Subroutine that sets up the default parameter lists for the all
 !>        MatrixTypes including Sparse, Tri-Diagonal, Dense Rectangular, Dense
 !>        Square, and PETSc.
 !> The required parameters for the Sparse Matrix Type are:
@@ -1852,7 +2208,7 @@ MODULE MatrixTypes
     SUBROUTINE MatrixTypes_Declare_ValidParams()
       INTEGER(SIK) :: n,m,nnz,dnnz(1),onnz(1),matType,MPI_COMM_ID,nlocal
       LOGICAL(SBK) :: isSym
-      
+
       !Setup the required and optional parameter lists
       n=1
       m=1
@@ -1875,23 +2231,23 @@ MODULE MatrixTypes
       !Dense Square Matrix Type - Required
       CALL DenseSquareMatrixType_reqParams%add('MatrixType->n',n)
       CALL DenseSquareMatrixType_reqParams%add('MatrixType->isSym',isSym)
-      !PETSc Matrix Type - Required
-      CALL PETScMatrixType_reqParams%add('MatrixType->n',n)
-      CALL PETScMatrixType_reqParams%add('MatrixType->isSym',isSym)
-      CALL PETScMatrixType_reqParams%add('MatrixType->matType',matType)
-      CALL PETScMatrixType_reqParams%add('MatrixType->MPI_COMM_ID',MPI_COMM_ID)
-      
+      !Distributed Matrix Type - Required
+      CALL DistributedMatrixType_reqParams%add('MatrixType->n',n)
+      CALL DistributedMatrixType_reqParams%add('MatrixType->isSym',isSym)
+      CALL DistributedMatrixType_reqParams%add('MatrixType->matType',matType)
+      CALL DistributedMatrixType_reqParams%add('MatrixType->MPI_COMM_ID',MPI_COMM_ID)
+
       !There are no optional parameters at this time.
-      CALL PETScMatrixType_optParams%add('MatrixType->nlocal',nlocal)
-      CALL PETScMatrixType_optParams%add('MatrixType->dnnz',dnnz)
-      CALL PETScMatrixType_optParams%add('MatrixType->onnz',onnz)
-      
+      CALL DistributedMatrixType_optParams%add('MatrixType->nlocal',nlocal)
+      CALL DistributedMatrixType_optParams%add('MatrixType->dnnz',dnnz)
+      CALL DistributedMatrixType_optParams%add('MatrixType->onnz',onnz)
+
       !Set flag to true since the defaults have been set for this type.
       MatrixType_Paramsflag=.TRUE.
     ENDSUBROUTINE MatrixTypes_Declare_ValidParams
 !
 !-------------------------------------------------------------------------------
-!> @brief Subroutine that clears the default parameter lists for the all 
+!> @brief Subroutine that clears the default parameter lists for the all
 !>        MatrixTypes including Sparse, Tri-Diagonal, Dense Rectangular, Dense
 !>        Square, and PETSc.
 !>
@@ -1899,7 +2255,7 @@ MODULE MatrixTypes
 
       !Set flag to true since the defaults have been set for this type.
       MatrixType_Paramsflag=.FALSE.
-      
+
       !Sparse Matrix Type
       CALL SparseMatrixType_reqParams%clear()
       !Tri-Diagonal Matrix Type
@@ -1908,11 +2264,11 @@ MODULE MatrixTypes
       CALL DenseRectMatrixType_reqParams%clear()
       !Dense Square Matrix Type
       CALL DenseSquareMatrixType_reqParams%clear()
-      !PETSc Matrix Type
-      CALL PETScMatrixType_reqParams%clear()
-      
+      !Distributed Matrix Type
+      CALL DistributedMatrixType_reqParams%clear()
+
       !There are no optional parameters at this time.
-      CALL PETScMatrixType_optParams%clear()
+      CALL DistributedMatrixType_optParams%clear()
     ENDSUBROUTINE MatrixTypes_Clear_ValidParams
 !
 ENDMODULE MatrixTypes

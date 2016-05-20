@@ -39,12 +39,6 @@ TRIBITS_ADD_LIBRARY(TrilinosUtils
       trilinos/store_c.cpp
 )
 
-TRIBITS_ADD_EXECUTABLE(store
-     SOURCES trilinos/main.f90
-     NOEXEPREFIX
-     LINKER_LANGUAGE Fortran
-)
-
 #Library for utility code
 TRIBITS_ADD_LIBRARY(Utils
     HEADERS
@@ -100,4 +94,10 @@ TRIBITS_ADD_LIBRARY(Utils
       ArrayUtils.f90
     DEPLIBS
       CUtils
+)
+
+TRIBITS_ADD_EXECUTABLE(store
+     SOURCES trilinos/main.f90
+     NOEXEPREFIX
+     LINKER_LANGUAGE Fortran
 )

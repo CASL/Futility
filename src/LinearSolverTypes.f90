@@ -361,7 +361,7 @@ MODULE LinearSolverTypes
 #endif
         ENDIF
         IF(TPLType == TRILINOS) THEN ! Trilinos
-#ifndef HAVE_TRILINOS
+#ifndef MPACT_HAVE_Trilinos
           TPLType=PARDISO_MKL
 #endif
         ENDIF
@@ -415,6 +415,8 @@ MODULE LinearSolverTypes
         IF(.NOT.ASSOCIATED(solver%A)) THEN
           IF(TPLType == PETSC) THEN ! PETSc solver requires special PETSc type
             ALLOCATE(PETScMatrixType :: solver%A)
+          ELSEIF(TPLType == TRILINOS) THEN
+            ALLOCATE(TrilinosMatrixType :: solver%A)
           ELSEIF(TPLType == PARDISO_MKL) THEN ! PARDISO only uses sparse matrices
             ALLOCATE(SparseMatrixType :: solver%A)
 #ifdef HAVE_PARDISO

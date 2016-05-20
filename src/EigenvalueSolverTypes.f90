@@ -38,7 +38,7 @@
 !>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE EigenvalueSolverTypes
-
+  USE ISO_C_BINDING
   USE IntrType
   USE BLAS
   USE Times
@@ -62,6 +62,7 @@ MODULE EigenvalueSolverTypes
 #endif
 #undef IS
 #endif
+#include "trilinos/store_interface.h"
 
   PRIVATE
 !
@@ -69,6 +70,7 @@ MODULE EigenvalueSolverTypes
   PUBLIC :: eEigenvalueSolverType
   PUBLIC :: EigenvalueSolverType_Base
   PUBLIC :: EigenvalueSolverType_SLEPc
+  PUBLIC :: EigenvalueSolverType_Anasazi
 
   !> set enumeration scheme for TPLs
   INTEGER(SIK),PARAMETER,PUBLIC :: SLEPC=0,TRILINOS=1,NATIVE=4
@@ -95,6 +97,7 @@ MODULE EigenvalueSolverTypes
     REAL(SRK) :: tol
     !> eigenvalue of the system
     REAL(SRK) :: k
+    INTEGER(SIK) :: tmpcnt=0
     !> Pointer to the MatrixType A
     CLASS(MatrixType),POINTER :: A => NULL()
     !> Pointer to the MatrixType B
@@ -163,6 +166,31 @@ MODULE EigenvalueSolverTypes
       !> @copydetails EigenvalueSolverTypes::solve_EigenvalueSolverType_SLEPc
       PROCEDURE,PASS :: solve => solve_EigenvalueSolverType_SLEPc
   ENDTYPE EigenvalueSolverType_SLEPc
+
+  !> @brief The extended type for the SLEPc Eigenvalue Solvers
+  TYPE,EXTENDS(EigenvalueSolverType_Base) :: EigenvalueSolverType_Anasazi
+    !>
+#ifdef MPACT_HAVE_Trilinos
+    !> Anasazi Eigenvalue Solver type
+    INTEGER(SIK) :: eig
+    !> Anasazi Eigenvalue Preconditioner type
+    INTEGER(SIK) :: pc
+    !> store vector for scaling fission source
+    TYPE(TrilinosVectorType) :: x_scale
+#endif
+!
+!List of Type Bound Procedures
+    CONTAINS
+      !> @copybrief EigenvalueSolverTypes::init_EigenvalueSolverType_Anasazi
+      !> @copydetails EigenvalueSolverTypes::init_EigenvalueSolverType_Anasazi
+      PROCEDURE,PASS :: init => init_EigenvalueSolverType_Anasazi
+      !> @copybrief EigenvalueSolverTypes::clear_EigenvalueSolverType_Anasazi
+      !> @copydetails EigenvalueSolverTypes::clear_EigenvalueSolverType_Anasazi
+      PROCEDURE,PASS :: clear => clear_EigenvalueSolverType_Anasazi
+      !> @copybrief EigenvalueSolverTypes::solve_EigenvalueSolverType_Anasazi
+      !> @copydetails EigenvalueSolverTypes::solve_EigenvalueSolverType_Anasazi
+      PROCEDURE,PASS :: solve => solve_EigenvalueSolverType_Anasazi
+  ENDTYPE EigenvalueSolverType_Anasazi
 
   !> Logical flag to check whether the required and optional parameter lists
   !> have been created yet for the Eigenvalue Solver Type.
@@ -303,7 +331,7 @@ MODULE EigenvalueSolverTypes
         CALL EPSGetST(solver%eps,st,ierr)
         !get KSP
         CALL STGetKSP(st,ksp,ierr)
-        CALL KSPSetType(ksp,KSPBCGS,ierr)
+        !CALL KSPSetType(ksp,KSPBCGS,ierr)
         !ksp pc
         CALL KSPGetPC(ksp,pc,ierr)
         !CALL PCSetType(pc,PCHYPRE,ierr)
@@ -335,6 +363,119 @@ MODULE EigenvalueSolverTypes
 
     ENDSUBROUTINE init_EigenvalueSolverType_SLEPc
 
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes the Eigenvalue Solver Type with a parameter list
+!> @param pList the parameter list
+!>
+!> @param solver The eigen solver to act on
+!> @param solverMethod The integer flag for which type of solution scheme to use
+!> @param MPIparallelEnv The MPI environment description
+!> @param OMPparallelEnv The OMP environment description
+!> @param TimerName The name of the timer to be used for querying (optional)
+!>
+!> This routine initializes the data spaces for the Anasazi eigenvalue solver.
+!>
+    SUBROUTINE init_EigenvalueSolverType_Anasazi(solver,MPIEnv,Params)
+      CHARACTER(LEN=*),PARAMETER :: myName='init_EigenvalueSolverType_Anasazi'
+      CLASS(EigenvalueSolverType_Anasazi),INTENT(INOUT) :: solver
+      TYPE(MPI_EnvType),INTENT(IN),TARGET :: MPIEnv
+      TYPE(ParamType),INTENT(IN) :: Params
+      TYPE(ParamType) :: validParams, tmpPL
+      INTEGER(SIK) :: n,nlocal,solvertype,maxit
+      REAL(SRK) :: tol
+      TYPE(STRINGType) :: pctype
+      !Check to set up required and optional param lists.
+      !IF(.NOT.EigenType_Paramsflag) CALL EigenType_Declare_ValidParams()
+
+      IF(.NOT. MPIEnv%isInit()) THEN
+        CALL eEigenvalueSolverType%raiseError('Incorrect input to '// &
+          modName//'::'//myName//' - MPI Environment is not initialized!')
+      ELSE
+        solver%MPIparallelEnv => MPIEnv
+      ENDIF
+      !Validate against the reqParams and OptParams
+      validParams=Params
+      !CALL validParams%validate(EigenType_reqParams)
+
+      n=0
+      nlocal=0
+      solvertype=-1
+      !Pull Data from Parameter List
+      CALL validParams%get('EigenvalueSolverType->n',n)
+      CALL validParams%get('EigenvalueSolverType->nlocal',nlocal)
+      CALL validParams%get('EigenvalueSolverType->solver',solvertype)
+      CALL validParams%get('EigenvalueSolverType->preconditioner',pctype)
+      CALL validParams%get('EigenvalueSolverType->tolerance',tol)
+      CALL validParams%get('EigenvalueSolverType->max_iterations',maxit)
+
+      IF(.NOT. solver%isInit) THEN
+        IF(n < 1) THEN
+          CALL eEigenvalueSolverType%raiseError('Incorrect input to '// &
+            modName//'::'//myName//' - Number of values (n) must be '// &
+              'greater than 0!')
+        ELSE
+          solver%n=n
+        ENDIF
+
+        IF((nlocal < 1) .AND. (nlocal > n)) THEN
+          CALL eEigenvalueSolverType%raiseError('Incorrect input to '// &
+            modName//'::'//myName//' - Number of values (nlocal) must be '// &
+              'greater than 0 and less than or equal to (n)!')
+        ENDIF
+
+        IF(tol<=0.0_SRK) THEN
+          CALL eEigenvalueSolverType%raiseError('Incorrect input to '// &
+            modName//'::'//myName//' - Tolerance must be '// &
+              'greater than 0!')
+        ELSE
+          solver%tol=tol
+        ENDIF
+
+        IF(maxit < 1) THEN
+          CALL eEigenvalueSolverType%raiseError('Incorrect input to '// &
+            modName//'::'//myName//' - Maximum Iterations must be '// &
+              'greater than 0!')
+        ELSE
+          solver%maxit=maxit
+        ENDIF
+#ifdef MPACT_HAVE_Trilinos
+        CALL Anasazi_Init(solver%eig)
+        IF(solvertype/=GD) THEN
+          CALL eEigenvalueSolverType%raiseError('Incorrect input to '// &
+              modName//'::'//myName//' - Only Generalized Davidson works with Anasazi.')
+        ENDIF
+
+        !Need to set PC type
+        CALL Preconditioner_Init(solver%pc,2)
+
+#else
+        CALL eEigenvalueSolverType%raiseError(modName//'::'//myName// &
+          ' - Anasazi (Trilinos) is not present in build')
+#endif
+        solver%SolverMethod=solvertype
+
+        ALLOCATE(TrilinosVectorType :: solver%X)
+        CALL tmpPL%clear()
+        CALL tmpPL%add('VectorType->n',n)
+        CALL tmpPL%add('VectorType->MPI_Comm_ID',solver%MPIparallelEnv%comm)
+        CALL tmpPL%add('VectorType->nlocal',nlocal)
+        CALL solver%X%init(tmpPL)
+        CALL solver%X_scale%init(tmpPL)
+        SELECTTYPE(x=>solver%X); TYPE IS(TrilinosVectorType)
+          CALL Anasazi_SetX(solver%eig,x%b)
+        ENDSELECT
+
+        solver%TPLType=Trilinos
+        solver%isInit=.TRUE.
+      ELSE
+        CALL eEigenvalueSolverType%raiseError('Incorrect call to '// &
+          modName//'::'//myName//' - EigenvalueSolverType already initialized')
+      ENDIF
+      CALL validParams%clear()
+
+    ENDSUBROUTINE init_EigenvalueSolverType_Anasazi
+
     SUBROUTINE setMat_EigenvalueSolverType_Base(solver,A,B)
       CLASS(EigenvalueSolverType_Base),INTENT(INOUT) :: solver
       CLASS(MatrixType),INTENT(IN),TARGET :: A
@@ -354,6 +495,10 @@ MODULE EigenvalueSolverTypes
         CALL EPSComputeRelativeError(solver%eps,0,resid,ierr)
         CALL EPSGetIterationNumber(solver%eps,its,ierr)
 #endif
+      TYPE IS(EigenvalueSolverType_Anasazi)
+        !TODO: fix
+        resid=1.e-6_SRK
+        its=0
       ENDSELECT
     ENDSUBROUTINE getResidual_EigenvalueSolverType_Base
 
@@ -380,6 +525,7 @@ MODULE EigenvalueSolverTypes
             CALL EPSSetInitialSpace(solver%eps,1,x0%b,ierr)
 #endif
           ENDSELECT
+        !Anasazi doesn't need this, blas copy will handle it
       ENDSELECT
       CALL BLAS_copy(THISVECTOR=x0,NEWVECTOR=solver%X)
     ENDSUBROUTINE setX0_EigenvalueSolverType_Base
@@ -410,6 +556,32 @@ MODULE EigenvalueSolverTypes
 #endif
       solver%isInit=.FALSE.
     ENDSUBROUTINE clear_EigenvalueSolverType_SLEPc
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears the SLEPc Eigen Solver Type
+!> @param solver The eigen solver to act on
+!>
+!> This routine clears the data spaces
+!>
+    SUBROUTINE clear_EigenvalueSolverType_Anasazi(solver)
+      CLASS(EigenvalueSolverType_Anasazi),INTENT(INOUT) :: solver
+
+      solver%solverMethod=-1
+      solver%TPLType=-1
+      NULLIFY(solver%MPIparallelEnv)
+      IF(solver%OMPparallelEnv%isInit()) CALL solver%OMPparallelEnv%clear
+      solver%n=-1
+      solver%maxit=-1
+      solver%tol=0.0_SRK
+      solver%k=0.0_SRK
+      NULLIFY(solver%A)
+      NULLIFY(solver%B)
+      IF(solver%X%isInit) CALL solver%X%clear()
+#ifdef MPACT_HAVE_Trilinos
+      !Need
+#endif
+      solver%isInit=.FALSE.
+    ENDSUBROUTINE clear_EigenvalueSolverType_Anasazi
 !
 !-------------------------------------------------------------------------------
 !> @brief Clears the SLEPc Eigen Solver Type
@@ -448,5 +620,39 @@ MODULE EigenvalueSolverTypes
       CALL BLAS_scal(THISVECTOR=solver%X,A=1.0_SRK/REAL(ki,SRK))
 #endif
     ENDSUBROUTINE solve_EigenvalueSolverType_SLEPc
+!
+!-------------------------------------------------------------------------------
+!> @brief Solves the Anasazi Eigen Solver Type
+!> @param solver The eigen solver to act on
+!>
+!> This routine solves the eigenvalue system
+!>
+    SUBROUTINE solve_EigenvalueSolverType_Anasazi(solver)
+      CLASS(EigenvalueSolverType_Anasazi),INTENT(INOUT) :: solver
+#ifdef MPACT_HAVE_Trilinos
+      REAL(SRK) :: factor
+      REAL(SRK) :: tmp(2)
+      SELECTTYPE(A=>solver%A); TYPE IS(TrilinosMatrixType)
+        SELECTTYPE(B=>solver%B); TYPE IS(TrilinosMatrixType)
+          IF (.NOT.(A%isAssembled)) CALL A%assemble()
+          IF (.NOT.(B%isAssembled)) CALL B%assemble()
+          CALL Preconditioner_Setup(solver%pc,B%A)
+          CALL Anasazi_SetMat(solver%eig,B%A,A%A)
+        ENDSELECT
+      ENDSELECT
+
+      !TODO: set tolerance
+      CALL Anasazi_SetPC(solver%eig,solver%pc)
+
+      CALL Anasazi_Solve(solver%eig)
+      CALL Anasazi_GetEigenvalue(solver%eig,solver%k)
+
+      !renormalize
+      CALL solver%x_scale%set(0.0_SRK)
+      CALL BLAS_matvec(THISMATRIX=solver%A,X=solver%x,Y=solver%x_scale)
+      factor=BLAS_asum(solver%x_scale)
+      CALL BLAS_scal(THISVECTOR=solver%X,A=1.0_SRK/factor)
+#endif
+    ENDSUBROUTINE solve_EigenvalueSolverType_Anasazi
 !
 ENDMODULE EigenvalueSolverTypes

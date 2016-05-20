@@ -1,15 +1,19 @@
 PROGRAM ben_thing
   USE ISO_C_BINDING
+  USE IntrType
+  USE Times
 
   implicit none
 
   include 'mpif.h'
   include 'store_interface.h'
 
-  INTEGER(C_INT) :: rank, size, n, nlocal, nval, idX, idR, idL, eid, pcid, ierr, i, p, j(3)
+  INTEGER(C_INT) :: rank, size, n, nlocal, nval, idX, idR, idL, eid, pcid, ierr, i, p, j(3), pctype
   REAL(C_DOUBLE) :: x, a(3)
+  TYPE(TimerType) :: Timer
 
-  n=128
+  n=32
+  pctype=2
   call MPI_INIT(ierr)
   call MPI_COMM_SIZE(MPI_COMM_WORLD, size, ierr)
   call MPI_COMM_RANK(MPI_COMM_WORLD, rank, ierr)
@@ -18,19 +22,25 @@ PROGRAM ben_thing
   nlocal=n/size
 
   CALL ForPETRA_VecInit(idX,n,nlocal,MPI_COMM_WORLD)
-
+!!!!!!!!!!!!!!!!!! new code
+  CALL ForPETRA_VecSetAll(idX,-1.0_SRK)
+  CALL ForPETRA_VECMax(idx,x)
+  WRITE(*,*) x
+  CALL MPACT_Trilinos_Finalize()
+STOP 0
+!!!!!!!!!!!!!!!!!!!!!!!
   do i=rank*nlocal+1,(rank+1)*nlocal
     x=real(i)+0.01
     CALL ForPETRA_VecSet(idX,i,x)
   ENDDO
-  CALL ForPETRA_VecEdit(idX)
+  CALL ForPETRA_VecEdit(idX,"x.vec"//C_NULL_CHAR)
 
   DO p=0,size-1
     if(rank==p)THEN
       WRITE(*,*) "Proc: ", p
       DO i=rank*nlocal+1,(rank+1)*nlocal
         CALL ForPETRA_VecGet(idX,i,x)
-        WRITE(*,*) i, x
+        !WRITE(*,*) i, x
       ENDDO
     ENDIF
     CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
@@ -64,29 +74,29 @@ PROGRAM ben_thing
   ENDDO
   CALL ForPETRA_MatAssemble(idL)
   CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
-  CALL ForPETRA_MatNormF(idL,x)
-  IF(rank==0) WRITE(*,*) x, sqrt(REAL(n))
-  CALL ForPETRA_MatNormF(idR,x)
-  IF(rank==0) WRITE(*,*) x, sqrt(REAL(4*n+2*(n-1)))
-  CALL ForPETRA_MatEdit(idL)
-!  CALL ForPETRA_MatEdit(idR)
+
+  CALL ForPETRA_MatEdit(idL,"LHS.mat"//C_NULL_CHAR)
+  CALL ForPETRA_MatEdit(idR,"RHS.mat"//C_NULL_CHAR)
   IF(rank==0) WRITE(*,*) "-------------------------------------------------"
   IF(rank==0) WRITE(*,*)
   CALL Anasazi_Init(eid)
-  CALL Preconditioner_Init(pcid)
+  CALL Preconditioner_Init(pcid,pctype)
   CALL Preconditioner_Setup(pcid,idR)
   CALL Anasazi_SetMat(eid,idR,idL)
   CALL Anasazi_SetX(eid,idX)
   CALL Anasazi_SetPC(eid,pcid)
 
+  CALL Timer%tic()
   CALL Anasazi_Solve(eid)
+  CALL Timer%toc()
+  IF(rank==0) WRITE(*,*) Timer%elapsedtime
 
   DO p=0,size-1
     if(rank==p)THEN
       WRITE(*,*) "Proc: ", p
       DO i=rank*nlocal+1,(rank+1)*nlocal
         CALL ForPETRA_VecGet(idX,i,x)
-        WRITE(*,*) i, x
+        !WRITE(*,*) i, x
       ENDDO
     ENDIF
     CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)

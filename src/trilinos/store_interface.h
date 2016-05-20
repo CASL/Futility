@@ -24,6 +24,12 @@
       REAL(C_DOUBLE),INTENT(IN),VALUE  :: val
     ENDSUBROUTINE
 
+    SUBROUTINE ForPETRA_VecSetAll(id,val) bind(C,NAME="ForPETRA_VecSetAll")
+      IMPORT :: C_INT,C_DOUBLE
+      INTEGER(C_INT),INTENT(IN),VALUE  :: id
+      REAL(C_DOUBLE),INTENT(IN),VALUE  :: val
+    ENDSUBROUTINE
+
     SUBROUTINE ForPETRA_VecGet(id,i,val) bind(C,NAME="ForPETRA_VecGet")
       IMPORT :: C_INT,C_DOUBLE
       INTEGER(C_INT),INTENT(IN),VALUE  :: id
@@ -31,9 +37,42 @@
       REAL(C_DOUBLE),INTENT(OUT)       :: val
     ENDSUBROUTINE
 
-    SUBROUTINE ForPETRA_VecEdit(id) bind(C,NAME="ForPETRA_VecEdit")
+    SUBROUTINE ForPETRA_VecCopy(id,idfrom) bind(C,NAME="ForPETRA_VecCopy")
       IMPORT :: C_INT
       INTEGER(C_INT),INTENT(IN),VALUE  :: id
+      INTEGER(C_INT),INTENT(IN),VALUE  :: idfrom
+    ENDSUBROUTINE
+
+    SUBROUTINE ForPETRA_VecAXPY(id,idx,a,b) bind(C,NAME="ForPETRA_VecAXPY")
+      IMPORT :: C_INT,C_DOUBLE
+      INTEGER(C_INT),INTENT(IN),VALUE  :: id
+      INTEGER(C_INT),INTENT(IN),VALUE  :: idx
+      REAL(C_DOUBLE),INTENT(IN),VALUE  :: a
+      REAL(C_DOUBLE),INTENT(IN),VALUE  :: b
+    ENDSUBROUTINE
+
+    SUBROUTINE ForPETRA_VecSum(id,val) bind(C,NAME="ForPETRA_VecSum")
+      IMPORT :: C_INT,C_DOUBLE
+      INTEGER(C_INT),INTENT(IN),VALUE  :: id
+      REAL(C_DOUBLE),INTENT(OUT)       :: val
+    ENDSUBROUTINE
+
+    SUBROUTINE ForPETRA_VecMax(id,val) bind(C,NAME="ForPETRA_VecMax")
+      IMPORT :: C_INT,C_DOUBLE
+      INTEGER(C_INT),INTENT(IN),VALUE  :: id
+      REAL(C_DOUBLE),INTENT(OUT)       :: val
+    ENDSUBROUTINE
+
+    SUBROUTINE ForPETRA_VecScale(id,val) bind(C,NAME="ForPETRA_VecScale")
+      IMPORT :: C_INT,C_DOUBLE
+      INTEGER(C_INT),INTENT(IN),VALUE  :: id
+      REAL(C_DOUBLE),INTENT(IN),VALUE  :: val
+    ENDSUBROUTINE
+
+    SUBROUTINE ForPETRA_VecEdit(id,name) bind(C,NAME="ForPETRA_VecEdit")
+      IMPORT :: C_INT, C_CHAR
+      INTEGER(C_INT),INTENT(IN),VALUE  :: id
+      CHARACTER(KIND=C_CHAR),INTENT(IN),DIMENSION(*) :: name
     ENDSUBROUTINE
 
 !-------------------------------------------------------------------------------
@@ -70,15 +109,18 @@
       INTEGER(C_INT),INTENT(IN),VALUE  :: id
     ENDSUBROUTINE
 
-    SUBROUTINE ForPETRA_MatEdit(id) bind(C,NAME="ForPETRA_MatEdit")
-      IMPORT :: C_INT
-      INTEGER(C_INT),INTENT(IN),VALUE  :: id
+    SUBROUTINE ForPETRA_MatMult(idA,trans,idX,idY) bind(C,NAME="ForPETRA_MatMult")
+      IMPORT :: C_INT,C_BOOL
+      INTEGER(C_INT),INTENT(IN),VALUE        :: idA
+      LOGICAL(C_BOOL),INTENT(IN),VALUE       :: trans
+      INTEGER(C_INT),INTENT(IN),VALUE        :: idX
+      INTEGER(C_INT),INTENT(IN),VALUE        :: idY
     ENDSUBROUTINE
 
-    SUBROUTINE ForPETRA_MatNormF(id,val) bind(C,NAME="ForPETRA_MatNormF")
-      IMPORT :: C_INT,C_DOUBLE
+    SUBROUTINE ForPETRA_MatEdit(id,name) bind(C,NAME="ForPETRA_MatEdit")
+      IMPORT :: C_INT,C_CHAR
       INTEGER(C_INT),INTENT(IN),VALUE  :: id
-      REAL(C_DOUBLE),INTENT(OUT)       :: val
+      CHARACTER(KIND=C_CHAR),INTENT(IN),DIMENSION(*) :: name
     ENDSUBROUTINE
 
 !-------------------------------------------------------------------------------
@@ -113,6 +155,12 @@
       INTEGER(C_INT),INTENT(IN),VALUE  :: id
     ENDSUBROUTINE
 
+    SUBROUTINE Anasazi_GetEigenvalue(id,k) bind(C,NAME="Anasazi_GetEigenvalue")
+      IMPORT :: C_INT,C_DOUBLE
+      INTEGER(C_INT),INTENT(IN),VALUE  :: id
+      REAL(C_DOUBLE),INTENT(OUT)       :: k
+    ENDSUBROUTINE
+
 !-------------------------------------------------------------------------------
 ! Belos Interfaces
 !-------------------------------------------------------------------------------
@@ -124,9 +172,10 @@
 !-------------------------------------------------------------------------------
 ! Preconditioner Interfaces
 !-------------------------------------------------------------------------------
-    SUBROUTINE Preconditioner_Init(id) bind(C,NAME="Preconditioner_Init")
+    SUBROUTINE Preconditioner_Init(id,opt) bind(C,NAME="Preconditioner_Init")
       IMPORT :: C_INT
       INTEGER(C_INT),INTENT(INOUT)    :: id
+      INTEGER(C_INT),INTENT(IN),VALUE :: opt
     ENDSUBROUTINE
 
     SUBROUTINE Preconditioner_Setup(id,idM) bind(C,NAME="Preconditioner_Setup")

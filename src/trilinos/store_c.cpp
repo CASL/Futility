@@ -2,6 +2,7 @@
 #include "store_solvers.hpp"
 #include "store_pc.hpp"
 
+bool           mpact_trilinos_isinit=false;
 EpetraVecStore *evec = nullptr;
 EpetraMatStore *emat = nullptr;
 AnasaziStore   *aeig = nullptr;
@@ -9,17 +10,21 @@ BelosStore     *bels = nullptr;
 PCStore        *pcst = nullptr;
 
 extern "C" void MPACT_Trilinos_Init() {
-    assert(!evec);
-    assert(!emat);
-    assert(!aeig);
-    assert(!bels);
-    assert(!pcst);
-    if(verbose) std::cout << "Initializing data store" << std::endl;
-    evec = new EpetraVecStore();
-    emat = new EpetraMatStore();
-    aeig = new AnasaziStore();
-    bels = new BelosStore();
-    pcst = new PCStore();
+    if(!mpact_trilinos_isinit){
+        assert(!evec);
+        assert(!emat);
+        assert(!aeig);
+        assert(!bels);
+        assert(!pcst);
+        if(verbose) std::cout << "Initializing data store" << std::endl;
+        evec = new EpetraVecStore();
+        emat = new EpetraMatStore();
+        aeig = new AnasaziStore();
+        bels = new BelosStore();
+        pcst = new PCStore();
+        mpact_trilinos_isinit=true;
+    }
+
 }
 
 extern "C" void MPACT_Trilinos_Finalize() {
@@ -43,13 +48,47 @@ extern "C" void ForPETRA_VecSet(const int id, const int i, const double val) {
     assert(ierr==0);
 }
 
+extern "C" void ForPETRA_VecSetAll(const int id, const double val) {
+    int ierr = evec->setall_data(id,val);
+    assert(ierr==0);
+}
+
 extern "C" void ForPETRA_VecGet(const int id, const int i, double &val) {
     int ierr = evec->get_data(id,i,val);
     assert(ierr==0);
 }
 
-extern "C" void ForPETRA_VecEdit(const int id) {
-    int ierr = evec->edit_data(id);
+extern "C" void ForPETRA_VecCopy(const int id, const int idfrom) {
+    int ierr = evec->copy_data(id,idfrom);
+    assert(ierr==0);
+}
+
+extern "C" void ForPETRA_VecAXPY(const int id, const int idx, const double a, const double b) {
+    int ierr = evec->axpy_data(id,idx,a,b);
+    assert(ierr==0);
+}
+
+extern "C" void ForPETRA_VecSum(const int id, double &val) {
+    double vals[1];
+    int ierr = evec->norm1_data(id,vals);
+    val=vals[0];
+    assert(ierr==0);
+}
+
+extern "C" void ForPETRA_VecMax(const int id, double &val) {
+    double vals[1];
+    int ierr = evec->max_data(id,vals);
+    val=vals[0];
+    assert(ierr==0);
+}
+
+extern "C" void ForPETRA_VecScale(const int id, const double val) {
+    int ierr = evec->scale_data(id,val);
+    assert(ierr==0);
+}
+
+extern "C" void ForPETRA_VecEdit(const int id, const char name[]) {
+    int ierr = evec->edit_data(id,name);
     assert(ierr==0);
 }
 
@@ -76,8 +115,13 @@ extern "C" void ForPETRA_MatAssemble(const int id) {
 //    assert(ierr==0);
 //}
 
-extern "C" void ForPETRA_MatEdit(const int id) {
-    int ierr = emat->edit_data(id);
+extern "C" void ForPETRA_MatMult(const int idA, const bool trans, const int idX, const int idY) {
+    int ierr = emat->matvec_data(idA,trans,evec->get_vec(idX),evec->get_vec(idY));
+    assert(ierr==0);
+}
+
+extern "C" void ForPETRA_MatEdit(const int id,const char name[]) {
+    int ierr = emat->edit_data(id,name);
     assert(ierr==0);
 }
 
@@ -109,6 +153,10 @@ extern "C" void Anasazi_Solve( int id) {
     aeig->solve(id);
 }
 
+extern "C" void Anasazi_GetEigenvalue( const int id, double &k) {
+    aeig->getEigenvalue_data(id,k);
+}
+
 //------------------------------------------------------------------------------
 //Belos
 //------------------------------------------------------------------------------
@@ -119,8 +167,8 @@ extern "C" void Belos_Init( int &id) {
 //------------------------------------------------------------------------------
 //Preconditioner
 //------------------------------------------------------------------------------
-extern "C" void Preconditioner_Init( int &id) {
-    id = pcst->new_data();
+extern "C" void Preconditioner_Init( int &id, const int opt) {
+    id = pcst->new_data(opt);
 }
 
 extern "C" void Preconditioner_Setup( const int id, const int idM ) {

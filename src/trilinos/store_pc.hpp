@@ -42,13 +42,13 @@ public:
         return;
     }
 
-    int new_data() {
+    int new_data(const int option) {
         //Teuchos::ParameterList db
         things_[cid]=PCCnt();
         //setup parameterlist with defaults
         //eventually read this from somewhere
-        //things_[cid].pc_type="IFPACK";
-        things_[cid].pc_type="ML";
+        if(option==1){things_[cid].pc_type="IFPACK";}
+        else if(option==2){things_[cid].pc_type="ML";}
 
         //RCP_ParameterList ifpack_db = Teuchos::sublist(db, "Ifpack Params");
         if(things_[cid].pc_type == "IFPACK"){
