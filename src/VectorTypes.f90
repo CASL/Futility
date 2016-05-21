@@ -1885,6 +1885,15 @@ MODULE VectorTypes
            modName//'::'//myName//' - PETSc not enabled.  You will'// &
            'need to recompile with PETSc enabled to use this feature.')
 #endif
+      TYPE IS(TrilinosVectorType)
+#ifdef MPACT_HAVE_Trilinos
+        IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
+        CALL ForPETRA_VecNorm2(thisVector%b,norm2)
+#else
+        CALL eVectorType%raiseFatalError('Incorrect call to '// &
+           modName//'::'//myName//' - Trilinos not enabled.  You will'// &
+           'need to recompile with Trilinos enabled to use this feature.')
+#endif
       CLASS Default
         CALL eVectorType%raiseFatalError('Incorrect call to '// &
            modName//'::'//myName//' - Too lazy to implement interface.')

@@ -57,6 +57,12 @@
       REAL(C_DOUBLE),INTENT(OUT)       :: val
     ENDSUBROUTINE
 
+    SUBROUTINE ForPETRA_VecNorm2(id,val) bind(C,NAME="ForPETRA_VecNorm2")
+      IMPORT :: C_INT,C_DOUBLE
+      INTEGER(C_INT),INTENT(IN),VALUE  :: id
+      REAL(C_DOUBLE),INTENT(OUT)       :: val
+    ENDSUBROUTINE
+
     SUBROUTINE ForPETRA_VecMax(id,val) bind(C,NAME="ForPETRA_VecMax")
       IMPORT :: C_INT,C_DOUBLE
       INTEGER(C_INT),INTENT(IN),VALUE  :: id

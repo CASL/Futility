@@ -78,6 +78,13 @@ extern "C" void ForPETRA_VecSum(const int id, double &val) {
     assert(ierr==0);
 }
 
+extern "C" void ForPETRA_VecNorm2(const int id, double &val) {
+    double vals[1];
+    int ierr = evec->norm2_data(id,vals);
+    val=vals[0];
+    assert(ierr==0);
+}
+
 extern "C" void ForPETRA_VecMax(const int id, double &val) {
     double vals[1];
     int ierr = evec->max_data(id,vals);

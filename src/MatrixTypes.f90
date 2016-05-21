@@ -1689,7 +1689,7 @@ MODULE MatrixTypes
 #endif
               CLASS DEFAULT
                 CALL eMatrixType%raiseFatalError('Incorrect call to '// &
-                     modName//'::'//myName//' - Too lazy to implement interface.')
+                     modName//'::'//myName//' - Too lazy to implement interface.. here?.')
             ENDSELECT
           ENDSELECT
         TYPE IS(PETScVectorType)

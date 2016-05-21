@@ -92,6 +92,10 @@ public:
         return ierr;
     }
 
+    int norm2_data(const int id, double val[]) {
+        return things_[id]->evec->Norm2(val);
+    }
+
     int max_data(const int id, double val[]) {
         return things_[id]->evec->MaxValue(val);
     }

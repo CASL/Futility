@@ -452,6 +452,9 @@ MODULE LinearSolverTypes
             IF(TPLType==PETSC) THEN ! PETSc solver requires special PETSc type
               ALLOCATE(PETScVectorType :: solver%X)
               ALLOCATE(PETScVectorType :: solver%b)
+            ELSEIF(TPLType==Trilinos) THEN
+              ALLOCATE(TrilinosVectorType :: solver%X)
+              ALLOCATE(TrilinosVectorType :: solver%b)
             ELSE ! all other TPLs use the real vector type
               ALLOCATE(RealVectorType :: solver%X)
               ALLOCATE(RealVectorType :: solver%b)
