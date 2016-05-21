@@ -784,7 +784,7 @@ MODULE MatrixTypes
             matrix%isSymmetric=.FALSE.
           ENDIF
           IF(.NOT.matrix%isCreated) THEN
-            CALL ForPETRA_MatInit(matrix%A,n,nlocal,rnnz,MPI_COMM_WORLD)
+            CALL ForPETRA_MatInit(matrix%A,n,nlocal,rnnz,matrix%comm)
             matrix%isCreated=.TRUE.
           ENDIF
 

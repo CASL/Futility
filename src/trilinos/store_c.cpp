@@ -1,3 +1,6 @@
+#ifdef HAVE_MPI
+#include "mpi.h"
+#endif
 #include "store.hpp"
 #include "store_solvers.hpp"
 #include "store_pc.hpp"
@@ -40,7 +43,7 @@ extern "C" void MPACT_Trilinos_Finalize() {
 //Vector
 //------------------------------------------------------------------------------
 extern "C" void ForPETRA_VecInit( int &id, const int n, const int nlocal, const int Comm ) {
-    id = evec->new_data(n,nlocal,Comm);
+    id = evec->new_data(n,nlocal,MPI_Comm_f2c(Comm));
 }
 
 extern "C" void ForPETRA_VecSet(const int id, const int i, const double val) {
@@ -96,7 +99,7 @@ extern "C" void ForPETRA_VecEdit(const int id, const char name[]) {
 //Matrix
 //------------------------------------------------------------------------------
 extern "C" void ForPETRA_MatInit( int &id, const int n, const int nlocal, const int rnnz, const int Comm ) {
-    id = emat->new_data(n,nlocal,rnnz,Comm);
+    id = emat->new_data(n,nlocal,rnnz,MPI_Comm_f2c(Comm));
 }
 
 extern "C" void ForPETRA_MatSet(const int id, const int i, const int nnz, const int j[], const double val[]) {
