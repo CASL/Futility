@@ -636,11 +636,15 @@ MODULE EigenvalueSolverTypes
         SELECTTYPE(B=>solver%B); TYPE IS(TrilinosMatrixType)
           IF (.NOT.(A%isAssembled)) CALL A%assemble()
           IF (.NOT.(B%isAssembled)) CALL B%assemble()
-          CALL Preconditioner_Setup(solver%pc,B%A)
+          IF(solver%tmpcnt==0) CALL Preconditioner_Setup(solver%pc,B%A)
           CALL Anasazi_SetMat(solver%eig,B%A,A%A)
+          !IF(solver%tmpcnt==2) THEN
+          !  CALL ForPETRA_MatEdit(B%A,"M.mtx"//C_NULL_CHAR);
+          !  CALL ForPETRA_MatEdit(A%A,"F.mtx"//C_NULL_CHAR);
+          !ENDIF
         ENDSELECT
       ENDSELECT
-
+      solver%tmpcnt=solver%tmpcnt+1
       !TODO: set tolerance
       CALL Anasazi_SetPC(solver%eig,solver%pc)
 
