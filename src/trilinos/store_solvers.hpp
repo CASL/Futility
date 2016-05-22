@@ -86,7 +86,7 @@ public:
     }
 
     int setPC_data(const int id, Teuchos::RCP<Epetra_Operator> pc) {
-        std::cout << pc->Label() << std::endl;
+        if(things_[id].LHS->Comm().MyPID()==0) std::cout << pc->Label() << std::endl;
         things_[id].pc=pc;
         things_[id].haspc=true;
         return 0;
