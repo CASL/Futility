@@ -488,9 +488,18 @@ PROGRAM testGeom_Points
       CALL firstPoint%insert(thisPoint)
       bool = ASSOCIATED(thisPoint)
       ASSERT(bool, 'firstPoint%insert(thisPoint) for nearby point FAILED')
+      thisPoint%sortval=1._SRK-99._SRK*EPSREAL
+      CALL firstPoint%insert(thisPoint)
+      bool = ASSOCIATED(thisPoint)
+      ASSERT(bool, 'firstPoint%insert(thisPoint) for fuzzy points < 1e-12')
+      thisPoint%sortval=1._SRK+101._SRK*EPSREAL
+      CALL firstPoint%insert(thisPoint)
+      bool = .NOT.(ASSOCIATED(thisPoint))
+      ASSERT(bool, 'firstPoint%insert(thisPoint) for fuzzy points > 1e-12')
+      ALLOCATE(thisPoint)
       thisPoint%sortval=1.5_SRK
       CALL firstPoint%insert(thisPoint)
-      bool = .NOT.(ASSOCIATED(thisPoint) .OR. firstPoint%next%sortval /= 1.5_SRK)
+      bool = .NOT.(ASSOCIATED(thisPoint) .OR. firstPoint%next%next%sortval /= 1.5_SRK)
       ASSERT(bool, 'firstPoint%insert(thisPoint)')
 
       COMPONENT_TEST('LinkedListPointType %clear()')
