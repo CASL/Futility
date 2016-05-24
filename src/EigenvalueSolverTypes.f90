@@ -496,9 +496,10 @@ MODULE EigenvalueSolverTypes
         CALL EPSGetIterationNumber(solver%eps,its,ierr)
 #endif
       TYPE IS(EigenvalueSolverType_Anasazi)
-        !TODO: fix
-        resid=1.e-6_SRK
-        its=0
+#ifdef MPACT_HAVE_Trilinos
+        CALL Anasazi_GetResid(solver%eig,resid)
+        CALL Anasazi_GetIterationCount(solver%eig,its)
+#endif
       ENDSELECT
     ENDSUBROUTINE getResidual_EigenvalueSolverType_Base
 
@@ -637,7 +638,7 @@ MODULE EigenvalueSolverTypes
           IF (.NOT.(A%isAssembled)) CALL A%assemble()
           IF (.NOT.(B%isAssembled)) CALL B%assemble()
           IF(solver%tmpcnt==0) CALL Preconditioner_Setup(solver%pc,B%A)
-          CALL Anasazi_SetMat(solver%eig,B%A,A%A)
+          CALL Anasazi_SetMat(solver%eig,A%A,B%A)
           !IF(solver%tmpcnt==2) THEN
           !  CALL ForPETRA_MatEdit(B%A,"M.mtx"//C_NULL_CHAR);
           !  CALL ForPETRA_MatEdit(A%A,"F.mtx"//C_NULL_CHAR);
