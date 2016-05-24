@@ -36,6 +36,7 @@ public:
     Teuchos::RCP<Epetra_Operator>  pc;
     bool haspc=false;
     double keff;
+    int niters;
     Teuchos::RCP<Epetra_Vector> x;
     Teuchos::ParameterList anasazi_db;
     //maybe some other things about a specific solver
@@ -61,7 +62,8 @@ public:
         things_[cid].anasazi_db.get("Restart Dimension",5);
         things_[cid].anasazi_db.get("Maximum Restarts",100);
         things_[cid].anasazi_db.get("Initial Guess",std::string("User"));
-        things_[cid].anasazi_db.get("Verbosity",Anasazi::Errors + Anasazi::Warnings + Anasazi::FinalSummary + Anasazi::TimingDetails);
+        things_[cid].anasazi_db.get("Verbosity",Anasazi::Errors + Anasazi::Warnings);
+        // + Anasazi::FinalSummary + Anasazi::TimingDetails
 
         cid++;
         return cid-1;
@@ -75,8 +77,7 @@ public:
 
     int setConvCrit_data(const int id, const double tol, const int maxit) {
         things_[id].anasazi_db.set("Convergence Tolerance", tol);
-        // check if this is what I think it is...
-        //things_[id].anasazi_db->set("Maximum Restarts", maxit);
+        things_[id].anasazi_db.set("Maximum Restarts", maxit);
         return 0;
     }
 
@@ -95,8 +96,8 @@ public:
     int solve(const int id) {
         Teuchos::RCP<Anasazi::BasicEigenproblem<double,Epetra_MultiVector,Epetra_Operator>> problem(
             new Anasazi::BasicEigenproblem<double,Epetra_MultiVector,Epetra_Operator>());
-        problem->setA(things_[id].RHS);
-        problem->setM(things_[id].LHS);
+        problem->setA(things_[id].LHS);
+        problem->setM(things_[id].RHS);
         if(things_[id].haspc) problem->setPrec(things_[id].pc);
         problem->setInitVec(things_[id].x);
         problem->setNEV(1);
@@ -108,6 +109,8 @@ public:
 
         Anasazi::ReturnType returnval = solver.solve();
         assert(returnval==0);
+
+        things_[id].niters=solver.getNumIters();
 
         // Extract solution
         Anasazi::Eigensolution<double,Epetra_MultiVector> solution =
@@ -127,7 +130,22 @@ public:
         return 0;
     }
 
+    int getIterations_data(const int id,int &niters) {
+        niters=things_[id].niters;
+        return 0;
+    }
+
     int getResidual(const int id,double &resid) {
+        Teuchos::RCP<Epetra_Vector> ltmp(new Epetra_Vector(*things_[id].x));
+        Teuchos::RCP<Epetra_Vector> rtmp(new Epetra_Vector(*things_[id].x));
+        things_[id].LHS->Multiply(false,*(things_[id].x),*ltmp);
+        things_[id].RHS->Multiply(false,*(things_[id].x),*rtmp);
+        double denom[1];
+        (things_[id].x)->Norm2(denom);
+        rtmp->Update(-1.*things_[id].keff,*(ltmp),1.);
+        double resids[1];
+        rtmp->Norm2(resids);
+        resid=resids[0]/denom[0];
         return 0;
     }
 

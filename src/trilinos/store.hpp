@@ -43,6 +43,10 @@ public:
     }
 
     double &operator[](int i){ return (*evec)[i];}
+
+    ~EpetraVecCnt(){
+        evec = Teuchos::null;
+    }
 };
 
 class EpetraVecStore {
@@ -58,6 +62,10 @@ public:
         things_[cid]=new EpetraVecCnt(n,nloc,rawComm);
         cid++;
         return cid-1;
+    }
+
+    int delete_data(const int id){
+        delete things_[id];
     }
 
     int set_data(const int id, const int *i, const double *val) {
@@ -141,9 +149,7 @@ public:
     {}
 
     ~EpetraMatCnt(){
-        //delete Comm;
-        //delete emap;
-        //delete emat;
+        emat = Teuchos::null;
     }
 };
 
@@ -160,6 +166,10 @@ public:
         things_[cid]=new EpetraMatCnt(n,nloc,rnnz,rawComm);
         cid++;
         return cid-1;
+    }
+
+    int delete_data(const int id){
+        delete things_[id];
     }
 
     int set_data(const int id, const int i, const int nnz, const int j[], const double val[]) {

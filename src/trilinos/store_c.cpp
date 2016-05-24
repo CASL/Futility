@@ -167,6 +167,14 @@ extern "C" void Anasazi_GetEigenvalue( const int id, double &k) {
     aeig->getEigenvalue_data(id,k);
 }
 
+extern "C" void Anasazi_GetResid( const int id, double &resid) {
+    aeig->getResidual(id,resid);
+}
+
+extern "C" void Anasazi_GetIterationCount( const int id, int &niter) {
+    aeig->getIterations_data(id,niter);
+}
+
 //------------------------------------------------------------------------------
 //Belos
 //------------------------------------------------------------------------------

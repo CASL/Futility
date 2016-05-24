@@ -167,6 +167,18 @@
       REAL(C_DOUBLE),INTENT(OUT)       :: k
     ENDSUBROUTINE
 
+    SUBROUTINE Anasazi_GetResid(id,resid) bind(C,NAME="Anasazi_GetResid")
+      IMPORT :: C_INT,C_DOUBLE
+      INTEGER(C_INT),INTENT(IN),VALUE  :: id
+      REAL(C_DOUBLE),INTENT(OUT)       :: resid
+    ENDSUBROUTINE
+
+    SUBROUTINE Anasazi_GetIterationCount(id,niter) bind(C,NAME="Anasazi_GetIterationCount")
+      IMPORT :: C_INT
+      INTEGER(C_INT),INTENT(IN),VALUE  :: id
+      INTEGER(C_INT),INTENT(OUT)       :: niter
+    ENDSUBROUTINE
+
 !-------------------------------------------------------------------------------
 ! Belos Interfaces
 !-------------------------------------------------------------------------------
