@@ -4440,6 +4440,22 @@ PROGRAM testParameterLists
     ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add (param)')
     CALL testParam%clear()
     CALL testParam2%clear()
+    CALL someParam%clear()
+
+    ! COMPONENT_TEST('Sublist not added')
+    ! CALL testParam%add('A->C',1)
+    ! CALL testParam2%add('CB->p1',1)
+    ! CALL testParam2%add('CB->p2',2)
+    ! CALL testParam2%get('CB',someParam)
+    ! testParam3=someParam
+    ! CALL testParam%add('A',testParam3)
+    ! bool=testParam%has('A->CB')
+    ! ASSERT(bool,'not added')
+
+    ! CALL testParam%clear()
+    ! CALL testParam2%clear()
+    ! CALL testParam3%clear()
+    ! someParam => NULL()
   ENDSUBROUTINE testAdd
 !
 !-------------------------------------------------------------------------------
