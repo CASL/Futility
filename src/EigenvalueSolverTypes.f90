@@ -73,7 +73,7 @@ MODULE EigenvalueSolverTypes
   PUBLIC :: EigenvalueSolverType_Anasazi
 
   !> set enumeration scheme for TPLs
-  INTEGER(SIK),PARAMETER,PUBLIC :: SLEPC=0,TRILINOS=1,NATIVE=4
+  INTEGER(SIK),PARAMETER,PUBLIC :: SLEPC=0,ANASAZI=1,NATIVE=4
   !> set enumeration scheme for solver methods
   INTEGER(SIK),PARAMETER,PUBLIC :: POWER_IT=0,JD=1,GD=2,ARNOLDI=3
 
@@ -466,7 +466,7 @@ MODULE EigenvalueSolverTypes
           CALL Anasazi_SetX(solver%eig,x%b)
         ENDSELECT
 
-        solver%TPLType=Trilinos
+        solver%TPLType=Anasazi
         solver%isInit=.TRUE.
       ELSE
         CALL eEigenvalueSolverType%raiseError('Incorrect call to '// &
