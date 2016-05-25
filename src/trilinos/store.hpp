@@ -18,8 +18,6 @@
 
 using std::map;
 
-bool verbose=false;
-
 class EpetraVecCnt{
 public:
 #ifdef HAVE_MPI
@@ -53,19 +51,19 @@ class EpetraVecStore {
 public:
     EpetraVecStore():
         cid(0)
-    {
-        if(verbose) std::cout << "Constructing new vector store" << std::endl;
-        return;
-    }
+    {}
 
     int new_data(const int n, const int nloc, const MPI_Comm rawComm) {
         things_[cid]=new EpetraVecCnt(n,nloc,rawComm);
+        //things_[cid]->Comm.PrintInfo(std::cout);
         cid++;
         return cid-1;
     }
 
     int delete_data(const int id){
         delete things_[id];
+        things_.erase(id);
+        return 0;
     }
 
     int set_data(const int id, const int *i, const double *val) {
@@ -147,20 +145,13 @@ public:
         emap(n,nloc,1,Comm),
         emat(new Epetra_CrsMatrix(Copy,emap,rnnz))
     {}
-
-    ~EpetraMatCnt(){
-        emat = Teuchos::null;
-    }
 };
 
 class EpetraMatStore {
 public:
     EpetraMatStore():
         cid(0)
-    {
-        if(verbose) std::cout << "Constructing new matrix store" << std::endl;
-        return;
-    }
+    {}
 
     int new_data(const int n, const int nloc, const int rnnz, const MPI_Comm rawComm) {
         things_[cid]=new EpetraMatCnt(n,nloc,rnnz,rawComm);
@@ -170,6 +161,8 @@ public:
 
     int delete_data(const int id){
         delete things_[id];
+        things_.erase(id);
+        return 0;
     }
 
     int set_data(const int id, const int i, const int nnz, const int j[], const double val[]) {

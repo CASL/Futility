@@ -69,7 +69,7 @@
 include 'mkl_pardiso.f90'
 #endif
 MODULE LinearSolverTypes
-
+  USE ISO_C_BINDING
   USE IntrType
   USE BLAS
   USE Times
@@ -93,6 +93,7 @@ MODULE LinearSolverTypes
 !petscisdef.h defines the keyword IS, and it needs to be reset
 #undef IS
 #endif
+#include "trilinos/store_interface.h"
 
   PRIVATE
 !
@@ -153,7 +154,11 @@ MODULE LinearSolverTypes
     KSP :: ksp
     PC :: pc
 #endif
-
+#ifdef MPACT_HAVE_Trilinos
+    INTEGER(SIK) :: Belos_solver
+    INTEGER(SIK) :: Belos_pc
+    LOGICAL(SBK) :: belos_pc_set=.TRUE.
+#endif
   !
   !List of Type Bound Procedures
     CONTAINS
@@ -611,6 +616,28 @@ MODULE LinearSolverTypes
                 ENDIF
                 CALL KSPSetFromOptions(solver%ksp,ierr)
 
+#else
+                CALL eLinearSolverType%raiseError('Incorrect call to '// &
+                  modName//'::'//myName//' - invalid value of solverMethod')
+#endif
+              ELSEIF(TPLType==TRILINOS) THEN
+#ifdef MPACT_HAVE_Trilinos
+                IF(solverMethod/=GMRES) &
+                  CALL eLinearSolverType%raiseError('Incorrect call to '// &
+                      modName//'::'//myName//' - Only GMRES solver is supported with Trilinos')
+
+                CALL Belos_Init(solver%Belos_solver)
+                CALL Preconditioner_Init(solver%Belos_pc,2)
+
+                SELECTTYPE(A=>solver%A); TYPE IS(TrilinosMatrixType)
+                  CALL Belos_SetMat(solver%Belos_solver,A%A)
+                ENDSELECT
+                SELECTTYPE(x=>solver%X); TYPE IS(TrilinosVectorType)
+                  CALL Belos_SetX(solver%Belos_solver,x%b)
+                ENDSELECT
+                SELECTTYPE(b=>solver%b); TYPE IS(TrilinosVectorType)
+                  CALL Belos_Setb(solver%Belos_solver,b%b)
+                ENDSELECT
 #else
                 CALL eLinearSolverType%raiseError('Incorrect call to '// &
                   modName//'::'//myName//' - invalid value of solverMethod')
@@ -1111,6 +1138,31 @@ MODULE LinearSolverTypes
                    modName//'::'//myName//' - PETSc not enabled.  You will'// &
                    'need to recompile with PETSc enabled to use this feature.')
 #endif
+              TYPE IS(TrilinosMatrixType)
+#ifdef MPACT_HAVE_Trilinos
+                ! assemble matrix if necessary
+                IF(.NOT.(A%isAssembled)) CALL A%assemble()
+
+                IF(solver%belos_pc_set) CALL Preconditioner_Setup(solver%Belos_pc,A%A)
+                solver%belos_pc_set=.FALSE.
+
+                ! assemble source vector if necessary
+                SELECTTYPE(b=>solver%b); TYPE IS(TrilinosVectorType)
+                  IF(.NOT.(b%isAssembled)) CALL b%assemble()
+                ENDSELECT
+
+                ! assemble solution vector if necessary
+                SELECTTYPE(X=>solver%X); TYPE IS(TrilinosVectorType)
+                  IF(.NOT.(X%isAssembled)) CALL X%assemble()
+                ENDSELECT
+
+                ! solve
+                CALL Belos_solve(solver%Belos_solver)
+#else
+                CALL eLinearSolverType%raiseFatalError('Incorrect call to '// &
+                   modName//'::'//myName//' - PETSc not enabled.  You will'// &
+                   'need to recompile with PETSc enabled to use this feature.')
+#endif
               CLASS DEFAULT
                 IF(solver%pciters /= 0) THEN
                   CALL solveGMRES(solver,solver%PreCondType)
@@ -1193,8 +1245,7 @@ MODULE LinearSolverTypes
       IF(solver%isInit) THEN
         SELECTTYPE(X => solver%X); TYPE IS(RealVectorType)
           X%b=X0
-        ENDSELECT
-        SELECTTYPE(X => solver%X); TYPE IS(PETScVectorType)
+        CLASS IS(DistributedVectorType)
           DO i=1,solver%X%n
             CALL X%set(i,X0(i))
           ENDDO
@@ -1285,6 +1336,14 @@ MODULE LinearSolverTypes
              modName//'::'//myName//' - PETSc not enabled.  You will'// &
              'need to recompile with PETSc enabled to use this feature.')
 #endif
+        ELSEIF(solver%TPLType == TRILINOS) THEN
+#ifdef MPACT_HAVE_Trilinos
+          CALL Belos_SetConvCrit(solver%Belos_solver,solver%convTol,solver%maxIters)
+#else
+          CALL eLinearSolverType%raiseFatalError('Incorrect call to '// &
+             modName//'::'//myName//' - Trilinos not enabled.  You will'// &
+             'need to recompile with Trilinos enabled to use this feature.')
+#endif
         ENDIF
       ENDIF
     ENDSUBROUTINE setConv_LinearSolverType_Iterative
@@ -1336,6 +1395,11 @@ MODULE LinearSolverTypes
 #ifdef MPACT_HAVE_PETSC
         CALL KSPGetIterationNumber(solver%ksp,niters,ierr)
         CALL KSPGetResidualNorm(solver%ksp,resid,ierr)
+#endif
+      ELSEIF(solver%TPLType == TRILINOS) THEN
+#ifdef MPACT_HAVE_Trilinos
+        CALL Belos_GetIterationCount(solver%Belos_solver,niters)
+        CALL Belos_GetResid(solver%Belos_solver,resid)
 #endif
       ELSE
         niters=solver%iters

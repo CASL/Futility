@@ -4,6 +4,7 @@
 #include "store.hpp"
 #include "store_solvers.hpp"
 #include "store_pc.hpp"
+#include <omp.h>
 
 bool           mpact_trilinos_isinit=false;
 EpetraVecStore *evec = nullptr;
@@ -19,19 +20,18 @@ extern "C" void MPACT_Trilinos_Init() {
         assert(!aeig);
         assert(!bels);
         assert(!pcst);
-        if(verbose) std::cout << "Initializing data store" << std::endl;
         evec = new EpetraVecStore();
         emat = new EpetraMatStore();
         aeig = new AnasaziStore();
         bels = new BelosStore();
         pcst = new PCStore();
         mpact_trilinos_isinit=true;
+        omp_set_num_threads(1);
     }
 
 }
 
 extern "C" void MPACT_Trilinos_Finalize() {
-    if(verbose) std::cout << "Deleting data store" << std::endl;
     delete aeig;
     delete bels;
     delete pcst;
@@ -44,6 +44,10 @@ extern "C" void MPACT_Trilinos_Finalize() {
 //------------------------------------------------------------------------------
 extern "C" void ForPETRA_VecInit( int &id, const int n, const int nlocal, const int Comm ) {
     id = evec->new_data(n,nlocal,MPI_Comm_f2c(Comm));
+}
+
+extern "C" void ForPETRA_VecDestroy(const int id) {
+    evec->delete_data(id);
 }
 
 extern "C" void ForPETRA_VecSet(const int id, const int i, const double val) {
@@ -109,6 +113,10 @@ extern "C" void ForPETRA_MatInit( int &id, const int n, const int nlocal, const 
     id = emat->new_data(n,nlocal,rnnz,MPI_Comm_f2c(Comm));
 }
 
+extern "C" void ForPETRA_MatDestroy(const int id) {
+    emat->delete_data(id);
+}
+
 extern "C" void ForPETRA_MatSet(const int id, const int i, const int nnz, const int j[], const double val[]) {
     int ierr = emat->set_data(id,i,nnz,j,val);
     assert(ierr==0);
@@ -147,6 +155,10 @@ extern "C" void Anasazi_Init( int &id) {
     id = aeig->new_data();
 }
 
+extern "C" void Anasazi_Destroy(const int id) {
+    aeig->delete_data(id);
+}
+
 extern "C" void Anasazi_SetMat( const int id, const int idLHS, const int idRHS) {
     aeig->setMat_data(id,emat->get_mat(idLHS),emat->get_mat(idRHS));
 }
@@ -157,6 +169,10 @@ extern "C" void Anasazi_SetPC( const int id, const int idpc) {
 
 extern "C" void Anasazi_SetX( const int id, const int idX) {
     aeig->setX0_data(id,evec->get_vec(idX));
+}
+
+extern "C" void Anasazi_SetConvCrit( const int id, const double tol, const int maxit) {
+    aeig->setConvCrit_data(id,tol,maxit);
 }
 
 extern "C" void Anasazi_Solve( int id) {
@@ -182,11 +198,51 @@ extern "C" void Belos_Init( int &id) {
     id = bels->new_data();
 }
 
+extern "C" void Belos_Destroy(const int id) {
+    bels->delete_data(id);
+}
+
+extern "C" void Belos_SetMat( const int id, const int idA) {
+    bels->setMat_data(id,emat->get_mat(idA));
+}
+
+extern "C" void Belos_SetPC( const int id, const int idpc) {
+    bels->setPC_data(id,pcst->get_pc(idpc));
+}
+
+extern "C" void Belos_SetX( const int id, const int idX) {
+    bels->setX0_data(id,evec->get_vec(idX));
+}
+
+extern "C" void Belos_Setb( const int id, const int idb) {
+    bels->setb_data(id,evec->get_vec(idb));
+}
+
+extern "C" void Belos_SetConvCrit( const int id, const double tol, const int maxit) {
+    bels->setConvCrit_data(id,tol,maxit);
+}
+
+extern "C" void Belos_Solve( int id) {
+    bels->solve(id);
+}
+
+extern "C" void Belos_GetResid( const int id, double &resid) {
+    bels->getResidual(id,resid);
+}
+
+extern "C" void Belos_GetIterationCount( const int id, int &niter) {
+    bels->getIterations_data(id,niter);
+}
+
 //------------------------------------------------------------------------------
 //Preconditioner
 //------------------------------------------------------------------------------
 extern "C" void Preconditioner_Init( int &id, const int opt) {
     id = pcst->new_data(opt);
+}
+
+extern "C" void Preconditioner_Destroy(const int id) {
+    pcst->delete_data(id);
 }
 
 extern "C" void Preconditioner_Setup( const int id, const int idM ) {

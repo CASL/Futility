@@ -31,6 +31,8 @@ public:
       problem needs matrices
       the two above statements mean we can't constrcut them until solve time (consistent with Steven)
     */
+
+    //We're solving   LHS*x = k*RHS*x
     Teuchos::RCP<Epetra_CrsMatrix> LHS;
     Teuchos::RCP<Epetra_CrsMatrix> RHS;
     Teuchos::RCP<Epetra_Operator>  pc;
@@ -46,10 +48,7 @@ class AnasaziStore {
 public:
     AnasaziStore():
         cid(0)
-    {
-        if(verbose) std::cout << "Constructing new Anasazi store" << std::endl;
-        return;
-    }
+    {}
 
     int new_data() {
         //Teuchos::ParameterList db
@@ -67,6 +66,11 @@ public:
 
         cid++;
         return cid-1;
+    }
+
+    int delete_data(const int id){
+        things_.erase(id);
+        return 0;
     }
 
     int setMat_data(const int id, Teuchos::RCP<Epetra_CrsMatrix> LHS, Teuchos::RCP<Epetra_CrsMatrix> RHS) {
@@ -87,7 +91,7 @@ public:
     }
 
     int setPC_data(const int id, Teuchos::RCP<Epetra_Operator> pc) {
-        if(things_[id].LHS->Comm().MyPID()==0) std::cout << pc->Label() << std::endl;
+        //if(things_[id].LHS->Comm().MyPID()==0) std::cout << pc->Label() << std::endl;
         things_[id].pc=pc;
         things_[id].haspc=true;
         return 0;
@@ -120,8 +124,6 @@ public:
         things_[id].x->Update(1.0,*(solution.Evecs),0.0);
         //things_[id].x=Teuchos::rcp((*solution.Evecs)(0));
 
-        //std::cout << things_[id].keff << std::endl;
-
         return 0;
     }
 
@@ -142,7 +144,7 @@ public:
         things_[id].RHS->Multiply(false,*(things_[id].x),*rtmp);
         double denom[1];
         (things_[id].x)->Norm2(denom);
-        rtmp->Update(-1.*things_[id].keff,*(ltmp),1.);
+        rtmp->Update(-1.,*(ltmp),things_[id].keff);
         double resids[1];
         rtmp->Norm2(resids);
         resid=resids[0]/denom[0];
@@ -165,36 +167,48 @@ public:
     Teuchos::RCP<Epetra_CrsMatrix> A;
     Teuchos::RCP<Epetra_Operator>  pc;
     bool haspc=false;
+    int num_iters;
     Teuchos::RCP<Epetra_Vector> x;
     Teuchos::RCP<Epetra_Vector> b;
-    Teuchos::RCP<Teuchos::ParameterList> belos_db;
+    Teuchos::ParameterList belos_db;
     //maybe some other things about a specific solver
+
+
+    ~BelosCnt(){
+        A  = Teuchos::null;
+        pc = Teuchos::null;
+        x  = Teuchos::null;
+        b  = Teuchos::null;
+    }
 };
 
 class BelosStore {
 public:
     BelosStore():
         cid(0)
-    {
-        if(verbose) std::cout << "Constructing new Belos store" << std::endl;
-        return;
-    }
+    {}
 
     int new_data() {
         //Teuchos::ParameterList db
         things_[cid]=BelosCnt();
         //setup parameterlist with defaults
+
         //things_[cid].anasazi_db = Teuchos::sublist(db, "Anasazi");
-        things_[cid].belos_db->get("belos_type","Pseudo Block GMRES");
-        things_[cid].belos_db->get("Convergence Tolerance",1e-6);
-        things_[cid].belos_db->get("Maximum Iterations",250);
-        things_[cid].belos_db->get("Verbosity",Belos::Warnings+Belos::FinalSummary+Belos::StatusTestDetails);
-        things_[cid].belos_db->get("Output Frequency",1);
-        things_[cid].belos_db->get("Implicit Residual Scaling","Norm of RHS");
-        things_[cid].belos_db->get("Explicit Residual Scaling","Norm of RHS");
+        //things_[cid].belos_db.get("belos_type","Pseudo Block GMRES");
+        things_[cid].belos_db.get("Convergence Tolerance",1e-6);
+        things_[cid].belos_db.get("Maximum Iterations",250);
+        things_[cid].belos_db.get("Verbosity",0);  //Belos::Warnings+Belos::FinalSummary+Belos::StatusTestDetails
+        things_[cid].belos_db.get("Output Frequency",1);
+        things_[cid].belos_db.get("Implicit Residual Scaling","Norm of RHS");
+        things_[cid].belos_db.get("Explicit Residual Scaling","Norm of RHS");
 
         cid++;
         return cid-1;
+    }
+
+    int delete_data(const int id) {
+        things_.erase(id);
+        return 0;
     }
 
     int setMat_data(const int id, Teuchos::RCP<Epetra_CrsMatrix> A) {
@@ -203,9 +217,8 @@ public:
     }
 
     int setConvCrit_data(const int id, const double tol, const int maxit) {
-        //things_[id].anasazi_db.set("Convergence Tolerance", tol);
-        // check if this is what I think it is...
-        //things_[id].anasazi_db->set("Maximum Restarts", maxit);
+        things_[id].belos_db.set("Convergence Tolerance", tol);
+        things_[id].belos_db.set("Maximum Iterations", maxit);
         return 0;
     }
 
@@ -228,9 +241,9 @@ public:
     int solve(const int id) {
         Belos::SolverFactory<double,Epetra_MultiVector,Epetra_Operator> factory;
 
-        std::string type = things_[id].belos_db->get("belos_type","Pseudo Block GMRES");
+        std::string type ="Pseudo Block GMRES";
         Teuchos::RCP<Belos::SolverManager<double,Epetra_MultiVector,Epetra_Operator> > solver =
-            factory.create(type,things_[id].belos_db);
+            factory.create(type,Teuchos::rcpFromRef(things_[id].belos_db));
 
         // Create linear problem
         Teuchos::RCP<Belos::LinearProblem<double,Epetra_MultiVector,Epetra_Operator> > problem(
@@ -241,18 +254,27 @@ public:
         if(things_[id].haspc) problem->setRightPrec(things_[id].pc);
         problem->setProblem();
 
-        solver->setParameters(things_[id].belos_db);
+        solver->setParameters(Teuchos::rcpFromRef(things_[id].belos_db));
         solver->setProblem(problem);
 
         Belos::ReturnType result = solver->solve();
-        int num_iters = solver->getNumIters();
-
-        std::cout << num_iters << std::endl;
+        things_[id].num_iters = solver->getNumIters();
 
         return 0;
     }
 
+    int getIterations_data(const int id,int &niter) {
+        niter=things_[id].num_iters;
+        return 0;
+    }
+
     int getResidual(const int id,double &resid) {
+        Teuchos::RCP<Epetra_Vector> rtmp(new Epetra_Vector(*things_[id].x));
+        things_[id].A->Multiply(false,*(things_[id].x),*rtmp);
+        rtmp->Update(-1.,*(things_[id].b),1.);
+        double resids[1];
+        rtmp->Norm2(resids);
+        resid=resids[0];
         return 0;
     }
 

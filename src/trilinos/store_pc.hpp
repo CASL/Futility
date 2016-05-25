@@ -37,10 +37,7 @@ class PCStore {
 public:
     PCStore():
         cid(0)
-    {
-        if(verbose) std::cout << "Constructing new preconditioner store" << std::endl;
-        return;
-    }
+    {}
 
     int new_data(const int option) {
         //Teuchos::ParameterList db
@@ -65,6 +62,10 @@ public:
         }
         cid++;
         return cid-1;
+    }
+
+    int delete_data(const int id){
+        things_.erase(id);
     }
 
     int setupPC_data(const int id, Teuchos::RCP<Epetra_CrsMatrix> M) {
