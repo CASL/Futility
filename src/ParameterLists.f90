@@ -482,6 +482,9 @@ MODULE ParameterLists
       !> @copybrief ParameterLists::getSubParam_List
       !> @copydoc ParameterLists::getSubParam_List
       PROCEDURE,PASS :: getSubPL => getSubParam_List
+      !> @copybrief ParameterLists::getSubParams
+      !> @copydoc ParameterLists::getSubParams
+      PROCEDURE,PASS :: getSubParams => getSubParams
       !> @copybrief ParameterLists::validate_ParamType
       !> @copydoc ParameterLists::validate_ParamType
       PROCEDURE,PASS :: validate => validate_ParamType
@@ -1406,7 +1409,6 @@ MODULE ParameterLists
                 ENDDO sublistSearch
               ELSE 
                 !Return NULL if parent list is empty
-                write(*,*) "Nothing in list"
                 nextParam => NULL()
               ENDIF
             CLASS DEFAULT
@@ -1428,7 +1430,89 @@ MODULE ParameterLists
       ENDIF
       param => nextParam
     ENDSUBROUTINE getSubParam_List
+!
+!-------------------------------------------------------------------------------
+!> @brief Routine can be used as an "iterator" over parameters(not just lists)
+!>        one level deep. It takes an absolute list address a parameter and
+!>        returns the next parameter
+!> @param thisParam the parent parameter list to obtain the next sublist from
+!> @param addr the absolute address of the parent list
+!> @param param a pointer to the next parameter(1-level deep), if null the first
+!>        sub-parameter will be returned
+!>
+!> To use this routine as an iterator, a loop of the following form should be
+!> written in the client code:
+!> @code
+!> TYPE(StringType) :: addr
+!> TYPE(ParameType) :: paramList
+!> CLASS(ParamType),POINTER :: nextParam
+!> TYPE(ParamType) :: iterPL
+!> addr=''
+!> nextParam => NULL()
+!> CALL paramList%getSubParams(addr,nextParam)
+!> DO WHILE(ASSOCIATED(nextParam))
+!>   iterPL=nextParam
+!>   !Do stuff with nextParam
+!>   !...
+!>   CALL paramList%getSubParams(addr,nextParam)
+!> ENDDO
+!> @endcode
+!>
+    SUBROUTINE getSubParams(thisParam,addr,param)
+      CLASS(ParamType),TARGET,INTENT(IN) :: thisParam
+      TYPE(StringType),INTENT(IN) :: addr
+      CLASS(ParamType),POINTER,INTENT(INOUT) :: param
 
+      INTEGER(SIK) :: i
+      TYPE(StringType) :: tmpAddr,prevName
+      CLASS(ParamType),POINTER :: tmpParam,nextParam
+
+      nextParam => NULL()
+      tmpParam => NULL()
+      IF(LEN_TRIM(addr) > 0) THEN
+        !Address passed in is the parent list
+        CALL get_ParamType(thisParam,TRIM(addr),tmpParam)
+      ELSE
+        !No Address so assume root
+        IF(LEN_TRIM(thisParam%name) > 0) THEN
+          tmpParam => thisParam
+        ELSE
+          tmpParam => thisParam%pdat
+        ENDIF
+      ENDIF
+
+      IF(ASSOCIATED(tmpParam)) THEN
+        !Check to make sure param is in thisParam
+        !if param is null that's ok too because we're guaranteed to
+        !be within thisParam
+        SELECTTYPE(tp => tmpParam); TYPE IS(ParamType_List)
+          IF(ALLOCATED(tp%pList)) THEN
+            !Search the PL for an element
+            IF(ASSOCIATED(param)) THEN
+              DO i=1,SIZE(tp%pList)
+                IF(ASSOCIATED(param,tp%pList(i)%pdat)) THEN
+                  IF(i+1 <= SIZE(tp%pList)) THEN
+                    nextParam => tp%pList(i+1)%pdat
+                  ELSE
+                    nextParam => NULL()
+                  ENDIF
+                  EXIT
+                ENDIF
+              ENDDO
+            ELSE
+              !Return first element
+              IF(SIZE(tp%pList) > 0) THEN
+                nextParam => tp%pList(1)%pdat
+              ENDIF
+            ENDIF
+          ELSE
+            !Return NULL if parent list is empty
+            nextParam => NULL()
+          ENDIF
+        ENDSELECT
+      ENDIF
+      param => nextParam
+    ENDSUBROUTINE getSubParams
 !
 !-------------------------------------------------------------------------------
 !> @brief Returns a pointer to a parameter whose name matches the given input

@@ -88,6 +88,7 @@ PROGRAM testParameterLists
   REGISTER_SUBTEST('%has(...)',testHas)
   REGISTER_SUBTEST('%remove(...)',testRemove)
   REGISTER_SUBTEST('%getNextParam(...)',testGetNextParam)
+  REGISTER_SUBTEST('%getSubParams(...)',testGetSubParams)
   REGISTER_SUBTEST('%validate(...)',testValidate)
   REGISTER_SUBTEST('%verify(...)',testVerify)
   REGISTER_SUBTEST('Partial Matching',testPartialMatch)
@@ -4879,6 +4880,80 @@ PROGRAM testParameterLists
     
     CALL clear_test_vars()
   ENDSUBROUTINE testGetNextParam
+!
+!-------------------------------------------------------------------------------
+  SUBROUTINE testGetSubParams()
+    INTEGER(SIK) :: n
+    TYPE(StringType) :: addr,refname(3)
+    CLASS(ParamType),POINTER :: iParam => NULL()
+
+    CALL testParam%add('level 1->level 2->val 1',1.0)
+    CALL testParam%add('level 1->val 3',3.0)
+    CALL testParam%add('level 1->level 2->level 3->dummy',0.0)
+    CALL testParam%add('level 1->level 2->val 2',2.0)
+
+    refname(1)='level 2'
+    refname(2)='val 3'
+
+    n=0
+    CALL testParam%get('level 1',someParam)
+    addr=''
+    CALL testParam%getSubParams(addr,iParam)
+    ASSERT(ASSOCIATED(iParam),'First Sub Param')
+    DO WHILE(ASSOCIATED(iParam))
+      n=n+1
+      ASSERT(refname(n) == TRIM(iParam%name),'name')
+      FINFO() n,'"'//TRIM(refname(n))//'" "'//TRIM(iParam%name)//'"'
+      CALL testParam%getSubParams(addr,iParam)
+    ENDDO
+    ASSERT(n == 2,'number of subParams')
+    
+    refname(1)='level 2'
+    refname(2)='val 3'
+    n=0
+    CALL testParam%get('level 1',someParam)
+    addr='level 1'
+    CALL testParam%getSubParams(addr,iParam)
+    ASSERT(ASSOCIATED(iParam),'First Sub Param')
+    DO WHILE(ASSOCIATED(iParam))
+      n=n+1
+      ASSERT(refname(n) == TRIM(iParam%name),'name')
+      FINFO() n,'"'//TRIM(refname(n))//'" "'//TRIM(iParam%name)//'"'
+      CALL testParam%getSubParams(addr,iParam)
+    ENDDO
+    ASSERT(n == 2,'number of subParams')
+
+
+    n=0
+    refname(1)='val 1'
+    refname(2)='level 3'
+    refname(3)='val 2'
+    addr='level 1->level 2'
+    CALL testParam%getSubParams(addr,iParam)
+    ASSERT(ASSOCIATED(iParam),'First Sub Param')
+    DO WHILE(ASSOCIATED(iParam))
+      n=n+1
+      ASSERT(refname(n) == TRIM(iParam%name),'name')
+      FINFO() n,'"'//TRIM(refname(n))//'" "'//TRIM(iParam%name)//'"'
+      CALL testParam%getSubParams(addr,iParam)
+    ENDDO
+    ASSERT(n == 3,'number of subParams')
+
+    n=0
+    refname(1)='dummy'
+    addr='level 1->level 2->level 3'
+    CALL testParam%getSubParams(addr,iParam)
+    ASSERT(ASSOCIATED(iParam),'First Sub Param')
+    DO WHILE(ASSOCIATED(iParam))
+      n=n+1
+      ASSERT(refname(n) == TRIM(iParam%name),'name')
+      FINFO() n,'"'//TRIM(refname(n))//'" "'//TRIM(iParam%name)//'"'
+      CALL testParam%getSubParams(addr,iParam)
+    ENDDO
+    ASSERT(n == 1,'number of subParams')
+
+    CALL clear_test_vars()
+  ENDSUBROUTINE testGetSubParams
 !
 !-------------------------------------------------------------------------------
   SUBROUTINE testRemove()
