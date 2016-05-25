@@ -36,6 +36,7 @@ PROGRAM testXMLFileType
   root => testXMLFile%root
   ASSERTFAIL(ASSOCIATED(root),'root Element')
   REGISTER_SUBTEST('%get',testGet)
+  REGISTER_SUBTEST('%set',testSet)
 
   FINALIZE_TEST()
 !
@@ -92,5 +93,70 @@ PROGRAM testXMLFileType
     DEALLOCATE(attr_names)
     DEALLOCATE(attr_values)
   ENDSUBROUTINE testGet
+!
+!-------------------------------------------------------------------------------
+  SUBROUTINE testSet()
+    LOGICAL(SBK) :: bool
+    INTEGER(SIK) :: ich,nch,nchComp,iattr
+    TYPE(StringType) :: attr_name,val,refval
+    TYPE(StringType) :: refName,setName
+    TYPE(XMLElementType),POINTER :: setChildren(:),getChildren(:)
+
+    refName=root%name
+    bool=(TRIM(refName) == 'ParameterList')
+    ASSERT(bool,'correct Name')
+
+    !set Name
+    setName='Parameter'
+    CALL root%setName(setName)
+    setName=root%name
+    bool=(TRIM(setName) == 'Parameter')
+    ASSERT(bool,'setName')
+    !Reset to correct value
+    CALL root%setName(refName)
+
+    !Get the children to modify/set
+    CALL root%getChildren(getChildren)
+    nch=SIZE(getChildren)
+    ALLOCATE(setChildren(nch-1))
+    nch=nch-1
+    setChildren=getChildren(1:nch)
+    NULLIFY(getChildren)
+    CALL root%setChildren(setChildren)
+
+    !Check that the set worked
+    CALL root%getChildren(getChildren)
+    nchComp=SIZE(getChildren)
+    bool=(nch == nchComp)
+    ASSERT(bool,'set Children')
+
+    !Test set attribute
+    attr_name='name'
+    refval='testName'
+    CALL setChildren(1)%setAttribute(attr_name,refval)
+    CALL setChildren(1)%getAttributeValue(attr_name,val)
+    bool=(TRIM(refval) == TRIM(val))
+    ASSERT(bool,'set existing attribute')
+
+    attr_name='testSet'
+    refval='testvalue'
+    CALL setChildren(1)%setAttribute(attr_name,refval)
+
+    CALL setChildren(1)%getAttributeValue(attr_name,val)
+    bool=(TRIM(refval) == TRIM(val))
+    ASSERT(bool,'set non-existing attribute')
+
+    attr_name='name'
+    refval='testName'
+    CALL setChildren(1)%getAttributeValue(attr_name,val)
+    bool=(TRIM(refval) == TRIM(val))
+    ASSERT(bool,'set non-existing attribute')
+
+    DO iattr=1,4
+      CALL setChildren(iattr)%clear()
+    ENDDO !iattr
+    DEALLOCATE(setChildren)
+    NULLIFY(getChildren)
+  ENDSUBROUTINE testSet
 !
 ENDPROGRAM testXMLFileType
