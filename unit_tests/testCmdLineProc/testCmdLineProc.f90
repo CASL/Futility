@@ -27,7 +27,6 @@ PROGRAM testCmdLineProc
   EXTERNAL testProcArgs
   
   TYPE(CmdLineProcType) :: testCLP
-  INTEGER :: iarg
   CHARACTER(LEN=128) :: str
   TYPE(ExceptionHandlerType),TARGET :: e
 
@@ -63,6 +62,7 @@ PROGRAM testCmdLineProc
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testOptions()
+      TYPE(StringType) :: optStr
       CALL testCLP%clearOpts()
       CALL testCLP%setExecName('test5.exe')
       CALL testCLP%defineUsage('[[-help] | [input_file] [output_file]]')
@@ -80,7 +80,19 @@ PROGRAM testCmdLineProc
       CALL testCLP%defineOpt(2,' input_file','Name of the input file')
       CALL testCLP%defineOpt(3,' output_file','Name of the output file')
       CALL testCLP%DisplayHelp()
+      CALL testCLP%getOptName(1,optStr)
+      ASSERT(optStr == '-help','optName=-help')
+      CALL testCLP%getOptName(2,optStr)
+      ASSERT(optStr == 'input_file','optName=input_file')
+      CALL testCLP%getOptName(3,optStr)
+      ASSERT(optStr == 'output_file','optName=output_file')
       CALL testCLP%clearOpts()
+      CALL testCLP%getOptName(1,optStr)
+      ASSERT(LEN(optStr) == 0,'Empty 1')
+      CALL testCLP%getOptName(2,optStr)
+      ASSERT(LEN(optStr) == 0,'Empty 2')
+      CALL testCLP%getOptName(3,optStr)
+      ASSERT(LEN(optStr) == 0,'Empty 3')
       ASSERT(testCLP%getNumOpts() == 0,'%clearOpts()')
       CALL testCLP%DisplayHelp()
       CALL testCLP%clearOpts()
