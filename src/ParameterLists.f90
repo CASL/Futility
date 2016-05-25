@@ -494,6 +494,9 @@ MODULE ParameterLists
       !> @copybrief ParameterLists::edit_ParamType
       !> @copydoc ParameterLists::edit_ParamType
       PROCEDURE,PASS :: edit => edit_ParamType
+      !> @copybrief ParameterLists::editToXML_ParamType
+      !> @copydoc ParameterLists::editToXML_ParamType
+      PROCEDURE,PASS :: editToXML => editToXML_ParamType
       !> @copybrief ParameterLists::clear_ParamType
       !> @copydoc ParameterLists::clear_ParamType
       PROCEDURE,PASS :: clear => clear_ParamType
@@ -9227,6 +9230,131 @@ MODULE ParameterLists
     ENDSUBROUTINE initFromXML
 !
 !-------------------------------------------------------------------------------
+!> @brief Recrusive routine to create an XML tree from a parameter list
+!> @param param the parameter to be converted
+!> @param currPath the current Path in the parameter list
+!> @param currElem the XML element to store the data of param
+!>
+    RECURSIVE SUBROUTINE paramToXML(param,currPath,currElem)
+      CHARACTER(LEN=*),PARAMETER :: myName='paramToXML'
+      CLASS(ParamType),INTENT(IN) :: param
+      ! TYPE(XMLElementType),POINTER,INTENT(IN) :: parent
+      TYPE(StringType),INTENT(IN) :: currPath
+      TYPE(XMLElementType),POINTER,INTENT(INOUT) :: currElem
+
+
+      LOGICAL(SBK) :: bool0
+      LOGICAL(SBK),ALLOCATABLE :: bool1
+      INTEGER(SIK) :: i,nChildren
+      TYPE(StringType),ALLOCATABLE :: str1(:)
+
+      TYPE(StringType) :: addr,val,name,typename,tmpPath
+      CLASS(ParamType),POINTER :: nextParam
+      TYPE(XMLElementType),POINTER :: tmpChild,myChildren(:)
+
+      name=TRIM(param%name)
+      IF(.NOT. ASSOCIATED(currElem)) ALLOCATE(currElem)
+      addr=TRIM('name')
+      CALL currElem%setAttribute(addr,name)
+
+      addr=currPath
+      nChildren=0
+      nextParam => NULL()
+      CALL param%getSubParams(addr,nextParam)
+      DO WHILE(ASSOCIATED(nextParam))
+        nChildren=nChildren+1
+        CALL param%getSubParams(addr,nextParam)
+      ENDDO
+
+      IF(nChildren > 0) THEN
+        ALLOCATE(myChildren(nChildren))
+        addr=currPath
+        nextParam => NULL()
+        CALL param%getSubParams(addr,nextParam)
+        NULLIFY(tmpChild)
+        DO i=1,nChildren
+          ! IF(LEN_TRIM(addr) > 0) THEN
+            ! tmpPath=TRIM(addr)//'->'//TRIM(nextParam%name)
+          ! ELSE
+            tmpPath=TRIM(nextParam%name)
+          ! ENDIF
+          tmpChild => myChildren(i)
+          CALL paramToXML(nextParam,tmpPath,tmpChild)
+          NULLIFY(tmpChild)
+          CALL param%getSubParams(addr,nextParam)
+        ENDDO
+        name=TRIM('ParameterList')
+        CALL currElem%setName(name)
+        CALL currElem%setChildren(myChildren)
+      ELSE
+        !Get name and value from parameter list
+        SELECTCASE(TRIM(param%dataType))
+          CASE('LOGICAL(SBK)')
+            CALL param%get(TRIM(param%name),bool0)
+            IF(bool0) THEN
+              val='true'
+            ELSE
+              val='false'
+            ENDIF
+            typename='bool'
+          CASE('INTEGER(SNK)')
+            CALL param%getString(TRIM(param%name),val)
+            typename='int'
+          CASE('REAL(SDK)')
+            CALL param%getString(TRIM(param%name),val)
+            typename='double'
+          CASE('TYPE(StringType)')
+            CALL param%getString(TRIM(param%name),val)
+            typename='string'
+          CASE('1-D ARRAY INTEGER(SNK)')
+            CALL param%getString(TRIM(param%name),str1)
+            CALL string_array_to_string(str1,val)
+            typename='Array(int)'
+          CASE('1-D ARRAY REAL(SDK)')
+            CALL param%getString(TRIM(param%name),str1)
+            CALL string_array_to_string(str1,val)
+            typename='Array(double)'
+          CASE('1-D ARRAY TYPE(StringType)')
+            CALL param%getString(TRIM(param%name),str1)
+            CALL string_array_to_string(str1,val)
+            typename='Array(string)'
+          CASE DEFAULT
+            CALL eParams%raiseError('Invalid paramType in '//modName//'::'//myName// &
+              ' - dataType '//TRIM(param%dataType)//' is not valid for XML output!')
+        ENDSELECT
+        name=TRIM('Parameter')
+        CALL currElem%setName(name)
+        addr=TRIM('type')
+        CALL currElem%setAttribute(addr,typename)
+        addr=TRIM('value')
+        CALL currElem%setAttribute(addr,val)
+      ENDIF
+    ENDSUBROUTINE paramToXML
+!
+!-------------------------------------------------------------------------------
+!> @brief Creates an XML file from the input parameter list
+!> @param thisParam the parameter list to be written into the XML file
+!> @param fname the name of the output file
+!>
+    SUBROUTINE editToXML_ParamType(thisParam, fname)
+      CLASS(ParamType),INTENT(IN) :: thisParam
+      CHARACTER(LEN=*),INTENT(IN) :: fname
+      TYPE(XMLFileType) :: xmlFile
+      TYPE(XMLElementType),POINTER :: nullElem => NULL()
+      TYPE(StringType) :: addr
+
+      SELECTTYPE(thisParam); TYPE IS(ParamType)
+        !Initialize the XML file
+        addr=''
+        CALL paramToXML(thisParam%pdat,addr,xmlFile%root)
+        CALL xmlFile%exportToDisk(fname)
+        CALL xmlFile%clear()
+      CLASS DEFAULT
+        !Wrong type
+      ENDSELECT
+    ENDSUBROUTINE editToXML_ParamType
+!
+!-------------------------------------------------------------------------------
     FUNCTION countArrayElts(charArr) RESULT(numElts)
       INTEGER(SIK) :: numElts
       CHARACTER(LEN=*),INTENT(IN) :: charArr
@@ -9281,6 +9409,31 @@ MODULE ParameterLists
     ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing an assignment of an array of
+!> integers to a string
+!> @param iArr the array of integers
+!> @param str the string value
+    SUBROUTINE int_array_to_string(iArr,str)
+      INTEGER(SIK),INTENT(IN) :: iArr(:)
+      TYPE(StringType),INTENT(OUT) :: str
+      INTEGER(SIK) :: i,numElts
+      CHARACTER(LEN=32) :: tmpchar
+
+      numElts=SIZE(iArr)
+      str=''
+      IF(numElts == 0) RETURN
+
+      str='{'
+      DO i=1,numElts
+        WRITE(tmpchar,*) iArr(i)
+        tmpchar=ADJUSTL(tmpchar)
+        str=TRIM(str)//TRIM(tmpchar)
+        IF(i < numElts) str=TRIM(str)//','
+      ENDDO
+      str=TRIM(str)//'}'
+    ENDSUBROUTINE int_array_to_string
+!
+!-------------------------------------------------------------------------------
 !> @brief Defines the operation for performing an assignment of a character
 !> string to an array of doubles
 !> @param dArr the array of doubles
@@ -9317,6 +9470,31 @@ MODULE ParameterLists
     ENDSUBROUTINE char_to_double_array
 !
 !-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing an assignment of an array of
+!> double to a string
+!> @param dArr the array of doubles
+!> @param str the string value
+    SUBROUTINE double_array_to_string(dArr,str)
+      REAL(SRK),INTENT(IN) :: dArr(:)
+      TYPE(StringType),INTENT(OUT) :: str
+      INTEGER(SIK) :: i,numElts
+      CHARACTER(LEN=32) :: tmpchar
+
+      numElts=SIZE(dArr)
+      str=''
+      IF(numElts == 0) RETURN
+
+      str='{'
+      DO i=1,numElts
+        WRITE(tmpchar,*) dArr(i)
+        tmpchar=ADJUSTL(tmpchar)
+        str=TRIM(str)//TRIM(tmpchar)
+        IF(i < numElts) str=TRIM(str)//','
+      ENDDO
+      str=TRIM(str)//'}'
+    ENDSUBROUTINE double_array_to_string
+!
+!-------------------------------------------------------------------------------
 !> @brief Defines the operation for performing an assignment of a character
 !> string to an array of strings
 !> @param sArr the array of strings
@@ -9350,6 +9528,28 @@ MODULE ParameterLists
         ENDIF
       ENDDO
     ENDSUBROUTINE char_to_string_array
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing an assignment of an array of
+!> strings to a string single string(for XML output)
+!> @param sArr the array of strings
+!> @param str the string value
+    SUBROUTINE string_array_to_string(sArr,str)
+      TYPE(StringType),INTENT(IN) :: sArr(:)
+      TYPE(StringType),INTENT(OUT) :: str
+      INTEGER(SIK) :: i,numElts
+
+      numElts=SIZE(sArr)
+      str=''
+      IF(numElts == 0) RETURN
+
+      str='{'
+      DO i=1,numElts
+        str=TRIM(str)//TRIM(sArr(i))
+        IF(i < numElts) str=TRIM(str)//','
+      ENDDO
+      str=TRIM(str)//'}'
+    ENDSUBROUTINE string_array_to_string
 !
 ENDMODULE ParameterLists
 

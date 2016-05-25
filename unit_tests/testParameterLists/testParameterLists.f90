@@ -94,6 +94,7 @@ PROGRAM testParameterLists
   REGISTER_SUBTEST('Partial Matching',testPartialMatch)
 
   REGISTER_SUBTEST('%initFromXML',testInitFromXML)
+  REGISTER_SUBTEST('%editToXML',testEditToXML)
   
   FINALIZE_TEST()
   CALL clear_test_vars()
@@ -5423,6 +5424,19 @@ PROGRAM testParameterLists
     CALL testParam%clear()
     CALL testParam2%clear()
   ENDSUBROUTINE testInitFromXML
+!
+!-------------------------------------------------------------------------------
+  SUBROUTINE testEditToXML()
+    LOGICAL(SBK) :: bool
+    CALL testParam%initFromXML('testInit.xml')
+    CALL testParam%editToXML('testEdit.xml')
+    CALL testParam2%initFromXML('testEdit.xml')
+    CALL testParam%verify(testParam2,bool)
+    ASSERT(bool,"edit to XML file")
+
+    CALL testParam%clear()
+    CALL testParam2%clear()
+  ENDSUBROUTINE testEditToXML
 !
 !-------------------------------------------------------------------------------
 !Clear all the test variables
