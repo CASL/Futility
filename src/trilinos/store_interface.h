@@ -103,6 +103,11 @@
       INTEGER(C_INT),INTENT(IN),VALUE        :: id
     ENDSUBROUTINE
 
+    SUBROUTINE ForPETRA_MatReset(id) bind(C,NAME="ForPETRA_MatReset")
+      IMPORT :: C_INT
+      INTEGER(C_INT),INTENT(IN),VALUE        :: id
+    ENDSUBROUTINE
+
     SUBROUTINE ForPETRA_MatSet(id,i,nnz,j,val) bind(C,NAME="ForPETRA_MatSet")
       IMPORT :: C_INT,C_DOUBLE
       INTEGER(C_INT),INTENT(IN),VALUE        :: id

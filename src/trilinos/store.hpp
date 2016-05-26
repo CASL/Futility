@@ -135,6 +135,7 @@ public:
     Epetra_Map emap;
     Teuchos::RCP<Epetra_CrsMatrix> emat;
     bool b_asy=false;
+    int m_rnnz;
 
     EpetraMatCnt(int n, int nloc, int rnnz, MPI_Comm rawComm) :
 #ifdef HAVE_MPI
@@ -144,7 +145,9 @@ public:
 #endif
         emap(n,nloc,1,Comm),
         emat(new Epetra_CrsMatrix(Copy,emap,rnnz))
-    {}
+    {
+        m_rnnz=rnnz;
+    }
 };
 
 class EpetraMatStore {
@@ -165,6 +168,12 @@ public:
         return 0;
     }
 
+
+    int reset_data(const int id){
+        things_[id]->emat=Teuchos::RCP<Epetra_CrsMatrix>(new Epetra_CrsMatrix(Copy,things_[id]->emap,things_[id]->m_rnnz));
+        return 0;
+    }
+
     int set_data(const int id, const int i, const int nnz, const int j[], const double val[]) {
         //std::cout << id << " - " << i << " - " << nnz << " - " << things_[id]->b_asy << std::endl;
         //for (int it = 0; it < nnz; it++) { std::cout << j[it] << " ";}
@@ -173,6 +182,7 @@ public:
         //std::cout << std::endl;
         int ierr = things_[id]->emat->InsertGlobalValues(i,nnz,val,j);
         if(ierr!=0) ierr = things_[id]->emat->ReplaceGlobalValues(i,nnz,val,j);
+        if(ierr!=0) std::cout << id << " - " << ierr << " - " << i << std::endl;
         //std::cout << ierr << std::endl;
         return ierr;
     }

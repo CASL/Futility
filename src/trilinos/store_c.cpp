@@ -117,6 +117,10 @@ extern "C" void ForPETRA_MatDestroy(const int id) {
     emat->delete_data(id);
 }
 
+extern "C" void ForPETRA_MatReset(const int id) {
+    emat->reset_data(id);
+}
+
 extern "C" void ForPETRA_MatSet(const int id, const int i, const int nnz, const int j[], const double val[]) {
     int ierr = emat->set_data(id,i,nnz,j,val);
     assert(ierr==0);

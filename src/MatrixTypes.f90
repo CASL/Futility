@@ -1120,6 +1120,7 @@ MODULE MatrixTypes
       IF(matrix%isInit) THEN
         IF(((j <= matrix%n) .AND. (i <= matrix%n)) &
           .AND. ((j > 0) .AND. (i > 0))) THEN
+          IF(matrix%isAssembled) CALL ForPETRA_MatReset(matrix%A)
           IF(i==matrix%currow) THEN
             matrix%ncol=matrix%ncol+1
             matrix%jloc(matrix%ncol)=j
