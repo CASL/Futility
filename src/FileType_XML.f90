@@ -145,6 +145,8 @@ MODULE FileType_XML
     !> The XML file encoding
     CHARACTER(LEN=32) :: encoding='UTF-8'
     !>
+    TYPE(StringType) :: style_sheet
+    !>
     LOGICAL(SBK) :: standalone=.FALSE.
     !> The root XML element of the file
     TYPE(XMLElementType),POINTER :: root => NULL()
@@ -932,6 +934,13 @@ MODULE FileType_XML
           '" encoding="'//TRIM(thisXMLFile%encoding)//'"?>'
         WRITE(tmpFile%unitNo,FMT='(a)') CHAR(header)
         
+        !Write style-sheet info
+        IF(LEN(thisXMLFile%style_sheet) > 0) THEN
+          WRITE(tmpFile%unitNo,FMT='(a)') &
+            '<?xml-stylesheet version="1.0" type="text/xsl" href="'// &
+            thisXMLFile%style_sheet//'"?>'
+        ENDIF
+
         !Write the XML Elements
         CALL thisXMLFile%root%fwrite(tmpFile%unitNo,0)
         CALL tmpFile%clear()
