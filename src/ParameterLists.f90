@@ -9180,7 +9180,7 @@ MODULE ParameterLists
               CALL thisParam%add(CHAR(tmpPath),intVal)
             CASE('DOUBLE')
               doubleVal=CHAR(attrVal)
-              CALL thisParam%add(CHAR(tmpPath),doubleVal)
+              CALL thisParam%add(CHAR(tmpPath),doubleVal,'XML_IN_VAL='//attrval)
             CASE('STRING')
               CALL thisParam%add(CHAR(tmpPath),attrVal)
             CASE('ARRAY(INT)')
@@ -9188,7 +9188,7 @@ MODULE ParameterLists
               CALL thisParam%add(CHAR(tmpPath),intArry)
             CASE('ARRAY(DOUBLE)')
               CALL char_to_double_array(doubleArry,CHAR(attrVal))
-              CALL thisParam%add(CHAR(tmpPath),doubleArry)
+              CALL thisParam%add(CHAR(tmpPath),doubleArry,'XML_IN_VAL='//attrval)
             CASE('ARRAY(STRING)')
               CALL char_to_string_array(strArry,CHAR(attrVal))
               CALL thisParam%add(CHAR(tmpPath),strArry)
@@ -9248,10 +9248,12 @@ MODULE ParameterLists
 
       LOGICAL(SBK) :: bool0
       LOGICAL(SBK),ALLOCATABLE :: bool1
-      INTEGER(SIK) :: i,nChildren
+      INTEGER(SIK) :: i,idx,nChildren
+      REAL(SRK) :: doubleVal,oDoubleVal
+      REAL(SRK),ALLOCATABLE :: doubleArry(:),oDoubleArry(:)
       TYPE(StringType),ALLOCATABLE :: str1(:)
 
-      TYPE(StringType) :: addr,val,name,typename,tmpPath
+      TYPE(StringType) :: addr,val,name,typename,tmpPath,oVal
       CLASS(ParamType),POINTER :: nextParam
       TYPE(XMLElementType),POINTER :: tmpChild,myChildren(:)
 
@@ -9276,11 +9278,7 @@ MODULE ParameterLists
         CALL param%getSubParams(addr,nextParam)
         NULLIFY(tmpChild)
         DO i=1,nChildren
-          ! IF(LEN_TRIM(addr) > 0) THEN
-            ! tmpPath=TRIM(addr)//'->'//TRIM(nextParam%name)
-          ! ELSE
-            tmpPath=TRIM(nextParam%name)
-          ! ENDIF
+          tmpPath=TRIM(nextParam%name)
           tmpChild => myChildren(i)
           CALL paramToXML(nextParam,tmpPath,tmpChild)
           NULLIFY(tmpChild)
@@ -9293,34 +9291,65 @@ MODULE ParameterLists
         !Get name and value from parameter list
         SELECTCASE(TRIM(param%dataType))
           CASE('LOGICAL(SBK)')
+            typename='bool'
             CALL param%get(TRIM(param%name),bool0)
             IF(bool0) THEN
               val='true'
             ELSE
               val='false'
             ENDIF
-            typename='bool'
           CASE('INTEGER(SNK)')
-            CALL param%getString(TRIM(param%name),val)
             typename='int'
+            CALL param%getString(TRIM(param%name),val)
           CASE('REAL(SDK)')
-            CALL param%getString(TRIM(param%name),val)
             typename='double'
+            idx=INDEX(param%description,'XML_IN_VAL=')
+            IF(idx > 0) THEN
+              idx=idx+11
+              CALL getSubString(param%description,oVal,idx,LEN_TRIM(param%description))
+              oDoubleVal=CHAR(oVal)
+              CALL param%get(TRIM(param%name),doubleVal)
+
+              IF(doubleVal == oDoubleVal) THEN
+                val=oVal !use original input string
+              ELSE
+                !output variable with same number of sig figs
+                CALL param%getString(TRIM(param%name),val)
+              ENDIF
+            ELSE
+              CALL param%getString(TRIM(param%name),val)
+            ENDIF
           CASE('TYPE(StringType)')
-            CALL param%getString(TRIM(param%name),val)
             typename='string'
+            CALL param%getString(TRIM(param%name),val)
           CASE('1-D ARRAY INTEGER(SNK)')
-            CALL param%getString(TRIM(param%name),str1)
-            CALL string_array_to_string(str1,val)
             typename='Array(int)'
+            CALL param%getString(TRIM(param%name),str1)
+            CALL string_array_to_string(str1,val)
           CASE('1-D ARRAY REAL(SDK)')
-            CALL param%getString(TRIM(param%name),str1)
-            CALL string_array_to_string(str1,val)
             typename='Array(double)'
+            idx=INDEX(param%description,'XML_IN_VAL=')
+            IF(idx > 0) THEN
+              idx=idx+11
+              CALL getSubString(param%description,oVal,idx,LEN_TRIM(param%description))
+              CALL char_to_double_array(oDoubleArry,CHAR(oVal))
+              CALL param%get(TRIM(param%name),doubleArry)
+
+              IF(ALL(doubleArry == oDoubleArry)) THEN
+                val=oVal !use original input string
+              ELSE
+                !output variable with same number of sig figs
+                CALL param%getString(TRIM(param%name),str1)
+                CALL string_array_to_string(str1,val)
+              ENDIF
+            ELSE
+              CALL param%getString(TRIM(param%name),str1)
+              CALL string_array_to_string(str1,val)
+            ENDIF
           CASE('1-D ARRAY TYPE(StringType)')
+            typename='Array(string)'
             CALL param%getString(TRIM(param%name),str1)
             CALL string_array_to_string(str1,val)
-            typename='Array(string)'
           CASE DEFAULT
             CALL eParams%raiseError('Invalid paramType in '//modName//'::'//myName// &
               ' - dataType '//TRIM(param%dataType)//' is not valid for XML output!')
@@ -9339,7 +9368,7 @@ MODULE ParameterLists
 !> @param thisParam the parameter list to be written into the XML file
 !> @param fname the name of the output file
 !>
-    SUBROUTINE editToXML_ParamType(thisParam, fname)
+    SUBROUTINE editToXML_ParamType(thisParam,fname)
       CLASS(ParamType),INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: fname
       TYPE(XMLFileType) :: xmlFile
@@ -9349,6 +9378,7 @@ MODULE ParameterLists
       SELECTTYPE(thisParam); TYPE IS(ParamType)
         !Initialize the XML file
         addr=''
+        xmlFile%style_sheet='PL9.xsl'
         CALL paramToXML(thisParam%pdat,addr,xmlFile%root)
         CALL xmlFile%exportToDisk(fname)
         CALL xmlFile%clear()
