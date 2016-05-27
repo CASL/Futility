@@ -547,7 +547,7 @@ MODULE FileType_XML
 !> @param children the array of children element types
 !>
     SUBROUTINE setChildren_XMLElementType(thisXMLE,children)
-      CLASS(XMLElementType),INTENT(INOUT) :: thisXMLE
+      CLASS(XMLElementType),TARGET,INTENT(INOUT) :: thisXMLE
       TYPE(XMLElementType),POINTER,INTENT(INOUT) :: children(:)
       INTEGER(SIK) :: i,nChildren
 
