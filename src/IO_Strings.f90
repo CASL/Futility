@@ -106,6 +106,7 @@ MODULE IO_Strings
   PUBLIC :: getFileName
   PUBLIC :: getFileNameExt
   PUBLIC :: getFileParts
+  PUBLIC :: getRealFormat
   PUBLIC :: nFields
   PUBLIC :: getField
   PUBLIC :: getSubstring
@@ -320,6 +321,25 @@ MODULE IO_Strings
     !> @copydetails IO_Strings::strarrayeqind_string
     MODULE PROCEDURE strarrayeqind_string
   ENDINTERFACE strarrayeqind
+
+  !> @brief Generic interface for getRealFormat
+  !>
+  !> This interfaces allows for the input argument to be either a
+  !> character array or a StringType.
+  INTERFACE getRealFormat
+    !> @copybrief IO_Strings::
+    !> @copydetails IO_Strings::
+    MODULE PROCEDURE getRealFormat_char_char
+    !> @copybrief IO_Strings::
+    !> @copydetails IO_Strings::
+    MODULE PROCEDURE getRealFormat_char_str
+    !> @copybrief IO_Strings::
+    !> @copydetails IO_Strings::
+    MODULE PROCEDURE getRealFormat_str_char
+    !> @copybrief IO_Strings::
+    !> @copydetails IO_Strings::
+    MODULE PROCEDURE getRealFormat_str_str
+  ENDINTERFACE getRealFormat
 !
 !===============================================================================      
   CONTAINS
@@ -1178,6 +1198,89 @@ MODULE IO_Strings
         ENDIF
       ENDDO
     ENDFUNCTION strarrayeqind_string
+!
+!-------------------------------------------------------------------------------
+!> @brief
+    PURE SUBROUTINE getRealFormat_char_char(valstr,fmtstr)
+      CHARACTER(LEN=*),INTENT(IN) :: valstr
+      CHARACTER(LEN=*),INTENT(INOUT) :: fmtstr
+      TYPE(StringType) :: vstr,fstr
+      vstr=valstr
+      fstr=fmtstr
+      CALL getRealFormat_str_str(vstr,fstr)
+      fmtstr=fstr
+    ENDSUBROUTINE getRealFormat_char_char
+!
+!-------------------------------------------------------------------------------
+!> @brief
+    PURE SUBROUTINE getRealFormat_str_char(valstr,fmtstr)
+      TYPE(StringType),INTENT(IN) :: valstr
+      CHARACTER(LEN=*),INTENT(INOUT) :: fmtstr
+      TYPE(StringType) :: fstr
+      fstr=fmtstr
+      CALL getRealFormat_str_str(valstr,fstr)
+      fmtstr=fstr
+    ENDSUBROUTINE getRealFormat_str_char
+!
+!-------------------------------------------------------------------------------
+!> @brief
+    PURE SUBROUTINE getRealFormat_char_str(valstr,fmtstr)
+      CHARACTER(LEN=*),INTENT(IN) :: valstr
+      TYPE(StringType),INTENT(INOUT) :: fmtstr
+      TYPE(StringType) :: vstr
+      vstr=valstr
+      CALL getRealFormat_str_str(vstr,fmtstr)
+    ENDSUBROUTINE getRealFormat_char_str
+!
+!-------------------------------------------------------------------------------
+!> @brief
+    PURE SUBROUTINE getRealFormat_str_str(valstr,fmtstr)
+      TYPE(StringType),INTENT(IN) :: valstr
+      TYPE(StringType),INTENT(INOUT) :: fmtstr
+
+      CHARACTER(LEN=32) :: tmpchar
+      INTEGER(SIK) :: w,d,e,ioerr
+      REAL(SRK) :: tmpval
+      TYPE(StringType) :: vstr
+
+      fmtstr=''
+      vstr=valstr
+      IF(LEN_TRIM(vstr) == 0) RETURN
+      tmpChar=vstr
+      READ(tmpChar,*,IOSTAT=ioerr) tmpval
+      IF(ioerr == 0) THEN
+        vstr=TRIM(ADJUSTL(vstr)) !eliminate whitespace
+        w=LEN(vstr)              !Get the total width
+        d=0
+        e=MAX(INDEX(vstr,'e'),INDEX(vstr,'E'))
+        IF(e > 0) THEN
+          IF(INDEX(vstr,'.') > 0) THEN
+            d=e-INDEX(vstr,'.')-1 !Always one digit left of decimal
+          ELSE
+            w=w+1
+          ENDIF
+          e=LEN(vstr)-e-1
+          IF(e == 0) THEN !This accounts for a degenerate case like "3.2e1"
+            e=1
+            w=w+1
+          ENDIF
+          fmtstr='es'
+          WRITE(tmpchar,*) w; fmtstr=fmtstr//TRIM(ADJUSTL(tmpchar));
+          WRITE(tmpchar,*) d; fmtstr=fmtstr//'.'//TRIM(ADJUSTL(tmpchar));
+          WRITE(tmpchar,*) e; fmtstr=fmtstr//'e'//TRIM(ADJUSTL(tmpchar));
+        ELSE
+          IF(INDEX(vstr,'.') > 0) THEN
+            d=w-INDEX(vstr,'.')
+          ELSE
+            w=w+1 !Add 1 for decimal point in output
+          ENDIF
+          fmtstr='f'
+          WRITE(tmpchar,*) w; fmtstr=fmtstr//TRIM(ADJUSTL(tmpchar));
+          WRITE(tmpchar,*) d; fmtstr=fmtstr//'.'//TRIM(ADJUSTL(tmpchar));
+        ENDIF
+
+      ENDIF
+    ENDSUBROUTINE getRealFormat_str_str
 !
 !-------------------------------------------------------------------------------
 !> @brief Private routine replaces slash character in file path names with 

@@ -495,6 +495,36 @@ PROGRAM testIOutil
       COMPONENT_TEST('Error Checking')
       CALL getFileParts(string,shortstring1,shortstring2,shortstring3)
       CALL getFileParts(string,shortstring1,shortstring2,shortstring3,e)
+
+      COMPONENT_TEST('getRealFormat')
+      string='1'
+      CALL getRealFormat(string,string1)
+      ASSERT(string1 == 'f2.0','1')
+      string='1.'
+      CALL getRealFormat(string,string1)
+      ASSERT(string1 == 'f2.0','1.')
+      string='1.0001'
+      CALL getRealFormat(string,string1)
+      ASSERT(string1 == 'f6.4','1.0001')
+      string='1e-6'
+      CALL getRealFormat(string,string1)
+      ASSERT(string1 == 'es5.0e1','1e-6')
+      string='1e-06'
+      CALL getRealFormat(string,string1)
+      ASSERT(string1 == 'es6.0e2','1e-06')
+      string='-3.21e+02'
+      CALL getRealFormat(string,string1)
+      ASSERT(string1 == 'es9.2e2','-3.21e+02')
+      string='3.21e'
+      CALL getRealFormat(string,string1)
+      ASSERT(string1 == '','3.21e')
+      string='3.21e1'
+      CALL getRealFormat(string,string1)
+      ASSERT(string1 == 'es7.2e1','3.21e1')
+      string='hello'
+      CALL getRealFormat(string,string1)
+      ASSERT(string1 == '','hello')
+      FINFO() '"'//string1//'"'
     ENDSUBROUTINE testIO_Strings
 !
 !-------------------------------------------------------------------------------
