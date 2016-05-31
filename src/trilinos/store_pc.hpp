@@ -59,6 +59,7 @@ public:
             things_[cid].pc_db.get("smoother: sweeps", 3);
             things_[cid].pc_db.get("smoother: ifpack overlap", 0);
             things_[cid].pc_db.get("max levels", 4);
+            things_[cid].pc_db.get("ML output", 10);
         }
         cid++;
         return cid-1;
@@ -70,7 +71,7 @@ public:
 
     int setupPC_data(const int id, Teuchos::RCP<Epetra_CrsMatrix> M) {
         things_[id].M=M;
-
+        if(things_[id].M->Comm().MyPID()==0) std::cout << "Setting up PC..." << std::endl;
         if(things_[id].pc_type == "IFPACK"){
             Ifpack ifpack_factory;
             Teuchos::RCP<Ifpack_Preconditioner> ifpack_prec;
@@ -112,7 +113,7 @@ public:
                                     new Epetra_InvOperator(ml_prec.getRawPtr()) );
             Teuchos::set_extra_data(ml_prec,"ml_raw_pointer",Teuchos::inOutArg(things_[id].pc));
         }
-
+        if(things_[id].M->Comm().MyPID()==0) std::cout << "PC Constructed..." << std::endl;
         return 0;
     }
 
