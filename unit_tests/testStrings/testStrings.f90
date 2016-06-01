@@ -29,6 +29,7 @@ PROGRAM testStrings
   TYPE(StringType) :: testString,testString2,testStringArray(10)
   TYPE(StringType) :: test1a(2),test1a2(2),test2a(2,2),test2a2(2,2)
   TYPE(StringType) :: test3a(2,2,2),test3a2(2,2,2)
+  TYPE(StringType),ALLOCATABLE :: s1a(:),s1a2(:)
   
   CREATE_TEST('TEST STRINGS')
 !
@@ -85,6 +86,30 @@ PROGRAM testStrings
   testString2='testString2'
   testString2=testString
   ASSERT(CHAR(testString2) == 'testString1','testString2=testString')
+!
+!Test assigning an array of strings to an array of strings
+  !null assignmnet (should deallocate the array)
+  ALLOCATE(s1a(1))
+  s1a=s1a2
+  ASSERT(.NOT.ALLOCATED(s1a),'null array assignment')
+  !assign array to deallocated array
+  ALLOCATE(s1a2(1))
+  s1a2(1)='test'
+  s1a=s1a2
+  ASSERT(ALLOCATED(s1a),'allocated array assignment')
+  ASSERT(SIZE(s1a,DIM=1) == 1,'SIZE array assignment')
+  ASSERT(s1a(1)=='test','test array assignment')
+  !assign array to allocated array
+  DEALLOCATE(s1a2)
+  ALLOCATE(s1a2(2))
+  s1a2(1)='one'; s1a2(2)='two'
+  s1a=s1a2
+  ASSERT(ALLOCATED(s1a),'allocated array assignment')
+  ASSERT(SIZE(s1a,DIM=1) == 2,'SIZE array assignment')
+  ASSERT(s1a(1)=='one','test array assignment')
+  ASSERT(s1a(2)=='two','test array assignment')
+ 
+
 !
 !Test ADJUSTL and ADJUSTR
   COMPONENT_TEST('ADJUSTL')

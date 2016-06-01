@@ -254,7 +254,9 @@ MODULE Strings
     !> @copybrief Strings::assign_StringType_to_StringType
     !> @copydetails Strings::assign_StringType_to_StringType
     MODULE PROCEDURE assign_StringType_to_StringType
-!Need to try and overload 1-D array assignments.
+    !> @copybrief Strings::assign_StringType1A_to_StringType1A
+    !> @copydetails Strings::assign_StringType1A_to_StringType1A
+    MODULE PROCEDURE assign_StringType1A_to_StringType1A
   ENDINTERFACE
   
   !> @brief Overloads the Fortran intrinsic operator for concatenating
@@ -895,6 +897,47 @@ MODULE Strings
         ENDDO
       ENDIF
     ENDSUBROUTINE assign_StringType_to_StringType
+!
+!-------------------------------------------------------------------------------
+!> @brief Assigns the contents of a @c StringType variable to a @c StringType.
+!> @param thisStr the string object
+!> @param s another string object
+!>
+!> The intent is that this will overload the assignment operator so a
+!> @c Stringtype can be assigned to a @c StringType. This is used instead
+!> of the intrinsic operation because I think there are some issues with
+!> the allocatable component.
+!>
+    PURE SUBROUTINE assign_StringType1A_to_StringType1A(thisStr,s)
+      TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: thisStr(:)
+      TYPE(StringType),ALLOCATABLE,INTENT(IN) :: s(:)
+      INTEGER(SIK) :: i,j
+
+      IF(ALLOCATED(thisStr)) THEN
+        DO i=1,SIZE(thisStr,DIM=1)
+          IF(thisStr(i)%n > 0) THEN
+            DEALLOCATE(thisStr(i)%s)
+            thisStr(i)%n=0
+            thisStr(i)%ntrim=0
+          ENDIF
+        ENDDO
+        DEALLOCATE(thisStr)
+      ENDIF
+
+      IF(ALLOCATED(s)) THEN
+        ALLOCATE(thisStr(SIZE(s,DIM=1)))
+        DO i=1,SIZE(s,DIM=1)
+          IF(s(i)%n > 0) THEN
+            thisStr(i)%n=s(i)%n
+            thisStr(i)%ntrim=s(i)%ntrim
+            ALLOCATE(thisStr(i)%s(thisStr(i)%n))
+            DO j=1,thisStr(i)%n
+              thisStr(i)%s(j)=s(i)%s(j)
+            ENDDO
+          ENDIF
+        ENDDO
+      ENDIF
+    ENDSUBROUTINE assign_StringType1A_to_StringType1A
 !
 !-------------------------------------------------------------------------------
 !> @brief Concatenates an intrinsic character type variable with a
