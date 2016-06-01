@@ -1370,66 +1370,43 @@ MODULE ParameterLists
       TYPE(StringType),INTENT(IN) :: addr
       CLASS(ParamType),POINTER,INTENT(INOUT) :: param
 
-      CHARACTER(LEN=addr%ntrim) :: addrIn,newAddr,parentAddr
-      INTEGER(SIK) :: istp,ip,ip2,i,i2
-      TYPE(StringType) :: tmpAddr
-      CLASS(ParamType),POINTER :: tmpParam,nextParam,parentParam
-      LOGICAL(SBK) :: isList=.FALSE., listFound=.FALSE.
-      nextParam => NULL()
-      tmpAddr=''
-      addrIn=TRIM(addr)
-      IF(LEN_TRIM(addrIn) > 0) THEN
-        !Address passed in is the parent list
-        CALL get_ParamType(thisParam,TRIM(addrIn),tmpParam)
-        IF(ASSOCIATED(tmpParam)) THEN
-          !Check to make sure param is in thisParam
-          !if param is null that's ok too because we're guaranteed to
-          !be within thisParam
+      INTEGER(SIK) :: i,istt
+      CLASS(ParamType),POINTER :: aParam,nextParam
 
-          SELECTTYPE(tp => tmpParam)
-            TYPE IS(ParamType_List)
-              IF(ALLOCATED(tp%pList)) THEN
-                !Search the PL for a sublist
-                sublistSearch: DO i=1,SIZE(tp%pList)
-                  !If passed in sublist is null, get the first sub parameter list
-                  IF(.NOT. ASSOCIATED(param)) THEN
-                    nextParam => tp%pList(i)%pdat
-                    SELECTTYPE(np => nextParam); TYPE IS(ParamType_List)
-                      tmpAddr=TRIM(addrIn)//'->'//nextParam%name
-                      EXIT sublistSearch
-                    ENDSELECT
-                  ENDIF
-                  IF(ASSOCIATED(tp%pList(i)%pdat,param)) THEN
-                    !Search the rest of the list 
-                    DO i2=i+1,SIZE(tp%pList)
-                      nextParam => tp%pList(i2)%pdat
-                      SELECTTYPE(np => nextParam); TYPE IS(ParamType_List)
-                        tmpAddr=TRIM(addrIn)//'->'//nextParam%name
-                        EXIT sublistSearch
-                      ENDSELECT
-                    ENDDO
-                  ENDIF
-                ENDDO sublistSearch
-              ELSE 
-                !Return NULL if parent list is empty
-                nextParam => NULL()
-              ENDIF
-            CLASS DEFAULT
-              !If a non-list ParamType was passed in, just return NULL
-              nextParam => NULL()
+      nextParam => NULL()
+      IF(LEN_TRIM(addr) > 0) THEN
+        CALL get_ParamType(thisParam,CHAR(addr),aParam)
+        IF(ASSOCIATED(aParam)) THEN
+          SELECTTYPE(aParam); TYPE IS(ParamType_List)
+            !Sublists only exist for lists
+            IF(ALLOCATED(aParam%pList)) THEN
+              istt=1
+              DO i=1,SIZE(aParam%pList)
+                IF(ASSOCIATED(param,aParam%pList(i)%pdat)) THEN
+                  istt=i+1
+                  EXIT
+                ENDIF
+              ENDDO
+              DO i=istt,SIZE(aParam%pList)
+                SELECTTYPE(p => aParam%pList(i)%pdat); TYPE IS(ParamType_List)
+                  nextParam => aParam%pList(i)%pdat
+                  EXIT
+                ENDSELECT
+              ENDDO
+            ENDIF
           ENDSELECT
         ENDIF
       ELSE
-        !No address is given so assume the client wants to start at the root
-        IF(LEN_TRIM(thisParam%name) > 0) THEN
-          tmpAddr=thisParam%name
-          nextParam => thisParam
-        ELSE
-          IF(ASSOCIATED(thisParam%pdat)) THEN
-            tmpAddr=thisParam%pdat%name
-            nextParam => thisParam%pdat
-          ENDIF
-        ENDIF
+        SELECTTYPE(p => thisParam)
+          TYPE IS(ParamType_List)
+            IF(.NOT.ASSOCIATED(param,thisParam)) nextParam => thisParam
+          CLASS DEFAULT
+            IF(.NOT.ASSOCIATED(param,thisParam%pdat)) THEN
+              SELECTTYPE(pdat => thisParam%pdat); TYPE IS(ParamType_List)
+                nextParam => thisParam%pdat
+              ENDSELECT
+            ENDIF
+        ENDSELECT
       ENDIF
       param => nextParam
     ENDSUBROUTINE getSubParam_List
@@ -9140,6 +9117,7 @@ MODULE ParameterLists
 
       LOGICAL(SBK) :: boolVal
       INTEGER(SIK) :: intVal
+      REAL(SSK) :: singleVal
       REAL(SDK) :: doubleVal
       TYPE(StringType) :: strVal
       INTEGER(SIK),ALLOCATABLE :: intArry(:)
@@ -9178,6 +9156,9 @@ MODULE ParameterLists
             CASE('INT')
               intVal=CHAR(attrVal)
               CALL thisParam%add(CHAR(tmpPath),intVal)
+            CASE('FLOAT')
+              singleVal=CHAR(attrVal)
+              CALL thisParam%add(CHAR(tmpPath),singleVal,'XML_IN_VAL='//attrval)
             CASE('DOUBLE')
               doubleVal=CHAR(attrVal)
               CALL thisParam%add(CHAR(tmpPath),doubleVal,'XML_IN_VAL='//attrval)
@@ -9249,7 +9230,7 @@ MODULE ParameterLists
       LOGICAL(SBK) :: bool0
       LOGICAL(SBK),ALLOCATABLE :: bool1
       INTEGER(SIK) :: i,idx,nChildren
-      REAL(SRK) :: doubleVal,oDoubleVal
+      REAL(SRK) :: doubleVal,oDoubleVal,singleVal,oSingleVal
       REAL(SRK),ALLOCATABLE :: doubleArry(:),oDoubleArry(:)
       TYPE(StringType),ALLOCATABLE :: str1(:)
 
@@ -9301,6 +9282,24 @@ MODULE ParameterLists
           CASE('INTEGER(SNK)')
             typename='int'
             CALL param%getString(TRIM(param%name),val)
+          CASE('REAL(SSK)')
+            typename='float'
+            idx=INDEX(param%description,'XML_IN_VAL=')
+            IF(idx > 0) THEN
+              idx=idx+11
+              CALL getSubString(param%description,oVal,idx,LEN_TRIM(param%description))
+              oSingleVal=CHAR(oVal)
+              CALL param%get(TRIM(param%name),singleVal)
+
+              IF(singleVal == oSingleVal) THEN
+                val=oVal !use original input string
+              ELSE
+                !output variable with same number of sig figs
+                CALL param%getString(TRIM(param%name),val)
+              ENDIF
+            ELSE
+              CALL param%getString(TRIM(param%name),val)
+            ENDIF
           CASE('REAL(SDK)')
             typename='double'
             idx=INDEX(param%description,'XML_IN_VAL=')

@@ -89,6 +89,7 @@ PROGRAM testParameterLists
   REGISTER_SUBTEST('%remove(...)',testRemove)
   REGISTER_SUBTEST('%getNextParam(...)',testGetNextParam)
   REGISTER_SUBTEST('%getSubParams(...)',testGetSubParams)
+  REGISTER_SUBTEST('%getSubPL(...)',testGetSubPL)
   REGISTER_SUBTEST('%validate(...)',testValidate)
   REGISTER_SUBTEST('%verify(...)',testVerify)
   REGISTER_SUBTEST('Partial Matching',testPartialMatch)
@@ -4955,6 +4956,75 @@ PROGRAM testParameterLists
 
     CALL clear_test_vars()
   ENDSUBROUTINE testGetSubParams
+!
+!-------------------------------------------------------------------------------
+  SUBROUTINE testGetSubPL()
+    CLASS(ParamType),POINTER :: refPtr,testClass
+    refPtr => NULL()
+
+    valstr=''
+    CALL testParam%clear()
+
+    COMPONENT_TEST('empty')
+    CALL testParam%getSubPL(valstr,someParam)
+    ASSERT(.NOT.ASSOCIATED(someParam),'someParam')
+
+    COMPONENT_TEST('1st Level')
+    CALL testParam%add('First param->Second level->p','p')
+    CALL testParam%add('First param->a','a')
+    CALL testParam%add('First param->Second list->b','b')
+
+    CALL testParam%getSubPL(valstr,someParam)
+    ASSERTFAIL(ASSOCIATED(someParam),'ASSOCIATED')
+    ASSERT(ASSOCIATED(someParam,testParam%pdat),'ASSOCIATED(pdat)')
+    ASSERT(someParam%name == 'First param','name')
+    CALL testParam%getSubPL(valstr,someParam)
+    ASSERT(.NOT.ASSOCIATED(someParam),'iter 2')
+
+    COMPONENT_TEST('2nd Level')
+    valstr='First param'
+    CALL testParam%get('First param->Second level',refPtr)
+    CALL testParam%getSubPL(valStr,someParam)
+    ASSERTFAIL(ASSOCIATED(someParam),'ASSOCIATEDi 1st iter')
+    ASSERT(ASSOCIATED(someParam,refPtr),'ASSOCIATED(refPtr) 1st iter')
+    ASSERT(someParam%name == 'Second level','name 1st iter')
+
+    CALL testParam%get('First param->Second list',refPtr)
+    CALL testParam%getSubPL(valStr,someParam)
+    ASSERTFAIL(ASSOCIATED(someParam),'ASSOCIATED 2nd iter')
+    ASSERT(ASSOCIATED(someParam,refPtr),'ASSOCIATED(refPtr) 2nd iter')
+    ASSERT(someParam%name == 'Second list','name 2nd iter')
+
+    CALL testParam%getSubPL(valStr,someParam)
+    ASSERT(.NOT.ASSOCIATED(someParam),'ASSOCIATED 3rd iter')
+
+    COMPONENT_TEST('bad addresses')
+    valStr='b'
+    CALL testParam%getSubPL(valStr,someParam)
+    ASSERT(.NOT.ASSOCIATED(someParam),'b')
+    valStr='Second level'
+    CALL testParam%getSubPL(valStr,someParam)
+    ASSERT(.NOT.ASSOCIATED(someParam),'Second level')
+    valStr='bad name'
+    CALL testParam%getSubPL(valStr,someParam)
+    ASSERT(.NOT.ASSOCIATED(someParam),'bad name')
+
+    COMPONENT_TEST('CLASS(ParamType)')
+    testClass => testParam%pdat
+    valStr=''
+    CALL testClass%getSubPL(valStr,someParam)
+    ASSERT(ASSOCIATED(testClass,someParam),'ASSOCIATED(root)')
+    CALL testClass%getSubPL(valStr,someParam)
+    ASSERT(.NOT.ASSOCIATED(someParam),'2nd iter')
+
+    CALL testClass%getSubPL(testClass%name,someParam)
+    CALL testClass%get('First param->Second level',refPtr)
+    ASSERTFAIL(ASSOCIATED(someParam),'ASSOCIATED 1st iter self')
+    ASSERT(ASSOCIATED(someParam,refPtr),'ASSOCIATED(refPtr) 1st iter self')
+    ASSERT(someParam%name == 'Second level','name 1st iter self')
+
+    CALL clear_test_vars()
+  ENDSUBROUTINE testGetSubPL
 !
 !-------------------------------------------------------------------------------
   SUBROUTINE testRemove()
