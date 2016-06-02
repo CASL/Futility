@@ -597,8 +597,10 @@ MODULE FileType_XML
         thisXMLE%nAttr=thisXMLE%nAttr+1
         ALLOCATE(thisXMLE%attr_names(thisXMLE%nAttr))
         ALLOCATE(thisXMLE%attr_values(thisXMLE%nAttr))
-        thisXMLE%attr_names(1:thisXMLE%nAttr-1)=tmpNames
-        thisXMLE%attr_values(1:thisXMLE%nAttr-1)=tmpVals
+        DO i=1,thisXMLE%nAttr-1
+          thisXMLE%attr_names(i)=tmpNames(i)
+          thisXMLE%attr_values(i)=tmpVals(i)
+        ENDDO
 
         thisXMLE%attr_names(thisXMLE%nAttr)=name
         thisXMLE%attr_values(thisXMLE%nAttr)=value

@@ -90,10 +90,10 @@ PROGRAM testStrings
 !Test assigning an array of strings to an array of strings
   !null assignmnet (should deallocate the array)
   ALLOCATE(s1a(1))
-  s1a=s1a2
+  ALLOCATE(s1a2(1))
+  s1a=s1a2(1:0)
   ASSERT(.NOT.ALLOCATED(s1a),'null array assignment')
   !assign array to deallocated array
-  ALLOCATE(s1a2(1))
   s1a2(1)='test'
   s1a=s1a2
   ASSERT(ALLOCATED(s1a),'allocated array assignment')
@@ -108,8 +108,6 @@ PROGRAM testStrings
   ASSERT(SIZE(s1a,DIM=1) == 2,'SIZE array assignment')
   ASSERT(s1a(1)=='one','test array assignment')
   ASSERT(s1a(2)=='two','test array assignment')
- 
-
 !
 !Test ADJUSTL and ADJUSTR
   COMPONENT_TEST('ADJUSTL')

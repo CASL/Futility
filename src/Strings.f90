@@ -910,7 +910,7 @@ MODULE Strings
 !>
     PURE SUBROUTINE assign_StringType1A_to_StringType1A(thisStr,s)
       TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: thisStr(:)
-      TYPE(StringType),ALLOCATABLE,INTENT(IN) :: s(:)
+      TYPE(StringType),INTENT(IN) :: s(:)
       INTEGER(SIK) :: i,j
 
       IF(ALLOCATED(thisStr)) THEN
@@ -924,7 +924,7 @@ MODULE Strings
         DEALLOCATE(thisStr)
       ENDIF
 
-      IF(ALLOCATED(s)) THEN
+      IF(SIZE(s) > 0) THEN
         ALLOCATE(thisStr(SIZE(s,DIM=1)))
         DO i=1,SIZE(s,DIM=1)
           IF(s(i)%n > 0) THEN
