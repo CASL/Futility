@@ -182,6 +182,9 @@ MODULE CommandLineProcessor
       !> @copybrief CommandLineProcessor::getNumOpts
       !> @copydetails CommandLineProcessor::getNumOpts
       PROCEDURE,PASS :: getNumOpts
+      !> @copybrief CommandLineProcessor::getOptName
+      !> @copydetails CommandLineProcessor::getOptName
+      PROCEDURE,PASS :: getOptName
       !> @copybrief CommandLineProcessor::defineOpt
       !> @copydetails CommandLineProcessor::defineOpt
       PROCEDURE,PASS :: defineOpt
@@ -227,10 +230,9 @@ MODULE CommandLineProcessor
 !>
 !> Raises a warning if the name is too long and will be truncated.
 !>
-    SUBROUTINE setExecName(clp,execname)
-      CHARACTER(LEN=*),PARAMETER :: myName='setExecName'
+    PURE SUBROUTINE setExecName(clp,execname)
       CLASS(CmdLineProcType),INTENT(INOUT) :: clp
-      CHARACTER(LEN=*) :: execname
+      CHARACTER(LEN=*),INTENT(IN) :: execname
       
       clp%execname=TRIM(execname)
     ENDSUBROUTINE setExecName
@@ -241,7 +243,7 @@ MODULE CommandLineProcessor
 !> @param clp command line processor object
 !> @returns execname executable name
 !>
-    FUNCTION getExecName(clp) RESULT(execname)
+    PURE FUNCTION getExecName(clp) RESULT(execname)
       CLASS(CmdLineProcType),INTENT(IN) :: clp
       CHARACTER(LEN=clp%execname%n) :: execname
       execname=clp%execname
@@ -253,7 +255,7 @@ MODULE CommandLineProcessor
 !> @param clp command line processor object
 !> @param usagestr the string with the usage syntax
 !>
-    SUBROUTINE defineUsage(clp,usagestr)
+    PURE SUBROUTINE defineUsage(clp,usagestr)
       CHARACTER(LEN=*),PARAMETER :: myName='defineUsage'
       CLASS(CmdLineProcType),INTENT(INOUT) :: clp
       CHARACTER(LEN=*),INTENT(IN) :: usagestr
@@ -290,11 +292,25 @@ MODULE CommandLineProcessor
 !> @param clp command line processor object
 !> @returns n the number of command line options accepted by the executable
 !>
-    FUNCTION getNumOpts(clp) RESULT(n)
+    PURE FUNCTION getNumOpts(clp) RESULT(n)
       CLASS(CmdLineProcType),INTENT(IN) :: clp
       INTEGER(SIK) :: n
       n=clp%nopts
     ENDFUNCTION getNumOpts
+!
+!-------------------------------------------------------------------------------
+!> @brief Get the name of a particular command line option
+!> @param clp command line processor object
+!> @param optName the name of the command line option
+!>
+    PURE SUBROUTINE getOptName(clp,iopt,optName)
+      CLASS(CmdLineProcType),INTENT(IN) :: clp
+      INTEGER(SIK),INTENT(IN) :: iopt
+      TYPE(StringType),INTENT(INOUT) :: optName
+      optName=''
+      IF(0 < iopt .AND. iopt <= clp%nopts) &
+        optName=TRIM(ADJUSTL(clp%opts(iopt)%name))
+    ENDSUBROUTINE getOptName
 !
 !-------------------------------------------------------------------------------
 !> @brief Define the names and descriptions for each command line option
@@ -334,7 +350,7 @@ MODULE CommandLineProcessor
 !> @brief Clear the options defined for the command line processor.
 !> @param clp command line processor object
 !>
-    SUBROUTINE clearOpts(clp)
+    PURE SUBROUTINE clearOpts(clp)
       CHARACTER(LEN=*),PARAMETER :: myName='clearOpts'
       CLASS(CmdLineProcType),INTENT(INOUT) :: clp
       INTEGER(SIK) :: iopt
@@ -423,21 +439,13 @@ MODULE CommandLineProcessor
 !> @param iarg input, the ith command line argument
 !> @param argout output, a string with the ith output argument
 !>
-    SUBROUTINE getCmdArg_string(clp,iarg,argout)
-      CHARACTER(LEN=*),PARAMETER :: myName='getCmdArg'
+    PURE SUBROUTINE getCmdArg_string(clp,iarg,argout)
       CLASS(CmdLineProcType),INTENT(INOUT) :: clp
       INTEGER(SIK),INTENT(IN) :: iarg
       TYPE(StringType),INTENT(OUT) :: argout
-      CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: emsg
-      
+
       argout=''
-      IF(0 < iarg .AND. iarg <= clp%narg) THEN
-        argout=TRIM(clp%CmdLineArgs(iarg))
-      ELSE
-        WRITE(emsg,'(2(a,i4),a)') modName//'::'//myName//' - Argument ',iarg, &
-          ' is less than 0 or greater than ',clp%narg,'.'
-        CALL clp%e%raiseError(TRIM(emsg))
-      ENDIF
+      IF(0 < iarg .AND. iarg <= clp%narg) argout=TRIM(clp%CmdLineArgs(iarg))
     ENDSUBROUTINE getCmdArg_string
 !
 !-------------------------------------------------------------------------------
@@ -446,8 +454,7 @@ MODULE CommandLineProcessor
 !> @param iarg input, the ith command line argument
 !> @param argout output, a string with the ith output argument
 !>
-    SUBROUTINE getCmdArg_char(clp,iarg,argout)
-      CHARACTER(LEN=*),PARAMETER :: myName='getCmdArg'
+    PURE SUBROUTINE getCmdArg_char(clp,iarg,argout)
       CLASS(CmdLineProcType),INTENT(INOUT) :: clp
       INTEGER(SIK),INTENT(IN) :: iarg
       CHARACTER(LEN=*),INTENT(OUT) :: argout
@@ -460,8 +467,8 @@ MODULE CommandLineProcessor
 !> @brief Get the number command line arguments
 !> @param clp command line processor object
 !>
-    FUNCTION getNargs(clp) RESULT(narg)
-      CLASS(CmdLineProcType),INTENT(INOUT) :: clp
+    PURE FUNCTION getNargs(clp) RESULT(narg)
+      CLASS(CmdLineProcType),INTENT(IN) :: clp
       INTEGER(SIK) :: narg
       narg=clp%narg
     ENDFUNCTION getNargs
@@ -515,7 +522,7 @@ MODULE CommandLineProcessor
 !> @brief Clears the command line processor object
 !> @param clp command line processor object
 !>
-    SUBROUTINE clear_CLP(clp)
+    PURE SUBROUTINE clear_CLP(clp)
       CLASS(CmdLineProcType),INTENT(INOUT) :: clp
       
       clp%execname=''

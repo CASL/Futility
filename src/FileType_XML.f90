@@ -123,6 +123,15 @@ MODULE FileType_XML
       !> @copybrief FileType_XML::getContent_XMLElementType
       !> @copydoc FileType_XML::getContent_XMLElementType
       PROCEDURE,PASS :: getContent => getContent_XMLElementType
+      !> @copybrief FileType_XML::setName_XMLElementType
+      !> @copydoc FileType_XML::setName_XMLElementType
+      PROCEDURE,PASS :: setName => setName_XMLElementType
+      !> @copybrief FileType_XML::setChildren_XMLElementType
+      !> @copydoc FileType_XML::setChildren_XMLElementType
+      PROCEDURE,PASS :: setChildren => setChildren_XMLElementType
+      !> @copybrief FileType_XML::setAttribute_XMLElementType
+      !> @copydoc FileType_XML::setAttribute_XMLElementType
+      PROCEDURE,PASS :: setAttribute => setAttribute_XMLElementType
   ENDTYPE XMLElementType
 
   !> The XML File type
@@ -520,6 +529,90 @@ MODULE FileType_XML
       TYPE(StringType) :: content
       content=thisXMLE%content
     ENDFUNCTION getContent_XMLElementType
+!
+!-------------------------------------------------------------------------------
+!> @brief sets the name of an XMLElementType
+!> @param thisXMLE the XML element
+!> @param the new name
+!>
+    SUBROUTINE setName_XMLElementType(thisXMLE,name)
+      CLASS(XMLElementType),INTENT(INOUT) :: thisXMLE
+      TYPE(StringType),INTENT(IN) :: name
+      thisXMLE%name=TRIM(name)
+    ENDSUBROUTINE setName_XMLElementType
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the children of an XML element as input array of XMLElementTypes
+!> @param thisXMLE the parent XML element
+!> @param children the array of children element types
+!>
+    SUBROUTINE setChildren_XMLElementType(thisXMLE,children)
+      CLASS(XMLElementType),TARGET,INTENT(INOUT) :: thisXMLE
+      TYPE(XMLElementType),POINTER,INTENT(INOUT) :: children(:)
+      INTEGER(SIK) :: i,nChildren
+
+      IF(thisXMLE%hasChildren()) DEALLOCATE(thisXMLE%children)
+      IF(SIZE(children) > 0) THEN
+        nChildren=SIZE(children)
+        ALLOCATE(thisXMLE%children(nChildren))
+        thisXMLE%children => children
+        SELECTTYPE(thisXMLE); TYPE IS(XMLElementType)
+          DO i=1,nChildren
+            thisXMLE%children(i)%parent => thisXMLE
+          ENDDO
+        ENDSELECT
+      ENDIF
+    ENDSUBROUTINE setChildren_XMLElementType
+!
+!-------------------------------------------------------------------------------
+!> @brief sets or adds attribute to XMLElementType
+!> @param thisXMLE the XML element
+!> @param the attribute name
+!> @param the value of the attribute(always a string for XML)
+!>
+    SUBROUTINE setAttribute_XMLElementType(thisXMLE,name,value)
+      CLASS(XMLElementType),INTENT(INOUT) :: thisXMLE
+      TYPE(StringType),INTENT(IN) :: name,value
+
+      INTEGER(SIK) :: i
+      TYPE(StringType),ALLOCATABLE :: tmpNames(:),tmpVals(:)
+
+      DO i=1,thisXMLE%nAttr
+        IF(name == thisXMLE%attr_names(i)) THEN
+          thisXMLE%attr_values(i)=value
+          EXIT
+        ENDIF
+      ENDDO
+      !If not currently an attribute add it
+      IF(thisXMLE%nAttr > 0) THEN
+        ALLOCATE(tmpNames(thisXMLE%nAttr))
+        ALLOCATE(tmpVals(thisXMLE%nAttr))
+
+        tmpNames=thisXMLE%attr_names
+        tmpVals=thisXMLE%attr_values
+        IF(ALLOCATED(thisXMLE%attr_names)) DEALLOCATE(thisXMLE%attr_names)
+        IF(ALLOCATED(thisXMLE%attr_values)) DEALLOCATE(thisXMLE%attr_values)
+        thisXMLE%nAttr=thisXMLE%nAttr+1
+        ALLOCATE(thisXMLE%attr_names(thisXMLE%nAttr))
+        ALLOCATE(thisXMLE%attr_values(thisXMLE%nAttr))
+        thisXMLE%attr_names(1:thisXMLE%nAttr-1)=tmpNames
+        thisXMLE%attr_values(1:thisXMLE%nAttr-1)=tmpVals
+
+        thisXMLE%attr_names(thisXMLE%nAttr)=name
+        thisXMLE%attr_values(thisXMLE%nAttr)=value
+
+        DEALLOCATE(tmpNames)
+        DEALLOCATE(tmpVals)
+      ELSE
+        IF(ALLOCATED(thisXMLE%attr_names)) DEALLOCATE(thisXMLE%attr_names)
+        IF(ALLOCATED(thisXMLE%attr_values)) DEALLOCATE(thisXMLE%attr_values)
+        thisXMLE%nAttr=thisXMLE%nAttr+1
+        ALLOCATE(thisXMLE%attr_names(thisXMLE%nAttr))
+        ALLOCATE(thisXMLE%attr_values(thisXMLE%nAttr))
+        thisXMLE%attr_names=name
+        thisXMLE%attr_values=value
+      ENDIF
+    ENDSUBROUTINE setAttribute_XMLElementType
 !
 !-------------------------------------------------------------------------------
 !> @brief Initializes an XML file type

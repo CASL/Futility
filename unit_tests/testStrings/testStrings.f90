@@ -27,6 +27,8 @@ PROGRAM testStrings
   CHARACTER(LEN=10) :: char10
   CHARACTER(LEN=20) :: char20
   TYPE(StringType) :: testString,testString2,testStringArray(10)
+  TYPE(StringType) :: test1a(2),test1a2(2),test2a(2,2),test2a2(2,2)
+  TYPE(StringType) :: test3a(2,2,2),test3a2(2,2,2)
   
   CREATE_TEST('TEST STRINGS')
 !
@@ -164,39 +166,98 @@ PROGRAM testStrings
   !ASSERT(ANY(char10,testStringArray,.FALSE.),'ANY(char10,testStringArray,.FALSE.)')
   ASSERT(ANY(testStringArray,char10,.FALSE.),'ANY(testStringArray,char10,.FALSE.)')
 !
-!Test ANY operator
-  COMPONENT_TEST('ALL')
+!Test ALL operator
+  !Test ALL of 1-D array and scalar
+  COMPONENT_TEST('ALL 1-D & Scalar')
   DO i=1,10
     testStringArray(i)='test'
   ENDDO
   testString='bad test'
   char10='bad test'
   !ASSERT(.NOT. ALL(testString,testStringArray),'ALL(testString,testStringArray), bad')
-  ASSERT(.NOT. ALL(testStringArray,testString),'ALL(testStringArray,testString), bad')
+  ASSERT(.NOT. ALL(testStringArray,testString),'ALL 1-D & scalar, str')
   !ASSERT(.NOT. ALL(char10,testStringArray),'ALL(char10,testStringArray), bad')
-  ASSERT(.NOT. ALL(testStringArray,char10),'ALL(testStringArray,char10), bad')
+  ASSERT(.NOT. ALL(testStringArray,char10),'ALL 1-D & scalar, char')
   !ASSERT(ALL(testString,testStringArray,.TRUE.),'ALL(testString,testStringArray,.TRUE.), bad')
-  ASSERT(ALL(testStringArray,testString,.TRUE.),'ALL(testStringArray,testString,.TRUE.), bad')
+  ASSERT(ALL(testStringArray,testString,.TRUE.),'ALL 1-D & scalar, str, w/ NOT=T')
   !ASSERT(ALL(char10,testStringArray,.TRUE.),'ALL(char10,testStringArray,.TRUE.), bad')
-  ASSERT(ALL(testStringArray,char10,.TRUE.),'ALL(testStringArray,char10,.TRUE.), bad')
+  ASSERT(ALL(testStringArray,char10,.TRUE.),'ALL 1-D & scalar, char, w/ NOT=T')
   !ASSERT(.NOT. ALL(testString,testStringArray,.FALSE.),'ALL(testString,testStringArray,.FALSE.), bad')
-  ASSERT(.NOT. ALL(testStringArray,testString,.FALSE.),'ALL(testStringArray,testString,.FALSE.), bad')
+  ASSERT(.NOT. ALL(testStringArray,testString,.FALSE.),'ALL 1-D & scalar, str, w/ NOT=F')
   !ASSERT(.NOT. ALL(char10,testStringArray,.FALSE.),'ALL(char10,testStringArray,.FALSE.), bad')
-  ASSERT(.NOT. ALL(testStringArray,char10,.FALSE.),'ALL(testStringArray,char10,.FALSE.), bad')
+  ASSERT(.NOT. ALL(testStringArray,char10,.FALSE.),'ALL 1-D & scalar, char, w/ NOT=F')
   testString='test'
   char10='test'
   !ASSERT(ALL(testString,testStringArray),'ALL(testString,testStringArray)')
-  ASSERT(ALL(testStringArray,testString),'ALL(testStringArray,testString)')
+  ASSERT(ALL(testStringArray,testString),'ALL 1-D & scalar, str')
   !ASSERT(ALL(char10,testStringArray),'ALL(char10,testStringArray)')
-  ASSERT(ALL(testStringArray,char10),'ALL(testStringArray,char10)')
+  ASSERT(ALL(testStringArray,char10),'ALL 1-D & scalar, char')
   !ASSERT(.NOT.ALL(testString,testStringArray,.TRUE.),'ALL(testString,testStringArray,.TRUE)')
-  ASSERT(.NOT.ALL(testStringArray,testString,.TRUE.),'ALL(testStringArray,testString,.TRUE)')
+  ASSERT(.NOT.ALL(testStringArray,testString,.TRUE.),'ALL 1-D & scalar, str, w/ NOT=T')
   !ASSERT(.NOT.ALL(char10,testStringArray,.TRUE.),'ALL(char10,testStringArray,.TRUE)')
-  ASSERT(.NOT.ALL(testStringArray,char10,.TRUE.),'ALL(testStringArray,char10,.TRUE)')
+  ASSERT(.NOT.ALL(testStringArray,char10,.TRUE.),'ALL 1-D & scalar, char, w/ NOT=T')
   !ASSERT(ALL(testString,testStringArray,.FALSE.),'ALL(testString,testStringArray,.FALSE.)')
-  ASSERT(ALL(testStringArray,testString,.FALSE.),'ALL(testStringArray,testString,.FALSE.)')
+  ASSERT(ALL(testStringArray,testString,.FALSE.),'ALL 1-D & scalar, str, w/ NOT=F')
   !ASSERT(ALL(char10,testStringArray,.FALSE.),'ALL(char10,testStringArray,.FALSE.)')
-  ASSERT(ALL(testStringArray,char10,.FALSE.),'ALL(testStringArray,char10,.FALSE.)')
+  ASSERT(ALL(testStringArray,char10,.FALSE.),'ALL 1-D & scalar, char, w/ NOT=F')
+
+  COMPONENT_TEST('ALL 1-D & 1-D')
+  !Test ALL of two 1-D arrays
+  test1a(1)='test'; test1a(2)='test'
+  test1a2(1)='test'; test1a2(2)='test'
+  ASSERT(ALL(test1a,test1a2),'ALL 1-D & 1-D')
+  ASSERT(.NOT.ALL(test1a,test1a2,.TRUE.),'ALL 1-D & 1-D, w/ NOT=T')
+  ASSERT(ALL(test1a,test1a2,.FALSE.),'ALL 1-D & 1-D, w/ NOT=F')
+  test1a2(2)='bad test'
+  ASSERT(.NOT.ALL(test1a,test1a2),'ALL 1-D & 1-D')
+  ASSERT(.NOT.ALL(test1a,test1a2,.TRUE.),'ALL 1-D & 1-D, w/ NOT=T')
+  ASSERT(.NOT.ALL(test1a,test1a2,.FALSE.),'ALL 1-D & 1-D, w/ NOT=F')
+  test1a2(1)='bad test'
+  ASSERT(.NOT.ALL(test1a,test1a2),'ALL 1-D & 1-D')
+  ASSERT(ALL(test1a,test1a2,.TRUE.),'ALL 1-D & 1-D, w/ NOT=T')
+  ASSERT(.NOT.ALL(test1a,test1a2,.FALSE.),'ALL 1-D & 1-D, w/ NOT=F')
+
+  COMPONENT_TEST('ALL 2-D & 2-D')
+  !Test ALL of two 2-D arrays
+  test2a(1,1)='test'; test2a(1,2)='test'
+  test2a(2,1)='test'; test2a(2,2)='test'
+  test2a2(1,1)='test'; test2a2(1,2)='test'
+  test2a2(2,1)='test'; test2a2(2,2)='test'
+  ASSERT(ALL(test2a,test2a2),'ALL 2-D & 2-D')
+  ASSERT(.NOT.ALL(test2a,test2a2,.TRUE.),'ALL 2-D & 2-D, w/ NOT=T')
+  ASSERT(ALL(test2a,test2a2,.FALSE.),'ALL 2-D & 2-D, w/ NOT=F')
+  test2a2(2,2)='bad test'
+  ASSERT(.NOT.ALL(test2a,test2a2),'ALL 2-D & 2-D')
+  ASSERT(.NOT.ALL(test2a,test2a2,.TRUE.),'ALL 2-D & 2-D, w/ NOT=T')
+  ASSERT(.NOT.ALL(test2a,test2a2,.FALSE.),'ALL 2-D & 2-D, w/ NOT=F')
+  test2a2(1,1)='bad test'; test2a2(1,2)='bad test'; test2a2(2,1)='bad test'
+  ASSERT(.NOT.ALL(test2a,test2a2),'ALL 2-D & 2-D')
+  ASSERT(ALL(test2a,test2a2,.TRUE.),'ALL 2-D & 2-D, w/ NOT=T')
+  ASSERT(.NOT.ALL(test2a,test2a2,.FALSE.),'ALL 2-D & 2-D, w/ NOT=F')
+
+  COMPONENT_TEST('ALL 3-D & 3-D')
+  !Test ALL of two 2-D arrays
+  test3a(1,1,1)='test'; test3a(1,2,1)='test'
+  test3a(2,1,1)='test'; test3a(2,2,1)='test'
+  test3a(1,1,2)='test'; test3a(1,2,2)='test'
+  test3a(2,1,2)='test'; test3a(2,2,2)='test'
+  test3a2(1,1,1)='test'; test3a2(1,2,1)='test'
+  test3a2(2,1,1)='test'; test3a2(2,2,1)='test'
+  test3a2(1,1,2)='test'; test3a2(1,2,2)='test'
+  test3a2(2,1,2)='test'; test3a2(2,2,2)='test'
+  ASSERT(ALL(test3a,test3a2),'ALL 3-D & 3-D')
+  ASSERT(.NOT.ALL(test3a,test3a2,.TRUE.),'ALL 3-D & 3-D, w/ NOT=T')
+  ASSERT(ALL(test3a,test3a2,.FALSE.),'ALL 3-D & 3-D, w/ NOT=F')
+  test3a2(2,2,2)='bad test'
+  ASSERT(.NOT.ALL(test3a,test3a2),'ALL 3-D & 3-D')
+  ASSERT(.NOT.ALL(test3a,test3a2,.TRUE.),'ALL 3-D & 3-D, w/ NOT=T')
+  ASSERT(.NOT.ALL(test3a,test3a2,.FALSE.),'ALL 3-D & 3-D, w/ NOT=F')
+  test3a2(1,1,1)='bad test'; test3a2(1,2,1)='bad test'; test3a2(2,1,1)='bad test'
+  test3a2(2,2,1)='bad test'; test3a2(1,1,2)='bad test'; test3a2(1,2,2)='bad test'
+  test3a2(2,1,2)='bad test'
+  ASSERT(.NOT.ALL(test3a,test3a2),'ALL 3-D & 3-D')
+  ASSERT(ALL(test3a,test3a2,.TRUE.),'ALL 3-D & 3-D, w/ NOT=T')
+  ASSERT(.NOT.ALL(test3a,test3a2,.FALSE.),'ALL 3-D & 3-D, w/ NOT=F')
   
   FINALIZE_TEST()
 !
