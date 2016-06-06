@@ -4448,20 +4448,18 @@ PROGRAM testParameterLists
     CALL testParam2%clear()
     NULLIFY(someParam)
 
-    ! COMPONENT_TEST('Sublist not added')
-    ! CALL testParam%add('A->C',1)
-    ! CALL testParam2%add('CB->p1',1)
-    ! CALL testParam2%add('CB->p2',2)
-    ! CALL testParam2%get('CB',someParam)
-    ! testParam3=someParam
-    ! CALL testParam%add('A',testParam3)
-    ! bool=testParam%has('A->CB')
-    ! ASSERT(bool,'not added')
-
-    ! CALL testParam%clear()
-    ! CALL testParam2%clear()
-    ! CALL testParam3%clear()
-    ! someParam => NULL()
+    COMPONENT_TEST('Sublist not added')
+    CALL testParam%add('A->C',1)
+    CALL testParam2%add('B000001->p',1)
+    CALL testParam%add('A->',testParam2)
+    CALL testParam%edit(0)
+    CALL testParam2%clear()
+    CALL testParam2%add('B000002->p',2)
+    CALL testParam%add('A->',testParam2)
+    CALL testParam%edit(0)
+    bool=testParam%has('A->B000002')
+    ASSERT(bool,'not added')
+    CALL clear_test_vars()
   ENDSUBROUTINE testAdd
 !
 !-------------------------------------------------------------------------------

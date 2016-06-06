@@ -1640,7 +1640,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN) :: name
       CLASS(ParamType),INTENT(IN) :: newParam
       LOGICAL(SBK),SAVE :: lsubListSearch=.TRUE.
-      CHARACTER(LEN=LEN(name)) :: thisname,nextname,pname,listName
+      TYPE(StringType) :: thisname,nextname,pname,listName
       INTEGER(SIK) :: ipos,i,np
       TYPE(ParamType),ALLOCATABLE :: tmpList(:)
       CLASS(ParamType),POINTER :: tmpParam
@@ -1665,7 +1665,7 @@ MODULE ParameterLists
                 thisParam%pdat%name=TRIM(ADJUSTL(name))
                 nextname=''
               ENDIF
-              CALL add_ParamType(thisParam%pdat,nextname,newParam)
+              CALL add_ParamType(thisParam%pdat,TRIM(nextname),newParam)
             ELSE
               !assign newParam to thisParam
               CALL assign_ParamType(thisParam,newParam)
@@ -1693,7 +1693,7 @@ MODULE ParameterLists
               !full address. last name is guaranteed not to exist
               !and this prevents accidental partial matching in sublists.
               lsubListSearch=.FALSE.
-              CALL add_ParamType(thisParam,nextname,newParam)
+              CALL add_ParamType(thisParam,TRIM(nextname),newParam)
               lsubListSearch=.TRUE.
             ELSE
               !Search for thisname within...
@@ -1717,7 +1717,7 @@ MODULE ParameterLists
 
               IF(ASSOCIATED(tmpParam)) THEN
                 !Found parameter with matching name
-                CALL add_ParamType(tmpParam,nextname,newParam)
+                CALL add_ParamType(tmpParam,TRIM(nextname),newParam)
               ELSE
                 !Create a new entry in the list for the new parameter
                 IF(np > 0) THEN
