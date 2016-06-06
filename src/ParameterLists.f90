@@ -1606,7 +1606,8 @@ MODULE ParameterLists
             ELSE
               IF(LEN(pname) >= LEN_TRIM(thisParam%name)) pname=thisParam%name
               CALL toUPPER(pname)
-              IF(TRIM(pname) == TRIM(thisname)) param => thisParam
+              IF(TRIM(pname) == TRIM(thisname) .AND. LEN_TRIM(nextName) == 0) &
+                param => thisParam
             ENDIF
         ENDSELECT
       ELSE

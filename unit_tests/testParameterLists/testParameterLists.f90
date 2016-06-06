@@ -158,6 +158,8 @@ PROGRAM testParameterLists
     
     COMPONENT_TEST('%get(...)')
     CALL testParam%init('testSBK',valsbk,'The value is TRUE')
+    CALL testParam%get('testSBK->no subparam',someParam)
+    ASSERT(.NOT.ASSOCIATED(someParam),'no subparam')
     CALL testParam%get('testSBK',someParam)
     ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
     CALL someParam%get('testSBK',valsbk)
@@ -4788,6 +4790,7 @@ PROGRAM testParameterLists
     ASSERT(testParam%has('testPL'),'testPL')
     ASSERT(testParam%has('testPL->testSDK'),'testPL->testSDK')
     ASSERT(.NOT.testParam%has('testPL->shenanigans'),'shenanigans')
+    ASSERT(.NOT.testParam%has('testPL->testSDK->bad'),'param of not param')
 
     !Confirm bug fix for incorrect matching from string truncation
     CALL testParam%clear()
