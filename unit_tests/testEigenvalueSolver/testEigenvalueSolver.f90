@@ -24,6 +24,7 @@ PROGRAM testEigenvalueSolver
   TYPE(MPI_EnvType) :: mpiTestEnv
   TYPE(ParamType) :: pList, optList
   TYPE(EigenvalueSolverType_SLEPc) :: testEVS
+  TYPE(PETScMatrixType) :: A, B
 
 #ifdef MPACT_HAVE_PETSC
 #include <finclude/petsc.h>
@@ -69,6 +70,9 @@ PROGRAM testEigenvalueSolver
   CALL pList%clear()
   CALL optList%clear()
 
+  IF(A%isInit) CALL A%clear()
+  IF(B%isInit) CALL B%clear()
+
 #ifdef MPACT_HAVE_PETSC
   CALL PetscFinalize(ierr)
 #else
@@ -111,7 +115,6 @@ CONTAINS
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testSetMat()
-      TYPE(PETScMatrixType) :: A, B
       CALL plist%clear()
       CALL plist%add('MatrixType->n',2_SIK)
       CALL plist%add('MatrixType->nlocal',2_SIK)

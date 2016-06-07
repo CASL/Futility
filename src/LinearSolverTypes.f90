@@ -684,6 +684,7 @@ MODULE LinearSolverTypes
 #endif
       IF(ASSOCIATED(solver%A)) THEN
         CALL solver%A%clear()
+        DEALLOCATE(solver%A)
         NULLIFY(solver%A)
       ENDIF
       IF(ALLOCATED(solver%X)) THEN
@@ -734,6 +735,7 @@ MODULE LinearSolverTypes
       ENDIF
       IF(ASSOCIATED(solver%A)) THEN
         CALL solver%A%clear()
+        DEALLOCATE(solver%A)
         NULLIFY(solver%A)
       ENDIF
       IF(ALLOCATED(solver%M)) THEN
