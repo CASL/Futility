@@ -34,9 +34,9 @@ ENDIF()
 
 TRIBITS_ADD_LIBRARY(TrilinosUtils
     HEADERS
-      trilinos/store.hpp trilinos/store_solvers.hpp trilinos/store_pc.hpp
+      trilinos_interfaces/store.hpp trilinos_interfaces/store_solvers.hpp trilinos_interfaces/store_pc.hpp
     SOURCES
-      trilinos/store_c.cpp
+      trilinos_interfaces/store_c.cpp
 )
 
 #Library for utility code
@@ -97,7 +97,7 @@ TRIBITS_ADD_LIBRARY(Utils
 )
 
 TRIBITS_ADD_EXECUTABLE(store
-     SOURCES trilinos/main.f90
+     SOURCES trilinos_interfaces/main.f90
      NOEXEPREFIX
      LINKER_LANGUAGE Fortran
 )
