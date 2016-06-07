@@ -1,9 +1,9 @@
 #ifdef HAVE_MPI
 #include "mpi.h"
 #endif
-#include "store.hpp"
-#include "store_solvers.hpp"
-#include "store_pc.hpp"
+#include "trilinos_mat_vec.hpp"
+#include "trilinos_solvers.hpp"
+#include "trilinos_pc.hpp"
 #include <omp.h>
 
 bool           mpact_trilinos_isinit=false;

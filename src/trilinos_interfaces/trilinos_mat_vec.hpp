@@ -54,74 +54,74 @@ public:
     {}
 
     int new_data(const int n, const int nloc, const MPI_Comm rawComm) {
-        things_[cid]=new EpetraVecCnt(n,nloc,rawComm);
-        //things_[cid]->Comm.PrintInfo(std::cout);
+        vec_map[cid]=new EpetraVecCnt(n,nloc,rawComm);
+        //vec_map[cid]->Comm.PrintInfo(std::cout);
         cid++;
         return cid-1;
     }
 
     int delete_data(const int id){
-        delete things_[id];
-        things_.erase(id);
+        delete vec_map[id];
+        vec_map.erase(id);
         return 0;
     }
 
     int set_data(const int id, const int *i, const double *val) {
-        return things_[id]->evec->ReplaceGlobalValues(1,val,i);
+        return vec_map[id]->evec->ReplaceGlobalValues(1,val,i);
     }
 
     int setall_data(const int id, const double val) {
-        return things_[id]->evec->PutScalar(val);
+        return vec_map[id]->evec->PutScalar(val);
     }
 
     int get_data(const int id, const int i, double &val) {
-        int lid=things_[id]->emap.LID(i);
+        int lid=vec_map[id]->emap.LID(i);
         if(lid>=0){
-            val = (*things_[id])[lid];
+            val = (*vec_map[id])[lid];
             return 0;
         }
         else return lid;
     }
 
     int copy_data(const int id, const int idfrom) {
-        *(things_[id]->evec)= *(things_[idfrom]->evec);
+        *(vec_map[id]->evec)= *(vec_map[idfrom]->evec);
         return 0;
     }
 
     int axpy_data(const int id, const int idx, const double a, const double b) {
-        return things_[id]->evec->Update(a,*(things_[idx]->evec),b);
+        return vec_map[id]->evec->Update(a,*(vec_map[idx]->evec),b);
     }
 
     int norm1_data(const int id, double val[]) {
-        int ierr = things_[id]->evec->MeanValue(val);
-        val[0]*=double(things_[id]->evec->GlobalLength());
+        int ierr = vec_map[id]->evec->MeanValue(val);
+        val[0]*=double(vec_map[id]->evec->GlobalLength());
         return ierr;
     }
 
     int norm2_data(const int id, double val[]) {
-        return things_[id]->evec->Norm2(val);
+        return vec_map[id]->evec->Norm2(val);
     }
 
     int max_data(const int id, double val[]) {
-        return things_[id]->evec->MaxValue(val);
+        return vec_map[id]->evec->MaxValue(val);
     }
 
     int scale_data(const int id, double val) {
-        return things_[id]->evec->Scale(val);
+        return vec_map[id]->evec->Scale(val);
     }
 
     //TODO: eventually send a string in
     int edit_data(const int id, const char name[]) {
-        return EpetraExt::VectorToMatlabFile(name,*(things_[id]->evec));
+        return EpetraExt::VectorToMatlabFile(name,*(vec_map[id]->evec));
     }
 
     Teuchos::RCP<Epetra_Vector> get_vec(const int id){
-        return things_[id]->evec;
+        return vec_map[id]->evec;
     }
 
 private:
         int cid;
-        map<int, EpetraVecCnt*> things_;
+        map<int, EpetraVecCnt*> vec_map;
 };
 
 
@@ -157,65 +157,65 @@ public:
     {}
 
     int new_data(const int n, const int nloc, const int rnnz, const MPI_Comm rawComm) {
-        things_[cid]=new EpetraMatCnt(n,nloc,rnnz,rawComm);
+        mat_map[cid]=new EpetraMatCnt(n,nloc,rnnz,rawComm);
         cid++;
         return cid-1;
     }
 
     int delete_data(const int id){
-        delete things_[id];
-        things_.erase(id);
+        delete mat_map[id];
+        mat_map.erase(id);
         return 0;
     }
 
 
     int reset_data(const int id){
-        things_[id]->emat=Teuchos::RCP<Epetra_CrsMatrix>(new Epetra_CrsMatrix(Copy,things_[id]->emap,things_[id]->m_rnnz));
+        mat_map[id]->emat=Teuchos::RCP<Epetra_CrsMatrix>(new Epetra_CrsMatrix(Copy,mat_map[id]->emap,mat_map[id]->m_rnnz));
         return 0;
     }
 
     int set_data(const int id, const int i, const int nnz, const int j[], const double val[]) {
-        //std::cout << id << " - " << i << " - " << nnz << " - " << things_[id]->b_asy << std::endl;
+        //std::cout << id << " - " << i << " - " << nnz << " - " << mat_map[id]->b_asy << std::endl;
         //for (int it = 0; it < nnz; it++) { std::cout << j[it] << " ";}
         //std::cout << std::endl;
         //for (int it = 0; it < nnz; it++) { std::cout << val[it]<< " ";}
         //std::cout << std::endl;
-        int ierr = things_[id]->emat->InsertGlobalValues(i,nnz,val,j);
-        if(ierr!=0) ierr = things_[id]->emat->ReplaceGlobalValues(i,nnz,val,j);
+        int ierr = mat_map[id]->emat->InsertGlobalValues(i,nnz,val,j);
+        if(ierr!=0) ierr = mat_map[id]->emat->ReplaceGlobalValues(i,nnz,val,j);
         if(ierr!=0) std::cout << id << " - " << ierr << " - " << i << std::endl;
         //std::cout << ierr << std::endl;
         return ierr;
     }
 
     int assemble_data(const int id){
-        things_[id]->b_asy=true;
-        return things_[id]->emat->FillComplete();
+        mat_map[id]->b_asy=true;
+        return mat_map[id]->emat->FillComplete();
     }
 
     //defering this for a while
     //int get_data(const int id, const int i, double &val) {
-    //    val = things_[id]->emat[i-1];   Need to overload this like the vector
+    //    val = mat_map[id]->emat[i-1];   Need to overload this like the vector
     //    return 0;
     //}
 
     int matvec_data(const int id, const bool trans, Teuchos::RCP<Epetra_Vector> x, Teuchos::RCP<Epetra_Vector> y){
-        return things_[id]->emat->Multiply(trans,*x,*y);
+        return mat_map[id]->emat->Multiply(trans,*x,*y);
     }
 
     int edit_data(const int id,const char name[]) {
-        return EpetraExt::RowMatrixToMatlabFile(name,*(things_[id]->emat));
+        return EpetraExt::RowMatrixToMatlabFile(name,*(mat_map[id]->emat));
     }
 
     int normF_data(const int id, double &x) {
-        x=things_[id]->emat->NormFrobenius();
+        x=mat_map[id]->emat->NormFrobenius();
         return 0;
     }
 
     Teuchos::RCP<Epetra_CrsMatrix> get_mat(const int id){
-        return things_[id]->emat;
+        return mat_map[id]->emat;
     }
 
 private:
         int cid;
-        map<int, EpetraMatCnt*> things_;
+        map<int, EpetraMatCnt*> mat_map;
 };
