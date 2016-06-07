@@ -95,9 +95,3 @@ TRIBITS_ADD_LIBRARY(Utils
     DEPLIBS
       CUtils
 )
-
-TRIBITS_ADD_EXECUTABLE(store
-     SOURCES trilinos_interfaces/main.f90
-     NOEXEPREFIX
-     LINKER_LANGUAGE Fortran
-)
