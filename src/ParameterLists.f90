@@ -1493,7 +1493,7 @@ MODULE ParameterLists
             !Search the PL for an element
             IF(ASSOCIATED(param)) THEN
               DO i=1,SIZE(tp%pList)
-                IF(ASSOCIATED(param,tp%pList(i)%pdat)) THEN
+                IF(ASSOCIATED(tp%pList(i)%pdat,param)) THEN
                   IF(i+1 <= SIZE(tp%pList)) THEN
                     nextParam => tp%pList(i+1)%pdat
                   ELSE
