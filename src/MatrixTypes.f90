@@ -82,7 +82,7 @@ MODULE MatrixTypes
 #include <finclude/petsc.h>
 #undef IS
 #endif
-#include "trilinos/store_interface.h"
+#include "trilinos_interfaces/trilinos_f_interfaces.h"
 
   PRIVATE
 !
@@ -751,7 +751,6 @@ MODULE MatrixTypes
       CALL validParams%clear()
 
       rnnz=MAXVAL(dnnz)+MAXVAL(onnz)
-
       IF(.NOT. matrix%isInit) THEN
         IF(n < 1) THEN
           CALL eMatrixType%raiseError('Incorrect input to '// &
@@ -1545,7 +1544,7 @@ MODULE MatrixTypes
                'need to recompile with PETSc enabled to use this feature.')
 #endif
         CLASS DEFAULT
-          CALL eMatrixType%raiseFatalError('Incorrect call to '// &
+          CALL eMatrixType%raiseError('Incorrect call to '// &
                modName//'::'//myName//' - Too lazy to implement interface.')
         ENDSELECT
       ENDIF
@@ -1689,7 +1688,7 @@ MODULE MatrixTypes
                    'need to recompile with PETSc enabled to use this feature.')
 #endif
               CLASS DEFAULT
-                CALL eMatrixType%raiseFatalError('Incorrect call to '// &
+                CALL eMatrixType%raiseError('Incorrect call to '// &
                      modName//'::'//myName//' - Too lazy to implement interface.. here?.')
             ENDSELECT
           ENDSELECT
@@ -1750,7 +1749,7 @@ MODULE MatrixTypes
             ENDSELECT
           ENDSELECT
         CLASS DEFAULT
-                CALL eMatrixType%raiseFatalError('Incorrect call to '// &
+                CALL eMatrixType%raiseError('Incorrect call to '// &
                     modName//'::'//myName//' - Too lazy to implement interface.')
         ENDSELECT
 
@@ -2173,7 +2172,7 @@ MODULE MatrixTypes
                 ENDSELECT
             ENDSELECT
           TYPE IS(TrilinosMatrixType)
-            CALL eMatrixType%raiseFatalError('Incorrect call to '// &
+            CALL eMatrixType%raiseError('Incorrect call to '// &
                  modName//'::'//myName//' - Too lazy to implement interface.')
         ENDSELECT
       ENDIF

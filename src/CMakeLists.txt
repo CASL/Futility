@@ -34,16 +34,16 @@ ENDIF()
 
 TRIBITS_ADD_LIBRARY(TrilinosUtils
     HEADERS
-      trilinos_interfaces/store.hpp trilinos_interfaces/store_solvers.hpp trilinos_interfaces/store_pc.hpp
+      trilinos_interfaces/trilinos_mat_vec.hpp trilinos_interfaces/trilinos_solvers.hpp trilinos_interfaces/trilinos_pc.hpp
     SOURCES
-      trilinos_interfaces/store_c.cpp
+      trilinos_interfaces/trilinos_c_interfaces.cpp
 )
 
 #Library for utility code
 TRIBITS_ADD_LIBRARY(Utils
     HEADERS
-	    UnitTest.h
-	    getSysProcInfo_F.h
+      UnitTest.h
+      getSysProcInfo_F.h
     SOURCES
       UnitTest.f90
       IntrType.f90
@@ -94,4 +94,5 @@ TRIBITS_ADD_LIBRARY(Utils
       ArrayUtils.f90
     DEPLIBS
       CUtils
+      TrilinosUtils
 )

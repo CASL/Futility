@@ -66,7 +66,7 @@ MODULE VectorTypes
 #include <finclude/petsc.h>
 #undef IS
 #endif
-#include "trilinos/store_interface.h"
+#include "trilinos_interfaces/trilinos_f_interfaces.h"
 
   PRIVATE
 !

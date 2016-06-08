@@ -93,7 +93,7 @@ MODULE LinearSolverTypes
 !petscisdef.h defines the keyword IS, and it needs to be reset
 #undef IS
 #endif
-#include "trilinos/store_interface.h"
+#include "trilinos_interfaces/trilinos_f_interfaces.h"
 
   PRIVATE
 !
