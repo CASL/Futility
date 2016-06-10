@@ -23,19 +23,20 @@ PROGRAM testStrings
   
   IMPLICIT NONE
   
+  LOGICAL(SBK) :: bool
   INTEGER(SIK) :: i
   CHARACTER(LEN=10) :: char10
   CHARACTER(LEN=20) :: char20
   TYPE(StringType) :: testString,testString2,testStringArray(10)
   TYPE(StringType) :: test1a(2),test1a2(2),test2a(2,2),test2a2(2,2)
   TYPE(StringType) :: test3a(2,2,2),test3a2(2,2,2)
-  TYPE(StringType),ALLOCATABLE :: s1a(:),s1a2(:)
+  TYPE(StringType),ALLOCATABLE :: s1a(:),s1a2(:),s2a(:,:),s2a2(:,:)
   
   CREATE_TEST('TEST STRINGS')
 !
 !Test methods for uninitialized state
   !length of an empty string
-  COMPONENT_TEST('Assignment')
+  COMPONENT_TEST('Assignment Char to String Scalar')
   ASSERT(LEN(testString) == 0,'LEN(testString) (uninit)')
   ASSERT(LEN_TRIM(testString) == 0,'LEN_TRIM(testString) (uninit)')
   ASSERT(CHAR(testString) == '','CHAR(testString) (uninit)')
@@ -75,6 +76,7 @@ PROGRAM testStrings
   ASSERT(TRIM(testString) == 'variable','TRIM(testString) (=''variable'')')
 !  
 !Test assigning a string to a character
+  COMPONENT_TEST('Assignment String Scalar to Char')
   char10='-'
   testString='testString1'
   char10=testString
@@ -83,31 +85,92 @@ PROGRAM testStrings
   ASSERT(char20 == 'testString1         ','char20=testString')
 !
 !Test assigning a string to a string
+  COMPONENT_TEST('Assignment String Scalar to String Scalar')
   testString2='testString2'
   testString2=testString
   ASSERT(CHAR(testString2) == 'testString1','testString2=testString')
 !
+!Test assigning a char to a 1-D string array
+  COMPONENT_TEST('Assignment char to 1-D String Array')
+  ALLOCATE(s1a(2))
+  s1a(1)='test'
+  s1a(2)='test2'
+  s1a='pass'
+  ASSERT(s1a(1) == 'pass' .AND. s1a(2) == 'pass','char to 1-D array') 
+  s1a=''
+  ASSERT(s1a(1) == '' .AND. s1a(2) == '','char to 1-D array nullify')
+  DEALLOCATE(s1a)
+!
+!Test assigning a char to a 2-D string array
+  COMPONENT_TEST('Assignment char to 2-D String Array')
+  ALLOCATE(s2a(2,2))
+  s2a(1,1)='test'; s2a(1,2)='test'
+  s2a(2,1)='test2'; s2a(2,2)='test2'
+  s2a='pass'
+  bool=s2a(1,1) == 'pass' .AND. s2a(1,2) == 'pass' .AND. s2a(2,1) == 'pass' .AND. &
+    s2a(2,2) == 'pass'
+  ASSERT(bool,'char to 2-D array')
+  s2a=''
+  bool=s2a(1,1) == '' .AND. s2a(1,2) == '' .AND. s2a(2,1) == '' .AND. s2a(2,2) == ''
+  ASSERT(bool,'char to 2-D array nullify')
+  DEALLOCATE(s2a)
+
+!
 !Test assigning an array of strings to an array of strings
   !null assignmnet (should deallocate the array)
+  COMPONENT_TEST('Assignment 1-D String Array to 1-D String Array')
+  testString2='testString2'
   ALLOCATE(s1a(1))
   ALLOCATE(s1a2(1))
+  s1a(1)='test'
   s1a=s1a2(1:0)
-  ASSERT(.NOT.ALLOCATED(s1a),'null array assignment')
-  !assign array to deallocated array
-  s1a2(1)='test'
+  ASSERT(ALLOCATED(s1a),'null array assignment')
+  ASSERT(SIZE(s1a,DIM=1) == 1,'SIZE null array assignment')
+  ASSERT(s1a(1) == '','null array assignment')
+  !assign array to allocated array
+  s1a2(1)='test2'
   s1a=s1a2
   ASSERT(ALLOCATED(s1a),'allocated array assignment')
   ASSERT(SIZE(s1a,DIM=1) == 1,'SIZE array assignment')
-  ASSERT(s1a(1)=='test','test array assignment')
+  ASSERT(s1a(1)=='test2','test array assignment')
   !assign array to allocated array
   DEALLOCATE(s1a2)
   ALLOCATE(s1a2(2))
   s1a2(1)='one'; s1a2(2)='two'
   s1a=s1a2
   ASSERT(ALLOCATED(s1a),'allocated array assignment')
-  ASSERT(SIZE(s1a,DIM=1) == 2,'SIZE array assignment')
-  ASSERT(s1a(1)=='one','test array assignment')
-  ASSERT(s1a(2)=='two','test array assignment')
+  ASSERT(SIZE(s1a,DIM=1) == 1,'SIZE array assignment')
+  ASSERT(s1a(1)=='','test array assignment')
+!
+!Test assigning an array of strings to an array of strings
+  !null assignmnet (should deallocate the array)
+  COMPONENT_TEST('Assignment 2-D String Array to 2-D String Array')
+  testString2='testString2'
+  ALLOCATE(s2a(2,2))
+  ALLOCATE(s2a2(2,2))
+  s2a='test'
+  s2a=s2a2(1:0,1:0)
+  ASSERT(ALLOCATED(s2a),'null array assignment')
+  ASSERT(SIZE(s2a,DIM=1) == 2 .AND. SIZE(s2a,DIM=2) == 2,'SIZE null array assignment')
+  bool=s2a(1,1) == '' .AND. s2a(1,2) == '' .AND. s2a(2,1) == '' .AND. s2a(2,2) == ''
+  ASSERT(bool,'null array assignment')
+  !assign array to allocated array
+  s2a2='test2'
+  s2a=s2a2
+  ASSERT(ALLOCATED(s2a),'allocated array assignment')
+  ASSERT(SIZE(s2a,DIM=1) == 2 .AND. SIZE(s2a,DIM=2) == 2,'SIZE array assignment')
+  bool=s2a(1,1) == 'test2' .AND. s2a(1,2) == 'test2' .AND. s2a(2,1) == 'test2' .AND. s2a(2,2) == 'test2'
+  ASSERT(bool,'test array assignment')
+  !assign array to allocated array
+  DEALLOCATE(s2a2)
+  ALLOCATE(s2a2(2,3))
+  s2a2='one'
+  s2a=s2a2
+  ASSERT(ALLOCATED(s2a),'allocated array assignment')
+  ASSERT(SIZE(s2a,DIM=1) == 2 .AND. SIZE(s2a,DIM=2) == 2,'SIZE array assignment')
+  bool=s2a(1,1) == '' .AND. s2a(1,2) == '' .AND. s2a(2,1) == '' .AND. s2a(2,2) == ''
+  ASSERT(bool,'test array assignment')
+
 !
 !Test ADJUSTL and ADJUSTR
   COMPONENT_TEST('ADJUSTL')

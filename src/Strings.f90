@@ -254,9 +254,18 @@ MODULE Strings
     !> @copybrief Strings::assign_StringType_to_StringType
     !> @copydetails Strings::assign_StringType_to_StringType
     MODULE PROCEDURE assign_StringType_to_StringType
+    !> @copybrief Strings::assign_char_to_StringType1A
+    !> @copydetails Strings::assign_char_to_StringType1A
+    MODULE PROCEDURE assign_char_to_StringType1A
+    !> @copybrief Strings::assign_char_to_StringType2A
+    !> @copydetails Strings::assign_char_to_StringType2A
+    MODULE PROCEDURE assign_char_to_StringType2A
     !> @copybrief Strings::assign_StringType1A_to_StringType1A
     !> @copydetails Strings::assign_StringType1A_to_StringType1A
     MODULE PROCEDURE assign_StringType1A_to_StringType1A
+    !> @copybrief Strings::assign_StringType2A_to_StringType2A
+    !> @copydetails Strings::assign_StringType2A_to_StringType2A
+    MODULE PROCEDURE assign_StringType2A_to_StringType2A
   ENDINTERFACE
   
   !> @brief Overloads the Fortran intrinsic operator for concatenating
@@ -908,12 +917,54 @@ MODULE Strings
 !> of the intrinsic operation because I think there are some issues with
 !> the allocatable component.
 !>
+    PURE SUBROUTINE assign_char_to_StringType1A(thisStr,s)
+      TYPE(StringType),INTENT(INOUT) :: thisStr(:)
+      CHARACTER(LEN=*),INTENT(IN) :: s
+      INTEGER(SIK) :: i
+
+      DO i=1,SIZE(thisStr,DIM=1)
+        CALL assign_char_to_StringType(thisStr(i),s)
+      ENDDO
+    ENDSUBROUTINE assign_char_to_StringType1A
+!
+!-------------------------------------------------------------------------------
+!> @brief Assigns the contents of a @c StringType variable to a @c StringType.
+!> @param thisStr the string object
+!> @param s another string object
+!>
+!> The intent is that this will overload the assignment operator so a
+!> @c Stringtype can be assigned to a @c StringType. This is used instead
+!> of the intrinsic operation because I think there are some issues with
+!> the allocatable component.
+!>
+    PURE SUBROUTINE assign_char_to_StringType2A(thisStr,s)
+      TYPE(StringType),INTENT(INOUT) :: thisStr(:,:)
+      CHARACTER(LEN=*),INTENT(IN) :: s
+      INTEGER(SIK) :: i,j
+
+      DO j=1,SIZE(thisStr,DIM=2)
+        DO i=1,SIZE(thisStr,DIM=1)
+          CALL assign_char_to_StringType(thisStr(i,j),s)
+        ENDDO
+      ENDDO
+    ENDSUBROUTINE assign_char_to_StringType2A
+!
+!-------------------------------------------------------------------------------
+!> @brief Assigns the contents of a @c StringType variable to a @c StringType.
+!> @param thisStr the string object
+!> @param s another string object
+!>
+!> The intent is that this will overload the assignment operator so a
+!> @c Stringtype can be assigned to a @c StringType. This is used instead
+!> of the intrinsic operation because I think there are some issues with
+!> the allocatable component.
+!>
     PURE SUBROUTINE assign_StringType1A_to_StringType1A(thisStr,s)
-      TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: thisStr(:)
+      TYPE(StringType),INTENT(INOUT) :: thisStr(:)
       TYPE(StringType),INTENT(IN) :: s(:)
       INTEGER(SIK) :: i,j
 
-      IF(ALLOCATED(thisStr)) THEN
+      IF(SIZE(thisStr,DIM=1) > 0) THEN
         DO i=1,SIZE(thisStr,DIM=1)
           IF(thisStr(i)%n > 0) THEN
             DEALLOCATE(thisStr(i)%s)
@@ -921,11 +972,11 @@ MODULE Strings
             thisStr(i)%ntrim=0
           ENDIF
         ENDDO
-        DEALLOCATE(thisStr)
+        !DEALLOCATE(thisStr)
       ENDIF
 
-      IF(SIZE(s) > 0) THEN
-        ALLOCATE(thisStr(SIZE(s,DIM=1)))
+      IF((SIZE(s) > 0) .AND. (SIZE(thisStr) == SIZE(s))) THEN
+        !ALLOCATE(thisStr(SIZE(s,DIM=1)))
         DO i=1,SIZE(s,DIM=1)
           IF(s(i)%n > 0) THEN
             thisStr(i)%n=s(i)%n
@@ -938,6 +989,54 @@ MODULE Strings
         ENDDO
       ENDIF
     ENDSUBROUTINE assign_StringType1A_to_StringType1A
+!
+!-------------------------------------------------------------------------------
+!> @brief Assigns the contents of a @c StringType variable to a @c StringType.
+!> @param thisStr the string object
+!> @param s another string object
+!>
+!> The intent is that this will overload the assignment operator so a
+!> @c Stringtype can be assigned to a @c StringType. This is used instead
+!> of the intrinsic operation because I think there are some issues with
+!> the allocatable component.
+!>
+    PURE SUBROUTINE assign_StringType2A_to_StringType2A(thisStr,s)
+      TYPE(StringType),INTENT(INOUT) :: thisStr(:,:)
+      TYPE(StringType),INTENT(IN) :: s(:,:)
+      INTEGER(SIK) :: i,j,k,n,m
+
+      n=SIZE(thisStr,DIM=1)
+      m=SIZE(thisStr,DIM=2)
+      IF((n > 0) .AND. (m > 0))THEN
+        DO i=1,SIZE(thisStr,DIM=2)
+          DO j=1,SIZE(thisStr,DIM=1)
+            IF(thisStr(j,i)%n > 0) THEN
+              DEALLOCATE(thisStr(j,i)%s)
+              thisStr(j,i)%n=0
+              thisStr(j,i)%ntrim=0
+            ENDIF
+          ENDDO
+        ENDDO
+        !DEALLOCATE(thisStr)
+      ENDIF
+
+      IF((SIZE(s,DIM=1) > 0) .AND. (SIZE(s,DIM=2) > 0) .AND. &
+          (n == SIZE(s,DIM=1)) .AND. (m == SIZE(s,DIM=2))) THEN
+        !ALLOCATE(thisStr(SIZE(s,DIM=1)))
+        DO i=1,SIZE(s,DIM=2)
+          DO j=1,SIZE(s,DIM=1)
+            IF(s(j,i)%n > 0) THEN
+              thisStr(j,i)%n=s(j,i)%n
+              thisStr(j,i)%ntrim=s(j,i)%ntrim
+              ALLOCATE(thisStr(j,i)%s(thisStr(j,i)%n))
+              DO k=1,thisStr(j,i)%n
+                thisStr(j,i)%s(k)=s(j,i)%s(k)
+              ENDDO
+            ENDIF
+          ENDDO
+        ENDDO
+      ENDIF
+    ENDSUBROUTINE assign_StringType2A_to_StringType2A
 !
 !-------------------------------------------------------------------------------
 !> @brief Concatenates an intrinsic character type variable with a
