@@ -19,6 +19,7 @@ PROGRAM testArrayUtils
 #include "UnitTest.h"
   USE UnitTest
   USE IntrType
+  USE Strings
   USE ArrayUtils
   USE Sorting
   
@@ -29,12 +30,16 @@ PROGRAM testArrayUtils
   REAL(SRK),ALLOCATABLE :: tmpr(:)
   INTEGER(SIK) :: tmpintarray(10)
   INTEGER(SIK),ALLOCATABLE :: tmpi(:)
+  TYPE(StringType) :: tmpstr1a(10),tmpstr2a(2,2),str2a(2,3)
+  TYPE(StringType),ALLOCATABLE :: tmps1(:)
 !
 !Check the timer resolution
   CREATE_TEST('ArrayUtils')
 !
   REGISTER_SUBTEST('1-D REALS',test1DReals)
   REGISTER_SUBTEST('1-D INTEGERS',test1DInts)
+  REGISTER_SUBTEST('1-D Strings',test1DStrings)
+  REGISTER_SUBTEST('2-D Strings',test2DStrings)
   !REGISTER_SUBTEST('2-D INTEGERS',test2DInts)
   
   
@@ -862,6 +867,96 @@ PROGRAM testArrayUtils
       ASSERT(bool,'getUnique, 3 duplicates')
       
     ENDSUBROUTINE test1DInts
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE test1DStrings()
+      !findNUnique_1DStrings
+      COMPONENT_TEST('findNUnique 1-D Array')
+      tmpstr1a=''
+      ASSERT(findNUnique(tmpstr1a) == 0,'empty array')
+      tmpstr1a(1)='one'
+      tmpstr1a(2)='two'
+      tmpstr1a(3)='three'
+      tmpstr1a(4)='four'
+      tmpstr1a(5)='five'
+      tmpstr1a(6)='six'
+      tmpstr1a(7)='seven'
+      tmpstr1a(8)='eight'
+      tmpstr1a(9)='nine'
+      tmpstr1a(10)='ten'
+      ASSERT(findNUnique(tmpstr1a) == 10,'all unique array')
+      tmpstr1a(1)='two'
+      tmpstr1a(5)='four'
+      tmpstr1a(10)='nine'
+      ASSERT(findNUnique(tmpstr1a) == 7,'3 duplicates array')
+
+      !getUnique_1DStrings
+      COMPONENT_TEST('getUnique 1-D Array')
+      tmpstr1a=''
+      CALL getUnique(tmpstr1a,tmps1)
+      ASSERT(.NOT.ALLOCATED(tmps1),'empty array') 
+      tmpstr1a(1)='one'
+      tmpstr1a(2)='two'
+      tmpstr1a(3)='three'
+      tmpstr1a(4)='four'
+      tmpstr1a(5)='five'
+      tmpstr1a(6)='six'
+      tmpstr1a(7)='seven'
+      tmpstr1a(8)='eight'
+      tmpstr1a(9)='nine'
+      tmpstr1a(10)='ten'
+      CALL getUnique(tmpstr1a,tmps1)
+      bool=tmps1(1) == 'one' .AND. tmps1(2) == 'two' .AND. tmps1(3) == 'three' .AND. &
+        tmps1(4) == 'four' .AND. tmps1(5) == 'five' .AND. tmps1(6) == 'six' .AND. &
+        tmps1(7) == 'seven' .AND. tmps1(8) == 'eight' .AND. tmps1(9) == 'nine' .AND. tmps1(10) == 'ten'
+      ASSERT(bool,'all unique array')
+      tmpstr1a(1)='two'
+      tmpstr1a(5)='four'
+      tmpstr1a(10)='nine'
+      CALL getUnique(tmpstr1a,tmps1)
+      bool=tmps1(1) == 'two' .AND. tmps1(2) == 'three' .AND. &
+        tmps1(3) == 'four' .AND.  tmps1(4) == 'six' .AND. &
+        tmps1(5) == 'seven' .AND. tmps1(6) == 'eight' .AND. tmps1(7) == 'nine'
+      ASSERT(bool,'3 duplicates unique array')
+    ENDSUBROUTINE test1DStrings
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE test2DStrings()
+      !findNUnique_2DStrings
+      COMPONENT_TEST('findNUnique 2-D Array')
+      tmpstr1a=''
+      ASSERT(findNUnique(tmpstr2a) == 0,'empty array')
+      tmpstr2a(1,1)='one'
+      tmpstr2a(1,2)='two'
+      tmpstr2a(2,1)='three'
+      tmpstr2a(2,2)='four'
+      ASSERT(findNUnique(tmpstr2a) == 4,'all unique array')
+      tmpstr2a(1,1)='two'
+      ASSERT(findNUnique(tmpstr2a) == 3,'1 duplicates array')
+
+      str2a='one'; str2a(2,3)='two'
+      ASSERT(findNUnique(str2a) == 2,'one unique array')
+
+      !getUnique_1DStrings
+      COMPONENT_TEST('getUnique 2-D Array')
+      tmpstr2a=''
+      CALL getUnique(tmpstr2a,tmps1)
+      ASSERT(.NOT.ALLOCATED(tmps1),'empty array')
+      tmpstr2a(1,1)='one'
+      tmpstr2a(1,2)='three'
+      tmpstr2a(2,1)='two'
+      tmpstr2a(2,2)='four'
+      CALL getUnique(tmpstr2a,tmps1)
+      bool=tmps1(1) == 'one' .AND. tmps1(2) == 'two' .AND. tmps1(3) == 'three' .AND. &
+        tmps1(4) == 'four'
+      ASSERT(bool,'all unique array')
+      FINFO() tmps1(1)//' '//tmps1(2)//' '//tmps1(3)//' '//tmps1(4)
+      tmpstr2a(1,1)='two'
+      CALL getUnique(tmpstr2a,tmps1)
+      bool=tmps1(1) == 'two' .AND. tmps1(2) == 'three' .AND. &
+        tmps1(3) == 'four' 
+      ASSERT(bool,'3 duplicates unique array')
+    ENDSUBROUTINE test2DStrings
 !
 !-------------------------------------------------------------------------------
     !SUBROUTINE test2DInts()

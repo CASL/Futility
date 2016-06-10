@@ -31,6 +31,7 @@ MODULE ArrayUtils
 
   USE IntrType
   USE Sorting
+  USE Strings
   IMPLICIT NONE
 
   PUBLIC :: getAbsolute
@@ -75,9 +76,15 @@ MODULE ArrayUtils
     !> @copybrief ArrayUtils::getUnique_1DInt
     !> @copydetails ArrayUtils::getUnique_1DInt
     MODULE PROCEDURE getUnique_1DInt
+    !> @copybrief ArrayUtils::getUnique_1DString
+    !> @copydetails ArrayUtils::getUnique_1DString
+    MODULE PROCEDURE getUnique_1DString
     !> @copybrief ArrayUtils::getUnique_2DInt
     !> @copydetails ArrayUtils::getUnique_2DInt
     MODULE PROCEDURE getUnique_2DInt
+    !> @copybrief ArrayUtils::getUnique_2DString
+    !> @copydetails ArrayUtils::getUnique_2DString
+    MODULE PROCEDURE getUnique_2DString
   ENDINTERFACE getUnique
 
   !> @brief Generic interface to ...
@@ -89,9 +96,15 @@ MODULE ArrayUtils
     !> @copybrief ArrayUtils::findNUnique_1DInt
     !> @copydetails ArrayUtils::findNUnique_1DInt
     MODULE PROCEDURE findNUnique_1DInt
+    !> @copybrief ArrayUtils::findNUnique_1DString
+    !> @copydetails ArrayUtils::findNUnique_1DString
+    MODULE PROCEDURE findNUnique_1DString
     !> @copybrief ArrayUtils::findNUnique_2DInt
     !> @copydetails ArrayUtils::findNUnique_2DInt
     MODULE PROCEDURE findNUnique_2DInt
+    !> @copybrief ArrayUtils::findNUnique_2DString
+    !> @copydetails ArrayUtils::findNUnique_2DString
+    MODULE PROCEDURE findNUnique_2DString
   ENDINTERFACE findNUnique
 
   !> @brief Generic interface to ...
@@ -362,6 +375,92 @@ MODULE ArrayUtils
     ENDFUNCTION findNUnique_1DInt
 !
 !-------------------------------------------------------------------------------
+!> @brief This routine takes an array of reals and returns the number of unique
+!>        entries within a given tolerance for the equivalence of reals.  The
+!>        optional delta input is whether the array is composed of incremental
+!>        values (deltas) or absolute values.  The optional tol input can
+!>        specifically decide the tolerance for whether two reals are unique.
+!> @param r The input array of reals
+!> @param delta The optional input for whether the array is incremental or not
+!> @param tol The tolerance for comparing two real values
+!> @param sout The number of unique entries in the array r.
+!>
+    FUNCTION findNUnique_1DString(r,delta,tol) RESULT(sout)
+      TYPE(StringType),INTENT(IN) :: r(:)
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: delta
+      REAL(SRK),INTENT(IN),OPTIONAL :: tol
+      INTEGER(SIK) :: sout
+
+      INTEGER(SIK) :: i,j,n
+      REAL(SRK) :: loctol
+      TYPE(StringType),ALLOCATABLE :: tmpr(:)
+
+      n=SIZE(r,DIM=1)
+      ALLOCATE(tmpr(n))
+      tmpr=r
+
+      !Find the number of unique entries
+      DO i=1,n
+        DO j=i+1,n
+          IF((TRIM(tmpr(i)) == TRIM(tmpr(j))) .AND. (LEN_TRIM(tmpr(j)) > 0)) tmpr(j)=''
+        ENDDO
+      ENDDO
+      sout=0
+      DO i=1,n
+        IF(TRIM(tmpr(i)) /= '') sout=sout+1
+      ENDDO
+      !Deallocate
+      DEALLOCATE(tmpr)
+    ENDFUNCTION findNUnique_1DString
+!
+!-------------------------------------------------------------------------------
+!> @brief This routine takes an array of reals and returns the number of unique
+!>        entries within a given tolerance for the equivalence of reals.  The
+!>        optional delta input is whether the array is composed of incremental
+!>        values (deltas) or absolute values.  The optional tol input can
+!>        specifically decide the tolerance for whether two reals are unique.
+!> @param r The input array of reals
+!> @param delta The optional input for whether the array is incremental or not
+!> @param tol The tolerance for comparing two real values
+!> @param sout The number of unique entries in the array r.
+!>
+    FUNCTION findNUnique_2DString(r,delta,tol) RESULT(sout)
+      TYPE(StringType),INTENT(IN) :: r(:,:)
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: delta
+      REAL(SRK),INTENT(IN),OPTIONAL :: tol
+      INTEGER(SIK) :: sout
+
+      INTEGER(SIK) :: i,j,n,m,x1,y1,x2,y2
+      TYPE(StringType),ALLOCATABLE :: tmpr(:,:)
+
+      n=SIZE(r,DIM=1)
+      m=SIZE(r,DIM=2)
+      IF(n > 0 .AND. m > 0) THEN
+        ALLOCATE(tmpr(n,m))
+        tmpr=r
+  
+        !Find the number of unique entries
+        DO i=1,n*m
+          y1=(i-1)/n+1
+          x1=i-(y1-1)*n
+          DO j=i+1,n*m
+            y2=(j-1)/n+1
+            x2=j-(y2-1)*n
+            IF((TRIM(tmpr(x1,y1)) == TRIM(tmpr(x2,y2))) .AND. (LEN_TRIM(tmpr(x2,y2)) > 0)) tmpr(x2,y2)=''
+          ENDDO
+        ENDDO
+        sout=0
+        DO j=1,m
+          DO i=1,n
+            IF(TRIM(tmpr(i,j)) /= '') sout=sout+1
+          ENDDO
+        ENDDO
+        !Deallocate
+        DEALLOCATE(tmpr)
+      ENDIF
+    ENDFUNCTION findNUnique_2DString
+!
+!-------------------------------------------------------------------------------
 !> @brief This routine takes a 2-D array of integers and returns the number of
 !>        unique entries.  The optional delta input is whether the array is
 !>        composed of incremental values (deltas) or absolute values.
@@ -369,7 +468,7 @@ MODULE ArrayUtils
 !> @param delta The optional input for whether the array is incremental or not
 !> @param sout The number of unique entries in the array r.
 !>
-    FUNCTION findNUnique_2DInt(r,delta) RESULT(sout)
+    PURE FUNCTION findNUnique_2DInt(r,delta) RESULT(sout)
       INTEGER(SIK),INTENT(IN) :: r(:,:)
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: delta
       INTEGER(SIK) :: sout
@@ -465,7 +564,7 @@ MODULE ArrayUtils
 !> @param rout The 1-D array of unique entries in the array r.
 !> @param delta The optional input for whether the array is incremental or not
 !>
-    PURE SUBROUTINE getUnique_1DInt(r,rout,delta)
+    SUBROUTINE getUnique_1DInt(r,rout,delta)
       INTEGER(SIK),INTENT(IN) :: r(:)
       INTEGER(SIK),ALLOCATABLE,INTENT(OUT) :: rout(:)
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: delta
@@ -506,6 +605,52 @@ MODULE ArrayUtils
     ENDSUBROUTINE getUnique_1DInt
 !
 !-------------------------------------------------------------------------------
+!> @brief This routine takes an array of integers and returns the unique
+!>        entries.  The optional delta input is whether the array is composed of
+!>         incremental values (deltas) or absolute values.
+!> @param r The input array of integers
+!> @param rout The 1-D array of unique entries in the array r.
+!> @param delta The optional input for whether the array is incremental or not
+!>
+    SUBROUTINE getUnique_1DString(r,rout,delta)
+      TYPE(StringType),INTENT(IN) :: r(:)
+      TYPE(StringType),ALLOCATABLE,INTENT(OUT) :: rout(:)
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: delta
+
+      INTEGER(SIK) :: i,j,n,sout
+      TYPE(StringType),ALLOCATABLE :: tmpr(:)
+
+      n=SIZE(r,DIM=1)
+      ALLOCATE(tmpr(n))
+      tmpr=r
+
+      !Find the number of unique entries
+      sout=findNUnique_1DString(r)
+      IF(sout > 0) THEN
+        ALLOCATE(rout(sout))
+        rout=''
+        !remove duplicate entries
+        DO i=1,n
+          DO j=i+1,n
+            IF(TRIM(tmpr(i)) == TRIM(tmpr(j)) .AND. (LEN_TRIM(tmpr(j)) > 0)) tmpr(j)=''
+          ENDDO
+        ENDDO
+  
+        rout(1)=tmpr(1)
+        sout=2
+        DO i=2,n
+          IF(TRIM(tmpr(i)) /= '') THEN
+            rout(sout)=tmpr(i)
+            sout=sout+1
+          ENDIF
+        ENDDO
+      ENDIF
+
+      !Deallocate
+      DEALLOCATE(tmpr)
+    ENDSUBROUTINE getUnique_1DString
+!
+!-------------------------------------------------------------------------------
 !> @brief This routine takes a 2-D array of integers and returns the unique
 !>        entries.  The optional delta input is whether the array is composed of
 !>         incremental values (deltas) or absolute values.
@@ -513,7 +658,7 @@ MODULE ArrayUtils
 !> @param rout The 2-D array of unique entries in the array r.
 !> @param delta The optional input for whether the array is incremental or not
 !>
-    PURE SUBROUTINE getUnique_2DInt(r,rout,delta)
+    SUBROUTINE getUnique_2DInt(r,rout,delta)
       INTEGER(SIK),INTENT(IN) :: r(:,:)
       INTEGER(SIK),ALLOCATABLE,INTENT(OUT) :: rout(:)
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: delta
@@ -548,6 +693,57 @@ MODULE ArrayUtils
       !Deallocate
       DEALLOCATE(tmpr)
     ENDSUBROUTINE getUnique_2DInt
+!
+!-------------------------------------------------------------------------------
+!> @brief This routine takes an array of integers and returns the unique
+!>        entries.  The optional delta input is whether the array is composed of
+!>         incremental values (deltas) or absolute values.
+!> @param r The input array of integers
+!> @param rout The 1-D array of unique entries in the array r.
+!> @param delta The optional input for whether the array is incremental or not
+!>
+    SUBROUTINE getUnique_2DString(r,rout,delta)
+      TYPE(StringType),INTENT(IN) :: r(:,:)
+      TYPE(StringType),ALLOCATABLE,INTENT(OUT) :: rout(:)
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: delta
+
+      INTEGER(SIK) :: i,j,n,m,x1,y1,x2,y2,sout
+      TYPE(StringType),ALLOCATABLE :: tmpr(:,:)
+
+      n=SIZE(r,DIM=1)
+      m=SIZE(r,DIM=2)
+      ALLOCATE(tmpr(n,m))
+      tmpr=r
+
+      !Find the number of unique entries
+      sout=findNUnique_2DString(r)
+      IF(sout > 0) THEN
+        ALLOCATE(rout(sout))
+        rout=''
+        !Remove the duplicate entries
+        DO i=1,n*m
+          y1=(i-1)/n+1
+          x1=i-(y1-1)*n
+          DO j=i+1,n*m
+            y2=(j-1)/n+1
+            x2=j-(y2-1)*n
+            IF((TRIM(tmpr(x1,y1)) == TRIM(tmpr(x2,y2))) .AND. (LEN_TRIM(tmpr(x2,y2)) > 0)) tmpr(x2,y2)=''
+          ENDDO
+        ENDDO
+        !Assign unique entries
+        sout=1
+        DO j=1,m
+          DO i=1,n
+            IF(TRIM(tmpr(i,j)) /= '') THEN
+              rout(sout)=tmpr(i,j)
+              sout=sout+1
+            ENDIF
+          ENDDO
+        ENDDO
+      ENDIF
+      !Deallocate
+      DEALLOCATE(tmpr)
+    ENDSUBROUTINE getUnique_2DString
 !
 !-------------------------------------------------------------------------------
 !> @brief This routine takes two real arrays and finds all the unique absolute
