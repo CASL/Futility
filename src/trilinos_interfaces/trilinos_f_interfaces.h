@@ -80,6 +80,8 @@
       REAL(C_DOUBLE),INTENT(IN),VALUE  :: val
     ENDSUBROUTINE
 
+    ! When calling from FORTRAN, need to append C_NULL_CHAR to name:
+    !    "myfile.out" // c_null_char
     SUBROUTINE ForPETRA_VecEdit(id,name) bind(C,NAME="ForPETRA_VecEdit")
       IMPORT :: C_INT, C_CHAR
       INTEGER(C_INT),INTENT(IN),VALUE  :: id
@@ -138,6 +140,8 @@
       INTEGER(C_INT),INTENT(IN),VALUE        :: idY
     ENDSUBROUTINE
 
+    ! When calling from FORTRAN, need to append C_NULL_CHAR to name:
+    !    "myfile.out" // c_null_char
     SUBROUTINE ForPETRA_MatEdit(id,name) bind(C,NAME="ForPETRA_MatEdit")
       IMPORT :: C_INT,C_CHAR
       INTEGER(C_INT),INTENT(IN),VALUE  :: id
