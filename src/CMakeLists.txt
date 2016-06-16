@@ -11,18 +11,7 @@
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
-IF(WIN32)
-    TRIBITS_ADD_LIBRARY(CUtils
-        HEADERS
-          getSysProcInfo.h
-          floatingpointchecks.h
-        SOURCES
-          getSysProcInfo.c
-          floatingpointchecks.c
-        DEPLIBS Psapi
-    )
-ELSE()
-    TRIBITS_ADD_LIBRARY(CUtils
+TRIBITS_ADD_LIBRARY(CUtils
         HEADERS
           getSysProcInfo.h
           floatingpointchecks.h
@@ -30,7 +19,6 @@ ELSE()
           getSysProcInfo.c
           floatingpointchecks.c
     )
-ENDIF()
 
 #Library for utility code
 TRIBITS_ADD_LIBRARY(Utils
