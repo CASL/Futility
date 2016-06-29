@@ -2750,6 +2750,7 @@ MODULE ParameterLists
           FINFO() SIZE(tmpsdka11,DIM=1), SIZE(tmpsdka12,DIM=1)
           IF(bool) THEN
             bool=ALL(tmpsdka11 .APPROXEQ. tmpsdka12)
+            IF(.NOT.bool) bool=ALL(SOFTEQ(tmpsdka11,tmpsdka12,EPSD*1000._SRK))
             ASSERT(bool, prefix//CHAR(thisParam%name))
             FINFO() 'test values=',tmpsdka11
             FINFO() 'ref. values=',tmpsdka12
