@@ -1101,7 +1101,7 @@ MODULE Strings
 !> The intent is that this will overload the == operator so a
 !> @c CHARACTER type can compared with a @c StringType.
 !>
-    PURE FUNCTION equalto_char_StringType(s,thisStr) RESULT(bool)
+    ELEMENTAL FUNCTION equalto_char_StringType(s,thisStr) RESULT(bool)
       CHARACTER(LEN=*),INTENT(IN) :: s
       CLASS(StringType),INTENT(IN) :: thisStr
       LOGICAL(SBK) :: bool
@@ -1118,7 +1118,7 @@ MODULE Strings
 !> The intent is that this will overload the == operator so a
 !> @c CHARACTER type can compared with a @c StringType.
 !>
-    PURE FUNCTION equalto_StringType_char(thisStr,s) RESULT(bool)
+    ELEMENTAL FUNCTION equalto_StringType_char(thisStr,s) RESULT(bool)
       CLASS(StringType),INTENT(IN) :: thisStr
       CHARACTER(LEN=*),INTENT(IN) :: s
       LOGICAL(SBK) :: bool
@@ -1135,7 +1135,7 @@ MODULE Strings
 !> The intent is that this will overload the == operator so a
 !> @c StringType type can compared with a @c StringType.
 !>
-    PURE FUNCTION equalto_StringType_StringType(s1,s2) RESULT(bool)
+    ELEMENTAL FUNCTION equalto_StringType_StringType(s1,s2) RESULT(bool)
       CLASS(StringType),INTENT(IN) :: s1
       CLASS(StringType),INTENT(IN) :: s2
       LOGICAL(SBK) :: bool
@@ -1152,7 +1152,7 @@ MODULE Strings
 !> The intent is that this will overload the /= operator so a
 !> @c CHARACTER type can compared with a @c StringType.
 !>
-    PURE FUNCTION notequalto_char_StringType(s,thisStr) RESULT(bool)
+    ELEMENTAL FUNCTION notequalto_char_StringType(s,thisStr) RESULT(bool)
       CHARACTER(LEN=*),INTENT(IN) :: s
       CLASS(StringType),INTENT(IN) :: thisStr
       LOGICAL(SBK) :: bool
@@ -1169,7 +1169,7 @@ MODULE Strings
 !> The intent is that this will overload the /= operator so a
 !> @c CHARACTER type can compared with a @c StringType.
 !>
-    PURE FUNCTION notequalto_StringType_char(thisStr,s) RESULT(bool)
+    ELEMENTAL FUNCTION notequalto_StringType_char(thisStr,s) RESULT(bool)
       CLASS(StringType),INTENT(IN) :: thisStr
       CHARACTER(LEN=*),INTENT(IN) :: s
       LOGICAL(SBK) :: bool
@@ -1186,7 +1186,7 @@ MODULE Strings
 !> The intent is that this will overload the /= operator so a
 !> @c StringType type can compared with a @c StringType.
 !>
-    PURE FUNCTION notequalto_StringType_StringType(s1,s2) RESULT(bool)
+    ELEMENTAL FUNCTION notequalto_StringType_StringType(s1,s2) RESULT(bool)
       CLASS(StringType),INTENT(IN) :: s1
       CLASS(StringType),INTENT(IN) :: s2
       LOGICAL(SBK) :: bool
