@@ -71,11 +71,17 @@ MODULE EigenvalueSolverTypes
   PUBLIC :: EigenvalueSolverType_Base
   PUBLIC :: EigenvalueSolverType_SLEPc
   PUBLIC :: EigenvalueSolverType_Anasazi
+  PUBLIC :: EigenvalueSolverType_SNES
+
+  PUBLIC :: PETSC_SHELL_EVS
+#ifdef MPACT_HAVE_PETSC
+  PUBLIC :: PETSC_SHELL_CALCRESID_extern
+#endif
 
   !> set enumeration scheme for TPLs
   INTEGER(SIK),PARAMETER,PUBLIC :: SLEPC=0,ANASAZI=1,NATIVE=4
   !> set enumeration scheme for solver methods
-  INTEGER(SIK),PARAMETER,PUBLIC :: POWER_IT=0,JD=1,GD=2,ARNOLDI=3
+  INTEGER(SIK),PARAMETER,PUBLIC :: POWER_IT=0,JD=1,GD=2,ARNOLDI=3,NONLIN=4
 
   !> @brief the base eigenvalue solver type
   TYPE,ABSTRACT :: EigenvalueSolverType_Base
@@ -191,6 +197,35 @@ MODULE EigenvalueSolverTypes
       !> @copydetails EigenvalueSolverTypes::solve_EigenvalueSolverType_Anasazi
       PROCEDURE,PASS :: solve => solve_EigenvalueSolverType_Anasazi
   ENDTYPE EigenvalueSolverType_Anasazi
+
+  !> @brief The extended type for the SLEPc Eigenvalue Solvers
+  TYPE,EXTENDS(EigenvalueSolverType_Base) :: EigenvalueSolverType_SNES
+    !>
+#ifdef MPACT_HAVE_PETSC
+!Rondom stuff you need for SNES... like SNES :: snes
+#endif
+!
+!List of Type Bound Procedures
+    CONTAINS
+      !> @copybrief EigenvalueSolverTypes::init_EigenvalueSolverType_SNES
+      !> @copydetails EigenvalueSolverTypes::init_EigenvalueSolverType_SNES
+      PROCEDURE,PASS :: init => init_EigenvalueSolverType_SNES
+      !> @copybrief EigenvalueSolverTypes::clear_EigenvalueSolverType_SNES
+      !> @copydetails EigenvalueSolverTypes::clear_EigenvalueSolverType_SNES
+      PROCEDURE,PASS :: clear => clear_EigenvalueSolverType_SNES
+      !> @copybrief EigenvalueSolverTypes::solve_EigenvalueSolverType_SNES
+      !> @copydetails EigenvalueSolverTypes::solve_EigenvalueSolverType_SNES
+      PROCEDURE,PASS :: solve => solve_EigenvalueSolverType_SNES
+      !> @copybrief EigenvalueSolverTypes::calcResid_EigenvalueSolverType_SNES
+      !> @copydetails EigenvalueSolverTypes::calcResid_EigenvalueSolverType_SNES
+      PROCEDURE,PASS :: calcResid => calcResid_EigenvalueSolverType_SNES
+  ENDTYPE EigenvalueSolverType_SNES
+
+
+  !> SNES Resid calculator
+  CLASS(EigenvalueSolverType_Base),POINTER :: PETSC_SHELL_EVS => NULL()
+
+
 
   !> Logical flag to check whether the required and optional parameter lists
   !> have been created yet for the Eigenvalue Solver Type.
@@ -476,6 +511,113 @@ MODULE EigenvalueSolverTypes
 
     ENDSUBROUTINE init_EigenvalueSolverType_Anasazi
 
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes the Eigenvalue Solver Type with a parameter list
+!> @param pList the parameter list
+!>
+!> @param solver The eigen solver to act on
+!> @param MPIparallelEnv The MPI environment description
+!> @param OMPparallelEnv The OMP environment description
+!> @param TimerName The name of the timer to be used for querying (optional)
+!>
+!> This routine initializes the data spaces for the SNES eigenvalue solver.
+!>
+    SUBROUTINE init_EigenvalueSolverType_SNES(solver,MPIEnv,Params)
+      CHARACTER(LEN=*),PARAMETER :: myName='init_EigenvalueSolverType_SNES'
+      CLASS(EigenvalueSolverType_SNES),INTENT(INOUT) :: solver
+      TYPE(MPI_EnvType),INTENT(IN),TARGET :: MPIEnv
+      TYPE(ParamType),INTENT(IN) :: Params
+      TYPE(ParamType) :: validParams, tmpPL
+      INTEGER(SIK) :: n,nlocal,solvertype,maxit
+      REAL(SRK) :: tol
+      TYPE(STRINGType) :: pctype
+      !Check to set up required and optional param lists.
+      !IF(.NOT.EigenType_Paramsflag) CALL EigenType_Declare_ValidParams()
+
+      IF(.NOT. MPIEnv%isInit()) THEN
+        CALL eEigenvalueSolverType%raiseError('Incorrect input to '// &
+          modName//'::'//myName//' - MPI Environment is not initialized!')
+      ELSE
+        solver%MPIparallelEnv => MPIEnv
+      ENDIF
+      !Validate against the reqParams and OptParams
+      validParams=Params
+      !CALL validParams%validate(EigenType_reqParams)
+
+      n=0
+      nlocal=0
+      solvertype=-1
+      !Pull Data from Parameter List
+      CALL validParams%get('EigenvalueSolverType->n',n)
+      CALL validParams%get('EigenvalueSolverType->nlocal',nlocal)
+      CALL validParams%get('EigenvalueSolverType->solver',solvertype)
+      CALL validParams%get('EigenvalueSolverType->preconditioner',pctype)
+      CALL validParams%get('EigenvalueSolverType->tolerance',tol)
+      CALL validParams%get('EigenvalueSolverType->max_iterations',maxit)
+
+      IF(.NOT. solver%isInit) THEN
+        IF(n < 1) THEN
+          CALL eEigenvalueSolverType%raiseError('Incorrect input to '// &
+            modName//'::'//myName//' - Number of values (n) must be '// &
+              'greater than 0!')
+        ELSE
+          solver%n=n
+        ENDIF
+
+        IF((nlocal < 1) .AND. (nlocal > n)) THEN
+          CALL eEigenvalueSolverType%raiseError('Incorrect input to '// &
+            modName//'::'//myName//' - Number of values (nlocal) must be '// &
+              'greater than 0 and less than or equal to (n)!')
+        ENDIF
+
+        IF(tol<=0.0_SRK) THEN
+          CALL eEigenvalueSolverType%raiseError('Incorrect input to '// &
+            modName//'::'//myName//' - Tolerance must be '// &
+              'greater than 0!')
+        ELSE
+          solver%tol=tol
+        ENDIF
+
+        IF(maxit < 1) THEN
+          CALL eEigenvalueSolverType%raiseError('Incorrect input to '// &
+            modName//'::'//myName//' - Maximum Iterations must be '// &
+              'greater than 0!')
+        ELSE
+          solver%maxit=maxit
+        ENDIF
+
+#ifdef MPACT_HAVE_PETSC
+        !TODO: SNES Init
+
+        !Need to set PC type
+        !TODO PC Init
+
+#else
+        CALL eEigenvalueSolverType%raiseError(modName//'::'//myName// &
+          ' - SNES (PETSc) is not present in build')
+#endif
+        solver%SolverMethod=solvertype
+
+        ALLOCATE(PetscVectorType :: solver%X)
+        CALL tmpPL%clear()
+        CALL tmpPL%add('VectorType->n',n)
+        CALL tmpPL%add('VectorType->MPI_Comm_ID',solver%MPIparallelEnv%comm)
+        CALL tmpPL%add('VectorType->nlocal',nlocal)
+        CALL solver%X%init(tmpPL)
+        !TODO  Make your own tmp vector:
+        !   CALL solver%X_scale%init(tmpPL)
+
+        solver%TPLType=SLEPC
+        solver%isInit=.TRUE.
+      ELSE
+        CALL eEigenvalueSolverType%raiseError('Incorrect call to '// &
+          modName//'::'//myName//' - EigenvalueSolverType already initialized')
+      ENDIF
+      CALL validParams%clear()
+
+    ENDSUBROUTINE init_EigenvalueSolverType_SNES
+
     SUBROUTINE setMat_EigenvalueSolverType_Base(solver,A,B)
       CLASS(EigenvalueSolverType_Base),INTENT(INOUT) :: solver
       CLASS(MatrixType),INTENT(IN),TARGET :: A
@@ -579,10 +721,38 @@ MODULE EigenvalueSolverTypes
       NULLIFY(solver%B)
       IF(solver%X%isInit) CALL solver%X%clear()
 #ifdef MPACT_HAVE_Trilinos
-      !Need
+      !TODO: Need to deallocate memory
 #endif
       solver%isInit=.FALSE.
     ENDSUBROUTINE clear_EigenvalueSolverType_Anasazi
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears the SLEPc Eigen Solver Type
+!> @param solver The eigen solver to act on
+!>
+!> This routine clears the data spaces
+!>
+    SUBROUTINE clear_EigenvalueSolverType_SNES(solver)
+      CLASS(EigenvalueSolverType_SNES),INTENT(INOUT) :: solver
+
+      solver%solverMethod=-1
+      solver%TPLType=-1
+      NULLIFY(solver%MPIparallelEnv)
+      IF(solver%OMPparallelEnv%isInit()) CALL solver%OMPparallelEnv%clear
+      solver%n=-1
+      solver%maxit=-1
+      solver%tol=0.0_SRK
+      solver%k=0.0_SRK
+      NULLIFY(solver%A)
+      NULLIFY(solver%B)
+      IF(solver%X%isInit) CALL solver%X%clear()
+      !IF(solver%xi%isInit) CALL solver%xi%clear()
+#ifdef MPACT_HAVE_PETSC
+      !CALL SNESDestroy(solver%snes,ierr)
+#endif
+      !TODO: add anything else allocated in SNES
+      solver%isInit=.FALSE.
+    ENDSUBROUTINE clear_EigenvalueSolverType_SNES
 !
 !-------------------------------------------------------------------------------
 !> @brief Clears the SLEPc Eigen Solver Type
@@ -659,5 +829,83 @@ MODULE EigenvalueSolverTypes
       CALL BLAS_scal(THISVECTOR=solver%X,A=1.0_SRK/factor)
 #endif
     ENDSUBROUTINE solve_EigenvalueSolverType_Anasazi
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears the SNES Eigen Solver Type
+!> @param solver The eigen solver to act on
+!>
+!> This routine clears the data spaces
+!>
+    SUBROUTINE solve_EigenvalueSolverType_SNES(solver)
+      CLASS(EigenvalueSolverType_SNES),INTENT(INOUT) :: solver
+#ifdef MPACT_HAVE_PETSC
+      REAL(SRK) :: tmp(2)
+
+      SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
+        SELECTTYPE(B=>solver%B); TYPE IS(PETScMatrixType)
+          IF (.NOT.(A%isAssembled)) CALL A%assemble()
+          IF (.NOT.(B%isAssembled)) CALL B%assemble()
+        ENDSELECT
+      ENDSELECT
+
+      !CALL SNESSetTolerances(solver%eps,solver%tol,solver%maxit,ierr)
+      !CALL tell SNES to use PETSC_SHELL_CALCRESID_extern
+      !CALL SNESSolve(solver%eps,ierr)
+
+      !CALL SNESGetEigenvalue(solver%eps,0,kr,ki,ierr)
+
+      !repurposing ki and xi since it isn't needed
+      !TODO make your own coefficients
+      !CALL solver%xi%set(0.0_SRK)
+      !CALL BLAS_matvec(THISMATRIX=solver%A,X=solver%x,Y=solver%xi)
+      !CALL VecSum(solver%xi%b,ki,ierr)
+      !CALL BLAS_scal(THISVECTOR=solver%X,A=1.0_SRK/REAL(ki,SRK))
+#endif
+    ENDSUBROUTINE solve_EigenvalueSolverType_SNES
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears the SNES Eigen Solver Type
+!> @param solver The eigen solver to act on
+!>
+!> This routine clears the data spaces
+!>
+    SUBROUTINE calcResid_EigenvalueSolverType_SNES(solver,v)
+      CLASS(EigenvalueSolverType_SNES),INTENT(INOUT) :: solver
+      CLASS(PETScVectorType),INTENT(INOUT) :: v
+#ifdef MPACT_HAVE_PETSC
+      !TODO  v = Bv/sum(Bv)-Av
+#endif
+    ENDSUBROUTINE calcResid_EigenvalueSolverType_SNES
+
+#ifdef MPACT_HAVE_PETSC
+    SUBROUTINE PETSC_SHELL_CALCRESID_extern(snes,x,f,dummy,err)
+      SNES :: snes
+      Vec :: x
+      Vec :: f
+      INTEGER :: dummy
+      PetscErrorCode :: err
+
+      PetscErrorCode :: ierr
+      INTEGER(SIK) :: n
+      TYPE(PETScVectorType) :: v
+
+      err=-1
+      IF(ASSOCIATED(PETSC_SHELL_EVS) .AND. PETSC_SHELL_EVS%isInit) THEN
+        n=0
+        CALL VecGetSize(x,n,ierr)
+        IF(ierr==0) CALL VecCopy(x,f,ierr)
+
+        v%isInit=.TRUE.
+        v%n=n
+        v%b=f
+
+        err=ierr
+        SELECTTYPE(myEVS=>PETSC_SHELL_EVS); CLASS IS(EigenvalueSolverType_SNES)
+          IF(err==0) CALL myEVS%calcResid(v)
+        ENDSELECT
+      ENDIF
+
+    ENDSUBROUTINE PETSC_SHELL_CALCRESID_extern
+#endif
 !
 ENDMODULE EigenvalueSolverTypes
