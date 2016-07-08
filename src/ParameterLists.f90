@@ -2657,8 +2657,11 @@ MODULE ParameterLists
       !list is not empty.
       isValid=.TRUE.
       isMatch=.FALSE.
-      IF(ASSOCIATED(reqParams%pdat)) &
+      IF(ASSOCIATED(reqParams%pdat)) THEN
         isValid=validateReq_ParamType(thisParam,reqParams,'',isMatch)
+      ELSE
+        isMatch=.NOT.ASSOCIATED(thisParam%pdat)
+      ENDIF
     ENDSUBROUTINE verify_Paramtype
 !
 !-------------------------------------------------------------------------------
@@ -3039,7 +3042,7 @@ MODULE ParameterLists
 !> Therefore the name cannot contain the "->" symbol to indicate access to a
 !> sub-list. @c thisParam must not already be inititalized.
 !>
-    SUBROUTINE init_ParamType_List(thisParam,name,param,description)
+    RECURSIVE SUBROUTINE init_ParamType_List(thisParam,name,param,description)
       CHARACTER(LEN=*),PARAMETER :: myName='init_ParamType_List'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       TYPE(ParamType),INTENT(IN) :: param(:)
@@ -3115,7 +3118,7 @@ MODULE ParameterLists
 !>
 !> This routine recursively clears all subparameters in this list.
 !>
-    SUBROUTINE clear_ParamType_List(thisParam)
+    RECURSIVE SUBROUTINE clear_ParamType_List(thisParam)
       CLASS(ParamType_List),INTENT(INOUT) :: thisParam
       INTEGER(SIK) :: i
       thisParam%name=''
