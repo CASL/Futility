@@ -320,6 +320,9 @@ MODULE IO_Strings
     !> @copybrief IO_Strings::strarrayeqind_string
     !> @copydetails IO_Strings::strarrayeqind_string
     MODULE PROCEDURE strarrayeqind_string
+    !> @copybrief IO_Strings::strarrayeqind_string_string
+    !> @copydetails IO_Strings::strarrayeqind_string_string
+    MODULE PROCEDURE strarrayeqind_string_string
   ENDINTERFACE strarrayeqind
 
   !> @brief Generic interface for getRealFormat
@@ -1198,6 +1201,32 @@ MODULE IO_Strings
         ENDIF
       ENDDO
     ENDFUNCTION strarrayeqind_string
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns the index where a substring @c pattern is found within @c
+!> string array.
+!> @param string the stringarray to search
+!> @param pattern the substring to find
+!> @returns bool whether or not @c pattern was found in @c string
+!>
+!> @note Does not handle trailing spaces that can be eliminated by TRIM() so
+!> strings should be trimmed when passing into function.
+!>
+    PURE FUNCTION strarrayeqind_string_string(string,pattern) RESULT(ind)
+      TYPE(StringType),INTENT(IN) :: string(:)
+      TYPE(StringType),INTENT(IN) :: pattern
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: i,ind
+
+      ind=-1
+      DO i=1,SIZE(string,DIM=1)
+        bool=string(i) == pattern
+        IF(bool) THEN
+          ind=i
+          EXIT
+        ENDIF
+      ENDDO
+    ENDFUNCTION strarrayeqind_string_string
 !
 !-------------------------------------------------------------------------------
 !> @brief
