@@ -79,9 +79,6 @@ MODULE ArrayUtils
     !> @copybrief ArrayUtils::getUnique_1DString
     !> @copydetails ArrayUtils::getUnique_1DString
     MODULE PROCEDURE getUnique_1DString
-    !> @copybrief ArrayUtils::getUnique_2DInt
-    !> @copydetails ArrayUtils::getUnique_2DInt
-    MODULE PROCEDURE getUnique_2DInt
     !> @copybrief ArrayUtils::getUnique_2DString
     !> @copydetails ArrayUtils::getUnique_2DString
     MODULE PROCEDURE getUnique_2DString
@@ -99,9 +96,6 @@ MODULE ArrayUtils
     !> @copybrief ArrayUtils::findNUnique_1DString
     !> @copydetails ArrayUtils::findNUnique_1DString
     MODULE PROCEDURE findNUnique_1DString
-    !> @copybrief ArrayUtils::findNUnique_2DInt
-    !> @copydetails ArrayUtils::findNUnique_2DInt
-    MODULE PROCEDURE findNUnique_2DInt
     !> @copybrief ArrayUtils::findNUnique_2DString
     !> @copydetails ArrayUtils::findNUnique_2DString
     MODULE PROCEDURE findNUnique_2DString
@@ -177,20 +171,15 @@ MODULE ArrayUtils
       INTEGER(SIK) :: i,n
 
       n=SIZE(r,DIM=1)
+      ALLOCATE(rout(n+1))
       IF(PRESENT(xi)) THEN
-        n=n+1
-        ALLOCATE(rout(n))
         rout(1)=xi
-        DO i=2,n
-          rout(i)=rout(i-1)+r(i-1)
-        ENDDO
       ELSE
-        ALLOCATE(rout(n))
-        rout(1)=r(1)
-        DO i=2,n
-          rout(i)=rout(i-1)+r(i)
-        ENDDO
+        rout(1)=0.0_SRK
       ENDIF
+      DO i=1,n
+        rout(i+1)=rout(i)+r(i)
+      ENDDO
     ENDSUBROUTINE getAbsolute_1DReal
 !
 !-------------------------------------------------------------------------------
@@ -209,53 +198,16 @@ MODULE ArrayUtils
       INTEGER(SIK) :: i,n
 
       n=SIZE(r,DIM=1)
+      ALLOCATE(rout(n+1))
       IF(PRESENT(xi)) THEN
-        n=n+1
-        ALLOCATE(rout(n))
         rout(1)=xi
-        DO i=2,n
-          rout(i)=rout(i-1)+r(i-1)
-        ENDDO
       ELSE
-        ALLOCATE(rout(n))
-        rout(1)=r(1)
-        DO i=2,n
-          rout(i)=rout(i-1)+r(i)
-        ENDDO
+        rout(1)=0
       ENDIF
+      DO i=1,n
+        rout(i+1)=rout(i)+r(i)
+      ENDDO
     ENDSUBROUTINE getAbsolute_1DInt
-!
-!-------------------------------------------------------------------------------
-!> @brief This routine takes a 2-D array of fractions, or deltas, and sums them
-!>        to get an absolute reference frame.  The bottom value can be adjusted
-!>        using the optional xi input.  The default is to use the first value in
-!>        r as the starting point for the absolute array.
-!> @param r The array of delta values
-!> @param rout The output array of absolute values
-!> @param xi The optional input for the bottom starting position
-!>
-    PURE SUBROUTINE getAbsolute_2DInt(r,rout,xi)
-      INTEGER(SIK),INTENT(IN) :: r(:,:)
-      INTEGER(SIK),ALLOCATABLE,INTENT(OUT) :: rout(:,:)
-      INTEGER(SIK),INTENT(IN),OPTIONAL :: xi
-      INTEGER(SIK) :: i,n
-
-      !n=SIZE(r,DIM=1)
-      !IF(PRESENT(xi)) THEN
-      !  n=n+1
-      !  ALLOCATE(rout(n))
-      !  rout(1)=xi
-      !  DO i=2,n
-      !    rout(i)=rout(i-1)+r(i-1)
-      !  ENDDO
-      !ELSE
-      !  ALLOCATE(rout(n))
-      !  rout(1)=r(1)
-      !  DO i=2,n
-      !    rout(i)=rout(i-1)+r(i)
-      !  ENDDO
-      !ENDIF
-    ENDSUBROUTINE getAbsolute_2DInt
 !
 !-------------------------------------------------------------------------------
 !> @brief This routine takes an array of absolute values that are assumed to be
@@ -461,44 +413,6 @@ MODULE ArrayUtils
     ENDFUNCTION findNUnique_2DString
 !
 !-------------------------------------------------------------------------------
-!> @brief This routine takes a 2-D array of integers and returns the number of
-!>        unique entries.  The optional delta input is whether the array is
-!>        composed of incremental values (deltas) or absolute values.
-!> @param r The input array of integers
-!> @param delta The optional input for whether the array is incremental or not
-!> @param sout The number of unique entries in the array r.
-!>
-    PURE FUNCTION findNUnique_2DInt(r,delta) RESULT(sout)
-      INTEGER(SIK),INTENT(IN) :: r(:,:)
-      LOGICAL(SBK),INTENT(IN),OPTIONAL :: delta
-      INTEGER(SIK) :: sout
-
-      INTEGER(SIK) :: i,n
-      INTEGER(SIK),ALLOCATABLE :: tmpr(:,:)
-
-      !n=SIZE(r,DIM=1)
-      !IF(PRESENT(delta)) THEN
-      !  IF(delta) THEN
-      !    CALL getAbsolute_2DInt(r,tmpr)
-      !    n=SIZE(tmpr,DIM=1)
-      !  ENDIF
-      !ENDIF
-      !IF(.NOT.ALLOCATED(tmpr)) THEN
-      !  ALLOCATE(tmpr(n))
-      !  tmpr=r
-      !ENDIF
-      !
-      !!Find the number of unique entries
-      !CALL sort(tmpr)
-      !sout=1
-      !DO i=2,n
-      !  IF(tmpr(i-1) /= tmpr(i)) sout=sout+1
-      !ENDDO
-      !!Deallocate
-      !DEALLOCATE(tmpr)
-    ENDFUNCTION findNUnique_2DInt
-!
-!-------------------------------------------------------------------------------
 !> @brief This routine takes an array of reals and returns the unique
 !>        entries within a given tolerance for the equivalence of reals.  The
 !>        optional delta input is whether the array is composed of incremental
@@ -649,50 +563,6 @@ MODULE ArrayUtils
       !Deallocate
       DEALLOCATE(tmpr)
     ENDSUBROUTINE getUnique_1DString
-!
-!-------------------------------------------------------------------------------
-!> @brief This routine takes a 2-D array of integers and returns the unique
-!>        entries.  The optional delta input is whether the array is composed of
-!>         incremental values (deltas) or absolute values.
-!> @param r The input array of integers
-!> @param rout The 2-D array of unique entries in the array r.
-!> @param delta The optional input for whether the array is incremental or not
-!>
-    SUBROUTINE getUnique_2DInt(r,rout,delta)
-      INTEGER(SIK),INTENT(IN) :: r(:,:)
-      INTEGER(SIK),ALLOCATABLE,INTENT(OUT) :: rout(:)
-      LOGICAL(SBK),INTENT(IN),OPTIONAL :: delta
-
-      INTEGER(SIK) :: i,n,sout
-      INTEGER(SIK),ALLOCATABLE :: tmpr(:,:)
-
-      n=SIZE(r,DIM=1)
-      IF(PRESENT(delta)) THEN
-        IF(delta) THEN
-          CALL getAbsolute_2DInt(r,tmpr)
-          n=SIZE(tmpr,DIM=1)
-        ENDIF
-      ENDIF
-      IF(.NOT.ALLOCATED(tmpr)) THEN
-        ALLOCATE(tmpr(n,n))
-        tmpr=r
-      ENDIF
-
-      !Find the number of unique entries
-      CALL sort(tmpr)
-      sout=1
-      DO i=2,n
-        IF(tmpr(i-1,i-1) /= tmpr(i,i)) sout=sout+1
-      ENDDO
-      ALLOCATE(rout(sout))
-      rout=0
-      rout(1)=tmpr(1,1)
-      DO i=2,n
-        IF(tmpr(i-1,i-1) /= tmpr(i,i)) rout(i)=tmpr(i,i)
-      ENDDO
-      !Deallocate
-      DEALLOCATE(tmpr)
-    ENDSUBROUTINE getUnique_2DInt
 !
 !-------------------------------------------------------------------------------
 !> @brief This routine takes an array of integers and returns the unique

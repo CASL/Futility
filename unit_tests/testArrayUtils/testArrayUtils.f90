@@ -63,13 +63,16 @@ PROGRAM testArrayUtils
       tmprealarray(9)=5.0_SRK  !65.0
       tmprealarray(10)=35.0_SRK !100.0
       CALL getAbsolute(tmprealarray,tmpr)
-      bool=ALL(tmpr .APPROXEQA. (/0.0_SRK,2.0_SRK,6.0_SRK,10.0_SRK,15.0_SRK,20.0_SRK,40.0_SRK,60.0_SRK,65.0_SRK,100.0_SRK/))
+      bool=ALL(tmpr .APPROXEQA. (/0.0_SRK,0.0_SRK,2.0_SRK,6.0_SRK,10.0_SRK, &
+        15.0_SRK,20.0_SRK,40.0_SRK,60.0_SRK,65.0_SRK,100.0_SRK/))
       ASSERT(bool,'getAbsolute, no XI')
       CALL getAbsolute(tmprealarray(2:10),tmpr,XI=0.0_SRK)
-      bool=ALL(tmpr .APPROXEQA. (/0.0_SRK,2.0_SRK,6.0_SRK,10.0_SRK,15.0_SRK,20.0_SRK,40.0_SRK,60.0_SRK,65.0_SRK,100.0_SRK/))
+      bool=ALL(tmpr .APPROXEQA. (/0.0_SRK,2.0_SRK,6.0_SRK,10.0_SRK,15.0_SRK, &
+        20.0_SRK,40.0_SRK,60.0_SRK,65.0_SRK,100.0_SRK/))
       ASSERT(bool,'getAbsolute, with XI')
       CALL getAbsolute(tmprealarray(2:10),tmpr,XI=-10.0_SRK)
-      bool=ALL(tmpr .APPROXEQA. (/-10.0_SRK,-8.0_SRK,-4.0_SRK,0.0_SRK,5.0_SRK,10.0_SRK,30.0_SRK,50.0_SRK,55.0_SRK,90.0_SRK/))
+      bool=ALL(tmpr .APPROXEQA. (/-10.0_SRK,-8.0_SRK,-4.0_SRK,0.0_SRK,5.0_SRK, &
+        10.0_SRK,30.0_SRK,50.0_SRK,55.0_SRK,90.0_SRK/))
       ASSERT(bool,'getAbsolute, with negative XI')
       !
       COMPONENT_TEST('getDelta 1-D Array')
@@ -804,10 +807,10 @@ PROGRAM testArrayUtils
       tmpintarray(10)=40 !100
       !getAbsolute_1DInt
       CALL getAbsolute(tmpintarray,tmpi)
-      bool=ALL(tmpi == (/0,2,3,5,12,20,25,40,60,100/))
+      bool=ALL(tmpi == (/0,0,2,3,5,12,20,25,40,60,100/))
       ASSERT(bool,'getAbsolute no Xi ')
       CALL getAbsolute(tmpintarray(3:10),tmpi)
-      bool=ALL(tmpi == (/1,3,10,18,23,38,58,98/))
+      bool=ALL(tmpi == (/0,1,3,10,18,23,38,58,98/))
       ASSERT(bool,'getAbsolute, partial array, no Xi ')
       CALL getAbsolute(tmpintarray(2:10),tmpi,XI=0)
       bool=ALL(tmpi == (/0,2,3,5,12,20,25,40,60,100/))
