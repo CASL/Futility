@@ -9175,6 +9175,7 @@ MODULE ParameterLists
             CASE('ARRAY(STRING)')
               CALL char_to_string_array(strArry,CHAR(attrVal))
               CALL thisParam%add(CHAR(tmpPath),strArry)
+              strArry=''
             CASE DEFAULT
               !Bad element type
           ENDSELECT

@@ -416,6 +416,7 @@ MODULE FileType_XML
         IF(ALLOCATED(thisXMLE%attr_values)) DEALLOCATE(thisXMLE%attr_values)
       ENDIF
       thisXMLE%content=''
+      thisXMLE%name=''
       thisXMLE%nAttr=0
     ENDSUBROUTINE clear_XMLElementType
 !
@@ -556,7 +557,6 @@ MODULE FileType_XML
       IF(thisXMLE%hasChildren()) DEALLOCATE(thisXMLE%children)
       IF(SIZE(children) > 0) THEN
         nChildren=SIZE(children)
-        ALLOCATE(thisXMLE%children(nChildren))
         thisXMLE%children => children
         SELECTTYPE(thisXMLE); TYPE IS(XMLElementType)
           DO i=1,nChildren
