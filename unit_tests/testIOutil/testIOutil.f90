@@ -106,6 +106,11 @@ PROGRAM testIOutil
       tmpStr='testing  '
       CALL strrep(tmpStr,'t','TT')
       ASSERT(TRIM(tmpStr) == 'TTesTTing','testing')
+      string='A->B->C->D->EFGH'
+      CALL strrep(string,'->','/')
+      ASSERT(TRIM(string) == 'A/B/C/D/EFGH','-> to /')
+      CALL strrep(string,'/','->')
+      ASSERT(TRIM(string) == 'A->B->C->D->EFGH','/ to ->')
       
       COMPONENT_TEST('nFields (character)')
       string=''

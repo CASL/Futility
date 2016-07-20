@@ -557,7 +557,7 @@ MODULE IO_Strings
           string(stt:stp)=repp
           string(stp+1:slen)=string2(stt+flen-(i-1)*dlen:slen)
           IF(i < n) THEN
-            indices(i+1)=indices(i+1)+dlen
+            indices(i+1)=indices(i+1)+dlen*i
           ENDIF
         ENDDO
       ENDIF
