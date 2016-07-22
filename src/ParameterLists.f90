@@ -9537,7 +9537,7 @@ MODULE ParameterLists
     SUBROUTINE char_to_string_array(sArr,c)
       TYPE(StringType),ALLOCATABLE,INTENT(OUT) :: sArr(:)
       CHARACTER(LEN=*),INTENT(IN) :: c
-      CHARACTER(LEN=50) :: tmpStr
+      CHARACTER(LEN=LEN(c)) :: tmpStr
       TYPE(StringType) :: tmpElt
       INTEGER(SIK) :: numElts
       INTEGER(SIK) :: i,j,k
