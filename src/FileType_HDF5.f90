@@ -54,6 +54,9 @@
 !> (10/01/2014) - Dan Jabaay
 !>   - Cleaned up the read and write routines by making things more generalized.
 !>   - Added more object state checking.
+!> (07/12/2016) - Dan Jabaay
+!>   - Added a mkalldir routine that will make all the groups necessary for a
+!>     given path if they do not exist.
 !> (07/26/2016) - Yuxuan Liu
 !>   - Added read and write routines for SSK, SDK, SNK and SLK for array
 !>   - ranks up to 7
@@ -151,6 +154,9 @@ MODULE FileType_HDF5
       !> @copybrief FileType_HDF5::mkdir_HDF5FileType
       !> @copydetails FileType_HDF5::mkdir_HDF5FileType
       PROCEDURE,PASS :: mkdir => mkdir_HDF5FileType
+      !> @copybrief FileType_HDF5::mkalldir_HDF5FileType
+      !> @copydetails FileType_HDF5::mkalldir_HDF5FileType
+      PROCEDURE,PASS :: mkalldir => mkalldir_HDF5FileType
       !> @copybrief FileType_HDF5::ngrp_HDF5FileType
       !> @copydetails FileType_HDF5::ngrp_HDF5FileType
       PROCEDURE,PASS :: ngrp => ngrp_HDF5FileType
@@ -882,7 +888,6 @@ MODULE FileType_HDF5
           ' - HDF5file '//thisHDF5File%getFileName()// &
            ' is already not opened!')
       ELSE
-
         ! Convert the path to use slashes
         path2=convertPath(path)
 
@@ -901,6 +906,67 @@ MODULE FileType_HDF5
       ENDIF
 #endif
     ENDSUBROUTINE mkdir_HDF5FileType
+!
+!-------------------------------------------------------------------------------
+!> @brief Creates a new group in the HDF file.
+!> @param thisHDF5File the HDF5FileType object to operate on
+!> @param path the path to the group to be created
+!>
+!> This routine is used to create a new group in an HDF5 file. It can only be
+!> called if the file has write access.
+!>
+    SUBROUTINE mkalldir_HDF5FileType(thisHDF5File,path)
+      CHARACTER(LEN=*),PARAMETER :: myNAme='mkalldir_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
+      CHARACTER(LEN=*),INTENT(IN) :: path
+#ifdef MPACT_HAVE_HDF5
+      INTEGER(SIK) :: i,nslash
+      INTEGER(SIK),ALLOCATABLE :: slashloc(:)
+      TYPE(StringType) :: path2,tmppath
+      INTEGER(HID_T) :: group_id,error
+
+      ! Make sure the object is initialized
+      IF(.NOT.thisHDF5File%isinit) THEN
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
+      ! Ensure that we have write permissions to the file
+      ELSEIF(.NOT.thisHDF5File%isWrite()) THEN
+        CALL thisHDF5File%e%raiseError(modName &
+            //'::'//myName//' - Can not create group in read-only file.')
+      ELSEIF(.NOT.thisHDF5File%isOpen()) THEN
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - HDF5file '//thisHDF5File%getFileName()// &
+           ' is already not opened!')
+      ELSE
+        error=0
+        ! Convert the path to use slashes
+        path2=convertPath(TRIM(path))
+        CALL strfind(TRIM(CHAR(path2)),FSLASH,slashloc)
+        nslash=SIZE(slashloc)
+        DO i=1,nslash-1
+          CALL getSubstring(path2,tmppath,1,slashloc(i+1)-1)
+          IF(.NOT.pathexists_HDF5FileType(thisHDF5File,TRIM(CHAR(tmppath)))) &
+            CALL h5gcreate_f(thisHDF5File%file_id,TRIM(CHAR(tmppath)),group_id,error)
+        ENDDO
+        DEALLOCATE(slashloc)
+        ! Create the group
+        IF(.NOT.pathexists_HDF5FileType(thisHDF5File,TRIM(CHAR(path2)))) &
+          CALL h5gcreate_f(thisHDF5File%file_id,TRIM(CHAR(path2)),group_id,error)
+
+        IF(error == 0) THEN
+          ! Close the group
+          CALL h5gclose_f(group_id,error)
+          IF(error /= 0) CALL thisHDF5File%e%raiseDebug(modName//'::'// &
+              myName//' - Failed to close HDF group')
+        ELSE
+          CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
+            ' - Failed to create HDF5 group.')
+        ENDIF
+      ENDIF
+#endif
+    ENDSUBROUTINE mkalldir_HDF5FileType
 !
 !-------------------------------------------------------------------------------
 !> @brief Returns the number of objects in a group
@@ -3559,7 +3625,7 @@ MODULE FileType_HDF5
       IF(PRESENT(first_dir)) fdir=first_dir
 
       ! Create root directory
-      root=convertPath(dsetname)
+      root=convertPath(TRIM(dsetname))
       !CALL thisHDF5File%mkdir(CHAR(root))
 
       ! Begin iterating over PL
@@ -3567,11 +3633,11 @@ MODULE FileType_HDF5
       CALL vals%getNextParam(address,nextParam)
       DO WHILE (ASSOCIATED(nextParam))
         IF(fdir) THEN
-          address2=address
+          address2=TRIM(address)
         ELSE
           address2=trimHeadDir(CHAR(address))
         ENDIF
-        path=root//'/'//CHAR(address2)
+        path=TRIM(root)//'/'//CHAR(address2)
         IF(.NOT. TRIM(address2)=='') THEN
          SELECTCASE(CHAR(nextParam%dataType))
             CASE('TYPE(ParamType_List)')

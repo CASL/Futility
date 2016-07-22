@@ -797,6 +797,13 @@ PROGRAM testHDF5
       ASSERT(bool,'%pathExists(groupC->anotherGroup->moreBlahGroups)')
       ASSERT(.NOT.h5%pathExists('groupC->memCBlah'),'%pathExists(groupC->memCBlah)')
 
+      COMPONENT_TEST('%mkAllDir')
+      ASSERT(.NOT.h5%pathExists('groupC->A group'),'no A group')
+      ASSERT(.NOT.h5%pathExists('groupC->A group->leaf group'),'no leaf group')
+      CALL h5%mkAllDir('groupC->A group->leaf group')
+      ASSERT(h5%pathExists('groupC->A group'),'A group')
+      ASSERT(h5%pathExists('groupC->A group->leaf group'),'leaf group')
+
       COMPONENT_TEST('%createHardLink')
       CALL h5%fwrite('groupC->anotherGroup->memC1',refC1)
       CALL h5%createHardLink('groupC->anotherGroup->memC1', &
