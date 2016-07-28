@@ -241,6 +241,9 @@ MODULE FileType_HDF5
       !> @copybrief FileType_HDF5::write_n6
       !> @copydoc FileType_HDF5::write_n6
       PROCEDURE,PASS,PRIVATE :: write_n6
+      !> @copybrief FileType_HDF5::write_n7
+      !> @copydoc FileType_HDF5::write_n7
+      PROCEDURE,PASS,PRIVATE :: write_n7
       !> @copybrief FileType_HDF5::write_l0
       !> @copydoc FileType_HDF5::write_l0
       PROCEDURE,PASS,PRIVATE :: write_l0
@@ -262,6 +265,9 @@ MODULE FileType_HDF5
       !> @copybrief FileType_HDF5::write_l6
       !> @copydoc FileType_HDF5::write_l6
       PROCEDURE,PASS,PRIVATE :: write_l6
+      !> @copybrief FileType_HDF5::write_l7
+      !> @copydoc FileType_HDF5::write_l7
+      PROCEDURE,PASS,PRIVATE :: write_l7
       !> @copybrief FileType_HDF5::write_st0
       !> @copydoc FileType_HDF5::write_st0
       PROCEDURE,PASS,PRIVATE :: write_st0
@@ -294,9 +300,9 @@ MODULE FileType_HDF5
       write_d5, write_d6, write_d7, write_s0, write_s1, write_s2, write_s3, &
       write_s4, write_s5, write_s6, write_s7, write_b0, write_b1, write_b2, &
       write_b3, write_n0, write_n1, write_n2, write_n3, write_n4, write_n5, &
-      write_n6, write_st0, write_st1_helper, write_st1, write_st2_helper,  &
+      write_n6, write_n7, write_st0, write_st1_helper, write_st1, write_st2_helper,  &
       write_st2, write_st3_helper, write_st3, write_l0, write_l1, write_l2, &
-      write_l3, write_l4, write_l5, write_l6, write_c1, write_pList
+      write_l3, write_l4, write_l5, write_l6, write_l7,write_c1, write_pList
       !> @copybrief FileType_HDF5::read_d0
       !> @copydoc FileType_HDF5::read_d0
       PROCEDURE,PASS,PRIVATE :: read_d0
@@ -2541,6 +2547,64 @@ MODULE FileType_HDF5
     ENDSUBROUTINE write_n6
 !
 !-------------------------------------------------------------------------------
+!> @brief Write a rank-7 array of 32-bit integers to a dataset
+!> @param thisHDF5File the HDF5FileType object to write to
+!> @param dsetname dataset name and path to write to
+!> @param vals data to write to dataset
+!> @param gdims_in shape of data to write with
+!>
+!> This routine writes a rank-7 array of integers @c vals to a dataset of name
+!> and path @c dsetname using the shape @c gdims_in, if present.
+!>
+    SUBROUTINE write_n7(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
+      CHARACTER(LEN=*),PARAMETER :: myName='writen7_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
+      CHARACTER(LEN=*),INTENT(IN) :: dsetname
+      INTEGER(SNK),INTENT(IN) :: vals(:,:,:,:,:,:,:)
+      INTEGER(SIK),DIMENSION(7),INTENT(IN),OPTIONAL :: gdims_in
+      INTEGER(SIK),DIMENSION(7),INTENT(IN),OPTIONAL :: cnt_in
+      INTEGER(SIK),DIMENSION(7),INTENT(IN),OPTIONAL :: offset_in
+#ifdef MPACT_HAVE_HDF5
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
+      INTEGER(HSIZE_T),DIMENSION(7) :: ldims,gdims,offset,cnt
+      INTEGER(HID_T),PARAMETER :: rank=7
+
+      INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
+
+      ! stash offset
+      offset(1)=LBOUND(vals,1)-1
+      offset(2)=LBOUND(vals,2)-1
+      offset(3)=LBOUND(vals,3)-1
+      offset(4)=LBOUND(vals,4)-1
+      offset(5)=LBOUND(vals,5)-1
+      offset(6)=LBOUND(vals,6)-1
+      offset(7)=LBOUND(vals,7)-1
+      IF(PRESENT(offset_in)) offset=offset_in
+
+      path=dsetname
+      ! Determine the dimensions for the dataspace
+      ldims=SHAPE(vals)
+
+      ! Store the dimensions from global if present
+      IF(PRESENT(gdims_in)) THEN
+        gdims=gdims_in
+      ELSE
+        gdims=ldims
+      ENDIF
+      cnt=gdims
+      IF(PRESENT(cnt_in)) cnt=cnt_in
+
+      mem=H5T_NATIVE_INTEGER
+      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
+        gspace_id,plist_id,error,cnt,offset)
+      IF(error == 0) THEN
+        CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
+        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
+      ENDIF
+#endif
+    ENDSUBROUTINE write_n7
+!
+!-------------------------------------------------------------------------------
 !> @brief Write a 64-bit "integer" to a dataset
 !> @param thisHDF5File the HDF5FileType object to write to
 !> @param dsetname dataset name and path to write to
@@ -2954,6 +3018,70 @@ MODULE FileType_HDF5
       ENDIF
 #endif
     ENDSUBROUTINE write_l6
+!
+!-------------------------------------------------------------------------------
+!> @brief Write a rank-7 array of 64-bit "integers" to a dataset
+!> @param thisHDF5File the HDF5FileType object to write to
+!> @param dsetname dataset name and path to write to
+!> @param valst data to write to dataset
+!> @param gdims_in shape of data to write with
+!>
+!> This routine writes a rank-7 array of long integers @c vals to a dataset of
+!> name and path @c dsetname using the shape @c gdims_in, if present.  Doubles
+!> are used for the write operation to compensate for the lack of an long
+!> integer write interface in the HDF5 library.
+!>
+    SUBROUTINE write_l7(thisHDF5File,dsetname,valst,gdims_in,cnt_in,offset_in)
+      CHARACTER(LEN=*),PARAMETER :: myName='writel7_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
+      CHARACTER(LEN=*),INTENT(IN) :: dsetname
+      INTEGER(SLK),INTENT(IN) :: valst(:,:,:,:,:,:,:)
+      INTEGER(SIK),DIMENSION(7),INTENT(IN),OPTIONAL :: gdims_in
+      INTEGER(SIK),DIMENSION(7),INTENT(IN),OPTIONAL :: cnt_in
+      INTEGER(SIK),DIMENSION(7),INTENT(IN),OPTIONAL :: offset_in
+#ifdef MPACT_HAVE_HDF5
+      REAL(SDK) :: vals(SIZE(valst,1),SIZE(valst,2),SIZE(valst,3), &
+        SIZE(valst,4),SIZE(valst,5),SIZE(valst,6),SIZE(valst,7))
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
+      INTEGER(HSIZE_T),DIMENSION(7) :: ldims,gdims,offset,cnt
+      INTEGER(HID_T),PARAMETER :: rank=7
+
+      INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
+
+      ! stash offset
+      offset(1)=LBOUND(vals,1)-1
+      offset(2)=LBOUND(vals,2)-1
+      offset(3)=LBOUND(vals,3)-1
+      offset(4)=LBOUND(vals,4)-1
+      offset(5)=LBOUND(vals,5)-1
+      offset(6)=LBOUND(vals,6)-1
+      offset(7)=LBOUND(vals,7)-1
+      IF(PRESENT(offset_in)) offset=offset_in
+
+      path=dsetname
+      ! Determine the dimensions for the dataspace
+      ldims=SHAPE(vals)
+
+      ! Store the dimensions from global if present
+      IF(PRESENT(gdims_in)) THEN
+        gdims=gdims_in
+      ELSE
+        gdims=ldims
+      ENDIF
+      cnt=gdims
+      IF(PRESENT(cnt_in)) cnt=cnt_in
+
+      mem=H5T_STD_I64LE
+      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
+        gspace_id,plist_id,error,cnt,offset)
+      mem=H5T_NATIVE_DOUBLE
+      vals=DBLE(valst)
+      IF(error == 0) THEN
+        CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
+        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
+      ENDIF
+#endif
+    ENDSUBROUTINE write_l7
 !
 !-------------------------------------------------------------------------------
 !> @brief Write a StringType to dataset
