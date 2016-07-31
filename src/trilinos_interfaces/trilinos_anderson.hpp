@@ -63,15 +63,17 @@ public:
     {}
 
     int new_data(const int depth, const double beta, Teuchos::RCP<Epetra_Vector> soln) {
-        //Teuchos::ParameterList db
         anderson_map[cid]=AndersonCnt();
+
         //setup parameterlist with defaults
         //anderson_map[cid].anderson_db = Teuchos::sublist(db, "Anderson");
+        anderson_map[cid].anderson_db = Teuchos::parameterList();
+
         anderson_map[cid].anderson_db->set("Nonlinear Solver", "Anderson Accelerated Fixed-Point");
         anderson_map[cid].anderson_db->sublist("Anderson Parameters").set("Storage Depth", depth);
         anderson_map[cid].anderson_db->sublist("Anderson Parameters").set("Mixing Parameter", beta);
         Teuchos::ParameterList& printParams = anderson_map[cid].anderson_db->sublist("Printing");
-// use soln to get comm
+
         printParams.set("MyPID", soln->Comm().MyPID());
         printParams.set("Output Precision", 3);
         printParams.set("Output Processor", 0);
