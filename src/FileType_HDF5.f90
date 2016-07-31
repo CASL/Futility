@@ -54,6 +54,9 @@
 !> (10/01/2014) - Dan Jabaay
 !>   - Cleaned up the read and write routines by making things more generalized.
 !>   - Added more object state checking.
+!> (07/26/2016) - Yuxuan Liu
+!>   - Added read and write routines for SSK, SDK, SNK and SLK for array
+!>   - ranks up to 7
 !> @todo
 !>  - Implement MPI/Parallel HDF5
 !>  - Make sure routines are safe (check for initialized object, etc.)
@@ -318,6 +321,15 @@ MODULE FileType_HDF5
       !> @copybrief FileType_HDF5::read_d4
       !> @copydoc FileType_HDF5::read_d4
       PROCEDURE,PASS,PRIVATE :: read_d4
+      !> @copybrief FileType_HDF5::read_d5
+      !> @copydoc FileType_HDF5::read_d5
+      PROCEDURE,PASS,PRIVATE :: read_d5
+      !> @copybrief FileType_HDF5::read_d6
+      !> @copydoc FileType_HDF5::read_d6
+      PROCEDURE,PASS,PRIVATE :: read_d6
+      !> @copybrief FileType_HDF5::read_d7
+      !> @copydoc FileType_HDF5::read_d7
+      PROCEDURE,PASS,PRIVATE :: read_d7
       !> @copybrief FileType_HDF5::read_dp4
       !> @copydoc FileType_HDF5::read_dp4
       PROCEDURE,PASS,PRIVATE :: read_dp4
@@ -336,6 +348,15 @@ MODULE FileType_HDF5
       !> @copybrief FileType_HDF5::read_s4
       !> @copydoc FileType_HDF5::read_s4
       PROCEDURE,PASS,PRIVATE :: read_s4
+      !> @copybrief FileType_HDF5::read_s5
+      !> @copydoc FileType_HDF5::read_s5
+      PROCEDURE,PASS,PRIVATE :: read_s5
+      !> @copybrief FileType_HDF5::read_s6
+      !> @copydoc FileType_HDF5::read_s6
+      PROCEDURE,PASS,PRIVATE :: read_s6
+      !> @copybrief FileType_HDF5::read_s7
+      !> @copydoc FileType_HDF5::read_s7
+      PROCEDURE,PASS,PRIVATE :: read_s7
       !> @copybrief FileType_HDF5::read_b0
       !> @copydoc FileType_HDF5::read_b0
       PROCEDURE,PASS,PRIVATE :: read_b0
@@ -360,6 +381,18 @@ MODULE FileType_HDF5
       !> @copybrief FileType_HDF5::read_n3
       !> @copydoc FileType_HDF5::read_n3
       PROCEDURE,PASS,PRIVATE :: read_n3
+      !> @copybrief FileType_HDF5::read_n4
+      !> @copydoc FileType_HDF5::read_n4
+      PROCEDURE,PASS,PRIVATE :: read_n4
+      !> @copybrief FileType_HDF5::read_n5
+      !> @copydoc FileType_HDF5::read_n5
+      PROCEDURE,PASS,PRIVATE :: read_n5
+      !> @copybrief FileType_HDF5::read_n6
+      !> @copydoc FileType_HDF5::read_n6
+      PROCEDURE,PASS,PRIVATE :: read_n6
+      !> @copybrief FileType_HDF5::read_n7
+      !> @copydoc FileType_HDF5::read_n7
+      PROCEDURE,PASS,PRIVATE :: read_n7
       !> @copybrief FileType_HDF5::read_l0
       !> @copydoc FileType_HDF5::read_l0
       PROCEDURE,PASS,PRIVATE :: read_l0
@@ -372,6 +405,18 @@ MODULE FileType_HDF5
       !> @copybrief FileType_HDF5::read_l3
       !> @copydoc FileType_HDF5::read_l3
       PROCEDURE,PASS,PRIVATE :: read_l3
+      !> @copybrief FileType_HDF5::read_l4
+      !> @copydoc FileType_HDF5::read_l4
+      PROCEDURE,PASS,PRIVATE :: read_l4
+      !> @copybrief FileType_HDF5::read_l5
+      !> @copydoc FileType_HDF5::read_l5
+      PROCEDURE,PASS,PRIVATE :: read_l5
+      !> @copybrief FileType_HDF5::read_l6
+      !> @copydoc FileType_HDF5::read_l6
+      PROCEDURE,PASS,PRIVATE :: read_l6
+      !> @copybrief FileType_HDF5::read_l7
+      !> @copydoc FileType_HDF5::read_l7
+      PROCEDURE,PASS,PRIVATE :: read_l7
       !> @copybrief FileType_HDF5::read_st0_helper
       !> @copydoc FileType_HDF5::read_st0_helper
       PROCEDURE,PASS,PRIVATE :: read_st0_helper
@@ -400,11 +445,13 @@ MODULE FileType_HDF5
       !> @copydoc FileType_HDF5::read_c1
       PROCEDURE,PASS,PRIVATE :: read_c1
       !> Generic typebound interface for all @c read operations
-      GENERIC :: fread => read_d1, read_d2, read_d3, read_d4, read_s1, read_s2,&
-        read_s3, read_s4, read_l1, read_l2, read_l3, read_b1, read_b2, read_b3,&
-        read_st0_helper,read_st0, read_d0, read_s0, read_l0, read_b0, read_st1,&
-        read_st1_helper,read_st2, read_st2_helper, read_st3, read_st3_helper,  &
-        read_n0, read_n1, read_n2, read_n3, read_c1
+      GENERIC :: fread => read_d1, read_d2, read_d3, read_d4, read_d5, read_d6,&
+        read_d7, read_s1, read_s2, read_s3, read_s4, read_s5, read_s6, read_s7,&
+        read_l1, read_l2, read_l3, read_l4, read_l5, read_l6, read_l7, read_b1,&
+        read_b2, read_b3, read_st0_helper,read_st0, read_d0, read_s0, read_l0, &
+        read_b0, read_st1, read_st1_helper,read_st2, read_st2_helper, read_st3,&
+        read_st3_helper, read_n0, read_n1, read_n2, read_n3, read_n4, read_n5, &
+        read_n6, read_n7, read_c1
       !> Generic typebound interface for pointer-based read operations
       GENERIC :: freadp => read_dp4
   ENDTYPE
@@ -3808,6 +3855,135 @@ MODULE FileType_HDF5
     ENDSUBROUTINE read_d4
 !
 !-------------------------------------------------------------------------------
+!> @brief Read a rank-5 array of doubles from dataset
+!> @param thisHDF5File the HDF5FileType object to read from
+!> @param dsetname dataset name and path to read from
+!> @param vals variable to hold read data
+!>
+!> This routine reads a rank-5 array of doubles from the dataset @c dsetname
+!> and stores the values in @c vals
+!>
+    SUBROUTINE read_d5(thisHDF5File,dsetname,vals)
+      CHARACTER(LEN=*),PARAMETER :: myName='readd5_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
+      CHARACTER(LEN=*),INTENT(IN) :: dsetname
+      REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:,:)
+#ifdef MPACT_HAVE_HDF5
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
+      INTEGER(HSIZE_T),DIMENSION(5) :: dims,maxdims
+      INTEGER(HID_T),PARAMETER :: rank=5
+
+      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: dspace_id,dset_id
+
+        path=convertPath(dsetname)
+        ! Allocate space if needed, make sure it is the right size
+        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+        IF(error >= 0) THEN
+          IF(ALLOCATED(vals)) THEN
+            IF(ANY(SHAPE(vals) /= dims)) THEN
+              DEALLOCATE(vals)
+              ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5)))
+            ENDIF
+          ELSE
+            ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5)))
+          ENDIF
+
+          ! Read the dataset
+          mem=H5T_NATIVE_DOUBLE
+          CALL h5dread_f(dset_id,mem,vals,dims,error)
+          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+        ENDIF
+#endif
+    ENDSUBROUTINE read_d5
+!
+!-------------------------------------------------------------------------------
+!> @brief Read a rank-6 array of doubles from dataset
+!> @param thisHDF5File the HDF5FileType object to read from
+!> @param dsetname dataset name and path to read from
+!> @param vals variable to hold read data
+!>
+!> This routine reads a rank-6 array of doubles from the dataset @c dsetname
+!> and stores the values in @c vals
+!>
+    SUBROUTINE read_d6(thisHDF5File,dsetname,vals)
+      CHARACTER(LEN=*),PARAMETER :: myName='readd6_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
+      CHARACTER(LEN=*),INTENT(IN) :: dsetname
+      REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:,:,:)
+#ifdef MPACT_HAVE_HDF5
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
+      INTEGER(HSIZE_T),DIMENSION(6) :: dims,maxdims
+      INTEGER(HID_T),PARAMETER :: rank=6
+
+      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: dspace_id,dset_id
+
+        path=convertPath(dsetname)
+        ! Allocate space if needed, make sure it is the right size
+        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+        IF(error >= 0) THEN
+          IF(ALLOCATED(vals)) THEN
+            IF(ANY(SHAPE(vals) /= dims)) THEN
+              DEALLOCATE(vals)
+              ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6)))
+            ENDIF
+          ELSE
+            ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6)))
+          ENDIF
+
+          ! Read the dataset
+          mem=H5T_NATIVE_DOUBLE
+          CALL h5dread_f(dset_id,mem,vals,dims,error)
+          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+        ENDIF
+#endif
+    ENDSUBROUTINE read_d6
+!
+!-------------------------------------------------------------------------------
+!> @brief Read a rank-7 array of doubles from dataset
+!> @param thisHDF5File the HDF5FileType object to read from
+!> @param dsetname dataset name and path to read from
+!> @param vals variable to hold read data
+!>
+!> This routine reads a rank-7 array of doubles from the dataset @c dsetname
+!> and stores the values in @c vals
+!>
+    SUBROUTINE read_d7(thisHDF5File,dsetname,vals)
+      CHARACTER(LEN=*),PARAMETER :: myName='readd7_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
+      CHARACTER(LEN=*),INTENT(IN) :: dsetname
+      REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:,:,:,:)
+#ifdef MPACT_HAVE_HDF5
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
+      INTEGER(HSIZE_T),DIMENSION(7) :: dims,maxdims
+      INTEGER(HID_T),PARAMETER :: rank=7
+
+      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: dspace_id,dset_id
+
+        path=convertPath(dsetname)
+        ! Allocate space if needed, make sure it is the right size
+        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+        IF(error >= 0) THEN
+          IF(ALLOCATED(vals)) THEN
+            IF(ANY(SHAPE(vals) /= dims)) THEN
+              DEALLOCATE(vals)
+              ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6),dims(7)))
+            ENDIF
+          ELSE
+            ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6),dims(7)))
+          ENDIF
+
+          ! Read the dataset
+          mem=H5T_NATIVE_DOUBLE
+          CALL h5dread_f(dset_id,mem,vals,dims,error)
+          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+        ENDIF
+#endif
+    ENDSUBROUTINE read_d7
+!
+!-------------------------------------------------------------------------------
 !> @brief Read a rank-4 array of doubles from dataset
 !> @param thisHDF5File the HDF5FileType object to read from
 !> @param dsetname dataset name and path to read from
@@ -4056,6 +4232,135 @@ MODULE FileType_HDF5
     ENDSUBROUTINE read_s4
 !
 !-------------------------------------------------------------------------------
+!> @brief Read a rank-5 array of reals from dataset
+!> @param thisHDF5File the HDF5FileType object to read from
+!> @param dsetname dataset name and path to read from
+!> @param vals variable to hold read data
+!>
+!> This routine reads a rank-5 array of reals from the dataset @c dsetname
+!> and stores the values in @c vals
+!>
+    SUBROUTINE read_s5(thisHDF5File,dsetname,vals)
+      CHARACTER(LEN=*),PARAMETER :: myName='reads5_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
+      CHARACTER(LEN=*),INTENT(IN) :: dsetname
+      REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:,:)
+#ifdef MPACT_HAVE_HDF5
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
+      INTEGER(HSIZE_T),DIMENSION(5) :: dims,maxdims
+      INTEGER(HID_T),PARAMETER :: rank=5
+
+      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: dspace_id,dset_id
+
+        path=convertPath(dsetname)
+        ! Allocate space if needed, make sure it is the right size
+        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+        IF(error >= 0) THEN
+          IF(ALLOCATED(vals)) THEN
+            IF(ANY(SHAPE(vals) /= dims)) THEN
+              DEALLOCATE(vals)
+              ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5)))
+            ENDIF
+          ELSE
+            ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5)))
+          ENDIF
+
+          ! Read the dataset
+          mem=H5T_NATIVE_REAL
+          CALL h5dread_f(dset_id,mem,vals,dims,error)
+          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+        ENDIF
+#endif
+    ENDSUBROUTINE read_s5
+!
+!-------------------------------------------------------------------------------
+!> @brief Read a rank-6 array of reals from dataset
+!> @param thisHDF5File the HDF5FileType object to read from
+!> @param dsetname dataset name and path to read from
+!> @param vals variable to hold read data
+!>
+!> This routine reads a rank-6 array of reals from the dataset @c dsetname
+!> and stores the values in @c vals
+!>
+    SUBROUTINE read_s6(thisHDF5File,dsetname,vals)
+      CHARACTER(LEN=*),PARAMETER :: myName='reads6_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
+      CHARACTER(LEN=*),INTENT(IN) :: dsetname
+      REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:,:,:)
+#ifdef MPACT_HAVE_HDF5
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
+      INTEGER(HSIZE_T),DIMENSION(6) :: dims,maxdims
+      INTEGER(HID_T),PARAMETER :: rank=6
+
+      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: dspace_id,dset_id
+
+        path=convertPath(dsetname)
+        ! Allocate space if needed, make sure it is the right size
+        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+        IF(error >= 0) THEN
+          IF(ALLOCATED(vals)) THEN
+            IF(ANY(SHAPE(vals) /= dims)) THEN
+              DEALLOCATE(vals)
+              ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6)))
+            ENDIF
+          ELSE
+            ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6)))
+          ENDIF
+
+          ! Read the dataset
+          mem=H5T_NATIVE_REAL
+          CALL h5dread_f(dset_id,mem,vals,dims,error)
+          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+        ENDIF
+#endif
+    ENDSUBROUTINE read_s6
+!
+!-------------------------------------------------------------------------------
+!> @brief Read a rank-7 array of reals from dataset
+!> @param thisHDF5File the HDF5FileType object to read from
+!> @param dsetname dataset name and path to read from
+!> @param vals variable to hold read data
+!>
+!> This routine reads a rank-7 array of reals from the dataset @c dsetname
+!> and stores the values in @c vals
+!>
+    SUBROUTINE read_s7(thisHDF5File,dsetname,vals)
+      CHARACTER(LEN=*),PARAMETER :: myName='reads7_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
+      CHARACTER(LEN=*),INTENT(IN) :: dsetname
+      REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:,:,:,:)
+#ifdef MPACT_HAVE_HDF5
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
+      INTEGER(HSIZE_T),DIMENSION(7) :: dims,maxdims
+      INTEGER(HID_T),PARAMETER :: rank=7
+
+      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: dspace_id,dset_id
+
+        path=convertPath(dsetname)
+        ! Allocate space if needed, make sure it is the right size
+        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+        IF(error >= 0) THEN
+          IF(ALLOCATED(vals)) THEN
+            IF(ANY(SHAPE(vals) /= dims)) THEN
+              DEALLOCATE(vals)
+              ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6),dims(7)))
+            ENDIF
+          ELSE
+            ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6),dims(7)))
+          ENDIF
+
+          ! Read the dataset
+          mem=H5T_NATIVE_REAL
+          CALL h5dread_f(dset_id,mem,vals,dims,error)
+          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+        ENDIF
+#endif
+    ENDSUBROUTINE read_s7
+!
+!-------------------------------------------------------------------------------
 !> @brief Read a 32-bit integer from dataset
 !> @param thisHDF5File the HDF5FileType object to read from
 !> @param dsetname dataset name and path to read from
@@ -4217,6 +4522,178 @@ MODULE FileType_HDF5
         ENDIF
 #endif
     ENDSUBROUTINE read_n3
+!
+!-------------------------------------------------------------------------------
+!> @brief Read a rank-4 array of 32-bit integers from dataset
+!> @param thisHDF5File the HDF5FileType object to read from
+!> @param dsetname dataset name and path to read from
+!> @param vals variable to hold read data
+!>
+!> This routine reads a rank-4 array of integers from the dataset @c dsetname
+!> and stores the values in @c vals
+!>
+    SUBROUTINE read_n4(thisHDF5File,dsetname,vals)
+      CHARACTER(LEN=*),PARAMETER :: myName='readn4_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
+      CHARACTER(LEN=*),INTENT(IN) :: dsetname
+      INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:)
+#ifdef MPACT_HAVE_HDF5
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
+      INTEGER(HSIZE_T),DIMENSION(4) :: dims,maxdims
+      INTEGER(HID_T),PARAMETER :: rank=4
+
+      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: dspace_id,dset_id
+
+        path=convertPath(dsetname)
+        ! Allocate space if needed, make sure it is the right size
+        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+        IF(error >= 0) THEN
+          IF(ALLOCATED(vals)) THEN
+            IF(ANY(SHAPE(vals) /= dims)) THEN
+              DEALLOCATE(vals)
+              ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4)))
+            ENDIF
+          ELSE
+            ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4)))
+          ENDIF
+
+          ! Read the dataset
+          mem=H5T_NATIVE_INTEGER
+          CALL h5dread_f(dset_id,mem,vals,dims,error)
+          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+        ENDIF
+#endif
+    ENDSUBROUTINE read_n4
+!
+!-------------------------------------------------------------------------------
+!> @brief Read a rank-5 array of 32-bit integers from dataset
+!> @param thisHDF5File the HDF5FileType object to read from
+!> @param dsetname dataset name and path to read from
+!> @param vals variable to hold read data
+!>
+!> This routine reads a rank-5 array of integers from the dataset @c dsetname
+!> and stores the values in @c vals
+!>
+    SUBROUTINE read_n5(thisHDF5File,dsetname,vals)
+      CHARACTER(LEN=*),PARAMETER :: myName='readn5_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
+      CHARACTER(LEN=*),INTENT(IN) :: dsetname
+      INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:,:)
+#ifdef MPACT_HAVE_HDF5
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
+      INTEGER(HSIZE_T),DIMENSION(5) :: dims,maxdims
+      INTEGER(HID_T),PARAMETER :: rank=5
+
+      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: dspace_id,dset_id
+
+        path=convertPath(dsetname)
+        ! Allocate space if needed, make sure it is the right size
+        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+        IF(error >= 0) THEN
+          IF(ALLOCATED(vals)) THEN
+            IF(ANY(SHAPE(vals) /= dims)) THEN
+              DEALLOCATE(vals)
+              ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5)))
+            ENDIF
+          ELSE
+            ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5)))
+          ENDIF
+
+          ! Read the dataset
+          mem=H5T_NATIVE_INTEGER
+          CALL h5dread_f(dset_id,mem,vals,dims,error)
+          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+        ENDIF
+#endif
+    ENDSUBROUTINE read_n5
+!
+!-------------------------------------------------------------------------------
+!> @brief Read a rank-6 array of 32-bit integers from dataset
+!> @param thisHDF5File the HDF5FileType object to read from
+!> @param dsetname dataset name and path to read from
+!> @param vals variable to hold read data
+!>
+!> This routine reads a rank-6 array of integers from the dataset @c dsetname
+!> and stores the values in @c vals
+!>
+    SUBROUTINE read_n6(thisHDF5File,dsetname,vals)
+      CHARACTER(LEN=*),PARAMETER :: myName='readn6_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
+      CHARACTER(LEN=*),INTENT(IN) :: dsetname
+      INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:,:,:)
+#ifdef MPACT_HAVE_HDF5
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
+      INTEGER(HSIZE_T),DIMENSION(6) :: dims,maxdims
+      INTEGER(HID_T),PARAMETER :: rank=6
+
+      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: dspace_id,dset_id
+
+        path=convertPath(dsetname)
+        ! Allocate space if needed, make sure it is the right size
+        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+        IF(error >= 0) THEN
+          IF(ALLOCATED(vals)) THEN
+            IF(ANY(SHAPE(vals) /= dims)) THEN
+              DEALLOCATE(vals)
+              ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6)))
+            ENDIF
+          ELSE
+            ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6)))
+          ENDIF
+
+          ! Read the dataset
+          mem=H5T_NATIVE_INTEGER
+          CALL h5dread_f(dset_id,mem,vals,dims,error)
+          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+        ENDIF
+#endif
+    ENDSUBROUTINE read_n6
+!
+!-------------------------------------------------------------------------------
+!> @brief Read a rank-7 array of 32-bit integers from dataset
+!> @param thisHDF5File the HDF5FileType object to read from
+!> @param dsetname dataset name and path to read from
+!> @param vals variable to hold read data
+!>
+!> This routine reads a rank-7 array of integers from the dataset @c dsetname
+!> and stores the values in @c vals
+!>
+    SUBROUTINE read_n7(thisHDF5File,dsetname,vals)
+      CHARACTER(LEN=*),PARAMETER :: myName='readn7_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
+      CHARACTER(LEN=*),INTENT(IN) :: dsetname
+      INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:,:,:,:)
+#ifdef MPACT_HAVE_HDF5
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
+      INTEGER(HSIZE_T),DIMENSION(7) :: dims,maxdims
+      INTEGER(HID_T),PARAMETER :: rank=7
+
+      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: dspace_id,dset_id
+
+        path=convertPath(dsetname)
+        ! Allocate space if needed, make sure it is the right size
+        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+        IF(error >= 0) THEN
+          IF(ALLOCATED(vals)) THEN
+            IF(ANY(SHAPE(vals) /= dims)) THEN
+              DEALLOCATE(vals)
+              ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6),dims(7)))
+            ENDIF
+          ELSE
+            ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6),dims(7)))
+          ENDIF
+
+          ! Read the dataset
+          mem=H5T_NATIVE_INTEGER
+          CALL h5dread_f(dset_id,mem,vals,dims,error)
+          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+        ENDIF
+#endif
+    ENDSUBROUTINE read_n7
 !
 !-------------------------------------------------------------------------------
 !> @brief Read a 64-bit "integer" from dataset
@@ -4406,6 +4883,206 @@ MODULE FileType_HDF5
         ENDIF
 #endif
     ENDSUBROUTINE read_l3
+!
+!-------------------------------------------------------------------------------
+!> @brief Read a rank-4 array of 64-bit "integers" from dataset
+!> @param thisHDF5File the HDF5FileType object to read from
+!> @param dsetname dataset name and path to read from
+!> @param vals variable to hold read data
+!>
+!> This routine reads a rank-4 array of long integers from the dataset @c
+!> dsetname and stores the values in @c vals.  A double is used to read the data
+!> to compensate for the lack of a long integer read interface in the HDF5
+!> library.
+!>
+    SUBROUTINE read_l4(thisHDF5File,dsetname,vals)
+      CHARACTER(LEN=*),PARAMETER :: myName='readl4_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
+      CHARACTER(LEN=*),INTENT(IN) :: dsetname
+      INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:)
+#ifdef MPACT_HAVE_HDF5
+      INTEGER(SNK),ALLOCATABLE :: valst(:,:,:,:)
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
+      INTEGER(HSIZE_T),DIMENSION(4) :: dims,maxdims
+      INTEGER(HID_T),PARAMETER :: rank=4
+
+      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: dspace_id,dset_id
+
+        path=convertPath(dsetname)
+        ! Allocate space if needed, make sure it is the right size
+        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+        IF(error >= 0) THEN
+          IF(ALLOCATED(vals)) THEN
+            IF(ANY(SHAPE(vals) /= dims)) THEN
+              DEALLOCATE(vals)
+              ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4)))
+            ENDIF
+          ELSE
+            ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4)))
+          ENDIF
+          ALLOCATE(valst(dims(1),dims(2),dims(3),dims(4)))
+
+          ! Read the dataset
+          mem=H5T_NATIVE_INTEGER
+          CALL h5dread_f(dset_id,mem,valst,dims,error)
+          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+          vals=INT(valst,SLK)
+          CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
+            ' - Converting from double to long integer!')
+        ENDIF
+#endif
+    ENDSUBROUTINE read_l4
+!
+!-------------------------------------------------------------------------------
+!> @brief Read a rank-5 array of 64-bit "integers" from dataset
+!> @param thisHDF5File the HDF5FileType object to read from
+!> @param dsetname dataset name and path to read from
+!> @param vals variable to hold read data
+!>
+!> This routine reads a rank-5 array of long integers from the dataset @c
+!> dsetname and stores the values in @c vals.  A double is used to read the data
+!> to compensate for the lack of a long integer read interface in the HDF5
+!> library.
+!>
+    SUBROUTINE read_l5(thisHDF5File,dsetname,vals)
+      CHARACTER(LEN=*),PARAMETER :: myName='readl5_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
+      CHARACTER(LEN=*),INTENT(IN) :: dsetname
+      INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:,:)
+#ifdef MPACT_HAVE_HDF5
+      INTEGER(SNK),ALLOCATABLE :: valst(:,:,:,:,:)
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
+      INTEGER(HSIZE_T),DIMENSION(5) :: dims,maxdims
+      INTEGER(HID_T),PARAMETER :: rank=5
+
+      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: dspace_id,dset_id
+
+        path=convertPath(dsetname)
+        ! Allocate space if needed, make sure it is the right size
+        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+        IF(error >= 0) THEN
+          IF(ALLOCATED(vals)) THEN
+            IF(ANY(SHAPE(vals) /= dims)) THEN
+              DEALLOCATE(vals)
+              ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5)))
+            ENDIF
+          ELSE
+            ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5)))
+          ENDIF
+          ALLOCATE(valst(dims(1),dims(2),dims(3),dims(4),dims(5)))
+
+          ! Read the dataset
+          mem=H5T_NATIVE_INTEGER
+          CALL h5dread_f(dset_id,mem,valst,dims,error)
+          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+          vals=INT(valst,SLK)
+          CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
+            ' - Converting from double to long integer!')
+        ENDIF
+#endif
+    ENDSUBROUTINE read_l5
+!
+!-------------------------------------------------------------------------------
+!> @brief Read a rank-6 array of 64-bit "integers" from dataset
+!> @param thisHDF5File the HDF5FileType object to read from
+!> @param dsetname dataset name and path to read from
+!> @param vals variable to hold read data
+!>
+!> This routine reads a rank-6 array of long integers from the dataset @c
+!> dsetname and stores the values in @c vals.  A double is used to read the data
+!> to compensate for the lack of a long integer read interface in the HDF5
+!> library.
+!>
+    SUBROUTINE read_l6(thisHDF5File,dsetname,vals)
+      CHARACTER(LEN=*),PARAMETER :: myName='readl6_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
+      CHARACTER(LEN=*),INTENT(IN) :: dsetname
+      INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:,:,:)
+#ifdef MPACT_HAVE_HDF5
+      INTEGER(SNK),ALLOCATABLE :: valst(:,:,:,:,:,:)
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
+      INTEGER(HSIZE_T),DIMENSION(6) :: dims,maxdims
+      INTEGER(HID_T),PARAMETER :: rank=6
+
+      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: dspace_id,dset_id
+
+        path=convertPath(dsetname)
+        ! Allocate space if needed, make sure it is the right size
+        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+        IF(error >= 0) THEN
+          IF(ALLOCATED(vals)) THEN
+            IF(ANY(SHAPE(vals) /= dims)) THEN
+              DEALLOCATE(vals)
+              ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6)))
+            ENDIF
+          ELSE
+            ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6)))
+          ENDIF
+          ALLOCATE(valst(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6)))
+
+          ! Read the dataset
+          mem=H5T_NATIVE_INTEGER
+          CALL h5dread_f(dset_id,mem,valst,dims,error)
+          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+          vals=INT(valst,SLK)
+          CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
+            ' - Converting from double to long integer!')
+        ENDIF
+#endif
+    ENDSUBROUTINE read_l6
+!
+!-------------------------------------------------------------------------------
+!> @brief Read a rank-7 array of 64-bit "integers" from dataset
+!> @param thisHDF5File the HDF5FileType object to read from
+!> @param dsetname dataset name and path to read from
+!> @param vals variable to hold read data
+!>
+!> This routine reads a rank-7 array of long integers from the dataset @c
+!> dsetname and stores the values in @c vals.  A double is used to read the data
+!> to compensate for the lack of a long integer read interface in the HDF5
+!> library.
+!>
+    SUBROUTINE read_l7(thisHDF5File,dsetname,vals)
+      CHARACTER(LEN=*),PARAMETER :: myName='readl7_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
+      CHARACTER(LEN=*),INTENT(IN) :: dsetname
+      INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:,:,:,:)
+#ifdef MPACT_HAVE_HDF5
+      INTEGER(SNK),ALLOCATABLE :: valst(:,:,:,:,:,:,:)
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
+      INTEGER(HSIZE_T),DIMENSION(7) :: dims,maxdims
+      INTEGER(HID_T),PARAMETER :: rank=7
+
+      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: dspace_id,dset_id
+
+        path=convertPath(dsetname)
+        ! Allocate space if needed, make sure it is the right size
+        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+        IF(error >= 0) THEN
+          IF(ALLOCATED(vals)) THEN
+            IF(ANY(SHAPE(vals) /= dims)) THEN
+              DEALLOCATE(vals)
+              ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6),dims(7)))
+            ENDIF
+          ELSE
+            ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6),dims(7)))
+          ENDIF
+          ALLOCATE(valst(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6),dims(7)))
+
+          ! Read the dataset
+          mem=H5T_NATIVE_INTEGER
+          CALL h5dread_f(dset_id,mem,valst,dims,error)
+          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+          vals=INT(valst,SLK)
+          CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
+            ' - Converting from double to long integer!')
+        ENDIF
+#endif
+    ENDSUBROUTINE read_l7
 !
 !-------------------------------------------------------------------------------
 !> @brief Read a logical from dataset
