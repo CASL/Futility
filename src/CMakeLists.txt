@@ -22,7 +22,7 @@ TRIBITS_ADD_LIBRARY(CUtils
 
 TRIBITS_ADD_LIBRARY(TrilinosUtils
     HEADERS
-      trilinos_interfaces/trilinos_mat_vec.hpp trilinos_interfaces/trilinos_solvers.hpp trilinos_interfaces/trilinos_pc.hpp
+      trilinos_interfaces/trilinos_mat_vec.hpp trilinos_interfaces/trilinos_solvers.hpp trilinos_interfaces/trilinos_pc.hpp trilinos_interfaces/trilinos_anderson.hpp
     SOURCES
       trilinos_interfaces/trilinos_c_interfaces.cpp
 )

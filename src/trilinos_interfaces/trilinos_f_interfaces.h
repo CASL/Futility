@@ -290,4 +290,30 @@
       INTEGER(C_INT),INTENT(IN),VALUE  :: id
       INTEGER(C_INT),INTENT(IN),VALUE  :: idM
     ENDSUBROUTINE
+
+!-------------------------------------------------------------------------------
+! Anderson Interfaces
+!-------------------------------------------------------------------------------
+    SUBROUTINE Anderson_Init(id,depth,beta,idv) bind(C,NAME="Anderson_Init")
+      IMPORT :: C_INT,C_DOUBLE
+      INTEGER(C_INT),INTENT(INOUT)    :: id
+      INTEGER(C_INT),INTENT(IN),VALUE :: depth
+      REAL(C_DOUBLE),INTENT(IN),VALUE :: beta
+      INTEGER(C_INT),INTENT(IN),VALUE :: idv
+    ENDSUBROUTINE
+
+    SUBROUTINE Anderson_Destroy(id) bind(C,NAME="Anderson_Destroy")
+      IMPORT :: C_INT
+      INTEGER(C_INT),INTENT(IN),VALUE :: id
+    ENDSUBROUTINE
+
+    SUBROUTINE Anderson_Update(id) bind(C,NAME="Anderson_Update")
+      IMPORT :: C_INT
+      INTEGER(C_INT),INTENT(IN),VALUE  :: id
+    ENDSUBROUTINE
+
+    SUBROUTINE Anderson_Reset(id) bind(C,NAME="Anderson_Reset")
+      IMPORT :: C_INT
+      INTEGER(C_INT),INTENT(IN),VALUE  :: id
+    ENDSUBROUTINE
   ENDINTERFACE

@@ -4,6 +4,7 @@
 #include "trilinos_mat_vec.hpp"
 #include "trilinos_solvers.hpp"
 #include "trilinos_pc.hpp"
+#include "trilinos_anderson.hpp"
 #include <omp.h>
 
 bool           mpact_trilinos_isinit=false;
@@ -11,6 +12,7 @@ EpetraVecStore *evec = nullptr;
 EpetraMatStore *emat = nullptr;
 AnasaziStore   *aeig = nullptr;
 BelosStore     *bels = nullptr;
+AndersonStore  *andr = nullptr;
 PCStore        *pcst = nullptr;
 
 extern "C" void MPACT_Trilinos_Init() {
@@ -20,11 +22,13 @@ extern "C" void MPACT_Trilinos_Init() {
         assert(!aeig);
         assert(!bels);
         assert(!pcst);
+        assert(!andr);
         evec = new EpetraVecStore();
         emat = new EpetraMatStore();
         aeig = new AnasaziStore();
         bels = new BelosStore();
         pcst = new PCStore();
+        andr = new AndersonStore();
         mpact_trilinos_isinit=true;
         omp_set_num_threads(1);
     }
@@ -37,6 +41,7 @@ extern "C" void MPACT_Trilinos_Finalize() {
     delete pcst;
     delete evec;
     delete emat;
+    delete andr;
 }
 
 //------------------------------------------------------------------------------
@@ -240,7 +245,7 @@ extern "C" void Belos_GetIterationCount( const int id, int &niter) {
 
 //------------------------------------------------------------------------------
 //Preconditioner
-//------------------------------------------------------------------------------
+//--------------------------------------------------------------------
 extern "C" void Preconditioner_Init( int &id, const int opt) {
     id = pcst->new_data(opt);
 }
@@ -252,4 +257,23 @@ extern "C" void Preconditioner_Destroy(const int id) {
 extern "C" void Preconditioner_Setup( const int id, const int idM ) {
     pcst->setupPC_data(id,emat->get_mat(idM));
     //std::cout << (pcst->get_pc(pid))->Label() << std::endl;
+}
+
+//------------------------------------------------------------------------------
+//Anderson
+//------------------------------------------------------------------------------
+extern "C" void Anderson_Init( int &id, const int depth, const double beta, const int idv) {
+    id = andr->new_data(depth, beta, evec->get_vec(idv));
+}
+
+extern "C" void Anderson_Destroy(const int id) {
+    andr->delete_data(id);
+}
+
+extern "C" void Anderson_Update(const int id) {
+    andr->step(id);
+}
+
+extern "C" void Anderson_Reset(const int id) {
+    andr->reset_data(id);
 }
