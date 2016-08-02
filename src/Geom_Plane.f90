@@ -151,10 +151,11 @@ MODULE Geom_Plane
           s=n/d
           IF(0._SRK <= s .AND. s <= 1._SRK) THEN
             !Compute the intersection
-            point=line%p1
-            point%coord(1)=point%coord(1)+s*u(1)
-            point%coord(2)=point%coord(2)+s*u(2)
-            point%coord(3)=point%coord(3)+s*u(3)
+            point%dim=line%p1%dim
+            ALLOCATE(point%coord(point%dim))
+            point%coord(1)=line%p1%coord(1)+s*u(1)
+            point%coord(2)=line%p1%coord(2)+s*u(2)
+            point%coord(3)=line%p1%coord(3)+s*u(3)
           ELSE
             point%dim=-3 !would intersect if infinite segment length
           ENDIF
