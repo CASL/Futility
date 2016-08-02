@@ -236,6 +236,7 @@ PROGRAM testHDF5
       INTEGER(SIK) :: nerror
       CHARACTER(LEN=32),ALLOCATABLE :: tmpchar(:)
       REAL(SDK),POINTER :: d4ptr(:,:,:,:)
+      d4ptr => NULL()
 
       CALL h5%e%setQuietMode(.TRUE.)
       !Adding the *2 for now to get the test passing.  Since the simplification,
@@ -958,6 +959,7 @@ PROGRAM testHDF5
       CHARACTER(LEN=80),ALLOCATABLE :: sets(:)
       INTEGER(SIK) :: i,j,k
       LOGICAL(SBK) :: checkread
+      testDP4 => NULL()
 
 !  Begin test
       CALL h5%init('readtest.h5','READ')
