@@ -4443,7 +4443,7 @@ PROGRAM testParameterLists
     ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add (param)')
     CALL testParam%clear()
     CALL testParam2%clear()
-    CALL someParam%clear()
+    NULLIFY(someParam)
 
     ! COMPONENT_TEST('Sublist not added')
     ! CALL testParam%add('A->C',1)
