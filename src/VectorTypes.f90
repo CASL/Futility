@@ -1122,6 +1122,8 @@ MODULE VectorTypes
       CALL validParams%get('VectorType->MPI_Comm_ID',MPI_Comm_ID)
       CALL validParams%get('VectorType->nlocal',nlocal)
 
+      IF(nlocal==-1) nlocal=n
+
 #ifdef MPACT_HAVE_Trilinos
       IF(.NOT. thisVector%isInit) THEN
         IF(n < 1) THEN
@@ -1691,7 +1693,11 @@ MODULE VectorTypes
         SELECTTYPE(newVector); TYPE IS(TrilinosVectorType)
 #ifdef MPACT_HAVE_Trilinos
           IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble()
-          CALL ForPETRA_VecCopy(thisVector%b,newVector%b)
+          !CALL ForPETRA_VecEdit(thisVector%b,'_firstvector.vec'//C_NULL_CHAR)
+          !CALL ForPETRA_VecEdit(newVector%b,'_newvector.vec'//C_NULL_CHAR)
+          CALL ForPETRA_VecCopy(newVector%b,thisVector%b)
+          !CALL ForPETRA_VecEdit(thisVector%b,'firstvector.vec'//C_NULL_CHAR)
+          !CALL ForPETRA_VecEdit(newVector%b,'newvector.vec'//C_NULL_CHAR)
 #else
           CALL eVectorType%raiseFatalError('Incorrect call to '// &
              modName//'::'//myName//' - Trilinos not enabled.  You will'// &

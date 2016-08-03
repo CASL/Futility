@@ -30,14 +30,14 @@ public:
 
     EpetraVecCnt(int n, int nloc, MPI_Comm rawComm) :
 #ifdef HAVE_MPI
-        Comm(MPI_COMM_WORLD),
+        Comm(rawComm),
 #else
-        //Comm(),
+        Comm(),
 #endif
         emap(n,nloc,1,Comm),
         evec(new Epetra_Vector(emap))
     {
-        evec->PutScalar(1.);
+        evec->PutScalar(0.);
     }
 
     double &operator[](int i){ return (*evec)[i];}
