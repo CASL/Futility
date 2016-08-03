@@ -1693,11 +1693,7 @@ MODULE VectorTypes
         SELECTTYPE(newVector); TYPE IS(TrilinosVectorType)
 #ifdef MPACT_HAVE_Trilinos
           IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble()
-          !CALL ForPETRA_VecEdit(thisVector%b,'_firstvector.vec'//C_NULL_CHAR)
-          !CALL ForPETRA_VecEdit(newVector%b,'_newvector.vec'//C_NULL_CHAR)
           CALL ForPETRA_VecCopy(newVector%b,thisVector%b)
-          !CALL ForPETRA_VecEdit(thisVector%b,'firstvector.vec'//C_NULL_CHAR)
-          !CALL ForPETRA_VecEdit(newVector%b,'newvector.vec'//C_NULL_CHAR)
 #else
           CALL eVectorType%raiseFatalError('Incorrect call to '// &
              modName//'::'//myName//' - Trilinos not enabled.  You will'// &
