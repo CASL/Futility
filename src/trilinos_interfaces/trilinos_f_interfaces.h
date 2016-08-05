@@ -316,4 +316,26 @@
       IMPORT :: C_INT
       INTEGER(C_INT),INTENT(IN),VALUE  :: id
     ENDSUBROUTINE
+
+!-------------------------------------------------------------------------------
+! JFNK Interfaces
+!-------------------------------------------------------------------------------
+    SUBROUTINE JFNK_Init(id,fptr,idx,idF) bind(C,NAME="JFNK_Init")
+      IMPORT :: C_INT,C_DOUBLE,C_FUNPTR
+      INTEGER(C_INT),INTENT(INOUT)    :: id
+      TYPE(C_FUNPTR),INTENT(IN),VALUE :: fptr
+      INTEGER(C_INT),INTENT(IN),VALUE :: idx
+      INTEGER(C_INT),INTENT(IN),VALUE :: idF
+    ENDSUBROUTINE
+
+    SUBROUTINE JFNK_Destroy(id) bind(C,NAME="JFNK_Destroy")
+      IMPORT :: C_INT
+      INTEGER(C_INT),INTENT(IN),VALUE :: id
+    ENDSUBROUTINE
+
+    SUBROUTINE JFNK_Solve(id) bind(C,NAME="JFNK_Solve")
+      IMPORT :: C_INT
+      INTEGER(C_INT),INTENT(IN),VALUE  :: id
+    ENDSUBROUTINE
+
   ENDINTERFACE

@@ -13,6 +13,7 @@
 #include "NOX.H"
 #include "NOX_Epetra.H"
 #include "NOX_Epetra_Interface_Required.H" // base class
+#include "Epetra_LinearProblem.h"
 
 #include "Epetra_MultiVector.h"
 #include "Epetra_Operator.h"
@@ -152,4 +153,158 @@ public:
 private:
         int cid;
         map<int, AndersonCnt> anderson_map;
+};
+
+// JFNK Interface
+class JFNKCnt{
+public:
+    /*
+    Notes:
+      solver manager needs a problem
+      problem needs matrices
+      the two above statements mean we can't constrcut them until solve time (consistent with Steven)
+    */
+
+    //
+    // need solver
+    // other things the solver needs
+    Teuchos::RCP<Teuchos::ParameterList> jfnk_db;
+    Teuchos::RCP<NOX::Solver::Generic> solver;
+    Teuchos::RCP<NOX::Epetra::Vector> soln;
+    //maybe some other things about a specific solver
+};
+
+class ModelEvaluator_JFNK : public NOX::Epetra::Interface::Required {
+public:
+ModelEvaluator_JFNK(void (*functionptr)(),Teuchos::RCP<Epetra_Vector> x, Teuchos::RCP<Epetra_Vector> F){
+    fptr=functionptr;
+    xloc=x;
+    Floc=F;
+}
+
+// Destructor
+~ModelEvaluator_JFNK(){}
+
+bool computeF(const Epetra_Vector& x,
+              Epetra_Vector& f,
+              NOX::Epetra::Interface::Required::FillType)
+    {
+      // Residual calculation
+      *xloc = x;
+      fptr();
+      f = *Floc;
+      return true;
+    }
+private:
+    void (*fptr)() = NULL;
+    Teuchos::RCP<Epetra_Vector> xloc;
+    Teuchos::RCP<Epetra_Vector> Floc;
+};
+
+class JFNKStore {
+public:
+    JFNKStore():
+        cid(0)
+    {}
+
+    int new_data(void (*functionptr)(), Teuchos::RCP<Epetra_Vector> soln, Teuchos::RCP<Epetra_Vector> F) {
+        jfnk_map[cid]=JFNKCnt();
+
+        //setup parameterlist with defaults
+        jfnk_map[cid].jfnk_db = Teuchos::parameterList();
+        jfnk_map[cid].jfnk_db->set("Nonlinear Solver", "Line Search Based");
+        //jfnk_map[cid].jfnk_db->sublist("Anderson Parameters").set("Storage Depth", depth);
+        //jfnk_map[cid].jfnk_db->sublist("Anderson Parameters").set("Mixing Parameter", beta);
+        Teuchos::ParameterList& printParams = jfnk_map[cid].jfnk_db->sublist("Printing");
+        printParams.set("MyPID", soln->Comm().MyPID());
+        printParams.set("Output Precision", 3);
+        printParams.set("Output Processor", 0);
+        printParams.set("Output Information",
+            NOX::Utils::OuterIteration +
+            NOX::Utils::OuterIterationStatusTest +
+            NOX::Utils::Parameters +
+            NOX::Utils::Details +
+            NOX::Utils::Warning +
+            NOX::Utils::Debug +
+            NOX::Utils::Error);
+
+        Teuchos::ParameterList& searchParams = jfnk_map[cid].jfnk_db->sublist("Line Search");
+        searchParams.set("Method", "Full Step");
+
+        Teuchos::ParameterList& dirParams = jfnk_map[cid].jfnk_db->sublist("Direction");
+        dirParams.set("Method", "Newton");
+        Teuchos::ParameterList& newtonParams = dirParams.sublist("Newton");
+        newtonParams.set("Forcing Term Method", "Constant");
+
+        Teuchos::ParameterList& lsParams = newtonParams.sublist("Linear Solver");
+        lsParams.set("Aztec Solver", "GMRES");
+        lsParams.set("Max Iterations", 800);
+        lsParams.set("Tolerance", 1e-4);
+        //lsParams.set("Preconditioner", "New Ifpack");
+        //lsParams.set("Preconditioner Reuse Policy", "Reuse");
+        //lsParams.set("Max Age Of Prec", 5);
+
+        // setup model evaluator
+        Teuchos::RCP<ModelEvaluator_JFNK> modelEvaluator = Teuchos::rcp(new ModelEvaluator_JFNK(functionptr,soln,F));
+
+        // Get solution cast into NOX vector
+        jfnk_map[cid].soln=Teuchos::RCP<NOX::Epetra::Vector>(new NOX::Epetra::Vector(soln, NOX::Epetra::Vector::CreateView));
+
+        // Create MF object
+        Teuchos::RCP<NOX::Epetra::MatrixFree> MF = Teuchos::rcp(new NOX::Epetra::MatrixFree(printParams,modelEvaluator,*(jfnk_map[cid].soln),false));
+        Teuchos::RCP<NOX::Epetra::Interface::Jacobian> iJac = MF;
+
+        // create linear solver object
+        Teuchos::RCP<NOX::Epetra::LinearSystemAztecOO> linSys =
+          Teuchos::rcp(new NOX::Epetra::LinearSystemAztecOO(printParams,lsParams,modelEvaluator,iJac,MF,*(jfnk_map[cid].soln)));
+
+        // create NOX group
+        Teuchos::RCP<NOX::Epetra::Group> noxGroup =
+          Teuchos::rcp(new NOX::Epetra::Group(printParams, modelEvaluator, *(jfnk_map[cid].soln), linSys));
+
+        // create convergence tests
+        Teuchos::RCP<NOX::StatusTest::NormF> absresid =
+          Teuchos::rcp(new NOX::StatusTest::NormF(1.0e-8));
+        Teuchos::RCP<NOX::StatusTest::NormF> relresid =
+          Teuchos::rcp(new NOX::StatusTest::NormF(*noxGroup, 1.0e-2));
+        Teuchos::RCP<NOX::StatusTest::NormUpdate> update =
+          Teuchos::rcp(new NOX::StatusTest::NormUpdate(1.0e-5));
+        Teuchos::RCP<NOX::StatusTest::NormWRMS> wrms =
+          Teuchos::rcp(new NOX::StatusTest::NormWRMS(1.0e-2, 1.0e-8));
+        Teuchos::RCP<NOX::StatusTest::Combo> converged =
+          Teuchos::rcp(new NOX::StatusTest::Combo(NOX::StatusTest::Combo::AND));
+        converged->addStatusTest(absresid);
+        converged->addStatusTest(relresid);
+        converged->addStatusTest(wrms);
+        converged->addStatusTest(update);
+        Teuchos::RCP<NOX::StatusTest::MaxIters> maxiters =
+          Teuchos::rcp(new NOX::StatusTest::MaxIters(20));
+        Teuchos::RCP<NOX::StatusTest::FiniteValue> fv =
+          Teuchos::rcp(new NOX::StatusTest::FiniteValue);
+        Teuchos::RCP<NOX::StatusTest::Combo> combo =
+          Teuchos::rcp(new NOX::StatusTest::Combo(NOX::StatusTest::Combo::OR));
+        combo->addStatusTest(fv);
+        combo->addStatusTest(converged);
+        combo->addStatusTest(maxiters);
+
+        // create solver
+        jfnk_map[cid].solver = NOX::Solver::buildSolver(noxGroup, combo, jfnk_map[cid].jfnk_db);
+
+        cid++;
+        return cid-1;
+    }
+
+    int delete_data(const int id){
+        jfnk_map.erase(id);
+        return 0;
+    }
+
+    int solve(const int id) {
+        jfnk_map[id].solver->solve();
+        return 0;
+    }
+
+private:
+        int cid;
+        map<int, JFNKCnt> jfnk_map;
 };

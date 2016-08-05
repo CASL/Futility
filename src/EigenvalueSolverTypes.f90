@@ -907,5 +907,20 @@ MODULE EigenvalueSolverTypes
 
     ENDSUBROUTINE PETSC_SHELL_CALCRESID_extern
 #endif
+
+!TEST CODE:  DO NOT CALL
+    SUBROUTINE testJFNKNOX()
+      !create x and F (need to be saved in global scope of module)
+      !  use PE_COMM_SELF for comm
+      !initialize JFNK
+      !  CALL JFNK_Init(id,C_FUNLOC(testcalcResid),idx,idF)
+      !CALL solve
+      !destroy JFNK
+    ENDSUBROUTINE testJFNKNOX
+
+    SUBROUTINE testcalcResid() BIND(C)
+      !Do matvec on dummy J
+      !F=J*x
+    ENDSUBROUTINE testcalcResid
 !
 ENDMODULE EigenvalueSolverTypes

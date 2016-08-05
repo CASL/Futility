@@ -13,6 +13,7 @@ EpetraMatStore *emat = nullptr;
 AnasaziStore   *aeig = nullptr;
 BelosStore     *bels = nullptr;
 AndersonStore  *andr = nullptr;
+JFNKStore      *jfnk = nullptr;
 PCStore        *pcst = nullptr;
 
 extern "C" void MPACT_Trilinos_Init() {
@@ -23,12 +24,14 @@ extern "C" void MPACT_Trilinos_Init() {
         assert(!bels);
         assert(!pcst);
         assert(!andr);
+        assert(!jfnk);
         evec = new EpetraVecStore();
         emat = new EpetraMatStore();
         aeig = new AnasaziStore();
         bels = new BelosStore();
         pcst = new PCStore();
         andr = new AndersonStore();
+        jfnk = new JFNKStore();
         mpact_trilinos_isinit=true;
         omp_set_num_threads(1);
     }
@@ -42,6 +45,7 @@ extern "C" void MPACT_Trilinos_Finalize() {
     delete evec;
     delete emat;
     delete andr;
+    delete jfnk;
 }
 
 //------------------------------------------------------------------------------
@@ -275,4 +279,19 @@ extern "C" void Anderson_Update(const int id) {
 
 extern "C" void Anderson_Reset(const int id) {
     andr->reset_data(id);
+}
+
+//------------------------------------------------------------------------------
+// JFNK NOX
+//------------------------------------------------------------------------------
+extern "C" void JFNK_Init( int &id, void (*funptr)(), const int idx, const int idF) {
+    id = jfnk->new_data(funptr, evec->get_vec(idx), evec->get_vec(idF));
+}
+
+extern "C" void JFNK_Destroy(const int id) {
+    jfnk->delete_data(id);
+}
+
+extern "C" void Anderson_Solve(const int id) {
+    jfnk->solve(id);
 }
