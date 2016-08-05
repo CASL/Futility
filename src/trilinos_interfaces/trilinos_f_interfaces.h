@@ -119,13 +119,13 @@
       REAL(C_DOUBLE),DIMENSION(*),INTENT(IN) :: val
     ENDSUBROUTINE
 
-!    SUBROUTINE ForPETRA_MatGet(id,i,j,val) bind(C,NAME="ForPETRA_MatGet")
-!      IMPORT :: C_INT,C_DOUBLE
-!      INTEGER(C_INT),INTENT(IN),VALUE  :: id
-!      INTEGER(C_INT),INTENT(IN),VALUE  :: i
-!      INTEGER(C_INT),INTENT(IN),VALUE  :: j
-!      REAL(C_DOUBLE),INTENT(OUT)       :: val
-!    ENDSUBROUTINE
+    SUBROUTINE ForPETRA_MatGet(id,i,j,val) bind(C,NAME="ForPETRA_MatGet")
+      IMPORT :: C_INT,C_DOUBLE
+      INTEGER(C_INT),INTENT(IN),VALUE  :: id
+      INTEGER(C_INT),INTENT(IN),VALUE  :: i
+      INTEGER(C_INT),INTENT(IN),VALUE  :: j
+      REAL(C_DOUBLE),INTENT(OUT)       :: val
+    ENDSUBROUTINE
 
     SUBROUTINE ForPETRA_MatAssemble(id) bind(C,NAME="ForPETRA_MatAssemble")
       IMPORT :: C_INT

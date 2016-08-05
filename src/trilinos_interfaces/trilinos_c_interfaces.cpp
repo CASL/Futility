@@ -136,11 +136,10 @@ extern "C" void ForPETRA_MatAssemble(const int id) {
     assert(ierr==0);
 }
 
-//defer this for a while...
-//extern "C" void ForPETRA_MatGet(const int id, const int i, const int j, double val) {
-//    ierr = emat->get_data(id,i,j,val);
-//    assert(ierr==0);
-//}
+extern "C" void ForPETRA_MatGet(const int id, const int i, const int j, double &val) {
+    int ierr = emat->get_data(id,i,j,val);
+    assert(ierr==0);
+}
 
 extern "C" void ForPETRA_MatMult(const int idA, const bool trans, const int idX, const int idY) {
     int ierr = emat->matvec_data(idA,trans,evec->get_vec(idX),evec->get_vec(idY));

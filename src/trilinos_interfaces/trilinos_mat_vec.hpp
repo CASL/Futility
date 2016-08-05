@@ -193,10 +193,21 @@ public:
     }
 
     //defering this for a while
-    //int get_data(const int id, const int i, double &val) {
-    //    val = mat_map[id]->emat[i-1];   Need to overload this like the vector
-    //    return 0;
-    //}
+    int get_data(const int id, const int i, const int j, double &val) {
+        val=0.0;
+        int N=0;
+        int* ind = NULL;
+        double* row = NULL;
+        int lid=mat_map[id]->emat->LCID(i);
+        int ierr=mat_map[id]->emat->ExtractMyRowView(lid, N, row, ind);
+        for(int k=0; k<N; k++){
+            if(ind[k]==j-1){
+                val = row[k];
+                break;
+            }
+        }
+        return 0;
+    }
 
     int matvec_data(const int id, const bool trans, Teuchos::RCP<Epetra_Vector> x, Teuchos::RCP<Epetra_Vector> y){
         return mat_map[id]->emat->Multiply(trans,*x,*y);

@@ -905,8 +905,8 @@ MODULE MatrixTypes
       matrix%isAssembled=.FALSE.
       matrix%isCreated=.FALSE.
       matrix%isSymmetric=.FALSE.
-      DEALLOCATE(matrix%jloc)
-      DEALLOCATE(matrix%aloc)
+      IF(ALLOCATED(matrix%jloc)) DEALLOCATE(matrix%jloc)
+      IF(ALLOCATED(matrix%aloc)) DEALLOCATE(matrix%aloc)
       matrix%currow=0
       matrix%ncol=0
 #else
@@ -1386,7 +1386,9 @@ MODULE MatrixTypes
         IF (.NOT.(matrix%isAssembled)) CALL matrix%assemble()
 
         IF((i <= matrix%n) .AND. (j <= matrix%n) .AND. ((j > 0) .AND. (i > 0))) THEN
-!TODO
+          CALL ForPETRA_MatGet(matrix%a,i,j,getval)
+        ELSE
+          getval=-1051._SRK
         ENDIF
       ENDIF
 #else
