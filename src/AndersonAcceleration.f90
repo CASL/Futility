@@ -168,16 +168,16 @@ MODULE AndersonAccelerationTypes
           solver%beta=beta
         ENDIF
 
+#ifdef MPACT_HAVE_Trilinos
         ALLOCATE(TrilinosVectorType :: solver%X)
         CALL tmpPL%clear()
         CALL tmpPL%add('VectorType->n',n)
         CALL tmpPL%add('VectorType->MPI_Comm_ID',solver%MPIparallelEnv%comm)
         CALL tmpPL%add('VectorType->nlocal',nlocal)
         CALL solver%X%init(tmpPL)
+        CALL solver%X%set(1.0_SRK)
 
-#ifdef MPACT_HAVE_Trilinos
         SELECTTYPE(x=>solver%X); TYPE IS(TrilinosVectorType)
-WRITE(*,*) x%b
           CALL Anderson_Init(solver%id,solver%depth,solver%beta,x%b)
         ENDSELECT
 #else
@@ -206,8 +206,8 @@ WRITE(*,*) x%b
       solver%n=-1
       solver%depth=-1
       solver%beta=0.0_SRK
-      IF(solver%X%isInit) CALL solver%X%clear()
 #ifdef MPACT_HAVE_Trilinos
+      IF(solver%X%isInit) CALL solver%X%clear()
       !TODO: Need to deallocate memory
 #endif
       solver%isInit=.FALSE.

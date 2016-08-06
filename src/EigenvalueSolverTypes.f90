@@ -62,7 +62,9 @@ MODULE EigenvalueSolverTypes
 #endif
 #undef IS
 #endif
+#ifdef MPACT_HAVE_Trilinos
 #include "trilinos_interfaces/trilinos_f_interfaces.h"
+#endif
 
   PRIVATE
 !
@@ -176,14 +178,12 @@ MODULE EigenvalueSolverTypes
   !> @brief The extended type for the SLEPc Eigenvalue Solvers
   TYPE,EXTENDS(EigenvalueSolverType_Base) :: EigenvalueSolverType_Anasazi
     !>
-#ifdef MPACT_HAVE_Trilinos
     !> Anasazi Eigenvalue Solver type
     INTEGER(SIK) :: eig
     !> Anasazi Eigenvalue Preconditioner type
     INTEGER(SIK) :: pc
     !> store vector for scaling fission source
     TYPE(TrilinosVectorType) :: x_scale
-#endif
 !
 !List of Type Bound Procedures
     CONTAINS
@@ -498,7 +498,9 @@ MODULE EigenvalueSolverTypes
         CALL solver%X%init(tmpPL)
         CALL solver%X_scale%init(tmpPL)
         SELECTTYPE(x=>solver%X); TYPE IS(TrilinosVectorType)
+#ifdef MPACT_HAVE_Trilinos
           CALL Anasazi_SetX(solver%eig,x%b)
+#endif
         ENDSELECT
 
         solver%TPLType=Anasazi

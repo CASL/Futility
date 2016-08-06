@@ -1,6 +1,7 @@
 #ifdef HAVE_MPI
 #include "mpi.h"
 #endif
+#ifdef MPACT_HAVE_TRILINOS
 #include "trilinos_mat_vec.hpp"
 #include "trilinos_solvers.hpp"
 #include "trilinos_pc.hpp"
@@ -295,3 +296,4 @@ extern "C" void JFNK_Destroy(const int id) {
 extern "C" void Anderson_Solve(const int id) {
     jfnk->solve(id);
 }
+#endif
