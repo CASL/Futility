@@ -1,7 +1,7 @@
 #ifdef HAVE_MPI
 #include "mpi.h"
 #endif
-#ifdef MPACT_HAVE_TRILINOS
+#ifdef MPACT_HAVE_Trilinos
 #include "trilinos_mat_vec.hpp"
 #include "trilinos_solvers.hpp"
 #include "trilinos_pc.hpp"

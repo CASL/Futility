@@ -64,7 +64,7 @@ MODULE AndersonAccelerationTypes
     !> value of mixing parameter
     REAL(SRK) :: beta=0.0_SRK
     !> Pointer to solution vector, x
-    CLASS(VectorType),POINTER :: X
+    CLASS(VectorType),POINTER :: X=>NULL()
     !> Timer to measure solution time
     TYPE(TimerType) :: SolveTime
   !
@@ -168,12 +168,12 @@ MODULE AndersonAccelerationTypes
           solver%beta=beta
         ENDIF
 
-#ifdef MPACT_HAVE_Trilinos
         ALLOCATE(TrilinosVectorType :: solver%X)
         CALL tmpPL%clear()
         CALL tmpPL%add('VectorType->n',n)
         CALL tmpPL%add('VectorType->MPI_Comm_ID',solver%MPIparallelEnv%comm)
         CALL tmpPL%add('VectorType->nlocal',nlocal)
+#ifdef MPACT_HAVE_Trilinos
         CALL solver%X%init(tmpPL)
         CALL solver%X%set(1.0_SRK)
 
