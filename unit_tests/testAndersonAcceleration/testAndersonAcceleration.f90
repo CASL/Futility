@@ -40,7 +40,7 @@ PROGRAM testAndersonAcceleration
   CALL mpiTestEnv%init(PE_COMM_SELF)
 
   CREATE_TEST('Test Anderson Acceleration Solver')
-WRITE(*,*) "a"
+
   REGISTER_SUBTEST('testInit',testInit)
   REGISTER_SUBTEST('testStep',testStep)
   !REGISTER_SUBTEST('testReset',testReset)
@@ -61,9 +61,7 @@ CONTAINS
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testInit()
-    WRITE(*,*) "a"
       CALL testAndAcc%init(mpiTestEnv,optList)
-    WRITE(*,*) "b"
       ASSERT(testAndAcc%isInit,'%isInit')
       ASSERT(testAndAcc%n==5,'%n')
       ASSERT(testAndAcc%depth==2,'%depth')
