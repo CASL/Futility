@@ -1096,7 +1096,6 @@ MODULE VectorTypes
          'need to recompile with PETSc enabled to use this feature.')
 #endif
     ENDSUBROUTINE assemble_PETScVectorType
-!>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 !
 !-------------------------------------------------------------------------------
 !> @brief Initializes the Trilinos vector
@@ -1251,7 +1250,7 @@ MODULE VectorTypes
         IF(SIZE(setval) == thisVector%n) THEN
 !TODO
       CALL eVectorType%raiseFatalError('Incorrect call to '// &
-           modName//'::'//myName//' - Too lazy to implement interface.')
+           modName//'::'//myName//' - This interface is not available.')
         ENDIF
       ENDIF
       IF(PRESENT(ierr)) ierr=ierrc
@@ -1387,7 +1386,7 @@ MODULE VectorTypes
         IF(SIZE(getval) == thisVector%n) THEN
 !TODO
           CALL eVectorType%raiseFatalError('Incorrect call to '// &
-             modName//'::'//myName//' - Too lazy to implement interface.')
+             modName//'::'//myName//' - This interface is not available.')
         ENDIF
       ENDIF
       IF(PRESENT(ierr)) ierr=ierrc
@@ -1494,9 +1493,9 @@ MODULE VectorTypes
            modName//'::'//myName//' - Trilinos not enabled.  You will'// &
            'need to recompile with Trilinos enabled to use this feature.')
 #endif
-      CLASS Default
+      CLASS DEFAULT
         CALL eVectorType%raiseFatalError('Incorrect call to '// &
-           modName//'::'//myName//' - Too lazy to implement interface.')
+           modName//'::'//myName//' - This interface is not available.')
       ENDSELECT
     ENDFUNCTION asum_VectorType
 !
@@ -1559,9 +1558,9 @@ MODULE VectorTypes
              'need to recompile with Trilinos enabled to use this feature.')
 #endif
         ENDSELECT
-      CLASS Default
+      CLASS DEFAULT
         CALL eVectorType%raiseFatalError('Incorrect call to '// &
-           modName//'::'//myName//' - Too lazy to implement interface.')
+           modName//'::'//myName//' - This interface is not available.')
       ENDSELECT
     ENDSUBROUTINE axpy_scalar_VectorType
 !
@@ -1613,9 +1612,9 @@ MODULE VectorTypes
 #endif
           ENDSELECT
         ENDSELECT
-      CLASS Default
+      CLASS DEFAULT
         CALL eVectorType%raiseFatalError('Incorrect call to '// &
-           modName//'::'//myName//' - Too lazy to implement interface.')
+           modName//'::'//myName//' - This interface is not available.')
       ENDSELECT
 
       IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
@@ -1700,9 +1699,9 @@ MODULE VectorTypes
              'need to recompile with Trilinos enabled to use this feature.')
 #endif
         ENDSELECT
-      CLASS Default
+      CLASS DEFAULT
         CALL eVectorType%raiseFatalError('Incorrect call to '// &
-           modName//'::'//myName//' - Too lazy to implement interface.')
+           modName//'::'//myName//' - This interface is not available.')
       ENDSELECT
     ENDSUBROUTINE copy_VectorType
 !
@@ -1756,9 +1755,9 @@ MODULE VectorTypes
              'need to recompile with PETSc enabled to use this feature.')
 #endif
         ENDSELECT
-      CLASS Default
+      CLASS DEFAULT
         CALL eVectorType%raiseFatalError('Incorrect call to '// &
-           modName//'::'//myName//' - Too lazy to implement interface.')
+           modName//'::'//myName//' - This interface is not available.')
       ENDSELECT
     ENDFUNCTION dot_VectorType
 !
@@ -1790,9 +1789,9 @@ MODULE VectorTypes
            modName//'::'//myName//' - PETSc not enabled.  You will'// &
            'need to recompile with PETSc enabled to use this feature.')
 #endif
-      CLASS Default
+      CLASS DEFAULT
         CALL eVectorType%raiseFatalError('Incorrect call to '// &
-           modName//'::'//myName//' - Too lazy to implement interface.')
+           modName//'::'//myName//' - This interface is not available.')
       ENDSELECT
 
       IF(PRESENT(n) .AND. PRESENT(incx)) THEN
@@ -1836,9 +1835,9 @@ MODULE VectorTypes
            modName//'::'//myName//' - PETSc not enabled.  You will'// &
            'need to recompile with PETSc enabled to use this feature.')
 #endif
-      CLASS Default
+      CLASS DEFAULT
         CALL eVectorType%raiseFatalError('Incorrect call to '// &
-           modName//'::'//myName//' - Too lazy to implement interface.')
+           modName//'::'//myName//' - This interface is not available.')
       ENDSELECT
 
       IF(PRESENT(n) .AND. PRESENT(incx)) THEN
@@ -1896,9 +1895,9 @@ MODULE VectorTypes
            modName//'::'//myName//' - Trilinos not enabled.  You will'// &
            'need to recompile with Trilinos enabled to use this feature.')
 #endif
-      CLASS Default
+      CLASS DEFAULT
         CALL eVectorType%raiseFatalError('Incorrect call to '// &
-           modName//'::'//myName//' - Too lazy to implement interface.')
+           modName//'::'//myName//' - This interface is not available.')
       ENDSELECT
     ENDFUNCTION nrm2_VectorType
 !
@@ -1944,9 +1943,9 @@ MODULE VectorTypes
            modName//'::'//myName//' - Trilinos not enabled.  You will'// &
            'need to recompile with Trilinos enabled to use this feature.')
 #endif
-      CLASS Default
+      CLASS DEFAULT
         CALL eVectorType%raiseFatalError('Incorrect call to '// &
-           modName//'::'//myName//' - Too lazy to implement interface.')
+           modName//'::'//myName//' - This interface is not available.')
       ENDSELECT
     ENDSUBROUTINE scal_scalar_VectorType
 !
@@ -1986,9 +1985,9 @@ MODULE VectorTypes
              'need to recompile with PETSc enabled to use this feature.')
 #endif
         ENDSELECT
-      CLASS Default
+      CLASS DEFAULT
         CALL eVectorType%raiseFatalError('Incorrect call to '// &
-           modName//'::'//myName//' - Too lazy to implement interface.')
+           modName//'::'//myName//' - This interface is not available.')
       ENDSELECT
 
       IF(PRESENT(n) .AND. PRESENT(incx)) THEN
@@ -2059,9 +2058,9 @@ MODULE VectorTypes
              'need to recompile with PETSc enabled to use this feature.')
 #endif
         ENDSELECT
-      CLASS Default
+      CLASS DEFAULT
         CALL eVectorType%raiseFatalError('Incorrect call to '// &
-           modName//'::'//myName//' - Too lazy to implement interface.')
+           modName//'::'//myName//' - This interface is not available.')
       ENDSELECT
     ENDSUBROUTINE swap_VectorType
 !

@@ -14,6 +14,8 @@
 !>
 !> @par Module Dependencies
 !>  - @ref IntrType "IntrType": @copybrief IntrType
+!>  - @ref BLAS "BLAS": @copybrief BLAS
+!>  - @ref Times "Times": @copybrief Times
 !>  - @ref ExceptionHandler "ExceptionHandler": @copybrief ExceptionHandler
 !>  - @ref ParameterLists "ParameterLists": @copybrief ParameterLists
 !>  - @ref ParallelEnv "ParallelEnv": @copybrief ParallelEnv
@@ -73,14 +75,14 @@ MODULE AndersonAccelerationTypes
       !> @copybrief AndersonAccelerationType::init_AndersonAccelerationType
       !> @copydetails AndersonAccelerationType::init_AndersonAccelerationType
       PROCEDURE,PASS :: init => init_AndersonAccelerationType
-      !> @copybrief AndersonAccelerationType::init_AndersonAccelerationType
-      !> @copydetails AndersonAccelerationType::init_AndersonAccelerationType
+      !> @copybrief AndersonAccelerationType::clear_AndersonAccelerationType
+      !> @copydetails AndersonAccelerationType::clear_AndersonAccelerationType
       PROCEDURE,PASS :: clear => clear_AndersonAccelerationType
-      !> @copybrief AndersonAccelerationType::init_AndersonAccelerationType
-      !> @copydetails AndersonAccelerationType::init_AndersonAccelerationType
+      !> @copybrief AndersonAccelerationType::step_AndersonAccelerationType
+      !> @copydetails AndersonAccelerationType::step_AndersonAccelerationType
       PROCEDURE,PASS :: step => step_AndersonAccelerationType
-      !> @copybrief AndersonAccelerationType::init_AndersonAccelerationType
-      !> @copydetails AndersonAccelerationType::init_AndersonAccelerationType
+      !> @copybrief AndersonAccelerationType::reset_AndersonAccelerationType
+      !> @copydetails AndersonAccelerationType::reset_AndersonAccelerationType
       PROCEDURE,PASS :: reset => reset_AndersonAccelerationType
   ENDTYPE AndersonAccelerationType
 
@@ -130,7 +132,7 @@ MODULE AndersonAccelerationTypes
       n=0
       nlocal=0
       depth=-1
-      beta=-0.0_SRK
+      beta=0.0_SRK
       !Pull Data from Parameter List
       CALL validParams%get('AndersonAccelerationType->n',n)
       CALL validParams%get('AndersonAccelerationType->nlocal',nlocal)
@@ -208,7 +210,7 @@ MODULE AndersonAccelerationTypes
       solver%beta=0.0_SRK
 #ifdef MPACT_HAVE_Trilinos
       IF(solver%X%isInit) CALL solver%X%clear()
-      !TODO: Need to deallocate memory
+      CALL Anderson_Destroy(solver%id)
 #endif
       solver%isInit=.FALSE.
     ENDSUBROUTINE clear_AndersonAccelerationType

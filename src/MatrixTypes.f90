@@ -1547,7 +1547,7 @@ MODULE MatrixTypes
 #endif
         CLASS DEFAULT
           CALL eMatrixType%raiseError('Incorrect call to '// &
-               modName//'::'//myName//' - Too lazy to implement interface.')
+               modName//'::'//myName//' - This interface is not available.')
         ENDSELECT
       ENDIF
     ENDSUBROUTINE matvec_MatrixType
@@ -1691,7 +1691,7 @@ MODULE MatrixTypes
 #endif
               CLASS DEFAULT
                 CALL eMatrixType%raiseError('Incorrect call to '// &
-                     modName//'::'//myName//' - Too lazy to implement interface.. here?.')
+                     modName//'::'//myName//' - This interface is not available.')
             ENDSELECT
           ENDSELECT
         TYPE IS(PETScVectorType)
@@ -1752,7 +1752,7 @@ MODULE MatrixTypes
           ENDSELECT
         CLASS DEFAULT
                 CALL eMatrixType%raiseError('Incorrect call to '// &
-                    modName//'::'//myName//' - Too lazy to implement interface.')
+                    modName//'::'//myName//' - This interface is not available.')
         ENDSELECT
 
       ENDIF
@@ -2175,7 +2175,7 @@ MODULE MatrixTypes
             ENDSELECT
           TYPE IS(TrilinosMatrixType)
             CALL eMatrixType%raiseError('Incorrect call to '// &
-                 modName//'::'//myName//' - Too lazy to implement interface.')
+                 modName//'::'//myName//' - This interface is not available.')
         ENDSELECT
       ENDIF
     ENDSUBROUTINE matmult_MatrixType
