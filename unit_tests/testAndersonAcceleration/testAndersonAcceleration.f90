@@ -47,7 +47,7 @@ PROGRAM testAndersonAcceleration
   REGISTER_SUBTEST('testClear',testClear)
   REGISTER_SUBTEST('testStep beta=1',testStep_beta_1)
   !It appears anderson(0) doesn't work in trilinos which is too bad
-  !REGISTER_SUBTEST('testStep depth=0',testStep_depth_0)
+  REGISTER_SUBTEST('testStep depth=0',testStep_depth_0)
 
   FINALIZE_TEST()
 
@@ -512,15 +512,20 @@ CONTAINS
 
       WRITE(*,*) "step(2)"
       CALL testAndAcc%X%get(1,tmp)
-      ASSERT(tmp==0.9775_SRK,'%step(2)')
+      ASSERT(tmp==0.98375000_SRK,'%step(2)')
+      FINFO() tmp
       CALL testAndAcc%X%get(2,tmp)
-      ASSERT(tmp==1.5265_SRK,'%step(2)')
+      ASSERT(tmp==1.40825000_SRK,'%step(2)')
+      FINFO() tmp
       CALL testAndAcc%X%get(3,tmp)
-      ASSERT(tmp==1.885_SRK,'%step(2)')
+      ASSERT(tmp==1.69550000_SRK,'%step(2)')
+      FINFO() tmp
       CALL testAndAcc%X%get(4,tmp)
-      ASSERT(tmp==4.165_SRK,'%step(2)')
+      ASSERT(tmp==3.37275000_SRK,'%step(2)')
+      FINFO() tmp
       CALL testAndAcc%X%get(5,tmp)
-      ASSERT(tmp==5.2235_SRK,'%step(2)')
+      ASSERT(tmp==4.16125000_SRK,'%step(2)')
+      FINFO() tmp
 
       CALL testAndAcc%X%set(1,0.987_SRK)
       CALL testAndAcc%X%set(2,1.735_SRK)
@@ -532,15 +537,15 @@ CONTAINS
 
       WRITE(*,*) "step(3)"
       CALL testAndAcc%X%get(1,tmp)
-      ASSERT(tmp==0.9835_SRK,'%step(3)')
+      ASSERT(tmp==0.98537500_SRK,'%step(3)')
       CALL testAndAcc%X%get(2,tmp)
-      ASSERT(tmp==1.6575_SRK,'%step(3)')
+      ASSERT(tmp==1.57162500_SRK,'%step(3)')
       CALL testAndAcc%X%get(3,tmp)
-      ASSERT(tmp==2.193_SRK,'%step(3)')
+      ASSERT(tmp==2.03475000_SRK,'%step(3)')
       CALL testAndAcc%X%get(4,tmp)
-      ASSERT(tmp==4.118_SRK,'%step(3)')
+      ASSERT(tmp==3.73387500_SRK,'%step(3)')
       CALL testAndAcc%X%get(5,tmp)
-      ASSERT(tmp==5.1615_SRK,'%step(3)')
+      ASSERT(tmp==4.64312500_SRK,'%step(3)')
 
       CALL testAndAcc%X%set(1,0.992_SRK)
       CALL testAndAcc%X%set(2,1.840_SRK)
@@ -552,15 +557,15 @@ CONTAINS
 
       WRITE(*,*) "step(4)"
       CALL testAndAcc%X%get(1,tmp)
-      ASSERT(tmp==0.9895_SRK,'%step(4)')
+      ASSERT(tmp==0.98868750_SRK,'%step(4)')
       CALL testAndAcc%X%get(2,tmp)
-      ASSERT(tmp==1.7875_SRK,'%step(4)')
+      ASSERT(tmp==1.70581250_SRK,'%step(4)')
       CALL testAndAcc%X%get(3,tmp)
-      ASSERT(tmp==2.5015_SRK,'%step(4)')
+      ASSERT(tmp==2.33187500_SRK,'%step(4)')
       CALL testAndAcc%X%get(4,tmp)
-      ASSERT(tmp==4.076_SRK,'%step(4)')
+      ASSERT(tmp==3.89543750_SRK,'%step(4)')
       CALL testAndAcc%X%get(5,tmp)
-      ASSERT(tmp==5.0995_SRK,'%step(4)')
+      ASSERT(tmp==4.85856250_SRK,'%step(4)')
 #endif
       CALL testAndAcc%clear()
     ENDSUBROUTINE testStep_depth_0

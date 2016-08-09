@@ -154,7 +154,7 @@ MODULE AndersonAccelerationTypes
               'greater than 0 and less than or equal to (n)!')
         ENDIF
 
-        IF(depth <= 0) THEN
+        IF(depth < 0) THEN
           CALL eAndersonAccelerationType%raiseError('Incorrect input to '// &
             modName//'::'//myName//' - Depth values (depth) must be '// &
               'greater than or equal to 0!')
