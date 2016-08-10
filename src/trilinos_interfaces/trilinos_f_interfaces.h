@@ -294,11 +294,12 @@
 !-------------------------------------------------------------------------------
 ! Anderson Interfaces
 !-------------------------------------------------------------------------------
-    SUBROUTINE Anderson_Init(id,depth,beta,idv) bind(C,NAME="Anderson_Init")
+    SUBROUTINE Anderson_Init(id,depth,beta,start,idv) bind(C,NAME="Anderson_Init")
       IMPORT :: C_INT,C_DOUBLE
       INTEGER(C_INT),INTENT(INOUT)    :: id
       INTEGER(C_INT),INTENT(IN),VALUE :: depth
       REAL(C_DOUBLE),INTENT(IN),VALUE :: beta
+      INTEGER(C_INT),INTENT(IN),VALUE :: start
       INTEGER(C_INT),INTENT(IN),VALUE :: idv
     ENDSUBROUTINE
 

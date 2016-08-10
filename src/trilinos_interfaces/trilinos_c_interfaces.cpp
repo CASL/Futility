@@ -266,8 +266,8 @@ extern "C" void Preconditioner_Setup( const int id, const int idM ) {
 //------------------------------------------------------------------------------
 //Anderson
 //------------------------------------------------------------------------------
-extern "C" void Anderson_Init( int &id, const int depth, const double beta, const int idv) {
-    id = andr->new_data(depth, beta, evec->get_vec(idv));
+extern "C" void Anderson_Init( int &id, const int depth, const double beta, const int start, const int idv) {
+    id = andr->new_data(depth, beta, start, evec->get_vec(idv));
 }
 
 extern "C" void Anderson_Destroy(const int id) {

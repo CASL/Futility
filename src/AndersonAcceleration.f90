@@ -115,7 +115,7 @@ MODULE AndersonAccelerationTypes
       TYPE(ParamType),INTENT(IN) :: Params
 
       TYPE(ParamType) :: validParams, tmpPL
-      INTEGER(SIK) :: n,nlocal,depth
+      INTEGER(SIK) :: n,nlocal,depth,start
       REAL(SRK) :: beta
 
       !Check to set up required and optional param lists.
@@ -135,11 +135,13 @@ MODULE AndersonAccelerationTypes
       nlocal=0
       depth=-1
       beta=0.0_SRK
+      start=0
       !Pull Data from Parameter List
       CALL validParams%get('AndersonAccelerationType->n',n)
       CALL validParams%get('AndersonAccelerationType->nlocal',nlocal)
       CALL validParams%get('AndersonAccelerationType->depth',depth)
       CALL validParams%get('AndersonAccelerationType->beta',beta)
+      CALL validParams%get('AndersonAccelerationType->start',start)
 
       IF(.NOT. solver%isInit) THEN
         IF(n < 1) THEN
@@ -164,6 +166,12 @@ MODULE AndersonAccelerationTypes
           solver%depth=depth
         ENDIF
 
+        IF(start <= 0) THEN
+          CALL eAndersonAccelerationType%raiseError('Incorrect input to '// &
+            modName//'::'//myName//' - Starting iteration must be '// &
+              'greater than to 0!')
+        ENDIF
+
         IF((beta<=0.0_SRK) .OR. (beta>1.0_SRK)) THEN
           CALL eAndersonAccelerationType%raiseError('Incorrect input to '// &
             modName//'::'//myName//' - Beta must be '// &
@@ -182,7 +190,7 @@ MODULE AndersonAccelerationTypes
         CALL solver%X%set(0.0_SRK)
 
         SELECTTYPE(x=>solver%X); TYPE IS(TrilinosVectorType)
-          CALL Anderson_Init(solver%id,solver%depth,solver%beta,x%b)
+          CALL Anderson_Init(solver%id,solver%depth,solver%beta,start,x%b)
         ENDSELECT
 #else
         CALL eAndersonAccelerationType%raiseError(modName//'::'//myName// &

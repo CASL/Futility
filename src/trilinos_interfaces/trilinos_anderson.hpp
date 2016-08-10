@@ -63,7 +63,7 @@ public:
         cid(0)
     {}
 
-    int new_data(const int depth, const double beta, Teuchos::RCP<Epetra_Vector> soln) {
+    int new_data(const int depth, const double beta, const int start, Teuchos::RCP<Epetra_Vector> soln) {
         anderson_map[cid]=AndersonCnt();
 
         //setup parameterlist with defaults
@@ -75,7 +75,7 @@ public:
         }
         else{
             anderson_map[cid].anderson_db->sublist("Anderson Parameters").set("Storage Depth", depth);
-            anderson_map[cid].anderson_db->sublist("Anderson Parameters").set("Acceleration Start Iteration", 5);
+            anderson_map[cid].anderson_db->sublist("Anderson Parameters").set("Acceleration Start Iteration", start);
         }
         anderson_map[cid].anderson_db->sublist("Anderson Parameters").set("Mixing Parameter", beta);
         Teuchos::ParameterList& printParams = anderson_map[cid].anderson_db->sublist("Printing");
