@@ -59,6 +59,8 @@ MODULE AndersonAccelerationTypes
     TYPE(MPI_EnvType),POINTER :: MPIparallelEnv => NULL()
     !> Pointer to the shared memory parallel environment TODO: eventually
     TYPE(OMP_EnvType) :: OMPparallelEnv
+    !> iteration count
+    INTEGER(SIK) :: iter=0
     !> size of nonlinear system
     INTEGER(SIK) :: n=-1
     !> depth of anderson solver
@@ -177,7 +179,7 @@ MODULE AndersonAccelerationTypes
         CALL tmpPL%add('VectorType->nlocal',nlocal)
 #ifdef MPACT_HAVE_Trilinos
         CALL solver%X%init(tmpPL)
-        CALL solver%X%set(1.0_SRK)
+        CALL solver%X%set(0.0_SRK)
 
         SELECTTYPE(x=>solver%X); TYPE IS(TrilinosVectorType)
           CALL Anderson_Init(solver%id,solver%depth,solver%beta,x%b)
@@ -205,6 +207,7 @@ MODULE AndersonAccelerationTypes
 
       NULLIFY(solver%MPIparallelEnv)
       IF(solver%OMPparallelEnv%isInit()) CALL solver%OMPparallelEnv%clear
+      solver%iter=0
       solver%n=-1
       solver%depth=-1
       solver%beta=0.0_SRK
@@ -224,7 +227,17 @@ MODULE AndersonAccelerationTypes
     SUBROUTINE step_AndersonAccelerationType(solver)
       CLASS(AndersonAccelerationType),INTENT(INOUT) :: solver
 #ifdef MPACT_HAVE_Trilinos
-      CALL Anderson_Update(solver%id)
+      SELECTTYPE(x=>solver%X); TYPE IS(TrilinosVectorType)
+        CALL ForPetra_VecEdit(x%b,'vector.in'//C_NULL_CHAR)
+      IF(solver%iter==0) THEN
+        CALL Anderson_Reset(solver%id)
+      ELSE
+        CALL Anderson_Update(solver%id)
+      ENDIF
+        CALL ForPetra_VecEdit(x%b,'vector.out'//C_NULL_CHAR)
+      ENDSELECT
+
+      solver%iter=solver%iter+1
 #endif
     ENDSUBROUTINE step_AndersonAccelerationType
 !
@@ -238,6 +251,7 @@ MODULE AndersonAccelerationTypes
       CLASS(AndersonAccelerationType),INTENT(INOUT) :: solver
 #ifdef MPACT_HAVE_Trilinos
       CALL Anderson_Reset(solver%id)
+      solver%iter=1
 #endif
     ENDSUBROUTINE reset_AndersonAccelerationType
 !

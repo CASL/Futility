@@ -69,19 +69,25 @@ public:
         //setup parameterlist with defaults
         anderson_map[cid].anderson_db = Teuchos::parameterList();
         anderson_map[cid].anderson_db->set("Nonlinear Solver", "Anderson Accelerated Fixed-Point");
-        anderson_map[cid].anderson_db->sublist("Anderson Parameters").set("Storage Depth", depth);
+        if(depth==0){
+            anderson_map[cid].anderson_db->sublist("Anderson Parameters").set("Storage Depth", 1);
+            anderson_map[cid].anderson_db->sublist("Anderson Parameters").set("Acceleration Start Iteration", 10000);
+        }
+        else{
+            anderson_map[cid].anderson_db->sublist("Anderson Parameters").set("Storage Depth", depth);
+            anderson_map[cid].anderson_db->sublist("Anderson Parameters").set("Acceleration Start Iteration", 5);
+        }
         anderson_map[cid].anderson_db->sublist("Anderson Parameters").set("Mixing Parameter", beta);
-        //anderson_map[cid].anderson_db->sublist("Anderson Parameters").set("Acceleration Start Iteration", 3);
         Teuchos::ParameterList& printParams = anderson_map[cid].anderson_db->sublist("Printing");
 
         printParams.set("MyPID", soln->Comm().MyPID());
         printParams.set("Output Precision", 3);
         printParams.set("Output Processor", 0);
         printParams.set("Output Information",
-            NOX::Utils::OuterIteration +
-            NOX::Utils::OuterIterationStatusTest +
-            NOX::Utils::Parameters +
-            NOX::Utils::Details +
+//            NOX::Utils::OuterIteration +
+//            NOX::Utils::OuterIterationStatusTest +
+//            NOX::Utils::Parameters +
+//            NOX::Utils::Details +
             NOX::Utils::Warning +
             NOX::Utils::Debug +
             NOX::Utils::Error);
@@ -148,6 +154,10 @@ public:
 
     int reset_data(const int id) {
         anderson_map[id].solver->reset(*(anderson_map[id].soln));
+        const NOX::Abstract::Group& noxGroup = anderson_map[id].solver->getSolutionGroup();
+
+        // compute initial (fake) residual
+        //noxGroup.computeF();
         return 0;
     }
 
