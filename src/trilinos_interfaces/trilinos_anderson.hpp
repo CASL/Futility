@@ -154,10 +154,10 @@ public:
 
     int reset_data(const int id) {
         anderson_map[id].solver->reset(*(anderson_map[id].soln));
-        const NOX::Abstract::Group& noxGroup = anderson_map[id].solver->getSolutionGroup();
+        NOX::Abstract::Group& noxGroup = const_cast<NOX::Abstract::Group&>(anderson_map[id].solver->getSolutionGroup());
 
         // compute initial (fake) residual
-        //noxGroup.computeF();
+        noxGroup.computeF();
         return 0;
     }
 
