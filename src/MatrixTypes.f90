@@ -751,6 +751,7 @@ MODULE MatrixTypes
       CALL validParams%clear()
 
       rnnz=MAXVAL(dnnz)+MAXVAL(onnz)
+      IF(rnnz==-2) rnnz=n
       IF(.NOT. matrix%isInit) THEN
         IF(n < 1) THEN
           CALL eMatrixType%raiseError('Incorrect input to '// &

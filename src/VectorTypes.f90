@@ -1888,7 +1888,7 @@ MODULE VectorTypes
 #endif
       TYPE IS(TrilinosVectorType)
 #ifdef MPACT_HAVE_Trilinos
-        IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
+        IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble()
         CALL ForPETRA_VecNorm2(thisVector%b,norm2)
 #else
         CALL eVectorType%raiseFatalError('Incorrect call to '// &
@@ -1937,7 +1937,7 @@ MODULE VectorTypes
 #endif
       TYPE IS(TrilinosVectorType)
 #ifdef MPACT_HAVE_Trilinos
-        IF(iperr == 0) CALL ForPETRA_VecScale(thisVector%b,a)
+        CALL ForPETRA_VecScale(thisVector%b,a)
 #else
         CALL eVectorType%raiseFatalError('Incorrect call to '// &
            modName//'::'//myName//' - Trilinos not enabled.  You will'// &

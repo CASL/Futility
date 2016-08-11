@@ -54,7 +54,6 @@ MODULE ParallelEnv
 #else
   INCLUDE 'mpif.h'
 #endif
-#include "trilinos_interfaces/trilinos_f_interfaces.h"
 
   INTEGER,PARAMETER :: PE_COMM_SELF=MPI_COMM_SELF
   INTEGER,PARAMETER :: PE_COMM_WORLD=MPI_COMM_WORLD
@@ -66,6 +65,7 @@ MODULE ParallelEnv
   INTEGER,PARAMETER :: PE_COMM_NULL=-1
   INTEGER,SAVE :: PE_COMM_DEFAULT=0
 #endif
+#include "trilinos_interfaces/trilinos_f_interfaces.h"
 
   PUBLIC :: PE_COMM_SELF
   PUBLIC :: PE_COMM_WORLD
