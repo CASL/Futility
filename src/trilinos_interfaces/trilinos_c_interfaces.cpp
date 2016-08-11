@@ -141,7 +141,6 @@ extern "C" void ForPETRA_MatReset(const int id) {
 
 extern "C" void ForPETRA_MatSet(const int id, const int i, const int nnz, const int j[], const double val[]) {
     int ierr = emat->set_data(id,i,nnz,j,val);
-    std::cout << i << " | " << nnz << " | " << j[0] << std::endl;
     assert(ierr==0);
 }
 
