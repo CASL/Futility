@@ -235,15 +235,11 @@ MODULE AndersonAccelerationTypes
     SUBROUTINE step_AndersonAccelerationType(solver)
       CLASS(AndersonAccelerationType),INTENT(INOUT) :: solver
 #ifdef MPACT_HAVE_Trilinos
-      SELECTTYPE(x=>solver%X); TYPE IS(TrilinosVectorType)
-        CALL ForPetra_VecEdit(x%b,'vector.in'//C_NULL_CHAR)
       IF(solver%iter==0) THEN
         CALL Anderson_Reset(solver%id)
       ELSE
         CALL Anderson_Update(solver%id)
       ENDIF
-        CALL ForPetra_VecEdit(x%b,'vector.out'//C_NULL_CHAR)
-      ENDSELECT
 
       solver%iter=solver%iter+1
 #endif
