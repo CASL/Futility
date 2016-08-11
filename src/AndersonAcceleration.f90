@@ -135,7 +135,7 @@ MODULE AndersonAccelerationTypes
       nlocal=0
       depth=-1
       beta=0.0_SRK
-      start=0
+      start=1
       !Pull Data from Parameter List
       CALL validParams%get('AndersonAccelerationType->n',n)
       CALL validParams%get('AndersonAccelerationType->nlocal',nlocal)

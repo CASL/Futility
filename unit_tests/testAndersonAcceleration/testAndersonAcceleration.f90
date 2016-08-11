@@ -63,6 +63,7 @@ CONTAINS
     SUBROUTINE testInit()
       CALL testAndAcc%init(mpiTestEnv,optList)
       ASSERT(testAndAcc%isInit,'%isInit')
+      ASSERT(testAndAcc%iter==0,'%iter')
       ASSERT(testAndAcc%n==5,'%n')
       ASSERT(testAndAcc%depth==2,'%depth')
       ASSERT(testAndAcc%beta==0.5_SRK,'%beta')
@@ -79,9 +80,14 @@ CONTAINS
       REAL(SRK) :: tmp
 
 #ifdef MPACT_HAVE_Trilinos
+      !First call to step resets the solution
+      CALL testAndAcc%X%set(1.0_SRK)
+      CALL testAndAcc%step()
+      ASSERT(testAndAcc%iter==1,'%iter')
+
       DO i=1,5
         CALL testAndAcc%X%get(i,tmp)
-        WRITE(*,*) i, tmp
+        ASSERT(tmp==1.0_SRK,'%step(0)')
       ENDDO
 
       CALL testAndAcc%X%set(1,0.975_SRK)
@@ -381,6 +387,9 @@ CONTAINS
       CALL optList%set('AndersonAccelerationType->beta',1.0_SRK)
       CALL testAndAcc%init(mpiTestEnv,optList)
 #ifdef MPACT_HAVE_Trilinos
+      CALL testAndAcc%X%set(1.0_SRK)
+      CALL testAndAcc%step()
+
       DO i=1,5
         CALL testAndAcc%X%get(i,tmp)
         WRITE(*,*) i, tmp
@@ -482,6 +491,9 @@ CONTAINS
       CALL optList%set('AndersonAccelerationType->depth',0_SIK)
       CALL testAndAcc%init(mpiTestEnv,optList)
 #ifdef MPACT_HAVE_Trilinos
+      CALL testAndAcc%X%set(1.0_SRK)
+      CALL testAndAcc%step()
+
       CALL testAndAcc%X%set(1,0.975_SRK)
       CALL testAndAcc%X%set(2,1.473_SRK)
       CALL testAndAcc%X%set(3,1.758_SRK)
