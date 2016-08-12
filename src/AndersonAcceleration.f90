@@ -59,6 +59,8 @@ MODULE AndersonAccelerationTypes
     TYPE(MPI_EnvType),POINTER :: MPIparallelEnv => NULL()
     !> Pointer to the shared memory parallel environment TODO: eventually
     TYPE(OMP_EnvType) :: OMPparallelEnv
+    !> iteration count
+    INTEGER(SIK) :: iter=0
     !> size of nonlinear system
     INTEGER(SIK) :: n=-1
     !> depth of anderson solver
@@ -113,7 +115,7 @@ MODULE AndersonAccelerationTypes
       TYPE(ParamType),INTENT(IN) :: Params
 
       TYPE(ParamType) :: validParams, tmpPL
-      INTEGER(SIK) :: n,nlocal,depth
+      INTEGER(SIK) :: n,nlocal,depth,start
       REAL(SRK) :: beta
 
       !Check to set up required and optional param lists.
@@ -133,11 +135,13 @@ MODULE AndersonAccelerationTypes
       nlocal=0
       depth=-1
       beta=0.0_SRK
+      start=1
       !Pull Data from Parameter List
       CALL validParams%get('AndersonAccelerationType->n',n)
       CALL validParams%get('AndersonAccelerationType->nlocal',nlocal)
       CALL validParams%get('AndersonAccelerationType->depth',depth)
       CALL validParams%get('AndersonAccelerationType->beta',beta)
+      CALL validParams%get('AndersonAccelerationType->start',start)
 
       IF(.NOT. solver%isInit) THEN
         IF(n < 1) THEN
@@ -154,12 +158,18 @@ MODULE AndersonAccelerationTypes
               'greater than 0 and less than or equal to (n)!')
         ENDIF
 
-        IF(depth <= 0) THEN
+        IF(depth < 0) THEN
           CALL eAndersonAccelerationType%raiseError('Incorrect input to '// &
             modName//'::'//myName//' - Depth values (depth) must be '// &
               'greater than or equal to 0!')
         ELSE
           solver%depth=depth
+        ENDIF
+
+        IF(start <= 0) THEN
+          CALL eAndersonAccelerationType%raiseError('Incorrect input to '// &
+            modName//'::'//myName//' - Starting iteration must be '// &
+              'greater than to 0!')
         ENDIF
 
         IF((beta<=0.0_SRK) .OR. (beta>1.0_SRK)) THEN
@@ -177,10 +187,10 @@ MODULE AndersonAccelerationTypes
         CALL tmpPL%add('VectorType->nlocal',nlocal)
 #ifdef MPACT_HAVE_Trilinos
         CALL solver%X%init(tmpPL)
-        CALL solver%X%set(1.0_SRK)
+        CALL solver%X%set(0.0_SRK)
 
         SELECTTYPE(x=>solver%X); TYPE IS(TrilinosVectorType)
-          CALL Anderson_Init(solver%id,solver%depth,solver%beta,x%b)
+          CALL Anderson_Init(solver%id,solver%depth,solver%beta,start,x%b)
         ENDSELECT
 #else
         CALL eAndersonAccelerationType%raiseError(modName//'::'//myName// &
@@ -205,6 +215,7 @@ MODULE AndersonAccelerationTypes
 
       NULLIFY(solver%MPIparallelEnv)
       IF(solver%OMPparallelEnv%isInit()) CALL solver%OMPparallelEnv%clear
+      solver%iter=0
       solver%n=-1
       solver%depth=-1
       solver%beta=0.0_SRK
@@ -224,7 +235,13 @@ MODULE AndersonAccelerationTypes
     SUBROUTINE step_AndersonAccelerationType(solver)
       CLASS(AndersonAccelerationType),INTENT(INOUT) :: solver
 #ifdef MPACT_HAVE_Trilinos
-      CALL Anderson_Update(solver%id)
+      IF(solver%iter==0) THEN
+        CALL Anderson_Reset(solver%id)
+      ELSE
+        CALL Anderson_Update(solver%id)
+      ENDIF
+
+      solver%iter=solver%iter+1
 #endif
     ENDSUBROUTINE step_AndersonAccelerationType
 !
@@ -238,6 +255,7 @@ MODULE AndersonAccelerationTypes
       CLASS(AndersonAccelerationType),INTENT(INOUT) :: solver
 #ifdef MPACT_HAVE_Trilinos
       CALL Anderson_Reset(solver%id)
+      solver%iter=1
 #endif
     ENDSUBROUTINE reset_AndersonAccelerationType
 !

@@ -63,13 +63,20 @@ public:
         cid(0)
     {}
 
-    int new_data(const int depth, const double beta, Teuchos::RCP<Epetra_Vector> soln) {
+    int new_data(const int depth, const double beta, const int start, Teuchos::RCP<Epetra_Vector> soln) {
         anderson_map[cid]=AndersonCnt();
 
         //setup parameterlist with defaults
         anderson_map[cid].anderson_db = Teuchos::parameterList();
         anderson_map[cid].anderson_db->set("Nonlinear Solver", "Anderson Accelerated Fixed-Point");
-        anderson_map[cid].anderson_db->sublist("Anderson Parameters").set("Storage Depth", depth);
+        if(depth==0){
+            anderson_map[cid].anderson_db->sublist("Anderson Parameters").set("Storage Depth", 1);
+            anderson_map[cid].anderson_db->sublist("Anderson Parameters").set("Acceleration Start Iteration", 10000);
+        }
+        else{
+            anderson_map[cid].anderson_db->sublist("Anderson Parameters").set("Storage Depth", depth);
+            anderson_map[cid].anderson_db->sublist("Anderson Parameters").set("Acceleration Start Iteration", start);
+        }
         anderson_map[cid].anderson_db->sublist("Anderson Parameters").set("Mixing Parameter", beta);
         Teuchos::ParameterList& printParams = anderson_map[cid].anderson_db->sublist("Printing");
 
@@ -77,10 +84,10 @@ public:
         printParams.set("Output Precision", 3);
         printParams.set("Output Processor", 0);
         printParams.set("Output Information",
-            NOX::Utils::OuterIteration +
-            NOX::Utils::OuterIterationStatusTest +
-            NOX::Utils::Parameters +
-            NOX::Utils::Details +
+//            NOX::Utils::OuterIteration +
+//            NOX::Utils::OuterIterationStatusTest +
+//            NOX::Utils::Parameters +
+//            NOX::Utils::Details +
             NOX::Utils::Warning +
             NOX::Utils::Debug +
             NOX::Utils::Error);
@@ -108,7 +115,7 @@ public:
         Teuchos::RCP<NOX::StatusTest::NormUpdate> update =
           Teuchos::rcp(new NOX::StatusTest::NormUpdate(1.0e-8));
         Teuchos::RCP<NOX::StatusTest::MaxIters> maxiters =
-          Teuchos::rcp(new NOX::StatusTest::MaxIters(1000));
+          Teuchos::rcp(new NOX::StatusTest::MaxIters(100000));
         Teuchos::RCP<NOX::StatusTest::FiniteValue> fv =
           Teuchos::rcp(new NOX::StatusTest::FiniteValue);
         Teuchos::RCP<NOX::StatusTest::Combo> combo =
@@ -146,7 +153,11 @@ public:
     }
 
     int reset_data(const int id) {
-        // do something to reset the nox iteration between statepoint solves
+        anderson_map[id].solver->reset(*(anderson_map[id].soln));
+        NOX::Abstract::Group& noxGroup = const_cast<NOX::Abstract::Group&>(anderson_map[id].solver->getSolutionGroup());
+
+        // compute initial (fake) residual
+        noxGroup.computeF();
         return 0;
     }
 

@@ -53,7 +53,11 @@ extern "C" void MPACT_Trilinos_Finalize() {
 //Vector
 //------------------------------------------------------------------------------
 extern "C" void ForPETRA_VecInit( int &id, const int n, const int nlocal, const int Comm ) {
+#ifdef HAVE_MPI
     id = evec->new_data(n,nlocal,MPI_Comm_f2c(Comm));
+#else
+    id = evec->new_data(n,nlocal,Comm);
+#endif
 }
 
 extern "C" void ForPETRA_VecDestroy(const int id) {
@@ -120,7 +124,11 @@ extern "C" void ForPETRA_VecEdit(const int id, const char name[]) {
 //Matrix
 //------------------------------------------------------------------------------
 extern "C" void ForPETRA_MatInit( int &id, const int n, const int nlocal, const int rnnz, const int Comm ) {
+#ifdef HAVE_MPI
     id = emat->new_data(n,nlocal,rnnz,MPI_Comm_f2c(Comm));
+#else
+    id = emat->new_data(n,nlocal,rnnz,Comm);
+#endif
 }
 
 extern "C" void ForPETRA_MatDestroy(const int id) {
@@ -266,8 +274,8 @@ extern "C" void Preconditioner_Setup( const int id, const int idM ) {
 //------------------------------------------------------------------------------
 //Anderson
 //------------------------------------------------------------------------------
-extern "C" void Anderson_Init( int &id, const int depth, const double beta, const int idv) {
-    id = andr->new_data(depth, beta, evec->get_vec(idv));
+extern "C" void Anderson_Init( int &id, const int depth, const double beta, const int start, const int idv) {
+    id = andr->new_data(depth, beta, start, evec->get_vec(idv));
 }
 
 extern "C" void Anderson_Destroy(const int id) {

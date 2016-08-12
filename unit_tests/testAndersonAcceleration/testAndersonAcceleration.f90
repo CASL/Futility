@@ -47,7 +47,7 @@ PROGRAM testAndersonAcceleration
   REGISTER_SUBTEST('testClear',testClear)
   REGISTER_SUBTEST('testStep beta=1',testStep_beta_1)
   !It appears anderson(0) doesn't work in trilinos which is too bad
-  !REGISTER_SUBTEST('testStep depth=0',testStep_depth_0)
+  REGISTER_SUBTEST('testStep depth=0',testStep_depth_0)
 
   FINALIZE_TEST()
 
@@ -63,6 +63,7 @@ CONTAINS
     SUBROUTINE testInit()
       CALL testAndAcc%init(mpiTestEnv,optList)
       ASSERT(testAndAcc%isInit,'%isInit')
+      ASSERT(testAndAcc%iter==0,'%iter')
       ASSERT(testAndAcc%n==5,'%n')
       ASSERT(testAndAcc%depth==2,'%depth')
       ASSERT(testAndAcc%beta==0.5_SRK,'%beta')
@@ -79,9 +80,14 @@ CONTAINS
       REAL(SRK) :: tmp
 
 #ifdef MPACT_HAVE_Trilinos
+      !First call to step resets the solution
+      CALL testAndAcc%X%set(1.0_SRK)
+      CALL testAndAcc%step()
+      ASSERT(testAndAcc%iter==1,'%iter')
+
       DO i=1,5
         CALL testAndAcc%X%get(i,tmp)
-        WRITE(*,*) i, tmp
+        ASSERT(tmp==1.0_SRK,'%step(0)')
       ENDDO
 
       CALL testAndAcc%X%set(1,0.975_SRK)
@@ -381,6 +387,9 @@ CONTAINS
       CALL optList%set('AndersonAccelerationType->beta',1.0_SRK)
       CALL testAndAcc%init(mpiTestEnv,optList)
 #ifdef MPACT_HAVE_Trilinos
+      CALL testAndAcc%X%set(1.0_SRK)
+      CALL testAndAcc%step()
+
       DO i=1,5
         CALL testAndAcc%X%get(i,tmp)
         WRITE(*,*) i, tmp
@@ -482,6 +491,9 @@ CONTAINS
       CALL optList%set('AndersonAccelerationType->depth',0_SIK)
       CALL testAndAcc%init(mpiTestEnv,optList)
 #ifdef MPACT_HAVE_Trilinos
+      CALL testAndAcc%X%set(1.0_SRK)
+      CALL testAndAcc%step()
+
       CALL testAndAcc%X%set(1,0.975_SRK)
       CALL testAndAcc%X%set(2,1.473_SRK)
       CALL testAndAcc%X%set(3,1.758_SRK)
@@ -492,15 +504,15 @@ CONTAINS
 
       WRITE(*,*) "step(1)"
       CALL testAndAcc%X%get(1,tmp)
-      ASSERT(tmp==0.9875_SRK,'%step(1)')
+      ASSERT(SOFTEQ(tmp,0.9875_SRK,1.0E-12_SRK),'%step(1)')
       CALL testAndAcc%X%get(2,tmp)
-      ASSERT(tmp==1.2365_SRK,'%step(1)')
+      ASSERT(SOFTEQ(tmp,1.2365_SRK,1.0E-12_SRK),'%step(1)')
       CALL testAndAcc%X%get(3,tmp)
-      ASSERT(tmp==1.3790_SRK,'%step(1)')
+      ASSERT(SOFTEQ(tmp,1.3790_SRK,1.0E-12_SRK),'%step(1)')
       CALL testAndAcc%X%get(4,tmp)
-      ASSERT(tmp==2.5945_SRK,'%step(1)')
+      ASSERT(SOFTEQ(tmp,2.5945_SRK,1.0E-12_SRK),'%step(1)')
       CALL testAndAcc%X%get(5,tmp)
-      ASSERT(tmp==3.1245_SRK,'%step(1)')
+      ASSERT(SOFTEQ(tmp,3.1245_SRK,1.0E-12_SRK),'%step(1)')
 
       CALL testAndAcc%X%set(1,0.980_SRK)
       CALL testAndAcc%X%set(2,1.580_SRK)
@@ -512,15 +524,15 @@ CONTAINS
 
       WRITE(*,*) "step(2)"
       CALL testAndAcc%X%get(1,tmp)
-      ASSERT(tmp==0.9775_SRK,'%step(2)')
+      ASSERT(SOFTEQ(tmp,0.98375000_SRK,1.0E-12_SRK),'%step(2)')
       CALL testAndAcc%X%get(2,tmp)
-      ASSERT(tmp==1.5265_SRK,'%step(2)')
+      ASSERT(SOFTEQ(tmp,1.40825000_SRK,1.0E-12_SRK),'%step(2)')
       CALL testAndAcc%X%get(3,tmp)
-      ASSERT(tmp==1.885_SRK,'%step(2)')
+      ASSERT(SOFTEQ(tmp,1.69550000_SRK,1.0E-12_SRK),'%step(2)')
       CALL testAndAcc%X%get(4,tmp)
-      ASSERT(tmp==4.165_SRK,'%step(2)')
+      ASSERT(SOFTEQ(tmp,3.36775000_SRK,1.0E-12_SRK),'%step(2)')
       CALL testAndAcc%X%get(5,tmp)
-      ASSERT(tmp==5.2235_SRK,'%step(2)')
+      ASSERT(SOFTEQ(tmp,4.16125000_SRK,1.0E-12_SRK),'%step(2)')
 
       CALL testAndAcc%X%set(1,0.987_SRK)
       CALL testAndAcc%X%set(2,1.735_SRK)
@@ -532,15 +544,15 @@ CONTAINS
 
       WRITE(*,*) "step(3)"
       CALL testAndAcc%X%get(1,tmp)
-      ASSERT(tmp==0.9835_SRK,'%step(3)')
+      ASSERT(SOFTEQ(tmp,0.98537500_SRK,1.0E-12_SRK),'%step(3)')
       CALL testAndAcc%X%get(2,tmp)
-      ASSERT(tmp==1.6575_SRK,'%step(3)')
+      ASSERT(SOFTEQ(tmp,1.57162500_SRK,1.0E-12_SRK),'%step(3)')
       CALL testAndAcc%X%get(3,tmp)
-      ASSERT(tmp==2.193_SRK,'%step(3)')
+      ASSERT(SOFTEQ(tmp,2.03475000_SRK,1.0E-12_SRK),'%step(3)')
       CALL testAndAcc%X%get(4,tmp)
-      ASSERT(tmp==4.118_SRK,'%step(3)')
+      ASSERT(SOFTEQ(tmp,3.73137500_SRK,1.0E-12_SRK),'%step(3)')
       CALL testAndAcc%X%get(5,tmp)
-      ASSERT(tmp==5.1615_SRK,'%step(3)')
+      ASSERT(SOFTEQ(tmp,4.64312500_SRK,1.0E-12_SRK),'%step(3)')
 
       CALL testAndAcc%X%set(1,0.992_SRK)
       CALL testAndAcc%X%set(2,1.840_SRK)
@@ -552,15 +564,15 @@ CONTAINS
 
       WRITE(*,*) "step(4)"
       CALL testAndAcc%X%get(1,tmp)
-      ASSERT(tmp==0.9895_SRK,'%step(4)')
+      ASSERT(SOFTEQ(tmp,0.98868750_SRK,1.0E-12_SRK),'%step(4)')
       CALL testAndAcc%X%get(2,tmp)
-      ASSERT(tmp==1.7875_SRK,'%step(4)')
+      ASSERT(SOFTEQ(tmp,1.70581250_SRK,1.0E-12_SRK),'%step(4)')
       CALL testAndAcc%X%get(3,tmp)
-      ASSERT(tmp==2.5015_SRK,'%step(4)')
+      ASSERT(SOFTEQ(tmp,2.33187500_SRK,1.0E-12_SRK),'%step(4)')
       CALL testAndAcc%X%get(4,tmp)
-      ASSERT(tmp==4.076_SRK,'%step(4)')
+      ASSERT(SOFTEQ(tmp,3.89418750_SRK,1.0E-12_SRK),'%step(4)')
       CALL testAndAcc%X%get(5,tmp)
-      ASSERT(tmp==5.0995_SRK,'%step(4)')
+      ASSERT(SOFTEQ(tmp,4.85856250_SRK,1.0E-12_SRK),'%step(4)')
 #endif
       CALL testAndAcc%clear()
     ENDSUBROUTINE testStep_depth_0

@@ -28,10 +28,11 @@ public:
     Epetra_Map emap;
     Teuchos::RCP<Epetra_Vector> evec;
 
-    EpetraVecCnt(int n, int nloc, MPI_Comm rawComm) :
 #ifdef HAVE_MPI
+    EpetraVecCnt(int n, int nloc, MPI_Comm rawComm) :
         Comm(rawComm),
 #else
+    EpetraVecCnt(int n, int nloc, int rawComm) :
         Comm(),
 #endif
         emap(n,nloc,1,Comm),
@@ -53,7 +54,11 @@ public:
         cid(0)
     {}
 
+#ifdef HAVE_MPI
     int new_data(const int n, const int nloc, const MPI_Comm rawComm) {
+#else
+    int new_data(const int n, const int nloc, const int rawComm) {
+#endif
         vec_map[cid]=new EpetraVecCnt(n,nloc,rawComm);
         //vec_map[cid]->Comm.PrintInfo(std::cout);
         cid++;
@@ -137,11 +142,12 @@ public:
     bool b_asy=false;
     int m_rnnz;
 
-    EpetraMatCnt(int n, int nloc, int rnnz, MPI_Comm rawComm) :
 #ifdef HAVE_MPI
+    EpetraMatCnt(int n, int nloc, int rnnz, MPI_Comm rawComm) :
         Comm(rawComm),
 #else
-        //Comm(),
+    EpetraMatCnt(int n, int nloc, int rnnz, int rawComm) :
+        Comm(),
 #endif
         emap(n,nloc,1,Comm),
         emat(new Epetra_CrsMatrix(Copy,emap,rnnz))
@@ -156,7 +162,11 @@ public:
         cid(0)
     {}
 
+#ifdef HAVE_MPI
     int new_data(const int n, const int nloc, const int rnnz, const MPI_Comm rawComm) {
+#else
+    int new_data(const int n, const int nloc, const int rnnz, const int rawComm) {
+#endif
         mat_map[cid]=new EpetraMatCnt(n,nloc,rnnz,rawComm);
         cid++;
         return cid-1;
