@@ -34,7 +34,7 @@
 !>  - initialization/clear routines for ParallelEnvType
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE ParallelEnv
-
+  USE ISO_C_BINDING
   USE IntrType
   USE ExceptionHandler
   USE BLAS
@@ -54,6 +54,7 @@ MODULE ParallelEnv
 #else
   INCLUDE 'mpif.h'
 #endif
+#include "trilinos_interfaces/trilinos_f_interfaces.h"
 
   INTEGER,PARAMETER :: PE_COMM_SELF=MPI_COMM_SELF
   INTEGER,PARAMETER :: PE_COMM_WORLD=MPI_COMM_WORLD
@@ -512,6 +513,9 @@ MODULE ParallelEnv
 #endif
         IF(myPE%rank == 0) myPE%master=.TRUE.
 
+#ifdef MPACT_HAVE_Trilinos
+        CALL MPACT_Trilinos_Init()
+#endif
 #ifdef MPACT_HAVE_PETSC
         !check if PETSC has been initialized as well
         CALL PetscInitialized(petsc_isinit,ierr)

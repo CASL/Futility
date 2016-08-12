@@ -18,6 +18,7 @@
 PROGRAM testMatrixTypes
 #include "UnitTest.h"
   USE ISO_FORTRAN_ENV
+  USE ISO_C_BINDING
   USE UnitTest
   USE IntrType
   USE ExceptionHandler
@@ -33,6 +34,7 @@ PROGRAM testMatrixTypes
 #undef IS
   PetscErrorCode  :: ierr
 #endif
+#include "trilinos_interfaces/trilinos_f_interfaces.h"
 
   TYPE(ExceptionHandlerType),TARGET :: e
   TYPE(ParamType) :: pList,optListMat,vecPList
@@ -51,10 +53,14 @@ PROGRAM testMatrixTypes
 
   !Set up vector PL
   CALL vecPList%add('VectorType -> n',1)
+  CALL vecPList%add('VectorType -> nlocal',1)
   CALL vecPList%add('VectorType -> MPI_Comm_ID',PE_COMM_SELF)
 
 #ifdef MPACT_HAVE_PETSC
   CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
+#endif
+#ifdef MPACT_HAVE_Trilinos
+        CALL MPACT_Trilinos_Init()
 #endif
 
   CREATE_TEST('Test Matrix Types')
@@ -79,11 +85,12 @@ PROGRAM testMatrixTypes
     SUBROUTINE testMatrix()
       CLASS(MatrixType),ALLOCATABLE :: thisMatrix
       CLASS(RealVectorType),ALLOCATABLE :: xRealVector,yRealVector
-      CLASS(VectorType),ALLOCATABLE :: xPETScVector,yPETScVector
-      INTEGER(SIK) :: i
+      CLASS(VectorType),ALLOCATABLE :: xPETScVector,yPETScVector,xTrilinosVector,yTrilinosVector
+      INTEGER(SIK) :: i, ncnt, ncnt2
       INTEGER(SIK) :: matsize1,matsize2
       INTEGER(SIK) :: ia_vals(4)
       INTEGER(SIK) :: ja_vals(6)
+      INTEGER(SIK),ALLOCATABLE :: dnnz(:)
       REAL(SRK) :: a_vals(6),x(3),y(3)
       REAL(SRK) :: dummy
       REAL(SRK),ALLOCATABLE :: dummyvec(:)
@@ -92,6 +99,7 @@ PROGRAM testMatrixTypes
       PetscErrorCode  :: ierr
 #endif
       CALL vecPList%set('VectorType -> n',3)
+      CALL vecPList%set('VectorType -> nlocal',3)
       ALLOCATE(SparseMatrixType :: thisMatrix)
       ALLOCATE(RealVectorType :: xRealVector)
       ALLOCATE(RealVectorType :: yRealVector)
@@ -103,7 +111,12 @@ PROGRAM testMatrixTypes
       CALL xPETScVector%init(vecPList)
       CALL yPETScVector%init(vecPlist)
 #endif
-
+#ifdef MPACT_HAVE_Trilinos
+      ALLOCATE(TrilinosVectorType :: xTrilinosVector)
+      ALLOCATE(TrilinosVectorType :: yTrilinosVector)
+      CALL xTrilinosVector%init(vecPList)
+      CALL yTrilinosVector%init(vecPlist)
+#endif
       SELECTTYPE(thisMatrix)
         TYPE IS(SparseMatrixType)
 !Test for sparse matrices
@@ -1050,6 +1063,8 @@ PROGRAM testMatrixTypes
           thisMatrix%isSymmetric=.TRUE.
           ALLOCATE(thisMatrix%a(10,10))
       ENDSELECT
+!  These are unsuported matvecs.  I added an error message in order to catch unsported types so these don't run anymore without throwing an error
+      ncnt=e%getCounter(EXCEPTION_ERROR)
       CALL BLAS_matvec(THISMATRIX=thisMatrix,X=x,Y=y) !Error check unsupported type
       bool = ALL((y .APPROXEQ. (/2._SRK,2._SRK,2._SRK/)))
       ASSERT(bool, 'BLAS_matvec(...) -tridiag')
@@ -1057,6 +1072,9 @@ PROGRAM testMatrixTypes
       CALL yRealVector%get(y)
       bool = ALL((y .APPROXEQ. (/2._SRK,2._SRK,2._SRK/)))
       ASSERT(bool, 'BLAS_matvec(...) -tridiag')
+      ncnt2=e%getCounter(EXCEPTION_ERROR)
+      ASSERT(ncnt2-ncnt==2, 'BLAS_matvec(...) -tridiag expected failures')
+
 
       CALL thisMatrix%clear()
       SELECTTYPE(thisMatrix)
@@ -2169,6 +2187,354 @@ PROGRAM testMatrixTypes
       CALL xPETScVector%clear()
       CALL yPETScVector%clear()
 #endif
+
+!Test for Trilinos matrices (if necessary)
+#ifdef MPACT_HAVE_Trilinos
+
+!Test for Trilinos sparsematrices
+      ALLOCATE(TrilinosMatrixType :: thisMatrix)
+      !check init
+      CALL pList%clear()
+      CALL pList%add('MatrixType->n',10_SNK)
+      CALL pList%add('MatrixType->nlocal',10_SNK)
+      CALL pList%add('MatrixType->isSym',.FALSE.)
+      CALL pList%add('MatrixType->matType',SPARSE)
+      ALLOCATE(dnnz(10))
+      dnnz=10
+      CALL pList%add('MatrixType->dnnz',dnnz)
+      dnnz=0
+      CALL pList%add('MatrixType->onnz',dnnz)
+      CALL pList%validate(pList,optListMat)
+      CALL thisMatrix%init(pList) !n=10, not symmetric (0), sparse (0)
+      SELECTTYPE(thisMatrix)
+        TYPE IS(TrilinosMatrixType)
+          bool = ((thisMatrix%isInit).AND.(thisMatrix%n == 10)) &
+              .AND.(.NOT.thisMatrix%isSymmetric)
+          ASSERT(bool, 'Trilinos%init(...)')
+      ENDSELECT
+      CALL thisMatrix%clear()
+      CALL pList%clear()
+!NOTE that symmetric matrices can't be supported since the matrix needs to be loaded row by row
+      CALL pList%add('MatrixType->n',10_SNK)
+      CALL pList%add('MatrixType->nlocal',10_SNK)
+      CALL pList%add('MatrixType->isSym',.TRUE.)
+      CALL pList%add('MatrixType->matType',SPARSE)
+      dnnz=10
+      CALL pList%add('MatrixType->dnnz',dnnz)
+      dnnz=0
+      CALL pList%add('MatrixType->onnz',dnnz)
+      CALL pList%validate(pList,optListMat)
+      CALL thisMatrix%init(pList) !n=10, symmetric (1), sparse (0)
+      SELECTTYPE(thisMatrix)
+        TYPE IS(TrilinosMatrixType)
+          bool = .NOT. thisMatrix%isInit
+          ASSERT(bool, 'Trilinossparse%init(...)')
+      ENDSELECT
+      CALL thisMatrix%clear()
+      !test with n<1
+      CALL pList%clear()
+      CALL pList%add('MatrixType->n',-1_SNK)
+      CALL pList%add('MatrixType->isSym',.TRUE.)
+      CALL pList%add('MatrixType->matType',SPARSE)
+      CALL pList%validate(pList,optListMat)
+      CALL thisMatrix%init(pList) !expect exception
+      bool = .NOT.thisMatrix%isInit
+      ASSERT(bool, 'Trilinossparse%init(...)')
+      CALL thisMatrix%clear()
+      WRITE(*,*) '  Passed: CALL Trilinossparse%init(...)'
+
+      !check set
+      !test normal use case (unsymmetric and nonsymmetric)
+      !want to build:
+      ![1 2]
+      ![0 3]
+      CALL pList%clear()
+      CALL pList%add('MatrixType->n',2_SNK)
+      CALL pList%add('MatrixType->nlocal',2_SNK)
+      CALL pList%add('MatrixType->isSym',.FALSE.)
+      CALL pList%add('MatrixType->matType',SPARSE)
+      dnnz=2
+      CALL pList%add('MatrixType->dnnz',dnnz)
+      dnnz=0
+      CALL pList%add('MatrixType->onnz',dnnz)
+      CALL pList%validate(pList,optListMat)
+      CALL thisMatrix%init(pList)
+      CALL thisMatrix%set(1,1,1._SRK)
+      CALL thisMatrix%set(1,2,2._SRK)
+      CALL thisMatrix%set(2,2,3._SRK)
+      SELECTTYPE(thisMatrix)
+        TYPE IS(TrilinosMatrixType)
+          CALL thisMatrix%assemble()
+          CALL thisMatrix%get(1,1,dummy)
+          bool = dummy==1._SRK
+          ASSERT(bool, 'Trilinossparse%set(...)')
+          CALL thisMatrix%get(1,2,dummy)
+          bool = dummy==2._SRK
+          ASSERT(bool, 'Trilinossparse%set(...)')
+          CALL thisMatrix%get(2,2,dummy)
+          bool = dummy==3._SRK
+          ASSERT(bool, 'Trilinossparse%set(...)')
+      ENDSELECT
+      CALL thisMatrix%clear()
+      CALL pList%clear()
+      CALL pList%add('MatrixType->n',2_SNK)
+      CALL pList%add('MatrixType->nlocal',2_SNK)
+      CALL pList%add('MatrixType->isSym',.FALSE.)
+      CALL pList%add('MatrixType->mattype',SPARSE)
+      dnnz=2
+      CALL pList%add('MatrixType->dnnz',dnnz)
+      dnnz=0
+      CALL pList%add('MatrixType->onnz',dnnz)
+      CALL pList%validate(pList,optListMat)
+      CALL thisMatrix%init(pList)  ! nonsymmetric (0), sparse (0)
+      CALL thisMatrix%set(1,1,1._SRK)
+      CALL thisMatrix%set(1,2,2._SRK)
+      CALL thisMatrix%set(2,1,2._SRK)
+      CALL thisMatrix%set(2,2,3._SRK)
+      SELECTTYPE(thisMatrix)
+        TYPE IS(TrilinosMatrixType)
+          ! manually assemble
+          CALL thisMatrix%assemble()
+
+          CALL thisMatrix%get(1,1,dummy)
+          bool = dummy==1._SRK
+          ASSERT(bool, 'Trilinossparse%set(...)')
+          CALL thisMatrix%get(1,2,dummy)
+          bool = dummy==2._SRK
+          ASSERT(bool, 'Trilinossparse%set(...)')
+          CALL thisMatrix%get(2,1,dummy)
+          bool = dummy==2._SRK
+          ASSERT(bool, 'Trilinossparse%set(...)')
+          CALL thisMatrix%get(2,2,dummy)
+          bool = dummy==3._SRK
+          ASSERT(bool, 'Trilinossparse%set(...)')
+      ENDSELECT
+
+      !check matrix that hasnt been init, i,j out of bounds
+      CALL thisMatrix%clear()
+      CALL thisMatrix%set(1,1,1._SRK)
+      CALL thisMatrix%clear()
+      CALL thisMatrix%init(pList)
+      CALL thisMatrix%set(-1,1,1._SRK)
+      CALL thisMatrix%set(1,-1,1._SRK)
+      CALL thisMatrix%set(5,1,1._SRK)
+      CALL thisMatrix%set(1,5,1._SRK)
+      !no crash? good
+      WRITE(*,*) '  Passed: CALL Trilinossparse%set(...)'
+
+      CALL thisMatrix%clear()
+      CALL pList%clear()
+      CALL pList%add('MatrixType->n',3_SNK)
+      CALL pList%add('MatrixType->nlocal',3_SNK)
+      CALL pList%add('MatrixType->isSym',.FALSE.)
+      CALL pList%add('MatrixType->mattype',SPARSE)
+      dnnz=3
+      CALL pList%add('MatrixType->dnnz',dnnz)
+      dnnz=0
+      CALL pList%add('MatrixType->onnz',dnnz)
+
+      CALL pList%validate(pList,optListMat)
+      CALL thisMatrix%init(pList)  !symmetric
+      CALL thisMatrix%set(1,1,1._SRK)
+      CALL thisMatrix%set(1,3,2._SRK)
+      CALL thisMatrix%set(2,2,4._SRK)
+      CALL thisMatrix%set(2,3,3._SRK)
+      CALL thisMatrix%set(3,1,4._SRK)
+      CALL thisMatrix%set(3,2,5._SRK)
+      CALL thisMatrix%set(3,3,6._SRK)
+!TODO: these interfaces are not implemented
+!      x=1.0_SRK
+!      y=1.0_SRK
+!      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=x,Y=y)
+!      bool = ALL((y .APPROXEQ. (/4._SRK,8._SRK,16._SRK/)))
+!      ASSERT(bool, 'BLAS_matvec(THISMATRIX=thisMatrix,X=x,Y=y) -Trilsparse')
+!      CALL xRealVector%set(1.0_SRK)
+!      CALL yRealVector%set(1.0_SRK)
+!      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,Y=yRealVector)
+!      CALL yRealVector%get(y)
+!      bool = ALL((y .APPROXEQ. (/4._SRK,8._SRK,16._SRK/)))
+!      ASSERT(bool, 'BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,Y=yRealVector) -Trilsparse')
+      CALL xTrilinosVector%set(1.0_SRK)
+      CALL yTrilinosVector%set(1.0_SRK)
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xTrilinosVector,Y=yTrilinosVector)
+      CALL yTrilinosVector%get(1,y(1))
+      CALL yTrilinosVector%get(2,y(2))
+      CALL yTrilinosVector%get(3,y(3))
+      bool = ALL((y .APPROXEQ. (/4._SRK,8._SRK,16._SRK/)))
+      ASSERT(bool, 'BLAS_matvec(THISMATRIX=thisMatrix,X=TrilVector,Y=yTrilVector) -Trilsparse')
+!TODO: these interfaces are not implemented
+!      y=1.0_SRK
+!      CALL BLAS_matvec(THISMATRIX=thisMatrix,trans='t',X=x,Y=y)
+!      bool = ALL((y .APPROXEQ. (/6._SRK,10._SRK,12._SRK/)))
+!      ASSERT(bool, "BLAS_matvec(THISMATRIX=thisMatrix,trans='t',X=x,Y=y) -Trilsparse")
+!      CALL yRealVector%set(1.0_SRK)
+!      CALL BLAS_matvec(THISMATRIX=thisMatrix,trans='t',X=xRealVector,Y=yRealVector)
+!      CALL yRealVector%get(y)
+!      bool = ALL((y .APPROXEQ. (/6._SRK,10._SRK,12._SRK/)))
+!      ASSERT(bool, 'BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,Y=yRealVector) -Trilsparse')
+      CALL yTrilinosVector%set(1.0_SRK)
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,trans='t',X=xTrilinosVector,Y=yTrilinosVector)
+      CALL yTrilinosVector%get(1,y(1))
+      CALL yTrilinosVector%get(2,y(2))
+      CALL yTrilinosVector%get(3,y(3))
+      bool = ALL((y .APPROXEQ. (/6._SRK,10._SRK,12._SRK/)))
+      ASSERT(bool, "BLAS_matvec(THISMATRIX=thisMatrix,trans='t',X=xTrilVector,Y=yTrilVector) -Trilsparse")
+!TODO: these interfaces are not implemented
+!      y=1.0_SRK
+!      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=x,BETA=2.0_SRK,Y=y)
+!      bool = ALL((y .APPROXEQ. (/5._SRK,9._SRK,17._SRK/)))
+!      ASSERT(bool, 'BLAS_matvec(THISMATRIX=thisMatrix,X=x,BETA=2.0_SRK,Y=y) -Trilsparse')
+!      CALL yRealVector%set(1.0_SRK)
+!      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,BETA=2.0_SRK,Y=yRealVector)
+!      CALL yRealVector%get(y)
+!      bool = ALL((y .APPROXEQ. (/5._SRK,9._SRK,17._SRK/)))
+!      ASSERT(bool, 'BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,BETA=2.0_SRK,Y=yRealVector) -Trilsparse')
+      CALL yTrilinosVector%set(1.0_SRK)
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xTrilinosVector,BETA=2.0_SRK,Y=yTrilinosVector)
+      CALL yTrilinosVector%get(1,y(1))
+      CALL yTrilinosVector%get(2,y(2))
+      CALL yTrilinosVector%get(3,y(3))
+      bool = ALL((y .APPROXEQ. (/5._SRK,9._SRK,17._SRK/)))
+      ASSERT(bool, 'BLAS_matvec(THISMATRIX=thisMatrix,X=xTrilVector,BETA=2.0_SRK,Y=yTrilVector) -Trilsparse')
+!TODO: these interfaces are not implemented
+!      y=1.0_SRK
+!      CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=x,Y=y)
+!      bool = ALL((y .APPROXEQ. (/7._SRK,15._SRK,31._SRK/)))
+!      ASSERT(bool, 'BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=x,Y=y) -Trilsparse')
+!      CALL yRealVector%set(1.0_SRK)
+!      CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xRealVector,Y=yRealVector)
+!      CALL yRealVector%get(y)
+!      bool = ALL((y .APPROXEQ. (/7._SRK,15._SRK,31._SRK/)))
+!      ASSERT(bool, 'BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xRealVector,Y=yRealVector) -Trilsparse')
+      CALL yTrilinosVector%set(1.0_SRK)
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xTrilinosVector,Y=yTrilinosVector)
+      CALL yTrilinosVector%get(1,y(1))
+      CALL yTrilinosVector%get(2,y(2))
+      CALL yTrilinosVector%get(3,y(3))
+      bool = ALL((y .APPROXEQ. (/7._SRK,15._SRK,31._SRK/)))
+      ASSERT(bool, 'BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xTrilVector,Y=yTrilVector) -Trilsparse')
+!TODO: these interfaces are not implemented
+!      y=1.0_SRK
+!      CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=x,BETA=2.0_SRK,Y=y)
+!      bool = ALL((y .APPROXEQ. (/8._SRK,16._SRK,32._SRK/)))
+!      ASSERT(bool, 'BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=x,BETA=2.0_SRK,Y=y) -Trilsparse')
+!      CALL yRealVector%set(1.0_SRK)
+!      CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xRealVector,BETA=2.0_SRK,Y=yRealVector)
+!      CALL yRealVector%get(y)
+!      bool = ALL((y .APPROXEQ. (/8._SRK,16._SRK,32._SRK/)))
+!      ASSERT(bool, 'BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xRealVector,BETA=2.0_SRK,Y=yRealVector)')
+!      FINFO() '-Trilsparse'
+      CALL yTrilinosVector%set(1.0_SRK)
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xTrilinosVector,BETA=2.0_SRK,Y=yTrilinosVector)
+      CALL yTrilinosVector%get(1,y(1))
+      CALL yTrilinosVector%get(2,y(2))
+      CALL yTrilinosVector%get(3,y(3))
+      bool = ALL((y .APPROXEQ. (/8._SRK,16._SRK,32._SRK/)))
+      ASSERT(bool, 'BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xTrilVector,BETA=2.0_SRK,Y=yTrilVector)')
+      FINFO() '-Trilsparse'
+      CALL thisMatrix%clear()
+!TODO: these interfaces are not implemented
+!      y=2._SRK
+!      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=x,BETA=2.0_SRK,Y=y) !Error check uninit
+!      bool = ALL((y .APPROXEQ. (/2._SRK,2._SRK,2._SRK/)))
+!      ASSERT(bool, 'BLAS_matvec(THISMATRIX=thisMatrix,X=x,BETA=2.0_SRK,Y=y) -Trilsparse')
+!      CALL yRealVector%set(2._SRK)
+!      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xRealVector,BETA=2.0_SRK,Y=yRealVector) !Error check uninit
+!      CALL yRealVector%get(y)
+!      bool = ALL((y .APPROXEQ. (/2._SRK,2._SRK,2._SRK/)))
+!      ASSERT(bool, 'BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xRealVector,BETA=2.0_SRK,Y=yRealVector)')
+!      FINFO() '-Trilsparse'
+      CALL yTrilinosVector%set(2._SRK)
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=xTrilinosVector,BETA=2.0_SRK,Y=yTrilinosVector) !Error check uninit
+      CALL yTrilinosVector%get(1,y(1))
+      CALL yTrilinosVector%get(2,y(2))
+      CALL yTrilinosVector%get(3,y(3))
+      bool = ALL((y .APPROXEQ. (/2._SRK,2._SRK,2._SRK/)))
+      ASSERT(bool, 'BLAS_matvec(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xTrilVector,BETA=2.0_SRK,Y=yTrilVector)')
+      FINFO() '-Trilsparse'
+      WRITE(*,*) '  Passed: CALL BLAS_matvec(...) Trilinossparse-matrix'
+
+      !Perform test of functionality of get function
+      ![1 0 2]
+      ![0 0 3]
+      ![4 5 6]
+      CALL thisMatrix%clear()
+      CALL pList%clear()
+      CALL pList%add('MatrixType->n',3_SNK)
+      CALL pList%add('MatrixType->nlocal',3_SNK)
+      CALL pList%add('MatrixType->isSym',.FALSE.)
+      CALL pList%add('MatrixType->mattype',SPARSE)
+      dnnz=3
+      CALL pList%add('MatrixType->dnnz',dnnz)
+      dnnz=0
+      CALL pList%add('MatrixType->onnz',dnnz)
+
+      CALL pList%validate(pList,optListMat)
+      CALL thisMatrix%init(pList) ! non-symmetric (0), sparse (0)
+      SELECTTYPE(thisMatrix)
+        TYPE IS(TrilinosMatrixType)
+          CALL thisMatrix%set(1,1,1._SRK)
+          CALL thisMatrix%set(1,3,2._SRK)
+          CALL thisMatrix%set(2,3,3._SRK)
+          CALL thisMatrix%set(3,1,4._SRK)
+          CALL thisMatrix%set(3,2,5._SRK)
+          CALL thisMatrix%set(3,3,6._SRK)
+          CALL thisMatrix%assemble()
+          IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+          ALLOCATE(dummyvec(9))
+          CALL thisMatrix%get(1,1,dummyvec(1))
+          CALL thisMatrix%get(2,1,dummyvec(2))
+          CALL thisMatrix%get(3,1,dummyvec(3))
+          CALL thisMatrix%get(1,2,dummyvec(4))
+          CALL thisMatrix%get(2,2,dummyvec(5))
+          CALL thisMatrix%get(3,2,dummyvec(6))
+          CALL thisMatrix%get(1,3,dummyvec(7))
+          CALL thisMatrix%get(2,3,dummyvec(8))
+          CALL thisMatrix%get(3,3,dummyvec(9))
+          bool = (dummyvec(1) == 1._SRK) .AND. &
+                 (dummyvec(2) == 0._SRK) .AND. &
+                 (dummyvec(3) == 4._SRK)
+          ASSERT(bool, 'Trilinossparse%get(...)')
+          bool = (dummyvec(4) == 0._SRK) .AND. &
+                 (dummyvec(5) == 0._SRK) .AND. &
+                 (dummyvec(6) == 5._SRK)
+          ASSERT(bool, 'Trilinossparse%get(...)')
+          FINFO() dummyvec(4:6)
+          bool = (dummyvec(7) == 2._SRK) .AND. &
+                 (dummyvec(8) == 3._SRK) .AND. &
+                 (dummyvec(9) == 6._SRK)
+          ASSERT(bool, 'Trilinossparse%get(...)')
+          FINFO() dummyvec(7:9)
+      ENDSELECT
+      !test with out of bounds i,j, make sure no crash.
+      SELECTTYPE(thisMatrix)
+        TYPE IS(TrilinosMatrixType)
+          CALL thisMatrix%get(4,2,dummy)
+          bool = dummy == -1051._SRK
+          ASSERT(bool, 'Trilinossparse%get(...)')
+          CALL thisMatrix%get(-1,2,dummy)
+          bool = dummy==-1051._SRK
+          ASSERT(bool, 'Trilinossparse%get(...)')
+          CALL thisMatrix%get(2,-1,dummy)
+          bool = dummy==-1051._SRK
+          ASSERT(bool, 'Trilinossparse%get(...)')
+      ENDSELECT
+      !test get with uninit, make sure no crash.
+      CALL thisMatrix%clear()
+      SELECTTYPE(thisMatrix)
+        TYPE IS(TrilinosMatrixType)
+          CALL thisMatrix%get(1,1,dummy)
+          bool = dummy == 0.0_SRK
+          ASSERT(bool, 'Trilinossparse%get(...)')
+      ENDSELECT
+      CALL thisMatrix%clear()
+      WRITE(*,*) '  Passed: CALL Trilinossparse%get(...)'
+      DEALLOCATE(thisMatrix)
+
+      CALL xTrilinosVector%clear()
+      CALL yTrilinosVector%clear()
+#endif
+
       CALL xRealVector%clear()
       CALL yRealVector%clear()
     ENDSUBROUTINE testMatrix

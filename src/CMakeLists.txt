@@ -20,11 +20,18 @@ TRIBITS_ADD_LIBRARY(CUtils
           floatingpointchecks.c
     )
 
+TRIBITS_ADD_LIBRARY(TrilinosUtils
+    HEADERS
+      trilinos_interfaces/trilinos_mat_vec.hpp trilinos_interfaces/trilinos_solvers.hpp trilinos_interfaces/trilinos_pc.hpp trilinos_interfaces/trilinos_anderson.hpp
+    SOURCES
+      trilinos_interfaces/trilinos_c_interfaces.cpp
+)
+
 #Library for utility code
 TRIBITS_ADD_LIBRARY(Utils
     HEADERS
-	    UnitTest.h
-	    getSysProcInfo_F.h
+      UnitTest.h
+      getSysProcInfo_F.h
     SOURCES
       UnitTest.f90
       IntrType.f90
@@ -70,9 +77,11 @@ TRIBITS_ADD_LIBRARY(Utils
       PreconditionerTypes.f90
       LinearSolverTypes.f90
       EigenvalueSolverTypes.f90
+      AndersonAcceleration.f90
       StochasticSampling.f90
       Sorting.f90
       ArrayUtils.f90
     DEPLIBS
       CUtils
+      TrilinosUtils
 )

@@ -671,7 +671,7 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_char(thisDA32,rec,dat,iostat,nrec)
+    SUBROUTINE writedat_char(thisDA32,rec,dat,iostat,nrec) 
       CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
       INTEGER(SLK),INTENT(IN) :: rec
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
@@ -680,7 +680,7 @@ MODULE FileType_DA32
       
       INTEGER(SNK) :: tmpdat(NBUF)
       INTEGER(SIK) :: nlen,ioerr,istt,istp
-      INTEGER(SLK) :: n,irec
+      INTEGER(SLK) :: n,irec,nw,tmp1,tmp2,tmp3
       
       ioerr=IOSTAT_END
       irec=rec
@@ -716,7 +716,13 @@ MODULE FileType_DA32
             istp=MIN(nlen,NBUFCH)+istt-1
           ENDIF
 #else
-          !This should ways work, but optimizers are stupid.
+
+#if defined(__GFORTRAN__) && __GNUC__ == 5 && __GNUC_MINOR__ >= 3
+          !(Not?) Suprisingly newer versions of GCC have a different
+          !optimization error. To prevent optimization, flush the error unit
+          FLUSH(ERROR_UNIT)
+#endif
+          !This should always work, but optimizers are stupid.
           n=istp-istt+1
           n=n/CH2REC
           IF(MOD(istp-istt+1,CH2REC) > 0) n=n+1
