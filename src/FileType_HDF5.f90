@@ -5950,36 +5950,13 @@ MODULE FileType_HDF5
 !>
 !> Paths in MPACT use '->' to resolve heirarchy. HSF5 uses '/'.
 !>
-    FUNCTION convertPath(path,HDF5File)
+    FUNCTION convertPath(path) RESULT(newPath)
       CHARACTER(LEN=*),INTENT(IN) :: path
-      CLASS(HDF5FileType),INTENT(INOUT),OPTIONAL :: HDF5File
-      CHARACTER(LEN=LEN(path)+1) :: convertPath
-
-      LOGICAL(SBK) :: lsubdir
-      INTEGER(SIK) :: ipos,ipos2,last,ind,stor,nlinks,cord,error
-
-      convertPath=''
-      lsubdir=.FALSE.
-      IF(PRESENT(HDF5File)) lsubdir=.TRUE.
-      last=LEN_TRIM(path)
-      ! Split the path string by '->'
-      ipos=1
-      DO
-        ind=INDEX(path(ipos:last),'->')
-        ipos2=ind+ipos-1
-        IF(ind > 0) THEN
-          convertPath=TRIM(convertPath)//'/'//path(ipos:ipos2-1)
-          ipos=ipos2+2
-        ELSE
-          convertPath=TRIM(convertPath)//'/'//path(ipos:last)
-          EXIT
-        ENDIF
-        !IF(lsubdir) THEN
-        !  CALL h5gget_info_by_name_f(HDF5File%file_id,convertPath,stor,nlinks,cord,error)
-        !  !Inquiry failed, therefore the group doesn't exist, so we call mkdir
-        !  IF(error == -1) CALL HDF5File%mkdir(convertPath)
-        !ENDIF
-      ENDDO ! Elements in path string
+      CHARACTER(LEN=LEN(path)+1) :: newPath
+      TYPE(StringType) :: tmp
+      tmp=TRIM(path)
+      CALL strrep(tmp,'->','/')
+      newPath='/'//tmp
     ENDFUNCTION convertPath
 #ifdef MPACT_HAVE_HDF5
 !
