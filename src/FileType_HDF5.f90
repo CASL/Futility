@@ -3582,7 +3582,7 @@ MODULE FileType_HDF5
 #ifdef MPACT_HAVE_HDF5
       TYPE(StringType) :: address,address2,path,root
       CLASS(ParamType),POINTER :: nextParam
-      LOGICAL(SBK) :: fdir=.TRUE.
+      LOGICAL(SBK) :: fdir
       INTEGER(SNK) :: is0
       INTEGER(SLK) :: id0
       REAL(SSK) :: rs0
@@ -3604,8 +3604,10 @@ MODULE FileType_HDF5
       INTEGER(SLK),ALLOCATABLE :: id3(:,:,:)
       REAL(SSK),ALLOCATABLE :: rs3(:,:,:)
       REAL(SDK),ALLOCATABLE :: rd3(:,:,:)
+      INTEGER(SIK) :: i
 
 
+      fdir=.TRUE.
       IF(PRESENT(first_dir)) fdir=first_dir
 
       ! Create root directory
@@ -3643,6 +3645,7 @@ MODULE FileType_HDF5
               CALL thisHDF5File%write_b0(CHAR(path),l0)
             CASE('TYPE(StringType)')
               CALL vals%get(CHAR(address),st0)
+              IF(LEN_TRIM(st0) == 0) st0=C_NULL_CHAR
               CALL thisHDF5File%write_st0(CHAR(path),st0)
             CASE('1-D ARRAY REAL(SSK)')
               CALL vals%get(CHAR(address),rs1)
@@ -3661,6 +3664,9 @@ MODULE FileType_HDF5
               CALL thisHDF5File%write_b1(CHAR(path),l1)
             CASE('1-D ARRAY TYPE(StringType)')
               CALL vals%get(CHAR(address),st1)
+              DO i=1,SIZE(st1)
+                IF(LEN_TRIM(st1(i)) == 0) st1(i)=C_NULL_CHAR
+              ENDDO
               CALL thisHDF5File%write_st1_helper(CHAR(path),st1)
             CASE('2-D ARRAY REAL(SSK)')
               CALL vals%get(CHAR(address),rs2)
