@@ -160,9 +160,9 @@ MODULE FileType_HDF5
       !> @copybrief FileType_HDF5::ngrp_HDF5FileType
       !> @copydetails FileType_HDF5::ngrp_HDF5FileType
       PROCEDURE,PASS :: ngrp => ngrp_HDF5FileType
-      !!> @copybrief FileType_HDF5::hasgrp_HDF5FileType
-      !!> @copydetails FileType_HDF5::hasgrp_HDF5FileType
-      !PROCEDURE,PASS :: hasGroup => hasgrp_HDF5FileType
+      !> @copybrief FileType_HDF5::isgrp_HDF5FileType
+      !> @copydetails FileType_HDF5::isgrp_HDF5FileType
+      PROCEDURE,PASS :: isGroup => isgrp_HDF5FileType
       !> @copybrief FileType_HDF5::pathexists_HDF5FileType
       !> @copydetails FileType_HDF5::pathexists_HDF5FileType
       PROCEDURE,PASS :: pathExists => pathexists_HDF5FileType
@@ -812,8 +812,9 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),PARAMETER :: myName='ls_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: path
-      CHARACTER(LEN=*),ALLOCATABLE,INTENT(INOUT) :: objs(:)
+      TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: objs(:)
 #ifdef MPACT_HAVE_HDF5
+      CHARACTER(LEN=1024) :: tmpchar
       TYPE(StringType) :: path2
       INTEGER(HSIZE_T) :: i
       INTEGER(HID_T) :: grp_id,error
@@ -840,12 +841,16 @@ MODULE FileType_HDF5
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - Unable to get group information.')
 
-        IF(ALLOCATED(objs)) DEALLOCATE(objs)
+        IF(ALLOCATED(objs)) THEN
+          !objs=''
+          DEALLOCATE(objs)
+        ENDIF
         ALLOCATE(objs(nlinks))
 
         DO i=0,nlinks-1
           CALL h5lget_name_by_idx_f(thisHDF5File%file_id,CHAR(path2), &
-              H5_INDEX_NAME_F,H5_ITER_INC_F,i,objs(i+1),error)
+              H5_INDEX_NAME_F,H5_ITER_INC_F,i,tmpchar,error)
+          objs(i+1)=TRIM(tmpchar)
           IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - Unable to get object name.')
         ENDDO
@@ -1015,65 +1020,44 @@ MODULE FileType_HDF5
     ENDFUNCTION ngrp_HDF5FileType
 !
 !-------------------------------------------------------------------------------
-!> @brief Returns whether the group exists in the file or not.
+!> @brief Returns whether the group is a group type in the file or not.
 !> @param thisHDF5File the HDF5FileType object to interrogate
-!> @param path the group in the file to check if it exists
-!> @param bool the logical result of whether the specified group exists.
+!> @param path the group in the file to check if it is a group
+!> @param bool the logical result of whether the specified group is a group.
 !>
 !> This function returns a logical corresponding to whether the group specified
-!> by @c path exists or not.  This function assumes a group path, and is not
-!> expected to parse the path to see if there is a dataset at the end that needs
-!> to be removed, although that may be useful functionality at some point.
+!> by @c path is a group or not.  
 !>
-!> So, after reading through the HDF5 manual, there doesn't seem to be a clean
-!> way to interrogate an HDF5 path ("link") object to see to what type of object
-!> it links.  You can check if the object at the end of the link object exists
-!> via h5oexists_by_name_f, but to know whether it is a group, dataset, or
-!> datatype is uglier.  You need the identifier, not the path, so that means
-!> trying to open the group, dataset, or datatype, and enduring the subsequent
-!> errors, which is unsatisfying.  Commenting out for now.
-!>
-!    FUNCTION hasgrp_HDF5FileType(thisHDF5File,path) RESULT(bool)
-!      CHARACTER(LEN=*),PARAMETER :: myName='hasgrp_HDF5FileType'
-!      CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
-!      CHARACTER(LEN=*),INTENT(IN) :: path
-!      LOGICAL(SBK) :: bool
-!#ifdef MPACT_HAVE_HDF5
-!      TYPE(StringType) :: path2
-!      INTEGER(HID_T) :: grp_id,error
-!      INTEGER :: arrow,arrowstt
-!
-!      ! Make sure the object is initialized, and opened
-!      bool=.FALSE.
-!      IF(thisHDF5File%isinit .AND. thisHDF5File%isOpen()) THEN
-!        bool=thisHDF5File%pathExists(path)
-!        IF(bool) THEN
-!
-!        arrow=1
-!        !Loop over all sub groups to make sure they exist
-!        DO WHILE (arrow > -1)
-!          WRITE(*,*) "Before IF block="//path
-!          arrow=INDEX(path(arrow:),'->')-1
-!          WRITE(*,*) "INDEX result=",arrow
-!          IF(arrow == -1) THEN
-!            WRITE(*,*) "in the -1 ="//path
-!            path2=convertPath(path)
-!          ELSE
-!            WRITE(*,*) path(:arrow)
-!            path2=convertPath(path(:arrow))
-!            arrow=arrow+3
-!          ENDIF
-!          CALL h5lexists_f(thisHDF5File%file_id,CHAR(path2),bool,error)
-!          WRITE(*,*) "Result of h5lexists=",CHAR(path2),bool
-!          IF(.NOT.bool) EXIT
-!        ENDDO
-!        !If all subgroups exist, check the last
-!        IF(bool
-!      ENDIF
-!#else
-!      bool=.FALSE.
-!#endif
-!    ENDFUNCTION hasgrp_HDF5FileType
+    FUNCTION isgrp_HDF5FileType(thisHDF5File,path) RESULT(bool)
+      CHARACTER(LEN=*),PARAMETER :: myName='hasgrp_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
+      CHARACTER(LEN=*),INTENT(IN) :: path
+      LOGICAL(SBK) :: bool
+#ifdef MPACT_HAVE_HDF5
+      TYPE(StringType) :: path2
+      INTEGER(HID_T) :: obj_id,error
+      INTEGER(SIK) :: arrow,arrowstt,type
+
+      ! Make sure the object is initialized, and opened
+      bool=.FALSE.
+      IF(thisHDF5File%isinit .AND. thisHDF5File%isOpen()) THEN
+        bool=thisHDF5File%pathExists(path)
+        IF(bool) THEN
+          path2=convertPath(path)
+          !Need to get the object ID from the path...
+          CALL h5oopen_f(thisHDF5File%file_id,CHAR(path2),obj_id,error)
+          IF(error == -1) THEN
+            bool=.FALSE.
+          ELSE
+            CALL h5iget_type_f(obj_id,type,error)
+            bool=(type == H5I_GROUP_F)
+          ENDIF
+        ENDIF
+      ENDIF
+#else
+      bool=.FALSE.
+#endif
+    ENDFUNCTION isgrp_HDF5FileType
 !
 !-------------------------------------------------------------------------------
 !> @brief Returns whether the path exists in the file or not.
@@ -1091,7 +1075,7 @@ MODULE FileType_HDF5
       LOGICAL(SBK) :: bool
 #ifdef MPACT_HAVE_HDF5
       TYPE(StringType) :: path2
-      INTEGER(HID_T) :: grp_id,error
+      INTEGER(HID_T) :: error
       INTEGER :: nextpos,oldpos
 
       ! Make sure the object is initialized, and opened

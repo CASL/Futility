@@ -365,7 +365,7 @@ PROGRAM testHDF5
       ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==41,'%write_c1 %isinit check')
       CALL h5%mkdir('groupI')
       ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==42,'%mkdir %isinit check')
-      CALL h5%ls('groupR',tmpchar)
+      CALL h5%ls('groupR',refST1)
       ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==43,'%ls %isinit check')
 
       CALL h5%fread('groupR->memD0',refD0)
@@ -790,6 +790,12 @@ PROGRAM testHDF5
       ASSERT(bool,'%pathExists(groupC->anotherGroup->moreGroups->lastGroup)')
       ASSERT(h5%pathExists('groupC->memC1'),'%pathExists(groupC->memC1)')
 
+      COMPONENT_TEST('%isgrp')
+      ASSERT(h5%isGroup('groupC'),'/groupC')
+      ASSERT(.NOT.h5%isGroup('groupC->memC1'),'/groupC/memC1')
+      ASSERT(h5%isGroup('groupC->anotherGroup'),'/groupC/anotherGroup')
+
+
       !Check for invalid paths
       ASSERT(.NOT.h5%pathExists('groupBlah'),'%pathExists(groupBlah)')
       ASSERT(.NOT.h5%pathExists('groupC->blahGroup'),'%pathExists(groupC->blahGroup)')
@@ -1132,7 +1138,7 @@ PROGRAM testHDF5
       CALL h5%fopen()
       !CALL h5%e%setQuietMode('.FALSE.')
 
-      CALL h5%ls('groupR',sets)
+      CALL h5%ls('groupR',testST1)
       DO i=1,SIZE(sets)
         ASSERT(TRIM(refsets(i))==TRIM(sets(i)),refsets(i)//' List Failure')
       ENDDO
