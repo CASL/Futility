@@ -1128,7 +1128,6 @@ PROGRAM testHDF5
       LOGICAL(SBK) :: testB0
       CHARACTER(LEN=32) :: testC1
       TYPE(StringType) :: testST0
-      CHARACTER(LEN=80),ALLOCATABLE :: sets(:)
       INTEGER(SIK) :: i,j,k
       LOGICAL(SBK) :: checkread
       testDP4 => NULL()
@@ -1139,8 +1138,8 @@ PROGRAM testHDF5
       !CALL h5%e%setQuietMode('.FALSE.')
 
       CALL h5%ls('groupR',testST1)
-      DO i=1,SIZE(sets)
-        ASSERT(TRIM(refsets(i))==TRIM(sets(i)),refsets(i)//' List Failure')
+      DO i=1,SIZE(testST1)
+        ASSERT(TRIM(refsets(i))==TRIM(testST1(i)),refsets(i)//' List Failure')
       ENDDO
 
       COMPONENT_TEST('%fread values')
