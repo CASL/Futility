@@ -1130,7 +1130,7 @@ PROGRAM testHDF5
         ASSERT(TRIM(refsets(i))==TRIM(sets(i)),refsets(i)//' List Failure')
       ENDDO
 
-      SET_PREFIX("hdf5%read()")
+      COMPONENT_TEST('%fread values')
       ! Read a dataset (real-1)
       CALL h5%fread('groupR->memD0',testD0)
       ASSERT(testD0==refD0,'D0 Read Failure')

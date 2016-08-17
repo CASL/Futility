@@ -1126,7 +1126,7 @@ MODULE FileType_HDF5
 #ifdef MPACT_HAVE_HDF5
       CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(1) :: ldims,gdims,offset,cnt
-      INTEGER(HID_T),PARAMETER :: rank=1
+      INTEGER(HID_T),PARAMETER :: rank=0
 
       INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
       INTEGER(SIK) :: dim
@@ -1565,7 +1565,7 @@ MODULE FileType_HDF5
 #ifdef MPACT_HAVE_HDF5
       CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(1) :: ldims,gdims,offset,cnt
-      INTEGER(HID_T),PARAMETER :: rank=1
+      INTEGER(HID_T),PARAMETER :: rank=0
 
       INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
 
@@ -2003,7 +2003,7 @@ MODULE FileType_HDF5
       CHARACTER :: charvals
       CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(1) :: ldims,gdims,offset,cnt
-      INTEGER(HID_T),PARAMETER :: rank=1
+      INTEGER(HID_T),PARAMETER :: rank=0
 
       INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
 
@@ -2236,7 +2236,7 @@ MODULE FileType_HDF5
 #ifdef MPACT_HAVE_HDF5
       CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(1) :: ldims,gdims,offset,cnt
-      INTEGER(HID_T),PARAMETER :: rank=1
+      INTEGER(HID_T),PARAMETER :: rank=0
 
       INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
 
@@ -3666,7 +3666,7 @@ MODULE FileType_HDF5
 #ifdef MPACT_HAVE_HDF5
       CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
-      INTEGER(HID_T),PARAMETER :: rank=1
+      INTEGER(HID_T),PARAMETER :: rank=0
 
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
@@ -4043,7 +4043,7 @@ MODULE FileType_HDF5
 #ifdef MPACT_HAVE_HDF5
       CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
-      INTEGER(HID_T),PARAMETER :: rank=1
+      INTEGER(HID_T),PARAMETER :: rank=0
 
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
@@ -4377,7 +4377,7 @@ MODULE FileType_HDF5
 #ifdef MPACT_HAVE_HDF5
       CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
-      INTEGER(HID_T),PARAMETER :: rank=1
+      INTEGER(HID_T),PARAMETER :: rank=0
 
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
@@ -4714,7 +4714,7 @@ MODULE FileType_HDF5
       REAL(SDK) :: valst
       CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
-      INTEGER(HID_T),PARAMETER :: rank=1
+      INTEGER(HID_T),PARAMETER :: rank=0
 
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
@@ -5103,7 +5103,7 @@ MODULE FileType_HDF5
       CHARACTER(LEN=1) :: valsc
       CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
-      INTEGER(HID_T),PARAMETER :: rank=1
+      INTEGER(HID_T),PARAMETER :: rank=0
 
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
@@ -5307,7 +5307,7 @@ MODULE FileType_HDF5
       CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER :: i
       INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
-      INTEGER(HID_T),PARAMETER :: rank=1
+      INTEGER(HID_T),PARAMETER :: rank=0
 
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
@@ -5992,31 +5992,40 @@ MODULE FileType_HDF5
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - Could not create parameter list.')
 
-        ! Create the dataspace
-        ! Global dataspace
-        CALL h5screate_simple_f(rank,gdims,gspace_id,error)
-        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create dataspace.')
-
-        ! Local dataspace
-        CALL h5screate_simple_f(rank,ldims,dspace_id,error)
-        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create dataspace.')
-
-        ! Setup the DSpace creation property list to use ZLIB compression
-        ! (requires chunking).
-        !
-        ! Do not compress on scalar data sets.
-        IF(thisHDF5File%hasCompression .AND. &
-          .NOT.(rank == 1 .AND. gdims(1) == 1)) THEN
-
-          !Compute optimal chunk size and specify in property list.
-          CALL compute_chunk_size(gdims,cdims)
-          CALL h5pset_chunk_f(plist_id,rank,cdims,error)
-
-          !Do not presently support user defined compression levels, just level 5
-          !5 seems like a good trade-off of speed vs. compression ratio.
-          CALL h5pset_deflate_f(plist_id,5,error)
+        IF(rank == 0) THEN
+          CALL h5screate_f(H5S_SCALAR_F,gspace_id,error)
+          IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+            ' - Could not create scalar dataspace.')
+          CALL h5screate_f(H5S_SCALAR_F,dspace_id,error)
+          IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+            ' - Could not create scalar dataspace.')
+        ELSE
+          ! Create the dataspace
+          ! Global dataspace
+          CALL h5screate_simple_f(rank,gdims,gspace_id,error)
+          IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+            ' - Could not create dataspace.')
+  
+          ! Local dataspace
+          CALL h5screate_simple_f(rank,ldims,dspace_id,error)
+          IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+            ' - Could not create dataspace.')
+          
+          ! Setup the DSpace creation property list to use ZLIB compression
+          ! (requires chunking).
+          !
+          ! Do not compress on scalar data sets.
+          IF(thisHDF5File%hasCompression .AND. &
+            .NOT.(rank == 1 .AND. gdims(1) == 1)) THEN
+  
+            !Compute optimal chunk size and specify in property list.
+            CALL compute_chunk_size(gdims,cdims)
+            CALL h5pset_chunk_f(plist_id,rank,cdims,error)
+  
+            !Do not presently support user defined compression levels, just level 5
+            !5 seems like a good trade-off of speed vs. compression ratio.
+            CALL h5pset_deflate_f(plist_id,5,error)
+          ENDIF
         ENDIF
 
         ! Create the dataset
@@ -6118,6 +6127,7 @@ MODULE FileType_HDF5
 
       INTEGER(HID_T) :: ndims
       INTEGER(HSIZE_T) :: maxdims(rank)
+      INTEGER :: dtype
 
       error=0
       ! Make sure the object is initialized
@@ -6143,14 +6153,18 @@ MODULE FileType_HDF5
           ' - Failed to obtain the dataspace.')
 
         ! Make sure the rank is right
-        CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
-        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Failed to retrieve number of dataspace dimensions.')
-        IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Using wrong read function for rank.')
-        CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
-        IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Failed to retrieve dataspace dimensions.')
+        IF(rank > 0) THEN
+          CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+          IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+            ' - Failed to retrieve number of dataspace dimensions.')
+          IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+            ' - Using wrong read function for rank.')
+          CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
+          IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+            ' - Failed to retrieve dataspace dimensions.')
+        ELSE
+          dims=1
+        ENDIF
       ENDIF
     ENDSUBROUTINE preRead
 !
