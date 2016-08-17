@@ -10,6 +10,8 @@
 #include "Epetra_SerialComm.h"
 #endif
 #include "Epetra_Map.h"
+#include "Epetra_Import.h"
+#include "Epetra_DistObject.h"
 #include "Epetra_Vector.h"
 #include "Epetra_CrsMatrix.h"
 #include "EpetraExt_VectorOut.h"
@@ -26,7 +28,10 @@ public:
     Epetra_SerialComm Comm;
 #endif
     Epetra_Map emap;
+    Teuchos::RCP<Epetra_Map> distMap;
     Teuchos::RCP<Epetra_Vector> evec;
+    Teuchos::RCP<Epetra_Import> importer;
+    bool havedistMap;
 
 #ifdef HAVE_MPI
     EpetraVecCnt(int n, int nloc, MPI_Comm rawComm) :
@@ -39,12 +44,14 @@ public:
         evec(new Epetra_Vector(emap))
     {
         evec->PutScalar(0.);
+        havedistMap=false;
     }
 
     double &operator[](int i){ return (*evec)[i];}
 
     ~EpetraVecCnt(){
         evec = Teuchos::null;
+        distMap = Teuchos::null;
     }
 };
 
@@ -65,6 +72,12 @@ public:
         return cid-1;
     }
 
+    int define_map_data(const int id, const int nloc, const int *gid){
+        vec_map[id]->distMap=Teuchos::rcp(new Epetra_Map(vec_map[id]->evec->GlobalLength(),nloc,gid,1,vec_map[id]->Comm));
+        vec_map[id]->importer=Teuchos::rcp(new Epetra_Import(*(vec_map[id]->distMap),vec_map[id]->emap));
+        vec_map[id]->havedistMap=true;
+    }
+
     int delete_data(const int id){
         delete vec_map[id];
         vec_map.erase(id);
@@ -80,12 +93,24 @@ public:
     }
 
     int get_data(const int id, const int i, double &val) {
-        int lid=vec_map[id]->emap.LID(i);
-        if(lid>=0){
-            val = (*vec_map[id])[lid];
-            return 0;
+        if(vec_map[id]->havedistMap){
+            Epetra_Vector tmp=Epetra_Vector(*(vec_map[id]->distMap));
+            tmp.Import(*(vec_map[id]->evec),*(vec_map[id]->importer),Insert);
+            int lid=vec_map[id]->distMap->LID(i);
+            if(lid>=0){
+                val = tmp[lid];
+                return 0;
+            }
+            else return lid;
         }
-        else return lid;
+        else{
+            int lid=vec_map[id]->emap.LID(i);
+            if(lid>=0){
+                val = (*vec_map[id])[lid];
+                return 0;
+            }
+            else return lid;
+        }
     }
 
     int copy_data(const int id, const int idfrom) {
