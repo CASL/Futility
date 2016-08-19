@@ -4,7 +4,6 @@ PROGRAM test_interfaces
 
 #ifdef HAVE_MPI
   INCLUDE 'mpif.h'
-#endif
 #include "trilinos_f_interfaces.h"
 
   INTEGER :: mpierr
@@ -14,7 +13,7 @@ PROGRAM test_interfaces
   INTEGER :: nlocal
   INTEGER :: xid, i
   INTEGER,ALLOCATABLE :: gids(:)
-  REAL*8 :: tmp
+  REAL(8) :: tmp
 
   CALL MPI_Init(mpierr)
   CALL MPI_Comm_size(MPI_COMM_WORLD,nproc,mpierr)
@@ -65,4 +64,5 @@ PROGRAM test_interfaces
 
   CALL MPACT_Trilinos_Finalize()
   CALL MPI_Finalize(mpierr)
+#endif
 ENDPROGRAM test_interfaces
