@@ -60,6 +60,11 @@ extern "C" void ForPETRA_VecInit( int &id, const int n, const int nlocal, const 
 #endif
 }
 
+extern "C" void ForPETRA_VecSetImportMap(const int id, const int n, const int *gids) {
+    int ierr = evec->define_map_data(id,n,gids);
+    assert(ierr==0);
+}
+
 extern "C" void ForPETRA_VecDestroy(const int id) {
     evec->delete_data(id);
 }
@@ -74,9 +79,13 @@ extern "C" void ForPETRA_VecSetAll(const int id, const double val) {
     assert(ierr==0);
 }
 
+extern "C" void ForPETRA_VecTransfer(const int id) {
+    evec->transfer_data(id);
+}
+
 extern "C" void ForPETRA_VecGet(const int id, const int i, double &val) {
     int ierr = evec->get_data(id,i,val);
-    assert(ierr==0);
+    //assert(ierr==0);
 }
 
 extern "C" void ForPETRA_VecCopy(const int id, const int idfrom) {

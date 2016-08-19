@@ -28,9 +28,10 @@ public:
     Epetra_SerialComm Comm;
 #endif
     Epetra_Map emap;
-    Teuchos::RCP<Epetra_Map> distMap;
+    Teuchos::RCP<Epetra_BlockMap> distMap;
     Teuchos::RCP<Epetra_Vector> evec;
     Teuchos::RCP<Epetra_Import> importer;
+    Teuchos::RCP<Epetra_Vector> distvec;
     bool havedistMap;
 
 #ifdef HAVE_MPI
@@ -73,9 +74,11 @@ public:
     }
 
     int define_map_data(const int id, const int nloc, const int *gid){
-        vec_map[id]->distMap=Teuchos::rcp(new Epetra_Map(vec_map[id]->evec->GlobalLength(),nloc,gid,1,vec_map[id]->Comm));
+        vec_map[id]->distMap=Teuchos::rcp(new Epetra_Map(-1,nloc,gid,1,vec_map[id]->Comm));
         vec_map[id]->importer=Teuchos::rcp(new Epetra_Import(*(vec_map[id]->distMap),vec_map[id]->emap));
+        vec_map[id]->distvec=Teuchos::rcp(new Epetra_Vector(*(vec_map[id]->distMap)));
         vec_map[id]->havedistMap=true;
+        return 0;
     }
 
     int delete_data(const int id){
@@ -92,13 +95,15 @@ public:
         return vec_map[id]->evec->PutScalar(val);
     }
 
+    int transfer_data(const int id) {
+        return vec_map[id]->distvec->Import(*(vec_map[id]->evec),*(vec_map[id]->importer),Insert);
+    }
+
     int get_data(const int id, const int i, double &val) {
         if(vec_map[id]->havedistMap){
-            Epetra_Vector tmp=Epetra_Vector(*(vec_map[id]->distMap));
-            tmp.Import(*(vec_map[id]->evec),*(vec_map[id]->importer),Insert);
             int lid=vec_map[id]->distMap->LID(i);
             if(lid>=0){
-                val = tmp[lid];
+                val = (*(vec_map[id]->distvec))[lid];
                 return 0;
             }
             else return lid;

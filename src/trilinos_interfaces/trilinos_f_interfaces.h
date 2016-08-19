@@ -17,6 +17,13 @@
       INTEGER(C_INT),INTENT(IN),VALUE :: comm
     ENDSUBROUTINE
 
+    SUBROUTINE ForPETRA_VecSetImportMap(id,n,gids) bind(C,NAME="ForPETRA_VecSetImportMap")
+      IMPORT :: C_INT
+      INTEGER(C_INT),INTENT(IN),VALUE        :: id
+      INTEGER(C_INT),INTENT(IN),VALUE        :: n
+      INTEGER(C_INT),DIMENSION(*),INTENT(IN) :: gids
+    ENDSUBROUTINE
+
     SUBROUTINE ForPETRA_VecDestroy(id) bind(C,NAME="ForPETRA_VecDestroy")
       IMPORT :: C_INT
       INTEGER(C_INT),INTENT(IN),VALUE :: id
@@ -33,6 +40,11 @@
       IMPORT :: C_INT,C_DOUBLE
       INTEGER(C_INT),INTENT(IN),VALUE  :: id
       REAL(C_DOUBLE),INTENT(IN),VALUE  :: val
+    ENDSUBROUTINE
+
+    SUBROUTINE ForPETRA_VecTransfer(id) bind(C,NAME="ForPETRA_VecTransfer")
+      IMPORT :: C_INT
+      INTEGER(C_INT),INTENT(IN),VALUE :: id
     ENDSUBROUTINE
 
     SUBROUTINE ForPETRA_VecGet(id,i,val) bind(C,NAME="ForPETRA_VecGet")
