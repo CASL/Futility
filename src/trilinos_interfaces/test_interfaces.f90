@@ -3,6 +3,7 @@ PROGRAM test_interfaces
   IMPLICIT NONE
 
 #ifdef HAVE_MPI
+#ifdef MPACT_HAVE_TRILINOS
   INCLUDE 'mpif.h'
 #include "trilinos_f_interfaces.h"
 
@@ -64,5 +65,6 @@ PROGRAM test_interfaces
 
   CALL MPACT_Trilinos_Finalize()
   CALL MPI_Finalize(mpierr)
+#endif
 #endif
 ENDPROGRAM test_interfaces
