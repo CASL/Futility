@@ -85,7 +85,7 @@ extern "C" void ForPETRA_VecTransfer(const int id) {
 
 extern "C" void ForPETRA_VecGet(const int id, const int i, double &val) {
     int ierr = evec->get_data(id,i,val);
-    //assert(ierr==0);
+    assert(ierr==0);
 }
 
 extern "C" void ForPETRA_VecCopy(const int id, const int idfrom) {

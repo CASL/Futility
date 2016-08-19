@@ -28,7 +28,7 @@ public:
     Epetra_SerialComm Comm;
 #endif
     Epetra_Map emap;
-    Teuchos::RCP<Epetra_BlockMap> distMap;
+    Teuchos::RCP<Epetra_Map> distMap;
     Teuchos::RCP<Epetra_Vector> evec;
     Teuchos::RCP<Epetra_Import> importer;
     Teuchos::RCP<Epetra_Vector> distvec;
