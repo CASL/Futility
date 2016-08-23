@@ -1998,7 +1998,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),PARAMETER :: myName='getString_ParamType_a1'
       CLASS(ParamType),TARGET,INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
-      TYPE(StringType),ALLOCATABLE,INTENT(OUT) :: string(:)
+      TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: string(:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: sskfmt
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: sdkfmt
       CLASS(ParamType),POINTER :: param
@@ -2073,7 +2073,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),PARAMETER :: myName='getString_ParamType_a2'
       CLASS(ParamType),TARGET,INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
-      TYPE(StringType),ALLOCATABLE,INTENT(OUT) :: string(:,:)
+      TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: string(:,:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: sskfmt
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: sdkfmt
       CLASS(ParamType),POINTER :: param
@@ -2158,7 +2158,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),PARAMETER :: myName='getString_ParamType_a3'
       CLASS(ParamType),TARGET,INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
-      TYPE(StringType),ALLOCATABLE,INTENT(OUT) :: string(:,:,:)
+      TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: string(:,:,:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: sskfmt
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: sdkfmt
       CLASS(ParamType),POINTER :: param
