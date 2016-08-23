@@ -1267,7 +1267,7 @@ MODULE IO_Strings
       TYPE(StringType),INTENT(IN) :: valstr
       TYPE(StringType),INTENT(INOUT) :: fmtstr
 
-      CHARACTER(LEN=32) :: tmpchar
+      CHARACTER(LEN=32) :: tmpchar,testChar
       INTEGER(SIK) :: w,d,e,ioerr
       REAL(SRK) :: tmpval
       TYPE(StringType) :: vstr
@@ -1293,10 +1293,12 @@ MODULE IO_Strings
             e=1
             w=w+1
           ENDIF
-          fmtstr='es'
-          WRITE(tmpchar,*) w; fmtstr=fmtstr//TRIM(ADJUSTL(tmpchar));
-          WRITE(tmpchar,*) d; fmtstr=fmtstr//'.'//TRIM(ADJUSTL(tmpchar));
-          WRITE(tmpchar,*) e; fmtstr=fmtstr//'e'//TRIM(ADJUSTL(tmpchar));
+          IF(e > 0) THEN !This accounts for stupid intel for case "3.2e"
+            fmtstr='es'
+            WRITE(tmpchar,*) w; fmtstr=fmtstr//TRIM(ADJUSTL(tmpchar));
+            WRITE(tmpchar,*) d; fmtstr=fmtstr//'.'//TRIM(ADJUSTL(tmpchar));
+            WRITE(tmpchar,*) e; fmtstr=fmtstr//'e'//TRIM(ADJUSTL(tmpchar));
+          ENDIF
         ELSE
           IF(INDEX(vstr,'.') > 0) THEN
             d=w-INDEX(vstr,'.')
@@ -1307,7 +1309,6 @@ MODULE IO_Strings
           WRITE(tmpchar,*) w; fmtstr=fmtstr//TRIM(ADJUSTL(tmpchar));
           WRITE(tmpchar,*) d; fmtstr=fmtstr//'.'//TRIM(ADJUSTL(tmpchar));
         ENDIF
-
       ENDIF
     ENDSUBROUTINE getRealFormat_str_str
 !
