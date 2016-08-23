@@ -1371,7 +1371,7 @@ MODULE ParameterLists
       CLASS(ParamType),POINTER,INTENT(INOUT) :: param
 
       INTEGER(SIK) :: i,istt
-      CLASS(ParamType),POINTER :: aParam,nextParam
+      CLASS(ParamType),POINTER :: aParam,nextParam,tmpPtr
 
       nextParam => NULL()
       IF(LEN_TRIM(addr) > 0) THEN
@@ -1382,7 +1382,8 @@ MODULE ParameterLists
             IF(ALLOCATED(aParam%pList)) THEN
               istt=1
               DO i=1,SIZE(aParam%pList)
-                IF(ASSOCIATED(param,aParam%pList(i)%pdat)) THEN
+                tmpPtr => aParam%pList(i)%pdat
+                IF(ASSOCIATED(tmpPtr,param)) THEN
                   istt=i+1
                   EXIT
                 ENDIF
@@ -1399,9 +1400,11 @@ MODULE ParameterLists
       ELSE
         SELECTTYPE(p => thisParam)
           TYPE IS(ParamType_List)
-            IF(.NOT.ASSOCIATED(param,thisParam)) nextParam => thisParam
+             tmpPtr => thisParam
+            IF(.NOT.ASSOCIATED(tmpPtr,param)) nextParam => thisParam
           CLASS DEFAULT
-            IF(.NOT.ASSOCIATED(param,thisParam%pdat)) THEN
+            tmpPtr => thisParam%pdat
+            IF(.NOT.ASSOCIATED(tmpPtr,param)) THEN
               SELECTTYPE(pdat => thisParam%pdat); TYPE IS(ParamType_List)
                 nextParam => thisParam%pdat
               ENDSELECT
