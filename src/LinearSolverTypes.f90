@@ -316,6 +316,15 @@ MODULE LinearSolverTypes
       CALL validParams%validate(LinearSolverType_reqParams)
 
       !Pull LS data from the parameter list
+      TPLType=-1
+      solverMethod=-1
+      MPI_Comm_ID=-1
+      numberOMP=-1
+      matType=-1
+      pciters=-1
+      pcsetup=-1
+      PreCondType=''
+      timerName=''
       CALL validParams%get('LinearSolverType->TPLType',TPLType)
       CALL validParams%get('LinearSolverType->solverMethod',solverMethod)
       CALL validParams%get('LinearSolverType->MPI_Comm_ID',MPI_Comm_ID)
