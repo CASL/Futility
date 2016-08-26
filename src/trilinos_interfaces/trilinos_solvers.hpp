@@ -80,8 +80,8 @@ public:
     }
 
     int setConvCrit_data(const int id, const double tol, const int maxit) {
-        //anasazi_map[id].anasazi_db.set("Convergence Tolerance", tol);
-        //anasazi_map[id].anasazi_db.set("Maximum Restarts", maxit);
+        anasazi_map[id].anasazi_db.set("Convergence Tolerance", tol);
+        anasazi_map[id].anasazi_db.set("Maximum Restarts", maxit);
         return 0;
     }
 
