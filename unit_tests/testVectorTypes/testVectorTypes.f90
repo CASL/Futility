@@ -2788,8 +2788,7 @@ PROGRAM testVectorTypes
 
     !Test BLAS_asum (absolute value summation)
     CALL xVector%set(1, 5.0_SRK)
-!TODO: in other tests, this is negative but this interface is doing a real sum, not abs right now because the feature is needed
-    CALL xVector%set(2, 2.0_SRK)
+    CALL xVector%set(2,-2.0_SRK)
     CALL xVector%set(3, 7.0_SRK)
     r=0.0_SRK
     r = BLAS_asum(THISVECTOR=xVector,N=xVector%n,INCX=1)

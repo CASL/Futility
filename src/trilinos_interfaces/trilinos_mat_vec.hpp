@@ -128,9 +128,7 @@ public:
     }
 
     int norm1_data(const int id, double val[]) {
-        int ierr = vec_map[id]->evec->MeanValue(val);
-        val[0]*=double(vec_map[id]->evec->GlobalLength());
-        return ierr;
+        return vec_map[id]->evec->Norm1(val);
     }
 
     int norm2_data(const int id, double val[]) {
