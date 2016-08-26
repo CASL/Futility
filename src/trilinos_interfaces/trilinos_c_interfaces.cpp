@@ -280,6 +280,11 @@ extern "C" void Preconditioner_Setup( const int id, const int idM ) {
     //std::cout << (pcst->get_pc(pid))->Label() << std::endl;
 }
 
+extern "C" void Preconditioner_Reset( const int id, const int idM ) {
+    pcst->resetPC_data(id,emat->get_mat(idM));
+    //std::cout << (pcst->get_pc(pid))->Label() << std::endl;
+}
+
 //------------------------------------------------------------------------------
 //Anderson
 //------------------------------------------------------------------------------

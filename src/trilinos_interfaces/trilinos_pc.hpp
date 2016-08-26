@@ -69,6 +69,11 @@ public:
         pc_map.erase(id);
     }
 
+    int resetPC_data(const int id, Teuchos::RCP<Epetra_CrsMatrix> M) {
+        pc_map[id].pc = Teuchos::null;
+        return setupPC_data(id, M);
+    }
+
     int setupPC_data(const int id, Teuchos::RCP<Epetra_CrsMatrix> M) {
         pc_map[id].M=M;
         if(pc_map[id].M->Comm().MyPID()==0) std::cout << "Setting up PC..." << std::endl;
@@ -93,6 +98,7 @@ public:
             pc_map[id].pc = Teuchos::RCP<Epetra_Operator>(
                     new Epetra_InvOperator(ifpack_prec.getRawPtr()) );
             Teuchos::set_extra_data(ifpack_prec,"ifpack_raw_pointer",Teuchos::inOutArg(pc_map[id].pc));
+            Teuchos::set_extra_data(M,"ifpack_mat_raw_pointer",Teuchos::inOutArg(pc_map[id].pc));
         }
         else if(pc_map[id].pc_type == "ML"){
             Teuchos::RCP<ML_Epetra::MultiLevelPreconditioner> ml_prec;
@@ -112,6 +118,7 @@ public:
             pc_map[id].pc = Teuchos::RCP<Epetra_Operator>(
                                     new Epetra_InvOperator(ml_prec.getRawPtr()) );
             Teuchos::set_extra_data(ml_prec,"ml_raw_pointer",Teuchos::inOutArg(pc_map[id].pc));
+            Teuchos::set_extra_data(M,"ml_mat_raw_pointer",Teuchos::inOutArg(pc_map[id].pc));
         }
         if(pc_map[id].M->Comm().MyPID()==0) std::cout << "PC Constructed..." << std::endl;
         return 0;

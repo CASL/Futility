@@ -56,10 +56,10 @@ public:
         //setup parameterlist with defaults
         //anasazi_map[cid].anasazi_db = Teuchos::sublist(db, "Anasazi");
         anasazi_map[cid].anasazi_db.set("Which", std::string("LM"));
-        anasazi_map[cid].anasazi_db.get("Convergence Tolerance",1e-6);
+        anasazi_map[cid].anasazi_db.get("Convergence Tolerance",1e-7);
         anasazi_map[cid].anasazi_db.get("Maximum Subspace Dimension",25);
         anasazi_map[cid].anasazi_db.get("Restart Dimension",5);
-        anasazi_map[cid].anasazi_db.get("Maximum Restarts",100);
+        anasazi_map[cid].anasazi_db.get("Maximum Restarts",50);
         anasazi_map[cid].anasazi_db.get("Initial Guess",std::string("User"));
         anasazi_map[cid].anasazi_db.get("Verbosity",Anasazi::Errors + Anasazi::Warnings);
         // + Anasazi::FinalSummary + Anasazi::TimingDetails
@@ -80,8 +80,8 @@ public:
     }
 
     int setConvCrit_data(const int id, const double tol, const int maxit) {
-        anasazi_map[id].anasazi_db.set("Convergence Tolerance", tol);
-        anasazi_map[id].anasazi_db.set("Maximum Restarts", maxit);
+        //anasazi_map[id].anasazi_db.set("Convergence Tolerance", tol);
+        //anasazi_map[id].anasazi_db.set("Maximum Restarts", maxit);
         return 0;
     }
 
@@ -121,8 +121,9 @@ public:
             solver.getProblem().getSolution();
         Anasazi::Value<double> eval = (solution.Evals)[0];
         anasazi_map[id].keff = eval.realpart;
-        anasazi_map[id].x->Update(1.0,*(solution.Evecs),0.0);
-        //anasazi_map[id].x=Teuchos::rcp((*solution.Evecs)(0));
+        double val[0];
+        solution.Evecs->MeanValue(val);
+        anasazi_map[id].x->Update(1.0/val[0],*(solution.Evecs),0.0);
 
         return 0;
     }

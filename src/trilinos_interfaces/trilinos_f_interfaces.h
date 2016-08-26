@@ -303,6 +303,12 @@
       INTEGER(C_INT),INTENT(IN),VALUE  :: idM
     ENDSUBROUTINE
 
+    SUBROUTINE Preconditioner_Reset(id,idM) bind(C,NAME="Preconditioner_Reset")
+      IMPORT :: C_INT
+      INTEGER(C_INT),INTENT(IN),VALUE  :: id
+      INTEGER(C_INT),INTENT(IN),VALUE  :: idM
+    ENDSUBROUTINE
+
 !-------------------------------------------------------------------------------
 ! Anderson Interfaces
 !-------------------------------------------------------------------------------
