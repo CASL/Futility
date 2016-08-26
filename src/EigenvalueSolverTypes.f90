@@ -815,6 +815,7 @@ MODULE EigenvalueSolverTypes
           IF(solver%setupPC) THEN
             CALL Preconditioner_Setup(solver%pc,B%A)
             solver%setupPC=.FALSE.
+            solver%updatePC=.FALSE.
           ELSEif(solver%updatePC) THEN
             CALL Preconditioner_Reset(solver%pc,B%A)
             solver%updatePC=.FALSE.
