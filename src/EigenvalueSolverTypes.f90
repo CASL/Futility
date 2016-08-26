@@ -105,7 +105,10 @@ MODULE EigenvalueSolverTypes
     REAL(SRK) :: tol
     !> eigenvalue of the system
     REAL(SRK) :: k
-    INTEGER(SIK) :: tmpcnt=0
+    !> update pc
+    LOGICAL(SBK) :: updatePC=.TRUE.
+    !> pc setup
+    LOGICAL(SBK) :: setupPC=.TRUE.
     !> Pointer to the MatrixType A
     CLASS(MatrixType),POINTER :: A => NULL()
     !> Pointer to the MatrixType B
@@ -809,7 +812,13 @@ MODULE EigenvalueSolverTypes
         SELECTTYPE(B=>solver%B); TYPE IS(TrilinosMatrixType)
           IF (.NOT.(A%isAssembled)) CALL A%assemble()
           IF (.NOT.(B%isAssembled)) CALL B%assemble()
-          IF(solver%tmpcnt==0) CALL Preconditioner_Setup(solver%pc,B%A)
+          IF(solver%setupPC) THEN
+            CALL Preconditioner_Setup(solver%pc,B%A)
+            solver%setupPC=.FALSE.
+          ELSEif(solver%updatePC) THEN
+            CALL Preconditioner_Reset(solver%pc,B%A)
+            solver%updatePC=.FALSE.
+          ENDIF
           CALL Anasazi_SetMat(solver%eig,A%A,B%A)
           !IF(solver%tmpcnt==2) THEN
           !  CALL ForPETRA_MatEdit(B%A,"M.mtx"//C_NULL_CHAR);
@@ -817,10 +826,9 @@ MODULE EigenvalueSolverTypes
           !ENDIF
         ENDSELECT
       ENDSELECT
-      solver%tmpcnt=solver%tmpcnt+1
+
       !TODO: set tolerance
       CALL Anasazi_SetPC(solver%eig,solver%pc)
-
       CALL Anasazi_Solve(solver%eig)
       CALL Anasazi_GetEigenvalue(solver%eig,solver%k)
 
