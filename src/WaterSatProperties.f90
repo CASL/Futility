@@ -504,19 +504,21 @@ MODULE WaterSatProperties
 
       INTEGER(SIK) :: it
       REAL(SRK) :: T_local,dT
-    
+
       vrho=-HUGE(vrho)
       IF(initTables) THEN
+        T_local=vrho
         IF(PRESENT(T)) THEN
           T_local=T      
         ELSEIF(PRESENT(P)) THEN
           T_local=WaterSatProperties_GetTemp(P)
         ENDIF
-    
-        it=INT(T_local)
-        dT=T_local-REAL(it,SRK)
-        IF(273 < it .AND. it < 675) &
-          vrho=eostable(RHOV,it+1)*dT-eostable(RHOV,it)*dT+eostable(RHOV,it)
+        IF(T_local /= vrho) THEN
+          it=INT(T_local)
+          dT=T_local-REAL(it,SRK)
+          IF(273 < it .AND. it < 675) &
+            vrho=eostable(RHOV,it+1)*dT-eostable(RHOV,it)*dT+eostable(RHOV,it)
+        ENDIF
       ENDIF
     ENDFUNCTION WaterSatProperties_GetVapDens
 !
@@ -531,16 +533,18 @@ MODULE WaterSatProperties
     
       lrho=-HUGE(lrho)
       IF(initTables) THEN
+        T_local=lrho
         IF(PRESENT(T)) THEN
           T_local=T      
         ELSEIF(PRESENT(P)) THEN
           T_local=WaterSatProperties_GetTemp(P)
         ENDIF
-    
-        it=INT(T_local)
-        dT=T_local-REAL(it,SRK)
-        IF(273 < it .AND. it < 675) &
-          lrho=eostable(RHOL,it+1)*dT-eostable(RHOL,it)*dT+eostable(RHOL,it)
+        IF(T_local /= lrho) THEN
+          it=INT(T_local)
+          dT=T_local-REAL(it,SRK)
+          IF(273 < it .AND. it < 675) &
+            lrho=eostable(RHOL,it+1)*dT-eostable(RHOL,it)*dT+eostable(RHOL,it)
+        ENDIF
       ENDIF
     ENDFUNCTION WaterSatProperties_GetLiqDens
 !
