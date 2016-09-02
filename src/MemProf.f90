@@ -110,10 +110,12 @@ MODULE MemProf
       CLASS(Memory_Profiler),INTENT(INOUT) :: thisMP
       CHARACTER(LEN=*),INTENT(IN) :: name
 
+      CHARACTER(LEN=40)  :: tmpchar
       CHARACTER(LEN=128) :: amesg
       INTEGER(C_LONG_LONG) :: tmpL1, tmpL2
       REAL(SRK) :: mem(1), dmem(1), maxmem(1)
 
+      CALL thisMP%pe%world%barrier()
       CALL getProcMemInfo(tmpL1,tmpL2)
       thisMP%mem_current=REAL(tmpL1,SRK)/(1024.0_SRK*1024.0_SRK)
 
@@ -126,9 +128,12 @@ MODULE MemProf
       mem=mem/REAL(thisMP%pe%world%nproc,SRK)
 
       IF(ASSOCIATED(thisMP%myLog) .AND. thisMP%pe%world%master) THEN
-        WRITE(amesg,'(a,3(f10.3))') 'Memory Use at '//TRIM(name)//':', mem, maxmem, dmem
+        WRITE(tmpchar,'(a)') 'Memory Use at '//TRIM(name)//':'
+        WRITE(amesg,'(a,3(f10.3))') ADJUSTL(tmpchar), mem, maxmem, dmem
         CALL thisMP%myLog%message(TRIM(amesg),.FALSE.,.TRUE.)
       ENDIF
+
+      thisMP%mem_old=thisMP%mem_current
 
     ENDSUBROUTINE edit_MemProf
 !
