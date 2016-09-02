@@ -45,6 +45,7 @@ TRIBITS_ADD_LIBRARY(Utils
       Strings.f90
       Times.f90
       TAU_Stubs.f90
+      MemProf.f90
       BinaryTrees.f90
       MortonOrdering.f90
       Geom_Points.f90
