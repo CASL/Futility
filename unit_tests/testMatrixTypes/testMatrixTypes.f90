@@ -77,6 +77,10 @@ PROGRAM testMatrixTypes
 #ifdef MPACT_HAVE_PETSC
   CALL PetscFinalize(ierr)
 #endif
+#ifdef MPACT_HAVE_Trilinos
+  CALL MPACT_Trilinos_Finalize()
+#endif
+
 !
 !===============================================================================
   CONTAINS

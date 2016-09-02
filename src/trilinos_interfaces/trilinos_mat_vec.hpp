@@ -53,6 +53,8 @@ public:
     ~EpetraVecCnt(){
         evec = Teuchos::null;
         distMap = Teuchos::null;
+        importer = Teuchos::null;
+        distvec = Teuchos::null;
     }
 };
 
@@ -182,6 +184,10 @@ public:
     {
         m_rnnz=rnnz;
     }
+
+    ~EpetraMatCnt(){
+        emat = Teuchos::null;
+    }
 };
 
 class EpetraMatStore {
@@ -205,7 +211,6 @@ public:
         mat_map.erase(id);
         return 0;
     }
-
 
     int reset_data(const int id){
         mat_map[id]->emat=Teuchos::RCP<Epetra_CrsMatrix>(new Epetra_CrsMatrix(Copy,mat_map[id]->emap,mat_map[id]->m_rnnz));

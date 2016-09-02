@@ -1168,6 +1168,7 @@ MODULE VectorTypes
       thisVector%isAssembled=.FALSE.
       thisVector%isCreated=.FALSE.
       thisVector%n=0
+      CALL ForPETRA_VecDestroy(thisVector%b)
       IF(VectorType_Paramsflag) CALL VectorType_Clear_ValidParams()
 #else
       CHARACTER(LEN=*),PARAMETER :: myName='clear_TrilinosVectorType'

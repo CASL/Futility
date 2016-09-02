@@ -927,7 +927,6 @@ MODULE MatrixTypes
 #ifdef MPACT_HAVE_Trilinos
 
       !TODO add routine to clear memory
-      matrix%A=-1
       matrix%isInit=.FALSE.
       matrix%n=0
       matrix%isAssembled=.FALSE.
@@ -937,6 +936,8 @@ MODULE MatrixTypes
       IF(ALLOCATED(matrix%aloc)) DEALLOCATE(matrix%aloc)
       matrix%currow=0
       matrix%ncol=0
+      CALL ForPETRA_MatDestroy(matrix%a)
+      matrix%A=-1
 #else
       CALL eMatrixType%raiseFatalError('Incorrect call to '// &
               modName//'::'//myName//' - Trilinos not enabled.  You will'// &
