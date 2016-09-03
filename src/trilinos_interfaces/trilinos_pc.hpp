@@ -71,6 +71,7 @@ public:
 
     int resetPC_data(const int id, Teuchos::RCP<Epetra_CrsMatrix> M) {
         pc_map[id].pc = Teuchos::null;
+        pc_map[id].M = Teuchos::null;
         return setupPC_data(id, M);
     }
 
