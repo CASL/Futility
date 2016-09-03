@@ -110,7 +110,7 @@ MODULE MemProf
       CLASS(Memory_Profiler),INTENT(INOUT) :: thisMP
       CHARACTER(LEN=*),INTENT(IN) :: name
 
-      CHARACTER(LEN=40)  :: tmpchar
+      CHARACTER(LEN=45)  :: tmpchar
       CHARACTER(LEN=128) :: amesg
       INTEGER(C_LONG_LONG) :: tmpL1, tmpL2
       REAL(SRK) :: mem(1), dmem(1), maxmem(1)
