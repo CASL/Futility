@@ -14,7 +14,6 @@
 !>  - @ref ExceptionHandler "ExceptionHandler": @copybrief ExceptionHandler
 !>  - @ref ParameterLists "ParameterLists": @copybrief ParameterLists
 !>  - @ref XSMesh "XSMesh": @copybrief XSMesh
-!>  - @ref FeedbackSolver "FeedbackSolver": @copybrief FeedbackSolver
 !>
 !> @author Ben Collins
 !>   @date 11/19/2014
@@ -39,12 +38,13 @@ MODULE MemProf
   TYPE :: Memory_Profiler
     !> Initialization status
     LOGICAL(SBK) :: isInit=.FALSE.
-    !>
+    !> Current memory
     REAL(SRK) :: mem_current=0.0_SRK
+    !> Memory last time edit was called
     REAL(SRK) :: mem_old=0.0_SRK
     TYPE(LogFileType),POINTER :: mylog => NULL()
     !> Parallel Environment for the problem
-    TYPE(ParallelEnvType),POINTER :: pe
+    TYPE(ParallelEnvType),POINTER :: pe => NULL()
 !
 !List of type-bound procedures
     CONTAINS
@@ -80,13 +80,15 @@ MODULE MemProf
 
       INTEGER(C_LONG_LONG) :: tmpL1, tmpL2
 
-      thisMP%pe=>pe
-      thisMP%myLog=>myLog
+      IF(ASSOCIATED(myLog)) THEN
+        thisMP%pe=>pe
+        thisMP%myLog=>myLog
 
-      CALL getProcMemInfo(tmpL1,tmpL2)
-      thisMP%mem_old=REAL(tmpL1,SRK)/(1024.0_SRK*1024.0_SRK)
-      thisMP%mem_current=thisMP%mem_old
-      thisMP%isInit=.TRUE.
+        CALL getProcMemInfo(tmpL1,tmpL2)
+        thisMP%mem_old=REAL(tmpL1,SRK)/(1024.0_SRK*1024.0_SRK)
+        thisMP%mem_current=thisMP%mem_old
+        thisMP%isInit=.TRUE.
+      ENDIF
     ENDSUBROUTINE init_MemProf
 !
 !-------------------------------------------------------------------------------
