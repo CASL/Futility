@@ -21,6 +21,7 @@ PROGRAM testVectorTypes
   USE UnitTest
   USE IntrType
   USE ExceptionHandler
+  USE trilinos_interfaces
   USE ParameterLists
   USE ParallelEnv
   USE VectorTypes
@@ -34,7 +35,6 @@ PROGRAM testVectorTypes
   PetscErrorCode  :: ierr
 
 #endif
-#include "trilinos_interfaces/trilinos_f_interfaces.h"
   INTEGER(SIK) :: iverr
   TYPE(ExceptionHandlerType),POINTER :: e
 

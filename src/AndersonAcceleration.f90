@@ -31,17 +31,15 @@
 !>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE AndersonAccelerationTypes
-  USE ISO_C_BINDING
   USE IntrType
   USE BLAS
+  USE trilinos_interfaces
   USE Times
   USE ExceptionHandler
   USE ParameterLists
   USE ParallelEnv
   USE VectorTypes
   IMPLICIT NONE
-
-#include "trilinos_interfaces/trilinos_f_interfaces.h"
 
   PRIVATE
 !

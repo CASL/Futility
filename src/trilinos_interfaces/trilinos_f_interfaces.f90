@@ -1,3 +1,30 @@
+!++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
+!  This manuscript has been authored by UT-Battelle, LLC, under Contract       !
+!  No. DE-AC0500OR22725 with the U.S. Department of Energy. The United States  !
+!  Government retains and the publisher, by accepting the article for          !
+!  publication, acknowledges that the United States Government retains a       !
+!  non-exclusive, paid-up, irrevocable, world-wide license to publish or       !
+!  reproduce the published form of this manuscript, or allow others to do so,  !
+!  for the United States Government purposes.                                  !
+!++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
+!> @brief Module provides an interface to Anderson Acceleration
+!>
+!> Currently supported TPLs include:
+!>  - Trilinos
+!>
+!> @par Module Dependencies
+!>
+!> @par EXAMPLES
+!> @code
+!>
+!> @endcode
+!>
+!> @author Ben Collins
+!>   @date 07/30/2016
+!>
+!++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
+MODULE trilinos_interfaces
+  USE ISO_C_BINDING
   !High level interfaces to setup and free data
   INTERFACE
     SUBROUTINE MPACT_Trilinos_Init() bind(C,NAME="MPACT_Trilinos_Init")
@@ -358,3 +385,4 @@
     ENDSUBROUTINE
 
   ENDINTERFACE
+ENDMODULE trilinos_interfaces

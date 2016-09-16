@@ -69,9 +69,9 @@
 include 'mkl_pardiso.f90'
 #endif
 MODULE LinearSolverTypes
-  USE ISO_C_BINDING
   USE IntrType
   USE BLAS
+  USE trilinos_interfaces
   USE Times
   USE ExceptionHandler
   USE Allocs
@@ -93,7 +93,6 @@ MODULE LinearSolverTypes
 !petscisdef.h defines the keyword IS, and it needs to be reset
 #undef IS
 #endif
-#include "trilinos_interfaces/trilinos_f_interfaces.h"
 
   PRIVATE
 !

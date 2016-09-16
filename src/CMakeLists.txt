@@ -42,6 +42,7 @@ TRIBITS_ADD_LIBRARY(Utils
       BLAS2.f90
       BLAS3.f90
       BLAS.f90
+      trilinos_interfaces/trilinos_f_interfaces.f90
       Strings.f90
       Times.f90
       TAU_Stubs.f90

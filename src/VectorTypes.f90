@@ -46,7 +46,6 @@
 !>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE VectorTypes
-  USE ISO_C_BINDING
   USE IntrType
   USE ExceptionHandler
   USE Allocs
@@ -60,13 +59,13 @@ MODULE VectorTypes
                              BLAS1_nrm2  => BLAS_nrm2,  &
                              BLAS1_scal  => BLAS_scal,  &
                              BLAS1_swap  => BLAS_swap
+  USE trilinos_interfaces
   IMPLICIT NONE
 
 #ifdef MPACT_HAVE_PETSC
 #include <finclude/petsc.h>
 #undef IS
 #endif
-#include "trilinos_interfaces/trilinos_f_interfaces.h"
 
   PRIVATE
 !

@@ -34,10 +34,10 @@
 !>  - initialization/clear routines for ParallelEnvType
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE ParallelEnv
-  USE ISO_C_BINDING
   USE IntrType
   USE ExceptionHandler
   USE BLAS
+  USE trilinos_interfaces
   USE Allocs
 !$ USE OMP_LIB
 
@@ -65,7 +65,6 @@ MODULE ParallelEnv
   INTEGER,PARAMETER :: PE_COMM_NULL=-1
   INTEGER,SAVE :: PE_COMM_DEFAULT=0
 #endif
-#include "trilinos_interfaces/trilinos_f_interfaces.h"
 
   PUBLIC :: PE_COMM_SELF
   PUBLIC :: PE_COMM_WORLD

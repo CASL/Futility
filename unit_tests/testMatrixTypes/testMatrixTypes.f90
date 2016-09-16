@@ -22,6 +22,7 @@ PROGRAM testMatrixTypes
   USE UnitTest
   USE IntrType
   USE ExceptionHandler
+  USE trilinos_interfaces
   USE ParameterLists
   USE ParallelEnv
   USE VectorTypes
@@ -34,7 +35,6 @@ PROGRAM testMatrixTypes
 #undef IS
   PetscErrorCode  :: ierr
 #endif
-#include "trilinos_interfaces/trilinos_f_interfaces.h"
 
   TYPE(ExceptionHandlerType),TARGET :: e
   TYPE(ParamType) :: pList,optListMat,vecPList

@@ -38,9 +38,9 @@
 !>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE EigenvalueSolverTypes
-  USE ISO_C_BINDING
   USE IntrType
   USE BLAS
+  USE trilinos_interfaces
   USE Times
   USE ExceptionHandler
   USE Allocs
@@ -61,9 +61,6 @@ MODULE EigenvalueSolverTypes
 #include <finclude/slepceps.h>
 #endif
 #undef IS
-#endif
-#ifdef MPACT_HAVE_Trilinos
-#include "trilinos_interfaces/trilinos_f_interfaces.h"
 #endif
 
   PRIVATE

@@ -68,12 +68,12 @@
 !>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE MatrixTypes
-  USE ISO_C_BINDING
   USE IntrType
   USE ExceptionHandler
   USE Allocs
   USE BLAS2,           ONLY: BLAS2_matvec => BLAS_matvec
   USE BLAS3,           ONLY: BLAS3_matmult => BLAS_matmat
+  USE trilinos_interfaces
   USE ParameterLists
   USE VectorTypes
   IMPLICIT NONE
@@ -82,7 +82,6 @@ MODULE MatrixTypes
 #include <finclude/petsc.h>
 #undef IS
 #endif
-#include "trilinos_interfaces/trilinos_f_interfaces.h"
 
   PRIVATE
 !
