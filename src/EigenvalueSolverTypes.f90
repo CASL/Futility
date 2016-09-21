@@ -721,9 +721,11 @@ MODULE EigenvalueSolverTypes
       solver%k=0.0_SRK
       NULLIFY(solver%A)
       NULLIFY(solver%B)
+      CALL solver%x_scale%clear()
       IF(solver%X%isInit) CALL solver%X%clear()
 #ifdef MPACT_HAVE_Trilinos
-      !TODO: Need to deallocate memory
+      CALL Preconditioner_Destroy(solver%pc)
+      CALL Anasazi_Destroy(solver%eig)
 #endif
       solver%isInit=.FALSE.
     ENDSUBROUTINE clear_EigenvalueSolverType_Anasazi
@@ -817,6 +819,7 @@ MODULE EigenvalueSolverTypes
             CALL Preconditioner_Reset(solver%pc,B%A)
             solver%updatePC=.FALSE.
           ENDIF
+
           CALL Anasazi_SetMat(solver%eig,A%A,B%A)
           !IF(solver%tmpcnt==2) THEN
           !  CALL ForPETRA_MatEdit(B%A,"M.mtx"//C_NULL_CHAR);
