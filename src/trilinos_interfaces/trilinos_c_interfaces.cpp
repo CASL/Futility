@@ -194,7 +194,7 @@ extern "C" void Anasazi_SetMat( const int id, const int idLHS, const int idRHS) 
 }
 
 extern "C" void Anasazi_SetPC( const int id, const int idpc) {
-    aeig->setPC_data(id,pcst->get_pc(idpc));
+    aeig->setPC_data(id,idpc,pcst->get_pc(idpc));
 }
 
 extern "C" void Anasazi_SetX( const int id, const int idX) {
@@ -206,7 +206,17 @@ extern "C" void Anasazi_SetConvCrit( const int id, const double tol, const int m
 }
 
 extern "C" void Anasazi_Solve( int id) {
-    aeig->solve(id);
+    int ierr = aeig->solve(id);
+    if(ierr>0){
+        //update pc
+        int pcid;
+        Teuchos::RCP<Epetra_CrsMatrix> M;
+        aeig->getPCid_data(id,pcid,M);
+        pcst->resetPC_data(pcid,M);
+        //resolve
+        int ierr = aeig->solve(id);
+    }
+    assert(ierr==0);
 }
 
 extern "C" void Anasazi_GetEigenvalue( const int id, double &k) {

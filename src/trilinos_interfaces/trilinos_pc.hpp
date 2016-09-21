@@ -55,10 +55,11 @@ public:
         else if(pc_map[cid].pc_type == "ML"){
             pc_map[cid].pc_db.get("ML Default Type", std::string("SA"));
             pc_map[cid].pc_db.get("smoother: type", std::string("Gauss-Seidel"));
+            pc_map[cid].pc_db.get("aggregation: type", std::string("Uncoupled"));
             pc_map[cid].pc_db.get("smoother: damping factor", 1.0);
             pc_map[cid].pc_db.get("smoother: sweeps", 3);
             pc_map[cid].pc_db.get("smoother: ifpack overlap", 0);
-            pc_map[cid].pc_db.get("max levels", 4);
+            pc_map[cid].pc_db.get("max levels", 8);
             pc_map[cid].pc_db.get("ML output", 10);
         }
         cid++;
@@ -105,11 +106,8 @@ public:
             Teuchos::RCP<ML_Epetra::MultiLevelPreconditioner> ml_prec;
 
             std::string default_type = pc_map[id].pc_db.get("ML Default Type", std::string("DD"));
-            std::vector<int> az_options(AZ_OPTIONS_SIZE);
-            std::vector<double> az_params(AZ_PARAMS_SIZE);
             bool override = false;
-            ML_Epetra::SetDefaults(default_type, pc_map[id].pc_db, &az_options[0],
-                               &az_params[0],override);
+            ML_Epetra::SetDefaults(default_type, pc_map[id].pc_db, 0, 0,override);
             //pc_map[id].pc_db.get("ML output", 10);
             ml_prec = Teuchos::rcp( new ML_Epetra::MultiLevelPreconditioner(
                                     *(pc_map[id].M), pc_map[id].pc_db ) );

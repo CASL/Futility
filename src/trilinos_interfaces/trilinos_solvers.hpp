@@ -39,6 +39,7 @@ public:
     bool haspc=false;
     double keff;
     int niters;
+    int pc_id;
     Teuchos::RCP<Epetra_Vector> x;
     Teuchos::ParameterList anasazi_db;
     //maybe some other things about a specific solver
@@ -59,10 +60,10 @@ public:
         anasazi_map[cid].anasazi_db.get("Convergence Tolerance",1e-7);
         anasazi_map[cid].anasazi_db.get("Maximum Subspace Dimension",25);
         anasazi_map[cid].anasazi_db.get("Restart Dimension",5);
-        anasazi_map[cid].anasazi_db.get("Maximum Restarts",50);
+        anasazi_map[cid].anasazi_db.get("Maximum Restarts",10);
         anasazi_map[cid].anasazi_db.get("Initial Guess",std::string("User"));
         anasazi_map[cid].anasazi_db.get("Verbosity",Anasazi::Errors + Anasazi::Warnings);
-        // + Anasazi::FinalSummary + Anasazi::TimingDetails
+        // + Anasazi::FinalSummary + Anasazi::TimingDetails + Anasazi::IterationDetails
 
         cid++;
         return cid-1;
@@ -90,8 +91,9 @@ public:
         return 0;
     }
 
-    int setPC_data(const int id, Teuchos::RCP<Epetra_Operator> pc) {
+    int setPC_data(const int id, const int pc_id, Teuchos::RCP<Epetra_Operator> pc) {
         //if(anasazi_map[id].LHS->Comm().MyPID()==0) std::cout << pc->Label() << std::endl;
+        anasazi_map[id].pc_id=pc_id;
         anasazi_map[id].pc=pc;
         anasazi_map[id].haspc=true;
         return 0;
@@ -112,20 +114,20 @@ public:
             problem, anasazi_map[id].anasazi_db);
 
         Anasazi::ReturnType returnval = solver.solve();
-        assert(returnval==0);
 
-        anasazi_map[id].niters=solver.getNumIters();
+        if(returnval==Anasazi::Converged){
+            anasazi_map[id].niters=solver.getNumIters();
 
-        // Extract solution
-        Anasazi::Eigensolution<double,Epetra_MultiVector> solution =
-            solver.getProblem().getSolution();
-        Anasazi::Value<double> eval = (solution.Evals)[0];
-        anasazi_map[id].keff = eval.realpart;
-        double val[0];
-        solution.Evecs->MeanValue(val);
-        anasazi_map[id].x->Update(1.0/val[0],*(solution.Evecs),0.0);
-
-        return 0;
+            // Extract solution
+            Anasazi::Eigensolution<double,Epetra_MultiVector> solution =
+                solver.getProblem().getSolution();
+            Anasazi::Value<double> eval = (solution.Evals)[0];
+            anasazi_map[id].keff = eval.realpart;
+            double val[0];
+            solution.Evecs->MeanValue(val);
+            anasazi_map[id].x->Update(1.0/val[0],*(solution.Evecs),0.0);
+            return 0;
+        } else{ return 1;}
     }
 
     int getEigenvalue_data(const int id,double &keff) {
@@ -149,6 +151,12 @@ public:
         double resids[1];
         rtmp->Norm2(resids);
         resid=resids[0]/denom[0];
+        return 0;
+    }
+
+    int getPCid_data(const int id,int &pcid, Teuchos::RCP<Epetra_CrsMatrix> &M) {
+        pcid=anasazi_map[id].pc_id;
+        M=anasazi_map[id].LHS;
         return 0;
     }
 
