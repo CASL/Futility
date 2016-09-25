@@ -960,6 +960,7 @@ MODULE ArrayUtils
       IF((tmp(1) .APPROXLE. pos) .AND. (pos .APPROXLE. tmp(n))) THEN
         ind=1
         DO WHILE(pos .APPROXGE. tmp(ind))
+          IF(ind == n) EXIT
           ind=ind+1
         ENDDO
         IF(ind > 1) val=tmp(ind-1)
@@ -1011,6 +1012,7 @@ MODULE ArrayUtils
       IF((tmp(1) .APPROXLE. pos) .AND. (pos .APPROXLE. tmp(n))) THEN
         ind=1
         DO WHILE(pos .APPROXGE. tmp(ind))
+          IF(ind == n) EXIT
           ind=ind+1
         ENDDO
         val=tmp(ind)
