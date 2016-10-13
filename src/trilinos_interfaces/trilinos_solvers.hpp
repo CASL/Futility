@@ -60,10 +60,9 @@ public:
         anasazi_map[cid].anasazi_db.get("Convergence Tolerance",1e-7);
         anasazi_map[cid].anasazi_db.get("Maximum Subspace Dimension",25);
         anasazi_map[cid].anasazi_db.get("Restart Dimension",5);
-        anasazi_map[cid].anasazi_db.get("Maximum Restarts",10);
+        anasazi_map[cid].anasazi_db.get("Maximum Restarts",20);
         anasazi_map[cid].anasazi_db.get("Initial Guess",std::string("User"));
-        anasazi_map[cid].anasazi_db.get("Verbosity",Anasazi::Errors + Anasazi::Warnings);
-        // + Anasazi::FinalSummary + Anasazi::TimingDetails + Anasazi::IterationDetails
+        anasazi_map[cid].anasazi_db.get("Verbosity",Anasazi::Errors + Anasazi::Warnings);  // + Anasazi::FinalSummary + Anasazi::TimingDetails + Anasazi::IterationDetails);
 
         cid++;
         return cid-1;

@@ -54,10 +54,11 @@ public:
         }
         else if(pc_map[cid].pc_type == "ML"){
             pc_map[cid].pc_db.get("ML Default Type", std::string("SA"));
-            pc_map[cid].pc_db.get("smoother: type", std::string("Gauss-Seidel"));
+            //pc_map[cid].pc_db.get("smoother: type", std::string("Gauss-Seidel"));
+            pc_map[cid].pc_db.get("smoother: type", std::string("ILU"));
             pc_map[cid].pc_db.get("aggregation: type", std::string("Uncoupled"));
             pc_map[cid].pc_db.get("smoother: damping factor", 1.0);
-            pc_map[cid].pc_db.get("smoother: sweeps", 3);
+            pc_map[cid].pc_db.get("smoother: sweeps", 5);
             pc_map[cid].pc_db.get("smoother: ifpack overlap", 0);
             pc_map[cid].pc_db.get("max levels", 8);
             pc_map[cid].pc_db.get("ML output", 10);
