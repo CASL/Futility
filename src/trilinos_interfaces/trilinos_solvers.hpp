@@ -126,7 +126,21 @@ public:
             solution.Evecs->MeanValue(val);
             anasazi_map[id].x->Update(1.0/val[0],*(solution.Evecs),0.0);
             return 0;
-        } else{ return 1;}
+        }
+        else{
+            //If Anasazi doesn't return, approximate k as x^T Fx/x^M Fx
+            anasazi_map[id].niters=-1;
+            double rhs=1.0;
+            double lhs=1.0;
+            Epetra_Vector tmp=Epetra_Vector(*(anasazi_map[id].x));
+            anasazi_map[id].RHS->Multiply(false,*(anasazi_map[id].x),tmp);
+            tmp.Dot(*(anasazi_map[id].x),&rhs);
+            anasazi_map[id].LHS->Multiply(false,*(anasazi_map[id].x),tmp);
+            tmp.Dot(*(anasazi_map[id].x),&lhs);
+            //LHS*phi = k * RHS * phi
+            anasazi_map[id].keff=lhs/rhs;
+            return 1;
+        }
     }
 
     int getEigenvalue_data(const int id,double &keff) {
