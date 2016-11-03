@@ -816,7 +816,7 @@ MODULE EigenvalueSolverTypes
             solver%setupPC=.FALSE.
             solver%updatePC=.FALSE.
           ELSEif(solver%updatePC) THEN
-            CALL Preconditioner_Reset(solver%pc,B%A)
+            !CALL Preconditioner_Reset(solver%pc,B%A)
             solver%updatePC=.FALSE.
           ENDIF
 
@@ -837,7 +837,7 @@ MODULE EigenvalueSolverTypes
       CALL solver%x_scale%set(0.0_SRK)
       CALL BLAS_matvec(THISMATRIX=solver%A,X=solver%x,Y=solver%x_scale)
       factor=BLAS_asum(solver%x_scale)/REAL(solver%n,SRK)
-      CALL BLAS_scal(THISVECTOR=solver%X,A=1.0_SRK/factor)
+      CALL BLAS_scal(THISVECTOR=solver%X,A=REAL(solver%n,SRK)/factor)
 #endif
     ENDSUBROUTINE solve_EigenvalueSolverType_Anasazi
 !
