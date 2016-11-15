@@ -831,33 +831,34 @@ MODULE FileType_HDF5
           ' - HDF5file '//thisHDF5File%getFileName()// &
            ' is not opened!')
       ELSE
-        path2=convertPath(path)
-
-        CALL h5gopen_f(thisHDF5File%file_id, CHAR(path2), grp_id, error)
-        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Unable to open file.')
-
-        CALL h5gget_info_f(grp_id, store_type, nlinks, max_corder, error)
-        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Unable to get group information.')
-
         IF(ALLOCATED(objs)) THEN
           !objs=''
           DEALLOCATE(objs)
         ENDIF
-        ALLOCATE(objs(nlinks))
-
-        DO i=0,nlinks-1
-          CALL h5lget_name_by_idx_f(thisHDF5File%file_id,CHAR(path2), &
-              H5_INDEX_NAME_F,H5_ITER_INC_F,i,tmpchar,error)
-          objs(i+1)=TRIM(tmpchar)
+        IF(isgrp_HDF5FileType(thisHDF5File,path)) THEN
+          path2=convertPath(path)
+          CALL h5gopen_f(thisHDF5File%file_id, CHAR(path2), grp_id, error)
           IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Unable to get object name.')
-        ENDDO
-
-        CALL h5gclose_f(grp_id, error)
-        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Unable to close group.')
+            ' - Unable to open file.')
+  
+          CALL h5gget_info_f(grp_id, store_type, nlinks, max_corder, error)
+          IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+            ' - Unable to get group information.')
+  
+          ALLOCATE(objs(nlinks))
+  
+          DO i=0,nlinks-1
+            CALL h5lget_name_by_idx_f(thisHDF5File%file_id,CHAR(path2), &
+                H5_INDEX_NAME_F,H5_ITER_INC_F,i,tmpchar,error)
+            objs(i+1)=TRIM(tmpchar)
+            IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+            ' - Unable to get object name.')
+          ENDDO
+  
+          CALL h5gclose_f(grp_id, error)
+          IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+            ' - Unable to close group.')
+        ENDIF
       ENDIF
 #endif
     ENDSUBROUTINE ls_HDF5FileType
