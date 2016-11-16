@@ -1075,6 +1075,7 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),INTENT(IN) :: path
       LOGICAL(SBK) :: bool
 #ifdef MPACT_HAVE_HDF5
+      CHARACTER(LEN=16) :: tmp
       TYPE(StringType) :: path2
       INTEGER(HID_T) :: error
       INTEGER :: nextpos,oldpos
@@ -1084,6 +1085,13 @@ MODULE FileType_HDF5
       IF(thisHDF5File%isinit .AND. thisHDF5File%isOpen()) THEN
         nextpos=1
         oldpos=0
+        tmp=path
+        !If only the root path is passed in, it always exists.
+        IF((LEN_TRIM(tmp) == 1) .AND. (tmp(1:1) == '/')) THEN
+          bool=.TRUE.
+          nextpos=-1
+        ENDIF
+
         !Loop over all sub paths to make sure they exist
         DO WHILE (nextpos > -1)
           nextpos=INDEX(path(nextpos:),'->')-1
