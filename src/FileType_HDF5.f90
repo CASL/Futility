@@ -60,6 +60,12 @@
 !> (07/26/2016) - Yuxuan Liu
 !>   - Added read and write routines for SSK, SDK, SNK and SLK for array
 !>   - ranks up to 7
+!> (11/10/2016) - Dan Jabaay
+!>   - Adding the read_pList routine.
+!>   - Renaming hasGrp to isGrp
+!>   - Changing ls to check to see if the path in question is a group, and if so
+!>     then it returns the list of objects, otherwise it returns a dellocated
+!>     array.
 !> @todo
 !>  - Implement MPI/Parallel HDF5
 !>  - Make sure routines are safe (check for initialized object, etc.)
@@ -450,6 +456,9 @@ MODULE FileType_HDF5
       !> @copybrief FileType_HDF5::read_c1
       !> @copydoc FileType_HDF5::read_c1
       PROCEDURE,PASS,PRIVATE :: read_c1
+      !> @copybrief FileType_HDF5::read_pList
+      !> @copydoc FileType_HDF5::read_pList
+      PROCEDURE,PASS,PRIVATE :: read_pList
       !> Generic typebound interface for all @c read operations
       GENERIC :: fread => read_d1, read_d2, read_d3, read_d4, read_d5, read_d6,&
         read_d7, read_s1, read_s2, read_s3, read_s4, read_s5, read_s6, read_s7,&
@@ -457,7 +466,7 @@ MODULE FileType_HDF5
         read_b2, read_b3, read_st0_helper,read_st0, read_d0, read_s0, read_l0, &
         read_b0, read_st1, read_st1_helper,read_st2, read_st2_helper, read_st3,&
         read_st3_helper, read_n0, read_n1, read_n2, read_n3, read_n4, read_n5, &
-        read_n6, read_n7, read_c1
+        read_n6, read_n7, read_c1, read_pList
       !> Generic typebound interface for pointer-based read operations
       GENERIC :: freadp => read_dp4
   ENDTYPE
@@ -1030,7 +1039,7 @@ MODULE FileType_HDF5
 !> by @c path is a group or not.  
 !>
     FUNCTION isgrp_HDF5FileType(thisHDF5File,path) RESULT(bool)
-      CHARACTER(LEN=*),PARAMETER :: myName='hasgrp_HDF5FileType'
+      CHARACTER(LEN=*),PARAMETER :: myName='isgrp_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: path
       LOGICAL(SBK) :: bool
@@ -6016,6 +6025,268 @@ MODULE FileType_HDF5
       ENDIF
 #endif
     ENDSUBROUTINE read_c1
+!
+!-------------------------------------------------------------------------------
+!> @brief Write a Parameter List object to a group
+!> @param thisHDF5File the HDF5FileType object to write to
+!> @param dsetname group name and path to write to
+!> @param vals data to write to group
+!> @param gdims_in shape of data to write with
+!>
+!> This routine writes a Parameter List object @c vals to a group of name
+!> and path @c dsetname using the shape @c gdims_in, if present.
+!>
+    RECURSIVE SUBROUTINE read_pList(thisHDF5File,dsetname,vals)
+      CHARACTER(LEN=*),PARAMETER :: myName='read_pList_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
+      CHARACTER(LEN=*),INTENT(IN) :: dsetname
+      TYPE(ParamType),INTENT(INOUT) :: vals
+#ifdef MPACT_HAVE_HDF5
+      INTEGER(SIK) :: iobj,i,j,k,error,ndims,dtype_order,mem_len,class_type
+      INTEGER(HID_T) :: dset_id,dspace_id,native_dtype,dtype,base_dtype
+      INTEGER(SIZE_T) :: dtype_prec,dtype_size
+      TYPE(StringType) :: path,baseh5path,h5path,plpath,tmpstr
+      CLASS(ParamType),POINTER :: nextParam
+      CHARACTER(LEN=1024) :: mem_name
+      LOGICAL(SBK) :: l0,isbool
+      LOGICAL(SBK),ALLOCATABLE :: l1(:),l2(:,:),l3(:,:,:)
+      INTEGER(SNK) :: is0
+      INTEGER(SNK),ALLOCATABLE :: is1(:),is2(:,:),is3(:,:,:)
+      INTEGER(SLK) :: id0
+      INTEGER(SLK),ALLOCATABLE :: id1(:),id2(:,:),id3(:,:,:)
+      REAL(SSK) :: rs0
+      REAL(SSK),ALLOCATABLE :: rs1(:),rs2(:,:),rs3(:,:,:)
+      REAL(SDK) :: rd0
+      REAL(SDK),ALLOCATABLE :: rd1(:),rd2(:,:),rd3(:,:,:)
+      TYPE(StringType) :: st0
+      TYPE(StringType),ALLOCATABLE :: st1(:),st2(:,:),st3(:,:,:),lsobjs(:)
+
+      ! Create root directory
+      baseh5path=TRIM(dsetname)
+      CALL strrep(baseh5path,'->','/')
+      baseh5path='/'//baseh5path
+      !Check to make sure there are objects/groups to be read
+      CALL ls_HDF5FileType(thisHDF5File,dsetname,lsobjs)
+      !Then we have a list of parameters to loop over.
+      IF(ALLOCATED(lsobjs)) THEN
+        !Loop over all objects/groups
+        DO iobj=1,SIZE(lsobjs)
+          h5path=TRIM(baseh5path)//'/'//lsobjs(iobj)
+          !Make this bad boy recursive!
+          !Call read_pList if the current object is a group.  Continue until data is reached.
+          IF(isgrp_HDF5FileType(thisHDF5File,CHAR(h5path))) THEN
+            plpath=h5path//REPEAT(' ',nmatchstr(CHAR(h5path),'/'))
+            !Convert back to PL style pathing
+            CALL strrep(plpath,'/','->')
+            !Skip the first arrow that will be there
+            CALL getSubstring(plpath,h5path,3,LEN(plpath))
+            CALL read_pList(thisHDF5File,CHAR(h5path),vals)
+          !Get all the necessary information to read in the data
+          ELSE
+            CALL read_parameter(thisHDF5File,h5path,vals)
+          ENDIF
+        ENDDO
+      !Otherwise we just have a parameter to get
+      ELSE
+        CALL read_parameter(thisHDF5File,baseh5path,vals)
+      ENDIF
+#endif
+    ENDSUBROUTINE read_pList
+!
+!------------------------------------------------------------------------------
+!>
+    SUBROUTINE read_parameter(thisHDF5File,h5path,vals)
+      CHARACTER(LEN=*),PARAMETER :: myName='read_pList_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
+      TYPE(StringType),INTENT(IN) :: h5path
+      TYPE(ParamType),INTENT(INOUT) :: vals
+      INTEGER(SIK) :: iobj,i,j,k,error,ndims,dtype_order,mem_len,class_type
+      INTEGER(HID_T) :: dset_id,dspace_id,native_dtype,dtype,base_dtype
+      INTEGER(SIZE_T) :: dtype_prec,dtype_size
+      TYPE(StringType) :: path,baseh5path,plpath,tmpstr
+      CLASS(ParamType),POINTER :: nextParam
+      CHARACTER(LEN=1024) :: mem_name
+      LOGICAL(SBK) :: l0,isbool
+      LOGICAL(SBK),ALLOCATABLE :: l1(:),l2(:,:),l3(:,:,:)
+      INTEGER(SNK) :: is0
+      INTEGER(SNK),ALLOCATABLE :: is1(:),is2(:,:),is3(:,:,:)
+      INTEGER(SLK) :: id0
+      INTEGER(SLK),ALLOCATABLE :: id1(:),id2(:,:),id3(:,:,:)
+      REAL(SSK) :: rs0
+      REAL(SSK),ALLOCATABLE :: rs1(:),rs2(:,:),rs3(:,:,:)
+      REAL(SDK) :: rd0
+      REAL(SDK),ALLOCATABLE :: rd1(:),rd2(:,:),rd3(:,:,:)
+      TYPE(StringType) :: st0
+      TYPE(StringType),ALLOCATABLE :: st1(:),st2(:,:),st3(:,:,:),lsobjs(:)
+
+      tmpstr=h5path//REPEAT(' ',nmatchstr(CHAR(h5path),'/'))
+      CALL strrep(tmpstr,'/','->')
+      CALL getSubstring(tmpstr,plpath,3,LEN(tmpstr))
+      !Open the dataset so we can get the precision
+      CALL h5dopen_f(thisHDF5File%file_id,CHAR(h5path),dset_id,error)
+      !Get dataspace so we can get dimensions for allocation (rank)
+      CALL h5dget_space_f(dset_id,dspace_id,error)
+      !Get the datatype so we can get the data class.
+      CALL h5dget_type_f(dset_id,dtype,error)
+      CALL h5tget_class_f(dtype,class_type,error)
+      CALL h5tget_precision_f(dtype,dtype_prec,error)
+      CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+      !Close everything so we don't leak memory.
+      CALL h5tclose_f(dtype,error)
+      CALL h5sclose_f(dspace_id,error)
+      CALL h5dclose_f(dset_id,error)
+      !Integer types
+      IF(class_type == H5T_INTEGER_F) THEN
+        !Longs
+        IF(INT(dtype_prec,SIK) == 64) THEN
+          !Get the dimensionality.  0 is scalar.
+          SELECTCASE(ndims)
+            CASE(0)
+              CALL read_l0(thisHDF5File,CHAR(plpath),id0)
+              CALL vals%add(CHAR(plpath),id0)
+            CASE(1)
+              CALL read_l1(thisHDF5File,CHAR(plpath),id1)
+                      CALL vals%add(CHAR(plpath),id1)
+            CASE(2)
+              CALL read_l2(thisHDF5File,CHAR(plpath),id2)
+              CALL vals%add(CHAR(plpath),id2)
+            CASE(3)
+              CALL read_l3(thisHDF5File,CHAR(plpath),id3)
+              CALL vals%add(CHAR(plpath),id3)
+          ENDSELECT
+        !Ints
+        ELSEIF(INT(dtype_prec,SIK) == 32) THEN
+          !Get the dimensionality.  0 is scalar.
+          SELECTCASE(ndims)
+            CASE(0)
+              CALL read_n0(thisHDF5File,CHAR(plpath),is0)
+              CALL vals%add(CHAR(plpath),is0)
+            CASE(1)
+              CALL read_n1(thisHDF5File,CHAR(plpath),is1)
+              CALL vals%add(CHAR(plpath),is1)
+            CASE(2)
+              CALL read_n2(thisHDF5File,CHAR(plpath),is2)
+              CALL vals%add(CHAR(plpath),is2)
+            CASE(3)
+              CALL read_n3(thisHDF5File,CHAR(plpath),is3)
+              CALL vals%add(CHAR(plpath),is3)
+          ENDSELECT
+        ENDIF
+      !Real types
+      ELSEIF(class_type == H5T_FLOAT_F) THEN
+        !Double
+        IF(INT(dtype_prec,SIK) == 64) THEN
+          !Get the dimensionality.  0 is scalar.
+          SELECTCASE(ndims)
+            CASE(0)
+              CALL read_d0(thisHDF5File,CHAR(plpath),rd0)
+              CALL vals%add(CHAR(plpath),rd0)
+            CASE(1)
+              CALL read_d1(thisHDF5File,CHAR(plpath),rd1)
+              CALL vals%add(CHAR(plpath),rd1)
+            CASE(2)
+              CALL read_d2(thisHDF5File,CHAR(plpath),rd2)
+              CALL vals%add(CHAR(plpath),rd2)
+            CASE(3)
+              CALL read_d3(thisHDF5File,CHAR(plpath),rd3)
+              CALL vals%add(CHAR(plpath),rd3)
+          ENDSELECT
+        !Single
+        ELSEIF(INT(dtype_prec,SIK) == 32) THEN
+          !Get the dimensionality.  0 is scalar.
+          SELECTCASE(ndims)
+            CASE(0)
+              CALL read_s0(thisHDF5File,CHAR(plpath),rs0)
+              CALL vals%add(CHAR(plpath),rs0)
+            CASE(1)
+              CALL read_s1(thisHDF5File,CHAR(plpath),rs1)
+              CALL vals%add(CHAR(plpath),rs1)
+            CASE(2)
+              CALL read_s2(thisHDF5File,CHAR(plpath),rs2)
+              CALL vals%add(CHAR(plpath),rs2)
+            CASE(3)
+              CALL read_s3(thisHDF5File,CHAR(plpath),rs3)
+              CALL vals%add(CHAR(plpath),rs3)
+          ENDSELECT
+        ENDIF
+      !String and boolean types
+      ELSEIF(class_type == H5T_STRING_F) THEN
+        !Get the dimensionality.  0 is scalar.
+        SELECTCASE(ndims)
+          CASE(0)
+            !Get the string, then check if it's a boolean.
+            CALL read_st0_helper(thisHDF5File,CHAR(plpath),st0)
+            isbool=(st0 == 'T') .OR. (st0 == 'F')
+            IF(isbool) THEN
+              CALL read_b0(thisHDF5File,CHAR(plpath),l0)
+              CALL vals%add(CHAR(plpath),l0)
+            ELSE
+              CALL vals%add(CHAR(plpath),st0)
+            ENDIF
+          CASE(1)
+            !Get the string, then check if it's a boolean.
+            CALL read_st1_helper(thisHDF5File,CHAR(plpath),st1)
+            isbool=.TRUE.
+            DO i=1,SIZE(st1)
+              isbool=(st1(i) == 'T') .OR. (st1(i) == 'F')
+              IF(.NOT.isbool) EXIT
+            ENDDO
+            IF(isbool) THEN
+              CALL read_b1(thisHDF5File,CHAR(plpath),l1)
+              CALL vals%add(CHAR(plpath),l1)
+            ELSE
+              CALL vals%add(CHAR(plpath),st1)
+            ENDIF
+          CASE(2)
+            !Get the string, then check if it's a boolean.
+            CALL read_st2_helper(thisHDF5File,CHAR(plpath),st2)
+            isbool=.TRUE.
+            DO j=1,SIZE(st2,DIM=2)
+              DO i=1,SIZE(st2,DIM=1)
+                isbool=(st2(i,j) == 'T') .OR. (st2(i,j) == 'F')
+                IF(.NOT.isbool) EXIT
+              ENDDO
+              IF(.NOT.isbool) EXIT
+            ENDDO
+            IF(isbool) THEN
+              !Disabled until PL support is added.
+              CALL read_b2(thisHDF5File,CHAR(plpath),l2)
+              CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
+                ' - Unsupported Parameter Type 2-D Logical Array will not be '// &
+                'added to Parameter List.')
+              !CALL vals%add(CHAR(plpath),l2)
+            ELSE
+              CALL vals%add(CHAR(plpath),st2)
+            ENDIF
+          CASE(3)
+            !Get the string, then check if it's a boolean.
+            CALL read_st3_helper(thisHDF5File,CHAR(plpath),st3)
+            DO k=1,SIZE(st3,DIM=3)
+              DO j=1,SIZE(st3,DIM=2)
+                DO i=1,SIZE(st3,DIM=1)
+                  isbool=(st3(i,j,k) == 'T') .OR. (st3(i,j,k) == 'F')
+                  IF(.NOT.isbool) EXIT
+                ENDDO
+                IF(.NOT.isbool) EXIT
+              ENDDO
+              IF(.NOT.isbool) EXIT
+            ENDDO
+            !Disabled until PL support is added.
+            IF(isbool) THEN
+              CALL read_b3(thisHDF5File,CHAR(plpath),l3)
+              CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
+                ' - Unsupported Parameter Type 3-D Logical Array will not be '// &
+                'added to Parameter List.')
+              !CALL vals%add(CHAR(plpath),l3)
+            ELSE
+              CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
+                ' - Unsupported Parameter Type 3-D String Array will not be '// &
+                'added to Parameter List.')
+              !CALL vals%add(CHAR(plpath),st3)
+            ENDIF
+        ENDSELECT
+      ENDIF
+    ENDSUBROUTINE read_parameter
 !
 !-------------------------------------------------------------------------------
 !> @brief Trim off the head directory of a path
