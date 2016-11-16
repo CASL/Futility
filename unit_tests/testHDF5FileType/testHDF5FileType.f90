@@ -22,6 +22,7 @@ PROGRAM testHDF5
   USE IntrType
   USE Strings
   USE ExceptionHandler
+  USE ParameterLists
   USE ParallelEnv
   USE FileType_HDF5
 
@@ -46,11 +47,12 @@ PROGRAM testHDF5
   INTEGER(SNK) :: refN0
   LOGICAL(SBK) :: refB0
   TYPE(StringType) :: refST0
-  TYPE(StringType),ALLOCATABLE :: refST1(:),refST2(:,:),refST3(:,:,:)
+  TYPE(StringType),ALLOCATABLE :: refST1(:),refSTC1(:),refST0CA(:),refST2(:,:),refST3(:,:,:)
   CHARACTER(LEN=32) :: refC1
   CHARACTER(LEN=12) :: helper_string
   LOGICAL(SBK) :: exists
   TYPE(StringType),ALLOCATABLE :: refsets(:)
+  TYPE(HDF5FileType) :: h5
 
   CALL testMPI%init(PE_COMM_WORLD)
   IF(testMPI%rank /= 0)  utest_master=.FALSE.
@@ -74,6 +76,8 @@ PROGRAM testHDF5
     WRITE(*,*) '-----------------------------------------------------'// &
         '--------------------'
   ENDIF
+  CALL h5%init('readtest.h5','READ')
+  CALL h5%clear(.TRUE.)
   DEALLOCATE(refD1,refD2,refD3,refD4,refD5,refD6,refD7,refS1,refS2,refS3,refS4, &
     refS5,refS6,refS7,refB1,refB2,refB3,refL1,refL2,refL3,refL4,refL5,refL6, &
       refL7,refN1,refN2,refN3,refN4,refN5,refN6,refN7,refST1,refST2,refST3,refsets)
@@ -89,7 +93,9 @@ PROGRAM testHDF5
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testHDF5FileTypeSetup()
+      TYPE(HDF5FileType) :: h5
       INTEGER(SIK) :: i,j,k
+      CHARACTER(LEN=12) :: ca1(3),ca2(2,3),ca3(3,4,5)
 
       ALLOCATE(refD1(10))
       ALLOCATE(refD2(4,5))
@@ -125,6 +131,8 @@ PROGRAM testHDF5
       ALLOCATE(refST1(3))
       ALLOCATE(refST2(2,3))
       ALLOCATE(refST3(3,4,5))
+      ALLOCATE(refSTC1(32))
+      ALLOCATE(refST0CA(33))
       ALLOCATE(refsets(16))
 
       refD0=42.123456789_SDK
@@ -171,6 +179,13 @@ PROGRAM testHDF5
         ENDDO
       ENDDO
       refST0='Rank-0 (Not-an-array) String Test'
+       refST0CA(1)='R'; refST0CA(2)='a'; refST0CA(3)='n'; refST0CA(4)='k'; refST0CA(5)='-'
+       refST0CA(6)='0'; refST0CA(7)=' '; refST0CA(8)='('; refST0CA(9)='N';refST0CA(10)='o'
+      refST0CA(11)='t';refST0CA(12)='-';refST0CA(13)='a';refST0CA(14)='n';refST0CA(15)='-'
+      refST0CA(16)='a';refST0CA(17)='r';refST0CA(18)='r';refST0CA(19)='a';refST0CA(20)='y'
+      refST0CA(21)=')';refST0CA(22)=' ';refST0CA(23)='S';refST0CA(24)='t';refST0CA(25)='r'
+      refST0CA(26)='i';refST0CA(27)='n';refST0CA(28)='g';refST0CA(29)=' ';refST0CA(30)='T'
+      refST0CA(31)='e';refST0CA(32)='s';refST0CA(33)='t'
       DO i=1,SIZE(refST1)
         WRITE(helper_string,FMT="(a7,i0)") 'String ',i
         refST1(i)=helper_string
@@ -193,6 +208,14 @@ PROGRAM testHDF5
         ENDDO
       ENDDO
       refC1='MPACT string test'; refC1=ADJUSTL(refC1)
+      refSTC1(1)='M';refSTC1(2)='P';refSTC1(3)='A';refSTC1(4)='C';refSTC1(5)='T'
+      refSTC1(6)=' ';refSTC1(7)='s';refSTC1(8)='t';refSTC1(9)='r';refSTC1(10)='i'
+      refSTC1(11)='n';refSTC1(12)='g';refSTC1(13)=' ';refSTC1(14)='t';refSTC1(15)='e'
+      refSTC1(16)='s';refSTC1(17)='t';refSTC1(18)=' ';refSTC1(19)=' ';refSTC1(20)=' '
+      refSTC1(21)=' ';refSTC1(22)=' ';refSTC1(23)=' ';refSTC1(24)=' ';refSTC1(25)=' '
+      refSTC1(26)=' ';refSTC1(27)=' ';refSTC1(28)=' ';refSTC1(29)=' ';refSTC1(30)=' '
+      refSTC1(31)=' ';refSTC1(32)=' '
+      
 
       refsets(1)='memD0'
       refsets(2)='memD1'
@@ -210,6 +233,68 @@ PROGRAM testHDF5
       refsets(14)='memS5'
       refsets(15)='memS6'
       refsets(16)='memS7'
+
+      !write the reference file for the read side
+      CALL h5%init('readtest.h5','NEW')
+      CALL h5%fopen()
+      CALL h5%mkdir('groupB')
+      CALL h5%fwrite('groupB->memB0',refB0)
+      CALL h5%fwrite('groupB->memB1',refB1)
+      CALL h5%fwrite('groupB->memB2',refB2)
+      CALL h5%fwrite('groupB->memB3',refB3)
+      CALL h5%mkdir('groupC')
+      CALL h5%mkdir('groupC->anotherGroup')
+      CALL h5%mkdir('groupC->anotherGroup->moreGroups')
+      CALL h5%mkdir('groupC->anotherGroup->moreGroups->almostLastGroup')
+      CALL h5%mkdir('groupC->anotherGroup->moreGroups->LastGroup')
+      CALL h5%fwrite('groupC->anotherGroup->memC1',refC1)
+      CALL h5%fwrite('groupC->memC1',refC1)
+      CALL h5%createHardLink('groupC->anotherGroup->memC1', &
+        'groupC->anotherGroup->moreGroups->almostLastGroup->memC2')
+      CALL h5%mkdir('groupI')
+      CALL h5%fwrite('groupI->memL0',refL0)
+      CALL h5%fwrite('groupI->memL1',refL1)
+      CALL h5%fwrite('groupI->memL2',refL2)
+      CALL h5%fwrite('groupI->memL3',refL3)
+      CALL h5%fwrite('groupI->memL4',refL4)
+      CALL h5%fwrite('groupI->memL5',refL5)
+      CALL h5%fwrite('groupI->memL6',refL6)
+      CALL h5%fwrite('groupI->memL7',refL7)
+      CALL h5%fwrite('groupI->memN0',refN0)
+      CALL h5%fwrite('groupI->memN1',refN1)
+      CALL h5%fwrite('groupI->memN2',refN2)
+      CALL h5%fwrite('groupI->memN3',refN3)
+      CALL h5%fwrite('groupI->memN4',refN4)
+      CALL h5%fwrite('groupI->memN5',refN5)
+      CALL h5%fwrite('groupI->memN6',refN6)
+      CALL h5%fwrite('groupI->memN7',refN7)
+      CALL h5%mkdir('groupR')
+      CALL h5%fwrite('groupR->memD0',refD0)
+      CALL h5%fwrite('groupR->memD1',refD1)
+      CALL h5%fwrite('groupR->memD2',refD2)
+      CALL h5%fwrite('groupR->memD3',refD3)
+      CALL h5%fwrite('groupR->memD4',refD4)
+      CALL h5%fwrite('groupR->memD5',refD5)
+      CALL h5%fwrite('groupR->memD6',refD6)
+      CALL h5%fwrite('groupR->memD7',refD7)
+      CALL h5%fwrite('groupR->memS0',refS0)
+      CALL h5%fwrite('groupR->memS1',refS1)
+      CALL h5%fwrite('groupR->memS2',refS2)
+      CALL h5%fwrite('groupR->memS3',refS3)
+      CALL h5%fwrite('groupR->memS4',refS4)
+      CALL h5%fwrite('groupR->memS5',refS5)
+      CALL h5%fwrite('groupR->memS6',refS6)
+      CALL h5%fwrite('groupR->memS7',refS7)
+      CALL h5%mkdir('groupST')
+      CALL h5%fwrite('groupST->memCA0',CHAR(refST0))
+      CALL h5%fwrite('groupST->memCA1',refST1)
+      CALL h5%fwrite('groupST->memCA2',refST2)
+      CALL h5%fwrite('groupST->memCA3',refST3)
+      CALL h5%fwrite('groupST->memST0',refST0)
+      CALL h5%fwrite('groupST->memST1',refST1)
+      CALL h5%fwrite('groupST->memST2',refST2)
+      CALL h5%fwrite('groupST->memST3',refST3)
+      CALL h5%fclose()
 
     ENDSUBROUTINE testHDF5FileTypeSetup
 !
@@ -1130,6 +1215,7 @@ PROGRAM testHDF5
       TYPE(StringType) :: testST0
       INTEGER(SIK) :: i,j,k
       LOGICAL(SBK) :: checkread
+      TYPE(ParamType) :: tmpPL
       testDP4 => NULL()
 
 !  Begin test
@@ -1140,6 +1226,7 @@ PROGRAM testHDF5
       CALL h5%ls('groupR',testST1)
       DO i=1,SIZE(testST1)
         ASSERT(TRIM(refsets(i))==TRIM(testST1(i)),refsets(i)//' List Failure')
+        FINFO() refsets(i)//':'//testST1(i)
       ENDDO
 
       COMPONENT_TEST('%fread values')
@@ -1275,6 +1362,106 @@ PROGRAM testHDF5
       CALL h5%fread('groupC->memC1',testC1)
       ASSERT(testC1 == refC1,'C1 Read Failure')
 
+      COMPONENT_TEST('%fread to parameter list')
+      CALL h5%fread('groupC',tmpPL)
+      !Character arrays
+      CALL tmpPL%get('groupC->anotherGroup->memC1',testST1)
+      DO i=1,SIZE(testST1)
+        ASSERTFAIL(SIZE(testST1) == SIZE(refSTC1),'SIZE(')
+        ASSERT(testST1(i) == refSTC1(i),'C1 Read PL Failure')
+        FINFO() i,CHAR(testST1(i))
+        FINFO() i,CHAR(refSTC1(i))
+      ENDDO
+      CALL tmpPL%get('groupC->anotherGroup->moreGroups->almostLastGroup->memC2',testST1)
+      DO i=1,SIZE(testST1)
+        ASSERTFAIL(SIZE(testST1) == SIZE(refSTC1),'SIZE(')
+        ASSERT(testST1(i) == refSTC1(i),'C1 Read PL Failure')
+        FINFO() i,CHAR(testST1(i))
+        FINFO() i,CHAR(refSTC1(i))
+      ENDDO
+      CALL tmpPL%get('groupC->memC1',testST1)
+      DO i=1,SIZE(testST1)
+        ASSERTFAIL(SIZE(testST1) == SIZE(refSTC1),'SIZE(')
+        ASSERT(testST1(i) == refSTC1(i),'C1 Read PL Failure')
+        FINFO() i,CHAR(testST1(i))
+        FINFO() i,CHAR(refSTC1(i))
+      ENDDO
+      !Logicals
+      CALL tmpPL%clear()
+      CALL h5%fread('groupB',tmpPL)
+      CALL tmpPL%get('groupB->memB0',testB0)
+      ASSERT(.NOT.testB0,'B0 read PL Failure')
+      CALL tmpPL%get('groupB->memB1',testB1)
+      testB0=.NOT.testB1(1) .AND. testB1(2) .AND. .NOT. testB1(3) .AND. &
+        testB1(4) .AND. .NOT.testB1(5) .AND. testB1(6)
+      ASSERT(testB0,'B1 read PL Failure')
+      !Integers
+      CALL tmpPL%clear()
+      CALL h5%fread('groupI',tmpPL)
+      CALL tmpPL%get('groupI->memL0',testL0)
+      ASSERT(testL0 == refL0,'L0 read PL Failure')
+      CALL tmpPL%get('groupI->memL1',testL1)
+      ASSERT(ALL(testL1 == refL1),'L1 read PL Failure')
+      CALL tmpPL%get('groupI->memL2',testL2)
+      ASSERT(ALL(testL2 == refL2),'L2 read PL Failure')
+      CALL tmpPL%get('groupI->memL3',testL3)
+      ASSERT(ALL(testL3 == refL3),'L3 read PL Failure')
+      CALL tmpPL%get('groupI->memN0',testN0)
+      ASSERT(testN0 == refN0,'N0 read PL Failure')
+      CALL tmpPL%get('groupI->memN1',testN1)
+      ASSERT(ALL(testN1 == refN1),'N1 read PL Failure')
+      CALL tmpPL%get('groupI->memN2',testN2)
+      ASSERT(ALL(testN2 == refN2),'N2 read PL Failure')
+      CALL tmpPL%get('groupI->memN3',testN3)
+      ASSERT(ALL(testN3 == refN3),'N3 read PL Failure')
+      !Reals
+      CALL tmpPL%clear()
+      CALL h5%fread('groupR',tmpPL)
+      CALL tmpPL%get('groupR->memD0',testD0)
+      ASSERT(testD0 == refD0,'D0 read PL Failure')
+      CALL tmpPL%get('groupR->memD1',testD1)
+      ASSERT(ALL(testD1 == refD1),'D1 read PL Failure')
+      CALL tmpPL%get('groupR->memD2',testD2)
+      ASSERT(ALL(testD2 == refD2),'D2 read PL Failure')
+      CALL tmpPL%get('groupR->memD3',testD3)
+      ASSERT(ALL(testD3 == refD3),'D3 read PL Failure')
+      CALL tmpPL%get('groupR->memS0',testS0)
+      ASSERT(testS0 == refS0,'S0 read PL Failure')
+      CALL tmpPL%get('groupR->memS1',testS1)
+      ASSERT(ALL(testS1 == refS1),'S1 read PL Failure')
+      CALL tmpPL%get('groupR->memS2',testS2)
+      ASSERT(ALL(testS2 == refS2),'S2 read PL Failure')
+      CALL tmpPL%get('groupR->memS3',testS3)
+      ASSERT(ALL(testS3 == refS3),'S3 read PL Failure')
+      !Strings
+      CALL tmpPL%clear()
+      CALL tmpPL%clear()
+      CALL h5%fread('groupST',tmpPL)
+      CALL tmpPL%get('groupST->memST0',testST0)
+      ASSERT(testST0 == refST0,'ST0 read PL Failure')
+      CALL tmpPL%get('groupST->memST1',testST1)
+      ASSERTFAIL(SIZE(testST1) == SIZE(refST1),'ST1 Sizes')
+      DO i=1,SIZE(testST1)
+        ASSERT(testST1(i) == refST1(i),'ST1 read PL Failure')
+      ENDDO
+      CALL tmpPL%get('groupST->memST2',testST2)
+      testB0=(SIZE(testST2,DIM=1) == SIZE(refST2,DIM=1)) .AND. &
+        (SIZE(testST2,DIM=2) == SIZE(refST2,DIM=2))
+      ASSERTFAIL(testB0,'ST2 Sizes')
+      DO j=1,SIZE(testST2,DIM=2)
+        DO i=1,SIZE(testST2,DIM=1)
+          ASSERT(testST2(i,j) == refST2(i,j),'ST2 read PL Failure')
+         ENDDO
+       ENDDO
+      !Character array, read in as a 1-D string array
+      CALL tmpPL%get('groupST->memCA0',testST1)
+      ASSERTFAIL(SIZE(testST1) == SIZE(refST0CA),'ST1 Sizes')
+      DO i=1,SIZE(testST1)
+        ASSERT(testST1(i) == refST0CA(i),'ST1 read PL Failure')
+        FINFO() i,CHAR(testST1(i))//' | '//CHAR(refST0CA(i))
+      ENDDO
+      CALL tmpPL%clear()
+      
       DEALLOCATE(testD1,testD2,testD3,testD4,testD5,testD6,testD7,testS1,testS2,&
         testS3,testS4,testS5,testS6,testS7,testL1,testL2,testL3,testL4,testL5, &
         testL6,testL7,testB1,testB2,testB3,testST1,testST2,testST3,testN1,testN2, &
