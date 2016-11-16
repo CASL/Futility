@@ -2734,7 +2734,7 @@ MODULE FileType_HDF5
       REAL(SDK) :: vals
       CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(1) :: ldims,gdims,offset,cnt
-      INTEGER(HID_T),PARAMETER :: rank=1
+      INTEGER(HID_T),PARAMETER :: rank=0
 
       INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
 
@@ -3208,12 +3208,46 @@ MODULE FileType_HDF5
       INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: gdims_in
       INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: cnt_in
       INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: offset_in
+#ifdef MPACT_HAVE_HDF5
+      CHARACTER(LEN=LEN(vals),KIND=C_CHAR),TARGET :: valss
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
+      INTEGER(SIK) :: i,j,ilen
+      INTEGER(HSIZE_T),DIMENSION(1) :: ldims,gdims,offset,cnt
+      INTEGER(HID_T),PARAMETER :: rank=0
 
-      TYPE(StringType),ALLOCATABLE :: valss(:)
-      ALLOCATE(valss(1))
-      valss(1)=vals
+      INTEGER :: error
+      INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
 
-      CALL write_st1_helper(thisHDF5File,dsetname,valss,gdims_in(1),cnt_in,offset_in)
+      path=dsetname
+      ! Fill character array
+      valss=vals
+
+      ! stash offset
+      offset(1)=0
+      IF(PRESENT(offset_in)) offset=offset_in
+
+      ! Determine the dimensions for the dataspace
+      ldims=1
+
+      ! Store the dimensions from global if present
+      IF(PRESENT(gdims_in)) THEN
+        gdims=gdims_in
+      ELSE
+        gdims=ldims
+      ENDIF
+      cnt=gdims
+      IF(PRESENT(cnt_in)) cnt=cnt_in
+
+      CALL h5tcopy_f(H5T_NATIVE_CHARACTER,mem,error)
+      CALL h5tset_strpad_f(mem,0,error)
+      CALL h5tset_size_f(mem,INT(LEN(vals),SDK),error)
+      CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
+        gspace_id,plist_id,error,cnt,offset)
+      IF(error == 0) THEN
+        CALL h5dwrite_f(dset_id,mem,TRIM(valss),gdims,error,dspace_id,gspace_id,plist_id)
+        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
+      ENDIF
+#endif
     ENDSUBROUTINE write_st0
 !
 !-------------------------------------------------------------------------------
