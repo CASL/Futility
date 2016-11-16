@@ -5207,20 +5207,20 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Read the dataset
-        mem=H5T_NATIVE_CHARACTER
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          CALL h5dread_f(dset_id,mem,valsc,dims,error)
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
-        ! Convert to logical from character
-          IF(valsc=='F') THEN
-            vals=.FALSE.
-          ELSE
-            vals=.TRUE.
-          ENDIF
+      path=convertPath(dsetname)
+      ! Read the dataset
+      mem=H5T_NATIVE_CHARACTER
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        CALL h5dread_f(dset_id,mem,valsc,dims,error)
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      ! Convert to logical from character
+        IF(valsc=='F') THEN
+          vals=.FALSE.
+        ELSE
+          vals=.TRUE.
         ENDIF
+      ENDIF
 #endif
     ENDSUBROUTINE read_b0
 !
