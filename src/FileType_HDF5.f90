@@ -5410,16 +5410,21 @@ MODULE FileType_HDF5
 
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
-      INTEGER(SIZE_T) :: size
-
+      INTEGER(SIZE_T) :: max_size
 
       path=convertPath(dsetname)
 
       CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
       CALL h5dget_type_f(dset_id,mem,error)
-      CALL h5tget_size_f(mem,size,error)
-
-      CALL read_st0(thisHDF5File,dsetname,INT(size,SIK),vals)
+      CALL h5tget_size_f(mem,max_size,error)
+      CALL h5dget_space_f(dset_id,dspace_id,error)
+      CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+!Need to make decisison on rank and size based on values of ndims and max_size
+      IF((ndims==rank+1) .AND. (max_size==1)) THEN
+        CALL read_ca0(thisHDF5File,dsetname,vals)
+      ELSE
+        CALL read_st0(thisHDF5File,dsetname,INT(max_size,SIK),vals)
+      ENDIF
 #endif
     ENDSUBROUTINE read_st0_helper
 !
@@ -5444,7 +5449,7 @@ MODULE FileType_HDF5
       CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER :: i
       INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
-      INTEGER(HID_T),PARAMETER :: rank=1
+      INTEGER(HID_T),PARAMETER :: rank=0
 
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
@@ -5470,6 +5475,46 @@ MODULE FileType_HDF5
 
 #endif
     ENDSUBROUTINE read_st0
+!
+!-------------------------------------------------------------------------------
+!> @brief Read a scalar array of length 1 characters into a string type.
+!> @param thisHDF5File the HDF5FileType object to read from
+!> @param dsetname dataset name and path to read from
+!> @param vals variable to hold read data
+!>
+    SUBROUTINE read_ca0(thisHDF5File,dsetname,vals)
+      CHARACTER(LEN=*),PARAMETER :: myName='readca1_HDF5FileType'
+      CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
+      CHARACTER(LEN=*),INTENT(IN) :: dsetname
+      TYPE(StringType),INTENT(INOUT) :: vals
+#ifdef MPACT_HAVE_HDF5
+      CHARACTER(LEN=1),ALLOCATABLE :: valsc(:)
+      INTEGER(SIK) :: i,j
+      CHARACTER(LEN=LEN(dsetname)+1) :: path
+      INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
+      INTEGER(HID_T),PARAMETER :: rank=1
+
+      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: dspace_id,dset_id
+
+      path=convertPath(dsetname)
+      ! Allocate character array to size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        ALLOCATE(valsc(dims(1)))
+        CALL h5dget_type_f(dset_id,mem,error)
+        CALL h5dread_f(dset_id,mem,valsc,dims,error)
+        ! Allocate space if needed, make sure it is the right size
+        vals=''
+        ! Convert to StringType
+        DO i=1,SIZE(valsc)
+          vals=vals//valsc(i)
+        ENDDO
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      ENDIF
+      IF(ALLOCATED(valsc)) DEALLOCATE(valsc)
+#endif
+    ENDSUBROUTINE read_ca0
 !
 !-------------------------------------------------------------------------------
 !> @brief Read a string from dataset
