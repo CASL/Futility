@@ -54,6 +54,7 @@ SET(UNIT_TEST_NAMES
     testPreconditionerTypes
     testLinearSolver
     testEigenvalueSolver
+    testODESolver
     testAndersonAcceleration
     testStochasticSampler
 )
