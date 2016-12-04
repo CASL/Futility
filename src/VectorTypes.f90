@@ -1651,7 +1651,7 @@ MODULE VectorTypes
 !>
     SUBROUTINE copy_VectorType(thisVector,newVector,n,incx,incy)
       CHARACTER(LEN=*),PARAMETER :: myName='copy_VectorType'
-      CLASS(VectorType),INTENT(INOUT)  :: thisVector
+      CLASS(VectorType),INTENT(IN)     :: thisVector
       CLASS(VectorType),INTENT(INOUT)  :: newVector
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
