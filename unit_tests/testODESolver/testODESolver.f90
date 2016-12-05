@@ -93,9 +93,11 @@ CONTAINS
         ASSERT(testODE%tol==1.0E-5_SRK,'%tol')
         ASSERT(testODE%substep_size==0.01_SRK,'%substep_size')
         ASSERT(ASSOCIATED(testODE%f),'%f')
+        ASSERT(testODE%myLS%isInit,'%myLS%isInit')
 
         testODE%isInit=.FALSE.
         testODE%BDForder=5_SIK
+        CALL testODE%myLS%clear()
         CALL pList%set('ODESolverType->solver',THETA_METHOD)
 
         CALL testODE%init(pList,f)
@@ -107,6 +109,7 @@ CONTAINS
         ASSERT(testODE%tol==1.0E-5_SRK,'%tol')
         ASSERT(testODE%substep_size==0.01_SRK,'%substep_size')
         ASSERT(ASSOCIATED(testODE%f),'%f')
+        ASSERT(testODE%myLS%isInit,'%myLS%isInit')
       ENDSELECT
 
     ENDSUBROUTINE testInit_Native
@@ -149,7 +152,8 @@ CONTAINS
         ASSERT(testODE%theta==0.5_SRK,'%theta')
         ASSERT(testODE%BDForder==5,'%BDForder')
         ASSERT(testODE%substep_size==0.1_SRK,'%substep_size')
-        ASSERT(testODE%isInit==.FALSE.,'%isInit')
+        ASSERT(.NOT. testODE%myLS%isInit,'%myLS%isInit')
+        ASSERT(.NOT. testODE%isInit,'%isInit')
       ENDSELECT
     ENDSUBROUTINE testClear_Native
 !

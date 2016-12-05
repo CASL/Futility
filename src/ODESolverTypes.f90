@@ -180,9 +180,8 @@ MODULE ODESolverTypes
 
       INTEGER(SIK) :: n, solvetype, bdf_order
       REAL(SRK) :: theta, tol, substep
+      TYPE(ParamType) :: tmpPL
 
-      theta=-100.0_SRK
-      bdf_order=-1
       CALL Params%get('ODESolverType->n',n)
       CALL Params%get('ODESolverType->solver',solvetype)
       CALL Params%get('ODESolverType->tolerance',tol)
@@ -241,7 +240,17 @@ MODULE ODESolverTypes
           solver%substep_size=substep
         ENDIF
 
-        ! Probably should initialize some stuff, linear solver
+        CALL tmpPL%add('LinearSolverType->TPLType',NATIVE)
+        CALL tmpPL%add('LinearSolverType->solverMethod',GE)
+        CALL tmpPL%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
+        CALL tmpPL%add('LinearSolverType->numberOMP',1_SNK)
+        CALL tmpPL%add('LinearSolverType->timerName','ODEtimer')
+        CALL tmpPL%add('LinearSolverType->matType',DENSESQUARE)
+        CALL tmpPL%add('LinearSolverType->A->MatrixType->n',n)
+        CALL tmpPL%add('LinearSolverType->A->MatrixType->isSym',.FALSE.)
+        CALL tmpPL%add('LinearSolverType->x->VectorType->n',n)
+        CALL tmpPL%add('LinearSolverType->b->VectorType->n',n)
+        CALL solver%myLS%init(tmpPL)
 
         solver%TPLType=ODE_NATIVE
         solver%f=>f
@@ -269,7 +278,7 @@ MODULE ODESolverTypes
       solver%BDForder=5
       solver%substep_size=0.1_SRK
 
-      !**** Need to clear linear solver
+      CALL solver%myLS%clear()
       solver%isInit=.FALSE.
     ENDSUBROUTINE clear_ODESolverType_Native
 !
