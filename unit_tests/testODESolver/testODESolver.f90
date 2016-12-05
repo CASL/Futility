@@ -7,6 +7,27 @@
 !  reproduce the published form of this manuscript, or allow others to do so,  !
 !  for the United States Government purposes.                                  !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
+MODULE testODEInterface
+  USE IntrType
+  USE VectorTypes
+  USE ODESolverTypes
+  TYPE,EXTENDS(ODESolverInterface_Base) :: ODESolverInterface_Test
+    CONTAINS
+      !> Deferred routine for initializing the ode solver
+      PROCEDURE,PASS :: eval => eval
+  ENDTYPE ODESolverInterface_Test
+  CONTAINS
+    SUBROUTINE eval(self,t,y,ydot)
+      CLASS(ODESolverInterface_Test),INTENT(INOUT) :: self
+      REAL(SRK),INTENT(IN) :: t
+      CLASS(VectorType),INTENT(IN) :: y
+      CLASS(VectorType),INTENT(INOUT) :: ydot
+      CALL ydot%set(0.0_SRK)
+      CALL ydot%set(1,3.2_SRK)
+      CALL ydot%set(3,-0.3_SRK)
+    ENDSUBROUTINE eval
+ENDMODULE testODEInterface
+
 PROGRAM testODESolver
 #include "UnitTest.h"
   USE UnitTest
@@ -17,21 +38,14 @@ PROGRAM testODESolver
   USE VectorTypes
   USE MatrixTypes
   USE ODESolverTypes
+  USE testODEInterface
 
   IMPLICIT NONE
 
   TYPE(ExceptionHandlerType),TARGET :: e
   TYPE(ParamType) :: pList
   CLASS(ODESolverType_Base),POINTER :: testODE
-
-  INTERFACE
-    SUBROUTINE f(t,y,ydot)
-      IMPORT :: SRK,VectorType
-      REAL(SRK),INTENT(IN) :: t
-      CLASS(VectorType),INTENT(IN) :: y
-      CLASS(VectorType),INTENT(INOUT) :: ydot
-    ENDSUBROUTINE f
-  ENDINTERFACE
+  CLASS(ODESolverInterface_Base),POINTER :: f
 
 #ifdef MPACT_HAVE_PETSC
 #include <finclude/petsc.h>
@@ -61,6 +75,7 @@ PROGRAM testODESolver
   CREATE_TEST('Test ODE Solvers')
 
   ALLOCATE(ODESolverType_Native :: testODE)
+  ALLOCATE(ODESolverInterface_Test:: f)
 
   REGISTER_SUBTEST('testInit_Native',testInit_Native)
   REGISTER_SUBTEST('testStep_Native',testStep_Native)
@@ -167,7 +182,10 @@ ENDPROGRAM testODESolver
     REAL(SRK),INTENT(IN) :: t
     CLASS(VectorType),INTENT(IN) :: y
     CLASS(VectorType),INTENT(INOUT) :: ydot
-
+WRITE(*,*) "in f"
+WRITE(*,*) t
+WRITE(*,*) y%isInit
+WRITE(*,*) ydot%isInit
     CALL ydot%set(0.0_SRK)
     CALL ydot%set(1,3.2_SRK)
     CALL ydot%set(3,-0.3_SRK)

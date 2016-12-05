@@ -64,6 +64,7 @@ MODULE ODESolverTypes
 !
 ! List of public members
   PUBLIC :: eODESolverType
+  PUBLIC :: ODESolverInterface_Base
   PUBLIC :: ODESolverType_Base
   PUBLIC :: ODESolverType_Native
 
@@ -71,6 +72,12 @@ MODULE ODESolverTypes
   INTEGER(SIK),PARAMETER,PUBLIC :: ODE_NATIVE=1
   !> set enumeration scheme for solver methods
   INTEGER(SIK),PARAMETER,PUBLIC :: THETA_METHOD=0,BDF_METHOD=1
+
+  TYPE,ABSTRACT :: ODESolverInterface_Base
+    CONTAINS
+      !> Deferred routine for initializing the ode solver
+      PROCEDURE(odesolver_f_sub_absintfc),DEFERRED,PASS :: eval
+  ENDTYPE ODESolverInterface_Base
 
   !> @brief the base ode solver type
   TYPE,ABSTRACT :: ODESolverType_Base
@@ -87,7 +94,7 @@ MODULE ODESolverTypes
     !> Timer to measure solution time
     TYPE(TimerType) :: SolveTime
     !>
-    PROCEDURE(odesolver_f_absintfc),POINTER,NOPASS :: f => NULL()
+    CLASS(ODESolverInterface_Base),POINTER :: f
   !
   !List of Type Bound Procedures
     CONTAINS
@@ -101,18 +108,19 @@ MODULE ODESolverTypes
 
   !> Explicitly defines the interface for the clear and step routines
   ABSTRACT INTERFACE
-      SUBROUTINE odesolver_f_absintfc(t,y,ydot)
-        IMPORT :: SRK,VectorType
-        REAL(SRK),INTENT(IN) :: t
-        CLASS(VectorType),INTENT(IN) :: y
-        CLASS(VectorType),INTENT(INOUT) :: ydot
-    ENDSUBROUTINE odesolver_f_absintfc
+    SUBROUTINE odesolver_f_sub_absintfc(self,t,y,ydot)
+      IMPORT :: ODESolverInterface_Base,SRK,VectorType
+      CLASS(ODESolverInterface_Base),INTENT(INOUT) :: self
+      REAL(SRK),INTENT(IN) :: t
+      CLASS(VectorType),INTENT(IN) :: y
+      CLASS(VectorType),INTENT(INOUT) :: ydot
+    ENDSUBROUTINE odesolver_f_sub_absintfc
 
     SUBROUTINE odesolver_init_sub_absintfc(solver,Params,f)
-      IMPORT :: ODESolverType_Base, ParamType
+      IMPORT :: ODESolverType_Base, ODESolverInterface_Base, ParamType
       CLASS(ODESolverType_Base),INTENT(INOUT) :: solver
       TYPE(ParamType),INTENT(IN) :: Params
-      PROCEDURE(odesolver_f_absintfc) :: f
+      CLASS(ODESolverInterface_Base),POINTER :: f => NULL()
     ENDSUBROUTINE odesolver_init_sub_absintfc
 
     SUBROUTINE odesolver_step_sub_absintfc(solver,t0,y0,tf,yf)
@@ -176,7 +184,7 @@ MODULE ODESolverTypes
       CHARACTER(LEN=*),PARAMETER :: myName='init_ODESolverType_Native'
       CLASS(ODESolverType_Native),INTENT(INOUT) :: solver
       TYPE(ParamType),INTENT(IN) :: Params
-      PROCEDURE(odesolver_f_absintfc) :: f
+      CLASS(ODESolverInterface_Base),POINTER :: f
 
       INTEGER(SIK) :: n, solvetype, bdf_order
       REAL(SRK) :: theta, tol, substep
@@ -312,9 +320,9 @@ MODULE ODESolverTypes
       IF(solver%solverMethod==THETA_METHOD .AND. solver%theta==0.0_SRK) THEN
         !forward Euler
         DO i=1,nstep
-          t=t+dt
-          CALL f(t,yf,ydot)
+          CALL solver%f%eval(t,yf,ydot)
           CALL BLAS_axpy(ydot,yf,dt)
+          t=t+dt
         ENDDO
       ELSE
         !setup RHS
