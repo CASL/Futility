@@ -120,7 +120,7 @@ MODULE ODESolverTypes
       IMPORT :: ODESolverType_Base, ODESolverInterface_Base, ParamType
       CLASS(ODESolverType_Base),INTENT(INOUT) :: solver
       TYPE(ParamType),INTENT(IN) :: Params
-      CLASS(ODESolverInterface_Base),POINTER :: f => NULL()
+      CLASS(ODESolverInterface_Base),POINTER :: f
     ENDSUBROUTINE odesolver_init_sub_absintfc
 
     SUBROUTINE odesolver_step_sub_absintfc(solver,t0,y0,tf,yf)
