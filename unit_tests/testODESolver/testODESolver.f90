@@ -86,11 +86,11 @@ PROGRAM testODESolver
 
   REGISTER_SUBTEST('testInit_Native',testInit_Native)
   REGISTER_SUBTEST('testStep_Native_theta=0.0',testStep_Native)
-  SELECTTYPE(testODE); TYPEIS(ODESolverType_Native)
+  SELECTTYPE(testODE); TYPE IS(ODESolverType_Native)
     testODE%theta=0.5_SRK
   ENDSELECT
   REGISTER_SUBTEST('testStep_Native_theta=0.5',testStep_Native)
-  SELECTTYPE(testODE); TYPEIS(ODESolverType_Native)
+  SELECTTYPE(testODE); TYPE IS(ODESolverType_Native)
     testODE%theta=1.0_SRK
   ENDSELECT
   REGISTER_SUBTEST('testStep_Native_theta=1.0',testStep_Native)
