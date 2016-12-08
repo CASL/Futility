@@ -112,7 +112,7 @@ MODULE ODESolverTypes
       IMPORT :: ODESolverInterface_Base,SRK,VectorType
       CLASS(ODESolverInterface_Base),INTENT(INOUT) :: self
       REAL(SRK),INTENT(IN) :: t
-      CLASS(VectorType),INTENT(IN) :: y
+      CLASS(VectorType),INTENT(INOUT) :: y
       CLASS(VectorType),INTENT(INOUT) :: ydot
     ENDSUBROUTINE odesolver_f_sub_absintfc
 
@@ -308,8 +308,9 @@ MODULE ODESolverTypes
       CLASS(VectorType),INTENT(INOUT) :: yf
 
       INTEGER(SIK) :: i,nstep
-      REAL(SRK) :: t,dt
+      REAL(SRK) :: t,dt,beta,resid
       CLASS(VectorType),ALLOCATABLE :: ydot
+      CLASS(VectorType),ALLOCATABLE :: rhs
 
       ALLOCATE(ydot,SOURCE=y0)
       CALL BLAS_copy(y0,yf)
@@ -325,12 +326,104 @@ MODULE ODESolverTypes
           t=t+dt
         ENDDO
       ELSE
-        !setup RHS
-        !setup LHS matrix
-        !solve nonlinear system
-        !save data if needed for next iteration
+        ALLOCATE(rhs,SOURCE=y0)
+        DO i=1,nstep
+          IF(solver%solverMethod==THETA_METHOD) THEN
+            !setup RHS
+            CALL BLAS_copy(yf,rhs)
+            CALL solver%f%eval(t,yf,ydot)
+            CALL BLAS_axpy(ydot,rhs,dt*(1.0_SRK-solver%theta))
+            beta=solver%theta
+          ELSEIF(solver%solverMethod==BDF_METHOD) THEN
+            !setup RHS
+          ENDIF
+          !setup LHS matrix
+          IF (MOD(i-1,20)==0) THEN
+            CALL estimate_jacobian(solver%f,t,yf,0.5_SRK*dt,solver%myLS%A)
+          ENDIF
+
+          !solve nonlinear system
+          resid=2*solver%tol
+          DO WHILE (resid>solver%tol)
+            CALL solver%f%eval(t+dt,yf,ydot)
+            CALL BLAS_copy(rhs,solver%myLS%b)
+            CALL BLAS_axpy(yf,solver%myLS%b,-1.0_SRK)
+            CALL BLAS_axpy(ydot,solver%myLS%b,dt*beta)
+            CALL BLAS_scal(solver%myLS%b,1.0_SRK)
+            CALL solver%myLS%solve()
+!SELECTTYPE(rhs);TYPEIS(RealVectorType)
+!WRITE(*,*) "rhs: ",rhs%b
+!ENDSELECT
+!SELECTTYPE(yf);TYPEIS(RealVectorType)
+!WRITE(*,*) "yf: ",yf%b
+!ENDSELECT
+!SELECTTYPE(ydot);TYPEIS(RealVectorType)
+!WRITE(*,*) "ydot: ",ydot%b
+!ENDSELECT
+            CALL BLAS_axpy(solver%myLS%x,yf,1.0_SRK)
+!SELECTTYPE(x=>solver%myLS%x);TYPEIS(RealVectorType)
+!WRITE(*,*) "x: ",x%b
+!ENDSELECT
+!SELECTTYPE(b=>solver%myLS%b);TYPEIS(RealVectorType)
+!WRITE(*,*) "b: ",b%b
+!ENDSELECT
+!SELECTTYPE(yf);TYPEIS(RealVectorType)
+!WRITE(*,*) "yf: ",yf%b
+!ENDSELECT
+!READ(*,*)
+            resid=BLAS_nrm2(solver%myLS%x)
+          ENDDO
+!SELECTTYPE(yf);TYPEIS(RealVectorType)
+!WRITE(*,*) yf%b
+!ENDSELECT
+          IF(solver%solverMethod==BDF_METHOD) THEN
+            !save data if needed for next iteration
+          ENDIF
+        ENDDO
+        CALL rhs%clear()
+        DEALLOCATE(rhs)
       ENDIF
       DEALLOCATE(ydot)
     ENDSUBROUTINE step_ODESolverType_Native
+
+    SUBROUTINE estimate_jacobian(f,t,y,const,A)
+      CLASS(ODESolverInterface_Base),INTENT(INOUT) :: f
+      REAL(SRK),INTENT(IN) :: t
+      CLASS(VectorType),INTENT(INOUT) :: y
+      REAL(SRK),INTENT(IN) :: const
+      CLASS(MatrixType),INTENT(INOUT) :: A
+
+      INTEGER(SIK) :: i,j
+      REAL(SRK) :: tmp,tmp2,f1,f2
+      REAL(SRK) :: dy=1.000001_SRK
+      REAL(SRK) :: dytol=1.0E-12_SRK
+      CLASS(VectorType),ALLOCATABLE :: ytmp,f0,ftmp
+
+      ALLOCATE(f0,SOURCE=y)
+      ALLOCATE(ytmp,SOURCE=y)
+      ALLOCATE(ftmp,SOURCE=y)
+
+      CALL f%eval(t,y,f0)
+      DO i=1,y%n
+        CALL BLAS_copy(y,ytmp)
+        CALL ytmp%get(i,tmp)
+        IF(ABS(tmp)<dytol) THEN
+          tmp2=SIGN(dytol,tmp)
+        ELSE
+          tmp2=tmp*dy
+        ENDIF
+        CALL ytmp%set(i,tmp2)
+        CALL f%eval(t,ytmp,ftmp)
+        DO j=1,y%n
+          CALL f0%get(j,f1)
+          CALL ftmp%get(j,f2)
+          IF(i==j) THEN
+            CALL A%set(i,j,1.0_SRK-const*(f2-f1)/(tmp2-tmp))
+          ELSE
+            CALL A%set(i,j,-const*(f2-f1)/(tmp2-tmp))
+          ENDIF
+        ENDDO
+      ENDDO
+    ENDSUBROUTINE estimate_jacobian
 !
 ENDMODULE ODESolverTypes

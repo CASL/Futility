@@ -20,10 +20,17 @@ MODULE testODEInterface
     SUBROUTINE eval(self,t,y,ydot)
       CLASS(ODESolverInterface_Test),INTENT(INOUT) :: self
       REAL(SRK),INTENT(IN) :: t
-      CLASS(VectorType),INTENT(IN) :: y
+      CLASS(VectorType),INTENT(INOUT) :: y
       CLASS(VectorType),INTENT(INOUT) :: ydot
+
+      REAL(SRK) :: tmp(3)
       CALL ydot%set(0.0_SRK)
+      CALL y%get(tmp)
+      !CALL ydot%set(1,3.2_SRK*tmp(1)-2.4_SRK*tmp(2)+5.0_SRK*tmp(3))
+      !CALL ydot%set(2,tmp(1)-10.0_SRK*tmp(3))
+      !CALL ydot%set(3,-0.3_SRK*SUM(tmp))
       CALL ydot%set(1,3.2_SRK)
+      CALL ydot%set(2,0.0_SRK)
       CALL ydot%set(3,-0.3_SRK)
     ENDSUBROUTINE eval
 ENDMODULE testODEInterface
@@ -59,7 +66,7 @@ PROGRAM testODESolver
 
   !> set up default parameter list
   CALL pList%clear()
-  CALL pList%add('ODESolverType->n',2_SIK)
+  CALL pList%add('ODESolverType->n',3_SIK)
   CALL pList%add('ODESolverType->solver',BDF_METHOD)
   CALL pList%add('ODESolverType->theta',0.0_SRK)
   CALL pList%add('ODESolverType->bdf_order',3_SIK)
@@ -78,7 +85,15 @@ PROGRAM testODESolver
   ALLOCATE(ODESolverInterface_Test:: f)
 
   REGISTER_SUBTEST('testInit_Native',testInit_Native)
-  REGISTER_SUBTEST('testStep_Native',testStep_Native)
+  REGISTER_SUBTEST('testStep_Native_theta=0.0',testStep_Native)
+  SELECTTYPE(testODE); TYPEIS(ODESolverType_Native)
+    testODE%theta=0.5_SRK
+  ENDSELECT
+  REGISTER_SUBTEST('testStep_Native_theta=0.5',testStep_Native)
+  SELECTTYPE(testODE); TYPEIS(ODESolverType_Native)
+    testODE%theta=1.0_SRK
+  ENDSELECT
+  REGISTER_SUBTEST('testStep_Native_theta=1.0',testStep_Native)
   REGISTER_SUBTEST('testClear_Native',testClear_Native)
   FINALIZE_TEST()
 
@@ -101,7 +116,7 @@ CONTAINS
       SELECTTYPE(testODE); TYPE IS(ODESolverType_Native)
         CALL testODE%init(pList,f)
         ASSERT(testODE%isInit,'%isInit')
-        ASSERT(testODE%n==2,'%n')
+        ASSERT(testODE%n==3,'%n')
         ASSERT(testODE%solverMethod==BDF_METHOD,'%solverMethod')
         ASSERT(testODE%theta/=0.0_SRK,'%theta') ! this shoudln't get set since method is bdf
         ASSERT(testODE%BDForder==3,'%BDForder')
@@ -117,7 +132,7 @@ CONTAINS
 
         CALL testODE%init(pList,f)
         ASSERT(testODE%isInit,'%isInit')
-        ASSERT(testODE%n==2,'%n')
+        ASSERT(testODE%n==3,'%n')
         ASSERT(testODE%solverMethod==THETA_METHOD,'%solverMethod')
         ASSERT(testODE%theta==0.0_SRK,'%theta')
         ASSERT(testODE%BDForder/=3,'%BDForder') ! this shoudln't get set since method is theta
