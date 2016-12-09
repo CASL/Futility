@@ -72,6 +72,18 @@ MODULE ODESolverTypes
   INTEGER(SIK),PARAMETER,PUBLIC :: ODE_NATIVE=1
   !> set enumeration scheme for solver methods
   INTEGER(SIK),PARAMETER,PUBLIC :: THETA_METHOD=0,BDF_METHOD=1
+  !> bdf constants for LHS
+  REAL(SRK),PARAMETER :: beta_bdf(5)=(/1.0_SRK,2.0_SRK/3.0_SRK,6.0_SRK/11.0_SRK, &
+    12.0_SRK/25.0_SRK,60.0_SRK/137.0_SRK/)
+  !> bdf constants for RHS
+  REAL(SRK),PARAMETER :: alpha_bdf(15)=(/                             -1.0_SRK,&
+                                              -4.0_SRK/3.0_SRK,1.0_SRK/3.0_SRK,&
+                         -18.0_SRK/11.0_SRK,9.0_SRK/11.0_SRK,-2.0_SRK/11.0_SRK,&
+      -48.0_SRK/25.0_SRK,36.0_SRK/25.0_SRK,-16.0_SRK/25.0_SRK,3.0_SRK/25.0_SRK,&
+    -300.0_SRK/137.0_SRK,300.0_SRK/137.0_SRK,-200.0_SRK/137.0_SRK,             &
+       75.0_SRK/137.0_SRK,-12.0_SRK/137.0_SRK/)
+  !> indices for RHS bdf constants
+  INTEGER(SIK),PARAMETER :: alpha_index(6)=(/1,2,4,7,11,16/)
 
   TYPE,ABSTRACT :: ODESolverInterface_Base
     CONTAINS
@@ -307,10 +319,11 @@ MODULE ODESolverTypes
       REAL(SRK),INTENT(IN) :: tf
       CLASS(VectorType),INTENT(INOUT) :: yf
 
-      INTEGER(SIK) :: i,nstep
+      INTEGER(SIK) :: i,j,k,nstep,ist,ord
       REAL(SRK) :: t,dt,beta,resid
       CLASS(VectorType),ALLOCATABLE :: ydot
       CLASS(VectorType),ALLOCATABLE :: rhs
+      CLASS(VectorType),ALLOCATABLE :: bdf_hist(:)
 
       ALLOCATE(ydot,SOURCE=y0)
       CALL BLAS_copy(y0,yf)
@@ -327,6 +340,14 @@ MODULE ODESolverTypes
         ENDDO
       ELSE
         ALLOCATE(rhs,SOURCE=y0)
+        IF(solver%solverMethod==BDF_METHOD) THEN
+          ALLOCATE(bdf_hist(solver%BDForder),SOURCE=rhs)
+          DO i=1,solver%BDForder
+            CALL bdf_hist(i)%set(0.0_SRK)
+          ENDDO
+          ist=1
+          CALL BLAS_copy(y0,bdf_hist(ist))
+        ENDIF
         DO i=1,nstep
           IF(solver%solverMethod==THETA_METHOD) THEN
             !setup RHS
@@ -336,14 +357,24 @@ MODULE ODESolverTypes
             beta=solver%theta
           ELSEIF(solver%solverMethod==BDF_METHOD) THEN
             !setup RHS
+            ord=MIN(i,solver%BDForder)
+!WRITE(*,*) ord,ist,ABS(MOD(ist-1-1,solver%BDForder))+1
+            CALL BLAS_copy(bdf_hist(ist),rhs)
+            CALL BLAS_scal(rhs,alpha_bdf(alpha_index(ord)))
+            DO j=1,ord-1
+              CALL BLAS_axpy(bdf_hist(ABS(MOD(ist-j-1+solver%BDForder,solver%BDForder))+1),rhs,alpha_bdf(alpha_index(ord)+j))
+            ENDDO
+            CALL BLAS_scal(rhs,-1.0_SRK)
+            beta=beta_bdf(ord)
           ENDIF
           !setup LHS matrix
           IF (MOD(i-1,20)==0) THEN
-            CALL estimate_jacobian(solver%f,t,yf,0.5_SRK*dt,solver%myLS%A)
+            CALL estimate_jacobian(solver%f,t,yf,beta*dt,solver%myLS%A)
           ENDIF
 
           !solve nonlinear system
           resid=2*solver%tol
+          j=1
           DO WHILE (resid>solver%tol)
             CALL solver%f%eval(t+dt,yf,ydot)
             CALL BLAS_copy(rhs,solver%myLS%b)
@@ -372,12 +403,33 @@ MODULE ODESolverTypes
 !ENDSELECT
 !READ(*,*)
             resid=BLAS_nrm2(solver%myLS%x)
+!IF(j>1 .AND. solver%BDForder==3) THEN
+!WRITE(*,*) i,j,resid,dt,beta,alpha_bdf(alpha_index(ord):alpha_index(ord+1)-1)
+!CALL estimate_jacobian(solver%f,t,yf,beta*dt,solver%myLS%A)
+!SELECTTYPE(bdf_hist);TYPEIS(RealVectorType)
+!  DO k=1,solver%BDForder
+!    WRITE(*,*) "hist ",k,": ", bdf_hist(k)%b
+!  ENDDO
+!ENDSELECT
+!SELECTTYPE(rhs);TYPEIS(RealVectorType)
+!  WRITE(*,*) "rhs:    ", rhs%b
+!ENDSELECT
+!SELECTTYPE(yf);TYPEIS(RealVectorType)
+!  WRITE(*,*) "yf:     ", yf%b
+!ENDSELECT
+!WRITE(*,*) beta
+!READ(*,*)
+!ENDIF
+!WRITE(*,*) i,j,resid
+            j=j+1
           ENDDO
 !SELECTTYPE(yf);TYPEIS(RealVectorType)
 !WRITE(*,*) yf%b
 !ENDSELECT
           IF(solver%solverMethod==BDF_METHOD) THEN
             !save data if needed for next iteration
+            ist=MOD(ist,solver%BDForder)+1
+            CALL BLAS_copy(yf,bdf_hist(ist))
           ENDIF
         ENDDO
         CALL rhs%clear()

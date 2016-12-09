@@ -136,6 +136,31 @@ PROGRAM testODESolver
   ENDSELECT
   REGISTER_SUBTEST('testStep_Native_theta=1.0',testStep_Native)
 
+  SELECTTYPE(testODE); TYPE IS(ODESolverType_Native)
+    testODE%solverMethod=BDF_METHOD
+    testODE%BDForder=1
+  ENDSELECT
+  REGISTER_SUBTEST('testStep_Native_BDF-1',testStep_Native)
+  SELECTTYPE(testODE); TYPE IS(ODESolverType_Native)
+    testODE%BDForder=2
+  ENDSELECT
+  REGISTER_SUBTEST('testStep_Native_BDF-2',testStep_Native)
+  SELECTTYPE(testODE); TYPE IS(ODESolverType_Native)
+    testODE%BDForder=3
+  ENDSELECT
+  REGISTER_SUBTEST('testStep_Native_BDF-3',testStep_Native)
+  SELECTTYPE(testODE); TYPE IS(ODESolverType_Native)
+    testODE%BDForder=4
+  ENDSELECT
+  REGISTER_SUBTEST('testStep_Native_BDF-4',testStep_Native)
+  SELECTTYPE(testODE); TYPE IS(ODESolverType_Native)
+    testODE%BDForder=5
+  ENDSELECT
+  REGISTER_SUBTEST('testStep_Native_BDF-5',testStep_Native)
+
+  SELECTTYPE(testODE); TYPE IS(ODESolverType_Native)
+    testODE%solverMethod=THETA_METHOD
+  ENDSELECT
   DEALLOCATE(f)
   ALLOCATE(ODESolverInterface_TestExponential :: f)
   testODE%f=>f
