@@ -102,7 +102,7 @@ MODULE ODESolverTypes
     !> size of ODE system
     INTEGER(SIK) :: n=-1
     !> acceptable tolerance in solve
-    REAL(SRK) :: tol=1.0e-6_SRK
+    REAL(SRK) :: tol=1.0e-8_SRK
     !> Timer to measure solution time
     TYPE(TimerType) :: SolveTime
     !>
@@ -293,7 +293,7 @@ MODULE ODESolverTypes
       solver%solverMethod=-1
       solver%TPLType=-1
       solver%n=-1
-      solver%tol=1.0e-6_SRK
+      solver%tol=1.0e-8_SRK
       solver%theta=0.5_SRK
       solver%BDForder=5
       solver%substep_size=0.1_SRK
@@ -349,20 +349,20 @@ MODULE ODESolverTypes
           CALL BLAS_copy(y0,bdf_hist(ist))
         ENDIF
         DO i=1,nstep
+          CALL solver%f%eval(t,yf,ydot)
           IF(solver%solverMethod==THETA_METHOD) THEN
             !setup RHS
             CALL BLAS_copy(yf,rhs)
-            CALL solver%f%eval(t,yf,ydot)
             CALL BLAS_axpy(ydot,rhs,dt*(1.0_SRK-solver%theta))
             beta=solver%theta
           ELSEIF(solver%solverMethod==BDF_METHOD) THEN
             !setup RHS
             ord=MIN(i,solver%BDForder)
-!WRITE(*,*) ord,ist,ABS(MOD(ist-1-1,solver%BDForder))+1
             CALL BLAS_copy(bdf_hist(ist),rhs)
             CALL BLAS_scal(rhs,alpha_bdf(alpha_index(ord)))
             DO j=1,ord-1
-              CALL BLAS_axpy(bdf_hist(ABS(MOD(ist-j-1+solver%BDForder,solver%BDForder))+1),rhs,alpha_bdf(alpha_index(ord)+j))
+              CALL BLAS_axpy(bdf_hist(ABS(MOD(ist-j-1+solver%BDForder,solver%BDForder))+1), &
+                              rhs,alpha_bdf(alpha_index(ord)+j))
             ENDDO
             CALL BLAS_scal(rhs,-1.0_SRK)
             beta=beta_bdf(ord)
@@ -372,6 +372,8 @@ MODULE ODESolverTypes
             CALL estimate_jacobian(solver%f,t,yf,beta*dt,solver%myLS%A)
           ENDIF
 
+          !Initial guess is forward euler
+          CALL BLAS_axpy(ydot,yf,dt)
           !solve nonlinear system
           resid=2*solver%tol
           j=1
@@ -382,55 +384,16 @@ MODULE ODESolverTypes
             CALL BLAS_axpy(ydot,solver%myLS%b,dt*beta)
             CALL BLAS_scal(solver%myLS%b,1.0_SRK)
             CALL solver%myLS%solve()
-!SELECTTYPE(rhs);TYPEIS(RealVectorType)
-!WRITE(*,*) "rhs: ",rhs%b
-!ENDSELECT
-!SELECTTYPE(yf);TYPEIS(RealVectorType)
-!WRITE(*,*) "yf: ",yf%b
-!ENDSELECT
-!SELECTTYPE(ydot);TYPEIS(RealVectorType)
-!WRITE(*,*) "ydot: ",ydot%b
-!ENDSELECT
             CALL BLAS_axpy(solver%myLS%x,yf,1.0_SRK)
-!SELECTTYPE(x=>solver%myLS%x);TYPEIS(RealVectorType)
-!WRITE(*,*) "x: ",x%b
-!ENDSELECT
-!SELECTTYPE(b=>solver%myLS%b);TYPEIS(RealVectorType)
-!WRITE(*,*) "b: ",b%b
-!ENDSELECT
-!SELECTTYPE(yf);TYPEIS(RealVectorType)
-!WRITE(*,*) "yf: ",yf%b
-!ENDSELECT
-!READ(*,*)
             resid=BLAS_nrm2(solver%myLS%x)
-!IF(j>1 .AND. solver%BDForder==3) THEN
-!WRITE(*,*) i,j,resid,dt,beta,alpha_bdf(alpha_index(ord):alpha_index(ord+1)-1)
-!CALL estimate_jacobian(solver%f,t,yf,beta*dt,solver%myLS%A)
-!SELECTTYPE(bdf_hist);TYPEIS(RealVectorType)
-!  DO k=1,solver%BDForder
-!    WRITE(*,*) "hist ",k,": ", bdf_hist(k)%b
-!  ENDDO
-!ENDSELECT
-!SELECTTYPE(rhs);TYPEIS(RealVectorType)
-!  WRITE(*,*) "rhs:    ", rhs%b
-!ENDSELECT
-!SELECTTYPE(yf);TYPEIS(RealVectorType)
-!  WRITE(*,*) "yf:     ", yf%b
-!ENDSELECT
-!WRITE(*,*) beta
-!READ(*,*)
-!ENDIF
-!WRITE(*,*) i,j,resid
             j=j+1
           ENDDO
-!SELECTTYPE(yf);TYPEIS(RealVectorType)
-!WRITE(*,*) yf%b
-!ENDSELECT
           IF(solver%solverMethod==BDF_METHOD) THEN
             !save data if needed for next iteration
             ist=MOD(ist,solver%BDForder)+1
             CALL BLAS_copy(yf,bdf_hist(ist))
           ENDIF
+          t=t+dt
         ENDDO
         CALL rhs%clear()
         DEALLOCATE(rhs)

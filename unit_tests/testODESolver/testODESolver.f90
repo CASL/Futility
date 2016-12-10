@@ -53,9 +53,6 @@ MODULE testODEInterface
       REAL(SRK) :: tmp(3)
       CALL ydot%set(0.0_SRK)
       CALL y%get(tmp)
-      !CALL ydot%set(1,3.2_SRK*tmp(1)-2.4_SRK*tmp(2)+5.0_SRK*tmp(3))
-      !CALL ydot%set(2,tmp(1)-10.0_SRK*tmp(3))
-      !CALL ydot%set(3,-0.3_SRK*SUM(tmp))
       CALL ydot%set(1,3.2_SRK*tmp(1))
       CALL ydot%set(2,tmp(1))
       CALL ydot%set(3,-0.3_SRK*tmp(3))
@@ -111,7 +108,7 @@ PROGRAM testODESolver
   CALL pList%add('ODESolverType->solver',BDF_METHOD)
   CALL pList%add('ODESolverType->theta',0.0_SRK)
   CALL pList%add('ODESolverType->bdf_order',3_SIK)
-  CALL pList%add('ODESolverType->tolerance',1.0e-5_SRK)
+  CALL pList%add('ODESolverType->tolerance',1.0e-9_SRK)
   CALL pList%add('ODESolverType->substep_size',0.01_SRK)
 
   !Configure exception handler for test
@@ -199,7 +196,7 @@ CONTAINS
         ASSERT(testODE%solverMethod==BDF_METHOD,'%solverMethod')
         ASSERT(testODE%theta/=0.0_SRK,'%theta') ! this shoudln't get set since method is bdf
         ASSERT(testODE%BDForder==3,'%BDForder')
-        ASSERT(testODE%tol==1.0E-5_SRK,'%tol')
+        ASSERT(testODE%tol==1.0E-9_SRK,'%tol')
         ASSERT(testODE%substep_size==0.01_SRK,'%substep_size')
         ASSERT(ASSOCIATED(testODE%f),'%f')
         ASSERT(testODE%myLS%isInit,'%myLS%isInit')
@@ -215,7 +212,7 @@ CONTAINS
         ASSERT(testODE%solverMethod==THETA_METHOD,'%solverMethod')
         ASSERT(testODE%theta==0.0_SRK,'%theta')
         ASSERT(testODE%BDForder/=3,'%BDForder') ! this shoudln't get set since method is theta
-        ASSERT(testODE%tol==1.0E-5_SRK,'%tol')
+        ASSERT(testODE%tol==1.0E-9_SRK,'%tol')
         ASSERT(testODE%substep_size==0.01_SRK,'%substep_size')
         ASSERT(ASSOCIATED(testODE%f),'%f')
         ASSERT(testODE%myLS%isInit,'%myLS%isInit')
@@ -270,6 +267,31 @@ CONTAINS
       ENDSELECT
       CALL testOrderConv(1.0_SRK,0.1_SRK,ref,'theta=1.0')
 
+      SELECTTYPE(testODE); TYPE IS(ODESolverType_Native)
+        testODE%solverMethod=BDF_METHOD
+        testODE%BDForder=1
+      ENDSELECT
+      CALL testOrderConv(1.0_SRK,0.1_SRK,ref,'bdf-1')
+      SELECTTYPE(testODE); TYPE IS(ODESolverType_Native)
+        testODE%BDForder=2
+      ENDSELECT
+      CALL testOrderConv(2.0_SRK,0.1_SRK,ref,'bdf-2')
+      SELECTTYPE(testODE); TYPE IS(ODESolverType_Native)
+        testODE%BDForder=3
+      ENDSELECT
+      CALL testOrderConv(2.0_SRK,0.1_SRK,ref,'bdf-3')
+      SELECTTYPE(testODE); TYPE IS(ODESolverType_Native)
+        testODE%BDForder=4
+      ENDSELECT
+      CALL testOrderConv(2.0_SRK,0.1_SRK,ref,'bdf-4')
+      SELECTTYPE(testODE); TYPE IS(ODESolverType_Native)
+        testODE%BDForder=5
+      ENDSELECT
+      CALL testOrderConv(2.0_SRK,0.1_SRK,ref,'bdf-5')
+      SELECTTYPE(testODE); TYPE IS(ODESolverType_Native)
+        testODE%solverMethod=THETA_METHOD
+      ENDSELECT
+
     ENDSUBROUTINE testStep_Native_exp
 !
 !-------------------------------------------------------------------------------
@@ -291,6 +313,28 @@ CONTAINS
       ENDSELECT
       CALL testOrderConv(1.0_SRK,0.1_SRK,ref,'theta=1.0')
 
+      SELECTTYPE(testODE); TYPE IS(ODESolverType_Native)
+        testODE%solverMethod=BDF_METHOD
+        testODE%BDForder=1
+      ENDSELECT
+      CALL testOrderConv(1.0_SRK,0.1_SRK,ref,'bdf-1')
+      SELECTTYPE(testODE); TYPE IS(ODESolverType_Native)
+        testODE%BDForder=2
+      ENDSELECT
+      CALL testOrderConv(2.0_SRK,0.1_SRK,ref,'bdf-2')
+      SELECTTYPE(testODE); TYPE IS(ODESolverType_Native)
+        testODE%BDForder=3
+      ENDSELECT
+      CALL testOrderConv(2.0_SRK,0.1_SRK,ref,'bdf-3')
+      SELECTTYPE(testODE); TYPE IS(ODESolverType_Native)
+        testODE%BDForder=4
+      ENDSELECT
+      CALL testOrderConv(2.0_SRK,0.1_SRK,ref,'bdf-4')
+      SELECTTYPE(testODE); TYPE IS(ODESolverType_Native)
+        testODE%BDForder=5
+      ENDSELECT
+      CALL testOrderConv(2.0_SRK,0.1_SRK,ref,'bdf-5')
+
     ENDSUBROUTINE testStep_Native_nonlinear
 !
 !-------------------------------------------------------------------------------
@@ -300,7 +344,7 @@ CONTAINS
         ASSERT(testODE%solverMethod==-1,'%solverMethod')
         ASSERT(testODE%TPLType==-1,'%TPLType')
         ASSERT(testODE%n==-1,'%n')
-        ASSERT(testODE%tol==1.0e-6_SRK,'%tol')
+        ASSERT(testODE%tol==1.0e-8_SRK,'%tol')
         ASSERT(testODE%theta==0.5_SRK,'%theta')
         ASSERT(testODE%BDForder==5,'%BDForder')
         ASSERT(testODE%substep_size==0.1_SRK,'%substep_size')
