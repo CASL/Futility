@@ -400,7 +400,19 @@ MODULE ODESolverTypes
       ENDIF
       DEALLOCATE(ydot)
     ENDSUBROUTINE step_ODESolverType_Native
-
+!
+!-------------------------------------------------------------------------------
+!> @brief Estimate the Jacobian of the system
+!>
+!> @param f the function interface which the Jacobian is based
+!> @param t current time
+!> @param y the vector to form Jacobian around
+!> @param const the constant multipier in front of the Jacobian
+!> @param A the matrix type in which the Jacobian is stored
+!>
+!> This routine approximates A = I-const*J where J is the Jacobian, df/dy
+!> which is formed using a finite difference approximation.
+!>
     SUBROUTINE estimate_jacobian(f,t,y,const,A)
       CLASS(ODESolverInterface_Base),INTENT(INOUT) :: f
       REAL(SRK),INTENT(IN) :: t

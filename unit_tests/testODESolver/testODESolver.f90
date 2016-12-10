@@ -36,9 +36,6 @@ MODULE testODEInterface
       REAL(SRK) :: tmp(3)
       CALL ydot%set(0.0_SRK)
       CALL y%get(tmp)
-      !CALL ydot%set(1,3.2_SRK*tmp(1)-2.4_SRK*tmp(2)+5.0_SRK*tmp(3))
-      !CALL ydot%set(2,tmp(1)-10.0_SRK*tmp(3))
-      !CALL ydot%set(3,-0.3_SRK*SUM(tmp))
       CALL ydot%set(1,3.2_SRK)
       CALL ydot%set(2,0.0_SRK)
       CALL ydot%set(3,-0.3_SRK)
@@ -99,7 +96,7 @@ PROGRAM testODESolver
   CALL PETScInitialize(PETSC_NULL_CHARACTER,ierr)
 #endif
 #ifdef MPACT_HAVE_Trilinos
-        CALL MPACT_Trilinos_Init()
+  CALL MPACT_Trilinos_Init()
 #endif
 
   !> set up default parameter list
