@@ -1261,8 +1261,9 @@ MODULE ParallelEnv
 !$    IF(PRESENT(PEparam)) THEN
 !$      IF(PEparam > omp_get_num_procs()) THEN
 !$        CALL eParEnv%raiseWarning("More threads requested than actual cores")
+!$        myPE%nproc=PEparam
 !$      ELSEIF(PEparam == 0) THEN
-!$        myPE%nproc=omp_get_num_threads()
+!$        myPE%nproc=omp_get_max_threads()
 !$      ELSE
 !$        myPE%nproc=MAX(1,PEparam)
 !$      ENDIF
