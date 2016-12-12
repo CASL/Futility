@@ -77,6 +77,7 @@ PROGRAM testParallelEnv
 !-------------------------------------------------------------------------------
     SUBROUTINE testOMPEnv()
       TYPE(OMP_EnvType) :: testOMP
+      INTEGER :: n_warn
         
       COMPONENT_TEST('Uninit.')
       ASSERT(testOMP%nproc == -1,'%nproc')
@@ -107,8 +108,9 @@ PROGRAM testParallelEnv
 !$    CALL testOMP%clear()
 !$
 !$    COMPONENT_TEST('Too many threads')
-!$    CALL testOMP%init(1000)
-!$    ASSERT(testOMP%nproc == omp_get_max_threads(),'%nproc')
+!$    n_warn = eParEnv%getCounter(EXCEPTION_WARNING)
+!$    CALL testOMP%init(omp_get_num_procs()+1)
+!$    ASSERT(eParEnv%getCounter(EXCEPTION_WARNING) > n_warn,'no warning')
 !$    ASSERT(testOMP%rank == 0,'%rank')
 !$    ASSERT(testOMP%master,'%master')
 !$    ASSERT(testOMP%isInit(),'%isInit()')

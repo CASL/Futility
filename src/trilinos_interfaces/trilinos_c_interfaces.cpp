@@ -34,7 +34,6 @@ extern "C" void MPACT_Trilinos_Init() {
         andr = new AndersonStore();
         jfnk = new JFNKStore();
         mpact_trilinos_isinit=true;
-        omp_set_num_threads(1);
     }
 
 }

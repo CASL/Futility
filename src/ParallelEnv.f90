@@ -1235,6 +1235,23 @@ MODULE ParallelEnv
 !-------------------------------------------------------------------------------
 !> @brief Initializes an OpenMP environment type object.
 !>
+!> This uses the optional passed parameter as the number of threads to use in
+!> the constructed parallel environment. The following rules are enforced:
+!>  - If the requested number of threads is greater than the physical number
+!     of processors on the system, a warning is generated. The number of still
+!     respected, however, since it may be desired to observe the effects of
+!     using too many threads. 
+!>  - If the requested number of threads is less than the result of
+!>    omp_get_max_threads(), omp_set_num_threads() will be called to set the
+!>    maximum number of threads to the requested number. It should be noted that
+!>    omp_get_max_threads() is not the number of physical cores present, but
+!>    rather the number of threads that would be used if a parallel region were
+!>    encountered that lacked a num_threads() clause. This is usually the value
+!>    of the OMP_NUM_THREADS environment variable at the start of program
+!>    execution.  This rule ensures that TPLs that employ OpenMP, but do not
+!>    explicitly request a number of threads using a num_threads clause, will
+!>    use the number of threads requested by the user, rather than the
+!>    value stored in OMP_NUM_THREADS.
     SUBROUTINE init_OMP_Env_type(myPE,PEparam)
       CLASS(OMP_EnvType),INTENT(INOUT) :: myPE
       INTEGER(SIK),INTENT(IN),OPTIONAL :: PEparam
@@ -1242,13 +1259,16 @@ MODULE ParallelEnv
       myPE%rank=0
       myPE%master=.TRUE.
 !$    IF(PRESENT(PEparam)) THEN
-!$      IF(PEparam > omp_get_max_threads()) THEN
-!$        myPE%nproc=omp_get_max_threads()
+!$      IF(PEparam > omp_get_num_procs()) THEN
+!$        CALL eParEnv%raiseWarning("More threads requested than actual cores")
 !$      ELSEIF(PEparam == 0) THEN
 !$        myPE%nproc=omp_get_num_threads()
 !$      ELSE
 !$        myPE%nproc=MAX(1,PEparam)
 !$      ENDIF
+!$    ENDIF
+!$    IF(myPE%nproc > omp_get_max_threads()) THEN
+!$      CALL omp_set_num_threads(myPE%nproc)
 !$    ENDIF
       myPE%initStat=.TRUE.
     ENDSUBROUTINE init_OMP_Env_type
