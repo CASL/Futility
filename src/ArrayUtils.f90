@@ -971,7 +971,7 @@ MODULE ArrayUtils
       LOGICAL(SBK),INTENT(IN) :: delta
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incl
       REAL(SRK),INTENT(IN),OPTIONAL :: tol
-      REAL(SRK) :: val
+      REAL(SRK) :: val,l_tol
       INTEGER(SIK) :: ind
       INTEGER(SIK) :: i,n,l_incl
       REAL(SRK) :: tmp(SIZE(r,DIM=1)+1)
