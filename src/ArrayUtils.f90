@@ -275,7 +275,7 @@ MODULE ArrayUtils
       ENDIF
       loctol=EPSREAL*100.0_SRK
       IF(PRESENT(tol)) THEN
-        IF((0.0_SRK < tol) .AND. (tol <= EPSREAL*1000.0_SRK)) loctol=tol
+        IF((0.0_SRK < tol)) loctol=tol
       ENDIF
 
       !Find the number of unique entries
@@ -446,7 +446,7 @@ MODULE ArrayUtils
       ENDIF
       loctol=EPSREAL*100.0_SRK
       IF(PRESENT(tol)) THEN
-        IF((0.0_SRK < tol) .AND. (tol <= EPSREAL*1000.0_SRK)) loctol=tol
+        IF((0.0_SRK < tol)) loctol=tol
       ENDIF
 
       !Find the number of unique entries
@@ -794,7 +794,7 @@ MODULE ArrayUtils
       l_tol=EPSREAL
       IF(PRESENT(tol)) THEN
         !Give tolerance a range of say 1000*EPSREAL
-        IF((0.0_SRK < tol) .AND. (tol <= EPSREAL*1000.0_SRK)) l_tol=tol
+        IF((0.0_SRK < tol)) l_tol=tol
       ENDIF
 
       !Below the array
@@ -914,7 +914,7 @@ MODULE ArrayUtils
       LOGICAL(SBK),INTENT(IN) :: delta
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incl
       REAL(SRK),INTENT(IN),OPTIONAL :: tol
-      REAL(SRK) :: val
+      REAL(SRK) :: val,l_tol
       INTEGER(SIK) :: ind
       INTEGER(SIK) :: i,n,l_incl
       REAL(SRK) :: tmp(SIZE(r,DIM=1)+1)
@@ -933,17 +933,20 @@ MODULE ArrayUtils
       ENDIF
 
       !If incl is present
-      IF(PRESENT(incl)) THEN
-        IF((0 <= incl) .AND. (incl <= 2)) l_incl=incl
-      ENDIF
+      !l_incl=0
+      !IF(PRESENT(incl)) THEN
+      !  IF((0 <= incl) .AND. (incl <= 2)) l_incl=incl
+      !ENDIF
 
       !If tol is present
+      l_tol=EPSREAL
       IF(PRESENT(tol)) THEN
+        IF((0.0_SRK < tol)) l_tol=tol
       ENDIF
 
       IF((tmp(1) .APPROXLE. pos) .AND. (pos .APPROXLE. tmp(n))) THEN
         ind=1
-        DO WHILE(pos .APPROXGE. tmp(ind))
+        DO WHILE(SOFTGE(pos,tmp(ind),l_tol))
           IF(ind == n) EXIT
           ind=ind+1
         ENDDO
@@ -987,17 +990,20 @@ MODULE ArrayUtils
       ENDIF
 
       !If incl is present
-      IF(PRESENT(incl)) THEN
-        IF((0 <= incl) .AND. (incl <= 2)) l_incl=incl
-      ENDIF
+      !l_incl=0
+      !IF(PRESENT(incl)) THEN
+      !  IF((0 <= incl) .AND. (incl <= 2)) l_incl=incl
+      !ENDIF
 
       !If tol is present
+      l_tol=EPSREAL
       IF(PRESENT(tol)) THEN
+        IF((0.0_SRK < tol)) l_tol=tol
       ENDIF
 
       IF((tmp(1) .APPROXLE. pos) .AND. (pos .APPROXLE. tmp(n))) THEN
         ind=1
-        DO WHILE(pos .APPROXGE. tmp(ind))
+        DO WHILE(SOFTGE(pos,tmp(ind),l_tol))
           IF(ind == n) EXIT
           ind=ind+1
         ENDDO
