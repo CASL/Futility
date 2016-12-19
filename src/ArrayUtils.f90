@@ -762,11 +762,10 @@ MODULE ArrayUtils
 !> @param delta The optional input for whether the array is incremental or not
 !> @param ind The array index where pos is located in r.
 !>
-    PURE FUNCTION findIndex_1DReal(r,pos,xi,delta,incl,tol) RESULT(ind)
+    PURE FUNCTION findIndex_1DReal(r,pos,delta,incl,tol) RESULT(ind)
       REAL(SRK),INTENT(IN) :: r(:)
       REAL(SRK),INTENT(IN) :: pos
-      REAL(SRK),INTENT(IN),OPTIONAL :: xi
-      LOGICAL(SBK),INTENT(IN),OPTIONAL :: delta
+      LOGICAL(SBK),INTENT(IN) :: delta
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incl
       REAL(SRK),INTENT(IN),OPTIONAL :: tol
       INTEGER(SIK) :: ind
@@ -776,21 +775,13 @@ MODULE ArrayUtils
       !Initialize the tmp array and adjust for any offset xi
       n=SIZE(r,DIM=1)
       tmp=0.0_SRK
-      IF(PRESENT(xi)) THEN
-        tmp(1)=xi
-        tmp(2:n+1)=r
-        n=n+1
-      ELSE
-        tmp(1:n)=r
-      ENDIF
+      tmp(1:n)=r
 
       !If the array is in increments/deltas and not full values
-      IF(PRESENT(delta)) THEN
-        IF(delta) THEN
-          DO i=2,SIZE(tmp,DIM=1)
-            tmp(i)=tmp(i-1)+tmp(i)
-          ENDDO
-        ENDIF
+      IF(delta) THEN
+        DO i=2,SIZE(tmp,DIM=1)
+          tmp(i)=tmp(i-1)+tmp(i)
+        ENDDO
       ENDIF
 
       !If the logic should be inclusive or exclusive
@@ -845,11 +836,10 @@ MODULE ArrayUtils
 !> @brief
 !> @param r
 !>
-    PURE FUNCTION findIndex_1DInt(r,pos,xi,delta,incl) RESULT(ind)
+    PURE FUNCTION findIndex_1DInt(r,pos,delta,incl) RESULT(ind)
       INTEGER(SIK),INTENT(IN) :: r(:)
       INTEGER(SIK),INTENT(IN) :: pos
-      INTEGER(SIK),INTENT(IN),OPTIONAL :: xi
-      LOGICAL(SBK),INTENT(IN),OPTIONAL :: delta
+      LOGICAL(SBK),INTENT(IN) :: delta
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incl
       INTEGER(SIK) :: ind
       INTEGER(SIK) :: n,i,l_incl
@@ -858,21 +848,13 @@ MODULE ArrayUtils
       !Initialize the tmp array and adjust for any offset xi
       n=SIZE(r,DIM=1)
       tmp=0
-      IF(PRESENT(xi)) THEN
-        tmp(1)=xi
-        tmp(2:n+1)=r
-        n=n+1
-      ELSE
-        tmp(1:n)=r
-      ENDIF
+      tmp(1:n)=r
 
       !If the array is in increments/deltas and not full values
-      IF(PRESENT(delta)) THEN
-        IF(delta) THEN
-          DO i=2,SIZE(tmp,DIM=1)
-            tmp(i)=tmp(i-1)+tmp(i)
-          ENDDO
-        ENDIF
+      IF(delta) THEN
+        DO i=2,SIZE(tmp,DIM=1)
+          tmp(i)=tmp(i-1)+tmp(i)
+        ENDDO
       ENDIF
 
       !If the logic should be inclusive or exclusive
@@ -926,35 +908,37 @@ MODULE ArrayUtils
 !> @param delta The optional input for whether the array is incremental or not
 !> @param val The nearest lesser value
 !>
-    PURE FUNCTION findLowBound_1DReal(r,pos,xi,delta) RESULT(val)
+    PURE FUNCTION findLowBound_1DReal(r,pos,delta,incl,tol) RESULT(val)
       REAL(SRK),INTENT(IN) :: r(:)
       REAL(SRK),INTENT(IN) :: pos
-      REAL(SRK),INTENT(IN),OPTIONAL :: xi
-      LOGICAL(SBK),INTENT(IN),OPTIONAL :: delta
+      LOGICAL(SBK),INTENT(IN) :: delta
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: incl
+      REAL(SRK),INTENT(IN),OPTIONAL :: tol
       REAL(SRK) :: val
       INTEGER(SIK) :: ind
-      INTEGER(SIK) :: i,n
+      INTEGER(SIK) :: i,n,l_incl
       REAL(SRK) :: tmp(SIZE(r,DIM=1)+1)
 
       !Initialize the tmp array and adjust for any offset xi
       val=0.0_SRK
       n=SIZE(r,DIM=1)
       tmp=0.0_SRK
-      IF(PRESENT(xi)) THEN
-        tmp(1)=xi
-        tmp(2:n+1)=r
-        n=n+1
-      ELSE
-        tmp(1:n)=r
-      ENDIF
+      tmp(1:n)=r
 
       !If the array is in increments/deltas and not full values
-      IF(PRESENT(delta)) THEN
-        IF(delta) THEN
-          DO i=2,SIZE(tmp,DIM=1)
-            tmp(i)=tmp(i-1)+tmp(i)
-          ENDDO
-        ENDIF
+      IF(delta) THEN
+        DO i=2,SIZE(tmp,DIM=1)
+          tmp(i)=tmp(i-1)+tmp(i)
+        ENDDO
+      ENDIF
+
+      !If incl is present
+      IF(PRESENT(incl)) THEN
+        IF((0 <= incl) .AND. (incl <= 2)) l_incl=incl
+      ENDIF
+
+      !If tol is present
+      IF(PRESENT(tol)) THEN
       ENDIF
 
       IF((tmp(1) .APPROXLE. pos) .AND. (pos .APPROXLE. tmp(n))) THEN
@@ -978,35 +962,37 @@ MODULE ArrayUtils
 !> @param delta The optional input for whether the array is incremental or not
 !> @param val The nearest greater value
 !>
-    PURE FUNCTION findUpBound_1DReal(r,pos,xi,delta) RESULT(val)
+    PURE FUNCTION findUpBound_1DReal(r,pos,delta,incl,tol) RESULT(val)
       REAL(SRK),INTENT(IN) :: r(:)
       REAL(SRK),INTENT(IN) :: pos
-      REAL(SRK),INTENT(IN),OPTIONAL :: xi
-      LOGICAL(SBK),INTENT(IN),OPTIONAL :: delta
+      LOGICAL(SBK),INTENT(IN) :: delta
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: incl
+      REAL(SRK),INTENT(IN),OPTIONAL :: tol
       REAL(SRK) :: val
       INTEGER(SIK) :: ind
-      INTEGER(SIK) :: i,n
+      INTEGER(SIK) :: i,n,l_incl
       REAL(SRK) :: tmp(SIZE(r,DIM=1)+1)
 
       !Initialize the tmp array and adjust for any offset xi
       val=0.0_SRK
       n=SIZE(r,DIM=1)
       tmp=0.0_SRK
-      IF(PRESENT(xi)) THEN
-        tmp(1)=xi
-        tmp(2:n+1)=r
-        n=n+1
-      ELSE
-        tmp(1:n)=r
-      ENDIF
+      tmp(1:n)=r
 
       !If the array is in increments/deltas and not full values
-      IF(PRESENT(delta)) THEN
-        IF(delta) THEN
-          DO i=2,SIZE(tmp,DIM=1)
-            tmp(i)=tmp(i-1)+tmp(i)
-          ENDDO
-        ENDIF
+      IF(delta) THEN
+        DO i=2,SIZE(tmp,DIM=1)
+          tmp(i)=tmp(i-1)+tmp(i)
+        ENDDO
+      ENDIF
+
+      !If incl is present
+      IF(PRESENT(incl)) THEN
+        IF((0 <= incl) .AND. (incl <= 2)) l_incl=incl
+      ENDIF
+
+      !If tol is present
+      IF(PRESENT(tol)) THEN
       ENDIF
 
       IF((tmp(1) .APPROXLE. pos) .AND. (pos .APPROXLE. tmp(n))) THEN
@@ -1031,22 +1017,23 @@ MODULE ArrayUtils
 !> @param delta The optional input for whether the array is incremental or not
 !> @param val The difference of the nearest greater value and pos
 !>
-    PURE FUNCTION findEleHtAbove_1DReal(r,pos,xi,delta) RESULT(val)
+    PURE FUNCTION findEleHtAbove_1DReal(r,pos,delta,incl,tol) RESULT(val)
       REAL(SRK),INTENT(IN) :: r(:)
       REAL(SRK),INTENT(IN) :: pos
-      REAL(SRK),INTENT(IN),OPTIONAL :: xi
-      LOGICAL(SBK),INTENT(IN),OPTIONAL :: delta
+      LOGICAL(SBK),INTENT(IN) :: delta
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: incl
+      REAL(SRK),INTENT(IN),OPTIONAL :: tol
       REAL(SRK) :: val
       REAL(SRK) :: tmp
 
-      IF(PRESENT(xi) .AND. PRESENT(delta)) THEN
-        tmp=findUpBound(r,pos,XI=xi,delta=DELTA)
-      ELSEIF(PRESENT(delta)) THEN
-        tmp=findUpBound(r,pos,DELTA=delta)
-      ELSEIF(PRESENT(xi)) THEN
-        tmp=findUpBound(r,pos,XI=xi)
+      IF(PRESENT(incl) .AND. PRESENT(tol)) THEN
+        tmp=findUpBound(r,pos,delta,INCL=incl,TOL=tol)
+      ELSEIF(PRESENT(incl)) THEN
+        tmp=findUpBound(r,pos,delta,INCL=incl)
+      ELSEIF(PRESENT(tol)) THEN
+        tmp=findUpBound(r,pos,delta,TOL=tol)
       ELSE
-        tmp=findUpBound(r,pos)
+        tmp=findUpBound(r,pos,delta)
       ENDIF
 
       val=tmp-pos
@@ -1065,22 +1052,23 @@ MODULE ArrayUtils
 !> @param delta The optional input for whether the array is incremental or not
 !> @param val The difference of pos and the nearest lesser value
 !>
-    PURE FUNCTION findEleHtBelow_1DReal(r,pos,xi,delta) RESULT(val)
+    PURE FUNCTION findEleHtBelow_1DReal(r,pos,delta,incl,tol) RESULT(val)
       REAL(SRK),INTENT(IN) :: r(:)
       REAL(SRK),INTENT(IN) :: pos
-      REAL(SRK),INTENT(IN),OPTIONAL :: xi
-      LOGICAL(SBK),INTENT(IN),OPTIONAL :: delta
+      LOGICAL(SBK),INTENT(IN) :: delta
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: incl
+      REAL(SRK),INTENT(IN),OPTIONAL :: tol
       REAL(SRK) :: val
       REAL(SRK) :: tmp
 
-      IF(PRESENT(xi) .AND. PRESENT(delta)) THEN
-        tmp=findLowBound(r,pos,XI=xi,DELTA=delta)
-      ELSEIF(PRESENT(delta)) THEN
-        tmp=findLowBound(r,pos,DELTA=delta)
-      ELSEIF(PRESENT(xi)) THEN
-        tmp=findLowBound(r,pos,XI=xi)
+      IF(PRESENT(incl) .AND. PRESENT(tol)) THEN
+        tmp=findLowBound(r,pos,delta,INCL=incl,TOL=tol)
+      ELSEIF(PRESENT(incl)) THEN
+        tmp=findLowBound(r,pos,delta,INCL=incl)
+      ELSEIF(PRESENT(tol)) THEN
+        tmp=findLowBound(r,pos,delta,TOL=tol)
       ELSE
-        tmp=findLowBound(r,pos)
+        tmp=findLowBound(r,pos,delta)
       ENDIF
 
       val=pos-tmp
