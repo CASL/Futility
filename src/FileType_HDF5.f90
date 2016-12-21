@@ -6100,6 +6100,7 @@ MODULE FileType_HDF5
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       TYPE(StringType),INTENT(IN) :: h5path
       TYPE(ParamType),INTENT(INOUT) :: vals
+#ifdef MPACT_HAVE_HDF5 
       INTEGER(SIK) :: iobj,i,j,k,error,ndims,dtype_order,mem_len,class_type
       INTEGER(HID_T) :: dset_id,dspace_id,native_dtype,dtype,base_dtype
       INTEGER(SIZE_T) :: dtype_prec,dtype_size
@@ -6286,6 +6287,7 @@ MODULE FileType_HDF5
             ENDIF
         ENDSELECT
       ENDIF
+#endif
     ENDSUBROUTINE read_parameter
 !
 !-------------------------------------------------------------------------------
