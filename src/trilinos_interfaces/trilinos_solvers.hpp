@@ -51,18 +51,27 @@ public:
         cid(0)
     {}
 
-    int new_data() {
-        //Teuchos::ParameterList db
-        anasazi_map[cid]=AnasaziCnt();
-        //setup parameterlist with defaults
-        //anasazi_map[cid].anasazi_db = Teuchos::sublist(db, "Anasazi");
-        anasazi_map[cid].anasazi_db.set("Which", std::string("LM"));
-        anasazi_map[cid].anasazi_db.get("Convergence Tolerance",1e-7);
-        anasazi_map[cid].anasazi_db.get("Maximum Subspace Dimension",25);
-        anasazi_map[cid].anasazi_db.get("Restart Dimension",5);
-        anasazi_map[cid].anasazi_db.get("Maximum Restarts",20);
-        anasazi_map[cid].anasazi_db.get("Initial Guess",std::string("User"));
-        anasazi_map[cid].anasazi_db.get("Verbosity",Anasazi::Errors + Anasazi::Warnings);  // + Anasazi::FinalSummary + Anasazi::TimingDetails + Anasazi::IterationDetails);
+    int new_data(Teuchos::ParameterList &params) {
+        //setup parameterlist with defaults. The get() method will add the
+        //passed settings to the parameter list if they do not already exist,
+        //otherwise there is no effect. As such, only options missing from the
+        //passed parameter list will be set to default values.
+        params.set("Which", std::string("LM"));
+        params.get("Convergence Tolerance",1e-7);
+        params.get("Maximum Subspace Dimension",25);
+        params.get("Restart Dimension",5);
+        params.get("Maximum Restarts",20);
+        params.get("Initial Guess",std::string("User"));
+        params.get("Verbosity",Anasazi::Errors + Anasazi::Warnings);
+        // + Anasazi::FinalSummary 
+        // + Anasazi::TimingDetails 
+        // + Anasazi::IterationDetails);
+
+        std::cout << "i\n\n\n\n\n\nAnasazi parameters\n";
+        params.print();
+
+        anasazi_map[cid] = AnasaziCnt();
+        anasazi_map[cid].anasazi_db = params;
 
         cid++;
         return cid-1;
@@ -99,46 +108,49 @@ public:
     }
 
     int solve(const int id) {
+        // get a reference to the indexed Anasazi container
+        auto &anasazi = anasazi_map[id];
+
         Teuchos::RCP<Anasazi::BasicEigenproblem<double,Epetra_MultiVector,Epetra_Operator>> problem(
             new Anasazi::BasicEigenproblem<double,Epetra_MultiVector,Epetra_Operator>());
-        problem->setA(anasazi_map[id].LHS);
-        problem->setM(anasazi_map[id].RHS);
-        if(anasazi_map[id].haspc) problem->setPrec(anasazi_map[id].pc);
-        problem->setInitVec(anasazi_map[id].x);
+        problem->setA(anasazi.LHS);
+        problem->setM(anasazi.RHS);
+        if(anasazi.haspc) problem->setPrec(anasazi.pc);
+        problem->setInitVec(anasazi.x);
         problem->setNEV(1);
         bool problem_set = problem->setProblem();
         assert(problem_set);
 
         Anasazi::GeneralizedDavidsonSolMgr<double,Epetra_MultiVector,Epetra_Operator> solver(
-            problem, anasazi_map[id].anasazi_db);
+            problem, anasazi.anasazi_db);
 
         Anasazi::ReturnType returnval = solver.solve();
 
         if(returnval==Anasazi::Converged){
-            anasazi_map[id].niters=solver.getNumIters();
+            anasazi.niters=solver.getNumIters();
 
             // Extract solution
             Anasazi::Eigensolution<double,Epetra_MultiVector> solution =
                 solver.getProblem().getSolution();
             Anasazi::Value<double> eval = (solution.Evals)[0];
-            anasazi_map[id].keff = eval.realpart;
+            anasazi.keff = eval.realpart;
             double val[0];
             solution.Evecs->MeanValue(val);
-            anasazi_map[id].x->Update(1.0/val[0],*(solution.Evecs),0.0);
+            anasazi.x->Update(1.0/val[0],*(solution.Evecs),0.0);
             return 0;
         }
         else{
             //If Anasazi doesn't return, approximate k as x^T Fx/x^M Fx
-            anasazi_map[id].niters=-1;
+            anasazi.niters=-1;
             double rhs=1.0;
             double lhs=1.0;
-            Epetra_Vector tmp=Epetra_Vector(*(anasazi_map[id].x));
-            anasazi_map[id].RHS->Multiply(false,*(anasazi_map[id].x),tmp);
-            tmp.Dot(*(anasazi_map[id].x),&rhs);
-            anasazi_map[id].LHS->Multiply(false,*(anasazi_map[id].x),tmp);
-            tmp.Dot(*(anasazi_map[id].x),&lhs);
+            Epetra_Vector tmp=Epetra_Vector(*(anasazi.x));
+            anasazi.RHS->Multiply(false,*(anasazi.x),tmp);
+            tmp.Dot(*(anasazi.x),&rhs);
+            anasazi.LHS->Multiply(false,*(anasazi.x),tmp);
+            tmp.Dot(*(anasazi.x),&lhs);
             //LHS*phi = k * RHS * phi
-            anasazi_map[id].keff=lhs/rhs;
+            anasazi.keff=lhs/rhs;
             return 1;
         }
     }

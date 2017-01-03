@@ -25,6 +25,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE trilinos_interfaces
   USE ISO_C_BINDING
+#ifdef HAVE_ForTeuchos
+  USE ForTeuchos_ParameterList
+#endif
+
   !High level interfaces to setup and free data
   INTERFACE
     SUBROUTINE MPACT_Trilinos_Init() bind(C,NAME="MPACT_Trilinos_Init")
@@ -194,6 +198,15 @@ MODULE trilinos_interfaces
       IMPORT :: C_INT
       INTEGER(C_INT),INTENT(INOUT)    :: id
     ENDSUBROUTINE
+
+#ifdef HAVE_ForTeuchos
+    SUBROUTINE Anasazi_Init_Params(id, plID) bind(C,NAME="Anasazi_Init_Params")
+      IMPORT :: C_INT
+      IMPORT :: ForTeuchos_ParameterList_ID
+      INTEGER(C_INT),INTENT(INOUT)    :: id
+      TYPE(ForTeuchos_ParameterList_ID), INTENT(IN) :: plID
+    ENDSUBROUTINE
+#endif
 
     SUBROUTINE Anasazi_Destroy(id) bind(C,NAME="Anasazi_Destroy")
       IMPORT :: C_INT
