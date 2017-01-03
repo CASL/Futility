@@ -23,6 +23,10 @@ PROGRAM testParameterLists
   USE Strings
   USE ExceptionHandler
   USE ParameterLists
+#ifdef HAVE_ForTeuchos
+  USE ForTeuchos_ParameterList
+  USE ISO_C_BINDING
+#endif
   
   IMPLICIT NONE
   
@@ -96,6 +100,10 @@ PROGRAM testParameterLists
 
   REGISTER_SUBTEST('%initFromXML',testInitFromXML)
   REGISTER_SUBTEST('%editToXML',testEditToXML)
+
+#ifdef HAVE_ForTeuchos
+  REGISTER_SUBTEST('Convert to Teuchos', testConvertTeuchos)
+#endif
   
   FINALIZE_TEST()
   CALL clear_test_vars()
@@ -5503,6 +5511,59 @@ PROGRAM testParameterLists
     CALL testParam%clear()
     CALL testParam2%clear()
   ENDSUBROUTINE testInitFromXML
+!
+!-------------------------------------------------------------------------------
+#ifdef HAVE_ForTeuchos
+  SUBROUTINE testConvertTeuchos()
+    TYPE(ParamType) :: params
+    TYPE(ForTeuchos_ParameterList_ID) :: teuchos_plist
+    INTEGER(C_INT) :: ierr
+    INTEGER(C_INT) :: int
+    REAL(SDK) :: float
+    LOGICAL(SBK) :: bool
+    CHARACTER(LEN=1024) :: string
+    TYPE(StringType) :: strtype
+
+
+    CALL params%add("test_params->some_int", 5_SNK)
+    CALL params%add("test_params->some_double", 3.14_SDK)
+    CALL params%add("test_params->some_string", "fa la la la la!")
+    CALL params%add("test_params->some_level->data_int", 4_SNK)
+    CALL params%add("test_params->some_level->data_int2", 8_SNK)
+    CALL params%add("test_params->more_lower_stuff", 8.7_SDK)
+    CALL params%add("test_params->look_a_bool", .true.)
+    CALL params%add("test_params->a_false_bool", .false.)
+
+
+    teuchos_plist = Teuchos_ParameterList_Create(ierr)
+    CALL params%toTeuchosPlist(teuchos_plist)
+    CALL Teuchos_ParameterList_print(teuchos_plist, ierr)
+
+    int = ForTeuchos_PL_get_int(teuchos_plist, "some_int", ierr);
+    ASSERT(int==5,"some_int")
+
+    int = ForTeuchos_PL_get_int(&
+      ForTeuchos_PL_sublist_existing(teuchos_plist, "some_level", ierr),&
+      "data_int", ierr)
+    ASSERT(int==4,"some_level->data_int")
+    FINFO()int,ierr
+
+    float = ForTeuchos_PL_get_double(teuchos_plist, "some_double", ierr)
+    ASSERT(float == 3.14_SDK, "some_double")
+
+    CALL ForTeuchos_PL_get_string(teuchos_plist, "some_string", string, ierr)
+    strtype = TRIM(string)
+    ASSERT(strtype=="fa la la la la!", "some_string")
+
+    bool = ForTeuchos_PL_get_bool(teuchos_plist, "look_a_bool", ierr)
+    ASSERT(bool,"bool")
+
+    bool = ForTeuchos_PL_get_bool(teuchos_plist, "a_false_bool", ierr)
+    ASSERT(.not.bool,"bool")
+
+
+  ENDSUBROUTINE testConvertTeuchos
+#endif
 !
 !-------------------------------------------------------------------------------
   SUBROUTINE testEditToXML()

@@ -103,6 +103,9 @@ MODULE ParameterLists
   USE ExceptionHandler
   USE IO_Strings
   USE FileType_XML
+#ifdef HAVE_ForTeuchos
+  USE ForTeuchos_ParameterList
+#endif
 
   IMPLICIT NONE
   PRIVATE !Default private for module contents
@@ -500,6 +503,9 @@ MODULE ParameterLists
       !> @copybrief ParameterLists::clear_ParamType
       !> @copydoc ParameterLists::clear_ParamType
       PROCEDURE,PASS :: clear => clear_ParamType
+#ifdef HAVE_ForTeuchos
+      PROCEDURE,PASS :: toTeuchosPlist
+#endif
   PROCEDURE :: procXMLTree
   ENDTYPE ParamType
 
@@ -878,6 +884,64 @@ MODULE ParameterLists
 !
 !===============================================================================
   CONTAINS
+#ifdef HAVE_ForTeuchos
+    RECURSIVE SUBROUTINE toTeuchosPlist(this, that, n)
+      CLASS(ParamType),INTENT(IN) :: this
+      TYPE(ForTeuchos_ParameterList_ID),INTENT(IN) :: that
+      INTEGER(SNK),INTENT(IN),OPTIONAL :: n
+      !
+      CLASS(ParamType), POINTER :: itr
+      Type(ParamType) :: nextParam
+      TYPE(ForTeuchos_ParameterList_ID) :: new
+      INTEGER(C_INT) :: ierr
+      INTEGER(SNK) :: level
+      TYPE(StringType) :: path
+      INTEGER :: t
+
+      nullify(itr)
+
+      level = 0
+      IF(PRESENT(n)) THEN
+        level = n
+      ENDIF
+
+      IF(level > 10) THEN
+        WRITE(*,*)"Too much recursion. Giving up"
+        return
+      ENDIF
+
+      path = ''
+      CALL this%getSubParams(path, itr)
+
+      DO WHILE(ASSOCIATED(itr))
+        SELECT TYPE(itr)
+          TYPE IS(ParamType_List)
+            ! This node is its own parameter list
+            new = ForTeuchos_PL_sublist(that, CHAR(itr%name), 0, &
+              "Imported from MPACT PList", ierr)
+            nextParam = itr
+            WRITE(*,*)associated(nextParam%pdat)
+            CALL toTeuchosPlist(nextParam, new, level+1)
+          TYPE IS(ParamType_SBK)
+            CALL ForTeuchos_PL_set_bool(that, CHAR(itr%name), itr%val,&
+              CHAR(itr%description), ierr)
+          TYPE IS(ParamType_SDK)
+            CALL ForTeuchos_PL_set_double(that, CHAR(itr%name), itr%val,&
+              CHAR(itr%description), ierr)
+          TYPE IS(ParamType_SNK)
+            CALL ForTeuchos_PL_set_int(that, CHAR(itr%name), itr%val,&
+              CHAR(itr%description), ierr)
+          TYPE IS(ParamType_STR)
+            CALL ForTeuchos_PL_set_string(that, CHAR(itr%name), CHAR(itr%val),&
+              CHAR(itr%description), ierr)
+          CLASS DEFAULT
+            CALL eParams%raiseError(&
+              "Unsupported PARAMETER TYPE for Teuchos conversion.")
+        ENDSELECT
+        CALL this%getSubParams(path, itr)
+      ENDDO
+    ENDSUBROUTINE
+#endif
 !
 !-------------------------------------------------------------------------------
 !> @brief Defines the assignment operation two @c ParamType objects.
