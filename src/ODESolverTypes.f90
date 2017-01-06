@@ -383,8 +383,28 @@ MODULE ODESolverTypes
     ENDSUBROUTINE step_ODESolverType_Native
 !
 !-------------------------------------------------------------------------------
+!> @brief BDF iteration
+!>
+!> @param f the function interface which the Jacobian is based
+!> @param myLS the linear solver type used for the Newton iteration
+!> @param ord
+!> @param nstep
+!> @param t current time
+!> @param dt current timestep
+!> @param yf the vector which contains the final solution
+!> @param ydot the vector which contains the solution derivative
+!> @param tol the tolerance for the 2-norm which determines how tight to converge the implicit solve
+!> @param ist the start index into the history variable
+!> @param bdf_hist 2D array of the historical data.  The second index corresponds to the bdf primer
+!>     hierarchy and should only be accessed as bdf_hist(:,ord)
+!> @param updateJ_in an optional logical to update the jacobian of the matrix
+!>
+!> This routine performs the BDF solve for n steps.  THis routine is seperate in support of the priming
+!> methodology that was implmeneted which introduces substeps for lower order methods to generate historical
+!> data needed by the higher order methods.
+!>
     SUBROUTINE solve_bdf(f,myLS,ord,nstep,t,dt,yf,ydot,tol,ist,bdf_hist,updateJ_in)
-      CLASS(ODESolverInterface_Base),POINTER,INTENT(IN) :: f
+      CLASS(ODESolverInterface_Base),INTENT(INOUT) :: f
       TYPE(LinearSolverType_Direct),INTENT(INOUT) :: myLS
       INTEGER(SIK),INTENT(IN) :: ord
       INTEGER(SIK),INTENT(IN) :: nstep
@@ -432,8 +452,24 @@ MODULE ODESolverTypes
     ENDSUBROUTINE solve_bdf
 !
 !-------------------------------------------------------------------------------
+!> @brief Iterative solve to get the implict term
+!>
+!> @param f the function interface which the Jacobian is based
+!> @param myLS the linear solver type used for the Newton iteration
+!> @param t current time
+!> @param dt current timestep
+!> @param yf the vector which contains the final solution
+!> @param ydot the vector which contains the solution derivative
+!> @param rhs the vector which contains the rhs of the solution
+!> @param beta the constant multipier to scale the implicit term
+!> @param tol the tolerance for the 2-norm which determines how tight to converge the implicit solve
+!> @param updateJ an optional logical to update the jacobian of the matrix
+!>
+!> This routine performs a newton iteration to converge for the implict component of the soluion.
+!> This routine is used for both theta method (theta/=0) and all BDF methods
+!>
     SUBROUTINE solve_implicit(f,myLS,t,dt,yf,ydot,rhs,beta,tol,updateJ)
-      CLASS(ODESolverInterface_Base),POINTER,INTENT(IN) :: f
+      CLASS(ODESolverInterface_Base),INTENT(INOUT) :: f
       TYPE(LinearSolverType_Direct),INTENT(INOUT) :: myLS
       REAL(SRK),INTENT(IN) :: t
       REAL(SRK),INTENT(IN) :: dt
