@@ -319,11 +319,11 @@ MODULE ODESolverTypes
       REAL(SRK),INTENT(IN) :: tf
       CLASS(VectorType),INTENT(INOUT) :: yf
 
-      INTEGER(SIK) :: i,j,k,nstep,ist,ord
-      REAL(SRK) :: t,dt,beta,resid
+      INTEGER(SIK) :: i,j,nstep,ist,N,ntmp
+      REAL(SRK) :: t,dt,beta,m
       CLASS(VectorType),ALLOCATABLE :: ydot
       CLASS(VectorType),ALLOCATABLE :: rhs
-      CLASS(VectorType),ALLOCATABLE :: bdf_hist(:)
+      CLASS(VectorType),ALLOCATABLE :: bdf_hist(:,:)
 
       ALLOCATE(ydot,SOURCE=y0)
       CALL BLAS_copy(y0,yf)
@@ -338,68 +338,137 @@ MODULE ODESolverTypes
           CALL BLAS_axpy(ydot,yf,dt)
           t=t+dt
         ENDDO
-      ELSE
+      ELSEIF(solver%solverMethod==THETA_METHOD) THEN
         ALLOCATE(rhs,SOURCE=y0)
-        IF(solver%solverMethod==BDF_METHOD) THEN
-          ALLOCATE(bdf_hist(solver%BDForder),SOURCE=rhs)
-          DO i=1,solver%BDForder
-            CALL bdf_hist(i)%set(0.0_SRK)
-          ENDDO
-          ist=1
-          CALL BLAS_copy(y0,bdf_hist(ist))
-        ENDIF
         DO i=1,nstep
           CALL solver%f%eval(t,yf,ydot)
-          IF(solver%solverMethod==THETA_METHOD) THEN
-            !setup RHS
-            CALL BLAS_copy(yf,rhs)
-            CALL BLAS_axpy(ydot,rhs,dt*(1.0_SRK-solver%theta))
-            beta=solver%theta
-          ELSEIF(solver%solverMethod==BDF_METHOD) THEN
-            !setup RHS
-            ord=MIN(i,solver%BDForder)
-            CALL BLAS_copy(bdf_hist(ist),rhs)
-            CALL BLAS_scal(rhs,alpha_bdf(alpha_index(ord)))
-            DO j=1,ord-1
-              CALL BLAS_axpy(bdf_hist(ABS(MOD(ist-j-1+solver%BDForder,solver%BDForder))+1), &
-                              rhs,alpha_bdf(alpha_index(ord)+j))
-            ENDDO
-            CALL BLAS_scal(rhs,-1.0_SRK)
-            beta=beta_bdf(ord)
-          ENDIF
-          !setup LHS matrix
-          IF (MOD(i-1,20)==0) THEN
-            CALL estimate_jacobian(solver%f,t,yf,beta*dt,solver%myLS%A)
-          ENDIF
-
-          !Initial guess is forward euler
-          CALL BLAS_axpy(ydot,yf,dt)
-          !solve nonlinear system
-          resid=2*solver%tol
-          j=1
-          DO WHILE (resid>solver%tol)
-            CALL solver%f%eval(t+dt,yf,ydot)
-            CALL BLAS_copy(rhs,solver%myLS%b)
-            CALL BLAS_axpy(yf,solver%myLS%b,-1.0_SRK)
-            CALL BLAS_axpy(ydot,solver%myLS%b,dt*beta)
-            CALL BLAS_scal(solver%myLS%b,1.0_SRK)
-            CALL solver%myLS%solve()
-            CALL BLAS_axpy(solver%myLS%x,yf,1.0_SRK)
-            resid=BLAS_nrm2(solver%myLS%x)
-            j=j+1
-          ENDDO
-          IF(solver%solverMethod==BDF_METHOD) THEN
-            !save data if needed for next iteration
-            ist=MOD(ist,solver%BDForder)+1
-            CALL BLAS_copy(yf,bdf_hist(ist))
-          ENDIF
-          t=t+dt
+          !setup RHS
+          CALL BLAS_copy(yf,rhs)
+          CALL BLAS_axpy(ydot,rhs,dt*(1.0_SRK-solver%theta))
+          beta=solver%theta
+          CALL solve_implicit(solver%f,solver%myLS,t,dt,yf,ydot,rhs,beta,solver%tol,MOD(i-1,20)==0)
         ENDDO
         CALL rhs%clear()
         DEALLOCATE(rhs)
+      ELSE
+        ALLOCATE(bdf_hist(solver%BDForder,solver%BDForder),SOURCE=y0)
+
+        ist=1
+        DO i=1,solver%BDForder
+          DO j=1,solver%BDForder
+            CALL bdf_hist(i,j)%set(0.0_SRK)
+          ENDDO
+          CALL BLAS_copy(y0,bdf_hist(ist,i))
+        ENDDO
+        !Presolve
+        N=10 ! note that this needs to be sufficiently big in order to the algorithm below to
+        m=1.0_SRK/REAL(N,SRK)     ! work, must be BDForder-1 but 10 represents the order of magnitude
+        DO i=1,solver%BDForder-1
+          ist=i
+          ntmp=N-i+1
+          DO j=1,i
+            IF(ntmp>0) THEN
+              CALL solve_bdf(solver%f,solver%myLS,i,ntmp,t,dt*m**(solver%BDForder-i),yf, &
+                    ydot,solver%tol,ist,bdf_hist,.TRUE.)
+              CALL BLAS_copy(yf,bdf_hist(j+1,i+1))
+            ENDIF
+            ntmp=N
+          ENDDO
+        ENDDO
+        ist=solver%BDForder
+        CALL solve_bdf(solver%f,solver%myLS,solver%BDForder,nstep-solver%BDForder+1,t,dt, &
+                    yf,ydot,solver%tol,ist,bdf_hist)
       ENDIF
       DEALLOCATE(ydot)
     ENDSUBROUTINE step_ODESolverType_Native
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE solve_bdf(f,myLS,ord,nstep,t,dt,yf,ydot,tol,ist,bdf_hist,updateJ_in)
+      CLASS(ODESolverInterface_Base),POINTER,INTENT(IN) :: f
+      TYPE(LinearSolverType_Direct),INTENT(INOUT) :: myLS
+      INTEGER(SIK),INTENT(IN) :: ord
+      INTEGER(SIK),INTENT(IN) :: nstep
+      REAL(SRK),INTENT(INOUT) :: t
+      REAL(SRK),INTENT(IN) :: dt
+      CLASS(VectorType),INTENT(INOUT) :: yf
+      CLASS(VectorType),INTENT(INOUT) :: ydot
+      REAL(SRK),INTENT(IN) :: tol
+      INTEGER(SIK),INTENT(INOUT) :: ist
+      CLASS(VectorType),INTENT(INOUT) :: bdf_hist(:,:)
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: updateJ_in
+
+      INTEGER(SIK) :: i,j
+      CLASS(VectorType),ALLOCATABLE :: rhs
+      LOGICAL(SBK) :: updateJ
+      ALLOCATE(rhs,SOURCE=yf)
+
+      DO i=1,nstep
+        IF(PRESENT(updateJ_in)) THEN
+          updateJ=.FALSE.
+          IF(i==1) updateJ=updateJ_in
+        ELSE
+          updateJ=(MOD(i-1,20)==0)
+        ENDIF
+        CALL f%eval(t,yf,ydot)
+        !setup RHS
+        CALL BLAS_copy(bdf_hist(ist,ord),rhs)
+
+        CALL BLAS_scal(rhs,alpha_bdf(alpha_index(ord)))
+        DO j=1,ord-1
+          CALL BLAS_axpy(bdf_hist(ABS(MOD(ist-j-1+ord,ord))+1,ord), &
+                          rhs,alpha_bdf(alpha_index(ord)+j))
+        ENDDO
+        CALL BLAS_scal(rhs,-1.0_SRK)
+
+        CALL solve_implicit(f,myLS,t,dt,yf,ydot,rhs,beta_bdf(ord),tol,updateJ)
+
+        !save data if needed for next iteration
+        ist=MOD(ist,ord)+1
+        CALL BLAS_copy(yf,bdf_hist(ist,ord))
+        t=t+dt
+      ENDDO
+      CALL rhs%clear()
+      DEALLOCATE(rhs)
+    ENDSUBROUTINE solve_bdf
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE solve_implicit(f,myLS,t,dt,yf,ydot,rhs,beta,tol,updateJ)
+      CLASS(ODESolverInterface_Base),POINTER,INTENT(IN) :: f
+      TYPE(LinearSolverType_Direct),INTENT(INOUT) :: myLS
+      REAL(SRK),INTENT(IN) :: t
+      REAL(SRK),INTENT(IN) :: dt
+      CLASS(VectorType),INTENT(INOUT) :: yf
+      CLASS(VectorType),INTENT(INOUT) :: ydot
+      CLASS(VectorType),INTENT(IN) :: rhs
+      REAL(SRK),INTENT(IN) :: beta
+      REAL(SRK),INTENT(IN) :: tol
+      LOGICAL(SBK),INTENT(IN) :: updateJ
+
+      INTEGER(SIK) :: j
+      REAL(SRK) :: resid
+
+      !setup LHS matrix
+      IF (updateJ) THEN
+        CALL estimate_jacobian(f,t,yf,beta*dt,myLS%A)
+      ENDIF
+
+      !Initial guess is forward euler
+      CALL BLAS_axpy(ydot,yf,dt)
+      !solve nonlinear system
+      resid=2*tol
+      j=1
+      DO WHILE (resid>tol)
+        CALL f%eval(t+dt,yf,ydot)
+        CALL BLAS_copy(rhs,myLS%b)
+        CALL BLAS_axpy(yf,myLS%b,-1.0_SRK)
+        CALL BLAS_axpy(ydot,myLS%b,dt*beta)
+        CALL BLAS_scal(myLS%b,1.0_SRK)
+        CALL myLS%solve()
+        CALL BLAS_axpy(myLS%x,yf,1.0_SRK)
+        resid=BLAS_nrm2(myLS%x)
+        j=j+1
+      ENDDO
+    ENDSUBROUTINE solve_implicit
 !
 !-------------------------------------------------------------------------------
 !> @brief Estimate the Jacobian of the system

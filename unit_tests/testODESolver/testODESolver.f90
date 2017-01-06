@@ -52,7 +52,7 @@ MODULE testODEInterface
       CALL y%get(tmp)
       CALL ydot%set(1,3.2_SRK*tmp(1))
       CALL ydot%set(2,tmp(1))
-      CALL ydot%set(3,-0.3_SRK*tmp(3))
+      CALL ydot%set(3,-0.03_SRK*tmp(3))
     ENDSUBROUTINE eval_exp
     !
     SUBROUTINE eval_nonlinear(self,t,y,ydot)
@@ -64,7 +64,7 @@ MODULE testODEInterface
       REAL(SRK) :: tmp(3)
       CALL ydot%set(0.0_SRK)
       CALL y%get(tmp)
-      CALL ydot%set(1,1.0E-3*(tmp(3)-tmp(3)*tmp(2)*tmp(2)))
+      CALL ydot%set(1,1.0E-3_SRK*(tmp(3)-tmp(3)*tmp(2)*tmp(2)))
       CALL ydot%set(2,1.0E-3_SRK*(1.053-tmp(1)))
       CALL ydot%set(3,1.0E-3_SRK*(3.089-tmp(2)))
     ENDSUBROUTINE eval_nonlinear
@@ -139,14 +139,17 @@ PROGRAM testODESolver
     testODE%BDForder=2
   ENDSELECT
   REGISTER_SUBTEST('testStep_Native_BDF-2',testStep_Native)
+
   SELECTTYPE(testODE); TYPE IS(ODESolverType_Native)
     testODE%BDForder=3
   ENDSELECT
   REGISTER_SUBTEST('testStep_Native_BDF-3',testStep_Native)
+
   SELECTTYPE(testODE); TYPE IS(ODESolverType_Native)
     testODE%BDForder=4
   ENDSELECT
   REGISTER_SUBTEST('testStep_Native_BDF-4',testStep_Native)
+
   SELECTTYPE(testODE); TYPE IS(ODESolverType_Native)
     testODE%BDForder=5
   ENDSELECT
@@ -250,7 +253,7 @@ CONTAINS
 
       ref(1)=3.0_SRK*EXP(3.2_SRK*3.5_SRK)
       ref(2)=3.0_SRK*(EXP(3.2_SRK*3.5_SRK)-1.0_SRK)/3.2_SRK+3.0_SRK
-      ref(3)=3.0_SRK*EXP(-0.3_SRK*3.5_SRK)
+      ref(3)=3.0_SRK*EXP(-0.03_SRK*3.5_SRK)
       SELECTTYPE(testODE); TYPE IS(ODESolverType_Native)
         testODE%theta=0.0_SRK
       ENDSELECT
@@ -276,15 +279,15 @@ CONTAINS
       SELECTTYPE(testODE); TYPE IS(ODESolverType_Native)
         testODE%BDForder=3
       ENDSELECT
-      CALL testOrderConv(2.0_SRK,0.1_SRK,ref,'bdf-3')
+      CALL testOrderConv(3.0_SRK,0.2_SRK,ref,'bdf-3')
       SELECTTYPE(testODE); TYPE IS(ODESolverType_Native)
         testODE%BDForder=4
       ENDSELECT
-      CALL testOrderConv(2.0_SRK,0.1_SRK,ref,'bdf-4')
+      CALL testOrderConv(4.0_SRK,0.2_SRK,ref,'bdf-4')
       SELECTTYPE(testODE); TYPE IS(ODESolverType_Native)
         testODE%BDForder=5
       ENDSELECT
-      CALL testOrderConv(2.0_SRK,0.1_SRK,ref,'bdf-5')
+      CALL testOrderConv(5.0_SRK,0.2_SRK,ref,'bdf-5')
       SELECTTYPE(testODE); TYPE IS(ODESolverType_Native)
         testODE%solverMethod=THETA_METHOD
       ENDSELECT
@@ -296,7 +299,7 @@ CONTAINS
       REAL(SRK) :: ref(3)
 
       !This reference was generated with 1e-6 substep size
-      ref=(/2.9162069562508526_SRK,2.9933322575306889_SRK,3.0003232540442979_SRK/)
+      ref=(/2.9162069601728970_SRK,2.9933322574820909_SRK,3.0003232540397478_SRK/)
       SELECTTYPE(testODE); TYPE IS(ODESolverType_Native)
         testODE%theta=0.0_SRK
       ENDSELECT
@@ -322,15 +325,15 @@ CONTAINS
       SELECTTYPE(testODE); TYPE IS(ODESolverType_Native)
         testODE%BDForder=3
       ENDSELECT
-      CALL testOrderConv(2.0_SRK,0.1_SRK,ref,'bdf-3')
+      CALL testOrderConv(3.0_SRK,0.2_SRK,ref,'bdf-3')
       SELECTTYPE(testODE); TYPE IS(ODESolverType_Native)
         testODE%BDForder=4
       ENDSELECT
-      CALL testOrderConv(2.0_SRK,0.1_SRK,ref,'bdf-4')
+      CALL testOrderConv(4.0_SRK,0.2_SRK,ref,'bdf-4')
       SELECTTYPE(testODE); TYPE IS(ODESolverType_Native)
         testODE%BDForder=5
       ENDSELECT
-      CALL testOrderConv(2.0_SRK,0.1_SRK,ref,'bdf-5')
+      CALL testOrderConv(5.0_SRK,0.2_SRK,ref,'bdf-5')
 
     ENDSUBROUTINE testStep_Native_nonlinear
 !
@@ -379,18 +382,21 @@ CONTAINS
         CALL testODE%step(0.0_SRK,y0,3.5_SRK,yf)
 
         CALL yf%get(tmp(:,i))
-        tmp(:,i)=tmp(:,i)-ref
+        DO j=1,3
+          tmp(j,i)=tmp(j,i)/ref(j)-1.0_SRK
+        ENDDO
         substep=substep*0.1_SRK
       ENDDO
 
       DO i=1,3 ! reduction order
         DO j=1,3 ! solution index
-          bool=(ABS(exp_order-LOG10(tmp(j,i)/tmp(j,i+1)))<=tol .OR. ABS(tmp(j,i))<=1.0E-7)
+          bool=(ABS(exp_order-LOG10(tmp(j,i)/tmp(j,i+1)))<=tol .OR. ABS(tmp(j,i))<=1.0E-8)
           ASSERT(bool,'Order Convergence: '//TRIM(tag))
           FINFO() tmp(j,:)
           FINFO() i,j,exp_order,LOG10(tmp(j,i)/tmp(j,i+1)),ABS(exp_order-LOG(tmp(j,i)/tmp(j,i+1)))
         ENDDO
       ENDDO
+
 
     ENDSUBROUTINE testOrderConv
 !
