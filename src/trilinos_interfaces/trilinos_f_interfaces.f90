@@ -270,6 +270,15 @@ MODULE trilinos_interfaces
       INTEGER(C_INT),INTENT(INOUT)    :: id
     ENDSUBROUTINE
 
+#ifdef HAVE_ForTeuchos
+    SUBROUTINE Belos_Init_Params(id, plID) bind(C,NAME="Belos_Init_Params")
+      IMPORT :: C_INT
+      IMPORT :: ForTeuchos_ParameterList_ID
+      INTEGER(C_INT),INTENT(INOUT)    :: id
+      TYPE(ForTeuchos_ParameterList_ID), INTENT(IN) :: plID
+    ENDSUBROUTINE
+#endif
+
     SUBROUTINE Belos_Destroy(id) bind(C,NAME="Belos_Destroy")
       IMPORT :: C_INT
       INTEGER(C_INT),INTENT(IN),VALUE  :: id

@@ -219,19 +219,20 @@ public:
         cid(0)
     {}
 
-    int new_data() {
+    int new_data(Teuchos::ParameterList &params) {
         //Teuchos::ParameterList db
         belos_map[cid]=BelosCnt();
         //setup parameterlist with defaults
 
         //belos_map[cid].anasazi_db = Teuchos::sublist(db, "Anasazi");
         //belos_map[cid].belos_db.get("belos_type","Pseudo Block GMRES");
-        belos_map[cid].belos_db.get("Convergence Tolerance",1e-6);
-        belos_map[cid].belos_db.get("Maximum Iterations",250);
-        belos_map[cid].belos_db.get("Verbosity",0);  //Belos::Warnings+Belos::FinalSummary+Belos::StatusTestDetails
-        belos_map[cid].belos_db.get("Output Frequency",1);
-        belos_map[cid].belos_db.get("Implicit Residual Scaling","Norm of RHS");
-        belos_map[cid].belos_db.get("Explicit Residual Scaling","Norm of RHS");
+        params.get("Convergence Tolerance",1e-6);
+        params.get("Maximum Iterations",250);
+        params.get("Verbosity",0);  //Belos::Warnings+Belos::FinalSummary+Belos::StatusTestDetails
+        params.get("Output Frequency",1);
+        params.get("Implicit Residual Scaling","Norm of RHS");
+        params.get("Explicit Residual Scaling","Norm of RHS");
+        belos_map[cid].belos_db = params;
 
         cid++;
         return cid-1;
