@@ -38,6 +38,7 @@
 !>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE EigenvalueSolverTypes
+  USE ISO_FORTRAN_ENV
   USE IntrType
   USE BLAS
   USE trilinos_interfaces
@@ -425,7 +426,7 @@ MODULE EigenvalueSolverTypes
       TYPE(STRINGType) :: pctype
 #ifdef HAVE_ForTeuchos
       INTEGER(C_INT) :: ierr
-      TYPE(ParamType) :: anasaziParams
+      CLASS(ParamType),POINTER :: anasaziParams
       TYPE(ForTeuchos_ParameterList_ID) :: plID
 #endif
       !Check to set up required and optional param lists.
@@ -484,8 +485,6 @@ MODULE EigenvalueSolverTypes
         ENDIF
 #ifdef MPACT_HAVE_Trilinos
 #ifdef HAVE_ForTeuchos
-        CALL anasaziParams%add('anasazi->Convergence Tolerance', 1e-7_SDK) 
-        CALL anasaziParams%add('anasazi->Maximum Subspace Dimension', 25_SNK)
         plID = Teuchos_ParameterList_Create(ierr)
         CALL anasaziParams%toTeuchosPlist(plID)
         CALL Anasazi_Init_Params(solver%eig, plID)
