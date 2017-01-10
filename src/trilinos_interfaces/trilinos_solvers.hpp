@@ -67,9 +67,6 @@ public:
         // + Anasazi::TimingDetails 
         // + Anasazi::IterationDetails);
 
-        std::cout << "i\n\n\n\n\n\nAnasazi parameters\n";
-        params.print();
-
         anasazi_map[cid] = AnasaziCnt();
         anasazi_map[cid].anasazi_db = params;
 
