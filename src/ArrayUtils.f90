@@ -933,10 +933,10 @@ MODULE ArrayUtils
       ENDIF
 
       !If incl is present
-      !l_incl=0
-      !IF(PRESENT(incl)) THEN
-      !  IF((0 <= incl) .AND. (incl <= 2)) l_incl=incl
-      !ENDIF
+      l_incl=0
+      IF(PRESENT(incl)) THEN
+        IF((0 <= incl) .AND. (incl <= 2)) l_incl=incl
+      ENDIF
 
       !If tol is present
       l_tol=EPSREAL
@@ -948,6 +948,9 @@ MODULE ArrayUtils
         ind=1
         DO WHILE(SOFTGE(pos,tmp(ind),l_tol))
           IF(ind == n) EXIT
+          IF(incl == 1) THEN 
+            IF(SOFTEQ(pos,tmp(ind),l_tol)) EXIT
+          ENDIF
           ind=ind+1
         ENDDO
         IF(ind > 1) val=tmp(ind-1)
@@ -990,10 +993,10 @@ MODULE ArrayUtils
       ENDIF
 
       !If incl is present
-      !l_incl=0
-      !IF(PRESENT(incl)) THEN
-      !  IF((0 <= incl) .AND. (incl <= 2)) l_incl=incl
-      !ENDIF
+      l_incl=0
+      IF(PRESENT(incl)) THEN
+        IF((0 <= incl) .AND. (incl <= 2)) l_incl=incl
+      ENDIF
 
       !If tol is present
       l_tol=EPSREAL
@@ -1005,6 +1008,9 @@ MODULE ArrayUtils
         ind=1
         DO WHILE(SOFTGE(pos,tmp(ind),l_tol))
           IF(ind == n) EXIT
+          IF(l_incl == 1) THEN
+            IF(SOFTEQ(pos,tmp(ind),l_tol)) EXIT
+          ENDIF
           ind=ind+1
         ENDDO
         val=tmp(ind)
