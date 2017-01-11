@@ -371,6 +371,20 @@ PROGRAM testArrayUtils
       ASSERT(findLowBound(tmprealarray,70.0_SRK,.FALSE.) .APPROXEQA. 65.0_SRK,'Lower Bound == 65.0')
       !Check what happens on a mesh boundary.
   
+      !Test with default INCL
+      ASSERT(findLowBound(tmprealarray,0.0_SRK,.FALSE.) .APPROXEQA. 0.0_SRK,'Lower Bound == 0.0')
+      ASSERT(findLowBound(tmprealarray,2.0_SRK,.FALSE.) .APPROXEQA. 2.0_SRK,'Lower Bound == 2.0')
+      ASSERT(findLowBound(tmprealarray,6.0_SRK,.FALSE.) .APPROXEQA. 6.0_SRK,'Lower Bound == 6.0')
+      !Test with INCL=0 (still default)
+      ASSERT(findLowBound(tmprealarray,10.0_SRK,.FALSE.,INCL=0) .APPROXEQA. 10.0_SRK,'Lower Bound == 10.0')
+      ASSERT(findLowBound(tmprealarray,15.0_SRK,.FALSE.,INCL=0) .APPROXEQA. 15.0_SRK,'Lower Bound == 15.0')
+      !TEST with INCL=1 (if on mesh boundary, include as previous index)
+      ASSERT(findLowBound(tmprealarray,20.0_SRK,.FALSE.,INCL=1) .APPROXEQ. 15.0_SRK,'Lower Bound == 15.0')
+      ASSERT(findLowBound(tmprealarray,40.0_SRK,.FALSE.,INCL=1) .APPROXEQA. 20.0_SRK,'Lower Bound == 20.0')
+      !TEST with INCL=2 (if on mesh boundary, include as next index)
+      ASSERT(findLowBound(tmprealarray,60.0_SRK,.FALSE.,INCL=2) .APPROXEQA. 60.0_SRK,'Lower Bound == 60.0')
+      ASSERT(findLowBound(tmprealarray,65.0_SRK,.FALSE.,INCL=2) .APPROXEQA. 65.0_SRK,'Lower Bound == 65.0')
+
       !Test without 0.0 specified
       tmprealarray(1)=2.0_SRK
       tmprealarray(2)=6.0_SRK
@@ -482,6 +496,20 @@ PROGRAM testArrayUtils
       ASSERT(findUpBound(tmprealarray,70.0_SRK,.FALSE.) .APPROXEQ. 100.0_SRK,'Upper Bound == 100.0')
       !Check what happens on a mesh boundary.
   
+      !Test with default INCL
+      ASSERT(findUpBound(tmprealarray,0.0_SRK,.FALSE.) .APPROXEQ. 2.0_SRK,'Upper Bound == 2.0')
+      ASSERT(findUpBound(tmprealarray,2.0_SRK,.FALSE.) .APPROXEQ. 6.0_SRK,'Upper Bound == 6.0')
+      ASSERT(findUpBound(tmprealarray,6.0_SRK,.FALSE.) .APPROXEQ. 10.0_SRK,'Upper Bound == 10.0')
+      !TEST with INCL=0 (default still)
+      ASSERT(findUpBound(tmprealarray,10.0_SRK,.FALSE.,INCL=0) .APPROXEQ. 15.0_SRK,'Upper Bound == 15.0')
+      ASSERT(findUpBound(tmprealarray,15.0_SRK,.FALSE.,INCL=0) .APPROXEQ. 20.0_SRK,'Upper Bound == 20.0')
+      !TEST with INCL=1 (if on mesh boundary, include as previous index)
+      ASSERT(findUpBound(tmprealarray,20.0_SRK,.FALSE.,INCL=1) .APPROXEQ. 20.0_SRK,'Upper Bound == 20.0')
+      ASSERT(findUpBound(tmprealarray,40.0_SRK,.FALSE.,INCL=1) .APPROXEQ. 40.0_SRK,'Upper Bound == 40.0')
+      !TEST with INCL=2 (if on mesh boundary, include as next index)
+      ASSERT(findUpBound(tmprealarray,60.0_SRK,.FALSE.,INCL=2) .APPROXEQ. 65.0_SRK,'Upper Bound == 65.0')
+      ASSERT(findUpBound(tmprealarray,65.0_SRK,.FALSE.,INCL=2) .APPROXEQ. 100.0_SRK,'Upper Bound == 100.0')
+      
       !Test without 0.0 specified
       tmprealarray(1)=2.0_SRK
       tmprealarray(2)=6.0_SRK

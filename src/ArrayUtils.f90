@@ -948,7 +948,7 @@ MODULE ArrayUtils
         ind=1
         DO WHILE(SOFTGE(pos,tmp(ind),l_tol))
           IF(ind == n) EXIT
-          IF(incl == 1) THEN 
+          IF(l_incl == 1) THEN 
             IF(SOFTEQ(pos,tmp(ind),l_tol)) EXIT
           ENDIF
           ind=ind+1
