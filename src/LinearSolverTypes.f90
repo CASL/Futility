@@ -306,7 +306,10 @@ MODULE LinearSolverTypes
 #ifdef MPACT_HAVE_PETSC
       PetscErrorCode  :: ierr
 #endif
-
+#ifdef MPACT_HAVE_Trilinos
+      TYPE(ParamType) :: belosParams
+      TYPE(ForTeuchos_ParameterList_ID) :: plID
+#endif
       !Check to set up required and optional param lists.
       IF(.NOT.LinearSolverType_Paramsflag) CALL LinearSolverType_Declare_ValidParams()
 
@@ -634,8 +637,13 @@ MODULE LinearSolverTypes
                   CALL eLinearSolverType%raiseError('Incorrect call to '// &
                       modName//'::'//myName//' - Only GMRES solver is supported with Trilinos')
 
+                ! PC option is hard-coded for now
+                CALL belosParams%add('belos_options->pc_option', 2_SIK)
+                plID = Teuchos_ParameterList_Create(ierr)
+                CALL belosParams%toTeuchosPlist(plID)
                 CALL Belos_Init(solver%Belos_solver)
-                CALL Preconditioner_Init(solver%Belos_pc,2)
+                CALL Preconditioner_InitParams(solver%Belos_pc,plID)
+                CALL Teuchos_ParameterList_Release(plID,ierr)
 
                 SELECTTYPE(A=>solver%A); TYPE IS(TrilinosMatrixType)
                   CALL Belos_SetMat(solver%Belos_solver,A%A)

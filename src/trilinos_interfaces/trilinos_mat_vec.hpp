@@ -63,6 +63,9 @@ public:
     EpetraVecStore():
         cid(0)
     {}
+    ~EpetraVecStore(){
+        std::cout << "~EpetraVecStore\n";
+    }
 
 #ifdef HAVE_MPI
     int new_data(const int n, const int nloc, const MPI_Comm rawComm) {

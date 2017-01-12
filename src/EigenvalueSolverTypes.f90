@@ -51,9 +51,7 @@ MODULE EigenvalueSolverTypes
   USE MatrixTypes
   USE PreconditionerTypes
   USE Strings
-#ifdef HAVE_ForTeuchos
   USE ForTeuchos_ParameterList
-#endif
   IMPLICIT NONE
 
 #ifdef MPACT_HAVE_PETSC
@@ -421,14 +419,13 @@ MODULE EigenvalueSolverTypes
       TYPE(MPI_EnvType),INTENT(IN),TARGET :: MPIEnv
       TYPE(ParamType),INTENT(IN) :: Params
       TYPE(ParamType) :: validParams, tmpPL
+#ifdef MPACT_HAVE_Trilinos
       INTEGER(SIK) :: n,nlocal,solvertype,maxit
       REAL(SRK) :: tol
       TYPE(STRINGType) :: pctype
-#ifdef HAVE_ForTeuchos
       INTEGER(C_INT) :: ierr
-      CLASS(ParamType),POINTER :: anasaziParams
+      CLASS(ParamType),POINTER :: anasaziParams, pcParams
       TYPE(ForTeuchos_ParameterList_ID) :: plID
-#endif
       !Check to set up required and optional param lists.
       !IF(.NOT.EigenType_Paramsflag) CALL EigenType_Declare_ValidParams()
 
@@ -483,27 +480,37 @@ MODULE EigenvalueSolverTypes
         ELSE
           solver%maxit=maxit
         ENDIF
-#ifdef MPACT_HAVE_Trilinos
-#ifdef HAVE_ForTeuchos
-        plID = Teuchos_ParameterList_Create(ierr)
-        CALL anasaziParams%toTeuchosPlist(plID)
-        CALL Anasazi_Init_Params(solver%eig, plID)
-#else
-        CALL Anasazi_Init(solver%eig)
-#endif
-
+        IF(Params%has('EigenvalueSolverType->anasazi_options')) THEN
+          CALL Params%get('EigenvalueSolverType->anasazi_options', anasaziParams)
+          plID = Teuchos_ParameterList_Create(ierr)
+          CALL anasaziParams%toTeuchosPlist(plID)
+          CALL Anasazi_Init_Params(solver%eig, plID)
+          CALL Teuchos_ParameterList_Release(plID, ierr)
+        ELSE
+          CALL Anasazi_Init(solver%eig)
+        ENDIF
         IF(solvertype/=GD) THEN
           CALL eEigenvalueSolverType%raiseError('Incorrect input to '// &
               modName//'::'//myName//' - Only Generalized Davidson works with Anasazi.')
         ENDIF
 
         !Need to set PC type
-        CALL Preconditioner_Init(solver%pc,2)
+        IF(Params%has('EigenvalueSolverType->pc_options')) THEN
+          CALL Params%get('EigenvalueSolverType->pc_options', pcParams)
+          ! Make sure that a pc_option is defined, if not, set to 2
+          IF(.NOT.pcParams%has('pc_options->pc_option')) THEN
+            CALL pcParams%add('pc_options->pc_option',2_SIK)
+          ENDIF
 
-#else
-        CALL eEigenvalueSolverType%raiseError(modName//'::'//myName// &
-          ' - Anasazi (Trilinos) is not present in build')
-#endif
+          plID = Teuchos_ParameterList_Create(ierr)
+          CALL pcParams%toTeuchosPlist(plID)
+          CALL Preconditioner_InitParams(solver%pc,plID)
+          CALL Teuchos_ParameterList_Release(plID, ierr)
+        ELSE
+          CALL Preconditioner_Init(solver%pc,2)
+        ENDIF
+
+
         solver%SolverMethod=solvertype
 
         ALLOCATE(TrilinosVectorType :: solver%X)
@@ -514,9 +521,7 @@ MODULE EigenvalueSolverTypes
         CALL solver%X%init(tmpPL)
         CALL solver%X_scale%init(tmpPL)
         SELECTTYPE(x=>solver%X); TYPE IS(TrilinosVectorType)
-#ifdef MPACT_HAVE_Trilinos
           CALL Anasazi_SetX(solver%eig,x%b)
-#endif
         ENDSELECT
 
         solver%TPLType=Anasazi
@@ -527,6 +532,10 @@ MODULE EigenvalueSolverTypes
       ENDIF
       CALL validParams%clear()
 
+#else
+      CALL eEigenvalueSolverType%raiseError(modName//'::'//myName// &
+        ' - Anasazi (Trilinos) is not present in build')
+#endif
     ENDSUBROUTINE init_EigenvalueSolverType_Anasazi
 
 !

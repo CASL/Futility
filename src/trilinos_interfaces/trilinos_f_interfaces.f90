@@ -25,9 +25,7 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE trilinos_interfaces
   USE ISO_C_BINDING
-#ifdef HAVE_ForTeuchos
   USE ForTeuchos_ParameterList
-#endif
 
   !High level interfaces to setup and free data
   INTERFACE
@@ -199,14 +197,12 @@ MODULE trilinos_interfaces
       INTEGER(C_INT),INTENT(INOUT)    :: id
     ENDSUBROUTINE
 
-#ifdef HAVE_ForTeuchos
     SUBROUTINE Anasazi_Init_Params(id, plID) bind(C,NAME="Anasazi_Init_Params")
       IMPORT :: C_INT
       IMPORT :: ForTeuchos_ParameterList_ID
       INTEGER(C_INT),INTENT(INOUT)    :: id
       TYPE(ForTeuchos_ParameterList_ID), INTENT(IN) :: plID
     ENDSUBROUTINE
-#endif
 
     SUBROUTINE Anasazi_Destroy(id) bind(C,NAME="Anasazi_Destroy")
       IMPORT :: C_INT
@@ -270,14 +266,12 @@ MODULE trilinos_interfaces
       INTEGER(C_INT),INTENT(INOUT)    :: id
     ENDSUBROUTINE
 
-#ifdef HAVE_ForTeuchos
     SUBROUTINE Belos_Init_Params(id, plID) bind(C,NAME="Belos_Init_Params")
       IMPORT :: C_INT
       IMPORT :: ForTeuchos_ParameterList_ID
       INTEGER(C_INT),INTENT(INOUT)    :: id
       TYPE(ForTeuchos_ParameterList_ID), INTENT(IN) :: plID
     ENDSUBROUTINE
-#endif
 
     SUBROUTINE Belos_Destroy(id) bind(C,NAME="Belos_Destroy")
       IMPORT :: C_INT
@@ -339,6 +333,13 @@ MODULE trilinos_interfaces
       IMPORT :: C_INT
       INTEGER(C_INT),INTENT(INOUT)    :: id
       INTEGER(C_INT),INTENT(IN),VALUE :: opt
+    ENDSUBROUTINE
+  
+    SUBROUTINE Preconditioner_InitParams(id,plist) bind(C,NAME="Preconditioner_InitParams")
+      IMPORT :: C_INT
+      IMPORT :: ForTeuchos_ParameterList_ID
+      INTEGER(C_INT),INTENT(INOUT)    :: id
+      TYPE(ForTeuchos_ParameterList_ID), INTENT(IN) :: plist
     ENDSUBROUTINE
 
     SUBROUTINE Preconditioner_Destroy(id) bind(C,NAME="Preconditioner_Destroy")

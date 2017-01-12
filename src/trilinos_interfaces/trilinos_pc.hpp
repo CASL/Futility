@@ -39,7 +39,11 @@ public:
         cid(0)
     {}
 
-    int new_data(const int option) {
+    int new_data(Teuchos::ParameterList &params) {
+        const int option = params.get<int>("pc_option");
+        // pc_option needs to be removed, or Trilinos will complain about
+        // invalid parameters
+        params.remove("pc_option");
         //Teuchos::ParameterList db
         pc_map[cid]=PCCnt();
         //setup parameterlist with defaults
@@ -49,21 +53,23 @@ public:
 
         //RCP_ParameterList ifpack_db = Teuchos::sublist(db, "Ifpack Params");
         if(pc_map[cid].pc_type == "IFPACK"){
-            pc_map[cid].pc_db.get("Ifpack Type", std::string("ILU"));
-            pc_map[cid].pc_db.get("Ifpack Overlap", 0);
+            params.get("Ifpack Type", std::string("ILU"));
+            params.get("Ifpack Overlap", 0);
         }
         else if(pc_map[cid].pc_type == "ML"){
             pc_map[cid].pc_db.get("ML Default Type", std::string("SA"));
             //pc_map[cid].pc_db.get("smoother: type", std::string("Gauss-Seidel"));
-            pc_map[cid].pc_db.get("smoother: type", std::string("ILU"));
-            pc_map[cid].pc_db.get("aggregation: type", std::string("Uncoupled"));
-            pc_map[cid].pc_db.get("aggregation: damping factor", 0.0);
-            pc_map[cid].pc_db.get("smoother: damping factor", 1.0);
-            pc_map[cid].pc_db.get("smoother: sweeps", 3);
-            pc_map[cid].pc_db.get("smoother: ifpack overlap", 1);
-            pc_map[cid].pc_db.get("max levels", 8);
-            pc_map[cid].pc_db.get("ML output", 10);
+            params.get("smoother: type", std::string("ILU"));
+            params.get("aggregation: type", std::string("Uncoupled"));
+            params.get("aggregation: damping factor", 0.0);
+            params.get("smoother: damping factor", 1.0);
+            params.get("smoother: sweeps", 3);
+            params.get("smoother: ifpack overlap", 1);
+            params.get("max levels", 8);
+            params.get("ML output", 10);
         }
+
+        pc_map[cid].pc_db = params;
         cid++;
         return cid-1;
     }
