@@ -51,7 +51,9 @@ MODULE EigenvalueSolverTypes
   USE MatrixTypes
   USE PreconditionerTypes
   USE Strings
+#ifdef MPACT_HAVE_ForTeuchos
   USE ForTeuchos_ParameterList
+#endif
   IMPLICIT NONE
 
 #ifdef MPACT_HAVE_PETSC
