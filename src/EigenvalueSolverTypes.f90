@@ -840,7 +840,7 @@ MODULE EigenvalueSolverTypes
             CALL Preconditioner_Setup(solver%pc,B%A)
             solver%setupPC=.FALSE.
             solver%updatePC=.FALSE.
-          ELSEif(solver%updatePC) THEN
+          ELSEIF(solver%updatePC) THEN
             !CALL Preconditioner_Reset(solver%pc,B%A)
             solver%updatePC=.FALSE.
           ENDIF
