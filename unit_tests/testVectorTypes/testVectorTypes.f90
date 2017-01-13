@@ -49,9 +49,6 @@ PROGRAM testVectorTypes
 #ifdef MPACT_HAVE_PETSC
   CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
 #endif
-#ifdef MPACT_HAVE_Trilinos
-        CALL MPACT_Trilinos_Init()
-#endif
 
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING VECTOR TYPES...'
@@ -81,9 +78,6 @@ PROGRAM testVectorTypes
 
 #ifdef MPACT_HAVE_PETSC
   CALL PetscFinalize(ierr)
-#endif
-#ifdef MPACT_HAVE_Trilinos
-        CALL MPACT_Trilinos_Finalize()
 #endif
   FINALIZE_TEST()
 

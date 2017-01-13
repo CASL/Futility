@@ -27,14 +27,7 @@ MODULE trilinos_interfaces
   USE ISO_C_BINDING
   USE ForTeuchos_ParameterList
 
-  !High level interfaces to setup and free data
   INTERFACE
-    SUBROUTINE MPACT_Trilinos_Init() bind(C,NAME="MPACT_Trilinos_Init")
-    ENDSUBROUTINE
-
-    SUBROUTINE MPACT_Trilinos_Finalize() bind(C,NAME="MPACT_Trilinos_Finalize")
-    ENDSUBROUTINE
-
 !-------------------------------------------------------------------------------
 ! Vector Interfaces
 !-------------------------------------------------------------------------------

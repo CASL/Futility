@@ -11,44 +11,13 @@
 #include "CTeuchos_ParameterList_Cpp.hpp"
 
 bool mpact_trilinos_isinit = false;
-EpetraVecStore *evec       = nullptr;
-EpetraMatStore *emat       = nullptr;
-AnasaziStore *aeig         = nullptr;
-BelosStore *bels           = nullptr;
-AndersonStore *andr        = nullptr;
-JFNKStore *jfnk            = nullptr;
-PCStore *pcst              = nullptr;
-
-extern "C" void MPACT_Trilinos_Init() {
-    if (!mpact_trilinos_isinit) {
-        assert(!evec);
-        assert(!emat);
-        assert(!aeig);
-        assert(!bels);
-        assert(!pcst);
-        assert(!andr);
-        assert(!jfnk);
-        evec = new EpetraVecStore();
-        emat = new EpetraMatStore();
-        aeig = new AnasaziStore();
-        bels = new BelosStore();
-        pcst = new PCStore();
-        andr = new AndersonStore();
-        jfnk = new JFNKStore();
-
-        mpact_trilinos_isinit = true;
-    }
-}
-
-extern "C" void MPACT_Trilinos_Finalize() {
-    delete aeig;
-    delete bels;
-    delete pcst;
-    delete evec;
-    delete emat;
-    delete andr;
-    delete jfnk;
-}
+Teuchos::RCP< EpetraVecStore > evec(new EpetraVecStore);
+Teuchos::RCP< EpetraMatStore > emat(new EpetraMatStore);
+Teuchos::RCP< AnasaziStore   > aeig(new AnasaziStore);
+Teuchos::RCP< BelosStore     > bels(new BelosStore);
+Teuchos::RCP< AndersonStore  > andr(new AndersonStore);
+Teuchos::RCP< JFNKStore      > jfnk(new JFNKStore);
+Teuchos::RCP< PCStore        > pcst(new PCStore);
 
 //------------------------------------------------------------------------------
 // Vector

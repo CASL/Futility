@@ -512,9 +512,6 @@ MODULE ParallelEnv
 #endif
         IF(myPE%rank == 0) myPE%master=.TRUE.
 
-#ifdef MPACT_HAVE_Trilinos
-        CALL MPACT_Trilinos_Init()
-#endif
 #ifdef MPACT_HAVE_PETSC
         !check if PETSC has been initialized as well
         CALL PetscInitialized(petsc_isinit,ierr)
@@ -562,6 +559,7 @@ MODULE ParallelEnv
             myName//' - call to MPI_Comm_free returned an error!')
         ENDIF
 #endif
+
         myPE%comm=-1
         myPE%nproc=-1
         myPE%rank=-1

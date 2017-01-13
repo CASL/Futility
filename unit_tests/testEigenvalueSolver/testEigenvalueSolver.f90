@@ -37,10 +37,6 @@ PROGRAM testEigenvalueSolver
   CALL PETScInitialize(PETSC_NULL_CHARACTER,ierr)
 #endif
 #endif
-#ifdef MPACT_HAVE_Trilinos
-        CALL MPACT_Trilinos_Init()
-#endif
-
   !> set up default parameter list
   CALL optList%clear()
   CALL optList%add('EigenvalueSolverType->n',2_SIK)
@@ -98,9 +94,6 @@ PROGRAM testEigenvalueSolver
   IF(B%isInit) CALL B%clear()
   DEALLOCATE(testEVS,A,B)
 
-#ifdef MPACT_HAVE_Trilinos
-  CALL MPACT_Trilinos_Finalize()
-#endif
 #ifdef MPACT_HAVE_PETSC
   CALL PetscFinalize(ierr)
 #else

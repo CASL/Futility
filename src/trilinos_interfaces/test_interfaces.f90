@@ -19,7 +19,6 @@ PROGRAM test_interfaces
   CALL MPI_Init(mpierr)
   CALL MPI_Comm_size(MPI_COMM_WORLD,nproc,mpierr)
   CALL MPI_Comm_rank(MPI_COMM_WORLD,rank,mpierr)
-  CALL MPACT_Trilinos_Init()
 
   nlocal=n/nproc
 
@@ -63,7 +62,6 @@ PROGRAM test_interfaces
 
   CALL ForPetra_VecDestroy(xid)
 
-  CALL MPACT_Trilinos_Finalize()
   CALL MPI_Finalize(mpierr)
 #endif
 #endif

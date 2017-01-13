@@ -95,9 +95,6 @@ PROGRAM testODESolver
   PetscErrorCode  :: ierr
   CALL PETScInitialize(PETSC_NULL_CHARACTER,ierr)
 #endif
-#ifdef MPACT_HAVE_Trilinos
-  CALL MPACT_Trilinos_Init()
-#endif
 
   !> set up default parameter list
   CALL pList%clear()
@@ -177,9 +174,6 @@ PROGRAM testODESolver
 
   DEALLOCATE(testODE)
 
-#ifdef MPACT_HAVE_Trilinos
-  CALL MPACT_Trilinos_Finalize()
-#endif
 #ifdef MPACT_HAVE_PETSC
   CALL PetscFinalize(ierr)
 #endif
