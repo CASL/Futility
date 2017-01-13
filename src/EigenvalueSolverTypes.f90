@@ -413,6 +413,11 @@ MODULE EigenvalueSolverTypes
 !>
 !> This routine initializes the data spaces for the Anasazi eigenvalue solver.
 !>
+!> Custom options may be specified for the Anasazi solver and its preconditioner
+!> through the "anasazi_options" and "pc_options" sections in the parameter
+!> list, respectively. The entries in these lists should be valid options to
+!> their respective Trilinos classes, as they are converted to Teuchos parameter
+!> lists and handed to Trilinos.
     SUBROUTINE init_EigenvalueSolverType_Anasazi(solver,MPIEnv,Params)
       CHARACTER(LEN=*),PARAMETER :: myName='init_EigenvalueSolverType_Anasazi'
       CLASS(EigenvalueSolverType_Anasazi),INTENT(INOUT) :: solver
