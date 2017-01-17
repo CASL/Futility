@@ -78,12 +78,11 @@ TRIBITS_ADD_OPTION_AND_DEFINE(
     ${${PNAME}_ENABLE_SLEPC_DEFAULT}
 )
 
-MESSAGE("ForTeuchos enabled: ${${PNAME}_ENABLE_ForTeuchos} ${MPACT_ENABLE_ForTeuchos} ${PNAME}")
 TRIBITS_ADD_OPTION_AND_DEFINE(
     ${PNAME}_ENABLE_ForTeuchos
     MPACT_HAVE_ForTeuchos
     "Enable use of ForTeuchos wrappers."
-    OFF
+    ${MPACT_ENABLE_ForTeuchos}
 )
 
 # Define Package dependent option for HDF5 TPL
