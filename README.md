@@ -10,7 +10,7 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !                                 Introduction                                 !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-The Futility project is a CMake-configureable package of FORTRAN utilities that
+The Futility project is a CMake-configurable package of FORTRAN utilities that
 contains the following capabilities:
 - Definition of kinds for intrinsic numeric data types
 - Unit test harness
@@ -45,7 +45,7 @@ Proper citation of the Futility software...
 The original software package that is now Futility was developed at the
    University of Michigan to enable efficient development and testing of the
    MPACT code. The original developers, now at ORNL and Michigan, further
-   extended thislibrary and generalized it for use with COBRA-TF and MAMBA as
+   extended this library and generalized it for use with COBRA-TF and MAMBA as
    part of VERA. Further information on these original applications that
    leverage Futility can be found at www.casl.gov.
 
