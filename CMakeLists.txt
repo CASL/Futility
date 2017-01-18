@@ -15,11 +15,11 @@
 SET(PNAME MPACT_Utils)
 TRIBITS_PACKAGE_DECL(${PNAME})
 
-# 
+#
 # Configure CMake/TriBITS options for package
 #
 # Add CMake option for enabling OpenMP
-OPTION(${PNAME}_ENABLE_OpenMP 
+OPTION(${PNAME}_ENABLE_OpenMP
     "Use compiler flags for OpenMP support."
     ${${PROJECT_NAME}_ENABLE_OpenMP}
 )
@@ -82,7 +82,7 @@ TRIBITS_ADD_OPTION_AND_DEFINE(
     ${PNAME}_ENABLE_ForTeuchos
     MPACT_HAVE_ForTeuchos
     "Enable use of ForTeuchos wrappers."
-    ${MPACT_ENABLE_ForTeuchos}
+    "${MPACT_ENABLE_ForTeuchos}"
 )
 
 # Define Package dependent option for HDF5 TPL
@@ -156,16 +156,16 @@ TRIBITS_ADD_OPTION_AND_DEFINE(
 INCLUDE(${PNAME}_Compiler_Config)
 
 #
-#Enable test categories 
+#Enable test categories
 #
-# IF ("${PROJECT_NAME}" STREQUAL "MPACT" AND ${PROJECT_NAME}_ENABLE_VALIDATION) 
+# IF ("${PROJECT_NAME}" STREQUAL "MPACT" AND ${PROJECT_NAME}_ENABLE_VALIDATION)
 #     SET(${PROJECT_NAME}_TEST_CATEGORIES ${${PROJECT_NAME}_TEST_CATEGORIES}
 #                                          PERFORMANCE)
 # ENDIF()
 
 #
 # Have TRIBITS process the package
-# 
+#
 TRIBITS_PACKAGE_DEF()
 ADD_SUBDIRECTORY(src)
 TRIBITS_ADD_TEST_DIRECTORIES(unit_tests)
