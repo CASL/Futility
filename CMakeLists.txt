@@ -78,13 +78,6 @@ TRIBITS_ADD_OPTION_AND_DEFINE(
     ${${PNAME}_ENABLE_SLEPC_DEFAULT}
 )
 
-TRIBITS_ADD_OPTION_AND_DEFINE(
-    ${PNAME}_ENABLE_ForTeuchos
-    MPACT_HAVE_ForTeuchos
-    "Enable use of ForTeuchos wrappers."
-    "${MPACT_ENABLE_ForTeuchos}"
-)
-
 # Define Package dependent option for HDF5 TPL
 IF(TPL_ENABLE_HDF5)
     SET(${PNAME}_ENABLE_HDF5_DEFAULT ON)
