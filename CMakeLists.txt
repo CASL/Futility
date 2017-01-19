@@ -7,8 +7,9 @@
 # can be found in LICENSE.txt in the head directory of this repository.        !
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 
-SET(Futility_PACKAGES_AND_DIRS_AND_CLASSIFICATIONS
-  Futility      .               SS
-  )
+TRIBITS_PACKAGE(Futility)
 
-TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES()
+#ADD_SUBDIRECTORY(src)
+#TRIBITS_ADD_TEST_DIRECTORIES(unit_tests)
+
+TRIBITS_PACKAGE_POSTPROCESS()
