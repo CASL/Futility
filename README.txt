@@ -36,8 +36,11 @@ The Futility project will not contain any encryption technology to preserve the
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !                                   Citation                                   !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-Proper citation of the Futility software...
+Proper citation of the Futility software: 
+  Futility Development Group, "Futility: FORTRAN Utility," Revision {REVISION}.
 
+Where the {REVISION} can be found with GIT:
+ > git log -1 --pretty=format:"%h [%ad]" --date=format:'%m-%d-%Y'
 
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !                                    Origin                                    !
