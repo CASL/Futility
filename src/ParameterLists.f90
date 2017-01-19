@@ -881,6 +881,8 @@ MODULE ParameterLists
     !> @copydoc ParameterLists::isEqual_ParamType
     MODULE PROCEDURE isEqual_ParamType
   ENDINTERFACE
+
+  INTEGER(SIK),PARAMETER :: PARAM_MAX_DAT_LEN=26
 !
 !===============================================================================
   CONTAINS
@@ -2360,16 +2362,18 @@ MODULE ParameterLists
 !> the parameter value which is overriden by another edit routine defined within
 !> this module.
 !>
-    RECURSIVE SUBROUTINE edit_ParamType(thisParam,funit,indent)
+    RECURSIVE SUBROUTINE edit_ParamType(thisParam,funit,indent,prefix,paddtw)
       CLASS(ParamType),INTENT(IN) :: thisParam
       INTEGER(SIK),INTENT(IN) :: funit
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       INTEGER(SIK) :: i
 
       i=3
       IF(PRESENT(indent)) i=i+indent
       IF(ASSOCIATED(thisParam%pdat)) &
-        CALL thisParam%pdat%edit(funit,i)
+        CALL thisParam%pdat%edit(funit,i,prefix,paddtw)
     ENDSUBROUTINE edit_ParamType
 !
 !-------------------------------------------------------------------------------
@@ -3125,23 +3129,37 @@ MODULE ParameterLists
 !> This routine is recursive because it essentially calls the edit routine
 !> on all parameters in it's list.
 !>
-    RECURSIVE SUBROUTINE edit_ParamType_List(thisParam,funit,indent)
+    RECURSIVE SUBROUTINE edit_ParamType_List(thisParam,funit,indent,prefix,paddtw)
       CLASS(ParamType_List),INTENT(IN) :: thisParam
       INTEGER(SIK),INTENT(IN) :: funit
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i,j
+      TYPE(StringType) :: sprefix,sdtype
+      
 
       IF(LEN_TRIM(thisParam%name) > 0) THEN
+        IF(PRESENT(prefix)) sprefix=prefix
+        sdtype=thisParam%datatype
+        IF(PRESENT(paddtw)) THEN
+          IF(paddtw) THEN
+            dtype=thisParam%dataType
+            sdtype=dtype
+          ENDIF
+        ENDIF
         i=1
         IF(PRESENT(indent)) i=i+indent
         WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
         IF(LEN_TRIM(thisParam%description) == 0) THEN
-          WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') &
-            thisParam%dataType//' :: '//thisParam%name//'='
+          WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') sprefix// &
+            sdtype//' :: '//thisParam%name//'='
         ELSE
-          WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') thisParam%dataType// &
-            ' :: '//thisParam%name//'= !'//thisParam%description
+          WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') sprefix// &
+            sdtype//' :: '//thisParam%name//'= !'// &
+            thisParam%description
         ENDIF
       ENDIF
       IF(ALLOCATED(thisParam%pList)) THEN
@@ -3431,22 +3449,34 @@ MODULE ParameterLists
 !> printed if the number is very large in absolute value engineering format
 !> is used otherwise floating point form is used to write the value.
 !>
-    SUBROUTINE edit_ParamType_SSK(thisParam,funit,indent)
+    SUBROUTINE edit_ParamType_SSK(thisParam,funit,indent,prefix,paddtw)
       CLASS(ParamType_SSK),INTENT(IN) :: thisParam
       INTEGER(SIK),INTENT(IN) :: funit
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i
+      TYPE(StringType) :: sprefix,sdtype
 
       i=1
       IF(PRESENT(indent)) i=i+indent
+      IF(PRESENT(prefix)) sprefix=prefix
+      sdtype=thisParam%datatype
+      IF(PRESENT(paddtw)) THEN
+        IF(paddtw) THEN
+          dtype=thisParam%dataType
+          sdtype=dtype
+        ENDIF
+      ENDIF
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
       IF(LEN_TRIM(thisParam%description) == 0) THEN
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g13.7)') &
-          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g13.7)') sprefix// &
+          sdtype//' :: '//thisParam%name//'=',thisParam%val
       ELSE
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g13.7,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val, &
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g13.7,a)') sprefix// &
+          sdtype//' :: '//thisParam%name//'=',thisParam%val, &
             ' !'//thisParam%description
       ENDIF
     ENDSUBROUTINE edit_ParamType_SSK
@@ -3674,22 +3704,34 @@ MODULE ParameterLists
 !> printed if the number is very large in absolute value engineering format
 !> is used otherwise floating point form is used to write the value.
 !>
-    SUBROUTINE edit_ParamType_SDK(thisParam,funit,indent)
+    SUBROUTINE edit_ParamType_SDK(thisParam,funit,indent,prefix,paddtw)
       CLASS(ParamType_SDK),INTENT(IN) :: thisParam
       INTEGER(SIK),INTENT(IN) :: funit
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i
+      TYPE(StringType) :: sprefix,sdtype
 
       i=1
       IF(PRESENT(indent)) i=i+indent
+      IF(PRESENT(prefix)) sprefix=prefix
+      sdtype=thisParam%datatype
+      IF(PRESENT(paddtw)) THEN
+        IF(paddtw) THEN
+          dtype=thisParam%dataType
+          sdtype=dtype
+        ENDIF
+      ENDIF
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
       IF(LEN_TRIM(thisParam%description) == 0) THEN
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g23.16)') &
-          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g23.16)') sprefix// &
+          sdtype//' :: '//thisParam%name//'=',thisParam%val
       ELSE
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g23.16,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val, &
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g23.16,a)') sprefix// &
+          sdtype//' :: '//thisParam%name//'=',thisParam%val, &
             ' !'//thisParam%description
       ENDIF
     ENDSUBROUTINE edit_ParamType_SDK
@@ -3917,22 +3959,34 @@ MODULE ParameterLists
 !> printed if the number is very large in absolute value engineering format
 !> is used otherwise floating point form is used to write the value.
 !>
-    SUBROUTINE edit_ParamType_SNK(thisParam,funit,indent)
+    SUBROUTINE edit_ParamType_SNK(thisParam,funit,indent,prefix,paddtw)
       CLASS(ParamType_SNK),INTENT(IN) :: thisParam
       INTEGER(SIK),INTENT(IN) :: funit
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i
+      TYPE(StringType) :: sprefix,sdtype
 
       i=1
       IF(PRESENT(indent)) i=i+indent
+      IF(PRESENT(prefix)) sprefix=prefix
+      sdtype=thisParam%datatype
+      IF(PRESENT(paddtw)) THEN
+        IF(paddtw) THEN
+          dtype=thisParam%dataType
+          sdtype=dtype
+        ENDIF
+      ENDIF
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
       IF(LEN_TRIM(thisParam%description) == 0) THEN
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g13.7)') &
-          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g13.7)') sprefix// &
+          sdtype//' :: '//thisParam%name//'=',thisParam%val
       ELSE
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g13.7,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val, &
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g13.7,a)') sprefix// &
+          sdtype//' :: '//thisParam%name//'=',thisParam%val, &
             ' !'//thisParam%description
       ENDIF
     ENDSUBROUTINE edit_ParamType_SNK
@@ -4156,22 +4210,34 @@ MODULE ParameterLists
 !> printed if the number is very large in absolute value engineering format
 !> is used otherwise floating point form is used to write the value.
 !>
-    SUBROUTINE edit_ParamType_SLK(thisParam,funit,indent)
+    SUBROUTINE edit_ParamType_SLK(thisParam,funit,indent,prefix,paddtw)
       CLASS(ParamType_SLK),INTENT(IN) :: thisParam
       INTEGER(SIK),INTENT(IN) :: funit
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       CHARACTER(LEN=12) :: fmt
       INTEGER(SIK) :: i
+      TYPE(StringType) :: sprefix,sdtype
 
       i=1
       IF(PRESENT(indent)) i=i+indent
+      IF(PRESENT(prefix)) sprefix=prefix
+      sdtype=thisParam%datatype
+      IF(PRESENT(paddtw)) THEN
+        IF(paddtw) THEN
+          dtype=thisParam%dataType
+          sdtype=dtype
+        ENDIF
+      ENDIF
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
       IF(LEN_TRIM(thisParam%description) == 0) THEN
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g13.7)') &
-          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g13.7)') sprefix// &
+          sdtype//' :: '//thisParam%name//'=',thisParam%val
       ELSE
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g13.7,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val, &
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g13.7,a)') sprefix// &
+          sdtype//' :: '//thisParam%name//'=',thisParam%val, &
             ' !'//thisParam%description
       ENDIF
     ENDSUBROUTINE edit_ParamType_SLK
@@ -4395,22 +4461,34 @@ MODULE ParameterLists
 !> printed if the number is very large in absolute value engineering format
 !> is used otherwise floating point form is used to write the value.
 !>
-    SUBROUTINE edit_ParamType_SBK(thisParam,funit,indent)
+    SUBROUTINE edit_ParamType_SBK(thisParam,funit,indent,prefix,paddtw)
       CLASS(ParamType_SBK),INTENT(IN) :: thisParam
       INTEGER(SIK),INTENT(IN) :: funit
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       CHARACTER(LEN=12) :: fmt
       INTEGER(SIK) :: i
+      TYPE(StringType) :: sprefix,sdtype
 
       i=1
       IF(PRESENT(indent)) i=i+indent
+      IF(PRESENT(prefix)) sprefix=prefix
+      sdtype=thisParam%datatype
+      IF(PRESENT(paddtw)) THEN
+        IF(paddtw) THEN
+          dtype=thisParam%dataType
+          sdtype=dtype
+        ENDIF
+      ENDIF
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
       IF(LEN_TRIM(thisParam%description) == 0) THEN
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,l2)') &
-          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,l2)') sprefix// &
+          sdtype//' :: '//thisParam%name//'=',thisParam%val
       ELSE
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,l2,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val, &
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,l2,a)') sprefix// &
+          sdtype//' :: '//thisParam%name//'=',thisParam%val, &
             ' !'//thisParam%description
       ENDIF
     ENDSUBROUTINE edit_ParamType_SBK
@@ -4629,22 +4707,34 @@ MODULE ParameterLists
 !> @param indent optional indicates the number of blank spaces to precede the
 !>        beginning of text to edit.
 !>
-    SUBROUTINE edit_ParamType_STR(thisParam,funit,indent)
+    SUBROUTINE edit_ParamType_STR(thisParam,funit,indent,prefix,paddtw)
       CLASS(ParamType_STR),INTENT(IN) :: thisParam
       INTEGER(SIK),INTENT(IN) :: funit
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       CHARACTER(LEN=12) :: fmt
       INTEGER(SIK) :: i
+      TYPE(StringType) :: sprefix,sdtype
 
       i=1
       IF(PRESENT(indent)) i=i+indent
+      IF(PRESENT(prefix)) sprefix=prefix
+      sdtype=thisParam%datatype
+      IF(PRESENT(paddtw)) THEN
+        IF(paddtw) THEN
+          dtype=thisParam%dataType
+          sdtype=dtype
+        ENDIF
+      ENDIF
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
       IF(LEN_TRIM(thisParam%description) == 0) THEN
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'='//thisParam%val
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') sprefix// &
+          sdtype//' :: '//thisParam%name//'='//thisParam%val
       ELSE
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'='//thisParam%val// &
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') sprefix// &
+          sdtype//' :: '//thisParam%name//'='//thisParam%val// &
             ' !'//thisParam%description
       ENDIF
     ENDSUBROUTINE edit_ParamType_STR
@@ -4963,20 +5053,33 @@ MODULE ParameterLists
 !> printed if the number is very large in absolute value engineering format
 !> is used otherwise floating point form is used to write the value.
 !>
-    SUBROUTINE edit_ParamType_SSK_a1(thisParam,funit,indent)
+    SUBROUTINE edit_ParamType_SSK_a1(thisParam,funit,indent,prefix,paddtw)
       CLASS(ParamType_SSK_a1),INTENT(IN) :: thisParam
       INTEGER(SIK),INTENT(IN) :: funit
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i,j,k
+      TYPE(StringType) :: sprefix,sdtype
 
       i=1
       j=5
       IF(PRESENT(indent)) i=i+indent
+      IF(PRESENT(prefix)) sprefix=prefix
+      sdtype=thisParam%datatype
+      IF(PRESENT(paddtw)) THEN
+        IF(paddtw) THEN
+          dtype=thisParam%dataType
+          sdtype=dtype
+        ENDIF
+      ENDIF
+      j=j+LEN(sprefix)
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
-      WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g13.7)',ADVANCE='NO') &
-        thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val(1)
-      j=j+LEN(thisParam%dataType)+LEN(thisParam%name)
+      WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g13.7)',ADVANCE='NO') sprefix// &
+        sdtype//' :: '//thisParam%name//'=',thisParam%val(1)
+      j=j+LEN(sdtype)+LEN(thisParam%name)
       WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
       IF(SIZE(thisParam%val)>MAX_1D_LEN) THEN
         DO k=2,SIZE(thisParam%val)
@@ -5248,20 +5351,33 @@ MODULE ParameterLists
 !> printed if the number is very large in absolute value engineering format
 !> is used otherwise floating point form is used to write the value.
 !>
-    SUBROUTINE edit_ParamType_SDK_a1(thisParam,funit,indent)
+    SUBROUTINE edit_ParamType_SDK_a1(thisParam,funit,indent,prefix,paddtw)
       CLASS(ParamType_SDK_a1),INTENT(IN) :: thisParam
       INTEGER(SIK),INTENT(IN) :: funit
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i,j,k
+      TYPE(StringType) :: sprefix,sdtype
 
       i=1
       j=5
       IF(PRESENT(indent)) i=i+indent
+      IF(PRESENT(prefix)) sprefix=prefix
+      sdtype=thisParam%datatype
+      IF(PRESENT(paddtw)) THEN
+        IF(paddtw) THEN
+          dtype=thisParam%dataType
+          sdtype=dtype
+        ENDIF
+      ENDIF
+      j=j+LEN(sprefix)
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
-      WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g20.14)',ADVANCE='NO') &
-        thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val(1)
-      j=j+LEN(thisParam%dataType)+LEN(thisParam%name)
+      WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g20.14)',ADVANCE='NO') sprefix// &
+        sdtype//' :: '//thisParam%name//'=',thisParam%val(1)
+      j=j+LEN(sdtype)+LEN(thisParam%name)
       WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
       IF(SIZE(thisParam%val)>MAX_1D_LEN) THEN
         DO k=2,SIZE(thisParam%val)
@@ -5534,20 +5650,33 @@ MODULE ParameterLists
 !> printed if the number is very large in absolute value engineering format
 !> is used otherwise floating point form is used to write the value.
 !>
-    SUBROUTINE edit_ParamType_SNK_a1(thisParam,funit,indent)
+    SUBROUTINE edit_ParamType_SNK_a1(thisParam,funit,indent,prefix,paddtw)
       CLASS(ParamType_SNK_a1),INTENT(IN) :: thisParam
       INTEGER(SIK),INTENT(IN) :: funit
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i,j,k
+      TYPE(StringType) :: sprefix,sdtype
 
       i=1
       j=5
       IF(PRESENT(indent)) i=i+indent
+      IF(PRESENT(prefix)) sprefix=prefix
+      sdtype=thisParam%datatype
+      IF(PRESENT(paddtw)) THEN
+        IF(paddtw) THEN
+          dtype=thisParam%dataType
+          sdtype=dtype
+        ENDIF
+      ENDIF
+      j=j+LEN(sprefix)
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
-      WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g13.7)',ADVANCE='NO') &
-          thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val(1)
-      j=j+LEN(thisParam%dataType)+LEN(thisParam%name)
+      WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g13.7)',ADVANCE='NO') sprefix// &
+          sdtype//' :: '//thisParam%name//'=',thisParam%val(1)
+      j=j+LEN(sdtype)+LEN(thisParam%name)
       WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
       IF(SIZE(thisParam%val)>MAX_1D_LEN) THEN
         DO k=2,SIZE(thisParam%val)
@@ -5818,20 +5947,33 @@ MODULE ParameterLists
 !> printed if the number is very large in absolute value engineering format
 !> is used otherwise floating point form is used to write the value.
 !>
-    SUBROUTINE edit_ParamType_SLK_a1(thisParam,funit,indent)
+    SUBROUTINE edit_ParamType_SLK_a1(thisParam,funit,indent,prefix,paddtw)
       CLASS(ParamType_SLK_a1),INTENT(IN) :: thisParam
       INTEGER(SIK),INTENT(IN) :: funit
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i,j,k
+      TYPE(StringType) :: sprefix,sdtype
 
       i=1
       j=5
       IF(PRESENT(indent)) i=i+indent
+      IF(PRESENT(prefix)) sprefix=prefix
+      sdtype=thisParam%datatype
+      IF(PRESENT(paddtw)) THEN
+        IF(paddtw) THEN
+          dtype=thisParam%dataType
+          sdtype=dtype
+        ENDIF
+      ENDIF
+      j=j+LEN(sprefix)
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
-      WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g20.14)',ADVANCE='NO') &
-        thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val(1)
-      j=j+LEN(thisParam%dataType)+LEN(thisParam%name)
+      WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g20.14)',ADVANCE='NO') sprefix// &
+        sdtype//' :: '//thisParam%name//'=',thisParam%val(1)
+      j=j+LEN(sdtype)+LEN(thisParam%name)
       WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
       IF(SIZE(thisParam%val)>MAX_1D_LEN) THEN
         DO k=2,SIZE(thisParam%val)
@@ -6099,20 +6241,33 @@ MODULE ParameterLists
 !> @param indent optional indicates the number of blank spaces to precede the
 !>        beginning of text to edit.
 !>
-    SUBROUTINE edit_ParamType_SBK_a1(thisParam,funit,indent)
+    SUBROUTINE edit_ParamType_SBK_a1(thisParam,funit,indent,prefix,paddtw)
       CLASS(ParamType_SBK_a1),INTENT(IN) :: thisParam
       INTEGER(SIK),INTENT(IN) :: funit
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i,j,k
+      TYPE(StringType) :: sprefix,sdtype
 
       i=1
       j=5
       IF(PRESENT(indent)) i=i+indent
+      IF(PRESENT(prefix)) sprefix=prefix
+      sdtype=thisParam%datatype
+      IF(PRESENT(paddtw)) THEN
+        IF(paddtw) THEN
+          dtype=thisParam%dataType
+          sdtype=dtype
+        ENDIF
+      ENDIF
+      j=j+LEN(sprefix)
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
-      WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,l3)',ADVANCE='NO') &
-        thisParam%dataType//' :: '//thisParam%name//'=',thisParam%val(1)
-      j=j+LEN(thisParam%dataType)+LEN(thisParam%name)
+      WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,l3)',ADVANCE='NO') sprefix// &
+        sdtype//' :: '//thisParam%name//'=',thisParam%val(1)
+      j=j+LEN(sdtype)+LEN(thisParam%name)
       WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
       IF(SIZE(thisParam%val)>MAX_1D_LEN) THEN
         DO k=2,SIZE(thisParam%val)
@@ -6379,20 +6534,33 @@ MODULE ParameterLists
 !> @param indent optional indicates the number of blank spaces to precede the
 !>        beginning of text to edit.
 !>
-    SUBROUTINE edit_ParamType_STR_a1(thisParam,funit,indent)
+    SUBROUTINE edit_ParamType_STR_a1(thisParam,funit,indent,prefix,paddtw)
       CLASS(ParamType_STR_a1),INTENT(IN) :: thisParam
       INTEGER(SIK),INTENT(IN) :: funit
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i,j,k
+      TYPE(StringType) :: sprefix,sdtype
 
       i=1
       j=5
       IF(PRESENT(indent)) i=i+indent
+      IF(PRESENT(prefix)) sprefix=prefix
+      sdtype=thisParam%datatype
+      IF(PRESENT(paddtw)) THEN
+        IF(paddtw) THEN
+          dtype=thisParam%dataType
+          sdtype=dtype
+        ENDIF
+      ENDIF
+      j=j+LEN(sprefix)
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
-      WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)',ADVANCE='NO') &
-            thisParam%dataType//' :: '//thisParam%name//'='//CHAR(thisParam%val(1))
-      j=j+LEN(thisParam%dataType)+LEN(thisParam%name)
+      WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)',ADVANCE='NO') sprefix// &
+        sdtype//' :: '//thisParam%name//'='//CHAR(thisParam%val(1))
+      j=j+LEN(sdtype)+LEN(thisParam%name)
       WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
 
       IF (SIZE(thisParam%val)>MAX_1D_LEN) THEN
@@ -6674,25 +6842,38 @@ MODULE ParameterLists
 !> printed if the number is very large in absolute value engineering format
 !> is used otherwise floating point form is used to write the value.
 !>
-    SUBROUTINE edit_ParamType_SSK_a2(thisParam,funit,indent)
+    SUBROUTINE edit_ParamType_SSK_a2(thisParam,funit,indent,prefix,paddtw)
       CLASS(ParamType_SSK_a2),INTENT(IN) :: thisParam
       INTEGER(SIK),INTENT(IN) :: funit
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2,fmt3
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i,j,k,l
+      TYPE(StringType) :: sprefix,sdtype
 
       i=1
       j=6
       IF(PRESENT(indent)) i=i+indent
+      IF(PRESENT(prefix)) sprefix=prefix
+      sdtype=thisParam%datatype
+      IF(PRESENT(paddtw)) THEN
+        IF(paddtw) THEN
+          dtype=thisParam%dataType
+          sdtype=dtype
+        ENDIF
+      ENDIF
+      j=j+LEN(sprefix)
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
       IF(LEN_TRIM(thisParam%description) == 0) THEN
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'= ...'
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') sprefix// &
+          sdtype//' :: '//thisParam%name//'= ...'
       ELSE
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'= ... !'//thisParam%description
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,a)') sprefix// &
+          sdtype//' :: '//thisParam%name//'= ... !'//thisParam%description
       ENDIF
-      j=j+LEN(thisParam%dataType)+LEN(thisParam%name)
+      j=j+LEN(sdtype)+LEN(thisParam%name)
       WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
       WRITE(fmt3,'(i12)') SIZE(thisParam%val,1); fmt3=ADJUSTL(fmt3)
       DO k=1,SIZE(thisParam%val,2)
@@ -6952,25 +7133,38 @@ MODULE ParameterLists
 !> printed if the number is very large in absolute value engineering format
 !> is used otherwise floating point form is used to write the value.
 !>
-    SUBROUTINE edit_ParamType_SDK_a2(thisParam,funit,indent)
+    SUBROUTINE edit_ParamType_SDK_a2(thisParam,funit,indent,prefix,paddtw)
       CLASS(ParamType_SDK_a2),INTENT(IN) :: thisParam
       INTEGER(SIK),INTENT(IN) :: funit
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2,fmt3
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i,j,k,l
+      TYPE(StringType) :: sprefix,sdtype
 
       i=1
       j=6
       IF(PRESENT(indent)) i=i+indent
+      IF(PRESENT(prefix)) sprefix=prefix
+      sdtype=thisParam%datatype
+      IF(PRESENT(paddtw)) THEN
+        IF(paddtw) THEN
+          dtype=thisParam%dataType
+          sdtype=dtype
+        ENDIF
+      ENDIF
+      j=j+LEN(sprefix)
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
       IF(LEN_TRIM(thisParam%description) == 0) THEN
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'= ...'
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') sprefix// &
+          sdtype//' :: '//thisParam%name//'= ...'
       ELSE
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'= ... !'//thisParam%description
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,a)') sprefix// &
+          sdtype//' :: '//thisParam%name//'= ... !'//thisParam%description
       ENDIF
-      j=j+LEN(thisParam%dataType)+LEN(thisParam%name)
+      j=j+LEN(sdtype)+LEN(thisParam%name)
       WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
       WRITE(fmt3,'(i12)') SIZE(thisParam%val,1); fmt3=ADJUSTL(fmt3)
       DO k=1,SIZE(thisParam%val,2)
@@ -7230,25 +7424,38 @@ MODULE ParameterLists
 !> printed if the number is very large in absolute value engineering format
 !> is used otherwise floating point form is used to write the value.
 !>
-    SUBROUTINE edit_ParamType_SNK_a2(thisParam,funit,indent)
+    SUBROUTINE edit_ParamType_SNK_a2(thisParam,funit,indent,prefix,paddtw)
       CLASS(ParamType_SNK_a2),INTENT(IN) :: thisParam
       INTEGER(SIK),INTENT(IN) :: funit
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2,fmt3
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i,j,k,l
+      TYPE(StringType) :: sprefix,sdtype
 
       i=1
       j=6
       IF(PRESENT(indent)) i=i+indent
+      IF(PRESENT(prefix)) sprefix=prefix
+      sdtype=thisParam%datatype
+      IF(PRESENT(paddtw)) THEN
+        IF(paddtw) THEN
+          dtype=thisParam%dataType
+          sdtype=dtype
+        ENDIF
+      ENDIF
+      j=j+LEN(sprefix)
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
       IF(LEN_TRIM(thisParam%description) == 0) THEN
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'= ...'
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') sprefix// &
+          sdtype//' :: '//thisParam%name//'= ...'
       ELSE
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'= ... !'//thisParam%description
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,a)') sprefix// &
+          sdtype//' :: '//thisParam%name//'= ... !'//thisParam%description
       ENDIF
-      j=j+LEN(thisParam%dataType)+LEN(thisParam%name)
+      j=j+LEN(sdtype)+LEN(thisParam%name)
       WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
       WRITE(fmt3,'(i12)') SIZE(thisParam%val,1); fmt3=ADJUSTL(fmt3)
       DO k=1,SIZE(thisParam%val,2)
@@ -7508,25 +7715,38 @@ MODULE ParameterLists
 !> printed if the number is very large in absolute value engineering format
 !> is used otherwise floating point form is used to write the value.
 !>
-    SUBROUTINE edit_ParamType_SLK_a2(thisParam,funit,indent)
+    SUBROUTINE edit_ParamType_SLK_a2(thisParam,funit,indent,prefix,paddtw)
       CLASS(ParamType_SLK_a2),INTENT(IN) :: thisParam
       INTEGER(SIK),INTENT(IN) :: funit
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2,fmt3
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i,j,k,l
+      TYPE(StringType) :: sprefix,sdtype
 
       i=1
       j=6
       IF(PRESENT(indent)) i=i+indent
+      IF(PRESENT(prefix)) sprefix=prefix
+      sdtype=thisParam%datatype
+      IF(PRESENT(paddtw)) THEN
+        IF(paddtw) THEN
+          dtype=thisParam%dataType
+          sdtype=dtype
+        ENDIF
+      ENDIF
+      j=j+LEN(sprefix)
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
       IF(LEN_TRIM(thisParam%description) == 0) THEN
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'= ...'
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') sprefix// &
+          sdtype//' :: '//thisParam%name//'= ...'
       ELSE
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'= ... !'//thisParam%description
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,a)') sprefix// &
+          sdtype//' :: '//thisParam%name//'= ... !'//thisParam%description
       ENDIF
-      j=j+LEN(thisParam%dataType)+LEN(thisParam%name)
+      j=j+LEN(sdtype)+LEN(thisParam%name)
       WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
       WRITE(fmt3,'(i12)') SIZE(thisParam%val,1); fmt3=ADJUSTL(fmt3)
       DO k=1,SIZE(thisParam%val,2)
@@ -7782,28 +8002,41 @@ MODULE ParameterLists
 !>
 !>  The way this is set up could go horribly awry for printing things nicely.
 !>  Check back later.
-    SUBROUTINE edit_ParamType_STR_a2(thisParam,funit,indent)
+    SUBROUTINE edit_ParamType_STR_a2(thisParam,funit,indent,prefix,paddtw)
       CLASS(ParamType_STR_a2),INTENT(IN) :: thisParam
       INTEGER(SIK),INTENT(IN) :: funit
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2,fmt3
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i,j,k,l
+      TYPE(StringType) :: sprefix,sdtype
       !Compiler problem for gnu-4.6.3.  It is fixed in gnu-4.7.0.
       !CHARACTER(LEN=MAXVAL(LEN(thisParam%val))) :: tmpstr(SIZE(thisParam%val))
 
       i=1
       j=6
       IF(PRESENT(indent)) i=i+indent
+      IF(PRESENT(prefix)) sprefix=prefix
+      sdtype=thisParam%datatype
+      IF(PRESENT(paddtw)) THEN
+        IF(paddtw) THEN
+          dtype=thisParam%dataType
+          sdtype=dtype
+        ENDIF
+      ENDIF
+      j=j+LEN(sprefix)
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
       !tmpstr(1)=CHAR(thisParam%val(1))
       IF(LEN_TRIM(thisParam%description) == 0) THEN
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'= ...'
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') sprefix// &
+          sdtype//' :: '//thisParam%name//'= ...'
       ELSE
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'= ... !'//thisParam%description
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,a)') sprefix// &
+          sdtype//' :: '//thisParam%name//'= ... !'//thisParam%description
       ENDIF
-      j=j+LEN(thisParam%dataType)+LEN(thisParam%name)
+      j=j+LEN(sdtype)+LEN(thisParam%name)
       WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
       WRITE(fmt3,'(i12)') SIZE(thisParam%val,1); fmt3=ADJUSTL(fmt3)
       DO k=1,SIZE(thisParam%val,2)
@@ -8079,25 +8312,37 @@ MODULE ParameterLists
 !> printed if the number is very large in absolute value engineering format
 !> is used otherwise floating point form is used to write the value.
 !>
-    SUBROUTINE edit_ParamType_SSK_a3(thisParam,funit,indent)
+    SUBROUTINE edit_ParamType_SSK_a3(thisParam,funit,indent,prefix,paddtw)
       CLASS(ParamType_SSK_a3),INTENT(IN) :: thisParam
       INTEGER(SIK),INTENT(IN) :: funit
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2,fmt3
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i,j,k,l,m
+      TYPE(StringType) :: sprefix,sdtype
 
       i=1
       j=6
       IF(PRESENT(indent)) i=i+indent
+      IF(PRESENT(prefix)) sprefix=prefix
+      sdtype=thisParam%datatype
+      IF(PRESENT(paddtw)) THEN
+        IF(paddtw) THEN
+          dtype=thisParam%dataType
+          sdtype=dtype
+        ENDIF
+      ENDIF
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
       IF(LEN_TRIM(thisParam%description) == 0) THEN
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'= ...'
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') sprefix// &
+          sdtype//' :: '//thisParam%name//'= ...'
       ELSE
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'= ... !'//thisParam%description
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,a)') sprefix// &
+          sdtype//' :: '//thisParam%name//'= ... !'//thisParam%description
       ENDIF
-      j=j+LEN(thisParam%dataType)+LEN(thisParam%name)
+      j=j+LEN(sdtype)+LEN(thisParam%name)
       WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
       WRITE(fmt3,'(i12)') SIZE(thisParam%val,1); fmt3=ADJUSTL(fmt3)
       DO k=1,SIZE(thisParam%val,3)
@@ -8365,25 +8610,37 @@ MODULE ParameterLists
 !> printed if the number is very large in absolute value engineering format
 !> is used otherwise floating point form is used to write the value.
 !>
-    SUBROUTINE edit_ParamType_SDK_a3(thisParam,funit,indent)
+    SUBROUTINE edit_ParamType_SDK_a3(thisParam,funit,indent,prefix,paddtw)
       CLASS(ParamType_SDK_a3),INTENT(IN) :: thisParam
       INTEGER(SIK),INTENT(IN) :: funit
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2,fmt3
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i,j,k,l,m
+      TYPE(StringType) :: sprefix,sdtype
 
       i=1
       j=6
       IF(PRESENT(indent)) i=i+indent
+      IF(PRESENT(prefix)) sprefix=prefix
+      sdtype=thisParam%datatype
+      IF(PRESENT(paddtw)) THEN
+        IF(paddtw) THEN
+          dtype=thisParam%dataType
+          sdtype=dtype
+        ENDIF
+      ENDIF
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
       IF(LEN_TRIM(thisParam%description) == 0) THEN
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'= ...'
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') sprefix// &
+          sdtype//' :: '//thisParam%name//'= ...'
       ELSE
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'= ... !'//thisParam%description
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,a)') sprefix// &
+          sdtype//' :: '//thisParam%name//'= ... !'//thisParam%description
       ENDIF
-      j=j+LEN(thisParam%dataType)+LEN(thisParam%name)
+      j=j+LEN(sdtype)+LEN(thisParam%name)
       WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
       WRITE(fmt3,'(i12)') SIZE(thisParam%val,1); fmt3=ADJUSTL(fmt3)
       DO k=1,SIZE(thisParam%val,3)
@@ -8651,25 +8908,37 @@ MODULE ParameterLists
 !> printed if the number is very large in absolute value engineering format
 !> is used otherwise floating point form is used to write the value.
 !>
-    SUBROUTINE edit_ParamType_SNK_a3(thisParam,funit,indent)
+    SUBROUTINE edit_ParamType_SNK_a3(thisParam,funit,indent,prefix,paddtw)
       CLASS(ParamType_SNK_a3),INTENT(IN) :: thisParam
       INTEGER(SIK),INTENT(IN) :: funit
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2,fmt3
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i,j,k,l,m
+      TYPE(StringType) :: sprefix,sdtype
 
       i=1
       j=6
       IF(PRESENT(indent)) i=i+indent
+      IF(PRESENT(prefix)) sprefix=prefix
+      sdtype=thisParam%datatype
+      IF(PRESENT(paddtw)) THEN
+        IF(paddtw) THEN
+          dtype=thisParam%dataType
+          sdtype=dtype
+        ENDIF
+      ENDIF
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
       IF(LEN_TRIM(thisParam%description) == 0) THEN
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'= ...'
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') sprefix// &
+          sdtype//' :: '//thisParam%name//'= ...'
       ELSE
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'= ... !'//thisParam%description
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,a)') sprefix// &
+          sdtype//' :: '//thisParam%name//'= ... !'//thisParam%description
       ENDIF
-      j=j+LEN(thisParam%dataType)+LEN(thisParam%name)
+      j=j+LEN(sdtype)+LEN(thisParam%name)
       WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
       WRITE(fmt3,'(i12)') SIZE(thisParam%val,1); fmt3=ADJUSTL(fmt3)
       DO k=1,SIZE(thisParam%val,3)
@@ -8937,25 +9206,37 @@ MODULE ParameterLists
 !> printed if the number is very large in absolute value engineering format
 !> is used otherwise floating point form is used to write the value.
 !>
-    SUBROUTINE edit_ParamType_SLK_a3(thisParam,funit,indent)
+    SUBROUTINE edit_ParamType_SLK_a3(thisParam,funit,indent,prefix,paddtw)
       CLASS(ParamType_SLK_a3),INTENT(IN) :: thisParam
       INTEGER(SIK),INTENT(IN) :: funit
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2,fmt3
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i,j,k,l,m
+      TYPE(StringType) :: sprefix,sdtype
 
       i=1
       j=6
       IF(PRESENT(indent)) i=i+indent
+      IF(PRESENT(prefix)) sprefix=prefix
+      sdtype=thisParam%datatype
+      IF(PRESENT(paddtw)) THEN
+        IF(paddtw) THEN
+          dtype=thisParam%dataType
+          sdtype=dtype
+        ENDIF
+      ENDIF
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
       IF(LEN_TRIM(thisParam%description) == 0) THEN
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'= ...'
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') sprefix// &
+          sdtype//' :: '//thisParam%name//'= ...'
       ELSE
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,a)') &
-          thisParam%dataType//' :: '//thisParam%name//'= ... !'//thisParam%description
+        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,a)') sprefix// &
+          sdtype//' :: '//thisParam%name//'= ... !'//thisParam%description
       ENDIF
-      j=j+LEN(thisParam%dataType)+LEN(thisParam%name)
+      j=j+LEN(sdtype)+LEN(thisParam%name)
       WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
       WRITE(fmt3,'(i12)') SIZE(thisParam%val,1); fmt3=ADJUSTL(fmt3)
       DO k=1,SIZE(thisParam%val,3)
