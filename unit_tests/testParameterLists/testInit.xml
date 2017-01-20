@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet version="1.0" type="text/xsl" href="PL9.xsl"?>
+<ParameterList name="CASEID">
+  <Parameter name="case_id" type="string" value="CASL AMA Benchmark Problem 2 - Fuel Lattice - Public"/>
+  <ParameterList name="STATE">
+    <Parameter name="testVal" type="int" value="10"/>
+    <Parameter name="sym" type="string" value="qtr"/>
+  </ParameterList>
+  <ParameterList name="ASSEMBLIES">
+    <ParameterList name="Assembly_ASSY1">
+      <Parameter name="axial_labels" type="Array(string)" value="{LAT1}"/>
+      <ParameterList name="SpacerGrids">
+      </ParameterList>
+      <Parameter name="label" type="string" value="ASSY1"/>
+    </ParameterList>
+  </ParameterList>
+</ParameterList>
+
