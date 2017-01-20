@@ -1,0 +1,15 @@
+# Standard ignores
+*~
+*.pyc
+\#*#
+.#*
+.*.swp
+fort.*
+
+/checkin_message
+/cmake/dependencies
+
+# Repostiory list file for egdist
+.egdist
+.gitdist
+*.sublime-*
