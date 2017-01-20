@@ -271,7 +271,7 @@ MODULE trilinos_interfaces
       INTEGER(C_INT),INTENT(INOUT)    :: id
     ENDSUBROUTINE
 
-#ifdef MPACT_HAVE_ForTeuchos
+#ifdef HAVE_ForTeuchos
     SUBROUTINE Belos_Init_Params(id, plID) bind(C,NAME="Belos_Init_Params")
       IMPORT :: C_INT
       IMPORT :: ForTeuchos_ParameterList_ID

@@ -257,8 +257,18 @@ extern "C" void Anasazi_GetIterationCount(const int id, int &niter) {
 // Belos
 //------------------------------------------------------------------------------
 extern "C" void Belos_Init(int &id) {
-    id = bels->new_data();
+    Teuchos::ParameterList params;
+    id = bels->new_data(params);
 }
+
+#ifdef HAVE_ForTeuchos
+extern "C" void Belos_Init_Params(int &id, CTeuchos_ParameterList_ID &plist) {
+    auto plistDB = CTeuchos::getNonconstParameterListDB();
+    Teuchos::Ptr<Teuchos::ParameterList> params =
+        plistDB->getNonconstObjPtr(plist.id);
+    id = bels->new_data(*params);
+}
+#endif
 
 extern "C" void Belos_Destroy(const int id) {
     bels->delete_data(id);
