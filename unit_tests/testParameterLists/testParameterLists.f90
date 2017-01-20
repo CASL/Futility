@@ -23,7 +23,7 @@ PROGRAM testParameterLists
   USE Strings
   USE ExceptionHandler
   USE ParameterLists
-#ifdef MPACT_HAVE_Trilinos
+#ifdef HAVE_ForTeuchos
   USE ForTeuchos_ParameterList
   USE ISO_C_BINDING
 #endif
@@ -101,7 +101,7 @@ PROGRAM testParameterLists
   REGISTER_SUBTEST('%initFromXML',testInitFromXML)
   REGISTER_SUBTEST('%editToXML',testEditToXML)
 
-#ifdef MPACT_HAVE_Trilinos
+#ifdef HAVE_ForTeuchos
   REGISTER_SUBTEST('Convert to Teuchos', testConvertTeuchos)
 #endif
   
@@ -5513,7 +5513,7 @@ PROGRAM testParameterLists
   ENDSUBROUTINE testInitFromXML
 !
 !-------------------------------------------------------------------------------
-#ifdef MPACT_HAVE_Trilinos
+#ifdef HAVE_ForTeuchos
   SUBROUTINE testConvertTeuchos()
     TYPE(ParamType) :: params
     TYPE(ForTeuchos_ParameterList_ID) :: teuchos_plist

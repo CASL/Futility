@@ -103,7 +103,7 @@ MODULE ParameterLists
   USE ExceptionHandler
   USE IO_Strings
   USE FileType_XML
-#ifdef MPACT_HAVE_Trilinos
+#ifdef HAVE_ForTeuchos
   USE ForTeuchos_ParameterList
 #endif
 
@@ -503,7 +503,7 @@ MODULE ParameterLists
       !> @copybrief ParameterLists::clear_ParamType
       !> @copydoc ParameterLists::clear_ParamType
       PROCEDURE,PASS :: clear => clear_ParamType
-#ifdef MPACT_HAVE_Trilinos
+#ifdef HAVE_ForTeuchos
       PROCEDURE,PASS :: toTeuchosPlist
 #endif
   PROCEDURE :: procXMLTree
@@ -884,7 +884,7 @@ MODULE ParameterLists
 !
 !===============================================================================
   CONTAINS
-#ifdef MPACT_HAVE_Trilinos
+#ifdef HAVE_ForTeuchos
     RECURSIVE SUBROUTINE toTeuchosPlist(this, that, n)
       CLASS(ParamType),INTENT(IN) :: this
       TYPE(ForTeuchos_ParameterList_ID),INTENT(IN) :: that
@@ -905,6 +905,11 @@ MODULE ParameterLists
         level = n
       ENDIF
 
+      IF(level > 10) THEN
+        WRITE(*,*)"Too much recursion. Giving up"
+        return
+      ENDIF
+
       path = ''
       CALL this%getSubParams(path, itr)
 
@@ -915,6 +920,7 @@ MODULE ParameterLists
             new = ForTeuchos_PL_sublist(that, CHAR(itr%name), 0, &
               "Imported from MPACT PList", ierr)
             nextParam = itr
+            WRITE(*,*)associated(nextParam%pdat)
             CALL toTeuchosPlist(nextParam, new, level+1)
           TYPE IS(ParamType_SBK)
             CALL ForTeuchos_PL_set_bool(that, CHAR(itr%name), itr%val,&
