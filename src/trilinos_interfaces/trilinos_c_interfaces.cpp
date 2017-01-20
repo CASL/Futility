@@ -7,17 +7,50 @@
 #include "trilinos_pc.hpp"
 #include "trilinos_solvers.hpp"
 #include <omp.h>
+#ifdef HAVE_ForTeuchos
 #include "CTeuchos_ParameterList.h"
 #include "CTeuchos_ParameterList_Cpp.hpp"
+#endif
 
 bool mpact_trilinos_isinit = false;
-Teuchos::RCP< EpetraVecStore > evec(new EpetraVecStore);
-Teuchos::RCP< EpetraMatStore > emat(new EpetraMatStore);
-Teuchos::RCP< AnasaziStore   > aeig(new AnasaziStore);
-Teuchos::RCP< BelosStore     > bels(new BelosStore);
-Teuchos::RCP< AndersonStore  > andr(new AndersonStore);
-Teuchos::RCP< JFNKStore      > jfnk(new JFNKStore);
-Teuchos::RCP< PCStore        > pcst(new PCStore);
+EpetraVecStore *evec       = nullptr;
+EpetraMatStore *emat       = nullptr;
+AnasaziStore *aeig         = nullptr;
+BelosStore *bels           = nullptr;
+AndersonStore *andr        = nullptr;
+JFNKStore *jfnk            = nullptr;
+PCStore *pcst              = nullptr;
+
+extern "C" void MPACT_Trilinos_Init() {
+    if (!mpact_trilinos_isinit) {
+        assert(!evec);
+        assert(!emat);
+        assert(!aeig);
+        assert(!bels);
+        assert(!pcst);
+        assert(!andr);
+        assert(!jfnk);
+        evec = new EpetraVecStore();
+        emat = new EpetraMatStore();
+        aeig = new AnasaziStore();
+        bels = new BelosStore();
+        pcst = new PCStore();
+        andr = new AndersonStore();
+        jfnk = new JFNKStore();
+
+        mpact_trilinos_isinit = true;
+    }
+}
+
+extern "C" void MPACT_Trilinos_Finalize() {
+    delete aeig;
+    delete bels;
+    delete pcst;
+    delete evec;
+    delete emat;
+    delete andr;
+    delete jfnk;
+}
 
 //------------------------------------------------------------------------------
 // Vector
@@ -164,12 +197,14 @@ extern "C" void Anasazi_Init(int &id) {
     id = aeig->new_data(params);
 }
 
+#ifdef HAVE_ForTeuchos
 extern "C" void Anasazi_Init_Params(int &id, CTeuchos_ParameterList_ID &plist) {
     auto plistDB = CTeuchos::getNonconstParameterListDB();
     Teuchos::Ptr<Teuchos::ParameterList> params =
         plistDB->getNonconstObjPtr(plist.id);
     id = aeig->new_data(*params);
 }
+#endif
 
 extern "C" void Anasazi_Destroy(const int id) {
     aeig->delete_data(id);
@@ -222,15 +257,7 @@ extern "C" void Anasazi_GetIterationCount(const int id, int &niter) {
 // Belos
 //------------------------------------------------------------------------------
 extern "C" void Belos_Init(int &id) {
-    Teuchos::ParameterList params;
-    id = bels->new_data(params);
-}
-
-extern "C" void Belos_Init_Params(int &id, CTeuchos_ParameterList_ID &plist) {
-    auto plistDB = CTeuchos::getNonconstParameterListDB();
-    Teuchos::Ptr<Teuchos::ParameterList> params =
-        plistDB->getNonconstObjPtr(plist.id);
-    id = bels->new_data(*params);
+    id = bels->new_data();
 }
 
 extern "C" void Belos_Destroy(const int id) {
@@ -273,19 +300,8 @@ extern "C" void Belos_GetIterationCount(const int id, int &niter) {
 //------------------------------------------------------------------------------
 // Preconditioner
 //--------------------------------------------------------------------
-extern "C" void Preconditioner_Init(int &id, int opt) {
-    auto plistDB = CTeuchos::getNonconstParameterListDB();
-    Teuchos::ParameterList params;
-    params.set("pc_option", opt);
-    id = pcst->new_data(params);
-}
-
-extern "C" void Preconditioner_InitParams(int &id,
-                                          CTeuchos_ParameterList_ID &plist) {
-    auto plistDB = CTeuchos::getNonconstParameterListDB();
-    Teuchos::Ptr<Teuchos::ParameterList> params =
-        plistDB->getNonconstObjPtr(plist.id);
-    id = pcst->new_data(*params);
+extern "C" void Preconditioner_Init(int &id, const int opt) {
+    id = pcst->new_data(opt);
 }
 
 extern "C" void Preconditioner_Destroy(const int id) {
