@@ -85,6 +85,9 @@ MODULE LinearSolverTypes
 #ifdef HAVE_PARDISO
   USE MKL_PARDISO
 #endif
+#ifdef MPACT_HAVE_Trilinos
+  USE ForTeuchos_ParameterList
+#endif
   IMPLICIT NONE
 
 #ifdef MPACT_HAVE_PETSC

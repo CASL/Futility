@@ -51,6 +51,7 @@ MODULE EigenvalueSolverTypes
   USE MatrixTypes
   USE PreconditionerTypes
   USE Strings
+#ifdef MPACT_HAVE_Trilinos
   USE ForTeuchos_ParameterList
   IMPLICIT NONE
 
