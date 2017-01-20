@@ -51,9 +51,7 @@ MODULE EigenvalueSolverTypes
   USE MatrixTypes
   USE PreconditionerTypes
   USE Strings
-#ifdef HAVE_ForTeuchos
   USE ForTeuchos_ParameterList
-#endif
   IMPLICIT NONE
 
 #ifdef MPACT_HAVE_PETSC
@@ -430,11 +428,9 @@ MODULE EigenvalueSolverTypes
       INTEGER(SIK) :: n,nlocal,solvertype,maxit
       REAL(SRK) :: tol
       TYPE(STRINGType) :: pctype
-#ifdef HAVE_ForTeuchos
       INTEGER(C_INT) :: ierr
-      CLASS(ParamType),POINTER :: anasaziParams
+      CLASS(ParamType),POINTER :: anasaziParams, pcParams
       TYPE(ForTeuchos_ParameterList_ID) :: plID
-#endif
       !Check to set up required and optional param lists.
       !IF(.NOT.EigenType_Paramsflag) CALL EigenType_Declare_ValidParams()
 
@@ -489,15 +485,15 @@ MODULE EigenvalueSolverTypes
         ELSE
           solver%maxit=maxit
         ENDIF
-#ifdef MPACT_HAVE_Trilinos
-#ifdef HAVE_ForTeuchos
-        plID = Teuchos_ParameterList_Create(ierr)
-        CALL anasaziParams%toTeuchosPlist(plID)
-        CALL Anasazi_Init_Params(solver%eig, plID)
-#else
-        CALL Anasazi_Init(solver%eig)
-#endif
-
+        IF(Params%has('EigenvalueSolverType->anasazi_options')) THEN
+          CALL Params%get('EigenvalueSolverType->anasazi_options', anasaziParams)
+          plID = Teuchos_ParameterList_Create(ierr)
+          CALL anasaziParams%toTeuchosPlist(plID)
+          CALL Anasazi_Init_Params(solver%eig, plID)
+          CALL Teuchos_ParameterList_Release(plID, ierr)
+        ELSE
+          CALL Anasazi_Init(solver%eig)
+        ENDIF
         IF(solvertype/=GD) THEN
           CALL eEigenvalueSolverType%raiseError('Incorrect input to '// &
               modName//'::'//myName//' - Only Generalized Davidson works with Anasazi.')

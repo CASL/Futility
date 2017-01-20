@@ -7,10 +7,8 @@
 #include "trilinos_pc.hpp"
 #include "trilinos_solvers.hpp"
 #include <omp.h>
-#ifdef HAVE_ForTeuchos
 #include "CTeuchos_ParameterList.h"
 #include "CTeuchos_ParameterList_Cpp.hpp"
-#endif
 
 bool mpact_trilinos_isinit = false;
 EpetraVecStore *evec       = nullptr;
@@ -197,14 +195,12 @@ extern "C" void Anasazi_Init(int &id) {
     id = aeig->new_data(params);
 }
 
-#ifdef HAVE_ForTeuchos
 extern "C" void Anasazi_Init_Params(int &id, CTeuchos_ParameterList_ID &plist) {
     auto plistDB = CTeuchos::getNonconstParameterListDB();
     Teuchos::Ptr<Teuchos::ParameterList> params =
         plistDB->getNonconstObjPtr(plist.id);
     id = aeig->new_data(*params);
 }
-#endif
 
 extern "C" void Anasazi_Destroy(const int id) {
     aeig->delete_data(id);
@@ -261,14 +257,12 @@ extern "C" void Belos_Init(int &id) {
     id = bels->new_data(params);
 }
 
-#ifdef HAVE_ForTeuchos
 extern "C" void Belos_Init_Params(int &id, CTeuchos_ParameterList_ID &plist) {
     auto plistDB = CTeuchos::getNonconstParameterListDB();
     Teuchos::Ptr<Teuchos::ParameterList> params =
         plistDB->getNonconstObjPtr(plist.id);
     id = bels->new_data(*params);
 }
-#endif
 
 extern "C" void Belos_Destroy(const int id) {
     bels->delete_data(id);
@@ -310,8 +304,19 @@ extern "C" void Belos_GetIterationCount(const int id, int &niter) {
 //------------------------------------------------------------------------------
 // Preconditioner
 //--------------------------------------------------------------------
-extern "C" void Preconditioner_Init(int &id, const int opt) {
-    id = pcst->new_data(opt);
+extern "C" void Preconditioner_Init(int &id, int opt) {
+    auto plistDB = CTeuchos::getNonconstParameterListDB();
+    Teuchos::ParameterList params;
+    params.set("pc_option", opt);
+    id = pcst->new_data(params);
+}
+
+extern "C" void Preconditioner_InitParams(int &id,
+                                          CTeuchos_ParameterList_ID &plist) {
+    auto plistDB = CTeuchos::getNonconstParameterListDB();
+    Teuchos::Ptr<Teuchos::ParameterList> params =
+        plistDB->getNonconstObjPtr(plist.id);
+    id = pcst->new_data(*params);
 }
 
 extern "C" void Preconditioner_Destroy(const int id) {
