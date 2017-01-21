@@ -53,6 +53,7 @@ MODULE EigenvalueSolverTypes
   USE Strings
 #ifdef MPACT_HAVE_Trilinos
   USE ForTeuchos_ParameterList
+#endif
   IMPLICIT NONE
 
 #ifdef MPACT_HAVE_PETSC
