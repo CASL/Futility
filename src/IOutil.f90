@@ -1,19 +1,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief Global module for I/O utility modules, collecting all
 !> public members of other I/O type modules. This is the module that should be
@@ -58,7 +49,7 @@ MODULE IOutil
   USE IntrType
   USE Strings
   USE IO_Strings
-  
+
   IMPLICIT NONE
   PRIVATE
 
@@ -66,33 +57,33 @@ MODULE IOutil
   PUBLIC :: GET_COMMAND
   PUBLIC :: GET_ENVIRONMENT_VARIABLE
   PUBLIC :: GET_CURRENT_DIRECTORY
-  
+
   !Needed for getPWD_c
   INCLUDE 'getSysProcInfo_F.h'
-  
-  !> @brief Generic interface for overloading intrinsic  
+
+  !> @brief Generic interface for overloading intrinsic
   !> @ref GET_ENVIRONMENT_VARIABLE.
   INTERFACE GET_ENVIRONMENT_VARIABLE
     !> @copybrief IO_Strings::get_environment_variable_string
     !> @copydetails IO_Strings::get_environment_variable_string
     MODULE PROCEDURE get_environment_variable_string
   ENDINTERFACE GET_ENVIRONMENT_VARIABLE
-  
-  !> @brief Generic interface for overloading intrinsic  
+
+  !> @brief Generic interface for overloading intrinsic
   !> @ref GET_COMMAND.
   INTERFACE GET_COMMAND
     !> @copybrief IO_Strings::get_command_string
     !> @copydetails IO_Strings::get_command_string
     MODULE PROCEDURE get_command_string
   ENDINTERFACE GET_COMMAND
-  
-  !> @brief Generic interface for overloading intrinsic  
+
+  !> @brief Generic interface for overloading intrinsic
   !> @ref GET_CURRENT_DIRECTORY.
   INTERFACE GET_CURRENT_DIRECTORY
     MODULE PROCEDURE GET_CURRENT_DIRECTORY_string
     MODULE PROCEDURE GET_CURRENT_DIRECTORY_char
   ENDINTERFACE GET_CURRENT_DIRECTORY
-  
+
 !
 !===============================================================================
   CONTAINS
@@ -177,7 +168,7 @@ MODULE IOutil
       LOGICAL(SBK) :: trm_nm
       INTEGER(SIK) :: len,stat
       INTRINSIC GET_ENVIRONMENT_VARIABLE
-      
+
       trm_nm=.TRUE.
       len=0
       IF(PRESENT(value)) THEN
@@ -210,7 +201,7 @@ MODULE IOutil
       LOGICAL(SBK),INTENT(IN) :: ltrim
       INTEGER(SIK),INTENT(OUT) :: stat
       CHARACTER(LEN=nchar) :: tmpChar
-      
+
       CALL GET_ENVIRONMENT_VARIABLE(NAME=varname,VALUE=tmpChar, &
         STATUS=stat,TRIM_NAME=ltrim)
       IF(stat == 0) str=tmpChar
@@ -233,7 +224,7 @@ MODULE IOutil
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: status
       CHARACTER(LEN=1) :: tmp
       INTEGER(SIK) :: stat,len
-      
+
       len=0
       CALL getPWD_c(tmp,1,stat)
       IF(stat > 0) len=stat

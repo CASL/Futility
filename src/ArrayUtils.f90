@@ -1,19 +1,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief A Fortran 2003 module implementing some mesh/array utility functions.
 !>        Examples include searching for an index in a 1-D real array given a
@@ -390,7 +381,7 @@ MODULE ArrayUtils
       IF(n > 0 .AND. m > 0) THEN
         ALLOCATE(tmpr(n,m))
         tmpr=r
-  
+
         !Find the number of unique entries
         DO i=1,n*m
           y1=(i-1)/n+1
@@ -549,7 +540,7 @@ MODULE ArrayUtils
             IF(TRIM(tmpr(i)) == TRIM(tmpr(j)) .AND. (LEN_TRIM(tmpr(j)) > 0)) tmpr(j)=''
           ENDDO
         ENDDO
-  
+
         rout(1)=tmpr(1)
         sout=2
         DO i=2,n
@@ -948,7 +939,7 @@ MODULE ArrayUtils
         ind=1
         DO WHILE(SOFTGE(pos,tmp(ind),l_tol))
           IF(ind == n) EXIT
-          IF(l_incl == 1) THEN 
+          IF(l_incl == 1) THEN
             IF(SOFTEQ(pos,tmp(ind),l_tol)) EXIT
           ENDIF
           ind=ind+1

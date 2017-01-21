@@ -1,19 +1,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE DummyCPFile
   USE IntrType
@@ -22,9 +13,9 @@ MODULE DummyCPFile
   USE FileType_Checkpoint
   IMPLICIT NONE
   PRIVATE
-  
+
   PUBLIC :: DummyCPFileType
-  
+
   TYPE,EXTENDS(CheckpointFileType) :: DummyCPFileType
     INTEGER(SIK) :: ninterrupts=0
     INTEGER(SIK) :: nexports=0
@@ -68,16 +59,16 @@ PROGRAM testFileType_Checkpoint
   USE IO_Strings
   USE FileType_Checkpoint
   USE DummyCPFile
-  
+
   IMPLICIT NONE
-  
+
   TYPE(ExceptionHandlerType),TARGET :: eTest
   TYPE(DummyCPFileType):: testCPFile
 
   CALL eTest%setStopOnError(.FALSE.)
   CALL eTest%setQuietMode(.TRUE.)
   CALL testCPFile%e%addSurrogate(eTest)
-  
+
   CREATE_TEST("CHECKPOINT FILE")
   REGISTER_SUBTEST('Uninitialized',testUninit)
   CALL testCPFile%init()
@@ -91,12 +82,12 @@ PROGRAM testFileType_Checkpoint
 !-------------------------------------------------------------------------------
   SUBROUTINE testUninit()
     TYPE(StringType) :: str1,str2,str3
-    
+
     COMPONENT_TEST('Uninit. State')
     ASSERT(.NOT.ASSOCIATED(testCPFile%basefile),'%basefile')
     ASSERT(.NOT.ASSOCIATED(testCPFile%daf),'%daf')
     ASSERT(.NOT.ASSOCIATED(testCPFile%h5f),'%h5f')
-    
+
     ASSERT(LEN_TRIM(testCPFile%getFilePath()) == 0,'%getFilePath()')
     ASSERT(LEN_TRIM(testCPFile%getFileName()) == 0,'%getFileName()')
     ASSERT(LEN_TRIM(testCPFile%getFileExt()) == 0,'%getFileExt()')
@@ -108,7 +99,7 @@ PROGRAM testFileType_Checkpoint
     ASSERT(.NOT.testCPFile%isRead(),'%isRead()')
     ASSERT(.NOT.testCPFile%isWrite(),'%isWrite()')
     ASSERT(.NOT.testCPFile%isEOF(),'%isEOF()')
-    
+
     ASSERT(LEN_TRIM(testCPFile%version) == 0,'%version')
     ASSERT(.NOT.testCPFile%isInit,'%isInit')
     ASSERT(.NOT.testCPFile%export_on_interrupt,'%export_on_interrupt')
@@ -136,7 +127,7 @@ PROGRAM testFileType_Checkpoint
     CALL testCPFile%setWritestat(.TRUE.)
     ASSERT(.NOT.testCPFile%isWrite(),'%isWrite()')
     ASSERT(testCPFile%e%getCounter(EXCEPTION_ERROR) == 7,'%setWritestat')
-    
+
     COMPONENT_TEST('Bad Ops.')
     CALL testCPFile%fopen()
     ASSERT(testCPFile%e%getCounter(EXCEPTION_ERROR) == 8,'%fopen')
@@ -154,8 +145,8 @@ PROGRAM testFileType_Checkpoint
 
     COMPONENT_TEST('clear')
     CALL testCPFile%clear()
-    
-  ENDSUBROUTINE testUninit 
+
+  ENDSUBROUTINE testUninit
 !
 !-------------------------------------------------------------------------------
   SUBROUTINE testBaseMethods()
@@ -193,7 +184,7 @@ PROGRAM testFileType_Checkpoint
     CALL testCPFile%setFilePath('./')
     CALL testCPFile%setFileName('testCPF')
     CALL testCPFile%setFileExt('.dcp')
-    
+
     CALL testCPFile%setReadstat(.FALSE.)
     ASSERT(.NOT.testCPFile%isRead(),'%setReadstat')
     ASSERT(testCPFile%isRead() .EQV. testCPFile%basefile%isRead(),'base read')
@@ -217,40 +208,40 @@ PROGRAM testFileType_Checkpoint
     ASSERT(testCPFile%isOpen(),'isOpen() failed')
     INQUIRE(FILE='testCPF.dcp',EXIST=lexist)
     ASSERT(lexist,'failed to create file')
-    
+
     COMPONENT_TEST('fclose')
     CALL testCPFile%fclose()
     ASSERT(.NOT.testCPFile%isOpen(),'isOpen() failed')
-    
+
     COMPONENT_TEST('fdelete')
     CALL testCPFile%fdelete()
     INQUIRE(FILE='testCPF.dcp',EXIST=lexist)
     ASSERT(.NOT.lexist,'failed to delete file')
-    
+
   ENDSUBROUTINE testBaseMethods
 !
 !-------------------------------------------------------------------------------
   SUBROUTINE testCPMethods()
     COMPONENT_TEST('calledFromInterrupt')
     ASSERT(.NOT.testCPFIle%calledFromInterrupt(),'%interrupt')
-    
+
     COMPONENT_TEST('importFile')
     CALL testCPFile%importFile()
     ASSERT(testCPFile%nimports == 1,'nimports')
-    
+
     COMPONENT_TEST('exportFile')
     CALL testCPFile%exportFile()
     ASSERT(testCPFile%nexports == 1,'nexports')
     ASSERT(testCPFile%ninterrupts == 0,'ninterrupts')
-    
+
     COMPONENT_TEST('setInterruptFile')
     CALL testCPFile%setInterruptFile('do_export')
     ASSERT(testCPFile%interrupt_file == 'do_export','interrupt_file')
-    
+
     COMPONENT_TEST('setExportOnInterrupt')
     CALL testCPFile%setExportOnInterrupt(.TRUE.)
     ASSERT(testCPFile%export_on_interrupt,'export_on_interrupt')
-    
+
     COMPONENT_TEST('checkForFileInterrupt')
     CALL testCPFile%checkForFileInterrupt()
     ASSERT(testCPFile%nexports == 1,'nexports')
@@ -262,7 +253,7 @@ PROGRAM testFileType_Checkpoint
     ASSERT(testCPFile%ninterrupts == 1,'ninterrupts')
     OPEN(UNIT=23,FILE='do_export')
     CLOSE(23,STATUS='DELETE')
-    
+
     COMPONENT_TEST('clear')
     CALL testCPFile%clear()
   ENDSUBROUTINE testCPMethods

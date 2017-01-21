@@ -1,19 +1,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief Module defines an object for representing an XML file.
 !>
@@ -41,7 +32,7 @@ MODULE FileType_XML
   USE FileType_Base
 
   IMPLICIT NONE
-  PRIVATE  
+  PRIVATE
 
   PUBLIC :: XMLElementType
   PUBLIC :: XMLFileType
@@ -193,22 +184,22 @@ MODULE FileType_XML
     RECURSIVE SUBROUTINE init_XMLElementType(thisXMLE,cachedFile,itag,lines,tagBegin,tagEnd)
       CLASS(XMLElementType),TARGET,INTENT(INOUT) :: thisXMLE
       CHARACTER(LEN=1),INTENT(IN) :: cachedFile(:)
-      INTEGER(SIK),INTENT(IN) :: itag(:,:)      
+      INTEGER(SIK),INTENT(IN) :: itag(:,:)
       INTEGER(SIK),INTENT(IN) :: lines(:)
       INTEGER(SIK),INTENT(IN) :: tagBegin
       INTEGER(SIK),INTENT(IN) :: tagEnd
-      
+
       INTEGER(SIK) :: nChildren,ichild,ierr
       INTEGER(SIK),ALLOCATABLE :: childTags(:,:)
       TYPE(StringType) :: startTagName,endTagName,tmpStr
-      
+
       IF(iTag(3,tagBegin) == EMPTY_ELEMENT_TAG) THEN
 !
 !Empty Element
         IF(tagEnd == tagBegin) THEN
           !Get the element Name
           CALL getTagName(cachedFile(iTag(1,tagBegin):iTag(2,tagBegin)),ierr,thisXMLE%name)
-          
+
           !Process the attributes
           CALL charArrytoStr(cachedFile(iTag(1,tagBegin):iTag(2,tagBegin)), tmpStr)
           CALL processTagAttributes(CHAR(tmpStr),thisXMLE%nAttr, &
@@ -231,7 +222,7 @@ MODULE FileType_XML
             IF(startTagName == endTagName .AND. ierr == 0) THEN
               !Store the name
               thisXMLE%name=startTagName
-              
+
               !Process attributes
               CALL charArrytoStr(cachedFile(iTag(1,tagBegin):iTag(2,tagBegin)),tmpStr)
               CALL processTagAttributes(CHAR(tmpStr),thisXMLE%nAttr, &
@@ -239,7 +230,7 @@ MODULE FileType_XML
               IF(ierr /= 0) THEN
                 !Failed to process the attributes
               ENDIF
-              
+
               !Determine the number of children
               CALL DetermineNChildren(tagBegin,tagEnd,iTag,nChildren, &
                 childTags,ierr)
@@ -278,7 +269,7 @@ MODULE FileType_XML
 !> @param thisXMLE the XML element object
 !> @param unitNo the Fortran unit number of the file
 !> @param nindent the amount of indentation to use when writing the element
-!> 
+!>
     RECURSIVE SUBROUTINE write_XMLElementType(thisXMLE,unitNo,nindent)
       CLASS(XMLElementType),INTENT(IN) :: thisXMLE
       INTEGER(SIK),INTENT(IN) :: unitNo
@@ -286,7 +277,7 @@ MODULE FileType_XML
       CHARACTER(LEN=16) :: sint
       INTEGER(SIK) :: i,ierr,nspace
       TYPE(StringType) :: fmt,tmpTag
-      
+
       IF(LEN_TRIM(thisXMLE%name) > 0) THEN
         nspace=0
         IF(PRESENT(nindent)) nspace=2*nindent
@@ -309,12 +300,12 @@ MODULE FileType_XML
             fmt='(a'//TRIM(ADJUSTL(sint))//')'
           ENDIF
           WRITE(unitNo,FMT=CHAR(fmt),IOSTAT=ierr) CHAR(tmpTag)
-          
+
           !children
           DO i=1,SIZE(thisXMLE%children)
             CALL thisXMLE%children(i)%fwrite(unitNo,nspace/2+1)
           ENDDO
-        
+
           !end tag
           tmpTag='</'//thisXMLE%name//'>'
           IF(nspace > 0) THEN
@@ -346,15 +337,15 @@ MODULE FileType_XML
             fmt='(a'//TRIM(ADJUSTL(sint))//')'
           ENDIF
           WRITE(unitNo,FMT=CHAR(fmt),IOSTAT=ierr) CHAR(tmpTag)
-          
+
           !content
           WRITE(sint,'(i16)',IOSTAT=ierr) nspace+2
           fmt='('//TRIM(ADJUSTL(sint))//'x'
           WRITE(sint,'(i16)',IOSTAT=ierr) LEN_TRIM(thisXMLE%content)
           fmt=fmt//',a'//TRIM(ADJUSTL(sint))//')'
-          IF(thisXMLE%content /= LF) & 
+          IF(thisXMLE%content /= LF) &
             WRITE(unitNo,FMT=CHAR(fmt),IOSTAT=ierr) CHAR(thisXMLE%content)
-        
+
           !endtag
           tmpTag='</'//thisXMLE%name//'>'
           IF(nspace > 0) THEN
@@ -395,11 +386,11 @@ MODULE FileType_XML
 !-------------------------------------------------------------------------------
 !> @brief Clears an XML element object and all subobjects.
 !> @param thisXMLE the XML element object
-!> 
+!>
     RECURSIVE SUBROUTINE clear_XMLElementType(thisXMLE)
       CLASS(XMLElementType),INTENT(INOUT) :: thisXMLE
       INTEGER(SIK) :: i
-      
+
       IF(ASSOCIATED(thisXMLE%children)) THEN
         DO i=SIZE(thisXMLE%children),1,-1
           CALL clear_XMLElementType(thisXMLE%children(i))
@@ -424,7 +415,7 @@ MODULE FileType_XML
 !> @brief Determines if an XML element object is empty
 !> @param thisXMLE the XML element object
 !> @returns bool logical indicating if the XML element object is empty
-!> 
+!>
     PURE FUNCTION isEmpty_XMLElementType(thisXMLE) RESULT(bool)
       CLASS(XMLElementType),INTENT(IN) :: thisXMLE
       LOGICAL(SBK) :: bool
@@ -436,7 +427,7 @@ MODULE FileType_XML
 !> @brief Determines if an XML element has a parent.
 !> @param thisXMLE the XML element object
 !> @returns bool logical indicating if the XML element object has a parent
-!> 
+!>
     PURE FUNCTION hasParent_XMLElementType(thisXMLE) RESULT(bool)
       CLASS(XMLElementType),INTENT(IN) :: thisXMLE
       LOGICAL(SBK) :: bool
@@ -447,7 +438,7 @@ MODULE FileType_XML
 !> @brief Gets a pointer to the XML element objects parent
 !> @param thisXMLE the XML element object
 !> @param parent the parent XML element object
-!> 
+!>
     PURE SUBROUTINE getParent_XMLElementType(thisXMLE,parent)
       CLASS(XMLElementType),INTENT(INOUT) :: thisXMLE
       TYPE(XMLElementType),POINTER,INTENT(INOUT) :: parent
@@ -460,7 +451,7 @@ MODULE FileType_XML
 !>        elements.
 !> @param thisXMLE the XML element object
 !> @returns bool logical indicating if the XML element has children
-!> 
+!>
     PURE FUNCTION hasChildren_XMLElementType(thisXMLE) RESULT(bool)
       CLASS(XMLElementType),INTENT(IN) :: thisXMLE
       LOGICAL(SBK) :: bool
@@ -471,7 +462,7 @@ MODULE FileType_XML
 !> @brief Gets a pointer to the children elements of an XML element
 !> @param thisXMLE the XML element object
 !> @param children a pointer to the XML elements children
-!> 
+!>
     PURE SUBROUTINE getChildren_XMLElementType(thisXMLE,children)
       CLASS(XMLElementType),INTENT(INOUT) :: thisXMLE
       TYPE(XMLElementType),POINTER,INTENT(INOUT) :: children(:)
@@ -484,13 +475,13 @@ MODULE FileType_XML
 !> @param thisXMLE the XML element object
 !> @param names the names of all the attributes
 !> @param values the values of all the attributes
-!> 
+!>
     PURE SUBROUTINE getAttributes_XMLElementType(thisXMLE,names,values)
       CLASS(XMLElementType),INTENT(INOUT) :: thisXMLE
       TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: names(:)
       TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: values(:)
       INTEGER(SIK) :: i
-      
+
       IF(ALLOCATED(names)) DEALLOCATE(names)
       IF(ALLOCATED(values)) DEALLOCATE(values)
       ALLOCATE(names(thisXMLE%nAttr))
@@ -506,13 +497,13 @@ MODULE FileType_XML
 !> @param thisXMLE the XML element
 !> @param name the name of the attribute
 !> @param val the value of the attribute with name
-!> 
+!>
     PURE SUBROUTINE getAttributeValue_XMLElementType(thisXMLE,name,val)
       CLASS(XMLElementType),INTENT(INOUT) :: thisXMLE
       TYPE(StringType),INTENT(IN) :: name
       TYPE(StringType),INTENT(OUT) :: val
       INTEGER(SIK) :: i
-      
+
       val=''
       DO i=1,thisXMLE%nAttr
         IF(name == thisXMLE%attr_names(i)) THEN
@@ -526,7 +517,7 @@ MODULE FileType_XML
 !> @brief Returns the content of an XML element as a string
 !> @param thisXMLE the XML element
 !> @returns content the content of an XML element
-!> 
+!>
     PURE FUNCTION getContent_XMLElementType(thisXMLE) RESULT(content)
       CLASS(XMLElementType),INTENT(IN) :: thisXMLE
       TYPE(StringType) :: content
@@ -630,7 +621,7 @@ MODULE FileType_XML
       CHARACTER(LEN=*) :: fname
       LOGICAL(SBK) :: lread
       CHARACTER(LEN=LEN(fname)) :: fpath,fnm,fext
-      
+
       IF(.NOT.thisXMLFile%isInit) THEN
         !Initialize the file
         CALL getFileParts(fname,fpath,fnm,fext,thisXMLFile%e)
@@ -639,7 +630,7 @@ MODULE FileType_XML
         CALL thisXMLFile%setFileExt(fext)
         CALL thisXMLFile%setReadStat(lread)
         CALL thisXMLFile%setWriteStat(.NOT.lread)
-        
+
         ALLOCATE(thisXMLFile%root)
         thisXMLFile%isInit=.TRUE.
       ELSE
@@ -651,7 +642,7 @@ MODULE FileType_XML
 !-------------------------------------------------------------------------------
 !> @brief Clears the XML File object
 !> @param thisXMLFile the XML file object
-!> 
+!>
     SUBROUTINE clear_XMLFileType(thisXMLFile)
       CLASS(XMLFileType),INTENT(INOUT) :: thisXMLFile
       IF(ASSOCIATED(thisXMLFile%root)) THEN
@@ -674,14 +665,14 @@ MODULE FileType_XML
 !> @param file the XML file type object
 !>
 !> @todo fix how the unit number is set
-!> 
+!>
     SUBROUTINE fopen_XMLFileType(file)
       CHARACTER(LEN=*),PARAMETER :: myName='fopen_XMLFileType'
       CLASS(XMLFileType),INTENT(INOUT) :: file
       LOGICAL(SBK) :: lopen
       INTEGER(SIK) :: funit,ierr
       TYPE(StringType) :: fname
-      
+
       IF(.NOT.file%isOpen()) THEN
         !Find a valid unit number
         funit=700
@@ -690,11 +681,11 @@ MODULE FileType_XML
           funit=funit+1
           INQUIRE(UNIT=funit,OPENED=lopen)
         ENDDO
-        
+
         file%unitNo=funit
         fname=TRIM(file%getFilePath())//TRIM(file%getFileName())// &
           TRIM(file%getFileExt())
-        
+
         IF(file%isRead()) THEN
           !Open the file for reading
           OPEN(UNIT=file%unitNo,FILE=CHAR(fname),STATUS='OLD', &
@@ -721,7 +712,7 @@ MODULE FileType_XML
 !-------------------------------------------------------------------------------
 !> @brief Closes the XML file object
 !> @param file teh XML file object
-!> 
+!>
     SUBROUTINE fclose_XMLFileType(file)
       CHARACTER(LEN=*),PARAMETER :: myName='fclose_XMLFileType'
       CLASS(XMLFileType),INTENT(INOUT) :: file
@@ -740,7 +731,7 @@ MODULE FileType_XML
 !-------------------------------------------------------------------------------
 !> @brief Deletes the XML file from disk
 !> @param file the XML file object
-!> 
+!>
     SUBROUTINE fdelete_XMLFileType(file)
       CHARACTER(LEN=*),PARAMETER :: myName='fdelete_XMLFileType'
       CLASS(XMLFileType),INTENT(INOUT) :: file
@@ -768,31 +759,31 @@ MODULE FileType_XML
       CHARACTER(LEN=*),PARAMETER :: myName='importFromDisk_XMLFileType'
       CLASS(XMLFileType),INTENT(INOUT) :: thisXMLFile
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: fname
-      
+
       CHARACTER(LEN=1),ALLOCATABLE :: cachedFile(:)
       INTEGER(SIK) :: nchars,nopen,nclose,nTags,ic,i,nlines
       INTEGER(SIK) :: rootTagEnd,rootTagBegin
       INTEGER(SIK),ALLOCATABLE :: itag(:,:),lines(:)
       TYPE(StringType) :: tagStr
-      
+
       !Initialize and open the file if needed
       IF(.NOT.thisXMLFile%isInit) THEN
         IF(PRESENT(fname)) CALL thisXMLFile%init(fname,.TRUE.)
       ENDIF
       IF(.NOT.thisXMLFile%isOpen()) CALL thisXMLFile%fopen()
-      
+
       IF(thisXMLFile%isInit) THEN
         CALL thisXMLFile%root%clear()
-        
+
         IF(thisXMLFile%isOpen() .AND. thisXMLFile%isRead()) THEN
           !Get the XML Declaration info
           CALL processXMLDecl(thisXMLFile)
-          
+
           !Cache the file for processing
           SELECTTYPE(thisXMLFile); TYPE IS(XMLFileType)
             CALL cacheXMLFile(thisXMLFile,nchars,cachedFile)
           ENDSELECT
-          
+
           !Count the number of markup characters "<" and ">" and lines
           nopen=0
           nclose=0
@@ -804,7 +795,7 @@ MODULE FileType_XML
           ENDDO
           IF(nopen /= nclose) THEN
             CALL thisXMLFile%e%raiseError(modName//'::'//myName// &
-              ' - mismatched markup characters!') 
+              ' - mismatched markup characters!')
           ELSE
             !Store the locations of all the markup characters "<" and ">" lines
             nTags=nopen
@@ -832,11 +823,11 @@ MODULE FileType_XML
             DO i=1,nTags
               IF(itag(1,i) > itag(2,i)) THEN
                 CALL thisXMLFile%e%raiseError(modName//'::'//myName// &
-                  ' - mismatched markup characters!') 
+                  ' - mismatched markup characters!')
                 EXIT
               ENDIF
             ENDDO
-            
+
             DO i=1,nTags
               !Create temporary string
               CALL charArrytoStr(cachedFile(itag(1,i):itag(2,i)), tagStr)
@@ -872,7 +863,7 @@ MODULE FileType_XML
                   ' - Unrecognizable markup in "'//tagStr//'"!')
               ENDIF
             ENDDO
-            
+
             !Find first start tag
             DO i=1,nTags
               IF(itag(3,i) == START_TAG) THEN
@@ -884,7 +875,7 @@ MODULE FileType_XML
                   ' - Could not locate start of root element!')
               ENDIF
             ENDDO
-            
+
             !Find last end tag
             DO i=nTags,1,-1
               IF(itag(3,i) == END_TAG) THEN
@@ -897,7 +888,7 @@ MODULE FileType_XML
                   ' - Could not locate end of root element!')
               ENDIF
             ENDDO
-            
+
             !Process the elements
             CALL thisXMLFile%root%init(cachedFile,itag,lines,rootTagBegin, &
               rootTagEnd)
@@ -916,7 +907,7 @@ MODULE FileType_XML
 !> @brief Dumps an XML file stored in memory to disk.
 !> @param thisXMLFile the XML file type to write to disk
 !> @param fname the file name to use on disk
-!> 
+!>
     SUBROUTINE exportToDisk_XMLFileType(thisXMLFile,fname)
       CHARACTER(LEN=*),PARAMETER :: myName='exportToDisk_XMLFileType'
       CLASS(XMLFileType),INTENT(INOUT) :: thisXMLFile
@@ -925,17 +916,17 @@ MODULE FileType_XML
       INTEGER(SIK) :: ierr
       TYPE(StringType) :: header
       TYPE(XMLFileType) :: tmpFile
-      
+
       IF(ASSOCIATED(thisXMLFile%root)) THEN
         CALL tmpFile%init(fname,.FALSE.)
         CALL tmpFile%fopen()
-        
+
         !Write the header
         WRITE(version,FMT='(f4.1)',IOSTAT=ierr) thisXMLFile%version
         header='<?xml version="'//TRIM(ADJUSTL(version))// &
           '" encoding="'//TRIM(thisXMLFile%encoding)//'"?>'
         WRITE(tmpFile%unitNo,FMT='(a)') CHAR(header)
-        
+
         !Write style-sheet info
         IF(LEN(thisXMLFile%style_sheet) > 0) THEN
           WRITE(tmpFile%unitNo,FMT='(a)') &
@@ -957,7 +948,7 @@ MODULE FileType_XML
       CHARACTER(LEN=*),PARAMETER :: myName='processXMLDecl'
       INTEGER(SIK),PARAMETER :: maxbuf=512
       CLASS(XMLFileType),INTENT(INOUT) :: thisXMLFile
-      
+
       CHARACTER(LEN=1) :: tmpChar
       CHARACTER(LEN=7) :: fencoding,curEncoding
       CHARACTER(LEN=maxbuf) :: ioBuffer
@@ -966,12 +957,12 @@ MODULE FileType_XML
       REAL(SRK) :: version
       TYPE(StringType) :: tagStr,firstTag,fname
       TYPE(StringType),ALLOCATABLE :: anames(:),avalues(:)
-    
+
       fencoding='DEFAULT'
-      
+
       !Rewind the file
       REWIND(thisXMLFile%unitNo)
-      
+
       !Get the first tag.
       ioBuffer=''
       ierr=0
@@ -985,12 +976,12 @@ MODULE FileType_XML
             ' - Reached end of file before finding start of first tag "<"!')
           EXIT !No more tags
         ENDIF
-        
+
         IF(tmpChar == '<') THEN
           !At the start of the tag
           ibuf=1
           ioBuffer(1:1)=tmpChar
-          
+
           !Stream to closing marker
           DO WHILE(ierr /= IOSTAT_END .AND. tmpChar /= '>')
             ibuf=ibuf+1
@@ -1001,7 +992,7 @@ MODULE FileType_XML
               ibuf=1
             ENDIF
           ENDDO
-          
+
           !Insure that the last character of the ioBuffer is '>'
           IF(ioBuffer(ibuf:ibuf) == '>') THEN
             tagStr=tagStr//ioBuffer(1:ibuf)
@@ -1023,14 +1014,14 @@ MODULE FileType_XML
         ENDIF
       ENDDO
       firstTag=tagStr
-      
+
       !Check that the first Tag starting and ending markers are
       !the XML declaration
       IF(INDEX(firstTag,'<?xml') == 1 .AND. &
           INDEX(firstTag,'?>',.TRUE.) == LEN_TRIM(firstTag)-1) THEN
         !Process the attributes if it is an xml declaration
         CALL processTagAttributes(CHAR(firstTag),nattr,anames,avalues,ierr)
-        
+
         IF(ierr == 0) THEN
           !The XML declaration only has 3 possible attributes
           ! - version (required, always first)
@@ -1053,7 +1044,7 @@ MODULE FileType_XML
               CALL thisXMLFile%e%raiseError(modName//'::'//myName// &
                 ' - The first attribute must be the XML version!')
             ENDIF
-            
+
             !Check other attributes
             IF(nattr > 1) THEN
               DO i=2,nattr
@@ -1068,13 +1059,13 @@ MODULE FileType_XML
                     CALL thisXMLFile%e%raiseError(modName//'::'//myName// &
                       ' - File encoding "'//TRIM(avalues(i))//'" is not supported!')
                   ENDIF
-                  
+
                   !Re-open file if it was not opened with the matching encoding
                   INQUIRE(UNIT=thisXMLFile%unitNo,ENCODING=curEncoding)
                   IF(fencoding /= curEncoding) THEN
                     !Close the file
                     CALL thisXMLFile%fclose()
-                    
+
                     !Open the file for reading
                     fname=TRIM(thisXMLFile%getFilePath())// &
                       TRIM(thisXMLFile%getFileName())// &
@@ -1178,7 +1169,7 @@ MODULE FileType_XML
 !> @param fulltag the full tag string
 !> @param ierr return error code
 !> @returns sname a string with the tag name
-!> 
+!>
 !> For the return error codes the values are:
 !>  0: Success
 !> -1: Bad value for fulltag
@@ -1198,11 +1189,11 @@ MODULE FileType_XML
         istt=2
         IF(fullTag(2) == '/') istt=3 !This is an endtag
         inamechar=IACHAR(fullTag(istt))
-        
+
         IF(inamechar == 58 .OR. inamechar == 95 .OR. &
           (64 < inamechar .AND. inamechar < 91) .OR. &
           (96 < inamechar .AND. inamechar < 123)) THEN
-          
+
           IF(nchar-istt > 2) THEN
             xml(1:1)=fullTag(istt)
             xml(2:2)=fullTag(istt+1)
@@ -1215,7 +1206,7 @@ MODULE FileType_XML
               nchar=1 !Skip executing the loop
             ENDIF
           ENDIF
-          
+
           istp=0
           DO i=istt,nchar-1
             IF(ANY(fulltag(i) == (/LF,CR,SP,TB/))) THEN
@@ -1223,7 +1214,7 @@ MODULE FileType_XML
               EXIT
             ENDIF
             charval=IACHAR(fulltag(i))
-            
+
             !Check that the character is valid in a name
             IF(.NOT.(charval == 45 .OR. charval == 96 .OR. &
                       charval == 95 .OR. &
@@ -1232,7 +1223,7 @@ MODULE FileType_XML
                     (47 < charval .AND. charval < 59))) THEN
               istp=-1
               EXIT
-            ENDIF        
+            ENDIF
           ENDDO
           IF(istp == 0) istp=nchar-1
           IF(istp > 0) THEN
@@ -1270,47 +1261,47 @@ MODULE FileType_XML
       TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: anames(:)
       TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: avalues(:)
       INTEGER(SIK),INTENT(OUT) :: ierr
-    
+
       CHARACTER(LEN=1) :: quote
       CHARACTER(LEN=LEN(elStartTag)) :: startTag
       INTEGER(SIK) :: ic,i,nchars,namestt,valstt,valstp
       INTEGER(SIK),ALLOCATABLE :: anchorLoc(:)
-    
+
       !Initialize return arguments
       ierr=0
       nattr=0
       IF(ALLOCATED(anames)) DEALLOCATE(anames)
       IF(ALLOCATED(avalues)) DEALLOCATE(avalues)
-    
+
       !Copy input arg to temporary
       startTag=elStartTag
       startTag=ADJUSTL(startTag)
       nchars=LEN_TRIM(startTag)
-    
+
       IF(startTag(1:1) == '<' .AND. startTag(nchars:nchars) == '>') THEN
         !Make sure this is not an end tag or comment
         IF(startTag(1:2) /= '<!') THEN
-      
+
           !Count the number of attributes (count the number of '=' characters)
           DO ic=2,nchars
             IF(startTag(ic:ic) == '=') THEN
               nattr=nattr+1
-        
+
               !Check to make sure occurrence of '=' is not in '=='
               IF(startTag(ic-1:ic-1) == '=') THEN
                 ierr=-2
                 nattr=0
                 EXIT
               ENDIF
-            ENDIF  
+            ENDIF
           ENDDO
-      
+
           IF(ierr /= -2) THEN
             !Allocate the return arguments
             ALLOCATE(anames(nattr))
             ALLOCATE(avalues(nattr))
             ALLOCATE(anchorLoc(nattr))
-      
+
             !Get the locations of the '=' characters.
             nattr=0
             DO ic=2,nchars
@@ -1320,7 +1311,7 @@ MODULE FileType_XML
               ENDIF
             ENDDO
           ENDIF
-      
+
           !Get the names (names precede the '=' character with no whitespace)
           !attribute names cannot contain whitespace, must be unique and preceded
           !by whitespace
@@ -1332,7 +1323,7 @@ MODULE FileType_XML
               ierr=-3
             ENDIF
           ENDDO
-    
+
           !Get the values
           DO i=1,nattr
             valstt=anchorLoc(i)+1
@@ -1358,7 +1349,7 @@ MODULE FileType_XML
 !> @param nChildren the number of child elements
 !> @param childTags the start/stop indeces of the tags of any children
 !> @param ierr error code
-!> 
+!>
     PURE SUBROUTINE DetermineNChildren(tagBegin,tagEnd,iTag,nChildren,childTags,ierr)
       INTEGER(SIK),INTENT(IN) :: tagBegin
       INTEGER(SIK),INTENT(IN) :: tagEnd
@@ -1366,12 +1357,12 @@ MODULE FileType_XML
       INTEGER(SIK),INTENT(OUT) :: nChildren
       INTEGER(SIK),ALLOCATABLE,INTENT(INOUT) :: childTags(:,:)
       INTEGER(SIK),INTENT(OUT) :: ierr
-      
+
       INTEGER(SIK) :: nTagRemain,iLevel,i,iChild
-      
+
       nChildren=0
       IF(ALLOCATED(childTags)) DEALLOCATE(childTags)
-      
+
       nTagRemain=tagEnd-tagBegin-1
       ierr=-1
       IF(nTagRemain > 0) THEN
@@ -1419,14 +1410,14 @@ MODULE FileType_XML
 !> @param s the string to convert to a double
 !> @param fmt the format to use to process the double
 !> @returns val the double
-!> 
+!>
     PURE FUNCTION str2double(s,fmt) RESULT(val)
       TYPE(StringType),INTENT(IN) :: s
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: fmt
       REAL(SDK) :: val
       CHARACTER(LEN=s%n) :: tmpChar
       INTEGER(SIK) :: ierr
-    
+
       tmpChar=s
       IF(PRESENT(fmt)) THEN
         READ(tmpChar,FMT=TRIM(fmt),IOSTAT=ierr) val
@@ -1450,7 +1441,7 @@ MODULE FileType_XML
 !      TYPE(StringType) :: val
 !      CHARACTER(LEN=s%n) :: tmpChar
 !      INTEGER(SIK) :: i
-!    
+!
 !      val=''
 !      IF(i1 < i2 .AND. i2-i1+1 < s%n) THEN
 !        tmpChar=''

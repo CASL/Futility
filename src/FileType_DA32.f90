@@ -1,28 +1,19 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief Moduled defines a direct access file type with 32-bit records.
 !>
 !> The implementation actually uses a programmable record size. Unless this file
 !> is changed the actual record size of the file used in the implementation is
-!> 1 KB (or 256 words, 1 word == 32-bits). The methods of the file however, 
+!> 1 KB (or 256 words, 1 word == 32-bits). The methods of the file however,
 !> allow the client code to read individual words within the 1 KB records. The
 !> reason 1 KB records are used in this implementation is because it allows a
-!> maximum addressable file of up to 2 TB. As one may guess, changing the 
+!> maximum addressable file of up to 2 TB. As one may guess, changing the
 !> WORDSREC parameter will change the maximum file size for all DA32 file types
 !> and the maximum addressable space.
 !>
@@ -79,19 +70,19 @@ MODULE FileType_DA32
   USE ExceptionHandler
   USE IO_Strings
   USE FileType_Fortran
-  
+
   IMPLICIT NONE
   PRIVATE
-  
+
   !List of Public Members
   PUBLIC :: DA32FileType
   PUBLIC :: RECL32
   PUBLIC :: RECLSZ
   PUBLIC :: RECL_UNIT
-  
+
   !> Module name for error messages
   CHARACTER(LEN=*),PARAMETER :: modName='FileType_DA32'
-  
+
 #ifdef __GFORTRAN__
   !> The units of the record length value
   CHARACTER(LEN=*),PARAMETER :: RECL_UNIT='BYTE'
@@ -121,7 +112,7 @@ MODULE FileType_DA32
   !> @brief Derived type object for Fortran file that is unformatted and
   !>        direct access with 32-bit records
   !>
-  !> This is an extension of the abstract @ref FileType_Fortran 
+  !> This is an extension of the abstract @ref FileType_Fortran
   !> "FortranFileType". It has no additional attributes. It provides 2
   !> additional public methods which are generic interfaces for reading and
   !> writing data to the file.
@@ -454,7 +445,7 @@ MODULE FileType_DA32
     ENDFUNCTION getPad2NextBlk
 !
 !-------------------------------------------------------------------------------
-!> @brief Writes an empty block of data to the file where IREC exists in the 
+!> @brief Writes an empty block of data to the file where IREC exists in the
 !>        block
 !> @param thisDA32 the DA32FileType object
 !> @param irec the record number indicating the block in which to write data
@@ -500,7 +491,7 @@ MODULE FileType_DA32
 !> the records.
 !>
 !> Bottom line is the other interfaces allow the client code to reference
-!> data within the file by 
+!> data within the file by
 !>
     SUBROUTINE init_DA32_file(fileobj,unit,file,status,access,form, &
                               position,action,pad,recl)
@@ -516,19 +507,19 @@ MODULE FileType_DA32
       CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: pad
       INTEGER(SIK),OPTIONAL,INTENT(IN) :: recl
       CHARACTER(LEN=9) :: actionval
-      
+
       IF(PRESENT(access)) CALL fileobj%e%raiseWarning(modName//'::'//myName// &
         ' - Optional argument "ACCESS='''//TRIM(ADJUSTL(access))// &
           '''" is being ignored. DA32 File type is direct access.')
-      
+
       IF(PRESENT(form)) CALL fileobj%e%raiseWarning(modName//'::'//myName// &
         ' - Optional argument "FORM='''//TRIM(ADJUSTL(form))// &
           '''" is being ignored. DA32 File type is unformatted.')
-      
+
       IF(PRESENT(recl)) CALL fileobj%e%raiseWarning(modName//'::'//myName// &
         ' - Optional argument "RECL" is being ignored. '// &
           'DA32 File type has 1 kb records.')
-      
+
       IF(PRESENT(action)) THEN
         actionval=action
         CALL toUPPER(actionval)
@@ -536,7 +527,7 @@ MODULE FileType_DA32
       ELSE
         actionval='READWRITE'
       ENDIF
-      
+
       !Initialize the Direct Acces File using 1KB records. This allows for a
       !maximum file size of 2 TB.
       CALL init_fortran_file(fileobj,unit,file,status,'DIRECT', &
@@ -545,7 +536,7 @@ MODULE FileType_DA32
 !
 !-------------------------------------------------------------------------------
 !> @brief
-!> 
+!>
     FUNCTION getNextRec_DA32_file(thisDA32) RESULT(next_rec)
       CLASS(DA32FileType),INTENT(IN) :: thisDA32
       INTEGER(SLK) :: next_rec
@@ -566,7 +557,7 @@ MODULE FileType_DA32
 !> @param ioerr the IOSTAT value from the last read statement
 !> @param nrec the number of records read into the buffer
 !>
-!> The buffer is a 32-bit integer array. All other read routines eventually 
+!> The buffer is a 32-bit integer array. All other read routines eventually
 !> call this routine.
 !>
     SUBROUTINE readdat_basic(funit,iaddr,dat,ioerr,nword)
@@ -577,7 +568,7 @@ MODULE FileType_DA32
       INTEGER(SNK),INTENT(OUT) :: dat(*)
       INTEGER(SLK) :: i,irec,istt,istp,iword,nrec,nread
       INTEGER(SNK) :: bufdat(WORDSREC)
-      
+
       ioerr=0
       nread=0
       irec=(iaddr-1)/WORDSREC+1
@@ -585,7 +576,7 @@ MODULE FileType_DA32
       nrec=nword/WORDSREC
       IF(MOD(nword,INT(WORDSREC,SLK)) > 0) nrec=nrec+1
       IF(WORDSREC-iword+1 < nword) nrec=nrec+1
-      
+
       READ(UNIT=funit,REC=irec,IOSTAT=ioerr) bufdat
       IF(ioerr == 0) THEN
         istt=1
@@ -612,7 +603,7 @@ MODULE FileType_DA32
 !> @param ioerr the IOSTAT value from the last write statement
 !> @param nrec the number of records written to the file
 !>
-!> The buffer is a 32-bit integer array. All other write routines eventually 
+!> The buffer is a 32-bit integer array. All other write routines eventually
 !> call this routine.
 !>
     SUBROUTINE writedat_basic(funit,iaddr,dat,ioerr,nword)
@@ -623,7 +614,7 @@ MODULE FileType_DA32
       INTEGER(SNK),INTENT(IN) :: dat(*)
       INTEGER(SLK) :: i,irec,istt,istp,iword,nrec,nwrite
       INTEGER(SNK) :: bufdat(WORDSREC)
-            
+
       ioerr=0
       nwrite=0
       irec=(iaddr-1)/WORDSREC+1
@@ -631,7 +622,7 @@ MODULE FileType_DA32
       nrec=nword/WORDSREC
       IF(MOD(nword,INT(WORDSREC,SLK)) > 0) nrec=nrec+1
       IF(WORDSREC-iword+1 < nword) nrec=nrec+1
-      
+
       bufdat=0
       IF(irec <= FileRecSize(funit)) &
         READ(UNIT=funit,REC=irec,IOSTAT=ioerr) bufdat
@@ -671,17 +662,17 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_char(thisDA32,rec,dat,iostat,nrec) 
+    SUBROUTINE writedat_char(thisDA32,rec,dat,iostat,nrec)
       CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
       INTEGER(SLK),INTENT(IN) :: rec
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
       INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
       CHARACTER(LEN=*),INTENT(IN) :: dat
-      
+
       INTEGER(SNK) :: tmpdat(NBUF)
       INTEGER(SIK) :: nlen,ioerr,istt,istp
       INTEGER(SLK) :: n,irec,nw,tmp1,tmp2,tmp3
-      
+
       ioerr=IOSTAT_END
       irec=rec
       IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
@@ -755,11 +746,11 @@ MODULE FileType_DA32
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
       INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
       LOGICAL(SBK),INTENT(IN) :: dat
-      
+
       INTEGER(SNK) :: tmpdat(1)
       INTEGER(SIK) :: ioerr
       INTEGER(SLK) :: n
-      
+
       ioerr=IOSTAT_END
       n=0
       IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
@@ -786,11 +777,11 @@ MODULE FileType_DA32
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
       INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
       INTEGER(SNK),INTENT(IN) :: dat
-      
+
       INTEGER(SNK) :: tmpdat(1)
       INTEGER(SIK) :: ioerr
       INTEGER(SLK) :: n
-      
+
       ioerr=IOSTAT_END
       n=0
       IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
@@ -817,11 +808,11 @@ MODULE FileType_DA32
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
       INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
       INTEGER(SLK),INTENT(IN) :: dat
-      
+
       INTEGER(SNK) :: tmpdat(2)
       INTEGER(SIK) :: ioerr
       INTEGER(SLK) :: n
-      
+
       ioerr=IOSTAT_END
       n=0
       IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
@@ -848,11 +839,11 @@ MODULE FileType_DA32
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
       INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
       REAL(SSK),INTENT(IN) :: dat
-      
+
       INTEGER(SNK) :: tmpdat(1)
       INTEGER(SIK) :: ioerr
       INTEGER(SLK) :: n
-      
+
       ioerr=IOSTAT_END
       n=0
       IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
@@ -879,11 +870,11 @@ MODULE FileType_DA32
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
       INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
       REAL(SDK),INTENT(IN) :: dat
-      
+
       INTEGER(SNK) :: tmpdat(2)
       INTEGER(SIK) :: ioerr
       INTEGER(SLK) :: n
-      
+
       ioerr=IOSTAT_END
       n=0
       IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
@@ -910,11 +901,11 @@ MODULE FileType_DA32
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
       INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
       LOGICAL(SBK),INTENT(IN) :: dat(:)
-      
+
       INTEGER(SNK) :: tmpdat(NBUF)
       INTEGER(SIK) :: ndat,ioerr,istt,istp
       INTEGER(SLK) :: n,irec
-      
+
       ioerr=IOSTAT_END
       irec=rec
       IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
@@ -952,11 +943,11 @@ MODULE FileType_DA32
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
       INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
       INTEGER(SNK),INTENT(IN) :: dat(:)
-      
+
       INTEGER(SNK) :: tmpdat(NBUF)
       INTEGER(SIK) :: ndat,ioerr,istt,istp
       INTEGER(SLK) :: n,irec
-      
+
       ioerr=IOSTAT_END
       irec=rec
       IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
@@ -994,11 +985,11 @@ MODULE FileType_DA32
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
       INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
       INTEGER(SLK),INTENT(IN) :: dat(:)
-      
+
       INTEGER(SNK) :: tmpdat(NBUF)
       INTEGER(SIK) :: ndat,ioerr,istt,istp
       INTEGER(SLK) :: n,irec
-      
+
       ioerr=IOSTAT_END
       irec=rec
       IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
@@ -1037,11 +1028,11 @@ MODULE FileType_DA32
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
       INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
       REAL(SSK),INTENT(IN) :: dat(:)
-      
+
       INTEGER(SNK) :: tmpdat(NBUF)
       INTEGER(SIK) :: ndat,ioerr,istt,istp
       INTEGER(SLK) :: n,irec
-      
+
       ioerr=IOSTAT_END
       irec=rec
       IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
@@ -1079,11 +1070,11 @@ MODULE FileType_DA32
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
       INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
       REAL(SDK),INTENT(IN) :: dat(:)
-      
+
       INTEGER(SNK) :: tmpdat(NBUF)
       INTEGER(SIK) :: ndat,ioerr,istt,istp
       INTEGER(SLK) :: n,irec
-      
+
       ioerr=IOSTAT_END
       irec=rec
       IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
@@ -1124,7 +1115,7 @@ MODULE FileType_DA32
       LOGICAL(SBK),INTENT(IN) :: dat(:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=2)
@@ -1153,7 +1144,7 @@ MODULE FileType_DA32
       INTEGER(SNK),INTENT(IN) :: dat(:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=2)
@@ -1182,7 +1173,7 @@ MODULE FileType_DA32
       INTEGER(SLK),INTENT(IN) :: dat(:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=2)
@@ -1211,7 +1202,7 @@ MODULE FileType_DA32
       REAL(SSK),INTENT(IN) :: dat(:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=2)
@@ -1240,7 +1231,7 @@ MODULE FileType_DA32
       REAL(SDK),INTENT(IN) :: dat(:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=2)
@@ -1269,7 +1260,7 @@ MODULE FileType_DA32
       LOGICAL(SBK),INTENT(IN) :: dat(:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=3)
@@ -1298,7 +1289,7 @@ MODULE FileType_DA32
       INTEGER(SNK),INTENT(IN) :: dat(:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=3)
@@ -1327,7 +1318,7 @@ MODULE FileType_DA32
       INTEGER(SLK),INTENT(IN) :: dat(:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=3)
@@ -1356,7 +1347,7 @@ MODULE FileType_DA32
       REAL(SSK),INTENT(IN) :: dat(:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=3)
@@ -1385,7 +1376,7 @@ MODULE FileType_DA32
       REAL(SDK),INTENT(IN) :: dat(:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=3)
@@ -1414,7 +1405,7 @@ MODULE FileType_DA32
       LOGICAL(SBK),INTENT(IN) :: dat(:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=4)
@@ -1443,7 +1434,7 @@ MODULE FileType_DA32
       INTEGER(SNK),INTENT(IN) :: dat(:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=4)
@@ -1472,7 +1463,7 @@ MODULE FileType_DA32
       INTEGER(SLK),INTENT(IN) :: dat(:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=4)
@@ -1501,7 +1492,7 @@ MODULE FileType_DA32
       REAL(SSK),INTENT(IN) :: dat(:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=4)
@@ -1530,7 +1521,7 @@ MODULE FileType_DA32
       REAL(SDK),INTENT(IN) :: dat(:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=4)
@@ -1559,7 +1550,7 @@ MODULE FileType_DA32
       LOGICAL(SBK),INTENT(IN) :: dat(:,:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=5)
@@ -1588,7 +1579,7 @@ MODULE FileType_DA32
       INTEGER(SNK),INTENT(IN) :: dat(:,:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=5)
@@ -1617,7 +1608,7 @@ MODULE FileType_DA32
       INTEGER(SLK),INTENT(IN) :: dat(:,:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=5)
@@ -1646,7 +1637,7 @@ MODULE FileType_DA32
       REAL(SSK),INTENT(IN) :: dat(:,:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=5)
@@ -1675,7 +1666,7 @@ MODULE FileType_DA32
       REAL(SDK),INTENT(IN) :: dat(:,:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=5)
@@ -1704,7 +1695,7 @@ MODULE FileType_DA32
       LOGICAL(SBK),INTENT(IN) :: dat(:,:,:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=6)
@@ -1733,7 +1724,7 @@ MODULE FileType_DA32
       INTEGER(SNK),INTENT(IN) :: dat(:,:,:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=6)
@@ -1762,7 +1753,7 @@ MODULE FileType_DA32
       INTEGER(SLK),INTENT(IN) :: dat(:,:,:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=6)
@@ -1791,7 +1782,7 @@ MODULE FileType_DA32
       REAL(SSK),INTENT(IN) :: dat(:,:,:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=6)
@@ -1820,7 +1811,7 @@ MODULE FileType_DA32
       REAL(SDK),INTENT(IN) :: dat(:,:,:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=6)
@@ -1849,7 +1840,7 @@ MODULE FileType_DA32
       LOGICAL(SBK),INTENT(IN) :: dat(:,:,:,:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=7)
@@ -1878,7 +1869,7 @@ MODULE FileType_DA32
       INTEGER(SNK),INTENT(IN) :: dat(:,:,:,:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=7)
@@ -1907,7 +1898,7 @@ MODULE FileType_DA32
       INTEGER(SLK),INTENT(IN) :: dat(:,:,:,:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=7)
@@ -1936,7 +1927,7 @@ MODULE FileType_DA32
       REAL(SSK),INTENT(IN) :: dat(:,:,:,:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=7)
@@ -1965,7 +1956,7 @@ MODULE FileType_DA32
       REAL(SDK),INTENT(IN) :: dat(:,:,:,:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=7)
@@ -1992,11 +1983,11 @@ MODULE FileType_DA32
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
       INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
       CHARACTER(LEN=*),INTENT(OUT) :: dat
-      
+
       INTEGER(SNK) :: tmpdat(NBUF)
       INTEGER(SIK) :: nlen,ioerr,istt,istp,i
       INTEGER(SLK) :: irec,n
-      
+
       ioerr=IOSTAT_END
       irec=rec
       IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
@@ -2016,7 +2007,7 @@ MODULE FileType_DA32
           istt=istp+1
           istp=MIN(nlen,NBUFCH)+istt-1
         ENDDO
-        
+
         !The transfer intrinsic generates 0 (or C NULL CHARS) for records
         !that were not complete. This replaces the trailing NULL chars with
         !spaces to facilitate the use of TRIM on the returned character string.
@@ -2045,11 +2036,11 @@ MODULE FileType_DA32
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
       INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
       LOGICAL(SBK),INTENT(OUT) :: dat
-      
+
       INTEGER(SNK) :: tmpdat(1)
       INTEGER(SIK) :: ioerr
       INTEGER(SLK) :: n
-      
+
       n=1
       CALL readdat_basic(thisDA32%getUnitNo(),rec,tmpdat,ioerr,n)
       dat=TRANSFER(tmpdat,dat)
@@ -2072,11 +2063,11 @@ MODULE FileType_DA32
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
       INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
       INTEGER(SNK),INTENT(OUT) :: dat
-      
+
       INTEGER(SNK) :: tmpdat(1)
       INTEGER(SIK) :: ioerr
       INTEGER(SLK) :: n
-      
+
       n=1
       CALL readdat_basic(thisDA32%getUnitNo(),rec,tmpdat,ioerr,n)
       dat=tmpdat(1)
@@ -2099,11 +2090,11 @@ MODULE FileType_DA32
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
       INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
       INTEGER(SLK),INTENT(OUT) :: dat
-      
+
       INTEGER(SNK) :: tmpdat(2)
       INTEGER(SIK) :: ioerr
       INTEGER(SLK) :: n
-      
+
       n=2
       CALL readdat_basic(thisDA32%getUnitNo(),rec,tmpdat,ioerr,n)
       dat=TRANSFER(tmpdat,dat)
@@ -2126,11 +2117,11 @@ MODULE FileType_DA32
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
       INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
       REAL(SSK),INTENT(OUT) :: dat
-      
+
       INTEGER(SNK) :: tmpdat(1)
       INTEGER(SIK) :: ioerr
       INTEGER(SLK) :: n
-      
+
       n=1
       CALL readdat_basic(thisDA32%getUnitNo(),rec,tmpdat,ioerr,n)
       dat=TRANSFER(tmpdat,dat)
@@ -2153,11 +2144,11 @@ MODULE FileType_DA32
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
       INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
       REAL(SDK),INTENT(OUT) :: dat
-      
+
       INTEGER(SNK) :: tmpdat(2)
       INTEGER(SIK) :: ioerr
       INTEGER(SLK) :: n
-      
+
       n=2
       CALL readdat_basic(thisDA32%getUnitNo(),rec,tmpdat,ioerr,n)
       dat=TRANSFER(tmpdat,dat)
@@ -2180,11 +2171,11 @@ MODULE FileType_DA32
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
       INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
       LOGICAL(SBK),INTENT(INOUT) :: dat(:)
-      
+
       INTEGER(SNK) :: tmpdat(NBUF)
       INTEGER(SIK) :: ndat,ioerr,istt,istp
       INTEGER(SLK) :: n,irec
-      
+
       ioerr=IOSTAT_END
       irec=rec
       IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
@@ -2222,11 +2213,11 @@ MODULE FileType_DA32
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
       INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
       INTEGER(SNK),INTENT(INOUT) :: dat(:)
-      
+
       INTEGER(SNK) :: tmpdat(NBUF)
       INTEGER(SIK) :: ndat,ioerr,istt,istp
       INTEGER(SLK) :: n,irec
-      
+
       ioerr=IOSTAT_END
       irec=rec
       IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
@@ -2264,11 +2255,11 @@ MODULE FileType_DA32
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
       INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
       INTEGER(SLK),INTENT(INOUT) :: dat(:)
-      
+
       INTEGER(SNK) :: tmpdat(NBUF)
       INTEGER(SIK) :: ndat,ioerr,istt,istp
       INTEGER(SLK) :: n,irec
-      
+
       ioerr=IOSTAT_END
       irec=rec
       IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
@@ -2307,11 +2298,11 @@ MODULE FileType_DA32
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
       INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
       REAL(SSK),INTENT(INOUT) :: dat(:)
-      
+
       INTEGER(SNK) :: tmpdat(NBUF)
       INTEGER(SIK) :: ndat,ioerr,istt,istp
       INTEGER(SLK) :: n,irec
-      
+
       ioerr=IOSTAT_END
       irec=rec
       IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
@@ -2349,11 +2340,11 @@ MODULE FileType_DA32
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
       INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
       REAL(SDK),INTENT(INOUT) :: dat(:)
-      
+
       INTEGER(SNK) :: tmpdat(NBUF)
       INTEGER(SIK) :: ndat,ioerr,istt,istp
       INTEGER(SLK) :: n,irec
-      
+
       ioerr=IOSTAT_END
       irec=rec
       IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
@@ -2394,7 +2385,7 @@ MODULE FileType_DA32
       LOGICAL(SBK),INTENT(INOUT) :: dat(:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=2)
@@ -2423,7 +2414,7 @@ MODULE FileType_DA32
       INTEGER(SNK),INTENT(INOUT) :: dat(:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=2)
@@ -2452,7 +2443,7 @@ MODULE FileType_DA32
       INTEGER(SLK),INTENT(INOUT) :: dat(:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=2)
@@ -2481,7 +2472,7 @@ MODULE FileType_DA32
       REAL(SSK),INTENT(INOUT) :: dat(:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=2)
@@ -2510,7 +2501,7 @@ MODULE FileType_DA32
       REAL(SDK),INTENT(INOUT) :: dat(:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=2)
@@ -2539,7 +2530,7 @@ MODULE FileType_DA32
       LOGICAL(SBK),INTENT(INOUT) :: dat(:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=3)
@@ -2568,7 +2559,7 @@ MODULE FileType_DA32
       INTEGER(SNK),INTENT(INOUT) :: dat(:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=3)
@@ -2597,7 +2588,7 @@ MODULE FileType_DA32
       INTEGER(SLK),INTENT(INOUT) :: dat(:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=3)
@@ -2626,7 +2617,7 @@ MODULE FileType_DA32
       REAL(SSK),INTENT(INOUT) :: dat(:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=3)
@@ -2655,7 +2646,7 @@ MODULE FileType_DA32
       REAL(SDK),INTENT(INOUT) :: dat(:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=3)
@@ -2684,7 +2675,7 @@ MODULE FileType_DA32
       LOGICAL(SBK),INTENT(INOUT) :: dat(:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=4)
@@ -2713,7 +2704,7 @@ MODULE FileType_DA32
       INTEGER(SNK),INTENT(INOUT) :: dat(:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=4)
@@ -2742,7 +2733,7 @@ MODULE FileType_DA32
       INTEGER(SLK),INTENT(INOUT) :: dat(:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=4)
@@ -2771,7 +2762,7 @@ MODULE FileType_DA32
       REAL(SSK),INTENT(INOUT) :: dat(:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=4)
@@ -2800,7 +2791,7 @@ MODULE FileType_DA32
       REAL(SDK),INTENT(INOUT) :: dat(:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=4)
@@ -2829,7 +2820,7 @@ MODULE FileType_DA32
       LOGICAL(SBK),INTENT(INOUT) :: dat(:,:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=5)
@@ -2858,7 +2849,7 @@ MODULE FileType_DA32
       INTEGER(SNK),INTENT(INOUT) :: dat(:,:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=5)
@@ -2887,7 +2878,7 @@ MODULE FileType_DA32
       INTEGER(SLK),INTENT(INOUT) :: dat(:,:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=5)
@@ -2916,7 +2907,7 @@ MODULE FileType_DA32
       REAL(SSK),INTENT(INOUT) :: dat(:,:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=5)
@@ -2945,7 +2936,7 @@ MODULE FileType_DA32
       REAL(SDK),INTENT(INOUT) :: dat(:,:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=5)
@@ -2974,7 +2965,7 @@ MODULE FileType_DA32
       LOGICAL(SBK),INTENT(INOUT) :: dat(:,:,:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=6)
@@ -3003,7 +2994,7 @@ MODULE FileType_DA32
       INTEGER(SNK),INTENT(INOUT) :: dat(:,:,:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=6)
@@ -3032,7 +3023,7 @@ MODULE FileType_DA32
       INTEGER(SLK),INTENT(INOUT) :: dat(:,:,:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=6)
@@ -3061,7 +3052,7 @@ MODULE FileType_DA32
       REAL(SSK),INTENT(INOUT) :: dat(:,:,:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=6)
@@ -3090,7 +3081,7 @@ MODULE FileType_DA32
       REAL(SDK),INTENT(INOUT) :: dat(:,:,:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=6)
@@ -3119,7 +3110,7 @@ MODULE FileType_DA32
       LOGICAL(SBK),INTENT(INOUT) :: dat(:,:,:,:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=7)
@@ -3148,7 +3139,7 @@ MODULE FileType_DA32
       INTEGER(SNK),INTENT(INOUT) :: dat(:,:,:,:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=7)
@@ -3177,7 +3168,7 @@ MODULE FileType_DA32
       INTEGER(SLK),INTENT(INOUT) :: dat(:,:,:,:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=7)
@@ -3206,7 +3197,7 @@ MODULE FileType_DA32
       REAL(SSK),INTENT(INOUT) :: dat(:,:,:,:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=7)
@@ -3235,7 +3226,7 @@ MODULE FileType_DA32
       REAL(SDK),INTENT(INOUT) :: dat(:,:,:,:,:,:,:)
       INTEGER(SIK) :: i,ioerr
       INTEGER(SLK) :: irec,n
-      
+
       irec=rec
       ioerr=0
       DO i=1,SIZE(dat,DIM=7)
@@ -3248,11 +3239,11 @@ MODULE FileType_DA32
     ENDSUBROUTINE readdat_sdk7
 !
 !-------------------------------------------------------------------------------
-!> @brief Internal routine to determine the maximum number of records in the 
+!> @brief Internal routine to determine the maximum number of records in the
 !>        file on disk.
 !> @param funit the unit number to check
 !> @returns fsize the size in number of records of the file
-!> 
+!>
     FUNCTION FileRecSize(funit) RESULT(fsize)
       INTEGER(SIK),INTENT(IN) :: funit
       INTEGER(SLK) :: fsize

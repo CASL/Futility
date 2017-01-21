@@ -1,42 +1,33 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testGeom_Line
 #include "UnitTest.h"
-  USE ISO_FORTRAN_ENV  
+  USE ISO_FORTRAN_ENV
   USE UnitTest
   USE IntrType
   USE Constants_Conversion
   USE ParameterLists
   USE Geom
-  
+
   IMPLICIT NONE
-  
+
   TYPE(PointType) :: point,point2,point3
   TYPE(PointType) :: points(2),points2(2),points3(2)
   TYPE(LineType) :: line1,line2,lines(2),dis,diss(2)
   INTEGER(SIK) :: ldim(2),i,ioerr
   REAL(SRK) :: d,mu1,mu2,s(2)
   LOGICAL(SBK) :: bool
-  
+
   CREATE_TEST('Test Geom')
   CALL eParams%setQuietMode(.TRUE.)
   CALL eParams%setStopOnError(.FALSE.)
-  
+
   REGISTER_SUBTEST('Test Lines',TestLine)
 
   FINALIZE_TEST()
@@ -59,10 +50,10 @@ PROGRAM testGeom_Line
       bool=.NOT.(line1%p1%dim /= 0 .OR. line1%p2%dim /= 0 .OR. &
                    ALLOCATED(line1%p1%coord) .OR. ALLOCATED(line1%p2%coord))
       ASSERT(bool, 'line1%clear()')
-      
+
       !Redundant call to clear
       CALL line1%clear()
-!      
+!
 !Test init
       COMPONENT_TEST('%init()')
       CALL point2%init(DIM=3,X=0.1_SRK,Y=0.2_SRK,Z=0.3_SRK)
@@ -74,7 +65,7 @@ PROGRAM testGeom_Line
                  line1%p2%coord(2) /= 0.5_SRK .OR. line1%p2%coord(3) /= 0.6_SRK)
       ASSERT(bool, 'line1%set(...)')
       CALL line1%clear()
-      
+
       !Redundant call to test input error
       CALL line1%set(point,point2)
       bool = .NOT.(line1%p1%dim /= 0 .OR. line1%p2%dim /= 0 .OR. &
@@ -87,10 +78,10 @@ PROGRAM testGeom_Line
       CALL line1%set(point2,point3)
       ASSERT(line1%getDim() == 3, 'line1%getDim()')
       CALL line1%clear()
-      
+
       !Redundant call to test input error
       ASSERT(line1%getDim() == 0, 'line1%getDim()')
-!      
+!
 !Test length
       COMPONENT_TEST('%length()')
       CALL line1%set(point2,point3)
@@ -134,9 +125,9 @@ PROGRAM testGeom_Line
       !Test for within rounding error of intersect
       CALL line1%clear()
       CALL line2%clear()
-      CALL line1%p1%init(COORD=(/0.23706666666670007_SRK,-0.3041650000000002_SRK/))     
-      CALL line1%p2%init(COORD=(/0.23706666666670007_SRK, 0.64833499999999977_SRK/))     
-      CALL line2%p1%init(COORD=(/-0.11302999999999996_SRK,-0.30416500000000024_SRK/))     
+      CALL line1%p1%init(COORD=(/0.23706666666670007_SRK,-0.3041650000000002_SRK/))
+      CALL line1%p2%init(COORD=(/0.23706666666670007_SRK, 0.64833499999999977_SRK/))
+      CALL line2%p1%init(COORD=(/-0.11302999999999996_SRK,-0.30416500000000024_SRK/))
       CALL line2%p2%init(COORD=(/0.93725999999999998_SRK,-0.30416500000000024_SRK/))
       point=line1%intersectLine(line2)
       ASSERT(point%dim == 2,'line1%intersectLine(...)')
@@ -177,7 +168,7 @@ PROGRAM testGeom_Line
       CALL line1%p2%init(DIM=1,X=0.0_SRK)
       point=line1%intersectLine(line1)
       ASSERT(point%dim == -2, '1-D line1%intersectLine(...)')
-      
+
       CALL line1%clear()
       CALL line2%clear()
       CALL line1%p1%init(COORD=(/0.0_SRK,0.0_SRK/))
@@ -186,7 +177,7 @@ PROGRAM testGeom_Line
       CALL line2%p2%init(COORD=(/1.0_SRK,2.5_SRK/))
       point=line1%intersectLine(line2)
       ASSERT(point%dim == -3, 'line1%intersectLine(...)')
-      
+
 !Test for %distance2Line(...)
       COMPONENT_TEST('%distance2Line()')
       !Line dimension error check
@@ -254,7 +245,7 @@ PROGRAM testGeom_Line
       bool = .NOT.(dis%getDim() /= 3 .OR. mu1 /= 0._SRK .OR. mu2 /= 0._SRK &
                    .OR. dis%p1 /= line2%p1 .OR. dis%p2 /= line1%p1)
       ASSERT(bool, 'line2%distance2Line(...)')
-      
+
 !Test for %distance2Point(...)
       COMPONENT_TEST('%distance2Point()')
       CALL line1%clear()
@@ -272,7 +263,7 @@ PROGRAM testGeom_Line
       CALL point%init(COORD=(/1.5_SRK/))
       bool = line1%distance2Point(point) .APPROXEQ. 0.25_SRK
       ASSERT(bool, '1-D line1%distance2Point(...)')
-      
+
       CALL line1%clear()
       CALL point%clear()
       CALL line1%p1%init(COORD=(/0.0_SRK,0.0_SRK/))
@@ -294,7 +285,7 @@ PROGRAM testGeom_Line
       CALL point%init(COORD=(/-0.5_SRK,-1.0_SRK/))
       bool = line1%distance2Point(point) .APPROXEQ. 1.25_SRK
       ASSERT(bool, '2-D line1%distance2Point(...)')
-      
+
       CALL line1%clear()
       CALL point%clear()
       CALL line1%p1%init(COORD=(/0.0_SRK,0.0_SRK,0.0_SRK/))
@@ -314,7 +305,7 @@ PROGRAM testGeom_Line
       CALL point%init(COORD=(/0.0_SRK,0.0_SRK,-1.0_SRK/))
       bool = line1%distance2Point(point) .APPROXEQ. 1.0_SRK
       ASSERT(bool, '3-D line1%distance2Point(...)')
-      
+
 !Test pointIsLeft
       COMPONENT_TEST('%pointIsLeft()')
       CALL point%clear()
@@ -326,7 +317,7 @@ PROGRAM testGeom_Line
       CALL point%clear()
       CALL point%init(COORD=(/0.5_SRK,0.5_SRK,0.5_SRK/))
       ASSERT(.NOT.line1%pointIsLeft(point),'Point (0.5,0.5,0.5)')
-      
+
 !Test pointIsLeft
       CALL point%clear()
       CALL point%init(COORD=(/2.0_SRK,1.0_SRK,-10.0_SRK/))
@@ -338,7 +329,7 @@ PROGRAM testGeom_Line
       CALL point%clear()
       CALL point%init(COORD=(/0.5_SRK,0.5_SRK,0.5_SRK/))
       ASSERT(.NOT.line1%pointIsLeft(point),'Point (0.5,0.5,0.5)')
-      
+
       !Test for equivalence operation
       COMPONENT_TEST('OPERATOR(==)')
       line2=line1
@@ -353,7 +344,7 @@ PROGRAM testGeom_Line
       CALL line2%p1%init(COORD=(/0.0_SRK,0.0_SRK,0.0_SRK/))
       CALL line2%p2%init(COORD=(/1.0_SRK,1.0_SRK,1.0_SRK/))
       ASSERT(.NOT.(line1 == line2),'2-D and 3-D line non-equivalence')
-      
+
 #ifdef __GFORTRAN__
       WRITE(*,*) 'ELEMENTAL METHODS FOR NON-SCALAR BASE OBJECTS NOT YET SUPPORTED BY COMPILER'
 #else
@@ -369,36 +360,36 @@ PROGRAM testGeom_Line
       CALL lines%set(points2,points3)
 !      CALL lines(1)%set(points2(1),points3(1))
 !      CALL lines(2)%set(points2(2),points3(2))
-      bool = .NOT.(lines(1)%p1%dim /= 3 .OR. lines(1)%p2%dim /= 3 .OR. & 
+      bool = .NOT.(lines(1)%p1%dim /= 3 .OR. lines(1)%p2%dim /= 3 .OR. &
                   ANY(.NOT.(lines(1)%p1%coord .APPROXEQ. (/0.5_SRK,0.6_SRK,0.7_SRK/))) .OR. &
                   ANY(.NOT.(lines(1)%p2%coord .APPROXEQ. (/0.6_SRK,0.7_SRK,0.8_SRK/))) .OR. &
                   lines(2)%p1%dim /= 2 .OR. lines(2)%p2%dim /= 2 .OR. &
                   ANY(.NOT.(lines(2)%p1%coord .APPROXEQ. (/0.5_SRK,0.6_SRK/))) .OR. &
                   ANY(.NOT.(lines(2)%p2%coord .APPROXEQ. (/0.6_SRK,0.7_SRK/))))
       ASSERT(bool, 'lines%set(...)')
-      
+
       COMPONENT_TEST('Elemental %getDim()')
       ldim=lines%getDim()
       bool = .NOT.(ldim(1) /= 3 .OR. ldim(2) /= 2)
       ASSERT(bool, 'lines%getDim()')
-      
+
       COMPONENT_TEST('Elemental %length()')
       s=lines%length()
       bool = .NOT.(.NOT.(s(1) .APPROXEQ. 0.173205080756888_SRK) .OR. &
                    .NOT.(s(2) .APPROXEQ. 0.141421356237309_SRK))
       ASSERT(bool, 'lines%length()')
-      
+
       COMPONENT_TEST('Elemental %midPoint()')
       points=lines%midPoint()
       bool = .NOT.(ANY(.NOT.(points(1)%coord .APPROXEQ. (/0.55_SRK,0.65_SRK,0.75_SRK/))) .OR. &
                    ANY(.NOT.(points(2)%coord .APPROXEQ. (/0.55_SRK,0.65_SRK/))))
       ASSERT(bool, 'lines%midPoint()')
-      
+
       COMPONENT_TEST('Elemental %intersectLine()')
       points=lines%intersectLine(lines)
       bool = .NOT.(points(1)%dim /= -2 .OR. points(2)%dim /= -2)
       ASSERT(bool, 'lines%intersectLine(...)')
-      
+
      !diss=lines%distance2Line(lines)
      ! IF(diss(1)%p(1)%dim /= -2 .OR. diss(2)%p(1)%dim /= -2) THEN
      !   WRITE(*,*) 'lines%distance2Line(...) FAILED!'
@@ -412,7 +403,7 @@ PROGRAM testGeom_Line
       s=lines%distance2Point(points)
       bool = .NOT.(ANY(.NOT.(s .APPROXEQ. 0.0_SRK)))
       ASSERT(bool, 'lines%distance2Point(...)')
-      
+
       COMPONENT_TEST('Elemental %clear()')
       CALL lines%clear()
       bool = .NOT.((lines(1)%p1%dim /= 0) .OR. (lines(1)%p2%dim /= 0) .OR. &

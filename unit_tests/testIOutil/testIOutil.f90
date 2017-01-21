@@ -1,19 +1,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testIOutil
 #include "UnitTest.h"
@@ -23,22 +14,22 @@ PROGRAM testIOutil
   USE ExceptionHandler
   USE IO_Strings
   USE IOutil
-  
+
   IMPLICIT NONE
-  
+
   CHARACTER(LEN=256) :: string,string1,string2,string3
   CHARACTER(LEN=1) :: shortstring1,shortstring2,shortstring3
   TYPE(ExceptionHandlerType),TARGET :: e
-      
+
   CREATE_TEST('IOUTIL')
-  
+
   CALL e%setStopOnError(.FALSE.)
   CALL e%setQuietMode(.TRUE.)
-  
+
   REGISTER_SUBTEST('PARAMETERS',testParameters)
   REGISTER_SUBTEST('IO_Strings',testIO_Strings)
   REGISTER_SUBTEST('Run-time Environment',testRTEnv)
-  
+
   FINALIZE_TEST()
 !
 !===============================================================================
@@ -61,11 +52,11 @@ PROGRAM testIOutil
       INTEGER,ALLOCATABLE :: tmpint(:)
       CHARACTER(LEN=32) :: char
       TYPE(StringType) :: tmpStr,tmpStr2,tmpStrArray(10)
-      
+
       COMPONENT_TEST('strmatch')
       ASSERT(strmatch('testing','test'),'testing')
       ASSERT(.NOT.(strmatch('TEAM','I')),'TEAM')
-      
+
       COMPONENT_TEST('strarraymatch')
       DO stat=1,10
         WRITE(char,'(i32)') stat-1; char=ADJUSTL(char)
@@ -74,18 +65,18 @@ PROGRAM testIOutil
       ASSERT(strarraymatch(tmpStrArray,'test'),'testing')
       ASSERT(strarraymatch(tmpStrArray,'1'),'testing 1')
       ASSERT(.NOT.strarraymatch(tmpStrArray,'11'),'testing 11')
-      
+
       COMPONENT_TEST('strarraymatchind')
       ASSERT(strarraymatchind(tmpStrArray,'test') == 1,'testing')
       ASSERT(strarraymatchind(tmpStrArray,'1') == 2,'testing 1')
       ASSERT(strarraymatchind(tmpStrArray,'9') == 10,'testing 9')
       ASSERT(strarraymatchind(tmpStrArray,'11') == -1,'testing 11')
-      
+
       COMPONENT_TEST('nmatchstr')
       ASSERT(nmatchstr('testing','test') == 1,'testing')
       ASSERT(nmatchstr('TEAM','I') == 0,'TEAM')
       ASSERT(nmatchstr('t e s t',' ') == 3 ,'t e s t')
-      
+
       COMPONENT_TEST('strfind')
       CALL strfind('stesting','test',tmpint)
       ASSERTFAIL(SIZE(tmpint) == 1,'testing SIZE')
@@ -98,7 +89,7 @@ PROGRAM testIOutil
       ASSERTFAIL(SIZE(tmpint) == 3,'t e s t SIZE')
       ASSERT(ALL(tmpint == (/2,4,6/)),'t e s t')
       DEALLOCATE(tmpint)
-      
+
       COMPONENT_TEST('strrep')
       string='testing'
       CALL strrep(string,'t','TT')
@@ -111,7 +102,7 @@ PROGRAM testIOutil
       ASSERT(TRIM(string) == 'A/B/C/D/EFGH','-> to /')
       CALL strrep(string,'/','->')
       ASSERT(TRIM(string) == 'A->B->C->D->EFGH','/ to ->')
-      
+
       COMPONENT_TEST('nFields (character)')
       string=''
       ASSERT(nFields(string) == 0,'blank')
@@ -131,7 +122,7 @@ PROGRAM testIOutil
       !ASSERT(nFields(string) == 3,'quotes')
       !string=' XSMACRO "core mat mod" 0 '
       !ASSERT(nFields(string) == 3,'quotes')
-      
+
       string='arg1 nmult*arg2'
       ASSERT(nFields(string) == 2,'bad multi-arg')
       string='arg1 2*arg2'
@@ -142,7 +133,7 @@ PROGRAM testIOutil
       ASSERT(nFields(string) == 7,'card')
       string='     cardname 200*3.1 15*0.2'
       ASSERT(nFields(string) == 216,'card multi-arg')
-      
+
       COMPONENT_TEST('nFields (string)')
       tmpStr=''
       ASSERT(nFields(tmpStr) == 0,'blank')
@@ -164,7 +155,7 @@ PROGRAM testIOutil
       ASSERT(nFields(tmpStr) == 7,'card')
       tmpStr='     cardname 200*3.1 15*0.2'
       ASSERT(nFields(tmpStr) == 216,'card multi-arg')
-      
+
       COMPONENT_TEST('getField (char,char)')
       string='     cardname 200*3.1 15*0.2'
       CALL getField(50,string,string2,stat)
@@ -206,7 +197,7 @@ PROGRAM testIOutil
       CALL getField(35,string,string2,stat)
       ASSERT(TRIM(string2) == '2','multi-arg filepath 35 (field)')
       ASSERT(stat == 0,'multi-arg filepath 35 (stat)')
-      
+
       COMPONENT_TEST('getField (string,char)')
       tmpStr='     cardname 200*3.1 15*0.2'
       CALL getField(50,tmpStr,tmpStr2,stat)
@@ -248,7 +239,7 @@ PROGRAM testIOutil
       CALL getField(35,tmpStr,tmpStr2,stat)
       ASSERT(TRIM(tmpStr2) == '2','multi-arg filepath 35 (field)')
       ASSERT(stat == 0,'multi-arg filepath 35 (stat)')
-      
+
       COMPONENT_TEST('getField (char,string)')
       string='     cardname 200*3.1 15*0.2'
       CALL getField(50,string,tmpStr2,stat)
@@ -286,7 +277,7 @@ PROGRAM testIOutil
       CALL getField(35,string,tmpStr2,stat)
       ASSERT(TRIM(tmpStr2) == '2','multi-arg filepath 35 (field)')
       ASSERT(stat == 0,'multi-arg filepath 35 (stat)')
-      
+
       COMPONENT_TEST('getField (string,string)')
       tmpStr='     cardname 200*3.1 15*0.2'
       CALL getField(50,tmpStr,tmpStr2,stat)
@@ -324,7 +315,7 @@ PROGRAM testIOutil
       CALL getField(35,tmpStr,tmpStr2,stat)
       ASSERT(TRIM(tmpStr2) == '2','multi-arg filepath 35 (field)')
       ASSERT(stat == 0,'multi-arg filepath 35 (stat)')
-      
+
       COMPONENT_TEST('stripComment')
       string='some data !a comment !another comment?'
       CALL stripComment(string)
@@ -344,7 +335,7 @@ PROGRAM testIOutil
       string='some data'
       CALL stripComment(string)
       ASSERT(TRIM(string) == 'some data','no comment')
-      
+
       COMPONENT_TEST('toUPPER')
       string='239p84uyqh;jndf:JKDFH./'
       CALL toUPPER(string)
@@ -352,7 +343,7 @@ PROGRAM testIOutil
       tmpStr='239p84uyqh;jndf:JKDFH./'
       CALL toUPPER(tmpStr)
       ASSERT(TRIM(tmpStr) == '239P84UYQH;JNDF:JKDFH./','gibberish (string)')
-      
+
       COMPONENT_TEST('getFilePath')
       string='C:\fullpath\dir1\filenoext'
       CALL getFilePath(string,string2)
@@ -390,7 +381,7 @@ PROGRAM testIOutil
       bool=(TRIM(string2) == '..'//SLASH//'relpath'//SLASH// &
         '..'//SLASH//'dir1'//SLASH)
       ASSERT(bool,string)
-      
+
       COMPONENT_TEST('getFileName')
       string='C:\fullpath\dir1\filenoext'
       CALL getFileName(string,string2)
@@ -416,7 +407,7 @@ PROGRAM testIOutil
       string='../relpath/../dir1/file.two.ext'
       CALL getFileName(string,string2)
       ASSERT(TRIM(string2) == 'file.two.ext',string)
-      
+
       COMPONENT_TEST('getFileNameExt')
       string='C:\fullpath\dir1\filenoext'
       CALL getFileNameExt(string,string2)
@@ -442,7 +433,7 @@ PROGRAM testIOutil
       string='../relpath/../dir1/file.two.ext'
       CALL getFileNameExt(string,string2)
       ASSERT(TRIM(string2) == '.ext',string)
-      
+
       COMPONENT_TEST('getFileParts')
       string='C:\fullpath\dir1\filenoext'
       CALL getFileParts(string,string1,string2,string3)
@@ -496,7 +487,7 @@ PROGRAM testIOutil
       ASSERT(bool,string//' path')
       ASSERT(TRIM(string2) == 'file.two',string//' name')
       ASSERT(TRIM(string3) == '.ext',string//' ext')
-  
+
       COMPONENT_TEST('Error Checking')
       CALL getFileParts(string,shortstring1,shortstring2,shortstring3)
       CALL getFileParts(string,shortstring1,shortstring2,shortstring3,e)
@@ -537,7 +528,7 @@ PROGRAM testIOutil
       INTEGER :: n,stat,n0
       CHARACTER(LEN=1024) :: tmpChar,varname
       TYPE(StringType) :: tmpStr
-      
+
       COMPONENT_TEST('GET_COMMAND')
       CALL GET_COMMAND(LENGTH=n)
       CALL GET_COMMAND(STATUS=stat)
@@ -550,7 +541,7 @@ PROGRAM testIOutil
       ELSE
         INFO(0) 'Could not run test for GET_COMMAND'
       ENDIF
-      
+
       COMPONENT_TEST('GET_ENVIRONMENT_VARIABLE')
 #ifdef WIN32
       varname='USERNAME'
@@ -560,7 +551,7 @@ PROGRAM testIOutil
       CALL GET_ENVIRONMENT_VARIABLE(NAME=varname,VALUE=tmpStr,LENGTH=n, &
         STATUS=stat)
       CALL GET_ENVIRONMENT_VARIABLE(NAME=varname,LENGTH=n,STATUS=stat)
-      
+
       CALL GET_ENVIRONMENT_VARIABLE(NAME=varname,VALUE=tmpChar(1:1),LENGTH=n, &
         STATUS=stat)
       IF(0 < n .AND. n <= LEN(tmpChar)) THEN
@@ -571,7 +562,7 @@ PROGRAM testIOutil
       ELSE
         INFO(0) 'Could not run test for GET_ENVIRONMENT_VARIABLE'
       ENDIF
-      
+
       COMPONENT_TEST('GET_CURRENT_DIRECTORY')
       CALL GET_CURRENT_DIRECTORY(DIR=tmpStr,LENGTH=n,STATUS=stat)
       ASSERT(stat == 0,'STATUS (string)')

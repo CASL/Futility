@@ -1,19 +1,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief Defines the base Checkpoint file type which is abstract.
 !>
@@ -29,7 +20,7 @@
 !> are to define the import and export routines, specifically what data is
 !> put into the file and read from the file.
 !>
-!> The abstract base checkpoint file implementation defines a generic 
+!> The abstract base checkpoint file implementation defines a generic
 !> initialization method, overloads all the base file type methods, and defines
 !> a clear method. In addition to this it provides a basic feature to check
 !> for an "interrupt file" and if this file exists and then the base checkpoint
@@ -48,23 +39,23 @@
 !> @author Brendan Kochunas
 !>   @date 02/12/2014
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-MODULE FileType_Checkpoint    
+MODULE FileType_Checkpoint
   USE IntrType
   USE Strings
   USE ExceptionHandler
   USE FileType_Base
   USE FileType_DA32
   USE FileType_HDF5
-  
+
   IMPLICIT NONE
   PRIVATE
-  
+
   !List of Public Members
   PUBLIC :: CheckpointFileType
   PUBLIC :: clear_CheckpointFileType
-  
+
   CHARACTER(LEN=*),PARAMETER :: modName='FILETYPE_CHECKPOINT'
-  
+
   !> @brief The base checkpoint file type
   !>
   !> Extensions primarily provide implementations of the import and export
@@ -179,7 +170,7 @@ MODULE FileType_Checkpoint
       !> @copydetails FileType_Checkpoint::isWrite_CheckpointFileType
       PROCEDURE,PASS :: isWrite => isWrite_CheckpointFileType
   ENDTYPE CheckpointFileType
-  
+
   !> Abstract interface used to declare import/export deferred methods.
   ABSTRACT INTERFACE
     SUBROUTINE CheckPointFileType_absintfc(thisCPF)
@@ -206,7 +197,7 @@ MODULE FileType_Checkpoint
       INTEGER(SIK) :: nerror
       TYPE(DA32FileType),POINTER :: myDA32File
       TYPE(HDF5FileType),POINTER :: myHDF5File
-      
+
       IF(ASSOCIATED(myBaseFile)) THEN
         nerror=thisCPF%e%getCounter(EXCEPTION_ERROR)
         myDa32File => NULL()
@@ -231,18 +222,18 @@ MODULE FileType_Checkpoint
               'The passed base file type must be either a DA32FileType '// &
                 'or HDF5FileType!')
         ENDSELECT
-        
+
         IF(nerror == thisCPF%e%getCounter(EXCEPTION_ERROR)) THEN
           thisCPF%daf => myDA32File
           thisCPF%h5f => myHDF5File
           thisCPF%basefile => myBaseFile
           CALL thisCPF%e%addSurrogate(thisCPF%basefile%e)
-          
+
           !Set Checkpoint file values from base file type
           thisCPF%pathlen=LEN_TRIM(thisCPF%basefile%getFilePath())
           thisCPF%fnamelen=LEN_TRIM(thisCPF%basefile%getFileName())
           thisCPF%extlen=LEN_TRIM(thisCPF%basefile%getFileExt())
-          
+
           thisCPF%isInit=.TRUE.
         ENDIF
       ELSE
@@ -326,7 +317,7 @@ MODULE FileType_Checkpoint
 !>
     SUBROUTINE clear_CheckpointFileType(thisCPF)
       CLASS(CheckpointFileType),INTENT(INOUT) :: thisCPF
-      
+
       IF(ASSOCIATED(thisCPF%h5f)) CALL thisCPF%h5f%clear()
       IF(ASSOCIATED(thisCPF%daf)) CALL thisCPF%daf%clear()
       NULLIFY(thisCPF%h5f)
@@ -444,9 +435,9 @@ MODULE FileType_Checkpoint
 !-------------------------------------------------------------------------------
 !> @brief Get the path, filename, and extension of a file object.
 !> @param file the file object
-!> @param path output string containing just the path (includes file separator 
+!> @param path output string containing just the path (includes file separator
 !>        at the end)
-!> @param fname output string with the filename 
+!> @param fname output string with the filename
 !> @param ext output string with the filename extension (including the '.')
 !>
 !> Given a file object it returns the path, filename, and file
@@ -474,7 +465,7 @@ MODULE FileType_Checkpoint
 !-------------------------------------------------------------------------------
 !> @brief Get the path of a file object.
 !> @param file the file object
-!> @param path output string containing just the path (includes file separator 
+!> @param path output string containing just the path (includes file separator
 !>        at the end)
 !>
     PURE FUNCTION getFilePath_CheckpointFileType(file) RESULT(path)
@@ -511,7 +502,7 @@ MODULE FileType_Checkpoint
 !-------------------------------------------------------------------------------
 !> @brief Sets the status of whether or not the end of file record
 !> has been reached.
-!> 
+!>
 !> Cannot be changed if the file is closed.
 !>
     SUBROUTINE setEOFstat_CheckpointFileType(file,bool)
@@ -529,7 +520,7 @@ MODULE FileType_Checkpoint
 !-------------------------------------------------------------------------------
 !> @brief Sets the value for when the file is open or closed.
 !>
-!> There is no sufficient way to protect this attribute from being corrupted, 
+!> There is no sufficient way to protect this attribute from being corrupted,
 !> but this method, in general should NEVER be called unless it is within the
 !> fopen or fclose methods.
 !>

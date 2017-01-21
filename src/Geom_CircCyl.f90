@@ -1,19 +1,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief A Fortran 2003 module defining "circles" and "cylinders" for use in
 !> geometry.
@@ -109,7 +100,7 @@ MODULE Geom_CircCyl
       !> @copydetails Geom_CircCyl::intersect_CylinderType_and_LineType
       PROCEDURE,PASS :: intersectLine => intersect_CylinderType_and_LineType
   ENDTYPE CylinderType
-  
+
   !> @brief Generic interface for 'is equal to' operator (==)
   !>
   !> Adds 'is equal to' capability for Circle types
@@ -292,7 +283,7 @@ MODULE Geom_CircCyl
 !> @note a return code is assigned to @c p1%dim and @c p2%dim indicating the type of
 !> intersection. @n
 !> ==  2: success; Two points of intersection  found @n
-!> == -1: uninitialized circle 
+!> == -1: uninitialized circle
 !> == -2: no intersection points found (disjoint) @n
 !> == -3: The circles are tangent @n
 !> == -4: The circles are overlapped @n
@@ -822,7 +813,7 @@ MODULE Geom_CircCyl
     ENDFUNCTION onSurface_CircleType
 !
 !-------------------------------------------------------------------------------
-!> @brief Defines the 'is equal to' operation between two circles e.g. @c 
+!> @brief Defines the 'is equal to' operation between two circles e.g. @c
 !>        circ1 == circ2
 !> @param p0 the first circle
 !> @param p1 the second circle
@@ -838,7 +829,7 @@ MODULE Geom_CircCyl
     ENDFUNCTION isequal_CircleType
 !
 !-------------------------------------------------------------------------------
-!> @brief Defines the 'is equal to' operation between two cylinders e.g. @c 
+!> @brief Defines the 'is equal to' operation between two cylinders e.g. @c
 !>        cyl1 == cyl2
 !> @param p0 the first cylinder
 !> @param p1 the second cylinder

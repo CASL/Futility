@@ -1,26 +1,17 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testBinaryTrees
 #include "UnitTest.h"
   USE UnitTest
   USE IntrType
   USE BinaryTrees
-  
+
   IMPLICIT NONE
 
   TYPE(BinaryTreeType_Integer),POINTER :: t => NULL()
@@ -33,9 +24,9 @@ PROGRAM testBinaryTrees
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING BINARY TREES...'
   WRITE(*,*) '==================================================='
-  
+
   WRITE(*,*) 'TESTING INTEGER BINARY TREE'
-  
+
   ALLOCATE(emptyi(1:0))
   CALL CreateBinaryTree(t,emptyi)
   CALL BurnBinaryTree(t)
@@ -55,7 +46,7 @@ PROGRAM testBinaryTrees
   ASSERT(.NOT.ASSOCIATED(t), 'BurnBinaryTree(t)')
   WRITE(*,*) '  Passed: CALL BurnBinaryTree(t)'
   WRITE(*,*) '---------------------------------------------------'
-  
+
   WRITE(*,*) 'TESTING INDEXED BINARY TREE'
   CALL CreateBinaryTreeRmDup(t2,(/4,8,4,6,7,2,1/),1,7)
   ASSERT(t2%val == 4, 'CreateBinaryTreeRmDup(t,...)')
@@ -76,7 +67,7 @@ PROGRAM testBinaryTrees
   CALL BurnBinaryTree(t2)
   ASSERT(.NOT.ASSOCIATED(t), 'BurnBinaryTree(t2)')
   WRITE(*,*) '  Passed: CALL BurnBinaryTree(t2)'
-  
+
   CALL SortedBinaryTree(t2,1,(/1,2,3,4,5,6/))
   bool = .NOT.((t2%val /= 4 .AND. t2%index /= 4) .AND. &
                (t2%left%val /= 2 .AND. t2%left%index /= 2) .AND. &

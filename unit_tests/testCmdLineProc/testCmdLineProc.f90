@@ -1,19 +1,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testCmdLineProc
 #include "UnitTest.h"
@@ -21,11 +12,11 @@ PROGRAM testCmdLineProc
   USE Strings
   USE ExceptionHandler
   USE CommandLineProcessor
-  
+
   IMPLICIT NONE
 
   EXTERNAL testProcArgs
-  
+
   TYPE(CmdLineProcType) :: testCLP
   CHARACTER(LEN=128) :: str
   TYPE(ExceptionHandlerType),TARGET :: e
@@ -36,12 +27,12 @@ PROGRAM testCmdLineProc
   CALL e%setQuietMode(.TRUE.)
 
   CREATE_TEST('COMMAND_LINE_PROCESSOR')
-  
+
   REGISTER_SUBTEST('ExecName',testExecName)
   REGISTER_SUBTEST('Usage',testUsage)
   REGISTER_SUBTEST('Options',testOptions)
   REGISTER_SUBTEST('Processing',testProcessing)
-  
+
   FINALIZE_TEST()
 !
 !===============================================================================
@@ -66,7 +57,7 @@ PROGRAM testCmdLineProc
       CALL testCLP%clearOpts()
       CALL testCLP%setExecName('test5.exe')
       CALL testCLP%defineUsage('[[-help] | [input_file] [output_file]]')
-      
+
       CALL testCLP%setNumOpts(-1)
       ASSERT(testCLP%getNumOpts() == 0,'%setNumOpts(-1)')
       CALL testCLP%setNumOpts(3)
@@ -101,7 +92,7 @@ PROGRAM testCmdLineProc
 !-------------------------------------------------------------------------------
     SUBROUTINE testProcessing()
       TYPE(StringType) :: tmpStr
-    
+
       CALL testCLP%clearCmdLine()
       CALL testCLP%getCmdArg(1,str)
       CALL testCLP%setCmdLine('')
@@ -118,7 +109,7 @@ PROGRAM testCmdLineProc
       ASSERT(TRIM(str) == 'te','%getCmdArg(...)')
       CALL testCLP%getCmdArg(1,tmpStr)
       ASSERT(tmpStr == 'test.inp','%getCmdArg(...)')
-      
+
       CALL testCLP%ProcCmdLineArgs(testProcArgs)
       CALL testCLP%clearCmdLine()
       ASSERT(testCLP%getNargs() == 0,'%clearCmdLine()')

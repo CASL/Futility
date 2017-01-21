@@ -1,19 +1,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief Utility module to replicate some TAU interfaces when TAU is not
 !>        available. Only measures time and number of calls.
@@ -22,7 +13,7 @@
 !>  - @c TAU_PROFILE_INIT - must be called before any of the other routines
 !>  - @c TAU_PROFILE_TIMER - defines a static timer
 !>  - @c TAU_PROFILE_START - starts profiling a section
-!>  - @c TAU_PROFILE_STOP - stops profiling a section (must be called after 
+!>  - @c TAU_PROFILE_STOP - stops profiling a section (must be called after
 !>       @c TAU_PROFILE_START)
 !>  - @c TAU_PROFILE_EXIT - stops all profiling and writes profiling data to
 !>                          disk
@@ -33,15 +24,15 @@
 !> the user must be aware of.
 !>
 !> @par First:
-!> Automatic source instrumentation is not available, so using the 
+!> Automatic source instrumentation is not available, so using the
 !> profiling capability requires hand instrumentation of the source. When
 !> instrumenting the source the <TT>USE TAU_Stubs</TT> statement must be
 !> within the scope of the procedure.
 !>
 !> @par Second:
 !> The @ref TAU_Stubs::TAU_PROFILE_EXIT "TAU_PROFILE_EXIT", routine must be
-!> called prior to the halt of execution else no profile data is written to 
-!> disk. 
+!> called prior to the halt of execution else no profile data is written to
+!> disk.
 !>
 !> @par Third:
 !> Applies only to situations where the application uses OpenMP. In
@@ -61,7 +52,7 @@
 !> the correct profiler key must be passed to do so. Therefore, the @c profileID
 !> return argument will need to persist with the correct value after the parallel
 !> region has ended.
-!> 
+!>
 !> It gets slightly more complicated. When inside a parallel region, only those
 !> threads for which a specific profiler is defined can access that profiler.
 !> Note here it is therefore important that the @c profileID return argument
@@ -89,11 +80,11 @@
 !> @par EXAMPLES
 !> @code
 !> PROGRAM TestTauStubs
-!> 
+!>
 !>   USE TAU_Stubs
 !>   IMPLICIT NONE
 !>
-!>   
+!>
 !> END PROGRAM
 !> @endcode
 !>
@@ -111,7 +102,7 @@ MODULE TAU_Stubs
   USE IO_Strings
   IMPLICIT NONE
   PRIVATE
-  
+
 #ifdef HAVE_MPI
   INCLUDE 'mpif.h'
 #endif
@@ -133,7 +124,7 @@ MODULE TAU_Stubs
   PUBLIC :: TAUSTUB_CHECK_MEMORY
   PUBLIC :: TAUSTUB_ENABLE_MEMORY_PROFILE
   PUBLIC :: TAUSTUB_DISABLE_MEMORY_PROFILE
-  
+
   !> @brief Derived type for defines a basic profiler.
   !>
   !> A profiler is given a name and keeps track of the execution time of
@@ -162,7 +153,7 @@ MODULE TAU_Stubs
     REAL(SDK),ALLOCATABLE :: papiCounts(:)
     TYPE(ProfilerType),POINTER :: nextProfiler => NULL()
   ENDTYPE ProfilerType
-  
+
   !> @brief A type for containing an array of scalar pointers for profilers
   !>
   !> Essentially a database.
@@ -170,7 +161,7 @@ MODULE TAU_Stubs
   TYPE :: ProfilerDBType
     TYPE(ProfilerType),POINTER :: profiler => NULL()
   ENDTYPE ProfilerDBType
-  
+
   !> @brief Type for storing all the profiling data amongst processes
   !>
   !> This is used to define one variable which is a singleton object
@@ -199,8 +190,8 @@ MODULE TAU_Stubs
     !> All of the profile objects initialized for taking measurements
     TYPE(ProfilerDBType),POINTER :: threadProfilesDB(:)
   ENDTYPE TauStubModData
-  
-  !> Singleton object containing all the profilers and profiling data for the 
+
+  !> Singleton object containing all the profilers and profiling data for the
   !> given executable.
   TYPE(TauStubModData),SAVE :: TauStubLibData
 !
@@ -219,7 +210,7 @@ MODULE TAU_Stubs
 
 !$OMP SINGLE
       IF(.NOT.TauStubLibData%isInit) THEN
-  
+
 #ifdef HAVE_MPI
         CALL MPI_Initialized(isinit,mpierr)
         IF(isinit == 0) CALL MPI_Init(mpierr)
@@ -230,18 +221,18 @@ MODULE TAU_Stubs
 
         TauStubLibData%nthreads=1
 !$      TauStubLibData%nthreads=OMP_GET_MAX_THREADS()
-        
+
         ALLOCATE(TauStubLibData%threadProfilesDB(TauStubLibData%nthreads))
         ALLOCATE(TauStubLibData%nProfiles(TauStubLibData%nthreads))
         TauStubLibData%nProfiles=0
-        
+
 #ifdef HAVE_PAPI
         perr=PAPI_VER_CURRENT
         CALL PAPIF_library_init(perr)
 !$      CALL PAPIF_thread_init(OMP_GET_THREAD_NUM,perr)
         CALL Set_PAPI_Metrics()
 #endif
-        
+
         !Determine overhead
         CALL EstimateOverhead()
       ENDIF
@@ -280,7 +271,7 @@ MODULE TAU_Stubs
       CHARACTER(LEN=*),INTENT(IN) :: name
       INTEGER(SIK) :: tid,it
       TYPE(ProfilerType),POINTER :: newThreadProfiler
-  
+
       IF(ALL(profileID == 0) .AND. TauStubLibData%isInit) THEN
         tid=1
 !$      tid=OMP_GET_THREAD_NUM()+1
@@ -319,7 +310,7 @@ MODULE TAU_Stubs
       INTEGER(C_INT) :: perr
       INTEGER(C_LONG_LONG) :: ptime,values(12)
       TYPE(ProfilerType),POINTER :: activeThreadProfiler
-      
+
       IF(profileID(1) > 0 .AND. profileID(1) <= TauStubLibData%nthreads) THEN
 !       Profilers are thread dependent, so only access profilers initialized on
 !       other threads when NOT in a parallel region.
@@ -379,7 +370,7 @@ MODULE TAU_Stubs
       INTEGER(C_INT) :: perr
       INTEGER(C_LONG_LONG) :: ptime,values(12)
       TYPE(ProfilerType),POINTER :: activeThreadProfiler
-  
+
       IF(profileID(1) > 0 .AND. profileID(1) <= TauStubLibData%nthreads) THEN
         tid=profileID(1)
         activeThreadProfiler => TauStubLibData%threadProfilesDB(tid)%profiler
@@ -412,7 +403,7 @@ MODULE TAU_Stubs
                   activeThreadProfiler%memUsage(2,2)
             ENDIF
 #else
-          
+
             IF(.NOT.activeThreadProfiler%inOMP) THEN
               CALL activeThreadProfiler%timer%toc() !2 Flops on each call
             ELSE
@@ -468,12 +459,12 @@ MODULE TAU_Stubs
 !
 !-------------------------------------------------------------------------------
 !> @brief Outputs all the profiler measurement data to disk and removes
-!> profilers from memory. Should be called prior to exiting or stopping 
+!> profilers from memory. Should be called prior to exiting or stopping
 !> execution.
 !>
 !> When adding this to an executable it should be the last line called before
 !> @c "ENDPROGRAM". Although it can be placed elsewhere if you understand what
-!> you're doing. If you are running an MPI executable then you should 
+!> you're doing. If you are running an MPI executable then you should
 !> place this call just before the call to MPI_Finalize().
 !>
 !> If the program terminates prior to this routine being called (e.g. because of
@@ -507,7 +498,7 @@ MODULE TAU_Stubs
         funit=funit+1
         INQUIRE(UNIT=funit,OPENED=isopen)
       ENDDO
-      
+
       DO i=0,UBOUND(dirnames,DIM=1)
         CALL Write_Profile_metric(funit,CHAR(dirnames(i)),eventNames,i)
       ENDDO
@@ -523,7 +514,7 @@ MODULE TAU_Stubs
       TauStubLibData%tOverhead=-1.0_SDK
       TauStubLibData%memProf=.FALSE.
       TauStubLibData%isInit=.FALSE.
-      
+
 #ifdef HAVE_PAPI
       CALL PAPIF_shutdown()
 #endif
@@ -536,14 +527,14 @@ MODULE TAU_Stubs
       CHARACTER(LEN=*),INTENT(IN) :: outdir
       TYPE(StringType),INTENT(IN) :: metric_name(0:)
       INTEGER(SIK),INTENT(IN) :: i
-      
+
       CHARACTER(LEN=16) :: rankstr,tidstr,tmpIstr
       CHARACTER(LEN=20) :: tmpRstr
       INTEGER(SIK) :: ip,ierr,j
       INTEGER(SLK) :: it
       TYPE(StringType) :: fname,tline
       TYPE(ProfilerType),POINTER :: activeProfiler
-      
+
       WRITE(rankstr,'(i16)') TauStubLibData%rankWorld
 !
 !Loop over threads and write files
@@ -561,7 +552,7 @@ MODULE TAU_Stubs
             tline=TRIM(ADJUSTL(tmpIstr))//' templated_functions_MULTI_'// &
               CHAR(metric_name(i))
             WRITE(UNIT=funit,FMT='(a)',IOSTAT=ierr) CHAR(tline)
-          
+
             !Metadata
             WRITE(tmpRstr,'(g9.3)') TauStubLibData%tOverhead
             tline='# Name Calls Subrs Excl Incl ProfileCalls # <metadata>'
@@ -589,18 +580,18 @@ MODULE TAU_Stubs
             ENDIF
             tline=tline//'</metadata>'
             WRITE(UNIT=funit,FMT='(a)',IOSTAT=ierr) CHAR(tline)
-          
+
             !Write profile data (Consists of INCLUSIVE times only)
             activeProfiler => TauStubLibData%threadProfilesDB(it)%profiler
             DO ip=1,TauStubLibData%nProfiles(it)
-              
+
               IF(activeProfiler%isStart) THEN
                 !Make sure the profiler has been stopped
                 CALL activeProfiler%timer%toc()
                 activeProfiler%isStart=.FALSE.
                 activeProfiler%num_calls=activeProfiler%num_calls+1
               ENDIF
-              
+
               IF(i == 0) THEN
                 IF(activeProfiler%timer%getTimeReal() < 0.0_SDK) THEN
                   WRITE(tmpRstr,'(g20.15)') 0.0_SDK
@@ -621,7 +612,7 @@ MODULE TAU_Stubs
               WRITE(UNIT=funit,FMT='(a)',IOSTAT=ierr) CHAR(tline)
               activeProfiler => activeProfiler%nextProfiler
             ENDDO
-          
+
             !Write end of file
             WRITE(UNIT=funit,FMT='(a)',IOSTAT=ierr) '0 aggregates'
             WRITE(UNIT=funit,FMT='(a)',IOSTAT=ierr) '0 userevents'
@@ -727,7 +718,7 @@ MODULE TAU_Stubs
       CHARACTER(LEN=n) :: papi_metric_name
       INTEGER(SIK) :: istt,istp,nevents
       INTEGER(C_INT) :: eventSet,perr,native_code
-      
+
       nevents=0
       eventSet=PAPI_NULL
       CALL PAPIF_create_eventset(eventSet,perr)
@@ -748,7 +739,7 @@ MODULE TAU_Stubs
           istt=istp+1
           istp=INDEX(TAU_METRICS(istt:n),';')+istt-1
         ENDDO
-      
+
         !Process the last entry
         papi_metric_name=TAU_METRICS(istp+1:n)
         CALL PAPIF_event_name_to_code(TRIM(papi_metric_name),native_code,perr)
@@ -792,13 +783,13 @@ MODULE TAU_Stubs
 !> Not public. Should only be called by TAU_PROFILE_INIT
 !>
     SUBROUTINE EstimateOverhead()
-      INTEGER(SIK),PARAMETER,DIMENSION(2) :: pid=(/1,1/)  
+      INTEGER(SIK),PARAMETER,DIMENSION(2) :: pid=(/1,1/)
       INTEGER(SIK) :: i
       INTEGER(C_INT) :: perr
       INTEGER(C_LONG_LONG) :: ptime_s,ptime_e,pmet(5,2)
       REAL(SDK) :: t
       TYPE(TimerType) :: ohead
-      
+
       TauStubLibData%nProfiles(1)=1
       ALLOCATE(TauStubLibData%threadProfilesDB(1)%profiler)
       IF(TauStubLibData%nPAPImetrics > 0) THEN
@@ -810,7 +801,7 @@ MODULE TAU_Stubs
           profiler%tmpCounts(TauStubLibData%nPAPImetrics,2))
         ALLOCATE(TauStubLibData%metricOverhead(TauStubLibData%nPAPImetrics))
       ENDIF
-      
+
       !Estimate the overhead by repeatedly making 10000 start/stop calls
       !Until a measureable amount of time has passed.
       t=0.0_SRK
@@ -840,7 +831,7 @@ MODULE TAU_Stubs
           REAL(TauStubLibData%threadProfilesDB(1)%profiler%num_calls,SDK)
       !TauStubLibData%tOverhead=1.e6_SDK*t/ &
       !  REAL(TauStubLibData%threadProfilesDB(1)%profiler%num_calls,SDK)
-      
+
       IF(TauStubLibData%nPAPImetrics > 0) THEN
         TauStubLibData%metricOverhead= &
           TauStubLibData%threadProfilesDB(1)%profiler%papiCounts/ &
@@ -858,8 +849,8 @@ MODULE TAU_Stubs
       REAL(SRK) :: mem,Kbytes
       REAL(SRK),PARAMETER :: MB2KB=1024.0_SRK
       REAL(SRK),PARAMETER :: GB2KB=1048576_SRK
-      
-      
+
+
       Kbytes=REAL(memKb,SRK)
       mem=Kbytes
       unit='KB'

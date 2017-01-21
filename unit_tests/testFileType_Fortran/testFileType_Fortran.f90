@@ -1,19 +1,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testFileType_Fortran
 #include "UnitTest.h"
@@ -22,20 +13,20 @@ PROGRAM testFileType_Fortran
   USE IntrType
   USE ExceptionHandler
   USE FileType_Fortran
-  
+
   IMPLICIT NONE
-  
+
   LOGICAL(SBK) :: lexist
   TYPE(ExceptionHandlerType),TARGET :: e
   TYPE(FortranFileType) :: testFile,testFile2
-      
+
   CREATE_TEST('FILETYPE_FORTRAN')
-  
+
   CALL e%setStopOnError(.FALSE.)
   CALL e%setQuietMode(.TRUE.)
-  
+
   REGISTER_SUBTEST('FortranFileType',testFortranFileType)
-  
+
   FINALIZE_TEST()
 !
 !===============================================================================
@@ -43,7 +34,7 @@ PROGRAM testFileType_Fortran
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testFortranFileType()
-      
+
       COMPONENT_TEST('%clear()')
       CALL testFile%clear()
       !Configure exception handler for testing
@@ -56,7 +47,7 @@ PROGRAM testFileType_Fortran
       ASSERT(.NOT.(testFile%isPadded()),'%isPadded()')
       ASSERT(.NOT.(testFile%isNew()),'%isNew()')
       ASSERT(.NOT.(testFile%isOverwrite()),'%isOverwrite()')
-      
+
       !Called for coverage/error checking
       COMPONENT_TEST('%initialize()')
       CALL testFile%fopen()
@@ -75,11 +66,11 @@ PROGRAM testFileType_Fortran
         ACCESS='DIRECT',POSITION='REWIND',ACTION='READWRITE',RECL=100)
       CALL testFile%initialize(UNIT=OUTPUT_UNIT,FILE='oops.txt',STATUS='SCRATCH')
       CALL testFile%initialize(UNIT=OUTPUT_UNIT,FILE='oops.txt',STATUS='UNKNOWN')
-  
+
       CALL testFile%initialize(UNIT=12,FILE='./testFile.txt',PAD='NO')
       ASSERT(testFile%isInit(),'%isInit(...)')
       ASSERT(TRIM(testFile%getFileName()) == 'testFile','%getFileName()')
-      
+
       CALL testFile%setStatus('Garbage')
       CALL testFile%setStatus('OLD')
       ASSERT(.NOT.testFile%isNew(),'%isNew() OLD')
@@ -96,16 +87,16 @@ PROGRAM testFileType_Fortran
       CALL testFile%setStatus('UNKNOWN')
       ASSERT(testFile%isNew(),'%isNew() UNKNOWN')
       ASSERT(testFile%isOverwrite(),'%isOverwrite() UNKNOWN')
-      
+
       COMPONENT_TEST('%fopen()')
       CALL testFile%fopen()
       ASSERT(testFile%isOpen(),'testFile%fopen()')
-      
+
       !Coverage/Error checking
       CALL testFile%fopen()
       CALL testFile2%initialize(UNIT=12,FILE='./testFile.txt')
       CALL testFile%setStatus('NEW')
-  
+
       CALL e%setStopOnError(.TRUE.)
       CALL testFile%fbackspace()
       CALL testFile%frewind()
@@ -115,7 +106,7 @@ PROGRAM testFileType_Fortran
       CALL testFile%fdelete()
       INQUIRE(FILE='./testFile.txt',EXIST=lexist)
       ASSERT(.NOT.lexist,'%fdelete()')
-      
+
       !Coverage/Error checking
       CALL testFile%fclose()
       CALL testFile%fbackspace()

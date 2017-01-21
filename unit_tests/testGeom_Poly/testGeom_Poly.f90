@@ -1,23 +1,14 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testGeom_Poly
 #include "UnitTest.h"
-  USE ISO_FORTRAN_ENV  
+  USE ISO_FORTRAN_ENV
   USE UnitTest
   USE IntrType
   USE Constants_Conversion
@@ -28,17 +19,17 @@ PROGRAM testGeom_Poly
   USE Geom_Box
   USE Geom_Graph
   USE Geom_Poly
-  
+
   IMPLICIT NONE
-  
+
   LOGICAL(SBK) :: bool
   TYPE(GraphType) :: testGraph
   TYPE(PolygonType) :: testPolyType
-  
+
   CREATE_TEST('GEOM_POLY')
   CALL eParams%setQuietMode(.TRUE.)
   CALL eParams%setStopOnError(.FALSE.)
-  
+
   REGISTER_SUBTEST('Uninitialized',testUninit)
   REGISTER_SUBTEST('%clear',testClear)
   REGISTER_SUBTEST('%set',testSet)
@@ -54,7 +45,7 @@ PROGRAM testGeom_Poly
   REGISTER_SUBTEST('%doesPolyIntersect',testDoesPolyIntersect)
   REGISTER_SUBTEST('%subtractSubVolume',testSubtractSubVol)
   REGISTER_SUBTEST('Operator(==)',testEquivalence)
-  
+
   FINALIZE_TEST()
 !
 !===============================================================================
@@ -89,13 +80,13 @@ PROGRAM testGeom_Poly
       testPolyType%nVert=3
       testPolyType%nQuadEdge=3
       testPolyType%area=6.0_SRK
-      
+
       CALL testPolyType%clear()
       CALL testUninit()
-      
+
       !Redundant Call
       CALL testPolyType%clear()
-      
+
     ENDSUBROUTINE testClear
 !
 !-------------------------------------------------------------------------------
@@ -103,7 +94,7 @@ PROGRAM testGeom_Poly
       INTEGER(SIK) :: i,inext
       REAL(SRK) :: testCoord(2,9),c0(2),r
       TYPE(PolygonType) :: refRect
-      
+
       !Setup test graph - isosceles triangle
       testCoord(:,1)=(/-1.0_SRK,-2.0_SRK/)
       testCoord(:,2)=(/1.0_SRK,-2.0_SRK/)
@@ -114,7 +105,7 @@ PROGRAM testGeom_Poly
       CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
       CALL testGraph%defineEdge(testCoord(:,2),testCoord(:,3))
       CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,1))
-      
+
       !inext=testGraph%getCCWMostVert(1,0) !3
       !inext=testGraph%getCCWMostVert(1,3) !2
       !inext=testGraph%getCCWMostVert(3,2) !1
@@ -123,7 +114,7 @@ PROGRAM testGeom_Poly
       !inext=testGraph%getCWMostVert(1,2) !3
       !inext=testGraph%getCWMostVert(2,3) !1
       !inext=testGraph%getCWMostVert(3,1) !2
-      
+
       CALL testPolyType%set(testGraph)
       ASSERT(testPolyType%isinit,'triangle %isinit')
       bool=ALL(testPolyType%vert(1)%coord .APPROXEQA. testCoord(:,1))
@@ -139,7 +130,7 @@ PROGRAM testGeom_Poly
       bool=(testPolyType%centroid%coord(1) .APPROXEQA. 0.0_SRK) .AND. &
         (testPolyType%centroid%coord(2) .APPROXEQA. -1.0_SRK)
       ASSERT(bool,'%centroid')
-      
+
       CALL testGraph%clear()
       CALL testPolyType%clear()
       !Setup test graph - rectangle
@@ -154,7 +145,7 @@ PROGRAM testGeom_Poly
       CALL testGraph%defineEdge(testCoord(:,2),testCoord(:,3))
       CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
       CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,1))
-      
+
       CALL testPolyType%set(testGraph)
       ASSERT(testPolyType%isinit,'rectangle %isinit')
       bool=ALL(testPolyType%vert(1)%coord .APPROXEQA. testCoord(:,1))
@@ -190,7 +181,7 @@ PROGRAM testGeom_Poly
       CALL refRect%centroid%init(COORD=(/-0.5_SRK,1.0_SRK/))
       bool=(testPolyType == refRect)
       ASSERT(bool,'== rectangle')
-      
+
       CALL testGraph%clear()
       CALL testPolyType%clear()
       !Setup test graph - square with a full circle
@@ -214,7 +205,7 @@ PROGRAM testGeom_Poly
         testCoord(:,4),c0,SQRT(8.0_SRK))
       CALL testGraph%defineQuadraticEdge(testCoord(:,4), &
         testCoord(:,1),c0,SQRT(8.0_SRK))
-      
+
       CALL testPolyType%set(testGraph)
       ASSERT(testPolyType%isinit,'rectangle %isinit')
       bool=ALL(testPolyType%vert(1)%coord .APPROXEQA. testCoord(:,1))
@@ -245,7 +236,7 @@ PROGRAM testGeom_Poly
       bool=(testPolyType%centroid%coord(1) .APPROXEQA. 0.0_SRK) .AND. &
         (testPolyType%centroid%coord(2) .APPROXEQA. 0.0_SRK)
       ASSERT(bool,'%centroid')
-      
+
       !CALL testGraph%clear()
       !CALL testPolyType%clear()
       !!Setup test graph - square with a half circle
@@ -282,7 +273,7 @@ PROGRAM testGeom_Poly
       !  (/2.0_SRK,0.0_SRK,2.0_SRK/))
       !ASSERT(bool,'square-quad %quadEdge(:,3)')
       !ASSERT(testPolyType%area .APPROXEQA. 16.0_SRK+TWOPI,'%area')
-      
+
       CALL testGraph%clear()
       CALL testPolyType%clear()
       !Setup test graph - square with a circle to subtract
@@ -376,7 +367,7 @@ PROGRAM testGeom_Poly
       INTEGER(SIK) :: i,inext
       REAL(SRK) :: testCoord(2,9),c0(2),r
       TYPE(PolygonType) :: testPoly2,testPoly3,testPoly4
-      
+
       !Case 1, subtract itself
       !Setup test graph - quadralateral
       CALL testGraph%clear()
@@ -399,7 +390,7 @@ PROGRAM testGeom_Poly
       ASSERT(testPolyType%area .APPROXEQA. 20.0_SRK,'%area')
       bool=ALL(testPolyType%centroid%coord .APPROXEQA. (/0.0_SRK,0.5_SRK/))
       ASSERT(bool,'%centroid')
-      
+
       !Case 4, subtract a valid subregion
       CALL testGraph%clear()
       !Setup test graph - isosceles triangle
@@ -413,7 +404,7 @@ PROGRAM testGeom_Poly
       CALL testGraph%defineEdge(testCoord(:,2),testCoord(:,3))
       CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,1))
       CALL testPoly2%set(testGraph)
-      
+
       !Triangle is fully inside quadralateral
       ASSERTFAIL(testPoly2%isinit,'%isinit')
       CALL testPolyType%subtractSubVolume(testPoly2)
@@ -426,7 +417,7 @@ PROGRAM testGeom_Poly
       testPolyType%centroid%coord(2)=0.5_SRK
       CALL testPolyType%subRegions%clear()
       testPolyType%subRegions => NULL()
-      
+
       !Case 2, subtract a rectangle that shares an edge with the polygon
       CALL testPoly2%clear()
       CALL testGraph%clear()
@@ -448,7 +439,7 @@ PROGRAM testGeom_Poly
       ASSERTFAIL(testPoly2%isinit,'%isinit')
       CALL testPolyType%subtractSubVolume(testPoly2)
       ASSERT(.NOT.ASSOCIATED(testPolyType%subRegions),'%subRegions')
-      
+
       !Case 8, subtracting a rectangle that intersects with other subregions
       CALL testGraph%clear()
       !Setup test graph - rectangle
@@ -467,7 +458,7 @@ PROGRAM testGeom_Poly
       CALL testPolyType%subtractSubVolume(testPoly4)
       bool=.NOT.ASSOCIATED(testPolyType%subRegions%nextPoly)
       ASSERT(bool,'%subRegions%nextPoly')
-      
+
       !Case 6, subtracting a smaller rectangle within a larger subregions
       !Reinit base polygon
       CALL testGraph%clear()
@@ -508,7 +499,7 @@ PROGRAM testGeom_Poly
       ASSERT(testPolyType%area .APPROXEQA. 18.0_SRK,'%area')
       bool=ALL(testPolyType%centroid%coord .APPROXEQA. (/0.0_SRK,0.3888888888888889_SRK/))
       ASSERT(bool,'%centroid')
-      
+
       !Setup test graph - rectangle
       CALL testGraph%clear()
       testCoord(:,1)=(/-0.5_SRK,1.1_SRK/)
@@ -526,7 +517,7 @@ PROGRAM testGeom_Poly
       ASSERTFAIL(testPoly3%isinit,'%isinit')
       CALL testPolyType%subtractSubVolume(testPoly3)
       ASSERT(.NOT.ASSOCIATED(testPolyType%subRegions%nextPoly),'%subRegions%nextPoly')
-      
+
       !Case 9, subtracting a larger rectangle over a two smaller subregions
       CALL testPoly3%clear()
       CALL testGraph%clear()
@@ -550,7 +541,7 @@ PROGRAM testGeom_Poly
       ASSERT(testPolyType%area .APPROXEQA. 17.0_SRK,'%area')
       bool=ALL(testPolyType%centroid%coord .APPROXEQA. (/0.0_SRK,0.4411764705882353_SRK/))
       ASSERT(bool,'%centroid')
-      
+
       CALL testGraph%clear()
       !Setup test graph - rectangle
       testCoord(:,1)=(/-1.5_SRK,-1.25_SRK/)
@@ -572,7 +563,7 @@ PROGRAM testGeom_Poly
       ASSERT(testPolyType%area .APPROXEQA. 8.0_SRK,'%area')
       bool=ALL(testPolyType%centroid%coord .APPROXEQA. (/0.0_SRK,0.125_SRK/))
       ASSERT(bool,'%centroid')
-      
+
       CALL testPoly2%clear()
       CALL testPolyType%clear()
     ENDSUBROUTINE testSubtractSubVol
@@ -583,7 +574,7 @@ PROGRAM testGeom_Poly
       REAL(SRK) :: testCoord(2,9),c0(2),r
       TYPE(PointType) :: point
       TYPE(PolygonType),TARGET :: testPoly2,testPoly3,testPoly4
-      
+
       !Case 1, subtract itself
       !Setup test graph - quadralateral
       CALL testGraph%clear()
@@ -606,7 +597,7 @@ PROGRAM testGeom_Poly
       ASSERT(testPolyType%area .APPROXEQA. 20.0_SRK,'%area')
       bool=ALL(testPolyType%centroid%coord .APPROXEQA. (/0.0_SRK,0.5_SRK/))
       ASSERT(bool,'%centroid')
-      
+
       !Case 4, subtract a valid subregion
       CALL testGraph%clear()
       !Setup test graph - isosceles triangle
@@ -623,11 +614,11 @@ PROGRAM testGeom_Poly
       CALL testGraph%defineQuadraticEdge(testCoord(:,1), &
         testCoord(:,2),c0,SQRT(5.0_SRK))
       CALL testPoly2%set(testGraph)
-      
+
       !Triangle is fully inside quadralateral
       ASSERTFAIL(testPoly2%isinit,'%isinit')
       testPolyType%subregions => testPoly2
-      
+
       !Outer surfaces
       CALL point%clear()
       CALL point%init(DIM=2,X=-2.0_SRK,Y=0.0_SRK)
@@ -670,7 +661,7 @@ PROGRAM testGeom_Poly
       ASSERT(testPolyType%onSurface(testPolyType%vert(2)),'North-West Corner')
       ASSERT(testPolyType%onSurface(testPolyType%vert(3)),'North-East Corner')
       ASSERT(testPolyType%onSurface(testPolyType%vert(4)),'South-East Corner')
-      
+
       !Sub-region tests.
       CALL point%clear()
       CALL point%init(DIM=2,X=-0.3333333333333333_SRK,Y=1.0_SRK)
@@ -712,7 +703,7 @@ PROGRAM testGeom_Poly
       REAL(SRK) :: testCoord(2,9),c0(2),r
       TYPE(PointType) :: point
       TYPE(PolygonType),TARGET :: testPoly2,testPoly3
-      
+
       COMPONENT_TEST('Triangle')
       CALL testPolyType%clear()
       !Setup test graph - isosceles triangle
@@ -725,7 +716,7 @@ PROGRAM testGeom_Poly
       CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
       CALL testGraph%defineEdge(testCoord(:,2),testCoord(:,3))
       CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,1))
-      
+
       CALL testPolyType%set(testGraph)
       ASSERTFAIL(testPolyType%isinit,'%isinit')
       CALL point%clear()
@@ -1098,9 +1089,9 @@ PROGRAM testGeom_Poly
 
       !Test rodlet 2
       c0=(/-0.64833500000000022_SRK,0.33537071428571341_SRK/)
-      testCoord(:,1)=(/-0.82359500000000019_SRK,0.33537071428571341_SRK/)     
-      testCoord(:,2)=(/-0.64833500000000022_SRK,0.51063071428571338_SRK/)     
-      testCoord(:,3)=(/-0.47307500000000025_SRK,0.33537071428571341_SRK/)     
+      testCoord(:,1)=(/-0.82359500000000019_SRK,0.33537071428571341_SRK/)
+      testCoord(:,2)=(/-0.64833500000000022_SRK,0.51063071428571338_SRK/)
+      testCoord(:,3)=(/-0.47307500000000025_SRK,0.33537071428571341_SRK/)
       testCoord(:,4)=(/-0.64833500000000022_SRK,0.16011071428571341_SRK/)
       CALL testGraph%clear()
       DO i=1,4
@@ -1127,7 +1118,7 @@ PROGRAM testGeom_Poly
       REAL(SRK) :: testCoord(2,9),c0(2),r
       TYPE(PointType) :: point
       TYPE(PolygonType) :: testPoly2,testPoly3
-      
+
       !Setup test graph - isosceles triangle
       testCoord(:,1)=(/-1.0_SRK,-1.0_SRK/)
       testCoord(:,2)=(/1.0_SRK,-1.0_SRK/)
@@ -1140,7 +1131,7 @@ PROGRAM testGeom_Poly
       CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,1))
       CALL testPolyType%set(testGraph)
       ASSERTFAIL(testPolyType%isinit,'%isinit')
-      
+
       CALL testGraph%clear()
       testCoord(:,1)=(/-0.5_SRK,-0.5_SRK/)
       testCoord(:,2)=(/0.5_SRK,-0.5_SRK/)
@@ -1156,7 +1147,7 @@ PROGRAM testGeom_Poly
       ASSERT(testPolyType%boundsPoly(testPoly2),'Small triangle in bigger one')
       ASSERT(.NOT.testPoly2%boundsPoly(testPolyType),'Big triangle not in smaller one')
       CALL testPoly2%clear()
-      
+
       CALL testGraph%clear()
       testCoord(:,1)=(/-1.0_SRK,2.0_SRK/)
       testCoord(:,2)=(/1.0_SRK,2.0_SRK/)
@@ -1172,7 +1163,7 @@ PROGRAM testGeom_Poly
       ASSERT(.NOT.testPolyType%boundsPoly(testPoly2),'line-line intersection')
       ASSERT(.NOT.testPoly2%boundsPoly(testPolyType),'No points inside')
       CALL testPoly2%clear()
-      
+
       !Setup test graph - quadralateral with quadratic edge
       CALL testGraph%clear()
       CALL testPolyType%clear()
@@ -1207,7 +1198,7 @@ PROGRAM testGeom_Poly
         testCoord(:,7),c0,SQRT(5.0_SRK))
       CALL testPolyType%set(testGraph)
       ASSERTFAIL(testPolyType%isinit,'%isinit')
-      
+
       CALL testGraph%clear()
       !Setup test graph - square with a full circle
       testCoord(:,1)=(/-1.5_SRK,-1.5_SRK/)
@@ -1235,7 +1226,7 @@ PROGRAM testGeom_Poly
       ASSERT(.NOT.testPolyType%boundsPoly(testPoly2),'circle-circle intersection')
       ASSERT(.NOT.testPoly2%boundsPoly(testPolyType),'No points inside')
       CALL testPoly2%clear()
-      
+
       CALL testGraph%clear()
       !Setup test graph - square with a east face circle
       testCoord(:,1)=(/2.1_SRK,2.1_SRK/)
@@ -1257,7 +1248,7 @@ PROGRAM testGeom_Poly
       ASSERT(.NOT.testPolyType%boundsPoly(testPoly2),'circle-line intersection')
       ASSERT(.NOT.testPoly2%boundsPoly(testPolyType),'No points inside')
       CALL testPoly2%clear()
-      
+
       CALL testGraph%clear()
       !Setup test graph - square
       testCoord(:,1)=(/-1.5_SRK,-1.5_SRK/)
@@ -1277,7 +1268,7 @@ PROGRAM testGeom_Poly
       ASSERT(.NOT.testPolyType%boundsPoly(testPoly2),'line-circle intersection')
       ASSERT(.NOT.testPoly2%boundsPoly(testPolyType),'No points inside')
       CALL testPoly2%clear()
-      
+
       CALL testGraph%clear()
       CALL testPolyType%clear()
       CALL point%clear()
@@ -1552,7 +1543,7 @@ PROGRAM testGeom_Poly
       INTEGER(SIK) :: i
       REAL(SRK) :: testCoord(2,9),c0(2),r
       TYPE(LineType) :: line
-      
+
       !Setup test graph - quadralateral with quadratic edge
       CALL testGraph%clear()
       CALL testPolyType%clear()
@@ -1588,7 +1579,7 @@ PROGRAM testGeom_Poly
       CALL line%p2%init(COORD=(/-5.0_SRK,2.5_SRK/))
       ASSERT(.NOT.testPolyType%doesLineIntersect(line),'non-intersection')
       CALL line%clear()
-      
+
       CALL testGraph%clear()
       CALL testPolyType%clear()
     ENDSUBROUTINE testDoesLineIntersect
@@ -1598,7 +1589,7 @@ PROGRAM testGeom_Poly
       INTEGER(SIK) :: i
       REAL(SRK) :: testCoord(2,9),c0(2),r
       TYPE(PolygonType) :: testPoly2
-      
+
       !Setup test graph - quadralateral with quadratic edge
       CALL testGraph%clear()
       CALL testPolyType%clear()
@@ -1621,7 +1612,7 @@ PROGRAM testGeom_Poly
         testCoord(:,3),c0,SQRT(5.0_SRK))
       CALL testPolyType%set(testGraph)
       ASSERTFAIL(testPolyType%isinit,'%isinit')
-      
+
       CALL testGraph%clear()
       CALL testPoly2%clear()
       testCoord(:,1)=(/0.0_SRK,-4.0_SRK/)
@@ -1637,10 +1628,10 @@ PROGRAM testGeom_Poly
       CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,1))
       CALL testPoly2%set(testGraph)
       ASSERTFAIL(testPoly2%isinit,'%isinit')
-      
+
       ASSERT(testPolyType%doesPolyIntersect(testPoly2),'intersect poly line-line')
       ASSERT(testPoly2%doesPolyIntersect(testPolyType),'reverse intersect poly line-line')
-      
+
       CALL testGraph%clear()
       CALL testPoly2%clear()
       testCoord(:,1)=(/-3.2_SRK,-2.0_SRK/)
@@ -1656,10 +1647,10 @@ PROGRAM testGeom_Poly
       CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,1))
       CALL testPoly2%set(testGraph)
       ASSERTFAIL(testPoly2%isinit,'%isinit')
-      
+
       ASSERT(testPolyType%doesPolyIntersect(testPoly2),'intersect poly line-circle')
       ASSERT(testPoly2%doesPolyIntersect(testPolyType),'reverse intersect poly line-circle')
-      
+
       CALL testGraph%clear()
       CALL testPoly2%clear()
       testCoord(:,1)=(/0.0_SRK,-5.0_SRK/)
@@ -1678,10 +1669,10 @@ PROGRAM testGeom_Poly
         testCoord(:,3),c0,SQRT(5.0_SRK))
       CALL testPoly2%set(testGraph)
       ASSERTFAIL(testPoly2%isinit,'%isinit')
-      
+
       ASSERT(testPolyType%doesPolyIntersect(testPoly2),'intersect poly circle-line')
       ASSERT(testPoly2%doesPolyIntersect(testPolyType),'reverse intersect poly circle-line')
-      
+
       CALL testGraph%clear()
       CALL testPoly2%clear()
       testCoord(:,1)=(/-3.2_SRK,-2.0_SRK/)
@@ -1700,10 +1691,10 @@ PROGRAM testGeom_Poly
         testCoord(:,4),c0,SQRT(4.25_SRK))
       CALL testPoly2%set(testGraph)
       ASSERTFAIL(testPoly2%isinit,'%isinit')
-      
+
       ASSERT(testPolyType%doesPolyIntersect(testPoly2),'intersect poly circle-circle')
       ASSERT(testPoly2%doesPolyIntersect(testPolyType),'reverse intersect poly circle-circle')
-      
+
       CALL testGraph%clear()
       CALL testPoly2%clear()
       testCoord(:,1)=(/-32.0_SRK,-2.0_SRK/)
@@ -1719,7 +1710,7 @@ PROGRAM testGeom_Poly
       CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,1))
       CALL testPoly2%set(testGraph)
       ASSERTFAIL(testPoly2%isinit,'%isinit')
-      
+
       ASSERT(.NOT.testPolyType%doesPolyIntersect(testPoly2),'non-intersection')
       ASSERT(.NOT.testPoly2%doesPolyIntersect(testPolyType),'non-intersection')
 
@@ -1834,7 +1825,7 @@ PROGRAM testGeom_Poly
       bool=(points(2)%coord(1) .APPROXEQA. 0.66666666666666667_SRK) .AND. &
         (points(2)%coord(2) .APPROXEQA. 0.0_SRK)
       ASSERT(bool,'point 2 intersection v/e')
-      
+
       line%p1%coord=(/-1.0_SRK,-1.0_SRK/)
       line%p2%coord=(/0.0_SRK,-1.0_SRK/)
       CALL testPolyType%intersectLine(line,points)
@@ -1959,7 +1950,7 @@ PROGRAM testGeom_Poly
       TYPE(PointType) :: point1,point2
       TYPE(PointType),ALLOCATABLE :: points(:)
       TYPE(PolygonType) :: testPoly
-      
+
       CALL testGraph%clear()
       CALL testPolyType%clear()
       testCoord(:,1)=(/-2.0_SRK,-2.0_SRK/)
@@ -2011,19 +2002,19 @@ PROGRAM testGeom_Poly
         (points(4)%coord(2) .APPROXEQA. 2.0_SRK)
       ASSERT(bool,'%point(4)')
       bool=(points(5)%coord(1) .APPROXEQA. 4.0_SRK-SQRT(8.0_SRK)) .AND. &
-        (points(5)%coord(2) .APPROXEQA. 0.0_SRK)      
+        (points(5)%coord(2) .APPROXEQA. 0.0_SRK)
       ASSERT(bool,'%point(5)')
       bool=(points(6)%coord(1) .APPROXEQA. -1.0*SQRT(5.0_SRK)) .AND. &
         (points(6)%coord(2) .APPROXEQA. 0.0_SRK)
       ASSERT(bool,'%point(6)')
-      
+
     ENDSUBROUTINE testIntersectPoly
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testIsCircle()
       INTEGER(SIK) :: i,inext
       REAL(SRK) :: testCoord(2,9),c0(2),r
-    
+
       !Test 4 point polygon-circle
       CALL testGraph%clear()
       CALL testPolyType%clear()
@@ -2044,10 +2035,10 @@ PROGRAM testGeom_Poly
       ASSERTFAIL(testPolyType%isinit,'%isinit')
       ASSERT(testPolyType%isCircle(),'%isCircle, 4-point')
       CALL testPolyType%clear()
-      
+
       !Test uninitialized poly
       ASSERT(.NOT.testPolyType%isCircle(),'%isCircle, uninit')
-      
+
       !Test 3 point polygon-circle
       testCoord(:,1)=(/3.0_SRK,-4.0_SRK/)
       testCoord(:,2)=(/-3.0_SRK,-4.0_SRK/)
@@ -2063,7 +2054,7 @@ PROGRAM testGeom_Poly
       ASSERTFAIL(testPolyType%isinit,'%isinit')
       ASSERT(testPolyType%isCircle(),'%isCircle, 3-point')
       CALL testPolyType%clear()
-      
+
       !Test non-circle quad edges
       CALL testGraph%clear()
       c0=(/0.0_SRK,0.0_SRK/)
@@ -2082,7 +2073,7 @@ PROGRAM testGeom_Poly
       CALL testGraph%clear()
       ASSERTFAIL(testPolyType%isinit,'%isinit')
       ASSERT(.NOT.testPolyType%isCircle(),'%isCircle, missing quad edge')
-      
+
       !Test non-circle, no quad edges
       CALL testGraph%clear()
       c0=(/0.0_SRK,0.0_SRK/)
@@ -2107,7 +2098,7 @@ PROGRAM testGeom_Poly
     SUBROUTINE testGetRadius()
       INTEGER(SIK) :: i,inext
       REAL(SRK) :: testCoord(2,9),c0(2),r
-    
+
       !Test 4 point polygon-circle
       CALL testGraph%clear()
       c0=(/0.0_SRK,0.0_SRK/)
@@ -2127,10 +2118,10 @@ PROGRAM testGeom_Poly
       ASSERTFAIL(testPolyType%isinit,'%isinit')
       ASSERT(testPolyType%getRadius() .APPROXEQA. 2.0_SRK,'%getRadius, 4-point')
       CALL testPolyType%clear()
-      
+
       !Test uninitialized poly
       ASSERT(testPolyType%getRadius() .APPROXEQA. 0.0_SRK,'%getRadius, uninit')
-      
+
       !Test 3 point polygon-circle
       testCoord(:,1)=(/3.0_SRK,-4.0_SRK/)
       testCoord(:,2)=(/-3.0_SRK,-4.0_SRK/)
@@ -2146,7 +2137,7 @@ PROGRAM testGeom_Poly
       ASSERTFAIL(testPolyType%isinit,'%isinit')
       ASSERT(testPolyType%getRadius() .APPROXEQA. 5.0_SRK,'%getRadius, 3-point')
       CALL testPolyType%clear()
-      
+
       !Test non-circle quad edges
       CALL testGraph%clear()
       c0=(/0.0_SRK,0.0_SRK/)
@@ -2165,7 +2156,7 @@ PROGRAM testGeom_Poly
       CALL testGraph%clear()
       ASSERTFAIL(testPolyType%isinit,'%isinit')
       ASSERT(testPolyType%getRadius() .APPROXEQA. 0.0_SRK,'%getRadius, missing quad edge')
-      
+
       !Test non-circle, no quad edges
       CALL testGraph%clear()
       c0=(/0.0_SRK,0.0_SRK/)
@@ -2298,7 +2289,7 @@ PROGRAM testGeom_Poly
       TYPE(PointType) :: point1,point2
       TYPE(GraphType) :: testGraph2
       TYPE(PolygonType) :: testPoly2
-      
+
       CALL testGraph%clear()
       CALL testPolyType%clear()
       testCoord(:,1)=(/-3.0_SRK,3.0_SRK/)
@@ -2334,7 +2325,7 @@ PROGRAM testGeom_Poly
       ASSERTFAIL(testPolyType%isinit,'%isinit')
       CALL testPolyType%generateGraph(testGraph2)
       ASSERT(testGraph == testGraph2,'Graph is equal')
-      
+
       !Setup subregion graph - square with a full circle
       CALL testGraph2%clear()
       testCoord(:,1)=(/-1.0_SRK,-1.0_SRK/)/SQRT(2.0_SRK)
@@ -2362,7 +2353,7 @@ PROGRAM testGeom_Poly
       ASSERTFAIL(testPoly2%isinit,'%isinit')
       CALL testPolyType%subtractSubVolume(testPoly2)
       ASSERTFAIL(ASSOCIATED(testPolyType%subRegions),'%subRegions')
-      
+
       !Add the subregion graph to the main reference graph
       DO i=1,4
         CALL testGraph%insertVertex(testCoord(:,i))
@@ -2379,7 +2370,7 @@ PROGRAM testGeom_Poly
         testCoord(:,4),c0,1.0_SRK)
       CALL testGraph%defineQuadraticEdge(testCoord(:,4), &
         testCoord(:,1),c0,1.0_SRK)
-      
+
       CALL testPolyType%generateGraph(testGraph2)
       ASSERT(testGraph == testGraph2,'Graph with sub-region is equal')
       CALL testGraph%clear()
@@ -2391,7 +2382,7 @@ PROGRAM testGeom_Poly
       INTEGER(SIK) :: i
       REAL(SRK) :: testCoord(2,9),c0(2),r
       TYPE(PolygonType) :: testPoly2,testPoly3
-      
+
       CALL testPolyType%clear()
       CALL testGraph%clear()
       !Setup test graph - isosceles triangle
@@ -2404,7 +2395,7 @@ PROGRAM testGeom_Poly
       CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
       CALL testGraph%defineEdge(testCoord(:,2),testCoord(:,3))
       CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,1))
-      
+
       CALL testPolyType%set(testGraph)
       !Set up polygon by hand
       testPoly2%isinit=.TRUE.
@@ -2420,7 +2411,7 @@ PROGRAM testGeom_Poly
       testPoly2%edge(:,3)=(/3,1/)
       testPoly2%area=3.0_SRK
       CALL testPoly2%centroid%init(COORD=(/0.0_SRK,-1.0_SRK/))
-      
+
       ASSERT(testPolyType == testPoly2,'triangle poly')
       testPoly2%isinit=.FALSE.
       ASSERT(.NOT.(testPolyType == testPoly2),'triangle poly, %isinit')
@@ -2436,9 +2427,9 @@ PROGRAM testGeom_Poly
       testPoly2%area=3.0_SRK
       testPoly2%centroid%coord(1)=-1.0_SRK
       ASSERT(.NOT.(testPolyType == testPoly2),'triangle poly, %centroid%coord(1)')
-      
+
       CALL testPoly2%clear()
-      
+
       CALL testGraph%clear()
       CALL testPolyType%clear()
       c0=(/0.0_SRK,0.0_SRK/)
@@ -2454,7 +2445,7 @@ PROGRAM testGeom_Poly
       CALL testGraph%defineQuadraticEdge(testCoord(:,3),testCoord(:,4),c0,2.0_SRK)
       CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,1))
       CALL testPolyType%set(testGraph)
-      
+
       !Set up polygon by hand
       testPoly2%isinit=.TRUE.
       testPoly2%nvert=4
@@ -2477,7 +2468,7 @@ PROGRAM testGeom_Poly
       testPoly2%quad2edge(2)=3
       testPoly2%area=2.0_SRK*PI+4.0_SRK
       CALL testPoly2%centroid%init(COORD=(/0.0_SRK,0.0_SRK/))
-      
+
       ASSERT(testPolyType == testPoly2,'quad edge poly')
       testPoly2%isinit=.FALSE.
       ASSERT(.NOT.(testPolyType == testPoly2),'quad edge poly, %isinit')
@@ -2506,7 +2497,7 @@ PROGRAM testGeom_Poly
       testPoly2%centroid%coord(1)=-1.0_SRK
       ASSERT(.NOT.(testPolyType == testPoly2),'quad edge poly, %centroid%coord(1)')
       testPoly2%centroid%coord(1)=0.0_SRK
-      
+
       CALL testGraph%clear()
       c0=(/0.0_SRK,0.0_SRK/)
       testCoord(:,1)=(/-1.0_SRK,0.0_SRK/)
@@ -2522,9 +2513,9 @@ PROGRAM testGeom_Poly
       CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,1))
       CALL testPoly3%set(testGraph)
       CALL testGraph%clear()
-      
+
       CALL testPolyType%subtractSubVolume(testPoly3)
-      
+
       ALLOCATE(testPoly2%subRegions)
       testPoly2%subRegions%isinit=.TRUE.
       testPoly2%subRegions%nvert=4
@@ -2541,15 +2532,15 @@ PROGRAM testGeom_Poly
       testPoly2%subRegions%area=2.0_SRK
       testPoly2%area=testPoly2%area-2.0_SRK
       CALL testPoly2%subRegions%centroid%init(COORD=(/0.0_SRK,0.0_SRK/))
-      
+
       ASSERT(testPolyType == testPoly2,'subregion poly')
-      
+
       CALL testPoly3%clear()
       CALL testPoly2%subRegions%clear()
       DEALLOCATE(testPoly2%subRegions)
       CALL testPoly2%clear()
       CALL testPolyType%clear()
-      
+
     ENDSUBROUTINE testEquivalence
 !
 ENDPROGRAM testGeom_Poly

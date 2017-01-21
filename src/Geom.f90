@@ -1,21 +1,12 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!> @brief The global geometry module, collecting all public members of 
+!> @brief The global geometry module, collecting all public members of
 !> other geometry modules. This is the module that should be used elsewhere
 !> in the code.
 !>
@@ -29,7 +20,7 @@
 !>
 !> @author Brendan Kochunas
 !>    @date 5/26/2011
-!> 
+!>
 !> @par Revisions:
 !> (06/01/2015) - Brendan Kochunas
 !>   - Added parameter list based constructors
@@ -109,7 +100,7 @@ MODULE Geom
     REAL(SRK),ALLOCATABLE :: c0(:),c1(:)
     TYPE(PointType) :: p0,p1
 
-    CALL params%get('LineGeom -> StartPoint',c0)            
+    CALL params%get('LineGeom -> StartPoint',c0)
     CALL params%get('LineGeom -> EndPoint',c1)
     IF(ALLOCATED(c0)) CALL p0%init(COORD=c0)
     IF(ALLOCATED(c1)) CALL p1%init(COORD=c1)
@@ -128,7 +119,7 @@ MODULE Geom
     REAL(SRK),ALLOCATABLE :: c0(:),v0(:)
     TYPE(PointType) :: p0
 
-    CALL params%get('PlaneGeom -> Point',c0)            
+    CALL params%get('PlaneGeom -> Point',c0)
     CALL params%get('PlaneGeom -> NormalVector',v0)
     IF(ALLOCATED(c0)) CALL p0%init(COORD=c0)
     IF(ALLOCATED(v0)) CALL geom%set(v0,p0)
@@ -151,7 +142,7 @@ MODULE Geom
     CALL params%get('BoxGeom -> Vector2',v2)
     CALL params%get('BoxGeom -> ExtentVector',extent)
     IF(params%has('BoxGeom -> Vector3')) &
-      CALL params%get('BoxGeom -> Vector3',v3)  
+      CALL params%get('BoxGeom -> Vector3',v3)
     IF(ALLOCATED(c0)) CALL p0%init(COORD=c0)
     IF(ALLOCATED(v3)) THEN
       CALL geom%set(p0,extent,v1,v2,v3)
@@ -181,7 +172,7 @@ MODULE Geom
       CALL params%get('CircleGeom -> StartingAngle',theta1)
     IF(params%has('CircleGeom -> StoppingAngle')) &
       CALL params%get('CircleGeom -> StoppingAngle',theta2)
-    
+
     IF(ALLOCATED(c0)) CALL p0%init(COORD=c0)
     CALL geom%set(p0,r,theta1,theta2)
   ENDSUBROUTINE newGeom_circ
@@ -194,11 +185,11 @@ MODULE Geom
   SUBROUTINE newGeom_cyl(params,geom)
     TYPE(ParamType),INTENT(IN) :: params
     TYPE(CylinderType),INTENT(INOUT) :: geom
-    
+
     REAL(SRK) :: r,theta1,theta2
     REAL(SRK),ALLOCATABLE :: c0(:),c1(:)
     TYPE(PointType) :: p0,p1
-    
+
     theta1=0.0_SRK
     theta2=TWOPI
     CALL params%get('CylinderGeom -> Radius',r)
@@ -208,7 +199,7 @@ MODULE Geom
       CALL params%get('CylinderGeom -> StartingAngle',theta1)
     IF(params%has('CylinderGeom -> StoppingAngle')) &
       CALL params%get('CylinderGeom -> StoppingAngle',theta2)
-    
+
     IF(ALLOCATED(c0)) CALL p0%init(COORD=c0)
     IF(ALLOCATED(c1)) CALL p1%init(COORD=c1)
     CALL geom%set(p0,p1,r,theta1,theta2)

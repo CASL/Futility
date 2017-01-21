@@ -1,11 +1,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!  This manuscript has been authored by UT-Battelle, LLC, under Contract       !
-!  No. DE-AC0500OR22725 with the U.S. Department of Energy. The United States  !
-!  Government retains and the publisher, by accepting the article for          !
-!  publication, acknowledges that the United States Government retains a       !
-!  non-exclusive, paid-up, irrevocable, world-wide license to publish or       !
-!  reproduce the published form of this manuscript, or allow others to do so,  !
-!  for the United States Government purposes.                                  !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testAndersonAcceleration
 #include "UnitTest.h"
