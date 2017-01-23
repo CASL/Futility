@@ -1,31 +1,22 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testGeom_CircCyl
 #include "UnitTest.h"
-  USE ISO_FORTRAN_ENV  
+  USE ISO_FORTRAN_ENV
   USE UnitTest
   USE IntrType
   USE Constants_Conversion
   USE ParameterLists
   USE Geom
-  
+
   IMPLICIT NONE
-  
+
   TYPE(PointType) :: point,point1,point2,point3,point4
   TYPE(PointType) :: points(2),points2(2),points3(2)
   TYPE(LineType) :: line1
@@ -34,11 +25,11 @@ PROGRAM testGeom_CircCyl
   INTEGER(SIK) :: i,ioerr
   REAL(SRK) :: d,s(2)
   LOGICAL(SBK) :: bool
-  
+
   CREATE_TEST('Test Geom')
   CALL eParams%setQuietMode(.TRUE.)
   CALL eParams%setStopOnError(.FALSE.)
-  
+
   REGISTER_SUBTEST('Test Circle and Cylinder',TestCircle_and_Cylinder)
   REGISTER_SUBTEST('circle%onSurface',testOnSurface)
   FINALIZE_TEST()
@@ -46,7 +37,7 @@ PROGRAM testGeom_CircCyl
 !===============================================================================
   CONTAINS
 !
-!-------------------------------------------------------------------------------    
+!-------------------------------------------------------------------------------
     SUBROUTINE TestCircle_and_Cylinder
       TYPE(ParamType) :: params
 !
@@ -86,11 +77,11 @@ PROGRAM testGeom_CircCyl
       CALL circle1%clear()
       CALL line1%clear()
       CALL circle1%intersectLine(line1,point2,point3) !Test bad input
-      
+
       !Reference circle for other tests
       CALL point%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
       CALL circle1%set(point,0.4225_SRK)
-      
+
       !Test disjoint (pointing away)
       CALL line1%p1%init(DIM=2,X=0.3_SRK,Y=0.4_SRK)
       CALL line1%p2%init(DIM=2,X=0.4_SRK,Y=0.5_SRK)
@@ -98,7 +89,7 @@ PROGRAM testGeom_CircCyl
       bool = .NOT.(point2%dim /= -2 .OR. point3%dim /= -2)
       ASSERT(bool, 'circle1%intersectLine(...) (disjoint')
       CALL line1%clear()
-      
+
       !Test disjoint (ray misses)
       CALL line1%p1%init(DIM=2,X=-0.4_SRK,Y=0.4_SRK)
       CALL line1%p2%init(DIM=2,X=-0.1_SRK,Y=0.5_SRK)
@@ -106,7 +97,7 @@ PROGRAM testGeom_CircCyl
       bool = .NOT.(point2%dim /= -2 .OR. point3%dim /= -2)
       ASSERT(bool, 'circle1%intersectLine(...) (disjoint 1)')
       CALL line1%clear()
-      
+
       !Test tangent
       CALL line1%p1%init(DIM=2,X=0.4225_SRK,Y=0.4_SRK)
       CALL line1%p2%init(DIM=2,X=0.4225_SRK,Y=-0.5_SRK)
@@ -114,7 +105,7 @@ PROGRAM testGeom_CircCyl
       bool = .NOT.(point2%dim /= -3 .OR. point3%dim /= -3)
       ASSERT(bool, 'circle1%intersectLine(...) (tangent)')
       CALL line1%clear()
-      
+
       !Test totally inside
       CALL line1%p1%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
       CALL line1%p2%init(DIM=2,X=0.1_SRK,Y=0.1_SRK)
@@ -122,7 +113,7 @@ PROGRAM testGeom_CircCyl
       bool = .NOT.(point2%dim /= 0 .OR. point3%dim /= 0)
       ASSERT(bool, 'circle1%intersectLine(...) (inside)')
       CALL line1%clear()
-      
+
       !Test 1 point of intersection
       CALL line1%p1%init(DIM=2,X=-0.4_SRK,Y=-0.3_SRK)
       CALL line1%p2%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
@@ -131,7 +122,7 @@ PROGRAM testGeom_CircCyl
                    .OR. point3%dim /= 0)
       ASSERT(bool, 'circle1%intersectLine(...) (1-point)')
       CALL line1%clear()
-      
+
       !Test 2 points of intersection
       CALL line1%p1%init(DIM=2,X=-0.3_SRK,Y=-0.4_SRK)
       CALL line1%p2%init(DIM=2,X=0.4_SRK,Y=0.2_SRK)
@@ -150,7 +141,7 @@ PROGRAM testGeom_CircCyl
       CALL point%init(DIM=2,X=-1.0_SRK,Y=ZERO)
       CALL circle1%set(point,0.5_SRK)
       CALL point%clear()
-      CALL point%init(DIM=2,X=1.0_SRK,Y=ZERO)      
+      CALL point%init(DIM=2,X=1.0_SRK,Y=ZERO)
       CALL circle2%set(point,0.5_SRK)
       CALL circle1%intersectCircle(circle2,point2,point3)
       bool=(point2%dim == -2 .AND. point3%dim == -2)
@@ -162,7 +153,7 @@ PROGRAM testGeom_CircCyl
       CALL point%init(DIM=2,X=-1.0_SRK,Y=ZERO)
       CALL circle1%set(point,1.0_SRK)
       CALL point%clear()
-      CALL point%init(DIM=2,X=1.0_SRK,Y=ZERO)      
+      CALL point%init(DIM=2,X=1.0_SRK,Y=ZERO)
       CALL circle2%set(point,1.0_SRK)
       CALL circle1%intersectCircle(circle2,point2,point3)
       bool=(point2%dim == -3 .AND. point3%dim == -3)
@@ -174,7 +165,7 @@ PROGRAM testGeom_CircCyl
       CALL point%init(DIM=2,X=ZERO,Y=ZERO)
       CALL circle1%set(point,1.0_SRK)
       CALL point%clear()
-      CALL point%init(DIM=2,X=ZERO,Y=1.5_SRK)      
+      CALL point%init(DIM=2,X=ZERO,Y=1.5_SRK)
       CALL circle2%set(point,1.0_SRK)
       CALL circle1%intersectCircle(circle2,point2,point3)
       bool=(point2%dim == 2 .AND. point3%dim == 2)
@@ -189,7 +180,7 @@ PROGRAM testGeom_CircCyl
       CALL point%init(DIM=2,X=1.5_SRK,Y=1.5_SRK)
       CALL circle1%set(point,1.5_SRK)
       CALL point%clear()
-      CALL point%init(DIM=2,X=2.5_SRK,Y=2.5_SRK)      
+      CALL point%init(DIM=2,X=2.5_SRK,Y=2.5_SRK)
       CALL circle2%set(point,SQRT(3.25_SRK-2.0_SRK*SQRT(2.0_SRK)))
       CALL circle1%intersectCircle(circle2,point2,point3)
       bool=(point2%dim == 2 .AND. point3%dim == 2)
@@ -203,7 +194,7 @@ PROGRAM testGeom_CircCyl
       CALL point%init(DIM=2,X=ZERO,Y=ZERO)
       CALL circle1%set(point,1.5_SRK)
       CALL point%clear()
-      CALL point%init(DIM=2,X=0.4_SRK,Y=0.25_SRK)      
+      CALL point%init(DIM=2,X=0.4_SRK,Y=0.25_SRK)
       CALL circle2%set(point,0.1_SRK)
       CALL circle1%intersectCircle(circle2,point2,point3)
       bool=(point2%dim == -4 .AND. point3%dim == -4)
@@ -212,7 +203,7 @@ PROGRAM testGeom_CircCyl
       CALL point%clear()
       CALL circle1%clear()
       CALL circle2%clear()
-      CALL point%init(DIM=2,X=0.4_SRK,Y=0.25_SRK)      
+      CALL point%init(DIM=2,X=0.4_SRK,Y=0.25_SRK)
       CALL circle2%set(point,0.1_SRK)
       CALL circle1%intersectCircle(circle2,point2,point3)
       bool=(point2%dim == -1 .AND. point3%dim == -1)
@@ -360,7 +351,7 @@ PROGRAM testGeom_CircCyl
             point3%dim == -3 .AND. ALLOCATED(point3%coord) .AND. &
             point4%dim == -3 .AND. ALLOCATED(point4%coord))
       ASSERT(bool,'arc test 13 (arc crosses theta=0 (thetastt > thetastp))')
-      
+
 !Test hasPoint
       COMPONENT_TEST('Circle %inside()')
       !Full circle
@@ -382,7 +373,7 @@ PROGRAM testGeom_CircCyl
       CALL point%clear()
       CALL point%init(COORD=(/0.0_SRK,0.0_SRK/))
       ASSERT(.NOT.circle2%inside(point),'Circle external point')
-      
+
       !Test half circle
       CALL point%clear()
       CALL point%init(COORD=(/-1.5_SRK,-1.5_SRK/))
@@ -400,7 +391,7 @@ PROGRAM testGeom_CircCyl
       CALL point%clear()
       CALL point%init(COORD=(/-1.4_SRK,-1.6_SRK/))
       ASSERT(.NOT.circle2%inside(point),'Circle Arc external point, Q4')
-      
+
       !Test 1st and 2nd quadrant arc
       CALL point%clear()
       CALL point%init(COORD=(/-1.5_SRK,1.5_SRK/))
@@ -424,7 +415,7 @@ PROGRAM testGeom_CircCyl
       CALL point%clear()
       CALL point%init(COORD=(/-1.4_SRK,1.4_SRK/))
       ASSERT(.NOT.circle2%inside(point),'Circle Arc external point Q4')
-      
+
       !Test "reflex" arc
       CALL point%clear()
       CALL point%init(COORD=(/1.5_SRK,-1.5_SRK/))
@@ -445,7 +436,7 @@ PROGRAM testGeom_CircCyl
       CALL point%clear()
       CALL point%init(COORD=(/1.7_SRK,-1.6_SRK/))
       ASSERT(.NOT.circle2%inside(point),'Circle Arc external point Q4')
-      
+
       !Test 3rd and 4th quadrant arc
       CALL point%clear()
       CALL point%init(COORD=(/1.5_SRK,1.5_SRK/))
@@ -490,7 +481,7 @@ PROGRAM testGeom_CircCyl
       cylinder1%axis%p1=point2
       cylinder1%axis%p2=point2
       cylinder1%r=1.0_SRK
-      
+
       CALL cylinder1%clear()
       bool = .NOT.(cylinder1%r /= 0.0_SRK .OR. cylinder1%axis%p1%dim /= 0 .OR. &
                    ALLOCATED(cylinder1%axis%p1%coord) .OR. cylinder1%axis%p2%dim /= 0 .OR. &
@@ -523,7 +514,7 @@ PROGRAM testGeom_CircCyl
                    ANY(cylinder1%axis%p2%coord /= (/0.1_SRK,0.2_SRK,1.3_SRK/)))
       ASSERT(bool, 'cylinder1%set(...)')
       CALL cylinder1%clear()
-      
+
 !
 !Test intersection
       COMPONENT_TEST('Cylinder %intersectLine()')
@@ -531,14 +522,14 @@ PROGRAM testGeom_CircCyl
       CALL cylinder1%intersectLine(line1,point2,point3)
       bool = .NOT.(point2%dim /= -1 .OR. point3%dim /= -1)
       ASSERT(bool, 'cylinder1%intersectLine(...) (bad input)')
-      
+
       !Reference cylinder for all cases.
       cylinder1%r=1.0_SRK
       CALL cylinder1%axis%p1%init(DIM=3,X=0.1_SRK,Y=-0.2_SRK,Z=0.0_SRK)
       CALL cylinder1%axis%p2%init(DIM=3,X=0.1_SRK,Y=-0.2_SRK,Z=1.0_SRK)
       cylinder1%thetastp=TWOPI
       CALL line1%clear()
-      
+
       !Test totally "outside" P-surface
       CALL line1%p1%init(DIM=3,X=2.0_SRK,Y=2.0_SRK,Z=-0.5_SRK)
       CALL line1%p2%init(DIM=3,X=2.0_SRK,Y=2.0_SRK,Z=-1.5_SRK)
@@ -546,7 +537,7 @@ PROGRAM testGeom_CircCyl
       bool = .NOT.(point2%dim /= -2 .OR. point3%dim /= -2)
       ASSERT(bool, 'cylinder1%intersectLine(...) (outside P)')
       CALL line1%clear()
-      
+
       !Test totally "outside" Q-surface
       CALL line1%p1%init(DIM=3,X=2.0_SRK,Y=2.0_SRK,Z=10.5_SRK)
       CALL line1%p2%init(DIM=3,X=2.0_SRK,Y=2.0_SRK,Z=1.5_SRK)
@@ -554,7 +545,7 @@ PROGRAM testGeom_CircCyl
       bool = .NOT.(point2%dim /= -3 .OR. point3%dim /= -3)
       ASSERT(bool, 'cylinder1%intersectLine(...) (outside Q)')
       CALL line1%clear()
-      
+
       !Test parallel on cylinder surface
       CALL line1%p1%init(DIM=3,X=0.1_SRK,Y=-1.2_SRK,Z=-0.5_SRK)
       CALL line1%p2%init(DIM=3,X=0.1_SRK,Y=-1.2_SRK,Z=1.5_SRK)
@@ -562,7 +553,7 @@ PROGRAM testGeom_CircCyl
       bool = .NOT.(point2%dim /= -4 .OR. point3%dim /= -4)
       ASSERT(bool, 'cylinder1%intersectLine(...) (parallel on surface)')
       CALL line1%clear()
-      
+
       !Test parallel outside radius
       CALL line1%p1%init(DIM=3,X=2.0_SRK,Y=2.0_SRK,Z=-0.5_SRK)
       CALL line1%p2%init(DIM=3,X=2.0_SRK,Y=2.0_SRK,Z=1.5_SRK)
@@ -570,7 +561,7 @@ PROGRAM testGeom_CircCyl
       bool = .NOT.(point2%dim /= -5 .OR. point3%dim /= -5)
       ASSERT(bool, 'cylinder1%intersectLine(...) (parallel outside)')
       CALL line1%clear()
-      
+
       !Test parallel totally inside
       CALL line1%p1%init(DIM=3,X=0.0_SRK,Y=0.2_SRK,Z=0.2_SRK)
       CALL line1%p2%init(DIM=3,X=0.0_SRK,Y=0.2_SRK,Z=0.5_SRK)
@@ -578,7 +569,7 @@ PROGRAM testGeom_CircCyl
       bool = .NOT.(point2%dim /= -6 .OR. point3%dim /= -6)
       ASSERT(bool, 'cylinder1%intersectLine(...) (parallel inside)')
       CALL line1%clear()
-      
+
       !Test parallel both intersections
       CALL line1%p1%init(DIM=3,X=0.0_SRK,Y=0.0_SRK,Z=-0.5_SRK)
       CALL line1%p2%init(DIM=3,X=0.0_SRK,Y=0.0_SRK,Z=1.5_SRK)
@@ -587,7 +578,7 @@ PROGRAM testGeom_CircCyl
                    ANY(.NOT.(point3%coord .APPROXEQ. (/0.0_SRK,0.0_SRK,1.0_SRK/))))
       ASSERT(bool, 'cylinder1%intersectLine(...) (parallel inside)')
       CALL line1%clear()
-      
+
       !Test not parallel and tangent
       CALL line1%p1%init(DIM=3,X=-1.1_SRK,Y=-1.2_SRK,Z=0.5_SRK)
       CALL line1%p2%init(DIM=3,X=1.1_SRK,Y=-1.2_SRK,Z=0.5_SRK)
@@ -595,7 +586,7 @@ PROGRAM testGeom_CircCyl
       bool = .NOT.(point2%dim /= -7 .OR. point3%dim /= -7)
       ASSERT(bool, 'cylinder1%intersectLine(...) (disjoint)')
       CALL line1%clear()
-      
+
       !Test not parallel and disjoint
       CALL line1%p1%init(DIM=3,X=0.1_SRK,Y=2.0_SRK,Z=0.5_SRK)
       CALL line1%p2%init(DIM=3,X=1.1_SRK,Y=2.0_SRK,Z=1.5_SRK)
@@ -603,7 +594,7 @@ PROGRAM testGeom_CircCyl
       bool = .NOT.(point2%dim /= -8 .OR. point3%dim /= -8)
       ASSERT(bool, 'cylinder1%intersectLine(...) (disjoint)')
       CALL line1%clear()
-      
+
       !Test not parallel outside no intersection
       CALL line1%p1%init(DIM=3,X=0.1_SRK,Y=2.0_SRK,Z=-0.5_SRK)
       CALL line1%p2%init(DIM=3,X=0.1_SRK,Y=2.5_SRK,Z=1.5_SRK)
@@ -611,7 +602,7 @@ PROGRAM testGeom_CircCyl
       bool = .NOT.(point2%dim /= 0 .OR. point3%dim /= 0)
       ASSERT(bool, 'cylinder1%intersectLine(...) (no intersection)')
       CALL line1%clear()
-      
+
       !Test not parallel intersection with P-surface only
       CALL line1%p1%init(DIM=3,X=0.0_SRK,Y=0.0_SRK,Z=-0.5_SRK)
       CALL line1%p2%init(DIM=3,X=0.0_SRK,Y=0.5_SRK,Z=0.5_SRK)
@@ -620,7 +611,7 @@ PROGRAM testGeom_CircCyl
                    point3%dim /= 0)
       ASSERT(bool, 'cylinder1%intersectLine(...) (P-surface)')
       CALL line1%clear()
-      
+
       !Test not parallel intersection with Q-surface only
       CALL line1%p1%init(DIM=3,X=0.0_SRK,Y=0.0_SRK,Z=0.5_SRK)
       CALL line1%p2%init(DIM=3,X=0.0_SRK,Y=0.5_SRK,Z=1.5_SRK)
@@ -629,7 +620,7 @@ PROGRAM testGeom_CircCyl
                    point2%dim /= 0)
       ASSERT(bool, 'cylinder1%intersectLine(...) (Q-surface)')
       CALL line1%clear()
-      
+
       !Test not parallel intersection with both PQ-surfaces
       CALL line1%p1%init(DIM=3,X=0.0_SRK,Y=0.5_SRK,Z=1.5_SRK)
       CALL line1%p2%init(DIM=3,X=0.0_SRK,Y=0.0_SRK,Z=-0.5_SRK)
@@ -638,7 +629,7 @@ PROGRAM testGeom_CircCyl
                    ANY(.NOT.(point2%coord .APPROXEQ. (/0.0_SRK,0.375_SRK,1.0_SRK/))))
       ASSERT(bool, 'cylinder1%intersectLine(...) (QP-surface)')
       CALL line1%clear()
-      
+
       !Test not parallel intersection with cylinder once
       CALL line1%p1%init(DIM=3,X=0.0_SRK,Y=0.0_SRK,Z=0.5_SRK)
       CALL line1%p2%init(DIM=3,X=0.0_SRK,Y=1.5_SRK,Z=0.5_SRK)
@@ -647,7 +638,7 @@ PROGRAM testGeom_CircCyl
                    point2%dim /= 0)
       ASSERT(bool, 'cylinder1%intersectLine(...)')
       CALL line1%clear()
-      
+
       !Test not parallel intersection with cylinder twice
       CALL line1%p1%init(DIM=3,X=0.0_SRK,Y=-1.5_SRK,Z=0.5_SRK)
       CALL line1%p2%init(DIM=3,X=0.0_SRK,Y=1.5_SRK,Z=0.5_SRK)
@@ -656,7 +647,7 @@ PROGRAM testGeom_CircCyl
                    ANY(.NOT.(point2%coord .APPROXEQ. (/0.0_SRK,-1.194987437106620_SRK,0.5_SRK/))))
       ASSERT(bool, 'cylinder1%intersectLine(...) (cyl-2)')
 
-      
+
       !Test missed intersection for slice of cylinder
       !cylinder1%thetastt=HALFPI
       !cylinder1%thetastp=PI
@@ -667,14 +658,14 @@ PROGRAM testGeom_CircCyl
       !ASSERT(bool,'cylinder1%intersectLine(...) (arc miss)')
       !FINFO() point2%dim, point2%coord
       !FINFO() point3%dim, point3%coord
-      
+
       !Test for equivalence operation (implicitly tests assignment operation)
       COMPONENT_TEST('OPERATOR(==)')
       cylinder2=cylinder1
       ASSERT(cylinder1 == cylinder2,'cylinder equivalence')
       cylinder2%r=0.5_SRK
       ASSERT(.NOT.(cylinder1 == cylinder2),'cylinder non-equivalence')
-      
+
 #ifdef __GFORTRAN__
       WRITE(*,*) 'ELEMENTAL METHODS FOR NON-SCALAR BASE OBJECTS NOT YET SUPPORTED BY COMPILER'
 #else
@@ -731,7 +722,7 @@ PROGRAM testGeom_CircCyl
       cylinders(1)%axis%p2=point2
       cylinders(1)%r=1.0_SRK
       cylinders(2)=cylinders(1)
-      
+
       CALL cylinders%clear()
       bool = .NOT.(cylinders(1)%r /= 0.0_SRK .OR. cylinders(1)%axis%p1%dim /= 0 .OR. &
                    ALLOCATED(cylinders(1)%axis%p1%coord) .OR. cylinders(1)%axis%p2%dim /= 0 .OR. &

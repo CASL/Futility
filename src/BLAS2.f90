@@ -1,19 +1,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief A utility module providing an interface to Level 2 BLAS functionality.
 !>
@@ -44,7 +35,7 @@ MODULE BLAS2
 !
 ! List of Public items
   PUBLIC :: BLAS_matvec
-  
+
   !> @brief Generic interface to the Level 2 BLAS routine ???MV
   !>
   !> It provides an interface to routines that perform one of the following
@@ -52,7 +43,7 @@ MODULE BLAS2
   !> y <- alpha*A*x+beta*y
   !> y <- alpha*A^T*x+beta*y
   !> x <- A*x
-  !> x <- A^T*x    
+  !> x <- A^T*x
   !>
   !> Simplified interfaces are also provided so that dimension information
   !> is optional as is @c alpha and @c beta.  If these inputs are excluded, a different
@@ -185,10 +176,10 @@ MODULE BLAS2
     MODULE PROCEDURE scsrmv_noBETANNZ
     !> @copybrief BLAS2::scsrmv_noBETANNNZ @copydetails BLAS2::scsrmv_noBETANNNZ
     MODULE PROCEDURE scsrmv_noBETANNNZ
-    !> @copybrief BLAS2::scsrmv_noALPHABETA 
+    !> @copybrief BLAS2::scsrmv_noALPHABETA
     !> @copydetails BLAS2::scsrmv_noALPHABETA
     MODULE PROCEDURE scsrmv_noALPHABETA
-    !> @copybrief BLAS2::scsrmv_noALPHABETANNZ 
+    !> @copybrief BLAS2::scsrmv_noALPHABETANNZ
     !> @copydetails BLAS2::scsrmv_noALPHABETANNZ
     MODULE PROCEDURE scsrmv_noALPHABETANNZ
     !> @copybrief BLAS2::scsrmv_noALPHABETANNNZ
@@ -213,10 +204,10 @@ MODULE BLAS2
     MODULE PROCEDURE dcsrmv_noBETANNZ
     !> @copybrief BLAS2::dcsrmv_noBETANNNZ @copydetails BLAS2::dcsrmv_noBETANNNZ
     MODULE PROCEDURE dcsrmv_noBETANNNZ
-    !> @copybrief BLAS2::dcsrmv_noALPHABETA 
+    !> @copybrief BLAS2::dcsrmv_noALPHABETA
     !> @copydetails BLAS2::dcsrmv_noALPHABETA
     MODULE PROCEDURE dcsrmv_noALPHABETA
-    !> @copybrief BLAS2::dcsrmv_noALPHABETANNZ 
+    !> @copybrief BLAS2::dcsrmv_noALPHABETANNZ
     !> @copydetails BLAS2::dcsrmv_noALPHABETANNZ
     MODULE PROCEDURE dcsrmv_noALPHABETANNZ
     !> @copybrief BLAS2::dcsrmv_noALPHABETANNNZ
@@ -235,7 +226,7 @@ MODULE BLAS2
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine computes a matrix vector product for a general matrix.
-!> @param trans single character input indicating whether or not to use the 
+!> @param trans single character input indicating whether or not to use the
 !>        transpose of @c A
 !> @param m the size of the first dimension of @c A (number of rows)
 !> @param n the size of the second dimension of @c A (number of columns)
@@ -288,12 +279,12 @@ MODULE BLAS2
       INTEGER(SIK) :: i,ix,iy,j,jx,jy,kx,ky,lenx,leny,mleny
       REAL(SSK) :: tmp
       INTRINSIC MAX,MOD
-    
+
       IF(m > 0 .AND. n > 0 .AND. incx /= 0 .AND. incy /= 0 .AND. &
         .NOT.(alpha == 0.0_SSK .AND. beta == 1.0_SSK) .AND. lda >= MAX(1,m) .AND. &
           (trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
             trans == 'n' .OR. trans == 'N')) THEN
-      
+
         IF(trans == 'n' .OR. trans == 'N') THEN
           lenx=n
           leny=m
@@ -303,19 +294,19 @@ MODULE BLAS2
           leny=n
           ltrans=.TRUE.
         ENDIF
-      
+
         IF(incx > 0) THEN
           kx=1
         ELSE
           kx=1-(lenx-1)*incx
         ENDIF
-      
+
         IF(incy > 0) THEN
           ky=1
         ELSE
           ky=1-(leny-1)*incy
         ENDIF
-      
+
         !Compute y=beta*y
         IF(beta /= 1.0_SSK) THEN
           IF(incy == 1) THEN
@@ -361,9 +352,9 @@ MODULE BLAS2
                 iy=iy+incy
               ENDDO
             ENDIF
-          ENDIF  
+          ENDIF
         ENDIF
-      
+
         IF(alpha /= 0.0_SSK) THEN
           IF(ltrans) THEN
             !Compute y=alpha*A^T*x+y
@@ -424,7 +415,7 @@ MODULE BLAS2
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS2::sgemv_all "sgemv_all" for when the user
 !> does not want to supply @c lda, @c incx, and @c incy.
-!> @param trans single character input indicating whether or not to use the 
+!> @param trans single character input indicating whether or not to use the
 !>        transpose of @c A
 !> @param m the size of the first dimension of @c A (number of rows)
 !> @param n the size of the second dimension of @c A (number of columns)
@@ -435,7 +426,7 @@ MODULE BLAS2
 !> @param y the single-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c m and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::sgemv_all "sgemv_all".
 !>
     PURE SUBROUTINE sgemv_tmnaaxby(trans,m,n,alpha,a,x,beta,y)
@@ -470,7 +461,7 @@ MODULE BLAS2
 !> @param y the single-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c m and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::sgemv_all "sgemv_all".
 !>
     PURE SUBROUTINE sgemv_mnaaxby(m,n,alpha,a,x,beta,y)
@@ -488,7 +479,7 @@ MODULE BLAS2
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS2::sgemv_all "sgemv_all" for when the user
 !> does not want to supply @c m, @c lda, @c incx, and @c incy.
-!> @param trans single character input indicating whether or not to use the 
+!> @param trans single character input indicating whether or not to use the
 !>        transpose of @c A
 !> @param n the dimension of @c A (square)
 !> @param alpha the single-precision scalar used to scale @c A
@@ -498,7 +489,7 @@ MODULE BLAS2
 !> @param y the single-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c n and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::sgemv_all "sgemv_all".
 !>
     PURE SUBROUTINE sgemv_tnaaxby(trans,n,alpha,a,x,beta,y)
@@ -524,7 +515,7 @@ MODULE BLAS2
 !> @param y the single-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c n and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::sgemv_all "sgemv_all".
 !>
     PURE SUBROUTINE sgemv_naaxby(n,alpha,a,x,beta,y)
@@ -548,7 +539,7 @@ MODULE BLAS2
 !> @param y the single-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c m and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::sgemv_all "sgemv_all". Note that @c A need not be square.
 !>
     PURE SUBROUTINE sgemv_aaxby(alpha,a,x,beta,y)
@@ -566,7 +557,7 @@ MODULE BLAS2
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine computes a matrix vector product for a general matrix.
-!> @param trans single character input indicating whether or not to use the 
+!> @param trans single character input indicating whether or not to use the
 !>        transpose of @c A
 !> @param m the size of the first dimension of @c A (number of rows)
 !> @param n the size of the second dimension of @c A (number of columns)
@@ -582,7 +573,7 @@ MODULE BLAS2
 !> routine that gets called, otherwise the supplied code is used. It is based on
 !> the code available on http://netlib.org/blas/sgemv.f but has some minor
 !> modifications. The application of @c beta to @c y is explicitly unrolled and
-!> the error checking is somewhat different. @c alpha is assumed to be 1 so 
+!> the error checking is somewhat different. @c alpha is assumed to be 1 so
 !> the multiplication operation is explicitly removed from the loops.
 !>
     PURE SUBROUTINE sgemv_noalpha(trans,m,n,a,lda,x,incx,beta,y,incy)
@@ -618,8 +609,8 @@ MODULE BLAS2
       INTEGER(SIK) :: i,ix,iy,j,jx,jy,kx,ky,lenx,leny,mleny
       REAL(SSK) :: tmp
       INTRINSIC MAX,MOD
-    
-      IF(m > 0 .AND. n > 0 .AND. incx /= 0 .AND. incy /= 0 .AND. & 
+
+      IF(m > 0 .AND. n > 0 .AND. incx /= 0 .AND. incy /= 0 .AND. &
           lda >= MAX(1,m) .AND. (trans == 't' .OR. trans == 'T' .OR. &
             trans == 'c' .OR. trans == 'C' .OR. trans == 'n' .OR. trans == 'N')) THEN
         IF(trans == 'n' .OR. trans == 'N') THEN
@@ -631,19 +622,19 @@ MODULE BLAS2
           leny=n
           ltrans=.TRUE.
         ENDIF
-      
+
         IF(incx > 0) THEN
           kx=1
         ELSE
           kx=1-(lenx-1)*incx
         ENDIF
-      
+
         IF(incy > 0) THEN
           ky=1
         ELSE
           ky=1-(leny-1)*incy
         ENDIF
-      
+
         !Compute y=beta*y
         IF(beta /= 1.0_SSK) THEN
           IF(incy == 1) THEN
@@ -689,9 +680,9 @@ MODULE BLAS2
                 iy=iy+incy
               ENDDO
             ENDIF
-          ENDIF  
+          ENDIF
         ENDIF
-      
+
         IF(ltrans) THEN
           !Compute y=A^T*x+y
           jy=ky
@@ -748,7 +739,7 @@ MODULE BLAS2
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS2::sgemv_noalpha "sgemv_noalpha" for when the user
 !> does not want to supply @c lda, @c incx, and @c incy.
-!> @param trans single character input indicating whether or not to use the 
+!> @param trans single character input indicating whether or not to use the
 !>        transpose of @c A
 !> @param m the size of the first dimension of @c A (number of rows)
 !> @param n the size of the second dimension of @c A (number of columns)
@@ -758,7 +749,7 @@ MODULE BLAS2
 !> @param y the single-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c m and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::sgemv_noalpha "sgemv_noalpha".
 !>
     PURE SUBROUTINE sgemv_tmnaxby(trans,m,n,a,x,beta,y)
@@ -791,7 +782,7 @@ MODULE BLAS2
 !> @param y the single-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c m and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::sgemv_noalpha "sgemv_noalpha".
 !>
     PURE SUBROUTINE sgemv_mnaxby(m,n,a,x,beta,y)
@@ -808,7 +799,7 @@ MODULE BLAS2
 !-------------------------------------------------------------------------------
 !> @brief Subroutines wraps @ref BLAS2::sgemv_noalpha "sgemv_noalpha" for when
 !> the user does not want to supply @c m, @c lda, @c incx, and @c incy.
-!> @param trans single character input indicating whether or not to use the 
+!> @param trans single character input indicating whether or not to use the
 !>        transpose of @c A
 !> @param n the dimension of @c A (square)
 !> @param A the single-precision matrix multiply with @c x
@@ -817,7 +808,7 @@ MODULE BLAS2
 !> @param y the single-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c n and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::sgemv_noalpha "sgemv_noalpha".
 !>
     PURE SUBROUTINE sgemv_tnaxby(trans,n,a,x,beta,y)
@@ -842,7 +833,7 @@ MODULE BLAS2
 !> @param y the single-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c n and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::sgemv_noalpha "sgemv_noalpha".
 !>
     PURE SUBROUTINE sgemv_naxby(n,a,x,beta,y)
@@ -865,7 +856,7 @@ MODULE BLAS2
 !> @param y the single-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c m and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::sgemv_noalpha "sgemv_noalpha". Note that @c A need not be square.
 !>
     PURE SUBROUTINE sgemv_axby(a,x,beta,y)
@@ -882,7 +873,7 @@ MODULE BLAS2
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine computes a matrix vector product for a general matrix.
-!> @param trans single character input indicating whether or not to use the 
+!> @param trans single character input indicating whether or not to use the
 !>        transpose of @c A
 !> @param m the size of the first dimension of @c A (number of rows)
 !> @param n the size of the second dimension of @c A (number of columns)
@@ -933,7 +924,7 @@ MODULE BLAS2
       INTEGER(SIK) :: i,ix,iy,j,jx,jy,kx,ky,lenx,leny
       REAL(SSK) :: tmp
       INTRINSIC MAX,MOD
-    
+
       IF(m > 0 .AND. n > 0 .AND. incx /= 0 .AND. incy /= 0 .AND. &
         alpha /= 0.0_SSK .AND. lda >= MAX(1,m) .AND. (trans == 't' .OR. &
           trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
@@ -947,19 +938,19 @@ MODULE BLAS2
           leny=n
           ltrans=.TRUE.
         ENDIF
-      
+
         IF(incx > 0) THEN
           kx=1
         ELSE
           kx=1-(lenx-1)*incx
         ENDIF
-      
+
         IF(incy > 0) THEN
           ky=1
         ELSE
           ky=1-(leny-1)*incy
         ENDIF
-      
+
         IF(ltrans) THEN
           !Compute y=alpha*A^T*x+y
           jy=ky
@@ -1018,7 +1009,7 @@ MODULE BLAS2
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS2::sgemv_nobeta "sgemv_nobeta" for when the
 !> user does not want to supply @c lda, @c incx, and @c incy.
-!> @param trans single character input indicating whether or not to use the 
+!> @param trans single character input indicating whether or not to use the
 !>        transpose of @c A
 !> @param m the size of the first dimension of @c A (number of rows)
 !> @param n the size of the second dimension of @c A (number of columns)
@@ -1028,7 +1019,7 @@ MODULE BLAS2
 !> @param y the single-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c m and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::sgemv_nobeta "sgemv_nobeta".
 !>
     PURE SUBROUTINE sgemv_tmnaaxy(trans,m,n,alpha,a,x,y)
@@ -1061,7 +1052,7 @@ MODULE BLAS2
 !> @param y the single-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c m and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::sgemv_nobeta "sgemv_nobeta".
 !>
     PURE SUBROUTINE sgemv_mnaaxy(m,n,alpha,a,x,y)
@@ -1078,7 +1069,7 @@ MODULE BLAS2
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS2::sgemv_nobeta "sgemv_nobeta" for when the
 !> user does not want to supply @c m, @c lda, @c incx, and @c incy.
-!> @param trans single character input indicating whether or not to use the 
+!> @param trans single character input indicating whether or not to use the
 !>        transpose of @c A
 !> @param n the dimension of @c A (square)
 !> @param alpha the single-precision scalar used to scale @c A
@@ -1087,7 +1078,7 @@ MODULE BLAS2
 !> @param y the single-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c n and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::sgemv_nobeta "sgemv_nobeta".
 !>
     PURE SUBROUTINE sgemv_tnaaxy(trans,n,alpha,a,x,y)
@@ -1111,7 +1102,7 @@ MODULE BLAS2
 !> @param y the single-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c n and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::sgemv_nobeta "sgemv_nobeta".
 !>
     PURE SUBROUTINE sgemv_naaxy(n,alpha,a,x,y)
@@ -1134,7 +1125,7 @@ MODULE BLAS2
 !> @param y the single-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c m and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::sgemv_nobeta "sgemv_nobeta". Note that @c A need not be square.
 !>
     PURE SUBROUTINE sgemv_aaxy(alpha,a,x,y)
@@ -1151,7 +1142,7 @@ MODULE BLAS2
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine computes a matrix vector product for a general matrix.
-!> @param trans single character input indicating whether or not to use the 
+!> @param trans single character input indicating whether or not to use the
 !>        transpose of @c A
 !> @param m the size of the first dimension of @c A (number of rows)
 !> @param n the size of the second dimension of @c A (number of columns)
@@ -1166,7 +1157,7 @@ MODULE BLAS2
 !> routine that gets called, otherwise the supplied code is used. It is based on
 !> the code available on http://netlib.org/blas/sgemv.f but has some minor
 !> modifications. The application of @c beta to @c y is explicitly unrolled and
-!> the error checking is somewhat different. @c alpha is assumed to be 1 so 
+!> the error checking is somewhat different. @c alpha is assumed to be 1 so
 !> the multiplication operation is explicitly removed from the loops. @c beta
 !> is also assumed to be 1 so its application to @c y is explicitly removed.
 !>
@@ -1202,7 +1193,7 @@ MODULE BLAS2
       INTEGER(SIK) :: i,ix,iy,j,jx,jy,kx,ky,lenx,leny
       REAL(SSK) :: tmp
       INTRINSIC MAX,MOD
-    
+
       IF(m > 0 .AND. n > 0 .AND. incx /= 0 .AND. incy /= 0 .AND. &
         lda >= MAX(1,m) .AND. (trans == 't' .OR. trans == 'T' .OR. &
           trans == 'c' .OR. trans == 'C' .OR. trans == 'n' .OR. trans == 'N')) THEN
@@ -1215,19 +1206,19 @@ MODULE BLAS2
           leny=n
           ltrans=.TRUE.
         ENDIF
-      
+
         IF(incx > 0) THEN
           kx=1
         ELSE
           kx=1-(lenx-1)*incx
         ENDIF
-      
+
         IF(incy > 0) THEN
           ky=1
         ELSE
           ky=1-(leny-1)*incy
         ENDIF
-      
+
         IF(ltrans) THEN
           !Compute y=A^T*x+y
           jy=ky
@@ -1284,7 +1275,7 @@ MODULE BLAS2
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS2::sgemv_noalphabeta "sgemv_noalphabeta"
 !> for when the user does not want to supply @c lda, @c incx, and @c incy.
-!> @param trans single character input indicating whether or not to use the 
+!> @param trans single character input indicating whether or not to use the
 !>        transpose of @c A
 !> @param m the size of the first dimension of @c A (number of rows)
 !> @param n the size of the second dimension of @c A (number of columns)
@@ -1293,7 +1284,7 @@ MODULE BLAS2
 !> @param y the single-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c m and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::sgemv_noalphabeta "sgemv_noalphabeta".
 !>
     PURE SUBROUTINE sgemv_tmnaxy(trans,m,n,a,x,y)
@@ -1325,7 +1316,7 @@ MODULE BLAS2
 !> @param y the single-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c m and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::sgemv_noalphabeta "sgemv_noalphabeta".
 !>
     PURE SUBROUTINE sgemv_mnaxy(m,n,a,x,y)
@@ -1341,7 +1332,7 @@ MODULE BLAS2
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS2::sgemv_noalphabeta "sgemv_noalphabeta"
 !> for when the user does not want to supply @c m, @c lda, @c incx, and @c incy.
-!> @param trans single character input indicating whether or not to use the 
+!> @param trans single character input indicating whether or not to use the
 !>        transpose of @c A
 !> @param n the dimension of @c A (square)
 !> @param A the single-precision matrix multiply with @c x
@@ -1349,7 +1340,7 @@ MODULE BLAS2
 !> @param y the single-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c n and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::sgemv_noalphabeta "sgemv_noalphabeta".
 !>
     PURE SUBROUTINE sgemv_tnaxy(trans,n,a,x,y)
@@ -1372,7 +1363,7 @@ MODULE BLAS2
 !> @param y the single-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c n and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::sgemv_noalphabeta "sgemv_noalphabeta".
 !>
     PURE SUBROUTINE sgemv_naxy(n,a,x,y)
@@ -1386,14 +1377,14 @@ MODULE BLAS2
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS2::sgemv_noalphabeta "sgemv_noalphabeta"
-!> for when the user does not want to supply @c trans, @c m, @c n, @c lda, 
+!> for when the user does not want to supply @c trans, @c m, @c n, @c lda,
 !> @c incx, and @c incy.
 !> @param A the single-precision matrix multiply with @c x
 !> @param x the single-precision vector to multiply with @c A
 !> @param y the single-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c m and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::sgemv_nobeta "sgemv_nobeta". Note that @c A need not be square.
 !>
     PURE SUBROUTINE sgemv_axy(a,x,y)
@@ -1410,13 +1401,13 @@ MODULE BLAS2
 !-------------------------------------------------------------------------------
 !> @brief Subroutine computes a matrix vector product for a general square
 !> matrix.
-!> @param trans single character input indicating whether or not to use the 
+!> @param trans single character input indicating whether or not to use the
 !>        transpose of @c A
 !> @param A the single-precision matrix multiply with @c x
 !> @param x the single-precision vector to multiply with @c A
 !>
 !> This routine is a very specific form of the matrix-vector multiply where
-!> @c A is square and @c x is the output argument. The increments over the 
+!> @c A is square and @c x is the output argument. The increments over the
 !> elements are 1.
 !>
     PURE SUBROUTINE sgemv_tax(trans,a,x)
@@ -1425,7 +1416,7 @@ MODULE BLAS2
       REAL(SSK),INTENT(INOUT) :: x(:)
       INTEGER(SIK) :: n,m,i,j
       REAL(SSK) :: tmp,b(SIZE(x))
-    
+
       n=SIZE(a,DIM=1)
       IF(n > 0 .AND. SIZE(a,DIM=2) == n .AND. SIZE(x) == n .AND. &
           (trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. &
@@ -1450,7 +1441,7 @@ MODULE BLAS2
             ENDDO
             b(j)=tmp
           ENDDO
-          
+
           !Copy b to x
           IF(n > 100) THEN
             !Inlining BLAS_copy and unrolling 4 times
@@ -1486,7 +1477,7 @@ MODULE BLAS2
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine computes a matrix vector product for a general matrix.
-!> @param trans single character input indicating whether or not to use the 
+!> @param trans single character input indicating whether or not to use the
 !>        transpose of @c A
 !> @param m the size of the first dimension of @c A (number of rows)
 !> @param n the size of the second dimension of @c A (number of columns)
@@ -1539,12 +1530,12 @@ MODULE BLAS2
       INTEGER(SIK) :: i,ix,iy,j,jx,jy,kx,ky,lenx,leny,mleny
       REAL(SDK) :: tmp
       INTRINSIC MAX,MOD
-    
+
       IF(m > 0 .AND. n > 0 .AND. incx /= 0 .AND. incy /= 0 .AND. &
         .NOT.(alpha == 0.0_SDK .AND. beta == 1.0_SDK) .AND. lda >= MAX(1,m) .AND. &
           (trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
             trans == 'n' .OR. trans == 'N')) THEN
-      
+
         IF(trans == 'n' .OR. trans == 'N') THEN
           lenx=n
           leny=m
@@ -1554,19 +1545,19 @@ MODULE BLAS2
           leny=n
           ltrans=.TRUE.
         ENDIF
-      
+
         IF(incx > 0) THEN
           kx=1
         ELSE
           kx=1-(lenx-1)*incx
         ENDIF
-      
+
         IF(incy > 0) THEN
           ky=1
         ELSE
           ky=1-(leny-1)*incy
         ENDIF
-      
+
         !Compute y=beta*y
         IF(beta /= 1.0_SDK) THEN
           IF(incy == 1) THEN
@@ -1612,9 +1603,9 @@ MODULE BLAS2
                 iy=iy+incy
               ENDDO
             ENDIF
-          ENDIF  
+          ENDIF
         ENDIF
-      
+
         IF(alpha /= 0.0_SDK) THEN
           IF(ltrans) THEN
             !Compute y=alpha*A^T*x+y
@@ -1675,7 +1666,7 @@ MODULE BLAS2
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS2::dgemv_all "dgemv_all" for when the user
 !> does not want to supply @c lda, @c incx, and @c incy.
-!> @param trans single character input indicating whether or not to use the 
+!> @param trans single character input indicating whether or not to use the
 !>        transpose of @c A
 !> @param m the size of the first dimension of @c A (number of rows)
 !> @param n the size of the second dimension of @c A (number of columns)
@@ -1686,7 +1677,7 @@ MODULE BLAS2
 !> @param y the double-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c m and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::dgemv_all "dgemv_all".
 !>
     PURE SUBROUTINE dgemv_tmnaaxby(trans,m,n,alpha,a,x,beta,y)
@@ -1721,7 +1712,7 @@ MODULE BLAS2
 !> @param y the double-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c m and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::dgemv_all "dgemv_all".
 !>
     PURE SUBROUTINE dgemv_mnaaxby(m,n,alpha,a,x,beta,y)
@@ -1739,7 +1730,7 @@ MODULE BLAS2
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS2::dgemv_all "dgemv_all" for when the user
 !> does not want to supply @c m, @c lda, @c incx, and @c incy.
-!> @param trans single character input indicating whether or not to use the 
+!> @param trans single character input indicating whether or not to use the
 !>        transpose of @c A
 !> @param n the dimension of @c A (square)
 !> @param alpha the double-precision scalar used to scale @c A
@@ -1749,7 +1740,7 @@ MODULE BLAS2
 !> @param y the double-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c n and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::dgemv_all "dgemv_all".
 !>
     PURE SUBROUTINE dgemv_tnaaxby(trans,n,alpha,a,x,beta,y)
@@ -1775,7 +1766,7 @@ MODULE BLAS2
 !> @param y the double-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c n and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::dgemv_all "dgemv_all".
 !>
     PURE SUBROUTINE dgemv_naaxby(n,alpha,a,x,beta,y)
@@ -1799,7 +1790,7 @@ MODULE BLAS2
 !> @param y the double-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c m and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::dgemv_all "dgemv_all". Note that @c A need not be square.
 !>
     PURE SUBROUTINE dgemv_aaxby(alpha,a,x,beta,y)
@@ -1817,7 +1808,7 @@ MODULE BLAS2
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine computes a matrix vector product for a general matrix.
-!> @param trans single character input indicating whether or not to use the 
+!> @param trans single character input indicating whether or not to use the
 !>        transpose of @c A
 !> @param m the size of the first dimension of @c A (number of rows)
 !> @param n the size of the second dimension of @c A (number of columns)
@@ -1833,7 +1824,7 @@ MODULE BLAS2
 !> routine that gets called, otherwise the supplied code is used. It is based on
 !> the code available on http://netlib.org/blas/dgemv.f but has some minor
 !> modifications. The application of @c beta to @c y is explicitly unrolled and
-!> the error checking is somewhat different. @c alpha is assumed to be 1 so 
+!> the error checking is somewhat different. @c alpha is assumed to be 1 so
 !> the multiplication operation is explicitly removed from the loops.
 !>
     PURE SUBROUTINE dgemv_noalpha(trans,m,n,a,lda,x,incx,beta,y,incy)
@@ -1869,8 +1860,8 @@ MODULE BLAS2
       INTEGER(SIK) :: i,ix,iy,j,jx,jy,kx,ky,lenx,leny,mleny
       REAL(SDK) :: tmp
       INTRINSIC MAX,MOD
-    
-      IF(m > 0 .AND. n > 0 .AND. incx /= 0 .AND. incy /= 0 .AND. & 
+
+      IF(m > 0 .AND. n > 0 .AND. incx /= 0 .AND. incy /= 0 .AND. &
           lda >= MAX(1,m) .AND. (trans == 't' .OR. trans == 'T' .OR. &
             trans == 'c' .OR. trans == 'C' .OR. trans == 'n' .OR. trans == 'N')) THEN
         IF(trans == 'n' .OR. trans == 'N') THEN
@@ -1882,19 +1873,19 @@ MODULE BLAS2
           leny=n
           ltrans=.TRUE.
         ENDIF
-      
+
         IF(incx > 0) THEN
           kx=1
         ELSE
           kx=1-(lenx-1)*incx
         ENDIF
-      
+
         IF(incy > 0) THEN
           ky=1
         ELSE
           ky=1-(leny-1)*incy
         ENDIF
-      
+
         !Compute y=beta*y
         IF(beta /= 1.0_SDK) THEN
           IF(incy == 1) THEN
@@ -1940,9 +1931,9 @@ MODULE BLAS2
                 iy=iy+incy
               ENDDO
             ENDIF
-          ENDIF  
+          ENDIF
         ENDIF
-      
+
         IF(ltrans) THEN
           !Compute y=A^T*x+y
           jy=ky
@@ -1999,7 +1990,7 @@ MODULE BLAS2
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS2::dgemv_noalpha "dgemv_noalpha" for when the user
 !> does not want to supply @c lda, @c incx, and @c incy.
-!> @param trans single character input indicating whether or not to use the 
+!> @param trans single character input indicating whether or not to use the
 !>        transpose of @c A
 !> @param m the size of the first dimension of @c A (number of rows)
 !> @param n the size of the second dimension of @c A (number of columns)
@@ -2009,7 +2000,7 @@ MODULE BLAS2
 !> @param y the double-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c m and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::dgemv_noalpha "dgemv_noalpha".
 !>
     PURE SUBROUTINE dgemv_tmnaxby(trans,m,n,a,x,beta,y)
@@ -2042,7 +2033,7 @@ MODULE BLAS2
 !> @param y the double-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c m and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::dgemv_noalpha "dgemv_noalpha".
 !>
     PURE SUBROUTINE dgemv_mnaxby(m,n,a,x,beta,y)
@@ -2059,7 +2050,7 @@ MODULE BLAS2
 !-------------------------------------------------------------------------------
 !> @brief Subroutines wraps @ref BLAS2::dgemv_noalpha "dgemv_noalpha" for when
 !> the user does not want to supply @c m, @c lda, @c incx, and @c incy.
-!> @param trans single character input indicating whether or not to use the 
+!> @param trans single character input indicating whether or not to use the
 !>        transpose of @c A
 !> @param n the dimension of @c A (square)
 !> @param A the double-precision matrix multiply with @c x
@@ -2068,7 +2059,7 @@ MODULE BLAS2
 !> @param y the double-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c n and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::dgemv_noalpha "dgemv_noalpha".
 !>
     PURE SUBROUTINE dgemv_tnaxby(trans,n,a,x,beta,y)
@@ -2093,7 +2084,7 @@ MODULE BLAS2
 !> @param y the double-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c n and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::dgemv_noalpha "dgemv_noalpha".
 !>
     PURE SUBROUTINE dgemv_naxby(n,a,x,beta,y)
@@ -2116,7 +2107,7 @@ MODULE BLAS2
 !> @param y the double-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c m and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::dgemv_noalpha "dgemv_noalpha". Note that @c A need not be square.
 !>
     PURE SUBROUTINE dgemv_axby(a,x,beta,y)
@@ -2133,7 +2124,7 @@ MODULE BLAS2
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine computes a matrix vector product for a general matrix.
-!> @param trans single character input indicating whether or not to use the 
+!> @param trans single character input indicating whether or not to use the
 !>        transpose of @c A
 !> @param m the size of the first dimension of @c A (number of rows)
 !> @param n the size of the second dimension of @c A (number of columns)
@@ -2184,7 +2175,7 @@ MODULE BLAS2
       INTEGER(SIK) :: i,ix,iy,j,jx,jy,kx,ky,lenx,leny
       REAL(SDK) :: tmp
       INTRINSIC MAX,MOD
-    
+
       IF(m > 0 .AND. n > 0 .AND. incx /= 0 .AND. incy /= 0 .AND. &
         alpha /= 0.0_SDK .AND. lda >= MAX(1,m) .AND. (trans == 't' .OR. &
           trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
@@ -2198,19 +2189,19 @@ MODULE BLAS2
           leny=n
           ltrans=.TRUE.
         ENDIF
-      
+
         IF(incx > 0) THEN
           kx=1
         ELSE
           kx=1-(lenx-1)*incx
         ENDIF
-      
+
         IF(incy > 0) THEN
           ky=1
         ELSE
           ky=1-(leny-1)*incy
         ENDIF
-      
+
         IF(ltrans) THEN
           !Compute y=alpha*A^T*x+y
           jy=ky
@@ -2269,7 +2260,7 @@ MODULE BLAS2
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS2::dgemv_nobeta "dgemv_nobeta" for when the
 !> user does not want to supply @c lda, @c incx, and @c incy.
-!> @param trans single character input indicating whether or not to use the 
+!> @param trans single character input indicating whether or not to use the
 !>        transpose of @c A
 !> @param m the size of the first dimension of @c A (number of rows)
 !> @param n the size of the second dimension of @c A (number of columns)
@@ -2279,7 +2270,7 @@ MODULE BLAS2
 !> @param y the double-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c m and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::dgemv_nobeta "dgemv_nobeta".
 !>
     PURE SUBROUTINE dgemv_tmnaaxy(trans,m,n,alpha,a,x,y)
@@ -2312,7 +2303,7 @@ MODULE BLAS2
 !> @param y the double-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c m and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::dgemv_nobeta "dgemv_nobeta".
 !>
     PURE SUBROUTINE dgemv_mnaaxy(m,n,alpha,a,x,y)
@@ -2329,7 +2320,7 @@ MODULE BLAS2
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS2::dgemv_nobeta "dgemv_nobeta" for when the
 !> user does not want to supply @c m, @c lda, @c incx, and @c incy.
-!> @param trans single character input indicating whether or not to use the 
+!> @param trans single character input indicating whether or not to use the
 !>        transpose of @c A
 !> @param n the dimension of @c A (square)
 !> @param alpha the double-precision scalar used to scale @c A
@@ -2338,7 +2329,7 @@ MODULE BLAS2
 !> @param y the double-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c n and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::dgemv_nobeta "dgemv_nobeta".
 !>
     PURE SUBROUTINE dgemv_tnaaxy(trans,n,alpha,a,x,y)
@@ -2362,7 +2353,7 @@ MODULE BLAS2
 !> @param y the double-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c n and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::dgemv_nobeta "dgemv_nobeta".
 !>
     PURE SUBROUTINE dgemv_naaxy(n,alpha,a,x,y)
@@ -2385,7 +2376,7 @@ MODULE BLAS2
 !> @param y the double-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c m and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::dgemv_nobeta "dgemv_nobeta". Note that @c A need not be square.
 !>
     PURE SUBROUTINE dgemv_aaxy(alpha,a,x,y)
@@ -2402,7 +2393,7 @@ MODULE BLAS2
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine computes a matrix vector product for a general matrix.
-!> @param trans single character input indicating whether or not to use the 
+!> @param trans single character input indicating whether or not to use the
 !>        transpose of @c A
 !> @param m the size of the first dimension of @c A (number of rows)
 !> @param n the size of the second dimension of @c A (number of columns)
@@ -2417,7 +2408,7 @@ MODULE BLAS2
 !> routine that gets called, otherwise the supplied code is used. It is based on
 !> the code available on http://netlib.org/blas/dgemv.f but has some minor
 !> modifications. The application of @c beta to @c y is explicitly unrolled and
-!> the error checking is somewhat different. @c alpha is assumed to be 1 so 
+!> the error checking is somewhat different. @c alpha is assumed to be 1 so
 !> the multiplication operation is explicitly removed from the loops. @c beta
 !> is also assumed to be 1 so its application to @c y is explicitly removed.
 !>
@@ -2453,7 +2444,7 @@ MODULE BLAS2
       INTEGER(SIK) :: i,ix,iy,j,jx,jy,kx,ky,lenx,leny
       REAL(SDK) :: tmp
       INTRINSIC MAX,MOD
-    
+
       IF(m > 0 .AND. n > 0 .AND. incx /= 0 .AND. incy /= 0 .AND. &
         lda >= MAX(1,m) .AND. (trans == 't' .OR. trans == 'T' .OR. &
           trans == 'c' .OR. trans == 'C' .OR. trans == 'n' .OR. trans == 'N')) THEN
@@ -2466,19 +2457,19 @@ MODULE BLAS2
           leny=n
           ltrans=.TRUE.
         ENDIF
-      
+
         IF(incx > 0) THEN
           kx=1
         ELSE
           kx=1-(lenx-1)*incx
         ENDIF
-      
+
         IF(incy > 0) THEN
           ky=1
         ELSE
           ky=1-(leny-1)*incy
         ENDIF
-      
+
         IF(ltrans) THEN
           !Compute y=A^T*x+y
           jy=ky
@@ -2535,7 +2526,7 @@ MODULE BLAS2
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS2::dgemv_noalphabeta "dgemv_noalphabeta"
 !> for when the user does not want to supply @c lda, @c incx, and @c incy.
-!> @param trans single character input indicating whether or not to use the 
+!> @param trans single character input indicating whether or not to use the
 !>        transpose of @c A
 !> @param m the size of the first dimension of @c A (number of rows)
 !> @param n the size of the second dimension of @c A (number of columns)
@@ -2544,7 +2535,7 @@ MODULE BLAS2
 !> @param y the double-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c m and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::dgemv_noalphabeta "dgemv_noalphabeta".
 !>
     PURE SUBROUTINE dgemv_tmnaxy(trans,m,n,a,x,y)
@@ -2576,7 +2567,7 @@ MODULE BLAS2
 !> @param y the double-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c m and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::dgemv_noalphabeta "dgemv_noalphabeta".
 !>
     PURE SUBROUTINE dgemv_mnaxy(m,n,a,x,y)
@@ -2592,7 +2583,7 @@ MODULE BLAS2
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS2::dgemv_noalphabeta "dgemv_noalphabeta"
 !> for when the user does not want to supply @c m, @c lda, @c incx, and @c incy.
-!> @param trans single character input indicating whether or not to use the 
+!> @param trans single character input indicating whether or not to use the
 !>        transpose of @c A
 !> @param n the dimension of @c A (square)
 !> @param A the double-precision matrix multiply with @c x
@@ -2600,7 +2591,7 @@ MODULE BLAS2
 !> @param y the double-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c n and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::dgemv_noalphabeta "dgemv_noalphabeta".
 !>
     PURE SUBROUTINE dgemv_tnaxy(trans,n,a,x,y)
@@ -2623,7 +2614,7 @@ MODULE BLAS2
 !> @param y the double-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c n and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::dgemv_noalphabeta "dgemv_noalphabeta".
 !>
     PURE SUBROUTINE dgemv_naxy(n,a,x,y)
@@ -2637,14 +2628,14 @@ MODULE BLAS2
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS2::dgemv_noalphabeta "dgemv_noalphabeta"
-!> for when the user does not want to supply @c trans, @c m, @c n, @c lda, 
+!> for when the user does not want to supply @c trans, @c m, @c n, @c lda,
 !> @c incx, and @c incy.
 !> @param A the double-precision matrix multiply with @c x
 !> @param x the double-precision vector to multiply with @c A
 !> @param y the double-precision vector to add to the product of @c A and @c x
 !>
 !> @c lda is taken to be equal to @c m and the increments are set to 1. The
-!> dimensions of @c A, @c x, and @c y are also checked prior to calling 
+!> dimensions of @c A, @c x, and @c y are also checked prior to calling
 !> @ref BLAS2::dgemv_nobeta "dgemv_nobeta". Note that @c A need not be square.
 !>
     PURE SUBROUTINE dgemv_axy(a,x,y)
@@ -2661,13 +2652,13 @@ MODULE BLAS2
 !-------------------------------------------------------------------------------
 !> @brief Subroutine computes a matrix vector product for a general square
 !> matrix.
-!> @param trans single character input indicating whether or not to use the 
+!> @param trans single character input indicating whether or not to use the
 !>        transpose of @c A
 !> @param A the double-precision matrix multiply with @c x
 !> @param x the double-precision vector to multiply with @c A
 !>
 !> This routine is a very specific form of the matrix-vector multiply where
-!> @c A is square and @c x is the output argument. The increments over the 
+!> @c A is square and @c x is the output argument. The increments over the
 !> elements are 1.
 !>
     PURE SUBROUTINE dgemv_tax(trans,a,x)
@@ -2676,7 +2667,7 @@ MODULE BLAS2
       REAL(SDK),INTENT(INOUT) :: x(:)
       INTEGER(SIK) :: n,m,i,j
       REAL(SDK) :: tmp,b(SIZE(x))
-    
+
       n=SIZE(a,DIM=1)
       IF(n > 0 .AND. SIZE(a,DIM=2) == n .AND. SIZE(x) == n .AND. &
           (trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. &
@@ -2758,16 +2749,16 @@ MODULE BLAS2
       REAL(SSK),INTENT(IN) :: x(n)
       REAL(SSK),INTENT(IN) :: beta
       REAL(SSK),INTENT(INOUT) :: y(n)
-             
+
       INTEGER(SIK) :: i,j,k
       REAL(SSK) :: tmp
-      
+
       IF(n > 0 .AND. nnz >= n .AND. .NOT.(alpha == 0.0_SSK .AND. &
         beta == 1.0_SSK)) THEN
-        
+
         !Compute y <- beta*y
         IF(beta /= 1.0_SSK) CALL BLAS_scal(n,beta,y,1)
-        
+
         IF(alpha /= 0.0_SSK) THEN
           !y <- Ax+y
           DO i=1,n
@@ -2783,7 +2774,7 @@ MODULE BLAS2
     ENDSUBROUTINE scsrmv_all
 !
 !-------------------------------------------------------------------------------
-!> @brief Subroutine wraps @ref BLAS2::scsrmv_all "scsrmv_all" for when the 
+!> @brief Subroutine wraps @ref BLAS2::scsrmv_all "scsrmv_all" for when the
 !> user does not want to pass @c nnz.
 !> @param n order of the linear system
 !> @param ia indexing array for @c ja and @c aa whose consecutive elements gives
@@ -2810,7 +2801,7 @@ MODULE BLAS2
     ENDSUBROUTINE scsrmv_noNNZ
 !
 !-------------------------------------------------------------------------------
-!> @brief Subroutine wraps @ref BLAS2::scsrmv_all "scsrmv_all" for when the 
+!> @brief Subroutine wraps @ref BLAS2::scsrmv_all "scsrmv_all" for when the
 !> user does not want to pass @c nnz or @c n.
 !> @param ia indexing array for @c ja and @c aa whose consecutive elements gives
 !>        the number of non-zero elements in the row.
@@ -2849,9 +2840,9 @@ MODULE BLAS2
 !> @param beta the single-precision scalar used to scale @c y
 !> @param y the single-precision vector to add to the product of @c A and @c x
 !>
-!> This routine is similar to @ref BLAS2::scsrmv_all "scsrmv_all" except 
-!> @c alpha is assumed to be 1 so the floating point operation multiplying 
-!> @c alpha is explicitly removed reducing the FLOP count by a factor of @c n 
+!> This routine is similar to @ref BLAS2::scsrmv_all "scsrmv_all" except
+!> @c alpha is assumed to be 1 so the floating point operation multiplying
+!> @c alpha is explicitly removed reducing the FLOP count by a factor of @c n
 !> multiplications.
 !>
     PURE SUBROUTINE scsrmv_noALPHA(n,nnz,ia,ja,aa,x,beta,y)
@@ -2863,15 +2854,15 @@ MODULE BLAS2
       REAL(SSK),INTENT(IN) :: x(n)
       REAL(SSK),INTENT(IN) :: beta
       REAL(SSK),INTENT(INOUT) :: y(n)
-      
+
       INTEGER(SIK) :: i,j,k
       REAL(SSK) :: tmp
-      
+
       IF(n > 0 .AND. nnz >= n) THEN
-        
+
         !Compute y <- beta*y
         IF(beta /= 1.0_SSK) CALL BLAS_scal(n,beta,y,1)
-        
+
         !y <- Ax+y
         DO i=1,n
           tmp=0.0_SSK
@@ -2948,7 +2939,7 @@ MODULE BLAS2
 !> @param y the single-precision vector to add to the product of @c A and @c x
 !>
 !> This routine is similar to @ref BLAS2::scsrmv_all "scsrmv_all" except @c beta
-!> is assumed to be 1 so the branching statement to @ref BLAS1::BLAS_scal 
+!> is assumed to be 1 so the branching statement to @ref BLAS1::BLAS_scal
 !> "BLAS_scal" is explicitly removed.
 !>
     PURE SUBROUTINE scsrmv_noBETA(n,nnz,ia,ja,aa,alpha,x,y)
@@ -2960,10 +2951,10 @@ MODULE BLAS2
       REAL(SSK),INTENT(IN) :: alpha
       REAL(SSK),INTENT(IN) :: x(n)
       REAL(SSK),INTENT(INOUT) :: y(n)
-             
+
       INTEGER(SIK) :: i,j,k
       REAL(SSK) :: tmp
-      
+
       IF(n > 0 .AND. nnz >= n .AND. alpha /= 0.0_SSK) THEN
         !y <- Ax+y
         DO i=1,n
@@ -3040,7 +3031,7 @@ MODULE BLAS2
 !> @param y the single-precision vector to add to the product of @c A and @c x
 !>
 !> This routine is similar to @ref BLAS2::scsrmv_all "scsrmv_all" except @c beta
-!> is assumed to be 1 so the branching statement to @ref BLAS1::BLAS_scal 
+!> is assumed to be 1 so the branching statement to @ref BLAS1::BLAS_scal
 !> "BLAS_scal" is explicitly removed. @c alpha is also assumed to be 1 so the
 !> floating point operation multiplying @c alpha is explicitly removed reducing
 !> the FLOP count by a factor of @c n multiplications.
@@ -3053,10 +3044,10 @@ MODULE BLAS2
       REAL(SSK),INTENT(IN) :: aa(nnz)
       REAL(SSK),INTENT(IN) :: x(n)
       REAL(SSK),INTENT(INOUT) :: y(n)
-             
+
       INTEGER(SIK) :: i,j,k
       REAL(SSK) :: tmp
-      
+
       IF(n > 0 .AND. nnz >= n) THEN
         !y <- Ax+y
         DO i=1,n
@@ -3140,16 +3131,16 @@ MODULE BLAS2
       REAL(SDK),INTENT(IN) :: x(n)
       REAL(SDK),INTENT(IN) :: beta
       REAL(SDK),INTENT(INOUT) :: y(n)
-             
+
       INTEGER(SIK) :: i,j,k
       REAL(SDK) :: tmp
-      
+
       IF(n > 0 .AND. nnz >= n .AND. .NOT.(alpha == 0.0_SDK .AND. &
         beta == 1.0_SDK)) THEN
-        
+
         !Compute y <- beta*y
         IF(beta /= 1.0_SDK) CALL BLAS_scal(n,beta,y,1)
-        
+
         IF(alpha /= 0.0_SDK) THEN
           !y <- Ax+y
           DO i=1,n
@@ -3165,7 +3156,7 @@ MODULE BLAS2
     ENDSUBROUTINE dcsrmv_all
 !
 !-------------------------------------------------------------------------------
-!> @brief Subroutine wraps @ref BLAS2::dcsrmv_all "dcsrmv_all" for when the 
+!> @brief Subroutine wraps @ref BLAS2::dcsrmv_all "dcsrmv_all" for when the
 !> user does not want to pass @c nnz.
 !> @param n order of the linear system
 !> @param ia indexing array for @c ja and @c aa whose consecutive elements gives
@@ -3192,7 +3183,7 @@ MODULE BLAS2
     ENDSUBROUTINE dcsrmv_noNNZ
 !
 !-------------------------------------------------------------------------------
-!> @brief Subroutine wraps @ref BLAS2::dcsrmv_all "dcsrmv_all" for when the 
+!> @brief Subroutine wraps @ref BLAS2::dcsrmv_all "dcsrmv_all" for when the
 !> user does not want to pass @c nnz or @c n.
 !> @param ia indexing array for @c ja and @c aa whose consecutive elements gives
 !>        the number of non-zero elements in the row.
@@ -3231,9 +3222,9 @@ MODULE BLAS2
 !> @param beta the double-precision scalar used to scale @c y
 !> @param y the double-precision vector to add to the product of @c A and @c x
 !>
-!> This routine is similar to @ref BLAS2::dcsrmv_all "dcsrmv_all" except 
-!> @c alpha is assumed to be 1 so the floating point operation multiplying 
-!> @c alpha is explicitly removed reducing the FLOP count by a factor of @c n 
+!> This routine is similar to @ref BLAS2::dcsrmv_all "dcsrmv_all" except
+!> @c alpha is assumed to be 1 so the floating point operation multiplying
+!> @c alpha is explicitly removed reducing the FLOP count by a factor of @c n
 !> multiplications.
 !>
     PURE SUBROUTINE dcsrmv_noALPHA(n,nnz,ia,ja,aa,x,beta,y)
@@ -3245,15 +3236,15 @@ MODULE BLAS2
       REAL(SDK),INTENT(IN) :: x(n)
       REAL(SDK),INTENT(IN) :: beta
       REAL(SDK),INTENT(INOUT) :: y(n)
-      
+
       INTEGER(SIK) :: i,j,k
       REAL(SDK) :: tmp
-      
+
       IF(n > 0 .AND. nnz >= n) THEN
-        
+
         !Compute y <- beta*y
         IF(beta /= 1.0_SDK) CALL BLAS_scal(n,beta,y,1)
-        
+
         !y <- Ax+y
         DO i=1,n
           tmp=0.0_SDK
@@ -3330,7 +3321,7 @@ MODULE BLAS2
 !> @param y the double-precision vector to add to the product of @c A and @c x
 !>
 !> This routine is similar to @ref BLAS2::dcsrmv_all "dcsrmv_all" except @c beta
-!> is assumed to be 1 so the branching statement to @ref BLAS1::BLAS_scal 
+!> is assumed to be 1 so the branching statement to @ref BLAS1::BLAS_scal
 !> "BLAS_scal" is explicitly removed.
 !>
     PURE SUBROUTINE dcsrmv_noBETA(n,nnz,ia,ja,aa,alpha,x,y)
@@ -3342,10 +3333,10 @@ MODULE BLAS2
       REAL(SDK),INTENT(IN) :: alpha
       REAL(SDK),INTENT(IN) :: x(n)
       REAL(SDK),INTENT(INOUT) :: y(n)
-             
+
       INTEGER(SIK) :: i,j,k
       REAL(SDK) :: tmp
-      
+
       IF(n > 0 .AND. nnz >= n .AND. alpha /= 0.0_SDK) THEN
         !y <- Ax+y
         DO i=1,n
@@ -3422,7 +3413,7 @@ MODULE BLAS2
 !> @param y the double-precision vector to add to the product of @c A and @c x
 !>
 !> This routine is similar to @ref BLAS2::dcsrmv_all "dcsrmv_all" except @c beta
-!> is assumed to be 1 so the branching statement to @ref BLAS1::BLAS_scal 
+!> is assumed to be 1 so the branching statement to @ref BLAS1::BLAS_scal
 !> "BLAS_scal" is explicitly removed. @c alpha is also assumed to be 1 so the
 !> floating point operation multiplying @c alpha is explicitly removed reducing
 !> the FLOP count by a factor of @c n multiplications.
@@ -3435,10 +3426,10 @@ MODULE BLAS2
       REAL(SDK),INTENT(IN) :: aa(nnz)
       REAL(SDK),INTENT(IN) :: x(n)
       REAL(SDK),INTENT(INOUT) :: y(n)
-             
+
       INTEGER(SIK) :: i,j,k
       REAL(SDK) :: tmp
-      
+
       IF(n > 0 .AND. nnz >= n) THEN
         !y <- Ax+y
         DO i=1,n
@@ -3500,9 +3491,9 @@ MODULE BLAS2
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine solves a triangular matrix linear system.
-!> @param uplo single character input indicating if an upper (U) or lower (L) 
+!> @param uplo single character input indicating if an upper (U) or lower (L)
 !>        maxtrix is stored in @c A
-!> @param trans single character input indicating whether or not to use the 
+!> @param trans single character input indicating whether or not to use the
 !>        transpose of @c A
 !> @param diag single character input indicating whether or not a unity
 !>        diagonal is used
@@ -3553,7 +3544,7 @@ MODULE BLAS2
       REAL(SSK) :: temp
       REAL(SSK),PARAMETER :: ZERO=0.0_SSK
       INTRINSIC MAX
-    
+
       n=SIZE(a,DIM=2)
       IF(PRESENT(incx_in)) THEN
         incx=incx_in
@@ -3567,7 +3558,7 @@ MODULE BLAS2
           (diag == 'u' .OR. diag == 'U' .OR. diag == 'n' .OR. diag == 'N')) THEN
 
         IF(diag == 'n' .OR. diag == 'N') nounit=.TRUE.
- 
+
         IF(incx<=0) THEN
             kx=1-(n-1)*incx
         ELSEIF(incx/=1) THEN
@@ -3687,9 +3678,9 @@ MODULE BLAS2
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine solves a triangular matrix linear system.
-!> @param uplo single character input indicating if an upper (U) or lower (L) 
+!> @param uplo single character input indicating if an upper (U) or lower (L)
 !>        maxtrix is stored in @c A
-!> @param trans single character input indicating whether or not to use the 
+!> @param trans single character input indicating whether or not to use the
 !>        transpose of @c A
 !> @param diag single character input indicating whether or not a unity
 !>        diagonal is used
@@ -3740,7 +3731,7 @@ MODULE BLAS2
       REAL(SDK) :: temp
       REAL(SDK),PARAMETER :: ZERO=0.0_SSK
       INTRINSIC MAX
-    
+
       n=SIZE(a,DIM=2)
       lda=SIZE(a,DIM=1)
       IF(PRESENT(incx_in)) THEN
@@ -3759,7 +3750,7 @@ MODULE BLAS2
         ELSE
           nounit=.FALSE.
         ENDIF
- 
+
         IF (incx<=0) THEN
             kx = 1 - (n-1)*incx
         ELSEIF (incx/=1) THEN

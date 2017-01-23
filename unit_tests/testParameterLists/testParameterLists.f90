@@ -1,19 +1,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testParameterLists
 #include "UnitTest.h"
@@ -27,9 +18,9 @@ PROGRAM testParameterLists
   USE ForTeuchos_ParameterList
   USE ISO_C_BINDING
 #endif
-  
+
   IMPLICIT NONE
-  
+
   REAL(SSK) :: valssk
   REAL(SDK) :: valsdk
   INTEGER(SNK) :: valsnk
@@ -53,17 +44,17 @@ PROGRAM testParameterLists
   INTEGER(SNK),ALLOCATABLE :: valsnka3(:,:,:)
   INTEGER(SLK),ALLOCATABLE :: valslka3(:,:,:)
   TYPE(ExceptionHandlerType),POINTER :: e
-  
+
   TYPE(ParamType) :: testParam,testParam2,testParam3,testList(5),testList2(3)
   CLASS(ParamType),POINTER :: someParam
-  
+
   CREATE_TEST('PARAMETER TYPES')
-  
+
   ALLOCATE(e)
   CALL e%setStopOnError(.FALSE.)
   CALL e%setQuietMode(.TRUE.)
   CALL eParams%addSurrogate(e)
-  
+
   REGISTER_SUBTEST('Scalar SBK',testSBK)
   REGISTER_SUBTEST('Scalar SNK',testSNK)
   REGISTER_SUBTEST('Scalar SLK',testSLK)
@@ -104,7 +95,7 @@ PROGRAM testParameterLists
 #ifdef MPACT_HAVE_Trilinos
   REGISTER_SUBTEST('Convert to Teuchos', testConvertTeuchos)
 #endif
-  
+
   FINALIZE_TEST()
   CALL clear_test_vars()
   DEALLOCATE(e)
@@ -118,7 +109,7 @@ PROGRAM testParameterLists
     CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
     valsbk=.TRUE.
     !test init
-    
+
     COMPONENT_TEST('%init(...)')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
     ASSERT(LEN(testParam%name) == 0,'%name 1')
@@ -146,7 +137,7 @@ PROGRAM testParameterLists
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SBK'// &
       ' - parameter is already initialized! Use set method!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
-    
+
     !Test clear
     COMPONENT_TEST('%clear()')
     CALL testParam%clear()
@@ -154,7 +145,7 @@ PROGRAM testParameterLists
     ASSERT(LEN(testParam%datatype) == 0,'%datatype')
     ASSERT(LEN(testParam%description) == 0,'%description')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
-    
+
     COMPONENT_TEST('%edit(...)')
     CALL testParam%init('testSBK',valsbk,'The value is TRUE')
     CALL testParam%edit(OUTPUT_UNIT,0)
@@ -163,7 +154,7 @@ PROGRAM testParameterLists
     CALL testParam%edit(OUTPUT_UNIT,0)
     CALL testParam%clear()
     CALL testParam%edit(OUTPUT_UNIT,0)
-    
+
     COMPONENT_TEST('%get(...)')
     CALL testParam%init('testSBK',valsbk,'The value is TRUE')
     CALL testParam%get('testSBK->no subparam',someParam)
@@ -195,7 +186,7 @@ PROGRAM testParameterLists
       ' must be LOGICAL(SBK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
-  
+
     !test set
     COMPONENT_TEST('%set(...)')
     CALL testParam%set('testSBK',.FALSE.,'The value is FALSE')
@@ -230,7 +221,7 @@ PROGRAM testParameterLists
       ' and must be LOGICAL(SBK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
-    
+
     COMPONENT_TEST('Operators')
     CALL testParam%init('testSBK',.TRUE.)
     testParam2=testParam
@@ -247,7 +238,7 @@ PROGRAM testParameterLists
     CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
     valsnk=5_SNK
     !test init
-    
+
     COMPONENT_TEST('%init(...)')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
     ASSERT(LEN(testParam%name) == 0,'%name 1')
@@ -275,7 +266,7 @@ PROGRAM testParameterLists
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SNK'// &
       ' - parameter is already initialized! Use set method!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
-    
+
     !Test clear
     COMPONENT_TEST('%clear()')
     CALL testParam%clear()
@@ -283,7 +274,7 @@ PROGRAM testParameterLists
     ASSERT(LEN(testParam%datatype) == 0,'%datatype')
     ASSERT(LEN(testParam%description) == 0,'%description')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
-    
+
     COMPONENT_TEST('%edit(...)')
     CALL testParam%init('testSNK',valsnk,'The number 5')
     CALL testParam%edit(OUTPUT_UNIT,0)
@@ -292,7 +283,7 @@ PROGRAM testParameterLists
     CALL testParam%edit(OUTPUT_UNIT,0)
     CALL testParam%clear()
     CALL testParam%edit(OUTPUT_UNIT,0)
-    
+
     COMPONENT_TEST('%get(...)')
     CALL testParam%init('testSNK',valsnk,'The number 5')
     CALL testParam%get('testSNK',someParam)
@@ -322,7 +313,7 @@ PROGRAM testParameterLists
       ' must be INTEGER(SNK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
-  
+
     !test set
     COMPONENT_TEST('%set(...)')
     valsnk=-4
@@ -359,7 +350,7 @@ PROGRAM testParameterLists
       ' and must be INTEGER(SNK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
-    
+
     COMPONENT_TEST('Operators')
     valsnk=4
     CALL testParam%init('testSNK',valsnk)
@@ -377,7 +368,7 @@ PROGRAM testParameterLists
     CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
     valslk=5_SLK
     !test init
-    
+
     COMPONENT_TEST('%init(...)')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
     ASSERT(LEN(testParam%name) == 0,'%name 1')
@@ -405,7 +396,7 @@ PROGRAM testParameterLists
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SLK'// &
       ' - parameter is already initialized! Use set method!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
-    
+
     !Test clear
     COMPONENT_TEST('%clear()')
     CALL testParam%clear()
@@ -413,7 +404,7 @@ PROGRAM testParameterLists
     ASSERT(LEN(testParam%datatype) == 0,'%datatype')
     ASSERT(LEN(testParam%description) == 0,'%description')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
-    
+
     COMPONENT_TEST('%edit(...)')
     CALL testParam%init('testSLK',valslk,'The number 5')
     CALL testParam%edit(OUTPUT_UNIT,0)
@@ -422,7 +413,7 @@ PROGRAM testParameterLists
     CALL testParam%edit(OUTPUT_UNIT,0)
     CALL testParam%clear()
     CALL testParam%edit(OUTPUT_UNIT,0)
-    
+
     COMPONENT_TEST('%get(...)')
     CALL testParam%init('testSLK',valslk,'The number 5')
     CALL testParam%get('testSLK',someParam)
@@ -452,7 +443,7 @@ PROGRAM testParameterLists
       ' must be INTEGER(SLK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
-  
+
     !test set
     COMPONENT_TEST('%set(...)')
     valslk=-4_SLK
@@ -489,7 +480,7 @@ PROGRAM testParameterLists
       ' and must be INTEGER(SLK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
-    
+
     COMPONENT_TEST('Operators')
     valslk=4_SLK
     CALL testParam%init('testSLK',valslk)
@@ -507,7 +498,7 @@ PROGRAM testParameterLists
     CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
     valssk=5._SSK
     !test init
-    
+
     COMPONENT_TEST('%init(...)')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
     ASSERT(LEN(testParam%name) == 0,'%name 1')
@@ -535,7 +526,7 @@ PROGRAM testParameterLists
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SSK'// &
       ' - parameter is already initialized! Use set method!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
-    
+
     !Test clear
     COMPONENT_TEST('%clear()')
     CALL testParam%clear()
@@ -543,7 +534,7 @@ PROGRAM testParameterLists
     ASSERT(LEN(testParam%datatype) == 0,'%datatype')
     ASSERT(LEN(testParam%description) == 0,'%description')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
-    
+
     COMPONENT_TEST('%edit(...)')
     CALL testParam%init('testSSK',valssk,'The number 5.0')
     CALL testParam%edit(OUTPUT_UNIT,0)
@@ -552,7 +543,7 @@ PROGRAM testParameterLists
     CALL testParam%edit(OUTPUT_UNIT,0)
     CALL testParam%clear()
     CALL testParam%edit(OUTPUT_UNIT,0)
-    
+
     COMPONENT_TEST('%get(...)')
     CALL testParam%init('testSSK',valssk,'The number 5.0')
     CALL testParam%get('testSSK',someParam)
@@ -582,7 +573,7 @@ PROGRAM testParameterLists
       ' must be REAL(SSK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
-  
+
     !test set
     COMPONENT_TEST('%set(...)')
     valssk=-4._SSK
@@ -619,7 +610,7 @@ PROGRAM testParameterLists
       ' and must be REAL(SSK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
-    
+
     COMPONENT_TEST('Operators')
     valssk=3.0_SSK
     CALL testParam%init('testSSK',valssk)
@@ -637,7 +628,7 @@ PROGRAM testParameterLists
     CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
     valsdk=5._SDK
     !test init
-    
+
     COMPONENT_TEST('%init(...)')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
     ASSERT(LEN(testParam%name) == 0,'%name 1')
@@ -665,7 +656,7 @@ PROGRAM testParameterLists
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SDK'// &
       ' - parameter is already initialized! Use set method!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
-    
+
     !Test clear
     COMPONENT_TEST('%clear()')
     CALL testParam%clear()
@@ -673,7 +664,7 @@ PROGRAM testParameterLists
     ASSERT(LEN(testParam%datatype) == 0,'%datatype')
     ASSERT(LEN(testParam%description) == 0,'%description')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
-    
+
     COMPONENT_TEST('%edit(...)')
     CALL testParam%init('testSDK',valsdk,'The number 5.0')
     CALL testParam%edit(OUTPUT_UNIT,0)
@@ -682,7 +673,7 @@ PROGRAM testParameterLists
     CALL testParam%edit(OUTPUT_UNIT,0)
     CALL testParam%clear()
     CALL testParam%edit(OUTPUT_UNIT,0)
-    
+
     COMPONENT_TEST('%get(...)')
     CALL testParam%init('testSDK',valsdk,'The number 5.0')
     CALL testParam%get('testSDK',someParam)
@@ -712,7 +703,7 @@ PROGRAM testParameterLists
       ' must be REAL(SDK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
-  
+
     !test set
     COMPONENT_TEST('%set(...)')
     valsdk=-4._SDK
@@ -749,7 +740,7 @@ PROGRAM testParameterLists
       ' and must be REAL(SDK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
-    
+
     COMPONENT_TEST('Operators')
     valsdk=3.0_SDK
     CALL testParam%init('testSDK',valsdk)
@@ -767,7 +758,7 @@ PROGRAM testParameterLists
     CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
     valchar='test'
     !test init
-    
+
     COMPONENT_TEST('%init(...)')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
     ASSERT(LEN(testParam%name) == 0,'%name 1')
@@ -795,7 +786,7 @@ PROGRAM testParameterLists
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_STR'// &
       ' - parameter is already initialized! Use set method!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
-    
+
     !Test clear
     COMPONENT_TEST('%clear()')
     CALL testParam%clear()
@@ -803,7 +794,7 @@ PROGRAM testParameterLists
     ASSERT(LEN(testParam%datatype) == 0,'%datatype')
     ASSERT(LEN(testParam%description) == 0,'%description')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
-    
+
     COMPONENT_TEST('%edit(...)')
     CALL testParam%init('testCHAR',TRIM(valchar),'The value is test')
     CALL testParam%edit(OUTPUT_UNIT,0)
@@ -812,7 +803,7 @@ PROGRAM testParameterLists
     CALL testParam%edit(OUTPUT_UNIT,0)
     CALL testParam%clear()
     CALL testParam%edit(OUTPUT_UNIT,0)
-    
+
     COMPONENT_TEST('%get(...)')
     CALL testParam%init('testCHAR',TRIM(valchar),'The value is test')
     CALL testParam%get('testCHAR',someParam)
@@ -842,7 +833,7 @@ PROGRAM testParameterLists
       ' must be TYPE(StringType)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
-  
+
     !test set
     COMPONENT_TEST('%set(...)')
     valchar='testing'
@@ -879,7 +870,7 @@ PROGRAM testParameterLists
       ' and must be TYPE(StringType)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
-    
+
     COMPONENT_TEST('Operators')
     valchar='last test'
     CALL testParam%init('testCHAR',TRIM(valchar))
@@ -897,7 +888,7 @@ PROGRAM testParameterLists
     CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
     valstr='test'
     !test init
-    
+
     COMPONENT_TEST('%init(...)')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
     ASSERT(LEN(testParam%name) == 0,'%name 1')
@@ -925,7 +916,7 @@ PROGRAM testParameterLists
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_STR'// &
       ' - parameter is already initialized! Use set method!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
-    
+
     !Test clear
     COMPONENT_TEST('%clear()')
     CALL testParam%clear()
@@ -933,7 +924,7 @@ PROGRAM testParameterLists
     ASSERT(LEN(testParam%datatype) == 0,'%datatype')
     ASSERT(LEN(testParam%description) == 0,'%description')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
-    
+
     COMPONENT_TEST('%edit(...)')
     CALL testParam%init('testSTR',TRIM(valstr),'The value is test')
     CALL testParam%edit(OUTPUT_UNIT,0)
@@ -942,7 +933,7 @@ PROGRAM testParameterLists
     CALL testParam%edit(OUTPUT_UNIT,0)
     CALL testParam%clear()
     CALL testParam%edit(OUTPUT_UNIT,0)
-    
+
     COMPONENT_TEST('%get(...)')
     CALL testParam%init('testSTR',TRIM(valstr),'The value is test')
     CALL testParam%get('testSTR',someParam)
@@ -972,7 +963,7 @@ PROGRAM testParameterLists
       ' must be TYPE(StringType)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
-  
+
     !test set
     COMPONENT_TEST('%set(...)')
     valstr='testing'
@@ -1009,7 +1000,7 @@ PROGRAM testParameterLists
       ' and must be TYPE(StringType)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
-    
+
     COMPONENT_TEST('Operators')
     valstr='last test'
     CALL testParam%init('testSTR',TRIM(valstr))
@@ -1029,7 +1020,7 @@ PROGRAM testParameterLists
     valsbka1(1)=.TRUE.
     valsbka1(2)=.FALSE.
     !test init
-    
+
     COMPONENT_TEST('%init(...)')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
     ASSERT(LEN(testParam%name) == 0,'%name 1')
@@ -1057,7 +1048,7 @@ PROGRAM testParameterLists
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SBK_a1'// &
       ' - parameter is already initialized! Use set method!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
-    
+
     !Test clear
     COMPONENT_TEST('%clear()')
     CALL testParam%clear()
@@ -1065,7 +1056,7 @@ PROGRAM testParameterLists
     ASSERT(LEN(testParam%datatype) == 0,'%datatype')
     ASSERT(LEN(testParam%description) == 0,'%description')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
-    
+
     COMPONENT_TEST('%edit(...)')
     CALL testParam%init('testSBKa1',valsbka1,'The values .TRUE. & .FALSE.')
     CALL testParam%edit(OUTPUT_UNIT,0)
@@ -1074,7 +1065,7 @@ PROGRAM testParameterLists
     CALL testParam%edit(OUTPUT_UNIT,0)
     CALL testParam%clear()
     CALL testParam%edit(OUTPUT_UNIT,0)
-    
+
     COMPONENT_TEST('%get(...)')
     CALL testParam%init('testSBKa1',valsbka1,'The values .TRUE. & .FALSE.')
     CALL testParam%get('testSBKa1',someParam)
@@ -1120,7 +1111,7 @@ PROGRAM testParameterLists
       ' must be 1-D ARRAY LOGICAL(SBK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
-  
+
     !test set
     COMPONENT_TEST('%set(...)')
     CALL testParam%set('testSBKa1',(/.FALSE./),'The value is FALSE')
@@ -1172,7 +1163,7 @@ PROGRAM testParameterLists
       ' and must be 1-D ARRAY LOGICAL(SBK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
-    
+
     COMPONENT_TEST('Operators')
     CALL testParam%init('testSBKa1',(/.TRUE./))
     testParam2=testParam
@@ -1191,7 +1182,7 @@ PROGRAM testParameterLists
     valsnka1(1)=5_SNK
     valsnka1(2)=7_SNK
     !test init
-    
+
     COMPONENT_TEST('%init(...)')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
     ASSERT(LEN(testParam%name) == 0,'%name 1')
@@ -1219,7 +1210,7 @@ PROGRAM testParameterLists
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SNK_a1'// &
       ' - parameter is already initialized! Use set method!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
-    
+
     !Test clear
     COMPONENT_TEST('%clear()')
     CALL testParam%clear()
@@ -1227,7 +1218,7 @@ PROGRAM testParameterLists
     ASSERT(LEN(testParam%datatype) == 0,'%datatype')
     ASSERT(LEN(testParam%description) == 0,'%description')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
-    
+
     COMPONENT_TEST('%edit(...)')
     CALL testParam%init('testSNKa1',valsnka1,'The numbers 5 & 7')
     CALL testParam%edit(OUTPUT_UNIT,0)
@@ -1236,7 +1227,7 @@ PROGRAM testParameterLists
     CALL testParam%edit(OUTPUT_UNIT,0)
     CALL testParam%clear()
     CALL testParam%edit(OUTPUT_UNIT,0)
-    
+
     COMPONENT_TEST('%get(...)')
     CALL testParam%init('testSNKa1',valsnka1,'The numbers 5 & 7')
     CALL testParam%get('testSNKa1',someParam)
@@ -1282,7 +1273,7 @@ PROGRAM testParameterLists
       ' must be 1-D ARRAY INTEGER(SNK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
-  
+
     !test set
     COMPONENT_TEST('%set(...)')
     CALL testParam%set('testSNKa1',(/-10/),'The number -10')
@@ -1334,7 +1325,7 @@ PROGRAM testParameterLists
       ' and must be 1-D ARRAY INTEGER(SNK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
-    
+
     COMPONENT_TEST('Operators')
     CALL testParam%init('testSNKa1',(/-1/))
     testParam2=testParam
@@ -1353,7 +1344,7 @@ PROGRAM testParameterLists
     valslka1(1)=5_SLK
     valslka1(2)=7_SLK
     !test init
-    
+
     COMPONENT_TEST('%init(...)')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
     ASSERT(LEN(testParam%name) == 0,'%name 1')
@@ -1381,7 +1372,7 @@ PROGRAM testParameterLists
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SLK_a1'// &
       ' - parameter is already initialized! Use set method!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
-    
+
     !Test clear
     COMPONENT_TEST('%clear()')
     CALL testParam%clear()
@@ -1389,7 +1380,7 @@ PROGRAM testParameterLists
     ASSERT(LEN(testParam%datatype) == 0,'%datatype')
     ASSERT(LEN(testParam%description) == 0,'%description')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
-    
+
     COMPONENT_TEST('%edit(...)')
     CALL testParam%init('testSLKa1',valslka1,'The numbers 5 & 7')
     CALL testParam%edit(OUTPUT_UNIT,0)
@@ -1398,7 +1389,7 @@ PROGRAM testParameterLists
     CALL testParam%edit(OUTPUT_UNIT,0)
     CALL testParam%clear()
     CALL testParam%edit(OUTPUT_UNIT,0)
-    
+
     COMPONENT_TEST('%get(...)')
     CALL testParam%init('testSLKa1',valslka1,'The numbers 5 & 7')
     CALL testParam%get('testSLKa1',someParam)
@@ -1444,7 +1435,7 @@ PROGRAM testParameterLists
       ' must be 1-D ARRAY INTEGER(SLK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
-  
+
     !test set
     COMPONENT_TEST('%set(...)')
     CALL testParam%set('testSLKa1',(/-10_SLK/),'The number -10')
@@ -1496,7 +1487,7 @@ PROGRAM testParameterLists
       ' and must be 1-D ARRAY INTEGER(SLK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
-    
+
     COMPONENT_TEST('Operators')
     CALL testParam%init('testSLKa1',(/-1_SLK/))
     testParam2=testParam
@@ -1516,7 +1507,7 @@ PROGRAM testParameterLists
     valsska1(1)=5.0_SSK
     valsska1(2)=7.0_SSK
     !test init
-    
+
     COMPONENT_TEST('%init(...)')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
     ASSERT(LEN(testParam%name) == 0,'%name 1')
@@ -1544,7 +1535,7 @@ PROGRAM testParameterLists
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SSK_a1'// &
       ' - parameter is already initialized! Use set method!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
-    
+
     !Test clear
     COMPONENT_TEST('%clear()')
     CALL testParam%clear()
@@ -1552,7 +1543,7 @@ PROGRAM testParameterLists
     ASSERT(LEN(testParam%datatype) == 0,'%datatype')
     ASSERT(LEN(testParam%description) == 0,'%description')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
-    
+
     COMPONENT_TEST('%edit(...)')
     CALL testParam%init('testSSKa1',valsska1,'The numbers 5.0 & 7.0')
     CALL testParam%edit(OUTPUT_UNIT,0)
@@ -1561,7 +1552,7 @@ PROGRAM testParameterLists
     CALL testParam%edit(OUTPUT_UNIT,0)
     CALL testParam%clear()
     CALL testParam%edit(OUTPUT_UNIT,0)
-    
+
     COMPONENT_TEST('%get(...)')
     CALL testParam%init('testSSKa1',valsska1,'The numbers 5.0 & 7.0')
     CALL testParam%get('testSSKa1',someParam)
@@ -1612,7 +1603,7 @@ PROGRAM testParameterLists
       ' must be 1-D ARRAY REAL(SSK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
-  
+
     !test set
     COMPONENT_TEST('%set(...)')
     CALL testParam%set('testSSKa1',(/-10.0_SSK/),'The number -10.0')
@@ -1666,7 +1657,7 @@ PROGRAM testParameterLists
       ' and must be 1-D ARRAY REAL(SSK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
-    
+
     COMPONENT_TEST('Operators')
     CALL testParam%init('testSSKa1',(/-1.0_SSK/))
     testParam2=testParam
@@ -1686,7 +1677,7 @@ PROGRAM testParameterLists
     valsdka1(1)=5.0_SDK
     valsdka1(2)=7.0_SDK
     !test init
-    
+
     COMPONENT_TEST('%init(...)')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
     ASSERT(LEN(testParam%name) == 0,'%name 1')
@@ -1714,7 +1705,7 @@ PROGRAM testParameterLists
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SDK_a1'// &
       ' - parameter is already initialized! Use set method!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
-    
+
     !Test clear
     COMPONENT_TEST('%clear()')
     CALL testParam%clear()
@@ -1722,7 +1713,7 @@ PROGRAM testParameterLists
     ASSERT(LEN(testParam%datatype) == 0,'%datatype')
     ASSERT(LEN(testParam%description) == 0,'%description')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
-    
+
     COMPONENT_TEST('%edit(...)')
     CALL testParam%init('testSDKa1',valsdka1,'The numbers 5.0 & 7.0')
     CALL testParam%edit(OUTPUT_UNIT,0)
@@ -1731,7 +1722,7 @@ PROGRAM testParameterLists
     CALL testParam%edit(OUTPUT_UNIT,0)
     CALL testParam%clear()
     CALL testParam%edit(OUTPUT_UNIT,0)
-    
+
     COMPONENT_TEST('%get(...)')
     CALL testParam%init('testSDKa1',valsdka1,'The numbers 5.0 & 7.0')
     CALL testParam%get('testSDKa1',someParam)
@@ -1782,7 +1773,7 @@ PROGRAM testParameterLists
       ' must be 1-D ARRAY REAL(SDK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
-  
+
     !test set
     COMPONENT_TEST('%set(...)')
     CALL testParam%set('testSDKa1',(/-10.0_SDK/),'The number -10.0')
@@ -1836,7 +1827,7 @@ PROGRAM testParameterLists
       ' and must be 1-D ARRAY REAL(SDK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
-    
+
     COMPONENT_TEST('Operators')
     CALL testParam%init('testSDKa1',(/-1.0_SDK/))
     testParam2=testParam
@@ -1856,7 +1847,7 @@ PROGRAM testParameterLists
     valstra1(1)='testing'
     valstra1(2)='more testing'
     !test init
-    
+
     COMPONENT_TEST('%init(...)')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
     ASSERT(LEN(testParam%name) == 0,'%name 1')
@@ -1884,7 +1875,7 @@ PROGRAM testParameterLists
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_STR_a1'// &
       ' - parameter is already initialized! Use set method!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
-    
+
     !Test clear
     COMPONENT_TEST('%clear()')
     CALL testParam%clear()
@@ -1892,7 +1883,7 @@ PROGRAM testParameterLists
     ASSERT(LEN(testParam%datatype) == 0,'%datatype')
     ASSERT(LEN(testParam%description) == 0,'%description')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
-    
+
     COMPONENT_TEST('%edit(...)')
     CALL testParam%init('testSTRa1',valstra1,'The numbers 5.0 & 7.0')
     CALL testParam%edit(OUTPUT_UNIT,0)
@@ -1901,7 +1892,7 @@ PROGRAM testParameterLists
     CALL testParam%edit(OUTPUT_UNIT,0)
     CALL testParam%clear()
     CALL testParam%edit(OUTPUT_UNIT,0)
-    
+
     COMPONENT_TEST('%get(...)')
     CALL testParam%init('testSTRa1',valstra1,'The values are testing and more testing')
     CALL testParam%get('testSTRa1',someParam)
@@ -1952,7 +1943,7 @@ PROGRAM testParameterLists
       ' must be 1-D ARRAY TYPE(StringType)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
-  
+
     !test set
     COMPONENT_TEST('%set(...)')
     valstra1(1)='another test'
@@ -2032,7 +2023,7 @@ PROGRAM testParameterLists
       ' and must be 1-D ARRAY TYPE(StringType)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
-    
+
     COMPONENT_TEST('Operators')
     CALL testParam%init('testSTRa1',valstra1)
     testParam2=testParam
@@ -2054,7 +2045,7 @@ PROGRAM testParameterLists
     valsnka2(1,2)=6_SNK
     valsnka2(2,2)=8_SNK
     !test init
-    
+
     COMPONENT_TEST('%init(...)')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
     ASSERT(LEN(testParam%name) == 0,'%name 1')
@@ -2082,7 +2073,7 @@ PROGRAM testParameterLists
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SNK_a2'// &
       ' - parameter is already initialized! Use set method!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
-    
+
     !Test clear
     COMPONENT_TEST('%clear()')
     CALL testParam%clear()
@@ -2090,7 +2081,7 @@ PROGRAM testParameterLists
     ASSERT(LEN(testParam%datatype) == 0,'%datatype')
     ASSERT(LEN(testParam%description) == 0,'%description')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
-    
+
     COMPONENT_TEST('%edit(...)')
     CALL testParam%init('testSNKa2',valsnka2,'The numbers 5, 7, 6, & 8')
     CALL testParam%edit(OUTPUT_UNIT,0)
@@ -2099,7 +2090,7 @@ PROGRAM testParameterLists
     CALL testParam%edit(OUTPUT_UNIT,0)
     CALL testParam%clear()
     CALL testParam%edit(OUTPUT_UNIT,0)
-    
+
     COMPONENT_TEST('%get(...)')
     CALL testParam%init('testSNKa2',valsnka2,'The numbers 5, 7, 6, & 8')
     CALL testParam%get('testSNKa2',someParam)
@@ -2155,7 +2146,7 @@ PROGRAM testParameterLists
       ' must be 2-D ARRAY INTEGER(SNK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
-  
+
     !test set
     COMPONENT_TEST('%set(...)')
     CALL testParam%set('testSNKa2',RESHAPE((/-10/),(/1,1/)),'The number -10')
@@ -2215,7 +2206,7 @@ PROGRAM testParameterLists
       ' and must be 2-D ARRAY INTEGER(SNK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
-    
+
     COMPONENT_TEST('Operators')
     CALL testParam%init('testSNKa2',RESHAPE((/-1/),(/1,1/)))
     testParam2=testParam
@@ -2237,7 +2228,7 @@ PROGRAM testParameterLists
     valslka2(1,2)=6_SLK
     valslka2(2,2)=8_SLK
     !test init
-    
+
     COMPONENT_TEST('%init(...)')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
     ASSERT(LEN(testParam%name) == 0,'%name 1')
@@ -2265,7 +2256,7 @@ PROGRAM testParameterLists
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SLK_a2'// &
       ' - parameter is already initialized! Use set method!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
-    
+
     !Test clear
     COMPONENT_TEST('%clear()')
     CALL testParam%clear()
@@ -2273,7 +2264,7 @@ PROGRAM testParameterLists
     ASSERT(LEN(testParam%datatype) == 0,'%datatype')
     ASSERT(LEN(testParam%description) == 0,'%description')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
-    
+
     COMPONENT_TEST('%edit(...)')
     CALL testParam%init('testSLKa2',valslka2,'The numbers 5, 7, 6, & 8')
     CALL testParam%edit(OUTPUT_UNIT,0)
@@ -2282,7 +2273,7 @@ PROGRAM testParameterLists
     CALL testParam%edit(OUTPUT_UNIT,0)
     CALL testParam%clear()
     CALL testParam%edit(OUTPUT_UNIT,0)
-    
+
     COMPONENT_TEST('%get(...)')
     CALL testParam%init('testSLKa2',valslka2,'The numbers 5, 7, 6, & 8')
     CALL testParam%get('testSLKa2',someParam)
@@ -2343,7 +2334,7 @@ PROGRAM testParameterLists
       ' must be 2-D ARRAY INTEGER(SLK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
-  
+
     !test set
     COMPONENT_TEST('%set(...)')
     CALL testParam%set('testSLKa2',RESHAPE((/-10_SLK/),(/1,1/)),'The number -10')
@@ -2403,7 +2394,7 @@ PROGRAM testParameterLists
       ' and must be 2-D ARRAY INTEGER(SLK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
-    
+
     COMPONENT_TEST('Operators')
     CALL testParam%init('testSLKa2',RESHAPE((/-1_SLK/),(/1,1/)))
     testParam2=testParam
@@ -2425,7 +2416,7 @@ PROGRAM testParameterLists
     valsska2(1,2)=6.0_SSK
     valsska2(2,2)=8.0_SSK
     !test init
-    
+
     COMPONENT_TEST('%init(...)')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
     ASSERT(LEN(testParam%name) == 0,'%name 1')
@@ -2453,7 +2444,7 @@ PROGRAM testParameterLists
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SSK_a2'// &
       ' - parameter is already initialized! Use set method!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
-    
+
     !Test clear
     COMPONENT_TEST('%clear()')
     CALL testParam%clear()
@@ -2461,7 +2452,7 @@ PROGRAM testParameterLists
     ASSERT(LEN(testParam%datatype) == 0,'%datatype')
     ASSERT(LEN(testParam%description) == 0,'%description')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
-    
+
     COMPONENT_TEST('%edit(...)')
     CALL testParam%init('testSSKa2',valsska2,'The numbers 5, 7, 6, & 8')
     CALL testParam%edit(OUTPUT_UNIT,0)
@@ -2470,7 +2461,7 @@ PROGRAM testParameterLists
     CALL testParam%edit(OUTPUT_UNIT,0)
     CALL testParam%clear()
     CALL testParam%edit(OUTPUT_UNIT,0)
-    
+
     COMPONENT_TEST('%get(...)')
     CALL testParam%init('testSSKa2',valsska2,'The numbers 5, 7, 6, & 8')
     CALL testParam%get('testSSKa2',someParam)
@@ -2531,7 +2522,7 @@ PROGRAM testParameterLists
       ' must be 2-D ARRAY REAL(SSK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
-  
+
     !test set
     COMPONENT_TEST('%set(...)')
     CALL testParam%set('testSSKa2',RESHAPE((/-10.0_SSK/),(/1,1/)),'The number -10')
@@ -2591,7 +2582,7 @@ PROGRAM testParameterLists
       ' and must be 2-D ARRAY REAL(SSK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
-    
+
     COMPONENT_TEST('Operators')
     CALL testParam%init('testSSKa2',RESHAPE((/-1.0_SSK/),(/1,1/)))
     testParam2=testParam
@@ -2613,7 +2604,7 @@ PROGRAM testParameterLists
     valsdka2(1,2)=6.0_SDK
     valsdka2(2,2)=8.0_SDK
     !test init
-    
+
     COMPONENT_TEST('%init(...)')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
     ASSERT(LEN(testParam%name) == 0,'%name 1')
@@ -2641,7 +2632,7 @@ PROGRAM testParameterLists
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SDK_a2'// &
       ' - parameter is already initialized! Use set method!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
-    
+
     !Test clear
     COMPONENT_TEST('%clear()')
     CALL testParam%clear()
@@ -2649,7 +2640,7 @@ PROGRAM testParameterLists
     ASSERT(LEN(testParam%datatype) == 0,'%datatype')
     ASSERT(LEN(testParam%description) == 0,'%description')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
-    
+
     COMPONENT_TEST('%edit(...)')
     CALL testParam%init('testSDKa2',valsdka2,'The numbers 5, 7, 6, & 8')
     CALL testParam%edit(OUTPUT_UNIT,0)
@@ -2658,7 +2649,7 @@ PROGRAM testParameterLists
     CALL testParam%edit(OUTPUT_UNIT,0)
     CALL testParam%clear()
     CALL testParam%edit(OUTPUT_UNIT,0)
-    
+
     COMPONENT_TEST('%get(...)')
     CALL testParam%init('testSDKa2',valsdka2,'The numbers 5, 7, 6, & 8')
     CALL testParam%get('testSDKa2',someParam)
@@ -2719,7 +2710,7 @@ PROGRAM testParameterLists
       ' must be 2-D ARRAY REAL(SDK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
-  
+
     !test set
     COMPONENT_TEST('%set(...)')
     CALL testParam%set('testSDKa2',RESHAPE((/-10.0_SDK/),(/1,1/)),'The number -10')
@@ -2779,7 +2770,7 @@ PROGRAM testParameterLists
       ' and must be 2-D ARRAY REAL(SDK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
-    
+
     COMPONENT_TEST('Operators')
     CALL testParam%init('testSDKa2',RESHAPE((/-1.0_SDK/),(/1,1/)))
     testParam2=testParam
@@ -2801,7 +2792,7 @@ PROGRAM testParameterLists
     valstra2(1,2)='testing 3'
     valstra2(2,2)='testing 4'
     !test init
-    
+
     COMPONENT_TEST('%init(...)')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
     ASSERT(LEN(testParam%name) == 0,'%name 1')
@@ -2829,7 +2820,7 @@ PROGRAM testParameterLists
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_STR_a2'// &
       ' - parameter is already initialized! Use set method!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
-    
+
     !Test clear
     COMPONENT_TEST('%clear()')
     CALL testParam%clear()
@@ -2837,7 +2828,7 @@ PROGRAM testParameterLists
     ASSERT(LEN(testParam%datatype) == 0,'%datatype')
     ASSERT(LEN(testParam%description) == 0,'%description')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
-    
+
     COMPONENT_TEST('%edit(...)')
     CALL testParam%init('testSTRa2',valstra2,'The values testing 1, 2, 3, & 4')
     CALL testParam%edit(OUTPUT_UNIT,0)
@@ -2846,7 +2837,7 @@ PROGRAM testParameterLists
     CALL testParam%edit(OUTPUT_UNIT,0)
     CALL testParam%clear()
     CALL testParam%edit(OUTPUT_UNIT,0)
-    
+
     COMPONENT_TEST('%get(...)')
     CALL testParam%init('testSTRa2',valstra2,'The values testing 1, 2, 3, & 4')
     CALL testParam%get('testSTRa2',someParam)
@@ -2907,7 +2898,7 @@ PROGRAM testParameterLists
       ' must be 2-D ARRAY TYPE(StringType)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
-  
+
     !test set
     COMPONENT_TEST('%set(...)')
     DEALLOCATE(valstra2)
@@ -2984,7 +2975,7 @@ PROGRAM testParameterLists
       ' and must be 2-D ARRAY TYPE(StringType)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
-    
+
     COMPONENT_TEST('Operators')
     DEALLOCATE(valstra2)
     ALLOCATE(valstra2(1,1))
@@ -3009,7 +3000,7 @@ PROGRAM testParameterLists
     valsnka3(1,2,:)=6_SNK
     valsnka3(2,2,:)=8_SNK
     !test init
-    
+
     COMPONENT_TEST('%init(...)')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
     ASSERT(LEN(testParam%name) == 0,'%name 1')
@@ -3037,7 +3028,7 @@ PROGRAM testParameterLists
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SNK_a3'// &
       ' - parameter is already initialized! Use set method!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
-    
+
     !Test clear
     COMPONENT_TEST('%clear()')
     CALL testParam%clear()
@@ -3045,7 +3036,7 @@ PROGRAM testParameterLists
     ASSERT(LEN(testParam%datatype) == 0,'%datatype')
     ASSERT(LEN(testParam%description) == 0,'%description')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
-    
+
     COMPONENT_TEST('%edit(...)')
     CALL testParam%init('testSNKa3',valsnka3,'The numbers 5, 7, 6, & 8')
     CALL testParam%edit(OUTPUT_UNIT,0)
@@ -3054,7 +3045,7 @@ PROGRAM testParameterLists
     CALL testParam%edit(OUTPUT_UNIT,0)
     CALL testParam%clear()
     CALL testParam%edit(OUTPUT_UNIT,0)
-    
+
     COMPONENT_TEST('%get(...)')
     CALL testParam%init('testSNKa3',valsnka3,'The numbers 5, 7, 6, & 8')
     CALL testParam%get('testSNKa3',someParam)
@@ -3115,7 +3106,7 @@ PROGRAM testParameterLists
       ' must be 3-D ARRAY INTEGER(SNK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
-  
+
     !test set
     COMPONENT_TEST('%set(...)')
     CALL testParam%set('testSNKa3',RESHAPE((/-10/),(/1,1,1/)),'The number -10')
@@ -3176,7 +3167,7 @@ PROGRAM testParameterLists
       ' and must be 3-D ARRAY INTEGER(SNK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
-    
+
     COMPONENT_TEST('Operators')
     CALL testParam%init('testSNKa3',RESHAPE((/-1/),(/1,1,1/)))
     testParam2=testParam
@@ -3198,7 +3189,7 @@ PROGRAM testParameterLists
     valslka3(1,2,:)=6_SLK
     valslka3(2,2,:)=8_SLK
     !test init
-    
+
     COMPONENT_TEST('%init(...)')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
     ASSERT(LEN(testParam%name) == 0,'%name 1')
@@ -3226,7 +3217,7 @@ PROGRAM testParameterLists
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SLK_a3'// &
       ' - parameter is already initialized! Use set method!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
-    
+
     !Test clear
     COMPONENT_TEST('%clear()')
     CALL testParam%clear()
@@ -3234,7 +3225,7 @@ PROGRAM testParameterLists
     ASSERT(LEN(testParam%datatype) == 0,'%datatype')
     ASSERT(LEN(testParam%description) == 0,'%description')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
-    
+
     COMPONENT_TEST('%edit(...)')
     CALL testParam%init('testSLKa3',valslka3,'The numbers 5, 7, 6, & 8')
     CALL testParam%edit(OUTPUT_UNIT,0)
@@ -3243,7 +3234,7 @@ PROGRAM testParameterLists
     CALL testParam%edit(OUTPUT_UNIT,0)
     CALL testParam%clear()
     CALL testParam%edit(OUTPUT_UNIT,0)
-    
+
     COMPONENT_TEST('%get(...)')
     CALL testParam%init('testSLKa3',valslka3,'The numbers 5, 7, 6, & 8')
     CALL testParam%get('testSLKa3',someParam)
@@ -3304,7 +3295,7 @@ PROGRAM testParameterLists
       ' must be 3-D ARRAY INTEGER(SLK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
-  
+
     !test set
     COMPONENT_TEST('%set(...)')
     CALL testParam%set('testSLKa3',RESHAPE((/-10_SLK/),(/1,1,1/)),'The number -10')
@@ -3365,7 +3356,7 @@ PROGRAM testParameterLists
       ' and must be 3-D ARRAY INTEGER(SLK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
-    
+
     COMPONENT_TEST('Operators')
     CALL testParam%init('testSLKa3',RESHAPE((/-1_SLK/),(/1,1,1/)))
     testParam2=testParam
@@ -3387,7 +3378,7 @@ PROGRAM testParameterLists
     valsska3(1,2,:)=6.0_SSK
     valsska3(2,2,:)=8.0_SSK
     !test init
-    
+
     COMPONENT_TEST('%init(...)')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
     ASSERT(LEN(testParam%name) == 0,'%name 1')
@@ -3415,7 +3406,7 @@ PROGRAM testParameterLists
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SSK_a3'// &
       ' - parameter is already initialized! Use set method!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
-    
+
     !Test clear
     COMPONENT_TEST('%clear()')
     CALL testParam%clear()
@@ -3423,7 +3414,7 @@ PROGRAM testParameterLists
     ASSERT(LEN(testParam%datatype) == 0,'%datatype')
     ASSERT(LEN(testParam%description) == 0,'%description')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
-    
+
     COMPONENT_TEST('%edit(...)')
     CALL testParam%init('testSSKa3',valsska3,'The numbers 5, 7, 6, & 8')
     CALL testParam%edit(OUTPUT_UNIT,0)
@@ -3432,7 +3423,7 @@ PROGRAM testParameterLists
     CALL testParam%edit(OUTPUT_UNIT,0)
     CALL testParam%clear()
     CALL testParam%edit(OUTPUT_UNIT,0)
-    
+
     COMPONENT_TEST('%get(...)')
     CALL testParam%init('testSSKa3',valsska3,'The numbers 5, 7, 6, & 8')
     CALL testParam%get('testSSKa3',someParam)
@@ -3493,7 +3484,7 @@ PROGRAM testParameterLists
       ' must be 3-D ARRAY REAL(SSK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
-  
+
     !test set
     COMPONENT_TEST('%set(...)')
     CALL testParam%set('testSSKa3',RESHAPE((/-10.0_SSK/),(/1,1,1/)),'The number -10')
@@ -3554,7 +3545,7 @@ PROGRAM testParameterLists
       ' and must be 3-D ARRAY REAL(SSK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
-    
+
     COMPONENT_TEST('Operators')
     CALL testParam%init('testSSKa3',RESHAPE((/-1.0_SSK/),(/1,1,1/)))
     testParam2=testParam
@@ -3576,7 +3567,7 @@ PROGRAM testParameterLists
     valsdka3(1,2,:)=6.0_SDK
     valsdka3(2,2,:)=8.0_SDK
     !test init
-    
+
     COMPONENT_TEST('%init(...)')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
     ASSERT(LEN(testParam%name) == 0,'%name 1')
@@ -3604,7 +3595,7 @@ PROGRAM testParameterLists
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SDK_a3'// &
       ' - parameter is already initialized! Use set method!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
-    
+
     !Test clear
     COMPONENT_TEST('%clear()')
     CALL testParam%clear()
@@ -3612,7 +3603,7 @@ PROGRAM testParameterLists
     ASSERT(LEN(testParam%datatype) == 0,'%datatype')
     ASSERT(LEN(testParam%description) == 0,'%description')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
-    
+
     COMPONENT_TEST('%edit(...)')
     CALL testParam%init('testSDKa3',valsdka3,'The numbers 5, 7, 6, & 8')
     CALL testParam%edit(OUTPUT_UNIT,0)
@@ -3621,7 +3612,7 @@ PROGRAM testParameterLists
     CALL testParam%edit(OUTPUT_UNIT,0)
     CALL testParam%clear()
     CALL testParam%edit(OUTPUT_UNIT,0)
-    
+
     COMPONENT_TEST('%get(...)')
     CALL testParam%init('testSDKa3',valsdka3,'The numbers 5, 7, 6, & 8')
     CALL testParam%get('testSDKa3',someParam)
@@ -3682,7 +3673,7 @@ PROGRAM testParameterLists
       ' must be 3-D ARRAY REAL(SDK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
-  
+
     !test set
     COMPONENT_TEST('%set(...)')
     CALL testParam%set('testSDKa3',RESHAPE((/-10.0_SDK/),(/1,1,1/)),'The number -10')
@@ -3743,7 +3734,7 @@ PROGRAM testParameterLists
       ' and must be 3-D ARRAY REAL(SDK)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
-    
+
     COMPONENT_TEST('Operators')
     CALL testParam%init('testSDKa3',RESHAPE((/-1.0_SDK/),(/1,1,1/)))
     testParam2=testParam
@@ -3760,7 +3751,7 @@ PROGRAM testParameterLists
     LOGICAL(SBK) :: bool
     CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
     !test init
-    
+
     COMPONENT_TEST('%init(...)')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
     ASSERT(LEN(testParam%name) == 0,'%name 1')
@@ -3779,7 +3770,7 @@ PROGRAM testParameterLists
     testList(1)=testParam
     CALL testParam%clear()
     CALL testParam%init('testPL',testList,'The param list')
-    
+
     ASSERT(LEN(testParam%name) == 0,'%name 3')
     ASSERT(LEN(testParam%datatype) == 0,'%datatype 3')
     ASSERT(LEN(testParam%description) == 0,'%description 3')
@@ -3793,7 +3784,7 @@ PROGRAM testParameterLists
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_List'// &
       ' - parameter  is already initialized! Use set method!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
-    
+
     !Test clear
     COMPONENT_TEST('%clear()')
     CALL testParam%clear()
@@ -3801,7 +3792,7 @@ PROGRAM testParameterLists
     ASSERT(LEN(testParam%datatype) == 0,'%datatype')
     ASSERT(LEN(testParam%description) == 0,'%description')
     ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
-    
+
     COMPONENT_TEST('%edit(...)')
     CALL testParam%init('testSSK',5.0_SSK,'The number 5.0')
     testList(1)=testParam
@@ -3816,7 +3807,7 @@ PROGRAM testParameterLists
     CALL testParam%edit(OUTPUT_UNIT,0)
     CALL testParam%clear()
     CALL testParam%edit(OUTPUT_UNIT,0)
-    
+
     COMPONENT_TEST('%get(...)')
     CALL testParam%get('',someParam)
     msg=eParams%getLastMessage()
@@ -3854,7 +3845,7 @@ PROGRAM testParameterLists
       ' must be TYPE(ParamType_List)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
     CALL testParam2%clear()
-  
+
     !test set
     COMPONENT_TEST('%set(...)')
     testList2(1)=testList(1)
@@ -3901,7 +3892,7 @@ PROGRAM testParameterLists
       ' and must be TYPE(ParamType_List)!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
     CALL testParam2%clear()
-    
+
     COMPONENT_TEST('Operators')
     CALL testParam%init('testPL',testList2)
     testParam2=testParam
@@ -3927,8 +3918,8 @@ PROGRAM testParameterLists
     REAL(SDK),ALLOCATABLE :: sdk1(:),sdk2(:,:),sdk3(:,:,:)
     TYPE(StringType) :: str0
     TYPE(StringType),ALLOCATABLE :: str1(:),str2(:,:)
-  
-    
+
+
     !Testing addition of SBK routine to parameter list
     CALL testParam%add('testPL->testSBK',.TRUE.)
     CALL testParam%add('testPL->testSBK2',.FALSE.,'comment')
@@ -3942,7 +3933,7 @@ PROGRAM testParameterLists
     ASSERT(sbk0,'%add sbk0')
     CALL testParam%get('testPL->testSBK2',sbk0)
     ASSERT(.NOT.sbk0,'%add sbk0')
-    
+
     !Testing addition of SSK routine to parameter list
     CALL testParam%add('testPL->testSSK',7.0_SSK)
     CALL testParam%add('testPL->testSSK2',8.0_SSK,'comment')
@@ -3956,7 +3947,7 @@ PROGRAM testParameterLists
     ASSERT(ssk0 .APPROXEQA. 7.0_SSK,'%add ssk0')
     CALL testParam%get('testPL->testSSK2',ssk0)
     ASSERT(ssk0 .APPROXEQA. 8.0_SSK,'%add ssk0')
-    
+
     !Testing addition of SDK routine to parameter list
     CALL testParam%add('testPL->testSDK',7.0_SDK)
     CALL testParam%add('testPL->testSDK2',8.0_SDK,'comment')
@@ -3970,7 +3961,7 @@ PROGRAM testParameterLists
     ASSERT(sdk0 .APPROXEQA. 7.0_SDK,'%add sdk0')
     CALL testParam%get('testPL->testSDK2',sdk0)
     ASSERT(sdk0 .APPROXEQA. 8.0_SDK,'%add sdk0')
-  
+
     !Testing addition of SNK routine to parameter list
     CALL testParam%add('testPL->testSNK',7_SNK)
     CALL testParam%add('testPL->testSNK2',8_SNK,'comment')
@@ -3984,7 +3975,7 @@ PROGRAM testParameterLists
     ASSERT(snk0 == 7_SNK,'%add snk0')
     CALL testParam%get('testPL->testSNK2',snk0)
     ASSERT(snk0 == 8_SNK,'%add snk0')
-  
+
     !Testing addition of SLK routine to parameter list
     CALL testParam%add('testPL->testSLK',7_SLK)
     CALL testParam%add('testPL->testSLK2',8_SLK,'comment')
@@ -3998,7 +3989,7 @@ PROGRAM testParameterLists
     ASSERT(slk0 == 7_SLK,'%add slk0')
     CALL testParam%get('testPL->testSLK2',slk0)
     ASSERT(slk0 == 8_SLK,'%add slk0')
-  
+
     !Testing addition of STR routine to parameter list
     str0='string1'
     CALL testParam%add('testPL->testSTR',str0)
@@ -4014,7 +4005,7 @@ PROGRAM testParameterLists
     ASSERT(str0 == 'string1','%add str0')
     CALL testParam%get('testPL->testSTR2',str0)
     ASSERT(str0 == 'string2','%add str0')
-    
+
     !Testing addition of CHAR routine to parameter list
     CALL testParam%add('testPL->testCHAR','char1')
     CALL testParam%add('testPL->testCHAR2','char2','comment')
@@ -4028,7 +4019,7 @@ PROGRAM testParameterLists
     ASSERT(str0 == 'char1','%add char')
     CALL testParam%get('testPL->testCHAR2',str0)
     ASSERT(str0 == 'char2','%add char')
-  
+
     !Testing addition of 1-D array SSK routine to parameter list
     CALL testParam%add('testPL->testSSKa1',(/1.5_SSK,1.6_SSK/))
     CALL testParam%add('testPL->testSSKa1_2',(/1.7_SSK,1.8_SSK/),'comment')
@@ -4042,7 +4033,7 @@ PROGRAM testParameterLists
     ASSERT(ALL(ssk1 .APPROXEQA. (/1.5_SSK,1.6_SSK/)),'%add ssk1')
     CALL testParam%get('testPL->testSSKa1_2',ssk1)
     ASSERT(ALL(ssk1 .APPROXEQA. (/1.7_SSK,1.8_SSK/)),'%add ssk1')
-    
+
     !Testing addition of 1-D array SDK routine to parameter list
     CALL testParam%add('testPL->testSDKa1',(/2.5_SDK,2.6_SDK/))
     CALL testParam%add('testPL->testSDKa1_2',(/2.7_SDK,2.8_SDK/),'comment')
@@ -4056,7 +4047,7 @@ PROGRAM testParameterLists
     ASSERT(ALL(sdk1 .APPROXEQA. (/2.5_SDK,2.6_SDK/)),'%add sdk1')
     CALL testParam%get('testPL->testSDKa1_2',sdk1)
     ASSERT(ALL(sdk1 .APPROXEQA. (/2.7_SDK,2.8_SDK/)),'%add sdk1')
-    
+
     !Testing addition of 1-D array SNK routine to parameter list
     CALL testParam%add('testPL->testSNKa1',(/-2_SNK,-3_SNK/))
     CALL testParam%add('testPL->testSNKa1_2',(/2_SNK,3_SNK/),'comment')
@@ -4070,7 +4061,7 @@ PROGRAM testParameterLists
     ASSERT(ALL(snk1 == (/-2_SNK,-3_SNK/)),'%add snk1')
     CALL testParam%get('testPL->testSNKa1_2',snk1)
     ASSERT(ALL(snk1 == (/2_SNK,3_SNK/)),'%add snk1')
-    
+
     !Testing addition of 1-D array SLK routine to parameter list
     CALL testParam%add('testPL->testSLKa1',(/-4_SLK,-5_SLK/))
     CALL testParam%add('testPL->testSLKa1_2',(/4_SLK,5_SLK/),'comment')
@@ -4084,7 +4075,7 @@ PROGRAM testParameterLists
     ASSERT(ALL(slk1 == (/-4_SLK,-5_SLK/)),'%add slk1')
     CALL testParam%get('testPL->testSLKa1_2',slk1)
     ASSERT(ALL(slk1 == (/4_SLK,5_SLK/)),'%add slk1')
-    
+
     !Testing addition of 1-D array SBK routine to parameter list
     CALL testParam%add('testPL->testSBKa1',(/.TRUE.,.FALSE./))
     CALL testParam%add('testPL->testSBKa1_2',(/.FALSE.,.FALSE./),'comment')
@@ -4098,7 +4089,7 @@ PROGRAM testParameterLists
     ASSERT(sbk1(1) .AND. .NOT.sbk1(2),'%add sbk1')
     CALL testParam%get('testPL->testSBKa1_2',sbk1)
     ASSERT(.NOT.sbk1(1) .AND. .NOT.sbk1(2),'%add sbk1')
-    
+
     !Testing addition of 1-D array STR routine to parameter list
     ALLOCATE(str1(2))
     str1(1)='stringarray1'
@@ -4119,7 +4110,7 @@ PROGRAM testParameterLists
     CALL testParam%get('testPL->testSTRa1_2',str1)
     bool=str1(1) == 'stringarray3' .AND. str1(2) == 'stringarray4'
     ASSERT(bool,'%add str1')
-    
+
     !Testing addition of 2-D array SSK routine to parameter list
     ALLOCATE(ssk2(2,2))
     ssk2(1,1)=1.1_SSK
@@ -4144,7 +4135,7 @@ PROGRAM testParameterLists
     CALL testParam%get('testPL->testSSKa2_2',ssk2)
     bool=ALL(ssk2 == RESHAPE((/3.1_SSK,4.1_SSK,3.2_SSK,4.2_SSK/),(/2,2/)))
     ASSERT(bool,'%add ssk2')
-    
+
     !Testing addition of 2-D array SDK routine to parameter list
     ALLOCATE(sdk2(2,2))
     sdk2(1,1)=11.0_SDK
@@ -4169,7 +4160,7 @@ PROGRAM testParameterLists
     CALL testParam%get('testPL->testSDKa2_2',sdk2)
     bool=ALL(sdk2 == RESHAPE((/31._SDK,41._SDK,32._SDK,42._SDK/),(/2,2/)))
     ASSERT(bool,'%add sdk2')
-    
+
     !Testing addition of 2-D array SNK routine to parameter list
     ALLOCATE(snk2(2,2))
     snk2(1,1)=11
@@ -4194,7 +4185,7 @@ PROGRAM testParameterLists
     CALL testParam%get('testPL->testSNKa2_2',snk2)
     bool=ALL(snk2 == RESHAPE((/31_SNK,41_SNK,32_SNK,42_SNK/),(/2,2/)))
     ASSERT(bool,'%add snk2')
-    
+
     !Testing addition of 2-D array SLK routine to parameter list
     ALLOCATE(slk2(2,2))
     slk2(1,1)=110
@@ -4219,7 +4210,7 @@ PROGRAM testParameterLists
     CALL testParam%get('testPL->testSLKa2_2',slk2)
     bool=ALL(slk2 == RESHAPE((/310_SLK,410_SLK,320_SLK,420_SLK/),(/2,2/)))
     ASSERT(bool,'%add slk2')
-    
+
     !Testing addition of 2-D array STR routine to parameter list
     ALLOCATE(str2(2,2))
     str2(1,1)='stringarray1'
@@ -4246,7 +4237,7 @@ PROGRAM testParameterLists
     bool=str2(1,1) == 'stringarray5' .AND. str2(2,1) == 'stringarray6' .AND. &
       str2(1,2) == 'stringarray7' .AND. str2(2,2) == 'stringarray8'
     ASSERT(bool,'%add str2')
-    
+
     !Testing addition of 3-D array SSK routine to parameter list
     ALLOCATE(ssk3(2,2,2))
     ssk3(1,1,1)=1.11_SSK
@@ -4281,7 +4272,7 @@ PROGRAM testParameterLists
     bool=ALL(ssk3 .APPROXEQA. RESHAPE((/3.11_SSK,4.11_SSK,3.21_SSK,4.21_SSK, &
       3.12_SSK,4.12_SSK,3.22_SSK,4.22_SSK/),(/2,2,2/)))
     ASSERT(bool,'%add ssk3')
-    
+
     !Testing addition of 3-D array SDK routine to parameter list
     ALLOCATE(sdk3(2,2,2))
     sdk3(1,1,1)=11.1_SDK
@@ -4316,7 +4307,7 @@ PROGRAM testParameterLists
     bool=ALL(sdk3 .APPROXEQA. RESHAPE((/31.1_SDK,41.1_SDK,32.1_SDK,42.1_SDK, &
       31.2_SDK,41.2_SDK,32.2_SDK,42.2_SDK/),(/2,2,2/)))
     ASSERT(bool,'%add sdk3')
-    
+
     !Testing addition of 3-D array SNK routine to parameter list
     ALLOCATE(snk3(2,2,2))
     snk3(1,1,1)=111
@@ -4351,7 +4342,7 @@ PROGRAM testParameterLists
     bool=ALL(snk3 == RESHAPE((/311_SNK,411_SNK,321_SNK,421_SNK, &
       312_SNK,412_SNK,322_SNK,422_SNK/),(/2,2,2/)))
     ASSERT(bool,'%add snk3')
-    
+
     !Testing addition of 3-D array SLK routine to parameter list
     ALLOCATE(slk3(2,2,2))
     slk3(1,1,1)=111
@@ -4386,7 +4377,7 @@ PROGRAM testParameterLists
     bool=ALL(slk3 == RESHAPE((/311_SLK,411_SLK,321_SLK,421_SLK, &
       312_SLK,412_SLK,322_SLK,422_SLK/),(/2,2,2/)))
     ASSERT(bool,'%add slk3')
-    
+
     !CALL testList(1)%add('item 1',0)
     !CALL testList(2)%add('item 2',0)
     CALL testParam%add('testPL->testList',testList,'this is a test list')
@@ -4418,7 +4409,7 @@ PROGRAM testParameterLists
     DEALLOCATE(sdk3)
     DEALLOCATE(str1)
     DEALLOCATE(str2)
-    
+
     COMPONENT_TEST('Misplaced sublist')
     CALL testParam%add('A -> B',1)
     CALL testParam%add('A -> C',1.0_SRK)
@@ -4431,8 +4422,8 @@ PROGRAM testParameterLists
     bool=testParam%has('A -> Sub A -> Sub B -> Sub C -> Sub D -> bad location')
     ASSERT(.NOT.bool,'not bad location')
     CALL testParam%clear()
-    
-    
+
+
     CALL testParam%add('A -> B',1)
     CALL testParam%add('A -> C',1.0_SRK)
     CALL testParam%add('A -> Sub A -> D',1)
@@ -4785,13 +4776,13 @@ PROGRAM testParameterLists
 !-------------------------------------------------------------------------------
   SUBROUTINE testHas()
     CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
-    
+
     ASSERT(.NOT.testParam%has('testPL->error->'),'testPL->error->')
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::has_ParamType'// &
       ' - cannot search for a blank name!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'')
-    
+
     CALL testParam%add('testPL->testSDK',0.2_SDK)
     ASSERT(testParam%has('testPL'),'testPL')
     ASSERT(testParam%has('testPL->testSDK'),'testPL->testSDK')
@@ -4812,27 +4803,27 @@ PROGRAM testParameterLists
     INTEGER(SIK) :: n
     TYPE(StringType) :: addr,refaddr(6),refname(6)
     CLASS(ParamType),POINTER :: iParam
-    
+
     refaddr(1)='level 1'
     refaddr(2)='level 1->level 2'
     refaddr(3)='level 1->level 2->val 1'
     refaddr(4)='level 1->level 2->level 3'
     refaddr(5)='level 1->level 2->val 2'
     refaddr(6)='level 1->val 3'
-    
+
     refname(1)='level 1'
     refname(2)='level 2'
     refname(3)='val 1'
     refname(4)='level 3'
     refname(5)='val 2'
     refname(6)='val 3'
-    
+
     CALL testParam%add('level 1->level 2->val 1',1.0)
     CALL testParam%add('level 1->val 3',3.0)
     CALL testParam%add('level 1->level 2->level 3->dummy',0.0)
     CALL testParam%remove('level 1->level 2->level 3->dummy')
     CALL testParam%add('level 1->level 2->val 2',2.0)
-    
+
     n=0
     addr=''
     CALL testParam%getNextParam(addr,iParam)
@@ -4845,7 +4836,7 @@ PROGRAM testParameterLists
       CALL testParam%getNextParam(addr,iParam)
     ENDDO
     ASSERT(n == 6,'number of iters')
-    
+
     !Root search with a paramtype pointer.
     n=0
     CALL testParam%get('level 1',someParam)
@@ -4860,7 +4851,7 @@ PROGRAM testParameterLists
       CALL someParam%getNextParam(addr,iParam)
     ENDDO
     ASSERT(n == 6,'number of iters')
-    
+
     !search with a non root starting point
     n=2
     addr='level 1->level 2'
@@ -4874,7 +4865,7 @@ PROGRAM testParameterLists
       CALL testParam%getNextParam(addr,iParam)
     ENDDO
     ASSERT(n == 6,'number of iters')
-    
+
     !search for the last value in the list (Can't find out how to get to the uncovered code)
     n=6
     addr='level 1->val 3'
@@ -4888,7 +4879,7 @@ PROGRAM testParameterLists
       CALL testParam%getNextParam(addr,iParam)
     ENDDO
     ASSERT(n == 6,'number of iters')
-    
+
     CALL clear_test_vars()
   ENDSUBROUTINE testGetNextParam
 !
@@ -4918,7 +4909,7 @@ PROGRAM testParameterLists
       CALL testParam%getSubParams(addr,iParam)
     ENDDO
     ASSERT(n == 2,'number of subParams')
-    
+
     refname(1)='level 2'
     refname(2)='val 3'
     n=0
@@ -5038,63 +5029,63 @@ PROGRAM testParameterLists
 !-------------------------------------------------------------------------------
   SUBROUTINE testRemove()
     CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
-  
+
     someParam => NULL()
-    
+
     !Testing removal of parameter that doesn't exist
     CALL testParam%remove('testSSK3')
     !
     !Testing removal of parameter that is erroneous, need to have a value before '->'
     CALL testParam%remove('->error')
-    
+
     !Testing removal of a blank
     CALL testParam%remove('')
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::remove_ParamType -'// &
       ' cannot search for a blank name!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'blank remove')
-    
+
     !Set up actual values for removal
     CALL testParam%add('TestList->testSSK',1.0_SSK)
     CALL testParam%add('TestList->FirstList->testSSK',1.0_SSK)
     CALL testParam%add('TestList->NextList->testSDK',1.0_SDK)
     CALL testParam%add('TestList->OtherList->testSNK',1_SNK)
     CALL testParam%add('TestList->OtherList->testSLK',1_SLK)
-    
+
     !Remove parameter at end of list
     CALL testParam%remove('TestList->NextList->testSDK')
     ASSERT(.NOT.testParam%has('TestList->NextList->testSDK'),'remove parameter')
-    
+
     !Remove empty PL
     CALL testParam%remove('TestList->NextList')
     ASSERT(.NOT.testParam%has('TestList->NextList'),'remove empty pl')
-    
+
     !Remove a sublist
     CALL testParam%remove('TestList->OtherList')
     ASSERT(.NOT.testParam%has('TestList->OtherList'),'remove parameter list')
-    
+
     !Remove everything
     CALL testParam%remove('TestList')
     ASSERT(.NOT.testParam%has('TestList'),'remove everything')
-    
+
     CALL clear_test_vars()
   ENDSUBROUTINE testRemove
 !
 !-------------------------------------------------------------------------------
   SUBROUTINE testValidate()
     CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
-    
+
     !Setup reference list and test validation subroutines
     CALL testParam%add('TestReq->p1',0.0_SSK)
-    
+
     !test the null case for both params.
     CALL testParam%validate(testParam2,testParam3)
-    
+
     !Testing the assignment operation
     testParam3=testParam
     !test the null required param, but existing optional param
     CALL testParam%validate(testParam2,testParam3)
-    
+
     testParam2=testParam
     CALL testParam3%clear()
     !test existing required params with null optional params
@@ -5106,23 +5097,23 @@ PROGRAM testParameterLists
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::validateReq_ParamType -'// &
       ' Failed to locate required parameter "TestReq->p2"!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'testReq->p2 validate')
-    
+
     !Clear the test param, and test against an existing req param list
     CALL testParam%clear()
     CALL testParam%validate(testParam2)
-    
+
     !Setting the test param to have all the required params
     !This allows for optional params to be tested
     testParam=testParam2
     !Adding an extra parameter to the test list
     CALL testParam%add('TestReq->sublist1->p3',1.1_SSK)
     CALL testParam%validate(testParam2,testParam3)
-    
+
     !Adding the same extra parameter to the optional list
     CALL testParam3%add('TestReq->sublist1->p3',1.1_SSK)
     CALL testParam%validate(testParam2,testParam3)
     CALL testParam%validate(testParam2,testParam3,.TRUE.)
-    
+
     !Making sure the req param has all the test param data
     testParam2=testParam
     !Clearing the options for now
@@ -5133,7 +5124,7 @@ PROGRAM testParameterLists
     testParam=testParam2
     !Valid Req parameters, covering the line for checkExtras_Paramtype w/o optional params (line 1538)
     CALL testParam%validate(testParam2)
-    
+
     !Valid Req parameters, covering different parameter type for optional input (lines 1424-1431)
     CALL testParam%add('TestReq->sublist1->sublist2->sublist3->opt3',5.0_SDK)
     CALL testParam%validate(testParam2,testParam3)
@@ -5144,7 +5135,7 @@ PROGRAM testParameterLists
       ' Optional parameter "TestReq->sublist1->sublist2->sublist3->opt3" has type'// &
       ' "REAL(SDK)" and should be type "REAL(SSK)"!  It is being overriden with default value.'
     ASSERT(TRIM(msg) == TRIM(refmsg),'TestReq->sublist1->sublist2->sublist3->opt3 SSK validate optional input')
-    
+
     !Finds a meaningful REQ parameter, returns an associated parameter of a different type (lines 1337-1340)
     CALL testParam%add('TestReq->p6',6.0_SSK)
     CALL testParam2%add('TestReq->p6',6_SNK)
@@ -5154,7 +5145,7 @@ PROGRAM testParameterLists
       ' Required parameter "TestReq->p6" has type "REAL(SSK)" and must be type "INTEGER(SNK)"!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'TestReq->p6 SNK validate required input')
     CALL clear_test_vars()
-    
+
     !Test param 2 is the required values, test param 3 is the optional
     !Test param is the list being checked.
     !Checks all the extras...
@@ -5165,15 +5156,15 @@ PROGRAM testParameterLists
     CALL testParam%remove('TestOther')
     CALL testParam2%add('TestReq->p2->2far->veryfar',7._SDK)
     CALL testParam2%remove('TestReq->p2->2far->veryfar')
-  
+
     !Test param for an existing parameter list, but the pointer isn't associated (lines 1313-1315)
     CALL testParam%validate(testParam2,testParam3)
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::validateReq_ParamType -'// &
       ' Failed to locate required parameter "TestReq->p2->2far"!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'TestReq->p2->2far validate failed to locate')
-    
-    !Since an empty req param list exists, add a SLK parameter to test param 
+
+    !Since an empty req param list exists, add a SLK parameter to test param
     !so they aren't the same type  (lines 1319-1323)
     CALL testParam%add('TestReq->p2->2far',6_SLK)
     CALL testParam%validate(testParam2,testParam3)
@@ -5181,7 +5172,7 @@ PROGRAM testParameterLists
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::validateReq_ParamType -'// &
       ' Required parameter "TestReq->p2->2far" has type "INTEGER(SLK)" and must be type "TYPE(ParamType_List)"!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'TestReq->p2->2far validate different type, PList')
-    
+
     !Remove the extra required parameters and add TestRq->p1 so the validate req params is true
     CALL testParam2%remove('TestReq->p2')
     CALL testParam%add('TestReq->p1',0.2_SSK)
@@ -5197,7 +5188,7 @@ PROGRAM testParameterLists
       ' Optional parameter "TestOpt->p2->2far->veryfar" has type "REAL(SSK)" and'// &
       ' should be type "TYPE(ParamType_List)"!  Since has no default value, it will remain unset!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'TestReq->p2->2far validate different type, PList')
-    
+
     CALL testParam%remove('TestOpt->p2->2far->veryfar')
     !Testing an unassociated test param from the remove statement above (lines 1388-1396)
     CALL testParam%validate(testParam2,testParam3)
@@ -5206,7 +5197,7 @@ PROGRAM testParameterLists
       ' Failed to locate optional parameter "TestOpt->p2->2far->veryfar"! It is being'// &
       ' added with no default value!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'TestOpt->p2->2far->veryfar validate different type, PList')
-    
+
     CALL clear_test_vars()
   ENDSUBROUTINE testValidate
 !
@@ -5225,60 +5216,60 @@ PROGRAM testParameterLists
     REAL(SDK),ALLOCATABLE :: sdk1(:),sdk2(:,:),sdk3(:,:,:)
     TYPE(StringType) :: str0
     TYPE(StringType),ALLOCATABLE :: str1(:),str2(:,:)
-  
+
     CALL testParam%verify(testParam2,bool)
     ASSERT(bool,'empty lists')
-    
+
     !Testing addition of SBK routine to parameter list
     CALL testParam%add('testPL->testSBK',.TRUE.)
     CALL testParam%add('testPL->testSBK2',.FALSE.,'comment')
-    
+
     !Testing addition of SSK routine to parameter list
     CALL testParam%add('testPL->testSSK',7.0_SSK)
     CALL testParam%add('testPL->testSSK2',8.0_SSK,'comment')
-    
+
     !Testing addition of SDK routine to parameter list
     CALL testParam%add('testPL->testSDK',7.0_SDK)
     CALL testParam%add('testPL->testSDK2',8.0_SDK,'comment')
-  
+
     !Testing addition of SNK routine to parameter list
     CALL testParam%add('testPL->testSNK',7_SNK)
     CALL testParam%add('testPL->testSNK2',8_SNK,'comment')
-  
+
     !Testing addition of SLK routine to parameter list
     CALL testParam%add('testPL->testSLK',7_SLK)
     CALL testParam%add('testPL->testSLK2',8_SLK,'comment')
-  
+
     !Testing addition of STR routine to parameter list
     str0='string1'
     CALL testParam%add('testPL->testSTR',str0)
     str0='string2'
     CALL testParam%add('testPL->testSTR2',str0,'comment')
-    
+
     !Testing addition of CHAR routine to parameter list
     CALL testParam%add('testPL->testCHAR','char1')
     CALL testParam%add('testPL->testCHAR2','char2','comment')
-  
+
     !Testing addition of 1-D array SSK routine to parameter list
     CALL testParam%add('testPL->testSSKa1',(/1.5_SSK,1.6_SSK/))
     CALL testParam%add('testPL->testSSKa1_2',(/1.7_SSK,1.8_SSK/),'comment')
-    
+
     !Testing addition of 1-D array SDK routine to parameter list
     CALL testParam%add('testPL->testSDKa1',(/2.5_SDK,2.6_SDK/))
     CALL testParam%add('testPL->testSDKa1_2',(/2.7_SDK,2.8_SDK/),'comment')
-    
+
     !Testing addition of 1-D array SNK routine to parameter list
     CALL testParam%add('testPL->testSNKa1',(/-2_SNK,-3_SNK/))
     CALL testParam%add('testPL->testSNKa1_2',(/2_SNK,3_SNK/),'comment')
-    
+
     !Testing addition of 1-D array SLK routine to parameter list
     CALL testParam%add('testPL->testSLKa1',(/-4_SLK,-5_SLK/))
     CALL testParam%add('testPL->testSLKa1_2',(/4_SLK,5_SLK/),'comment')
-    
+
     !Testing addition of 1-D array SBK routine to parameter list
     CALL testParam%add('testPL->testSBKa1',(/.TRUE.,.FALSE./))
     CALL testParam%add('testPL->testSBKa1_2',(/.FALSE.,.FALSE./),'comment')
-    
+
     !Testing addition of 1-D array STR routine to parameter list
     ALLOCATE(str1(2))
     str1(1)='stringarray1'
@@ -5287,7 +5278,7 @@ PROGRAM testParameterLists
     str1(1)='stringarray3'
     str1(2)='stringarray4'
     CALL testParam%add('testPL->testSTRa1_2',str1,'comment')
-    
+
     !Testing addition of 2-D array SSK routine to parameter list
     ALLOCATE(ssk2(2,2))
     ssk2(1,1)=1.1_SSK
@@ -5300,7 +5291,7 @@ PROGRAM testParameterLists
     ssk2(1,2)=3.2_SSK
     ssk2(2,2)=4.2_SSK
     CALL testParam%add('testPL->testSSKa2_2',ssk2,'comment')
-    
+
     !Testing addition of 2-D array SDK routine to parameter list
     ALLOCATE(sdk2(2,2))
     sdk2(1,1)=11.0_SDK
@@ -5313,7 +5304,7 @@ PROGRAM testParameterLists
     sdk2(1,2)=32.0_SDK
     sdk2(2,2)=42.0_SDK
     CALL testParam%add('testPL->testSDKa2_2',sdk2,'comment')
-    
+
     !Testing addition of 2-D array SNK routine to parameter list
     ALLOCATE(snk2(2,2))
     snk2(1,1)=11
@@ -5326,7 +5317,7 @@ PROGRAM testParameterLists
     snk2(1,2)=32
     snk2(2,2)=42
     CALL testParam%add('testPL->testSNKa2_2',snk2,'comment')
-    
+
     !Testing addition of 2-D array SLK routine to parameter list
     ALLOCATE(slk2(2,2))
     slk2(1,1)=110
@@ -5339,7 +5330,7 @@ PROGRAM testParameterLists
     slk2(1,2)=320
     slk2(2,2)=420
     CALL testParam%add('testPL->testSLKa2_2',slk2,'comment')
-    
+
     !Testing addition of 2-D array STR routine to parameter list
     ALLOCATE(str2(2,2))
     str2(1,1)='stringarray1'
@@ -5352,7 +5343,7 @@ PROGRAM testParameterLists
     str2(1,2)='stringarray7'
     str2(2,2)='stringarray8'
     CALL testParam%add('testPL->testSTRa2_2',str2,'comment')
-    
+
     !Testing addition of 3-D array SSK routine to parameter list
     ALLOCATE(ssk3(2,2,2))
     ssk3(1,1,1)=1.11_SSK
@@ -5373,7 +5364,7 @@ PROGRAM testParameterLists
     ssk3(1,2,2)=3.22_SSK
     ssk3(2,2,2)=4.22_SSK
     CALL testParam%add('testPL->testSSKa3_2',ssk3,'comment')
-    
+
     !Testing addition of 3-D array SDK routine to parameter list
     ALLOCATE(sdk3(2,2,2))
     sdk3(1,1,1)=11.1_SDK
@@ -5394,7 +5385,7 @@ PROGRAM testParameterLists
     sdk3(1,2,2)=32.2_SDK
     sdk3(2,2,2)=42.2_SDK
     CALL testParam%add('testPL->testSDKa3_2',sdk3,'comment')
-    
+
     !Testing addition of 3-D array SNK routine to parameter list
     ALLOCATE(snk3(2,2,2))
     snk3(1,1,1)=111
@@ -5415,7 +5406,7 @@ PROGRAM testParameterLists
     snk3(1,2,2)=322
     snk3(2,2,2)=422
     CALL testParam%add('testPL->testSNKa3_2',snk3,'comment')
-    
+
     !Testing addition of 3-D array SLK routine to parameter list
     ALLOCATE(slk3(2,2,2))
     slk3(1,1,1)=111
@@ -5459,7 +5450,7 @@ PROGRAM testParameterLists
     DEALLOCATE(sdk3)
     DEALLOCATE(str1)
     DEALLOCATE(str2)
-  
+
     CALL clear_test_vars()
   ENDSUBROUTINE testVerify
 !
@@ -5581,7 +5572,7 @@ PROGRAM testParameterLists
 !-------------------------------------------------------------------------------
 !Clear all the test variables
   SUBROUTINE clear_test_vars()
-    
+
     CALL testParam%clear()
     CALL testParam2%clear()
     CALL testParam3%clear()
@@ -5593,7 +5584,7 @@ PROGRAM testParameterLists
     CALL testList2(1)%clear()
     CALL testList2(2)%clear()
     CALL testList2(3)%clear()
-  
+
   ENDSUBROUTINE clear_test_vars
 !
 ENDPROGRAM testParameterLists

@@ -1,19 +1,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief A utility module providing an interface to Level 1 BLAS functionality.
 !>
@@ -61,7 +52,7 @@ MODULE BLAS1
   PUBLIC :: BLAS_nrm2
   PUBLIC :: BLAS_scal
   PUBLIC :: BLAS_swap
-  
+
   !> @brief Generic interface to the Level 1 BLAS routine _asum
   !>
   !> The _asum routine computes the sum of the absolute values of a vector.
@@ -96,12 +87,12 @@ MODULE BLAS1
     !> @copydetails BLAS1::dasum_onlyX
     MODULE PROCEDURE dasum_onlyX
   ENDINTERFACE BLAS_asum
-  
+
   !> @brief Generic interface to the Level 1 BLAS routine _axpy
   !>
   !> _axpy performs the operation y <- a*x+y
   !>
-  !> The generic interface supports passing of single precision or 
+  !> The generic interface supports passing of single precision or
   !> double precision vectors and the @c N, @c A, @c INCX and @c INCY arguments
   !> are all made to be optional. The functionality is also extended such that
   !> @c A may be a vector the same size as @c X. These routines are resolved at
@@ -193,7 +184,7 @@ MODULE BLAS1
     !> @copydetails BLAS1::daxpy_xy
     MODULE PROCEDURE daxpy_xy
   ENDINTERFACE BLAS_axpy
-  
+
   !> @brief Generic interface to the Level 1 BLAS routine _copy
   !>
   !> _copy performs the operation y <- x
@@ -240,7 +231,7 @@ MODULE BLAS1
     !> @copydetails BLAS1::dcopy_xy
     MODULE PROCEDURE dcopy_xy
   ENDINTERFACE BLAS_copy
-  
+
   !> @brief Generic interface to the Level 1 BLAS routine _dot
   !>
   !> _dot performs the operation dot <- (x^T)*y
@@ -287,7 +278,7 @@ MODULE BLAS1
     !> @copydetails BLAS1::ddot_xy
     MODULE PROCEDURE ddot_xy
   ENDINTERFACE BLAS_dot
-  
+
   !> @brief Generic interface to the Level 1 BLAS routine i_amax
   !>
   !> The i_amax routine returns the index of the absolute maximum of a vector.
@@ -322,7 +313,7 @@ MODULE BLAS1
     !> @copydetails BLAS1::idamax_onlyX
     MODULE PROCEDURE idamax_onlyX
   ENDINTERFACE BLAS_iamax
-  
+
   !> @brief Generic interface for an extension to the Level 1 BLAS routines
   !>
   !> The i_amin routine returns the index of the absolute minimum of a vector.
@@ -357,7 +348,7 @@ MODULE BLAS1
     !> @copydetails BLAS1::idamin_onlyX
     MODULE PROCEDURE idamin_onlyX
   ENDINTERFACE BLAS_iamin
-  
+
   !> @brief Generic interface to the Level 1 BLAS routine _nrm2
   !>
   !> The _nrm2 routine computes the 2-norm of a vector.
@@ -392,7 +383,7 @@ MODULE BLAS1
     !> @copydetails BLAS1::dnrm2_onlyX
     MODULE PROCEDURE dnrm2_onlyX
   ENDINTERFACE BLAS_nrm2
-  
+
   !> @brief Generic interface to the Level 1 BLAS routine _scal
   !>
   !> _scal performs the operation x <- a*x
@@ -452,7 +443,7 @@ MODULE BLAS1
     !> @copydetails BLAS1::dscal_vecA_noNINCX
     MODULE PROCEDURE dscal_vecA_noNINCX
   ENDINTERFACE BLAS_scal
-  
+
   !> @brief Generic interface to the Level 1 BLAS routine _swap
   !>
   !> _swap performs the operation y <-> x
@@ -526,7 +517,7 @@ MODULE BLAS1
     INTEGER(SIK),INTENT(IN) :: incx
     REAL(SSK) :: r
 #ifdef HAVE_BLAS
-    !Not sure if this will actually work at link time, if it doesn't then 
+    !Not sure if this will actually work at link time, if it doesn't then
     !"REAL(KIND(0.0e0)),EXTERNAL :: sasum" should work. But then the pure
     !attribute will need to be removed from the function.
     INTERFACE
@@ -544,7 +535,7 @@ MODULE BLAS1
     INTEGER(SIK) :: i,nincx,m
     REAL(SSK) :: tmpsum
     INTRINSIC ABS,MOD,SUM
-    
+
     r=0.0_SSK
     tmpsum=0.0_SSK
     IF(n > 0 .AND. incx > 0) THEN
@@ -581,7 +572,7 @@ MODULE BLAS1
 !> @param x the single-precision real vector to operate on
 !> @return r the sum of the absolute values of @c x
 !>
-!> It might be more efficient to copy the block of code from @ref 
+!> It might be more efficient to copy the block of code from @ref
 !> BLAS1::sasum_all "sasum_all" for @c incx==1 but I am hoping that if
 !> inter-procedural optimizations are turned on for the compiler optimizations
 !> it will do this correctly.
@@ -608,7 +599,7 @@ MODULE BLAS1
   ENDFUNCTION sasum_noN
 !
 !-------------------------------------------------------------------------------
-!> @brief Function wraps @ref BLAS1::sasum_all "sasum_all" for when user only 
+!> @brief Function wraps @ref BLAS1::sasum_all "sasum_all" for when user only
 !> wants to pass @c x.
 !> @param x the single-precision real vector to operate on
 !> @return r the sum of the absolute values of @c x
@@ -641,9 +632,9 @@ MODULE BLAS1
     REAL(SDK),INTENT(IN) :: x(*)
     INTEGER(SIK),INTENT(IN) :: incx
     REAL(SDK) :: r
-    
+
 #ifdef HAVE_BLAS
-    !Not sure if this will actually work at link time, if it doesn't then 
+    !Not sure if this will actually work at link time, if it doesn't then
     !"REAL(KIND(0.0d0)),EXTERNAL :: sasum" should work. But then the pure
     !attribute will need to be removed from the function.
     INTERFACE
@@ -661,7 +652,7 @@ MODULE BLAS1
     INTEGER(SIK) :: i,nincx,m
     REAL(SDK) :: tmpsum
     INTRINSIC ABS,MOD,SUM
-    
+
     r=0.0_SDK
     tmpsum=0.0_SDK
     IF(n > 0 .AND. incx > 0) THEN
@@ -698,7 +689,7 @@ MODULE BLAS1
 !> @param x the double-precision real vector to operate on
 !> @return r the sum of the absolute values of @c x
 !>
-!> It might be more efficient to copy the block of code from @ref 
+!> It might be more efficient to copy the block of code from @ref
 !> BLAS1::dasum_all "dasum_all" for @c incx==1 but I am hoping that if
 !> inter-procedural optimizations are turned on for the compiler optimizations
 !> it will do this correctly.
@@ -763,7 +754,7 @@ MODULE BLAS1
     REAL(SSK),INTENT(INOUT) :: y(*)
     INTEGER(SIK),INTENT(IN) :: incy
 #ifdef HAVE_BLAS
-    !Not sure if this will actually work at link time, if it doesn't then 
+    !Not sure if this will actually work at link time, if it doesn't then
     !"REAL(KIND(0.0e0)),EXTERNAL :: saxpy" should work. But then the pure
     !attribute will need to be removed from all the routines.
     INTERFACE
@@ -776,7 +767,7 @@ MODULE BLAS1
         INTEGER,INTENT(IN) :: incy
       ENDSUBROUTINE saxpy
     ENDINTERFACE
-    
+
     CALL saxpy(n,a,x,incx,y,incy)
 #else
     INTEGER(SIK) :: i,ix,iy,m
@@ -834,7 +825,7 @@ MODULE BLAS1
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS1::saxpy_all "saxpy_all" for when the user
-!> only wants to pass @c a, @c x, @c y, and one increment to use for both 
+!> only wants to pass @c a, @c x, @c y, and one increment to use for both
 !> @c incx and @c incy.
 !> @param a the constant to multiply with @c x
 !> @param x the single-precision real vector to add to @c y
@@ -915,7 +906,7 @@ MODULE BLAS1
     INTEGER(SIK),INTENT(IN) :: incy
     INTEGER(SIK) :: i,ix,iy,m
     INTRINSIC MOD
-    
+
     IF(n > 0 .AND. ANY(a(1:n) /= 0.0_SSK)) THEN
       IF(incx == 1 .AND. incy == 1) THEN
         IF(n > 100) THEN
@@ -1061,7 +1052,7 @@ MODULE BLAS1
     REAL(SSK),INTENT(INOUT) :: y(*)
     INTEGER(SIK),INTENT(IN) :: incy
 #ifdef HAVE_BLAS
-    !Not sure if this will actually work at link time, if it doesn't then 
+    !Not sure if this will actually work at link time, if it doesn't then
     !"REAL(KIND(0.0e0)),EXTERNAL :: saxpy" should work. But then the pure
     !attribute will need to be removed from all the routines.
     INTERFACE
@@ -1077,7 +1068,7 @@ MODULE BLAS1
     CALL saxpy(n,1.0_SSK,x,incx,y,incy)
 #else
     INTEGER(SIK) :: i,ix,iy,m
-    
+
     IF(n > 0) THEN
       IF(incx == 1 .AND. incy == 1) THEN
         IF(n > 100) THEN
@@ -1187,7 +1178,7 @@ MODULE BLAS1
     REAL(SDK),INTENT(INOUT) :: y(*)
     INTEGER(SIK),INTENT(IN) :: incy
 #ifdef HAVE_BLAS
-    !Not sure if this will actually work at link time, if it doesn't then 
+    !Not sure if this will actually work at link time, if it doesn't then
     !"REAL(KIND(0.0d0)),EXTERNAL :: daxpy" should work. But then the pure
     !attribute will need to be removed from all the routines.
     INTERFACE
@@ -1200,12 +1191,12 @@ MODULE BLAS1
         INTEGER,INTENT(IN) :: incy
       ENDSUBROUTINE daxpy
     ENDINTERFACE
-    
+
     CALL daxpy(n,a,x,incx,y,incy)
 #else
     INTEGER(SIK) :: i,ix,iy,m
     INTRINSIC MOD
-    
+
     IF(n > 0 .AND. a /= 0.0_SDK) THEN
       IF(incx == 1 .AND. incy == 1) THEN
         IF(n > 100) THEN
@@ -1340,7 +1331,7 @@ MODULE BLAS1
     INTEGER(SIK),INTENT(IN) :: incy
     INTEGER(SIK) :: i,ix,iy,m
     INTRINSIC MOD
-    
+
     IF(n > 0 .AND. ANY(a(1:n) /= 0.0_SDK)) THEN
       IF(incx == 1 .AND. incy == 1) THEN
         IF(n > 100) THEN
@@ -1486,7 +1477,7 @@ MODULE BLAS1
     REAL(SDK),INTENT(INOUT) :: y(*)
     INTEGER(SIK),INTENT(IN) :: incy
 #ifdef HAVE_BLAS
-    !Not sure if this will actually work at link time, if it doesn't then 
+    !Not sure if this will actually work at link time, if it doesn't then
     !"REAL(KIND(0.0d0)),EXTERNAL :: daxpy" should work. But then the pure
     !attribute will need to be removed from all the routines.
     INTERFACE
@@ -1503,7 +1494,7 @@ MODULE BLAS1
 #else
     INTEGER(SIK) :: i,ix,iy,m
     INTRINSIC MOD
-    
+
     IF(n > 0) THEN
       IF(incx == 1 .AND. incy == 1) THEN
         IF(n > 100) THEN
@@ -1609,7 +1600,7 @@ MODULE BLAS1
     REAL(SSK),INTENT(INOUT) :: x(*)
     INTEGER(SIK),INTENT(IN) :: incx
 #ifdef HAVE_BLAS
-    !Not sure if this will actually work at link time, if it doesn't then 
+    !Not sure if this will actually work at link time, if it doesn't then
     !"REAL(KIND(0.0e0)),EXTERNAL :: sscal" should work. But then the pure
     !attribute will need to be removed from all the routines.
     INTERFACE
@@ -1626,7 +1617,7 @@ MODULE BLAS1
 #else
     INTEGER(SIK) :: i,nincx,m
     INTRINSIC MOD
-    
+
     IF(n > 0 .AND. incx > 0) THEN
       IF(incx == 1) THEN
         IF(n > 100) THEN
@@ -1713,7 +1704,7 @@ MODULE BLAS1
     INTEGER(SIK),INTENT(IN) :: incx
     INTEGER(SIK) :: i,nincx,m
     INTRINSIC MOD
-    
+
     IF(n > 0 .AND. incx > 0) THEN
       IF(incx == 1) THEN
         IF(n > 100) THEN
@@ -1808,7 +1799,7 @@ MODULE BLAS1
     REAL(SDK),INTENT(INOUT) :: x(*)
     INTEGER(SIK),INTENT(IN) :: incx
 #ifdef HAVE_BLAS
-    !Not sure if this will actually work at link time, if it doesn't then 
+    !Not sure if this will actually work at link time, if it doesn't then
     !"REAL(KIND(0.0d0)),EXTERNAL :: dscal" should work. But then the pure
     !attribute will need to be removed from all the routines.
     INTERFACE
@@ -1825,7 +1816,7 @@ MODULE BLAS1
 #else
     INTEGER(SIK) :: i,nincx,m
     INTRINSIC MOD
-    
+
     IF(n > 0 .AND. incx > 0) THEN
       IF(incx == 1) THEN
         IF(n > 100) THEN
@@ -1912,7 +1903,7 @@ MODULE BLAS1
     INTEGER(SIK),INTENT(IN) :: incx
     INTEGER(SIK) :: i,nincx,m
     INTRINSIC MOD
-    
+
     IF(n > 0 .AND. incx > 0) THEN
       IF(incx == 1) THEN
         IF(n > 100) THEN
@@ -1999,7 +1990,7 @@ MODULE BLAS1
 !> a value leading to more optimal performance most certainly exists but will be
 !> architecture dependent.
 !>
-!> The netlib implementation uses an algorithm that rescales the sum as its 
+!> The netlib implementation uses an algorithm that rescales the sum as its
 !> computed. This is what is used when the increment is not 1 or the size of
 !> @c x is smaller than 100. It is assumed that the rescaling approach will
 !> produce a result with less round-off error.
@@ -2022,7 +2013,7 @@ MODULE BLAS1
     INTEGER(SIK) :: i,m
     REAL(SSK) :: sum2,r,rscale
     INTRINSIC ABS,MOD,SUM,SQRT
-    
+
     norm2=0.0_SSK
     IF(n == 1) norm2=ABS(x(1))
     IF(n > 1 .AND. incx > 0) THEN
@@ -2036,7 +2027,7 @@ MODULE BLAS1
         ENDDO
         norm2=SQRT(sum2)
       ELSE
-        !This is similar to what is in http://netlib.org/blas/snrm2.f but I 
+        !This is similar to what is in http://netlib.org/blas/snrm2.f but I
         !think I was able to improve it slightly by moving divisions into one
         !part of the loop and eliminating the first iteration of the loop.
         !
@@ -2093,7 +2084,7 @@ MODULE BLAS1
 !> @param x the single-precision real vector to operate on
 !> @return norm2 the 2-norm of @c x
 !>
-!> It might be more efficient to copy the block of code from @ref 
+!> It might be more efficient to copy the block of code from @ref
 !> BLAS1::snrm2_all "snrm2_all" for @c incx==1 but I am hoping that if
 !> inter-procedural optimizations are turned on for the compiler optimizations
 !> it will do this correctly.
@@ -2106,7 +2097,7 @@ MODULE BLAS1
   ENDFUNCTION snrm2_noINCX
 !
 !-------------------------------------------------------------------------------
-!> @brief Function wraps @ref BLAS1::snrm2_all "snrm2_all" for when user only 
+!> @brief Function wraps @ref BLAS1::snrm2_all "snrm2_all" for when user only
 !> wants to pass @c x.
 !> @param x the single-precision real vector to operate on
 !> @return norm2 the 2-norm of @c x
@@ -2132,7 +2123,7 @@ MODULE BLAS1
 !> a value leading to more optimal performance most certainly exists but will be
 !> architecture dependent.
 !>
-!> The netlib implementation uses an algorithm that rescales the sum as its 
+!> The netlib implementation uses an algorithm that rescales the sum as its
 !> computed. This is what is used when the increment is not 1 or the size of
 !> @c x is smaller than 100. It is assumed that the rescaling approach will
 !> produce a result with less round-off error.
@@ -2155,7 +2146,7 @@ MODULE BLAS1
     INTEGER(SIK) :: i,m
     REAL(SDK) :: sum2,r,rscale
     INTRINSIC ABS,MOD,SUM,SQRT
-    
+
     norm2=0.0_SDK
     IF(n == 1) norm2=ABS(x(1))
     IF(n > 1 .AND. incx > 0) THEN
@@ -2169,7 +2160,7 @@ MODULE BLAS1
         ENDDO
         norm2=SQRT(sum2)
       ELSE
-        !This is similar to what is in http://netlib.org/blas/dnrm2.f but I 
+        !This is similar to what is in http://netlib.org/blas/dnrm2.f but I
         !think I was able to improve it slightly by moving divisions into one
         !part of the loop and eliminating the first iteration of the loop.
         !
@@ -2226,7 +2217,7 @@ MODULE BLAS1
 !> @param x the double-precision real vector to operate on
 !> @return norm2 the 2-norm of @c x
 !>
-!> It might be more efficient to copy the block of code from @ref 
+!> It might be more efficient to copy the block of code from @ref
 !> BLAS1::dnrm2_all "dnrm2_all" for @c incx==1 but I am hoping that if
 !> inter-procedural optimizations are turned on for the compiler optimizations
 !> it will do this correctly.
@@ -2239,7 +2230,7 @@ MODULE BLAS1
   ENDFUNCTION dnrm2_noINCX
 !
 !-------------------------------------------------------------------------------
-!> @brief Function wraps @ref BLAS1::dnrm2_all "dnrm2_all" for when user only 
+!> @brief Function wraps @ref BLAS1::dnrm2_all "dnrm2_all" for when user only
 !> wants to pass @c x.
 !> @param x the double-precision real vector to operate on
 !> @return norm2 the 2-norm of @c x
@@ -2287,7 +2278,7 @@ MODULE BLAS1
 #else
     INTEGER(SIK) :: i,ix,iy,m
     INTRINSIC MOD
-    
+
     IF(n > 0) THEN
       IF(incx == 1 .AND. incy == 1) THEN
         IF(n > 100) THEN
@@ -2458,7 +2449,7 @@ MODULE BLAS1
 #else
     INTEGER(SIK) :: i,ix,iy,m
     INTRINSIC MOD
-    
+
     IF(n > 0) THEN
       IF(incx == 1 .AND. incy == 1) THEN
         IF(n > 100) THEN
@@ -2631,7 +2622,7 @@ MODULE BLAS1
 #else
     INTEGER(SIK) :: i,ix,iy,m
     INTRINSIC MOD,SUM
-    
+
     r=0.0_SSK
     IF(n > 0) THEN
       IF(incx == 1 .AND. incy == 1) THEN
@@ -2684,7 +2675,7 @@ MODULE BLAS1
 !
 !-------------------------------------------------------------------------------
 !> @brief Function wraps @ref BLAS1::sdot_all "sdot_all" for when the user
-!> only wants to pass @c n, @c x, @c y, and one increment to use for @c x and 
+!> only wants to pass @c n, @c x, @c y, and one increment to use for @c x and
 !> @c y.
 !> @param n the size of the vectors @c x and @c y
 !> @param x the single-precision real vector to operate on
@@ -2709,7 +2700,7 @@ MODULE BLAS1
 !> @param y the single-precision real vector to operate on
 !> @return r the dot product of @c x and @c y
 !>
-!> It might be more efficient to copy the block of code from @ref 
+!> It might be more efficient to copy the block of code from @ref
 !> BLAS1::sdot_all "sdot_all" for @c incx==1 and @c incy==1 but I am hoping
 !> that if inter-procedural optimizations are turned on for the compiler
 !> optimizations it will do this correctly.
@@ -2752,7 +2743,7 @@ MODULE BLAS1
 !> @param y the single-precision real vector to operate on
 !> @return r the dot product of @c x and @c y
 !>
-!> It might be more efficient to copy the block of code from @ref 
+!> It might be more efficient to copy the block of code from @ref
 !> BLAS1::sdot_all "sdot_all" for @c incx==1 and @c incy==1 but I am hoping
 !> that if inter-procedural optimizations are turned on for the compiler
 !> optimizations it will do this correctly.
@@ -2810,7 +2801,7 @@ MODULE BLAS1
 #else
     INTEGER(SIK) :: i,ix,iy,m
     INTRINSIC MOD,SUM
-    
+
     r=0.0_SDK
     IF(n > 0) THEN
       IF(incx == 1 .AND. incy == 1) THEN
@@ -2863,7 +2854,7 @@ MODULE BLAS1
 !
 !-------------------------------------------------------------------------------
 !> @brief Function wraps @ref BLAS1::ddot_all "ddot_all" for when the user
-!> only wants to pass @c n, @c x, @c y, and one increment to use for @c x and 
+!> only wants to pass @c n, @c x, @c y, and one increment to use for @c x and
 !> @c y.
 !> @param n the size of the vectors @c x and @c y
 !> @param x the double-precision real vector to operate on
@@ -2888,7 +2879,7 @@ MODULE BLAS1
 !> @param y the double-precision real vector to operate on
 !> @return r the dot product of @c x and @c y
 !>
-!> It might be more efficient to copy the block of code from @ref 
+!> It might be more efficient to copy the block of code from @ref
 !> BLAS1::ddot_all "ddot_all" for @c incx==1 and @c incy==1 but I am hoping
 !> that if inter-procedural optimizations are turned on for the compiler
 !> optimizations it will do this correctly.
@@ -2931,7 +2922,7 @@ MODULE BLAS1
 !> @param y the double-precision real vector to operate on
 !> @return r the dot product of @c x and @c y
 !>
-!> It might be more efficient to copy the block of code from @ref 
+!> It might be more efficient to copy the block of code from @ref
 !> BLAS1::ddot_all "ddot_all" for @c incx==1 and @c incy==1 but I am hoping
 !> that if inter-procedural optimizations are turned on for the compiler
 !> optimizations it will do this correctly.
@@ -2961,9 +2952,9 @@ MODULE BLAS1
 !> If an external BLAS library is available at link time then that library
 !> routine that gets called, otherwise the supplied code is used. It is based on
 !> the code available on http://netlib.org/blas/sswap.f but has some minor
-!> modifications. The temporary swap variables are defined as separate 
-!> variables when unrolling the loop. This may improve the ability of the 
-!> compiler to optimize the loop by eliminating dependencies between the 
+!> modifications. The temporary swap variables are defined as separate
+!> variables when unrolling the loop. This may improve the ability of the
+!> compiler to optimize the loop by eliminating dependencies between the
 !> operations for elements @c i, @c i+1, and @c i+2.
 !>
   PURE SUBROUTINE sswap_all(n,x,incx,y,incy)
@@ -2987,7 +2978,7 @@ MODULE BLAS1
     INTEGER(SIK) :: i,ix,iy,m
     REAL(SSK) :: stmp1,stmp2,stmp3
     INTRINSIC MOD
-    
+
     IF(n > 0) THEN
       IF(incx == 1 .AND. incy == 1) THEN
         !Manually unroll loop 3 times
@@ -3053,7 +3044,7 @@ MODULE BLAS1
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS1::sswap_all "sswap_all" for when
-!> the user only wants to pass @c n @c x, @c y, and one increment for both 
+!> the user only wants to pass @c n @c x, @c y, and one increment for both
 !> @c incx and @c incy.
 !> @param n the number of elements to operate on
 !> @param x the single-precision real vector to swap with @c y
@@ -3070,7 +3061,7 @@ MODULE BLAS1
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS1::sswap_all "sswap_all" for when
-!> the user only wants to pass @c x, @c y, and one increment for both 
+!> the user only wants to pass @c x, @c y, and one increment for both
 !> @c incx and @c incy.
 !> @param x the single-precision real vector to swap with @c y
 !> @param y the single-precision real vector to swap with @c x
@@ -3134,9 +3125,9 @@ MODULE BLAS1
 !> If an external BLAS library is available at link time then that library
 !> routine that gets called, otherwise the supplied code is used. It is based on
 !> the code available on http://netlib.org/blas/dswap.f but has some minor
-!> modifications. The temporary swap variables are defined as separate 
-!> variables when unrolling the loop. This may improve the ability of the 
-!> compiler to optimize the loop by eliminating dependencies between the 
+!> modifications. The temporary swap variables are defined as separate
+!> variables when unrolling the loop. This may improve the ability of the
+!> compiler to optimize the loop by eliminating dependencies between the
 !> operations for elements @c i, @c i+1, and @c i+2.
 !>
   PURE SUBROUTINE dswap_all(n,x,incx,y,incy)
@@ -3160,7 +3151,7 @@ MODULE BLAS1
     INTEGER(SIK) :: i,ix,iy,m
     REAL(SDK) :: stmp1,stmp2,stmp3
     INTRINSIC MOD
-    
+
     IF(n > 0) THEN
       IF(incx == 1 .AND. incy == 1) THEN
         !Manually unroll loop 3 times
@@ -3226,7 +3217,7 @@ MODULE BLAS1
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS1::dswap_all "dswap_all" for when
-!> the user only wants to pass @c n @c x, @c y, and one increment for both 
+!> the user only wants to pass @c n @c x, @c y, and one increment for both
 !> @c incx and @c incy.
 !> @param n the number of elements to operate on
 !> @param x the double-precision real vector to swap with @c y
@@ -3243,7 +3234,7 @@ MODULE BLAS1
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS1::dswap_all "dswap_all" for when
-!> the user only wants to pass @c x, @c y, and one increment for both 
+!> the user only wants to pass @c x, @c y, and one increment for both
 !> @c incx and @c incy.
 !> @param x the double-precision real vector to swap with @c y
 !> @param y the double-precision real vector to swap with @c x
@@ -3297,7 +3288,7 @@ MODULE BLAS1
   ENDSUBROUTINE dswap_xy
 !
 !-------------------------------------------------------------------------------
-!> @brief Function returns the index of the absolute maximum of a single 
+!> @brief Function returns the index of the absolute maximum of a single
 !> precision vector.
 !> @param n the size of the vector @c x
 !> @param x the single-precision real vector to operate on
@@ -3327,7 +3318,7 @@ MODULE BLAS1
     INTEGER(SIK) :: i,ix
     REAL(SSK) :: tmpmax
     INTRINSIC ABS
-    
+
     imax=0
     IF(n == 1) imax=1
     IF(n > 1 .AND. incx > 0) THEN
@@ -3430,7 +3421,7 @@ MODULE BLAS1
     INTEGER(SIK) :: i,ix
     REAL(SDK) :: tmpmax
     INTRINSIC ABS
-    
+
     imax=0
     IF(n == 1) imax=1
     IF(n > 1 .AND. incx > 0) THEN
@@ -3503,7 +3494,7 @@ MODULE BLAS1
   ENDFUNCTION idamax_onlyX
 !
 !-------------------------------------------------------------------------------
-!> @brief Function returns the index of the absolute minimum of a single 
+!> @brief Function returns the index of the absolute minimum of a single
 !> precision vector.
 !> @param n the size of the vector @c x
 !> @param x the single-precision real vector to operate on

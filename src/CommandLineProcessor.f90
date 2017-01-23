@@ -1,27 +1,18 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief Utility module provides a command line processor type object.
-!> 
+!>
 !> This module will process the command line and store the arguments, or it may
-!> be given a string representing the command line that will be processed. 
-!> It stores these options as strings which can be retrieved. 
-!> This module is tested using @c testCmdLineProc.f90. An 
-!> example of how to use this object is given below, the unit test also shows 
+!> be given a string representing the command line that will be processed.
+!> It stores these options as strings which can be retrieved.
+!> This module is tested using @c testCmdLineProc.f90. An
+!> example of how to use this object is given below, the unit test also shows
 !> how to use the object. Code coverage documentation can be found on the @ref
 !> CodeCoverageReports page.
 !>
@@ -41,7 +32,7 @@
 !> @par EXAMPLE
 !> @code
 !> PROGRAM CmdLineExample
-!> 
+!>
 !>   USE CommandLineProcessor
 !>   IMPLICIT NONE
 !>
@@ -52,7 +43,7 @@
 !>   CALL CLP%exception%setQuietMode(.TRUE.)
 !>
 !>   !Configure the command line processor (CLP)
-!>   CALL CLP%setExecName('CmdLineExample.exe') 
+!>   CALL CLP%setExecName('CmdLineExample.exe')
 !>   CALL CLP%setNumOpts(3)
 !>   CALL CLP%defineOpt(1,'-help','Display this help message')
 !>   CALL CLP%defineOpt(2,' input_file','Name of input file')
@@ -63,7 +54,7 @@
 !>   !Process command line
 !>   CALL CLP%setCmdLine()
 !>   CALL CLP%ProcCmdLine(ExampleProcSub)
-!> 
+!>
 !>   CONTAINS
 !>     !Interface of this subroutine is fixed, it can be defined
 !>     !anywhere in the code though, and it is to be passed
@@ -72,11 +63,11 @@
 !>
 !>       TYPE(CmdLineProcType) :: uclp
 !>       CHARACTER(LEN=MAX_ARG_STRING_LENGTH) :: arg
-!> 
+!>
 !>       !The usage is defined here, not by the string passed to %defineUsage
 !>       !In this example the useage is '-help' or the input file name or
 !>       !the input file name and output file name.
-!> 
+!>
 !>       SELECT CASE(uclp%getNargs())
 !>         CASE(0)
 !>           !use the default input file name
@@ -112,7 +103,7 @@
 !>
 !> END PROGRAM
 !> @endcode
-!> 
+!>
 !> @author Brendan Kochunas
 !>   @date 05/12/2011
 !>
@@ -120,7 +111,7 @@
 !> (07/05/2011) - Brendan Kochunas
 !>   - Modified to be a derived type with type bound procedures
 !>   - Updated unit test and documentation
-!> 
+!>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE CommandLineProcessor
   USE ISO_FORTRAN_ENV
@@ -129,15 +120,15 @@ MODULE CommandLineProcessor
   USE ExceptionHandler
   USE IO_Strings
   USE IOutil
-  
+
   IMPLICIT NONE
   PRIVATE
-  
+
   PUBLIC :: CmdLineProcType
-  
+
   !> Name of the module to be used in exception reporting
   CHARACTER(LEN=*),PARAMETER :: modName='COMMANDLINEPROCESSOR'
-  
+
   !> @brief Derived type for a command line option
   !>
   !> This is used to only for displaying help information
@@ -147,7 +138,7 @@ MODULE CommandLineProcessor
     !> The description of the option
     TYPE(StringType) :: description
   ENDTYPE CmdLineOptType
-  
+
   !> Derived type for a command line processor object
   TYPE :: CmdLineProcType
     !> Name of executable
@@ -233,7 +224,7 @@ MODULE CommandLineProcessor
     PURE SUBROUTINE setExecName(clp,execname)
       CLASS(CmdLineProcType),INTENT(INOUT) :: clp
       CHARACTER(LEN=*),INTENT(IN) :: execname
-      
+
       clp%execname=TRIM(execname)
     ENDSUBROUTINE setExecName
 !
@@ -259,7 +250,7 @@ MODULE CommandLineProcessor
       CHARACTER(LEN=*),PARAMETER :: myName='defineUsage'
       CLASS(CmdLineProcType),INTENT(INOUT) :: clp
       CHARACTER(LEN=*),INTENT(IN) :: usagestr
-      
+
       clp%usage=TRIM(usagestr)
     ENDSUBROUTINE defineUsage
 !
@@ -272,7 +263,7 @@ MODULE CommandLineProcessor
       CHARACTER(LEN=*),PARAMETER :: myName='setNumOpts'
       CLASS(CmdLineProcType),INTENT(INOUT) :: clp
       INTEGER(SIK),INTENT(IN) :: n
-      
+
       IF(n < 1) THEN
         CALL clp%e%raiseError(modName//'::'//myName// &
           ' - illegal input, number of options is less than 1!')
@@ -326,7 +317,7 @@ MODULE CommandLineProcessor
       INTEGER(SIK),INTENT(IN) :: iopt
       CHARACTER(LEN=*),INTENT(IN) :: name,description
       CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: emsg
-      
+
       IF(0 < iopt .AND. iopt <= clp%nopts) THEN
         !Warn for bad input
         IF(LEN_TRIM(name) == 0) &
@@ -368,7 +359,7 @@ MODULE CommandLineProcessor
 !-------------------------------------------------------------------------------
 !> @brief Processes the command line and stores the arguments in CmdLineArgs
 !> @param clp command line processor object
-!> @param iline (OPTIONAL) a string containing the command line arguments to 
+!> @param iline (OPTIONAL) a string containing the command line arguments to
 !>              process
 !>
 !> The optional input argument iline is provided should the code that this module
@@ -381,10 +372,10 @@ MODULE CommandLineProcessor
       CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: iline
       TYPE(StringType) :: cmdline,opt
       INTEGER(SIK) :: iarg,ierr,cmdlinelength
-      
+
       IF(.NOT.ASSOCIATED(clp%CmdLineArgs)) THEN
         IF(PRESENT(iline)) THEN
-          
+
           cmdline=TRIM(iline)
           clp%cmdline=cmdline
           clp%narg=nFields(cmdline)
@@ -489,10 +480,10 @@ MODULE CommandLineProcessor
           CLASS(CmdLineProcType),INTENT(INOUT) :: uclp
         ENDSUBROUTINE
       ENDINTERFACE
-      
+
       !Call the other subroutine that was passed in.
       CALL userSubroutine(clp)
-      
+
     ENDSUBROUTINE ProcCmdLineArgs
 !
 !-------------------------------------------------------------------------------
@@ -502,7 +493,7 @@ MODULE CommandLineProcessor
     SUBROUTINE DisplayHelp(clp)
       CLASS(CmdLineProcType),INTENT(IN) :: clp
       INTEGER(SIK) :: iopt
-      
+
       IF(LEN_TRIM(clp%execname) > 0 .AND. LEN_TRIM(clp%usage) > 0) THEN
         WRITE(OUTPUT_UNIT,*)
         WRITE(OUTPUT_UNIT,*)
@@ -524,7 +515,7 @@ MODULE CommandLineProcessor
 !>
     PURE SUBROUTINE clear_CLP(clp)
       CLASS(CmdLineProcType),INTENT(INOUT) :: clp
-      
+
       clp%execname=''
       CALL clearCmdLine(clp)
       CALL clearOpts(clp)

@@ -1,19 +1,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testParallelEnv
 #include "UnitTest.h"
@@ -23,7 +14,7 @@ PROGRAM testParallelEnv
   USE IntrType
   USE ExceptionHandler
   USE ParallelEnv
-  
+
   IMPLICIT NONE
 
 #ifdef HAVE_MPI
@@ -32,9 +23,9 @@ PROGRAM testParallelEnv
 
   TYPE(ExceptionHandlerType),TARGET :: e
   TYPE(ParallelEnvType) :: testPE,testPE2
-  
+
   INTEGER :: mpierr,myrank,mysize,tmp,stt,stp
-  
+
 #ifdef HAVE_MPI
   CALL MPI_Init(mpierr)
   CALL MPI_Comm_rank(MPI_COMM_WORLD,myrank,mpierr)
@@ -46,14 +37,14 @@ PROGRAM testParallelEnv
 #endif
   CALL eParEnv%setQuietMode(.TRUE.)
   CALL eParEnv%setStopOnError(.FALSE.)
-  
+
   CREATE_TEST('PARALLEL ENVIRONMENT')
-  
+
   REGISTER_SUBTEST('PARAMETERS',testParams)
   REGISTER_SUBTEST('OMP_ENVTYPE',testOMPEnv)
   REGISTER_SUBTEST('MPI_ENVTYPE',testMPIEnv)
   REGISTER_SUBTEST('PARALLEL_ENVTYPE',testPE_Env)
-  
+
   FINALIZE_TEST()
   CALL testPE%world%finalize()
 !
@@ -71,34 +62,34 @@ PROGRAM testParallelEnv
       ASSERT(PE_COMM_SELF == MPI_COMM_SELF,'PE_COMM_SELF')
       ASSERT(PE_COMM_NULL == MPI_COMM_NULL,'PE_COMM_NULL')
       ASSERT(PE_COMM_DEFAULT == PE_COMM_WORLD,'PE_COMM_DEFAULT')
-#endif 
+#endif
     ENDSUBROUTINE testParams
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testOMPEnv()
       TYPE(OMP_EnvType) :: testOMP
       INTEGER :: n_warn
-        
+
       COMPONENT_TEST('Uninit.')
       ASSERT(testOMP%nproc == -1,'%nproc')
       ASSERT(testOMP%rank == -1,'%rank')
       ASSERT(.NOT.testOMP%master,'%master')
       ASSERT(.NOT.testOMP%isInit(),'%isInit()')
-      
+
       COMPONENT_TEST('%init()')
       CALL testOMP%init()
       ASSERT(testOMP%nproc == 1,'%nproc')
       ASSERT(testOMP%rank == 0,'%rank')
       ASSERT(testOMP%master,'%master')
       ASSERT(testOMP%isInit(),'%isInit()')
-      
+
       COMPONENT_TEST('%clear()')
       CALL testOMP%clear()
       ASSERT(testOMP%nproc == -1,'%nproc')
       ASSERT(testOMP%rank == -1,'%rank')
       ASSERT(.NOT.testOMP%master,'%master')
       ASSERT(.NOT.testOMP%isInit(),'%isInit()')
-      
+
 !$    COMPONENT_TEST('With OpenMP')
 !$    CALL testOMP%init(1)
 !$    ASSERT(testOMP%nproc == 1,'%nproc')
@@ -124,14 +115,14 @@ PROGRAM testParallelEnv
       INTEGER(SIK),ALLOCATABLE :: testIDX(:),testWGT(:)
       INTEGER(SLK),ALLOCATABLE :: ranks(:),ranks2(:,:)
       TYPE(MPI_EnvType) :: testMPI,testMPI2
-      
-      
+
+
       COMPONENT_TEST('%isInit()')
       ASSERT(testMPI%nproc == -1,'%nproc')
       ASSERT(testMPI%rank == -1,'%rank')
       ASSERT(.NOT.testMPI%master,'%master')
       ASSERT(.NOT.testMPI%isInit(),'%isInit()')
-      
+
       COMPONENT_TEST('%init(PE_COMM_WORLD)')
       CALL testMPI%init(PE_COMM_WORLD)
       ASSERT(testMPI%comm /= PE_COMM_WORLD,'%comm world')
@@ -140,7 +131,7 @@ PROGRAM testParallelEnv
       ASSERT(testMPI%rank == myrank,'%rank')
       ASSERT(testMPI%nproc > 0,'%nproc')
       ASSERT(testMPI%isInit(),'%isInit()')
-      
+
       COMPONENT_TEST('%init(PE_COMM_SELF)')
       CALL testMPI2%init(PE_COMM_SELF)
       ASSERT(testMPI2%comm /= PE_COMM_WORLD,'%comm world')
@@ -150,17 +141,17 @@ PROGRAM testParallelEnv
       ASSERT(testMPI2%nproc == 1,'%nproc')
       ASSERT(testMPI2%master,'%master')
       ASSERT(testMPI2%isInit(),'%isInit()')
-      
+
       COMPONENT_TEST('%clear()')
       CALL testMPI2%clear()
       ASSERT(testMPI2%nproc == -1,'%nproc')
       ASSERT(testMPI2%rank == -1,'%rank')
       ASSERT(.NOT.testMPI2%master,'%master')
       ASSERT(.NOT.testMPI2%isInit(),'%isInit()')
-  
+
       COMPONENT_TEST('%barrier()')
       CALL testMPI%barrier()
-  
+
       COMPONENT_TEST('%partition')
       CALL testMPI2%init(testMPI%comm)
       testMPI2%nproc=7
@@ -192,7 +183,7 @@ PROGRAM testParallelEnv
       CALL testMPI2%partition(N1=2,N2=25,ISTT=stt,ISTP=stp)
       ASSERT(stt == 23,'istt (6,7)')
       ASSERT(stp == 25,'istp (6,7)')
-      
+
       testMPI2%nproc=10
       ALLOCATE(testWGT(40))
       testWGT=(/936,936,936,936,1722,1722,1722,1722,1722,1722,1722,1722,1916, &
@@ -219,17 +210,17 @@ PROGRAM testParallelEnv
       ASSERT(ALL(testIDX == (/13,17,19,25,39/)),'testIDX 8')
       CALL testMPI2%partition(IWGT=testWGT,N1=1,N2=40,IPART=9,IDXMAP=testIDX)
       ASSERT(ALL(testIDX == (/14,18,20,26,40/)),'testIDX 9')
-    
+
       !Error Checking
       CALL testMPI2%partition(IWGT=testWGT,N1=1,N2=40,IPART=100,IDXMAP=testIDX)
       CALL testMPI2%partition(IWGT=testWGT,N1=41,N2=40,IDXMAP=testIDX)
       CALL testMPI2%clear()
       CALL testMPI2%partition(IWGT=testWGT,N1=1,N2=40,IDXMAP=testIDX)
-      
+
       CALL testMPI%clear()
-      
+
       COMPONENT_TEST('%gather')
-      !Need to test error conditions and 
+      !Need to test error conditions and
       !cases where SIZE(recvbuf) > SIZE(sbuf)*nproc
       CALL testMPI%init(PE_COMM_WORLD)
       ALLOCATE(ranks(testMPI%nproc))
@@ -272,7 +263,7 @@ PROGRAM testParallelEnv
     SUBROUTINE testPE_Env()
       CALL eParEnv%setStopOnError(.FALSE.)
       CALL eParEnv%setQuietMode(.TRUE.)
-      
+
       !Test every line of isInit
       COMPONENT_TEST('%isInit()')
       ASSERT(.NOT.testPE%isInit(),'%isInit() 1')
@@ -293,7 +284,7 @@ PROGRAM testParallelEnv
       ASSERT(.NOT.testPE%isInit(),'%isInit() 8')
       CALL testPE%ray%init()
       ASSERT(testPE%isInit(),'%isInit() 9')
-      
+
       COMPONENT_TEST('%clear()')
       CALL testPE%clear()
       ASSERT(.NOT.ASSOCIATED(testPE%energy),'%energy')
@@ -301,7 +292,7 @@ PROGRAM testParallelEnv
       ASSERT(.NOT.ASSOCIATED(testPE%angle),'%angle')
       ASSERT(.NOT.ASSOCIATED(testPE%ray),'%ray')
       ASSERT(.NOT.testPE%world%isInit(),'%isInit()')
-      
+
       COMPONENT_TEST('%initialize(...)')
       CALL testPE%initialize(PE_COMM_SELF,1,1,1,1)
       ASSERT(testPE%world%comm /= PE_COMM_WORLD,'%world%comm world')
@@ -340,7 +331,7 @@ PROGRAM testParallelEnv
       ASSERT(testPE%ray%rank == 0,'%ray%rank')
       ASSERT(testPE%ray%master,'%ray%master')
       ASSERT(testPE%ray%isInit(),'%isInit()')
-      
+
       COMPONENT_TEST('OPERATOR(=)')
       testPE2=testPE
       ASSERT(testPE2%world%comm /= testPE%world%comm,'world%comm')
@@ -425,10 +416,10 @@ PROGRAM testParallelEnv
 
       !Error Checking coverage
       CALL testPE%initialize(PE_COMM_WORLD,0,0,0,0)
-!      
+!
 !Not sure if we want to every resurrect this stuff.
 !
-  !CALL testPE%initialize(PE_COMM_WORLD,0,0,0,0)    
+  !CALL testPE%initialize(PE_COMM_WORLD,0,0,0,0)
   !CALL testPE%init(MPI_COMM_WORLD,mysize,1,1,1)
   !CALL testPE%world%barrier()
   !WRITE(OUTPUT_UNIT,*) myrank,testPE%space%rank,testPE%energy%rank,testPE%angle%rank

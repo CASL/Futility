@@ -1,30 +1,21 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!> @brief Utility module for I/O defines the derived type for a Fortran File 
+!> @brief Utility module for I/O defines the derived type for a Fortran File
 !> object.
 !>
-!> The Fortan file type is an extension of the abstract @ref FileType_Base 
+!> The Fortan file type is an extension of the abstract @ref FileType_Base
 !> "Base file type". It provides a simplified interface to the native Fortran
 !> file capabilities and includes error checking. This module is considered to
 !> be an I/O utility module so it's public members should be accessed through
 !> @ref IOutil "IOutil". This module should not be used directly except when it
-!> is needed by another I/O utility module. This module is tested by 
-!> @c testIOutil.f90 and the coverage report can be found at the @ref 
+!> is needed by another I/O utility module. This module is tested by
+!> @c testIOutil.f90 and the coverage report can be found at the @ref
 !> CodeCoverageReports "Code Coverage Reports" page. An example of how to use
 !> the Fortran file type is provided below and in the test.
 !>
@@ -39,7 +30,7 @@
 !> @par EXAMPLES
 !> @code
 !> PROGRAM FileExample
-!> 
+!>
 !> USE IOutil
 !> IMPLICIT NONE
 !>
@@ -63,7 +54,7 @@
 !> !Read a line from the input file and write it to the output file
 !> READ(inputfile%getUnitNo(),*) string
 !> WRITE(outputfile%getUnitNo(),*) string
-!> 
+!>
 !> !Close the files
 !> CALL inputfile%fclose()
 !> CALL outputfile%fclose()
@@ -75,7 +66,7 @@
 !>   @date 07/06/2011
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE FileType_Fortran
-      
+
   USE ISO_FORTRAN_ENV
   USE IntrType
   USE Strings
@@ -84,7 +75,7 @@ MODULE FileType_Fortran
   USE FileType_Base
   IMPLICIT NONE
   PRIVATE
-  
+
   !List of Public Members
   PUBLIC :: FortranFileType
   PUBLIC :: init_fortran_file
@@ -92,14 +83,14 @@ MODULE FileType_Fortran
   PUBLIC :: rewind_fortran_file
   PUBLIC :: backspace_fortran_file
   PUBLIC :: FortranFile_get_new_unit
-  
+
   !> Module name for error messages
   CHARACTER(LEN=*),PARAMETER :: modName='FILETYPE_FORTRAN'
   !> Scratch variable for exception messages of this module
   CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: emesg
   !> Scratch variable for IOSTAT values
   INTEGER(SIK) :: ioerr
-  
+
   !> @brief Derived type object for files definable by the native Fortran I/O
   !>
   !> This is an extension of the abstract @ref FileType_Base "BaseFileType".
@@ -201,7 +192,7 @@ MODULE FileType_Fortran
 !>               statement.
 !> @param pad Optional input. Value to use for the PAD clause of the OPEN
 !>            statement.
-!> @param recl Optional input. Value to use for the RECL clause of the OPEN 
+!> @param recl Optional input. Value to use for the RECL clause of the OPEN
 !>             statement.
 !>
 !> The interface to this routine is very similar to that of the OPEN statement
@@ -223,7 +214,7 @@ MODULE FileType_Fortran
       CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: action
       CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: pad
       INTEGER(SIK),OPTIONAL,INTENT(IN) :: recl
-      
+
       CHARACTER(LEN=7) :: statusval
       CHARACTER(LEN=10) :: accessval
       CHARACTER(LEN=11) :: formval
@@ -232,16 +223,16 @@ MODULE FileType_Fortran
       TYPE(StringType) :: fpath,fname,fext
       LOGICAL(SBK) :: ostat
       INTEGER(SIK) :: oldcnt
-      
+
       !Initialize data
       statusval=''
       accessval=''
       formval=''
       actionval=''
       padval=''
-      
+
       oldcnt=fileobj%e%getCounter(EXCEPTION_ERROR)
-      
+
       IF(fileobj%initstat) THEN
         CALL fileobj%e%raiseError(modName//'::'//myName//' - '// &
           'Fortran file has already been initialized!')
@@ -251,7 +242,7 @@ MODULE FileType_Fortran
         CALL fileobj%setFilePath(CHAR(fpath))
         CALL fileobj%setFileName(CHAR(fname))
         CALL fileobj%setFileExt(CHAR(fext))
-        
+
         IF(PRESENT(unit)) THEN
           IF(unit == OUTPUT_UNIT) THEN
             CALL fileobj%e%raiseError(modName//'::'//myName//' - Illegal '// &
@@ -278,7 +269,7 @@ MODULE FileType_Fortran
         ELSE
           fileobj%unitno=fileobj%newUnitNo()
         ENDIF
-        
+
         !STATUS clause for OPEN statement
         IF(PRESENT(status)) THEN
           SELECT CASE(status)
@@ -300,7 +291,7 @@ MODULE FileType_Fortran
           !Default value for status
           statusval='REPLACE'
         ENDIF
-        
+
         !ACCESS clause for OPEN statement
         IF(PRESENT(access)) THEN
           SELECT CASE(access)
@@ -318,7 +309,7 @@ MODULE FileType_Fortran
           !Default value
           accessval='SEQUENTIAL'
         ENDIF
-        
+
         !FORM clause for OPEN statement
         IF(PRESENT(form)) THEN
           SELECT CASE(form)
@@ -334,7 +325,7 @@ MODULE FileType_Fortran
           !Default value
           formval='FORMATTED'
         ENDIF
-        
+
         !POSITION clause for OPEN statement
         IF(PRESENT(position)) THEN
           SELECT CASE(position)
@@ -349,7 +340,7 @@ MODULE FileType_Fortran
                 'value ('//position//') for optional input argument POSITION!')
           ENDSELECT
         ENDIF
-        
+
         !ACTION clause for OPEN statement
         IF(PRESENT(action)) THEN
           SELECT CASE(action)
@@ -367,7 +358,7 @@ MODULE FileType_Fortran
           !Default value
           actionval='READWRITE'
         ENDIF
-        
+
         IF(PRESENT(pad)) THEN
           SELECT CASE(pad)
             CASE('YES') !File is padded
@@ -382,7 +373,7 @@ MODULE FileType_Fortran
           !Fortran default value
           padval='YES'
         ENDIF
-        
+
         IF(PRESENT(recl)) THEN
           IF(recl < 1) THEN
             CALL fileobj%e%raiseError(modName//'::'//myName//' - Illegal '// &
@@ -391,7 +382,7 @@ MODULE FileType_Fortran
             fileobj%reclval=recl
           ENDIF
         ENDIF
-        
+
         IF(TRIM(statusval) /= 'OLD') THEN
           fileobj%newstat=.TRUE.
           IF(TRIM(statusval) == 'REPLACE') fileobj%overwrite=.TRUE.
@@ -404,7 +395,7 @@ MODULE FileType_Fortran
             myName//' - Record length must be set to greater than 0 for '// &
               'direct access files!')
         ENDIF
-        
+
         IF(TRIM(actionval) == 'READ') THEN
           CALL fileobj%setReadStat(.TRUE.)
           IF(fileobj%newstat) CALL fileobj%e%raiseError(modName//'::'// &
@@ -415,7 +406,7 @@ MODULE FileType_Fortran
           CALL fileobj%setReadStat(.TRUE.)
           CALL fileobj%setWriteStat(.TRUE.)
         ENDIF
-        
+
         IF(oldcnt < fileobj%e%getCounter(EXCEPTION_ERROR)) THEN
           CALL fileobj%e%raiseError(modName//'::'//myName//' - Exceptions '// &
             'during file initialization! File not initialized!')
@@ -453,7 +444,7 @@ MODULE FileType_Fortran
       CLASS(FortranFileType),INTENT(INOUT) :: file
       LOGICAL(SBK),OPTIONAL,INTENT(IN) :: ldel
       LOGICAL(SBK) :: bool
-      
+
       !Close the file
       bool=.FALSE.
       IF(PRESENT(ldel)) bool=ldel
@@ -464,7 +455,7 @@ MODULE FileType_Fortran
           CALL file%fclose()
         ENDIF
       ENDIF
-      
+
       !Set FortranFileType attributes to defaults
       file%initstat=.FALSE.
       file%unitno=-1
@@ -475,7 +466,7 @@ MODULE FileType_Fortran
       file%reclval=-1
       file%padstat=.FALSE.
       file%posopt='ASIS  '
-      
+
       !Set BaseFileType attributes to default
       CALL clear_base_file(file)
     ENDSUBROUTINE clear_fortran_file
@@ -548,7 +539,7 @@ MODULE FileType_Fortran
     ENDFUNCTION isNew_fortran_file
 !
 !-------------------------------------------------------------------------------
-!> @brief Returns whether or not the FORTRAN file will be overwritten when 
+!> @brief Returns whether or not the FORTRAN file will be overwritten when
 !> opened.
 !> @param file the fortran file type object
 !> @returns bool TRUE/FALSE if the file will be overwritten
@@ -575,7 +566,7 @@ MODULE FileType_Fortran
       CHARACTER(LEN=9) :: actionvar
       CHARACTER(LEN=3) :: padvar
       INTEGER(SIK) :: reclval
-      
+
       !Get the appropriate clause values for the OPEN statement
       IF(file%initstat) THEN
         IF(file%isOpen()) THEN
@@ -621,7 +612,7 @@ MODULE FileType_Fortran
           ELSE
             padvar='NO'
           ENDIF
-          
+
           !The POSITION clause is illegal to use in the OPEN statement if
           !the file is DIRECT access.
           !The PAD clause is illegal to use in the OPEN statement if the file
@@ -658,7 +649,7 @@ MODULE FileType_Fortran
                       TRIM(file%getFileExt()))
             ENDIF
           ENDIF
-          
+
           IF(ioerr /= 0) THEN
             WRITE(emesg,'(a,i4,a,i4)') 'Error opening file "'// &
               TRIM(file%getFilePath())//TRIM(file%getFileName())// &
@@ -685,7 +676,7 @@ MODULE FileType_Fortran
     SUBROUTINE close_fortran_file(file)
       CHARACTER(LEN=*),PARAMETER :: myName='CLOSE_FORTRAN_FILE'
       CLASS(FortranFileType),INTENT(INOUT) :: file
-      
+
       IF(file%initstat) THEN
         IF(file%isOpen()) THEN
           CLOSE(UNIT=file%unitno,STATUS='KEEP',IOSTAT=ioerr)
@@ -716,7 +707,7 @@ MODULE FileType_Fortran
     SUBROUTINE delete_fortran_file(file)
       CHARACTER(LEN=*),PARAMETER :: myName='DELETE_FORTRAN_FILE'
       CLASS(FortranFileType),INTENT(INOUT) :: file
-      
+
       IF(file%initstat) THEN
         IF(file%isOpen()) THEN
           CLOSE(UNIT=file%unitno,STATUS='DELETE',IOSTAT=ioerr)
@@ -758,7 +749,7 @@ MODULE FileType_Fortran
     SUBROUTINE rewind_fortran_file(file)
       CHARACTER(LEN=*),PARAMETER :: myName='REWIND_FORTRAN_FILE'
       CLASS(FortranFileType),INTENT(INOUT) :: file
-      
+
       IF(file%initstat) THEN
         IF(file%isOpen()) THEN
           REWIND(UNIT=file%unitno,IOSTAT=ioerr)
@@ -786,7 +777,7 @@ MODULE FileType_Fortran
     SUBROUTINE backspace_fortran_file(file)
       CHARACTER(LEN=*),PARAMETER :: myName='BACKSPACE_FORTRAN_FILE'
       CLASS(FortranFileType),INTENT(INOUT) :: file
-      
+
       IF(file%initstat) THEN
         IF(file%isOpen()) THEN
           BACKSPACE(UNIT=file%unitno,IOSTAT=ioerr)
@@ -872,17 +863,17 @@ MODULE FileType_Fortran
       INTEGER(SIK),INTENT(IN),OPTIONAL :: istt
       INTEGER(SIK) :: newlun,isafe
       LOGICAL(SBK) :: ostat
-      
+
       newlun=MAX(MAX(OUTPUT_UNIT,ERROR_UNIT),INPUT_UNIT)+1
       IF(PRESENT(istt)) newlun=istt
-      
+
       INQUIRE(UNIT=newlun,OPENED=ostat)
       isafe=0
       DO WHILE(ostat)
         newlun=newlun+1
         isafe=isafe+1
         INQUIRE(UNIT=newlun,OPENED=ostat)
-        
+
         !Catch to prevent an infinite loop
         !Return a bad value as apparently all unit numbers
         !are in use.

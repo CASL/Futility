@@ -1,24 +1,15 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief Utility module for working with VTK Files.
 !>
 !> This module provides derived types for a VTK File, a VTK mesh and VTK data.
-!> It also provides enumerated constants that are defined by VTK. Currently, 
+!> It also provides enumerated constants that are defined by VTK. Currently,
 !> it only supports writing of VTK legacy files for all but FIELD and POLYGON
 !> mesh. In terms of writing data for this mesh, it only supports writing of
 !> scalar cell data.
@@ -38,7 +29,7 @@
 !>  - VisIt may not support displaying all cell types (e.g. the quadratic ones)
 !>  - Tools that utilize VTK may not be fully compatible with VTK and therefore
 !>    may not support all the features of this module.
-!> 
+!>
 !> @par Module Dependencies
 !>  - @ref IntrType "IntrType": @copybrief IntrType
 !>  - @ref ExceptionHandler "ExceptionHandler": @copybrief ExceptionHandler
@@ -58,7 +49,7 @@ MODULE VTKFiles
   USE FileType_Fortran
   IMPLICIT NONE
   PRIVATE
-  
+
   !List of Public Members
   PUBLIC :: VTK_STRUCTURED_POINTS
   PUBLIC :: VTK_STRUCTURED_GRID
@@ -97,7 +88,7 @@ MODULE VTKFiles
   PUBLIC :: VTKLegFileType
   PUBLIC :: eVTK
   PUBLIC :: OPERATOR(+)
-  
+
   !>Interface for mesh addition
   INTERFACE OPERATOR(+)
     MODULE PROCEDURE addMesh_VTKMesh
@@ -105,7 +96,7 @@ MODULE VTKFiles
 
   !> Module name for error messages
   CHARACTER(LEN=*),PARAMETER :: modName='VTKFILES'
-  
+
   !> Enumeration for the VTK Dataset type STRUCTURED_POINTS
   INTEGER(SIK),PARAMETER :: VTK_STRUCTURED_POINTS=1
   !> Enumeration for the VTK Dataset type STRUCTURED_GRID
@@ -118,7 +109,7 @@ MODULE VTKFiles
   INTEGER(SIK),PARAMETER :: VTK_RECTILINEAR_GRID=5
   !> Enumeration for the VTK Dataset type FIELD
   INTEGER(SIK),PARAMETER :: VTK_FIELD=6
-  
+
   !> Enumeration for the VTK Cell Type VTK_VERTEX from VTK Standard
   INTEGER(SIK),PARAMETER :: VTK_VERTEX=1
   !> Enumeration for the VTK Cell Type VTK_POLY_VERTEX from VTK Standard
@@ -157,7 +148,7 @@ MODULE VTKFiles
   INTEGER(SIK),PARAMETER :: VTK_QUADRATIC_TETRA=24
   !> Enumeration for the VTK Cell Type VTK_QUADRATIC_HEXAHEDRON from VTK Standard
   INTEGER(SIK),PARAMETER :: VTK_QUADRATIC_HEXAHEDRON=25
-  
+
   !> Enumeration for VTK SCALAR data attribute
   INTEGER(SIK),PARAMETER :: VTK_DATA_SCALARS=1
   !> Enumeration for VTK COLOR_SCALAR data attribute
@@ -174,7 +165,7 @@ MODULE VTKFiles
   INTEGER(SIK),PARAMETER :: VTK_DATA_TENSORS=7
   !> Enumeration for VTK FIELD data attribute
   INTEGER(SIK),PARAMETER :: VTK_DATA_FIELD=8
-  
+
   !> Type for representing a VTK mesh
   !>
   !> Depending on the meshType only certain attributes are meaningful.
@@ -224,7 +215,7 @@ MODULE VTKFiles
       !> @copydetails VTKFiles::clear_VTKMeshType
       PROCEDURE,PASS :: clear => clear_VTKMeshType
   ENDTYPE VTKMeshType
-  
+
   !> Type for representing data that can be written on a VTK mesh
   !>
   !> Adding type-bound procedures for initializing and clearing the
@@ -250,8 +241,8 @@ MODULE VTKFiles
       !> @copydetails VTKFiles::clear_VTKDataType
       PROCEDURE,PASS :: clear => clear_VTKDataType
   ENDTYPE VTKDataType
-  
-  
+
+
   !> @brief Derived type object for files definable by the legacy VTK format
   !>
   !> This is an extension of the @ref FileType_Fortran "FortranFileType".
@@ -289,7 +280,7 @@ MODULE VTKFiles
     !> @copydetails VTKFiles::assign_VTKMeshType
     MODULE PROCEDURE assign_VTKMeshType
   ENDINTERFACE
-  
+
   TYPE(ExceptionHandlerType),SAVE :: eVTK
 !
 !===============================================================================
@@ -301,10 +292,10 @@ MODULE VTKFiles
 !> @param unit Unit number to use for the file.
 !> @param status optional, used here for name of header of VTK File
 !>
-!> The other input arguments are not currently supported. See 
+!> The other input arguments are not currently supported. See
 !> @ref FileType_Fortran::init_fortran_file "init_fortran_file" for a complete
 !> description of all the optional input arguments.
-!> 
+!>
 !> This routine initializes the file object through the Fortran file type
 !> interface then writes the VTK header to the file.
 !>
@@ -321,9 +312,9 @@ MODULE VTKFiles
       CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: action
       CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: pad
       INTEGER(SIK),OPTIONAL,INTENT(IN) :: recl
-      
+
       CHARACTER(LEN=256) :: title
-      
+
       IF(.NOT.fileobj%isInit()) THEN
         IF(PRESENT(access)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
           ' - Optional input "ACCESS" is being ignored. Value is "SEQUENTIAL".')
@@ -337,14 +328,14 @@ MODULE VTKFiles
           ' - Optional input "POSITION" is being ignored. Value is "APPEND".')
         IF(PRESENT(recl)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
           ' - Optional input "RECL" is being ignored. File is "SEQUENTIAL".')
-        
+
         !Initialize the file, only support ascii for now
         CALL init_fortran_file(fileobj,unit,file,'REPLACE','SEQUENTIAL', &
           'FORMATTED','APPEND','WRITE')
-      
+
         !Open the file
         CALL fileobj%fopen()
-      
+
         !Determine the file's title
         IF(PRESENT(status)) THEN
           IF(LEN_TRIM(status) > 256) THEN
@@ -357,7 +348,7 @@ MODULE VTKFiles
         ELSE
           title='vtk output'
         ENDIF
-      
+
         !Write header to file, title and format information to file
         IF(fileobj%isOpen()) THEN
           WRITE(fileobj%getUnitNo(),'(a,f4.1)') '# vtk DataFile Version',fileobj%version
@@ -378,7 +369,7 @@ MODULE VTKFiles
 !> @param file the VTK Legacy file object
 !> @param ldel logical on whether or not to delete the file
 !>
-!> Clears the file object using the @ref FileType_Fortran::clear_fortran_file 
+!> Clears the file object using the @ref FileType_Fortran::clear_fortran_file
 !> "clear_fortran_file" interface. This is why @c ldel is an argument. In
 !> practice one probably does not want to delete these files before the program
 !> exits.
@@ -418,7 +409,7 @@ MODULE VTKFiles
 !>
     SUBROUTINE clear_VTKDataType(myVTKData)
       CLASS(VTKDataType),INTENT(INOUT) :: myVTKData
-      
+
       myVTKData%isInit=.FALSE.
       myVTKData%varname=''
       myVTKData%vtkDataFormat=''
@@ -471,10 +462,10 @@ MODULE VTKFiles
 !> @brief Writes a VTK mesh to VTK Legacy file
 !> @param myVTKFile the VTK file to write the data to
 !> @param vtkMesh the VTK mesh to write in the file
-!> 
-!> This routine supports writing of STRUCTURED_POINTS, STRUCTURED_GRIDS, 
-!> RECTILINEAR_GRIDS, and UNSTRUCTURED_GRIDS. The other types of 
-!> geometry/topology are not yet implemented. The display of this 
+!>
+!> This routine supports writing of STRUCTURED_POINTS, STRUCTURED_GRIDS,
+!> RECTILINEAR_GRIDS, and UNSTRUCTURED_GRIDS. The other types of
+!> geometry/topology are not yet implemented. The display of this
 !> data was verified by loading and displaying it with VisIt. It should be noted
 !> that other tools may have varying support for VTK legacy files.
 !>
@@ -484,7 +475,7 @@ MODULE VTKFiles
       TYPE(VTKMeshType),INTENT(IN) :: vtkMesh
       CHARACTER(LEN=256) :: aline,sint
       INTEGER(SIK) :: funit,i,j,k,n
-      
+
       IF(.NOT.myVTKFile%hasMesh) THEN
         IF(myVTKFile%isOpen()) THEN
           IF(vtkMesh%isInit) THEN
@@ -535,7 +526,7 @@ MODULE VTKFiles
                   aline=TRIM(aline)//' '//TRIM(sint)
                 ENDDO
                 WRITE(funit,'(a)') TRIM(aline)
-                
+
                 !Write the x coordinates
                 WRITE(sint,'(i64)') myVTKFile%mesh%dims(1); sint=ADJUSTL(sint)
                 WRITE(funit,'(a)') 'X_COORDINATES '//TRIM(sint)//' float'
@@ -551,7 +542,7 @@ MODULE VTKFiles
                   WRITE(funit,'(3es17.8)') myVTKFile%mesh%x(i), &
                     myVTKFile%mesh%x(i+1)
                 ENDIF
-                
+
                 !Write the y coordinates
                 WRITE(sint,'(i64)') myVTKFile%mesh%dims(2); sint=ADJUSTL(sint)
                 WRITE(funit,'(a)') 'Y_COORDINATES '//TRIM(sint)//' float'
@@ -567,7 +558,7 @@ MODULE VTKFiles
                   WRITE(funit,'(3es17.8)') myVTKFile%mesh%y(i), &
                     myVTKFile%mesh%y(i+1)
                 ENDIF
-                
+
                 !Write the z coordinates
                 WRITE(sint,'(i64)') myVTKFile%mesh%dims(3); sint=ADJUSTL(sint)
                 WRITE(funit,'(a)') 'Z_COORDINATES '//TRIM(sint)//' float'
@@ -597,7 +588,7 @@ MODULE VTKFiles
                     myVTKFile%mesh%y(i),myVTKFile%mesh%z(i)
                 ENDDO
                 WRITE(funit,'(a)') ''
-                
+
                 !Write the list of cell vertices
                 aline='CELLS'
                 WRITE(sint,'(i64)') myVTKFile%mesh%numCells; sint=ADJUSTL(sint)
@@ -643,7 +634,7 @@ MODULE VTKFiles
                   ENDIF
                 ENDDO
                 WRITE(funit,'(a)') ''
-                
+
                 !Write the list of cell types
                 aline='CELL_TYPES'
                 WRITE(sint,'(i64)') myVTKFile%mesh%numCells; sint=ADJUSTL(sint)
@@ -651,7 +642,7 @@ MODULE VTKFiles
                 WRITE(funit,'(a)') TRIM(aline)
                 WRITE(funit,*) myVTKFile%mesh%cellList
                 WRITE(funit,'(a)') ''
-                
+
               CASE(VTK_POLYDATA)
                 CALL myVTKFile%e%raiseError(modName//'::'//myName// &
                   ' - VTK DATASET "POLYDATA" not supported!')
@@ -678,7 +669,7 @@ MODULE VTKFiles
 !> @brief Writes scalar data for a VTK mesh to VTK Legacy file
 !> @param myVTKFile the VTK file to write the data to
 !> @param vtkData the VTK data to write to the file
-!> 
+!>
 !> Presently, this routine is only capable of writing scalar cell data.
 !> The data can be written as integers, single precision or double precision.
 !> Note that in the VTKDataType data is always stored as double precision.
@@ -695,7 +686,7 @@ MODULE VTKFiles
       TYPE(VTKDataType),INTENT(IN) :: vtkData
       INTEGER(SIK) :: funit,i,istp
       CHARACTER(LEN=256) :: aline,sint
-      
+
       IF(myVTKFile%hasMesh) THEN
         IF(myVTKFile%isOpen()) THEN
           IF(vtkData%isInit) THEN
@@ -793,14 +784,14 @@ MODULE VTKFiles
       INTEGER(SIK) :: uniqPoints
       INTEGER(SIK) :: i,j
       REAL(SRK) :: x,y,z
-      
+
       !Allocate scratch arrays
       ALLOCATE(isRedundant(thisVTKMesh%numPoints))
       isRedundant=.FALSE.
       ALLOCATE(newPtList(thisVTKMesh%numPoints))
       ALLOCATE(newY(thisVTKMesh%numPoints))
       ALLOCATE(newZ(thisVTKMesh%numPoints))
-      
+
       !Only unstructured grid is supported, because this is the only mesh type
       !likely to have redundant points
       IF(thisVTKMesh%meshType == VTK_UNSTRUCTURED_GRID) THEN
@@ -809,10 +800,10 @@ MODULE VTKFiles
         DO i=1,thisVTKMesh%numPoints
           newPtList(i)=i-1
         ENDDO
-          
+
 !Sort all the points along x
         CALL mergeSort(thisVTKMesh%numPoints,thisVTkMesh%x,newPtList)
-          
+
         !Re-order y and z coordinates to match sorted x coordinates
         DO i=1,thisVTKMesh%numPoints
           newY(i)=thisVTKMesh%y(newPtList(i)+1)
@@ -833,9 +824,9 @@ MODULE VTKFiles
           ALLOCATE(partialPtList(j-i+1))
           newY=thisVTKMesh%y(i:j)
           partialPtList=newPtList(i:j)
-            
+
           CALL mergeSort(j-i+1,newY,partialPtList)
-            
+
           newPtList(i:j)=partialPtList
           thisVTKMesh%y(i:j)=newY
           DEALLOCATE(newY)
@@ -850,7 +841,7 @@ MODULE VTKFiles
         ENDDO
         thisVTKMesh%z=newZ
         DEALLOCATE(newZ)
-!          
+!
 !Sort z-coordinates for each all points with same x- and y-coordinates
         i=1
         j=0
@@ -872,9 +863,9 @@ MODULE VTKFiles
           i=j+1
           j=i
         ENDDO
-          
-          
-        !invert newPtList so that the index is the old point number, 
+
+
+        !invert newPtList so that the index is the old point number,
         !and the output is the new
         ALLOCATE(partialPtList(thisVTKMesh%numPoints))
         DO i=1,thisVTKMesh%numPoints
@@ -882,12 +873,12 @@ MODULE VTKFiles
         ENDDO
         newPtList=partialPtList
         DEALLOCATE(partialPtList)
-          
+
         !Alter the node list to reflect the reordered point list
         DO i=1,size(ThisVTKMesh%nodeList)
           ThisVTKMesh%nodeList(i)=newPtList(thisVTKMesh%nodeList(i)+1)
         ENDDO
-!          
+!
 !Remove the redundant points
         uniqPoints=0_SIK
         i=1
@@ -912,7 +903,7 @@ MODULE VTKFiles
             IF(i > thisVTKMesh%numPoints) EXIT
           ENDDO
         ENDDO
-          
+
         !Create new list of xyz coordinates
         ALLOCATE(newX(uniqPoints))
         ALLOCATE(newY(uniqPoints))
@@ -936,12 +927,12 @@ MODULE VTKFiles
         thisVTKMesh%x=newX
         thisVTKMesh%y=newY
         thisVTKMesh%z=newZ
-          
+
         !Update the node list to remove the redundant points
         DO i=1,SIZE(thisVTKMesh%nodeList)
           thisVTKMesh%nodeList(i)=newPtList(thisVTKMesh%nodeList(i)+1)
         ENDDO
-          
+
         !Clean up scratch variables
         DEALLOCATE(newX)
         DEALLOCATE(newY)
@@ -973,7 +964,7 @@ MODULE VTKFiles
      REAL(SRK),INTENT(OUT) :: new(n)
      INTEGER(SIK),INTENT(OUT) :: points(n)
      INTEGER(SIK) :: i,j,k
-     
+
      i=1
      j=1
      DO k=1,n
@@ -998,7 +989,7 @@ MODULE VTKFiles
    ENDSUBROUTINE merger
 !
 !-------------------------------------------------------------------------------
-!> @brief Orders a numeric array, in ascending order, using the merge sort 
+!> @brief Orders a numeric array, in ascending order, using the merge sort
 !>        algorithm
 !> @param array numeric array to be sorted
 !> @param N length of the numeric array
@@ -1013,7 +1004,7 @@ MODULE VTKFiles
      REAL(SRK),ALLOCATABLE :: leftArray(:)
      INTEGER(SIK),ALLOCATABLE :: leftPoints(:),rightPoints(:)
      INTEGER(SIK) :: nr,nl
-     
+
      CALL dmallocA(rightArray,n/2)
      CALL dmallocA(leftArray, n-(n/2))
      CALL dmallocA(leftPoints,n-(n/2))
@@ -1053,7 +1044,7 @@ MODULE VTKFiles
     REAL(SRK),ALLOCATABLE :: yList(:)
     REAL(SRK),ALLOCATABLE :: zList(:)
     INTEGER(SIK) :: i,j,k,n
-    
+
     IF(thisVTKMesh%isinit) THEN
       SELECTCASE(newVTKMeshType)
         CASE(VTK_STRUCTURED_POINTS)
@@ -1123,7 +1114,7 @@ MODULE VTKFiles
               CALL demallocA(Ylist)
               CALL demallocA(Zlist)
               CALL demallocA(pointMap)
-              
+
             CASE(VTK_RECTILINEAR_GRID)
               thisVTKMesh%meshType=VTK_UNSTRUCTURED_GRID
               thisVTKMesh%numPoints=thisVTKMesh%dims(1)*thisVTKMesh%dims(2)* &
@@ -1214,7 +1205,7 @@ MODULE VTKFiles
     REAL(SRK),INTENT(IN) :: x_shift
     REAL(SRK),INTENT(IN) :: y_shift
     REAL(SRK),INTENT(IN) :: z_shift
-    
+
     IF(thisVTKMesh%meshType == VTK_STRUCTURED_POINTS) THEN
       thisVTKMesh%x(1)=thisVTKMesh%x(1)+x_shift
       thisVTKMesh%y(1)=thisVTKMesh%y(1)+y_shift
@@ -1249,10 +1240,10 @@ MODULE VTKFiles
 
     n=0
     q=0
-    
+
     CALL thisVTKMesh%convert(VTK_UNSTRUCTURED_GRID)
     ALLOCATE(nodePresent(SIZE(thisVTKMesh%nodeList)))
-    
+
     !Calculate the length of new cell list and node list
     DO i=1,thisVTKMesh%numCells
       IF(.NOT. cellNotPresent(i)) THEN
@@ -1279,7 +1270,7 @@ MODULE VTKFiles
       ENDSELECT
       ENDIF
     ENDDO
-    
+
     !Fill scratch cell lists and node lists
     ALLOCATE(scratchCellList(n))
     ALLOCATE(scratchNodeList(q))
@@ -1320,7 +1311,7 @@ MODULE VTKFiles
       ENDIF
     ENDDO
     thisVTKMesh%numCells=SIZE(scratchCellList)
-    
+
     !Find which points are no longer used, remove them, and renumber the node
     !list
     ALLOCATE(pointPresent(thisVTKMesh%numPoints))
@@ -1353,7 +1344,7 @@ MODULE VTKFiles
         k=k+1
       ENDIF
     ENDDO
-    
+
     !Enter new point lists, cell list, and node list into the VTK mesh
     !object
     CALL demallocA(ThisVTKMesh%x)
@@ -1372,7 +1363,7 @@ MODULE VTKFiles
     thisVTKMesh%z=scratchZ
     thisVTKMesh%cellList=scratchCellList
     thisVTKMesh%nodeList=scratchNodeList
-    
+
     !Clean up scratch variables
     DEALLOCATE(scratchCellList)
     DEALLOCATE(scratchNodeList)
@@ -1382,7 +1373,7 @@ MODULE VTKFiles
     DEALLOCATE(pointPresent)
     DEALLOCATE(nodePresent)
     DEALLOCATE(pointMap)
-  ENDSUBROUTINE removeCells_VTKMeshType    
+  ENDSUBROUTINE removeCells_VTKMeshType
 !
 !-------------------------------------------------------------------------------
 !> @brief Adds two VTK mesh objects together so that a single mesh is formed
@@ -1391,20 +1382,20 @@ MODULE VTKFiles
 !>              data to the VTK file)
 !> @param mesh2 The second mesh to be added
 !>
-!> This routine may produce a memory leak for a=a+b, but I after some initial 
+!> This routine may produce a memory leak for a=a+b, but I after some initial
 !> investigation it does not appear to.
 !>
   FUNCTION addMesh_VTKMesh(mesh1,mesh2) RESULT(newMesh)
     TYPE(VTKMeshType),INTENT(IN) :: mesh1,mesh2
     TYPE(VTKMeshType) :: newMesh,mesh1conv,mesh2conv
     INTEGER(SIK) :: numPoints,numCells,numNodes
-    
+
     !Convert input meshed to VTK_UNSTRUCTURED_GRID
     mesh1conv=mesh1
     mesh2conv=mesh2
     CALL mesh1conv%convert(VTK_UNSTRUCTURED_GRID)
     CALL mesh2conv%convert(VTK_UNSTRUCTURED_GRID)
-    
+
     !Allocate new mesh arrays
     numPoints=mesh1conv%numPoints+mesh2conv%numPoints
     numCells=mesh1conv%numCells+mesh2conv%numCells
@@ -1416,7 +1407,7 @@ MODULE VTKFiles
     CALL dmallocA(newMesh%nodeList,numNodes)
     newMesh%numPoints=numPoints
     newMesh%numCells=numCells
-    
+
     !Merge the two input meshes
     newMesh%meshType=VTK_UNSTRUCTURED_GRID
     newMesh%isInit=.TRUE.

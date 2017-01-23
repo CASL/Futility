@@ -1,19 +1,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief A Fortran 2003 module defining "Points" for use in geometry.
 !>
@@ -37,7 +28,7 @@
 MODULE Geom_Points
   USE IntrType
   USE Constants_Conversion
-  
+
   IMPLICIT NONE
   PRIVATE !Default contents of module to private
 !
@@ -108,7 +99,7 @@ MODULE Geom_Points
     !> @copydetails GeomPoints::innerAngle_3points
     MODULE PROCEDURE innerAngle_3points
   ENDINTERFACE innerAngle
-  
+
   !> @brief Generic interface for computing outerAngle
   !>
   !> Adds the listed module procedures to the global interface name for outerAngle
@@ -117,7 +108,7 @@ MODULE Geom_Points
     !> @copydetails GeomPoints::outerAngle_3points
     MODULE PROCEDURE outerAngle_3points
   ENDINTERFACE outerAngle
-  
+
   !> @brief Generic interface for computing midpoint
   !>
   !> Adds the listed module procedures to the global interface name for midPoint
@@ -497,10 +488,10 @@ MODULE Geom_Points
     ENDFUNCTION midPoint_2points
 !
 !-------------------------------------------------------------------------------
-!> @brief Computes the interior angle between three points in up to three 
+!> @brief Computes the interior angle between three points in up to three
 !>        dimensions, where the points exist like:
 !>   ^   * p0
-!>    \   \  
+!>    \   \
 !>     v1  \
 !>          \     v2->
 !>        p1 *----------* p2
@@ -542,10 +533,10 @@ MODULE Geom_Points
     ENDFUNCTION innerAngle_3points
 !
 !-------------------------------------------------------------------------------
-!> @brief Computes the exterior angle between three points in up to three 
+!> @brief Computes the exterior angle between three points in up to three
 !>        dimensions, where the points exist like:
 !>   ^   * p0
-!>    \   \  
+!>    \   \
 !>     v1  \
 !>          \     v2->
 !>        p1 *----------* p2

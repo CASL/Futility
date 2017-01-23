@@ -1,19 +1,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testAllocsOOM
 #include "UnitTest.h"
@@ -26,12 +17,12 @@ PROGRAM testAllocsOOM
   IMPLICIT NONE
 
   INCLUDE 'getSysProcInfo_F.h'
-  
+
   INTEGER(SIK) :: nerror0,nerror1,n1,n2,i
   INTEGER(C_LONG_LONG),SAVE :: maxRam,maxSwap,memAvail,maxMem,memForTest
-  
+
   CREATE_TEST('AllocsOOM')
-  
+
   CALL eAllocs%setStopOnError(.FALSE.)
   !CALL eAllocs%setQuietMode(.TRUE.)
   maxMem=0
@@ -52,10 +43,10 @@ PROGRAM testAllocsOOM
     FINFO() 'Machine has "',maxMem,'" bytes of memory,'
     FINFO() 'which is larger than what test will allocate (',memForTest,' bytes).'
   ENDIF
-  
+
   FINALIZE_TEST()
 !
-!===============================================================================  
+!===============================================================================
   CONTAINS
 !
 !-------------------------------------------------------------------------------
@@ -96,15 +87,15 @@ PROGRAM testAllocsOOM
       REAL(SDK),POINTER :: d5tb(:,:,:,:,:)
       REAL(SDK),POINTER :: d6tb(:,:,:,:,:,:)
       REAL(SDK),POINTER :: d7tb(:,:,:,:,:,:,:)
-      
+
       NULLIFY(i1tb,i2tb,i3tb,i4tb,i5tb,i6tb,i7tb)
       NULLIFY(l1tb,l2tb,l3tb,l4tb,l5tb,l6tb,l7tb)
       NULLIFY(b1tb,b2tb,b3tb,b4tb,b5tb,b6tb,b7tb)
       NULLIFY(s1tb,s2tb,s3tb,s4tb,s5tb,s6tb,s7tb)
       NULLIFY(d1tb,d2tb,d3tb,d4tb,d5tb,d6tb,d7tb)
-      
+
       nerror0=eAllocs%getCounter(EXCEPTION_ERROR)
-      
+
       CALL dmallocP(b2tb,n1,n2)
       nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
       ASSERT(nerror0+1 == nerror1,'dmallocP(b2tb,n1,n2)')
@@ -153,7 +144,7 @@ PROGRAM testAllocsOOM
       nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
       ASSERT(nerror0+1 == nerror1,'dmalloc0P(b7tb,1,n1,1,n2,1,1,1,1,1,1,1,1,1,1)')
       nerror0=nerror1
-      
+
       CALL dmallocP(i2tb,n1,n2)
       nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
       ASSERT(nerror0+1 == nerror1,'dmallocP(i2tb,n1,n2)')
@@ -202,7 +193,7 @@ PROGRAM testAllocsOOM
       nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
       ASSERT(nerror0+1 == nerror1,'dmalloc0P(i7tb,1,n1,1,n2,1,1,1,1,1,1,1,1,1,1)')
       nerror0=nerror1
-      
+
       CALL dmallocP(l2tb,n1,n2)
       nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
       ASSERT(nerror0+1 == nerror1,'dmallocP(l2tb,n1,n2)')
@@ -251,7 +242,7 @@ PROGRAM testAllocsOOM
       nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
       ASSERT(nerror0+1 == nerror1,'dmalloc0P(l7tb,1,n1,1,n2,1,1,1,1,1,1,1,1,1,1)')
       nerror0=nerror1
-      
+
       CALL dmallocP(s2tb,n1,n2)
       nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
       ASSERT(nerror0+1 == nerror1,'dmallocP(s2tb,n1,n2)')
@@ -300,7 +291,7 @@ PROGRAM testAllocsOOM
       nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
       ASSERT(nerror0+1 == nerror1,'dmalloc0P(s7tb,1,n1,1,n2,1,1,1,1,1,1,1,1,1,1)')
       nerror0=nerror1
-      
+
       CALL dmallocP(d2tb,n1,n2)
       nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
       ASSERT(nerror0+1 == nerror1,'dmallocP(d2tb,n1,n2)')
@@ -354,7 +345,7 @@ PROGRAM testAllocsOOM
 !===============================================================================
 ! Test error checking for over allocation
     SUBROUTINE testTOOBIGA()
-      
+
       INTEGER(SNK),ALLOCATABLE :: i1tb(:)
       INTEGER(SNK),ALLOCATABLE :: i2tb(:,:)
       INTEGER(SNK),ALLOCATABLE :: i3tb(:,:,:)
@@ -389,8 +380,8 @@ PROGRAM testAllocsOOM
       REAL(SDK),ALLOCATABLE :: d4tb(:,:,:,:)
       REAL(SDK),ALLOCATABLE :: d5tb(:,:,:,:,:)
       REAL(SDK),ALLOCATABLE :: d6tb(:,:,:,:,:,:)
-      REAL(SDK),ALLOCATABLE :: d7tb(:,:,:,:,:,:,:)      
-      
+      REAL(SDK),ALLOCATABLE :: d7tb(:,:,:,:,:,:,:)
+
       CALL dmallocA(b2tb,n1,n2)
       nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
       ASSERT(nerror0+1 == nerror1,'dmallocA(b2tb,n1,n2)')
@@ -439,7 +430,7 @@ PROGRAM testAllocsOOM
       nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
       ASSERT(nerror0+1 == nerror1,'dmalloc0A(b7tb,1,n1,1,n2,1,1,1,1,1,1,1,1,1,1)')
       nerror0=nerror1
-      
+
       CALL dmallocA(i2tb,n1,n2)
       nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
       ASSERT(nerror0+1 == nerror1,'dmallocA(i2tb,n1,n2)')
@@ -488,7 +479,7 @@ PROGRAM testAllocsOOM
       nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
       ASSERT(nerror0+1 == nerror1,'dmalloc0A(i7tb,1,n1,1,n2,1,1,1,1,1,1,1,1,1,1)')
       nerror0=nerror1
-      
+
       CALL dmallocA(l2tb,n1,n2)
       nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
       ASSERT(nerror0+1 == nerror1,'dmallocA(l2tb,n1,n2)')
@@ -537,7 +528,7 @@ PROGRAM testAllocsOOM
       nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
       ASSERT(nerror0+1 == nerror1,'dmalloc0A(l7tb,1,n1,1,n2,1,1,1,1,1,1,1,1,1,1)')
       nerror0=nerror1
-      
+
       CALL dmallocA(s2tb,n1,n2)
       nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
       ASSERT(nerror0+1 == nerror1,'dmallocA(s2tb,n1,n2)')
@@ -586,7 +577,7 @@ PROGRAM testAllocsOOM
       nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
       ASSERT(nerror0+1 == nerror1,'dmalloc0A(s7tb,1,n1,1,n2,1,1,1,1,1,1,1,1,1,1)')
       nerror0=nerror1
-      
+
       CALL dmallocA(d2tb,n1,n2)
       nerror1=eAllocs%getCounter(EXCEPTION_ERROR)
       ASSERT(nerror0+1 == nerror1,'dmallocA(d2tb,n1,n2)')
@@ -636,5 +627,5 @@ PROGRAM testAllocsOOM
       ASSERT(nerror0+1 == nerror1,'dmalloc0A(d7tb,1,n1,1,n2,1,1,1,1,1,1,1,1,1,1)')
       nerror0=nerror1
     ENDSUBROUTINE testTOOBIGA
-!    
+!
 ENDPROGRAM testAllocsOOM

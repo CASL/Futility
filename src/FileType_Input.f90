@@ -1,19 +1,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief Utility module for I/O defines the derived type for an Input File
 !> object.
@@ -222,7 +213,7 @@ MODULE FileType_Input
 !> @brief Clears the log file object and resets its state to the unitialized
 !> state.
 !> @param file input file object.
-!> 
+!>
     SUBROUTINE clear_inp_file(file,ldel)
       CLASS(InputFileType),INTENT(INOUT) :: file
       LOGICAL(SBK),OPTIONAL,INTENT(IN) :: ldel
@@ -240,7 +231,7 @@ MODULE FileType_Input
 !> @brief Returns one line of text from the input file.
 !> @param file input file object
 !> @returns oneline StringType object storing a line of text from the input file.
-!> 
+!>
     SUBROUTINE read_oneline_inp_file(file,oneline)
       CHARACTER(LEN=*),PARAMETER :: myName='READ_ONELINE_INP_FILE'
       CLASS(InputFileType),INTENT(INOUT) :: file

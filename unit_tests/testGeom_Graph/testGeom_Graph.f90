@@ -1,35 +1,26 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testGeom_Graph
 #include "UnitTest.h"
-  USE ISO_FORTRAN_ENV  
+  USE ISO_FORTRAN_ENV
   USE UnitTest
   USE IntrType
   USE Allocs
   USE Geom_Graph
-  
+
   IMPLICIT NONE
-  
+
   TYPE(GraphType) :: testGraph
   TYPE(DAGraphType) :: testDAGraph
-  
+
   CREATE_TEST('TEST GEOM_GRAPH')
-  
+
   REGISTER_SUBTEST('Uninit',testUninit)
   REGISTER_SUBTEST('%nVert',testNVert)
   REGISTER_SUBTEST('%nEdge',testNEdge)
@@ -54,7 +45,7 @@ PROGRAM testGeom_Graph
   REGISTER_SUBTEST('%TriangulateVerts',testTriangulate)
   REGISTER_SUBTEST('OPERATOR(==)',testIsEqual)
   !REGISTER_SUBTEST('OPERATOR(+)',testAddition)
-  
+
   CREATE_TEST('TEST Directed Acyclic Graph')
   REGISTER_SUBTEST('Uninit',testDAGUninit)
   REGISTER_SUBTEST('%clear',testDAGClear)
@@ -216,7 +207,7 @@ PROGRAM testGeom_Graph
       ASSERT(bool,'%edgeMatrix size vertices')
 
       CALL testGraph%clear()
-      
+
       COMPONENT_TEST('Vertical Lines')
       testCoord(:,1)=(/0.0_SRK,0.0_SRK/)
       testCoord(:,2)=(/0.0_SRK,0.5_SRK/)
@@ -353,7 +344,7 @@ PROGRAM testGeom_Graph
       ASSERT(testGraph%getVertIndex(testCoord(:,6)) ==  6,'6')
 
       CALL testGraph%clear()
-      
+
       COMPONENT_TEST('Vertical Lines')
       testCoord(:,1)=(/0.0_SRK,0.0_SRK/)
       testCoord(:,2)=(/0.0_SRK,0.5_SRK/)
@@ -420,13 +411,13 @@ PROGRAM testGeom_Graph
       CALL testGraph%insertVertex(testCoord(:,4))
       CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,1))
       ASSERT(ALL(testGraph%edgeMatrix == 0),'same point')
-      
+
       !Missing Point
       CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
       ASSERT(ALL(testGraph%edgeMatrix == 0),'missing point 1')
       CALL testGraph%defineEdge(testCoord(:,2),testCoord(:,1))
       ASSERT(ALL(testGraph%edgeMatrix == 0),'missing point 2')
-      
+
       !Valid Point
       CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,1))
       ASSERT(testGraph%edgeMatrix(1,2) == 1,'edge 1')
@@ -445,7 +436,7 @@ PROGRAM testGeom_Graph
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testDefineQuadEdge()
-      REAL(SRK),PARAMETER :: r=1.0_SRK,c0(2)=0.0_SRK  
+      REAL(SRK),PARAMETER :: r=1.0_SRK,c0(2)=0.0_SRK
       LOGICAL(SBK) :: bool
       REAL(SRK) :: testCoord(2,5)
 
@@ -459,14 +450,14 @@ PROGRAM testGeom_Graph
       CALL testGraph%defineQuadraticEdge(testCoord(:,1),testCoord(:,2),c0,r)
       ASSERT(.NOT.ALLOCATED(testGraph%edgeMatrix),'no eMatrix')
       ASSERT(.NOT.ALLOCATED(testGraph%quadEdges),'no qEdges')
-      
+
       COMPONENT_TEST('Same Point')
       CALL testGraph%insertVertex(testCoord(:,1))
       CALL testGraph%insertVertex(testCoord(:,2))
       CALL testGraph%defineQuadraticEdge(testCoord(:,1),testCoord(:,1),c0,r)
       ASSERT(ALL(testGraph%edgeMatrix == 0),'no eMatrix')
       ASSERT(ALL(testGraph%quadEdges == 0.0_SRK),'no qEdges')
-      
+
       COMPONENT_TEST('Missing Points')
       CALL testGraph%defineQuadraticEdge(testCoord(:,3),testCoord(:,2),c0,r)
       ASSERT(ALL(testGraph%edgeMatrix == 0),'no eMatrix 1')
@@ -474,7 +465,7 @@ PROGRAM testGeom_Graph
       CALL testGraph%defineQuadraticEdge(testCoord(:,2),testCoord(:,3),c0,r)
       ASSERT(ALL(testGraph%edgeMatrix == 0),'no eMatrix 2')
       ASSERT(ALL(testGraph%quadEdges == 0.0_SRK),'no qEdges 2')
-      
+
       COMPONENT_TEST('Valid Edge')
       CALL testGraph%defineQuadraticEdge(testCoord(:,2),testCoord(:,1),c0,r)
       ASSERT(testGraph%nEdge() == 1,'nEdge')
@@ -482,7 +473,7 @@ PROGRAM testGeom_Graph
       bool=ALL(testGraph%quadEdges(:,1,2) == (/c0(1),c0(2),r/))
       ASSERT(bool,'quadEdge 1')
       CALL symEdgeCheck()
-      
+
       COMPONENT_TEST('Post vertex append')
       CALL testGraph%insertVertex(testCoord(:,3))
       ASSERT(testGraph%nEdge() == 1,'nEdge')
@@ -510,7 +501,7 @@ PROGRAM testGeom_Graph
       bool=ALL(testGraph%quadEdges(:,2,4) == (/c0(1),c0(2),r/))
       ASSERT(bool,'quadEdge 2')
       CALL symEdgeCheck()
-      
+
       COMPONENT_TEST('Mixed edges')
       CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,4))
       CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
@@ -730,7 +721,7 @@ PROGRAM testGeom_Graph
     SUBROUTINE testVTK()
       INTEGER(SIK) :: i
       REAL(SRK) :: testCoord(2,9),c0(2),r
-      
+
       !Setup test graph
       testCoord(:,1)=(/0.0_SRK,-1.0_SRK/)
       testCoord(:,2)=(/0.0_SRK,0.0_SRK/)
@@ -754,7 +745,7 @@ PROGRAM testGeom_Graph
       CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,8))
       CALL testGraph%defineEdge(testCoord(:,6),testCoord(:,7))
       CALL testGraph%defineEdge(testCoord(:,8),testCoord(:,9))
-      
+
       CALL testGraph%editToVTK('testVTK.vtk')
 
       CALL testGraph%clear()
@@ -764,7 +755,7 @@ PROGRAM testGeom_Graph
     SUBROUTINE testNAdjacent()
       INTEGER(SIK) :: i
       REAL(SRK) :: testCoord(2,9),c0(2),r
-      
+
       !Setup test graph
       testCoord(:,1)=(/0.0_SRK,-1.0_SRK/)
       testCoord(:,2)=(/0.0_SRK,0.0_SRK/)
@@ -787,10 +778,10 @@ PROGRAM testGeom_Graph
       CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,7))
       CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,8))
       CALL testGraph%defineEdge(testCoord(:,8),testCoord(:,9))
-      
+
       ASSERT(testGraph%nAdjacent(0) == 0,'0')
       ASSERT(testGraph%nAdjacent(10) == 0,'n+1')
-      
+
       ASSERT(testGraph%nAdjacent(1) == 0,'v1')
       ASSERT(testGraph%nAdjacent(2) == 1,'v2')
       ASSERT(testGraph%nAdjacent(3) == 3,'v3')
@@ -808,7 +799,7 @@ PROGRAM testGeom_Graph
     SUBROUTINE testGetAdjVert()
       INTEGER(SIK) :: i
       REAL(SRK) :: testCoord(2,9),c0(2),r
-      
+
       !Setup test graph
       testCoord(:,1)=(/0.0_SRK,-1.0_SRK/)
       testCoord(:,2)=(/0.0_SRK,0.0_SRK/)
@@ -831,7 +822,7 @@ PROGRAM testGeom_Graph
       CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,7))
       CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,8))
       CALL testGraph%defineEdge(testCoord(:,8),testCoord(:,9))
-      
+
       ASSERT(testGraph%getAdjacentVert(0,1) == 0,'0')
       ASSERT(testGraph%getAdjacentVert(10,1) == 0,'n+1')
       ASSERT(testGraph%getAdjacentVert(1,0) == 0,'edge 0')
@@ -868,7 +859,7 @@ PROGRAM testGeom_Graph
     SUBROUTINE testCWVert()
       INTEGER(SIK) :: i
       REAL(SRK) :: testCoord(2,9),c0(2),r
-      
+
       !Setup test graph
       testCoord(:,1)=(/0.0_SRK,-1.0_SRK/)
       testCoord(:,2)=(/0.0_SRK,0.0_SRK/)
@@ -929,7 +920,7 @@ PROGRAM testGeom_Graph
       ASSERT(testGraph%getCWMostVert(0,1) == 2,'(0,1)')
       ASSERT(testGraph%getCWMostVert(2,1) == 3,'(2,1)')
       ASSERT(testGraph%getCWMostVert(3,1) == 2,'(3,1)')
-      
+
       CALL testGraph%clear()
     ENDSUBROUTINE testCWVert
 !
@@ -937,7 +928,7 @@ PROGRAM testGeom_Graph
     SUBROUTINE testCCWVert()
       INTEGER(SIK) :: i
       REAL(SRK) :: testCoord(2,9),c0(2),r
-      
+
       !Setup test graph
       testCoord(:,1)=(/0.0_SRK,-1.0_SRK/)
       testCoord(:,2)=(/0.0_SRK,0.0_SRK/)
@@ -993,10 +984,10 @@ PROGRAM testGeom_Graph
     SUBROUTINE testIsMinCyc()
       INTEGER(SIK) :: i
       REAL(SRK) :: testCoord(2,9)
-      
+
       COMPONENT_TEST('Empty graph')
       ASSERT(.NOT.testGraph%isMinimumCycle(),'empty')
-      
+
       COMPONENT_TEST('No edges')
       !Setup test graph 1 (no minimum cycle)
       testCoord(:,1)=(/0.0_SRK,-1.0_SRK/)
@@ -1012,13 +1003,13 @@ PROGRAM testGeom_Graph
         CALL testGraph%insertVertex(testCoord(:,i))
       ENDDO
       ASSERT(.NOT.testGraph%isMinimumCycle(),'iso')
-      
+
       COMPONENT_TEST('Filament')
       CALL testGraph%defineEdge(testCoord(:,2),testCoord(:,3))
       CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
       CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,5))
       ASSERT(.NOT.testGraph%isMinimumCycle(),'iso')
-      
+
       COMPONENT_TEST('Cycle w/ filaments')
       CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,6))
       CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,7))
@@ -1026,7 +1017,7 @@ PROGRAM testGeom_Graph
       CALL testGraph%defineEdge(testCoord(:,6),testCoord(:,7))
       CALL testGraph%defineEdge(testCoord(:,8),testCoord(:,9))
       ASSERT(.NOT.testGraph%isMinimumCycle(),'iso')
-      
+
       COMPONENT_TEST('Polygon')
       CALL testGraph%clear()
       !Setup test graph 2 (polygon)
@@ -1046,7 +1037,7 @@ PROGRAM testGeom_Graph
       ASSERT(testGraph%isMinimumCycle(),'pentagon')
       CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,2))
       ASSERT(.NOT.testGraph%isMinimumCycle(),'two-cycle')
-      
+
       CALL testGraph%clear()
     ENDSUBROUTINE testIsMinCyc
 !
@@ -1055,7 +1046,7 @@ PROGRAM testGeom_Graph
       LOGICAL(SBK) :: bool
       INTEGER(SIK) :: i
       REAL(SRK) :: testCoord(2,9),c0(2),r
-      
+
       !Setup test graph
       testCoord(:,1)=(/0.0_SRK,-1.0_SRK/)
       testCoord(:,2)=(/0.0_SRK,0.0_SRK/)
@@ -1078,7 +1069,7 @@ PROGRAM testGeom_Graph
       CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,7))
       CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,8))
       CALL testGraph%defineEdge(testCoord(:,8),testCoord(:,9))
-      
+
       COMPONENT_TEST('Bad Vertices')
       CALL testGraph%removeVertexI(0)
       ASSERT(testGraph%nVert() == 9,'nvert 0')
@@ -1089,7 +1080,7 @@ PROGRAM testGeom_Graph
       CALL testGraph%removeVertex(c0)
       ASSERT(testGraph%nVert() == 9,'nvert (1,1)')
       ASSERT(testGraph%nEdge() == 7,'nedge (1,1)')
-      
+
       COMPONENT_TEST('Isolated vertex')
       CALL testGraph%removeVertexI(1)
       ASSERT(testGraph%nVert() == 8,'nvert')
@@ -1104,7 +1095,7 @@ PROGRAM testGeom_Graph
       bool=ALL(testGraph%quadEdges(:,1,2) == (/c0(1),c0(2),r/))
       ASSERT(bool,'QE(1,2)')
       CALL symEdgeCheck()
-      
+
       COMPONENT_TEST('V5')
       CALL testGraph%removeVertex(testCoord(:,5))
       ASSERT(testGraph%nVert() == 7,'nvert')
@@ -1133,7 +1124,7 @@ PROGRAM testGeom_Graph
       LOGICAL(SBK) :: bool
       INTEGER(SIK) :: i
       REAL(SRK) :: testCoord(2,9),c0(2),r
-      
+
       !Setup test graph
       testCoord(:,1)=(/0.0_SRK,-1.0_SRK/)
       testCoord(:,2)=(/0.0_SRK,0.0_SRK/)
@@ -1156,7 +1147,7 @@ PROGRAM testGeom_Graph
       CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,7))
       CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,8))
       CALL testGraph%defineEdge(testCoord(:,8),testCoord(:,9))
-      
+
       COMPONENT_TEST('Bad Points')
       CALL testGraph%removeEdgeIJ(0,1)
       ASSERT(testGraph%nEdge() == 7,'nedge (0,1)')
@@ -1170,7 +1161,7 @@ PROGRAM testGeom_Graph
       ASSERT(testGraph%nEdge() == 7,'nedge (c0,2)')
       CALL testGraph%removeEdge(testCoord(:,2),c0)
       ASSERT(testGraph%nEdge() == 7,'nedge (2,c0)')
-      
+
       COMPONENT_TEST('Same Vertex')
       CALL testGraph%removeEdgeIJ(1,1)
       ASSERT(testGraph%nEdge() == 7,'nedge')
@@ -1184,7 +1175,7 @@ PROGRAM testGeom_Graph
       bool=ALL(testGraph%quadEdges(:,2,3) == (/c0(1),c0(2),r/))
       ASSERT(bool,'QE(2,3)')
       CALL symEdgeCheck()
-      
+
       COMPONENT_TEST('Non-existent edge (IJ)')
       CALL testGraph%removeEdgeIJ(1,2)
       ASSERT(testGraph%nEdge() == 7,'nedge')
@@ -1212,7 +1203,7 @@ PROGRAM testGeom_Graph
       bool=ALL(testGraph%quadEdges(:,2,3) == (/c0(1),c0(2),r/))
       ASSERT(bool,'QE(2,3)')
       CALL symEdgeCheck()
-      
+
       COMPONENT_TEST('Valid Edge')
       CALL testGraph%removeEdge(testCoord(:,3),testCoord(:,4))
       ASSERT(testGraph%nEdge() == 6,'nedge')
@@ -1342,7 +1333,7 @@ PROGRAM testGeom_Graph
       ASSERT(testGraph%edgeMatrix(3,5) == 1,'E(5,7)')
       ASSERT(testGraph%edgeMatrix(4,5) == 1,'E(6,7)')
       CALL symEdgeCheck()
-      
+
       CALL testGraph%clear()
     ENDSUBROUTINE testRemFil
 !
@@ -1353,7 +1344,7 @@ PROGRAM testGeom_Graph
       INTEGER(SIK) :: i
       REAL(SRK) :: testCoord(2,18),c0(2),r
       TYPE(GraphType),ALLOCATABLE :: cycles(:)
-      
+
       COMPONENT_TEST('1 cycle + filaments')
       !Setup test graph
       testCoord(:,1)=(/0.0_SRK,-1.0_SRK/)
@@ -1431,7 +1422,7 @@ PROGRAM testGeom_Graph
       CALL testGraph%insertVertex(testCoord(:,6))
       CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,6))
       CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,5))
-      CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,6))      
+      CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,6))
       CALL testGraph%getMCB(cycles)
       ASSERTFAIL(ALLOCATED(cycles),'allocated')
       ASSERT(SIZE(cycles) == 2,'size')
@@ -1461,7 +1452,7 @@ PROGRAM testGeom_Graph
       ASSERT(cycles(2)%edgeMatrix(1,3) == 1,'2 edge(1,3)')
       ASSERT(cycles(2)%edgeMatrix(3,4) == 1,'2 edge(3,4)')
       ASSERT(cycles(2)%edgeMatrix(2,4) == 1,'2 edge(2,4)')
-      
+
       COMPONENT_TEST('2 cycles + filament')
       CALL testGraph%insertVertex(testCoord(:,7))
       CALL testGraph%defineEdge(testCoord(:,6),testCoord(:,7))
@@ -1495,7 +1486,7 @@ PROGRAM testGeom_Graph
       ASSERT(cycles(2)%edgeMatrix(3,4) == 1,'2 edge(3,4)')
       ASSERT(cycles(2)%edgeMatrix(2,4) == 1,'2 edge(2,4)')
       CALL testGraph%clear()
-      
+
       COMPONENT_TEST('KeyHole')
       testCoord(:, 1)=(/-0.564_SRK,0.0_SRK/)
       testCoord(:, 2)=(/-0.521068056_SRK,-0.215833456_SRK/)
@@ -1796,7 +1787,7 @@ PROGRAM testGeom_Graph
       ASSERT(ALL(testGraph%vertices(:,10) == (/1.5_SRK,0.75_SRK/)),'vert 10')
                                             ! 1 2 3 4 5 6 7 8 9 0
       bool=ALL(testGraph%edgeMatrix(:,1) == (/0,1,0,0,1,0,0,0,0,0/))
-      ASSERT(bool,'edges 1')                ! 1 2 3 4 5 6 7 8 9 0 
+      ASSERT(bool,'edges 1')                ! 1 2 3 4 5 6 7 8 9 0
       bool=ALL(testGraph%edgeMatrix(:,2) == (/1,0,0,0,0,0,0,1,0,0/))
       ASSERT(bool,'edges 2')                ! 1 2 3 4 5 6 7 8 9 0
       bool=ALL(testGraph%edgeMatrix(:,3) == (/0,0,0,1,0,1,0,0,0,0/))
@@ -2127,7 +2118,7 @@ PROGRAM testGeom_Graph
       ASSERT(bool,'edges 7')
       bool=ALL(testGraph%edgeMatrix(:,8) == (/0,0,0,0,1,0,1,0/))
       ASSERT(bool,'edges 8')
-      
+
       !Perform reverse
       COMPONENT_TEST('Circle with Bounding Box')
       testGraph=g2
@@ -2224,7 +2215,7 @@ PROGRAM testGeom_Graph
       ASSERT(bool,'edges 7')
       bool=ALL(testGraph%edgeMatrix(:,8) == (/0,0,0,0,-1,-1,0,0/))
       ASSERT(bool,'edges 8')
-      
+
       !Perform Reverse
       COMPONENT_TEST('half-circle inside with Box')
       testGraph=g2
@@ -2371,13 +2362,13 @@ PROGRAM testGeom_Graph
       CALL testGraph%clear()
     ENDSUBROUTINE testCombine
 !
-!-------------------------------------------------------------------------------    
+!-------------------------------------------------------------------------------
     SUBROUTINE testTriangulate
       LOGICAL(SBK) :: bool
       INTEGER(SIK) :: i,j,n
       REAL(SRK) :: testCoord(2,9)
       TYPE(GraphType),ALLOCATABLE :: cycles(:)
-      
+
       !Setup test graph
       testCoord(:,1)=(/0.0_SRK,-1.0_SRK/)
       testCoord(:,2)=(/0.0_SRK,0.0_SRK/)
@@ -2408,12 +2399,12 @@ PROGRAM testGeom_Graph
       ASSERT(bool,'Wrong number of triangles')
     ENDSUBROUTINE
 !
-!-------------------------------------------------------------------------------    
+!-------------------------------------------------------------------------------
     SUBROUTINE testAssign()
       INTEGER(SIK) :: i
       REAL(SRK) :: testCoord(2,9),c0(2),r
       TYPE(GraphType) :: g2
-      
+
       !Setup test graph
       testCoord(:,1)=(/0.0_SRK,-1.0_SRK/)
       testCoord(:,2)=(/0.0_SRK,0.0_SRK/)
@@ -2444,7 +2435,7 @@ PROGRAM testGeom_Graph
       ASSERT(ALL(testGraph%edgeMatrix == g2%edgeMatrix),'edgeMatrix')
       ASSERT(ALL(testGraph%quadEdges == g2%quadEdges),'quadEdges')
       CALL g2%clear()
-      
+
       COMPONENT_TEST('Overwrite')
       DO i=1,3
         CALL g2%insertVertex(testCoord(:,i))
@@ -2486,7 +2477,7 @@ PROGRAM testGeom_Graph
       CALL testGraph%insertVertex(testCoord(:,6))
       CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,6))
       CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,5))
-      CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,6))      
+      CALL testGraph%defineEdge(testCoord(:,5),testCoord(:,6))
       CALL testGraph%insertVertex(testCoord(:,7))
       CALL testGraph%defineEdge(testCoord(:,6),testCoord(:,7))
       !Graph2
@@ -2499,12 +2490,12 @@ PROGRAM testGeom_Graph
       CALL g2%defineEdge(testCoord(:,4),testCoord(:,2))
       CALL g2%defineEdge(testCoord(:,4),testCoord(:,6))
       CALL g2%defineEdge(testCoord(:,3),testCoord(:,5))
-      CALL g2%defineEdge(testCoord(:,5),testCoord(:,6))      
+      CALL g2%defineEdge(testCoord(:,5),testCoord(:,6))
       CALL g2%defineEdge(testCoord(:,6),testCoord(:,7))
       ASSERT(testGraph == g2,'Equal Graphs')
       g2%vertices(1,1)=-1.0_SRK
       ASSERT(.NOT.(testGraph == g2),'Non-Equal Graphs')
-      
+
       CALL testGraph%clear()
       CALL g2%clear()
     ENDSUBROUTINE testIsEqual
@@ -2532,7 +2523,7 @@ PROGRAM testGeom_Graph
 !      INTEGER(SIK) :: i
 !      REAL(SRK) :: testCoord(2,9),c0(2),r
 !      TYPE(GraphType) :: testGraph2,testGraph3,testGraph4
-!      
+!
 !      !Test graph1
 !      testCoord(:,1)=(/0.0_SRK,0.0_SRK/)
 !      testCoord(:,2)=(/0.0_SRK,1.0_SRK/)
@@ -2568,9 +2559,9 @@ PROGRAM testGeom_Graph
 !      CALL testGraph4%defineEdge(testCoord(:,3),testCoord(:,4))
 !      CALL testGraph4%defineEdge(testCoord(:,4),testCoord(:,2))
 !      CALL testGraph4%defineEdge(testCoord(:,7),testCoord(:,1))
-!      CALL testGraph4%defineEdge(testCoord(:,5),testCoord(:,6))      
+!      CALL testGraph4%defineEdge(testCoord(:,5),testCoord(:,6))
 !      CALL testGraph4%defineEdge(testCoord(:,6),testCoord(:,7))
-!      
+!
 !      testGraph3=testGraph+testGraph2
 !      ASSERT(testGraph3 == testGraph4,'addition')
 !    ENDSUBROUTINE testAddition
@@ -2594,21 +2585,21 @@ PROGRAM testGeom_Graph
 !-------------------------------------------------------------------------------
     SUBROUTINE testDAGInit()
       INTEGER(SIK),ALLOCATABLE :: nodes(:)
-      
+
       CALL testDAGraph%init(0,nodes)
       CALL testDAGUninit()
-      
+
       CALL testDAGraph%init(5,nodes)
       CALL testDAGUninit()
-      
+
       ALLOCATE(nodes(5))
       nodes(1)=2; nodes(2)=3; nodes(3)=4; nodes(4)=5; nodes(5)=6
-      
+
       CALL testDAGraph%init(4,nodes)
       CALL testDAGUninit()
-      
+
       CALL testDAGraph%init(5,nodes)
-      
+
       ASSERT(testDAGraph%n == 5,'%n')
       ASSERT(ALL(testDAGraph%nodes == (/2,3,4,5,6/)),'%nodes')
       ASSERT(ALL(testDAGraph%edgeMatrix == 0),'%edgeMatrix')
@@ -2618,44 +2609,44 @@ PROGRAM testGeom_Graph
 !-------------------------------------------------------------------------------
     SUBROUTINE testDAGDefineEdge()
       INTEGER(SIK),ALLOCATABLE :: edges(:,:)
-      
+
       ALLOCATE(edges(5,5))
       edges=0
-      
+
       CALL testDAGraph%defineEdge(0,0)
       ASSERT(ALL(testDAGraph%edgeMatrix == edges),'%null edge')
-      
+
       CALL testDAGraph%defineEdge(2,3)
       edges(1,2)=1
       ASSERT(ALL(testDAGraph%edgeMatrix == edges),'%edge(1,2)')
-      
+
       CALL testDAGraph%defineEdge(5,3)
       edges(4,2)=1
       ASSERT(ALL(testDAGraph%edgeMatrix == edges),'%edge(4,2)')
-      
+
       CALL testDAGraph%defineEdge(2,4)
       edges(1,3)=1
       ASSERT(ALL(testDAGraph%edgeMatrix == edges),'%edge(1,3)')
-      
+
       CALL testDAGraph%defineEdge(2,5)
       edges(1,4)=1
       ASSERT(ALL(testDAGraph%edgeMatrix == edges),'%edge(1,4)')
-      
+
       CALL testDAGraph%defineEdge(3,4)
       edges(2,3)=1
       ASSERT(ALL(testDAGraph%edgeMatrix == edges),'%edge(2,3)')
-      
+
       CALL testDAGraph%defineEdge(5,6)
       edges(4,5)=1
       ASSERT(ALL(testDAGraph%edgeMatrix == edges),'%edge(4,5)')
-      
+
       DEALLOCATE(edges)
     ENDSUBROUTINE testDAGDefineEdge
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testDAGRemoveEdge()
       INTEGER(SIK),ALLOCATABLE :: edges(:,:)
-      
+
       ALLOCATE(edges(5,5))
       edges=0
       edges(1,2)=1
@@ -2664,34 +2655,34 @@ PROGRAM testGeom_Graph
       edges(1,4)=1
       edges(2,3)=1
       edges(4,5)=1
-      
+
       CALL testDAGraph%removeEdge(2,3)
       edges(1,2)=0
       ASSERT(ALL(testDAGraph%edgeMatrix == edges),'%edge(1,2)')
-      
+
       CALL testDAGraph%removeEdge(5,3)
       edges(4,2)=0
       ASSERT(ALL(testDAGraph%edgeMatrix == edges),'%edge(4,2)')
-      
+
       CALL testDAGraph%removeEdge(2,4)
       edges(1,3)=0
       ASSERT(ALL(testDAGraph%edgeMatrix == edges),'%edge(1,3)')
-      
+
       !Redundant call
       CALL testDAGraph%removeEdge(2,4)
       ASSERT(ALL(testDAGraph%edgeMatrix == edges),'%edge(1,3)')
-      
+
       CALL testDAGraph%defineEdge(2,3)
       CALL testDAGraph%defineEdge(5,3)
       CALL testDAGraph%defineEdge(2,4)
-      
+
       DEALLOCATE(edges)
     ENDSUBROUTINE testDAGRemoveEdge
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testDAGinsertNode()
       INTEGER(SIK),ALLOCATABLE :: edges(:,:)
-      
+
       ALLOCATE(edges(6,6))
       edges=0
       edges(1,3)=1
@@ -2705,7 +2696,7 @@ PROGRAM testGeom_Graph
       ASSERT(ALL(testDAGraph%nodes == (/2,7,3,4,5,6/)),'%nodes')
       ASSERT(ALL(testDAGraph%edgeMatrix == edges),'%edgeMatrix')
       DEALLOCATE(edges)
-      
+
       ALLOCATE(edges(7,7))
       edges=0
       edges(2,4)=1
@@ -2724,7 +2715,7 @@ PROGRAM testGeom_Graph
 !-------------------------------------------------------------------------------
     SUBROUTINE testDAGremoveNode()
       INTEGER(SIK),ALLOCATABLE :: edges(:,:)
-      
+
       ALLOCATE(edges(6,6))
       edges=0
       edges(2,3)=1
@@ -2738,7 +2729,7 @@ PROGRAM testGeom_Graph
       ASSERT(ALL(testDAGraph%nodes == (/8,2,3,4,5,6/)),'%nodes')
       ASSERT(ALL(testDAGraph%edgeMatrix == edges),'%edgeMatrix')
       DEALLOCATE(edges)
-      
+
       ALLOCATE(edges(5,5))
       edges=0
       edges(1,2)=1
@@ -2756,13 +2747,13 @@ PROGRAM testGeom_Graph
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testDAGisStartNode()
-      
+
       ASSERT(testDAGraph%isStartNode(ID=2),'%isStartNode(ID=2)')
       ASSERT(.NOT.testDAGraph%isStartNode(ID=3),'%isStartNode(ID=3)')
       ASSERT(.NOT.testDAGraph%isStartNode(ID=4),'%isStartNode(ID=4)')
       ASSERT(.NOT.testDAGraph%isStartNode(ID=5),'%isStartNode(ID=5)')
       ASSERT(.NOT.testDAGraph%isStartNode(ID=6),'%isStartNode(ID=6)')
-      
+
       ASSERT(testDAGraph%isStartNode(IND=1),'%isStartNode(ID=1)')
       ASSERT(.NOT.testDAGraph%isStartNode(IND=2),'%isStartNode(ID=2)')
       ASSERT(.NOT.testDAGraph%isStartNode(IND=3),'%isStartNode(ID=3)')
@@ -2774,22 +2765,22 @@ PROGRAM testGeom_Graph
     SUBROUTINE testDAGgetNextStartNode()
       INTEGER(SIK) :: ID
       INTEGER(SIK),ALLOCATABLE :: old(:)
-      
+
       ALLOCATE(old(5))
       old=0
       CALL testDAGraph%getNextStartNode(old,ID)
       ASSERT(ID == 2,'Start Node is 2')
       ASSERT(ALL(old == (/2,0,0,0,0/)),'old list')
-      
+
       CALL testDAGraph%getNextStartNode(old,ID)
       ASSERT(ID == 0,'No other start node')
       ASSERT(ALL(old == (/2,0,0,0,0/)),'old list')
-      
+
     ENDSUBROUTINE testDAGgetNextStartNode
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testDAGKATS()
-    
+
       CALL testDAGraph%clear()
       CALL testDAGraph%init(8,(/10,9,2,8,11,3,5,7/))
       CALL testDAGraph%defineEdge(3,8)
@@ -2801,10 +2792,10 @@ PROGRAM testGeom_Graph
       CALL testDAGraph%defineEdge(11,9)
       CALL testDAGraph%defineEdge(11,10)
       CALL testDAGraph%defineEdge(8,9)
-      
+
       CALL testDAGraph%KATS()
       ASSERT(ALL(testDAGraph%nodes == (/2,9,10,11,8,7,5,3/)),'%sorted')
-      
+
     ENDSUBROUTINE testDAGKATS
 !
   ENDPROGRAM testGeom_Graph

@@ -1,36 +1,27 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, DOes not necessarily constitute or imply its     !
-! enDOrsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testStochasticSampler
 #include "UnitTest.h"
   USE ISO_FORTRAN_ENV
-  USE UnitTest    
+  USE UnitTest
   USE IntrType
   USE ExceptionHandler
   USE ParallelEnv
   USE StochasticSampling
-  
+
   IMPLICIT NONE
 
   TYPE(StochasticSamplingType) :: myRNG
   TYPE(ExceptionHandlerType),TARGET :: e
   TYPE(MPI_EnvType) :: MPIEnv
   TYPE(OMP_EnvType) :: OMPEnv
-  
+
   INTERFACE
     FUNCTION linear(x)
       IMPORT :: SDK
@@ -55,7 +46,7 @@ PROGRAM testStochasticSampler
       REAL(SDK) :: quadfunc
     ENDFUNCTION
   ENDINTERFACE
-  
+
   CREATE_TEST("StochasticSampler")
 
   REGISTER_SUBTEST('Initialize',TestInit)
@@ -78,8 +69,8 @@ PROGRAM testStochasticSampler
 
   CALL MPIEnv%finalize()
   CALL myRNG%clear()
-  
-  FINALIZE_TEST() 
+
+  FINALIZE_TEST()
 !
 !===============================================================================
   CONTAINS
@@ -91,7 +82,7 @@ PROGRAM testStochasticSampler
       INTEGER :: i
       INTEGER(SLK) :: firstten(11)
       REAL(SDK) :: x
-      
+
       CALL e%setQuietMode(.TRUE.)
       CALL eStochasticSampler%addSurrogate(e)
       ! Test Manager Init
@@ -115,17 +106,17 @@ PROGRAM testStochasticSampler
       firstten(9)=4656810573858967513_SLK
       firstten(10)=5251754594274751070_SLK
       firstten(11)=2039497501229545367_SLK
-      
+
       DO i=1,11
         ASSERT(myRNG%RNseed == firstten(i),'RNG did not reproduce first 10 random numbers')
         FINFO() 'Failed at random number: ', i
         x=myRNG%rng()
       ENDDO
-      
+
       DO i=1,100
         x=myRNG%rng()
       ENDDO
-      
+
       CALL myRNG2%init(RNG_LEcuyer2,SKIP=myRNG%counter)
       ASSERT(myRNG%rng() == myRNG2%rng(),'RNG did not skip ahead properly.')
       FINFO() "RNG 1:         ", myRNG%rng()
@@ -138,15 +129,15 @@ PROGRAM testStochasticSampler
       ASSERT(myRNG2%RNseed==myRNG3%RNseed,'RNG did not handle uninitialized parallel env properly.')
       CALL myRNG2%clear()
       CALL myRNG3%clear()
-      
+
       ! Set up parallel environment for initialization test
       !   Initialize null MPI env then sets it to appear as 100 processors and of rank 22
       CALL MPIEnv%init(PE_COMM_SELF)
       MPIEnv%nproc=100
       MPIEnv%rank=22
-      
+
       CALL myRNG2%init(RNG_LEcuyer2,MPIparallelEnv=MPIEnv)
-      
+
       ! Set up parallel environment for initialization test
       !   Initialize null MPI env then sets it to appear as 10 processors and of rank 2
       MPIEnv%nproc=10
@@ -157,9 +148,9 @@ PROGRAM testStochasticSampler
       OMPEnv%nproc=10
       OMPEnv%rank=2
       CALL myRNG3%init(RNG_LEcuyer2,MPIparallelEnv=MPIEnv,OMPparallelEnv=OMPEnv)
-      
+
       ASSERT(myRNG2%RNseed==myRNG3%RNseed,'RNG Parallel Decomposition did not initialize properly.')
-      
+
       CALL myRNG2%clear()
       CALL myRNG3%clear()
     ENDSUBROUTINE TestInit
@@ -167,7 +158,7 @@ PROGRAM testStochasticSampler
 !-------------------------------------------------------------------------------
     SUBROUTINE TestClear
       CALL myRNG%clear()
-      
+
       SET_PREFIX('RNG clear')
       ASSERT(.NOT. myRNG%isInit,'isInit')
       ASSERT(myRNG%RNseed==-1,'RNseed')
@@ -184,15 +175,15 @@ PROGRAM testStochasticSampler
 !-------------------------------------------------------------------------------
     SUBROUTINE TestRNG
       USE Times
-      
+
       INTEGER(SLK) :: i,n,inicount
       REAL(SDK) :: x,mean,stdev,truemean,truestd,tol
       TYPE(TimerType) :: testTimer
-      
-      CALL testTimer%setTimerHiResMode(.TRUE.) 
-      
+
+      CALL testTimer%setTimerHiResMode(.TRUE.)
+
       n=100000000
-      
+
       inicount=myRNG%counter
       mean=0.0
       stdev=0.0
@@ -209,15 +200,15 @@ PROGRAM testStochasticSampler
       CALL testTimer%toc()
       stdev=SQRT(stdev-mean**2)
 
-      ASSERT(myRNG%counter-inicount==n,'Check counter increment.')      
+      ASSERT(myRNG%counter-inicount==n,'Check counter increment.')
       ASSERT(ABS(mean-truemean)<tol,'RNG mean does not meet criteria')
       FINFO() mean,truemean,ABS(mean-truemean)
       ASSERT(ABS(stdev-truestd)<tol,'RNG standard deviation does not meet criteria')
       FINFO() stdev,truestd,ABS(stdev-truestd)
-      
+
       WRITE(*,'(A,ES14.7,A)') '     RNG generated ',REAL(n,SRK)/testTimer%elapsedtime, &
                               ' random numbers per second'
- 
+
     ENDSUBROUTINE TestRNG
 !
 !-------------------------------------------------------------------------------
@@ -272,7 +263,7 @@ PROGRAM testStochasticSampler
     SUBROUTINE TestExp
       INTEGER(SLK) :: i,n,inicount
       REAL(SDK) :: x,mean,stdev,truemean,truestd,tol
-      
+
       n=1000000
 
       inicount=myRNG%counter
@@ -301,7 +292,7 @@ PROGRAM testStochasticSampler
     SUBROUTINE TestNormal
       INTEGER(SLK) :: i,n,inicount
       REAL(SDK) :: x,mean,stdev,truemean,truestd,tol
-      
+
       n=1000000
 
       COMPONENT_TEST('Normal Distribution')
@@ -324,7 +315,7 @@ PROGRAM testStochasticSampler
       FINFO() mean,truemean,ABS(mean-truemean)
       ASSERT(ABS(stdev-truestd)<tol,'RNG standard deviation does not meet criteria')
       FINFO() stdev,truestd,ABS(stdev-truestd)
-    
+
       COMPONENT_TEST('Log-Normal Distribution')
       inicount=myRNG%counter
       mean=0.0
@@ -347,11 +338,11 @@ PROGRAM testStochasticSampler
 
     ENDSUBROUTINE TestNormal
 !
-!-------------------------------------------------------------------------------   
+!-------------------------------------------------------------------------------
     SUBROUTINE TestMaxwellian
       INTEGER(SLK) :: i,n,inicount
       REAL(SDK) :: x,mean,stdev,T,truemean,truestd,tol
-      
+
       n=1000000
 
       inicount=myRNG%counter
@@ -381,7 +372,7 @@ PROGRAM testStochasticSampler
     SUBROUTINE TestWatt
       INTEGER(SLK) :: i,n,inicount
       REAL(SDK) :: x,mean,stdev,a,b,truemean,truestd,tol
-      
+
       n=1000000
 
       inicount=myRNG%counter
@@ -391,7 +382,7 @@ PROGRAM testStochasticSampler
       truestd=SQRT((a**2*(-36.0*SQRT(a**3*b)+a*SQRT(b)*(12.0+a*b)* &
             (4.0*SQRT(a)+a**1.5*b-SQRT(b)*SQRT(a**3*b))))/SQRT(a**3*b))/(2.0*SQRT(2.0))
       tol=5.0_SDK/SQRT(REAL(n,SDK))
-      
+
       mean=0.0
       stdev=0.0
       DO i=1,n
@@ -413,7 +404,7 @@ PROGRAM testStochasticSampler
     SUBROUTINE TestEvap
       INTEGER(SLK) :: i,n,inicount
       REAL(SDK) :: x, theta,mean,stdev,truemean,truestd,tol
-      
+
       n=1000000
 
       inicount=myRNG%counter
@@ -421,7 +412,7 @@ PROGRAM testStochasticSampler
       truemean=8.0_SDK/5.0_SDK
       truestd=SQRT(32.0_SDK)/5.0_SDK
       tol=5.0_SDK/SQRT(REAL(n,SDK))
-      
+
       mean=0.0
       stdev=0.0
       DO i=1,n
@@ -444,12 +435,12 @@ PROGRAM testStochasticSampler
       INTEGER(SLK) :: i,j,n,inicount
       REAL(SDK) :: mean,stdev,truemean,truestd,tol
       REAL(SRK),ALLOCATABLE :: y(:), iii(:)
-      
+
       ALLOCATE(y(5))
       ALLOCATE(iii(5))
-      
+
       n=1000000
-  
+
       inicount=myRNG%counter
       y=(/ 0.2, 0.4, 0.1, 0.05, 0.25 /)
       mean=0.0_SDK
@@ -458,7 +449,7 @@ PROGRAM testStochasticSampler
       truemean=2.75_SRK
       truestd=SQRT(9.75_SRK-2.75_SRK**2)
       tol=5.0_SDK/SQRT(REAL(n,SDK))
-      
+
       DO i=1,n
         j=myRNG%histogram(y)
         iii(j)=iii(j)+1
@@ -487,11 +478,11 @@ PROGRAM testStochasticSampler
       INTEGER(SLK) :: i,j,n,inicount
       REAL(SDK) :: mean,stdev,truemean,truestd,tol
       REAL(SRK),ALLOCATABLE :: y(:),iii(:)
-      
+
       ALLOCATE(y(5))
       ALLOCATE(iii(5))
       n=1000000
-  
+
       inicount=myRNG%counter
       y=(/ 2.0, 4.0, 1.0, 0.5, 2.5 /)
       iii=0
@@ -500,7 +491,7 @@ PROGRAM testStochasticSampler
       truemean=2.75_SRK
       truestd=SQRT(9.75_SRK-2.75_SRK**2)
       tol=5.0_SDK/SQRT(REAL(n,SDK))
-      
+
       DO i=1,n
         j=myRNG%unnormhistogram(y)
         iii(j)=iii(j)+1
@@ -529,7 +520,7 @@ PROGRAM testStochasticSampler
       INTEGER(SLK) :: i,n,inicount
       REAL(SDK) :: x,mean,stdev,truemean,truestd,tol
       REAL(SRK),ALLOCATABLE :: y(:),z(:)
-      
+
       ALLOCATE(y(5))
       ALLOCATE(z(6))
       n=1000000
@@ -542,7 +533,7 @@ PROGRAM testStochasticSampler
       truemean=3.375_SRK
       truestd=SQRT(43.0_SRK/3.0_SRK-3.375_SRK**2)
       tol=5.0_SDK/SQRT(REAL(n,SDK))
-      
+
       DO i=1,n
         x=myRNG%conthistogram(y,z)
         mean=mean+x/REAL(n,SDK)
@@ -558,14 +549,14 @@ PROGRAM testStochasticSampler
 
       DEALLOCATE(y)
       DEALLOCATE(z)
-    ENDSUBROUTINE TestNormContHist    
+    ENDSUBROUTINE TestNormContHist
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE TestUnnormContHist
       INTEGER(SLK) :: i,n,inicount
       REAL(SDK) :: x,mean,stdev,truemean,truestd,tol
       REAL(SRK),ALLOCATABLE :: y(:),z(:)
-      
+
       ALLOCATE(y(5))
       ALLOCATE(z(6))
       n=1000000
@@ -578,7 +569,7 @@ PROGRAM testStochasticSampler
       truemean=3.375_SRK
       truestd=SQRT(43.0_SRK/3.0_SRK-3.375_SRK**2)
       tol=5.0_SDK/SQRT(REAL(n,SDK))
-      
+
       DO i=1,n
         x=myRNG%unnormconthistogram(y,z)
         mean=mean+x/REAL(n,SDK)
@@ -594,14 +585,14 @@ PROGRAM testStochasticSampler
 
       DEALLOCATE(y)
       DEALLOCATE(z)
-    ENDSUBROUTINE TestUnnormContHist  
+    ENDSUBROUTINE TestUnnormContHist
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE TestNormPWLinear
       INTEGER(SLK) :: i,n,inicount
       REAL(SDK) :: x, mean,stdev,truemean,truestd,tol
       REAL(SRK),ALLOCATABLE :: y(:),z(:)
-      
+
       ALLOCATE(y(3))
       ALLOCATE(z(3))
       n=1000000
@@ -614,7 +605,7 @@ PROGRAM testStochasticSampler
       truemean=1.0_SDK
       truestd=1.0_SDK/SQRT(6.0_SDK)
       tol=5.0_SDK/SQRT(REAL(n,SDK))
-      
+
       DO i=1,n
         x=myRNG%pwlinear(y,z)
         mean=mean+x/REAL(n,SDK)
@@ -630,14 +621,14 @@ PROGRAM testStochasticSampler
 
       DEALLOCATE(y)
       DEALLOCATE(z)
-    ENDSUBROUTINE TestNormPWLinear     
+    ENDSUBROUTINE TestNormPWLinear
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE TestUnnormPWLinear
       INTEGER(SLK) :: i,n,inicount
       REAL(SDK) :: x,mean,stdev,truemean,truestd,tol
       REAL(SRK),ALLOCATABLE :: y(:),z(:)
-      
+
       ALLOCATE(y(3))
       ALLOCATE(z(3))
       n=1000000
@@ -650,7 +641,7 @@ PROGRAM testStochasticSampler
       truemean=4.0_SDK/3.0_SDK
       truestd=SQRT(7.0_SDK)/SQRT(18.0_SDK)
       tol=5.0_SDK/SQRT(REAL(n,SDK))
-      
+
       DO i=1,n
         x=myRNG%unnormpwlinear(y,z)
         mean=mean+x/REAL(n,SDK)
@@ -666,14 +657,14 @@ PROGRAM testStochasticSampler
 
       DEALLOCATE(y)
       DEALLOCATE(z)
-    ENDSUBROUTINE TestUnnormPWLinear    
+    ENDSUBROUTINE TestUnnormPWLinear
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE TestRejection
       INTEGER(SLK) :: i,n,inicount
       REAL(SDK) :: x,mean,stdev,truemean,truestd,tol
       REAL(SRK),ALLOCATABLE :: y(:),z(:)
-      
+
       ALLOCATE(y(3))
       ALLOCATE(z(3))
       n=1000000
@@ -686,7 +677,7 @@ PROGRAM testStochasticSampler
       truemean=10.0_SDK/3.0_SDK
       truestd=5.0_SDK/SQRT(18.0_SDK)
       tol=5.0_SDK/SQRT(REAL(n,SDK))
-      
+
       DO i=1,n
         x=myRNG%rejection(linear,0.0_SDK,5.0_SDK,7.0_SDK)
         mean=mean+x/REAL(n,SDK)
@@ -707,7 +698,7 @@ PROGRAM testStochasticSampler
       INTEGER(SLK) :: i,n,inicount
       REAL(SDK) :: x,mean,stdev,truemean,truestd,tol
       REAL(SRK),ALLOCATABLE :: y(:),z(:)
-      
+
       ALLOCATE(y(3))
       ALLOCATE(z(3))
       n=1000000
@@ -720,7 +711,7 @@ PROGRAM testStochasticSampler
       truemean=11.0_SDK/9.0_SDK
       truestd=SQRT(23.0_SDK)/9.0_SDK
       tol=5.0_SDK/SQRT(REAL(n,SDK))
-      
+
       DO i=1,n
         x=myRNG%rejectionarg(lineararg,0.0_SDK,2.0_SDK,7.0_SDK,(/2.0_SDK,1.0_SDK/))
         mean=mean+x/REAL(n,SDK)
@@ -743,7 +734,7 @@ FUNCTION linear(x) RESULT(y)
   USE IntrType
   REAL(SDK),INTENT(IN) :: x
   REAL(SDK) :: y
-      
+
   y=x
 ENDFUNCTION
 !
@@ -761,6 +752,6 @@ FUNCTION quadfunc(x) RESULT(y)
   USE IntrType
   REAL(SDK),INTENT(IN) :: x
   REAL(SDK) :: y
-      
+
   y=x**2+x+1.0_SDK
 ENDFUNCTION

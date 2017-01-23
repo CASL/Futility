@@ -1,31 +1,22 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testGeom
 #include "UnitTest.h"
-  USE ISO_FORTRAN_ENV  
+  USE ISO_FORTRAN_ENV
   USE UnitTest
   USE IntrType
   USE Constants_Conversion
   USE ParameterLists
   USE Geom
-  
+
   IMPLICIT NONE
-  
+
   TYPE(ParamType) :: params
   TYPE(PointType) :: point,point2,point3
   TYPE(LineType) :: line1
@@ -38,11 +29,11 @@ PROGRAM testGeom
   REAL(SRK) :: u1_3d(3),u2_3d(3),u3_3d(3)
   REAL(SRK) :: n(3)
   LOGICAL(SBK) :: bool
-  
+
   CREATE_TEST('Test Geom')
   CALL eParams%setQuietMode(.TRUE.)
   CALL eParams%setStopOnError(.FALSE.)
-  
+
   REGISTER_SUBTEST('Test Geom',testGeoms)
 
   FINALIZE_TEST()
@@ -187,7 +178,7 @@ PROGRAM testGeom
     bool = .NOT.(ANY(plane1%v0%coord /= 0.5_SRK) .OR. ANY(.NOT.(plane1%n .APPROXEQ. &
                  (/1._SRK/SQRT(3.0_SRK),1._SRK/SQRT(3.0_SRK),1._SRK/SQRT(3.0_SRK)/))))
     ASSERT(bool, 'CALL newGeom(params,plane1)')
-    
+
     !Test newGeom for Polygon
     CALL params%add('PolygonGeom->nVert',7)
     CALL params%add('PolygonGeom->vertex 1',(/-3.0_SRK,3.0_SRK/))

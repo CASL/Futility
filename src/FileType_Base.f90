@@ -1,22 +1,13 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief Utility module for I/O defines the base file type object.
-!> 
+!>
 !> This type is an abstract type, so it has no specific implementation. It
 !> exists only to provide a base for the extended types. It specifies the
 !> maximum lengths for the file path, name, and extension, some basic attributes
@@ -25,14 +16,14 @@
 !> also provided.
 !>
 !> @par
-!> It should be noted that the @ref FileType_Base::setOpenStat_file 
+!> It should be noted that the @ref FileType_Base::setOpenStat_file
 !> "setOpenStat" method should never be used directly outside of an I/O utility
 !> module it has the potential to corrupt the object and make its use unstable.
 !> This module is considered to be an I/O utility module so it's public members
 !> should be accessed through @ref IOutil "IOutil". This module  should not be
 !> used directly except when it is needed by another I/O utility module. Since
 !> this is an abstract type, it has no specific implementation so see one of
-!> it's extended types for examples on how it should be used. This module is 
+!> it's extended types for examples on how it should be used. This module is
 !> tested by @c testIOutil.f90 and the coverage report can be found at the @ref
 !> CodeCoverageReports "Code Coverage Reports" page.
 !>
@@ -49,15 +40,15 @@ MODULE FileType_Base
   USE ExceptionHandler
   IMPLICIT NONE
   PRIVATE
-  
+
   !List of Public Members
   PUBLIC :: BaseFileType
   PUBLIC :: MAX_FILE_STRING_LEN
   PUBLIC :: clear_base_file
-  
+
   CHARACTER(LEN=*),PARAMETER :: modName='FILETYPE_BASE'
   INTEGER(SIK),SAVE :: MAX_FILE_STRING_LEN=0
-  
+
   !> @brief Base derived type for a file object
   !>
   !> This is an abstract type which means it has no basic implementation
@@ -203,9 +194,9 @@ MODULE FileType_Base
 !-------------------------------------------------------------------------------
 !> @brief Get the path, filename, and extension of a file object.
 !> @param file the file object
-!> @param path output string containing just the path (includes file separator 
+!> @param path output string containing just the path (includes file separator
 !>        at the end)
-!> @param fname output string with the filename 
+!> @param fname output string with the filename
 !> @param ext output string with the filename extension (including the '.')
 !>
 !> Given a file object it returns the path, filename, and file
@@ -232,7 +223,7 @@ MODULE FileType_Base
 !-------------------------------------------------------------------------------
 !> @brief Get the path of a file object.
 !> @param file the file object
-!> @param path output string containing just the path (includes file separator 
+!> @param path output string containing just the path (includes file separator
 !>        at the end)
 !>
     PURE FUNCTION getFilePath_file(file) RESULT(path)
@@ -310,7 +301,7 @@ MODULE FileType_Base
 !-------------------------------------------------------------------------------
 !> @brief Sets the status of whether or not the end of file record
 !> has been reached.
-!> 
+!>
 !> Cannot be changed if the file is closed.
 !>
     SUBROUTINE setEOFstat_file(file,bool)
@@ -328,7 +319,7 @@ MODULE FileType_Base
 !-------------------------------------------------------------------------------
 !> @brief Sets the value for when the file is open or closed.
 !>
-!> There is no sufficient way to protect this attribute from being corrupted, 
+!> There is no sufficient way to protect this attribute from being corrupted,
 !> but this method, in general should NEVER be called unless it is within the
 !> fopen or fclose methods.
 !>

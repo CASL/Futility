@@ -1,19 +1,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief description
 !>
@@ -86,7 +77,7 @@ MODULE UnitTest
     '                                                '
   CHARACTER(LEN=79),PARAMETER :: utest_dot='  .............................'// &
     '................................................'
-  
+
 #ifdef COLOR_LINUX
   CHARACTER(LEN=7),PARAMETER :: c_red=ACHAR(27)//'[31;1m'
   CHARACTER(LEN=7),PARAMETER :: c_grn=ACHAR(27)//'[32;1m'
@@ -94,11 +85,11 @@ MODULE UnitTest
   CHARACTER(LEN=7),PARAMETER :: c_blu=ACHAR(27)//'[34;1m'
   CHARACTER(LEN=4),PARAMETER :: c_nrm=ACHAR(27)//'[0m'
 #else
-  CHARACTER(LEN=1),PARAMETER :: c_red=ACHAR(0)                                  
-  CHARACTER(LEN=1),PARAMETER :: c_grn=ACHAR(0)                                  
-  CHARACTER(LEN=1),PARAMETER :: c_yel=ACHAR(0)                                  
-  CHARACTER(LEN=1),PARAMETER :: c_blu=ACHAR(0)                                  
-  CHARACTER(LEN=1),PARAMETER :: c_nrm=ACHAR(0)   
+  CHARACTER(LEN=1),PARAMETER :: c_red=ACHAR(0)
+  CHARACTER(LEN=1),PARAMETER :: c_grn=ACHAR(0)
+  CHARACTER(LEN=1),PARAMETER :: c_yel=ACHAR(0)
+  CHARACTER(LEN=1),PARAMETER :: c_blu=ACHAR(0)
+  CHARACTER(LEN=1),PARAMETER :: c_nrm=ACHAR(0)
 #endif
 
   !> Variables for MPI tests
@@ -137,7 +128,7 @@ MODULE UnitTest
 !> @brief description
 !> @param parameter    description
 !>
-!> description  
+!> description
 !>
     SUBROUTINE UTest_Start(testname)
       CHARACTER(LEN=*),INTENT(IN) :: testname
@@ -181,7 +172,7 @@ MODULE UnitTest
       tmp%subtestname='main'
       utest_firsttest => tmp
       utest_curtest => tmp
-      
+
       utest_interactive=.FALSE.
       utest_verbose=0
     ENDSUBROUTINE UTest_Start
@@ -221,12 +212,12 @@ MODULE UnitTest
           passfail=c_grn//'PASSED'//c_nrm
         ENDIF
       ENDIF
-      
+
       IF(utest_master) THEN
         WRITE(*,'(A)') utest_hline
         WRITE(*,'(A72,A)')  ' TEST '//utest_testname//utest_pad,passfail
         WRITE(*,'(A)') utest_hline
-     
+
         WRITE(*,'(A)') utest_hline
         WRITE(*,'(A,31x,A,31x,A)') '|','TEST STATISTICS','|'
         WRITE(*,'(A)') '|--------------------------------------------------'// &
@@ -333,7 +324,7 @@ MODULE UnitTest
     SUBROUTINE UTest_Start_SubTest(subtestname)
       CHARACTER(LEN=*),INTENT(IN) :: subtestname
       TYPE(UTestElement),POINTER :: tmp
-      
+
       ALLOCATE(tmp)
 !If we're using MPI, each processor should have a unique subtest name
       tmp%subtestname=subtestname
@@ -348,7 +339,7 @@ MODULE UnitTest
 #endif
       utest_curtest%next=>tmp
       utest_curtest=>tmp
-      
+
       WRITE(*,*)
       WRITE(*,'(A)') utest_pad(1:utest_lvl*2)//'BEGIN SUBTEST '//TRIM(ADJUSTL(tmp%subtestname))
 
@@ -364,7 +355,7 @@ MODULE UnitTest
 !>
     SUBROUTINE UTest_End_SubTest()
       CHARACTER(LEN=19) :: pfstr
-      
+
       IF(utest_component) CALL UTest_End_Component()
 
       CALL UTest_decl()
@@ -374,7 +365,7 @@ MODULE UnitTest
       ELSE
         pfstr=c_grn//' PASSED'//c_nrm
       ENDIF
-      
+
       WRITE(*,'(A71,A)') utest_pad(1:utest_lvl*2)//'SUBTEST '// &
         TRIM(ADJUSTL(utest_curtest%subtestname))//utest_dot,pfstr
       WRITE(*,*)
@@ -401,9 +392,9 @@ MODULE UnitTest
 !>
     SUBROUTINE UTest_Start_Component(componentname)
       CHARACTER(LEN=*),INTENT(IN) :: componentname
-      
+
       IF(utest_component) CALL UTest_End_Component()
-      
+
       utest_component=.TRUE.
       utest_compfail=.FALSE.
 !If we're using MPI, each processor should have a unique subtest name
@@ -435,7 +426,7 @@ MODULE UnitTest
 !>
     SUBROUTINE UTest_End_Component()
       CHARACTER(LEN=19) :: pfstr
-      
+
       CALL UTest_decl()
 
       IF(utest_compfail) THEN
@@ -443,7 +434,7 @@ MODULE UnitTest
       ELSE
         pfstr=c_grn//' PASSED'//c_nrm
       ENDIF
-      
+
       WRITE(*,'(A71,A)') utest_pad(1:utest_lvl*2)//'COMPONENT '// &
         TRIM(ADJUSTL(utest_componentname))//utest_dot,pfstr
 
@@ -462,7 +453,7 @@ MODULE UnitTest
       LOGICAL,INTENT(IN) :: bool
       INTEGER,INTENT(IN) :: line
       CHARACTER(LEN=*),INTENT(IN) :: msg
-      
+
       IF(bool) THEN
         utest_lastfail=.FALSE.
         IF(utest_inmain) THEN
@@ -508,7 +499,7 @@ MODULE UnitTest
       CHARACTER(LEN=*),INTENT(IN) :: file
       CHARACTER(LEN=LEN(file)) :: name
       INTEGER :: i
-      
+
       DO i=LEN(file),1,-1
         IF(file(i:i) == ACHAR(92)) EXIT
       ENDDO

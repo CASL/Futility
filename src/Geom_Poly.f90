@@ -1,19 +1,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief A Fortran 2003 module defining a polygon type and a "polygonize"
 !> method.
@@ -31,7 +22,7 @@
 !>  - @ref Geom_Points "Geom_Points": @copybrief Geom_Points
 !>  - @ref Geom_Line "Geom_Line": @copybrief Geom_Line
 !>  - @ref Geom_Line "Geom_Plane": @copybrief Geom_Plane
-!>  - @ref Geom_Box "Geom_Box": @copybrief Geom_Box 
+!>  - @ref Geom_Box "Geom_Box": @copybrief Geom_Box
 !>  - @ref Geom_Line "Geom_CircCyl": @copybrief Geom_CircCyl
 !>  - @ref Geom_Line "Geom_Graph": @copybrief Geom_Graph
 !>
@@ -49,10 +40,10 @@ MODULE Geom_Poly
   USE Geom_Box
   USE Geom_CircCyl
   USE Geom_Box
-  
+
   IMPLICIT NONE
   PRIVATE
-  
+
   PUBLIC :: PolygonType
   PUBLIC :: Polygonize
   PUBLIC :: OPERATOR(==)
@@ -65,9 +56,9 @@ MODULE Geom_Poly
     !> Area of the polygon
     REAL(SRK) :: area=0.0_SRK
     !> The number of elements in the list of vertices
-    INTEGER(SIK) :: nVert=0 
+    INTEGER(SIK) :: nVert=0
     !> The number of elements in the list of edges
-    INTEGER(SIK) :: nQuadEdge=0 
+    INTEGER(SIK) :: nQuadEdge=0
     !> Centroid of the polygon
     TYPE(PointType) :: centroid
     !> The list of vertices SIZE(nvert)
@@ -134,7 +125,7 @@ MODULE Geom_Poly
     MODULE PROCEDURE Polygonize_OBBox
     MODULE PROCEDURE Polygonize_ABBox
   ENDINTERFACE
-  
+
   !No need to make this public... yet.
   !!> @brief
   !INTERFACE inside_PolygonType
@@ -145,7 +136,7 @@ MODULE Geom_Poly
   !  !> @copydetails Geom_Poly::point_inside_PolygonType
   !  MODULE PROCEDURE point_inside_PolygonType
   !ENDINTERFACE
-  
+
   !> @brief
   INTERFACE OPERATOR(==)
     !> @copybrief Geom_Poly::isequal_PolygonType
@@ -162,10 +153,10 @@ MODULE Geom_Poly
 !> @param thatGraph The graphtype from which to initialize the polygon.
 !>
 !> Note:  References for the calculation of the centroid include:
-!> http://mathworld.wolfram.com/CircularSegment.html for the circular sector 
+!> http://mathworld.wolfram.com/CircularSegment.html for the circular sector
 !> portion, https://en.wikipedia.org/wiki/Centroid for Centroid of a polygon
-!> specified by vertices, and 
-!> http://www.slideshare.net/coolzero2012/centroids-moments-of-inertia for 
+!> specified by vertices, and
+!> http://www.slideshare.net/coolzero2012/centroids-moments-of-inertia for
 !> how to set up the super-position of these elements altogether.
 !>
     SUBROUTINE set_PolygonType(thisPoly,thatGraph)
@@ -190,7 +181,7 @@ MODULE Geom_Poly
         CALL thisPoly%vert(1)%init(DIM=2,X=thatGraph%vertices(1,1), &
           Y=thatGraph%vertices(2,1))
         thisPoly%edge(1,1)=1
-        !Loop over all vertices in the graphtype in CW ordering.  
+        !Loop over all vertices in the graphtype in CW ordering.
         !Logic here is for when we have our next point directly above the starting point.
         iccw=thatGraph%getCCWMostVert(0,1)
         icw=thatGraph%getCWMostVert(0,1)
@@ -241,7 +232,7 @@ MODULE Geom_Poly
           CALL dmallocA(thisPoly%quad2edge,thisPoly%nQuadEdge)
           thisPoly%quad2edge=0
           thisPoly%quadEdge=0.0_SRK
-          !Loop over all vertices in the graphtype in CW ordering.  
+          !Loop over all vertices in the graphtype in CW ordering.
           !Logic here is for when we have our next point directly above the starting point.
           iccw=thatGraph%getCCWMostVert(0,1)
           icw=thatGraph%getCWMostVert(0,1)
@@ -319,7 +310,7 @@ MODULE Geom_Poly
     SUBROUTINE clear_PolygonType(thisPolygon)
       CLASS(PolygonType),INTENT(INOUT) :: thisPolygon
       INTEGER(SIK) :: i
-    
+
       !Clear the vertex data
       DO i=thisPolygon%nVert,1,-1
         CALL thisPolygon%vert(i)%clear()
@@ -383,12 +374,12 @@ MODULE Geom_Poly
     ENDFUNCTION getRadius_PolygonType
 !
 !-------------------------------------------------------------------------------
-!> @brief This routine determines if a given point lies on the surface of a 
+!> @brief This routine determines if a given point lies on the surface of a
 !>        given polygon.
 !> @param thisPoly The polygon type used in the query
-!> @param point The point type to check if it lies on the surface of the 
+!> @param point The point type to check if it lies on the surface of the
 !>        polygontype
-!> @param bool The logical result of this operation.  TRUE if the point is on 
+!> @param bool The logical result of this operation.  TRUE if the point is on
 !>        the surface.
 !>
     PURE RECURSIVE FUNCTION onSurface_PolygonType(thisPoly,point,incSubReg) RESULT(bool)
@@ -401,7 +392,7 @@ MODULE Geom_Poly
       REAL(SRK) :: d
       TYPE(PointType) :: centroid
       TYPE(LineType) :: line
-      
+
       IF(thisPoly%isinit .AND. point%dim == 2) THEN
         bool=.FALSE.
         !Check if its one of the vertices
@@ -411,7 +402,7 @@ MODULE Geom_Poly
             EXIT
           ENDIF
         ENDDO
-        
+
         IF(.NOT.bool) THEN
           !Check straight edges.
           DO i=1,thisPoly%nVert
@@ -441,18 +432,18 @@ MODULE Geom_Poly
               (point%coord(2)-thisPoly%quadEdge(2,i))* &
               (point%coord(2)-thisPoly%quadEdge(2,i))) .APPROXEQA. &
                 (thisPoly%quadEdge(3,i)*thisPoly%quadEdge(3,i))) THEN
-              !Check if the point is within the arc range 
+              !Check if the point is within the arc range
               CALL centroid%init(DIM=2,X=thisPoly%quadEdge(1,i), &
                 Y=thisPoly%quadEdge(2,i))
               iedge=thisPoly%quad2edge(i)
               CALL line%set(thisPoly%vert(thisPoly%edge(1,iedge)), &
                 thisPoly%vert(thisPoly%edge(2,iedge)))
               IF(line%pointIsLeft(centroid)) THEN
-                !Centroid is on the left, the valid portion of the 
+                !Centroid is on the left, the valid portion of the
                 !arc lies to the right of the line.
                 bool=line%pointIsRight(point)
               ELSE
-                !Centroid is on the right, the valid portion of the 
+                !Centroid is on the right, the valid portion of the
                 !arc lies to the left of the line.
                 bool=line%pointIsLeft(point)
               ENDIF
@@ -475,9 +466,9 @@ MODULE Geom_Poly
     ENDFUNCTION onSurface_PolygonType
 !
 !-------------------------------------------------------------------------------
-!> @brief This routine determines whether a point lies within an arbitrary 
+!> @brief This routine determines whether a point lies within an arbitrary
 !> polygon.  The processes by which this can be done are the ray tracing "count
-!> number" approach, or the winding number approach.  After researching the 
+!> number" approach, or the winding number approach.  After researching the
 !> problem, it was determined that the winding number provides the best solution
 !> in the case that the polygon is non-convex.  A paper was found by Alciatore
 !> and Miranda describing a simple axis-crossing method.  This routine applies
@@ -527,11 +518,11 @@ MODULE Geom_Poly
           ENDIF
         ENDDO
         inPoly=.NOT.(w .APPROXEQA. 0.0_SRK)
-        
+
         !We need this statement until the winding algorithm can be fixed
         !for special edge cases.
         IF(.NOT.inPoly) inPoly=onSurface_PolygonType(thisPoly,point)
-      
+
         !Now check the quadratic edges if there are any
         IF(thisPoly%nQuadEdge > 0) THEN
           inConvexCirc=.FALSE.
@@ -546,11 +537,11 @@ MODULE Geom_Poly
             onLine=(line%distance2Point(point) .APPROXEQA. 0.0_SRK)
             !Check if the centroid is on the interior or exterior of the edge
             IF(line%pointIsRight(centroid) .AND. .NOT. inConvexCirc) THEN
-              !Quad edge extends outside the polygon.  
+              !Quad edge extends outside the polygon.
               !Check if the point is to the left of the edge and inside the circle
               inConvexCirc=(line%pointIsLeft(point) .OR. onLine) .AND. circ%inside(point)
             ELSEIF(line%pointIsLeft(centroid) .AND. .NOT. inConcaveCirc) THEN
-              !Quad edge extends inside the polygon.  
+              !Quad edge extends inside the polygon.
               !Check if the point is to the right of the edge and outside the circle
               inConcaveCirc=(line%pointIsRight(point) .OR. onLine) .AND. &
                 (circ%inside(point) .AND. .NOT.circ%onSurface(point))
@@ -577,9 +568,9 @@ MODULE Geom_Poly
     ENDFUNCTION point_inside_PolygonType
 !
 !-------------------------------------------------------------------------------
-!> @brief This routine determines if one polygon is within another. The first 
-!>        polygon's surface boundaries are inclusive. So if the exact same 
-!>        polygon where given for both arguments, the result of the operation 
+!> @brief This routine determines if one polygon is within another. The first
+!>        polygon's surface boundaries are inclusive. So if the exact same
+!>        polygon where given for both arguments, the result of the operation
 !>        would be TRUE.
 !>
 !> @param thisPoly The polygon type used in the query
@@ -597,9 +588,9 @@ MODULE Geom_Poly
       TYPE(CircleType) :: tmpCirc
       TYPE(CircleType),ALLOCATABLE :: Circs(:)
       TYPE(PolygonType),POINTER :: iPoly,lastSubPoly
-      
+
       bool=.FALSE.
-      
+
       IF(thisPoly%isinit .AND. thatPoly%isinit) THEN
         bool=.TRUE.
         !1. make sure all vertices are inside bounding polygon
@@ -670,9 +661,9 @@ MODULE Geom_Poly
             DO j=1,thatPoly%nQuadEdge
               CALL createArcFromQuad(thatPoly,j,tmpCirc)
               CALL tmpCirc%intersectLine(Lines(i),p1,p2)
-              
+
               IF(p1%dim == -3) p1%dim=2 !Include tangent points
-            
+
               !If line segment end points are on circle, intersections
               !are not returned, so we handle that special case here.
               IF(p1%dim == 0 .AND. tmpCirc%onSurface(Lines(i)%p1)) &
@@ -692,7 +683,7 @@ MODULE Geom_Poly
                 (Lines(i)%p2 .APPROXEQA. p2) .OR. &
                 (thatPoly%vert(thatPoly%edge(1,iedge)) .APPROXEQA. p2) .OR. &
                 (thatPoly%vert(thatPoly%edge(2,iedge)) .APPROXEQA. p2)) CALL p2%clear()
-            
+
               IF((p1%dim > 0) .OR. (p2%dim > 0)) THEN
                 bool=.FALSE.
                 EXIT Line
@@ -719,9 +710,9 @@ MODULE Geom_Poly
                     thatPoly%vert(thatPoly%edge(2,j)))
                   CALL Circs(i)%intersectLine(tmpLine,p1,p2)
                 ENDIF
-              
+
                 IF(p1%dim == -3) p1%dim=2 !Include tangent points
-            
+
                 !If line segment end points are on circle, intersections
                 !are not returned, so we handle that special case here.
                 IF(p1%dim == 0 .AND. Circs(i)%onSurface(tmpLine%p1)) &
@@ -741,7 +732,7 @@ MODULE Geom_Poly
                   (tmpLine%p2 .APPROXEQA. p2) .OR. &
                   (thisPoly%vert(thisPoly%edge(1,iedge)) .APPROXEQA. p2) .OR. &
                   (thisPoly%vert(thisPoly%edge(2,iedge)) .APPROXEQA. p2)) CALL p2%clear()
-            
+
                 IF((p1%dim > 0) .OR. (p2%dim > 0)) THEN
                   bool=.FALSE.
                   EXIT Quad
@@ -752,9 +743,9 @@ MODULE Geom_Poly
               DO j=1,thatPoly%nQuadEdge
                 CALL createArcFromQuad(thatPoly,j,tmpCirc)
                 CALL tmpCirc%intersectCircle(Circs(i),p1,p2)
-              
+
                 IF(p1%dim == -3) p1%dim=2 !Include tangent points
-            
+
                 iedge=thatPoly%quad2edge(j)
                 !Exclude points not in the arc, or the endpoints
                 IF(.NOT.tmpCirc%onSurface(p1) .OR. &
@@ -763,7 +754,7 @@ MODULE Geom_Poly
                 IF(.NOT.tmpCirc%onSurface(p2) .OR. &
                   (thatPoly%vert(thatPoly%edge(1,iedge)) .APPROXEQA. p2) .OR. &
                   (thatPoly%vert(thatPoly%edge(2,iedge)) .APPROXEQA. p2)) CALL p2%clear()
-            
+
                 IF((p1%dim > 0) .OR. (p2%dim > 0)) THEN
                   bool=.FALSE.
                   EXIT Quad
@@ -775,7 +766,7 @@ MODULE Geom_Poly
         ENDIF
         !3. make sure smaller polygon centroid is inside larger polygon
         IF(bool) THEN
-          IF((.NOT. thisPoly%pointInside(thatPoly%centroid) .AND. & 
+          IF((.NOT. thisPoly%pointInside(thatPoly%centroid) .AND. &
            thatPoly%pointInside(thatPoly%centroid))) bool=.FALSE.
         ENDIF
         !4. Evaluate against subregions (for each subregion)
@@ -807,7 +798,7 @@ MODULE Geom_Poly
             ENDDO sub
           ENDIF
         ENDIF
-      
+
         !Clear the first set of lines
         IF(ALLOCATED(Lines)) THEN
           DO i=1,SIZE(Lines)
@@ -826,18 +817,18 @@ MODULE Geom_Poly
     ENDFUNCTION polygon_inside_PolygonType
 !
 !-------------------------------------------------------------------------------
-!> @brief Function to determine if a line intersects a polygon. This routine 
+!> @brief Function to determine if a line intersects a polygon. This routine
 !>        tests the lines intersecting with lines and lines intersecting with
-!>        arc circles.  If any of these intersection routines return a point with 
-!>        a positive dimension variable, an intersection has occurred and will 
-!>        return TRUE.  If all of the intersection routines return 0 or an error 
+!>        arc circles.  If any of these intersection routines return a point with
+!>        a positive dimension variable, an intersection has occurred and will
+!>        return TRUE.  If all of the intersection routines return 0 or an error
 !>        code, the polygons are presumed to not intersect.
 !>
 !>        It should be noted that this routine presumes that a colinear
 !>        intersection does not constitute an intersection.  This can be changed
-!>        by modifying the logic to test a point returning from the intersection 
+!>        by modifying the logic to test a point returning from the intersection
 !>        routines if it has a dimension matching the colinear error code.
-!> @param thisPoly The first polygon type 
+!> @param thisPoly The first polygon type
 !> @param line The line type to intersect with the polygon
 !> @param bool The logical result of the operation
 !>
@@ -850,13 +841,13 @@ MODULE Geom_Poly
       TYPE(PointType),ALLOCATABLE :: tmppoints(:)
       TYPE(LineType),ALLOCATABLE :: lines(:)
       TYPE(CircleType),ALLOCATABLE :: circles(:)
-      
+
       bool=.FALSE.
-      
+
       !Construct line and circle types locally
       ALLOCATE(lines(thisPolygon%nVert))
       IF(thisPolygon%nQuadEdge > 0) ALLOCATE(circles(thisPolygon%nQuadEdge))
-      
+
       DO i=1,thisPolygon%nVert
         CALL lines(i)%set(thisPolygon%vert(thisPolygon%edge(1,i)), &
           thisPolygon%vert(thisPolygon%edge(2,i)))
@@ -866,8 +857,8 @@ MODULE Geom_Poly
       ENDDO
       !Make tmppoints the max possible size
       ALLOCATE(tmppoints(thisPolygon%nVert+3*thisPolygon%nQuadEdge))
-      
-      !Test the line with all the edges, 
+
+      !Test the line with all the edges,
       !Intersect circles first if necessary
       ipoint=1
       Quad: DO i=1,thisPolygon%nQuadEdge
@@ -889,13 +880,13 @@ MODULE Geom_Poly
         ENDDO
         ipoint=ipoint+4
       ENDDO Quad
-      
+
       !Intersect the remaining lines if necessary
       IF(.NOT.bool) THEN
         IF(thisPolygon%nQuadEdge > 0) THEN
           DO i=1,SIZE(lines)
             !Intersect the line
-            IF(ALL(i /= thisPolygon%quad2edge)) THEN 
+            IF(ALL(i /= thisPolygon%quad2edge)) THEN
               tmppoints(ipoint)=lines(i)%intersectLine(line)
               IF(tmppoints(ipoint)%dim > 0) THEN
                 bool=.TRUE.
@@ -915,7 +906,7 @@ MODULE Geom_Poly
           ENDDO
         ENDIF
       ENDIF
-      
+
       !Clear local types
       DO i=SIZE(tmppoints),1,-1
         CALL tmppoints(i)%clear()
@@ -934,7 +925,7 @@ MODULE Geom_Poly
     ENDFUNCTION doesLineIntersect_PolygonType
 !
 !-------------------------------------------------------------------------------
-!> @brief Function to determine if two polygons intersect each other. This 
+!> @brief Function to determine if two polygons intersect each other. This
 !>        routine tests the lines intersecting with lines, lines intersecting
 !>        with arc circles, arc circles intersecting with lines, and arc-circles
 !>        intersecting with arc-circles.  If any of these intersection routines
@@ -942,12 +933,12 @@ MODULE Geom_Poly
 !>        has occurred and will return TRUE.  If all of the intersection routines
 !>        return 0 or an error code, the polygons are presumed to not intersect.
 !>
-!>        It should be noted that this routine presumes that a tangential 
+!>        It should be noted that this routine presumes that a tangential
 !>        intersection does not constitute an intersection.  This can be changed
-!>        by modifying the logic to test a point returning from the circle 
+!>        by modifying the logic to test a point returning from the circle
 !>        intersection routines if it has a dimension matching the tangent error
 !>        code.
-!> @param thisPoly The first polygon type 
+!> @param thisPoly The first polygon type
 !> @param thatPoly The second polygon type to intersect with the first
 !> @param bool The logical result of the operation
 !>
@@ -961,9 +952,9 @@ MODULE Geom_Poly
       TYPE(LineType),ALLOCATABLE :: Lines(:)
       TYPE(CircleType) :: tmpCirc
       TYPE(CircleType),ALLOCATABLE :: Circs(:)
-      
+
       bool=.FALSE.
-      
+
       IF(thisPoly%isinit .AND. thatPoly%isinit) THEN
         !2. Check intersections between combinations of edges of two polygons (ignore intersections that are vertices)
         ALLOCATE(Lines(thisPoly%nVert-thisPoly%nQuadEdge))
@@ -1024,9 +1015,9 @@ MODULE Geom_Poly
           DO j=1,thatPoly%nQuadEdge
             CALL createArcFromQuad(thatPoly,j,tmpCirc)
             CALL tmpCirc%intersectLine(Lines(i),p1,p2)
-              
+
             IF(p1%dim == -3) p1%dim=2 !Include tangent points
-            
+
             !If line segment end points are on circle, intersections
             !are not returned, so we handle that special case here.
             IF(p1%dim == 0 .AND. tmpCirc%onSurface(Lines(i)%p1)) &
@@ -1041,7 +1032,7 @@ MODULE Geom_Poly
             IF(.NOT.tmpCirc%onSurface(p2) .OR. &
               (Lines(i)%p1 .APPROXEQA. p2) .OR. &
               (Lines(i)%p2 .APPROXEQA. p2)) CALL p2%clear()
-            
+
             IF((p1%dim > 0) .OR. (p2%dim > 0)) THEN
               bool=.TRUE.
               EXIT Line
@@ -1068,10 +1059,10 @@ MODULE Geom_Poly
                   thatPoly%vert(thatPoly%edge(2,j)))
                 CALL Circs(i)%intersectLine(tmpLine,p1,p2)
               ENDIF
-              
-              
+
+
               IF(p1%dim == -3) p1%dim=2 !Include tangent points
-            
+
               !If line segment end points are on circle, intersections
               !are not returned, so we handle that special case here.
               IF(p1%dim == 0 .AND. Circs(i)%onSurface(tmpLine%p1)) &
@@ -1086,7 +1077,7 @@ MODULE Geom_Poly
               IF(.NOT.Circs(i)%onSurface(p2) .OR. &
                 (tmpLine%p1 .APPROXEQA. p2) .OR. &
                 (tmpLine%p2 .APPROXEQA. p2)) CALL p2%clear()
-            
+
               IF((p1%dim > 0) .OR. (p2%dim > 0)) THEN
                 bool=.TRUE.
                 EXIT Quad
@@ -1097,9 +1088,9 @@ MODULE Geom_Poly
             DO j=1,thatPoly%nQuadEdge
               CALL createArcFromQuad(thatPoly,j,tmpCirc)
               CALL tmpCirc%intersectCircle(Circs(i),p1,p2)
-              
+
               IF(p1%dim == -3) p1%dim=2 !Include tangent points
-            
+
               iedge=thatPoly%quad2edge(j)
               !Exclude points not in the arc, or the endpoints
               IF(.NOT.tmpCirc%onSurface(p1) .OR. &
@@ -1108,7 +1099,7 @@ MODULE Geom_Poly
               IF(.NOT.tmpCirc%onSurface(p2) .OR. &
                 (thatPoly%vert(thatPoly%edge(1,iedge)) .APPROXEQA. p2) .OR. &
                 (thatPoly%vert(thatPoly%edge(2,iedge)) .APPROXEQA. p2)) CALL p2%clear()
-            
+
               IF((p1%dim > 0) .OR. (p2%dim > 0)) THEN
                 bool=.TRUE.
                 EXIT Quad
@@ -1135,7 +1126,7 @@ MODULE Geom_Poly
         !  ENDIF
         !ENDIF
       ENDIF
-      
+
       !Clear the first set of lines
       IF(ALLOCATED(Lines)) THEN
         DO i=1,SIZE(Lines)
@@ -1165,7 +1156,7 @@ MODULE Geom_Poly
       TYPE(PointType),ALLOCATABLE :: tmppoints(:)
       TYPE(LineType),ALLOCATABLE :: lines(:)
       TYPE(CircleType),ALLOCATABLE :: circles(:)
-      
+
       !Clear the output variable if it's allocated
       IF(ALLOCATED(points)) THEN
         DO i=1,SIZE(points)
@@ -1173,7 +1164,7 @@ MODULE Geom_Poly
         ENDDO
         DEALLOCATE(points)
       ENDIF
-      
+
       !Determine local array sizes
       nlines=thisPolygon%nVert-thisPolygon%nQuadEdge
       narcs=thisPolygon%nQuadEdge
@@ -1221,13 +1212,13 @@ MODULE Geom_Poly
             CALL p1%clear()
           ENDDO
         ENDIF
-      
+
         !Test against arcs
         IF(narcs > 0) THEN
           DO i=1,narcs
             CALL circles(i)%intersectLine(line,p1,p2)
             IF(p1%dim == -3) p1%dim=2 !Include tangent points
-            
+
             !If line segment end points are on circle, intersections
             !are not returned, so we handle that special case here.
             IF(p1%dim == 0 .AND. circles(i)%onSurface(line%p1)) &
@@ -1238,7 +1229,7 @@ MODULE Geom_Poly
             !Exclude points not in the arc
             IF(.NOT.circles(i)%onSurface(p1)) CALL p1%clear()
             IF(.NOT.circles(i)%onSurface(p2)) CALL p2%clear()
-            
+
             IF(p1%dim == 2) THEN
               npoints=npoints+1
               tmpPoints(npoints)=p1
@@ -1257,7 +1248,7 @@ MODULE Geom_Poly
               IF(tmppoints(j) .APPROXEQA. tmppoints(i)) CALL tmppoints(j)%clear()
             ENDDO
           ENDDO
-        
+
           ipoint=0
           DO i=1,npoints
             IF(tmpPoints(i)%dim == 2) ipoint=ipoint+1
@@ -1273,7 +1264,7 @@ MODULE Geom_Poly
             ENDIF
           ENDDO
         ENDIF
-      
+
         !Clear local types
         IF(ALLOCATED(tmpPoints)) THEN
           DO i=1,SIZE(tmpPoints)
@@ -1309,7 +1300,7 @@ MODULE Geom_Poly
       TYPE(PointType),ALLOCATABLE :: tmppoints(:)
       TYPE(LineType),ALLOCATABLE :: theseLines(:),thoseLines(:)
       TYPE(CircleType),ALLOCATABLE :: theseCircs(:),thoseCircs(:)
-      
+
       IF(thisPoly%isinit .AND. thatPoly%isinit) THEN
         !Set up all the lines for both polygons
         ALLOCATE(theseLines(thisPoly%nVert))
@@ -1342,7 +1333,7 @@ MODULE Geom_Poly
         DO i=1,thatPoly%nQuadEdge
           CALL createArcFromQuad(thatPoly,i,thoseCircs(i))
         ENDDO
-        
+
         !Nested do-loops for intersecting all lines with lines
         ipoint=1
         !TheseLines
@@ -1413,8 +1404,8 @@ MODULE Geom_Poly
           CALL thoseLines(j)%clear()
         ENDDO
         !How to handle subregion intersections?  Do we just eliminate the points that are %inside the subregion?
-        
-        !Get the reduced set of points that were actual intersections.  
+
+        !Get the reduced set of points that were actual intersections.
         !Eliminate duplicate points.
         DO i=1,SIZE(tmppoints)
           DO j=i+1,SIZE(tmppoints)
@@ -1440,7 +1431,7 @@ MODULE Geom_Poly
             CALL tmppoints(i)%clear()
           ENDDO
         ENDIF
-        
+
         !Clear stuff
         DEALLOCATE(tmppoints)
         DEALLOCATE(theseLines,thoseLines)
@@ -1460,7 +1451,7 @@ MODULE Geom_Poly
       INTEGER(SIK) :: i
       REAL(SRK) :: cent(2),area
       TYPE(PolygonType),POINTER :: lastSubPoly,iPoly,prevPoly
-      
+
       IF(thisPoly%isInit .AND. subPoly%isInit) THEN
         IF(thisPoly%boundsPoly(subPoly)) THEN
           !Make sure the vertices are not on the surface
@@ -1606,7 +1597,7 @@ MODULE Geom_Poly
         c=circle%c%coord(1:2)
         IF((circle%thetastt .APPROXEQA. 0.0_SRK) .AND. &
            (circle%thetastp .APPROXEQA. TWOPI)) THEN
-          
+
           v0(1)=c(1)-r; v0(2)=c(2)
           v1(1)=c(1); v1(2)=c(2)+r
           v2(1)=c(1)+r; v2(2)=c(2)
@@ -1702,7 +1693,7 @@ MODULE Geom_Poly
       CALL g%defineEdge(v1,v2)
       CALL g%defineEdge(v2,v3)
       CALL g%defineEdge(v3,v0)
-      
+
       CALL polygon%set(g)
       CALL g%clear()
     ENDSUBROUTINE Polygonize_ABBox
@@ -1718,18 +1709,18 @@ MODULE Geom_Poly
       TYPE(PolygonType),INTENT(IN) :: p1
       TYPE(PolygonType),INTENT(IN) :: p2
       LOGICAL(SBK) :: bool
-      
+
       bool=.FALSE.
       IF(p1%isinit .AND. p2%isinit) THEN
         IF((p1%area .APPROXEQA. p2%area) .AND. (p1%nVert == p2%nVert) .AND. &
           (p1%nQuadEdge == p2%nQuadEdge) .AND. (p1%centroid .APPROXEQA. p2%centroid) .AND. &
-          (SIZE(p1%vert) == SIZE(p2%vert)) .AND. & 
+          (SIZE(p1%vert) == SIZE(p2%vert)) .AND. &
           (SIZE(p1%edge,DIM=1) == SIZE(p2%edge,DIM=1)) .AND. &
           (SIZE(p1%edge,DIM=2) == SIZE(p2%edge,DIM=2)) .AND. &
           (ASSOCIATED(p1%nextPoly) .EQV. ASSOCIATED(p2%nextPoly)) .AND. &
             (ASSOCIATED(p1%subRegions) .EQV. ASSOCIATED(p2%subRegions))) THEN
           !
-          bool=ALL(p1%vert .APPROXEQA. p2%vert) .AND. ALL(p1%edge == p2%edge) 
+          bool=ALL(p1%vert .APPROXEQA. p2%vert) .AND. ALL(p1%edge == p2%edge)
           bool=bool .AND. (ALLOCATED(p1%quad2edge) .EQV. ALLOCATED(p2%quad2edge))
           IF(bool .AND. ALLOCATED(p1%quad2edge)) THEN
             IF(SIZE(p1%quadEdge,DIM=1) == SIZE(p2%quadEdge,DIM=1) .AND. &
@@ -1764,8 +1755,8 @@ MODULE Geom_Poly
       REAL(SRK) :: angstart,angstop
       TYPE(PointType) :: centroid,refpoint
       TYPE(LineType) :: edge
-      
-      IF((thisPoly%nQuadEdge > 0) .AND. (0 < iquad) .AND. & 
+
+      IF((thisPoly%nQuadEdge > 0) .AND. (0 < iquad) .AND. &
           (iquad <= thisPoly%nQuadEdge)) THEN
         iedge=thisPoly%quad2edge(iquad)
         CALL edge%set(thisPoly%vert(thisPoly%edge(1,iedge)), &

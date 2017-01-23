@@ -1,22 +1,13 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testTPLHDF5
-  
+
 #ifdef HAVE_HDF5
   USE HDF5
 #endif
@@ -44,7 +35,7 @@ PROGRAM testTPLHDF5
 #else
   WRITE(*,*) ' HDF5 not enabled!'
 #endif
-  
+
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING HDF5 TPL PASSED!'
   WRITE(*,*) '==================================================='
@@ -85,9 +76,9 @@ PROGRAM testTPLHDF5
       ! Create/open an HDF file
       CALL h5fcreate_f(hdf_file,H5F_ACC_TRUNC_F,file_id,error)
 
-      ! Create a dataspace   rank  dims   
+      ! Create a dataspace   rank  dims
       CALL h5screate_simple_f(2,dims,dspace_id,error)
-     
+
       ! Group structures
       CALL h5gcreate_f(file_id,'grp_a',grp_id,error)
 
@@ -136,9 +127,9 @@ PROGRAM testTPLHDF5
 
       offset(1)=lbound(datal,1)-1
       offset(2)=lbound(datal,2)-1
-      
+
       CALL h5open_f(error)
-      
+
       CALL h5pcreate_f(H5P_FILE_ACCESS_F,plist_id,error)
       CALL h5pset_fapl_mpio_f(plist_id,MPI_COMM_WORLD,MPI_INFO_NULL,error)
       acc=H5F_ACC_TRUNC_F
@@ -154,7 +145,7 @@ PROGRAM testTPLHDF5
       CALL h5dcreate_f(file_id, 'test', H5T_NATIVE_DOUBLE, gspace_id, &
                        dset_id,error,plist_id)
       CALL h5pclose_f(plist_id,error)
-      
+
       CALL h5pcreate_f(H5P_DATASET_XFER_F, plist_id,error)
       CALL h5dget_space_f(dset_id,gspace_id,error)
       CALL h5pset_dxpl_mpio_f(plist_id,H5FD_MPIO_COLLECTIVE_F,error)

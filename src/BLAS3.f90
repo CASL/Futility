@@ -1,19 +1,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief A utility module providing an interface to Level 3 BLAS functionality.
 !>
@@ -45,7 +36,7 @@ MODULE BLAS3
 !
 ! List of Public items
   PUBLIC :: BLAS_matmat
-  
+
   !> @brief Generic interface to the Level 3 BLAS routine (MM)
   !>
   !> It provides an interface to routines that perform one of the following
@@ -60,7 +51,7 @@ MODULE BLAS3
   !> is optional as is @c alpha and @c beta.  If these inputs are excluded, a different
   !> algorithm is used (when no external BLAS library is present).
   !>
-  !> Currently, only routines for performing those operations on full, dense matrices. 
+  !> Currently, only routines for performing those operations on full, dense matrices.
   !> Extensions will include CSR matrix multiplication to the interface in the future.
   !>
   INTERFACE BLAS_matmat
@@ -116,18 +107,18 @@ MODULE BLAS3
 !-------------------------------------------------------------------------------
 !> @brief Subroutine computes a matrix matrix product for general matricies
 !>        A and B.
-!> @param transa single character input indicating whether or not to use the 
+!> @param transa single character input indicating whether or not to use the
 !>        transpose of @c A
-!> @param transb single character input indicating whether or not to use the 
+!> @param transb single character input indicating whether or not to use the
 !>        transpose of @c B
 !> @param m the size of the first dimension of @c A and of @c C (number of rows)
 !> @param n the size of the second dimension of @c B and of @c C (number of columns)
-!> @param k the size of the second dimension of @c A (number of columns) 
+!> @param k the size of the second dimension of @c A (number of columns)
 !>        and the first dimension of @c B (number of rows)
 !> @param alpha the single-precision scalar used to scale @c A and @c B
-!> @param A the single-precision matrix to multiply with @c B and @c alpha 
+!> @param A the single-precision matrix to multiply with @c B and @c alpha
 !> @param lda the size of the leading (first) dimension of @c A
-!> @param B the single-precision matrix to multiply with @c A and @c alpha 
+!> @param B the single-precision matrix to multiply with @c A and @c alpha
 !> @param ldb the size of the leading (first) dimension of @c B
 !> @param beta the single-precision scalar used to scale @c C
 !> @param C the single-precision matrix to be overwritten by
@@ -153,7 +144,7 @@ MODULE BLAS3
       REAL(SSK),INTENT(IN) :: beta
       INTEGER(SIK),INTENT(IN) :: ldc
       REAL(SSK),INTENT(INOUT) :: c(ldc,*)
-      
+
 #ifdef HAVE_BLAS
       INTERFACE
         PURE SUBROUTINE sgemm(transa,transb,m,n,k,alpha,a,lda,b,ldb,beta,c,ldc)
@@ -178,7 +169,7 @@ MODULE BLAS3
       INTEGER(SIK) :: i,j,l,akm,bkn,amaxval,bmaxval
       REAL(SSK) :: tmp
       INTRINSIC MAX
-      
+
       !Check for transpose of A
       IF(transa == 'n' .OR. transa == 'N') THEN
         !If not transposed, akm is column number, amaxval is row number
@@ -211,10 +202,10 @@ MODULE BLAS3
       !.AND. &
        IF(     (transa == 't' .OR. transa == 'T' .OR. transa == 'c' .OR. transa == 'C' .OR. &
               transa == 'n' .OR. transa == 'N')) THEN
-       !.AND. 
-       IF (transb == 't' .OR. transb == 'T' & 
+       !.AND.
+       IF (transb == 't' .OR. transb == 'T' &
                 .OR. transb == 'c' .OR. transb == 'C' .OR. transb == 'n' .OR. transb == 'N') THEN
-        
+
         !Compute beta*C for alpha=0. C := beta*C
         IF(alpha == 0.0_SSK) THEN
           !All entries become zero if alpha and beta are 0.
@@ -303,7 +294,7 @@ MODULE BLAS3
                   ENDIF
                 ENDDO
               ENDDO
-            !Operation 4, A & B transposed. Form  C := alpha*A^T*B^T + beta*C.  
+            !Operation 4, A & B transposed. Form  C := alpha*A^T*B^T + beta*C.
             ELSE
               DO j=1,n
                 DO i=1,m
@@ -321,28 +312,28 @@ MODULE BLAS3
             ENDIF
           ENDIF
         ENDIF
-              ENDIF  
+              ENDIF
           ENDIF
       ENDIF
     ENDIF
-    
+
 #endif
     ENDSUBROUTINE sgemm_all
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS3::sgemm_all "sgemm_all" for when the user
 !>        does not want to supply @c lda, @c ldb, and @c ldc.
-!> @param transa single character input indicating whether or not to use the 
+!> @param transa single character input indicating whether or not to use the
 !>        transpose of @c A
-!> @param transb single character input indicating whether or not to use the 
+!> @param transb single character input indicating whether or not to use the
 !>        transpose of @c B
 !> @param m the size of the first dimension of @c A and of @c C (number of rows)
 !> @param n the size of the second dimension of @c B and of @c C (number of columns)
-!> @param k the size of the second dimension of @c A (number of columns) 
+!> @param k the size of the second dimension of @c A (number of columns)
 !>        and the first dimension of @c B (number of rows)
 !> @param alpha the single-precision scalar used to scale @c A and @c B
-!> @param A the single-precision matrix to multiply with @c B and @c alpha 
-!> @param B the single-precision matrix to multiply with @c A and @c alpha 
+!> @param A the single-precision matrix to multiply with @c B and @c alpha
+!> @param B the single-precision matrix to multiply with @c A and @c alpha
 !> @param beta the single-precision scalar used to scale @c C
 !> @param C the single-precision matrix to be overwritten by
 !>        C := alpha*op(A)*op(B) + beta*C
@@ -365,22 +356,22 @@ MODULE BLAS3
       REAL(SSK),INTENT(INOUT) :: c(:,:)
 
       CALL sgemm_all(transa,transb,m,n,k,alpha,a,m,b,k,beta,c,m)
-      
+
     ENDSUBROUTINE sgemm_ttmnkaabbc
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS3::sgemm_all "sgemm_all" for when the user
 !>        does not want to supply @c alpha, @c lda, @c ldb, and @c ldc.
-!> @param transa single character input indicating whether or not to use the 
+!> @param transa single character input indicating whether or not to use the
 !>        transpose of @c A
-!> @param transb single character input indicating whether or not to use the 
+!> @param transb single character input indicating whether or not to use the
 !>        transpose of @c B
 !> @param m the size of the first dimension of @c A and of @c C (number of rows)
 !> @param n the size of the second dimension of @c B and of @c C (number of columns)
-!> @param k the size of the second dimension of @c A (number of columns) 
+!> @param k the size of the second dimension of @c A (number of columns)
 !>        and the first dimension of @c B (number of rows)
-!> @param A the single-precision matrix to multiply with @c B and @c alpha 
-!> @param B the single-precision matrix to multiply with @c A and @c alpha 
+!> @param A the single-precision matrix to multiply with @c B and @c alpha
+!> @param B the single-precision matrix to multiply with @c A and @c alpha
 !> @param beta the single-precision scalar used to scale @c C
 !> @param C the single-precision matrix to be overwritten by
 !>        C := alpha*op(A)*op(B) + beta*C
@@ -402,23 +393,23 @@ MODULE BLAS3
       REAL(SSK),INTENT(INOUT) :: c(:,:)
 
       CALL sgemm_all(transa,transb,m,n,k,1.0_SSK,a,m,b,k,beta,c,m)
-      
+
     ENDSUBROUTINE sgemm_ttmnkabbc
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS3::sgemm_all "sgemm_all" for when the user
 !>        does not want to supply @c beta, @c lda, @c ldb, and @c ldc.
-!> @param transa single character input indicating whether or not to use the 
+!> @param transa single character input indicating whether or not to use the
 !>        transpose of @c A
-!> @param transb single character input indicating whether or not to use the 
+!> @param transb single character input indicating whether or not to use the
 !>        transpose of @c B
 !> @param m the size of the first dimension of @c A and of @c C (number of rows)
 !> @param n the size of the second dimension of @c B and of @c C (number of columns)
-!> @param k the size of the second dimension of @c A (number of columns) 
+!> @param k the size of the second dimension of @c A (number of columns)
 !>        and the first dimension of @c B (number of rows)
 !> @param alpha the single-precision scalar used to scale @c A and @c B
-!> @param A the single-precision matrix to multiply with @c B and @c alpha 
-!> @param B the single-precision matrix to multiply with @c A and @c alpha 
+!> @param A the single-precision matrix to multiply with @c B and @c alpha
+!> @param B the single-precision matrix to multiply with @c A and @c alpha
 !> @param C the single-precision matrix to be overwritten by
 !>        C := alpha*op(A)*op(B) + beta*C
 !>
@@ -439,22 +430,22 @@ MODULE BLAS3
       REAL(SSK),INTENT(INOUT) :: c(:,:)
 
       CALL sgemm_all(transa,transb,m,n,k,alpha,a,m,b,k,1.0_SSK,c,m)
-      
+
     ENDSUBROUTINE sgemm_ttmnkaabc
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS3::sgemm_all "sgemm_all" for when the user
 !>        does not want to supply @c alpha, @c beta, @c lda, @c ldb, and @c ldc.
-!> @param transa single character input indicating whether or not to use the 
+!> @param transa single character input indicating whether or not to use the
 !>        transpose of @c A
-!> @param transb single character input indicating whether or not to use the 
+!> @param transb single character input indicating whether or not to use the
 !>        transpose of @c B
 !> @param m the size of the first dimension of @c A and of @c C (number of rows)
 !> @param n the size of the second dimension of @c B and of @c C (number of columns)
-!> @param k the size of the second dimension of @c A (number of columns) 
+!> @param k the size of the second dimension of @c A (number of columns)
 !>        and the first dimension of @c B (number of rows)
-!> @param A the single-precision matrix to multiply with @c B and @c alpha 
-!> @param B the single-precision matrix to multiply with @c A and @c alpha 
+!> @param A the single-precision matrix to multiply with @c B and @c alpha
+!> @param B the single-precision matrix to multiply with @c A and @c alpha
 !> @param C the single-precision matrix to be overwritten by
 !>        C := alpha*op(A)*op(B) + beta*C
 !>
@@ -474,7 +465,7 @@ MODULE BLAS3
       REAL(SSK),INTENT(INOUT) :: c(:,:)
 
       CALL sgemm_all(transa,transb,m,n,k,1.0_SSK,a,m,b,k,1.0_SSK,c,m)
-      
+
     ENDSUBROUTINE sgemm_ttmnkabc
 !
 !-------------------------------------------------------------------------------
@@ -482,11 +473,11 @@ MODULE BLAS3
 !>        does not want to supply @c lda, @c ldb, @c ldc, @c transa, and @c transb.
 !> @param m the size of the first dimension of @c A and of @c C (number of rows)
 !> @param n the size of the second dimension of @c B and of @c C (number of columns)
-!> @param k the size of the second dimension of @c A (number of columns) 
+!> @param k the size of the second dimension of @c A (number of columns)
 !>        and the first dimension of @c B (number of rows)
 !> @param alpha the single-precision scalar used to scale @c A and @c B
-!> @param A the single-precision matrix to multiply with @c B and @c alpha 
-!> @param B the single-precision matrix to multiply with @c A and @c alpha 
+!> @param A the single-precision matrix to multiply with @c B and @c alpha
+!> @param B the single-precision matrix to multiply with @c A and @c alpha
 !> @param beta the single-precision scalar used to scale @c C
 !> @param C the single-precision matrix to be overwritten by
 !>        C := alpha*op(A)*op(B) + beta*C
@@ -507,19 +498,19 @@ MODULE BLAS3
       REAL(SSK),INTENT(INOUT) :: c(:,:)
 
       CALL sgemm_all('n','n',m,n,k,alpha,a,m,b,k,beta,c,1)
-      
+
     ENDSUBROUTINE sgemm_mnkaabbc
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS3::sgemm_all "sgemm_all" for when the user
 !>        does not want to supply @c m, @c n, @c k, @c lda, @c ldb, and @c ldc.
-!> @param transa single character input indicating whether or not to use the 
+!> @param transa single character input indicating whether or not to use the
 !>        transpose of @c A
-!> @param transb single character input indicating whether or not to use the 
+!> @param transb single character input indicating whether or not to use the
 !>        transpose of @c B
 !> @param alpha the single-precision scalar used to scale @c A and @c B
-!> @param A the single-precision matrix to multiply with @c B and @c alpha 
-!> @param B the single-precision matrix to multiply with @c A and @c alpha 
+!> @param A the single-precision matrix to multiply with @c B and @c alpha
+!> @param B the single-precision matrix to multiply with @c A and @c alpha
 !> @param beta the single-precision scalar used to scale @c C
 !> @param C the single-precision matrix to be overwritten by
 !>        C := alpha*op(A)*op(B) + beta*C
@@ -537,7 +528,7 @@ MODULE BLAS3
       REAL(SSK),INTENT(IN) :: b(:,:)
       REAL(SSK),INTENT(IN) :: beta
       REAL(SSK),INTENT(INOUT) :: c(:,:)
-      
+
       INTEGER(SIK) :: m
       INTEGER(SIK) :: n
       INTEGER(SIK) :: k
@@ -547,16 +538,16 @@ MODULE BLAS3
       k=SIZE(b,DIM=1)
 
       CALL sgemm_all(transa,transb,m,n,k,alpha,a,m,b,k,beta,c,m)
-      
+
     ENDSUBROUTINE sgemm_ttaabbc
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS3::sgemm_all "sgemm_all" for when the user
-!>        does not want to supply @c lda, @c ldb, @c ldc, @c m, @c n, @c k, 
+!>        does not want to supply @c lda, @c ldb, @c ldc, @c m, @c n, @c k,
 !>        @c transa, and @c transb.
 !> @param alpha the single-precision scalar used to scale @c A and @c B
-!> @param A the single-precision matrix to multiply with @c B and @c alpha 
-!> @param B the single-precision matrix to multiply with @c A and @c alpha 
+!> @param A the single-precision matrix to multiply with @c B and @c alpha
+!> @param B the single-precision matrix to multiply with @c A and @c alpha
 !> @param beta the single-precision scalar used to scale @c C
 !> @param C the single-precision matrix to be overwritten by
 !>        C := alpha*op(A)*op(B) + beta*C
@@ -572,26 +563,26 @@ MODULE BLAS3
       REAL(SSK),INTENT(IN) :: b(:,:)
       REAL(SSK),INTENT(IN) :: beta
       REAL(SSK),INTENT(INOUT) :: c(:,:)
-      
+
       INTEGER(SIK) :: m
       INTEGER(SIK) :: n
       INTEGER(SIK) :: k
-      
+
       m=SIZE(c,DIM=1)
       n=SIZE(c,DIM=2)
       k=SIZE(b,DIM=1)
 
       CALL sgemm_all('n','n',m,n,k,alpha,a,m,b,k,beta,c,1)
-      
+
     ENDSUBROUTINE sgemm_aabbc
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS3::sgemm_all "sgemm_all" for when the user
-!>        does not want to supply @c lda, @c ldb, @c ldc, @c m, @c n, @c k, 
+!>        does not want to supply @c lda, @c ldb, @c ldc, @c m, @c n, @c k,
 !>        @c transa, and @c transb.
 !> @param alpha the single-precision scalar used to scale @c A and @c B
-!> @param A the single-precision matrix to multiply with @c B and @c alpha 
-!> @param B the single-precision matrix to multiply with @c A and @c alpha 
+!> @param A the single-precision matrix to multiply with @c B and @c alpha
+!> @param B the single-precision matrix to multiply with @c A and @c alpha
 !> @param beta the single-precision scalar used to scale @c C
 !> @param C the single-precision matrix to be overwritten by
 !>        C := alpha*op(A)*op(B) + beta*C
@@ -606,26 +597,26 @@ MODULE BLAS3
       REAL(SSK),INTENT(IN) :: b(:,:)
       REAL(SSK),INTENT(IN) :: beta
       REAL(SSK),INTENT(INOUT) :: c(:,:)
-      
+
       INTEGER(SIK) :: m
       INTEGER(SIK) :: n
       INTEGER(SIK) :: k
-      
+
       m=SIZE(c,DIM=1)
       n=SIZE(c,DIM=2)
       k=SIZE(b,DIM=1)
 
       CALL sgemm_all('n','n',m,n,k,1.0_SSK,a,m,b,k,beta,c,1)
-      
+
     ENDSUBROUTINE sgemm_abbc
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS3::sgemm_all "sgemm_all" for when the user
-!>        does not want to supply @c lda, @c ldb, @c ldc, @c m, @c n, @c k, 
+!>        does not want to supply @c lda, @c ldb, @c ldc, @c m, @c n, @c k,
 !>        @c beta, @c transa, and @c transb.
 !> @param alpha the single-precision scalar used to scale @c A and @c B
-!> @param A the single-precision matrix to multiply with @c B and @c alpha 
-!> @param B the single-precision matrix to multiply with @c A and @c alpha 
+!> @param A the single-precision matrix to multiply with @c B and @c alpha
+!> @param B the single-precision matrix to multiply with @c A and @c alpha
 !> @param C the single-precision matrix to be overwritten by
 !>        C := alpha*op(A)*op(B) + beta*C
 !>
@@ -639,25 +630,25 @@ MODULE BLAS3
       REAL(SSK),INTENT(IN) :: a(:,:)
       REAL(SSK),INTENT(IN) :: b(:,:)
       REAL(SSK),INTENT(INOUT) :: c(:,:)
-      
+
       INTEGER(SIK) :: m
       INTEGER(SIK) :: n
       INTEGER(SIK) :: k
-      
+
       m=SIZE(c,DIM=1)
       n=SIZE(c,DIM=2)
       k=SIZE(b,DIM=1)
 
       CALL sgemm_all('n','n',m,n,k,alpha,a,m,b,k,1.0_SSK,c,1)
-      
+
     ENDSUBROUTINE sgemm_aabc
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS3::sgemm_all "sgemm_all" for when the user
-!>        does not want to supply @c lda, @c ldb, @c ldc, @c m, @c n, @c k, 
+!>        does not want to supply @c lda, @c ldb, @c ldc, @c m, @c n, @c k,
 !>        @c alpha, @c beta, @c transa, and @c transb.
-!> @param A the single-precision matrix to multiply with @c B and @c alpha 
-!> @param B the single-precision matrix to multiply with @c A and @c alpha 
+!> @param A the single-precision matrix to multiply with @c B and @c alpha
+!> @param B the single-precision matrix to multiply with @c A and @c alpha
 !> @param C the single-precision matrix to be overwritten by
 !>        C := alpha*op(A)*op(B) + beta*C
 !>
@@ -670,34 +661,34 @@ MODULE BLAS3
       REAL(SSK),INTENT(IN) :: a(:,:)
       REAL(SSK),INTENT(IN) :: b(:,:)
       REAL(SSK),INTENT(INOUT) :: c(:,:)
-      
+
       INTEGER(SIK) :: m
       INTEGER(SIK) :: n
       INTEGER(SIK) :: k
-      
+
       m=SIZE(c,DIM=1)
       n=SIZE(c,DIM=2)
       k=SIZE(b,DIM=1)
 
       CALL sgemm_all('n','n',m,n,k,1.0_SSK,a,m,b,k,1.0_SSK,c,1)
-      
+
     ENDSUBROUTINE sgemm_abc
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine computes a matrix matrix product for general matricies
 !>        A and B.
-!> @param transa single character input indicating whether or not to use the 
+!> @param transa single character input indicating whether or not to use the
 !>        transpose of @c A
-!> @param transb single character input indicating whether or not to use the 
+!> @param transb single character input indicating whether or not to use the
 !>        transpose of @c B
 !> @param m the size of the first dimension of @c A and of @c C (number of rows)
 !> @param n the size of the second dimension of @c B and of @c C (number of columns)
-!> @param k the size of the second dimension of @c A (number of columns) 
+!> @param k the size of the second dimension of @c A (number of columns)
 !>        and the first dimension of @c B (number of rows)
 !> @param alpha the double-precision scalar used to scale @c A and @c B
-!> @param A the double-precision matrix to multiply with @c B and @c alpha 
+!> @param A the double-precision matrix to multiply with @c B and @c alpha
 !> @param lda the size of the leading (first) dimension of @c A
-!> @param B the double-precision matrix to multiply with @c A and @c alpha 
+!> @param B the double-precision matrix to multiply with @c A and @c alpha
 !> @param ldb the size of the leading (first) dimension of @c B
 !> @param beta the double-precision scalar used to scale @c C
 !> @param C the double-precision matrix to be overwritten by
@@ -723,7 +714,7 @@ MODULE BLAS3
       REAL(SDK),INTENT(IN) :: beta
       INTEGER(SIK),INTENT(IN) :: ldc
       REAL(SDK),INTENT(INOUT) :: c(ldc,*)
-      
+
 #ifdef HAVE_BLAS
       INTERFACE
         PURE SUBROUTINE dgemm(transa,transb,m,n,k,alpha,a,lda,b,ldb,beta,c,ldc)
@@ -748,7 +739,7 @@ MODULE BLAS3
       INTEGER(SIK) :: i,j,l,akm,bkn,amaxval,bmaxval
       REAL(SDK) :: tmp
       INTRINSIC MAX
-      
+
       !Check for transpose of A
       IF(transa == 'n' .OR. transa == 'N') THEN
         !If not transposed, akm is column number, amaxval is row number
@@ -778,9 +769,9 @@ MODULE BLAS3
         lda >= MAX(1,amaxval) .AND. ldb >= MAX(1,bmaxval) .AND. &
           .NOT.(alpha == 0.0_SSK .AND. beta == 1.0_SSK) .AND. &
             (transa == 't' .OR. transa == 'T' .OR. transa == 'c' .OR. transa == 'C' .OR. &
-              transa == 'n' .OR. transa == 'N') .AND. (transb == 't' .OR. transb == 'T' & 
+              transa == 'n' .OR. transa == 'N') .AND. (transb == 't' .OR. transb == 'T' &
                 .OR. transb == 'c' .OR. transb == 'C' .OR. transb == 'n' .OR. transb == 'N')) THEN
-        
+
         !Compute beta*C for alpha=0. C := beta*C
         IF(alpha == 0.0_SSK) THEN
           !All entries become zero if alpha and beta are 0.
@@ -869,7 +860,7 @@ MODULE BLAS3
                   ENDIF
                 ENDDO
               ENDDO
-            !Operation 4, A & B transposed. Form  C := alpha*A^T*B^T + beta*C.  
+            !Operation 4, A & B transposed. Form  C := alpha*A^T*B^T + beta*C.
             ELSE
               DO j=1,n
                 DO i=1,m
@@ -887,24 +878,24 @@ MODULE BLAS3
             ENDIF
           ENDIF
         ENDIF
-      ENDIF  
+      ENDIF
 #endif
     ENDSUBROUTINE dgemm_all
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS3::dgemm_all "dgemm_all" for when the user
 !>        does not want to supply @c lda, @c ldb, and @c ldc.
-!> @param transa single character input indicating whether or not to use the 
+!> @param transa single character input indicating whether or not to use the
 !>        transpose of @c A
-!> @param transb single character input indicating whether or not to use the 
+!> @param transb single character input indicating whether or not to use the
 !>        transpose of @c B
 !> @param m the size of the first dimension of @c A and of @c C (number of rows)
 !> @param n the size of the second dimension of @c B and of @c C (number of columns)
-!> @param k the size of the second dimension of @c A (number of columns) 
+!> @param k the size of the second dimension of @c A (number of columns)
 !>        and the first dimension of @c B (number of rows)
 !> @param alpha the double-precision scalar used to scale @c A and @c B
-!> @param A the double-precision matrix to multiply with @c B and @c alpha 
-!> @param B the double-precision matrix to multiply with @c A and @c alpha 
+!> @param A the double-precision matrix to multiply with @c B and @c alpha
+!> @param B the double-precision matrix to multiply with @c A and @c alpha
 !> @param beta the double-precision scalar used to scale @c C
 !> @param C the double-precision matrix to be overwritten by
 !>        C := alpha*op(A)*op(B) + beta*C
@@ -927,22 +918,22 @@ MODULE BLAS3
       REAL(SDK),INTENT(INOUT) :: c(:,:)
 
       CALL dgemm_all(transa,transb,m,n,k,alpha,a,m,b,k,beta,c,m)
-      
+
     ENDSUBROUTINE dgemm_ttmnkaabbc
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS3::dgemm_all "dgemm_all" for when the user
 !>        does not want to supply @c alpha, @c lda, @c ldb, and @c ldc.
-!> @param transa double character input indicating whether or not to use the 
+!> @param transa double character input indicating whether or not to use the
 !>        transpose of @c A
-!> @param transb double character input indicating whether or not to use the 
+!> @param transb double character input indicating whether or not to use the
 !>        transpose of @c B
 !> @param m the size of the first dimension of @c A and of @c C (number of rows)
 !> @param n the size of the second dimension of @c B and of @c C (number of columns)
-!> @param k the size of the second dimension of @c A (number of columns) 
+!> @param k the size of the second dimension of @c A (number of columns)
 !>        and the first dimension of @c B (number of rows)
-!> @param A the double-precision matrix to multiply with @c B and @c alpha 
-!> @param B the double-precision matrix to multiply with @c A and @c alpha 
+!> @param A the double-precision matrix to multiply with @c B and @c alpha
+!> @param B the double-precision matrix to multiply with @c A and @c alpha
 !> @param beta the double-precision scalar used to scale @c C
 !> @param C the double-precision matrix to be overwritten by
 !>        C := alpha*op(A)*op(B) + beta*C
@@ -964,23 +955,23 @@ MODULE BLAS3
       REAL(SDK),INTENT(INOUT) :: c(:,:)
 
       CALL dgemm_all(transa,transb,m,n,k,1.0_SDK,a,m,b,k,beta,c,m)
-      
+
     ENDSUBROUTINE dgemm_ttmnkabbc
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS3::dgemm_all "dgemm_all" for when the user
 !>        does not want to supply @c beta, @c lda, @c ldb, and @c ldc.
-!> @param transa double character input indicating whether or not to use the 
+!> @param transa double character input indicating whether or not to use the
 !>        transpose of @c A
-!> @param transb double character input indicating whether or not to use the 
+!> @param transb double character input indicating whether or not to use the
 !>        transpose of @c B
 !> @param m the size of the first dimension of @c A and of @c C (number of rows)
 !> @param n the size of the second dimension of @c B and of @c C (number of columns)
-!> @param k the size of the second dimension of @c A (number of columns) 
+!> @param k the size of the second dimension of @c A (number of columns)
 !>        and the first dimension of @c B (number of rows)
 !> @param alpha the double-precision scalar used to scale @c A and @c B
-!> @param A the double-precision matrix to multiply with @c B and @c alpha 
-!> @param B the double-precision matrix to multiply with @c A and @c alpha 
+!> @param A the double-precision matrix to multiply with @c B and @c alpha
+!> @param B the double-precision matrix to multiply with @c A and @c alpha
 !> @param C the double-precision matrix to be overwritten by
 !>        C := alpha*op(A)*op(B) + beta*C
 !>
@@ -1001,22 +992,22 @@ MODULE BLAS3
       REAL(SDK),INTENT(INOUT) :: c(:,:)
 
       CALL dgemm_all(transa,transb,m,n,k,alpha,a,m,b,k,1.0_SDK,c,m)
-      
+
     ENDSUBROUTINE dgemm_ttmnkaabc
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS3::dgemm_all "dgemm_all" for when the user
 !>        does not want to supply @c alpha, @c beta, @c lda, @c ldb, and @c ldc.
-!> @param transa double character input indicating whether or not to use the 
+!> @param transa double character input indicating whether or not to use the
 !>        transpose of @c A
-!> @param transb double character input indicating whether or not to use the 
+!> @param transb double character input indicating whether or not to use the
 !>        transpose of @c B
 !> @param m the size of the first dimension of @c A and of @c C (number of rows)
 !> @param n the size of the second dimension of @c B and of @c C (number of columns)
-!> @param k the size of the second dimension of @c A (number of columns) 
+!> @param k the size of the second dimension of @c A (number of columns)
 !>        and the first dimension of @c B (number of rows)
-!> @param A the double-precision matrix to multiply with @c B and @c alpha 
-!> @param B the double-precision matrix to multiply with @c A and @c alpha 
+!> @param A the double-precision matrix to multiply with @c B and @c alpha
+!> @param B the double-precision matrix to multiply with @c A and @c alpha
 !> @param C the double-precision matrix to be overwritten by
 !>        C := alpha*op(A)*op(B) + beta*C
 !>
@@ -1036,7 +1027,7 @@ MODULE BLAS3
       REAL(SDK),INTENT(INOUT) :: c(:,:)
 
       CALL dgemm_all(transa,transb,m,n,k,1.0_SDK,a,m,b,k,1.0_SDK,c,m)
-      
+
     ENDSUBROUTINE dgemm_ttmnkabc
 !
 !-------------------------------------------------------------------------------
@@ -1044,11 +1035,11 @@ MODULE BLAS3
 !>        does not want to supply @c lda, @c ldb, @c ldc, @c transa, and @c transb.
 !> @param m the size of the first dimension of @c A and of @c C (number of rows)
 !> @param n the size of the second dimension of @c B and of @c C (number of columns)
-!> @param k the size of the second dimension of @c A (number of columns) 
+!> @param k the size of the second dimension of @c A (number of columns)
 !>        and the first dimension of @c B (number of rows)
 !> @param alpha the double-precision scalar used to scale @c A and @c B
-!> @param A the double-precision matrix to multiply with @c B and @c alpha 
-!> @param B the double-precision matrix to multiply with @c A and @c alpha 
+!> @param A the double-precision matrix to multiply with @c B and @c alpha
+!> @param B the double-precision matrix to multiply with @c A and @c alpha
 !> @param beta the double-precision scalar used to scale @c C
 !> @param C the double-precision matrix to be overwritten by
 !>        C := alpha*op(A)*op(B) + beta*C
@@ -1069,19 +1060,19 @@ MODULE BLAS3
       REAL(SDK),INTENT(INOUT) :: c(:,:)
 
       CALL dgemm_all('n','n',m,n,k,alpha,a,m,b,k,beta,c,1)
-      
+
     ENDSUBROUTINE dgemm_mnkaabbc
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS3::dgemm_all "dgemm_all" for when the user
 !>        does not want to supply @c m, @c n, @c k, @c lda, @c ldb, and @c ldc.
-!> @param transa single character input indicating whether or not to use the 
+!> @param transa single character input indicating whether or not to use the
 !>        transpose of @c A
-!> @param transb single character input indicating whether or not to use the 
+!> @param transb single character input indicating whether or not to use the
 !>        transpose of @c B
 !> @param alpha the double-precision scalar used to scale @c A and @c B
-!> @param A the double-precision matrix to multiply with @c B and @c alpha 
-!> @param B the double-precision matrix to multiply with @c A and @c alpha 
+!> @param A the double-precision matrix to multiply with @c B and @c alpha
+!> @param B the double-precision matrix to multiply with @c A and @c alpha
 !> @param beta the double-precision scalar used to scale @c C
 !> @param C the double-precision matrix to be overwritten by
 !>        C := alpha*op(A)*op(B) + beta*C
@@ -1099,7 +1090,7 @@ MODULE BLAS3
       REAL(SDK),INTENT(IN) :: b(:,:)
       REAL(SDK),INTENT(IN) :: beta
       REAL(SDK),INTENT(INOUT) :: c(:,:)
-      
+
       INTEGER(SIK) :: m
       INTEGER(SIK) :: n
       INTEGER(SIK) :: k
@@ -1109,16 +1100,16 @@ MODULE BLAS3
       k=SIZE(b,DIM=1)
 
       CALL dgemm_all(transa,transb,m,n,k,alpha,a,m,b,k,beta,c,m)
-      
+
     ENDSUBROUTINE dgemm_ttaabbc
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS3::dgemm_all "dgemm_all" for when the user
-!>        does not want to supply @c lda, @c ldb, @c ldc, @c m, @c n, @c k, 
+!>        does not want to supply @c lda, @c ldb, @c ldc, @c m, @c n, @c k,
 !>        @c transa, and @c transb.
 !> @param alpha the double-precision scalar used to scale @c A and @c B
-!> @param A the double-precision matrix to multiply with @c B and @c alpha 
-!> @param B the double-precision matrix to multiply with @c A and @c alpha 
+!> @param A the double-precision matrix to multiply with @c B and @c alpha
+!> @param B the double-precision matrix to multiply with @c A and @c alpha
 !> @param beta the double-precision scalar used to scale @c C
 !> @param C the double-precision matrix to be overwritten by
 !>        C := alpha*op(A)*op(B) + beta*C
@@ -1134,28 +1125,28 @@ MODULE BLAS3
       REAL(SDK),INTENT(IN) :: b(:,:)
       REAL(SDK),INTENT(IN) :: beta
       REAL(SDK),INTENT(INOUT) :: c(:,:)
-      
+
       INTEGER(SIK) :: m
       INTEGER(SIK) :: n
       INTEGER(SIK) :: k
       INTEGER(SIK) :: ldc
-      
+
       m=SIZE(a,DIM=1)
       n=SIZE(c,DIM=2)
       k=SIZE(b,DIM=1)
       ldc=SIZE(c,DIM=1)
 
       CALL dgemm_all('n','n',m,n,k,alpha,a,m,b,k,beta,c,ldc)
-!      
+!
     ENDSUBROUTINE dgemm_aabbc
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS3::dgemm_all "dgemm_all" for when the user
-!>        does not want to supply @c lda, @c ldb, @c ldc, @c m, @c n, @c k, 
+!>        does not want to supply @c lda, @c ldb, @c ldc, @c m, @c n, @c k,
 !>        @c transa, and @c transb.
 !> @param alpha the double-precision scalar used to scale @c A and @c B
-!> @param A the double-precision matrix to multiply with @c B and @c alpha 
-!> @param B the double-precision matrix to multiply with @c A and @c alpha 
+!> @param A the double-precision matrix to multiply with @c B and @c alpha
+!> @param B the double-precision matrix to multiply with @c A and @c alpha
 !> @param beta the double-precision scalar used to scale @c C
 !> @param C the double-precision matrix to be overwritten by
 !>        C := alpha*op(A)*op(B) + beta*C
@@ -1170,28 +1161,28 @@ MODULE BLAS3
       REAL(SDK),INTENT(IN) :: b(:,:)
       REAL(SDK),INTENT(IN) :: beta
       REAL(SDK),INTENT(INOUT) :: c(:,:)
-      
+
       INTEGER(SIK) :: m
       INTEGER(SIK) :: n
       INTEGER(SIK) :: k
       INTEGER(SIK) :: ldc
-      
+
       m=SIZE(a,DIM=1)
       n=SIZE(c,DIM=2)
       k=SIZE(b,DIM=1)
       ldc=SIZE(c,DIM=1)
 
       CALL dgemm_all('n','n',m,n,k,1.0_SDK,a,m,b,k,beta,c,ldc)
-      
+
     ENDSUBROUTINE dgemm_abbc
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS3::dgemm_all "dgemm_all" for when the user
-!>        does not want to supply @c lda, @c ldb, @c ldc, @c m, @c n, @c k, 
+!>        does not want to supply @c lda, @c ldb, @c ldc, @c m, @c n, @c k,
 !>        @c beta, @c transa, and @c transb.
 !> @param alpha the double-precision scalar used to scale @c A and @c B
-!> @param A the double-precision matrix to multiply with @c B and @c alpha 
-!> @param B the double-precision matrix to multiply with @c A and @c alpha 
+!> @param A the double-precision matrix to multiply with @c B and @c alpha
+!> @param B the double-precision matrix to multiply with @c A and @c alpha
 !> @param C the double-precision matrix to be overwritten by
 !>        C := alpha*op(A)*op(B) + beta*C
 !>
@@ -1205,25 +1196,25 @@ MODULE BLAS3
       REAL(SDK),INTENT(IN) :: a(:,:)
       REAL(SDK),INTENT(IN) :: b(:,:)
       REAL(SDK),INTENT(INOUT) :: c(:,:)
-      
+
       INTEGER(SIK) :: m
       INTEGER(SIK) :: n
       INTEGER(SIK) :: k
-      
+
       m=SIZE(c,DIM=1)
       n=SIZE(c,DIM=2)
       k=SIZE(b,DIM=1)
 
       CALL dgemm_all('n','n',m,n,k,alpha,a,m,b,k,1.0_SDK,c,1)
-     
+
     ENDSUBROUTINE dgemm_aabc
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine wraps @ref BLAS3::dgemm_all "dgemm_all" for when the user
-!>        does not want to supply @c lda, @c ldb, @c ldc, @c m, @c n, @c k, 
+!>        does not want to supply @c lda, @c ldb, @c ldc, @c m, @c n, @c k,
 !>        @c alpha, @c beta, @c transa, and @c transb.
-!> @param A the double-precision matrix to multiply with @c B and @c alpha 
-!> @param B the double-precision matrix to multiply with @c A and @c alpha 
+!> @param A the double-precision matrix to multiply with @c B and @c alpha
+!> @param B the double-precision matrix to multiply with @c A and @c alpha
 !> @param C the double-precision matrix to be overwritten by
 !>        C := alpha*op(A)*op(B) + beta*C
 !>
@@ -1236,17 +1227,17 @@ MODULE BLAS3
       REAL(SDK),INTENT(IN) :: a(:,:)
       REAL(SDK),INTENT(IN) :: b(:,:)
       REAL(SDK),INTENT(INOUT) :: c(:,:)
-      
+
       INTEGER(SIK) :: m
       INTEGER(SIK) :: n
       INTEGER(SIK) :: k
-      
+
       m=SIZE(c,DIM=1)
       n=SIZE(c,DIM=2)
       k=SIZE(b,DIM=1)
 
       CALL dgemm_all('n','n',m,n,k,1.0_SDK,a,m,b,k,1.0_SDK,c,1)
-      
+
     ENDSUBROUTINE dgemm_abc
 !
 ENDMODULE BLAS3

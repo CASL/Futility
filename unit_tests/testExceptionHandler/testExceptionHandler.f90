@@ -1,19 +1,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testExceptionHandler
 #include "UnitTest.h"
@@ -21,16 +12,16 @@ PROGRAM testExceptionHandler
   USE UnitTest
   USE IntrType
   USE ExceptionHandler
-  
+
   IMPLICIT NONE
 
   TYPE(ExceptionHandlerType),TARGET :: testE
   TYPE(ExceptionHandlerType) :: testE2
   TYPE(ExceptionHandlerType),POINTER :: testE3
   CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: mesg,mesg2
-  
+
   CREATE_TEST('EXCEPTION HANDLER')
-  
+
   REGISTER_SUBTEST('Parameters',testParameters)
   REGISTER_SUBTEST('Defaults',testDefault)
   REGISTER_SUBTEST('Raise',testRaise)
@@ -39,9 +30,9 @@ PROGRAM testExceptionHandler
   REGISTER_SUBTEST('Surrogate',testSurrogate)
   REGISTER_SUBTEST('ASSIGNMENT(=)',testAssignment)
   REGISTER_SUBTEST('Reset',testReset)
-  
+
   CLOSE(testE%getLogFileUnit(),STATUS='DELETE')
-  
+
   FINALIZE_TEST()
 
   CONTAINS
@@ -71,10 +62,10 @@ PROGRAM testExceptionHandler
       ASSERT(.NOT.testE%isQuietMode(EXCEPTION_ERROR),'%isQuietMode(ERROR)')
       ASSERT(.NOT.testE%isQuietMode(EXCEPTION_FATAL_ERROR),'%isQuietMode(FATAL_ERROR)')
       ASSERT(.NOT.testE%isQuietMode(EXCEPTION_OK),'%isQuietMode(OK)')
-      
+
       COMPONENT_TEST('isStopOnError')
       ASSERT(testE%isStopOnError(),'%isStopOnError')
-      
+
       COMPONENT_TEST('Counter')
       ASSERT(ALL(testE%getCounterAll() == 0),'getCounterAll()')
       ASSERT(testE%getCounter(EXCEPTION_INFORMATION) == 0,'INFO')
@@ -84,11 +75,11 @@ PROGRAM testExceptionHandler
       ASSERT(testE%getCounter(EXCEPTION_FATAL_ERROR) == 0,'FATAL_ERROR')
       ASSERT(testE%getCounter(EXCEPTION_OK) == -1,'OK')
       ASSERT(testE%getLastMessage() == '','%getLastMessage()')
-      
+
       COMPONENT_TEST('Log File')
       ASSERT(testE%getLogFileUnit() == 666,'%getLogFileUnit')
       ASSERT(.NOT.testE%isLogActive(),'%isLogActive')
-      
+
       COMPONENT_TEST('setQuietMode')
       CALL testE%setQuietMode(.TRUE.)
       ASSERT(testE%isQuietMode(),'%setQuietMode(T)')
@@ -123,7 +114,7 @@ PROGRAM testExceptionHandler
       ASSERT(.NOT.testE%isQuietMode(),'%setQuietMode(OK,T)')
       ASSERT(.NOT.testE%isQuietMode(EXCEPTION_OK),'%setQuietMode(OK,T) OK')
       CALL testE%setQuietMode((/.FALSE.,.FALSE.,.FALSE.,.FALSE./))
-      
+
       COMPONENT_TEST('setVerboseMode')
       CALL testE%setVerboseMode(.TRUE.)
       ASSERT(testE%isVerboseMode(),'%setVerboseMode(T)')
@@ -168,21 +159,21 @@ PROGRAM testExceptionHandler
       ASSERT(testE%getCounter(EXCEPTION_INFORMATION) == 1,'%counter(INFO)')
       mesg=' - EXCEPTION_INFORMATION: Test information'
       ASSERT(testE%getLastMessage() == TRIM(mesg),'mesg')
-  
+
       COMPONENT_TEST('raiseWarning()')
       CALL testE%raiseWarning('Test warning')
       ASSERT(ALL(testE%getCounterAll() == (/1,1,0,0,0/)),'%counterall')
       ASSERT(testE%getCounter(EXCEPTION_WARNING) == 1,'%counter(WARNING)')
       mesg='#### EXCEPTION_WARNING #### - Test warning'
       ASSERT(testE%getLastMessage() == TRIM(mesg),'mesg')
-  
+
       COMPONENT_TEST('raiseDebug()')
       CALL testE%raiseDebug('Test debug')
       ASSERT(ALL(testE%getCounterAll() == (/1,1,1,0,0/)),'%raiseDebug')
       ASSERT(testE%getCounter(EXCEPTION_DEBUG) == 1,'%counter(DEBUG)')
       mesg='#### EXCEPTION_DEBUG_MESG #### - Test debug'
       ASSERT(testE%getLastMessage() == TRIM(mesg),'mesg')
-  
+
       COMPONENT_TEST('raiseError()')
       CALL testE%setStopOnError(.FALSE.)
       ASSERT(.NOT.testE%isStopOnError(),'setStopOnError(F)')
@@ -195,7 +186,7 @@ PROGRAM testExceptionHandler
       ASSERT(testE%getCounter(EXCEPTION_ERROR) == 1,'%counter(ERROR)')
       mesg='#### EXCEPTION_ERROR #### - Test error'
       ASSERT(testE%getLastMessage() == TRIM(mesg),'mesg')
-      
+
       COMPONENT_TEST('initCounter()')
       CALL testE%initCounter()
       ASSERT(ALL(testE%getCounterAll() == 0),'counterAll')
@@ -220,7 +211,7 @@ PROGRAM testExceptionHandler
       ASSERT(TRIM(testE%getLastMessage()) == TRIM(mesg),'%getLastMessage')
       CALL testE%setLogFileUnit(23)
       ASSERT(testE%getLogFileUnit() == 23,'setLogFileUnit(23)')
-      
+
       COMPONENT_TEST('isLogActive()')
       CALL testE%setQuietMode(.FALSE.)
       ASSERT(.NOT.testE%isLogActive(),'%isLogActive')
@@ -238,7 +229,7 @@ PROGRAM testExceptionHandler
       CALL testE%raiseWarning('Test warning')
       CALL testE%raiseDebug('Test debug')
       CALL testE%raiseError('Test error')
-      
+
 !Verify the log file contents
       CLOSE(testE%getLogFileUnit())
       OPEN(UNIT=testE%getLogFileUnit(),FILE='Exception.log', &
@@ -300,10 +291,10 @@ PROGRAM testExceptionHandler
       ASSERT(ALL(testE2%getCounterAll() == testE%getCounterAll()),'getCounterAll')
       ASSERT(testE2%getLastMessage() == testE%getLastMessage(),'getLastMessage')
       ASSERT(testE2%isLogActive() .EQV. testE%isLogActive(),'isLogActive')
-      
+
       CALL testE2%getSurrogate(testE3)
       ASSERT(ASSOCIATED(testE3,testE), 'getSurrogate')
-      
+
       CALL testE2%setQuietMode(.TRUE.)
       ASSERT(testE2%isQuietMode() .NEQV. testE%isQuietMode(),'isQuiet (NEQV)')
     ENDSUBROUTINE testSurrogate
