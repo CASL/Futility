@@ -1,19 +1,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testHDF5
 #include "UnitTest.h"
@@ -215,7 +206,7 @@ PROGRAM testHDF5
       refSTC1(21)=' ';refSTC1(22)=' ';refSTC1(23)=' ';refSTC1(24)=' ';refSTC1(25)=' '
       refSTC1(26)=' ';refSTC1(27)=' ';refSTC1(28)=' ';refSTC1(29)=' ';refSTC1(30)=' '
       refSTC1(31)=' ';refSTC1(32)=' '
-      
+
 
       refsets(1)='memD0'
       refsets(2)='memD1'
@@ -1461,7 +1452,7 @@ PROGRAM testHDF5
         FINFO() i,CHAR(testST1(i))//' | '//CHAR(refST0CA(i))
       ENDDO
       CALL tmpPL%clear()
-      
+
       DEALLOCATE(testD1,testD2,testD3,testD4,testD5,testD6,testD7,testS1,testS2,&
         testS3,testS4,testS5,testS6,testS7,testL1,testL2,testL3,testL4,testL5, &
         testL6,testL7,testB1,testB2,testB3,testST1,testST2,testST3,testN1,testN2, &

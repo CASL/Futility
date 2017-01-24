@@ -1,19 +1,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testFileType_DA32
 #include "UnitTest.h"
@@ -22,24 +13,24 @@ PROGRAM testFileType_DA32
   USE IntrType
   USE ExceptionHandler
   USE FileType_DA32
-  
+
   IMPLICIT NONE
-  
+
   TYPE(ExceptionHandlerType),TARGET,SAVE :: e
   TYPE(DA32FileType) :: testDA32File
-  
+
   CREATE_TEST('DA32 FILETYPE')
-  
+
   CALL e%setStopOnError(.FALSE.)
   CALL e%setQuietMode(.TRUE.)
-  
+
   CALL setupTest()
   REGISTER_SUBTEST('Parameters',testParams)
   REGISTER_SUBTEST('Read',testRead)
   REGISTER_SUBTEST('Write',testWrite)
   REGISTER_SUBTEST('%getPad2NextBlk()',testPad)
   REGISTER_SUBTEST('%writeEmptyBlock()',testWMTBlock)
-  
+
   FINALIZE_TEST()
 !
 !===============================================================================
@@ -51,27 +42,27 @@ PROGRAM testFileType_DA32
       INTEGER(SLK) :: doubleint,longarry(100)
       REAL(SSK) :: singlereal,singlearray(100)
       REAL(SDK) :: doublereal,doublearray(100)
-      
+
       singleint=HUGE(singleint)
       doubleint=HUGE(doubleint)
       singlereal=EPSILON(singlereal)
       doublereal=EPSILON(doublereal)
-      
+
       OPEN(UNIT=7,FILE='testReadfile.bin',ACCESS='DIRECT',FORM='UNFORMATTED', &
         RECL=RECL32,ACTION='READWRITE')
-            
+
       tmpData(1)=TRANSFER(.TRUE.,tmpData(1))
       WRITE(7,REC=1) tmpData(1)
       WRITE(7,REC=2) singleint
       tmpData=TRANSFER(doubleint,tmpData)
       WRITE(7,REC=3) tmpData(1)
       WRITE(7,REC=4) tmpData(2)
-      
+
       WRITE(7,REC=5) singlereal
       tmpData=TRANSFER(doublereal,tmpData)
       WRITE(7,REC=6) tmpData(1)
       WRITE(7,REC=7) tmpData(2)
-      
+
       WRITE(7,REC=8) '1234'
       WRITE(7,REC=9) '5'
       intarry=0
@@ -80,7 +71,7 @@ PROGRAM testFileType_DA32
       DO i=1,100
         WRITE(7,REC=9+i) intarry(i)
       ENDDO
-      
+
       longarry=0
       longarry(1)=doubleint
       longarry(99)=doubleint
@@ -90,16 +81,16 @@ PROGRAM testFileType_DA32
         WRITE(7,REC=109+2*i  ) tmpData(2)
       ENDDO
       DO i=1,258
-        WRITE(7,REC=511+i) i        
+        WRITE(7,REC=511+i) i
       ENDDO
-      
+
       singlearray=0.0_SSK
       singlearray(1)=TINY(singlereal)
       singlearray(99)=HUGE(singlereal)
       DO i=1,100
         WRITE(7,REC=770+i) singlearray(i)
       ENDDO
-      
+
       doublearray=0.0_SSK
       doublearray(1)=TINY(doublereal)
       doublearray(99)=HUGE(doublereal)
@@ -129,12 +120,12 @@ PROGRAM testFileType_DA32
       INTEGER(SIK) :: ioerr
       INTEGER(SLK) :: n
       CHARACTER(LEN=6) :: testCHAR
-      
+
       CALL testDA32File%e%addSurrogate(e)
       CALL testDA32File%initialize(FILE='testReadfile.bin',STATUS='OLD', &
         ACTION='READ')
       CALL testDA32File%fopen()
-      
+
       COMPONENT_TEST('read_sbk')
       testBool=.FALSE.; n=0; ioerr=-1
       CALL testDA32File%readdat(REC=1_SLK,DAT=testBool,IOSTAT=ioerr,NREC=n)
@@ -152,7 +143,7 @@ PROGRAM testFileType_DA32
       testBool=.FALSE.; n=0; ioerr=-1
       CALL testDA32File%readdat(REC=1_SLK,DAT=testBool)
       ASSERT(testBool,'testBool value 4')
-      
+
       COMPONENT_TEST('read_snk')
       testSNK=0; n=0; ioerr=-1
       CALL testDA32File%readdat(REC=2_SLK,DAT=testSNK,IOSTAT=ioerr,NREC=n)
@@ -193,7 +184,7 @@ PROGRAM testFileType_DA32
           FINFO() i,j,testSNK2(i,j)
         ENDDO
       ENDDO
-      
+
       COMPONENT_TEST('read_ssk')
       testSSK=0.0; n=0; ioerr=-1
       CALL testDA32File%readdat(REC=5_SLK,DAT=testSSK,IOSTAT=ioerr,NREC=n)
@@ -236,7 +227,7 @@ PROGRAM testFileType_DA32
           FINFO() i,j,testSSK2(i,j)
         ENDDO
       ENDDO
-      
+
       COMPONENT_TEST('read_slk')
       testSLK=0; n=0; ioerr=-1
       CALL testDA32File%readdat(REC=3_SLK,DAT=testSLK,IOSTAT=ioerr,NREC=n)
@@ -277,7 +268,7 @@ PROGRAM testFileType_DA32
           FINFO() i,j,testSLK2(i,j)
         ENDDO
       ENDDO
-      
+
       COMPONENT_TEST('read_sdk')
       testSDK=0.0_SDK; n=0; ioerr=-1
       CALL testDA32File%readdat(REC=6_SLK,DAT=testSDK,IOSTAT=ioerr,NREC=n)
@@ -320,8 +311,8 @@ PROGRAM testFileType_DA32
           FINFO() i,j,testSDK2(i,j)
         ENDDO
       ENDDO
-      
-      
+
+
       COMPONENT_TEST('read_char')
       testCHAR=''; n=0; ioerr=-1
       CALL testDA32File%readdat(REC=8_SLK,DAT=testCHAR,IOSTAT=ioerr,NREC=n)
@@ -343,7 +334,7 @@ PROGRAM testFileType_DA32
       CALL testDA32File%readdat(REC=8_SLK,DAT=testCHAR)
       ASSERT(TRIM(testCHAR) == '12345','testCHAR value 4')
       FINFO() '"'//testCHAR//'"'
-      
+
       COMPONENT_TEST('read big')
       CALL testDA32File%readdat(REC=512_SLK,DAT=test2SNK,IOSTAT=ioerr,NREC=n)
       ASSERT(ioerr == 0,'test2SNK ioerr')
@@ -366,12 +357,12 @@ PROGRAM testFileType_DA32
       CHARACTER(LEN=5) :: testCHAR
       INTEGER(SIK) :: ioerr,i
       INTEGER(SLK) :: n
-      
+
       CALL testDA32File%e%addSurrogate(e)
       CALL testDA32File%initialize(FILE='testReadfile.bin',STATUS='REPLACE', &
         ACTION='WRITE')
       CALL testDA32File%fopen()
-      
+
       COMPONENT_TEST('write_sbk')
       testBool=.TRUE.; n=0; ioerr=-1
       CALL testDA32File%writedat(REC=1_SLK,DAT=testBool,IOSTAT=ioerr,NREC=n)
@@ -387,7 +378,7 @@ PROGRAM testFileType_DA32
       CALL testDA32File%writedat(REC=1_SLK,DAT=testBool)
 
       FLUSH(testDA32File%getUnitNo())
-      
+
       COMPONENT_TEST('write_snk')
       testSNK=HUGE(testSNK); n=0; ioerr=-1
       CALL testDA32File%writedat(REC=2_SLK,DAT=testSNK,IOSTAT=ioerr,NREC=n)
@@ -407,7 +398,7 @@ PROGRAM testFileType_DA32
       CALL testDA32File%writedat(REC=10_SLK,DAT=testSNK1,IOSTAT=ioerr,NREC=n)
       ASSERT(ioerr == 0,'testSNK1 ioerr')
       ASSERT(n == 100,'testSNK1 n')
-      
+
       COMPONENT_TEST('write_ssk')
       testSSK=EPSILON(testSSK); n=0; ioerr=-1
       CALL testDA32File%writedat(REC=5_SLK,DAT=testSSK,IOSTAT=ioerr,NREC=n)
@@ -427,7 +418,7 @@ PROGRAM testFileType_DA32
       CALL testDA32File%writedat(REC=771_SLK,DAT=testSSK1,IOSTAT=ioerr,NREC=n)
       ASSERT(ioerr == 0,'testSSK1 ioerr')
       ASSERT(n == 100,'testSSK1 n')
-      
+
       COMPONENT_TEST('write_slk')
       testSLK=HUGE(testSLK); n=0; ioerr=-1
       CALL testDA32File%writedat(REC=3_SLK,DAT=testSLK,IOSTAT=ioerr,NREC=n)
@@ -447,7 +438,7 @@ PROGRAM testFileType_DA32
       CALL testDA32File%writedat(REC=110_SLK,DAT=testSLK1,IOSTAT=ioerr,NREC=n)
       ASSERT(ioerr == 0,'testSLK1 ioerr')
       ASSERT(n == 200,'testSLK1 n')
-      
+
       COMPONENT_TEST('write_sdk')
       testSDK=EPSILON(testSDK); n=0; ioerr=-1
       CALL testDA32File%writedat(REC=6_SLK,DAT=testSDK,IOSTAT=ioerr,NREC=n)
@@ -467,7 +458,7 @@ PROGRAM testFileType_DA32
       CALL testDA32File%writedat(REC=871_SLK,DAT=testSDK1,IOSTAT=ioerr,NREC=n)
       ASSERT(ioerr == 0,'testSDK1 ioerr')
       ASSERT(n == 200,'testSDK1 n')
-      
+
       COMPONENT_TEST('write_char')
       testCHAR='12345'; n=0; ioerr=-1
       CALL testDA32File%writedat(REC=8_SLK,DAT=testCHAR,IOSTAT=ioerr,NREC=n)
@@ -481,7 +472,7 @@ PROGRAM testFileType_DA32
       ASSERT(n == 2,'n')
       testCHAR='12345'; n=0; ioerr=-1
       CALL testDA32File%writedat(REC=8_SLK,DAT=testCHAR)
-      
+
       COMPONENT_TEST('write big')
       DO i=1,258
         test2SNK(i)=i
@@ -497,7 +488,7 @@ PROGRAM testFileType_DA32
 !-------------------------------------------------------------------------------
     SUBROUTINE testPad()
       INTEGER(SIK) :: i,WORDSREC
-      
+
       WORDSREC=RECLSZ/RECL32
       ASSERT(testDA32File%getPad2NextBlk(1_SLK) == 0,'i=1')
       DO i=2,WORDSREC

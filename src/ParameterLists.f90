@@ -1,19 +1,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief This module defines a parameter type object.
 !>
@@ -1644,7 +1635,7 @@ MODULE ParameterLists
               IF(LEN(pname) >= LEN_TRIM(thisParam%pdat%name)) &
                 pname=thisParam%pdat%name
               CALL toUPPER(pname)
-              
+
               IF(TRIM(pname) == TRIM(thisname)) THEN
                 !Found the match
                 tmpParam => thisParam%pdat
@@ -1832,7 +1823,7 @@ MODULE ParameterLists
                   EXIT
                 ENDIF
               ENDDO
-              
+
               IF(.NOT.ASSOCIATED(tmpParam)) THEN
                 !Copy the parameter list to a temporary
                 ALLOCATE(tmpList(np))
@@ -3139,7 +3130,7 @@ MODULE ParameterLists
       CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i,j
       TYPE(StringType) :: sprefix,sdtype
-      
+
 
       IF(LEN_TRIM(thisParam%name) > 0) THEN
         IF(PRESENT(prefix)) sprefix=prefix

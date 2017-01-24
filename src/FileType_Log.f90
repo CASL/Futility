@@ -1,25 +1,16 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief Utility module for I/O defines the derived type for a Log File object.
 !>
 !> The log file type is an extension of the Fortran file type. Specifically it
 !> is a write-only text file that overwrites any existing file when opened. The
-!> purpose of the log file is to provide a log of the execution of a program or 
+!> purpose of the log file is to provide a log of the execution of a program or
 !> subprogram. It provides additional methods for @ref FileType_Log::
 !> message_log_file "message" which writes a message to the log file and
 !> optionally to the prompt. The @ref FileType_Log::echo_log_file "setEcho"
@@ -28,8 +19,8 @@
 !> input to over-ride the value of @c %echostat. This module is considered to be
 !> an I/O utility module so it's public members should be accessed through @ref
 !> IOutil "IOutil". This module should not be used directly except when it is
-!> needed by another I/O utility module. This module is tested by 
-!> @c testIOutil.f90 and the coverage report can be found at the @ref 
+!> needed by another I/O utility module. This module is tested by
+!> @c testIOutil.f90 and the coverage report can be found at the @ref
 !> CodeCoverageReports "Code Coverage Reports" page. An example of how to use
 !> the log file type is provided below and in the test.
 !>
@@ -45,7 +36,7 @@
 !> @par EXAMPLES
 !> @code
 !> PROGRAM FileExample
-!> 
+!>
 !> USE IOutil
 !> IMPLICIT NONE
 !>
@@ -70,7 +61,7 @@
 !>   @date 07/15/2011
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE FileType_Log
-  
+
   USE ISO_FORTRAN_ENV
   USE IntrType
   USE ExceptionHandler
@@ -79,24 +70,24 @@ MODULE FileType_Log
   USE FileType_Fortran
   IMPLICIT NONE
   PRIVATE
-  
+
   !List of Public Members
   PUBLIC :: LogFileType
-  
+
   !> Module name for error messages
   CHARACTER(LEN=*),PARAMETER :: modName='FILETYPE_LOG'
   !> Scratch variable for exception messages of this module
   CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: emesg
   !> Scratch variable for IOSTAT values
   INTEGER(SIK) :: ioerr
-  
+
   !> @brief Derived type object for a log file, it is an extension of the @ref
   !> FileType_Fortran "FortranFileType" object.
   !>
-  !> This type provides two new attributes to the @ref FileType_Fortran 
+  !> This type provides two new attributes to the @ref FileType_Fortran
   !> "FortranFileType" for an echo status and a timer. It overwrites the methods
-  !> for @ref FileType_Log::init_log_file "initialize" and @ref 
-  !> FileType_Log::clear_log_file "clear", and provides @ref 
+  !> for @ref FileType_Log::init_log_file "initialize" and @ref
+  !> FileType_Log::clear_log_file "clear", and provides @ref
   !> FileType_Log::message_log_file "message", @ref FileType_Log::echo_log_file
   !> "setEcho", and @ref FileType_Log::isecho_log_file "isEcho".
   TYPE,EXTENDS(FortranFileType) :: LogFileType
@@ -123,7 +114,7 @@ MODULE FileType_Log
       !> @copydetails FileType_Log::isecho_log_file
       PROCEDURE,PASS :: isEcho => isecho_log_file
   ENDTYPE LogFileType
-  
+
 !
 !===============================================================================
   CONTAINS
@@ -154,7 +145,7 @@ MODULE FileType_Log
       CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: pad
       INTEGER(SIK),OPTIONAL,INTENT(IN) :: recl
       CHARACTER(LEN=LEN(file)) :: fname
-      
+
       fname=''
       IF(PRESENT(status)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
         ' - Optional input "STATUS" is being ignored. Value is "REPLACE".')
@@ -170,15 +161,15 @@ MODULE FileType_Log
         ' - Optional input "POSITION" is being ignored. Value is "ASIS".')
       IF(PRESENT(recl)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
         ' - Optional input "RECL" is being ignored. File is "SEQUENTIAL".')
-      
+
       !Initialize the timer for the log file
       CALL fileobj%timer%setTimerHiResMode(.TRUE.)
       CALL getFileName(file,fname,fileobj%e)
       CALL fileobj%timer%setTimerName('Log_'//TRIM(fname)//'_Timer')
-      
+
       !Initialize the rest of the log file
       CALL init_fortran_file(fileobj,unit,file,'REPLACE','SEQUENTIAL', &
-        'FORMATTED','ASIS','WRITE')  
+        'FORMATTED','ASIS','WRITE')
     ENDSUBROUTINE init_log_file
 !
 !-------------------------------------------------------------------------------
@@ -215,7 +206,7 @@ MODULE FileType_Log
 !> @brief Returns the echo status of the log file object
 !> @param file log file object.
 !> @returns bool the logical value of the echo status
-!> 
+!>
     PURE FUNCTION isecho_log_file(file) RESULT(bool)
       CLASS(LogFileType),INTENT(IN) :: file
       LOGICAL(SBK) :: bool
@@ -230,7 +221,7 @@ MODULE FileType_Log
 !>        time to @c mesg
 !> @param echo optional logical of whether or not to echo the message to the
 !>        prompt as well. This overrides the echo status of the file object.
-!> 
+!>
     SUBROUTINE message_log_file(file,mesg,timestamp,echo)
       CHARACTER(LEN=*),PARAMETER :: myName='MESSAGE_LOG_FILE'
       CLASS(LogFileType),INTENT(INOUT) :: file
@@ -239,7 +230,7 @@ MODULE FileType_Log
       LOGICAL(SBK),OPTIONAL,INTENT(IN) :: echo
       LOGICAL(SBK) :: echostat
       LOGICAL(SBK) :: tstat
-      
+
       echostat=file%echostat
       IF(PRESENT(echo)) echostat=echo
       tstat=.FALSE.

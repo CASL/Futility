@@ -1,31 +1,22 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testGeom_Box
 #include "UnitTest.h"
-  USE ISO_FORTRAN_ENV  
+  USE ISO_FORTRAN_ENV
   USE UnitTest
   USE IntrType
   USE Constants_Conversion
   USE ParameterLists
   USE Geom
-  
+
   IMPLICIT NONE
-  
+
   TYPE(PointType) :: point
   TYPE(PointType) :: points(2),points2(2),points3(2)
   TYPE(LineType) :: line1,lines(2)
@@ -35,11 +26,11 @@ PROGRAM testGeom_Box
   REAL(SRK) :: e_2d(2),e_3d(3),u1_2d(2),u2_2d(2),u3_2d(2)
   REAL(SRK) :: u1_3d(3),u2_3d(3),u3_3d(3)
   LOGICAL(SBK) :: bool
-  
+
   CREATE_TEST('Test Geom')
   CALL eParams%setQuietMode(.TRUE.)
   CALL eParams%setStopOnError(.FALSE.)
-  
+
   REGISTER_SUBTEST('Test OB Box',TestOBBox)
 
   FINALIZE_TEST()
@@ -47,7 +38,7 @@ PROGRAM testGeom_Box
 !===============================================================================
   CONTAINS
 !
-!-------------------------------------------------------------------------------    
+!-------------------------------------------------------------------------------
     SUBROUTINE TestOBBox
       TYPE(ParamType) :: params
     !Test for clear
@@ -60,11 +51,11 @@ PROGRAM testGeom_Box
       box%u(3,:)=(/0._SRK,0._SRK,1._SRK/)
       box%e=1._SRK
       CALL box%clear()
-      
+
       bool = .NOT.(ANY(box%u /= 0.0_SRK) .OR. ANY(box%e /= 0.0_SRK) &
                    .OR. box%p0%dim /= 0 .OR. ALLOCATED(box%p0%coord))
       ASSERT(bool,'box%clear()')
-      
+
     !Test for set
       COMPONENT_TEST('%set()')
       !input check
@@ -124,11 +115,11 @@ PROGRAM testGeom_Box
       u1_2d=(/1._SRK,1._SRK/)
       u2_2d=(/-1._SRK,1._SRK/)
       CALL box%set(point,(/1._SRK,1._SRK/),u1_2d,u2_2d)
-      
+
       CALL points(1)%init(COORD=(/0._SRK,0._SRK,0._SRK/))
       CALL points(2)%init(COORD=(/0._SRK,8._SRK,0._SRK/))
       CALL line1%set(points(1),points(2))
-      
+
       CALL points2(1)%clear()
       CALL points2(2)%clear()
       CALL box%intersectLine(line1,points2(1),points2(2))
@@ -139,7 +130,7 @@ PROGRAM testGeom_Box
       u1_2d=(/1._SRK,1._SRK/)
       u2_2d=(/-1._SRK,1._SRK/)
       CALL box%set(point,(/SQRT(2._SRK),8._SRK/),u1_2d,u2_2d)
-      
+
       !Normal
       CALL line1%clear()
       CALL points(1)%clear()
@@ -147,7 +138,7 @@ PROGRAM testGeom_Box
       CALL points(1)%init(COORD=(/0._SRK,0._SRK/))
       CALL points(2)%init(COORD=(/0._SRK,8._SRK/))
       CALL line1%set(points(1),points(2))
-      
+
       CALL points2(1)%clear()
       CALL points2(2)%clear()
       CALL box%intersectLine(line1,points2(1),points2(2))
@@ -160,7 +151,7 @@ PROGRAM testGeom_Box
       CALL points(1)%init(COORD=(/1._SRK,1._SRK/))
       CALL points(2)%init(COORD=(/2._SRK,2._SRK/))
       CALL line1%set(points(1),points(2))
-      
+
       CALL points2(1)%clear()
       CALL points2(2)%clear()
       CALL box%intersectLine(line1,points2(1),points2(2))
@@ -174,7 +165,7 @@ PROGRAM testGeom_Box
       CALL points(1)%init(COORD=(/2._SRK,0._SRK/))
       CALL points(2)%init(COORD=(/2._SRK,2._SRK/))
       CALL line1%set(points(1),points(2))
-      
+
       CALL points2(1)%clear()
       CALL points2(2)%clear()
       CALL box%intersectLine(line1,points2(1),points2(2))
@@ -203,20 +194,20 @@ PROGRAM testGeom_Box
       !  WRITE(*,*) 'CALL box%intersectLine(...) FAILED! 2D'
       !  STOP 666
       !ENDIF
-      
+
       !No point
       CALL points(1)%clear()
       CALL points(2)%clear()
       CALL points(1)%init(COORD=(/3._SRK,0._SRK/))
       CALL points(2)%init(COORD=(/3._SRK,2._SRK/))
       CALL line1%set(points(1),points(2))
-      
+
       CALL points2(1)%clear()
       CALL points2(2)%clear()
       CALL box%intersectLine(line1,points2(1),points2(2))
       bool = .NOT.(points2(1)%dim /= -3 .OR. points2(2)%dim /= -3)
       ASSERT(bool, 'box%intersectLine(...)')
-      
+
       !Test for intersection (3D normal box)
       CALL box%clear()
       CALL point%clear()
@@ -225,7 +216,7 @@ PROGRAM testGeom_Box
       u2_3d=(/-1._SRK,1._SRK,0._SRK/)
       u3_3d=(/0._SRK,0._SRK,1._SRK/)
       CALL box%set(point,(/SQRT(2._SRK),8._SRK,2._SRK/),u1_3d,u2_3d,u3_3d)
-      
+
       !Normal
       CALL line1%clear()
       CALL points(1)%clear()
@@ -233,21 +224,21 @@ PROGRAM testGeom_Box
       CALL points(1)%init(COORD=(/0._SRK,0._SRK,1._SRK/))
       CALL points(2)%init(COORD=(/0._SRK,8._SRK,1._SRK/))
       CALL line1%set(points(2),points(1))
-      
+
       CALL points2(1)%clear()
       CALL points2(2)%clear()
       CALL box%intersectLine(line1,points2(1),points2(2))
       bool = .NOT.(ANY(.NOT.(points2(2)%coord .APPROXEQ. (/0._SRK,2._SRK,1._SRK/))) &
                    .OR. ANY(.NOT.(points2(1)%coord .APPROXEQ. (/0._SRK,4._SRK,1._SRK/))))
       ASSERT(bool, 'box%intersectLine(...)')
-      
+
       !Parallel
       CALL points(1)%clear()
       CALL points(2)%clear()
       CALL points(1)%init(COORD=(/1._SRK,1._SRK,1._SRK/))
       CALL points(2)%init(COORD=(/2._SRK,2._SRK,1._SRK/))
       CALL line1%set(points(1),points(2))
-      
+
       CALL points2(1)%clear()
       CALL points2(2)%clear()
       CALL box%intersectLine(line1,points2(1),points2(2))
@@ -261,21 +252,21 @@ PROGRAM testGeom_Box
       CALL points(1)%init(COORD=(/2._SRK,0._SRK,1._SRK/))
       CALL points(2)%init(COORD=(/2._SRK,2._SRK,1._SRK/))
       CALL line1%set(points(1),points(2))
-      
+
       CALL points2(1)%clear()
       CALL points2(2)%clear()
       CALL box%intersectLine(line1,points2(1),points2(2))
       bool = .NOT.(.NOT.(ANY(points2(1)%coord .APPROXEQ. (/2._SRK,2._SRK,1._SRK/))) &
                    .OR. .NOT.(ANY(points2(2)%coord .APPROXEQ. (/2._SRK,2._SRK,1._SRK/))))
       ASSERT(bool, 'box%intersectLine(...)')
-        
+
       !one point
       CALL points(1)%clear()
       CALL points(2)%clear()
       CALL points(1)%init(COORD=(/0._SRK,0._SRK,1._SRK/))
       CALL points(2)%init(COORD=(/0._SRK,3._SRK,1._SRK/))
       CALL line1%set(points(1),points(2))
-      
+
       !CALL points2(1)%clear()
       !CALL points2(2)%clear()
       !CALL box%intersectLine(line1,points2(1),points2(2))
@@ -284,7 +275,7 @@ PROGRAM testGeom_Box
       !  WRITE(*,*) 'CALL box%intersectLine(...) FAILED! 3D'
       !  STOP 666
       !ENDIF
-          
+
       !Test for intersection (3D box: one extention is zero)
       CALL box%clear()
       CALL point%clear()
@@ -293,36 +284,36 @@ PROGRAM testGeom_Box
       u2_3d=(/-1._SRK,1._SRK,0._SRK/)
       u3_3d=(/0._SRK,0._SRK,1._SRK/)
       CALL box%set(point,(/SQRT(2._SRK),8._SRK,0._SRK/),u1_3d,u2_3d,u3_3d)
-      
+
       !one point
       CALL points(1)%clear()
       CALL points(2)%clear()
       CALL points(1)%init(COORD=(/0._SRK,3._SRK,0._SRK/))
       CALL points(2)%init(COORD=(/0._SRK,3._SRK,1._SRK/))
       CALL line1%set(points(1),points(2))
-      
+
       CALL points2(1)%clear()
       CALL points2(2)%clear()
       CALL box%intersectLine(line1,points2(1),points2(2))
       bool = .NOT.(.NOT.(ANY(points2(1)%coord .APPROXEQ. (/0._SRK,3._SRK,0._SRK/))) &
                    .OR. .NOT.(ANY(points2(2)%coord .APPROXEQ. (/0._SRK,3._SRK,0._SRK/))))
       ASSERT(bool, 'box%intersectLine(...)')
-      
+
       !No point
       CALL points(1)%clear()
       CALL points(2)%clear()
       CALL points(1)%init(COORD=(/0._SRK,1._SRK,0._SRK/))
       CALL points(2)%init(COORD=(/0._SRK,1._SRK,1._SRK/))
       CALL line1%set(points(1),points(2))
-      
+
       CALL points2(1)%clear()
       CALL points2(2)%clear()
       CALL box%intersectLine(line1,points2(1),points2(2))
       bool = .NOT.(points2(1)%dim /= -3 .AND. points2(2)%dim /= -3)
       ASSERT(bool, 'box%intersectLine(...)')
-      
+
 !
-!Test hasPoint      
+!Test hasPoint
       COMPONENT_TEST('%inside()')
       CALL box%clear()
       CALL point%clear()
@@ -336,7 +327,7 @@ PROGRAM testGeom_Box
       CALL point%clear()
       CALL point%init(DIM=2,X=-10.0_SRK,Y=-0.5_SRK)
       ASSERT(.NOT.box%inside(point),'%hasPoint')
-      
+
       CALL box%clear()
       CALL point%clear()
       CALL point%init(DIM=2,X=0.5_SRK,Y=0.5_SRK)
@@ -349,9 +340,9 @@ PROGRAM testGeom_Box
       CALL point%clear()
       CALL point%init(DIM=2,X=0.0_SRK,Y=-0.5_SRK)
       ASSERT(.NOT.box%inside(point),'%hasPoint')
-      
 
-      
+
+
       !Test for equivalence operation (implicitly tests assignment operation)
       COMPONENT_TEST('OPERATOR(==)')
       box2=box
@@ -373,7 +364,7 @@ PROGRAM testGeom_Box
       CALL boxs(1)%set(point,(/SQRT(2._SRK),8._SRK/),u1_2d,u2_2d)
       boxs(2)=boxs(1)
       CALL boxs%clear()
-      
+
       bool = .NOT.(ANY(boxs(1)%u /= 0.0_SRK).OR. ANY(boxs(1)%e /= 0.0_SRK) &
                    .OR. boxs(1)%p0%dim /= 0 .OR. ALLOCATED(boxs(1)%p0%coord) &
                    .OR. ANY(boxs(2)%u /= 0.0_SRK).OR. ANY(boxs(2)%e /= 0.0_SRK) &
@@ -384,14 +375,14 @@ PROGRAM testGeom_Box
       COMPONENT_TEST('Elemental %intersectLine()')
       CALL boxs(1)%set(point,(/SQRT(2._SRK),8._SRK/),u1_2d,u2_2d)
       boxs(2)=boxs(1)
-      
+
       CALL lines%clear()
       CALL points%clear()
       CALL points(1)%init(COORD=(/0._SRK,0._SRK/))
       CALL points(2)%init(COORD=(/0._SRK,8._SRK/))
       CALL lines(1)%set(points(1),points(2))
       lines(2)=lines(1)
-      
+
       CALL points2%clear()
       CALL points3%clear()
       CALL boxs%intersectLine(lines,points2,points3)

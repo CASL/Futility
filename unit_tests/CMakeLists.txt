@@ -1,13 +1,11 @@
-################################################################################
-#
-# CMake Configuration File for MPACT unit tests
-#
-# Description: Adds the subdirectories for the unit tests
-#
-# Author: Derek Lax, Brendan Kochunas
-#   Date: 06/05/2012
-#
-################################################################################
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
+#                          Futility Development Group                          !
+#                             All rights reserved.                             !
+#                                                                              !
+# Futility is a jointly-maintained, open-source project between the University !
+# of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+# can be found in LICENSE.txt in the head directory of this repository.        !
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 
 # List the names of all the tests (same as subdirectory)
 # The order of the names is reflective of the hierarchy of the code dependencies.

@@ -1,19 +1,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief Provides Morton order (also known as Z-order) space filling curve
 !> functions and data structures.
@@ -1076,9 +1067,9 @@ MODULE MortonOrdering
     CLASS(ZTreeNodeType),INTENT(IN) :: thisZTreeNode
     INTEGER(SIK),ALLOCATABLE,INTENT(INOUT) :: avail_parts(:)
     INTEGER(SIK) :: il,nlevels
-    
+
     IF(ALLOCATED(avail_parts)) DEALLOCATE(avail_parts)
-    
+
     !Determine the number of levels for which there are partitions
     nlevels=thisZTreeNode%getMaxLevels(0)
     IF(nlevels > 0) THEN
@@ -1086,7 +1077,7 @@ MODULE MortonOrdering
       DO il=1,nlevels-1
         avail_parts(il)=thisZTreeNode%getNDomains(il)
       ENDDO
-      
+
       !The last level may be incomplete for some trees, so we just specify
       !the last level as the total number of leafs in the tree
       !(which is always valid)

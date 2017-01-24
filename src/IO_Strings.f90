@@ -1,19 +1,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief Utility module for I/O providing routines for manipulating strings.
 !>
@@ -175,7 +166,7 @@ MODULE IO_Strings
     !> @copydetails IO_Strings::getFileParts_string
     MODULE PROCEDURE getFileParts_string
   ENDINTERFACE getFileParts
-  
+
   !> @brief Generic interface to get the file name.
   !>
   !> This interfaces is presently redundant but is provided on the
@@ -185,7 +176,7 @@ MODULE IO_Strings
     !> @copydetails IO_Strings::getPath_string
     MODULE PROCEDURE getPath_string
   ENDINTERFACE getFilePath
-  
+
   !> @brief Generic interface to get the file name.
   !>
   !> This interfaces is presently redundant but is provided on the
@@ -195,7 +186,7 @@ MODULE IO_Strings
     !> @copydetails IO_Strings::getFileName_string
     MODULE PROCEDURE getFileName_string
   ENDINTERFACE getFileName
-  
+
   !> @brief Generic interface to get the extension of a file name.
   !>
   !> This interfaces is presently redundant but is provided on the
@@ -205,7 +196,7 @@ MODULE IO_Strings
     !> @copydetails IO_Strings::getFileNameExt_string
     MODULE PROCEDURE getFileNameExt_string
   ENDINTERFACE getFileNameExt
-  
+
   !> @brief Generic interface for strmatch
   !>
   !> This interfaces allows for the input argument to be either a
@@ -218,7 +209,7 @@ MODULE IO_Strings
     !> @copydetails IO_Strings::strmatch_string
     MODULE PROCEDURE strmatch_string
   ENDINTERFACE strmatch
-  
+
   !> @brief Generic interface for strrep
   !>
   !> This interfaces allows for the input argument to be either a
@@ -231,7 +222,7 @@ MODULE IO_Strings
     !> @copydetails IO_Strings::strrep_string_char_char
     MODULE PROCEDURE strrep_string_char_char
   ENDINTERFACE strrep
-  
+
   !> @brief Generic interface for toUPPER
   !>
   !> This interfaces allows for the input argument to be either a
@@ -244,7 +235,7 @@ MODULE IO_Strings
     !> @copydetails IO_Strings::toUPPER_string
     MODULE PROCEDURE toUPPER_string
   ENDINTERFACE toUPPER
-  
+
   !> @brief Generic interface for nFields
   !>
   !> This interfaces allows for the input argument to be either a
@@ -257,7 +248,7 @@ MODULE IO_Strings
     !> @copydetails IO_Strings::nFields_string
     MODULE PROCEDURE nFields_string
   ENDINTERFACE nFields
-  
+
   !> @brief Generic interface for getField
   !>
   !> This interfaces allows for the input argument to be either a
@@ -282,7 +273,7 @@ MODULE IO_Strings
     !> @copydetails IO_Strings::getField_string_real
     MODULE PROCEDURE getField_string_real
   ENDINTERFACE getField
-  
+
   !> @brief Generic interface for strarraymatch
   !>
   !> This interfaces allows for the input argument to be either a
@@ -295,7 +286,7 @@ MODULE IO_Strings
     !> @copydetails IO_Strings::strarraymatch_string
     MODULE PROCEDURE strarraymatch_string
   ENDINTERFACE strarraymatch
-  
+
   !> @brief Generic interface for strarraymatch
   !>
   !> This interfaces allows for the input argument to be either a
@@ -344,7 +335,7 @@ MODULE IO_Strings
     MODULE PROCEDURE getRealFormat_str_str
   ENDINTERFACE getRealFormat
 !
-!===============================================================================      
+!===============================================================================
   CONTAINS
 !
 !-------------------------------------------------------------------------------
@@ -385,7 +376,7 @@ MODULE IO_Strings
           substring=string
         ENDIF
       ELSE
-        substring=' '  
+        substring=' '
       ENDIF
     ENDSUBROUTINE getSubstring
 !
@@ -508,20 +499,20 @@ MODULE IO_Strings
     ENDFUNCTION strmatch_char
 !
 !-------------------------------------------------------------------------------
-!> @brief Returns whether or not a substring @c pattern is found within @c 
+!> @brief Returns whether or not a substring @c pattern is found within @c
 !> string
 !> @param string the string to search
 !> @param pattern the substring to find
 !> @returns bool whether or not @c pattern was found in @c string
 !>
-!> @note Does not handle trailing spaces that can be eliminated by TRIM() so 
+!> @note Does not handle trailing spaces that can be eliminated by TRIM() so
 !> strings should be trimmed when passing into function.
 !>
     PURE FUNCTION strmatch_string(string,pattern) RESULT(bool)
       TYPE(StringType),INTENT(IN) :: string
       CHARACTER(LEN=*),INTENT(IN) :: pattern
       LOGICAL(SBK) :: bool
-      
+
       bool=strmatch_char(CHAR(string),pattern)
     ENDFUNCTION strmatch_string
 !
@@ -694,7 +685,7 @@ MODULE IO_Strings
     ENDFUNCTION nFields_char
 !
 !-------------------------------------------------------------------------------
-!> @brief Counts the number of non-blank entries on a line. An "entry" is 
+!> @brief Counts the number of non-blank entries on a line. An "entry" is
 !> recognized as a character that is not a space that precedes a space.
 !> @param aline input a StringType
 !> @returns nfields output value for number of fields
@@ -728,7 +719,7 @@ MODULE IO_Strings
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierrout
       INTEGER(SIK) :: j,ioerr,nf
       CHARACTER(LEN=LEN(string)) :: temp,temp2
-                 
+
       temp=string
       temp2=''
       nf=nFields(temp)
@@ -830,7 +821,7 @@ MODULE IO_Strings
       CHARACTER(LEN=LEN_TRIM(string)) :: char_field
 
       CALL getField_char_char(i,CHAR(string),char_field,ierrout)
-      IF(ierrout == 0) READ(char_field,*,IOSTAT=ierrout) field 
+      IF(ierrout == 0) READ(char_field,*,IOSTAT=ierrout) field
     ENDSUBROUTINE getField_string_int
 !
 !-------------------------------------------------------------------------------
@@ -850,7 +841,7 @@ MODULE IO_Strings
       CHARACTER(LEN=LEN_TRIM(string)) :: char_field
 
       CALL getField_char_char(i,CHAR(string),char_field,ierrout)
-      IF(ierrout == 0) READ(char_field,*,IOSTAT=ierrout) field 
+      IF(ierrout == 0) READ(char_field,*,IOSTAT=ierrout) field
     ENDSUBROUTINE getField_string_real
 !
 !-------------------------------------------------------------------------------
@@ -899,7 +890,7 @@ MODULE IO_Strings
 !> @param fname output string with the filename
 !> @param ext output string with the filename extension (including the '.')
 !>
-!> This is a wrapper routine for @ref IO_Strings::getFileParts_char 
+!> This is a wrapper routine for @ref IO_Strings::getFileParts_char
 !> "getFileParts_char".
 !>
 !> See also: @ref IO_Strings::getFileParts_char "getFileParts_char"
@@ -913,7 +904,7 @@ MODULE IO_Strings
       CHARACTER(LEN=LEN(string)) :: pathchar
       CHARACTER(LEN=LEN(string)) :: fnamechar
       CHARACTER(LEN=LEN(string)) :: extchar
-      
+
       CALL getFileParts_char(string,pathchar,fnamechar,extchar,e)
       path=pathchar
       fname=fnamechar
@@ -1050,13 +1041,13 @@ MODULE IO_Strings
     ENDFUNCTION printCentered
 !
 !-------------------------------------------------------------------------------
-!> @brief Returns whether or not a substring @c pattern is found within @c 
+!> @brief Returns whether or not a substring @c pattern is found within @c
 !> string array
 !> @param string the stringarray to search
 !> @param pattern the substring to find
 !> @returns bool whether or not @c pattern was found in @c string
 !>
-!> @note Does not handle trailing spaces that can be eliminated by TRIM() so 
+!> @note Does not handle trailing spaces that can be eliminated by TRIM() so
 !> strings should be trimmed when passing into function.
 !>
     PURE FUNCTION strarraymatch_char(string,pattern) RESULT(bool)
@@ -1064,7 +1055,7 @@ MODULE IO_Strings
       CHARACTER(LEN=*),INTENT(IN) :: pattern
       LOGICAL(SBK) :: bool
       INTEGER(SIK) :: i
-      
+
       bool=.FALSE.
       DO i=1,SIZE(string,DIM=1)
         bool=strmatch(string(i),pattern)
@@ -1073,14 +1064,14 @@ MODULE IO_Strings
     ENDFUNCTION strarraymatch_char
 !
 !-------------------------------------------------------------------------------
-!> @brief Returns whether or not a substring @c pattern is found within @c 
+!> @brief Returns whether or not a substring @c pattern is found within @c
 !> string array
 !> @param string the stringarray to search
 !> @param pattern the substring to find
-!> @returns ind the index in string array @c string where the substring was 
+!> @returns ind the index in string array @c string where the substring was
 !> found.
 !>
-!> @note Does not handle trailing spaces that can be eliminated by TRIM() so 
+!> @note Does not handle trailing spaces that can be eliminated by TRIM() so
 !> strings should be trimmed when passing into function.
 !>
     PURE FUNCTION strarraymatch_string(string,pattern) RESULT(bool)
@@ -1088,7 +1079,7 @@ MODULE IO_Strings
       CHARACTER(LEN=*),INTENT(IN) :: pattern
       LOGICAL(SBK) :: bool
       INTEGER(SIK) :: i
-      
+
       bool=.FALSE.
       DO i=1,SIZE(string,DIM=1)
         bool=strmatch(CHAR(string(i)),pattern)
@@ -1097,14 +1088,14 @@ MODULE IO_Strings
     ENDFUNCTION strarraymatch_string
 !
 !-------------------------------------------------------------------------------
-!> @brief Returns the index where a substring @c pattern is found within @c 
+!> @brief Returns the index where a substring @c pattern is found within @c
 !> string array.
 !> @param string the stringarray to search
 !> @param pattern the substring to find
-!> @returns ind the index in string array @c string where the substring was 
+!> @returns ind the index in string array @c string where the substring was
 !> found.
 !>
-!> @note Does not handle trailing spaces that can be eliminated by TRIM() so 
+!> @note Does not handle trailing spaces that can be eliminated by TRIM() so
 !> strings should be trimmed when passing into function.
 !>
     PURE FUNCTION strarraymatchind_char(string,pattern) RESULT(ind)
@@ -1112,7 +1103,7 @@ MODULE IO_Strings
       CHARACTER(LEN=*),INTENT(IN) :: pattern
       LOGICAL(SBK) :: bool
       INTEGER(SIK) :: i,ind
-      
+
       ind=-1
       DO i=1,SIZE(string,DIM=1)
         bool=strmatch(string(i),pattern)
@@ -1124,13 +1115,13 @@ MODULE IO_Strings
     ENDFUNCTION strarraymatchind_char
 !
 !-------------------------------------------------------------------------------
-!> @brief Returns the index where a substring @c pattern is found within @c 
+!> @brief Returns the index where a substring @c pattern is found within @c
 !> string array.
 !> @param string the stringarray to search
 !> @param pattern the substring to find
 !> @returns bool whether or not @c pattern was found in @c string
 !>
-!> @note Does not handle trailing spaces that can be eliminated by TRIM() so 
+!> @note Does not handle trailing spaces that can be eliminated by TRIM() so
 !> strings should be trimmed when passing into function.
 !>
     PURE FUNCTION strarraymatchind_string(string,pattern) RESULT(ind)
@@ -1138,7 +1129,7 @@ MODULE IO_Strings
       CHARACTER(LEN=*),INTENT(IN) :: pattern
       LOGICAL(SBK) :: bool
       INTEGER(SIK) :: i,ind
-      
+
       ind=-1
       DO i=1,SIZE(string,DIM=1)
         bool=strmatch(string(i),pattern)
@@ -1313,7 +1304,7 @@ MODULE IO_Strings
     ENDSUBROUTINE getRealFormat_str_str
 !
 !-------------------------------------------------------------------------------
-!> @brief Private routine replaces slash character in file path names with 
+!> @brief Private routine replaces slash character in file path names with
 !> the system appropriate file separator slash.
 !>
     PURE SUBROUTINE SlashRep(string)

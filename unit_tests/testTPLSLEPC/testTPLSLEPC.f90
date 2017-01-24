@@ -1,28 +1,19 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testTPLSLEPC
 
   IMPLICIT NONE
-  
+
 #include <finclude/slepc.h>
 #include <finclude/petsc.h>
 #undef IS
-  
+
   !define precision kinds
   INTEGER,PARAMETER :: N_INT_ORDER=8
   INTEGER,PARAMETER :: N_LONG_ORDER=18
@@ -47,10 +38,10 @@ PROGRAM testTPLSLEPC
 
   !define error code
   PetscErrorCode  :: ierr
-  
+
   CALL SlepcInitialize(PETSC_NULL_CHARACTER,ierr)
   CALL MPI_Comm_rank(PETSC_COMM_WORLD,rank,ierr)
-  
+
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING SLEPC TPL...'
   WRITE(*,*) '==================================================='
@@ -64,7 +55,7 @@ PROGRAM testTPLSLEPC
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING SLEPC TPL PASSED!'
   WRITE(*,*) '==================================================='
-  
+
   CALL SlepcFinalize(ierr)
 
 !
@@ -84,10 +75,10 @@ PROGRAM testTPLSLEPC
     Mat A
     EPS eps
     EPSType tname
-    
+
     !set reference values
-    refeig(1)=3.996206657474086_SRK         
-    refeig(2)=3.984841019343870_SRK        
+    refeig(1)=3.996206657474086_SRK
+    refeig(2)=3.984841019343870_SRK
     refeig(3)=3.965946199367805_SRK
     referr(1)=4.303631495901956E-10_SRK
     referr(2)=2.086312056401549E-09_SRK
@@ -123,7 +114,7 @@ PROGRAM testTPLSLEPC
       call MatSetValues(A,i1,i,i2,col,value,INSERT_VALUES,ierr)
       Istart = Istart+1
     ENDIF
-    IF(Iend == n) THEN 
+    IF(Iend == n) THEN
       i = n-1
       col(1) = n-2
       col(2) = n-1
@@ -144,7 +135,7 @@ PROGRAM testTPLSLEPC
 
     CALL MatAssemblyBegin(A,MAT_FINAL_ASSEMBLY,ierr)
     CALL MatAssemblyEnd(A,MAT_FINAL_ASSEMBLY,ierr)
-    
+
 ! Create eigensolver and print basic info
 
     ! create eigensolver
@@ -156,9 +147,9 @@ PROGRAM testTPLSLEPC
 
     ! Set solver parameters at runtime
     CALL EPSSetFromOptions(eps,ierr)
-      
+
 ! Solve the eigensystem
-    CALL EPSSolve(eps,ierr) 
+    CALL EPSSolve(eps,ierr)
     CALL EPSGetIterationNumber(eps,its,ierr)
     IF(rank == 0) THEN
       WRITE(*,'(A,I4)') '    Number of iterations of the method:',its
@@ -177,7 +168,7 @@ PROGRAM testTPLSLEPC
     IF(rank == 0) THEN
       WRITE(*,'(A,E10.4,A,I4)') '    Stopping condition: tol= ',tol,', maxit=',maxit
     ENDIF
-      
+
 ! Display solution and clean up
     ! Get number of converged eigenpairs
     CALL EPSGetConverged(eps,nconv,ierr)
@@ -192,7 +183,7 @@ PROGRAM testTPLSLEPC
         WRITE(*,*) '    ----------------- ------------------'
       ENDIF
       DO i=0,nconv-1
-        ! Get converged eigenpairs: i-th eigenvalue is stored in kr 
+        ! Get converged eigenpairs: i-th eigenvalue is stored in kr
         ! (real part) and ki (imaginary part)
         CALL EPSGetEigenpair(eps,i,kr,ki,PETSC_NULL_OBJECT,PETSC_NULL_OBJECT,ierr)
 
@@ -221,8 +212,8 @@ PROGRAM testTPLSLEPC
     ! destroy eigensolver and matrix
     CALL EPSDestroy(eps,ierr)
     CALL MatDestroy(A,ierr)
-    
+
   ENDSUBROUTINE testEX1F
-  
+
 ENDPROGRAM testTPLSLEPC
 

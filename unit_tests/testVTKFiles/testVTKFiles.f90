@@ -1,19 +1,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testVTKFiles
 #include "UnitTest.h"
@@ -21,9 +12,9 @@ PROGRAM testVTKFiles
   USE IntrType
   USE ExceptionHandler
   USE VTKFiles
-  
+
   IMPLICIT NONE
-  
+
   CHARACTER(LEN=257) :: longstring
   TYPE(ExceptionHandlerType),POINTER,SAVE :: e
   TYPE(VTKMeshType),SAVE :: testVTKMesh, testVTKMesh2
@@ -35,35 +26,35 @@ PROGRAM testVTKFiles
   INTEGER(SIK) :: k,npartfail
 
   CREATE_TEST('Test VTK Files')
-  
+
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING VTKFILES...'
   WRITE(*,*) '==================================================='
-  
+
   ALLOCATE(e)
   CALL e%setStopOnError(.FALSE.)
   CALL e%setQuietMode(.TRUE.)
-  
+
   !Check clear
   CALL testVTKFile%clear()
   CALL testVTKFile%e%addSurrogate(e)
   CALL eVTK%addSurrogate(e)
-  
+
 !Test Initialize and clear
   CALL testVTKFile%initialize(666,'testVTK0.vtk')
   bool = testVTKFile%isInit() .AND. testVTKFile%isOpen()
   ASSERT(bool, 'testVTKFile%initialize(...)')
   WRITE(*,*) '  Passed: CALL testVTKFile%initialize(...) 0'
-  
+
   !Error check
   CALL testVTKFile%initialize(666,'testVTK1.vtk',STATUS='testVTK1')
-  
+
   CALL testVTKFile%clear(.TRUE.)
   CALL testVTKFile%e%addSurrogate(e)
   bool = .NOT.testVTKFile%isInit()
   ASSERT(bool, 'testVTKFile%clear() 0')
   WRITE(*,*) '  Passed: CALL testVTKFile%clear() 0'
-  
+
   CALL testVTKFile%clear()
   CALL testVTKFile%e%addSurrogate(e)
   longstring='testVTK0.vtk'
@@ -100,7 +91,7 @@ PROGRAM testVTKFiles
   testVTKData%vtkDataFormat='double'
   testVTKData%varname='VTK_cellIndex_double'
   CALL testVTKFile%writeScalarData(testVTKData) !write as double
-  
+
   !Error checking/coverage
   testVTKData%vtkDataFormat='char'
   CALL testVTKFile%writeScalarData(testVTKData) !bad data format
@@ -181,7 +172,7 @@ PROGRAM testVTKFiles
   IF(ANY(.NOT.(testVTKMesh%x .APPROXEQ. xref)) .OR. &
      ANY(.NOT.(testVTKMesh%y .APPROXEQ. yref)) .OR. &
      ANY(.NOT.(testVTKMesh%z .APPROXEQ. zref))) THEN
-    
+
     bool = ALL((testVTKMesh%x .APPROXEQA. xref)) .AND. &
            ALL((testVTKMesh%y .APPROXEQA. yref)) .AND. &
            ALL((testVTKMesh%z .APPROXEQA. zref))
@@ -484,7 +475,7 @@ PROGRAM testVTKFiles
         READ(555,*) testVTKMesh%x(i),testVTKMesh%y(i),testVTKMesh%z(i)
       ENDDO
       CLOSE(555)
-      
+
       testVTKMesh%cellList=12
       j=0
       DO i=1,800
@@ -517,7 +508,7 @@ PROGRAM testVTKFiles
         READ(555,*) testVTKMesh%x(i),testVTKMesh%y(i),testVTKMesh%z(i)
       ENDDO
       CLOSE(555)
-      
+
       testVTKMesh%cellList=12
       j=0
       DO i=1,800
@@ -578,7 +569,7 @@ PROGRAM testVTKFiles
 !-------------------------------------------------------------------------------
     SUBROUTINE SetupTest1_Data()
       INTEGER(SIK) :: i
-      
+
       !Initialize VTK data by hand
       testVTKData%varname='VTK_cellIndex_int'
       testVTKData%vtkDataFormat='int'
@@ -595,7 +586,7 @@ PROGRAM testVTKFiles
 !-------------------------------------------------------------------------------
     SUBROUTINE SetupTest4_Data()
       INTEGER(SIK) :: i
-      
+
       !Initialize VTK data by hand
       testVTKData%varname='material'
       testVTKData%vtkDataFormat='int'

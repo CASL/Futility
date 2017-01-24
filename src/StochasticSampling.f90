@@ -1,19 +1,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief Utility module for performing stochastic sampling.
 !>
@@ -64,22 +55,22 @@ MODULE StochasticSampling
   PUBLIC :: RNG_LEcuyer1
   PUBLIC :: RNG_LEcuyer2
   PUBLIC :: RNG_LEcuyer3
-  
+
   ! Ennumeration list for RNG types
   INTEGER(SIK),PARAMETER :: RNG_MCNP_STD=1
   INTEGER(SIK),PARAMETER :: RNG_LEcuyer1=2
   INTEGER(SIK),PARAMETER :: RNG_LEcuyer2=3
-  INTEGER(SIK),PARAMETER :: RNG_LEcuyer3=4 
-  
+  INTEGER(SIK),PARAMETER :: RNG_LEcuyer3=4
+
   !> Maximum length for the name of a random number generator
   INTEGER(SIK),PARAMETER :: MAX_RNG_NAME_LEN=8
-  
+
   !> Pi
   REAL(SRK),PARAMETER,PRIVATE :: PI=3.141592653589793_SRK
-  
+
   !> Name of module
   CHARACTER(LEN=*),PARAMETER :: modName='STOCHASTICSAMPLER'
-  
+
   !> Add description
   TYPE :: RNGdataType
     !> Random Number Data
@@ -95,10 +86,10 @@ MODULE StochasticSampling
     !> Random Number Name
     CHARACTER(LEN=MAX_RNG_NAME_LEN) :: name=''
   ENDTYPE
-  
+
   !> Add description
   INTEGER(SIK),PRIVATE,PARAMETER :: nRN=4
-  
+
   !> Add description
   TYPE(RNGdataType),PRIVATE,PARAMETER :: generators(nRN)=(/ &
            RNGdataType(              5_SLK**19, 0_SLK, 48, 152917_SLK, 5_SLK**19, 'mcnp std'),  &
@@ -106,10 +97,10 @@ MODULE StochasticSampling
            RNGdataType(2806196910506780709_SLK, 1_SLK, 63, 152917_SLK, 1_SLK,     'LEcuyer2'),  &
            RNGdataType(3249286849523012805_SLK, 1_SLK, 63, 152917_SLK, 1_SLK,     'LEcuyer3') /)
   !                           mult              add  log2mod  stride   seed0        name
-    
+
   !> Add description
   TYPE :: StochasticSamplingType
-    !> Initialization status 
+    !> Initialization status
     LOGICAL(SBK) :: isInit=.FALSE.
     !> Random Number Seed
     INTEGER(SLK) :: RNseed=-1
@@ -220,17 +211,17 @@ MODULE StochasticSampling
       INTEGER(SLK),INTENT(IN),OPTIONAL :: skip
       TYPE(MPI_EnvType),INTENT(IN),OPTIONAL :: MPIparallelEnv
       TYPE(OMP_EnvType),INTENT(IN),OPTIONAL :: OMPparallelEnv
-      
+
       INTEGER(SIK) :: mpirank,omprank,nproc,nthread
       INTEGER(SLK) :: myskip,period
       TYPE(RNGdataType) :: RNGdata
-      
+
       mpirank=0
       omprank=0
       nproc=1
       nthread=1
       myskip=0_SLK
-      
+
       RNGdata=generators(RNGid)
 
       IF(PRESENT(MPIparallelEnv)) THEN
@@ -251,9 +242,9 @@ MODULE StochasticSampling
             ' - OMP Env is not initialized, and will not be used.')
         ENDIF
       ENDIF
-      
+
       IF(PRESENT(skip)) myskip=skip
-      
+
       ! Reduced the number of bits for period where add is non-zero to prevent
       ! overflow of the period
       IF(RNGdata%RNadd == 0) THEN
@@ -264,19 +255,19 @@ MODULE StochasticSampling
 
       myskip=myskip+INT(mpirank,SLK)*INT(period/INT(nproc,SLK),SLK)+ &
         INT(omprank,SLK)*INT(period/INT(nproc*nthread,SLK),SLK)
-      
+
       sampler%RNseed=RNGdata%RNseed0
       ! Add checks for constraints on seed0
       IF(PRESENT(seed0)) sampler%RNseed=seed0
-      
+
       IF(myskip /= 0_SLK) sampler%RNseed=RNskip(RNGdata,sampler%RNseed,myskip)
-      
+
       sampler%RNmult=RNGdata%RNmult
       sampler%RNadd=RNGdata%RNadd
       sampler%RNmask=2_SLK**RNGdata%RNlog2mod-1_SLK
       sampler%RNmod=2_SLK**RNGdata%RNlog2mod
       sampler%RNnorm=1.0_SDK/2.0_SDK**RNGdata%RNlog2mod
-      
+
       sampler%isInit=.TRUE.
       sampler%counter=0
     ENDSUBROUTINE init_Sampler
@@ -312,7 +303,7 @@ MODULE StochasticSampling
     ENDFUNCTION rng_Sampler
 !
 !-------------------------------------------------------------------------------
-!> @brief Routine returns a random number from a uniform distribution between a 
+!> @brief Routine returns a random number from a uniform distribution between a
 !> and b
 !> @param sampler the type variable to sample from
 !> @param xmin the minimum value in the uniform distribution
@@ -328,7 +319,7 @@ MODULE StochasticSampling
     ENDFUNCTION unif_Sampler
 !
 !-------------------------------------------------------------------------------
-!> @brief Routine returns a random number from an exponential distribution with 
+!> @brief Routine returns a random number from an exponential distribution with
 !> the coefficient a
 !> @param sampler the type variable to sample from
 !> @param a is the coefficient of the exponential f(x)=a*EXP(-a*x)
@@ -342,7 +333,7 @@ MODULE StochasticSampling
     ENDFUNCTION exp_Sampler
 !
 !-------------------------------------------------------------------------------
-!> @brief Routine returns a random number from a normal distribution with 
+!> @brief Routine returns a random number from a normal distribution with
 !> the mean value xbar and standard deviation sigma
 !> @param sampler the type variable to sample from
 !> @param mu is the mean value
@@ -361,7 +352,7 @@ MODULE StochasticSampling
     ENDFUNCTION norm_Sampler
 !
 !-------------------------------------------------------------------------------
-!> @brief Routine returns a random number from a log-normal distribution with 
+!> @brief Routine returns a random number from a log-normal distribution with
 !> the mean value xbar and standard deviation sigma
 !> @param sampler the type variable to sample from
 !> @param mu is the mean value
@@ -377,7 +368,7 @@ MODULE StochasticSampling
     ENDFUNCTION lognorm_Sampler
 !
 !-------------------------------------------------------------------------------
-!> @brief Routine returns a random number from a Maxwellian distribution with 
+!> @brief Routine returns a random number from a Maxwellian distribution with
 !> the temperature T
 !> @param sampler the type variable to sample from
 !> @param T is the temperature
@@ -396,7 +387,7 @@ MODULE StochasticSampling
     ENDFUNCTION maxw_Sampler
 !
 !-------------------------------------------------------------------------------
-!> @brief Routine returns a random number from a Watt fission distribution with 
+!> @brief Routine returns a random number from a Watt fission distribution with
 !> the coefficients a and b
 !> @param sampler the type variable to sample from
 !> @param a is the coefficient of the Watt fission spectrum
@@ -414,7 +405,7 @@ MODULE StochasticSampling
     ENDFUNCTION watt_Sampler
 !
 !-------------------------------------------------------------------------------
-!> @brief Routine returns a random number from a Evaporation distribution with 
+!> @brief Routine returns a random number from a Evaporation distribution with
 !> the coefficient theta
 !> @param sampler the type variable to sample from
 !> @param thata is the coefficient of the Evaporation spectrum
@@ -441,7 +432,7 @@ MODULE StochasticSampling
       REAL(SDK) :: rn1, sum
       INTEGER(SIK) :: rang
       INTEGER(SIK) :: n
-      
+
       n=SIZE(y,DIM=1)
       rn1=sampler%rng()
       sum=0.0_SDK
@@ -513,18 +504,18 @@ MODULE StochasticSampling
       REAL(SDK) :: rang
       REAL(SDK) :: rn1,rn2,sum
       INTEGER(SIK) :: i,n
-      
+
       n=SIZE(x,DIM=1)-1
-      
+
       rn1=sampler%rng()
       rn2=sampler%rng()
-      
+
       sum=0.0_SDK
       DO i=1,n
         sum=sum+(y(i)+y(i+1))/2*(x(i+1)-x(i))
         IF(rn1 <sum) EXIT
       ENDDO
-      
+
       IF(rn1 < y(i)/(y(i+1)+y(i))) THEN
         rang=x(i+1)-(x(i+1)-x(i))*SQRT(rn2)
       ELSE
@@ -546,7 +537,7 @@ MODULE StochasticSampling
       REAL(SDK) :: rang
       REAL(SDK) :: sum
       INTEGER(SIK) :: i,n
-      
+
       n=SIZE(y,DIM=1)-1
 
       sum=0.0_SDK
@@ -571,7 +562,7 @@ MODULE StochasticSampling
       REAL(SDK),INTENT(IN) :: xmax
       REAL(SDK),INTENT(IN) :: ymax
       REAL(SDK) :: rang
-      
+
       INTERFACE
         FUNCTION func(x)
           IMPORT :: SDK
@@ -603,7 +594,7 @@ MODULE StochasticSampling
       REAL(SDK),INTENT(IN) :: ymax
       REAL(SDK),INTENT(IN) :: arg(:)
       REAL(SDK) :: rang
-      
+
       INTERFACE
         FUNCTION func(x,arg)
           IMPORT :: SDK
@@ -641,7 +632,7 @@ MODULE StochasticSampling
 !      REAL(SDK) :: g, mult
 !      REAL(SDK),ALLOCATABLE :: yscaled(:)
 !      INTEGER(SIK) :: i,n
-!      
+!
 !      INTERFACE
 !        FUNCTION func(x)
 !          IMPORT :: SDK
@@ -649,10 +640,10 @@ MODULE StochasticSampling
 !          REAL(SDK) :: func
 !        ENDFUNCTION
 !      ENDINTERFACE
-!      
+!
 !      n=SIZE(xval,DIM=1)-1
 !      ALLOCATE(yscaled(n+1))
-!      
+!
 !      IF(PRESENT(c)) THEN
 !        mult=c
 !        yscaled=yval
@@ -696,19 +687,19 @@ MODULE StochasticSampling
       ! Local Variables
       INTEGER(SLK) :: newseed
       INTEGER(SLK) :: nskip,gen,g,inc,c,gp,rn,period,mask
-      
+
       mask=ISHFT(NOT(0_SLK),RNGdata%RNlog2mod-64)
       IF(RNGdata%RNadd == 0) THEN
         period=ISHFT(1_SLK,RNGdata%RNlog2mod-2)
       ELSE
         period=ISHFT(1_SLK,RNGdata%RNlog2mod)
       ENDIF
-      
+
       nskip=skip
       DO WHILE(nskip < 0_SLK)
         nskip=nskip+period
       ENDDO
-      
+
       nskip=IAND(nskip,mask)
       gen=1
       g=RNGdata%RNmult

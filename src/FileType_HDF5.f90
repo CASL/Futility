@@ -1,19 +1,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief Utility module for I/O defines the HDF5 file type object.
 !>
@@ -849,13 +840,13 @@ MODULE FileType_HDF5
           CALL h5gopen_f(thisHDF5File%file_id, CHAR(path2), grp_id, error)
           IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
             ' - Unable to open file.')
-  
+
           CALL h5gget_info_f(grp_id, store_type, nlinks, max_corder, error)
           IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
             ' - Unable to get group information.')
-  
+
           ALLOCATE(objs(nlinks))
-  
+
           DO i=0,nlinks-1
             CALL h5lget_name_by_idx_f(thisHDF5File%file_id,CHAR(path2), &
                 H5_INDEX_NAME_F,H5_ITER_INC_F,i,tmpchar,error)
@@ -863,7 +854,7 @@ MODULE FileType_HDF5
             IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
             ' - Unable to get object name.')
           ENDDO
-  
+
           CALL h5gclose_f(grp_id, error)
           IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
             ' - Unable to close group.')
@@ -1036,7 +1027,7 @@ MODULE FileType_HDF5
 !> @param bool the logical result of whether the specified group is a group.
 !>
 !> This function returns a logical corresponding to whether the group specified
-!> by @c path is a group or not.  
+!> by @c path is a group or not.
 !>
     FUNCTION isgrp_HDF5FileType(thisHDF5File,path) RESULT(bool)
       CHARACTER(LEN=*),PARAMETER :: myName='isgrp_HDF5FileType'
@@ -6100,7 +6091,7 @@ MODULE FileType_HDF5
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       TYPE(StringType),INTENT(IN) :: h5path
       TYPE(ParamType),INTENT(INOUT) :: vals
-#ifdef MPACT_HAVE_HDF5 
+#ifdef MPACT_HAVE_HDF5
       INTEGER(SIK) :: iobj,i,j,k,error,ndims,dtype_order,mem_len,class_type
       INTEGER(HID_T) :: dset_id,dspace_id,native_dtype,dtype,base_dtype
       INTEGER(SIZE_T) :: dtype_prec,dtype_size
@@ -6399,23 +6390,23 @@ MODULE FileType_HDF5
           CALL h5screate_simple_f(rank,gdims,gspace_id,error)
           IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
             ' - Could not create dataspace.')
-  
+
           ! Local dataspace
           CALL h5screate_simple_f(rank,ldims,dspace_id,error)
           IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
             ' - Could not create dataspace.')
-          
+
           ! Setup the DSpace creation property list to use ZLIB compression
           ! (requires chunking).
           !
           ! Do not compress on scalar data sets.
           IF(thisHDF5File%hasCompression .AND. &
             .NOT.(rank == 1 .AND. gdims(1) == 1)) THEN
-  
+
             !Compute optimal chunk size and specify in property list.
             CALL compute_chunk_size(gdims,cdims)
             CALL h5pset_chunk_f(plist_id,rank,cdims,error)
-  
+
             !Do not presently support user defined compression levels, just level 5
             !5 seems like a good trade-off of speed vs. compression ratio.
             CALL h5pset_deflate_f(plist_id,5,error)

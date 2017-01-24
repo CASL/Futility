@@ -1,43 +1,34 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testGeom_Points
 #include "UnitTest.h"
-  USE ISO_FORTRAN_ENV  
+  USE ISO_FORTRAN_ENV
   USE UnitTest
   USE IntrType
   USE Constants_Conversion
   USE ParameterLists
   USE Geom_Points
   USE Geom
-  
+
   IMPLICIT NONE
-  
+
   TYPE(PointType) :: point,point2,point3
   TYPE(PointType) :: points(2),points2(2),points3(2)
   TYPE(LinkedListPointType),POINTER :: firstPoint,thisPoint
   INTEGER(SIK) :: i
   REAL(SRK) :: d,s(2)
   LOGICAL(SBK) :: bool
-  
+
   CREATE_TEST('Test Geom')
   CALL eParams%setQuietMode(.TRUE.)
   CALL eParams%setStopOnError(.FALSE.)
-  
+
   REGISTER_SUBTEST('Test Points',TestPoints)
 
   FINALIZE_TEST()
@@ -47,51 +38,51 @@ PROGRAM testGeom_Points
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE TestPoints
-      
+
       !Initialize by hand
       COMPONENT_TEST('%clear()')
       !or point=PointType(2,(/0.5_SRK,0.3_SRK/))
       point%dim=1
       ALLOCATE(point%coord(1))
       point%coord(1)=0.5_SRK
-!      
+!
 !Test clear routine
       CALL point%clear()
       bool = .NOT.(point%dim /= 0 .OR. ALLOCATED(point%coord))
       ASSERT(bool, 'point%clear()')
       WRITE(*,*) '  Passed: CALL point%clear()'
       CALL point%clear() !Test redundant call doesn't have an error
-!      
+!
 !Test initialization
       COMPONENT_TEST('%init()')
       CALL point%init(DIM=1,X=0.5_SRK) !test 1-D
       bool = .NOT.(point%dim /= 1 .OR. point%coord(1) /= 0.5_SRK)
       ASSERT(bool, 'point%init(DIM=1,X=0.5)')
-      
+
       !Test redundant call
       CALL point%init(DIM=2,X=0.6_SRK,Y=0.7_SRK)
       bool = .NOT.(point%dim /= 1 .OR. point%coord(1) /= 0.5_SRK)
       ASSERT(bool, 'point%init(DIM=1,X=0.5)')
       CALL point%clear()
-      
+
       CALL point%init(DIM=2,X=0.2_SRK,Y=0.3_SRK) !test 2-D
       bool = .NOT.(point%dim /= 2 .OR. point%coord(1) /= 0.2_SRK .OR. &
               point%coord(2) /= 0.3_SRK)
       ASSERT(bool, 'point%init(DIM=2,X=0.2_SRK,Y=0.3_SRK)')
       CALL point%clear()
-      
+
       CALL point%init(DIM=3,X=0.7_SRK,Y=0.8_SRK,Z=0.9_SRK) !test 3-D
       bool = .NOT.(point%dim /= 3 .OR. point%coord(1) /= 0.7_SRK .OR. &
                    point%coord(2) /= 0.8_SRK .OR. point%coord(3) /= 0.9_SRK)
       ASSERT(bool, 'point%init(DIM=3,X=0.7_SRK,Y=0.8_SRK,Z=0.9_SRK)')
       CALL point%clear()
-      
+
       CALL point%init(COORD=(/1.7_SRK,1.8_SRK,1.9_SRK,1.0_SRK/)) !test N-D
       bool = .NOT.(point%dim /= 4 .OR. point%coord(1) /= 1.7_SRK .OR. &
                    point%coord(2) /= 1.8_SRK .OR. point%coord(3) /= 1.9_SRK .OR. &
                    point%coord(4) /= 1.0_SRK)
       ASSERT(bool, 'point%init(COORD=(/.../))')
-!      
+!
 !Test getCoordString
       COMPONENT_TEST('%getCoordString()')
       bool = .NOT.(TRIM(point%getCoordString()) /= '( 1.70000000000000E+00, '// &
@@ -115,7 +106,7 @@ PROGRAM testGeom_Points
       ASSERT(d == 0.4_SRK, '1-D Distance(...)') !Check 1-D
       CALL point2%clear()
       CALL point3%clear()
-      
+
       CALL point2%init(DIM=2,X=0.5_SRK,Y=0.6_SRK)
       CALL point3%init(DIM=2,X=0.3_SRK,Y=0.2_SRK)
       d=Distance(point2,point3)
@@ -123,18 +114,18 @@ PROGRAM testGeom_Points
       ASSERT(bool, '2-D Distance(...)')
       CALL point2%clear()
       CALL point3%clear()
-      
+
       CALL point2%init(DIM=3,X=0.5_SRK,Y=0.6_SRK,Z=0.7_SRK)
       CALL point3%init(DIM=3,X=0.3_SRK,Y=0.2_SRK,Z=0.1_SRK)
       d=Distance(point2,point3)
       bool = d .APPROXEQ. 0.748331477354788_SRK
       ASSERT(bool, '3-D Distance(...)')
-      
+
       !Redundant call to test error check
       ASSERT(Distance(point2,point) == 0.0_SRK, 'Distance(point2,point)')
       CALL point2%clear()
       CALL point3%clear()
-      
+
       CALL point2%init(DIM=4,COORD=(/0.5_SRK,0.6_SRK,0.7_SRK,0.8_SRK/))
       CALL point3%init(DIM=4,COORD=(/0.3_SRK,0.2_SRK,0.1_SRK,0.0_SRK/))
       d=Distance(point2,point3)
@@ -153,7 +144,7 @@ PROGRAM testGeom_Points
       ASSERT(bool, '1-D midPoint(...)')
       CALL point2%clear()
       CALL point3%clear()
-      
+
       !Test 2-D
       CALL point2%init(DIM=2,X=0.5_SRK,Y=0.6_SRK)
       CALL point3%init(DIM=2,X=0.3_SRK,Y=0.2_SRK)
@@ -163,7 +154,7 @@ PROGRAM testGeom_Points
       ASSERT(bool, '2-D midPoint(...)')
       CALL point2%clear()
       CALL point3%clear()
-      
+
       !Test 3-D
       CALL point2%init(DIM=3,X=0.5_SRK,Y=0.6_SRK,Z=0.7_SRK)
       CALL point3%init(DIM=3,X=0.3_SRK,Y=0.2_SRK,Z=0.1_SRK)
@@ -174,7 +165,7 @@ PROGRAM testGeom_Points
       ASSERT(bool, '3-D midPoint(...)')
       CALL point2%clear()
       CALL point3%clear()
-      
+
       !Test N-D
       CALL point2%init(DIM=4,COORD=(/0.5_SRK,0.6_SRK,0.7_SRK,0.8_SRK/))
       CALL point3%init(DIM=4,COORD=(/0.3_SRK,0.2_SRK,0.1_SRK,0.0_SRK/))
@@ -267,7 +258,7 @@ PROGRAM testGeom_Points
       CALL point2%init(DIM=2,X=20.0_SRK,Y=0.5_SRK)
       CALL point3%init(DIM=2,X=60.0_SRK,Y=0.5_SRK)
       ASSERT(outerAngle(point,point2,point3) .APPROXEQA. PI,'180 straight angle')
-      
+
 !
 !Test Operators
       COMPONENT_TEST('OPERATOR(+)')
@@ -281,7 +272,7 @@ PROGRAM testGeom_Points
       ASSERT(bool, '1-D PointType')
       CALL point2%clear()
       CALL point3%clear()
-      
+
       CALL point2%init(DIM=2,X=0.5_SRK,Y=0.6_SRK)
       CALL point3%init(DIM=2,X=0.3_SRK,Y=0.2_SRK)
       point=point2+point3
@@ -289,7 +280,7 @@ PROGRAM testGeom_Points
       ASSERT(bool, '2-D PointType OPERATOR(+)')
       CALL point2%clear()
       CALL point3%clear()
-      
+
       CALL point2%init(DIM=3,X=0.5_SRK,Y=0.6_SRK,Z=0.7_SRK)
       CALL point3%init(DIM=3,X=0.3_SRK,Y=0.2_SRK,Z=0.1_SRK)
       point=point2+point3
@@ -297,7 +288,7 @@ PROGRAM testGeom_Points
       ASSERT(bool, '3-D PointType OPERATOR(+)')
       CALL point2%clear()
       CALL point3%clear()
-      
+
       CALL point2%init(DIM=4,COORD=(/0.5_SRK,0.6_SRK,0.7_SRK,0.8_SRK/))
       CALL point3%init(DIM=4,COORD=(/0.3_SRK,0.2_SRK,0.1_SRK,0.0_SRK/))
       point=point2+point3
@@ -305,7 +296,7 @@ PROGRAM testGeom_Points
       ASSERT(bool, 'N-D PointType OPERATOR(+)')
       CALL point2%clear()
       CALL point3%clear()
-      
+
       !Redundant calls for error checking
       point=point2+point3 !Empty case
       bool = .NOT.(point%dim /= 0 .OR. ALLOCATED(point%coord))
@@ -314,7 +305,7 @@ PROGRAM testGeom_Points
       point2=point2+point3 !mismatched dimensions case
       bool = .NOT.(point2%dim /= 0 .OR. ALLOCATED(point2%coord))
       ASSERT(bool, 'Mismatched PointType OPERATOR(+)')
-      
+
       !Test subtraction
       COMPONENT_TEST('OPERATOR(-)')
       CALL point2%init(DIM=1,X=0.5_SRK)
@@ -325,7 +316,7 @@ PROGRAM testGeom_Points
 !      ENDIF
       CALL point2%clear()
       CALL point3%clear()
-      
+
       CALL point2%init(DIM=2,X=0.5_SRK,Y=0.6_SRK)
       CALL point3%init(DIM=2,X=0.3_SRK,Y=0.2_SRK)
       point=point2-point3
@@ -334,7 +325,7 @@ PROGRAM testGeom_Points
       ASSERT(bool, '2-D PointType OPERATOR(-)')
       CALL point2%clear()
       CALL point3%clear()
-      
+
       CALL point2%init(DIM=3,X=0.5_SRK,Y=0.6_SRK,Z=0.7_SRK)
       CALL point3%init(DIM=3,X=0.3_SRK,Y=0.2_SRK,Z=0.1_SRK)
       point=point2-point3
@@ -344,7 +335,7 @@ PROGRAM testGeom_Points
       ASSERT(bool, '3-D PointType OPERATOR(-)')
       CALL point2%clear()
       CALL point3%clear()
-      
+
       CALL point2%init(DIM=4,COORD=(/0.5_SRK,0.6_SRK,0.7_SRK,0.8_SRK/))
       CALL point3%init(DIM=4,COORD=(/0.3_SRK,0.2_SRK,0.1_SRK,0.0_SRK/))
       point=point2-point3
@@ -355,7 +346,7 @@ PROGRAM testGeom_Points
       ASSERT(bool, 'N-D PointType OPERATOR(-)')
       CALL point2%clear()
       CALL point3%clear()
-      
+
       !Redundant calls for error checking
       point=point2-point3 !Empty case
       bool = .NOT.(point%dim /= 0 .OR. ALLOCATED(point%coord))
@@ -364,31 +355,31 @@ PROGRAM testGeom_Points
       point2=point2-point3 !mismatched dimensions case
       bool = .NOT.(point2%dim /= 0 .OR. ALLOCATED(point2%coord))
       ASSERT(bool, 'Mismatched PointType OPERATOR(-)')
-      
+
       COMPONENT_TEST('OPERATOR(==)')
       CALL point2%init(DIM=4,COORD=(/0.5_SRK,0.6_SRK,0.7_SRK,0.8_SRK/))
       CALL point3%init(DIM=4,COORD=(/0.5_SRK,0.6_SRK,0.7_SRK,0.80000000000002_SRK/))
       point=point2
       bool = .NOT.(.NOT.(point == point2) .OR. point == point3)
       ASSERT(bool, 'PointType OPERATOR(==)')
-      
+
       COMPONENT_TEST('OPERATOR(/=)')
       bool = .NOT.((point /= point2) .OR. .NOT.(point /= point3))
       ASSERT(bool, 'PointType OPERATOR(/=)')
-      
+
       COMPONENT_TEST('OPERATOR(.APPROXEQ.)')
       point2%coord(4)=0.80000000000001_SRK
       bool = .NOT.(.NOT.(point .APPROXEQA. point2) .OR. (point .APPROXEQA. point3))
       ASSERT(bool, 'PointType OPERATOR(.APPROXEQ.)')
       CALL point2%clear()
       CALL point3%clear()
-      
+
 #ifdef __GFORTRAN__
       WRITE(*,*) 'ELEMENTAL METHODS FOR NON-SCALAR BASE OBJECTS NOT YET SUPPORTED BY COMPILER'
 #else
       CALL point%init(DIM=1,X=0.5_SRK)
       points=point
-!      
+!
 !Test clear routine
       COMPONENT_TEST('Elemental %clear()')
       CALL points%clear()
@@ -430,7 +421,7 @@ PROGRAM testGeom_Points
       bool = .NOT.(ANY(.NOT.(points3(1)%coord .APPROXEQ. 0.8_SRK)) .OR. &
                    ANY(.NOT.(points3(2)%coord .APPROXEQ. 0.8_SRK)))
       ASSERT(bool, 'PointType Array OPERATOR(+)')
-      
+
       !Subtraction
       COMPONENT_TEST('Elemental OPERATOR(-)')
       points3=points-points2
@@ -440,18 +431,18 @@ PROGRAM testGeom_Points
                    .NOT.(points3(2)%coord(1) .APPROXEQ. 0.2_SRK) .OR. &
                    .NOT.(points3(2)%coord(2) .APPROXEQ. 0.4_SRK))
       ASSERT(bool, 'PointType Array OPERATOR(-)')
-      
+
       !Equal to
       COMPONENT_TEST('Elemental OPERATOR(==)')
       points3=points
       bool = .NOT.(ANY(.NOT.(points == points3)) .OR. ANY(points2 == points))
       ASSERT(bool, 'PointType Array OPERATOR(==)')
-      
+
       !Not equal to
       COMPONENT_TEST('Elemental OPERATOR(/=)')
       bool = .NOT.(ANY(.NOT.(points2 /= points)) .OR. ANY(points /= points3))
       ASSERT(bool, 'PointType Array OPERATOR(/=)')
-      
+
       !Approximately equal to
       COMPONENT_TEST('Elemental OPERATOR(.APPROXEQ.)')
       points3=points

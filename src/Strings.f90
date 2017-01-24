@@ -1,22 +1,13 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief Module for specifying a type for arbitrary length strings
-!> 
+!>
 !> This module defines a type for a string which can be an arbitrary length.
 !> It then provides overloaded operators and intrinsic functions so
 !> that it can be used almost exactly like a Fortran @c CHARACTER type variable.
@@ -46,7 +37,7 @@
 !> PROGRAM
 !>   USE Strings
 !>   IMPLICIT NONE
-!>   
+!>
 !>   CHARACTER(LEN=20) :: char20
 !>   TYPE(StringType) :: myString
 !>
@@ -99,7 +90,7 @@
 !>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE Strings
-  
+
   USE IntrType
   IMPLICIT NONE
   PRIVATE !Default private for module contents
@@ -119,7 +110,7 @@ MODULE Strings
   PUBLIC :: OPERATOR(//)
   PUBLIC :: OPERATOR(==)
   PUBLIC :: OPERATOR(/=)
-  
+
   !> Derived type for an arbitrary length string
   TYPE :: StringType
     !> The size of the string
@@ -134,7 +125,7 @@ MODULE Strings
     !> The string stored as an array of length 1 character strings
     CHARACTER(LEN=1),ALLOCATABLE :: s(:)
   ENDTYPE StringType
-  
+
   !> @brief Overloads the Fortran intrinsic procedure CHAR() so
   !> a string type argument may be passed.
   INTERFACE CHAR
@@ -142,7 +133,7 @@ MODULE Strings
     !> @copydetails Strings::CHAR_StringType
     MODULE PROCEDURE  CHAR_StringType
   ENDINTERFACE
-  
+
   !> @brief Overloads the Fortran intrinsic procedure LEN() so
   !> a string type argument may be passed.
   INTERFACE LEN
@@ -150,7 +141,7 @@ MODULE Strings
     !> @copydetails Strings::LEN_StringType
     MODULE PROCEDURE LEN_StringType
   ENDINTERFACE
-  
+
   !> @brief Overloads the Fortran intrinsic procedure LEN_TRIM() so
   !> a string type argument may be passed.
   INTERFACE LEN_TRIM
@@ -158,7 +149,7 @@ MODULE Strings
     !> @copydetails Strings::LEN_TRIM_StringType
     MODULE PROCEDURE LEN_TRIM_StringType
   ENDINTERFACE
-  
+
   !> @brief Overloads the Fortran intrinsic procedure TRIM() so
   !> a string type argument may be passed.
   INTERFACE TRIM
@@ -166,23 +157,23 @@ MODULE Strings
     !> @copydetails Strings::TRIM_StringType
     MODULE PROCEDURE TRIM_StringType
   ENDINTERFACE
-  
-  !> @brief Overloads the Fortran intrinsic procedure ADJUSTL() so 
+
+  !> @brief Overloads the Fortran intrinsic procedure ADJUSTL() so
   !> a string type argument may be passed.
   INTERFACE ADJUSTL
     !> @copybrief Strings::ADJUSTL_StringType
     !> @copydetails Strings::ADJUSTL_StringType
     MODULE PROCEDURE ADJUSTL_StringType
   ENDINTERFACE
-  
-  !> @brief Overloads the Fortran intrinsic procedure ADJUSTR() so 
+
+  !> @brief Overloads the Fortran intrinsic procedure ADJUSTR() so
   !> a string type argument may be passed.
   INTERFACE ADJUSTR
     !> @copybrief Strings::ADJUSTR_StringType
     !> @copydetails Strings::ADJUSTR_StringType
     MODULE PROCEDURE ADJUSTR_StringType
   ENDINTERFACE
-  
+
   !> @brief Overloads the Fortran intrinsic procedure INDEX() so
   !> string type arguments may be passed.
   INTERFACE INDEX
@@ -196,8 +187,8 @@ MODULE Strings
     !> @copydetails Strings::INDEX_StringType_StringType
     MODULE PROCEDURE INDEX_StringType_StringType
   ENDINTERFACE
-  
-  !> @brief Overloads the Fortran intrinsic procedure ANY() so 
+
+  !> @brief Overloads the Fortran intrinsic procedure ANY() so
   !> an array of string type arguments may be passed.
   INTERFACE ANY
     !> @copybrief Strings::ANY_StringTypeArray_char
@@ -213,8 +204,8 @@ MODULE Strings
     !> @copydetails Strings::ANY_StringTypeStringTypeArray
     !MODULE PROCEDURE ANY_StringTypeStringTypeArray
   ENDINTERFACE
-  
-  !> @brief Overloads the Fortran intrinsic procedure ALL() so 
+
+  !> @brief Overloads the Fortran intrinsic procedure ALL() so
   !> an array of string type arguments may be passed.
   INTERFACE ALL
     !> @copybrief Strings::ALL_StringTypeArray_char
@@ -240,7 +231,7 @@ MODULE Strings
     !> @copydetails Strings::ALL_StringType3a_StringType3a
     MODULE PROCEDURE ALL_StringType3a_StringType3a
   ENDINTERFACE
-  
+
   !> @brief Overloads the assignment operator.
   !>
   !> This is so string types can be assigned to characters and vice-versa
@@ -267,7 +258,7 @@ MODULE Strings
     !> @copydetails Strings::assign_StringType2A_to_StringType2A
     MODULE PROCEDURE assign_StringType2A_to_StringType2A
   ENDINTERFACE
-  
+
   !> @brief Overloads the Fortran intrinsic operator for concatenating
   !> character strings.
   INTERFACE OPERATOR(//)
@@ -281,7 +272,7 @@ MODULE Strings
     !> @copydetails Strings::concatenate_StringType_onto_StringType
     MODULE PROCEDURE concatenate_StringType_onto_StringType
   ENDINTERFACE
-  
+
   !> @brief Overloads the Fortran intrinsic operator for comparing
   !> two variables to see if they are equal
   INTERFACE OPERATOR(==)
@@ -295,7 +286,7 @@ MODULE Strings
     !> @copydetails Strings::equalto_StringType_StringType
     MODULE PROCEDURE equalto_StringType_StringType
   ENDINTERFACE
-  
+
   !> @brief Overloads the Fortran intrinsic operator for comparing
   !> two variables to see if they are not equal
   INTERFACE OPERATOR(/=)
@@ -421,7 +412,7 @@ MODULE Strings
     ENDFUNCTION ADJUSTR_StringType
 !
 !-------------------------------------------------------------------------------
-!> @brief Returns the starting position of a @c CHARACTER substring within a 
+!> @brief Returns the starting position of a @c CHARACTER substring within a
 !> @c StringType string.
 !> @param string the @c StringType object in which @c substring is located
 !> @param substring the @c CHARACTER string to locate within @c string
@@ -441,7 +432,7 @@ MODULE Strings
     ENDFUNCTION INDEX_StringType_char
 !
 !-------------------------------------------------------------------------------
-!> @brief Returns the starting position of a @c StringType substring within a 
+!> @brief Returns the starting position of a @c StringType substring within a
 !> @c CHARACTER string.
 !> @param string the @c CHARACTER string in which @c substring is located
 !> @param substring the @c StringType object to locate within @c string
@@ -453,7 +444,7 @@ MODULE Strings
 !> function @c INDEX does for character variables.
 !>
     ELEMENTAL FUNCTION INDEX_char_StringType(string,substring,back) RESULT(ipos)
-      CHARACTER(LEN=*),INTENT(IN) :: string  
+      CHARACTER(LEN=*),INTENT(IN) :: string
       CLASS(StringType),INTENT(IN) :: substring
       LOGICAL,INTENT(IN),OPTIONAL :: back
       INTEGER :: ipos
@@ -461,7 +452,7 @@ MODULE Strings
     ENDFUNCTION INDEX_char_StringType
 !
 !-------------------------------------------------------------------------------
-!> @brief Returns the starting position of a @c StringType substring within a 
+!> @brief Returns the starting position of a @c StringType substring within a
 !> @c StringType string.
 !> @param string the @c StringType object in which @c substring is located
 !> @param substring the @c StringType object to locate within @c string
@@ -481,8 +472,8 @@ MODULE Strings
     ENDFUNCTION INDEX_StringType_StringType
 !
 !-------------------------------------------------------------------------------
-!> @brief Returns the boolean of comparison of all of the contents of the array 
-!> of string types to character s where only one entry in the array need to 
+!> @brief Returns the boolean of comparison of all of the contents of the array
+!> of string types to character s where only one entry in the array need to
 !> equal s.
 !> @param thisStr the array of string objects
 !> @param s the character string to check against
@@ -494,11 +485,11 @@ MODULE Strings
 !>
     PURE FUNCTION ANY_StringTypeArray_char(thisStr,s,not) RESULT(bool)
       TYPE(StringType),INTENT(IN) :: thisStr(:)
-      CHARACTER(LEN=*),INTENT(IN) :: s  
+      CHARACTER(LEN=*),INTENT(IN) :: s
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: not
       LOGICAL(SBK) :: bool
       INTEGER(SIK) :: i
-      
+
       bool=.FALSE.
       IF(PRESENT(not)) bool=not
       DO i=1,SIZE(thisStr,DIM=1)
@@ -511,8 +502,8 @@ MODULE Strings
     ENDFUNCTION ANY_StringTypeArray_char
 !
 !-------------------------------------------------------------------------------
-!> @brief Returns the boolean of comparison of all of the contents of the array 
-!> of string types to string s where only one entry in the array need to 
+!> @brief Returns the boolean of comparison of all of the contents of the array
+!> of string types to string s where only one entry in the array need to
 !> equal s.
 !> @param thisStr the array of string objects
 !> @param s the string type to check against
@@ -527,7 +518,7 @@ MODULE Strings
       CLASS(StringType),INTENT(IN) :: s
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: not
       LOGICAL(SBK) :: bool
-      
+
       IF(PRESENT(not)) THEN
         bool=ANY_StringTypeArray_char(thisStr,CHAR(s),not)
       ELSE
@@ -536,8 +527,8 @@ MODULE Strings
     ENDFUNCTION ANY_StringTypeArray_StringType
 !
 !-------------------------------------------------------------------------------
-!> @brief Returns the boolean of comparison of all of the contents of the array 
-!> of string types to character s where only one entry in the array need to 
+!> @brief Returns the boolean of comparison of all of the contents of the array
+!> of string types to character s where only one entry in the array need to
 !> equal s.
 !> @param thisStr the array of string objects
 !> @param s the character string to check against
@@ -548,11 +539,11 @@ MODULE Strings
 !> function @c ANY does for character variables.
 !>
 !    PURE FUNCTION ANY_char_StringTypeArray(s,thisStr,not) RESULT(bool)
-!      CHARACTER(LEN=*),INTENT(IN) :: s  
+!      CHARACTER(LEN=*),INTENT(IN) :: s
 !      TYPE(StringType),INTENT(IN) :: thisStr(:)
 !      LOGICAL(SBK),INTENT(IN),OPTIONAL :: not
 !      LOGICAL(SBK) :: bool
-!      
+!
 !      IF(PRESENT(not)) THEN
 !        bool=ANY_StringTypeArray_char(thisStr,s,not)
 !      ELSE
@@ -561,8 +552,8 @@ MODULE Strings
 !    ENDFUNCTION ANY_char_StringTypeArray
 !
 !-------------------------------------------------------------------------------
-!> @brief Returns the boolean of comparison of all of the contents of the array 
-!> of string types to string s where only one entry in the array need to 
+!> @brief Returns the boolean of comparison of all of the contents of the array
+!> of string types to string s where only one entry in the array need to
 !> equal s.
 !> @param thisStr the array of string objects
 !> @param s the string type to check against
@@ -573,11 +564,11 @@ MODULE Strings
 !> function @c ANY does for character variables.
 !>
 !    PURE FUNCTION ANY_StringTypeStringTypeArray(s,thisStr,not) RESULT(bool)
-!      CLASS(StringType),INTENT(IN) :: s 
+!      CLASS(StringType),INTENT(IN) :: s
 !      TYPE(StringType),INTENT(IN) :: thisStr(:)
 !      LOGICAL(SBK),INTENT(IN),OPTIONAL :: not
 !      LOGICAL(SBK) :: bool
-!      
+!
 !      IF(PRESENT(not)) THEN
 !        bool=ANY_StringTypeArray_char(thisStr,CHAR(s),not)
 !      ELSE
@@ -586,8 +577,8 @@ MODULE Strings
 !    ENDFUNCTION ANY_StringTypeStringTypeArray
 !
 !-------------------------------------------------------------------------------
-!> @brief Returns the boolean of comparison of all of the contents of the array 
-!> of string types to character s where all entries in the array need to 
+!> @brief Returns the boolean of comparison of all of the contents of the array
+!> of string types to character s where all entries in the array need to
 !> equal s.
 !> @param thisStr the array of string objects
 !> @param s the character string to check against
@@ -599,11 +590,11 @@ MODULE Strings
 !>
     PURE FUNCTION ALL_StringTypeArray_char(thisStr,s,not) RESULT(bool)
       TYPE(StringType),INTENT(IN) :: thisStr(:)
-      CHARACTER(LEN=*),INTENT(IN) :: s  
+      CHARACTER(LEN=*),INTENT(IN) :: s
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: not
       LOGICAL(SBK) :: bool
       INTEGER(SIK) :: i
-      
+
       bool=.TRUE.
       IF(PRESENT(not)) bool=.NOT.not
       DO i=1,SIZE(thisStr,DIM=1)
@@ -616,8 +607,8 @@ MODULE Strings
     ENDFUNCTION ALL_StringTypeArray_char
 !
 !-------------------------------------------------------------------------------
-!> @brief Returns the boolean of comparison of all of the contents of the array 
-!> of string types to string type s where all entries in the array need to 
+!> @brief Returns the boolean of comparison of all of the contents of the array
+!> of string types to string type s where all entries in the array need to
 !> equal s.
 !> @param thisStr the array of string objects
 !> @param s the string type to check against
@@ -629,10 +620,10 @@ MODULE Strings
 !>
     PURE FUNCTION ALL_StringTypeArray_StringType(thisStr,s,not) RESULT(bool)
       TYPE(StringType),INTENT(IN) :: thisStr(:)
-      CLASS(StringType),INTENT(IN) :: s 
+      CLASS(StringType),INTENT(IN) :: s
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: not
       LOGICAL(SBK) :: bool
-      
+
       IF(PRESENT(not)) THEN
         bool=ALL_StringTypeArray_char(thisStr,CHAR(s),not)
       ELSE
@@ -782,8 +773,8 @@ MODULE Strings
     ENDFUNCTION ALL_StringType3a_StringType3a
 !
 !-------------------------------------------------------------------------------
-!> @brief Returns the boolean of comparison of all of the contents of the array 
-!> of string types to character s where all entries in the array need to 
+!> @brief Returns the boolean of comparison of all of the contents of the array
+!> of string types to character s where all entries in the array need to
 !> equal s.
 !> @param thisStr the array of string objects
 !> @param s the character string to check against
@@ -794,11 +785,11 @@ MODULE Strings
 !> function @c ANY does for character variables.
 !>
 !    PURE FUNCTION ALL_char_StringTypeArray(s,thisStr,not) RESULT(bool)
-!      CHARACTER(LEN=*),INTENT(IN) :: s  
+!      CHARACTER(LEN=*),INTENT(IN) :: s
 !      TYPE(StringType),INTENT(IN) :: thisStr(:)
 !      LOGICAL(SBK),INTENT(IN),OPTIONAL :: not
 !      LOGICAL(SBK) :: bool
-!      
+!
 !      IF(PRESENT(not)) THEN
 !        bool=ALL_StringTypeArray_char(thisStr,s,not)
 !      ELSE
@@ -807,8 +798,8 @@ MODULE Strings
 !    ENDFUNCTION ALL_char_StringTypeArray
 !
 !-------------------------------------------------------------------------------
-!> @brief Returns the boolean of comparison of all of the contents of the array 
-!> of string types to string type s where all entries in the array need to 
+!> @brief Returns the boolean of comparison of all of the contents of the array
+!> of string types to string type s where all entries in the array need to
 !> equal s.
 !> @param thisStr the array of string objects
 !> @param s the string type to check against
@@ -819,11 +810,11 @@ MODULE Strings
 !> function @c ANY does for character variables.
 !>
 !    PURE FUNCTION ALL_StringType_StringTypeArray(s,thisStr,not) RESULT(bool)
-!      CLASS(StringType),INTENT(IN) :: s 
+!      CLASS(StringType),INTENT(IN) :: s
 !      TYPE(StringType),INTENT(IN) :: thisStr(:)
 !      LOGICAL(SBK),INTENT(IN),OPTIONAL :: not
 !      LOGICAL(SBK) :: bool
-!      
+!
 !      IF(PRESENT(not)) THEN
 !        bool=ALL_StringTypeArray_char(thisStr,CHAR(s),not)
 !      ELSE
@@ -841,7 +832,7 @@ MODULE Strings
 !> @c StringType can be assigned to a @c CHARACTER type.
 !>
     PURE SUBROUTINE assign_StringType_to_char(s,thisStr)
-      CHARACTER(LEN=*),INTENT(INOUT) :: s  
+      CHARACTER(LEN=*),INTENT(INOUT) :: s
       CLASS(StringType),INTENT(IN) :: thisStr
       s=CHAR(thisStr)
     ENDSUBROUTINE assign_StringType_to_char
@@ -859,13 +850,13 @@ MODULE Strings
       CLASS(StringType),INTENT(INOUT) :: thisStr
       CHARACTER(LEN=*),INTENT(IN) :: s
       INTEGER(SIK) :: i
-      
+
       IF(thisStr%n > 0) THEN
         IF(ALLOCATED(thisStr%s)) DEALLOCATE(thisStr%s)
         thisStr%n=0
         thisStr%ntrim=0
       ENDIF
-      
+
       IF(LEN(s) > 0) THEN
         thisStr%n=LEN(s)
         thisStr%ntrim=LEN_TRIM(s)
@@ -890,13 +881,13 @@ MODULE Strings
       CLASS(StringType),INTENT(INOUT) :: thisStr
       CLASS(StringType),INTENT(IN) :: s
       INTEGER(SIK) :: i
-      
+
       IF(thisStr%n > 0) THEN
         DEALLOCATE(thisStr%s)
         thisStr%n=0
         thisStr%ntrim=0
       ENDIF
-      
+
       IF(s%n > 0) THEN
         thisStr%n=s%n
         thisStr%ntrim=s%ntrim
@@ -1050,7 +1041,7 @@ MODULE Strings
 !> @c CHARACTER type can be concatenated with a @c StringType.
 !>
     PURE FUNCTION concatenate_StringType_onto_char(s,thisStr) RESULT(newstring)
-      CHARACTER(LEN=*),INTENT(IN) :: s  
+      CHARACTER(LEN=*),INTENT(IN) :: s
       CLASS(StringType),INTENT(IN) :: thisStr
       CHARACTER(LEN=thisStr%n+LEN(s)) :: newstring
       newstring=s//CHAR(thisStr)

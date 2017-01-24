@@ -1,19 +1,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief A Fortran 2003 module defining a graph type.
 !>
@@ -47,7 +38,7 @@ MODULE Geom_Graph
   PUBLIC :: ASSIGNMENT(=)
   PUBLIC :: OPERATOR(==)
   !PUBLIC :: OPERATOR(+)
-  
+
   !> @brief a Directed Acyclic Graph Type
   TYPE :: DAGraphType
     !> The number of nodes on the graph
@@ -90,7 +81,7 @@ MODULE Geom_Graph
       !> @copydetails Geom_Graph::KATS_DAGraphType
       PROCEDURE,PASS :: KATS => KATS_DAGraphType
   ENDTYPE DAGraphType
-  
+
   !> @brief a Planar Graph
   TYPE :: GraphType
     !Only allocated during execution of getMCB
@@ -497,7 +488,7 @@ MODULE Geom_Graph
               IF(coord(2) .APPROXEQA. thisGraph%vertices(2,i)) THEN
                 idx=-1 !Duplicate vertex
                 EXIT
-              ELSEIF(coord(2) < thisGraph%vertices(2,i)) THEN                
+              ELSEIF(coord(2) < thisGraph%vertices(2,i)) THEN
                 idx=i !Before i
               ELSE
                 !After i
@@ -784,7 +775,7 @@ MODULE Geom_Graph
         thisGraph%quadEdges(:,v2,v1)=0.0_SRK
       ENDIF
     ENDSUBROUTINE removeEdge_graphType
-   
+
 !
 !-------------------------------------------------------------------------------
 !> @brief
@@ -1149,9 +1140,9 @@ MODULE Geom_Graph
             r=g1%quadEdges(3,v1,v2)
             alp1=ATAN2PI(a(1)-p0%coord(1),a(2)-p0%coord(2))
             alp2=ATAN2PI(b(1)-p0%coord(1),b(2)-p0%coord(2))
-            
+
             !Insure we are traversing the shorter arc on the circle
-            IF(ABS(alp1-alp2) .APPROXEQA. PI) THEN  
+            IF(ABS(alp1-alp2) .APPROXEQA. PI) THEN
               !Semi-circle, for this case we must look at sign of r
               IF(r < 0.0_SRK) THEN
                 CALL c1%set(p0,ABS(r),alp1,alp2)
@@ -1172,7 +1163,7 @@ MODULE Geom_Graph
                 CALL c1%set(p0,ABS(r),alp2,alp1)
               ENDIF
             ENDIF
-            
+
             !Compute arc midpoint
             m=a+b-2.0_SRK*p0%coord
             scal=SQRT(m(1)*m(1)+m(2)*m(2))
@@ -1189,7 +1180,7 @@ MODULE Geom_Graph
               m=m*scal
             ENDIF
             m=m+c1%c%coord
-            
+
             !Compute theta shift so that thetastp > thetastt when crossing x+ axis
             theta_shift=0.0_SRK
             IF(c1%thetastt > c1%thetastp) theta_shift=TWOPI
@@ -1316,7 +1307,7 @@ MODULE Geom_Graph
                 alp1=ATAN2PI(c(1)-p0%coord(1),c(2)-p0%coord(2))
                 alp2=ATAN2PI(d(1)-p0%coord(1),d(2)-p0%coord(2))
                 !Insure we are traversing the shorter arc on the circle
-                IF(ABS(alp1-alp2) .APPROXEQA. PI) THEN  
+                IF(ABS(alp1-alp2) .APPROXEQA. PI) THEN
                   !Semi-circle, for this case we must look at sign of r
                   IF(r < 0.0_SRK) THEN
                     CALL c2%set(p0,ABS(r),alp1,alp2)
@@ -1420,17 +1411,17 @@ MODULE Geom_Graph
                       m=m*scal
                     ENDIF
                     m=m+c2%c%coord
-                    
+
                     CALL removeEdge_graphType(g0,c,d)
                     CALL insertVertex_graphType(g0,p1%coord)
                     CALL insertVertex_graphType(g0,p2%coord)
-                    
+
                     !Add midpoint of arc (keeps graph sane)
                     !p1 and p2 are connected by a straight point and an arc
                     CALL insertVertex_graphType(g0,m)
                     CALL defineQuadEdge_graphType(g0,m,p1%coord,c2%c%coord,c2%r)
                     CALL defineQuadEdge_graphType(g0,m,p2%coord,c2%c%coord,c2%r)
-                    
+
                     !Cord intersecting circle
                     CALL defineEdge_graphType(g0,p1%coord,p2%coord)
                     !is p1 always closer to c?
@@ -1462,7 +1453,7 @@ MODULE Geom_Graph
             DO i=2,nVert_graphType(lineAB)
               CALL insertVertex_graphType(g0,lineAB%vertices(:,i))
               CALL defineEdge_graphType(g0,lineAB%vertices(:,i-1), &
-                lineAB%vertices(:,i)) 
+                lineAB%vertices(:,i))
             ENDDO
           ELSE
             !Sort vertices in clock-wise order.
@@ -1485,7 +1476,7 @@ MODULE Geom_Graph
               cwVerts(i)=MINLOC(vTheta,DIM=1)
               vTheta(cwVerts(i))=HUGE(vTheta(1))
             ENDDO
-            
+
             !Add vertices in CW-order and define edges
             CALL insertVertex_graphType(g0,lineAB%vertices(:,cwVerts(1)))
             DO i=2,nVert_graphType(lineAB)
@@ -1545,10 +1536,10 @@ MODULE Geom_Graph
       LOGICAL(SBK) :: incircum
       REAL(SRK) :: drsqr, m1,m2,mx1,mx2,my1,my2,r,rsqr,xc,yc
       CHARACTER(len=22) :: tmpname
-      
+
       thisGraph%edgeMatrix=0
       nVert=thisGraph%nVert()
-      
+
       !Maximum of n-2 triangles...n+1 with super-triangle
       ALLOCATE(v1(6*nVert+6),v2(6*nVert+6),v3(6*nVert+6))
       v1=0
@@ -1661,14 +1652,14 @@ MODULE Geom_Graph
           IF(.NOT. ALL(polEdges(:,j) == 0)) THEN
             DO k=j+1,nEdges
               IF( .NOT. ALL(polEdges(:,k) == 0)) THEN
-                IF(polEdges(1,j) == polEdges(2,k) & 
+                IF(polEdges(1,j) == polEdges(2,k) &
                   .AND. polEdges(2,j) == polEdges(1,k)) THEN
                   polEdges(:,j)=0
                   polEdges(:,k)=0
                 ENDIF
               ENDIF
             ENDDO
-          ENDIF 
+          ENDIF
         ENDDO
         !Update triangle list
         DO j=1,nEdges
@@ -1683,11 +1674,11 @@ MODULE Geom_Graph
       ENDDO !End loop over each vertex
       !Create edges of final triangulation
       DO i=1,nTri
-        CALL thisGraph%defineEdge(thisGraph%vertices(:,v1(i)), & 
+        CALL thisGraph%defineEdge(thisGraph%vertices(:,v1(i)), &
           thisGraph%vertices(:,v2(i)))
-        CALL thisGraph%defineEdge(thisGraph%vertices(:,v2(i)), & 
+        CALL thisGraph%defineEdge(thisGraph%vertices(:,v2(i)), &
           thisGraph%vertices(:,v3(i)))
-        CALL thisGraph%defineEdge(thisGraph%vertices(:,v3(i)), & 
+        CALL thisGraph%defineEdge(thisGraph%vertices(:,v3(i)), &
           thisGraph%vertices(:,v1(i)))
       ENDDO
       !Remove superTriangle from arrays
@@ -1726,7 +1717,7 @@ MODULE Geom_Graph
       TYPE(GraphType),INTENT(IN) :: g0
       TYPE(GraphType),INTENT(IN) :: g1
       LOGICAL(SBK) :: bool
-      
+
       bool=.FALSE.
       IF((ALLOCATED(g0%isCycleEdge) .EQV. ALLOCATED(g1%isCycleEdge)) .AND. &
         (ALLOCATED(g0%vertices) .EQV. ALLOCATED(g1%vertices)) .AND. &
@@ -1740,9 +1731,9 @@ MODULE Geom_Graph
             SIZE(g0%quadEdges,DIM=2) == SIZE(g1%quadEdges,DIM=2) .AND. &
             SIZE(g0%quadEdges,DIM=3) == SIZE(g1%quadEdges,DIM=3)) THEN
           bool=.TRUE.
-          IF(ALLOCATED(g0%isCycleEdge)) THEN 
+          IF(ALLOCATED(g0%isCycleEdge)) THEN
             IF(SIZE(g0%isCycleEdge,DIM=1) == SIZE(g1%isCycleEdge,DIM=1) .AND. &
-               SIZE(g0%isCycleEdge,DIM=2) == SIZE(g1%isCycleEdge,DIM=2)) THEN 
+               SIZE(g0%isCycleEdge,DIM=2) == SIZE(g1%isCycleEdge,DIM=2)) THEN
               bool=.TRUE.
             ELSE
               bool=.FALSE.
@@ -1766,7 +1757,7 @@ MODULE Geom_Graph
 !      TYPE(GraphType),INTENT(IN) :: g1
 !      TYPE(GraphType) :: g
 !      INTEGER(SIK) :: i,j,n
-!      
+!
 !      CALL clear_graphType(g)
 !      g=g0
 !      n=nVert_graphType(g1)
@@ -1794,7 +1785,7 @@ MODULE Geom_Graph
       CLASS(DAGraphType),INTENT(INOUT) :: thisGraph
       INTEGER(SIK),INTENT(IN) :: n
       INTEGER(SIK),INTENT(IN) :: nodes(:)
-      
+
       IF(.NOT. ALLOCATED(thisGraph%nodes)) THEN
         IF(n > 0) THEN
           IF(SIZE(nodes) == n) THEN
@@ -1814,7 +1805,7 @@ MODULE Geom_Graph
 !>
     SUBROUTINE clear_DAGraphType(thisGraph)
       CLASS(DAGraphType),INTENT(INOUT) :: thisGraph
-      
+
       thisGraph%n=0
       IF(ALLOCATED(thisGraph%nodes)) DEALLOCATE(thisGraph%nodes)
       IF(ALLOCATED(thisGraph%edgeMatrix)) DEALLOCATE(thisGraph%edgeMatrix)
@@ -1830,7 +1821,7 @@ MODULE Geom_Graph
       INTEGER(SIK),INTENT(IN),OPTIONAL :: ind
       INTEGER(SIK) :: index
       INTEGER(SIK),ALLOCATABLE :: tmpNodes(:),tmpEdges(:,:)
-      
+
       index=1
       IF(PRESENT(ind)) index=ind
       IF(ALLOCATED(thisGraph%edgeMatrix)) THEN
@@ -1876,7 +1867,7 @@ MODULE Geom_Graph
       INTEGER(SIK),INTENT(IN),OPTIONAL :: ID
       INTEGER(SIK),INTENT(IN),OPTIONAL :: ind
       INTEGER(SIK) :: i,index
-      
+
       index=0
       IF(PRESENT(ID)) THEN
         !Find the index to remove
@@ -1902,7 +1893,7 @@ MODULE Geom_Graph
       INTEGER(SIK),INTENT(IN) :: ind
       INTEGER(SIK) :: i,index
       INTEGER(SIK),ALLOCATABLE :: tmpN(:),tmpEdge(:,:)
-      
+
       IF(ALLOCATED(thisGraph%edgeMatrix)) THEN
         IF((1 <= ind) .AND. (ind <= thisGraph%n)) THEN
           !Store values temporarily
@@ -1945,7 +1936,7 @@ MODULE Geom_Graph
       INTEGER(SIK),INTENT(IN),OPTIONAL :: ind
       INTEGER(SIK) :: i,index
       LOGICAL(SBK) :: bool
-      
+
       bool=.FALSE.
       IF(PRESENT(ID)) THEN
         index=thisGraph%getIndex(ID)
@@ -1964,7 +1955,7 @@ MODULE Geom_Graph
       INTEGER(SIK),INTENT(INOUT) :: old(:)
       INTEGER(SIK),INTENT(OUT) :: ID
       INTEGER(SIK) :: i
-      
+
       ID=0
       DO i=1,thisGraph%n
         IF(thisGraph%isStartNode(IND=i) .AND. ALL(thisGraph%nodes(i) /= old)) THEN
@@ -1984,7 +1975,7 @@ MODULE Geom_Graph
       INTEGER(SIK),INTENT(IN) :: fromID
       INTEGER(SIK),INTENT(IN) :: toID
       INTEGER(SIK) :: fromInd,toInd
-      
+
       IF(ALLOCATED(thisGraph%edgeMatrix)) THEN
         fromInd=thisGraph%getIndex(fromID)
         toInd=thisGraph%getIndex(toID)
@@ -2001,7 +1992,7 @@ MODULE Geom_Graph
       INTEGER(SIK),INTENT(IN) :: fromID
       INTEGER(SIK),INTENT(IN) :: toID
       INTEGER(SIK) :: fromInd,toInd
-      
+
       IF(ALLOCATED(thisGraph%edgeMatrix)) THEN
         fromInd=thisGraph%getIndex(fromID)
         toInd=thisGraph%getIndex(toID)
@@ -2017,7 +2008,7 @@ MODULE Geom_Graph
       CLASS(DAGraphType),INTENT(INOUT) :: thisGraph
       INTEGER(SIK),INTENT(IN) :: ID
       INTEGER(SIK) :: i,ind
-      
+
       ind=0
       IF(ALLOCATED(thisGraph%edgeMatrix)) THEN
         DO i=1,thisGraph%n
@@ -2038,12 +2029,12 @@ MODULE Geom_Graph
       TYPE(DAGraphType) :: sortedGraph
       INTEGER(SIK) :: i,ID
       INTEGER(SIK),ALLOCATABLE :: oldIDs(:)
-      
+
       ID=0
       ALLOCATE(oldIDs(thisGraph%n))
       oldIDs=0
       CALL thisGraph%getNextStartNode(oldIDs,ID)
-      
+
       DO WHILE(ID /= 0)
         CALL sortedGraph%insertNode(ID,1)
         DO i=1,thisGraph%n
@@ -2073,5 +2064,5 @@ MODULE Geom_Graph
         g0%edgeMatrix=g1%edgeMatrix
       ENDIF
     ENDSUBROUTINE assign_DAGraphType
-!    
+!
 ENDMODULE Geom_Graph

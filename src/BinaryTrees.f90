@@ -1,19 +1,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief Utility module for supplying basic binary tree data types
 !>
@@ -32,14 +23,14 @@ MODULE BinaryTrees
   USE IntrType
   IMPLICIT NONE
   PRIVATE
-  
+
   PUBLIC :: BinaryTreeType_Integer
   PUBLIC :: BinaryTreeType_Index
   PUBLIC :: CreateBinaryTree
   PUBLIC :: CreateBinaryTreeRmDup
   PUBLIC :: BurnBinaryTree
   PUBLIC :: SortedBinaryTree
-  
+
   !> Basic binary tree type that has an integer value on each node/leaf
   TYPE :: BinaryTreeType_Integer
     !> Value of node
@@ -55,7 +46,7 @@ MODULE BinaryTrees
       !> @copydetails BinaryTrees::SearchBinaryTree_Integer
       PROCEDURE,PASS :: match => SearchBinaryTree_Integer
   ENDTYPE BinaryTreeType_Integer
-  
+
   !> Basic binary tree type that has an integer value on each node/leaf
   TYPE :: BinaryTreeType_Index
     !> Value of node
@@ -76,7 +67,7 @@ MODULE BinaryTrees
       !> @copydetails BinaryTrees::getBinaryTreeIndex_Index
       PROCEDURE,PASS :: findIndex => getBinaryTree_Index
   ENDTYPE BinaryTreeType_Index
-  
+
   !> Generic interface to creating a binary tree data type for
   !> different types of binary trees and input data
   INTERFACE CreateBinaryTree
@@ -87,7 +78,7 @@ MODULE BinaryTrees
     !> @copydetails BinaryTrees::CreateBinaryTreeIndex_Index
     MODULE PROCEDURE CreateBinaryTree_Index
   ENDINTERFACE CreateBinaryTree
-  
+
   !> Generic interface to creating a binary tree data type for
   !> different types of binary trees and input data
   INTERFACE CreateBinaryTreeRmDup
@@ -98,7 +89,7 @@ MODULE BinaryTrees
     !> @copydetails BinaryTrees::CreateBinaryTreeRmDup_Index
     MODULE PROCEDURE CreateBinaryTreeRmDup_Index
   ENDINTERFACE CreateBinaryTreeRmDup
-  
+
   !> Generic interface for destroying a binary tree
   INTERFACE BurnBinaryTree
     !> @copybrief BinaryTrees::BurnBinaryTreeIndex_Integer
@@ -108,7 +99,7 @@ MODULE BinaryTrees
     !> @copydetails BinaryTrees::BurnBinaryTreeIndex_Index
     MODULE PROCEDURE BurnBinaryTree_Index
   ENDINTERFACE BurnBinaryTree
-  
+
   !> Generif interface for creating a binary list from a sorted list
   INTERFACE SortedBinaryTree
     !> @copybrief BinaryTrees::SortedBinaryTreeIndex_Index
@@ -147,12 +138,12 @@ MODULE BinaryTrees
 !> @param t the binary tree to be created
 !> @param list the list of integers to put into the tree
 !>
-!> 
-    SUBROUTINE CreateBinaryTree_Integer(t,list)    
+!>
+    SUBROUTINE CreateBinaryTree_Integer(t,list)
       TYPE(BinaryTreeType_Integer),POINTER :: t
       INTEGER(SIK),INTENT(IN) :: list(:)
       INTEGER(SIK) :: i
-      
+
       IF(.NOT.ASSOCIATED(t)) THEN
         DO i=1,SIZE(list)
           CALL InsertBinaryTreeNode_Integer(t,list(i))
@@ -165,12 +156,12 @@ MODULE BinaryTrees
 !> @param t the binary tree to be created
 !> @param list the list of integers to put into the tree
 !>
-!> 
-    SUBROUTINE CreateBinaryTreeRmDup_Integer(t,list)    
+!>
+    SUBROUTINE CreateBinaryTreeRmDup_Integer(t,list)
       TYPE(BinaryTreeType_Integer),POINTER :: t
       INTEGER(SIK),INTENT(IN) :: list(:)
       INTEGER(SIK) :: i
-      
+
       IF(.NOT.ASSOCIATED(t)) THEN
         DO i=1,SIZE(list)
           CALL InsertBinaryTreeNodeRmDup_Integer(t,list(i))
@@ -184,7 +175,7 @@ MODULE BinaryTrees
 !> @param number the number be inserted in the node
 !>
 !> Recursive subroutines are really bad for trees with a very high depth because
-!> a new stack is allocated each level down the tree. This creates all kinds of 
+!> a new stack is allocated each level down the tree. This creates all kinds of
 !> performance issues and so it should be replaced by a non-recursive routine
 !> to traverse the tree. However, it should be ok for initial use.
     RECURSIVE SUBROUTINE InsertBinaryTreeNode_Integer(t,number)
@@ -209,7 +200,7 @@ MODULE BinaryTrees
 !> @param number the number be inserted in the node
 !>
 !> Recursive subroutines are really bad for trees with a very high depth because
-!> a new stack is allocated each level down the tree. This creates all kinds of 
+!> a new stack is allocated each level down the tree. This creates all kinds of
 !> performance issues and so it should be replaced by a non-recursive routine
 !> to traverse the tree. However, it should be ok for initial use.
     RECURSIVE SUBROUTINE InsertBinaryTreeNodeRmDup_Integer(t,number)
@@ -268,7 +259,7 @@ MODULE BinaryTrees
 !> @param list the list of integers to put into the tree
 !> @param n1 optional, the starting index
 !> @param n2 optional, the ending index
-!> 
+!>
 !> This is useful for searching lists with non-sequential, and possibly
 !> unordered values.
     SUBROUTINE CreateBinaryTree_Index(t,list,n1,n2)
@@ -276,7 +267,7 @@ MODULE BinaryTrees
       INTEGER(SIK),INTENT(IN) :: list(:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n1,n2
       INTEGER(SIK) :: i,j,stt,stp
-      
+
       IF(PRESENT(n1)) THEN
         stt=n1
       ELSE
@@ -302,7 +293,7 @@ MODULE BinaryTrees
 !> @param list the list of integers to put into the tree
 !> @param n1 optional, the starting index
 !> @param n2 optional, the ending index
-!> 
+!>
 !> This is useful for searching lists with non-sequential, and possibly
 !> unordered values.
     SUBROUTINE CreateBinaryTreeRmDup_Index(t,list,n1,n2)
@@ -310,7 +301,7 @@ MODULE BinaryTrees
       INTEGER(SIK),INTENT(IN) :: list(:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n1,n2
       INTEGER(SIK) :: i,j,stt,stp
-      
+
       IF(PRESENT(n1)) THEN
         stt=n1
       ELSE
@@ -337,7 +328,7 @@ MODULE BinaryTrees
 !> @param index the index of the number to be inserted
 !>
 !> Recursive subroutines are really bad for trees with a very high depth because
-!> a new stack is allocated each level down the tree. This creates all kinds of 
+!> a new stack is allocated each level down the tree. This creates all kinds of
 !> performance issues and so it should be replaced by a non-recursive routine
 !> to traverse the tree. However, it should be ok for initial use.
     RECURSIVE SUBROUTINE InsertBinaryTreeNode_Index(t,number,index)
@@ -364,7 +355,7 @@ MODULE BinaryTrees
 !> @param index the index of the number to be inserted
 !>
 !> Recursive subroutines are really bad for trees with a very high depth because
-!> a new stack is allocated each level down the tree. This creates all kinds of 
+!> a new stack is allocated each level down the tree. This creates all kinds of
 !> performance issues and so it should be replaced by a non-recursive routine
 !> to traverse the tree. However, it should be ok for initial use.
     RECURSIVE SUBROUTINE InsertBinaryTreeNodeRmDup_Index(t,number,index)

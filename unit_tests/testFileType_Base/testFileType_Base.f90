@@ -1,28 +1,19 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE DummyFile
   USE FileType_Base
-  
+
   IMPLICIT NONE
   PRIVATE
-  
+
   PUBLIC :: DummyFileType
-  
+
   TYPE,EXTENDS(BaseFileType) :: DummyFileType
     CONTAINS
       PROCEDURE,PASS :: fopen
@@ -51,23 +42,23 @@ PROGRAM testFileType_Base
   USE ExceptionHandler
   USE FileType_Base
   USE DummyFile
-  
+
   IMPLICIT NONE
-  
+
   TYPE(StringType) :: str1,str2,str3
   TYPE(ExceptionHandlerType),TARGET :: e
   CLASS(BaseFileType),ALLOCATABLE :: testFile
-      
+
   CREATE_TEST('FILETYPE_BASE')
-  
+
   ALLOCATE(DummyFileType :: testFile)
   CALL e%setStopOnError(.FALSE.)
   CALL e%setQuietMode(.TRUE.)
-  
+
   REGISTER_SUBTEST('uninitialized',testUninit)
   REGISTER_SUBTEST('File Name',testNames)
   REGISTER_SUBTEST('File State',testState)
-  
+
   FINALIZE_TEST()
   DEALLOCATE(testFile)
 !

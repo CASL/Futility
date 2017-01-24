@@ -1,13 +1,11 @@
-################################################################################
-#
-# CMake/TriBITS File for MPACT
-#
-# Description: Defines the compiler flags and options for MPACT_Utils
-#
-# Author: Brendan Kochunas
-#   Date: 08/29/2016
-#
-################################################################################
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
+#                          Futility Development Group                          !
+#                             All rights reserved.                             !
+#                                                                              !
+# Futility is a jointly-maintained, open-source project between the University !
+# of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+# can be found in LICENSE.txt in the head directory of this repository.        !
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 
 # Preprocessor symbols for TPLs.
 IF(${PACKAGE_NAME}_ENABLE_PAPI)

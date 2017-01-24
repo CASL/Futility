@@ -1,22 +1,13 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief Module provides water properties at saturation conditions.
-!> 
+!>
 !> The module provides interfaces to retrieve the saturation properties of
 !> water give teh temperature or pressure:
 !>  - pressure at a given temperature
@@ -48,13 +39,13 @@
 !>
 !> @author Brendan Kochunas
 !>   @date 4/07/2015
-!> 
+!>
 MODULE WaterSatProperties
   USE IntrType
-  
+
   IMPLICIT NONE
   PRIVATE
-  
+
   PUBLIC :: WaterSatProperties_Init
   PUBLIC :: WaterSatProperties_GetPres
   PUBLIC :: WaterSatProperties_GetTemp
@@ -453,10 +444,10 @@ MODULE WaterSatProperties
     FUNCTION WaterSatProperties_GetPres(T) RESULT(P)
       REAL(SRK),INTENT(IN) :: T
       REAL(SRK) :: P
-    
+
       INTEGER(SIK) :: it
       REAL(SRK) :: dT
-    
+
       P=-HUGE(P)
       IF(initTables) THEN
         it=INT(T)
@@ -468,11 +459,11 @@ MODULE WaterSatProperties
 !
 !-------------------------------------------------------------------------------
     FUNCTION WaterSatProperties_GetTemp(P) RESULT(T)
-      REAL(SRK),INTENT(IN) :: P  
+      REAL(SRK),INTENT(IN) :: P
       REAL(SRK) :: T
-    
+
       INTEGER(SIK) :: iphi,iplo,ipmid
-    
+
       T=-HUGE(T)
       IF(initTables) THEN
         iplo=274
@@ -498,7 +489,7 @@ MODULE WaterSatProperties
 !
 !-------------------------------------------------------------------------------
     FUNCTION WaterSatProperties_GetVapDens(P,T) RESULT(vrho)
-      REAL(SRK),INTENT(IN),OPTIONAL :: P  
+      REAL(SRK),INTENT(IN),OPTIONAL :: P
       REAL(SRK),INTENT(IN),OPTIONAL :: T
       REAL(SRK) :: vrho
 
@@ -509,7 +500,7 @@ MODULE WaterSatProperties
       IF(initTables) THEN
         T_local=vrho
         IF(PRESENT(T)) THEN
-          T_local=T      
+          T_local=T
         ELSEIF(PRESENT(P)) THEN
           T_local=WaterSatProperties_GetTemp(P)
         ENDIF
@@ -524,18 +515,18 @@ MODULE WaterSatProperties
 !
 !-------------------------------------------------------------------------------
     FUNCTION WaterSatProperties_GetLiqDens(P,T) RESULT(lrho)
-      REAL(SRK),INTENT(IN),OPTIONAL :: P  
+      REAL(SRK),INTENT(IN),OPTIONAL :: P
       REAL(SRK),INTENT(IN),OPTIONAL :: T
       REAL(SRK) :: lrho
-    
+
       INTEGER(SIK) :: it
       REAL(SRK) :: T_local,dT
-    
+
       lrho=-HUGE(lrho)
       IF(initTables) THEN
         T_local=lrho
         IF(PRESENT(T)) THEN
-          T_local=T      
+          T_local=T
         ELSEIF(PRESENT(P)) THEN
           T_local=WaterSatProperties_GetTemp(P)
         ENDIF

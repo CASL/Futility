@@ -1,19 +1,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief A Fortran 2003 module defining bounding "boxes" for use in
 !> geometry.
@@ -78,7 +69,7 @@ MODULE Geom_Box
       !> @copydetail Geom_Box::inside_OBBoxType
       PROCEDURE,PASS :: inside => inside_OBBoxType
   ENDTYPE OBBoxType
-  
+
   !> @breif Lightweight type for axis-aligned box
   !>
   !> Derived type for storing a simple axis-aligned box. This is used to bound
@@ -108,8 +99,8 @@ MODULE Geom_Box
       !> @copybrief Geom_Box::clear_ABBoxType
       !> @copydetail Geom_Box::clear_ABBoxType
       PROCEDURE,PASS :: clear => clear_ABBoxType
-  ENDTYPE ABBoxType  
-    
+  ENDTYPE ABBoxType
+
   !> @brief Generic interface for 'is equal to' operator (==)
   !>
   !> Adds 'is equal to' capability for OBBox types
@@ -414,7 +405,7 @@ MODULE Geom_Box
    PURE SUBROUTINE getLines_OBBoxType(thisBox,lines)
      CLASS(OBBoxType),INTENT(INOUT) :: thisBox
      TYPE(LineType),INTENT(OUT),ALLOCATABLE :: lines(:)
-     
+
      IF(thisBox%p0%dim == 2) THEN
        ALLOCATE(lines(4))
        lines(1)%p1=thisBox%p0
@@ -443,7 +434,7 @@ MODULE Geom_Box
      CLASS(OBBoxType),INTENT(INOUT) :: thisBox
      TYPE(PlaneType),INTENT(OUT),ALLOCATABLE :: planes(:)
      TYPE(PointType) :: tmpPt
-     
+
      IF(thisBox%p0%dim == 3) THEN
        ALLOCATE(planes(6))
        planes(1)%v0=thisBox%p0
@@ -481,7 +472,7 @@ MODULE Geom_Box
      LOGICAL(SBK) :: bool
      TYPE(PointType) :: px,py
      REAL(SRK) :: pxmag,pymag,pxproj,pyproj
-     
+
      bool=.FALSE.
      IF(point%dim == 2) THEN
        CALL px%init(DIM=2,X=thisBox%u(1,1)*thisBox%e(1), &
@@ -525,7 +516,7 @@ MODULE Geom_Box
 !> @param xMax the maximum x-extent of the box
 !> @param yMin the minimum y-extent of the box
 !> @param yMax the maximum y-extent of the box
-!> 
+!>
 !> This routine sets the attributes of a ABBoxType object.
     ELEMENTAL SUBROUTINE set_ABBoxType(thisABB,xMin,xMax,yMin,yMax)
       CLASS(ABBoxType),INTENT(INOUT) :: thisABB
@@ -558,7 +549,7 @@ MODULE Geom_Box
 !> @param thisABB the box
 !> @param p the point
 !> @returns inside .TRUE. if p is inside the box.
-!> 
+!>
     ELEMENTAL FUNCTION inside_ABBoxType(thisABB,p) RESULT(inside)
       CLASS(ABBoxType),INTENT(IN) :: thisABB
       TYPE(PointType),INTENT(IN) :: p

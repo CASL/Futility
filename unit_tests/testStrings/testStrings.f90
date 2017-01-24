@@ -1,28 +1,19 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                              Copyright (C) 2012                              !
-!                   The Regents of the University of Michigan                  !
-!              MPACT Development Group and Prof. Thomas J. Downar              !
-!                             All rights reserved.                             !
-!                                                                              !
-! Copyright is reserved to the University of Michigan for purposes of          !
-! controlled dissemination, commercialization through formal licensing, or     !
-! other disposition. The University of Michigan nor any of their employees,    !
-! makes any warranty, express or implied, or assumes any liability or          !
-! responsibility for the accuracy, completeness, or usefulness of any          !
-! information, apparatus, product, or process disclosed, or represents that    !
-! its use would not infringe privately owned rights. Reference herein to any   !
-! specific commercial products, process, or service by trade name, trademark,  !
-! manufacturer, or otherwise, does not necessarily constitute or imply its     !
-! endorsement, recommendation, or favoring by the University of Michigan.      !
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testStrings
 #include "UnitTest.h"
-  USE UnitTest  
+  USE UnitTest
   USE IntrType
   USE Strings
-  
+
   IMPLICIT NONE
-  
+
   LOGICAL(SBK) :: bool
   INTEGER(SIK) :: i
   CHARACTER(LEN=10) :: char10
@@ -31,7 +22,7 @@ PROGRAM testStrings
   TYPE(StringType) :: test1a(2),test1a2(2),test2a(2,2),test2a2(2,2)
   TYPE(StringType) :: test3a(2,2,2),test3a2(2,2,2)
   TYPE(StringType),ALLOCATABLE :: s1a(:),s1a2(:),s2a(:,:),s2a2(:,:)
-  
+
   CREATE_TEST('TEST STRINGS')
 !
 !Test methods for uninitialized state
@@ -74,7 +65,7 @@ PROGRAM testStrings
   ASSERT(LEN(testString) == 10,'LEN(testString) (=''variable'')')
   ASSERT(LEN_TRIM(testString) == 8,'LEN_TRIM(testString) (=''variable'')')
   ASSERT(TRIM(testString) == 'variable','TRIM(testString) (=''variable'')')
-!  
+!
 !Test assigning a string to a character
   COMPONENT_TEST('Assignment String Scalar to Char')
   char10='-'
@@ -96,7 +87,7 @@ PROGRAM testStrings
   s1a(1)='test'
   s1a(2)='test2'
   s1a='pass'
-  ASSERT(s1a(1) == 'pass' .AND. s1a(2) == 'pass','char to 1-D array') 
+  ASSERT(s1a(1) == 'pass' .AND. s1a(2) == 'pass','char to 1-D array')
   s1a=''
   ASSERT(s1a(1) == '' .AND. s1a(2) == '','char to 1-D array nullify')
   DEALLOCATE(s1a)
@@ -182,7 +173,7 @@ PROGRAM testStrings
   testString=char10
   ASSERT(ADJUSTR(testString) == ADJUSTR(char10),'ADJUSTR(testString)')
 !
-!Test INDEX 
+!Test INDEX
   COMPONENT_TEST('INDEX')
   char10='  - -'
   testString=char10
@@ -201,7 +192,7 @@ PROGRAM testStrings
   ASSERT('"'//testString == '"  -       ','''"''//testString')
   ASSERT(testString//'"' == '  -       "','testString//''"''')
   ASSERT(testString//testString == '  -         -       ','testString//testString')
-  
+
 !
 !Test == operator
   COMPONENT_TEST('==')
@@ -215,7 +206,7 @@ PROGRAM testStrings
   ASSERT(.NOT.(testString /= char10),'testString == char10')
   ASSERT(char10 /= testString2,'char10 /= testString2')
   ASSERT(testString /= testString2,'testString /= testString2')
-  
+
 !
 !Test ANY operator
   COMPONENT_TEST('ANY')
@@ -344,7 +335,7 @@ PROGRAM testStrings
   ASSERT(.NOT.ALL(test3a,test3a2),'ALL 3-D & 3-D')
   ASSERT(ALL(test3a,test3a2,.TRUE.),'ALL 3-D & 3-D, w/ NOT=T')
   ASSERT(.NOT.ALL(test3a,test3a2,.FALSE.),'ALL 3-D & 3-D, w/ NOT=F')
-  
+
   FINALIZE_TEST()
 !
 ENDPROGRAM testStrings
