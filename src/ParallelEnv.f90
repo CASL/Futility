@@ -57,6 +57,8 @@ MODULE ParallelEnv
   INTEGER,SAVE :: PE_COMM_DEFAULT=0
 #endif
 
+  INTEGER :: max_threads_requested=0
+
   PUBLIC :: PE_COMM_SELF
   PUBLIC :: PE_COMM_WORLD
   PUBLIC :: PE_COMM_NULL
@@ -1257,7 +1259,8 @@ MODULE ParallelEnv
 !$        myPE%nproc=MAX(1,PEparam)
 !$      ENDIF
 !$    ENDIF
-!$    IF(myPE%nproc > omp_get_max_threads()) THEN
+!$    IF(myPE%nproc > max_threads_requested) THEN
+!$      max_threads_requested = myPE%nproc
 !$      CALL omp_set_num_threads(myPE%nproc)
 !$    ENDIF
       myPE%initStat=.TRUE.
