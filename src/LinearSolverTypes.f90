@@ -565,6 +565,10 @@ MODULE LinearSolverTypes
                   solver%PCTypeName='NOPC'
                   solver%pciters=0
                   solver%pcsetup=0
+                ELSE
+                  solver%PCTypeName=PreCondType
+                  solver%pciters=0
+                  solver%pcsetup=0
                 ENDIF
               ELSE
                 solver%PCTypeName='NOPC'
@@ -608,6 +612,15 @@ MODULE LinearSolverTypes
                     CALL PetscOptionsSetValue("-sub_ksp_type","preonly",ierr)
                     CALL PetscOptionsSetValue("-sub_pc_type","ilu",ierr)
                     CALL PCSetFromOptions(solver%pc,ierr)
+                  ELSEIF(TRIM(PreCondType)=='EISENSTAT') THEN
+                    CALL PCSetType(solver%pc,PCEISENSTAT,ierr)
+                  ELSEIF(TRIM(PreCondType)=='MG') THEN
+                    !This is not actually a MG preconditioner since we are not
+                    ! providing it any geometric/interpolation/restriction 
+                    ! information.  However, it does perform one Cholesky
+                    ! smoother step, which seems to be fairly effective for many
+                    ! problems.
+                    CALL PCSetType(solver%pc,PCMG,ierr)
                   ELSEIF(TRIM(PreCondType)=='SHELL') THEN
                     CALL PCSetType(solver%pc,PCSHELL,ierr)
                     CALL PCShellSetSetup(solver%pc,PETSC_PCSHELL_setup_extern,ierr)
