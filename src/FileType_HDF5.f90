@@ -697,6 +697,8 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),PARAMETER :: myName='close_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: file
 #ifdef MPACT_HAVE_HDF5
+      LOGICAL(SBK) :: lastStopOnError
+      lastStopOnError=file%e%isStopOnError()
       CALL file%e%setStopOnError(.FALSE.)
       !Check init status
       IF(.NOT.file%isinit) THEN
@@ -714,6 +716,7 @@ MODULE FileType_HDF5
           ENDIF
         ENDIF
       ENDIF
+      CALL file%e%setStopOnError(lastStopOnError)
 #endif
     ENDSUBROUTINE close_HDF5FileType
 !
@@ -6371,7 +6374,6 @@ MODULE FileType_HDF5
 !          IF(thisHDF5File%pe%isinit()) parwrite=.TRUE.
 !        ENDIF
 !#endif
-
         !Create an HDF5 parameter list for the dataset creation.
         CALL h5pcreate_f(H5P_DATASET_CREATE_F,plist_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
