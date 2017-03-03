@@ -24,7 +24,7 @@ PROGRAM testLinearSolver
   TYPE(MPI_EnvType) :: mpiTestEnv
   TYPE(ParamType) :: pList, optListLS, optListMat, vecPList
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
 #include <finclude/petsc.h>
 #undef IS
   PetscErrorCode  :: ierr
@@ -79,7 +79,7 @@ PROGRAM testLinearSolver
   CALL optListMat%clear()
   CALL optListLS%clear()
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
   CALL PetscFinalize(ierr)
 #else
   CALL mpiTestEnv%finalize()
@@ -165,7 +165,7 @@ CONTAINS
         thisLS%isDecomposed=.TRUE.
         CALL thisLS%MPIparallelEnv%init(PE_COMM_SELF)
         CALL thisLS%OMPparallelEnv%init(1)
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
         CALL KSPCreate(thisLS%MPIparallelEnv%comm,thisLS%ksp,ierr)
 #endif
 
@@ -1433,7 +1433,7 @@ WRITE(*,*) thisLS%info
       INTEGER(SIK) :: i
       LOGICAL(SBK) :: bool
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       PetscReal :: rtol,abstol,dtol
       PetscInt  :: maxits,restart
       PetscErrorCode :: ierr
@@ -1477,7 +1477,7 @@ WRITE(*,*) thisLS%info
       DEALLOCATE(thisX2)
       CALL thisLS%clear()
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       ! initialize linear system
       CALL pList%clear()
       CALL pList%add('LinearSolverType->TPLType',PETSC)
@@ -1550,7 +1550,7 @@ WRITE(*,*) thisLS%info
       ENDSELECT
       CALL thisLS%clear()
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       !Test setConv
       !Bad input
       ! initialize linear system
@@ -2031,7 +2031,7 @@ WRITE(*,*) thisLS%info
       DEALLOCATE(thisX)
       CALL thisLS%clear()
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       !The PETSC sparse matrix type
       ! initialize linear system
       CALL pList%clear()
@@ -2523,7 +2523,7 @@ WRITE(*,*) thisLS%info
       CALL thisLS%clear()
 
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       ! DenseSquare matrix
       ! initialize linear system
       CALL pList%clear()
@@ -2960,7 +2960,7 @@ WRITE(*,*) thisLS%info
       DEALLOCATE(thisX)
       CALL thisLS%clear()
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       !With GMRES
       !The sparse matrix type
       ! initialize linear system

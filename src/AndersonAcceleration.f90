@@ -182,7 +182,7 @@ MODULE AndersonAccelerationTypes
         CALL tmpPL%add('VectorType->n',n)
         CALL tmpPL%add('VectorType->MPI_Comm_ID',solver%MPIparallelEnv%comm)
         CALL tmpPL%add('VectorType->nlocal',nlocal)
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
         CALL solver%X%init(tmpPL)
         CALL solver%X%set(0.0_SRK)
 
@@ -216,7 +216,7 @@ MODULE AndersonAccelerationTypes
       solver%n=-1
       solver%depth=-1
       solver%beta=0.0_SRK
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
       IF(solver%X%isInit) CALL solver%X%clear()
       CALL Anderson_Destroy(solver%id)
 #endif
@@ -231,7 +231,7 @@ MODULE AndersonAccelerationTypes
 !>
     SUBROUTINE step_AndersonAccelerationType(solver)
       CLASS(AndersonAccelerationType),INTENT(INOUT) :: solver
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
       IF(solver%iter==0) THEN
         CALL Anderson_Reset(solver%id)
       ELSE
@@ -250,7 +250,7 @@ MODULE AndersonAccelerationTypes
 !>
     SUBROUTINE reset_AndersonAccelerationType(solver)
       CLASS(AndersonAccelerationType),INTENT(INOUT) :: solver
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
       CALL Anderson_Reset(solver%id)
       solver%iter=1
 #endif

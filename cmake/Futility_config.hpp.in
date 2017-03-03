@@ -1,5 +1,5 @@
 #cmakedefine HAVE_MPI
-#cmakedefine MPACT_HAVE_PETSC
+#cmakedefine FUTILITY_HAVE_PETSC
 #cmakedefine WIN32
 #cmakedefine UNIT_TEST
 #cmakedefine HAVE_MPI

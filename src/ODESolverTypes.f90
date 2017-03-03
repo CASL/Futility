@@ -52,7 +52,7 @@ MODULE ODESolverTypes
   USE Strings
   IMPLICIT NONE
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
 #include <finclude/petsc.h>
 #include <petscversion.h>
 !petscisdef.h defines the keyword IS, and it needs to be reset

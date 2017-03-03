@@ -94,7 +94,7 @@ MODULE ParameterLists
   USE ExceptionHandler
   USE IO_Strings
   USE FileType_XML
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
   USE ForTeuchos_ParameterList
 #endif
 
@@ -494,7 +494,7 @@ MODULE ParameterLists
       !> @copybrief ParameterLists::clear_ParamType
       !> @copydoc ParameterLists::clear_ParamType
       PROCEDURE,PASS :: clear => clear_ParamType
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
       PROCEDURE,PASS :: toTeuchosPlist
 #endif
   PROCEDURE :: procXMLTree
@@ -877,7 +877,7 @@ MODULE ParameterLists
 !
 !===============================================================================
   CONTAINS
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
     RECURSIVE SUBROUTINE toTeuchosPlist(this, that, n)
       CLASS(ParamType),INTENT(IN) :: this
       TYPE(ForTeuchos_ParameterList_ID),INTENT(IN) :: that

@@ -50,16 +50,16 @@ MODULE EigenvalueSolverTypes
   USE MatrixTypes
   USE PreconditionerTypes
   USE Strings
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
   USE ForTeuchos_ParameterList
 #endif
   IMPLICIT NONE
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
 #include <finclude/petsc.h>
 #include <petscversion.h>
 !petscisdef.h defines the keyword IS, and it needs to be reset
-#ifdef MPACT_HAVE_SLEPC
+#ifdef FUTILITY_HAVE_SLEPC
 #include <finclude/slepcsys.h>
 #include <finclude/slepceps.h>
 #endif
@@ -76,7 +76,7 @@ MODULE EigenvalueSolverTypes
   PUBLIC :: EigenvalueSolverType_SNES
 
   PUBLIC :: PETSC_SHELL_EVS
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
   PUBLIC :: PETSC_SHELL_CALCRESID_extern
 #endif
 
@@ -158,7 +158,7 @@ MODULE EigenvalueSolverTypes
   TYPE,EXTENDS(EigenvalueSolverType_Base) :: EigenvalueSolverType_SLEPc
     !>
     LOGICAL(SBK) :: clops=.FALSE.
-#ifdef MPACT_HAVE_SLEPC
+#ifdef FUTILITY_HAVE_SLEPC
     !> SLEPc Eigenvalue Solver type
     EPS :: eps
 #endif
@@ -204,7 +204,7 @@ MODULE EigenvalueSolverTypes
   !> @brief The extended type for the SLEPc Eigenvalue Solvers
   TYPE,EXTENDS(EigenvalueSolverType_Base) :: EigenvalueSolverType_SNES
     !>
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
 !Rondom stuff you need for SNES... like SNES :: snes
 #endif
 !
@@ -244,7 +244,7 @@ MODULE EigenvalueSolverTypes
   !> Name of module
   CHARACTER(LEN=*),PARAMETER :: modName='EIGENVALUESOLVERTYPES'
 
-#ifdef MPACT_HAVE_SLEPC
+#ifdef FUTILITY_HAVE_SLEPC
       PetscErrorCode ierr
 #endif
 
@@ -274,7 +274,7 @@ MODULE EigenvalueSolverTypes
       REAL(SRK) :: tol
       LOGICAL(SBK) :: clops
       TYPE(STRINGType) :: pctype
-#ifdef MPACT_HAVE_SLEPC
+#ifdef FUTILITY_HAVE_SLEPC
       ST :: st
       KSP :: ksp
       PC :: pc
@@ -335,7 +335,7 @@ MODULE EigenvalueSolverTypes
         ELSE
           solver%maxit=maxit
         ENDIF
-#ifdef MPACT_HAVE_SLEPC
+#ifdef FUTILITY_HAVE_SLEPC
         CALL EPSCreate(solver%MPIparallelEnv%comm,solver%eps,ierr)
         CALL EPSSetProblemType(solver%eps,EPS_GNHEP,ierr)
         IF(ierr/=0) &
@@ -425,7 +425,7 @@ MODULE EigenvalueSolverTypes
       TYPE(MPI_EnvType),INTENT(IN),TARGET :: MPIEnv
       TYPE(ParamType),INTENT(IN) :: Params
       TYPE(ParamType) :: validParams, tmpPL
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
       INTEGER(SIK) :: n,nlocal,solvertype,maxit
       REAL(SRK) :: tol
       TYPE(STRINGType) :: pctype
@@ -620,7 +620,7 @@ MODULE EigenvalueSolverTypes
           solver%maxit=maxit
         ENDIF
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
         !TODO: SNES Init
 
         !Need to set PC type
@@ -666,12 +666,12 @@ MODULE EigenvalueSolverTypes
       INTEGER(SIK),INTENT(OUT) :: its
 
       SELECTTYPE(solver); TYPE IS(EigenvalueSolverType_SLEPc)
-#ifdef MPACT_HAVE_SLEPC
+#ifdef FUTILITY_HAVE_SLEPC
         CALL EPSComputeRelativeError(solver%eps,0,resid,ierr)
         CALL EPSGetIterationNumber(solver%eps,its,ierr)
 #endif
       TYPE IS(EigenvalueSolverType_Anasazi)
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
         CALL Anasazi_GetResid(solver%eig,resid)
         CALL Anasazi_GetIterationCount(solver%eig,its)
 #endif
@@ -697,7 +697,7 @@ MODULE EigenvalueSolverTypes
       SELECTTYPE(solver)
         TYPE IS(EigenvalueSolverType_SLEPc)
           SELECTTYPE(x0); TYPE IS(PETScVectorType)
-#ifdef MPACT_HAVE_SLEPC
+#ifdef FUTILITY_HAVE_SLEPC
             CALL EPSSetInitialSpace(solver%eps,1,x0%b,ierr)
 #endif
           ENDSELECT
@@ -727,7 +727,7 @@ MODULE EigenvalueSolverTypes
       NULLIFY(solver%B)
       IF(solver%X%isInit) CALL solver%X%clear()
       IF(solver%xi%isInit) CALL solver%xi%clear()
-#ifdef MPACT_HAVE_SLEPC
+#ifdef FUTILITY_HAVE_SLEPC
       CALL EPSDestroy(solver%eps,ierr)
 #endif
       solver%isInit=.FALSE.
@@ -754,7 +754,7 @@ MODULE EigenvalueSolverTypes
       NULLIFY(solver%B)
       CALL solver%x_scale%clear()
       IF(solver%X%isInit) CALL solver%X%clear()
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
       CALL Preconditioner_Destroy(solver%pc)
       CALL Anasazi_Destroy(solver%eig)
 #endif
@@ -782,7 +782,7 @@ MODULE EigenvalueSolverTypes
       NULLIFY(solver%B)
       IF(solver%X%isInit) CALL solver%X%clear()
       !IF(solver%xi%isInit) CALL solver%xi%clear()
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       !CALL SNESDestroy(solver%snes,ierr)
 #endif
       !TODO: add anything else allocated in SNES
@@ -797,7 +797,7 @@ MODULE EigenvalueSolverTypes
 !>
     SUBROUTINE solve_EigenvalueSolverType_SLEPc(solver)
       CLASS(EigenvalueSolverType_SLEPc),INTENT(INOUT) :: solver
-#ifdef MPACT_HAVE_SLEPC
+#ifdef FUTILITY_HAVE_SLEPC
       PetscScalar    kr, ki
       REAL(SRK) :: tmp(2)
 
@@ -835,7 +835,7 @@ MODULE EigenvalueSolverTypes
 !>
     SUBROUTINE solve_EigenvalueSolverType_Anasazi(solver)
       CLASS(EigenvalueSolverType_Anasazi),INTENT(INOUT) :: solver
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
       REAL(SRK) :: factor
       REAL(SRK) :: tmp(2)
       SELECTTYPE(A=>solver%A); TYPE IS(TrilinosMatrixType)
@@ -880,7 +880,7 @@ MODULE EigenvalueSolverTypes
 !>
     SUBROUTINE solve_EigenvalueSolverType_SNES(solver)
       CLASS(EigenvalueSolverType_SNES),INTENT(INOUT) :: solver
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       REAL(SRK) :: tmp(2)
 
       SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
@@ -914,12 +914,12 @@ MODULE EigenvalueSolverTypes
     SUBROUTINE calcResid_EigenvalueSolverType_SNES(solver,v)
       CLASS(EigenvalueSolverType_SNES),INTENT(INOUT) :: solver
       CLASS(PETScVectorType),INTENT(INOUT) :: v
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       !TODO  v = Bv/sum(Bv)-Av
 #endif
     ENDSUBROUTINE calcResid_EigenvalueSolverType_SNES
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
     SUBROUTINE PETSC_SHELL_CALCRESID_extern(snes,x,f,dummy,err)
       SNES :: snes
       Vec :: x

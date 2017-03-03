@@ -6,14 +6,14 @@
 # of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
 # can be found in LICENSE.txt in the head directory of this repository.        !
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-INCLUDE(MPACT_CreateUnitTest)
+INCLUDE(Futility_CreateUnitTest)
 
 # List any files from the main source directory that the test depends on
 SET(ADDITIONAL_FILES
     testFile.xml
 )
 
-MPACT_CreateUnitTest(testFileType_XML)
+Futility_CreateUnitTest(testFileType_XML)
 
-MPACT_CopyFiles(ADDITIONAL_FILES)
+Futility_CopyFiles(ADDITIONAL_FILES)
 UNSET(ADDITIONAL_FILES)

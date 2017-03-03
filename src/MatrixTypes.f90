@@ -69,7 +69,7 @@ MODULE MatrixTypes
   USE VectorTypes
   IMPLICIT NONE
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
 #include <finclude/petsc.h>
 #undef IS
 #endif
@@ -211,7 +211,7 @@ MODULE MatrixTypes
   ENDINTERFACE
 
   TYPE,EXTENDS(DistributedMatrixType) :: PETScMatrixType
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
     Mat :: A
 #endif
 !
@@ -241,7 +241,7 @@ MODULE MatrixTypes
   ENDTYPE PETScMatrixType
 
   TYPE,EXTENDS(DistributedMatrixType) :: TrilinosMatrixType
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
     INTEGER(SIK) :: A
     INTEGER(SIK) :: currow
     INTEGER(SIK) :: ncol
@@ -659,7 +659,7 @@ MODULE MatrixTypes
       INTEGER(SIK),ALLOCATABLE :: dnnz(:), onnz(:)
       LOGICAL(SBK) :: isSym
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       PetscErrorCode  :: ierr
 
       !Check to set up required and optional param lists.
@@ -747,7 +747,7 @@ MODULE MatrixTypes
       INTEGER(SIK),ALLOCATABLE :: dnnz(:), onnz(:)
       LOGICAL(SBK) :: isSym
 
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
 
       !Check to set up required and optional param lists.
       IF(.NOT.MatrixType_Paramsflag) CALL MatrixTypes_Declare_ValidParams()
@@ -891,7 +891,7 @@ MODULE MatrixTypes
     SUBROUTINE clear_PETScMatrixType(matrix)
       CHARACTER(LEN=*),PARAMETER :: myName='clear_PETScMatrixType'
       CLASS(PETScMatrixType),INTENT(INOUT) :: matrix
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       PetscErrorCode  :: ierr
 
       IF(matrix%isInit) CALL MatDestroy(matrix%a,ierr)
@@ -914,7 +914,7 @@ MODULE MatrixTypes
     SUBROUTINE clear_TrilinosMatrixType(matrix)
       CHARACTER(LEN=*),PARAMETER :: myName='clear_TrilinosMatrixType'
       CLASS(TrilinosMatrixType),INTENT(INOUT) :: matrix
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
 
       !TODO add routine to clear memory
       matrix%isInit=.FALSE.
@@ -1099,7 +1099,7 @@ MODULE MatrixTypes
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(IN) :: setval
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       PetscErrorCode  :: ierr
 
       IF(matrix%isInit) THEN
@@ -1132,7 +1132,7 @@ MODULE MatrixTypes
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(IN) :: setval
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
       INTEGER(SIK)  :: ierr
 
       IF(matrix%isInit) THEN
@@ -1177,7 +1177,7 @@ MODULE MatrixTypes
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(IN) :: setval
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
       INTEGER(SIK)  :: ierr
 
       IF(matrix%isInit) THEN
@@ -1335,7 +1335,7 @@ MODULE MatrixTypes
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(INOUT) :: getval
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       PetscErrorCode  :: ierr
 
       getval=0.0_SRK
@@ -1361,7 +1361,7 @@ MODULE MatrixTypes
       CLASS(PETScMatrixType),INTENT(INOUT) :: thisMatrix
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
       INTEGER(SIK) :: ierrc
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       PetscErrorCode  :: iperr
 
       ierrc=0
@@ -1396,7 +1396,7 @@ MODULE MatrixTypes
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(INOUT) :: getval
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
       INTEGER(SIK)  :: ierr
 
       getval=0.0_SRK
@@ -1422,7 +1422,7 @@ MODULE MatrixTypes
       CLASS(TrilinosMatrixType),INTENT(INOUT) :: thisMatrix
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
       INTEGER(SIK) :: ierrc
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
       INTEGER(SIK) :: iperr
 
       ierrc=0
@@ -1536,7 +1536,7 @@ MODULE MatrixTypes
                 thisMatrix%ja,thisMatrix%a,x,y)
             ENDIF
           TYPE IS(PETScMatrixType)
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
             ALLOCATE(tmpmat(thisMatrix%n,thisMatrix%n))
             ! stuff into temporary matrix
             DO i=1,thisMatrix%n
@@ -1602,11 +1602,11 @@ MODULE MatrixTypes
       INTEGER(SIK) :: incx
       REAL(SRK) :: a,b
       TYPE(ParamType) :: vecPList
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       PetscErrorCode  :: iperr
       TYPE(PETScVectorType) :: dummy
 #endif
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
       TYPE(TrilinosVectorType) :: tdummy
 #endif
       IF(thisMatrix%isInit) THEN
@@ -1675,7 +1675,7 @@ MODULE MatrixTypes
                     thisMatrix%ja,thisMatrix%a,x%b,y%b)
                 ENDIF
               TYPE IS(PETScMatrixType)
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
                 ALLOCATE(tmpmat(thisMatrix%n,thisMatrix%n))
                 ALLOCATE(tmpvec(x%n))
                 ALLOCATE(tmpy(x%n))
@@ -1716,7 +1716,7 @@ MODULE MatrixTypes
         TYPE IS(PETScVectorType)
           SELECTTYPE(y); TYPE IS(PETScVectorType)
             SELECTTYPE(thisMatrix); TYPE IS(PETScMatrixType)
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
                 CALL vecPList%add('VectorType -> n',y%n)
                 CALL vecPList%add('VectorType -> MPI_Comm_ID',y%comm)
                 CALL vecPList%add('VectorType -> nlocal',x%nlocal)
@@ -1744,7 +1744,7 @@ MODULE MatrixTypes
         TYPE IS(TrilinosVectorType)
           SELECTTYPE(y); TYPE IS(TrilinosVectorType)
             SELECTTYPE(thisMatrix); TYPE IS(TrilinosMatrixType)
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
                 CALL vecPList%add('VectorType -> n',y%n)
                 CALL vecPList%add('VectorType -> MPI_Comm_ID',y%comm)
                 CALL vecPList%add('VectorType -> nlocal',x%nlocal)
@@ -2141,7 +2141,7 @@ MODULE MatrixTypes
               TYPE IS(PETScMatrixType)
                 SELECTTYPE(C)
                   TYPE IS(PETScMatrixType)
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
                     ALLOCATE(tmpA(A%n,A%n))
                     ALLOCATE(tmpB(B%n,B%n))
                     ALLOCATE(tmpC(C%n,C%n))
@@ -2424,7 +2424,7 @@ MODULE MatrixTypes
     SUBROUTINE transpose_PETScMatrixType(matrix)
       CHARACTER(LEN=*),PARAMETER :: myName='transpose_PETScMatrixType'
       CLASS(PETScMatrixType),INTENT(INOUT) :: matrix
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       PetscErrorCode  :: iperr
       IF(.NOT.matrix%isAssembled) CALL matrix%assemble()
       CALL MatTranspose(matrix%a,MAT_REUSE_MATRIX,matrix%a,iperr)

@@ -54,7 +54,7 @@ ELSE()
 ENDIF()
 TRIBITS_ADD_OPTION_AND_DEFINE(
     ${PNAME}_ENABLE_PETSC
-    MPACT_HAVE_PETSC
+    FUTILITY_HAVE_PETSC
     "Enable use of PETSC libraries."
     ${${PNAME}_ENABLE_PETSC_DEFAULT}
 )
@@ -67,7 +67,7 @@ ELSE()
 ENDIF()
 TRIBITS_ADD_OPTION_AND_DEFINE(
     ${PNAME}_ENABLE_SLEPC
-    MPACT_HAVE_SLEPC
+    FUTILITY_HAVE_SLEPC
     "Enable use of SLEPC libraries."
     ${${PNAME}_ENABLE_SLEPC_DEFAULT}
 )
@@ -137,7 +137,7 @@ TRIBITS_ADD_OPTION_AND_DEFINE(
     ${${PNAME}_ENABLE_PAPI_DEFAULT}
 )
 
-# Set compiler options for this package using the MPACT configuration.
+# Set compiler options for this package using the Futility configuration.
 # NOTE: It appears that this must come before the package name is defined.
 #       These options are only defined for this package.
 INCLUDE(${PNAME}_Compiler_Config)

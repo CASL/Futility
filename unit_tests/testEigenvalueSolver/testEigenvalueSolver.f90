@@ -26,11 +26,11 @@ PROGRAM testEigenvalueSolver
   CLASS(EigenvalueSolverType_Base),POINTER :: testEVS
   CLASS(DistributedMatrixType),POINTER :: A, B
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
 #include <finclude/petsc.h>
 #undef IS
   PetscErrorCode  :: ierr
-#ifdef MPACT_HAVE_SLEPC
+#ifdef FUTILITY_HAVE_SLEPC
   CALL SlepcInitialize(PETSC_NULL_CHARACTER,ierr)
 #else
   CALL PETScInitialize(PETSC_NULL_CHARACTER,ierr)
@@ -57,12 +57,12 @@ PROGRAM testEigenvalueSolver
   ALLOCATE(EigenvalueSolverType_SLEPC :: testEVS)
   ALLOCATE(PetscMatrixType :: A)
   ALLOCATE(PetscMatrixType :: B)
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
   REGISTER_SUBTEST('testInitSLEPc',testInitSLEPc)
   REGISTER_SUBTEST('testSetMatSLEPc',testSetMatSLEPc)
   REGISTER_SUBTEST('testSetX0SLEPc',testSetX0SLEPc)
   REGISTER_SUBTEST('testSetConvSLEPc',testSetConvSLEPc)
-#ifdef MPACT_HAVE_SLEPC
+#ifdef FUTILITY_HAVE_SLEPC
   REGISTER_SUBTEST('testSolveSLEPc',testSolveSLEPc)
   REGISTER_SUBTEST('testGetResidSLEPc',testGetResidSLEPc)
 #endif
@@ -75,7 +75,7 @@ PROGRAM testEigenvalueSolver
   CALL optList%set('EigenvalueSolverType->solver',GD)
   CALL optList%set('EigenvalueSolverType->n',30_SIK)
   CALL optList%set('EigenvalueSolverType->nlocal',30_SIK)
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
   REGISTER_SUBTEST('testInitAnasazi',testInitAnasazi)
   REGISTER_SUBTEST('testSetMatAnasazi',testSetMatAnasazi)
   REGISTER_SUBTEST('testSetX0Anasazi',testSetX0Anasazi)
@@ -93,7 +93,7 @@ PROGRAM testEigenvalueSolver
   IF(B%isInit) CALL B%clear()
   DEALLOCATE(testEVS,A,B)
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
   CALL PetscFinalize(ierr)
 #else
   CALL mpiTestEnv%finalize()
