@@ -21,7 +21,7 @@ PROGRAM testMatrixTypes
 
   IMPLICIT NONE
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
 #include <finclude/petsc.h>
 #undef IS
   PetscErrorCode  :: ierr
@@ -47,7 +47,7 @@ PROGRAM testMatrixTypes
   CALL vecPList%add('VectorType -> nlocal',1)
   CALL vecPList%add('VectorType -> MPI_Comm_ID',PE_COMM_SELF)
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
   CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
 #endif
 
@@ -62,7 +62,7 @@ PROGRAM testMatrixTypes
   CALL MatrixTypes_Clear_ValidParams()
   CALL VectorType_Clear_ValidParams()
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
   CALL PetscFinalize(ierr)
 #endif
 
@@ -84,7 +84,7 @@ PROGRAM testMatrixTypes
       REAL(SRK) :: dummy
       REAL(SRK),ALLOCATABLE :: dummyvec(:)
       LOGICAL(SBK) :: bool
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       PetscErrorCode  :: ierr
 #endif
       CALL vecPList%set('VectorType -> n',3)
@@ -94,13 +94,13 @@ PROGRAM testMatrixTypes
       ALLOCATE(RealVectorType :: yRealVector)
       CALL xRealVector%init(vecPList)
       CALL yRealVector%init(vecPlist)
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       ALLOCATE(PETScVectorType :: xPETScVector)
       ALLOCATE(PETScVectorType :: yPETScVector)
       CALL xPETScVector%init(vecPList)
       CALL yPETScVector%init(vecPlist)
 #endif
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
       ALLOCATE(TrilinosVectorType :: xTrilinosVector)
       ALLOCATE(TrilinosVectorType :: yTrilinosVector)
       CALL xTrilinosVector%init(vecPList)
@@ -1505,7 +1505,7 @@ PROGRAM testMatrixTypes
       DEALLOCATE(thisMatrix)
 
 !Test for PETSc matrices (if necessary)
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
 
 !Test for PETSc sparsematrices
       ALLOCATE(PETScMatrixType :: thisMatrix)
@@ -2178,7 +2178,7 @@ PROGRAM testMatrixTypes
 #endif
 
 !Test for Trilinos matrices (if necessary)
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
 
 !Test for Trilinos sparsematrices
       ALLOCATE(TrilinosMatrixType :: thisMatrix)
@@ -2537,7 +2537,7 @@ PROGRAM testMatrixTypes
       REAL(SRK) :: ALPHA,BETA,dummy
       LOGICAL(SBK) :: bool
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       !
       !1.) A: PETSc  B: PETSc  C: PETSc     ----------------------------
       !
@@ -3013,7 +3013,7 @@ PROGRAM testMatrixTypes
       CALL bmat%clear()
       CALL cmat%clear()
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       !
       !5.) A: PETSc  B: PETSc  C: PETSc     ----------------------------
       !

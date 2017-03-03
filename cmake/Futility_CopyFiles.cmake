@@ -6,18 +6,13 @@
 # of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
 # can be found in LICENSE.txt in the head directory of this repository.        !
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-INCLUDE(Futility_CreateUnitTest)
-INCLUDE(Futility_CopyFiles)
+FUNCTION(Futility_CopyFiles FILES)
 
-# List any files from the main source directory that the test depends on
-SET(ADDITIONAL_FILES
-    mesh3Points.txt
-    mesh3Data.txt
-    VtktestCyl.vtk
-    mesh5ref.txt
-)
-
-Futility_CreateUnitTest(testVTKFiles)
-
-Futility_CopyFiles(ADDITIONAL_FILES)
-UNSET(ADDITIONAL_FILES)
+    FOREACH(file ${${FILES}})
+        CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/${file}
+            ${CMAKE_CURRENT_BINARY_DIR}/${file} COPYONLY)
+    ENDFOREACH()
+    
+    UNSET(file)
+    UNSET(FILES)
+ENDFUNCTION()

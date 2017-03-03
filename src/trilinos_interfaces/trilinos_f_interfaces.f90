@@ -24,7 +24,7 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE trilinos_interfaces
   USE ISO_C_BINDING
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
   USE ForTeuchos_ParameterList
 #endif
 
@@ -191,7 +191,7 @@ MODULE trilinos_interfaces
       INTEGER(C_INT),INTENT(INOUT)    :: id
     ENDSUBROUTINE
 
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
     SUBROUTINE Anasazi_Init_Params(id, plID) bind(C,NAME="Anasazi_Init_Params")
       IMPORT :: C_INT
       IMPORT :: ForTeuchos_ParameterList_ID
@@ -262,7 +262,7 @@ MODULE trilinos_interfaces
       INTEGER(C_INT),INTENT(INOUT)    :: id
     ENDSUBROUTINE
 
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
     SUBROUTINE Belos_Init_Params(id, plID) bind(C,NAME="Belos_Init_Params")
       IMPORT :: C_INT
       IMPORT :: ForTeuchos_ParameterList_ID
@@ -333,7 +333,7 @@ MODULE trilinos_interfaces
       INTEGER(C_INT),INTENT(IN),VALUE :: opt
     ENDSUBROUTINE
 
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
     SUBROUTINE Preconditioner_InitParams(id,plist) bind(C,NAME="Preconditioner_InitParams")
       IMPORT :: C_INT
       IMPORT :: ForTeuchos_ParameterList_ID

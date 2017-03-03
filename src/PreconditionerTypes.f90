@@ -50,7 +50,7 @@ MODULE PreconditionerTypes
   IMPLICIT NONE
   PRIVATE
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
 #include <finclude/petsc.h>
 #undef IS
 #endif
@@ -63,7 +63,7 @@ MODULE PreconditionerTypes
   PUBLIC :: BILU_PreCondType
   PUBLIC :: ePreCondType
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
   PUBLIC :: PETSC_PCSHELL_SETUP_extern
   PUBLIC :: PETSC_PCSHELL_APPLY_extern
 #endif
@@ -1539,7 +1539,7 @@ MODULE PreconditionerTypes
       ENDDO
     ENDSUBROUTINE solve_M1
 !
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
     SUBROUTINE PETSC_PCSHELL_SETUP_extern(pc,err)
       PC :: pc
       PetscErrorCode :: err

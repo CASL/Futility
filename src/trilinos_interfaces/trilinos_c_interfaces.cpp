@@ -9,7 +9,7 @@
 #ifdef HAVE_MPI
 #include "mpi.h"
 #endif
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
 #include "trilinos_anderson.hpp"
 #include "trilinos_mat_vec.hpp"
 #include "trilinos_pc.hpp"
@@ -18,7 +18,7 @@
 #include "CTeuchos_ParameterList.h"
 #include "CTeuchos_ParameterList_Cpp.hpp"
 
-bool mpact_trilinos_isinit = false;
+bool futility_trilinos_isinit = false;
 Teuchos::RCP< EpetraVecStore > evec(new EpetraVecStore);
 Teuchos::RCP< EpetraMatStore > emat(new EpetraMatStore);
 Teuchos::RCP< AnasaziStore   > aeig(new AnasaziStore);

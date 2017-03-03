@@ -11,7 +11,7 @@ PROGRAM test_interfaces
   IMPLICIT NONE
 
 #ifdef HAVE_MPI
-#ifdef MPACT_HAVE_TRILINOS
+#ifdef FUTILITY_HAVE_TRILINOS
   INCLUDE 'mpif.h'
 #include "trilinos_f_interfaces.h"
 

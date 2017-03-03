@@ -76,12 +76,12 @@ MODULE LinearSolverTypes
 #ifdef HAVE_PARDISO
   USE MKL_PARDISO
 #endif
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
   USE ForTeuchos_ParameterList
 #endif
   IMPLICIT NONE
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
 #include <finclude/petsc.h>
 #include <petscversion.h>
 !petscisdef.h defines the keyword IS, and it needs to be reset
@@ -143,11 +143,11 @@ MODULE LinearSolverTypes
     !> -1: Unsuccessful exit
     INTEGER(SIK) :: info
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
     KSP :: ksp
     PC :: pc
 #endif
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
     INTEGER(SIK) :: Belos_solver
     INTEGER(SIK) :: Belos_pc
     LOGICAL(SBK) :: belos_pc_set=.TRUE.
@@ -297,10 +297,10 @@ MODULE LinearSolverTypes
       INTEGER(SIK) :: nz,npin,ngrp
       INTEGER(SIK) :: MPI_Comm_ID,numberOMP
       CHARACTER(LEN=256) :: timerName,ReqTPLTypeStr,TPLTypeStr,PreCondType
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       PetscErrorCode  :: ierr
 #endif
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
       TYPE(ParamType) :: belosParams
       TYPE(ForTeuchos_ParameterList_ID) :: plID
 #endif
@@ -366,12 +366,12 @@ MODULE LinearSolverTypes
         ReqTPLType=TPLType
         ! go through solver hierarchy to determine TPLType
         IF(TPLType == PETSC) THEN ! PETSc
-#ifndef MPACT_HAVE_PETSC
+#ifndef FUTILITY_HAVE_PETSC
           TPLType=TRILINOS
 #endif
         ENDIF
         IF(TPLType == TRILINOS) THEN ! Trilinos
-#ifndef MPACT_HAVE_Trilinos
+#ifndef FUTILITY_HAVE_Trilinos
           TPLType=PARDISO_MKL
 #endif
         ENDIF
@@ -577,7 +577,7 @@ MODULE LinearSolverTypes
               ENDIF
 
               IF(TPLType==PETSC) THEN
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
                 !create and initialize KSP
                 CALL KSPCreate(solver%MPIparallelEnv%comm,solver%ksp,ierr)
 
@@ -616,7 +616,7 @@ MODULE LinearSolverTypes
                     CALL PCSetType(solver%pc,PCEISENSTAT,ierr)
                   ELSEIF(TRIM(PreCondType)=='MG') THEN
                     !This is not actually a MG preconditioner since we are not
-                    ! providing it any geometric/interpolation/restriction 
+                    ! providing it any geometric/interpolation/restriction
                     ! information.  However, it does perform one Cholesky
                     ! smoother step, which seems to be fairly effective for many
                     ! problems.
@@ -639,7 +639,7 @@ MODULE LinearSolverTypes
                   modName//'::'//myName//' - invalid value of solverMethod')
 #endif
               ELSEIF(TPLType==TRILINOS) THEN
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
                 IF(solverMethod/=GMRES) &
                   CALL eLinearSolverType%raiseError('Incorrect call to '// &
                       modName//'::'//myName//' - Only GMRES solver is supported with Trilinos')
@@ -768,7 +768,7 @@ MODULE LinearSolverTypes
 !>
     SUBROUTINE clear_LinearSolverType_Iterative(solver)
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       PetscErrorCode  :: ierr
       IF(solver%TPLType==PETSC .AND. solver%isInit) &
         CALL KSPDestroy(solver%ksp,ierr)
@@ -950,7 +950,7 @@ MODULE LinearSolverTypes
     SUBROUTINE solve_LinearSolverType_Iterative(solver)
       CHARACTER(LEN=*),PARAMETER :: myName='solve_LinearSolverType_Iterative'
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       PetscErrorCode  :: ierr
 #endif
       CALL solve_checkInput(solver)
@@ -1000,7 +1000,7 @@ MODULE LinearSolverTypes
                       'is not implemented, CGNR method is used instead.')
 
               TYPE IS(PETScMatrixType)
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
                 ! assemble matrix if necessary
                 IF(.NOT.(A%isAssembled)) CALL A%assemble()
 
@@ -1059,7 +1059,7 @@ MODULE LinearSolverTypes
                     'is not implemented, BiCGSTAB method is used instead.')
 
               TYPE IS(PETScMatrixType)
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
                 ! assemble matrix if necessary
                 IF(.NOT.(A%isAssembled)) CALL A%assemble()
 
@@ -1124,7 +1124,7 @@ MODULE LinearSolverTypes
                       'is not implemented, CGNR method is used instead.')
 
               TYPE IS(PETScMatrixType)
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
                 ! assemble matrix if necessary
                 IF(.NOT.(A%isAssembled)) CALL A%assemble()
 
@@ -1162,7 +1162,7 @@ MODULE LinearSolverTypes
                    'need to recompile with PETSc enabled to use this feature.')
 #endif
               TYPE IS(TrilinosMatrixType)
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
                 ! assemble matrix if necessary
                 IF(.NOT.(A%isAssembled)) CALL A%assemble()
 
@@ -1296,7 +1296,7 @@ MODULE LinearSolverTypes
       REAL(SRK),INTENT(IN) :: convTol_in
       INTEGER(SIK),INTENT(IN) :: maxIters_in
       INTEGER(SIK),INTENT(IN),OPTIONAL :: nRestart_in
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       PetscErrorCode  :: ierr
       PetscInt  :: maxits,nrst
       PetscReal :: rtol,abstol
@@ -1347,7 +1347,7 @@ MODULE LinearSolverTypes
         solver%nRestart=nRestart
 
         IF(solver%TPLType == PETSC) THEN
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
           rtol=convTol
           abstol=convTol
           maxits=maxIters
@@ -1360,7 +1360,7 @@ MODULE LinearSolverTypes
              'need to recompile with PETSc enabled to use this feature.')
 #endif
         ELSEIF(solver%TPLType == TRILINOS) THEN
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
           CALL Belos_SetConvCrit(solver%Belos_solver,solver%convTol,solver%maxIters)
 #else
           CALL eLinearSolverType%raiseFatalError('Incorrect call to '// &
@@ -1394,7 +1394,7 @@ MODULE LinearSolverTypes
           ENDSELECT
           CALL BLAS_matvec(THISMATRIX=solver%A,X=solver%X,Y=resid)
 #else
-          !perform calculations using the BLAS system (intrinsic to MPACT or
+          !perform calculations using the BLAS system (intrinsic to Futility or
           !TPL, defined by #HAVE_BLAS)
           SELECTTYPE(b => solver%b); TYPE IS(RealVectorType)
             resid%b=-b%b
@@ -1415,12 +1415,12 @@ MODULE LinearSolverTypes
       INTEGER(SIK) :: ierr
 
       IF(solver%TPLType == PETSC) THEN
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
         CALL KSPGetIterationNumber(solver%ksp,niters,ierr)
         CALL KSPGetResidualNorm(solver%ksp,resid,ierr)
 #endif
       ELSEIF(solver%TPLType == TRILINOS) THEN
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
         CALL Belos_GetIterationCount(solver%Belos_solver,niters)
         CALL Belos_GetResid(solver%Belos_solver,resid)
 #endif
@@ -1602,7 +1602,7 @@ MODULE LinearSolverTypes
         v(:,1)=-u%b/beta
         h=beta
         phibar=beta
-#ifdef MPACT_DEBUG_MSG
+#ifdef FUTILITY_DEBUG_MSG
           WRITE(668,*) '         GMRES-NOPC',0,ABS(phibar)
 #endif
         !Iterate on solution
@@ -1635,7 +1635,7 @@ MODULE LinearSolverTypes
           R(it,it)=temp
           g(it)=c(it)*phibar
           phibar=-s(it)*phibar
-#ifdef MPACT_DEBUG_MSG
+#ifdef FUTILITY_DEBUG_MSG
           WRITE(668,*) '         GMRES-NOPC',it,ABS(phibar)
 #endif
           IF(ABS(phibar) <= tol) EXIT
@@ -1713,7 +1713,7 @@ MODULE LinearSolverTypes
         v(:,1)=-u%b/beta
         h=beta
         phibar=beta
-#ifdef MPACT_DEBUG_MSG
+#ifdef FUTILITY_DEBUG_MSG
           WRITE(668,*) '         GMRES-LP',0,ABS(phibar)
 #endif
         !Iterate on solution
@@ -1749,7 +1749,7 @@ MODULE LinearSolverTypes
           R(it,it)=temp
           g(it)=c(it)*phibar
           phibar=-s(it)*phibar
-#ifdef MPACT_DEBUG_MSG
+#ifdef FUTILITY_DEBUG_MSG
           WRITE(668,*) '         GMRES-LP',it,ABS(phibar)
 #endif
           IF(ABS(phibar) <= tol) EXIT

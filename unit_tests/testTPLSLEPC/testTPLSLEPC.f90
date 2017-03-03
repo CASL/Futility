@@ -46,7 +46,7 @@ PROGRAM testTPLSLEPC
   WRITE(*,*) 'TESTING SLEPC TPL...'
   WRITE(*,*) '==================================================='
 
-#ifdef MPACT_HAVE_SLEPC
+#ifdef FUTILITY_HAVE_SLEPC
   CALL testEX1F()
 #else
   WRITE(*,*) ' SLEPC not enabled!'

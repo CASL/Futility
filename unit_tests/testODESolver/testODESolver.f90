@@ -88,7 +88,7 @@ PROGRAM testODESolver
   CLASS(ODESolverType_Base),POINTER :: testODE
   CLASS(ODESolverInterface_Base),POINTER :: f
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
 #include <finclude/petsc.h>
 #undef IS
   PetscErrorCode  :: ierr
@@ -173,7 +173,7 @@ PROGRAM testODESolver
 
   DEALLOCATE(testODE)
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
   CALL PetscFinalize(ierr)
 #endif
 !
