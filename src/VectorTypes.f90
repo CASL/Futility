@@ -53,7 +53,7 @@ MODULE VectorTypes
   USE trilinos_interfaces
   IMPLICIT NONE
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
 #include <finclude/petsc.h>
 #undef IS
 #endif
@@ -299,7 +299,7 @@ MODULE VectorTypes
   !> @brief The extended type for PETSc vectors
   TYPE,EXTENDS(DistributedVectorType) :: PETScVectorType
     !> The values of the vector
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
     Vec :: b
 #endif
 !
@@ -475,7 +475,7 @@ MODULE VectorTypes
   !> Exception Handler for use in VectorTypes
   TYPE(ExceptionHandlerType),SAVE :: eVectorType
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
   !> Scratch variable for petsc error code.
   !> It is an integer type.
   PetscErrorCode  :: iperr
@@ -740,7 +740,7 @@ MODULE VectorTypes
       CALL validParams%get('VectorType->MPI_Comm_ID',MPI_Comm_ID)
       CALL validParams%get('VectorType->nlocal',nlocal)
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       IF(.NOT. thisVector%isInit) THEN
         IF(n < 1) THEN
           CALL eVectorType%raiseError('Incorrect input to '// &
@@ -784,7 +784,7 @@ MODULE VectorTypes
     SUBROUTINE clear_PETScVectorType(thisVector)
       CLASS(PETScVectorType),INTENT(INOUT) :: thisVector
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       IF(thisVector%isInit) CALL VecDestroy(thisVector%b,iperr)
       thisVector%isInit=.FALSE.
       thisVector%isAssembled=.FALSE.
@@ -810,7 +810,7 @@ MODULE VectorTypes
       INTEGER(SIK),INTENT(IN) :: i
       REAL(SRK),INTENT(IN) :: setval
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       ierrc=-1
       IF(thisVector%isInit) THEN
         ierrc=-2
@@ -839,7 +839,7 @@ MODULE VectorTypes
       CLASS(PETScVectorType),INTENT(INOUT) :: thisVector
       REAL(SRK),INTENT(IN) :: setval
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       ierrc=-1
       IF(thisVector%isInit) THEN
         CALL thisVector%assemble(iperr)
@@ -865,7 +865,7 @@ MODULE VectorTypes
       CLASS(PETScVectorType),INTENT(INOUT) :: thisVector
       REAL(SRK),INTENT(IN) :: setval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       INTEGER(SIK) :: i
 
       ierrc=-1
@@ -901,7 +901,7 @@ MODULE VectorTypes
       INTEGER(SIK),INTENT(IN) :: istt
       INTEGER(SIK),INTENT(IN) :: istp
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       INTEGER(SIK) :: i
 
       ierrc=-1
@@ -937,7 +937,7 @@ MODULE VectorTypes
       INTEGER(SIK),INTENT(IN) :: istt
       INTEGER(SIK),INTENT(IN) :: istp
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       INTEGER(SIK) :: i
 
       ierrc=-1
@@ -973,7 +973,7 @@ MODULE VectorTypes
       INTEGER(SIK),INTENT(IN) :: i
       REAL(SRK),INTENT(INOUT) :: getval
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       ierrc=-1
       IF(thisVector%isInit) THEN
         ierrc=-2
@@ -1001,7 +1001,7 @@ MODULE VectorTypes
       CLASS(PETScVectorType),INTENT(INOUT) :: thisVector
       REAL(SRK),INTENT(INOUT) :: getval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       INTEGER(SIK) :: i
 
       ierrc=-1
@@ -1037,7 +1037,7 @@ MODULE VectorTypes
       INTEGER(SIK),INTENT(IN) :: istp
       REAL(SRK),INTENT(INOUT) :: getval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       INTEGER(SIK) :: i
 
       ierrc=-1
@@ -1068,7 +1068,7 @@ MODULE VectorTypes
     SUBROUTINE assemble_PETScVectorType(thisVector,ierr)
       CLASS(PETScVectorType),INTENT(INOUT) :: thisVector
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       ierrc=0
       IF(.NOT.thisVector%isAssembled) THEN
         thisVector%isAssembled=.FALSE.
@@ -1113,7 +1113,7 @@ MODULE VectorTypes
 
       IF(nlocal==-1) nlocal=n
 
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
       IF(.NOT. thisVector%isInit) THEN
         IF(n < 1) THEN
           CALL eVectorType%raiseError('Incorrect input to '// &
@@ -1152,7 +1152,7 @@ MODULE VectorTypes
     SUBROUTINE clear_TrilinosVectorType(thisVector)
       CLASS(TrilinosVectorType),INTENT(INOUT) :: thisVector
 
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
       !IF(thisVector%isInit) CALL ForPETRA_VecDestroy(thisVector%b)
       thisVector%isInit=.FALSE.
       thisVector%isAssembled=.FALSE.
@@ -1179,7 +1179,7 @@ MODULE VectorTypes
       INTEGER(SIK),INTENT(IN) :: i
       REAL(SRK),INTENT(IN) :: setval
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
       ierrc=-1
       IF(thisVector%isInit) THEN
         ierrc=-2
@@ -1208,7 +1208,7 @@ MODULE VectorTypes
       CLASS(TrilinosVectorType),INTENT(INOUT) :: thisVector
       REAL(SRK),INTENT(IN) :: setval
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
       ierrc=-1
       IF(thisVector%isInit) THEN
         CALL ForPETRA_VecSetAll(thisVector%b,setval)
@@ -1232,7 +1232,7 @@ MODULE VectorTypes
       CLASS(TrilinosVectorType),INTENT(INOUT) :: thisVector
       REAL(SRK),INTENT(IN) :: setval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
       INTEGER(SIK) :: i
 
       ierrc=-1
@@ -1266,7 +1266,7 @@ MODULE VectorTypes
       INTEGER(SIK),INTENT(IN) :: istt
       INTEGER(SIK),INTENT(IN) :: istp
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
       INTEGER(SIK) :: i
 
       ierrc=-1
@@ -1303,7 +1303,7 @@ MODULE VectorTypes
       INTEGER(SIK),INTENT(IN) :: istt
       INTEGER(SIK),INTENT(IN) :: istp
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
       INTEGER(SIK) :: i
 
       ierrc=-1
@@ -1340,7 +1340,7 @@ MODULE VectorTypes
       INTEGER(SIK),INTENT(IN) :: i
       REAL(SRK),INTENT(INOUT) :: getval
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
       ierrc=-1
       IF(thisVector%isInit) THEN
         ierrc=-2
@@ -1368,7 +1368,7 @@ MODULE VectorTypes
       CLASS(TrilinosVectorType),INTENT(INOUT) :: thisVector
       REAL(SRK),INTENT(INOUT) :: getval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
       INTEGER(SIK) :: i
 
       ierrc=-1
@@ -1401,7 +1401,7 @@ MODULE VectorTypes
       INTEGER(SIK),INTENT(IN) :: istp
       REAL(SRK),INTENT(INOUT) :: getval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
       INTEGER(SIK) :: i
 
       ierrc=-1
@@ -1431,7 +1431,7 @@ MODULE VectorTypes
     SUBROUTINE assemble_TrilinosVectorType(thisVector,ierr)
       CLASS(TrilinosVectorType),INTENT(INOUT) :: thisVector
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
       !Trilinos vectors don't need assembly
 #else
       CHARACTER(LEN=*),PARAMETER :: myName='assemble_TrilinosVectorType'
@@ -1468,7 +1468,7 @@ MODULE VectorTypes
           r=BLAS1_asum(thisVector%b)
         ENDIF
       TYPE IS(PETScVectorType)
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
         IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
         IF(iperr == 0) CALL VecNorm(thisVector%b,NORM_1,r,iperr)
 #else
@@ -1477,7 +1477,7 @@ MODULE VectorTypes
            'need to recompile with PETSc enabled to use this feature.')
 #endif
       TYPE IS(TrilinosVectorType)
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
         CALL ForPETRA_VecSUM(thisVector%b,r)
 #else
         CALL eVectorType%raiseFatalError('Incorrect call to '// &
@@ -1529,7 +1529,7 @@ MODULE VectorTypes
         ENDSELECT
       TYPE IS(PETScVectorType)
         SELECTTYPE(newVector); TYPE IS(PETScVectorType)
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
           IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
           IF(iperr == 0) CALL VecAXPY(newVector%b,alpha,thisVector%b,iperr)
 #else
@@ -1540,7 +1540,7 @@ MODULE VectorTypes
         ENDSELECT
       TYPE IS(TrilinosVectorType)
         SELECTTYPE(newVector); TYPE IS(TrilinosVectorType)
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
           IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble()
           CALL ForPETRA_VecAXPY(newVector%b,thisVector%b,alpha,1.0_SRK)
 #else
@@ -1589,7 +1589,7 @@ MODULE VectorTypes
       TYPE IS(PETScVectorType)
         SELECTTYPE(newVector); TYPE IS(PETScVectorType)
           SELECTTYPE(aVector); TYPE IS(PETScVectorType)
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
             ALLOCATE(tmpthis(thisVector%n))
             ALLOCATE(tmpnew(newVector%n))
             ALLOCATE(tmpa(aVector%n))
@@ -1670,7 +1670,7 @@ MODULE VectorTypes
         ENDSELECT
       TYPE IS(PETScVectorType)
         SELECTTYPE(newVector); TYPE IS(PETScVectorType)
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
           IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
           IF(iperr == 0) CALL VecCopy(thisVector%b,newVector%b,iperr)
 #else
@@ -1681,7 +1681,7 @@ MODULE VectorTypes
         ENDSELECT
       TYPE IS(TrilinosVectorType)
         SELECTTYPE(newVector); TYPE IS(TrilinosVectorType)
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
           IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble()
           CALL ForPETRA_VecCopy(newVector%b,thisVector%b)
 #else
@@ -1737,7 +1737,7 @@ MODULE VectorTypes
         ENDSELECT
       TYPE IS(PETScVectorType)
         SELECTTYPE(thatVector); TYPE IS(PETScVectorType)
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
           IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
           IF(iperr == 0) CALL VecTDot(thisVector%b,thatVector%b,r,iperr)
 #else
@@ -1772,7 +1772,7 @@ MODULE VectorTypes
         ALLOCATE(tmpthis(thisVector%n))
         CALL thisVector%get(tmpthis)
       TYPE IS(PETScVectorType)
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
         ALLOCATE(tmpthis(thisVector%n))
         CALL thisVector%get(tmpthis)
 #else
@@ -1818,7 +1818,7 @@ MODULE VectorTypes
         ALLOCATE(tmpthis(thisVector%n))
         CALL thisVector%get(tmpthis)
       TYPE IS(PETScVectorType)
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
         ALLOCATE(tmpthis(thisVector%n))
         CALL thisVector%get(tmpthis)
 #else
@@ -1869,7 +1869,7 @@ MODULE VectorTypes
           norm2=BLAS1_nrm2(thisVector%b)
         ENDIF
       TYPE IS(PETScVectorType)
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
         IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
         IF(iperr == 0) CALL VecNorm(thisVector%b,NORM_2,norm2,iperr)
 #else
@@ -1878,7 +1878,7 @@ MODULE VectorTypes
            'need to recompile with PETSc enabled to use this feature.')
 #endif
       TYPE IS(TrilinosVectorType)
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
         IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble()
         CALL ForPETRA_VecNorm2(thisVector%b,norm2)
 #else
@@ -1918,7 +1918,7 @@ MODULE VectorTypes
           CALL BLAS1_scal(a,thisVector%b)
         ENDIF
       TYPE IS(PETScVectorType)
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
         IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
         IF(iperr == 0) CALL VecScale(thisVector%b,a,iperr)
 #else
@@ -1927,7 +1927,7 @@ MODULE VectorTypes
            'need to recompile with PETSc enabled to use this feature.')
 #endif
       TYPE IS(TrilinosVectorType)
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
         CALL ForPETRA_VecScale(thisVector%b,a)
 #else
         CALL eVectorType%raiseFatalError('Incorrect call to '// &
@@ -1965,7 +1965,7 @@ MODULE VectorTypes
         ENDSELECT
       TYPE IS(PETScVectorType)
         SELECTTYPE(aVector); TYPE IS(PETScVectorType)
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
           ALLOCATE(tmpthis(thisVector%n))
           ALLOCATE(tmpa(aVector%n))
           CALL thisVector%get(tmpthis)
@@ -2039,7 +2039,7 @@ MODULE VectorTypes
         ENDSELECT
       TYPE IS(PETScVectorType)
         SELECTTYPE(thatVector); TYPE IS(PETScVectorType)
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
           IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
           IF(.NOT.thatVector%isAssembled) CALL thatVector%assemble(iperr)
           IF(iperr == 0) CALL VecSwap(thisVector%b,thatVector%b,iperr)

@@ -19,7 +19,7 @@ PROGRAM testVectorTypes
 
   IMPLICIT NONE
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
 #include <finclude/petsc.h>
 #undef IS
 
@@ -37,7 +37,7 @@ PROGRAM testVectorTypes
   CALL e%setQuietMode(.TRUE.)
   CALL eVectorType%addSurrogate(e)
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
   CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
 #endif
 
@@ -67,7 +67,7 @@ PROGRAM testVectorTypes
   DEALLOCATE(e)
   CALL VectorType_Clear_ValidParams()
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
   CALL PetscFinalize(ierr)
 #endif
   FINALIZE_TEST()
@@ -569,7 +569,7 @@ PROGRAM testVectorTypes
       DEALLOCATE(thisVector)
 
 !Test for PETSc vectors (if necessary)
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
 
       !Perform test of clear function
       !make vector without using untested init
@@ -1127,7 +1127,7 @@ PROGRAM testVectorTypes
 #endif
 
 
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
       ALLOCATE(TrilinosVectorType :: thisVector)
       !Perform test of init function
       !first check intended init path (m provided)
@@ -2183,7 +2183,7 @@ PROGRAM testVectorTypes
     DEALLOCATE(aVector)
     WRITE(*,*) '  Passed: CALL BLAS_swap(...) [REAL]'
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
     ! test with PETSc vectors
     ALLOCATE(PETScVectorType :: xVector)
     ALLOCATE(PETScVectorType :: yVector)
@@ -2761,7 +2761,7 @@ PROGRAM testVectorTypes
     CALL pList%clear()
 #endif
 
-#ifdef MPACT_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
     ! test with Trilinos vectors
     ALLOCATE(TrilinosVectorType :: xVector)
     ALLOCATE(TrilinosVectorType :: yVector)

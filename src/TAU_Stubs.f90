@@ -70,7 +70,7 @@
 !> metadata is also extremely limited and only includes the
 !> "TAU_PROFILE_FORMAT", "TAU Version", and a new meta-data element that reports
 !> the estimated overhead from using these timers. The TAU Version is listed as
-!> "TAU Stubs Library (MPACT)".
+!> "TAU Stubs Library (Futility)".
 !>
 !> @par Module Dependencies
 !>  - @ref IntrType "IntrType": @copybrief IntrType
@@ -559,7 +559,7 @@ MODULE TAU_Stubs
             tline=tline//'<attribute>'// &
               '<name>Metric Name</name><value>'//CHAR(metric_name(i))// &
              '</value></attribute><attribute>'// &
-              '<name>TAU Version</name><value>TAU Stub Library (MPACT)</value>'// &
+              '<name>TAU Version</name><value>TAU Stub Library (Futility)</value>'// &
              '</attribute><attribute>'// &
               '<name>Est. overhead per call</name><value>'//TRIM(ADJUSTL(tmpRstr))// &
                 ' nsecs.</value>'// &

@@ -6,8 +6,8 @@
 # of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
 # can be found in LICENSE.txt in the head directory of this repository.        !
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-INCLUDE(MPACT_CreateUnitTest)
-INCLUDE(MPACT_CopyFiles)
+INCLUDE(Futility_CreateUnitTest)
+INCLUDE(Futility_CopyFiles)
 
 SET(ADDITIONAL_FILES
     matrices/1g_matrix.txt
@@ -18,7 +18,7 @@ SET(ADDITIONAL_FILES
     matrices/refBILU_mgU.txt
 )
 
-MPACT_CreateUnitTest(testPreconditionerTypes)
+Futility_CreateUnitTest(testPreconditionerTypes)
 
-MPACT_CopyFiles(ADDITIONAL_FILES)
+Futility_CopyFiles(ADDITIONAL_FILES)
 UNSET(ADDITIONAL_FILES)

@@ -110,7 +110,7 @@ MODULE MemProf
     SUBROUTINE edit_MemProf(thisMP,name)
       CLASS(Memory_Profiler),INTENT(INOUT) :: thisMP
       CHARACTER(LEN=*),INTENT(IN) :: name
-#ifdef MPACT_MEMPROF
+#ifdef FUTILITY_MEMPROF
       CHARACTER(LEN=45)  :: tmpchar
       CHARACTER(LEN=128) :: amesg
       INTEGER(C_LONG_LONG) :: tmpL1, tmpL2

@@ -6,5 +6,5 @@
 # of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
 # can be found in LICENSE.txt in the head directory of this repository.        !
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-INCLUDE(MPACT_CreateUnitTest)
-MPACT_CreateUnitTest(testSorting)
+INCLUDE(Futility_CreateUnitTest)
+Futility_CreateUnitTest(testSorting)

@@ -11,12 +11,12 @@ MODULE dummyPCShell
   USE VectorTypes
   USE MatrixTypes
   USE PreconditionerTypes
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
 #include <finclude/petsc.h>
 #undef IS
 #endif
   TYPE,EXTENDS(PreconditionerType) :: dummyPCType
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
     Mat :: M
 #endif
     CONTAINS
@@ -37,7 +37,7 @@ MODULE dummyPCShell
     SUBROUTINE init_dummyPC(thisPC,A)
       CLASS(dummyPCType),INTENT(INOUT) :: thisPC
       CLASS(MatrixType),TARGET,INTENT(IN),OPTIONAL :: A
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       PetscErrorCode  :: ierr
       CALL MatCreate(MPI_COMM_WORLD,thisPC%M,ierr)
 #endif
@@ -46,7 +46,7 @@ MODULE dummyPCShell
 !
     SUBROUTINE clear_dummyPC(thisPC)
       CLASS(dummyPCType),INTENT(INOUT) :: thisPC
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       PetscErrorCode  :: ierr
       CALL MatDestroy(thisPC%M,ierr)
 #endif
@@ -66,7 +66,7 @@ MODULE dummyPCShell
 !
     SUBROUTINE setup_smartPC(thisPC)
       CLASS(smartPCType),INTENT(INOUT) :: thisPC
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       PetscErrorCode  :: ierr
       CALL MatSetSizes(thisPC%M,3,3,3,3,ierr)
       CALL MatSetType(thisPC%M,MATMPIAIJ,ierr)
@@ -89,7 +89,7 @@ MODULE dummyPCShell
     SUBROUTINE apply_smartPC(thisPC,v)
       CLASS(smartPCType),INTENT(INOUT) :: thisPC
       CLASS(VectorType),INTENT(INOUT) :: v
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       Vec :: tmp
       PetscErrorCode  :: ierr
       SELECTTYPE(v); TYPE IS(PETScVectorType)
@@ -118,7 +118,7 @@ PROGRAM testPreconditionerTypes
   USE dummyPCShell
   IMPLICIT NONE
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
   PetscErrorCode  :: ierr
 #else
 #ifdef HAVE_MPI
@@ -146,7 +146,7 @@ PROGRAM testPreconditionerTypes
   CALL eParams%addSurrogate(e)
   CALL ePreCondType%addSurrogate(e)
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
   CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
 #endif
 
@@ -157,7 +157,7 @@ PROGRAM testPreconditionerTypes
   CALL clearTest()
 
   REGISTER_SUBTEST('Test PCShell',testPCShell)
-!#ifdef MPACT_HAVE_PETSC
+!#ifdef FUTILITY_HAVE_PETSC
 !  !test BILU petsc
 !  CALL setupBILUTest(0)
 !  REGISTER_SUBTEST('Test BILU Preconditioner Type (petsc)',testBILU_PreCondType)
@@ -170,7 +170,7 @@ PROGRAM testPreconditionerTypes
 
   FINALIZE_TEST()
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
   CALL PetscFinalize(ierr)
 #endif
 #ifdef HAVE_MPI
@@ -962,7 +962,7 @@ PROGRAM testPreconditionerTypes
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testPCShell()
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
       KSP :: ksp
       PC  :: pc
       Mat :: A

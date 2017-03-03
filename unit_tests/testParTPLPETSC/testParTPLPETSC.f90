@@ -45,7 +45,7 @@ PROGRAM testParTPLPETSC
   IF(rank == 0) WRITE(*,*) 'TESTING PETSC TPL...'
   IF(rank == 0) WRITE(*,*) '==================================================='
 
-#ifdef MPACT_HAVE_PETSC
+#ifdef FUTILITY_HAVE_PETSC
   CALL testPETSC_KSP()
 #endif
 
