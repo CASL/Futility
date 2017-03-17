@@ -9,7 +9,7 @@
 PROGRAM testTPLSLEPC
 
   IMPLICIT NONE
-
+#ifdef FUTILITY_HAVE_SLEPC
 #include <finclude/slepc.h>
 #include <finclude/petsc.h>
 #undef IS
@@ -40,8 +40,10 @@ PROGRAM testTPLSLEPC
   PetscErrorCode  :: ierr
 
   CALL SlepcInitialize(PETSC_NULL_CHARACTER,ierr)
+#ifdef HAVE_MPI
   CALL MPI_Comm_rank(PETSC_COMM_WORLD,rank,ierr)
-
+#endif
+#endif
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING SLEPC TPL...'
   WRITE(*,*) '==================================================='
@@ -55,9 +57,8 @@ PROGRAM testTPLSLEPC
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING SLEPC TPL PASSED!'
   WRITE(*,*) '==================================================='
-
+#ifdef FUTILITY_HAVE_SLEPC
   CALL SlepcFinalize(ierr)
-
 !
 !===============================================================================
   CONTAINS
@@ -214,6 +215,6 @@ PROGRAM testTPLSLEPC
     CALL MatDestroy(A,ierr)
 
   ENDSUBROUTINE testEX1F
-
+#endif
 ENDPROGRAM testTPLSLEPC
 
