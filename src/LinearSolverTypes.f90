@@ -294,11 +294,11 @@ MODULE LinearSolverTypes
       ! local variables
       INTEGER(SIK) :: i,n
       INTEGER(SIK) :: matType,ReqTPLType,TPLType,solverMethod,pciters,pcsetup
-      INTEGER(SIK) :: nz,npin,ngrp
+      INTEGER(SIK) :: nz,npin,ngrp,ierr
       INTEGER(SIK) :: MPI_Comm_ID,numberOMP
       CHARACTER(LEN=256) :: timerName,ReqTPLTypeStr,TPLTypeStr,PreCondType
 #ifdef FUTILITY_HAVE_PETSC
-      PetscErrorCode  :: ierr
+      PetscErrorCode  :: iperr
 #endif
 #ifdef FUTILITY_HAVE_Trilinos
       TYPE(ParamType) :: belosParams
@@ -579,60 +579,60 @@ MODULE LinearSolverTypes
               IF(TPLType==PETSC) THEN
 #ifdef FUTILITY_HAVE_PETSC
                 !create and initialize KSP
-                CALL KSPCreate(solver%MPIparallelEnv%comm,solver%ksp,ierr)
+                CALL KSPCreate(solver%MPIparallelEnv%comm,solver%ksp,iperr)
 
                 !set iterative solver type
                 SELECTCASE(solverMethod)
                   CASE(BICGSTAB)
-                    CALL KSPSetType(solver%ksp,KSPBCGS,ierr)
+                    CALL KSPSetType(solver%ksp,KSPBCGS,iperr)
                   CASE(CGNR)
-                    CALL KSPSetType(solver%ksp,KSPCGNE,ierr)
+                    CALL KSPSetType(solver%ksp,KSPCGNE,iperr)
                   CASE(GMRES)
-                    CALL KSPSetType(solver%ksp,KSPGMRES,ierr)
+                    CALL KSPSetType(solver%ksp,KSPGMRES,iperr)
                 ENDSELECT
 
                 SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
 #if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=5))
-                  CALL KSPSetOperators(solver%ksp,A%a,A%a,ierr)
+                  CALL KSPSetOperators(solver%ksp,A%a,A%a,iperr)
 #else
                   CALL KSPSetOperators(solver%ksp,A%a,A%a, &
-                    DIFFERENT_NONZERO_PATTERN,ierr)
+                    DIFFERENT_NONZERO_PATTERN,iperr)
 #endif
                 ENDSELECT
 
                 !set preconditioner
                 IF((solver%solverMethod == GMRES) .OR. (solver%solverMethod == BICGSTAB)) THEN
-                  CALL KSPGetPC(solver%ksp,solver%pc,ierr)
+                  CALL KSPGetPC(solver%ksp,solver%pc,iperr)
                   IF(TRIM(PreCondType)=='SOR') THEN
-                    CALL PCSetType(solver%pc,PCSOR,ierr)
+                    CALL PCSetType(solver%pc,PCSOR,iperr)
                   ELSEIF(TRIM(PreCondType)=='JACOBI') THEN
-                    CALL PCSetType(solver%pc,PCJACOBI,ierr)
+                    CALL PCSetType(solver%pc,PCJACOBI,iperr)
                   ELSEIF(TRIM(PreCondType)=='BJACOBI_ILU') THEN
-                    CALL PCSetType(solver%pc,PCBJACOBI,ierr)
-                    CALL PetscOptionsSetValue("-sub_ksp_type","preonly",ierr)
-                    CALL PetscOptionsSetValue("-sub_pc_type","ilu",ierr)
-                    CALL PCSetFromOptions(solver%pc,ierr)
+                    CALL PCSetType(solver%pc,PCBJACOBI,iperr)
+                    CALL PetscOptionsSetValue("-sub_ksp_type","preonly",iperr)
+                    CALL PetscOptionsSetValue("-sub_pc_type","ilu",iperr)
+                    CALL PCSetFromOptions(solver%pc,iperr)
                   ELSEIF(TRIM(PreCondType)=='EISENSTAT') THEN
-                    CALL PCSetType(solver%pc,PCEISENSTAT,ierr)
+                    CALL PCSetType(solver%pc,PCEISENSTAT,iperr)
                   ELSEIF(TRIM(PreCondType)=='MG') THEN
                     !This is not actually a MG preconditioner since we are not
                     ! providing it any geometric/interpolation/restriction
                     ! information.  However, it does perform one Cholesky
                     ! smoother step, which seems to be fairly effective for many
                     ! problems.
-                    CALL PCSetType(solver%pc,PCMG,ierr)
+                    CALL PCSetType(solver%pc,PCMG,iperr)
                   ELSEIF(TRIM(PreCondType)=='SHELL') THEN
-                    CALL PCSetType(solver%pc,PCSHELL,ierr)
-                    CALL PCShellSetSetup(solver%pc,PETSC_PCSHELL_setup_extern,ierr)
-                    CALL PCShellSetApply(solver%pc,PETSC_PCSHELL_apply_extern,ierr)
+                    CALL PCSetType(solver%pc,PCSHELL,iperr)
+                    CALL PCShellSetSetup(solver%pc,PETSC_PCSHELL_setup_extern,iperr)
+                    CALL PCShellSetApply(solver%pc,PETSC_PCSHELL_apply_extern,iperr)
 ! Disabling nopc option for PETSC because it breaks a lot of things
 !                  ELSEIF(TRIM(PreCondType)=='NOPC') THEN
-!                    CALL PCSetType(solver%pc,PCNONE,ierr)
+!                    CALL PCSetType(solver%pc,PCNONE,iperr)
                   ELSE   ! Regardless of what else is set, we'll use block-jacobi ILU
-                    CALL PCSetType(solver%pc,PCBJACOBI,ierr)
+                    CALL PCSetType(solver%pc,PCBJACOBI,iperr)
                   ENDIF
                 ENDIF
-                CALL KSPSetFromOptions(solver%ksp,ierr)
+                CALL KSPSetFromOptions(solver%ksp,iperr)
 
 #else
                 CALL eLinearSolverType%raiseError('Incorrect call to '// &
