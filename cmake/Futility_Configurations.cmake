@@ -93,7 +93,7 @@ ENDIF()
 
 # Preprocessor symbol for using memory profile
 IF(${PROJECT_NAME}_ENABLE_MEMPROF)
-    SET(${PACKAGE_NAME}_DEFINES ${${PACKAGE_NAME}_DEFINES} Futility_MEMPROF)
+    SET(${PACKAGE_NAME}_DEFINES ${${PACKAGE_NAME}_DEFINES} FUTILITY_MEMPROF)
 ENDIF()
 
 # OpenMP Compiler flag (like a TPL)
