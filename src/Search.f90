@@ -44,12 +44,16 @@ MODULE Search
   CONTAINS
 !
 !-------------------------------------------------------------------------------
-!> @brief 
-!> @param list the list to earch
+!> @brief Return the index of the first element of a list that compares greater
+!> than the passed value
+!> @param list the list to search. The list should be sorted, otherwise
+!> undefined behavior.
 !> @param val the value to find
-!> @returns the index to the first element of the list that is greater than the
-!> passed search value
+!> @returns the index to the first element of the list that compares greater
+!> than the passed search value
 !>
+!> If the value is greater than or equal to the largest element of the list,
+!> returns SIZE + 1.
     PURE FUNCTION upper_bound_1Dint(list,val) RESULT (i)
       INTEGER(SIK),INTENT(IN) :: list(:)
       INTEGER(SIK),INTENT(IN) :: val
@@ -76,12 +80,15 @@ MODULE Search
     ENDFUNCTION upper_bound_1Dint
 !
 !-------------------------------------------------------------------------------
-!> @brief 
-!> @param list the list to earch
+!> @brief  Return the index of the first element of a list that does not compare
+!> less than the passed value
+!> @param list the list to search. The list should be sorted, otherwise
+!> undefined behavior
 !> @param val the value to find
-!> @returns the index to the first element of the list that is greater than the
-!> passed search value
+!> @returns the index to the first element of the list that does not compare
+!> less than the passed value
 !>
+!> If the value is greater than the last element of the list, returns SIZE+1
     PURE FUNCTION lower_bound_1Dint(list,val) RESULT(j)
       INTEGER(SIK),INTENT(IN) :: list(:)
       INTEGER(SIK),INTENT(IN) :: val

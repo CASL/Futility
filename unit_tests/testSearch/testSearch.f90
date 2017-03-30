@@ -59,6 +59,7 @@ PROGRAM testSearch
       ASSERT(lower_bound(test_list, 89) == 11, "Wrong result for 89")
 
       ASSERT(lower_bound(test_list, 90) == 12, "Wrong result for 90")
+      ASSERT(lower_bound(test_list, 95) == 12, "Wrong result for 95")
 
 
     ENDSUBROUTINE
