@@ -34,6 +34,7 @@ TRIBITS_ADD_LIBRARY(Utils
     SOURCES
       UnitTest.f90
       IntrType.f90
+      Search.f90
       Constants_Conversion.f90
       ExtendedMath.f90
       WaterSatProperties.f90
