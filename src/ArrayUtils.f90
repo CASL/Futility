@@ -31,10 +31,6 @@ MODULE ArrayUtils
   PUBLIC :: findNUnique
   PUBLIC :: getUnion
   PUBLIC :: findIndex
-  PUBLIC :: findLowBound
-  PUBLIC :: findUpBound
-  PUBLIC :: findEleHtAbove
-  PUBLIC :: findEleHtBelow
   !PUBLIC :: findIntersection
   !Need a routine in here that compares a 1-D array to a 2-D array for a given dimension
   !to see if the 1-D array exists in the 2-D array...
@@ -111,37 +107,6 @@ MODULE ArrayUtils
     MODULE PROCEDURE findIndex_1DInt
   ENDINTERFACE findIndex
 
-  !> @brief Generic interface to ...
-  !>
-  INTERFACE findLowBound
-    !> @copybrief ArrayUtils::findLowBound_1DReal
-    !> @copydetails ArrayUtils::findLowBound_1DReal
-    MODULE PROCEDURE findLowBound_1DReal
-  ENDINTERFACE findLowBound
-
-  !> @brief Generic interface to ...
-  !>
-  INTERFACE findUpBound
-    !> @copybrief ArrayUtils::findUpBound_1DReal
-    !> @copydetails ArrayUtils::findUpBound_1DReal
-    MODULE PROCEDURE findUpBound_1DReal
-  ENDINTERFACE findUpBound
-
-  !> @brief Generic interface to ...
-  !>
-  INTERFACE findEleHtAbove
-    !> @copybrief ArrayUtils::findEleHtAbove_1DReal
-    !> @copydetails ArrayUtils::findEleHtAbove_1DReal
-    MODULE PROCEDURE findEleHtAbove_1DReal
-  ENDINTERFACE findEleHtAbove
-
-  !> @brief Generic interface to ...
-  !>
-  INTERFACE findEleHtBelow
-    !> @copybrief ArrayUtils::findEleHtBelow_1DReal
-    !> @copydetails ArrayUtils::findEleHtBelow_1DReal
-    MODULE PROCEDURE findEleHtBelow_1DReal
-  ENDINTERFACE findEleHtBelow
 !
 !===============================================================================
   CONTAINS
@@ -1007,75 +972,5 @@ MODULE ArrayUtils
         val=tmp(ind)
       ENDIF
     ENDFUNCTION findUpBound_1DReal
-!
-!-------------------------------------------------------------------------------
-!> @brief This routine returns the difference of the nearest value of array r
-!>        that is greater than position pos and position pos.  It has the
-!>        optional for specifying the lower array bounds xi, and whether the
-!>        array is incremental or not.  If the pos value is not within array r,
-!>        the return argument val will be -pos.
-!> @param r The array in which to find the difference
-!> @param pos The position for which to find the difference
-!> @param xi The optional input for the bottom starting position
-!> @param delta The optional input for whether the array is incremental or not
-!> @param val The difference of the nearest greater value and pos
-!>
-    PURE FUNCTION findEleHtAbove_1DReal(r,pos,delta,incl,tol) RESULT(val)
-      REAL(SRK),INTENT(IN) :: r(:)
-      REAL(SRK),INTENT(IN) :: pos
-      LOGICAL(SBK),INTENT(IN) :: delta
-      INTEGER(SIK),INTENT(IN),OPTIONAL :: incl
-      REAL(SRK),INTENT(IN),OPTIONAL :: tol
-      REAL(SRK) :: val
-      REAL(SRK) :: tmp
-
-      IF(PRESENT(incl) .AND. PRESENT(tol)) THEN
-        tmp=findUpBound(r,pos,delta,INCL=incl,TOL=tol)
-      ELSEIF(PRESENT(incl)) THEN
-        tmp=findUpBound(r,pos,delta,INCL=incl)
-      ELSEIF(PRESENT(tol)) THEN
-        tmp=findUpBound(r,pos,delta,TOL=tol)
-      ELSE
-        tmp=findUpBound(r,pos,delta)
-      ENDIF
-
-      val=tmp-pos
-
-    ENDFUNCTION findEleHtAbove_1DReal
-!
-!-------------------------------------------------------------------------------
-!> @brief This routine returns the difference of position pos and the nearest
-!>        value of array r that is lesser than position pos.  It has the
-!>        optional for specifying the lower array bounds xi, and whether the
-!>        array is incremental or not.  If the pos value is not within array r,
-!>        the return argument val will be -pos.
-!> @param r The array in which to find the difference
-!> @param pos The position for which to find the difference
-!> @param xi The optional input for the bottom starting position
-!> @param delta The optional input for whether the array is incremental or not
-!> @param val The difference of pos and the nearest lesser value
-!>
-    PURE FUNCTION findEleHtBelow_1DReal(r,pos,delta,incl,tol) RESULT(val)
-      REAL(SRK),INTENT(IN) :: r(:)
-      REAL(SRK),INTENT(IN) :: pos
-      LOGICAL(SBK),INTENT(IN) :: delta
-      INTEGER(SIK),INTENT(IN),OPTIONAL :: incl
-      REAL(SRK),INTENT(IN),OPTIONAL :: tol
-      REAL(SRK) :: val
-      REAL(SRK) :: tmp
-
-      IF(PRESENT(incl) .AND. PRESENT(tol)) THEN
-        tmp=findLowBound(r,pos,delta,INCL=incl,TOL=tol)
-      ELSEIF(PRESENT(incl)) THEN
-        tmp=findLowBound(r,pos,delta,INCL=incl)
-      ELSEIF(PRESENT(tol)) THEN
-        tmp=findLowBound(r,pos,delta,TOL=tol)
-      ELSE
-        tmp=findLowBound(r,pos,delta)
-      ENDIF
-
-      val=pos-tmp
-
-    ENDFUNCTION findEleHtBelow_1DReal
 !
 ENDMODULE ArrayUtils
