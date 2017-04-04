@@ -68,6 +68,7 @@ MODULE Search
   !> @param tol the comparison tolerance to use for floating-point
   !> implementations. Optional
   !>
+  !> If the value is not found, return SIZE+1
   INTERFACE find
     MODULE PROCEDURE find_i
     MODULE PROCEDURE find_r
@@ -81,6 +82,7 @@ MODULE Search
   !> @param tol the comparison tolerance to use for floating-point
   !> implementations. Optional
   !>
+  !> If the value is not found, return SIZE+1
   INTERFACE binarySearch
     MODULE PROCEDURE binary_search_i
     MODULE PROCEDURE binary_search_r
@@ -249,7 +251,7 @@ MODULE Search
       INTEGER(SIK) :: i
 
       i=lowerBound(list,val)
-      IF(i > 0 .AND. i <= SIZE(list)) THEN
+      IF(i <= SIZE(list)) THEN
         IF(list(i) == val) THEN
           RETURN
         ENDIF
@@ -273,7 +275,7 @@ MODULE Search
       ENDIF
 
       i=lowerBound(list,val,tol)
-      IF(i > 0 .AND. i <= SIZE(list)) THEN
+      IF(i <= SIZE(list)) THEN
         IF(SOFTEQ(list(i),val,eps)) THEN
           RETURN
         ENDIF
