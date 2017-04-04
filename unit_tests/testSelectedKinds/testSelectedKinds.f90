@@ -17,7 +17,6 @@ PROGRAM testSelectedKinds
   REAL(SDK) :: doublefloat
   INTEGER(SNK) :: singleint
   INTEGER(SLK) :: doubleint
-  LOGICAL(SBK) :: bool
 
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING SELECTED KINDS...'
@@ -48,6 +47,7 @@ PROGRAM testSelectedKinds
   REGISTER_SUBTEST('APPROXLE', testAPPROXLE)
   REGISTER_SUBTEST('APPROXGE', testAPPROXGE)
   REGISTER_SUBTEST('SOFTEQ', testSOFTEQ)
+  REGISTER_SUBTEST('SOFT...', testSOFTCompare)
   REGISTER_SUBTEST('isNAN', testisNAN)
   REGISTER_SUBTEST('isINF', testisINF)
   REGISTER_SUBTEST('CharToInt', testCharToInt)
@@ -128,7 +128,7 @@ PROGRAM testSelectedKinds
     FUNCTION approxeq_test(a,b) RESULT(bool)
       REAL(SDK),INTENT(IN) :: a,b
       LOGICAL(SBK) :: bool
-      REAL(SDK) :: largest,eps
+      REAL(SDK) :: eps
 
       eps=MAX(ABS(a),ABS(b))*1.e-14_SDK
       IF(a == 0.0_SRK .OR. b == 0.0_SRK) eps=1.e-14_SDK
@@ -436,6 +436,58 @@ PROGRAM testSelectedKinds
                       (SOFTEQ(1.00011_SSK,1._SSK,1.0E-4_SSK)))
       ASSERT(bool, 'SOFTEQ(...) (SINGLE PRECISION)')
     ENDSUBROUTINE testSOFTEQ
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testSOFTCompare()
+      LOGICAL(SBK) :: bool
+      COMPONENT_TEST('SOFTLT (DOUBLE PRECISION)')
+      bool = SOFTLT(1.0_SDK,1.11_SDK,0.1_SDK)
+      ASSERT(bool, "is less than")
+      bool = .NOT.SOFTLT(1.0_SDK,1.09_SDK,0.1_SDK)
+      ASSERT(bool, "not less than")
+
+      COMPONENT_TEST('SOFTLT (SINGLE PRECISION)')
+      bool = SOFTLT(1.0_SSK,1.11_SSK,0.1_SSK)
+      ASSERT(bool, "is less than")
+      bool = .NOT.SOFTLT(1.0_SSK,1.09_SSK,0.1_SSK)
+      ASSERT(bool, "not less than")
+
+      COMPONENT_TEST('SOFTLE (DOUBLE PRECISION)')
+      bool = SOFTLE(1.09_SDK,1.0_SDK,0.1_SDK)
+      ASSERT(bool, "is less than/equal to")
+      bool = .NOT.SOFTLT(1.11_SDK,1.0_SDK,0.1_SDK)
+      ASSERT(bool, "too big")
+
+      COMPONENT_TEST('SOFTLE (SINGLE PRECISION)')
+      bool = SOFTLE(1.09_SSK,1.0_SSK,0.1_SSK)
+      ASSERT(bool, "is less than/equal to")
+      bool = .NOT.SOFTLT(1.11_SSK,1.0_SSK,0.1_SSK)
+      ASSERT(bool, "too big")
+
+      COMPONENT_TEST('SOFTGT (DOUBLE PRECISION)')
+      bool = SOFTGT(1.11_SDK,1.0_SDK,0.1_SDK)
+      ASSERT(bool, "is greater than")
+      bool = .NOT.SOFTGT(1.09_SDK,1.0_SDK,0.1_SDK)
+      ASSERT(bool, "too small")
+
+      COMPONENT_TEST('SOFTGT (SINGLE PRECISION)')
+      bool = SOFTGT(1.11_SSK,1.0_SSK,0.1_SSK)
+      ASSERT(bool, "is greater than")
+      bool = .NOT.SOFTGT(1.09_SSK,1.0_SSK,0.1_SSK)
+      ASSERT(bool, "too small")
+
+      COMPONENT_TEST('SOFTGE (DOUBLE PRECISION)')
+      bool = SOFTGE(0.91_SDK,1.0_SDK,0.1_SDK)
+      ASSERT(bool, "is greater than")
+      bool = .NOT.SOFTGE(0.89_SDK,1.0_SDK,0.1_SDK)
+      ASSERT(bool, "too small")
+
+      COMPONENT_TEST('SOFTGE (SINGLE PRECISION)')
+      bool = SOFTGE(0.91_SSK,1.0_SSK,0.1_SSK)
+      ASSERT(bool, "is greater than")
+      bool = .NOT.SOFTGE(0.89_SSK,1.0_SSK,0.1_SSK)
+      ASSERT(bool, "too small")
+    ENDSUBROUTINE testSOFTCompare
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testisNAN()
