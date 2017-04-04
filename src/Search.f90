@@ -138,7 +138,7 @@ MODULE Search
         i=j
         step=n/2
         i=i+step
-        IF(.NOT. SOFTLE(val,list(i),eps)) THEN
+        IF(.NOT. SOFTLT(val,list(i),eps)) THEN
           i=i+1
           j=i
           n=n-step-1
@@ -197,7 +197,7 @@ MODULE Search
         i=j
         step = n/2
         i=i+step
-        IF(SOFTLE(list(i),val,eps)) THEN
+        IF(SOFTLT(list(i),val,eps)) THEN
           i=i+1
           j=i
           n=n-step-1
@@ -273,8 +273,10 @@ MODULE Search
       ENDIF
 
       i=lowerBound(list,val,tol)
-      IF(SOFTEQ(list(i),val,eps)) THEN
-        RETURN
+      IF(i > 0 .AND. i <= SIZE(list)) THEN
+        IF(SOFTEQ(list(i),val,eps)) THEN
+          RETURN
+        ENDIF
       ENDIF
 
       i=SIZE(list)+1
