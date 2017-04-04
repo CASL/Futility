@@ -98,7 +98,9 @@ MODULE IntrType
   PUBLIC :: SOFTEQ
   PUBLIC :: SOFTEQR
   PUBLIC :: SOFTLE
+  PUBLIC :: SOFTLT
   PUBLIC :: SOFTGE
+  PUBLIC :: SOFTGT
   PUBLIC :: isNAN
   PUBLIC :: isINF
 !
@@ -281,6 +283,15 @@ MODULE IntrType
     MODULE PROCEDURE softle_double
   ENDINTERFACE
 
+  !> @brief Interface for the operator for "soft less than" for intrinsic
+  !> types. Less than means that the LHS is sufficiently less than the RHS
+  INTERFACE SOFTLT
+    !> @copybrief IntrType::softlt_single
+    MODULE PROCEDURE softlt_single
+    !> @copybrief IntrType::softlt_double
+    MODULE PROCEDURE softlt_double
+  ENDINTERFACE
+
   !> @brief Interface for the operator for "soft greater than or equal to" for intrinsic
   !> types
   INTERFACE SOFTGE
@@ -288,6 +299,15 @@ MODULE IntrType
     MODULE PROCEDURE softge_single
     !> @copybrief IntrType::softge_double
     MODULE PROCEDURE softge_double
+  ENDINTERFACE
+
+  !> @brief Interface for the operator for "soft greater than" for intrinsic
+  !> types
+  INTERFACE SOFTGT
+    !> @copybrief IntrType::softgt_single
+    MODULE PROCEDURE softgt_single
+    !> @copybrief IntrType::softgt_double
+    MODULE PROCEDURE softgt_double
   ENDINTERFACE
 
   !> @brief Interface for the function for isNAN for real
@@ -802,6 +822,38 @@ MODULE IntrType
 !
 !-------------------------------------------------------------------------------
 !> @brief Defines the operation when comparing two single precision reals
+!> with SOFTLT
+!> @param r1 a single precision real number
+!> @param r2 a single precision real number
+!> @param tol a single precision real number
+!> @returns @c bool result of comparison
+!>
+    ELEMENTAL FUNCTION softlt_single(r1,r2,tol) RESULT(bool)
+      REAL(SSK),INTENT(IN) :: r1
+      REAL(SSK),INTENT(IN) :: r2
+      REAL(SSK),INTENT(IN) :: tol
+      LOGICAL(SBK) :: bool
+      bool=(r1 < r2-tol)
+    ENDFUNCTION softlt_single
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation when comparing two double precision reals
+!> with SOFTLT
+!> @param r1 a double precision real number
+!> @param r2 a double precision real number
+!> @param tol a double precision real number
+!> @returns @c bool result of comparison
+!>
+    ELEMENTAL FUNCTION softlt_double(r1,r2,tol) RESULT(bool)
+      REAL(SDK),INTENT(IN) :: r1
+      REAL(SDK),INTENT(IN) :: r2
+      REAL(SDK),INTENT(IN) :: tol
+      LOGICAL(SBK) :: bool
+      bool=(r1 < r2-tol)
+    ENDFUNCTION softlt_double
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation when comparing two single precision reals
 !> with SOFTGE
 !> @param r1 a single precision real number
 !> @param r2 a single precision real number
@@ -831,6 +883,39 @@ MODULE IntrType
       LOGICAL(SBK) :: bool
       bool=(r1+tol >= r2)
     ENDFUNCTION softge_double
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation when comparing two single precision reals
+!> with SOFTGT
+!> @param r1 a single precision real number
+!> @param r2 a single precision real number
+!> @param tol a single precision real number
+!> @returns @c bool result of comparison
+!>
+    ELEMENTAL FUNCTION softgt_single(r1,r2,tol) RESULT(bool)
+      REAL(SSK),INTENT(IN) :: r1
+      REAL(SSK),INTENT(IN) :: r2
+      REAL(SSK),INTENT(IN) :: tol
+      LOGICAL(SBK) :: bool
+      bool=(r1 > r2+tol)
+    ENDFUNCTION softgt_single
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation when comparing two double precision reals
+!> with SOFTGT
+!> @param r1 a double precision real number
+!> @param r2 a double precision real number
+!> @param tol a double precision real number
+!> @returns @c bool result of comparison
+!>
+    ELEMENTAL FUNCTION softgt_double(r1,r2,tol) RESULT(bool)
+      REAL(SDK),INTENT(IN) :: r1
+      REAL(SDK),INTENT(IN) :: r2
+      REAL(SDK),INTENT(IN) :: tol
+      LOGICAL(SBK) :: bool
+      bool=(r1 > r2+tol)
+    ENDFUNCTION softgt_double
+
 !
 !-------------------------------------------------------------------------------
 !> @brief Defines the operation to determine if number is NAN

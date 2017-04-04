@@ -30,6 +30,7 @@ SET(UNIT_TEST_NAMES
     testGeom_Poly
     testGeom
     testSorting
+    testSearch
     testBinaryTrees
     testExceptionHandler
     testSpaceFillingCurve
