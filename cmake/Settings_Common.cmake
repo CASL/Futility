@@ -53,9 +53,13 @@ PROJECT(${PROJECT_NAME} NONE)
 
 # Pull in the TriBITS system and execute
 IF(NOT DEFINED(${${PROJECT_NAME}_TRIBITS_DIR}))
-  SET(${PROJECT_NAME}_TRIBITS_DIR
-      "${${PROJECT_NAME}_MAIN_SOURCE_DIR}/Futility/cmake/tribits" CACHE INTERNAL ""
-  )
+  IF(${PROJECT_NAME} STREQUAL "Futility")
+    SET(${PROJECT_NAME}_TRIBITS_DIR
+       "${${PROJECT_NAME}_MAIN_SOURCE_DIR}/cmake/tribits" CACHE INTERNAL "")
+  ELSE()
+    SET(${PROJECT_NAME}_TRIBITS_DIR
+       "${${PROJECT_NAME}_MAIN_SOURCE_DIR}/Futility/cmake/tribits" CACHE INTERNAL "")
+  ENDIF()
 ENDIF()
 
 # Include the modules in TriBITS

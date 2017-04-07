@@ -7,13 +7,13 @@
 # can be found in LICENSE.txt in the head directory of this repository.        !
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 
-SET(Futility_TPLS_FINDMODS_CLASSIFICATIONS
-        MPI     "${${PROJECT_NAME}_TRIBITS_DIR}/core/std_tpls/" SS
-        BLAS    "${${PROJECT_NAME}_SOURCE_DIR}/cmake/tpl/"      SS
-        PARDISO "${${PROJECT_NAME}_SOURCE_DIR}/cmake/tpl/"      SS
-        HDF5    "${${PROJECT_NAME}_SOURCE_DIR}/cmake/tpl/"      SS
-        HYPRE   "${${PROJECT_NAME}_SOURCE_DIR}/cmake/tpl/"      SS
-        PETSC   "${${PROJECT_NAME}_SOURCE_DIR}/cmake/tpl/"      SS
-        PAPI    "${${PROJECT_NAME}_SOURCE_DIR}/cmake/tpl/"      SS
-        SLEPC   "${${PROJECT_NAME}_SOURCE_DIR}/cmake/tpl/"      SS
-  )
+SET(Futility_VERSION_MAJOR 2)
+SET(Futility_VERSION_MINOR 1)
+SET(Futility_VERSION_PATCH 0)
+SET(Futility_VERSION ${${PROJECT_NAME}_VERSION_MAJOR}.${${PROJECT_NAME}_VERSION_MINOR}.${${PROJECT_NAME}_VERSION_PATCH})
+SET(Futility_VERSION_STRING "${Futility_VERSION} (Dev)")
+SET(Futility_MAJOR_VERSION ${Futility_VERSION_MAJOR})
+
+# Used by testing scripts and should not be used elsewhere
+SET(Futility_REPOSITORY_BRANCH "master" CACHE INTERNAL "")
+SET(Futility_TESTING_TRACK "" CACHE INTERNAL "")

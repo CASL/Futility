@@ -7,13 +7,17 @@
 # can be found in LICENSE.txt in the head directory of this repository.        !
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 
-SET(Futility_TPLS_FINDMODS_CLASSIFICATIONS
-        MPI     "${${PROJECT_NAME}_TRIBITS_DIR}/core/std_tpls/" SS
-        BLAS    "${${PROJECT_NAME}_SOURCE_DIR}/cmake/tpl/"      SS
-        PARDISO "${${PROJECT_NAME}_SOURCE_DIR}/cmake/tpl/"      SS
-        HDF5    "${${PROJECT_NAME}_SOURCE_DIR}/cmake/tpl/"      SS
-        HYPRE   "${${PROJECT_NAME}_SOURCE_DIR}/cmake/tpl/"      SS
-        PETSC   "${${PROJECT_NAME}_SOURCE_DIR}/cmake/tpl/"      SS
-        PAPI    "${${PROJECT_NAME}_SOURCE_DIR}/cmake/tpl/"      SS
-        SLEPC   "${${PROJECT_NAME}_SOURCE_DIR}/cmake/tpl/"      SS
-  )
+FUNCTION(CHECK_LATEX_PACKAGES LATEX_EXE INPUT_FILE WORK_DIR RESULT_NAME)
+  MESSAGE(STATUS "Checking for LaTeX packages..." )
+  EXECUTE_PROCESS( COMMAND ${LATEX_EXE} ${INPUT_FILE}
+                   TIMEOUT 5
+                   OUTPUT_QUIET
+                   ERROR_QUIET
+                   WORKING_DIRECTORY ${WORK_DIR}
+                   RESULT_VARIABLE HAS_LATEX_PACKAGES_LOCAL )
+  IF( NOT ${HAS_LATEX_PACKAGES_LOCAL} STREQUAL "0")
+    MESSAGE(STATUS "LaTeX packages NOT FOUND!")
+  ENDIF()
+  GLOBAL_SET( ${RESULT_NAME} ${HAS_LATEX_PACKAGES_LOCAL} )
+  #GLOBAL_SET( HAS_LATEX_PACKAGES ${HAS_LATEX_PACKAGES_LOCAL} )
+ENDFUNCTION()
