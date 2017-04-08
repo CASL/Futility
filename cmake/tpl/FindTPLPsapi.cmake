@@ -1,13 +1,11 @@
-################################################################################
-#
-# CMake/TriBITS File for MPACT
-#
-# Description: Loads the Windows Processor status API (Psapi).
-#
-# Author: Brendan Kochunas
-#   Date: 02/29/2016
-#
-################################################################################
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
+#                          Futility Development Group                          !
+#                             All rights reserved.                             !
+#                                                                              !
+# Futility is a jointly-maintained, open-source project between the University !
+# of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+# can be found in LICENSE.txt in the head directory of this repository.        !
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 
 IF(WIN32)
 	SET(TPL_Psapi_LIBRARIES "C:/Windows/System32/psapi.dll")

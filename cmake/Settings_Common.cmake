@@ -10,7 +10,7 @@
 # Set PROJECT_NAME (must be in file for other parts of system)
 INCLUDE("${CMAKE_CURRENT_SOURCE_DIR}/ProjectName.cmake")
 
-# Set MPACT Project defaults for TriBITS
+# Set Project defaults for TriBITS
 SET(${PROJECT_NAME}_ENABLE_Fortran ON CACHE BOOL
     "${PROJECT_NAME} always requires Fortran!" FORCE) #Always Fortran
 SET(${PROJECT_NAME}_DEFAULT_BUILD_TYPE DEBUG)         #Default build type
@@ -72,7 +72,7 @@ IF(NOT CMAKE_BUILD_TYPE)
 ENDIF()
 
 IF(WIN32)
-  SET(MPACT_GENERATE_REPO_VERSION_FILE OFF)
+  SET(${PROJECT_NAME}_GENERATE_REPO_VERSION_FILE OFF)
   SET(TPL_ENABLE_Psapi ON)
 ENDIF()
 

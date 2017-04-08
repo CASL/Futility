@@ -1,13 +1,11 @@
-################################################################################
-#
-# CMake/TriBITS File for MPACT
-#
-# Description: Loads the SLEPC TPL.
-#
-# Author: Shane Stimpson
-#   Date: 09/18/2013
-#
-################################################################################
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
+#                          Futility Development Group                          !
+#                             All rights reserved.                             !
+#                                                                              !
+# Futility is a jointly-maintained, open-source project between the University !
+# of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+# can be found in LICENSE.txt in the head directory of this repository.        !
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 
 IF("${SLEPC_INCLUDE_DIRS}" STREQUAL "")
   GLOBAL_SET(SLEPC_INCLUDE_DIRS "$ENV{SLEPC_DIR}/include;$ENV{SLEPC_DIR}/$ENV{SLEPC_ARCH}/include")
