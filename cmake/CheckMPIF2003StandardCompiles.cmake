@@ -60,12 +60,10 @@ FUNCTION(CHECK_MPI_F2003_STANDARD_COMPILES )
         ENDIF()
     ELSE()
         IF(TPL_ENABLE_MPI)
-            IF(${PACKAGE_NAME} STREQUAL "MPACT_libs")
-                MESSAGE(STATUS
-                    "MPI F2003 standard compliance already set as: "
-                    ${MPI_F2003_STANDARD_COMPLIANT}
-                )
-            ENDIF()
+            MESSAGE(STATUS
+                "MPI F2003 standard compliance already set as: "
+                ${MPI_F2003_STANDARD_COMPLIANT}
+            )
         ELSE()
             GLOBAL_SET(MPI_F2003_STANDARD_COMPLIANT TRUE)
         ENDIF()

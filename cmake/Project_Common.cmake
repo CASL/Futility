@@ -27,7 +27,7 @@ SET(${PROJECT_NAME}_ELEVATE_ST_TO_PT ON CACHE BOOL
 # for subpackages!
 SET(${PROJECT_NAME}_ENABLE_SECONDARY_TESTED_CODE  ON  CACHE BOOL  "")
 
-# Exclude a bunch of packages from MPACT's primary meta-project packages
+# Exclude a bunch of packages from primary meta-project packages
 SET(Trilinos_NO_PRIMARY_META_PROJECT_PACKAGES TRUE)
 
 # Enable all Primary Meta-Project Packages by default
@@ -37,7 +37,7 @@ SET(${PROJECT_NAME}_ENABLE_ALL_PACKAGES  ON
 # Turn on C++11 by default
 SET(${PROJECT_NAME}_ENABLE_CXX11_DEFAULT  ON)
 
-# These are all packages that are not needed by MPACT.  This list is the only
+# These are all packages that are not needed.  This list is the only
 # list that need to be maintained to exclude and disable Trilinos packages.
 # This list is used in a variety of places.
 IF (NOT ${PROJECT_NAME}_EXCLUDE_PACKAGES)
@@ -92,9 +92,6 @@ IF (NOT ${PROJECT_NAME}_EXCLUDE_PACKAGES)
     ShyLU
     )
 ENDIF()
-# ToDo: Generate specialized PackagesList.cmake files for Trilinos and SCALE
-# that only lists the package needed by MPACT and then you can remove the
-# above list!
 
 # Disable a bunch of other stuff we don't want/need
 SET(EpetraExt_ENABLE_PETSC  OFF)
@@ -109,7 +106,7 @@ SET(NOX_ENABLE_PETSC  OFF)
 
 SET(${PROJECT_NAME}_FORCE_EXCLUDED_PACKAGE_DISABLES  ON
   CACHE  BOOL
-  "If ON, all excluded MPACT packages are forced off even if user tries to enable")
+  "If ON, all excluded packages are forced off even if user tries to enable")
 MARK_AS_ADVANCED(${PROJECT_NAME}_FORCE_EXCLUDED_PACKAGE_DISABLES)
 
 IF (${PROJECT_NAME}_FORCE_EXCLUDED_PACKAGE_DISABLES)
