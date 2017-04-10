@@ -9,6 +9,10 @@ fort.*
 /checkin_message
 /cmake/dependencies
 
+# extra repos
+Trilinos
+TeuchosWrappersExt
+
 # Repostiory list file for egdist
 .egdist
 .gitdist
