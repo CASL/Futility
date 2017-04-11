@@ -8,6 +8,12 @@
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 
 SET(Futility_TPLS_FINDMODS_CLASSIFICATIONS
-       MPI      "${${PROJECT_NAME}_TRIBITS_DIR}/common_tpls/"    SS
-       PETSC    "${${PROJECT_NAME}_TRIBITS_DIR}/common_tpls/"    SS
+        MPI     "${${PROJECT_NAME}_TRIBITS_DIR}/core/std_tpls/" SS
+        BLAS    "${${PROJECT_NAME}_SOURCE_DIR}/cmake/tpl/"      SS
+        PARDISO "${${PROJECT_NAME}_SOURCE_DIR}/cmake/tpl/"      SS
+        HDF5    "${${PROJECT_NAME}_SOURCE_DIR}/cmake/tpl/"      SS
+        HYPRE   "${${PROJECT_NAME}_SOURCE_DIR}/cmake/tpl/"      SS
+        PETSC   "${${PROJECT_NAME}_SOURCE_DIR}/cmake/tpl/"      SS
+        PAPI    "${${PROJECT_NAME}_SOURCE_DIR}/cmake/tpl/"      SS
+        SLEPC   "${${PROJECT_NAME}_SOURCE_DIR}/cmake/tpl/"      SS
   )
