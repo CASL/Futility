@@ -953,8 +953,10 @@ MODULE FileType_HDF5
         nslash=SIZE(slashloc)
         DO i=1,nslash-1
           CALL getSubstring(path2,tmppath,1,slashloc(i+1)-1)
-          IF(.NOT.pathexists_HDF5FileType(thisHDF5File,TRIM(CHAR(tmppath)))) &
+          IF(.NOT.pathexists_HDF5FileType(thisHDF5File,TRIM(CHAR(tmppath)))) THEN
             CALL h5gcreate_f(thisHDF5File%file_id,TRIM(CHAR(tmppath)),group_id,error)
+            CALL h5gclose_f(group_id,error)
+          ENDIF
         ENDDO
         DEALLOCATE(slashloc)
         ! Create the group
@@ -1013,6 +1015,11 @@ MODULE FileType_HDF5
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - Could not get group info in HDF5 file.')
 
+        ! Close the group
+        CALL h5gclose_f(grp_id,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseDebug(modName//'::'// &
+            myName//' - Failed to close HDF group')
+
         ngrp=nlinks
       ENDIF
 #else
@@ -1053,6 +1060,10 @@ MODULE FileType_HDF5
             CALL h5iget_type_f(obj_id,type,error)
             bool=(type == H5I_GROUP_F)
           ENDIF
+          ! Close the object
+          CALL h5oclose_f(obj_id,error)
+          IF(error /= 0) CALL thisHDF5File%e%raiseDebug(modName//'::'// &
+              myName//' - Failed to close HDF object!')
         ENDIF
       ENDIF
 #else
@@ -1210,10 +1221,9 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_DOUBLE
       CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
         gspace_id,plist_id,error,cnt,offset)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
     ENDSUBROUTINE write_d0
 !
@@ -1262,10 +1272,9 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_DOUBLE
       CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
         gspace_id,plist_id,error,cnt,offset)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
     ENDSUBROUTINE write_d1
 !
@@ -1315,10 +1324,9 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_DOUBLE
       CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
         gspace_id,plist_id,error,cnt,offset)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
     ENDSUBROUTINE write_d2
 !
@@ -1369,10 +1377,9 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_DOUBLE
       CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
         gspace_id,plist_id,error,cnt,offset)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
     ENDSUBROUTINE write_d3
 !
@@ -1425,10 +1432,9 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_DOUBLE
       CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
         gspace_id,plist_id,error,cnt,offset)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
     ENDSUBROUTINE write_d4
 !
@@ -1481,10 +1487,9 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_DOUBLE
       CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
         gspace_id,plist_id,error,cnt,offset)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
     ENDSUBROUTINE write_d5
 !
@@ -1538,10 +1543,9 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_DOUBLE
       CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
         gspace_id,plist_id,error,cnt,offset)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
     ENDSUBROUTINE write_d6
 !
@@ -1596,10 +1600,9 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_DOUBLE
       CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
         gspace_id,plist_id,error,cnt,offset)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
     ENDSUBROUTINE write_d7
 !
@@ -1648,10 +1651,9 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_REAL
       CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
         gspace_id,plist_id,error,cnt,offset)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
     ENDSUBROUTINE write_s0
 !
@@ -1700,10 +1702,9 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_REAL
       CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
         gspace_id,plist_id,error,cnt,offset)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
     ENDSUBROUTINE write_s1
 !
@@ -1753,10 +1754,9 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_REAL
       CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
         gspace_id,plist_id,error,cnt,offset)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
     ENDSUBROUTINE write_s2
 !
@@ -1807,10 +1807,9 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_REAL
       CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
         gspace_id,plist_id,error,cnt,offset)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
     ENDSUBROUTINE write_s3
 !
@@ -1862,10 +1861,9 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_REAL
       CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
         gspace_id,plist_id,error,cnt,offset)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
     ENDSUBROUTINE write_s4
 !
@@ -1918,10 +1916,9 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_REAL
       CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
         gspace_id,plist_id,error,cnt,offset)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
     ENDSUBROUTINE write_s5
 !
@@ -1975,10 +1972,9 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_REAL
       CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
         gspace_id,plist_id,error,cnt,offset)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
     ENDSUBROUTINE write_s6
 !
@@ -2033,10 +2029,9 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_REAL
       CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
         gspace_id,plist_id,error,cnt,offset)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
     ENDSUBROUTINE write_s7
 !
@@ -2091,10 +2086,9 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_CHARACTER
       CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
         gspace_id,plist_id,error,cnt,offset)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,charvals,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
     ENDSUBROUTINE write_b0
 !
@@ -2149,10 +2143,9 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_CHARACTER
       CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
         gspace_id,plist_id,error,cnt,offset)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,charvals,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
     ENDSUBROUTINE write_b1
 !
@@ -2208,10 +2201,9 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_CHARACTER
       CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
         gspace_id,plist_id,error,cnt,offset)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,charvals,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
     ENDSUBROUTINE write_b2
 !-------------------------------------------------------------------------------
@@ -2268,10 +2260,9 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_CHARACTER
       CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
         gspace_id,plist_id,error,cnt,offset)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,charvals,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
     ENDSUBROUTINE write_b3
 !-------------------------------------------------------------------------------
@@ -2319,10 +2310,9 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_INTEGER
       CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
         gspace_id,plist_id,error,cnt,offset)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
     ENDSUBROUTINE write_n0
 !-------------------------------------------------------------------------------
@@ -2370,10 +2360,9 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_INTEGER
       CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
         gspace_id,plist_id,error,cnt,offset)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
     ENDSUBROUTINE write_n1
 !
@@ -2423,10 +2412,9 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_INTEGER
       CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
         gspace_id,plist_id,error,cnt,offset)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
     ENDSUBROUTINE write_n2
 !
@@ -2477,10 +2465,9 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_INTEGER
       CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
         gspace_id,plist_id,error,cnt,offset)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
     ENDSUBROUTINE write_n3
 !
@@ -2532,10 +2519,9 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_INTEGER
       CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
         gspace_id,plist_id,error,cnt,offset)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
     ENDSUBROUTINE write_n4
 !
@@ -2588,10 +2574,9 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_INTEGER
       CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
         gspace_id,plist_id,error,cnt,offset)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
     ENDSUBROUTINE write_n5
 !
@@ -2645,10 +2630,9 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_INTEGER
       CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
         gspace_id,plist_id,error,cnt,offset)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
     ENDSUBROUTINE write_n6
 !
@@ -2703,10 +2687,9 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_INTEGER
       CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
         gspace_id,plist_id,error,cnt,offset)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
     ENDSUBROUTINE write_n7
 !
@@ -2760,10 +2743,9 @@ MODULE FileType_HDF5
         gspace_id,plist_id,error,cnt,offset)
       mem=H5T_NATIVE_DOUBLE
       vals=DBLE(valst)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
     ENDSUBROUTINE write_l0
 !-------------------------------------------------------------------------------
@@ -2816,10 +2798,9 @@ MODULE FileType_HDF5
         gspace_id,plist_id,error,cnt,offset)
       mem=H5T_NATIVE_DOUBLE
       vals=DBLE(valst)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
     ENDSUBROUTINE write_l1
 !
@@ -2874,10 +2855,9 @@ MODULE FileType_HDF5
         gspace_id,plist_id,error,cnt,offset)
       mem=H5T_NATIVE_DOUBLE
       vals=DBLE(valst)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
     ENDSUBROUTINE write_l2
 !
@@ -2933,10 +2913,9 @@ MODULE FileType_HDF5
         gspace_id,plist_id,error,cnt,offset)
       mem=H5T_NATIVE_DOUBLE
       vals=DBLE(valst)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
     ENDSUBROUTINE write_l3
 !
@@ -2993,10 +2972,9 @@ MODULE FileType_HDF5
         gspace_id,plist_id,error,cnt,offset)
       mem=H5T_NATIVE_DOUBLE
       vals=DBLE(valst)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
     ENDSUBROUTINE write_l4
 !
@@ -3055,10 +3033,9 @@ MODULE FileType_HDF5
         gspace_id,plist_id,error,cnt,offset)
       mem=H5T_NATIVE_DOUBLE
       vals=DBLE(valst)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
     ENDSUBROUTINE write_l5
 !
@@ -3118,10 +3095,9 @@ MODULE FileType_HDF5
         gspace_id,plist_id,error,cnt,offset)
       mem=H5T_NATIVE_DOUBLE
       vals=DBLE(valst)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
     ENDSUBROUTINE write_l6
 !
@@ -3182,10 +3158,9 @@ MODULE FileType_HDF5
         gspace_id,plist_id,error,cnt,offset)
       mem=H5T_NATIVE_DOUBLE
       vals=DBLE(valst)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
     ENDSUBROUTINE write_l7
 !
@@ -3243,10 +3218,10 @@ MODULE FileType_HDF5
       CALL h5tset_size_f(mem,INT(LEN(vals),SDK),error)
       CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
         gspace_id,plist_id,error,cnt,offset)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,TRIM(valss),gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
+      CALL h5tclose_f(mem,error)
 #endif
     ENDSUBROUTINE write_st0
 !
@@ -3338,10 +3313,10 @@ MODULE FileType_HDF5
       CALL h5tset_size_f(mem,INT(length_max,SDK),error)
       CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
         gspace_id,plist_id,error,cnt,offset)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,valss,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
+      CALL h5tclose_f(mem,error)
 #endif
     ENDSUBROUTINE write_st1
 !
@@ -3439,10 +3414,10 @@ MODULE FileType_HDF5
       CALL h5tset_size_f(mem,INT(length_max,SDK),error)
       CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
         gspace_id,plist_id,error,cnt,offset)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,valss,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
+      CALL h5tclose_f(mem,error)
 #endif
     ENDSUBROUTINE write_st2
 !
@@ -3546,10 +3521,10 @@ MODULE FileType_HDF5
       CALL h5tset_size_f(mem,INT(length_max,SDK),error)
       CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
         gspace_id,plist_id,error,cnt,offset)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,valss,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
+      CALL h5tclose_f(mem,error)
 #endif
     ENDSUBROUTINE write_st3
 !
@@ -3598,10 +3573,9 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_CHARACTER
       CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
         gspace_id,plist_id,error,cnt,offset)
-      IF(error == 0) THEN
+      IF(error == 0) &
         CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
-        CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
-      ENDIF
+      CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
     ENDSUBROUTINE write_c1
 !
@@ -3774,10 +3748,9 @@ MODULE FileType_HDF5
         ! Read the dataset
         CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
         mem=H5T_NATIVE_DOUBLE
-        IF(error >= 0) THEN
+        IF(error >= 0) &
           CALL h5dread_f(dset_id,mem,vals,dims,error)
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
-        ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_d0
 !
@@ -3815,12 +3788,12 @@ MODULE FileType_HDF5
           ELSE
             ALLOCATE(vals(dims(1)))
           ENDIF
-
+  
           ! Read the dataset
           mem=H5T_NATIVE_DOUBLE
           CALL h5dread_f(dset_id,mem,vals,dims,error)
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_d1
 !
@@ -3858,12 +3831,12 @@ MODULE FileType_HDF5
           ELSE
             ALLOCATE(vals(dims(1),dims(2)))
           ENDIF
-
+  
           ! Read the dataset
           mem=H5T_NATIVE_DOUBLE
           CALL h5dread_f(dset_id,mem,vals,dims,error)
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_d2
 !
@@ -3901,12 +3874,12 @@ MODULE FileType_HDF5
           ELSE
             ALLOCATE(vals(dims(1),dims(2),dims(3)))
           ENDIF
-
+  
           ! Read the dataset
           mem=H5T_NATIVE_DOUBLE
           CALL h5dread_f(dset_id,mem,vals,dims,error)
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_d3
 !
@@ -3944,12 +3917,12 @@ MODULE FileType_HDF5
           ELSE
             ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4)))
           ENDIF
-
+  
           ! Read the dataset
           mem=H5T_NATIVE_DOUBLE
           CALL h5dread_f(dset_id,mem,vals,dims,error)
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_d4
 !
@@ -3987,12 +3960,12 @@ MODULE FileType_HDF5
           ELSE
             ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5)))
           ENDIF
-
+  
           ! Read the dataset
           mem=H5T_NATIVE_DOUBLE
           CALL h5dread_f(dset_id,mem,vals,dims,error)
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_d5
 !
@@ -4030,12 +4003,12 @@ MODULE FileType_HDF5
           ELSE
             ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6)))
           ENDIF
-
+  
           ! Read the dataset
           mem=H5T_NATIVE_DOUBLE
           CALL h5dread_f(dset_id,mem,vals,dims,error)
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_d6
 !
@@ -4073,12 +4046,12 @@ MODULE FileType_HDF5
           ELSE
             ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6),dims(7)))
           ENDIF
-
+  
           ! Read the dataset
           mem=H5T_NATIVE_DOUBLE
           CALL h5dread_f(dset_id,mem,vals,dims,error)
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_d7
 !
@@ -4116,12 +4089,12 @@ MODULE FileType_HDF5
           ELSE
             ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4)))
           ENDIF
-
+  
           ! Read the dataset
           mem=H5T_NATIVE_DOUBLE
           CALL h5dread_f(dset_id,mem,vals,dims,error)
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_dp4
 !
@@ -4151,10 +4124,9 @@ MODULE FileType_HDF5
         ! Read the dataset
         mem=H5T_NATIVE_REAL
         CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
+        IF(error >= 0) &
           CALL h5dread_f(dset_id,mem,vals,dims,error)
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
-        ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_s0
 !
@@ -4192,12 +4164,12 @@ MODULE FileType_HDF5
           ELSE
             ALLOCATE(vals(dims(1)))
           ENDIF
-
+  
           ! Read the dataset
           mem=H5T_NATIVE_REAL
           CALL h5dread_f(dset_id,mem,vals,dims,error)
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_s1
 !
@@ -4235,12 +4207,12 @@ MODULE FileType_HDF5
           ELSE
             ALLOCATE(vals(dims(1),dims(2)))
           ENDIF
-
+  
           ! Read the dataset
           mem=H5T_NATIVE_REAL
           CALL h5dread_f(dset_id,mem,vals,dims,error)
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_s2
 !
@@ -4278,12 +4250,12 @@ MODULE FileType_HDF5
           ELSE
             ALLOCATE(vals(dims(1),dims(2),dims(3)))
           ENDIF
-
+  
           ! Read the dataset
           mem=H5T_NATIVE_REAL
           CALL h5dread_f(dset_id,mem,vals,dims,error)
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_s3
 !
@@ -4321,12 +4293,12 @@ MODULE FileType_HDF5
           ELSE
             ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4)))
           ENDIF
-
+  
           ! Read the dataset
           mem=H5T_NATIVE_REAL
           CALL h5dread_f(dset_id,mem,vals,dims,error)
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_s4
 !
@@ -4364,12 +4336,12 @@ MODULE FileType_HDF5
           ELSE
             ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5)))
           ENDIF
-
+  
           ! Read the dataset
           mem=H5T_NATIVE_REAL
           CALL h5dread_f(dset_id,mem,vals,dims,error)
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_s5
 !
@@ -4407,12 +4379,12 @@ MODULE FileType_HDF5
           ELSE
             ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6)))
           ENDIF
-
+  
           ! Read the dataset
           mem=H5T_NATIVE_REAL
           CALL h5dread_f(dset_id,mem,vals,dims,error)
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_s6
 !
@@ -4450,12 +4422,12 @@ MODULE FileType_HDF5
           ELSE
             ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6),dims(7)))
           ENDIF
-
+  
           ! Read the dataset
           mem=H5T_NATIVE_REAL
           CALL h5dread_f(dset_id,mem,vals,dims,error)
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_s7
 !
@@ -4485,10 +4457,9 @@ MODULE FileType_HDF5
         ! Read the dataset
         mem=H5T_NATIVE_INTEGER
         CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
+        IF(error >= 0) &
           CALL h5dread_f(dset_id,mem,vals,dims,error)
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
-        ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_n0
 !
@@ -4527,12 +4498,12 @@ MODULE FileType_HDF5
           ELSE
             ALLOCATE(vals(dims(1)))
           ENDIF
-
+  
           ! Read the dataset
           mem=H5T_NATIVE_INTEGER
           CALL h5dread_f(dset_id,mem,vals,dims,error)
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_n1
 !
@@ -4570,12 +4541,12 @@ MODULE FileType_HDF5
           ELSE
             ALLOCATE(vals(dims(1),dims(2)))
           ENDIF
-
+  
           ! Read the dataset
           mem=H5T_NATIVE_INTEGER
           CALL h5dread_f(dset_id,mem,vals,dims,error)
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_n2
 !
@@ -4613,12 +4584,12 @@ MODULE FileType_HDF5
           ELSE
             ALLOCATE(vals(dims(1),dims(2),dims(3)))
           ENDIF
-
+  
           ! Read the dataset
           mem=H5T_NATIVE_INTEGER
           CALL h5dread_f(dset_id,mem,vals,dims,error)
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_n3
 !
@@ -4656,12 +4627,12 @@ MODULE FileType_HDF5
           ELSE
             ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4)))
           ENDIF
-
+  
           ! Read the dataset
           mem=H5T_NATIVE_INTEGER
           CALL h5dread_f(dset_id,mem,vals,dims,error)
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_n4
 !
@@ -4699,12 +4670,12 @@ MODULE FileType_HDF5
           ELSE
             ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5)))
           ENDIF
-
+  
           ! Read the dataset
           mem=H5T_NATIVE_INTEGER
           CALL h5dread_f(dset_id,mem,vals,dims,error)
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_n5
 !
@@ -4742,12 +4713,12 @@ MODULE FileType_HDF5
           ELSE
             ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6)))
           ENDIF
-
+  
           ! Read the dataset
           mem=H5T_NATIVE_INTEGER
           CALL h5dread_f(dset_id,mem,vals,dims,error)
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_n6
 !
@@ -4785,12 +4756,12 @@ MODULE FileType_HDF5
           ELSE
             ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6),dims(7)))
           ENDIF
-
+  
           ! Read the dataset
           mem=H5T_NATIVE_INTEGER
           CALL h5dread_f(dset_id,mem,vals,dims,error)
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_n7
 !
@@ -4824,12 +4795,12 @@ MODULE FileType_HDF5
         CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
         IF(error >= 0) THEN
           CALL h5dread_f(dset_id,mem,valst,dims,error)
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
           ! Convert data type
           vals=INT(valst,SLK)
           CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
             ' - Converting from double to long integer!')
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_l0
 !
@@ -4871,15 +4842,15 @@ MODULE FileType_HDF5
             ALLOCATE(vals(dims(1)))
           ENDIF
           ALLOCATE(valst(dims(1)))
-
+  
           ! Read the dataset
           mem=H5T_NATIVE_INTEGER
           CALL h5dread_f(dset_id,mem,valst,dims,error)
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
           vals=INT(valst,SLK)
           CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
             ' - Converting from double to long integer!')
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_l1
 !
@@ -4921,15 +4892,15 @@ MODULE FileType_HDF5
             ALLOCATE(vals(dims(1),dims(2)))
           ENDIF
           ALLOCATE(valst(dims(1),dims(2)))
-
+  
           ! Read the dataset
           mem=H5T_NATIVE_INTEGER
           CALL h5dread_f(dset_id,mem,valst,dims,error)
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
           vals=INT(valst,SLK)
           CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
             ' - Converting from double to long integer!')
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_l2
 !
@@ -4971,15 +4942,15 @@ MODULE FileType_HDF5
             ALLOCATE(vals(dims(1),dims(2),dims(3)))
           ENDIF
           ALLOCATE(valst(dims(1),dims(2),dims(3)))
-
+  
           ! Read the dataset
           mem=H5T_NATIVE_INTEGER
           CALL h5dread_f(dset_id,mem,valst,dims,error)
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
           vals=INT(valst,SLK)
           CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
             ' - Converting from double to long integer!')
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_l3
 !
@@ -5021,15 +4992,15 @@ MODULE FileType_HDF5
             ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4)))
           ENDIF
           ALLOCATE(valst(dims(1),dims(2),dims(3),dims(4)))
-
+  
           ! Read the dataset
           mem=H5T_NATIVE_INTEGER
           CALL h5dread_f(dset_id,mem,valst,dims,error)
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
           vals=INT(valst,SLK)
           CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
             ' - Converting from double to long integer!')
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_l4
 !
@@ -5071,15 +5042,15 @@ MODULE FileType_HDF5
             ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5)))
           ENDIF
           ALLOCATE(valst(dims(1),dims(2),dims(3),dims(4),dims(5)))
-
+  
           ! Read the dataset
           mem=H5T_NATIVE_INTEGER
           CALL h5dread_f(dset_id,mem,valst,dims,error)
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
           vals=INT(valst,SLK)
           CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
             ' - Converting from double to long integer!')
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_l5
 !
@@ -5121,15 +5092,15 @@ MODULE FileType_HDF5
             ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6)))
           ENDIF
           ALLOCATE(valst(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6)))
-
+  
           ! Read the dataset
           mem=H5T_NATIVE_INTEGER
           CALL h5dread_f(dset_id,mem,valst,dims,error)
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
           vals=INT(valst,SLK)
           CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
             ' - Converting from double to long integer!')
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_l6
 !
@@ -5171,15 +5142,15 @@ MODULE FileType_HDF5
             ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6),dims(7)))
           ENDIF
           ALLOCATE(valst(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6),dims(7)))
-
+  
           ! Read the dataset
           mem=H5T_NATIVE_INTEGER
           CALL h5dread_f(dset_id,mem,valst,dims,error)
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
           vals=INT(valst,SLK)
           CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
             ' - Converting from double to long integer!')
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_l7
 !
@@ -5213,7 +5184,6 @@ MODULE FileType_HDF5
       CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
       IF(error >= 0) THEN
         CALL h5dread_f(dset_id,mem,valsc,dims,error)
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
       ! Convert to logical from character
         IF(valsc=='F') THEN
           vals=.FALSE.
@@ -5221,6 +5191,7 @@ MODULE FileType_HDF5
           vals=.TRUE.
         ENDIF
       ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_b0
 !
@@ -5262,19 +5233,19 @@ MODULE FileType_HDF5
             ALLOCATE(vals(dims(1)))
           ENDIF
           ALLOCATE(valsc(dims(1)))
-
+  
           ! Read the dataset
           mem=H5T_NATIVE_CHARACTER
           CALL h5dread_f(dset_id,mem,valsc,dims,error)
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
           ! Convert from surrogate character array to boolean array
           vals=.FALSE.
           FORALL(i=1:SIZE(vals),valsc(i) == 'T')
             vals(i)=.TRUE.
           ENDFORALL
-
+  
           DEALLOCATE(valsc)
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_b1
 !
@@ -5316,19 +5287,19 @@ MODULE FileType_HDF5
             ALLOCATE(vals(dims(1),dims(2)))
           ENDIF
           ALLOCATE(valsc(dims(1),dims(2)))
-
+  
           ! Read the dataset
           mem=H5T_NATIVE_CHARACTER
           CALL h5dread_f(dset_id,mem,valsc,dims,error)
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
           ! Convert from surrogate character array to boolean array
           vals=.FALSE.
           FORALL(i=1:SIZE(vals,DIM=1),j=1:SIZE(vals,DIM=2),valsc(i,j) == 'T')
             vals(i,j)=.TRUE.
           ENDFORALL
-
+  
           DEALLOCATE(valsc)
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_b2
 !
@@ -5370,20 +5341,20 @@ MODULE FileType_HDF5
             ALLOCATE(vals(dims(1),dims(2),dims(3)))
           ENDIF
           ALLOCATE(valsc(dims(1),dims(2),dims(3)))
-
+  
           ! Read the dataset
           mem=H5T_NATIVE_CHARACTER
           CALL h5dread_f(dset_id,mem,valsc,dims,error)
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
           ! Convert from surrogate character array to boolean array
           vals(:,:,:)=.FALSE.
           FORALL(i=1:SIZE(vals,DIM=1),j=1:SIZE(vals,DIM=2),k=1:SIZE(vals,DIM=3), &
             valsc(i,j,k) == 'T')
             vals(i,j,k)=.TRUE.
           ENDFORALL
-
+  
           DEALLOCATE(valsc)
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_b3
 !
@@ -5425,6 +5396,8 @@ MODULE FileType_HDF5
       ELSE
         CALL read_st0(thisHDF5File,dsetname,INT(max_size,SIK),vals)
       ENDIF
+      CALL h5sclose_f(dspace_id,error)
+      CALL h5dclose_f(dset_id,error)
 #endif
     ENDSUBROUTINE read_st0_helper
 !
@@ -5464,7 +5437,6 @@ MODULE FileType_HDF5
         ! Read the dataset
         CALL h5dget_type_f(dset_id,mem,error)
         CALL h5dread_f(dset_id,mem,valsc,dims,error)
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 
         IF(length_max==1) THEN
           CALL convert_char_array_to_str(valsc,vals)
@@ -5472,6 +5444,7 @@ MODULE FileType_HDF5
           vals=valsc(1)(1:length_max)
         ENDIF
       ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 
 #endif
     ENDSUBROUTINE read_st0
@@ -5510,8 +5483,8 @@ MODULE FileType_HDF5
         DO i=1,SIZE(valsc)
           vals=vals//valsc(i)
         ENDDO
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
       ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
       IF(ALLOCATED(valsc)) DEALLOCATE(valsc)
 #endif
     ENDSUBROUTINE read_ca0
@@ -5554,6 +5527,8 @@ MODULE FileType_HDF5
       ELSE
         CALL read_st1(thisHDF5File,dsetname,INT(max_size,SIK),vals)
       ENDIF
+      CALL h5sclose_f(dspace_id,error)
+      CALL h5dclose_f(dset_id,error)
 #endif
     ENDSUBROUTINE read_st1_helper
 !
@@ -5589,10 +5564,10 @@ MODULE FileType_HDF5
         CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
         IF(error >= 0) THEN
           ALLOCATE(valsc(dims(1)))
-
+  
           CALL h5dget_type_f(dset_id,mem,error)
           CALL h5dread_f(dset_id,mem,valsc,dims,error)
-
+  
           IF(ALLOCATED(vals)) THEN
             IF(SIZE(vals) /= dims(1)) THEN
               DEALLOCATE(vals)
@@ -5604,9 +5579,9 @@ MODULE FileType_HDF5
           DO i=1,SIZE(vals)
             vals(i)=valsc(i)(1:length_max)
           ENDDO
-
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+  
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
         IF(ALLOCATED(valsc)) DEALLOCATE(valsc)
 #endif
     ENDSUBROUTINE read_st1
@@ -5659,8 +5634,8 @@ MODULE FileType_HDF5
               vals(i)=vals(i)//valsc(j,i)
             ENDDO
           ENDDO
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
         IF(ALLOCATED(valsc)) DEALLOCATE(valsc)
 #endif
     ENDSUBROUTINE read_ca1
@@ -5703,6 +5678,8 @@ MODULE FileType_HDF5
       ELSE
         CALL read_st2(thisHDF5File,dsetname,INT(max_size,SIK),vals)
       ENDIF
+      CALL h5sclose_f(dspace_id,error)
+      CALL h5dclose_f(dset_id,error)
 #endif
     ENDSUBROUTINE read_st2_helper
 !
@@ -5740,7 +5717,7 @@ MODULE FileType_HDF5
           ALLOCATE(valsc(dims(1),dims(2)))
           CALL h5dget_type_f(dset_id,mem,error)
           CALL h5dread_f(dset_id,mem,valsc,dims,error)
-
+  
           ! Allocate space if needed, make sure it is the right size
           IF(ALLOCATED(vals)) THEN
             IF(ALL(SHAPE(vals) /= (/dims(1),dims(2)/))) THEN
@@ -5755,8 +5732,8 @@ MODULE FileType_HDF5
               vals(i,j)=valsc(i,j)(1:length_max)
             ENDDO
           ENDDO
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
         IF(ALLOCATED(valsc)) DEALLOCATE(valsc)
 #endif
     ENDSUBROUTINE read_st2
@@ -5810,9 +5787,9 @@ MODULE FileType_HDF5
                 vals(i,j)=vals(i,j)//valsc(k,i,j)
               ENDDO
             ENDDO
-        ENDDO
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+          ENDDO
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
         IF(ALLOCATED(valsc)) DEALLOCATE(valsc)
 #endif
     ENDSUBROUTINE read_ca2
@@ -5855,6 +5832,8 @@ MODULE FileType_HDF5
       ELSE
         CALL read_st3(thisHDF5File,dsetname,INT(max_size,SIK),vals)
       ENDIF
+      CALL h5sclose_f(dspace_id,error)
+      CALL h5dclose_f(dset_id,error)
 #endif
     ENDSUBROUTINE read_st3_helper
 !
@@ -5892,7 +5871,7 @@ MODULE FileType_HDF5
           ALLOCATE(valsc(dims(1),dims(2),dims(3)))
           CALL h5dget_type_f(dset_id,mem,error)
           CALL h5dread_f(dset_id,mem,valsc,dims,error)
-
+  
           ! Allocate space if needed, make sure it is the right size
           IF(ALLOCATED(vals)) THEN
             IF(ALL(SHAPE(vals) /= (/dims(1),dims(2),dims(3)/))) THEN
@@ -5910,8 +5889,8 @@ MODULE FileType_HDF5
               ENDDO
             ENDDO
           ENDDO
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_st3
 !
@@ -5967,8 +5946,8 @@ MODULE FileType_HDF5
               ENDDO
             ENDDO
           ENDDO
-          CALL postRead(thisHDF5File,dset_id,dspace_id,error)
         ENDIF
+        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_ca3
 !
@@ -6006,7 +5985,6 @@ MODULE FileType_HDF5
         ! Read the dataset
         mem=H5T_NATIVE_CHARACTER
         CALL h5dread_f(dset_id,mem,valsc,dims,error)
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 
         ! Convert from surrogate character array to boolean array
         vals(:)=" "
@@ -6014,6 +5992,7 @@ MODULE FileType_HDF5
           vals(i:i)=valsc(i)
         ENDDO
       ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_c1
 !
@@ -6563,16 +6542,16 @@ MODULE FileType_HDF5
       INTEGER(HID_T),INTENT(INOUT) :: dspace_id
       INTEGER(SIK),INTENT(INOUT) :: error
 
-!      ! Make sure the object is initialized
-!      IF(.NOT.thisHDF5File%isinit) THEN
-!        CALL thisHDF5File%e%setStopOnError(.FALSE.)
-!        CALL thisHDF5File%e%raiseError(modName// &
-!          '::'//myName//' - File object not initialized.')
-!      ELSEIF(.NOT.thisHDF5File%isRead()) THEN
-!        CALL thisHDF5File%e%setStopOnError(.FALSE.)
-!        CALL thisHDF5File%e%raiseError(modName// &
-!          '::'//myName//' - File is not Readable!')
-!      ELSE
+      ! Make sure the object is initialized
+      IF(.NOT.thisHDF5File%isinit) THEN
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File object not initialized.')
+      ELSEIF(.NOT.thisHDF5File%isRead()) THEN
+        CALL thisHDF5File%e%setStopOnError(.FALSE.)
+        CALL thisHDF5File%e%raiseError(modName// &
+          '::'//myName//' - File is not Readable!')
+      ELSE
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - Failed to read data from dataset.')
         ! Close the dataset
