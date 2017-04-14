@@ -651,6 +651,8 @@ MODULE FileType_HDF5
 
       IF(file%isinit) THEN
         CALL h5pcreate_f(H5P_FILE_ACCESS_F,plist_id,error)
+        CALL h5pset_fclose_degree_f(plist_id,H5F_CLOSE_SEMI_F,error)
+        
         IF (error /= 0) CALL file%e%raiseError(modName//'::'//myName// &
           ' - Unable to create property list for open operation.')
 
@@ -706,6 +708,7 @@ MODULE FileType_HDF5
         !Check open status.
         IF(file%isopen()) THEN
           CALL h5fclose_f(file%file_id,error)
+          file%file_id=0
           IF(error /= 0) THEN
             CALL file%e%raiseError(modName//'::'//myName// &
               ' - Unable to close HDF5 file.')
