@@ -3747,13 +3747,13 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Read the dataset
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        mem=H5T_NATIVE_DOUBLE
-        IF(error >= 0) &
-          CALL h5dread_f(dset_id,mem,vals,dims,error)
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      path=convertPath(dsetname)
+      ! Read the dataset
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      mem=H5T_NATIVE_DOUBLE
+      IF(error >= 0) &
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_d0
 !
@@ -3779,24 +3779,24 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate space if needed, make sure it is the right size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          IF(ALLOCATED(vals)) THEN
-            IF(ANY(SHAPE(vals) /= dims)) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(1)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate space if needed, make sure it is the right size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        IF(ALLOCATED(vals)) THEN
+          IF(ANY(SHAPE(vals) /= dims)) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(1)))
           ENDIF
-  
-          ! Read the dataset
-          mem=H5T_NATIVE_DOUBLE
-          CALL h5dread_f(dset_id,mem,vals,dims,error)
+        ELSE
+          ALLOCATE(vals(dims(1)))
         ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+
+        ! Read the dataset
+        mem=H5T_NATIVE_DOUBLE
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_d1
 !
@@ -3822,24 +3822,24 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate space if needed, make sure it is the right size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          IF(ALLOCATED(vals)) THEN
-            IF(ANY(SHAPE(vals) /= dims)) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(1),dims(2)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate space if needed, make sure it is the right size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        IF(ALLOCATED(vals)) THEN
+          IF(ANY(SHAPE(vals) /= dims)) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(1),dims(2)))
           ENDIF
-  
-          ! Read the dataset
-          mem=H5T_NATIVE_DOUBLE
-          CALL h5dread_f(dset_id,mem,vals,dims,error)
+        ELSE
+          ALLOCATE(vals(dims(1),dims(2)))
         ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+
+        ! Read the dataset
+        mem=H5T_NATIVE_DOUBLE
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_d2
 !
@@ -3865,24 +3865,24 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate space if needed, make sure it is the right size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          IF(ALLOCATED(vals)) THEN
-            IF(ANY(SHAPE(vals) /= dims)) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(1),dims(2),dims(3)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate space if needed, make sure it is the right size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        IF(ALLOCATED(vals)) THEN
+          IF(ANY(SHAPE(vals) /= dims)) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(1),dims(2),dims(3)))
           ENDIF
-  
-          ! Read the dataset
-          mem=H5T_NATIVE_DOUBLE
-          CALL h5dread_f(dset_id,mem,vals,dims,error)
+        ELSE
+          ALLOCATE(vals(dims(1),dims(2),dims(3)))
         ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+
+        ! Read the dataset
+        mem=H5T_NATIVE_DOUBLE
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_d3
 !
@@ -3908,24 +3908,24 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate space if needed, make sure it is the right size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          IF(ALLOCATED(vals)) THEN
-            IF(ANY(SHAPE(vals) /= dims)) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate space if needed, make sure it is the right size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        IF(ALLOCATED(vals)) THEN
+          IF(ANY(SHAPE(vals) /= dims)) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4)))
           ENDIF
-  
-          ! Read the dataset
-          mem=H5T_NATIVE_DOUBLE
-          CALL h5dread_f(dset_id,mem,vals,dims,error)
+        ELSE
+          ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4)))
         ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+
+        ! Read the dataset
+        mem=H5T_NATIVE_DOUBLE
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_d4
 !
@@ -3951,24 +3951,24 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate space if needed, make sure it is the right size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          IF(ALLOCATED(vals)) THEN
-            IF(ANY(SHAPE(vals) /= dims)) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate space if needed, make sure it is the right size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        IF(ALLOCATED(vals)) THEN
+          IF(ANY(SHAPE(vals) /= dims)) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5)))
           ENDIF
-  
-          ! Read the dataset
-          mem=H5T_NATIVE_DOUBLE
-          CALL h5dread_f(dset_id,mem,vals,dims,error)
+        ELSE
+          ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5)))
         ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+
+        ! Read the dataset
+        mem=H5T_NATIVE_DOUBLE
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_d5
 !
@@ -3994,24 +3994,24 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate space if needed, make sure it is the right size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          IF(ALLOCATED(vals)) THEN
-            IF(ANY(SHAPE(vals) /= dims)) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate space if needed, make sure it is the right size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        IF(ALLOCATED(vals)) THEN
+          IF(ANY(SHAPE(vals) /= dims)) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6)))
           ENDIF
-  
-          ! Read the dataset
-          mem=H5T_NATIVE_DOUBLE
-          CALL h5dread_f(dset_id,mem,vals,dims,error)
+        ELSE
+          ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6)))
         ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+
+        ! Read the dataset
+        mem=H5T_NATIVE_DOUBLE
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_d6
 !
@@ -4037,24 +4037,24 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate space if needed, make sure it is the right size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          IF(ALLOCATED(vals)) THEN
-            IF(ANY(SHAPE(vals) /= dims)) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6),dims(7)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate space if needed, make sure it is the right size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        IF(ALLOCATED(vals)) THEN
+          IF(ANY(SHAPE(vals) /= dims)) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6),dims(7)))
           ENDIF
-  
-          ! Read the dataset
-          mem=H5T_NATIVE_DOUBLE
-          CALL h5dread_f(dset_id,mem,vals,dims,error)
+        ELSE
+          ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6),dims(7)))
         ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+
+        ! Read the dataset
+        mem=H5T_NATIVE_DOUBLE
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_d7
 !
@@ -4080,24 +4080,24 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate space if needed, make sure it is the right size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          IF(ASSOCIATED(vals)) THEN
-            IF(ANY(SHAPE(vals) /= dims)) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate space if needed, make sure it is the right size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        IF(ASSOCIATED(vals)) THEN
+          IF(ANY(SHAPE(vals) /= dims)) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4)))
           ENDIF
-  
-          ! Read the dataset
-          mem=H5T_NATIVE_DOUBLE
-          CALL h5dread_f(dset_id,mem,vals,dims,error)
+        ELSE
+          ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4)))
         ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+
+        ! Read the dataset
+        mem=H5T_NATIVE_DOUBLE
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_dp4
 !
@@ -4123,13 +4123,13 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Read the dataset
-        mem=H5T_NATIVE_REAL
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) &
-          CALL h5dread_f(dset_id,mem,vals,dims,error)
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      path=convertPath(dsetname)
+      ! Read the dataset
+      mem=H5T_NATIVE_REAL
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) &
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_s0
 !
@@ -4155,24 +4155,24 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate space if needed, make sure it is the right size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          IF(ALLOCATED(vals)) THEN
-            IF(ANY(SHAPE(vals) /= dims)) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(1)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate space if needed, make sure it is the right size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        IF(ALLOCATED(vals)) THEN
+          IF(ANY(SHAPE(vals) /= dims)) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(1)))
           ENDIF
-  
-          ! Read the dataset
-          mem=H5T_NATIVE_REAL
-          CALL h5dread_f(dset_id,mem,vals,dims,error)
+        ELSE
+          ALLOCATE(vals(dims(1)))
         ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+
+        ! Read the dataset
+        mem=H5T_NATIVE_REAL
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_s1
 !
@@ -4198,24 +4198,24 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate space if needed, make sure it is the right size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          IF(ALLOCATED(vals)) THEN
-            IF(ANY(SHAPE(vals) /= dims)) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(1),dims(2)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate space if needed, make sure it is the right size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        IF(ALLOCATED(vals)) THEN
+          IF(ANY(SHAPE(vals) /= dims)) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(1),dims(2)))
           ENDIF
-  
-          ! Read the dataset
-          mem=H5T_NATIVE_REAL
-          CALL h5dread_f(dset_id,mem,vals,dims,error)
+        ELSE
+          ALLOCATE(vals(dims(1),dims(2)))
         ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+
+        ! Read the dataset
+        mem=H5T_NATIVE_REAL
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_s2
 !
@@ -4241,24 +4241,24 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate space if needed, make sure it is the right size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          IF(ALLOCATED(vals)) THEN
-            IF(ANY(SHAPE(vals) /= dims)) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(1),dims(2),dims(3)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate space if needed, make sure it is the right size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        IF(ALLOCATED(vals)) THEN
+          IF(ANY(SHAPE(vals) /= dims)) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(1),dims(2),dims(3)))
           ENDIF
-  
-          ! Read the dataset
-          mem=H5T_NATIVE_REAL
-          CALL h5dread_f(dset_id,mem,vals,dims,error)
+        ELSE
+          ALLOCATE(vals(dims(1),dims(2),dims(3)))
         ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+
+        ! Read the dataset
+        mem=H5T_NATIVE_REAL
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_s3
 !
@@ -4284,24 +4284,24 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate space if needed, make sure it is the right size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          IF(ALLOCATED(vals)) THEN
-            IF(ANY(SHAPE(vals) /= dims)) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate space if needed, make sure it is the right size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        IF(ALLOCATED(vals)) THEN
+          IF(ANY(SHAPE(vals) /= dims)) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4)))
           ENDIF
-  
-          ! Read the dataset
-          mem=H5T_NATIVE_REAL
-          CALL h5dread_f(dset_id,mem,vals,dims,error)
+        ELSE
+          ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4)))
         ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+
+        ! Read the dataset
+        mem=H5T_NATIVE_REAL
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_s4
 !
@@ -4327,24 +4327,24 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate space if needed, make sure it is the right size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          IF(ALLOCATED(vals)) THEN
-            IF(ANY(SHAPE(vals) /= dims)) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate space if needed, make sure it is the right size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        IF(ALLOCATED(vals)) THEN
+          IF(ANY(SHAPE(vals) /= dims)) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5)))
           ENDIF
-  
-          ! Read the dataset
-          mem=H5T_NATIVE_REAL
-          CALL h5dread_f(dset_id,mem,vals,dims,error)
+        ELSE
+          ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5)))
         ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+
+        ! Read the dataset
+        mem=H5T_NATIVE_REAL
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_s5
 !
@@ -4370,24 +4370,24 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate space if needed, make sure it is the right size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          IF(ALLOCATED(vals)) THEN
-            IF(ANY(SHAPE(vals) /= dims)) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate space if needed, make sure it is the right size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        IF(ALLOCATED(vals)) THEN
+          IF(ANY(SHAPE(vals) /= dims)) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6)))
           ENDIF
-  
-          ! Read the dataset
-          mem=H5T_NATIVE_REAL
-          CALL h5dread_f(dset_id,mem,vals,dims,error)
+        ELSE
+          ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6)))
         ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+
+        ! Read the dataset
+        mem=H5T_NATIVE_REAL
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_s6
 !
@@ -4413,24 +4413,24 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate space if needed, make sure it is the right size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          IF(ALLOCATED(vals)) THEN
-            IF(ANY(SHAPE(vals) /= dims)) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6),dims(7)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate space if needed, make sure it is the right size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        IF(ALLOCATED(vals)) THEN
+          IF(ANY(SHAPE(vals) /= dims)) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6),dims(7)))
           ENDIF
-  
-          ! Read the dataset
-          mem=H5T_NATIVE_REAL
-          CALL h5dread_f(dset_id,mem,vals,dims,error)
+        ELSE
+          ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6),dims(7)))
         ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+
+        ! Read the dataset
+        mem=H5T_NATIVE_REAL
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_s7
 !
@@ -4456,13 +4456,14 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Read the dataset
-        mem=H5T_NATIVE_INTEGER
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) &
-          CALL h5dread_f(dset_id,mem,vals,dims,error)
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      path=convertPath(dsetname)
+      ! Read the dataset
+      mem=H5T_NATIVE_INTEGER
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_n0
 !
@@ -4489,24 +4490,24 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate space if needed, make sure it is the right size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          IF(ALLOCATED(vals)) THEN
-            IF(ANY(SHAPE(vals) /= dims)) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(1)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate space if needed, make sure it is the right size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        IF(ALLOCATED(vals)) THEN
+          IF(ANY(SHAPE(vals) /= dims)) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(1)))
           ENDIF
-  
-          ! Read the dataset
-          mem=H5T_NATIVE_INTEGER
-          CALL h5dread_f(dset_id,mem,vals,dims,error)
+        ELSE
+          ALLOCATE(vals(dims(1)))
         ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+
+        ! Read the dataset
+        mem=H5T_NATIVE_INTEGER
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_n1
 !
@@ -4532,24 +4533,24 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate space if needed, make sure it is the right size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          IF(ALLOCATED(vals)) THEN
-            IF(ANY(SHAPE(vals) /= dims)) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(1),dims(2)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate space if needed, make sure it is the right size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        IF(ALLOCATED(vals)) THEN
+          IF(ANY(SHAPE(vals) /= dims)) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(1),dims(2)))
           ENDIF
-  
-          ! Read the dataset
-          mem=H5T_NATIVE_INTEGER
-          CALL h5dread_f(dset_id,mem,vals,dims,error)
+        ELSE
+          ALLOCATE(vals(dims(1),dims(2)))
         ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+
+        ! Read the dataset
+        mem=H5T_NATIVE_INTEGER
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_n2
 !
@@ -4575,24 +4576,24 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate space if needed, make sure it is the right size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          IF(ALLOCATED(vals)) THEN
-            IF(ANY(SHAPE(vals) /= dims)) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(1),dims(2),dims(3)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate space if needed, make sure it is the right size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        IF(ALLOCATED(vals)) THEN
+          IF(ANY(SHAPE(vals) /= dims)) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(1),dims(2),dims(3)))
           ENDIF
-  
-          ! Read the dataset
-          mem=H5T_NATIVE_INTEGER
-          CALL h5dread_f(dset_id,mem,vals,dims,error)
+        ELSE
+          ALLOCATE(vals(dims(1),dims(2),dims(3)))
         ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+
+        ! Read the dataset
+        mem=H5T_NATIVE_INTEGER
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_n3
 !
@@ -4618,24 +4619,24 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate space if needed, make sure it is the right size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          IF(ALLOCATED(vals)) THEN
-            IF(ANY(SHAPE(vals) /= dims)) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate space if needed, make sure it is the right size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        IF(ALLOCATED(vals)) THEN
+          IF(ANY(SHAPE(vals) /= dims)) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4)))
           ENDIF
-  
-          ! Read the dataset
-          mem=H5T_NATIVE_INTEGER
-          CALL h5dread_f(dset_id,mem,vals,dims,error)
+        ELSE
+          ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4)))
         ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+
+        ! Read the dataset
+        mem=H5T_NATIVE_INTEGER
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_n4
 !
@@ -4661,24 +4662,24 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate space if needed, make sure it is the right size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          IF(ALLOCATED(vals)) THEN
-            IF(ANY(SHAPE(vals) /= dims)) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate space if needed, make sure it is the right size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        IF(ALLOCATED(vals)) THEN
+          IF(ANY(SHAPE(vals) /= dims)) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5)))
           ENDIF
-  
-          ! Read the dataset
-          mem=H5T_NATIVE_INTEGER
-          CALL h5dread_f(dset_id,mem,vals,dims,error)
+        ELSE
+          ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5)))
         ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+
+        ! Read the dataset
+        mem=H5T_NATIVE_INTEGER
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_n5
 !
@@ -4704,24 +4705,24 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate space if needed, make sure it is the right size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          IF(ALLOCATED(vals)) THEN
-            IF(ANY(SHAPE(vals) /= dims)) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate space if needed, make sure it is the right size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        IF(ALLOCATED(vals)) THEN
+          IF(ANY(SHAPE(vals) /= dims)) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6)))
           ENDIF
-  
-          ! Read the dataset
-          mem=H5T_NATIVE_INTEGER
-          CALL h5dread_f(dset_id,mem,vals,dims,error)
+        ELSE
+          ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6)))
         ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+
+        ! Read the dataset
+        mem=H5T_NATIVE_INTEGER
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_n6
 !
@@ -4747,24 +4748,24 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate space if needed, make sure it is the right size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          IF(ALLOCATED(vals)) THEN
-            IF(ANY(SHAPE(vals) /= dims)) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6),dims(7)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate space if needed, make sure it is the right size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        IF(ALLOCATED(vals)) THEN
+          IF(ANY(SHAPE(vals) /= dims)) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6),dims(7)))
           ENDIF
-  
-          ! Read the dataset
-          mem=H5T_NATIVE_INTEGER
-          CALL h5dread_f(dset_id,mem,vals,dims,error)
+        ELSE
+          ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6),dims(7)))
         ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+
+        ! Read the dataset
+        mem=H5T_NATIVE_INTEGER
+        CALL h5dread_f(dset_id,mem,vals,dims,error)
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_n7
 !
@@ -4792,18 +4793,18 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Read the dataset
-        mem=H5T_NATIVE_DOUBLE
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          CALL h5dread_f(dset_id,mem,valst,dims,error)
-          ! Convert data type
-          vals=INT(valst,SLK)
-          CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
-            ' - Converting from double to long integer!')
-        ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      path=convertPath(dsetname)
+      ! Read the dataset
+      mem=H5T_NATIVE_DOUBLE
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        CALL h5dread_f(dset_id,mem,valst,dims,error)
+        ! Convert data type
+        vals=INT(valst,SLK)
+        CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
+          ' - Converting from double to long integer!')
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_l0
 !
@@ -4832,28 +4833,28 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate space if needed, make sure it is the right size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          IF(ALLOCATED(vals)) THEN
-            IF(ANY(SHAPE(vals) /= dims)) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(1)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate space if needed, make sure it is the right size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        IF(ALLOCATED(vals)) THEN
+          IF(ANY(SHAPE(vals) /= dims)) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(1)))
           ENDIF
-          ALLOCATE(valst(dims(1)))
-  
-          ! Read the dataset
-          mem=H5T_NATIVE_INTEGER
-          CALL h5dread_f(dset_id,mem,valst,dims,error)
-          vals=INT(valst,SLK)
-          CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
-            ' - Converting from double to long integer!')
+        ELSE
+          ALLOCATE(vals(dims(1)))
         ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+        ALLOCATE(valst(dims(1)))
+
+        ! Read the dataset
+        mem=H5T_NATIVE_INTEGER
+        CALL h5dread_f(dset_id,mem,valst,dims,error)
+        vals=INT(valst,SLK)
+        CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
+          ' - Converting from double to long integer!')
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_l1
 !
@@ -4882,28 +4883,28 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate space if needed, make sure it is the right size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          IF(ALLOCATED(vals)) THEN
-            IF(ANY(SHAPE(vals) /= dims)) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(1),dims(2)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate space if needed, make sure it is the right size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        IF(ALLOCATED(vals)) THEN
+          IF(ANY(SHAPE(vals) /= dims)) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(1),dims(2)))
           ENDIF
-          ALLOCATE(valst(dims(1),dims(2)))
-  
-          ! Read the dataset
-          mem=H5T_NATIVE_INTEGER
-          CALL h5dread_f(dset_id,mem,valst,dims,error)
-          vals=INT(valst,SLK)
-          CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
-            ' - Converting from double to long integer!')
+        ELSE
+          ALLOCATE(vals(dims(1),dims(2)))
         ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+        ALLOCATE(valst(dims(1),dims(2)))
+
+        ! Read the dataset
+        mem=H5T_NATIVE_INTEGER
+        CALL h5dread_f(dset_id,mem,valst,dims,error)
+        vals=INT(valst,SLK)
+        CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
+          ' - Converting from double to long integer!')
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_l2
 !
@@ -4932,28 +4933,28 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate space if needed, make sure it is the right size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          IF(ALLOCATED(vals)) THEN
-            IF(ANY(SHAPE(vals) /= dims)) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(1),dims(2),dims(3)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate space if needed, make sure it is the right size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        IF(ALLOCATED(vals)) THEN
+          IF(ANY(SHAPE(vals) /= dims)) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(1),dims(2),dims(3)))
           ENDIF
-          ALLOCATE(valst(dims(1),dims(2),dims(3)))
-  
-          ! Read the dataset
-          mem=H5T_NATIVE_INTEGER
-          CALL h5dread_f(dset_id,mem,valst,dims,error)
-          vals=INT(valst,SLK)
-          CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
-            ' - Converting from double to long integer!')
+        ELSE
+          ALLOCATE(vals(dims(1),dims(2),dims(3)))
         ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+        ALLOCATE(valst(dims(1),dims(2),dims(3)))
+
+        ! Read the dataset
+        mem=H5T_NATIVE_INTEGER
+        CALL h5dread_f(dset_id,mem,valst,dims,error)
+        vals=INT(valst,SLK)
+        CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
+          ' - Converting from double to long integer!')
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_l3
 !
@@ -4982,28 +4983,28 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate space if needed, make sure it is the right size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          IF(ALLOCATED(vals)) THEN
-            IF(ANY(SHAPE(vals) /= dims)) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate space if needed, make sure it is the right size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        IF(ALLOCATED(vals)) THEN
+          IF(ANY(SHAPE(vals) /= dims)) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4)))
           ENDIF
-          ALLOCATE(valst(dims(1),dims(2),dims(3),dims(4)))
-  
-          ! Read the dataset
-          mem=H5T_NATIVE_INTEGER
-          CALL h5dread_f(dset_id,mem,valst,dims,error)
-          vals=INT(valst,SLK)
-          CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
-            ' - Converting from double to long integer!')
+        ELSE
+          ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4)))
         ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+        ALLOCATE(valst(dims(1),dims(2),dims(3),dims(4)))
+
+        ! Read the dataset
+        mem=H5T_NATIVE_INTEGER
+        CALL h5dread_f(dset_id,mem,valst,dims,error)
+        vals=INT(valst,SLK)
+        CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
+          ' - Converting from double to long integer!')
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_l4
 !
@@ -5032,28 +5033,28 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate space if needed, make sure it is the right size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          IF(ALLOCATED(vals)) THEN
-            IF(ANY(SHAPE(vals) /= dims)) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate space if needed, make sure it is the right size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        IF(ALLOCATED(vals)) THEN
+          IF(ANY(SHAPE(vals) /= dims)) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5)))
           ENDIF
-          ALLOCATE(valst(dims(1),dims(2),dims(3),dims(4),dims(5)))
-  
-          ! Read the dataset
-          mem=H5T_NATIVE_INTEGER
-          CALL h5dread_f(dset_id,mem,valst,dims,error)
-          vals=INT(valst,SLK)
-          CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
-            ' - Converting from double to long integer!')
+        ELSE
+          ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5)))
         ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+        ALLOCATE(valst(dims(1),dims(2),dims(3),dims(4),dims(5)))
+
+        ! Read the dataset
+        mem=H5T_NATIVE_INTEGER
+        CALL h5dread_f(dset_id,mem,valst,dims,error)
+        vals=INT(valst,SLK)
+        CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
+          ' - Converting from double to long integer!')
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_l5
 !
@@ -5082,28 +5083,28 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate space if needed, make sure it is the right size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          IF(ALLOCATED(vals)) THEN
-            IF(ANY(SHAPE(vals) /= dims)) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate space if needed, make sure it is the right size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        IF(ALLOCATED(vals)) THEN
+          IF(ANY(SHAPE(vals) /= dims)) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6)))
           ENDIF
-          ALLOCATE(valst(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6)))
-  
-          ! Read the dataset
-          mem=H5T_NATIVE_INTEGER
-          CALL h5dread_f(dset_id,mem,valst,dims,error)
-          vals=INT(valst,SLK)
-          CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
-            ' - Converting from double to long integer!')
+        ELSE
+          ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6)))
         ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+        ALLOCATE(valst(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6)))
+
+        ! Read the dataset
+        mem=H5T_NATIVE_INTEGER
+        CALL h5dread_f(dset_id,mem,valst,dims,error)
+        vals=INT(valst,SLK)
+        CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
+          ' - Converting from double to long integer!')
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_l6
 !
@@ -5132,28 +5133,28 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate space if needed, make sure it is the right size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          IF(ALLOCATED(vals)) THEN
-            IF(ANY(SHAPE(vals) /= dims)) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6),dims(7)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate space if needed, make sure it is the right size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        IF(ALLOCATED(vals)) THEN
+          IF(ANY(SHAPE(vals) /= dims)) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6),dims(7)))
           ENDIF
-          ALLOCATE(valst(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6),dims(7)))
-  
-          ! Read the dataset
-          mem=H5T_NATIVE_INTEGER
-          CALL h5dread_f(dset_id,mem,valst,dims,error)
-          vals=INT(valst,SLK)
-          CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
-            ' - Converting from double to long integer!')
+        ELSE
+          ALLOCATE(vals(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6),dims(7)))
         ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+        ALLOCATE(valst(dims(1),dims(2),dims(3),dims(4),dims(5),dims(6),dims(7)))
+
+        ! Read the dataset
+        mem=H5T_NATIVE_INTEGER
+        CALL h5dread_f(dset_id,mem,valst,dims,error)
+        vals=INT(valst,SLK)
+        CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
+          ' - Converting from double to long integer!')
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_l7
 !
@@ -5223,32 +5224,32 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate space in data if needed, make sure it is the right size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          IF(ALLOCATED(vals)) THEN
-            IF(ANY(SHAPE(vals) /= dims)) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(1)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate space in data if needed, make sure it is the right size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        IF(ALLOCATED(vals)) THEN
+          IF(ANY(SHAPE(vals) /= dims)) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(1)))
           ENDIF
-          ALLOCATE(valsc(dims(1)))
-  
-          ! Read the dataset
-          mem=H5T_NATIVE_CHARACTER
-          CALL h5dread_f(dset_id,mem,valsc,dims,error)
-          ! Convert from surrogate character array to boolean array
-          vals=.FALSE.
-          FORALL(i=1:SIZE(vals),valsc(i) == 'T')
-            vals(i)=.TRUE.
-          ENDFORALL
-  
-          DEALLOCATE(valsc)
+        ELSE
+          ALLOCATE(vals(dims(1)))
         ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+        ALLOCATE(valsc(dims(1)))
+
+        ! Read the dataset
+        mem=H5T_NATIVE_CHARACTER
+        CALL h5dread_f(dset_id,mem,valsc,dims,error)
+        ! Convert from surrogate character array to boolean array
+        vals=.FALSE.
+        FORALL(i=1:SIZE(vals),valsc(i) == 'T')
+          vals(i)=.TRUE.
+        ENDFORALL
+
+        DEALLOCATE(valsc)
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_b1
 !
@@ -5277,32 +5278,32 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate space for data if needed, make sure it is the right size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          IF(ALLOCATED(vals)) THEN
-            IF(ANY(SHAPE(vals) /= dims)) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(1),dims(2)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate space for data if needed, make sure it is the right size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        IF(ALLOCATED(vals)) THEN
+          IF(ANY(SHAPE(vals) /= dims)) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(1),dims(2)))
           ENDIF
-          ALLOCATE(valsc(dims(1),dims(2)))
-  
-          ! Read the dataset
-          mem=H5T_NATIVE_CHARACTER
-          CALL h5dread_f(dset_id,mem,valsc,dims,error)
-          ! Convert from surrogate character array to boolean array
-          vals=.FALSE.
-          FORALL(i=1:SIZE(vals,DIM=1),j=1:SIZE(vals,DIM=2),valsc(i,j) == 'T')
-            vals(i,j)=.TRUE.
-          ENDFORALL
-  
-          DEALLOCATE(valsc)
+        ELSE
+          ALLOCATE(vals(dims(1),dims(2)))
         ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+        ALLOCATE(valsc(dims(1),dims(2)))
+
+        ! Read the dataset
+        mem=H5T_NATIVE_CHARACTER
+        CALL h5dread_f(dset_id,mem,valsc,dims,error)
+        ! Convert from surrogate character array to boolean array
+        vals=.FALSE.
+        FORALL(i=1:SIZE(vals,DIM=1),j=1:SIZE(vals,DIM=2),valsc(i,j) == 'T')
+          vals(i,j)=.TRUE.
+        ENDFORALL
+
+        DEALLOCATE(valsc)
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_b2
 !
@@ -5331,33 +5332,33 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate space for data if needed, make sure it is the right size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          IF(ALLOCATED(vals)) THEN
-            IF(ANY(SHAPE(vals) /= dims)) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(1),dims(2),dims(3)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate space for data if needed, make sure it is the right size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        IF(ALLOCATED(vals)) THEN
+          IF(ANY(SHAPE(vals) /= dims)) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(1),dims(2),dims(3)))
           ENDIF
-          ALLOCATE(valsc(dims(1),dims(2),dims(3)))
-  
-          ! Read the dataset
-          mem=H5T_NATIVE_CHARACTER
-          CALL h5dread_f(dset_id,mem,valsc,dims,error)
-          ! Convert from surrogate character array to boolean array
-          vals(:,:,:)=.FALSE.
-          FORALL(i=1:SIZE(vals,DIM=1),j=1:SIZE(vals,DIM=2),k=1:SIZE(vals,DIM=3), &
-            valsc(i,j,k) == 'T')
-            vals(i,j,k)=.TRUE.
-          ENDFORALL
-  
-          DEALLOCATE(valsc)
+        ELSE
+          ALLOCATE(vals(dims(1),dims(2),dims(3)))
         ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+        ALLOCATE(valsc(dims(1),dims(2),dims(3)))
+
+        ! Read the dataset
+        mem=H5T_NATIVE_CHARACTER
+        CALL h5dread_f(dset_id,mem,valsc,dims,error)
+        ! Convert from surrogate character array to boolean array
+        vals(:,:,:)=.FALSE.
+        FORALL(i=1:SIZE(vals,DIM=1),j=1:SIZE(vals,DIM=2),k=1:SIZE(vals,DIM=3), &
+          valsc(i,j,k) == 'T')
+          vals(i,j,k)=.TRUE.
+        ENDFORALL
+
+        DEALLOCATE(valsc)
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_b3
 !
@@ -5562,30 +5563,30 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate character array to size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          ALLOCATE(valsc(dims(1)))
-  
-          CALL h5dget_type_f(dset_id,mem,error)
-          CALL h5dread_f(dset_id,mem,valsc,dims,error)
-  
-          IF(ALLOCATED(vals)) THEN
-            IF(SIZE(vals) /= dims(1)) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(1)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate character array to size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        ALLOCATE(valsc(dims(1)))
+
+        CALL h5dget_type_f(dset_id,mem,error)
+        CALL h5dread_f(dset_id,mem,valsc,dims,error)
+
+        IF(ALLOCATED(vals)) THEN
+          IF(SIZE(vals) /= dims(1)) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(1)))
           ENDIF
-          DO i=1,SIZE(vals)
-            vals(i)=valsc(i)(1:length_max)
-          ENDDO
-  
+        ELSE
+          ALLOCATE(vals(dims(1)))
         ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
-        IF(ALLOCATED(valsc)) DEALLOCATE(valsc)
+        DO i=1,SIZE(vals)
+          vals(i)=valsc(i)(1:length_max)
+        ENDDO
+
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      IF(ALLOCATED(valsc)) DEALLOCATE(valsc)
 #endif
     ENDSUBROUTINE read_st1
 !
@@ -5614,32 +5615,32 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate character array to size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          ALLOCATE(valsc(dims(1),dims(2)))
-          CALL h5dget_type_f(dset_id,mem,error)
-          CALL h5dread_f(dset_id,mem,valsc,dims,error)
-          ! Allocate space if needed, make sure it is the right size
-          IF(ALLOCATED(vals)) THEN
-            IF(SIZE(vals) /= dims(2)) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(2)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate character array to size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        ALLOCATE(valsc(dims(1),dims(2)))
+        CALL h5dget_type_f(dset_id,mem,error)
+        CALL h5dread_f(dset_id,mem,valsc,dims,error)
+        ! Allocate space if needed, make sure it is the right size
+        IF(ALLOCATED(vals)) THEN
+          IF(SIZE(vals) /= dims(2)) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(2)))
           ENDIF
-          ! Convert to StringType
-          DO i=1,SIZE(vals)
-            vals(i)=''
-            DO j=1,SIZE(valsc(:,i))
-              vals(i)=vals(i)//valsc(j,i)
-            ENDDO
-          ENDDO
+        ELSE
+          ALLOCATE(vals(dims(2)))
         ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
-        IF(ALLOCATED(valsc)) DEALLOCATE(valsc)
+        ! Convert to StringType
+        DO i=1,SIZE(vals)
+          vals(i)=''
+          DO j=1,SIZE(valsc(:,i))
+            vals(i)=vals(i)//valsc(j,i)
+          ENDDO
+        ENDDO
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      IF(ALLOCATED(valsc)) DEALLOCATE(valsc)
 #endif
     ENDSUBROUTINE read_ca1
 !
@@ -5713,31 +5714,31 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate character array to size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          ALLOCATE(valsc(dims(1),dims(2)))
-          CALL h5dget_type_f(dset_id,mem,error)
-          CALL h5dread_f(dset_id,mem,valsc,dims,error)
-  
-          ! Allocate space if needed, make sure it is the right size
-          IF(ALLOCATED(vals)) THEN
-            IF(ALL(SHAPE(vals) /= (/dims(1),dims(2)/))) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(1),dims(2)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate character array to size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        ALLOCATE(valsc(dims(1),dims(2)))
+        CALL h5dget_type_f(dset_id,mem,error)
+        CALL h5dread_f(dset_id,mem,valsc,dims,error)
+
+        ! Allocate space if needed, make sure it is the right size
+        IF(ALLOCATED(vals)) THEN
+          IF(ALL(SHAPE(vals) /= (/dims(1),dims(2)/))) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(1),dims(2)))
           ENDIF
-          DO i=1,SIZE(vals,1)
-            DO j=1,SIZE(vals,2)
-              vals(i,j)=valsc(i,j)(1:length_max)
-            ENDDO
-          ENDDO
+        ELSE
+          ALLOCATE(vals(dims(1),dims(2)))
         ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
-        IF(ALLOCATED(valsc)) DEALLOCATE(valsc)
+        DO i=1,SIZE(vals,1)
+          DO j=1,SIZE(vals,2)
+            vals(i,j)=valsc(i,j)(1:length_max)
+          ENDDO
+        ENDDO
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      IF(ALLOCATED(valsc)) DEALLOCATE(valsc)
 #endif
     ENDSUBROUTINE read_st2
 !
@@ -5766,34 +5767,34 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate character array to size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          ALLOCATE(valsc(dims(1),dims(2),dims(3)))
-          CALL h5dget_type_f(dset_id,mem,error)
-          CALL h5dread_f(dset_id,mem,valsc,dims,error)
-          ! Allocate space if needed, make sure it is the right size
-          IF(ALLOCATED(vals)) THEN
-            IF(ALL(SHAPE(vals) /= (/dims(2),dims(3)/))) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(2),dims(3)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate character array to size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        ALLOCATE(valsc(dims(1),dims(2),dims(3)))
+        CALL h5dget_type_f(dset_id,mem,error)
+        CALL h5dread_f(dset_id,mem,valsc,dims,error)
+        ! Allocate space if needed, make sure it is the right size
+        IF(ALLOCATED(vals)) THEN
+          IF(ALL(SHAPE(vals) /= (/dims(2),dims(3)/))) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(2),dims(3)))
           ENDIF
-          ! Convert to StringType
-          DO i=1,SIZE(vals,1)
-            DO j=1,SIZE(vals,2)
-              vals(i,j)=''
-              DO k=1,SIZE(valsc(:,i,j))
-                vals(i,j)=vals(i,j)//valsc(k,i,j)
-              ENDDO
+        ELSE
+          ALLOCATE(vals(dims(2),dims(3)))
+        ENDIF
+        ! Convert to StringType
+        DO i=1,SIZE(vals,1)
+          DO j=1,SIZE(vals,2)
+            vals(i,j)=''
+            DO k=1,SIZE(valsc(:,i,j))
+              vals(i,j)=vals(i,j)//valsc(k,i,j)
             ENDDO
           ENDDO
-        ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
-        IF(ALLOCATED(valsc)) DEALLOCATE(valsc)
+        ENDDO
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      IF(ALLOCATED(valsc)) DEALLOCATE(valsc)
 #endif
     ENDSUBROUTINE read_ca2
 !
@@ -5867,33 +5868,33 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate character array to size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          ALLOCATE(valsc(dims(1),dims(2),dims(3)))
-          CALL h5dget_type_f(dset_id,mem,error)
-          CALL h5dread_f(dset_id,mem,valsc,dims,error)
-  
-          ! Allocate space if needed, make sure it is the right size
-          IF(ALLOCATED(vals)) THEN
-            IF(ALL(SHAPE(vals) /= (/dims(1),dims(2),dims(3)/))) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(1),dims(2),dims(3)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate character array to size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        ALLOCATE(valsc(dims(1),dims(2),dims(3)))
+        CALL h5dget_type_f(dset_id,mem,error)
+        CALL h5dread_f(dset_id,mem,valsc,dims,error)
+
+        ! Allocate space if needed, make sure it is the right size
+        IF(ALLOCATED(vals)) THEN
+          IF(ALL(SHAPE(vals) /= (/dims(1),dims(2),dims(3)/))) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(1),dims(2),dims(3)))
           ENDIF
-          ! Convert to StringType
-          DO i=1,SIZE(vals,1)
-            DO j=1,SIZE(vals,2)
-              DO m=1,SIZE(vals,3)
-                vals(i,j,m)=valsc(i,j,m)(1:length_max)
-              ENDDO
+        ELSE
+          ALLOCATE(vals(dims(1),dims(2),dims(3)))
+        ENDIF
+        ! Convert to StringType
+        DO i=1,SIZE(vals,1)
+          DO j=1,SIZE(vals,2)
+            DO m=1,SIZE(vals,3)
+              vals(i,j,m)=valsc(i,j,m)(1:length_max)
             ENDDO
           ENDDO
-        ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+        ENDDO
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_st3
 !
@@ -5922,35 +5923,35 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,ndims
       INTEGER(HID_T) :: dspace_id,dset_id
 
-        path=convertPath(dsetname)
-        ! Allocate character array to size
-        CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
-        IF(error >= 0) THEN
-          ALLOCATE(valsc(dims(1),dims(2),dims(3),dims(4)))
-          CALL h5dget_type_f(dset_id,mem,error)
-          CALL h5dread_f(dset_id,mem,valsc,dims,error)
-          ! Allocate space if needed, make sure it is the right size
-          IF(ALLOCATED(vals)) THEN
-            IF(ALL(SHAPE(vals) /= (/dims(2),dims(3),dims(4)/))) THEN
-              DEALLOCATE(vals)
-              ALLOCATE(vals(dims(2),dims(3),dims(4)))
-            ENDIF
-          ELSE
+      path=convertPath(dsetname)
+      ! Allocate character array to size
+      CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
+      IF(error >= 0) THEN
+        ALLOCATE(valsc(dims(1),dims(2),dims(3),dims(4)))
+        CALL h5dget_type_f(dset_id,mem,error)
+        CALL h5dread_f(dset_id,mem,valsc,dims,error)
+        ! Allocate space if needed, make sure it is the right size
+        IF(ALLOCATED(vals)) THEN
+          IF(ALL(SHAPE(vals) /= (/dims(2),dims(3),dims(4)/))) THEN
+            DEALLOCATE(vals)
             ALLOCATE(vals(dims(2),dims(3),dims(4)))
           ENDIF
-          ! Convert to StringType
-          DO i=1,SIZE(vals,1)
-            DO j=1,SIZE(vals,2)
-              DO m=1,SIZE(vals,3)
-                vals(i,j,m)=''
-                DO k=1,SIZE(valsc(:,i,j,m))
-                 vals(i,j,m)=vals(i,j,m)//valsc(k,i,j,m)
-                ENDDO
+        ELSE
+          ALLOCATE(vals(dims(2),dims(3),dims(4)))
+        ENDIF
+        ! Convert to StringType
+        DO i=1,SIZE(vals,1)
+          DO j=1,SIZE(vals,2)
+            DO m=1,SIZE(vals,3)
+              vals(i,j,m)=''
+              DO k=1,SIZE(valsc(:,i,j,m))
+               vals(i,j,m)=vals(i,j,m)//valsc(k,i,j,m)
               ENDDO
             ENDDO
           ENDDO
-        ENDIF
-        CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+        ENDDO
+      ENDIF
+      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_ca3
 !
@@ -6565,7 +6566,7 @@ MODULE FileType_HDF5
         CALL h5sclose_f(dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - Failed to close dataspace.')
-!      ENDIF
+      ENDIF
     ENDSUBROUTINE postRead
 !
 !------------------------------------------------------------------------------
@@ -6598,8 +6599,6 @@ MODULE FileType_HDF5
       !Lazy
       cdims=gdims
     ENDSUBROUTINE compute_chunk_size
-
-
 #endif
 !
 ENDMODULE FileType_HDF5
