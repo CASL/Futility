@@ -2264,7 +2264,6 @@ PROGRAM testGeom_Poly
       CALL testcyl%set(testpoint_b,testpoint_t,2.0_SRK*SQRT(2.0_SRK))
       CALL Polygonize(testcyl,testPolyType)
       ASSERTFAIL(testPolyType%isinit,'init polygon from cylinder')
-      WRITE(*,*) 'nvert,nquadedge = ',testPolyType%nVert,testPolyType%nQuadEdge
       ASSERT(testPolyType%nVert == 4,'%nVert')
       ASSERT(testPolyType%nQuadEdge == 4,'%nQuadEdge')
       bool=(testPolyType%quadEdge(1,1) .APPROXEQA. 1.0_SRK) .AND. &

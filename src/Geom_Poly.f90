@@ -1634,6 +1634,7 @@ MODULE Geom_Poly
 !
 !-------------------------------------------------------------------------------
 !> @brief This routine will return a polygon type for a given cylindrical geometry.
+!> This routine converts a 3D cylinder to a 2D polygon for visualization. 
 !> @param cylinder The cylinder type to be turned into a polygon
 !> @param polygon The polygon type that corresponds to the cylinder type.
 !>
