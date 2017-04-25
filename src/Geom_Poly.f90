@@ -1633,9 +1633,9 @@ MODULE Geom_Poly
     ENDSUBROUTINE Polygonize_Circle
 !
 !-------------------------------------------------------------------------------
-!> @brief This routine will return a polygon type for a given circular geometry.
-!> @param circle The circle type to be turned into a polygon
-!> @param polygon The polygon type that corresponds to the circle type.
+!> @brief This routine will return a polygon type for a given cylindrical geometry.
+!> @param cylinder The cylinder type to be turned into a polygon
+!> @param polygon The polygon type that corresponds to the cylinder type.
 !>
     SUBROUTINE Polygonize_Cylinder(cylinder,polygon)
       TYPE(CylinderType),INTENT(IN) :: cylinder
