@@ -2180,9 +2180,11 @@ PROGRAM testGeom_Poly
 !-------------------------------------------------------------------------------
     SUBROUTINE testPolygonize()
       TYPE(PointType) :: testpoint
+      TYPE(PointType) :: testpoint_b,testpoint_t
       TYPE(ABBoxType) :: testABbox
       TYPE(OBBoxType) :: testOBbox
       TYPE(CircleType) :: testcircle
+      TYPE(CylinderType) :: testcyl
 
       !polygonize an OB box
       CALL testpoint%init(DIM=2,X=1.0_SRK,Y=1.0_SRK)
@@ -2254,6 +2256,35 @@ PROGRAM testGeom_Poly
       ASSERT(bool,'%quadEdge(4)')
       CALL testpoint%clear()
       CALL testcircle%clear()
+      CALL testPolyType%clear()
+
+      !polygonize a cylinder
+      CALL testpoint_b%init(DIM=3,X=1.0_SRK,Y=1.0_SRK,Z=0.0_SRK)
+      CALL testpoint_t%init(DIM=3,X=1.0_SRK,Y=1.0_SRK,Z=1.0_SRK)
+      CALL testcyl%set(testpoint_b,testpoint_t,2.0_SRK*SQRT(2.0_SRK))
+      CALL Polygonize(testcyl,testPolyType)
+      ASSERTFAIL(testPolyType%isinit,'init polygon from cylinder')
+      WRITE(*,*) 'nvert,nquadedge = ',testPolyType%nVert,testPolyType%nQuadEdge
+      ASSERT(testPolyType%nVert == 4,'%nVert')
+      ASSERT(testPolyType%nQuadEdge == 4,'%nQuadEdge')
+      bool=(testPolyType%quadEdge(1,1) .APPROXEQA. 1.0_SRK) .AND. &
+        (testPolyType%quadEdge(2,1) .APPROXEQA. 1.0_SRK) .AND. &
+        (testPolyType%quadEdge(3,1) .APPROXEQA. 2.0_SRK*SQRT(2.0_SRK))
+      ASSERT(bool,'%quadEdge(1)')
+      bool=(testPolyType%quadEdge(1,2) .APPROXEQA. 1.0_SRK) .AND. &
+        (testPolyType%quadEdge(2,2) .APPROXEQA. 1.0_SRK) .AND. &
+        (testPolyType%quadEdge(3,2) .APPROXEQA. 2.0_SRK*SQRT(2.0_SRK))
+      ASSERT(bool,'%quadEdge(2)')
+      bool=(testPolyType%quadEdge(1,3) .APPROXEQA. 1.0_SRK) .AND. &
+        (testPolyType%quadEdge(2,3) .APPROXEQA. 1.0_SRK) .AND. &
+        (testPolyType%quadEdge(3,3) .APPROXEQA. 2.0_SRK*SQRT(2.0_SRK))
+      ASSERT(bool,'%quadEdge(3)')
+      bool=(testPolyType%quadEdge(1,4) .APPROXEQA. 1.0_SRK) .AND. &
+        (testPolyType%quadEdge(2,4) .APPROXEQA. 1.0_SRK) .AND. &
+        (testPolyType%quadEdge(3,4) .APPROXEQA. 2.0_SRK*SQRT(2.0_SRK))
+      ASSERT(bool,'%quadEdge(4)')
+      CALL testpoint%clear()
+      CALL testcyl%clear()
       CALL testPolyType%clear()
 
       !Polygonize an arc

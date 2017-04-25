@@ -122,6 +122,7 @@ MODULE Geom_Poly
 
   INTERFACE Polygonize
     MODULE PROCEDURE Polygonize_Circle
+    MODULE PROCEDURE Polygonize_Cylinder
     MODULE PROCEDURE Polygonize_OBBox
     MODULE PROCEDURE Polygonize_ABBox
   ENDINTERFACE
@@ -1630,6 +1631,57 @@ MODULE Geom_Poly
         CALL g%clear()
       ENDIF
     ENDSUBROUTINE Polygonize_Circle
+!
+!-------------------------------------------------------------------------------
+!> @brief This routine will return a polygon type for a given cylindrical geometry.
+!> @param cylinder The cylinder type to be turned into a polygon
+!> @param polygon The polygon type that corresponds to the cylinder type.
+!>
+    SUBROUTINE Polygonize_Cylinder(cylinder,polygon)
+      TYPE(CylinderType),INTENT(IN) :: cylinder
+      TYPE(PolygonType),INTENT(INOUT) :: polygon
+      REAL(SRK) :: v0(2),v1(2),v2(2),v3(2),r,c(3)
+      TYPE(GraphType) :: g
+
+      CALL polygon%clear()
+      IF(cylinder%r > 0.0_SRK .AND. cylinder%axis%p1%dim == 3) THEN
+        r=cylinder%r
+        c=cylinder%axis%p1%coord(1:3)
+        IF((cylinder%thetastt .APPROXEQA. 0.0_SRK) .AND. &
+           (cylinder%thetastp .APPROXEQA. TWOPI)) THEN
+
+          v0(1)=c(1)-r; v0(2)=c(2)
+          v1(1)=c(1); v1(2)=c(2)+r
+          v2(1)=c(1)+r; v2(2)=c(2)
+          v3(1)=c(1); v3(2)=c(2)-r
+
+          CALL g%insertVertex(v0)
+          CALL g%insertVertex(v1)
+          CALL g%insertVertex(v2)
+          CALL g%insertVertex(v3)
+          CALL g%defineQuadraticEdge(v0,v1,c(1:2),r)
+          CALL g%defineQuadraticEdge(v1,v2,c(1:2),r)
+          CALL g%defineQuadraticEdge(v2,v3,c(1:2),r)
+          CALL g%defineQuadraticEdge(v0,v3,c(1:2),r)
+        ELSE
+          v0(1)=c(1); v0(2)=c(2)
+          v1(1)=c(1)+r*COS(cylinder%thetastt)
+          v1(2)=c(2)+r*SIN(cylinder%thetastt)
+          v2(1)=c(1)+r*COS(cylinder%thetastp)
+          v2(2)=c(2)+r*SIN(cylinder%thetastp)
+
+          CALL g%insertVertex(v0)
+          CALL g%insertVertex(v1)
+          CALL g%insertVertex(v2)
+          CALL g%defineEdge(v0,v1)
+          CALL g%defineEdge(v0,v2)
+          CALL g%defineQuadraticEdge(v1,v2,c(1:2),r)
+        ENDIF
+
+        CALL polygon%set(g)
+        CALL g%clear()
+      ENDIF
+    ENDSUBROUTINE Polygonize_Cylinder
 !
 !-------------------------------------------------------------------------------
 !> @brief This routine will return a polygon type for a given OBBox  geometry.
