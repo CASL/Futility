@@ -18,6 +18,7 @@ SET(ADDITIONAL_FILES
 )
 
 Futility_CreateUnitTest(testVTKFiles)
+Futility_CreateUnitTest(testVTUFiles)
 
 Futility_CopyFiles(ADDITIONAL_FILES)
 UNSET(ADDITIONAL_FILES)

@@ -1,15 +1,24 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!                          Futility Development Group                          !
-!                             All rights reserved.                             !
-!                                                                              !
-! Futility is a jointly-maintained, open-source project between the University !
-! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
-! can be found in LICENSE.txt in the head directory of this repository.        !
+!                              Copyright (C) 2012                              !
+!                   The Regents of the University of Michigan                  !
+!              MPACT Development Group and Prof. Thomas J. Downar              !
+!                             All rights reserved.                             !
+!                                                                              !
+! Copyright is reserved to the University of Michigan for purposes of          !
+! controlled dissemination, commercialization through formal licensing, or     !
+! other disposition. The University of Michigan nor any of their employees,    !
+! makes any warranty, express or implied, or assumes any liability or          !
+! responsibility for the accuracy, completeness, or usefulness of any          !
+! information, apparatus, product, or process disclosed, or represents that    !
+! its use would not infringe privately owned rights. Reference herein to any   !
+! specific commercial products, process, or service by trade name, trademark,  !
+! manufacturer, or otherwise, does not necessarily constitute or imply its     !
+! endorsement, recommendation, or favoring by the University of Michigan.      !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief Utility module for working with VTK Files.
 !>
 !> This module provides derived types for a VTK File, a VTK mesh and VTK data.
-!> It also provides enumerated constants that are defined by VTK. Currently,
+!> It also provides enumerated constants that are defined by VTK. Currently, 
 !> it only supports writing of VTK legacy files for all but FIELD and POLYGON
 !> mesh. In terms of writing data for this mesh, it only supports writing of
 !> scalar cell data.
@@ -29,7 +38,7 @@
 !>  - VisIt may not support displaying all cell types (e.g. the quadratic ones)
 !>  - Tools that utilize VTK may not be fully compatible with VTK and therefore
 !>    may not support all the features of this module.
-!>
+!> 
 !> @par Module Dependencies
 !>  - @ref IntrType "IntrType": @copybrief IntrType
 !>  - @ref ExceptionHandler "ExceptionHandler": @copybrief ExceptionHandler
@@ -49,7 +58,7 @@ MODULE VTKFiles
   USE FileType_Fortran
   IMPLICIT NONE
   PRIVATE
-
+  
   !List of Public Members
   PUBLIC :: VTK_STRUCTURED_POINTS
   PUBLIC :: VTK_STRUCTURED_GRID
@@ -86,9 +95,11 @@ MODULE VTKFiles
   PUBLIC :: VTKMeshType
   PUBLIC :: VTKDataType
   PUBLIC :: VTKLegFileType
+  PUBLIC :: VTUXMLFileType
+  PUBLIC :: PVTUXMLFileType
   PUBLIC :: eVTK
   PUBLIC :: OPERATOR(+)
-
+  
   !>Interface for mesh addition
   INTERFACE OPERATOR(+)
     MODULE PROCEDURE addMesh_VTKMesh
@@ -96,7 +107,7 @@ MODULE VTKFiles
 
   !> Module name for error messages
   CHARACTER(LEN=*),PARAMETER :: modName='VTKFILES'
-
+  
   !> Enumeration for the VTK Dataset type STRUCTURED_POINTS
   INTEGER(SIK),PARAMETER :: VTK_STRUCTURED_POINTS=1
   !> Enumeration for the VTK Dataset type STRUCTURED_GRID
@@ -109,7 +120,7 @@ MODULE VTKFiles
   INTEGER(SIK),PARAMETER :: VTK_RECTILINEAR_GRID=5
   !> Enumeration for the VTK Dataset type FIELD
   INTEGER(SIK),PARAMETER :: VTK_FIELD=6
-
+  
   !> Enumeration for the VTK Cell Type VTK_VERTEX from VTK Standard
   INTEGER(SIK),PARAMETER :: VTK_VERTEX=1
   !> Enumeration for the VTK Cell Type VTK_POLY_VERTEX from VTK Standard
@@ -148,7 +159,7 @@ MODULE VTKFiles
   INTEGER(SIK),PARAMETER :: VTK_QUADRATIC_TETRA=24
   !> Enumeration for the VTK Cell Type VTK_QUADRATIC_HEXAHEDRON from VTK Standard
   INTEGER(SIK),PARAMETER :: VTK_QUADRATIC_HEXAHEDRON=25
-
+  
   !> Enumeration for VTK SCALAR data attribute
   INTEGER(SIK),PARAMETER :: VTK_DATA_SCALARS=1
   !> Enumeration for VTK COLOR_SCALAR data attribute
@@ -165,7 +176,7 @@ MODULE VTKFiles
   INTEGER(SIK),PARAMETER :: VTK_DATA_TENSORS=7
   !> Enumeration for VTK FIELD data attribute
   INTEGER(SIK),PARAMETER :: VTK_DATA_FIELD=8
-
+  
   !> Type for representing a VTK mesh
   !>
   !> Depending on the meshType only certain attributes are meaningful.
@@ -215,7 +226,7 @@ MODULE VTKFiles
       !> @copydetails VTKFiles::clear_VTKMeshType
       PROCEDURE,PASS :: clear => clear_VTKMeshType
   ENDTYPE VTKMeshType
-
+  
   !> Type for representing data that can be written on a VTK mesh
   !>
   !> Adding type-bound procedures for initializing and clearing the
@@ -241,13 +252,13 @@ MODULE VTKFiles
       !> @copydetails VTKFiles::clear_VTKDataType
       PROCEDURE,PASS :: clear => clear_VTKDataType
   ENDTYPE VTKDataType
-
-
+  
+  
   !> @brief Derived type object for files definable by the legacy VTK format
   !>
   !> This is an extension of the @ref FileType_Fortran "FortranFileType".
   TYPE,EXTENDS(FortranFileType) :: VTKLegFileType
-    !isInit inhereted from FortranFileType
+    !isInit inherited from FortranFileType
     !> Whether or not this object has a mesh added to it
     LOGICAL(SBK) :: hasMesh=.FALSE.
     !> The VTK version of this file
@@ -271,6 +282,53 @@ MODULE VTKFiles
       PROCEDURE,PASS :: writeScalarData => writeScalarData_VTKLegFileType
   ENDTYPE VTKLegFileType
 
+
+  !> @brief Derived type object for files definable by the VTU XML format
+  !>
+  !> This is an extension of the @ref FileType_Fortran "VTKLegFileType".
+  TYPE,EXTENDS(VTKLegFileType) :: VTUXMLFileType
+!
+!List of type bound procedures (methods) for the VTU XML File type
+    CONTAINS
+      !> @copybrief VTUFiles::init_VTUXMLFileType
+      !> @copydetails VTUFiles::init_VTUXMLFileType
+      PROCEDURE,PASS :: initialize => init_VTUXMLFileType
+      !> @copybrief VTUFiles::writeMesh_VTUXMLFileType
+      !> @copydetails VTUFiles::writeMesh_VTUXMLFileType
+      PROCEDURE,PASS :: writeMesh => writeMesh_VTUXMLFileType
+      !> @copybrief VTUFiles::writeScalarData_VTUXMLFileType
+      !> @copydetails VTUFiles::writeScalarData_VTUXMLFileType
+      PROCEDURE,PASS :: writeScalarData => writeScalarData_VTUXMLFileType
+      !> @copybrief VTUFiles::close_VTUXMLFileType
+      !> @copydetails VTUFiles::close_VTUXMLFileType
+      PROCEDURE,PASS :: close => close_VTUXMLFileType
+  ENDTYPE VTUXMLFileType
+  
+  !> @brief Derived type object for files definable by the PVTU XML format
+  !>
+  !> This is an extension of the @ref FileType_Fortran "VTUXMLFileType".
+  TYPE,EXTENDS(VTUXMLFileType) :: PVTUXMLFileType
+  
+  CHARACTER(LEN=256),ALLOCATABLE,DIMENSION(:) :: fileList
+  INTEGER(SIK) :: fileListLength = 0
+  CHARACTER(LEN=256),ALLOCATABLE,DIMENSION(:) :: varNameList
+  INTEGER(SIK) :: varNameListLength = 0
+  CHARACTER(LEN=256),ALLOCATABLE,DIMENSION(:) :: dataFormatList
+  INTEGER(SIK) :: dataFormatListLength = 0
+!
+!List of type bound procedures (methods) for the VTU XML File type
+    CONTAINS
+      !> @copybrief VTUFiles::init_PVTUXMLFileType
+      !> @copydetails VTUFiles::init_PVTUXMLFileType
+      PROCEDURE,PASS :: initialize => init_PVTUXMLFileType
+      !> @copybrief VTUFiles::writeScalarData_PVTUXMLFileType
+      !> @copydetails VTUFiles::writeScalarData_PVTUXMLFileType
+      PROCEDURE,PASS :: writeScalarData => writeScalarData_PVTUXMLFileType
+      !> @copybrief VTUFiles::writepvtu_PVTUXMLFileType
+      !> @copydetails VTUFiles::writepvtu_PVTUXMLFileType
+      PROCEDURE,PASS :: writepvtu => writepvtu_PVTUXMLFileType
+  ENDTYPE PVTUXMLFileType
+
   !> @brief Generic interface for assignment operator (=)
   !>
   !> Adds assignment capability for VTKMeshType
@@ -280,7 +338,7 @@ MODULE VTKFiles
     !> @copydetails VTKFiles::assign_VTKMeshType
     MODULE PROCEDURE assign_VTKMeshType
   ENDINTERFACE
-
+  
   TYPE(ExceptionHandlerType),SAVE :: eVTK
 !
 !===============================================================================
@@ -292,10 +350,10 @@ MODULE VTKFiles
 !> @param unit Unit number to use for the file.
 !> @param status optional, used here for name of header of VTK File
 !>
-!> The other input arguments are not currently supported. See
+!> The other input arguments are not currently supported. See 
 !> @ref FileType_Fortran::init_fortran_file "init_fortran_file" for a complete
 !> description of all the optional input arguments.
-!>
+!> 
 !> This routine initializes the file object through the Fortran file type
 !> interface then writes the VTK header to the file.
 !>
@@ -312,9 +370,9 @@ MODULE VTKFiles
       CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: action
       CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: pad
       INTEGER(SIK),OPTIONAL,INTENT(IN) :: recl
-
+      
       CHARACTER(LEN=256) :: title
-
+      
       IF(.NOT.fileobj%isInit()) THEN
         IF(PRESENT(access)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
           ' - Optional input "ACCESS" is being ignored. Value is "SEQUENTIAL".')
@@ -328,14 +386,14 @@ MODULE VTKFiles
           ' - Optional input "POSITION" is being ignored. Value is "APPEND".')
         IF(PRESENT(recl)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
           ' - Optional input "RECL" is being ignored. File is "SEQUENTIAL".')
-
+        
         !Initialize the file, only support ascii for now
         CALL init_fortran_file(fileobj,unit,file,'REPLACE','SEQUENTIAL', &
           'FORMATTED','APPEND','WRITE')
-
+      
         !Open the file
         CALL fileobj%fopen()
-
+      
         !Determine the file's title
         IF(PRESENT(status)) THEN
           IF(LEN_TRIM(status) > 256) THEN
@@ -348,7 +406,7 @@ MODULE VTKFiles
         ELSE
           title='vtk output'
         ENDIF
-
+      
         !Write header to file, title and format information to file
         IF(fileobj%isOpen()) THEN
           WRITE(fileobj%getUnitNo(),'(a,f4.1)') '# vtk DataFile Version',fileobj%version
@@ -369,7 +427,7 @@ MODULE VTKFiles
 !> @param file the VTK Legacy file object
 !> @param ldel logical on whether or not to delete the file
 !>
-!> Clears the file object using the @ref FileType_Fortran::clear_fortran_file
+!> Clears the file object using the @ref FileType_Fortran::clear_fortran_file 
 !> "clear_fortran_file" interface. This is why @c ldel is an argument. In
 !> practice one probably does not want to delete these files before the program
 !> exits.
@@ -409,7 +467,7 @@ MODULE VTKFiles
 !>
     SUBROUTINE clear_VTKDataType(myVTKData)
       CLASS(VTKDataType),INTENT(INOUT) :: myVTKData
-
+      
       myVTKData%isInit=.FALSE.
       myVTKData%varname=''
       myVTKData%vtkDataFormat=''
@@ -462,10 +520,10 @@ MODULE VTKFiles
 !> @brief Writes a VTK mesh to VTK Legacy file
 !> @param myVTKFile the VTK file to write the data to
 !> @param vtkMesh the VTK mesh to write in the file
-!>
-!> This routine supports writing of STRUCTURED_POINTS, STRUCTURED_GRIDS,
-!> RECTILINEAR_GRIDS, and UNSTRUCTURED_GRIDS. The other types of
-!> geometry/topology are not yet implemented. The display of this
+!> 
+!> This routine supports writing of STRUCTURED_POINTS, STRUCTURED_GRIDS, 
+!> RECTILINEAR_GRIDS, and UNSTRUCTURED_GRIDS. The other types of 
+!> geometry/topology are not yet implemented. The display of this 
 !> data was verified by loading and displaying it with VisIt. It should be noted
 !> that other tools may have varying support for VTK legacy files.
 !>
@@ -475,7 +533,7 @@ MODULE VTKFiles
       TYPE(VTKMeshType),INTENT(IN) :: vtkMesh
       CHARACTER(LEN=256) :: aline,sint
       INTEGER(SIK) :: funit,i,j,k,n
-
+      
       IF(.NOT.myVTKFile%hasMesh) THEN
         IF(myVTKFile%isOpen()) THEN
           IF(vtkMesh%isInit) THEN
@@ -526,7 +584,7 @@ MODULE VTKFiles
                   aline=TRIM(aline)//' '//TRIM(sint)
                 ENDDO
                 WRITE(funit,'(a)') TRIM(aline)
-
+                
                 !Write the x coordinates
                 WRITE(sint,'(i64)') myVTKFile%mesh%dims(1); sint=ADJUSTL(sint)
                 WRITE(funit,'(a)') 'X_COORDINATES '//TRIM(sint)//' float'
@@ -542,7 +600,7 @@ MODULE VTKFiles
                   WRITE(funit,'(3es17.8)') myVTKFile%mesh%x(i), &
                     myVTKFile%mesh%x(i+1)
                 ENDIF
-
+                
                 !Write the y coordinates
                 WRITE(sint,'(i64)') myVTKFile%mesh%dims(2); sint=ADJUSTL(sint)
                 WRITE(funit,'(a)') 'Y_COORDINATES '//TRIM(sint)//' float'
@@ -558,7 +616,7 @@ MODULE VTKFiles
                   WRITE(funit,'(3es17.8)') myVTKFile%mesh%y(i), &
                     myVTKFile%mesh%y(i+1)
                 ENDIF
-
+                
                 !Write the z coordinates
                 WRITE(sint,'(i64)') myVTKFile%mesh%dims(3); sint=ADJUSTL(sint)
                 WRITE(funit,'(a)') 'Z_COORDINATES '//TRIM(sint)//' float'
@@ -588,7 +646,7 @@ MODULE VTKFiles
                     myVTKFile%mesh%y(i),myVTKFile%mesh%z(i)
                 ENDDO
                 WRITE(funit,'(a)') ''
-
+                
                 !Write the list of cell vertices
                 aline='CELLS'
                 WRITE(sint,'(i64)') myVTKFile%mesh%numCells; sint=ADJUSTL(sint)
@@ -634,7 +692,7 @@ MODULE VTKFiles
                   ENDIF
                 ENDDO
                 WRITE(funit,'(a)') ''
-
+                
                 !Write the list of cell types
                 aline='CELL_TYPES'
                 WRITE(sint,'(i64)') myVTKFile%mesh%numCells; sint=ADJUSTL(sint)
@@ -642,7 +700,7 @@ MODULE VTKFiles
                 WRITE(funit,'(a)') TRIM(aline)
                 WRITE(funit,*) myVTKFile%mesh%cellList
                 WRITE(funit,'(a)') ''
-
+                
               CASE(VTK_POLYDATA)
                 CALL myVTKFile%e%raiseError(modName//'::'//myName// &
                   ' - VTK DATASET "POLYDATA" not supported!')
@@ -669,7 +727,7 @@ MODULE VTKFiles
 !> @brief Writes scalar data for a VTK mesh to VTK Legacy file
 !> @param myVTKFile the VTK file to write the data to
 !> @param vtkData the VTK data to write to the file
-!>
+!> 
 !> Presently, this routine is only capable of writing scalar cell data.
 !> The data can be written as integers, single precision or double precision.
 !> Note that in the VTKDataType data is always stored as double precision.
@@ -686,7 +744,7 @@ MODULE VTKFiles
       TYPE(VTKDataType),INTENT(IN) :: vtkData
       INTEGER(SIK) :: funit,i,istp
       CHARACTER(LEN=256) :: aline,sint
-
+      
       IF(myVTKFile%hasMesh) THEN
         IF(myVTKFile%isOpen()) THEN
           IF(vtkData%isInit) THEN
@@ -784,14 +842,14 @@ MODULE VTKFiles
       INTEGER(SIK) :: uniqPoints
       INTEGER(SIK) :: i,j
       REAL(SRK) :: x,y,z
-
+      
       !Allocate scratch arrays
       ALLOCATE(isRedundant(thisVTKMesh%numPoints))
       isRedundant=.FALSE.
       ALLOCATE(newPtList(thisVTKMesh%numPoints))
       ALLOCATE(newY(thisVTKMesh%numPoints))
       ALLOCATE(newZ(thisVTKMesh%numPoints))
-
+      
       !Only unstructured grid is supported, because this is the only mesh type
       !likely to have redundant points
       IF(thisVTKMesh%meshType == VTK_UNSTRUCTURED_GRID) THEN
@@ -800,10 +858,10 @@ MODULE VTKFiles
         DO i=1,thisVTKMesh%numPoints
           newPtList(i)=i-1
         ENDDO
-
+          
 !Sort all the points along x
         CALL mergeSort(thisVTKMesh%numPoints,thisVTkMesh%x,newPtList)
-
+          
         !Re-order y and z coordinates to match sorted x coordinates
         DO i=1,thisVTKMesh%numPoints
           newY(i)=thisVTKMesh%y(newPtList(i)+1)
@@ -824,9 +882,9 @@ MODULE VTKFiles
           ALLOCATE(partialPtList(j-i+1))
           newY=thisVTKMesh%y(i:j)
           partialPtList=newPtList(i:j)
-
+            
           CALL mergeSort(j-i+1,newY,partialPtList)
-
+            
           newPtList(i:j)=partialPtList
           thisVTKMesh%y(i:j)=newY
           DEALLOCATE(newY)
@@ -841,7 +899,7 @@ MODULE VTKFiles
         ENDDO
         thisVTKMesh%z=newZ
         DEALLOCATE(newZ)
-!
+!          
 !Sort z-coordinates for each all points with same x- and y-coordinates
         i=1
         j=0
@@ -863,9 +921,9 @@ MODULE VTKFiles
           i=j+1
           j=i
         ENDDO
-
-
-        !invert newPtList so that the index is the old point number,
+          
+          
+        !invert newPtList so that the index is the old point number, 
         !and the output is the new
         ALLOCATE(partialPtList(thisVTKMesh%numPoints))
         DO i=1,thisVTKMesh%numPoints
@@ -873,12 +931,12 @@ MODULE VTKFiles
         ENDDO
         newPtList=partialPtList
         DEALLOCATE(partialPtList)
-
+          
         !Alter the node list to reflect the reordered point list
         DO i=1,size(ThisVTKMesh%nodeList)
           ThisVTKMesh%nodeList(i)=newPtList(thisVTKMesh%nodeList(i)+1)
         ENDDO
-!
+!          
 !Remove the redundant points
         uniqPoints=0_SIK
         i=1
@@ -903,7 +961,7 @@ MODULE VTKFiles
             IF(i > thisVTKMesh%numPoints) EXIT
           ENDDO
         ENDDO
-
+          
         !Create new list of xyz coordinates
         ALLOCATE(newX(uniqPoints))
         ALLOCATE(newY(uniqPoints))
@@ -927,12 +985,12 @@ MODULE VTKFiles
         thisVTKMesh%x=newX
         thisVTKMesh%y=newY
         thisVTKMesh%z=newZ
-
+          
         !Update the node list to remove the redundant points
         DO i=1,SIZE(thisVTKMesh%nodeList)
           thisVTKMesh%nodeList(i)=newPtList(thisVTKMesh%nodeList(i)+1)
         ENDDO
-
+          
         !Clean up scratch variables
         DEALLOCATE(newX)
         DEALLOCATE(newY)
@@ -964,7 +1022,7 @@ MODULE VTKFiles
      REAL(SRK),INTENT(OUT) :: new(n)
      INTEGER(SIK),INTENT(OUT) :: points(n)
      INTEGER(SIK) :: i,j,k
-
+     
      i=1
      j=1
      DO k=1,n
@@ -989,7 +1047,7 @@ MODULE VTKFiles
    ENDSUBROUTINE merger
 !
 !-------------------------------------------------------------------------------
-!> @brief Orders a numeric array, in ascending order, using the merge sort
+!> @brief Orders a numeric array, in ascending order, using the merge sort 
 !>        algorithm
 !> @param array numeric array to be sorted
 !> @param N length of the numeric array
@@ -1004,7 +1062,7 @@ MODULE VTKFiles
      REAL(SRK),ALLOCATABLE :: leftArray(:)
      INTEGER(SIK),ALLOCATABLE :: leftPoints(:),rightPoints(:)
      INTEGER(SIK) :: nr,nl
-
+     
      CALL dmallocA(rightArray,n/2)
      CALL dmallocA(leftArray, n-(n/2))
      CALL dmallocA(leftPoints,n-(n/2))
@@ -1044,7 +1102,7 @@ MODULE VTKFiles
     REAL(SRK),ALLOCATABLE :: yList(:)
     REAL(SRK),ALLOCATABLE :: zList(:)
     INTEGER(SIK) :: i,j,k,n
-
+    
     IF(thisVTKMesh%isinit) THEN
       SELECTCASE(newVTKMeshType)
         CASE(VTK_STRUCTURED_POINTS)
@@ -1114,7 +1172,7 @@ MODULE VTKFiles
               CALL demallocA(Ylist)
               CALL demallocA(Zlist)
               CALL demallocA(pointMap)
-
+              
             CASE(VTK_RECTILINEAR_GRID)
               thisVTKMesh%meshType=VTK_UNSTRUCTURED_GRID
               thisVTKMesh%numPoints=thisVTKMesh%dims(1)*thisVTKMesh%dims(2)* &
@@ -1205,7 +1263,7 @@ MODULE VTKFiles
     REAL(SRK),INTENT(IN) :: x_shift
     REAL(SRK),INTENT(IN) :: y_shift
     REAL(SRK),INTENT(IN) :: z_shift
-
+    
     IF(thisVTKMesh%meshType == VTK_STRUCTURED_POINTS) THEN
       thisVTKMesh%x(1)=thisVTKMesh%x(1)+x_shift
       thisVTKMesh%y(1)=thisVTKMesh%y(1)+y_shift
@@ -1240,10 +1298,10 @@ MODULE VTKFiles
 
     n=0
     q=0
-
+    
     CALL thisVTKMesh%convert(VTK_UNSTRUCTURED_GRID)
     ALLOCATE(nodePresent(SIZE(thisVTKMesh%nodeList)))
-
+    
     !Calculate the length of new cell list and node list
     DO i=1,thisVTKMesh%numCells
       IF(.NOT. cellNotPresent(i)) THEN
@@ -1270,7 +1328,7 @@ MODULE VTKFiles
       ENDSELECT
       ENDIF
     ENDDO
-
+    
     !Fill scratch cell lists and node lists
     ALLOCATE(scratchCellList(n))
     ALLOCATE(scratchNodeList(q))
@@ -1311,7 +1369,7 @@ MODULE VTKFiles
       ENDIF
     ENDDO
     thisVTKMesh%numCells=SIZE(scratchCellList)
-
+    
     !Find which points are no longer used, remove them, and renumber the node
     !list
     ALLOCATE(pointPresent(thisVTKMesh%numPoints))
@@ -1344,7 +1402,7 @@ MODULE VTKFiles
         k=k+1
       ENDIF
     ENDDO
-
+    
     !Enter new point lists, cell list, and node list into the VTK mesh
     !object
     CALL demallocA(ThisVTKMesh%x)
@@ -1363,7 +1421,7 @@ MODULE VTKFiles
     thisVTKMesh%z=scratchZ
     thisVTKMesh%cellList=scratchCellList
     thisVTKMesh%nodeList=scratchNodeList
-
+    
     !Clean up scratch variables
     DEALLOCATE(scratchCellList)
     DEALLOCATE(scratchNodeList)
@@ -1373,7 +1431,7 @@ MODULE VTKFiles
     DEALLOCATE(pointPresent)
     DEALLOCATE(nodePresent)
     DEALLOCATE(pointMap)
-  ENDSUBROUTINE removeCells_VTKMeshType
+  ENDSUBROUTINE removeCells_VTKMeshType    
 !
 !-------------------------------------------------------------------------------
 !> @brief Adds two VTK mesh objects together so that a single mesh is formed
@@ -1382,20 +1440,20 @@ MODULE VTKFiles
 !>              data to the VTK file)
 !> @param mesh2 The second mesh to be added
 !>
-!> This routine may produce a memory leak for a=a+b, but I after some initial
+!> This routine may produce a memory leak for a=a+b, but I after some initial 
 !> investigation it does not appear to.
 !>
   FUNCTION addMesh_VTKMesh(mesh1,mesh2) RESULT(newMesh)
     TYPE(VTKMeshType),INTENT(IN) :: mesh1,mesh2
     TYPE(VTKMeshType) :: newMesh,mesh1conv,mesh2conv
     INTEGER(SIK) :: numPoints,numCells,numNodes
-
+    
     !Convert input meshed to VTK_UNSTRUCTURED_GRID
     mesh1conv=mesh1
     mesh2conv=mesh2
     CALL mesh1conv%convert(VTK_UNSTRUCTURED_GRID)
     CALL mesh2conv%convert(VTK_UNSTRUCTURED_GRID)
-
+    
     !Allocate new mesh arrays
     numPoints=mesh1conv%numPoints+mesh2conv%numPoints
     numCells=mesh1conv%numCells+mesh2conv%numCells
@@ -1407,7 +1465,7 @@ MODULE VTKFiles
     CALL dmallocA(newMesh%nodeList,numNodes)
     newMesh%numPoints=numPoints
     newMesh%numCells=numCells
-
+    
     !Merge the two input meshes
     newMesh%meshType=VTK_UNSTRUCTURED_GRID
     newMesh%isInit=.TRUE.
@@ -1423,5 +1481,589 @@ MODULE VTKFiles
     newMesh%nodeList(SIZE(mesh1conv%nodeList)+1:)=mesh2conv%nodeList+ &
                                                   mesh1conv%numPoints
   ENDFUNCTION addMesh_VTKMesh
+!
+!-------------------------------------------------------------------------------
+!> @brief Closes the VTU XML file object.
+!> @param file the VTU XML file object
+!> @param ldel logical on whether or not to delete the file
+!>
+!> Closes the file by adding standard XML structure closures.
+!>
+    SUBROUTINE close_VTUXMLFileType(myVTKFile)
+      CHARACTER(LEN=*),PARAMETER :: myName='close_VTUXMLFileType'
+      CLASS(VTUXMLFileType),INTENT(INOUT) :: myVTKFile
+      INTEGER(SIK) :: funit
+
+      funit=myVTKFile%getUnitNo()
+      WRITE(funit,'(a)') '      </CellData>'
+      WRITE(funit,'(a)') '    </Piece>'
+      WRITE(funit,'(a)') '  </UnstructuredGrid>'
+      WRITE(funit,'(a)') '</VTKFile>'
+    ENDSUBROUTINE close_VTUXMLFileType
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes the VTU XML file object.
+!> @param fileobj input file object.
+!> @param unit Unit number to use for the file.
+!> @param status optional, used here for name of header of VTK File
+!>
+!> The other input arguments are not currently supported. See 
+!> @ref FileType_Fortran::init_fortran_file "init_fortran_file" for a complete
+!> description of all the optional input arguments.
+!> 
+!> This routine initializes the file object through the Fortran file type
+!> interface then writes the VTU header to the file.
+!>
+    SUBROUTINE init_VTUXMLFileType(fileobj,unit,file,status,access,form, &
+                                 position,action,pad,recl)
+      CHARACTER(LEN=*),PARAMETER :: myName='init_VTUXMLFileType'
+      CLASS(VTUXMLFileType),INTENT(INOUT) :: fileobj
+      INTEGER(SIK),OPTIONAL,INTENT(IN) :: unit
+      CHARACTER(LEN=*),INTENT(IN) :: file
+      CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: status
+      CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: access
+      CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: form
+      CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: position
+      CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: action
+      CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: pad
+      INTEGER(SIK),OPTIONAL,INTENT(IN) :: recl
+      
+      CHARACTER(LEN=256) :: title
+      
+      IF(.NOT.fileobj%isInit()) THEN
+        IF(PRESENT(access)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
+          ' - Optional input "ACCESS" is being ignored. Value is "SEQUENTIAL".')
+        IF(PRESENT(form)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
+          ' - Optional input "FORM" is being ignored. Value is "FORMATTED".')
+        IF(PRESENT(action)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
+          ' - Optional input "ACTION" is being ignored. Value is "WRITE".')
+        IF(PRESENT(pad)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
+          ' - Optional input "PAD" is being ignored. Value is "YES".')
+        IF(PRESENT(position)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
+          ' - Optional input "POSITION" is being ignored. Value is "APPEND".')
+        IF(PRESENT(recl)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
+          ' - Optional input "RECL" is being ignored. File is "SEQUENTIAL".')
+        
+        !Initialize the file, only support ascii for now
+        CALL init_fortran_file(fileobj,unit,file,'REPLACE','SEQUENTIAL', &
+          'FORMATTED','APPEND','WRITE')
+      
+        !Open the file
+        CALL fileobj%fopen()
+      
+        !Determine the file's title
+        IF(PRESENT(status)) THEN
+          IF(LEN_TRIM(status) > 256) THEN
+            CALL fileobj%e%raiseDebug(modName//'::'//myName// &
+              ' - File title name is being truncated!')
+            title=status(1:256)
+          ELSE
+            title=TRIM(status)
+          ENDIF
+        ELSE
+          title='vtu output'
+        ENDIF
+      
+        !Write header to file, title and format information to file
+        IF(fileobj%isOpen()) THEN
+          WRITE(fileobj%getUnitNo(),'(a)') '<?xml version="1.0"?>'
+          WRITE(fileobj%getUnitNo(),'(a)') '<VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">'
+          !Change "new" status so that if file is closed and re-opened
+          !during execution it will be appended file instead of replacing it.
+          fileobj%newstat=.FALSE.
+        ENDIF
+      ELSE
+        CALL fileobj%e%raiseError(modName//'::'//myName// &
+          ' - VTU File is already initialized!')
+      ENDIF
+    ENDSUBROUTINE init_VTUXMLFileType
+!
+!-------------------------------------------------------------------------------
+!> @brief Writes a VTU mesh to VTU file
+!> @param myVTKFile the VTK file to write the data to
+!> @param vtkMesh the VTK mesh to write in the file
+!> 
+!> This routine supports writing of UNSTRUCTURED_GRIDS. The other types of 
+!> geometry/topology are not yet implemented. The display of this 
+!> data was verified by loading and displaying it with VisIt.
+!>
+    SUBROUTINE writeMesh_VTUXMLFileType(myVTKFile,vtkMesh)
+      CHARACTER(LEN=*),PARAMETER :: myName='writeMesh_VTUXMLFileType'
+      CLASS(VTUXMLFileType),INTENT(INOUT) :: myVTKFile
+      TYPE(VTKMeshType),INTENT(IN) :: vtkMesh
+      CHARACTER(LEN=256) :: aline,sint
+      INTEGER(SIK) :: funit,i,j,k,n
+      INTEGER(SIK),DIMENSION(:),ALLOCATABLE :: offsets
+      
+      IF(.NOT.myVTKFile%hasMesh) THEN
+        IF(myVTKFile%isOpen()) THEN
+          IF(vtkMesh%isInit) THEN
+            funit=myVTKFile%getUnitNo()
+            SELECTCASE(vtkMesh%meshType)
+              CASE(VTK_UNSTRUCTURED_GRID)
+                myVTKFile%mesh=vtkMesh
+                myVTKFile%hasMesh=.TRUE.
+                !Write a mesh that is an unstructured grid
+                !Clean-up redundant points
+                CALL myVTKFile%mesh%cleanupPoints()
+                WRITE(sint,'(i64)') myVTKFile%mesh%numPoints; sint=ADJUSTL(sint)
+                WRITE(aline,'(i64)') myVTKFile%mesh%numCells; aline=ADJUSTL(aline)
+                WRITE(funit,'(a)') '  <UnstructuredGrid>'
+                WRITE(funit,'(a)') '    <Piece NumberOfPoints="'//TRIM(sint)//'" NumberOfCells="'//TRIM(aline)//'">'
+                WRITE(funit,'(a)') '      <Points>'
+                WRITE(funit,'(a)') '        <DataArray type="Float32" NumberOfComponents="3" format="ascii">'
+                DO i=1,myVTKFile%mesh%numPoints
+                  WRITE(funit,'(a,3es17.8)') '        ',myVTKFile%mesh%x(i), &
+                    myVTKFile%mesh%y(i),myVTKFile%mesh%z(i)
+                ENDDO
+                WRITE(funit,'(a)') '        </DataArray>'
+                WRITE(funit,'(a)') '      </Points>'
+                
+                !Write the list of cell vertices
+                WRITE(funit,'(a)') '      <Cells>'
+                WRITE(funit,'(a)') '        <DataArray type="Int32" Name="connectivity" format="ascii">'
+                j=1
+                ALLOCATE(offsets(myVTKFile%mesh%numCells))
+                DO i=1,myVTKFile%mesh%numCells
+                  !Determine the next n nodes that make up this cell
+                  SELECTCASE(myVTKFile%mesh%cellList(i))
+                    CASE(VTK_VERTEX); n=1
+                    CASE(VTK_LINE); n=2
+                    CASE(VTK_TRIANGLE); n=3
+                    CASE(VTK_QUAD); n=4
+                    CASE(VTK_TETRA); n=4
+                    CASE(VTK_HEXAHEDRON); n=8
+                    CASE(VTK_VOXEL); n=8
+                    CASE(VTK_WEDGE); n=6
+                    CASE(VTK_PYRAMID); n=5
+                    CASE(VTK_QUADRATIC_EDGE); n=3
+                    CASE(VTK_QUADRATIC_TRIANGLE); n=6
+                    CASE(VTK_QUADRATIC_QUAD); n=8
+                    CASE(VTK_QUADRATIC_TETRA); n=10
+                    CASE(VTK_QUADRATIC_HEXAHEDRON); n=20
+                    CASE DEFAULT
+                      CALL myVTKFile%e%raiseError(modName//'::'//myName// &
+                        ' - VTK cell type is not supported!')
+                      n=0
+                  ENDSELECT
+                  IF(n > 0) THEN
+                    WRITE(sint,'(a)') '  '; sint=ADJUSTL(sint)
+                    aline=TRIM(sint)
+                    DO k=0,n-1
+                      WRITE(sint,'(i64)') myVTKFile%mesh%nodeList(j+k)
+                      sint=ADJUSTL(sint)
+                      aline=TRIM(aline)//' '//TRIM(sint)
+                    ENDDO
+                    WRITE(funit,'(a)') '         '//TRIM(aline)
+                    j=j+n
+                    offsets(i) = j-1
+                  ENDIF
+                ENDDO
+                WRITE(funit,'(a)') '        </DataArray>'
+
+                ! Write the offsets
+                WRITE(funit,'(a)') '        <DataArray type="Int32" Name="offsets" format="ascii">'
+                WRITE(funit,*) offsets
+                WRITE(funit,'(a)') '        </DataArray>'
+                
+                !Write the list of cell types
+                WRITE(funit,'(a)') '        <DataArray type="UInt8" Name="types" format="ascii">'
+                WRITE(funit,*) myVTKFile%mesh%cellList
+                WRITE(funit,'(a)') '        </DataArray>'
+                WRITE(funit,'(a)') '      </Cells>'
+                WRITE(funit,'(a)') '      <CellData>'
+                
+              CASE(VTK_POLYDATA)
+                CALL myVTKFile%e%raiseError(modName//'::'//myName// &
+                  ' - VTK DATASET "POLYDATA" not supported!')
+              CASE DEFAULT
+                CALL myVTKFile%e%raiseError(modName//'::'//myName// &
+                  ' - VTK DATASET type is not recognized!')
+            ENDSELECT
+            FLUSH(funit)
+          ELSE
+            CALL myVTKFile%e%raiseError(modName//'::'//myName// &
+              ' - VTU Mesh is not initialized!')
+          ENDIF
+        ELSE
+          CALL myVTKFile%e%raiseError(modName//'::'//myName// &
+            ' - VTU File is not open for writing!')
+        ENDIF
+      ELSE
+        CALL myVTKFile%e%raiseError(modName//'::'//myName// &
+          ' - VTU File already has a mesh!')
+      ENDIF
+    ENDSUBROUTINE writeMesh_VTUXMLFileType
+!
+!-------------------------------------------------------------------------------
+!> @brief Writes scalar data for a VTK mesh to VTU XML file
+!> @param myVTKFile the VTK file to write the data to
+!> @param vtkData the VTK data to write to the file
+!> 
+!> Presently, this routine is only capable of writing scalar cell data.
+!> The data can be written as integers, single precision or double precision.
+!> Note that in the VTKDataType data is always stored as double precision.
+!>
+!> Currently no check is made if the amount of data differs from the number
+!> of cells in the mesh that has already been written in the file. From what
+!> I understand about VTK, it does not have to, and that a default lookup table
+!> will be used to obtain missing values. Adding a warning message when the
+!> amount of data is not consistent should be done.
+!>
+    SUBROUTINE writeScalarData_VTUXMLFileType(myVTKFile,vtkData)
+      CHARACTER(LEN=*),PARAMETER :: myName='writeScalarData_VTUXMLFileType'
+      CLASS(VTUXMLFileType),INTENT(INOUT) :: myVTKFile
+      TYPE(VTKDataType),INTENT(IN) :: vtkData
+      INTEGER(SIK) :: funit,i,istp
+      CHARACTER(LEN=256) :: aline,sint
+      
+      IF(myVTKFile%hasMesh) THEN
+        IF(myVTKFile%isOpen()) THEN
+          IF(vtkData%isInit) THEN
+            IF(vtkData%isCellData) THEN
+              IF(vtkData%dataSetType == VTK_DATA_SCALARS) THEN
+                funit=myVTKFile%getUnitNo()
+                aline='CELL_DATA'
+                WRITE(sint,'(i64)') myVTKFile%mesh%numCells; sint=ADJUSTL(sint)
+                aline=TRIM(aline)//' '//TRIM(sint)
+                SELECTCASE(TRIM(vtkData%vtkDataFormat))
+                  CASE('float')
+                    WRITE(funit,'(a)') '        <DataArray type="Float32"'// &
+                      ' Name="'//TRIM(vtkData%varname)//'" format="ascii">'
+                    DO i=1,SIZE(vtkData%datalist),5
+                      istp=i+4
+                      IF(istp > SIZE(vtkData%datalist)) istp=SIZE(vtkData%datalist)
+                      WRITE(funit,'(5f15.6)') REAL(vtkData%datalist(i:istp),SSK)
+                    ENDDO
+                  CASE('double')
+                    WRITE(funit,'(a)') '        <DataArray type="Float64"'// &
+                      ' Name="'//TRIM(vtkData%varname)//'" format="ascii">'
+                    DO i=1,SIZE(vtkData%datalist),3
+                      istp=i+2
+                      IF(istp > SIZE(vtkData%datalist)) istp=SIZE(vtkData%datalist)
+                      WRITE(funit,'(3es22.14)') vtkData%datalist(i:istp)
+                    ENDDO
+                  CASE('int','short','long')
+                    WRITE(funit,'(a)') '        <DataArray type="Int32"'// &
+                      ' Name="'//TRIM(vtkData%varname)//'" format="ascii">'
+                    DO i=1,SIZE(vtkData%datalist),6
+                      istp=i+5
+                      IF(istp > SIZE(vtkData%datalist)) istp=SIZE(vtkData%datalist)
+                      WRITE(funit,'(6i12)') NINT(vtkData%datalist(i:istp),SIK)
+                    ENDDO
+                  CASE DEFAULT
+                    CALL myVTKFile%e%raiseError(modName//'::'//myName// &
+                      ' - Writing of "'//TRIM(vtkData%vtkDataFormat)// &
+                        '" data not yet supported!')
+                ENDSELECT
+                WRITE(funit,'(a)') '        </DataArray>'
+                FLUSH(funit)
+              ELSE
+                CALL myVTKFile%e%raiseError(modName//'::'//myName// &
+                ' - dataSetType is not yet supported!')
+              ENDIF
+            ELSE
+              CALL myVTKFile%e%raiseError(modName//'::'//myName// &
+                ' - Writing of point data is not yet supported!')
+            ENDIF
+          ELSE
+            CALL myVTKFile%e%raiseError(modName//'::'//myName// &
+              ' - VTK Data is not initialized!')
+          ENDIF
+        ELSE
+          CALL myVTKFile%e%raiseError(modName//'::'//myName// &
+            ' - VTK File is not open for writing!')
+        ENDIF
+      ELSE
+        CALL myVTKFile%e%raiseError(modName//'::'//myName// &
+          ' - VTK File has no mesh to write data for!')
+      ENDIF
+    ENDSUBROUTINE writeScalarData_VTUXMLFileType
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes the VTU XML file object.
+!> @param fileobj input file object.
+!> @param unit Unit number to use for the file.
+!> @param status optional, used here for name of header of VTK File
+!>
+!> The other input arguments are not currently supported. See 
+!> @ref FileType_Fortran::init_fortran_file "init_fortran_file" for a complete
+!> description of all the optional input arguments.
+!> 
+!> This routine initializes the file object through the Fortran file type
+!> interface then writes the VTU header to the file.
+!>
+    SUBROUTINE init_PVTUXMLFileType(fileobj,unit,file,status,access,form, &
+                                 position,action,pad,recl)
+      CHARACTER(LEN=*),PARAMETER :: myName='init_PVTUXMLFileType'
+      CLASS(PVTUXMLFileType),INTENT(INOUT) :: fileobj
+      INTEGER(SIK),OPTIONAL,INTENT(IN) :: unit
+      CHARACTER(LEN=*),INTENT(IN) :: file
+      CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: status
+      CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: access
+      CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: form
+      CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: position
+      CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: action
+      CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: pad
+      INTEGER(SIK),OPTIONAL,INTENT(IN) :: recl
+      
+      CHARACTER(LEN=256) :: title
+      CHARACTER(LEN=256),ALLOCATABLE,DIMENSION(:) :: temp
+
+      fileobj%fileListLength = fileobj%fileListLength + 1
+
+      IF (.NOT.ALLOCATED(fileobj%fileList)) THEN
+        ALLOCATE(fileobj%fileList(fileobj%fileListLength))
+        fileobj%fileList = file
+      ELSE
+        ALLOCATE(temp(fileobj%fileListLength))
+        temp(1:fileobj%fileListLength - 1) = fileobj%fileList
+        temp(fileobj%fileListLength) = file
+        DEALLOCATE(fileobj%fileList)
+        ALLOCATE(fileobj%fileList(fileobj%fileListLength))
+        fileobj%fileList = temp
+        DEALLOCATE(temp)
+      ENDIF
+      
+      IF(.NOT.fileobj%isInit()) THEN
+        IF(PRESENT(access)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
+          ' - Optional input "ACCESS" is being ignored. Value is "SEQUENTIAL".')
+        IF(PRESENT(form)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
+          ' - Optional input "FORM" is being ignored. Value is "FORMATTED".')
+        IF(PRESENT(action)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
+          ' - Optional input "ACTION" is being ignored. Value is "WRITE".')
+        IF(PRESENT(pad)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
+          ' - Optional input "PAD" is being ignored. Value is "YES".')
+        IF(PRESENT(position)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
+          ' - Optional input "POSITION" is being ignored. Value is "APPEND".')
+        IF(PRESENT(recl)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
+          ' - Optional input "RECL" is being ignored. File is "SEQUENTIAL".')
+        
+        !Initialize the file, only support ascii for now
+        CALL init_fortran_file(fileobj,unit,file,'REPLACE','SEQUENTIAL', &
+          'FORMATTED','APPEND','WRITE')
+      
+        !Open the file
+        CALL fileobj%fopen()
+      
+        !Determine the file's title
+        IF(PRESENT(status)) THEN
+          IF(LEN_TRIM(status) > 256) THEN
+            CALL fileobj%e%raiseDebug(modName//'::'//myName// &
+              ' - File title name is being truncated!')
+            title=status(1:256)
+          ELSE
+            title=TRIM(status)
+          ENDIF
+        ELSE
+          title='vtu output'
+        ENDIF
+      
+        !Write header to file, title and format information to file
+        IF(fileobj%isOpen()) THEN
+          WRITE(fileobj%getUnitNo(),'(a)') '<?xml version="1.0"?>'
+          WRITE(fileobj%getUnitNo(),'(a)') '<VTKFile type='// &
+          '"UnstructuredGrid" version="0.1" byte_order="LittleEndian">'
+          !Change "new" status so that if file is closed and re-opened
+          !during execution it will be appended file instead of replacing it.
+          fileobj%newstat=.FALSE.
+        ENDIF
+      ELSE
+        CALL fileobj%e%raiseError(modName//'::'//myName// &
+          ' - VTU File is already initialized!')
+      ENDIF
+    ENDSUBROUTINE init_PVTUXMLFileType
+!
+!-------------------------------------------------------------------------------
+!> @brief Writes scalar data for a VTK mesh to VTU XML file
+!> @param myVTKFile the VTK file to write the data to
+!> @param vtkData the VTK data to write to the file
+!> 
+!> Presently, this routine is only capable of writing scalar cell data.
+!> The data can be written as integers, single precision or double precision.
+!> Note that in the VTKDataType data is always stored as double precision.
+!>
+!> Currently no check is made if the amount of data differs from the number
+!> of cells in the mesh that has already been written in the file. From what
+!> I understand about VTK, it does not have to, and that a default lookup table
+!> will be used to obtain missing values. Adding a warning message when the
+!> amount of data is not consistent should be done.
+!>
+    SUBROUTINE writeScalarData_PVTUXMLFileType(myVTKFile,vtkData)
+      CHARACTER(LEN=*),PARAMETER :: myName='writeScalarData_PVTUXMLFileType'
+      CLASS(PVTUXMLFileType),INTENT(INOUT) :: myVTKFile
+      TYPE(VTKDataType),INTENT(IN) :: vtkData
+      INTEGER(SIK) :: funit,i,istp
+      CHARACTER(LEN=256) :: aline,sint
+
+      CHARACTER(LEN=256),ALLOCATABLE,DIMENSION(:) :: temp
+
+      myVTKFile%varNameListLength = myVTKFile%varNameListLength + 1
+
+      IF (.NOT.ALLOCATED(myVTKFile%varNameList)) THEN
+        ALLOCATE(myVTKFile%varNameList(myVTKFile%varNameListLength))
+        myVTKFile%varNameList = vtkData%varname
+      ELSE
+        ALLOCATE(temp(myVTKFile%varNameListLength))
+        temp(1:myVTKFile%varNameListLength - 1) = myVTKFile%varNameList
+        temp(myVTKFile%varNameListLength) = vtkData%varname
+        DEALLOCATE(myVTKFile%varNameList)
+        ALLOCATE(myVTKFile%varNameList(myVTKFile%varNameListLength))
+        myVTKFile%varNameList = temp
+        DEALLOCATE(temp)
+      ENDIF
+
+      myVTKFile%dataFormatListLength = myVTKFile%dataFormatListLength + 1
+
+      IF (.NOT.ALLOCATED(myVTKFile%dataFormatList)) THEN
+        ALLOCATE(myVTKFile%dataFormatList(myVTKFile%dataFormatListLength))
+        myVTKFile%dataFormatList = vtkData%vtkDataFormat
+      ELSE
+        ALLOCATE(temp(myVTKFile%dataFormatListLength))
+        temp(1:myVTKFile%dataFormatListLength - 1) = myVTKFile%dataFormatList
+        temp(myVTKFile%dataFormatListLength) = vtkData%vtkDataFormat
+        DEALLOCATE(myVTKFile%dataFormatList)
+        ALLOCATE(myVTKFile%dataFormatList(myVTKFile%dataFormatListLength))
+        myVTKFile%dataFormatList = temp
+        DEALLOCATE(temp)
+      ENDIF
+      
+      IF(myVTKFile%hasMesh) THEN
+        IF(myVTKFile%isOpen()) THEN
+          IF(vtkData%isInit) THEN
+            IF(vtkData%isCellData) THEN
+              IF(vtkData%dataSetType == VTK_DATA_SCALARS) THEN
+                funit=myVTKFile%getUnitNo()
+                aline='CELL_DATA'
+                WRITE(sint,'(i64)') myVTKFile%mesh%numCells; sint=ADJUSTL(sint)
+                aline=TRIM(aline)//' '//TRIM(sint)
+                SELECTCASE(TRIM(vtkData%vtkDataFormat))
+                  CASE('float')
+                    WRITE(funit,'(a)') '        <DataArray type="Float32"'// &
+                      ' Name="'//TRIM(vtkData%varname)//'" format="ascii">'
+                    DO i=1,SIZE(vtkData%datalist),5
+                      istp=i+4
+                      IF(istp > SIZE(vtkData%datalist)) istp=SIZE(vtkData%datalist)
+                      WRITE(funit,'(5f15.6)') REAL(vtkData%datalist(i:istp),SSK)
+                    ENDDO
+                  CASE('double')
+                    WRITE(funit,'(a)') '        <DataArray type="Float64"'// &
+                      ' Name="'//TRIM(vtkData%varname)//'" format="ascii">'
+                    DO i=1,SIZE(vtkData%datalist),3
+                      istp=i+2
+                      IF(istp > SIZE(vtkData%datalist)) istp=SIZE(vtkData%datalist)
+                      WRITE(funit,'(3es22.14)') vtkData%datalist(i:istp)
+                    ENDDO
+                  CASE('int','short','long')
+                    WRITE(funit,'(a)') '        <DataArray type="Int32"'// &
+                      ' Name="'//TRIM(vtkData%varname)//'" format="ascii">'
+                    DO i=1,SIZE(vtkData%datalist),6
+                      istp=i+5
+                      IF(istp > SIZE(vtkData%datalist)) istp=SIZE(vtkData%datalist)
+                      WRITE(funit,'(6i12)') NINT(vtkData%datalist(i:istp),SIK)
+                    ENDDO
+                  CASE DEFAULT
+                    CALL myVTKFile%e%raiseError(modName//'::'//myName// &
+                      ' - Writing of "'//TRIM(vtkData%vtkDataFormat)// &
+                        '" data not yet supported!')
+                ENDSELECT
+                WRITE(funit,'(a)') '        </DataArray>'
+                FLUSH(funit)
+              ELSE
+                CALL myVTKFile%e%raiseError(modName//'::'//myName// &
+                ' - dataSetType is not yet supported!')
+              ENDIF
+            ELSE
+              CALL myVTKFile%e%raiseError(modName//'::'//myName// &
+                ' - Writing of point data is not yet supported!')
+            ENDIF
+          ELSE
+            CALL myVTKFile%e%raiseError(modName//'::'//myName// &
+              ' - VTK Data is not initialized!')
+          ENDIF
+        ELSE
+          CALL myVTKFile%e%raiseError(modName//'::'//myName// &
+            ' - VTK File is not open for writing!')
+        ENDIF
+      ELSE
+        CALL myVTKFile%e%raiseError(modName//'::'//myName// &
+          ' - VTK File has no mesh to write data for!')
+      ENDIF
+    ENDSUBROUTINE writeScalarData_PVTUXMLFileType
+!
+!-------------------------------------------------------------------------------
+!> @brief Closes the VTU XML file object.
+!> @param file the VTU XML file object
+!> @param ldel logical on whether or not to delete the file
+!>
+!> Writes the pvtu file for visualizing in parallel.
+!>
+    SUBROUTINE writepvtu_PVTUXMLFileType(fileobj,funit,filen,procs)
+      CHARACTER(LEN=*),PARAMETER :: myName='writepvtu_PVTUXMLFileType'
+      CLASS(PVTUXMLFileType),INTENT(INOUT) :: fileobj
+      CHARACTER(LEN=*),INTENT(IN) :: filen
+      INTEGER(SIK),INTENT(IN) :: procs
+      CHARACTER(LEN=128) :: sint
+      INTEGER(SIK),INTENT(IN) :: funit
+      INTEGER(SIK) :: i,j,iord
+      CHARACTER(LEN=128) :: fname,fmtStr
+
+      OPEN(unit=funit,file=TRIM(filen)//'.pvtu')
+
+      WRITE(funit,'(a)') '<?xml version="1.0"?>'
+      WRITE(funit,'(a)') '<VTKFile type="PUnstructuredGrid" version="0.1" byte_order="LittleEndian">'
+      WRITE(funit,'(a)') '  <PUnstructuredGrid GhostLevel="0">'
+
+      WRITE(funit,'(a)') '    <PPoints>'
+
+      WRITE(funit,'(a)') '      <PDataArray type="Float32"'// &
+        ' NumberOfComponents="3"/>'
+
+      WRITE(funit,'(a)') '    </PPoints>'
+      WRITE(funit,'(a)') '    <PCells>'
+      WRITE(funit,'(a)') '      <PDataArray type="Int32" Name="connectivity"/>'
+      WRITE(funit,'(a)') '      <PDataArray type="Int32" Name="offsets"/>'
+      WRITE(funit,'(a)') '      <PDataArray type="UInt8" Name="types"/>'
+      WRITE(funit,'(a)') '    </PCells>'
+
+      WRITE(funit,'(a)') '    <PCellData Scalars="Data">'
+
+      DO i=1,fileobj%varNameListLength
+        SELECTCASE(TRIM(fileobj%dataFormatList(i)))
+          CASE('float')
+            WRITE(funit,'(a)') '      <PDataArray type="Float32"'// &
+              ' Name="'//TRIM(fileobj%varNameList(i))//'"/>'
+          CASE('double')
+            WRITE(funit,'(a)') '      <PDataArray type="Float64"'// &
+              ' Name="'//TRIM(fileobj%varNameList(i))//'"/>'
+          CASE('int','short','long')
+            WRITE(funit,'(a)') '      <PDataArray type="Int32"'// &
+              ' Name="'//TRIM(fileobj%varNameList(i))//'"/>'
+          CASE DEFAULT
+            CALL fileobj%e%raiseError(modName//'::'//myName// &
+              ' - Writing of "'//TRIM(fileobj%dataFormatList(i))// &
+                '" data not yet supported!')
+        ENDSELECT
+      ENDDO
+
+      WRITE(funit,'(a)') '    </PCellData>'
+
+      DO i=1,procs
+        iord=procs-1
+        j=1
+        DO WHILE(iord >= 10)
+          j=j+1
+          iord=iord/10
+        ENDDO
+        WRITE(fmtStr,'(a,i2.2,a,i2.2,a)') '(i',j,'.',j,')'; fmtSTR=ADJUSTL(fmtStr)
+        WRITE(sint,FMT=TRIM(fmtStr)) i-1
+        fname=TRIM(filen)//'_'//TRIM(sint)
+        WRITE(funit,'(a)') '    <Piece Source="'//TRIM(fname)//'.vtu'//'"/>'
+      ENDDO
+      WRITE(funit,'(a)') '  </PUnstructuredGrid>'
+      WRITE(funit,'(a)') '</VTKFile>'
+
+      CLOSE(funit)
+    ENDSUBROUTINE writepvtu_PVTUXMLFileType
 !
 ENDMODULE VTKFiles
