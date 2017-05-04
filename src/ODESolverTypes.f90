@@ -377,7 +377,14 @@ MODULE ODESolverTypes
         ist=solver%BDForder
         CALL solve_bdf(solver%f,solver%myLS,solver%BDForder,nstep-solver%BDForder+1,t,dt, &
                     yf,ydot,solver%tol,ist,bdf_hist)
+        DO i=1,solver%BDForder
+          DO j=1,solver%BDForder
+            CALL bdf_hist(i,j)%clear()
+          ENDDO
+        ENDDO
+        DEALLOCATE(bdf_hist)
       ENDIF
+      CALL ydot%clear()
       DEALLOCATE(ydot)
     ENDSUBROUTINE step_ODESolverType_Native
 !
@@ -555,6 +562,12 @@ MODULE ODESolverTypes
           ENDIF
         ENDDO
       ENDDO
+      CALL f0%clear()
+      CALL ytmp%clear()
+      CALL ftmp%clear()
+      DEALLOCATE(f0)
+      DEALLOCATE(ytmp)
+      DEALLOCATE(ftmp)
     ENDSUBROUTINE estimate_jacobian
 !
 ENDMODULE ODESolverTypes
