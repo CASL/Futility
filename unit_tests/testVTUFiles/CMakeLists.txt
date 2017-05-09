@@ -13,11 +13,10 @@ INCLUDE(Futility_CopyFiles)
 SET(ADDITIONAL_FILES
     mesh3Points.txt
     mesh3Data.txt
-    VtktestCyl.vtk
     mesh5ref.txt
 )
 
-Futility_CreateUnitTest(testVTKFiles)
+Futility_CreateUnitTest(testVTUFiles)
 
 Futility_CopyFiles(ADDITIONAL_FILES)
 UNSET(ADDITIONAL_FILES)
