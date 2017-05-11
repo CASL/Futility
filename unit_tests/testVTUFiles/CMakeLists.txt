@@ -11,9 +11,8 @@ INCLUDE(Futility_CopyFiles)
 
 # List any files from the main source directory that the test depends on
 SET(ADDITIONAL_FILES
-    mesh3Points.txt
-    mesh3Data.txt
-    mesh5ref.txt
+    mesh2Points.txt
+    mesh2Data.txt
 )
 
 Futility_CreateUnitTest(testVTUFiles)
