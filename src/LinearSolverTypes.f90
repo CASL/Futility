@@ -828,10 +828,6 @@ MODULE LinearSolverTypes
         TYPE IS(LinearSolverType_Direct)
           IF(ALLOCATED(solver%IPIV)) CALL demallocA(solver%IPIV)
       ENDSELECT
-      IF(ALLOCATED(solver%M)) THEN
-        CALL solver%M%clear()
-        DEALLOCATE(solver%M)
-      ENDIF
     ENDSUBROUTINE updatedA
 !
 !-------------------------------------------------------------------------------
@@ -1863,11 +1859,15 @@ MODULE LinearSolverTypes
       LOGICAL(SBK) :: diagDom
 
       !Check if M is allocated.
-      IF(ALLOCATED(solver%M)) THEN
-        CALL solver%M%clear()
-        DEALLOCATE(solver%M)
+      IF(.NOT. ALLOCATED(solver%M) .AND. solver%A%isInit) THEN
+        ALLOCATE(TriDiagMatrixType :: solver%M)
+        SELECTTYPE(A => solver%A); TYPE IS(TriDiagMatrixType)
+          CALL pList%add('MatrixType->n',A%n)
+          CALL pList%add('MatrixType->isSym',.FALSE.)
+          CALL solver%M%init(pList)
+          CALL pList%clear()
+        ENDSELECT
       ENDIF
-      ALLOCATE(TriDiagMatrixType :: solver%M)
 
       solver%info=-1
       IF(solver%A%isInit) THEN
@@ -1883,15 +1883,9 @@ MODULE LinearSolverTypes
 
           !If the first diagonal coefficient is zero, return
           IF(A%a(2,1) .APPROXEQA. 0._SRK) THEN
-            CALL solver%M%clear()
-            DEALLOCATE(solver%M)
             RETURN
           ENDIF
 
-          CALL pList%add('MatrixType->n',A%n)
-          CALL pList%add('MatrixType->isSym',.FALSE.)
-          CALL solver%M%init(pList)
-          CALL pList%clear()
           SELECTTYPE(M => solver%M); TYPE IS(TriDiagMatrixType)
             M%a(2,1)=1.0_SRK/A%a(2,1)
             DO i=1,A%n-1
@@ -1900,8 +1894,6 @@ MODULE LinearSolverTypes
               t=A%a(2,i+1)-M%a(1,i+1)*M%a(3,i)
               !If failed, return.
               IF(t .APPROXEQA. 0._SRK) THEN
-                CALL M%clear()
-                DEALLOCATE(solver%M)
                 RETURN
               ENDIF
               M%a(2,i+1)=1.0_SRK/t
