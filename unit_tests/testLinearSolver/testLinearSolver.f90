@@ -471,7 +471,7 @@ CONTAINS
       CALL thisLS%updatedA()
       !Check
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Direct)
-        bool = .NOT.thisLS%isDecomposed .AND. .NOT.ALLOCATED(thisLS%IPIV)
+        bool = .NOT.thisLS%isDecomposed
         ASSERT(bool, 'Direct%updatedA()')
       ENDSELECT
       CALL thisLS%clear()

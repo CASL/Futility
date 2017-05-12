@@ -824,10 +824,7 @@ MODULE LinearSolverTypes
     SUBROUTINE updatedA(solver)
       CLASS(LinearSolverType_Base),INTENT(INOUT) :: solver
       solver%isDecomposed=.FALSE.
-      SELECTTYPE(solver)
-        TYPE IS(LinearSolverType_Direct)
-          IF(ALLOCATED(solver%IPIV)) CALL demallocA(solver%IPIV)
-      ENDSELECT
+
     ENDSUBROUTINE updatedA
 !
 !-------------------------------------------------------------------------------
@@ -1787,11 +1784,9 @@ MODULE LinearSolverTypes
       INTEGER(SIK) :: uptr(solver%A%n)
       REAL(SRK) :: m_val
 
-      IF(ALLOCATED(solver%M)) THEN
-        CALL solver%M%clear()
-        DEALLOCATE(solver%M)
+      IF(.NOT. ALLOCATED(solver%M)) THEN
+        ALLOCATE(SparseMatrixType :: solver%M)
       ENDIF
-      ALLOCATE(SparseMatrixType :: solver%M)
 
       SELECTTYPE(M => solver%M); TYPE IS(SparseMatrixType)
         SELECTTYPE(A => solver%A); TYPE IS(SparseMatrixType)
@@ -1800,6 +1795,7 @@ MODULE LinearSolverTypes
       ENDSELECT
 
       solver%info=-1
+      solver%isDecomposed=.FALSE.
       SELECTTYPE(M => solver%M); TYPE IS(SparseMatrixType)
         ! Find the indices of M containing the diagonal terms
         DO i=1,M%n
@@ -2099,21 +2095,18 @@ MODULE LinearSolverTypes
       REAL(SRK) :: t
       TYPE(ParamType) :: pList
 
-      IF(ALLOCATED(solver%M)) THEN
-        CALL solver%M%clear()
-        DEALLOCATE(solver%M)
+      IF(.NOT. ALLOCATED(solver%M) .AND. solver%A%isInit) THEN
+        ALLOCATE(DenseSquareMatrixType :: solver%M)
+        CALL pList%add('MatrixType->n',solver%A%n)
+        CALL pList%add('MatrixType->isSym',.FALSE.)
+        CALL solver%M%init(pList)
+        CALL pList%clear()
       ENDIF
-      ALLOCATE(DenseSquareMatrixType :: solver%M)
 
-      IF(ALLOCATED(solver%IPIV)) THEN
-        CALL demallocA(solver%IPIV)
+      IF(.NOT. ALLOCATED(solver%IPIV) .AND. solver%A%isInit) THEN
+        CALL dmallocA(solver%IPIV,solver%A%n)
       ENDIF
-      CALL dmallocA(solver%IPIV,solver%A%n)
 
-      CALL pList%add('MatrixType->n',solver%A%n)
-      CALL pList%add('MatrixType->isSym',.FALSE.)
-      CALL solver%M%init(pList)
-      CALL pList%clear()
       SELECTTYPE(M => solver%M); TYPE IS(DenseSquareMatrixType)
         SELECTTYPE(A => solver%A); TYPE IS(DenseSquareMatrixType)
           M=A
@@ -2122,6 +2115,7 @@ MODULE LinearSolverTypes
 
       solver%IPIV=0
       solver%info=-1
+      solver%isDecomposed=.FALSE.
       SELECTTYPE(M => solver%M)
         TYPE IS(DenseSquareMatrixType)
           N=solver%A%n
