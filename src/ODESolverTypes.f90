@@ -274,11 +274,16 @@ MODULE ODESolverTypes
         solver%TPLType=ODE_SUNDIALS
 
         ALLOCATE(solver%ytmp(solver%n))
+#ifdef FUTILITY_HAVE_SUNDIALS
         CALL FNVINITS(1, INT(solver%n,C_LONG), ierr)
 
         solver%f=>f
         SUNDIALS_ODE_INTERFACE=>f
         solver%isInit=.TRUE.
+#else
+        CALL eODESolverType%raiseError('Error in '// &
+          modName//'::'//myName//' - Sundials interface is not available')
+#endif
       ELSE
         CALL eODESolverType%raiseError('Incorrect call to '// &
           modName//'::'//myName//' - ODESolverType already initialized')
@@ -299,8 +304,11 @@ MODULE ODESolverTypes
       solver%n=-1
       solver%tol=1.0e-8_SRK
       solver%BDForder=5
-
+      IF(ALLOCATED(solver%ytmp)) DEALLOCATE(solver%ytmp)
+#ifdef FUTILITY_HAVE_SUNDIALS
       CALL FCVFREE()
+#endif
+      SUNDIALS_ODE_INTERFACE=>NULL()
 
       solver%isInit=.FALSE.
     ENDSUBROUTINE clear_ODESolverType_Sundials
@@ -326,7 +334,7 @@ MODULE ODESolverTypes
       REAL(SRK) :: ttmp
 
       CALL y0%get(solver%ytmp)
-
+#ifdef FUTILITY_HAVE_SUNDIALS
       ! IOUT, ROUT are likely unused, IPAR(1) should be n, RPAR is unused
       IF(solver%first) THEN
         solver%ipar(1)=solver%n
@@ -343,6 +351,7 @@ MODULE ODESolverTypes
       !put data in U into yf
       CALL FCVODE(REAL(TF,C_DOUBLE),REAL(ttmp,C_DOUBLE),solver%ytmp,INT(1,C_INT), ierr)
       CALL yf%set(solver%ytmp)
+#endif
     ENDSUBROUTINE step_ODESolverType_Sundials
 !
 !-------------------------------------------------------------------------------
