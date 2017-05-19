@@ -219,6 +219,7 @@ MODULE ODESolverTypes
 !>
 !> @param solver The ode solver to act on
 !> @param Params A parameter list with input options
+!> @param f ODE Solver Abstract Interface
 !>
 !> This routine initializes the data spaces for the Sundials ODE solver interface.
 !>
@@ -245,7 +246,8 @@ MODULE ODESolverTypes
         ENDIF
 
         IF(solvetype == THETA_METHOD) THEN
-          !Error... unsupported option
+              CALL eODESolverType%raiseError('Incorrect input to '// &
+                modName//'::'//myName//' - Theta method is not supported with Sundials')
         ELSEIF(solvetype == BDF_METHOD) THEN
           solver%solverMethod=solvetype
           IF(Params%has('ODESolverType->bdf_order')) THEN
@@ -359,6 +361,7 @@ MODULE ODESolverTypes
 !>
 !> @param solver The ode solver to act on
 !> @param Params A parameter list with input options
+!> @param f ODE Solver Abstract Interface
 !>
 !> This routine initializes the data spaces for the native ODE solver interface.
 !>
