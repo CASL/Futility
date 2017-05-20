@@ -38,6 +38,7 @@
 !>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE ODESolverTypes
+  USE ISO_C_BINDING
   USE IntrType
   USE BLAS
   !USE trilinos_interfaces
@@ -66,9 +67,11 @@ MODULE ODESolverTypes
   PUBLIC :: ODESolverInterface_Base
   PUBLIC :: ODESolverType_Base
   PUBLIC :: ODESolverType_Native
+  PUBLIC :: ODESolverType_Sundials
+  PUBLIC :: SUNDIALS_ODE_INTERFACE
 
   !> set enumeration scheme for TPLs
-  INTEGER(SIK),PARAMETER,PUBLIC :: ODE_NATIVE=1
+  INTEGER(SIK),PARAMETER,PUBLIC :: ODE_NATIVE=1,ODE_SUNDIALS=2
   !> set enumeration scheme for solver methods
   INTEGER(SIK),PARAMETER,PUBLIC :: THETA_METHOD=0,BDF_METHOD=1
   !> bdf constants for LHS
@@ -89,6 +92,8 @@ MODULE ODESolverTypes
       !> Deferred routine for initializing the ode solver
       PROCEDURE(odesolver_f_sub_absintfc),DEFERRED,PASS :: eval
   ENDTYPE ODESolverInterface_Base
+
+  CLASS(ODESolverInterface_Base),POINTER :: SUNDIALS_ODE_INTERFACE => NULL()
 
   !> @brief the base ode solver type
   TYPE,ABSTRACT :: ODESolverType_Base
@@ -138,7 +143,7 @@ MODULE ODESolverTypes
       IMPORT :: ODESolverType_Base, VectorType, SRK
       CLASS(ODESolverType_Base),INTENT(INOUT) :: solver
       REAL(SRK),INTENT(IN) :: t0
-      CLASS(VectorType),INTENT(IN) :: y0
+      CLASS(VectorType),INTENT(INOUT) :: y0
       REAL(SRK),INTENT(IN) :: tf
       CLASS(VectorType),INTENT(INOUT) :: yf
     ENDSUBROUTINE odesolver_step_sub_absintfc
@@ -173,6 +178,32 @@ MODULE ODESolverTypes
       PROCEDURE,PASS :: step => step_ODESolverType_Native
   ENDTYPE ODESolverType_Native
 
+  !> @brief the sundials ode solver type
+  TYPE,EXTENDS(ODESolverType_Base) :: ODESolverType_Sundials
+    !> order of BDF method
+    INTEGER(SIK) :: BDForder=5
+    !> logical indicating if the solve is the first iteration
+    LOGICAL(SBK) :: first=.TRUE.
+    !> temporary allocatable array
+    REAL(C_DOUBLE),ALLOCATABLE :: ytmp(:)
+    INTEGER(C_LONG) :: iout(25)
+    INTEGER(C_LONG) :: ipar(1)
+    REAL(C_DOUBLE) :: rout(10)
+    REAL(C_DOUBLE) :: rpar(1)
+  !
+  !List of Type Bound Procedures
+    CONTAINS
+      !> @copybrief ODESolverTypes::init_ODESolverType_Sundials
+      !> @copydetails ODESolverTypes::init_ODESolverType_Sundials
+      PROCEDURE,PASS :: init => init_ODESolverType_Sundials
+      !> @copybrief ODESolverTypes::clear_ODESolverType_Sundials
+      !> @copydetails ODESolverTypes::clear_ODESolverType_Sundials
+      PROCEDURE,PASS :: clear => clear_ODESolverType_Sundials
+      !> @copybrief ODESolverTypes::step_ODESolverType_Sundials
+      !> @copydetails ODESolverTypes::step_ODESolverType_Sundials
+      PROCEDURE,PASS :: step => step_ODESolverType_Sundials
+  ENDTYPE ODESolverType_Sundials
+
   !> Exception Handler for use in MatrixTypes
   TYPE(ExceptionHandlerType),SAVE :: eODESolverType
 
@@ -188,6 +219,149 @@ MODULE ODESolverTypes
 !>
 !> @param solver The ode solver to act on
 !> @param Params A parameter list with input options
+!> @param f ODE Solver Abstract Interface
+!>
+!> This routine initializes the data spaces for the Sundials ODE solver interface.
+!>
+    SUBROUTINE init_ODESolverType_Sundials(solver,Params,f)
+      CHARACTER(LEN=*),PARAMETER :: myName='init_ODESolverType_Sundials'
+      CLASS(ODESolverType_Sundials),INTENT(INOUT) :: solver
+      TYPE(ParamType),INTENT(IN) :: Params
+      CLASS(ODESolverInterface_Base),POINTER :: f
+
+      INTEGER(SIK) :: n, solvetype, bdf_order, ierr
+      REAL(SRK) :: tol
+
+      CALL Params%get('ODESolverType->n',n)
+      CALL Params%get('ODESolverType->solver',solvetype)
+      CALL Params%get('ODESolverType->tolerance',tol)
+
+      IF(.NOT. solver%isInit) THEN
+        IF(n < 1) THEN
+          CALL eODESolverType%raiseError('Incorrect input to '// &
+            modName//'::'//myName//' - Number of values (n) must be '// &
+              'greater than 0!')
+        ELSE
+          solver%n=n
+        ENDIF
+
+        IF(solvetype == THETA_METHOD) THEN
+              CALL eODESolverType%raiseError('Incorrect input to '// &
+                modName//'::'//myName//' - Theta method is not supported with Sundials')
+        ELSEIF(solvetype == BDF_METHOD) THEN
+          solver%solverMethod=solvetype
+          IF(Params%has('ODESolverType->bdf_order')) THEN
+            CALL Params%get('ODESolverType->bdf_order',bdf_order)
+            IF(bdf_order<1 .OR. bdf_order>5) THEN
+              CALL eODESolverType%raiseError('Incorrect input to '// &
+                modName//'::'//myName//' - BDF order must be between 1 and 5')
+            ELSE
+              solver%BDForder=bdf_order
+            ENDIF
+
+          ENDIF
+        ELSE
+          CALL eODESolverType%raiseError('Incorrect input to '// &
+            modName//'::'//myName//' - Unknown Solver Type')
+        ENDIF
+
+        IF(tol<=0.0_SRK) THEN
+          CALL eODESolverType%raiseError('Incorrect input to '// &
+            modName//'::'//myName//' - Tolerance must be '// &
+              'greater than 0!')
+        ELSE
+          solver%tol=tol
+        ENDIF
+
+        solver%TPLType=ODE_SUNDIALS
+
+        ALLOCATE(solver%ytmp(solver%n))
+#ifdef FUTILITY_HAVE_SUNDIALS
+        CALL FNVINITS(1, INT(solver%n,C_LONG), ierr)
+
+        solver%f=>f
+        SUNDIALS_ODE_INTERFACE=>f
+        solver%isInit=.TRUE.
+#else
+        CALL eODESolverType%raiseError('Error in '// &
+          modName//'::'//myName//' - Sundials interface is not available')
+#endif
+      ELSE
+        CALL eODESolverType%raiseError('Incorrect call to '// &
+          modName//'::'//myName//' - ODESolverType already initialized')
+      ENDIF
+    ENDSUBROUTINE init_ODESolverType_Sundials
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears the Sundials ODE Solver Type
+!> @param solver The ode solver to act on
+!>
+!> This routine clears the data spaces
+!>
+    SUBROUTINE clear_ODESolverType_Sundials(solver)
+      CLASS(ODESolverType_Sundials),INTENT(INOUT) :: solver
+
+      solver%solverMethod=-1
+      solver%TPLType=-1
+      solver%n=-1
+      solver%tol=1.0e-8_SRK
+      solver%BDForder=5
+      IF(ALLOCATED(solver%ytmp)) DEALLOCATE(solver%ytmp)
+#ifdef FUTILITY_HAVE_SUNDIALS
+      CALL FCVFREE()
+#endif
+      SUNDIALS_ODE_INTERFACE=>NULL()
+
+      solver%isInit=.FALSE.
+    ENDSUBROUTINE clear_ODESolverType_Sundials
+!
+!-------------------------------------------------------------------------------
+!> @brief Performs time step for the Sundials ODE Solver Type
+!> @param solver The ode solver to act on
+!> @param t0 The initial time of the solve
+!> @param y0 The initial condition y(t0)
+!> @param tf The final time of the solve
+!> @param yf The final value of y(tf)
+!>
+!> This routine performs a solve using the sundials solver
+!>(
+    SUBROUTINE step_ODESolverType_Sundials(solver,t0,y0,tf,yf)
+      CLASS(ODESolverType_Sundials),INTENT(INOUT) :: solver
+      REAL(SRK),INTENT(IN) :: t0
+      CLASS(VectorType),INTENT(INOUT) :: y0
+      REAL(SRK),INTENT(IN) :: tf
+      CLASS(VectorType),INTENT(INOUT) :: yf
+
+      INTEGER(SIK) :: ierr
+      REAL(SRK) :: ttmp
+
+      CALL y0%get(solver%ytmp)
+#ifdef FUTILITY_HAVE_SUNDIALS
+      ! IOUT, ROUT are likely unused, IPAR(1) should be n, RPAR is unused
+      IF(solver%first) THEN
+        solver%ipar(1)=solver%n
+        solver%rpar(1)=0.0_SRK
+
+        CALL FCVMALLOC(t0,solver%ytmp, 2, 2, 1, solver%tol, solver%tol,solver%IOUT, solver%ROUT, &
+                      solver%IPAR, solver%RPAR, ierr)
+        CALL FCVDENSE(INT(solver%n,C_LONG),ierr)
+        solver%first=.FALSE.
+      ELSE
+        !pull data out of y0 into y
+        CALL FCVREINIT(t0,solver%ytmp, 1, solver%tol, solver%tol, ierr)
+      ENDIF
+      !put data in U into yf
+      CALL FCVODE(REAL(TF,C_DOUBLE),REAL(ttmp,C_DOUBLE),solver%ytmp,INT(1,C_INT), ierr)
+      CALL yf%set(solver%ytmp)
+#endif
+    ENDSUBROUTINE step_ODESolverType_Sundials
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes the ODE Solver Type with a parameter list
+!>
+!> @param solver The ode solver to act on
+!> @param Params A parameter list with input options
+!> @param f ODE Solver Abstract Interface
 !>
 !> This routine initializes the data spaces for the native ODE solver interface.
 !>
@@ -314,7 +488,7 @@ MODULE ODESolverTypes
     SUBROUTINE step_ODESolverType_Native(solver,t0,y0,tf,yf)
       CLASS(ODESolverType_Native),INTENT(INOUT) :: solver
       REAL(SRK),INTENT(IN) :: t0
-      CLASS(VectorType),INTENT(IN) :: y0
+      CLASS(VectorType),INTENT(INOUT) :: y0
       REAL(SRK),INTENT(IN) :: tf
       CLASS(VectorType),INTENT(INOUT) :: yf
 
@@ -571,3 +745,44 @@ MODULE ODESolverTypes
     ENDSUBROUTINE estimate_jacobian
 !
 ENDMODULE ODESolverTypes
+
+!
+!-------------------------------------------------------------------------------
+!> @brief FCVFUN interface for FCVODE to define y'(t)=f(t,y(t))
+!> @param t The current time of the solve
+!> @param y The current condition y(t)
+!> @param ydot The calculated derivative at time t
+!> @param ipar An integer array defined above - only ipar(1) will be defined as the number of unknowns
+!> @param rpar A real array defined above - unused
+!> @param ierr return value back to ODE solver
+!>
+!> This routine performs a solve using the sundials solver
+!>
+SUBROUTINE FCVFUN(t,y,ydot,ipar,rpar,ierr)
+  USE ISO_C_BINDING
+  USE IntrType
+  USE VectorTypes
+  USE ODESolverTypes
+  REAL(C_DOUBLE),INTENT(IN) :: t
+  REAL(C_DOUBLE),INTENT(IN) :: y(*)
+  REAL(C_DOUBLE),INTENT(INOUT) :: ydot(*)
+  INTEGER(C_LONG),INTENT(IN) :: ipar(1)
+  REAL(C_DOUBLE),INTENT(IN) :: rpar(1)
+  INTEGER(C_INT),INTENT(INOUT) :: ierr
+
+  INTEGER(SIK) :: n
+  TYPE(RealVectorType) :: v_y, v_ydot
+
+  n=ipar(1)
+  v_y%n=n
+  v_ydot%n=n
+  ALLOCATE(v_y%b(n),v_ydot%b(n))
+  v_y%b(1:n)=y(1:n)
+  v_y%isInit=.TRUE.
+  v_ydot%isInit=.TRUE.
+
+  CALL SUNDIALS_ODE_INTERFACE%eval(t,v_y,v_ydot)
+  !convert v_ydot back to
+  ydot(1:n)=v_ydot%b(1:n)
+  ierr=0
+ENDSUBROUTINE FCVFUN

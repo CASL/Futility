@@ -7,14 +7,6 @@
 # can be found in LICENSE.txt in the head directory of this repository.        !
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 
-SET(Futility_TPLS_FINDMODS_CLASSIFICATIONS
-       MPI      "${${PROJECT_NAME}_TRIBITS_DIR}/core/std_tpls/" SS
-       BLAS     "${Futility_SOURCE_DIR}/cmake/tpl/"             SS
-       PARDISO  "${Futility_SOURCE_DIR}/cmake/tpl/"             SS
-       HDF5     "${Futility_SOURCE_DIR}/cmake/tpl/"             SS
-       HYPRE    "${Futility_SOURCE_DIR}/cmake/tpl/"             SS
-       PETSC    "${Futility_SOURCE_DIR}/cmake/tpl/"             SS
-       PAPI     "${Futility_SOURCE_DIR}/cmake/tpl/"             SS
-       SLEPC    "${Futility_SOURCE_DIR}/cmake/tpl/"             SS
-       SUNDIALS "${Futility_SOURCE_DIR}/cmake/tpl/"             SS
-  )
+TRIBITS_TPL_FIND_INCLUDE_DIRS_AND_LIBRARIES(SUNDIALS
+  REQUIRED_LIBS_NAMES sundials_cvode sundials_fcvode sundials_nvecserial sundials_fnvecserial)
+
