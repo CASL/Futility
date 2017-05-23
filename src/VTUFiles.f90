@@ -401,8 +401,7 @@ MODULE VTUFiles
 !
 !-------------------------------------------------------------------------------
 !> @brief Closes the VTU XML file object.
-!> @param file the VTU XML file object
-!> @param ldel logical on whether or not to delete the file
+!> @param myVTKFile the VTU XML file object
 !>
 !> Closes the file by adding standard XML structure closures.
 !>
@@ -421,10 +420,13 @@ MODULE VTUFiles
 !-------------------------------------------------------------------------------
 !> @brief Creates pvtu file for VTU XML file object.
 !> @param fileobj input file object.
-!> @param unit Unit number to use for the file.
+!> @param funit Unit number to use for the file.
 !> @param filen Name of the pvtu file.
+!> @param procs Number of processors in MPI environment.
+!> @param rank MPI rank.
 !>
-!> Writes the pvtu file for visualizing in parallel.
+!> Writes the pvtu file for visualizing in parallel (only if master rank and
+!> the number of processors is greater than one).
 !>
     SUBROUTINE writepvtu_VTUXMLFileType(fileobj,funit,filen,procs,rank)
       CHARACTER(LEN=*),PARAMETER :: myName='writepvtu_VTUXMLFileType'
