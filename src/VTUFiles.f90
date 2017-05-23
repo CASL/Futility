@@ -33,11 +33,10 @@ MODULE VTUFiles
   USE VTKFiles
   IMPLICIT NONE
   PRIVATE
-
+  !
   !List of Public Members
   PUBLIC :: VTUXMLFileType
-  PUBLIC :: PVTUXMLFileType
-
+  !
   !> Module name for error messages
   CHARACTER(LEN=*),PARAMETER :: modName='VTUFILES'
   
@@ -45,6 +44,11 @@ MODULE VTUFiles
   !>
   !> This is an extension of the @ref FileType_Fortran "VTKLegFileType".
   TYPE,EXTENDS(VTKLegFileType) :: VTUXMLFileType
+  !
+  CHARACTER(LEN=256),ALLOCATABLE,DIMENSION(:) :: dataFormatList
+  INTEGER(SIK) :: dataFormatListLength = 0
+  CHARACTER(LEN=256),ALLOCATABLE,DIMENSION(:) :: varNameList
+  INTEGER(SIK) :: varNameListLength = 0
 !
 !List of type bound procedures (methods) for the VTU XML File type
     CONTAINS
@@ -57,55 +61,19 @@ MODULE VTUFiles
       !> @copybrief VTUFiles::writeScalarData_VTUXMLFileType
       !> @copydetails VTUFiles::writeScalarData_VTUXMLFileType
       PROCEDURE,PASS :: writeScalarData => writeScalarData_VTUXMLFileType
+      !> @copybrief VTUFiles::hasData_VTUXMLFileType
+      !> @copydetails VTUFiles::hasData_VTUXMLFileType
+      PROCEDURE,PASS :: hasData => hasData_VTUXMLFileType
       !> @copybrief VTUFiles::close_VTUXMLFileType
       !> @copydetails VTUFiles::close_VTUXMLFileType
       PROCEDURE,PASS :: close => close_VTUXMLFileType
-  ENDTYPE VTUXMLFileType
-  
-  !> @brief Derived type object for files definable by the PVTU XML format
-  !>
-  !> This is an extension of the @ref FileType_Fortran "VTUXMLFileType".
-  TYPE,EXTENDS(VTUXMLFileType) :: PVTUXMLFileType
-  
-  CHARACTER(LEN=256),ALLOCATABLE,DIMENSION(:) :: dataFormatList
-  INTEGER(SIK) :: dataFormatListLength = 0
-  CHARACTER(LEN=256),ALLOCATABLE,DIMENSION(:) :: varNameList
-  INTEGER(SIK) :: varNameListLength = 0
-!
-!List of type bound procedures (methods) for the VTU XML File type
-    CONTAINS
-      !> @copybrief VTUFiles::init_PVTUXMLFileType
-      !> @copydetails VTUFiles::init_PVTUXMLFileType
-      PROCEDURE,PASS :: initialize => init_PVTUXMLFileType
-      !> @copybrief VTUFiles::writeScalarData_PVTUXMLFileType
-      !> @copydetails VTUFiles::writeScalarData_PVTUXMLFileType
-      PROCEDURE,PASS :: writeScalarData => writeScalarData_PVTUXMLFileType
       !> @copybrief VTUFiles::writepvtu_PVTUXMLFileType
       !> @copydetails VTUFiles::writepvtu_PVTUXMLFileType
-      PROCEDURE,PASS :: writepvtu => writepvtu_PVTUXMLFileType
-  ENDTYPE PVTUXMLFileType
+      PROCEDURE,PASS :: writepvtu => writepvtu_VTUXMLFileType
+  ENDTYPE VTUXMLFileType
 !
 !===============================================================================
   CONTAINS
-!
-!-------------------------------------------------------------------------------
-!> @brief Closes the VTU XML file object.
-!> @param file the VTU XML file object
-!> @param ldel logical on whether or not to delete the file
-!>
-!> Closes the file by adding standard XML structure closures.
-!>
-    SUBROUTINE close_VTUXMLFileType(myVTKFile)
-      CHARACTER(LEN=*),PARAMETER :: myName='close_VTUXMLFileType'
-      CLASS(VTUXMLFileType),INTENT(INOUT) :: myVTKFile
-      INTEGER(SIK) :: funit
-
-      funit=myVTKFile%getUnitNo()
-      WRITE(funit,'(a)') '      </CellData>'
-      WRITE(funit,'(a)') '    </Piece>'
-      WRITE(funit,'(a)') '  </UnstructuredGrid>'
-      WRITE(funit,'(a)') '</VTKFile>'
-    ENDSUBROUTINE close_VTUXMLFileType
 !
 !-------------------------------------------------------------------------------
 !> @brief Initializes the VTU XML file object.
@@ -133,7 +101,7 @@ MODULE VTUFiles
       CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: action
       CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: pad
       INTEGER(SIK),OPTIONAL,INTENT(IN) :: recl
-      
+      !
       IF(.NOT.fileobj%isInit()) THEN
         IF(PRESENT(access)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
           ' - Optional input "ACCESS" is being ignored. Value is "SEQUENTIAL".')
@@ -147,24 +115,25 @@ MODULE VTUFiles
           ' - Optional input "POSITION" is being ignored. Value is "APPEND".')
         IF(PRESENT(recl)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
           ' - Optional input "RECL" is being ignored. File is "SEQUENTIAL".')
-        
+        !
         !Initialize the file, only support ascii for now
         CALL init_fortran_file(fileobj,unit,file,'REPLACE','SEQUENTIAL', &
           'FORMATTED','APPEND','WRITE')
-      
+        !
         !Open the file
         CALL fileobj%fopen()
-
+        !
         !Handle status argument, which is unused
         IF(PRESENT(status)) THEN
           CALL fileobj%e%raiseDebug(modName//'::'//myName// &
             ' - File header not used for VTU files!')
         ENDIF
-      
+        !
         !Write header to file, title and format information to file
         IF(fileobj%isOpen()) THEN
           WRITE(fileobj%getUnitNo(),'(a)') '<?xml version="1.0"?>'
-          WRITE(fileobj%getUnitNo(),'(a)') '<VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">'
+          WRITE(fileobj%getUnitNo(),'(a)') '<VTKFile type='// &
+          '"UnstructuredGrid" version="0.1" byte_order="LittleEndian">'
           !Change "new" status so that if file is closed and re-opened
           !during execution it will be appended file instead of replacing it.
           fileobj%newstat=.FALSE.
@@ -191,7 +160,7 @@ MODULE VTUFiles
       CHARACTER(LEN=256) :: aline,sint
       INTEGER(SIK) :: funit,i,j,k,n
       INTEGER(SIK),DIMENSION(:),ALLOCATABLE :: offsets
-      
+      !
       IF(.NOT.myVTKFile%hasMesh) THEN
         IF(myVTKFile%isOpen()) THEN
           IF(vtkMesh%isInit) THEN
@@ -257,19 +226,20 @@ MODULE VTUFiles
                   ENDIF
                 ENDDO
                 WRITE(funit,'(a)') '        </DataArray>'
-
+                !
                 ! Write the offsets
                 WRITE(funit,'(a)') '        <DataArray type="Int32" Name="offsets" format="ascii">'
                 WRITE(funit,*) offsets
                 WRITE(funit,'(a)') '        </DataArray>'
-                
+                DEALLOCATE(offsets)
+                !
                 !Write the list of cell types
                 WRITE(funit,'(a)') '        <DataArray type="UInt8" Name="types" format="ascii">'
                 WRITE(funit,*) myVTKFile%mesh%cellList
                 WRITE(funit,'(a)') '        </DataArray>'
                 WRITE(funit,'(a)') '      </Cells>'
                 WRITE(funit,'(a)') '      <CellData>'
-                
+                !
               CASE(VTK_POLYDATA)
                 CALL myVTKFile%e%raiseError(modName//'::'//myName// &
                   ' - VTK DATASET "POLYDATA" not supported!')
@@ -313,12 +283,41 @@ MODULE VTUFiles
       TYPE(VTKDataType),INTENT(IN) :: vtkData
       INTEGER(SIK) :: funit,i,istp
       CHARACTER(LEN=256) :: aline,sint
-      
+      CHARACTER(LEN=256),ALLOCATABLE,DIMENSION(:) :: temp
+      !
+      myVTKFile%varNameListLength=myVTKFile%varNameListLength+1
+      IF (.NOT.ALLOCATED(myVTKFile%varNameList)) THEN
+        ALLOCATE(myVTKFile%varNameList(myVTKFile%varNameListLength))
+        myVTKFile%varNameList=vtkData%varname
+      ELSE
+        ALLOCATE(temp(myVTKFile%varNameListLength))
+        temp(1:myVTKFile%varNameListLength-1)=myVTKFile%varNameList
+        temp(myVTKFile%varNameListLength)=vtkData%varname
+        DEALLOCATE(myVTKFile%varNameList)
+        ALLOCATE(myVTKFile%varNameList(myVTKFile%varNameListLength))
+        myVTKFile%varNameList=temp
+        DEALLOCATE(temp)
+      ENDIF
+      !
+      myVTKFile%dataFormatListLength=myVTKFile%dataFormatListLength+1
+      IF (.NOT.ALLOCATED(myVTKFile%dataFormatList)) THEN
+        ALLOCATE(myVTKFile%dataFormatList(myVTKFile%dataFormatListLength))
+        myVTKFile%dataFormatList = vtkData%vtkDataFormat
+      ELSE
+        ALLOCATE(temp(myVTKFile%dataFormatListLength))
+        temp(1:myVTKFile%dataFormatListLength-1)=myVTKFile%dataFormatList
+        temp(myVTKFile%dataFormatListLength)=vtkData%vtkDataFormat
+        DEALLOCATE(myVTKFile%dataFormatList)
+        ALLOCATE(myVTKFile%dataFormatList(myVTKFile%dataFormatListLength))
+        myVTKFile%dataFormatList=temp
+        DEALLOCATE(temp)
+      ENDIF
+      !
       IF(myVTKFile%hasMesh) THEN
         IF(myVTKFile%isOpen()) THEN
           IF(vtkData%isInit) THEN
             IF(vtkData%isCellData) THEN
-              IF(vtkData%dataSetType == VTK_DATA_SCALARS) THEN
+              IF(vtkData%dataSetType==VTK_DATA_SCALARS) THEN
                 funit=myVTKFile%getUnitNo()
                 aline='CELL_DATA'
                 WRITE(sint,'(i64)') myVTKFile%mesh%numCells; sint=ADJUSTL(sint)
@@ -378,190 +377,46 @@ MODULE VTUFiles
     ENDSUBROUTINE writeScalarData_VTUXMLFileType
 !
 !-------------------------------------------------------------------------------
-!> @brief Initializes the VTU XML file object.
+!> @brief Checks if fileobj has a given data set.
 !> @param fileobj input file object.
-!> @param unit Unit number to use for the file.
-!> @param status optional, not used for VTU files.
+!> @param varName Name of the variable to check.
+!> @param varFormat Data format of the data to check.
+!> @param bool Whether or not the data is present.
 !>
-!> The other input arguments are not currently supported. See 
-!> @ref FileType_Fortran::init_fortran_file "init_fortran_file" for a complete
-!> description of all the optional input arguments.
-!> 
-!> This routine initializes the file object through the Fortran file type
-!> interface then writes the VTU header to the file.
+!> Checks if the VTU File has the specified data name and type.
 !>
-    SUBROUTINE init_PVTUXMLFileType(fileobj,unit,file,status,access,form, &
-                                 position,action,pad,recl)
-      CHARACTER(LEN=*),PARAMETER :: myName='init_PVTUXMLFileType'
-      CLASS(PVTUXMLFileType),INTENT(INOUT) :: fileobj
-      INTEGER(SIK),OPTIONAL,INTENT(IN) :: unit
-      CHARACTER(LEN=*),INTENT(IN) :: file
-      CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: status
-      CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: access
-      CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: form
-      CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: position
-      CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: action
-      CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: pad
-      INTEGER(SIK),OPTIONAL,INTENT(IN) :: recl
-      
-      IF(.NOT.fileobj%isInit()) THEN
-        IF(PRESENT(access)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
-          ' - Optional input "ACCESS" is being ignored. Value is "SEQUENTIAL".')
-        IF(PRESENT(form)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
-          ' - Optional input "FORM" is being ignored. Value is "FORMATTED".')
-        IF(PRESENT(action)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
-          ' - Optional input "ACTION" is being ignored. Value is "WRITE".')
-        IF(PRESENT(pad)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
-          ' - Optional input "PAD" is being ignored. Value is "YES".')
-        IF(PRESENT(position)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
-          ' - Optional input "POSITION" is being ignored. Value is "APPEND".')
-        IF(PRESENT(recl)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
-          ' - Optional input "RECL" is being ignored. File is "SEQUENTIAL".')
-        
-        !Initialize the file, only support ascii for now
-        CALL init_fortran_file(fileobj,unit,file,'REPLACE','SEQUENTIAL', &
-          'FORMATTED','APPEND','WRITE')
-      
-        !Open the file
-        CALL fileobj%fopen()
-
-        !Handle status argument, which is unused
-        IF(PRESENT(status)) THEN
-          CALL fileobj%e%raiseDebug(modName//'::'//myName// &
-            ' - File header not used for VTU files!')
-        ENDIF
-      
-        !Write header to file, title and format information to file
-        IF(fileobj%isOpen()) THEN
-          WRITE(fileobj%getUnitNo(),'(a)') '<?xml version="1.0"?>'
-          WRITE(fileobj%getUnitNo(),'(a)') '<VTKFile type='// &
-          '"UnstructuredGrid" version="0.1" byte_order="LittleEndian">'
-          !Change "new" status so that if file is closed and re-opened
-          !during execution it will be appended file instead of replacing it.
-          fileobj%newstat=.FALSE.
-        ENDIF
-      ELSE
-        CALL fileobj%e%raiseError(modName//'::'//myName// &
-          ' - VTU File is already initialized!')
-      ENDIF
-    ENDSUBROUTINE init_PVTUXMLFileType
+    SUBROUTINE hasData_VTUXMLFileType(fileobj,varName,varFormat,bool)
+      CHARACTER(LEN=*),PARAMETER :: myName='hasData_VTUXMLFileType'
+      CLASS(VTUXMLFileType),INTENT(INOUT) :: fileobj
+      CHARACTER(LEN=*),INTENT(IN) :: varName,varFormat
+      LOGICAL(SBK),INTENT(INOUT) :: bool
+      INTEGER(SIK) :: i
+      !
+      bool=.FALSE.
+      DO i=1,fileobj%varNameListLength
+        IF (varName==fileobj%varNameList(i).AND. &
+          varFormat==fileobj%dataFormatList(i)) bool=.TRUE.
+      ENDDO
+    ENDSUBROUTINE hasData_VTUXMLFileType
 !
 !-------------------------------------------------------------------------------
-!> @brief Writes scalar data for a VTK mesh to VTU XML file
-!> @param myVTKFile the VTK file to write the data to
-!> @param vtkData the VTK data to write to the file
-!> 
-!> Presently, this routine is only capable of writing scalar cell data.
-!> The data can be written as integers, single precision or double precision.
-!> Note that in the VTKDataType data is always stored as double precision.
+!> @brief Closes the VTU XML file object.
+!> @param file the VTU XML file object
+!> @param ldel logical on whether or not to delete the file
 !>
-!> Currently no check is made if the amount of data differs from the number
-!> of cells in the mesh that has already been written in the file. From what
-!> I understand about VTK, it does not have to, and that a default lookup table
-!> will be used to obtain missing values. Adding a warning message when the
-!> amount of data is not consistent should be done.
+!> Closes the file by adding standard XML structure closures.
 !>
-    SUBROUTINE writeScalarData_PVTUXMLFileType(myVTKFile,vtkData)
-      CHARACTER(LEN=*),PARAMETER :: myName='writeScalarData_PVTUXMLFileType'
-      CLASS(PVTUXMLFileType),INTENT(INOUT) :: myVTKFile
-      TYPE(VTKDataType),INTENT(IN) :: vtkData
-      INTEGER(SIK) :: funit,i,istp
-      CHARACTER(LEN=256) :: aline,sint
-
-      CHARACTER(LEN=256),ALLOCATABLE,DIMENSION(:) :: temp
-      
-      myVTKFile%varNameListLength = myVTKFile%varNameListLength + 1
-
-      IF (.NOT.ALLOCATED(myVTKFile%varNameList)) THEN
-        ALLOCATE(myVTKFile%varNameList(myVTKFile%varNameListLength))
-        myVTKFile%varNameList = vtkData%varname
-      ELSE
-        ALLOCATE(temp(myVTKFile%varNameListLength))
-        temp(1:myVTKFile%varNameListLength - 1) = myVTKFile%varNameList
-        temp(myVTKFile%varNameListLength) = vtkData%varname
-        DEALLOCATE(myVTKFile%varNameList)
-        ALLOCATE(myVTKFile%varNameList(myVTKFile%varNameListLength))
-        myVTKFile%varNameList = temp
-        DEALLOCATE(temp)
-      ENDIF
-
-      myVTKFile%dataFormatListLength = myVTKFile%dataFormatListLength + 1
-
-      IF (.NOT.ALLOCATED(myVTKFile%dataFormatList)) THEN
-        ALLOCATE(myVTKFile%dataFormatList(myVTKFile%dataFormatListLength))
-        myVTKFile%dataFormatList = vtkData%vtkDataFormat
-      ELSE
-        ALLOCATE(temp(myVTKFile%dataFormatListLength))
-        temp(1:myVTKFile%dataFormatListLength - 1) = myVTKFile%dataFormatList
-        temp(myVTKFile%dataFormatListLength) = vtkData%vtkDataFormat
-        DEALLOCATE(myVTKFile%dataFormatList)
-        ALLOCATE(myVTKFile%dataFormatList(myVTKFile%dataFormatListLength))
-        myVTKFile%dataFormatList = temp
-        DEALLOCATE(temp)
-      ENDIF
-      
-      IF(myVTKFile%hasMesh) THEN
-        IF(myVTKFile%isOpen()) THEN
-          IF(vtkData%isInit) THEN
-            IF(vtkData%isCellData) THEN
-              IF(vtkData%dataSetType == VTK_DATA_SCALARS) THEN
-                funit=myVTKFile%getUnitNo()
-                aline='CELL_DATA'
-                WRITE(sint,'(i64)') myVTKFile%mesh%numCells; sint=ADJUSTL(sint)
-                aline=TRIM(aline)//' '//TRIM(sint)
-                SELECTCASE(TRIM(vtkData%vtkDataFormat))
-                  CASE('float')
-                    WRITE(funit,'(a)') '        <DataArray type="Float32"'// &
-                      ' Name="'//TRIM(vtkData%varname)//'" format="ascii">'
-                    DO i=1,SIZE(vtkData%datalist),5
-                      istp=i+4
-                      IF(istp > SIZE(vtkData%datalist)) istp=SIZE(vtkData%datalist)
-                      WRITE(funit,'(5f15.6)') REAL(vtkData%datalist(i:istp),SSK)
-                    ENDDO
-                  CASE('double')
-                    WRITE(funit,'(a)') '        <DataArray type="Float64"'// &
-                      ' Name="'//TRIM(vtkData%varname)//'" format="ascii">'
-                    DO i=1,SIZE(vtkData%datalist),3
-                      istp=i+2
-                      IF(istp > SIZE(vtkData%datalist)) istp=SIZE(vtkData%datalist)
-                      WRITE(funit,'(3es22.14)') vtkData%datalist(i:istp)
-                    ENDDO
-                  CASE('int','short','long')
-                    WRITE(funit,'(a)') '        <DataArray type="Int32"'// &
-                      ' Name="'//TRIM(vtkData%varname)//'" format="ascii">'
-                    DO i=1,SIZE(vtkData%datalist),6
-                      istp=i+5
-                      IF(istp > SIZE(vtkData%datalist)) istp=SIZE(vtkData%datalist)
-                      WRITE(funit,'(6i12)') NINT(vtkData%datalist(i:istp),SIK)
-                    ENDDO
-                  CASE DEFAULT
-                    CALL myVTKFile%e%raiseError(modName//'::'//myName// &
-                      ' - Writing of "'//TRIM(vtkData%vtkDataFormat)// &
-                        '" data not yet supported!')
-                ENDSELECT
-                WRITE(funit,'(a)') '        </DataArray>'
-                FLUSH(funit)
-              ELSE
-                CALL myVTKFile%e%raiseError(modName//'::'//myName// &
-                ' - dataSetType is not yet supported!')
-              ENDIF
-            ELSE
-              CALL myVTKFile%e%raiseError(modName//'::'//myName// &
-                ' - Writing of point data is not yet supported!')
-            ENDIF
-          ELSE
-            CALL myVTKFile%e%raiseError(modName//'::'//myName// &
-              ' - VTK Data is not initialized!')
-          ENDIF
-        ELSE
-          CALL myVTKFile%e%raiseError(modName//'::'//myName// &
-            ' - VTK File is not open for writing!')
-        ENDIF
-      ELSE
-        CALL myVTKFile%e%raiseError(modName//'::'//myName// &
-          ' - VTK File has no mesh to write data for!')
-      ENDIF
-    ENDSUBROUTINE writeScalarData_PVTUXMLFileType
+    SUBROUTINE close_VTUXMLFileType(myVTKFile)
+      CHARACTER(LEN=*),PARAMETER :: myName='close_VTUXMLFileType'
+      CLASS(VTUXMLFileType),INTENT(INOUT) :: myVTKFile
+      INTEGER(SIK) :: funit
+      !
+      funit=myVTKFile%getUnitNo()
+      WRITE(funit,'(a)') '      </CellData>'
+      WRITE(funit,'(a)') '    </Piece>'
+      WRITE(funit,'(a)') '  </UnstructuredGrid>'
+      WRITE(funit,'(a)') '</VTKFile>'
+    ENDSUBROUTINE close_VTUXMLFileType
 !
 !-------------------------------------------------------------------------------
 !> @brief Creates pvtu file for VTU XML file object.
@@ -571,73 +426,70 @@ MODULE VTUFiles
 !>
 !> Writes the pvtu file for visualizing in parallel.
 !>
-    SUBROUTINE writepvtu_PVTUXMLFileType(fileobj,funit,filen,procs)
-      CHARACTER(LEN=*),PARAMETER :: myName='writepvtu_PVTUXMLFileType'
-      CLASS(PVTUXMLFileType),INTENT(INOUT) :: fileobj
+    SUBROUTINE writepvtu_VTUXMLFileType(fileobj,funit,filen,procs,rank)
+      CHARACTER(LEN=*),PARAMETER :: myName='writepvtu_VTUXMLFileType'
+      CLASS(VTUXMLFileType),INTENT(INOUT) :: fileobj
       CHARACTER(LEN=*),INTENT(IN) :: filen
       CHARACTER(LEN=128) :: sint
-      INTEGER(SIK),INTENT(IN) :: funit,procs
+      INTEGER(SIK),INTENT(IN) :: funit,procs,rank
       INTEGER(SIK) :: i,j,iord
       CHARACTER(LEN=128) :: fname,fmtStr
-
-      OPEN(unit=funit,file=TRIM(filen)//'.pvtu')
-
-      WRITE(funit,'(a)') '<?xml version="1.0"?>'
-      WRITE(funit,'(a)') '<VTKFile type="PUnstructuredGrid" version="0.1" byte_order="LittleEndian">'
-      WRITE(funit,'(a)') '  <PUnstructuredGrid GhostLevel="0">'
-
-      WRITE(funit,'(a)') '    <PPoints>'
-
-      WRITE(funit,'(a)') '      <PDataArray type="Float32"'// &
-        ' NumberOfComponents="3"/>'
-
-      WRITE(funit,'(a)') '    </PPoints>'
-      WRITE(funit,'(a)') '    <PCells>'
-      WRITE(funit,'(a)') '      <PDataArray type="Int32" Name="connectivity"/>'
-      WRITE(funit,'(a)') '      <PDataArray type="Int32" Name="offsets"/>'
-      WRITE(funit,'(a)') '      <PDataArray type="UInt8" Name="types"/>'
-      WRITE(funit,'(a)') '    </PCells>'
-
-      WRITE(funit,'(a)') '    <PCellData Scalars="Data">'
-
-      DO i=1,fileobj%dataFormatListLength
-        SELECTCASE(TRIM(fileobj%dataFormatList(i)))
-          CASE('float')
-            WRITE(funit,'(a)') '      <PDataArray type="Float32"'// &
-              ' Name="'//TRIM(fileobj%varNameList(i))//'"/>'
-          CASE('double')
-            WRITE(funit,'(a)') '      <PDataArray type="Float64"'// &
-              ' Name="'//TRIM(fileobj%varNameList(i))//'"/>'
-          CASE('int','short','long')
-            WRITE(funit,'(a)') '      <PDataArray type="Int32"'// &
-              ' Name="'//TRIM(fileobj%varNameList(i))//'"/>'
-          CASE DEFAULT
-            CALL fileobj%e%raiseError(modName//'::'//myName// &
-              ' - Writing of "'//TRIM(fileobj%dataFormatList(i))// &
-                '" data not yet supported!')
-        ENDSELECT
-      ENDDO
-
-      WRITE(funit,'(a)') '    </PCellData>'
-
-      DO i=1,procs
-        iord=procs-1
-        j=1
-        DO WHILE(iord >= 10)
-          j=j+1
-          iord=iord/10
+      !
+      IF((procs>1).AND.rank==0) THEN
+        OPEN(unit=funit,file=TRIM(filen)//'.pvtu')
+        !
+        WRITE(funit,'(a)') '<?xml version="1.0"?>'
+        WRITE(funit,'(a)') '<VTKFile type="PUnstructuredGrid" version="0.1" byte_order="LittleEndian">'
+        WRITE(funit,'(a)') '  <PUnstructuredGrid GhostLevel="0">'
+        WRITE(funit,'(a)') '    <PPoints>'
+        WRITE(funit,'(a)') '      <PDataArray type="Float32"'// &
+          ' NumberOfComponents="3"/>'
+        WRITE(funit,'(a)') '    </PPoints>'
+        WRITE(funit,'(a)') '    <PCells>'
+        WRITE(funit,'(a)') '      <PDataArray type="Int32" Name="connectivity"/>'
+        WRITE(funit,'(a)') '      <PDataArray type="Int32" Name="offsets"/>'
+        WRITE(funit,'(a)') '      <PDataArray type="UInt8" Name="types"/>'
+        WRITE(funit,'(a)') '    </PCells>'
+        !
+        WRITE(funit,'(a)') '    <PCellData Scalars="Data">'
+        DO i=1,fileobj%dataFormatListLength
+          SELECTCASE(TRIM(fileobj%dataFormatList(i)))
+            CASE('float')
+              WRITE(funit,'(a)') '      <PDataArray type="Float32"'// &
+                ' Name="'//TRIM(fileobj%varNameList(i))//'"/>'
+            CASE('double')
+              WRITE(funit,'(a)') '      <PDataArray type="Float64"'// &
+                ' Name="'//TRIM(fileobj%varNameList(i))//'"/>'
+            CASE('int','short','long')
+              WRITE(funit,'(a)') '      <PDataArray type="Int32"'// &
+                ' Name="'//TRIM(fileobj%varNameList(i))//'"/>'
+            CASE DEFAULT
+              CALL fileobj%e%raiseError(modName//'::'//myName// &
+                ' - Writing of "'//TRIM(fileobj%dataFormatList(i))// &
+                  '" data not yet supported!')
+          ENDSELECT
         ENDDO
-        WRITE(fmtStr,'(a,i2.2,a,i2.2,a)') '(i',j,'.',j,')'; fmtSTR=ADJUSTL(fmtStr)
-        WRITE(sint,FMT=TRIM(fmtStr)) i-1
-        fname=TRIM(filen)//'_'//TRIM(sint)
-        WRITE(funit,'(a)') '    <Piece Source="'//TRIM(fname)//'.vtu'//'"/>'
-      ENDDO
-      WRITE(funit,'(a)') '  </PUnstructuredGrid>'
-      WRITE(funit,'(a)') '</VTKFile>'
-
-      CLOSE(funit)
+        WRITE(funit,'(a)') '    </PCellData>'
+        !
+        DO i=1,procs
+          iord=procs-1
+          j=1
+          DO WHILE(iord >= 10)
+            j=j+1
+            iord=iord/10
+          ENDDO
+          WRITE(fmtStr,'(a,i2.2,a,i2.2,a)') '(i',j,'.',j,')'; fmtSTR=ADJUSTL(fmtStr)
+          WRITE(sint,FMT=TRIM(fmtStr)) i-1
+          fname=TRIM(filen)//'_'//TRIM(sint)
+          WRITE(funit,'(a)') '    <Piece Source="'//TRIM(fname)//'.vtu'//'"/>'
+        ENDDO
+        WRITE(funit,'(a)') '  </PUnstructuredGrid>'
+        WRITE(funit,'(a)') '</VTKFile>'
+        CLOSE(funit)
+      ENDIF
+      !
       DEALLOCATE(fileobj%varNameList)
       DEALLOCATE(fileobj%dataFormatList)
-    ENDSUBROUTINE writepvtu_PVTUXMLFileType
+    ENDSUBROUTINE writepvtu_VTUXMLFileType
 !
 ENDMODULE VTUFiles

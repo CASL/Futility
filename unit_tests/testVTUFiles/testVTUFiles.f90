@@ -13,34 +13,35 @@ PROGRAM testVTUFiles
   USE ExceptionHandler
   USE VTKFiles
   USE VTUFiles
-
+  !
   IMPLICIT NONE
-
+  !
   TYPE(ExceptionHandlerType),POINTER,SAVE :: e
   TYPE(VTKMeshType),SAVE :: testVTKMesh
   TYPE(VTKDataType),SAVE :: testVTKData
   TYPE(VTUXMLFileType),SAVE :: testVTUFile
-  TYPE(PVTUXMLFileType),SAVE :: testPVTUFile
   LOGICAL(SBK) :: bool
-
+  !
   CREATE_TEST('Test VTU Files')
-
-  CALL SetupError
-
+  !
+  REGISTER_SUBTEST('CLEAR',testClear)
+  !
+  CALL SetupError()
+  !
   REGISTER_SUBTEST('INITIALIZE',testInitialize)
   REGISTER_SUBTEST('STRUCTURED POINTS',testFailSTRUCTURED_POINTS)
   REGISTER_SUBTEST('UNSTRUCTURED GRID',testUNSTRUCTURED_GRID)
   REGISTER_SUBTEST('MULTIFILE DATASET',testMultiVTU)
-
-  CALL DellocateAll
-
+  !
+  CALL DellocateAll()
+  !
   FINALIZE_TEST()
 !
 !===============================================================================
   CONTAINS
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE SetupError
+    SUBROUTINE SetupError()
       ALLOCATE(e)
       CALL e%setStopOnError(.FALSE.)
       CALL e%setQuietMode(.TRUE.)
@@ -49,92 +50,118 @@ PROGRAM testVTUFiles
     ENDSUBROUTINE SetupError
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE testInitialize
-      !Test Initialize and clear
-      CALL testVTUFile%clear
+    SUBROUTINE testClear()
+      !Test clear
+      CALL testVTUFile%clear()
+      bool=.NOT.testVTUFile%isInit()
+      ASSERT(bool,'testVTUFile%clear(...)')
+    ENDSUBROUTINE testClear
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testInitialize()
+      !Test initialize
       CALL testVTUFile%initialize(666,'testVTU0.vtu')
-      bool = testVTUFile%isInit() .AND. testVTUFile%isOpen()
+      bool=testVTUFile%isInit().AND.testVTUFile%isOpen()
       ASSERT(bool,'testVTUFile%initialize(...)')
       CALL testVTUFile%clear(.TRUE.)
     ENDSUBROUTINE testInitialize
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE testFailSTRUCTURED_POINTS
+    SUBROUTINE testFailSTRUCTURED_POINTS()
       !Test writeMesh for STRUCTURED_POINTS (should fail, not supported)
       CALL testVTUFile%e%addSurrogate(e)
       CALL testVTUFile%initialize(666,'testVTU1.vtu')
-      CALL SetupTest1_Mesh
+      CALL SetupTest1_Mesh()
       CALL testVTUFile%writeMesh(testVTKMesh) ! Try to write STRUCTURED_POINTS
-      bool = .NOT.testVTUFile%hasMesh
-      ASSERT(bool, 'testVTUFile%writeMesh(...) STRUCTURED_POINTS')
+      bool=.NOT.testVTUFile%hasMesh
+      ASSERT(bool,'testVTUFile%writeMesh(...) STRUCTURED_POINTS')
       CALL testVTUFile%clear(.TRUE.)
     ENDSUBROUTINE testFailSTRUCTURED_POINTS
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE testUNSTRUCTURED_GRID
+    SUBROUTINE testUNSTRUCTURED_GRID()
       !Test writeMesh for UNSTRUCTURED_GRID
       CALL testVTUFile%initialize(666,'testVTU2.vtu')
-      CALL SetupTest2_Mesh
+      CALL SetupTest2_Mesh()
       CALL testVTUFile%writeMesh(testVTKMesh)
-      bool = testVTUFile%hasMesh
-      ASSERT(bool, 'testVTUFile%writeMesh(...) UNSTRUCTURED_GRID')
-
+      bool=testVTUFile%hasMesh
+      ASSERT(bool,'testVTUFile%writeMesh(...) UNSTRUCTURED_GRID')
+      !
       !Write data on the mesh
-      CALL SetupTest2_Data
+      CALL SetupTest2_Data()
       CALL testVTUFile%writeScalarData(testVTKData)
-      testVTKData%varname='mat_val'
-      testVTKData%vtkDataFormat='float'
-      CALL testVTUFile%writeScalarData(testVTKData)
-
+      !
       !Test writeScalarData
+      COMPONENT_TEST('write float')
+      testVTKData%vtkDataFormat='float'
+      testVTKData%varname='mat_float'
+      CALL testVTUFile%writeScalarData(testVTKData)
+      CALL testVTUFile%hasData('mat_float','float',bool)
+      ASSERT(bool,'testVTUFile%hasData(...) FLOAT')
+      !
+      COMPONENT_TEST('write long')
       testVTKData%vtkDataFormat='long'
       testVTKData%varname='mat_long'
       CALL testVTUFile%writeScalarData(testVTKData) !repeat for long
+      CALL testVTUFile%hasData('mat_long','long',bool)
+      ASSERT(bool,'testVTUFile%hasData(...) LONG')
+      !
+      COMPONENT_TEST('write short')
       testVTKData%vtkDataFormat='short'
       testVTKData%varname='mat_short'
       CALL testVTUFile%writeScalarData(testVTKData) !repeat for short
+      CALL testVTUFile%hasData('mat_short','short',bool)
+      ASSERT(bool,'testVTUFile%hasData(...) SHORT')
+      !
+      COMPONENT_TEST('write int')
       testVTKData%vtkDataFormat='int'
-      testVTKData%varname='mat_float'
+      testVTKData%varname='mat_int'
       CALL testVTUFile%writeScalarData(testVTKData) !write as int
+      CALL testVTUFile%hasData('mat_int','int',bool)
+      ASSERT(bool,'testVTUFile%hasData(...) INT')
+      !
+      COMPONENT_TEST('write double')
       testVTKData%vtkDataFormat='double'
       testVTKData%varname='mat_double'
       CALL testVTUFile%writeScalarData(testVTKData) !write as double
-      CALL testVTUFile%close
-      CALL testVTUFile%clear
+      CALL testVTUFile%hasData('mat_double','double',bool)
+      ASSERT(bool,'testVTUFile%hasData(...) DOUBLE')
+      !
+      CALL testVTUFile%close()
+      CALL testVTUFile%clear()
     ENDSUBROUTINE testUNSTRUCTURED_GRID
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE testMultiVTU
+    SUBROUTINE testMultiVTU()
       !Test writeMesh for UNSTRUCTURED_GRID
-      CALL testPVTUFile%clear
-      CALL testPVTUFile%initialize(666,'testPVTU_0.vtu')
-      CALL SetupTest2_Mesh
-      CALL testPVTUFile%writeMesh(testVTKMesh)
-      bool = testPVTUFile%hasMesh
-      ASSERT(bool,'testPVTUFile%writeMesh(...) UNSTRUCTURED_GRID 0')
+      CALL testVTUFile%initialize(666,'testPVTU_0.vtu')
+      CALL SetupTest2_Mesh()
+      CALL testVTUFile%writeMesh(testVTKMesh)
+      bool=testVTUFile%hasMesh
+      ASSERT(bool,'testVTUFile%writeMesh(...) UNSTRUCTURED_GRID 0')
       !Write data on the mesh
-      CALL SetupTest2_Data
-      CALL testPVTUFile%writeScalarData(testVTKData)
-      CALL testPVTUFile%close
-      CALL testPVTUFile%clear
-
+      CALL SetupTest2_Data()
+      CALL testVTUFile%writeScalarData(testVTKData)
+      CALL testVTUFile%close()
+      CALL testVTUFile%clear()
+      !
       !Write to second file
-      CALL testPVTUFile%initialize(666,'testPVTU_1.vtu')
+      CALL testVTUFile%initialize(666,'testPVTU_1.vtu')
       !Translate mesh
       CALL testVTKMesh%translate(-4.0_SRK,-5.0_SRK,3.0_SRK)
-      CALL testPVTUFile%writeMesh(testVTKMesh)
-      bool = testPVTUFile%hasMesh
-      ASSERT(bool,'testPVTUFile%writeMesh(...) UNSTRUCTURED_GRID 1')
+      CALL testVTUFile%writeMesh(testVTKMesh)
+      bool=testVTUFile%hasMesh
+      ASSERT(bool,'testVTUFile%writeMesh(...) UNSTRUCTURED_GRID 1')
       !Write data on the mesh
-      CALL testPVTUFile%writeScalarData(testVTKData)
-      CALL testPVTUFile%close
-      CALL testPVTUFile%clear
-
-      CALL testPVTUFile%writepvtu(666,'testPVTU',2)
+      CALL testVTUFile%writeScalarData(testVTKData)
+      CALL testVTUFile%close()
+      CALL testVTUFile%clear()
+      !
+      CALL testVTUFile%writepvtu(666,'testPVTU',2,0)
     ENDSUBROUTINE testMultiVTU
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE SetupTest1_Mesh
+    SUBROUTINE SetupTest1_Mesh()
       !Initialize a VTK mesh by hand
       testVTKMesh%dims=(/33,33,5/)
       testVTKMesh%meshType=VTK_STRUCTURED_POINTS
@@ -153,7 +180,7 @@ PROGRAM testVTUFiles
     ENDSUBROUTINE SetupTest1_Mesh
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE SetupTest2_Mesh
+    SUBROUTINE SetupTest2_Mesh()
       INTEGER(SIK) :: i,j
       !Initialize a VTK mesh by hand
       testVTKMesh%numPoints=800
@@ -176,7 +203,7 @@ PROGRAM testVTUFiles
         READ(555,*) testVTKMesh%x(i),testVTKMesh%y(i),testVTKMesh%z(i)
       ENDDO
       CLOSE(555)
-      
+      !
       testVTKMesh%cellList=12
       j=0
       DO i=1,800
@@ -186,9 +213,9 @@ PROGRAM testVTUFiles
     ENDSUBROUTINE SetupTest2_Mesh
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE SetupTest1_Data
+    SUBROUTINE SetupTest1_Data()
       INTEGER(SIK) :: i
-      
+      !
       !Initialize VTK data by hand
       testVTKData%varname='VTK_cellIndex_int'
       testVTKData%vtkDataFormat='int'
@@ -203,9 +230,9 @@ PROGRAM testVTUFiles
     ENDSUBROUTINE SetupTest1_Data
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE SetupTest2_Data
+    SUBROUTINE SetupTest2_Data()
       INTEGER(SIK) :: i
-      
+      !
       !Initialize VTK data by hand
       testVTKData%varname='material'
       testVTKData%vtkDataFormat='int'
@@ -223,10 +250,10 @@ PROGRAM testVTUFiles
     ENDSUBROUTINE SetupTest2_Data
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE DellocateAll
+    SUBROUTINE DellocateAll()
       DEALLOCATE(e)
-      CALL testVTKMesh%clear
-      CALL testVTKData%clear
+      CALL testVTKMesh%clear()
+      CALL testVTKData%clear()
     ENDSUBROUTINE DellocateAll
 !
 ENDPROGRAM testVTUFiles
