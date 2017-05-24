@@ -69,6 +69,8 @@ MODULE ODESolverTypes
   PUBLIC :: ODESolverType_Native
   PUBLIC :: ODESolverType_Sundials
   PUBLIC :: SUNDIALS_ODE_INTERFACE
+  PUBLIC :: SUNDIALS_y
+  PUBLIC :: SUNDIALS_ydot
 
   !> set enumeration scheme for TPLs
   INTEGER(SIK),PARAMETER,PUBLIC :: ODE_NATIVE=1,ODE_SUNDIALS=2
@@ -94,6 +96,8 @@ MODULE ODESolverTypes
   ENDTYPE ODESolverInterface_Base
 
   CLASS(ODESolverInterface_Base),POINTER :: SUNDIALS_ODE_INTERFACE => NULL()
+  TYPE(RealVectorType),SAVE :: SUNDIALS_y
+  TYPE(RealVectorType),SAVE :: SUNDIALS_ydot
 
   !> @brief the base ode solver type
   TYPE,ABSTRACT :: ODESolverType_Base
@@ -229,6 +233,7 @@ MODULE ODESolverTypes
       TYPE(ParamType),INTENT(IN) :: Params
       CLASS(ODESolverInterface_Base),POINTER :: f
 
+      TYPE(ParamType) :: plist
       INTEGER(SIK) :: n, solvetype, bdf_order, ierr
       REAL(SRK) :: tol
 
@@ -281,6 +286,11 @@ MODULE ODESolverTypes
 
         solver%f=>f
         SUNDIALS_ODE_INTERFACE=>f
+        CALL plist%clear()
+        CALL plist%add('VectorType -> n',solver%n)
+        CALL SUNDIALS_y%init(plist)
+        CALL SUNDIALS_ydot%init(plist)
+        CALL plist%clear()
         solver%isInit=.TRUE.
 #else
         CALL eODESolverType%raiseError('Error in '// &
@@ -307,8 +317,11 @@ MODULE ODESolverTypes
       solver%tol=1.0e-8_SRK
       solver%BDForder=5
       IF(ALLOCATED(solver%ytmp)) DEALLOCATE(solver%ytmp)
+      CALL SUNDIALS_y%clear()
+      CALL SUNDIALS_ydot%clear()
 #ifdef FUTILITY_HAVE_SUNDIALS
-      CALL FCVFREE()
+      !If sundials FNVINITS isn't called, FCVFEE segfaults
+      IF(.NOT. solver%first) CALL FCVFREE()
 #endif
       SUNDIALS_ODE_INTERFACE=>NULL()
 
@@ -342,13 +355,13 @@ MODULE ODESolverTypes
         solver%ipar(1)=solver%n
         solver%rpar(1)=0.0_SRK
 
-        CALL FCVMALLOC(t0,solver%ytmp, 2, 2, 1, solver%tol, solver%tol,solver%IOUT, solver%ROUT, &
+        CALL FCVMALLOC(t0,solver%ytmp, 2, 2, 1, solver%tol, 1.0E-12_C_DOUBLE,solver%IOUT, solver%ROUT, &
                       solver%IPAR, solver%RPAR, ierr)
         CALL FCVDENSE(INT(solver%n,C_LONG),ierr)
         solver%first=.FALSE.
       ELSE
         !pull data out of y0 into y
-        CALL FCVREINIT(t0,solver%ytmp, 1, solver%tol, solver%tol, ierr)
+        CALL FCVREINIT(t0,solver%ytmp, 1, solver%tol, 1.0E-12_C_DOUBLE, ierr)
       ENDIF
       !put data in U into yf
       CALL FCVODE(REAL(TF,C_DOUBLE),REAL(ttmp,C_DOUBLE),solver%ytmp,INT(1,C_INT), ierr)
@@ -771,18 +784,12 @@ SUBROUTINE FCVFUN(t,y,ydot,ipar,rpar,ierr)
   INTEGER(C_INT),INTENT(INOUT) :: ierr
 
   INTEGER(SIK) :: n
-  TYPE(RealVectorType) :: v_y, v_ydot
 
   n=ipar(1)
-  v_y%n=n
-  v_ydot%n=n
-  ALLOCATE(v_y%b(n),v_ydot%b(n))
-  v_y%b(1:n)=y(1:n)
-  v_y%isInit=.TRUE.
-  v_ydot%isInit=.TRUE.
+  SUNDIALS_y%b(1:n)=y(1:n)
 
-  CALL SUNDIALS_ODE_INTERFACE%eval(t,v_y,v_ydot)
+  CALL SUNDIALS_ODE_INTERFACE%eval(t,SUNDIALS_y,SUNDIALS_ydot)
   !convert v_ydot back to
-  ydot(1:n)=v_ydot%b(1:n)
+  ydot(1:n)=SUNDIALS_ydot%b(1:n)
   ierr=0
 ENDSUBROUTINE FCVFUN

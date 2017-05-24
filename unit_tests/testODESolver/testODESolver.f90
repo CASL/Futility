@@ -176,7 +176,7 @@ PROGRAM testODESolver
 
   CALL pList%set('ODESolverType->solver',BDF_METHOD)
   CALL pList%set('ODESolverType->bdf_order',3_SIK)
-  CALL pList%set('ODESolverType->tolerance',1.0e-10_SRK)
+  CALL pList%set('ODESolverType->tolerance',1.0e-9_SRK)
 
   REGISTER_SUBTEST('testInit_Sundials',testInit_Sundials)
 #ifdef FUTILITY_HAVE_SUNDIALS
@@ -380,7 +380,7 @@ CONTAINS
         ASSERT(testODE%n==3,'%n')
         ASSERT(testODE%solverMethod==BDF_METHOD,'%solverMethod')
         ASSERT(testODE%BDForder==3,'%BDForder')
-        ASSERT(testODE%tol==1.0E-10_SRK,'%tol')
+        ASSERT(testODE%tol==1.0E-9_SRK,'%tol')
         ASSERT(ALLOCATED(testODE%ytmp),'%ytmp Allocated')
 #ifdef FUTILITY_HAVE_SUNDIALS
         ASSERT(testODE%isInit,'%isInit')
@@ -450,15 +450,14 @@ CONTAINS
       CALL yf%set(0.0_SRK)
 
       CALL testODE%step(0.0_SRK,y0,3.5_SRK,yf)
-
       CALL yf%get(1,tmpval)
-      ASSERT(SOFTEQR(tmpval,ref(1),2.0E-8_SRK),'yf(1)')
+      ASSERT(SOFTEQR(tmpval,ref(1),1.0E-6_SRK),'yf(1)')
       FINFO() tmpval, ref(1), tmpval/ref(1)-1.0_SRK
       CALL yf%get(2,tmpval)
-      ASSERT(SOFTEQR(tmpval,ref(2),2.0E-8_SRK),'yf(2)')
+      ASSERT(SOFTEQR(tmpval,ref(2),1.0E-6_SRK),'yf(2)')
       FINFO() tmpval, ref(2), tmpval/ref(2)-1.0_SRK
       CALL yf%get(3,tmpval)
-      ASSERT(SOFTEQR(tmpval,ref(3),2.0E-8_SRK),'yf(3)')
+      ASSERT(SOFTEQR(tmpval,ref(3),1.0E-6_SRK),'yf(3)')
       FINFO() tmpval, ref(3), tmpval/ref(3)-1.0_SRK
 
     ENDSUBROUTINE testStep_Sundials_Exp
