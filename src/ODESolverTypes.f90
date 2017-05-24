@@ -320,7 +320,8 @@ MODULE ODESolverTypes
       CALL SUNDIALS_y%clear()
       CALL SUNDIALS_ydot%clear()
 #ifdef FUTILITY_HAVE_SUNDIALS
-      CALL FCVFREE()
+      !If sundials FNVINITS isn't called, FCVFEE segfaults
+      IF(.NOT. solver%first) CALL FCVFREE()
 #endif
       SUNDIALS_ODE_INTERFACE=>NULL()
 
