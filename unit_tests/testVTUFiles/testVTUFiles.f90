@@ -24,10 +24,9 @@ PROGRAM testVTUFiles
   !
   CREATE_TEST('Test VTU Files')
   !
-  REGISTER_SUBTEST('CLEAR',testClear)
-  !
   CALL SetupError()
   !
+  REGISTER_SUBTEST('CLEAR',testClear)
   REGISTER_SUBTEST('INITIALIZE',testInitialize)
   REGISTER_SUBTEST('STRUCTURED POINTS',testFailSTRUCTURED_POINTS)
   REGISTER_SUBTEST('UNSTRUCTURED GRID',testUNSTRUCTURED_GRID)
@@ -52,17 +51,23 @@ PROGRAM testVTUFiles
 !-------------------------------------------------------------------------------
     SUBROUTINE testClear()
       !Test clear
+      CALL testVTUFile%fopen()
+      testVTUFile%hasMesh=.TRUE.
+      !
       CALL testVTUFile%clear()
-      bool=.NOT.testVTUFile%isInit()
-      ASSERT(bool,'testVTUFile%clear(...)')
+      ASSERT(.NOT.testVTUFile%isInit(),'testVTUFile%isInit()')
+      ASSERT(.NOT.testVTUFile%isOpen(),'testVTUFile%isOpen()')
+      ASSERT(.NOT.testVTUFile%hasMesh,'testVTUFile%hasMesh')
     ENDSUBROUTINE testClear
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testInitialize()
       !Test initialize
       CALL testVTUFile%initialize(666,'testVTU0.vtu')
-      bool=testVTUFile%isInit().AND.testVTUFile%isOpen()
-      ASSERT(bool,'testVTUFile%initialize(...)')
+      ASSERT(testVTUFile%isInit(),'testVTUFile%isInit()')
+      ASSERT(testVTUFile%isOpen(),'testVTUFile%isOpen()')
+      ASSERT(.NOT.testVTUFile%hasMesh,'testVTUFile%hasMesh')
+      ASSERT(testVTUFile%numDataSet==0,'testVTUFile%numDataSet')
       CALL testVTUFile%clear(.TRUE.)
     ENDSUBROUTINE testInitialize
 !
@@ -138,10 +143,14 @@ PROGRAM testVTUFiles
       CALL SetupTest2_Mesh()
       CALL testVTUFile%writeMesh(testVTKMesh)
       bool=testVTUFile%hasMesh
-      ASSERT(bool,'testVTUFile%writeMesh(...) UNSTRUCTURED_GRID 0')
+      ASSERT(bool,'testVTUFile%hasMesh')
+      INQUIRE(FILE='testPVTU_0.vtu',EXIST=bool)
+      ASSERT(bool,'FILE WRITTEN')
+      !
       !Write data on the mesh
       CALL SetupTest2_Data()
       CALL testVTUFile%writeScalarData(testVTKData)
+      ASSERT(testVTUFile%numDataSet==1,'testVTUFile%numDataSet==1')
       CALL testVTUFile%close()
       CALL testVTUFile%clear()
       !
@@ -151,13 +160,30 @@ PROGRAM testVTUFiles
       CALL testVTKMesh%translate(-4.0_SRK,-5.0_SRK,3.0_SRK)
       CALL testVTUFile%writeMesh(testVTKMesh)
       bool=testVTUFile%hasMesh
-      ASSERT(bool,'testVTUFile%writeMesh(...) UNSTRUCTURED_GRID 1')
+      ASSERT(bool,'testVTUFile%hasMesh')
+      INQUIRE(FILE='testPVTU_1.vtu',EXIST=bool)
+      ASSERT(bool,'FILE WRITTEN')
       !Write data on the mesh
       CALL testVTUFile%writeScalarData(testVTKData)
+      ASSERT(testVTUFile%numDataSet==1,'testVTUFile%numDataSet==1')
       CALL testVTUFile%close()
       CALL testVTUFile%clear()
       !
+      !Check that data is present
+      CALL testVTUFile%hasData('material','int',bool)
+      ASSERT(bool,'testVTUFile%hasData(...)')
+      !
+      !Write pvtu file
       CALL testVTUFile%writepvtu(666,'testPVTU',2,0)
+      CALL testVTUFile%hasFile('testPVTU_0.vtu',bool)
+      ASSERT(bool,'testVTUFile%hasFile(...) testPVTU_0.vtu')
+      CALL testVTUFile%hasFile('testPVTU_1.vtu',bool)
+      ASSERT(bool,'testVTUFile%hasFile(...) testPVTU_1.vtu')
+      !
+      !Ensure that data is now deallocated
+      CALL testVTUFile%hasData('material','int',bool)
+      ASSERT(.NOT.bool,'testVTUFile%hasData(...)')
+      ASSERT(testVTUFile%numDataSet==0,'testVTUFile%numDataSet==0')
     ENDSUBROUTINE testMultiVTU
 !
 !-------------------------------------------------------------------------------
@@ -252,6 +278,7 @@ PROGRAM testVTUFiles
 !-------------------------------------------------------------------------------
     SUBROUTINE DellocateAll()
       DEALLOCATE(e)
+      CALL testVTUFile%clear()
       CALL testVTKMesh%clear()
       CALL testVTKData%clear()
     ENDSUBROUTINE DellocateAll

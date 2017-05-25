@@ -31,6 +31,7 @@ MODULE VTUFiles
   USE IntrType
   USE FileType_Fortran
   USE VTKFiles
+  USE Strings
   IMPLICIT NONE
   PRIVATE
   !
@@ -39,22 +40,24 @@ MODULE VTUFiles
   !
   !> Module name for error messages
   CHARACTER(LEN=*),PARAMETER :: modName='VTUFILES'
-  
+  !
   !> @brief Derived type object for files definable by the VTU XML format
   !>
   !> This is an extension of the @ref FileType_Fortran "VTKLegFileType".
   TYPE,EXTENDS(VTKLegFileType) :: VTUXMLFileType
   !
-  CHARACTER(LEN=256),ALLOCATABLE,DIMENSION(:) :: dataFormatList
-  INTEGER(SIK) :: dataFormatListLength = 0
-  CHARACTER(LEN=256),ALLOCATABLE,DIMENSION(:) :: varNameList
-  INTEGER(SIK) :: varNameListLength = 0
+  TYPE(StringType),ALLOCATABLE,DIMENSION(:) :: dataFormatList,varNameList, &
+    fileList
+  INTEGER(SIK) :: numDataSet=0,numFiles=0
 !
 !List of type bound procedures (methods) for the VTU XML File type
     CONTAINS
       !> @copybrief VTUFiles::init_VTUXMLFileType
       !> @copydetails VTUFiles::init_VTUXMLFileType
       PROCEDURE,PASS :: initialize => init_VTUXMLFileType
+      !> @copybrief VTUXMLes::clear_VTUXMLFileType
+      !> @copydetails VTUXMLes::clear_VTUXMLFileType
+      PROCEDURE,PASS :: clear => clear_VTUXMLFileType
       !> @copybrief VTUFiles::writeMesh_VTUXMLFileType
       !> @copydetails VTUFiles::writeMesh_VTUXMLFileType
       PROCEDURE,PASS :: writeMesh => writeMesh_VTUXMLFileType
@@ -64,6 +67,9 @@ MODULE VTUFiles
       !> @copybrief VTUFiles::hasData_VTUXMLFileType
       !> @copydetails VTUFiles::hasData_VTUXMLFileType
       PROCEDURE,PASS :: hasData => hasData_VTUXMLFileType
+      !> @copybrief VTUFiles::hasFile_VTUXMLFileType
+      !> @copydetails VTUFiles::hasFile_VTUXMLFileType
+      PROCEDURE,PASS :: hasFile => hasFile_VTUXMLFileType
       !> @copybrief VTUFiles::close_VTUXMLFileType
       !> @copydetails VTUFiles::close_VTUXMLFileType
       PROCEDURE,PASS :: close => close_VTUXMLFileType
@@ -111,8 +117,9 @@ MODULE VTUFiles
           ' - Optional input "ACTION" is being ignored. Value is "WRITE".')
         IF(PRESENT(pad)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
           ' - Optional input "PAD" is being ignored. Value is "YES".')
-        IF(PRESENT(position)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
-          ' - Optional input "POSITION" is being ignored. Value is "APPEND".')
+        IF(PRESENT(position)) CALL fileobj%e%raiseDebug(modName//'::'// &
+          myName//' - Optional input "POSITION" is being ignored. Value '// &
+          'is "APPEND".')
         IF(PRESENT(recl)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
           ' - Optional input "RECL" is being ignored. File is "SEQUENTIAL".')
         !
@@ -138,11 +145,35 @@ MODULE VTUFiles
           !during execution it will be appended file instead of replacing it.
           fileobj%newstat=.FALSE.
         ENDIF
+        fileobj%numDataSet=0
       ELSE
         CALL fileobj%e%raiseError(modName//'::'//myName// &
           ' - VTU File is already initialized!')
       ENDIF
     ENDSUBROUTINE init_VTUXMLFileType
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears the VTU XML file object.
+!> @param file the VTU XML file object
+!> @param ldel logical on whether or not to delete the file
+!>
+!> Clears the file object using the @ref FileType_Fortran::clear_fortran_file
+!> "clear_fortran_file" interface. This is why @c ldel is an argument. In
+!> practice one probably does not want to delete these files before the program
+!> exits.
+!>
+    SUBROUTINE clear_VTUXMLFileType(file,ldel)
+      CLASS(VTUXMLFileType),INTENT(INOUT) :: file
+      LOGICAL(SBK),OPTIONAL,INTENT(IN) :: ldel
+      LOGICAL(SBK) :: bool
+      IF(file%hasMesh) CALL file%mesh%clear()
+      file%hasMesh=.FALSE.
+      bool=.FALSE.
+      IF(PRESENT(ldel)) bool=ldel
+      CALL clear_fortran_file(file,bool)
+      IF(ALLOCATED(file%fileList)) DEALLOCATE(file%fileList)
+      file%numFiles=0
+    ENDSUBROUTINE clear_VTUXMLFileType
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a VTU mesh to VTU file
@@ -172,12 +203,16 @@ MODULE VTUFiles
                 !Write a mesh that is an unstructured grid
                 !Clean-up redundant points
                 CALL myVTKFile%mesh%cleanupPoints()
-                WRITE(sint,'(i64)') myVTKFile%mesh%numPoints; sint=ADJUSTL(sint)
-                WRITE(aline,'(i64)') myVTKFile%mesh%numCells; aline=ADJUSTL(aline)
+                WRITE(sint,'(i64)') myVTKFile%mesh%numPoints
+                sint=ADJUSTL(sint)
+                WRITE(aline,'(i64)') myVTKFile%mesh%numCells
+                aline=ADJUSTL(aline)
                 WRITE(funit,'(a)') '  <UnstructuredGrid>'
-                WRITE(funit,'(a)') '    <Piece NumberOfPoints="'//TRIM(sint)//'" NumberOfCells="'//TRIM(aline)//'">'
+                WRITE(funit,'(a)') '    <Piece NumberOfPoints="'//TRIM(sint)// &
+                  '" NumberOfCells="'//TRIM(aline)//'">'
                 WRITE(funit,'(a)') '      <Points>'
-                WRITE(funit,'(a)') '        <DataArray type="Float32" NumberOfComponents="3" format="ascii">'
+                WRITE(funit,'(a)') '        <DataArray type="Float32"'// &
+                  ' NumberOfComponents="3" format="ascii">'
                 DO i=1,myVTKFile%mesh%numPoints
                   WRITE(funit,'(a,3es17.8)') '        ',myVTKFile%mesh%x(i), &
                     myVTKFile%mesh%y(i),myVTKFile%mesh%z(i)
@@ -187,7 +222,8 @@ MODULE VTUFiles
                 
                 !Write the list of cell vertices
                 WRITE(funit,'(a)') '      <Cells>'
-                WRITE(funit,'(a)') '        <DataArray type="Int32" Name="connectivity" format="ascii">'
+                WRITE(funit,'(a)') '        <DataArray type="Int32" Name="'// &
+                  'connectivity" format="ascii">'
                 j=1
                 ALLOCATE(offsets(myVTKFile%mesh%numCells))
                 DO i=1,myVTKFile%mesh%numCells
@@ -222,19 +258,21 @@ MODULE VTUFiles
                     ENDDO
                     WRITE(funit,'(a)') '         '//TRIM(aline)
                     j=j+n
-                    offsets(i) = j-1
+                    offsets(i)=j-1
                   ENDIF
                 ENDDO
                 WRITE(funit,'(a)') '        </DataArray>'
                 !
                 ! Write the offsets
-                WRITE(funit,'(a)') '        <DataArray type="Int32" Name="offsets" format="ascii">'
+                WRITE(funit,'(a)') '        <DataArray type="Int32" Name="'// &
+                  'offsets" format="ascii">'
                 WRITE(funit,*) offsets
                 WRITE(funit,'(a)') '        </DataArray>'
                 DEALLOCATE(offsets)
                 !
                 !Write the list of cell types
-                WRITE(funit,'(a)') '        <DataArray type="UInt8" Name="types" format="ascii">'
+                WRITE(funit,'(a)') '        <DataArray type="UInt8" Name="'// &
+                  'types" format="ascii">'
                 WRITE(funit,*) myVTKFile%mesh%cellList
                 WRITE(funit,'(a)') '        </DataArray>'
                 WRITE(funit,'(a)') '      </Cells>'
@@ -282,36 +320,14 @@ MODULE VTUFiles
       CLASS(VTUXMLFileType),INTENT(INOUT) :: myVTKFile
       TYPE(VTKDataType),INTENT(IN) :: vtkData
       INTEGER(SIK) :: funit,i,istp
-      CHARACTER(LEN=256) :: aline,sint
-      CHARACTER(LEN=256),ALLOCATABLE,DIMENSION(:) :: temp
       !
-      myVTKFile%varNameListLength=myVTKFile%varNameListLength+1
-      IF (.NOT.ALLOCATED(myVTKFile%varNameList)) THEN
-        ALLOCATE(myVTKFile%varNameList(myVTKFile%varNameListLength))
-        myVTKFile%varNameList=vtkData%varname
-      ELSE
-        ALLOCATE(temp(myVTKFile%varNameListLength))
-        temp(1:myVTKFile%varNameListLength-1)=myVTKFile%varNameList
-        temp(myVTKFile%varNameListLength)=vtkData%varname
-        DEALLOCATE(myVTKFile%varNameList)
-        ALLOCATE(myVTKFile%varNameList(myVTKFile%varNameListLength))
-        myVTKFile%varNameList=temp
-        DEALLOCATE(temp)
-      ENDIF
-      !
-      myVTKFile%dataFormatListLength=myVTKFile%dataFormatListLength+1
-      IF (.NOT.ALLOCATED(myVTKFile%dataFormatList)) THEN
-        ALLOCATE(myVTKFile%dataFormatList(myVTKFile%dataFormatListLength))
-        myVTKFile%dataFormatList = vtkData%vtkDataFormat
-      ELSE
-        ALLOCATE(temp(myVTKFile%dataFormatListLength))
-        temp(1:myVTKFile%dataFormatListLength-1)=myVTKFile%dataFormatList
-        temp(myVTKFile%dataFormatListLength)=vtkData%vtkDataFormat
-        DEALLOCATE(myVTKFile%dataFormatList)
-        ALLOCATE(myVTKFile%dataFormatList(myVTKFile%dataFormatListLength))
-        myVTKFile%dataFormatList=temp
-        DEALLOCATE(temp)
-      ENDIF
+      !Increment data set number
+      myVTKFile%numDataSet=myVTKFile%numDataSet+1
+      !Append data set info to lists
+      CALL str_append(myVTKFile%varNameList,vtkData%varname, &
+        myVTKFile%numDataSet)
+      CALL str_append(myVTKFile%dataFormatList,vtkData%vtkDataFormat, &
+        myVTKFile%numDataSet)
       !
       IF(myVTKFile%hasMesh) THEN
         IF(myVTKFile%isOpen()) THEN
@@ -319,16 +335,14 @@ MODULE VTUFiles
             IF(vtkData%isCellData) THEN
               IF(vtkData%dataSetType==VTK_DATA_SCALARS) THEN
                 funit=myVTKFile%getUnitNo()
-                aline='CELL_DATA'
-                WRITE(sint,'(i64)') myVTKFile%mesh%numCells; sint=ADJUSTL(sint)
-                aline=TRIM(aline)//' '//TRIM(sint)
                 SELECTCASE(TRIM(vtkData%vtkDataFormat))
                   CASE('float')
                     WRITE(funit,'(a)') '        <DataArray type="Float32"'// &
                       ' Name="'//TRIM(vtkData%varname)//'" format="ascii">'
                     DO i=1,SIZE(vtkData%datalist),5
                       istp=i+4
-                      IF(istp > SIZE(vtkData%datalist)) istp=SIZE(vtkData%datalist)
+                      IF(istp > SIZE(vtkData%datalist)) istp= &
+                        SIZE(vtkData%datalist)
                       WRITE(funit,'(5f15.6)') REAL(vtkData%datalist(i:istp),SSK)
                     ENDDO
                   CASE('double')
@@ -336,7 +350,8 @@ MODULE VTUFiles
                       ' Name="'//TRIM(vtkData%varname)//'" format="ascii">'
                     DO i=1,SIZE(vtkData%datalist),3
                       istp=i+2
-                      IF(istp > SIZE(vtkData%datalist)) istp=SIZE(vtkData%datalist)
+                      IF(istp > SIZE(vtkData%datalist)) istp= &
+                        SIZE(vtkData%datalist)
                       WRITE(funit,'(3es22.14)') vtkData%datalist(i:istp)
                     ENDDO
                   CASE('int','short','long')
@@ -344,7 +359,8 @@ MODULE VTUFiles
                       ' Name="'//TRIM(vtkData%varname)//'" format="ascii">'
                     DO i=1,SIZE(vtkData%datalist),6
                       istp=i+5
-                      IF(istp > SIZE(vtkData%datalist)) istp=SIZE(vtkData%datalist)
+                      IF(istp > SIZE(vtkData%datalist)) istp= &
+                        SIZE(vtkData%datalist)
                       WRITE(funit,'(6i12)') NINT(vtkData%datalist(i:istp),SIK)
                     ENDDO
                   CASE DEFAULT
@@ -393,11 +409,36 @@ MODULE VTUFiles
       INTEGER(SIK) :: i
       !
       bool=.FALSE.
-      DO i=1,fileobj%varNameListLength
-        IF (varName==fileobj%varNameList(i).AND. &
-          varFormat==fileobj%dataFormatList(i)) bool=.TRUE.
-      ENDDO
+      IF(ALLOCATED(fileobj%varNameList)) THEN
+        DO i=1,fileobj%numDataSet
+          IF (varName==fileobj%varNameList(i).AND. &
+            varFormat==fileobj%dataFormatList(i)) bool=.TRUE.
+        ENDDO
+      ENDIF
     ENDSUBROUTINE hasData_VTUXMLFileType
+!
+!-------------------------------------------------------------------------------
+!> @brief Checks if fileobj has a given file.
+!> @param fileobj input file object.
+!> @param fname Name of the file to check.
+!> @param bool Whether or not the data is present.
+!>
+!> Checks if the VTU File has the specified file (which is written to pvtu).
+!>
+    SUBROUTINE hasFile_VTUXMLFileType(fileobj,fname,bool)
+      CHARACTER(LEN=*),PARAMETER :: myName='hasFile_VTUXMLFileType'
+      CLASS(VTUXMLFileType),INTENT(INOUT) :: fileobj
+      CHARACTER(LEN=*),INTENT(IN) :: fname
+      LOGICAL(SBK),INTENT(INOUT) :: bool
+      INTEGER(SIK) :: i
+      !
+      bool=.FALSE.
+      IF(ALLOCATED(fileobj%fileList)) THEN
+        DO i=1,fileobj%numFiles
+          IF (fname==fileobj%fileList(i)) bool=.TRUE.
+        ENDDO
+      ENDIF
+    ENDSUBROUTINE hasFile_VTUXMLFileType
 !
 !-------------------------------------------------------------------------------
 !> @brief Closes the VTU XML file object.
@@ -441,21 +482,23 @@ MODULE VTUFiles
         OPEN(unit=funit,file=TRIM(filen)//'.pvtu')
         !
         WRITE(funit,'(a)') '<?xml version="1.0"?>'
-        WRITE(funit,'(a)') '<VTKFile type="PUnstructuredGrid" version="0.1" byte_order="LittleEndian">'
+        WRITE(funit,'(a)') '<VTKFile type="PUnstructuredGrid" version="'// &
+          '0.1" byte_order="LittleEndian">'
         WRITE(funit,'(a)') '  <PUnstructuredGrid GhostLevel="0">'
         WRITE(funit,'(a)') '    <PPoints>'
         WRITE(funit,'(a)') '      <PDataArray type="Float32"'// &
           ' NumberOfComponents="3"/>'
         WRITE(funit,'(a)') '    </PPoints>'
         WRITE(funit,'(a)') '    <PCells>'
-        WRITE(funit,'(a)') '      <PDataArray type="Int32" Name="connectivity"/>'
+        WRITE(funit,'(a)') '      <PDataArray type="Int32" Name="'// &
+          'connectivity"/>'
         WRITE(funit,'(a)') '      <PDataArray type="Int32" Name="offsets"/>'
         WRITE(funit,'(a)') '      <PDataArray type="UInt8" Name="types"/>'
         WRITE(funit,'(a)') '    </PCells>'
         !
         WRITE(funit,'(a)') '    <PCellData Scalars="Data">'
-        DO i=1,fileobj%dataFormatListLength
-          SELECTCASE(TRIM(fileobj%dataFormatList(i)))
+        DO i=1,fileobj%numDataSet
+          SELECTCASE(TRIM(CHAR(fileobj%dataFormatList(i))))
             CASE('float')
               WRITE(funit,'(a)') '      <PDataArray type="Float32"'// &
                 ' Name="'//TRIM(fileobj%varNameList(i))//'"/>'
@@ -473,6 +516,8 @@ MODULE VTUFiles
         ENDDO
         WRITE(funit,'(a)') '    </PCellData>'
         !
+        ALLOCATE(fileobj%fileList(procs))
+        fileobj%numFiles=procs
         DO i=1,procs
           iord=procs-1
           j=1
@@ -480,10 +525,12 @@ MODULE VTUFiles
             j=j+1
             iord=iord/10
           ENDDO
-          WRITE(fmtStr,'(a,i2.2,a,i2.2,a)') '(i',j,'.',j,')'; fmtSTR=ADJUSTL(fmtStr)
+          WRITE(fmtStr,'(a,i2.2,a,i2.2,a)') '(i',j,'.',j,')'
+          fmtSTR=ADJUSTL(fmtStr)
           WRITE(sint,FMT=TRIM(fmtStr)) i-1
-          fname=TRIM(filen)//'_'//TRIM(sint)
-          WRITE(funit,'(a)') '    <Piece Source="'//TRIM(fname)//'.vtu'//'"/>'
+          fname=TRIM(filen)//'_'//TRIM(sint)//'.vtu'
+          fileobj%fileList(i)=fname
+          WRITE(funit,'(a)') '    <Piece Source="'//TRIM(fname)//'"/>'
         ENDDO
         WRITE(funit,'(a)') '  </PUnstructuredGrid>'
         WRITE(funit,'(a)') '</VTKFile>'
@@ -492,6 +539,36 @@ MODULE VTUFiles
       !
       DEALLOCATE(fileobj%varNameList)
       DEALLOCATE(fileobj%dataFormatList)
+      fileobj%numDataSet=0
     ENDSUBROUTINE writepvtu_VTUXMLFileType
+!
+!-------------------------------------------------------------------------------
+!> @brief Appends to StringType array.
+!> @param str_list input StringType array.
+!> @param str String to add to str_list.
+!> @param n New length of str_list.
+!>
+!> This routine adds a string to a StringType array.
+!>
+    SUBROUTINE str_append(str_list,str,n)
+      CHARACTER(LEN=*),PARAMETER :: myName='str_append'
+      TYPE(StringType),ALLOCATABLE,DIMENSION(:),INTENT(INOUT) :: str_list
+      CHARACTER(LEN=*),INTENT(IN) :: str
+      INTEGER(SIK),INTENT(IN) :: n
+      TYPE(StringType),ALLOCATABLE,DIMENSION(:) :: temp
+      !
+      IF (.NOT.ALLOCATED(str_list)) THEN
+        ALLOCATE(str_list(n))
+        str_list=str
+      ELSE
+        ALLOCATE(temp(n))
+        temp(1:n-1)=str_list
+        temp(n)=str
+        DEALLOCATE(str_list)
+        ALLOCATE(str_list(n))
+        str_list=temp
+        DEALLOCATE(temp)
+      ENDIF
+    ENDSUBROUTINE str_append
 !
 ENDMODULE VTUFiles
