@@ -411,8 +411,8 @@ MODULE VTUFiles
       bool=.FALSE.
       IF(ALLOCATED(fileobj%varNameList)) THEN
         DO i=1,fileobj%numDataSet
-          IF (varName==fileobj%varNameList(i).AND. &
-            varFormat==fileobj%dataFormatList(i)) bool=.TRUE.
+          IF (varName == fileobj%varNameList(i).AND. &
+            varFormat == fileobj%dataFormatList(i)) bool=.TRUE.
         ENDDO
       ENDIF
     ENDSUBROUTINE hasData_VTUXMLFileType
@@ -435,7 +435,10 @@ MODULE VTUFiles
       bool=.FALSE.
       IF(ALLOCATED(fileobj%fileList)) THEN
         DO i=1,fileobj%numFiles
-          IF (fname==fileobj%fileList(i)) bool=.TRUE.
+          IF(fname == fileobj%fileList(i)) THEN
+            bool=.TRUE.
+            EXIT
+          ENDIF
         ENDDO
       ENDIF
     ENDSUBROUTINE hasFile_VTUXMLFileType
@@ -478,7 +481,7 @@ MODULE VTUFiles
       INTEGER(SIK) :: i,j,iord
       CHARACTER(LEN=128) :: fname,fmtStr
       !
-      IF((procs>1).AND.rank==0) THEN
+      IF((procs>1).AND.rank == 0) THEN
         OPEN(unit=funit,file=TRIM(filen)//'.pvtu')
         !
         WRITE(funit,'(a)') '<?xml version="1.0"?>'

@@ -21,6 +21,7 @@ PROGRAM testVTUFiles
   TYPE(VTKDataType),SAVE :: testVTKData
   TYPE(VTUXMLFileType),SAVE :: testVTUFile
   LOGICAL(SBK) :: bool
+  INTEGER(SRK) :: i
   !
   CREATE_TEST('Test VTU Files')
   !
@@ -55,19 +56,19 @@ PROGRAM testVTUFiles
       testVTUFile%hasMesh=.TRUE.
       !
       CALL testVTUFile%clear()
-      ASSERT(.NOT.testVTUFile%isInit(),'testVTUFile%isInit()')
-      ASSERT(.NOT.testVTUFile%isOpen(),'testVTUFile%isOpen()')
-      ASSERT(.NOT.testVTUFile%hasMesh,'testVTUFile%hasMesh')
+      ASSERT(.NOT.testVTUFile%isInit(),'isInit()')
+      ASSERT(.NOT.testVTUFile%isOpen(),'isOpen()')
+      ASSERT(.NOT.testVTUFile%hasMesh,'hasMesh')
     ENDSUBROUTINE testClear
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testInitialize()
       !Test initialize
       CALL testVTUFile%initialize(666,'testVTU0.vtu')
-      ASSERT(testVTUFile%isInit(),'testVTUFile%isInit()')
-      ASSERT(testVTUFile%isOpen(),'testVTUFile%isOpen()')
-      ASSERT(.NOT.testVTUFile%hasMesh,'testVTUFile%hasMesh')
-      ASSERT(testVTUFile%numDataSet==0,'testVTUFile%numDataSet')
+      ASSERT(testVTUFile%isInit(),'isInit()')
+      ASSERT(testVTUFile%isOpen(),'isOpen()')
+      ASSERT(.NOT.testVTUFile%hasMesh,'hasMesh')
+      ASSERT(testVTUFile%numDataSet == 0,'numDataSet')
       CALL testVTUFile%clear(.TRUE.)
     ENDSUBROUTINE testInitialize
 !
@@ -79,7 +80,7 @@ PROGRAM testVTUFiles
       CALL SetupTest1_Mesh()
       CALL testVTUFile%writeMesh(testVTKMesh) ! Try to write STRUCTURED_POINTS
       bool=.NOT.testVTUFile%hasMesh
-      ASSERT(bool,'testVTUFile%writeMesh(...) STRUCTURED_POINTS')
+      ASSERT(bool,'writeMesh(...) STRUCTURED_POINTS')
       CALL testVTUFile%clear(.TRUE.)
     ENDSUBROUTINE testFailSTRUCTURED_POINTS
 !
@@ -90,7 +91,7 @@ PROGRAM testVTUFiles
       CALL SetupTest2_Mesh()
       CALL testVTUFile%writeMesh(testVTKMesh)
       bool=testVTUFile%hasMesh
-      ASSERT(bool,'testVTUFile%writeMesh(...) UNSTRUCTURED_GRID')
+      ASSERT(bool,'writeMesh(...) UNSTRUCTURED_GRID')
       !
       !Write data on the mesh
       CALL SetupTest2_Data()
@@ -102,38 +103,38 @@ PROGRAM testVTUFiles
       testVTKData%varname='mat_float'
       CALL testVTUFile%writeScalarData(testVTKData)
       CALL testVTUFile%hasData('mat_float','float',bool)
-      ASSERT(bool,'testVTUFile%hasData(...) FLOAT')
+      ASSERT(bool,'hasData(...) FLOAT')
       !
       COMPONENT_TEST('write long')
       testVTKData%vtkDataFormat='long'
       testVTKData%varname='mat_long'
       CALL testVTUFile%writeScalarData(testVTKData) !repeat for long
       CALL testVTUFile%hasData('mat_long','long',bool)
-      ASSERT(bool,'testVTUFile%hasData(...) LONG')
+      ASSERT(bool,'hasData(...) LONG')
       !
       COMPONENT_TEST('write short')
       testVTKData%vtkDataFormat='short'
       testVTKData%varname='mat_short'
       CALL testVTUFile%writeScalarData(testVTKData) !repeat for short
       CALL testVTUFile%hasData('mat_short','short',bool)
-      ASSERT(bool,'testVTUFile%hasData(...) SHORT')
+      ASSERT(bool,'hasData(...) SHORT')
       !
       COMPONENT_TEST('write int')
       testVTKData%vtkDataFormat='int'
       testVTKData%varname='mat_int'
       CALL testVTUFile%writeScalarData(testVTKData) !write as int
       CALL testVTUFile%hasData('mat_int','int',bool)
-      ASSERT(bool,'testVTUFile%hasData(...) INT')
+      ASSERT(bool,'hasData(...) INT')
       !
       COMPONENT_TEST('write double')
       testVTKData%vtkDataFormat='double'
       testVTKData%varname='mat_double'
       CALL testVTUFile%writeScalarData(testVTKData) !write as double
       CALL testVTUFile%hasData('mat_double','double',bool)
-      ASSERT(bool,'testVTUFile%hasData(...) DOUBLE')
+      ASSERT(bool,'hasData(...) DOUBLE')
       !
       CALL testVTUFile%close()
-      CALL testVTUFile%clear()
+      CALL testVTUFile%clear(.TRUE.)
     ENDSUBROUTINE testUNSTRUCTURED_GRID
 !
 !-------------------------------------------------------------------------------
@@ -143,16 +144,18 @@ PROGRAM testVTUFiles
       CALL SetupTest2_Mesh()
       CALL testVTUFile%writeMesh(testVTKMesh)
       bool=testVTUFile%hasMesh
-      ASSERT(bool,'testVTUFile%hasMesh')
+      ASSERT(bool,'hasMesh')
       INQUIRE(FILE='testPVTU_0.vtu',EXIST=bool)
       ASSERT(bool,'FILE WRITTEN')
       !
       !Write data on the mesh
       CALL SetupTest2_Data()
       CALL testVTUFile%writeScalarData(testVTKData)
-      ASSERT(testVTUFile%numDataSet==1,'testVTUFile%numDataSet==1')
+      ASSERT(testVTUFile%numDataSet == 1,'numDataSet == 1')
       CALL testVTUFile%close()
-      CALL testVTUFile%clear()
+      CALL testVTUFile%clear(.TRUE.)
+      INQUIRE(FILE='testPVTU_0.vtu',EXIST=bool)
+      ASSERT(.NOT.bool,'FILE DELETED')
       !
       !Write to second file
       CALL testVTUFile%initialize(666,'testPVTU_1.vtu')
@@ -160,30 +163,36 @@ PROGRAM testVTUFiles
       CALL testVTKMesh%translate(-4.0_SRK,-5.0_SRK,3.0_SRK)
       CALL testVTUFile%writeMesh(testVTKMesh)
       bool=testVTUFile%hasMesh
-      ASSERT(bool,'testVTUFile%hasMesh')
+      ASSERT(bool,'hasMesh')
       INQUIRE(FILE='testPVTU_1.vtu',EXIST=bool)
       ASSERT(bool,'FILE WRITTEN')
       !Write data on the mesh
       CALL testVTUFile%writeScalarData(testVTKData)
-      ASSERT(testVTUFile%numDataSet==1,'testVTUFile%numDataSet==1')
+      ASSERT(testVTUFile%numDataSet == 1,'numDataSet == 1')
       CALL testVTUFile%close()
-      CALL testVTUFile%clear()
+      CALL testVTUFile%clear(.TRUE.)
+      INQUIRE(FILE='testPVTU_1.vtu',EXIST=bool)
+      ASSERT(.NOT.bool,'FILE DELETED')
       !
       !Check that data is present
       CALL testVTUFile%hasData('material','int',bool)
-      ASSERT(bool,'testVTUFile%hasData(...)')
+      ASSERT(bool,'hasData(...)')
       !
       !Write pvtu file
       CALL testVTUFile%writepvtu(666,'testPVTU',2,0)
       CALL testVTUFile%hasFile('testPVTU_0.vtu',bool)
-      ASSERT(bool,'testVTUFile%hasFile(...) testPVTU_0.vtu')
+      ASSERT(bool,'hasFile(...) testPVTU_0.vtu')
       CALL testVTUFile%hasFile('testPVTU_1.vtu',bool)
-      ASSERT(bool,'testVTUFile%hasFile(...) testPVTU_1.vtu')
+      ASSERT(bool,'hasFile(...) testPVTU_1.vtu')
       !
       !Ensure that data is now deallocated
       CALL testVTUFile%hasData('material','int',bool)
-      ASSERT(.NOT.bool,'testVTUFile%hasData(...)')
-      ASSERT(testVTUFile%numDataSet==0,'testVTUFile%numDataSet==0')
+      ASSERT(.NOT.bool,'hasData(...)')
+      ASSERT(testVTUFile%numDataSet == 0,'numDataSet == 0')
+      !
+      !Delete test file
+      OPEN(UNIT=666,IOSTAT=i,FILE='testPVTU.pvtu')
+      IF(i == 0) CLOSE(666,STATUS='DELETE')
     ENDSUBROUTINE testMultiVTU
 !
 !-------------------------------------------------------------------------------
