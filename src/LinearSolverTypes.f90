@@ -600,6 +600,9 @@ MODULE LinearSolverTypes
 #endif
                 ENDSELECT
 
+                !Always use a nonzero initial guess:
+                CALL KSPSetInitialGuessNonzero(solver%ksp,PETSC_TRUE,iperr)
+
                 !set preconditioner
                 IF((solver%solverMethod == GMRES) .OR. (solver%solverMethod == BICGSTAB)) THEN
                   CALL KSPGetPC(solver%ksp,solver%pc,iperr)
