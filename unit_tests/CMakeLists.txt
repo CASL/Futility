@@ -47,6 +47,7 @@ SET(UNIT_TEST_NAMES
     testParallelEnv
     testExpTables
     testVTKFiles
+    testVTUFiles
     testCmdLineProc
     testVectorTypes
     testMatrixTypes

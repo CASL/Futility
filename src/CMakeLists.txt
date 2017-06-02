@@ -71,6 +71,7 @@ TRIBITS_ADD_LIBRARY(Utils
       FileType_Checkpoint.f90
       FileType_Input.f90
       VTKFiles.f90
+      VTUFiles.f90
       IOutil.f90
       ParameterLists.f90
       CommandLineProcessor.f90
