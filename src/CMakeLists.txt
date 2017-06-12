@@ -93,6 +93,7 @@ TRIBITS_ADD_LIBRARY(Utils
       StochasticSampling.f90
       Sorting.f90
       ArrayUtils.f90
+      PartitionGraph.f90
     DEPLIBS
       CUtils
       TrilinosUtils
