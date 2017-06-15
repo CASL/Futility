@@ -19,6 +19,7 @@ PROGRAM testPartitionGraph
 
   TYPE(PartitionGraphType) :: testPG,testSG
   TYPE(ParamType) :: params,tparams
+  TYPE(ParamType) :: refInitParams,refG1Params,refG2Params,refG3Params
   TYPE(StringType),ALLOCATABLE :: strList(:)
   TYPE(ExceptionHandlerType),POINTER :: e
 
@@ -29,10 +30,13 @@ PROGRAM testPartitionGraph
   CALL e%setQuietMode(.TRUE.)
   CALL ePartitionGraph%addSurrogate(e)
 
+  CALL setupTest()
+
   REGISTER_SUBTEST('Initialization',testInit)
   REGISTER_SUBTEST('Clear',testClear)
   REGISTER_SUBTEST('Subgraph',testSubgraph)
   REGISTER_SUBTEST('Recursive Expansion Bisection',testREB)
+  REGISTER_SUBTEST('Metrics Calculation',testMetrics)
   FINALIZE_TEST()
 
   CALL clearTest()
@@ -45,43 +49,18 @@ PROGRAM testPartitionGraph
     SUBROUTINE testInit()
       CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
       LOGICAL(SBK) :: bool
-      INTEGER(SIK) :: refwts(6),refneigh(4,6),refnwts(4,6),refunwt(4,6),refcond(1)
-      INTEGER(SIK) :: refd(6)
-      REAL(SRK) :: refCoord(2,6)
+      INTEGER(SIK) :: refcond(1)
+      INTEGER(SIK),ALLOCATABLE :: refwts(:),refneigh(:,:),refnwts(:,:),refunwt(:,:)
+      INTEGER(SIK),ALLOCATABLE :: refd(:)
+      REAL(SRK),ALLOCATABLE :: refCoord(:,:)
       TYPE(StringType) :: refAlgNames(2),tmpAlgNames(3)
 
-      !Generate parameter list
-      CALL params%add('PartitionGraph -> nvert', 6)
-      CALL params%add('PartitionGraph -> nGroups', 3)
-      refneigh=RESHAPE((/2, 0, 0, 0, &
-                         1, 3, 4, 0, &
-                         2, 5, 0, 0, &
-                         2, 5, 0, 0, &
-                         3, 4, 6, 0, &
-                         5, 0, 0, 0/),(/4,6/))
-      CALL params%add('PartitionGraph -> neigh', refneigh)
-      refwts=(/1,2,3,2,1,1/)
-      CALL params%add('PartitionGraph -> wts', refwts)
-      refnwts=RESHAPE((/1, 0, 0, 0, &
-                        1, 2, 3, 0, &
-                        2, 1, 0, 0, &
-                        3, 1, 0, 0, &
-                        1, 1, 1, 0, &
-                        1, 0, 0, 0/), (/4,6/))
-      CALL params%add('PartitionGraph -> neighwts', refnwts)
-      refAlgNames(1)='Recursive Expansion Bisection'
-      refAlgNames(2)='Recursive Spectral Bisection'
-      CALL params%add('PartitionGraph -> Algorithms', refAlgNames)
-      refcond=(/3/)
-      CALL params%add('PartitionGraph -> Conditions', refcond)
-      refCoord=RESHAPE((/-1.0_SRK, -1.0_SRK, &
-                         -1.0_SRK,  0.0_SRK, &
-                          0.0_SRK,  0.0_SRK, &
-                         -1.0_SRK,  1.0_SRK, &
-                          0.0_SRK,  1.0_SRK, &
-                          1.0_SRK,  1.0_SRK/),(/2,6/))
-      CALL params%add('PartitionGraph -> coord',refCoord)
-      tparams=params !Copy good parameter list
+      !Copy parameter list and get reference data
+      tparams=refInitParams !Copy good parameter list
+      CALL tparams%get('PartitionGraph -> wts', refwts)
+      CALL tparams%get('PartitionGraph -> neigh', refneigh)
+      CALL tparams%get('PartitionGraph -> neighwts', refnwts)
+      CALL tparams%get('PartitionGraph -> coord', refCoord)
 
       !Test invalid number of groups
       CALL tparams%set('PartitionGraph -> nGroups',0)
@@ -94,7 +73,6 @@ PROGRAM testPartitionGraph
       FINFO() 'Test:      ',msg
       CALL tparams%set('PartitionGraph -> nGroups',3)
 
-
       !Test invalid number of vertices
       CALL tparams%set('PartitionGraph -> nvert',0)
       CALL testPG%initialize(tparams)
@@ -106,7 +84,7 @@ PROGRAM testPartitionGraph
       FINFO() 'Test:      ',msg
       CALL tparams%set('PartitionGraph -> nvert',6)
 
-      ! !Test incorrectly sized coordinate matrix
+      !Test incorrectly sized coordinate matrix
       CALL tparams%set('PartitionGraph -> coord', RESHAPE((/1.0_SRK,1.0_SRK/),(/2,1/)))
       CALL testPG%initialize(tparams)
       msg=e%getLastMessage()
@@ -232,7 +210,6 @@ PROGRAM testPartitionGraph
       CALL tparams%set('PartitionGraph -> Algorithms',refAlgNames)
       CALL tparams%set('PartitionGraph -> Conditions', (/3/))
 
-
       !Test bad function name
       CALL tparams%remove('PartitionGraph -> wts')
       CALL tparams%remove('PartitionGraph -> neighwts')
@@ -251,6 +228,8 @@ PROGRAM testPartitionGraph
       CALL tparams%set('PartitionGraph -> Algorithms',refAlgNames(1:1))
       CALL testPG%initialize(tparams)
 
+      ALLOCATE(refd(6))
+      ALLOCATE(refunwt(4,6))
       refd=(/1, 3, 2, 2, 3, 1/)
       refunwt=RESHAPE((/1, 0, 0, 0, &
                         1, 1, 1, 0, &
@@ -288,7 +267,7 @@ PROGRAM testPartitionGraph
       ASSERT(bool,'%init(...)%d')
 
       !Test full initializaton (weighted, multiple algorithms)
-      tparams=params
+      tparams=refInitParams
       CALL testPG%initialize(tparams)
 
       ASSERT(testPG%nvert == 6, '%init(...)%nvert')
@@ -320,9 +299,15 @@ PROGRAM testPartitionGraph
       bool=ALL(testPG%d == refd)
       ASSERT(bool,'%init(...)%d')
 
+      !Clear and deallocate
       CALL testPG%clear()
       CALL tparams%clear()
-      CALL params%clear()
+      DEALLOCATE(refwts)
+      DEALLOCATE(refneigh)
+      DEALLOCATE(refnwts)
+      DEALLOCATE(refunwt)
+      DEALLOCATE(refd)
+      DEALLOCATE(refCoord)
     ENDSUBROUTINE testInit
 !
 !-------------------------------------------------------------------------------
@@ -461,37 +446,20 @@ PROGRAM testPartitionGraph
     ENDSUBROUTINE testSubgraph
 !
 !-------------------------------------------------------------------------------
-!May want to begin reading these from an xml file
     SUBROUTINE testREB()
       LOGICAL(SBK) :: bool
       INTEGER(SIK) :: ig,iv
-      INTEGER(SIK) ::refneigh(4,6),refGrpIdx(3),refGrpList(6)
+      INTEGER(SIK) :: refneigh(4,6),refGrpIdx(3),refGrpList(6)
       REAL(SRK) :: refCoord(2,6)
       TYPE(StringType) :: AlgName,refAlgNames(1)
       INTEGER(SIK),ALLOCATABLE :: grpIdx(:),grpList(:)
 
       !Test very simple 2-group, 2D, uniform-weighted graph
-      !Generate parameter list
-      CALL params%add('PartitionGraph -> nvert', 6)
-      CALL params%add('PartitionGraph -> nGroups', 2)
-      refneigh=RESHAPE((/2, 0, 0, 0, &
-                         1, 3, 4, 0, &
-                         2, 5, 0, 0, &
-                         2, 5, 0, 0, &
-                         3, 4, 0, 0, &
-                         5, 0, 0, 0/),(/4,6/))
-      CALL params%add('PartitionGraph -> neigh', refneigh)
-      AlgName='Recursive Expansion Bisection'
-      refAlgNames(1)=AlgName
-      CALL params%add('PartitionGraph -> Algorithms', refAlgNames)
-      refCoord=RESHAPE((/0.0_SRK, 0.0_SRK, &
-                         0.0_SRK, 1.0_SRK, &
-                         1.0_SRK, 1.0_SRK, &
-                         0.0_SRK, 2.0_SRK, &
-                         1.0_SRK, 2.0_SRK, &
-                         2.0_SRK, 2.0_SRK/),(/2,6/))
-      CALL params%add('PartitionGraph -> coord',refCoord)
-      CALL testPG%initialize(params)
+      !Decomposition should look like:
+      ! 2 2 2
+      ! 1 1
+      ! 1
+      CALL testPG%initialize(refG1Params)
 
       !Call partition algorithm
       CALL testPG%partition()
@@ -514,61 +482,15 @@ PROGRAM testPartitionGraph
       CALL params%clear()
 
       !Test larger 3-group problem (even divisions, unweighted)
-      CALL params%add('PartitionGraph -> nvert',24)
-      CALL params%add('PartitionGraph -> nGroups',3)
-      CALL params%add('PartitionGraph -> Algorithms',refAlgNames)
-      CALL params%add('PartitionGraph -> neigh', &
-        RESHAPE((/ 2,  3,  0,  0, &
-                   1,  4,  0,  0, &
-                   1,  4,  5,  0, &
-                   2,  3,  6,  0, &
-                   3,  6,  9,  0, &
-                   4,  5,  7, 10, &
-                   6,  8, 11,  0, &
-                   7, 12,  0,  0, &
-                   5, 10, 13,  0, &
-                   6,  9, 11, 14, &
-                   7, 10, 12, 15, &
-                   8, 11, 16,  0, &
-                   9, 14, 19,  0, &
-                  10, 13, 15, 20, &
-                  11, 14, 16, 21, &
-                  12, 15, 17, 22, &
-                  16, 18, 23,  0, &
-                  17, 24,  0,  0, &
-                  13, 20,  0,  0, &
-                  14, 19, 21,  0, &
-                  15, 20, 22,  0, &
-                  16, 21, 23,  0, &
-                  17, 22, 24,  0, &
-                  18, 23,  0,  0/),(/4, 24/)))
-      CALL params%add('PartitionGraph -> coord', &
-        RESHAPE((/1.0_SRK, 1.0_SRK, &
-                  2.0_SRK, 1.0_SRK, &
-                  1.0_SRK, 2.0_SRK, &
-                  2.0_SRK, 2.0_SRK, &
-                  1.0_SRK, 3.0_SRK, &
-                  2.0_SRK, 3.0_SRK, &
-                  3.0_SRK, 3.0_SRK, &
-                  4.0_SRK, 3.0_SRK, &
-                  1.0_SRK, 4.0_SRK, &
-                  2.0_SRK, 4.0_SRK, &
-                  3.0_SRK, 4.0_SRK, &
-                  4.0_SRK, 4.0_SRK, &
-                  1.0_SRK, 5.0_SRK, &
-                  2.0_SRK, 5.0_SRK, &
-                  3.0_SRK, 5.0_SRK, &
-                  4.0_SRK, 5.0_SRK, &
-                  5.0_SRK, 5.0_SRK, &
-                  6.0_SRK, 5.0_SRK, &
-                  1.0_SRK, 6.0_SRK, &
-                  2.0_SRK, 6.0_SRK, &
-                  3.0_SRK, 6.0_SRK, &
-                  4.0_SRK, 6.0_SRK, &
-                  5.0_SRK, 6.0_SRK, &
-                  6.0_SRK, 6.0_SRK/),(/2,24/)))
+      !Decomposition should look like
+      ! 3 3 2 2 2 2
+      ! 3 3 3 2 2 2
+      ! 3 3 3 2
+      ! 1 1 1 1
+      ! 1 1
+      ! 1 1
       !Initialize
-      CALL testPG%initialize(params)
+      CALL testPG%initialize(refG2Params)
       !Partition
       CALL testPG%partition()
 
@@ -599,71 +521,15 @@ PROGRAM testPartitionGraph
       CALL params%clear()
 
       !Test larger 3-group problem (uneven divisions, weighted)
-      CALL params%add('PartitionGraph -> nvert',28)
-      CALL params%add('PartitionGraph -> nGroups',3)
-      CALL params%add('PartitionGraph -> Algorithms',refAlgNames)
-      CALL params%add('PartitionGraph -> wts', (/2,2,1,2,2,1,2,2,2,2,2,2,2,2,1, &
-        1,2,2,2,2,2,2,2,2,2,2,2,2/))
-      CALL params%add('PartitionGraph -> neigh', &
-        RESHAPE((/  2,  4,  0,  0, &
-                    1,  3,  5,  0, &
-                    2,  6,  0,  0, &
-                    1,  5,  7,  0, &
-                    2,  4,  6,  8, &
-                    3,  5,  9,  0, &
-                    4,  8, 11,  0, &
-                    5,  7,  9, 12, &
-                    6,  8, 10, 13, &
-                    9, 14,  0,  0, &
-                    7, 12, 17,  0, &
-                    8, 11, 13, 18, &
-                    9, 12, 14, 19, &
-                   10, 13, 15, 20, &
-                   14, 16, 21,  0, &
-                   15, 22,  0,  0, &
-                   11, 18, 23,  0, &
-                   12, 17, 19, 24, &
-                   13, 18, 20, 25, &
-                   14, 19, 21, 26, &
-                   15, 20, 22, 27, &
-                   16, 21, 28,  0, &
-                   17, 24,  0,  0, &
-                   18, 23, 25,  0, &
-                   19, 24, 26,  0, &
-                   20, 25, 27,  0, &
-                   21, 26, 28,  0, &
-                   22, 27,  0,  0/),(/4, 28/)))
-      CALL params%add('PartitionGraph -> coord', &
-        RESHAPE((/1.0_SRK, 1.0_SRK, &
-                  2.0_SRK, 1.0_SRK, &
-                  3.0_SRK, 1.0_SRK, &
-                  1.0_SRK, 2.0_SRK, &
-                  2.0_SRK, 2.0_SRK, &
-                  3.0_SRK, 2.0_SRK, &
-                  1.0_SRK, 3.0_SRK, &
-                  2.0_SRK, 3.0_SRK, &
-                  3.0_SRK, 3.0_SRK, &
-                  4.0_SRK, 3.0_SRK, &
-                  1.0_SRK, 4.0_SRK, &
-                  2.0_SRK, 4.0_SRK, &
-                  3.0_SRK, 4.0_SRK, &
-                  4.0_SRK, 4.0_SRK, &
-                  5.0_SRK, 4.0_SRK, &
-                  6.0_SRK, 4.0_SRK, &
-                  1.0_SRK, 5.0_SRK, &
-                  2.0_SRK, 5.0_SRK, &
-                  3.0_SRK, 5.0_SRK, &
-                  4.0_SRK, 5.0_SRK, &
-                  5.0_SRK, 5.0_SRK, &
-                  6.0_SRK, 5.0_SRK, &
-                  1.0_SRK, 6.0_SRK, &
-                  2.0_SRK, 6.0_SRK, &
-                  3.0_SRK, 6.0_SRK, &
-                  4.0_SRK, 6.0_SRK, &
-                  5.0_SRK, 6.0_SRK, &
-                  6.0_SRK, 6.0_SRK/),(/2,28/)))
+      !Decomposition should look like
+      ! 3 3 3 2 2 2
+      ! 3 3 3 2 2 2
+      ! 3 3 2 2 2 2
+      ! 1 1 1 1
+      ! 1 1 1
+      ! 1 1 1
       !Initialize
-      CALL testPG%initialize(params)
+      CALL testPG%initialize(refG3Params)
       !Partition
       CALL testPG%partition()
 
@@ -696,12 +562,242 @@ PROGRAM testPartitionGraph
     ENDSUBROUTINE testREB
 !
 !-------------------------------------------------------------------------------
+    SUBROUTINE testMetrics()
+      LOGICAL(SBK) :: bool
+      REAL(SRK) :: mmr,srms,ecut,comm
+
+      !Initialize the graph
+      CALL testPG%initialize(refG3Params)
+      !Partition the graph manually
+      CALL testPG%setGroups( &
+          (/1,11,20,29/), & !GroupIdx
+          (/  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, & !GroupList Group 1
+             11, 12, 13, 14, 15, 17, 18, 23, 24, &
+             16, 19, 20, 21, 22, 25, 26, 27, 28/))
+      !Calculate the metrics
+      CALL testPG%metrics(mmr,srms,ecut,comm)
+
+      !Test values
+      bool=(mmr .APPROXEQ. 1.0588235294117647_SRK)
+      ASSERT(bool,'max-min ratio')
+      FINFO() mmr
+      bool=(srms .APPROXEQ. 0.81649658092772603_SRK)
+      ASSERT(bool, 'group size rms (from optimal)')
+      FINFO() srms
+      bool=(ecut .APPROXEQ. 10.0_SRK)
+      ASSERT(bool, 'edges cut')
+      FINFO() ecut
+      bool=(comm .APPROXEQ. 18.0_SRK)
+      ASSERT(bool, 'communication')
+      FINFO() comm
+      !Clear
+      CALL testPG%clear()
+    ENDSUBROUTINE testMetrics
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE setupTest()
+      TYPE(StringType) :: AlgName
+      TYPE(StringType) :: refAlgNames(2)
+
+      !Generate parameter list for the initialization test
+      CALL refInitParams%add('PartitionGraph -> nvert', 6)
+      CALL refInitParams%add('PartitionGraph -> nGroups', 3)
+      CALL refInitParams%add('PartitionGraph -> neigh', &
+        RESHAPE((/2, 0, 0, 0, &
+                  1, 3, 4, 0, &
+                  2, 5, 0, 0, &
+                  2, 5, 0, 0, &
+                  3, 4, 6, 0, &
+                  5, 0, 0, 0/),(/4,6/)))
+      CALL refInitParams%add('PartitionGraph -> wts', (/1,2,3,2,1,1/))
+      CALL refInitParams%add('PartitionGraph -> neighwts', &
+        RESHAPE((/1, 0, 0, 0, &
+                  1, 2, 3, 0, &
+                  2, 1, 0, 0, &
+                  3, 1, 0, 0, &
+                  1, 1, 1, 0, &
+                  1, 0, 0, 0/), (/4,6/)))
+      refAlgNames(1)='Recursive Expansion Bisection'
+      refAlgNames(2)='Recursive Spectral Bisection'
+      CALL refInitParams%add('PartitionGraph -> Algorithms', refAlgNames)
+      CALL refInitParams%add('PartitionGraph -> Conditions', (/3/))
+      CALL refInitParams%add('PartitionGraph -> coord', &
+        RESHAPE((/-1.0_SRK, -1.0_SRK, &
+                  -1.0_SRK,  0.0_SRK, &
+                   0.0_SRK,  0.0_SRK, &
+                  -1.0_SRK,  1.0_SRK, &
+                   0.0_SRK,  1.0_SRK, &
+                   1.0_SRK,  1.0_SRK/),(/2,6/)))
+
+      !Generate parameter list for testGraph 1 with shape
+      ! 1 1 1
+      ! 1 1
+      ! 1
+      CALL refG1Params%add('PartitionGraph -> nvert', 6)
+      CALL refG1Params%add('PartitionGraph -> nGroups', 2)
+      CALL refG1Params%add('PartitionGraph -> neigh', &
+        RESHAPE((/ 2, 0, 0, 0, &
+                   1, 3, 4, 0, &
+                   2, 5, 0, 0, &
+                   2, 5, 0, 0, &
+                   3, 4, 0, 0, &
+                   5, 0, 0, 0/),(/4,6/)))
+      AlgName='Recursive Expansion Bisection'
+      refAlgNames(1)=AlgName
+      CALL refG1Params%add('PartitionGraph -> Algorithms', refAlgNames(1:1))
+
+      CALL refG1Params%add('PartitionGraph -> coord' ,&
+        RESHAPE((/0.0_SRK, 0.0_SRK, &
+                  0.0_SRK, 1.0_SRK, &
+                  1.0_SRK, 1.0_SRK, &
+                  0.0_SRK, 2.0_SRK, &
+                  1.0_SRK, 2.0_SRK, &
+                  2.0_SRK, 2.0_SRK/),(/2,6/)))
+
+      !Generate parameter list for testGraph 2 with shape
+      ! 1 1 1 1 1 1
+      ! 1 1 1 1 1 1
+      ! 1 1 1 1
+      ! 1 1 1 1
+      ! 1 1
+      ! 1 1
+      CALL refG2Params%add('PartitionGraph -> nvert',24)
+      CALL refG2Params%add('PartitionGraph -> nGroups',3)
+      CALL refG2Params%add('PartitionGraph -> Algorithms',refAlgNames(1:1))
+      CALL refG2Params%add('PartitionGraph -> neigh', &
+        RESHAPE((/ 2,  3,  0,  0, &
+                   1,  4,  0,  0, &
+                   1,  4,  5,  0, &
+                   2,  3,  6,  0, &
+                   3,  6,  9,  0, &
+                   4,  5,  7, 10, &
+                   6,  8, 11,  0, &
+                   7, 12,  0,  0, &
+                   5, 10, 13,  0, &
+                   6,  9, 11, 14, &
+                   7, 10, 12, 15, &
+                   8, 11, 16,  0, &
+                   9, 14, 19,  0, &
+                  10, 13, 15, 20, &
+                  11, 14, 16, 21, &
+                  12, 15, 17, 22, &
+                  16, 18, 23,  0, &
+                  17, 24,  0,  0, &
+                  13, 20,  0,  0, &
+                  14, 19, 21,  0, &
+                  15, 20, 22,  0, &
+                  16, 21, 23,  0, &
+                  17, 22, 24,  0, &
+                  18, 23,  0,  0/),(/4, 24/)))
+      CALL refG2Params%add('PartitionGraph -> coord', &
+        RESHAPE((/1.0_SRK, 1.0_SRK, &
+                  2.0_SRK, 1.0_SRK, &
+                  1.0_SRK, 2.0_SRK, &
+                  2.0_SRK, 2.0_SRK, &
+                  1.0_SRK, 3.0_SRK, &
+                  2.0_SRK, 3.0_SRK, &
+                  3.0_SRK, 3.0_SRK, &
+                  4.0_SRK, 3.0_SRK, &
+                  1.0_SRK, 4.0_SRK, &
+                  2.0_SRK, 4.0_SRK, &
+                  3.0_SRK, 4.0_SRK, &
+                  4.0_SRK, 4.0_SRK, &
+                  1.0_SRK, 5.0_SRK, &
+                  2.0_SRK, 5.0_SRK, &
+                  3.0_SRK, 5.0_SRK, &
+                  4.0_SRK, 5.0_SRK, &
+                  5.0_SRK, 5.0_SRK, &
+                  6.0_SRK, 5.0_SRK, &
+                  1.0_SRK, 6.0_SRK, &
+                  2.0_SRK, 6.0_SRK, &
+                  3.0_SRK, 6.0_SRK, &
+                  4.0_SRK, 6.0_SRK, &
+                  5.0_SRK, 6.0_SRK, &
+                  6.0_SRK, 6.0_SRK/),(/2,24/)))
+
+      !Generate parameter list for testGraph 3 with shape (weights shown)
+      ! 2 2 2 2 2 2
+      ! 2 2 2 2 2 2
+      ! 2 2 2 2 1 1
+      ! 2 2 2 2
+      ! 2 2 1
+      ! 2 2 1
+      CALL refG3Params%add('PartitionGraph -> nvert',28)
+      CALL refG3Params%add('PartitionGraph -> nGroups',3)
+      CALL refG3Params%add('PartitionGraph -> Algorithms',refAlgNames(1:1))
+      CALL refG3Params%add('PartitionGraph -> wts', &
+        (/2,2,1,2,2,1,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,2,2,2,2/))
+      CALL refG3Params%add('PartitionGraph -> neigh', &
+        RESHAPE((/  2,  4,  0,  0, &
+                    1,  3,  5,  0, &
+                    2,  6,  0,  0, &
+                    1,  5,  7,  0, &
+                    2,  4,  6,  8, &
+                    3,  5,  9,  0, &
+                    4,  8, 11,  0, &
+                    5,  7,  9, 12, &
+                    6,  8, 10, 13, &
+                    9, 14,  0,  0, &
+                    7, 12, 17,  0, &
+                    8, 11, 13, 18, &
+                    9, 12, 14, 19, &
+                   10, 13, 15, 20, &
+                   14, 16, 21,  0, &
+                   15, 22,  0,  0, &
+                   11, 18, 23,  0, &
+                   12, 17, 19, 24, &
+                   13, 18, 20, 25, &
+                   14, 19, 21, 26, &
+                   15, 20, 22, 27, &
+                   16, 21, 28,  0, &
+                   17, 24,  0,  0, &
+                   18, 23, 25,  0, &
+                   19, 24, 26,  0, &
+                   20, 25, 27,  0, &
+                   21, 26, 28,  0, &
+                   22, 27,  0,  0/),(/4, 28/)))
+      CALL refG3Params%add('PartitionGraph -> coord', &
+        RESHAPE((/1.0_SRK, 1.0_SRK, &
+                  2.0_SRK, 1.0_SRK, &
+                  3.0_SRK, 1.0_SRK, &
+                  1.0_SRK, 2.0_SRK, &
+                  2.0_SRK, 2.0_SRK, &
+                  3.0_SRK, 2.0_SRK, &
+                  1.0_SRK, 3.0_SRK, &
+                  2.0_SRK, 3.0_SRK, &
+                  3.0_SRK, 3.0_SRK, &
+                  4.0_SRK, 3.0_SRK, &
+                  1.0_SRK, 4.0_SRK, &
+                  2.0_SRK, 4.0_SRK, &
+                  3.0_SRK, 4.0_SRK, &
+                  4.0_SRK, 4.0_SRK, &
+                  5.0_SRK, 4.0_SRK, &
+                  6.0_SRK, 4.0_SRK, &
+                  1.0_SRK, 5.0_SRK, &
+                  2.0_SRK, 5.0_SRK, &
+                  3.0_SRK, 5.0_SRK, &
+                  4.0_SRK, 5.0_SRK, &
+                  5.0_SRK, 5.0_SRK, &
+                  6.0_SRK, 5.0_SRK, &
+                  1.0_SRK, 6.0_SRK, &
+                  2.0_SRK, 6.0_SRK, &
+                  3.0_SRK, 6.0_SRK, &
+                  4.0_SRK, 6.0_SRK, &
+                  5.0_SRK, 6.0_SRK, &
+                  6.0_SRK, 6.0_SRK/),(/2,28/)))
+    ENDSUBROUTINE setupTest
+!
+!-------------------------------------------------------------------------------
     !Clear data from the unit-test
     SUBROUTINE clearTest()
       CALL testPG%clear()
       CALL testSG%clear()
       CALL params%clear()
       CALL tparams%clear()
+      CALL refInitParams%clear()
+      CALL refG1Params%clear()
+      CALL refG2Params%clear()
+      CALL refG3Params%clear()
       CALL PartitionGraphType_Clear_Params()
       IF(ALLOCATED(strList)) DEALLOCATE(strList)
       DEALLOCATE(e)

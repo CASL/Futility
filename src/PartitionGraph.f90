@@ -49,6 +49,7 @@ MODULE PartitionGraph
   !> 1. Structured Graph/Core - connectivity is reasonably low
   !> 2. Undirected edges - edges connect both ways
   !> 3. Edges only connect 2 vertices
+  !> 4. Connected graph (no isolated vertices, or groups of vertices)
   !>
   TYPE :: PartitionGraphType
     !> The number of vertices in the graph (core)
@@ -89,12 +90,18 @@ MODULE PartitionGraph
     !> @copybrief PartitionGraph::clear_PartitionGraph
     !> @copydetails PartitionGraph::clear_PartitionGraph
     PROCEDURE,PASS :: clear => clear_PartitionGraph
+    !> @copybrief PartitionGraph::setGroups_PartitionGraph
+    !> @copydetails PartitionGraph::setGroups_PartitionGraph
+    PROCEDURE,PASS :: setGroups => setGroups_PartitionGraph
     !> @copybrief PartitionGraph::GenerateSubgraph
     !> @copydetails PartitionGraph::GenerateSubgraph
-    PROCEDURE,PASS :: subgraph => GenerateSubgraph
+    PROCEDURE,PASS :: subgraph => GenerateSubgraph_PartitionGraph
     !> @copybrief PartitionGraph::partition_PartitionGraph
     !> @copydetails PartitionGraph::partition_PartitionGraph
     PROCEDURE,PASS :: partition => partition_PartitionGraph
+    !> @copybrief PartitionGraph::calcDecompMetrics_PartitionGraph
+    !> @copydetails PartitionGraph::calcDecompMetrics_PartitionGraph
+    PROCEDURE,PASS :: metrics => calcDecompMetrics_PartitionGraph
   ENDTYPE PartitionGraphType
 
   !> Abstract interface for pointer to partitioning routine
@@ -346,7 +353,7 @@ MODULE PartitionGraph
 !> @param L the list of vertex indices to create the subgraph
 !> @param subgraph the generated subgraph
 !>
-    SUBROUTINE GenerateSubgraph(thisGraph,L,ng,subgraph)
+    SUBROUTINE GenerateSubgraph_PartitionGraph(thisGraph,L,ng,subgraph)
       CLASS(PartitionGraphType),INTENT(IN) :: thisGraph
       INTEGER(SIK),INTENT(IN) :: ng,L(:)
       TYPE(PartitionGraphType),INTENT(OUT) :: subgraph
@@ -415,7 +422,30 @@ MODULE PartitionGraph
           ENDDO !in
         ENDIF
       ENDDO !il
-    ENDSUBROUTINE GenerateSubgraph
+    ENDSUBROUTINE GenerateSubgraph_PartitionGraph
+!
+!-------------------------------------------------------------------------------
+!> @brief Manually set the groups of the graph
+!> @param thisGraph the graph to set the groups within
+!> @param groupIdx the starting index for each group(extra index is nvert+1)
+!> @param groupList the list of vertices within each group
+!>
+    SUBROUTINE setGroups_PartitionGraph(thisGraph,groupIdx,groupList)
+      CLASS(PartitionGraphType),INTENT(INOUT) :: thisGraph
+      INTEGER(SIK),INTENT(IN) :: groupIdx(:),groupList(:)
+
+      !If already partitioned then deallocate previous partition description
+      IF(ALLOCATED(thisGraph%groupIdx)) THEN
+        DEALLOCATE(thisGraph%groupIdx)
+        DEALLOCATE(thisGraph%groupList)
+      ENDIF
+
+      !Allocate new memory and copy lists
+      ALLOCATE(thisGraph%groupIdx(thisGraph%nGroups+1))
+      ALLOCATE(thisGraph%groupList(thisGraph%nvert))
+      thisGraph%groupIdx=groupIdx
+      thisGraph%groupList=groupList
+    ENDSUBROUTINE setGroups_PartitionGraph
 !
 !-------------------------------------------------------------------------------
 !> @brief Wrapper routine to call the procedure to partition the graph
@@ -861,6 +891,97 @@ MODULE PartitionGraph
         ENDIF
       ENDDO !jn
     ENDSUBROUTINE detSoI
+!
+!-------------------------------------------------------------------------------
+!> @brief Calculate metrics relevant to the quality of partition
+!> @param thisGraph the partitioned graph to check metrics of
+!> @param mmr the ratio of maximum sized(weighted) group to minimum
+!> @param srms the rms of the group size(weighted) difference from optimal
+!> @param ecut the total weight of edges cut
+!> @param comm the total weight of communication between groups
+!>
+    SUBROUTINE calcDecompMetrics_PartitionGraph(thisGraph,mmr,srms,ecut,comm)
+      CHARACTER(LEN=*),PARAMETER :: myName='calcDecompMetrics'
+      CLASS(PartitionGraphType),INTENT(IN) :: thisGraph
+      REAL(SRK),INTENT(OUT) :: mmr,srms,ecut,comm
+      INTEGER(SIK) :: ig,igstt,igstp,in,ineigh,iv,ivert,neighGrp
+      INTEGER(SIK) :: lgroup,sgroup,gsize,wtSum,wtGrp
+      REAL(SRK) :: optSize,wtDif
+      INTEGER(SIK),ALLOCATABLE :: grpMap(:),uniqueGrps(:)
+
+      mmr=0.0_SRK
+      srms=0.0_SRK
+      ecut=0.0_SRK
+      comm=0.0_SRK
+      IF(ALLOCATED(thisGraph%groupIdx)) THEN
+        !Compute the min/max ratio and rms difference from optimal
+        lgroup=0
+        sgroup=HUGE(1)
+        wtSum=SUM(thisGraph%wts)
+        optSize=REAL(wtSum,SRK)/REAL(thisGraph%nGroups,SRK)
+        DO ig=1,thisGraph%nGroups
+
+          !Determine group size(weighted)
+          wtGrp=0
+          DO iv=thisGraph%groupIdx(ig),thisGraph%groupIdx(ig+1)-1
+            wtGrp=wtGrp+thisGraph%wts(thisGraph%groupList(iv))
+          ENDDO !iv
+          !Determine min/max weights
+          IF(wtGrp > lgroup) lgroup=wtGrp
+          IF(wtGrp < sgroup) sgroup=wtGrp
+
+          !Accumulate rms errors
+          wtDif=optSize-REAL(wtGrp,SRK)
+          wtDif=wtDif*wtDif
+          srms=srms+REAL(wtDif,SRK)
+        ENDDO !ig
+        mmr=REAL(lgroup,SRK)/REAL(sgroup,SRK)
+        srms=SQRT(srms)
+
+        !Determine the total weight of cut edges, and the communication between
+        !groups
+        ALLOCATE(uniqueGrps(thisGraph%maxneigh))
+        ALLOCATE(grpMap(thisGraph%nvert))
+        !Generate a map to the groups
+        DO ig=1,thisGraph%nGroups
+          igstt=thisGraph%groupIdx(ig)
+          igstp=thisGraph%groupIdx(ig+1)-1
+          DO iv=igstt,igstp
+            ivert=thisGraph%groupList(iv)
+            grpMap(ivert)=ig
+          ENDDO !iv
+        ENDDO !ig
+        !Determine cut edges and communication
+        DO ig=1,thisGraph%nGroups
+          igstt=thisGraph%groupIdx(ig)
+          igstp=thisGraph%groupIdx(ig+1)-1
+          DO iv=igstt,igstp
+            ivert=thisGraph%groupList(iv)
+            uniqueGrps=0
+            DO in=1,thisGraph%maxneigh
+              ineigh=thisGraph%neigh(in,ivert)
+              IF(ineigh /= 0) THEN
+                !Accumulate edges cut
+                IF(.NOT. ANY(ineigh == thisGraph%groupList(igstt:igstp))) THEN
+                  ecut=ecut+REAL(thisGraph%neighwts(in,ivert),SRK)
+                ENDIF
+                !Accumulate communication between groups
+                neighGrp=grpMap(ineigh)
+                IF((neighGrp /= ig) .AND. &
+                   (.NOT. ANY(neighGrp == uniqueGrps))) THEN
+                  uniqueGrps(in)=neighGrp
+                  comm=comm+REAL(thisGraph%neighwts(in,ivert),SRK)
+                ENDIF
+              ENDIF
+            ENDDO !in
+          ENDDO !iv
+        ENDDO !ig
+        ecut=0.5_SRK*ecut
+      ELSE
+        CALL ePartitionGraph%raiseError(modName//'::'//myName// &
+          ' - graph is not partitioned!')
+      ENDIF
+    ENDSUBROUTINE calcDecompMetrics_PartitionGraph
 !
 !-------------------------------------------------------------------------------
 !> @brief Declares the required and optional parameters for initialization of
