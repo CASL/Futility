@@ -889,7 +889,6 @@ MODULE ParameterLists
       INTEGER(C_INT) :: ierr
       INTEGER(SNK) :: level
       TYPE(StringType) :: path
-      INTEGER :: t
 
       nullify(itr)
 
@@ -1498,7 +1497,6 @@ MODULE ParameterLists
       CLASS(ParamType),POINTER,INTENT(INOUT) :: param
 
       INTEGER(SIK) :: i
-      TYPE(StringType) :: tmpAddr,prevName
       CLASS(ParamType),POINTER :: tmpParam,nextParam
 
       nextParam => NULL()
@@ -9445,7 +9443,7 @@ MODULE ParameterLists
     RECURSIVE SUBROUTINE procXMLTree(thisParam,parent,currentPath)
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       TYPE(StringType),INTENT(IN) :: currentPath
-      TYPE(XMLElementType),POINTER :: iXMLE,children(:),parent,nextXMLE
+      TYPE(XMLElementType),POINTER :: iXMLE,children(:),parent
       TYPE(ParamType),POINTER :: pList(:)
       TYPE(StringType) :: elname,tmpStr,typval,attrVal,nameVal,tmpPath
       INTEGER(SIK) :: ic
@@ -9454,7 +9452,6 @@ MODULE ParameterLists
       INTEGER(SIK) :: intVal
       REAL(SSK) :: singleVal
       REAL(SDK) :: doubleVal
-      TYPE(StringType) :: strVal
       INTEGER(SIK),ALLOCATABLE :: intArry(:)
       REAL(SDK),ALLOCATABLE :: doubleArry(:)
       TYPE(StringType),ALLOCATABLE :: strArry(:)
@@ -9527,8 +9524,7 @@ MODULE ParameterLists
     SUBROUTINE initFromXML(thisParam, fname)
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: fname
-      INTEGER(SIK) :: ic
-      TYPE(StringType) :: tmpStr,typval,nameVal
+      TYPE(StringType) :: tmpStr,nameVal
       TYPE(XMLFileType) :: xmlFile
       TYPE(XMLElementType),POINTER :: iXMLE
       TYPE(StringType) :: currentPath
@@ -9564,7 +9560,6 @@ MODULE ParameterLists
 
 
       LOGICAL(SBK) :: bool0
-      LOGICAL(SBK),ALLOCATABLE :: bool1
       INTEGER(SIK) :: i,idx,nChildren
       REAL(SRK) :: doubleVal,oDoubleVal,singleVal,oSingleVal
       REAL(SRK),ALLOCATABLE :: doubleArry(:),oDoubleArry(:)
@@ -9707,7 +9702,6 @@ MODULE ParameterLists
       CLASS(ParamType),INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: fname
       TYPE(XMLFileType) :: xmlFile
-      TYPE(XMLElementType),POINTER :: nullElem => NULL()
       TYPE(StringType) :: addr
 
       SELECTTYPE(thisParam); TYPE IS(ParamType)
@@ -9751,7 +9745,7 @@ MODULE ParameterLists
       CHARACTER(LEN=50) :: tmpStr
       INTEGER(SIK) :: tmpInt
       INTEGER(SIK) :: numElts
-      INTEGER(SIK) :: i,j,k,commas
+      INTEGER(SIK) :: i,j,k
 
       numElts=countArrayElts(c)
       !Empty array case
