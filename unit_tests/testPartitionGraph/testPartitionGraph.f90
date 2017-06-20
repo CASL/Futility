@@ -13,6 +13,8 @@ PROGRAM testPartitionGraph
   USE Strings
   USE ExceptionHandler
   USE ParameterLists
+  USE VectorTypes
+  USE MatrixTypes
   USE PartitionGraph
 
   IMPLICIT NONE
@@ -23,23 +25,37 @@ PROGRAM testPartitionGraph
   TYPE(StringType),ALLOCATABLE :: strList(:)
   TYPE(ExceptionHandlerType),POINTER :: e
 
+#ifdef FUTILITY_HAVE_SLEPC
+#include <finclude/petsc.h>
+#include <finclude/slepc.h>
+#undef IS
+  PetscErrorCode  :: ierr
+#endif
+
   CREATE_TEST('PartitionGraph')
+
+  CALL setupTest()
 
   ALLOCATE(e)
   CALL e%setStopOnError(.FALSE.)
   CALL e%setQuietMode(.TRUE.)
   CALL ePartitionGraph%addSurrogate(e)
 
-  CALL setupTest()
-
   REGISTER_SUBTEST('Initialization',testInit)
   REGISTER_SUBTEST('Clear',testClear)
   REGISTER_SUBTEST('Subgraph',testSubgraph)
   REGISTER_SUBTEST('Recursive Expansion Bisection',testREB)
+  REGISTER_SUBTEST('Recursive Spectral Bisection',testRSB)
+  REGISTER_SUBTEST('Multi-method',testMulti)
   REGISTER_SUBTEST('Metrics Calculation',testMetrics)
-  FINALIZE_TEST()
 
+#ifdef FUTILITY_HAVE_PETSC
+  CALL SlepcFinalize(ierr)
+  CALL PetscFinalize(ierr)
+#endif
   CALL clearTest()
+
+  FINALIZE_TEST()
 !
 !===============================================================================
   CONTAINS
@@ -479,7 +495,6 @@ PROGRAM testPartitionGraph
       ENDDO !iv
 
       CALL testPG%clear()
-      CALL params%clear()
 
       !Test larger 3-group problem (even divisions, unweighted)
       !Decomposition should look like
@@ -518,7 +533,6 @@ PROGRAM testPartitionGraph
       DEALLOCATE(grpList)
 
       CALL testPG%clear()
-      CALL params%clear()
 
       !Test larger 3-group problem (uneven divisions, weighted)
       !Decomposition should look like
@@ -558,8 +572,204 @@ PROGRAM testPartitionGraph
       DEALLOCATE(grpList)
 
       CALL testPG%clear()
-      CALL params%clear()
     ENDSUBROUTINE testREB
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testRSB()
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: ig,iv
+      INTEGER(SIK),ALLOCATABLE :: grpIdx(:),grpList(:)
+      TYPE(StringType) :: algName(1)
+      algName(1)='Recursive Spectral Bisection'
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !Decomposition should look like:
+      ! 1 1 1
+      ! 2 2
+      ! 2
+      tparams=refG1Params
+      CALL tparams%set('PartitionGraph -> Algorithms',algName)
+
+      !initialize
+      CALL testPG%initialize(tparams)
+      CALL tparams%clear()
+
+      !Partition
+      CALL testPG%partition()
+
+      !Setup reference
+      ALLOCATE(grpIdx(3))
+      ALLOCATE(grpList(6))
+      grpIdx=(/1,4,7/)
+      grpList=(/6,5,4,1,2,3/)
+
+      !Test
+      DO ig=1,testPG%nGroups+1
+        bool=(testPG%groupIdx(ig) == GrpIdx(ig))
+        ASSERT(bool,'%partition(RSB)%groupIdx')
+        FINFO() 'Ref: ',grpIdx(ig)
+        FINFO() 'Test:',testPG%groupIdx(ig)
+      ENDDO !ig
+      DO iv=1,testPG%nvert
+        bool=(testPG%groupList(iv) == GrpList(iv))
+        ASSERT(bool,'%partition(RSB)%groupList')
+        FINFO() 'Ref: ',grpList(iv)
+        FINFO() 'Test:',testPG%groupList(iv)
+      ENDDO !iv
+
+      !Clear
+      DEALLOCATE(grpIdx)
+      DEALLOCATE(grpList)
+      CALL testPG%clear()
+      CALL tparams%clear()
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !Decomposition should look like:
+      ! 2 2 1 1 1 1
+      ! 2 2 1 1 1 1
+      ! 3 3 2 2
+      ! 3 3 2 2
+      ! 3 3
+      ! 3 3
+      tparams=refG2Params
+      CALL tparams%set('PartitionGraph -> Algorithms',algName)
+
+      !initialize
+      CALL testPG%initialize(tparams)
+      CALL tparams%clear()
+
+      !Partition
+      CALL testPG%partition()
+
+      !Setup reference
+      ALLOCATE(grpIdx(4))
+      ALLOCATE(grpList(24))
+      grpIdx=(/1,9,17,25/)
+      grpList=(/24,18,23,17,22,16,21,15, &
+                 1, 2, 3, 4, 5, 6, 7, 8, &
+                 9,10,11,12,13,14,19,20/)
+
+      !Test
+      DO ig=1,testPG%nGroups+1
+        bool=(testPG%groupIdx(ig) == GrpIdx(ig))
+        ASSERT(bool,'%partition(RSB)%groupIdx')
+        FINFO() 'Index:',ig
+        FINFO() 'Ref: ',grpIdx(ig)
+        FINFO() 'Test:',testPG%groupIdx(ig)
+      ENDDO !ig
+      DO iv=1,testPG%nvert
+        bool=(testPG%groupList(iv) == GrpList(iv))
+        ASSERT(bool,'%partition(RSB)%groupList')
+        FINFO() 'Index:',iv
+        FINFO() 'Ref: ',grpList(iv)
+        FINFO() 'Test:',testPG%groupList(iv)
+      ENDDO !iv
+
+      !Clear
+      DEALLOCATE(grpIdx)
+      DEALLOCATE(grpList)
+      CALL testPG%clear()
+      CALL tparams%clear()
+
+      !Test larger 3-group problem (uneven divisions, weighted)
+      !Decomposition should look like
+      ! 2 2 2 2 1 1
+      ! 2 2 2 1 1 1
+      ! 3 2 2 1 1 1
+      ! 3 3 3 1
+      ! 3 3 3
+      ! 3 3 3
+      !Initialize
+      tparams=refG3Params
+      CALL tparams%set('PartitionGraph -> Algorithms',algName)
+      CALL testPG%initialize(tparams)
+      !Partition
+      CALL testPG%partition()
+
+      !Setup references
+      ALLOCATE(grpIdx(4))
+      ALLOCATE(grpList(28))
+      grpIdx=(/1, 11, 20, 29/)
+      grpList=(/ 28, 22, 16, 27, 21, 15, 26, 20, 25, 14, &
+                  3,  2,  1,  6,  5,  4, 10,  9,  8, &
+                  7, 11, 12, 13, 17, 18, 19, 23, 24/)
+
+      !Test
+      DO ig=1,testPG%nGroups+1
+        bool=(testPG%groupIdx(ig) == GrpIdx(ig))
+        ASSERT(bool,'%partition(RSB)%groupIdx')
+        FINFO() 'Index:',ig
+        FINFO() 'Ref: ',grpIdx(ig)
+        FINFO() 'Test:',testPG%groupIdx(ig)
+      ENDDO !ig
+      DO iv=1,testPG%nvert
+        bool=(testPG%groupList(iv) == GrpList(iv))
+        ASSERT(bool,'%partition(RSB)%groupList')
+        FINFO() 'Index:',iv
+        FINFO() 'Ref: ',grpList(iv)
+        FINFO() 'Test:',testPG%groupList(iv)
+      ENDDO !iv
+
+      DEALLOCATE(grpIdx)
+      DEALLOCATE(grpList)
+
+      CALL testPG%clear()
+    ENDSUBROUTINE testRSB
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testMulti()
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: ig,iv
+      INTEGER(SIK),ALLOCATABLE :: grpIdx(:),grpList(:)
+      TYPE(StringType) :: algName(2)
+      algName(1)='Recursive Expansion Bisection'
+      algName(2)='Recursive Spectral Bisection'
+
+      !Test larger 3-group problem (uneven divisions, weighted)
+      !Decomposition should look like
+      ! 2 2 2 3 3 3
+      ! 2 2 2 3 3 3
+      ! 2 2 2 3 3 3
+      ! 1 1 1 1
+      ! 1 1 1
+      ! 1 1 1
+
+      !Initialize
+      tparams=refG3Params
+      CALL tparams%set('PartitionGraph -> Algorithms',algName)
+      CALL tparams%add('PartitionGraph -> Conditions',(/20/))
+      CALL testPG%initialize(tparams)
+      !Partition
+      CALL testPG%partition()
+
+      !Setup references
+      ALLOCATE(grpIdx(4))
+      ALLOCATE(grpList(28))
+      grpIdx=(/1, 11, 19, 29/)
+      grpList=(/  1,  2,  3,  6,  5,  4,  7,  8,  9, 10, &
+                 23, 17, 11, 24, 18, 12, 25, 19, 13, &
+                 14, 15, 16, 20, 21, 22, 26, 27, 28/)
+
+      !Test
+      DO ig=1,testPG%nGroups+1
+        bool=(testPG%groupIdx(ig) == GrpIdx(ig))
+        ASSERT(bool,'%partition(REB-RSB)%groupIdx')
+        FINFO() 'Index:',ig
+        FINFO() 'Ref: ',grpIdx(ig)
+        FINFO() 'Test:',testPG%groupIdx(ig)
+      ENDDO !ig
+      DO iv=1,testPG%nvert
+        bool=(testPG%groupList(iv) == GrpList(iv))
+        ASSERT(bool,'%partition(REB-RSB)%groupList')
+        FINFO() 'Index:',iv
+        FINFO() 'Ref: ',grpList(iv)
+        FINFO() 'Test:',testPG%groupList(iv)
+      ENDDO !iv
+
+      DEALLOCATE(grpIdx)
+      DEALLOCATE(grpList)
+
+      CALL testPG%clear()
+    ENDSUBROUTINE testMulti
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testMetrics()
@@ -599,6 +809,10 @@ PROGRAM testPartitionGraph
       TYPE(StringType) :: AlgName
       TYPE(StringType) :: refAlgNames(2)
 
+#ifdef FUTILITY_HAVE_SLEPC
+      CALL PETScInitialize(PETSC_NULL_CHARACTER,ierr)
+      CALL SlepcInitialize(PETSC_NULL_CHARACTER,ierr)
+#endif
       !Generate parameter list for the initialization test
       CALL refInitParams%add('PartitionGraph -> nvert', 6)
       CALL refInitParams%add('PartitionGraph -> nGroups', 3)
@@ -640,7 +854,7 @@ PROGRAM testPartitionGraph
                    1, 3, 4, 0, &
                    2, 5, 0, 0, &
                    2, 5, 0, 0, &
-                   3, 4, 0, 0, &
+                   3, 4, 6, 0, &
                    5, 0, 0, 0/),(/4,6/)))
       AlgName='Recursive Expansion Bisection'
       refAlgNames(1)=AlgName
@@ -798,6 +1012,8 @@ PROGRAM testPartitionGraph
       CALL refG1Params%clear()
       CALL refG2Params%clear()
       CALL refG3Params%clear()
+      CALL VectorType_Clear_ValidParams()
+      CALL MatrixTypes_Clear_ValidParams()
       CALL PartitionGraphType_Clear_Params()
       IF(ALLOCATED(strList)) DEALLOCATE(strList)
       DEALLOCATE(e)

@@ -23,8 +23,24 @@ MODULE PartitionGraph
   USE IO_Strings
   USE ExceptionHandler
   USE ParameterLists
+  USE ParallelEnv
+  USE VectorTypes
+  USE MatrixTypes
+  USE Sorting
 
   IMPLICIT NONE
+
+#ifdef FUTILITY_HAVE_PETSC
+#include <finclude/petsc.h>
+#include <petscversion.h>
+!petscisdef.h defines the keyword IS, and it needs to be reset
+#ifdef FUTILITY_HAVE_SLEPC
+#include <finclude/slepcsys.h>
+#include <finclude/slepceps.h>
+#endif
+#undef IS
+#endif
+
   PRIVATE
 
   PUBLIC :: PartitionGraphType
@@ -296,6 +312,7 @@ MODULE PartitionGraph
           CALL toUPPER(algName)
           SELECTCASE(TRIM(algName))
             CASE('RECURSIVE SPECTRAL BISECTION')
+              thisGraph%partitionAlgArry(ipart)%p => RecursiveSpectralBisection
             CASE('RECURSIVE EXPANSION BISECTION')
               thisGraph%partitionAlgArry(ipart)%p => RecursiveExpansionBisection
             CASE DEFAULT
@@ -721,13 +738,13 @@ MODULE PartitionGraph
         DEALLOCATE(S)
         DEALLOCATE(Scalc)
 
-        !Redistribute the number of groups for each subgraph
-        ng1=FLOOR(ng*cw1/wtSum)
-        ng2=ng-ng1
-
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!REFINE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+        !Redistribute the number of groups for each subgraph
+        ng1=MAX(1,FLOOR(ng*cw1/wtSum))
+        ng2=ng-ng1
 
         IF(ng1 > 1) THEN
           !Generate subgraph if further decomposition is needed
@@ -795,6 +812,227 @@ MODULE PartitionGraph
         ENDDO !iv
       ENDIF
     ENDSUBROUTINE RecursiveExpansionBisection
+!
+!-------------------------------------------------------------------------------
+!> @brief Recursively bisects the graph using a spectral(matrix) method
+!> @param thisGraph the graph to be partitioned
+!>
+    RECURSIVE SUBROUTINE RecursiveSpectralBisection(thisGraph)
+      CLASS(PartitionGraphType),INTENT(INOUT) :: thisGraph
+      LOGICAL(SBK) :: lexpand
+      INTEGER(SIK) :: nvert,ng,ng1,ng2,iv,jv,in,wneigh,nlocal,nneigh,ierr
+      INTEGER(SIK) :: nv1,nv2,wtMin,numeq
+      REAL(SRK) :: W,wg1,wg2,edgewt,cw1,curdif,wt,wtSum
+      TYPE(ParamType) :: matParams
+      TYPE(PETScMatrixType) :: Lmat
+      TYPE(PartitionGraphType) :: sg1,sg2
+      INTEGER(SIK),ALLOCATABLE :: L1(:),L2(:),Order(:)
+      REAL(SRK),ALLOCATABLE :: vf(:),vf2(:),vf2Copy(:)
+      CLASS(VectorType),ALLOCATABLE :: evecs(:)
+
+      IF(thisGraph%nGroups > 1) THEN
+        nvert=thisGraph%nvert
+        nneigh=thisGraph%maxneigh
+
+        !Generate edge-weighted Laplacian
+        !All local for now
+        nlocal=nvert
+
+        !Construct the matrix
+        CALL matParams%add('MatrixType->n',nvert)
+        CALL matParams%add('MatrixType->isSym',.TRUE.)
+        CALL matParams%add('MatrixType->matType',SPARSE)
+        CALL matParams%add('MatrixType->MPI_COMM_ID',PE_COMM_SELF)
+        CALL matParams%add('MatrixType->nlocal',nlocal)
+        CALL matParams%add('MatrixType->dnnz',(/0/))
+        CALL matParams%add('MatrixType->onnz',(/0/))
+
+        !Initialize matrix
+        CALL Lmat%init(matParams)
+
+        !Clear parameter list
+        CALL matParams%clear()
+        !Set the matrix
+        DO iv=1,nvert
+          wneigh=SUM(thisGraph%neighwts(1:nneigh,iv))
+          CALL Lmat%set(iv,iv,REAL(wneigh,SRK))
+          DO in=1,nneigh
+            jv=thisGraph%neigh(in,iv)
+            IF(jv /= 0) THEN
+              wneigh=-thisGraph%neighwts(in,iv)
+              CALL Lmat%set(iv,jv,REAL(wneigh,SRK))
+            ENDIF
+          ENDDO !in
+        ENDDO !iv
+
+        !Find Fiedler vector (Algebraic connectivity) - 2nd smallest eigenvector
+        CALL getEigenVecs(Lmat,.TRUE.,3,evecs)
+        CALL Lmat%clear()
+
+        !Store it
+        ALLOCATE(vf(nvert))   !Fiedler-vector
+        ALLOCATE(vf2(nvert))  !3rd smallest eigenvector
+        CALL evecs(1)%clear()
+        CALL evecs(2)%getAll(vf,ierr)
+        CALL evecs(3)%getAll(vf2,ierr)
+        CALL evecs(2)%clear()
+        CALL evecs(3)%clear()
+        DEALLOCATE(evecs)
+
+        !Sort the Fiedler vector
+        ALLOCATE(Order(nvert))
+        DO iv=1,nvert
+          Order(iv)=iv
+        ENDDO !iv
+        CALL sort(vf,Order,.TRUE.)
+
+        !Reorder 3rd eigenvector so no backwards sorting...
+        ALLOCATE(vf2Copy(nvert))
+        vf2Copy=vf2
+        DO iv=1,nvert
+          vf2(iv)=vf2Copy(Order(iv))
+        ENDDO !iv
+        DEALLOCATE(vf2Copy)
+        !In the event of ties, these values should be sorted by the 3rd-eigenvector
+        iv=0
+        DO WHILE(iv < nvert)
+          iv=iv+1
+          !Loop through remaining vertices
+          numeq=0
+          DO jv=iv+1,nvert
+            IF(vf(jv) .APPROXEQA. vf(iv)) THEN
+              numeq=numeq+1
+            ELSE
+              EXIT
+            ENDIF
+          ENDDO !jv
+
+          !Sort based on 3rd eigenvector values
+          IF(numeq > 1) THEN
+            CALL sort(vf2(iv:iv+numeq),Order(iv:iv+numeq),.TRUE.)
+            !Move forward(don't resort these values)
+            iv=iv+numeq
+          ENDIF
+        ENDDO !iv
+
+        !Determine desired number of groups for each bisection
+        !This will be updated before recursion, once the total weight of each
+        !group has been determined
+        ng=thisGraph%nGroups
+        ng1=ng/2    !Group 1
+        ng2=ng-ng1  !Group 2
+
+        !Vertex weight total
+        wtSum=REAL(SUM(thisGraph%wts),SRK)
+        wtMin=REAL(MINVAL(thisGraph%wts),SRK)
+        !Determine the weighted size of each bisection group
+        wg1=wtSum*REAL(ng1,SRK)/REAL(ng,SRK)  !Group 1
+        wg2=wtSum-wg1                         !Group 2
+
+        !Expected maximum size of the group is then wg/wtMin
+        nv1=CEILING(wg1/wtMin)
+        nv2=CEILING(wg2/wtMin)
+        ALLOCATE(L1(nv1))
+        ALLOCATE(L2(nv2))
+        L1=0
+        L2=0
+        cw1=0.0_SRK
+        curdif=wg1
+
+        !Expand until closest to desired size
+        nv1=0
+        DO jv=1,nvert
+          iv=Order(jv)
+          wt=REAL(thisGraph%wts(iv),SRK)
+          IF(ABS(curdif-wt) < ABS(curdif)) THEN
+            nv1=nv1+1
+            L1(jv)=iv
+            curdif=curdif-wt
+            cw1=cw1+wt
+          ELSE
+            EXIT
+          ENDIF
+        ENDDO !jv
+
+        !Populate 2nd group
+        nv2=0
+        DO iv=1,nvert
+          IF(.NOT. ANY(iv == L1)) THEN
+            nv2=nv2+1
+            L2(nv2)=iv
+          ENDIF
+        ENDDO !iv
+
+        !Redistribute the number of groups for each subgraph
+        ng1=MAX(1,FLOOR(ng*cw1/wtSum))
+        ng2=ng-ng1
+
+        IF(ng1 > 1) THEN
+          !Generate subgraph if further decomposition is needed
+          CALL thisGraph%subgraph(L1(1:nv1),ng1,sg1)
+          !Recursively partition
+          CALL sg1%partition()
+        ENDIF
+
+        IF(ng2 > 1) THEN
+          !Generate subgraph if further decomposition is needed
+          CALL thisGraph%subgraph(L2(1:nv2),ng2,sg2)
+          !Recursively partition
+          CALL sg2%partition()
+        ENDIF
+
+        !Allocate group lists on parent type
+        ALLOCATE(thisGraph%groupIdx(ng+1))
+        ALLOCATE(thisGraph%groupList(nvert))
+
+        IF(ng1 > 1) THEN
+          !Pull groups from first subgraph
+          thisGraph%groupIdx(1:ng1+1)=sg1%groupIdx(1:ng1+1)
+          DO iv=1,sg1%nvert
+            thisGraph%groupList(iv)=L1(sg1%groupList(iv))
+          ENDDO !iv
+          CALL sg1%clear()
+        ELSE
+          thisGraph%groupIdx(1)=1
+          thisGraph%groupIdx(2)=nv1+1
+          DO iv=1,nv1
+            thisGraph%groupList(iv)=L1(iv)
+          ENDDO !iv
+        ENDIF
+
+        IF(ng2 > 1) THEN
+          !Pull groups from second subgraph
+          thisGraph%groupIdx(ng1+1:ng1+ng2+1)=nv1+sg2%groupIdx(1:ng2+1)
+          DO iv=1,sg2%nvert
+            thisGraph%groupList(iv+nv1)=L2(sg2%groupList(iv))
+          ENDDO !iv
+          CALL sg2%clear()
+        ELSE
+          thisGraph%groupIdx(ng1+1)=nv1+1
+          thisGraph%groupIdx(ng1+2)=nv1+nv2+1
+          DO iv=1,nv2
+            thisGraph%groupList(iv+nv1)=L2(iv)
+          ENDDO !iv
+        ENDIF
+
+        !Deallocate lists
+        DEALLOCATE(L1)
+        DEALLOCATE(L2)
+      ELSE
+        !Single group graph...it will contain all the nodes
+        ALLOCATE(thisGraph%groupIdx(2))
+        ALLOCATE(thisGraph%groupList(thisGraph%nvert))
+
+        !Group indices
+        thisGraph%groupIdx(1)=1
+        thisGraph%groupIdx(2)=thisGraph%nvert+1
+
+        !List of 1 to nvert
+        DO iv=1,thisGraph%nvert
+          thisGraph%groupList(iv)=iv
+        ENDDO !iv
+      ENDIF
+    ENDSUBROUTINE RecursiveSpectralBisection
 !
 !-------------------------------------------------------------------------------
 !> @brief Calculates distance between two points
@@ -893,6 +1131,17 @@ MODULE PartitionGraph
     ENDSUBROUTINE detSoI
 !
 !-------------------------------------------------------------------------------
+!> @brief Algorithm to minimize communication between groups in a PartitionGraph
+!> @param thisGraph the graph containing vertices in L1, L2
+!> @param L1 the list of vertices in group 1
+!> @param L2 the list of vertices in group 2
+!>
+    SUBROUTINE KernighanLin_PartitionGraph(thisGraph,L1,L2)
+      CLASS(PartitionGraphType),INTENT(IN) :: thisGraph
+      INTEGER(SIK),INTENT(INOUT) :: L1(:),L2(:)
+    ENDSUBROUTINE KernighanLin_PartitionGraph
+!
+!-------------------------------------------------------------------------------
 !> @brief Calculate metrics relevant to the quality of partition
 !> @param thisGraph the partitioned graph to check metrics of
 !> @param mmr the ratio of maximum sized(weighted) group to minimum
@@ -905,7 +1154,7 @@ MODULE PartitionGraph
       CLASS(PartitionGraphType),INTENT(IN) :: thisGraph
       REAL(SRK),INTENT(OUT) :: mmr,srms,ecut,comm
       INTEGER(SIK) :: ig,igstt,igstp,in,ineigh,iv,ivert,neighGrp
-      INTEGER(SIK) :: lgroup,sgroup,gsize,wtSum,wtGrp
+      INTEGER(SIK) :: lgroup,sgroup,wtSum,wtGrp
       REAL(SRK) :: optSize,wtDif
       INTEGER(SIK),ALLOCATABLE :: grpMap(:),uniqueGrps(:)
 
@@ -1016,5 +1265,86 @@ MODULE PartitionGraph
       !Clear parameter list
       CALL PartitionGraphType_reqParams%clear()
     ENDSUBROUTINE PartitionGraphType_Clear_Params
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the indexed right eigenvectors of matrix A
+!> @param A matrix to find eigenvectors of
+!> @param lsmall true if searching for n smallest eigenvectors (false for largest)
+!> @param numvecs number of eigenvectors to calculate
+!> @param V array containing desired eigenvectors
+!>
+!> Uses SLEPc solver to find the eigenvectors of a matrix. Currently this will
+!> calculate all of the eigenvectors, and return the desired ones...some effort
+!> may be spent here to speed this up.
+!>
+    SUBROUTINE getEigenVecs(A,lsmall,numvecs,V)
+      CHARACTER(LEN=*),PARAMETER :: myName='getEigenVecs'
+      CLASS(MatrixType),INTENT(IN) :: A
+      LOGICAL(SBK),INTENT(IN) :: lsmall
+      INTEGER(SIK),INTENT(IN) :: numvecs
+      CLASS(VectorType),ALLOCATABLE,INTENT(OUT) :: V(:)
+      INTEGER(SIK) :: n,iv,tiv
+      INTEGER(SIK) :: nev,ncv,mpd
+      INTEGER(SIK) :: ierr
+      CLASS(VectorType),ALLOCATABLE :: Vi(:)
+      TYPE(ParamType) :: vecParams
+#ifdef FUTILITY_HAVE_SLEPC
+      EPS :: eps !SLEPC eigenvalue problem solver type
+
+      !Matrix size
+      n=A%n
+      !For now only pass in self-communicating MPI ENV
+      CALL EPSCreate(PE_COMM_SELF,eps,ierr)
+      CALL EPSSetProblemType(eps,EPS_HEP,ierr)
+      SELECTTYPE(A); TYPE IS(PETScMatrixType)
+        !Assemble the matrix
+        CALL A%assemble(ierr)
+        !Set the operators (Only matrix A)
+        CALL EPSSetOperators(eps, A%A,PETSC_NULL_OBJECT,ierr)
+      ENDSELECT
+
+      !Get the eigenvectors
+      ALLOCATE(PETScVectorType :: V(numvecs))
+      ALLOCATE(PETScVectorType :: Vi(numvecs))
+      CALL vecParams%add('VectorType->n',n)
+      CALL vecParams%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
+      CALL vecParams%add('VectorType->nlocal',n)
+
+      IF(lsmall) THEN !Calculate from smallest eigenvalue
+        CALL EPSSetWhichEigenpairs(eps,EPS_SMALLEST_MAGNITUDE,ierr)
+      ELSE !Calculate from largest eigenvalue
+        CALL EPSSetWhichEigenpairs(eps,EPS_LARGEST_MAGNITUDE,ierr)
+      ENDIF
+
+      !Solve for all eigenpairs (Only get the ones we want)
+      !Possibly figure out this so it only calculates the desired pairs?
+      nev=numvecs
+      ncv=n
+      mpd=n
+      CALL EPSSetDimensions(eps,nev,ncv,mpd,ierr)
+      CALL EPSSolve(eps,ierr)
+      CALL EPSGetConverged(eps,nev,ierr)
+      DO iv=1,numvecs
+      SELECTTYPE(v1 => V(iv)); TYPE IS(PETScVectorType)
+          SELECTTYPE(v2 => Vi(iv)); TYPE IS(PETScVectorType)
+            CALL v1%init(vecParams)
+            CALL v2%init(vecParams)
+            CALL v1%assemble(ierr)
+            CALL v2%assemble(ierr)
+            CALL EPSGetEigenVector(eps,iv-1,v1%b,v2%b,ierr)
+            CALL v2%clear()
+          ENDSELECT
+        ENDSELECT
+      ENDDO !iv
+      CALL vecParams%clear()
+      DEALLOCATE(Vi)
+
+      !Destroy
+      CALL EPSDestroy(eps,ierr)
+#else
+      CALL ePartitionGraph%raiseError(modName//'::'//myName// &
+        ' - eigenvector solves only available through SLEPC!')
+#endif
+    ENDSUBROUTINE getEigenVecs
 !
 ENDMODULE PartitionGraph
