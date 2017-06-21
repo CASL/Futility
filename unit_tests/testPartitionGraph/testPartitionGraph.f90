@@ -45,8 +45,11 @@ PROGRAM testPartitionGraph
   REGISTER_SUBTEST('Clear',testClear)
   REGISTER_SUBTEST('Subgraph',testSubgraph)
   REGISTER_SUBTEST('Recursive Expansion Bisection',testREB)
+#ifdef FUTILITY_HAVE_SLEPC
   REGISTER_SUBTEST('Recursive Spectral Bisection',testRSB)
+#endif
   REGISTER_SUBTEST('Multi-method',testMulti)
+  REGISTER_SUBTEST('Kernighan-Lin',testKL)
   REGISTER_SUBTEST('Metrics Calculation',testMetrics)
 
 #ifdef FUTILITY_HAVE_PETSC
@@ -770,6 +773,65 @@ PROGRAM testPartitionGraph
 
       CALL testPG%clear()
     ENDSUBROUTINE testMulti
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testKL()
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: iv
+      INTEGER(SIK),ALLOCATABLE :: L1(:),L2(:)
+      INTEGER(SIK),ALLOCATABLE :: refL1(:),refL2(:)
+      TYPE(StringType) :: algName(1),refineAlg(1)
+      algName(1)='Recursive Expansion Bisection'
+      refineAlg(1)='Kernighan-Lin'
+
+      !Initialize
+      tparams=refG2Params
+      CALL tparams%set('PartitionGraph -> Algorithms',algName)
+      CALL tparams%add('PartitionGraph -> Refinement',refineAlg)
+      CALL testPG%initialize(tparams)
+
+      ALLOCATE(L1(11))
+      ALLOCATE(L2(13))
+      ALLOCATE(refL1(11))
+      ALLOCATE(refL2(13))
+      L1=(/1,2,3,4,8,9,10,12,14,17,22/)
+      L2=(/5,6,7,11,13,15,16,18,19,20,21,23,24/)
+      refL1=(/11,15,8,7,22,23,12,18,16,17,24/)
+      refL2=(/10,3,4,1,13,2,14,5,19,20,21,9,6/)
+      !Refinement should transform:
+      ! 2 2 2 1 2 2     2 2 2 1 1 1
+      ! 2 1 2 2 1 2     2 2 1 1 1 1
+      ! 1 1 2 1     =>  2 2 1 1
+      ! 2 2 2 1         2 2 1 1
+      ! 1 1             2 2
+      ! 1 1             2 2
+      CALL testPG%refine(L1,L2)
+
+      !Test
+      DO iv=1,SIZE(L1)
+        bool=(L1(iv) == refL1(iv))
+        ASSERT(bool,'%refine(KL) L1')
+        FINFO() 'Index:',iv
+        FINFO() 'Ref: ',refL1(iv)
+        FINFO() 'Test:',L1(iv)
+      ENDDO !iv
+
+      DO iv=1,SIZE(L2)
+        bool=(L2(iv) == refL2(iv))
+        ASSERT(bool,'%refine(KL) L2')
+        FINFO() 'Index:',iv
+        FINFO() 'Ref: ',refL2(iv)
+        FINFO() 'Test:',L2(iv)
+      ENDDO !iv
+
+      !Clear
+      CALL tparams%clear()
+      CALL testPG%clear()
+      DEALLOCATE(L1)
+      DEALLOCATE(L2)
+      DEALLOCATE(refL1)
+      DEALLOCATE(refL2)
+    ENDSUBROUTINE testKL
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testMetrics()

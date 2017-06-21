@@ -55,6 +55,12 @@ MODULE PartitionGraph
     PROCEDURE(partition_absintfc),POINTER,NOPASS :: p => NULL()
   ENDTYPE
 
+  !> Pointer to a refinement algorithm. Type used to create arrays of
+  !> procedures
+  TYPE :: RefinePtrArry
+    PROCEDURE(refine_absintfc),POINTER,NOPASS :: r => NULL()
+  ENDTYPE
+
   !> @brief Derived type to spatially decompose a reactor
   !>
   !> Graph structure to decompose a reactor spatially. Retains spatial
@@ -99,6 +105,8 @@ MODULE PartitionGraph
     REAL(SRK),ALLOCATABLE :: coord(:,:)
     !> Array containing pointers to partitioning routines
     TYPE(PartitionPtrArry),ALLOCATABLE :: partitionAlgArry(:)
+    !> Array containing pointers to refinement routines
+    TYPE(RefinePtrArry),ALLOCATABLE :: refineAlgArry(:)
   CONTAINS
     !> @copybrief PartitionGraph::init_PartitionGraph
     !> @copydetails PartitionGraph::init_PartitionGraph
@@ -115,6 +123,9 @@ MODULE PartitionGraph
     !> @copybrief PartitionGraph::partition_PartitionGraph
     !> @copydetails PartitionGraph::partition_PartitionGraph
     PROCEDURE,PASS :: partition => partition_PartitionGraph
+    !> @copybrief PartitionGraph::refine_PartitionGraph
+    !> @copydetails PartitionGraph::refine_PartitionGraph
+    PROCEDURE,PASS :: refine => refine_PartitionGraph
     !> @copybrief PartitionGraph::calcDecompMetrics_PartitionGraph
     !> @copydetails PartitionGraph::calcDecompMetrics_PartitionGraph
     PROCEDURE,PASS :: metrics => calcDecompMetrics_PartitionGraph
@@ -123,9 +134,18 @@ MODULE PartitionGraph
   !> Abstract interface for pointer to partitioning routine
   ABSTRACT INTERFACE
     SUBROUTINE partition_absintfc(thisGraph)
-      IMPORT :: PartitionGraphType,SRK,SIK
+      IMPORT :: PartitionGraphType
       CLASS(PartitionGraphType),INTENT(INOUT) :: thisGraph
     ENDSUBROUTINE partition_absintfc
+  ENDINTERFACE
+
+  !> Abstract interface for pointer to refinement routine
+  ABSTRACT INTERFACE
+    SUBROUTINE refine_absintfc(thisGraph,L1,L2)
+      IMPORT :: PartitionGraphType,SIK
+      CLASS(PartitionGraphType),INTENT(IN) :: thisGraph
+      INTEGER(SIK),INTENT(INOUT) :: L1(:),L2(:)
+    ENDSUBROUTINE refine_absintfc
   ENDINTERFACE
 
   !> Name of the module
@@ -160,7 +180,7 @@ MODULE PartitionGraph
       TYPE(StringType) :: algName
       INTEGER(SIK),ALLOCATABLE :: wts(:),neigh(:,:),neighwts(:,:), cond(:)
       REAL(SRK),ALLOCATABLE :: coord(:,:)
-      TYPE(StringType),ALLOCATABLE :: partAlgs(:)
+      TYPE(StringType),ALLOCATABLE :: partAlgs(:),refAlgNames(:)
 
       !Clear the type in case it has already been intialized
       CALL thisGraph%clear()
@@ -286,6 +306,15 @@ MODULE PartitionGraph
         ENDIF
       ENDIF
 
+      !Check refinement algorithms/conditions
+      IF(params%has('PartitionGraph -> Refinement')) THEN
+        CALL params%get('PartitionGraph->Refinement',refAlgNames)
+        IF((SIZE(refAlgNames) /= 1) .AND. (SIZE(refAlgNames) /= nPart)) THEN
+          CALL ePartitionGraph%raiseError(modName//'::'//myName// &
+            ' - invalid number of refinement algorithms specified!')
+        ENDIF
+      ENDIF
+
       !If no errors, then initialize the type
       IF(nerror == ePartitionGraph%getCounter(EXCEPTION_ERROR)) THEN
         !Set scalars
@@ -304,21 +333,49 @@ MODULE PartitionGraph
           CALL MOVE_ALLOC(cond,thisGraph%cond)
         ENDIF
 
-        !Assign procedure pointers
+        !Assign procedure pointers for partitioning
         ALLOCATE(thisGraph%partitionAlgArry(nPart))
         DO ipart=1,SIZE(partAlgs)
           thisGraph%partitionAlgArry(ipart)%p => NULL()
           algName=partAlgs(ipart)
           CALL toUPPER(algName)
           SELECTCASE(TRIM(algName))
-            CASE('RECURSIVE SPECTRAL BISECTION')
-              thisGraph%partitionAlgArry(ipart)%p => RecursiveSpectralBisection
             CASE('RECURSIVE EXPANSION BISECTION')
               thisGraph%partitionAlgArry(ipart)%p => RecursiveExpansionBisection
+            CASE('RECURSIVE SPECTRAL BISECTION')
+#ifdef FUTILITY_HAVE_SLEPC
+              thisGraph%partitionAlgArry(ipart)%p => RecursiveSpectralBisection
+#else
+              CALL ePartitionGraph%raiseError(modName//'::'//myName// &
+                ' - must recompile with SLEPc to use partitioning algorithm '// &
+                TRIM(algName)//'!')
+#endif
             CASE DEFAULT
               CALL ePartitionGraph%raiseError(modName//'::'//myName// &
                 ' - Partitioning algorithm "'//TRIM(algName)//'" not recognized!')
           ENDSELECT
+        ENDDO !ipart
+
+        !Assign procedure pointers for refinement
+        ALLOCATE(thisGraph%refineAlgArry(nPart))
+        ipart=1
+        algName=''
+        DO WHILE(ipart <= npart)
+          thisGraph%refineAlgArry(ipart)%r => NULL()
+          !Use previous procedure if no new algorithm is specified
+          IF(ipart <= SIZE(refAlgNames)) THEN
+            algName=refAlgNames(ipart)
+          ENDIF
+          CALL toUPPER(algName)
+          SELECTCASE(TRIM(algName))
+            CASE('') !Do nothing if nothing specified
+            CASE('KERNIGHAN-LIN')
+              thisGraph%refineAlgArry(ipart)%r => KernighanLin_PartitionGraph
+            CASE DEFAULT
+              CALL ePartitionGraph%raiseError(modName//'::'//myName// &
+                ' - Refinement algorithm "'//TRIM(algName)//'" not recognized!')
+          ENDSELECT
+          ipart=ipart+1
         ENDDO !ipart
 
         !Calculate degree of each vertex
@@ -358,6 +415,14 @@ MODULE PartitionGraph
           thisGraph%partitionAlgArry(ipart)%p => NULL()
         ENDDO !ipart
         DEALLOCATE(thisGraph%partitionAlgArry)
+      ENDIF
+
+      !Nullify each procedure pointer for refinement
+      IF(ALLOCATED(thisGraph%refineAlgArry)) THEN
+        DO ipart=1,SIZE(thisGraph%refineAlgArry)
+          thisGraph%refineAlgArry(ipart)%r => NULL()
+        ENDDO !ipart
+        DEALLOCATE(thisGraph%refineAlgArry)
       ENDIF
     ENDSUBROUTINE clear_PartitionGraph
 !
@@ -487,6 +552,33 @@ MODULE PartitionGraph
       !Call the correct partitioning algorithm
       CALL thisGraph%partitionAlgArry(corAlg)%p(thisGraph)
     ENDSUBROUTINE partition_PartitionGraph
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine to call the procedure to refine the graph
+!> @param thisGraph the graph containing groups L1, L2
+!> @param L1 list of vertices in group 1
+!> @param L2 list of vertices in group 2
+!>
+    SUBROUTINE refine_PartitionGraph(thisGraph,L1,L2)
+      CLASS(PartitionGraphType),INTENT(IN) :: thisGraph
+      INTEGER(SIK),INTENT(INOUT) :: L1(:),L2(:)
+      INTEGER(SIK) :: ialg,corAlg
+
+      !Determine which refinement algorithm to use based on graph size
+      corAlg=1
+      IF(ALLOCATED(thisGraph%cond)) THEN
+        DO ialg=1,thisGraph%nPart-1
+          IF(thisGraph%nvert > thisGraph%cond(ialg)) THEN
+            EXIT
+          ENDIF
+        ENDDO !ialg
+        corAlg=ialg
+      ENDIF
+
+      !Call the correct refminement algorithm
+      IF(ASSOCIATED(thisGraph%refineAlgArry(corAlg)%r)) &
+         CALL thisGraph%refineAlgArry(corAlg)%r(thisGraph,L1,L2)
+    ENDSUBROUTINE refine_PartitionGraph
 !-------------------------------------------------------------------------------
 !> @brief Recursively bisect the graph by starting at a specific vertex, and
 !> expanding to a vertex with five prioritized properties:
@@ -1019,7 +1111,7 @@ MODULE PartitionGraph
         DEALLOCATE(L1)
         DEALLOCATE(L2)
       ELSE
-        !Single group graph...it will contain all the nodes
+        !Single group graph...it will contain all the vertices
         ALLOCATE(thisGraph%groupIdx(2))
         ALLOCATE(thisGraph%groupList(thisGraph%nvert))
 
@@ -1139,6 +1231,176 @@ MODULE PartitionGraph
     SUBROUTINE KernighanLin_PartitionGraph(thisGraph,L1,L2)
       CLASS(PartitionGraphType),INTENT(IN) :: thisGraph
       INTEGER(SIK),INTENT(INOUT) :: L1(:),L2(:)
+      INTEGER(SIK) :: ia,ib,iam,ibm,cva,cvb,in,ineigh
+      INTEGER(SIK) :: N1,N2,nneigh,ng,cg,iv,ig,k
+      INTEGER(SIK),ALLOCATABLE :: av(:),bv(:)
+      REAL(SRK),ALLOCATABLE :: D(:),gv(:)
+      REAL(SRK) :: wg1,wg2,wt,wdiff,wta,wtb,g,gmax
+
+      !Calculate D
+      N1=SIZE(L1)
+      N2=SIZE(L2)
+      ng=MIN(N1,N2)
+      ALLOCATE(D(thisGraph%nvert))
+      ALLOCATE(av(ng))
+      ALLOCATE(bv(ng))
+      ALLOCATE(gv(ng))
+
+      gmax=1.0_SRK
+      DO WHILE(gmax > 0)
+        D=0
+        nneigh=thisGraph%maxneigh
+        DO ia=1,N1
+          cva=L1(ia)
+          DO in=1,nneigh
+            ineigh=thisGraph%neigh(in,cva)
+            IF(ineigh > 0) THEN
+              IF(ANY(ineigh == L1)) THEN
+                D(cva)=D(cva)-thisGraph%neighwts(in,cva)
+              ELSE
+                D(cva)=D(cva)+thisGraph%neighwts(in,cva)
+              ENDIF
+            ENDIF
+          ENDDO !in
+        ENDDO !ia
+        DO ib=1,N2
+          cvb=L2(ib)
+          DO in=1,nneigh
+            ineigh=thisGraph%neigh(in,cvb)
+            IF(ineigh > 0) THEN
+              IF(ANY(ineigh == L2)) THEN
+                D(cvb)=D(cvb)-thisGraph%neighwts(in,cvb)
+              ELSE
+                D(cvb)=D(cvb)+thisGraph%neighwts(in,cvb)
+              ENDIF
+            ENDIF
+          ENDDO !in
+        ENDDO !ib
+
+        !Begin with empty set
+        av=-1
+        bv=-1
+        gv=-1.0_SRK
+        cg=0
+        DO ig=1,ng
+          !Current size of each group
+          wg1=0
+          wg2=0
+          DO iv=1,N1
+            wg1=wg1+thisGraph%wts(L1(iv))
+          ENDDO !iv
+          DO iv=1,N2
+            wg2=wg2+thisGraph%wts(L2(iv))
+          ENDDO !iv
+          wdiff=wg2-wg1
+
+          !Find maximum value of g
+          iam=-1
+          ibm=-1
+          gmax=-HUGE(1.0_SRK)
+
+          DO ia=1,N1
+            cva=L1(ia)
+            IF(.NOT. ANY(cva == av)) THEN
+              DO ib=1,N2
+                cvb=L2(ib)
+                IF(.NOT. ANY(cvb == bv)) THEN
+                  wta=thisGraph%wts(cva)
+                  wtb=thisGraph%wts(cvb)
+                  !Conserve balance between the groups
+                  IF((wta .APPROXEQA. wtb) .OR. &
+                     (wtb-wta .APPROXEQA. wdiff)) THEN
+                    g=D(cva)+D(cvb)
+                    DO in=1,nneigh
+                      ineigh=thisGraph%neigh(in,cva)
+                      IF(ineigh == cvb) THEN
+                        g=g-2.0_SRK*thisGraph%neighwts(in,cva)
+                      ENDIF
+                    ENDDO !in
+
+                    !Check for new maximal value
+                    IF(g > gmax) THEN
+                      iam=ia
+                      ibm=ib
+                      gmax=g
+                    ENDIF
+                  ENDIF
+                ENDIF
+              ENDDO !ib
+            ENDIF
+          ENDDO !ia
+
+          !Check if found vertices to swap
+          IF(iam == -1) THEN
+            EXIT
+          ELSE
+            cg=cg+1
+          ENDIF
+
+          !Update sets
+          av(ig)=L1(iam)
+          bv(ig)=L2(ibm)
+          gv(ig)=gmax
+
+          !Update weights of groups as if these have been swapped
+          wta=thisGraph%wts(iam)-thisGraph%wts(ibm)
+          wg1=wg1-wta
+          wg2=wg2+wta
+
+          !Update D values as if these have been swapped
+          DO in=1,nneigh
+            ineigh=thisGraph%neigh(in,av(ig))
+            IF(ANY(ineigh == L1)) THEN
+              D(ineigh)=D(ineigh)+2.0_SRK*thisGraph%neighwts(in,av(ig))
+            ELSEIF(ineigh /= 0) THEN
+              D(ineigh)=D(ineigh)-2.0_SRK*thisGraph%neighwts(in,av(ig))
+            ENDIF
+          ENDDO !in
+          DO in=1,nneigh
+            ineigh=thisGraph%neigh(in,bv(ig))
+            IF(ANY(ineigh == L2)) THEN
+              D(ineigh)=D(ineigh)+2.0_SRK*thisGraph%neighwts(in,bv(ig))
+            ELSEIF(ineigh /= 0) THEN
+              D(ineigh)=D(ineigh)-2.0_SRK*thisGraph%neighwts(in,bv(ig))
+            ENDIF
+          ENDDO !in
+        ENDDO !ig
+        k=-1
+        gmax=-HUGE(1.0_SRK)
+        g=0.0_SRK
+        !Find k which maximizes sum gv(1:k)
+        DO ig=1,cg
+          g=g+gv(ig)
+          IF(g > gmax) THEN
+            gmax=g
+            k=ig
+          ENDIF
+        ENDDO !ig
+
+        !Exchange between groups
+        IF(gmax > 0) THEN
+          DO ig=1,k
+            DO ia=1,N1
+              IF(L1(ia) == av(ig)) THEN
+                L1(ia)=bv(ig)
+                EXIT
+              ENDIF
+            ENDDO !ia
+            DO ib=1,N2
+              IF(L2(ib) == bv(ig)) THEN
+                L2(ib)=av(ig)
+                EXIT
+              ENDIF
+            ENDDO !ib
+          ENDDO !ig
+        ENDIF
+      ENDDO !gmax > 0
+
+      !Free up memory
+      DEALLOCATE(D)
+      DEALLOCATE(av)
+      DEALLOCATE(bv)
+      DEALLOCATE(gv)
     ENDSUBROUTINE KernighanLin_PartitionGraph
 !
 !-------------------------------------------------------------------------------
