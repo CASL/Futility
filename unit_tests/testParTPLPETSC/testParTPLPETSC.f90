@@ -47,6 +47,7 @@ PROGRAM testParTPLPETSC
 
 #ifdef FUTILITY_HAVE_PETSC
   CALL testPETSC_KSP()
+  CALL testPETSC_KSP_SuperLU()
 #endif
 
   CALL MPI_Barrier(MPI_COMM_WORLD,ierr)
@@ -78,7 +79,7 @@ PROGRAM testParTPLPETSC
     CALL MPI_Barrier(MPI_COMM_WORLD,ierr)
     IF(rank == 0) WRITE(*,*) '  Passed: CALL KSPCreate(...)'
 
-    !test KSPCreateType
+    !test KSPSetType
     CALL KSPSetType(ksp,KSPGMRES,ierr)
     IF(ierr /= 0) THEN
       WRITE(*,*) 'CALL KSPSetType(solver%ksp,KSPGMRES,ierr) FAILED!'
@@ -222,5 +223,116 @@ PROGRAM testParTPLPETSC
     CALL VecDestroy(b,ierr)
     CALL VecDestroy(x,ierr)
   ENDSUBROUTINE testPETSC_KSP
+!
+!-------------------------------------------------------------------------------
+  SUBROUTINE testPETSC_KSP_SuperLU
+    Vec :: x,b
+    Mat :: A,F
+    KSP :: ksp
+    PC  :: pc
+    PetscReal :: rtol,abstol,dtol
+    PetscInt  :: maxits,restart
+    REAL(SRK) :: getval
 
+    IF(rank == 0) WRITE(*,*)
+    IF(rank == 0) WRITE(*,*) 'Testing with SuperLU'
+
+    !create matrix and vectors for solver
+    ! A = [ 2 -1  0  0    b=[1.0
+    !      -1  2 -1  0       1.2
+    !       0 -1  2 -1       1.1
+    !       0  0 -1  2]      0.8]
+    !setup A
+    CALL MatCreate(MPI_COMM_WORLD,A,ierr)
+    CALL MatSetSizes(A,PETSC_DECIDE,PETSC_DECIDE,4,4,ierr)
+    CALL MatSetType(A,MATMPIAIJ,ierr)
+    CALL MatSetUp(A,ierr)
+    CALL MatSetValues(A,1,0,1,0,2.0_SRK,INSERT_VALUES,ierr)
+    CALL MatSetValues(A,1,0,1,1,-1.0_SRK,INSERT_VALUES,ierr)
+    CALL MatSetValues(A,1,1,1,0,-1.0_SRK,INSERT_VALUES,ierr)
+    CALL MatSetValues(A,1,1,1,1,2.0_SRK,INSERT_VALUES,ierr)
+    CALL MatSetValues(A,1,1,1,2,-1.0_SRK,INSERT_VALUES,ierr)
+    CALL MatSetValues(A,1,2,1,1,-1.0_SRK,INSERT_VALUES,ierr)
+    CALL MatSetValues(A,1,2,1,2,2.0_SRK,INSERT_VALUES,ierr)
+    CALL MatSetValues(A,1,2,1,3,-1.0_SRK,INSERT_VALUES,ierr)
+    CALL MatSetValues(A,1,3,1,2,-1.0_SRK,INSERT_VALUES,ierr)
+    CALL MatSetValues(A,1,3,1,3,2.0_SRK,INSERT_VALUES,ierr)
+    CALL MatAssemblyBegin(A,MAT_FINAL_ASSEMBLY,ierr)
+    CALL MatAssemblyEnd(A,MAT_FINAL_ASSEMBLY,ierr)
+    !setup b
+    CALL VecCreate(MPI_COMM_WORLD,b,ierr)
+    CALL VecSetSizes(b,PETSC_DECIDE,4,ierr)
+    CALL VecSetType(b,VECMPI,ierr)
+    CALL VecSetFromOptions(b,ierr)
+    CALL VecSetValue(b,0,1.0_SRK,INSERT_VALUES,ierr)
+    CALL VecSetValue(b,1,1.2_SRK,INSERT_VALUES,ierr)
+    CALL VecSetValue(b,2,1.1_SRK,INSERT_VALUES,ierr)
+    CALL VecSetValue(b,3,0.8_SRK,INSERT_VALUES,ierr)
+    CALL VecAssemblyBegin(b,ierr)
+    CALL VecAssemblyEnd(b,ierr)
+    !setup x
+    CALL VecCreate(MPI_COMM_WORLD,x,ierr)
+    CALL VecSetSizes(x,PETSC_DECIDE,4,ierr)
+    CALL VecSetType(x,VECMPI,ierr)
+    CALL VecSetFromOptions(x,ierr)
+    CALL VecAssemblyBegin(x,ierr)
+    CALL VecAssemblyEnd(x,ierr)
+
+    !KSP calls
+    CALL KSPCreate(MPI_COMM_WORLD,ksp,ierr)
+    CALL KSPSetType(ksp,KSPPREONLY,ierr)    
+    CALL KSPGetPC(ksp,pc,ierr)
+    CALL KSPSetFromOptions(ksp,ierr)
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=5))
+    CALL KSPSetOperators(ksp,A,A,ierr)
+#else
+    CALL KSPSetOperators(ksp,A,A,DIFFERENT_NONZERO_PATTERN,ierr)
+#endif
+
+    !PC calls
+    CALL PCSetType(pc,PCLU,ierr)
+    CALL PCFactorSetMatSolverPackage(pc,MATSOLVERSUPERLU_DIST,ierr)
+    CALL PCFactorSetUpMatSolverPackage(pc,ierr)
+    CALL PCFactorGetMatrix(pc,F,ierr)
+
+    !test KSPSolve
+    CALL KSPSolve(ksp,b,x,ierr)
+    IF(rank == 0) THEN
+      CALL VecGetValues(x,1,0,getval,ierr)
+      IF(ABS(getval-2.12_SRK)>1E-13 .OR. ierr /= 0) THEN
+        WRITE(*,*) 'CALL VecGetValues(x,1,0,getval,ierr) [KSPSolve] FAILED!'
+        STOP 666
+      ENDIF
+    ENDIF
+    IF(rank == 1) THEN
+      CALL VecGetValues(x,1,1,getval,ierr)
+      IF(ABS(getval-3.24_SRK)>1E-13 .OR. ierr /= 0) THEN
+        WRITE(*,*) 'CALL VecGetValues(x,1,1,getval,ierr) [KSPSolve] FAILED!'
+        STOP 666
+      ENDIF
+    ENDIF
+    IF(rank == 2) THEN
+      CALL VecGetValues(x,1,2,getval,ierr)
+      IF(ABS(getval-3.16_SRK)>1E-13 .OR. ierr /= 0) THEN
+        WRITE(*,*) 'CALL VecGetValues(x,1,2,getval,ierr) [KSPSolve] FAILED!'
+        STOP 666
+      ENDIF
+    ENDIF
+    IF(rank == 3) THEN
+      CALL VecGetValues(x,1,3,getval,ierr)
+      IF(ABS(getval-1.98_SRK)>1E-13 .OR. ierr /= 0) THEN
+        WRITE(*,*) 'CALL VecGetValues(x,1,2,getval,ierr) [KSPSolve] FAILED!'
+        STOP 666
+      ENDIF
+    ENDIF
+    CALL MPI_Barrier(MPI_COMM_WORLD,ierr)
+    IF(rank == 0) WRITE(*,*) '  Passed: CALL KSPSolve(...)'
+
+    CALL KSPDestroy(ksp,ierr)
+    CALL MPI_Barrier(MPI_COMM_WORLD,ierr)
+    CALL MatDestroy(A,ierr)
+    CALL VecDestroy(b,ierr)
+    CALL VecDestroy(x,ierr)
+  ENDSUBROUTINE testPETSC_KSP_SuperLU
+!
 ENDPROGRAM testParTPLPETSC
