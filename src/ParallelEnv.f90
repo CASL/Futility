@@ -459,7 +459,6 @@ MODULE ParallelEnv
       CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
       INTEGER(SIK),INTENT(IN),OPTIONAL :: PEparam
       INTEGER(SIK) :: isinit,icomm
-      LOGICAL(SBK) :: allpetsc
       LOGICAL(SBK),ALLOCATABLE :: allpetsc2(:)
 
       IF(.NOT.myPE%initstat) THEN
@@ -636,7 +635,7 @@ MODULE ParallelEnv
       INTEGER(SLK),INTENT(IN) :: sendbuf(:)
       INTEGER(SLK),INTENT(INOUT) :: recvbuf(:,:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: root
-      INTEGER(SIK) :: rank,count,i,j,n
+      INTEGER(SIK) :: rank,count
       rank=0
       IF(PRESENT(root)) rank=root
       count=SIZE(sendbuf)
@@ -699,7 +698,7 @@ MODULE ParallelEnv
       INTEGER(SLK),INTENT(IN) :: sendbuf(:,:)
       INTEGER(SLK),INTENT(INOUT) :: recvbuf(:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: root
-      INTEGER(SIK) :: rank,count,i,j,n
+      INTEGER(SIK) :: rank,count
       rank=0
       IF(PRESENT(root)) rank=root
       count=SIZE(recvbuf)

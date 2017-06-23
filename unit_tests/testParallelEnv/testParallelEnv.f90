@@ -21,7 +21,6 @@ PROGRAM testParallelEnv
   INCLUDE 'mpif.h'
 #endif
 
-  TYPE(ExceptionHandlerType),TARGET :: e
   TYPE(ParallelEnvType) :: testPE,testPE2
 
   INTEGER :: mpierr,myrank,mysize,tmp,stt,stp

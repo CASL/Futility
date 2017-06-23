@@ -671,7 +671,7 @@ MODULE FileType_DA32
 
       INTEGER(SNK) :: tmpdat(NBUF)
       INTEGER(SIK) :: nlen,ioerr,istt,istp
-      INTEGER(SLK) :: n,irec,nw,tmp1,tmp2,tmp3
+      INTEGER(SLK) :: n,irec
 
       ioerr=IOSTAT_END
       irec=rec

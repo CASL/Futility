@@ -515,7 +515,7 @@ CONTAINS
       CHARACTER(LEN=*),INTENT(IN) :: tag
 
       INTEGER(SIK) :: i,j
-      REAL(SRK) :: substep, calc_order
+      REAL(SRK) :: substep
       REAL(SRK) :: tmp(3,4)
       TYPE(ParamType) :: tmpPL
       TYPE(RealVectorType) :: y0, yf

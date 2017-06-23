@@ -292,7 +292,7 @@ MODULE LinearSolverTypes
       CLASS(ParamType),POINTER :: pListPtr
       TYPE(ParamType) :: validParams,matPList,vecxPList,vecbPList
       ! local variables
-      INTEGER(SIK) :: i,n
+      INTEGER(SIK) :: n
       INTEGER(SIK) :: matType,ReqTPLType,TPLType,solverMethod,pciters,pcsetup
       INTEGER(SIK) :: nz,npin,ngrp,ierr
       INTEGER(SIK) :: MPI_Comm_ID,numberOMP
@@ -1522,7 +1522,7 @@ MODULE LinearSolverTypes
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
 
       REAL(SRK),PARAMETER :: one=1.0_SRK,zero=0.0_SRK
-      REAL(SRK):: calpha,crho,comega,crhod,cbeta,pts,ptt
+      REAL(SRK):: calpha,crho,comega,crhod,cbeta
       TYPE(RealVectorType) :: vr,vr0,vs,vv,vp,vy,vz,vt
       INTEGER(SIK) :: n,iterations
       TYPE(ParamType) :: pList
@@ -1622,7 +1622,7 @@ MODULE LinearSolverTypes
       REAL(SRK)  :: beta,h,t,phibar,temp,tol
       REAL(SRK),ALLOCATABLE :: v(:,:),R(:,:),w(:),c(:),s(:),g(:),y(:)
       TYPE(RealVectorType) :: u
-      INTEGER(SIK) :: j,k,m,n,it
+      INTEGER(SIK) :: k,m,n,it
       TYPE(ParamType) :: pList
 
       n=0
@@ -1732,7 +1732,7 @@ MODULE LinearSolverTypes
       REAL(SRK)  :: beta,h,t,phibar,temp,tol
       REAL(SRK),ALLOCATABLE :: v(:,:),R(:,:),w(:),c(:),s(:),g(:),y(:)
       TYPE(RealVectorType) :: u
-      INTEGER(SIK) :: j,k,m,n,it
+      INTEGER(SIK) :: k,m,n,it
       TYPE(ParamType) :: pList
 
       n=0

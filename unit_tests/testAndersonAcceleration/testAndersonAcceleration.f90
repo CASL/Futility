@@ -483,7 +483,6 @@ CONTAINS
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testStep_depth_0()
-      INTEGER(SIK) :: i
       REAL(SRK) :: tmp
 
       CALL optList%set('AndersonAccelerationType->beta',0.5_SRK)

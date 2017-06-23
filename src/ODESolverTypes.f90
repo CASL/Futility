@@ -233,8 +233,7 @@ MODULE ODESolverTypes
       TYPE(ParamType),INTENT(IN) :: Params
       CLASS(ODESolverInterface_Base),POINTER :: f
 
-      TYPE(ParamType) :: plist
-      INTEGER(SIK) :: n, solvetype, bdf_order, ierr
+      INTEGER(SIK) :: n, solvetype, bdf_order
       REAL(SRK) :: tol
 
       CALL Params%get('ODESolverType->n',n)
@@ -344,9 +343,6 @@ MODULE ODESolverTypes
       CLASS(VectorType),INTENT(INOUT) :: y0
       REAL(SRK),INTENT(IN) :: tf
       CLASS(VectorType),INTENT(INOUT) :: yf
-
-      INTEGER(SIK) :: ierr
-      REAL(SRK) :: ttmp
 
       CALL y0%get(solver%ytmp)
 #ifdef FUTILITY_HAVE_SUNDIALS

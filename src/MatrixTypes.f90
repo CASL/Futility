@@ -743,7 +743,7 @@ MODULE MatrixTypes
       CLASS(TrilinosMatrixType),INTENT(INOUT) :: matrix
       CLASS(ParamType),INTENT(IN) :: Params
       TYPE(ParamType) :: validParams
-      INTEGER(SIK) :: n, matType, MPI_COMM_ID, nlocal, ierr, rnnz
+      INTEGER(SIK) :: n, matType, MPI_COMM_ID, nlocal, rnnz
       INTEGER(SIK),ALLOCATABLE :: dnnz(:), onnz(:)
       LOGICAL(SBK) :: isSym
 
@@ -1133,7 +1133,6 @@ MODULE MatrixTypes
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(IN) :: setval
 #ifdef FUTILITY_HAVE_Trilinos
-      INTEGER(SIK)  :: ierr
 
       IF(matrix%isInit) THEN
         IF(((j <= matrix%n) .AND. (i <= matrix%n)) &
@@ -1178,7 +1177,6 @@ MODULE MatrixTypes
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(IN) :: setval
 #ifdef FUTILITY_HAVE_Trilinos
-      INTEGER(SIK)  :: ierr
 
       IF(matrix%isInit) THEN
         IF(((j <= matrix%n) .AND. (i <= matrix%n)) &
@@ -1397,7 +1395,6 @@ MODULE MatrixTypes
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(INOUT) :: getval
 #ifdef FUTILITY_HAVE_Trilinos
-      INTEGER(SIK)  :: ierr
 
       getval=0.0_SRK
       IF(matrix%isInit) THEN
@@ -1423,7 +1420,6 @@ MODULE MatrixTypes
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
       INTEGER(SIK) :: ierrc
 #ifdef FUTILITY_HAVE_Trilinos
-      INTEGER(SIK) :: iperr
 
       ierrc=0
       IF(.NOT.thisMatrix%isAssembled) THEN

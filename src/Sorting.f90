@@ -331,9 +331,8 @@ MODULE Sorting
       TYPE(StringType),INTENT(INOUT) :: str1(:)
       !LOGICAL(SBK),INTENT(IN),OPTIONAL :: reverse
       LOGICAL(SBK) :: sorted
-      INTEGER(SIK) :: i,ni,nr,n,ncomp
+      INTEGER(SIK) :: i,ni,nr,ncomp
       INTEGER(SIK) :: tmpi
-      REAL(SRK) :: tmpr
       TYPE(StringType) :: tmpstr,tmpstr2
 
       sorted=.FALSE.
@@ -383,7 +382,7 @@ MODULE Sorting
       INTEGER(SIK),INTENT(INOUT) :: int2(:)
       !LOGICAL(SBK),INTENT(IN),OPTIONAL :: reverse
       LOGICAL(SBK) :: sorted
-      INTEGER(SIK) :: i,ni,nr,n,ncomp
+      INTEGER(SIK) :: i,ni,nr,ncomp
       INTEGER(SIK) :: tmpi
       REAL(SRK) :: tmpr
 
@@ -429,9 +428,8 @@ MODULE Sorting
       TYPE(StringType),INTENT(INOUT) :: str1(:)
       !LOGICAL(SBK),INTENT(IN),OPTIONAL :: reverse
       LOGICAL(SBK) :: sorted
-      INTEGER(SIK) :: i,ni,nr,n,ncomp
+      INTEGER(SIK) :: i,ni,nr,ncomp
       INTEGER(SIK) :: tmpi
-      REAL(SRK) :: tmpr
       TYPE(StringType) :: tmpstr,tmpstr2
 
       sorted=.FALSE.

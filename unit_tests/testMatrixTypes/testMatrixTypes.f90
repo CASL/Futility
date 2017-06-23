@@ -3508,9 +3508,6 @@ PROGRAM testMatrixTypes
     SUBROUTINE testTransposeMatrix()
       CLASS(SparseMatrixType),ALLOCATABLE :: testA
       LOGICAL(SBK) :: bool
-      REAL(SRK) :: TEMPA(4,4),tmp_real
-      INTEGER(SIK) :: i,j
-      REAL(SRK),ALLOCATABLE :: x(:),y(:)
       TYPE(ParamType) :: tmpPlist
       ALLOCATE(SparseMatrixType :: testA)
 

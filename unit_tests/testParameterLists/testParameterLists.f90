@@ -4463,17 +4463,10 @@ PROGRAM testParameterLists
 !
 !-------------------------------------------------------------------------------
   SUBROUTINE testGetString()
-    CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
-    LOGICAL(SBK) :: bool,sbk0
-    LOGICAL(SBK),ALLOCATABLE :: sbk1(:)
-    INTEGER(SNK) :: snk0
-    INTEGER(SNK),ALLOCATABLE :: snk1(:),snk2(:,:),snk3(:,:,:)
-    INTEGER(SLK) :: slk0
-    INTEGER(SLK),ALLOCATABLE :: slk1(:),slk2(:,:),slk3(:,:,:)
-    REAL(SSK) :: ssk0
-    REAL(SSK),ALLOCATABLE :: ssk1(:),ssk2(:,:),ssk3(:,:,:)
-    REAL(SDK) :: sdk0
-    REAL(SDK),ALLOCATABLE :: sdk1(:),sdk2(:,:),sdk3(:,:,:)
+    INTEGER(SNK),ALLOCATABLE :: snk2(:,:),snk3(:,:,:)
+    INTEGER(SLK),ALLOCATABLE :: slk2(:,:),slk3(:,:,:)
+    REAL(SSK),ALLOCATABLE :: ssk2(:,:),ssk3(:,:,:)
+    REAL(SDK),ALLOCATABLE :: sdk2(:,:),sdk3(:,:,:)
     TYPE(StringType) :: tmpstr,str0
     TYPE(StringType),ALLOCATABLE :: str1(:),str2(:,:),str3(:,:,:)
     TYPE(StringType),ALLOCATABLE :: tmpstr1(:),tmpstr2(:,:),tmpstr3(:,:,:)
@@ -5203,17 +5196,11 @@ PROGRAM testParameterLists
 !
 !-------------------------------------------------------------------------------
   SUBROUTINE testVerify()
-    CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
-    LOGICAL(SBK) :: bool,sbk0
-    LOGICAL(SBK),ALLOCATABLE :: sbk1(:)
-    INTEGER(SNK) :: snk0
-    INTEGER(SNK),ALLOCATABLE :: snk1(:),snk2(:,:),snk3(:,:,:)
-    INTEGER(SLK) :: slk0
-    INTEGER(SLK),ALLOCATABLE :: slk1(:),slk2(:,:),slk3(:,:,:)
-    REAL(SSK) :: ssk0
-    REAL(SSK),ALLOCATABLE :: ssk1(:),ssk2(:,:),ssk3(:,:,:)
-    REAL(SDK) :: sdk0
-    REAL(SDK),ALLOCATABLE :: sdk1(:),sdk2(:,:),sdk3(:,:,:)
+    LOGICAL(SBK) :: bool
+    INTEGER(SNK),ALLOCATABLE :: snk2(:,:),snk3(:,:,:)
+    INTEGER(SLK),ALLOCATABLE :: slk2(:,:),slk3(:,:,:)
+    REAL(SSK),ALLOCATABLE :: ssk2(:,:),ssk3(:,:,:)
+    REAL(SDK),ALLOCATABLE :: sdk2(:,:),sdk3(:,:,:)
     TYPE(StringType) :: str0
     TYPE(StringType),ALLOCATABLE :: str1(:),str2(:,:)
 

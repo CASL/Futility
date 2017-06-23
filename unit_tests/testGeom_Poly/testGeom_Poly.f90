@@ -91,8 +91,8 @@ PROGRAM testGeom_Poly
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testSet()
-      INTEGER(SIK) :: i,inext
-      REAL(SRK) :: testCoord(2,9),c0(2),r
+      INTEGER(SIK) :: i
+      REAL(SRK) :: testCoord(2,9),c0(2)
       TYPE(PolygonType) :: refRect
 
       !Setup test graph - isosceles triangle
@@ -364,8 +364,8 @@ PROGRAM testGeom_Poly
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testSubtractSubVol()
-      INTEGER(SIK) :: i,inext
-      REAL(SRK) :: testCoord(2,9),c0(2),r
+      INTEGER(SIK) :: i
+      REAL(SRK) :: testCoord(2,9)
       TYPE(PolygonType) :: testPoly2,testPoly3,testPoly4
 
       !Case 1, subtract itself
@@ -570,10 +570,10 @@ PROGRAM testGeom_Poly
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testPointOnSurface()
-      INTEGER(SIK) :: i,inext
-      REAL(SRK) :: testCoord(2,9),c0(2),r
+      INTEGER(SIK) :: i
+      REAL(SRK) :: testCoord(2,9),c0(2)
       TYPE(PointType) :: point
-      TYPE(PolygonType),TARGET :: testPoly2,testPoly3,testPoly4
+      TYPE(PolygonType),TARGET :: testPoly2
 
       !Case 1, subtract itself
       !Setup test graph - quadralateral
@@ -698,9 +698,8 @@ PROGRAM testGeom_Poly
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testPointInside()
-      LOGICAL(SBK) :: bool
-      INTEGER(SIK) :: i,inext
-      REAL(SRK) :: testCoord(2,9),c0(2),r
+      INTEGER(SIK) :: i
+      REAL(SRK) :: testCoord(2,9),c0(2)
       TYPE(PointType) :: point
       TYPE(PolygonType),TARGET :: testPoly2,testPoly3
 
@@ -1115,7 +1114,7 @@ PROGRAM testGeom_Poly
 !-------------------------------------------------------------------------------
     SUBROUTINE testPolyInside()
       INTEGER(SIK) :: i
-      REAL(SRK) :: testCoord(2,9),c0(2),r
+      REAL(SRK) :: testCoord(2,9),c0(2)
       TYPE(PointType) :: point
       TYPE(PolygonType) :: testPoly2,testPoly3
 
@@ -1541,7 +1540,7 @@ PROGRAM testGeom_Poly
 !-------------------------------------------------------------------------------
     SUBROUTINE testDoesLineIntersect()
       INTEGER(SIK) :: i
-      REAL(SRK) :: testCoord(2,9),c0(2),r
+      REAL(SRK) :: testCoord(2,9),c0(2)
       TYPE(LineType) :: line
 
       !Setup test graph - quadralateral with quadratic edge
@@ -1587,7 +1586,7 @@ PROGRAM testGeom_Poly
 !-------------------------------------------------------------------------------
     SUBROUTINE testDoesPolyIntersect()
       INTEGER(SIK) :: i
-      REAL(SRK) :: testCoord(2,9),c0(2),r
+      REAL(SRK) :: testCoord(2,9),c0(2)
       TYPE(PolygonType) :: testPoly2
 
       !Setup test graph - quadralateral with quadratic edge
@@ -1756,8 +1755,8 @@ PROGRAM testGeom_Poly
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testIntersectLine()
-      INTEGER(SIK) :: i,inext
-      REAL(SRK) :: testCoord(2,9),c0(2),r
+      INTEGER(SIK) :: i
+      REAL(SRK) :: testCoord(2,9),c0(2)
       TYPE(PointType) :: point1,point2
       TYPE(PointType),ALLOCATABLE :: points(:)
       TYPE(LineType) :: line
@@ -1945,9 +1944,8 @@ PROGRAM testGeom_Poly
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testIntersectPoly()
-      INTEGER(SIK) :: i,inext
-      REAL(SRK) :: testCoord(2,9),c0(2),r
-      TYPE(PointType) :: point1,point2
+      INTEGER(SIK) :: i
+      REAL(SRK) :: testCoord(2,9),c0(2)
       TYPE(PointType),ALLOCATABLE :: points(:)
       TYPE(PolygonType) :: testPoly
 
@@ -2012,8 +2010,8 @@ PROGRAM testGeom_Poly
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testIsCircle()
-      INTEGER(SIK) :: i,inext
-      REAL(SRK) :: testCoord(2,9),c0(2),r
+      INTEGER(SIK) :: i
+      REAL(SRK) :: testCoord(2,9),c0(2)
 
       !Test 4 point polygon-circle
       CALL testGraph%clear()
@@ -2096,8 +2094,8 @@ PROGRAM testGeom_Poly
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testGetRadius()
-      INTEGER(SIK) :: i,inext
-      REAL(SRK) :: testCoord(2,9),c0(2),r
+      INTEGER(SIK) :: i
+      REAL(SRK) :: testCoord(2,9),c0(2)
 
       !Test 4 point polygon-circle
       CALL testGraph%clear()
@@ -2314,9 +2312,8 @@ PROGRAM testGeom_Poly
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testGenerateGraph
-      INTEGER(SIK) :: i,inext
-      REAL(SRK) :: testCoord(2,9),c0(2),r
-      TYPE(PointType) :: point1,point2
+      INTEGER(SIK) :: i
+      REAL(SRK) :: testCoord(2,9),c0(2)
       TYPE(GraphType) :: testGraph2
       TYPE(PolygonType) :: testPoly2
 
@@ -2410,7 +2407,7 @@ PROGRAM testGeom_Poly
 !-------------------------------------------------------------------------------
     SUBROUTINE testEquivalence()
       INTEGER(SIK) :: i
-      REAL(SRK) :: testCoord(2,9),c0(2),r
+      REAL(SRK) :: testCoord(2,9),c0(2)
       TYPE(PolygonType) :: testPoly2,testPoly3
 
       CALL testPolyType%clear()

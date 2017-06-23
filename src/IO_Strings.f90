@@ -350,7 +350,6 @@ MODULE IO_Strings
       TYPE(StringType),INTENT(OUT) :: substring
       INTEGER(SIK),INTENT(IN) :: stt,stp
       INTEGER(SIK) :: i,sublen
-      CHARACTER(LEN=string%n) :: tempChar
 
       IF(stp >= stt) THEN
         IF(stp <= string%n) THEN
@@ -386,7 +385,7 @@ MODULE IO_Strings
 !>
     PURE SUBROUTINE stripComment_char(string)
       CHARACTER(LEN=*),INTENT(INOUT) :: string
-      INTEGER(SIK) :: nBang,stt,stp
+      INTEGER(SIK) :: stt,stp
       INTEGER(SIK),ALLOCATABLE :: bangloc(:)
 
       stt=1
@@ -408,7 +407,7 @@ MODULE IO_Strings
     PURE SUBROUTINE stripComment_string(string)
       TYPE(StringType),INTENT(INOUT) :: string
       TYPE(StringType) :: tempString
-      INTEGER(SIK) :: nBang,stt,stp
+      INTEGER(SIK) :: stt,stp
       INTEGER(SIK),ALLOCATABLE :: bangloc(:)
 
       stt=1
@@ -1258,7 +1257,7 @@ MODULE IO_Strings
       TYPE(StringType),INTENT(IN) :: valstr
       TYPE(StringType),INTENT(INOUT) :: fmtstr
 
-      CHARACTER(LEN=32) :: tmpchar,testChar
+      CHARACTER(LEN=32) :: tmpchar
       INTEGER(SIK) :: w,d,e,ioerr
       REAL(SRK) :: tmpval
       TYPE(StringType) :: vstr

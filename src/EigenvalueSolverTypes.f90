@@ -837,7 +837,6 @@ MODULE EigenvalueSolverTypes
       CLASS(EigenvalueSolverType_Anasazi),INTENT(INOUT) :: solver
 #ifdef FUTILITY_HAVE_Trilinos
       REAL(SRK) :: factor
-      REAL(SRK) :: tmp(2)
       SELECTTYPE(A=>solver%A); TYPE IS(TrilinosMatrixType)
         SELECTTYPE(B=>solver%B); TYPE IS(TrilinosMatrixType)
           IF (.NOT.(A%isAssembled)) CALL A%assemble()
@@ -881,7 +880,6 @@ MODULE EigenvalueSolverTypes
     SUBROUTINE solve_EigenvalueSolverType_SNES(solver)
       CLASS(EigenvalueSolverType_SNES),INTENT(INOUT) :: solver
 #ifdef FUTILITY_HAVE_PETSC
-      REAL(SRK) :: tmp(2)
 
       SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
         SELECTTYPE(B=>solver%B); TYPE IS(PETScMatrixType)
