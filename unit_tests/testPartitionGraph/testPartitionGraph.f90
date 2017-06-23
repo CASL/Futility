@@ -610,12 +610,14 @@ PROGRAM testPartitionGraph
       DO ig=1,testPG%nGroups+1
         bool=(testPG%groupIdx(ig) == GrpIdx(ig))
         ASSERT(bool,'%partition(RSB)%groupIdx')
+        FINFO() 'Index:', ig
         FINFO() 'Ref: ',grpIdx(ig)
         FINFO() 'Test:',testPG%groupIdx(ig)
       ENDDO !ig
       DO iv=1,testPG%nvert
         bool=(testPG%groupList(iv) == GrpList(iv))
         ASSERT(bool,'%partition(RSB)%groupList')
+        FINFO() 'Index:',iv
         FINFO() 'Ref: ',grpList(iv)
         FINFO() 'Test:',testPG%groupList(iv)
       ENDDO !iv
@@ -716,6 +718,7 @@ PROGRAM testPartitionGraph
       DEALLOCATE(grpList)
 
       CALL testPG%clear()
+      CALL tparams%clear()
     ENDSUBROUTINE testRSB
 !
 !-------------------------------------------------------------------------------

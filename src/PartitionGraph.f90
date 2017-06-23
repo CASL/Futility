@@ -15,6 +15,7 @@
 !>
 !> TODO: -convert all the weights into reals (integer weights may work for core
 !>        decomposition, but not in general)
+!>       -move eigenvector solve into eigenvaluesolvertype
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE PartitionGraph
   USE IntrType
@@ -363,8 +364,10 @@ MODULE PartitionGraph
         DO WHILE(ipart <= npart)
           thisGraph%refineAlgArry(ipart)%r => NULL()
           !Use previous procedure if no new algorithm is specified
-          IF(ipart <= SIZE(refAlgNames)) THEN
-            algName=refAlgNames(ipart)
+          IF(ALLOCATED(refAlgNames)) THEN
+            IF(ipart <= SIZE(refAlgNames)) THEN
+              algName=refAlgNames(ipart)
+            ENDIF
           ENDIF
           CALL toUPPER(algName)
           SELECTCASE(TRIM(algName))
@@ -385,6 +388,9 @@ MODULE PartitionGraph
           thisGraph%d(iv)=COUNT(thisGraph%neigh(1:maxneigh,iv) /= 0)
         ENDDO !iv
       ENDIF
+
+      DEALLOCATE(partAlgs)
+      IF(ALLOCATED(refAlgNames)) DEALLOCATE(refAlgNames)
     ENDSUBROUTINE init_PartitionGraph
 !
 !-------------------------------------------------------------------------------
@@ -466,6 +472,7 @@ MODULE PartitionGraph
       ALLOCATE(subgraph%neighwts(thisGraph%maxneigh,snv))
       ALLOCATE(subgraph%coord(dim,snv))
       ALLOCATE(subgraph%partitionAlgArry(thisGraph%nPart))
+      ALLOCATE(subgraph%refineAlgArry(thisGraph%nPart))
       IF(ALLOCATED(thisGraph%cond)) THEN
         ALLOCATE(subgraph%cond(thisGraph%nPart-1))
         subgraph%cond=thisGraph%cond
@@ -473,6 +480,7 @@ MODULE PartitionGraph
 
       !Populate arrays
       subgraph%partitionAlgArry=thisGraph%partitionAlgArry
+      subgraph%refineAlgArry=thisGraph%refineAlgArry
       cv=0
       DO il=1,SIZE(L)
         iv=L(il)
@@ -830,9 +838,8 @@ MODULE PartitionGraph
         DEALLOCATE(S)
         DEALLOCATE(Scalc)
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!REFINE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        !Refine the 2 groups
+        CALL thisGraph%refine(L1(1:nv1),L2(1:nv2))
 
         !Redistribute the number of groups for each subgraph
         ng1=MAX(1,FLOOR(ng*cw1/wtSum))
@@ -985,6 +992,7 @@ MODULE PartitionGraph
           vf2(iv)=vf2Copy(Order(iv))
         ENDDO !iv
         DEALLOCATE(vf2Copy)
+
         !In the event of ties, these values should be sorted by the 3rd-eigenvector
         iv=0
         DO WHILE(iv < nvert)
@@ -1006,6 +1014,8 @@ MODULE PartitionGraph
             iv=iv+numeq
           ENDIF
         ENDDO !iv
+        DEALLOCATE(vf)
+        DEALLOCATE(vf2)
 
         !Determine desired number of groups for each bisection
         !This will be updated before recursion, once the total weight of each
@@ -1054,6 +1064,9 @@ MODULE PartitionGraph
             L2(nv2)=iv
           ENDIF
         ENDDO !iv
+
+        !Refine the 2 groups
+        CALL thisGraph%refine(L1(1:nv1),L2(1:nv2))
 
         !Redistribute the number of groups for each subgraph
         ng1=MAX(1,FLOOR(ng*cw1/wtSum))
@@ -1552,7 +1565,7 @@ MODULE PartitionGraph
       TYPE(ParamType) :: vecParams
 #ifdef FUTILITY_HAVE_SLEPC
       EPS :: eps !SLEPC eigenvalue problem solver type
-
+      PetscScalar :: kr,ki
       !Matrix size
       n=A%n
       !For now only pass in self-communicating MPI ENV
@@ -1593,6 +1606,7 @@ MODULE PartitionGraph
             CALL v2%init(vecParams)
             CALL v1%assemble(ierr)
             CALL v2%assemble(ierr)
+            ! CALL EPSGetEigenValue(eps,iv-1,kr,ki,ierr)
             CALL EPSGetEigenVector(eps,iv-1,v1%b,v2%b,ierr)
             CALL v2%clear()
           ENDSELECT
