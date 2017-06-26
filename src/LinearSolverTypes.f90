@@ -298,6 +298,7 @@ MODULE LinearSolverTypes
       INTEGER(SIK) :: MPI_Comm_ID,numberOMP
       CHARACTER(LEN=256) :: timerName,ReqTPLTypeStr,TPLTypeStr,PreCondType
 #ifdef FUTILITY_HAVE_PETSC
+      PC :: pc
       PetscErrorCode  :: iperr
 #endif
 #ifdef FUTILITY_HAVE_Trilinos
@@ -514,6 +515,32 @@ MODULE LinearSolverTypes
               CALL PARDISOINIT(solver%pt,solver%mtype,solver%iparm)
             ENDIF
 #endif
+            IF(TPLType==PETSC) THEN
+#ifdef FUTILITY_HAVE_PETSC
+                !create and initialize KSP
+                CALL KSPCreate(solver%MPIparallelEnv%comm,solver%ksp,iperr)
+                CALL KSPSetType(solver%ksp,KSPPREONLY,iperr)
+                CALL KSPSetFromOptions(solver%ksp,iperr)
+                SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=5))
+                  CALL KSPSetOperators(solver%ksp,A%a,A%a,iperr)
+#else
+                  CALL KSPSetOperators(solver%ksp,A%a,A%a, &
+                    DIFFERENT_NONZERO_PATTERN,iperr)
+#endif
+                ENDSELECT
+
+                !PC calls
+                CALL KSPGetPC(solver%ksp,pc,ierr)
+                CALL PCSetType(pc,PCLU,iperr)
+                CALL PCFactorSetMatSolverPackage(pc,MATSOLVERSUPERLU_DIST,iperr)
+                CALL PCFactorSetUpMatSolverPackage(pc,iperr)
+
+#else
+                CALL eLinearSolverType%raiseError('Incorrect call to '// &
+                  modName//'::'//myName//' - invalid value of solverMethod')
+#endif
+            ENDIF
 
           TYPE IS(LinearSolverType_Iterative) ! iterative solver
             IF((solverMethod > 0) .AND. &
@@ -842,6 +869,10 @@ MODULE LinearSolverTypes
 #ifdef HAVE_PARDISO
       INTEGER(SIK) :: msglvl=0,nrhs=1,maxfct=1,mnum=1,error=0
 #endif
+#ifdef FUTILITY_HAVE_PETSC
+      PetscErrorCode :: iperr
+#endif
+
       CALL solve_checkInput(solver)
       IF(solver%info == 0) THEN
         solver%info=-1
@@ -895,7 +926,34 @@ MODULE LinearSolverTypes
                 IF(.NOT.solver%isDecomposed) &
                   CALL DecomposePLU_TriDiag(solver)
                 CALL solvePLU_TriDiag(solver)
-
+              TYPE IS(PETScMatrixType)
+                IF(solver%TPLtype==PETSC) THEN
+#ifdef FUTILITY_HAVE_PETSC                  
+                  ! assemble matrix if necessary
+                  IF(.NOT.(A%isAssembled)) CALL A%assemble()
+                  
+                  ! assemble source vector if necessary
+                  SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
+                    IF(.NOT.(b%isAssembled)) CALL b%assemble()
+                  ENDSELECT
+                  
+                  ! assemble solution vector if necessary
+                  SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
+                    IF(.NOT.(X%isAssembled)) CALL X%assemble()
+                  ENDSELECT
+                
+                  SELECTTYPE(A => solver%A); TYPE IS(PETScMatrixType)
+                    SELECTTYPE(x => solver%x); TYPE IS(PETScVectorType)
+                      SELECTTYPE(b => solver%b); TYPE IS(PETScVectorType)
+                        CALL KSPSolve(solver%ksp,b%b,x%b,iperr)
+                      ENDSELECT
+                    ENDSELECT
+                  ENDSELECT
+#else
+                  CALL eLinearSolverType%raiseError('Incorrect call to '// &
+                    modName//'::'//myName//' - PETS not enabled.')
+#endif
+                ENDIF
               CLASS DEFAULT
                 IF(solver%TPLtype==PARDISO_MKL) THEN
 #ifdef HAVE_PARDISO
