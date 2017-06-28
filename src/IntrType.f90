@@ -330,28 +330,28 @@ MODULE IntrType
 
   !> Definition of external C interfaces defined in CUtils.
   INTERFACE
-    FUNCTION isNAN_float_c(x) RESULT(bool) &
+    PURE FUNCTION isNAN_float_c(x) RESULT(bool) &
       BIND(C,NAME="isNAN_float_c")
       USE ISO_C_BINDING
       REAL(C_FLOAT),INTENT(IN) :: x
       INTEGER(C_INT) :: bool
     ENDFUNCTION isNAN_float_c
 
-    FUNCTION isNAN_double_c(x) RESULT(bool) &
+    PURE FUNCTION isNAN_double_c(x) RESULT(bool) &
       BIND(C,NAME="isNAN_double_c")
       USE ISO_C_BINDING
       REAL(C_DOUBLE),INTENT(IN) :: x
       INTEGER(C_INT) :: bool
     ENDFUNCTION isNAN_double_c
 
-    FUNCTION isINF_float_c(x) RESULT(bool) &
+    PURE FUNCTION isINF_float_c(x) RESULT(bool) &
       BIND(C,NAME="isINF_float_c")
       USE ISO_C_BINDING
       REAL(C_FLOAT),INTENT(IN) :: x
       INTEGER(C_INT) :: bool
     ENDFUNCTION isINF_float_c
 
-    FUNCTION isINF_double_c(x) RESULT(bool) &
+    PURE FUNCTION isINF_double_c(x) RESULT(bool) &
       BIND(C,NAME="isINF_double_c")
       USE ISO_C_BINDING
       REAL(C_DOUBLE),INTENT(IN) :: x
@@ -922,7 +922,7 @@ MODULE IntrType
 !> @param x a single precision real number
 !> @returns @c bool result of comparison
 !>
-    FUNCTION isnan_single(x) RESULT(bool)
+    ELEMENTAL FUNCTION isnan_single(x) RESULT(bool)
       REAL(SSK),INTENT(IN) :: x
       LOGICAL(SBK) :: bool
       INTEGER(C_INT) :: c_bool
@@ -936,7 +936,7 @@ MODULE IntrType
 !> @param x a double precision real number
 !> @returns @c bool result of comparison
 !>
-    FUNCTION isnan_double(x) RESULT(bool)
+    ELEMENTAL FUNCTION isnan_double(x) RESULT(bool)
       REAL(SDK),INTENT(IN) :: x
       LOGICAL(SBK) :: bool
       INTEGER(C_INT) :: c_bool
@@ -950,7 +950,7 @@ MODULE IntrType
 !> @param x a single precision real number
 !> @returns @c bool result of comparison
 !>
-    FUNCTION isinf_single(x) RESULT(bool)
+    ELEMENTAL FUNCTION isinf_single(x) RESULT(bool)
       REAL(SSK),INTENT(IN) :: x
       LOGICAL(SBK) :: bool
       INTEGER(C_INT) :: c_bool
@@ -964,7 +964,7 @@ MODULE IntrType
 !> @param x a double precision real number
 !> @returns @c bool result of comparison
 !>
-    FUNCTION isINF_double(x) RESULT(bool)
+    ELEMENTAL FUNCTION isINF_double(x) RESULT(bool)
       REAL(SDK),INTENT(IN) :: x
       LOGICAL(SBK) :: bool
       INTEGER(C_INT) :: c_bool
