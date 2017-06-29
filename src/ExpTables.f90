@@ -378,8 +378,8 @@ MODULE ExpTables
           ENDSELECT
         ENDIF
         IF(nerror == eExpTable%getcounter(EXCEPTION_ERROR)) THEN
-          minTable=minVal*nintervals
-          maxTable=maxVal*nintervals
+          minTable=INT(minVal*nintervals)
+          maxTable=INT(maxVal*nintervals)
           myET%minTable=minTable
           SELECTCASE(tableType)
             CASE (EXACT_EXP_TABLE)

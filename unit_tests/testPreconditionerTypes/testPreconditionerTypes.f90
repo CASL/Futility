@@ -438,7 +438,7 @@ PROGRAM testPreconditionerTypes
 !-------------------------------------------------------------------------------
     SUBROUTINE setupBILUTest(index)
       INTEGER(SIK),INTENT(IN) :: index
-      INTEGER(SIK) :: i,j,iostatus,ierr
+      INTEGER(SIK) :: i,j,iostatus
       INTEGER(SIK) :: nPlane,nPin,nGrp,N,comm,nnz
       REAL(SRK) :: val
 

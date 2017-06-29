@@ -24,7 +24,6 @@ PROGRAM testGeom_Poly
 
   LOGICAL(SBK) :: bool
   TYPE(GraphType) :: testGraph
-  TYPE(PolygonType) :: testPolyType
 
   CREATE_TEST('GEOM_POLY')
   CALL eParams%setQuietMode(.TRUE.)
@@ -53,6 +52,7 @@ PROGRAM testGeom_Poly
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testUninit()
+      TYPE(PolygonType) :: testPolyType
       ASSERT(.NOT.testPolyType%isinit,'%isinit')
       ASSERT(testPolyType%area .APPROXEQA. 0.0_SRK,'%area')
       ASSERT(testPolyType%nVert == 0,'%nVert')
@@ -65,6 +65,7 @@ PROGRAM testGeom_Poly
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testClear()
+      TYPE(PolygonType) :: testPolyType
       !init by hand
       testPolyType%isinit=.TRUE.
       ALLOCATE(testPolyType%vert(3))
@@ -91,6 +92,7 @@ PROGRAM testGeom_Poly
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testSet()
+      TYPE(PolygonType) :: testPolyType
       INTEGER(SIK) :: i
       REAL(SRK) :: testCoord(2,9),c0(2)
       TYPE(PolygonType) :: refRect
@@ -364,6 +366,7 @@ PROGRAM testGeom_Poly
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testSubtractSubVol()
+      TYPE(PolygonType) :: testPolyType
       INTEGER(SIK) :: i
       REAL(SRK) :: testCoord(2,9)
       TYPE(PolygonType) :: testPoly2,testPoly3,testPoly4
@@ -570,6 +573,7 @@ PROGRAM testGeom_Poly
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testPointOnSurface()
+      TYPE(PolygonType) :: testPolyType
       INTEGER(SIK) :: i
       REAL(SRK) :: testCoord(2,9),c0(2)
       TYPE(PointType) :: point
@@ -698,6 +702,7 @@ PROGRAM testGeom_Poly
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testPointInside()
+      TYPE(PolygonType) :: testPolyType
       INTEGER(SIK) :: i
       REAL(SRK) :: testCoord(2,9),c0(2)
       TYPE(PointType) :: point
@@ -1113,6 +1118,7 @@ PROGRAM testGeom_Poly
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testPolyInside()
+      TYPE(PolygonType) :: testPolyType
       INTEGER(SIK) :: i
       REAL(SRK) :: testCoord(2,9),c0(2)
       TYPE(PointType) :: point
@@ -1539,6 +1545,7 @@ PROGRAM testGeom_Poly
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testDoesLineIntersect()
+      TYPE(PolygonType) :: testPolyType
       INTEGER(SIK) :: i
       REAL(SRK) :: testCoord(2,9),c0(2)
       TYPE(LineType) :: line
@@ -1585,6 +1592,7 @@ PROGRAM testGeom_Poly
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testDoesPolyIntersect()
+      TYPE(PolygonType) :: testPolyType
       INTEGER(SIK) :: i
       REAL(SRK) :: testCoord(2,9),c0(2)
       TYPE(PolygonType) :: testPoly2
@@ -1755,6 +1763,7 @@ PROGRAM testGeom_Poly
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testIntersectLine()
+      TYPE(PolygonType) :: testPolyType
       INTEGER(SIK) :: i
       REAL(SRK) :: testCoord(2,9),c0(2)
       TYPE(PointType) :: point1,point2
@@ -1944,6 +1953,7 @@ PROGRAM testGeom_Poly
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testIntersectPoly()
+      TYPE(PolygonType) :: testPolyType
       INTEGER(SIK) :: i
       REAL(SRK) :: testCoord(2,9),c0(2)
       TYPE(PointType),ALLOCATABLE :: points(:)
@@ -2010,6 +2020,7 @@ PROGRAM testGeom_Poly
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testIsCircle()
+      TYPE(PolygonType) :: testPolyType
       INTEGER(SIK) :: i
       REAL(SRK) :: testCoord(2,9),c0(2)
 
@@ -2094,6 +2105,7 @@ PROGRAM testGeom_Poly
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testGetRadius()
+      TYPE(PolygonType) :: testPolyType
       INTEGER(SIK) :: i
       REAL(SRK) :: testCoord(2,9),c0(2)
 
@@ -2177,6 +2189,7 @@ PROGRAM testGeom_Poly
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testPolygonize()
+      TYPE(PolygonType) :: testPolyType
       TYPE(PointType) :: testpoint
       TYPE(PointType) :: testpoint_b,testpoint_t
       TYPE(ABBoxType) :: testABbox
@@ -2312,6 +2325,7 @@ PROGRAM testGeom_Poly
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testGenerateGraph
+      TYPE(PolygonType) :: testPolyType
       INTEGER(SIK) :: i
       REAL(SRK) :: testCoord(2,9),c0(2)
       TYPE(GraphType) :: testGraph2
@@ -2406,6 +2420,7 @@ PROGRAM testGeom_Poly
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testEquivalence()
+      TYPE(PolygonType) :: testPolyType
       INTEGER(SIK) :: i
       REAL(SRK) :: testCoord(2,9),c0(2)
       TYPE(PolygonType) :: testPoly2,testPoly3

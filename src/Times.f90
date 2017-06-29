@@ -743,6 +743,8 @@ MODULE Times
       INTEGER(SIK) :: ndays
 
       INTEGER(SIK) :: i
+      !Avoids unsed dumy argument warning
+      i=daystt
       ndays=0
       !Count the number of leap years from 0
       DO i=yearstt,yearstp

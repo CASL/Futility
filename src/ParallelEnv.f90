@@ -1032,7 +1032,7 @@ MODULE ParallelEnv
         ELSE
           !Copy the result to the output argument
           x(1:n)=rbuf(1,:)
-          i(1:n)=rbuf(2,:)
+          i(1:n)=INT(rbuf(2,:))
         ENDIF
       ENDIF
 #endif
@@ -1077,7 +1077,7 @@ MODULE ParallelEnv
         ELSE
           !Copy the result to the output argument
           x(1:n)=rbuf(1,:)
-          i(1:n)=rbuf(2,:)
+          i(1:n)=INT(rbuf(2,:))
         ENDIF
       ENDIF
 #endif

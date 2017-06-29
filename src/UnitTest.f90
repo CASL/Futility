@@ -56,9 +56,8 @@ MODULE UnitTest
 !
 ! List of global variables
   CHARACTER(LEN=60) :: utest_testname
-  CHARACTER(LEN=60) :: utest_subtestname
   CHARACTER(LEN=60) :: utest_componentname
-  CHARACTER(LEN=60) :: utest_prefix
+  CHARACTER(LEN=62) :: utest_prefix
   LOGICAL :: utest_master=.TRUE.
   LOGICAL :: utest_component=.FALSE.
   LOGICAL :: utest_compfail=.FALSE.
@@ -99,7 +98,6 @@ MODULE UnitTest
   LOGICAL :: mpiinit
 #endif
 
-  CHARACTER(LEN=80) :: line
   INTEGER :: utest_npfx=0
   INTEGER :: utest_lvl=0
 !
@@ -488,23 +486,6 @@ MODULE UnitTest
       WRITE(*,*) 'Press Return to Continue:'
       READ(*,*)
     ENDSUBROUTINE UTest_Stay
-!
-!-------------------------------------------------------------------------------
-!> @brief description
-!> @param parameter    description
-!>
-!> description
-!>
-    FUNCTION trim_path(file) RESULT(name)
-      CHARACTER(LEN=*),INTENT(IN) :: file
-      CHARACTER(LEN=LEN(file)) :: name
-      INTEGER :: i
-
-      DO i=LEN(file),1,-1
-        IF(file(i:i) == ACHAR(92)) EXIT
-      ENDDO
-      name=file(i+1:LEN(file))
-    ENDFUNCTION
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE UTest_setpfx(pfx)

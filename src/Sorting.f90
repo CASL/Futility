@@ -332,8 +332,8 @@ MODULE Sorting
       !LOGICAL(SBK),INTENT(IN),OPTIONAL :: reverse
       LOGICAL(SBK) :: sorted
       INTEGER(SIK) :: i,ni,nr,ncomp
-      INTEGER(SIK) :: tmpi
       TYPE(StringType) :: tmpstr,tmpstr2
+      REAL(SRK) :: tmpr
 
       sorted=.FALSE.
       ni=SIZE(real1,DIM=1)
@@ -345,12 +345,13 @@ MODULE Sorting
           ncomp=ncomp+1
           DO i=1,ni-ncomp
             IF(real1(i) > real1(i+1)) THEN
-              tmpi=real1(i+1)
+              tmpr=real1(i+1)
               real1(i+1)=real1(i)
-              real1(i)=tmpi
+              real1(i)=tmpr
               tmpstr=str1(i+1)
               tmpstr2=str1(i)
               str1(i+1)=tmpstr2
+              !str1(i+1)=str1(i)
               str1(i)=tmpstr
               sorted=.FALSE.
             ENDIF
@@ -383,8 +384,7 @@ MODULE Sorting
       !LOGICAL(SBK),INTENT(IN),OPTIONAL :: reverse
       LOGICAL(SBK) :: sorted
       INTEGER(SIK) :: i,ni,nr,ncomp
-      INTEGER(SIK) :: tmpi
-      REAL(SRK) :: tmpr
+      INTEGER(SIK) :: tmpi,tmpi2
 
       sorted=.FALSE.
       ni=SIZE(int1,DIM=1)
@@ -399,9 +399,9 @@ MODULE Sorting
               tmpi=int1(i+1)
               int1(i+1)=int1(i)
               int1(i)=tmpi
-              tmpr=int2(i+1)
+              tmpi2=int2(i+1)
               int2(i+1)=int2(i)
-              int2(i)=tmpr
+              int2(i)=tmpi2
               sorted=.FALSE.
             ENDIF
           ENDDO

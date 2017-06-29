@@ -9771,31 +9771,6 @@ MODULE ParameterLists
     ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
-!> @brief Defines the operation for performing an assignment of an array of
-!> integers to a string
-!> @param iArr the array of integers
-!> @param str the string value
-    SUBROUTINE int_array_to_string(iArr,str)
-      INTEGER(SIK),INTENT(IN) :: iArr(:)
-      TYPE(StringType),INTENT(OUT) :: str
-      INTEGER(SIK) :: i,numElts
-      CHARACTER(LEN=32) :: tmpchar
-
-      numElts=SIZE(iArr)
-      str=''
-      IF(numElts == 0) RETURN
-
-      str='{'
-      DO i=1,numElts
-        WRITE(tmpchar,*) iArr(i)
-        tmpchar=ADJUSTL(tmpchar)
-        str=TRIM(str)//TRIM(tmpchar)
-        IF(i < numElts) str=TRIM(str)//','
-      ENDDO
-      str=TRIM(str)//'}'
-    ENDSUBROUTINE int_array_to_string
-!
-!-------------------------------------------------------------------------------
 !> @brief Defines the operation for performing an assignment of a character
 !> string to an array of doubles
 !> @param dArr the array of doubles
@@ -9830,31 +9805,6 @@ MODULE ParameterLists
         ENDIF
       ENDDO
     ENDSUBROUTINE char_to_double_array
-!
-!-------------------------------------------------------------------------------
-!> @brief Defines the operation for performing an assignment of an array of
-!> double to a string
-!> @param dArr the array of doubles
-!> @param str the string value
-    SUBROUTINE double_array_to_string(dArr,str)
-      REAL(SRK),INTENT(IN) :: dArr(:)
-      TYPE(StringType),INTENT(OUT) :: str
-      INTEGER(SIK) :: i,numElts
-      CHARACTER(LEN=32) :: tmpchar
-
-      numElts=SIZE(dArr)
-      str=''
-      IF(numElts == 0) RETURN
-
-      str='{'
-      DO i=1,numElts
-        WRITE(tmpchar,*) dArr(i)
-        tmpchar=ADJUSTL(tmpchar)
-        str=TRIM(str)//TRIM(tmpchar)
-        IF(i < numElts) str=TRIM(str)//','
-      ENDDO
-      str=TRIM(str)//'}'
-    ENDSUBROUTINE double_array_to_string
 !
 !-------------------------------------------------------------------------------
 !> @brief Defines the operation for performing an assignment of a character
