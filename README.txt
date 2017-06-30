@@ -6,7 +6,7 @@
 ! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
 ! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-https://api.travis-ci.org/CASL/Futility.svg?branch=master
+
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !                                 Introduction                                 !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
