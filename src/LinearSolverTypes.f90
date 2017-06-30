@@ -1873,17 +1873,17 @@ MODULE LinearSolverTypes
         SELECTTYPE(A => solver%A); TYPE IS(TriDiagMatrixType)
           !Test for diagonal dominance
           diagDom=.TRUE.
-          IF(ABS(A%a(2,1))<ABS(A%a(3,1))) diagDom=.FALSE.
-          DO i=2,A%n-1
-            IF(ABS(A%a(2,i))<(ABS(A%a(1,i))+ABS(A%a(3,i)))) &
-              diagDom=.FALSE.; EXIT
-          ENDDO
-          IF(ABS(A%a(2,A%n))<ABS(A%a(1,A%n))) diagDom=.FALSE.
-
-          !If the first diagonal coefficient is zero, return
-          IF(A%a(2,1) .APPROXEQA. 0._SRK) THEN
-            RETURN
-          ENDIF
+!          IF(ABS(A%a(2,1))<ABS(A%a(3,1))) diagDom=.FALSE.
+!          DO i=2,A%n-1
+!            IF(ABS(A%a(2,i))<(ABS(A%a(1,i))+ABS(A%a(3,i)))) &
+!              diagDom=.FALSE.; EXIT
+!          ENDDO
+!          IF(ABS(A%a(2,A%n))<ABS(A%a(1,A%n))) diagDom=.FALSE.
+!
+!          !If the first diagonal coefficient is zero, return
+!          IF(A%a(2,1) .APPROXEQA. 0._SRK) THEN
+!            RETURN
+!          ENDIF
 
           SELECTTYPE(M => solver%M); TYPE IS(TriDiagMatrixType)
             M%a(2,1)=1.0_SRK/A%a(2,1)
@@ -1991,21 +1991,25 @@ MODULE LinearSolverTypes
               n=M%n
               !LUx=b,Ux=y, Ly=b
               !find y (Ly=b), y is stored in X to save space
-              CALL b%get(1,tmpbval)
-              CALL X%set(1,tmpbval)
+              !CALL b%get(1,tmpbval)
+              !CALL X%set(1,tmpbval)
+              x%b(1)=b%b(1)
               DO i=2,n
-                CALL X%get((i-1),tmpxval)
-                CALL b%get(i,tmpbval)
-                CALL X%set(i,tmpbval-M%a(1,i)*tmpxval)
+                !CALL X%get((i-1),tmpxval)
+                !CALL b%get(i,tmpbval)
+                !CALL X%set(i,tmpbval-M%a(1,i)*tmpxval)
+                x%b(i)=b%b(i)-M%a(1,i)*x%b(i-1)
               ENDDO
               !find x with backward substitution (Ux=y)
-              CALL X%get(n,tmpxval)
-              CALL X%set(n,tmpxval*M%a(2,n))
-              CALL X%get(n,Xprev)
+              !CALL X%get(n,tmpxval)
+              !CALL X%set(n,tmpxval*M%a(2,n))
+              x%b(n)=x%b(n)*M%a(2,n)
+              !CALL X%get(n,Xprev)
               DO i=(n-1),1,-1
-                CALL X%get(i,tmpxval)
-                CALL X%set(i,(tmpxval-M%a(3,i)*Xprev)*M%a(2,i))
-                CALL X%get(i,Xprev)
+                !CALL X%get(i,tmpxval)
+                !CALL X%set(i,(tmpxval-M%a(3,i)*Xprev)*M%a(2,i))
+                !CALL X%get(i,Xprev)
+                x%b(i)=(x%b(i)-M%a(3,i)*x%b(i+1))*M%a(2,i)
               ENDDO
               solver%info=0
             ENDSELECT

@@ -130,7 +130,7 @@ MODULE MemProf
 
       IF(ASSOCIATED(thisMP%myLog) .AND. thisMP%pe%world%master) THEN
         WRITE(tmpchar,'(a)') 'Memory Use at '//TRIM(name)//':'
-        WRITE(amesg,'(a,3(f10.3))') ADJUSTL(tmpchar), mem, maxmem, dmem
+        WRITE(amesg,'(a,3(f12.5))') ADJUSTL(tmpchar), mem, maxmem, dmem
         CALL thisMP%myLog%message(TRIM(amesg),.FALSE.,.TRUE.)
       ENDIF
 
