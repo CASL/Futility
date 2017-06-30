@@ -74,16 +74,22 @@ PROGRAM testMatrixTypes
     SUBROUTINE testMatrix()
       CLASS(MatrixType),ALLOCATABLE :: thisMatrix
       CLASS(RealVectorType),ALLOCATABLE :: xRealVector,yRealVector
-      CLASS(VectorType),ALLOCATABLE :: xPETScVector,yPETScVector,xTrilinosVector,yTrilinosVector
       INTEGER(SIK) :: i, ncnt, ncnt2
-      INTEGER(SIK) :: matsize1,matsize2
       INTEGER(SIK) :: ia_vals(4)
       INTEGER(SIK) :: ja_vals(6)
-      INTEGER(SIK),ALLOCATABLE :: dnnz(:)
       REAL(SRK) :: a_vals(6),x(3),y(3)
       REAL(SRK) :: dummy
       REAL(SRK),ALLOCATABLE :: dummyvec(:)
       LOGICAL(SBK) :: bool
+#ifdef FUTILITY_HAVE_PETSC
+      INTEGER(SIK) :: matsize1,matsize2
+      CLASS(VectorType),ALLOCATABLE :: xPETScVector,yPETScVector
+#endif
+#ifdef FUTILITY_HAVE_Trilinos
+      INTEGER(SIK),ALLOCATABLE :: dnnz(:)
+      CLASS(VectorType),ALLOCATABLE :: xTrilinosVector,yTrilinosVector
+#endif
+
 #ifdef FUTILITY_HAVE_PETSC
       PetscErrorCode  :: ierr
 #endif
@@ -2530,6 +2536,7 @@ PROGRAM testMatrixTypes
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testMatrixMultSparse()
+#ifdef FUTILITY_HAVE_PETSC
       CLASS(MatrixType),ALLOCATABLE :: thisMtrx
       CLASS(MatrixType),ALLOCATABLE :: bmat
       CLASS(MatrixType),ALLOCATABLE :: cmat
@@ -2537,7 +2544,6 @@ PROGRAM testMatrixTypes
       REAL(SRK) :: ALPHA,BETA,dummy
       LOGICAL(SBK) :: bool
 
-#ifdef FUTILITY_HAVE_PETSC
       !
       !1.) A: PETSc  B: PETSc  C: PETSc     ----------------------------
       !
@@ -2652,8 +2658,11 @@ PROGRAM testMatrixTypes
       CLASS(MatrixType),ALLOCATABLE :: bmat
       CLASS(MatrixType),ALLOCATABLE :: cmat
       INTEGER(SIK) :: i,j
-      REAL(SRK) :: ALPHA,BETA,dummy
+      REAL(SRK) :: ALPHA,BETA
       LOGICAL(SBK) :: bool
+#ifdef FUTILITY_HAVE_PETSC
+     REAL(SRK) :: dummy
+#endif
 
       !Test BLAS_matmult
       !

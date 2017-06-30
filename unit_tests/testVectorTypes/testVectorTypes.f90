@@ -79,11 +79,14 @@ PROGRAM testVectorTypes
 !-------------------------------------------------------------------------------
     SUBROUTINE testVector()
       CLASS(VectorType),ALLOCATABLE :: thisVector
-      INTEGER(SIK) :: i,vecsize
+      INTEGER(SIK) :: i
       REAL(SRK),ALLOCATABLE :: testvec(:),testvec2(:),dummyvec(:)
       REAL(SRK) :: dummy
       TYPE(ParamType) :: pList
       LOGICAL(SBK) :: bool
+#ifdef FUTILITY_HAVE_PETSC
+      INTEGER(SIK) :: vecsize
+#endif
 
 !Test for real vectors
       !Perform test of clear function
@@ -1612,9 +1615,12 @@ PROGRAM testVectorTypes
     CLASS(VectorType),ALLOCATABLE :: xVector, yVector, aVector
     REAL(SRK) :: r, a
     REAL(SRK),ALLOCATABLE :: dummyvec(:),dummyvec2(:)
-    INTEGER(SIK) :: r_index, i
+    INTEGER(SIK) :: r_index
     TYPE(ParamType) :: pList
     LOGICAL(SBK) :: bool
+#ifdef FUTILITY_HAVE_TRILINOS
+    INTEGER(SIK) :: i
+#endif
     ! test with real vectors
     ALLOCATE(RealVectorType :: xVector)
     ALLOCATE(RealVectorType :: yVector)

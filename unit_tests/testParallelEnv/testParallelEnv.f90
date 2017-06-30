@@ -19,11 +19,12 @@ PROGRAM testParallelEnv
 
 #ifdef HAVE_MPI
   INCLUDE 'mpif.h'
+  INTEGER :: mpierr, tmp
 #endif
 
   TYPE(ParallelEnvType) :: testPE,testPE2
 
-  INTEGER :: mpierr,myrank,mysize,tmp,stt,stp
+  INTEGER :: myrank,mysize,stt,stp
 
 #ifdef HAVE_MPI
   CALL MPI_Init(mpierr)
@@ -67,7 +68,7 @@ PROGRAM testParallelEnv
 !-------------------------------------------------------------------------------
     SUBROUTINE testOMPEnv()
       TYPE(OMP_EnvType) :: testOMP
-      INTEGER :: n_warn
+      !INTEGER :: n_warn
 
       COMPONENT_TEST('Uninit.')
       ASSERT(testOMP%nproc == -1,'%nproc')

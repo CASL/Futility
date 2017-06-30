@@ -185,8 +185,10 @@ MODULE UnitTest
       CHARACTER(LEN=17) :: passfail
       INTEGER :: npass=0
       INTEGER :: nfail=0
+#ifdef HAVE_MPI
       INTEGER :: sendbuf(2),recvbuf(2)
       CHARACTER(LEN=79) :: sendcharbuf,recvcharbuf,subtest_stats
+#endif
       TYPE(UTestElement),POINTER :: tmp, tmp1
 
 !If this is a parallel test, the test fails if tests on ANY processor failed

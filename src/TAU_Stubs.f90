@@ -205,7 +205,9 @@ MODULE TAU_Stubs
 !> execution environment. Allocates space for profilers.
 !>
     SUBROUTINE TAU_PROFILE_INIT()
+#ifdef HAVE_MPI
       INTEGER(SIK) :: isinit,mpierr
+#endif
 
 !$OMP SINGLE
       IF(.NOT.TauStubLibData%isInit) THEN

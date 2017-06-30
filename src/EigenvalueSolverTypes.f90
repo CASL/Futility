@@ -424,10 +424,10 @@ MODULE EigenvalueSolverTypes
       CLASS(EigenvalueSolverType_Anasazi),INTENT(INOUT) :: solver
       TYPE(MPI_EnvType),INTENT(IN),TARGET :: MPIEnv
       TYPE(ParamType),INTENT(IN) :: Params
-      TYPE(ParamType) :: validParams, tmpPL
 #ifdef FUTILITY_HAVE_Trilinos
       INTEGER(SIK) :: n,nlocal,solvertype,maxit
       REAL(SRK) :: tol
+      TYPE(ParamType) :: validParams, tmpPL
       TYPE(STRINGType) :: pctype
       INTEGER(C_INT) :: ierr
       CLASS(ParamType),POINTER :: anasaziParams, pcParams

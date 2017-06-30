@@ -294,7 +294,7 @@ MODULE LinearSolverTypes
       ! local variables
       INTEGER(SIK) :: n
       INTEGER(SIK) :: matType,ReqTPLType,TPLType,solverMethod,pciters,pcsetup
-      INTEGER(SIK) :: nz,npin,ngrp,ierr
+      INTEGER(SIK) :: nz,npin,ngrp
       INTEGER(SIK) :: MPI_Comm_ID,numberOMP
       CHARACTER(LEN=256) :: timerName,ReqTPLTypeStr,TPLTypeStr,PreCondType
 #ifdef FUTILITY_HAVE_PETSC
@@ -302,6 +302,7 @@ MODULE LinearSolverTypes
       PetscErrorCode  :: iperr
 #endif
 #ifdef FUTILITY_HAVE_Trilinos
+      INTEGER(SIK) :: ierr
       TYPE(ParamType) :: belosParams
       TYPE(ForTeuchos_ParameterList_ID) :: plID
 #endif
@@ -1466,7 +1467,9 @@ MODULE LinearSolverTypes
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
       INTEGER(SIK),INTENT(INOUT) :: niters
       REAL(SRK),INTENT(INOUT) :: resid
+#ifdef FUTILITY_HAVE_PETSC
       INTEGER(SIK) :: ierr
+#endif
 
       IF(solver%TPLType == PETSC) THEN
 #ifdef FUTILITY_HAVE_PETSC
