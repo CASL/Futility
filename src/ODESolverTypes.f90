@@ -346,7 +346,7 @@ MODULE ODESolverTypes
       CLASS(VectorType),INTENT(INOUT) :: yf
 
       INTEGER(SIK) :: ierr
-      REAL(SRK) :: ttmp
+      REAL(C_DOUBLE) :: ttmp
 
       CALL y0%get(solver%ytmp)
 #ifdef FUTILITY_HAVE_SUNDIALS
@@ -355,16 +355,18 @@ MODULE ODESolverTypes
         solver%ipar(1)=solver%n
         solver%rpar(1)=0.0_SRK
 
-        CALL FCVMALLOC(t0,solver%ytmp, 2, 2, 1, solver%tol, 1.0E-12_C_DOUBLE,solver%IOUT, solver%ROUT, &
+        CALL FCVMALLOC(REAL(t0,C_DOUBLE),solver%ytmp, 2, 2, 1, solver%tol, 1.0E-12_C_DOUBLE,solver%IOUT, solver%ROUT, &
                       solver%IPAR, solver%RPAR, ierr)
         CALL FCVDENSE(INT(solver%n,C_LONG),ierr)
         solver%first=.FALSE.
       ELSE
         !pull data out of y0 into y
-        CALL FCVREINIT(t0,solver%ytmp, 1, solver%tol, 1.0E-12_C_DOUBLE, ierr)
+        CALL FCVREINIT(REAL(t0,C_DOUBLE),solver%ytmp, 1, solver%tol, 1.0E-12_C_DOUBLE, ierr)
       ENDIF
+      !CALL FCVSETIIN('HNIL_WARNS',0_C_LONG,ierr)
       !put data in U into yf
-      CALL FCVODE(REAL(TF,C_DOUBLE),REAL(ttmp,C_DOUBLE),solver%ytmp,INT(1,C_INT), ierr)
+      CALL FCVODE(REAL(TF,C_DOUBLE),ttmp,solver%ytmp,INT(1,C_INT), ierr)
+IF(ierr<0 .OR. ABS(ttmp-Tf)>1.0_SRK) WRITE(*,*) T0, TF, ttmp, ABS(TF-ttmp), ierr
       CALL yf%set(solver%ytmp)
 #endif
     ENDSUBROUTINE step_ODESolverType_Sundials
