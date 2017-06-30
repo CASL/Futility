@@ -1,0 +1,11 @@
+sudo: required
+
+services:
+ - docker
+
+before_install:
+ - docker pull dalg24/vera_tpls
+ - docker run -v $PWD:/mnt/Futility dalg24/vera_tpls /bin/sh -c "mkdir /build; cd /build; cmake /mnt/Futility; make; ctest"
+
+script:
+ - echo $PWD
