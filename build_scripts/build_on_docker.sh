@@ -2,6 +2,7 @@
 TPL_DIR=/tools/vera/gcc-5.4.0/tpls/opt
 
 BLAS_LIBRARY_DIRS=${TPL_DIR}/lapack-3.3.1/lib
+LAPACK_LIBRARY_DIRS=${TPL_DIR}/lapack-3.3.1/lib
 
 PETSC_DIR=${TPL_DIR}/petsc-3.5.4
 SLEPC_DIR=${TPL_DIR}/slepc-3.5.4
@@ -29,6 +30,7 @@ cmake -Wno-dev                                  \
  -DTPL_ENABLE_PETSC:BOOL=ON                     \
  -DFutility_BUILD_STANDARD=OFF                  \
  -DTPL_ENABLE_BLAS=ON     -DBLAS_LIBRARY_DIRS:FILENAME=${BLAS_LIBRARY_DIRS}         \
+ -DTPL_ENABLE_LAPACK=ON   -DLAPACK_LIBRARY_DIRS:FILENAME=${LAPACK_LIBRARY_DIRS}     \
  -DTPL_ENABLE_HDF5=ON     -DHDF5_LIBRARY_DIRS:FILEPATH=${HDF5_LIBRARY_DIRS}         \
                           -DHDF5_INCLUDE_DIRS:FILEPATH=${HDF5_INCLUDE_DIRS}         \
                           -DHDF5_LIBRARY_NAMES:STRING=${HDF5_LIBRARY_NAMES}         \
