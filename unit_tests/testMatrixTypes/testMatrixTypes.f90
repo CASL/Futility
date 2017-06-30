@@ -25,6 +25,11 @@ PROGRAM testMatrixTypes
 #include <finclude/petsc.h>
 #undef IS
   PetscErrorCode  :: ierr
+#else
+#ifdef HAVE_MPI
+#include <mpif.h>
+  INTEGER :: ierr
+#endif
 #endif
 
   TYPE(ExceptionHandlerType),TARGET :: e
@@ -49,6 +54,10 @@ PROGRAM testMatrixTypes
 
 #ifdef FUTILITY_HAVE_PETSC
   CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
+#else
+#ifdef HAVE_MPI
+  CALL MPI_Init(ierr)
+#endif
 #endif
 
   CREATE_TEST('Test Matrix Types')

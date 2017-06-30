@@ -1602,10 +1602,11 @@ MODULE MatrixTypes
       INTEGER(SIK) :: i,j
       PetscErrorCode  :: iperr
       TYPE(PETScVectorType) :: dummy
-      TYPE(ParamType) :: vecPList
 #endif
 #ifdef FUTILITY_HAVE_Trilinos
       TYPE(TrilinosVectorType) :: tdummy
+#endif
+#if  defined(FUTILITY_HAVE_PETSC) || defined(FUTILITY_HAVE_Trilinos)
       TYPE(ParamType) :: vecPList
 #endif
       IF(thisMatrix%isInit) THEN

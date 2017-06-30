@@ -68,7 +68,7 @@ PROGRAM testParallelEnv
 !-------------------------------------------------------------------------------
     SUBROUTINE testOMPEnv()
       TYPE(OMP_EnvType) :: testOMP
-      !INTEGER :: n_warn
+!$    INTEGER :: n_warn
 
       COMPONENT_TEST('Uninit.')
       ASSERT(testOMP%nproc == -1,'%nproc')
