@@ -6,7 +6,7 @@
 ! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
 ! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-
+https://api.travis-ci.org/CASL/Futility.svg?branch=master
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !                                 Introduction                                 !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
@@ -36,7 +36,7 @@ The Futility project will not contain any encryption technology to preserve the
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !                                   Citation                                   !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-Proper citation of the Futility software: 
+Proper citation of the Futility software:
   Futility Development Group, "Futility: FORTRAN Utility," Revision {REVISION}.
 
 Where the {REVISION} can be found with GIT:
