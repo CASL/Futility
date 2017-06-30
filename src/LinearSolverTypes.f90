@@ -301,8 +301,10 @@ MODULE LinearSolverTypes
       PC :: pc
       PetscErrorCode  :: iperr
 #endif
-#ifdef FUTILITY_HAVE_Trilinos
+#if defined(FUTILITY_HAVE_PETSC) || defined(FUTILITY_HAVE_Trilinos)
       INTEGER(SIK) :: ierr
+#endif
+#ifdef FUTILITY_HAVE_Trilinos
       TYPE(ParamType) :: belosParams
       TYPE(ForTeuchos_ParameterList_ID) :: plID
 #endif
