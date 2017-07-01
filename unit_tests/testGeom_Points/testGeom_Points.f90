@@ -38,7 +38,7 @@ PROGRAM testGeom_Points
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE TestPoints
-
+      REAL(SRK) :: s(2)
       !Initialize by hand
       COMPONENT_TEST('%clear()')
       !or point=PointType(2,(/0.5_SRK,0.3_SRK/))
@@ -374,9 +374,6 @@ PROGRAM testGeom_Points
       CALL point2%clear()
       CALL point3%clear()
 
-#ifdef __GFORTRAN__
-      WRITE(*,*) 'ELEMENTAL METHODS FOR NON-SCALAR BASE OBJECTS NOT YET SUPPORTED BY COMPILER'
-#else
       CALL point%init(DIM=1,X=0.5_SRK)
       points=point
 !
@@ -408,7 +405,6 @@ PROGRAM testGeom_Points
       bool = .NOT.(ANY(.NOT.(points3(1)%coord .APPROXEQ. 0.4_SRK)) .OR. &
                    ANY(.NOT.(points3(2)%coord .APPROXEQ. 0.4_SRK)))
       ASSERT(bool, 'midPoint(...)')
-#endif
 !
 !Test Operators
       !Addition

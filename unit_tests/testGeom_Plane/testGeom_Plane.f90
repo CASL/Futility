@@ -17,9 +17,9 @@ PROGRAM testGeom_Plane
 
   IMPLICIT NONE
 
-  TYPE(PointType) :: point,point2
+  TYPE(PointType) :: point,point2,points(2)
   TYPE(LineType) :: line1,line2
-  TYPE(PlaneType) :: plane1,plane2
+  TYPE(PlaneType) :: plane1,plane2,planes(2)
   LOGICAL(SBK) :: bool
 
   CREATE_TEST('Test Geom')
@@ -112,9 +112,6 @@ PROGRAM testGeom_Plane
       CALL plane2%set(n,point)
       ASSERT(.NOT.(plane1 == plane2),'plane non-equivalence')
 
-#ifdef __GFORTRAN__
-      WRITE(*,*) 'ELEMENTAL METHODS FOR NON-SCALAR BASE OBJECTS NOT YET SUPPORTED BY COMPILER'
-#else
       COMPONENT_TEST('Elemental %set()')
       n=(/1.0_SRK,1.0_SRK,1.0_SRK/)
       CALL plane1%set(n,point)
@@ -133,7 +130,6 @@ PROGRAM testGeom_Plane
                    ALLOCATED(planes(1)%v0%coord) .OR. ANY(planes(2)%n /= 0.0_SRK) .OR. &
                    planes(2)%v0%dim /= 0 .OR. ALLOCATED(planes(2)%v0%coord))
       ASSERT(bool, 'planes%clear()')
-#endif
     ENDSUBROUTINE TestPlane
 
 ENDPROGRAM testGeom_Plane

@@ -18,9 +18,10 @@ PROGRAM testGeom_CircCyl
   IMPLICIT NONE
 
   TYPE(PointType) :: point,point1,point2,point3,point4
+  TYPE(PointType) :: points(2),points2(2),points3(2)
   TYPE(LineType) :: line1
-  TYPE(CircleType) :: circle1,circle2
-  TYPE(CylinderType) :: cylinder1,cylinder2
+  TYPE(CircleType) :: circle1,circle2,circles(2)
+  TYPE(CylinderType) :: cylinder1,cylinder2,cylinders(2)
   LOGICAL(SBK) :: bool
 
   CREATE_TEST('Test Geom')
@@ -661,9 +662,6 @@ PROGRAM testGeom_CircCyl
       cylinder2%r=0.5_SRK
       ASSERT(.NOT.(cylinder1 == cylinder2),'cylinder non-equivalence')
 
-#ifdef __GFORTRAN__
-      WRITE(*,*) 'ELEMENTAL METHODS FOR NON-SCALAR BASE OBJECTS NOT YET SUPPORTED BY COMPILER'
-#else
       WRITE(*,*) 'TESTING CIRCLETYPE (arrays)'
 !
 !Test clear
@@ -753,7 +751,6 @@ PROGRAM testGeom_CircCyl
                    ANY(.NOT.(points3(2)%coord .APPROXEQ. (/0.0_SRK,1.296662954709577_SRK,0.5_SRK/))) .OR. &
                    ANY(.NOT.(points2(2)%coord .APPROXEQ. (/0.0_SRK,-1.696662954709577_SRK,0.5_SRK/))))
       ASSERT(bool, 'cylinders%intersectLine(...)')
-#endif
 
     ENDSUBROUTINE TestCircle_and_Cylinder
 !

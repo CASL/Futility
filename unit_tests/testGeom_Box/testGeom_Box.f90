@@ -18,9 +18,9 @@ PROGRAM testGeom_Box
   IMPLICIT NONE
 
   TYPE(PointType) :: point
-  TYPE(PointType) :: points(2),points2(2)
-  TYPE(LineType) :: line1
-  TYPE(OBBoxType) :: box,box2
+  TYPE(PointType) :: points(2),points2(2),points3(2)
+  TYPE(LineType) :: line1,lines(2)
+  TYPE(OBBoxType) :: box,box2,boxs(2)
   REAL(SRK) :: e_2d(2),e_3d(3),u1_2d(2),u2_2d(2),u3_2d(2)
   REAL(SRK) :: u1_3d(3),u2_3d(3),u3_3d(3)
   LOGICAL(SBK) :: bool
@@ -347,9 +347,6 @@ PROGRAM testGeom_Box
       box2%u(:,1)=(/0.0_SRK,1.0_SRK,0.0_SRK/)
       ASSERT(.NOT.(box == box2),'box non-equivalence')
 !
-#ifdef __GFORTRAN__
-      WRITE(*,*) 'ELEMENTAL METHODS FOR NON-SCALAR BASE OBJECTS NOT YET SUPPORTED BY COMPILER'
-#else
     !Test for clear
       COMPONENT_TEST('Elemental %clear()')
       CALL boxs(1)%clear()
@@ -388,7 +385,6 @@ PROGRAM testGeom_Box
                    .OR. .NOT.(ANY(points2(2)%coord .APPROXEQ. (/0._SRK,2._SRK/))) &
                    .OR. .NOT.(ANY(points3(2)%coord .APPROXEQ. (/0._SRK,4._SRK/))))
       ASSERT(bool, 'box%intersectLine(...)')
-#endif
     ENDSUBROUTINE
 
 ENDPROGRAM testGeom_Box
