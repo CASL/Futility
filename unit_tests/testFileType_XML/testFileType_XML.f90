@@ -39,7 +39,7 @@ PROGRAM testXMLFileType
   SUBROUTINE testGet()
     LOGICAL(SBK) :: bool
     INTEGER(SIK) :: ich,nch,iattr,nattr
-    TYPE(StringType) :: attr_name,val
+    TYPE(StringType) :: val
     TYPE(StringType),ALLOCATABLE :: attr_names(:),attr_values(:)
     TYPE(XMLElementType),POINTER :: parent,children(:)
 
@@ -88,7 +88,7 @@ PROGRAM testXMLFileType
 !-------------------------------------------------------------------------------
   SUBROUTINE testSet()
     LOGICAL(SBK) :: bool
-    INTEGER(SIK) :: ich,nch,nchComp,iattr
+    INTEGER(SIK) :: nch,nchComp,iattr
     TYPE(StringType) :: attr_name,val,refval
     TYPE(StringType) :: refName,setName
     TYPE(XMLElementType),POINTER :: setChildren(:),getChildren(:)

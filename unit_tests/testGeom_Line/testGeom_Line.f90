@@ -18,10 +18,8 @@ PROGRAM testGeom_Line
   IMPLICIT NONE
 
   TYPE(PointType) :: point,point2,point3
-  TYPE(PointType) :: points(2),points2(2),points3(2)
-  TYPE(LineType) :: line1,line2,lines(2),dis,diss(2)
-  INTEGER(SIK) :: ldim(2),i,ioerr
-  REAL(SRK) :: d,mu1,mu2,s(2)
+  TYPE(LineType) :: line1,line2,dis
+  REAL(SRK) :: d,mu1,mu2
   LOGICAL(SBK) :: bool
 
   CREATE_TEST('Test Geom')
@@ -37,7 +35,6 @@ PROGRAM testGeom_Line
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE TestLine
-      TYPE(ParamType) :: params
 !The LineType constructor allocates sp and ep, care should
 !be taken not to code memory leaks. This is why clearPoints() exists.
       COMPONENT_TEST('%clear()')

@@ -452,7 +452,6 @@ MODULE StochasticSampling
       CLASS(StochasticSamplingType),INTENT(INOUT) :: sampler
       REAL(SDK),INTENT(IN) :: y(:)
       INTEGER(SIK) :: rang
-      rang=0._SDK
       rang=sampler%histogram(y/SUM(y))
     ENDFUNCTION uhist_Sampler
 !

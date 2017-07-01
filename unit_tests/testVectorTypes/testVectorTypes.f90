@@ -22,9 +22,12 @@ PROGRAM testVectorTypes
 #ifdef FUTILITY_HAVE_PETSC
 #include <finclude/petsc.h>
 #undef IS
-
   PetscErrorCode  :: ierr
-
+#else
+#ifdef HAVE_MPI
+#include <mpif.h>
+  INTEGER :: ierr
+#endif
 #endif
   INTEGER(SIK) :: iverr
   TYPE(ExceptionHandlerType),POINTER :: e
@@ -39,6 +42,10 @@ PROGRAM testVectorTypes
 
 #ifdef FUTILITY_HAVE_PETSC
   CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
+#else
+#ifdef HAVE_MPI
+  CALL MPI_Init(ierr)
+#endif
 #endif
 
   WRITE(*,*) '==================================================='
@@ -79,11 +86,14 @@ PROGRAM testVectorTypes
 !-------------------------------------------------------------------------------
     SUBROUTINE testVector()
       CLASS(VectorType),ALLOCATABLE :: thisVector
-      INTEGER(SIK) :: i,vecsize
+      INTEGER(SIK) :: i
       REAL(SRK),ALLOCATABLE :: testvec(:),testvec2(:),dummyvec(:)
       REAL(SRK) :: dummy
       TYPE(ParamType) :: pList
       LOGICAL(SBK) :: bool
+#ifdef FUTILITY_HAVE_PETSC
+      INTEGER(SIK) :: vecsize
+#endif
 
 !Test for real vectors
       !Perform test of clear function
@@ -1612,9 +1622,12 @@ PROGRAM testVectorTypes
     CLASS(VectorType),ALLOCATABLE :: xVector, yVector, aVector
     REAL(SRK) :: r, a
     REAL(SRK),ALLOCATABLE :: dummyvec(:),dummyvec2(:)
-    INTEGER(SIK) :: r_index, i
+    INTEGER(SIK) :: r_index
     TYPE(ParamType) :: pList
     LOGICAL(SBK) :: bool
+#ifdef FUTILITY_HAVE_Trilinos
+    INTEGER(SIK) :: i
+#endif
     ! test with real vectors
     ALLOCATE(RealVectorType :: xVector)
     ALLOCATE(RealVectorType :: yVector)

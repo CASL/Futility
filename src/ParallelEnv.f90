@@ -458,9 +458,13 @@ MODULE ParallelEnv
       CHARACTER(LEN=*),PARAMETER :: myName='init_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
       INTEGER(SIK),INTENT(IN),OPTIONAL :: PEparam
-      INTEGER(SIK) :: isinit,icomm
-      LOGICAL(SBK) :: allpetsc
+      INTEGER(SIK) :: icomm
+#ifdef HAVE_MPI
+      INTEGER(SIK) :: isinit
+#endif
+#ifdef FUTILITY_HAVE_PETSC
       LOGICAL(SBK),ALLOCATABLE :: allpetsc2(:)
+#endif
 
       IF(.NOT.myPE%initstat) THEN
         icomm=PE_COMM_NULL
@@ -636,7 +640,10 @@ MODULE ParallelEnv
       INTEGER(SLK),INTENT(IN) :: sendbuf(:)
       INTEGER(SLK),INTENT(INOUT) :: recvbuf(:,:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: root
-      INTEGER(SIK) :: rank,count,i,j,n
+      INTEGER(SIK) :: rank,count
+#ifndef HAVE_MPI
+      INTEGER(SIK)::i,j,n
+#endif
       rank=0
       IF(PRESENT(root)) rank=root
       count=SIZE(sendbuf)
@@ -699,7 +706,10 @@ MODULE ParallelEnv
       INTEGER(SLK),INTENT(IN) :: sendbuf(:,:)
       INTEGER(SLK),INTENT(INOUT) :: recvbuf(:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: root
-      INTEGER(SIK) :: rank,count,i,j,n
+      INTEGER(SIK) :: rank,count
+#ifndef HAVE_MPI
+      INTEGER(SIK)::i,j,n
+#endif
       rank=0
       IF(PRESENT(root)) rank=root
       count=SIZE(recvbuf)
@@ -1033,7 +1043,7 @@ MODULE ParallelEnv
         ELSE
           !Copy the result to the output argument
           x(1:n)=rbuf(1,:)
-          i(1:n)=rbuf(2,:)
+          i(1:n)=INT(rbuf(2,:))
         ENDIF
       ENDIF
 #endif
@@ -1078,7 +1088,7 @@ MODULE ParallelEnv
         ELSE
           !Copy the result to the output argument
           x(1:n)=rbuf(1,:)
-          i(1:n)=rbuf(2,:)
+          i(1:n)=INT(rbuf(2,:))
         ENDIF
       ENDIF
 #endif
@@ -1288,9 +1298,12 @@ MODULE ParallelEnv
       INTEGER(SIK),INTENT(IN) :: nangle
       INTEGER(SIK),INTENT(IN) :: nenergy
       INTEGER(SIK),INTENT(IN) :: nthreads
-      CHARACTER(LEN=12) :: smpierr, nproc, selproc
+      CHARACTER(LEN=12) ::  nproc, selproc
       INTEGER(SIK) :: nerror,tmpcomm,commDims(3)
+#ifdef HAVE_MPI
       LOGICAL(SBK) :: activeCommDim(3)
+      CHARACTER(LEN=12) :: smpierr
+#endif
 
       nerror=eParEnv%getCounter(EXCEPTION_ERROR)
       CALL myPE%world%init(commWorld)

@@ -438,9 +438,9 @@ PROGRAM testPreconditionerTypes
 !-------------------------------------------------------------------------------
     SUBROUTINE setupBILUTest(index)
       INTEGER(SIK),INTENT(IN) :: index
-      INTEGER(SIK) :: i,j,iostatus,ierr
-      INTEGER(SIK) :: nPlane,nPin,nGrp,N,comm,nnz,row,col
-      REAL(SRK) :: tmpreal,val
+      INTEGER(SIK) :: i,j,iostatus
+      INTEGER(SIK) :: nPlane,nPin,nGrp,N,comm,nnz
+      REAL(SRK) :: val
 
 #ifdef HAVE_MPI
   comm=MPI_COMM_WORLD
@@ -556,7 +556,6 @@ PROGRAM testPreconditionerTypes
       INTEGER(SIK) :: nPlane,nPin,nGrp
       INTEGER(SIK) :: row,col,i,j,iostatus,X
       REAL(SRK) :: tmpval,reftmpval,val
-      TYPE(ParamType) :: pList
       CLASS(MatrixType),ALLOCATABLE :: refBILU_L,refBILU_U
       REAL(SRK),ALLOCATABLE :: refF0(:,:,:),refE(:,:),refW(:,:),refNS(:,:)
 

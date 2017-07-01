@@ -16,10 +16,10 @@ PROGRAM testTPLHDF5
 
 #ifdef HAVE_MPI
   INCLUDE 'mpif.h'
+  INTEGER :: mpierr
 #endif
 
   CHARACTER(LEN=8),PARAMETER :: hdf_file='hdf01.h5'
-  INTEGER :: mpierr
 
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING HDF5 TPL...'

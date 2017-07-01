@@ -575,8 +575,6 @@ MODULE Times
       INTEGER(SIK) :: dayspermonth(12)=(/31,28,31,30,31,30,31,31,30,31,30,31/)
       CHARACTER(LEN=LEN(Date1_inp)) :: Date1
       CHARACTER(LEN=LEN(Date2_inp)) :: Date2
-      CHARACTER(LEN=2) :: tmp2
-      CHARACTER(LEN=4) :: tmp4
       CHARACTER(LEN=10) :: tmpdate
       TYPE(StringType) :: outputunit,fmt1,fmt2
 
@@ -745,6 +743,8 @@ MODULE Times
       INTEGER(SIK) :: ndays
 
       INTEGER(SIK) :: i
+      !Avoids unsed dumy argument warning
+      i=daystt
       ndays=0
       !Count the number of leap years from 0
       DO i=yearstt,yearstp

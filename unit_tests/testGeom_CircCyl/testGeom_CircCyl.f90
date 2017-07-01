@@ -18,12 +18,9 @@ PROGRAM testGeom_CircCyl
   IMPLICIT NONE
 
   TYPE(PointType) :: point,point1,point2,point3,point4
-  TYPE(PointType) :: points(2),points2(2),points3(2)
   TYPE(LineType) :: line1
-  TYPE(CircleType) :: circle1,circle2,circles(2)
-  TYPE(CylinderType) :: cylinder1,cylinder2,cylinders(2)
-  INTEGER(SIK) :: i,ioerr
-  REAL(SRK) :: d,s(2)
+  TYPE(CircleType) :: circle1,circle2
+  TYPE(CylinderType) :: cylinder1,cylinder2
   LOGICAL(SBK) :: bool
 
   CREATE_TEST('Test Geom')
@@ -39,8 +36,6 @@ PROGRAM testGeom_CircCyl
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE TestCircle_and_Cylinder
-      TYPE(ParamType) :: params
-!
 !Test clear
       COMPONENT_TEST('Circle %clear()')
       CALL point%clear()

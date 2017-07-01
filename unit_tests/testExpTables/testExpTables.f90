@@ -266,8 +266,8 @@ CONTAINS
 !> This routine computes the numerical error of the tables which can be used to
 !> compare to the analytic expressions for verification.
     SUBROUTINE ErrCheck()
-      REAL(SRK) :: x(1000),ans(1000),err_input,err_result(1000),maxerr,dx
-      INTEGER(SIK) :: nloops,j,i,ntype,nintervals,itype,maxi
+      REAL(SRK) :: x(1000),ans(1000),err_result(1000),maxerr,dx
+      INTEGER(SIK) :: j,i,ntype,nintervals,itype,maxi
       TYPE(ExpTableType) :: testET
 
       ntype=5_SIK
@@ -406,7 +406,7 @@ CONTAINS
       USE Times
       USE StochasticSampling
 
-      INTEGER(SIK) :: nval,neval,j,ix
+      INTEGER(SIK) :: nval,neval,j
       REAL(SRK),ALLOCATABLE :: xval(:),ans(:)
       TYPE(ExpTableType) :: myTable
       TYPE(TimerType) :: testTimer
@@ -474,9 +474,9 @@ CONTAINS
       EQUIVALENCE(x,xint)
       EQUIVALENCE(y,yint)
       EQUIVALENCE(xinit,xinitint)
-      INTEGER(SIK) :: xfixed,neval,nval,i
+      INTEGER(SIK) :: i 
       !REAL(SSK),ALLOCATABLE :: ans(:),xval(:)
-      REAL(SSK) :: ans,xval,logvals(27)
+      REAL(SSK) :: logvals(27)
 
       !Set test input for number of evaluations and number of values to evaluate
       !neval=1

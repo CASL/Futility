@@ -1339,7 +1339,6 @@ PROGRAM testGeom_Graph
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testGetMCB()
-      CHARACTER(LEN=10) :: ic
       LOGICAL(SBK) :: bool
       INTEGER(SIK) :: i
       REAL(SRK) :: testCoord(2,18),c0(2),r
@@ -2453,9 +2452,8 @@ PROGRAM testGeom_Graph
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testIsEqual()
-      LOGICAL(SBK) :: bool
       INTEGER(SIK) :: i
-      REAL(SRK) :: testCoord(2,9),c0(2),r
+      REAL(SRK) :: testCoord(2,9)
       TYPE(GraphType) :: g2
 
       CALL testGraph%clear()

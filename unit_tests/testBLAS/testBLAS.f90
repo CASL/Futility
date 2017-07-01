@@ -606,7 +606,7 @@ PROGRAM testBLAS
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testBLAS2()
-      INTEGER(SIK) :: ia(5),ja(7),ia2(10),ja2(10)
+      INTEGER(SIK) :: ia(5),ja(7)
       REAL(SSK) :: sa(128,128),sx(128),sy(128),salpha,sbeta,saa(7)
       REAL(SDK) :: da(128,128),dx(128),dy(128),dalpha,dbeta,daa(7)
       LOGICAL(SBK) :: bool
