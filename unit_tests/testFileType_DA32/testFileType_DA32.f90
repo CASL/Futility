@@ -38,7 +38,7 @@ PROGRAM testFileType_DA32
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE setupTest()
-      INTEGER(SNK) :: i,singleint,tmpData(2),intarry(100),intarry2(258)
+      INTEGER(SNK) :: i,singleint,tmpData(2),intarry(100)
       INTEGER(SLK) :: doubleint,longarry(100)
       REAL(SSK) :: singlereal,singlearray(100)
       REAL(SDK) :: doublereal,doublearray(100)

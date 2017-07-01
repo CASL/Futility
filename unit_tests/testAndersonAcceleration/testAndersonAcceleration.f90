@@ -75,10 +75,10 @@ CONTAINS
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testStep()
-      INTEGER(SIK) :: i
-      REAL(SRK) :: tmp
 
 #ifdef FUTILITY_HAVE_Trilinos
+      INTEGER(SIK) :: i
+      REAL(SRK) :: tmp
       !First call to step resets the solution
       CALL testAndAcc%X%set(1.0_SRK)
       CALL testAndAcc%step()
@@ -380,8 +380,10 @@ CONTAINS
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testStep_beta_1()
+#ifdef FUTILITY_HAVE_Trilinos
       INTEGER(SIK) :: i
       REAL(SRK) :: tmp
+#endif
 
       CALL optList%set('AndersonAccelerationType->beta',1.0_SRK)
       CALL testAndAcc%init(mpiTestEnv,optList)
@@ -483,8 +485,9 @@ CONTAINS
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testStep_depth_0()
-      INTEGER(SIK) :: i
+#ifdef FUTILITY_HAVE_Trilinos
       REAL(SRK) :: tmp
+#endif
 
       CALL optList%set('AndersonAccelerationType->beta',0.5_SRK)
       CALL optList%set('AndersonAccelerationType->depth',0_SIK)

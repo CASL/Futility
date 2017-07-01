@@ -1039,7 +1039,7 @@ MODULE VTKFiles
     CHARACTER(LEN=*),PARAMETER :: myName='convert_VTKMeshType'
     CLASS(VTKMeshType),INTENT(INOUT) :: thisVTKMesh
     INTEGER(SIK),INTENT(IN) :: newVTKMeshType
-    REAL(SRK),ALLOCATABLE :: pointMap(:,:,:)
+    INTEGER(SIK),ALLOCATABLE :: pointMap(:,:,:)
     REAL(SRK),ALLOCATABLE :: xList(:)
     REAL(SRK),ALLOCATABLE :: yList(:)
     REAL(SRK),ALLOCATABLE :: zList(:)
@@ -1070,7 +1070,7 @@ MODULE VTKFiles
               DO k=1,thisVTKMesh%dims(3)
                 DO j=1,thisVTKMesh%dims(2)
                   DO i=1,thisVTKMesh%dims(1)
-                    pointmap(i,j,k)=n
+                    pointMap(i,j,k)=n
                     Xlist(n+1)=(i-1)*thisVTKMesh%x(2)+thisVTKMesh%x(1)
                     Ylist(n+1)=(j-1)*thisVTKMesh%y(2)+thisVTKMesh%y(1)
                     Zlist(n+1)=(k-1)*thisVTKMesh%z(2)+thisVTKMesh%z(1)
@@ -1128,7 +1128,7 @@ MODULE VTKFiles
               DO k=1,thisVTKMesh%dims(3)
                 DO j=1,thisVTKMesh%dims(2)
                   DO i=1,thisVTKMesh%dims(1)
-                    pointmap(i,j,k)=n
+                    pointMap(i,j,k)=n
                     Xlist(n+1)=thisVTKMesh%x(i)
                     Ylist(n+1)=thisVTKMesh%y(j)
                     Zlist(n+1)=thisVTKMesh%z(k)

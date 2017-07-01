@@ -18,11 +18,9 @@ PROGRAM testGeom_Box
   IMPLICIT NONE
 
   TYPE(PointType) :: point
-  TYPE(PointType) :: points(2),points2(2),points3(2)
-  TYPE(LineType) :: line1,lines(2)
-  TYPE(OBBoxType) :: box,box2,boxs(2)
-  INTEGER(SIK) :: i
-  REAL(SRK) :: d
+  TYPE(PointType) :: points(2),points2(2)
+  TYPE(LineType) :: line1
+  TYPE(OBBoxType) :: box,box2
   REAL(SRK) :: e_2d(2),e_3d(3),u1_2d(2),u2_2d(2),u3_2d(2)
   REAL(SRK) :: u1_3d(3),u2_3d(3),u3_3d(3)
   LOGICAL(SBK) :: bool
@@ -40,7 +38,6 @@ PROGRAM testGeom_Box
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE TestOBBox
-      TYPE(ParamType) :: params
     !Test for clear
       COMPONENT_TEST('%clear()')
       CALL point%init(DIM=3,X=0.1_SRK,Y=0.2_SRK,Z=0.3_SRK)

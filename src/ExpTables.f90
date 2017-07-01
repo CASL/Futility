@@ -273,7 +273,6 @@ MODULE ExpTables
       INTEGER(SIK) :: minTable,maxTable
       TYPE(ParamType) :: tmpList
       INTEGER(SIK) :: ipol,npol
-      REAL(SRK) :: x1p,x2p
       REAL(SRK),ALLOCATABLE :: rsinpol(:),y1p(:),y2p(:)
 
       !Initialize reference parameter lists
@@ -379,8 +378,8 @@ MODULE ExpTables
           ENDSELECT
         ENDIF
         IF(nerror == eExpTable%getcounter(EXCEPTION_ERROR)) THEN
-          minTable=minVal*nintervals
-          maxTable=maxVal*nintervals
+          minTable=INT(minVal*nintervals)
+          maxTable=INT(maxVal*nintervals)
           myET%minTable=minTable
           SELECTCASE(tableType)
             CASE (EXACT_EXP_TABLE)

@@ -1233,7 +1233,6 @@ MODULE VectorTypes
       REAL(SRK),INTENT(IN) :: setval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
 #ifdef FUTILITY_HAVE_Trilinos
-      INTEGER(SIK) :: i
 
       ierrc=-1
       IF(thisVector%isInit) THEN
@@ -1369,7 +1368,6 @@ MODULE VectorTypes
       REAL(SRK),INTENT(INOUT) :: getval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
 #ifdef FUTILITY_HAVE_Trilinos
-      INTEGER(SIK) :: i
 
       ierrc=-1
       IF(thisVector%isInit) THEN

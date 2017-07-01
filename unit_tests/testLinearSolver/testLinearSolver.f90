@@ -1409,8 +1409,6 @@ CONTAINS
 !-------------------------------------------------------------------------------
     SUBROUTINE testQRSolve()
       CLASS(LinearSolverType_Base),ALLOCATABLE :: thisLS
-      REAL(SRK),ALLOCATABLE :: dummyvec(:)
-      LOGICAL(SBK) :: bool
 
       ALLOCATE(LinearSolverType_Direct :: thisLS)
 
@@ -1481,7 +1479,7 @@ WRITE(*,*) thisLS%info
 !-------------------------------------------------------------------------------
     SUBROUTINE testIterativeOthers()
       CLASS(LinearSolverType_Base),ALLOCATABLE :: thisLS
-      REAL(SRK),POINTER :: thisX(:),thisX2(:)
+      REAL(SRK),POINTER :: thisX2(:)
       REAL(SRK),ALLOCATABLE :: resid_soln(:),dummyvec(:)
       TYPE(RealVectorType) :: resid
       INTEGER(SIK) :: i
@@ -2299,7 +2297,7 @@ WRITE(*,*) thisLS%info
 !-------------------------------------------------------------------------------
     SUBROUTINE testIterativeSolve_CGNR()
       CLASS(LinearSolverType_Base),ALLOCATABLE :: thisLS
-      REAL(SRK),ALLOCATABLE :: thisB(:),dummyvec(:)
+      REAL(SRK),ALLOCATABLE :: dummyvec(:)
       REAL(SRK),POINTER :: thisX(:)
       LOGICAL(SBK) :: bool
 

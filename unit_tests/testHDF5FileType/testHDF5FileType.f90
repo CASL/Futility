@@ -21,7 +21,6 @@ PROGRAM testHDF5
 
   !TYPE(ExceptionHandlerType),TARGET,SAVE :: e
   TYPE(MPI_EnvType) :: testMPI
-  INTEGER(SIK) :: mpierr,mysize,myrank
   !  Reference solutions
   REAL(SDK),ALLOCATABLE :: refD1(:),refD2(:,:),refD3(:,:,:),refD4(:,:,:,:)
   REAL(SDK),ALLOCATABLE :: refD5(:,:,:,:,:),refD6(:,:,:,:,:,:),refD7(:,:,:,:,:,:,:)
@@ -86,7 +85,6 @@ PROGRAM testHDF5
     SUBROUTINE testHDF5FileTypeSetup()
       TYPE(HDF5FileType) :: h5
       INTEGER(SIK) :: i,j,k
-      CHARACTER(LEN=12) :: ca1(3),ca2(2,3),ca3(3,4,5)
 
       ALLOCATE(refD1(10))
       ALLOCATE(refD2(4,5))
@@ -302,7 +300,6 @@ PROGRAM testHDF5
 !-------------------------------------------------------------------------------
     SUBROUTINE testHDF5FileTypeCreateDelete()
       TYPE(HDF5FileType) :: h5
-      INTEGER(SIK) :: unitno
 
       CALL h5%e%setQuietMode(.TRUE.)
       CALL h5%init('createdeletetest.h5','NEW')
@@ -348,8 +345,6 @@ PROGRAM testHDF5
 !-------------------------------------------------------------------------------
     SUBROUTINE testHDF5FileTypeErrorCheck()
       TYPE(HDF5FileType) :: h5
-      INTEGER(SIK) :: nerror
-      CHARACTER(LEN=32),ALLOCATABLE :: tmpchar(:)
       REAL(SDK),POINTER :: d4ptr(:,:,:,:)
       d4ptr => NULL()
 
@@ -933,7 +928,7 @@ PROGRAM testHDF5
       REAL(SSK) :: testS0
       INTEGER(SLK) :: testL0
       INTEGER(SNK) :: testN0
-      LOGICAL(SBK) :: testB0,bool
+      LOGICAL(SBK) :: testB0
       CHARACTER(LEN=32) :: testC1
       TYPE(StringType) :: testST0
       INTEGER(SIK) :: i,j,k

@@ -300,7 +300,6 @@ MODULE ArrayUtils
       INTEGER(SIK) :: sout
 
       INTEGER(SIK) :: i,j,n
-      REAL(SRK) :: loctol
       TYPE(StringType),ALLOCATABLE :: tmpr(:)
 
       n=SIZE(r,DIM=1)

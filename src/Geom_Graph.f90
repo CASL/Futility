@@ -1523,19 +1523,16 @@ MODULE Geom_Graph
     SUBROUTINE triangulateVerts_graphType(thisGraph)
       CLASS(GraphType),INTENT(INOUT) :: thisGraph
 
-      TYPE(PointType) :: p0,p1,PointI
-      TYPE(CircleType) :: circumCirc
       INTEGER(SIK) :: nVert,nTri,nEdges,i,j,k
       INTEGER(SIK),ALLOCATABLE :: v1(:),v2(:),v3(:)
       INTEGER(SIK),ALLOCATABLE :: polEdges(:,:)
       REAL(SRK) :: xMin,xMax,yMin,yMax,dx,dy,dm,xMid,yMid,superTri(2,3)
-      REAL(SRK) :: x1,x2,x3,y1,y2,y3,r1,r2,r3,x0,y0,a,bx,by,c,rad
+      REAL(SRK) :: x1,x2,x3,y1,y2,y3,r1,r2,r3,a,bx,by,c,rad
       REAL(SRK),ALLOCATABLE :: verts(:,:)
       LOGICAL(SBK), ALLOCATABLE :: complete(:)
 
       LOGICAL(SBK) :: incircum
-      REAL(SRK) :: drsqr, m1,m2,mx1,mx2,my1,my2,r,rsqr,xc,yc
-      CHARACTER(len=22) :: tmpname
+      REAL(SRK) :: r,xc,yc
 
       thisGraph%edgeMatrix=0
       nVert=thisGraph%nVert()
@@ -1891,7 +1888,7 @@ MODULE Geom_Graph
     SUBROUTINE removeNodeByIndex_DAGraphType(thisGraph,ind)
       CLASS(DAGraphType),INTENT(INOUT) :: thisGraph
       INTEGER(SIK),INTENT(IN) :: ind
-      INTEGER(SIK) :: i,index
+      INTEGER(SIK) :: i
       INTEGER(SIK),ALLOCATABLE :: tmpN(:),tmpEdge(:,:)
 
       IF(ALLOCATED(thisGraph%edgeMatrix)) THEN
@@ -1934,7 +1931,7 @@ MODULE Geom_Graph
       CLASS(DAGraphType),INTENT(INOUT) :: thisGraph
       INTEGER(SIK),INTENT(IN),OPTIONAL :: ID
       INTEGER(SIK),INTENT(IN),OPTIONAL :: ind
-      INTEGER(SIK) :: i,index
+      INTEGER(SIK) :: index
       LOGICAL(SBK) :: bool
 
       bool=.FALSE.
@@ -2054,7 +2051,6 @@ MODULE Geom_Graph
     SUBROUTINE assign_DAGraphType(g0,g1)
       CLASS(DAGraphType),INTENT(INOUT) :: g0
       CLASS(DAGraphType),INTENT(IN) :: g1
-      INTEGER(SIK) :: n
       CALL clear_DAGraphType(g0)
       IF(g1%n > 0) THEN
         g0%n=g1%n

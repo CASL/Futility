@@ -519,7 +519,7 @@ MODULE FileType_HDF5
 #ifdef FUTILITY_HAVE_HDF5
       TYPE(StringType) :: fpath,fname,fext,mode_in
       INTEGER(SIK) :: unitno
-      LOGICAL(SBK) :: ostat,exists,lcmp
+      LOGICAL(SBK) :: ostat,exists
 #endif
 #ifdef FUTILITY_HAVE_HDF5
       IF(.NOT.thisHDF5File%isinit) THEN
@@ -647,7 +647,6 @@ MODULE FileType_HDF5
 #ifdef FUTILITY_HAVE_HDF5
       INTEGER(HID_T) :: acc
       INTEGER(HID_T) :: plist_id
-      LOGICAL(SBK) :: opened
 
       IF(file%isinit) THEN
         CALL h5pcreate_f(H5P_FILE_ACCESS_F,plist_id,error)
@@ -738,7 +737,6 @@ MODULE FileType_HDF5
       CLASS(HDF5FileType),INTENT(INOUT) :: file
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: emesg
-      LOGICAL(SBK) :: bool
 
       IF(file%isinit) THEN
         !So, HDF5 is special in that the unitno assigned isn't used in the
@@ -1050,7 +1048,7 @@ MODULE FileType_HDF5
 #ifdef FUTILITY_HAVE_HDF5
       TYPE(StringType) :: path2
       INTEGER(HID_T) :: obj_id,error
-      INTEGER(SIK) :: arrow,arrowstt,type
+      INTEGER(SIK) :: type
 
       ! Make sure the object is initialized, and opened
       bool=.FALSE.
@@ -1205,7 +1203,6 @@ MODULE FileType_HDF5
       INTEGER(HID_T),PARAMETER :: rank=0
 
       INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
-      INTEGER(SIK) :: dim
 
       ! stash offset
       offset(1)=0
@@ -3192,7 +3189,6 @@ MODULE FileType_HDF5
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=LEN(vals),KIND=C_CHAR),TARGET :: valss
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(SIK) :: i,j,ilen
       INTEGER(HSIZE_T),DIMENSION(1) :: ldims,gdims,offset,cnt
       INTEGER(HID_T),PARAMETER :: rank=0
 
@@ -3285,7 +3281,7 @@ MODULE FileType_HDF5
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=length_max,KIND=C_CHAR),TARGET :: valss(SIZE(vals))
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(SIK) :: i,j,ilen
+      INTEGER(SIK) :: j
       INTEGER(HSIZE_T),DIMENSION(1) :: ldims,gdims,offset,cnt
       INTEGER(HID_T),PARAMETER :: rank=1
 
@@ -3384,7 +3380,7 @@ MODULE FileType_HDF5
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=length_max) :: valss(SIZE(vals,1),SIZE(vals,2))
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(SIK) :: i,j,k,ilen
+      INTEGER(SIK) :: j,k
       INTEGER(HSIZE_T),DIMENSION(2) :: gdims,ldims,offset,cnt
       INTEGER(HID_T),PARAMETER :: rank=2
 
@@ -3487,7 +3483,7 @@ MODULE FileType_HDF5
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=length_max) :: valss(SIZE(vals,1),SIZE(vals,2),SIZE(vals,3))
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(SIK) :: i,j,k,l,ilen
+      INTEGER(SIK) :: j,k,l
       INTEGER(HSIZE_T),DIMENSION(3) :: gdims,ldims,offset,cnt
       INTEGER(HID_T),PARAMETER :: rank=3
 
@@ -3744,10 +3740,10 @@ MODULE FileType_HDF5
       REAL(SDK),INTENT(INOUT) :: vals
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(1) :: dims
       INTEGER(HID_T),PARAMETER :: rank=0
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -3776,10 +3772,10 @@ MODULE FileType_HDF5
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: vals(:)
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(1) :: dims
       INTEGER(HID_T),PARAMETER :: rank=1
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -3819,10 +3815,10 @@ MODULE FileType_HDF5
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:)
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(2) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(2) :: dims
       INTEGER(HID_T),PARAMETER :: rank=2
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -3862,10 +3858,10 @@ MODULE FileType_HDF5
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:)
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(3) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(3) :: dims
       INTEGER(HID_T),PARAMETER :: rank=3
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -3905,10 +3901,10 @@ MODULE FileType_HDF5
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:)
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(4) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(4) :: dims
       INTEGER(HID_T),PARAMETER :: rank=4
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -3948,10 +3944,10 @@ MODULE FileType_HDF5
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:,:)
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(5) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(5) :: dims
       INTEGER(HID_T),PARAMETER :: rank=5
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -3991,10 +3987,10 @@ MODULE FileType_HDF5
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:,:,:)
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(6) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(6) :: dims
       INTEGER(HID_T),PARAMETER :: rank=6
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -4034,10 +4030,10 @@ MODULE FileType_HDF5
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:,:,:,:)
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(7) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(7) :: dims
       INTEGER(HID_T),PARAMETER :: rank=7
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -4077,10 +4073,10 @@ MODULE FileType_HDF5
       REAL(SDK),POINTER,INTENT(INOUT) :: vals(:,:,:,:)
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(4) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(4) :: dims
       INTEGER(HID_T),PARAMETER :: rank=4
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -4120,10 +4116,10 @@ MODULE FileType_HDF5
       REAL(SSK),INTENT(INOUT) :: vals
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(1) :: dims
       INTEGER(HID_T),PARAMETER :: rank=0
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -4152,10 +4148,10 @@ MODULE FileType_HDF5
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: vals(:)
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(1) :: dims
       INTEGER(HID_T),PARAMETER :: rank=1
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -4195,10 +4191,10 @@ MODULE FileType_HDF5
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:)
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(2) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(2) :: dims
       INTEGER(HID_T),PARAMETER :: rank=2
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -4238,10 +4234,10 @@ MODULE FileType_HDF5
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:)
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(3) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(3) :: dims
       INTEGER(HID_T),PARAMETER :: rank=3
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -4281,10 +4277,10 @@ MODULE FileType_HDF5
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:)
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(4) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(4) :: dims
       INTEGER(HID_T),PARAMETER :: rank=4
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -4324,10 +4320,10 @@ MODULE FileType_HDF5
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:,:)
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(5) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(5) :: dims
       INTEGER(HID_T),PARAMETER :: rank=5
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -4367,10 +4363,10 @@ MODULE FileType_HDF5
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:,:,:)
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(6) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(6) :: dims
       INTEGER(HID_T),PARAMETER :: rank=6
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -4410,10 +4406,10 @@ MODULE FileType_HDF5
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:,:,:,:)
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(7) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(7) :: dims
       INTEGER(HID_T),PARAMETER :: rank=7
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -4453,10 +4449,10 @@ MODULE FileType_HDF5
       INTEGER(SNK),INTENT(INOUT) :: vals
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(1) :: dims
       INTEGER(HID_T),PARAMETER :: rank=0
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -4487,10 +4483,10 @@ MODULE FileType_HDF5
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: vals(:)
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(1) :: dims
       INTEGER(HID_T),PARAMETER :: rank=1
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -4530,10 +4526,10 @@ MODULE FileType_HDF5
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:)
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(2) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(2) :: dims
       INTEGER(HID_T),PARAMETER :: rank=2
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -4573,10 +4569,10 @@ MODULE FileType_HDF5
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:)
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(3) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(3) :: dims
       INTEGER(HID_T),PARAMETER :: rank=3
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -4616,10 +4612,10 @@ MODULE FileType_HDF5
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:)
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(4) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(4) :: dims
       INTEGER(HID_T),PARAMETER :: rank=4
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -4659,10 +4655,10 @@ MODULE FileType_HDF5
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:,:)
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(5) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(5) :: dims
       INTEGER(HID_T),PARAMETER :: rank=5
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -4702,10 +4698,10 @@ MODULE FileType_HDF5
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:,:,:)
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(6) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(6) :: dims
       INTEGER(HID_T),PARAMETER :: rank=6
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -4745,10 +4741,10 @@ MODULE FileType_HDF5
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:,:,:,:)
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(7) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(7) :: dims
       INTEGER(HID_T),PARAMETER :: rank=7
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -4790,10 +4786,10 @@ MODULE FileType_HDF5
 #ifdef FUTILITY_HAVE_HDF5
       REAL(SDK) :: valst
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(1) :: dims
       INTEGER(HID_T),PARAMETER :: rank=0
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -4830,10 +4826,10 @@ MODULE FileType_HDF5
 #ifdef FUTILITY_HAVE_HDF5
       INTEGER(SNK),ALLOCATABLE :: valst(:)
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(1) :: dims
       INTEGER(HID_T),PARAMETER :: rank=1
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -4880,10 +4876,10 @@ MODULE FileType_HDF5
 #ifdef FUTILITY_HAVE_HDF5
       INTEGER(SNK),ALLOCATABLE :: valst(:,:)
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(2) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(2) :: dims
       INTEGER(HID_T),PARAMETER :: rank=2
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -4930,10 +4926,10 @@ MODULE FileType_HDF5
 #ifdef FUTILITY_HAVE_HDF5
       INTEGER(SNK),ALLOCATABLE :: valst(:,:,:)
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(3) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(3) :: dims
       INTEGER(HID_T),PARAMETER :: rank=3
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -4980,10 +4976,10 @@ MODULE FileType_HDF5
 #ifdef FUTILITY_HAVE_HDF5
       INTEGER(SNK),ALLOCATABLE :: valst(:,:,:,:)
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(4) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(4) :: dims
       INTEGER(HID_T),PARAMETER :: rank=4
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -5030,10 +5026,10 @@ MODULE FileType_HDF5
 #ifdef FUTILITY_HAVE_HDF5
       INTEGER(SNK),ALLOCATABLE :: valst(:,:,:,:,:)
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(5) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(5) :: dims
       INTEGER(HID_T),PARAMETER :: rank=5
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -5080,10 +5076,10 @@ MODULE FileType_HDF5
 #ifdef FUTILITY_HAVE_HDF5
       INTEGER(SNK),ALLOCATABLE :: valst(:,:,:,:,:,:)
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(6) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(6) :: dims
       INTEGER(HID_T),PARAMETER :: rank=6
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -5130,10 +5126,10 @@ MODULE FileType_HDF5
 #ifdef FUTILITY_HAVE_HDF5
       INTEGER(SNK),ALLOCATABLE :: valst(:,:,:,:,:,:,:)
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(7) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(7) :: dims
       INTEGER(HID_T),PARAMETER :: rank=7
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -5179,10 +5175,10 @@ MODULE FileType_HDF5
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=1) :: valsc
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(1) :: dims
       INTEGER(HID_T),PARAMETER :: rank=0
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -5221,10 +5217,10 @@ MODULE FileType_HDF5
       CHARACTER,ALLOCATABLE :: valsc(:)
       CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER :: i
-      INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(1) :: dims
       INTEGER(HID_T),PARAMETER :: rank=1
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -5275,10 +5271,10 @@ MODULE FileType_HDF5
       CHARACTER(LEN=1),ALLOCATABLE :: valsc(:,:)
       CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(SIK) :: i,j
-      INTEGER(HSIZE_T),DIMENSION(2) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(2) :: dims
       INTEGER(HID_T),PARAMETER :: rank=2
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -5329,10 +5325,10 @@ MODULE FileType_HDF5
       CHARACTER(LEN=1),ALLOCATABLE :: valsc(:,:,:)
       CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(SIK) :: i,j,k
-      INTEGER(HSIZE_T),DIMENSION(3) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(3) :: dims
       INTEGER(HID_T),PARAMETER :: rank=3
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -5382,8 +5378,6 @@ MODULE FileType_HDF5
       TYPE(StringType),INTENT(INOUT) :: vals
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER :: i
-      INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
       INTEGER(HID_T),PARAMETER :: rank=0
 
       INTEGER(HID_T) :: mem,ndims
@@ -5427,13 +5421,11 @@ MODULE FileType_HDF5
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=length_max),ALLOCATABLE :: valsc(:)
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER :: i
-      INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(1) :: dims
       INTEGER(HID_T),PARAMETER :: rank=0
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
-      INTEGER(SIZE_T) :: size
 
       path=convertPath(dsetname)
 
@@ -5469,12 +5461,12 @@ MODULE FileType_HDF5
       TYPE(StringType),INTENT(INOUT) :: vals
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=1),ALLOCATABLE :: valsc(:)
-      INTEGER(SIK) :: i,j
+      INTEGER(SIK) :: i
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(1) :: dims
       INTEGER(HID_T),PARAMETER :: rank=1
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -5512,8 +5504,6 @@ MODULE FileType_HDF5
       TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: vals(:)
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER :: i
-      INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
       INTEGER(HID_T),PARAMETER :: rank=1
 
       INTEGER(HID_T) :: mem,ndims
@@ -5558,12 +5548,12 @@ MODULE FileType_HDF5
       TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: vals(:)
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=length_max),ALLOCATABLE :: valsc(:)
-      INTEGER(SIK) :: i,j
+      INTEGER(SIK) :: i
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(1) :: dims
       INTEGER(HID_T),PARAMETER:: rank=1
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -5612,10 +5602,10 @@ MODULE FileType_HDF5
       CHARACTER(LEN=1),ALLOCATABLE :: valsc(:,:)
       INTEGER(SIK) :: i,j
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(2) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(2) :: dims
       INTEGER(HID_T),PARAMETER :: rank=2
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -5663,8 +5653,6 @@ MODULE FileType_HDF5
       TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: vals(:,:)
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER :: i,j
-      INTEGER(HSIZE_T),DIMENSION(2) :: dims,maxdims
       INTEGER(HID_T),PARAMETER :: rank=2
 
       INTEGER(HID_T) :: mem,ndims
@@ -5709,12 +5697,12 @@ MODULE FileType_HDF5
       TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: vals(:,:)
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=length_max),ALLOCATABLE :: valsc(:,:)
-      INTEGER(SIK) :: i,j,k
+      INTEGER(SIK) :: i,j
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(2) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(2) :: dims
       INTEGER(HID_T),PARAMETER :: rank=2
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -5764,10 +5752,10 @@ MODULE FileType_HDF5
       CHARACTER(LEN=1),ALLOCATABLE :: valsc(:,:,:)
       INTEGER(SIK) :: i,j,k
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(3) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(3) :: dims
       INTEGER(HID_T),PARAMETER :: rank=3
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -5817,8 +5805,6 @@ MODULE FileType_HDF5
       TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:)
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER :: i,j,k
-      INTEGER(HSIZE_T),DIMENSION(3) :: dims,maxdims
       INTEGER(HID_T),PARAMETER :: rank=3
 
       INTEGER(HID_T) :: mem,ndims
@@ -5863,12 +5849,12 @@ MODULE FileType_HDF5
       TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:)
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=length_max),ALLOCATABLE :: valsc(:,:,:)
-      INTEGER(SIK) :: i,j,k,m
+      INTEGER(SIK) :: i,j,m
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(3) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(3) :: dims
       INTEGER(HID_T),PARAMETER :: rank=3
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -5920,10 +5906,10 @@ MODULE FileType_HDF5
       CHARACTER(LEN=1),ALLOCATABLE :: valsc(:,:,:,:)
       INTEGER(SIK) :: i,j,k,m
       CHARACTER(LEN=LEN(dsetname)+1) :: path
-      INTEGER(HSIZE_T),DIMENSION(4) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(4) :: dims
       INTEGER(HID_T),PARAMETER :: rank=4
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -5977,10 +5963,10 @@ MODULE FileType_HDF5
       CHARACTER,ALLOCATABLE :: valsc(:)
       CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER :: i
-      INTEGER(HSIZE_T),DIMENSION(1) :: dims,maxdims
+      INTEGER(HSIZE_T),DIMENSION(1) :: dims
       INTEGER(HID_T),PARAMETER :: rank=1
 
-      INTEGER(HID_T) :: mem,ndims
+      INTEGER(HID_T) :: mem
       INTEGER(HID_T) :: dspace_id,dset_id
 
       path=convertPath(dsetname)
@@ -6019,24 +6005,9 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       TYPE(ParamType),INTENT(INOUT) :: vals
 #ifdef FUTILITY_HAVE_HDF5
-      INTEGER(SIK) :: iobj,i,j,k,error,ndims,dtype_order,mem_len,class_type
-      INTEGER(HID_T) :: dset_id,dspace_id,native_dtype,dtype,base_dtype
-      INTEGER(SIZE_T) :: dtype_prec,dtype_size
-      TYPE(StringType) :: path,baseh5path,h5path,plpath,tmpstr
-      CLASS(ParamType),POINTER :: nextParam
-      CHARACTER(LEN=1024) :: mem_name
-      LOGICAL(SBK) :: l0,isbool
-      LOGICAL(SBK),ALLOCATABLE :: l1(:),l2(:,:),l3(:,:,:)
-      INTEGER(SNK) :: is0
-      INTEGER(SNK),ALLOCATABLE :: is1(:),is2(:,:),is3(:,:,:)
-      INTEGER(SLK) :: id0
-      INTEGER(SLK),ALLOCATABLE :: id1(:),id2(:,:),id3(:,:,:)
-      REAL(SSK) :: rs0
-      REAL(SSK),ALLOCATABLE :: rs1(:),rs2(:,:),rs3(:,:,:)
-      REAL(SDK) :: rd0
-      REAL(SDK),ALLOCATABLE :: rd1(:),rd2(:,:),rd3(:,:,:)
-      TYPE(StringType) :: st0
-      TYPE(StringType),ALLOCATABLE :: st1(:),st2(:,:),st3(:,:,:),lsobjs(:)
+      INTEGER(SIK) :: iobj
+      TYPE(StringType) :: baseh5path,h5path,plpath
+      TYPE(StringType),ALLOCATABLE :: lsobjs(:)
 
       ! Create root directory
       baseh5path=TRIM(dsetname)
@@ -6078,12 +6049,10 @@ MODULE FileType_HDF5
       TYPE(StringType),INTENT(IN) :: h5path
       TYPE(ParamType),INTENT(INOUT) :: vals
 #ifdef FUTILITY_HAVE_HDF5
-      INTEGER(SIK) :: iobj,i,j,k,error,ndims,dtype_order,mem_len,class_type
-      INTEGER(HID_T) :: dset_id,dspace_id,native_dtype,dtype,base_dtype
-      INTEGER(SIZE_T) :: dtype_prec,dtype_size
-      TYPE(StringType) :: path,baseh5path,plpath,tmpstr
-      CLASS(ParamType),POINTER :: nextParam
-      CHARACTER(LEN=1024) :: mem_name
+      INTEGER(SIK) :: i,j,k,error,ndims,class_type
+      INTEGER(HID_T) :: dset_id,dspace_id,dtype
+      INTEGER(SIZE_T) :: dtype_prec
+      TYPE(StringType) :: plpath,tmpstr
       LOGICAL(SBK) :: l0,isbool
       LOGICAL(SBK),ALLOCATABLE :: l1(:),l2(:,:),l3(:,:,:)
       INTEGER(SNK) :: is0
@@ -6095,7 +6064,7 @@ MODULE FileType_HDF5
       REAL(SDK) :: rd0
       REAL(SDK),ALLOCATABLE :: rd1(:),rd2(:,:),rd3(:,:,:)
       TYPE(StringType) :: st0
-      TYPE(StringType),ALLOCATABLE :: st1(:),st2(:,:),st3(:,:,:),lsobjs(:)
+      TYPE(StringType),ALLOCATABLE :: st1(:),st2(:,:),st3(:,:,:)
 
       tmpstr=h5path//REPEAT(' ',nmatchstr(CHAR(h5path),'/'))
       CALL strrep(tmpstr,'/','->')
@@ -6497,7 +6466,6 @@ MODULE FileType_HDF5
 
       INTEGER(HID_T) :: ndims
       INTEGER(HSIZE_T) :: maxdims(rank)
-      INTEGER :: dtype
 
       error=0
       ! Make sure the object is initialized

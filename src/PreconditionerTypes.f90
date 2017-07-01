@@ -191,7 +191,7 @@ MODULE PreconditionerTypes
               !allocate additional storage for BILU3D
               SELECTTYPE(thisPC)
                 TYPE IS(BILU_PrecondType)
-                  X=SQRT(REAL(thisPC%nPin))
+                  X=INT(SQRT(REAL(thisPC%nPin)))
                   ALLOCATE(thisPC%F0(thisPC%nPlane*thisPC%nPin,thisPC%nGrp,thisPC%nGrp))
                   ALLOCATE(thisPC%E(thisPC%nPlane*X,thisPC%nGrp*(X-1)))
                   ALLOCATE(thisPC%W(thisPC%nPlane*X,thisPC%nGrp*(X-1)))
@@ -422,8 +422,8 @@ MODULE PreconditionerTypes
               CLASS IS(SparseMatrixType)
 
 
-                X=SQRT(REAL(thisPC%nPin))
-                Y=SQRT(REAL(thisPC%nPin))
+                X=INT(SQRT(REAL(thisPC%nPin)))
+                Y=INT(SQRT(REAL(thisPC%nPin)))
                 Z=thisPC%nPlane
 
                 ALLOCATE(soln(SIZE(v%b)))
@@ -893,8 +893,8 @@ MODULE PreconditionerTypes
 
                 !dimension variables
                 XY=thisPC%nPin
-                X=SQRT(REAL(XY))
-                Y=SQRT(REAL(XY))
+                X=INT(SQRT(REAL(XY)))
+                Y=INT(SQRT(REAL(XY)))
                 Z=thisPC%nPlane
                 G=thisPC%nGrp
                 dim0D=G
@@ -1386,7 +1386,7 @@ MODULE PreconditionerTypes
       REAL(SRK),ALLOCATABLE :: vt(:),bt(:),tmp(:),Bot(:,:),T(:,:)
 
       ng=thisPC%nGrp
-      X=SQRT(REAL(thisPC%nPin))
+      X=INT(SQRT(REAL(thisPC%nPin)))
       Y=X
       Z=thisPC%nPlane
 
@@ -1445,7 +1445,7 @@ MODULE PreconditionerTypes
       INTEGER(SIK) :: X,j,Y,ng,index1,index2,index3
 
       ng=thisPC%nGrp
-      X=SQRT(REAL(thisPC%nPin))
+      X=INT(SQRT(REAL(thisPC%nPin)))
       Y=X
 
       ALLOCATE(vt(SIZE(v)))
@@ -1493,7 +1493,7 @@ MODULE PreconditionerTypes
       INTEGER(SIK) :: i,X,ng,index1,index2,index3
 
       ng=thisPC%nGrp
-      X=SQRT(REAL(thisPC%nPin))
+      X=INT(SQRT(REAL(thisPC%nPin)))
 
       ALLOCATE(vt(SIZE(v)))
       ALLOCATE(bt(ng))

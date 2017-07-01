@@ -18,11 +18,8 @@ PROGRAM testGeom_Plane
   IMPLICIT NONE
 
   TYPE(PointType) :: point,point2
-  TYPE(PointType) :: points(2)
   TYPE(LineType) :: line1,line2
-  TYPE(PlaneType) :: plane1,plane2,planes(2)
-  INTEGER(SIK) :: i
-  REAL(SRK) :: d
+  TYPE(PlaneType) :: plane1,plane2
   LOGICAL(SBK) :: bool
 
   CREATE_TEST('Test Geom')
@@ -39,7 +36,6 @@ PROGRAM testGeom_Plane
 !-------------------------------------------------------------------------------
     SUBROUTINE TestPlane
       REAL(SRK) :: n(3)
-      TYPE(ParamType) :: params
 !
 !Test clear
       COMPONENT_TEST('%clear()')

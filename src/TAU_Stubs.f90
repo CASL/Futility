@@ -205,8 +205,9 @@ MODULE TAU_Stubs
 !> execution environment. Allocates space for profilers.
 !>
     SUBROUTINE TAU_PROFILE_INIT()
+#ifdef HAVE_MPI
       INTEGER(SIK) :: isinit,mpierr
-      INTEGER(C_INT) :: perr
+#endif
 
 !$OMP SINGLE
       IF(.NOT.TauStubLibData%isInit) THEN
@@ -307,8 +308,7 @@ MODULE TAU_Stubs
       INTEGER(SIK),INTENT(IN) :: profileID(2)
       LOGICAL(SBK) :: inOMP
       INTEGER(SIK) :: it,tid
-      INTEGER(C_INT) :: perr
-      INTEGER(C_LONG_LONG) :: ptime,values(12)
+      INTEGER(C_LONG_LONG) :: values(12)
       TYPE(ProfilerType),POINTER :: activeThreadProfiler
 
       IF(profileID(1) > 0 .AND. profileID(1) <= TauStubLibData%nthreads) THEN
@@ -367,8 +367,7 @@ MODULE TAU_Stubs
     SUBROUTINE TAU_PROFILE_STOP(profileID)
       INTEGER(SIK),INTENT(IN) :: profileID(2)
       INTEGER(SIK) :: it,tid
-      INTEGER(C_INT) :: perr
-      INTEGER(C_LONG_LONG) :: ptime,values(12)
+      INTEGER(C_LONG_LONG) :: values(12)
       TYPE(ProfilerType),POINTER :: activeThreadProfiler
 
       IF(profileID(1) > 0 .AND. profileID(1) <= TauStubLibData%nthreads) THEN
@@ -429,9 +428,7 @@ MODULE TAU_Stubs
 !-------------------------------------------------------------------------------
     SUBROUTINE TAUSTUB_CHECK_MEMORY()
 
-      LOGICAL(SBK),SAVE :: lfirst=.TRUE.
       INTEGER(C_LONG_LONG) :: values(12),memUsage(4)
-      INTEGER(C_INT) :: perr
 #ifdef HAVE_PAPI
       CALL PAPIF_get_dmem_info(values,perr)
       memUsage(1)=values(PAPIF_DMEM_VMSIZE)
@@ -664,9 +661,7 @@ MODULE TAU_Stubs
 #ifdef HAVE_PAPI
       CHARACTER(KIND=C_CHAR,LEN=PAPI_MAX_STR_LEN) :: papi_eventName
 #endif
-      INTEGER(SIK) :: i,ierr,n
-      INTEGER(C_INT) :: nevents,perr
-      INTEGER(C_INT),ALLOCATABLE :: eventCodes(:)
+      INTEGER(SIK) :: ierr,n
 
       dirnames(0)='.'
       eventnames(0)='LINUX_TIMERS'
@@ -785,8 +780,6 @@ MODULE TAU_Stubs
     SUBROUTINE EstimateOverhead()
       INTEGER(SIK),PARAMETER,DIMENSION(2) :: pid=(/1,1/)
       INTEGER(SIK) :: i
-      INTEGER(C_INT) :: perr
-      INTEGER(C_LONG_LONG) :: ptime_s,ptime_e,pmet(5,2)
       REAL(SDK) :: t
       TYPE(TimerType) :: ohead
 
