@@ -1,0 +1,17 @@
+sudo: required
+
+services:
+ - docker
+
+before_install:
+ - echo $PWD
+ - docker pull dalg24/vera_tpls
+
+script:
+ - docker run -v $PWD:/mnt/Futility dalg24/vera_tpls /bin/bash -c "mkdir /build; cd /build; cmake /mnt/Futility; make; ctest -E DA32"
+ - git clone https://github.com/trilinos/Trilinos.git
+ - docker run -v $PWD:/mnt/Futility dalg24/vera_tpls /bin/bash -c "mkdir /build; cd /build; /bin/bash /mnt/Futility/build_scripts/build_on_docker.sh /mnt/Futility; make; ctest -E DA32"
+
+branches:
+  only:
+    - master

@@ -8,5 +8,5 @@
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 
 TRIBITS_TPL_FIND_INCLUDE_DIRS_AND_LIBRARIES(SUNDIALS
-  REQUIRED_LIBS_NAMES sundials_cvode sundials_fcvode sundials_nvecserial sundials_fnvecserial)
+  REQUIRED_LIBS_NAMES sundials_fcvode sundials_cvode sundials_fnvecserial sundials_nvecserial)
 
