@@ -18,8 +18,10 @@ PROGRAM testGeom_Line
   IMPLICIT NONE
 
   TYPE(PointType) :: point,point2,point3
-  TYPE(LineType) :: line1,line2,dis
-  REAL(SRK) :: d,mu1,mu2
+  TYPE(PointType) :: points(2),points2(2),points3(2)
+  TYPE(LineType) :: line1,line2,lines(2),dis
+  INTEGER(SIK) :: ldim(2)
+  REAL(SRK) :: d,mu1,mu2,s(2)
   LOGICAL(SBK) :: bool
 
   CREATE_TEST('Test Geom')
@@ -342,9 +344,6 @@ PROGRAM testGeom_Line
       CALL line2%p2%init(COORD=(/1.0_SRK,1.0_SRK,1.0_SRK/))
       ASSERT(.NOT.(line1 == line2),'2-D and 3-D line non-equivalence')
 
-#ifdef __GFORTRAN__
-      WRITE(*,*) 'ELEMENTAL METHODS FOR NON-SCALAR BASE OBJECTS NOT YET SUPPORTED BY COMPILER'
-#else
       CALL points2%clear()
       CALL points3%clear()
       CALL points2(1)%init(DIM=3,X=0.5_SRK,Y=0.6_SRK,Z=0.7_SRK)
@@ -408,7 +407,6 @@ PROGRAM testGeom_Line
                    ALLOCATED(lines(1)%p1%coord) .OR. ALLOCATED(lines(1)%p2%coord) .OR. &
                    ALLOCATED(lines(2)%p1%coord) .OR. ALLOCATED(lines(2)%p2%coord))
       ASSERT(bool, 'lines%clear(...)')
-#endif
     ENDSUBROUTINE TestLine
 
 ENDPROGRAM testGeom_Line
