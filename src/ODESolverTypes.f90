@@ -236,7 +236,8 @@ MODULE ODESolverTypes
       INTEGER(SIK) :: n, solvetype, bdf_order
       REAL(SRK) :: tol
 #ifdef FUTILITY_HAVE_SUNDIALS
-      TYPE(ParamType) :: pList(:)
+      INTEGER(SIK) :: ierr
+      TYPE(ParamType) :: pList
 #endif
 
       CALL Params%get('ODESolverType->n',n)
