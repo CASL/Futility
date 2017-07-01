@@ -22,7 +22,7 @@ PROGRAM testGeom_Points
   TYPE(PointType) :: points(2),points2(2),points3(2)
   TYPE(LinkedListPointType),POINTER :: firstPoint,thisPoint
   INTEGER(SIK) :: i
-  REAL(SRK) :: d
+  REAL(SRK) :: d,s(2)
   LOGICAL(SBK) :: bool
 
   CREATE_TEST('Test Geom')
@@ -38,7 +38,7 @@ PROGRAM testGeom_Points
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE TestPoints
-      REAL(SRK) :: s(2)
+
       !Initialize by hand
       COMPONENT_TEST('%clear()')
       !or point=PointType(2,(/0.5_SRK,0.3_SRK/))
