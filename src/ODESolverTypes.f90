@@ -291,8 +291,8 @@ MODULE ODESolverTypes
         SUNDIALS_ODE_INTERFACE=>f
         CALL plist%clear()
         CALL plist%add('VectorType -> n',solver%n)
-        CALL SUNDIALS_y%init(plist)
-        CALL SUNDIALS_ydot%init(plist)
+        IF(.NOT. SUNDIALS_y%isInit) CALL SUNDIALS_y%init(plist)
+        IF(.NOT. SUNDIALS_ydot%isInit) CALL SUNDIALS_ydot%init(plist)
         CALL plist%clear()
         solver%isInit=.TRUE.
 #else
@@ -359,7 +359,7 @@ MODULE ODESolverTypes
         solver%ipar(1)=solver%n
         solver%rpar(1)=0.0_SRK
 
-        CALL FCVMALLOC(t0,solver%ytmp, 2, 2, 1, solver%tol, 1.0E-12_C_DOUBLE,solver%IOUT, solver%ROUT, &
+        CALL FCVMALLOC(t0,solver%ytmp, 2, 2, 1, solver%tol, 1.0E-10_C_DOUBLE,solver%IOUT, solver%ROUT, &
                       solver%IPAR, solver%RPAR, ierr)
         CALL FCVDENSE(INT(solver%n,C_LONG),ierr)
         solver%first=.FALSE.
