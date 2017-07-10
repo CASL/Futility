@@ -294,7 +294,6 @@ MODULE LinearSolverTypes
       ! local variables
       INTEGER(SIK) :: n
       INTEGER(SIK) :: matType,ReqTPLType,TPLType,solverMethod,pciters,pcsetup
-      INTEGER(SIK) :: nz,npin,ngrp
       INTEGER(SIK) :: MPI_Comm_ID,numberOMP
       CHARACTER(LEN=256) :: timerName,ReqTPLTypeStr,TPLTypeStr,PreCondType
 #ifdef FUTILITY_HAVE_PETSC
@@ -344,10 +343,6 @@ MODULE LinearSolverTypes
         CALL validParams%get('LinearSolverType->PCType',PreCondType)
         CALL ValidParams%get('LinearSolverType->PCIters',pciters)
         CALL validParams%get('LinearSolverType->PCSetup',pcsetup)
-!        !get extra data necessary for BILU
-!        CALL validParams%get('LinearSolverType->nPlane',nz)
-!        CALL validParams%get('LinearSolverType->nPin',npin)
-!        CALL validParams%get('LinearSolverType->nGrp',ngrp)
       ELSE
         PreCondType='NOPC'
       ENDIF
@@ -576,21 +571,6 @@ MODULE LinearSolverTypes
                   WRITE(*,*) 'allocate ILU'
                   ALLOCATE(ILU_PreCondtype :: solver%PreCondType)
                   solver%PCTypeName='ILU'
-                ELSEIF(PreCondType == 'BILU' .OR. PreCondType == 'BILU-SGS') THEN
-                  ALLOCATE(BILU_PreCondtype :: solver%PreCondType)
-                  solver%PCTypeName='BILU'
-                  SELECTTYPE(pc => solver%PreCondType); TYPE IS(BILU_PreCondtype)
-                    IF(PreCondType == 'BILU') THEN
-                      WRITE(*,*) 'allocate BILU'
-                      pc%BILUType=BILU
-                    ELSEIF(PreCondType == 'BILU-SGS') THEN
-                      WRITE(*,*) 'allocate BILU-SGS'
-                      pc%BILUType=BILUSGS
-                    ENDIF
-                    pc%nGrp=nGrp
-                    pc%nPlane=nz
-                    pc%nPin=npin
-                  ENDSELECT
                 ELSEIF(PreCondType=='DEFAULT') THEN
                   solver%PCTypeName='NOPC'
                   solver%pciters=0
