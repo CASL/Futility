@@ -70,14 +70,21 @@ MODULE MatrixTypes
   USE MatrixTypes_Native
   USE MatrixTypes_Trilinos
   USE MatrixTypes_PETSc
+  USE trilinos_interfaces
   IMPLICIT NONE
 
   PRIVATE
 !
 ! List of public members
   PUBLIC :: MatrixType
+  PUBLIC :: SquareMatrixType
+  PUBLIC :: RectMatrixType
+  PUBLIC :: DistributedMatrixType
   ! Matrix structure enumerations
   PUBLIC :: SPARSE,DENSESQUARE,DENSERECT,TRIDIAG
+  ! Parameter list setup/teardown
+  PUBLIC :: MatrixTypes_Declare_ValidParams
+  PUBLIC :: MatrixTypes_Clear_ValidParams
   ! Native implementations
   PUBLIC :: DenseSquareMatrixType
   PUBLIC :: DenseRectMatrixType
@@ -162,11 +169,16 @@ MODULE MatrixTypes
       CHARACTER(LEN=1),INTENT(IN),OPTIONAL :: uplo
       CHARACTER(LEN=1),INTENT(IN),OPTIONAL :: diag
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx_in
+      !
+      CHARACTER(LEN=1) :: t,ul,d
+      INTEGER(SIK) :: incx
 
-      SELECTTYPE(thisMatrix)
-        TYPE IS(DenseSquareMatrixType)
-          
-
+      SELECTTYPE(mat => thisMatrix)
+#ifdef FUTILITY_HAVE_PETSC
+        TYPE IS(PETScMatrixType)
+          CALL matvec_PETSc(mat,trans,alpha,x,beta,y,uplo,diag,incx_in)
+          RETURN
+#endif
       ENDSELECT
 
       IF(thisMatrix%isInit) THEN
@@ -253,6 +265,9 @@ MODULE MatrixTypes
 !> @param diag character indicating if diagonal of @c thisMatrix should be treated
 !> @param incx_in integer containing distance between elements in @c x
 !>
+!> TODO: This is more of a mess than it needs to be, and should be resturctured
+!> to match the matvec implementation. Split up the functionality and store
+!> closer to their respective implementations.
     SUBROUTINE matvec_MatrixTypeVectorType(thisMatrix,trans,alpha,x,beta,y,uplo,diag,incx_in)
       CHARACTER(LEN=*),PARAMETER :: myName='matvec_MatrixTypeVectorType'
       CLASS(MatrixType),INTENT(INOUT) :: thisMatrix
@@ -267,10 +282,20 @@ MODULE MatrixTypes
       CHARACTER(LEN=1) :: t,ul,d
       INTEGER(SIK) :: incx
       REAL(SRK) :: a,b
-#ifdef FUTILITY_HAVE_Trilinos
-      TYPE(TrilinosVectorType) :: tdummy
-      TYPE(ParamType) :: vecPList
+
+#ifdef FUTILITY_HAVE_PETSC
+      SELECTTYPE(mat => thisMatrix); TYPE IS(PETScMatrixType)
+        CALL matvec_PETScVector(mat,trans,alpha,x,beta,y,uplo,diag,incx_in)
+        RETURN
+      ENDSELECT
 #endif
+
+#ifdef FUTILITY_HAVE_Trilinos
+      SELECTTYPE(mat => thisMatrix); TYPE IS(TrilinosMatrixType)
+        CALL matvec_TrilinosVector(mat,trans,alpha,x,beta,y,uplo,diag,incx_in)
+      ENDSELECT
+#endif
+
       IF(thisMatrix%isInit) THEN
         t='n'
         ul='n'
@@ -341,39 +366,10 @@ MODULE MatrixTypes
                      modName//'::'//myName//' - This interface is not available.')
             ENDSELECT
           ENDSELECT
-        TYPE IS(TrilinosVectorType)
-          SELECTTYPE(y); TYPE IS(TrilinosVectorType)
-            SELECTTYPE(thisMatrix); TYPE IS(TrilinosMatrixType)
-#ifdef FUTILITY_HAVE_Trilinos
-                CALL vecPList%add('VectorType -> n',y%n)
-                CALL vecPList%add('VectorType -> MPI_Comm_ID',y%comm)
-                CALL vecPList%add('VectorType -> nlocal',x%nlocal)
-                CALL tdummy%init(vecPList)
-                IF(.NOT.x%isAssembled) CALL x%assemble()
-                IF(.NOT.y%isAssembled) CALL y%assemble()
-                IF(.NOT.thisMatrix%isAssembled) CALL thisMatrix%assemble()
-                IF(t == 'n') THEN
-                  CALL ForPETRA_MatMult(thisMatrix%a,LOGICAL(.FALSE.,1),x%b,tdummy%b)
-                ELSE
-                  CALL ForPETRA_MatMult(thisMatrix%a,LOGICAL(.TRUE.,1),x%b,tdummy%b)
-                ENDIF
-                CALL BLAS_scal(tdummy,a)
-                CALL BLAS_scal(y,b)
-                CALL BLAS_axpy(tdummy,y)
-                CALL vecPList%clear()
-                CALL tdummy%clear()
-#else
-                CALL eMatrixType%raiseFatalError('Incorrect call to '// &
-                   modName//'::'//myName//' - Trilinos not enabled.  You will'// &
-                   'need to recompile with Trilinos enabled to use this feature.')
-#endif
-            ENDSELECT
-          ENDSELECT
         CLASS DEFAULT
                 CALL eMatrixType%raiseError('Incorrect call to '// &
                     modName//'::'//myName//' - This interface is not available.')
         ENDSELECT
-
       ENDIF
     ENDSUBROUTINE matvec_MatrixTypeVectorType
 !
@@ -558,7 +554,6 @@ MODULE MatrixTypes
           ENDIF
         ENDIF
       ENDIF
-
     ENDSUBROUTINE trsv_sparse
 !
 !-------------------------------------------------------------------------------
@@ -583,15 +578,28 @@ MODULE MatrixTypes
       CLASS(MatrixType),INTENT(INOUT) :: C
       REAL(SRK),INTENT(IN),OPTIONAL :: alpha
       REAL(SRK),INTENT(IN),OPTIONAL :: beta
-#ifdef FUTILITY_HAVE_PETSC
-      INTEGER(SIK) :: i,j
-      REAL(SRK),ALLOCATABLE :: tmpA(:,:),tmpB(:,:),tmpC(:,:)
-#endif
       CHARACTER(LEN=1),OPTIONAL,INTENT(IN) :: transA
       CHARACTER(LEN=1),OPTIONAL,INTENT(IN) :: transB
       CHARACTER(LEN=1) :: tA
       CHARACTER(LEN=1) :: tB
 
+#ifdef FUTILITY_HAVE_PETSC
+      SELECTTYPE(A); TYPE IS(PETScMatrixType)
+        SELECTTYPE(B); TYPE IS(PETScMatrixType)
+          SELECTTYPE(C); TYPE IS(PETScMatrixType)
+            CALL matmult_PETSc(A,B,C,alpha,beta,transA,transB)
+          CLASS DEFAULT
+            CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
+              "Interface not implemented")
+          ENDSELECT
+        CLASS DEFAULT
+            CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
+              "Interface not implemented")
+        ENDSELECT
+        RETURN
+      ENDSELECT
+#endif
+  
       IF(A%isInit) THEN
         tA='n'
         IF(PRESENT(transA)) tA=transA
@@ -600,21 +608,6 @@ MODULE MatrixTypes
         tB='n'
         IF(PRESENT(transB)) tB=transB
       ENDIF
-!      IF((.NOT. C%isInit) .AND. A%isInit .AND. B%isInit) THEN
-!        SELECTTYPE(C)
-!          TYPE IS(DenseSquareMatrixType)
-!            CALL C%init(A%n)
-!            C%a=0.0_SRK
-!          TYPE IS(DenseRectMatrixType)
-!            SELECTTYPE(B)
-!              TYPE IS(DenseSquareMatrixType)
-!                CALL C%init(A%n,B%n)
-!              TYPE IS(DenseRectMatrixType)
-!                CALL C%init(A%n,B%m)
-!            ENDSELECT
-!            C%a=0.0_SRK
-!        ENDSELECT
-!      ENDIF
 
       IF(A%isInit .AND. B%isInit .AND. C%isInit) THEN
         SELECTTYPE(A)
@@ -738,62 +731,6 @@ MODULE MatrixTypes
             ENDSELECT
           TYPE IS(SparseMatrixType)
             ! NOT SUPPORTED
-          TYPE IS(PETScMatrixType)
-            SELECTTYPE(B)
-              TYPE IS(PETScMatrixType)
-                SELECTTYPE(C)
-                  TYPE IS(PETScMatrixType)
-#ifdef FUTILITY_HAVE_PETSC
-                    ALLOCATE(tmpA(A%n,A%n))
-                    ALLOCATE(tmpB(B%n,B%n))
-                    ALLOCATE(tmpC(C%n,C%n))
-                    tmpA=0._SRK
-                    tmpB=0._SRK
-                    tmpC=0._SRK
-                    DO i=1,A%n
-                      DO j=1,A%n
-                        CALL A%get(i,j,tmpA(i,j))
-                      ENDDO
-                    ENDDO
-                    DO i=1,B%n
-                      DO j=1,B%n
-                        CALL B%get(i,j,tmpB(i,j))
-                      ENDDO
-                    ENDDO
-                    DO i=1,B%n
-                      DO j=1,B%n
-                        CALL C%get(i,j,tmpC(i,j))
-                      ENDDO
-                    ENDDO
-                    ! A: Square   B: Square  C: Square
-                    IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
-                      CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,alpha,tmpA,tmpB,beta,tmpC)
-                    ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-                      CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,alpha,tmpA,tmpB,tmpC)
-                    ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
-                      CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,tmpA,tmpB,beta,tmpC)
-                    ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-                      CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,tmpA,tmpB,tmpC)
-                    ENDIF
-
-                    ! put into return matrix
-                    DO i=1,C%n
-                      DO j=1,C%n
-                        CALL C%set(i,j,tmpC(i,j))
-                      ENDDO
-                    ENDDO
-
-                    DEALLOCATE(tmpA)
-                    DEALLOCATE(tmpB)
-                    DEALLOCATE(tmpC)
-#else
-                    CALL eMatrixType%raiseFatalError('Incorrect call to '// &
-                       modName//'::'//myName//' - PETSc not enabled.  You will'// &
-                       'need to recompile with PETSc enabled to use this feature.')
-#endif
-
-                ENDSELECT
-            ENDSELECT
           TYPE IS(TrilinosMatrixType)
             CALL eMatrixType%raiseError('Incorrect call to '// &
                  modName//'::'//myName//' - This interface is not available.')

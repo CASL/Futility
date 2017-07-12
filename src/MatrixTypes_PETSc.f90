@@ -37,7 +37,9 @@ MODULE MatrixTypes_PETSc
 !
 ! List of public members
   PUBLIC :: PETScMatrixType
-  PUBLIC :: BLAS_matvec
+  PUBLIC :: matvec_PETSc
+  PUBLIC :: matvec_PETScVector
+  PUBLIC :: matmult_PETSc
 
   TYPE,EXTENDS(DistributedMatrixType) :: PETScMatrixType
     Mat :: A
@@ -66,14 +68,7 @@ MODULE MatrixTypes_PETSc
       !> @copydetails MatrixTypes::transpose_PETScMatrixType
       PROCEDURE,PASS :: transpose => transpose_PETScMatrixType
   ENDTYPE PETScMatrixType
-
   
-  INTERFACE BLAS_matvec
-    MODULE PROCEDURE matvec_PetscPetsc
-    MODULE PROCEDURE matvec_PetscNative
-
-  ENDINTERFACE BLAS_matvec
-
   !> Name of module
   CHARACTER(LEN=*),PARAMETER :: modName='MATRIXTYPES_PETSC'
 
@@ -282,38 +277,7 @@ MODULE MatrixTypes_PETSc
 !> @param diag character indicating if diagonal of @c thisMatrix should be treated
 !> @param incx_in integer containing distance between elements in @c x
 !>
-    SUBROUTINE matvec_PetscPetsc(thisMatrix,trans,alpha,x,beta,y,uplo,diag,incx_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='matvec_PetscPetsc'
-      TYPE(PETScMatrixType),INTENT(INOUT) :: thisMatrix
-      CHARACTER(LEN=1),OPTIONAL,INTENT(IN) :: trans
-      REAL(SRK),INTENT(IN),OPTIONAL :: alpha
-      TYPE(PETScVectorType),INTENT(IN) :: x
-      REAL(SRK),INTENT(IN),OPTIONAL :: beta
-      TYPE(PETScVectorType),INTENT(INOUT) :: y
-      CHARACTER(LEN=1),INTENT(IN),OPTIONAL :: uplo
-      CHARACTER(LEN=1),INTENT(IN),OPTIONAL :: diag
-      INTEGER(SIK),INTENT(IN),OPTIONAL :: incx_in
-
-      IF(thisMatrix%isInit) THEN
-        CALL eMatrixType%raiseError(modName//"::"//myName//" - Not implemented")
-      ENDIF
-    ENDSUBROUTINE matvec_PetscPetsc
-!
-!-------------------------------------------------------------------------------
-!> @brief Subroutine provides an interface to matrix vector multiplication for
-!> the MatrixType.
-!> @param trans single character input indicating whether or not to use the
-!>        transpose of @c A
-!> @param thisMatrix derived matrix type.
-!> @param alpha the scalar used to scale @c x
-!> @param x the vector to multiply with @c A
-!> @param beta the scalar used to scale @c y
-!> @param y the vector to add to the product of @c A and @c x
-!> @param uplo character indicating if @c thisMatrix is upper or lower triangular
-!> @param diag character indicating if diagonal of @c thisMatrix should be treated
-!> @param incx_in integer containing distance between elements in @c x
-!>
-    SUBROUTINE matvec_PetscNative(thisMatrix,trans,alpha,x,beta,y,uplo,diag,incx_in)
+    SUBROUTINE matvec_PETScVector(thisMatrix,trans,alpha,x,beta,y,uplo,diag,incx_in)
       CHARACTER(LEN=*),PARAMETER :: myName='matvec_PetscNative'
       TYPE(PETScMatrixType),INTENT(INOUT) :: thisMatrix
       CLASS(VectorType),INTENT(INOUT) :: x
@@ -333,76 +297,237 @@ MODULE MatrixTypes_PETSc
       TYPE(PETScVectorType) :: dummy
       TYPE(ParamType) :: vecPList
 
+      IF(.NOT. thisMatrix%isInit) THEN
+        CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
+          "Matrix not initialized.")
+        RETURN
+      ENDIF
+
+      t='n'
+      ul='n'
+      d='n'
+      incx=1_SIK
+      a=1
+      b=1
+      IF(PRESENT(trans)) t=trans
+      IF(PRESENT(uplo)) ul=uplo
+      IF(PRESENT(diag)) d=diag
+      IF(PRESENT(incx_in)) incx=incx_in
+      IF(PRESENT(alpha)) a=alpha
+      IF(PRESENT(beta))  b=beta
+
+      SELECTTYPE(x); TYPE IS(RealVectorType)
+        SELECTTYPE(y); TYPE IS(RealVectorType)
+          ALLOCATE(tmpmat(thisMatrix%n,thisMatrix%n))
+          ALLOCATE(tmpvec(x%n))
+          ALLOCATE(tmpy(x%n))
+          ! stuff into temporary matrix
+          DO i=1,thisMatrix%n
+            DO j=1,thisMatrix%n
+              CALL thisMatrix%get(i,j,tmpmat(i,j))
+            ENDDO
+          ENDDO
+          ! stuff into temporary vector
+          CALL x%get(tmpvec)
+          CALL y%get(tmpy)
+          IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
+            CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+              alpha,tmpmat,thisMatrix%n,tmpvec,1,beta,tmpy,1)
+          ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+            CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+              alpha,tmpmat,thisMatrix%n,tmpvec,1,tmpy,1)
+          ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
+            CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+              tmpmat,thisMatrix%n,tmpvec,1,beta,tmpy,1)
+          ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+            CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+              tmpmat,thisMatrix%n,tmpvec,1,tmpy,1)
+          ENDIF
+          ! set into return vector
+          CALL y%set(tmpy)
+        ENDSELECT
+      TYPE IS(PETScVectorType) ! x
+        SELECTTYPE(y); TYPE IS(PETScVectorType)
+          CALL vecPList%add('VectorType -> n',y%n)
+          CALL vecPList%add('VectorType -> MPI_Comm_ID',y%comm)
+          CALL vecPList%add('VectorType -> nlocal',x%nlocal)
+          CALL dummy%init(vecPList)
+          IF(.NOT.x%isAssembled) CALL x%assemble()
+          IF(.NOT.y%isAssembled) CALL y%assemble()
+          IF(.NOT.thisMatrix%isAssembled) CALL thisMatrix%assemble()
+          IF(t == 'n') THEN
+            CALL MatMult(thisMatrix%a,x%b,dummy%b,iperr)
+          ELSE
+            CALL MatMultTranspose(thisMatrix%a,x%b,dummy%b,iperr)
+          ENDIF
+          CALL BLAS_scal(dummy,a)
+          CALL BLAS_scal(y,b)
+          CALL BLAS_axpy(dummy,y)
+          CALL vecPList%clear()
+          CALL dummy%clear()
+        ENDSELECT
+        CLASS DEFAULT
+              CALL eMatrixType%raiseError('Incorrect call to '// &
+                  modName//'::'//myName//' - This interface is not available.')
+      ENDSELECT
+    ENDSUBROUTINE matvec_PETScVector
+!
+!-------------------------------------------------------------------------------
+!> @brief Subroutine provides an interface to matrix vector multiplication for
+!> the PETSc matrix type and 1-D array vectors.
+!> @param trans single character input indicating whether or not to use the
+!>        transpose of @c A
+!> @param thisMatrix derived matrix type.
+!> @param alpha the scalar used to scale @c x
+!> @param x the vector to multiply with @c A
+!> @param beta the scalar used to scale @c y
+!> @param y the vector to add to the product of @c A and @c x
+!> @param uplo character indicating if @c thisMatrix is upper or lower triangular
+!> @param diag character indicating if diagonal of @c thisMatrix should be treated
+!> @param incx_in integer containing distance between elements in @c x
+!>
+    SUBROUTINE matvec_PETSc(thisMatrix,trans,alpha,x,beta,y,uplo,diag,incx_in)
+      CHARACTER(LEN=*),PARAMETER :: myName='matvec_MatrixType'
+      TYPE(PETScMatrixType),INTENT(INOUT) :: thisMatrix
+      CHARACTER(LEN=1),OPTIONAL,INTENT(IN) :: trans
+      REAL(SRK),INTENT(IN),OPTIONAL :: alpha
+      REAL(SRK),INTENT(IN) :: x(:)
+      REAL(SRK),INTENT(IN),OPTIONAL :: beta
+      REAL(SRK),INTENT(INOUT) :: y(:)
+      CHARACTER(LEN=1),INTENT(IN),OPTIONAL :: uplo
+      CHARACTER(LEN=1),INTENT(IN),OPTIONAL :: diag
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: incx_in
+      !
+      REAL(SRK),ALLOCATABLE :: tmpmat(:,:)
+      INTEGER(SIK) :: i,j
+      CHARACTER(LEN=1) :: t,ul,d
+      INTEGER(SIK) :: incx
+
       IF(thisMatrix%isInit) THEN
         t='n'
         ul='n'
         d='n'
         incx=1_SIK
-        a=1
-        b=1
         IF(PRESENT(trans)) t=trans
         IF(PRESENT(uplo)) ul=uplo
         IF(PRESENT(diag)) d=diag
         IF(PRESENT(incx_in)) incx=incx_in
-        IF(PRESENT(alpha)) a=alpha
-        IF(PRESENT(beta))  b=beta
 
-        SELECTTYPE(x); TYPE IS(RealVectorType)
-          SELECTTYPE(y); TYPE IS(RealVectorType)
-                ALLOCATE(tmpmat(thisMatrix%n,thisMatrix%n))
-                ALLOCATE(tmpvec(x%n))
-                ALLOCATE(tmpy(x%n))
-                ! stuff into temporary matrix
-                DO i=1,thisMatrix%n
-                  DO j=1,thisMatrix%n
-                    CALL thisMatrix%get(i,j,tmpmat(i,j))
-                  ENDDO
-                ENDDO
-                ! stuff into temporary vector
-                CALL x%get(tmpvec)
-                CALL y%get(tmpy)
-                IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
-                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-                    alpha,tmpmat,thisMatrix%n,tmpvec,1,beta,tmpy,1)
-                ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-                    alpha,tmpmat,thisMatrix%n,tmpvec,1,tmpy,1)
-                ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
-                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-                    tmpmat,thisMatrix%n,tmpvec,1,beta,tmpy,1)
-                ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-                    tmpmat,thisMatrix%n,tmpvec,1,tmpy,1)
-                ENDIF
-                ! set into return vector
-                CALL y%set(tmpy)
-          ENDSELECT
-        TYPE IS(PETScVectorType) ! x
-          SELECTTYPE(y); TYPE IS(PETScVectorType)
-            CALL vecPList%add('VectorType -> n',y%n)
-            CALL vecPList%add('VectorType -> MPI_Comm_ID',y%comm)
-            CALL vecPList%add('VectorType -> nlocal',x%nlocal)
-            CALL dummy%init(vecPList)
-            IF(.NOT.x%isAssembled) CALL x%assemble()
-            IF(.NOT.y%isAssembled) CALL y%assemble()
-            IF(.NOT.thisMatrix%isAssembled) CALL thisMatrix%assemble()
-            IF(t == 'n') THEN
-              CALL MatMult(thisMatrix%a,x%b,dummy%b,iperr)
-            ELSE
-              CALL MatMultTranspose(thisMatrix%a,x%b,dummy%b,iperr)
+            ALLOCATE(tmpmat(thisMatrix%n,thisMatrix%n))
+            ! stuff into temporary matrix
+            DO i=1,thisMatrix%n
+              DO j=1,thisMatrix%n
+                CALL thisMatrix%get(i,j,tmpmat(i,j))
+              ENDDO
+            ENDDO
+
+            IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
+              CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+                alpha,tmpmat,thisMatrix%n,x,1,beta,y,1)
+            ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+              CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+                alpha,tmpmat,thisMatrix%n,x,1,y,1)
+            ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
+              CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+                tmpmat,thisMatrix%n,x,1,beta,y,1)
+            ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+              CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+                tmpmat,thisMatrix%n,x,1,y,1)
             ENDIF
-            CALL BLAS_scal(dummy,a)
-            CALL BLAS_scal(y,b)
-            CALL BLAS_axpy(dummy,y)
-            CALL vecPList%clear()
-            CALL dummy%clear()
-          ENDSELECT
-          CLASS DEFAULT
-                CALL eMatrixType%raiseError('Incorrect call to '// &
-                    modName//'::'//myName//' - This interface is not available.')
-        ENDSELECT
+            DEALLOCATE(tmpmat)
       ENDIF
-    ENDSUBROUTINE matvec_PetscNative
+    ENDSUBROUTINE matvec_PETSc
+!
+!-------------------------------------------------------------------------------
+!> @brief Subroutine provides an interface to matrix matrix multiplication for
+!> the PETScMatrixType. alpha*A*B+beta*C
+!> @param A a derived matrix type to multiply by @c B
+!> @param B a derived matrix type to multiply by @c A
+!> @param C a derived matrix type to add to the product of @c A and @c B
+!>          If C is not initialized when the subroutine is called, it will be
+!>          initialized and set to all zeros
+!> @param transA single character input indicating whether or not to use the
+!>        transpose of @c A
+!> @param alpha the scalar used to scale the product of @c A and @cB
+!> @param transB single character input indicating whether or not to use the
+!>        transpose of @c B
+!> @param beta the scalar used to scale @c C
+!>
+!> NOTE: This interface is inefficient to the point of being not worth
+!> providing. We may want to remove these BLAS interfaces to TPL-backed
+!> matrices, or at the very least implement them using functionality of tha
+!> backing TPLs
+    SUBROUTINE matmult_PETSc(A,B,C,alpha,beta,transA,transB)
+      CHARACTER(LEN=*),PARAMETER :: myName='matmult_MatrixType'
+      TYPE(PETScMatrixType),INTENT(INOUT) :: A
+      TYPE(PETScMatrixType),INTENT(INOUT) :: B
+      TYPE(PETScMatrixType),INTENT(INOUT) :: C
+      REAL(SRK),INTENT(IN),OPTIONAL :: alpha
+      REAL(SRK),INTENT(IN),OPTIONAL :: beta
+      CHARACTER(LEN=1),OPTIONAL,INTENT(IN) :: transA
+      CHARACTER(LEN=1),OPTIONAL,INTENT(IN) :: transB
+      !
+      INTEGER(SIK) :: i,j
+      REAL(SRK),ALLOCATABLE :: tmpA(:,:),tmpB(:,:),tmpC(:,:)
+      CHARACTER(LEN=1) :: tA
+      CHARACTER(LEN=1) :: tB
+
+      IF(.NOT.(A%isInit .AND. B%isInit .AND. C%isInit)) THEN
+        RETURN
+      ENDIF
+
+      tA='n'
+      IF(PRESENT(transA)) THEN
+        tA=transA
+      ENDIF
+      tB='n'
+      IF(PRESENT(transB)) THEN
+        tB=transB
+      ENDIF
+
+      ALLOCATE(tmpA(A%n,A%n))
+      ALLOCATE(tmpB(B%n,B%n))
+      ALLOCATE(tmpC(C%n,C%n))
+      tmpA=0._SRK
+      tmpB=0._SRK
+      tmpC=0._SRK
+      DO i=1,A%n
+        DO j=1,A%n
+          CALL A%get(i,j,tmpA(i,j))
+        ENDDO
+      ENDDO
+      DO i=1,B%n
+        DO j=1,B%n
+          CALL B%get(i,j,tmpB(i,j))
+        ENDDO
+      ENDDO
+      DO i=1,B%n
+        DO j=1,B%n
+          CALL C%get(i,j,tmpC(i,j))
+        ENDDO
+      ENDDO
+      ! A: Square   B: Square  C: Square
+      IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
+        CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,alpha,tmpA,tmpB,beta,tmpC)
+      ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+        CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,alpha,tmpA,tmpB,tmpC)
+      ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
+        CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,tmpA,tmpB,beta,tmpC)
+      ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+        CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,tmpA,tmpB,tmpC)
+      ENDIF
+
+      ! put into return matrix
+      DO i=1,C%n
+        DO j=1,C%n
+          CALL C%set(i,j,tmpC(i,j))
+        ENDDO
+      ENDDO
+
+      DEALLOCATE(tmpA)
+      DEALLOCATE(tmpB)
+      DEALLOCATE(tmpC)
+    ENDSUBROUTINE matmult_PETSc
 #endif
 
 ENDMODULE MatrixTypes_PETSc

@@ -157,16 +157,6 @@ MODULE MatrixTypes_Native
       PROCEDURE,PASS :: transpose => transpose_SparseMatrixType
   ENDTYPE SparseMatrixType
 
-  INTERFACE BLAS_matvec
-    MODULE PROCEDURE matmult_DenseSquare
-    MODULE PROCEDURE matmult_DenseRect
-    MODULE PROCEDURE matmult_Sparse
-  ENDINTERFACE BLAS_matvec
-
-  INTERFACE BLAS_matmult
-
-  ENDINTERFACE BLAS_matmult
-
   !> Name of module
   CHARACTER(LEN=*),PARAMETER :: modName='MATRIXTYPES_NATIVE'
 

@@ -20,24 +20,25 @@ MODULE MatrixTypes_Trilinos
   USE IntrType
   USE ExceptionHandler
   USE ParameterLists
+  USE VectorTypes
   USE MatrixTypes_Base
   USE trilinos_interfaces
 
   IMPLICIT NONE
   PRIVATE
 
+#ifdef FUTILITY_HAVE_Trilinos
 !
 ! List of public members
   PUBLIC :: TrilinosMatrixType
+  PUBLIC :: matvec_TrilinosVector
   
   TYPE,EXTENDS(DistributedMatrixType) :: TrilinosMatrixType
-#ifdef FUTILITY_HAVE_Trilinos
     INTEGER(SIK) :: A
     INTEGER(SIK) :: currow
     INTEGER(SIK) :: ncol
     INTEGER(SIK),ALLOCATABLE :: jloc(:)
     REAL(SRK),ALLOCATABLE :: aloc(:)
-#endif
 !
 !List of Type Bound Procedures
     CONTAINS
@@ -83,8 +84,6 @@ MODULE MatrixTypes_Trilinos
       INTEGER(SIK) :: n, matType, MPI_COMM_ID, nlocal, ierr, rnnz
       INTEGER(SIK),ALLOCATABLE :: dnnz(:), onnz(:)
       LOGICAL(SBK) :: isSym
-
-#ifdef FUTILITY_HAVE_Trilinos
 
       !Check to set up required and optional param lists.
       IF(.NOT.MatrixType_Paramsflag) CALL MatrixTypes_Declare_ValidParams()
@@ -153,11 +152,6 @@ MODULE MatrixTypes_Trilinos
         CALL eMatrixType%raiseError('Incorrect call to '// &
           modName//'::'//myName//' - MatrixType already initialized')
       ENDIF
-#else
-      CALL eMatrixType%raiseFatalError('Incorrect call to '// &
-              modName//'::'//myName//' - Trilinos not enabled.  You will'// &
-              'need to recompile with Trilinos enabled to use this feature.')
-#endif
     ENDSUBROUTINE init_TrilinosMatrixParam
 !
 !-------------------------------------------------------------------------------
@@ -167,7 +161,6 @@ MODULE MatrixTypes_Trilinos
     SUBROUTINE clear_TrilinosMatrixType(matrix)
       CHARACTER(LEN=*),PARAMETER :: myName='clear_TrilinosMatrixType'
       CLASS(TrilinosMatrixType),INTENT(INOUT) :: matrix
-#ifdef FUTILITY_HAVE_Trilinos
 
       !TODO add routine to clear memory
       matrix%isInit=.FALSE.
@@ -181,11 +174,6 @@ MODULE MatrixTypes_Trilinos
       matrix%ncol=0
       CALL ForPETRA_MatDestroy(matrix%a)
       matrix%A=-1
-#else
-      CALL eMatrixType%raiseFatalError('Incorrect call to '// &
-              modName//'::'//myName//' - Trilinos not enabled.  You will'// &
-              'need to recompile with Trilinos enabled to use this feature.')
-#endif
     ENDSUBROUTINE clear_TrilinosMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -201,7 +189,6 @@ MODULE MatrixTypes_Trilinos
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(IN) :: setval
-#ifdef FUTILITY_HAVE_Trilinos
       INTEGER(SIK)  :: ierr
 
       IF(matrix%isInit) THEN
@@ -228,11 +215,6 @@ MODULE MatrixTypes_Trilinos
           matrix%isAssembled=.FALSE.
         ENDIF
       ENDIF
-#else
-      CALL eMatrixType%raiseFatalError('Incorrect call to '// &
-              modName//'::'//myName//' - Trilinos not enabled.  You will'// &
-              'need to recompile with Trilinos enabled to use this feature.')
-#endif
     ENDSUBROUTINE set_TrilinosMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -248,7 +230,6 @@ MODULE MatrixTypes_Trilinos
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(IN) :: setval
-#ifdef FUTILITY_HAVE_Trilinos
       INTEGER(SIK)  :: ierr
 
       IF(matrix%isInit) THEN
@@ -269,11 +250,6 @@ MODULE MatrixTypes_Trilinos
           matrix%isAssembled=.FALSE.
         ENDIF
       ENDIF
-#else
-      CALL eMatrixType%raiseFatalError('Incorrect call to '// &
-              modName//'::'//myName//' - Trilinos not enabled.  You will'// &
-              'need to recompile with Trilinos enabled to use this feature.')
-#endif
     ENDSUBROUTINE setShape_TrilinosMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -291,7 +267,6 @@ MODULE MatrixTypes_Trilinos
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(INOUT) :: getval
-#ifdef FUTILITY_HAVE_Trilinos
       INTEGER(SIK)  :: ierr
 
       getval=0.0_SRK
@@ -305,11 +280,6 @@ MODULE MatrixTypes_Trilinos
           getval=-1051._SRK
         ENDIF
       ENDIF
-#else
-      CALL eMatrixType%raiseFatalError('Incorrect call to '// &
-              modName//'::'//myName//' - Trilinos not enabled.  You will'// &
-              'need to recompile with Trilinos enabled to use this feature.')
-#endif
     ENDSUBROUTINE get_TrilinosMatrixtype
 !
 !-------------------------------------------------------------------------------
@@ -352,6 +322,82 @@ MODULE MatrixTypes_Trilinos
       CALL eMatrixType%raiseFatalError(modName//'::'//myName// &
         ' - routine is not implemented!')
     ENDSUBROUTINE transpose_TrilinosMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief Subroutine provides an interface to matrix vector multiplication for
+!> the MatrixType.
+!> @param trans single character input indicating whether or not to use the
+!>        transpose of @c A
+!> @param thisMatrix derived matrix type.
+!> @param alpha the scalar used to scale @c x
+!> @param x the vector to multiply with @c A
+!> @param beta the scalar used to scale @c y
+!> @param y the vector to add to the product of @c A and @c x
+!> @param uplo character indicating if @c thisMatrix is upper or lower triangular
+!> @param diag character indicating if diagonal of @c thisMatrix should be treated
+!> @param incx_in integer containing distance between elements in @c x
+!>
+!> TODO: This is more of a mess than it needs to be, and should be resturctured
+!> to match the matvec implementation. Split up the functionality and store
+!> closer to their respective implementations.
+    SUBROUTINE matvec_TrilinosVector(thisMatrix,trans,alpha,x,beta,y,uplo,diag,incx_in)
+      CHARACTER(LEN=*),PARAMETER :: myName='matvec_MatrixTypeVectorType'
+      CLASS(TrilinosMatrixType),INTENT(INOUT) :: thisMatrix
+      CLASS(VectorType),INTENT(INOUT) :: x
+      CHARACTER(LEN=1),OPTIONAL,INTENT(IN) :: trans
+      REAL(SRK),INTENT(IN),OPTIONAL :: alpha
+      REAL(SRK),INTENT(IN),OPTIONAL :: beta
+      CLASS(VectorType),INTENT(INOUT) :: y
+      CHARACTER(LEN=1),INTENT(IN),OPTIONAL :: uplo
+      CHARACTER(LEN=1),INTENT(IN),OPTIONAL :: diag
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: incx_in
+      !
+      REAL(SRK) :: a,b
+      CHARACTER(LEN=1) :: t
+      TYPE(TrilinosVectorType) :: tdummy
+      TYPE(ParamType) :: vecPList
 
+      IF(.NOT. thisMatrix%isInit) THEN
+        CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
+          "Matrix not initialized.")
+        RETURN
+      ENDIF
+      t='n'
+      a=1
+      b=1
+      IF(PRESENT(trans)) t=trans
+      IF(PRESENT(alpha)) a=alpha
+      IF(PRESENT(beta))  b=beta
+
+      SELECTTYPE(x); TYPE IS(TrilinosVectorType)
+        SELECTTYPE(y); TYPE IS(TrilinosVectorType)
+          CALL vecPList%add('VectorType -> n',y%n)
+          CALL vecPList%add('VectorType -> MPI_Comm_ID',y%comm)
+          CALL vecPList%add('VectorType -> nlocal',x%nlocal)
+          CALL tdummy%init(vecPList)
+          IF(.NOT.x%isAssembled) CALL x%assemble()
+          IF(.NOT.y%isAssembled) CALL y%assemble()
+          IF(.NOT.thisMatrix%isAssembled) CALL thisMatrix%assemble()
+          IF(t == 'n') THEN
+            CALL ForPETRA_MatMult(thisMatrix%a,LOGICAL(.FALSE.,1),x%b,tdummy%b)
+          ELSE
+            CALL ForPETRA_MatMult(thisMatrix%a,LOGICAL(.TRUE.,1),x%b,tdummy%b)
+          ENDIF
+          CALL BLAS_scal(tdummy,a)
+          CALL BLAS_scal(y,b)
+          CALL BLAS_axpy(tdummy,y)
+          CALL vecPList%clear()
+          CALL tdummy%clear()
+        CLASS DEFAULT
+          CALL eMatrixType%raiseError('Incorrect call to '// &
+              modName//'::'//myName//' - This interface is not available.')
+        ENDSELECT
+      CLASS DEFAULT
+        CALL eMatrixType%raiseError('Incorrect call to '// &
+            modName//'::'//myName//' - This interface is not available.')
+      ENDSELECT
+    ENDSUBROUTINE matvec_TrilinosVector
+    
+#endif
 
 ENDMODULE MatrixTypes_Trilinos
