@@ -102,6 +102,8 @@ MODULE LinearSolverTypes
 
   !> Number of direct solver solution methodologies - for error checking
   INTEGER(SIK),PARAMETER :: MAX_DIRECT_SOLVER_METHODS=3
+  !> set enumeration scheme for TPLs
+  INTEGER(SIK),PARAMETER,PUBLIC :: PETSC=0,TRILINOS=1,PARDISO_MKL=2,MKL=3,NATIVE=4
   !> Number of iterative solver solution methodologies - for error checking
   INTEGER(SIK),PARAMETER :: MAX_IT_SOLVER_METHODS=3
   !> set enumeration scheme for iterative solver methods
