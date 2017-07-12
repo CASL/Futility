@@ -183,11 +183,11 @@ PROGRAM testODESolver
   REGISTER_SUBTEST('testStep_Sundials_Linear',testStep_Sundials_Linear)
   DEALLOCATE(f)
   ALLOCATE(ODESolverInterface_TestExponential :: f)
-  SUNDIALS_ODE_INTERFACE=>f
+  testODE%f=>f
   REGISTER_SUBTEST('testStep_Sundials_Exp',testStep_Sundials_Exp)
   DEALLOCATE(f)
   ALLOCATE(ODESolverInterface_TestNonLinear :: f)
-  SUNDIALS_ODE_INTERFACE=>f
+  testODE%f=>f
   REGISTER_SUBTEST('testStep_Sundials_NonLinear',testStep_Sundials_NonLinear)
 #endif
   REGISTER_SUBTEST('testClear_Sundials',testClear_Sundials)
