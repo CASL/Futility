@@ -98,6 +98,13 @@ MODULE ODESolverTypes
   CLASS(ODESolverInterface_Base),POINTER :: SUNDIALS_ODE_INTERFACE => NULL()
   TYPE(RealVectorType),SAVE :: SUNDIALS_y
   TYPE(RealVectorType),SAVE :: SUNDIALS_ydot
+  LOGICAL(SLK),SAVE :: SUNDIALS_isInit=.FALSE.
+  LOGICAL(SLK),SAVE :: SUNDIALS_first=.TRUE.
+  INTEGER(SIK),SAVE :: SUNDIALS_N=0
+  INTEGER(C_LONG),SAVE :: SUNDIALS_iout(25)
+  INTEGER(C_LONG),SAVE :: SUNDIALS_ipar(1)
+  REAL(C_DOUBLE),SAVE :: SUNDIALS_rout(10)
+  REAL(C_DOUBLE),SAVE :: SUNDIALS_rpar(1)
 
   !> @brief the base ode solver type
   TYPE,ABSTRACT :: ODESolverType_Base
@@ -186,14 +193,8 @@ MODULE ODESolverTypes
   TYPE,EXTENDS(ODESolverType_Base) :: ODESolverType_Sundials
     !> order of BDF method
     INTEGER(SIK) :: BDForder=5
-    !> logical indicating if the solve is the first iteration
-    LOGICAL(SBK) :: first=.TRUE.
     !> temporary allocatable array
     REAL(C_DOUBLE),ALLOCATABLE :: ytmp(:)
-    INTEGER(C_LONG) :: iout(25)
-    INTEGER(C_LONG) :: ipar(1)
-    REAL(C_DOUBLE) :: rout(10)
-    REAL(C_DOUBLE) :: rpar(1)
   !
   !List of Type Bound Procedures
     CONTAINS
@@ -249,8 +250,13 @@ MODULE ODESolverTypes
           CALL eODESolverType%raiseError('Incorrect input to '// &
             modName//'::'//myName//' - Number of values (n) must be '// &
               'greater than 0!')
+        ELSEIF(SUNDIALS_N > 0 .AND. SUNDIALS_N /= n) THEN
+          CALL eODESolverType%raiseError('Unable to initialize '// &
+            modName//'::'//myName//' - Another ODE SUNDIALS ODE Solver has'// &
+              'already been created with a different n.')
         ELSE
           solver%n=n
+          SUNDIALS_N=n
         ENDIF
 
         IF(solvetype == THETA_METHOD) THEN
@@ -285,7 +291,8 @@ MODULE ODESolverTypes
 
         ALLOCATE(solver%ytmp(solver%n))
 #ifdef FUTILITY_HAVE_SUNDIALS
-        CALL FNVINITS(1, INT(solver%n,C_LONG), ierr)
+        IF(.NOT. SUNDIALS_isInit) CALL FNVINITS(1, INT(solver%n,C_LONG), ierr)
+        SUNDIALS_isInit=.TRUE.
 
         solver%f=>f
         SUNDIALS_ODE_INTERFACE=>f
@@ -320,13 +327,16 @@ MODULE ODESolverTypes
       solver%tol=1.0e-8_SRK
       solver%BDForder=5
       IF(ALLOCATED(solver%ytmp)) DEALLOCATE(solver%ytmp)
-      CALL SUNDIALS_y%clear()
-      CALL SUNDIALS_ydot%clear()
+      IF(SUNDIALS_y%isInit) CALL SUNDIALS_y%clear()
+      IF(SUNDIALS_ydot%isInit)CALL SUNDIALS_ydot%clear()
 #ifdef FUTILITY_HAVE_SUNDIALS
       !If sundials FNVINITS isn't called, FCVFEE segfaults
-      IF(.NOT. solver%first) CALL FCVFREE()
+      IF(.NOT. SUNDIALS_isInit) CALL FCVFREE()
 #endif
+      SUNDIALS_first=.TRUE.
+      SUNDIALS_isInit=.FALSE.
       SUNDIALS_ODE_INTERFACE=>NULL()
+      SUNDIALS_N=0
 
       solver%isInit=.FALSE.
     ENDSUBROUTINE clear_ODESolverType_Sundials
@@ -355,18 +365,19 @@ MODULE ODESolverTypes
       CALL y0%get(solver%ytmp)
 #ifdef FUTILITY_HAVE_SUNDIALS
       ! IOUT, ROUT are likely unused, IPAR(1) should be n, RPAR is unused
-      IF(solver%first) THEN
-        solver%ipar(1)=solver%n
-        solver%rpar(1)=0.0_SRK
+      IF(SUNDIALS_first) THEN
+        SUNDIALS_ipar(1)=solver%n
+        SUNDIALS_rpar(1)=0.0_SRK
 
-        CALL FCVMALLOC(t0,solver%ytmp, 2, 2, 1, solver%tol, 1.0E-12_C_DOUBLE,solver%IOUT, solver%ROUT, &
-                      solver%IPAR, solver%RPAR, ierr)
+        CALL FCVMALLOC(t0,solver%ytmp, 2, 2, 1, solver%tol, 1.0E-12_C_DOUBLE,SUNDIALS_IOUT, SUNDIALS_ROUT, &
+                      SUNDIALS_IPAR, SUNDIALS_RPAR, ierr)
         CALL FCVDENSE(INT(solver%n,C_LONG),ierr)
-        solver%first=.FALSE.
+        SUNDIALS_first=.FALSE.
       ELSE
         !pull data out of y0 into y
         CALL FCVREINIT(t0,solver%ytmp, 1, solver%tol, 1.0E-12_C_DOUBLE, ierr)
       ENDIF
+      SUNDIALS_ODE_INTERFACE=>solver%f
       !put data in U into yf
       CALL FCVODE(REAL(TF,C_DOUBLE),REAL(ttmp,C_DOUBLE),solver%ytmp,INT(1,C_INT), ierr)
       CALL yf%set(solver%ytmp)
