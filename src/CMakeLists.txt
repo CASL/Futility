@@ -80,6 +80,10 @@ TRIBITS_ADD_LIBRARY(Utils
       MatrixTypes_PETSc.f90
       MatrixTypes_Trilinos.f90
       MatrixTypes.f90
+      VectorTypes_Base.f90
+      VectorTypes_Native.f90
+      VectorTypes_PETSc.f90
+      VectorTypes_Trilinos.f90
       VectorTypes.f90
       PreconditionerTypes.f90
       LinearSolverTypes.f90
