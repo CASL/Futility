@@ -293,6 +293,7 @@ MODULE MatrixTypes
 #ifdef FUTILITY_HAVE_Trilinos
       SELECTTYPE(mat => thisMatrix); TYPE IS(TrilinosMatrixType)
         CALL matvec_TrilinosVector(mat,trans,alpha,x,beta,y,uplo,diag,incx_in)
+        RETURN
       ENDSELECT
 #endif
 
