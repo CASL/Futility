@@ -77,11 +77,14 @@ MODULE MatrixTypes
 !
 ! List of public members
   PUBLIC :: MatrixType
+  PUBLIC :: MatrixFactory
   PUBLIC :: SquareMatrixType
   PUBLIC :: RectMatrixType
   PUBLIC :: DistributedMatrixType
   ! Matrix structure enumerations
   PUBLIC :: SPARSE,DENSESQUARE,DENSERECT,TRIDIAG
+  ! Matrix-Vector engine enumerations
+  PUBLIC :: VM_PETSC,VM_TRILINOS,VM_NATIVE
   ! Parameter list setup/teardown
   PUBLIC :: MatrixTypes_Declare_ValidParams
   PUBLIC :: MatrixTypes_Clear_ValidParams
@@ -138,10 +141,80 @@ MODULE MatrixTypes
 !
 !===============================================================================
   CONTAINS
+!
+!-------------------------------------------------------------------------------
+!> @brief Abstract factory for all enabled MatrixTypes
+!>
     SUBROUTINE MatrixFactory(matrix, params)
+      CHARACTER(LEN=*),PARAMETER :: myName="MatrixFactory"
       CLASS(MatrixType),POINTER,INTENT(INOUT) :: matrix
-      CLASS(ParamType),INTENT(IN) :: Params
-      
+      CLASS(ParamType),INTENT(IN) :: params
+      !
+      INTEGER(SIK) :: engine,matType
+
+      IF(ASSOCIATED(matrix)) THEN
+        CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
+          "Matrix pointer already allocated")
+        RETURN
+      ENDIF
+
+      ! Default to dative, dense matrix
+      engine=VM_NATIVE
+      matType=DENSESQUARE
+
+      IF(params%has("MatrixType->engine")) THEN
+        CALL params%get("MatrixType->engine", engine)
+      ENDIF
+
+      IF(params%has("MatrixType->matType")) THEN
+        CALL params%get("MatrixType->matType", matType)
+      ENDIF
+
+      SELECTCASE(engine)
+        CASE(VM_NATIVE)
+          SELECTCASE(matType)
+            CASE(DENSESQUARE)
+              ALLOCATE(DenseSquareMatrixType :: matrix)
+            CASE(DENSERECT)
+              ALLOCATE(DenseRectMatrixType :: matrix)
+            CASE(SPARSE)
+              ALLOCATE(SparseMatrixType :: matrix)
+            CASE(TRIDIAG)
+              ALLOCATE(TriDiagMatrixType :: matrix)
+            CASE DEFAULT
+              CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
+                "Unrecognized matrix structure requested")
+          ENDSELECT
+        CASE(VM_TRILINOS)
+#ifdef FUTILITY_HAVE_Trilinos
+          IF(matType == SPARSE) THEN
+            ALLOCATE(TrilinosMatrixType :: matrix)
+          ELSE
+            CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
+              "Trilinos matrix should be sparse")
+          ENDIF
+#else
+          CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
+            "Futility was not compiled with Trilinos support. Recompile "// &
+            "with Trilinos to create PETSc matrices.")
+#endif
+        CASE(VM_PETSC)
+#ifdef FUTILITY_HAVE_PETSC
+          IF(matType == SPARSE) THEN
+            ALLOCATE(PETScMatrixType :: matrix)
+          ELSE
+            CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
+              "PETSc matrix should be sparse")
+          ENDIF
+#else
+          CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
+            "Futility was not compiled with PETSc support. Recompile with "// &
+            "PETSc to create PETSc matrices.")
+#endif
+        CASE DEFAULT
+          CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
+            "Unsupported matrix engine requested.")
+      ENDSELECT
     ENDSUBROUTINE MatrixFactory
 !
 !-------------------------------------------------------------------------------

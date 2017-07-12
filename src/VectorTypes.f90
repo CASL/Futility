@@ -70,6 +70,8 @@ MODULE VectorTypes
   PUBLIC :: DistributedVectorType
   PUBLIC :: RealVectorType
   PUBLIC :: PETScVectorType
+  !> Enumerated matrix-vector engines
+  INTEGER(SIK),PARAMETER,PUBLIC :: VM_PETSC=0,VM_TRILINOS=1,VM_NATIVE=2
   PUBLIC :: TrilinosVectorType
   PUBLIC :: VectorType_Declare_ValidParams
   PUBLIC :: VectorType_Clear_ValidParams

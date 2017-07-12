@@ -29,6 +29,8 @@ MODULE MatrixTypes_Base
   PUBLIC :: DistributedMatrixType
   
   PUBLIC :: MatrixType_Paramsflag
+  !> set enumeration scheme for matrix types
+  INTEGER(SIK),PARAMETER,PUBLIC :: SPARSE=0,TRIDIAG=1,DENSESQUARE=2,DENSERECT=3
   PUBLIC :: SparseMatrixType_reqParams,SparseMatrixType_optParams
   PUBLIC :: TriDiagMatrixType_reqParams,TriDiagMatrixType_optParams
   PUBLIC :: DenseRectMatrixType_reqParams,DenseRectMatrixType_optParams
@@ -164,9 +166,6 @@ MODULE MatrixTypes_Base
 
   !> initialization for a Distributed Matrix Type.
   TYPE(ParamType),PROTECTED,SAVE :: DistributedMatrixType_reqParams, DistributedMatrixType_optParams
-
-  !> set enumeration scheme for matrix types
-  INTEGER(SIK),PUBLIC :: SPARSE=0,TRIDIAG=1,DENSESQUARE=2,DENSERECT=3
 
   !> Logical flag to check whether the required and optional parameter lists
   !> have been created yet for the Matrix Types.
