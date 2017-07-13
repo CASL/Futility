@@ -99,7 +99,6 @@ MODULE ODESolverTypes
   TYPE(RealVectorType),SAVE :: SUNDIALS_y
   TYPE(RealVectorType),SAVE :: SUNDIALS_ydot
   LOGICAL(SLK),SAVE :: SUNDIALS_isInit=.FALSE.
-  LOGICAL(SLK),SAVE :: SUNDIALS_first=.TRUE.
   INTEGER(SIK),SAVE :: SUNDIALS_N=0
   INTEGER(C_LONG),SAVE :: SUNDIALS_iout(25)
   INTEGER(C_LONG),SAVE :: SUNDIALS_ipar(1)
@@ -291,9 +290,17 @@ MODULE ODESolverTypes
 
         ALLOCATE(solver%ytmp(solver%n))
 #ifdef FUTILITY_HAVE_SUNDIALS
-        IF(.NOT. SUNDIALS_isInit) CALL FNVINITS(1, INT(solver%n,C_LONG), ierr)
-        SUNDIALS_isInit=.TRUE.
-
+        IF(.NOT. SUNDIALS_isInit) THEN
+          CALL FNVINITS(1, INT(solver%n,C_LONG), ierr)
+          ! IOUT, ROUT are likely unused, IPAR(1) should be n, RPAR is unused
+          SUNDIALS_ipar(1)=solver%n
+          SUNDIALS_rpar(1)=0.0_SRK
+          !Calling malloc and assuming t=0 for in init.  This way we can call init then clear without a segfault
+          CALL FCVMALLOC(0.0_SRK,solver%ytmp, 2, 2, 1, solver%tol, 1.0E-12_C_DOUBLE,SUNDIALS_IOUT, SUNDIALS_ROUT, &
+                      SUNDIALS_IPAR, SUNDIALS_RPAR, ierr)
+          CALL FCVDENSE(INT(solver%n,C_LONG),ierr)
+          SUNDIALS_isInit=.TRUE.
+        ENDIF
         solver%f=>f
         SUNDIALS_ODE_INTERFACE=>f
         CALL plist%clear()
@@ -330,10 +337,9 @@ MODULE ODESolverTypes
       IF(SUNDIALS_y%isInit) CALL SUNDIALS_y%clear()
       IF(SUNDIALS_ydot%isInit)CALL SUNDIALS_ydot%clear()
 #ifdef FUTILITY_HAVE_SUNDIALS
-      !If sundials FNVINITS isn't called, FCVFEE segfaults
+      !If sundials FNVINITS and FCVMALLOC isn't called, FCVFEE segfaults
       IF(SUNDIALS_isInit) CALL FCVFREE()
 #endif
-      SUNDIALS_first=.TRUE.
       SUNDIALS_isInit=.FALSE.
       SUNDIALS_ODE_INTERFACE=>NULL()
       SUNDIALS_N=0
@@ -364,19 +370,10 @@ MODULE ODESolverTypes
 
       CALL y0%get(solver%ytmp)
 #ifdef FUTILITY_HAVE_SUNDIALS
-      ! IOUT, ROUT are likely unused, IPAR(1) should be n, RPAR is unused
-      IF(SUNDIALS_first) THEN
-        SUNDIALS_ipar(1)=solver%n
-        SUNDIALS_rpar(1)=0.0_SRK
 
-        CALL FCVMALLOC(t0,solver%ytmp, 2, 2, 1, solver%tol, 1.0E-12_C_DOUBLE,SUNDIALS_IOUT, SUNDIALS_ROUT, &
-                      SUNDIALS_IPAR, SUNDIALS_RPAR, ierr)
-        CALL FCVDENSE(INT(solver%n,C_LONG),ierr)
-        SUNDIALS_first=.FALSE.
-      ELSE
-        !pull data out of y0 into y
-        CALL FCVREINIT(t0,solver%ytmp, 1, solver%tol, 1.0E-12_C_DOUBLE, ierr)
-      ENDIF
+      !pull data out of y0 into y
+      CALL FCVREINIT(t0,solver%ytmp, 1, solver%tol, 1.0E-12_C_DOUBLE, ierr)
+
       SUNDIALS_ODE_INTERFACE=>solver%f
       !put data in U into yf
       CALL FCVODE(REAL(TF,C_DOUBLE),REAL(ttmp,C_DOUBLE),solver%ytmp,INT(1,C_INT), ierr)
