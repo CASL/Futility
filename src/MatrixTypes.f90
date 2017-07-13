@@ -313,13 +313,9 @@ MODULE MatrixTypes
               CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
                 thisMatrix%ja,thisMatrix%a,x,y)
             ENDIF
-          TYPE IS(PETScMatrixType)
-            CALL eMatrixType%raiseFatalError('Incorrect call to '// &
-               modName//'::'//myName//' - PETSc not enabled.  You will'// &
-               'need to recompile with PETSc enabled to use this feature.')
-        CLASS DEFAULT
-          CALL eMatrixType%raiseError('Incorrect call to '// &
-               modName//'::'//myName//' - This interface is not available.')
+          CLASS DEFAULT
+            CALL eMatrixType%raiseError('Incorrect call to '// &
+                 modName//'::'//myName//' - This interface is not available.')
         ENDSELECT
       ENDIF
     ENDSUBROUTINE matvec_MatrixType
@@ -805,9 +801,6 @@ MODULE MatrixTypes
             ENDSELECT
           TYPE IS(SparseMatrixType)
             ! NOT SUPPORTED
-          TYPE IS(TrilinosMatrixType)
-            CALL eMatrixType%raiseError('Incorrect call to '// &
-                 modName//'::'//myName//' - This interface is not available.')
         ENDSELECT
       ENDIF
     ENDSUBROUTINE matmult_MatrixType

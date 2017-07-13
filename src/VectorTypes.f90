@@ -69,10 +69,14 @@ MODULE VectorTypes
   PUBLIC :: VectorType
   PUBLIC :: DistributedVectorType
   PUBLIC :: RealVectorType
+#ifdef FUTILITY_HAVE_PETSC
   PUBLIC :: PETScVectorType
+#endif
+!#ifdef FUTILITY_HAVE_Trilinos
+  PUBLIC :: TrilinosVectorType
+!#endif
   !> Enumerated matrix-vector engines
   INTEGER(SIK),PARAMETER,PUBLIC :: VM_PETSC=0,VM_TRILINOS=1,VM_NATIVE=2
-  PUBLIC :: TrilinosVectorType
   PUBLIC :: VectorType_Declare_ValidParams
   PUBLIC :: VectorType_Clear_ValidParams
   PUBLIC :: BLAS_asum
@@ -201,22 +205,14 @@ MODULE VectorTypes
         ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
           r=BLAS1_asum(thisVector%b)
         ENDIF
-      TYPE IS(PETScVectorType)
 #ifdef FUTILITY_HAVE_PETSC
+      TYPE IS(PETScVectorType)
         IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
         IF(iperr == 0) CALL VecNorm(thisVector%b,NORM_1,r,iperr)
-#else
-        CALL eVectorType%raiseFatalError('Incorrect call to '// &
-           modName//'::'//myName//' - PETSc not enabled.  You will'// &
-           'need to recompile with PETSc enabled to use this feature.')
 #endif
-      TYPE IS(TrilinosVectorType)
 #ifdef FUTILITY_HAVE_Trilinos
+      TYPE IS(TrilinosVectorType)
         CALL ForPETRA_VecSUM(thisVector%b,r)
-#else
-        CALL eVectorType%raiseFatalError('Incorrect call to '// &
-           modName//'::'//myName//' - Trilinos not enabled.  You will'// &
-           'need to recompile with Trilinos enabled to use this feature.')
 #endif
       CLASS DEFAULT
         CALL eVectorType%raiseFatalError('Incorrect call to '// &
@@ -261,28 +257,20 @@ MODULE VectorTypes
             CALL BLAS1_axpy(alpha,thisVector%b,newVector%b)
           ENDIF
         ENDSELECT
+#ifdef FUTILITY_HAVE_PETSC
       TYPE IS(PETScVectorType)
         SELECTTYPE(newVector); TYPE IS(PETScVectorType)
-#ifdef FUTILITY_HAVE_PETSC
           IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
           IF(iperr == 0) CALL VecAXPY(newVector%b,alpha,thisVector%b,iperr)
-#else
-          CALL eVectorType%raiseFatalError('Incorrect call to '// &
-             modName//'::'//myName//' - PETSc not enabled.  You will'// &
-             'need to recompile with PETSc enabled to use this feature.')
-#endif
         ENDSELECT
+#endif
+#ifdef FUTILITY_HAVE_Trilinos
       TYPE IS(TrilinosVectorType)
         SELECTTYPE(newVector); TYPE IS(TrilinosVectorType)
-#ifdef FUTILITY_HAVE_Trilinos
           IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble()
           CALL ForPETRA_VecAXPY(newVector%b,thisVector%b,alpha,1.0_SRK)
-#else
-          CALL eVectorType%raiseFatalError('Incorrect call to '// &
-             modName//'::'//myName//' - Trilinos not enabled.  You will'// &
-             'need to recompile with Trilinos enabled to use this feature.')
-#endif
         ENDSELECT
+#endif
       CLASS DEFAULT
         CALL eVectorType%raiseFatalError('Incorrect call to '// &
            modName//'::'//myName//' - This interface is not available.')
@@ -299,6 +287,10 @@ MODULE VectorTypes
 !> @param incx the increment to use when looping over elements in @c x
 !> @param incy the increment to use when looping over elements in @c y
 !>
+!> MAINTENANCE NOTE: This is inefficient. It makes a copy of the vectors, which
+!> is a pretty big waste. The one upside to this is the algorithm can be
+!> implemented using a type-agnostic approach. But we still select type
+!> everything for some reason. Worst of both worlds
     SUBROUTINE axpy_vector_VectorType(thisVector,newVector,aVector,n,incx,incy)
       CHARACTER(LEN=*),PARAMETER :: myName='axpy_vector_VectorType'
       CLASS(VectorType),INTENT(INOUT)  :: thisVector
@@ -320,23 +312,19 @@ MODULE VectorTypes
             CALL aVector%get(tmpa)
           ENDSELECT
         ENDSELECT
+#ifdef FUTILITY_HAVE_PETSC
       TYPE IS(PETScVectorType)
         SELECTTYPE(newVector); TYPE IS(PETScVectorType)
           SELECTTYPE(aVector); TYPE IS(PETScVectorType)
-#ifdef FUTILITY_HAVE_PETSC
             ALLOCATE(tmpthis(thisVector%n))
             ALLOCATE(tmpnew(newVector%n))
             ALLOCATE(tmpa(aVector%n))
             CALL thisVector%get(tmpthis)
             CALL newVector%get(tmpnew)
             CALL aVector%get(tmpa)
-#else
-            CALL eVectorType%raiseFatalError('Incorrect call to '// &
-               modName//'::'//myName//' - PETSc not enabled.  You will'// &
-               'need to recompile with PETSc enabled to use this feature.')
-#endif
           ENDSELECT
         ENDSELECT
+#endif
       CLASS DEFAULT
         CALL eVectorType%raiseFatalError('Incorrect call to '// &
            modName//'::'//myName//' - This interface is not available.')
@@ -354,11 +342,7 @@ MODULE VectorTypes
         CALL BLAS1_axpy(tmpa,tmpthis,tmpnew)
       ENDIF
 
-      SELECTTYPE(newVector); TYPE IS(RealVectorType)
-        CALL newVector%set(tmpnew)
-      TYPE IS(PETScVectorType)
-        CALL newVector%set(tmpnew)
-      ENDSELECT
+      CALL newVector%set(tmpnew)
 
       DEALLOCATE(tmpthis)
       DEALLOCATE(tmpnew)
@@ -402,28 +386,20 @@ MODULE VectorTypes
             CALL BLAS1_copy(thisVector%b,newVector%b)
           ENDIF
         ENDSELECT
+#ifdef FUTILITY_HAVE_PETSC
       TYPE IS(PETScVectorType)
         SELECTTYPE(newVector); TYPE IS(PETScVectorType)
-#ifdef FUTILITY_HAVE_PETSC
           IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
           IF(iperr == 0) CALL VecCopy(thisVector%b,newVector%b,iperr)
-#else
-          CALL eVectorType%raiseFatalError('Incorrect call to '// &
-             modName//'::'//myName//' - PETSc not enabled.  You will'// &
-             'need to recompile with PETSc enabled to use this feature.')
-#endif
         ENDSELECT
+#endif
+#ifdef FUTILITY_HAVE_Trilinos
       TYPE IS(TrilinosVectorType)
         SELECTTYPE(newVector); TYPE IS(TrilinosVectorType)
-#ifdef FUTILITY_HAVE_Trilinos
           IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble()
           CALL ForPETRA_VecCopy(newVector%b,thisVector%b)
-#else
-          CALL eVectorType%raiseFatalError('Incorrect call to '// &
-             modName//'::'//myName//' - Trilinos not enabled.  You will'// &
-             'need to recompile with Trilinos enabled to use this feature.')
-#endif
         ENDSELECT
+#endif
       CLASS DEFAULT
         CALL eVectorType%raiseFatalError('Incorrect call to '// &
            modName//'::'//myName//' - This interface is not available.')
@@ -469,17 +445,13 @@ MODULE VectorTypes
             r=BLAS1_dot(thisVector%b,thatVector%b)
           ENDIF
         ENDSELECT
+#ifdef FUTILITY_HAVE_PETSC
       TYPE IS(PETScVectorType)
         SELECTTYPE(thatVector); TYPE IS(PETScVectorType)
-#ifdef FUTILITY_HAVE_PETSC
           IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
           IF(iperr == 0) CALL VecTDot(thisVector%b,thatVector%b,r,iperr)
-#else
-          CALL eVectorType%raiseFatalError('Incorrect call to '// &
-             modName//'::'//myName//' - PETSc not enabled.  You will'// &
-             'need to recompile with PETSc enabled to use this feature.')
-#endif
         ENDSELECT
+#endif
       CLASS DEFAULT
         CALL eVectorType%raiseFatalError('Incorrect call to '// &
            modName//'::'//myName//' - This interface is not available.')
@@ -505,14 +477,10 @@ MODULE VectorTypes
       SELECTTYPE(thisVector); TYPE IS(RealVectorType)
         ALLOCATE(tmpthis(thisVector%n))
         CALL thisVector%get(tmpthis)
-      TYPE IS(PETScVectorType)
 #ifdef FUTILITY_HAVE_PETSC
+      TYPE IS(PETScVectorType)
         ALLOCATE(tmpthis(thisVector%n))
         CALL thisVector%get(tmpthis)
-#else
-        CALL eVectorType%raiseFatalError('Incorrect call to '// &
-           modName//'::'//myName//' - PETSc not enabled.  You will'// &
-           'need to recompile with PETSc enabled to use this feature.')
 #endif
       CLASS DEFAULT
         CALL eVectorType%raiseFatalError('Incorrect call to '// &
@@ -551,14 +519,10 @@ MODULE VectorTypes
       SELECTTYPE(thisVector); TYPE IS(RealVectorType)
         ALLOCATE(tmpthis(thisVector%n))
         CALL thisVector%get(tmpthis)
-      TYPE IS(PETScVectorType)
 #ifdef FUTILITY_HAVE_PETSC
+      TYPE IS(PETScVectorType)
         ALLOCATE(tmpthis(thisVector%n))
         CALL thisVector%get(tmpthis)
-#else
-        CALL eVectorType%raiseFatalError('Incorrect call to '// &
-           modName//'::'//myName//' - PETSc not enabled.  You will'// &
-           'need to recompile with PETSc enabled to use this feature.')
 #endif
       CLASS DEFAULT
         CALL eVectorType%raiseFatalError('Incorrect call to '// &
@@ -602,23 +566,15 @@ MODULE VectorTypes
         ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
           norm2=BLAS1_nrm2(thisVector%b)
         ENDIF
-      TYPE IS(PETScVectorType)
 #ifdef FUTILITY_HAVE_PETSC
+      TYPE IS(PETScVectorType)
         IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
         IF(iperr == 0) CALL VecNorm(thisVector%b,NORM_2,norm2,iperr)
-#else
-        CALL eVectorType%raiseFatalError('Incorrect call to '// &
-           modName//'::'//myName//' - PETSc not enabled.  You will'// &
-           'need to recompile with PETSc enabled to use this feature.')
 #endif
-      TYPE IS(TrilinosVectorType)
 #ifdef FUTILITY_HAVE_Trilinos
+      TYPE IS(TrilinosVectorType)
         IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble()
         CALL ForPETRA_VecNorm2(thisVector%b,norm2)
-#else
-        CALL eVectorType%raiseFatalError('Incorrect call to '// &
-           modName//'::'//myName//' - Trilinos not enabled.  You will'// &
-           'need to recompile with Trilinos enabled to use this feature.')
 #endif
       CLASS DEFAULT
         CALL eVectorType%raiseFatalError('Incorrect call to '// &
@@ -651,22 +607,14 @@ MODULE VectorTypes
         ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
           CALL BLAS1_scal(a,thisVector%b)
         ENDIF
-      TYPE IS(PETScVectorType)
 #ifdef FUTILITY_HAVE_PETSC
+      TYPE IS(PETScVectorType)
         IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
         IF(iperr == 0) CALL VecScale(thisVector%b,a,iperr)
-#else
-        CALL eVectorType%raiseFatalError('Incorrect call to '// &
-           modName//'::'//myName//' - PETSc not enabled.  You will'// &
-           'need to recompile with PETSc enabled to use this feature.')
 #endif
-      TYPE IS(TrilinosVectorType)
 #ifdef FUTILITY_HAVE_Trilinos
+      TYPE IS(TrilinosVectorType)
         CALL ForPETRA_VecScale(thisVector%b,a)
-#else
-        CALL eVectorType%raiseFatalError('Incorrect call to '// &
-           modName//'::'//myName//' - Trilinos not enabled.  You will'// &
-           'need to recompile with Trilinos enabled to use this feature.')
 #endif
       CLASS DEFAULT
         CALL eVectorType%raiseFatalError('Incorrect call to '// &
@@ -697,19 +645,15 @@ MODULE VectorTypes
           CALL thisVector%get(tmpthis)
           CALL aVector%get(tmpa)
         ENDSELECT
+#ifdef FUTILITY_HAVE_PETSC
       TYPE IS(PETScVectorType)
         SELECTTYPE(aVector); TYPE IS(PETScVectorType)
-#ifdef FUTILITY_HAVE_PETSC
           ALLOCATE(tmpthis(thisVector%n))
           ALLOCATE(tmpa(aVector%n))
           CALL thisVector%get(tmpthis)
           CALL aVector%get(tmpa)
-#else
-          CALL eVectorType%raiseFatalError('Incorrect call to '// &
-             modName//'::'//myName//' - PETSc not enabled.  You will'// &
-             'need to recompile with PETSc enabled to use this feature.')
-#endif
         ENDSELECT
+#endif
       CLASS DEFAULT
         CALL eVectorType%raiseFatalError('Incorrect call to '// &
            modName//'::'//myName//' - This interface is not available.')
@@ -725,11 +669,7 @@ MODULE VectorTypes
         CALL BLAS1_scal(tmpa,tmpthis)
       ENDIF
 
-      SELECTTYPE(thisVector); TYPE IS(RealVectorType)
-        CALL thisVector%set(tmpthis)
-      TYPE IS(PETScVectorType)
-        CALL thisVector%set(tmpthis)
-      ENDSELECT
+      CALL thisVector%set(tmpthis)
 
       DEALLOCATE(tmpthis)
       DEALLOCATE(tmpa)
@@ -771,18 +711,14 @@ MODULE VectorTypes
             CALL BLAS1_swap(thisVector%b,thatVector%b)
           ENDIF
         ENDSELECT
+#ifdef FUTILITY_HAVE_PETSC
       TYPE IS(PETScVectorType)
         SELECTTYPE(thatVector); TYPE IS(PETScVectorType)
-#ifdef FUTILITY_HAVE_PETSC
           IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
           IF(.NOT.thatVector%isAssembled) CALL thatVector%assemble(iperr)
           IF(iperr == 0) CALL VecSwap(thisVector%b,thatVector%b,iperr)
-#else
-          CALL eVectorType%raiseFatalError('Incorrect call to '// &
-             modName//'::'//myName//' - PETSc not enabled.  You will'// &
-             'need to recompile with PETSc enabled to use this feature.')
-#endif
         ENDSELECT
+#endif
       CLASS DEFAULT
         CALL eVectorType%raiseFatalError('Incorrect call to '// &
            modName//'::'//myName//' - This interface is not available.')

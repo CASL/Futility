@@ -208,26 +208,28 @@ MODULE PreconditionerTypes
                   ' = In LU Preconditioner initialization, LU was not properly initialized!')
               ENDIF
           ENDSELECT
-        CLASS IS(PETScMatrixType)
-          !allocate L and U
-          ALLOCATE(PETScMatrixType :: thisPC%L)
-          ALLOCATE(PETScMatrixType :: thisPC%U)
-
-          !initialize L and U
-          SELECTTYPE(U => thisPC%U); TYPE IS(PETScMatrixType)
-            SELECTTYPE(L => thisPC%L); TYPE IS(PETScMatrixType)
-              ! Initialize L and U (add preallocation eventually)
-              CALL PL%add('MatrixType->matType',SPARSE)
-              CALL PL%add('MatrixType->n',mat%n)
-              CALL PL%add('MatrixType->isSym',mat%isSymmetric)
-              CALL PL%add('MatrixType->MPI_Comm_ID',mat%comm)
-              CALL U%init(PL)
-              CALL L%init(PL)
-              CALL PL%clear()
-            ENDSELECT
-          ENDSELECT
-
-          thisPC%isInit=.TRUE.
+          ! This doesnt appear to work. It initializes L and U, which never get
+          ! used
+        ! CLASS IS(PETScMatrixType)
+        !   !allocate L and U
+        !   ALLOCATE(PETScMatrixType :: thisPC%L)
+        !   ALLOCATE(PETScMatrixType :: thisPC%U)
+        !
+        !   !initialize L and U
+        !   SELECTTYPE(U => thisPC%U); TYPE IS(PETScMatrixType)
+        !     SELECTTYPE(L => thisPC%L); TYPE IS(PETScMatrixType)
+        !       ! Initialize L and U (add preallocation eventually)
+        !       CALL PL%add('MatrixType->matType',SPARSE)
+        !       CALL PL%add('MatrixType->n',mat%n)
+        !       CALL PL%add('MatrixType->isSym',mat%isSymmetric)
+        !       CALL PL%add('MatrixType->MPI_Comm_ID',mat%comm)
+        !       CALL U%init(PL)
+        !       CALL L%init(PL)
+        !       CALL PL%clear()
+        !     ENDSELECT
+        !   ENDSELECT
+        !
+        !   thisPC%isInit=.TRUE.
         CLASS DEFAULT
           CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
             ' - LU Preconditioners are not supported for input matrix type!')
