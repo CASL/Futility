@@ -78,6 +78,7 @@ MODULE MatrixTypes
 ! List of public members
   PUBLIC :: MatrixType
   PUBLIC :: MatrixFactory
+  PUBLIC :: DistributedMatrixFactory
   PUBLIC :: SquareMatrixType
   PUBLIC :: RectMatrixType
   PUBLIC :: DistributedMatrixType
@@ -151,6 +152,7 @@ MODULE MatrixTypes
       CLASS(ParamType),INTENT(IN) :: params
       !
       INTEGER(SIK) :: engine,matType
+      CLASS(DistributedMatrixType),POINTER :: dist_p => NULL()
 
       IF(ASSOCIATED(matrix)) THEN
         CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
@@ -186,6 +188,44 @@ MODULE MatrixTypes
                 "Unrecognized matrix structure requested")
           ENDSELECT
         CASE(VM_TRILINOS)
+          CALL DistributedMatrixFactory(dist_p, params)
+          matrix => dist_p
+        CASE(VM_PETSC)
+          CALL DistributedMatrixFactory(dist_p, params)
+          matrix => dist_p
+        CASE DEFAULT
+          CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
+            "Unsupported matrix engine requested.")
+      ENDSELECT
+
+      CALL matrix%init(params)
+    ENDSUBROUTINE MatrixFactory
+
+    SUBROUTINE DistributedMatrixFactory(matrix, params)
+      CHARACTER(LEN=*),PARAMETER :: myName="MatrixFactory"
+      CLASS(DistributedMatrixType),POINTER,INTENT(INOUT) :: matrix
+      CLASS(ParamType),INTENT(IN) :: params
+      !
+      INTEGER(SIK) :: engine,matType
+
+      IF(ASSOCIATED(matrix)) THEN
+        CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
+          "Matrix pointer already allocated")
+        RETURN
+      ENDIF
+      
+      matType=DENSESQUARE
+
+      IF(params%has("MatrixType->engine")) THEN
+        CALL params%get("MatrixType->engine", engine)
+      ENDIF
+
+      IF(params%has("MatrixType->matType")) THEN
+        CALL params%get("MatrixType->matType", matType)
+      ENDIF
+
+      SELECTCASE(engine)
+        CASE(VM_TRILINOS)
 #ifdef FUTILITY_HAVE_Trilinos
           IF(matType == SPARSE) THEN
             ALLOCATE(TrilinosMatrixType :: matrix)
@@ -213,9 +253,11 @@ MODULE MatrixTypes
 #endif
         CASE DEFAULT
           CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
-            "Unsupported matrix engine requested.")
+            "Unsupported distributed matrix engine requested.")
       ENDSELECT
-    ENDSUBROUTINE MatrixFactory
+
+      CALL matrix%init(params)
+    ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine provides an interface to matrix vector multiplication for
