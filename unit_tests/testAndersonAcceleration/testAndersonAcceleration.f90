@@ -588,7 +588,9 @@ CONTAINS
       ASSERT(testAndAcc%n==-1,'%n')
       ASSERT(testAndAcc%depth==-1,'%depth')
       ASSERT(testAndAcc%beta==0.0_SRK,'%beta')
-      ASSERT(.NOT. (testAndAcc%X%isInit) ,'%x')
+      IF(ASSOCIATED(testAndAcc%X)) THEN
+        ASSERT(.NOT. (testAndAcc%X%isInit) ,'%x')
+      ENDIF
     ENDSUBROUTINE testClear
 !
 !-------------------------------------------------------------------------------

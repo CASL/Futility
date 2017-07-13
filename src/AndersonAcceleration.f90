@@ -177,12 +177,13 @@ MODULE AndersonAccelerationTypes
           solver%beta=beta
         ENDIF
 
-        ALLOCATE(TrilinosVectorType :: solver%X)
+#ifdef FUTILITY_HAVE_Trilinos
         CALL tmpPL%clear()
         CALL tmpPL%add('VectorType->n',n)
         CALL tmpPL%add('VectorType->MPI_Comm_ID',solver%MPIparallelEnv%comm)
         CALL tmpPL%add('VectorType->nlocal',nlocal)
-#ifdef FUTILITY_HAVE_Trilinos
+        CALL tmpPL%add('VectorType->engine',VM_TRILINOS)
+        CALL VectorFactory(solver%X,tmpPL)
         CALL solver%X%init(tmpPL)
         CALL solver%X%set(0.0_SRK)
 
