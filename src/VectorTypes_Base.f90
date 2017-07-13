@@ -20,6 +20,8 @@
 !>  - @ref ExceptionHandler "ExceptionHandler": @copybrief ExceptionHandler
 !>  - @ref Allocs "Allocs": @copybrief Allocs
 !>
+!> TIBWSFB: This documentation does not match the actual interface
+!>
 !> @par EXAMPLES
 !> @code
 !> PROGRAM ExampleVector

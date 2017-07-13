@@ -46,6 +46,7 @@ MODULE VectorTypes_Trilinos
   IMPLICIT NONE
 
   PRIVATE
+#ifdef FUTILITY_HAVE_Trilinos
 !
 ! List of public members
   PUBLIC :: TrilinosVectorType
@@ -387,5 +388,5 @@ MODULE VectorTypes_Trilinos
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
       !Trilinos vectors don't need assembly
     ENDSUBROUTINE assemble_TrilinosVectorType
-
+#endif
 ENDMODULE VectorTypes_Trilinos

@@ -66,15 +66,16 @@ MODULE VectorTypes
 !
 ! List of public members
   PUBLIC :: eVectorType
+  PUBLIC :: VectorFactory
   PUBLIC :: VectorType
   PUBLIC :: DistributedVectorType
   PUBLIC :: RealVectorType
 #ifdef FUTILITY_HAVE_PETSC
   PUBLIC :: PETScVectorType
 #endif
-!#ifdef FUTILITY_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
   PUBLIC :: TrilinosVectorType
-!#endif
+#endif
   !> Enumerated matrix-vector engines
   INTEGER(SIK),PARAMETER,PUBLIC :: VM_PETSC=0,VM_TRILINOS=1,VM_NATIVE=2
   PUBLIC :: VectorType_Declare_ValidParams
@@ -179,6 +180,49 @@ MODULE VectorTypes
 !
 !===============================================================================
   CONTAINS
+!
+!-------------------------------------------------------------------------------
+!> @brief Abstract factory for all enabled VectorTypes
+!>
+    SUBROUTINE VectorFactory(vector, params)
+      CHARACTER(LEN=*),PARAMETER :: myName="VectorFactory"
+      CLASS(VectorType),POINTER,INTENT(INOUT) :: vector
+      CLASS(ParamType),INTENT(IN) :: params
+      !
+      INTEGER(SIK) :: engine
+
+      IF(ASSOCIATED(vector)) THEN
+        CALL eVectorType%raiseError(modName//"::"//myName//" - "// &
+          "Vector pointer is already allocated")
+        RETURN
+      ENDIF
+
+      ! Default to the native engine
+      engine=VM_NATIVE
+
+      IF(params%has("VectorType->engine")) THEN
+        CALL params%get("VectorTypes->engine",engine)
+      ENDIF
+
+      SELECTCASE(engine)
+        CASE(VM_NATIVE)
+          ALLOCATE(RealVectorType :: vector)
+        CASE(VM_PETSC)
+#ifdef FUTILITY_HAVE_PETSC
+          ALLOCATE(PETScVectorType :: vector)
+#endif
+        CASE(VM_TRILINOS)
+#ifdef FUTILITY_HAVE_Trilinos
+          ALLOCATE(TrilinosVectorType :: vector)
+#endif
+        CASE DEFAULT
+          CALL eVectorType%raiseError(modName//"::"//myName//" - "// &
+            "Unrecognized vector engine requested")
+      ENDSELECT
+
+      CALL vector%init(params)
+
+    ENDSUBROUTINE VectorFactory
 !
 !-------------------------------------------------------------------------------
 !> @brief Function provides an interface to vector absolute value summation
