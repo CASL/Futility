@@ -331,7 +331,7 @@ MODULE ODESolverTypes
       IF(SUNDIALS_ydot%isInit)CALL SUNDIALS_ydot%clear()
 #ifdef FUTILITY_HAVE_SUNDIALS
       !If sundials FNVINITS isn't called, FCVFEE segfaults
-      IF(.NOT. SUNDIALS_isInit) CALL FCVFREE()
+      IF(SUNDIALS_isInit) CALL FCVFREE()
 #endif
       SUNDIALS_first=.TRUE.
       SUNDIALS_isInit=.FALSE.
