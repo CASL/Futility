@@ -167,7 +167,6 @@ CONTAINS
       CALL plist%add('MatrixType->matType',0_SIK)
       CALL plist%add('MatrixType->engine',VM_PETSC)
       CALL plist%add('MatrixType->MPI_COMM_ID',testEVS%MPIparallelEnv%comm)
-WRITE(*,*)__LINE__
 
       CALL DistributedMatrixFactory(A, plist)
       ASSERT(ASSOCIATED(A), "A matrix not ASSOCIATED")
