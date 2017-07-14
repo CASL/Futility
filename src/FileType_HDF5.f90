@@ -474,16 +474,28 @@ MODULE FileType_HDF5
         write_attribute_d0
       !> @copybrief FileType_HDF5::read_str_attribure_help
       !> @copyoc FileType_HDF5_read_str_attribure_help
+<<<<<<< d0b2bde1837c2f8987ee6898143e2b7c5b53329a
       PROCEDURE,PASS,PRIVATE :: read_attribute_st0 
       !> @copybrief FileType_HDF5::read_attribute_i0
       !> @copyoc FileType_HDF5_read_attribute_i0
       PROCEDURE,PASS,PRIVATE :: read_attribute_i0 
+=======
+      PROCEDURE,PASS,PRIVATE :: read_attribute_st0_helper 
+      !> @copybrief FileType_HDF5::read_attribure_i0
+      !> @copyoc FileType_HDF5_read_attribure_i0
+      PROCEDURE,PASS,PRIVATE :: read_attribure_i0 
+>>>>>>> Adds functionality to support writing and reading attributes to HDF5 objects.
       !> @copybrief FileType_HDF5::read_attribute_d0
       !> @copyoc FileType_HDF5_read_attribute_d0
       PROCEDURE,PASS,PRIVATE :: read_attribute_d0
       !> Generic typebound interface for all @c attribute writes
+<<<<<<< d0b2bde1837c2f8987ee6898143e2b7c5b53329a
       GENERIC :: read_attribute => read_attribute_st0, read_attribute_i0,&
         read_attribute_d0
+=======
+      GENERIC :: read_attribute => read_attribute_st0_helper,&
+        read_attribure_i0, read_attribute_d0
+>>>>>>> Adds functionality to support writing and reading attributes to HDF5 objects.
   ENDTYPE
 
   !> @brief Type that is a container so as to have an array of pointers to HDF5 files
