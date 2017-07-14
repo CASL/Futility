@@ -184,7 +184,6 @@ MODULE AndersonAccelerationTypes
         CALL tmpPL%add('VectorType->nlocal',nlocal)
         CALL tmpPL%add('VectorType->engine',VM_TRILINOS)
         CALL VectorFactory(solver%X,tmpPL)
-        CALL solver%X%init(tmpPL)
         CALL solver%X%set(0.0_SRK)
 
         SELECTTYPE(x=>solver%X); TYPE IS(TrilinosVectorType)
@@ -217,8 +216,12 @@ MODULE AndersonAccelerationTypes
       solver%n=-1
       solver%depth=-1
       solver%beta=0.0_SRK
+      IF(ASSOCIATED(solver%X)) THEN
+        CALL solver%X%clear()
+        DEALLOCATE(solver%X)
+        NULLIFY(solver%X)
+      ENDIF
 #ifdef FUTILITY_HAVE_Trilinos
-      IF(solver%X%isInit) CALL solver%X%clear()
       CALL Anderson_Destroy(solver%id)
 #endif
       solver%isInit=.FALSE.

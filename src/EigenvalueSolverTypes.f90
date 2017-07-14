@@ -70,6 +70,7 @@ MODULE EigenvalueSolverTypes
 !
 ! List of public members
   PUBLIC :: eEigenvalueSolverType
+  PUBLIC :: EigenvalueSolverFactory
   PUBLIC :: EigenvalueSolverType_Base
   PUBLIC :: EigenvalueSolverType_SLEPc
   PUBLIC :: EigenvalueSolverType_Anasazi
@@ -254,6 +255,39 @@ MODULE EigenvalueSolverTypes
   CONTAINS
 !
 !-------------------------------------------------------------------------------
+    SUBROUTINE EigenvalueSolverFactory(solver,MPIEnv,M,params)
+      CHARACTER(LEN=*),PARAMETER :: myName="EigenvalueSolverFactory"
+      CLASS(EigenvalueSolverType_Base),INTENT(INOUT),POINTER :: solver
+      TYPE(MPI_EnvType),INTENT(IN),TARGET :: MPIEnv
+      CLASS(MatrixType),INTENT(IN),TARGET :: M
+      TYPE(ParamType),INTENT(IN) :: params
+      
+      IF(ASSOCIATED(solver)) THEN
+        CALL eEigenvalueSolverType%raiseError(modName//"::"//myName//" - "// &
+          "Solver pointer is already associated")
+        RETURN
+      ENDIF
+
+      SELECTTYPE(M)
+#ifdef FUTILITY_HAVE_PETSC
+        TYPE IS(PETScMatrixType)
+          ALLOCATE(EigenvalueSolverType_SLEPc :: solver)
+#endif
+#ifdef FUTILITY_HAVE_Trilinos
+        TYPE IS(TrilinosMatrixType)
+          ALLOCATE(EigenvalueSolverType_Anasazi :: solver)
+#endif
+        CLASS DEFAULT
+          CALL eEigenvalueSolverType%raiseError(modName//"::"//myName//" - "// &
+            "Unsupported matrix type")
+      ENDSELECT
+      IF(ASSOCIATED(solver)) THEN
+        CALL solver%init(MPIEnv,params)
+      ENDIF
+
+    ENDSUBROUTINE EigenvalueSolverFactory
+!
+!-------------------------------------------------------------------------------
 !> @brief Initializes the Eigenvalue Solver Type with a parameter list
 !> @param pList the parameter list
 !>
@@ -270,16 +304,15 @@ MODULE EigenvalueSolverTypes
       CLASS(EigenvalueSolverType_SLEPc),INTENT(INOUT) :: solver
       TYPE(MPI_EnvType),INTENT(IN),TARGET :: MPIEnv
       TYPE(ParamType),INTENT(IN) :: Params
+#ifdef FUTILITY_HAVE_SLEPC
       TYPE(ParamType) :: validParams, tmpPL
       INTEGER(SIK) :: n,nlocal,solvertype,maxit
       REAL(SRK) :: tol
       LOGICAL(SBK) :: clops
       TYPE(STRINGType) :: pctype
-#ifdef FUTILITY_HAVE_SLEPC
       ST :: st
       KSP :: ksp
       PC :: pc
-#endif
       !Check to set up required and optional param lists.
       !IF(.NOT.EigenType_Paramsflag) CALL EigenType_Declare_ValidParams()
 
@@ -336,7 +369,6 @@ MODULE EigenvalueSolverTypes
         ELSE
           solver%maxit=maxit
         ENDIF
-#ifdef FUTILITY_HAVE_SLEPC
         CALL EPSCreate(solver%MPIparallelEnv%comm,solver%eps,ierr)
         CALL EPSSetProblemType(solver%eps,EPS_GNHEP,ierr)
         IF(ierr/=0) &
@@ -391,16 +423,15 @@ MODULE EigenvalueSolverTypes
 
         solver%TPLType=SLEPC
         solver%isInit=.TRUE.
-#else
-        CALL eEigenvalueSolverType%raiseError(modName//'::'//myName// &
-          ' - SLEPc is not present in build')
-#endif
       ELSE
         CALL eEigenvalueSolverType%raiseError('Incorrect call to '// &
           modName//'::'//myName//' - EigenvalueSolverType already initialized')
       ENDIF
       CALL validParams%clear()
-
+#else
+      CALL eEigenvalueSolverType%raiseError(modName//'::'//myName// &
+        ' - SLEPc is not present in build')
+#endif
     ENDSUBROUTINE init_EigenvalueSolverType_SLEPc
 
 !

@@ -56,15 +56,13 @@ PROGRAM testEigenvalueSolver
   CREATE_TEST('Test Eigenvalue Solvers')
 
   ALLOCATE(EigenvalueSolverType_SLEPC :: testEVS)
-#ifdef FUTILITY_HAVE_PETSC
+#ifdef FUTILITY_HAVE_SLEPC
   REGISTER_SUBTEST('testInitSLEPc',testInitSLEPc)
   REGISTER_SUBTEST('testSetMatSLEPc',testSetMatSLEPc)
   REGISTER_SUBTEST('testSetX0SLEPc',testSetX0SLEPc)
   REGISTER_SUBTEST('testSetConvSLEPc',testSetConvSLEPc)
-#ifdef FUTILITY_HAVE_SLEPC
   REGISTER_SUBTEST('testSolveSLEPc',testSolveSLEPc)
   REGISTER_SUBTEST('testGetResidSLEPc',testGetResidSLEPc)
-#endif
   REGISTER_SUBTEST('testClearSLEPc',testClearSLEPc)
 #endif
   IF(ASSOCIATED(A)) THEN

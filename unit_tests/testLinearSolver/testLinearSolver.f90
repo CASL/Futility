@@ -1560,7 +1560,7 @@ CONTAINS
       !test case that is expected to work, thisX has already been allocated
       SELECTTYPE(thisLS); TYPE IS (LinearSolverType_Iterative)
         CALL thisLS%setX0(thisX2)
-        bool = (ALLOCATED(thisLS%X) .AND. ASSOCIATED(thisX2) &
+        bool = (ASSOCIATED(thisLS%X) .AND. ASSOCIATED(thisX2) &
            .AND.  thisLS%hasX0)
         ASSERT(bool, 'PETScIterative%setX0(...)')
       ENDSELECT

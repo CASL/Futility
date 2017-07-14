@@ -129,9 +129,9 @@ MODULE LinearSolverTypes
     !> Pointer to the MatrixType A
     CLASS(MatrixType),POINTER :: A => NULL()
     !> Right-hand side vector, b
-    CLASS(VectorType),POINTER :: b
+    CLASS(VectorType),POINTER :: b => NULL()
     !> Pointer to solution vector, x
-    CLASS(VectorType),POINTER :: X
+    CLASS(VectorType),POINTER :: X => NULL()
     !> Timer to measure solution time
     TYPE(TimerType) :: SolveTime
     !> Status of the decomposition of A
@@ -727,10 +727,12 @@ MODULE LinearSolverTypes
       IF(ASSOCIATED(solver%X)) THEN
         CALL solver%X%clear()
         DEALLOCATE(solver%X)
+        NULLIFY(solver%X)
       ENDIF
       IF(ASSOCIATED(solver%b)) THEN
         CALL solver%b%clear()
         DEALLOCATE(solver%b)
+        NULLIFY(solver%b)
       ENDIF
       IF(ALLOCATED(solver%IPIV)) CALL demallocA(solver%IPIV)
       IF(ALLOCATED(solver%M)) THEN
@@ -761,10 +763,12 @@ MODULE LinearSolverTypes
       IF(ASSOCIATED(solver%X)) THEN
         CALL solver%X%clear()
         DEALLOCATE(solver%X)
+        NULLIFY(solver%X)
       ENDIF
       IF(ASSOCIATED(solver%b)) THEN
         CALL solver%b%clear()
         DEALLOCATE(solver%b)
+        NULLIFY(solver%b)
       ENDIF
       IF(ALLOCATED(solver%PreCondType)) THEN
         CALL solver%PreCondType%clear()

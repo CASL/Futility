@@ -67,6 +67,7 @@ MODULE VectorTypes
 ! List of public members
   PUBLIC :: eVectorType
   PUBLIC :: VectorFactory
+  PUBLIC :: VectorResemble
   PUBLIC :: VectorType
   PUBLIC :: DistributedVectorType
   PUBLIC :: RealVectorType
@@ -201,7 +202,7 @@ MODULE VectorTypes
       engine=VM_NATIVE
 
       IF(params%has("VectorType->engine")) THEN
-        CALL params%get("VectorTypes->engine",engine)
+        CALL params%get("VectorType->engine",engine)
       ENDIF
 
       SELECTCASE(engine)
@@ -223,6 +224,66 @@ MODULE VectorTypes
       CALL vector%init(params)
 
     ENDSUBROUTINE VectorFactory
+!
+!-------------------------------------------------------------------------------
+!> @brief Create a new vector of compatible size and type to the input vector
+!>
+!> For now, the source vector shall be initialized, though in the future it
+!> might be nice to support uninitialized vectors. If the source vector is
+!> initialized, the destination will be initialized, otherwise the destination
+!> pointer will be allocated to the appropriate type, but not initialized
+    SUBROUTINE VectorResemble(dest, source, params)
+      CHARACTER(LEN=*),PARAMETER :: myName="VectorResemble"
+      CLASS(VectorType),POINTER,INTENT(INOUT) :: dest
+      CLASS(VectorType),POINTER,INTENT(IN) :: source
+      CLASS(ParamType),INTENT(INOUT) :: params
+
+      IF(.NOT. ASSOCIATED(source)) THEN
+        CALL eVectorType%raiseError(modName//"::"//myName//" - "// &
+          "Source vector is not associated")
+        RETURN
+      ENDIF
+
+      IF(.NOT. source%isInit) THEN
+        CALL eVectorType%raiseError(modName//"::"//myName//" - "// &
+          "Source vector is not initialized")
+      ENDIF
+
+      IF(ASSOCIATED(dest)) THEN
+        CALL eVectorType%raiseError(modName//"::"//myName//" - "// &
+          "Destination vector is already associated")
+        RETURN
+      ENDIF
+
+      IF(.NOT. params%has("VectorType->n")) THEN
+        CALL params%add("VectorType->n",source%n)
+      ENDIF
+      SELECTTYPE(source); CLASS IS(DistributedVectorType)
+        IF(.NOT. params%has("VectorType->nlocal")) THEN
+          CALL params%add("VectorType->nlocal",source%nlocal)
+        ENDIF
+        IF(.NOT. params%has("VectorType->MPI_Comm_Id")) THEN
+          CALL params%add("VectorType->MPI_Comm_Id",source%comm) 
+        ENDIF
+      ENDSELECT
+
+      SELECTTYPE(source)
+        TYPE IS(RealVectorType)
+          ALLOCATE(RealVectorType :: dest)
+#ifdef FUTILITY_HAVE_PETSC
+        TYPE IS(PETScVectorType)
+          ALLOCATE(PETScVectorType :: dest)
+#endif
+#ifdef FUTILITY_HAVE_Trilinos
+        TYPE IS(TrilinosVectorType)
+          ALLOCATE(TrilinosVectorType :: dest)
+#endif
+      ENDSELECT
+
+      CALL dest%init(params)
+
+      CALL params%clear()
+    ENDSUBROUTINE VectorResemble
 !
 !-------------------------------------------------------------------------------
 !> @brief Function provides an interface to vector absolute value summation

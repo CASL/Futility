@@ -79,6 +79,7 @@ MODULE MatrixTypes
   PUBLIC :: MatrixType
   PUBLIC :: MatrixFactory
   PUBLIC :: DistributedMatrixFactory
+  PUBLIC :: MatrixResemble
   PUBLIC :: SquareMatrixType
   PUBLIC :: RectMatrixType
   PUBLIC :: DistributedMatrixType
@@ -152,13 +153,15 @@ MODULE MatrixTypes
       CLASS(ParamType),INTENT(IN) :: params
       !
       INTEGER(SIK) :: engine,matType
-      CLASS(DistributedMatrixType),POINTER :: dist_p => NULL()
+      CLASS(DistributedMatrixType),POINTER :: dist_p
 
       IF(ASSOCIATED(matrix)) THEN
         CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
           "Matrix pointer already allocated")
         RETURN
       ENDIF
+
+      dist_p => NULL()
 
       ! Default to dative, dense matrix
       engine=VM_NATIVE
@@ -190,9 +193,11 @@ MODULE MatrixTypes
         CASE(VM_TRILINOS)
           CALL DistributedMatrixFactory(dist_p, params)
           matrix => dist_p
+          RETURN
         CASE(VM_PETSC)
           CALL DistributedMatrixFactory(dist_p, params)
           matrix => dist_p
+          RETURN
         CASE DEFAULT
           CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
             "Unsupported matrix engine requested.")
@@ -201,8 +206,12 @@ MODULE MatrixTypes
       CALL matrix%init(params)
     ENDSUBROUTINE MatrixFactory
 
+!
+!-------------------------------------------------------------------------------
+!> @brief Abstract factory for all enabled DistributedMatrixTypes
+!>
     SUBROUTINE DistributedMatrixFactory(matrix, params)
-      CHARACTER(LEN=*),PARAMETER :: myName="MatrixFactory"
+      CHARACTER(LEN=*),PARAMETER :: myName="DistributedMatrixFactory"
       CLASS(DistributedMatrixType),POINTER,INTENT(INOUT) :: matrix
       CLASS(ParamType),INTENT(IN) :: params
       !
@@ -214,7 +223,7 @@ MODULE MatrixTypes
         RETURN
       ENDIF
       
-      matType=DENSESQUARE
+      matType=SPARSE
 
       IF(params%has("MatrixType->engine")) THEN
         CALL params%get("MatrixType->engine", engine)
@@ -240,7 +249,7 @@ MODULE MatrixTypes
 #endif
         CASE(VM_PETSC)
 #ifdef FUTILITY_HAVE_PETSC
-          IF(matType == SPARSE) THEN
+          IF(matType == SPARSE .OR. matType == DENSESQUARE) THEN
             ALLOCATE(PETScMatrixType :: matrix)
           ELSE
             CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
@@ -258,6 +267,51 @@ MODULE MatrixTypes
 
       CALL matrix%init(params)
     ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+!> @brief Abstractly reproduce a new Matrix of the same type passed in
+!>
+    SUBROUTINE MatrixResemble(dest, source, params)
+      CHARACTER(LEN=*),PARAMETER :: myName="MatrixResemble"
+      CLASS(MatrixType),POINTER,INTENT(INOUT) :: dest
+      CLASS(MatrixType),POINTER,INTENT(IN) :: source
+      CLASS(ParamType),INTENT(INOUT) :: params
+
+      IF(.NOT. ASSOCIATED(source)) THEN
+        CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
+          "Source matrix is not associated")
+        RETURN
+      ENDIF
+
+      IF(ASSOCIATED(dest)) THEN
+        CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
+          "Destination pointer is already associated")
+        RETURN
+      ENDIF
+
+      SELECTTYPE(source)
+        TYPE IS(DenseSquareMatrixType)
+          ALLOCATE(DenseSquareMatrixType :: dest)
+        TYPE IS(DenseRectMatrixType)
+          ALLOCATE(DenseRectMatrixType :: dest)
+        TYPE IS(TriDiagMatrixType)
+          ALLOCATE(TriDiagMatrixType :: dest)
+        TYPE IS(SparseMatrixType)
+          ALLOCATE(SparseMatrixType :: dest)
+#ifdef FUTILITY_HAVE_PETSC
+        TYPE IS(PETScMatrixType)
+          ALLOCATE(PETScMatrixType :: dest)
+#endif
+#ifdef FUTILITY_HAVE_Trilinos
+        TYPE IS(TrilinosMatrixType)
+          ALLOCATE(TrilinosMatrixType :: dest)
+#endif
+        CLASS DEFAULT
+          CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
+            "Unsupported source matrix type")
+      ENDSELECT
+      CALL dest%init(params)
+    ENDSUBROUTINE MatrixResemble
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine provides an interface to matrix vector multiplication for
