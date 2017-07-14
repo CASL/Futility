@@ -6748,6 +6748,7 @@ MODULE FileType_HDF5
 !> @param attr_name the desired name of the attribute
 !> @param attr_value the desired value of the attrbute
 !>  
+#ifdef FUTILITY_HAVE_HDF5
     SUBROUTINE read_attribute_st0(this,attr_id,length_max,attr_name,attr_val)
        CHARACTER(LEN=*),PARAMETER :: myName='read_attribute_st0_HDF5FileType'
        CLASS(HDF5FileType),INTENT(INOUT) :: this
@@ -6755,7 +6756,6 @@ MODULE FileType_HDF5
        TYPE(StringType),INTENT(INOUT)::attr_val
        INTEGER(SDK),INTENT(IN) :: length_max
         
-#ifdef FUTILITY_HAVE_HDF5
        INTEGER(HID_T),INTENT(IN) :: attr_id
        INTEGER(HID_T)::atype_id
        INTEGER(HSIZE_T),DIMENSION(1) :: dims
@@ -6765,8 +6765,8 @@ MODULE FileType_HDF5
        CALL h5aget_type_f(attr_id,atype_id,error)
        CALL h5aread_f(attr_id,atype_id,buf,dims,error)
        attr_val=buf
-#endif
     END SUBROUTINE read_attribute_st0
+#endif
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a integer value attribute from a known dataset
@@ -6840,12 +6840,12 @@ MODULE FileType_HDF5
 !> @param obj_name the relative path to the dataset
 !> @param dset_id the HDF5 system id for the working dataset 
 !>  
+#ifdef FUTILITY_HAVE_HDF5
     SUBROUTINE open_object(this,obj_name,dset_id)
        CHARACTER(LEN=*),PARAMETER :: myName='open_object_HDF5FileType'
        CLASS(HDF5FileType),INTENT(INOUT) :: this
        CHARACTER(LEN=*),INTENT(IN) :: obj_name
         
-#ifdef FUTILITY_HAVE_HDF5
        INTEGER(HID_T),INTENT(OUT) :: dset_id
        CHARACTER(LEN=LEN(obj_name)+1) :: path
        LOGICAL(SBK) :: dset_exists
@@ -6868,7 +6868,6 @@ MODULE FileType_HDF5
           ' - Failed to open dataset.')
          RETURN
        ENDIF
-#endif
     END SUBROUTINE open_object
 !
 !-------------------------------------------------------------------------------
@@ -6881,7 +6880,6 @@ MODULE FileType_HDF5
        CHARACTER(LEN=*),PARAMETER :: myName='post_attribute_rHDF5FileType'
        CLASS(HDF5FileType),INTENT(INOUT) :: this
         
-#ifdef FUTILITY_HAVE_HDF5
        INTEGER(HID_T),INTENT(IN) :: attr_id, dset_id
        CALL h5aclose_f(attr_id,error)
        IF (error /= 0) THEN
@@ -6895,7 +6893,6 @@ MODULE FileType_HDF5
            ' - Failed to close objectt.')
          RETURN
        ENDIF
-#endif
     END SUBROUTINE post_attribute
 !
 !-------------------------------------------------------------------------------
@@ -6911,7 +6908,6 @@ MODULE FileType_HDF5
        CLASS(HDF5FileType),INTENT(INOUT) :: this
        CHARACTER(LEN=*),INTENT(IN) :: attr_name
         
-#ifdef FUTILITY_HAVE_HDF5
        INTEGER(HID_T),INTENT(IN) :: dset_id
        INTEGER(HID_T),INTENT(OUT) :: attr_id
        LOGICAL(SBK):: attr_exists
@@ -6931,6 +6927,6 @@ MODULE FileType_HDF5
           ' - Failed to open attribute.')
          RETURN
        ENDIF
-#endif
     END SUBROUTINE pre_read_attribute
+#endif
 ENDMODULE FileType_HDF5
