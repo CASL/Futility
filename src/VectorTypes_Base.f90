@@ -6,7 +6,7 @@
 ! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
 ! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!> @brief Utility module for defining vector types.
+!> @brief The base abstraction for the VectorType.
 !>
 !> The types of vectors defined in this module include a real vector type,
 !> and PETSc vector type.

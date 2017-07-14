@@ -6,31 +6,7 @@
 ! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
 ! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!> @brief Utility module for defining vector types.
-!>
-!> The types of vectors defined in this module include a real vector type,
-!> and PETSc vector type.
-!>
-!> The objects are initialized with a parameter list. For valid reference lists
-!> see @ref VectorTypes::VectorTypes_Declare_ValidParams
-!> "VectorTypes_Declare_ValidParams".
-!>
-!> @par Module Dependencies
-!>  - @ref IntrType "IntrType": @copybrief IntrType
-!>  - @ref ExceptionHandler "ExceptionHandler": @copybrief ExceptionHandler
-!>  - @ref Allocs "Allocs": @copybrief Allocs
-!>
-!> @par EXAMPLES
-!> @code
-!> PROGRAM ExampleVector
-!>   TYPE(RealVectorType) :: vector
-!>
-!>   CALL vector%init(36)
-!>   CALL vector%set(1,10._SRK)
-!>   value=vector%get(1)
-!>   CALL vector%clear()
-!> ENDPROGRAM ExampleVector
-!> @endcode
+!> @brief VectorType implementation for the PETSc TPL
 !>
 !> @author Shane Stimpson
 !>   @date 08/20/2012

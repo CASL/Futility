@@ -121,9 +121,6 @@ public:
         problem->setA(anasazi.LHS);
         problem->setM(anasazi.RHS);
 
-        EpetraExt::RowMatrixToMatrixMarketFile("LHS_matrix.mat", *anasazi.LHS);
-        EpetraExt::RowMatrixToMatrixMarketFile("RHS_matrix.mat", *anasazi.RHS);
-
         if(anasazi.haspc) problem->setPrec(anasazi.pc);
         problem->setInitVec(anasazi.x);
         problem->setNEV(1);

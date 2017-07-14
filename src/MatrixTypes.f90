@@ -32,6 +32,7 @@
 !>  - @ref BLAS2 "BLAS2": @copybrief BLAS2
 !>  - @ref BLAS3 "BLAS3": @copybrief BLAS3
 !>
+!> TIBWSFB: This documentation doesnt match the current interface
 !> @par EXAMPLES
 !> @code
 !> PROGRAM ExampleMatrix
@@ -147,6 +148,24 @@ MODULE MatrixTypes
 !-------------------------------------------------------------------------------
 !> @brief Abstract factory for all enabled MatrixTypes
 !>
+!> @param matrix a pointer to the base MatrixType that will store the
+!> constructed matrix. Should be NULL
+!> @param params a parameter list to use to determine the type of and construct
+!> the matrix
+!> 
+!> This is an abstract factory routine for the base MatrixTypes. It uses the
+!> matType and engine parameters on the passed parameter list to determine which
+!> type of MatrixType to which the passed pointer should be allocated. It then
+!> uses the same parameter list to initialize the matrix.
+!>
+!> The valid matrix engines (if enabled at configure time) are MV_NATIVE,
+!> MV_TRILINOS and MV_PETSC.
+!> The valid matTypes are those enumerated in the MatrixTypes_Base module.
+!>
+!> The purpose of such a routine is to hide from the user which specific
+!> MatrixTypes are available and reduce the need for SELECT TYPEing the matrices
+!> later. This also hides the #ifdef guards needed to safely interact with each
+!> of the optional engines.
     SUBROUTINE MatrixFactory(matrix, params)
       CHARACTER(LEN=*),PARAMETER :: myName="MatrixFactory"
       CLASS(MatrixType),POINTER,INTENT(INOUT) :: matrix
@@ -205,11 +224,19 @@ MODULE MatrixTypes
 
       CALL matrix%init(params)
     ENDSUBROUTINE MatrixFactory
-
 !
 !-------------------------------------------------------------------------------
 !> @brief Abstract factory for all enabled DistributedMatrixTypes
 !>
+!> @param matrix a pointer to the DistributedMatrixType that will store the
+!> constructed matrix. Should be NULL
+!> @param params a parameter list to use to determine the type of and construct
+!> the matrix
+!>
+!> This is similar to the MatrixType factory, but specifically interacts with
+!> DistributedMatrixType pointers. This distinction in necessary for client code
+!> that knows that it wants one of the DistributedMatrixTypes and therefore uses
+!> a pointer to such.
     SUBROUTINE DistributedMatrixFactory(matrix, params)
       CHARACTER(LEN=*),PARAMETER :: myName="DistributedMatrixFactory"
       CLASS(DistributedMatrixType),POINTER,INTENT(INOUT) :: matrix
@@ -271,6 +298,16 @@ MODULE MatrixTypes
 !-------------------------------------------------------------------------------
 !> @brief Abstractly reproduce a new Matrix of the same type passed in
 !>
+!> @param dest the matrix pointer to allocate
+!> @param source the matrix to use when determining the proper type for dest
+!> @param params the parameter list to use when constructing the dest matrix
+!>
+!> This routine uses the matrix passed in as source to allocate a new matrix,
+!> dest, of the same type. The passed parameter list is then used to initialize
+!> the dest matrix.
+!> Such a routine exists to make it easy for client code to create a new matrix
+!> that will be compatible with an existing matrix, without needed to know which
+!> type the existing matrix is. This cuts down on #ifdef guards and SELECT TYPEs
     SUBROUTINE MatrixResemble(dest, source, params)
       CHARACTER(LEN=*),PARAMETER :: myName="MatrixResemble"
       CLASS(MatrixType),POINTER,INTENT(INOUT) :: dest

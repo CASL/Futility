@@ -230,8 +230,6 @@ MODULE EigenvalueSolverTypes
   !> SNES Resid calculator
   CLASS(EigenvalueSolverType_Base),POINTER :: PETSC_SHELL_EVS => NULL()
 
-
-
   !> Logical flag to check whether the required and optional parameter lists
   !> have been created yet for the Eigenvalue Solver Type.
   LOGICAL(SBK),SAVE :: EigenvalueSolverType_Paramsflag=.FALSE.
@@ -255,6 +253,19 @@ MODULE EigenvalueSolverTypes
   CONTAINS
 !
 !-------------------------------------------------------------------------------
+!> @brief Create an Eigenvalue solver object compatible with the provided matrix
+!>
+!> @param solver a pointer to the base eigenvalue solver type. Should be NULL
+!> @param MPIEnv the MPI environment to be used to initialize the solver
+!> @param M the matrix to use to determine which type of solver to create
+!> @param params A parameter list to use in allocating the solver
+!> 
+!> This is a simple abstract factory routine for the base EigenvalueSolverType.
+!> It uses the type of the passed MatrixType object to determine which type of
+!> eigenvalue solver to allocate, then initialized the solver with the passed
+!> parameters. The purpose of such a routine is to hide from the client code the
+!> actual type of the matrix/solver pair, and the preprocessor guards necessary
+!> to safely use the TPLs.
     SUBROUTINE EigenvalueSolverFactory(solver,MPIEnv,M,params)
       CHARACTER(LEN=*),PARAMETER :: myName="EigenvalueSolverFactory"
       CLASS(EigenvalueSolverType_Base),INTENT(INOUT),POINTER :: solver

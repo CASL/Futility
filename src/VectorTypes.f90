@@ -8,8 +8,11 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief Utility module for defining vector types.
 !>
-!> The types of vectors defined in this module include a real vector type,
-!> and PETSc vector type.
+!> This module exposes all of the modules which provide VectorType
+!> functionality, as enabled at configure time. This includes the Native vector
+!> types, and optionally PETSc and/or Trilinos vector types.
+!> It also provides abstract factory routines to aid in constructing VectorType
+!> objects, as well as interfaces to the BLAS algorithms
 !>
 !> The objects are initialized with a parameter list. For valid reference lists
 !> see @ref VectorTypes::VectorTypes_Declare_ValidParams
@@ -20,6 +23,7 @@
 !>  - @ref ExceptionHandler "ExceptionHandler": @copybrief ExceptionHandler
 !>  - @ref Allocs "Allocs": @copybrief Allocs
 !>
+!> TIBWSFB: This example doesnt match the current interface
 !> @par EXAMPLES
 !> @code
 !> PROGRAM ExampleVector
@@ -185,6 +189,14 @@ MODULE VectorTypes
 !-------------------------------------------------------------------------------
 !> @brief Abstract factory for all enabled VectorTypes
 !>
+!> @param vector the vector pointer to allocate and initialize. Should be NULL
+!> @param params the parameter list to use in determining the type of and
+!> initializing the vector.
+!>
+!> This is an abstract factory routine for the base VectorType. It will use the
+!> 'engine' parameter in the passed parameter list to determine which type of
+!> Vector to allocate the pointer to. The parameter list is then used to
+!> initialize the vector.
     SUBROUTINE VectorFactory(vector, params)
       CHARACTER(LEN=*),PARAMETER :: myName="VectorFactory"
       CLASS(VectorType),POINTER,INTENT(INOUT) :: vector
@@ -228,10 +240,20 @@ MODULE VectorTypes
 !-------------------------------------------------------------------------------
 !> @brief Create a new vector of compatible size and type to the input vector
 !>
+!> @param dest the destination VectorType pointer to allocate and construct.
+!> This should be NULL
+!> @param source the vector type to use in determining the type and parameters
+!> of the dest vector
+!> @param params the parameters to use in overriding settings from the source
+!> vector
+!>
 !> For now, the source vector shall be initialized, though in the future it
-!> might be nice to support uninitialized vectors. If the source vector is
-!> initialized, the destination will be initialized, otherwise the destination
-!> pointer will be allocated to the appropriate type, but not initialized
+!> might be nice to support uninitialized vectors.
+!> Unlike the corresponding routine for MatrixTypes, this routine will attempt
+!> to adopt parameters from the source vector to initialize the dest vector.
+!> This is only done for required parameters that are not provided in the passed
+!> parameter list. Providing the parameters on the parameter list will override
+!> the corresponding parameters from the source matrix.
     SUBROUTINE VectorResemble(dest, source, params)
       CHARACTER(LEN=*),PARAMETER :: myName="VectorResemble"
       CLASS(VectorType),POINTER,INTENT(INOUT) :: dest
