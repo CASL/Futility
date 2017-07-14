@@ -6751,13 +6751,13 @@ MODULE FileType_HDF5
     SUBROUTINE read_attribute_st0(this,attr_id,length_max,attr_name,attr_val)
        CHARACTER(LEN=*),PARAMETER :: myName='read_attribute_st0_HDF5FileType'
        CLASS(HDF5FileType),INTENT(INOUT) :: this
-       INTEGER(HID_T),INTENT(IN) :: attr_id
        CHARACTER(LEN=*),INTENT(IN) :: attr_name
        TYPE(StringType),INTENT(INOUT)::attr_val
-       INTEGER(HID_T)::atype_id
        INTEGER(SDK),INTENT(IN) :: length_max
         
 #ifdef FUTILITY_HAVE_HDF5
+       INTEGER(HID_T),INTENT(IN) :: attr_id
+       INTEGER(HID_T)::atype_id
        INTEGER(HSIZE_T),DIMENSION(1) :: dims
        CHARACTER(LEN=length_max,KIND=C_CHAR),TARGET :: buf
 
@@ -6844,9 +6844,9 @@ MODULE FileType_HDF5
        CHARACTER(LEN=*),PARAMETER :: myName='open_object_HDF5FileType'
        CLASS(HDF5FileType),INTENT(INOUT) :: this
        CHARACTER(LEN=*),INTENT(IN) :: obj_name
-       INTEGER(HID_T),INTENT(OUT) :: dset_id
         
 #ifdef FUTILITY_HAVE_HDF5
+       INTEGER(HID_T),INTENT(OUT) :: dset_id
        CHARACTER(LEN=LEN(obj_name)+1) :: path
        LOGICAL(SBK) :: dset_exists
 
@@ -6880,9 +6880,9 @@ MODULE FileType_HDF5
     SUBROUTINE post_attribute(this,attr_id,dset_id)
        CHARACTER(LEN=*),PARAMETER :: myName='post_attribute_rHDF5FileType'
        CLASS(HDF5FileType),INTENT(INOUT) :: this
-       INTEGER(HID_T),INTENT(IN) :: attr_id, dset_id
         
 #ifdef FUTILITY_HAVE_HDF5
+       INTEGER(HID_T),INTENT(IN) :: attr_id, dset_id
        CALL h5aclose_f(attr_id,error)
        IF (error /= 0) THEN
          CALL this%e%raiseError(modName//'::'//myName// &
@@ -6909,11 +6909,11 @@ MODULE FileType_HDF5
     SUBROUTINE pre_read_attribute(this,dset_id,attr_name,attr_id)
        CHARACTER(LEN=*),PARAMETER :: myName='pre_attribute_rHDF5FileType'
        CLASS(HDF5FileType),INTENT(INOUT) :: this
-       INTEGER(HID_T),INTENT(IN) :: dset_id
        CHARACTER(LEN=*),INTENT(IN) :: attr_name
-       INTEGER(HID_T),INTENT(OUT) :: attr_id
         
 #ifdef FUTILITY_HAVE_HDF5
+       INTEGER(HID_T),INTENT(IN) :: dset_id
+       INTEGER(HID_T),INTENT(OUT) :: attr_id
        LOGICAL(SBK):: attr_exists
 
        !Check that the named attribute exists
