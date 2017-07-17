@@ -38,7 +38,7 @@ PROGRAM testHDF5
   LOGICAL(SBK) :: refB0
   TYPE(StringType) :: refST0
   TYPE(StringType),ALLOCATABLE :: refST1(:),refSTC1(:),refST0CA(:),refST2(:,:),refST3(:,:,:)
-  CHARACTER(LEN=32) :: refC1
+  CHARACTER(LEN=32) :: refC1,integer_name,real_name,string_name
   CHARACTER(LEN=12) :: helper_string
   LOGICAL(SBK) :: exists
   TYPE(StringType),ALLOCATABLE :: refsets(:)
@@ -223,6 +223,11 @@ PROGRAM testHDF5
       refsets(15)='memS6'
       refsets(16)='memS7'
 
+      !Set Attribute write values
+      string_name='string'
+      integer_name='int'
+      real_name='real'
+
       !write the reference file for the read side
       CALL h5%init('readtest.h5','NEW')
       CALL h5%fopen()
@@ -283,7 +288,14 @@ PROGRAM testHDF5
       CALL h5%fwrite('groupST->memST1',refST1)
       CALL h5%fwrite('groupST->memST2',refST2)
       CALL h5%fwrite('groupST->memST3',refST3)
+
+      !Write Attribute Values
+      CALL h5%write_attribute('groupB->memB0',integer_name,refN0)
+      CALL h5%write_attribute('groupB->memB1',string_name,refST0)
+      CALL h5%write_attribute('groupB->memB2',real_name,refD0)
+
       CALL h5%fclose()
+
 
     ENDSUBROUTINE testHDF5FileTypeSetup
 !
@@ -737,6 +749,20 @@ PROGRAM testHDF5
       CALL h5%fwrite('groupST->memST3',refST3)
       CALL h5%fwrite('groupC->memC1',refC1)
 
+      COMPONENT_TEST('%write_attribute')
+      !WRITE ATTRIBUTESr
+      CALL h5%write_attribute('groupB->memB0',integer_name,refN0)
+      CALL h5%write_attribute('groupB->memB1',string_name,refST0)
+      CALL h5%write_attribute('groupB->memB2',real_name,refD0)
+
+      !READ ATTRIBUTES
+      CALL h5%read_attribute('groupB->memB0',integer_name,testN0)
+      ASSERT(refN0==testN0,'integer read fail')
+      CALL h5%read_attribute('groupB->memB1',string_name,testST0)
+      ASSERT(refST0==testST0,'string read fail')
+      CALL h5%read_attribute('groupB->memB2',real_name,testD0)
+      ASSERT(refD0==testD0,'real_read fail')
+
       CALL h5%fread('groupR->memD0',testD0)
       ASSERT(testD0==refD0,'D0 Write Failure')
       CALL h5%fread('groupR->memD1',testD1)
@@ -843,6 +869,7 @@ PROGRAM testHDF5
       i=h5%ngrp('groupR')
       ASSERT(i == 16,'ngrp_HDF5FileType')
       FINFO() i
+
 
       COMPONENT_TEST('%pathExists')
       !Add some sub-groups
@@ -1347,6 +1374,16 @@ PROGRAM testHDF5
       ASSERT(checkread,'CA3 Read Failure')
       CALL h5%fread('groupC->memC1',testC1)
       ASSERT(testC1 == refC1,'C1 Read Failure')
+      
+      !Read test attributes
+      COMPONENT_TEST('%read_attributes')
+      !READ ATTRIBUTES
+      CALL h5%read_attribute('groupB->memB0',integer_name,testN0)
+      ASSERT(refN0==testN0,'integer read fail')
+      CALL h5%read_attribute('groupB->memB1',string_name,testST0)
+      ASSERT(refST0==testST0,'string read fail')
+      CALL h5%read_attribute('groupB->memB2',real_name,testD0)
+      ASSERT(refD0==testD0,'real_read fail')
 
       COMPONENT_TEST('%fread to parameter list')
       CALL h5%fread('groupC',tmpPL)
