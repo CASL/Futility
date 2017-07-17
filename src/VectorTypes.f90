@@ -421,7 +421,7 @@ MODULE VectorTypes
 !> @param incx the increment to use when looping over elements in @c x
 !> @param incy the increment to use when looping over elements in @c y
 !>
-!> MAINTENANCE NOTE: This is inefficient. It makes a copy of the vectors, which
+!> TIBWSFB: This is inefficient. It makes a copy of the vectors, which
 !> is a pretty big waste. The one upside to this is the algorithm can be
 !> implemented using a type-agnostic approach. But we still select type
 !> everything for some reason. Worst of both worlds

@@ -136,7 +136,7 @@ MODULE MatrixTypes_Base
     !> MPI comm ID
     INTEGER(SIK) :: comm=-1
     !> number of local values
-    INTEGER(SIK) :: nlocal
+    INTEGER(SIK) :: nlocal=0
 !
 !List of Type Bound Procedures
     CONTAINS
