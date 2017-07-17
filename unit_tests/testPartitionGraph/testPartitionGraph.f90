@@ -73,9 +73,8 @@ PROGRAM testPartitionGraph
       CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
       LOGICAL(SBK) :: bool
       INTEGER(SIK) :: refcond(1)
-      INTEGER(SIK),ALLOCATABLE :: refwts(:),refneigh(:,:),refnwts(:,:),refunwt(:,:)
-      INTEGER(SIK),ALLOCATABLE :: refd(:)
-      REAL(SRK),ALLOCATABLE :: refCoord(:,:)
+      INTEGER(SIK),ALLOCATABLE :: refd(:),refneigh(:,:)
+      REAL(SRK),ALLOCATABLE :: refwts(:),refnwts(:,:),refunwt(:,:),refCoord(:,:)
       TYPE(StringType) :: refAlgNames(2),tmpAlgNames(3)
 
       !Copy parameter list and get reference data
@@ -145,7 +144,8 @@ PROGRAM testPartitionGraph
       CALL tparams%set('PartitionGraph -> neigh',refneigh)
 
       !Test incorrectly sized edge weight matrix
-      CALL tparams%set('PartitionGraph -> neighwts',RESHAPE((/3,1/),(/2,1/)))
+      CALL tparams%set('PartitionGraph -> neighwts', &
+        RESHAPE((/3.0_SRK,1.0_SRK/),(/2,1/)))
       CALL testPG%initialize(tparams)
       msg=e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - PartitionGraph::'// &
@@ -156,8 +156,12 @@ PROGRAM testPartitionGraph
 
       !Test invalid edge weight matrix
       CALL tparams%set('PartitionGraph -> neighwts', &
-        RESHAPE((/-1,1,1,1,-1,1,1,1,-1,1,1,1,-1,1,1,1,-1,1,1,1,-1,1,1,1/), &
-          (/4,6/)))
+        RESHAPE((/-1.0_SRK, 1.0_SRK, 1.0_SRK, 1.0_SRK, &
+                  -1.0_SRK, 1.0_SRK, 1.0_SRK, 1.0_SRK, &
+                  -1.0_SRK, 1.0_SRK, 1.0_SRK, 1.0_SRK, &
+                  -1.0_SRK, 1.0_SRK, 1.0_SRK, 1.0_SRK, &
+                  -1.0_SRK, 1.0_SRK, 1.0_SRK, 1.0_SRK, &
+                  -1.0_SRK ,1.0_SRK, 1.0_SRK, 1.0_SRK/),(/4,6/)))
       CALL testPG%initialize(tparams)
       msg=e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - PartitionGraph::'// &
@@ -168,7 +172,7 @@ PROGRAM testPartitionGraph
       CALL tparams%set('PartitionGraph -> neighwts',refnwts)
 
       !Test incorrectly sized weight array
-      CALL tparams%set('PartitionGraph -> wts', (/1/))
+      CALL tparams%set('PartitionGraph -> wts', (/1.0_SRK/))
       CALL testPG%initialize(tparams)
       msg=e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - PartitionGraph::'// &
@@ -178,7 +182,8 @@ PROGRAM testPartitionGraph
       FINFO() msg
 
       !Test invalid wts array
-      CALL tparams%set('PartitionGraph -> wts',(/-1,1,1,1,1,1/))
+      CALL tparams%set('PartitionGraph -> wts',(/-1.0_SRK,1.0_SRK,1.0_SRK, &
+        1.0_SRK,1.0_SRK,1.0_SRK/))
       CALL testPG%initialize(tparams)
       msg=e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - PartitionGraph::'// &
@@ -257,12 +262,12 @@ PROGRAM testPartitionGraph
       ALLOCATE(refd(6))
       ALLOCATE(refunwt(4,6))
       refd=(/1, 3, 2, 2, 3, 1/)
-      refunwt=RESHAPE((/1, 0, 0, 0, &
-                        1, 1, 1, 0, &
-                        1, 1, 0, 0, &
-                        1, 1, 0, 0, &
-                        1, 1, 1, 0, &
-                        1, 0, 0, 0/),(/4,6/))
+      refunwt=RESHAPE((/1.0_SRK, 0.0_SRK, 0.0_SRK, 0.0_SRK, &
+                        1.0_SRK, 1.0_SRK, 1.0_SRK, 0.0_SRK, &
+                        1.0_SRK, 1.0_SRK, 0.0_SRK, 0.0_SRK, &
+                        1.0_SRK, 1.0_SRK, 0.0_SRK, 0.0_SRK, &
+                        1.0_SRK, 1.0_SRK, 1.0_SRK, 0.0_SRK, &
+                        1.0_SRK, 0.0_SRK, 0.0_SRK, 0.0_SRK/),(/4,6/))
       ASSERT(testPG%isInit, '%init(...)%isInit')
       ASSERT(testPG%nvert == 6, '%init(...)%nvert')
       ASSERT(testPG%dim == 2, '%init(...)%dim')
@@ -271,7 +276,7 @@ PROGRAM testPartitionGraph
       ASSERT(testPG%nPart == 1, '%init(...)%nPart')
       bool=(SIZE(testPG%wts) == 6)
       ASSERT(bool,'%init(...)%SIZE(wts)')
-      bool=ALL(testPG%wts == 1)
+      bool=ALL(testPG%wts == 1.0_SRK)
       ASSERT(bool,'%init(...)%wts')
       bool=((SIZE(testPG%neigh,DIM=1) == 4) .AND. &
             (SIZE(testPG%neigh,DIM=2) == 6))
@@ -342,8 +347,8 @@ PROGRAM testPartitionGraph
 !-------------------------------------------------------------------------------
     SUBROUTINE testClear()
       LOGICAL(SBK) :: bool
-      INTEGER(SIK) :: refwts(6),refneigh(4,6),refnwts(4,6),refcond(1)
-      REAL(SRK) :: refCoord(2,6)
+      INTEGER(SIK) :: refneigh(4,6),refcond(1)
+      REAL(SRK) :: refwts(6),refnwts(4,6),refCoord(2,6)
       TYPE(StringType) :: refAlgNames(2),tmpAlgNames(3)
 
       !Generate parameter list
@@ -356,14 +361,14 @@ PROGRAM testPartitionGraph
                          3, 4, 6, 0, &
                          5, 0, 0, 0/),(/4,6/))
       CALL params%add('PartitionGraph -> neigh', refneigh)
-      refwts=(/1,2,3,2,1,1/)
+      refwts=(/1.0_SRK,2.0_SRK,3.0_SRK,2.0_SRK,1.0_SRK,1.0_SRK/)
       CALL params%add('PartitionGraph -> wts', refwts)
-      refnwts=RESHAPE((/1, 0, 0, 0, &
-                        1, 2, 3, 0, &
-                        2, 1, 0, 0, &
-                        3, 1, 0, 0, &
-                        1, 1, 1, 0, &
-                        1, 0, 0, 0/), (/4,6/))
+      refnwts=RESHAPE((/1.0_SRK, 0.0_SRK, 0.0_SRK, 0.0_SRK, &
+                        1.0_SRK, 2.0_SRK, 3.0_SRK, 0.0_SRK, &
+                        2.0_SRK, 1.0_SRK, 0.0_SRK, 0.0_SRK, &
+                        3.0_SRK, 1.0_SRK, 0.0_SRK, 0.0_SRK, &
+                        1.0_SRK, 1.0_SRK, 1.0_SRK, 0.0_SRK, &
+                        1.0_SRK, 0.0_SRK, 0.0_SRK, 0.0_SRK/), (/4,6/))
       CALL params%add('PartitionGraph -> neighwts', refnwts)
       refAlgNames(1)='Recursive Expansion Bisection'
       refAlgNames(2)='Recursive Spectral Bisection'
@@ -449,7 +454,7 @@ PROGRAM testPartitionGraph
       ASSERT(testSG%dim == 2, '%subgraph(...)%dim')
       ASSERT(testSG%maxneigh == 4, '%subgraph(...)%maxneigh')
       ASSERT(testSG%nGroups == 1 , '%subgraph(...)%nGroups')
-      ASSERT(ALL(testSG%wts == 1) , '%subgraph(...)%wts')
+      ASSERT(ALL(testSG%wts == 1.0_SRK) , '%subgraph(...)%wts')
       bool=ALL(testSG%d == (/1, 1, 1, 3/))
       ASSERT(bool,'%subgraph(...)%d')
       bool=ALL(testSG%neigh == RESHAPE((/0, 4, 0, 0, &
@@ -457,10 +462,10 @@ PROGRAM testPartitionGraph
                                          4, 0, 0, 0, &
                                          2, 1, 3, 0/),(/4,4/)))
       ASSERT(bool, '%subgraph(...)%neigh')
-      bool=ALL(testSG%neighwts == RESHAPE((/0, 1, 0, 0, &
-                                            0, 1, 0, 0, &
-                                            1, 0, 0, 0, &
-                                            1, 1, 1, 0/),(/4,4/)))
+      bool=ALL(testSG%neighwts == RESHAPE((/0.0_SRK, 1.0_SRK, 0.0_SRK, 0.0_SRK, &
+                                            0.0_SRK, 1.0_SRK, 0.0_SRK, 0.0_SRK, &
+                                            1.0_SRK, 0.0_SRK, 0.0_SRK, 0.0_SRK, &
+                                            1.0_SRK, 1.0_SRK, 1.0_SRK, 0.0_SRK/),(/4,4/)))
       ASSERT(bool, '%subgraph(...)%neighwts')
       bool=ALL(testSG%coord == RESHAPE((/-1.0_SRK, 1.0_SRK, &
                                           0.0_SRK, 0.0_SRK, &
@@ -637,6 +642,7 @@ PROGRAM testPartitionGraph
       DEALLOCATE(grpList)
       CALL testPG%clear()
       CALL tparams%clear()
+
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       !Decomposition should look like:
       ! 2 2 1 1 1 1
@@ -894,14 +900,15 @@ PROGRAM testPartitionGraph
                   2, 5, 0, 0, &
                   3, 4, 6, 0, &
                   5, 0, 0, 0/),(/4,6/)))
-      CALL refInitParams%add('PartitionGraph -> wts', (/1,2,3,2,1,1/))
+      CALL refInitParams%add('PartitionGraph -> wts', &
+        (/1.0_SRK, 2.0_SRK, 3.0_SRK, 2.0_SRK, 1.0_SRK, 1.0_SRK/))
       CALL refInitParams%add('PartitionGraph -> neighwts', &
-        RESHAPE((/1, 0, 0, 0, &
-                  1, 2, 3, 0, &
-                  2, 1, 0, 0, &
-                  3, 1, 0, 0, &
-                  1, 1, 1, 0, &
-                  1, 0, 0, 0/), (/4,6/)))
+        RESHAPE((/1.0_SRK, 0.0_SRK, 0.0_SRK, 0.0_SRK, &
+                  1.0_SRK, 2.0_SRK, 3.0_SRK, 0.0_SRK, &
+                  2.0_SRK, 1.0_SRK, 0.0_SRK, 0.0_SRK, &
+                  3.0_SRK, 1.0_SRK, 0.0_SRK, 0.0_SRK, &
+                  1.0_SRK, 1.0_SRK, 1.0_SRK, 0.0_SRK, &
+                  1.0_SRK, 0.0_SRK, 0.0_SRK, 0.0_SRK/), (/4,6/)))
       refAlgNames(1)='Recursive Expansion Bisection'
       refAlgNames(2)='Recursive Spectral Bisection'
       CALL refInitParams%add('PartitionGraph -> Algorithms', refAlgNames)
@@ -1011,7 +1018,10 @@ PROGRAM testPartitionGraph
       CALL refG3Params%add('PartitionGraph -> nGroups',3)
       CALL refG3Params%add('PartitionGraph -> Algorithms',refAlgNames(1:1))
       CALL refG3Params%add('PartitionGraph -> wts', &
-        (/2,2,1,2,2,1,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,2,2,2,2/))
+        (/2.0_SRK,2.0_SRK,1.0_SRK,2.0_SRK,2.0_SRK,1.0_SRK,2.0_SRK,2.0_SRK, &
+          2.0_SRK,2.0_SRK,2.0_SRK,2.0_SRK,2.0_SRK,2.0_SRK,1.0_SRK,1.0_SRK, &
+          2.0_SRK,2.0_SRK,2.0_SRK,2.0_SRK,2.0_SRK,2.0_SRK,2.0_SRK,2.0_SRK, &
+          2.0_SRK,2.0_SRK,2.0_SRK,2.0_SRK/))
       CALL refG3Params%add('PartitionGraph -> neigh', &
         RESHAPE((/  2,  4,  0,  0, &
                     1,  3,  5,  0, &

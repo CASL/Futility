@@ -91,18 +91,18 @@ MODULE PartitionGraph
     !> Vertex indices belonging to each group.
     !> Group separation given by groupIdx. Size [nvert]
     INTEGER(SIK),ALLOCATABLE :: groupList(:)
-    !> The computational weight associated with each vertex. Size [nvert]
-    INTEGER(SIK),ALLOCATABLE :: wts(:)
     !> Max. size for each partitioning algorithm to be used. Size [nPart-1]
     !> The first algorithm will have no size condition
     INTEGER(SIK),ALLOCATABLE :: cond(:)
     !> Degree array. Number of edges from each vertex. Size [nvert]
     INTEGER(SIK),ALLOCATABLE :: d(:)
+    !> The computational weight associated with each vertex. Size [nvert]
+    REAL(SRK),ALLOCATABLE :: wts(:)
     !> Neighbor matrix. Size [maxneigh, nvert]
     !> Vertex index if neighbor exists, otherwise 0
     INTEGER(SIK),ALLOCATABLE :: neigh(:,:)
     !> Communication weights. Size [maxneigh, nvert]
-    INTEGER(SIK),ALLOCATABLE :: neighwts(:,:)
+    REAL(SRK),ALLOCATABLE :: neighwts(:,:)
     !> Coordinates. Ordered x,y,z(if it exists). Size [dim, nvert]
     REAL(SRK),ALLOCATABLE :: coord(:,:)
     !> Array containing pointers to partitioning routines
@@ -178,10 +178,9 @@ MODULE PartitionGraph
       TYPE(ParamType),INTENT(IN) :: params
       INTEGER(SIK) :: nerror,nvert,maxneigh,nGroups,nPart,dim
       INTEGER(SIK) :: ipart,pcond,iv
-      TYPE(ParamType) :: validParams
       TYPE(StringType) :: algName
-      INTEGER(SIK),ALLOCATABLE :: wts(:),neigh(:,:),neighwts(:,:), cond(:)
-      REAL(SRK),ALLOCATABLE :: coord(:,:)
+      INTEGER(SIK),ALLOCATABLE :: neigh(:,:), cond(:)
+      REAL(SRK),ALLOCATABLE :: wts(:),neighwts(:,:),coord(:,:)
       TYPE(StringType),ALLOCATABLE :: partAlgs(:),refAlgNames(:)
 
       !Error checking for initialization input
@@ -315,7 +314,7 @@ MODULE PartitionGraph
           ENDIF
         ELSE
           ALLOCATE(wts(nvert))
-          wts=1
+          wts=1.0_SRK
         ENDIF
 
         !Check neighbor weights
@@ -335,8 +334,8 @@ MODULE PartitionGraph
           ENDIF
         ELSE
           ALLOCATE(neighwts(maxneigh, nvert))
-          neighwts=0
-          WHERE(neigh /= 0) neighwts=1
+          neighwts=0.0_SRK
+          WHERE(neigh /= 0.0_SRK) neighwts=1.0_SRK
         ENDIF
       ENDIF
 
@@ -622,25 +621,28 @@ MODULE PartitionGraph
 !> @param thisGraph the graph to use the REB metod on
 !>
     RECURSIVE SUBROUTINE RecursiveExpansionBisection(thisGraph)
+      CHARACTER(LEN=*),PARAMETER :: myName='RecursiveExpansionBisection'
       CLASS(PartitionGraphType),INTENT(INOUT) :: thisGraph
+
       !local scalars
       INTEGER(SIK) :: ng,ng1,ng2,nv,nv1,nv2,iv,jv,kv,in,jn,kn,maxd,maxd2
-      INTEGER(SIK) :: soiv,count
-      INTEGER(SIK) :: curInt,curExt,curSI,curSE
-      INTEGER(SIK) :: maxInt,minExt,maxSI,maxSE
-      INTEGER(SIK) :: bvert
-      REAL(SRK) :: cw1,cw2,wg1,wg2,wtSum,wtMin,cE,cS,lE,dS
-      REAL(SRK) :: soid
+      INTEGER(SIK) :: soiv,count,bvert
+      INTEGER(SIK) :: curSI,curSE,maxSI,maxSE
+      REAL(SRK) :: cw1,cw2,wg1,wg2,wtSum,wtMin,cE,cS,lE,dS,soid
+      REAL(SRK) :: curInt,curExt,maxInt,minExt
       !local arrays
       REAL(SRK) :: wc(thisGraph%dim),soic(thisGraph%dim),gsc(thisGraph%dim)
       !local allocatables
       LOGICAL(SBK),ALLOCATABLE :: SCalc(:)
-      INTEGER(SIK),ALLOCATABLE :: L1(:),L2(:)
-      INTEGER(SIK),ALLOCATABLE :: S(:,:)
+      INTEGER(SIK),ALLOCATABLE :: L1(:),L2(:),S(:,:)
       !local types
       TYPE(PartitionGraphType) :: sg1,sg2
 
       IF(thisGraph%nGroups > 1) THEN
+        IF(.NOT. ALLOCATED(thisGraph%coord)) THEN
+          CALL ePartitionGraph%raiseError(modName//'::'//myName// &
+            ' - cannot use REB method to partition without coordinates!')
+        ENDIF
 
         !Determine desired number of groups for each bisection
         !This will be updated before recursion, once the total weight of each
@@ -650,8 +652,8 @@ MODULE PartitionGraph
         ng2=ng-ng1  !Group 2
 
         !Vertex weight total
-        wtSum=REAL(SUM(thisGraph%wts),SRK)
-        wtMin=REAL(MINVAL(thisGraph%wts),SRK)
+        wtSum=SUM(thisGraph%wts)
+        wtMin=MINVAL(thisGraph%wts)
         !Determine the weighted size of each bisection group
         nv=thisGraph%nvert
         wg1=wtSum*REAL(ng1,SRK)/REAL(ng,SRK)  !Group 1
@@ -941,10 +943,9 @@ MODULE PartitionGraph
 !>
     RECURSIVE SUBROUTINE RecursiveSpectralBisection(thisGraph)
       CLASS(PartitionGraphType),INTENT(INOUT) :: thisGraph
-      LOGICAL(SBK) :: lexpand
-      INTEGER(SIK) :: nvert,ng,ng1,ng2,iv,jv,in,wneigh,nlocal,nneigh,ierr
-      INTEGER(SIK) :: nv1,nv2,wtMin,numeq
-      REAL(SRK) :: W,wg1,wg2,edgewt,cw1,curdif,wt,wtSum
+      INTEGER(SIK) :: nvert,ng,ng1,ng2,iv,jv,in,nlocal,nneigh,ierr
+      INTEGER(SIK) :: nv1,nv2,numeq
+      REAL(SRK) :: wg1,wg2,cw1,curdif,wt,wtSum,wneigh,wtMin
       TYPE(ParamType) :: matParams
       TYPE(PETScMatrixType) :: Lmat
       TYPE(PartitionGraphType) :: sg1,sg2
@@ -1000,6 +1001,15 @@ MODULE PartitionGraph
         CALL evecs(2)%clear()
         CALL evecs(3)%clear()
         DEALLOCATE(evecs)
+
+        !Make sure 3rd smallest eigenvector has same signs as first
+        DO iv=1,nvert
+          IF(.NOT. (vf(iv) .APPROXEQA. 0.0_SRK) .AND. &
+             .NOT. (vf2(iv) .APPROXEQA. 0.0_SRK)) THEN
+            IF(vf(iv)*vf2(iv) < 0.0_SRK) vf2=-vf2
+            EXIT
+          ENDIF
+        ENDDO !iv
 
         !Sort the Fiedler vector
         ALLOCATE(Order(nvert))
@@ -1271,7 +1281,7 @@ MODULE PartitionGraph
       INTEGER(SIK) :: N1,N2,nneigh,ng,cg,iv,ig,k
       INTEGER(SIK),ALLOCATABLE :: av(:),bv(:)
       REAL(SRK),ALLOCATABLE :: D(:),gv(:)
-      REAL(SRK) :: wg1,wg2,wt,wdiff,wta,wtb,g,gmax
+      REAL(SRK) :: wg1,wg2,wdiff,wta,wtb,g,gmax
 
       !Calculate D
       N1=SIZE(L1)
@@ -1452,8 +1462,7 @@ MODULE PartitionGraph
       CLASS(PartitionGraphType),INTENT(IN) :: thisGraph
       REAL(SRK),INTENT(OUT) :: mmr,srms,ecut,comm
       INTEGER(SIK) :: ig,igstt,igstp,in,ineigh,iv,ivert,neighGrp
-      INTEGER(SIK) :: lgroup,sgroup,wtSum,wtGrp
-      REAL(SRK) :: optSize,wtDif
+      REAL(SRK) :: wtSum,wtGrp,lgroup,sgroup,optSize,wtDif
       INTEGER(SIK),ALLOCATABLE :: grpMap(:),uniqueGrps(:)
 
       mmr=0.0_SRK
@@ -1462,8 +1471,8 @@ MODULE PartitionGraph
       comm=0.0_SRK
       IF(ALLOCATED(thisGraph%groupIdx)) THEN
         !Compute the min/max ratio and rms difference from optimal
-        lgroup=0
-        sgroup=HUGE(1)
+        lgroup=0.0_SRK
+        sgroup=HUGE(1.0_SRK)
         wtSum=SUM(thisGraph%wts)
         optSize=REAL(wtSum,SRK)/REAL(thisGraph%nGroups,SRK)
         DO ig=1,thisGraph%nGroups
@@ -1555,6 +1564,7 @@ MODULE PartitionGraph
 #ifdef FUTILITY_HAVE_SLEPC
       EPS :: eps !SLEPC eigenvalue problem solver type
       PetscScalar :: kr,ki
+
       !Matrix size
       n=A%n
       !For now only pass in self-communicating MPI ENV
@@ -1587,7 +1597,6 @@ MODULE PartitionGraph
       mpd=n
       CALL EPSSetDimensions(eps,nev,ncv,mpd,ierr)
       CALL EPSSolve(eps,ierr)
-      CALL EPSGetConverged(eps,nev,ierr)
       DO iv=1,numvecs
       SELECTTYPE(v1 => V(iv)); TYPE IS(PETScVectorType)
           SELECTTYPE(v2 => Vi(iv)); TYPE IS(PETScVectorType)
