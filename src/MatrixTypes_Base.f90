@@ -8,6 +8,11 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief Base abstraction for the MatrixTypes
 !>
+!> @par Module Dependencies
+!>  - @ref IntrType "IntrType": @copybrief IntrType
+!>  - @ref ParameterLists "ParameterLists": @copybrief ParameterLists
+!>  - @ref ExceptionHandler "ExceptionHandler": @copybrief ExceptionHandler
+!>
 !> @author Adam Nelson and Brendan Kochunas
 !>   @date 02/14/2012
 !>

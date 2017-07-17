@@ -12,9 +12,11 @@
 !> @par Module Dependencies
 !>  - @ref IntrType "IntrType": @copybrief IntrType
 !>  - @ref ExceptionHandler "ExceptionHandler": @copybrief ExceptionHandler
-!>  - @ref Allocs "Allocs": @copybrief Allocs
+!>  - @ref ParameterLists "ParameterLists": @copybrief ParameterLists
+!>  - @ref MatrixTypes_Base "MatrixTypes_Base": @copybrief MatrixTypes_Base
 !>  - @ref BLAS2 "BLAS2": @copybrief BLAS2
 !>  - @ref BLAS3 "BLAS3": @copybrief BLAS3
+!>  - @ref VectorTypes "VectorTypes": @copybrief VectorTypes
 !>
 !> @author Shane Stimpson
 !>   @date 02/14/2012
@@ -22,6 +24,7 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE MatrixTypes_PETSc
   USE IntrType
+  USE ExceptionHandler
   USE ParameterLists
   USE MatrixTypes_Base
   USE BLAS2,           ONLY: BLAS2_matvec => BLAS_matvec

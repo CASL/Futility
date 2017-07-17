@@ -17,8 +17,8 @@
 !>
 !> @par Module Dependencies
 !>  - @ref IntrType "IntrType": @copybrief IntrType
+!>  - @ref ParameterLists "ParameterLists": @copybrief ParameterLists
 !>  - @ref ExceptionHandler "ExceptionHandler": @copybrief ExceptionHandler
-!>  - @ref Allocs "Allocs": @copybrief Allocs
 !>
 !> TIBWSFB: This documentation does not match the actual interface
 !>

@@ -11,6 +11,10 @@
 !> @par Module Dependencies
 !>  - @ref IntrType "IntrType": @copybrief IntrType
 !>  - @ref ExceptionHandler "ExceptionHandler": @copybrief ExceptionHandler
+!>  - @ref ParameterLists "ParameterLists": @copybrief ParameterLists
+!>  - @ref VectorTypes "VectorTypes": @copybrief VectorTypes
+!>  - @ref MatrixTypes_Base "MatrixTypes_Base": @copybrief MatrixTypes_Base
+!>  - @ref trilinos_interfaces "trilinos_interfaces": @copybrief trilinos_interfaces
 !>
 !> @author Adam Nelson and Brendan Kochunas
 !>   @date 02/14/2012

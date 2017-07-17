@@ -22,6 +22,13 @@
 !>  - @ref IntrType "IntrType": @copybrief IntrType
 !>  - @ref ExceptionHandler "ExceptionHandler": @copybrief ExceptionHandler
 !>  - @ref Allocs "Allocs": @copybrief Allocs
+!>  - @ref ParameterLists "ParamterLists": @copybrief ParamterLists
+!>  - @ref VectorType_Base "VectorType_Base": @copybrief VectorType_Base
+!>  - @ref VectorTypes_Native "VectorTypes_Native": @copybrief VectorTypes_Native
+!>  - @ref VectorTypes_PETSc "VectorTypes_PETSc": @copybrief VectorTypes_PETSc
+!>  - @ref VectorTypes_Trilinos "VectorTypes_Trilinos": @copybrief VectorTypes_Trilinos
+!>  - @ref trilinos_interfaces "trilinos_interfaces": @copybrief trilinos_interfaces
+!>  - @ref BLAS1 "BLAS1": @copybrief BLAS1
 !>
 !> TIBWSFB: This example doesnt match the current interface
 !> @par EXAMPLES

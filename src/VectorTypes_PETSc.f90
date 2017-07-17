@@ -8,6 +8,12 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief VectorType implementation for the PETSc TPL
 !>
+!> @par Module Dependencies
+!>  - @ref IntrType "IntrType": @copybrief IntrType
+!>  - @ref ExceptionHandler "ExceptionHandler": @copybrief ExceptionHandler
+!>  - @ref ParameterLists "ParameterLists": @copybrief ParameterLists
+!>  - @ref VectorTypes_Base "VectorTypes_Base": @copybrief VectorTypes_Base
+!>
 !> @author Shane Stimpson
 !>   @date 08/20/2012
 !>

@@ -8,8 +8,15 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief Trilinos implementations of VectorType
 !>
-!> @author Shane Stimpson
-!>   @date 08/20/2012
+!> @par Module Dependencies
+!>  - @ref IntrType "IntrType": @copybrief IntrType
+!>  - @ref ExceptionHandler "ExceptionHandler": @copybrief ExceptionHandler
+!>  - @ref ParameterLists "ParameterLists": @copybrief ParameterLists
+!>  - @ref VectorTypes_Base "VectorTypes_Base": @copybrief VectorTypes_Base
+!>  - @ref trilinos_interfaces "trilinos_interfaces": @copybrief trilinos_interfaces
+!>
+!> @author Benjamin Collins
+!>   @date 07/17/2017
 !>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE VectorTypes_Trilinos

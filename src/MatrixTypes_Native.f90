@@ -11,9 +11,9 @@
 !> @par Module Dependencies
 !>  - @ref IntrType "IntrType": @copybrief IntrType
 !>  - @ref ExceptionHandler "ExceptionHandler": @copybrief ExceptionHandler
+!>  - @ref ParameterLists "ParameterLists": @copybrief ParameterLists
 !>  - @ref Allocs "Allocs": @copybrief Allocs
-!>  - @ref BLAS2 "BLAS2": @copybrief BLAS2
-!>  - @ref BLAS3 "BLAS3": @copybrief BLAS3
+!>  - @ref MatrixTypes_Base "MatrixTypes_Base": @copybrief MatrixTypes_Base
 !>
 !> @author Adam Nelson and Brendan Kochunas
 !>   @date 02/14/2012

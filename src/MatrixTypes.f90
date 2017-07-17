@@ -31,6 +31,13 @@
 !>  - @ref Allocs "Allocs": @copybrief Allocs
 !>  - @ref BLAS2 "BLAS2": @copybrief BLAS2
 !>  - @ref BLAS3 "BLAS3": @copybrief BLAS3
+!>  - @ref ParameterLists "ParameterLists": @copybrief ParameterLists
+!>  - @ref VectorTypes "VectorTypes": @copybrief VectorTypes
+!>  - @ref MatrixTypes_Base "MatrixTypes_Base": @copybrief MatrixTypes_Base
+!>  - @ref MatrixTypes_Native "MatrixTypes_Native": @copybrief MatrixTypes_Native
+!>  - @ref MatrixTypes_Trilinos "MatrixTypes_Trilinos": @copybrief MatrixTypes_Trilinos
+!>  - @ref MatrixTypes_PETSc "MatrixTypes_PETSc": @copybrief MatrixTypes_PETSc
+!>  - @ref trilinos_interfaces "trilinos_interfaces": @copybrief trilinos_interfaces
 !>
 !> TIBWSFB: This documentation doesnt match the current interface
 !> @par EXAMPLES
