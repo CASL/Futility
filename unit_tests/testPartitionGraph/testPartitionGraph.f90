@@ -34,6 +34,10 @@ PROGRAM testPartitionGraph
 
   CREATE_TEST('PartitionGraph')
 
+#ifdef FUTILITY_HAVE_SLEPC
+  CALL PETScInitialize(PETSC_NULL_CHARACTER,ierr)
+  CALL SlepcInitialize(PETSC_NULL_CHARACTER,ierr)
+#endif
   CALL setupTest()
 
   ALLOCATE(e)
@@ -47,8 +51,8 @@ PROGRAM testPartitionGraph
   REGISTER_SUBTEST('Recursive Expansion Bisection',testREB)
 #ifdef FUTILITY_HAVE_SLEPC
   REGISTER_SUBTEST('Recursive Spectral Bisection',testRSB)
-#endif
   REGISTER_SUBTEST('Multi-method',testMulti)
+#endif
   REGISTER_SUBTEST('Kernighan-Lin',testKL)
   REGISTER_SUBTEST('Metrics Calculation',testMetrics)
 
@@ -82,8 +86,9 @@ PROGRAM testPartitionGraph
       CALL tparams%get('PartitionGraph -> coord', refCoord)
 
       !Test invalid number of groups
-      CALL tparams%set('PartitionGraph -> nGroups',0)
+      CALL tparams%set('PartitionGraph -> nGroups', 0)
       CALL testPG%initialize(tparams)
+
       msg=e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - PartitionGraph::'// &
         'init_PartitionGraph - invalid number of partitioning groups!'
@@ -116,6 +121,7 @@ PROGRAM testPartitionGraph
 
       !Test incorrectly sized neighbor matrix
       CALL tparams%set('PartitionGraph -> neigh',RESHAPE((/1,1/),(/2,1/)))
+      CALL tparams%set('PartitionGraph -> neighwts',refnwts(1:2,:))
       CALL testPG%initialize(tparams)
       msg=e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - PartitionGraph::'// &
@@ -128,6 +134,7 @@ PROGRAM testPartitionGraph
       CALL tparams%set('PartitionGraph -> neigh', &
         RESHAPE((/-1,1,1,1,-1,1,1,1,-1,1,1,1,-1,1,1,1,-1,1,1,1,-1,1,1,1/), &
           (/4,6/)))
+      CALL tparams%set('PartitionGraph -> neighwts',refnwts)
       CALL testPG%initialize(tparams)
       msg=e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - PartitionGraph::'// &
@@ -256,6 +263,7 @@ PROGRAM testPartitionGraph
                         1, 1, 0, 0, &
                         1, 1, 1, 0, &
                         1, 0, 0, 0/),(/4,6/))
+      ASSERT(testPG%isInit, '%init(...)%isInit')
       ASSERT(testPG%nvert == 6, '%init(...)%nvert')
       ASSERT(testPG%dim == 2, '%init(...)%dim')
       ASSERT(testPG%nGroups == 3, '%init(...)%nGroups')
@@ -284,16 +292,18 @@ PROGRAM testPartitionGraph
       ASSERT(bool,'%init(...)%SIZE(partitionAlgArry)')
       bool=ALL(testPG%d == refd)
       ASSERT(bool,'%init(...)%d')
+      CALL testPG%clear()
 
       !Test full initializaton (weighted, multiple algorithms)
       tparams=refInitParams
       CALL testPG%initialize(tparams)
-
+      ASSERT(testPG%isInit, '%init(...)%isInit')
       ASSERT(testPG%nvert == 6, '%init(...)%nvert')
       ASSERT(testPG%dim == 2, '%init(...)%dim')
       ASSERT(testPG%nGroups == 3, '%init(...)%nGroups')
       ASSERT(testPG%maxneigh == 4, '%init(...)%maxneigh')
       ASSERT(testPG%nPart == 2, '%init(...)%nPart')
+      FINFO() testPG%nPart
       bool=(SIZE(testPG%wts) == 6)
       ASSERT(bool,'%init(...)%SIZE(wts)')
       bool=ALL(testPG%wts == refwts)
@@ -874,10 +884,6 @@ PROGRAM testPartitionGraph
       TYPE(StringType) :: AlgName
       TYPE(StringType) :: refAlgNames(2)
 
-#ifdef FUTILITY_HAVE_SLEPC
-      CALL PETScInitialize(PETSC_NULL_CHARACTER,ierr)
-      CALL SlepcInitialize(PETSC_NULL_CHARACTER,ierr)
-#endif
       !Generate parameter list for the initialization test
       CALL refInitParams%add('PartitionGraph -> nvert', 6)
       CALL refInitParams%add('PartitionGraph -> nGroups', 3)
@@ -1067,7 +1073,6 @@ PROGRAM testPartitionGraph
     ENDSUBROUTINE setupTest
 !
 !-------------------------------------------------------------------------------
-    !Clear data from the unit-test
     SUBROUTINE clearTest()
       CALL testPG%clear()
       CALL testSG%clear()
@@ -1079,7 +1084,6 @@ PROGRAM testPartitionGraph
       CALL refG3Params%clear()
       CALL VectorType_Clear_ValidParams()
       CALL MatrixTypes_Clear_ValidParams()
-      CALL PartitionGraphType_Clear_Params()
       IF(ALLOCATED(strList)) DEALLOCATE(strList)
       DEALLOCATE(e)
     ENDSUBROUTINE clearTest

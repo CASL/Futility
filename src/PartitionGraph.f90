@@ -45,7 +45,6 @@ MODULE PartitionGraph
   PRIVATE
 
   PUBLIC :: PartitionGraphType
-  PUBLIC :: PartitionGraphType_Clear_Params
 #ifdef UNIT_TEST
   PUBLIC :: ePartitionGraph
 #endif
@@ -75,6 +74,8 @@ MODULE PartitionGraph
   !> 4. Connected graph (no isolated vertices, or groups of vertices)
   !>
   TYPE :: PartitionGraphType
+    !> Logical if the type is already initialized
+    LOGICAL(SBK) :: isInit=.FALSE.
     !> The number of vertices in the graph (core)
     INTEGER(SIK) :: nvert=0
     !> Dimensions (2 or 3)
@@ -183,38 +184,66 @@ MODULE PartitionGraph
       REAL(SRK),ALLOCATABLE :: coord(:,:)
       TYPE(StringType),ALLOCATABLE :: partAlgs(:),refAlgNames(:)
 
-      !Clear the type in case it has already been intialized
-      CALL thisGraph%clear()
-
-      !Check to set up required and optional param lists
-      IF(.NOT. PartitionGraphType_flagParams) &
-        CALL PartitionGraphType_Declare_Params()
-
-      validParams=params
-      CALL validParams%validate(PartitionGraphType_reqParams)
-
-      !Error checking for subroutine input
+      !Error checking for initialization input
       nerror=ePartitionGraph%getCounter(EXCEPTION_ERROR)
+      IF(.NOT. thisGraph%isInit) THEN
+        !Check number of vertices
+        IF(params%has('PartitionGraph -> nvert')) THEN
+          CALL params%get('PartitionGraph -> nvert', nvert)
+          !Must have atleast 1 vertex
+          IF(nvert < 1) CALL ePartitionGraph%raiseError(modName//'::'//myName// &
+            ' - invalid number of vertices!')
+        ELSE
+          CALL ePartitionGraph%raiseError(modName//'::'//myName// &
+            ' - nvert is required for PartitionGraph initialization!')
+        ENDIF
 
-      !Pull Required data from parameter list
-      CALL validParams%get('PartitionGraph -> nvert', nvert)
-      CALL validParams%get('PartitionGraph -> nGroups', nGroups)
-      CALL validParams%get('PartitionGraph -> neigh', neigh)
-      CALL validParams%get('PartitionGraph -> coord', coord)
-      CALL validParams%get('PartitionGraph -> Algorithms', partAlgs)
-      CALL validParams%clear()
+        !Check number of groups to partition graph into
+        IF(params%has('PartitionGraph -> nGroups')) THEN
+          CALL params%get('PartitionGraph -> nGroups', nGroups)
+          !Must partition into at least 1 group
+          IF(nGroups < 1) CALL ePartitionGraph%raiseError(modName//'::'//myName// &
+            ' - invalid number of partitioning groups!')
+        ELSE
+          CALL ePartitionGraph%raiseError(modName//'::'//myName// &
+            ' - nGroups is required for PartitionGraph initialization!')
+        ENDIF
 
-      !Check input number of groups to partition graph into
-      IF(nGroups < 1) CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-        ' - invalid number of partitioning groups!')
+        !Check neighbor matrix
+        IF(params%has('PartitionGraph -> neigh')) THEN
+          CALL params%get('PartitionGraph -> neigh', neigh)
+        ELSE
+          CALL ePartitionGraph%raiseError(modName//'::'//myName// &
+            ' - neigh is required for PartitionGraph initialization!')
+        ENDIF
 
-      !Check input number of vertices
-      IF(nvert >= 1) THEN
-        !Check input coordinate matrix
-        dim=SIZE(coord,DIM=1)
-        IF(SIZE(coord,DIM=2) /= nvert) CALL ePartitionGraph%raiseError(modName// &
-          '::'//myName//' - coordinate matrix is incorrect size!')
+        !Check partitioning algorithm list
+        nPart=0
+        IF(params%has('PartitionGraph -> Algorithms')) THEN
+          CALL params%get('PartitionGraph -> Algorithms', partAlgs)
+          nPart=SIZE(partAlgs)
+        ELSE
+          CALL ePartitionGraph%raiseError(modName//'::'//myName// &
+            ' - Algorithms is required for PartitionGraph initialization!')
+        ENDIF
 
+        !If more than 1 algorithm there must be an input condition list
+        IF(nPart > 1) THEN
+          IF(params%has('PartitionGraph -> Conditions')) THEN
+            CALL params%get('PartitionGraph -> Conditions', cond)
+          ELSE
+            CALL ePartitionGraph%raiseError(modName//'::'//myName// &
+              ' - Conditions must be specified if more than 1 algorithm is'// &
+              ' to be used!')
+          ENDIF
+        ENDIF
+      ELSE
+        CALL ePartitionGraph%raiseError(modName//'::'//myName// &
+          ' - partition graph is already initialized!')
+      ENDIF
+
+      !If no errors then check validity of input and optional inputs
+      IF(nerror == ePartitionGraph%getCounter(EXCEPTION_ERROR)) THEN
         !Check neighbor matrix
         maxneigh=SIZE(neigh,DIM=1)
         IF(SIZE(neigh,DIM=2) == nvert) THEN
@@ -222,66 +251,13 @@ MODULE PartitionGraph
             CALL ePartitionGraph%raiseError(modName//'::'//myName// &
               ' - invalid neighbor matrix!')
           ENDIF
-
-          !Check edge weights
-          IF(params%has('PartitionGraph -> neighwts')) THEN
-            CALL params%get('PartitionGraph -> neighwts',neighwts)
-
-            !Check it is the correct size
-            IF((SIZE(neighwts, DIM=1) == maxneigh) .AND. &
-               (SIZE(neighwts,DIM=2) == nvert)) THEN
-              !Check weights are valid (>0)
-              IF(ANY(neighwts < 0)) THEN
-                CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-                  ' - edge weights must be > 0!')
-              ENDIF
-            ELSE
-              CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-                ' - input edge weights matrix is incorrect size!')
-            ENDIF
-          ELSE
-            !If no communication weights are provided, all are assumed to be 1
-            ALLOCATE(neighwts(maxneigh,nvert))
-            neighwts=0
-            WHERE(neigh /= 0) neighwts=1
-          ENDIF
         ELSE
           CALL ePartitionGraph%raiseError(modName//'::'//myName// &
             ' - neighbor matrix is incorrect size!')
         ENDIF
 
-        !Check vertex weights
-        IF(params%has('PartitionGraph -> wts')) THEN
-          CALL params%get('PartitionGraph -> wts',wts)
-
-          !Check it is the correct size
-          IF(SIZE(wts) == nvert) THEN
-            !Check weights are valid (>0)
-            IF(ANY(wts < 0)) THEN
-              CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-                ' - vertex weights must be > 0!')
-            ENDIF
-          ELSE
-            CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-              ' - input vertex weights array is incorrect size!')
-          ENDIF
-        ELSE
-          !If no weights provided, all are assumed to be 1
-          ALLOCATE(wts(nvert))
-          wts=1
-        ENDIF
-      ELSE
-        CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-        ' - invalid number of vertices!')
-      ENDIF
-
-      !Check partitioning algorithms/conditions
-      nPart=SIZE(partAlgs)
-      IF(nPart > 1) THEN
-        !Check conditions
-        IF(params%has('PartitionGraph->Conditions')) THEN
-          CALL params%get('PartitionGraph->Conditions',cond)
-
+        !Check the condition list
+        IF(nPart > 1) THEN
           IF(SIZE(cond) == nPart-1) THEN
             !Check all conditions are valid (positive integers)
             IF(ALL(cond > 0)) THEN
@@ -301,24 +277,73 @@ MODULE PartitionGraph
             CALL ePartitionGraph%raiseError(modName//'::'//myName// &
               ' - Wrong number of conditions specified!')
           ENDIF
+        ENDIF
+
+        !Check refinement algorithm
+        IF(params%has('PartitionGraph -> Refinement')) THEN
+          CALL params%get('PartitionGraph -> Refinement', refAlgNames)
+          IF((SIZE(refAlgNames) /= 1) .AND. (SIZE(refAlgNames) /= nPart)) THEN
+            CALL ePartitionGraph%raiseError(modName//'::'//myName// &
+              ' - invalid number of refinement algorithms specified!')
+          ENDIF
+        ENDIF
+
+        !Check coordinates (optional)
+        dim=0
+        IF(params%has('PartitionGraph -> coord')) THEN
+          CALL params%get('PartitionGraph -> coord', coord)
+          !Check input coordinate matrix
+          dim=SIZE(coord,DIM=1)
+          IF(SIZE(coord,DIM=2) /= nvert) THEN
+            CALL ePartitionGraph%raiseError(modName//'::'//myName// &
+              ' - coordinate matrix is incorrect size!')
+          ENDIF
+        ENDIF
+
+        !Check vertex weights (optional)
+        IF(params%has('PartitionGraph -> wts')) THEN
+          CALL params%get('PartitionGraph -> wts', wts)
+          IF(SIZE(wts) == nvert) THEN
+            !Check weights are valid (>0)
+            IF(ANY(wts < 0)) THEN
+              CALL ePartitionGraph%raiseError(modName//'::'//myName// &
+                ' - vertex weights must be > 0!')
+            ENDIF
+          ELSE
+            CALL ePartitionGraph%raiseError(modName//'::'//myName// &
+              ' - input vertex weights array is incorrect size!')
+          ENDIF
         ELSE
-          CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-            ' - Conditions must be specified if more than 1 algorithm is to be used!')
+          ALLOCATE(wts(nvert))
+          wts=1
+        ENDIF
+
+        !Check neighbor weights
+        IF(params%has('PartitionGraph -> neighwts')) THEN
+          CALL params%get('PartitionGraph -> neighwts', neighwts)
+          !Check it is the correct size
+          IF((SIZE(neighwts, DIM=1) == maxneigh) .AND. &
+             (SIZE(neighwts,DIM=2) == nvert)) THEN
+            !Check weights are valid (>0)
+            IF(ANY(neighwts < 0)) THEN
+              CALL ePartitionGraph%raiseError(modName//'::'//myName// &
+                ' - edge weights must be > 0!')
+            ENDIF
+          ELSE
+            CALL ePartitionGraph%raiseError(modName//'::'//myName// &
+              ' - input edge weights matrix is incorrect size!')
+          ENDIF
+        ELSE
+          ALLOCATE(neighwts(maxneigh, nvert))
+          neighwts=0
+          WHERE(neigh /= 0) neighwts=1
         ENDIF
       ENDIF
 
-      !Check refinement algorithms/conditions
-      IF(params%has('PartitionGraph -> Refinement')) THEN
-        CALL params%get('PartitionGraph->Refinement',refAlgNames)
-        IF((SIZE(refAlgNames) /= 1) .AND. (SIZE(refAlgNames) /= nPart)) THEN
-          CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-            ' - invalid number of refinement algorithms specified!')
-        ENDIF
-      ENDIF
-
-      !If no errors, then initialize the type
+      !If no errors then initialize the type
       IF(nerror == ePartitionGraph%getCounter(EXCEPTION_ERROR)) THEN
         !Set scalars
+        thisGraph%isInit=.TRUE.
         thisGraph%nvert=nvert
         thisGraph%dim=dim
         thisGraph%maxneigh=maxneigh
@@ -327,12 +352,12 @@ MODULE PartitionGraph
 
         !Move allocated data onto the type
         CALL MOVE_ALLOC(neigh,thisGraph%neigh)
-        CALL MOVE_ALLOC(coord,thisGraph%coord)
         CALL MOVE_ALLOC(wts,thisGraph%wts)
         CALL MOVE_ALLOC(neighwts,thisGraph%neighwts)
         IF(nPart > 1) THEN
           CALL MOVE_ALLOC(cond,thisGraph%cond)
         ENDIF
+        IF(ALLOCATED(coord)) CALL MOVE_ALLOC(coord,thisGraph%coord)
 
         !Assign procedure pointers for partitioning
         ALLOCATE(thisGraph%partitionAlgArry(nPart))
@@ -388,9 +413,6 @@ MODULE PartitionGraph
           thisGraph%d(iv)=COUNT(thisGraph%neigh(1:maxneigh,iv) /= 0)
         ENDDO !iv
       ENDIF
-
-      DEALLOCATE(partAlgs)
-      IF(ALLOCATED(refAlgNames)) DEALLOCATE(refAlgNames)
     ENDSUBROUTINE init_PartitionGraph
 !
 !-------------------------------------------------------------------------------
@@ -401,6 +423,7 @@ MODULE PartitionGraph
       CLASS(PartitionGraphType),INTENT(INOUT) :: thisGraph
       INTEGER(SIK) :: ipart
 
+      thisGraph%isInit=.FALSE.
       thisGraph%nvert=0
       thisGraph%dim=0
       thisGraph%maxneigh=0
@@ -1506,40 +1529,6 @@ MODULE PartitionGraph
           ' - graph is not partitioned!')
       ENDIF
     ENDSUBROUTINE calcDecompMetrics_PartitionGraph
-!
-!-------------------------------------------------------------------------------
-!> @brief Declares the required and optional parameters for initialization of
-!> the PartitionGraphType
-!>
-    SUBROUTINE PartitionGraphType_Declare_Params()
-      INTEGER(SIK) :: neigh(1,1)
-      REAL(SRK) :: coord(1,1)
-      TYPE(StringType) :: algNames(1)
-
-      !Required parameters
-      neigh=0
-      coord=0.0_SRK
-      algNames(1)=''
-      CALL PartitionGraphType_reqParams%add('PartitionGraph -> nvert',0)
-      CALL PartitionGraphType_reqParams%add('PartitionGraph -> nGroups',0)
-      CALL PartitionGraphType_reqParams%add('PartitionGraph -> coord',coord)
-      CALL PartitionGraphType_reqParams%add('PartitionGraph -> neigh',neigh)
-      CALL PartitionGraphType_reqParams%add('PartitionGraph -> Algorithms', &
-        algNames)
-
-      !Set flag to true since the parameters have been set for this type.
-      PartitionGraphType_flagParams=.TRUE.
-    ENDSUBROUTINE PartitionGraphType_Declare_Params
-!
-!-------------------------------------------------------------------------------
-!> @brief Clears the required parameter lists for the PartitionGraphType
-!>
-    SUBROUTINE PartitionGraphType_Clear_Params()
-      !Reset flag to false
-      PartitionGraphType_flagParams=.FALSE.
-      !Clear parameter list
-      CALL PartitionGraphType_reqParams%clear()
-    ENDSUBROUTINE PartitionGraphType_Clear_Params
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the indexed right eigenvectors of matrix A
