@@ -62,6 +62,7 @@ PROGRAM testMatrixTypes
 
   CREATE_TEST('Test Matrix Types')
   REGISTER_SUBTEST('TestMatrix',testMatrix)
+  REGISTER_SUBTEST('Test Factories',testFactories)
   REGISTER_SUBTEST('TestTranspose',testTransposeMatrix)
   FINALIZE_TEST()
 
@@ -3552,5 +3553,248 @@ PROGRAM testMatrixTypes
       ASSERT(bool,"wrong a")
       CALL tmpPlist%clear()
     ENDSUBROUTINE testTransposeMatrix
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testFactories()
+      CLASS(MatrixType),POINTER :: mat_p
+      CLASS(MatrixType),POINTER :: other_mat_p
+      CLASS(DistributedMatrixType),POINTER :: dmat_p
+      TYPE(ParamType) :: params
+#ifdef FUTILITY_HAVE_Trilinos
+      INTEGER(SIK),ALLOCATABLE :: dnnz(:)
+#endif
+
+      mat_p => NULL()
+      other_mat_p => NULL()
+      dmat_p => NULL()
+
+      COMPONENT_TEST("Matrix Factory")
+
+      ! Dense Square matrix
+      CALL params%add("MatrixType->n",10)
+      CALL params%add("MatrixType->isSym",.FALSE.)
+      CALL params%add("MatrixType->matType",DENSESQUARE)
+      CALL params%add("MatrixType->engine",VM_NATIVE)
+      CALL MatrixFactory(mat_p,params)
+      ASSERT(ASSOCIATED(mat_p), "dense square matrix not allocated")
+      ASSERT(mat_p%isInit, "dense square matrix not initialized")
+      SELECTTYPE(mat_p); TYPE IS(DenseSquareMatrixType)
+        ASSERT(.TRUE., "yay")
+      CLASS DEFAULT 
+        ASSERT(.FALSE., "Wrong TYPE ALLOCATED for dense square matrix")
+      ENDSELECT
+      CALL MatrixResemble(other_mat_p,mat_p,params)
+      SELECTTYPE(other_mat_p); TYPE IS(DenseSquareMatrixType)
+        ASSERT(.TRUE., "yay")
+      CLASS DEFAULT
+        ASSERT(.FALSE., "Wrong TYPE ALLOCATED for cloned matrix")
+      ENDSELECT
+      CALL other_mat_p%clear()
+      DEALLOCATE(other_mat_p)
+      NULLIFY(other_mat_p)
+      CALL mat_p%clear()
+      DEALLOCATE(mat_p)
+      NULLIFY(mat_p)
+      CALL params%clear()
+
+      ! Dense rect matrix
+      CALL params%add("MatrixType->n",10)
+      CALL params%add("MatrixType->m",12)
+      CALL params%add("MatrixType->isSym",.FALSE.)
+      CALL params%add("MatrixType->matType",DENSERECT)
+      CALL params%add("MatrixType->engine",VM_NATIVE)
+      CALL MatrixFactory(mat_p,params)
+      ASSERT(ASSOCIATED(mat_p), "dense rect matrix not allocated")
+      ASSERT(mat_p%isInit, "dense rect matrix not initialized")
+      SELECTTYPE(mat_p); TYPE IS(DenseRectMatrixType)
+        ASSERT(.TRUE., "yay")
+      CLASS DEFAULT 
+        ASSERT(.FALSE., "Wrong TYPE ALLOCATED for dense rect matrix")
+      ENDSELECT
+      CALL MatrixResemble(other_mat_p,mat_p,params)
+      SELECTTYPE(other_mat_p); TYPE IS(DenseRectMatrixType)
+        ASSERT(.TRUE., "yay")
+      CLASS DEFAULT
+        ASSERT(.FALSE., "Wrong TYPE ALLOCATED for cloned matrix")
+      ENDSELECT
+      CALL other_mat_p%clear()
+      DEALLOCATE(other_mat_p)
+      NULLIFY(other_mat_p)
+      CALL mat_p%clear()
+      DEALLOCATE(mat_p)
+      NULLIFY(mat_p)
+      CALL params%clear()
+
+      ! Native, sparse matrix
+      CALL params%add("MatrixType->n",10)
+      CALL params%add("MatrixType->nnz",25)
+      CALL params%add("MatrixType->matType",SPARSE)
+      CALL params%add("MatrixType->engine",VM_NATIVE)
+      CALL MatrixFactory(mat_p,params)
+      ASSERT(ASSOCIATED(mat_p), "sparse matrix not allocated")
+      ASSERT(mat_p%isInit, "sparse matrix not initialized")
+      SELECTTYPE(mat_p); TYPE IS(SparseMatrixType)
+        ASSERT(.TRUE., "yay")
+      CLASS DEFAULT 
+        ASSERT(.FALSE., "Wrong TYPE ALLOCATED for sparse matrix")
+      ENDSELECT
+      CALL MatrixResemble(other_mat_p,mat_p,params)
+      SELECTTYPE(other_mat_p); TYPE IS(SparseMatrixType)
+        ASSERT(.TRUE., "yay")
+      CLASS DEFAULT
+        ASSERT(.FALSE., "Wrong TYPE ALLOCATED for cloned matrix")
+      ENDSELECT
+      CALL other_mat_p%clear()
+      DEALLOCATE(other_mat_p)
+      NULLIFY(other_mat_p)
+      CALL mat_p%clear()
+      DEALLOCATE(mat_p)
+      NULLIFY(mat_p)
+      CALL params%clear()
+
+      ! Tridiag matrix
+      CALL params%add("MatrixType->n",10)
+      CALL params%add("MatrixType->isSym",.FALSE.)
+      CALL params%add("MatrixType->matType",TRIDIAG)
+      CALL params%add("MatrixType->engine",VM_NATIVE)
+      CALL MatrixFactory(mat_p,params)
+      ASSERT(ASSOCIATED(mat_p), "tridiag matrix not allocated")
+      ASSERT(mat_p%isInit, "tridiag matrix not initialized")
+      SELECTTYPE(mat_p); TYPE IS(TridiagMatrixType)
+        ASSERT(.TRUE., "yay")
+      CLASS DEFAULT 
+        ASSERT(.FALSE., "Wrong TYPE ALLOCATED for tridiag matrix")
+      ENDSELECT
+      CALL MatrixResemble(other_mat_p,mat_p,params)
+      SELECTTYPE(other_mat_p); TYPE IS(TridiagMatrixType)
+        ASSERT(.TRUE., "yay")
+      CLASS DEFAULT
+        ASSERT(.FALSE., "Wrong TYPE ALLOCATED for cloned matrix")
+      ENDSELECT
+      CALL other_mat_p%clear()
+      DEALLOCATE(other_mat_p)
+      NULLIFY(other_mat_p)
+      CALL mat_p%clear()
+      DEALLOCATE(mat_p)
+      NULLIFY(mat_p)
+      CALL params%clear()
+
+      !TPL-backed engines
+#ifdef FUTILITY_HAVE_PETSC
+      ! PETSc Matrix
+      CALL params%add("MatrixType->n",10)
+      CALL params%add("MatrixType->isSym",.FALSE.)
+      CALL params%add("MatrixType->matType",SPARSE)
+      CALL params%add("MatrixType->engine",VM_PETSC)
+      CALL params%add("MatrixType->MPI_COMM_ID",PE_COMM_SELF)
+      CALL MatrixFactory(mat_p,params)
+      ASSERT(ASSOCIATED(mat_p), "PETSc matrix not allocated")
+      ASSERT(mat_p%isInit, "PETSc matrix not initialized")
+      SELECTTYPE(mat_p); TYPE IS(PETScMatrixType)
+        ASSERT(.TRUE., "yay")
+      CLASS DEFAULT 
+        ASSERT(.FALSE., "Wrong TYPE ALLOCATED for PETSc matrix")
+      ENDSELECT
+      CALL MatrixResemble(other_mat_p,mat_p,params)
+      SELECTTYPE(other_mat_p); TYPE IS(PETScMatrixType)
+        ASSERT(.TRUE., "yay")
+      CLASS DEFAULT
+        ASSERT(.FALSE., "Wrong TYPE ALLOCATED for cloned matrix")
+      ENDSELECT
+      CALL other_mat_p%clear()
+      DEALLOCATE(other_mat_p)
+      NULLIFY(other_mat_p)
+      CALL mat_p%clear()
+      DEALLOCATE(mat_p)
+      NULLIFY(mat_p)
+      CALL params%clear()
+#endif
+
+#ifdef FUTILITY_HAVE_Trilinos
+      ! PETSc Matrix
+      CALL params%add('MatrixType->n',10_SNK)
+      CALL params%add('MatrixType->nlocal',10_SNK)
+      CALL params%add('MatrixType->isSym',.FALSE.)
+      CALL params%add('MatrixType->matType',SPARSE)
+      ALLOCATE(dnnz(10))
+      dnnz=10
+      CALL params%add('MatrixType->dnnz',dnnz)
+      dnnz=0
+      CALL params%add('MatrixType->onnz',dnnz)
+      CALL params%add("MatrixType->engine",VM_TRILINOS)
+      CALL params%add("MatrixType->MPI_COMM_ID",PE_COMM_SELF)
+      CALL MatrixFactory(mat_p,params)
+      ASSERT(ASSOCIATED(mat_p), "Trilinos matrix not allocated")
+      ASSERT(mat_p%isInit, "Trilinos matrix not initialized")
+      SELECTTYPE(mat_p); TYPE IS(TrilinosMatrixType)
+        ASSERT(.TRUE., "yay")
+      CLASS DEFAULT 
+        ASSERT(.FALSE., "Wrong TYPE ALLOCATED for Trilinos matrix")
+      ENDSELECT
+      CALL MatrixResemble(other_mat_p,mat_p,params)
+      SELECTTYPE(other_mat_p); TYPE IS(TrilinosMatrixType)
+        ASSERT(.TRUE., "yay")
+      CLASS DEFAULT
+        ASSERT(.FALSE., "Wrong TYPE ALLOCATED for cloned matrix")
+      ENDSELECT
+      CALL other_mat_p%clear()
+      DEALLOCATE(other_mat_p)
+      NULLIFY(other_mat_p)
+      CALL mat_p%clear()
+      DEALLOCATE(mat_p)
+      NULLIFY(mat_p)
+      CALL params%clear()
+#endif
+      
+      COMPONENT_TEST("Distributed Matrix Factory")
+#ifdef FUTILITY_HAVE_PETSC
+      ! PETSc Matrix
+      CALL params%add("MatrixType->n",10)
+      CALL params%add("MatrixType->isSym",.FALSE.)
+      CALL params%add("MatrixType->matType",SPARSE)
+      CALL params%add("MatrixType->engine",VM_PETSC)
+      CALL params%add("MatrixType->MPI_COMM_ID",PE_COMM_SELF)
+      CALL DistributedMatrixFactory(dmat_p,params)
+      ASSERT(ASSOCIATED(dmat_p), "PETSc matrix not allocated")
+      ASSERT(dmat_p%isInit, "PETSc matrix not initialized")
+      SELECTTYPE(dmat_p); TYPE IS(PETScMatrixType)
+        ASSERT(.TRUE., "yay")
+      CLASS DEFAULT 
+        ASSERT(.FALSE., "Wrong TYPE ALLOCATED for PETSc matrix")
+      ENDSELECT
+      CALL dmat_p%clear()
+      DEALLOCATE(dmat_p)
+      NULLIFY(dmat_p)
+      CALL params%clear()
+#endif
+
+#ifdef FUTILITY_HAVE_Trilinos
+      ! PETSc Matrix
+      CALL params%add('MatrixType->n',10_SNK)
+      CALL params%add('MatrixType->nlocal',10_SNK)
+      CALL params%add('MatrixType->isSym',.FALSE.)
+      CALL params%add('MatrixType->matType',SPARSE)
+      DEALLOCATE(dnnz)
+      ALLOCATE(dnnz(10))
+      dnnz=10
+      CALL params%add('MatrixType->dnnz',dnnz)
+      dnnz=0
+      CALL params%add('MatrixType->onnz',dnnz)
+      CALL params%add("MatrixType->engine",VM_TRILINOS)
+      CALL params%add("MatrixType->MPI_COMM_ID",PE_COMM_SELF)
+      CALL DistributedMatrixFactory(dmat_p,params)
+      ASSERT(ASSOCIATED(dmat_p), "Trilinos matrix not allocated")
+      ASSERT(dmat_p%isInit, "Trilinos matrix not initialized")
+      SELECTTYPE(dmat_p); TYPE IS(TrilinosMatrixType)
+        ASSERT(.TRUE., "yay")
+      CLASS DEFAULT 
+        ASSERT(.FALSE., "Wrong TYPE ALLOCATED for Trilinos matrix")
+      ENDSELECT
+      CALL dmat_p%clear()
+      DEALLOCATE(dmat_p)
+      NULLIFY(dmat_p)
+      CALL params%clear()
+#endif
+    ENDSUBROUTINE testFactories
 !
 ENDPROGRAM testMatrixTypes

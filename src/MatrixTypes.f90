@@ -192,6 +192,9 @@ MODULE MatrixTypes
 
       IF(params%has("MatrixType->matType")) THEN
         CALL params%get("MatrixType->matType", matType)
+      ELSE 
+        CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
+          "no matrix TYPE specified")
       ENDIF
 
       SELECTCASE(engine)
