@@ -796,10 +796,13 @@ PROGRAM testPartitionGraph
 !-------------------------------------------------------------------------------
     SUBROUTINE testKL()
       LOGICAL(SBK) :: bool
-      INTEGER(SIK) :: iv
+      INTEGER(SIK) :: iv,iv2
       INTEGER(SIK),ALLOCATABLE :: L1(:),L2(:)
       INTEGER(SIK),ALLOCATABLE :: refL1(:),refL2(:)
+      REAL(SRK),ALLOCATABLE :: map(:,:)
       TYPE(StringType) :: algName(1),refineAlg(1)
+
+      COMPONENT_TEST('Kernighan-Lin')
       algName(1)='Recursive Expansion Bisection'
       refineAlg(1)='Kernighan-Lin'
 
@@ -850,6 +853,130 @@ PROGRAM testPartitionGraph
       DEALLOCATE(L2)
       DEALLOCATE(refL1)
       DEALLOCATE(refL2)
+
+      !Test a small map
+      !KL should not optimally refine this (local minima trap)
+      !SKL will be able to optimally refine this
+      !The initial partition looks like:
+      !0 0 0 0 0 2 2 2 2 0 0 0 0 0
+      !0 0 0 2 2 2 2 2 2 2 2 0 0 0
+      !0 0 2 2 2 2 2 2 2 2 2 2 0 0
+      !0 2 2 2 2 2 2 2 2 2 2 2 2 0
+      !0 2 2 2 2 2 2 2 2 2 2 2 1 0
+      !2 2 2 2 2 2 2 2 2 2 1 1 1 1
+      !2 2 2 2 2 2 2 2 1 1 1 1 1 1
+      !2 2 2 2 2 2 1 1 1 1 1 1 1 1
+      !2 2 2 2 1 1 1 1 1 1 1 1 1 1
+      !0 2 1 1 1 1 1 1 1 1 1 1 1 0
+      !0 1 1 1 1 1 1 1 1 1 1 1 1 0
+      !0 0 1 1 1 1 1 1 1 1 1 1 0 0
+      !0 0 0 1 1 1 1 1 1 1 1 0 0 0
+      !0 0 0 0 0 1 1 1 1 0 0 0 0 0
+      ALLOCATE(map(14,14))
+      map=REAL(RESHAPE((/0,0,0,0,0,1,1,1,1,0,0,0,0,0, &
+                         0,0,0,1,1,1,1,1,1,1,1,0,0,0, &
+                         0,0,1,1,1,1,1,1,1,1,1,1,0,0, &
+                         0,1,1,1,1,1,1,1,1,1,1,1,1,0, &
+                         0,1,1,1,1,1,1,1,1,1,1,1,1,0, &
+                         1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                         1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                         1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                         1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                         0,1,1,1,1,1,1,1,1,1,1,1,1,0, &
+                         0,1,1,1,1,1,1,1,1,1,1,1,1,0, &
+                         0,0,1,1,1,1,1,1,1,1,1,1,0,0, &
+                         0,0,0,1,1,1,1,1,1,1,1,0,0,0, &
+                         0,0,0,0,0,1,1,1,1,0,0,0,0,0/),(/14,14/)),SRK)
+      CALL map2Graph(map,tparams)
+      DEALLOCATE(map)
+      CALL tparams%add('PartitionGraph -> Algorithms',algName)
+      CALL tparams%add('PartitionGraph -> Refinement',refineAlg)
+      CALL tparams%add('PartitionGraph -> nGroups',2)
+      CALL testPG%initialize(tparams)
+      ALLOCATE(L1(74))
+      ALLOCATE(L2(74))
+      L1=(/1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25, &
+          26,27,28,29,30,31,32,33,34,36,37,38,39,40,41,42,43,44,45,46,51,52, &
+          53,54,55,56,57,58,59,60,67,68,69,70,71,72,73,74,83,84,85,86,87,88, &
+          99,100,101,102,114/)
+      L2=(/35,47,48,49,50,61,62,63,64,65,66,75,76,77,78,79,80,81,82,89,90,91, &
+           92,93,94,95,96,97,98,103,104,105,106,107,108,109,110,111,112,113, &
+           115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130, &
+           131,132,133,134,135,136,137,138,139,140,141,142,143,144,145,146, &
+           147,148/)
+      ALLOCATE(refL1(74))
+      ALLOCATE(refL2(74))
+      refL1=(/1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24, &
+             25,26,27,28,29,30,31,32,33,34,36,37,38,39,40,41,42,43,44,45,46, &
+             51,52,53,54,55,56,57,58,59,60,67,68,69,70,71,72,73,74,83,84,85, &
+             86,87,88,99,100,101,102,35/)
+      refL2=(/114,47,48,49,50,61,62,63,64,65,66,75,76,77,78,79,80,81,82,89,90, &
+               91,92,93,94,95,96,97,98,103,104,105,106,107,108,109,110,111, &
+              112,113,115,116,117,118,119,120,121,122,123,124,125,126,127,128, &
+              129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,144, &
+              145,146,147,148/)
+      CALL testPG%refine(L1,L2)
+      !Test
+      DO iv=1,SIZE(L1)
+        bool=(L1(iv) == refL1(iv))
+        ASSERT(bool,'%refine(KL) L1')
+        FINFO() 'Index:',iv
+        FINFO() 'Ref: ',refL1(iv)
+        FINFO() 'Test:',L1(iv)
+      ENDDO !iv
+
+      DO iv=1,SIZE(L2)
+        bool=(L2(iv) == refL2(iv))
+        ASSERT(bool,'%refine(KL) L2')
+        FINFO() 'Index:',iv
+        FINFO() 'Ref: ',refL2(iv)
+        FINFO() 'Test:',L2(iv)
+      ENDDO !iv
+
+
+      CALL testPG%clear()
+      COMPONENT_TEST('Spatial-Kernighan-Lin')
+      refineAlg(1)='Spatial-Kernighan-Lin'
+      CALL tparams%set('PartitionGraph -> Refinement', refineAlg)
+      CALL testPG%initialize(tparams)
+      L1=(/1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25, &
+          26,27,28,29,30,31,32,33,34,36,37,38,39,40,41,42,43,44,45,46,51,52, &
+          53,54,55,56,57,58,59,60,67,68,69,70,71,72,73,74,83,84,85,86,87,88, &
+          99,100,101,102,114/)
+      L2=(/35,47,48,49,50,61,62,63,64,65,66,75,76,77,78,79,80,81,82,89,90,91, &
+           92,93,94,95,96,97,98,103,104,105,106,107,108,109,110,111,112,113, &
+           115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130, &
+           131,132,133,134,135,136,137,138,139,140,141,142,143,144,145,146, &
+           147,148/)
+      CALL testPG%refine(L1,L2)
+      refL1=(/1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24, &
+             25,26,27,28,29,30,31,32,33,34,36,37,38,39,40,41,42,43,44,45,46, &
+             51,52,53,54,55,56,57,58,59,60,67,68,69,70,71,72,73,74,66,65,64, &
+             63,62,61,50,49,48,47,35/)
+      refL2=(/114,102,101,100,99,88,87,86,85,84,83,75,76,77,78,79,80,81,82, &
+              89,90,91,92,93,94,95,96,97,98,103,104,105,106,107,108,109,110, &
+              111,112,113,115,116,117,118,119,120,121,122,123,124,125,126,127, &
+              128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143, &
+              144,145,146,147,148/)
+
+      !Test
+      DO iv=1,SIZE(L1)
+        bool=(L1(iv) == refL1(iv))
+        ASSERT(bool,'%refine(KL) L1')
+        FINFO() 'Index:',iv
+        FINFO() 'Ref: ',refL1(iv)
+        FINFO() 'Test:',L1(iv)
+      ENDDO !iv
+
+      DO iv=1,SIZE(L2)
+        bool=(L2(iv) == refL2(iv))
+        ASSERT(bool,'%refine(KL) L2')
+        FINFO() 'Index:',iv
+        FINFO() 'Ref: ',refL2(iv)
+        FINFO() 'Test:',L2(iv)
+      ENDDO !iv
+      CALL tparams%clear()
+      CALL testPG%clear()
     ENDSUBROUTINE testKL
 !
 !-------------------------------------------------------------------------------
@@ -1097,5 +1224,63 @@ PROGRAM testPartitionGraph
       IF(ALLOCATED(strList)) DEALLOCATE(strList)
       DEALLOCATE(e)
     ENDSUBROUTINE clearTest
+!
+!-------------------------------------------------------------------------------
+!> @brief help routine to generate a parameter list for a graph from a 2D map
+!>        This only adds relevent parameters: nvert, neigh, wts, coord for map
+!>        (can do weighted vertices, but not edges)
+!>
+    SUBROUTINE map2Graph(map,params)
+      REAL(SRK),INTENT(IN) :: map(:,:)
+      TYPE(ParamType) :: params
+      INTEGER(SIK) :: nvert,ix,iy,iv,cv,cn,nx,ny
+      INTEGER(SIK),ALLOCATABLE :: indMap(:,:),neigh(:,:)
+      REAL(SRK),ALLOCATABLE :: wts(:),coord(:,:)
+
+      nx=SIZE(map,DIM=1)
+      ny=SIZE(map,DIM=2)
+      nvert=COUNT(map > 0.0_SRK)
+      ALLOCATE(wts(nvert))
+      ALLOCATE(neigh(4,nvert))
+      ALLOCATE(coord(2,nvert))
+      ALLOCATE(indMap(nx,ny))
+      neigh=0
+      indMap=0
+      wts=0.0_SRK
+      coord=0.0_SRK
+
+      cv=0
+      DO iy=SIZE(map,DIM=2),1,-1
+        DO ix=1,SIZE(map,DIM=1)
+          IF(map(ix,iy) > 0.0_SRK) THEN
+            cv=cv+1
+            wts(cv)=map(ix,iy)
+            coord(1,cv)=ix; coord(2,cv)=iy
+            indMap(ix,iy)=cv
+          ENDIF
+        ENDDO !iy
+      ENDDO !ix
+
+      !Get neighbors
+      DO iv=1,nvert
+        ix=coord(1,iv); iy=coord(2,iv)
+        IF(ix > 1) neigh(1,iv)=indMap(ix-1,iy)
+        IF(ix < nx) neigh(2,iv)=indMap(ix+1,iy)
+        IF(iy > 1) neigh(3,iv)=indMap(ix,iy-1)
+        IF(iy < ny) neigh(4,iv)=indMap(ix,iy+1)
+      ENDDO !iv
+
+      DEALLOCATE(indMap)
+
+      !Add to parameter list
+      CALL params%add('PartitionGraph -> nvert', nvert)
+      CALL params%add('PartitionGraph -> neigh', neigh)
+      CALL params%add('PartitionGraph -> wts', wts)
+      CALL params%add('PartitionGraph -> coord', coord)
+
+      DEALLOCATE(neigh)
+      DEALLOCATE(wts)
+      DEALLOCATE(coord)
+    ENDSUBROUTINE map2Graph
 !
 ENDPROGRAM testPartitionGraph

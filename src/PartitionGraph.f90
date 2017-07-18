@@ -398,6 +398,8 @@ MODULE PartitionGraph
             CASE('') !Do nothing if nothing specified
             CASE('KERNIGHAN-LIN')
               thisGraph%refineAlgArry(ipart)%r => KernighanLin_PartitionGraph
+            CASE('SPATIAL-KERNIGHAN-LIN')
+              thisGraph%refineAlgArry(ipart)%r => SpatialKernighanLin_PartitionGraph
             CASE DEFAULT
               CALL ePartitionGraph%raiseError(modName//'::'//myName// &
                 ' - Refinement algorithm "'//TRIM(algName)//'" not recognized!')
@@ -1283,7 +1285,8 @@ MODULE PartitionGraph
       REAL(SRK),ALLOCATABLE :: D(:),gv(:)
       REAL(SRK) :: wg1,wg2,wdiff,wta,wtb,g,gmax
 
-      !Calculate D
+      !Allocate memory
+      nneigh=thisGraph%maxneigh
       N1=SIZE(L1)
       N2=SIZE(L2)
       ng=MIN(N1,N2)
@@ -1294,18 +1297,17 @@ MODULE PartitionGraph
 
       gmax=1.0_SRK
       DO WHILE(gmax > 0)
+        !Calculate D=E-I
         D=0
-        nneigh=thisGraph%maxneigh
         DO ia=1,N1
           cva=L1(ia)
           DO in=1,nneigh
             ineigh=thisGraph%neigh(in,cva)
-            IF(ineigh > 0) THEN
-              IF(ANY(ineigh == L1)) THEN
-                D(cva)=D(cva)-thisGraph%neighwts(in,cva)
-              ELSE
-                D(cva)=D(cva)+thisGraph%neighwts(in,cva)
-              ENDIF
+            IF(ineigh == 0) CYCLE
+            IF(ANY(ineigh == L1)) THEN
+              D(cva)=D(cva)-thisGraph%neighwts(in,cva)
+            ELSE
+              D(cva)=D(cva)+thisGraph%neighwts(in,cva)
             ENDIF
           ENDDO !in
         ENDDO !ia
@@ -1313,12 +1315,11 @@ MODULE PartitionGraph
           cvb=L2(ib)
           DO in=1,nneigh
             ineigh=thisGraph%neigh(in,cvb)
-            IF(ineigh > 0) THEN
-              IF(ANY(ineigh == L2)) THEN
-                D(cvb)=D(cvb)-thisGraph%neighwts(in,cvb)
-              ELSE
-                D(cvb)=D(cvb)+thisGraph%neighwts(in,cvb)
-              ENDIF
+            IF(ineigh == 0) CYCLE
+            IF(ANY(ineigh == L2)) THEN
+              D(cvb)=D(cvb)-thisGraph%neighwts(in,cvb)
+            ELSE
+              D(cvb)=D(cvb)+thisGraph%neighwts(in,cvb)
             ENDIF
           ENDDO !in
         ENDDO !ib
@@ -1328,23 +1329,25 @@ MODULE PartitionGraph
         bv=-1
         gv=-1.0_SRK
         cg=0
+
+        !Current size of each group
+        wg1=0
+        wg2=0
+        DO iv=1,N1
+          wg1=wg1+thisGraph%wts(L1(iv))
+        ENDDO !iv
+        DO iv=1,N2
+          wg2=wg2+thisGraph%wts(L2(iv))
+        ENDDO !iv
+
         DO ig=1,ng
-          !Current size of each group
-          wg1=0
-          wg2=0
-          DO iv=1,N1
-            wg1=wg1+thisGraph%wts(L1(iv))
-          ENDDO !iv
-          DO iv=1,N2
-            wg2=wg2+thisGraph%wts(L2(iv))
-          ENDDO !iv
+          !Current weight difference between groups
           wdiff=wg2-wg1
 
           !Find maximum value of g
           iam=-1
           ibm=-1
           gmax=-HUGE(1.0_SRK)
-
           DO ia=1,N1
             cva=L1(ia)
             IF(.NOT. ANY(cva == av)) THEN
@@ -1389,9 +1392,9 @@ MODULE PartitionGraph
           gv(ig)=gmax
 
           !Update weights of groups as if these have been swapped
-          wta=thisGraph%wts(iam)-thisGraph%wts(ibm)
-          wg1=wg1-wta
-          wg2=wg2+wta
+          wdiff=thisGraph%wts(iam)-thisGraph%wts(ibm)
+          wg1=wg1-wdiff
+          wg2=wg2+wdiff
 
           !Update D values as if these have been swapped
           DO in=1,nneigh
@@ -1401,16 +1404,16 @@ MODULE PartitionGraph
             ELSEIF(ineigh /= 0) THEN
               D(ineigh)=D(ineigh)-2.0_SRK*thisGraph%neighwts(in,av(ig))
             ENDIF
-          ENDDO !in
-          DO in=1,nneigh
             ineigh=thisGraph%neigh(in,bv(ig))
+            IF(ineigh == 0) CYCLE
             IF(ANY(ineigh == L2)) THEN
               D(ineigh)=D(ineigh)+2.0_SRK*thisGraph%neighwts(in,bv(ig))
-            ELSEIF(ineigh /= 0) THEN
+            ELSE
               D(ineigh)=D(ineigh)-2.0_SRK*thisGraph%neighwts(in,bv(ig))
             ENDIF
           ENDDO !in
         ENDDO !ig
+
         k=-1
         gmax=-HUGE(1.0_SRK)
         g=0.0_SRK
@@ -1448,6 +1451,237 @@ MODULE PartitionGraph
       DEALLOCATE(bv)
       DEALLOCATE(gv)
     ENDSUBROUTINE KernighanLin_PartitionGraph
+!
+!-------------------------------------------------------------------------------
+!> @brief Algorithm to minimize communication between groups in a PartitionGraph
+!> @param thisGraph the graph containing vertices in L1, L2
+!> @param L1 the list of vertices in group 1
+!> @param L2 the list of vertices in group 2
+!>
+    SUBROUTINE SpatialKernighanLin_PartitionGraph(thisGraph,L1,L2)
+      CLASS(PartitionGraphType),INTENT(IN) :: thisGraph
+      INTEGER(SIK),INTENT(INOUT) :: L1(:),L2(:)
+      INTEGER(SIK) :: ia,ib,iam,ibm,cva,cvb,in,ineigh
+      INTEGER(SIK) :: N1,N2,nneigh,ng,cg,iv,ig,k
+      INTEGER(SIK),ALLOCATABLE :: av(:),bv(:)
+      REAL(SRK),ALLOCATABLE :: D(:),gv(:),wd(:)
+      REAL(SRK) :: wg1,wg2,wdiff,wta,wtb,g,gmax,sd,dmax
+
+      !Allocate memory
+      nneigh=thisGraph%maxneigh
+      N1=SIZE(L1)
+      N2=SIZE(L2)
+      ng=MIN(N1,N2)
+      ALLOCATE(D(thisGraph%nvert))
+      ALLOCATE(wd(thisGraph%nvert))
+      ALLOCATE(av(ng))
+      ALLOCATE(bv(ng))
+      ALLOCATE(gv(ng))
+
+      !Calculate weighted sum of edges out of each vertex (weighted degree)
+      DO iv=1,thisGraph%nvert
+        wd(iv)=SUM(thisGraph%neighwts(:,iv))
+      ENDDO !iv
+
+      gmax=1.0_SRK
+      DO WHILE(gmax > 0)
+        !Calculate D=E-I
+        D=0
+        DO ia=1,N1
+          cva=L1(ia)
+          DO in=1,nneigh
+            ineigh=thisGraph%neigh(in,cva)
+            IF(ineigh == 0) CYCLE
+            IF(ANY(ineigh == L1)) THEN
+              D(cva)=D(cva)-thisGraph%neighwts(in,cva)
+            ELSE
+              D(cva)=D(cva)+thisGraph%neighwts(in,cva)
+            ENDIF
+          ENDDO !in
+        ENDDO !ia
+        DO ib=1,N2
+          cvb=L2(ib)
+          DO in=1,nneigh
+            ineigh=thisGraph%neigh(in,cvb)
+            IF(ineigh == 0) CYCLE
+            IF(ANY(ineigh == L2)) THEN
+              D(cvb)=D(cvb)-thisGraph%neighwts(in,cvb)
+            ELSE
+              D(cvb)=D(cvb)+thisGraph%neighwts(in,cvb)
+            ENDIF
+          ENDDO !in
+        ENDDO !ib
+
+        !Begin with empty set
+        av=-1
+        bv=-1
+        gv=-1.0_SRK
+        cg=0
+
+        !Current size of each group
+        wg1=0
+        wg2=0
+        DO iv=1,N1
+          wg1=wg1+thisGraph%wts(L1(iv))
+        ENDDO !iv
+        DO iv=1,N2
+          wg2=wg2+thisGraph%wts(L2(iv))
+        ENDDO !iv
+
+        DO ig=1,ng
+          !Current weight difference between groups
+          wdiff=wg2-wg1
+
+          !Find maximum value of g
+          iam=-1
+          ibm=-1
+          dmax=0.0_SRK
+          gmax=-HUGE(1.0_SRK)
+          DO ia=1,N1
+            cva=L1(ia)
+            IF(D(cva) > -wd(cva) .AND. .NOT. ANY(cva == av)) THEN
+              DO ib=1,N2
+                cvb=L2(ib)
+                IF(D(cvb) > -wd(cvb) .AND. .NOT. ANY(cvb == bv)) THEN
+                  wta=thisGraph%wts(cva)
+                  wtb=thisGraph%wts(cvb)
+                  !Conserve balance between the groups
+                  IF((wta .APPROXEQA. wtb) .OR. &
+                     (wtb-wta .APPROXEQA. wdiff)) THEN
+                    g=D(cva)+D(cvb)
+                    DO in=1,nneigh
+                      ineigh=thisGraph%neigh(in,cva)
+                      IF(ineigh == cvb) THEN
+                        g=g-2.0_SRK*thisGraph%neighwts(in,cva)
+                      ENDIF
+                    ENDDO !in
+
+                    IF(g >= gmax) THEN
+                      IF(g > gmax) THEN
+                        gmax=g
+                        dmax=0.0_SRK
+                      ENDIF
+
+                      sd=distance(thisGraph%coord(:,cva),thisGraph%coord(:,cvb))
+                      IF(sd > dmax) THEN
+                        dmax=sd
+                        iam=ia
+                        ibm=ib
+                      ENDIF
+                    ENDIF
+                  ENDIF
+                ENDIF
+              ENDDO !ib
+            ENDIF
+          ENDDO !ia
+
+          !If no swap found under the conditions then search using KL
+          IF(iam == -1) THEN
+            DO ia=1,N1
+              cva=L1(ia)
+              IF(.NOT. ANY(cva == av)) THEN
+                DO ib=1,N2
+                  IF(.NOT. ANY(cvb == bv)) THEN
+                    wta=thisGraph%wts(cva)
+                    wtb=thisGraph%wts(cvb)
+                    !Conserve balance between the groups
+                    IF((wta .APPROXEQA. wtb) .OR. &
+                       (wtb-wta .APPROXEQA. wdiff)) THEN
+                      g=D(cva)+D(cvb)
+                      DO in=1,nneigh
+                        ineigh=thisGraph%neigh(in,cva)
+                        IF(ineigh == cvb) THEN
+                          g=g-2.0_SRK*thisGraph%neighwts(in,cva)
+                        ENDIF
+                      ENDDO !in
+
+                      IF(g > gmax) THEN
+                        gmax=g
+                        iam=ia
+                        ibm=ib
+                      ENDIF
+                    ENDIF
+                  ENDIF
+                ENDDO !ib
+              ENDIF
+            ENDDO !ia
+
+            !Exit if a swap is still not found
+            IF(iam == -1) THEN
+              EXIT
+            ELSE
+              cg=cg+1
+            ENDIF
+          ELSE
+            cg=cg+1
+          ENDIF
+
+          !Update sets
+          av(ig)=L1(iam)
+          bv(ig)=L2(ibm)
+          gv(ig)=gmax
+
+          !Update weights of groups as if these have been swapped
+          wdiff=thisGraph%wts(iam)-thisGraph%wts(ibm)
+          wg1=wg1-wdiff
+          wg2=wg2+wdiff
+
+          !Update D values as if these have been swapped
+          DO in=1,nneigh
+            ineigh=thisGraph%neigh(in,av(ig))
+            IF(ANY(ineigh == L1)) THEN
+              D(ineigh)=D(ineigh)+2.0_SRK*thisGraph%neighwts(in,av(ig))
+            ELSEIF(ineigh /= 0) THEN
+              D(ineigh)=D(ineigh)-2.0_SRK*thisGraph%neighwts(in,av(ig))
+            ENDIF
+            ineigh=thisGraph%neigh(in,bv(ig))
+            IF(ineigh == 0) CYCLE
+            IF(ANY(ineigh == L2)) THEN
+              D(ineigh)=D(ineigh)+2.0_SRK*thisGraph%neighwts(in,bv(ig))
+            ELSE
+              D(ineigh)=D(ineigh)-2.0_SRK*thisGraph%neighwts(in,bv(ig))
+            ENDIF
+          ENDDO !in
+        ENDDO !ig
+
+        k=-1
+        gmax=-HUGE(1.0_SRK)
+        g=0.0_SRK
+        !Find k which maximizes sum gv(1:k)
+        DO ig=1,cg
+          g=g+gv(ig)
+          IF(g > gmax) THEN
+            gmax=g
+            k=ig
+          ENDIF
+        ENDDO !ig
+
+        !Exchange between groups
+        IF(gmax > 0) THEN
+          DO ig=1,k
+            DO ia=1,N1
+              IF(L1(ia) == av(ig)) THEN
+                L1(ia)=bv(ig)
+                EXIT
+              ENDIF
+            ENDDO !ia
+            DO ib=1,N2
+              IF(L2(ib) == bv(ig)) THEN
+                L2(ib)=av(ig)
+                EXIT
+              ENDIF
+            ENDDO !ib
+          ENDDO !ig
+        ENDIF
+      ENDDO !gmax > 0
+
+      !Free up memory
+      DEALLOCATE(wd)
+      DEALLOCATE(D)
+      DEALLOCATE(av)
+      DEALLOCATE(bv)
+      DEALLOCATE(gv)
+    ENDSUBROUTINE SpatialKernighanLin_PartitionGraph
 !
 !-------------------------------------------------------------------------------
 !> @brief Calculate metrics relevant to the quality of partition
