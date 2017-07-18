@@ -24,7 +24,8 @@ PROGRAM testEigenvalueSolver
   TYPE(MPI_EnvType) :: mpiTestEnv
   TYPE(ParamType) :: pList, optList
   CLASS(EigenvalueSolverType_Base),POINTER :: testEVS
-  CLASS(DistributedMatrixType),POINTER :: A, B
+  CLASS(DistributedMatrixType),POINTER :: A => NULL()
+  CLASS(DistributedMatrixType),POINTER :: B => NULL()
 
 #ifdef FUTILITY_HAVE_PETSC
 #include <finclude/petsc.h>
@@ -55,23 +56,29 @@ PROGRAM testEigenvalueSolver
   CREATE_TEST('Test Eigenvalue Solvers')
 
   ALLOCATE(EigenvalueSolverType_SLEPC :: testEVS)
-  ALLOCATE(PetscMatrixType :: A)
-  ALLOCATE(PetscMatrixType :: B)
-#ifdef FUTILITY_HAVE_PETSC
+#ifdef FUTILITY_HAVE_SLEPC
   REGISTER_SUBTEST('testInitSLEPc',testInitSLEPc)
   REGISTER_SUBTEST('testSetMatSLEPc',testSetMatSLEPc)
   REGISTER_SUBTEST('testSetX0SLEPc',testSetX0SLEPc)
   REGISTER_SUBTEST('testSetConvSLEPc',testSetConvSLEPc)
-#ifdef FUTILITY_HAVE_SLEPC
   REGISTER_SUBTEST('testSolveSLEPc',testSolveSLEPc)
   REGISTER_SUBTEST('testGetResidSLEPc',testGetResidSLEPc)
-#endif
   REGISTER_SUBTEST('testClearSLEPc',testClearSLEPc)
 #endif
-  DEALLOCATE(testEVS,A,B)
+  IF(ASSOCIATED(A)) THEN
+    IF(A%isInit) THEN
+      CALL A%clear()
+    ENDIF
+    DEALLOCATE(A)
+  ENDIF
+  IF(ASSOCIATED(B)) THEN
+    IF(B%isInit) THEN
+      CALL B%clear()
+    ENDIF
+    DEALLOCATE(B)
+  ENDIF 
+  DEALLOCATE(testEVS)
   ALLOCATE(EigenvalueSolverType_Anasazi :: testEVS)
-  ALLOCATE(TrilinosMatrixType :: A)
-  ALLOCATE(TrilinosMatrixType :: B)
   CALL optList%set('EigenvalueSolverType->solver',GD)
   CALL optList%set('EigenvalueSolverType->n',30_SIK)
   CALL optList%set('EigenvalueSolverType->nlocal',30_SIK)
@@ -89,9 +96,19 @@ PROGRAM testEigenvalueSolver
   CALL pList%clear()
   CALL optList%clear()
 
-  IF(A%isInit) CALL A%clear()
-  IF(B%isInit) CALL B%clear()
-  DEALLOCATE(testEVS,A,B)
+  IF(ASSOCIATED(A)) THEN
+    IF(A%isInit) THEN
+      CALL A%clear()
+    ENDIF
+    DEALLOCATE(A)
+  ENDIF
+  IF(ASSOCIATED(B)) THEN
+    IF(B%isInit) THEN
+      CALL B%clear()
+    ENDIF
+    DEALLOCATE(B)
+  ENDIF 
+  DEALLOCATE(testEVS)
 
 #ifdef FUTILITY_HAVE_PETSC
   CALL PetscFinalize(ierr)
@@ -114,7 +131,9 @@ CONTAINS
       ASSERT(ASSOCIATED(testEVS%MPIparallelEnv),'%MPIenv')
       ASSERT(testEVS%X%isInit ,'%x')
       SELECTTYPE(testEVS); TYPE IS(EigenvalueSolverType_SLEPC)
+#ifdef FUTILITY_HAVE_SLEPC
         ASSERT(testEVS%xi%isInit,'%xi')
+#endif
       ENDSELECT
     ENDSUBROUTINE testInitSLEPc
 !
@@ -133,7 +152,9 @@ CONTAINS
       ASSERT(.NOT. ASSOCIATED(testEVS%B),'%B')
       ASSERT(.NOT. (testEVS%X%isInit) ,'%x')
       SELECTTYPE(testEVS); TYPE IS(EigenvalueSolverType_SLEPC)
+#ifdef FUTILITY_HAVE_SLEPC
         ASSERT(.NOT. (testEVS%xi%isInit),'%xi')
+#endif
       ENDSELECT
     ENDSUBROUTINE testClearSLEPc
 !
@@ -144,10 +165,13 @@ CONTAINS
       CALL plist%add('MatrixType->nlocal',2_SIK)
       CALL plist%add('MatrixType->isSym',.FALSE.)
       CALL plist%add('MatrixType->matType',0_SIK)
+      CALL plist%add('MatrixType->engine',VM_PETSC)
       CALL plist%add('MatrixType->MPI_COMM_ID',testEVS%MPIparallelEnv%comm)
 
-      CALL A%init(plist)
-      CALL B%init(plist)
+      CALL DistributedMatrixFactory(A, plist)
+      ASSERT(ASSOCIATED(A), "A matrix not ASSOCIATED")
+      CALL DistributedMatrixFactory(B, plist)
+      ASSERT(ASSOCIATED(B), "B matrix not ASSOCIATED")
 
       CALL B%set(1,1,0.1208_SRK)
       CALL B%set(2,1,-0.117_SRK)
@@ -182,6 +206,7 @@ CONTAINS
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testSetX0SLEPc()
+#ifdef FUTILITY_HAVE_PETSC
       TYPE(PETScVectorType) :: x
       REAL(SRK) :: tmp(2)
       CALL plist%clear()
@@ -200,7 +225,7 @@ CONTAINS
       ASSERT(tmp(2)==1.5_SRK,'%x(2)')
 
       CALL x%clear()
-
+#endif
     ENDSUBROUTINE testSetX0SLEPc
 !
 !-------------------------------------------------------------------------------
@@ -237,7 +262,9 @@ CONTAINS
       ASSERT(ASSOCIATED(testEVS%MPIparallelEnv),'%MPIenv')
       ASSERT(testEVS%X%isInit ,'%x')
       SELECTTYPE(testEVS); TYPE IS(EigenvalueSolverType_Anasazi)
+#ifdef FUTILITY_HAVE_Trilinos
         ASSERT(testEVS%x_scale%isInit,'%x_scale')
+#endif
       ENDSELECT
     ENDSUBROUTINE testInitAnasazi
 !
@@ -256,7 +283,9 @@ CONTAINS
       ASSERT(.NOT. ASSOCIATED(testEVS%B),'%B')
       ASSERT(.NOT. (testEVS%X%isInit) ,'%x')
       SELECTTYPE(testEVS); TYPE IS(EigenvalueSolverType_Anasazi)
+#ifdef FUTILITY_HAVE_Trilinos
         ASSERT(.NOT. testEVS%x_scale%isInit,'%x_scale')
+#endif
       ENDSELECT
     ENDSUBROUTINE testClearAnasazi
 !
@@ -268,10 +297,11 @@ CONTAINS
       CALL plist%add('MatrixType->nlocal',30_SIK)
       CALL plist%add('MatrixType->isSym',.FALSE.)
       CALL plist%add('MatrixType->matType',0_SIK)
+      CALL plist%add('MatrixType->engine',VM_TRILINOS)
       CALL plist%add('MatrixType->MPI_COMM_ID',testEVS%MPIparallelEnv%comm)
 
-      CALL A%init(plist)
-      CALL B%init(plist)
+      CALL DistributedMatrixFactory(A,plist)
+      CALL DistributedMatrixFactory(B,plist)
 
       CALL B%set(1,1,0.1208_SRK)
       CALL B%set(2,1,-0.117_SRK)
@@ -320,6 +350,7 @@ CONTAINS
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testSetX0Anasazi()
+#ifdef FUTILITY_HAVE_Trilinos
       TYPE(TrilinosVectorType) :: x
       REAL(SRK) :: tmp(30)
       INTEGER(SIK) :: i
@@ -340,8 +371,8 @@ CONTAINS
       ENDDO
 
       CALL x%clear()
-
-    ENDSUBROUTINE testSetX0Anasazi
+#endif
+ENDSUBROUTINE testSetX0Anasazi
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testSetConvAnasazi()

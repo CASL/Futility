@@ -120,6 +120,7 @@ public:
             new Anasazi::BasicEigenproblem<double,Epetra_MultiVector,Epetra_Operator>());
         problem->setA(anasazi.LHS);
         problem->setM(anasazi.RHS);
+
         if(anasazi.haspc) problem->setPrec(anasazi.pc);
         problem->setInitVec(anasazi.x);
         problem->setNEV(1);
@@ -139,9 +140,9 @@ public:
                 solver.getProblem().getSolution();
             Anasazi::Value<double> eval = (solution.Evals)[0];
             anasazi.keff = eval.realpart;
-            double val[0];
-            solution.Evecs->MeanValue(val);
-            anasazi.x->Update(1.0/val[0],*(solution.Evecs),0.0);
+            double val;
+            solution.Evecs->MeanValue(&val);
+            anasazi.x->Update(1.0/val,*(solution.Evecs),0.0);
             return 0;
         }
         else{
