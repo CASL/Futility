@@ -30,16 +30,33 @@
 !>  - @ref trilinos_interfaces "trilinos_interfaces": @copybrief trilinos_interfaces
 !>  - @ref BLAS1 "BLAS1": @copybrief BLAS1
 !>
-!> TIBWSFB: This example doesnt match the current interface
 !> @par EXAMPLES
 !> @code
 !> PROGRAM ExampleVector
 !>   TYPE(RealVectorType) :: vector
+!>   CLASS(VectorType),POINTER :: vec_p
+!>   TYPE(ParamType) :: params
+!>   
+!>   CALL params%add("VectorType->n",36_SIK)
 !>
-!>   CALL vector%init(36)
+!>   CALL vector%init(params)
+!>   CALL params%clear()
 !>   CALL vector%set(1,10._SRK)
 !>   value=vector%get(1)
 !>   CALL vector%clear()
+!>
+!>   ! Create a Trilinos vector using the abstract factory
+!>   CALL params%add("VectorType->n",36_SIK)
+!>   CALL params%add("VectorType->nlocal",6_SIK)
+!>   CALL params%add("VectorType->engine",VM_TRILINOS)
+!>   CALL params%add("VectorType->MPI_Comm_ID",MPI_COMM_WORLD)
+!>
+!>   CALL VectorFactory(vec_p,params)
+!>
+!>   ! Clean up
+!>   CALL vec_p%clear()
+!>   DEALLOCATE(vec_p)
+!>
 !> ENDPROGRAM ExampleVector
 !> @endcode
 !>

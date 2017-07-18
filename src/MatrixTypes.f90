@@ -44,8 +44,14 @@
 !> @code
 !> PROGRAM ExampleMatrix
 !>   TYPE(SparseMatrixType) :: sparse
+!>   CLASS(MatrixType),POINTER :: matrix_p => NULL()
+!>   TYPE(ParamType) :: params
 !>
-!>   CALL sparse%init(3,6)
+!>   CALL params%add("MatrixType->n",3_SIK)
+!>   CALL params%add("MatrixType->nnz",6_SIK)
+!>
+!>   CALL sparse%init(params)
+!>   CALL params%clear()
 !>   CALL sparse%setShape(1,1,1._SRK)
 !>   CALL sparse%setShape(1,3,2._SRK)
 !>   CALL sparse%setShape(2,3,3._SRK)
@@ -59,6 +65,18 @@
 !>   CALL sparse%set(3,2,50._SRK)
 !>   CALL sparse%set(3,3,60._SRK)
 !>   CALL sparse%clear()
+!>   
+!>   ! Create a PETSc matrix using the factory
+!>   CALL params%add("MatrixType->n",3_SIK)
+!>   CALL params%add("MatrixType->nnz",6_SIK)
+!>   CALL params%add("MatrixType->matType",SPARSE)
+!>   CALL params%add("MatrixType->engine",VM_PETSC)
+!>   CALL MatrixFactory(matrix_p,params)
+!>
+!>   ! Clean up
+!>   CALL matrix_p%clear()
+!>   DEALLOCATE(matrix_p)
+!>   
 !> ENDPROGRAM ExampleMatrix
 !> @endcode
 !>
