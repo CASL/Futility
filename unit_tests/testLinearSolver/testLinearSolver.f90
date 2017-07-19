@@ -141,8 +141,8 @@ CONTAINS
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Direct)
         bool = .NOT.thisLS%isInit .AND. thisLS%solverMethod == -1                   &
           .AND. .NOT.thisLS%isDecomposed .AND. .NOT.ASSOCIATED(thisLS%A)            &
-          .AND. .NOT.ALLOCATED(thisLS%X) .AND. thisLS%info == 0                     &
-          .AND. .NOT.ALLOCATED(thisLS%b) .AND. .NOT.ALLOCATED(thisLS%IPIV)          &
+          .AND. .NOT.ASSOCIATED(thisLS%X) .AND. thisLS%info == 0                    &
+          .AND. .NOT.ASSOCIATED(thisLS%b) .AND. .NOT.ALLOCATED(thisLS%IPIV)         &
           .AND. .NOT.ALLOCATED(thisLS%M) .AND. .NOT.thisLS%MPIparallelEnv%isInit()  &
           .AND. .NOT.thisLS%OMPparallelEnv%isInit()
         ASSERT(bool, 'Direct%clear(...)')
@@ -204,7 +204,7 @@ CONTAINS
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
         bool=thisLS%isInit .OR.thisLS%solverMethod == 1                  &
             .OR. ALLOCATED(thisLS%M) .OR. ASSOCIATED(thisLS%A)           &
-            .OR. ALLOCATED(thisLS%X) .OR. thisLS%info /= 0               &
+            .OR. ASSOCIATED(thisLS%X) .OR. thisLS%info /= 0               &
 !            .OR. thisLS%MPIparallelEnv%isInit()                          &
 !            .OR. thisLS%OMPparallelEnv%isInit()                          &
             .OR. thisLS%normType == 2 .OR. thisLS%maxIters == 2          &
@@ -601,6 +601,8 @@ CONTAINS
         CALL A%set(4,2,1._SRK)
         CALL A%set(4,3,1._SRK)
         CALL A%set(4,4,1._SRK)
+        CLASS DEFAULT
+          ASSERT(.FALSE., "Wrong matrix TYPE")
       ENDSELECT
 
       SELECTTYPE(b => thisLS%b); TYPE IS(RealVectorType)
@@ -608,6 +610,8 @@ CONTAINS
         CALL b%set(2,9._SRK)
         CALL b%set(3,9._SRK)
         CALL b%set(4,4._SRK)
+        CLASS DEFAULT
+          ASSERT(.FALSE., "Wrong matrix TYPE")
       ENDSELECT
 
       ! solve
@@ -1428,8 +1432,6 @@ CONTAINS
       CALL pList%validate(pList,optListLS)
       CALL thisLS%init(pList)
 
-WRITE(*,*) thisLS%info
-
       !A=[1 -1   1]    b=[ 1]   x=[ *]
       !  [1 -.5  .25]    [.5]     [ *]
       !  [1  0   0]      [ 0]     [ *]
@@ -1522,7 +1524,7 @@ WRITE(*,*) thisLS%info
       !test case that is expected to work, thisX has already been allocated
       SELECTTYPE(thisLS); TYPE IS (LinearSolverType_Iterative)
         CALL thisLS%setX0(thisX2)
-        bool = (ALLOCATED(thisLS%X) .AND. ASSOCIATED(thisX2) &
+        bool = (ASSOCIATED(thisLS%X) .AND. ASSOCIATED(thisX2) &
            .AND.  thisLS%hasX0)
         ASSERT(bool, 'Iterative%setX0(...)')
       ENDSELECT
@@ -1558,7 +1560,7 @@ WRITE(*,*) thisLS%info
       !test case that is expected to work, thisX has already been allocated
       SELECTTYPE(thisLS); TYPE IS (LinearSolverType_Iterative)
         CALL thisLS%setX0(thisX2)
-        bool = (ALLOCATED(thisLS%X) .AND. ASSOCIATED(thisX2) &
+        bool = (ASSOCIATED(thisLS%X) .AND. ASSOCIATED(thisX2) &
            .AND.  thisLS%hasX0)
         ASSERT(bool, 'PETScIterative%setX0(...)')
       ENDSELECT

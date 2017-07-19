@@ -102,10 +102,10 @@ MODULE LinearSolverTypes
 
   !> Number of direct solver solution methodologies - for error checking
   INTEGER(SIK),PARAMETER :: MAX_DIRECT_SOLVER_METHODS=3
-  !> Number of iterative solver solution methodologies - for error checking
-  INTEGER(SIK),PARAMETER :: MAX_IT_SOLVER_METHODS=3
   !> set enumeration scheme for TPLs
   INTEGER(SIK),PARAMETER,PUBLIC :: PETSC=0,TRILINOS=1,PARDISO_MKL=2,MKL=3,NATIVE=4
+  !> Number of iterative solver solution methodologies - for error checking
+  INTEGER(SIK),PARAMETER :: MAX_IT_SOLVER_METHODS=3
   !> set enumeration scheme for iterative solver methods
   INTEGER(SIK),PARAMETER,PUBLIC :: BICGSTAB=1,CGNR=2,GMRES=3
   !> set enumeration scheme for direct solver methods
@@ -129,9 +129,9 @@ MODULE LinearSolverTypes
     !> Pointer to the MatrixType A
     CLASS(MatrixType),POINTER :: A => NULL()
     !> Right-hand side vector, b
-    CLASS(VectorType),ALLOCATABLE :: b
+    CLASS(VectorType),POINTER :: b => NULL()
     !> Pointer to solution vector, x
-    CLASS(VectorType),ALLOCATABLE :: X
+    CLASS(VectorType),POINTER :: X => NULL()
     !> Timer to measure solution time
     TYPE(TimerType) :: SolveTime
     !> Status of the decomposition of A
@@ -293,8 +293,8 @@ MODULE LinearSolverTypes
       TYPE(ParamType) :: validParams,matPList,vecxPList,vecbPList
       ! local variables
       INTEGER(SIK) :: n
-      INTEGER(SIK) :: matType,ReqTPLType,TPLType,solverMethod,pciters,pcsetup
-      INTEGER(SIK) :: nz,npin,ngrp
+      INTEGER(SIK) :: ReqTPLType,TPLType,solverMethod,pciters,pcsetup
+      INTEGER(SIK) :: matType,matEngine
       INTEGER(SIK) :: MPI_Comm_ID,numberOMP
       CHARACTER(LEN=256) :: timerName,ReqTPLTypeStr,TPLTypeStr,PreCondType
 #ifdef FUTILITY_HAVE_PETSC
@@ -321,6 +321,7 @@ MODULE LinearSolverTypes
       MPI_Comm_ID=-1
       numberOMP=-1
       matType=-1
+      matEngine=-1
       pciters=-1
       pcsetup=-1
       PreCondType=''
@@ -344,10 +345,6 @@ MODULE LinearSolverTypes
         CALL validParams%get('LinearSolverType->PCType',PreCondType)
         CALL ValidParams%get('LinearSolverType->PCIters',pciters)
         CALL validParams%get('LinearSolverType->PCSetup',pcsetup)
-!        !get extra data necessary for BILU
-!        CALL validParams%get('LinearSolverType->nPlane',nz)
-!        CALL validParams%get('LinearSolverType->nPin',npin)
-!        CALL validParams%get('LinearSolverType->nGrp',ngrp)
       ELSE
         PreCondType='NOPC'
       ENDIF
@@ -366,6 +363,7 @@ MODULE LinearSolverTypes
       IF(numberOMP > 0) CALL solver%OMPparallelEnv%init(numberOMP)
 
       IF(.NOT.solver%isInit) THEN
+        solver%info=0
 
         ReqTPLType=TPLType
         ! go through solver hierarchy to determine TPLType
@@ -408,14 +406,19 @@ MODULE LinearSolverTypes
         SELECTCASE(TPLType)
           CASE(PETSC)
             TPLTypeStr='PETSC'
+            matEngine=VM_PETSC
           CASE(TRILINOS)
             TPLTypeStr='TRILINOS'
+            matEngine=VM_TRILINOS
           CASE(PARDISO_MKL)
             TPLTypeStr='PARDISO_MKL'
+            matEngine=VM_NATIVE
           CASE(MKL)
             TPLTypeStr='MKL'
+            matEngine=VM_NATIVE
           CASE(NATIVE)
             TPLTypeStr='NATIVE'
+            matEngine=VM_NATIVE
         ENDSELECT
 
         !print status of TPL post-heirarchy
@@ -425,64 +428,26 @@ MODULE LinearSolverTypes
               ' is not enabled, will use '//TRIM(TPLTypeStr)//' solvers instead.')
         ENDIF
 
+        CALL matPList%add("MatrixType->engine",matEngine)
+        CALL vecxPList%add('VectorType->engine',matEngine)
+        CALL vecbPList%add('VectorType->engine',matEngine)
         ! allocate and initialize matrix (A)
-        IF(.NOT.ASSOCIATED(solver%A)) THEN
-          IF(TPLType == PETSC) THEN ! PETSc solver requires special PETSc type
-            ALLOCATE(PETScMatrixType :: solver%A)
-          ELSEIF(TPLType == TRILINOS) THEN
-            ALLOCATE(TrilinosMatrixType :: solver%A)
-          ELSEIF(TPLType == PARDISO_MKL) THEN ! PARDISO only uses sparse matrices
-            ALLOCATE(SparseMatrixType :: solver%A)
+        CALL MatrixFactory(solver%A, matPList)
+
 #ifdef HAVE_PARDISO
-           SELECTTYPE(solver); TYPE IS(LinearSolverType_Direct)
-             solver%mtype=11 ! real and nonsymmetric
-           ENDSELECT
+        SELECTTYPE(solver); TYPE IS(LinearSolverType_Direct)
+          solver%mtype=11 ! real and nonsymmetric
+        ENDSELECT
 #endif
-            IF(matType /= SPARSE) THEN
-              CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
-            '  - MatrixType A not allocated!')
-            ENDIF
-          ELSE ! all other TPLs use the standard matrix types
-            IF(matType == SPARSE) THEN
-              ALLOCATE(SparseMatrixType :: solver%A)
-            ELSEIF(matType == TRIDIAG) THEN
-              ALLOCATE(TriDiagMatrixType :: solver%A)
-            ELSEIF(matType == DENSESQUARE) THEN
-              ALLOCATE(DenseSquareMatrixType :: solver%A)
-            ELSEIF(matType == DENSERECT) THEN
-              ALLOCATE(DenseRectMatrixType :: solver%A)
-            ENDIF
-          ENDIF
-          CALL solver%A%init(matPList)
-          IF(PRESENT(A)) A=>solver%A
-        ELSE
-          CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
-            '  - MatrixType A not allocated!')
+        IF(.NOT. ASSOCIATED(solver%A)) THEN
+          CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
+            "Failed to create matrix A")
         ENDIF
 
-        ! allocate and initialize vectors (X and b)
-        IF(.NOT.ALLOCATED(solver%X)) THEN
-          IF(.NOT.ALLOCATED(solver%b)) THEN
-            IF(TPLType==PETSC) THEN ! PETSc solver requires special PETSc type
-              ALLOCATE(PETScVectorType :: solver%X)
-              ALLOCATE(PETScVectorType :: solver%b)
-            ELSEIF(TPLType==Trilinos) THEN
-              ALLOCATE(TrilinosVectorType :: solver%X)
-              ALLOCATE(TrilinosVectorType :: solver%b)
-            ELSE ! all other TPLs use the real vector type
-              ALLOCATE(RealVectorType :: solver%X)
-              ALLOCATE(RealVectorType :: solver%b)
-            ENDIF
-            CALL solver%X%init(vecxPList)
-            CALL solver%b%init(vecbPList)
-          ELSE
-            CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
-              '  - VectorType b not allocated!')
-          ENDIF
-        ELSE
-          CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
-            '  - VectorType x not allocated!')
-        ENDIF
+        IF(PRESENT(A)) A=>solver%A
+
+        CALL VectorFactory(solver%X, vecxPlist)
+        CALL VectorFactory(solver%b, vecbPlist)
 
         ! define other linear solver variables
         SELECTTYPE(solver)
@@ -573,24 +538,8 @@ MODULE LinearSolverTypes
                 ! Otherwise, set it up every pcsetup iterations
                 solver%pcsetup=pcsetup
                 IF(PreCondType == 'ILU') THEN
-                  WRITE(*,*) 'allocate ILU'
                   ALLOCATE(ILU_PreCondtype :: solver%PreCondType)
                   solver%PCTypeName='ILU'
-                ELSEIF(PreCondType == 'BILU' .OR. PreCondType == 'BILU-SGS') THEN
-                  ALLOCATE(BILU_PreCondtype :: solver%PreCondType)
-                  solver%PCTypeName='BILU'
-                  SELECTTYPE(pc => solver%PreCondType); TYPE IS(BILU_PreCondtype)
-                    IF(PreCondType == 'BILU') THEN
-                      WRITE(*,*) 'allocate BILU'
-                      pc%BILUType=BILU
-                    ELSEIF(PreCondType == 'BILU-SGS') THEN
-                      WRITE(*,*) 'allocate BILU-SGS'
-                      pc%BILUType=BILUSGS
-                    ENDIF
-                    pc%nGrp=nGrp
-                    pc%nPlane=nz
-                    pc%nPin=npin
-                  ENDSELECT
                 ELSEIF(PreCondType=='DEFAULT') THEN
                   solver%PCTypeName='NOPC'
                   solver%pciters=0
@@ -775,13 +724,15 @@ MODULE LinearSolverTypes
         DEALLOCATE(solver%A)
         NULLIFY(solver%A)
       ENDIF
-      IF(ALLOCATED(solver%X)) THEN
+      IF(ASSOCIATED(solver%X)) THEN
         CALL solver%X%clear()
         DEALLOCATE(solver%X)
+        NULLIFY(solver%X)
       ENDIF
-      IF(ALLOCATED(solver%b)) THEN
+      IF(ASSOCIATED(solver%b)) THEN
         CALL solver%b%clear()
         DEALLOCATE(solver%b)
+        NULLIFY(solver%b)
       ENDIF
       IF(ALLOCATED(solver%IPIV)) CALL demallocA(solver%IPIV)
       IF(ALLOCATED(solver%M)) THEN
@@ -809,13 +760,15 @@ MODULE LinearSolverTypes
 
       CALL solver%MPIparallelEnv%clear()
       CALL solver%OMPparallelEnv%clear()
-      IF(ALLOCATED(solver%X)) THEN
+      IF(ASSOCIATED(solver%X)) THEN
         CALL solver%X%clear()
         DEALLOCATE(solver%X)
+        NULLIFY(solver%X)
       ENDIF
-      IF(ALLOCATED(solver%b)) THEN
+      IF(ASSOCIATED(solver%b)) THEN
         CALL solver%b%clear()
         DEALLOCATE(solver%b)
+        NULLIFY(solver%b)
       ENDIF
       IF(ALLOCATED(solver%PreCondType)) THEN
         CALL solver%PreCondType%clear()
@@ -875,7 +828,6 @@ MODULE LinearSolverTypes
 #ifdef FUTILITY_HAVE_PETSC
       PetscErrorCode :: iperr
 #endif
-
       CALL solve_checkInput(solver)
       IF(solver%info == 0) THEN
         solver%info=-1
@@ -929,9 +881,9 @@ MODULE LinearSolverTypes
                 IF(.NOT.solver%isDecomposed) &
                   CALL DecomposePLU_TriDiag(solver)
                 CALL solvePLU_TriDiag(solver)
+#ifdef FUTILITY_HAVE_PETSC                  
               TYPE IS(PETScMatrixType)
                 IF(solver%TPLtype==PETSC) THEN
-#ifdef FUTILITY_HAVE_PETSC                  
                   ! assemble matrix if necessary
                   IF(.NOT.(A%isAssembled)) CALL A%assemble()
                   
@@ -952,11 +904,8 @@ MODULE LinearSolverTypes
                       ENDSELECT
                     ENDSELECT
                   ENDSELECT
-#else
-                  CALL eLinearSolverType%raiseError('Incorrect call to '// &
-                    modName//'::'//myName//' - PETS not enabled.')
-#endif
                 ENDIF
+#endif
               CLASS DEFAULT
                 IF(solver%TPLtype==PARDISO_MKL) THEN
 #ifdef HAVE_PARDISO
@@ -1056,8 +1005,8 @@ MODULE LinearSolverTypes
                     myName//'- BiCGSTAB method for dense rectangular system '// &
                       'is not implemented, CGNR method is used instead.')
 
-              TYPE IS(PETScMatrixType)
 #ifdef FUTILITY_HAVE_PETSC
+              TYPE IS(PETScMatrixType)
                 ! assemble matrix if necessary
                 IF(.NOT.(A%isAssembled)) CALL A%assemble()
 
@@ -1088,12 +1037,7 @@ MODULE LinearSolverTypes
                     IF(ierr==0) solver%info=0
                   ENDSELECT
                 ENDSELECT
-#else
-                CALL eLinearSolverType%raiseFatalError('Incorrect call to '// &
-                   modName//'::'//myName//' - PETSc not enabled.  You will'// &
-                   'need to recompile with PETSc enabled to use this feature.')
 #endif
-
             ENDSELECT
           CASE(CGNR)
             SELECTTYPE(A=>solver%A)
@@ -1115,8 +1059,8 @@ MODULE LinearSolverTypes
                   myName//'- CGNR method for sparse system '// &
                     'is not implemented, BiCGSTAB method is used instead.')
 
-              TYPE IS(PETScMatrixType)
 #ifdef FUTILITY_HAVE_PETSC
+              TYPE IS(PETScMatrixType)
                 ! assemble matrix if necessary
                 IF(.NOT.(A%isAssembled)) CALL A%assemble()
 
@@ -1147,10 +1091,6 @@ MODULE LinearSolverTypes
                     IF(ierr==0) solver%info=0
                   ENDSELECT
                 ENDSELECT
-#else
-                CALL eLinearSolverType%raiseFatalError('Incorrect call to '// &
-                   modName//'::'//myName//' - PETSc not enabled.  You will'// &
-                   'need to recompile with PETSc enabled to use this feature.')
 #endif
               CLASS DEFAULT
                 CALL solveCGNR(solver)
@@ -1180,8 +1120,8 @@ MODULE LinearSolverTypes
                     myName//'- GMRES method for dense rectangular system '// &
                       'is not implemented, CGNR method is used instead.')
 
-              TYPE IS(PETScMatrixType)
 #ifdef FUTILITY_HAVE_PETSC
+              TYPE IS(PETScMatrixType)
                 ! assemble matrix if necessary
                 IF(.NOT.(A%isAssembled)) CALL A%assemble()
 
@@ -1213,13 +1153,9 @@ MODULE LinearSolverTypes
                     IF(ierr==0) solver%info=0
                   ENDSELECT
                 ENDSELECT
-#else
-                CALL eLinearSolverType%raiseFatalError('Incorrect call to '// &
-                   modName//'::'//myName//' - PETSc not enabled.  You will'// &
-                   'need to recompile with PETSc enabled to use this feature.')
 #endif
-              TYPE IS(TrilinosMatrixType)
 #ifdef FUTILITY_HAVE_Trilinos
+              TYPE IS(TrilinosMatrixType)
                 ! assemble matrix if necessary
                 IF(.NOT.(A%isAssembled)) CALL A%assemble()
 
@@ -1238,10 +1174,6 @@ MODULE LinearSolverTypes
 
                 ! solve
                 CALL Belos_solve(solver%Belos_solver)
-#else
-                CALL eLinearSolverType%raiseFatalError('Incorrect call to '// &
-                   modName//'::'//myName//' - PETSc not enabled.  You will'// &
-                   'need to recompile with PETSc enabled to use this feature.')
 #endif
               CLASS DEFAULT
                 IF(solver%pciters /= 0) THEN
@@ -1268,44 +1200,45 @@ MODULE LinearSolverTypes
       CLASS(LinearSolverType_Base),INTENT(INOUT) :: solver
 
       solver%info=-1
-      IF(solver%isInit) THEN
-        IF(ASSOCIATED(solver%A)) THEN
-          IF(ALLOCATED(solver%X)) THEN
-            IF(ALLOCATED(solver%b)) THEN
-              SELECTTYPE(A=>solver%A)
-                TYPE IS(DenseRectMatrixType)
-                  IF(A%n /= solver%b%n .OR. A%m /= solver%X%n &
-                    .OR. A%n < 1 .OR. A%m < 1) THEN
-                    CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
-                      '  - The size of the matrix and vector do not conform!')
-                  ELSE
-                    solver%info=0
-                  ENDIF
-                CLASS DEFAULT
-                  IF(A%n /= solver%b%n .OR. A%n /= solver%X%n &
-                    .OR. A%n < 1) THEN
-                    CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
-                      '  - The size of the matrix and vector do not conform!')
-                  ELSE
-                    solver%info=0
-                  ENDIF
-              ENDSELECT
-            ELSE
-              CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
-                '  - The right hand side has not been set!')
-            ENDIF
-          ELSE
-            CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
-              '  - The unknowns X has not been associated!')
-          ENDIF
-        ELSE
-          CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
-            '  - The matrix A has not been associated!')
-        ENDIF
-      ELSE
+      IF(.NOT. solver%isInit) THEN
         CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
           '  - Linear solver object has not been initialized!')
+        RETURN
       ENDIF
+      IF(.NOT. ASSOCIATED(solver%A)) THEN
+        CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
+          '  - The matrix A has not been associated!')
+        RETURN
+      ENDIF
+      IF(.NOT. ASSOCIATED(solver%X)) THEN
+        CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
+          '  - The unknowns X has not been associated!')
+        RETURN
+      ENDIF
+      IF(.NOT. ASSOCIATED(solver%b)) THEN
+        CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
+          '  - The right hand side has not been set!')
+        RETURN
+      ENDIF
+
+      SELECTTYPE(A=>solver%A)
+        TYPE IS(DenseRectMatrixType)
+          IF(A%n /= solver%b%n .OR. A%m /= solver%X%n &
+            .OR. A%n < 1 .OR. A%m < 1) THEN
+            CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
+              '  - The size of the matrix and vector do not conform!')
+          ELSE
+            solver%info=0
+          ENDIF
+        CLASS DEFAULT
+          IF(A%n /= solver%b%n .OR. A%n /= solver%X%n &
+            .OR. A%n < 1) THEN
+            CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
+              '  - The size of the matrix and vector do not conform!')
+          ELSE
+            solver%info=0
+          ENDIF
+      ENDSELECT
     ENDSUBROUTINE solve_checkInput
 !
 !-------------------------------------------------------------------------------
@@ -1439,8 +1372,8 @@ MODULE LinearSolverTypes
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
       TYPE(RealVectorType),INTENT(INOUT) :: resid
       !input check
-      IF(solver%isInit .AND. ALLOCATED(solver%b) .AND. ASSOCIATED(solver%A) &
-        .AND. ALLOCATED(solver%X) .AND. resid%n > 0) THEN
+      IF(solver%isInit .AND. ASSOCIATED(solver%b) .AND. ASSOCIATED(solver%A) &
+        .AND. ASSOCIATED(solver%X) .AND. resid%n > 0) THEN
         !Written assuming A is not decomposed.  Which is accurate, the correct
         !solve function will contain the decomposed A.
         IF(resid%n == solver%b%n) THEN

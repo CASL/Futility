@@ -70,6 +70,7 @@ MODULE EigenvalueSolverTypes
 !
 ! List of public members
   PUBLIC :: eEigenvalueSolverType
+  PUBLIC :: EigenvalueSolverFactory
   PUBLIC :: EigenvalueSolverType_Base
   PUBLIC :: EigenvalueSolverType_SLEPc
   PUBLIC :: EigenvalueSolverType_Anasazi
@@ -161,9 +162,9 @@ MODULE EigenvalueSolverTypes
 #ifdef FUTILITY_HAVE_SLEPC
     !> SLEPc Eigenvalue Solver type
     EPS :: eps
-#endif
     !> store vector for imaginary term required by SLEPc
     TYPE(PETScVectorType) :: xi
+#endif
 !
 !List of Type Bound Procedures
     CONTAINS
@@ -180,6 +181,7 @@ MODULE EigenvalueSolverTypes
 
   !> @brief The extended type for the SLEPc Eigenvalue Solvers
   TYPE,EXTENDS(EigenvalueSolverType_Base) :: EigenvalueSolverType_Anasazi
+#ifdef FUTILITY_HAVE_Trilinos
     !>
     !> Anasazi Eigenvalue Solver type
     INTEGER(SIK) :: eig
@@ -187,6 +189,7 @@ MODULE EigenvalueSolverTypes
     INTEGER(SIK) :: pc
     !> store vector for scaling fission source
     TYPE(TrilinosVectorType) :: x_scale
+#endif
 !
 !List of Type Bound Procedures
     CONTAINS
@@ -204,9 +207,6 @@ MODULE EigenvalueSolverTypes
   !> @brief The extended type for the SLEPc Eigenvalue Solvers
   TYPE,EXTENDS(EigenvalueSolverType_Base) :: EigenvalueSolverType_SNES
     !>
-#ifdef FUTILITY_HAVE_PETSC
-!Rondom stuff you need for SNES... like SNES :: snes
-#endif
 !
 !List of Type Bound Procedures
     CONTAINS
@@ -219,16 +219,16 @@ MODULE EigenvalueSolverTypes
       !> @copybrief EigenvalueSolverTypes::solve_EigenvalueSolverType_SNES
       !> @copydetails EigenvalueSolverTypes::solve_EigenvalueSolverType_SNES
       PROCEDURE,PASS :: solve => solve_EigenvalueSolverType_SNES
+#ifdef FUTILITY_HAVE_PETSC
       !> @copybrief EigenvalueSolverTypes::calcResid_EigenvalueSolverType_SNES
       !> @copydetails EigenvalueSolverTypes::calcResid_EigenvalueSolverType_SNES
       PROCEDURE,PASS :: calcResid => calcResid_EigenvalueSolverType_SNES
+#endif
   ENDTYPE EigenvalueSolverType_SNES
 
 
   !> SNES Resid calculator
   CLASS(EigenvalueSolverType_Base),POINTER :: PETSC_SHELL_EVS => NULL()
-
-
 
   !> Logical flag to check whether the required and optional parameter lists
   !> have been created yet for the Eigenvalue Solver Type.
@@ -253,6 +253,52 @@ MODULE EigenvalueSolverTypes
   CONTAINS
 !
 !-------------------------------------------------------------------------------
+!> @brief Create an Eigenvalue solver object compatible with the provided matrix
+!>
+!> @param solver a pointer to the base eigenvalue solver type. Should be NULL
+!> @param MPIEnv the MPI environment to be used to initialize the solver
+!> @param M the matrix to use to determine which type of solver to create
+!> @param params A parameter list to use in allocating the solver
+!> 
+!> This is a simple abstract factory routine for the base EigenvalueSolverType.
+!> It uses the type of the passed MatrixType object to determine which type of
+!> eigenvalue solver to allocate, then initialized the solver with the passed
+!> parameters. The purpose of such a routine is to hide from the client code the
+!> actual type of the matrix/solver pair, and the preprocessor guards necessary
+!> to safely use the TPLs.
+    SUBROUTINE EigenvalueSolverFactory(solver,MPIEnv,M,params)
+      CHARACTER(LEN=*),PARAMETER :: myName="EigenvalueSolverFactory"
+      CLASS(EigenvalueSolverType_Base),INTENT(INOUT),POINTER :: solver
+      TYPE(MPI_EnvType),INTENT(IN),TARGET :: MPIEnv
+      CLASS(MatrixType),INTENT(IN),TARGET :: M
+      TYPE(ParamType),INTENT(IN) :: params
+      
+      IF(ASSOCIATED(solver)) THEN
+        CALL eEigenvalueSolverType%raiseError(modName//"::"//myName//" - "// &
+          "Solver pointer is already associated")
+        RETURN
+      ENDIF
+
+      SELECTTYPE(M)
+#ifdef FUTILITY_HAVE_PETSC
+        TYPE IS(PETScMatrixType)
+          ALLOCATE(EigenvalueSolverType_SLEPc :: solver)
+#endif
+#ifdef FUTILITY_HAVE_Trilinos
+        TYPE IS(TrilinosMatrixType)
+          ALLOCATE(EigenvalueSolverType_Anasazi :: solver)
+#endif
+        CLASS DEFAULT
+          CALL eEigenvalueSolverType%raiseError(modName//"::"//myName//" - "// &
+            "Unsupported matrix type")
+      ENDSELECT
+      IF(ASSOCIATED(solver)) THEN
+        CALL solver%init(MPIEnv,params)
+      ENDIF
+
+    ENDSUBROUTINE EigenvalueSolverFactory
+!
+!-------------------------------------------------------------------------------
 !> @brief Initializes the Eigenvalue Solver Type with a parameter list
 !> @param pList the parameter list
 !>
@@ -269,16 +315,15 @@ MODULE EigenvalueSolverTypes
       CLASS(EigenvalueSolverType_SLEPc),INTENT(INOUT) :: solver
       TYPE(MPI_EnvType),INTENT(IN),TARGET :: MPIEnv
       TYPE(ParamType),INTENT(IN) :: Params
+#ifdef FUTILITY_HAVE_SLEPC
       TYPE(ParamType) :: validParams, tmpPL
       INTEGER(SIK) :: n,nlocal,solvertype,maxit
       REAL(SRK) :: tol
       LOGICAL(SBK) :: clops
       TYPE(STRINGType) :: pctype
-#ifdef FUTILITY_HAVE_SLEPC
       ST :: st
       KSP :: ksp
       PC :: pc
-#endif
       !Check to set up required and optional param lists.
       !IF(.NOT.EigenType_Paramsflag) CALL EigenType_Declare_ValidParams()
 
@@ -335,7 +380,6 @@ MODULE EigenvalueSolverTypes
         ELSE
           solver%maxit=maxit
         ENDIF
-#ifdef FUTILITY_HAVE_SLEPC
         CALL EPSCreate(solver%MPIparallelEnv%comm,solver%eps,ierr)
         CALL EPSSetProblemType(solver%eps,EPS_GNHEP,ierr)
         IF(ierr/=0) &
@@ -377,10 +421,7 @@ MODULE EigenvalueSolverTypes
         CALL PCSetType(pc,PCBJACOBI,ierr)
         !CALL PCSetReusePreconditioner(pc,PETSC_TRUE,ierr)
         !set KSP
-#else
-        CALL eEigenvalueSolverType%raiseError(modName//'::'//myName// &
-          ' - SLEPc is not present in build')
-#endif
+
         solver%SolverMethod=solvertype
 
         ALLOCATE(PETScVectorType :: solver%X)
@@ -398,7 +439,10 @@ MODULE EigenvalueSolverTypes
           modName//'::'//myName//' - EigenvalueSolverType already initialized')
       ENDIF
       CALL validParams%clear()
-
+#else
+      CALL eEigenvalueSolverType%raiseError(modName//'::'//myName// &
+        ' - SLEPc is not present in build')
+#endif
     ENDSUBROUTINE init_EigenvalueSolverType_SLEPc
 
 !
@@ -626,10 +670,6 @@ MODULE EigenvalueSolverTypes
         !Need to set PC type
         !TODO PC Init
 
-#else
-        CALL eEigenvalueSolverType%raiseError(modName//'::'//myName// &
-          ' - SNES (PETSc) is not present in build')
-#endif
         solver%SolverMethod=solvertype
 
         ALLOCATE(PetscVectorType :: solver%X)
@@ -643,6 +683,11 @@ MODULE EigenvalueSolverTypes
 
         solver%TPLType=SLEPC
         solver%isInit=.TRUE.
+#else
+        CALL eEigenvalueSolverType%raiseError(modName//'::'//myName// &
+          ' - SNES (PETSc) is not present in build')
+#endif
+
       ELSE
         CALL eEigenvalueSolverType%raiseError('Incorrect call to '// &
           modName//'::'//myName//' - EigenvalueSolverType already initialized')
@@ -696,11 +741,11 @@ MODULE EigenvalueSolverTypes
 
       SELECTTYPE(solver)
         TYPE IS(EigenvalueSolverType_SLEPc)
-          SELECTTYPE(x0); TYPE IS(PETScVectorType)
 #ifdef FUTILITY_HAVE_SLEPC
+          SELECTTYPE(x0); TYPE IS(PETScVectorType)
             CALL EPSSetInitialSpace(solver%eps,1,x0%b,ierr)
-#endif
           ENDSELECT
+#endif
         !Anasazi doesn't need this, blas copy will handle it
       ENDSELECT
       CALL BLAS_copy(THISVECTOR=x0,NEWVECTOR=solver%X)
@@ -726,8 +771,8 @@ MODULE EigenvalueSolverTypes
       NULLIFY(solver%A)
       NULLIFY(solver%B)
       IF(solver%X%isInit) CALL solver%X%clear()
-      IF(solver%xi%isInit) CALL solver%xi%clear()
 #ifdef FUTILITY_HAVE_SLEPC
+      IF(solver%xi%isInit) CALL solver%xi%clear()
       CALL EPSDestroy(solver%eps,ierr)
 #endif
       solver%isInit=.FALSE.
@@ -742,6 +787,7 @@ MODULE EigenvalueSolverTypes
     SUBROUTINE clear_EigenvalueSolverType_Anasazi(solver)
       CLASS(EigenvalueSolverType_Anasazi),INTENT(INOUT) :: solver
 
+#ifdef FUTILITY_HAVE_Trilinos
       solver%solverMethod=-1
       solver%TPLType=-1
       NULLIFY(solver%MPIparallelEnv)
@@ -754,7 +800,6 @@ MODULE EigenvalueSolverTypes
       NULLIFY(solver%B)
       CALL solver%x_scale%clear()
       IF(solver%X%isInit) CALL solver%X%clear()
-#ifdef FUTILITY_HAVE_Trilinos
       CALL Preconditioner_Destroy(solver%pc)
       CALL Anasazi_Destroy(solver%eig)
 #endif
@@ -902,6 +947,7 @@ MODULE EigenvalueSolverTypes
       !CALL BLAS_scal(THISVECTOR=solver%X,A=1.0_SRK/REAL(ki,SRK))
 #endif
     ENDSUBROUTINE solve_EigenvalueSolverType_SNES
+#ifdef FUTILITY_HAVE_PETSC
 !
 !-------------------------------------------------------------------------------
 !> @brief Clears the SNES Eigen Solver Type
@@ -912,10 +958,9 @@ MODULE EigenvalueSolverTypes
     SUBROUTINE calcResid_EigenvalueSolverType_SNES(solver,v)
       CLASS(EigenvalueSolverType_SNES),INTENT(INOUT) :: solver
       CLASS(PETScVectorType),INTENT(INOUT) :: v
-#ifdef FUTILITY_HAVE_PETSC
       !TODO  v = Bv/sum(Bv)-Av
-#endif
     ENDSUBROUTINE calcResid_EigenvalueSolverType_SNES
+#endif
 
 #ifdef FUTILITY_HAVE_PETSC
     SUBROUTINE PETSC_SHELL_CALCRESID_extern(snes,x,f,dummy,err)

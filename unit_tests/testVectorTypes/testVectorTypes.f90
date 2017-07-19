@@ -9,6 +9,7 @@
 PROGRAM testVectorTypes
 #include "UnitTest.h"
   USE ISO_C_BINDING
+  USE ISO_FORTRAN_ENV
   USE UnitTest
   USE IntrType
   USE ExceptionHandler
@@ -48,11 +49,7 @@ PROGRAM testVectorTypes
 #endif
 #endif
 
-  WRITE(*,*) '==================================================='
-  WRITE(*,*) 'TESTING VECTOR TYPES...'
-  WRITE(*,*) '==================================================='
-
-  CALL testVector()
+  REGISTER_SUBTEST("Vector Types",testVector)
 
   !Edit the reference lists
   !CALL reqParamsRealVT%edit(666)
@@ -66,11 +63,10 @@ PROGRAM testVectorTypes
   !WRITE(666,*)
   !CALL optParamsPETScVT%edit(666)
 
-  CALL testBLAS1Interface()
+  REGISTER_SUBTEST("BLAS interface",testBLAS1Interface)
 
-  WRITE(*,*) '==================================================='
-  WRITE(*,*) 'TESTING VECTOR TYPES PASSED!'
-  WRITE(*,*) '==================================================='
+  REGISTER_SUBTEST("Vector factory",testVectorFactory)
+
   DEALLOCATE(e)
   CALL VectorType_Clear_ValidParams()
 
@@ -3403,5 +3399,169 @@ PROGRAM testVectorTypes
     CALL pList%clear()
 #endif
     ENDSUBROUTINE testBLAS1Interface
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testVectorFactory()
+      CLASS(VectorType),POINTER :: vec_p
+      CLASS(VectorType),POINTER :: other_vec_p
+      CLASS(ParamType),ALLOCATABLE :: params
+#if defined(FUTILITY_HAVE_PETSC) || defined(FUTILITY_HAVE_Trilinos)
+      CLASS(DistributedVectorType),POINTER :: dvec_p
+#endif
+
+      ALLOCATE(ParamType :: params)
+
+      vec_p => NULL()
+      other_vec_p => NULL()
+
+      ! Native
+      CALL params%add("VectorType->n",10_SIK)
+      CALL params%add("VectorType->engine",VM_NATIVE)
+      CALL VectorFactory(vec_p,params)
+      ASSERT(ASSOCIATED(vec_p),"Vector not ALLOCATED")
+      ASSERT(vec_p%isInit, "Vector not initialized")
+      SELECTTYPE(vec_p); TYPE IS(RealVectorType)
+        ASSERT(.TRUE.,"Vector TYPE")
+      CLASS DEFAULT
+        ASSERT(.FALSE.,"Vector TYPE")
+      ENDSELECT
+      
+      CALL VectorResemble(other_vec_p,vec_p,params)
+      ASSERT(ASSOCIATED(other_vec_p),"Cloned vector not ALLOCATED")
+      ASSERT(other_vec_p%isInit,"Other vector not initialized")
+      ASSERT(other_vec_p%n==vec_p%n,"Cloned vector %n")
+      SELECTTYPE(other_vec_p); TYPE IS(RealVectorType)
+        ASSERT(.TRUE.,"Resemble vector type")
+      CLASS DEFAULT
+        ASSERT(.FALSE.,"Resemble vector type")
+      ENDSELECT
+      CALL other_vec_p%clear()
+      DEALLOCATE(other_vec_p)
+      NULLIFY(other_vec_p)
+      
+      CALL params%add("VectorType->n",5_SIK)
+      CALL VectorResemble(other_vec_p,vec_p,params)
+      ASSERT(other_vec_p%n==5_SIK,"Cloned overridden vector %n")
+      CALL other_vec_p%clear()
+      DEALLOCATE(other_vec_p)
+      NULLIFY(other_vec_p)
+
+      CALL params%clear()
+      CALL vec_p%clear()
+      DEALLOCATE(vec_p)
+      NULLIFY(vec_p)
+
+      ! PETSc
+#ifdef FUTILITY_HAVE_PETSC
+      CALL params%add("VectorType->n",10_SIK)
+      CALL params%add("VectorType->nlocal",10_SIK)
+      CALL params%add("VectorType->engine",VM_PETSC)
+      CALL params%add("VectorType->MPI_Comm_ID",PE_COMM_SELF)
+      CALL VectorFactory(vec_p,params)
+      ASSERT(ASSOCIATED(vec_p),"PETSc vector associated")
+      ASSERT(vec_p%isInit,"PETSc vector initialized")
+      SELECTTYPE(vec_p); TYPE IS(PETScVectorType)
+        ASSERT(.TRUE.,"PETSc type")
+        dvec_p => vec_p
+      CLASS DEFAULT
+        ASSERT(.FALSE.,"PETSc type")
+      ENDSELECT
+      CALL params%clear()
+
+      ! Resemble, no param override
+      CALL VectorResemble(other_vec_p,vec_p,params)
+      ASSERT(ASSOCIATED(other_vec_p),"Resemble vector associated")
+      ASSERT(other_vec_p%isInit,"Resemble vector %isInit")
+      SELECTTYPE(other_vec_p); TYPE IS(PETScVectorType)
+        ASSERT(other_vec_p%n == dvec_p%n,"Resemble vector %n") 
+        ASSERT(other_vec_p%nlocal == dvec_p%nlocal,"Resemble vector %nlocal") 
+      CLASS DEFAULT
+        ASSERT(.FALSE.,"Resemble vector type")
+      ENDSELECT
+      CALL other_vec_p%clear()
+      DEALLOCATE(other_vec_p)
+      NULLIFY(other_vec_p)
+
+      ! Resemble, override params
+      CALL params%add("VectorType->n",5_SIK)
+      CALL params%add("VectorType->nlocal",5_SIK)
+      CALL VectorResemble(other_vec_p,vec_p,params)
+      ASSERT(ASSOCIATED(other_vec_p),"Resemble vector associated")
+      ASSERT(other_vec_p%isInit,"Resemble vector %isInit")
+      SELECTTYPE(other_vec_p); TYPE IS(PETScVectorType)
+        ASSERT(other_vec_p%n == 5_SIK,"Resemble vector %n") 
+        ASSERT(other_vec_p%nlocal == 5_SIK,"Resemble vector %nlocal") 
+      CLASS DEFAULT
+        ASSERT(.FALSE.,"Resemble vector type")
+      ENDSELECT
+      CALL other_vec_p%clear()
+      DEALLOCATE(other_vec_p)
+      NULLIFY(other_vec_p)
+
+      ! Clean up
+      NULLIFY(dvec_p)
+      CALL vec_p%clear()
+      DEALLOCATE(vec_p)
+      NULLIFY(vec_p)
+#endif
+
+      ! Trilinos
+#ifdef FUTILITY_HAVE_Trilinos
+      CALL params%add("VectorType->n",10_SIK)
+      CALL params%add("VectorType->nlocal",10_SIK)
+      CALL params%add("VectorType->engine",VM_TRILINOS)
+      CALL params%add("VectorType->MPI_Comm_ID",PE_COMM_SELF)
+      CALL VectorFactory(vec_p,params)
+      ASSERT(ASSOCIATED(vec_p),"Trilinos vector associated")
+      ASSERT(vec_p%isInit,"Trilinos vector initialized")
+      SELECTTYPE(vec_p); TYPE IS(TrilinosVectorType)
+        ASSERT(.TRUE.,"Trilinos type")
+        dvec_p => vec_p
+      CLASS DEFAULT
+        ASSERT(.FALSE.,"Trilinos type")
+      ENDSELECT
+      CALL params%clear()
+
+      ! Resemble, no param override
+      CALL VectorResemble(other_vec_p,vec_p,params)
+      ASSERT(ASSOCIATED(other_vec_p),"Resemble vector associated")
+      ASSERT(other_vec_p%isInit,"Resemble vector %isInit")
+      SELECTTYPE(other_vec_p); TYPE IS(TrilinosVectorType)
+        ASSERT(other_vec_p%n == dvec_p%n,"Resemble vector %n") 
+        ASSERT(other_vec_p%nlocal == dvec_p%nlocal,"Resemble vector %nlocal") 
+      CLASS DEFAULT
+        ASSERT(.FALSE.,"Resemble vector type")
+      ENDSELECT
+      CALL other_vec_p%clear()
+      DEALLOCATE(other_vec_p)
+      NULLIFY(other_vec_p)
+
+      ! Resemble, override params
+      CALL params%add("VectorType->n",5_SIK)
+      CALL params%add("VectorType->nlocal",5_SIK)
+      CALL VectorResemble(other_vec_p,vec_p,params)
+      ASSERT(ASSOCIATED(other_vec_p),"Resemble vector associated")
+      ASSERT(other_vec_p%isInit,"Resemble vector %isInit")
+      SELECTTYPE(other_vec_p); TYPE IS(TrilinosVectorType)
+        ASSERT(other_vec_p%n == 5_SIK,"Resemble vector %n") 
+        ASSERT(other_vec_p%nlocal == 5_SIK,"Resemble vector %nlocal") 
+      CLASS DEFAULT
+        ASSERT(.FALSE.,"Resemble vector type")
+      ENDSELECT
+      CALL other_vec_p%clear()
+      DEALLOCATE(other_vec_p)
+      NULLIFY(other_vec_p)
+
+      ! Clean up
+      NULLIFY(dvec_p)
+      CALL vec_p%clear()
+      DEALLOCATE(vec_p)
+      NULLIFY(vec_p)
+#endif
+
+      CALL params%clear()
+      DEALLOCATE(params)
+
+    ENDSUBROUTINE testVectorFactory
 !
 ENDPROGRAM testVectorTypes
