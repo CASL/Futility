@@ -533,6 +533,12 @@ MODULE VTUFiles
           WRITE(sint,FMT=TRIM(fmtStr)) i-1
           fname=TRIM(filen)//'_'//TRIM(sint)//'.vtu'
           fileobj%fileList(i)=fname
+          sint='DOMAIN_'//TRIM(sint)
+#ifdef _WIN32
+          fname=TRIM(sint)//'\\'//TRIM(fname)
+#else
+          fname=TRIM(sint)//'/'//TRIM(fname)
+#endif
           WRITE(funit,'(a)') '    <Piece Source="'//TRIM(fname)//'"/>'
         ENDDO
         WRITE(funit,'(a)') '  </PUnstructuredGrid>'
