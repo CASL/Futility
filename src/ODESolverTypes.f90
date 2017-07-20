@@ -554,7 +554,7 @@ MODULE ODESolverTypes
         ist=1
         DO i=1,solver%BDForder
           DO j=1,solver%BDForder
-            CALL bdf_hist(i,j)%set(0.0_SRK)
+            CALL bdf_hist(i,j)%setAll_scalar(0.0_SRK)
           ENDDO
           CALL BLAS_copy(y0,bdf_hist(ist,i))
         ENDDO
@@ -749,7 +749,7 @@ MODULE ODESolverTypes
         ELSE
           tmp2=tmp*dy
         ENDIF
-        CALL ytmp%set(i,tmp2)
+        CALL ytmp%setOne(i,tmp2)
         CALL f%eval(t,ytmp,ftmp)
         DO j=1,y%n
           CALL f0%get(j,f1)
