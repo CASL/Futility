@@ -60,7 +60,7 @@
 #define ASSERT_APPROXEQA(b,a,msg) ASSERT(b.APPROXEQA.a,msg); FINFO()b,"/=",a
 
 ! ASSERT_SOFTEQ used for comparing reals within user defiend tolerance
-#define ASSERT_SOFTEQ(b,a,c,msg) ASSERT(SOFTEQ(b,a,c),msg); FINFO()b,"/=",a,"+",c
+#define ASSERT_SOFTEQ(b,a,c,msg) ASSERT(SOFTEQ(b,a,c),msg); FINFO()b,"/=",a,c
 
 #define ASSERTFAIL(bool,msg)  ASSERT(bool,msg); IF(utest_lastfail) STOP UTEST_FAIL_CODE
 
