@@ -6659,7 +6659,6 @@ MODULE FileType_HDF5
        INTEGER :: num_dims
        INTEGER(HID_T) :: attr_id, dspace_id, obj_id
        INTEGER(HSIZE_T),DIMENSION(1) :: dims
-       CHARACTER(LEN=LEN(obj_name)+1) :: path
 
        num_dims=1
        dims(1)=1
@@ -6698,7 +6697,6 @@ MODULE FileType_HDF5
        INTEGER :: num_dims
        INTEGER(HID_T) :: attr_id, dspace_id, obj_id
        INTEGER(HSIZE_T),DIMENSION(1) :: dims
-       CHARACTER(LEN=LEN(obj_name)+1) :: path
 
        num_dims=1
        dims(1)=1
@@ -6742,7 +6740,7 @@ MODULE FileType_HDF5
        CALL open_attribute(this,obj_id,attr_name,attr_id)
 
        CALL h5aget_storage_size_f(attr_id,max_size,error)
-       CALL read_attribute_st0_helper(this,attr_id,max_size,attr_name,attr_val)
+       CALL read_attribute_st0_helper(attr_id,max_size,attr_val)
 
        CALL close_attribute(this,attr_id)
        CALL close_object(this,obj_id)
@@ -6757,10 +6755,8 @@ MODULE FileType_HDF5
 !> @param attr_value the desired value of the attrbute
 !>  
 #ifdef FUTILITY_HAVE_HDF5
-    SUBROUTINE read_attribute_st0_helper(this,attr_id,length_max,attr_name,attr_val)
+    SUBROUTINE read_attribute_st0_helper(attr_id,length_max,attr_val)
        CHARACTER(LEN=*),PARAMETER :: myName='read_attribute_st0_helper_HDF5FileType'
-       CLASS(HDF5FileType),INTENT(INOUT) :: this
-       CHARACTER(LEN=*),INTENT(IN) :: attr_name
        TYPE(StringType),INTENT(INOUT)::attr_val
        INTEGER(SDK),INTENT(IN) :: length_max
         
