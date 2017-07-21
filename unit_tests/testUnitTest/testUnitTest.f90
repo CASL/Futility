@@ -37,10 +37,22 @@ PROGRAM testUnitTest
   REGISTER_SUBTEST("ASSERT_APPROXEQ_SSK Test",testASSERT_APPROXEQ_SSK)
   REGISTER_SUBTEST("ASSERT_EQ_SDK Test",testASSERT_EQ_SDK)
   REGISTER_SUBTEST("ASSERT_EQ_SSK Test",testASSERT_EQ_SSK)
+  REGISTER_SUBTEST("ASSERT_LE_SDK Test",testASSERT_LE_SDK)
+  REGISTER_SUBTEST("ASSERT_LE_SSK Test",testASSERT_LE_SSK)
+  REGISTER_SUBTEST("ASSERT_LT_SDK Test",testASSERT_LT_SDK)
+  REGISTER_SUBTEST("ASSERT_LT_SSK Test",testASSERT_LT_SSK)
+  REGISTER_SUBTEST("ASSERT_GE_SDK Test",testASSERT_GE_SDK)
+  REGISTER_SUBTEST("ASSERT_GE_SSK Test",testASSERT_GE_SSK)
+  REGISTER_SUBTEST("ASSERT_GT_SDK Test",testASSERT_GT_SDK)
+  REGISTER_SUBTEST("ASSERT_GT_SSK Test",testASSERT_GT_SSK)
+  REGISTER_SUBTEST("ASSERT_APPROXLE_SDK Test",testASSERT_APPROXLE_SDK)
+  REGISTER_SUBTEST("ASSERT_APPROXLE_SSK Test",testASSERT_APPROXLE_SSK)
+  REGISTER_SUBTEST("ASSERT_APPROXGE_SDK Test",testASSERT_APPROXGE_SDK)
+  REGISTER_SUBTEST("ASSERT_APPROXGE_SSK Test",testASSERT_APPROXGE_SSK)
   ASSERT(.TRUE.,"in main")
   ! NEVER DO THIS IN YOUR UNIT TEST
-  !    This is testing failures as well as passing tests.  Expect 21 failures.
-  utest_nfail=utest_nfail-21
+  !    This is testing failures as well as passing tests.  Expect 37 failures.
+  utest_nfail=utest_nfail-37
   FINALIZE_TEST()
 
   STAY()
@@ -90,16 +102,16 @@ PROGRAM testUnitTest
 
       COMPONENT_TEST("Passing SOFTEQ")
       ! Test maximum delta without a failure, this should not cause output
-        ASSERT_SOFTEQ(a,b,tol,'ASSERT_SOFTEQ given passing condition')
+        ASSERT_SOFTEQ(b,a,tol,'ASSERT_SOFTEQ given passing condition')
       COMPONENT_TEST("Passing SOFTEQ")
       ! Test maximum delta without a failure, this should not cause output
-        ASSERT_SOFTEQ(a,d,tol,'ASSERT_SOFTEQ given passing condition')
+        ASSERT_SOFTEQ(d,a,tol,'ASSERT_SOFTEQ given passing condition')
       COMPONENT_TEST("Failing SOFTEQ")
       ! Test minimum delta to cause a failure, this should cause output
-        ASSERT_SOFTEQ(a,c,tol,'ASSERT_SOFTEQ given failing condition')
+        ASSERT_SOFTEQ(c,a,tol,'ASSERT_SOFTEQ given failing condition')
       COMPONENT_TEST("Failing SOFTEQ")
       ! Test minimum delta to cause a failure, this should cause output
-        ASSERT_SOFTEQ(a,e,tol,'ASSERT_SOFTEQ given failing condition')
+        ASSERT_SOFTEQ(e,a,tol,'ASSERT_SOFTEQ given failing condition')
     ENDSUBROUTINE testASSERT_SOFTEQ_SDK
 !
 !-------------------------------------------------------------------------------
@@ -129,16 +141,16 @@ PROGRAM testUnitTest
 
       COMPONENT_TEST("Passing SOFTEQ")
       ! Test maximum delta without a failure, this should not cause output
-        ASSERT_SOFTEQ(a,b,tol,'ASSERT_SOFTEQ given passing condition')
+        ASSERT_SOFTEQ(b,a,tol,'ASSERT_SOFTEQ given passing condition')
       COMPONENT_TEST("Passing SOFTEQ")
       ! Test maximum delta without a failure, this should not cause output
-        ASSERT_SOFTEQ(a,d,tol,'ASSERT_SOFTEQ given passing condition')
+        ASSERT_SOFTEQ(d,a,tol,'ASSERT_SOFTEQ given passing condition')
       COMPONENT_TEST("Failing SOFTEQ")
       ! Test minimum delta to cause a failure, this should cause output
-        ASSERT_SOFTEQ(a,c,tol,'ASSERT_SOFTEQ given failing condition')
+        ASSERT_SOFTEQ(c,a,tol,'ASSERT_SOFTEQ given failing condition')
       COMPONENT_TEST("Failing SOFTEQ")
       ! Test minimum delta to cause a failure, this should cause output
-        ASSERT_SOFTEQ(a,e,tol,'ASSERT_SOFTEQ given failing condition')
+        ASSERT_SOFTEQ(e,a,tol,'ASSERT_SOFTEQ given failing condition')
     ENDSUBROUTINE testASSERT_SOFTEQ_SSK
 !
 !-------------------------------------------------------------------------------
@@ -158,16 +170,16 @@ PROGRAM testUnitTest
 
       COMPONENT_TEST("Passing APPROXEQA")
       ! Test maximum delta without a failure, this should not cause output
-        ASSERT_APPROXEQA(a,b,"ASSERT_APPROXEQA given passing condition")
+        ASSERT_APPROXEQA(b,a,"ASSERT_APPROXEQA given passing condition")
       COMPONENT_TEST("Passing APPROXEQA")
       ! Test maximum delta without a failure, this should not cause output
-        ASSERT_APPROXEQA(a,d,"ASSERT_APPROXEQA given passing condition")
+        ASSERT_APPROXEQA(d,a,"ASSERT_APPROXEQA given passing condition")
       COMPONENT_TEST("Failing APPROXEQA")
       ! Test minimum delta to cause a failure, this should cause output
-        ASSERT_APPROXEQA(a,c,"ASSERT_APPROXEQA given failing condition")
+        ASSERT_APPROXEQA(c,a,"ASSERT_APPROXEQA given failing condition")
       COMPONENT_TEST("Failing APPROXEQA")
       ! Test minimum delta to cause a failure, this should cause output
-        ASSERT_APPROXEQA(a,e,"ASSERT_APPROXEQA given failing condition")
+        ASSERT_APPROXEQA(e,a,"ASSERT_APPROXEQA given failing condition")
     ENDSUBROUTINE testASSERT_APPROXEQA_SDK
 
 !
@@ -188,16 +200,16 @@ PROGRAM testUnitTest
 
       COMPONENT_TEST("Passing APPROXEQA")
       ! Test maximum delta without a failure, this should not cause output
-        ASSERT_APPROXEQA(a,b,"ASSERT_APPROXEQA given passing condition")
+        ASSERT_APPROXEQA(b,a,"ASSERT_APPROXEQA given passing condition")
       COMPONENT_TEST("Passing APPROXEQA")
       ! Test maximum delta without a failure, this should not cause output
-        ASSERT_APPROXEQA(a,d,"ASSERT_APPROXEQA given passing condition")
+        ASSERT_APPROXEQA(d,a,"ASSERT_APPROXEQA given passing condition")
       COMPONENT_TEST("Failing APPROXEQA")
       ! Test minimum delta to cause a failure, this should cause output
-        ASSERT_APPROXEQA(a,c,"ASSERT_APPROXEQA given failing condition")
+        ASSERT_APPROXEQA(c,a,"ASSERT_APPROXEQA given failing condition")
       COMPONENT_TEST("Failing APPROXEQA")
       ! Test minimum delta to cause a failure, this should cause output
-        ASSERT_APPROXEQA(a,e,"ASSERT_APPROXEQA given failing condition")
+        ASSERT_APPROXEQA(e,a,"ASSERT_APPROXEQA given failing condition")
     ENDSUBROUTINE testASSERT_APPROXEQA_SSK
 !
 !-------------------------------------------------------------------------------
@@ -216,16 +228,16 @@ PROGRAM testUnitTest
 
       COMPONENT_TEST("Passing _APPROXEQF")
       ! Test maximum delta without a failure, this should not cause output
-        ASSERT_APPROXEQF(a,b,"should PASS")
+        ASSERT_APPROXEQF(b,a,"should PASS")
       COMPONENT_TEST("Passing _APPROXEQF")
       ! Test maximum delta without a failure, this should not cause output
-        ASSERT_APPROXEQF(a,d,"should PASS")
+        ASSERT_APPROXEQF(d,a,"should PASS")
       COMPONENT_TEST("Failing _APPROXEQF")
       ! Test minimum delta to cause a failure, this should cause output
-        ASSERT_APPROXEQF(a,c,"should FAIL")
+        ASSERT_APPROXEQF(c,a,"should FAIL")
       COMPONENT_TEST("Failing _APPROXEQF")
       ! Test minimum delta to cause a failure, this should cause output
-        ASSERT_APPROXEQF(a,e,"should FAIL")
+        ASSERT_APPROXEQF(e,a,"should FAIL")
     ENDSUBROUTINE testASSERT_APPROXEQF_SSK
 !
 !-------------------------------------------------------------------------------
@@ -244,16 +256,16 @@ PROGRAM testUnitTest
 
       COMPONENT_TEST("Passing _APPROXEQF")
       ! Test maximum delta without a failure, this should not cause output
-        ASSERT_APPROXEQF(a,b,"should PASS")
+        ASSERT_APPROXEQF(b,a,"should PASS")
       COMPONENT_TEST("Passing _APPROXEQF")
       ! Test maximum delta without a failure, this should not cause output
-        ASSERT_APPROXEQF(a,d,"should PASS")
+        ASSERT_APPROXEQF(d,a,"should PASS")
       COMPONENT_TEST("Failing _APPROXEQF")
       ! Test minimum delta to cause a failure, this should cause output
-        ASSERT_APPROXEQF(a,c,"should FAIL")
+        ASSERT_APPROXEQF(c,a,"should FAIL")
       COMPONENT_TEST("Failing _APPROXEQF")
       ! Test minimum delta to cause a failure, this should cause output
-        ASSERT_APPROXEQF(a,e,"should FAIL")
+        ASSERT_APPROXEQF(e,a,"should FAIL")
     ENDSUBROUTINE testASSERT_APPROXEQF_SDK
 !
 !-------------------------------------------------------------------------------
@@ -283,16 +295,16 @@ PROGRAM testUnitTest
 
       COMPONENT_TEST("Passing APPROXEQ")
       ! Test maximum delta without a failure, this should not cause output
-        ASSERT_APPROXEQ(a,b,'ASSERT_APPROXEQ given failing condition')
+        ASSERT_APPROXEQ(b,a,"should PASS")
       COMPONENT_TEST("Passing APPROXEQ")
       ! Test maximum delta without a failure, this should not cause output
-        ASSERT_APPROXEQ(a,d,'ASSERT_APPROXEQ given failing condition')
+        ASSERT_APPROXEQ(d,a,"should PASS")
       COMPONENT_TEST("Failing APPROXEQ")
       ! Test minimum delta to cause a failure, this should cause output
-        ASSERT_APPROXEQ(a,c,'ASSERT_APPROXEQ given failing condition')
+        ASSERT_APPROXEQ(c,a,"should FAIL")
       COMPONENT_TEST("Failing APPROXEQ")
       ! Test minimum delta to cause a failure, this should cause output
-        ASSERT_APPROXEQ(a,e,'ASSERT_APPROXEQ given failing condition')
+        ASSERT_APPROXEQ(e,a,"should FAIL")
     ENDSUBROUTINE testASSERT_APPROXEQ_SDK
 !
 !-------------------------------------------------------------------------------
@@ -321,16 +333,16 @@ PROGRAM testUnitTest
 
       COMPONENT_TEST("Passing APPROXEQ")
       ! Test maximum delta without a failure, this should not cause output
-        ASSERT_APPROXEQ(a,b,'ASSERT_APPROXEQ given failing condition')
+        ASSERT_APPROXEQ(b,a,"should PASS")
       COMPONENT_TEST("Passing APPROXEQ")
       ! Test maximum delta without a failure, this should not cause output
-        ASSERT_APPROXEQ(a,d,'ASSERT_APPROXEQ given failing condition')
+        ASSERT_APPROXEQ(d,a,"should PASS")
       COMPONENT_TEST("Failing APPROXEQ")
       ! Test minimum delta to cause a failure, this should cause output
-        ASSERT_APPROXEQ(a,c,'ASSERT_APPROXEQ given failing condition')
+        ASSERT_APPROXEQ(c,a,"should FAIL")
       COMPONENT_TEST("Failing APPROXEQ")
       ! Test minimum delta to cause a failure, this should cause output
-        ASSERT_APPROXEQ(a,e,'ASSERT_APPROXEQ given failing condition')
+        ASSERT_APPROXEQ(e,a,"should FAIL")
     ENDSUBROUTINE testASSERT_APPROXEQ_SSK
 !
 !-------------------------------------------------------------------------------
@@ -360,16 +372,16 @@ PROGRAM testUnitTest
 
       COMPONENT_TEST("Passing EQ")
       ! Test maximum delta without a failure, this should not cause output
-        ASSERT_EQ(a,b,'ASSERT_EQ given failing condition')
+        ASSERT_EQ(b,a,"should PASS")
       COMPONENT_TEST("Passing EQ")
       ! Test maximum delta without a failure, this should not cause output
-        ASSERT_EQ(a,d,'ASSERT_EQ given failing condition')
+        ASSERT_EQ(d,a,"should PASS")
       COMPONENT_TEST("Failing EQ")
       ! Test minimum delta to cause a failure, this should cause output
-        ASSERT_EQ(a,c,'ASSERT_EQ given failing condition')
+        ASSERT_EQ(c,a,"should FAIL")
       COMPONENT_TEST("Failing EQ")
       ! Test minimum delta to cause a failure, this should cause output
-        ASSERT_EQ(a,e,'ASSERT_EQ given failing condition')
+        ASSERT_EQ(e,a,"should FAIL")
     ENDSUBROUTINE testASSERT_EQ_SDK
 !
 !-------------------------------------------------------------------------------
@@ -398,16 +410,397 @@ PROGRAM testUnitTest
 
       COMPONENT_TEST("Passing EQ")
       ! Test maximum delta without a failure, this should not cause output
-        ASSERT_EQ(a,b,'ASSERT_EQ given failing condition')
+        ASSERT_EQ(b,a,"should PASS")
       COMPONENT_TEST("Passing EQ")
       ! Test maximum delta without a failure, this should not cause output
-        ASSERT_EQ(a,d,'ASSERT_EQ given failing condition')
+        ASSERT_EQ(d,a,"should PASS")
       COMPONENT_TEST("Failing EQ")
       ! Test minimum delta to cause a failure, this should cause output
-        ASSERT_EQ(a,c,'ASSERT_EQ given failing condition')
+        ASSERT_EQ(c,a,"should FAIL")
       COMPONENT_TEST("Failing EQ")
       ! Test minimum delta to cause a failure, this should cause output
-        ASSERT_EQ(a,e,'ASSERT_EQ given failing condition')
+        ASSERT_EQ(e,a,"should FAIL")
     ENDSUBROUTINE testASSERT_EQ_SSK
-ENDPROGRAM testUnitTest
+!
+!-------------------------------------------------------------------------------
+!> @brief Tests the ASSERT_LE macro and associated function calss
+!> @param a - reference value
+!> @param b - test value
+!> @param c - test value
+!> @param d - test value
+!> @param e - test value
+!> @param tol - tolerance for test
+!>
+    SUBROUTINE testASSERT_LE_SDK()
+      REAL(SDK):: a,b,c,d,e,tol
+      !Initialize ref value
+      a=2.0_SDK
+      ! Declare a tolerance to test functionality of the statements
+      tol=1.0E-14_SDK
+      ! Initialize test values on either side of tolerance
+      b=a
+      c=a+0.5E-15_SDK
+      e=a-0.2E-15_SDK
 
+      COMPONENT_TEST("Passing LE")
+      ! Test maximum delta without a failure, this should not cause output
+        ASSERT_LE(b,a,"should PASS")
+      COMPONENT_TEST("Passing LE")
+      ! Test maximum delta without a failure, this should not cause output
+        ASSERT_LE(e,a,"should PASS")
+      COMPONENT_TEST("Failing LE")
+      ! Test minimum delta to cause a failure, this should cause output
+        ASSERT_LE(c,a,"should FAIL")
+    ENDSUBROUTINE testASSERT_LE_SDK
+!
+!-------------------------------------------------------------------------------
+!> @brief Tests the ASSERT_LE macro and associated function calss
+!> @param a - reference value
+!> @param b - test value
+!> @param c - test value
+!> @param d - test value
+!> @param e - test value
+!> @param tol - tolerance for test
+!>
+    SUBROUTINE testASSERT_LE_SSK()
+      REAL(SSK):: a,b,c,d,e
+
+      !Initialize ref value
+      a=2.0_SSK
+      ! Initialize test values on either side of tolerance
+      b=a
+      c=a+1.2E-7_SSK
+      e=a-0.7E-7_SSK
+
+      COMPONENT_TEST("Passing LE")
+      ! Test maximum delta without a failure, this should not cause output
+        ASSERT_LE(b,a,"should PASS")
+      COMPONENT_TEST("Passing LE")
+      ! Test maximum delta without a failure, this should not cause output
+        ASSERT_LE(e,a,"should PASS")
+      COMPONENT_TEST("Failing LE")
+      ! Test minimum delta to cause a failure, this should cause output
+        ASSERT_LE(c,a,"should FAIL")
+    ENDSUBROUTINE testASSERT_LE_SSK
+!
+!-------------------------------------------------------------------------------
+!> @brief Tests the ASSERT_LT macro and associated function calss
+!> @param a - reference value
+!> @param b - test value
+!> @param c - test value
+!> @param d - test value
+!> @param e - test value
+!> @param tol - tolerance for test
+!>
+    SUBROUTINE testASSERT_LT_SDK()
+      REAL(SDK):: a,b,c,d,e,tol
+      !Initialize ref value
+      a=2.0_SDK
+      ! Declare a tolerance to test functionality of the statements
+      tol=1.0E-14_SDK
+      ! Initialize test values on either side of tolerance
+      b=a
+      c=a+0.5E-15_SDK
+      e=a-0.2E-15_SDK
+
+      COMPONENT_TEST("Passing LT")
+      ! Test maximum delta without a failure, this should not cause output
+        ASSERT_LT(e,a,"should PASS")
+      COMPONENT_TEST("Failing LT")
+      ! Test minimum delta to cause a failure, this should cause output
+        ASSERT_LT(c,a,"should FAIL")
+      COMPONENT_TEST("Failing LT")
+      ! Test minimum delta to cause a failure, this should cause output
+        ASSERT_LT(b,a,"should FAIL")
+    ENDSUBROUTINE testASSERT_LT_SDK
+!
+!-------------------------------------------------------------------------------
+!> @brief Tests the ASSERT_LT macro and associated function calss
+!> @param a - reference value
+!> @param b - test value
+!> @param c - test value
+!> @param d - test value
+!> @param e - test value
+!> @param tol - tolerance for test
+!>
+    SUBROUTINE testASSERT_LT_SSK()
+      REAL(SSK):: a,b,c,d,e
+
+      !Initialize ref value
+      a=2.0_SSK
+      ! Initialize test values on either side of tolerance
+      b=a
+      c=a+1.2E-7_SSK
+      e=a-0.7E-7_SSK
+
+      COMPONENT_TEST("Passing LT")
+      ! Test maximum delta without a failure, this should not cause output
+        ASSERT_LT(e,a,"should PASS")
+      COMPONENT_TEST("Failing LT")
+      ! Test minimum delta to cause a failure, this should cause output
+        ASSERT_LT(c,a,"should FAIL")
+      COMPONENT_TEST("Failing LT")
+      ! Test minimum delta to cause a failure, this should cause output
+        ASSERT_LT(b,a,"should FAIL")
+    ENDSUBROUTINE testASSERT_LT_SSK
+!
+!-------------------------------------------------------------------------------
+!> @brief Tests the ASSERT_GE macro and associated function calss
+!> @param a - reference value
+!> @param b - test value
+!> @param c - test value
+!> @param d - test value
+!> @param e - test value
+!> @param tol - tolerance for test
+!>
+    SUBROUTINE testASSERT_GE_SDK()
+      REAL(SDK):: a,b,c,d,e,tol
+      !Initialize ref value
+      a=2.0_SDK
+      ! Declare a tolerance to test functionality of the statements
+      tol=1.0E-14_SDK
+      ! Initialize test values on either side of tolerance
+      b=a
+      c=a+0.5E-15_SDK
+      e=a-0.2E-15_SDK
+
+      COMPONENT_TEST("Passing GE")
+      ! Test maximum delta without a failure, this should not cause output
+        ASSERT_GE(b,a,"should PASS")
+      COMPONENT_TEST("Passing GE")
+      ! Test maximum delta without a failure, this should not cause output
+        ASSERT_GE(c,a,"should PASS")
+      COMPONENT_TEST("Failing GE")
+      ! Test minimum delta to cause a failure, this should cause output
+        ASSERT_GE(e,a,"should FAIL")
+    ENDSUBROUTINE testASSERT_GE_SDK
+!
+!-------------------------------------------------------------------------------
+!> @brief Tests the ASSERT_GE macro and associated function calss
+!> @param a - reference value
+!> @param b - test value
+!> @param c - test value
+!> @param d - test value
+!> @param e - test value
+!> @param tol - tolerance for test
+!>
+    SUBROUTINE testASSERT_GE_SSK()
+      REAL(SSK):: a,b,c,d,e
+
+      !Initialize ref value
+      a=2.0_SSK
+      ! Initialize test values on either side of tolerance
+      b=a
+      c=a+1.2E-7_SSK
+      e=a-0.7E-7_SSK
+
+      COMPONENT_TEST("Passing GE")
+      ! Test maximum delta without a failure, this should not cause output
+        ASSERT_GE(b,a,"should PASS")
+      COMPONENT_TEST("Passing GE")
+      ! Test maximum delta without a failure, this should not cause output
+        ASSERT_GE(c,a,"should PASS")
+      COMPONENT_TEST("Failing GE")
+      ! Test minimum delta to cause a failure, this should cause output
+        ASSERT_GE(e,a,"should FAIL")
+    ENDSUBROUTINE testASSERT_GE_SSK
+!
+!-------------------------------------------------------------------------------
+!> @brief Tests the ASSERT_GT macro and associated function calss
+!> @param a - reference value
+!> @param b - test value
+!> @param c - test value
+!> @param d - test value
+!> @param e - test value
+!> @param tol - tolerance for test
+!>
+    SUBROUTINE testASSERT_GT_SDK()
+      REAL(SDK):: a,b,c,d,e,tol
+      !Initialize ref value
+      a=2.0_SDK
+      ! Declare a tolerance to test functionality of the statements
+      tol=1.0E-14_SDK
+      ! Initialize test values on either side of tolerance
+      b=a
+      c=a+0.5E-15_SDK
+      e=a-0.2E-15_SDK
+
+      COMPONENT_TEST("Passing GT")
+      ! Test maximum delta without a failure, this should not cause output
+        ASSERT_GT(c,a,"should PASS")
+      COMPONENT_TEST("Failing GT")
+      ! Test minimum delta to cause a failure, this should cause output
+        ASSERT_GT(b,a,"should FAIL")
+      COMPONENT_TEST("Failing GT")
+      ! Test minimum delta to cause a failure, this should cause output
+        ASSERT_GT(e,a,"should FAIL")
+    ENDSUBROUTINE testASSERT_GT_SDK
+!
+!-------------------------------------------------------------------------------
+!> @brief Tests the ASSERT_GT macro and associated function calss
+!> @param a - reference value
+!> @param b - test value
+!> @param c - test value
+!> @param d - test value
+!> @param e - test value
+!> @param tol - tolerance for test
+!>
+    SUBROUTINE testASSERT_GT_SSK()
+      REAL(SSK):: a,b,c,d,e
+
+      !Initialize ref value
+      a=2.0_SSK
+      ! Initialize test values on either side of tolerance
+      b=a
+      c=a+1.2E-7_SSK
+      e=a-0.7E-7_SSK
+
+      COMPONENT_TEST("Passing GT")
+      ! Test maximum delta without a failure, this should not cause output
+        ASSERT_GT(c,a,"should PASS")
+      COMPONENT_TEST("Failing GT")
+      ! Test minimum delta to cause a failure, this should cause output
+        ASSERT_GT(b,a,"should FAIL")
+      COMPONENT_TEST("Failing GT")
+      ! Test minimum delta to cause a failure, this should cause output
+        ASSERT_GT(e,a,"should FAIL")
+    ENDSUBROUTINE testASSERT_GT_SSK
+!
+!-------------------------------------------------------------------------------
+!> @brief Tests the ASSERT_APPROXLE macro and associated function calss
+!> @param a - reference value
+!> @param b - test value
+!> @param c - test value
+!> @param d - test value
+!> @param e - test value
+!> @param tol - tolerance for test
+!>
+    SUBROUTINE testASSERT_APPROXLE_SDK()
+      REAL(SDK):: a,b,c,d,e,tol
+      !Initialize ref value
+      a=2.0_SDK
+      ! Declare a tolerance to test functionality of the statements
+      tol=1.0E-14_SDK
+      ! Initialize test values on either side of tolerance
+      b=a+0.98E-14_SDK
+      c=a+1.5E-14_SDK
+      d=a-0.98E-14_SDK
+      e=a-1.02E-14_SDK
+
+      COMPONENT_TEST("Passing APPROXLE")
+      ! Test maximum delta without a failure, this should not cause output
+        ASSERT_APPROXLE(b,a,"should PASS")
+      COMPONENT_TEST("Passing APPROXLE")
+      ! Test maximum delta without a failure, this should not cause output
+        ASSERT_APPROXLE(e,a,"should PASS")
+      COMPONENT_TEST("Passing APPROXLE")
+      ! Test maximum delta without a failure, this should not cause output
+        ASSERT_APPROXLE(d,a,"should PASS")
+      COMPONENT_TEST("Failing APPROXLE")
+      ! Test minimum delta to cause a failure, this should cause output
+        ASSERT_APPROXLE(c,a,"should FAIL")
+    ENDSUBROUTINE testASSERT_APPROXLE_SDK
+!
+!-------------------------------------------------------------------------------
+!> @brief Tests the ASSERT_APPROXLE macro and associated function calss
+!> @param a - reference value
+!> @param b - test value
+!> @param c - test value
+!> @param d - test value
+!> @param e - test value
+!> @param tol - tolerance for test
+!>
+    SUBROUTINE testASSERT_APPROXLE_SSK()
+      REAL(SSK):: a,b,c,d,e
+
+      !Initialize ref value
+      a=2.0_SSK
+      ! Initialize test values on either side of tolerance
+      b=a+0.98E-5_SSK
+      c=a+1.5E-5_SSK
+      d=a-0.98E-5_SSK
+      e=a-1.0E-5_SSK
+
+      COMPONENT_TEST("Passing APPROXLE")
+      ! Test maximum delta without a failure, this should not cause output
+        ASSERT_APPROXLE(b,a,"should PASS")
+      COMPONENT_TEST("Passing APPROXLE")
+      ! Test maximum delta without a failure, this should not cause output
+        ASSERT_APPROXLE(e,a,"should PASS")
+      COMPONENT_TEST("Passing APPROXLE")
+      ! Test maximum delta without a failure, this should not cause output
+        ASSERT_APPROXLE(d,a,"should PASS")
+      COMPONENT_TEST("Failing APPROXLE")
+      ! Test minimum delta to cause a failure, this should cause output
+        ASSERT_APPROXLE(c,a,"should FAIL")
+    ENDSUBROUTINE testASSERT_APPROXLE_SSK
+!
+!-------------------------------------------------------------------------------
+!> @brief Tests the ASSERT_APPROXGE macro and associated function calss
+!> @param a - reference value
+!> @param b - test value
+!> @param c - test value
+!> @param d - test value
+!> @param e - test value
+!> @param tol - tolerance for test
+!>
+    SUBROUTINE testASSERT_APPROXGE_SDK()
+      REAL(SDK):: a,b,c,d,e,tol
+      !Initialize ref value
+      a=2.0_SDK
+      ! Declare a tolerance to test functionality of the statements
+      tol=1.0E-14_SDK
+      ! Initialize test values on either side of tolerance
+      b=a+0.98E-14_SDK
+      c=a+1.5E-14_SDK
+      d=a-0.98E-14_SDK
+      e=a-1.02E-14_SDK
+
+      COMPONENT_TEST("Passing APPROXGE")
+      ! Test maximum delta without a failure, this should not cause output
+        ASSERT_APPROXGE(b,a,"should PASS")
+      COMPONENT_TEST("Passing APPROXGE")
+      ! Test maximum delta without a failure, this should not cause output
+        ASSERT_APPROXGE(c,a,"should PASS")
+      COMPONENT_TEST("Passing APPROXGE")
+      ! Test maximum delta without a failure, this should not cause output
+        ASSERT_APPROXGE(d,a,"should PASS")
+      COMPONENT_TEST("Failing APPROXGE")
+      ! Test minimum delta to cause a failure, this should cause output
+        ASSERT_APPROXGE(e,a,"should FAIL")
+    ENDSUBROUTINE testASSERT_APPROXGE_SDK
+!
+!-------------------------------------------------------------------------------
+!> @brief Tests the ASSERT_APPROXGE macro and associated function calss
+!> @param a - reference value
+!> @param b - test value
+!> @param c - test value
+!> @param d - test value
+!> @param e - test value
+!> @param tol - tolerance for test
+!>
+    SUBROUTINE testASSERT_APPROXGE_SSK()
+      REAL(SSK):: a,b,c,d,e
+
+      !Initialize ref value
+      a=2.0_SSK
+      ! Initialize test values on either side of tolerance
+      b=a+0.98E-5_SSK
+      c=a+1.5E-5_SSK
+      d=a-0.98E-5_SSK
+      e=a-1.0E-5_SSK
+
+      COMPONENT_TEST("Passing APPROXGE")
+      ! Test maximum delta without a failure, this should not cause output
+        ASSERT_APPROXGE(b,a,"should PASS")
+      COMPONENT_TEST("Passing APPROXGE")
+      ! Test maximum delta without a failure, this should not cause output
+        ASSERT_APPROXGE(c,a,"should PASS")
+      COMPONENT_TEST("Passing APPROXGE")
+      ! Test maximum delta without a failure, this should not cause output
+        ASSERT_APPROXGE(d,a,"should PASS")
+      COMPONENT_TEST("Failing APPROXGE")
+      ! Test minimum delta to cause a failure, this should cause output
+        ASSERT_APPROXGE(e,a,"should FAIL")
+    ENDSUBROUTINE testASSERT_APPROXGE_SSK
+ENDPROGRAM testUnitTest
