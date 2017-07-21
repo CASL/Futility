@@ -29,6 +29,7 @@ PROGRAM testIOutil
   REGISTER_SUBTEST('PARAMETERS',testParameters)
   REGISTER_SUBTEST('IO_Strings',testIO_Strings)
   REGISTER_SUBTEST('Run-time Environment',testRTEnv)
+  REGISTER_SUBTEST('MAKE_DIRECTORY',testMKDIR)
 
   FINALIZE_TEST()
 !
@@ -581,5 +582,42 @@ PROGRAM testIOutil
       CALL GET_CURRENT_DIRECTORY(STATUS=stat)
       ASSERT(stat == 0,'STATUS')
     ENDSUBROUTINE testRTEnv
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testMKDIR()
+#ifdef __INTEL_COMPILER
+      USE IFPORT !For SYSTEM function
+#endif
+      CHARACTER(LEN=32) :: char_dir,tmp
+      INTEGER :: mystat
+      TYPE(StringType) :: str_dir
+
+
+      char_dir='d1/d 2'
+      str_dir='d1/d 2/d3'
+      CALL MAKE_DIRECTORY(char_dir,STATUS=mystat)
+      ASSERT(mystat == 0,'d1/d 2 STAT')
+      CALL MAKE_DIRECTORY(str_dir,STATUS=mystat)
+      ASSERT(mystat == 0,'str_dir')
+      !Test if directories already exist
+      CALL MAKE_DIRECTORY(char_dir,STATUS=mystat)
+      ASSERT(mystat == 0,'char_dir')
+      CALL MAKE_DIRECTORY(str_dir,STATUS=mystat)
+      ASSERT(mystat == 0,'str_dir')
+
+      !Clean up tests, remove directories
+      tmp='rmdir "d1/d 2/d3"'
+      CALL SlashRep(tmp)
+      mystat=SYSTEM(tmp)
+      ASSERT(mystat == 0,'d1/d 2/d3 does not exist')
+      tmp='rmdir "d1/d 2"'
+      CALL SlashRep(tmp)
+      mystat=SYSTEM(tmp)
+      ASSERT(mystat == 0,'d1/d 2 does not exist')
+      tmp='rmdir d1'
+      CALL SlashRep(tmp)
+      mystat=SYSTEM(tmp)
+      ASSERT(mystat == 0,'d1 does not exist')
+    ENDSUBROUTINE testMKDIR
 !
 ENDPROGRAM testIOutil

@@ -57,6 +57,7 @@ MODULE IOutil
   PUBLIC :: GET_COMMAND
   PUBLIC :: GET_ENVIRONMENT_VARIABLE
   PUBLIC :: GET_CURRENT_DIRECTORY
+  PUBLIC :: MAKE_DIRECTORY
 
   !Needed for getPWD_c
   INCLUDE 'getSysProcInfo_F.h'
@@ -77,13 +78,19 @@ MODULE IOutil
     MODULE PROCEDURE get_command_string
   ENDINTERFACE GET_COMMAND
 
-  !> @brief Generic interface for overloading intrinsic
+  !> @brief Generic interface for overloading procedure
   !> @ref GET_CURRENT_DIRECTORY.
   INTERFACE GET_CURRENT_DIRECTORY
     MODULE PROCEDURE GET_CURRENT_DIRECTORY_string
     MODULE PROCEDURE GET_CURRENT_DIRECTORY_char
   ENDINTERFACE GET_CURRENT_DIRECTORY
 
+  !> @brief Generic interface for overloading procedure
+  !> @ref MAKE_DIRECTORY.
+  INTERFACE MAKE_DIRECTORY
+    MODULE PROCEDURE MAKE_DIRECTORY_string
+    MODULE PROCEDURE MAKE_DIRECTORY_char
+  ENDINTERFACE MAKE_DIRECTORY
 !
 !===============================================================================
   CONTAINS
@@ -243,5 +250,31 @@ MODULE IOutil
       CALL getPWD_c(tmp,length,status)
       IF(status == 0) dir=tmp(1:length-1) !Remove the C_NULL_CHAR
     ENDSUBROUTINE GET_CURRENT_DIRECTORY_internal
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE MAKE_DIRECTORY_string(dir,status)
+      TYPE(StringType),INTENT(IN) :: dir
+      INTEGER(SIK),INTENT(OUT),OPTIONAL :: status
+      CALL MAKE_DIRECTORY_char(CHAR(dir),status)
+    ENDSUBROUTINE MAKE_DIRECTORY_string
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE MAKE_DIRECTORY_char(dir,status)
+#ifdef __INTEL_COMPILER
+      USE IFPORT !For SYSTEM function
+#endif
+      CHARACTER(LEN=*),INTENT(IN) :: dir
+      INTEGER(SIK),INTENT(OUT),OPTIONAL :: status
+      CHARACTER(LEN=LEN(dir)) :: tmp
+
+      tmp=ADJUSTL(dir)
+      CALL SlashRep(tmp)
+
+#ifdef WIN32
+      status=SYSTEM('if not exist "'//TRIM(dir)//'" mkdir "'//TRIM(dir)//'"')
+#else
+      status=SYSTEM('mkdir -p "'//TRIM(dir)//'"')
+#endif
+    ENDSUBROUTINE MAKE_DIRECTORY_char
 !
 ENDMODULE IOutil
