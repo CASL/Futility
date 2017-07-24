@@ -482,11 +482,19 @@ MODULE PartitionGraph
       CLASS(PartitionGraphType),INTENT(IN) :: thisGraph
       INTEGER(SIK),INTENT(IN) :: ng,L(:)
       TYPE(PartitionGraphType),INTENT(OUT) :: subgraph
+      LOGICAL(SBK),ALLOCATABLE :: lInL(:)
       INTEGER(SIK) :: il,iv,cv,snv,in,cv2,il2
       INTEGER(SIK) :: maxneigh,dim
 
       !Size of new subgraph
       snv=SIZE(L)
+      ALLOCATE(lInL(thisGraph%nvert))
+
+      !Determine which verties are in the subgraph
+      lInL=.FALSE.
+      DO iv=1,snv
+        lInL(L(iv))=.TRUE.
+      ENDDO !iv
 
       !Construct the subgraph manually
       maxneigh=thisGraph%maxneigh
@@ -525,23 +533,23 @@ MODULE PartitionGraph
         !Fix indexing/existence of neighbor matrices and update d accordingly
         DO in=1,maxneigh
           cv2=subgraph%neigh(in,cv)
-          IF(cv2 /= 0) THEN
-            !Vertex is not present in the graph
-            IF(.NOT. ANY(cv2 == L)) THEN
-              subgraph%neigh(in,cv)=0
-              subgraph%neighwts(in,cv)=0
-              subgraph%d(cv)=subgraph%d(cv)-1
-            ELSE !it is present and needs index change
-              DO il2=1,snv
-                IF(L(il2) == cv2) THEN
-                  subgraph%neigh(in,cv)=il2
-                  EXIT
-                ENDIF
-              ENDDO !il2
-            ENDIF
+          IF(cv2 <= 0) CYCLE
+          !Vertex is not present in the graph
+          IF(.NOT. lInL(cv2)) THEN
+            subgraph%neigh(in,cv)=0
+            subgraph%neighwts(in,cv)=0
+            subgraph%d(cv)=subgraph%d(cv)-1
+          ELSE !it is present and needs index change
+            DO il2=1,snv
+              IF(L(il2) == cv2) THEN
+                subgraph%neigh(in,cv)=il2
+                EXIT
+              ENDIF
+            ENDDO !il2
           ENDIF
         ENDDO !in
       ENDDO !cv
+      DEALLOCATE(lInL)
     ENDSUBROUTINE GenerateSubgraph_PartitionGraph
 !
 !-------------------------------------------------------------------------------
@@ -657,7 +665,7 @@ MODULE PartitionGraph
       !local arrays
       REAL(SRK) :: wc(thisGraph%dim),soic(thisGraph%dim),gsc(thisGraph%dim)
       !local allocatables
-      LOGICAL(SBK),ALLOCATABLE :: SCalc(:)
+      LOGICAL(SBK),ALLOCATABLE :: SCalc(:),linL1(:)
       INTEGER(SIK),ALLOCATABLE :: L1(:),L2(:),S(:,:)
       !local types
       TYPE(PartitionGraphType) :: sg1,sg2
@@ -776,8 +784,12 @@ MODULE PartitionGraph
         !Maximum size expected is dim*maxneigh for each vertex
         ALLOCATE(SCalc(nv))
         ALLOCATE(S(thisGraph%dim*thisGraph%maxneigh,nv))
+        ALLOCATE(lInL1(nv))
         Scalc=.FALSE.
+        lInL1=.FALSE.
         S=0
+        lInL1(L1(1))=.TRUE.
+
         !Expand group using the following rules:
         ! 1. Highest I
         ! 2. Lowest E
@@ -797,15 +809,14 @@ MODULE PartitionGraph
           !Loop over all vertices
           DO iv=1,nv
             !Only consider those not already within the group
-            !This also checks if it exists (non-zero index)
-            IF(.NOT. ANY(iv == L1)) THEN
+            IF(.NOT. lInL1(iv)) THEN
               !Calculate (weighted) internal and external edge sums
               curInt=0
               curExt=0
               DO jn=1,thisGraph%maxneigh
                 jv=thisGraph%neigh(jn,iv)
                 IF(jv /= 0) THEN
-                  IF(ANY(jv == L1)) THEN
+                  IF(lInL1(jv)) THEN
                     curInt=curInt+thisGraph%neighwts(jn,iv)
                   ELSE
                     curExt=curExt+thisGraph%neighwts(jn,iv)
@@ -856,6 +867,7 @@ MODULE PartitionGraph
           nv1=nv1+1
           L1(nv1)=bvert
           cw1=cw1+thisGraph%wts(bvert)
+          lInL1(bvert)=.TRUE.
         ENDDO !cw1 < wg1
 
         !Populate 2nd group
@@ -870,6 +882,7 @@ MODULE PartitionGraph
         !Deallocate sphere memory
         DEALLOCATE(S)
         DEALLOCATE(Scalc)
+        DEALLOCATE(lInL1)
 
         !Recursively partition the graph
         CALL recursivePartitioning(thisGraph,L1(1:nv1),L2(1:nv2),cw1,wtSum)
@@ -1184,8 +1197,6 @@ MODULE PartitionGraph
       ENDIF
 
       !Calculate internal and external edge sums
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      !REDO THIS WITH WEIGHTS
       SI=0
       SE=0
       DO jn=1,maxEl
