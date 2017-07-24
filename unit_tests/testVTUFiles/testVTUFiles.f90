@@ -13,6 +13,8 @@ PROGRAM testVTUFiles
   USE ExceptionHandler
   USE VTKFiles
   USE VTUFiles
+  USE IO_Strings
+  USE IOutil
   !
   IMPLICIT NONE
   !
@@ -21,7 +23,8 @@ PROGRAM testVTUFiles
   TYPE(VTKDataType),SAVE :: testVTKData
   TYPE(VTUXMLFileType),SAVE :: testVTUFile
   LOGICAL(SBK) :: bool
-  INTEGER(SRK) :: i
+  INTEGER(SIK) :: i,dir_status
+  CHARACTER(LEN=150) :: sint
   !
   CREATE_TEST('Test VTU Files')
   !
@@ -179,7 +182,8 @@ PROGRAM testVTUFiles
       ASSERT(bool,'hasData(...)')
       !
       !Write pvtu file
-      CALL testVTUFile%writepvtu(666,'testPVTU',2,0)
+      CALL MAKE_DIRECTORY('fsr_test',dir_status)
+      CALL testVTUFile%writepvtu(666,'test','testPVTU',2,0)
       CALL testVTUFile%hasFile('testPVTU_0.vtu',bool)
       ASSERT(bool,'hasFile(...) testPVTU_0.vtu')
       CALL testVTUFile%hasFile('testPVTU_1.vtu',bool)
@@ -191,7 +195,9 @@ PROGRAM testVTUFiles
       ASSERT(testVTUFile%numDataSet == 0,'numDataSet == 0')
       !
       !Delete test file
-      OPEN(UNIT=666,IOSTAT=i,FILE='testPVTU.pvtu')
+      sint='fsr_test/'
+      CALL SlashRep(sint)
+      OPEN(UNIT=666,IOSTAT=i,FILE=TRIM(sint)//'testPVTU.pvtu')
       IF(i == 0) CLOSE(666,STATUS='DELETE')
     ENDSUBROUTINE testMultiVTU
 !
