@@ -761,7 +761,7 @@ PROGRAM testHDF5
       CALL h5%read_attribute('groupB->memB1',string_name,testST0)
       ASSERT(refST0==testST0,'string read fail')
       CALL h5%read_attribute('groupB->memB2',real_name,testD0)
-      ASSERT(refD0==testD0,'real_read fail')
+      ASSERT_SOFTEQ(refD0,testD0,1.E-12_SRK,'l')
 
       CALL h5%fread('groupR->memD0',testD0)
       ASSERT(testD0==refD0,'D0 Write Failure')
