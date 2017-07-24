@@ -1211,6 +1211,7 @@ MODULE PartitionGraph
       INTEGER(SIK),INTENT(INOUT) :: L1(:),L2(:)
       INTEGER(SIK) :: ia,ib,iam,ibm,cva,cvb,in,ineigh
       INTEGER(SIK) :: N1,N2,nneigh,ng,cg,iv,ig,k
+      LOGICAL(SBK),ALLOCATABLE :: lInL1(:),locked(:)
       INTEGER(SIK),ALLOCATABLE :: av(:),bv(:)
       REAL(SRK),ALLOCATABLE :: D(:),gv(:)
       REAL(SRK) :: wg1,wg2,wdiff,wta,wtb,g,gmax
@@ -1221,9 +1222,17 @@ MODULE PartitionGraph
       N2=SIZE(L2)
       ng=MIN(N1,N2)
       ALLOCATE(D(thisGraph%nvert))
+      ALLOCATE(lInL1(thisGraph%nvert))
+      ALLOCATE(locked(thisGraph%nvert))
       ALLOCATE(av(ng))
       ALLOCATE(bv(ng))
       ALLOCATE(gv(ng))
+
+      !Determine which vertices are in L1
+      lInL1=.FALSE.
+      DO iv=1,N1
+        lInL1(L1(iv))=.TRUE.
+      ENDDO !iv
 
       gmax=1.0_SRK
       DO WHILE(gmax > 0)
@@ -1234,7 +1243,7 @@ MODULE PartitionGraph
           DO in=1,nneigh
             ineigh=thisGraph%neigh(in,cva)
             IF(ineigh == 0) CYCLE
-            IF(ANY(ineigh == L1)) THEN
+            IF(lInL1(ineigh)) THEN
               D(cva)=D(cva)-thisGraph%neighwts(in,cva)
             ELSE
               D(cva)=D(cva)+thisGraph%neighwts(in,cva)
@@ -1246,7 +1255,7 @@ MODULE PartitionGraph
           DO in=1,nneigh
             ineigh=thisGraph%neigh(in,cvb)
             IF(ineigh == 0) CYCLE
-            IF(ANY(ineigh == L2)) THEN
+            IF(.NOT. lInL1(ineigh)) THEN
               D(cvb)=D(cvb)-thisGraph%neighwts(in,cvb)
             ELSE
               D(cvb)=D(cvb)+thisGraph%neighwts(in,cvb)
@@ -1259,6 +1268,7 @@ MODULE PartitionGraph
         bv=-1
         gv=-1.0_SRK
         cg=0
+        locked=.FALSE.
 
         !Current size of each group
         wg1=0
@@ -1280,10 +1290,10 @@ MODULE PartitionGraph
           gmax=-HUGE(1.0_SRK)
           DO ia=1,N1
             cva=L1(ia)
-            IF(.NOT. ANY(cva == av)) THEN
+            IF(.NOT. locked(cva)) THEN
               DO ib=1,N2
                 cvb=L2(ib)
-                IF(.NOT. ANY(cvb == bv)) THEN
+                IF(.NOT. locked(cvb)) THEN
                   wta=thisGraph%wts(cva)
                   wtb=thisGraph%wts(cvb)
                   !Conserve balance between the groups
@@ -1294,6 +1304,7 @@ MODULE PartitionGraph
                       ineigh=thisGraph%neigh(in,cva)
                       IF(ineigh == cvb) THEN
                         g=g-2.0_SRK*thisGraph%neighwts(in,cva)
+                        EXIT
                       ENDIF
                     ENDDO !in
 
@@ -1320,6 +1331,8 @@ MODULE PartitionGraph
           av(ig)=L1(iam)
           bv(ig)=L2(ibm)
           gv(ig)=gmax
+          locked(av(ig))=.TRUE.
+          locked(bv(ig))=.TRUE.
 
           !Update weights of groups as if these have been swapped
           wdiff=thisGraph%wts(iam)-thisGraph%wts(ibm)
@@ -1329,17 +1342,20 @@ MODULE PartitionGraph
           !Update D values as if these have been swapped
           DO in=1,nneigh
             ineigh=thisGraph%neigh(in,av(ig))
-            IF(ANY(ineigh == L1)) THEN
+            IF(ineigh <= 0) CYCLE
+            IF(lInL1(ineigh)) THEN
               D(ineigh)=D(ineigh)+2.0_SRK*thisGraph%neighwts(in,av(ig))
-            ELSEIF(ineigh /= 0) THEN
+            ELSE
               D(ineigh)=D(ineigh)-2.0_SRK*thisGraph%neighwts(in,av(ig))
             ENDIF
+          ENDDO !in
+          DO in=1,nneigh
             ineigh=thisGraph%neigh(in,bv(ig))
-            IF(ineigh == 0) CYCLE
-            IF(ANY(ineigh == L2)) THEN
-              D(ineigh)=D(ineigh)+2.0_SRK*thisGraph%neighwts(in,bv(ig))
-            ELSE
+            IF(ineigh <= 0) CYCLE
+            IF(lInL1(ineigh)) THEN
               D(ineigh)=D(ineigh)-2.0_SRK*thisGraph%neighwts(in,bv(ig))
+            ELSE
+              D(ineigh)=D(ineigh)+2.0_SRK*thisGraph%neighwts(in,bv(ig))
             ENDIF
           ENDDO !in
         ENDDO !ig
@@ -1359,6 +1375,8 @@ MODULE PartitionGraph
         !Exchange between groups
         IF(gmax > 0) THEN
           DO ig=1,k
+            lInL1(av(ig))=.FALSE.
+            lInL1(bv(ig))=.TRUE.
             DO ia=1,N1
               IF(L1(ia) == av(ig)) THEN
                 L1(ia)=bv(ig)
@@ -1380,6 +1398,8 @@ MODULE PartitionGraph
       DEALLOCATE(av)
       DEALLOCATE(bv)
       DEALLOCATE(gv)
+      DEALLOCATE(locked)
+      DEALLOCATE(lInL1)
     ENDSUBROUTINE KernighanLin_PartitionGraph
 !
 !-------------------------------------------------------------------------------
@@ -1393,6 +1413,7 @@ MODULE PartitionGraph
       INTEGER(SIK),INTENT(INOUT) :: L1(:),L2(:)
       INTEGER(SIK) :: ia,ib,iam,ibm,cva,cvb,in,ineigh
       INTEGER(SIK) :: N1,N2,nneigh,ng,cg,iv,ig,k
+      LOGICAL(SBK),ALLOCATABLE :: lInL1(:),locked(:)
       INTEGER(SIK),ALLOCATABLE :: av(:),bv(:)
       REAL(SRK),ALLOCATABLE :: D(:),gv(:),wd(:)
       REAL(SRK) :: wg1,wg2,wdiff,wta,wtb,g,gmax,sd,dmax
@@ -1404,9 +1425,17 @@ MODULE PartitionGraph
       ng=MIN(N1,N2)
       ALLOCATE(D(thisGraph%nvert))
       ALLOCATE(wd(thisGraph%nvert))
+      ALLOCATE(lInL1(thisGraph%nvert))
+      ALLOCATE(locked(thisGraph%nvert))
       ALLOCATE(av(ng))
       ALLOCATE(bv(ng))
       ALLOCATE(gv(ng))
+
+      !Determine which vertices are in L1
+      lInL1=.FALSE.
+      DO iv=1,N1
+        lInL1(L1(iv))=.TRUE.
+      ENDDO !iv
 
       !Calculate weighted sum of edges out of each vertex (weighted degree)
       DO iv=1,thisGraph%nvert
@@ -1422,7 +1451,7 @@ MODULE PartitionGraph
           DO in=1,nneigh
             ineigh=thisGraph%neigh(in,cva)
             IF(ineigh == 0) CYCLE
-            IF(ANY(ineigh == L1)) THEN
+            IF(lInL1(ineigh)) THEN
               D(cva)=D(cva)-thisGraph%neighwts(in,cva)
             ELSE
               D(cva)=D(cva)+thisGraph%neighwts(in,cva)
@@ -1434,7 +1463,7 @@ MODULE PartitionGraph
           DO in=1,nneigh
             ineigh=thisGraph%neigh(in,cvb)
             IF(ineigh == 0) CYCLE
-            IF(ANY(ineigh == L2)) THEN
+            IF(.NOT. lInL1(ineigh)) THEN
               D(cvb)=D(cvb)-thisGraph%neighwts(in,cvb)
             ELSE
               D(cvb)=D(cvb)+thisGraph%neighwts(in,cvb)
@@ -1447,6 +1476,7 @@ MODULE PartitionGraph
         bv=-1
         gv=-1.0_SRK
         cg=0
+        locked=.FALSE.
 
         !Current size of each group
         wg1=0
@@ -1469,10 +1499,10 @@ MODULE PartitionGraph
           gmax=-HUGE(1.0_SRK)
           DO ia=1,N1
             cva=L1(ia)
-            IF(D(cva) > -wd(cva) .AND. .NOT. ANY(cva == av)) THEN
+            IF(D(cva) > -wd(cva) .AND. .NOT. locked(cva)) THEN
               DO ib=1,N2
                 cvb=L2(ib)
-                IF(D(cvb) > -wd(cvb) .AND. .NOT. ANY(cvb == bv)) THEN
+                IF(D(cvb) > -wd(cvb) .AND. .NOT. locked(cvb)) THEN
                   wta=thisGraph%wts(cva)
                   wtb=thisGraph%wts(cvb)
                   !Conserve balance between the groups
@@ -1483,6 +1513,7 @@ MODULE PartitionGraph
                       ineigh=thisGraph%neigh(in,cva)
                       IF(ineigh == cvb) THEN
                         g=g-2.0_SRK*thisGraph%neighwts(in,cva)
+                        EXIT
                       ENDIF
                     ENDDO !in
 
@@ -1509,9 +1540,10 @@ MODULE PartitionGraph
           IF(iam == -1) THEN
             DO ia=1,N1
               cva=L1(ia)
-              IF(.NOT. ANY(cva == av)) THEN
+              IF(.NOT. locked(cva)) THEN
                 DO ib=1,N2
-                  IF(.NOT. ANY(cvb == bv)) THEN
+                  cvb=L2(ib)
+                  IF(.NOT. locked(cvb)) THEN
                     wta=thisGraph%wts(cva)
                     wtb=thisGraph%wts(cvb)
                     !Conserve balance between the groups
@@ -1522,6 +1554,7 @@ MODULE PartitionGraph
                         ineigh=thisGraph%neigh(in,cva)
                         IF(ineigh == cvb) THEN
                           g=g-2.0_SRK*thisGraph%neighwts(in,cva)
+                          EXIT
                         ENDIF
                       ENDDO !in
 
@@ -1550,6 +1583,8 @@ MODULE PartitionGraph
           av(ig)=L1(iam)
           bv(ig)=L2(ibm)
           gv(ig)=gmax
+          locked(av(ig))=.TRUE.
+          locked(bv(ig))=.TRUE.
 
           !Update weights of groups as if these have been swapped
           wdiff=thisGraph%wts(iam)-thisGraph%wts(ibm)
@@ -1559,17 +1594,20 @@ MODULE PartitionGraph
           !Update D values as if these have been swapped
           DO in=1,nneigh
             ineigh=thisGraph%neigh(in,av(ig))
-            IF(ANY(ineigh == L1)) THEN
+            IF(ineigh <= 0) CYCLE
+            IF(lInL1(ineigh)) THEN
               D(ineigh)=D(ineigh)+2.0_SRK*thisGraph%neighwts(in,av(ig))
-            ELSEIF(ineigh /= 0) THEN
+            ELSE
               D(ineigh)=D(ineigh)-2.0_SRK*thisGraph%neighwts(in,av(ig))
             ENDIF
+          ENDDO !in
+          DO in=1,nneigh
             ineigh=thisGraph%neigh(in,bv(ig))
-            IF(ineigh == 0) CYCLE
-            IF(ANY(ineigh == L2)) THEN
-              D(ineigh)=D(ineigh)+2.0_SRK*thisGraph%neighwts(in,bv(ig))
-            ELSE
+            IF(ineigh <= 0) CYCLE
+            IF(lInL1(ineigh)) THEN
               D(ineigh)=D(ineigh)-2.0_SRK*thisGraph%neighwts(in,bv(ig))
+            ELSE
+              D(ineigh)=D(ineigh)+2.0_SRK*thisGraph%neighwts(in,bv(ig))
             ENDIF
           ENDDO !in
         ENDDO !ig
@@ -1589,6 +1627,8 @@ MODULE PartitionGraph
         !Exchange between groups
         IF(gmax > 0) THEN
           DO ig=1,k
+            lInL1(av(ig))=.FALSE.
+            lInL1(bv(ig))=.TRUE.
             DO ia=1,N1
               IF(L1(ia) == av(ig)) THEN
                 L1(ia)=bv(ig)
@@ -1611,6 +1651,8 @@ MODULE PartitionGraph
       DEALLOCATE(av)
       DEALLOCATE(bv)
       DEALLOCATE(gv)
+      DEALLOCATE(locked)
+      DEALLOCATE(lInL1)
     ENDSUBROUTINE SpatialKernighanLin_PartitionGraph
 !
 !-------------------------------------------------------------------------------
