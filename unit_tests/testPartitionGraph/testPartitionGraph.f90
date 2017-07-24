@@ -20,9 +20,8 @@ PROGRAM testPartitionGraph
   IMPLICIT NONE
 
   TYPE(PartitionGraphType) :: testPG,testSG
-  TYPE(ParamType) :: params,tparams
-  TYPE(ParamType) :: refInitParams,refG1Params,refG2Params,refG3Params
-  TYPE(StringType),ALLOCATABLE :: strList(:)
+  TYPE(ParamType) :: params,tparams,refInitParams
+  TYPE(ParamType) :: refG1Params,refG2Params,refG3Params,refG4Params
   TYPE(ExceptionHandlerType),POINTER :: e
 
 #ifdef FUTILITY_HAVE_SLEPC
@@ -51,11 +50,13 @@ PROGRAM testPartitionGraph
   REGISTER_SUBTEST('Recursive Expansion Bisection',testREB)
 #ifdef FUTILITY_HAVE_SLEPC
   REGISTER_SUBTEST('Recursive Spectral Bisection',testRSB)
+#ifdef HAVE_BLAS
+  REGISTER_SUBTEST('Recursive Inertial Bisection',testRIB)
+#endif
   REGISTER_SUBTEST('Multi-method',testMulti)
 #endif
   REGISTER_SUBTEST('Kernighan-Lin',testKL)
   REGISTER_SUBTEST('Metrics Calculation',testMetrics)
-
 #ifdef FUTILITY_HAVE_PETSC
   CALL SlepcFinalize(ierr)
   CALL PetscFinalize(ierr)
@@ -68,7 +69,6 @@ PROGRAM testPartitionGraph
   CONTAINS
 !
 !-------------------------------------------------------------------------------
-    !Test initialization process
     SUBROUTINE testInit()
       CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
       LOGICAL(SBK) :: bool
@@ -483,37 +483,28 @@ PROGRAM testPartitionGraph
     SUBROUTINE testREB()
       LOGICAL(SBK) :: bool
       INTEGER(SIK) :: ig,iv
-      INTEGER(SIK) :: refneigh(4,6),refGrpIdx(3),refGrpList(6)
-      REAL(SRK) :: refCoord(2,6)
-      TYPE(StringType) :: AlgName,refAlgNames(1)
+      TYPE(StringType) :: str,AlgName,refAlgNames(1)
       INTEGER(SIK),ALLOCATABLE :: grpIdx(:),grpList(:)
 
+      !String for this partitionTest
+      str='REB'
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       !Test very simple 2-group, 2D, uniform-weighted graph
       !Decomposition should look like:
       ! 2 2 2
       ! 1 1
       ! 1
-      CALL testPG%initialize(refG1Params)
+      !Setup test
+      tparams=refG1Params
+      ALLOCATE(grpIdx(3))
+      ALLOCATE(grpList(6))
+      grpIdx=(/1,4,7/)
+      grpList=(/1,2,3,4,5,6/)
+      !Test
+      CALL partitionTest(tparams,str,grpIdx,grpList)
 
-      !Call partition algorithm
-      CALL testPG%partition()
-
-      !Reference lists
-      refGrpIdx=(/1,4,7/)
-      refGrpList=(/1,2,3,4,5,6/)
-
-      DO ig=1,3
-        bool=(testPG%groupIdx(ig) == refGrpIdx(ig))
-        ASSERT(bool,'%partition(REB)%groupIdx')
-      ENDDO !ig
-
-      DO iv=1,6
-        bool=(testPG%groupList(iv) == refGrpList(iv))
-        ASSERT(bool,'%partition(REB)%groupList')
-      ENDDO !iv
-
-      CALL testPG%clear()
-
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       !Test larger 3-group problem (even divisions, unweighted)
       !Decomposition should look like
       ! 3 3 2 2 2 2
@@ -522,12 +513,8 @@ PROGRAM testPartitionGraph
       ! 1 1 1 1
       ! 1 1
       ! 1 1
-      !Initialize
-      CALL testPG%initialize(refG2Params)
-      !Partition
-      CALL testPG%partition()
-
-      !Setup references
+      !Setup
+      tparams=refG2Params
       ALLOCATE(grpIdx(4))
       ALLOCATE(grpList(24))
       grpIdx=(/1, 9, 17, 25/)
@@ -535,23 +522,9 @@ PROGRAM testPartitionGraph
                 24, 18, 17, 23, 22, 16, 12, 21, &
                  9, 10, 11, 13, 14, 15, 19, 20/)
       !Test
-      DO ig=1,4
-        bool=(testPG%groupIdx(ig) == GrpIdx(ig))
-        ASSERT(bool,'%partition(REB)%groupIdx')
-      ENDDO !ig
+      CALL partitionTest(tparams,str,grpIdx,grpList)
 
-      DO iv=1,24
-        bool=(testPG%groupList(iv) == GrpList(iv))
-        ASSERT(bool,'%partition(REB)%groupList')
-        FINFO() 'Ref :',grpList(iv)
-        FINFO() 'Test:',testPG%groupList(iv)
-      ENDDO !iv
-
-      DEALLOCATE(grpIdx)
-      DEALLOCATE(grpList)
-
-      CALL testPG%clear()
-
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       !Test larger 3-group problem (uneven divisions, weighted)
       !Decomposition should look like
       ! 3 3 3 2 2 2
@@ -560,44 +533,24 @@ PROGRAM testPartitionGraph
       ! 1 1 1 1
       ! 1 1 1
       ! 1 1 1
-      !Initialize
-      CALL testPG%initialize(refG3Params)
-      !Partition
-      CALL testPG%partition()
-
-      !Setup references
+      !Setup
+      tparams=refG3Params
       ALLOCATE(grpIdx(4))
       ALLOCATE(grpList(28))
       grpIdx=(/1, 11, 21, 29/)
       grpList=(/ 1,  2,  3,  6,  5,  4,  7,  8,  9, 10, &
                 16, 15, 22, 21, 28, 27, 14, 20, 26, 13, &
                 11, 12, 17, 18, 19, 23, 24, 25/)
-
       !Test
-      DO ig=1,4
-        bool=(testPG%groupIdx(ig) == GrpIdx(ig))
-        ASSERT(bool,'%partition(REB)%groupIdx')
-      ENDDO !ig
-
-      DO iv=1,28
-        bool=(testPG%groupList(iv) == GrpList(iv))
-        ASSERT(bool,'%partition(REB)%groupList')
-        FINFO() 'Ref :',grpList(iv)
-        FINFO() 'Test:',testPG%groupList(iv)
-      ENDDO !iv
-
-      DEALLOCATE(grpIdx)
-      DEALLOCATE(grpList)
-
-      CALL testPG%clear()
+      CALL partitionTest(tparams,str,grpIdx,grpList)
     ENDSUBROUTINE testREB
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testRSB()
-      LOGICAL(SBK) :: bool
-      INTEGER(SIK) :: ig,iv
       INTEGER(SIK),ALLOCATABLE :: grpIdx(:),grpList(:)
-      TYPE(StringType) :: algName(1)
+      TYPE(StringType) :: str,algName(1)
+
+      str='RSB'
       algName(1)='Recursive Spectral Bisection'
 
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -605,43 +558,14 @@ PROGRAM testPartitionGraph
       ! 1 1 1
       ! 2 2
       ! 2
+      !Setup
       tparams=refG1Params
       CALL tparams%set('PartitionGraph -> Algorithms',algName)
-
-      !initialize
-      CALL testPG%initialize(tparams)
-      CALL tparams%clear()
-
-      !Partition
-      CALL testPG%partition()
-
-      !Setup reference
       ALLOCATE(grpIdx(3))
       ALLOCATE(grpList(6))
       grpIdx=(/1,4,7/)
-      grpList=(/6,5,4,1,2,3/)
-
-      !Test
-      DO ig=1,testPG%nGroups+1
-        bool=(testPG%groupIdx(ig) == GrpIdx(ig))
-        ASSERT(bool,'%partition(RSB)%groupIdx')
-        FINFO() 'Index:', ig
-        FINFO() 'Ref: ',grpIdx(ig)
-        FINFO() 'Test:',testPG%groupIdx(ig)
-      ENDDO !ig
-      DO iv=1,testPG%nvert
-        bool=(testPG%groupList(iv) == GrpList(iv))
-        ASSERT(bool,'%partition(RSB)%groupList')
-        FINFO() 'Index:',iv
-        FINFO() 'Ref: ',grpList(iv)
-        FINFO() 'Test:',testPG%groupList(iv)
-      ENDDO !iv
-
-      !Clear
-      DEALLOCATE(grpIdx)
-      DEALLOCATE(grpList)
-      CALL testPG%clear()
-      CALL tparams%clear()
+      grpList=(/6,5,4,3,2,1/)
+      CALL partitionTest(tparams,str,grpIdx,grpList)
 
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       !Decomposition should look like:
@@ -651,46 +575,18 @@ PROGRAM testPartitionGraph
       ! 3 3 2 2
       ! 3 3
       ! 3 3
+      !Setup
       tparams=refG2Params
       CALL tparams%set('PartitionGraph -> Algorithms',algName)
-
-      !initialize
-      CALL testPG%initialize(tparams)
-      CALL tparams%clear()
-
-      !Partition
-      CALL testPG%partition()
-
-      !Setup reference
       ALLOCATE(grpIdx(4))
       ALLOCATE(grpList(24))
       grpIdx=(/1,9,17,25/)
       grpList=(/24,18,23,17,22,16,21,15, &
-                 1, 2, 3, 4, 5, 6, 7, 8, &
-                 9,10,11,12,13,14,19,20/)
+                19,20,13,14, 9,10,11,12, &
+                 8, 7, 6, 5, 4, 3, 2, 1/)
+      CALL partitionTest(tparams,str,grpIdx,grpList)
 
-      !Test
-      DO ig=1,testPG%nGroups+1
-        bool=(testPG%groupIdx(ig) == GrpIdx(ig))
-        ASSERT(bool,'%partition(RSB)%groupIdx')
-        FINFO() 'Index:',ig
-        FINFO() 'Ref: ',grpIdx(ig)
-        FINFO() 'Test:',testPG%groupIdx(ig)
-      ENDDO !ig
-      DO iv=1,testPG%nvert
-        bool=(testPG%groupList(iv) == GrpList(iv))
-        ASSERT(bool,'%partition(RSB)%groupList')
-        FINFO() 'Index:',iv
-        FINFO() 'Ref: ',grpList(iv)
-        FINFO() 'Test:',testPG%groupList(iv)
-      ENDDO !iv
-
-      !Clear
-      DEALLOCATE(grpIdx)
-      DEALLOCATE(grpList)
-      CALL testPG%clear()
-      CALL tparams%clear()
-
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       !Test larger 3-group problem (uneven divisions, weighted)
       !Decomposition should look like
       ! 2 2 2 2 1 1
@@ -699,50 +595,87 @@ PROGRAM testPartitionGraph
       ! 3 3 3 1
       ! 3 3 3
       ! 3 3 3
-      !Initialize
+      !Setup
       tparams=refG3Params
       CALL tparams%set('PartitionGraph -> Algorithms',algName)
-      CALL testPG%initialize(tparams)
-      !Partition
-      CALL testPG%partition()
-
-      !Setup references
       ALLOCATE(grpIdx(4))
       ALLOCATE(grpList(28))
-      grpIdx=(/1, 11, 20, 29/)
-      grpList=(/ 28, 22, 16, 27, 21, 15, 26, 20, 25, 14, &
-                  3,  2,  1,  6,  5,  4, 10,  9,  8, &
-                  7, 11, 12, 13, 17, 18, 19, 23, 24/)
-
-      !Test
-      DO ig=1,testPG%nGroups+1
-        bool=(testPG%groupIdx(ig) == GrpIdx(ig))
-        ASSERT(bool,'%partition(RSB)%groupIdx')
-        FINFO() 'Index:',ig
-        FINFO() 'Ref: ',grpIdx(ig)
-        FINFO() 'Test:',testPG%groupIdx(ig)
-      ENDDO !ig
-      DO iv=1,testPG%nvert
-        bool=(testPG%groupList(iv) == GrpList(iv))
-        ASSERT(bool,'%partition(RSB)%groupList')
-        FINFO() 'Index:',iv
-        FINFO() 'Ref: ',grpList(iv)
-        FINFO() 'Test:',testPG%groupList(iv)
-      ENDDO !iv
-
-      DEALLOCATE(grpIdx)
-      DEALLOCATE(grpList)
-
-      CALL testPG%clear()
-      CALL tparams%clear()
+      grpIdx=(/1, 11, 19, 29/)
+      grpList=(/28,22,16,27,21,15,26,20,25,14, &
+                23,24,17,18,19,11,12,13, &
+                 7, 8, 9,10, 4, 5, 6, 1, 2, 3/)
+      CALL partitionTest(tparams,str,grpIdx,grpList)
     ENDSUBROUTINE testRSB
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testRIB()
+      INTEGER(SIK),ALLOCATABLE :: grpIdx(:),grpList(:)
+      TYPE(StringType) :: str,algName(1)
+
+      str='RIB'
+      algName(1)='Recursive Inertial Bisection'
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !Decomposition should look like:
+      ! 2 1 1
+      ! 2 1
+      ! 2
+      !Setup
+      tparams=refG1Params
+      CALL tparams%set('PartitionGraph -> Algorithms',algName)
+      ALLOCATE(grpIdx(3))
+      ALLOCATE(grpList(6))
+      grpIdx=(/1,4,7/)
+      grpList=(/6,5,4,3,2,1/)
+      CALL partitionTest(tparams,str,grpIdx,grpList)
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !Decomposition should look like:
+      ! 2 2 1 1 1 1
+      ! 2 2 1 1 1 1
+      ! 3 3 2 2
+      ! 3 3 2 2
+      ! 3 3
+      ! 3 3
+      !Setup
+      tparams=refG2Params
+      CALL tparams%set('PartitionGraph -> Algorithms',algName)
+      ALLOCATE(grpIdx(4))
+      ALLOCATE(grpList(24))
+      grpIdx=(/1,9,17,25/)
+      grpList=(/24,18,23,17,22,16,21,12, &
+                 1, 2, 3, 4, 5, 6, 7, 8, &
+                 9,10,11,13,14,15,19,20/)
+      CALL partitionTest(tparams,str,grpIdx,grpList)
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !Test larger 3-group problem (uneven divisions, weighted)
+      !Decomposition should look like
+      ! 2 2 2 2 1 1
+      ! 2 2 2 1 1 1
+      ! 3 2 2 1 1 1
+      ! 3 3 3 1
+      ! 3 3 3
+      ! 3 3 3
+      !Setup
+      tparams=refG3Params
+      CALL tparams%set('PartitionGraph -> Algorithms',algName)
+      ALLOCATE(grpIdx(4))
+      ALLOCATE(grpList(28))
+      grpIdx=(/1, 11, 19, 29/)
+      grpList=(/28,22,27,16,21,26,15,20,25,14, &
+                23,24,17,18,19,11,12,13, &
+                 7, 8, 9,10, 4, 5, 6, 1, 2, 3/)
+      CALL partitionTest(tparams,str,grpIdx,grpList)
+    ENDSUBROUTINE testRIB
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testMulti()
       LOGICAL(SBK) :: bool
       INTEGER(SIK) :: ig,iv
-      INTEGER(SIK),ALLOCATABLE :: grpIdx(:),grpList(:)
-      TYPE(StringType) :: algName(2)
+      LOGICAL(SBK),ALLOCATABLE :: match(:,:)
+      INTEGER(SIK),ALLOCATABLE :: grpIdx(:),grpList(:),grpList2(:)
+      TYPE(StringType) :: str,algName(2)
+
+      str='REB-RSB'
       algName(1)='Recursive Expansion Bisection'
       algName(2)='Recursive Spectral Bisection'
 
@@ -754,64 +687,87 @@ PROGRAM testPartitionGraph
       ! 1 1 1 1
       ! 1 1 1
       ! 1 1 1
-
-      !Initialize
+      !Setup
       tparams=refG3Params
       CALL tparams%set('PartitionGraph -> Algorithms',algName)
       CALL tparams%add('PartitionGraph -> Conditions',(/20/))
+      ALLOCATE(grpIdx(4))
+      ALLOCATE(grpList(28))
+      ALLOCATE(grpList2(28))
+      grpIdx=(/1, 11, 19, 29/)
+      grpList=(/ 1, 2, 3, 6, 5, 4, 7, 8, 9,10, &
+                11,17,23,12,18,24,13,19, &
+                25,26,20,14,27,21,15,28,22,16/)
+      grpList2=(/ 1, 2, 3, 6, 5, 4, 7, 8, 9,10, &
+                 23,17,11,24,18,12,25,19, &
+                 13,14,20,26,15,21,27,16,22,28/)
+      ALLOCATE(match(2,28))
+      !This case leads to a symmetric case with RSB. When getting eigenvectors
+      !from SLEPc, different compilations will return different a different order
+      !of the 3rd/4th smallest eigenvectors, as their eigenvalues are identical.
+      !Thus 2 different orders must be checked.
+      !Initialize
       CALL testPG%initialize(tparams)
+
       !Partition
       CALL testPG%partition()
 
-      !Setup references
-      ALLOCATE(grpIdx(4))
-      ALLOCATE(grpList(28))
-      grpIdx=(/1, 11, 19, 29/)
-      grpList=(/  1,  2,  3,  6,  5,  4,  7,  8,  9, 10, &
-                 23, 17, 11, 24, 18, 12, 25, 19, 13, &
-                 14, 15, 16, 20, 21, 22, 26, 27, 28/)
-
       !Test
       DO ig=1,testPG%nGroups+1
-        bool=(testPG%groupIdx(ig) == GrpIdx(ig))
-        ASSERT(bool,'%partition(REB-RSB)%groupIdx')
-        FINFO() 'Index:',ig
+        bool=(testPG%groupIdx(ig) == grpIdx(ig))
+        ASSERT(bool,'%partition%groupIdx')
+        FINFO() 'Index:', ig
         FINFO() 'Ref: ',grpIdx(ig)
         FINFO() 'Test:',testPG%groupIdx(ig)
       ENDDO !ig
+
+      !Make sure it follows 1 of the 2 orders
       DO iv=1,testPG%nvert
-        bool=(testPG%groupList(iv) == GrpList(iv))
-        ASSERT(bool,'%partition(REB-RSB)%groupList')
+        match(1,iv)=(testPG%groupList(iv) == grpList(iv))
+        match(2,iv)=(testPG%groupList(iv) == grpList2(iv))
+        bool=match(1,iv) .OR. match(2,iv)
+        ASSERT(bool, '%partition(REB-RSB)%GroupList')
         FINFO() 'Index:',iv
-        FINFO() 'Ref: ',grpList(iv)
+        FINFO() 'Refs: ',grpList(iv),grpList2(iv)
         FINFO() 'Test:',testPG%groupList(iv)
       ENDDO !iv
 
+      !Make sure complete match with 1 of the lists
+      bool=ALL(match(1,:)) .OR. ALL(match(2,:))
+      ASSERT(bool,'%partition(REB-RSB)%GroupList')
+      FINFO() "2-case scenario didn't match either reference!"
+      !Clear
+      CALL tparams%clear()
+      CALL testPG%clear()
       DEALLOCATE(grpIdx)
       DEALLOCATE(grpList)
-
-      CALL testPG%clear()
+      DEALLOCATE(grpList2)
+      DEALLOCATE(match)
     ENDSUBROUTINE testMulti
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testKL()
-      LOGICAL(SBK) :: bool
-      INTEGER(SIK) :: iv,iv2
       INTEGER(SIK),ALLOCATABLE :: L1(:),L2(:)
       INTEGER(SIK),ALLOCATABLE :: refL1(:),refL2(:)
-      REAL(SRK),ALLOCATABLE :: map(:,:)
-      TYPE(StringType) :: algName(1),refineAlg(1)
+      TYPE(StringType) :: str,algName(1),refineAlg(1)
 
       COMPONENT_TEST('Kernighan-Lin')
-      algName(1)='Recursive Expansion Bisection'
+      str='KL'
+      algName(1)='None'
       refineAlg(1)='Kernighan-Lin'
 
-      !Initialize
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !Refinement should transform:
+      ! 2 2 2 1 2 2     2 2 2 1 1 1
+      ! 2 1 2 2 1 2     2 2 1 1 1 1
+      ! 1 1 2 1     =>  2 2 1 1
+      ! 2 2 2 1         2 2 1 1
+      ! 1 1             2 2
+      ! 1 1             2 2
+      !Setup
       tparams=refG2Params
       CALL tparams%set('PartitionGraph -> Algorithms',algName)
       CALL tparams%add('PartitionGraph -> Refinement',refineAlg)
-      CALL testPG%initialize(tparams)
-
       ALLOCATE(L1(11))
       ALLOCATE(L2(13))
       ALLOCATE(refL1(11))
@@ -820,40 +776,9 @@ PROGRAM testPartitionGraph
       L2=(/5,6,7,11,13,15,16,18,19,20,21,23,24/)
       refL1=(/11,15,8,7,22,23,12,18,16,17,24/)
       refL2=(/10,3,4,1,13,2,14,5,19,20,21,9,6/)
-      !Refinement should transform:
-      ! 2 2 2 1 2 2     2 2 2 1 1 1
-      ! 2 1 2 2 1 2     2 2 1 1 1 1
-      ! 1 1 2 1     =>  2 2 1 1
-      ! 2 2 2 1         2 2 1 1
-      ! 1 1             2 2
-      ! 1 1             2 2
-      CALL testPG%refine(L1,L2)
+      CALL refinementTest(tparams,str,L1,L2,refL1,refL2)
 
-      !Test
-      DO iv=1,SIZE(L1)
-        bool=(L1(iv) == refL1(iv))
-        ASSERT(bool,'%refine(KL) L1')
-        FINFO() 'Index:',iv
-        FINFO() 'Ref: ',refL1(iv)
-        FINFO() 'Test:',L1(iv)
-      ENDDO !iv
-
-      DO iv=1,SIZE(L2)
-        bool=(L2(iv) == refL2(iv))
-        ASSERT(bool,'%refine(KL) L2')
-        FINFO() 'Index:',iv
-        FINFO() 'Ref: ',refL2(iv)
-        FINFO() 'Test:',L2(iv)
-      ENDDO !iv
-
-      !Clear
-      CALL tparams%clear()
-      CALL testPG%clear()
-      DEALLOCATE(L1)
-      DEALLOCATE(L2)
-      DEALLOCATE(refL1)
-      DEALLOCATE(refL2)
-
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       !Test a small map
       !KL should not optimally refine this (local minima trap)
       !SKL will be able to optimally refine this
@@ -872,27 +797,8 @@ PROGRAM testPartitionGraph
       !0 0 1 1 1 1 1 1 1 1 1 1 0 0
       !0 0 0 1 1 1 1 1 1 1 1 0 0 0
       !0 0 0 0 0 1 1 1 1 0 0 0 0 0
-      ALLOCATE(map(14,14))
-      map=REAL(RESHAPE((/0,0,0,0,0,1,1,1,1,0,0,0,0,0, &
-                         0,0,0,1,1,1,1,1,1,1,1,0,0,0, &
-                         0,0,1,1,1,1,1,1,1,1,1,1,0,0, &
-                         0,1,1,1,1,1,1,1,1,1,1,1,1,0, &
-                         0,1,1,1,1,1,1,1,1,1,1,1,1,0, &
-                         1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                         1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                         1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                         1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                         0,1,1,1,1,1,1,1,1,1,1,1,1,0, &
-                         0,1,1,1,1,1,1,1,1,1,1,1,1,0, &
-                         0,0,1,1,1,1,1,1,1,1,1,1,0,0, &
-                         0,0,0,1,1,1,1,1,1,1,1,0,0,0, &
-                         0,0,0,0,0,1,1,1,1,0,0,0,0,0/),(/14,14/)),SRK)
-      CALL map2Graph(map,tparams)
-      DEALLOCATE(map)
-      CALL tparams%add('PartitionGraph -> Algorithms',algName)
-      CALL tparams%add('PartitionGraph -> Refinement',refineAlg)
-      CALL tparams%add('PartitionGraph -> nGroups',2)
-      CALL testPG%initialize(tparams)
+      !Setup
+      tparams=refG4Params
       ALLOCATE(L1(74))
       ALLOCATE(L2(74))
       L1=(/1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25, &
@@ -915,28 +821,13 @@ PROGRAM testPartitionGraph
               112,113,115,116,117,118,119,120,121,122,123,124,125,126,127,128, &
               129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,144, &
               145,146,147,148/)
-      CALL testPG%refine(L1,L2)
-      !Test
-      DO iv=1,SIZE(L1)
-        bool=(L1(iv) == refL1(iv))
-        ASSERT(bool,'%refine(KL) L1')
-        FINFO() 'Index:',iv
-        FINFO() 'Ref: ',refL1(iv)
-        FINFO() 'Test:',L1(iv)
-      ENDDO !iv
+      CALL refinementTest(tparams,str,L1,L2,refL1,refL2)
 
-      DO iv=1,SIZE(L2)
-        bool=(L2(iv) == refL2(iv))
-        ASSERT(bool,'%refine(KL) L2')
-        FINFO() 'Index:',iv
-        FINFO() 'Ref: ',refL2(iv)
-        FINFO() 'Test:',L2(iv)
-      ENDDO !iv
-
-
-      CALL testPG%clear()
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       COMPONENT_TEST('Spatial-Kernighan-Lin')
+      str='SKL'
       refineAlg(1)='Spatial-Kernighan-Lin'
+      tparams=refG4Params
       CALL tparams%set('PartitionGraph -> Refinement', refineAlg)
       CALL testPG%initialize(tparams)
       L1=(/1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25, &
@@ -948,7 +839,6 @@ PROGRAM testPartitionGraph
            115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130, &
            131,132,133,134,135,136,137,138,139,140,141,142,143,144,145,146, &
            147,148/)
-      CALL testPG%refine(L1,L2)
       refL1=(/1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24, &
              25,26,27,28,29,30,31,32,33,34,36,37,38,39,40,41,42,43,44,45,46, &
              51,52,53,54,55,56,57,58,59,60,67,68,69,70,71,72,73,74,66,65,64, &
@@ -958,25 +848,7 @@ PROGRAM testPartitionGraph
               111,112,113,115,116,117,118,119,120,121,122,123,124,125,126,127, &
               128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143, &
               144,145,146,147,148/)
-
-      !Test
-      DO iv=1,SIZE(L1)
-        bool=(L1(iv) == refL1(iv))
-        ASSERT(bool,'%refine(KL) L1')
-        FINFO() 'Index:',iv
-        FINFO() 'Ref: ',refL1(iv)
-        FINFO() 'Test:',L1(iv)
-      ENDDO !iv
-
-      DO iv=1,SIZE(L2)
-        bool=(L2(iv) == refL2(iv))
-        ASSERT(bool,'%refine(KL) L2')
-        FINFO() 'Index:',iv
-        FINFO() 'Ref: ',refL2(iv)
-        FINFO() 'Test:',L2(iv)
-      ENDDO !iv
-      CALL tparams%clear()
-      CALL testPG%clear()
+      CALL refinementTest(tparams,str,L1,L2,refL1,refL2)
     ENDSUBROUTINE testKL
 !
 !-------------------------------------------------------------------------------
@@ -1014,9 +886,11 @@ PROGRAM testPartitionGraph
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE setupTest()
+      REAL(SRK),ALLOCATABLE :: map(:,:)
       TYPE(StringType) :: AlgName
-      TYPE(StringType) :: refAlgNames(2)
+      TYPE(StringType) :: refAlgNames(2),refineAlg(1)
 
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       !Generate parameter list for the initialization test
       CALL refInitParams%add('PartitionGraph -> nvert', 6)
       CALL refInitParams%add('PartitionGraph -> nGroups', 3)
@@ -1048,31 +922,23 @@ PROGRAM testPartitionGraph
                    0.0_SRK,  1.0_SRK, &
                    1.0_SRK,  1.0_SRK/),(/2,6/)))
 
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       !Generate parameter list for testGraph 1 with shape
       ! 1 1 1
       ! 1 1
       ! 1
-      CALL refG1Params%add('PartitionGraph -> nvert', 6)
-      CALL refG1Params%add('PartitionGraph -> nGroups', 2)
-      CALL refG1Params%add('PartitionGraph -> neigh', &
-        RESHAPE((/ 2, 0, 0, 0, &
-                   1, 3, 4, 0, &
-                   2, 5, 0, 0, &
-                   2, 5, 0, 0, &
-                   3, 4, 6, 0, &
-                   5, 0, 0, 0/),(/4,6/)))
+      ALLOCATE(map(3,3))
+      map=REAL(RESHAPE((/1,1,1, &
+                         1,1,0, &
+                         1,0,0/),(/3,3/)),SRK)
+      CALL map2Graph(map,refG1Params)
       AlgName='Recursive Expansion Bisection'
       refAlgNames(1)=AlgName
+      CALL refG1Params%add('PartitionGraph -> nGroups', 2)
       CALL refG1Params%add('PartitionGraph -> Algorithms', refAlgNames(1:1))
+      DEALLOCATE(map)
 
-      CALL refG1Params%add('PartitionGraph -> coord' ,&
-        RESHAPE((/0.0_SRK, 0.0_SRK, &
-                  0.0_SRK, 1.0_SRK, &
-                  1.0_SRK, 1.0_SRK, &
-                  0.0_SRK, 2.0_SRK, &
-                  1.0_SRK, 2.0_SRK, &
-                  2.0_SRK, 2.0_SRK/),(/2,6/)))
-
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       !Generate parameter list for testGraph 2 with shape
       ! 1 1 1 1 1 1
       ! 1 1 1 1 1 1
@@ -1080,60 +946,19 @@ PROGRAM testPartitionGraph
       ! 1 1 1 1
       ! 1 1
       ! 1 1
-      CALL refG2Params%add('PartitionGraph -> nvert',24)
+      ALLOCATE(map(6,6))
+      map=REAL(RESHAPE((/1,1,1,1,1,1, &
+                         1,1,1,1,1,1, &
+                         1,1,1,1,0,0, &
+                         1,1,1,1,0,0, &
+                         1,1,0,0,0,0, &
+                         1,1,0,0,0,0/),(/6,6/)),SRK)
+      CALL map2Graph(map,refG2Params)
       CALL refG2Params%add('PartitionGraph -> nGroups',3)
       CALL refG2Params%add('PartitionGraph -> Algorithms',refAlgNames(1:1))
-      CALL refG2Params%add('PartitionGraph -> neigh', &
-        RESHAPE((/ 2,  3,  0,  0, &
-                   1,  4,  0,  0, &
-                   1,  4,  5,  0, &
-                   2,  3,  6,  0, &
-                   3,  6,  9,  0, &
-                   4,  5,  7, 10, &
-                   6,  8, 11,  0, &
-                   7, 12,  0,  0, &
-                   5, 10, 13,  0, &
-                   6,  9, 11, 14, &
-                   7, 10, 12, 15, &
-                   8, 11, 16,  0, &
-                   9, 14, 19,  0, &
-                  10, 13, 15, 20, &
-                  11, 14, 16, 21, &
-                  12, 15, 17, 22, &
-                  16, 18, 23,  0, &
-                  17, 24,  0,  0, &
-                  13, 20,  0,  0, &
-                  14, 19, 21,  0, &
-                  15, 20, 22,  0, &
-                  16, 21, 23,  0, &
-                  17, 22, 24,  0, &
-                  18, 23,  0,  0/),(/4, 24/)))
-      CALL refG2Params%add('PartitionGraph -> coord', &
-        RESHAPE((/1.0_SRK, 1.0_SRK, &
-                  2.0_SRK, 1.0_SRK, &
-                  1.0_SRK, 2.0_SRK, &
-                  2.0_SRK, 2.0_SRK, &
-                  1.0_SRK, 3.0_SRK, &
-                  2.0_SRK, 3.0_SRK, &
-                  3.0_SRK, 3.0_SRK, &
-                  4.0_SRK, 3.0_SRK, &
-                  1.0_SRK, 4.0_SRK, &
-                  2.0_SRK, 4.0_SRK, &
-                  3.0_SRK, 4.0_SRK, &
-                  4.0_SRK, 4.0_SRK, &
-                  1.0_SRK, 5.0_SRK, &
-                  2.0_SRK, 5.0_SRK, &
-                  3.0_SRK, 5.0_SRK, &
-                  4.0_SRK, 5.0_SRK, &
-                  5.0_SRK, 5.0_SRK, &
-                  6.0_SRK, 5.0_SRK, &
-                  1.0_SRK, 6.0_SRK, &
-                  2.0_SRK, 6.0_SRK, &
-                  3.0_SRK, 6.0_SRK, &
-                  4.0_SRK, 6.0_SRK, &
-                  5.0_SRK, 6.0_SRK, &
-                  6.0_SRK, 6.0_SRK/),(/2,24/)))
+      DEALLOCATE(map)
 
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       !Generate parameter list for testGraph 3 with shape (weights shown)
       ! 2 2 2 2 2 2
       ! 2 2 2 2 2 2
@@ -1141,72 +966,55 @@ PROGRAM testPartitionGraph
       ! 2 2 2 2
       ! 2 2 1
       ! 2 2 1
-      CALL refG3Params%add('PartitionGraph -> nvert',28)
+      ALLOCATE(map(6,6))
+      map=REAL(RESHAPE((/2,2,2,2,2,2, &
+                         2,2,2,2,2,2, &
+                         2,2,2,2,1,1, &
+                         2,2,2,2,0,0, &
+                         2,2,1,0,0,0, &
+                         2,2,1,0,0,0/),(/6,6/)),SRK)
+      CALL map2Graph(map,refG3Params)
       CALL refG3Params%add('PartitionGraph -> nGroups',3)
       CALL refG3Params%add('PartitionGraph -> Algorithms',refAlgNames(1:1))
-      CALL refG3Params%add('PartitionGraph -> wts', &
-        (/2.0_SRK,2.0_SRK,1.0_SRK,2.0_SRK,2.0_SRK,1.0_SRK,2.0_SRK,2.0_SRK, &
-          2.0_SRK,2.0_SRK,2.0_SRK,2.0_SRK,2.0_SRK,2.0_SRK,1.0_SRK,1.0_SRK, &
-          2.0_SRK,2.0_SRK,2.0_SRK,2.0_SRK,2.0_SRK,2.0_SRK,2.0_SRK,2.0_SRK, &
-          2.0_SRK,2.0_SRK,2.0_SRK,2.0_SRK/))
-      CALL refG3Params%add('PartitionGraph -> neigh', &
-        RESHAPE((/  2,  4,  0,  0, &
-                    1,  3,  5,  0, &
-                    2,  6,  0,  0, &
-                    1,  5,  7,  0, &
-                    2,  4,  6,  8, &
-                    3,  5,  9,  0, &
-                    4,  8, 11,  0, &
-                    5,  7,  9, 12, &
-                    6,  8, 10, 13, &
-                    9, 14,  0,  0, &
-                    7, 12, 17,  0, &
-                    8, 11, 13, 18, &
-                    9, 12, 14, 19, &
-                   10, 13, 15, 20, &
-                   14, 16, 21,  0, &
-                   15, 22,  0,  0, &
-                   11, 18, 23,  0, &
-                   12, 17, 19, 24, &
-                   13, 18, 20, 25, &
-                   14, 19, 21, 26, &
-                   15, 20, 22, 27, &
-                   16, 21, 28,  0, &
-                   17, 24,  0,  0, &
-                   18, 23, 25,  0, &
-                   19, 24, 26,  0, &
-                   20, 25, 27,  0, &
-                   21, 26, 28,  0, &
-                   22, 27,  0,  0/),(/4, 28/)))
-      CALL refG3Params%add('PartitionGraph -> coord', &
-        RESHAPE((/1.0_SRK, 1.0_SRK, &
-                  2.0_SRK, 1.0_SRK, &
-                  3.0_SRK, 1.0_SRK, &
-                  1.0_SRK, 2.0_SRK, &
-                  2.0_SRK, 2.0_SRK, &
-                  3.0_SRK, 2.0_SRK, &
-                  1.0_SRK, 3.0_SRK, &
-                  2.0_SRK, 3.0_SRK, &
-                  3.0_SRK, 3.0_SRK, &
-                  4.0_SRK, 3.0_SRK, &
-                  1.0_SRK, 4.0_SRK, &
-                  2.0_SRK, 4.0_SRK, &
-                  3.0_SRK, 4.0_SRK, &
-                  4.0_SRK, 4.0_SRK, &
-                  5.0_SRK, 4.0_SRK, &
-                  6.0_SRK, 4.0_SRK, &
-                  1.0_SRK, 5.0_SRK, &
-                  2.0_SRK, 5.0_SRK, &
-                  3.0_SRK, 5.0_SRK, &
-                  4.0_SRK, 5.0_SRK, &
-                  5.0_SRK, 5.0_SRK, &
-                  6.0_SRK, 5.0_SRK, &
-                  1.0_SRK, 6.0_SRK, &
-                  2.0_SRK, 6.0_SRK, &
-                  3.0_SRK, 6.0_SRK, &
-                  4.0_SRK, 6.0_SRK, &
-                  5.0_SRK, 6.0_SRK, &
-                  6.0_SRK, 6.0_SRK/),(/2,28/)))
+      DEALLOCATE(map)
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !Generate parameter list for testGraph 4 with shape
+      ! 0 0 0 0 0 1 1 1 1 0 0 0 0 0
+      ! 0 0 0 1 1 1 1 1 1 1 1 0 0 0
+      ! 0 0 1 1 1 1 1 1 1 1 1 1 0 0
+      ! 0 1 1 1 1 1 1 1 1 1 1 1 1 0
+      ! 0 1 1 1 1 1 1 1 1 1 1 1 1 0
+      ! 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+      ! 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+      ! 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+      ! 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+      ! 0 1 1 1 1 1 1 1 1 1 1 1 1 0
+      ! 0 1 1 1 1 1 1 1 1 1 1 1 1 0
+      ! 0 0 1 1 1 1 1 1 1 1 1 1 0 0
+      ! 0 0 0 1 1 1 1 1 1 1 1 0 0 0
+      ! 0 0 0 0 0 1 1 1 1 0 0 0 0 0
+      ALLOCATE(map(14,14))
+      map=REAL(RESHAPE((/0,0,0,0,0,1,1,1,1,0,0,0,0,0, &
+                         0,0,0,1,1,1,1,1,1,1,1,0,0,0, &
+                         0,0,1,1,1,1,1,1,1,1,1,1,0,0, &
+                         0,1,1,1,1,1,1,1,1,1,1,1,1,0, &
+                         0,1,1,1,1,1,1,1,1,1,1,1,1,0, &
+                         1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                         1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                         1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                         1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                         0,1,1,1,1,1,1,1,1,1,1,1,1,0, &
+                         0,1,1,1,1,1,1,1,1,1,1,1,1,0, &
+                         0,0,1,1,1,1,1,1,1,1,1,1,0,0, &
+                         0,0,0,1,1,1,1,1,1,1,1,0,0,0, &
+                         0,0,0,0,0,1,1,1,1,0,0,0,0,0/),(/14,14/)),SRK)
+      CALL map2Graph(map,refG4Params)
+      DEALLOCATE(map)
+      refineAlg(1)='Kernighan-Lin'
+      CALL refG4Params%add('PartitionGraph -> Algorithms',refAlgNames(1:1))
+      CALL refG4Params%add('PartitionGraph -> Refinement',refineAlg)
+      CALL refG4Params%add('PartitionGraph -> nGroups',2)
     ENDSUBROUTINE setupTest
 !
 !-------------------------------------------------------------------------------
@@ -1219,9 +1027,9 @@ PROGRAM testPartitionGraph
       CALL refG1Params%clear()
       CALL refG2Params%clear()
       CALL refG3Params%clear()
+      CALL refG4Params%clear()
       CALL VectorType_Clear_ValidParams()
       CALL MatrixTypes_Clear_ValidParams()
-      IF(ALLOCATED(strList)) DEALLOCATE(strList)
       DEALLOCATE(e)
     ENDSUBROUTINE clearTest
 !
@@ -1233,7 +1041,7 @@ PROGRAM testPartitionGraph
     SUBROUTINE map2Graph(map,params)
       REAL(SRK),INTENT(IN) :: map(:,:)
       TYPE(ParamType) :: params
-      INTEGER(SIK) :: nvert,ix,iy,iv,cv,cn,nx,ny
+      INTEGER(SIK) :: nvert,ix,iy,ij,iv,cv,cn,nx,ny
       INTEGER(SIK),ALLOCATABLE :: indMap(:,:),neigh(:,:)
       REAL(SRK),ALLOCATABLE :: wts(:),coord(:,:)
 
@@ -1250,20 +1058,21 @@ PROGRAM testPartitionGraph
       coord=0.0_SRK
 
       cv=0
-      DO iy=SIZE(map,DIM=2),1,-1
-        DO ix=1,SIZE(map,DIM=1)
+      DO iy=ny,1,-1
+        DO ix=1,nx
           IF(map(ix,iy) > 0.0_SRK) THEN
             cv=cv+1
             wts(cv)=map(ix,iy)
-            coord(1,cv)=ix; coord(2,cv)=iy
-            indMap(ix,iy)=cv
+            ij=ny-iy+1
+            coord(1,cv)=REAL(ix,SRK); coord(2,cv)=REAL(ij,SRK)
+            indMap(ix,ij)=cv
           ENDIF
         ENDDO !iy
       ENDDO !ix
 
       !Get neighbors
       DO iv=1,nvert
-        ix=coord(1,iv); iy=coord(2,iv)
+        ix=INT(coord(1,iv),SIK); iy=INT(coord(2,iv),SIK)
         IF(ix > 1) neigh(1,iv)=indMap(ix-1,iy)
         IF(ix < nx) neigh(2,iv)=indMap(ix+1,iy)
         IF(iy > 1) neigh(3,iv)=indMap(ix,iy-1)
@@ -1282,5 +1091,111 @@ PROGRAM testPartitionGraph
       DEALLOCATE(wts)
       DEALLOCATE(coord)
     ENDSUBROUTINE map2Graph
+!
+!-------------------------------------------------------------------------------
+!> @brief help routine to test each partitioning method given a valid parameter
+!>        list to initialize the graph
+!> @param params parameter list to initialize graph
+!> @param str String to print so user can still find which test is failing
+!> @param grpIdx Reference group indices
+!> @param grpList Reference group list
+!>
+!> This routine also clears and deallocates all the arguments
+!> (reduces the cleanup code)
+!>
+  SUBROUTINE partitionTest(params,str,grpIdx,grpList)
+    TYPE(ParamType),INTENT(INOUT) :: params
+    TYPE(StringType),INTENT(INOUT) :: str
+    INTEGER(SIK),ALLOCATABLE,INTENT(INOUT) :: grpIdx(:),grpList(:)
+    LOGICAL(SBK) :: bool,lwrong
+    INTEGER(SIK) :: ig,iv,stt,stp
+    TYPE(StringType) :: prt
+
+    !Intiialize
+    CALL testPG%initialize(params)
+
+    !Call partition algorithm
+    CALL testPG%partition()
+
+    prt='%partition('//TRIM(ADJUSTL(str))//')'
+
+    !Test
+    DO ig=1,testPG%nGroups+1
+      bool=(testPG%groupIdx(ig) == grpIdx(ig))
+      ASSERT(bool,prt//'%groupIdx')
+      FINFO() 'Index:', ig
+      FINFO() 'Ref: ',grpIdx(ig)
+      FINFO() 'Test:',testPG%groupIdx(ig)
+    ENDDO !ig
+
+    DO iv=1,testPG%nvert
+      bool=(testPG%groupList(iv) == grpList(iv))
+      ASSERT(bool,prt//'%groupList')
+      FINFO() 'Index:',iv
+      FINFO() 'Ref: ',grpList(iv)
+      FINFO() 'Test:',testPG%groupList(iv)
+    ENDDO !iv
+
+    !Clear
+    CALL params%clear()
+    CALL testPG%clear()
+    DEALLOCATE(grpIdx)
+    DEALLOCATE(grpList)
+  ENDSUBROUTINE partitionTest
+!
+!-------------------------------------------------------------------------------
+!> @brief help routine to test each refinement method given a valid parameter
+!>        list to initialize the graph
+!> @param params parameter list to initialize graph
+!> @param str String to print so user can still find which test is failing
+!> @param L1 the first group list
+!> @param L2 the second group list
+!> @param rL1 the first reference group list to test against
+!> @param rL2 the second reference group list to test against
+!>
+!> This routine also clears and deallocates all the arguments
+!> (reduces the cleanup code)
+!>
+  SUBROUTINE refinementTest(params,str,L1,L2,rL1,rL2)
+    TYPE(ParamType),INTENT(INOUT) :: params
+    TYPE(StringType),INTENT(INOUT) :: str
+    INTEGER(SIK),ALLOCATABLE,INTENT(INOUT) :: L1(:),L2(:),rL1(:),rL2(:)
+    LOGICAL(SBK) :: bool
+    INTEGER(SIK) :: iv
+    TYPE(StringType) :: prt
+
+    !Error String
+    prt='%refine('//TRIM(ADJUSTL(str))//')'
+
+    !Initialize
+    CALL testPG%initialize(params)
+    !Refine
+    CALL testPG%refine(L1,L2)
+
+    !Test
+    DO iv=1,SIZE(L1)
+      bool=(L1(iv) == rL1(iv))
+      ASSERT(bool,prt//' L1')
+      FINFO() 'Index:',iv
+      FINFO() 'Ref: ',rL1(iv)
+      FINFO() 'Test:',L1(iv)
+    ENDDO !iv
+
+    DO iv=1,SIZE(L2)
+      bool=(L2(iv) == rL2(iv))
+      ASSERT(bool,prt//' L2')
+      FINFO() 'Index:',iv
+      FINFO() 'Ref: ',rL2(iv)
+      FINFO() 'Test:',L2(iv)
+    ENDDO !iv
+
+    !Clear/deallocate
+    CALL params%clear()
+    CALL testPG%clear()
+    DEALLOCATE(L1)
+    DEALLOCATE(L2)
+    DEALLOCATE(rL1)
+    DEALLOCATE(rL2)
+  ENDSUBROUTINE refinementTest
 !
 ENDPROGRAM testPartitionGraph

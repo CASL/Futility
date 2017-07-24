@@ -178,6 +178,7 @@ MODULE PartitionGraph
       TYPE(ParamType),INTENT(IN) :: params
       INTEGER(SIK) :: nerror,nvert,maxneigh,nGroups,nPart,dim
       INTEGER(SIK) :: ipart,pcond,iv
+      REAL(SRK) :: wtSum
       TYPE(StringType) :: algName
       INTEGER(SIK),ALLOCATABLE :: neigh(:,:), cond(:)
       REAL(SRK),ALLOCATABLE :: wts(:),neighwts(:,:),coord(:,:)
@@ -287,18 +288,6 @@ MODULE PartitionGraph
           ENDIF
         ENDIF
 
-        !Check coordinates (optional)
-        dim=0
-        IF(params%has('PartitionGraph -> coord')) THEN
-          CALL params%get('PartitionGraph -> coord', coord)
-          !Check input coordinate matrix
-          dim=SIZE(coord,DIM=1)
-          IF(SIZE(coord,DIM=2) /= nvert) THEN
-            CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-              ' - coordinate matrix is incorrect size!')
-          ENDIF
-        ENDIF
-
         !Check vertex weights (optional)
         IF(params%has('PartitionGraph -> wts')) THEN
           CALL params%get('PartitionGraph -> wts', wts)
@@ -337,6 +326,18 @@ MODULE PartitionGraph
           neighwts=0.0_SRK
           WHERE(neigh /= 0.0_SRK) neighwts=1.0_SRK
         ENDIF
+
+        !Check coordinates (optional)
+        dim=0
+        IF(params%has('PartitionGraph -> coord')) THEN
+          CALL params%get('PartitionGraph -> coord', coord)
+          !Check input coordinate matrix
+          dim=SIZE(coord,DIM=1)
+          IF(SIZE(coord,DIM=2) /= nvert) THEN
+            CALL ePartitionGraph%raiseError(modName//'::'//myName// &
+              ' - coordinate matrix is incorrect size!')
+          ENDIF
+        ENDIF
       ENDIF
 
       !If no errors then initialize the type
@@ -365,15 +366,27 @@ MODULE PartitionGraph
           algName=partAlgs(ipart)
           CALL toUPPER(algName)
           SELECTCASE(TRIM(algName))
+            CASE('NONE')
             CASE('RECURSIVE EXPANSION BISECTION')
               thisGraph%partitionAlgArry(ipart)%p => RecursiveExpansionBisection
-            CASE('RECURSIVE SPECTRAL BISECTION')
 #ifdef FUTILITY_HAVE_SLEPC
+            CASE('RECURSIVE SPECTRAL BISECTION')
               thisGraph%partitionAlgArry(ipart)%p => RecursiveSpectralBisection
+            CASE('RECURSIVE INERTIAL BISECTION')
+#ifdef HAVE_BLAS
+              thisGraph%partitionAlgArry(ipart)%p => RecursiveInertialBisection
 #else
               CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-                ' - must recompile with SLEPc to use partitioning algorithm '// &
-                TRIM(algName)//'!')
+                ' - must recompile with BLAS to use '//TRIM(ADJUSTL(algName)))
+#endif
+#else
+            CASE('RECURSIVE SPECTRAL BISECTION')
+              CALL ePartitionGraph%raiseError(modName//'::'//myName// &
+                ' - must recompile with SLEPc to use '//TRIM(ADJUSTL(algName)))
+            CASE('RECURSIVE INERTIAL BISECTION')
+              CALL ePartitionGraph%raiseError(modName//'::'//myName// &
+                ' - must recompile with SLEPc and BLAS to use '// &
+                TRIM(ADJUSTL(algName)))
 #endif
             CASE DEFAULT
               CALL ePartitionGraph%raiseError(modName//'::'//myName// &
@@ -475,13 +488,10 @@ MODULE PartitionGraph
       !Size of new subgraph
       snv=SIZE(L)
 
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      !May want to redo to actually find the maximum number of neighbors in the
-      !subgraph
-
       !Construct the subgraph manually
       maxneigh=thisGraph%maxneigh
       dim=thisGraph%dim
+
       !Set subgraph scalars
       subgraph%nvert=snv
       subgraph%dim=dim
@@ -505,37 +515,33 @@ MODULE PartitionGraph
       !Populate arrays
       subgraph%partitionAlgArry=thisGraph%partitionAlgArry
       subgraph%refineAlgArry=thisGraph%refineAlgArry
-      cv=0
-      DO il=1,SIZE(L)
-        iv=L(il)
-        IF(iv /= 0) THEN
-          cv=cv+1
-          subgraph%wts(cv)=thisGraph%wts(iv)
-          subgraph%d(cv)=thisGraph%d(iv)
-          subgraph%coord(1:dim,cv)=thisGraph%coord(1:dim,iv)
-          subgraph%neigh(1:maxneigh,cv)=thisGraph%neigh(1:maxneigh,iv)
-          subgraph%neighwts(1:maxneigh,cv)=thisGraph%neighwts(1:maxneigh,iv)
-          !Fix indexing/existence of neighbor matrices and update d accordingly
-          DO in=1,maxneigh
-            cv2=subgraph%neigh(in,cv)
-            IF(cv2 /= 0) THEN
-              !Vertex is not present in the graph
-              IF(.NOT. ANY(cv2 == L)) THEN
-                subgraph%neigh(in,cv)=0
-                subgraph%neighwts(in,cv)=0
-                subgraph%d(cv)=subgraph%d(cv)-1
-              ELSE !it is present and needs index change
-                DO il2=1,snv
-                  IF(L(il2) == cv2) THEN
-                    subgraph%neigh(in,cv)=il2
-                    EXIT
-                  ENDIF
-                ENDDO !il
-              ENDIF
+      DO cv=1,snv
+        iv=L(cv)
+        subgraph%wts(cv)=thisGraph%wts(iv)
+        subgraph%d(cv)=thisGraph%d(iv)
+        subgraph%coord(1:dim,cv)=thisGraph%coord(1:dim,iv)
+        subgraph%neigh(1:maxneigh,cv)=thisGraph%neigh(1:maxneigh,iv)
+        subgraph%neighwts(1:maxneigh,cv)=thisGraph%neighwts(1:maxneigh,iv)
+        !Fix indexing/existence of neighbor matrices and update d accordingly
+        DO in=1,maxneigh
+          cv2=subgraph%neigh(in,cv)
+          IF(cv2 /= 0) THEN
+            !Vertex is not present in the graph
+            IF(.NOT. ANY(cv2 == L)) THEN
+              subgraph%neigh(in,cv)=0
+              subgraph%neighwts(in,cv)=0
+              subgraph%d(cv)=subgraph%d(cv)-1
+            ELSE !it is present and needs index change
+              DO il2=1,snv
+                IF(L(il2) == cv2) THEN
+                  subgraph%neigh(in,cv)=il2
+                  EXIT
+                ENDIF
+              ENDDO !il2
             ENDIF
-          ENDDO !in
-        ENDIF
-      ENDDO !il
+          ENDIF
+        ENDDO !in
+      ENDDO !cv
     ENDSUBROUTINE GenerateSubgraph_PartitionGraph
 !
 !-------------------------------------------------------------------------------
@@ -567,22 +573,38 @@ MODULE PartitionGraph
 !>
     RECURSIVE SUBROUTINE partition_PartitionGraph(thisGraph)
       CLASS(PartitionGraphType),INTENT(INOUT) :: thisGraph
-      INTEGER(SIK) :: corAlg,ialg
+      INTEGER(SIK) :: iv,corAlg,ialg
 
-      !Determine which partitioning algorithm to use based on graph size
-      corAlg=1
+      IF(thisGraph%nGroups > 1) THEN
+        !Determine which partitioning algorithm to use based on graph size
+        corAlg=1
 
-      IF(ALLOCATED(thisGraph%cond)) THEN
-        DO ialg=1,thisGraph%nPart-1
-          IF(thisGraph%nvert > thisGraph%cond(ialg)) THEN
-            EXIT
-          ENDIF
-        ENDDO !ialg
-        corAlg=ialg
+        IF(ALLOCATED(thisGraph%cond)) THEN
+          DO ialg=1,thisGraph%nPart-1
+            IF(thisGraph%nvert > thisGraph%cond(ialg)) THEN
+              EXIT
+            ENDIF
+          ENDDO !ialg
+          corAlg=ialg
+        ENDIF
+
+        !Call the correct partitioning algorithm
+        IF(ASSOCIATED(thisGraph%partitionAlgArry(corAlg)%p)) &
+          CALL thisGraph%partitionAlgArry(corAlg)%p(thisGraph)
+      ELSE
+        !Single group graph...it will contain all the vertices
+        ALLOCATE(thisGraph%groupIdx(2))
+        ALLOCATE(thisGraph%groupList(thisGraph%nvert))
+
+        !Group indices
+        thisGraph%groupIdx(1)=1
+        thisGraph%groupIdx(2)=thisGraph%nvert+1
+
+        !List of 1 to nvert
+        DO iv=1,thisGraph%nvert
+          thisGraph%groupList(iv)=iv
+        ENDDO !iv
       ENDIF
-
-      !Call the correct partitioning algorithm
-      CALL thisGraph%partitionAlgArry(corAlg)%p(thisGraph)
     ENDSUBROUTINE partition_PartitionGraph
 !
 !-------------------------------------------------------------------------------
@@ -630,7 +652,7 @@ MODULE PartitionGraph
       INTEGER(SIK) :: ng,ng1,ng2,nv,nv1,nv2,iv,jv,kv,in,jn,kn,maxd,maxd2
       INTEGER(SIK) :: soiv,count,bvert
       INTEGER(SIK) :: curSI,curSE,maxSI,maxSE
-      REAL(SRK) :: cw1,cw2,wg1,wg2,wtSum,wtMin,cE,cS,lE,dS,soid
+      REAL(SRK) :: cw1,wg1,wg2,wtSum,wtMin,cE,cS,lE,dS,soid
       REAL(SRK) :: curInt,curExt,maxInt,minExt
       !local arrays
       REAL(SRK) :: wc(thisGraph%dim),soic(thisGraph%dim),gsc(thisGraph%dim)
@@ -640,30 +662,14 @@ MODULE PartitionGraph
       !local types
       TYPE(PartitionGraphType) :: sg1,sg2
 
-      IF(thisGraph%nGroups > 1) THEN
-        IF(.NOT. ALLOCATED(thisGraph%coord)) THEN
-          CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-            ' - cannot use REB method to partition without coordinates!')
-        ENDIF
+      IF(.NOT. ALLOCATED(thisGraph%coord)) THEN
+        CALL ePartitionGraph%raiseError(modName//'::'//myName// &
+          ' - cannot use REB method to partition without coordinates!')
+      ELSE
 
-        !Determine desired number of groups for each bisection
-        !This will be updated before recursion, once the total weight of each
-        !group has been determined
-        ng=thisGraph%nGroups
-        ng1=ng/2    !Group 1
-        ng2=ng-ng1  !Group 2
-
-        !Vertex weight total
-        wtSum=SUM(thisGraph%wts)
-        wtMin=MINVAL(thisGraph%wts)
-        !Determine the weighted size of each bisection group
+        !Initial guess for group sizes
         nv=thisGraph%nvert
-        wg1=wtSum*REAL(ng1,SRK)/REAL(ng,SRK)  !Group 1
-        wg2=wtSum-wg1                         !Group 2
-
-        !Expected maximum size of the group is then wg/wtMin
-        nv1=CEILING(wg1/wtMin)
-        nv2=CEILING(wg2/wtMin)
+        CALL detGroupSize(thisGraph,nv1,nv2,wg1,wg2,wtSum)
         ALLOCATE(L1(nv1))
         ALLOCATE(L2(nv2))
         L1=0
@@ -676,6 +682,7 @@ MODULE PartitionGraph
           wc=wc+thisGraph%coord(1:thisGraph%dim,iv)*thisGraph%wts(iv)
         ENDDO !iv
         wc=wc/wtSum
+
         !Determine the maximum distance for a "Sphere of Influence" (SoI) vertex
         !Sphere of Influence contains
         ! 1. Directly neighboring vertices
@@ -857,7 +864,6 @@ MODULE PartitionGraph
           IF(.NOT. ANY(iv == L1)) THEN
             nv2=nv2+1
             L2(nv2)=iv
-            cw2=cw2+thisGraph%wts(iv)
           ENDIF
         ENDDO !iv
 
@@ -865,77 +871,12 @@ MODULE PartitionGraph
         DEALLOCATE(S)
         DEALLOCATE(Scalc)
 
-        !Refine the 2 groups
-        CALL thisGraph%refine(L1(1:nv1),L2(1:nv2))
-
-        !Redistribute the number of groups for each subgraph
-        ng1=MAX(1,FLOOR(ng*cw1/wtSum))
-        ng2=ng-ng1
-
-        IF(ng1 > 1) THEN
-          !Generate subgraph if further decomposition is needed
-          CALL thisGraph%subgraph(L1(1:nv1),ng1,sg1)
-          !Recursively partition
-          CALL sg1%partition()
-        ENDIF
-
-        IF(ng2 > 1) THEN
-          !Generate subgraph if further decomposition is needed
-          CALL thisGraph%subgraph(L2(1:nv2),ng2,sg2)
-          !Recursively partition
-          CALL sg2%partition()
-        ENDIF
-
-        !Allocate group lists on parent type
-        ALLOCATE(thisGraph%groupIdx(ng+1))
-        ALLOCATE(thisGraph%groupList(nv))
-
-        IF(ng1 > 1) THEN
-          !Pull groups from first subgraph
-          thisGraph%groupIdx(1:ng1+1)=sg1%groupIdx(1:ng1+1)
-          DO iv=1,sg1%nvert
-            thisGraph%groupList(iv)=L1(sg1%groupList(iv))
-          ENDDO !iv
-          CALL sg1%clear()
-        ELSE
-          thisGraph%groupIdx(1)=1
-          thisGraph%groupIdx(2)=nv1+1
-          DO iv=1,nv1
-            thisGraph%groupList(iv)=L1(iv)
-          ENDDO !iv
-        ENDIF
-
-        IF(ng2 > 1) THEN
-          !Pull groups from second subgraph
-          thisGraph%groupIdx(ng1+1:ng1+ng2+1)=nv1+sg2%groupIdx(1:ng2+1)
-          DO iv=1,sg2%nvert
-            thisGraph%groupList(iv+nv1)=L2(sg2%groupList(iv))
-          ENDDO !iv
-          CALL sg2%clear()
-        ELSE
-          thisGraph%groupIdx(ng1+1)=nv1+1
-          thisGraph%groupIdx(ng1+2)=nv1+nv2+1
-          DO iv=1,nv2
-            thisGraph%groupList(iv+nv1)=L2(iv)
-          ENDDO !iv
-        ENDIF
+        !Recursively partition the graph
+        CALL recursivePartitioning(thisGraph,L1(1:nv1),L2(1:nv2),cw1,wtSum)
 
         !Deallocate lists
         DEALLOCATE(L1)
         DEALLOCATE(L2)
-      ELSE
-        !Single group graph...it will contain all the vertices
-        ALLOCATE(thisGraph%groupIdx(2))
-        ALLOCATE(thisGraph%groupList(thisGraph%nvert))
-
-        !Group indices
-        thisGraph%groupIdx(1)=1
-        thisGraph%groupIdx(2)=thisGraph%nvert+1
-
-        !List of 1 to nvert
-        DO iv=1,thisGraph%nvert
-          thisGraph%groupList(iv)=iv
-        ENDDO !iv
       ENDIF
     ENDSUBROUTINE RecursiveExpansionBisection
 !
@@ -955,120 +896,175 @@ MODULE PartitionGraph
       REAL(SRK),ALLOCATABLE :: vf(:),vf2(:),vf2Copy(:)
       CLASS(VectorType),ALLOCATABLE :: evecs(:)
 
-      IF(thisGraph%nGroups > 1) THEN
-        nvert=thisGraph%nvert
-        nneigh=thisGraph%maxneigh
+      nvert=thisGraph%nvert
+      nneigh=thisGraph%maxneigh
 
-        !Generate edge-weighted Laplacian
-        !All local for now
-        nlocal=nvert
+      !Generate edge-weighted Laplacian
+      !All local for now
+      nlocal=nvert
 
-        !Construct the matrix
-        CALL matParams%add('MatrixType->n',nvert)
-        CALL matParams%add('MatrixType->isSym',.TRUE.)
-        CALL matParams%add('MatrixType->matType',SPARSE)
-        CALL matParams%add('MatrixType->MPI_COMM_ID',PE_COMM_SELF)
-        CALL matParams%add('MatrixType->nlocal',nlocal)
-        CALL matParams%add('MatrixType->dnnz',(/0/))
-        CALL matParams%add('MatrixType->onnz',(/0/))
+      !Construct the matrix
+      CALL matParams%add('MatrixType->n',nvert)
+      CALL matParams%add('MatrixType->isSym',.TRUE.)
+      CALL matParams%add('MatrixType->matType',SPARSE)
+      CALL matParams%add('MatrixType->MPI_COMM_ID',PE_COMM_SELF)
+      CALL matParams%add('MatrixType->nlocal',nlocal)
+      CALL matParams%add('MatrixType->dnnz',(/0/))
+      CALL matParams%add('MatrixType->onnz',(/0/))
 
-        !Initialize matrix
-        CALL Lmat%init(matParams)
+      !Initialize matrix
+      CALL Lmat%init(matParams)
 
-        !Clear parameter list
-        CALL matParams%clear()
-        !Set the matrix
-        DO iv=1,nvert
-          wneigh=SUM(thisGraph%neighwts(1:nneigh,iv))
-          CALL Lmat%set(iv,iv,REAL(wneigh,SRK))
-          DO in=1,nneigh
-            jv=thisGraph%neigh(in,iv)
-            IF(jv /= 0) THEN
-              wneigh=-thisGraph%neighwts(in,iv)
-              CALL Lmat%set(iv,jv,REAL(wneigh,SRK))
-            ENDIF
-          ENDDO !in
-        ENDDO !iv
-
-        !Find Fiedler vector (Algebraic connectivity) - 2nd smallest eigenvector
-        CALL getEigenVecs(Lmat,.TRUE.,3,evecs)
-        CALL Lmat%clear()
-
-        !Store it
-        ALLOCATE(vf(nvert))   !Fiedler-vector
-        ALLOCATE(vf2(nvert))  !3rd smallest eigenvector
-        CALL evecs(1)%clear()
-        CALL evecs(2)%getAll(vf,ierr)
-        CALL evecs(3)%getAll(vf2,ierr)
-        CALL evecs(2)%clear()
-        CALL evecs(3)%clear()
-        DEALLOCATE(evecs)
-
-        !Make sure 3rd smallest eigenvector has same signs as first
-        DO iv=1,nvert
-          IF(.NOT. (vf(iv) .APPROXEQA. 0.0_SRK) .AND. &
-             .NOT. (vf2(iv) .APPROXEQA. 0.0_SRK)) THEN
-            IF(vf(iv)*vf2(iv) < 0.0_SRK) vf2=-vf2
-            EXIT
+      !Clear parameter list
+      CALL matParams%clear()
+      !Set the matrix
+      DO iv=1,nvert
+        wneigh=SUM(thisGraph%neighwts(1:nneigh,iv))
+        CALL Lmat%set(iv,iv,REAL(wneigh,SRK))
+        DO in=1,nneigh
+          jv=thisGraph%neigh(in,iv)
+          IF(jv /= 0) THEN
+            wneigh=-thisGraph%neighwts(in,iv)
+            CALL Lmat%set(iv,jv,REAL(wneigh,SRK))
           ENDIF
+        ENDDO !in
+      ENDDO !iv
+
+      !Find Fiedler vector (Algebraic connectivity) - 2nd smallest eigenvector
+      CALL getEigenVecs(Lmat,.TRUE.,4,evecs)
+      CALL Lmat%clear()
+
+      !Get the Order
+      ALLOCATE(Order(nvert))
+      DO iv=1,nvert
+        Order(iv)=iv
+      ENDDO !iv
+      SELECTTYPE(evecs(1)); TYPEIS(PETScVectorType)
+        CALL recursiveEigenOrder(evecs(2:), Order)
+      ENDSELECT
+      DO iv=1,4
+        CALL evecs(iv)%clear()
+      ENDDO !iv
+      DEALLOCATE(evecs)
+
+      !Initial guess for group sizes
+      CALL detGroupSize(thisGraph,nv1,nv2,wg1,wg2,wtSum)
+      ALLOCATE(L1(nv1))
+      ALLOCATE(L2(nv2))
+      L1=0
+      L2=0
+      cw1=0.0_SRK
+      curdif=wg1
+
+      !Expand until closest to desired size
+      nv1=0
+      DO jv=1,nvert
+        iv=Order(jv)
+        wt=REAL(thisGraph%wts(iv),SRK)
+        IF(ABS(curdif-wt) < ABS(curdif)) THEN
+          nv1=nv1+1
+          L1(jv)=iv
+          curdif=curdif-wt
+          cw1=cw1+wt
+        ELSE
+          EXIT
+        ENDIF
+      ENDDO !jv
+
+      !Populate 2nd group
+      nv2=0
+      DO iv=nv1+1,nvert
+        nv2=nv2+1
+        L2(nv2)=Order(iv)
+      ENDDO !iv
+
+      !Recursively partition the graph
+      CALL recursivePartitioning(thisGraph,L1(1:nv1),L2(1:nv2),cw1,wtSum)
+
+      !Deallocate lists
+      DEALLOCATE(L1)
+      DEALLOCATE(L2)
+    ENDSUBROUTINE RecursiveSpectralBisection
+!
+!-------------------------------------------------------------------------------
+!> @brief Recursively bisects the graph using inertial moments
+!> @param thisGraph the graph to be partitioned
+!>
+    RECURSIVE SUBROUTINE RecursiveInertialBisection(thisGraph)
+      CHARACTER(LEN=*),PARAMETER :: myName='RecursiveInertialBisection'
+      CLASS(PartitionGraphType),INTENT(INOUT) :: thisGraph
+      INTEGER(SIK) :: dim,iv,jv,ierr
+      INTEGER(SIK) :: ng,ng1,ng2,nv1,nv2
+      REAL(SRK) :: wtSum,wtMin,wg1,wg2,wt,cw1,curdif
+      INTEGER(SIK),ALLOCATABLE :: Order(:),L1(:),L2(:)
+      REAL(SRK),ALLOCATABLE :: I(:,:),coord(:,:),cent(:)
+      TYPE(ParamType) :: mparams
+      TYPE(PETScMatrixType) :: Imat
+      TYPE(PartitionGraphType) :: sg1, sg2
+      CLASS(VectorType),ALLOCATABLE :: evecs(:)
+
+
+      IF(.NOT. ALLOCATED(thisGraph%coord)) THEN
+        CALL ePartitionGraph%raiseError(modName//'::'//myName// &
+          ' - cannot use REB method to partition without coordinates!')
+      ELSE
+        !Transform the graph coordinates so the origin is at weighted centroid
+        dim=thisGraph%dim
+        ALLOCATE(cent(dim))
+        ALLOCATE(coord(dim,thisGraph%nvert))
+        cent=0.0_SRK
+        wtSum=0.0_SRK
+        DO iv=1,thisGraph%nvert
+          wt=thisGraph%wts(iv)
+          wtSum=wtSum+wt
+          cent(1:dim)=cent(1:dim)+wt*thisGraph%coord(1:dim,iv)
+        ENDDO !iv
+        cent=cent/wtSum
+        coord=thisGraph%coord
+        DO iv=1,thisGraph%nvert
+          coord(1:dim,iv)=coord(1:dim,iv)-cent
         ENDDO !iv
 
-        !Sort the Fiedler vector
-        ALLOCATE(Order(nvert))
-        DO iv=1,nvert
+        !Calculate the inertial matrix
+        ALLOCATE(I(dim,dim))
+        I=0.0_SRK
+        DO iv=1,thisGraph%nvert
+          CALL dsyr('u', dim, 1.0_SRK, coord(1:dim,iv), 1, I, dim)
+        ENDDO !iv
+
+        !Now construct the matrix type from I
+        CALL mparams%add('MatrixType->n', dim)
+        CALL mparams%add('MatrixType->isSym', .TRUE.)
+        CALL mparams%add('MatrixType->matType', DENSESQUARE)
+        CALL mparams%add('MatrixType->MPI_COMM_ID', PE_COMM_SELF)
+        CALL mparams%add('MatrixType->nlocal', dim)
+        CALL mparams%add('MatrixType->dnnz', (/0/))
+        CALL mparams%add('MatrixType->onnz', (/0/))
+        CALL Imat%init(mparams)
+        CALL mparams%clear()
+
+        DO iv=1,dim
+          DO jv=1,iv
+            CALL Imat%set(iv,jv,I(jv,iv))
+            CALL Imat%set(jv,iv,I(jv,iv))
+          ENDDO !jv
+        ENDDO !iv
+
+        !Solve the eigenvalue problem
+        CALL getEigenVecs(Imat, .FALSE., dim, evecs)
+
+        !Determine the order based on distance from the inertial vectors
+        ALLOCATE(Order(thisGraph%nvert))
+        DO iv=1,thisGraph%nvert
           Order(iv)=iv
         ENDDO !iv
-        CALL sort(vf,Order,.TRUE.)
+        SELECTTYPE(evecs); TYPEIS(PETScVectorType)
+          CALL recursiveEigenOrder(evecs, Order, dot=coord)
+        ENDSELECT
+        DEALLOCATE(coord)
 
-        !Reorder 3rd eigenvector so no backwards sorting...
-        ALLOCATE(vf2Copy(nvert))
-        vf2Copy=vf2
-        DO iv=1,nvert
-          vf2(iv)=vf2Copy(Order(iv))
-        ENDDO !iv
-        DEALLOCATE(vf2Copy)
-
-        !In the event of ties, these values should be sorted by the 3rd-eigenvector
-        iv=0
-        DO WHILE(iv < nvert)
-          iv=iv+1
-          !Loop through remaining vertices
-          numeq=0
-          DO jv=iv+1,nvert
-            IF(vf(jv) .APPROXEQA. vf(iv)) THEN
-              numeq=numeq+1
-            ELSE
-              EXIT
-            ENDIF
-          ENDDO !jv
-
-          !Sort based on 3rd eigenvector values
-          IF(numeq > 1) THEN
-            CALL sort(vf2(iv:iv+numeq),Order(iv:iv+numeq),.TRUE.)
-            !Move forward(don't resort these values)
-            iv=iv+numeq
-          ENDIF
-        ENDDO !iv
-        DEALLOCATE(vf)
-        DEALLOCATE(vf2)
-
-        !Determine desired number of groups for each bisection
-        !This will be updated before recursion, once the total weight of each
-        !group has been determined
-        ng=thisGraph%nGroups
-        ng1=ng/2    !Group 1
-        ng2=ng-ng1  !Group 2
-
-        !Vertex weight total
-        wtSum=REAL(SUM(thisGraph%wts),SRK)
-        wtMin=REAL(MINVAL(thisGraph%wts),SRK)
-        !Determine the weighted size of each bisection group
-        wg1=wtSum*REAL(ng1,SRK)/REAL(ng,SRK)  !Group 1
-        wg2=wtSum-wg1                         !Group 2
-
-        !Expected maximum size of the group is then wg/wtMin
-        nv1=CEILING(wg1/wtMin)
-        nv2=CEILING(wg2/wtMin)
+        !Initial guess for group sizes
+        CALL detGroupSize(thisGraph,nv1,nv2,wg1,wg2,wtSum)
         ALLOCATE(L1(nv1))
         ALLOCATE(L2(nv2))
         L1=0
@@ -1078,9 +1074,9 @@ MODULE PartitionGraph
 
         !Expand until closest to desired size
         nv1=0
-        DO jv=1,nvert
+        DO jv=1,thisGraph%nvert
           iv=Order(jv)
-          wt=REAL(thisGraph%wts(iv),SRK)
+          wt=thisGraph%wts(iv)
           IF(ABS(curdif-wt) < ABS(curdif)) THEN
             nv1=nv1+1
             L1(jv)=iv
@@ -1093,86 +1089,20 @@ MODULE PartitionGraph
 
         !Populate 2nd group
         nv2=0
-        DO iv=1,nvert
-          IF(.NOT. ANY(iv == L1)) THEN
-            nv2=nv2+1
-            L2(nv2)=iv
-          ENDIF
+        DO iv=nv1+1,thisGraph%nvert
+          nv2=nv2+1
+          L2(nv2)=Order(iv)
         ENDDO !iv
+        DEALLOCATE(Order)
 
-        !Refine the 2 groups
-        CALL thisGraph%refine(L1(1:nv1),L2(1:nv2))
-
-        !Redistribute the number of groups for each subgraph
-        ng1=MAX(1,FLOOR(ng*cw1/wtSum))
-        ng2=ng-ng1
-
-        IF(ng1 > 1) THEN
-          !Generate subgraph if further decomposition is needed
-          CALL thisGraph%subgraph(L1(1:nv1),ng1,sg1)
-          !Recursively partition
-          CALL sg1%partition()
-        ENDIF
-
-        IF(ng2 > 1) THEN
-          !Generate subgraph if further decomposition is needed
-          CALL thisGraph%subgraph(L2(1:nv2),ng2,sg2)
-          !Recursively partition
-          CALL sg2%partition()
-        ENDIF
-
-        !Allocate group lists on parent type
-        ALLOCATE(thisGraph%groupIdx(ng+1))
-        ALLOCATE(thisGraph%groupList(nvert))
-
-        IF(ng1 > 1) THEN
-          !Pull groups from first subgraph
-          thisGraph%groupIdx(1:ng1+1)=sg1%groupIdx(1:ng1+1)
-          DO iv=1,sg1%nvert
-            thisGraph%groupList(iv)=L1(sg1%groupList(iv))
-          ENDDO !iv
-          CALL sg1%clear()
-        ELSE
-          thisGraph%groupIdx(1)=1
-          thisGraph%groupIdx(2)=nv1+1
-          DO iv=1,nv1
-            thisGraph%groupList(iv)=L1(iv)
-          ENDDO !iv
-        ENDIF
-
-        IF(ng2 > 1) THEN
-          !Pull groups from second subgraph
-          thisGraph%groupIdx(ng1+1:ng1+ng2+1)=nv1+sg2%groupIdx(1:ng2+1)
-          DO iv=1,sg2%nvert
-            thisGraph%groupList(iv+nv1)=L2(sg2%groupList(iv))
-          ENDDO !iv
-          CALL sg2%clear()
-        ELSE
-          thisGraph%groupIdx(ng1+1)=nv1+1
-          thisGraph%groupIdx(ng1+2)=nv1+nv2+1
-          DO iv=1,nv2
-            thisGraph%groupList(iv+nv1)=L2(iv)
-          ENDDO !iv
-        ENDIF
+        !Recursively partition the graph
+        CALL recursivePartitioning(thisGraph,L1(1:nv1),L2(1:nv2),cw1,wtSum)
 
         !Deallocate lists
         DEALLOCATE(L1)
         DEALLOCATE(L2)
-      ELSE
-        !Single group graph...it will contain all the vertices
-        ALLOCATE(thisGraph%groupIdx(2))
-        ALLOCATE(thisGraph%groupList(thisGraph%nvert))
-
-        !Group indices
-        thisGraph%groupIdx(1)=1
-        thisGraph%groupIdx(2)=thisGraph%nvert+1
-
-        !List of 1 to nvert
-        DO iv=1,thisGraph%nvert
-          thisGraph%groupList(iv)=iv
-        ENDDO !iv
       ENDIF
-    ENDSUBROUTINE RecursiveSpectralBisection
+    ENDSUBROUTINE RecursiveInertialBisection
 !
 !-------------------------------------------------------------------------------
 !> @brief Calculates distance between two points
@@ -1824,11 +1754,11 @@ MODULE PartitionGraph
         CALL EPSSetWhichEigenpairs(eps,EPS_LARGEST_MAGNITUDE,ierr)
       ENDIF
 
-      !Solve for all eigenpairs (Only get the ones we want)
-      !Possibly figure out this so it only calculates the desired pairs?
+      !Set problem dimensions (Solve for desired eigen pairs, may get a few extra)
       nev=numvecs
-      ncv=n
-      mpd=n
+      ncv=MIN(4*nev,n)
+      mpd=ncv
+
       CALL EPSSetDimensions(eps,nev,ncv,mpd,ierr)
       CALL EPSSolve(eps,ierr)
       DO iv=1,numvecs
@@ -1854,5 +1784,252 @@ MODULE PartitionGraph
         ' - eigenvector solves only available through SLEPC!')
 #endif
     ENDSUBROUTINE getEigenVecs
+!
+!-------------------------------------------------------------------------------
+!> @brief Given the eigenvectors of the inertial matrix (RIB method), determine
+!>        the order
+!> @param coord the coordinates to determine distance
+!> @param evecs the eigenvectors of the inertial matrix
+!> @param Order the order of the vertices
+!>
+    RECURSIVE SUBROUTINE recursiveEigenOrder(evecs, Order, lpos, dot)
+      Type(PETScVectorType),INTENT(INOUT) :: evecs(:)
+      INTEGER(SIK),INTENT(INOUT) :: Order(:)
+      REAL(SRK),INTENT(INOUT),OPTIONAL :: dot(:,:)
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: lpos
+      LOGICAL(SBK) :: lposc
+      INTEGER(SIK) :: dim,numvecs,nvert,numeq,iv,jv,idim,ierr
+      REAL(SRK),ALLOCATABLE :: d(:),dc(:),ec(:)
+      TYPE(PETScVectorType) :: c
+      TYPE(PETScVectorType),ALLOCATABLE :: evc(:)
+      TYPE(ParamType) :: mparams
+
+      lposc=.TRUE.
+      IF(PRESENT(lpos)) lposc=lpos
+      numvecs=SIZE(evecs,DIM=1)
+      nvert = SIZE(Order)
+
+      !If dot is present use this to construct order
+      ALLOCATE(d(nvert))
+      IF(PRESENT(dot)) THEN
+        dim=SIZE(dot,DIM=1)
+        !Get the distance from the bisection plane for each vertex
+        CALl mparams%add('VectorType -> n', dim)
+        CALL mparams%add('VectorType -> MPI_COMM_ID', PE_COMM_SELF)
+        CALL mparams%add('VectorType -> nlocal', dim)
+        CALL c%init(mparams)
+        CALL mparams%clear()
+
+        !Dot product for each element
+        DO iv=1,nvert
+          CALL c%setall_array(dot(1:dim,iv))
+          d(iv)=BLAS_DOT(evecs(1), c)
+        ENDDO !iv
+        CALL c%clear()
+      ELSE
+        !Use the eigenvector itself for sorting
+        dim=0
+        CALL evecs(1)%getall(d,ierr)
+      ENDIF
+
+      !Consistent sorting
+      IF(.NOT. lposc) d=-d
+
+      !Sort by d
+      ALLOCATE(dc(nvert))
+      IF(PRESENT(dot)) THEN
+        !Reorder each element for the dot-item
+        DO idim=1,dim
+          dc=d
+          CALL sort(dc, dot(idim,1:nvert))
+        ENDDO !idim
+      ELSEIF(numvecs > 1) THEN
+        !Reorder each subsequent eigenvector
+        ALLOCATE(ec(nvert))
+        DO iv=2,numvecs
+          dc=d
+          CALL evecs(iv)%getall(ec,ierr)
+          CALL sort(dc,ec)
+          CALL evecs(iv)%setall_array(ec,ierr)
+        ENDDO !iv
+        DEALLOCATE(ec)
+      ENDIF
+      DEALLOCATE(dc)
+      CALL sort(d, Order, .TRUE.)
+
+      !If more than 1 vector, then check for ties
+      IF(numvecs > 1) THEN
+        iv=0
+        IF(.NOT. PRESENT(dot)) THEN
+          !Need to send only a slice of the reordered eigenvectors
+          ALLOCATE(evc(numvecs-1))
+          ALLOCATE(ec(nvert))
+          CALl mparams%add('VectorType -> n', 1)
+          CALL mparams%add('VectorType -> MPI_COMM_ID', PE_COMM_SELF)
+          CALL mparams%add('VectorType -> nlocal',1)
+        ENDIF
+        DO WHILE(iv < nvert)
+          iv=iv+1
+          numeq=0
+          DO jv=iv+1,nvert
+            IF(d(jv) .APPROXEQA. d(iv)) THEN
+              numeq=numeq+1
+            ELSE
+              EXIT
+            ENDIF
+          ENDDO !jv
+
+          !Recursive sort if ties
+          IF(numeq >= 1) THEN
+            IF(PRESENT(dot)) THEN
+              !Use dot-product approach on eigen-vectors
+              IF(d(iv) .APPROXGE. 0.0_SRK) THEN
+                CALL recursiveEigenOrder(evecs(2:),Order(iv:iv+numeq),.TRUE., &
+                  dot(1:dim, iv:iv+numeq))
+              ELSE
+                CALL recursiveEigenOrder(evecs(2:),Order(iv:iv+numeq),.FALSE., &
+                  dot(1:dim, iv:iv+numeq))
+              ENDIF
+            ELSE
+              !Get only the range of the eigenvectors which is needed
+              !for the next section
+              CALL mparams%set('VectorType -> n', numeq+1)
+              CALL mparams%set('VectorType -> nlocal', numeq+1)
+              DO jv=2,numvecs
+                CALL evecs(jv)%getRange(iv,iv+numeq,ec(iv:iv+numeq),ierr)
+                CALL evc(jv-1)%init(mparams)
+                CALL evc(jv-1)%setall_array(ec(iv:iv+numeq))
+              ENDDO !iv
+              IF(d(iv) .APPROXGE. 0.0_SRK) THEN
+                CALL recursiveEigenOrder(evc,Order(iv:iv+numeq),.TRUE.)
+              ELSE
+                CALL recursiveEigenOrder(evc,Order(iv:iv+numeq),.FALSE.)
+              ENDIF
+              DO jv=1,numvecs-1
+                CALL evc(jv)%clear()
+              ENDDO !iv
+            ENDIF
+            iv=iv+numeq
+          ENDIF
+        ENDDO !iv < nvert
+
+        IF(.NOT. PRESENT(dot)) THEN
+          DEALLOCATE(evc)
+          DEALLOCATE(ec)
+          CALL mparams%clear()
+        ENDIF
+      ENDIF
+      DEALLOCATE(d)
+    ENDSUBROUTINE recursiveEigenOrder
+!
+!-------------------------------------------------------------------------------
+!> @brief Determine the desired number of groups for each bisection in the
+!>        recursive bisection methods.
+!> @param thisGraph the graph which is being bisected
+!> @param nv1 the max number of vertices to be put in group 1
+!> @param nv2 the max number of vertices to be put in group 2
+!> @param wg1 the desired weight of group 1
+!> @param wg2 the desired weight of group 2
+!>
+    SUBROUTINE detGroupSize(thisGraph,nv1,nv2,wg1,wg2,wtSum)
+      CLASS(PartitionGraphType),INTENT(IN) :: thisGraph
+      INTEGER(SIK),INTENT(OUT) :: nv1,nv2
+      REAL(SRK),INTENT(OUT) :: wg1,wg2,wtSum
+      INTEGER(SIK) :: ng,ng1,ng2
+      REAL(SRK) :: wtMin
+
+      !Determine desired number of subgroups for each group
+      ng=thisGraph%nGroups
+      ng1=ng/2    !Group 1
+      ng2=ng-ng1  !Group 2
+
+      !Determine desired weight of each group
+      wtSum=SUM(thisGraph%wts)
+      wtMin=MINVAL(thisGraph%wts)
+      wg1=wtSum*REAL(ng1,SRK)/REAL(ng,SRK)  !Group 1
+      wg2=wtSum-wg1                         !Group 2
+
+      !Determine maximum size of groups
+      nv1=CEILING(wg1/wtMin)
+      nv2=CEILING(wg2/wtMin)
+    ENDSUBROUTINE detGroupSize
+!
+!-------------------------------------------------------------------------------
+!> @brief Partitioning process for the recusive class of partitioning methods
+!>        Routine added to reduce code replication in all these routines
+!> @param thisGraph The graph which is being partitioned
+!> @param L1 List of vertices in the first bisection group
+!> @param L2 List of vertices in the second bisection group
+!> @param cw1 The weight of group 1
+!> @param wtSum The total weight of the graph
+!>
+    SUBROUTINE recursivePartitioning(thisGraph,L1,L2,cw1,wtSum)
+      CLASS(PartitionGraphType),INTENT(INOUT) :: thisGraph
+      INTEGER(SIK),INTENT(INOUT) :: L1(:),L2(:)
+      REAL(SRK),INTENT(INOUT) :: cw1
+      REAL(SRK),INTENT(IN) :: wtSum
+      INTEGER(SIK) :: iv,nv1,nv2,ng,ng1,ng2
+      TYPE(PartitionGraphType) :: sg1,sg2
+
+      !Number of elements in each list
+      nv1=SIZE(L1)
+      nv2=SIZE(L2)
+
+      !Refine the 2 groups
+      CALL thisGraph%refine(L1,L2)
+
+      !Redistribute the number of groups for each subgraph
+      ng=thisGraph%nGroups
+      ng1=MAX(1,FLOOR(ng*cw1/wtSum))
+      ng2=ng-ng1
+
+      IF(ng1 > 1) THEN
+        !Generate subgraph if further decomposition is needed
+        CALL thisGraph%subgraph(L1,ng1,sg1)
+        !Recursively partition
+        CALL sg1%partition()
+      ENDIF
+
+      IF(ng2 > 1) THEN
+        !Generate subgraph if further decomposition is needed
+        CALL thisGraph%subgraph(L2,ng2,sg2)
+        !Recursively partition
+        CALL sg2%partition()
+      ENDIF
+
+      !Allocate group lists on parent type
+      ALLOCATE(thisGraph%groupIdx(ng+1))
+      ALLOCATE(thisGraph%groupList(thisGraph%nvert))
+
+      IF(ng1 > 1) THEN
+        !Pull groups from first subgraph
+        thisGraph%groupIdx(1:ng1+1)=sg1%groupIdx(1:ng1+1)
+        DO iv=1,sg1%nvert
+          thisGraph%groupList(iv)=L1(sg1%groupList(iv))
+        ENDDO !iv
+        CALL sg1%clear()
+      ELSE
+        thisGraph%groupIdx(1)=1
+        thisGraph%groupIdx(2)=nv1+1
+        DO iv=1,nv1
+          thisGraph%groupList(iv)=L1(iv)
+        ENDDO !iv
+      ENDIF
+
+      IF(ng2 > 1) THEN
+        !Pull groups from second subgraph
+        thisGraph%groupIdx(ng1+1:ng1+ng2+1)=nv1+sg2%groupIdx(1:ng2+1)
+        DO iv=1,sg2%nvert
+          thisGraph%groupList(iv+nv1)=L2(sg2%groupList(iv))
+        ENDDO !iv
+        CALL sg2%clear()
+      ELSE
+        thisGraph%groupIdx(ng1+1)=nv1+1
+        thisGraph%groupIdx(ng1+2)=nv1+nv2+1
+        DO iv=1,nv2
+          thisGraph%groupList(iv+nv1)=L2(iv)
+        ENDDO !iv
+      ENDIF
+    ENDSUBROUTINE recursivePartitioning
 !
 ENDMODULE PartitionGraph
