@@ -266,14 +266,16 @@ MODULE IOutil
       CHARACTER(LEN=*),INTENT(IN) :: dir
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: status
       CHARACTER(LEN=LEN(dir)) :: tmp
+      INTEGER(SIK) :: s
 
       tmp=ADJUSTL(dir)
       CALL SlashRep(tmp)
 #ifdef WIN32
-      status=SYSTEM('if not exist "'//TRIM(dir)//'" mkdir "'//TRIM(dir)//'"')
+      s=SYSTEM('if not exist "'//TRIM(dir)//'" mkdir "'//TRIM(dir)//'"')
 #else
-      status=SYSTEM('mkdir -p "'//TRIM(dir)//'"')
+      s=SYSTEM('mkdir -p "'//TRIM(dir)//'"')
 #endif
+      IF(PRESENT(status)) status=s
     ENDSUBROUTINE MAKE_DIRECTORY_char
 !
 ENDMODULE IOutil
