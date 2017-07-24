@@ -477,7 +477,7 @@ MODULE VTUFiles
       CHARACTER(LEN=*),PARAMETER :: myName='writepvtu_VTUXMLFileType'
       CLASS(VTUXMLFileType),INTENT(INOUT) :: fileobj
       CHARACTER(LEN=*),INTENT(IN) :: case,filen
-      CHARACTER(LEN=128) :: sint,aline
+      CHARACTER(LEN=128) :: sint
       INTEGER(SIK),INTENT(IN) :: funit,procs,rank
       INTEGER(SIK) :: i,j,iord
       CHARACTER(LEN=128) :: fname,fmtStr
@@ -536,10 +536,8 @@ MODULE VTUFiles
           WRITE(sint,FMT=TRIM(fmtStr)) i-1
           fname=TRIM(filen)//'_'//TRIM(sint)//'.vtu'
           fileobj%fileList(i)=fname
-          aline='fsr_'//TRIM(case)//'/'
-          CALL SlashRep(aline)
           sint='DOMAIN_'//TRIM(sint)//'/'
-          fname=TRIM(aline)//TRIM(sint)//TRIM(fname)
+          fname=TRIM(sint)//TRIM(fname)
           WRITE(funit,'(a)') '    <Piece Source="'//TRIM(fname)//'"/>'
         ENDDO
         WRITE(funit,'(a)') '  </PUnstructuredGrid>'
