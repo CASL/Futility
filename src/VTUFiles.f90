@@ -32,6 +32,7 @@ MODULE VTUFiles
   USE FileType_Fortran
   USE VTKFiles
   USE Strings
+  USE IO_Strings
   IMPLICIT NONE
   PRIVATE
   !
@@ -472,17 +473,19 @@ MODULE VTUFiles
 !> Writes the pvtu file for visualizing in parallel (only if master rank and
 !> the number of processors is greater than one).
 !>
-    SUBROUTINE writepvtu_VTUXMLFileType(fileobj,funit,filen,procs,rank)
+    SUBROUTINE writepvtu_VTUXMLFileType(fileobj,funit,case,filen,procs,rank)
       CHARACTER(LEN=*),PARAMETER :: myName='writepvtu_VTUXMLFileType'
       CLASS(VTUXMLFileType),INTENT(INOUT) :: fileobj
-      CHARACTER(LEN=*),INTENT(IN) :: filen
-      CHARACTER(LEN=128) :: sint
+      CHARACTER(LEN=*),INTENT(IN) :: case,filen
+      CHARACTER(LEN=128) :: sint,aline
       INTEGER(SIK),INTENT(IN) :: funit,procs,rank
       INTEGER(SIK) :: i,j,iord
       CHARACTER(LEN=128) :: fname,fmtStr
       !
       IF((procs>1).AND.rank == 0) THEN
-        OPEN(unit=funit,file=TRIM(filen)//'.pvtu')
+        sint='fsr_'//TRIM(case)//'/'
+        CALL SlashRep(sint)
+        OPEN(unit=funit,file=TRIM(sint)//TRIM(filen)//'.pvtu')
         !
         WRITE(funit,'(a)') '<?xml version="1.0"?>'
         WRITE(funit,'(a)') '<VTKFile type="PUnstructuredGrid" version="'// &
@@ -533,12 +536,10 @@ MODULE VTUFiles
           WRITE(sint,FMT=TRIM(fmtStr)) i-1
           fname=TRIM(filen)//'_'//TRIM(sint)//'.vtu'
           fileobj%fileList(i)=fname
-          sint='DOMAIN_'//TRIM(sint)
-#ifdef _WIN32
-          fname=TRIM(sint)//'\\'//TRIM(fname)
-#else
-          fname=TRIM(sint)//'/'//TRIM(fname)
-#endif
+          aline='fsr_'//TRIM(case)//'/'
+          CALL SlashRep(aline)
+          sint='DOMAIN_'//TRIM(sint)//'/'
+          fname=TRIM(aline)//TRIM(sint)//TRIM(fname)
           WRITE(funit,'(a)') '    <Piece Source="'//TRIM(fname)//'"/>'
         ENDDO
         WRITE(funit,'(a)') '  </PUnstructuredGrid>'
