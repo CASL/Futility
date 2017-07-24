@@ -270,10 +270,9 @@ MODULE IOutil
       tmp=ADJUSTL(dir)
       CALL SlashRep(tmp)
 #ifdef WIN32
-      CALL SYSTEM('if not exist "'//TRIM(dir)//'" mkdir "'//TRIM(dir)//'"', &
-        status)
+      status=SYSTEM('if not exist "'//TRIM(dir)//'" mkdir "'//TRIM(dir)//'"')
 #else
-      CALL SYSTEM('mkdir -p "'//TRIM(dir)//'"',status)
+      status=SYSTEM('mkdir -p "'//TRIM(dir)//'"')
 #endif
     ENDSUBROUTINE MAKE_DIRECTORY_char
 !

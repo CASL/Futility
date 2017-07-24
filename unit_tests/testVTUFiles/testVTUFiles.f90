@@ -23,7 +23,7 @@ PROGRAM testVTUFiles
   TYPE(VTKDataType),SAVE :: testVTKData
   TYPE(VTUXMLFileType),SAVE :: testVTUFile
   LOGICAL(SBK) :: bool
-  INTEGER(SRK) :: i
+  INTEGER(SIK) :: i,dir_status
   CHARACTER(LEN=150) :: sint
   !
   CREATE_TEST('Test VTU Files')
@@ -182,7 +182,7 @@ PROGRAM testVTUFiles
       ASSERT(bool,'hasData(...)')
       !
       !Write pvtu file
-      CALL MAKE_DIRECTORY('fsr_test')
+      CALL MAKE_DIRECTORY('fsr_test',dir_status)
       CALL testVTUFile%writepvtu(666,'test','testPVTU',2,0)
       CALL testVTUFile%hasFile('testPVTU_0.vtu',bool)
       ASSERT(bool,'hasFile(...) testPVTU_0.vtu')
