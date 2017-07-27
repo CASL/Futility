@@ -10,7 +10,7 @@ before_install:
 script:
  - docker run -v $PWD:/mnt/Futility dalg24/vera_tpls /bin/bash -c "mkdir /build; cd /build; cmake /mnt/Futility; make -j2 |& tee /mnt/Futility/make.out; ctest -E DA32 -j2"
  - ls
- - (exit `grep -i -b 4 'Unused variable' make.out | grep 'f90' | wc -l`)
+ - (exit `grep -i -B 4 'Unused variable' make.out | grep 'f90' | wc -l`)
  - git clone https://github.com/trilinos/Trilinos.git
  - docker run -v $PWD:/mnt/Futility dalg24/vera_tpls /bin/bash -c "mkdir /build; cd /build; /bin/bash /mnt/Futility/build_scripts/build_on_docker.sh /mnt/Futility; make -j2; ctest -E DA32 -j2"
 
