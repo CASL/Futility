@@ -1299,8 +1299,9 @@ MODULE ParallelEnv
       INTEGER(SIK),INTENT(IN) :: nenergy
       INTEGER(SIK),INTENT(IN) :: nthreads
       CHARACTER(LEN=12) ::  nproc, selproc
-      INTEGER(SIK) :: nerror,tmpcomm,commDims(3)
+      INTEGER(SIK) :: nerror,commDims(3)
 #ifdef HAVE_MPI
+      INTEGER(SIK) :: tmpcomm
       LOGICAL(SBK) :: activeCommDim(3)
       CHARACTER(LEN=12) :: smpierr
 #endif

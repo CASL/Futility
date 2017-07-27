@@ -153,10 +153,6 @@ MODULE PreconditionerTypes
       CHARACTER(LEN=*),PARAMETER :: myName='init_LU_PreCondType'
       CLASS(LU_PrecondType),INTENT(INOUT) :: thisPC
       CLASS(MatrixType),ALLOCATABLE,TARGET,INTENT(IN),OPTIONAL :: A
-      INTEGER(SIK) :: col,row,j,nU,nL,nnzU,nnzL
-      INTEGER(SIK) :: X
-      REAL(SRK) :: val
-      TYPE(ParamType) :: PL
 
       IF(thisPC%isinit) THEN
         CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &

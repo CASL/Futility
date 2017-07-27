@@ -111,9 +111,12 @@ MODULE AndersonAccelerationTypes
       TYPE(MPI_EnvType),INTENT(IN),TARGET :: MPIEnv
       TYPE(ParamType),INTENT(IN) :: Params
 
-      TYPE(ParamType) :: validParams, tmpPL
+      TYPE(ParamType) :: validParams
       INTEGER(SIK) :: n,nlocal,depth,start
       REAL(SRK) :: beta
+#ifdef FUTILITY_HAVE_Trilinos
+      TYPE(ParamType) :: tmpPL
+#endif
 
       !Check to set up required and optional param lists.
       !IF(.NOT.AndersonType_Paramsflag) CALL AndersionType_Declare_ValidParams()
