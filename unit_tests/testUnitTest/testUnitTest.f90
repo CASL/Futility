@@ -16,8 +16,6 @@ PROGRAM testUnitTest
   INCLUDE 'mpif.h'
   INTEGER :: mpierr
   CALL MPI_Init(mpierr)
-#else
-  INTEGER :: MPI_COMM_WORLD=0
 #endif
 
   CREATE_TEST("UnitTest")
@@ -54,6 +52,7 @@ PROGRAM testUnitTest
   !    This is testing failures as well as passing tests.  Expect 37 failures.
   utest_nfail=utest_nfail-37
   FINALIZE_TEST()
+
 
   STAY()
 #ifdef HAVE_MPI
