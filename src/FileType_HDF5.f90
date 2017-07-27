@@ -633,7 +633,9 @@ MODULE FileType_HDF5
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: ldel
 #ifdef FUTILITY_HAVE_HDF5
       LOGICAL(SBK) :: bool
+#endif
       IF(thisHDF5File%isinit) THEN
+#ifdef FUTILITY_HAVE_HDF5
         !Logical to close or delete the file.
         bool=.FALSE.
         IF(PRESENT(ldel)) bool=ldel
