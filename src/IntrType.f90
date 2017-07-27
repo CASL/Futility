@@ -433,7 +433,7 @@ MODULE IntrType
       CHARACTER(LEN=7) :: expString
       INTEGER(SNK) :: intA_left,intB_left,intA_exp,intB_exp,diffExp
       INTEGER(SLK) :: intA_right,intB_right
-      REAL(SSK) :: tol, unused
+      REAL(SSK) :: tol
 
       !Convert to character variable
       WRITE(aString,'(es13.6E2)') a
