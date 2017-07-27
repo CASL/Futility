@@ -605,10 +605,13 @@ MODULE EigenvalueSolverTypes
       CLASS(EigenvalueSolverType_SNES),INTENT(INOUT) :: solver
       TYPE(MPI_EnvType),INTENT(IN),TARGET :: MPIEnv
       TYPE(ParamType),INTENT(IN) :: Params
-      TYPE(ParamType) :: validParams, tmpPL
+      TYPE(ParamType) :: validParams
       INTEGER(SIK) :: n,nlocal,solvertype,maxit
       REAL(SRK) :: tol
       TYPE(STRINGType) :: pctype
+#ifdef FUTILITY_HAVE_PETSC
+      TYPE(ParamType) :: tmpPL
+#endif
       !Check to set up required and optional param lists.
       !IF(.NOT.EigenType_Paramsflag) CALL EigenType_Declare_ValidParams()
 

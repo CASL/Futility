@@ -136,7 +136,7 @@ PROGRAM testPreconditionerTypes
 #ifdef HAVE_MPI
   INTEGER :: mpierr
   CALL MPI_Init(mpierr)
-#else
+#elif defined FUTILITY_HAVE_PETSC
   INTEGER :: MPI_COMM_WORLD=0
 #endif
   !Configure exception handler for test

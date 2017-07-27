@@ -534,7 +534,6 @@ MODULE ArrayUtils
 
       INTEGER(SIK) :: i,j,n,m,x1,y1,x2,y2,sout
       TYPE(StringType),ALLOCATABLE :: tmpr(:,:)
-
       n=SIZE(r,DIM=1)
       m=SIZE(r,DIM=2)
       ALLOCATE(tmpr(n,m))
