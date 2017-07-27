@@ -50,9 +50,7 @@ PROGRAM testPartitionGraph
   REGISTER_SUBTEST('Recursive Expansion Bisection',testREB)
 #ifdef FUTILITY_HAVE_SLEPC
   REGISTER_SUBTEST('Recursive Spectral Bisection',testRSB)
-#ifdef HAVE_BLAS
   REGISTER_SUBTEST('Recursive Inertial Bisection',testRIB)
-#endif
   REGISTER_SUBTEST('Multi-method',testMulti)
 #endif
   REGISTER_SUBTEST('Kernighan-Lin',testKL)

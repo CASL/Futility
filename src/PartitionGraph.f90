@@ -373,20 +373,14 @@ MODULE PartitionGraph
             CASE('RECURSIVE SPECTRAL BISECTION')
               thisGraph%partitionAlgArry(ipart)%p => RecursiveSpectralBisection
             CASE('RECURSIVE INERTIAL BISECTION')
-#ifdef HAVE_BLAS
               thisGraph%partitionAlgArry(ipart)%p => RecursiveInertialBisection
-#else
-              CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-                ' - must recompile with BLAS to use '//TRIM(ADJUSTL(algName)))
-#endif
 #else
             CASE('RECURSIVE SPECTRAL BISECTION')
               CALL ePartitionGraph%raiseError(modName//'::'//myName// &
                 ' - must recompile with SLEPc to use '//TRIM(ADJUSTL(algName)))
             CASE('RECURSIVE INERTIAL BISECTION')
               CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-                ' - must recompile with SLEPc and BLAS to use '// &
-                TRIM(ADJUSTL(algName)))
+                ' - must recompile with SLEPc to use '//TRIM(ADJUSTL(algName)))
 #endif
             CASE DEFAULT
               CALL ePartitionGraph%raiseError(modName//'::'//myName// &
@@ -660,7 +654,7 @@ MODULE PartitionGraph
       INTEGER(SIK) :: ng,ng1,ng2,nv,nv1,nv2,iv,jv,kv,in,jn,kn,maxd,maxd2
       INTEGER(SIK) :: soiv,count,bvert
       INTEGER(SIK) :: curSI,curSE,maxSI,maxSE
-      REAL(SRK) :: cw1,wg1,wg2,wtSum,wtMin,cE,cS,lE,dS,soid
+      REAL(SRK) :: cw1,wg1,wg2,wtSum,wtMin,cE,cS,lE,dS,soid,curdif,wt
       REAL(SRK) :: curInt,curExt,maxInt,minExt
       !local arrays
       REAL(SRK) :: wc(thisGraph%dim),soic(thisGraph%dim),gsc(thisGraph%dim)
@@ -798,6 +792,7 @@ MODULE PartitionGraph
         ! 5. Smallest distance from starting vertex
         cw1=thisGraph%wts(L1(1))
         nv1=1
+        curdif=wg1
         DO WHILE(cw1 < wg1)
           !Reset targets
           maxInt=0
@@ -810,6 +805,8 @@ MODULE PartitionGraph
           DO iv=1,nv
             !Only consider those not already within the group
             IF(.NOT. lInL1(iv)) THEN
+              wt=thisGraph%wts(iv)
+              IF(ABS(curdif-wt) > ABS(curdif)) CYCLE
               !Calculate (weighted) internal and external edge sums
               curInt=0
               curExt=0
@@ -864,16 +861,21 @@ MODULE PartitionGraph
           ENDDO !iv
 
           !Add "best" vertex to the list and update weighted sum
-          nv1=nv1+1
-          L1(nv1)=bvert
-          cw1=cw1+thisGraph%wts(bvert)
-          lInL1(bvert)=.TRUE.
+          IF(bvert > 0) THEN
+            nv1=nv1+1
+            L1(nv1)=bvert
+            cw1=cw1+thisGraph%wts(bvert)
+            curdif=curdif-thisGraph%wts(bvert)
+            lInL1(bvert)=.TRUE.
+          ELSE
+            EXIT
+          ENDIF
         ENDDO !cw1 < wg1
 
         !Populate 2nd group
         nv2=0
         DO iv=1,nv
-          IF(.NOT. ANY(iv == L1)) THEN
+          IF(.NOT. lInL1(iv)) THEN
             nv2=nv2+1
             L2(nv2)=iv
           ENDIF
@@ -933,12 +935,12 @@ MODULE PartitionGraph
       !Set the matrix
       DO iv=1,nvert
         wneigh=SUM(thisGraph%neighwts(1:nneigh,iv))
-        CALL Lmat%set(iv,iv,REAL(wneigh,SRK))
+        CALL Lmat%set(iv,iv,wneigh)
         DO in=1,nneigh
           jv=thisGraph%neigh(in,iv)
           IF(jv /= 0) THEN
             wneigh=-thisGraph%neighwts(in,iv)
-            CALL Lmat%set(iv,jv,REAL(wneigh,SRK))
+            CALL Lmat%set(iv,jv,wneigh)
           ENDIF
         ENDDO !in
       ENDDO !iv
@@ -968,12 +970,11 @@ MODULE PartitionGraph
       L2=0
       cw1=0.0_SRK
       curdif=wg1
-
       !Expand until closest to desired size
       nv1=0
       DO jv=1,nvert
         iv=Order(jv)
-        wt=REAL(thisGraph%wts(iv),SRK)
+        wt=thisGraph%wts(iv)
         IF(ABS(curdif-wt) < ABS(curdif)) THEN
           nv1=nv1+1
           L1(jv)=iv
@@ -1007,15 +1008,14 @@ MODULE PartitionGraph
       CHARACTER(LEN=*),PARAMETER :: myName='RecursiveInertialBisection'
       CLASS(PartitionGraphType),INTENT(INOUT) :: thisGraph
       INTEGER(SIK) :: dim,iv,jv,ierr
-      INTEGER(SIK) :: ng,ng1,ng2,nv1,nv2
-      REAL(SRK) :: wtSum,wtMin,wg1,wg2,wt,cw1,curdif
+      INTEGER(SIK) :: ng,ng1,ng2,nv1,nv2,idim,idim2
+      REAL(SRK) :: wtSum,wtMin,wg1,wg2,wt,cw1,curdif,ccoord,cprod
       INTEGER(SIK),ALLOCATABLE :: Order(:),L1(:),L2(:)
       REAL(SRK),ALLOCATABLE :: I(:,:),coord(:,:),cent(:)
       TYPE(ParamType) :: mparams
       TYPE(PETScMatrixType) :: Imat
       TYPE(PartitionGraphType) :: sg1, sg2
       CLASS(VectorType),ALLOCATABLE :: evecs(:)
-
 
       IF(.NOT. ALLOCATED(thisGraph%coord)) THEN
         CALL ePartitionGraph%raiseError(modName//'::'//myName// &
@@ -1042,8 +1042,17 @@ MODULE PartitionGraph
         ALLOCATE(I(dim,dim))
         I=0.0_SRK
         DO iv=1,thisGraph%nvert
-          CALL dsyr('u', dim, 1.0_SRK, coord(1:dim,iv), 1, I, dim)
+          DO idim=1,dim
+            ccoord=coord(idim,iv)
+            I(idim,idim)=I(idim,idim)+ccoord*ccoord
+            DO idim2=idim+1,dim
+              cprod=ccoord*coord(idim2,iv)
+              I(idim,idim2)=I(idim,idim2)+cprod
+              I(idim2,idim)=I(idim2,idim)+cprod
+            ENDDO !idim2
+          ENDDO !idim
         ENDDO !iv
+
 
         !Now construct the matrix type from I
         CALL mparams%add('MatrixType->n', dim)
@@ -1691,11 +1700,11 @@ MODULE PartitionGraph
         lgroup=0.0_SRK
         sgroup=HUGE(1.0_SRK)
         wtSum=SUM(thisGraph%wts)
-        optSize=REAL(wtSum,SRK)/REAL(thisGraph%nGroups,SRK)
+        optSize=wtSum/REAL(thisGraph%nGroups,SRK)
         DO ig=1,thisGraph%nGroups
 
           !Determine group size(weighted)
-          wtGrp=0
+          wtGrp=0.0_SRK
           DO iv=thisGraph%groupIdx(ig),thisGraph%groupIdx(ig+1)-1
             wtGrp=wtGrp+thisGraph%wts(thisGraph%groupList(iv))
           ENDDO !iv
@@ -1704,12 +1713,12 @@ MODULE PartitionGraph
           IF(wtGrp < sgroup) sgroup=wtGrp
 
           !Accumulate rms errors
-          wtDif=optSize-REAL(wtGrp,SRK)
+          wtDif=optSize-wtGrp
           wtDif=wtDif*wtDif
-          srms=srms+REAL(wtDif,SRK)
+          srms=srms+wtDif
         ENDDO !ig
-        mmr=REAL(lgroup,SRK)/REAL(sgroup,SRK)
-        srms=SQRT(srms)
+        mmr=lgroup/sgroup
+        srms=100.0_SRK*SQRT(srms)/optSize
 
         !Determine the total weight of cut edges, and the communication between
         !groups
@@ -1736,14 +1745,14 @@ MODULE PartitionGraph
               IF(ineigh /= 0) THEN
                 !Accumulate edges cut
                 IF(.NOT. ANY(ineigh == thisGraph%groupList(igstt:igstp))) THEN
-                  ecut=ecut+REAL(thisGraph%neighwts(in,ivert),SRK)
+                  ecut=ecut+thisGraph%neighwts(in,ivert)
                 ENDIF
                 !Accumulate communication between groups
                 neighGrp=grpMap(ineigh)
                 IF((neighGrp /= ig) .AND. &
                    (.NOT. ANY(neighGrp == uniqueGrps))) THEN
                   uniqueGrps(in)=neighGrp
-                  comm=comm+REAL(thisGraph%neighwts(in,ivert),SRK)
+                  comm=comm+thisGraph%neighwts(in,ivert)
                 ENDIF
               ENDIF
             ENDDO !in
@@ -1852,6 +1861,7 @@ MODULE PartitionGraph
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: lpos
       LOGICAL(SBK) :: lposc
       INTEGER(SIK) :: dim,numvecs,nvert,numeq,iv,jv,idim,ierr
+      INTEGER(SIK),ALLOCATABLE :: indOrder(:),oc(:)
       REAL(SRK),ALLOCATABLE :: d(:),dc(:),ec(:)
       TYPE(PETScVectorType) :: c
       TYPE(PETScVectorType),ALLOCATABLE :: evc(:)
@@ -1866,19 +1876,14 @@ MODULE PartitionGraph
       ALLOCATE(d(nvert))
       IF(PRESENT(dot)) THEN
         dim=SIZE(dot,DIM=1)
-        !Get the distance from the bisection plane for each vertex
-        CALl mparams%add('VectorType -> n', dim)
-        CALL mparams%add('VectorType -> MPI_COMM_ID', PE_COMM_SELF)
-        CALL mparams%add('VectorType -> nlocal', dim)
-        CALL c%init(mparams)
-        CALL mparams%clear()
 
-        !Dot product for each element
+        ALLOCATE(ec(dim))
+        CALL evecs(1)%getall(ec,ierr)
+        d=0.0_SRK
         DO iv=1,nvert
-          CALL c%setall_array(dot(1:dim,iv))
-          d(iv)=BLAS_DOT(evecs(1), c)
+          d(iv)=SUM(ec(1:dim)*dot(1:dim,iv))
         ENDDO !iv
-        CALL c%clear()
+        DEALLOCATE(ec)
       ELSE
         !Use the eigenvector itself for sorting
         dim=0
@@ -1888,27 +1893,41 @@ MODULE PartitionGraph
       !Consistent sorting
       IF(.NOT. lposc) d=-d
 
-      !Sort by d
+      !Sort by value of d
+      ALLOCATE(indOrder(nvert))
+      ALLOCATE(oc(nvert))
       ALLOCATE(dc(nvert))
+      oc=Order
+      DO iv=1,nvert
+        indOrder(iv)=iv
+      ENDDO !iv
+      CALL sort(d,indOrder,.TRUE.)
+      DO iv=1,nvert
+        Order(iv)=oc(indOrder(iv))
+      ENDDO !iv
       IF(PRESENT(dot)) THEN
         !Reorder each element for the dot-item
         DO idim=1,dim
-          dc=d
-          CALL sort(dc, dot(idim,1:nvert))
+          dc=dot(idim,1:nvert)
+          DO iv=1,nvert
+            dot(idim,iv)=dc(indOrder(iv))
+          ENDDO !iv
         ENDDO !idim
-      ELSEIF(numvecs > 1) THEN
+      ELSE
         !Reorder each subsequent eigenvector
         ALLOCATE(ec(nvert))
         DO iv=2,numvecs
-          dc=d
           CALL evecs(iv)%getall(ec,ierr)
-          CALL sort(dc,ec)
-          CALL evecs(iv)%setall_array(ec,ierr)
+          DO jv=1,nvert
+            dc(jv)=ec(indOrder(jv))
+          ENDDO !jv
+          CALL evecs(iv)%setall_array(dc,ierr)
         ENDDO !iv
         DEALLOCATE(ec)
       ENDIF
       DEALLOCATE(dc)
-      CALL sort(d, Order, .TRUE.)
+      DEALLOCATE(oc)
+      DEALLOCATE(indOrder)
 
       !If more than 1 vector, then check for ties
       IF(numvecs > 1) THEN
@@ -2003,8 +2022,8 @@ MODULE PartitionGraph
       wg2=wtSum-wg1                         !Group 2
 
       !Determine maximum size of groups
-      nv1=CEILING(wg1/wtMin)
-      nv2=CEILING(wg2/wtMin)
+      nv1=CEILING(wg1/wtMin)+1
+      nv2=CEILING(wg2/wtMin)+1
     ENDSUBROUTINE detGroupSize
 !
 !-------------------------------------------------------------------------------
@@ -2016,12 +2035,13 @@ MODULE PartitionGraph
 !> @param cw1 The weight of group 1
 !> @param wtSum The total weight of the graph
 !>
-    SUBROUTINE recursivePartitioning(thisGraph,L1,L2,cw1,wtSum)
+    RECURSIVE SUBROUTINE recursivePartitioning(thisGraph,L1,L2,cw1,wtSum)
       CLASS(PartitionGraphType),INTENT(INOUT) :: thisGraph
       INTEGER(SIK),INTENT(INOUT) :: L1(:),L2(:)
       REAL(SRK),INTENT(INOUT) :: cw1
       REAL(SRK),INTENT(IN) :: wtSum
       INTEGER(SIK) :: iv,nv1,nv2,ng,ng1,ng2
+      REAL(SRK) :: ngr
       TYPE(PartitionGraphType) :: sg1,sg2
 
       !Number of elements in each list
@@ -2033,7 +2053,10 @@ MODULE PartitionGraph
 
       !Redistribute the number of groups for each subgraph
       ng=thisGraph%nGroups
+      ngr=ng*cw1/wtSum
       ng1=MAX(1,FLOOR(ng*cw1/wtSum))
+      ngr=ngr-REAL(ng1,SRK)
+      IF(ngr > 0.5_SRK) ng1=ng1+1
       ng2=ng-ng1
 
       IF(ng1 > 1) THEN
