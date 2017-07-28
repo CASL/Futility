@@ -631,7 +631,9 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),PARAMETER :: myName='clear_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: ldel
+#ifdef FUTILITY_HAVE_HDF5
       LOGICAL(SBK) :: bool
+#endif
       IF(thisHDF5File%isinit) THEN
 #ifdef FUTILITY_HAVE_HDF5
         !Logical to close or delete the file.

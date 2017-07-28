@@ -85,7 +85,7 @@ MODULE MatrixTypes_Trilinos
       CLASS(TrilinosMatrixType),INTENT(INOUT) :: matrix
       CLASS(ParamType),INTENT(IN) :: Params
       TYPE(ParamType) :: validParams
-      INTEGER(SIK) :: n, matType, MPI_COMM_ID, nlocal, ierr, rnnz
+      INTEGER(SIK) :: n, matType, MPI_COMM_ID, nlocal, rnnz
       INTEGER(SIK),ALLOCATABLE :: dnnz(:), onnz(:)
       LOGICAL(SBK) :: isSym
 
@@ -193,7 +193,6 @@ MODULE MatrixTypes_Trilinos
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(IN) :: setval
-      INTEGER(SIK)  :: ierr
 
       IF(matrix%isInit) THEN
         IF(((j <= matrix%n) .AND. (i <= matrix%n)) &
@@ -234,7 +233,6 @@ MODULE MatrixTypes_Trilinos
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(IN) :: setval
-      INTEGER(SIK)  :: ierr
 
       IF(matrix%isInit) THEN
         IF(((j <= matrix%n) .AND. (i <= matrix%n)) &
@@ -271,7 +269,6 @@ MODULE MatrixTypes_Trilinos
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(INOUT) :: getval
-      INTEGER(SIK)  :: ierr
 
       getval=0.0_SRK
       IF(matrix%isInit) THEN
@@ -291,9 +288,8 @@ MODULE MatrixTypes_Trilinos
       CLASS(TrilinosMatrixType),INTENT(INOUT) :: thisMatrix
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
       INTEGER(SIK) :: ierrc
-#ifdef FUTILITY_HAVE_Trilinos
-      INTEGER(SIK) :: iperr
 
+#ifdef FUTILITY_HAVE_Trilinos
       ierrc=0
       IF(.NOT.thisMatrix%isAssembled) THEN
         CALL ForPETRA_MatSet(thisMatrix%A,thisMatrix%currow,thisMatrix%ncol,thisMatrix%jloc,thisMatrix%aloc)

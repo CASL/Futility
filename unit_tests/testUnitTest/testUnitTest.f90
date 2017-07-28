@@ -16,8 +16,6 @@ PROGRAM testUnitTest
   INCLUDE 'mpif.h'
   INTEGER :: mpierr
   CALL MPI_Init(mpierr)
-#else
-  INTEGER :: MPI_COMM_WORLD=0
 #endif
 
   CREATE_TEST("UnitTest")
@@ -54,6 +52,7 @@ PROGRAM testUnitTest
   !    This is testing failures as well as passing tests.  Expect 37 failures.
   utest_nfail=utest_nfail-37
   FINALIZE_TEST()
+
 
   STAY()
 #ifdef HAVE_MPI
@@ -427,12 +426,11 @@ PROGRAM testUnitTest
 !> @param a - reference value
 !> @param b - test value
 !> @param c - test value
-!> @param d - test value
 !> @param e - test value
 !> @param tol - tolerance for test
 !>
     SUBROUTINE testASSERT_LE_SDK()
-      REAL(SDK):: a,b,c,d,e,tol
+      REAL(SDK):: a,b,c,e,tol
       !Initialize ref value
       a=2.0_SDK
       ! Declare a tolerance to test functionality of the statements
@@ -458,12 +456,11 @@ PROGRAM testUnitTest
 !> @param a - reference value
 !> @param b - test value
 !> @param c - test value
-!> @param d - test value
 !> @param e - test value
 !> @param tol - tolerance for test
 !>
     SUBROUTINE testASSERT_LE_SSK()
-      REAL(SSK):: a,b,c,d,e
+      REAL(SSK):: a,b,c,e
 
       !Initialize ref value
       a=2.0_SSK
@@ -488,12 +485,11 @@ PROGRAM testUnitTest
 !> @param a - reference value
 !> @param b - test value
 !> @param c - test value
-!> @param d - test value
 !> @param e - test value
 !> @param tol - tolerance for test
 !>
     SUBROUTINE testASSERT_LT_SDK()
-      REAL(SDK):: a,b,c,d,e,tol
+      REAL(SDK):: a,b,c,e,tol
       !Initialize ref value
       a=2.0_SDK
       ! Declare a tolerance to test functionality of the statements
@@ -519,12 +515,11 @@ PROGRAM testUnitTest
 !> @param a - reference value
 !> @param b - test value
 !> @param c - test value
-!> @param d - test value
 !> @param e - test value
 !> @param tol - tolerance for test
 !>
     SUBROUTINE testASSERT_LT_SSK()
-      REAL(SSK):: a,b,c,d,e
+      REAL(SSK):: a,b,c,e
 
       !Initialize ref value
       a=2.0_SSK
@@ -549,12 +544,11 @@ PROGRAM testUnitTest
 !> @param a - reference value
 !> @param b - test value
 !> @param c - test value
-!> @param d - test value
 !> @param e - test value
 !> @param tol - tolerance for test
 !>
     SUBROUTINE testASSERT_GE_SDK()
-      REAL(SDK):: a,b,c,d,e,tol
+      REAL(SDK):: a,b,c,e,tol
       !Initialize ref value
       a=2.0_SDK
       ! Declare a tolerance to test functionality of the statements
@@ -580,12 +574,11 @@ PROGRAM testUnitTest
 !> @param a - reference value
 !> @param b - test value
 !> @param c - test value
-!> @param d - test value
 !> @param e - test value
 !> @param tol - tolerance for test
 !>
     SUBROUTINE testASSERT_GE_SSK()
-      REAL(SSK):: a,b,c,d,e
+      REAL(SSK):: a,b,c,e
 
       !Initialize ref value
       a=2.0_SSK
@@ -610,12 +603,11 @@ PROGRAM testUnitTest
 !> @param a - reference value
 !> @param b - test value
 !> @param c - test value
-!> @param d - test value
 !> @param e - test value
 !> @param tol - tolerance for test
 !>
     SUBROUTINE testASSERT_GT_SDK()
-      REAL(SDK):: a,b,c,d,e,tol
+      REAL(SDK):: a,b,c,e,tol
       !Initialize ref value
       a=2.0_SDK
       ! Declare a tolerance to test functionality of the statements
@@ -641,12 +633,11 @@ PROGRAM testUnitTest
 !> @param a - reference value
 !> @param b - test value
 !> @param c - test value
-!> @param d - test value
 !> @param e - test value
 !> @param tol - tolerance for test
 !>
     SUBROUTINE testASSERT_GT_SSK()
-      REAL(SSK):: a,b,c,d,e
+      REAL(SSK):: a,b,c,e
 
       !Initialize ref value
       a=2.0_SSK

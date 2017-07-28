@@ -73,6 +73,7 @@ public:
             params.get("smoother: damping factor", 1.0);
             params.get("smoother: sweeps", 3);
             params.get("smoother: ifpack overlap", 1);
+            //params.get("PDE equations",2);
             params.get("max levels", 8);
             params.get("ML output", 10);
         }

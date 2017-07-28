@@ -3514,10 +3514,10 @@ MODULE BLAS2
       REAL(SSK),INTENT(INOUT) :: x(:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx_in
       INTEGER(SIK) :: incx
-      INTEGER(SIK) :: lda
       INTEGER(SIK) :: n
 
 #ifdef HAVE_BLAS
+      INTEGER(SIK) :: lda
       INTERFACE
         PURE SUBROUTINE strsv(uplo,trans,diag,n,a,lda,x,incx)
           CHARACTER(LEN=1),INTENT(IN) :: uplo
