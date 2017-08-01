@@ -574,6 +574,55 @@ PROGRAM testTPLPETSC
     ENDIF
     WRITE(*,*) '  Passed: CALL MatMultTranspose(...)'
 
+    !test MatTranspose
+    CALL MatTranspose(A,MAT_REUSE_MATRIX,A,ierr)
+    CALL MatGetValues(A,1,0,1,0,getval,ierr)
+    IF(getval /= 1.0_SRK .OR. ierr /= 0) THEN
+      WRITE(*,*) 'CALL MatGetValues(A,1,1,1,1,getval,ierr) FAILED!'
+      STOP 666
+    ENDIF
+    CALL MatGetValues(A,1,0,1,1,getval,ierr)
+    IF(getval /= 6.0_SRK .OR. ierr /= 0) THEN
+      WRITE(*,*) 'CALL MatGetValues(A,1,1,1,2,getval,ierr) FAILED!'
+      STOP 666
+    ENDIF
+    CALL MatGetValues(A,1,0,1,2,getval,ierr)
+    IF(getval /= 5.0_SRK .OR. ierr /= 0) THEN
+      WRITE(*,*) 'CALL MatGetValues(A,1,1,1,3,getval,ierr) FAILED!'
+      STOP 666
+    ENDIF
+    CALL MatGetValues(A,1,1,1,0,getval,ierr)
+    IF(getval /= 3.0_SRK .OR. ierr /= 0) THEN
+      WRITE(*,*) 'CALL MatGetValues(A,1,2,1,1,getval,ierr) FAILED!'
+      STOP 666
+    ENDIF
+    CALL MatGetValues(A,1,1,1,1,getval,ierr)
+    IF(getval /= 2.0_SRK .OR. ierr /= 0) THEN
+      WRITE(*,*) 'CALL MatGetValues(A,1,2,1,2,getval,ierr) FAILED!'
+      STOP 666
+    ENDIF
+    CALL MatGetValues(A,1,1,1,2,getval,ierr)
+    IF(getval /= 2.0_SRK .OR. ierr /= 0) THEN
+      WRITE(*,*) 'CALL MatGetValues(A,1,2,1,3,getval,ierr) FAILED!'
+      STOP 666
+    ENDIF
+    CALL MatGetValues(A,1,2,1,0,getval,ierr)
+    IF(getval /= 5.0_SRK .OR. ierr /= 0) THEN
+      WRITE(*,*) 'CALL MatGetValues(A,1,3,1,1,getval,ierr) FAILED!'
+      STOP 666
+    ENDIF
+    CALL MatGetValues(A,1,2,1,1,getval,ierr)
+    IF(getval /= 8.0_SRK .OR. ierr /= 0) THEN
+      WRITE(*,*) 'CALL MatGetValues(A,1,3,1,2,getval,ierr) FAILED!'
+      STOP 666
+    ENDIF
+    CALL MatGetValues(A,1,2,1,2,getval,ierr)
+    IF(getval /= 4.0_SRK .OR. ierr /= 0) THEN
+      WRITE(*,*) 'CALL MatGetValues(A,1,3,1,3,getval,ierr) FAILED!'
+      STOP 666
+    ENDIF
+    WRITE(*,*) '  Passed: CALL MatTranspose(...)'
+
     !test MatDestroy
     CALL MatDestroy(A,ierr)
     IF(ierr /= 0) WRITE(*,*) 'CALL MatDestroy(A,ierr) FAILED!'
