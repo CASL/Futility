@@ -26,8 +26,6 @@
 //#endif
 #include <cassert>
 
-using std::map;
-
 class PCCnt{
 public:
     /*
@@ -146,5 +144,5 @@ public:
 
 private:
         int cid;
-        map<int, PCCnt> pc_map;
+        std::map<int, PCCnt> pc_map;
 };
