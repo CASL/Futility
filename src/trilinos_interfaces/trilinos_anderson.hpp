@@ -27,8 +27,6 @@
 #include "Epetra_Operator.h"
 #include <cassert>
 
-using std::map;
-
 class AndersonCnt{
 public:
     /*
@@ -171,7 +169,7 @@ public:
 
 private:
         int cid;
-        map<int, AndersonCnt> anderson_map;
+        std::map<int, AndersonCnt> anderson_map;
 };
 
 // JFNK Interface
@@ -325,5 +323,5 @@ public:
 
 private:
         int cid;
-        map<int, JFNKCnt> jfnk_map;
+        std::map<int, JFNKCnt> jfnk_map;
 };

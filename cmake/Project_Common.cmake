@@ -44,7 +44,6 @@ IF (NOT ${PROJECT_NAME}_EXCLUDE_PACKAGES)
   SET(${PROJECT_NAME}_EXCLUDE_PACKAGES
     # Trilinos disables
     Gtest
-    Kokkos
     RTOp
     Sacado
     Zoltan
@@ -59,7 +58,6 @@ IF (NOT ${PROJECT_NAME}_EXCLUDE_PACKAGES)
     Pliris
     Claps
     Galeri
-    Tpetra
     Amesos2
     Pamgen
     Komplex

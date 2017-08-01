@@ -29,8 +29,6 @@
 #include "Epetra_Operator.h"
 #include <cassert>
 
-using std::map;
-
 class AnasaziCnt{
 public:
     /*
@@ -193,7 +191,7 @@ public:
 
 private:
         int cid;
-        map<int, AnasaziCnt> anasazi_map;
+        std::map<int, AnasaziCnt> anasazi_map;
 };
 
 class BelosCnt{
@@ -321,5 +319,5 @@ public:
 
 private:
         int cid;
-        map<int, BelosCnt> belos_map;
+        std::map<int, BelosCnt> belos_map;
 };

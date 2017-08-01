@@ -12,6 +12,7 @@
 #ifdef FUTILITY_HAVE_Trilinos
 #include "trilinos_anderson.hpp"
 #include "trilinos_mat_vec.hpp"
+#include "trilinos_tpetra.hpp"
 #include "trilinos_pc.hpp"
 #include "trilinos_solvers.hpp"
 #include <omp.h>
