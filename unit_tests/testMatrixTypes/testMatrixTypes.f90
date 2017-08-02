@@ -3526,10 +3526,12 @@ PROGRAM testMatrixTypes
 !-------------------------------------------------------------------------------
     SUBROUTINE testTransposeMatrix()
       CLASS(SparseMatrixType),ALLOCATABLE :: testA
-      CLASS(DistributedMatrixType),POINTER :: dmat_p
       LOGICAL(SBK) :: bool
-      REAL(SRK) :: aij
       TYPE(ParamType) :: tmpPlist
+#ifdef FUTILITY_HAVE_PETSC
+      CLASS(DistributedMatrixType),POINTER :: dmat_p
+      REAL(SRK) :: aij
+#endif
       ALLOCATE(SparseMatrixType :: testA)
 
 
