@@ -263,6 +263,9 @@ MODULE MatrixTypes_PETSc
       CLASS(PETScMatrixType),INTENT(INOUT) :: matrix
       PetscErrorCode  :: iperr
       IF(.NOT.matrix%isAssembled) CALL matrix%assemble()
+      !This is to avoid a deadlock in IBarrier in MPICH
+      CALL PetscCommBuildTwoSidedSetType(matrix%comm, &
+        PETSC_BUILDTWOSIDED_ALLREDUCE,iperr)
       CALL MatTranspose(matrix%a,MAT_REUSE_MATRIX,matrix%a,iperr)
     ENDSUBROUTINE transpose_PETScMatrixType
 !
