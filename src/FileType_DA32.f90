@@ -669,54 +669,30 @@ MODULE FileType_DA32
       INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
       CHARACTER(LEN=*),INTENT(IN) :: dat
 
+      CHARACTER(LEN=CH2REC) :: space_buffer
       INTEGER(SNK) :: tmpdat(NBUF)
-      INTEGER(SIK) :: nlen,ioerr,istt,istp
+      INTEGER(SIK) :: nlen,ioerr,istt,istp,i
       INTEGER(SLK) :: n,irec
 
       ioerr=IOSTAT_END
       irec=rec
       IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
+        DO i=1,CH2REC
+          space_buffer(i:i)=' '
+        ENDDO
         nlen=LEN(dat)
         istt=1
         istp=MIN(nlen,NBUFCH)
         ioerr=0
         DO WHILE(nlen > 0)
-          tmpdat=TRANSFER(dat(istt:istp),tmpdat)
-!With the GNU 4.7/8 compiler, when compiling with optimizations
-!Something happens to the following block of code such that it is
-!optimized incorrectly. This is a kluge to prevent the compiler
-!from producing incorrect code with optimizations. It is known to fail
-!with 4.7.3 and 4.8.1, but other minor patches seem to work.
-#if defined(__GFORTRAN__) && __GNUC__ == 4 && __GNUC_MINOR__ >= 7
-          !Does not get optimized
-          IF(MOD(istp-istt+1,CH2REC) > 0) THEN
-            n=(istp-istt+1)/CH2REC+1
-            CALL writedat_basic(thisDA32%getUnitNo(),irec,tmpdat,ioerr,n)
-            IF(ioerr /= 0) EXIT
-            irec=irec+n
-            nlen=nlen-NBUFCH
-            istt=istp+1
-            istp=MIN(nlen,NBUFCH)+istt-1
-          ELSE
-            n=(istp-istt+1)/CH2REC
-            CALL writedat_basic(thisDA32%getUnitNo(),irec,tmpdat,ioerr,n)
-            IF(ioerr /= 0) EXIT
-            irec=irec+n
-            nlen=nlen-NBUFCH
-            istt=istp+1
-            istp=MIN(nlen,NBUFCH)+istt-1
-          ENDIF
-#else
-
-#if defined(__GFORTRAN__) && __GNUC__ == 5 && __GNUC_MINOR__ == 3
-          !(Not?) Suprisingly newer versions of GCC have a different
-          !optimization error. To prevent optimization, flush the error unit
-          FLUSH(ERROR_UNIT)
-#endif
-          !This should always work, but optimizers are stupid.
           n=istp-istt+1
           n=n/CH2REC
-          IF(MOD(istp-istt+1,CH2REC) > 0) n=n+1
+          IF(MOD(istp-istt+1,CH2REC) > 0) THEN
+            n=n+1
+            tmpdat=TRANSFER(dat(istt:istp)//space_buffer,tmpdat)
+          ELSE
+            tmpdat=TRANSFER(dat(istt:istp),tmpdat)
+          ENDIF
           CALL writedat_basic(thisDA32%getUnitNo(),irec,tmpdat,ioerr,n)
 
           IF(ioerr /= 0) EXIT
@@ -724,7 +700,6 @@ MODULE FileType_DA32
           nlen=nlen-NBUFCH
           istt=istp+1
           istp=MIN(nlen,NBUFCH)+istt-1
-#endif
         ENDDO
       ENDIF
       IF(PRESENT(iostat)) iostat=ioerr
