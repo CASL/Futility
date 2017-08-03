@@ -2069,9 +2069,7 @@ MODULE PartitionGraph
 
       !Redistribute the number of groups for each subgraph
       ng=thisGraph%nGroups
-      ngr=ng*cw1/wtSum
-      ng1=MAX(1,FLOOR(ng*cw1/wtSum))
-      ngr=ngr-REAL(ng1,SRK)
+      ng1=NINT(ng*cw1/wtSum)
       IF(ngr > 0.5_SRK) ng1=ng1+1
       ng2=ng-ng1
 
