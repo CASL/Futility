@@ -8,7 +8,7 @@ before_install:
  - docker pull dalg24/vera_tpls
 
 script:
- - docker run -v $PWD:/mnt/Futility dalg24/vera_tpls /bin/bash -c "mkdir /build; cd /build; cmake /mnt/Futility; make -j2 |& tee /mnt/Futility/make.out; ctest -E DA32 -j2"
+ - docker run -v $PWD:/mnt/Futility dalg24/vera_tpls /bin/bash -c "mkdir /build; cd /build; cmake /mnt/Futility; make -j2 |& tee /mnt/Futility/make.out; ctest -j2"
  - ls
  - (exit `grep -i -B 4 'Unused variable' make.out | grep 'f90' | wc -l`)
  - git clone https://github.com/trilinos/Trilinos.git
