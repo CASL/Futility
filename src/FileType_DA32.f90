@@ -708,7 +708,7 @@ MODULE FileType_DA32
           ENDIF
 #else
 
-#if defined(__GFORTRAN__) && __GNUC__ == 5 && __GNUC_MINOR__ >= 3
+#if defined(__GFORTRAN__) && __GNUC__ == 5 && __GNUC_MINOR__ == 3
           !(Not?) Suprisingly newer versions of GCC have a different
           !optimization error. To prevent optimization, flush the error unit
           FLUSH(ERROR_UNIT)
