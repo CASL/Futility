@@ -69,8 +69,6 @@ IF (NOT ${PROJECT_NAME}_EXCLUDE_PACKAGES)
     Stokhos
     Piro
     Panzer
-    Xpetra
-    MueLu
     Sundance
     CTrilinos
     ForTrilinos
@@ -82,7 +80,6 @@ IF (NOT ${PROJECT_NAME}_EXCLUDE_PACKAGES)
     Zoltan2
     Gtest
     SEACAS
-    Ifpack2
     FEI
     STK
     Phalanx
