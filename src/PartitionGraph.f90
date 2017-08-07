@@ -8,14 +8,32 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief Module defines the type and routines to partition a graph.
 !>
+!> Provides a type with interfaces to partition a graph. The graph may be have
+!> coordinates, if it is associated with a mesh. Each vertex and edge may be
+!> weighted, which will be considered during partitioning and refinement.
+!>
+!> The PartitionGraphType is initialized using a parameter list. The partition
+!> groups may be determined using either:
+!>  - PartitionGraphType%partition() !Automated
+!>  - PartitionGraphType%setGroups() !Manual
+!> Some metrics for determining partition quality may be found using:
+!>  - PartitionGraphType%metrics()
+!>
 !> @par Module Dependencies
 !>  - @ref IntrType "IntrType": @copybrief IntrType
-!>  - @ref ExceptionHandler : "ExceptionHandler" @copybrief ExceptionHandler
-!>  - @ref ParameterLists : "ParameterLists" @copybrief ParameterLists
+!>  - @ref Allocs "Allocs": @copybrief Allocs
+!>  - @ref Strings "Strings": @copybrief Strings
+!>  - @ref IO_Strings "IO_Strings": @copybrief IO_Strings
+!>  - @ref ExceptionHandler "ExceptionHandler": @copybrief ExceptionHandler
+!>  - @ref ParameterLists "ParameterLists": @copybrief ParameterLists
+!>  - @ref ParallelEnv "ParallelEnv": @copybrief ParallelEnv
+!>  - @ref VectorTypes "VectorTypes": @copybrief VectorTypes
+!>  - @ref MatrixTypes "MatrixTypes": @copybrief MatrixTypes
+!>  - @ref Sorting "Sorting": @copybrief Sorting
 !>
-!> TODO: -convert all the weights into reals (integer weights may work for core
-!>        decomposition, but not in general)
-!>       -move eigenvector solve into eigenvaluesolvertype
+!> @author Andrew Fitzgerald
+!>   @date 08/08/2017
+!>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE PartitionGraph
   USE IntrType
@@ -61,22 +79,16 @@ MODULE PartitionGraph
     PROCEDURE(refine_absintfc),POINTER,NOPASS :: r => NULL()
   ENDTYPE
 
-  !> @brief Derived type to spatially decompose a reactor
+  !> @brief Derived type to partition a graph
   !>
-  !> Graph structure to decompose a reactor spatially. Retains spatial
-  !> coordinate information. Each vertex, and edge may have an associated
-  !> weight, which will be accounted for in the partitioning.
-  !>
-  !> Assumptions:
-  !> 1. Structured Graph/Core - connectivity is reasonably low
-  !> 2. Undirected edges - edges connect both ways
-  !> 3. Edges only connect 2 vertices
-  !> 4. Connected graph (no isolated vertices, or groups of vertices)
+  !> Graph structure used to partition a graph. The graph may have associated
+  !> spatial coordinates. The vertices and edges may also be weighted, which is
+  !> considered during partitioning.
   !>
   TYPE :: PartitionGraphType
     !> Logical if the type is already initialized
     LOGICAL(SBK) :: isInit=.FALSE.
-    !> The number of vertices in the graph (core)
+    !> The number of vertices in the graph
     INTEGER(SIK) :: nvert=0
     !> Dimensions (2 or 3)
     INTEGER(SIK) :: dim=0
@@ -171,6 +183,37 @@ MODULE PartitionGraph
 !> @brief Intialization routine for a PartitionGraphType
 !> @param thisGraph the graph to be initialized
 !> @param params the parameter list describing the graph
+!>
+!> The graph is defined from a parameter list containing 'PartitionGraph->':
+!>  Required:
+!>    - nvert      (INTEGER)
+!>        Number of vertices in the graph
+!>    - nGroups    (INTEGER)
+!>        Number of groups to partition the graph into
+!>    - neigh      (2D INTEGER)[max neigh, nvert]
+!>        Neighbor matrix. Each neigh(:,ivert) contains indices of vertices
+!>          which have edges with the vertex 'ivert'
+!>    - Algorithms (1D StringType)
+!>        List of partitioning algorithms to use. Options are:
+!>          a. 'Recursive Spectral Bisection'
+!>          b. 'Recursive Inertial Bisection'
+!>          c. 'Recursive Expansion Bisection'
+!>          d. 'None'   - Should only be used when %setGroups is used
+!>  Optional:
+!>    - Coord      (2D REAL)[dim, nvert]
+!>        Spatial coordinates for each vertex
+!>    - Refinement (1D StringType)
+!>        Refinement algorithms to use during partitioning. Options are:
+!>          a. 'Kernighan-Lin'
+!>          b. 'Spatial-Kernighan-Lin'
+!>          c. 'None' / ''
+!>        If only 1 is specified it will be used for all (sub)graph sizes
+!>    - Conditions (1D INTEGER)
+!>        List of minimum size(nvert) for each partitioning algorithm.
+!>    - wts        (1D REAL)
+!>        Weight of each vertex.
+!>    - neighwts   (2D REAL)
+!>        Weight of each edge. Should be same shape as neigh
 !>
    SUBROUTINE init_PartitionGraph(thisGraph,params)
       CHARACTER(LEN=*),PARAMETER :: myName='init_PartitionGraph'
@@ -407,7 +450,8 @@ MODULE PartitionGraph
           ENDIF
           CALL toUPPER(algName)
           SELECTCASE(TRIM(algName))
-            CASE('') !Do nothing if nothing specified
+            CASE('')     !Do nothing if nothing specified
+            CASE('None') !Do nothing if nothing specified
             CASE('KERNIGHAN-LIN')
               thisGraph%refineAlgArry(ipart)%r => KernighanLin_PartitionGraph
             CASE('SPATIAL-KERNIGHAN-LIN')
@@ -967,7 +1011,7 @@ MODULE PartitionGraph
       SELECTTYPE(evecs(1)); TYPEIS(PETScVectorType)
         CALL recursiveEigenOrder(evecs(2:), Order)
       ENDSELECT
-      DO iv=1,4
+      DO iv=1,SIZE(evecs)
         CALL evecs(iv)%clear()
       ENDDO !iv
       DEALLOCATE(evecs)
@@ -1084,6 +1128,7 @@ MODULE PartitionGraph
 
         !Solve the eigenvalue problem
         CALL getEigenVecs(Imat, .FALSE., dim, evecs)
+        CALL Imat%clear()
 
         !Determine the order based on distance from the inertial vectors
         ALLOCATE(Order(thisGraph%nvert))
@@ -1094,6 +1139,10 @@ MODULE PartitionGraph
           CALL recursiveEigenOrder(evecs, Order, dot=coord)
         ENDSELECT
         DEALLOCATE(coord)
+        DO iv=1,SIZE(evecs)
+          CALL evecs(iv)%clear()
+        ENDDO !iv
+        DEALLOCATE(evecs)
 
         !Initial guess for group sizes
         CALL detGroupSize(thisGraph,nv1,nv2,wg1,wg2,wtSum)
@@ -2057,7 +2106,6 @@ MODULE PartitionGraph
       REAL(SRK),INTENT(INOUT) :: cw1
       REAL(SRK),INTENT(IN) :: wtSum
       INTEGER(SIK) :: iv,nv1,nv2,ng,ng1,ng2
-      REAL(SRK) :: ngr
       TYPE(PartitionGraphType) :: sg1,sg2
 
       !Number of elements in each list
@@ -2070,7 +2118,6 @@ MODULE PartitionGraph
       !Redistribute the number of groups for each subgraph
       ng=thisGraph%nGroups
       ng1=NINT(ng*cw1/wtSum)
-      IF(ngr > 0.5_SRK) ng1=ng1+1
       ng2=ng-ng1
 
       IF(ng1 > 1) THEN
