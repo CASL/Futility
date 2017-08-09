@@ -68,9 +68,10 @@ MODULE ODESolverTypes
   PUBLIC :: ODESolverType_Base
   PUBLIC :: ODESolverType_Native
   PUBLIC :: ODESolverType_Sundials
-  PUBLIC :: SUNDIALS_ODE_INTERFACE
-  PUBLIC :: SUNDIALS_y
-  PUBLIC :: SUNDIALS_ydot
+  PUBLIC :: EXTERNAL_ODE_INTERFACE
+  PUBLIC :: EXTERNAL_N
+  PUBLIC :: EXTERNAL_y
+  PUBLIC :: EXTERNAL_ydot
 
   !> set enumeration scheme for TPLs
   INTEGER(SIK),PARAMETER,PUBLIC :: ODE_NATIVE=1,ODE_SUNDIALS=2
@@ -95,11 +96,11 @@ MODULE ODESolverTypes
       PROCEDURE(odesolver_f_sub_absintfc),DEFERRED,PASS :: eval
   ENDTYPE ODESolverInterface_Base
 
-  CLASS(ODESolverInterface_Base),POINTER :: SUNDIALS_ODE_INTERFACE => NULL()
-  TYPE(RealVectorType),SAVE :: SUNDIALS_y
-  TYPE(RealVectorType),SAVE :: SUNDIALS_ydot
-  LOGICAL(SLK),SAVE :: SUNDIALS_isInit=.FALSE.
-  INTEGER(SIK),SAVE :: SUNDIALS_N=0
+  CLASS(ODESolverInterface_Base),POINTER :: EXTERNAL_ODE_INTERFACE => NULL()
+  TYPE(RealVectorType),SAVE :: EXTERNAL_y
+  TYPE(RealVectorType),SAVE :: EXTERNAL_ydot
+  INTEGER(SIK),SAVE :: EXTERNAL_N=0
+  LOGICAL(SLK),SAVE :: EXTERNAL_isInit=.FALSE.
   INTEGER(C_LONG),SAVE :: SUNDIALS_iout(25)
   INTEGER(C_LONG),SAVE :: SUNDIALS_ipar(1)
   REAL(C_DOUBLE),SAVE :: SUNDIALS_rout(10)
@@ -249,13 +250,13 @@ MODULE ODESolverTypes
           CALL eODESolverType%raiseError('Incorrect input to '// &
             modName//'::'//myName//' - Number of values (n) must be '// &
               'greater than 0!')
-        ELSEIF(SUNDIALS_N > 0 .AND. SUNDIALS_N /= n) THEN
+        ELSEIF(EXTERNAL_N > 0 .AND. EXTERNAL_N /= n) THEN
           CALL eODESolverType%raiseError('Unable to initialize '// &
-            modName//'::'//myName//' - Another ODE SUNDIALS ODE Solver has'// &
+            modName//'::'//myName//' - Another ODE Solver has'// &
               'already been created with a different n.')
         ELSE
           solver%n=n
-          SUNDIALS_N=n
+          EXTERNAL_N=n
         ENDIF
 
         IF(solvetype == THETA_METHOD) THEN
@@ -290,7 +291,7 @@ MODULE ODESolverTypes
 
         ALLOCATE(solver%ytmp(solver%n))
 #ifdef FUTILITY_HAVE_SUNDIALS
-        IF(.NOT. SUNDIALS_isInit) THEN
+        IF(.NOT. EXTERNAL_isInit) THEN
           CALL FNVINITS(1, INT(solver%n,C_LONG), ierr)
           ! IOUT, ROUT are likely unused, IPAR(1) should be n, RPAR is unused
           SUNDIALS_ipar(1)=solver%n
@@ -299,14 +300,14 @@ MODULE ODESolverTypes
           CALL FCVMALLOC(0.0_SRK,solver%ytmp, 2, 2, 1, solver%tol*0.001, 1.0E-26_C_DOUBLE,SUNDIALS_IOUT, SUNDIALS_ROUT, &
                       SUNDIALS_IPAR, SUNDIALS_RPAR, ierr)
           CALL FCVDENSE(INT(solver%n,C_LONG),ierr)
-          SUNDIALS_isInit=.TRUE.
+          EXTERNAL_isInit=.TRUE.
         ENDIF
         solver%f=>f
-        SUNDIALS_ODE_INTERFACE=>f
+        EXTERNAL_ODE_INTERFACE=>f
         CALL plist%clear()
         CALL plist%add('VectorType -> n',solver%n)
-        IF(.NOT. SUNDIALS_y%isInit) CALL SUNDIALS_y%init(plist)
-        IF(.NOT. SUNDIALS_ydot%isInit) CALL SUNDIALS_ydot%init(plist)
+        IF(.NOT. EXTERNAL_y%isInit) CALL EXTERNAL_y%init(plist)
+        IF(.NOT. EXTERNAL_ydot%isInit) CALL EXTERNAL_ydot%init(plist)
         CALL plist%clear()
         solver%isInit=.TRUE.
 #else
@@ -334,15 +335,15 @@ MODULE ODESolverTypes
       solver%tol=1.0e-8_SRK
       solver%BDForder=5
       IF(ALLOCATED(solver%ytmp)) DEALLOCATE(solver%ytmp)
-      IF(SUNDIALS_y%isInit) CALL SUNDIALS_y%clear()
-      IF(SUNDIALS_ydot%isInit)CALL SUNDIALS_ydot%clear()
+      IF(EXTERNAL_y%isInit) CALL EXTERNAL_y%clear()
+      IF(EXTERNAL_ydot%isInit)CALL EXTERNAL_ydot%clear()
 #ifdef FUTILITY_HAVE_SUNDIALS
       !If sundials FNVINITS and FCVMALLOC isn't called, FCVFEE segfaults
-      IF(SUNDIALS_isInit) CALL FCVFREE()
+      IF(EXTERNAL_isInit) CALL FCVFREE()
 #endif
-      SUNDIALS_isInit=.FALSE.
-      SUNDIALS_ODE_INTERFACE=>NULL()
-      SUNDIALS_N=0
+      EXTERNAL_isInit=.FALSE.
+      EXTERNAL_ODE_INTERFACE=>NULL()
+      EXTERNAL_N=0
 
       solver%isInit=.FALSE.
     ENDSUBROUTINE clear_ODESolverType_Sundials
@@ -375,7 +376,7 @@ MODULE ODESolverTypes
       CALL FCVREINIT(t0,solver%ytmp, 1, solver%tol, 1.0E-12_C_DOUBLE, ierr)
 !      CALL FCVSETIIN("HNIL_WARNS", 0_C_LONG, ierr)
 
-      SUNDIALS_ODE_INTERFACE=>solver%f
+      EXTERNAL_ODE_INTERFACE=>solver%f
       !put data in U into yf
       CALL FCVODE(REAL(TF,C_DOUBLE),REAL(ttmp,C_DOUBLE),solver%ytmp,INT(1,C_INT), ierr)
       CALL yf%set(solver%ytmp)
@@ -799,10 +800,46 @@ SUBROUTINE FCVFUN(t,y,ydot,ipar,rpar,ierr)
   INTEGER(SIK) :: n
 
   n=ipar(1)
-  SUNDIALS_y%b(1:n)=y(1:n)
+  EXTERNAL_y%b(1:n)=y(1:n)
 
-  CALL SUNDIALS_ODE_INTERFACE%eval(t,SUNDIALS_y,SUNDIALS_ydot)
+  CALL EXTERNAL_ODE_INTERFACE%eval(t,EXTERNAL_y,EXTERNAL_ydot)
   !convert v_ydot back to
-  ydot(1:n)=SUNDIALS_ydot%b(1:n)
+  ydot(1:n)=EXTERNAL_ydot%b(1:n)
   ierr=0
 ENDSUBROUTINE FCVFUN
+
+
+!
+!-------------------------------------------------------------------------------
+!> @brief FCVFUN interface for FCVODE to define y'(t)=f(t,y(t))
+!> @param t The current time of the solve
+!> @param y The current condition y(t)
+!> @param ydot The calculated derivative at time t
+!> @param ipar An integer array defined above - only ipar(1) will be defined as the number of unknowns
+!> @param rpar A real array defined above - unused
+!> @param ierr return value back to ODE solver
+!>
+!> This routine performs a solve using the sundials solver
+!>
+SUBROUTINE Rythmos_eval(t,y,ydot,ierr) BIND(C,name="Rythmos_eval")
+  USE ISO_C_BINDING
+  USE IntrType
+  USE VectorTypes
+  USE ODESolverTypes
+  REAL(C_DOUBLE),INTENT(IN) :: t
+  REAL(C_DOUBLE),INTENT(IN) :: y(*)
+  REAL(C_DOUBLE),INTENT(INOUT) :: ydot(*)
+  !INTEGER(C_LONG),INTENT(IN) :: ipar(1)
+  !REAL(C_DOUBLE),INTENT(IN) :: rpar(1)
+  INTEGER(C_INT),INTENT(INOUT) :: ierr
+
+  INTEGER(SIK) :: n
+
+  n=EXTERNAL_N
+  EXTERNAL_y%b(1:n)=y(1:n)
+
+  CALL EXTERNAL_ODE_INTERFACE%eval(t,EXTERNAL_y,EXTERNAL_ydot)
+  !convert v_ydot back to
+  ydot(1:n)=EXTERNAL_ydot%b(1:n)
+  ierr=0
+ENDSUBROUTINE Rythmos_eval
