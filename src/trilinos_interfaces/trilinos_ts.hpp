@@ -8,62 +8,65 @@
 /+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 #pragma once
 
+#include <cassert>
 #include <iostream>
 #include <map>
-#include "Teuchos_RCP.hpp"
 
-#include <cassert>
+#include <Teuchos_RCP.hpp>
 
-using std::map;
+#include "trilinos_mat_vec.hpp"
 
-class TSCnt{
+
+class TSCnt {
 public:
-    /*
-    Notes:
-    */
-    void fptr() = 0;
+    typedef void (*FunctionPointer)();
+    FunctionPointer fptr = nullptr;
     int n;
     double tol;
     Teuchos::ParameterList ts_db;
-    //maybe some other things about a specific solver
+    // maybe some other things about a specific solver
 };
 
-class TSStore {
+class TSStore : ForPETRA_SelectedTypes {
 public:
-    TSStore():
-        cid(0)
-    {}
+    typedef TSCnt::FunctionPointer FunctionPointer;
+    TSStore() : cid(0)
+    {
+    }
 
-    int new_data(void (*funptr)(), const int n,
-                 const double tol,Teuchos::ParameterList &params) {
+    int new_data(void (*funptr)(), const int n, const double tol,
+                 Teuchos::ParameterList &params)
+    {
         const int option = params.get<int>("ts_option");
         // ts_option needs to be removed, or Trilinos will complain about
         // invalid parameters
         params.remove("ts_option");
-        //Teuchos::ParameterList db
-        ts_map[cid]=TSCnt();
-        //setup parameterlist with defaults
-        //eventually read this from somewhere
+        // Teuchos::ParameterList db
+        ts_map[cid] = TSCnt();
+        // setup parameterlist with defaults
+        // eventually read this from somewhere
 
-        ts_map[cid].fptr=funptr;
-        ts_map[cid].n=n;
-        ts_map[cid].tol=tol;
+        ts_map[cid].fptr  = funptr;
+        ts_map[cid].n     = n;
+        ts_map[cid].tol   = tol;
         ts_map[cid].ts_db = params;
         cid++;
-        return cid-1;
+        return cid - 1;
     }
 
-    int delete_data(const int id){
+    int delete_data(const int id)
+    {
         ts_map.erase(id);
     }
 
     int step_data(const int id, const double tstart, const double tend,
-                        const double* xstart, double* xend) {
+                  const Vector &xstart, Vector &xend)
+    {
 
         return 0;
     }
 
 private:
-        int cid;
-        map<int, TSCnt> ts_map;
+    int cid;
+    std::map<int, TSCnt> ts_map;
 };
