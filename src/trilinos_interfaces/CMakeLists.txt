@@ -13,13 +13,14 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 TRIBITS_ADD_LIBRARY(TrilinosUtils
     HEADERS
       trilinos_mat_vec.hpp
-      trilinos_solvers.hpp
       trilinos_pc.hpp
+      trilinos_solvers.hpp
       trilinos_ts.hpp
       trilinos_anderson.hpp
     SOURCES
       trilinos_mat_vec.cpp
       trilinos_pc.cpp
       trilinos_solvers.cpp
+      trilinos_ts.cpp
       trilinos_c_interfaces.cpp
 )

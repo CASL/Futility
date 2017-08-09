@@ -435,7 +435,7 @@ extern "C" void TS_Destroy(int id)
 
 extern "C" void TS_Step(int id, double tstart, double tend, int idS, int idE)
 {
-    tsst->step_data(id, tstart, tend, *tvec->get_vec(idS), *tvec->get_vec(idE));
+    (*tsst)[id].step(tstart, tend, *tvec->get_vec(idS), *tvec->get_vec(idE));
 }
 
 #endif
