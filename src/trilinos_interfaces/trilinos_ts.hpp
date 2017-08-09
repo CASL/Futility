@@ -58,7 +58,7 @@ public:
     }
 
     int step_data(const int id, const double tstart, const double tend,
-                        const double* x, double* xdot) {
+                        const double* xstart, double* xend) {
 
         return 0;
     }
