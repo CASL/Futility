@@ -2968,6 +2968,7 @@ PROGRAM testVectorTypes
             (dummyvec(2) .APPROXEQ. 3.0_SRK) .AND. &
             (dummyvec(3) .APPROXEQ. 7.0_SRK)
     ASSERT(bool, 'BLAS_copy(THISVECTOR=xVector,NEWVECTOR=yVector,INCX=1,INCY=1) [Trilinos]')
+    FINFO()dummyvec
     CALL yVector%set(0.0_SRK)
     CALL BLAS_copy(THISVECTOR=xVector,NEWVECTOR=yVector,N=xVector%n,INCX=1)
     DO i=1,yVector%n

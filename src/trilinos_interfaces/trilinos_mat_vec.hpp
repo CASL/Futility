@@ -48,6 +48,9 @@ public:
     typedef Tpetra::Import<> Import;
     typedef Tpetra::CrsMatrix<SC, LO, GO, NO> CrsMatrix;
     typedef Tpetra::Operator<SC, LO, GO, NO> Operator;
+
+    typedef MultiVector::dual_view_type::host_mirror_space HostSpace;
+    typedef MultiVector::dual_view_type::t_host HostView;
 };
 
 class TpetraVecCnt : public ForPETRA_SelectedTypes {
@@ -62,39 +65,18 @@ public:
     // Maintain host views of the data for doing element-wise access. Keep in
     // mind that there will be some extra difficulties if/when we want to move
     // to heterogeneous architectures.
-    decltype(Kokkos::subview(vec->getLocalView<Kokkos::HostSpace>(),
-                             Kokkos::ALL, 0)) localView;
-    decltype(Kokkos::subview(vec->getLocalView<Kokkos::HostSpace>(),
-                             Kokkos::ALL, 0)) distLocalView;
+    HostView localView;
+    HostView distLocalView;
 
     bool havedistMap;
 
-    TpetraVecCnt(int n, int nloc, MPI_Comm rawComm)
-        : comm(new SelectedComm(rawComm)),
-          map(new Map(n, nloc, 1, comm)),
-          vec(new Vector(map)),
-          havedistMap(false)
-    {
-        // This is unneccesary, since this Tpetra::Vector<> constructor
-        // initializes to zero
-        vec->putScalar(0.0);
-    }
+    TpetraVecCnt(int n, int nloc, MPI_Comm rawComm);
 
-    void defineMapData(const int id, const int nloc, const int *gid)
-    {
-        Kokkos::View<const Vector::global_ordinal_type *, Kokkos::HostSpace>
-            gid_view(gid, nloc);
-        distMap     = Teuchos::rcp(new Map(-1, gid_view, 1, comm));
-        importer    = Teuchos::rcp(new Import(distMap, map));
-        distvec     = Teuchos::rcp(new Vector(distMap));
-        havedistMap = true;
-
-        return;
-    }
+    void defineMapData(const int id, const int nloc, const int *gid);
 
     double &operator[](int i)
     {
-        return localView(i);
+        return localView(i, 0);
     }
 };
 
@@ -149,17 +131,17 @@ public:
     int get_data(const int id, const int i, double &val)
     {
         if (vec_map[id]->havedistMap) {
-            int lid = vec_map[id]->distMap->getLocalElement(i);
-            if (lid >= 0) {
-                val = vec_map[id]->distLocalView(lid);
+            LO lid = vec_map[id]->distMap->getLocalElement(i);
+            if (lid != Teuchos::OrdinalTraits<LO>::invalid()) {
+                val = vec_map[id]->distLocalView(lid, 0);
                 return 0;
             } else {
                 return lid;
             }
         } else {
-            int lid = vec_map[id]->map->getLocalElement(i);
-            if (lid >= 0) {
-                val = vec_map[id]->localView(lid);
+            LO lid = vec_map[id]->map->getLocalElement(i);
+            if (lid != Teuchos::OrdinalTraits<LO>::invalid()) {
+                val = vec_map[id]->localView(lid, 0);
                 return 0;
             } else {
                 return lid;
@@ -169,7 +151,7 @@ public:
 
     int copy_data(const int id, const int idfrom)
     {
-        *(vec_map[id]->vec) = *(vec_map[idfrom]->vec);
+        vec_map[id]->vec->assign(*(vec_map[idfrom]->vec));
         return 0;
     }
 
@@ -226,19 +208,17 @@ private:
 
 class TpetraMatCnt : public ForPETRA_SelectedTypes {
 public:
-    typedef Tpetra::Map<> Map;
-
     Teuchos::RCP<const Teuchos::Comm<int>> comm;
+    int rnnz;
     Teuchos::RCP<Map> map;
     Teuchos::RCP<CrsMatrix> mat;
     bool isAssembled = false;
-    int rnnz;
 
     TpetraMatCnt(int n, int nloc, int row_nnz, MPI_Comm rawComm)
         : comm(new SelectedComm(rawComm)),
+          rnnz(row_nnz),
           map(new Map(n, nloc, 1, comm)),
-          mat(new CrsMatrix(map, rnnz)),
-          rnnz(row_nnz)
+          mat(new CrsMatrix(map, rnnz))
     {
         return;
     }
@@ -286,7 +266,9 @@ public:
     int set_data(const int id, const int i, const int nnz, const int j[],
                  const double val[])
     {
-        mat_map[id]->mat->insertGlobalValues(i, nnz, val, j);
+        Teuchos::ArrayView<const double> vals(val, nnz);
+        Teuchos::ArrayView<const int> cols(j, nnz);
+        mat_map[id]->mat->insertGlobalValues(i, cols, vals);
         return 0;
     }
 
@@ -297,15 +279,15 @@ public:
         return 0;
     }
 
-    // defering this for a while
+    // deferring this for a while
     int get_data(const int id, const int i, const int j, double &val)
     {
         val = 0.0;
 
         RowValueView values;
         RowIndexView indices;
-        CrsMatrix::global_ordinal_type row = i;
-        mat_map[id]->mat->getGlobalRowView(row, indices, values);
+        auto row = mat_map[id]->map->getLocalElement(i);
+        mat_map[id]->mat->getLocalRowView(row, indices, values);
 
         for (int k = 0; k < indices.size(); ++k) {
             if (indices[k] == j - 1) {
