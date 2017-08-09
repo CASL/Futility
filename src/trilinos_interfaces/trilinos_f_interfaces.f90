@@ -407,5 +407,42 @@ MODULE trilinos_interfaces
       INTEGER(C_INT),INTENT(IN),VALUE  :: id
     ENDSUBROUTINE
 
+!-------------------------------------------------------------------------------
+! Rythmos Interfaces
+!-------------------------------------------------------------------------------
+    SUBROUTINE TS_Init(id,funptr,n,tol) bind(C,NAME="TS_Init")
+      IMPORT :: C_INT,C_DOUBLE,C_FUNPTR
+      INTEGER(C_INT),INTENT(INOUT)    :: id
+      TYPE(C_FUNPTR),INTENT(IN),VALUE :: funptr
+      INTEGER(C_INT),INTENT(IN),VALUE :: n
+      REAL(C_DOUBLE),INTENT(IN),VALUE :: tol
+    ENDSUBROUTINE
+
+#ifdef FUTILITY_HAVE_Trilinos
+    SUBROUTINE TS_InitParams(id,funptr,n,tol,plist) bind(C,NAME="TS_InitParams")
+      IMPORT :: C_INT,C_DOUBLE,C_FUNPTR
+      IMPORT :: ForTeuchos_ParameterList_ID
+      INTEGER(C_INT),INTENT(INOUT)    :: id
+      TYPE(C_FUNPTR),INTENT(IN),VALUE :: funptr
+      INTEGER(C_INT),INTENT(IN),VALUE :: n
+      REAL(C_DOUBLE),INTENT(IN),VALUE :: tol
+      TYPE(ForTeuchos_ParameterList_ID), INTENT(IN) :: plist
+    ENDSUBROUTINE
+#endif
+
+    SUBROUTINE TS_Destroy(id) bind(C,NAME="TS_Destroy")
+      IMPORT :: C_INT
+      INTEGER(C_INT),INTENT(IN),VALUE :: id
+    ENDSUBROUTINE
+
+    SUBROUTINE TS_Step(id,tstart,tend,x,xdot) bind(C,NAME="TS_Step")
+      IMPORT :: C_INT,C_DOUBLE
+      INTEGER(C_INT),INTENT(IN),VALUE  :: id
+      REAL(C_DOUBLE),INTENT(IN) :: tstart
+      REAL(C_DOUBLE),INTENT(IN) :: tend
+      REAL(C_DOUBLE),DIMENSION(*),INTENT(IN) :: x
+      REAL(C_DOUBLE),DIMENSION(*),INTENT(INOUT) :: xdot
+    ENDSUBROUTINE
+
   ENDINTERFACE
 ENDMODULE trilinos_interfaces
