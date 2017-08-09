@@ -16,10 +16,17 @@
 
 #include "trilinos_mat_vec.hpp"
 
-
-class TSCnt {
+class TSCnt : ForPETRA_SelectedTypes {
 public:
     typedef void (*FunctionPointer)();
+
+    TSCnt(){}
+
+    TSCnt(FunctionPointer fptr, int n, double tol,
+          Teuchos::ParameterList &params);
+
+    int step(double tstart, double tend, const Vector &xtart, Vector &xend);
+
     FunctionPointer fptr = nullptr;
     int n;
     double tol;
@@ -34,22 +41,10 @@ public:
     {
     }
 
-    int new_data(void (*funptr)(), const int n, const double tol,
+    int new_data(FunctionPointer fptr, int n, double tol,
                  Teuchos::ParameterList &params)
     {
-        const int option = params.get<int>("ts_option");
-        // ts_option needs to be removed, or Trilinos will complain about
-        // invalid parameters
-        params.remove("ts_option");
-        // Teuchos::ParameterList db
-        ts_map[cid] = TSCnt();
-        // setup parameterlist with defaults
-        // eventually read this from somewhere
-
-        ts_map[cid].fptr  = funptr;
-        ts_map[cid].n     = n;
-        ts_map[cid].tol   = tol;
-        ts_map[cid].ts_db = params;
+        ts_map[cid] = TSCnt(fptr, n, tol, params);
         cid++;
         return cid - 1;
     }
@@ -59,11 +54,14 @@ public:
         ts_map.erase(id);
     }
 
-    int step_data(const int id, const double tstart, const double tend,
-                  const Vector &xstart, Vector &xend)
+    const TSCnt &operator[](int id) const
     {
+        return ts_map.at(id);
+    }
 
-        return 0;
+    TSCnt &operator[](int id)
+    {
+        return ts_map.at(id);
     }
 
 private:
