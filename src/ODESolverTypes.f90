@@ -296,7 +296,7 @@ MODULE ODESolverTypes
           SUNDIALS_ipar(1)=solver%n
           SUNDIALS_rpar(1)=0.0_SRK
           !Calling malloc and assuming t=0 for in init.  This way we can call init then clear without a segfault
-          CALL FCVMALLOC(0.0_SRK,solver%ytmp, 2, 2, 1, solver%tol, 1.0E-12_C_DOUBLE,SUNDIALS_IOUT, SUNDIALS_ROUT, &
+          CALL FCVMALLOC(0.0_SRK,solver%ytmp, 2, 2, 1, solver%tol*0.001, 1.0E-26_C_DOUBLE,SUNDIALS_IOUT, SUNDIALS_ROUT, &
                       SUNDIALS_IPAR, SUNDIALS_RPAR, ierr)
           CALL FCVDENSE(INT(solver%n,C_LONG),ierr)
           SUNDIALS_isInit=.TRUE.
@@ -373,6 +373,7 @@ MODULE ODESolverTypes
 
       !pull data out of y0 into y
       CALL FCVREINIT(t0,solver%ytmp, 1, solver%tol, 1.0E-12_C_DOUBLE, ierr)
+!      CALL FCVSETIIN("HNIL_WARNS", 0_C_LONG, ierr)
 
       SUNDIALS_ODE_INTERFACE=>solver%f
       !put data in U into yf
