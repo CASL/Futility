@@ -24,8 +24,7 @@ TpetraVecCnt::TpetraVecCnt(int n, int nloc, MPI_Comm rawComm)
 
 void TpetraVecCnt::defineMapData(const int id, const int nloc, const int *gid)
 {
-    Kokkos::View<const Vector::global_ordinal_type *, Kokkos::HostSpace>
-        gid_view(gid, nloc);
+    Teuchos::ArrayView<const GO> gid_view(gid, nloc);
     distMap       = Teuchos::rcp(new Map(-1, gid_view, 1, comm));
     importer      = Teuchos::rcp(new Import(distMap, map));
     distvec       = Teuchos::rcp(new Vector(distMap));
