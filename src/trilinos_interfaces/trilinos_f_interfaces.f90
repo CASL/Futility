@@ -435,13 +435,13 @@ MODULE trilinos_interfaces
       INTEGER(C_INT),INTENT(IN),VALUE :: id
     ENDSUBROUTINE
 
-    SUBROUTINE TS_Step(id,tstart,tend,x,xdot) bind(C,NAME="TS_Step")
+    SUBROUTINE TS_Step(id,tstart,tend,xstart,xend) bind(C,NAME="TS_Step")
       IMPORT :: C_INT,C_DOUBLE
       INTEGER(C_INT),INTENT(IN),VALUE  :: id
       REAL(C_DOUBLE),INTENT(IN) :: tstart
       REAL(C_DOUBLE),INTENT(IN) :: tend
-      REAL(C_DOUBLE),DIMENSION(*),INTENT(IN) :: x
-      REAL(C_DOUBLE),DIMENSION(*),INTENT(INOUT) :: xdot
+      REAL(C_INT),INTENT(IN) :: xstart
+      REAL(C_INT),INTENT(IN) :: xend
     ENDSUBROUTINE
 
   ENDINTERFACE
