@@ -205,7 +205,7 @@ MODULE PartitionGraph
 !>    - Refinement (1D StringType)
 !>        Refinement algorithms to use during partitioning. Options are:
 !>          a. 'Kernighan-Lin'
-!>          b. 'Spatial-Kernighan-Lin'
+!>          b. 'Spatial Kernighan-Lin'
 !>          c. 'None' / ''
 !>        If only 1 is specified it will be used for all (sub)graph sizes
 !>    - Conditions (1D INTEGER)
@@ -454,7 +454,7 @@ MODULE PartitionGraph
             CASE('None') !Do nothing if nothing specified
             CASE('KERNIGHAN-LIN')
               thisGraph%refineAlgArry(ipart)%r => KernighanLin_PartitionGraph
-            CASE('SPATIAL-KERNIGHAN-LIN')
+            CASE('SPATIAL KERNIGHAN-LIN')
               thisGraph%refineAlgArry(ipart)%r => SpatialKernighanLin_PartitionGraph
             CASE DEFAULT
               CALL ePartitionGraph%raiseError(modName//'::'//myName// &

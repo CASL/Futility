@@ -822,9 +822,9 @@ PROGRAM testPartitionGraph
       CALL refinementTest(tparams,str,L1,L2,refL1,refL2)
 
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      COMPONENT_TEST('Spatial-Kernighan-Lin')
+      COMPONENT_TEST('Spatial Kernighan-Lin')
       str='SKL'
-      refineAlg(1)='Spatial-Kernighan-Lin'
+      refineAlg(1)='Spatial Kernighan-Lin'
       tparams=refG4Params
       CALL tparams%set('PartitionGraph -> Refinement', refineAlg)
       CALL testPG%initialize(tparams)
