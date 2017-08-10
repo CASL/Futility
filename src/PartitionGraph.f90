@@ -954,16 +954,18 @@ MODULE PartitionGraph
 !> @param thisGraph the graph to be partitioned
 !>
     RECURSIVE SUBROUTINE RecursiveSpectralBisection(thisGraph)
+      CHARACTER(LEN=*),PARAMETER :: myName='RecursiveSpectralBisection'
       CLASS(PartitionGraphType),INTENT(INOUT) :: thisGraph
       INTEGER(SIK) :: nvert,ng,ng1,ng2,iv,jv,in,nlocal,nneigh,ierr
       INTEGER(SIK) :: nv1,nv2,numeq
       REAL(SRK) :: wg1,wg2,cw1,curdif,wt,wtSum,wneigh,wtMin
       TYPE(ParamType) :: matParams
-      TYPE(PETScMatrixType) :: Lmat
       TYPE(PartitionGraphType) :: sg1,sg2
       INTEGER(SIK),ALLOCATABLE :: L1(:),L2(:),Order(:)
       REAL(SRK),ALLOCATABLE :: vf(:),vf2(:),vf2Copy(:)
       CLASS(VectorType),ALLOCATABLE :: evecs(:)
+#ifdef FUTILITY_HAVE_SLEPC
+      TYPE(PETScMatrixType) :: Lmat
 
       nvert=thisGraph%nvert
       nneigh=thisGraph%maxneigh
@@ -1052,6 +1054,10 @@ MODULE PartitionGraph
       !Deallocate lists
       DEALLOCATE(L1)
       DEALLOCATE(L2)
+#else
+      CALL ePartitionGraph%raiseError(modName//'::'//myName// &
+        ' - must recompile with PETSc and SLEPc to use RSB!')
+#endif
     ENDSUBROUTINE RecursiveSpectralBisection
 !
 !-------------------------------------------------------------------------------
@@ -1067,9 +1073,10 @@ MODULE PartitionGraph
       INTEGER(SIK),ALLOCATABLE :: Order(:),L1(:),L2(:)
       REAL(SRK),ALLOCATABLE :: I(:,:),coord(:,:),cent(:)
       TYPE(ParamType) :: mparams
-      TYPE(PETScMatrixType) :: Imat
       TYPE(PartitionGraphType) :: sg1, sg2
       CLASS(VectorType),ALLOCATABLE :: evecs(:)
+#ifdef FUTILITY_HAVE_SLEPC
+      TYPE(PETScMatrixType) :: Imat
 
       IF(.NOT. ALLOCATED(thisGraph%coord)) THEN
         CALL ePartitionGraph%raiseError(modName//'::'//myName// &
@@ -1183,6 +1190,10 @@ MODULE PartitionGraph
         DEALLOCATE(L1)
         DEALLOCATE(L2)
       ENDIF
+#else
+      CALL ePartitionGraph%raiseError(modName//'::'//myName// &
+        ' - must recompile with PETSc and SLEPc to use RIB!')
+#endif
     ENDSUBROUTINE RecursiveInertialBisection
 !
 !-------------------------------------------------------------------------------
@@ -1919,6 +1930,7 @@ MODULE PartitionGraph
 !> @param evecs the eigenvectors of the inertial matrix
 !> @param Order the order of the vertices
 !>
+#ifdef FUTILITY_HAVE_SLEPC
     RECURSIVE SUBROUTINE recursiveEigenOrder(evecs, Order, lpos, dot)
       Type(PETScVectorType),INTENT(INOUT) :: evecs(:)
       INTEGER(SIK),INTENT(INOUT) :: Order(:)
@@ -2058,6 +2070,7 @@ MODULE PartitionGraph
       ENDIF
       DEALLOCATE(d)
     ENDSUBROUTINE recursiveEigenOrder
+#endif
 !
 !-------------------------------------------------------------------------------
 !> @brief Determine the desired number of groups for each bisection in the
