@@ -440,8 +440,8 @@ MODULE trilinos_interfaces
       INTEGER(C_INT),INTENT(IN),VALUE  :: id
       REAL(C_DOUBLE),INTENT(IN) :: tstart
       REAL(C_DOUBLE),INTENT(IN) :: tend
-      REAL(C_INT),INTENT(IN) :: xstart
-      REAL(C_INT),INTENT(IN) :: xend
+      REAL(C_DOUBLE),DIMENSION(*),INTENT(IN) :: xstart
+      REAL(C_DOUBLE),DIMENSION(*),INTENT(OUT) :: xend
     ENDSUBROUTINE
 
   ENDINTERFACE

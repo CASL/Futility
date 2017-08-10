@@ -192,6 +192,26 @@ PROGRAM testODESolver
 #endif
   REGISTER_SUBTEST('testClear_Sundials',testClear_Sundials)
 
+! Rythmos tests
+  DEALLOCATE(testODE)
+  DEALLOCATE(f)
+  ALLOCATE(ODESolverType_Rythmos :: testODE)
+  ALLOCATE(ODESolverInterface_TestLinear :: f)
+
+  REGISTER_SUBTEST('testInit_Rythmos',testInit_Rythmos)
+#ifdef FUTILITY_HAVE_Trilinos
+  REGISTER_SUBTEST('testStep_Rythmos_Linear',testStep_Rythmos_Linear)
+  DEALLOCATE(f)
+  ALLOCATE(ODESolverInterface_TestExponential :: f)
+  testODE%f=>f
+  REGISTER_SUBTEST('testStep_Rythmos_Exp',testStep_Rythmos_Exp)
+  DEALLOCATE(f)
+  ALLOCATE(ODESolverInterface_TestNonLinear :: f)
+  testODE%f=>f
+  REGISTER_SUBTEST('testStep_Rythmos_NonLinear',testStep_Rythmos_NonLinear)
+#endif
+  REGISTER_SUBTEST('testClear_Rythmos',testClear_Rythmos)
+
   FINALIZE_TEST()
 
   CALL pList%clear()
@@ -502,10 +522,148 @@ CONTAINS
         ASSERT(testODE%tol==1.0e-8_SRK,'%tol')
         ASSERT(testODE%BDForder==5,'%BDForder')
         ASSERT(.NOT. ALLOCATED(testODE%ytmp),'%ytmp NOT Allocated')
-        ASSERT(.NOT. ASSOCIATED(EXTERNAL_ODE_INTERFACE),'SUNDIALS_ODE_INTERFACE')
+        ASSERT(.NOT. ASSOCIATED(EXTERNAL_ODE_INTERFACE),'External_ODE_INTERFACE')
         ASSERT(.NOT. testODE%isInit,'%isInit')
       ENDSELECT
     ENDSUBROUTINE testClear_Sundials
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testInit_Rythmos()
+      INTEGER(SIK) :: errcnt
+      errcnt=eODESolverType%getCounter(EXCEPTION_ERROR)
+      SELECTTYPE(testODE); TYPE IS(ODESolverType_Rythmos)
+        CALL testODE%init(pList,f)
+        ASSERT(testODE%n==3,'%n')
+        ASSERT(testODE%solverMethod==BDF_METHOD,'%solverMethod')
+        ASSERT(testODE%BDForder==3,'%BDForder')
+        ASSERT(testODE%tol==1.0E-9_SRK,'%tol')
+        ASSERT(ALLOCATED(testODE%ytmp0),'%ytmp0 Allocated')
+        ASSERT(ALLOCATED(testODE%ytmpf),'%ytmpf Allocated')
+#ifdef FUTILITY_HAVE_Trilinos
+        ASSERT(testODE%isInit,'%isInit')
+        ASSERT(ASSOCIATED(testODE%f),'%f')
+        ASSERT(ASSOCIATED(EXTERNAL_ODE_INTERFACE),'EXTERNAL_ODE_INTERFACE')
+#else
+        ASSERT(eODESolverType%getCounter(EXCEPTION_ERROR)-errcnt == 1,'ERROR')
+#endif
+      ENDSELECT
+
+    ENDSUBROUTINE testInit_Rythmos
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testStep_Rythmos_Linear()
+      REAL(SRK) :: tmpval
+      TYPE(ParamType) :: tmpPL
+      TYPE(RealVectorType) :: y0, yf
+
+      CALL tmpPL%add('VectorType->n',3_SIK)
+      CALL y0%init(tmpPL)
+      CALL yf%init(tmpPL)
+
+      CALL y0%set(3.0_SRK)
+      CALL yf%set(0.0_SRK)
+
+      CALL testODE%step(0.0_SRK,y0,3.5_SRK,yf)
+
+      CALL yf%get(1,tmpval)
+      ASSERT(SOFTEQ(tmpval,14.2_SRK,1.0E-12_SRK),'yf(1)')
+      FINFO() tmpval
+      CALL yf%get(2,tmpval)
+      ASSERT(SOFTEQ(tmpval,3.00_SRK,1.0E-12_SRK),'yf(2)')
+      FINFO() tmpval
+      CALL yf%get(3,tmpval)
+      ASSERT(SOFTEQ(tmpval,1.95_SRK,1.0E-12_SRK),'yf(3)')
+      FINFO() tmpval
+
+      CALL testODE%step(0.0_SRK,y0,3.5_SRK,yf)
+
+      CALL yf%get(1,tmpval)
+      ASSERT(SOFTEQ(tmpval,14.2_SRK,1.0E-12_SRK),'yf(1)')
+      FINFO() tmpval
+      CALL yf%get(2,tmpval)
+      ASSERT(SOFTEQ(tmpval,3.00_SRK,1.0E-12_SRK),'yf(2)')
+      FINFO() tmpval
+      CALL yf%get(3,tmpval)
+      ASSERT(SOFTEQ(tmpval,1.95_SRK,1.0E-12_SRK),'yf(3)')
+      FINFO() tmpval
+    ENDSUBROUTINE testStep_Rythmos_Linear
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testStep_Rythmos_Exp()
+      REAL(SRK) :: tmpval
+      TYPE(ParamType) :: tmpPL
+      TYPE(RealVectorType) :: y0, yf
+      REAL(SRK) :: ref(3)
+
+      ref(1)=3.0_SRK*EXP(3.2_SRK*3.5_SRK)
+      ref(2)=3.0_SRK*(EXP(3.2_SRK*3.5_SRK)-1.0_SRK)/3.2_SRK+3.0_SRK
+      ref(3)=3.0_SRK*EXP(-0.03_SRK*3.5_SRK)
+
+      CALL tmpPL%add('VectorType->n',3_SIK)
+      CALL y0%init(tmpPL)
+      CALL yf%init(tmpPL)
+
+      CALL y0%set(3.0_SRK)
+      CALL yf%set(0.0_SRK)
+
+      CALL testODE%step(0.0_SRK,y0,3.5_SRK,yf)
+      CALL yf%get(1,tmpval)
+      ASSERT(SOFTEQR(tmpval,ref(1),1.0E-6_SRK),'yf(1)')
+      FINFO() tmpval, ref(1), tmpval/ref(1)-1.0_SRK
+      CALL yf%get(2,tmpval)
+      ASSERT(SOFTEQR(tmpval,ref(2),1.0E-6_SRK),'yf(2)')
+      FINFO() tmpval, ref(2), tmpval/ref(2)-1.0_SRK
+      CALL yf%get(3,tmpval)
+      ASSERT(SOFTEQR(tmpval,ref(3),1.0E-6_SRK),'yf(3)')
+      FINFO() tmpval, ref(3), tmpval/ref(3)-1.0_SRK
+
+    ENDSUBROUTINE testStep_Rythmos_Exp
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testStep_Rythmos_NonLinear()
+      REAL(SRK) :: tmpval
+      TYPE(ParamType) :: tmpPL
+      TYPE(RealVectorType) :: y0, yf
+      REAL(SRK) :: ref(3)
+
+      ref=(/2.9162069601728970_SRK,2.9933322574820909_SRK,3.0003232540397478_SRK/)
+
+      CALL tmpPL%add('VectorType->n',3_SIK)
+      CALL y0%init(tmpPL)
+      CALL yf%init(tmpPL)
+
+      CALL y0%set(3.0_SRK)
+      CALL yf%set(0.0_SRK)
+
+      CALL testODE%step(0.0_SRK,y0,3.5_SRK,yf)
+
+      CALL yf%get(1,tmpval)
+      ASSERT(SOFTEQR(tmpval,ref(1),2.0E-8_SRK),'yf(1)')
+      FINFO() tmpval, ref(1), tmpval/ref(1)-1.0_SRK
+      CALL yf%get(2,tmpval)
+      ASSERT(SOFTEQR(tmpval,ref(2),2.0E-8_SRK),'yf(2)')
+      FINFO() tmpval, ref(2), tmpval/ref(2)-1.0_SRK
+      CALL yf%get(3,tmpval)
+      ASSERT(SOFTEQR(tmpval,ref(3),2.0E-8_SRK),'yf(3)')
+      FINFO() tmpval, ref(3), tmpval/ref(3)-1.0_SRK
+
+    ENDSUBROUTINE testStep_Rythmos_NonLinear
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testClear_Rythmos()
+      CALL testODE%clear()
+      SELECTTYPE(testODE); TYPE IS(ODESolverType_Rythmos)
+        ASSERT(testODE%solverMethod==-1,'%solverMethod')
+        ASSERT(testODE%TPLType==-1,'%TPLType')
+        ASSERT(testODE%n==-1,'%n')
+        ASSERT(testODE%tol==1.0e-8_SRK,'%tol')
+        ASSERT(testODE%BDForder==5,'%BDForder')
+        ASSERT(.NOT. ALLOCATED(testODE%ytmp0),'%ytmp0 NOT Allocated')
+        ASSERT(.NOT. ALLOCATED(testODE%ytmpf),'%ytmpf NOT Allocated')
+        ASSERT(.NOT. ASSOCIATED(EXTERNAL_ODE_INTERFACE),'EXTERNAL_ODE_INTERFACE')
+        ASSERT(.NOT. testODE%isInit,'%isInit')
+      ENDSELECT
+    ENDSUBROUTINE testClear_Rythmos
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testOrderConv(exp_order,tol,ref,tag)

@@ -75,7 +75,7 @@ MODULE VectorTypes_Trilinos
       !> @copydetails VectorTypes::assemble_TrilinosVectorType
       PROCEDURE,PASS :: assemble => assemble_TrilinosVectorType
   ENDTYPE TrilinosVectorType
-  
+
   !> Name of module
   CHARACTER(LEN=*),PARAMETER :: modName='VECTORTYPES_TRILINOS'
 !
