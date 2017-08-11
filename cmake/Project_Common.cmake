@@ -44,13 +44,10 @@ IF (NOT ${PROJECT_NAME}_EXCLUDE_PACKAGES)
   SET(${PROJECT_NAME}_EXCLUDE_PACKAGES
     # Trilinos disables
     Gtest
-    RTOp
     Sacado
     Zoltan
     Shards
-    Thyra
     Intrepid
-    Rythmos
     Pike
     ThreadPool
     GlobiPack
@@ -58,7 +55,6 @@ IF (NOT ${PROJECT_NAME}_EXCLUDE_PACKAGES)
     Pliris
     Claps
     Galeri
-    Amesos2
     Pamgen
     Komplex
     RBGen

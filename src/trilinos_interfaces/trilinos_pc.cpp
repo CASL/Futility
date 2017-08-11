@@ -36,7 +36,7 @@ int PCStore::new_data(Teuchos::ParameterList &params)
         params.get("max levels", 8);
         params.get("smoother: type", std::string("RILUK"));
         params.get("sa: damping factor", 1.0);
-        params.get("smoother: sweeps", 3);
+        // params.get("smoother: sweeps", 3);
         params.get("smoother: overlap", 1);
         params.get("aggregation: type", std::string("uncoupled"));
         params.get("multigrid algorithm", "sa");

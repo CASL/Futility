@@ -433,12 +433,13 @@ extern "C" void TS_Destroy(int id)
     tsst->delete_data(id);
 }
 
-extern "C" void TS_Step(int id, double tstart, double tend, double* xstart, double* xend)
+extern "C" void TS_Step(int id, double tstart, double tend, double *xstart,
+                        double *xend)
 {
-    //convert to vector in here?
-    int idS=-1;
-    int idE=-1;
-    (*tsst)[id].step(tstart, tend, *tvec->get_vec(idS), *tvec->get_vec(idE));
+    // convert to vector in here?
+    int idS = -1;
+    int idE = -1;
+    (*tsst)[id].step(tstart, tend, xstart, xend);
 }
 
 #endif
