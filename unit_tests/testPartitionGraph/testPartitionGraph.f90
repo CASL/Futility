@@ -70,7 +70,6 @@ PROGRAM testPartitionGraph
     SUBROUTINE testInit()
       CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
       LOGICAL(SBK) :: bool
-      INTEGER(SIK) :: refcond(1)
       INTEGER(SIK),ALLOCATABLE :: refd(:),refneigh(:,:)
       REAL(SRK),ALLOCATABLE :: refwts(:),refnwts(:,:),refunwt(:,:),refCoord(:,:)
       TYPE(StringType) :: refAlgNames(2),tmpAlgNames(3)
@@ -347,7 +346,7 @@ PROGRAM testPartitionGraph
       LOGICAL(SBK) :: bool
       INTEGER(SIK) :: refneigh(4,6),refcond(1)
       REAL(SRK) :: refwts(6),refnwts(4,6),refCoord(2,6)
-      TYPE(StringType) :: refAlgNames(2),tmpAlgNames(3)
+      TYPE(StringType) :: refAlgNames(2)
 
       !Generate parameter list
       CALL params%add('PartitionGraph -> nvert', 6)
@@ -479,9 +478,7 @@ PROGRAM testPartitionGraph
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testREB()
-      LOGICAL(SBK) :: bool
-      INTEGER(SIK) :: ig,iv
-      TYPE(StringType) :: str,AlgName,refAlgNames(1)
+      TYPE(StringType) :: str
       INTEGER(SIK),ALLOCATABLE :: grpIdx(:),grpList(:)
 
       !String for this partitionTest
@@ -1042,7 +1039,7 @@ PROGRAM testPartitionGraph
     SUBROUTINE map2Graph(map,params)
       REAL(SRK),INTENT(IN) :: map(:,:)
       TYPE(ParamType) :: params
-      INTEGER(SIK) :: nvert,ix,iy,ij,iv,cv,cn,nx,ny
+      INTEGER(SIK) :: nvert,ix,iy,ij,iv,cv,nx,ny
       INTEGER(SIK),ALLOCATABLE :: indMap(:,:),neigh(:,:)
       REAL(SRK),ALLOCATABLE :: wts(:),coord(:,:)
 
@@ -1108,8 +1105,8 @@ PROGRAM testPartitionGraph
     TYPE(ParamType),INTENT(INOUT) :: params
     TYPE(StringType),INTENT(INOUT) :: str
     INTEGER(SIK),ALLOCATABLE,INTENT(INOUT) :: grpIdx(:),grpList(:)
-    LOGICAL(SBK) :: bool,lwrong
-    INTEGER(SIK) :: ig,iv,stt,stp
+    LOGICAL(SBK) :: bool
+    INTEGER(SIK) :: ig,iv
     TYPE(StringType) :: prt
 
     !Intiialize

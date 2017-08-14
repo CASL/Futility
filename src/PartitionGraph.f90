@@ -167,14 +167,6 @@ MODULE PartitionGraph
 
   !> The module exception handler
   TYPE(ExceptionHandlerType),SAVE :: ePartitionGraph
-
-  !> Logical flag to check whether the required and optional parameter lists
-  !> have been created yet for the PartitionGraphType
-  LOGICAL(SBK),SAVE :: PartitionGraphType_flagParams=.FALSE.
-
-  !> The parameter list to use when validating a parameter list for
-  !> initialization of the PartitionGraphType
-  TYPE(ParamType),SAVE :: PartitionGraphType_reqParams
 !
 !===============================================================================
   CONTAINS
@@ -221,7 +213,6 @@ MODULE PartitionGraph
       TYPE(ParamType),INTENT(IN) :: params
       INTEGER(SIK) :: nerror,nvert,maxneigh,nGroups,nPart,dim
       INTEGER(SIK) :: ipart,pcond,iv
-      REAL(SRK) :: wtSum
       TYPE(StringType) :: algName
       INTEGER(SIK),ALLOCATABLE :: neigh(:,:), cond(:)
       REAL(SRK),ALLOCATABLE :: wts(:),neighwts(:,:),coord(:,:)
@@ -527,7 +518,7 @@ MODULE PartitionGraph
       TYPE(PartitionGraphType),INTENT(OUT) :: subgraph
       LOGICAL(SBK) :: lcoord
       LOGICAL(SBK),ALLOCATABLE :: lInL(:)
-      INTEGER(SIK) :: il,iv,cv,snv,in,cv2,il2
+      INTEGER(SIK) :: iv,cv,snv,in,cv2,il2
       INTEGER(SIK) :: maxneigh,dim
 
       !Size of new subgraph
@@ -705,18 +696,16 @@ MODULE PartitionGraph
       CLASS(PartitionGraphType),INTENT(INOUT) :: thisGraph
 
       !local scalars
-      INTEGER(SIK) :: ng,ng1,ng2,nv,nv1,nv2,iv,jv,kv,in,jn,kn,maxd,maxd2
+      INTEGER(SIK) :: nv,nv1,nv2,iv,jv,kv,in,jn,kn,maxd,maxd2
       INTEGER(SIK) :: soiv,count,bvert
       INTEGER(SIK) :: curSI,curSE,maxSI,maxSE
-      REAL(SRK) :: cw1,wg1,wg2,wtSum,wtMin,cE,cS,lE,dS,soid,curdif,wt
+      REAL(SRK) :: cw1,wg1,wg2,wtSum,cE,cS,lE,dS,soid,curdif,wt
       REAL(SRK) :: curInt,curExt,maxInt,minExt
       !local arrays
       REAL(SRK) :: wc(thisGraph%dim),soic(thisGraph%dim),gsc(thisGraph%dim)
       !local allocatables
       LOGICAL(SBK),ALLOCATABLE :: SCalc(:),linL1(:)
       INTEGER(SIK),ALLOCATABLE :: L1(:),L2(:),S(:,:)
-      !local types
-      TYPE(PartitionGraphType) :: sg1,sg2
 
       IF(.NOT. ALLOCATED(thisGraph%coord)) THEN
         CALL ePartitionGraph%raiseError(modName//'::'//myName// &
@@ -956,15 +945,14 @@ MODULE PartitionGraph
     RECURSIVE SUBROUTINE RecursiveSpectralBisection(thisGraph)
       CHARACTER(LEN=*),PARAMETER :: myName='RecursiveSpectralBisection'
       CLASS(PartitionGraphType),INTENT(INOUT) :: thisGraph
+#ifdef FUTILITY_HAVE_SLEPC
       INTEGER(SIK) :: nvert,ng,ng1,ng2,iv,jv,in,nlocal,nneigh,ierr
       INTEGER(SIK) :: nv1,nv2,numeq
       REAL(SRK) :: wg1,wg2,cw1,curdif,wt,wtSum,wneigh,wtMin
       TYPE(ParamType) :: matParams
-      TYPE(PartitionGraphType) :: sg1,sg2
       INTEGER(SIK),ALLOCATABLE :: L1(:),L2(:),Order(:)
       REAL(SRK),ALLOCATABLE :: vf(:),vf2(:),vf2Copy(:)
       CLASS(VectorType),ALLOCATABLE :: evecs(:)
-#ifdef FUTILITY_HAVE_SLEPC
       TYPE(PETScMatrixType) :: Lmat
 
       nvert=thisGraph%nvert
@@ -1067,15 +1055,14 @@ MODULE PartitionGraph
     RECURSIVE SUBROUTINE RecursiveInertialBisection(thisGraph)
       CHARACTER(LEN=*),PARAMETER :: myName='RecursiveInertialBisection'
       CLASS(PartitionGraphType),INTENT(INOUT) :: thisGraph
+#ifdef FUTILITY_HAVE_SLEPC
       INTEGER(SIK) :: dim,iv,jv,ierr
       INTEGER(SIK) :: ng,ng1,ng2,nv1,nv2,idim,idim2
       REAL(SRK) :: wtSum,wtMin,wg1,wg2,wt,cw1,curdif,ccoord,cprod
       INTEGER(SIK),ALLOCATABLE :: Order(:),L1(:),L2(:)
       REAL(SRK),ALLOCATABLE :: I(:,:),coord(:,:),cent(:)
       TYPE(ParamType) :: mparams
-      TYPE(PartitionGraphType) :: sg1, sg2
       CLASS(VectorType),ALLOCATABLE :: evecs(:)
-#ifdef FUTILITY_HAVE_SLEPC
       TYPE(PETScMatrixType) :: Imat
 
       IF(.NOT. ALLOCATED(thisGraph%coord)) THEN
@@ -1858,12 +1845,13 @@ MODULE PartitionGraph
       LOGICAL(SBK),INTENT(IN) :: lsmall
       INTEGER(SIK),INTENT(IN) :: numvecs
       CLASS(VectorType),ALLOCATABLE,INTENT(OUT) :: V(:)
+#ifdef FUTILITY_HAVE_SLEPC
       INTEGER(SIK) :: n,iv,tiv
       INTEGER(SIK) :: nev,ncv,mpd
       INTEGER(SIK) :: ierr
       CLASS(VectorType),ALLOCATABLE :: Vi(:)
       TYPE(ParamType) :: vecParams
-#ifdef FUTILITY_HAVE_SLEPC
+
       EPS :: eps !SLEPC eigenvalue problem solver type
       PetscScalar :: kr,ki
 
