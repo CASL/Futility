@@ -195,28 +195,30 @@ PROGRAM testODESolver
 ! Rythmos tests
   DEALLOCATE(testODE)
   DEALLOCATE(f)
-  ALLOCATE(ODESolverType_Rythmos :: testODE)
-  ALLOCATE(ODESolverInterface_TestLinear :: f)
-
-  REGISTER_SUBTEST('testInit_Rythmos',testInit_Rythmos)
-#ifdef FUTILITY_HAVE_Trilinos
-  REGISTER_SUBTEST('testStep_Rythmos_Linear',testStep_Rythmos_Linear)
-  DEALLOCATE(f)
-  ALLOCATE(ODESolverInterface_TestExponential :: f)
-  testODE%f=>f
-  REGISTER_SUBTEST('testStep_Rythmos_Exp',testStep_Rythmos_Exp)
-  DEALLOCATE(f)
-  ALLOCATE(ODESolverInterface_TestNonLinear :: f)
-  testODE%f=>f
-  REGISTER_SUBTEST('testStep_Rythmos_NonLinear',testStep_Rythmos_NonLinear)
-#endif
-  REGISTER_SUBTEST('testClear_Rythmos',testClear_Rythmos)
-
-  FINALIZE_TEST()
-
-  CALL pList%clear()
-  DEALLOCATE(testODE)
-  DEALLOCATE(f)
+  
+! Disabling Rythmos tests until implemented
+!   ALLOCATE(ODESolverType_Rythmos :: testODE)
+!   ALLOCATE(ODESolverInterface_TestLinear :: f)
+!
+!   REGISTER_SUBTEST('testInit_Rythmos',testInit_Rythmos)
+! #ifdef FUTILITY_HAVE_Trilinos
+!   REGISTER_SUBTEST('testStep_Rythmos_Linear',testStep_Rythmos_Linear)
+!   DEALLOCATE(f)
+!   ALLOCATE(ODESolverInterface_TestExponential :: f)
+!   testODE%f=>f
+!   REGISTER_SUBTEST('testStep_Rythmos_Exp',testStep_Rythmos_Exp)
+!   DEALLOCATE(f)
+!   ALLOCATE(ODESolverInterface_TestNonLinear :: f)
+!   testODE%f=>f
+!   REGISTER_SUBTEST('testStep_Rythmos_NonLinear',testStep_Rythmos_NonLinear)
+! #endif
+!   REGISTER_SUBTEST('testClear_Rythmos',testClear_Rythmos)
+!
+!   FINALIZE_TEST()
+!
+!   CALL pList%clear()
+!   DEALLOCATE(testODE)
+!   DEALLOCATE(f)
 
 #ifdef FUTILITY_HAVE_PETSC
   CALL PetscFinalize(ierr)

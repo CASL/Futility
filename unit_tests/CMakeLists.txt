@@ -55,7 +55,7 @@ SET(UNIT_TEST_NAMES
     testLinearSolver
     testEigenvalueSolver
     testODESolver
-    testAndersonAcceleration
+    #testAndersonAcceleration Disabled until Tpetra replacement exists
     testStochasticSampler
 )
 

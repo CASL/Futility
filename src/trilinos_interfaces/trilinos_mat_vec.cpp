@@ -18,7 +18,6 @@ TpetraVecCnt::TpetraVecCnt(int n, int nloc, MPI_Comm rawComm)
 {
     // This is unneccesary, since this Tpetra::Vector<> constructor
     // initializes to zero
-    std::cout << "MPI comm " << rawComm << "\n";
     vec->putScalar(0.0);
 }
 
