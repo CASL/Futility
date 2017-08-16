@@ -22,5 +22,6 @@ TRIBITS_ADD_LIBRARY(TrilinosUtils
       trilinos_pc.cpp
       trilinos_solvers.cpp
       trilinos_ts.cpp
+      trilinos_anderson.cpp
       trilinos_c_interfaces.cpp
 )

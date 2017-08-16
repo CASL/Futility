@@ -43,6 +43,7 @@ SET(${PROJECT_NAME}_ENABLE_CXX11_DEFAULT  ON)
 IF (NOT ${PROJECT_NAME}_EXCLUDE_PACKAGES)
   SET(${PROJECT_NAME}_EXCLUDE_PACKAGES
     # Trilinos disables
+    ML
     Gtest
     Sacado
     Zoltan
