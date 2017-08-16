@@ -6,6 +6,7 @@
 / of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
 / can be found in LICENSE.txt in the head directory of this repository.        !
 /+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+#ifdef FUTILITY_HAVE_Trilinos
 #include "trilinos_ts.hpp"
 
 #include <Thyra_DefaultSpmdVectorSpace.hpp>
@@ -98,3 +99,4 @@ int TSCnt::step(double tstart, double tend, const double *xstart, double *xend)
 {
     return 0;
 }
+#endif

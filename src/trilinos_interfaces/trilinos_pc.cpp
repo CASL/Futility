@@ -6,7 +6,7 @@
 / of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
 / can be found in LICENSE.txt in the head directory of this repository.        !
 /+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-
+#ifdef FUTILITY_HAVE_Trilinos
 #include "trilinos_pc.hpp"
 
 int PCStore::new_data(Teuchos::ParameterList &params)
@@ -89,3 +89,4 @@ int PCStore::setupPC_data(const int id, Teuchos::RCP<CrsMatrix> M)
         std::cout << "PC Constructed..." << std::endl;
     return 0;
 }
+#endif
