@@ -109,9 +109,9 @@ MODULE LinearSolverTypes
   !> set enumeration scheme for TPLs
   INTEGER(SIK),PARAMETER,PUBLIC :: PETSC=0,TRILINOS=1,PARDISO_MKL=2,MKL=3,NATIVE=4
   !> Number of iterative solver solution methodologies - for error checking
-  INTEGER(SIK),PARAMETER :: MAX_IT_SOLVER_METHODS=3
+  INTEGER(SIK),PARAMETER :: MAX_IT_SOLVER_METHODS=4
   !> set enumeration scheme for iterative solver methods
-  INTEGER(SIK),PARAMETER,PUBLIC :: BICGSTAB=1,CGNR=2,GMRES=3
+  INTEGER(SIK),PARAMETER,PUBLIC :: BICGSTAB=1,CGNR=2,GMRES=3,MULTIGRID=4
   !> set enumeration scheme for direct solver methods
   INTEGER(SIK),PARAMETER,PUBLIC :: GE=1,LU=2,QR=3
 
@@ -308,6 +308,7 @@ MODULE LinearSolverTypes
       INTEGER(SIK) :: MPI_Comm_ID,numberOMP
       CHARACTER(LEN=256) :: timerName,ReqTPLTypeStr,TPLTypeStr,PreCondType
 #ifdef FUTILITY_HAVE_PETSC
+      KSP :: ksp_temp
       PC :: pc
       PetscErrorCode  :: iperr
 #endif
@@ -513,7 +514,7 @@ MODULE LinearSolverTypes
 #endif
             ENDIF
 
-          TYPE IS(LinearSolverType_Iterative) ! iterative solver
+          CLASS IS(LinearSolverType_Iterative) ! iterative solver
             IF((solverMethod > 0) .AND. &
                (solverMethod <= MAX_IT_SOLVER_METHODS)) THEN
 
@@ -1162,6 +1163,24 @@ MODULE LinearSolverTypes
                   CALL solveGMRES(solver)
                 ENDIF
             ENDSELECT
+          CASE(MULTIGRID)
+#ifdef FUTILITY_HAVE_PETSC
+            SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
+              ! assemble matrix if necessary
+              IF(.NOT.(A%isAssembled)) CALL A%assemble()
+              SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
+                ! assemble source vector if necessary
+                IF(.NOT.(b%isAssembled)) CALL b%assemble()
+                SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
+                  ! assemble solution vector if necessary
+                  IF(.NOT.(X%isAssembled)) CALL X%assemble()
+                  ! solve
+                  CALL KSPSolve(solver%ksp,b%b,x%b,ierr)
+                  IF(ierr==0) solver%info=0
+                ENDSELECT
+              ENDSELECT
+            ENDSELECT
+#endif
         ENDSELECT
         CALL solver%SolveTime%toc()
       ENDIF

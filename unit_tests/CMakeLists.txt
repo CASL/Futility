@@ -55,6 +55,7 @@ SET(UNIT_TEST_NAMES
     testMatrixTypes
     testPreconditionerTypes
     testLinearSolver
+    testLinearSolver_Multigrid
     testEigenvalueSolver
     testODESolver
     testAndersonAcceleration

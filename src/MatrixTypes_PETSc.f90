@@ -51,6 +51,9 @@ MODULE MatrixTypes_PETSc
 
   TYPE,EXTENDS(DistributedMatrixType) :: PETScMatrixType
     Mat :: A
+
+    !> Number of rows for nonsquare matrices:
+    INTEGER(SIK) :: m
 !
 !List of Type Bound Procedures
     CONTAINS
@@ -76,7 +79,7 @@ MODULE MatrixTypes_PETSc
       !> @copydetails MatrixTypes::transpose_PETScMatrixType
       PROCEDURE,PASS :: transpose => transpose_PETScMatrixType
   ENDTYPE PETScMatrixType
-  
+
   !> Name of module
   CHARACTER(LEN=*),PARAMETER :: modName='MATRIXTYPES_PETSC'
 
@@ -95,6 +98,8 @@ MODULE MatrixTypes_PETSc
       CLASS(ParamType),INTENT(IN) :: Params
       TYPE(ParamType) :: validParams
       INTEGER(SIK) :: n, matType, MPI_COMM_ID, nlocal
+      !Number of columns (global and local)
+      INTEGER(SIK) :: m, mlocal
       INTEGER(SIK),ALLOCATABLE :: dnnz(:), onnz(:)
       LOGICAL(SBK) :: isSym
 
@@ -114,6 +119,16 @@ MODULE MatrixTypes_PETSc
       CALL validParams%get('MatrixType->matType',matType)
       CALL validParams%get('MatrixType->MPI_COMM_ID',MPI_COMM_ID)
       CALL validParams%get('MatrixType->nlocal',nlocal)
+
+      m=n
+      mlocal=nlocal
+      IF(.NOT. isSym) THEN
+        IF(validParams%has('MatrixType->m')) &
+          CALL validParams%get('MatrixType->m',m)
+        IF(validParams%has('MatrixType->mlocal')) &
+          CALL validParams%get('MatrixType->mlocal',mlocal)
+      ENDIF
+
       ALLOCATE(dnnz(nlocal))
       ALLOCATE(onnz(nlocal))
       CALL validParams%get('MatrixType->dnnz',dnnz)
@@ -121,13 +136,14 @@ MODULE MatrixTypes_PETSc
       CALL validParams%clear()
 
       IF(.NOT. matrix%isInit) THEN
-        IF(n < 1) THEN
+        IF(n < 1 .OR. m < 1) THEN
           CALL eMatrixType%raiseError('Incorrect input to '// &
-            modName//'::'//myName//' - Number of rows (n) must be '// &
-              'greater than 0!')
+            modName//'::'//myName//' - Number of rows (n) and cols (m) '// &
+              'must be greater than 0!')
         ELSE
           matrix%isInit=.TRUE.
           matrix%n=n
+          matrix%m=m
           matrix%comm=MPI_COMM_ID
           matrix%isAssembled=.FALSE.
           matrix%nlocal=nlocal
@@ -140,10 +156,10 @@ MODULE MatrixTypes_PETSc
             CALL MatCreate(MPI_COMM_ID,matrix%a,ierr)
             matrix%isCreated=.TRUE.
           ENDIF
-          IF(nlocal<0) THEN
-            CALL MatSetSizes(matrix%a,PETSC_DECIDE,PETSC_DECIDE,matrix%n,matrix%n,ierr)
+          IF(nlocal<0 .OR. mlocal<0) THEN
+            CALL MatSetSizes(matrix%a,PETSC_DECIDE,PETSC_DECIDE,matrix%n,matrix%m,ierr)
           ELSE
-            CALL MatSetSizes(matrix%a,nlocal,nlocal,matrix%n,matrix%n,ierr)
+            CALL MatSetSizes(matrix%a,nlocal,mlocal,matrix%n,matrix%m,ierr)
           ENDIF
 
           IF (matType == SPARSE) THEN
