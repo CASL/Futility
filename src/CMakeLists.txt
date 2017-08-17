@@ -84,6 +84,7 @@ TRIBITS_ADD_LIBRARY(Utils
       VectorTypes.f90
       PreconditionerTypes.f90
       LinearSolverTypes.f90
+      LinearSolverTypes_Multigrid.f90
       EigenvalueSolverTypes.f90
       ODESolverTypes.f90
       AndersonAcceleration.f90
