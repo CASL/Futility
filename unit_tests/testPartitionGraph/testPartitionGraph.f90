@@ -55,7 +55,7 @@ PROGRAM testPartitionGraph
 #endif
   REGISTER_SUBTEST('Kernighan-Lin',testKL)
   REGISTER_SUBTEST('Metrics Calculation',testMetrics)
-#ifdef FUTILITY_HAVE_PETSC
+#ifdef FUTILITY_HAVE_SLEPC
   CALL SlepcFinalize(ierr)
   CALL PetscFinalize(ierr)
 #endif
