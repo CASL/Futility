@@ -216,7 +216,7 @@ CONTAINS
 
       ASSERT(thisLS%isMultigridSetup,'LS%isMultigridSetup')
       ASSERT(thisLS%nLevels == 4,'Check number of multigrid levels')
-      ASSERT(ALL(ref_level_info==thisLS%level_info),'Check grid sizes on each level.')
+      ASSERT(ALL(ref_level_info == thisLS%level_info),'Check grid sizes on each level.')
 
       CALL thisLS%clear()
 
@@ -298,6 +298,7 @@ CONTAINS
     SUBROUTINE init_MultigridLS(thisLS)
       TYPE(LinearSolverType_Multigrid),INTENT(INOUT) :: thisLS
       INTEGER(SIK),PARAMETER :: n=65_SNK
+      INTEGER(SIK) :: dnnz(n),onnz(n)
 
       !The PETSC sparse matrix type
       ! initialize linear system
@@ -309,7 +310,14 @@ CONTAINS
       CALL pList%add('LinearSolverType->timerName','testTimer')
       CALL pList%add('LinearSolverType->matType',SPARSE)
       CALL pList%add('LinearSolverType->A->MatrixType->n',n)
+      CALL pList%add('LinearSolverType->A->MatrixType->nlocal',n)
       CALL pList%add('LinearSolverType->A->MatrixType->nnz',n*3-2)
+      dnnz=3_SIK
+      dnnz(1)=2_SIK
+      dnnz(n)=2_SIK
+      onnz=0_SIK
+      CALL pList%add('LinearSolverType->A->MatrixType->dnnz',dnnz)
+      CALL pList%add('LinearSolverType->A->MatrixType->onnz',onnz)
       CALL pList%add('LinearSolverType->x->VectorType->n',n)
       CALL pList%add('LinearSolverType->b->VectorType->n',n)
       CALL pList%validate(pList,optListLS)
@@ -323,6 +331,46 @@ CONTAINS
       !TODO make this test problem a coupled system of 2 equations
 
       CALL thisLS%init(pList)
+
+    ENDSUBROUTINE
+
+    SUBROUTINE setupLinearProblem(thisLS,soln)
+      TYPE(LinearSolverType_Multigrid),INTENT(INOUT) :: thisLS
+      REAL(SRK),INTENT(IN) :: soln(:)
+      REAL(SRK),ALLOCATABLE :: b(:)
+      REAL(SRK),ALLOCATABLE :: A_temp(:,:)
+      INTEGER(SIK) :: n
+      INTEGER(SIK) :: i
+
+      n=SIZE(soln)
+
+      !A is a tridiagonal system with -1 on the offdiagonals, and
+      !  2.5 on the diagonals.
+      ALLOCATE(A_temp(n,n))
+      A_temp=0.0_SRK
+      SELECTTYPE(A => thisLS%A); TYPE IS(PETScMatrixType)
+      DO i=1,n
+        IF(i > 1) THEN
+          CALL A%set(i,i-1,-1.0_SRK)
+          A_temp(i,i-1)=-1.0_SRK
+        ENDIF
+        CALL A%set(i,i,2.5_SRK)
+        A_temp(i,i)=2.5_SRK
+        IF(i < n) THEN
+          CALL A%set(i,i+1,-1.0_SRK)
+          A_temp(i,i+1)=-1.0_SRK
+        ENDIF
+      ENDDO
+      ENDSELECT
+
+      ALLOCATE(b(n))
+      b=MATMUL(A_temp,soln)
+      DEALLOCATE(A_temp)
+
+      SELECTTYPE(LS_b => thisLS%b); TYPE IS(PETScVectorType)
+        CALL LS_b%setAll_array(b)
+      ENDSELECT
+      DEALLOCATE(b)
 
     ENDSUBROUTINE
 

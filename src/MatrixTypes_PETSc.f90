@@ -172,7 +172,7 @@ MODULE MatrixTypes_PETSc
               'matrices are available with PETSc.')
           ENDIF
 
-          IF(MINVAL(dnnz) > 0_SIK .AND. MINVAL(onnz) > 0_SIK) THEN
+          IF(MINVAL(dnnz) > 0_SIK .AND. MINVAL(onnz) >= 0_SIK) THEN
             CALL MatMPIAIJSetPreallocation(matrix%A,0,dnnz,0,onnz,ierr)
           ELSE
             CALL MatSetUp(matrix%a,ierr)

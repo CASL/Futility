@@ -80,7 +80,7 @@ MODULE LinearSolverTypes_Multigrid
     INTEGER(SIK),ALLOCATABLE :: level_info(:,:)
 #ifdef FUTILITY_HAVE_PETSC
     !> Array of pointers to petsc interpolation matrices
-    Mat :: PetscInterpMats(max_levels)
+    TYPE(PETScMatrixType),ALLOCATABLE :: interpMats(:)
 #endif
 
     CONTAINS
@@ -260,6 +260,8 @@ MODULE LinearSolverTypes_Multigrid
       CLASS(MatrixType),POINTER :: interpmat => NULL()
       TYPE(ParamType) :: matPList
 #ifdef FUTILITY_HAVE_PETSC
+      INTEGER(SIK),ALLOCATABLE :: dnnz(:),onnz(:) !ZZZZ
+
       KSP :: ksp_temp
       PC :: pc_temp
       PetscErrorCode  :: iperr
@@ -301,13 +303,21 @@ MODULE LinearSolverTypes_Multigrid
 
         !Set # of levels:
         CALL PCMGSetLevels(solver%pc,solver%nLevels,PETSC_NULL_OBJECT,iperr) !TODO use some sort of mpi thing here?
+        ALLOCATE(solver%interpMats(solver%nLevels-1))
 
         CALL matPList%clear()
         CALL matPList%add('MatrixType->matType',SPARSE)
         CALL matPList%add('MatrixType->engine',VM_PETSC)
         CALL matPList%add('MatrixType->n',n)
         CALL matPList%add('MatrixType->m',n)
-        CALL matPList%add('MatrixType->nlocal',-1)
+        CALL matPList%add('MatrixType->nlocal',n)
+        CALL matPList%add('MatrixType->mlocal',n)
+        ALLOCATE(dnnz(n))
+        ALLOCATE(onnz(n))
+        CALL matPList%add('MatrixType->onnz',onnz)
+        CALL matPList%add('MatrixType->dnnz',dnnz)
+        DEALLOCATE(dnnz)
+        DEALLOCATE(onnz)
         CALL matPList%add('MatrixType->nnz',1)
         CALL matPList%add('MatrixType->MPI_Comm_ID',MPI_Comm_ID)
         CALL matPList%add('MatrixType->isSym',.FALSE.)
@@ -319,10 +329,10 @@ MODULE LinearSolverTypes_Multigrid
         DO iLevel=solver%nLevels-1,1,-1
           !Set the smoother:
           CALL PCMGGetSmoother(solver%pc,iLevel,ksp_temp,iperr)
-          CALL KSPSetType(ksp_temp,KSPPREONLY,iperr)
+          CALL KSPSetType(ksp_temp,KSPRICHARDSON,iperr)
           CALL KSPGetPC(ksp_temp,pc_temp,iperr)
           !TODO use PCBJACOBI and set block size
-          CALL PCSetType(pc_temp,PCSOR,iperr)
+          CALL PCSetType(pc_temp,PCJACOBI,iperr)
 
           !Create the interpolation operator:
           nx_old=nx
@@ -335,6 +345,8 @@ MODULE LinearSolverTypes_Multigrid
           n=nx*ny*nz*num_eqns
           CALL matPList%set('MatrixType->n',n_old)
           CALL matPList%set('MatrixType->m',n)
+          CALL matPList%set('MatrixType->nlocal',n_old)
+          CALL matPList%set('MatrixType->mlocal',n) !ZZZZ fix for parallel
           nnz=n
           IF(num_dims == 3) THEN
             nnz=nnz+((nx_old*ny_old*nz_old*num_eqns)-n)*6
@@ -344,6 +356,10 @@ MODULE LinearSolverTypes_Multigrid
             nnz=nnz+((nx_old*num_eqns)-n)*2 !ZZZZ what about the 2->1 part
           ENDIF
           CALL matPList%set('MatrixType->nnz',nnz)
+          ALLOCATE(dnnz(n_old))
+          ALLOCATE(onnz(n_old))
+          onnz=0_SIK
+          dnnz=0_SIK
 
           !To be used by the interp/restrict functions:
           solver%level_info(iLevel,:)=(/num_eqns,nx,ny,nz/)
@@ -362,9 +378,11 @@ MODULE LinearSolverTypes_Multigrid
               ELSE
                 IF(XOR(MOD(inx,2)==1, (inx>nx/2 .AND. MOD(nx,2) == 0))) THEN
                   CALL interpmat%set(i,((inx+1)/2-1)*num_eqns+inum_eqn,1.0_SRK)
+                  dnnz(i)=dnnz(i)+1
                 ELSE
                   CALL interpmat%set(i,(inx/2-1)*num_eqns+inum_eqn,0.5_SRK)
                   CALL interpmat%set(i,(inx/2)*num_eqns+inum_eqn,0.5_SRK)
+                  dnnz(i)=dnnz(i)+2
                 ENDIF
               ENDIF
 
@@ -388,6 +406,10 @@ MODULE LinearSolverTypes_Multigrid
             CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
               "Nonuniform multigrid weights not implemented yet.")
           ENDIF
+          CALL matPList%add('MatrixType->onnz',onnz)
+          CALL matPList%add('MatrixType->dnnz',dnnz)
+          DEALLOCATE(dnnz)
+          DEALLOCATE(onnz)
 
           IF(ny == 1 .AND. ny_old > 1) num_dims=num_dims-1
           IF(nz == 1 .AND. nz_old > 1) num_dims=num_dims-1
@@ -396,17 +418,15 @@ MODULE LinearSolverTypes_Multigrid
           SELECTTYPE(interpmat); TYPE IS(PETScMatrixType)
             CALL interpmat%assemble()
             CALL PCMGSetInterpolation(solver%pc,iLevel,interpmat%a,iperr)
-            CALL MatDestroy(interpmat%a,iperr)
+            solver%interpMats(iLevel)=interpmat
           ENDSELECT
           DEALLOCATE(interpmat)
         ENDDO
-        !DO iLevel=1,solver%nLevels-1
-        !  CALL MatView(solver%interpMats(iLevel)%a,PETSC_VIEWER_STDOUT_WORLD,iperr)
-        !ENDDO
-        !TODO determine coarsest smoother option
         !Set coarsest smoother options:
         CALL PCMGGetSmoother(solver%pc,0,ksp_temp,iperr)
         CALL KSPSetType(ksp_temp,KSPGMRES,iperr)
+        CALL KSPGetPC(ksp_temp,pc_temp,iperr)
+        CALL PCSetType(pc_temp,PCBJACOBI,iperr)
         CALL KSPSetInitialGuessNonzero(ksp_temp,PETSC_TRUE,iperr)
 #endif
       ENDIF
@@ -437,6 +457,7 @@ MODULE LinearSolverTypes_Multigrid
 
       solver%isMultigridSetup=.FALSE.
       IF(ALLOCATED(solver%level_info)) DEALLOCATE(solver%level_info)
+      IF(ALLOCATED(solver%interpmats)) DEALLOCATE(solver%interpmats)
       solver%nLevels=1_SIK
 
       CALL solver%LinearSolverType_Iterative%clear()
