@@ -946,12 +946,11 @@ MODULE PartitionGraph
       CHARACTER(LEN=*),PARAMETER :: myName='RecursiveSpectralBisection'
       CLASS(PartitionGraphType),INTENT(INOUT) :: thisGraph
 #ifdef FUTILITY_HAVE_SLEPC
-      INTEGER(SIK) :: nvert,ng,ng1,ng2,iv,jv,in,nlocal,nneigh,ierr
-      INTEGER(SIK) :: nv1,nv2,numeq
-      REAL(SRK) :: wg1,wg2,cw1,curdif,wt,wtSum,wneigh,wtMin
+      INTEGER(SIK) :: nvert,iv,jv,in,nlocal,nneigh
+      INTEGER(SIK) :: nv1,nv2
+      REAL(SRK) :: wg1,wg2,cw1,curdif,wt,wtSum,wneigh
       TYPE(ParamType) :: matParams
       INTEGER(SIK),ALLOCATABLE :: L1(:),L2(:),Order(:)
-      REAL(SRK),ALLOCATABLE :: vf(:),vf2(:),vf2Copy(:)
       CLASS(VectorType),ALLOCATABLE :: evecs(:)
       TYPE(PETScMatrixType) :: Lmat
 
@@ -1056,9 +1055,9 @@ MODULE PartitionGraph
       CHARACTER(LEN=*),PARAMETER :: myName='RecursiveInertialBisection'
       CLASS(PartitionGraphType),INTENT(INOUT) :: thisGraph
 #ifdef FUTILITY_HAVE_SLEPC
-      INTEGER(SIK) :: dim,iv,jv,ierr
-      INTEGER(SIK) :: ng,ng1,ng2,nv1,nv2,idim,idim2
-      REAL(SRK) :: wtSum,wtMin,wg1,wg2,wt,cw1,curdif,ccoord,cprod
+      INTEGER(SIK) :: dim,iv,jv
+      INTEGER(SIK) :: nv1,nv2,idim,idim2
+      REAL(SRK) :: wtSum,wg1,wg2,wt,cw1,curdif,ccoord,cprod
       INTEGER(SIK),ALLOCATABLE :: Order(:),L1(:),L2(:)
       REAL(SRK),ALLOCATABLE :: I(:,:),coord(:,:),cent(:)
       TYPE(ParamType) :: mparams
@@ -1846,14 +1845,13 @@ MODULE PartitionGraph
       INTEGER(SIK),INTENT(IN) :: numvecs
       CLASS(VectorType),ALLOCATABLE,INTENT(OUT) :: V(:)
 #ifdef FUTILITY_HAVE_SLEPC
-      INTEGER(SIK) :: n,iv,tiv
+      INTEGER(SIK) :: n,iv
       INTEGER(SIK) :: nev,ncv,mpd
       INTEGER(SIK) :: ierr
       CLASS(VectorType),ALLOCATABLE :: Vi(:)
       TYPE(ParamType) :: vecParams
 
       EPS :: eps !SLEPC eigenvalue problem solver type
-      PetscScalar :: kr,ki
 
       !Matrix size
       n=A%n
@@ -1894,7 +1892,6 @@ MODULE PartitionGraph
             CALL v2%init(vecParams)
             CALL v1%assemble(ierr)
             CALL v2%assemble(ierr)
-            ! CALL EPSGetEigenValue(eps,iv-1,kr,ki,ierr)
             CALL EPSGetEigenVector(eps,iv-1,v1%b,v2%b,ierr)
             CALL v2%clear()
           ENDSELECT
@@ -1928,7 +1925,6 @@ MODULE PartitionGraph
       INTEGER(SIK) :: dim,numvecs,nvert,numeq,iv,jv,idim,ierr
       INTEGER(SIK),ALLOCATABLE :: indOrder(:),oc(:)
       REAL(SRK),ALLOCATABLE :: d(:),dc(:),ec(:)
-      TYPE(PETScVectorType) :: c
       TYPE(PETScVectorType),ALLOCATABLE :: evc(:)
       TYPE(ParamType) :: mparams
 
