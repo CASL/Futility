@@ -64,7 +64,8 @@ PROGRAM testLinearSolver_Multigrid
 
   REGISTER_SUBTEST('testClear',testClear)
   REGISTER_SUBTEST('testInit',testInit)
-  REGISTER_SUBTEST('testSetupInterpMats',testSetupInterpMats)
+  REGISTER_SUBTEST('testPreAllocPETScInterpMat',testPreAllocPETScInterpMat)
+  REGISTER_SUBTEST('testSetupPETScMG',testSetupPETScMG)
   REGISTER_SUBTEST('testIterativeSolve_Multigrid',testIterativeSolve_Multigrid)
 
   FINALIZE_TEST()
@@ -151,6 +152,7 @@ CONTAINS
 !-------------------------------------------------------------------------------
     SUBROUTINE testInit()
       TYPE(LinearSolverType_Multigrid) :: thisLS
+      INTEGER(SIK) :: ref_level_info(4,4)
       INTEGER(SIK) :: nerrors1,nerrors2
       LOGICAL(SBK) :: bool
 
@@ -160,13 +162,21 @@ CONTAINS
       CALL pList%add('LinearSolverType->solverMethod',MULTIGRID)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
-      CALL pList%add('LinearSolverType->A->MatrixType->n',2_SNK)
-      CALL pList%add('LinearSolverType->A->MatrixType->nnz',2_SNK)
-      CALL pList%add('LinearSolverType->x->VectorType->n',2_SNK)
-      CALL pList%add('LinearSolverType->b->VectorType->n',2_SNK)
-      CALL pList%add('LinearSolverType->PCType','ILU')
+      CALL pList%add('LinearSolverType->A->MatrixType->n',65_SNK)
+      CALL pList%add('LinearSolverType->A->MatrixType->nlocal',65_SNK)
+      CALL pList%add('LinearSolverType->A->MatrixType->nnz',193_SNK)
+      CALL pList%add('LinearSolverType->x->VectorType->n',65_SNK)
+      CALL pList%add('LinearSolverType->x->VectorType->nlocal',65_SNK)
+      CALL pList%add('LinearSolverType->b->VectorType->n',65_SNK)
+      CALL pList%add('LinearSolverType->b->VectorType->nlocal',65_SNK)
+      CALL pList%add('LinearSolverType->PCType','PCMG')
       CALL pList%add('LinearSolverType->PCIters',-1)
       CALL pList%add('LinearSolverType->PCSetup',0)
+      CALL pList%add('LinearSolverType->Multigrid->nx',65_SIK)
+      CALL pList%add('LinearSolverType->Multigrid->nx',65_SIK)
+      CALL pList%add('LinearSolverType->Multigrid->ny',1_SIK)
+      CALL pList%add('LinearSolverType->Multigrid->nz',1_SIK)
+      CALL pList%add('LinearSolverType->Multigrid->num_eqns',1_SIK)
 
       CALL pList%validate(pList,optListLS)
       CALL thisLS%init(pList)
@@ -188,8 +198,17 @@ CONTAINS
       nerrors2=e%getCounter(EXCEPTION_ERROR)
       ASSERT(nerrors2 == nerrors1+1,'LS%setupPC ALLOCATED(PC%A) check')
       FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
-      ! Check uninitialized linear solver
+
+      CALL thisLS%init(pList)
+      ref_level_info = RESHAPE((/1,9,1,1, &
+                                 1,17,1,1, &
+                                 1,33,1,1, &
+                                 1,65,1,1/),SHAPE(ref_level_info))
+      ASSERT(thisLS%nLevels == 4,'Check number of multigrid levels')
+      ASSERT(ALL(ref_level_info == thisLS%level_info),'Check grid sizes on each level.')
+
       CALL thisLS%clear()
+      ! Check uninitialized linear solver
       nerrors1=e%getCounter(EXCEPTION_ERROR)
       CALL thisLS%setupPC()
       nerrors2=e%getCounter(EXCEPTION_ERROR)
@@ -201,22 +220,53 @@ CONTAINS
     ENDSUBROUTINE testInit
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE testSetupInterpMats()
+    SUBROUTINE testPreAllocPETScInterpMat()
       TYPE(LinearSolverType_Multigrid) :: thisLS
-      INTEGER(SIK) :: ref_level_info(4,4)
-      INTEGER(SIK),PARAMETER :: n=65_SNK
+#ifdef FUTILITY_HAVE_PETSC
+      INTEGER(SIK),PARAMETER :: ref_sizes(4)=(/9,17,33,65/)
+      INTEGER(SIK) :: iLevel,m,n
+      PetscErrorCode :: iperr
+#endif
 
       CALL init_MultigridLS(thisLS)
-      CALL thisLS%setupInterpMats(pList)
+      CALL preAllocInterpMatrices_1D1G(thisLS)
+#ifdef FUTILITY_HAVE_PETSC
+      DO iLevel=1,thisLS%nLevels-1
+        CALL MatGetSize(thisLS%interpMats(iLevel)%a,m,n,iperr)
+        ASSERT(m == ref_sizes(iLevel+1),'Incorrect # of rows for interp. mat.')
+        FINFO() 'Interpolation from',iLevel,'to',iLevel+1
+        ASSERT(n == ref_sizes(iLevel),'Incorrect # of cols for interp. mat.')
+        FINFO() 'Interpolation from',iLevel,'to',iLevel+1
+      ENDDO
+#endif
+      CALL thisLS%clear()
 
-      ref_level_info = RESHAPE((/1,1,1,1, &
-                                 9,17,33,65, &
-                                 1,1,1,1, &
-                                 1,1,1,1/),SHAPE(ref_level_info))
+    ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testSetupPETScMG()
+      TYPE(LinearSolverType_Multigrid) :: thisLS
+#ifdef FUTILITY_HAVE_PETSC
+      KSP :: ksp_temp
+      PC :: pc_temp
+      KSPType :: ksptype
+      PCType :: pctype
+      PetscErrorCode :: iperr
+#endif
 
+      CALL init_MultigridLS(thisLS)
+      CALL preAllocInterpMatrices_1D1G(thisLS)
+      CALL setupInterpMatrices_1D1G(thisLS)
+      CALL thisLS%setupPETScMG(pList)
       ASSERT(thisLS%isMultigridSetup,'LS%isMultigridSetup')
-      ASSERT(thisLS%nLevels == 4,'Check number of multigrid levels')
-      ASSERT(ALL(ref_level_info == thisLS%level_info),'Check grid sizes on each level.')
+
+#ifdef FUTILITY_HAVE_PETSC
+      CALL KSPGetType(thisLS%ksp,ksptype,iperr)
+      ASSERT(ksptype == KSPRICHARDSON,'KSP type must be richardson for MG solver in PETSc')
+      CALL KSPGetPC(thisLS%ksp,pc_temp,iperr)
+      CALL PCGetType(pc_temp,pctype,iperr)
+      ASSERT(pctype == PCMG,'PC type should be Multigrid!')
+#endif
 
       CALL thisLS%clear()
 
@@ -232,42 +282,22 @@ CONTAINS
       INTEGER(SIK) :: i
 
       INTEGER(SIK),PARAMETER :: n=65_SNK
+      INTEGER(SIK),PARAMETER :: n_2G=130_SNK
 
 #ifdef FUTILITY_HAVE_PETSC
+      !================ 1G Problem ============================
       CALL init_MultigridLS(thisLS)
-      CALL thisLS%setupInterpMats(pList)
+      CALL preAllocInterpMatrices_1D1G(thisLS)
+      CALL setupInterpMatrices_1D1G(thisLS)
+      CALL thisLS%setupPETScMG(pList)
 
-      !A is a tridiagonal system with -1 on the offdiagonals, and
-      !  2.5 on the diagonals.
-      ALLOCATE(A_temp(n,n))
-      A_temp=0.0_SRK
-      SELECTTYPE(A => thisLS%A); TYPE IS(PETScMatrixType)
-      DO i=1,n
-        IF(i > 1) THEN
-          CALL A%set(i,i-1,-1.0_SRK)
-          A_temp(i,i-1)=-1.0_SRK
-        ENDIF
-        CALL A%set(i,i,2.5_SRK)
-        A_temp(i,i)=2.5_SRK
-        IF(i < 1) THEN
-          CALL A%set(i,i+1,-1.0_SRK)
-          A_temp(i,i+1)=-1.0_SRK
-        ENDIF
-      ENDDO
-      ENDSELECT
-
+      ! Create solution:
       ALLOCATE(soln(n))
       soln=1.0_SRK
       soln(n/3)=2.0_SRK
+      CALL setupLinearProblem(thisLS,soln)
 
-      ALLOCATE(b(n))
-      b=MATMUL(A_temp,soln)
-      DEALLOCATE(A_temp)
-
-      SELECTTYPE(LS_b => thisLS%b); TYPE IS(PETScVectorType)
-        CALL LS_b%setAll_array(b)
-      ENDSELECT
-      DEALLOCATE(b)
+      CALL thisLS%setupPETScMG(pList)
 
       ! build x0
       ALLOCATE(x(n))
@@ -285,20 +315,36 @@ CONTAINS
         CALL LS_x%getAll(x)
       ENDSELECT
       match=ALL(ABS(x-soln) < 1.0E-6_SRK)
-      ASSERT(match, 'PETScIterative%solve() - Multigrid')
+      ASSERT(match, 'PETScIterative%solve() - 1G,1D Multigrid')
 
       DEALLOCATE(soln)
       DEALLOCATE(x)
       CALL thisLS%A%clear()
       CALL thisLS%clear()
+      !================ 1G Problem ============================
+      !
+      !
 #endif
 
     ENDSUBROUTINE testIterativeSolve_Multigrid
-
-    SUBROUTINE init_MultigridLS(thisLS)
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE init_MultigridLS(thisLS,num_eqns_in,nx_in,ny_in,nz_in)
       TYPE(LinearSolverType_Multigrid),INTENT(INOUT) :: thisLS
-      INTEGER(SIK),PARAMETER :: n=65_SNK
-      INTEGER(SIK) :: dnnz(n),onnz(n)
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: nx_in,ny_in,nz_in,num_eqns_in
+      INTEGER(SIK) :: num_eqns,nx,ny,nz,n
+      INTEGER(SIK),ALLOCATABLE :: dnnz(:),onnz(:)
+
+      num_eqns=1_SIK
+      nx=65_SIK
+      ny=1_SIK
+      nz=1_SIK
+      IF(PRESENT(num_eqns_in)) num_eqns=num_eqns_in
+      IF(PRESENT(nx_in)) nx=nx_in
+      IF(PRESENT(ny_in)) ny=ny_in
+      IF(PRESENT(nz_in)) nz=nz_in
+
+      n=num_eqns*nx*ny*nz
 
       !The PETSC sparse matrix type
       ! initialize linear system
@@ -311,29 +357,80 @@ CONTAINS
       CALL pList%add('LinearSolverType->matType',SPARSE)
       CALL pList%add('LinearSolverType->A->MatrixType->n',n)
       CALL pList%add('LinearSolverType->A->MatrixType->nlocal',n)
-      CALL pList%add('LinearSolverType->A->MatrixType->nnz',n*3-2)
-      dnnz=3_SIK
-      dnnz(1)=2_SIK
-      dnnz(n)=2_SIK
+      ALLOCATE(dnnz(n),onnz(n))
+      dnnz(1:num_eqns)=1_SIK+num_eqns
+      dnnz(num_eqns+1:n-num_eqns)=2_SIK+num_eqns
+      dnnz(n-num_eqns+1:n)=1_SIK+num_eqns
       onnz=0_SIK
       CALL pList%add('LinearSolverType->A->MatrixType->dnnz',dnnz)
       CALL pList%add('LinearSolverType->A->MatrixType->onnz',onnz)
+      CALL pList%add('LinearSolverType->A->MatrixType->nnz',SUM(dnnz)+SUM(onnz))
+      DEALLOCATE(dnnz,onnz)
       CALL pList%add('LinearSolverType->x->VectorType->n',n)
       CALL pList%add('LinearSolverType->b->VectorType->n',n)
       CALL pList%validate(pList,optListLS)
 
       !Geometry dimensions for multigrid:
-      CALL pList%add('LinearSolverType->Multigrid->nx',n)
-      CALL pList%add('LinearSolverType->Multigrid->ny',1)
-      CALL pList%add('LinearSolverType->Multigrid->nz',1)
-      CALL pList%add('LinearSolverType->Multigrid->num_eqns',1)
-
-      !TODO make this test problem a coupled system of 2 equations
+      CALL pList%add('LinearSolverType->Multigrid->nx',nx)
+      CALL pList%add('LinearSolverType->Multigrid->ny',ny)
+      CALL pList%add('LinearSolverType->Multigrid->nz',nz)
+      CALL pList%add('LinearSolverType->Multigrid->num_eqns',num_eqns)
 
       CALL thisLS%init(pList)
 
     ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE preAllocInterpMatrices_1D1G(thisLS)
+      TYPE(LinearSolverType_Multigrid),INTENT(INOUT) :: thisLS
+      INTEGER(SIK) :: iLevel, inx, nx, nx_old
+      INTEGER(SIK),ALLOCATABLE :: dnnz(:),onnz(:)
 
+      nx=thisLS%level_info(2,thisLS%nLevels)
+      DO iLevel=thisLS%nLevels-1,1,-1
+        !Create the interpolation operator:
+        nx_old=nx
+        nx=thisLS%level_info(2,iLevel)
+
+        ALLOCATE(dnnz(nx_old),onnz(nx_old))
+        onnz=0_SIK
+        DO inx=1,nx_old
+          IF(XOR(MOD(inx,2)==1, (inx>nx/2 .AND. MOD(nx,2) == 0))) THEN
+            dnnz(inx)=1
+          ELSE
+            dnnz(inx)=2
+          ENDIF
+        ENDDO
+
+        CALL thisLS%preAllocPETScInterpMat(iLevel,dnnz,onnz)
+        DEALLOCATE(dnnz,onnz)
+
+      ENDDO
+    ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE setupInterpMatrices_1D1G(thisLS)
+      TYPE(LinearSolverType_Multigrid),INTENT(INOUT) :: thisLS
+      INTEGER(SIK) :: iLevel, inx, nx, nx_old
+
+      DO iLevel=thisLS%nLevels-1,1,-1
+        !Create the interpolation operator:
+        nx_old=nx
+        nx=thisLS%level_info(2,iLevel)
+
+        DO inx=1,nx_old
+          IF(XOR(MOD(inx,2)==1, (inx>nx/2 .AND. MOD(nx,2) == 0))) THEN
+            CALL thisLS%interpMats(iLevel)%set(inx,(inx+1)/2,1.0_SRK)
+          ELSE
+            CALL thisLS%interpMats(iLevel)%set(inx,inx/2,0.5_SRK)
+            CALL thisLS%interpMats(iLevel)%set(inx,inx/2+1,0.5_SRK)
+          ENDIF
+        ENDDO
+
+      ENDDO
+    ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
     SUBROUTINE setupLinearProblem(thisLS,soln)
       TYPE(LinearSolverType_Multigrid),INTENT(INOUT) :: thisLS
       REAL(SRK),INTENT(IN) :: soln(:)
