@@ -401,37 +401,66 @@ MODULE LinearSolverTypes_Multigrid
       !For now, only Galerkin coarse grid operators are supported.
       !  Galerkin means A_c = R*A*I
       CALL PCMGSetGalerkin(solver%pc,PETSC_TRUE,iperr)
-
-      !ZZZZ why doesnt this work for multigrid?
-      !CALL KSPSetInitialGuessNonzero(solver%ksp,PETSC_TRUE,iperr)
+      CALL KSPSetInitialGuessNonzero(solver%ksp,PETSC_TRUE,iperr)
 
       !Set # of levels:
       CALL PCMGSetLevels(solver%pc,solver%nLevels,PETSC_NULL_OBJECT,iperr) !TODO use some sort of mpi thing here?
+
+      !The following options are applied to all blocks of the block Jacobi
+      ! smoother on all MG levels except the coarsest level.
+      !Solve each block with GS:
+      ! KSPRICHARDSON+SOR with omega=1 --> Gauss-Seidel
+      ! The mg_levels_ prefix specifies that it's for the MG smoother
+      ! mg_levels does not include the coarsest level
+      ! the sub_ indicates it's for each block
+      CALL PetscOptionsSetValue(PETSC_NULL_OBJECT, &
+              "-mg_levels_sub_ksp_type","richardson",iperr)
+      CALL PetscOptionsSetValue(PETSC_NULL_OBJECT, &
+              "-mg_levels_sub_pc_type","sor",iperr)
+      CALL PetscOptionsSetValue(PETSC_NULL_OBJECT, &
+              "-mg_levels_sub_ksp_initial_guess_nonzero","true",iperr)
+      !Only one "richardson iteration" (with possibly many SOR iterations):
+      CALL PetscOptionsSetValue(PETSC_NULL_OBJECT, &
+          "-mg_levels_sub_ksp_max_it","1",iperr)
+      !For some reason it iterates forever when it's a 1x1 block:
+      IF(solver%level_info(1,solver%nLevels) == 1) THEN
+        CALL PetscOptionsSetValue(PETSC_NULL_OBJECT, &
+              "-mg_levels_sub_pc_sor_its","1",iperr)
+      ELSE IF(ANY(solver%level_info(1,:) == 1)) THEN
+        CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
+          "The current setup with PETSc does not allow for coarsening from"// &
+          " multiple equations to 1 equation.  If you need this feature, "// &
+          "consider altering this subroutine.  It is likely not too "// &
+          "difficult to do so.")
+      ELSE
+        CALL PetscOptionsSetValue(PETSC_NULL_OBJECT, &
+              "-mg_levels_sub_pc_sor_its","1",iperr)
+        CALL PetscOptionsSetValue(PETSC_NULL_OBJECT, &
+              "-mg_levels_sub_pc_sor_lits","10",iperr)
+        !ZZZZ might want to change this value later
+      ENDIF
 
       DO iLevel=solver%nLevels-1,1,-1
         !Set the smoother:
         CALL PCMGGetSmoother(solver%pc,iLevel,ksp_temp,iperr)
 
         !Block Jacobi smoother:
+        !KSPRICHARDSON+PCBJACOBI=block jacobi
         CALL KSPSetType(ksp_temp,KSPRICHARDSON,iperr)
         CALL KSPGetPC(ksp_temp,pc_temp,iperr)
         CALL PCSetType(pc_temp,PCBJACOBI,iperr)
+        CALL KSPSetInitialGuessNonzero(ksp_temp,PETSC_TRUE,iperr)
 
         !Set number of blocks (i.e., # of spatial points):
         nx=solver%level_info(2,iLevel+1)
         ny=solver%level_info(3,iLevel+1)
         nz=solver%level_info(4,iLevel+1)
         ALLOCATE(tmpint_arr(nx*ny*nz))
-        tmpint_arr=1_SIK
+        tmpint_arr=solver%level_info(1,iLevel+1)
         CALL PCBJacobiSetTotalBlocks(pc_temp,nx*ny*nz,tmpint_arr,iperr)
         DEALLOCATE(tmpint_arr)
 
-        !Make it Gauss Seidel in energy:
-        CALL PetscOptionsSetValue(PETSC_NULL_OBJECT,"-sub_ksp_type","richardson",iperr)
-        CALL PetscOptionsSetValue(PETSC_NULL_OBJECT,"-sub_pc_type","sor",iperr)
-        !CALL PetscOptionsSetValue(PETSC_NULL_OBJECT,"-sub_pc_sor_omega",1.0_SRK,iperr)
         CALL PCSetFromOptions(pc_temp,iperr)
-        CALL KSPSetInitialGuessNonzero(ksp_temp,PETSC_TRUE,iperr)
 
         !Set the interpolation operator:
         CALL solver%interpMats(iLevel)%assemble()

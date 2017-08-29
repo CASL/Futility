@@ -295,8 +295,10 @@ CONTAINS
       ALLOCATE(soln(n))
       soln=1.0_SRK
       soln(n/3)=2.0_SRK
-      CALL setupLinearProblem(thisLS,soln)
+      CALL setupLinearProblem_1D1G(thisLS,soln)
 
+      CALL preAllocInterpMatrices_1D1G(thisLS)
+      CALL setupInterpMatrices_1D1G(thisLS)
       CALL thisLS%setupPETScMG(pList)
 
       ! build x0
@@ -324,6 +326,42 @@ CONTAINS
       !================ 1G Problem ============================
       !
       !
+      !================ 2G Problem ============================
+      CALL init_MultigridLS(thisLS,2)
+
+      ! Create solution:
+      ALLOCATE(soln(n_2G))
+      soln=1.0_SRK
+      soln(n_2G/3)=2.0_SRK
+      CALL setupLinearProblem_1D2G(thisLS,soln)
+
+      CALL preAllocInterpMatrices_1D2G(thisLS)
+      CALL setupInterpMatrices_1D2G(thisLS)
+      CALL thisLS%setupPETScMG(pList)
+
+      ! build x0
+      ALLOCATE(x(n_2G))
+      x(1:(n_2G-1)/2)=0.5_SRK
+      x((n_2G+1)/2:n_2G)=1.1_SRK
+      CALL thisLS%setX0(x)
+
+      !set iterations and convergence information and build/set M
+      CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1000_SIK,30_SIK)
+
+      !solve it
+      CALL thisLS%solve()
+
+      SELECTTYPE(LS_x => thisLS%X); TYPE IS(PETScVectorType)
+        CALL LS_x%getAll(x)
+      ENDSELECT
+      match=ALL(ABS(x-soln) < 1.0E-6_SRK)
+      ASSERT(match, 'PETScIterative%solve() - 2G,1D Multigrid')
+
+      DEALLOCATE(soln)
+      DEALLOCATE(x)
+      CALL thisLS%A%clear()
+      CALL thisLS%clear()
+      !================ 2G Problem ============================
 #endif
 
     ENDSUBROUTINE testIterativeSolve_Multigrid
@@ -413,6 +451,7 @@ CONTAINS
       TYPE(LinearSolverType_Multigrid),INTENT(INOUT) :: thisLS
       INTEGER(SIK) :: iLevel, inx, nx, nx_old
 
+      nx=thisLS%level_info(2,thisLS%nLevels)
       DO iLevel=thisLS%nLevels-1,1,-1
         !Create the interpolation operator:
         nx_old=nx
@@ -431,7 +470,69 @@ CONTAINS
     ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE setupLinearProblem(thisLS,soln)
+    SUBROUTINE preAllocInterpMatrices_1D2G(thisLS)
+      TYPE(LinearSolverType_Multigrid),INTENT(INOUT) :: thisLS
+      INTEGER(SIK) :: iLevel,inx,nx,nx_old,ieqn,row,col
+      INTEGER(SIK),ALLOCATABLE :: dnnz(:),onnz(:)
+
+      nx=thisLS%level_info(2,thisLS%nLevels)
+      DO iLevel=thisLS%nLevels-1,1,-1
+        !Create the interpolation operator:
+        nx_old=nx
+        nx=thisLS%level_info(2,iLevel)
+
+        ALLOCATE(dnnz(nx_old*2),onnz(nx_old*2))
+        onnz=0_SIK
+        DO inx=1,nx_old
+          DO ieqn=1,2
+            row=(inx-1)*2+ieqn
+            IF(XOR(MOD(inx,2)==1, (inx>nx/2 .AND. MOD(nx,2) == 0))) THEN
+              dnnz(row)=1
+            ELSE
+              dnnz(row)=2
+            ENDIF
+          ENDDO
+        ENDDO
+
+        CALL thisLS%preAllocPETScInterpMat(iLevel,dnnz,onnz)
+        DEALLOCATE(dnnz,onnz)
+
+      ENDDO
+    ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE setupInterpMatrices_1D2G(thisLS)
+      TYPE(LinearSolverType_Multigrid),INTENT(INOUT) :: thisLS
+      INTEGER(SIK) :: iLevel,inx,nx,nx_old,ieqn,row
+      INTEGER(SIK) :: inx_c,col
+
+      nx=thisLS%level_info(2,thisLS%nLevels)
+      DO iLevel=thisLS%nLevels-1,1,-1
+        !Create the interpolation operator:
+        nx_old=nx
+        nx=thisLS%level_info(2,iLevel)
+
+        DO inx=1,nx_old
+          DO ieqn=1,2
+            row=(inx-1)*2+ieqn
+            IF(XOR(MOD(inx,2)==1, (inx>nx/2 .AND. MOD(nx,2) == 0))) THEN
+              col=(inx-1)+ieqn
+              CALL thisLS%interpMats(iLevel)%set(row,col,1.0_SRK)
+            ELSE
+              inx_c=inx/2
+              col=(inx_c-1)*2+ieqn
+              CALL thisLS%interpMats(iLevel)%set(row,col,0.5_SRK)
+              col=inx_c*2+ieqn
+              CALL thisLS%interpMats(iLevel)%set(row,col,0.5_SRK)
+            ENDIF
+          ENDDO
+        ENDDO
+
+      ENDDO
+    ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE setupLinearProblem_1D1G(thisLS,soln)
       TYPE(LinearSolverType_Multigrid),INTENT(INOUT) :: thisLS
       REAL(SRK),INTENT(IN) :: soln(:)
       REAL(SRK),ALLOCATABLE :: b(:)
@@ -457,6 +558,61 @@ CONTAINS
           CALL A%set(i,i+1,-1.0_SRK)
           A_temp(i,i+1)=-1.0_SRK
         ENDIF
+      ENDDO
+      ENDSELECT
+
+      ALLOCATE(b(n))
+      b=MATMUL(A_temp,soln)
+      DEALLOCATE(A_temp)
+
+      SELECTTYPE(LS_b => thisLS%b); TYPE IS(PETScVectorType)
+        CALL LS_b%setAll_array(b)
+      ENDSELECT
+      DEALLOCATE(b)
+
+    ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE setupLinearProblem_1D2G(thisLS,soln)
+      TYPE(LinearSolverType_Multigrid),INTENT(INOUT) :: thisLS
+      REAL(SRK),INTENT(IN) :: soln(:)
+      REAL(SRK),ALLOCATABLE :: b(:)
+      REAL(SRK),ALLOCATABLE :: A_temp(:,:)
+      INTEGER(SIK) :: n
+      INTEGER(SIK) :: i,grp
+      INTEGER(SIK) :: row,col
+
+      n=SIZE(soln)/2
+
+      !2G homogeneous diffusion problem:
+      ALLOCATE(A_temp(2*n,2*n))
+      A_temp=0.0_SRK
+      SELECTTYPE(A => thisLS%A); TYPE IS(PETScMatrixType)
+      DO i=1,n
+        DO grp=1,2
+          row=(i-1)*2+grp
+          IF(i > 1) THEN
+            col=(i-2)*2+grp
+            CALL A%set(row,col,-1.0_SRK)
+            A_temp(row,col)=-1.0_SRK
+          ENDIF
+          IF(i < n) THEN
+            col=i*2+grp
+            CALL A%set(row,col,-1.0_SRK)
+            A_temp(row,col)=-1.0_SRK
+          ENDIF
+        ENDDO
+        row=(i-1)*2+1
+        CALL A%set(row,row,2.1_SRK)
+        A_temp(row,row)=2.1_SRK
+        CALL A%set(row+1,row+1,2.2_SRK)
+        A_temp(row+1,row+1)=2.2_SRK
+        !Downscatter:
+        CALL A%set(row,row+1,-0.5_SRK)
+        A_temp(row,row+1)=-0.5_SRK
+        !Upscatter:
+        CALL A%set(row+1,row,-0.01_SRK)
+        A_temp(row+1,row)=-0.01_SRK
       ENDDO
       ENDSELECT
 
