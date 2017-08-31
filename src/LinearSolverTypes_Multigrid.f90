@@ -406,40 +406,6 @@ MODULE LinearSolverTypes_Multigrid
       !Set # of levels:
       CALL PCMGSetLevels(solver%pc,solver%nLevels,PETSC_NULL_OBJECT,iperr) !TODO use some sort of mpi thing here?
 
-      !The following options are applied to all blocks of the block Jacobi
-      ! smoother on all MG levels except the coarsest level.
-      !Solve each block with GS:
-      ! KSPRICHARDSON+SOR with omega=1 --> Gauss-Seidel
-      ! The mg_levels_ prefix specifies that it's for the MG smoother
-      ! mg_levels does not include the coarsest level
-      ! the sub_ indicates it's for each block
-      CALL PetscOptionsSetValue(PETSC_NULL_OBJECT, &
-              "-mg_levels_sub_ksp_type","richardson",iperr)
-      CALL PetscOptionsSetValue(PETSC_NULL_OBJECT, &
-              "-mg_levels_sub_pc_type","sor",iperr)
-      CALL PetscOptionsSetValue(PETSC_NULL_OBJECT, &
-              "-mg_levels_sub_ksp_initial_guess_nonzero","true",iperr)
-      !Only one "richardson iteration" (with possibly many SOR iterations):
-      CALL PetscOptionsSetValue(PETSC_NULL_OBJECT, &
-          "-mg_levels_sub_ksp_max_it","1",iperr)
-      !For some reason it iterates forever when it's a 1x1 block:
-      IF(solver%level_info(1,solver%nLevels) == 1) THEN
-        CALL PetscOptionsSetValue(PETSC_NULL_OBJECT, &
-              "-mg_levels_sub_pc_sor_its","1",iperr)
-      ELSE IF(ANY(solver%level_info(1,:) == 1)) THEN
-        CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
-          "The current setup with PETSc does not allow for coarsening from"// &
-          " multiple equations to 1 equation.  If you need this feature, "// &
-          "consider altering this subroutine.  It is likely not too "// &
-          "difficult to do so.")
-      ELSE
-        CALL PetscOptionsSetValue(PETSC_NULL_OBJECT, &
-              "-mg_levels_sub_pc_sor_its","1",iperr)
-        CALL PetscOptionsSetValue(PETSC_NULL_OBJECT, &
-              "-mg_levels_sub_pc_sor_lits","10",iperr)
-        !ZZZZ might want to change this value later
-      ENDIF
-
       DO iLevel=solver%nLevels-1,1,-1
         !Set the smoother:
         CALL PCMGGetSmoother(solver%pc,iLevel,ksp_temp,iperr)
@@ -448,7 +414,7 @@ MODULE LinearSolverTypes_Multigrid
         !KSPRICHARDSON+PCBJACOBI=block jacobi
         CALL KSPSetType(ksp_temp,KSPRICHARDSON,iperr)
         CALL KSPGetPC(ksp_temp,pc_temp,iperr)
-        CALL PCSetType(pc_temp,PCBJACOBI,iperr)
+        CALL PCSetType(pc_temp,PCSOR,iperr)
         CALL KSPSetInitialGuessNonzero(ksp_temp,PETSC_TRUE,iperr)
 
         !Set number of blocks (i.e., # of spatial points):
@@ -459,8 +425,6 @@ MODULE LinearSolverTypes_Multigrid
         tmpint_arr=solver%level_info(1,iLevel+1)
         CALL PCBJacobiSetTotalBlocks(pc_temp,nx*ny*nz,tmpint_arr,iperr)
         DEALLOCATE(tmpint_arr)
-
-        CALL PCSetFromOptions(pc_temp,iperr)
 
         !Set the interpolation operator:
         CALL solver%interpMats(iLevel)%assemble()
