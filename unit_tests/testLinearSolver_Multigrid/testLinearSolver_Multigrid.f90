@@ -15,8 +15,6 @@ PROGRAM testLinearSolver_Multigrid
   USE ParallelEnv
   USE VectorTypes
   USE MatrixTypes
-  USE PreconditionerTypes
-  USE LinearSolverTypes
   USE LinearSolverTypes_Multigrid
 
   IMPLICIT NONE
@@ -115,10 +113,6 @@ CONTAINS
         CALL pList%add('MatrixType->isSym',.TRUE.)
         CALL pList%validate(pList,optListMat)
         CALL thisLS%A%init(pList) !2x2, symmetric
-
-        ! initialize preconditioner
-        ALLOCATE(ILU_PreCondType :: thisLS%PreCondType)
-        CALL thisLS%setupPC()
 
         ! initialize vector X
         CALL vecPList%set('VectorType -> n',2)
