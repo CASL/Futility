@@ -70,11 +70,11 @@ MODULE LinearSolverTypes_Multigrid
     LOGICAL(SBK) :: isMultigridSetup=.FALSE.
     !> Size of each grid level_info(level,:) = (/num_eqns,nx,ny,nz/)
     INTEGER(SIK),ALLOCATABLE :: level_info(:,:)
-#ifdef FUTILITY_HAVE_PETSC
     !> Size of each grid locally
     INTEGER(SIK),ALLOCATABLE :: level_info_local(:,:)
+#ifdef FUTILITY_HAVE_PETSC
     !> Array of PETSc interpolation matrices
-    TYPE(PETScMatrixType),ALLOCATABLE :: interpMats(:)
+    TYPE(PETScMatrixType),ALLOCATABLE :: interpMats_PETSc(:)
 #endif
 
     CONTAINS
@@ -210,8 +210,8 @@ MODULE LinearSolverTypes_Multigrid
             CALL KSPSetOperators(solver%ksp,A%a,A%a, &
               DIFFERENT_NONZERO_PATTERN,iperr)
 #endif
-#endif
           ENDSELECT
+#endif
 
         ENDIF
 
@@ -296,7 +296,9 @@ MODULE LinearSolverTypes_Multigrid
                  'nx,ny,nz,num_eqns')
         ENDIF
 
-        ALLOCATE(solver%interpMats(solver%nLevels-1))
+#ifdef FUTILITY_HAVE_PETSC
+        ALLOCATE(solver%interpMats_PETSc(solver%nLevels-1))
+#endif
       ELSE
         CALL eLinearSolverType%raiseError('Incorrect call to '// &
           modName//'::'//myName//' - LinearSolverType already initialized')
@@ -328,6 +330,7 @@ MODULE LinearSolverTypes_Multigrid
       TYPE(ParamType) :: matPList
       CLASS(MatrixType),POINTER :: interpmat => NULL()
 
+#ifdef FUTILITY_HAVE_PETSC
       IF(solver%isInit) THEN
         num_eqns=solver%level_info(1,iLevel)
         nx=solver%level_info(2,iLevel)
@@ -369,7 +372,7 @@ MODULE LinearSolverTypes_Multigrid
 
         !Store this matrix object:
         SELECTTYPE(interpmat); TYPE IS(PETScMatrixType)
-          solver%interpMats(iLevel)=interpmat
+          solver%interpMats_PETSc(iLevel)=interpmat
         ENDSELECT
 
         NULLIFY(interpmat)
@@ -377,6 +380,11 @@ MODULE LinearSolverTypes_Multigrid
         CALL eLinearSolverType%raiseError('Incorrect call to '// &
           modName//'::'//myName//' - LinearSolverType must be initialized')
       ENDIF
+#else
+      CALL eLinearSolverType%raiseError('Incorrect call to '// &
+        modName//'::'//myName//' - This subroutine can only be called if '// &
+        'PETSc is not enabled.')
+#endif
 
       CALL matPList%clear()
 
@@ -401,10 +409,7 @@ MODULE LinearSolverTypes_Multigrid
       PC :: pc_temp
       PetscErrorCode  :: iperr
       Mat :: mat_temp
-#else
-      CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
-        "This subroutine should only be called with PETSc.")
-#endif
+
       IF(solver%TPLType /= PETSC) &
         CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
           "This subroutine should only be called with PETSc.")
@@ -413,7 +418,6 @@ MODULE LinearSolverTypes_Multigrid
           CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
                  'Multigrid linear system is already setup!')
 
-#ifdef FUTILITY_HAVE_PETSC
       !KSPRICHARDSON+PCMG = Multigrid linear solver, not multigrid precon.
       CALL KSPSetType(solver%ksp,KSPRICHARDSON,iperr)
       CALL KSPGetPC(solver%ksp,solver%pc,iperr)
@@ -439,8 +443,8 @@ MODULE LinearSolverTypes_Multigrid
         CALL KSPSetInitialGuessNonzero(ksp_temp,PETSC_TRUE,iperr)
 
         !Set the interpolation operator:
-        CALL solver%interpMats(iLevel)%assemble()
-        CALL PCMGSetInterpolation(solver%pc,iLevel,solver%interpMats(iLevel)%a,iperr)
+        CALL solver%interpMats_PETSc(iLevel)%assemble()
+        CALL PCMGSetInterpolation(solver%pc,iLevel,solver%interpMats_PETSc(iLevel)%a,iperr)
       ENDDO
 
       !Coarsest smoother is GMRES with block Jacobi preconditioner:
@@ -449,8 +453,13 @@ MODULE LinearSolverTypes_Multigrid
       CALL KSPGetPC(ksp_temp,pc_temp,iperr)
       CALL PCSetType(pc_temp,PCBJACOBI,iperr)
       CALL KSPSetInitialGuessNonzero(ksp_temp,PETSC_TRUE,iperr)
-#endif
+
       solver%isMultigridSetup=.TRUE.
+#else
+      CALL eLinearSolverType%raiseError('Incorrect call to '// &
+        modName//'::'//myName//' - This subroutine can only be called if '// &
+        'PETSc is not enabled.')
+#endif
 
     ENDSUBROUTINE setupPETScMG_LinearSolverType_Multigrid
 !
@@ -470,15 +479,16 @@ MODULE LinearSolverTypes_Multigrid
 
       IF(solver%isMultigridSetup) THEN
         DO iLevel=1,solver%nLevels-1
-          CALL solver%interpMats(iLevel)%clear()
+          CALL solver%interpMats_PETSc(iLevel)%clear()
         ENDDO
       ENDIF
+
+      IF(ALLOCATED(solver%interpMats_PETSc)) DEALLOCATE(solver%interpMats_PETSc)
 #endif
 
       solver%isMultigridSetup=.FALSE.
       IF(ALLOCATED(solver%level_info)) DEALLOCATE(solver%level_info)
       IF(ALLOCATED(solver%level_info_local)) DEALLOCATE(solver%level_info_local)
-      IF(ALLOCATED(solver%interpMats)) DEALLOCATE(solver%interpMats)
       solver%nLevels=1_SIK
 
       CALL solver%LinearSolverType_Iterative%clear()

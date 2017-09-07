@@ -31,7 +31,9 @@ PROGRAM testLinearSolver_Multigrid
   CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
 #endif
 
+#ifdef HAVE_MPI
   CALL mpiTestEnv%init(MPI_COMM_WORLD)
+#endif
 
   !> set up default parameter list
   CALL optListLS%clear()
@@ -63,8 +65,10 @@ PROGRAM testLinearSolver_Multigrid
 
   REGISTER_SUBTEST('testClear',testClear)
   REGISTER_SUBTEST('testInit',testInit)
+#ifdef FUTILITY_HAVE_PETSC
   REGISTER_SUBTEST('testPreAllocPETScInterpMat',testPreAllocPETScInterpMat)
   REGISTER_SUBTEST('testSetupPETScMG',testSetupPETScMG)
+#endif
   REGISTER_SUBTEST('testIterativeSolve_Multigrid',testIterativeSolve_Multigrid)
 
   FINALIZE_TEST()
@@ -142,7 +146,10 @@ CONTAINS
             .OR. ALLOCATED(thisLS%PreCondType) .OR. thisLS%nLevels /= 1_SIK &
             .OR. ALLOCATED(thisLS%level_info)                               &
             .OR. ALLOCATED(thisLS%level_info_local)                         &
-            .OR. ALLOCATED(thisLS%interpMats) .OR. thisLS%isMultigridSetup
+#ifdef FUTILITY_HAVE_PETSC
+            .OR. ALLOCATED(thisLS%interpMats_PETSc)                         &
+#endif
+            .OR. thisLS%isMultigridSetup
         ASSERT(.NOT.(bool),'CALL Multigrid%clear() FAILED!')
         CALL thisLS%clear()
       ELSE
@@ -208,26 +215,23 @@ CONTAINS
     ENDSUBROUTINE testInit
 !
 !-------------------------------------------------------------------------------
+#ifdef FUTILITY_HAVE_PETSC
     SUBROUTINE testPreAllocPETScInterpMat()
       TYPE(LinearSolverType_Multigrid) :: thisLS
-#ifdef FUTILITY_HAVE_PETSC
       INTEGER(SIK),PARAMETER :: ref_sizes(4)=(/9,17,33,65/)
       INTEGER(SIK) :: iLevel,m,n
       PetscErrorCode :: iperr
-#endif
 
       IF(mpiTestEnv%master) THEN
         CALL init_MultigridLS(thisLS)
         CALL preAllocInterpMatrices_1D1G(thisLS)
-#ifdef FUTILITY_HAVE_PETSC
         DO iLevel=1,thisLS%nLevels-1
-          CALL MatGetSize(thisLS%interpMats(iLevel)%a,m,n,iperr)
+          CALL MatGetSize(thisLS%interpMats_PETSc(iLevel)%a,m,n,iperr)
           ASSERT(m == ref_sizes(iLevel+1),'Incorrect # of rows for interp. mat.')
           FINFO() 'Interpolation from',iLevel,'to',iLevel+1
           ASSERT(n == ref_sizes(iLevel),'Incorrect # of cols for interp. mat.')
           FINFO() 'Interpolation from',iLevel,'to',iLevel+1
         ENDDO
-#endif
         CALL thisLS%clear()
       ELSE
         !This is needed because the wrapper assumes that if one processor has
@@ -237,17 +241,17 @@ CONTAINS
       CALL mpiTestEnv%barrier()
 
     ENDSUBROUTINE
+#endif
 !
 !-------------------------------------------------------------------------------
+#ifdef FUTILITY_HAVE_PETSC
     SUBROUTINE testSetupPETScMG()
       TYPE(LinearSolverType_Multigrid) :: thisLS
-#ifdef FUTILITY_HAVE_PETSC
       KSP :: ksp_temp
       PC :: pc_temp
       KSPType :: ksptype
       PCType :: pctype
       PetscErrorCode :: iperr
-#endif
 
       IF(mpiTestEnv%master) THEN
         CALL init_MultigridLS(thisLS)
@@ -256,7 +260,6 @@ CONTAINS
         CALL thisLS%setupPETScMG(pList)
         ASSERT(thisLS%isMultigridSetup,'LS%isMultigridSetup')
 
-#ifdef FUTILITY_HAVE_PETSC
         CALL KSPGetType(thisLS%ksp,ksptype,iperr)
         ASSERT(ksptype == KSPRICHARDSON,'KSP type must be richardson for MG solver in PETSc')
         CALL KSPGetPC(thisLS%ksp,pc_temp,iperr)
@@ -264,7 +267,6 @@ CONTAINS
         ASSERT(pctype == PCMG,'PC type should be Multigrid!')
 
         CALL thisLS%clear()
-#endif
       ELSE
         !This is needed because the wrapper assumes that if one processor has
         ! >0 asserts, then all procs have >0 asserts.  Without this, it hangs
@@ -273,6 +275,7 @@ CONTAINS
       CALL mpiTestEnv%barrier()
 
     ENDSUBROUTINE
+#endif
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testIterativeSolve_Multigrid()
@@ -331,6 +334,7 @@ CONTAINS
       !
       !
       !================ 2G,2-proc Problem ============================
+#ifdef HAVE_MPI
       level_info=RESHAPE((/2,18,1,1,2,34,1,1,2,66,1,1,2,130,1,1/),(/4,4/))
       level_info_local=RESHAPE((/2,9,1,1,2,17,1,1,2,33,1,1,2,65,1,1/),(/4,4/))
       CALL init_MultigridLS(thisLS,num_eqns_in=2_SIK,nx_in=130_SIK, &
@@ -380,6 +384,7 @@ CONTAINS
       DEALLOCATE(x)
       CALL thisLS%A%clear()
       CALL thisLS%clear()
+#endif
       !================ 2G,2-proc Problem ============================
 #endif
 
@@ -473,6 +478,7 @@ CONTAINS
       INTEGER(SIK) :: iLevel, inx, nx, nx_old
       INTEGER(SIK),ALLOCATABLE :: dnnz(:),onnz(:)
 
+#ifdef FUTILITY_HAVE_PETSC
       nx=thisLS%level_info(2,thisLS%nLevels)
       DO iLevel=thisLS%nLevels-1,1,-1
         !Create the interpolation operator:
@@ -493,6 +499,7 @@ CONTAINS
         DEALLOCATE(dnnz,onnz)
 
       ENDDO
+#endif
     ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
@@ -500,6 +507,7 @@ CONTAINS
       TYPE(LinearSolverType_Multigrid),INTENT(INOUT) :: thisLS
       INTEGER(SIK) :: iLevel, inx, nx, nx_old
 
+#ifdef FUTILITY_HAVE_PETSC
       nx=thisLS%level_info(2,thisLS%nLevels)
       DO iLevel=thisLS%nLevels-1,1,-1
         !Create the interpolation operator:
@@ -508,14 +516,15 @@ CONTAINS
 
         DO inx=1,nx_old
           IF(XOR(MOD(inx,2)==1, (inx>nx/2 .AND. MOD(nx,2) == 0))) THEN
-            CALL thisLS%interpMats(iLevel)%set(inx,(inx+1)/2,1.0_SRK)
+            CALL thisLS%interpMats_PETSc(iLevel)%set(inx,(inx+1)/2,1.0_SRK)
           ELSE
-            CALL thisLS%interpMats(iLevel)%set(inx,inx/2,0.5_SRK)
-            CALL thisLS%interpMats(iLevel)%set(inx,inx/2+1,0.5_SRK)
+            CALL thisLS%interpMats_PETSc(iLevel)%set(inx,inx/2,0.5_SRK)
+            CALL thisLS%interpMats_PETSc(iLevel)%set(inx,inx/2+1,0.5_SRK)
           ENDIF
         ENDDO
 
       ENDDO
+#endif
     ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
@@ -524,6 +533,7 @@ CONTAINS
       INTEGER(SIK) :: iLevel,inx,nx,nx_old,ieqn,row,col
       INTEGER(SIK),ALLOCATABLE :: dnnz(:),onnz(:)
 
+#ifdef FUTILITY_HAVE_PETSC
       nx=thisLS%level_info_local(2,thisLS%nLevels)
       DO iLevel=thisLS%nLevels-1,1,-1
         !Create the interpolation operator:
@@ -547,6 +557,7 @@ CONTAINS
         DEALLOCATE(dnnz,onnz)
 
       ENDDO
+#endif
     ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
@@ -556,6 +567,7 @@ CONTAINS
       INTEGER(SIK) :: inx_c,col
       INTEGER(SIK) :: offset(2)
 
+#ifdef FUTILITY_HAVE_PETSC
       nx=thisLS%level_info_local(2,thisLS%nLevels)
       DO iLevel=thisLS%nLevels-1,1,-1
         !Create the interpolation operator:
@@ -573,20 +585,21 @@ CONTAINS
             row=(inx-1)*2+ieqn
             IF(XOR(MOD(inx,2)==1, (inx>nx/2 .AND. MOD(nx,2) == 0))) THEN
               col=(inx-1)+ieqn
-              CALL thisLS%interpMats(iLevel)%set(row+offset(1),col+offset(2),1.0_SRK)
+              CALL thisLS%interpMats_PETSc(iLevel)%set(row+offset(1),col+offset(2),1.0_SRK)
             ELSE
               inx_c=inx/2
               col=(inx_c-1)*2+ieqn
-              CALL thisLS%interpMats(iLevel)% &
+              CALL thisLS%interpMats_PETSc(iLevel)% &
                             set(row+offset(1),col+offset(2),0.5_SRK)
               col=inx_c*2+ieqn
-              CALL thisLS%interpMats(iLevel)% &
+              CALL thisLS%interpMats_PETSc(iLevel)% &
                             set(row+offset(1),col+offset(2),0.5_SRK)
             ENDIF
           ENDDO
         ENDDO
 
       ENDDO
+#endif
     ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
@@ -598,6 +611,7 @@ CONTAINS
       INTEGER(SIK) :: n
       INTEGER(SIK) :: i
 
+#ifdef FUTILITY_HAVE_PETSC
       n=SIZE(soln)
 
       !A is a tridiagonal system with -1 on the offdiagonals, and
@@ -627,6 +641,7 @@ CONTAINS
         CALL LS_b%setAll_array(b)
       ENDSELECT
       DEALLOCATE(b)
+#endif
 
     ENDSUBROUTINE
 !
@@ -640,6 +655,8 @@ CONTAINS
       INTEGER(SIK) :: i,grp
       INTEGER(SIK) :: row,col
 
+#ifdef FUTILITY_HAVE_PETSC
+#ifdef HAVE_MPI
       n=SIZE(soln)/2
 
       !2G homogeneous diffusion problem:
@@ -692,6 +709,8 @@ CONTAINS
                                   b((nstart-1)*2+1:(nend-1)*2+2))
       ENDSELECT
       DEALLOCATE(b)
+#endif
+#endif
 
     ENDSUBROUTINE
 
