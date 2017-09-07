@@ -86,18 +86,18 @@ MODULE LinearSolverTypes_Multigrid
 #endif
 
     CONTAINS
-      !> @copybrief TODO
-      !> @copydetails TODO
+      !> @copybrief LinearSolverType_Multigrid::init_LinearSolverType_Multigrid
+      !> @copydetails LinearSolverType_Multigrid::init_LinearSolverType_Multigrid
       PROCEDURE,PASS :: init => init_LinearSolverType_Multigrid
-      !> @copybrief TODO
-      !> @copydetails TODO
+      !> @copybrief LinearSolverType_Multigrid::preAllocPETScInterpMat_LinearSolverType_Multigrid
+      !> @copydetails LinearSolverType_Multigrid::preAllocPETScInterpMat_LinearSolverType_Multigrid
       PROCEDURE,PASS :: preAllocPETScInterpMat => &
                           preAllocPETScInterpMat_LinearSolverType_Multigrid
-      !> @copybrief TODO
-      !> @copydetails TODO
+      !> @copybrief LinearSolverType_Multigrid::setupPETScMG_LinearSolverType_Multigrid
+      !> @copydetails LinearSolverType_Multigrid::setupPETScMG_LinearSolverType_Multigrid
       PROCEDURE,PASS :: setupPETScMG => setupPETScMG_LinearSolverType_Multigrid
-      !> @copybrief TODO
-      !> @copydetails TODO
+      !> @copybrief  LinearSolverType_Multigrid::clear_LinearSolverType_Multigrid
+      !> @copydetails LinearSolverType_Multigrid::clear_LinearSolverType_Multigrid
       PROCEDURE,PASS :: clear => clear_LinearSolverType_Multigrid
   ENDTYPE LinearSolverType_Multigrid
 
@@ -280,9 +280,9 @@ MODULE LinearSolverTypes_Multigrid
 
         !Sanity check:
         IF(PRODUCT(solver%level_info(:,solver%nLevels)) /= n) THEN
-            CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
-                   'number of unknowns (n) does not match provided '// &
-                   'nx,ny,nz,num_eqns')
+          CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
+                 'number of unknowns (n) does not match provided '// &
+                 'nx,ny,nz,num_eqns')
         ENDIF
 
         ALLOCATE(solver%interpMats(solver%nLevels-1))
@@ -299,7 +299,7 @@ MODULE LinearSolverTypes_Multigrid
 !> @brief Initialize and preallocate memory for PETSc interpolation matrices
 !>
 !> @param solver The linear solver to act on
-!> @param iLevel The matrix we are allocating interpolates from grid iLevel-1 
+!> @param iLevel The matrix we are allocating interpolates from grid iLevel-1
 !>        to grid iLevel
 !> @param dnnz dnnz(i) must provide the number of nonzero columns local to the
 !>             processor in local row i
@@ -316,7 +316,7 @@ MODULE LinearSolverTypes_Multigrid
 
       TYPE(ParamType) :: matPList
       CLASS(MatrixType),POINTER :: interpmat => NULL()
-      
+
       IF(solver%isInit) THEN
         num_eqns=solver%level_info(1,iLevel)
         nx=solver%level_info(2,iLevel)
@@ -340,6 +340,7 @@ MODULE LinearSolverTypes_Multigrid
         !TODO fix this in parallel:
         CALL matPList%add('MatrixType->nlocal',n_old)
         CALL matPList%add('MatrixType->mlocal',n)
+
         CALL matPList%add('MatrixType->onnz',onnz)
         CALL matPList%add('MatrixType->dnnz',dnnz)
         !CALL matPList%add('MatrixType->nnz',SUM(dnnz)+SUM(onnz))
@@ -358,7 +359,6 @@ MODULE LinearSolverTypes_Multigrid
 
       CALL matPList%clear()
 
-      
     ENDSUBROUTINE preAllocPETScInterpMat_LinearSolverType_Multigrid
 !
 !-------------------------------------------------------------------------------
@@ -404,14 +404,14 @@ MODULE LinearSolverTypes_Multigrid
       CALL KSPSetInitialGuessNonzero(solver%ksp,PETSC_TRUE,iperr)
 
       !Set # of levels:
-      CALL PCMGSetLevels(solver%pc,solver%nLevels,PETSC_NULL_OBJECT,iperr) !TODO use some sort of mpi thing here?
+      CALL PCMGSetLevels(solver%pc,solver%nLevels,PETSC_NULL_OBJECT,iperr)
 
       DO iLevel=solver%nLevels-1,1,-1
         !Set the smoother:
         CALL PCMGGetSmoother(solver%pc,iLevel,ksp_temp,iperr)
 
         !Block Jacobi smoother:
-        !KSPRICHARDSON+PCBJACOBI=block jacobi
+        !KSPRICHARDSON+PCSOR=Gauss-Seidel
         CALL KSPSetType(ksp_temp,KSPRICHARDSON,iperr)
         CALL KSPGetPC(ksp_temp,pc_temp,iperr)
         CALL PCSetType(pc_temp,PCSOR,iperr)
