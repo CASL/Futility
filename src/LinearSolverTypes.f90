@@ -892,22 +892,22 @@ MODULE LinearSolverTypes
                 IF(.NOT.solver%isDecomposed) &
                   CALL DecomposePLU_TriDiag(solver)
                 CALL solvePLU_TriDiag(solver)
-#ifdef FUTILITY_HAVE_PETSC                  
+#ifdef FUTILITY_HAVE_PETSC
               TYPE IS(PETScMatrixType)
                 IF(solver%TPLtype==PETSC) THEN
                   ! assemble matrix if necessary
                   IF(.NOT.(A%isAssembled)) CALL A%assemble()
-                  
+
                   ! assemble source vector if necessary
                   SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
                     IF(.NOT.(b%isAssembled)) CALL b%assemble()
                   ENDSELECT
-                  
+
                   ! assemble solution vector if necessary
                   SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
                     IF(.NOT.(X%isAssembled)) CALL X%assemble()
                   ENDSELECT
-                
+
                   SELECTTYPE(A => solver%A); TYPE IS(PETScMatrixType)
                     SELECTTYPE(x => solver%x); TYPE IS(PETScVectorType)
                       SELECTTYPE(b => solver%b); TYPE IS(PETScVectorType)
