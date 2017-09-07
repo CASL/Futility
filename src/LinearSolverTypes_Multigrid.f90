@@ -39,18 +39,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE LinearSolverTypes_Multigrid
   USE IntrType
-  USE BLAS
-  USE trilinos_interfaces
-  USE Times
   USE ExceptionHandler
-  USE Allocs
   USE ParameterLists
-  USE ParallelEnv
   USE VectorTypes
   USE MatrixTypes
-  USE PreconditionerTypes
-  USE Strings
-  USE IOUtil
   USE LinearSolverTypes
   IMPLICIT NONE
 
@@ -262,7 +254,6 @@ MODULE LinearSolverTypes_Multigrid
           CALL Params%get('LinearSolverType->Multigrid->nx_local',nx)
           CALL Params%get('LinearSolverType->Multigrid->ny_local',ny)
           CALL Params%get('LinearSolverType->Multigrid->nz_local',nz)
-          CALL Params%get('LinearSolverType->MPI_Comm_ID',MPI_Comm_ID)
           CALL Params%get('LinearSolverType->Multigrid->num_eqns',num_eqns)
 
           !Number of levels required to reduce down to ~5*num_eqns unknowns per processor:
