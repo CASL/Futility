@@ -126,7 +126,7 @@ MODULE LinearSolverTypes_Multigrid
       CLASS(ParamType),POINTER :: pListPtr
       TYPE(ParamType) :: validParams,matPList,vecxPList,vecbPList
       ! local variables
-      INTEGER(SIK) :: n,num_eqns,nx,ny,nz
+      INTEGER(SIK) :: n,num_eqns,nx,ny,nz,nlocal
       INTEGER(SIK) :: iLevel
       INTEGER(SIK) :: TPLType
       INTEGER(SIK) :: matType,matEngine
@@ -172,6 +172,7 @@ MODULE LinearSolverTypes_Multigrid
       CALL vecbPList%add('VectorType->MPI_Comm_ID',MPI_Comm_ID)
       !pull size from source vector
       CALL validParams%get('LinearSolverType->b->VectorType->n',n)
+      CALL validParams%get('LinearSolverType->b->VectorType->nlocal',nlocal)
 
       CALL validParams%clear()
 
@@ -228,31 +229,52 @@ MODULE LinearSolverTypes_Multigrid
         solver%isMultigridSetup=.FALSE.
 
         !Figure out coarsening scheme:
-        manuallySetLevelInfo=.FALSE.
-        !To use this option, one must manually set solver%level_info and
-        !  solver%nLevels
-        IF(Params%has('LinearSolverType->manuallySetLevelInfo')) THEN
-          CALL Params%get('LinearSolverType->manuallySetLevelInfo', &
+        manuallySetLevelInfo=.TRUE.
+        IF(Params%has('LinearSolverType->Multigrid->manuallySetLevelInfo')) THEN
+          CALL Params%get('LinearSolverType->Multigrid->manuallySetLevelInfo', &
                           manuallySetLevelInfo)
         ENDIF
-        IF(.NOT. manuallySetLevelInfo) THEN
-          CALL Params%get('LinearSolverType->Multigrid->nx',nx)
-          CALL Params%get('LinearSolverType->Multigrid->ny',ny)
-          CALL Params%get('LinearSolverType->Multigrid->nz',nz)
+        IF(manuallySetLevelInfo) THEN
+          IF(.NOT.(Params%has('LinearSolverType->Multigrid->nLevels'))) &
+            CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
+                   'Number of levels (nLevels) not provided!')
+          IF(.NOT.(Params%has('LinearSolverType->Multigrid->level_info_local'))) &
+            CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
+                   'level_info_local not provided!')
+          IF(.NOT.(Params%has('LinearSolverType->Multigrid->level_info'))) &
+            CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
+                   'level_info not provided!')
+
+          CALL Params%get('LinearSolverType->Multigrid->nLevels',solver%nLevels)
+          ALLOCATE(solver%level_info_local(4,solver%nLevels))
+          CALL Params%get('LinearSolverType->Multigrid->level_info_local', &
+                              solver%level_info_local)
+          ALLOCATE(solver%level_info(4,solver%nLevels))
+          CALL Params%get('LinearSolverType->Multigrid->level_info', &
+                              solver%level_info)
+        ELSE
+          !The code in this else statement is mostly for testing.  It's an
+          !  example of how to define the levels for a simple 1D problem on 1
+          !  processor.  For any realistic (2D/3D or parallel) problem,
+          !  level_info_local and level_info should be provided to linear
+          !  solver.  It is too difficult to generalize this for all types of
+          !  problems.
+          CALL Params%get('LinearSolverType->Multigrid->nx_local',nx)
+          CALL Params%get('LinearSolverType->Multigrid->ny_local',ny)
+          CALL Params%get('LinearSolverType->Multigrid->nz_local',nz)
           CALL Params%get('LinearSolverType->MPI_Comm_ID',MPI_Comm_ID)
           CALL Params%get('LinearSolverType->Multigrid->num_eqns',num_eqns)
 
           !Number of levels required to reduce down to ~5*num_eqns unknowns per processor:
-          solver%nLevels=FLOOR(log(MAX(nx-1,ny-1,nz-1)/ &
-                solver%MPIParallelEnv%nproc/5.0_SRK)/log(2.0_SRK))+1
+          solver%nLevels=FLOOR(log(MAX(nx-1,ny-1,nz-1)/5.0_SRK)/log(2.0_SRK))+1
           solver%nLevels=MIN(solver%nLevels,max_levels)
           solver%nLevels=MAX(1,solver%nLevels)
           IF(solver%nLevels < 2) &
               CALL eLinearSolverType%raiseDebug(modName//"::"//myName//" - "// &
                      'The grid is too small to coarsen, using multigrid with '// &
                      ' only 1 level!')
-          ALLOCATE(solver%level_info(4,solver%nLevels))
-          solver%level_info(:,solver%nLevels)=(/num_eqns,nx,ny,nz/)
+          ALLOCATE(solver%level_info_local(4,solver%nLevels))
+          solver%level_info_local(:,solver%nLevels)=(/num_eqns,nx,ny,nz/)
           DO iLevel=solver%nLevels-1,1,-1
           !Setup the interpolation operator:
             IF(nx > 3) THEN
@@ -270,12 +292,10 @@ MODULE LinearSolverTypes_Multigrid
             ELSEIF(nz == 3) THEN
               nz=1
             ENDIF
-            solver%level_info(:,iLevel)=(/num_eqns,nx,ny,nz/)
+            solver%level_info_local(:,iLevel)=(/num_eqns,nx,ny,nz/)
           ENDDO !iLevel
-        ELSE
-          CALL Params%get('LinearSolverType->Multigrid->nLevels',solver%nLevels)
           ALLOCATE(solver%level_info(4,solver%nLevels))
-          CALL Params%get('LinearSolverType->Multigrid->level_info',solver%level_info)
+          solver%level_info=solver%level_info_local
         ENDIF !manuallySetLevelInfo
 
         !Sanity check:
@@ -337,7 +357,17 @@ MODULE LinearSolverTypes_Multigrid
         CALL matPList%add('MatrixType->isSym',.FALSE.)
         CALL matPList%add('MatrixType->n',n_old)
         CALL matPList%add('MatrixType->m',n)
-        !TODO fix this in parallel:
+
+        num_eqns=solver%level_info_local(1,iLevel)
+        nx=solver%level_info_local(2,iLevel)
+        ny=solver%level_info_local(3,iLevel)
+        nz=solver%level_info_local(4,iLevel)
+        n=nx*ny*nz*num_eqns
+        num_eqns_old=solver%level_info_local(1,iLevel+1)
+        nx_old=solver%level_info_local(2,iLevel+1)
+        ny_old=solver%level_info_local(3,iLevel+1)
+        nz_old=solver%level_info_local(4,iLevel+1)
+        n_old=nx_old*ny_old*nz_old*num_eqns_old
         CALL matPList%add('MatrixType->nlocal',n_old)
         CALL matPList%add('MatrixType->mlocal',n)
 
@@ -374,7 +404,7 @@ MODULE LinearSolverTypes_Multigrid
       INTEGER(SIK) :: iLevel
       INTEGER(SIK) :: nx,ny,nz
 #ifdef FUTILITY_HAVE_PETSC
-      INTEGER(SIK),ALLOCATABLE :: tmpint_arr(:) !ZZZZ
+      INTEGER(SIK),ALLOCATABLE :: tmpint_arr(:)
 
       KSP :: ksp_temp
       PC :: pc_temp
@@ -416,15 +446,6 @@ MODULE LinearSolverTypes_Multigrid
         CALL KSPGetPC(ksp_temp,pc_temp,iperr)
         CALL PCSetType(pc_temp,PCSOR,iperr)
         CALL KSPSetInitialGuessNonzero(ksp_temp,PETSC_TRUE,iperr)
-
-        !Set number of blocks (i.e., # of spatial points):
-        nx=solver%level_info(2,iLevel+1)
-        ny=solver%level_info(3,iLevel+1)
-        nz=solver%level_info(4,iLevel+1)
-        ALLOCATE(tmpint_arr(nx*ny*nz))
-        tmpint_arr=solver%level_info(1,iLevel+1)
-        CALL PCBJacobiSetTotalBlocks(pc_temp,nx*ny*nz,tmpint_arr,iperr)
-        DEALLOCATE(tmpint_arr)
 
         !Set the interpolation operator:
         CALL solver%interpMats(iLevel)%assemble()

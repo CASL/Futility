@@ -33,11 +33,13 @@ PROGRAM testLinearSolver_Multigrid
   CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
 #endif
 
+  CALL mpiTestEnv%init(MPI_COMM_WORLD)
+
   !> set up default parameter list
   CALL optListLS%clear()
   CALL optListLS%add('LinearSolverType->TPLType',NATIVE)
   CALL optListLS%add('LinearSolverType->solverMethod',1_SNK) ! GE or BICGSTAB
-  CALL optListLS%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
+  CALL optListLS%add('LinearSolverType->MPI_Comm_ID',mpiTestEnv%comm)
   CALL optListLS%add('LinearSolverType->numberOMP',1_SNK)
   CALL optListLS%add('LinearSolverType->timerName','LinearSolver Timer')
   CALL optListLS%add('LinearSolverType->matType',SPARSE)
@@ -51,14 +53,13 @@ PROGRAM testLinearSolver_Multigrid
 
   ! Set up vector parameter list
   CALL vecPList%add('VectorType -> n',2)
-  CALL vecPList%add('VectorType -> MPI_Comm_ID',PE_COMM_SELF)
+  CALL vecPList%add('VectorType -> MPI_Comm_ID',mpiTestEnv%comm)
 
   !Configure exception handler for test
   CALL e%setStopOnError(.FALSE.)
   CALL e%setQuietMode(.TRUE.)
   CALL eParams%addSurrogate(e)
   CALL eLinearSolverType%addSurrogate(e)
-  CALL mpiTestEnv%init(PE_COMM_SELF)
 
   CREATE_TEST('Test Linear Solvers')
 
@@ -89,63 +90,73 @@ CONTAINS
       TYPE(LinearSolverType_Multigrid) :: thisLS
       LOGICAL(SBK) :: bool
 
-      !first build one by hand to test
-      thisLS%isInit=.TRUE.
-      thisLS%TPLType=PETSC
-      thisLS%solverMethod=1
-      thisLS%info=2
-      thisLS%normType=2
-      thisLS%maxIters=2
-      thisLS%iters=2
-      thisLS%convTol=2._SRK
-      thisLS%residual=2._SRK
-      thisLS%isDecomposed=.TRUE.
-      CALL thisLS%MPIparallelEnv%init(PE_COMM_SELF)
-      CALL thisLS%OMPparallelEnv%init(1)
+      IF(mpiTestEnv%master) THEN
+        !first build one by hand to test
+        thisLS%isInit=.TRUE.
+        thisLS%TPLType=PETSC
+        thisLS%solverMethod=1
+        thisLS%info=2
+        thisLS%normType=2
+        thisLS%maxIters=2
+        thisLS%iters=2
+        thisLS%convTol=2._SRK
+        thisLS%residual=2._SRK
+        thisLS%isDecomposed=.TRUE.
+        CALL thisLS%MPIparallelEnv%init(PE_COMM_SELF)
+        CALL thisLS%OMPparallelEnv%init(1)
 #ifdef FUTILITY_HAVE_PETSC
-      CALL KSPCreate(thisLS%MPIparallelEnv%comm,thisLS%ksp,ierr)
+        CALL KSPCreate(thisLS%MPIparallelEnv%comm,thisLS%ksp,ierr)
 #endif
 
-      ! initialize matrix A
-      ALLOCATE(DenseSquareMatrixType :: thisLS%A)
-      CALL pList%clear()
-      CALL pList%add('MatrixType->n',2_SNK)
-      CALL pList%add('MatrixType->isSym',.TRUE.)
-      CALL pList%validate(pList,optListMat)
-      CALL thisLS%A%init(pList) !2x2, symmetric
+        ! initialize matrix A
+        ALLOCATE(DenseSquareMatrixType :: thisLS%A)
+        CALL pList%clear()
+        CALL pList%add('MatrixType->n',2_SNK)
+        CALL pList%add('MatrixType->isSym',.TRUE.)
+        CALL pList%validate(pList,optListMat)
+        CALL thisLS%A%init(pList) !2x2, symmetric
 
-      ! initialize preconditioner
-      ALLOCATE(ILU_PreCondType :: thisLS%PreCondType)
-      CALL thisLS%setupPC() !ZZZZ
+        ! initialize preconditioner
+        ALLOCATE(ILU_PreCondType :: thisLS%PreCondType)
+        CALL thisLS%setupPC()
 
-      ! initialize vector X
-      CALL vecPList%set('VectorType -> n',2)
-      ALLOCATE(RealVectorType :: thisLS%X)
-      CALL thisLS%X%init(vecPList)
+        ! initialize vector X
+        CALL vecPList%set('VectorType -> n',2)
+        ALLOCATE(RealVectorType :: thisLS%X)
+        CALL thisLS%X%init(vecPList)
 
-      ! initialize vector b
-      ALLOCATE(RealVectorType :: thisLS%b)
-      CALL thisLS%b%init(vecPList)
+        ! initialize vector b
+        ALLOCATE(RealVectorType :: thisLS%b)
+        CALL thisLS%b%init(vecPList)
 
-      ! initialize matrix M
-      ALLOCATE(DenseSquareMatrixType :: thisLS%M)
-      CALL pList%clear()
-      CALL pList%add('MatrixType->n',10_SNK)
-      CALL pList%add('MatrixType->isSym',.TRUE.)
-      CALL thisLS%M%init(pList)
+        ! initialize matrix M
+        ALLOCATE(DenseSquareMatrixType :: thisLS%M)
+        CALL pList%clear()
+        CALL pList%add('MatrixType->n',10_SNK)
+        CALL pList%add('MatrixType->isSym',.TRUE.)
+        CALL thisLS%M%init(pList)
 
-      CALL thisLS%clear()
+        CALL thisLS%clear()
 
-      !check results
-      bool=thisLS%isInit .OR.thisLS%solverMethod == 1                  &
-          .OR. ALLOCATED(thisLS%M) .OR. ASSOCIATED(thisLS%A)           &
-          .OR. ASSOCIATED(thisLS%X) .OR. thisLS%info /= 0               &
-          .OR. thisLS%normType == 2 .OR. thisLS%maxIters == 2          &
-          .OR. thisLS%iters == 2 .OR. thisLS%isDecomposed              &
-          .OR. thisLS%residual == 2._SRK .OR. thisLS%convTol == 2._SRK &
-          .OR. ALLOCATED(thisLS%PreCondType)
-      ASSERT(.NOT.(bool),'CALL Multigrid%clear() FAILED!')
-      CALL thisLS%clear()
+        !check results
+        bool=thisLS%isInit .OR.thisLS%solverMethod == 1                     &
+            .OR. ALLOCATED(thisLS%M) .OR. ASSOCIATED(thisLS%A)              &
+            .OR. ASSOCIATED(thisLS%X) .OR. thisLS%info /= 0                 &
+            .OR. thisLS%normType == 2 .OR. thisLS%maxIters == 2             &
+            .OR. thisLS%iters == 2 .OR. thisLS%isDecomposed                 &
+            .OR. thisLS%residual == 2._SRK .OR. thisLS%convTol == 2._SRK    &
+            .OR. ALLOCATED(thisLS%PreCondType) .OR. thisLS%nLevels /= 1_SIK &
+            .OR. ALLOCATED(thisLS%level_info)                               &
+            .OR. ALLOCATED(thisLS%level_info_local)                         &
+            .OR. ALLOCATED(thisLS%interpMats) .OR. thisLS%isMultigridSetup
+        ASSERT(.NOT.(bool),'CALL Multigrid%clear() FAILED!')
+        CALL thisLS%clear()
+      ELSE
+        !This is needed because the wrapper assumes that if one processor has
+        ! >0 asserts, then all procs have >0 asserts.  Without this, it hangs
+        ASSERT(.TRUE.,'blank assert')
+      ENDIF
+      CALL mpiTestEnv%barrier()
 
     ENDSUBROUTINE testClear
 !
@@ -153,69 +164,52 @@ CONTAINS
     SUBROUTINE testInit()
       TYPE(LinearSolverType_Multigrid) :: thisLS
       INTEGER(SIK) :: ref_level_info(4,4)
-      INTEGER(SIK) :: nerrors1,nerrors2
       LOGICAL(SBK) :: bool
 
-      CALL pList%clear()
-      CALL pList%add('LinearSolverType->matType',SPARSE)
-      CALL pList%add('LinearSolverType->TPLType',PETSC)
-      CALL pList%add('LinearSolverType->solverMethod',MULTIGRID)
-      CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-      CALL pList%add('LinearSolverType->numberOMP',1_SNK)
-      CALL pList%add('LinearSolverType->A->MatrixType->n',65_SNK)
-      CALL pList%add('LinearSolverType->A->MatrixType->nlocal',65_SNK)
-      CALL pList%add('LinearSolverType->A->MatrixType->nnz',193_SNK)
-      CALL pList%add('LinearSolverType->x->VectorType->n',65_SNK)
-      CALL pList%add('LinearSolverType->x->VectorType->nlocal',65_SNK)
-      CALL pList%add('LinearSolverType->b->VectorType->n',65_SNK)
-      CALL pList%add('LinearSolverType->b->VectorType->nlocal',65_SNK)
-      CALL pList%add('LinearSolverType->PCType','PCMG')
-      CALL pList%add('LinearSolverType->PCIters',-1)
-      CALL pList%add('LinearSolverType->PCSetup',0)
-      CALL pList%add('LinearSolverType->Multigrid->nx',65_SIK)
-      CALL pList%add('LinearSolverType->Multigrid->nx',65_SIK)
-      CALL pList%add('LinearSolverType->Multigrid->ny',1_SIK)
-      CALL pList%add('LinearSolverType->Multigrid->nz',1_SIK)
-      CALL pList%add('LinearSolverType->Multigrid->num_eqns',1_SIK)
+      IF(mpiTestEnv%master) THEN
+        CALL pList%clear()
+        CALL pList%add('LinearSolverType->matType',SPARSE)
+        CALL pList%add('LinearSolverType->TPLType',PETSC)
+        CALL pList%add('LinearSolverType->solverMethod',MULTIGRID)
+        CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
+        CALL pList%add('LinearSolverType->numberOMP',1_SNK)
+        CALL pList%add('LinearSolverType->A->MatrixType->n',65_SNK)
+        CALL pList%add('LinearSolverType->A->MatrixType->nlocal',65_SNK)
+        CALL pList%add('LinearSolverType->A->MatrixType->nnz',193_SNK)
+        CALL pList%add('LinearSolverType->x->VectorType->n',65_SNK)
+        CALL pList%add('LinearSolverType->x->VectorType->nlocal',65_SNK)
+        CALL pList%add('LinearSolverType->b->VectorType->n',65_SNK)
+        CALL pList%add('LinearSolverType->b->VectorType->nlocal',65_SNK)
+        CALL pList%add('LinearSolverType->PCType','PCMG')
+        CALL pList%add('LinearSolverType->PCIters',-1)
+        CALL pList%add('LinearSolverType->PCSetup',0)
+        CALL pList%add('LinearSolverType->Multigrid->nx_local',65_SIK)
+        CALL pList%add('LinearSolverType->Multigrid->ny_local',1_SIK)
+        CALL pList%add('LinearSolverType->Multigrid->nz_local',1_SIK)
+        CALL pList%add('LinearSolverType->Multigrid->num_eqns',1_SIK)
+        CALL pList%add('LinearSolverType->Multigrid->manuallySetLevelInfo',.FALSE.)
 
-      CALL pList%validate(pList,optListLS)
-      CALL thisLS%init(pList)
-      bool = (thisLS%isInit .AND. thisLS%solverMethod == MULTIGRID &
-         .AND. thisLS%MPIparallelEnv%isInit() &
-         .AND. thisLS%OMPparallelEnv%isInit() )
-      ASSERT(bool, 'Iterative%init(...)')
-        ! Check uninitialized A
-      CALL thisLS%A%clear()
-      nerrors1=e%getCounter(EXCEPTION_ERROR)
-      CALL thisLS%setupPC()
-      nerrors2=e%getCounter(EXCEPTION_ERROR)
-      ASSERT(nerrors2 == nerrors1+1,'LS%setupPC PC%A%isInit check')
-      FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
-      ! Check deallocated A
-      DEALLOCATE(thisLS%A)
-      nerrors1=e%getCounter(EXCEPTION_ERROR)
-      CALL thisLS%setupPC()
-      nerrors2=e%getCounter(EXCEPTION_ERROR)
-      ASSERT(nerrors2 == nerrors1+1,'LS%setupPC ALLOCATED(PC%A) check')
-      FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
+        CALL pList%validate(pList,optListLS)
+        CALL thisLS%init(pList)
+        bool = (thisLS%isInit .AND. thisLS%solverMethod == MULTIGRID &
+           .AND. thisLS%MPIparallelEnv%isInit() &
+           .AND. thisLS%OMPparallelEnv%isInit() )
+        ASSERT(bool, 'Iterative%init(...)')
 
-      CALL thisLS%init(pList)
-      ref_level_info = RESHAPE((/1,9,1,1, &
-                                 1,17,1,1, &
-                                 1,33,1,1, &
-                                 1,65,1,1/),SHAPE(ref_level_info))
-      ASSERT(thisLS%nLevels == 4,'Check number of multigrid levels')
-      ASSERT(ALL(ref_level_info == thisLS%level_info),'Check grid sizes on each level.')
+        ref_level_info = RESHAPE((/1,9,1,1, &
+                                   1,17,1,1, &
+                                   1,33,1,1, &
+                                   1,65,1,1/),SHAPE(ref_level_info))
+        ASSERT(thisLS%nLevels == 4,'Check number of multigrid levels')
+        ASSERT(ALL(ref_level_info == thisLS%level_info),'Check grid sizes on each level.')
 
-      CALL thisLS%clear()
-      ! Check uninitialized linear solver
-      nerrors1=e%getCounter(EXCEPTION_ERROR)
-      CALL thisLS%setupPC()
-      nerrors2=e%getCounter(EXCEPTION_ERROR)
-      ASSERT(nerrors2 == nerrors1+1,'LS%setupPC ALLOCATED(PC%A) check')
-      FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
-!      ENDIF
-      CALL thisLS%clear()
+        CALL thisLS%clear()
+      ELSE
+        !This is needed because the wrapper assumes that if one processor has
+        ! >0 asserts, then all procs have >0 asserts.  Without this, it hangs
+        ASSERT(.TRUE.,'blank assert')
+      ENDIF
+      CALL mpiTestEnv%barrier()
 
     ENDSUBROUTINE testInit
 !
@@ -228,18 +222,25 @@ CONTAINS
       PetscErrorCode :: iperr
 #endif
 
-      CALL init_MultigridLS(thisLS)
-      CALL preAllocInterpMatrices_1D1G(thisLS)
+      IF(mpiTestEnv%master) THEN
+        CALL init_MultigridLS(thisLS)
+        CALL preAllocInterpMatrices_1D1G(thisLS)
 #ifdef FUTILITY_HAVE_PETSC
-      DO iLevel=1,thisLS%nLevels-1
-        CALL MatGetSize(thisLS%interpMats(iLevel)%a,m,n,iperr)
-        ASSERT(m == ref_sizes(iLevel+1),'Incorrect # of rows for interp. mat.')
-        FINFO() 'Interpolation from',iLevel,'to',iLevel+1
-        ASSERT(n == ref_sizes(iLevel),'Incorrect # of cols for interp. mat.')
-        FINFO() 'Interpolation from',iLevel,'to',iLevel+1
-      ENDDO
+        DO iLevel=1,thisLS%nLevels-1
+          CALL MatGetSize(thisLS%interpMats(iLevel)%a,m,n,iperr)
+          ASSERT(m == ref_sizes(iLevel+1),'Incorrect # of rows for interp. mat.')
+          FINFO() 'Interpolation from',iLevel,'to',iLevel+1
+          ASSERT(n == ref_sizes(iLevel),'Incorrect # of cols for interp. mat.')
+          FINFO() 'Interpolation from',iLevel,'to',iLevel+1
+        ENDDO
 #endif
-      CALL thisLS%clear()
+        CALL thisLS%clear()
+      ELSE
+        !This is needed because the wrapper assumes that if one processor has
+        ! >0 asserts, then all procs have >0 asserts.  Without this, it hangs
+        ASSERT(.TRUE.,'blank assert')
+      ENDIF
+      CALL mpiTestEnv%barrier()
 
     ENDSUBROUTINE
 !
@@ -254,21 +255,28 @@ CONTAINS
       PetscErrorCode :: iperr
 #endif
 
-      CALL init_MultigridLS(thisLS)
-      CALL preAllocInterpMatrices_1D1G(thisLS)
-      CALL setupInterpMatrices_1D1G(thisLS)
-      CALL thisLS%setupPETScMG(pList)
-      ASSERT(thisLS%isMultigridSetup,'LS%isMultigridSetup')
+      IF(mpiTestEnv%master) THEN
+        CALL init_MultigridLS(thisLS)
+        CALL preAllocInterpMatrices_1D1G(thisLS)
+        CALL setupInterpMatrices_1D1G(thisLS)
+        CALL thisLS%setupPETScMG(pList)
+        ASSERT(thisLS%isMultigridSetup,'LS%isMultigridSetup')
 
 #ifdef FUTILITY_HAVE_PETSC
-      CALL KSPGetType(thisLS%ksp,ksptype,iperr)
-      ASSERT(ksptype == KSPRICHARDSON,'KSP type must be richardson for MG solver in PETSc')
-      CALL KSPGetPC(thisLS%ksp,pc_temp,iperr)
-      CALL PCGetType(pc_temp,pctype,iperr)
-      ASSERT(pctype == PCMG,'PC type should be Multigrid!')
-#endif
+        CALL KSPGetType(thisLS%ksp,ksptype,iperr)
+        ASSERT(ksptype == KSPRICHARDSON,'KSP type must be richardson for MG solver in PETSc')
+        CALL KSPGetPC(thisLS%ksp,pc_temp,iperr)
+        CALL PCGetType(pc_temp,pctype,iperr)
+        ASSERT(pctype == PCMG,'PC type should be Multigrid!')
 
-      CALL thisLS%clear()
+        CALL thisLS%clear()
+#endif
+      ELSE
+        !This is needed because the wrapper assumes that if one processor has
+        ! >0 asserts, then all procs have >0 asserts.  Without this, it hangs
+        ASSERT(.TRUE.,'blank assert')
+      ENDIF
+      CALL mpiTestEnv%barrier()
 
     ENDSUBROUTINE
 !
@@ -279,100 +287,121 @@ CONTAINS
       REAL(SRK),ALLOCATABLE :: A_temp(:,:)
       REAL(SRK),POINTER :: x(:)
       LOGICAL(SBK) :: match
-      INTEGER(SIK) :: i
+      INTEGER(SIK) :: istt,istp
 
       INTEGER(SIK),PARAMETER :: n=65_SNK
-      INTEGER(SIK),PARAMETER :: n_2G=130_SNK
+      INTEGER(SIK),PARAMETER :: n_2G=260_SNK
+
+      INTEGER(SIK) :: level_info(4,4),level_info_local(4,4)
 
 #ifdef FUTILITY_HAVE_PETSC
       !================ 1G Problem ============================
-      CALL init_MultigridLS(thisLS)
-      CALL preAllocInterpMatrices_1D1G(thisLS)
-      CALL setupInterpMatrices_1D1G(thisLS)
-      CALL thisLS%setupPETScMG(pList)
+      IF(mpiTestEnv%master) THEN
+        CALL init_MultigridLS(thisLS)
 
-      ! Create solution:
-      ALLOCATE(soln(n))
-      soln=1.0_SRK
-      soln(n/3)=2.0_SRK
-      CALL setupLinearProblem_1D1G(thisLS,soln)
+        ! Create solution:
+        ALLOCATE(soln(n))
+        soln=1.0_SRK
+        soln(n/3)=2.0_SRK
+        CALL setupLinearProblem_1D1G(thisLS,soln)
 
-      CALL preAllocInterpMatrices_1D1G(thisLS)
-      CALL setupInterpMatrices_1D1G(thisLS)
-      CALL thisLS%setupPETScMG(pList)
+        CALL preAllocInterpMatrices_1D1G(thisLS)
+        CALL setupInterpMatrices_1D1G(thisLS)
+        CALL thisLS%setupPETScMG(pList)
 
-      ! build x0
-      ALLOCATE(x(n))
-      x(1:(n-1)/2)=0.5_SRK
-      x((n+1)/2:n)=1.1_SRK
-      CALL thisLS%setX0(x)
+        ! build x0
+        ALLOCATE(x(n))
+        x(1:(n-1)/2)=0.5_SRK
+        x((n+1)/2:n)=1.1_SRK
+        CALL thisLS%setX0(x)
 
-      !set iterations and convergence information and build/set M
-      CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1000_SIK,30_SIK)
+        !set iterations and convergence information and build/set M
+        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1000_SIK,30_SIK)
 
-      !solve it
-      CALL thisLS%solve()
+        !solve it
+        CALL thisLS%solve()
 
-      SELECTTYPE(LS_x => thisLS%X); TYPE IS(PETScVectorType)
-        CALL LS_x%getAll(x)
-      ENDSELECT
-      match=ALL(ABS(x-soln) < 1.0E-6_SRK)
-      ASSERT(match, 'PETScIterative%solve() - 1G,1D Multigrid')
+        SELECTTYPE(LS_x => thisLS%X); TYPE IS(PETScVectorType)
+          CALL LS_x%getAll(x)
+        ENDSELECT
+        match=ALL(ABS(x-soln) < 1.0E-6_SRK)
+        ASSERT(match, 'PETScIterative%solve() - 1G,1D Multigrid')
 
-      DEALLOCATE(soln)
-      DEALLOCATE(x)
-      CALL thisLS%A%clear()
-      CALL thisLS%clear()
+        DEALLOCATE(soln)
+        DEALLOCATE(x)
+        CALL thisLS%A%clear()
+        CALL thisLS%clear()
+      ENDIF
+      CALL mpiTestEnv%barrier()
       !================ 1G Problem ============================
       !
       !
-      !================ 2G Problem ============================
-      CALL init_MultigridLS(thisLS,2)
+      !================ 2G,2-proc Problem ============================
+      level_info=RESHAPE((/2,18,1,1,2,34,1,1,2,66,1,1,2,130,1,1/),(/4,4/))
+      level_info_local=RESHAPE((/2,9,1,1,2,17,1,1,2,33,1,1,2,65,1,1/),(/4,4/))
+      CALL init_MultigridLS(thisLS,num_eqns_in=2_SIK,nx_in=130_SIK, &
+                              nprocs_in=2_SIK,level_info=level_info, &
+                              level_info_local=level_info_local,nlevels=4_SIK)
 
       ! Create solution:
       ALLOCATE(soln(n_2G))
       soln=1.0_SRK
       soln(n_2G/3)=2.0_SRK
-      CALL setupLinearProblem_1D2G(thisLS,soln)
+      CALL setupLinearProblem_1D2G_2proc(thisLS,soln)
 
-      CALL preAllocInterpMatrices_1D2G(thisLS)
-      CALL setupInterpMatrices_1D2G(thisLS)
+      CALL preAllocInterpMatrices_1D2G_2proc(thisLS)
+      CALL setupInterpMatrices_1D2G_2proc(thisLS)
       CALL thisLS%setupPETScMG(pList)
 
       ! build x0
       ALLOCATE(x(n_2G))
-      x(1:(n_2G-1)/2)=0.5_SRK
-      x((n_2G+1)/2:n_2G)=1.1_SRK
-      CALL thisLS%setX0(x)
+      x(1:n_2G/2)=1.1_SRK
+      x(n_2G/2+1:n_2G)=0.5_SRK
+      IF(mpiTestEnv%master) THEN
+        istt=1
+        istp=n_2G/2
+      ELSE
+        istt=n_2G/2+1
+        istp=n_2G
+      ENDIF
+      SELECTTYPE(LS_x => thisLS%X); TYPE IS(PETScVectorType)
+        CALL LS_x%setRange_array(istt,istp,x(istt:istp))
+      ENDSELECT
 
       !set iterations and convergence information and build/set M
       CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1000_SIK,30_SIK)
 
       !solve it
+      CALL mpiTestEnv%barrier()
       CALL thisLS%solve()
 
+      x=0.0_SRK
       SELECTTYPE(LS_x => thisLS%X); TYPE IS(PETScVectorType)
-        CALL LS_x%getAll(x)
+        CALL LS_x%getRange(istt,istp,x(istt:istp))
       ENDSELECT
-      match=ALL(ABS(x-soln) < 1.0E-6_SRK)
+      match=ALL(ABS(x(istt:istp)-soln(istt:istp)) < 1.0E-6_SRK)
       ASSERT(match, 'PETScIterative%solve() - 2G,1D Multigrid')
 
       DEALLOCATE(soln)
       DEALLOCATE(x)
       CALL thisLS%A%clear()
       CALL thisLS%clear()
-      !================ 2G Problem ============================
+      !================ 2G,2-proc Problem ============================
 #endif
 
     ENDSUBROUTINE testIterativeSolve_Multigrid
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE init_MultigridLS(thisLS,num_eqns_in,nx_in,ny_in,nz_in)
+    SUBROUTINE init_MultigridLS(thisLS,num_eqns_in,nx_in,ny_in,nz_in,nprocs_in, &
+                                level_info,level_info_local,nlevels)
       TYPE(LinearSolverType_Multigrid),INTENT(INOUT) :: thisLS
-      INTEGER(SIK),INTENT(IN),OPTIONAL :: nx_in,ny_in,nz_in,num_eqns_in
-      INTEGER(SIK) :: num_eqns,nx,ny,nz,n
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: nx_in,ny_in,nz_in,num_eqns_in,nprocs_in
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: level_info(:,:),level_info_local(:,:)
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: nlevels
+      INTEGER(SIK) :: num_eqns,nx,ny,nz,nprocs,n,nlocal
       INTEGER(SIK),ALLOCATABLE :: dnnz(:),onnz(:)
 
+      nprocs=1_SIK
       num_eqns=1_SIK
       nx=65_SIK
       ny=1_SIK
@@ -381,38 +410,64 @@ CONTAINS
       IF(PRESENT(nx_in)) nx=nx_in
       IF(PRESENT(ny_in)) ny=ny_in
       IF(PRESENT(nz_in)) nz=nz_in
+      IF(PRESENT(nprocs_in)) nprocs=nprocs_in
 
       n=num_eqns*nx*ny*nz
+      nlocal=n/nprocs
 
       !The PETSC sparse matrix type
       ! initialize linear system
       CALL pList%clear()
       CALL pList%add('LinearSolverType->TPLType',PETSC)
       CALL pList%add('LinearSolverType->solverMethod',MULTIGRID)
-      CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
+      IF(nprocs > 1_SIK) THEN
+        CALL pList%add('LinearSolverType->MPI_Comm_ID',mpiTestEnv%comm)
+      ELSE
+        CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
+      ENDIF
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
       CALL pList%add('LinearSolverType->timerName','testTimer')
       CALL pList%add('LinearSolverType->matType',SPARSE)
+      CALL pList%add('LinearSolverType->A->MatrixType->blockSize',num_eqns)
       CALL pList%add('LinearSolverType->A->MatrixType->n',n)
-      CALL pList%add('LinearSolverType->A->MatrixType->nlocal',n)
-      ALLOCATE(dnnz(n),onnz(n))
-      dnnz(1:num_eqns)=1_SIK+num_eqns
-      dnnz(num_eqns+1:n-num_eqns)=2_SIK+num_eqns
-      dnnz(n-num_eqns+1:n)=1_SIK+num_eqns
+      CALL pList%add('LinearSolverType->A->MatrixType->nlocal',nlocal)
+      ALLOCATE(dnnz(nlocal),onnz(nlocal))
       onnz=0_SIK
+      dnnz(1:num_eqns)=1_SIK+num_eqns
+      dnnz(num_eqns+1:nlocal-num_eqns)=2_SIK+num_eqns
+      dnnz(nlocal-num_eqns+1:nlocal)=1_SIK+num_eqns
+      IF(nprocs > 1_SIK) THEN
+        IF(mpiTestEnv%master) THEN
+          onnz(nlocal-num_eqns+1:nlocal)=1_SIK
+        ELSE
+          onnz(1:num_eqns)=1_SIK
+        ENDIF
+      ENDIF
       CALL pList%add('LinearSolverType->A->MatrixType->dnnz',dnnz)
       CALL pList%add('LinearSolverType->A->MatrixType->onnz',onnz)
       CALL pList%add('LinearSolverType->A->MatrixType->nnz',SUM(dnnz)+SUM(onnz))
       DEALLOCATE(dnnz,onnz)
       CALL pList%add('LinearSolverType->x->VectorType->n',n)
+      CALL pList%add('LinearSolverType->x->VectorType->nlocal',nlocal)
       CALL pList%add('LinearSolverType->b->VectorType->n',n)
+      CALL pList%add('LinearSolverType->b->VectorType->nlocal',nlocal)
       CALL pList%validate(pList,optListLS)
 
       !Geometry dimensions for multigrid:
-      CALL pList%add('LinearSolverType->Multigrid->nx',nx)
-      CALL pList%add('LinearSolverType->Multigrid->ny',ny)
-      CALL pList%add('LinearSolverType->Multigrid->nz',nz)
+      CALL pList%add('LinearSolverType->Multigrid->nx_local',nx/nprocs)
+      CALL pList%add('LinearSolverType->Multigrid->ny_local',ny)
+      CALL pList%add('LinearSolverType->Multigrid->nz_local',nz)
       CALL pList%add('LinearSolverType->Multigrid->num_eqns',num_eqns)
+      IF(PRESENT(nlevels)) &
+        CALL pList%add('LinearSolverType->Multigrid->nlevels',nlevels)
+      IF(PRESENT(level_info)) &
+        CALL pList%add('LinearSolverType->Multigrid->level_info',level_info)
+      IF(PRESENT(level_info_local)) &
+        CALL pList%add('LinearSolverType->Multigrid->level_info_local', &
+                                                           level_info_local)
+      IF(.NOT.(PRESENT(nlevels) .AND. PRESENT(level_info) .AND. &
+          PRESENT(level_info_local))) &
+        CALL pList%add('LinearSolverType->Multigrid->manuallySetLevelInfo',.FALSE.)
 
       CALL thisLS%init(pList)
 
@@ -470,16 +525,16 @@ CONTAINS
     ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE preAllocInterpMatrices_1D2G(thisLS)
+    SUBROUTINE preAllocInterpMatrices_1D2G_2proc(thisLS)
       TYPE(LinearSolverType_Multigrid),INTENT(INOUT) :: thisLS
       INTEGER(SIK) :: iLevel,inx,nx,nx_old,ieqn,row,col
       INTEGER(SIK),ALLOCATABLE :: dnnz(:),onnz(:)
 
-      nx=thisLS%level_info(2,thisLS%nLevels)
+      nx=thisLS%level_info_local(2,thisLS%nLevels)
       DO iLevel=thisLS%nLevels-1,1,-1
         !Create the interpolation operator:
         nx_old=nx
-        nx=thisLS%level_info(2,iLevel)
+        nx=thisLS%level_info_local(2,iLevel)
 
         ALLOCATE(dnnz(nx_old*2),onnz(nx_old*2))
         onnz=0_SIK
@@ -501,29 +556,38 @@ CONTAINS
     ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE setupInterpMatrices_1D2G(thisLS)
+    SUBROUTINE setupInterpMatrices_1D2G_2proc(thisLS)
       TYPE(LinearSolverType_Multigrid),INTENT(INOUT) :: thisLS
       INTEGER(SIK) :: iLevel,inx,nx,nx_old,ieqn,row
       INTEGER(SIK) :: inx_c,col
+      INTEGER(SIK) :: offset(2)
 
-      nx=thisLS%level_info(2,thisLS%nLevels)
+      nx=thisLS%level_info_local(2,thisLS%nLevels)
       DO iLevel=thisLS%nLevels-1,1,-1
         !Create the interpolation operator:
         nx_old=nx
-        nx=thisLS%level_info(2,iLevel)
+        nx=thisLS%level_info_local(2,iLevel)
+        IF(mpiTestEnv%master) THEN
+          offset=0_SIK
+        ELSE
+          offset(1)=nx_old*2
+          offset(2)=nx*2
+        ENDIF
 
         DO inx=1,nx_old
           DO ieqn=1,2
             row=(inx-1)*2+ieqn
             IF(XOR(MOD(inx,2)==1, (inx>nx/2 .AND. MOD(nx,2) == 0))) THEN
               col=(inx-1)+ieqn
-              CALL thisLS%interpMats(iLevel)%set(row,col,1.0_SRK)
+              CALL thisLS%interpMats(iLevel)%set(row+offset(1),col+offset(2),1.0_SRK)
             ELSE
               inx_c=inx/2
               col=(inx_c-1)*2+ieqn
-              CALL thisLS%interpMats(iLevel)%set(row,col,0.5_SRK)
+              CALL thisLS%interpMats(iLevel)% &
+                            set(row+offset(1),col+offset(2),0.5_SRK)
               col=inx_c*2+ieqn
-              CALL thisLS%interpMats(iLevel)%set(row,col,0.5_SRK)
+              CALL thisLS%interpMats(iLevel)% &
+                            set(row+offset(1),col+offset(2),0.5_SRK)
             ENDIF
           ENDDO
         ENDDO
@@ -573,12 +637,12 @@ CONTAINS
     ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE setupLinearProblem_1D2G(thisLS,soln)
+    SUBROUTINE setupLinearProblem_1D2G_2proc(thisLS,soln)
       TYPE(LinearSolverType_Multigrid),INTENT(INOUT) :: thisLS
       REAL(SRK),INTENT(IN) :: soln(:)
       REAL(SRK),ALLOCATABLE :: b(:)
       REAL(SRK),ALLOCATABLE :: A_temp(:,:)
-      INTEGER(SIK) :: n
+      INTEGER(SIK) :: n,nstart,nend
       INTEGER(SIK) :: i,grp
       INTEGER(SIK) :: row,col
 
@@ -588,40 +652,50 @@ CONTAINS
       ALLOCATE(A_temp(2*n,2*n))
       A_temp=0.0_SRK
       SELECTTYPE(A => thisLS%A); TYPE IS(PETScMatrixType)
-      DO i=1,n
-        DO grp=1,2
-          row=(i-1)*2+grp
-          IF(i > 1) THEN
-            col=(i-2)*2+grp
-            CALL A%set(row,col,-1.0_SRK)
-            A_temp(row,col)=-1.0_SRK
-          ENDIF
-          IF(i < n) THEN
-            col=i*2+grp
-            CALL A%set(row,col,-1.0_SRK)
-            A_temp(row,col)=-1.0_SRK
-          ENDIF
+        IF(mpiTestEnv%master) THEN
+          nstart=1
+          nend=n/2
+        ELSE
+          nstart=n/2+1
+          nend=n
+        ENDIF
+        DO i=nstart,nend
+          DO grp=1,2
+            row=(i-1)*2+grp
+            IF(i > nstart) THEN
+              col=(i-2)*2+grp
+              CALL A%set(row,col,-1.0_SRK)
+              A_temp(row,col)=-1.0_SRK
+            ENDIF
+            IF(i < nend) THEN
+              col=i*2+grp
+              CALL A%set(row,col,-1.0_SRK)
+              A_temp(row,col)=-1.0_SRK
+            ENDIF
+          ENDDO
+          row=(i-1)*2+1
+          CALL A%set(row,row,2.1_SRK)
+          A_temp(row,row)=2.1_SRK
+          CALL A%set(row+1,row+1,2.2_SRK)
+          A_temp(row+1,row+1)=2.2_SRK
+          !Upscatter:
+          CALL A%set(row,row+1,-0.01_SRK)
+          A_temp(row,row+1)=-0.01_SRK
+          !Downscatter:
+          CALL A%set(row+1,row,-0.5_SRK)
+          A_temp(row+1,row)=-0.5_SRK
         ENDDO
-        row=(i-1)*2+1
-        CALL A%set(row,row,2.1_SRK)
-        A_temp(row,row)=2.1_SRK
-        CALL A%set(row+1,row+1,2.2_SRK)
-        A_temp(row+1,row+1)=2.2_SRK
-        !Downscatter:
-        CALL A%set(row,row+1,-0.5_SRK)
-        A_temp(row,row+1)=-0.5_SRK
-        !Upscatter:
-        CALL A%set(row+1,row,-0.01_SRK)
-        A_temp(row+1,row)=-0.01_SRK
-      ENDDO
       ENDSELECT
 
-      ALLOCATE(b(n))
+      CALL mpiTestEnv%allReduce(4*n*n,A_temp)
+
+      ALLOCATE(b(2*n))
       b=MATMUL(A_temp,soln)
       DEALLOCATE(A_temp)
 
       SELECTTYPE(LS_b => thisLS%b); TYPE IS(PETScVectorType)
-        CALL LS_b%setAll_array(b)
+        CALL LS_b%setRange_array((nstart-1)*2+1,(nend-1)*2+2, &
+                                  b((nstart-1)*2+1:(nend-1)*2+2))
       ENDSELECT
       DEALLOCATE(b)
 

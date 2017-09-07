@@ -7,4 +7,4 @@
 # can be found in LICENSE.txt in the head directory of this repository.        !
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 INCLUDE(Futility_CreateUnitTest)
-Futility_CreateUnitTest(testLinearSolver_Multigrid)
+Futility_CreateParUnitTest(testLinearSolver_Multigrid 2)
