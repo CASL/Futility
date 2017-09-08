@@ -70,6 +70,7 @@ PROGRAM testLinearSolver_Multigrid
   REGISTER_SUBTEST('testSetupPETScMG',testSetupPETScMG)
 #endif
   REGISTER_SUBTEST('testIterativeSolve_Multigrid',testIterativeSolve_Multigrid)
+  REGISTER_SUBTEST('testSetSmoother',testSetSmoother)
 
   FINALIZE_TEST()
 
@@ -371,6 +372,62 @@ CONTAINS
 #endif
 
     ENDSUBROUTINE testIterativeSolve_Multigrid
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testSetSmoother
+      TYPE(LinearSolverType_Multigrid) :: thisLS
+      LOGICAL(SBK) :: tmpbool
+      INTEGER(SIK) :: iLevel
+#ifdef FUTILITY_HAVE_PETSC
+      KSP :: ksp_temp
+      PC :: pc_temp
+      KSPType :: myksptype
+      PCType :: mypctype
+      PetscErrorCode :: iperr
+
+      CALL init_MultigridLS(thisLS)
+      CALL preAllocInterpMatrices_1D1G(thisLS)
+      CALL setupInterpMatrices_1D1G(thisLS)
+      CALL thisLS%setupPETScMG(pList)
+
+      CALL thisLS%setSmoother(SMOOTH_GS,0_SIK)
+      CALL PCMGGetSmoother(thisLS%pc,0,ksp_temp,iperr)
+      CALL KSPGetPC(ksp_temp,pc_temp,iperr)
+      CALL KSPGetType(ksp_temp,myksptype,iperr)
+      CALL PCGetType(pc_temp,mypctype,iperr)
+      tmpbool=(myksptype == KSPRICHARDSON) .AND. (mypctype == PCSOR)
+      ASSERT(tmpbool,'Set smoother for coarsest level.')
+
+      CALL thisLS%setSmoother(SMOOTH_GMRES)
+      tmpbool=.TRUE.
+      DO iLevel=1,thisLS%nLevels-1
+        CALL PCMGGetSmoother(thisLS%pc,iLevel,ksp_temp,iperr)
+        CALL KSPGetPC(ksp_temp,pc_temp,iperr)
+        CALL KSPGetType(ksp_temp,myksptype,iperr)
+        CALL PCGetType(pc_temp,mypctype,iperr)
+        tmpbool=tmpbool .AND. (myksptype == KSPGMRES)
+      ENDDO
+      ASSERT(tmpbool,'Set smoother for all but the coarsest level.')
+
+      CALL thisLS%setSmoother(SMOOTH_GS,1_SIK)
+      CALL PCMGGetSmoother(thisLS%pc,1,ksp_temp,iperr)
+      CALL KSPGetPC(ksp_temp,pc_temp,iperr)
+      CALL KSPGetType(ksp_temp,myksptype,iperr)
+      CALL PCGetType(pc_temp,mypctype,iperr)
+      tmpbool=(myksptype == KSPRICHARDSON) .AND. (mypctype == PCSOR)
+      DO iLevel=2,thisLS%nLevels-1
+        CALL PCMGGetSmoother(thisLS%pc,iLevel,ksp_temp,iperr)
+        CALL KSPGetPC(ksp_temp,pc_temp,iperr)
+        CALL KSPGetType(ksp_temp,myksptype,iperr)
+        CALL PCGetType(pc_temp,mypctype,iperr)
+        tmpbool=tmpbool .AND. (myksptype == KSPGMRES)
+      ENDDO
+      ASSERT(tmpbool,'Set smoother level 1 only.')
+
+      CALL thisLS%clear()
+#endif
+
+    ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE init_MultigridLS(thisLS,num_eqns_in,nx_in,ny_in,nz_in,nprocs_in, &
