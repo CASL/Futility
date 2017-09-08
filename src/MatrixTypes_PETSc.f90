@@ -163,7 +163,11 @@ MODULE MatrixTypes_PETSc
           ENDIF
 
           IF (matType == SPARSE) THEN
-            CALL MatSetType(matrix%a,MATMPIAIJ,ierr)
+            IF(nlocal == matrix%n .AND. mlocal == matrix%m) THEN
+              CALL MatSetType(matrix%a,MATAIJ,ierr)
+            ELSE
+              CALL MatSetType(matrix%a,MATMPIAIJ,ierr)
+            ENDIF
           ELSEIF (matType == DENSESQUARE) THEN
             CALL MatSetType(matrix%a,MATMPIDENSE,ierr)
           ELSE
@@ -173,7 +177,11 @@ MODULE MatrixTypes_PETSc
           ENDIF
 
           IF(MINVAL(dnnz) > 0_SIK .AND. MINVAL(onnz) >= 0_SIK) THEN
-            CALL MatMPIAIJSetPreallocation(matrix%A,0,dnnz,0,onnz,ierr)
+            IF(nlocal == matrix%n .AND. mlocal == matrix%m) THEN
+              CALL MatSeqAIJSetPreallocation(matrix%A,0,dnnz,ierr)
+            ELSE
+              CALL MatMPIAIJSetPreallocation(matrix%A,0,dnnz,0,onnz,ierr)
+            ENDIF
           ELSE
             CALL MatSetUp(matrix%a,ierr)
           ENDIF
