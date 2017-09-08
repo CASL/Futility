@@ -401,14 +401,10 @@ MODULE LinearSolverTypes_Multigrid
       CLASS(LinearSolverType_Multigrid),INTENT(INOUT) :: solver
       TYPE(ParamType),INTENT(IN) :: Params
       INTEGER(SIK) :: iLevel
-      INTEGER(SIK) :: nx,ny,nz
 #ifdef FUTILITY_HAVE_PETSC
-      INTEGER(SIK),ALLOCATABLE :: tmpint_arr(:)
-
       KSP :: ksp_temp
       PC :: pc_temp
       PetscErrorCode  :: iperr
-      Mat :: mat_temp
 
       IF(solver%TPLType /= PETSC) &
         CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
@@ -435,7 +431,6 @@ MODULE LinearSolverTypes_Multigrid
         !Set the smoother:
         CALL PCMGGetSmoother(solver%pc,iLevel,ksp_temp,iperr)
 
-        !Block Jacobi smoother:
         !KSPRICHARDSON+PCSOR=Gauss-Seidel
         CALL KSPSetType(ksp_temp,KSPRICHARDSON,iperr)
         CALL KSPGetPC(ksp_temp,pc_temp,iperr)
