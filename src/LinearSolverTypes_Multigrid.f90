@@ -62,6 +62,10 @@ MODULE LinearSolverTypes_Multigrid
 
   INTEGER(SIK),PARAMETER :: max_levels=8_SIK
 
+  !> Set enumeration scheme for smoother options:
+  INTEGER(SIK),PARAMETER,PUBLIC :: SMOOTH_GS=0,SMOOTH_GMRES=1, &
+                                   SMOOTH_BJACOBI=2,SMOOTH_JACOBI=3
+
   !> @brief The extended type for the Iterative Linear Solver
   TYPE,EXTENDS(LinearSolverType_Iterative) :: LinearSolverType_Multigrid
     !> Number of grids:
@@ -91,6 +95,9 @@ MODULE LinearSolverTypes_Multigrid
       !> @copybrief  LinearSolverType_Multigrid::clear_LinearSolverType_Multigrid
       !> @copydetails LinearSolverType_Multigrid::clear_LinearSolverType_Multigrid
       PROCEDURE,PASS :: clear => clear_LinearSolverType_Multigrid
+      !> @copybrief  LinearSolverType_Multigrid::setSmoother_LinearSolverType_Multigrid
+      !> @copydetails LinearSolverType_Multigrid::setSmoother_LinearSolverType_Multigrid
+      PROCEDURE,PASS :: setSmoother => setSmoother_LinearSolverType_Multigrid
   ENDTYPE LinearSolverType_Multigrid
 
   !> Logical flag to check whether the required and optional parameter lists
@@ -457,6 +464,99 @@ MODULE LinearSolverTypes_Multigrid
 #endif
 
     ENDSUBROUTINE setupPETScMG_LinearSolverType_Multigrid
+!
+!-------------------------------------------------------------------------------
+!> @brief Define smoother options
+!>
+!> @param solver The linear solver to act on
+!> @param Params the parameter list
+!>
+    SUBROUTINE setSmoother_LinearSolverType_Multigrid(solver,smoother,iLevel)
+      CHARACTER(LEN=*),PARAMETER :: myName='setSmoother_LinearSolverType_Multigrid'
+      CLASS(LinearSolverType_Multigrid),INTENT(INOUT) :: solver
+      INTEGER(SIK),INTENT(IN) :: smoother
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: iLevel
+      INTEGER(SIK) :: i,istt,istp
+
+#ifdef FUTILITY_HAVE_PETSC
+      KSP :: ksp_temp
+      PC :: pc_temp
+      PetscErrorCode  :: iperr
+#endif
+
+#ifdef FUTILITY_HAVE_PETSC
+      IF(solver%TPLType /= PETSC) &
+        CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
+          "This subroutine should only be called with PETSc.")
+
+      !TODO when a non-petsc version is implemented, add a variable to track
+      !  type of solver being used (e.g., petsc vs non-petsc)
+
+      !By default, all levels will be set to the specified smoother except
+      !  the coarsest (i=0)
+      istt=1
+      istp=solver%nLevels-1
+      IF(PRESENT(iLevel)) THEN
+        istt=iLevel
+        istp=iLevel
+        IF(iLevel >= solver%nLevels) THEN
+          CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
+            "iLevel must be strictly smaller than the number of levels!")
+        ENDIF
+      ENDIF
+
+      DO i=istt,istp
+        CALL PCMGGetSmoother(solver%pc,i,ksp_temp,iperr)
+
+        IF(smoother == SMOOTH_GS) THEN
+          CALL KSPSetType(ksp_temp,KSPRICHARDSON,iperr)
+          CALL KSPGetPC(ksp_temp,pc_temp,iperr)
+          CALL PCSetType(pc_temp,PCSOR,iperr)
+        ELSEIF(smoother == SMOOTH_GMRES) THEN
+          !Coarsest smoother is GMRES with block Jacobi preconditioner:
+          CALL KSPSetType(ksp_temp,KSPGMRES,iperr)
+          CALL KSPGetPC(ksp_temp,pc_temp,iperr)
+          CALL PCSetType(pc_temp,PCBJACOBI,iperr)
+        ELSEIF(smoother == BICGSTAB) THEN
+          CALL KSPSetType(ksp_temp,KSPBCGS,iperr)
+          CALL KSPGetPC(ksp_temp,pc_temp,iperr)
+          CALL PCSetType(pc_temp,PCBJACOBI,iperr)
+        ELSEIF(smoother == LU) THEN
+        !We might want to loosen this to allow SUPERLU_MT (superLU for shared
+        !  memory architectures)
+#ifndef PETSC_HAVE_SUPERLU_DIST
+          IF(solver%MPIparallelEnv%nproc > 1) &
+            CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
+              "Cannot use LU in parallel in PETSc without SUPERLU_DIST!")
+#endif
+          !Only for the coarsest level!
+          IF(istt > 0) &
+            CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
+              "LU should only be used on the coarsest level!")
+          CALL KSPSetType(ksp_temp,KSPPREONLY,iperr)
+          CALL KSPGetPC(ksp_temp,pc_temp,iperr)
+          CALL PCSetType(pc_temp,PCLU,iperr)
+          IF(solver%MPIparallelEnv%nproc > 1) &
+            CALL PCFactorSetMatSolverPackage(pc_temp,MATSOLVERSUPERLU_DIST, &
+                                             iperr)
+        ELSEIF(smoother == SMOOTH_BJACOBI) THEN
+          CALL KSPSetType(ksp_temp,KSPRICHARDSON,iperr)
+          CALL KSPGetPC(ksp_temp,pc_temp,iperr)
+          CALL PCSetType(pc_temp,PCBJACOBI,iperr)
+        ELSEIF(smoother == SMOOTH_JACOBI) THEN
+          CALL KSPSetType(ksp_temp,KSPRICHARDSON,iperr)
+          CALL KSPGetPC(ksp_temp,pc_temp,iperr)
+          CALL PCSetType(pc_temp,PCJACOBI,iperr)
+        ELSE
+          CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
+            "Unrecognized smoother option!")
+        ENDIF
+
+        CALL KSPSetInitialGuessNonzero(ksp_temp,PETSC_TRUE,iperr)
+      ENDDO
+#endif
+
+    ENDSUBROUTINE setSmoother_LinearSolverType_Multigrid
 !
 !-------------------------------------------------------------------------------
 !> @brief Clears the Multigrid Linear Solver Type
