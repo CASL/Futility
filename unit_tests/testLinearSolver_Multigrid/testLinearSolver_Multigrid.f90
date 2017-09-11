@@ -15,6 +15,7 @@ PROGRAM testLinearSolver_Multigrid
   USE ParallelEnv
   USE VectorTypes
   USE MatrixTypes
+  USE LinearSolverTypes
   USE LinearSolverTypes_Multigrid
 
   IMPLICIT NONE
@@ -24,7 +25,8 @@ PROGRAM testLinearSolver_Multigrid
   TYPE(ParamType) :: pList, optListLS, optListMat, vecPList
 
 #ifdef FUTILITY_HAVE_PETSC
-#include <finclude/petscdef.h>
+#include <finclude/petsc.h>
+#include <petscversion.h>
 #undef IS
   PetscErrorCode  :: ierr
 
@@ -318,58 +320,64 @@ CONTAINS
       !
       !================ 2G,2-proc Problem ============================
 #ifdef HAVE_MPI
-      level_info=RESHAPE((/2,18,1,1,2,34,1,1,2,66,1,1,2,130,1,1/),(/4,4/))
-      level_info_local=RESHAPE((/2,9,1,1,2,17,1,1,2,33,1,1,2,65,1,1/),(/4,4/))
-      CALL init_MultigridLS(thisLS,num_eqns_in=2_SIK,nx_in=130_SIK, &
-                              nprocs_in=2_SIK,level_info=level_info, &
-                              level_info_local=level_info_local,nlevels=4_SIK)
+      IF(mpiTestEnv%nproc == 2) THEN
+        level_info=RESHAPE((/2,18,1,1,2,34,1,1,2,66,1,1,2,130,1,1/),(/4,4/))
+        level_info_local=RESHAPE((/2,9,1,1,2,17,1,1,2,33,1,1,2,65,1,1/),(/4,4/))
+        CALL init_MultigridLS(thisLS,num_eqns_in=2_SIK,nx_in=130_SIK, &
+                                nprocs_in=2_SIK,level_info=level_info, &
+                                level_info_local=level_info_local,nlevels=4_SIK)
 
-      ! Create solution:
-      ALLOCATE(soln(n_2G))
-      soln=1.0_SRK
-      soln(n_2G/3)=2.0_SRK
-      CALL setupLinearProblem_1D2G_2proc(thisLS,soln)
+        ! Create solution:
+        ALLOCATE(soln(n_2G))
+        soln=1.0_SRK
+        soln(n_2G/3)=2.0_SRK
+        CALL setupLinearProblem_1D2G_2proc(thisLS,soln)
 
-      CALL preAllocInterpMatrices_1D2G_2proc(thisLS)
-      CALL setupInterpMatrices_1D2G_2proc(thisLS)
-      CALL thisLS%setupPETScMG(pList)
+        CALL preAllocInterpMatrices_1D2G_2proc(thisLS)
+        CALL setupInterpMatrices_1D2G_2proc(thisLS)
+        CALL thisLS%setupPETScMG(pList)
 
-      ! build x0
-      ALLOCATE(x(n_2G))
-      x(1:n_2G/2)=1.1_SRK
-      x(n_2G/2+1:n_2G)=0.5_SRK
-      IF(mpiTestEnv%master) THEN
-        istt=1
-        istp=n_2G/2
-      ELSE
-        istt=n_2G/2+1
-        istp=n_2G
+        ! build x0
+        ALLOCATE(x(n_2G))
+        x(1:n_2G/2)=1.1_SRK
+        x(n_2G/2+1:n_2G)=0.5_SRK
+        IF(mpiTestEnv%master) THEN
+          istt=1
+          istp=n_2G/2
+        ELSE
+          istt=n_2G/2+1
+          istp=n_2G
+        ENDIF
+        SELECTTYPE(LS_x => thisLS%X); TYPE IS(PETScVectorType)
+          CALL LS_x%setRange_array(istt,istp,x(istt:istp))
+        ENDSELECT
+
+        !set iterations and convergence information and build/set M
+        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1000_SIK,30_SIK)
+
+        !solve it
+        CALL mpiTestEnv%barrier()
+        CALL thisLS%solve()
+
+        x=0.0_SRK
+        SELECTTYPE(LS_x => thisLS%X); TYPE IS(PETScVectorType)
+          CALL LS_x%getRange(istt,istp,x(istt:istp))
+        ENDSELECT
+        match=ALL(ABS(x(istt:istp)-soln(istt:istp)) < 1.0E-6_SRK)
+        ASSERT(match, 'PETScIterative%solve() - 2G,1D Multigrid')
+
+        DEALLOCATE(soln)
+        DEALLOCATE(x)
+        CALL thisLS%A%clear()
+        CALL thisLS%clear()
       ENDIF
-      SELECTTYPE(LS_x => thisLS%X); TYPE IS(PETScVectorType)
-        CALL LS_x%setRange_array(istt,istp,x(istt:istp))
-      ENDSELECT
-
-      !set iterations and convergence information and build/set M
-      CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1000_SIK,30_SIK)
-
-      !solve it
-      CALL mpiTestEnv%barrier()
-      CALL thisLS%solve()
-
-      x=0.0_SRK
-      SELECTTYPE(LS_x => thisLS%X); TYPE IS(PETScVectorType)
-        CALL LS_x%getRange(istt,istp,x(istt:istp))
-      ENDSELECT
-      match=ALL(ABS(x(istt:istp)-soln(istt:istp)) < 1.0E-6_SRK)
-      ASSERT(match, 'PETScIterative%solve() - 2G,1D Multigrid')
-
-      DEALLOCATE(soln)
-      DEALLOCATE(x)
-      CALL thisLS%A%clear()
-      CALL thisLS%clear()
 #endif
       !================ 2G,2-proc Problem ============================
 #endif
+      !This is needed because if one or more procs have at least one assert
+      ! statement, the unit test code assumes all procs have at least one
+      ! assert statement.
+      ASSERT(.TRUE.,'Dummy assert to make sure no procs are hanging.')
 
     ENDSUBROUTINE testIterativeSolve_Multigrid
 !
