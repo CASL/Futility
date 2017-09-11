@@ -7,8 +7,6 @@
 # can be found in LICENSE.txt in the head directory of this repository.        !
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 
-MESSAGE(STATUS "--------"${PACKAGE_NAME}"--------")
-
 # Preprocessor symbols for TPLs.
 IF(${PACKAGE_NAME}_ENABLE_PAPI)
     SET(${PACKAGE_NAME}_DEFINES ${${PACKAGE_NAME}_DEFINES} HAVE_PAPI)
