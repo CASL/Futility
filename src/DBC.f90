@@ -49,7 +49,10 @@ SUBROUTINE DBC_FAIL(test_char,mod_name,line)
   INTEGER,INTENT(IN) :: line
 
   WRITE(*,*) "DBC Failure: " // test_char // " in " // mod_name // ": line ",line
-
+#ifndef __INTEL_COMPILER
+  CALL backtrace()
+#endif
+  STOP 2
 ENDSUBROUTINE DBC_FAIL
 !
 ENDMODULE DBC
