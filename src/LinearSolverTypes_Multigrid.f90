@@ -45,6 +45,7 @@ MODULE LinearSolverTypes_Multigrid
   USE MatrixTypes
   USE LinearSolverTypes
   IMPLICIT NONE
+  PRIVATE
 
 #ifdef FUTILITY_HAVE_PETSC
 #include <petscversion.h>
