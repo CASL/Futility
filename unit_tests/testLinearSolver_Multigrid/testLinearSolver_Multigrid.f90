@@ -17,6 +17,7 @@ PROGRAM testLinearSolver_Multigrid
   USE MatrixTypes
   USE LinearSolverTypes
   USE LinearSolverTypes_Multigrid
+  USE MultigridMesh
 
   IMPLICIT NONE
 
@@ -69,6 +70,7 @@ PROGRAM testLinearSolver_Multigrid
   REGISTER_SUBTEST('testInit',testInit)
 #ifdef FUTILITY_HAVE_PETSC
   REGISTER_SUBTEST('testPreAllocPETScInterpMat',testPreAllocPETScInterpMat)
+  REGISTER_SUBTEST('testFillInterpMats',testFillInterpMats)
   REGISTER_SUBTEST('testSetupPETScMG',testSetupPETScMG)
 #endif
   REGISTER_SUBTEST('testIterativeSolve_Multigrid',testIterativeSolve_Multigrid)
@@ -160,7 +162,7 @@ CONTAINS
 !-------------------------------------------------------------------------------
     SUBROUTINE testInit()
       TYPE(LinearSolverType_Multigrid) :: thisLS
-      INTEGER(SIK) :: ref_level_info(4,4)
+      INTEGER(SIK) :: ref_level_info(2,4)
       LOGICAL(SBK) :: bool
 
       CALL pList%clear()
@@ -192,10 +194,10 @@ CONTAINS
          .AND. thisLS%OMPparallelEnv%isInit() )
       ASSERT(bool, 'Iterative%init(...)')
 
-      ref_level_info = RESHAPE((/1,9,1,1, &
-                                 1,17,1,1, &
-                                 1,33,1,1, &
-                                 1,65,1,1/),SHAPE(ref_level_info))
+      ref_level_info = RESHAPE((/1,9, &
+                                 1,17, &
+                                 1,33, &
+                                 1,65/),SHAPE(ref_level_info))
       ASSERT(thisLS%nLevels == 4,'Check number of multigrid levels')
       ASSERT(ALL(ref_level_info == thisLS%level_info),'Check grid sizes on each level.')
 
@@ -230,6 +232,82 @@ CONTAINS
       CALL mpiTestEnv%barrier()
 
     ENDSUBROUTINE testPreAllocPETScInterpMat
+#endif
+!
+!-------------------------------------------------------------------------------
+#ifdef FUTILITY_HAVE_PETSC
+    SUBROUTINE testFillInterpMats()
+      TYPE(LinearSolverType_Multigrid) :: thisLS
+      TYPE(MultigridMeshStructureType) :: myMMeshes
+
+      INTEGER(SIK) :: iLevel,ix,ncol,nx
+      INTEGER(SIK),ALLOCATABLE :: cols(:)
+      REAL(SRK),ALLOCATABLE :: vals(:)
+      CHARACTER(LEN=2) :: tmpchar
+
+      LOGICAL(SBK) :: boolcols,boolvals
+
+      PetscErrorCode :: iperr
+
+      CALL init_MultigridLS(thisLS)
+
+      CALL myMMeshes%init(thisLS%nLevels)
+      DO iLevel=thisLS%nLevels,1,-1
+        nx=thisLS%level_info(2,iLevel)
+        myMMeshes%meshes(iLevel)%istt=1
+        myMMeshes%meshes(iLevel)%istp=nx
+        myMMeshes%meshes(iLevel)%nPointsLocal=nx
+        ALLOCATE(myMMeshes%meshes(iLevel)%mmData(1:nx))
+        ALLOCATE(myMMeshes%meshes(iLevel)%interpDegrees(1:nx))
+        DO ix=1,nx
+          IF(MOD(ix,2) == 1) THEN
+            myMMeshes%meshes(iLevel)%interpDegrees(ix)=0
+            ALLOCATE(myMMeshes%meshes(iLevel)%mmData(ix)%childIndices(1))
+            ALLOCATE(myMMeshes%meshes(iLevel)%mmData(ix)%childWeights(1,1))
+            myMMeshes%meshes(iLevel)%mmData(ix)%childIndices(1)=(ix+1)/2
+            myMMeshes%meshes(iLevel)%mmData(ix)%childWeights=1.0_SRK
+          ELSE
+            myMMeshes%meshes(iLevel)%interpDegrees(ix)=1
+            ALLOCATE(myMMeshes%meshes(iLevel)%mmData(ix)%childIndices(2))
+            ALLOCATE(myMMeshes%meshes(iLevel)%mmData(ix)%childWeights(1,2))
+            myMMeshes%meshes(iLevel)%mmData(ix)%childIndices(1)=ix+1
+            myMMeshes%meshes(iLevel)%mmData(ix)%childIndices(2)=ix-1
+            myMMeshes%meshes(iLevel)%mmData(ix)%childWeights=0.5_SRK
+          ENDIF
+        ENDDO
+      ENDDO
+      CALL thisLS%fillInterpMats(myMMeshes)
+      CALL thisLS%setupPETScMG(pList)
+
+      ALLOCATE(vals(2),cols(2))
+      cols=0_SIK
+      DO iLevel=1,thisLS%nLevels-1
+        boolcols=.TRUE.
+        boolvals=.TRUE.
+        nx=thisLS%level_info(2,iLevel)
+        DO ix=1,nx
+          vals=0.0_SRK
+          CALL MatGetRow(thisLS%interpMats_PETSc(iLevel)%a,ix-1,ncol,cols,vals,iperr)
+          IF(MOD(ix,2) == 1) THEN
+            boolcols=(cols(1)==(ix-1)/2)
+            boolvals=vals(1)==1.0_SRK
+          ELSE
+            boolcols=(cols(1)==ix/2-1) .AND. (cols(2)==ix/2)
+            boolvals=ALL(vals(1:2)==0.5_SRK)
+          ENDIF
+          CALL MatRestoreRow(thisLS%interpMats_PETSc(iLevel)%a,1_SIK,ncol,cols,vals,iperr)
+          IF(.NOT. boolcols .OR. .NOT. boolvals .OR. iperr /= 0_SIK ) EXIT
+        ENDDO
+        WRITE(tmpchar,'(I2)') iLevel
+        ASSERT(boolcols,'Check interpolation matrix col indices for grid '//tmpchar)
+        ASSERT(boolvals,'Check interpolation matrix entries for grid '//tmpchar)
+        ASSERT(iperr == 0_SIK,'Error obtaining matrix entries for grid '//tmpchar)
+      ENDDO
+      DEALLOCATE(vals,cols)
+
+      CALL myMMeshes%clear()
+
+    ENDSUBROUTINE testFillInterpMats
 #endif
 !
 !-------------------------------------------------------------------------------
@@ -270,7 +348,7 @@ CONTAINS
       INTEGER(SIK),PARAMETER :: n=65_SNK
       INTEGER(SIK),PARAMETER :: n_2G=260_SNK
 
-      INTEGER(SIK) :: level_info(4,4),level_info_local(4,4)
+      INTEGER(SIK) :: level_info(2,4),level_info_local(2,4)
 
 #ifdef FUTILITY_HAVE_PETSC
       !================ 1G Problem ============================
@@ -321,8 +399,8 @@ CONTAINS
       !================ 2G,2-proc Problem ============================
 #ifdef HAVE_MPI
       IF(mpiTestEnv%nproc == 2) THEN
-        level_info=RESHAPE((/2,18,1,1,2,34,1,1,2,66,1,1,2,130,1,1/),(/4,4/))
-        level_info_local=RESHAPE((/2,9,1,1,2,17,1,1,2,33,1,1,2,65,1,1/),(/4,4/))
+        level_info=RESHAPE((/2,18,2,34,2,66,2,130/),(/2,4/))
+        level_info_local=RESHAPE((/2,9,2,17,2,33,2,65/),(/2,4/))
         CALL init_MultigridLS(thisLS,num_eqns_in=2_SIK,nx_in=130_SIK, &
                                 nprocs_in=2_SIK,level_info=level_info, &
                                 level_info_local=level_info_local,nlevels=4_SIK)
