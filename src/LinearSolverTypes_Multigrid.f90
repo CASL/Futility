@@ -44,6 +44,7 @@ MODULE LinearSolverTypes_Multigrid
   USE VectorTypes
   USE MatrixTypes
   USE LinearSolverTypes
+  USE MultigridMesh
   IMPLICIT NONE
   PRIVATE
 
@@ -61,7 +62,7 @@ MODULE LinearSolverTypes_Multigrid
 ! List of public members
   PUBLIC :: LinearSolverType_Multigrid
 
-  INTEGER(SIK),PARAMETER :: max_levels=8_SIK
+  INTEGER(SIK),PARAMETER,PUBLIC :: MAX_MG_LEVELS=8_SIK
 
   !> Set enumeration scheme for smoother options:
   INTEGER(SIK),PARAMETER,PUBLIC :: SMOOTH_GS=0,SMOOTH_GMRES=1, &
@@ -73,9 +74,9 @@ MODULE LinearSolverTypes_Multigrid
     INTEGER(SIK) :: nLevels=1_SIK
     !> Whether or not the restriciton, interpolation, and smoothing is ready:
     LOGICAL(SBK) :: isMultigridSetup=.FALSE.
-    !> Size of each grid level_info(level,:) = (/num_eqns,nx,ny,nz/)
+    !> Size of each grid. level_info(:,level) = (/num_eqns,npts/)
     INTEGER(SIK),ALLOCATABLE :: level_info(:,:)
-    !> Size of each grid locally
+    !> Size of each grid locally. level_info(:,level) = (/num_eqns_local,npts_local/)
     INTEGER(SIK),ALLOCATABLE :: level_info_local(:,:)
 #ifdef FUTILITY_HAVE_PETSC
     !> Array of PETSc interpolation matrices
@@ -93,6 +94,12 @@ MODULE LinearSolverTypes_Multigrid
       !> @copybrief LinearSolverType_Multigrid::setupPETScMG_LinearSolverType_Multigrid
       !> @copydetails LinearSolverType_Multigrid::setupPETScMG_LinearSolverType_Multigrid
       PROCEDURE,PASS :: setupPETScMG => setupPETScMG_LinearSolverType_Multigrid
+      !> @copybrief LinearSolverType_Multigrid::fillInterpMats_LinearSolverType_Multigrid
+      !> @copydetails LinearSolverType_Multigrid::fillInterpMats_LinearSolverType_Multigrid
+      PROCEDURE,PASS :: fillInterpMats => fillInterpMats_LinearSolverType_Multigrid
+      !> @copybrief  LinearSolverType_Multigrid::solve_LinearSolverType_Multigrid
+      !> @copydetails LinearSolverType_Multigrid::solve_LinearSolverType_Multigrid
+      PROCEDURE,PASS :: solve => solve_LinearSolverType_Multigrid
       !> @copybrief  LinearSolverType_Multigrid::clear_LinearSolverType_Multigrid
       !> @copydetails LinearSolverType_Multigrid::clear_LinearSolverType_Multigrid
       PROCEDURE,PASS :: clear => clear_LinearSolverType_Multigrid
@@ -246,10 +253,10 @@ MODULE LinearSolverTypes_Multigrid
                    'level_info not provided!')
 
           CALL Params%get('LinearSolverType->Multigrid->nLevels',solver%nLevels)
-          ALLOCATE(solver%level_info_local(4,solver%nLevels))
+          ALLOCATE(solver%level_info_local(2,solver%nLevels))
           CALL Params%get('LinearSolverType->Multigrid->level_info_local', &
                               solver%level_info_local)
-          ALLOCATE(solver%level_info(4,solver%nLevels))
+          ALLOCATE(solver%level_info(2,solver%nLevels))
           CALL Params%get('LinearSolverType->Multigrid->level_info', &
                               solver%level_info)
         ELSE
@@ -266,34 +273,22 @@ MODULE LinearSolverTypes_Multigrid
 
           !Number of levels required to reduce down to ~5*num_eqns unknowns per processor:
           solver%nLevels=FLOOR(log(MAX(nx-1,ny-1,nz-1)/5.0_SRK)/log(2.0_SRK))+1
-          solver%nLevels=MIN(solver%nLevels,max_levels)
+          solver%nLevels=MIN(solver%nLevels,MAX_MG_LEVELS)
           solver%nLevels=MAX(1,solver%nLevels)
           IF(solver%nLevels < 2) &
               CALL eLinearSolverType%raiseDebug(modName//"::"//myName//" - "// &
                      'The grid is too small to coarsen, using multigrid with '// &
                      ' only 1 level!')
-          ALLOCATE(solver%level_info_local(4,solver%nLevels))
-          solver%level_info_local(:,solver%nLevels)=(/num_eqns,nx,ny,nz/)
+          ALLOCATE(solver%level_info_local(2,solver%nLevels))
+          solver%level_info_local(:,solver%nLevels)=(/num_eqns,nx*ny*nz/)
           DO iLevel=solver%nLevels-1,1,-1
           !Setup the interpolation operator:
-            IF(nx > 3) THEN
-              nx=nx/2+1
-            ELSEIF(nx == 3) THEN
-              nx=1
-            ENDIF
-            IF(ny > 3) THEN
-              ny=ny/2+1
-            ELSEIF(ny == 3) THEN
-              ny=1
-            ENDIF
-            IF(nz > 3) THEN
-              nz=nz/2+1
-            ELSEIF(nz == 3) THEN
-              nz=1
-            ENDIF
-            solver%level_info_local(:,iLevel)=(/num_eqns,nx,ny,nz/)
+            nx=(nx+1)/2
+            ny=(ny+1)/2
+            nz=(nz+1)/2
+            solver%level_info_local(:,iLevel)=(/num_eqns,nx*ny*nz/)
           ENDDO !iLevel
-          ALLOCATE(solver%level_info(4,solver%nLevels))
+          ALLOCATE(solver%level_info(2,solver%nLevels))
           solver%level_info=solver%level_info_local
         ENDIF !manuallySetLevelInfo
 
@@ -301,7 +296,7 @@ MODULE LinearSolverTypes_Multigrid
         IF(PRODUCT(solver%level_info(:,solver%nLevels)) /= n) THEN
           CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
                  'number of unknowns (n) does not match provided '// &
-                 'nx,ny,nz,num_eqns')
+                 'npts,num_eqns')
         ENDIF
 
 #ifdef FUTILITY_HAVE_PETSC
@@ -324,33 +319,38 @@ MODULE LinearSolverTypes_Multigrid
 !>        to grid iLevel
 !> @param dnnz dnnz(i) must provide the number of nonzero columns local to the
 !>             processor in local row i
-!> @param onnz onnz(i) must provide the number of nonzero columns external to
-!>             the processor in local row i
+!> @param onnz_in onnz_in(i) should provide the number of nonzero columns
+!>             external to the processor in local row i
 !>
     SUBROUTINE preAllocPETScInterpMat_LinearSolverType_Multigrid(solver, &
-       iLevel,dnnz,onnz)
+       iLevel,dnnz,onnz_in)
       CHARACTER(LEN=*),PARAMETER :: myName='preAllocPETScInterpMat_LinearSolverType_Multigrid'
       CLASS(LinearSolverType_Multigrid),INTENT(INOUT) :: solver
-      INTEGER(SIK),INTENT(IN) :: iLevel,dnnz(:),onnz(:)
-      INTEGER(SIK) :: nx,ny,nz,num_eqns,n
-      INTEGER(SIK) :: nx_old,ny_old,nz_old,num_eqns_old,n_old
+      INTEGER(SIK),INTENT(IN) :: iLevel,dnnz(:)
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: onnz_in(:)
+      INTEGER(SIK),ALLOCATABLE :: onnz(:)
+      INTEGER(SIK) :: npts,num_eqns,n
+      INTEGER(SIK) :: npts_old,num_eqns_old,n_old
 
       TYPE(ParamType) :: matPList
       CLASS(MatrixType),POINTER :: interpmat => NULL()
 
+      ALLOCATE(onnz(SIZE(dnnz)))
+      IF(PRESENT(onnz_in)) THEN
+        onnz=onnz_in
+      ELSE
+        onnz=0_SIK
+      ENDIF
+
 #ifdef FUTILITY_HAVE_PETSC
       IF(solver%isInit) THEN
         num_eqns=solver%level_info(1,iLevel)
-        nx=solver%level_info(2,iLevel)
-        ny=solver%level_info(3,iLevel)
-        nz=solver%level_info(4,iLevel)
-        n=nx*ny*nz*num_eqns
+        npts=solver%level_info(2,iLevel)
+        n=npts*num_eqns
 
         num_eqns_old=solver%level_info(1,iLevel+1)
-        nx_old=solver%level_info(2,iLevel+1)
-        ny_old=solver%level_info(3,iLevel+1)
-        nz_old=solver%level_info(4,iLevel+1)
-        n_old=nx_old*ny_old*nz_old*num_eqns_old
+        npts_old=solver%level_info(2,iLevel+1)
+        n_old=npts_old*num_eqns_old
 
         CALL matPList%clear()
         CALL matPList%add('MatrixType->matType',SPARSE)
@@ -361,15 +361,11 @@ MODULE LinearSolverTypes_Multigrid
         CALL matPList%add('MatrixType->m',n)
 
         num_eqns=solver%level_info_local(1,iLevel)
-        nx=solver%level_info_local(2,iLevel)
-        ny=solver%level_info_local(3,iLevel)
-        nz=solver%level_info_local(4,iLevel)
-        n=nx*ny*nz*num_eqns
+        npts=solver%level_info_local(2,iLevel)
+        n=npts*num_eqns
         num_eqns_old=solver%level_info_local(1,iLevel+1)
-        nx_old=solver%level_info_local(2,iLevel+1)
-        ny_old=solver%level_info_local(3,iLevel+1)
-        nz_old=solver%level_info_local(4,iLevel+1)
-        n_old=nx_old*ny_old*nz_old*num_eqns_old
+        npts_old=solver%level_info_local(2,iLevel+1)
+        n_old=npts_old*num_eqns_old
         CALL matPList%add('MatrixType->nlocal',n_old)
         CALL matPList%add('MatrixType->mlocal',n)
 
@@ -395,8 +391,68 @@ MODULE LinearSolverTypes_Multigrid
 #endif
 
       CALL matPList%clear()
+      DEALLOCATE(onnz)
 
     ENDSUBROUTINE preAllocPETScInterpMat_LinearSolverType_Multigrid
+!
+!-------------------------------------------------------------------------------
+!> @brief Allocate and fill in the PETSc interpolation matrices from a multigrid
+!>          mesh hierachy object
+!>
+!> @param solver The linear solver to act on
+!> @param myMMeshes Multigrid mesh hierachy with information regarding weights
+!>          and neighbors for each mesh
+!> @param preallocated Whether the interpolation matrices are already allocated
+!>          This is false by default
+!>
+    SUBROUTINE fillInterpMats_LinearSolverType_Multigrid(solver,myMMeshes,preallocated)
+      CHARACTER(LEN=*),PARAMETER :: myName='fillInterpMats_LinearSolverType_Multigrid'
+      CLASS(LinearSolverType_Multigrid),INTENT(INOUT) :: solver
+      TYPE(MultigridMeshStructureType),INTENT(IN) :: myMMeshes
+      LOGICAL(SBK),OPTIONAL :: preallocated
+
+      INTEGER(SIK) :: iLevel,ip,i,row,col,ieqn,indices(48),nindices
+      REAL(SRK),ALLOCATABLE :: wts(:,:)
+
+#ifdef FUTILITY_HAVE_PETSC
+      IF(solver%TPLType /= PETSC) &
+        CALL eLinearSolverType%raiseError('Incorrect call to '// &
+          modName//'::'//myName//' - This subroutine does not have a '// &
+          'non-PETSc implementation yet.')
+
+      IF(solver%nLevels /= myMMeshes%nLevels) &
+        CALL eLinearSolverType%raiseError('Incorrect call to '// &
+          modName//'::'//myName//' - Mismatch in grid and solver nLevels.')
+
+      DO iLevel=solver%nLevels,2,-1
+        !Allocate the interpolation matrix:
+        IF(.NOT.PRESENT(preallocated) .OR. .NOT.preallocated) THEN
+          CALL solver%preAllocPETScInterpMat(iLevel-1, &
+                  2**myMMeshes%meshes(iLevel)%interpDegrees)
+          !Note that if there is interpolation across processors, this does not
+          !  work
+        ENDIF
+        ALLOCATE(wts(myMMeshes%meshes(iLevel)%num_eqns,48))
+        !Create the interpolation operator:
+        DO ip=myMMeshes%meshes(iLevel)%istt,myMMeshes%meshes(iLevel)%istp
+          CALL getWtsAndIndices(myMMeshes%meshes(iLevel), &
+            myMMeshes%meshes(iLevel)%num_eqns,ip,indices,wts,nindices)
+          DO ieqn=1,myMMeshes%meshes(iLevel)%num_eqns
+            row=(ip-1)*myMMeshes%meshes(iLevel)%num_eqns+ieqn
+            DO i=1,nindices
+              col=(indices(i)-1)*myMMeshes%meshes(iLevel)%num_eqns+ieqn
+              CALL solver%interpMats_PETSc(iLevel-1)%set(row,col,wts(ieqn,i))
+            ENDDO
+          ENDDO
+        ENDDO
+        DEALLOCATE(wts)
+      ENDDO !iLevel
+#else
+      CALL eLinearSolverType%raiseError('Incorrect call to '// &
+        modName//'::'//myName//' - This subroutine does not have a non-PETSc'// &
+        'implementation yet.')
+#endif
+    ENDSUBROUTINE fillInterpMats_LinearSolverType_Multigrid
 !
 !-------------------------------------------------------------------------------
 !> @brief Setup the PCMG environment in PETSc, finalize the interpolation operators
@@ -560,6 +616,23 @@ MODULE LinearSolverTypes_Multigrid
     ENDSUBROUTINE setSmoother_LinearSolverType_Multigrid
 !
 !-------------------------------------------------------------------------------
+!> @brief Solves the Linear System with multigrid
+!> @param solver The linear solver to act on
+!>
+!>
+    SUBROUTINE solve_LinearSolverType_Multigrid(solver)
+      CHARACTER(LEN=*),PARAMETER :: myName='solve_LinearSolverType_Multigrid'
+      CLASS(LinearSolverType_Multigrid),INTENT(INOUT) :: solver
+
+      IF(.NOT. solver%isMultigridSetup) &
+        CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
+          "Multigrid needs to be setup before it can be used to solve!")
+
+      CALL solver%LinearSolverType_Iterative%solve()
+
+    ENDSUBROUTINE solve_LinearSolverType_Multigrid
+!
+!-------------------------------------------------------------------------------
 !> @brief Clears the Multigrid Linear Solver Type
 !> @param solver The linear solver to act on
 !>
@@ -590,5 +663,94 @@ MODULE LinearSolverTypes_Multigrid
       CALL solver%LinearSolverType_Iterative%clear()
 
     ENDSUBROUTINE clear_LinearSolverType_Multigrid
+!
+!-------------------------------------------------------------------------------
+!> @brief Extracts the weights and neighbor indices for a given point on a mesh
+!> @param myMesh MultigridMeshType object corresponding to the current level
+!> @param ip Current point
+!> @param indices Indices to be returned
+!> @param wts Weights to be returned
+!>
+    SUBROUTINE getWtsAndIndices(myMesh,num_eqns,ip,indices,wts,nindices)
+      CLASS(MultigridMeshType),INTENT(IN) :: myMesh
+      INTEGER(SIK),INTENT(IN) :: num_eqns,ip
+      INTEGER(SIK),INTENT(INOUT) :: indices(:)
+      REAL(SRK),INTENT(INOUT) :: wts(:,:)
+      INTEGER(SIK),INTENT(OUT) :: nindices
+
+      INTEGER(SIK) :: ichild,ichild2,ichild3,ipn,ipn2,ipn3,i,ind
+      REAL(SRK) :: wt2(num_eqns),wt3(num_eqns),tmpwts(num_eqns,48)
+      INTEGER(SIK) :: tmpindices(48),counter
+
+      counter=1
+      SELECTCASE(myMesh%interpDegrees(ip))
+        CASE(3)
+          DO ichild=1,6
+            ipn=myMesh%mmData(ip)%childIndices(ichild)
+            IF(ipn < 1) CYCLE
+            wt3=myMesh%mmData(ip)%childWeights(:,ichild)
+            DO ichild2=1,4
+              ipn2=myMesh%mmData(ipn)%childIndices(ichild2)
+              IF(ipn2 < 1) CYCLE
+              wt2=wt3*myMesh%mmData(ipn)%childWeights(:,ichild2)
+              DO ichild3=1,2
+                ipn3=myMesh%mmData(ipn2)%childIndices(ichild3)
+                IF(ipn3 < 1) CYCLE
+                tmpwts(:,counter)=wt2*myMesh%mmData(ipn2)%childWeights(:,ichild3)
+                tmpindices(counter)=myMesh%mmData(ipn3)%childIndices(1)
+                counter=counter+1
+              ENDDO
+            ENDDO
+          ENDDO
+          counter=counter-1
+        CASE(2)
+          DO ichild=1,4
+            ipn=myMesh%mmData(ip)%childIndices(ichild)
+            IF(ipn < 1) CYCLE
+            wt2=myMesh%mmData(ip)%childWeights(:,ichild)
+            DO ichild2=1,2
+              ipn2=myMesh%mmData(ipn)%childIndices(ichild2)
+              IF(ipn2 < 1) CYCLE
+              tmpwts(:,counter)=wt2*myMesh%mmData(ipn)%childWeights(:,ichild2)
+              tmpindices(counter)=myMesh%mmData(ipn2)%childIndices(1)
+              counter=counter+1
+            ENDDO
+          ENDDO
+          counter=counter-1
+        CASE(1)
+          DO ichild=1,2
+            ipn=myMesh%mmData(ip)%childIndices(ichild)
+            IF(ipn < 1) CYCLE
+            tmpwts(:,counter)=myMesh%mmData(ip)%childWeights(:,ichild)
+            tmpindices(counter)=myMesh%mmData(ipn)%childIndices(1)
+            counter=counter+1
+          ENDDO
+          counter=counter-1
+        CASE DEFAULT
+          nindices=1
+          indices(1)=myMesh%mmData(ip)%childIndices(1)
+          wts(:,1)=1.0_SRK
+          RETURN
+      ENDSELECT
+
+      indices=0_SIK
+      nindices=1
+      !i=1:
+      indices(1)=tmpindices(1)
+      wts(:,1)=tmpwts(:,1)
+      !i>1:
+      DO i=2,counter
+        IF(tmpindices(i) < 1) CYCLE
+        ind=MINLOC(indices(1:nindices),DIM=1,MASK=(indices(1:nindices)==tmpindices(i)))
+        IF(ind == 0) THEN
+          nindices=nindices+1
+          indices(nindices)=tmpindices(i)
+          wts(:,nindices)=tmpwts(:,i)
+        ELSE
+          wts(:,ind)=wts(:,ind)+tmpwts(:,i)
+        ENDIF
+      ENDDO
+
+    ENDSUBROUTINE getFinalWtsAndIndices
 
 ENDMODULE LinearSolverTypes_Multigrid

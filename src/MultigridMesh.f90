@@ -56,16 +56,23 @@ MODULE MultigridMesh
   PUBLIC :: MultigridMeshStructureType
 
   TYPE :: MultigridMeshElementType
-    !> Number of local neighbors
-    INTEGER(SIK) :: nNeighLocal
-    !> Global indices of its local neighbors on the current multigrid mesh.
-    !>  Size nNeigh, should be ordered WSNEBT where possible
-    INTEGER(SIK),ALLOCATABLE :: neighLocal(:)
-    !> Indices of the points on the child mesh, see description of interpDegree
-    !>  in MultigridMeshType for information about the size of the array
+    !> Index of the point on the finest grid that this point eventually injects
+    !>  into.  May have another use/definition in cases where the interpolation
+    !>  operator has no injections.  This is not needed for fillInterpMatrices
+    !>  in LinearSolverTypes_Multigrid, it is only here for the user's
+    !>  and initializing this variable is optional.
+    INTEGER(SIK) :: finestGridIndex
+    !> For degree 0 points, childIndices is a size-1 array containing the
+    !>  child mesh index of the point that it injects into.
+    !> For degree >0 points, childIndices is a size >1 array containing the
+    !>  current mesh indices of the points from which the value on this point
+    !>  is interpolated.
+    !> For MPACT, ordering should be WSENBT on finest mesh and WESNBT on
+    !>  all other meshes, but, in general, ordering is arbitrary
     INTEGER(SIK),ALLOCATABLE :: childIndices(:)
-    !> Weights of each child point, same range as childIndices(:)
-    REAL(SRK),ALLOCATABLE :: childWeights(:)
+    !> Weights of each child point, 2nd index has same range as childIndices,
+    !>  1st index has range 1:num_eqns
+    REAL(SRK),ALLOCATABLE :: childWeights(:,:)
 
     CONTAINS
       !> @copybrief MultigridMesh::clear_MultigridMeshElement
@@ -74,16 +81,29 @@ MODULE MultigridMesh
   ENDTYPE MultigridMeshElementType
 
   TYPE :: MultigridMeshType
-    !> Which level the mesh corresponds to (0 = coarsest)
+    !> Which level the mesh corresponds to (1 = coarsest)
     INTEGER(SIK) :: iLevel
+    !> Number of equations (# of components per spatial point)
+    !>   Right now, there is no support for simultaneous collapse in both space
+    !>   and the number of eqns in this module.  Collapse of eqns must be done
+    !>   separately.
+    INTEGER(SIK) :: num_eqns
     !> Whether or not it is the finest level:
     LOGICAL(SBK) :: isFinestLevel
+    !> Whether or not it is the coarsest level:
+    !> NOTE: On the coarsest level, mmData, interpDegrees, and xyzMap need
+    !>  not be allocated!
+    LOGICAL(SBK) :: isCoarsestLevel
     !> Number of cells/points on this level locally:
     INTEGER(SIK) :: nPointsLocal
     !> Local starting index of mesh points:
     INTEGER(SIK) :: istt
     !> Local end index of mesh points:
     INTEGER(SIK) :: istp
+    !> Global x,y,z location of each element in units of the finest mesh
+    !> This means that adjacent cells in coarser meshes do not have
+    !>   adjacent x/y/z values.  Range is (3,istt:istp)
+    INTEGER(SIK),ALLOCATABLE :: xyzMap(:,:)
     !> Data for the individual coarse mesh elements. indices are istt:istp
     TYPE(MultigridMeshElementType),ALLOCATABLE :: mmData(:)
     !> How many "degrees" each point is from a coarse point.
@@ -115,8 +135,7 @@ MODULE MultigridMesh
     INTEGER(SIK) :: nLevels
     !> Data for each multigrid level.  NOTE: Typically 1:nLevels-1.
     !>  It is generally not necessary to define a MultigridMesh for the
-    !>  coarsest level.  0 = coarsest level, nLevels-1 = finest level.  The
-    !>  0-based index is consistent with PETSc indexing of multigrid levels.
+    !>  coarsest level.  1 = coarsest level, nLevels = finest level.
     TYPE(MultigridMeshType),ALLOCATABLE :: meshes(:)
     !> Whether or not the mesh structure has been initialized:
     LOGICAL(SBK) :: isInit
@@ -130,6 +149,9 @@ MODULE MultigridMesh
       PROCEDURE,PASS :: init => init_MultigridMeshStructure
   ENDTYPE MultigridMeshStructureType
 
+  !> Exception Handler for use in MatrixTypes
+  TYPE(ExceptionHandlerType),SAVE :: eMultigridMesh
+
   !> Name of module
   CHARACTER(LEN=*),PARAMETER :: modName='MULTIGRIDMESH'
 !
@@ -142,15 +164,29 @@ MODULE MultigridMesh
 !> @param myMeshes the mesh structure
 !> @param nLevels number of levels
 !>
-    SUBROUTINE init_MultigridMeshStructure(myMeshes,nLevels)
+    SUBROUTINE init_MultigridMeshStructure(myMeshes,nLevels,num_eqns)
       CHARACTER(LEN=*),PARAMETER :: myName='init_MultigridMeshStructure'
       CLASS(MultigridMeshStructureType),INTENT(INOUT) :: myMeshes
       INTEGER(SIK),INTENT(IN) :: nLevels
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: num_eqns
+
+      INTEGER(SIK) :: iLevel
+
+      IF(nLevels < 1_SIK) &
+        CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
+          "nLevels must be a positive integer!")
 
       myMeshes%nLevels=nLevels
+      ALLOCATE(myMeshes%meshes(nLevels))
+      DO iLevel=1,nLevels
+        myMeshes%meshes(iLevel)%iLevel=iLevel
+        myMeshes%meshes(iLevel)%num_eqns=1_SIK
+        IF(PRESENT(num_eqns)) myMeshes%meshes(iLevel)%num_eqns=num_eqns
+      ENDDO
+      myMeshes%meshes(nLevels)%isFinestLevel=.TRUE.
+      myMeshes%meshes(1)%isCoarsestLevel=.TRUE.
+
       myMeshes%isInit=.TRUE.
-      ALLOCATE(myMeshes%meshes(nLevels-1))
-      myMeshes%meshes(nLevels-1)%isFinestLevel=.TRUE.
 
     ENDSUBROUTINE init_MultigridMeshStructure
 !
@@ -188,6 +224,8 @@ MODULE MultigridMesh
 
       IF(ALLOCATED(myMesh%interpDegrees)) DEALLOCATE(myMesh%interpDegrees)
 
+      IF(ALLOCATED(myMesh%xyzMap)) DEALLOCATE(myMesh%xyzMap)
+
       IF(ALLOCATED(myMesh%mmData)) THEN
         DO i=myMesh%istt,myMesh%istp
           CALL myMesh%mmData(i)%clear()
@@ -207,8 +245,6 @@ MODULE MultigridMesh
       CHARACTER(LEN=*),PARAMETER :: myName='clear_MultigridMesh'
       CLASS(MultigridMeshElementType),INTENT(INOUT) :: myMeshElement
 
-      IF(ALLOCATED(myMeshElement%neighLocal)) &
-              DEALLOCATE(myMeshElement%neighLocal)
       IF(ALLOCATED(myMeshElement%childIndices)) &
               DEALLOCATE(myMeshElement%childIndices)
       IF(ALLOCATED(myMeshElement%childWeights)) &

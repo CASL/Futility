@@ -49,7 +49,7 @@ PROGRAM testMultigridMesh
     ASSERT(myMMeshes%isInit,'is init')
     ASSERT(myMMeshes%nLevels == nLevels,'correct number of levels')
     ASSERT(ALLOCATED(myMMeshes%meshes),'meshes allocated')
-    ASSERT(SIZE(myMMeshes%meshes) == nLevels-1,'meshes is the correct size')
+    ASSERT(SIZE(myMMeshes%meshes) == nLevels,'meshes is the correct size')
 
     CALL myMMeshes%clear()
   ENDSUBROUTINE testInit
