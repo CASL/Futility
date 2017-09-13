@@ -18,6 +18,7 @@
 !>    @date 11/17/2012
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE DBC
+  USE ISO_FORTRAN_ENV
   IMPLICIT NONE
 
 #ifdef HAVE_MPI
@@ -29,11 +30,6 @@ MODULE DBC
 !
 ! List of Public items
   PUBLIC :: DBC_FAIL
-
-  !> Variables for MPI tests
-#ifdef HAVE_MPI
-  INTEGER :: rank,nproc,mpierr,i
-#endif
 !
 !===============================================================================
   CONTAINS
@@ -47,8 +43,16 @@ SUBROUTINE DBC_FAIL(test_char,mod_name,line)
   CHARACTER(LEN=*),INTENT(IN) :: test_char
   CHARACTER(LEN=*),INTENT(IN) :: mod_name
   INTEGER,INTENT(IN) :: line
+  !> Variables for MPI tests
+  INTEGER :: rank=1,nproc=1
+#ifdef HAVE_MPI
+  INTEGER :: mpierr
+  CALL MPI_Comm_rank(MPI_COMM_WORLD,rank,mpierr)
+  CALL MPI_Comm_size(MPI_COMM_WORLD,nproc,mpierr)
+#endif
 
-  WRITE(*,*) "DBC Failure: " // test_char // " in " // mod_name // ": line ",line
+  WRITE(ERROR_UNIT,'(a,i5,a,i5,a,i5)') "DBC Failure: " // test_char // " in " // mod_name // &
+        " on line",line,":  process",rank+1," of",nproc
 #ifndef __INTEL_COMPILER
   CALL backtrace()
 #endif

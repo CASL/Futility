@@ -14,6 +14,11 @@ PROGRAM testDBC
   CHARACTER(LEN=*),PARAMETER :: modName="testDBC"
   INTEGER(SIK) :: iopt
   CHARACTER(LEN=5) :: arg
+#ifdef HAVE_MPI
+  INCLUDE "mpif.h"
+  INTEGER(SIK) :: mpierr
+  CALL MPI_Init(mpierr)
+#endif
 
   CALL GET_COMMAND_ARGUMENT(1,arg)
   READ(arg,*) iopt
@@ -31,6 +36,9 @@ PROGRAM testDBC
       STOP -1
   ENDSELECT
 
+#ifdef HAVE_MPI
+      CALL MPI_Finalize(mpierr)
+#endif
 !
 !===============================================================================
   CONTAINS
@@ -40,7 +48,7 @@ PROGRAM testDBC
 !>
     SUBROUTINE require_pass()
       WRITE(*,*) "Testing REQUIRE Passing"
-      REQUIRE(5==5)
+      DBC_REQUIRE(5==5)
 
     ENDSUBROUTINE require_pass
 !
@@ -49,7 +57,7 @@ PROGRAM testDBC
 !>
     SUBROUTINE ensure_pass()
       WRITE(*,*) "Testing ENSURE Passing"
-      ENSURE(5==5)
+      DBC_ENSURE(5==5)
 
     ENDSUBROUTINE ensure_pass
 !
@@ -58,7 +66,7 @@ PROGRAM testDBC
 !>
     SUBROUTINE require_fail()
       WRITE(*,*) "Testing REQUIRE Failing"
-      REQUIRE(8==5)
+      DBC_REQUIRE(8==5)
 
     ENDSUBROUTINE require_fail
 !
@@ -67,7 +75,7 @@ PROGRAM testDBC
 !>
     SUBROUTINE ensure_fail()
       WRITE(*,*) "Testing ENSURE Failing"
-      ENSURE(5==8)
+      DBC_ENSURE(5==8)
 
     ENDSUBROUTINE ensure_fail
 ENDPROGRAM testDBC

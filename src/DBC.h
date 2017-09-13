@@ -8,13 +8,13 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 
 #ifdef FUTILITY_DBC
-#define REQUIRE(test)  IF(.NOT. (test)) CALL DBC_FAIL("test",modName,__LINE__)
-#define ENSURE(test)   IF(.NOT. (test)) CALL DBC_FAIL("test",modName,__LINE__)
-#define REQUIRE_MSG(test,msg)  IF(.NOT. (test)) CALL DBC_FAIL("test",msg,__LINE__)
-#define ENSURE_MSG(test,msg)   IF(.NOT. (test)) CALL DBC_FAIL("test",msg,__LINE__)
+#define DBC_REQUIRE(test)  IF(.NOT. (test)) CALL DBC_FAIL("test",modName,__LINE__)
+#define DBC_ENSURE(test)   IF(.NOT. (test)) CALL DBC_FAIL("test",modName,__LINE__)
+#define DBC_REQUIRE_MSG(test,msg)  IF(.NOT. (test)) CALL DBC_FAIL("test",msg,__LINE__)
+#define DBC_ENSURE_MSG(test,msg)   IF(.NOT. (test)) CALL DBC_FAIL("test",msg,__LINE__)
 #else
-#define REQUIRE(test)  ! DBC REQUIRE - test
-#define ENSURE(test)   ! DBC ENSURE  - test
-#define REQUIRE_MSG(test,msg)  ! DBC REQUIRE - test, msg
-#define ENSURE_MSG(test,msg)   ! DBC ENSURE  - test, msg
+#define DBC_REQUIRE(test)  ! DBC REQUIRE - test
+#define DBC_ENSURE(test)   ! DBC ENSURE  - test
+#define DBC_REQUIRE_MSG(test,msg)  ! DBC REQUIRE - test, msg
+#define DBC_ENSURE_MSG(test,msg)   ! DBC ENSURE  - test, msg
 #endif
