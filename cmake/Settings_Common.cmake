@@ -47,9 +47,7 @@ IF(DEFINED ${PROJECT_NAME}_ENABLE_Teuchos)
   ENDIF()
 ENDIF()
 
-# CMake requires that you declare the CMake project in the top-level file and
-# not in an include file :-(
-PROJECT(${PROJECT_NAME} NONE)
+## used to be after call to project
 
 # Pull in the TriBITS system and execute
 IF(NOT DEFINED(${${PROJECT_NAME}_TRIBITS_DIR}))
@@ -64,6 +62,7 @@ ENDIF()
 
 # Include the modules in TriBITS
 SET(CMAKE_MODULE_PATH "${${PROJECT_NAME}_TRIBITS_DIR}/package_arch" CACHE INTERNAL "")
+
 INCLUDE(${${PROJECT_NAME}_TRIBITS_DIR}/TriBITS.cmake)
 
 # Set build type to default
