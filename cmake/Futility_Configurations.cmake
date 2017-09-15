@@ -218,6 +218,7 @@ ELSEIF(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
     SET(Fortran_FLAGS
         ${CSYM}cpp
         ${CSYM}fall-intrinsics
+        ${CSYM}ffree-line-length-none
        )
 
     SET(C_FLAGS

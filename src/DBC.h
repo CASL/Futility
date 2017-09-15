@@ -8,13 +8,9 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 
 #ifdef FUTILITY_DBC
-#define DBC_REQUIRE(test)  IF(.NOT. (test)) CALL DBC_FAIL("test",modName,__LINE__)
-#define DBC_ENSURE(test)   IF(.NOT. (test)) CALL DBC_FAIL("test",modName,__LINE__)
-#define DBC_REQUIRE_MSG(test,msg)  IF(.NOT. (test)) CALL DBC_FAIL("test",msg,__LINE__)
-#define DBC_ENSURE_MSG(test,msg)   IF(.NOT. (test)) CALL DBC_FAIL("test",msg,__LINE__)
+#define DBC_REQUIRE(test)  IF(.NOT. (test)) CALL DBC_FAIL("test",__FILE__,__LINE__)
+#define DBC_ENSURE(test)   IF(.NOT. (test)) CALL DBC_FAIL("test",__FILE__,__LINE__)
 #else
 #define DBC_REQUIRE(test)  ! DBC REQUIRE - test
 #define DBC_ENSURE(test)   ! DBC ENSURE  - test
-#define DBC_REQUIRE_MSG(test,msg)  ! DBC REQUIRE - test, msg
-#define DBC_ENSURE_MSG(test,msg)   ! DBC ENSURE  - test, msg
 #endif

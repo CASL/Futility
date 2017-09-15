@@ -44,7 +44,7 @@ SUBROUTINE DBC_FAIL(test_char,mod_name,line)
   CHARACTER(LEN=*),INTENT(IN) :: mod_name
   INTEGER,INTENT(IN) :: line
   !> Variables for MPI tests
-  INTEGER :: rank=1,nproc=1
+  INTEGER :: rank=0,nproc=1
 #ifdef HAVE_MPI
   INTEGER :: mpierr
   CALL MPI_Comm_rank(MPI_COMM_WORLD,rank,mpierr)
