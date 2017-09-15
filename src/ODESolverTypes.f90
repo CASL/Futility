@@ -298,7 +298,7 @@ MODULE ODESolverTypes
           SUNDIALS_ipar(1)=solver%n
           SUNDIALS_rpar(1)=0.0_SRK
           !Calling malloc and assuming t=0 for in init.  This way we can call init then clear without a segfault
-          CALL FCVMALLOC(0.0_SRK,solver%ytmp, 2, 2, 1, solver%tol*0.001, 1.0E-26_C_DOUBLE,SUNDIALS_IOUT, SUNDIALS_ROUT, &
+          CALL FCVMALLOC(0.0_SRK,solver%ytmp, 2, 2, 1, solver%tol, 1.0E-26_C_DOUBLE,SUNDIALS_IOUT, SUNDIALS_ROUT, &
                       SUNDIALS_IPAR, SUNDIALS_RPAR, ierr)
           CALL FCVDENSE(INT(solver%n,C_LONG),ierr)
           EXTERNAL_isInit=.TRUE.
