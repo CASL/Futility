@@ -43,14 +43,12 @@ SET(${PROJECT_NAME}_ENABLE_CXX11_DEFAULT  ON)
 IF (NOT ${PROJECT_NAME}_EXCLUDE_PACKAGES)
   SET(${PROJECT_NAME}_EXCLUDE_PACKAGES
     # Trilinos disables
+    ML
     Gtest
-    RTOp
     Sacado
     Zoltan
     Shards
-    Thyra
     Intrepid
-    Rythmos
     Pike
     ThreadPool
     GlobiPack
@@ -58,7 +56,6 @@ IF (NOT ${PROJECT_NAME}_EXCLUDE_PACKAGES)
     Pliris
     Claps
     Galeri
-    Amesos2
     Pamgen
     Komplex
     RBGen

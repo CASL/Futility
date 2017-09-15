@@ -6,7 +6,7 @@
 / of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
 / can be found in LICENSE.txt in the head directory of this repository.        !
 /+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-
+#ifdef FUTILITY_HAVE_Trilinos
 #include "trilinos_mat_vec.hpp"
 
 TpetraVecCnt::TpetraVecCnt(int n, int nloc, MPI_Comm rawComm)
@@ -18,7 +18,6 @@ TpetraVecCnt::TpetraVecCnt(int n, int nloc, MPI_Comm rawComm)
 {
     // This is unneccesary, since this Tpetra::Vector<> constructor
     // initializes to zero
-    std::cout << "MPI comm " << rawComm << "\n";
     vec->putScalar(0.0);
 }
 
@@ -33,3 +32,4 @@ void TpetraVecCnt::defineMapData(const int id, const int nloc, const int *gid)
 
     return;
 }
+#endif

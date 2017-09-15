@@ -11,7 +11,7 @@
 #endif
 #ifdef FUTILITY_HAVE_Trilinos
 #include "trilinos_mat_vec.hpp"
-//#include "trilinos_anderson.hpp"
+#include "trilinos_anderson.hpp"
 #include <omp.h>
 #include "CTeuchos_ParameterList.h"
 #include "CTeuchos_ParameterList_Cpp.hpp"
@@ -25,8 +25,7 @@ Teuchos::RCP<TpetraMatStore> tmat(new TpetraMatStore);
 Teuchos::RCP<PCStore> pcst(new PCStore);
 Teuchos::RCP<AnasaziStore> aeig(new AnasaziStore);
 Teuchos::RCP<BelosStore> bels(new BelosStore);
-// Teuchos::RCP< AndersonStore  > andr(new AndersonStore);
-// Teuchos::RCP< JFNKStore      > jfnk(new JFNKStore);
+Teuchos::RCP< AndersonStore  > andr(new AndersonStore);
 Teuchos::RCP<TSStore> tsst(new TSStore);
 
 //------------------------------------------------------------------------------
@@ -366,47 +365,22 @@ extern "C" void Preconditioner_Reset(const int id, const int idM)
 extern "C" void Anderson_Init(int &id, const int depth, const double beta,
                               const int start, const int idv)
 {
-    assert(false);
-    // id = andr->new_data(depth, beta, start, tvec->get_vec(idv));
+    id = andr->new_data(depth, beta, start, tvec->get_vec(idv));
 }
 
 extern "C" void Anderson_Destroy(const int id)
 {
-    assert(false);
-    // andr->delete_data(id);
+    andr->delete_data(id);
 }
 
 extern "C" void Anderson_Update(const int id)
 {
-    assert(false);
-    // andr->step(id);
+    andr->step(id);
 }
 
 extern "C" void Anderson_Reset(const int id)
 {
-    assert(false);
-    // andr->reset_data(id);
-}
-//------------------------------------------------------------------------------
-// JFNK NOX
-//------------------------------------------------------------------------------
-extern "C" void JFNK_Init(int &id, void (*funptr)(), const int idx,
-                          const int idF)
-{
-    assert(false);
-    // id = jfnk->new_data(funptr, tvec->get_vec(idx), tvec->get_vec(idF));
-}
-
-extern "C" void JFNK_Destroy(const int id)
-{
-    assert(false);
-    // jfnk->delete_data(id);
-}
-
-extern "C" void Anderson_Solve(const int id)
-{
-    assert(false);
-    // jfnk->solve(id);
+    andr->reset_data(id);
 }
 
 //------------------------------------------------------------------------------
@@ -433,12 +407,13 @@ extern "C" void TS_Destroy(int id)
     tsst->delete_data(id);
 }
 
-extern "C" void TS_Step(int id, double tstart, double tend, double* xstart, double* xend)
+extern "C" void TS_Step(int id, double tstart, double tend, double *xstart,
+                        double *xend)
 {
-    //convert to vector in here?
-    int idS=-1;
-    int idE=-1;
-    (*tsst)[id].step(tstart, tend, *tvec->get_vec(idS), *tvec->get_vec(idE));
+    // convert to vector in here?
+    int idS = -1;
+    int idE = -1;
+    (*tsst)[id].step(tstart, tend, xstart, xend);
 }
 
 #endif

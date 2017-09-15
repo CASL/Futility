@@ -3528,9 +3528,14 @@ PROGRAM testMatrixTypes
       CLASS(SparseMatrixType),ALLOCATABLE :: testA
       LOGICAL(SBK) :: bool
       TYPE(ParamType) :: tmpPlist
+#ifdef FUTILITY_HAVE_PETSC
+      CLASS(DistributedMatrixType),POINTER :: dmat_p
+      REAL(SRK) :: aij
+#endif
       ALLOCATE(SparseMatrixType :: testA)
 
 
+      COMPONENT_TEST('Sparse')
       CALL Plist%clear()
       CALL tmpPlist%add('MatrixType->n',4_SIK)
       CALL tmpPlist%add('MatrixType->matType',SPARSE)
@@ -3552,6 +3557,46 @@ PROGRAM testMatrixTypes
       bool=ALL(testA%a(:) .APPROXEQ. (/2.0_SRK,5.0_SRK,1.0_SRK,3.0_SRK,4.0_SRK,6.0_SRK/))
       ASSERT(bool,"wrong a")
       CALL tmpPlist%clear()
+
+
+#ifdef FUTILITY_HAVE_PETSC
+      COMPONENT_TEST('PETSc')
+      dmat_p => NULL()
+      CALL tmpPlist%add("MatrixType->n",4)
+      CALL tmpPlist%add("MatrixType->isSym",.FALSE.)
+      CALL tmpPlist%add("MatrixType->matType",SPARSE)
+      CALL tmpPlist%add("MatrixType->engine",VM_PETSC)
+      CALL tmpPlist%add("MatrixType->MPI_COMM_ID",PE_COMM_SELF)
+      CALL DistributedMatrixFactory(dmat_p,tmpPlist)
+
+      CALL dmat_p%set(1,2,1.0_SRK)
+      CALL dmat_p%set(2,1,2.0_SRK)
+      CALL dmat_p%set(2,4,3.0_SRK)
+      CALL dmat_p%set(3,4,4.0_SRK)
+      CALL dmat_p%set(4,1,5.0_SRK)
+      CALL dmat_p%set(4,4,6.0_SRK)
+
+      CALL dmat_p%assemble()
+      
+      CALL dmat_p%transpose()
+
+      CALL dmat_p%get(2,1,aij)
+      ASSERT(aij == 1.0_SRK,'(1,2)->(2,1)')
+      CALL dmat_p%get(1,2,aij)
+      ASSERT(aij == 2.0_SRK,'(2,1)->(1,2)')
+      CALL dmat_p%get(4,2,aij)
+      ASSERT(aij == 3.0_SRK,'(2,4)->(4,2)')
+      CALL dmat_p%get(4,3,aij)
+      ASSERT(aij == 4.0_SRK,'(3,4)->(4,3)')
+      CALL dmat_p%get(1,4,aij)
+      ASSERT(aij == 5.0_SRK,'(4,1)->(1,4)')
+      CALL dmat_p%get(4,4,aij)
+      ASSERT(aij == 6.0_SRK,'(4,4)->(4,4)')
+
+      CALL dmat_p%clear()
+      DEALLOCATE(dmat_p)
+      CALL tmpPlist%clear()
+#endif
     ENDSUBROUTINE testTransposeMatrix
 !
 !-------------------------------------------------------------------------------

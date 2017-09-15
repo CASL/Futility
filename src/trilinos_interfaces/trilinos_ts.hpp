@@ -14,24 +14,87 @@
 
 #include <Teuchos_RCP.hpp>
 
+#include <Thyra_ModelEvaluator.hpp>
+#include <Thyra_StateFuncModelEvaluatorBase.hpp>
+#include <Thyra_NonlinearSolverBase.hpp>
+
+#include <Rythmos_IntegratorBase.hpp>
+#include <Rythmos_StepperBase.hpp>
+
 #include "trilinos_mat_vec.hpp"
 
-class TSCnt : ForPETRA_SelectedTypes {
+class TSModelEvaluator : public Thyra::StateFuncModelEvaluatorBase<double> {
 public:
+    typedef double Scalar;
+    typedef Thyra::ModelEvaluatorBase::InArgs<Scalar> InArgs;
+    typedef Thyra::ModelEvaluatorBase::OutArgs<Scalar> OutArgs;
+
+    TSModelEvaluator(int n);
+
+    // Implement pure virtuals left over from ModelEvaluator
+    Teuchos::RCP<const Thyra::VectorSpaceBase<Scalar>>
+    get_x_space() const override
+    {
+        return x_space_;
+    }
+
+    Teuchos::RCP<const Thyra::VectorSpaceBase<Scalar>>
+    get_f_space() const override
+    {
+        return f_space_;
+    }
+
+    InArgs createInArgs() const override;
+
+    OutArgs createOutArgsImpl() const override;
+
+    void evalModelImpl(const InArgs &inArgs,
+                       const OutArgs &outArgs) const override;
+
+private:
+    // Number of coupled equations
+    const int n_;
+    Teuchos::RCP<const Thyra::VectorSpaceBase<Scalar>> x_space_;
+    Teuchos::RCP<const Thyra::VectorSpaceBase<Scalar>> f_space_;
+
+    InArgs inArgs_;
+    OutArgs outArgs_;
+};
+
+class TSCnt {
+public:
+    typedef TSModelEvaluator::Scalar Scalar;
     typedef void (*FunctionPointer)();
 
-    TSCnt(){}
+    TSCnt()
+    {
+    }
 
     TSCnt(FunctionPointer fptr, int n, double tol,
           Teuchos::ParameterList &params);
 
-    int step(double tstart, double tend, const Vector &xtart, Vector &xend);
+    int step(double tstart, double tend, const double *xtart, double *xend);
 
+    // Data
+private:
     FunctionPointer fptr = nullptr;
     int n;
     double tol;
     Teuchos::ParameterList ts_db;
-    // maybe some other things about a specific solver
+    // To drive Rythmos, we need to create:
+    //  - a ModelEvaluator (which should just wrap the call to the Fortran model
+    //  and marshal the results appropriately)
+    //  - a time Stepper, which knows how to use the ModelEvaluator to perform a
+    //  single time step at a time. This is where we can select a specific
+    //  integration method, such as BDF, RK, or various Euler methods.
+    //  - a TimeIntegrator, which uses the ModelEvaluator and the time Stepper
+    //  to advance the simulation forward to a requested time point
+    //  - a non-linear solver for solving each time step taken by the Stepper
+
+    Teuchos::RCP<Thyra::ModelEvaluator<Scalar>> model_;
+    Teuchos::RCP<Thyra::NonlinearSolverBase<Scalar>> solver_;
+    Teuchos::RCP<Rythmos::StepperBase<Scalar>> stepper_;
+    Teuchos::RCP<Rythmos::IntegratorBase<Scalar>> integrator_;
 };
 
 class TSStore : ForPETRA_SelectedTypes {
