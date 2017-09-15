@@ -43,15 +43,12 @@ SET(${PROJECT_NAME}_ENABLE_CXX11_DEFAULT  ON)
 IF (NOT ${PROJECT_NAME}_EXCLUDE_PACKAGES)
   SET(${PROJECT_NAME}_EXCLUDE_PACKAGES
     # Trilinos disables
+    ML
     Gtest
-    Kokkos
-    RTOp
     Sacado
     Zoltan
     Shards
-    Thyra
     Intrepid
-    Rythmos
     Pike
     ThreadPool
     GlobiPack
@@ -59,8 +56,6 @@ IF (NOT ${PROJECT_NAME}_EXCLUDE_PACKAGES)
     Pliris
     Claps
     Galeri
-    Tpetra
-    Amesos2
     Pamgen
     Komplex
     RBGen
@@ -71,8 +66,6 @@ IF (NOT ${PROJECT_NAME}_EXCLUDE_PACKAGES)
     Stokhos
     Piro
     Panzer
-    Xpetra
-    MueLu
     Sundance
     CTrilinos
     ForTrilinos
@@ -84,7 +77,6 @@ IF (NOT ${PROJECT_NAME}_EXCLUDE_PACKAGES)
     Zoltan2
     Gtest
     SEACAS
-    Ifpack2
     FEI
     STK
     Phalanx
