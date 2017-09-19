@@ -269,7 +269,7 @@ ELSEIF(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
        )
 
     SET(Fortran_FLAGS_RELEASE
-        ${CSYM}Ofast
+        ${CSYM}O3
        )
 ELSEIF(CMAKE_Fortran_COMPILER_ID STREQUAL "PGI")
 
