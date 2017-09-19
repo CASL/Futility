@@ -7,15 +7,30 @@
 ! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief description
+!>  This module contains the DBC_Fail routine which in conjunction with DBC.h
+!>  which defines the C-preprocessor macros REQUIRE and ENSURE, work to
+!>  implement a basic Design by Contract testing.
+!>  REQUIRE should be used to document contracts on the inputs to a routine
+!>  ENSURE should be used to document contracts on the outputs of a routine
 !>
-!>
-!> @par
+!> @par EXAMPLES
 !> @code
+!> SUBROUTINE foo(x,y)
+!>   TYPE(bar),INTENT(INOUT) :: x
+!>   REAL(SRK),INTENT(OUT) :: y
+!>
+!>   REQUIRE(x%isInit)
+!>   REQUIRE(x%hasData)
+!>
+!>   y=x%calcFoo()
+!>
+!>   ENSURE(y>0.0_SRK)
+!> ENDSUBROUTINE foo
 !> @endcode
 !>
 !>
 !> @author Benjamin Collins
-!>    @date 11/17/2012
+!>    @date 09/19/2017
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE DBC
   USE ISO_FORTRAN_ENV
