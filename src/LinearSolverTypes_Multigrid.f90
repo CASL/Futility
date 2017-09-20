@@ -415,6 +415,8 @@ MODULE LinearSolverTypes_Multigrid
       REAL(SRK),ALLOCATABLE :: wts(:,:)
 
 #ifdef FUTILITY_HAVE_PETSC
+      PetscErrorCode :: iperr
+
       IF(solver%TPLType /= PETSC) &
         CALL eLinearSolverType%raiseError('Incorrect call to '// &
           modName//'::'//myName//' - This subroutine does not have a '// &
@@ -465,6 +467,7 @@ MODULE LinearSolverTypes_Multigrid
       CLASS(LinearSolverType_Multigrid),INTENT(INOUT) :: solver
       TYPE(ParamType),INTENT(IN) :: Params
       INTEGER(SIK) :: iLevel
+      INTEGER(SIK) :: num_mg_coarse_its
 #ifdef FUTILITY_HAVE_PETSC
       KSP :: ksp_temp
       PC :: pc_temp
@@ -511,7 +514,23 @@ MODULE LinearSolverTypes_Multigrid
       CALL KSPSetType(ksp_temp,KSPGMRES,iperr)
       CALL KSPGetPC(ksp_temp,pc_temp,iperr)
       CALL PCSetType(pc_temp,PCBJACOBI,iperr)
+      IF(Params%has('LinearSolverType->num_mg_coarse_its')) THEN
+        CALL Params%get('LinearSolverType->num_mg_coarse_its', &
+                num_mg_coarse_its)
+      ELSE
+        !Some reasonable number of GMRES iterations:
+        num_mg_coarse_its=CEILING(SQRT(PRODUCT(solver%level_info(:,1))+0._SRK))
+      ENDIF
+      !None of the tolerances actually matter since PCMG doesn't check for
+      !  convergence and just runs until the maximum number of iterations.
+      CALL KSPSetTolerances(ksp_temp,1.E-8_SRK,1.E-8_SRK,1.E3_SRK, &
+                              num_mg_coarse_its,iperr)
+      CALL KSPGMRESSetRestart(ksp_temp,num_mg_coarse_its,iperr)
       CALL KSPSetInitialGuessNonzero(ksp_temp,PETSC_TRUE,iperr)
+
+      !Not sure if the tolerance actually matters on the outer level.  This
+      !  call is mostly to set a limit on the number of MG V-cycles performed.
+      CALL KSPSetTolerances(solver%ksp,1.E-8_SRK,1.E-8_SRK,1.E3_SRK,10_SIK,iperr)
 
       solver%isMultigridSetup=.TRUE.
 #else
