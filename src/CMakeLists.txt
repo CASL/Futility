@@ -86,6 +86,7 @@ TRIBITS_ADD_LIBRARY(Utils
       LinearSolverTypes.f90
       LinearSolverTypes_Multigrid.f90
       MultigridMesh.f90
+      SmootherTypes.f90
       EigenvalueSolverTypes.f90
       ODESolverTypes.f90
       AndersonAcceleration.f90
