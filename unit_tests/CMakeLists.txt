@@ -13,6 +13,7 @@
 # the tests at the end have the most dependencies.
 #
 SET(UNIT_TEST_NAMES
+    testDBC
     testUnitTest
     testSelectedKinds
     testWaterSatProperties
