@@ -60,8 +60,8 @@ MODULE MultigridMesh
     !>  into.  May have another use/definition in cases where the interpolation
     !>  operator has no injections.  This is not needed for fillInterpMatrices
     !>  in LinearSolverTypes_Multigrid, it is only here for the user's
-    !>  and initializing this variable is optional.
-    INTEGER(SIK) :: finestGridIndex
+    !>  and using/setting this variable is optional.
+    INTEGER(SIK) :: finestGridIndex=-1_SIK
     !> For degree 0 points, childIndices is a size-1 array containing the
     !>  child mesh index of the point that it injects into.
     !> For degree >0 points, childIndices is a size >1 array containing the
@@ -82,24 +82,24 @@ MODULE MultigridMesh
 
   TYPE :: MultigridMeshType
     !> Which level the mesh corresponds to (1 = coarsest)
-    INTEGER(SIK) :: iLevel
+    INTEGER(SIK) :: iLevel=-1_SIK
     !> Number of equations (# of components per spatial point)
     !>   Right now, there is no support for simultaneous collapse in both space
     !>   and the number of eqns in this module.  Collapse of eqns must be done
     !>   separately.
-    INTEGER(SIK) :: num_eqns
+    INTEGER(SIK) :: num_eqns=1_SIK
     !> Whether or not it is the finest level:
-    LOGICAL(SBK) :: isFinestLevel
+    LOGICAL(SBK) :: isFinestLevel=.FALSE.
     !> Whether or not it is the coarsest level:
     !> NOTE: On the coarsest level, mmData, interpDegrees, and xyzMap need
     !>  not be allocated!
-    LOGICAL(SBK) :: isCoarsestLevel
+    LOGICAL(SBK) :: isCoarsestLevel=.FALSE.
     !> Number of cells/points on this level locally:
-    INTEGER(SIK) :: nPointsLocal
+    INTEGER(SIK) :: nPointsLocal=-1_SIK
     !> Local starting index of mesh points:
-    INTEGER(SIK) :: istt
+    INTEGER(SIK) :: istt=-1_SIK
     !> Local end index of mesh points:
-    INTEGER(SIK) :: istp
+    INTEGER(SIK) :: istp=-1_SIK
     !> Global x,y,z location of each element in units of the finest mesh
     !> This means that adjacent cells in coarser meshes do not have
     !>   adjacent x/y/z values.  Range is (3,istt:istp)
@@ -132,7 +132,7 @@ MODULE MultigridMesh
 
   TYPE :: MultigridMeshStructureType
     !> Number of multigrid levels, including the coarsest and finest
-    INTEGER(SIK) :: nLevels
+    INTEGER(SIK) :: nLevels=-1_SIK
     !> Data for each multigrid level.  NOTE: Typically 1:nLevels-1.
     !>  It is generally not necessary to define a MultigridMesh for the
     !>  coarsest level.  1 = coarsest level, nLevels = finest level.
