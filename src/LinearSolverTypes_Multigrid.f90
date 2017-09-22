@@ -415,8 +415,6 @@ MODULE LinearSolverTypes_Multigrid
       REAL(SRK),ALLOCATABLE :: wts(:,:)
 
 #ifdef FUTILITY_HAVE_PETSC
-      PetscErrorCode :: iperr
-
       IF(solver%TPLType /= PETSC) &
         CALL eLinearSolverType%raiseError('Incorrect call to '// &
           modName//'::'//myName//' - This subroutine does not have a '// &
@@ -663,8 +661,6 @@ MODULE LinearSolverTypes_Multigrid
       INTEGER(SIK) :: iLevel
 
 #ifdef FUTILITY_HAVE_PETSC
-      PetscErrorCode :: iperr
-
       IF(solver%isMultigridSetup) THEN
         DO iLevel=1,solver%nLevels-1
           CALL solver%interpMats_PETSc(iLevel)%clear()
