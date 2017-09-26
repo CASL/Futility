@@ -60,6 +60,7 @@ MODULE SmootherTypes
   PUBLIC :: ctxList
   PUBLIC :: smootherType_PETSc_CBJ
   PUBLIC :: PCSetUp_CBJ
+  PUBLIC :: PCApply_CBJ
 #endif
 
   !> Enumeration for smoother options
@@ -418,8 +419,9 @@ MODULE SmootherTypes
           WRITE(pcnumber,'(i5)') ismoother
           pcname="CBJ PC"//pcnumber
           CALL PCShellSetName(smoother%pc,pcname,iperr)
-          CALL PCShellSetSetUp(smoother%pc,PCSetup_CBJ,iperr)
+          CALL PCShellSetSetUp(smoother%pc,PCSetUp_CBJ,iperr)
           CALL PCShellSetContext(smoother%pc,ctxList(ismoother)%ctx,iperr)
+          CALL PCShellSetApply(smoother%pc,PCApply_CBJ,iperr)
 #endif
           smoother%isKSPSetup=.TRUE.
         CLASS IS(SmootherType_PETSc)
@@ -652,6 +654,46 @@ MODULE SmootherTypes
 
       iperr=0_SIK
     ENDSUBROUTINE PCSetup_CBJ
+#endif
+!
+!-------------------------------------------------------------------------------
+!> @brief PETSc Apply PC function for PCSHELL for the colored block Jacobi scheme
+!>
+!> @param smoother Smoother object which owns the SHELL
+!> @param pc PETSc PC context
+!> @param iperr PetscErrorCode
+!>
+#ifdef FUTILITY_HAVE_PETSC
+    SUBROUTINE PCApply_CBJ(pc,xin,xout,iperr)
+      CHARACTER(LEN=*),PARAMETER :: myName='PCApply_CBJ'
+      PC,INTENT(INOUT) :: pc
+      Vec,INTENT(INOUT) :: xin,xout
+      PetscErrorCode,INTENT(INOUT) :: iperr
+
+      INTEGER(SIK) :: smootherID
+      TYPE(C_PTR) :: ctx_ptr
+      PetscInt,POINTER :: ctx(:)
+
+      !Get the smoother ID:
+      CALL PCShellGetContext(pc,ctx_ptr,iperr)
+      CALL C_F_POINTER(ctx_ptr,ctx,(/1/))
+      smootherID=ctx(1)
+
+      SELECTTYPE(smoother=>smootherList(smootherID)%smoother);
+        TYPE IS(SmootherType_PETSc_CBJ)
+          IF(.NOT. smoother%isInit) &
+            CALL eSmootherType%raiseError(modName//"::"//myName//" - "// &
+                "Smoother must be initialized first!")
+          IF(.NOT. smoother%colorManager%hasAllColorsDefined) &
+            CALL eSmootherType%raiseError(modName//"::"//myName//" - "// &
+                "Smoother's color manager must have its colors defined first!")
+        CLASS DEFAULT
+          CALL eSmootherType%raiseError(modName//"::"//myName//" - "// &
+              "This subroutine is only for CBJ smoothers!")
+      ENDSELECT
+
+      iperr=0_SIK
+    ENDSUBROUTINE PCApply_CBJ
 #endif
 
 ENDMODULE SmootherTypes

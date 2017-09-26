@@ -86,7 +86,7 @@ PROGRAM testSmoother
   REGISTER_SUBTEST('testInit',testInit)
   REGISTER_SUBTEST('testDefineColor',testDefineColor)
   REGISTER_SUBTEST('testDefineAllColors',testDefineAllColors)
-  !REGISTER_SUBTEST('testSmooth',testSmooth_PETSc_CBJ)
+  REGISTER_SUBTEST('testSmooth',testSmooth_PETSc_CBJ)
   FINALIZE_TEST()
 
   CALL params%clear()
@@ -344,6 +344,10 @@ PROGRAM testSmoother
       CALL VecAssemblyEnd(b_petsc,iperr)
       CALL VecAssemblyEnd(x_petsc,iperr)
       CALL MatAssemblyEnd(A_petsc,MAT_FINAL_ASSEMBLY,iperr)
+
+      CALL smootherManager_Init(params_2proc)
+
+      CALL smootherManager_setKSP(1,ksp)
 
       CALL KSPSetOperators(ksp,A_petsc,A_petsc,iperr)
 
