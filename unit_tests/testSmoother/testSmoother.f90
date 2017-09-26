@@ -41,6 +41,14 @@ PROGRAM testSmoother
     ENDSUBROUTINE PCShellGetContext
   ENDINTERFACE
 
+  INTERFACE
+    SUBROUTINE VecGetArrayReadF90(x,xx_v,iperr)
+      Vec :: x
+      PetscScalar, POINTER :: xx_v(:)
+      PetscErrorCode :: iperr
+    ENDSUBROUTINE VecGetArrayReadF90
+  ENDINTERFACE
+
   CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
 #else
   INTEGER(SIK) :: ksp=-1_SIK
@@ -284,6 +292,7 @@ PROGRAM testSmoother
       Mat :: A_petsc
       Vec :: b_petsc,x_petsc
       PetscErrorCode :: iperr
+      PetscScalar,POINTER :: xx_v(:)
 
       n=nlocal*mpiTestEnv%nproc
 
@@ -312,7 +321,6 @@ PROGRAM testSmoother
       CALL VecSetType(x_petsc,VECMPI,iperr)
       CALL MatMPIAIJSetPreallocation(A_petsc,0,dnnz,0,onnz,iperr)
       CALL VecSet(b_petsc,0.0_SRK,iperr)
-      CALL VecSet(x_petsc,0.0_SRK,iperr)
       CALL VecAssemblyBegin(b_petsc,iperr)
 
 
@@ -336,6 +344,11 @@ PROGRAM testSmoother
         CALL MatSetValue(A_petsc,row-1,row,-0.01_SRK,INSERT_VALUES,iperr)
         !Downscatter:
         CALL MatSetValue(A_petsc,row,row-1,-0.5_SRK,INSERT_VALUES,iperr)
+        IF(MOD(i,2) == 0_SIK) THEN
+          CALL VecSetValue(x_petsc,row,1.0_SRK,INSERT_VALUES,iperr)
+        ELSE
+          CALL VecSetValue(x_petsc,row,0.0_SRK,INSERT_VALUES,iperr)
+        ENDIF
       ENDDO
 
       CALL VecAssemblyBegin(x_petsc,iperr)
@@ -351,7 +364,14 @@ PROGRAM testSmoother
 
       CALL KSPSetOperators(ksp,A_petsc,A_petsc,iperr)
 
-      CALL smootherManager_Init(params_2proc)
+      CALL KSPSetInitialGuessNonzero(ksp,PETSC_TRUE,iperr)
+      CALL KSPSetTolerances(ksp,1E-10_SRK,1E-10_SRK,1E2_SRK,1_SIK,iperr)
+      CALL KSPSolve(ksp,b_petsc,x_petsc,iperr)
+      ASSERT(iperr == 0_SIK,'No KSPSolve Errors')
+
+      CALL VecGetArrayReadF90(x_petsc,xx_v,iperr)
+      ASSERT(ALL(xx_v .APPROXEQ. 0.0_SRK),'CBJ converged oscillating error in 1 it.')
+      CALL VecRestoreArrayReadF90(x_petsc,xx_v,iperr)
 
       CALL smootherManager_clear()
 
