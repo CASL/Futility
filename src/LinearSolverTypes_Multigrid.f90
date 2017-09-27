@@ -509,15 +509,9 @@ MODULE LinearSolverTypes_Multigrid
       !Set # of levels:
       CALL PCMGSetLevels(solver%pc,solver%nLevels,PETSC_NULL_OBJECT,iperr)
 
+      !Need a smoother on all levels except the coarsest:
       DO iLevel=solver%nLevels-1,1,-1
-        !Set the smoother:
-        CALL PCMGGetSmoother(solver%pc,iLevel,ksp_temp,iperr)
-
-        !KSPRICHARDSON+PCSOR=Gauss-Seidel
-        CALL KSPSetType(ksp_temp,KSPRICHARDSON,iperr)
-        CALL KSPGetPC(ksp_temp,pc_temp,iperr)
-        CALL PCSetType(pc_temp,PCSOR,iperr)
-        CALL KSPSetInitialGuessNonzero(ksp_temp,PETSC_TRUE,iperr)
+        CALL solver%setSmoother(smootherMethod_list(iLevel+1),iLevel)
 
         !Set the interpolation operator:
         CALL solver%interpMats_PETSc(iLevel)%assemble()
@@ -525,10 +519,8 @@ MODULE LinearSolverTypes_Multigrid
       ENDDO
 
       !Coarsest smoother is GMRES with block Jacobi preconditioner:
-      CALL PCMGGetSmoother(solver%pc,0,ksp_temp,iperr)
-      CALL KSPSetType(ksp_temp,KSPGMRES,iperr)
-      CALL KSPGetPC(ksp_temp,pc_temp,iperr)
-      CALL PCSetType(pc_temp,PCBJACOBI,iperr)
+      iLevel=0
+      CALL solver%setSmoother(smootherMethod_list(iLevel+1),iLevel)
       IF(Params%has('LinearSolverType->num_mg_coarse_its')) THEN
         CALL Params%get('LinearSolverType->num_mg_coarse_its', &
                 num_mg_coarse_its)
@@ -538,9 +530,11 @@ MODULE LinearSolverTypes_Multigrid
       ENDIF
       !None of the tolerances actually matter since PCMG doesn't check for
       !  convergence and just runs until the maximum number of iterations.
+      CALL PCMGGetSmoother(solver%pc,0,ksp_temp,iperr)
       CALL KSPSetTolerances(ksp_temp,1.E-8_SRK,1.E-8_SRK,1.E3_SRK, &
                               num_mg_coarse_its,iperr)
       CALL KSPGMRESSetRestart(ksp_temp,num_mg_coarse_its,iperr)
+      !Redundant call, but I think for some reason it might be needed:
       CALL KSPSetInitialGuessNonzero(ksp_temp,PETSC_TRUE,iperr)
 
       !Not sure if the tolerance actually matters on the outer level.  This
