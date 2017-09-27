@@ -49,6 +49,14 @@ PROGRAM testSmoother
     ENDSUBROUTINE VecGetArrayReadF90
   ENDINTERFACE
 
+  INTERFACE
+    SUBROUTINE VecRestoreArrayReadF90(x,xx_v,iperr)
+      Vec :: x
+      PetscScalar, POINTER :: xx_v(:)
+      PetscErrorCode :: iperr
+    ENDSUBROUTINE VecRestoreArrayReadF90
+  ENDINTERFACE
+
   CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
 #else
   INTEGER(SIK) :: ksp=-1_SIK
@@ -269,6 +277,8 @@ PROGRAM testSmoother
             tmpbool=manager%colors(1)%num_indices == 33_SIK .AND. &
                       manager%colors(2)%num_indices == 32_SIK
             ASSERT(tmpbool,'Correct number of red and black indices')
+            tmpbool=manager%hasAllColorsDefined
+            ASSERT(tmpbool,'Has all colors defined')
           ENDASSOCIATE
       ENDSELECT
 
@@ -288,6 +298,7 @@ PROGRAM testSmoother
       INTEGER(SIK) :: i,ieqn
       INTEGER(SIK) :: row,col
       INTEGER(SIK) :: dnnz(nlocal*num_eqns),onnz(nlocal*num_eqns)
+      INTEGER(SBK),ALLOCATABLE :: color_ids(:)
 
       Mat :: A_petsc
       Vec :: b_petsc,x_petsc
@@ -335,6 +346,11 @@ PROGRAM testSmoother
             col=i*num_eqns+ieqn
             CALL MatSetValue(A_petsc,row-1,col-1,-1.0_SRK,INSERT_VALUES,iperr)
           ENDIF
+          IF(MOD(i,2) == 1_SIK) THEN
+            CALL VecSetValue(x_petsc,row-1,0.0_SRK,INSERT_VALUES,iperr)
+          ELSE
+            CALL VecSetValue(x_petsc,row-1,0.0_SRK,INSERT_VALUES,iperr)
+          ENDIF
         ENDDO
         row=(i-1)*num_eqns+1
         CALL MatSetValue(A_petsc,row-1,row-1,2.1_SRK,INSERT_VALUES,iperr)
@@ -343,11 +359,6 @@ PROGRAM testSmoother
         CALL MatSetValue(A_petsc,row-1,row,-0.01_SRK,INSERT_VALUES,iperr)
         !Downscatter:
         CALL MatSetValue(A_petsc,row,row-1,-0.5_SRK,INSERT_VALUES,iperr)
-        IF(MOD(i,2) == 0_SIK) THEN
-          CALL VecSetValue(x_petsc,row,1.0_SRK,INSERT_VALUES,iperr)
-        ELSE
-          CALL VecSetValue(x_petsc,row,0.0_SRK,INSERT_VALUES,iperr)
-        ENDIF
       ENDDO
 
       CALL VecAssemblyBegin(x_petsc,iperr)
@@ -361,10 +372,17 @@ PROGRAM testSmoother
 
       CALL smootherManager_setKSP(1,ksp)
 
+      ALLOCATE(color_ids(istt(1):istp(1)))
+      color_ids=2
+      DO i=istt(1),istp(1),2
+        color_ids(i)=1
+      ENDDO
+      CALL smootherManager_defineAllColors(1_SIK,color_ids)
+
       CALL KSPSetOperators(ksp,A_petsc,A_petsc,iperr)
 
       CALL KSPSetInitialGuessNonzero(ksp,PETSC_TRUE,iperr)
-      CALL KSPSetTolerances(ksp,1E-10_SRK,1E-10_SRK,1E2_SRK,1_SIK,iperr)
+
       CALL KSPSolve(ksp,b_petsc,x_petsc,iperr)
       ASSERT(iperr == 0_SIK,'No KSPSolve Errors')
 

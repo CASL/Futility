@@ -50,7 +50,6 @@ MODULE SmootherTypes
 !
 ! List of public members
   PUBLIC :: eSmootherType
-  PUBLIC :: IndexList
   PUBLIC :: isSmootherListInit
   PUBLIC :: num_smoothers
   !Public smoother list manager functions:
@@ -98,6 +97,8 @@ MODULE SmootherTypes
     INTEGER(SIK) :: istp=-1_SIK
     !> Block size (number of unknowns per point):
     INTEGER(SIK) :: blk_size=-1_SIK
+    !> Solvers for all the blocks:
+    CLASS(LinearSolverType_Base),ALLOCATABLE :: blockSolvers(:)
 
   !
   !List of Type Bound Procedures
@@ -167,6 +168,8 @@ MODULE SmootherTypes
   TYPE,EXTENDS(SmootherType_PETSc) :: SmootherType_PETSc_CBJ
     !> A type for managing the coloring scheme:
     TYPE(ColorManagerType) :: colorManager
+    !> Current color being solved:
+    INTEGER(SIK) :: icolor=-1_SIK
 
   !
   !List of Type Bound Procedures
@@ -182,6 +185,7 @@ MODULE SmootherTypes
   !> Exception Handler for use in SmootherTypes
   TYPE(ExceptionHandlerType),SAVE :: eSmootherType
 
+  !PETSC INTERFACES
 #ifdef FUTILITY_HAVE_PETSC
   INTERFACE
     SUBROUTINE PCShellSetContext(mypc,ctx,iperr)
@@ -198,6 +202,74 @@ MODULE SmootherTypes
       TYPE(C_PTR) :: ctx_ptr
       PetscErrorCode :: iperr
     ENDSUBROUTINE PCShellGetContext
+  ENDINTERFACE
+
+  INTERFACE
+    SUBROUTINE MatSeqAIJGetArrayF90(A,xx_v,iperr)
+      Mat :: A
+      PetscReal, POINTER :: xx_v(:)
+      PetscErrorCode :: iperr
+    ENDSUBROUTINE MatSeqAIJGetArrayF90
+  ENDINTERFACE
+
+  INTERFACE
+    SUBROUTINE MatSeqAIJRestoreArrayF90(A,xx_v,iperr)
+      Mat :: A
+      PetscReal, POINTER :: xx_v(:)
+      PetscErrorCode :: iperr
+    ENDSUBROUTINE MatSeqAIJRestoreArrayF90
+  ENDINTERFACE
+
+  INTERFACE
+    SUBROUTINE MatGetRowIJF90(A,shift,symmetric,inodecompressed,n,ia,ja,done,iperr)
+      Mat :: A
+      PetscInt :: shift,n
+      PetscBool :: symmetric,inodecompressed,done
+      PetscInt,POINTER :: ia(:),ja(:)
+      PetscErrorCode :: iperr
+    ENDSUBROUTINE MatGetRowIJF90
+  ENDINTERFACE
+
+  INTERFACE
+    SUBROUTINE MatRestoreRowIJF90(A,shift,symmetric,inodecompressed,n,ia,ja,done,iperr)
+      Mat :: A
+      PetscInt :: shift,n
+      PetscBool :: symmetric,inodecompressed,done
+      PetscInt,POINTER :: ia(:),ja(:)
+      PetscErrorCode :: iperr
+    ENDSUBROUTINE MatRestoreRowIJF90
+  ENDINTERFACE
+
+  INTERFACE
+    SUBROUTINE VecGetArrayReadF90(x,xx_v,iperr)
+      Vec :: x
+      PetscReal, POINTER :: xx_v(:)
+      PetscErrorCode :: iperr
+    ENDSUBROUTINE VecGetArrayReadF90
+  ENDINTERFACE
+
+  INTERFACE
+    SUBROUTINE VecRestoreArrayReadF90(x,xx_v,iperr)
+      Vec :: x
+      PetscReal, POINTER :: xx_v(:)
+      PetscErrorCode :: iperr
+    ENDSUBROUTINE VecRestoreArrayReadF90
+  ENDINTERFACE
+
+  INTERFACE
+    SUBROUTINE VecGetArrayF90(x,xx_v,iperr)
+      Vec :: x
+      PetscReal, POINTER :: xx_v(:)
+      PetscErrorCode :: iperr
+    ENDSUBROUTINE VecGetArrayF90
+  ENDINTERFACE
+
+  INTERFACE
+    SUBROUTINE VecRestoreArrayF90(x,xx_v,iperr)
+      Vec :: x
+      PetscReal, POINTER :: xx_v(:)
+      PetscErrorCode :: iperr
+    ENDSUBROUTINE VecRestoreArrayF90
   ENDINTERFACE
 
   !> Explicitly defines the interface for the clear routines
@@ -279,6 +351,7 @@ MODULE SmootherTypes
 
       !Extract param list info:
       CALL smoother%colorManager%init(params)
+      smoother%icolor=1_SIK
 
       CALL params%get('SmootherType->istt',smoother%istt)
       CALL params%get('SmootherType->istp',smoother%istp)
@@ -310,10 +383,17 @@ MODULE SmootherTypes
     SUBROUTINE clear_SmootherType_PETSc_CBJ(smoother)
       CHARACTER(LEN=*),PARAMETER :: myName='clear_SmootherType_PETSc_CBJ'
       CLASS(SmootherType_PETSc_CBJ),INTENT(INOUT) :: smoother
-      INTEGER(SIK) :: icolor
+
+      INTEGER(SIK) :: i
 
       CALL smoother%colorManager%clear()
       CALL smoother%MPIparallelEnv%clear()
+      IF(ALLOCATED(smoother%blockSolvers)) THEN
+        DO i=smoother%istt,smoother%istp
+          CALL smoother%blockSolvers(i)%clear()
+        ENDDO
+        DEALLOCATE(smoother%blockSolvers)
+      ENDIF
       smoother%isKSPSetup=.FALSE.
       smoother%isInit=.FALSE.
 
@@ -378,8 +458,10 @@ MODULE SmootherTypes
 
       IF(ALLOCATED(smootherList)) THEN
         DO ismoother=1,num_smoothers
-          CALL smootherList(ismoother)%smoother%clear()
-          DEALLOCATE(smootherList(ismoother)%smoother)
+          IF(ALLOCATED(smootherList(ismoother)%smoother)) THEN
+            CALL smootherList(ismoother)%smoother%clear()
+            DEALLOCATE(smootherList(ismoother)%smoother)
+          ENDIF
         ENDDO
         DEALLOCATE(smootherList)
       ENDIF
@@ -429,6 +511,10 @@ MODULE SmootherTypes
           CALL PCShellSetSetUp(smoother%pc,PCSetUp_CBJ,iperr)
           CALL PCShellSetContext(smoother%pc,ctxList(ismoother)%ctx,iperr)
           CALL PCShellSetApply(smoother%pc,PCApply_CBJ,iperr)
+          IF(smoother%colorManager%hasAllColorsDefined) THEN
+            CALL KSPSetTolerances(smoother%ksp,0.0_SRK,0.0_SRK,1E8_SRK, &
+                                  smoother%colorManager%num_colors,iperr)
+          ENDIF
 #endif
           smoother%isKSPSetup=.TRUE.
         CLASS IS(SmootherType_PETSc)
@@ -515,10 +601,19 @@ MODULE SmootherTypes
             CALL eSmootherType%raiseDebug(modName//"::"//myName//" - "// &
                 "Unknown smoother method, not allocating smoother for this level!")
         ENDSELECT
-        CALL smootherList(ismoother)%smoother%init(params_out)
+        IF(ALLOCATED(smootherList(ismoother)%smoother)) &
+          CALL smootherList(ismoother)%smoother%init(params_out)
       ENDDO
 
       isSmootherListInit=.TRUE.
+
+      DEALLOCATE(istt_list)
+      DEALLOCATE(istp_list)
+      DEALLOCATE(blk_size_list)
+      DEALLOCATE(smootherMethod_list)
+      DEALLOCATE(blockMethod_list)
+      DEALLOCATE(num_colors_list)
+      DEALLOCATE(MPI_Comm_ID_list)
 
     ENDSUBROUTINE smootherManager_init
 !
@@ -536,6 +631,10 @@ MODULE SmootherTypes
       INTEGER(SIK),INTENT(IN) :: index_list(:)
 
       INTEGER(SIK) :: i,num_indices
+
+#ifdef FUTILITY_HAVE_PETSC
+      PetscErrorCode :: iperr
+#endif
 
       IF(.NOT. isSmootherListInit) &
         CALL eSmootherType%raiseError(modName//"::"//myName//" - "// &
@@ -561,6 +660,14 @@ MODULE SmootherTypes
             ENDDO
             manager%hasColorDefined(icolor)=.TRUE.
             manager%hasAllColorsDefined=ALL(manager%hasColorDefined)
+
+#ifdef FUTILITY_HAVE_PETSC
+            IF(manager%hasAllColorsDefined .AND. smoother%isKSPSetup) THEN
+              CALL KSPSetTolerances(smoother%ksp,0.0_SRK,0.0_SRK,1E8_SRK, &
+                                    smoother%colorManager%num_colors,iperr)
+            ENDIF
+#endif
+
           ENDASSOCIATE
         CLASS DEFAULT
           CALL eSmootherType%raiseError(modName//"::"//myName//" - "// &
@@ -583,6 +690,9 @@ MODULE SmootherTypes
 
       INTEGER(SIK) :: icolor,i
       INTEGER(SIK),ALLOCATABLE :: tmpints(:)
+#ifdef FUTILITY_HAVE_PETSC
+      PetscErrorCode :: iperr
+#endif
 
       IF(.NOT. isSmootherListInit) &
         CALL eSmootherType%raiseError(modName//"::"//myName//" - "// &
@@ -616,6 +726,17 @@ MODULE SmootherTypes
               manager%colors(icolor)%index_list(tmpints(icolor))=i
             ENDDO
             DEALLOCATE(tmpints)
+            manager%hasColorDefined=.TRUE.
+            manager%hasAllColorsDefined=.TRUE.
+
+#ifdef FUTILITY_HAVE_PETSC
+            IF(smoother%isKSPSetup) THEN
+              !TODO: more smoother steps per iteration
+              !TODO need to put this in a different place... KSP is not always set up by this point
+              CALL KSPSetTolerances(smoother%ksp,0.0_SRK,0.0_SRK,1E8_SRK, &
+                                    smoother%colorManager%num_colors,iperr)
+            ENDIF
+#endif
           ENDASSOCIATE
         CLASS DEFAULT
           CALL eSmootherType%raiseError(modName//"::"//myName//" - "// &
@@ -637,9 +758,19 @@ MODULE SmootherTypes
       PC,INTENT(INOUT) :: pc
       PetscErrorCode,INTENT(INOUT) :: iperr
 
-      INTEGER(SIK) :: smootherID
+      INTEGER(SIK) :: smootherID,nnz
+      INTEGER(SIK) :: localrowstart,localrowend,localcolind,rowstart
+      INTEGER(SIK) :: blockrowind,blockcolind
       TYPE(C_PTR) :: ctx_ptr
-      PetscInt,POINTER :: ctx(:)
+      PetscInt,POINTER :: ctx(:),ia(:),ja(:)
+      PetscInt :: numrows
+      PetscReal,POINTER :: matvals(:)
+      TYPE(ParamType) :: params
+      Mat :: Amat,Pmat
+      Mat :: localmat
+      PetscBool :: done
+      !Iteration variables:
+      INTEGER(SIK) :: i,j,localrowind
 
       !Get the smoother ID:
       CALL PCShellGetContext(pc,ctx_ptr,iperr)
@@ -654,10 +785,73 @@ MODULE SmootherTypes
           IF(.NOT. smoother%colorManager%hasAllColorsDefined) &
             CALL eSmootherType%raiseError(modName//"::"//myName//" - "// &
                 "Smoother's color manager must have its colors defined first!")
+
+          IF(.NOT. ALLOCATED(smoother%blockSolvers)) THEN
+            ALLOCATE(LinearSolverType_Direct :: &
+                      smoother%blockSolvers(smoother%istt:smoother%istp))
+            CALL params%clear()
+            CALL params%add('LinearSolverType->TPLType',NATIVE)
+            CALL params%add('LinearSolverType->solverMethod',LU)
+            !This part is serial, so we don't need an MPI communicator
+            CALL params%add('LinearSolverType->MPI_Comm_ID',-1_SIK)
+            CALL params%add('LinearSolverType->matType',DENSESQUARE)
+            CALL params%add('LinearSolverType->A->MatrixType->n',smoother%blk_size)
+            CALL params%add('LinearSolverType->A->MatrixType->isSym',.FALSE.)
+            CALL params%add('LinearSolverType->x->VectorType->n',smoother%blk_size)
+            CALL params%add('LinearSolverType->b->VectorType->n',smoother%blk_size)
+            !Get the block matrices:
+            CALL PCGetOperators(pc,Amat,Pmat,iperr)
+            CALL MatMPIAIJGetLocalMat(Pmat,MAT_INITIAL_MATRIX,localmat,iperr)
+            CALL MatSeqAIJGetArrayF90(localmat,matvals,iperr)
+            CALL MatGetRowIJF90(localmat,1_SIK,PETSC_FALSE,PETSC_FALSE, &
+                                  numrows,ia,ja,done,iperr)
+            nnz=ia(numrows+1)-1
+            IF(.NOT. done) &
+              CALL eSmootherType%raiseError(modName//"::"//myName//" - "// &
+                  "Unable to retrieve row and column indices!")
+
+            !Global --> global indices, includes all procs, 1:total prob size
+            !Local --> local to processor, 1:local prob size
+            !Block --> local to block, 1:blk_size
+            rowstart=(smoother%istt-1)*smoother%blk_size+1
+            !rowend=smoother%istp*smoother%blk_size
+            DO i=smoother%istt,smoother%istp
+            !Loop over all local blocks
+              CALL smoother%blockSolvers(i)%init(params)
+              localrowstart=(i-smoother%istt)*smoother%blk_size+1
+              localrowend=(i-smoother%istt+1)*smoother%blk_size
+              SELECTTYPE(A => smoother%blockSolvers(i)%A)
+                TYPE IS(DenseSquareMatrixType)
+                  A%a=0.0_SRK
+                  DO localrowind=localrowstart,localrowend
+                  !Loop over rows corresponding to block i
+                    blockrowind=localrowind-localrowstart+1
+                    DO j=ia(localrowind),ia(localrowind+1)-1
+                    !Loop over nonzero entries of row localrowind
+                      localcolind=ja(j)-rowstart+1
+                      !If it is not in the diagonal block, continue
+                      IF(localcolind < localrowstart .OR. &
+                         localcolind > localrowend) CYCLE
+                      !Otherwise, store the value in a densesquarematrix:
+                      blockcolind=localcolind-localrowstart+1
+                      A%a(blockrowind,blockcolind)=matvals(j)
+                    ENDDO !j=i
+                  ENDDO !localrowind
+              ENDSELECT !smoother%blockSolvers(i)%A
+            ENDDO !i=istt,istp
+            CALL MatRestoreRowIJF90(localmat,1_SIK,PETSC_FALSE,PETSC_FALSE, &
+                                  numrows,ia,ja,done,iperr)
+            IF(.NOT. done) &
+              CALL eSmootherType%raiseError(modName//"::"//myName//" - "// &
+                  "Unable to restore row and column indices!")
+            CALL MatSeqAIJRestoreArrayF90(localmat,matvals,iperr)
+            CALL params%clear()
+          ENDIF
         CLASS DEFAULT
           CALL eSmootherType%raiseError(modName//"::"//myName//" - "// &
               "This subroutine is only for CBJ smoothers!")
       ENDSELECT
+
 
       iperr=0_SIK
     ENDSUBROUTINE PCSetup_CBJ
@@ -677,16 +871,20 @@ MODULE SmootherTypes
       Vec,INTENT(INOUT) :: xin,xout
       PetscErrorCode,INTENT(INOUT) :: iperr
 
-      INTEGER(SIK) :: smootherID
+      INTEGER(SIK) :: smootherID,nlocal
       TYPE(C_PTR) :: ctx_ptr
       PetscInt,POINTER :: ctx(:)
+      PetscReal,POINTER :: xin_vals(:),xout_vals(:)
+
+      INTEGER(SIK) :: localrowstart,localrowend
+      INTEGER(SIK) :: i
 
       !Get the smoother ID:
       CALL PCShellGetContext(pc,ctx_ptr,iperr)
       CALL C_F_POINTER(ctx_ptr,ctx,(/1/))
       smootherID=ctx(1)
 
-      SELECTTYPE(smoother=>smootherList(smootherID)%smoother);
+      SELECTTYPE(smoother=>smootherList(smootherID)%smoother)
         TYPE IS(SmootherType_PETSc_CBJ)
           IF(.NOT. smoother%isInit) &
             CALL eSmootherType%raiseError(modName//"::"//myName//" - "// &
@@ -694,6 +892,39 @@ MODULE SmootherTypes
           IF(.NOT. smoother%colorManager%hasAllColorsDefined) &
             CALL eSmootherType%raiseError(modName//"::"//myName//" - "// &
                 "Smoother's color manager must have its colors defined first!")
+
+          nlocal=smoother%blk_size*(smoother%istp-smoother%istt+1)
+
+          CALL VecGetArrayReadF90(xin,xin_vals,iperr)
+          CALL VecGetArrayF90(xout,xout_vals,iperr)
+          !TODO rewrite LSTypes to allow for option to not store b or x
+          ! for each block.  We only need one instance of b or x at a time
+          ! we want to do threaded parallelism
+          ASSOCIATE(manager=>smoother%colorManager)
+            DO i=smoother%istt,smoother%istp
+            !Loop over all local blocks of color icolor
+              localrowstart=(i-smoother%istt)*smoother%blk_size+1
+              localrowend=(i-smoother%istt+1)*smoother%blk_size
+              IF(manager%color_ids(i) == smoother%icolor) THEN
+                SELECTTYPE(x => smoother%blockSolvers(i)%x)
+                TYPE IS(RealVectorType)
+                SELECTTYPE(b => smoother%blockSolvers(i)%b)
+                TYPE IS(RealVectorType)
+                  b%b=xin_vals(localrowstart:localrowend)
+                  CALL smoother%blockSolvers(i)%solve()
+                  xout_vals(localrowstart:localrowend)=x%b
+                ENDSELECT
+                ENDSELECT
+              ELSE
+                xout_vals(localrowstart:localrowend)=0.0_SRK
+              ENDIF
+            ENDDO
+            !Increment the color
+            smoother%icolor=smoother%icolor+1
+            IF(smoother%icolor > manager%num_colors) smoother%icolor=1_SIK
+          ENDASSOCIATE
+          CALL VecRestoreArrayF90(xout,xout_vals,iperr)
+          CALL VecRestoreArrayReadF90(xin,xin_vals,iperr)
         CLASS DEFAULT
           CALL eSmootherType%raiseError(modName//"::"//myName//" - "// &
               "This subroutine is only for CBJ smoothers!")

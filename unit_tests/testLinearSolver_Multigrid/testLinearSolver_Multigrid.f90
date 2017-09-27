@@ -18,6 +18,7 @@ PROGRAM testLinearSolver_Multigrid
   USE LinearSolverTypes
   USE LinearSolverTypes_Multigrid
   USE MultigridMesh
+  USE SmootherTypes
 
   IMPLICIT NONE
 
