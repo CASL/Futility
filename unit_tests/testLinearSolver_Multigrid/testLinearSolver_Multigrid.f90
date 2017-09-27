@@ -476,7 +476,7 @@ CONTAINS
       CALL setupInterpMatrices_1D1G(thisLS)
       CALL thisLS%setupPETScMG(pList)
 
-      CALL thisLS%setSmoother(SMOOTH_GS,0_SIK)
+      CALL thisLS%setSmoother(SOR,0_SIK)
       CALL PCMGGetSmoother(thisLS%pc,0,ksp_temp,iperr)
       CALL KSPGetPC(ksp_temp,pc_temp,iperr)
       CALL KSPGetType(ksp_temp,myksptype,iperr)
@@ -484,7 +484,7 @@ CONTAINS
       tmpbool=(myksptype == KSPRICHARDSON) .AND. (mypctype == PCSOR)
       ASSERT(tmpbool,'Set smoother for coarsest level.')
 
-      CALL thisLS%setSmoother(SMOOTH_GMRES)
+      CALL thisLS%setSmoother(GMRES)
       tmpbool=.TRUE.
       DO iLevel=1,thisLS%nLevels-1
         CALL PCMGGetSmoother(thisLS%pc,iLevel,ksp_temp,iperr)
@@ -495,7 +495,7 @@ CONTAINS
       ENDDO
       ASSERT(tmpbool,'Set smoother for all but the coarsest level.')
 
-      CALL thisLS%setSmoother(SMOOTH_GS,1_SIK)
+      CALL thisLS%setSmoother(SOR,1_SIK)
       CALL PCMGGetSmoother(thisLS%pc,1,ksp_temp,iperr)
       CALL KSPGetPC(ksp_temp,pc_temp,iperr)
       CALL KSPGetType(ksp_temp,myksptype,iperr)

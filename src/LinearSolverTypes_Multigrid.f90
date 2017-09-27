@@ -45,6 +45,7 @@ MODULE LinearSolverTypes_Multigrid
   USE MatrixTypes
   USE LinearSolverTypes
   USE MultigridMesh
+  USE SmootherTypes
   IMPLICIT NONE
   PRIVATE
 
@@ -64,9 +65,15 @@ MODULE LinearSolverTypes_Multigrid
 
   INTEGER(SIK),PARAMETER,PUBLIC :: MAX_MG_LEVELS=8_SIK
 
-  !> Set enumeration scheme for smoother options:
-  INTEGER(SIK),PARAMETER,PUBLIC :: SMOOTH_GS=0,SMOOTH_GMRES=1, &
-                                   SMOOTH_BJACOBI=2,SMOOTH_JACOBI=3
+  !!Public enumerations from LSTypes
+  PUBLIC :: PETSC
+  PUBLIC :: MULTIGRID
+  !Krylov smoother/solver options:
+  PUBLIC :: BICGSTAB,GMRES
+  !Fixed point smoother options:
+  PUBLIC :: SOR,BJACOBI,JACOBI,CBJ
+  !Direct solver options:
+  PUBLIC :: LU
 
   !> @brief The extended type for the Iterative Linear Solver
   TYPE,EXTENDS(LinearSolverType_Iterative) :: LinearSolverType_Multigrid
@@ -465,6 +472,7 @@ MODULE LinearSolverTypes_Multigrid
       CLASS(LinearSolverType_Multigrid),INTENT(INOUT) :: solver
       TYPE(ParamType),INTENT(IN) :: Params
       INTEGER(SIK) :: iLevel
+      INTEGER(SIK),ALLOCATABLE :: smootherMethod_list(:)
       INTEGER(SIK) :: num_mg_coarse_its
 #ifdef FUTILITY_HAVE_PETSC
       KSP :: ksp_temp
@@ -478,6 +486,15 @@ MODULE LinearSolverTypes_Multigrid
       IF(solver%isMultigridSetup) &
           CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
                  'Multigrid linear system is already setup!')
+
+      ALLOCATE(smootherMethod_list(solver%nLevels))
+      IF(Params%has('LinearSolverType->smootherMethod_list')) THEN
+        CALL Params%get('LinearSolverType->smootherMethod_list', &
+                smootherMethod_list)
+      ELSE
+        smootherMethod_list(1)=GMRES
+        smootherMethod_list(2:solver%nLevels)=SOR
+      ENDIF
 
       !KSPRICHARDSON+PCMG = Multigrid linear solver, not multigrid precon.
       CALL KSPSetType(solver%ksp,KSPRICHARDSON,iperr)
@@ -543,7 +560,8 @@ MODULE LinearSolverTypes_Multigrid
 !> @brief Define smoother options
 !>
 !> @param solver The linear solver to act on
-!> @param Params the parameter list
+!> @param smoother The type to set the smoother to
+!> @param iLevel level index, in PETSc notation where 0=coarsest
 !>
     SUBROUTINE setSmoother_LinearSolverType_Multigrid(solver,smoother,iLevel)
       CHARACTER(LEN=*),PARAMETER :: myName='setSmoother_LinearSolverType_Multigrid'
@@ -582,11 +600,19 @@ MODULE LinearSolverTypes_Multigrid
       DO i=istt,istp
         CALL PCMGGetSmoother(solver%pc,i,ksp_temp,iperr)
 
-        IF(smoother == SMOOTH_GS) THEN
+        IF(smoother == CBJ) THEN
+          IF(isSmootherListInit) THEN
+            CALL smootherManager_setKSP(i+1,ksp_temp)
+          ELSE
+            CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
+              "Smoother list must be initialized before any smoothers can be"// &
+              " set to CBJ!")
+          ENDIF
+        ELSEIF(smoother == SOR) THEN
           CALL KSPSetType(ksp_temp,KSPRICHARDSON,iperr)
           CALL KSPGetPC(ksp_temp,pc_temp,iperr)
           CALL PCSetType(pc_temp,PCSOR,iperr)
-        ELSEIF(smoother == SMOOTH_GMRES) THEN
+        ELSEIF(smoother == GMRES) THEN
           !Coarsest smoother is GMRES with block Jacobi preconditioner:
           CALL KSPSetType(ksp_temp,KSPGMRES,iperr)
           CALL KSPGetPC(ksp_temp,pc_temp,iperr)
@@ -613,11 +639,11 @@ MODULE LinearSolverTypes_Multigrid
           IF(solver%MPIparallelEnv%nproc > 1) &
             CALL PCFactorSetMatSolverPackage(pc_temp,MATSOLVERSUPERLU_DIST, &
                                              iperr)
-        ELSEIF(smoother == SMOOTH_BJACOBI) THEN
+        ELSEIF(smoother == BJACOBI) THEN
           CALL KSPSetType(ksp_temp,KSPRICHARDSON,iperr)
           CALL KSPGetPC(ksp_temp,pc_temp,iperr)
           CALL PCSetType(pc_temp,PCBJACOBI,iperr)
-        ELSEIF(smoother == SMOOTH_JACOBI) THEN
+        ELSEIF(smoother == JACOBI) THEN
           CALL KSPSetType(ksp_temp,KSPRICHARDSON,iperr)
           CALL KSPGetPC(ksp_temp,pc_temp,iperr)
           CALL PCSetType(pc_temp,PCJACOBI,iperr)

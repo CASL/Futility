@@ -22,7 +22,7 @@ PROGRAM testSmoother
   TYPE(MPI_EnvType) :: mpiTestEnv
   TYPE(ParamType) :: params,params_2proc
   INTEGER(SIK) :: istt(1),istp(1),blk_size(1),num_colors(1)
-  INTEGER(SIK) :: MPI_Comm_ID(1),solverMethod(1)
+  INTEGER(SIK) :: MPI_Comm_ID(1),smootherMethod(1)
 
 #ifdef FUTILITY_HAVE_PETSC
 #include <finclude/petsc.h>
@@ -69,14 +69,14 @@ PROGRAM testSmoother
   blk_size=2_SIK
   num_colors=2_SIK
   num_smoothers=1_SIK
-  solverMethod=CBJ
+  smootherMethod=CBJ
   MPI_Comm_ID=mpiTestEnv%comm
   CALL params%add('SmootherType->num_smoothers',1_SIK)
   CALL params%add('SmootherType->istt_list',istt)
   CALL params%add('SmootherType->istp_list',istp)
   CALL params%add('SmootherType->num_colors_list',num_colors)
   CALL params%add('SmootherType->blk_size_list',blk_size)
-  CALL params%add('SmootherType->solverMethod_list',solverMethod)
+  CALL params%add('SmootherType->smootherMethod_list',smootherMethod)
   CALL params%add('SmootherType->MPI_Comm_ID_list',MPI_Comm_ID)
   CALL params_2proc%clear()
   params_2proc=params
@@ -322,7 +322,6 @@ PROGRAM testSmoother
       CALL MatMPIAIJSetPreallocation(A_petsc,0,dnnz,0,onnz,iperr)
       CALL VecSet(b_petsc,0.0_SRK,iperr)
       CALL VecAssemblyBegin(b_petsc,iperr)
-
 
       !2G homogeneous diffusion problem:
       DO i=nstart,nend

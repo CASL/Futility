@@ -104,14 +104,15 @@ MODULE LinearSolverTypes
   PUBLIC :: LinearSolverType_Declare_ValidParams
   PUBLIC :: LinearSolverType_Clear_ValidParams
 
-  !> Number of direct solver solution methodologies - for error checking
-  INTEGER(SIK),PARAMETER :: MAX_DIRECT_SOLVER_METHODS=3
   !> set enumeration scheme for TPLs
   INTEGER(SIK),PARAMETER,PUBLIC :: PETSC=0,TRILINOS=1,PARDISO_MKL=2,MKL=3,NATIVE=4
   !> Number of iterative solver solution methodologies - for error checking
-  INTEGER(SIK),PARAMETER :: MAX_IT_SOLVER_METHODS=4
+  INTEGER(SIK),PARAMETER :: MAX_IT_SOLVER_METHODS=9
   !> set enumeration scheme for iterative solver methods
-  INTEGER(SIK),PARAMETER,PUBLIC :: BICGSTAB=1,CGNR=2,GMRES=3,MULTIGRID=4
+  INTEGER(SIK),PARAMETER,PUBLIC :: BICGSTAB=1,CGNR=2,GMRES=3,MULTIGRID=4, &
+                                   SOR=5,ILU=6,BJACOBI=7,JACOBI=8,CBJ=9,GAUSS_SEIDEL=10
+  !> Number of direct solver solution methodologies - for error checking
+  INTEGER(SIK),PARAMETER :: MAX_DIRECT_SOLVER_METHODS=3
   !> set enumeration scheme for direct solver methods
   INTEGER(SIK),PARAMETER,PUBLIC :: GE=1,LU=2,QR=3
 
