@@ -56,6 +56,7 @@ MODULE SmootherTypes
   PUBLIC :: smootherManager_clear
   PUBLIC :: smootherManager_setKSP
   PUBLIC :: smootherManager_init
+  PUBLIC :: smootherManager_initFromMMeshes
   PUBLIC :: smootherManager_defineColor
   PUBLIC :: smootherManager_defineAllColors
 #ifdef UNIT_TEST
@@ -616,6 +617,98 @@ MODULE SmootherTypes
       DEALLOCATE(MPI_Comm_ID_list)
 
     ENDSUBROUTINE smootherManager_init
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes the smootherList from a multigrid mesh structure object
+!>
+!> @param params Parameter list with details for each smoother
+!>
+    SUBROUTINE smootherManager_initFromMMeshes(params,myMMeshes)
+      CHARACTER(LEN=*),PARAMETER :: myName='smootherManager_initFromMMeshes'
+      TYPE(ParamType),INTENT(IN) :: params
+      TYPE(MultigridMeshStructureType),INTENT(IN) :: myMMeshes
+
+      INTEGER(SIK) :: iLevel,num_colors
+      TYPE(ParamType) :: params_out
+
+      INTEGER(SIK),ALLOCATABLE :: istt_list(:),istp_list(:)
+      INTEGER(SIK),ALLOCATABLE :: blk_size_list(:),num_colors_list(:)
+      INTEGER(SIK),ALLOCATABLE :: smootherMethod_list(:),blockMethod_list(:)
+      INTEGER(SIK),ALLOCATABLE :: MPI_Comm_ID_list(:),color_ids(:)
+
+      !Check parameter list:
+      IF(.NOT. params%has('SmootherType->MPI_Comm_ID_list')) &
+        CALL eSmootherType%raiseError(modName//"::"//myName//" - "// &
+            "Missing MPI_Comm_ID_list from the parameter list!")
+
+      !Fill out params_out using params and myMMeshes:
+      CALL params_out%clear()
+      IF(params%has('SmootherType->num_smoothers')) THEN
+        CALL params%edit(0)
+        CALL params%get('SmootherType->num_smoothers',num_smoothers)
+      ELSE
+        num_smoothers=myMMeshes%nLevels
+      ENDIF
+      CALL params_out%add('SmootherType->num_smoothers',num_smoothers)
+      ALLOCATE(istt_list(num_smoothers))
+      ALLOCATE(istp_list(num_smoothers))
+      ALLOCATE(blk_size_list(num_smoothers))
+      ALLOCATE(smootherMethod_list(num_smoothers))
+      DO iLevel=1,myMMeshes%nLevels
+        istt_list(iLevel)=myMMeshes%meshes(iLevel)%istt
+        istp_list(iLevel)=myMMeshes%meshes(iLevel)%istp
+        blk_size_list(iLevel)=myMMeshes%meshes(iLevel)%num_eqns
+      ENDDO
+      CALL params_out%add('SmootherType->istt_list',istt_list)
+      CALL params_out%add('SmootherType->istp_list',istp_list)
+      CALL params_out%add('SmootherType->blk_size_list',blk_size_list)
+      IF(params%has('SmootherType->smootherMethod_list')) THEN
+        CALL params%get('SmootherType->smootherMethod_list',smootherMethod_list)
+      ELSE
+        smootherMethod_list(1)=GMRES
+        smootherMethod_list(2:num_smoothers)=CBJ
+      ENDIF
+      CALL params_out%add('SmootherType->smootherMethod_list',smootherMethod_list)
+      DEALLOCATE(istt_list)
+      DEALLOCATE(istp_list)
+      DEALLOCATE(blk_size_list)
+      DEALLOCATE(smootherMethod_list)
+
+      IF(params%has('SmootherType->blockMethod_list')) THEN
+        ALLOCATE(blockMethod_list(num_smoothers))
+        CALL params%get('SmootherType->blockMethod_list',blockMethod_list)
+        CALL params_out%add('SmootherType->blockMethod_list',blockMethod_list)
+        DEALLOCATE(blockMethod_list)
+      ENDIF
+      IF(params%has('SmootherType->num_colors_list')) THEN
+        ALLOCATE(num_colors_list(num_smoothers))
+        CALL params%get('SmootherType->num_colors_list',num_colors_list)
+        CALL params_out%add('SmootherType->num_colors_list',num_colors_list)
+        DEALLOCATE(num_colors_list)
+      ENDIF
+
+      ALLOCATE(MPI_Comm_ID_list(num_smoothers))
+      CALL params%get('SmootherType->MPI_Comm_ID_list',MPI_Comm_ID_list)
+      CALL params_out%add('SmootherType->MPI_Comm_ID_list',MPI_Comm_ID_list)
+      DEALLOCATE(MPI_Comm_ID_list)
+
+      CALL smootherManager_init(params_out)
+
+      !Define red-black coloring for colored smoothers:
+      DO iLevel=1,myMMeshes%nLevels
+        SELECTTYPE(smoother => smootherList(iLevel)%smoother)
+          TYPE IS(SmootherType_PETSc_CBJ)
+            num_colors=smoother%colorManager%num_colors
+            ALLOCATE(color_ids(myMMeshes%meshes(iLevel)%istt: &
+                               myMMeshes%meshes(iLevel)%istp))
+            color_ids=MOD(myMMeshes%meshes(iLevel)%interpDegrees,num_colors)+1
+            CALL smootherManager_defineAllColors(iLevel,color_ids)
+            DEALLOCATE(color_ids)
+        ENDSELECT
+      ENDDO
+      CALL params_out%clear()
+
+    ENDSUBROUTINE smootherManager_initFromMMeshes
 !
 !-------------------------------------------------------------------------------
 !> @brief Fill out an index list for a particular color

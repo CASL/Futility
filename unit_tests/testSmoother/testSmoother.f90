@@ -14,15 +14,17 @@ PROGRAM testSmoother
   USE ParameterLists
   USE ParallelEnv
   USE SmootherTypes
+  USE MultigridMesh
+  USE LinearSolverTypes
   USE ISO_C_BINDING
 
   IMPLICIT NONE
 
   TYPE(ExceptionHandlerType),TARGET :: e
   TYPE(MPI_EnvType) :: mpiTestEnv
-  TYPE(ParamType) :: params,params_2proc
-  INTEGER(SIK) :: istt(1),istp(1),blk_size(1),num_colors(1)
-  INTEGER(SIK) :: MPI_Comm_ID(1),smootherMethod(1)
+  TYPE(ParamType) :: params,params_limited,params_2proc
+  INTEGER(SIK) :: istt(1),istp(1),blk_size(1),num_colors(1),num_colors_long(4)
+  INTEGER(SIK) :: MPI_Comm_ID(1),smootherMethod(1),MPI_Comm_ID_long(4)
 
 #ifdef FUTILITY_HAVE_PETSC
 #include <finclude/petsc.h>
@@ -76,9 +78,11 @@ PROGRAM testSmoother
   istp=65
   blk_size=2_SIK
   num_colors=2_SIK
+  num_colors_long=2_SIK
   num_smoothers=1_SIK
   smootherMethod=CBJ
   MPI_Comm_ID=mpiTestEnv%comm
+  MPI_Comm_ID_long=mpiTestEnv%comm
   CALL params%add('SmootherType->num_smoothers',1_SIK)
   CALL params%add('SmootherType->istt_list',istt)
   CALL params%add('SmootherType->istp_list',istp)
@@ -86,7 +90,8 @@ PROGRAM testSmoother
   CALL params%add('SmootherType->blk_size_list',blk_size)
   CALL params%add('SmootherType->smootherMethod_list',smootherMethod)
   CALL params%add('SmootherType->MPI_Comm_ID_list',MPI_Comm_ID)
-  CALL params_2proc%clear()
+  CALL params_limited%add('SmootherType->MPI_Comm_ID_list',MPI_Comm_ID_long)
+  CALL params_limited%add('SmootherType->num_colors_list',num_colors_long)
   params_2proc=params
   IF(.NOT. mpiTestEnv%master) THEN
     CALL params_2proc%set('SmootherType->istt',istt+istp)
@@ -100,12 +105,15 @@ PROGRAM testSmoother
   REGISTER_SUBTEST('testClear',testClear)
   REGISTER_SUBTEST('testSetKSP',testSetKSP)
   REGISTER_SUBTEST('testInit',testInit)
+  REGISTER_SUBTEST('testInitFromMMeshes',testInitFromMMeshes)
   REGISTER_SUBTEST('testDefineColor',testDefineColor)
   REGISTER_SUBTEST('testDefineAllColors',testDefineAllColors)
   REGISTER_SUBTEST('testSmooth',testSmooth_PETSc_CBJ)
   FINALIZE_TEST()
 
   CALL params%clear()
+  CALL params_2proc%clear()
+  CALL params_limited%clear()
 #ifdef FUTILITY_HAVE_PETSC
   CALL KSPDestroy(ksp,iperr)
   CALL PetscFinalize(ierr)
@@ -214,6 +222,81 @@ PROGRAM testSmoother
       CALL smootherManager_clear()
 
     ENDSUBROUTINE testInit
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testInitFromMMeshes()
+      TYPE(MultigridMeshStructureType) :: myMMeshes
+
+      INTEGER(SIK) :: iLevel,ix,ncol,nx,nLevels,num_eqns
+      INTEGER(SIK),ALLOCATABLE :: cols(:)
+      REAL(SRK),ALLOCATABLE :: vals(:)
+      CHARACTER(LEN=2) :: tmpchar
+
+      LOGICAL(SBK) :: boolcols,boolvals,tmpbool
+
+      nLevels=4_SIK
+      nx=65_SIK
+      num_eqns=2_SIK
+
+      CALL myMMeshes%init(nLevels,num_eqns)
+      DO iLevel=myMMeshes%nLevels,1,-1
+        myMMeshes%meshes(iLevel)%istt=1
+        myMMeshes%meshes(iLevel)%istp=nx
+        myMMeshes%meshes(iLevel)%nPointsLocal=nx
+        ALLOCATE(myMMeshes%meshes(iLevel)%mmData(1:nx))
+        ALLOCATE(myMMeshes%meshes(iLevel)%interpDegrees(1:nx))
+        DO ix=1,nx
+          IF(MOD(ix,2) == 1) THEN
+            myMMeshes%meshes(iLevel)%interpDegrees(ix)=0
+            ALLOCATE(myMMeshes%meshes(iLevel)%mmData(ix)%childIndices(1))
+            ALLOCATE(myMMeshes%meshes(iLevel)%mmData(ix)%childWeights(1,1))
+            myMMeshes%meshes(iLevel)%mmData(ix)%childIndices(1)=(ix+1)/2
+            myMMeshes%meshes(iLevel)%mmData(ix)%childWeights=1.0_SRK
+          ELSE
+            myMMeshes%meshes(iLevel)%interpDegrees(ix)=1
+            ALLOCATE(myMMeshes%meshes(iLevel)%mmData(ix)%childIndices(2))
+            ALLOCATE(myMMeshes%meshes(iLevel)%mmData(ix)%childWeights(1,2))
+            myMMeshes%meshes(iLevel)%mmData(ix)%childIndices(1)=ix+1
+            myMMeshes%meshes(iLevel)%mmData(ix)%childIndices(2)=ix-1
+            myMMeshes%meshes(iLevel)%mmData(ix)%childWeights=0.5_SRK
+          ENDIF
+        ENDDO
+        nx=(nx+1)/2
+      ENDDO
+      CALL smootherManager_initFromMMeshes(params_limited,myMMeshes)
+
+      nx=65_SIK
+      DO iLevel=myMMeshes%nLevels,2,-1
+        SELECTTYPE(smoother => smootherList(iLevel)%smoother)
+          TYPE IS(SmootherType_PETSc_CBJ)
+            tmpbool=ALLOCATED(smoother%colorManager%color_ids) .AND. &
+              LBOUND(smoother%colorManager%color_ids,DIM=1) == 1 .AND. &
+              UBOUND(smoother%colorManager%color_ids,DIM=1) == nx
+            WRITE(tmpchar,'(i2)') iLevel
+            ASSERT(tmpbool,'color_ids allocated with correct bounds for level'//tmpchar)
+
+            tmpbool=smoother%colorManager%num_colors == 2 .AND. &
+                      smoother%istt == 1 .AND. &
+                      smoother%istp == nx .AND. &
+                      smoother%blk_size == num_eqns .AND. &
+                      smoother%TPLType == PETSc .AND. &
+                      smoother%smootherMethod == CBJ .AND. &
+                      smoother%blockMethod == LU
+            ASSERT(tmpbool,'smoother parameters are the correct value for level'//tmpchar)
+
+            tmpbool=smoother%MPIparallelEnv%isInit()
+            ASSERT(tmpbool,'smoother ParEnv initialized for level'//tmpchar)
+
+            ASSERT(smoother%isInit,'Smoother  initialized for level'//tmpchar)
+            ASSERT(smoother%colorManager%hasAllColorsDefined,'Smoother has all colors defined for level'//tmpchar)
+        ENDSELECT
+        nx=(nx+1)/2
+      ENDDO
+
+      CALL myMMeshes%clear()
+      CALL smootherManager_clear()
+
+    ENDSUBROUTINE testInitFromMMeshes
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testDefineColor

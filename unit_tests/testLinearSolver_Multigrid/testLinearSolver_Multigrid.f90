@@ -242,11 +242,12 @@ CONTAINS
       TYPE(MultigridMeshStructureType) :: myMMeshes
 
       INTEGER(SIK) :: iLevel,ix,ncol,nx
-      INTEGER(SIK),ALLOCATABLE :: cols(:)
+      INTEGER(SIK),ALLOCATABLE :: cols(:),tmpint(:)
       REAL(SRK),ALLOCATABLE :: vals(:)
       CHARACTER(LEN=2) :: tmpchar
+      TYPE(ParamType) :: smootherParams
 
-      LOGICAL(SBK) :: boolcols,boolvals
+      LOGICAL(SBK) :: boolcols,boolvals,tmpbool
 
       PetscErrorCode :: iperr
 
@@ -277,8 +278,21 @@ CONTAINS
           ENDIF
         ENDDO
       ENDDO
+      ALLOCATE(tmpint(thisLS%nLevels))
+      tmpint=mpiTestEnv%comm
+      CALL smootherParams%add('SmootherType->MPI_Comm_ID_list',tmpint)
+      tmpint=2_SIK
+      CALL smootherParams%add('SmootherType->num_colors_list',tmpint)
+      CALL smootherManager_initFromMMeshes(smootherParams,myMMeshes)
       CALL thisLS%fillInterpMats(myMMeshes)
+      !Also test out the CBJ smoothers:
+      tmpint(1)=GMRES
+      tmpint(2:thisLS%nLevels)=CBJ
+      CALL pList%add('LinearSolverType->smootherMethod_list',tmpint)
+      DEALLOCATE(tmpint)
       CALL thisLS%setupPETScMG(pList)
+
+      ASSERT(isSmootherListInit,'smoother list initialized')
 
       ALLOCATE(vals(2),cols(2))
       cols=0_SIK
@@ -303,6 +317,20 @@ CONTAINS
         ASSERT(boolcols,'Check interpolation matrix col indices for grid '//tmpchar)
         ASSERT(boolvals,'Check interpolation matrix entries for grid '//tmpchar)
         ASSERT(iperr == 0_SIK,'Error obtaining matrix entries for grid '//tmpchar)
+
+        IF(iLevel > 1) THEN
+          WRITE(tmpchar,'(I2)') iLevel+1
+          tmpbool= smootherList(iLevel+1)%smoother%smootherMethod == CBJ .AND. &
+                    smootherList(iLevel+1)%smoother%isInit
+          ASSERT(tmpbool,'smoother initialized to correct smoother method for grid '//tmpchar)
+          SELECTTYPE(smoother=>smootherList(iLevel+1)%smoother)
+            TYPE IS(SmootherType_PETSc_CBJ)
+              tmpbool=smoother%colorManager%hasAllColorsDefined .AND. &
+                        smoother%isKSPSetup
+              ASSERT(tmpbool,'smoother has all colors defined and ksp set up for grid '//tmpchar)
+          ENDSELECT
+        ENDIF
+
       ENDDO
       DEALLOCATE(vals,cols)
 
