@@ -48,7 +48,7 @@ PROGRAM testDBC
 !>
     SUBROUTINE require_pass()
       WRITE(*,*) "Testing REQUIRE Passing"
-      DBC_REQUIRE(5==5)
+      REQUIRE(5==5)
 
     ENDSUBROUTINE require_pass
 !
@@ -57,7 +57,7 @@ PROGRAM testDBC
 !>
     SUBROUTINE ensure_pass()
       WRITE(*,*) "Testing ENSURE Passing"
-      DBC_ENSURE(5==5)
+      ENSURE(5==5)
 
     ENDSUBROUTINE ensure_pass
 !
@@ -66,7 +66,7 @@ PROGRAM testDBC
 !>
     SUBROUTINE require_fail()
       WRITE(*,*) "Testing REQUIRE Failing"
-      DBC_REQUIRE(8==5)
+      REQUIRE(8==5)
 
     ENDSUBROUTINE require_fail
 !
@@ -75,7 +75,7 @@ PROGRAM testDBC
 !>
     SUBROUTINE ensure_fail()
       WRITE(*,*) "Testing ENSURE Failing"
-      DBC_ENSURE(5==8)
+      ENSURE(5==8)
 
     ENDSUBROUTINE ensure_fail
 ENDPROGRAM testDBC
