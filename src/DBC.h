@@ -8,9 +8,9 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 
 #ifdef FUTILITY_DBC
-#define DBC_REQUIRE(test)  IF(.NOT. (test)) CALL DBC_FAIL("test",__FILE__,__LINE__)
-#define DBC_ENSURE(test)   IF(.NOT. (test)) CALL DBC_FAIL("test",__FILE__,__LINE__)
+#define REQUIRE(test)  IF(.NOT. (test)) CALL DBC_FAIL("test",__FILE__,__LINE__)
+#define ENSURE(test)   IF(.NOT. (test)) CALL DBC_FAIL("test",__FILE__,__LINE__)
 #else
-#define DBC_REQUIRE(test)  ! DBC REQUIRE - test
-#define DBC_ENSURE(test)   ! DBC ENSURE  - test
+#define REQUIRE(test)  ! DBC REQUIRE - test
+#define ENSURE(test)   ! DBC ENSURE  - test
 #endif
