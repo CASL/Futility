@@ -59,6 +59,7 @@ MODULE SmootherTypes
   PUBLIC :: smootherManager_initFromMMeshes
   PUBLIC :: smootherManager_defineColor
   PUBLIC :: smootherManager_defineAllColors
+  PUBLIC :: smootherManager_requestAllBlocksUpdate
 #ifdef UNIT_TEST
   PUBLIC :: smootherList
   PUBLIC :: ctxList
@@ -171,6 +172,8 @@ MODULE SmootherTypes
     TYPE(ColorManagerType) :: colorManager
     !> Current color being solved:
     INTEGER(SIK) :: icolor=-1_SIK
+    !> Whether or not block calculations need to be reperformed:
+    LOGICAL(SBK) :: blocksNeedUpdate=.TRUE.
 
   !
   !List of Type Bound Procedures
@@ -372,6 +375,7 @@ MODULE SmootherTypes
       IF(smoother%blockMethod == -1_SIK) smoother%blockMethod=LU
       smoother%hasX0=.FALSE.
       smoother%isKSPSetup=.FALSE.
+      smoother%blocksNeedUpdate=.TRUE.
 
       smoother%isInit=.TRUE.
 
@@ -397,6 +401,7 @@ MODULE SmootherTypes
       ENDIF
       smoother%isKSPSetup=.FALSE.
       smoother%isInit=.FALSE.
+      smoother%blocksNeedUpdate=.TRUE.
 
     ENDSUBROUTINE clear_SmootherType_PETSc_CBJ
 !
@@ -696,15 +701,17 @@ MODULE SmootherTypes
 
       !Define red-black coloring for colored smoothers:
       DO iLevel=1,myMMeshes%nLevels
-        SELECTTYPE(smoother => smootherList(iLevel)%smoother)
-          TYPE IS(SmootherType_PETSc_CBJ)
-            num_colors=smoother%colorManager%num_colors
-            ALLOCATE(color_ids(myMMeshes%meshes(iLevel)%istt: &
-                               myMMeshes%meshes(iLevel)%istp))
-            color_ids=MOD(myMMeshes%meshes(iLevel)%interpDegrees,num_colors)+1
-            CALL smootherManager_defineAllColors(iLevel,color_ids)
-            DEALLOCATE(color_ids)
-        ENDSELECT
+        IF(ALLOCATED(smootherList(ilevel)%smoother)) THEN
+          SELECTTYPE(smoother => smootherList(iLevel)%smoother)
+            TYPE IS(SmootherType_PETSc_CBJ)
+              num_colors=smoother%colorManager%num_colors
+              ALLOCATE(color_ids(myMMeshes%meshes(iLevel)%istt: &
+                                 myMMeshes%meshes(iLevel)%istp))
+              color_ids=MOD(myMMeshes%meshes(iLevel)%interpDegrees,num_colors)+1
+              CALL smootherManager_defineAllColors(iLevel,color_ids)
+              DEALLOCATE(color_ids)
+          ENDSELECT
+        ENDIF
       ENDDO
       CALL params_out%clear()
 
@@ -779,7 +786,7 @@ MODULE SmootherTypes
     SUBROUTINE smootherManager_defineAllColors(ismoother,color_ids)
       CHARACTER(LEN=*),PARAMETER :: myName='defineAllColors_ColorManagerType'
       INTEGER(SIK),INTENT(IN) :: ismoother
-      INTEGER(SIK),INTENT(IN) :: color_ids(:)
+      INTEGER(SIK),INTENT(IN),ALLOCATABLE :: color_ids(:)
 
       INTEGER(SIK) :: icolor,i
       INTEGER(SIK),ALLOCATABLE :: tmpints(:)
@@ -800,6 +807,7 @@ MODULE SmootherTypes
           ASSOCIATE(manager=>smoother%colorManager)
             manager%color_ids=color_ids
 
+            !Get the number of indices for each color:
             DO icolor=1,manager%num_colors
               manager%colors(icolor)%num_indices=0
             ENDDO
@@ -808,9 +816,13 @@ MODULE SmootherTypes
               manager%colors(icolor)%num_indices= &
                  manager%colors(icolor)%num_indices+1
             ENDDO
+
+            !Allocate based on # of indices for each color:
             DO icolor=1,manager%num_colors
               ALLOCATE(manager%colors(icolor)%index_list(manager%istp-manager%istt+1))
             ENDDO
+
+            !Fill out index lists for each color:
             ALLOCATE(tmpints(manager%num_colors))
             tmpints=0_SIK
             DO i=manager%istt,manager%istp
@@ -824,8 +836,6 @@ MODULE SmootherTypes
 
 #ifdef FUTILITY_HAVE_PETSC
             IF(smoother%isKSPSetup) THEN
-              !TODO: more smoother steps per iteration
-              !TODO need to put this in a different place... KSP is not always set up by this point
               CALL KSPSetTolerances(smoother%ksp,0.0_SRK,0.0_SRK,1E8_SRK, &
                                     smoother%colorManager%num_colors,iperr)
             ENDIF
@@ -837,6 +847,30 @@ MODULE SmootherTypes
       ENDSELECT
 
     ENDSUBROUTINE smootherManager_defineAllColors
+
+!
+!-------------------------------------------------------------------------------
+!> @brief Request that the LU factorization be updated.  This needs to be
+!>        called every time the diagonal blocks of a matrix are changed.
+!>
+    SUBROUTINE smootherManager_requestAllBlocksUpdate
+      CHARACTER(LEN=*),PARAMETER :: myName='smootherManager_requestAllBlocksUpdate'
+      INTEGER(SIK) :: ismoother
+
+      IF(.NOT. isSmootherListInit) &
+        CALL eSmootherType%raiseError(modName//"::"//myName//" - "// &
+            "Smoother list has not been initialized!")
+
+      DO ismoother=1,num_smoothers
+        IF(ALLOCATED(smootherList(ismoother)%smoother)) THEN
+          SELECTTYPE(smoother=>smootherList(ismoother)%smoother)
+            TYPE IS(SmootherType_PETSc_CBJ)
+              smoother%blocksNeedUpdate=.TRUE.
+          ENDSELECT
+        ENDIF
+      ENDDO
+
+    ENDSUBROUTINE smootherManager_requestAllBlocksUpdate
 !
 !-------------------------------------------------------------------------------
 !> @brief PETSc Setup PC function for PCSHELL for the colored block Jacobi scheme
@@ -879,14 +913,18 @@ MODULE SmootherTypes
             CALL eSmootherType%raiseError(modName//"::"//myName//" - "// &
                 "Smoother's color manager must have its colors defined first!")
 
-          IF(.NOT. ALLOCATED(smoother%blockSolvers)) THEN
-            ALLOCATE(LinearSolverType_Direct :: &
-                      smoother%blockSolvers(smoother%istt:smoother%istp))
+          IF(smoother%blocksNeedUpdate) THEN
+            IF(.NOT. ALLOCATED(smoother%blockSolvers)) THEN
+              ALLOCATE(LinearSolverType_Direct :: &
+                        smoother%blockSolvers(smoother%istt:smoother%istp))
+            ENDIF
             CALL params%clear()
             CALL params%add('LinearSolverType->TPLType',NATIVE)
             CALL params%add('LinearSolverType->solverMethod',LU)
             !This part is serial, so we don't need an MPI communicator
             CALL params%add('LinearSolverType->MPI_Comm_ID',-1_SIK)
+            CALL params%add('LinearSolverType->timerName','LU solver for smoother blocks')
+            CALL params%add('LinearSolverType->numberOMP',1_SIK)
             CALL params%add('LinearSolverType->matType',DENSESQUARE)
             CALL params%add('LinearSolverType->A->MatrixType->n',smoother%blk_size)
             CALL params%add('LinearSolverType->A->MatrixType->isSym',.FALSE.)
@@ -910,7 +948,8 @@ MODULE SmootherTypes
             !rowend=smoother%istp*smoother%blk_size
             DO i=smoother%istt,smoother%istp
             !Loop over all local blocks
-              CALL smoother%blockSolvers(i)%init(params)
+              IF(.NOT. smoother%blockSolvers(i)%isInit) &
+                CALL smoother%blockSolvers(i)%init(params)
               localrowstart=(i-smoother%istt)*smoother%blk_size+1
               localrowend=(i-smoother%istt+1)*smoother%blk_size
               SELECTTYPE(A => smoother%blockSolvers(i)%A)
@@ -939,6 +978,7 @@ MODULE SmootherTypes
                   "Unable to restore row and column indices!")
             CALL MatSeqAIJRestoreArrayF90(localmat,matvals,iperr)
             CALL params%clear()
+            smoother%blocksNeedUpdate=.FALSE.
           ENDIF
         CLASS DEFAULT
           CALL eSmootherType%raiseError(modName//"::"//myName//" - "// &
