@@ -64,8 +64,10 @@ MODULE SmootherTypes
   PUBLIC :: smootherList
   PUBLIC :: ctxList
   PUBLIC :: smootherType_PETSc_CBJ
+#ifdef FUTILITY_HAVE_PETSC
   PUBLIC :: PCSetUp_CBJ
   PUBLIC :: PCApply_CBJ
+#endif
 #endif
 
   !> TPL types from LinearSolverTypes:
@@ -211,7 +213,11 @@ MODULE SmootherTypes
   INTERFACE
     SUBROUTINE MatSeqAIJGetArrayF90(A,xx_v,iperr)
       Mat :: A
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6) && (PETSC_VERSION_SUBMINOR>=4))
       PetscReal, POINTER :: xx_v(:)
+#else
+      PetscReal, POINTER :: xx_v(:,:)
+#endif
       PetscErrorCode :: iperr
     ENDSUBROUTINE MatSeqAIJGetArrayF90
   ENDINTERFACE
@@ -219,7 +225,11 @@ MODULE SmootherTypes
   INTERFACE
     SUBROUTINE MatSeqAIJRestoreArrayF90(A,xx_v,iperr)
       Mat :: A
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6) && (PETSC_VERSION_SUBMINOR>=4))
       PetscReal, POINTER :: xx_v(:)
+#else
+      PetscReal, POINTER :: xx_v(:,:)
+#endif
       PetscErrorCode :: iperr
     ENDSUBROUTINE MatSeqAIJRestoreArrayF90
   ENDINTERFACE
@@ -275,6 +285,7 @@ MODULE SmootherTypes
       PetscErrorCode :: iperr
     ENDSUBROUTINE VecRestoreArrayF90
   ENDINTERFACE
+#endif
 
   !> Explicitly defines the interface for the clear routines
   ABSTRACT INTERFACE
@@ -292,7 +303,6 @@ MODULE SmootherTypes
       TYPE(ParamType),INTENT(IN) :: params
     ENDSUBROUTINE smootherInit_sub_absintfc
   ENDINTERFACE
-#endif
 
   !> Abstract smoother instance:
   !>  This is needed so smootherList can have different smoother types
@@ -891,7 +901,11 @@ MODULE SmootherTypes
       TYPE(C_PTR) :: ctx_ptr
       PetscInt,POINTER :: ctx(:),ia(:),ja(:)
       PetscInt :: numrows
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6) && (PETSC_VERSION_SUBMINOR>=4))
       PetscReal,POINTER :: matvals(:)
+#else
+      PetscReal,POINTER :: matvals(:,:)
+#endif
       TYPE(ParamType) :: params
       Mat :: Amat,Pmat
       Mat :: localmat
@@ -966,7 +980,12 @@ MODULE SmootherTypes
                          localcolind > localrowend) CYCLE
                       !Otherwise, store the value in a densesquarematrix:
                       blockcolind=localcolind-localrowstart+1
-                      A%a(blockrowind,blockcolind)=matvals(j)
+                      A%a(blockrowind,blockcolind)= &
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6) && (PETSC_VERSION_SUBMINOR>=4))
+                        matvals(j)
+#else
+                        matvals(MOD(j-1,numrows)+1,(j-1)/numrows+1)
+#endif
                     ENDDO !j=i
                   ENDDO !localrowind
               ENDSELECT !smoother%blockSolvers(i)%A
@@ -1028,7 +1047,11 @@ MODULE SmootherTypes
 
           nlocal=smoother%blk_size*(smoother%istp-smoother%istt+1)
 
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6))
           CALL VecGetArrayReadF90(xin,xin_vals,iperr)
+#else
+          CALL VecGetArrayF90(xin,xin_vals,iperr)
+#endif
           CALL VecGetArrayF90(xout,xout_vals,iperr)
           !TODO rewrite LSTypes to allow for option to not store b or x
           ! for each block.  We only need one instance of b or x at a time
@@ -1057,7 +1080,11 @@ MODULE SmootherTypes
             IF(smoother%icolor > manager%num_colors) smoother%icolor=1_SIK
           ENDASSOCIATE
           CALL VecRestoreArrayF90(xout,xout_vals,iperr)
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6))
           CALL VecRestoreArrayReadF90(xin,xin_vals,iperr)
+#else
+          CALL VecRestoreArrayF90(xin,xin_vals,iperr)
+#endif
         CLASS DEFAULT
           CALL eSmootherType%raiseError(modName//"::"//myName//" - "// &
               "This subroutine is only for CBJ smoothers!")
