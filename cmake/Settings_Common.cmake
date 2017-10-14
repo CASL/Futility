@@ -26,7 +26,7 @@ IF(NOT DEFINED ${PROJECT_NAME}_GENERATE_REPO_VERSION_FILE)
 ENDIF()
 
 # Don't install under /usr/local by default (that is crazy)
-IF ((NOT DEFINED CMAKE_INSTALL_PREFIX) OR ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr/local")
+IF ((NOT DEFINED CMAKE_INSTALL_PREFIX) OR "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local")
   SET(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/install CACHE PATH
   "Base install directory (overridde default from \"/usr/local\")"
   FORCE)
