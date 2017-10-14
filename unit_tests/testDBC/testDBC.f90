@@ -33,8 +33,10 @@ PROGRAM testDBC
     CASE(4)
       CALL ensure_fail()
     CASE DEFAULT
-      STOP -1
+      STOP 1
   ENDSELECT
+
+  WRITE(*,*) "TEST PASSED"
 
 #ifdef HAVE_MPI
       CALL MPI_Finalize(mpierr)
