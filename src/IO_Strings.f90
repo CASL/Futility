@@ -334,6 +334,11 @@ MODULE IO_Strings
     !> @copydetails IO_Strings::
     MODULE PROCEDURE getRealFormat_str_str
   ENDINTERFACE getRealFormat
+
+  INTERFACE SlashRep
+    MODULE PROCEDURE SlashRep_s
+    MODULE PROCEDURE SlashRep_c
+  ENDINTERFACE SlashRep
 !
 !===============================================================================
   CONTAINS
@@ -1306,7 +1311,21 @@ MODULE IO_Strings
 !> @brief Private routine replaces slash character in file path names with
 !> the system appropriate file separator slash.
 !>
-    PURE SUBROUTINE SlashRep(string)
+    PURE SUBROUTINE SlashRep_s(string)
+      TYPE(StringType),INTENT(INOUT) :: string
+      CHARACTER(LEN=LEN_TRIM(string)) :: cstring
+
+      cstring=TRIM(string)
+      CALL SlashRep_c(cstring)
+      string=cstring
+    ENDSUBROUTINE SlashRep_s
+
+!
+!-------------------------------------------------------------------------------
+!> @brief Private routine replaces slash character in file path names with
+!> the system appropriate file separator slash.
+!>
+    PURE SUBROUTINE SlashRep_c(string)
       CHARACTER(LEN=*),INTENT(INOUT) :: string
       INTEGER(SIK) :: i
 
@@ -1317,7 +1336,7 @@ MODULE IO_Strings
         IF(string(i:i) == BSLASH) string(i:i)=SLASH
 #endif
       ENDDO
-    ENDSUBROUTINE SlashRep
+    ENDSUBROUTINE SlashRep_c
 !
 !-------------------------------------------------------------------------------
 !> @brief Defines the operation for performing an assignment of a character
