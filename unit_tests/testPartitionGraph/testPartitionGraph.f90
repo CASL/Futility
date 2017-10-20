@@ -502,9 +502,9 @@ PROGRAM testPartitionGraph
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       !Test larger 3-group problem (even divisions, unweighted)
       !Decomposition should look like
-      ! 3 3 2 2 2 2
       ! 3 3 3 2 2 2
-      ! 3 3 3 2
+      ! 3 3 3 2 2 2
+      ! 3 3 2 2
       ! 1 1 1 1
       ! 1 1
       ! 1 1
@@ -514,8 +514,8 @@ PROGRAM testPartitionGraph
       ALLOCATE(grpList(24))
       grpIdx=(/1, 9, 17, 25/)
       grpList=(/ 1,  2,  4,  3,  5,  6,  7,  8, &
-                24, 18, 17, 23, 22, 16, 12, 21, &
-                 9, 10, 11, 13, 14, 15, 19, 20/)
+                24, 18, 17, 23, 22, 16, 12, 11, &
+                 9, 10, 13, 14, 15, 19, 20, 21/)
       !Test
       CALL partitionTest(tparams,str,grpIdx,grpList)
 
@@ -534,7 +534,7 @@ PROGRAM testPartitionGraph
       ALLOCATE(grpList(28))
       grpIdx=(/1, 11, 21, 29/)
       grpList=(/ 1,  2,  3,  6,  5,  4,  7,  8,  9, 10, &
-                16, 15, 22, 21, 28, 27, 14, 20, 26, 13, &
+                16, 15, 22, 21, 28, 27, 26, 20, 14, 13, &
                 11, 12, 17, 18, 19, 23, 24, 25/)
       !Test
       CALL partitionTest(tparams,str,grpIdx,grpList)
