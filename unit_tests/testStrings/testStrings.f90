@@ -16,9 +16,11 @@ PROGRAM testStrings
 
   LOGICAL(SBK) :: bool
   INTEGER(SIK) :: i
+  INTEGER(SNK) :: testSNK,testSNKarray(2)
+  INTEGER(SLK) :: testSLK,testSLKarray(2)
   CHARACTER(LEN=10) :: char10
   CHARACTER(LEN=20) :: char20
-  TYPE(StringType) :: testString,testString2,testStringArray(10)
+  TYPE(StringType) :: testString,testString2,testStringArray(10),testarray(2)
   TYPE(StringType) :: test1a(2),test1a2(2),test2a(2,2),test2a2(2,2)
   TYPE(StringType) :: test3a(2,2,2),test3a2(2,2,2)
   TYPE(StringType),ALLOCATABLE :: s1a(:),s1a2(:),s2a(:,:),s2a2(:,:)
@@ -80,6 +82,34 @@ PROGRAM testStrings
   testString2='testString2'
   testString2=testString
   ASSERT(CHAR(testString2) == 'testString1','testString2=testString')
+!
+!Test assigning a short integer to string
+  COMPONENT_TEST('Assignment 32-bit Integer to String')
+  testSNK=1_SNK
+  testString=testSNK
+  ASSERT(CHAR(testString) == '1','testString=testSNK : 1')
+  testString=-HUGE(testSNK)
+  ASSERT(CHAR(testString) == '-2147483647','testString=testSNK : lowest')
+  testString=HUGE(testSNK)
+  ASSERT(CHAR(testString) == '2147483647','testString=testSNK : highest')
+  testSNKarray=(/0,5/)
+  testarray=testSNKarray
+  ASSERT(CHAR(testarray(1)) == '0','testString=testSNK : array(1)')
+  ASSERT(CHAR(testarray(2)) == '5','testString=testSNK : array(2)')
+!
+!Test assigning a long integer to string
+  COMPONENT_TEST('Assignment 64-bit Integer to String')
+  testSLK=1_SLK
+  testString=testSLK
+  ASSERT(CHAR(testString) == '1','testString=testSLK : 1')
+  testString=-HUGE(testSLK)
+  ASSERT(CHAR(testString) == '-9223372036854775807','testString=testSLK : lowest')
+  testString=HUGE(testSLK)
+  ASSERT(CHAR(testString) == '9223372036854775807','testString=testSLK : highest')
+  testSLKarray=(/0,5/)
+  testarray=testSLKarray
+  ASSERT(CHAR(testarray(1)) == '0','testString=testSLK : array(1)')
+  ASSERT(CHAR(testarray(2)) == '5','testString=testSLK : array(2)')
 !
 !Test assigning a char to a 1-D string array
   COMPONENT_TEST('Assignment char to 1-D String Array')

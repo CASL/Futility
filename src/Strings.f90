@@ -257,6 +257,12 @@ MODULE Strings
     !> @copybrief Strings::assign_StringType2A_to_StringType2A
     !> @copydetails Strings::assign_StringType2A_to_StringType2A
     MODULE PROCEDURE assign_StringType2A_to_StringType2A
+    !> @copybrief Strings::assign_Short_Integer_to_StringType
+    !> @copydetails Strings::assign_Short_Integer_to_StringType
+    MODULE PROCEDURE assign_Short_Integer_to_StringType
+    !> @copybrief Strings::assign_Long_Integer_to_StringType
+    !> @copydetails Strings::assign_Long_Integer_to_StringType
+    MODULE PROCEDURE assign_Long_Integer_to_StringType
   ENDINTERFACE
 
   !> @brief Overloads the Fortran intrinsic operator for concatenating
@@ -1028,6 +1034,38 @@ MODULE Strings
         ENDDO
       ENDIF
     ENDSUBROUTINE assign_StringType2A_to_StringType2A
+!
+!-------------------------------------------------------------------------------
+!> @brief Assigns a short integer to a StringType.
+!> @param thisStr the string object
+!> @param i short integer
+!>
+!> The intent is that this will overload the assignment operator so a short
+!> (32-bit) integer can be assigned to a StringType.
+!>
+    ELEMENTAL SUBROUTINE assign_Short_Integer_to_StringType(thisStr,i)
+      TYPE(StringType),INTENT(INOUT) :: thisStr
+      INTEGER(SNK),INTENT(IN) :: i
+      CHARACTER(LEN=11) :: l
+      WRITE(l,'(i11)') i
+      thisStr=TRIM(ADJUSTL(l))
+    ENDSUBROUTINE assign_Short_Integer_to_StringType
+!
+!-------------------------------------------------------------------------------
+!> @brief Assigns a long integer to a StringType.
+!> @param thisStr the string object
+!> @param i long integer
+!>
+!> The intent is that this will overload the assignment operator so a long
+!> (64-bit) integer can be assigned to a StringType.
+!>
+    ELEMENTAL SUBROUTINE assign_Long_Integer_to_StringType(thisStr,i)
+      TYPE(StringType),INTENT(INOUT) :: thisStr
+      INTEGER(SLK),INTENT(IN) :: i
+      CHARACTER(LEN=20) :: l
+      WRITE(l,'(i20)') i
+      thisStr=TRIM(ADJUSTL(l))
+    ENDSUBROUTINE assign_Long_Integer_to_StringType
 !
 !-------------------------------------------------------------------------------
 !> @brief Concatenates an intrinsic character type variable with a
