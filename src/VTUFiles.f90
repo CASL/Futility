@@ -88,10 +88,10 @@ MODULE VTUFiles
 !> @param unit Unit number to use for the file.
 !> @param status optional, not used for VTU files.
 !>
-!> The other input arguments are not currently supported. See 
+!> The other input arguments are not currently supported. See
 !> @ref FileType_Fortran::init_fortran_file "init_fortran_file" for a complete
 !> description of all the optional input arguments.
-!> 
+!>
 !> This routine initializes the file object through the Fortran file type
 !> interface then writes the VTU header to the file.
 !>
@@ -180,16 +180,16 @@ MODULE VTUFiles
 !> @brief Writes a VTU mesh to VTU file
 !> @param myVTKFile the VTK file to write the data to
 !> @param vtkMesh the VTK mesh to write in the file
-!> 
-!> This routine supports writing of UNSTRUCTURED_GRIDS. The other types of 
-!> geometry/topology are not yet implemented. The display of this 
+!>
+!> This routine supports writing of UNSTRUCTURED_GRIDS. The other types of
+!> geometry/topology are not yet implemented. The display of this
 !> data was verified by loading and displaying it with VisIt.
 !>
     SUBROUTINE writeMesh_VTUXMLFileType(myVTKFile,vtkMesh)
       CHARACTER(LEN=*),PARAMETER :: myName='writeMesh_VTUXMLFileType'
       CLASS(VTUXMLFileType),INTENT(INOUT) :: myVTKFile
       TYPE(VTKMeshType),INTENT(IN) :: vtkMesh
-      CHARACTER(LEN=256) :: aline,sint
+      TYPE(StringType) :: aline,sint
       INTEGER(SIK) :: funit,i,j,k,n
       INTEGER(SIK),DIMENSION(:),ALLOCATABLE :: offsets
       !
@@ -204,10 +204,8 @@ MODULE VTUFiles
                 !Write a mesh that is an unstructured grid
                 !Clean-up redundant points
                 CALL myVTKFile%mesh%cleanupPoints()
-                WRITE(sint,'(i64)') myVTKFile%mesh%numPoints
-                sint=ADJUSTL(sint)
-                WRITE(aline,'(i64)') myVTKFile%mesh%numCells
-                aline=ADJUSTL(aline)
+                sint=myVTKFile%mesh%numPoints
+                aline=myVTKFile%mesh%numCells
                 WRITE(funit,'(a)') '  <UnstructuredGrid>'
                 WRITE(funit,'(a)') '    <Piece NumberOfPoints="'//TRIM(sint)// &
                   '" NumberOfCells="'//TRIM(aline)//'">'
@@ -220,7 +218,7 @@ MODULE VTUFiles
                 ENDDO
                 WRITE(funit,'(a)') '        </DataArray>'
                 WRITE(funit,'(a)') '      </Points>'
-                
+
                 !Write the list of cell vertices
                 WRITE(funit,'(a)') '      <Cells>'
                 WRITE(funit,'(a)') '        <DataArray type="Int32" Name="'// &
@@ -250,12 +248,10 @@ MODULE VTUFiles
                       n=0
                   ENDSELECT
                   IF(n > 0) THEN
-                    WRITE(sint,'(a)') '  '; sint=ADJUSTL(sint)
-                    aline=TRIM(sint)
+                    aline='  '
                     DO k=0,n-1
-                      WRITE(sint,'(i64)') myVTKFile%mesh%nodeList(j+k)
-                      sint=ADJUSTL(sint)
-                      aline=TRIM(aline)//' '//TRIM(sint)
+                      sint=myVTKFile%mesh%nodeList(j+k)
+                      aline=aline//' '//sint
                     ENDDO
                     WRITE(funit,'(a)') '         '//TRIM(aline)
                     j=j+n
@@ -305,7 +301,7 @@ MODULE VTUFiles
 !> @brief Writes scalar data for a VTK mesh to VTU XML file
 !> @param myVTKFile the VTK file to write the data to
 !> @param vtkData the VTK data to write to the file
-!> 
+!>
 !> Presently, this routine is only capable of writing scalar cell data.
 !> The data can be written as integers, single precision or double precision.
 !> Note that in the VTKDataType data is always stored as double precision.
@@ -476,7 +472,7 @@ MODULE VTUFiles
     SUBROUTINE writepvtu_VTUXMLFileType(fileobj,funit,case,filen,procs,rank)
       CHARACTER(LEN=*),PARAMETER :: myName='writepvtu_VTUXMLFileType'
       CLASS(VTUXMLFileType),INTENT(INOUT) :: fileobj
-      CHARACTER(LEN=*),INTENT(IN) :: case,filen
+      TYPE(StringType),INTENT(IN) :: case,filen
       CHARACTER(LEN=128) :: sint
       INTEGER(SIK),INTENT(IN) :: funit,procs,rank
       INTEGER(SIK) :: i,j,iord
