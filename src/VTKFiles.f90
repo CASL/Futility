@@ -47,6 +47,7 @@ MODULE VTKFiles
   USE ExceptionHandler
   USE Allocs
   USE FileType_Fortran
+  USE Strings
   IMPLICIT NONE
   PRIVATE
 
@@ -473,7 +474,7 @@ MODULE VTKFiles
       CHARACTER(LEN=*),PARAMETER :: myName='writeMesh_VTKLegFileType'
       CLASS(VTKLegFileType),INTENT(INOUT) :: myVTKFile
       TYPE(VTKMeshType),INTENT(IN) :: vtkMesh
-      CHARACTER(LEN=256) :: aline,sint
+      TYPE(StringType) :: aline,sint
       INTEGER(SIK) :: funit,i,j,k,n
 
       IF(.NOT.myVTKFile%hasMesh) THEN
@@ -488,8 +489,8 @@ MODULE VTKFiles
                 WRITE(funit,'(a)') 'DATASET STRUCTURED_POINTS'
                 aline='DIMENSIONS'
                 DO i=1,3
-                  WRITE(sint,'(i64)') myVTKFile%mesh%dims(i); sint=ADJUSTL(sint)
-                  aline=TRIM(aline)//' '//TRIM(sint)
+                  sint=myVTKFile%mesh%dims(i)
+                  aline=aline//' '//sint
                 ENDDO
                 WRITE(funit,'(a)') TRIM(aline)
                 WRITE(funit,'(a,3es17.8)') 'ORIGIN ', &
@@ -502,12 +503,12 @@ MODULE VTKFiles
                 WRITE(funit,'(a)') 'DATASET STRUCTURED_GRID'
                 aline='DIMENSIONS'
                 DO i=1,3
-                  WRITE(sint,'(i64)') myVTKFile%mesh%dims(i); sint=ADJUSTL(sint)
-                  aline=TRIM(aline)//' '//TRIM(sint)
+                  sint=myVTKFile%mesh%dims(i)
+                  aline=aline//' '//sint
                 ENDDO
                 WRITE(funit,'(a)') TRIM(aline)
-                WRITE(sint,'(i64)') myVTKFile%mesh%numPoints; sint=ADJUSTL(sint)
-                WRITE(funit,'(a)') 'POINTS '//TRIM(sint)//' float'
+                sint=myVTKFile%mesh%numPoints
+                WRITE(funit,'(a)') 'POINTS '//sint//' float'
                 DO k=1,myVTKFile%mesh%dims(3)
                   DO j=1,myVTKFile%mesh%dims(2)
                     DO i=1,myVTKFile%mesh%dims(1)
@@ -522,14 +523,14 @@ MODULE VTKFiles
                 WRITE(funit,'(a)') 'DATASET RECTILINEAR_GRID'
                 aline='DIMENSIONS'
                 DO i=1,3
-                  WRITE(sint,'(i64)') myVTKFile%mesh%dims(i); sint=ADJUSTL(sint)
-                  aline=TRIM(aline)//' '//TRIM(sint)
+                  sint=myVTKFile%mesh%dims(i)
+                  aline=aline//' '//sint
                 ENDDO
                 WRITE(funit,'(a)') TRIM(aline)
 
                 !Write the x coordinates
-                WRITE(sint,'(i64)') myVTKFile%mesh%dims(1); sint=ADJUSTL(sint)
-                WRITE(funit,'(a)') 'X_COORDINATES '//TRIM(sint)//' float'
+                sint=myVTKFile%mesh%dims(1)
+                WRITE(funit,'(a)') 'X_COORDINATES '//sint//' float'
                 DO i=1,myVTKFile%mesh%dims(1)-MOD(myVTKFile%mesh%dims(1),3),3
                   WRITE(funit,'(3es17.8)') myVTKFile%mesh%x(i), &
                         myVTKFile%mesh%x(i+1),myVTKFile%mesh%x(i+2)
@@ -544,11 +545,11 @@ MODULE VTKFiles
                 ENDIF
 
                 !Write the y coordinates
-                WRITE(sint,'(i64)') myVTKFile%mesh%dims(2); sint=ADJUSTL(sint)
-                WRITE(funit,'(a)') 'Y_COORDINATES '//TRIM(sint)//' float'
+                sint=myVTKFile%mesh%dims(2)
+                WRITE(funit,'(a)') 'Y_COORDINATES '//sint//' float'
                 DO i=1,myVTKFile%mesh%dims(2)-MOD(myVTKFile%mesh%dims(2),3),3
                   WRITE(funit,'(3es17.8)') myVTKFile%mesh%y(i), &
-                        myVTKFile%mesh%y(i+1),myVTKFile%mesh%y(i+2)
+                    myVTKFile%mesh%y(i+1),myVTKFile%mesh%y(i+2)
                 ENDDO
                 IF(MOD(myVTKFile%mesh%dims(2),3) == 1) THEN
                   i=myVTKFile%mesh%dims(2)
@@ -560,8 +561,8 @@ MODULE VTKFiles
                 ENDIF
 
                 !Write the z coordinates
-                WRITE(sint,'(i64)') myVTKFile%mesh%dims(3); sint=ADJUSTL(sint)
-                WRITE(funit,'(a)') 'Z_COORDINATES '//TRIM(sint)//' float'
+                sint=myVTKFile%mesh%dims(3)
+                WRITE(funit,'(a)') 'Z_COORDINATES '//sint//' float'
                 DO i=1,myVTKFile%mesh%dims(3)-MOD(myVTKFile%mesh%dims(3),3),3
                   WRITE(funit,'(3es17.8)') myVTKFile%mesh%z(i),myVTKFile%mesh%z(i+1),myVTKFile%mesh%z(i+2)
                 ENDDO
@@ -579,7 +580,7 @@ MODULE VTKFiles
                 !Clean-up redundant points
                 CALL myVTKFile%mesh%cleanupPoints()
                 WRITE(funit,'(a)') 'DATASET UNSTRUCTURED_GRID'
-                WRITE(sint,'(i64)') myVTKFile%mesh%numPoints; sint=ADJUSTL(sint)
+                sint=myVTKFile%mesh%numPoints
                 WRITE(funit,'(a)') 'POINTS '//TRIM(sint)//' float'
                 DO i=1,myVTKFile%mesh%numPoints
 !                  WRITE(*,'(i0,a1,3es17.8)') i,':',myVTKFile%mesh%x(i), &
@@ -591,13 +592,11 @@ MODULE VTKFiles
 
                 !Write the list of cell vertices
                 aline='CELLS'
-                WRITE(sint,'(i64)') myVTKFile%mesh%numCells; sint=ADJUSTL(sint)
-                aline=TRIM(aline)//' '//TRIM(sint)
-                WRITE(sint,'(i64)') SIZE(myVTKFile%mesh%nodeList)+ &
-                  myVTKFile%mesh%numCells
-                sint=ADJUSTL(sint)
-                aline=TRIM(aline)//' '//TRIM(sint)
-                WRITE(funit,'(a)') TRIM(aline)
+                sint=myVTKFile%mesh%numCells
+                aline=aline//' '//sint
+                sint=SIZE(myVTKFile%mesh%nodeList)+myVTKFile%mesh%numCells
+                aline=aline//' '//sint
+                WRITE(funit,'(a)') CHAR(aline)
                 j=1
                 DO i=1,myVTKFile%mesh%numCells
                   !Determine the next n nodes that make up this cell
@@ -622,12 +621,10 @@ MODULE VTKFiles
                       n=0
                   ENDSELECT
                   IF(n > 0) THEN
-                    WRITE(sint,'(i64)') n; sint=ADJUSTL(sint)
-                    aline=TRIM(sint)
+                    aline=n
                     DO k=0,n-1
-                      WRITE(sint,'(i64)') myVTKFile%mesh%nodeList(j+k)
-                      sint=ADJUSTL(sint)
-                      aline=TRIM(aline)//' '//TRIM(sint)
+                      sint=myVTKFile%mesh%nodeList(j+k)
+                      aline=aline//' '//sint
                     ENDDO
                     WRITE(funit,'(a)') TRIM(aline)
                     j=j+n
@@ -637,9 +634,9 @@ MODULE VTKFiles
 
                 !Write the list of cell types
                 aline='CELL_TYPES'
-                WRITE(sint,'(i64)') myVTKFile%mesh%numCells; sint=ADJUSTL(sint)
-                aline=TRIM(aline)//' '//TRIM(sint)
-                WRITE(funit,'(a)') TRIM(aline)
+                sint=myVTKFile%mesh%numCells
+                aline=aline//' '//sint
+                WRITE(funit,'(a)') CHAR(aline)
                 WRITE(funit,*) myVTKFile%mesh%cellList
                 WRITE(funit,'(a)') ''
 
@@ -685,7 +682,7 @@ MODULE VTKFiles
       CLASS(VTKLegFileType),INTENT(INOUT) :: myVTKFile
       TYPE(VTKDataType),INTENT(IN) :: vtkData
       INTEGER(SIK) :: funit,i,istp
-      CHARACTER(LEN=256) :: aline,sint
+      TYPE(StringType) :: aline,sint
 
       IF(myVTKFile%hasMesh) THEN
         IF(myVTKFile%isOpen()) THEN
@@ -694,8 +691,8 @@ MODULE VTKFiles
               IF(vtkData%dataSetType == VTK_DATA_SCALARS) THEN
                 funit=myVTKFile%getUnitNo()
                 aline='CELL_DATA'
-                WRITE(sint,'(i64)') myVTKFile%mesh%numCells; sint=ADJUSTL(sint)
-                aline=TRIM(aline)//' '//TRIM(sint)
+                sint=myVTKFile%mesh%numCells
+                aline=aline//' '//sint
                 SELECTCASE(TRIM(vtkData%vtkDataFormat))
                   CASE('float')
                     WRITE(funit,'(a)') TRIM(aline)
