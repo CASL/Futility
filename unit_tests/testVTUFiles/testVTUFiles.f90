@@ -187,7 +187,7 @@ PROGRAM testVTUFiles
       CALL MAKE_DIRECTORY('fsr_test',dir_status)
       str='test'
       str2='testPVTU'
-      CALL testVTUFile%writepvtu(666,str,str2,2,0)
+      CALL testVTUFile%writepvtu(666,TRIM(str),TRIM(str2),2,0)
       CALL testVTUFile%hasFile('testPVTU_0.vtu',bool)
       ASSERT(bool,'hasFile(...) testPVTU_0.vtu')
       CALL testVTUFile%hasFile('testPVTU_1.vtu',bool)

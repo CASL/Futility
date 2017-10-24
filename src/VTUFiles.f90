@@ -472,7 +472,7 @@ MODULE VTUFiles
     SUBROUTINE writepvtu_VTUXMLFileType(fileobj,funit,case,filen,procs,rank)
       CHARACTER(LEN=*),PARAMETER :: myName='writepvtu_VTUXMLFileType'
       CLASS(VTUXMLFileType),INTENT(INOUT) :: fileobj
-      TYPE(StringType),INTENT(IN) :: case,filen
+      CHARACTER(LEN=*),INTENT(IN) :: case,filen
       CHARACTER(LEN=128) :: sint
       INTEGER(SIK),INTENT(IN) :: funit,procs,rank
       INTEGER(SIK) :: i,j,iord
