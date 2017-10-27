@@ -13,6 +13,7 @@
 # the tests at the end have the most dependencies.
 #
 SET(UNIT_TEST_NAMES
+    testDBC
     testUnitTest
     testSelectedKinds
     testWaterSatProperties
@@ -57,6 +58,7 @@ SET(UNIT_TEST_NAMES
     testODESolver
     testAndersonAcceleration
     testStochasticSampler
+    testPartitionGraph
 )
 
 IF("${PROJECT_NAME}" STREQUAL "Futility" OR "${PROJECT_NAME}" STREQUAL "MPACT")

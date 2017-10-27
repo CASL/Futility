@@ -26,7 +26,7 @@ IF(NOT DEFINED ${PROJECT_NAME}_GENERATE_REPO_VERSION_FILE)
 ENDIF()
 
 # Don't install under /usr/local by default (that is crazy)
-IF (NOT EXISTS ${CMAKE_INSTALL_PREFIX} OR ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr/local")
+IF ((NOT DEFINED CMAKE_INSTALL_PREFIX) OR "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local")
   SET(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/install CACHE PATH
   "Base install directory (overridde default from \"/usr/local\")"
   FORCE)
@@ -47,9 +47,7 @@ IF(DEFINED ${PROJECT_NAME}_ENABLE_Teuchos)
   ENDIF()
 ENDIF()
 
-# CMake requires that you declare the CMake project in the top-level file and
-# not in an include file :-(
-PROJECT(${PROJECT_NAME} NONE)
+## used to be after call to project
 
 # Pull in the TriBITS system and execute
 IF(NOT DEFINED(${${PROJECT_NAME}_TRIBITS_DIR}))
@@ -64,11 +62,21 @@ ENDIF()
 
 # Include the modules in TriBITS
 SET(CMAKE_MODULE_PATH "${${PROJECT_NAME}_TRIBITS_DIR}/package_arch" CACHE INTERNAL "")
+
 INCLUDE(${${PROJECT_NAME}_TRIBITS_DIR}/TriBITS.cmake)
 
 # Set build type to default
 IF(NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE ${${PROJECT_NAME}_DEFAULT_BUILD_TYPE} CACHE STRING "" FORCE)
+ENDIF()
+
+# Set Design by Contract to default if not DEFINED
+IF(NOT DEFINED Futility_ENABLE_DBC)
+  IF("${CMAKE_BUILD_TYPE}" STREQUAL "DEBUG")
+    SET(Futility_ENABLE_DBC TRUE)
+  ELSE()
+    SET(Futility_ENABLE_DBC FALSE)
+  ENDIF()
 ENDIF()
 
 IF(WIN32)

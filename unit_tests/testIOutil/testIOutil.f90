@@ -30,6 +30,7 @@ PROGRAM testIOutil
   REGISTER_SUBTEST('IO_Strings',testIO_Strings)
   REGISTER_SUBTEST('Run-time Environment',testRTEnv)
   REGISTER_SUBTEST('MAKE_DIRECTORY',testMKDIR)
+  REGISTER_SUBTEST('SlashRep',testSlashRep)
 
   FINALIZE_TEST()
 !
@@ -619,5 +620,23 @@ PROGRAM testIOutil
       mystat=SYSTEM(tmp)
       ASSERT(mystat == 0,'d1 does not exist')
     ENDSUBROUTINE testMKDIR
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testSlashRep()
+      CHARACTER(LEN=32) :: char_dir
+      TYPE(StringType) :: str_dir
+#ifdef WIN32
+      char_dir='d1'//FSLASH//'d 2'
+      str_dir='d1'//FSLASH//'d 2'//FSLASH//'d3'
+#else
+      char_dir='d1'//BSLASH//'d 2'
+      str_dir='d1'//BSLASH//'d 2'//BSLASH//'d3'
+#endif
+
+      CALL SlashRep(char_dir)
+      ASSERT(char_dir == 'd1'//SLASH//'d 2','char')
+      CALL SlashRep(str_dir)
+      ASSERT(str_dir == 'd1'//SLASH//'d 2'//SLASH//'d3','string')
+    ENDSUBROUTINE testSlashRep
 !
 ENDPROGRAM testIOutil

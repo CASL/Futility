@@ -6,6 +6,7 @@
 
 .. _TRIBITS_TPL_FIND_INCLUDE_DIRS_AND_LIBRARIES(): https://tribits.org/doc/TribitsDevelopersGuide.html#tribits-tpl-find-include-dirs-and-libraries
 
+.. _TRIBITS_CTEST_DRIVER(): https://tribits.org/doc/TribitsDevelopersGuide.html#tribits-ctest-driver
 
 
 Getting set up to use CMake
@@ -29,21 +30,25 @@ recommended) from:
 Installing CMake from source [developers and experienced users]
 ---------------------------------------------------------------
 
-If you have access to the <Project> git repositories, then install CMake with::
+If you have access to the <Project> git repositories (which which includes a
+snapshot of TriBITS), then install CMake with::
 
-  $ $TRIBITS_BASE_DIR/python/install-cmake.py \
+  $ cd <some-scratch-space>/
+  $ export TRIBITS_BASE_DIR=<project-base-dir>/cmake/tribits
+  $ $TRIBITS_BASE_DIR/devtools_install/install-cmake.py \
      --install-dir=<INSTALL_BASE_DIR> \
      --do-all
 
 This will result in cmake and related CMake tools being installed in
-<INSTALL_BASE_DIR>/bin.
+``<INSTALL_BASE_DIR>/bin/`` (see the instructions printed at the end on how to
+update your ``PATH`` env var).
 
-Getting help for installing CMake with this script::
+To get help for installing CMake with this script use::
 
-  $ $TRIBITS_BASE_DIR/python/install-cmake.py --help
+  $ $TRIBITS_BASE_DIR/devtools_install/install-cmake.py --help
 
 NOTE: you will want to read the help message about how to use sudo to
-install in a privileged location (like the default /usr/local/bin).
+install in a privileged location (like the default ``/usr/local/bin``).
 
 
 Getting CMake Help
@@ -133,7 +138,7 @@ a) Create a 'do-configure' script such as [Recommended]::
   NOTE: If one has already configured once and one needs to configure from
   scratch (needs to wipe clean defaults for cache variables, updates
   compilers, other types of changes) then one will want to delete the local
-  CASL and other CMake-generated files before configuring again (see
+  CMakeCache.txt and other CMake-generated files before configuring again (see
   `Reconfiguring completely from scratch`_).
 
 .. _<Project>_CONFIGURE_OPTIONS_FILE:
@@ -150,41 +155,74 @@ b) Create a CMake file fragment and point to it [Recommended].
       $EXTRA_ARGS \
       ${SOURCE_BASE}
      
-  where MyConfigureOptions.cmake might look like::
+  where MyConfigureOptions.cmake (in the current working directory) might look
+  like::
 
-    SET(CMAKE_BUILD_TYPE DEBUG CACHE STRING "")
-    SET(<Project>_ENABLE_CHECKED_STL ON CACHE BOOL "")
-    SET(BUILD_SHARED_LIBS ON CACHE BOOL "")
+    SET(CMAKE_BUILD_TYPE DEBUG CACHE STRING "Set in MyConfigureOptions.cmake")
+    SET(<Project>_ENABLE_CHECKED_STL ON CACHE BOOL "Set in MyConfigureOptions.cmake")
+    SET(BUILD_SHARED_LIBS ON CACHE BOOL "Set in MyConfigureOptions.cmake")
     ...
 
   Using a configuration fragment file allows for better reuse of configure
   options across different configure scripts and better version control of
-  configure options.  Also, when this file changes, CMake will automatically
+  configure options.  Using the comment "Set in MyConfigureOptions.cmake"
+  makes it easy see where that variable got set when looking an the
+  CMakeCache.txt file.  Also, when this file changes, CMake will automatically
   trigger a reconfgure during a make (because it knows about the file and will
   check its time stamp).
 
-  NOTE: You can actually pass in a list of configuration fragment files
-  which will be read in the order they are given.
-
-  NOTE: You can use the ``FORCE`` option in the ``SET()`` shown above and that
-  will override any value of the options that might already be set.  However,
-  that will not allow the user to override the options on the CMake
-  comamndline using ``-D<VAR>=<value>`` so it is generally desired to use
+  One can use the ``FORCE`` option in the ``SET()`` shown above and that will
+  override any value of the options that might already be set.  However, that
+  will not allow the user to override the options on the CMake comamndline
+  using ``-D<VAR>=<value>`` so it is generally **not** desired to use
   ``FORCE``.
 
-c) Using ccmake to configure
+  One can actually pass in a list of configuration fragment files separated by
+  ''","'' which will be read in the order they are given::
 
-  ::
+    -D <Project>_CONFIGURE_OPTIONS_FILE=<file0>,<file1>,...
 
-    $ ccmake $SOURCE_BASE
+  One can read in configure option files under the project source directory by
+  using the type ``STRING`` such as with::
 
-d) Using the QT CMake configuration GUI:
+    -D <Project>_CONFIGURE_OPTIONS_FILE:STRING=cmake/MpiConfig1.cmake
+
+  In this case, the relative paths will be with respect to the project base
+  source directory, not the current working directroy.  (By specifying the
+  type ``STRING``, one turns off CMake interpretation as a ``FILEPATH``.
+  Otherwise, the type ``FILEPATH`` causes CMake to always interpret relative
+  paths with respect to the current working directory and set the absolute
+  path).
+
+  Note that a CMake options file can also be read in with::
+
+    cmake -C MyConfigureOptions.cmake [other options]  ${SOURCE_BASE}
+
+  However, the advantages of using ``<Project>_CONFIGURE_OPTIONS_FILE`` are:
+
+  1) One can use ``-D<Project>_CONFIGURE_OPTIONS_FILE:STRING=<rel-path>`` to
+  use a relative path w.r.t. to the source tree to make it easier to point to
+  options files in the project source.  Using ``cmake -C`` would require
+  having to give the absolute path or a longer relative path from the build
+  directory back to the source directory.
+
+  2) ``<Project>_CONFIGURE_OPTIONS_FILE`` accepts a list of files where
+  ``cmake -C`` only accepts a single file.  That saves from having to create
+  another dummy ``*.cmake`` file that just includes the others.
+
+  3) One can create and use parameterized ``*.cmake`` files that can be used
+  with multiple TriBITS projects.  For example, one can have set statements
+  like ``SET(${PROJECT_NAME}_ENABLE_Fortran OFF ...)`` since ``PROJECT_NAME``
+  is known before the file is included.  One can't do that with ``cmake -C``
+  and instead would have to the full variables names.
+
+c) Using the QT CMake configuration GUI:
 
   On systems where the QT CMake GUI is installed (e.g. Windows) the CMake GUI
-  can be a nice way to configure <Project> if you are a user.  To make your
-  configuration easily repeatable, you might want to create a fragment file
-  and just load it by setting `<Project>_CONFIGURE_OPTIONS_FILE`_ (see above)
-  in the GUI.
+  can be a nice way to configure <Project> (or just explore options) if you
+  are a user.  To make your configuration easily repeatable, you might want to
+  create a fragment file and just load it by setting
+  `<Project>_CONFIGURE_OPTIONS_FILE`_ (see above) in the GUI.
 
 Selecting the list of packages to enable
 ----------------------------------------
@@ -232,15 +270,38 @@ for ``<Project>_SE_PACKAGES`` using, for example::
 Print package dependencies
 ++++++++++++++++++++++++++
 
-The set of package dependencies in a project will be printed in the ``cmake``
-STDOUT by setting::
+The set of package dependencies can be printed in the ``cmake`` STDOUT by
+setting the configure option::
 
   -D <Project>_DUMP_PACKAGE_DEPENDENCIES=ON
 
-This will print the basic backward dependencies for each SE package.  To also
-see the direct forward dependencies for each SE package, also include::
+This will print the basic forward/upstream dependencies for each SE package.
+To find this output, look for the line::
+
+  Printing package dependencies ...
+
+and the dependencies are listed below this for each SE package in the form::
+
+  -- <PKG>_LIB_REQUIRED_DEP_TPLS: <TPL0> <TPL1> ...
+  -- <PKG>_LIB_OPTIONAL_DEP_TPLS: <TPL2> <TPL3> ...
+  -- <PKG>_LIB_REQUIRED_DEP_PACKAGES: <PKG0> <[PKG1> ...
+  -- <PKG>_LIB_OPTIONAL_DEP_PACKAGES: <PKG2> <PKG3> ...
+  -- <PKG>_TEST_REQUIRED_DEP_TPLS: <TPL4> <TPL5> ...
+  -- <PKG>_TEST_OPTIONAL_DEP_TPLS: <TPL6> <TPL7> ...
+  -- <PKG>_TEST_REQUIRED_DEP_PACKAGES: <PKG4> <[PKG5> ...
+  -- <PKG>_TEST_OPTIONAL_DEP_PACKAGES: <PKG6> <PKG7> ...
+  
+(Dependencies that don't exist are left out of the output.  For example, if
+there are no ``<PKG>_LIB_OPTIONAL_DEP_PACKAGES`` dependencies, then that line
+is not printed.)
+
+To also see the direct forward/downstream dependencies for each SE package,
+also include::
 
   -D <Project>_DUMP_FORWARD_PACKAGE_DEPENDENCIES=ON
+
+These dependencies are printed along with the backward/upstsream dependencies
+as described above.
 
 Both of these variables are automatically enabled when
 `<Project>_VERBOSE_CONFIGURE`_ = ``ON``.
@@ -1444,14 +1505,14 @@ b) **Getting verbose output from TriBITS configure:**
 
     -D <Project>_VERBOSE_CONFIGURE=ON
 
-  This produces a *lot* of output but can be very useful when debugging
+  However, this produces a *lot* of output so don't enable this unless you are
+  very desperate.  But this level of details can be very useful when debugging
   configuration problems.
 
-  To just dump the package and TPL dependencies, use::
+  To just view the package and TPL dependencies, it is recommended to use
+  ``-D`` `<Project>_DUMP_PACKAGE_DEPENDENCIES`_ ``= ON``.
 
-    -D <Project>_DUMP_PACKAGE_DEPENDENCIES=ON
-
-  To just dump the link libraries for each library and executable created,
+  To just print the link libraries for each library and executable created,
   use::
 
     -D <Project>_DUMP_LINK_LIBS=ON
@@ -1569,8 +1630,11 @@ Valid categories include ``BASIC``, ``CONTINUOUS``, ``NIGHTLY``, ``HEAVY`` and
 testing, and nightly testing.  ``CONTINUOUS`` tests are for post-push testing
 and nightly testing.  ``NIGHTLY`` tests are for nightly testing only.
 ``HEAVY`` tests are for more expensive tests that require larger number of MPI
-processes and llonger run times.  ``PERFORMANCE`` tests a special category
-used only for performance testing.
+processes and longer run times.  These test categories are nested
+(e.g. ``HEAVY`` contains all ``NIGHTLY``, ``NIGHTLY`` contains all
+``CONTINUOUS`` and ``CONTINUOUS`` contains all ``BASIC`` tests).  However,
+``PERFORMANCE`` tests are special category used only for performance testing
+and don't nest with the other categories.
 
 
 Disabling specific tests
@@ -1606,33 +1670,49 @@ arguments).
 Setting test timeouts at configure time
 ---------------------------------------
 
-A maximum default time limit for all the tests can be set at configure time
-using the cache variable::
+A maximum default time limit (timeout) for all the tests can be set at
+configure time using the cache variable::
 
   -D DART_TESTING_TIMEOUT=<maxSeconds>
 
-where ``<maxSeconds>`` is the number of wall-clock seconds.  By default there
-is no timeout limit set so it is a good idea to set some limit just so tests
-don't hang and run forever.  For example, when an MPI program has a defect, it
-can easily hang forever until it is manually killed.  If killed, CTest will
-kill all of this child processes correctly.
+where ``<maxSeconds>`` is the number of wall-clock seconds.  The default for
+most projects is 1500 seconds (see the default value set in the CMake cache).
+This value gets scaled by `<Project>_SCALE_TEST_TIMEOUT`_ and then set as the
+field ``TimeOut`` in the CMake-generated file ``DartConfiguration.tcl``.  The
+value ``TimeOut`` from this file is what is directly read by the ``ctest``
+executable.  Timeouts for tests are important.  For example, when an MPI
+program has a defect, it can easily hang (forever) until it is manually
+killed.  If killed by a timeout, CTest will kill the test process and all of
+its child processes correctly.
 
 NOTES:
 
-* Be careful not set the timeout too low since if a machine becomes loaded
-  tests can take longer to run and may result in timeouts that would not
-  otherwise occur.
-* Individual tests may have there timeout limit set on a test-by-test basis
+* If ``DART_TESTING_TIMEOUT`` is not explicitly set by the user, then the
+  projects gives it a default value (typically 1500 seconds but see the value
+  in the CMakeCache.txt file).
+
+* If ``DART_TESTING_TIMEOUT`` is explicitly set to empty
+  (i.e. ``-DDART_TESTING_TIMEOUT=``), then by default tests have no timeout
+  and can run forever until manually killed.
+
+* Individual tests may have their timeout limit set on a test-by-test basis
   internally in the project's ``CMakeLists.txt`` files (see the ``TIMEOUT``
   argument for ``TRIBITS_ADD_TEST()`` and ``TRIBITS_ADD_ADVANCED_TEST()``).
   When this is the case, the global timeout set with ``DART_TESTING_TIMEOUT``
-  has no impact on these individually set test timeouts.  To affect individual
-  test timeouts set on a test-by-test basis, use
-  `<Project>_SCALE_TEST_TIMEOUT_TESTING_TIMEOUT`_.
-* To set or override the default global test timeout limit at runtime, see
-  `Overridding test timeouts`_.
+  has no impact on these individually set test timeouts.
 
-.. _<Project>_SCALE_TEST_TIMEOUT_TESTING_TIMEOUT:
+* Be careful not set the global test timeout too low since if a machine
+  becomes loaded tests can take longer to run and may result in timeouts that
+  would not otherwise occur.
+
+* The value of ``DART_TESTING_TIMEOUT`` and the timeouts for individual tests
+  can be scaled up or down using the cache varaible
+  `<Project>_SCALE_TEST_TIMEOUT`_.
+
+* To set or override the default global test timeout limit at runtime, see
+  `Overriding test timeouts`_.
+
+.. _<Project>_SCALE_TEST_TIMEOUT:
 
 Scaling test timeouts at configure time
 ---------------------------------------
@@ -1657,18 +1737,22 @@ builds.
 
 NOTES:
 
+* If ``<Project>_SCALE_TEST_TIMEOUT`` is not set, the the default value is set
+  to ``1.0`` (i.e. no scaling of test timeouts).
+
 * When scaling the timeouts, the timeout is first truncated to integral
   seconds so an original timeout like ``200.5`` will be truncated to ``200``
   before it gets scaled.
 
-* Only the first fractional digit is used so ``1.57`` is truncated to ``1.5``
-  before scaling the test timeouts.
+* Only the first fractional digit of ``<Project>_SCALE_TEST_TIMEOUT`` is used
+  so ``1.57`` is truncated to ``1.5``, for example, before scaling the test
+  timeouts.
 
-* The cache value of the variable `DART_TESTING_TIMEOUT`_ is not changed in
-  the ``CMakeCache.txt`` file.  Only the value of ``TimeOut`` written into the
+* The value of the variable `DART_TESTING_TIMEOUT`_ is not changed in the
+  ``CMakeCache.txt`` file.  Only the value of ``TimeOut`` written into the
   ``DartConfiguration.tcl`` file (which is directly read by ``ctest``) will be
   scaled.  (This ensures that running configure over and over again will not
-  increase ``DART_TESTING_TIMEOUT`` each time.)
+  increase ``DART_TESTING_TIMEOUT`` or ``TimeOut`` withc each new configure.)
 
 
 Enabling support for coverage testing
@@ -1792,6 +1876,22 @@ NOTE: The set of extra repositories listed in the file
 ``<Project>_EXTRAREPOS_FILE`` can be filtered down by setting the variables
 ``<Project>_PRE_REPOSITORIES`` if PRE extra repos are listed and/or
 ``<Project>_EXTRA_REPOSITORIES`` if POST extra repos are listed.
+
+Selecting a different source location for a package
+---------------------------------------------------
+
+The source location for any package can be changed by configuring with::
+
+  -D<TRIBITS_PACKAGE>_SOURCE_DIR_OVERRIDE:STRING=<path>
+
+Here, ``<path>`` can be a relative path or an absolute path, but in both cases
+must be under the project source directory (otherwise, an error will occur).
+The relative path will then become the relative path for the package under the
+binary tree as well.
+
+This can be used, for example, to use a different repository for the
+implementation of a package that is otherwise snapshotted into the base
+project source repository (e.g. Kokkos in Trilinos).
 
   
 Reconfiguring completely from scratch
@@ -2080,7 +2180,7 @@ find the target name and then doing a find ``find . -name
 
 For this process to work correctly, you must be in the subdirectory where the
 ``TRIBITS_ADD_LIBRARY()`` or ``TRIBITS_ADD_EXECUTABLE()`` command is called
-from its ``CMakeList.txt`` file, otherwise the object file targets will not be
+from its ``CMakeLists.txt`` file, otherwise the object file targets will not be
 listed by ``make help``.
 
 NOTE: CMake does not seem to not check on dependencies when explicitly
@@ -2194,7 +2294,7 @@ working directory.  To run the test exactly as ``ctest`` would, cd into the
 shown working directory and run the shown command.
 
 
-Overridding test timeouts
+Overriding test timeouts
 -------------------------
 
 The configured glboal test timeout described in ``Setting test timeouts at
@@ -2202,9 +2302,10 @@ configure time`` can be overridden on the CTest command-line as::
 
   $ ctest --timeout <maxSeconds>
 
-This will override the configured cache variable `DART_TESTING_TIMEOUT`_.
-However, this will **not** override the test timesouts set on individual tests
-on a test-by-test basis!
+This will override the configured cache variable `DART_TESTING_TIMEOUT`_
+(actually, the scaled value set as ``TimeOut`` in the file
+``DartConfiguration.tcl``).  However, this will **not** override the test
+timesouts set on individual tests on a test-by-test basis!
 
 **WARNING:** Do not try to use ``--timeout=<maxSeconds>`` or CTest will just
 ignore the argument!
@@ -2325,7 +2426,7 @@ absolute paths, use the data type ``PATH`` as shown above.
 Setting install RPATH
 ---------------------
 
-Setting RPATH for installed shared libraries and exectuables
+Setting RPATH for installed shared libraries and executables
 (i.e. ``BUILD_SHARED_LIBS=ON``) can be a little tricky.  Some discussion of
 how raw CMake handles RPATH and installations can be found at:
 
@@ -2347,7 +2448,7 @@ same as the raw CMake default behavior):
   ``CMAKE_INSTALL_RPATH_USE_LINK_PATH`` which is set to ``TRUE`` by default
   for most TriBITS projects but is empty "" for raw CMake.)
 
-The above default behavior allows the installed exectuables and libraries to
+The above default behavior allows the installed executables and libraries to
 be run without needing to set ``LD_LIBRARY_PATH`` or any other system
 environment variables.  However, this setting does not allow the installed
 libraries and executables to be easily moved or relocated.  There are several
@@ -2404,7 +2505,7 @@ These scenarios in detail are:
      -D<Project>_SET_INSTALL_RPATH=TRUE \
      -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=TRUE \
 
-   As described above, this allows libraries and exectuables to be used right
+   As described above, this allows libraries and executables to be used right
    away once installed without needing to set any environment variables.
 
    Note that this also allows the installed libraries and executables to be
@@ -2463,7 +2564,7 @@ These scenarios in detail are:
    may help to avoid confusion.)
 
    Once the install directories are moved to the final location, the
-   exectuables can be run without any need to set environment variables.
+   executables can be run without any need to set environment variables.
 
    Note that TriBITS also accepts the directory separator "``:``" for::
 
@@ -2647,10 +2748,11 @@ release mode, i.e. ``<Project>_ENABLE_DEVELOPMENT_MODE==OFF``.)
 Dashboard submissions
 =====================
 
-You can use the TriBITS scripting code to submit package-by-package build,
-test, coverage, memcheck results to the project's CDash dashboard.
+All TriBITS projects have built-in support for submitting configure, build,
+and test results to CDash using the custom ``dashbaord`` target.
 
-First, configure as normal but add the build and test parallel levels with::
+First, configure as normal but add cache vars for the the build and test
+parallel levels with::
 
   -DCTEST_BUILD_FLAGS=-j4 -DCTEST_PARALLEL_LEVEL=4
 
@@ -2660,83 +2762,34 @@ with::
   $ make dashboard
 
 This invokes the advanced TriBITS CTest scripts to do an experimental build
-for all of the packages that you have explicitly enabled.  The packages that
-are implicitly enabled due to package dependencies are not directly processed
-by the experimental_build_test.cmake script.
+for all of the packages that you have explicitly enabled.  (The packages that
+are implicitly enabled due to package dependencies are not directly
+processed.)
 
-There are a number of options that you can set in the environment to control
-what this script does.  This set of options can be found by doing::
+NOTE: This generates a lot of output, so it is tyically better to pipe this to
+a file with::
 
-  $ grep 'SET_DEFAULT_AND_FROM_ENV(' \
-      $TRIBITS_DIR/ctest_driver/TribitsCTestDriverCore.cmake
+  $ make dashboard &> make.dashboard.out
 
-Currently, the variables can be set include::
+and then watch that file in another terminal with::
 
-  SET_DEFAULT_AND_FROM_ENV(<Project>_IGNORE_MISSING_EXTRA_REPOSITORIES ...)
-  SET_DEFAULT_AND_FROM_ENV(<Project>_PRE_REPOSITORIES ...)
-  SET_DEFAULT_AND_FROM_ENV(<Project>_EXTRA_REPOSITORIES ...)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_SOURCE_NAME <Project>)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_CONFIGURATION_UNIT_TESTING OFF)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_TEST_TYPE Experimental)
-  SET_DEFAULT_AND_FROM_ENV(<Project>_TRACK "${<Project>_TRACK_DEFAULT}")
-  SET_DEFAULT_AND_FROM_ENV(CTEST_SITE ${CTEST_SITE_DEFAULT})
-  SET_DEFAULT_AND_FROM_ENV(CTEST_DASHBOARD_ROOT "")
-  SET_DEFAULT_AND_FROM_ENV(BUILD_TYPE NONE)
-  SET_DEFAULT_AND_FROM_ENV(<Project>_VERBOSE_CONFIGURE OFF)
-  SET_DEFAULT_AND_FROM_ENV(COMPILER_VERSION UNKNOWN)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_BUILD_NAME
-  SET_DEFAULT_AND_FROM_ENV(CTEST_START_WITH_EMPTY_BINARY_DIRECTORY TRUE)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_WIPE_CACHE TRUE)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_CMAKE_GENERATOR ${DEFAULT_GENERATOR})
-  SET_DEFAULT_AND_FROM_ENV(CTEST_DO_UPDATES TRUE)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_GENERATE_DEPS_XML_OUTPUT_FILE FALSE)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_UPDATE_ARGS "")
-  SET_DEFAULT_AND_FROM_ENV(CTEST_UPDATE_OPTIONS "")
-  SET_DEFAULT_AND_FROM_ENV(CTEST_BUILD_FLAGS "-j2")
-  SET_DEFAULT_AND_FROM_ENV(CTEST_BUILD_FLAGS "")
-  SET_DEFAULT_AND_FROM_ENV(CTEST_DO_BUILD TRUE)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_DO_TEST TRUE)
-  SET_DEFAULT_AND_FROM_ENV(MPI_EXEC_MAX_NUMPROCS 0)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_PARALLEL_LEVEL 1)
-  SET_DEFAULT_AND_FROM_ENV(<Project>_WARNINGS_AS_ERRORS_FLAGS "")
-  SET_DEFAULT_AND_FROM_ENV(CTEST_DO_COVERAGE_TESTING FALSE)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_COVERAGE_COMMAND gcov)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_DO_MEMORY_TESTING FALSE)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_MEMORYCHECK_COMMAND
-    "${CTEST_MEMORYCHECK_COMMAND_DEFAULT}")
-  SET_DEFAULT_AND_FROM_ENV(CTEST_MEMORYCHECK_COMMAND_OPTIONS "")
-  SET_DEFAULT_AND_FROM_ENV(CTEST_GENERATE_OUTER_DEPS_XML_OUTPUT_FILE TRUE)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_SUBMIT_CDASH_SUBPROJECTS_DEPS_FILE TRUE)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_DO_SUBMIT TRUE)
-  SET_DEFAULT_AND_FROM_ENV(<Project>_ENABLE_SECONDARY_TESTED_CODE OFF)
-  SET_DEFAULT_AND_FROM_ENV(<Project>_ENABLE_SECONDARY_STABLE_CODE OFF)
-  SET_DEFAULT_AND_FROM_ENV(<Project>_ADDITIONAL_PACKAGES "")
-  SET_DEFAULT_AND_FROM_ENV(<Project>_EXCLUDE_PACKAGES "")
-  SET_DEFAULT_AND_FROM_ENV(<Project>_BRANCH "${<Project>_BRANCH_DEFAULT}")
-  SET_DEFAULT_AND_FROM_ENV(<Project>_ENABLE_DEVELOPMENT_MODE
-    "${<Project>_ENABLE_DEVELOPMENT_MODE_DEFAULT}")
-  SET_DEFAULT_AND_FROM_ENV(<Project>_REPOSITORY_LOCATION ...)
-  SET_DEFAULT_AND_FROM_ENV(<Project>_PACKAGES "")
-  SET_DEFAULT_AND_FROM_ENV(<Project>_EXTRAREPOS_FILE ...)
-  SET_DEFAULT_AND_FROM_ENV(<Project>_ENABLE_KNOWN_EXTERNAL_REPOS_TYPE ...)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_ENABLE_MODIFIED_PACKAGES_ONLY OFF)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_EXPLICITLY_ENABLE_IMPLICITLY_ENABLED_PACKAGES ...)
-  SET_DEFAULT_AND_FROM_ENV(<Project>_DISABLE_ENABLED_FORWARD_DEP_PACKAGES ...)
-  SET_DEFAULT_AND_FROM_ENV(TRIBITS_2ND_CTEST_DROP_SITE "")
-  SET_DEFAULT_AND_FROM_ENV(TRIBITS_2ND_CTEST_DROP_LOCATION "")
-  SET_DEFAULT_AND_FROM_ENV(CTEST_DEPENDENCY_HANDLING_UNIT_TESTING FALSE)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_UPDATE_RETURN_VAL 0)
-  SET_DEFAULT_AND_FROM_ENV(<Project>_SOURCE_DIRECTORY ${CTEST_SOURCE_DIRECTORY})
-  SET_DEFAULT_AND_FROM_ENV(CTEST_DROP_SITE_COVERAGE ...)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_DROP_LOCATION_COVERAGE ...)
+  $ tail -f make.dashboard.out
 
-For details on what all of these options do, look at the file
-``TribitsCTestDriverCore.cmake`` (more detailed documentation will come in
-time).  The value of all of these variables is printed out when the ``make
-dashboard`` target is run.  From there, one can change and tweak these
-options.  To see the defaults, just run with ``CTEST_DO_SUBMIT=FALSE`` and one
-can see the values used without actually doing the submit.  Just grep for the
-names of the variables in the STDOUT for ``make dashboard``.
+There are a number of options that you can set in the cache and/or in the
+environment to control what this script does.  For the full set of options,
+see `TRIBITS_CTEST_DRIVER()`_.  More detains can be found by examining the
+file::
+
+  core/ctest_driver/TribitsCTestDriverCore.cmake
+
+under the TriBITS version being used.  To see the full list of options, and
+their default values, one can run with::
+
+  $ env CTEST_DO_SUBMIT=FALSE CTEST_DEPENDENCY_HANDLING_UNIT_TESTING=TRUE \
+    make dashboard
+
+This will print the options with their default values and then do a sort of
+mock running of the CTest driver script and point out what is is doing.
 
 For an example of variables one might want to tweak, to run an experimental
 build and in the process change the build, use::
@@ -2750,26 +2803,34 @@ printed at the end of STDOUT).
 It is useful to set ``CTEST_BUILD_NAME`` to some unique name to make it easier
 to find your results in the CDash dashboard.
 
-A number of the defaults set in ``TribitsCTestDriverCore.cmake`` are
-overridden from ``experimental_build_test.cmake`` (such as
-``CTEST_TEST_TYPE=Experimental``) so you will want to look at
-``experimental_build_test.cmake`` to see how these are changed.  The script
-``experimental_build_test.cmake`` sets reasonable values for these options in
-order to use the `make dashboard` target in iterative development for
-experimental builds.
+Note that the ``dashboard`` target is not directly related to the built-in
+CMake ``Experimental*`` targets that run standard dashboards with CTest
+without the custom TriBItS CTest driver.  The CTest driver run with the
+``dashboard`` target is more appropriate for the TriBITS-based project
+<Project> and provides more control over what gets tested and submitted.
 
-The target ``dashboard`` is not directly related to the built-in CMake targets
-'Experimental*' that run standard dashboards with CTest without the custom
-package-by-package driver in ``TribitsCTestDriverCore.cmake``.  The
-package-by-package extended CTest driver is more appropriate for the
-TriBITS-based project <Project>.
+The configure, builds, and submits are either done package-by-package or
+all-at-once as controlled by the varaible ``<Project>_CTEST_DO_ALL_AT_ONCE``.
+This can be set in the CMake cache when configuring the project using::
+
+  -D<Project>_CTEST_DO_ALL_AT_ONCE=TRUE
+
+or when running the ``dashboard`` target with::
+
+  $ env <Project>_CTEST_DO_ALL_AT_ONCE=TRUE make dashbaord.
+
+Using the ``dashboard`` target, one can also run coverage and memory testing
+and submit to CDash as described below.
 
 Once you configure with ``-D<Project>_ENABLE_COVERAGE_TESTING=ON``, the
 environment variable ``CTEST_DO_COVERAGE_TESTING=TRUE`` is automatically set
-by the target 'dashboard' so you don't have to set this yourself.
+by the target ``dashboard`` so you don't have to set this yourself.  Then when
+you run the ``dashboard`` target, it will automatically submit converage
+results to CDash as well.
 
 Doing a memory check with Valgrind requires that you set
-``CTEST_DO_MEMORY_TESTING=TRUE`` with the 'env' command as::
+``CTEST_DO_MEMORY_TESTING=TRUE`` with the 'env' command when running the
+``dashboard`` target as::
 
   $ env CTEST_DO_MEMORY_TESTING=TRUE make dashboard
 
@@ -2785,10 +2846,10 @@ with::
     make dashboard
 
 The CMake cache variable ``<Project>_DASHBOARD_CTEST_ARGS`` can be set on the
-cmake configure line in order to pass additional arguments to 'ctest -S' when
-invoking the package-by-package CTest driver.  For example::
+cmake configure line in order to pass additional arguments to ``ctest -S``
+when invoking the package-by-package CTest driver.  For example::
 
-  -D <Project>_DASHBOARD_CTEST_ARGS="-VV"
+  -D<Project>_DASHBOARD_CTEST_ARGS="-VV"
 
 will set verbose output with CTest.
 
@@ -2818,12 +2879,14 @@ and ``TRIBITS_2ND_CTEST_DROP_SITE`` would be used for ``CTEST_DROP_SITE``.
 This is a common use case when upgrading to a new CDash installation or
 testing new features for CDash before impacting the existing CDash site.
 
-Note that if one kills the ``make dashboard`` target before it completes, then
-one must reconfigure from scratch in order to get the build directory back
-into the same state before the command was run.  This is because the
-``dashboard`` target must first reconfigure the project with no enabled
+Finally, note in package-by-package mode
+(i.e. ``<Project>_CTEST_DO_ALL_AT_ONCE=FALSE``) that if one kills the ``make
+dashboard`` target before it completes, then one must reconfigure from scratch
+in order to get the build directory back into the same state before the
+command was run.  This is because the ``dashboard`` target in
+package-by-package mode must first reconfigure the project with no enabled
 packages before it does the package-by-package configure/build/test/submit
 which enables each package one at a time.  After the package-by-package
 configure/build/test/submit cycles are complete, then the project is
-reconfigured with the original set of package enables and returning to the
+reconfigured with the original set of package enables and returned to the
 original configure state.

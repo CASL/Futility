@@ -114,6 +114,7 @@ PROGRAM testParallelEnv
       INTEGER(SLK) :: sbuf(2)
       INTEGER(SIK),ALLOCATABLE :: testIDX(:),testWGT(:)
       INTEGER(SLK),ALLOCATABLE :: ranks(:),ranks2(:,:)
+      LOGICAL(SBK) :: bool
       TYPE(MPI_EnvType) :: testMPI,testMPI2
 
 
@@ -243,6 +244,7 @@ PROGRAM testParallelEnv
       ENDIF
       DO ip=1,testMPI%nproc-1
         ranks=-1
+        ranks2=-1
         CALL testMPI%gather(INT(testMPI%rank,SLK),ranks,ip)
         CALL testMPI%gather(sbuf,ranks2,ip)
         IF(testMPI%rank == ip) THEN
@@ -257,6 +259,44 @@ PROGRAM testParallelEnv
           ASSERT(ALL(ranks2 == -1),'non-ip ranks2')
         ENDIF
       ENDDO
+
+      COMPONENT_TEST('%trueForAll')
+      CALL testMPI%init()
+      bool=.TRUE.
+      CALL testMPI%trueForAll(bool)
+      ASSERT(bool,'trueForAll - True')
+      bool=.FALSE.
+      CALL testMPI%trueForAll(bool)
+      ASSERT(.NOT.bool,'trueForAll - False')
+      IF(testMPI%nproc > 1) THEN
+        IF(testMPI%rank == 0) THEN
+          bool=.TRUE.
+        ELSE
+          bool=.FALSE.
+        ENDIF
+        CALL testMPI%trueForAll(bool)
+        ASSERT(.NOT.bool,'trueForAll - Parallel')
+      ENDIF
+
+      COMPONENT_TEST('%trueForAny')
+      CALL testMPI%init()
+      bool=.TRUE.
+      CALL testMPI%trueForAny(bool)
+      ASSERT(bool,'trueForAny - True')
+      bool=.FALSE.
+      CALL testMPI%trueForAny(bool)
+      ASSERT(.NOT.bool,'trueForAny - False')
+      IF(testMPI%nproc > 1) THEN
+        IF(testMPI%rank == 0) THEN
+          bool=.TRUE.
+        ELSE
+          bool=.FALSE.
+        ENDIF
+        CALL testMPI%trueForAny(bool)
+        ASSERT(bool,'trueForAny - Parallel')
+      ENDIF
+
+      CALL testMPI%clear()
     ENDSUBROUTINE testMPIEnv
 !
 !-------------------------------------------------------------------------------

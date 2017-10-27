@@ -15,6 +15,7 @@ PROGRAM testVTUFiles
   USE VTUFiles
   USE IO_Strings
   USE IOutil
+  USE Strings
   !
   IMPLICIT NONE
   !
@@ -25,6 +26,7 @@ PROGRAM testVTUFiles
   LOGICAL(SBK) :: bool
   INTEGER(SIK) :: i,dir_status
   CHARACTER(LEN=150) :: sint
+  TYPE(StringType) :: str,str2
   !
   CREATE_TEST('Test VTU Files')
   !
@@ -183,7 +185,9 @@ PROGRAM testVTUFiles
       !
       !Write pvtu file
       CALL MAKE_DIRECTORY('fsr_test',dir_status)
-      CALL testVTUFile%writepvtu(666,'test','testPVTU',2,0)
+      str='test'
+      str2='testPVTU'
+      CALL testVTUFile%writepvtu(666,TRIM(str),TRIM(str2),2,0)
       CALL testVTUFile%hasFile('testPVTU_0.vtu',bool)
       ASSERT(bool,'hasFile(...) testPVTU_0.vtu')
       CALL testVTUFile%hasFile('testPVTU_1.vtu',bool)

@@ -9,13 +9,11 @@
 
 IF (NOT TRIBITS_PROCESSING_PACKAGE)
   INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Settings_Common.cmake)
-  #Fixing issues with Trilinos dependencies
-  IF(DEFINED ${PROJECT_NAME}_ENABLE_Teuchos)
-    IF("${${PROJECT_NAME}_ENABLE_Teuchos}" STREQUAL "OFF")
-      SET(${PROJECT_NAME}_ENABLE_ML OFF)
-      SET(${PROJECT_NAME}_ENABLE_Triutils OFF)
-    ENDIF()
-  ENDIF()
+
+  # CMake requires that you declare the CMake project in the top-level file and
+  # not in an include file :-(
+  PROJECT(${PROJECT_NAME} NONE)
+
   # CMake requires this be in the top file and not in an include file :-(
   CMAKE_MINIMUM_REQUIRED(VERSION ${TRIBITS_CMAKE_MINIMUM_REQUIRED})
 

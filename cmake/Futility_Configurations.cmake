@@ -63,6 +63,10 @@ IF("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
     SET(${PACKAGE_NAME}_DEFINES ${${PACKAGE_NAME}_DEFINES} WIN32)
 ENDIF()
 
+IF(${PROJECT_NAME}_ENABLE_DBC)
+    SET(${PACKAGE_NAME}_DEFINES ${${PACKAGE_NAME}_DEFINES} FUTILITY_DBC)
+ENDIF()
+
 # Preprocessor symbol for tests
 IF(${PACKAGE_NAME}_ENABLE_TESTS)
     SET(${PACKAGE_NAME}_DEFINES ${${PACKAGE_NAME}_DEFINES} UNIT_TEST)
@@ -214,6 +218,7 @@ ELSEIF(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
     SET(Fortran_FLAGS
         ${CSYM}cpp
         ${CSYM}fall-intrinsics
+        ${CSYM}ffree-line-length-none
        )
 
     SET(C_FLAGS
@@ -269,7 +274,7 @@ ELSEIF(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
        )
 
     SET(Fortran_FLAGS_RELEASE
-        ${CSYM}Ofast
+        ${CSYM}O3
        )
 ELSEIF(CMAKE_Fortran_COMPILER_ID STREQUAL "PGI")
 

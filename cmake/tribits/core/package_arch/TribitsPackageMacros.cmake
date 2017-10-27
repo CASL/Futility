@@ -41,7 +41,7 @@ INCLUDE(TribitsPackageSetupCompilerFlags)
 INCLUDE(TribitsWriteClientExportFiles)
 INCLUDE(TribitsGeneralMacros)
 
-INCLUDE(ParseVariableArguments)
+INCLUDE(CMakeParseArguments)
 INCLUDE(GlobalNullSet)
 INCLUDE(AppendGlobalSet)
 INCLUDE(PrintVar)
@@ -188,19 +188,26 @@ MACRO(TRIBITS_PACKAGE_DECL PACKAGE_NAME_IN)
     MESSAGE("\nTRIBITS_PACKAGE_DECL: ${PACKAGE_NAME_IN}")
   ENDIF()
 
+  # Set flag to check that macros are called in the correct order
+  SET(${PACKAGE_NAME}_TRIBITS_PACKAGE_CALLED TRUE)
+
   #
   # A) Parse the input arguments
   #
 
-  PARSE_ARGUMENTS(
+  CMAKE_PARSE_ARGUMENTS(
     #prefix
     PARSE
-    #lists
-    ""
     #options
     "CLEANED;ENABLE_SHADOWING_WARNINGS;DISABLE_STRONG_WARNINGS;DISABLE_CIRCULAR_REF_DETECTION_FAILURE"
+    #one_value_keywords
+    ""
+    #multi_value_keywords
+    ""
     ${ARGN}
     )
+
+  TRIBITS_CHECK_FOR_UNPARSED_ARGUMENTS()
 
   #
   # B) Assert that the global and local package names are the same!
@@ -238,6 +245,11 @@ MACRO(TRIBITS_PACKAGE_DECL PACKAGE_NAME_IN)
 
   # Set up parent package linkage varaibles
   TRIBITS_DEFINE_TARGET_VARS(${PACKAGE_NAME})
+
+  IF (${PROJECT_NAME}_CTEST_USE_NEW_AAO_FEATURES)
+    # Define this as a CMake/CTest "Subproject"
+    SET_DIRECTORY_PROPERTIES(PROPERTIES LABELS "${PACKAGE_NAME}")
+  ENDIF()
 
   #
   # Append the local package's cmake directory in order to help pull in
@@ -596,6 +608,10 @@ ENDMACRO()
 #
 MACRO(TRIBITS_PACKAGE_POSTPROCESS)
 
+  IF(NOT ${PACKAGE_NAME}_TRIBITS_PACKAGE_CALLED)
+    MESSAGE(FATAL_ERROR "Must call TRIBITS_PACKAGE() before TRIBITS_PACKAGE_POSTPROCESS() in ${TRIBITS_PACKAGE_CMAKELIST_FILE}")
+  ENDIF()
+
   # Only parent packages have the targets (${PACKAGE_NAME}_libs and
   # (${PACKAGE_NAME}_all
   IF (${PROJECT_NAME}_VERBOSE_CONFIGURE)
@@ -609,7 +625,13 @@ MACRO(TRIBITS_PACKAGE_POSTPROCESS)
   TRIBITS_PACKAGE_FINALIZE_DEPENDENCY_VARS()
   TRIBITS_PACKAGE_POSTPROCESS_COMMON()
 
-  # NOTE: This package is only able
+  IF (${PACKAGE_NAME}_SOURCE_DIR STREQUAL ${PROJECT_NAME}_SOURCE_DIR)
+    SET(${PACKAGE_NAME}_TRIBITS_PACAKGE_POSTPROCESS TRUE)
+  ELSE()
+    SET(${PACKAGE_NAME}_TRIBITS_PACAKGE_POSTPROCESS TRUE PARENT_SCOPE)
+  ENDIF()
+
+  SET(${PACKAGE_NAME}_TRIBITS_PACKAGE_POSTPROCESS_CALLED TRUE)
 
 ENDMACRO()
 

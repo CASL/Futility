@@ -24,9 +24,11 @@ ADD_SUBDIRECTORY(trilinos_interfaces)
 #Library for utility code
 TRIBITS_ADD_LIBRARY(Utils
     HEADERS
+      DBC.h
       UnitTest.h
       getSysProcInfo_F.h
     SOURCES
+      DBC.f90
       UnitTest.f90
       IntrType.f90
       Search.f90
@@ -88,6 +90,7 @@ TRIBITS_ADD_LIBRARY(Utils
       StochasticSampling.f90
       Sorting.f90
       ArrayUtils.f90
+      PartitionGraph.f90
     DEPLIBS
       CUtils
       TrilinosUtils

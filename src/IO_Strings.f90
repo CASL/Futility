@@ -321,19 +321,32 @@ MODULE IO_Strings
   !> This interfaces allows for the input argument to be either a
   !> character array or a StringType.
   INTERFACE getRealFormat
-    !> @copybrief IO_Strings::
-    !> @copydetails IO_Strings::
+    !> @copybrief IO_Strings::getRealFormat_char_char
+    !> @copydetails IO_Strings::getRealFormat_char_char
     MODULE PROCEDURE getRealFormat_char_char
-    !> @copybrief IO_Strings::
-    !> @copydetails IO_Strings::
+    !> @copybrief IO_Strings::getRealFormat_char_str
+    !> @copydetails IO_Strings::getRealFormat_char_str
     MODULE PROCEDURE getRealFormat_char_str
-    !> @copybrief IO_Strings::
-    !> @copydetails IO_Strings::
+    !> @copybrief IO_Strings::getRealFormat_str_char
+    !> @copydetails IO_Strings::getRealFormat_str_char
     MODULE PROCEDURE getRealFormat_str_char
-    !> @copybrief IO_Strings::
-    !> @copydetails IO_Strings::
+    !> @copybrief IO_Strings::getRealFormat_str_str
+    !> @copydetails IO_Strings::getRealFormat_str_str
     MODULE PROCEDURE getRealFormat_str_str
   ENDINTERFACE getRealFormat
+
+  !> @brief Generic interface to SlashRep
+  !>
+  !> Allows for SlashRep to be called with intrinsic
+  !> character types or a StringType
+  INTERFACE SlashRep
+    !> @copybrief IO_Strings::SlashRep_s
+    !> @copydetails IO_Strings::SlashRep_s
+    MODULE PROCEDURE SlashRep_s
+    !> @copybrief IO_Strings::SlashRep_c
+    !> @copydetails IO_Strings::SlashRep_c
+    MODULE PROCEDURE SlashRep_c
+  ENDINTERFACE SlashRep
 !
 !===============================================================================
   CONTAINS
@@ -1303,10 +1316,27 @@ MODULE IO_Strings
     ENDSUBROUTINE getRealFormat_str_str
 !
 !-------------------------------------------------------------------------------
-!> @brief Private routine replaces slash character in file path names with
+!> @brief Pure routine replaces slash character in file path names with
 !> the system appropriate file separator slash.
+!> @param string a StringType with the filepath
 !>
-    PURE SUBROUTINE SlashRep(string)
+!> Wraps call to SlashRep_c
+    PURE SUBROUTINE SlashRep_s(string)
+      TYPE(StringType),INTENT(INOUT) :: string
+      CHARACTER(LEN=LEN_TRIM(string)) :: cstring
+
+      cstring=TRIM(string)
+      CALL SlashRep_c(cstring)
+      string=cstring
+    ENDSUBROUTINE SlashRep_s
+
+!
+!-------------------------------------------------------------------------------
+!> @brief Pure routine replaces slash character in file path names with
+!> the system appropriate file separator slash.
+!> @param string a character array with the filepath
+!>
+    PURE SUBROUTINE SlashRep_c(string)
       CHARACTER(LEN=*),INTENT(INOUT) :: string
       INTEGER(SIK) :: i
 
@@ -1317,7 +1347,7 @@ MODULE IO_Strings
         IF(string(i:i) == BSLASH) string(i:i)=SLASH
 #endif
       ENDDO
-    ENDSUBROUTINE SlashRep
+    ENDSUBROUTINE SlashRep_c
 !
 !-------------------------------------------------------------------------------
 !> @brief Defines the operation for performing an assignment of a character
