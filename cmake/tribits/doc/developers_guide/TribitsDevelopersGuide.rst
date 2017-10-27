@@ -43,19 +43,20 @@ modern agile software development best practices.
 TriBITS is a fairly extensive framework that is built on top of the
 open-source CMake/CTest/CPack/CDash system (which in itself is a very
 extensive system of software and tools).  The most important thing to remember
-is that a software project that use TriBITS are really just a CMake project.
+is that a software project that uses TriBITS is really just a CMake project.
 TriBITS makes no attempt to hide that fact either from the TriBITS project
 developers or from the users that need to configure and build the software.
 Therefore, to make effective usage of TriBITS, one must learn the basics of
 CMake (both as a developer and as a user).  In particular, CMake is a
-Turning-complete programming language with local and global variables (with
-strange scoping rules), macros, functions, targets, commands, and other
+Turning-complete programming language with local variables, global variables, macros, functions, targets, commands, and other
 features.  One needs to understand how to define and use variables, macros,
 and functions in CMake.  One needs to know how to debug CMakeLists.txt files
 and CMake code in general (i.e. using ``MESSAGE()`` print statements).  One
 needs to understand how CMake defines and uses targets for various qualities
 like libraries, executables, etc.  Without this basic understanding of CMake,
-one will have trouble resolving problems when they might occur.
+one will have trouble resolving problems when they occur.
+
+.. jfrye: Below paragraph is redundant with table of contents above?
 
 The remainder of this documented is structured as follows.  First, there is
 some additional `Background`_ material provided.  Then, a detailed
@@ -77,14 +78,14 @@ Documentation`_.  Finally, several bits of information are provided in the
 Background
 ==========
 
-Before diving into the details about TriBITS in the following sections, first
-some more background is in order.  First, a discussion of `TriBITS Developer
-and User Roles`_ is provided to help the reader identify their own role(s) and
-to help guide the reader to the appropriate documentation (which may or may
-not primarily be in this document).  Then, section `CMake Language Overview
-and Gotchas`_ tries to orient readers with little to no CMake knowledge or
-experience on where to start and provides some warnings about non-obvious
-CMake behavior that often trips up new users of TriBITS.
+In order to easily find the most appropriate documentation, see the 'TriBITS 
+Developer and User Roles`_ guide.  This guide describes the different roles 
+that users of TriBITS may play and offers links to relevant sections of the
+documentation.  Additionally, the reader may wish to review the `CMake Language 
+Overview and Gotchas`_ section which is meant for users that are new to both 
+CMake and TriBITS. This section gives a brief overview of getting started with
+CMake and provides some warnings about non-obvious CMake behavior that often 
+trips up new users of TriBITS.
 
 
 TriBITS Developer and User Roles
@@ -108,11 +109,8 @@ basics about how to run the ``cmake`` and ``ctest`` executables, how to set
 CMake cache variables, and the basics of building software by typing ``make``
 and running tests with ``ctest``.  The proper reference for a TriBITS Project
 User is the `Project-Specific Build Reference`_.  The `TriBITS
-Overview`_ document may also be of some help.  A TriBITS project user does not
-need to know anything about the CMake language itself or any of the TriBITS
-macros or functions described in `TriBITS Macros and Functions`_ or really
-anything else described in this current document except for `Package
-Dependencies and Enable/Disable Logic`_.
+Overview`_ document may also be of some help.  A TriBITS project user may also
+need to consult `Package Dependencies and Enable/Disable Logic`_.
 
 .. _TriBITS Project Developer:
 .. _TriBITS Project Developers:
@@ -132,6 +130,8 @@ package dependencies, and define new TPLs.  This current TriBITS Developers
 Guide and Reference document should supply everything such a developer needs
 to know and more.  Only a smaller part of this document needs to be understood
 and accessed by people assuming this role.
+
+.. jfrye: Add links to parts of document above?
 
 .. _TriBITS Project Architect:
 .. _TriBITS Project Architects:
@@ -175,14 +175,12 @@ author of this document).
 
 An explicit goal of this document is to make new `TriBITS Project Architects`_
 (i.e. those who would make the decision to adopt TriBITS for their projects),
-and new `TriBITS System Developers`_ to help extend and maintain TriBITS.  As
-TriBITS matures and its requirements further stabilize, the need for a
-`TriBITS System Architect`_ will hopefully be diminished.
+and new `TriBITS System Developers`_ to help extend and maintain TriBITS.
 
-So depending on the particular role that a reader falls into, this document
-may or may not be necessary but instead the `TriBITS Overview`_ or the
+Depending on the particular role that a reader falls into, this document
+may not be necessary and the `TriBITS Overview`_ or the
 `<Project>BuildReference`_ documents may be more appropriate.  Hopefully the
-above roles and discussion will help the reader select the right document to
+above roles and discussion help the reader select the right document to
 start with.
 
 
@@ -193,41 +191,41 @@ TriBITS removes a lot of the boiler plate code needed to write a CMake
 project.  As a result, many people can come into a project that uses TriBITS
 and quickly start to contribute by adding new source files, adding new
 libraries, adding new tests, and even adding new TriBITS packages and TPLs;
-all without really having learned anything about CMake.  One just needs to
-copy-and-paste existing example CMake code and files as basically "monkey see,
-monkey do".  As long as nothing out of the ordinary happens, many people can
-get along just fine in this mode for a time.
+all without really having learned anything about CMake.  Often one can use existing
+example CMake code as a guide and be successful using basic functionality. As long 
+as nothing out of the ordinary happens, many people can get along just fine in this 
+mode for a time.
 
-However, we have observed that most mistakes that people make when using
-TriBITS, and most of the problems they have when using the system, are due to a
-basic lack of knowledge of the CMake language.  One can find basic tutorials
-and references on the CMake language in various locations online for free.
+However, we have observed that most mistakes and problems that people run into when 
+using TriBITS are due to lack of basic knowledge of the CMake language.  One can find 
+basic tutorials and references on the CMake language in various locations online for free.
 One can also purchase the `official CMake reference book`_.  Also, documentation
 for any built-in CMake command is available locally by running::
 
    $ cmake --help-command <CMAKE_COMMAND>
 
 Because tutorials and detailed documentation for the CMake language already
-exists, this document will not even attempt to provide a first reference to
-CMake (which is a large topic in itself).  However, what we try to provide
-below is a short overview of the more quirky or surprising aspects of the
-CMake language that a programmer experienced in another language might get
-tripped up or surprised by.  Some of the more unique features of the language
-are described in order to help avoid some of these common mistakes and provide
+exists, this document does not attempt to provide a first reference to CMake
+(which is a large topic in itself).  However, what we try to provide below is
+a short overview of the more quirky or surprising aspects of the CMake
+language that a programmer experienced in another language might get tripped
+up or surprised by.  Some of the more unique features of the language are
+described in order to help avoid some of these common mistakes and provide
 greater understanding of how TriBITS works.
 
 .. _Official CMake reference book: http://www.cmake.org/cmake/help/book.html
 
-The CMake language that is used to write CMake projects with TriBITS (and that
-core TriBITS functionality itself is implemented in, see `TriBITS System
-Project Dependencies`_) is a fairly simple programming language with fairly
-simple rules (for the most part).  However, compared to other programming
-languages, there are a few peculiar aspects to the CMake language like strange
-variable scoping rules, and how arguments are passed to macros and functions,
-that can make working with it difficult if you don't understand these rules.
-Also, CMake has some interesting gotchas.  In order to effectively use TriBITS
-(or just raw CMake) to construct and maintain a project's CMake files, one
-must know the basic rules of CMake and be aware of these gotchas.
+The CMake language is used to write CMake projects with TriBITS. In fact the
+core TriBITS functionality itself is implemented in the CMake language (see 
+`TriBITS System Project Dependencies`_). CMake is a fairly simple programming 
+language with relatively simple rules (for the most part).  However, compared 
+to other programming languages, there are a few peculiar aspects to the CMake 
+language that can make working with it difficult if you don't understand these 
+rules.  For example there are unexpected variable scoping rules and how arguments 
+are passed to macros and functions can be tricky. Also, CMake has some interesting 
+gotchas.  In order to effectively use TriBITS (or just raw CMake) to construct 
+and maintain a project's CMake files, one must know the basic rules of CMake 
+and be aware of these gotchas.
 
 The first thing to understand about the CMake language is that nearly every
 line of CMake code is just a command taking a string (or an array of strings)
@@ -265,7 +263,7 @@ string arguments like::
 In CMake, the above is identical, in every way, to::
 
   SET(SOME_VARIABLE some_value)
-  SET("SOME_VARIABLE;"some_value")
+  SET("SOME_VARIABLE";"some_value")
   SET("SOME_VARIABLE;some_value")
 
 The function ``SET()`` simply interprets the first argument to as the name of
@@ -291,11 +289,11 @@ control structures (i.e. see ``cmake --help-command if`` and ``cmake
 
 CMake offers a rich assortment of built-in commands for doing all sorts of
 things.  Two of these are the built-in ``MACRO()`` and the ``FUNCTION()``
-commands which allow you to create user-defined macros and functions (which is
-what TriBITS is built on).  All of these built-in and user-defined macros and
-functions work exactly the same way; they take in an array of string
-arguments.  Some functions take in positional arguments but most actually take
-a combination of positional and keyword arguments (see `PARSE_ARGUMENTS()`_).
+commands which allow you to create user-defined macros and functions. TriBITS
+is actually built on CMake functions and macros.  All of the built-in and 
+user-defined macros, and some functions take an  array of string arguments.  
+Some functions take in positional arguments. In fact,  most functions take a 
+combination of positional and keyword arguments.
 
 Variable names are translated into their stored values using
 ``${SOME_VARIABLE}``.  The value that is extracted depends on if the variable
@@ -411,7 +409,7 @@ sensitivity rules for variables and functions.  However, because we must parse
 macro and function arguments when writing user-defined macros and functions,
 it is a good thing that CMake variables are case sensitive.  Case insensitivity
 would make it much harder and more expensive to parse argument lists that take
-keyword-based arguments (see `PARSE_ARGUMENTS()`_).
+keyword-based arguments.
 
 Other mistakes that people make result from not understanding how CMake scopes
 variables and other entities.  CMake defines a global scope (i.e. "cache"
@@ -468,9 +466,9 @@ listed below:
 Any of these six OO packaging principles (and other issues) may be considered
 when deciding how to partition software into different `TriBITS SE Packages`_.
 
-NOTE: This purpose of this TriBITS Developers Guide document is not teach
+NOTE: The purpose of this TriBITS Developers Guide document is not teach
 basic software engineering so these various principles will not be expanded on
-further here.  However, interested readers are strongly encouraged to read
+further.  However, interested readers are strongly encouraged to read
 [`Agile Software Development, 2003`_] as one of the better software
 engineering books out there (see
 http://web.ornl.gov/~8vt/readingList.html#Most_Recommended_SE_Books).
@@ -478,24 +476,25 @@ http://web.ornl.gov/~8vt/readingList.html#Most_Recommended_SE_Books).
 TriBITS Project Structure
 =========================
 
+.. jfrye: What does the "F" in framework mean?
+
 TriBITS is a Framework, implemented in CMake, to create CMake projects.  As a
-Framework (with a capital "F"), TriBITS defines the overall structure of a
-CMake build system for a project and it processes the various project-,
-repository-, and package-specific files in a specified order.  Almost all of
-this processing takes place in the `TRIBITS_PROJECT()`_ macro (or macros and
-functions it calls).  The following subsections define the essence of the
-TriBITS framework in some detail.  Later sections cover specific topics and
-the various sections link to each other.  Within this section, the subsection
-`TriBITS Structural Units`_ defines the basic units `TriBITS Project`_,
-`TriBITS Repository`_, `TriBITS Package`_, `TriBITS TPL`_ and other related
-structural units.  The subsection `Processing of TriBITS Files: Ordering and
-Details`_ defines exactly what files TriBITS processes and in what order.  It
-also shows how to get TriBITS to show exactly what files it is processing to
-help in debugging issues.  The subsection `Coexisting Projects, Repositories,
-and Packages`_ gives some of the rules and constrains for how the different
-structure units can co-exist in the same directories.  The last two
-subsections in this section cover `Standard TriBITS TPLs`_ and `Common TriBITS
-TPLs`_.
+`Software Framework`_, TriBITS defines the overall structure of a CMake build
+system for a project and it processes the various project-, repository-, and
+package-specific files in a specified order.  Almost all of this processing
+takes place in the `TRIBITS_PROJECT()`_ macro (or macros and functions it
+calls).  The following subsections define the essence of the TriBITS framework
+in some detail.  Later sections cover specific topics and the various sections
+link to each other.  Within this section, the subsection `TriBITS Structural
+Units`_ defines the basic units `TriBITS Project`_, `TriBITS Repository`_,
+`TriBITS Package`_, `TriBITS TPL`_ and other related structural units.  The
+subsection `Processing of TriBITS Files: Ordering and Details`_ defines
+exactly what files TriBITS processes and in what order.  It also shows how to
+get TriBITS to show exactly what files it is processing to help in debugging
+issues.  The subsection `Coexisting Projects, Repositories, and Packages`_
+gives some of the rules and constrains for how the different structure units
+can co-exist in the same directories.  The last two subsections in this
+section cover `Standard TriBITS TPLs`_ and `Common TriBITS TPLs`_.
 
 TriBITS Structural Units
 ------------------------
@@ -527,7 +526,7 @@ units are:
 
 * `TriBITS Subpackage`_: A part of a parent `TriBITS Package`_ that also
   typically has source files built into libraries and tests but is documented
-  and tested along with the other subpackages the parent package.  The primary
+  and tested along with the other subpackages in the parent package.  The primary
   purpose for supporting subpackages is to provide finer-grained control of
   software dependencies.  In `TribitsExampleProject`_, ``WithSubpackages`` is
   an example of a package with subpackages ``'A'``, ``'B'``, and ``'C'``.  The
@@ -563,6 +562,8 @@ units are:
 * `TriBITS Repository`_: A collection of one or more `TriBITS Packages`_
   specified in a `<repoDir>/PackagesList.cmake`_ file and zero or more TPL
   declarations specified in a `<repoDir>/TPLsList.cmake`_ file.
+  As discussed below, Repositories can include Native Repositories and Version
+  Control (VC) Repositories.
 
 .. _TriBITS Projects:
 
@@ -723,7 +724,7 @@ collection of set statements in this file.
 **<projectDir>/CMakeLists.txt**: [Required] The top-level CMake project file.
 This is the first file that the ``cmake`` executable processes that starts
 everything off and is the base-level scope for local (non-cache) CMake
-variables.  Due to a few CMake limitations and quarks, a project's top-level
+variables.  Due to a few CMake limitations and quirks, a project's top-level
 ``CMakeLists.txt`` file is not quit as clean as one might otherwise hope would
 be but it is not too bad.  A simple, but representative, example is
 `TribitsExampleProject`_/``CMakeLists.txt``:
@@ -731,7 +732,7 @@ be but it is not too bad.  A simple, but representative, example is
 .. include:: ../../examples/TribitsExampleProject/CMakeLists.txt
    :literal:
 
-A couple of CMake and TriBITS quarks that that above example
+A couple of CMake and TriBITS quirks that the above example
 ``CMakeLists.txt`` addresses are worth some discussion.  First, to avoid
 duplication, the project's ``ProjectName.cmake`` file is read in with an
 ``INCLUDE()`` that defines the local variable ``PROJECT_NAME``.  Right after
@@ -856,7 +857,7 @@ using checkin-test.py`_.
 
 .. _<projectDir>/cmake/NativeRepositoriesList.cmake:
 
-**<projectDir>/cmake/NativeRepositoriesList.cmake**: [Optional] If present,
+**<projectDir>/cmake/NativeRepositoriesList.cmake**: [Deprecated] If present,
 this file gives the list of native repositories for the TriBITS project.  The
 file must contain a ``SET()`` statement defining the variable
 ``${PROJECT_NAME}_NATIVE_REPOSITORIES`` which is just a flat list of repository
@@ -874,8 +875,8 @@ backward compatibility since there may be some TriBITS projects that still use
 it.  It is recommended instead to define multiple repositories using the
 `<projectDir>/cmake/ExtraRepositoriesList.cmake`_ file as it allows for more
 flexibility in how extra repositories are specified and how they are accessed.
-The latter file allows the various tools to perform VC activities with these
-repos while "native repositories" do not.
+The latter file allows the various tools to perform version control (VC)
+activities with these repos while "native repositories" do not.
 
 If this file ``NativeRepositoriesList.cmake`` does not exist, then TriBITS
 sets ``${PROJECT_NAME}_NATIVE_REPOSITORIES`` equal to ".", or the base project
@@ -1066,7 +1067,7 @@ processed by TriBITS:
     the built-in ``PROJECT()`` command called in the top-level
     `<projectDir>/CMakeLists.txt`_ file..
 
-The following `cache varaibles` are defined for every TriBITS project:
+The following `cache variables` are defined for every TriBITS project:
 
   .. _${PROJECT_NAME}_TRIBITS_DIR:
 
@@ -1166,7 +1167,7 @@ In short, a TriBITS Repository:
   respectively)
 * Defines the base source and binary directories for the Repository
   ``${REPOSITORY_NAME}_SOURCE_DIR`` and ``${REPOSITORY_NAME}_BINARY_DIR``.
-* Defines a common set of initializations and other hooks for a all the
+* Defines a common set of initializations and other hooks for all the
   packages in the repository.
 * Typically maps to a VC (i.e. git) repository and therefore represents a unit
   of integration, versioning and reuse.  (But core TriBITS has no dependency
@@ -1266,7 +1267,7 @@ file, just for legal purposes.  For a good open-source license, one should
 consider copying the ``TriBITS/Copyright.txt`` file which is a simple 3-clause
 BSD-like license like:
 
-.. include:: ../../../Copyright.txt
+.. include:: ../../Copyright.txt
    :literal:
 
 .. _<repoDir>/Version.cmake:
@@ -1359,7 +1360,7 @@ specific to this TriBITS Repository.  This file must define the macro
 file is processed as the top project-level scope so any local variables set
 have project-wide effect.  This file is processed after the project's
 `<projectDir>/cmake/CallbackDefineProjectPackaging.cmake`_ file so any project
-CPACK varaibles are defined for the repository-level options and commands are
+CPACK variables are defined for the repository-level options and commands are
 created.  This file typically just sets extra excludes to remove files from
 the tarball.  The file:
 
@@ -1407,7 +1408,7 @@ are processed:
   ``${REPOSITORY_NAME}_SOURCE_DIR``
 
     The absolute path to the base of a given TriBITS Repository's source
-    directory.  CMake code, for example in a packages's ``CMakeLists.txt``
+    directory.  CMake code, for example in a packages' ``CMakeLists.txt``
     file, typically refers to this by the raw name like ``RepoX_SOURCE_DIR``.
     This makes such CMake code independent of where the various TriBITS repos
     are in relation to each other or the TriBITS Project (but does hard-code
@@ -1421,7 +1422,7 @@ are processed:
     where the various TriBITS repos are in relation to each other or the
     Project.
 
-The following project-level local varaibles can be defined by the project or
+The following project-level local variables can be defined by the project or
 the user to help define the what packages from the repository
 ``${REPOSITORY_NAME}`` contribute to the primary meta-project packages (PMPP):
 
@@ -1629,7 +1630,7 @@ The final command in the package's base ``CMakeLists.txt`` file must always be
 necessary post-processing by TriBITS.
 
 It is also possible for the package's top-level ``CMakeLists.txt`` to be the
-only ``CMakeLists.txt`` file for a package.  Such an example can be see in the
+only ``CMakeLists.txt`` file for a package.  Such an example can be seen in the
 example project `TribitsHelloWorld`_ in the ``HelloWorld`` package.
 
 When a TriBITS package is broken up into subpackages (see `TriBITS
@@ -1659,7 +1660,7 @@ base ``CMakeLists.txt`` file is `TRIBITS_PACKAGE_POSTPROCESS()`_.
 NOTE: The package's base ``CMakeLists.txt`` file only gets processed if the
 package is actually enabled
 (i.e. ``${PROJECT_NAME}_ENABLE_${PACKAGE_NAME}=ON``).  This is an important
-design feature of TriBITS in that the contents of non-enabled package's can't
+design feature of TriBITS in that the contents of non-enabled packages can't
 damage the configure, build, and test of the enabled packages based on errors
 in non-enabled packages.  This is critical to allow experimental `EX`_
 test-group packages and lower-maturity packages to exist in the same source
@@ -1685,7 +1686,7 @@ are being processed:
   ``PACKAGE_NAME``
 
     The name of the current TriBITS SE package.  This is set automatically by
-    TriBITS before the packages's ``CMakeLists.txt`` file is processed.
+    TriBITS before the packages' ``CMakeLists.txt`` file is processed.
     **WARNING:** This name must be globally unique across the entire project
     (see `Globally unique TriBITS package names`_).
 
@@ -1717,7 +1718,7 @@ defined:
     ``PackageX_SOURCE_DIR``.  This makes such CMake code independent of where
     the package is in relation to other packages.  NOTE: This variable is
     defined for all declared packages that exist, independent of whether they
-    are enabled or not.  This varible is set as soon as it is known if the
+    are enabled or not.  This variable is set as soon as it is known if the
     given package exists or not.
 
   ``${PACKAGE_NAME}_BINARY_DIR``
@@ -1886,10 +1887,9 @@ A TriBITS Subpackage:
   and/or tests with CMake build targets for building these for which TriBITS
   exports the list of include directories, libraries, and targets that are
   created (along with CMake dependencies).
-* Is declared in its parent packages's
-  `<packageDir>/cmake/Dependencies.cmake`_ file in a call to
-  `TRIBITS_PACKAGE_DEFINE_DEPENDENCIES()`_ using the argument
-  `SUBPACKAGES_DIRS_CLASSIFICATIONS_OPTREQS`_.
+* Is declared in its parent package's `<packageDir>/cmake/Dependencies.cmake`_
+  file in a call to `TRIBITS_PACKAGE_DEFINE_DEPENDENCIES()`_ using the
+  argument `SUBPACKAGES_DIRS_CLASSIFICATIONS_OPTREQS`_.
 * Defines dependencies on `upstream`_ TPLs and/or other SE packages by just
   naming the dependencies in the file
   `<packageDir>/<spkgDir>/cmake/Dependencies.cmake`_ using the macro
@@ -1905,8 +1905,8 @@ A TriBITS Subpackage:
   ``${PARENT_PACKAGE_NAME}_ENABLE_TESTS=ON``.
 
 The contents of a TriBITS Subpackage are almost identical to those of a
-TriBITS Package.  The differences are described below and in `How is a TriBITS
-Subpackage is different from a TriBITS Package?`_.
+TriBITS Package.  The differences are described below and in `How is a TriBITS 
+Subpackage different from a TriBITS Package?`_.
 
 For more details on the definition of a TriBITS Package (or subpackage), see:
 
@@ -2063,8 +2063,8 @@ subpackage's files are:
     The absolute path to the parent package's base binary directory.
 
 
-How is a TriBITS Subpackage is different from a TriBITS Package?
-................................................................
+How is a TriBITS Subpackage different from a TriBITS Package?
+.............................................................
 
 A common question this is natural to ask is how a TriBITS Subpackage is
 different from a TriBITS Package?  They contain the same basic files (i.e. a
@@ -2246,8 +2246,8 @@ project's build files::
   $ cmake [options] <projectDir>
 
 Below, is a short pseudo-code algorithm for the TriBITS framework processing
-and callbacks that begin in the `<projectDir>/CMakeLists.txt`_ and proceed
-through the call to `TRIBITS_PROJECT()`_.
+and callbacks that begins in the `<projectDir>/CMakeLists.txt`_ file and
+proceeds through the call to `TRIBITS_PROJECT()`_.
 
 .. _Full Processing of TriBITS Project Files:
 
@@ -2256,7 +2256,7 @@ through the call to `TRIBITS_PROJECT()`_.
 | 1.  Read `<projectDir>/ProjectName.cmake`_ (sets `PROJECT_NAME`_)
 | 2.  Call ``PROJECT(${PROJECT_NAME} NONE)`` (sets `${PROJECT_NAME}_SOURCE_DIR`_
 |     and `${PROJECT_NAME}_BINARY_DIR`_)
-| 3.  Execute `TRIBITS_PROJECT()`_:
+| 3.  Call `TRIBITS_PROJECT()`_:
 |   1)  Set `PROJECT_SOURCE_DIR`_ and `PROJECT_BINARY_DIR`_
 |   2)  For each ``<optFile>`` in ${`${PROJECT_NAME}_CONFIGURE_OPTIONS_FILE`_}
 |         ${`${PROJECT_NAME}_CONFIGURE_OPTIONS_FILE_APPEND`_}
@@ -2289,7 +2289,7 @@ through the call to `TRIBITS_PROJECT()`_.
 |       (see `Package Dependencies and Enable/Disable Logic`_)
 |   11) `Probe and set up the environment`_ (finds MPI, compilers, etc.)
 |       (see `TriBITS Environment Probing and Setup`_)
-|   12) For ``<tplName>`` in the set of enabled TPLs:
+|   12) For each ``<tplName>`` in the set of enabled TPLs:
 |       * ``INCLUDE(${<tplName>_FINDMOD})`` (see `TriBITS TPL`_)
 |   13) For each ``<repoDir>`` in all defined TriBITS repositories:
 |       * Read `<repoDir>/Copyright.txt`_
@@ -2305,11 +2305,11 @@ through the call to `TRIBITS_PROJECT()`_.
 |       * ``INCLUDE(`` `<repoDir>/cmake/CallbackDefineRepositoryPackaging.cmake`_ ``)``
 |       * Call ``TRIBITS_REPOSITORY_DEFINE_PACKAGING()``
 
-The TriBITS Framework obviously does a lot more that what is described above
+The TriBITS Framework obviously does a lot more than what is described above
 but the basic trace of major operations and ordering and the processing of
 project, repository, package, and subpackage files should be clear.  All of
 this information should also be clear when enabling `File Processing
-Tracing`_. 
+Tracing`_ and watching the output from the ``cmake`` configure STDOUT.
 
 Reduced Package Dependency Processing 
 ++++++++++++++++++++++++++++++++++++++
@@ -2391,7 +2391,7 @@ configure command::
     -DTribitsExProj_TRACE_FILE_PROCESSING=ON \
     -DTribitsExProj_ENABLE_CPACK_PACKAGING=ON \
     -DTribitsExProj_DUMP_CPACK_SOURCE_IGNORE_FILES=ON \
-    <tribitsDir>/doc/examples/TribitsExampleProject \
+    <tribitsDir>/doc/TribitsExampleProject \
     | grep "^-- File Trace:"
 
 looks something like::
@@ -2623,7 +2623,7 @@ itself which allows the TriBITS system to be tested and installed from any
 TriBITS project that lists it, including the ``TriBITS`` project itself
 (see `Coexisting Projects, Repositories, and Packages`_).
 
-The directory ``tribits/doc/examples/`` contains some other example TriBITS
+The directory ``tribits/examples/`` contains some other example TriBITS
 projects and repositories as well that are referred to in this and other
 documents.
 
@@ -2634,7 +2634,7 @@ TribitsHelloWorld
 ``TribitsHelloWorld`` is about the simplest possible TriBITS project that you
 can imagine and is contained under the directory::
 
-  tribits/doc/examples/TribitsHelloWorld/
+  tribits/examples/TribitsHelloWorld/
 
 This example project contains only a single TriBITS package and no frills at
 all (does not support MPI or Fortran).  However, it does show how minimal a
@@ -2675,7 +2675,7 @@ TribitsExampleProject
 ``TribitsExampleProject`` in an example `TriBITS Project`_ and `TriBITS
 Repository`_ contained in the TriBITS source tree under::
 
-  tribits/doc/examples/TribitsExampleProject/
+  tribits/examples/TribitsExampleProject/
 
 When this is used as the base TriBITS project, this is the directory
 corresponds to ``<projectDir>`` and ``<repoDir>`` referenced in `TriBITS
@@ -2683,7 +2683,7 @@ Project Core Files`_ and `TriBITS Repository Core Files`_, respectively.
 
 Several files from this project are used as examples in the section `TriBITS
 Project Structure`_.  Here, a fuller description is given of this project and
-demonstrates some how TriBITS works.  From this simple example project, one
+a demonstration of how TriBITS works.  From this simple example project, one
 can quickly see how the basic structural elements of a TriBITS project,
 repository, and package (and subpackage) are pulled together.
 
@@ -3601,7 +3601,7 @@ packages, this can produce a lot of output to stdout.  One just needs to
 understand what TriBITS is printing out and where to look in the output for
 different information.  The examples in the section `Example Enable/Disable
 Use Cases`_ show what this output looks like for the various enable/disable
-scenarios and tries to explains in more detail the reasons for why the given
+scenarios and tries to explain in more detail the reasons for why the given
 behavior is implemented the way that it is.  Given this output, the rule
 definitions given above, and the detailed `Example Enable/Disable Use Cases`_,
 one should always be able to figure out exactly why the final set of
@@ -3635,7 +3635,7 @@ packages in its listed repositories are handled.  What these variable do is to
 allow a large project to turn off the auto-enable of optional SE packages in a
 given TriBITS repository to provide more detailed control of what gets used
 from a given TriBITS repository.  This, for example, is used in the CASL VERA
-project to mange some of its extra repositories and packages to further reduce
+project to manage some of its extra repositories and packages to further reduce
 the number of packages that get auto-enabled.
 
 .. ToDo: We should likely change this so that only tests and example don't get
@@ -4051,7 +4051,7 @@ TriBITS Automated Testing
 =========================
 
 Much of the value provided by the TriBITS system is support for testing of
-complex complex projects.  Many different types of testing are required in a
+complex projects.  Many different types of testing are required in a
 complex project and development effort.  A large project with lots of
 repositories and packages provides a number of testing and development
 challenges but also provides a number of opportunities to do testing in an
@@ -4220,7 +4220,7 @@ More detailed descriptions of the test groups are given below.
   major harm to most developers.  Also, code may be marked as ``ST`` if it has
   required dependencies on ``ST`` TPLs which are either hard to install or may
   not be available on all platforms where developers do their development and
-  fro where they push changes to the global repo.  In addition, code my be
+  from where they push changes to the global repo.  In addition, code may be
   marked as ``ST`` if the project is just too big and developers can't be
   expected to build and test all of this code with every push (so a decision
   is made to only make some code as ``PT`` so that pushes don't take too
@@ -4359,7 +4359,7 @@ The different test test categories are described below in more detail:
 
 * Tests marked **HEAVY** are usually reserved for very expensive tests that
   are too expensive to run nightly.  ``HEAVY`` tests require more testing
-  resources and therefore may only be run on a fully optimzied build and/or
+  resources and therefore may only be run on a fully optimized build and/or
   run less frequently.  Tests marked as ``HEAVY`` are enabled only for the
   value of ``${PROJECT_NAME}_TEST_CATEGORIES`` equal to ``HEAVY``.
 
@@ -4522,7 +4522,7 @@ The nightly builds comprise the basic "heart beat" for the project.
 *Heavy Testing* builds are just an extension to the `Nightly Testing`_ builds
 that add on more expensive tests marked using the `Test Test Category HEAVY`_.
 For projects that define heavy tests and heavy builds, individual test cases
-may be alloed to take 24 hours or longer to run so they can't even be run
+may be allowed to take 24 hours or longer to run so they can't even be run
 every day in nightly testing.  What standard heavy builds have in common is
 that they tend to select repositories, SE packages and code, and individual
 tests using the following test-related classifications:
@@ -4568,7 +4568,7 @@ Test Test Category         ``PERFORMANCE``     (`Test Test Category PERFORMANCE`
 
 .. ToDo: I need to set up automated testing for TriBITS to use as the example
 .. for all of these types of testing.  There is no better example that one
-.. that actually works.  It would also be nice t have a snapshot repo of
+.. that actually works.  It would also be nice to have a snapshot repo of
 .. TribitsExampleProject that also had this testing enabled for it but I am
 .. not sure that really makes sense.
 
@@ -4704,12 +4704,12 @@ package fails, then that TriBITS package is disabled in all downstream TriBITS
 package builds so as not to propagate already known failures.  Each TriBITS
 top-level package is assigned its own CDash regression email address (see
 `CDash regression email addresses`_) and each package configure/build/test is
-given its own row for the build in the CDash server.  A CTest script using
-`TRIBITS_CTEST_DRIVER()`_ is run in one of three different modes.  First, it
-can run standard once-a-day, from-scratch builds as described in `CTest/CDash
-Nightly Testing`_.  Second, it can run as a CI server as described in
-`CTest/CDash CI Server`_.  Third, it can run in experimental mode testing a
-local repository using the TriBITS-defined `make dashboard`_ target.
+given its own row for the package build in the CDash server.  A CTest script
+using `TRIBITS_CTEST_DRIVER()`_ is run in one of three different modes.
+First, it can run standard once-a-day, from-scratch builds as described in
+`CTest/CDash Nightly Testing`_.  Second, it can run as a CI server as
+described in `CTest/CDash CI Server`_.  Third, it can run in experimental mode
+testing a local repository using the TriBITS-defined `make dashboard`_ target.
 
 .. ToDo: Discuss the behavior of Continuous, Nightly, and Experimental
 .. CTest/CDash tracks and what that means in terms of sending out CDash error
@@ -4812,7 +4812,7 @@ developed repository.
 
 2) **REGRESSION_EMAIL_LIST** (defined in
 `<packageDir>/cmake/Dependencies.cmake`_): Package-specific email address
-specified in the packages's ``Dependencies.cmake`` file using
+specified in the package's ``Dependencies.cmake`` file using
 `TRIBITS_PACKAGE_DEFINE_DEPENDENCIES()`_.
 
 .. _${REPOSITORY_NAME}_REPOSITORY_EMAIL_URL_ADDRESS_BASE:
@@ -5411,7 +5411,7 @@ resulting TriBITS TPL module file ``FindTPL<tplName>.cmake`` looks like::
 
 With this approach, the ``FindTPL<tplName>.cmake`` module preserves all of the
 user behavior described in `Enabling support for an optional Third-Party
-Library (TPL)`_ for overriding what TPL componets to look for, where to look
+Library (TPL)`_ for overriding what TPL components to look for, where to look
 and finally to override what is actually used.  That is, if the user sets the
 cache variables ``TPL_<tplName>_INCLUDE_DIRS``, ``TPL_<tplName>_LIBRARIES``,
 or ``TPL_<tplName>_LIBRARY_DIRS``, then they should be used without question
@@ -5442,7 +5442,7 @@ return a list of include directories and libraries.  Some, like
 packages. therefore, in these cases, ``FIND_PACKAGE(Qt4 ...)`` must be called
 on every configure.  In specialized cases such as this, one must write a more
 specialized ``FindTPL<tplName>.cmake`` file and can't use the
-`TRIBITS_TPL_ALLOW_PRE_FIND_PACKAGE()`_ function like shown shown above.  Such
+`TRIBITS_TPL_ALLOW_PRE_FIND_PACKAGE()`_ function like shown above.  Such
 find modules cannot completely adhere to the standard behavior described in
 `Enabling support for an optional Third-Party Library (TPL)`_.
 
@@ -5681,7 +5681,7 @@ be missing.  This is demonstrated in `TribitsExampleProject`_ with the package
 .. include:: ../../examples/TribitsExampleProject/PackagesList.cmake
    :literal:
 
-In this example, ``InsertedPkg`` has a required dependency on on ``SimpleCxx``
+In this example, ``InsertedPkg`` has a required dependency on ``SimpleCxx``
 and the SE package ``WithSubpackagesB`` has an optional dependency on
 ``InsertedPkg``.  Therefore, the inserted package ``InsertedPkg`` has upstream
 and downstream dependencies on packages in the ``TribitsExampleProject`` repo.
@@ -5770,7 +5770,7 @@ following:
    (either explicitly or through auto enable/disable logic), use::
 
      IF ("${<XXX>_ENABLE_<YYY>}" STREQUAL "")
-       # Variable has not be set to 'ON' or 'OFF' yet
+       # Variable has not been set to 'ON' or 'OFF' yet
        ...
      ENDIF()
 
@@ -5838,6 +5838,138 @@ Enable/Disable Logic`_).  Also, these files get processed in `Reduced Package
 Dependency Processing`_ as well so they get processed in all contexts where
 enable/disable logic is applied.
 
+How to submit testing results to a CDash site
+---------------------------------------------
+
+The following steps describe how to submit results to a CDash site using the
+`TriBITS Package-by-Package CTest/Dash Driver`_ support.
+
+1) Create a CDash project ``<ProjectName>`` on the targeted CDash site.
+
+  To do this, one must have an account on the CDash site and the permissions
+  to create a new CDash project.  The name of the project on CDash should
+  generally match the name of the TriBITS project ``PROJECT_NAME`` but it does
+  not have to.  In fact, one can generally submit to any CDash project with
+  any name so creating a new CDash project is actually optional.
+
+  NOTE: For open-source projects, Kitware provides the free CDash site
+  my.cdash.org that allows a limited number of submits and data per day.  But
+  it should be enough to test out submitting to CDash.
+
+2) Create ``CTestConfig.cmake`` and ``CTestCustom.cmake.in`` files for the
+   project.
+
+  * The file `<projectDir>/CTestConfig.cmake`_ can be copied and pasted from
+    TribitsExampleProject/CTestConfig.cmake.  To customize for your project,
+    you generally just need to update the variables ``CTEST_DROP_SITE``,
+    ``CTEST_PROJECT_NAME``, and ``CTEST_DROP_LOCATION``.
+
+  * The file `<projectDir>/cmake/ctest/CTestCustom.cmake.in`_ can be copied
+    and pasted from ``TribitsExampleProject/cmake/ctest/CTestCustom.cmake.in``
+    and them modified as desired.
+
+3) Test experimental submits with ``make dashboard``.
+
+  Once the CDash project and the `<projectDir>/CTestConfig.cmake`_ and
+  `<projectDir>/cmake/ctest/CTestCustom.cmake.in`_ files are created, one
+  perform an experimental submission by just configuring the project as normal
+  and then running the build target::
+
+    make dashboard
+
+  That will configure, build, test, and submit results to the CDash site to
+  the ``Experimental`` track of the target CDash project.
+
+  To work out issue locally without spamming the CDash site, one can run with:
+
+    env CTEST_DO_SUBMIT=OFF make dashboard
+
+  To submit to a different CDash site and project, change the cache vars
+  ``CTEST_DROP_SITE``, ``CTEST_PROJECT_NAME``, and ``CTEST_DROP_LOCATION`` at
+  configure time. For example, to submit TribitsExampleProject results to a
+  different CDash site, configure with::
+
+    ctest \
+    -DCTEST_DROP_SITE=testing.sandia.gov/cdash \
+    -DCTEST_PROJECT_NAME=TribitsExProj \
+    -DCTEST_DROP_LOCATION="/submit.php?project=TribitsExProj" \
+    [other options] \
+    <baseDir>/TribitsExamplProject
+
+  and then run ``make dashboard``.
+     
+4) Add custom CTest -S driver scripts.
+
+  For driving different builds and tests, one needs to set up one or more
+  CTest -S driver scripts.  There are various ways to do this but a simple
+  approach that avoids duplication is to first create a file like
+  ``TribitsExampleProject/cmake/ctest/TribitsExProjCTestDriver.cmake``:
+
+  .. include:: ../../examples/TribitsExampleProject/cmake/ctest/TribitsExProjCTestDriver.cmake
+     :literal:
+
+  and then create a set of CTest -S driver scripts that uses that file.  One
+  example is the file
+  ``TribitsExampleProject/cmake/ctest/general_gcc/ctest_serial_debug.cmake``:
+
+  .. include:: ../../examples/TribitsExampleProject/cmake/ctest/general_gcc/ctest_serial_debug.cmake
+     :literal:
+
+5) Test CTest -S driver scripts
+
+  Once a CTest -S driver script (like the ``ctest_serial_debug.cmake`` example
+  shown above) is created, one can test it locally and then test a submit to
+  CDash.  To test the exact state of the repository locally, one can create a
+  temporary base directory, symbolically link in the local project source
+  directory, and then run the CTest -S script by setting
+  ``CTEST_DO_SUBMIT=OFF``.  For example, the TribitsExampleProject CTest -S
+  script can be run and tested locally by doing::
+
+    $ mkdir MOCK_TRIBITSEXPROJ_SERIAL_DEBUG
+    $ cd MOCK_TRIBITSEXPROJ_SERIAL_DEBUG/
+    $ ln -s $TRIBITS_DIR/examples/TribitsExampleProject .
+    $ env  CTEST_DASHBOARD_ROOT=$PWD \
+         CTEST_DROP_SITE=testing.sandia.gov/cdash \
+         CTEST_PROJECT_NAME=TribitsExProj \
+         CTEST_DROP_LOCATION="/submit.php?project=TribitsExProj" \
+         CTEST_TEST_TYPE=Experimental \
+         CTEST_DO_SUBMIT=OFF \
+         CTEST_DO_UPDATES=OFF \
+         CTEST_START_WITH_EMPTY_BINARY_DIRECTORY=TRUE \
+         ctest -V -S \
+          $TRIBITS_DIR/examples/TribitsExampleProject/cmake/ctest/general_gcc/ctest_serial_debug.cmake \
+         &> console.out
+
+  where ``TRIBITS_DIR`` is an env var that points to the location of the
+  TriBITS/tribits directory on the local machine (and the location of the
+  CDash site and project is changed, since the free my.cdash.org site can only
+  accept as small number of builds each day).
+
+  Once that CTest -S driver script is working correctly without submitting to
+  CDash, the above ``ctest -S`` command can be run with ``CTEST_DO_SUBMIT=ON``
+  which submit the CDash and then print the location on CDash for the
+  submitted configure, build, and test results.
+
+6) Set up automated runs of CTest -S driver scripts
+
+  The custom CTest -S driver scripts created above can be run and used to
+  submit to CDash in a variety of ways:
+
+  * Cron jobs can be set up to run them at the same time every day.
+ 
+  * Jenkins jobs can be set up to run them based on various criteria.
+
+  * Travis CI can run them to respond to GitHub pushes.
+
+  The setup of Jenkins, Travis CI and other more sophisticated automated
+  testing systems will not be described here.  What will be briefly outlined
+  below is the setup using cron jobs on a Linux machine.  That is sufficient
+  for most smaller projects and provides tremendous value.
+
+  To set up an automated build using a cron job, one will typically create a
+  shell driver script that sets the env and then calls the `ctest -S <script>`
+  command.  Then one just adds a call to that shell driver script using
+  `crontab -e`.  That is about all there is to it.
 
 Additional Topics
 =================
@@ -5936,7 +6068,7 @@ behavior such as:
 
 3. Some TriBITS projects may require a version of Python more recent than 2.4.
    In this case, the TriBITS project would set `PythonInterp_FIND_VERSION`_ to
-   some value higer than ``2.4``.  For example, may newer systems have Python
+   some value higher than ``2.4``.  For example, may newer systems have Python
    2.6.6 or higher versions installed by default and projects developed on
    such a system typically requires this version or higher.
 
@@ -5978,7 +6110,7 @@ by default) and then generates the read-only files::
 
 For a simple example of this, see::
 
-  tribits/doc/examples/TribitsExampleProject/cmake/create-build-quickref.sh
+  tribits/doc/build_ref/create-build-ref.sh
 
 A project-independent version of this file is provided in the
 `TribitsBuildReference`_.[rst,html,pdf] which is referred to many times in this
@@ -6027,7 +6159,7 @@ TriBITS Environment Probing and Setup
 Part of the TriBITS Framework is to probe the environment, set up the
 compilers, and get ready to compile code.  This was mentioned in `Full
 Processing of TriBITS Project Files`_.  This is executed by the TriBITS macro
-``TRIBITS_SETUP_ENV()``.  Some of to things this macro does are:
+``TRIBITS_SETUP_ENV()``.  Some of the things this macro does are:
 
 .. _Probe and set up the environment:
 
@@ -6100,7 +6232,7 @@ this allows one to create distributions which only includes subsets of a
 larger project (even a single package in some cases).
 
 Unlike other build systems (like autotools), CMake will put **EVERYTHING**
-into the source distribution (e.g. tarball) that it sitting in the source tree
+into the source distribution (e.g. tarball) that is sitting in the source tree
 by default.  Therefore, setting up for a source distribution usually means
 deciding what extra files and directories should be excluded.  Beyond the
 directories for non-enabled packages, further files can be selected to be
@@ -6233,7 +6365,7 @@ rebase by default) as shown in the following Trilinos commit::
       Define HAVE_TEUCHOSCORE_CXX11 in TeuchosCore_config.h
       
       This makes TeuchosCore a good example for how Trilinos (or any TriBITS)
-      subpackages should put in an optinal dependency on C++11.
+      subpackages should put in an optional dependency on C++11.
       
       Build/Test Cases Summary
       Enabled Packages: TeuchosCore
@@ -6602,7 +6734,7 @@ where, ``SYNC_BASE_DIR=~/sync_base_dir`` for example, which must already be
 created.
 
 Next, one defines a remote to pull changes for the ``ExtraRepo1`` from the
-main develoment repo:
+main development repo:
 
   $ cd $SYNC_BASE_DIR/BaseProj/ExtraRepo1
   $ git remote add public url2.gov:/git/ExtraRepo1
@@ -6871,7 +7003,7 @@ After the above cron job starts running (setup described above), the
 into the underlying ``checkin-test.py`` script.  If the emails report an
 update, configure, build, or test failure, then someone will need to log onto
 the machine where the ACI sync server is running and investigate what went
-wrong, just like they would if the were running the ``checkin-test.py`` script
+wrong, just like they would if they were running the ``checkin-test.py`` script
 for testing locally modified changes before pushing.
 
 In the above example, only a single git/TriBITS repo is integrated in this ACI
@@ -6901,7 +7033,7 @@ require non-trivial storage and CPU resources (due to the MySQL DB of test
 results) and requires some amount of extra maintenance.  As an intermediate
 approach, one can consider just using the project's `checkin-test.py`_ script
 to implement basic post-push CI and/or Nightly testing servers using simple
-cron jobs and a some other helper scripts.  The ``checkin-test.py`` script
+cron jobs and some other helper scripts.  The ``checkin-test.py`` script
 will robustly pull new commits, configure the project, build, run tests, and
 send out emails with results and pass/fail.  A bunch of builds can be run at
 once using multiple builds specified in the ``--default-builds``,
@@ -6935,7 +7067,7 @@ CI and Nightly testing using ``checkin-test.py`` may be quite adequate.  In
 fact, post-push testing processes implemented with ``checkin-test.py`` are
 much more solid and feature-full than have been employed in many software
 projects that we have seen over the years that were larger, more public, had
-many developers, and and were quite important to many users and development
+many developers, and were quite important to many users and development
 teams.
 
 
@@ -7180,7 +7312,7 @@ work on all later version GCC and Intel compilers).
 Hiding deprecated code to certify and facilitate later removal
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-In addition to adding deprecation warnings at preprecessing or compile-time,
+In addition to adding deprecation warnings at preprocessing or compile-time,
 it is also highly desirable to allow the deprecated code to be removed from
 the build to help certify that client code indeed no longer needs the
 deprecated code.  The following subsections describe how to hide deprecated
@@ -7251,7 +7383,7 @@ included in the build and include path and downstream clients can use them.
 
 Once these files need to be permanently removed, one just then needs to remove
 them from the version control repository (i.e. ``git rm <files_to_remove>``)
-and them remove them from the above ``CMakeLists.txt`` code.
+and then remove them from the above ``CMakeLists.txt`` code.
 
 
 Physically removing deprecated code
@@ -7463,7 +7595,7 @@ See `snapshot-dir.py --help`_ for more details.  Note the guidance on using a
 different branch for the snapshot sync followed by a merge.  This allows for
 one to maintain local changes to TriBITS and use git to manage the merges.
 However, this will increase the changes of merge conflicts so one should
-consider just directly snapshottting into the master branch to avoid merge
+consider just directly snapshotting into the master branch to avoid merge
 conflicts.
 
 
@@ -7592,8 +7724,10 @@ be documented in `TribitsBuildReference`_.
 The global project-level TriBITS options for which defaults can be provided by
 a given TriBITS project are:
 
+* `${PROJECT_NAME}_CHECK_FOR_UNPARSED_ARGUMENTS`_
 * `${PROJECT_NAME}_CONFIGURE_OPTIONS_FILE_APPEND`_
 * `${PROJECT_NAME}_CPACK_SOURCE_GENERATOR`_
+* `${PROJECT_NAME}_CTEST_DO_ALL_AT_ONCE`_
 * `${PROJECT_NAME}_DISABLE_ENABLED_FORWARD_DEP_PACKAGES`_
 * `${PROJECT_NAME}_ELEVATE_ST_TO_PT`_
 * `${PROJECT_NAME}_ENABLE_CPACK_PACKAGING`_
@@ -7616,12 +7750,81 @@ a given TriBITS project are:
 * `${PROJECT_NAME}_TRACE_ADD_TEST`_
 * `${PROJECT_NAME}_USE_GNUINSTALLDIRS`_
 * `${PROJECT_NAME}_USES_PYTHON`_
+* `DART_TESTING_TIMEOUT`_
 * `CMAKE_INSTALL_RPATH_USE_LINK_PATH`_
 * `MPI_EXEC_MAX_NUMPROCS`_
 * `PythonInterp_FIND_VERSION`_
 
 
 These options are described below.
+
+.. _${PROJECT_NAME}_CHECK_FOR_UNPARSED_ARGUMENTS:
+
+**${PROJECT_NAME}_CHECK_FOR_UNPARSED_ARGUMENTS**
+
+  The variable ``${PROJECT_NAME}_CHECK_FOR_UNPARSED_ARGUMENTS`` determines how
+  unparsed and otherwise ignored arguments are handled in TriBITS functions
+  that are called by the client TriBITS projects.  These are arguments that
+  are left over from parsing input options to functions and macros that take
+  both positional arguments and keyword arguments/options handled with the
+  ``CMAKE_PARSE_ARGUMENTS()`` function.  For example, for the a TriBITS
+  function declared like::
+
+    TRIBITS_COPY_FILES_TO_BINARY_DIR(
+      <targetName>
+      [SOURCE_FILES <file1> <file2> ...]
+      [SOURCE_DIR <sourceDir>]
+      ...
+      )
+
+  the arguments ``SOURCE_FILES <file1> <file2> ...`` and those that follow are
+  parsed by the ``CMAKE_PARSE_ARGUMENTS()`` function while the argument
+  ``<targetName>`` is a positional argument.  The problem is that any
+  arguments passed between the first ``<targetName>`` argument and the
+  specified keyword arguments like ``SOURCE_FILES`` and ``SOURCE_DIR`` are
+  returned as unparsed arguments and are basically ignored (which is what
+  happened in earlier versions of TriBITS).  For example, calling the function
+  as::
+
+    TRIBITS_COPY_FILES_TO_BINARY_DIR( FooTestCopyFiles
+      ThisArgumentIsNotParsedAndIsIgnored
+      SOURCE_FILES file1.cpp file2.cpp ...
+      ...
+      )
+
+  would result in the unparsed argument
+  ``ThisArgumentIsNotParsedAndIsIgnored``.
+
+  The value of ``${PROJECT_NAME}_CHECK_FOR_UNPARSED_ARGUMENTS`` determines how
+  that ignored argument is handled.  If the value is ``WARNING``, then it will
+  just result in a ``MESSAGE(WARNING ...)`` command that states the warning
+  but configure is allowed to be completed. This would be the right value to
+  allow an old TriBITS project to keep configuring until the warnings can be
+  cleaned up.  If the value is ``SEND_ERROR``, then ``MESSAGE(SEND_ERROR
+  ...)`` is called.  This will result in the configure failing but will allow
+  configure to continue until the end (or a ``FATAL_ERROR`` is raised).  This
+  would be the right value when trying to upgrade a TriBITS project where you
+  wanted to see all of the warnings when upgrading TriBITS (so you could fix
+  them all in one shot).  Finally, the value of ``FATAL_ERROR`` will result in
+  ``MESSAGE(FATAL_ERROR ...)`` being called which will halt configure right
+  away.  This is the best value when developing on a TriBITS project that is
+  already clean but you want to catch new developer-inserted errors right
+  away.
+
+  The default value for ``${PROJECT_NAME}_CHECK_FOR_UNPARSED_ARGUMENTS`` is
+  ``WARNING``, so that it will be backward compatible for TriBITS projects
+  that might have previously undetected unparased and therefore ignored
+  argument .  However, a project can change the default by setting, for
+  example::
+
+    SET(${PROJECT_NAME}_CHECK_FOR_UNPARSED_ARGUMENTS_DEFAULT FATAL_ERROR)
+
+  in the `<projectDir>/ProjectName.cmake`_ file.
+
+  The user of a TriBITS project should not be able to trigger this unparsed
+  arguments condition so this variable is not documented in the `TriBITS Build
+  Reference`_.  But it is still a CMake cache var that is documented in the
+  CMakeCache.txt file and can be set by the user or developer if desired.
 
 .. _${PROJECT_NAME}_CONFIGURE_OPTIONS_FILE_APPEND:
 
@@ -7661,6 +7864,24 @@ These options are described below.
 
   instead of in the base-level ``CMakeLists.txt`` file so that it goes along
   with rest of the project-specific CPack packaging options.
+
+.. _${PROJECT_NAME}_CTEST_DO_ALL_AT_ONCE:
+
+**${PROJECT_NAME}_CTEST_DO_ALL_AT_ONCE**
+
+  The variable ``${PROJECT_NAME}_CTEST_DO_ALL_AT_ONCE`` determines if the
+  CTest driver scripts using `TRIBITS_CTEST_DRIVER()`_ configure, build, test
+  and submit results to CDash all-at-once for all of the packages being tested
+  or if instead is done package-by-package.  Currently, the default is set to
+  ``FALSE`` for the package-by-package mode (for historical reasons) but the
+  default can be set to ``TRUE`` by setting:
+
+    SET(${PROJECT_NAME}_CTEST_DO_ALL_AT_ONCE_DEFAULT "TRUE")
+
+  in the project's `<projectDir>/ProjectName.cmake`_ file.  (This default must
+  be changed in the ``<projectDir>/ProjectName.cmake`` file and **NOT** the
+  `<projectDir>/CMakeLists.txt`_ file because the latter is not directly
+  processed in CTest -S driver scripts using ``TRIBITS_CTEST_DRIVER()``.)
 
 .. _${PROJECT_NAME}_DISABLE_ENABLED_FORWARD_DEP_PACKAGES:
 
@@ -7789,15 +8010,25 @@ These options are described below.
   
   If ``${PROJECT_NAME}_ENABLE_Fortran`` is ``ON``, then Fortran support for
   the project will be enabled and the Fortran compiler(s) must be found.  By
-  default, TriBITS sets this to ``ON`` for non-Windows systems (i.e. ``WIN32``
-  is not set by CMake) but is ``OFF`` for a Windows system.  A project that
-  always requires Fortran, for example, it can set the default::
-  
-    SET(${PROJECT_NAME}_ENABLE_Fortran_DEFAULT TRUE)
+  default, TriBITS sets this to ``ON`` .
   
   If a project does not have any native Fortran code a good default would be::
   
     SET(${PROJECT_NAME}_ENABLE_Fortran_DEFAULT OFF)
+
+  This default can be set in `<projectDir>/ProjectName.cmake`_ or `<projectDir>/CMakeLists.txt`_.
+
+  Given that a native Fortran compiler is not supported by default on Windows
+  and on most Mac OSX systems, projects that have optional Fortran code may
+  decide to set the default depending on the platform by setting, for example::
+
+    IF ( (WIN32 AND NOT CYGWIN) OR (CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin") )
+      MESSAGE(STATUS "Warning: Setting ${PROJECT_NAME}_ENABLE_Fortran=OFF by default"
+       " because this is Windows (not cygwin) and we assume to not have Fortran!")
+      SET(${PROJECT_NAME}_ENABLE_Fortran_DEFAULT OFF)
+    ELSE()
+      SET(${PROJECT_NAME}_ENABLE_Fortran_DEFAULT ON)
+    ENDIF()
   
   NOTE: It is usually not a good idea to always force off Fortran, or any
   compiler, because extra repositories and packages might be added by someone
@@ -8073,6 +8304,20 @@ These options are described below.
   that Python is never needed, set::
 
     SET(${PROJECT_NAME}_USES_PYTHON  FALSE)
+
+.. _DART_TESTING_TIMEOUT:
+
+**DART_TESTING_TIMEOUT**
+
+  The cache variable ``DART_TESTING_TIMEOUT`` is a built-in CMake variable
+  that provides a default timeout for all tests (see `Setting test timeouts at
+  configure time`_).  By default, TriBITS defines this to be 1500 seconds
+  (which is also the raw CMake default) but the project can change this
+  default, from 1500 to 300 for example, by setting the following in the
+  project's `<projectDir>/ProjectName.cmake`_ or
+  `<projectDir>/CMakeLists.txt`_ file::
+
+    SET(DART_TESTING_TIMEOUT_DEFAULT 300)
 
 .. _CMAKE_INSTALL_RPATH_USE_LINK_PATH:
 
@@ -8449,7 +8694,11 @@ Below is a snapshot of the output from ``install_devtools.py --help``.
 
 .. _${PROJECT_NAME}_TRACE_FILE_PROCESSING: TribitsBuildReference.html#project-trace-file-processing
 
+.. _Setting test timeouts at configure time: TribitsBuildReference.html#dart-testing-timeout
+
 .. _${PROJECT_NAME}_SCALE_TEST_TIMEOUT: TribitsBuildReference.html#project-scale-test-timeout-testing-timeout
+
+.. _Overriding test timeouts: TribitsBuildReference.html#overriding-test-timeouts
 
 .. _make dashboard: TribitsBuildReference.html#dashboard-submissions
 
@@ -8471,6 +8720,10 @@ Below is a snapshot of the output from ``install_devtools.py --help``.
 .. Common references to raw CMake commands:
 
 .. _CONFIGURE_FILE(): http://www.cmake.org/cmake/help/v2.8.11/cmake.html#command:configure_file
+
+.. Other references
+
+.. _Software Framework: https://en.wikipedia.org/wiki/Software_framework
 
 ..  LocalWords:  TribitsOverview TribitsLifecycleModel Lifecycle CMakeLists
 ..  LocalWords:  TriBITS Subpackage subpackage Subpackages subpackages TPL TPLs Kitware
