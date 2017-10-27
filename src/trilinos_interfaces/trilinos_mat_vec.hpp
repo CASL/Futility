@@ -8,276 +8,323 @@
 /+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 #pragma once
 
+#include <MatrixMarket_Tpetra.hpp>
+#include <Teuchos_DefaultMpiComm.hpp>
+#include <Tpetra_CombineMode.hpp>
+#include <Tpetra_CrsMatrix.hpp>
+#include <Tpetra_Import.hpp>
+#include <Tpetra_Map.hpp>
+#include <Tpetra_Vector.hpp>
+#include <cassert>
 #include <iostream>
 #include <map>
+#include "Teuchos_Comm.hpp"
 #include "Teuchos_RCP.hpp"
+
 #ifdef HAVE_MPI
-#include "Epetra_MpiComm.h"
 #include <mpi.h>
+typedef Teuchos::MpiComm<int> SelectedComm;
 #else
-#include "Epetra_SerialComm.h"
+typedef int MPI_Comm;
+typedef Teuchos::SerialComm<int> SelectedComm;
 #endif
-#include "Epetra_Map.h"
-#include "Epetra_Import.h"
-#include "Epetra_DistObject.h"
-#include "Epetra_Vector.h"
-#include "Epetra_CrsMatrix.h"
-#include "EpetraExt_VectorOut.h"
-#include "EpetraExt_RowMatrixOut.h"
-#include <cassert>
 
-using std::map;
+// We only have C++11 support, so implement "std::make_unique" by hand.
+template <typename T, typename... Args>
+std::unique_ptr<T> make_unique(Args &&... args)
+{
+    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+}
 
-class EpetraVecCnt{
+class ForPETRA_SelectedTypes {
 public:
-#ifdef HAVE_MPI
-    Epetra_MpiComm Comm;
-#else
-    Epetra_SerialComm Comm;
-#endif
-    Epetra_Map emap;
-    Teuchos::RCP<Epetra_Map> distMap;
-    Teuchos::RCP<Epetra_Vector> evec;
-    Teuchos::RCP<Epetra_Import> importer;
-    Teuchos::RCP<Epetra_Vector> distvec;
+    typedef double SC;
+    typedef int LO;
+    typedef int GO;
+    typedef Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::OpenMP> NO;
+    typedef Tpetra::Map<LO, GO, NO> Map;
+    typedef Tpetra::Vector<SC, LO, GO, NO> Vector;
+    typedef Tpetra::MultiVector<SC, LO, GO, NO> MultiVector;
+    typedef Tpetra::Import<> Import;
+    typedef Tpetra::CrsMatrix<SC, LO, GO, NO> CrsMatrix;
+    typedef Tpetra::Operator<SC, LO, GO, NO> Operator;
+
+    typedef MultiVector::dual_view_type::host_mirror_space HostSpace;
+    typedef MultiVector::dual_view_type::t_host HostView;
+};
+
+class TpetraVecCnt : public ForPETRA_SelectedTypes {
+public:
+    Teuchos::RCP<const Teuchos::Comm<int>> comm;
+    Teuchos::RCP<Map> map;
+    Teuchos::RCP<Map> distMap;
+    Teuchos::RCP<Vector> vec;
+    Teuchos::RCP<Import> importer;
+    Teuchos::RCP<Vector> distvec;
+
+    // Maintain host views of the data for doing element-wise access. Keep in
+    // mind that there will be some extra difficulties if/when we want to move
+    // to heterogeneous architectures.
+    HostView localView;
+    HostView distLocalView;
+
     bool havedistMap;
 
-#ifdef HAVE_MPI
-    EpetraVecCnt(int n, int nloc, MPI_Comm rawComm) :
-        Comm(rawComm),
-#else
-    EpetraVecCnt(int n, int nloc, int rawComm) :
-        Comm(),
-#endif
-        emap(n,nloc,1,Comm),
-        evec(new Epetra_Vector(emap))
+    TpetraVecCnt(int n, int nloc, MPI_Comm rawComm);
+
+    void defineMapData(const int id, const int nloc, const int *gid);
+
+    double &operator[](int i)
     {
-        evec->PutScalar(0.);
-        havedistMap=false;
-    }
-
-    double &operator[](int i){ return (*evec)[i];}
-
-    ~EpetraVecCnt(){
-        evec = Teuchos::null;
-        distMap = Teuchos::null;
-        importer = Teuchos::null;
-        distvec = Teuchos::null;
+        return localView(i, 0);
     }
 };
 
-class EpetraVecStore {
-public:
-    EpetraVecStore():
-        cid(0)
-    {}
+class TpetraVecStore : public ForPETRA_SelectedTypes {
 
-#ifdef HAVE_MPI
-    int new_data(const int n, const int nloc, const MPI_Comm rawComm) {
-#else
-    int new_data(const int n, const int nloc, const int rawComm) {
-#endif
-        vec_map[cid]=new EpetraVecCnt(n,nloc,rawComm);
-        //vec_map[cid]->Comm.PrintInfo(std::cout);
-        cid++;
-        return cid-1;
+public:
+    TpetraVecStore() : cid(0)
+    {
     }
 
-    int define_map_data(const int id, const int nloc, const int *gid){
-        vec_map[id]->distMap=Teuchos::rcp(new Epetra_Map(-1,nloc,gid,1,vec_map[id]->Comm));
-        vec_map[id]->importer=Teuchos::rcp(new Epetra_Import(*(vec_map[id]->distMap),vec_map[id]->emap));
-        vec_map[id]->distvec=Teuchos::rcp(new Epetra_Vector(*(vec_map[id]->distMap)));
-        vec_map[id]->havedistMap=true;
+    int new_data(const int n, const int nloc, const MPI_Comm rawComm)
+    {
+        vec_map.emplace(cid, make_unique<TpetraVecCnt>(n, nloc, rawComm));
+        cid++;
+        return cid - 1;
+    }
+
+    int define_map_data(const int id, const int nloc, const int *gid)
+    {
+        vec_map[id]->defineMapData(id, nloc, gid);
         return 0;
     }
 
-    int delete_data(const int id){
-        delete vec_map[id];
+    int delete_data(const int id)
+    {
         vec_map.erase(id);
         return 0;
     }
 
-    int set_data(const int id, const int *i, const double *val) {
-        return vec_map[id]->evec->ReplaceGlobalValues(1,val,i);
+    // TODO: if this is setting a scalar (it is), then there is no reason to use
+    // pointers, other than if the Fortran by-referenceness is better. Could
+    // change to pass-by-value to make the interface more clear
+    void set_data(const int id, const int *i, const double *val)
+    {
+        vec_map[id]->vec->replaceGlobalValue(*i, *val);
+        return;
     }
 
-    int setall_data(const int id, const double val) {
-        return vec_map[id]->evec->PutScalar(val);
+    void setall_data(const int id, const double val)
+    {
+        vec_map[id]->vec->putScalar(val);
+        return;
     }
 
-    int transfer_data(const int id) {
-        return vec_map[id]->distvec->Import(*(vec_map[id]->evec),*(vec_map[id]->importer),Insert);
+    void transfer_data(const int id)
+    {
+        vec_map[id]->distvec->doImport(
+            *(vec_map[id]->vec), *(vec_map[id]->importer), Tpetra::INSERT);
+        return;
     }
 
-    int get_data(const int id, const int i, double &val) {
-        if(vec_map[id]->havedistMap){
-            int lid=vec_map[id]->distMap->LID(i);
-            if(lid>=0){
-                val = (*(vec_map[id]->distvec))[lid];
+    int get_data(const int id, const int i, double &val)
+    {
+        if (vec_map[id]->havedistMap) {
+            LO lid = vec_map[id]->distMap->getLocalElement(i);
+            if (lid != Teuchos::OrdinalTraits<LO>::invalid()) {
+                val = vec_map[id]->distLocalView(lid, 0);
                 return 0;
+            } else {
+                return lid;
             }
-            else return lid;
-        }
-        else{
-            int lid=vec_map[id]->emap.LID(i);
-            if(lid>=0){
-                val = (*vec_map[id])[lid];
+        } else {
+            LO lid = vec_map[id]->map->getLocalElement(i);
+            if (lid != Teuchos::OrdinalTraits<LO>::invalid()) {
+                val = vec_map[id]->localView(lid, 0);
                 return 0;
+            } else {
+                return lid;
             }
-            else return lid;
         }
     }
 
-    int copy_data(const int id, const int idfrom) {
-        *(vec_map[id]->evec)= *(vec_map[idfrom]->evec);
+    int copy_data(const int id, const int idfrom)
+    {
+        vec_map[id]->vec->assign(*(vec_map[idfrom]->vec));
         return 0;
     }
 
-    int axpy_data(const int id, const int idx, const double a, const double b) {
-        return vec_map[id]->evec->Update(a,*(vec_map[idx]->evec),b);
+    int axpy_data(const int id, const int idx, const double a, const double b)
+    {
+        vec_map[id]->vec->update(a, *(vec_map[idx]->vec), b);
+        return 0;
     }
 
-    int norm1_data(const int id, double val[]) {
-        return vec_map[id]->evec->Norm1(val);
+    int norm1_data(const int id, double val[])
+    {
+        auto temp = vec_map[id]->vec->norm1();
+        *val      = temp;
+        return 0;
     }
 
-    int norm2_data(const int id, double val[]) {
-        return vec_map[id]->evec->Norm2(val);
+    int norm2_data(const int id, double val[])
+    {
+        auto temp = vec_map[id]->vec->norm2();
+        *val      = temp;
+        return 0;
     }
 
-    int max_data(const int id, double val[]) {
-        return vec_map[id]->evec->MaxValue(val);
+    int max_data(const int id, double val[])
+    {
+        auto temp = vec_map[id]->vec->normInf();
+        *val      = temp;
+        return 0;
     }
 
-    int scale_data(const int id, double val) {
-        return vec_map[id]->evec->Scale(val);
+    int scale_data(const int id, double val)
+    {
+        vec_map[id]->vec->scale(val);
+        return 0;
     }
 
-    //TODO: eventually send a string in
-    int edit_data(const int id, const char name[]) {
-        return EpetraExt::VectorToMatlabFile(name,*(vec_map[id]->evec));
+    // TODO: eventually send a string in
+    int edit_data(const int id, const char name[])
+    {
+        Tpetra::MatrixMarket::Writer<Vector>::writeDenseFile(name,
+                                                             vec_map[id]->vec);
+        return 0;
     }
 
-    Teuchos::RCP<Epetra_Vector> get_vec(const int id){
-        return vec_map[id]->evec;
+    Teuchos::RCP<Vector> get_vec(const int id)
+    {
+        return vec_map[id]->vec;
     }
 
 private:
-        int cid;
-        map<int, EpetraVecCnt*> vec_map;
+    int cid;
+    std::map<int, std::unique_ptr<TpetraVecCnt>> vec_map;
 };
 
-
-class EpetraMatCnt{
+class TpetraMatCnt : public ForPETRA_SelectedTypes {
 public:
-#ifdef HAVE_MPI
-    Epetra_MpiComm Comm;
-#else
-    Epetra_SerialComm Comm;
-#endif
-    Epetra_Map emap;
-    Teuchos::RCP<Epetra_CrsMatrix> emat;
-    bool b_asy=false;
-    int m_rnnz;
+    Teuchos::RCP<const Teuchos::Comm<int>> comm;
+    int rnnz;
+    Teuchos::RCP<Map> map;
+    Teuchos::RCP<CrsMatrix> mat;
+    bool isAssembled = false;
 
-#ifdef HAVE_MPI
-    EpetraMatCnt(int n, int nloc, int rnnz, MPI_Comm rawComm) :
-        Comm(rawComm),
-#else
-    EpetraMatCnt(int n, int nloc, int rnnz, int rawComm) :
-        Comm(),
-#endif
-        emap(n,nloc,1,Comm),
-        emat(new Epetra_CrsMatrix(Copy,emap,rnnz))
+    TpetraMatCnt(int n, int nloc, int row_nnz, MPI_Comm rawComm)
+        : comm(new SelectedComm(rawComm)),
+          rnnz(row_nnz),
+          map(new Map(n, nloc, 1, comm)),
+          mat(new CrsMatrix(map, rnnz))
     {
-        m_rnnz=rnnz;
+        return;
     }
 
-    ~EpetraMatCnt(){
-        emat = Teuchos::null;
+    void reset()
+    {
+        mat = Teuchos::rcp(new CrsMatrix(map, rnnz));
+        return;
     }
 };
 
-class EpetraMatStore {
-public:
-    EpetraMatStore():
-        cid(0)
-    {}
+class TpetraMatStore : public ForPETRA_SelectedTypes {
+    typedef TpetraMatCnt::Map Map;
+    typedef TpetraVecCnt::Vector Vector;
+    typedef TpetraMatCnt::CrsMatrix CrsMatrix;
+    typedef Teuchos::ArrayView<const CrsMatrix::global_ordinal_type>
+        RowIndexView;
+    typedef Teuchos::ArrayView<const CrsMatrix::scalar_type> RowValueView;
 
-#ifdef HAVE_MPI
-    int new_data(const int n, const int nloc, const int rnnz, const MPI_Comm rawComm) {
-#else
-    int new_data(const int n, const int nloc, const int rnnz, const int rawComm) {
-#endif
-        mat_map[cid]=new EpetraMatCnt(n,nloc,rnnz,rawComm);
-        cid++;
-        return cid-1;
+public:
+    TpetraMatStore() : cid(0)
+    {
     }
 
-    int delete_data(const int id){
-        delete mat_map[id];
+    int new_data(const int n, const int nloc, const int rnnz,
+                 const MPI_Comm rawComm)
+    {
+        mat_map.emplace(cid, make_unique<TpetraMatCnt>(n, nloc, rnnz, rawComm));
+        cid++;
+        return cid - 1;
+    }
+
+    int delete_data(const int id)
+    {
         mat_map.erase(id);
         return 0;
     }
 
-    int reset_data(const int id){
-        mat_map[id]->emat=Teuchos::RCP<Epetra_CrsMatrix>(new Epetra_CrsMatrix(Copy,mat_map[id]->emap,mat_map[id]->m_rnnz));
+    int reset_data(const int id)
+    {
+        mat_map[id]->reset();
         return 0;
     }
 
-    int set_data(const int id, const int i, const int nnz, const int j[], const double val[]) {
-        //std::cout << id << " - " << i << " - " << nnz << " - " << mat_map[id]->b_asy << std::endl;
-        //for (int it = 0; it < nnz; it++) { std::cout << j[it] << " ";}
-        //std::cout << std::endl;
-        //for (int it = 0; it < nnz; it++) { std::cout << val[it]<< " ";}
-        //std::cout << std::endl;
-        int ierr = mat_map[id]->emat->InsertGlobalValues(i,nnz,val,j);
-        if(ierr!=0) ierr = mat_map[id]->emat->ReplaceGlobalValues(i,nnz,val,j);
-        if(ierr!=0) std::cout << id << " - " << ierr << " - " << i << std::endl;
-        //std::cout << ierr << std::endl;
-        return ierr;
+    int set_data(const int id, const int i, const int nnz, const int j[],
+                 const double val[])
+    {
+        Teuchos::ArrayView<const double> vals(val, nnz);
+        Teuchos::ArrayView<const int> cols(j, nnz);
+        mat_map[id]->mat->insertGlobalValues(i, cols, vals);
+        return 0;
     }
 
-    int assemble_data(const int id){
-        mat_map[id]->b_asy=true;
-        return mat_map[id]->emat->FillComplete();
+    int assemble_data(const int id)
+    {
+        mat_map[id]->mat->fillComplete();
+        mat_map[id]->isAssembled = true;
+        return 0;
     }
 
-    //defering this for a while
-    int get_data(const int id, const int i, const int j, double &val) {
-        val=0.0;
-        int N=0;
-        int* ind = NULL;
-        double* row = NULL;
-        int lid=mat_map[id]->emat->LCID(i);
-        int ierr=mat_map[id]->emat->ExtractMyRowView(lid, N, row, ind);
-        for(int k=0; k<N; k++){
-            if(ind[k]==j-1){
-                val = row[k];
+    // deferring this for a while
+    int get_data(const int id, const int i, const int j, double &val)
+    {
+        val = 0.0;
+
+        RowValueView values;
+        RowIndexView indices;
+        auto row = mat_map[id]->map->getLocalElement(i);
+        mat_map[id]->mat->getLocalRowView(row, indices, values);
+
+        for (int k = 0; k < indices.size(); ++k) {
+            if (indices[k] == j - 1) {
+                val = values[k];
                 break;
             }
         }
         return 0;
     }
 
-    int matvec_data(const int id, const bool trans, Teuchos::RCP<Epetra_Vector> x, Teuchos::RCP<Epetra_Vector> y){
-        return mat_map[id]->emat->Multiply(trans,*x,*y);
-    }
-
-    int edit_data(const int id,const char name[]) {
-        return EpetraExt::RowMatrixToMatlabFile(name,*(mat_map[id]->emat));
-    }
-
-    int normF_data(const int id, double &x) {
-        x=mat_map[id]->emat->NormFrobenius();
+    int matvec_data(const int id, const bool trans, Teuchos::RCP<Vector> x,
+                    Teuchos::RCP<Vector> y)
+    {
+        auto mode = trans ? Teuchos::TRANS : Teuchos::NO_TRANS;
+        mat_map[id]->mat->apply(*x, *y, mode);
         return 0;
     }
 
-    Teuchos::RCP<Epetra_CrsMatrix> get_mat(const int id){
-        return mat_map[id]->emat;
+    int edit_data(const int id, const char name[])
+    {
+        Tpetra::MatrixMarket::Writer<CrsMatrix>::writeSparseFile(
+            name, mat_map[id]->mat);
+        return 0;
+    }
+
+    int normF_data(const int id, double &x)
+    {
+        x = mat_map[id]->mat->getFrobeniusNorm();
+        return 0;
+    }
+
+    Teuchos::RCP<CrsMatrix> get_mat(const int id)
+    {
+        return mat_map[id]->mat;
     }
 
 private:
-        int cid;
-        map<int, EpetraMatCnt*> mat_map;
+    int cid;
+    std::map<int, std::unique_ptr<TpetraMatCnt>> mat_map;
 };

@@ -192,11 +192,11 @@ PROGRAM testODESolver
 #endif
   REGISTER_SUBTEST('testClear_Sundials',testClear_Sundials)
 
-  FINALIZE_TEST()
+   FINALIZE_TEST()
 
-  CALL pList%clear()
-  DEALLOCATE(testODE)
-  DEALLOCATE(f)
+   CALL pList%clear()
+   DEALLOCATE(testODE)
+   DEALLOCATE(f)
 
 #ifdef FUTILITY_HAVE_PETSC
   CALL PetscFinalize(ierr)
@@ -385,7 +385,7 @@ CONTAINS
 #ifdef FUTILITY_HAVE_SUNDIALS
         ASSERT(testODE%isInit,'%isInit')
         ASSERT(ASSOCIATED(testODE%f),'%f')
-        ASSERT(ASSOCIATED(SUNDIALS_ODE_INTERFACE),'SUNDIALS_ODE_INTERFACE')
+        ASSERT(ASSOCIATED(EXTERNAL_ODE_INTERFACE),'EXTERNAL_ODE_INTERFACE')
 #else
         ASSERT(eODESolverType%getCounter(EXCEPTION_ERROR)-errcnt == 1,'ERROR')
 #endif
@@ -502,7 +502,7 @@ CONTAINS
         ASSERT(testODE%tol==1.0e-8_SRK,'%tol')
         ASSERT(testODE%BDForder==5,'%BDForder')
         ASSERT(.NOT. ALLOCATED(testODE%ytmp),'%ytmp NOT Allocated')
-        ASSERT(.NOT. ASSOCIATED(SUNDIALS_ODE_INTERFACE),'SUNDIALS_ODE_INTERFACE')
+        ASSERT(.NOT. ASSOCIATED(EXTERNAL_ODE_INTERFACE),'External_ODE_INTERFACE')
         ASSERT(.NOT. testODE%isInit,'%isInit')
       ENDSELECT
     ENDSUBROUTINE testClear_Sundials
