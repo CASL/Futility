@@ -115,6 +115,7 @@ MACRO(TRIBITS_ASSERT_AND_SETUP_PROJECT_AND_STATIC_SYSTEM_VARS)
   #
 
   PRINT_VAR(CMAKE_VERSION)
+  PRINT_VAR(CMAKE_GENERATOR)
 
 ENDMACRO()
 
@@ -235,13 +236,7 @@ MACRO(TRIBITS_DEFINE_GLOBAL_OPTIONS_AND_DEFINE_EXTRA_REPOS)
     "Enable the C++11 compiler options and related code (see ${PROJECT_NAME}_CXX11_FLAGS)"
     ${${PROJECT_NAME}_ENABLE_CXX11_DEFAULT} )
 
-  IF(WIN32 AND NOT CYGWIN)
-    IF ("${${PROJECT_NAME}_ENABLE_Fortran}" STREQUAL "")
-      MESSAGE(STATUS "Warning: Setting ${PROJECT_NAME}_ENABLE_Fortran=OFF by default"
-        " because this is Windows (not cygwin) and we assume to not have Fortran!")
-    ENDIF()
-    SET(${PROJECT_NAME}_ENABLE_Fortran_DEFAULT OFF)
-  ELSE()
+  IF ("${${PROJECT_NAME}_ENABLE_Fortran_DEFAULT}" STREQUAL "")
     SET(${PROJECT_NAME}_ENABLE_Fortran_DEFAULT ON)
   ENDIF()
 
@@ -286,6 +281,23 @@ MACRO(TRIBITS_DEFINE_GLOBAL_OPTIONS_AND_DEFINE_EXTRA_REPOS)
   OPTION(${PROJECT_NAME}_ENABLE_OpenMP
     "Build with OpenMP support." OFF)
 
+  IF (NOT CMAKE_VERSION VERSION_LESS "3.7.0")
+    IF (
+      CMAKE_GENERATOR STREQUAL "Ninja"
+      AND
+      "${${PROJECT_NAME}_WRITE_NINJA_MAKEFILES_DEFAULT}" STREQUAL ""
+      )
+      SET(${PROJECT_NAME}_WRITE_NINJA_MAKEFILES_DEFAULT ON)
+    ELSE()
+      SET(${PROJECT_NAME}_WRITE_NINJA_MAKEFILES_DEFAULT OFF)
+    ENDIF()
+    SET(${PROJECT_NAME}_WRITE_NINJA_MAKEFILES
+      ${${PROJECT_NAME}_WRITE_NINJA_MAKEFILES_DEFAULT} CACHE BOOL
+      "Generate dummy makefiles to call ninja in every bulid subdirectory (requires CMake 3.7.0 or newer)." )
+  ELSE()
+    SET(${PROJECT_NAME}_WRITE_NINJA_MAKEFILES OFF)
+  ENDIF()
+  
   IF (CMAKE_BUILD_TYPE STREQUAL "DEBUG")
     SET(${PROJECT_NAME}_ENABLE_DEBUG_DEFAULT ON)
   ELSE()
@@ -302,6 +314,28 @@ MACRO(TRIBITS_DEFINE_GLOBAL_OPTIONS_AND_DEFINE_EXTRA_REPOS)
   SET(${PROJECT_NAME}_ENABLE_CONFIGURE_DEBUG
     ${${PROJECT_NAME}_ENABLE_CONFIGURE_DEBUG_DEFAULT} CACHE BOOL
     "Enable debug checking of the process which finds errors in the project's CMake files (off by default unless ${PROJECT_NAME}_ENABLE_DEBUG=ON)." )
+
+  IF ("${${PROJECT_NAME}_CHECK_FOR_UNPARSED_ARGUMENTS_DEFAULT}" STREQUAL "")
+    SET(${PROJECT_NAME}_CHECK_FOR_UNPARSED_ARGUMENTS_DEFAULT "WARNING")
+  ENDIF()
+  ADVANCED_SET(${PROJECT_NAME}_CHECK_FOR_UNPARSED_ARGUMENTS
+    ${${PROJECT_NAME}_CHECK_FOR_UNPARSED_ARGUMENTS_DEFAULT}
+    CACHE STRING
+    "Determins how unparsed arguments for TriBITS functions that use CMAKE_PARASE_ARUMENTS() internally are handled.  Valid choices are 'WARNING', 'SEND_ERROR', and 'FATAL_ERROR'.  The default is 'SEND_ERROR'."
+    )
+  IF (
+    (NOT ${PROJECT_NAME}_CHECK_FOR_UNPARSED_ARGUMENTS STREQUAL "WARNING")
+     AND
+    (NOT ${PROJECT_NAME}_CHECK_FOR_UNPARSED_ARGUMENTS STREQUAL "SEND_ERROR")
+     AND
+    (NOT ${PROJECT_NAME}_CHECK_FOR_UNPARSED_ARGUMENTS STREQUAL "FATAL_ERROR")
+    )
+    MESSAGE(FATAL_ERROR "Error, the value of"
+      " ${PROJECT_NAME}_CHECK_FOR_UNPARSED_ARGUMENTS ="
+      " '${${PROJECT_NAME}_CHECK_FOR_UNPARSED_ARGUMENTS}' is invalid!"
+      " Valid valules include 'WANRING', 'SEND_ERROR', and 'FATAL_ERROR'"
+      )
+  ENDIF()
 
   SET(${PROJECT_NAME}_ENABLE_TEUCHOS_TIME_MONITOR ON
     CACHE BOOL
@@ -497,6 +531,18 @@ MACRO(TRIBITS_DEFINE_GLOBAL_OPTIONS_AND_DEFINE_EXTRA_REPOS)
 
   ADVANCED_SET(${PROJECT_NAME}_GENERATE_REPO_VERSION_FILE OFF CACHE BOOL
     "Generate a <ProjectName>RepoVersion.txt file.")
+
+  IF ("${DART_TESTING_TIMEOUT_DEFAULT}"  STREQUAL "")
+    SET(DART_TESTING_TIMEOUT_DEFAULT  1500)
+  ENDIF()
+  ADVANCED_SET(
+    DART_TESTING_TIMEOUT ${DART_TESTING_TIMEOUT_DEFAULT}
+    CACHE STRING
+    "Raw CMake/CTest global default test timeout (default 1500).  (NOTE: Does not impact timeouts of tests that have the TIMEOUT property set on a test-by-test basis.)"
+    )
+  # NOTE: 1500 is the CMake default set in Modules/CTest.cmake.  We need to
+  # set the default here because we need to be able to scale it correctly in
+  # case the user does not explicilty set this var in the cache.
 
   ADVANCED_SET(${PROJECT_NAME}_SCALE_TEST_TIMEOUT 1.0 CACHE STRING
     "Scale factor for global DART_TESTING_TIMEOUT and individual test TIMEOUT (default 1.0)."
@@ -755,7 +801,7 @@ MACRO(TRIBITS_SETUP_INSTALLATION_PATHS)
   ENDIF()
 
   #
-  # C) Set the cache varibles for the install dirs
+  # C) Set the cache variables for the install dirs
   #
 
   ADVANCED_SET( ${PROJECT_NAME}_INSTALL_INCLUDE_DIR
@@ -1491,23 +1537,35 @@ ENDFUNCTION()
 
 
 #
-# Function that prints the current set of enabled/disabled packages
+# Function that prints the current set of enabled/disabled packages given
+# input list of packages.
 #
-FUNCTION(TRIBITS_PRINT_ENABLED_PACKAGE_LIST  DOCSTRING  ENABLED_FLAG  INCLUDE_EMPTY)
+FUNCTION(TRIBITS_PRINT_ENABLED_PACKAGES_LIST_FROM_VAR  PACKAGES_LIST_VAR
+  DOCSTRING  ENABLED_FLAG  INCLUDE_EMPTY
+  )
   IF (ENABLED_FLAG AND NOT INCLUDE_EMPTY)
-    TRIBITS_GET_ENABLED_LIST(${PROJECT_NAME}_PACKAGES  ${PROJECT_NAME}
+    TRIBITS_GET_ENABLED_LIST(${PACKAGES_LIST_VAR}  ${PROJECT_NAME}
       ENABLED_PACKAGES  NUM_ENABLED)
   ELSEIF (ENABLED_FLAG AND INCLUDE_EMPTY)
-    TRIBITS_GET_NONDISABLED_LIST(${PROJECT_NAME}_PACKAGES  ${PROJECT_NAME}
+    TRIBITS_GET_NONDISABLED_LIST(${PACKAGES_LIST_VAR}  ${PROJECT_NAME}
       ENABLED_PACKAGES  NUM_ENABLED)
   ELSEIF (NOT ENABLED_FLAG AND NOT INCLUDE_EMPTY)
-    TRIBITS_GET_DISABLED_LIST(${PROJECT_NAME}_PACKAGES  ${PROJECT_NAME}
+    TRIBITS_GET_DISABLED_LIST(${PACKAGES_LIST_VAR}  ${PROJECT_NAME}
       ENABLED_PACKAGES  NUM_ENABLED)
   ELSE() # NOT ENABLED_FLAG AND INCLUDE_EMPTY
-    TRIBITS_GET_NONENABLED_LIST(${PROJECT_NAME}_PACKAGES  ${PROJECT_NAME}
+    TRIBITS_GET_NONENABLED_LIST(${PACKAGES_LIST_VAR}  ${PROJECT_NAME}
       ENABLED_PACKAGES  NUM_ENABLED)
   ENDIF()
   TRIBITS_PRINT_PREFIX_STRING_AND_LIST("${DOCSTRING}"  "${ENABLED_PACKAGES}")
+ENDFUNCTION()
+
+
+#
+# Function that prints the current set of enabled/disabled packages
+#
+FUNCTION(TRIBITS_PRINT_ENABLED_PACKAGE_LIST  DOCSTRING  ENABLED_FLAG  INCLUDE_EMPTY)
+  TRIBITS_PRINT_ENABLED_PACKAGES_LIST_FROM_VAR( ${PROJECT_NAME}_PACKAGES
+    "${DOCSTRING}" ${ENABLED_FLAG} ${INCLUDE_EMPTY} )
 ENDFUNCTION()
 
 
@@ -1705,7 +1763,12 @@ MACRO(TRIBITS_SETUP_ENV)
 
   # Set up MPI if MPI is being used
 
-  ASSERT_DEFINED(TPL_ENABLE_MPI)
+  IF ("${TPL_ENABLE_MPI}" STREQUAL "")
+    # If TPL_ENABLE_MPI is undefined or empty because this project does not
+    # define an MPI TPL, then explicitly disable it.
+    SET(TPL_ENABLE_MPI FALSE)
+  ENDIF()
+
   IF (TPL_ENABLE_MPI)
     TRIBITS_SETUP_MPI()
   ENDIF()
@@ -1929,6 +1992,21 @@ MACRO(TRIBITS_SETUP_ENV)
 
 ENDMACRO()
 
+#
+# Set mapping of labels to subprojects (i.e. TriBITS packages) for local CTest
+# only.
+#
+# NOTE: This macro is only used define mapping of labels to subprojects for
+# running ctest locally.  This results in summarizing the tests run for each
+# subproject (TriBITS package) if any tests were run.  Therefore, it is
+# harmless to define the mapping for every TriBITS package.  Only TriBITS
+# packages will be listed in the summary if they had one or more tests run.
+#
+
+MACRO(TRIBITS_SET_LABELS_TO_SUBPROJECTS_MAPPING)
+  SET(CTEST_LABELS_FOR_SUBPROJECTS ${${PROJECT_NAME}_PACKAGES})
+ENDMACRO()
+
 
 #
 # Macro to turn on CTest support
@@ -1947,6 +2025,11 @@ MACRO(TRIBITS_INCLUDE_CTEST_SUPPORT)
     # 'TimeOut' in DartConfiguration.tcl file!
     SET(DART_TESTING_TIMEOUT ${DART_TESTING_TIMEOUT} CACHE STRING "" FORCE)
   ENDIF()
+
+  # Set up CTEst/CDash subprojects
+  TRIBITS_SET_LABELS_TO_SUBPROJECTS_MAPPING()
+  # NOTE: We do this after all of the packages have been defined but before
+  # the DartConfiguration.tcl file has been created.
 
   INCLUDE(CTest)  # Generates file DartConfiguration.tcl with 'TimeOut' set!
 
@@ -2109,7 +2192,6 @@ FUNCTION(TRIBITS_REPOSITORY_CONFIGURE_ALL_VERSION_HEADER_FILES)
     TRIBITS_REPOSITORY_CONFIGURE_VERSION_HEADER_FILE( ${REPO_NAME}  ${REPO_DIR}  TRUE
       "${${PROJECT_NAME}_BINARY_DIR}/${REPO_DIR}/${REPO_NAME}_version.h")
   ENDFOREACH()
-
 ENDFUNCTION()
 
 
@@ -2227,12 +2309,19 @@ MACRO(TRIBITS_CONFIGURE_ENABLED_PACKAGES)
           PRINT_VAR(${TRIBITS_PACKAGE}_BINARY_DIR)
         ENDIF()
 
-        TRIBITS_TRACE_FILE_PROCESSING(PACKAGE  ADD_SUBDIR
+        SET(TRIBITS_PACKAGE_CMAKELIST_FILE
           "${${TRIBITS_PACKAGE}_SOURCE_DIR}/CMakeLists.txt")
+        TRIBITS_TRACE_FILE_PROCESSING(PACKAGE  ADD_SUBDIR
+          "${TRIBITS_PACKAGE_CMAKELIST_FILE}")
         IF (NOT ${TRIBITS_PACKAGE}_SOURCE_DIR STREQUAL ${PROJECT_NAME}_SOURCE_DIR)
           ADD_SUBDIRECTORY(${${TRIBITS_PACKAGE}_SOURCE_DIR} ${${TRIBITS_PACKAGE}_BINARY_DIR})
 	ELSE()
-          INCLUDE("${${TRIBITS_PACKAGE}_SOURCE_DIR}/CMakeLists.txt")
+          INCLUDE("${TRIBITS_PACKAGE_CMAKELIST_FILE}")
+        ENDIF()
+        IF (NOT ${PACKAGE_NAME}_TRIBITS_PACAKGE_POSTPROCESS)
+          MESSAGE(FATAL_ERROR
+            "ERROR: Forgot to call TRIBITS_PACKAGE_POSTPROCESS() in ${TRIBITS_PACKAGE_CMAKELIST_FILE}"
+            )
         ENDIF()
 
         LIST(APPEND ENABLED_PACKAGE_LIBS_TARGETS ${TRIBITS_PACKAGE}_libs)
@@ -2261,8 +2350,9 @@ MACRO(TRIBITS_CONFIGURE_ENABLED_PACKAGES)
 
   ENDFOREACH()
 
+
   #
-  # C part 2) Loop backwards over ETI packages if ETI is enabled
+  # D) Loop backwards over ETI packages if ETI is enabled
   #
 
   IF (NOT ${PROJECT_NAME}_TRACE_DEPENDENCY_HANDLING_ONLY)
@@ -2307,7 +2397,7 @@ MACRO(TRIBITS_CONFIGURE_ENABLED_PACKAGES)
   ENDIF()
 
   #
-  # D) Check if no packages are enabled and if that is allowed
+  # E) Check if no packages are enabled and if that is allowed
   #
 
   ADVANCED_SET( ${PROJECT_NAME}_ALLOW_NO_PACKAGES ON
@@ -2333,7 +2423,7 @@ MACRO(TRIBITS_CONFIGURE_ENABLED_PACKAGES)
   ENDIF()
 
   #
-  # E) Process the global variables and other cleanup
+  # F) Process the global variables and other cleanup
   #
 
   IF (NOT ${PROJECT_NAME}_TRACE_DEPENDENCY_HANDLING_ONLY)
@@ -2581,7 +2671,7 @@ ENDMACRO()
 # CMake/CPack as a regex that is prefixed by the project's and package's
 # source directory names so as to not exclude files and directories of the
 # same name and path from other packages.  If ``<filei>`` is an absolute path
-# it it not prefixed but is appended to ``CPACK_SOURCE_IGNORE_FILES``
+# it is not prefixed but is appended to ``CPACK_SOURCE_IGNORE_FILES``
 # unmodified.
 #
 # In general, do **NOT** put in excludes for files and directories that are

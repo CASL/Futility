@@ -89,6 +89,12 @@ INCLUDE(PrintVar)
 # than just grepping STDOUT (e.g. by running separate post-processing programs
 # to examine output files).
 #
+# The test is only added if tests are enabled for the SE package
+# (i.e. `${PACKAGE_NAME}_ENABLE_TESTS`_) or the parent package (if this is a
+# subpackage) (i.e. ``${PARENT_PACKAGE_NAME}_ENABLE_TESTS``).  (NOTE: A more
+# efficient way to optionally enable tests is to put them in a ``test/``
+# subdir and then include that subdir with `TRIBITS_ADD_TEST_DIRECTORIES()`_.)
+#
 # Each atomic test case is either a package-built executable or just a basic
 # command.  An atomic test command block ``TEST_<idx>`` (i.e. ``TEST_0``,
 # ``TEST_1``, ..., up to ``TEST_19``) takes the form::
@@ -110,7 +116,7 @@ INCLUDE(PrintVar)
 #        | PASS_REGULAR_EXPRESSION_ALL "<regex1>" "<regex2>" ... "<regexn>"
 #        | STANDARD_PASS_OUTPUT ]
 #      [FAIL_REGULAR_EXPRESSION "<regex>"]
-#      [ALWAYS_FAIL_ON_NONZERO_RETURN]
+#      [ALWAYS_FAIL_ON_NONZERO_RETURN | ALWAYS_FAIL_ON_ZERO_RETURN]
 #      [WILL_FAIL]
 #
 # By default, each and every atomic test or command needs to pass (as defined below) in
@@ -247,8 +253,9 @@ INCLUDE(PrintVar)
 #   ``TIMEOUT <maxSeconds>``
 #
 #     If passed in, gives maximum number of seconds the test will be allowed
-#     to run before being timed-out (see `TRIBITS_ADD_TEST()`_).  This is for
-#     the full CTest test, not individual ``TEST_<idx>`` commands!
+#     to run before being timed-out and killed (see `Setting timeouts for
+#     tests (TRIBITS_ADD_TEST())`_).  This is for the full CTest test, not
+#     individual ``TEST_<idx>`` commands!
 #
 #   ``ADDED_TEST_NAME_OUT <testName>``
 #
@@ -403,7 +410,7 @@ INCLUDE(PrintVar)
 #
 #     If specified, the test command will be assumed to pass if it matches the
 #     given regular expression.  Otherwise, it is assumed to fail.  TIPS:
-#     Replace ';' with '[;]' or CMake will interpretet this as a array eleemnt
+#     Replace ';' with '[;]' or CMake will interpret this as an array elemnt
 #     boundary.  To match '.', use '[.]'.
 #
 #   ``PASS_REGULAR_EXPRESSION_ALL "<regex1>" "<regex2>" ... "<regexn>"``
@@ -412,7 +419,7 @@ INCLUDE(PrintVar)
 #     matches all of the provided regular expressions.  Note that this is not
 #     a capability of raw ctest and represents an extension provided by
 #     TriBITS.  NOTE: It is critical that you replace ';' with '[;]' or CMake
-#     will interpretet this as a array eleemnt boundary.
+#     will interpret this as an array elemnt boundary.
 #
 #   ``STANDARD_PASS_OUTPUT``
 #
@@ -435,9 +442,18 @@ INCLUDE(PrintVar)
 #     If specified, then the test case will be marked as failed if the test
 #     command returns nonzero, independent of the other pass/fail criteria.
 #     This option is used in cases where one wants to grep for strings in the
+#     output but still wants to require a zero return code.  This make for a
+#     stronger test by requiring that both the strings are found and that the
+#     command returns 0.
+#
+#   ``ALWAYS_FAIL_ON_ZERO_RETURN``
+#
+#     If specified, then the test case will be marked as failed if the test
+#     command returns zero '0', independent of the other pass/fail criteria.
+#     This option is used in cases where one wants to grep for strings in the
 #     output but still wants to require a nonzero return code.  This make for
 #     a stronger test by requiring that both the strings are found and that
-#     the command returns 0.
+#     the command returns != 0.
 #
 #   ``WILL_FAIL``
 #
@@ -486,8 +502,10 @@ INCLUDE(PrintVar)
 #     TEST_CASE_PASSED = FALSE
 #   Endif
 #
-#   # C) Check for return code always 0?
+#   # C) Check for return code always 0 or !=0?
 #   If ALWAYS_FAIL_ON_NONZERO_RETURN specified and return code != 0:
+#     TEST_CASE_PASSED = FALSE
+#   ElseIf ALWAYS_FAIL_ON_ZERO_RETURN specified and return code == 0:
 #     TEST_CASE_PASSED = FALSE
 #   Endif
 #
@@ -525,15 +543,15 @@ INCLUDE(PrintVar)
 # **Argument Parsing and Ordering (TRIBITS_ADD_ADVANCED_TEST())**
 #
 # The basic tool used for parsing the arguments to this function is the macro
-# `PARSE_ARGUMENTS()`_ which has a certain set of behaviors.  The parsing
-# using `PARSE_ARGUMENTS()`_ is actually done in two phases.  There is a
-# top-level parsing of the "overall" arguments listed in `Overall Arguments
-# (TRIBITS_ADD_ADVANCED_TEST())`_ that also pulls out the test blocks.  Then
-# there is a second level of parsing using ``PARSE_ARGUMENTS()`` for each of
-# the ``TEST_<idx>`` blocks.  Because of this usage, there are a few
-# restrictions that one needs to be aware of when using
-# ``TRIBITS_ADD_ADVANCED_TEST()``.  This short sections tries to explain the
-# behaviors and what is allowed and what is not allowed.
+# ``CMAKE_PARSE_ARGUMENTS()`` which has a certain set of behaviors.  The
+# parsing using ``CMAKE_PARSE_ARGUMENTS()`` is actually done in two phases.
+# There is a top-level parsing of the "overall" arguments listed in `Overall
+# Arguments (TRIBITS_ADD_ADVANCED_TEST())`_ that also pulls out the test
+# blocks.  Then there is a second level of parsing using
+# ``CMAKE_PARSE_ARGUMENTS()`` for each of the ``TEST_<idx>`` blocks.  Because
+# of this usage, there are a few restrictions that one needs to be aware of
+# when using ``TRIBITS_ADD_ADVANCED_TEST()``.  This short sections tries to
+# explain the behaviors and what is allowed and what is not allowed.
 #
 # For the most part, the "overall" arguments and the arguments inside of any
 # individual ``TEST_<idx>`` blocks can be listed in any order but there are
@@ -600,6 +618,39 @@ INCLUDE(PrintVar)
 #
 # where the test writes a log file ``someTest.log`` that we want to submit to
 # CDash also.
+#
+# This approach will work no matter what TriBITS names the individual test(s)
+# or whether the test(s) are added or not (depending on other arguments like
+# ``COMM``, ``XHOST``, etc.).
+#
+# The following built-in CTest test properties are set through `Overall
+# Arguments (TRIBITS_ADD_ADVANCED_TEST())`_ or are otherwise automatically set
+# by this function and should **NOT** be overridden by direct calls to
+# ``SET_TESTS_PROPERTIES()``: ``ENVIRONMENT``, ``FAIL_REGULAR_EXPRESSION``,
+# ``LABELS``, ``PASS_REGULAR_EXPRESSION``, ``RUN_SERIAL``, ``TIMEOUT``,
+# ``WILL_FAIL``, and ``WORKING_DIRECTORY``.
+#
+# However, generally, other built-in CTest test properties can be set after
+# the test is added like show above.  Examples of test properties that can be
+# set using direct calls to ``SET_TESTS_PROPERTIES()`` include
+# ``ATTACHED_FILES``, ``ATTACHED_FILES_ON_FAIL``, ``COST``, ``DEPENDS``,
+# ``MEASUREMENT``, and ``RESOURCE_LOCK``.
+#
+# For example, one can set a dependency between two tests using::
+#
+#   TRIBITS_ADD_ADVANCED_TEST_TEST( test_a [...]
+#      ADDED_TEST_NAME_OUT  test_a_TEST_NAME )
+#   
+#   TRIBITS_ADD_ADVANCED_TEST_TEST( test_b [...]
+#      ADDED_TEST_NAME_OUT  test_z_TEST_NAME )
+#   
+#   IF (test_a_TEST_NAME AND test_b_TEST_NAME)
+#     SET_TESTS_PROPERTIES(${test_b_TEST_NAME}
+#       PROPERTIES DEPENDS ${test_a_TEST_NAME})
+#   ENDIF()
+#
+# This ensures that test ``test_b`` will always be run after ``test_a`` if
+# both tests are run by CTest.
 #
 # .. _Running multiple tests at the same time (TRIBITS_ADD_ADVANCED_TEST()):
 #
@@ -675,13 +726,15 @@ FUNCTION(TRIBITS_ADD_ADVANCED_TEST TEST_NAME_IN)
   ENDFOREACH()
   #PRINT_VAR(TEST_IDX_LIST)
 
-  PARSE_ARGUMENTS(
+  CMAKE_PARSE_ARGUMENTS(
      #prefix
      PARSE
-     #lists
-     "${TEST_IDX_LIST};OVERALL_WORKING_DIRECTORY;KEYWORDS;COMM;OVERALL_NUM_MPI_PROCS;OVERALL_NUM_TOTAL_CORES_USED;FINAL_PASS_REGULAR_EXPRESSION;CATEGORIES;HOST;XHOST;HOSTTYPE;XHOSTTYPE;EXCLUDE_IF_NOT_TRUE;FINAL_FAIL_REGULAR_EXPRESSION;TIMEOUT;ENVIRONMENT;ADDED_TEST_NAME_OUT"
      #options
      "FAIL_FAST;RUN_SERIAL;SKIP_CLEAN_OVERALL_WORKING_DIRECTORY"
+     # one_value_keywords
+     ""
+     # multi_value_keywords
+     "${TEST_IDX_LIST};OVERALL_WORKING_DIRECTORY;KEYWORDS;COMM;OVERALL_NUM_MPI_PROCS;OVERALL_NUM_TOTAL_CORES_USED;FINAL_PASS_REGULAR_EXPRESSION;CATEGORIES;HOST;XHOST;HOSTTYPE;XHOSTTYPE;EXCLUDE_IF_NOT_TRUE;FINAL_FAIL_REGULAR_EXPRESSION;TIMEOUT;ENVIRONMENT;ADDED_TEST_NAME_OUT"
      ${ARGN}
      )
 
@@ -692,6 +745,12 @@ FUNCTION(TRIBITS_ADD_ADVANCED_TEST TEST_NAME_IN)
   #
   # B) Add or don't add tests based on a number of criteria
   #
+
+  SET(ADD_THE_TEST FALSE)
+  TRIBITS_ADD_TEST_PROCESS_ENABLE_TESTS(ADD_THE_TEST)
+  IF (NOT ADD_THE_TEST)
+    RETURN()
+  ENDIF()
 
   SET(ADD_THE_TEST FALSE)
   TRIBITS_ADD_TEST_PROCESS_CATEGORIES(ADD_THE_TEST)
@@ -786,15 +845,19 @@ FUNCTION(TRIBITS_ADD_ADVANCED_TEST TEST_NAME_IN)
 
     #PRINT_VAR(PARSE_TEST_${TEST_CMND_IDX})
 
-    PARSE_ARGUMENTS(
+    CMAKE_PARSE_ARGUMENTS(
        #prefix
        PARSE
-       #lists
-       "EXEC;CMND;ARGS;DIRECTORY;MESSAGE;WORKING_DIRECTORY;OUTPUT_FILE;NUM_MPI_PROCS;NUM_TOTAL_CORES_USED;PASS_REGULAR_EXPRESSION_ALL;FAIL_REGULAR_EXPRESSION;PASS_REGULAR_EXPRESSION"
        #options
-       "NOEXEPREFIX;NOEXESUFFIX;NO_ECHO_OUTPUT;PASS_ANY;STANDARD_PASS_OUTPUT;ALWAYS_FAIL_ON_NONZERO_RETURN;WILL_FAIL;ADD_DIR_TO_NAME;SKIP_CLEAN_WORKING_DIRECTORY"
+        "NOEXEPREFIX;NOEXESUFFIX;NO_ECHO_OUTPUT;PASS_ANY;STANDARD_PASS_OUTPUT;ALWAYS_FAIL_ON_NONZERO_RETURN;ALWAYS_FAIL_ON_ZERO_RETURN;WILL_FAIL;ADD_DIR_TO_NAME;SKIP_CLEAN_WORKING_DIRECTORY"
+       # one_value_keywords
+       ""
+       # multi_value_keywords
+       "EXEC;CMND;ARGS;DIRECTORY;MESSAGE;WORKING_DIRECTORY;OUTPUT_FILE;NUM_MPI_PROCS;NUM_TOTAL_CORES_USED;PASS_REGULAR_EXPRESSION_ALL;FAIL_REGULAR_EXPRESSION;PASS_REGULAR_EXPRESSION"
        ${PARSE_TEST_${TEST_CMND_IDX}}
        )
+
+  TRIBITS_CHECK_FOR_UNPARSED_ARGUMENTS()
 
     # Write the command
 
@@ -1000,6 +1063,13 @@ FUNCTION(TRIBITS_ADD_ADVANCED_TEST TEST_NAME_IN)
       APPEND_STRING_VAR( TEST_SCRIPT_STR
         "\n"
         "SET( TEST_${TEST_CMND_IDX}_ALWAYS_FAIL_ON_NONZERO_RETURN TRUE )\n"
+        )
+    ENDIF()
+
+    IF (PARSE_ALWAYS_FAIL_ON_ZERO_RETURN)
+      APPEND_STRING_VAR( TEST_SCRIPT_STR
+        "\n"
+        "SET( TEST_${TEST_CMND_IDX}_ALWAYS_FAIL_ON_ZERO_RETURN TRUE )\n"
         )
     ENDIF()
 
