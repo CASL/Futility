@@ -7,27 +7,21 @@
 # can be found in LICENSE.txt in the head directory of this repository.        !
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 
-SET(LIB_REQUIRED_DEP_PACKAGES)
-SET(LIB_OPTIONAL_DEP_PACKAGES
-    Tpetra
-    Epetra
-    NOX
-    Amesos2
-    Rythmos
-    MueLu
-    Ifpack
-    Ifpack2
-    Anasazi
-    Belos
-    CTeuchos
-    ForTeuchos)
-SET(TEST_REQUIRED_DEP_PACKAGES)
-SET(TEST_OPTIONAL_DEP_PACKAGES)
-SET(LIB_REQUIRED_DEP_TPLS)
-SET(LIB_OPTIONAL_DEP_TPLS BLAS LAPACK MPI HYPRE PETSC PARDISO HDF5 PAPI SLEPC SUNDIALS)
-SET(TEST_REQUIRED_DEP_TPLS)
-SET(TEST_OPTIONAL_DEP_TPLS MPI)
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
-SET(HDF5_REQUIRE_FORTRAN TRUE)
-
-TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES(${LIB_OPTIONAL_DEP_PACKAGES})
+TRIBITS_ADD_LIBRARY(TrilinosUtils
+    HEADERS
+      trilinos_mat_vec.hpp
+      trilinos_pc.hpp
+      trilinos_solvers.hpp
+      trilinos_ts.hpp
+      trilinos_anderson.hpp
+    SOURCES
+      trilinos_mat_vec.cpp
+      trilinos_pc.cpp
+      trilinos_solvers.cpp
+      trilinos_ts.cpp
+      trilinos_anderson.cpp
+      trilinos_c_interfaces.cpp
+)

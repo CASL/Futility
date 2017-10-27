@@ -387,24 +387,40 @@ MODULE trilinos_interfaces
     ENDSUBROUTINE
 
 !-------------------------------------------------------------------------------
-! JFNK Interfaces
+! Rythmos Interfaces
 !-------------------------------------------------------------------------------
-    SUBROUTINE JFNK_Init(id,fptr,idx,idF) bind(C,NAME="JFNK_Init")
+    SUBROUTINE TS_Init(id,funptr,n,tol) bind(C,NAME="TS_Init")
       IMPORT :: C_INT,C_DOUBLE,C_FUNPTR
       INTEGER(C_INT),INTENT(INOUT)    :: id
-      TYPE(C_FUNPTR),INTENT(IN),VALUE :: fptr
-      INTEGER(C_INT),INTENT(IN),VALUE :: idx
-      INTEGER(C_INT),INTENT(IN),VALUE :: idF
+      TYPE(C_FUNPTR),INTENT(IN),VALUE :: funptr
+      INTEGER(C_INT),INTENT(IN),VALUE :: n
+      REAL(C_DOUBLE),INTENT(IN),VALUE :: tol
     ENDSUBROUTINE
 
-    SUBROUTINE JFNK_Destroy(id) bind(C,NAME="JFNK_Destroy")
+#ifdef FUTILITY_HAVE_Trilinos
+    SUBROUTINE TS_InitParams(id,funptr,n,tol,plist) bind(C,NAME="TS_InitParams")
+      IMPORT :: C_INT,C_DOUBLE,C_FUNPTR
+      IMPORT :: ForTeuchos_ParameterList_ID
+      INTEGER(C_INT),INTENT(INOUT)    :: id
+      TYPE(C_FUNPTR),INTENT(IN),VALUE :: funptr
+      INTEGER(C_INT),INTENT(IN),VALUE :: n
+      REAL(C_DOUBLE),INTENT(IN),VALUE :: tol
+      TYPE(ForTeuchos_ParameterList_ID), INTENT(IN) :: plist
+    ENDSUBROUTINE
+#endif
+
+    SUBROUTINE TS_Destroy(id) bind(C,NAME="TS_Destroy")
       IMPORT :: C_INT
       INTEGER(C_INT),INTENT(IN),VALUE :: id
     ENDSUBROUTINE
 
-    SUBROUTINE JFNK_Solve(id) bind(C,NAME="JFNK_Solve")
-      IMPORT :: C_INT
+    SUBROUTINE TS_Step(id,tstart,tend,xstart,xend) bind(C,NAME="TS_Step")
+      IMPORT :: C_INT,C_DOUBLE
       INTEGER(C_INT),INTENT(IN),VALUE  :: id
+      REAL(C_DOUBLE),INTENT(IN) :: tstart
+      REAL(C_DOUBLE),INTENT(IN) :: tend
+      REAL(C_DOUBLE),DIMENSION(*),INTENT(IN) :: xstart
+      REAL(C_DOUBLE),DIMENSION(*),INTENT(OUT) :: xend
     ENDSUBROUTINE
 
   ENDINTERFACE
