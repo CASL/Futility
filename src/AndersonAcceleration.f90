@@ -114,7 +114,7 @@ MODULE AndersonAccelerationTypes
       TYPE(ParamType) :: validParams
       INTEGER(SIK) :: n,nlocal,depth,start
       REAL(SRK) :: beta
-#ifdef FUTILITY_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos_NOX
       TYPE(ParamType) :: tmpPL
 #endif
 
@@ -180,7 +180,7 @@ MODULE AndersonAccelerationTypes
           solver%beta=beta
         ENDIF
 
-#ifdef FUTILITY_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos_NOX
         CALL tmpPL%clear()
         CALL tmpPL%add('VectorType->n',n)
         CALL tmpPL%add('VectorType->MPI_Comm_ID',solver%MPIparallelEnv%comm)
@@ -224,7 +224,7 @@ MODULE AndersonAccelerationTypes
         DEALLOCATE(solver%X)
         NULLIFY(solver%X)
       ENDIF
-#ifdef FUTILITY_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos_NOX
       CALL Anderson_Destroy(solver%id)
 #endif
       solver%isInit=.FALSE.
@@ -238,7 +238,7 @@ MODULE AndersonAccelerationTypes
 !>
     SUBROUTINE step_AndersonAccelerationType(solver)
       CLASS(AndersonAccelerationType),INTENT(INOUT) :: solver
-#ifdef FUTILITY_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos_NOX
       IF(solver%iter==0) THEN
         CALL Anderson_Reset(solver%id)
       ELSE
@@ -257,7 +257,7 @@ MODULE AndersonAccelerationTypes
 !>
     SUBROUTINE reset_AndersonAccelerationType(solver)
       CLASS(AndersonAccelerationType),INTENT(INOUT) :: solver
-#ifdef FUTILITY_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos_NOX
       CALL Anderson_Reset(solver%id)
       solver%iter=1
 #endif
