@@ -67,7 +67,7 @@ CONTAINS
       ASSERT(testAndAcc%depth==2,'%depth')
       ASSERT(testAndAcc%beta==0.5_SRK,'%beta')
       ASSERT(ASSOCIATED(testAndAcc%MPIparallelEnv),'%MPIenv')
-#ifdef FUTILITY_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos_NOX
       !Can't test this without trilinos
       ASSERT(testAndAcc%X%isInit ,'%x')
 #endif
@@ -76,7 +76,7 @@ CONTAINS
 !-------------------------------------------------------------------------------
     SUBROUTINE testStep()
 
-#ifdef FUTILITY_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos_NOX
       INTEGER(SIK) :: i
       REAL(SRK) :: tmp
       !First call to step resets the solution
@@ -380,14 +380,14 @@ CONTAINS
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testStep_beta_1()
-#ifdef FUTILITY_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos_NOX
       INTEGER(SIK) :: i
       REAL(SRK) :: tmp
 #endif
 
       CALL optList%set('AndersonAccelerationType->beta',1.0_SRK)
       CALL testAndAcc%init(mpiTestEnv,optList)
-#ifdef FUTILITY_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos_NOX
       CALL testAndAcc%X%set(1.0_SRK)
       CALL testAndAcc%step()
 
@@ -485,14 +485,14 @@ CONTAINS
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testStep_depth_0()
-#ifdef FUTILITY_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos_NOX
       REAL(SRK) :: tmp
 #endif
 
       CALL optList%set('AndersonAccelerationType->beta',0.5_SRK)
       CALL optList%set('AndersonAccelerationType->depth',0_SIK)
       CALL testAndAcc%init(mpiTestEnv,optList)
-#ifdef FUTILITY_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_Trilinos_NOX
       CALL testAndAcc%X%set(1.0_SRK)
       CALL testAndAcc%step()
 

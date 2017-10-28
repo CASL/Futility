@@ -11,13 +11,13 @@
 #endif
 #ifdef FUTILITY_HAVE_Trilinos
 #include "trilinos_mat_vec.hpp"
-#include "trilinos_anderson.hpp"
+//#include "trilinos_anderson.hpp"
 #include <omp.h>
 #include "CTeuchos_ParameterList.h"
 #include "CTeuchos_ParameterList_Cpp.hpp"
 #include "trilinos_pc.hpp"
 #include "trilinos_solvers.hpp"
-#include "trilinos_ts.hpp"
+// #include "trilinos_ts.hpp"
 
 bool futility_trilinos_isinit = false;
 Teuchos::RCP<TpetraVecStore> tvec(new TpetraVecStore);
@@ -25,8 +25,8 @@ Teuchos::RCP<TpetraMatStore> tmat(new TpetraMatStore);
 Teuchos::RCP<PCStore> pcst(new PCStore);
 Teuchos::RCP<AnasaziStore> aeig(new AnasaziStore);
 Teuchos::RCP<BelosStore> bels(new BelosStore);
-Teuchos::RCP< AndersonStore  > andr(new AndersonStore);
-Teuchos::RCP<TSStore> tsst(new TSStore);
+//Teuchos::RCP< AndersonStore  > andr(new AndersonStore);
+//Teuchos::RCP<TSStore> tsst(new TSStore);
 
 //------------------------------------------------------------------------------
 // Vector
@@ -362,6 +362,8 @@ extern "C" void Preconditioner_Reset(const int id, const int idM)
 //------------------------------------------------------------------------------
 // Anderson
 //------------------------------------------------------------------------------
+/*   Disabled to cut down build time and currently unused
+
 extern "C" void Anderson_Init(int &id, const int depth, const double beta,
                               const int start, const int idv)
 {
@@ -415,5 +417,5 @@ extern "C" void TS_Step(int id, double tstart, double tend, double *xstart,
     int idE = -1;
     (*tsst)[id].step(tstart, tend, xstart, xend);
 }
-
+*/
 #endif
