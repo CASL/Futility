@@ -641,26 +641,9 @@ MODULE Allocs
 !>
     FUNCTION getMemUsageChar_default() RESULT(memstring)
       CHARACTER(LEN=ALLOC_MEMSTRING_LENGTH) :: memstring
-      CHARACTER(LEN=5) :: unit
-      REAL(SRK) :: mem,bytes
-      REAL(SRK),PARAMETER :: KB2bytes=1024_SRK
-      REAL(SRK),PARAMETER :: MB2bytes=1048576_SRK
-      REAL(SRK),PARAMETER :: GB2bytes=1073741824_SRK
 
-      bytes=Alloc_nbytes
-      mem=bytes
-      unit='bytes'
-      IF(bytes >= KB2bytes .AND. bytes < MB2bytes) THEN
-        mem=bytes/KB2bytes
-        unit='KB'
-      ELSEIF(bytes >= MB2bytes .AND. bytes < GB2bytes) THEN
-        mem=bytes/MB2bytes
-        unit='MB'
-      ELSEIF(Alloc_nbytes >= GB2bytes) THEN
-        mem=bytes/GB2bytes
-        unit='GB'
-      ENDIF
-      WRITE(memstring,'(f8.2,a)') mem,' '//unit
+      memstring=getMemUsageChar_bytes(Alloc_nbytes)
+
     ENDFUNCTION getMemUsageChar_default
 !
 !-------------------------------------------------------------------------------
@@ -704,22 +687,11 @@ MODULE Allocs
     SUBROUTINE getMemUsage(memory,units)
       CHARACTER(LEN=*),INTENT(IN) :: units
       REAL(SRK),INTENT(INOUT) :: memory
-      CHARACTER(LEN=32) :: mem_string,mem_unit
       REAL(SRK),PARAMETER :: KB2bytes=1024_SRK
       REAL(SRK),PARAMETER :: MB2bytes=1048576_SRK
       REAL(SRK),PARAMETER :: GB2bytes=1073741824_SRK
 
-      ! Get memory usage for current process, then convert to bytes
-      mem_string=getMemUsageChar_default()
-      READ(mem_string,FMT='(f8.2,a)') memory,mem_unit
-      IF(TRIM(ADJUSTL(mem_unit))=='KB') THEN
-        memory=memory*KB2bytes
-      ELSEIF(TRIM(ADJUSTL(mem_unit))=='MB') THEN
-        memory=memory*MB2bytes
-      ELSEIF(TRIM(ADJUSTL(mem_unit))=='GB') THEN
-        memory=memory*GB2bytes
-      ENDIF
-
+      memory=Alloc_nbytes
       ! Total memory as bytes, convert to whatever was requrested
       IF(TRIM(ADJUSTL(units))=='KB') THEN
         memory=memory/KB2bytes
