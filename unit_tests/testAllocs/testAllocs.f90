@@ -65,16 +65,16 @@ PROGRAM testAllocs
 
       CALL dmallocA(tmpvar,1000000_SIK)
       CALL getMemUsage(memory,'whatever')
-      ASSERT(SOFTEQ(memory,8000634.87999_SRK,1.0E-4_SRK),'getMemUsage(memory,''bytes'')')
+      ASSERT(memory .APPROXEQA. 8000000.0_SRK,'getMemUsage(memory,''bytes'')')
 
       CALL getMemUsage(memory,'KB')
-      ASSERT(SOFTEQ(memory,7813.11999_SRK,1.0E-4_SRK),'getMemUsage(memory,''KB'')')
+      ASSERT(memory .APPROXEQA. 7812.5_SRK,'getMemUsage(memory,''KB'')')
 
       CALL getMemUsage(memory,'MB')
-      ASSERT(SOFTEQ(memory,7.62999999_SRK,1.0E-7_SRK),'getMemUsage(memory,''MB'')')
+      ASSERT(memory .APPROXEQA. 7.62939453125_SRK,'getMemUsage(memory,''MB'')')
 
       CALL getMemUsage(memory,'GB')
-      ASSERT(SOFTEQ(memory,0.00745117187_SRK,1.0E-10_SRK),'getMemUsage(memory,''GB'')')
+      ASSERT(memory .APPROXEQA. 7.450580596923828E-3_SRK,'getMemUsage(memory,''GB'')')
 
       CALL demallocA(tmpvar)
 
