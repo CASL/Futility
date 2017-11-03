@@ -10,9 +10,7 @@
 SET(LIB_REQUIRED_DEP_PACKAGES)
 SET(LIB_OPTIONAL_DEP_PACKAGES
     Tpetra
-    Epetra
     #NOX
-    Amesos2
     #Rythmos
     MueLu
     Ifpack2
