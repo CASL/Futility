@@ -8,7 +8,7 @@
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 
 SET(Futility_PACKAGES_AND_DIRS_AND_CLASSIFICATIONS
-  Futility      .               SS
+  Futility  .  ST
   )
 
 TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES()
