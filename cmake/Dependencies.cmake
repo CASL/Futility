@@ -7,23 +7,26 @@
 # can be found in LICENSE.txt in the head directory of this repository.        !
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 
-SET(LIB_REQUIRED_DEP_PACKAGES)
-SET(LIB_OPTIONAL_DEP_PACKAGES
-    Tpetra
-    #NOX
-    #Rythmos
-    MueLu
-    Ifpack2
-    Anasazi
-    Belos
-    CTeuchos
-    ForTeuchos)
-SET(TEST_REQUIRED_DEP_PACKAGES)
-SET(TEST_OPTIONAL_DEP_PACKAGES)
-SET(LIB_REQUIRED_DEP_TPLS)
-SET(LIB_OPTIONAL_DEP_TPLS BLAS LAPACK MPI HYPRE PETSC PARDISO HDF5 PAPI SLEPC SUNDIALS)
-SET(TEST_REQUIRED_DEP_TPLS)
-SET(TEST_OPTIONAL_DEP_TPLS MPI)
+SET(LIB_OPTIONAL_DEP_PACKAGES_local
+  Tpetra
+  #NOX
+  #Rythmos
+  MueLu
+  Ifpack2
+  Anasazi
+  Belos
+  CTeuchos
+  ForTeuchos
+  )
+
+TRIBITS_PACKAGE_DEFINE_DEPENDENCIES(
+  LIB_OPTIONAL_PACKAGES
+    ${LIB_OPTIONAL_DEP_PACKAGES_local}
+  LIB_OPTIONAL_TPLS
+    BLAS LAPACK MPI HYPRE PETSC PARDISO HDF5 PAPI SLEPC SUNDIALS
+  TEST_OPTIONAL_TPLS
+    MPI
+  )
 
 SET(HDF5_REQUIRE_FORTRAN TRUE)
 
