@@ -50,14 +50,16 @@ ENDIF()
 ## used to be after call to project
 
 # Pull in the TriBITS system and execute
-IF(NOT DEFINED(${${PROJECT_NAME}_TRIBITS_DIR}))
-  IF(${PROJECT_NAME} STREQUAL "Futility")
-    SET(${PROJECT_NAME}_TRIBITS_DIR
-       "${${PROJECT_NAME}_MAIN_SOURCE_DIR}/cmake/tribits" CACHE INTERNAL "")
-  ELSE()
-    SET(${PROJECT_NAME}_TRIBITS_DIR
-       "${${PROJECT_NAME}_MAIN_SOURCE_DIR}/Futility/cmake/tribits" CACHE INTERNAL "")
-  ENDIF()
+IF(${PROJECT_NAME} STREQUAL "Futility")
+  SET(${PROJECT_NAME}_TRIBITS_DIR
+     "${${PROJECT_NAME}_MAIN_SOURCE_DIR}/cmake/tribits"
+     CACHE PATH
+     "Set in Futility/cmake/Settings_Common.cmake")
+ELSE()
+  SET(${PROJECT_NAME}_TRIBITS_DIR
+     "${${PROJECT_NAME}_MAIN_SOURCE_DIR}/Futility/cmake/tribits"
+     CACHE PATH
+     "Set in Futility/cmake/Settings_Common.cmake")
 ENDIF()
 
 # Include the modules in TriBITS
