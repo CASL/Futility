@@ -9,18 +9,6 @@
 
 SET(PROJECT_NAME Futility)
 
-SET(${PROJECT_NAME}_ENABLE_STANDALONE OFF
-  CACHE BOOL
-   "If 'ON', then Futility is configured and built against pre-installed Trilinos+TeuchosWrappersExt"
-   )
-
-IF (${PROJECT_NAME}_ENABLE_STANDALONE)
-  SET(${PROJECT_NAME}_EXTRAREPOS_FILE ""
-    CACHE FILEPATH
-    "Set in Futility/ProjectName.cmake"
-    )
-ENDIF()
-
 INCLUDE(cmake/Project_Common.cmake)
 
 # Put in hard disables for excluded packages

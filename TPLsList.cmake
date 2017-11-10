@@ -7,7 +7,7 @@
 # can be found in LICENSE.txt in the head directory of this repository.        !
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 
-IF (${PROJECT_NAME}_ENABLE_STANDALONE)
+IF (${PROJECT_NAME}_TRILINOS_TPL)
   SET(TRILINOS_PACKAGE_TPLS_LIST
     Tpetra        TRIBITS_PKG   SS
     MueLu         TRIBITS_PKG   SS
