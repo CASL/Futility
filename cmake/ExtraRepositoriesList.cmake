@@ -6,8 +6,8 @@ SET_DEFAULT_AND_FROM_ENV(Futility_URL_REPO_BASE
 #
 IF(NOT ${PROJECT_NAME}_TRILINOS_TPL)
   SET(TRILINOS_PACKAGE_EXTRA_REPO
-    Trilinos           ""  GIT  ${Futility_URL_REPO_BASE}Trilinos            PRE         Continuous
-    TeuchosWrappersExt ""  GIT  ${Futility_URL_REPO_BASE}TeuchosWrappersExt  PRE         Continuous
+    Trilinos           \"\"  GIT  ${Futility_URL_REPO_BASE}Trilinos            PRE         Continuous
+    TeuchosWrappersExt \"\"  GIT  ${Futility_URL_REPO_BASE}TeuchosWrappersExt  PRE         Continuous
   )
 ELSE()
   SET(TRILINOS_PACKAGE_EXTRA_REPO )
