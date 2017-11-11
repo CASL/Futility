@@ -10,5 +10,7 @@ IF(NOT ${PROJECT_NAME}_TRILINOS_TPL)
     TeuchosWrappersExt ""  GIT  ${Futility_URL_REPO_BASE}TeuchosWrappersExt  PRE         Continuous
   )
 ELSE()
-  TRIBITS_PROJECT_DEFINE_EXTRA_REPOSITORIES()
+  TRIBITS_PROJECT_DEFINE_EXTRA_REPOSITORIES(
+    FakeRepo           ""  GIT  ${Futility_URL_REPO_BASE}FakeRepo            ""          Experimental
+  )
 ENDIF()
