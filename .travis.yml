@@ -5,7 +5,7 @@ services:
 
 before_install:
  - echo $PWD
- - docker pull dalg24/vera_tpls
+ - docker pull bcollins/futility_tpl
 
 script:
  - docker run -v $PWD:/mnt/Futility dalg24/vera_tpls /bin/bash -c "mkdir /build; cd /build; cmake /mnt/Futility; make -j2 |& tee /mnt/Futility/make.out; ctest -j2"
