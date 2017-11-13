@@ -1732,7 +1732,7 @@ MODULE PartitionGraph
           srms=srms+wtDif
         ENDDO !ig
         mmr=lgroup/sgroup
-        srms=100.0_SRK*SQRT(srms)/optSize
+        srms=100.0_SRK*SQRT(srms/REAL(thisGraph%nGroups,SRK))/optSize
 
         !Determine the total weight of cut edges, and the communication between
         !groups

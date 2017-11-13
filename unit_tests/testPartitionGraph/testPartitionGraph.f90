@@ -828,7 +828,7 @@ PROGRAM testPartitionGraph
       bool=(mmr .APPROXEQ. 1.0588235294117647_SRK)
       ASSERT(bool,'max-min ratio')
       FINFO() mmr
-      bool=(srms .APPROXEQ. 4.7105571976599583_SRK)
+      bool=(srms .APPROXEQ. 2.7196414661021060_SRK)
       ASSERT(bool, 'group size rms (from optimal)')
       FINFO() srms
       bool=(ecut .APPROXEQ. 10.0_SRK)
