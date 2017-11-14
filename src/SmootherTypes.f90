@@ -774,7 +774,7 @@ MODULE SmootherTypes
 #ifdef FUTILITY_HAVE_PETSC
             IF(manager%hasAllColorsDefined .AND. smoother%isKSPSetup) THEN
               CALL KSPSetTolerances(smoother%ksp,0.0_SRK,0.0_SRK,1E8_SRK, &
-                                    smoother%colorManager%num_colors,iperr)
+                                 smoother%colorManager%num_colors,iperr)
             ENDIF
 #endif
 

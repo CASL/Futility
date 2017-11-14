@@ -60,7 +60,7 @@ MODULE MultigridMesh
     !>  into.  May have another use/definition in cases where the interpolation
     !>  operator has no injections.  This is not needed for fillInterpMatrices
     !>  in LinearSolverTypes_Multigrid, it is only here for the user's
-    !>  and using/setting this variable is optional.
+    !>  convenience and using/setting this variable is optional.
     INTEGER(SIK) :: finestGridIndex=-1_SIK
     !> For degree 0 points, childIndices is a size-1 array containing the
     !>  child mesh index of the point that it injects into.
