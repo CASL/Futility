@@ -418,7 +418,8 @@ MODULE LinearSolverTypes_Multigrid
       TYPE(MultigridMeshStructureType),INTENT(IN) :: myMMeshes
       LOGICAL(SBK),OPTIONAL :: preallocated
 
-      INTEGER(SIK) :: iLevel,ip,i,row,col,ieqn,indices(48),nindices
+      !Need to increase size of indices to 48 if 3-D is allowed:
+      INTEGER(SIK) :: iLevel,ip,i,row,col,ieqn,indices(8),nindices
       REAL(SRK),ALLOCATABLE :: wts(:,:)
 
 #ifdef FUTILITY_HAVE_PETSC
@@ -439,7 +440,7 @@ MODULE LinearSolverTypes_Multigrid
           !Note that if there is interpolation across processors, this does not
           !  work
         ENDIF
-        ALLOCATE(wts(myMMeshes%meshes(iLevel)%num_eqns,48))
+        ALLOCATE(wts(myMMeshes%meshes(iLevel)%num_eqns,8))
         !Create the interpolation operator:
         DO ip=myMMeshes%meshes(iLevel)%istt,myMMeshes%meshes(iLevel)%istp
           CALL getFinalWtsAndIndices(myMMeshes%meshes(iLevel), &
@@ -476,7 +477,6 @@ MODULE LinearSolverTypes_Multigrid
       INTEGER(SIK) :: num_mg_coarse_its
 #ifdef FUTILITY_HAVE_PETSC
       KSP :: ksp_temp
-      PC :: pc_temp
       PetscErrorCode  :: iperr
 
       IF(solver%TPLType /= PETSC) &
@@ -527,19 +527,24 @@ MODULE LinearSolverTypes_Multigrid
       ELSE
         !Some reasonable number of GMRES iterations:
         num_mg_coarse_its=CEILING(SQRT(PRODUCT(solver%level_info(:,1))+0._SRK))
+        WRITE(*,*) "level_info = ", solver%level_info
+        WRITE(*,*) "num_mg_coarse_its = ", num_mg_coarse_its
       ENDIF
-      !None of the tolerances actually matter since PCMG doesn't check for
-      !  convergence and just runs until the maximum number of iterations.
+      !None of the tolerances actually matter since PCMG doesn't check smoothers
+      !  for convergence.  It just runs until the maximum number of iterations.
       CALL PCMGGetSmoother(solver%pc,0,ksp_temp,iperr)
-      CALL KSPSetTolerances(ksp_temp,1.E-8_SRK,1.E-8_SRK,1.E3_SRK, &
-                              num_mg_coarse_its,iperr)
-      CALL KSPGMRESSetRestart(ksp_temp,num_mg_coarse_its,iperr)
-      !Redundant call, but I think for some reason it might be needed:
-      CALL KSPSetInitialGuessNonzero(ksp_temp,PETSC_TRUE,iperr)
+      CALL KSPSetTolerances(ksp_temp,cg_tol,cg_tol,1.E3_SRK,cg_solver_its,iperr)
+      CALL KSPGMRESSetRestart(ksp_temp,cg_solver_its,iperr)
 
       !Not sure if the tolerance actually matters on the outer level.  This
       !  call is mostly to set a limit on the number of MG V-cycles performed.
-      CALL KSPSetTolerances(solver%ksp,1.E-8_SRK,1.E-8_SRK,1.E3_SRK,10_SIK,iperr)
+      CALL KSPSetTolerances(solver%ksp,1.E-10_SRK,1.E-10_SRK,1.E3_SRK,10_SIK,iperr)
+
+      !Set cycle type to V:
+      CALL PCMGSetCycleType(solver%pc,PC_MG_CYCLE_V,iperr)
+
+      CALL PetscOptionsSetValue("-pc_mg_log",PETSC_NULL_CHARACTER,iperr)
+      CALL PCSetFromOptions(solver%pc,iperr)
 
       solver%isMultigridSetup=.TRUE.
 #else
@@ -646,7 +651,13 @@ MODULE LinearSolverTypes_Multigrid
             "Unrecognized smoother option!")
         ENDIF
 
-        CALL KSPSetInitialGuessNonzero(ksp_temp,PETSC_TRUE,iperr)
+        !On all levels except the finest, the initial guess should be zero
+        !  since it is an error equation.
+        IF(i == solver%nLevels-1) THEN
+          CALL KSPSetInitialGuessNonzero(ksp_temp,PETSC_TRUE,iperr)
+        ELSE
+          CALL KSPSetInitialGuessNonzero(ksp_temp,PETSC_FALSE,iperr)
+        ENDIF
       ENDDO
 #endif
 
@@ -715,9 +726,9 @@ MODULE LinearSolverTypes_Multigrid
       REAL(SRK),INTENT(INOUT) :: wts(:,:)
       INTEGER(SIK),INTENT(OUT) :: nindices
 
-      INTEGER(SIK) :: ichild,ichild2,ichild3,ipn,ipn2,ipn3,i,ind
-      REAL(SRK) :: wt2(num_eqns),tmpwts(num_eqns,48)
-      INTEGER(SIK) :: tmpindices(48),counter
+      INTEGER(SIK) :: i,ind
+      REAL(SRK) :: wt2(num_eqns),tmpwts(num_eqns,8)
+      INTEGER(SIK) :: tmpindices(8),counter
 
       counter=1
       wt2=1.0_SRK
