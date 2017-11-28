@@ -101,9 +101,9 @@ PROGRAM testStrings
 !
 !Test assigning a long integer to string
   COMPONENT_TEST('Assignment 64-bit Integer to String')
-  testSLK=1.01_SSK
+  testSLK=1_SLK
   testString=testSLK
-  ASSERT(CHAR(testString) == '1','testString=testSLK : 1.01')
+  ASSERT(CHAR(testString) == '1','testString=testSLK : 1')
   testString=-HUGE(testSLK)
   ASSERT(CHAR(testString) == '-9223372036854775807','testString=testSLK : lowest')
   testString=HUGE(testSLK)
