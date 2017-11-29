@@ -4705,7 +4705,7 @@ MODULE ParameterLists
       CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       CHARACTER(LEN=12) :: fmt
       INTEGER(SIK) :: i
-      TYPE(StringType) :: sprefix,sdtype
+      TYPE(StringType) :: sprefix,sdtype,tmpstr
 
       i=1
       IF(PRESENT(indent)) i=i+indent
@@ -4718,12 +4718,14 @@ MODULE ParameterLists
         ENDIF
       ENDIF
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
+      tmpstr=''
+      IF(LEN_TRIM(thisParam%val) > 0) tmpstr=thisParam%val
       IF(LEN_TRIM(thisParam%description) == 0) THEN
         WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') sprefix// &
-          sdtype//' :: '//thisParam%name//'='//thisParam%val
+          sdtype//' :: '//thisParam%name//'='//tmpstr
       ELSE
         WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') sprefix// &
-          sdtype//' :: '//thisParam%name//'='//thisParam%val// &
+          sdtype//' :: '//thisParam%name//'='//tmpstr// &
             ' !'//thisParam%description
       ENDIF
     ENDSUBROUTINE edit_ParamType_STR
