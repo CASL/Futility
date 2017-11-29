@@ -4705,10 +4705,11 @@ MODULE ParameterLists
       CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       CHARACTER(LEN=12) :: fmt
       INTEGER(SIK) :: i
-      TYPE(StringType) :: sprefix,sdtype,tmpstr
+      TYPE(StringType) :: sprefix,sdtype,sval,sdesc
 
       i=1
       IF(PRESENT(indent)) i=i+indent
+      sprefix=''
       IF(PRESENT(prefix)) sprefix=prefix
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
@@ -4718,16 +4719,12 @@ MODULE ParameterLists
         ENDIF
       ENDIF
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
-      tmpstr=''
-      IF(LEN_TRIM(thisParam%val) > 0) tmpstr=thisParam%val
-      IF(LEN_TRIM(thisParam%description) == 0) THEN
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') sprefix// &
-          sdtype//' :: '//thisParam%name//'='//tmpstr
-      ELSE
-        WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') sprefix// &
-          sdtype//' :: '//thisParam%name//'='//tmpstr// &
-            ' !'//thisParam%description
-      ENDIF
+      sval=''
+      IF(LEN_TRIM(thisParam%val) > 0) sval=thisParam%val
+      sdesc=''
+      IF(LEN_TRIM(thisParam%description) > 0) sdesc=' !'//thisParam%description
+      WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') sprefix// &
+        sdtype//' :: '//thisParam%name//'='//sval//sdesc
     ENDSUBROUTINE edit_ParamType_STR
 !
 !-------------------------------------------------------------------------------
@@ -6534,11 +6531,12 @@ MODULE ParameterLists
       CHARACTER(LEN=12) :: fmt,fmt2
       CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i,j,k
-      TYPE(StringType) :: sprefix,sdtype
+      TYPE(StringType) :: sprefix,sdtype,sval,sdesc
 
       i=1
       j=5
       IF(PRESENT(indent)) i=i+indent
+      sprefix=''
       IF(PRESENT(prefix)) sprefix=prefix
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
@@ -6549,30 +6547,30 @@ MODULE ParameterLists
       ENDIF
       j=j+LEN(sprefix)
       WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
+
+      sval=''
+      IF(LEN_TRIM(thisParam%val(1)) > 0) sval=thisParam%val(1)
+      sdesc=''
+      IF(LEN_TRIM(thisParam%description) > 0) sdesc=' !'//thisParam%description
       WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)',ADVANCE='NO') sprefix// &
-        sdtype//' :: '//thisParam%name//'='//CHAR(thisParam%val(1))
+        sdtype//' :: '//thisParam%name//'='//sval
       j=j+LEN(sdtype)+LEN(thisParam%name)
       WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
 
       IF (SIZE(thisParam%val)>MAX_1D_LEN) THEN
         DO k=2,SIZE(thisParam%val)
-          WRITE(UNIT=funit,FMT='(", ",a)',ADVANCE='NO') CHAR(thisParam%val(k))
+          sval=''
+          IF(LEN_TRIM(thisParam%val(k)) > 0) sval=thisParam%val(k)
+          WRITE(UNIT=funit,FMT='(", ",a)',ADVANCE='NO') CHAR(sval)
         ENDDO
-
-        IF(LEN_TRIM(thisParam%description) == 0) THEN
-          WRITE(funit,*)
-        ELSE
-          WRITE(UNIT=funit,FMT='(a)') " !"//thisParam%description
-        ENDIF
+        WRITE(UNIT=funit,FMT='(a)') CHAR(sdesc)
       ELSE
-        IF(LEN_TRIM(thisParam%description) == 0) THEN
-          WRITE(funit,*)
-        ELSE
-          WRITE(UNIT=funit,FMT='(a)') " !"//thisParam%description
-        ENDIF
+        WRITE(UNIT=funit,FMT='(a)') CHAR(sdesc)
         DO k=2,SIZE(thisParam%val)
+          sval=''
+          IF(LEN_TRIM(thisParam%val(k)) > 0) sval=thisParam%val(k)
           WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,a)') &
-            CHAR(thisParam%val(k))
+            CHAR(sval)
         ENDDO
       ENDIF
 
