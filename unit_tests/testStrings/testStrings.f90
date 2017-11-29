@@ -118,6 +118,9 @@ PROGRAM testStrings
   testSSK=1.01_SSK
   testString=testSSK
   ASSERT(CHAR(testString) == '1.01000E+00','testString=testSSK : 1')
+  testSSK=-testSSK
+  testString=SQRT(testSSK)
+  ASSERT(CHAR(testString) == 'NaN','testString=testSSK : NaN')
   testString=-HUGE(testSSK)
   ASSERT(CHAR(testString) == '-3.40282E+38','testString=testSSK : lowest')
   testString=HUGE(testSSK)
@@ -132,6 +135,9 @@ PROGRAM testStrings
   testSDK=1.01_SDK
   testString=testSDK
   ASSERT(CHAR(testString) == '1.010000000000000E+00','testString=testSDK : 1.01')
+  testSDK=-testSDK
+  testString=SQRT(testSDK)
+  ASSERT(CHAR(testString) == 'NaN','testString=testSDK : NaN')
   !Since HUGE produces a triple digit exponent, it seems the 'E' disappears when
   !writing.
   testString=-HUGE(testSDK)
