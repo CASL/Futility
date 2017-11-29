@@ -125,6 +125,10 @@ PROGRAM testStrings
   ASSERT(CHAR(testString) == '-3.40282E+38','testString=testSSK : lowest')
   testString=HUGE(testSSK)
   ASSERT(CHAR(testString) == '3.40282E+38','testString=testSSK : highest')
+  testString=-TINY(testSSK)
+  ASSERT(CHAR(testString) == '-1.17549E-38','testString=testSSK : smallest negative')
+  testString=TINY(testSSK)
+  ASSERT(CHAR(testString) == '1.17549E-38','testString=testSSK : smallest positive')
   testSSKarray=(/-2.0_SSK,50.0_SSK/)
   testarray=testSSKarray
   ASSERT(CHAR(testarray(1)) == '-2.00000E+00','testString=testSSK : array(1)')
@@ -144,6 +148,10 @@ PROGRAM testStrings
   ASSERT(CHAR(testString) == '-1.797693134862316+308','testString=testSDK : lowest')
   testString=HUGE(testSDK)
   ASSERT(CHAR(testString) == '1.797693134862316+308','testString=testSDK : highest')
+  testString=-TINY(testSDK)
+  ASSERT(CHAR(testString) == '-2.225073858507201-308','testString=testSDK : smallest negative')
+  testString=TINY(testSDK)
+  ASSERT(CHAR(testString) == '2.225073858507201-308','testString=testSDK : smallest positive')
   testSDKarray=(/-2.0_SDK,50.0_SDK/)
   testarray=testSDKarray
   ASSERT(CHAR(testarray(1)) == '-2.000000000000000E+00','testString=testSDK : array(1)')
