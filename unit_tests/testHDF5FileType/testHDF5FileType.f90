@@ -9,6 +9,7 @@
 PROGRAM testHDF5
 #include "UnitTest.h"
   USE ISO_FORTRAN_ENV
+  USE ISO_C_BINDING
   USE UnitTest
   USE IntrType
   USE Strings
@@ -36,8 +37,9 @@ PROGRAM testHDF5
   INTEGER(SLK) :: refL0
   INTEGER(SNK) :: refN0
   LOGICAL(SBK) :: refB0
-  TYPE(StringType) :: refST0
+  TYPE(StringType) :: refST0,refCNCHAR0
   TYPE(StringType),ALLOCATABLE :: refST1(:),refSTC1(:),refST0CA(:),refST2(:,:),refST3(:,:,:)
+  TYPE(StringType),ALLOCATABLE :: refCNCHAR1(:),refCNCHAR2(:,:),refCNCHAR3(:,:,:)
   CHARACTER(LEN=32) :: refC1,integer_name,real_name,string_name
   CHARACTER(LEN=12) :: helper_string
   LOGICAL(SBK) :: exists
@@ -117,6 +119,9 @@ PROGRAM testHDF5
       ALLOCATE(refN5(3,4,5,6,7))
       ALLOCATE(refN6(3,4,5,6,7,8))
       ALLOCATE(refN7(3,4,5,6,7,8,9))
+      ALLOCATE(refCNCHAR1(1))
+      ALLOCATE(refCNCHAR2(1,1))
+      ALLOCATE(refCNCHAR3(1,1,1))
       ALLOCATE(refST1(3))
       ALLOCATE(refST2(2,3))
       ALLOCATE(refST3(3,4,5))
@@ -166,6 +171,12 @@ PROGRAM testHDF5
             refB3(i,j,k)=.FALSE.
           ENDDO
         ENDDO
+      ENDDO
+      refCNCHAR0=C_NULL_CHAR
+      refCNCHAR1=C_NULL_CHAR
+      refCNCHAR2=C_NULL_CHAR
+      DO k=1,SIZE(refCNCHAR3,DIM=3)
+        refCNCHAR3(:,:,k)=C_NULL_CHAR
       ENDDO
       refST0='Rank-0 (Not-an-array) String Test'
        refST0CA(1)='R'; refST0CA(2)='a'; refST0CA(3)='n'; refST0CA(4)='k'; refST0CA(5)='-'
@@ -285,6 +296,10 @@ PROGRAM testHDF5
       CALL h5%fwrite('groupST->memCA2',refST2)
       CALL h5%fwrite('groupST->memCA3',refST3)
       CALL h5%fwrite('groupST->memST0',refST0)
+      CALL h5%fwrite('groupST->CNULLCHAR0',refCNCHAR0)
+      CALL h5%fwrite('groupST->CNULLCHAR1',refCNCHAR1)
+      CALL h5%fwrite('groupST->CNULLCHAR2',refCNCHAR2)
+      CALL h5%fwrite('groupST->CNULLCHAR3',refCNCHAR3)
       CALL h5%fwrite('groupST->memST1',refST1)
       CALL h5%fwrite('groupST->memST2',refST2)
       CALL h5%fwrite('groupST->memST3',refST3)
@@ -357,6 +372,7 @@ PROGRAM testHDF5
 !-------------------------------------------------------------------------------
     SUBROUTINE testHDF5FileTypeErrorCheck()
       TYPE(HDF5FileType) :: h5
+      INTEGER(SIK) :: tmpi
       REAL(SDK),POINTER :: d4ptr(:,:,:,:)
       d4ptr => NULL()
 
@@ -365,146 +381,227 @@ PROGRAM testHDF5
       !the pre and post routines have two %isinit checks.  All these checks are
       !mostly redundant now though, one check checks the same code as all of them now.
       CALL h5%fwrite('groupR->memD0',refD0)
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==1*2,'%write_d0 %isinit check')
+      tmpi=1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_d0 %isinit check')
       CALL h5%fwrite('groupR->memD1',refD1,SHAPE(refD1))
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==2*2,'%write_d1 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_d1 %isinit check')
       CALL h5%fwrite('groupR->memD2',refD2,SHAPE(refD2))
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==3*2,'%write_d2 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_d2 %isinit check')
       CALL h5%fwrite('groupR->memD3',refD3,SHAPE(refD3))
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==4*2,'%write_d3 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_d3 %isinit check')
       CALL h5%fwrite('groupR->memD4',refD4,SHAPE(refD4))
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==5*2,'%write_d4 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_d4 %isinit check')
       CALL h5%fwrite('groupR->memD5',refD5,SHAPE(refD5))
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==6*2,'%write_d5 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_d5 %isinit check')
       CALL h5%fwrite('groupR->memD6',refD6,SHAPE(refD6))
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==7*2,'%write_d6 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_d6 %isinit check')
       CALL h5%fwrite('groupR->memD7',refD7,SHAPE(refD7))
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==8*2,'%write_d7 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_d7 %isinit check')
       CALL h5%fwrite('groupR->memS0',refS0)
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==9*2,'%write_s0 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_s0 %isinit check')
       CALL h5%fwrite('groupR->memS1',refS1,SHAPE(refS1))
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==10*2,'%write_s1 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_s1 %isinit check')
       CALL h5%fwrite('groupR->memS2',refS2,SHAPE(refS2))
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==11*2,'%write_s2 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_s2 %isinit check')
       CALL h5%fwrite('groupR->memS3',refS3,SHAPE(refS3))
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==12*2,'%write_s3 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_s3 %isinit check')
       CALL h5%fwrite('groupR->memS4',refS4,SHAPE(refS4))
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==13*2,'%write_s4 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_s4 %isinit check')
       CALL h5%fwrite('groupR->memS5',refS5,SHAPE(refS5))
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==14*2,'%write_s5 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_s5 %isinit check')
       CALL h5%fwrite('groupR->memS6',refS6,SHAPE(refS6))
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==15*2,'%write_s6 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_s6 %isinit check')
       CALL h5%fwrite('groupR->memS7',refS7,SHAPE(refS7))
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==16*2,'%write_s7 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_s7 %isinit check')
       CALL h5%fwrite('groupI->memL0',refL0)
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==17*2,'%write_l0 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_l0 %isinit check')
       CALL h5%fwrite('groupI->memL1',refL1,SHAPE(refL1))
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==18*2,'%write_l1 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_l1 %isinit check')
       CALL h5%fwrite('groupI->memL2',refL2,SHAPE(refL2))
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==19*2,'%write_l2 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_l2 %isinit check')
       CALL h5%fwrite('groupI->memL3',refL3,SHAPE(refL3))
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==20*2,'%write_l3 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_l3 %isinit check')
       CALL h5%fwrite('groupI->memL4',refL4,SHAPE(refL4))
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==21*2,'%write_l4 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_l4 %isinit check')
       CALL h5%fwrite('groupI->memL5',refL5,SHAPE(refL5))
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==22*2,'%write_l5 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_l5 %isinit check')
       CALL h5%fwrite('groupI->memL6',refL6,SHAPE(refL6))
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==23*2,'%write_l6 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_l6 %isinit check')
       CALL h5%fwrite('groupI->memL7',refL7,SHAPE(refL7))
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==24*2,'%write_l7 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_l7 %isinit check')
       CALL h5%fwrite('groupI->memN0',refN0)
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==25*2,'%write_n0 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_n0 %isinit check')
       CALL h5%fwrite('groupI->memN1',refN1,SHAPE(refN1))
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==26*2,'%write_n1 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_n1 %isinit check')
       CALL h5%fwrite('groupI->memN2',refN2,SHAPE(refN2))
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==27*2,'%write_n2 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_n2 %isinit check')
       CALL h5%fwrite('groupI->memN3',refN3,SHAPE(refN3))
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==28*2,'%write_n3 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_n3 %isinit check')
       CALL h5%fwrite('groupI->memN4',refN4,SHAPE(refN4))
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==29*2,'%write_n4 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_n4 %isinit check')
       CALL h5%fwrite('groupI->memN5',refN5,SHAPE(refN5))
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==30*2,'%write_n5 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_n5 %isinit check')
       CALL h5%fwrite('groupI->memN6',refN6,SHAPE(refN6))
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==31*2,'%write_n6 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_n6 %isinit check')
       CALL h5%fwrite('groupI->memN7',refN7,SHAPE(refN7))
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==32*2,'%write_n7 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_n7 %isinit check')
       CALL h5%fwrite('groupB->memB0',refB0)
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==33*2,'%write_b0 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_b0 %isinit check')
       CALL h5%fwrite('groupB->memB1',refB1,SHAPE(refB1))
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==34*2,'%write_b1 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_b1 %isinit check')
       CALL h5%fwrite('groupB->memB2',refB2,SHAPE(refB2))
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==35*2,'%write_b2 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_b2 %isinit check')
       CALL h5%fwrite('groupB->memB3',refB3,SHAPE(refB3))
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==36*2,'%write_b3 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_b3 %isinit check')
+      CALL h5%fwrite('groupST->CNULLCHAR0',refCNCHAR0)
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_st0 %isinit check')
+      CALL h5%fwrite('groupST->CNULLCHAR1',refCNCHAR1)
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_st1 %isinit check')
+      CALL h5%fwrite('groupST->CNULLCHAR2',refCNCHAR2)
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_st2 %isinit check')
+      CALL h5%fwrite('groupST->CNULLCHAR3',refCNCHAR3)
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_st3 %isinit check')
       CALL h5%fwrite('groupST->memST0',refST0)
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==37*2,'%write_st0 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_st0 %isinit check')
       CALL h5%fwrite('groupST->memST1',refST1,SHAPE(refST1))
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==38*2,'%write_st1 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_st1 %isinit check')
       CALL h5%fwrite('groupST->memST2',refST2,SHAPE(refST2))
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==39*2,'%write_st2 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_st2 %isinit check')
       CALL h5%fwrite('groupST->memST3',refST3,SHAPE(refST3))
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==40*2,'%write_st3 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_st3 %isinit check')
       CALL h5%fwrite('groupC->memC1',refC1)
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==41*2,'%write_c1 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_c1 %isinit check')
       CALL h5%mkdir('groupI')
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==42*2-1,'%mkdir %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2-1,'%mkdir %isinit check')
       CALL h5%ls('groupR',refST1)
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==42*2,'%ls %isinit check')
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%ls %isinit check')
 
       CALL h5%fread('groupR->memD0',refD0)
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==43*2,'%read_d0 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_d0 %isinit check')
       CALL h5%fread('groupR->memD1',refD1)
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==44*2,'%read_d1 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_d1 %isinit check')
       CALL h5%fread('groupR->memD2',refD2)
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==45*2,'%read_d2 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_d2 %isinit check')
       CALL h5%fread('groupR->memD3',refD3)
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==46*2,'%read_d3 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_d3 %isinit check')
       CALL h5%fread('groupR->memD4',refD4)
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==47*2,'%read_d4 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_d4 %isinit check')
       CALL h5%freadp('groupR->memD4',d4ptr)
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==48*2,'%read_d4 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_d4 %isinit check')
       CALL h5%fread('groupR->memS0',refS0)
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==49*2,'%read_s0 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_s0 %isinit check')
       CALL h5%fread('groupR->memS1',refS1)
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==50*2,'%read_s1 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_s1 %isinit check')
       CALL h5%fread('groupR->memS2',refS2)
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==51*2,'%read_s2 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_s2 %isinit check')
       CALL h5%fread('groupR->memS3',refS3)
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==52*2,'%read_s3 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_s3 %isinit check')
       CALL h5%fread('groupR->memS4',refS4)
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==53*2,'%read_s4 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_s4 %isinit check')
       CALL h5%fread('groupI->memL0',refL0)
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==54*2,'%read_l0 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_l0 %isinit check')
       CALL h5%fread('groupI->memL1',refL1)
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==55*2,'%read_l1 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_l1 %isinit check')
       CALL h5%fread('groupI->memL2',refL2)
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==56*2,'%read_l2 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_l2 %isinit check')
       CALL h5%fread('groupI->memL3',refL3)
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==57*2,'%read_l3 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_l3 %isinit check')
       CALL h5%fread('groupI->memN0',refN0)
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==58*2,'%read_n0 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_n0 %isinit check')
       CALL h5%fread('groupI->memN1',refN1)
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==59*2,'%read_n1 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_n1 %isinit check')
       CALL h5%fread('groupI->memN2',refN2)
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==60*2,'%read_n2 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_n2 %isinit check')
       CALL h5%fread('groupI->memN3',refN3)
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==61*2,'%read_n3 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_n3 %isinit check')
       CALL h5%fread('groupB->memB0',refB0)
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==62*2,'%read_b0 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_b0 %isinit check')
       CALL h5%fread('groupB->memB1',refB1)
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==63*2,'%read_b1 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_b1 %isinit check')
       CALL h5%fread('groupB->memB2',refB2)
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==64*2,'%read_b2 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_b2 %isinit check')
       CALL h5%fread('groupB->memB3',refB3)
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==65*2,'%read_b3 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_b3 %isinit check')
       CALL h5%fread('groupST->memST0',refST0)
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==66*2,'%read_st0 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_st0 %isinit check')
       CALL h5%fread('groupST->memST1',refST1)
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==67*2,'%read_st1 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_st1 %isinit check')
       CALL h5%fread('groupST->memST2',refST2)
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==68*2,'%read_st2 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_st2 %isinit check')
       CALL h5%fread('groupST->memST3',refST3)
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==69*2,'%read_st3 %isinit check')
+      tmpi=tmpi+1
+      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_st3 %isinit check')
 
       CALL h5%clear(.TRUE.)
     ENDSUBROUTINE testHDF5FileTypeErrorCheck
@@ -578,6 +675,11 @@ PROGRAM testHDF5
       CALL h5%fwrite('groupB->memB1',refB1,SHAPE(refB1))
       CALL h5%fwrite('groupB->memB2',refB2,SHAPE(refB2))
       CALL h5%fwrite('groupB->memB3',refB3,SHAPE(refB3))
+      CALL h5%mkdir('groupCNCHAR')
+      CALL h5%fwrite('groupCNCHAR->CNCHAR0',refCNCHAR0)
+      CALL h5%fwrite('groupCNCHAR->CNCHAR1',refCNCHAR1,SHAPE(refCNCHAR1))
+      CALL h5%fwrite('groupCNCHAR->CNCHAR2',refCNCHAR2,SHAPE(refCNCHAR2))
+      CALL h5%fwrite('groupCNCHAR->CNCHAR3',refCNCHAR3,SHAPE(refCNCHAR3))
       CALL h5%mkdir('groupST')
       CALL h5%fwrite('groupST->memST0',refST0)
       CALL h5%fwrite('groupST->memST1',refST1,SHAPE(refST1))
@@ -659,6 +761,33 @@ PROGRAM testHDF5
       ASSERT(ALL(testB2.EQV.refB2),'B2 Write Failure with gdims_in')
       CALL h5%fread('groupB->memB3',testB3)
       ASSERT(ALL(testB3.EQV.refB3),'B3 Write Failure with gdims_in')
+      CALL h5%fread('groupCNCHAR->CNCHAR0',testST0)
+      ASSERT(testST0=='','CNCHAR0 is non empty! Write Failure with gdims_in')
+      CALL h5%fread('groupCNCHAR->CNCHAR1',testST1)
+      checkwrite=.TRUE.
+      DO i=1,SIZE(refCNCHAR1)
+        IF(testST1(i)/='') checkwrite=.FALSE.
+      ENDDO
+      ASSERT(checkwrite,'CNCHAR1 is non empty! Write Failure with gdims_in')
+      CALL h5%fread('groupCNCHAR->CNCHAR2',testST2)
+      checkwrite=.TRUE.
+      DO i=1,SIZE(refCNCHAR2,1)
+        DO j=1,SIZE(refCNCHAR2,2)
+          IF(testST2(i,j)/='') checkwrite=.FALSE.
+        ENDDO
+      ENDDO
+      ASSERT(checkwrite,'CNCHAR2 is non empty! Write Failure with gdims_in')
+      CALL h5%fread('groupCNCHAR->CNCHAR3',testST3)
+      checkwrite=.TRUE.
+      DO i=1,SIZE(refCNCHAR3,1)
+        DO j=1,SIZE(refCNCHAR3,2)
+          DO k=1,SIZE(refCNCHAR3,3)
+            IF(testST3(i,j,k)/='') checkwrite=.FALSE.
+          ENDDO
+        ENDDO
+      ENDDO
+      ASSERT(checkwrite,'CNCHAR3 is non empty! Write Failure with gdims_in')
+
       CALL h5%fread('groupST->memST0',testST0)
       ASSERT(testST0==refST0,'ST0 Write Failure with gdims_in')
       FINFO() ":"//testST0//":   :"//refST0//":"
@@ -705,6 +834,7 @@ PROGRAM testHDF5
       CALL h5%mkdir('groupR')
       CALL h5%mkdir('groupI')
       CALL h5%mkdir('groupB')
+      CALL h5%mkdir('groupCNCHAR')
       CALL h5%mkdir('groupST')
       CALL h5%mkdir('groupC')
       CALL h5%fwrite('groupR->memD0',refD0)
@@ -743,6 +873,10 @@ PROGRAM testHDF5
       CALL h5%fwrite('groupB->memB1',refB1)
       CALL h5%fwrite('groupB->memB2',refB2)
       CALL h5%fwrite('groupB->memB3',refB3)
+      CALL h5%fwrite('groupCNCHAR->CNCHAR0',refCNCHAR0)
+      CALL h5%fwrite('groupCNCHAR->CNCHAR1',refCNCHAR1)
+      CALL h5%fwrite('groupCNCHAR->CNCHAR2',refCNCHAR2)
+      CALL h5%fwrite('groupCNCHAR->CNCHAR3',refCNCHAR3)
       CALL h5%fwrite('groupST->memST0',refST0)
       CALL h5%fwrite('groupST->memST1',refST1)
       CALL h5%fwrite('groupST->memST2',refST2)
@@ -836,6 +970,33 @@ PROGRAM testHDF5
       ASSERT(ALL(testB2.EQV.refB2),'B2 Write Failure')
       CALL h5%fread('groupB->memB3',testB3)
       ASSERT(ALL(testB3.EQV.refB3),'B3 Write Failure')
+      CALL h5%fread('groupCNCHAR->CNCHAR0',testST0)
+      ASSERT(testST0=='','CNCHAR0 is non empty! Write Failure')
+      CALL h5%fread('groupCNCHAR->CNCHAR1',testST1)
+      checkwrite=.TRUE.
+      DO i=1,SIZE(refCNCHAR1)
+        IF(testST1(i)/='') checkwrite=.FALSE.
+      ENDDO
+      ASSERT(checkwrite,'CNCHAR1 is non empty! Write Failure')
+      CALL h5%fread('groupCNCHAR->CNCHAR2',testST2)
+      checkwrite=.TRUE.
+      DO i=1,SIZE(refCNCHAR2,1)
+        DO j=1,SIZE(refCNCHAR2,2)
+          IF(testST2(i,j)/='') checkwrite=.FALSE.
+        ENDDO
+      ENDDO
+      ASSERT(checkwrite,'CNCHAR2 is non empty! Write Failure')
+      CALL h5%fread('groupCNCHAR->CNCHAR3',testST3)
+      checkwrite=.TRUE.
+      DO i=1,SIZE(refCNCHAR3,1)
+        DO j=1,SIZE(refCNCHAR3,2)
+          DO k=1,SIZE(refCNCHAR3,3)
+            IF(testST3(i,j,k)/='') checkwrite=.FALSE.
+          ENDDO
+        ENDDO
+      ENDDO
+      ASSERT(checkwrite,'CNCHAR3 is non empty! Write Failure')
+
       CALL h5%fread('groupST->memST0',testST0)
       ASSERT(testST0==refST0,'ST0 Write Failure')
       FINFO() ':'//CHAR(testST0)//':  :'//CHAR(refST0)//':'
