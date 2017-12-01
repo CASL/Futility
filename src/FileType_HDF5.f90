@@ -5468,6 +5468,7 @@ MODULE FileType_HDF5
         ELSE
           vals=valsc(1)(1:length_max)
         ENDIF
+        CALL strrep(vals,C_NULL_CHAR,'')
       ENDIF
       CALL postRead(thisHDF5File,dset_id,dspace_id,error)
 
@@ -5603,6 +5604,10 @@ MODULE FileType_HDF5
           vals(i)=valsc(i)(1:length_max)
         ENDDO
 
+        !Find replace C_NULL_CHARs from HDF5
+        DO i=1,SIZE(vals)
+          CALL strrep(vals(i),C_NULL_CHAR,'')
+        ENDDO
       ENDIF
       CALL postRead(thisHDF5File,dset_id,dspace_id,error)
       IF(ALLOCATED(valsc)) DEALLOCATE(valsc)
@@ -5753,6 +5758,13 @@ MODULE FileType_HDF5
             vals(i,j)=valsc(i,j)(1:length_max)
           ENDDO
         ENDDO
+
+        !Find replace C_NULL_CHARs from HDF5
+        DO j=1,SIZE(vals,DIM=2)
+          DO i=1,SIZE(vals,DIM=1)
+            CALL strrep(vals(i,j),C_NULL_CHAR,'')
+          ENDDO
+        ENDDO
       ENDIF
       CALL postRead(thisHDF5File,dset_id,dspace_id,error)
       IF(ALLOCATED(valsc)) DEALLOCATE(valsc)
@@ -5875,7 +5887,7 @@ MODULE FileType_HDF5
       TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:)
 #ifdef FUTILITY_HAVE_HDF5
       CHARACTER(LEN=length_max),ALLOCATABLE :: valsc(:,:,:)
-      INTEGER(SIK) :: i,j,m
+      INTEGER(SIK) :: i,j,k
       CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(3) :: dims
       INTEGER(HID_T),PARAMETER :: rank=3
@@ -5903,8 +5915,17 @@ MODULE FileType_HDF5
         ! Convert to StringType
         DO i=1,SIZE(vals,1)
           DO j=1,SIZE(vals,2)
-            DO m=1,SIZE(vals,3)
-              vals(i,j,m)=valsc(i,j,m)(1:length_max)
+            DO k=1,SIZE(vals,3)
+              vals(i,j,k)=valsc(i,j,k)(1:length_max)
+            ENDDO
+          ENDDO
+        ENDDO
+
+        !Find replace C_NULL_CHARs from HDF5
+        DO k=1,SIZE(vals,DIM=3)
+          DO j=1,SIZE(vals,DIM=2)
+            DO i=1,SIZE(vals,DIM=1)
+              CALL strrep(vals(i,j,k),C_NULL_CHAR,'')
             ENDDO
           ENDDO
         ENDDO
@@ -6189,6 +6210,8 @@ MODULE FileType_HDF5
           CASE(0)
             !Get the string, then check if it's a boolean.
             CALL read_st0_helper(thisHDF5File,CHAR(plpath),st0)
+            !Find replace C_NULL_CHARs from HDF5
+            CALL strrep(st0,C_NULL_CHAR,'')
             isbool=(st0 == 'T') .OR. (st0 == 'F')
             IF(isbool) THEN
               CALL read_b0(thisHDF5File,CHAR(plpath),l0)
@@ -6199,6 +6222,10 @@ MODULE FileType_HDF5
           CASE(1)
             !Get the string, then check if it's a boolean.
             CALL read_st1_helper(thisHDF5File,CHAR(plpath),st1)
+            !Find replace C_NULL_CHARs from HDF5
+            DO i=1,SIZE(st1)
+              CALL strrep(st1(i),C_NULL_CHAR,'')
+            ENDDO
             isbool=.TRUE.
             DO i=1,SIZE(st1)
               isbool=(st1(i) == 'T') .OR. (st1(i) == 'F')
@@ -6213,6 +6240,12 @@ MODULE FileType_HDF5
           CASE(2)
             !Get the string, then check if it's a boolean.
             CALL read_st2_helper(thisHDF5File,CHAR(plpath),st2)
+            !Find replace C_NULL_CHARs from HDF5
+            DO j=1,SIZE(st2,DIM=2)
+              DO i=1,SIZE(st2,DIM=1)
+                CALL strrep(st2(i,j),C_NULL_CHAR,'')
+              ENDDO
+            ENDDO
             isbool=.TRUE.
             DO j=1,SIZE(st2,DIM=2)
               DO i=1,SIZE(st2,DIM=1)
@@ -6234,6 +6267,15 @@ MODULE FileType_HDF5
           CASE(3)
             !Get the string, then check if it's a boolean.
             CALL read_st3_helper(thisHDF5File,CHAR(plpath),st3)
+            !Find replace C_NULL_CHARs from HDF5
+            DO k=1,SIZE(st3,DIM=3)
+              DO j=1,SIZE(st3,DIM=2)
+                DO i=1,SIZE(st3,DIM=1)
+                  CALL strrep(st3(i,j,k),C_NULL_CHAR,'')
+                ENDDO
+              ENDDO
+            ENDDO
+            isbool=.TRUE. 
             DO k=1,SIZE(st3,DIM=3)
               DO j=1,SIZE(st3,DIM=2)
                 DO i=1,SIZE(st3,DIM=1)
