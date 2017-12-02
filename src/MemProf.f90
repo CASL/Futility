@@ -41,6 +41,11 @@ MODULE MemProf
     REAL(SRK) :: mem_current=0.0_SRK
     !> Memory last time edit was called
     REAL(SRK) :: mem_old=0.0_SRK
+    !> Memory threshold
+    REAL(SRK) :: mem_threshold=0.0_SRK
+    !> logical to enable and disabled edits
+    LOGICAL(SBK) :: mem_edit=.TRUE.
+    !> log file
     TYPE(LogFileType),POINTER :: mylog => NULL()
     !> Parallel Environment for the problem
     TYPE(ParallelEnvType),POINTER :: pe => NULL()
@@ -56,6 +61,12 @@ MODULE MemProf
       !> @copybrief Memory_Profiler::edit_MemProf
       !> @copydetails Memory_Profiler::edit_MemProf
       PROCEDURE,PASS :: edit => edit_MemProf
+      !> @copybrief Memory_Profiler::enableEdits_MemProf
+      !> @copydetails Memory_Profiler::enableEdits_MemProf
+      PROCEDURE,PASS :: enableEdits => enableEdits_MemProf
+      !> @copybrief Memory_Profiler::disableEdits_MemProf
+      !> @copydetails Memory_Profiler::disableEdits_MemProf
+      PROCEDURE,PASS :: disableEdits => disableEdits_MemProf
   ENDTYPE Memory_Profiler
 
   !> Module name
@@ -88,6 +99,9 @@ MODULE MemProf
         thisMP%mem_current=thisMP%mem_old
         thisMP%isInit=.TRUE.
       ENDIF
+      IF(PRESENT(params)) THEN
+        IF(params%has('threshold')) CALL params%get('threshold',thisMP%mem_threshold)
+      ENDIF
     ENDSUBROUTINE init_MemProf
 !
 !-------------------------------------------------------------------------------
@@ -116,27 +130,53 @@ MODULE MemProf
       INTEGER(C_LONG_LONG) :: tmpL1, tmpL2
       REAL(SRK) :: mem(1), dmem(1), maxmem(1)
 
-      CALL thisMP%pe%world%barrier()
-      CALL getProcMemInfo(tmpL1,tmpL2)
-      thisMP%mem_current=REAL(tmpL1,SRK)/(1024.0_SRK*1024.0_SRK)
+      IF(thisMP%mem_edit) THEN
+        CALL thisMP%pe%world%barrier()
+        CALL getProcMemInfo(tmpL1,tmpL2)
+        thisMP%mem_current=REAL(tmpL1,SRK)/(1024.0_SRK*1024.0_SRK)
 
-      mem=thisMP%mem_current
-      maxmem=mem
-      dmem=thisMP%mem_current-thisMP%mem_old
-      CALL thisMP%pe%world%allReduceMax(1,maxmem)
-      CALL thisMP%pe%world%allReduceMax(1,dmem)
-      CALL thisMP%pe%world%allReduce(1,mem)
-      mem=mem/REAL(thisMP%pe%world%nproc,SRK)
+        mem=thisMP%mem_current
+        maxmem=mem
+        dmem=thisMP%mem_current-thisMP%mem_old
+        CALL thisMP%pe%world%allReduceMax(1,maxmem)
+        CALL thisMP%pe%world%allReduceMax(1,dmem)
+        CALL thisMP%pe%world%allReduce(1,mem)
+        mem=mem/REAL(thisMP%pe%world%nproc,SRK)
 
-      IF(ASSOCIATED(thisMP%myLog) .AND. thisMP%pe%world%master) THEN
-        WRITE(tmpchar,'(a)') 'Memory Use at '//TRIM(name)//':'
-        WRITE(amesg,'(a,3(f10.3))') ADJUSTL(tmpchar), mem, maxmem, dmem
-        CALL thisMP%myLog%message(TRIM(amesg),.FALSE.,.TRUE.)
+        IF(dmem(1)>=thisMP%mem_threshold .AND. ASSOCIATED(thisMP%myLog) .AND. &
+            thisMP%pe%world%master) THEN
+          WRITE(tmpchar,'(a)') 'Memory Use at '//TRIM(name)//':'
+          WRITE(amesg,'(a,3(f10.3))') ADJUSTL(tmpchar), mem, maxmem, dmem
+          CALL thisMP%myLog%message(TRIM(amesg),.FALSE.,.TRUE.)
+        ENDIF
+
+        thisMP%mem_old=thisMP%mem_current
       ENDIF
-
-      thisMP%mem_old=thisMP%mem_current
 #endif
     ENDSUBROUTINE edit_MemProf
+!
+!-------------------------------------------------------------------------------
+!> @brief Default procedure for
+!> @param thisMP the memory profiling object
+!>
+    SUBROUTINE enableEdits_MemProf(thisMP)
+      CLASS(Memory_Profiler),INTENT(INOUT) :: thisMP
+      thisMP%mem_edit=.TRUE.
+#ifndef FUTILITY_MEMPROF
+        IF(ASSOCIATED(thisMP%myLog) .AND. thisMP%pe%world%master) &
+          CALL thisMP%myLog%message("Unable to enable memory edits.  Need to " &
+            //"reconfigure with Memory Profiling on.",.FALSE.,.TRUE.)
+#endif
+    ENDSUBROUTINE enableEdits_MemProf
+!
+!-------------------------------------------------------------------------------
+!> @brief Default procedure for
+!> @param thisMP the memory profiling object
+!>
+    SUBROUTINE disableEdits_MemProf(thisMP)
+      CLASS(Memory_Profiler),INTENT(INOUT) :: thisMP
+      thisMP%mem_edit=.FALSE.
+    ENDSUBROUTINE disableEdits_MemProf
 !
 ENDMODULE MemProf
 
