@@ -518,10 +518,11 @@ MODULE LinearSolverTypes_Multigrid
         CALL PCMGSetInterpolation(solver%pc,iLevel,solver%interpMats_PETSc(iLevel)%a,iperr)
       ENDDO
 
-      !Coarsest smoother is GMRES with block Jacobi preconditioner:
       iLevel=0
       CALL solver%setSmoother(smootherMethod_list(iLevel+1),iLevel)
-      IF(Params%has('LinearSolverType->num_mg_coarse_its')) THEN
+      IF(smootherMethod_list(iLevel+1) == LU) THEN
+        num_mg_coarse_its=1
+      ELSE IF(Params%has('LinearSolverType->num_mg_coarse_its')) THEN
         CALL Params%get('LinearSolverType->num_mg_coarse_its', &
                 num_mg_coarse_its)
       ELSE
@@ -612,7 +613,6 @@ MODULE LinearSolverTypes_Multigrid
           CALL KSPGetPC(ksp_temp,pc_temp,iperr)
           CALL PCSetType(pc_temp,PCSOR,iperr)
         ELSEIF(smoother == GMRES) THEN
-          !Coarsest smoother is GMRES with block Jacobi preconditioner:
           CALL KSPSetType(ksp_temp,KSPGMRES,iperr)
           CALL KSPGetPC(ksp_temp,pc_temp,iperr)
           CALL PCSetType(pc_temp,PCBJACOBI,iperr)
@@ -635,9 +635,7 @@ MODULE LinearSolverTypes_Multigrid
           CALL KSPSetType(ksp_temp,KSPPREONLY,iperr)
           CALL KSPGetPC(ksp_temp,pc_temp,iperr)
           CALL PCSetType(pc_temp,PCLU,iperr)
-          IF(solver%MPIparallelEnv%nproc > 1) &
-            CALL PCFactorSetMatSolverPackage(pc_temp,MATSOLVERSUPERLU_DIST, &
-                                             iperr)
+          CALL PCFactorSetMatSolverPackage(pc_temp,MATSOLVERSUPERLU_DIST,iperr)
         ELSEIF(smoother == BJACOBI) THEN
           CALL KSPSetType(ksp_temp,KSPRICHARDSON,iperr)
           CALL KSPGetPC(ksp_temp,pc_temp,iperr)
