@@ -95,7 +95,6 @@ MODULE IntrType
   PUBLIC :: OPERATOR(==)
   PUBLIC :: OPERATOR(/=)
   PUBLIC :: ASSIGNMENT(=)
-  PUBLIC :: OPERATOR(.XOR.)
   PUBLIC :: SOFTEQ
   PUBLIC :: SOFTEQR
   PUBLIC :: SOFTLE
@@ -404,13 +403,6 @@ MODULE IntrType
 !    !> @copybrief IntrType::assign_char_to_array_string
 !    !> @copydetails IntrType::assign_char_to_array_string
 !    MODULE PROCEDURE assign_char_to_array_string
-  ENDINTERFACE
-
-  !> @brief Interface for the exclusive OR operator
-  INTERFACE OPERATOR(.XOR.)
-    !> @copybrief IntrType::xor_logical
-    !> @copydetails IntrType::xor_logical
-    MODULE PROCEDURE xor_logical
   ENDINTERFACE
 !
 !===============================================================================
@@ -1006,19 +998,6 @@ MODULE IntrType
       LOGICAL(SBK) :: bool
       bool=(l1 .NEQV. l2)
     ENDFUNCTION notequalto_logical
-!
-!-------------------------------------------------------------------------------
-!> @brief Defines the XOR operation when comparing two logical variables
-!> @param l1 a logical of type SBK
-!> @param l2 a logical of type SBK
-!> @returns @c bool result of comparison
-!>
-    ELEMENTAL FUNCTION xor_logical(l1,l2) RESULT(bool)
-      LOGICAL(SBK),INTENT(IN) :: l1
-      LOGICAL(SBK),INTENT(IN) :: l2
-      LOGICAL(SBK) :: bool
-      bool=(l1 .AND. .NOT.l2) .OR. (.NOT.l1 .AND. l2)
-    ENDFUNCTION xor_logical
 !
 !-------------------------------------------------------------------------------
 !> @brief Defines the operation for performing an assignment of a string to an
