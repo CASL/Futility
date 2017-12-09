@@ -909,6 +909,7 @@ MODULE SmootherTypes
       TYPE(ParamType) :: params
       Mat :: Amat,Pmat
       Mat :: localmat
+      MatType :: globalmattype
       PetscBool :: done
       !Iteration variables:
       INTEGER(SIK) :: i,j,localrowind
@@ -946,7 +947,12 @@ MODULE SmootherTypes
             CALL params%add('LinearSolverType->b->VectorType->n',smoother%blk_size)
             !Get the block matrices:
             CALL PCGetOperators(pc,Amat,Pmat,iperr)
-            CALL MatMPIAIJGetLocalMat(Pmat,MAT_INITIAL_MATRIX,localmat,iperr)
+            CALL MatGetType(Pmat,globalmattype,iperr)
+            IF(globalmattype == MATMPIAIJ) THEN
+              CALL MatMPIAIJGetLocalMat(Pmat,MAT_INITIAL_MATRIX,localmat,iperr)
+            ELSE
+              localmat=Pmat
+            ENDIF
             CALL MatSeqAIJGetArrayF90(localmat,matvals,iperr)
             CALL MatGetRowIJF90(localmat,1_SIK,PETSC_FALSE,PETSC_FALSE, &
                                   numrows,ia,ja,done,iperr)
