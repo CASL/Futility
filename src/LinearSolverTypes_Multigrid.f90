@@ -553,7 +553,6 @@ MODULE LinearSolverTypes_Multigrid
         modName//'::'//myName//' - This subroutine can only be called if '// &
         'PETSc is not enabled.')
 #endif
-
     ENDSUBROUTINE setupPETScMG_LinearSolverType_Multigrid
 !
 !-------------------------------------------------------------------------------
@@ -635,7 +634,8 @@ MODULE LinearSolverTypes_Multigrid
           CALL KSPSetType(ksp_temp,KSPPREONLY,iperr)
           CALL KSPGetPC(ksp_temp,pc_temp,iperr)
           CALL PCSetType(pc_temp,PCLU,iperr)
-          CALL PCFactorSetMatSolverPackage(pc_temp,MATSOLVERSUPERLU_DIST,iperr)
+          IF(solver%MPIparallelEnv%nproc > 1) &
+            CALL PCFactorSetMatSolverPackage(pc_temp,MATSOLVERSUPERLU_DIST,iperr)
         ELSEIF(smoother == BJACOBI) THEN
           CALL KSPSetType(ksp_temp,KSPRICHARDSON,iperr)
           CALL KSPGetPC(ksp_temp,pc_temp,iperr)
