@@ -62,6 +62,9 @@
 !>  - Make sure routines are safe (check for initialized object, etc.)
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE FileType_HDF5
+#include "DBC.h"
+  USE DBC
+  USE ISO_FORTRAN_ENV
   USE ISO_C_BINDING
 #ifdef FUTILITY_HAVE_HDF5
   USE HDF5
@@ -166,6 +169,12 @@ MODULE FileType_HDF5
       !> @copybrief FileType_HDF5::createHardLink_HDF5FileType
       !> @copydetails FileType_HDF5::createHardLink_HDF5FileType
       PROCEDURE,PASS :: createHardLink => createHardLink_HDF5FileType
+      !> @copybrief FileType_HDF5::getChunkSize_HDF5FileType
+      !> @copydetails FileType_HDF5::getChunkSize_HDF5FileType
+      PROCEDURE,PASS :: getChunkSize => getChunkSize_HDF5FileType
+      !> @copybrief FileType_HDF5::isCompressed_HDF5FileType
+      !> @copydetails FileType_HDF5::isCompressed_HDF5FileType
+      PROCEDURE,PASS :: isCompressed => isCompressed_HDF5FileType
       !> @copybrief FileType_HDF5::write_d0
       !> @copydoc FileType_HDF5::write_d0
       PROCEDURE,PASS,PRIVATE :: write_d0
@@ -1151,6 +1160,109 @@ MODULE FileType_HDF5
       bool=.FALSE.
 #endif
     ENDFUNCTION pathexists_HDF5FileType
+!
+!-------------------------------------------------------------------------------
+!> @brief   Returns whether an HDF5 File or data set has compression
+!> @param   thisHDF5File the HDF5FileType object to interrogate
+!> @param   path (optional) the path to a dataset in the file
+!> @returns bool the logical result of whether the specified object has
+!>          compression.
+!>
+    FUNCTION isCompressed_HDF5FileType(thisHDF5File,path) RESULT(bool)
+      CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
+      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: path
+      LOGICAL(SBK) :: bool
+#ifdef FUTILITY_HAVE_HDF5
+      INTEGER(SIZE_T),PARAMETER :: namelen=180
+      CHARACTER(LEN=namelen) :: filter_name
+      INTEGER(SIK) :: i,nfilters,filter_id,error,flags,cd_values(1)
+      INTEGER(HID_T) :: dset_id,dcpl
+      INTEGER(SIZE_T) :: nelmts
+      TYPE(StringType) :: path2
+
+      bool=.FALSE.
+
+      ! Make sure the object is initialized, and opened
+      REQUIRE(thisHDF5File%isinit)
+      REQUIRE(thisHDF5File%isOpen())
+
+      IF(PRESENT(path)) THEN
+        IF(pathexists_HDF5FileType(thisHDF5File,path)) THEN
+          path2=convertPath(path)
+          nelmts=1
+
+          !Get the data set ID
+          CALL h5dopen_f(thisHDF5File%file_id,TRIM(path2),dset_id,error)
+
+          !Get the data set creation property list
+          CALL h5dget_create_plist_f(dset_id,dcpl,error)
+
+          !Get the number of filters on the data set, and loop over
+          !them to find a compression filter
+          CALL h5pget_nfilters_f(dcpl,nfilters,error)
+          DO i=0,nfilters-1
+            CALL h5pget_filter_f(dcpl,i,flags,nelmts,cd_values, &
+              namelen,filter_name,filter_id,error)
+            bool=ANY(filter_id == (/H5Z_FILTER_DEFLATE_F, &
+              H5Z_FILTER_SZIP_F,H5Z_FILTER_NBIT_F,H5Z_FILTER_NBIT_F/))
+            IF(bool) EXIT
+          ENDDO
+        ENDIF
+      ELSE
+        bool=thisHDF5File%hasCompression
+      ENDIF
+#else
+      bool=.FALSE.
+#endif
+    ENDFUNCTION isCompressed_HDF5FileType
+!
+!-------------------------------------------------------------------------------
+!> @brief   Returns the chunk size of a dataset
+!> @param   thisHDF5File the HDF5FileType object to interrogate
+!> @param   path the path to a dataset in the file
+!> @param   cdims allocatabel array containing chunk sizes for each dimension
+!>          of dataset.
+!>
+!> If a dataset does not have chunking or does not exist, then cdims is
+!> returned unallocated.
+!>
+    SUBROUTINE getChunkSize_HDF5FileType(thisHDF5File,path,cdims)
+      CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
+      CHARACTER(LEN=*),INTENT(IN) :: path
+      INTEGER(HSIZE_T),ALLOCATABLE,INTENT(INOUT) :: cdims(:)
+
+#ifdef FUTILITY_HAVE_HDF5
+      INTEGER(SIK) :: error,ndims,layout
+      INTEGER(HID_T) :: dset_id,dspace_id,dcpl
+      TYPE(StringType) :: path2
+
+      IF(ALLOCATED(cdims)) DEALLOCATE(cdims)
+
+      ! Make sure the object is initialized, and opened
+      REQUIRE(thisHDF5File%isinit)
+      REQUIRE(thisHDF5File%isOpen())
+      IF(pathexists_HDF5FileType(thisHDF5File,path)) THEN
+        path2=convertPath(path)
+
+        !Get the data set ID, associated data space, and rank
+        CALL h5dopen_f(thisHDF5File%file_id,TRIM(path2),dset_id,error)
+        CALL h5dget_space_f(dset_id,dspace_id,error)
+        CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+
+        !Get the data set creation property list
+        CALL h5dget_create_plist_f(dset_id,dcpl,error)
+
+        !Get the data space layout and chunk size
+        CALL h5pget_layout_f(dcpl,layout,error)
+        IF(layout == H5D_CHUNKED_F) THEN
+          ALLOCATE(cdims(ndims)); cdims=-1
+          CALL h5pget_chunk_f(dcpl,SIZE(cdims),cdims,error)
+        ENDIF
+      ENDIF
+#else
+      IF(ALLOCATED(cdims)) DEALLOCATE(cdims)
+#endif
+    ENDSUBROUTINE getChunkSize_HDF5FileType
 !
 !-------------------------------------------------------------------------------
 !> @brief

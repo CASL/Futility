@@ -49,17 +49,19 @@ PROGRAM testHDF5
   CALL testMPI%init(PE_COMM_WORLD)
   IF(testMPI%rank /= 0)  utest_master=.FALSE.
 
-  CREATE_TEST("HDF File Type")
+  CREATE_TEST("HDFFILETYPE")
 
   CALL testHDF5FileTypeSetup()
   CALL HDF5Open()
-  REGISTER_SUBTEST("HDF5FileType Uninit Checks",testHDF5FileTypeUninit)
-  REGISTER_SUBTEST("HDF5FileType Initialization Checks",testHDF5FileTypeCreateDelete)
-  REGISTER_SUBTEST("HDF5FileType Error Checks",testHDF5FileTypeErrorCheck)
-  REGISTER_SUBTEST("HDF5FileType Read",testHDF5FileTypeRead)
+  REGISTER_SUBTEST("Uninit",testHDF5FileTypeUninit)
+  REGISTER_SUBTEST("Init",testHDF5FileTypeCreateDelete)
+  REGISTER_SUBTEST("Error Checks",testHDF5FileTypeErrorCheck)
+  REGISTER_SUBTEST("%fread",testHDF5FileTypeRead)
   IF(utest_nfail == 0) THEN
-    REGISTER_SUBTEST("HDF5FileType Write",testHDF5FileTypeWrite)
-    REGISTER_SUBTEST("HDF5 File Compression",testCompress)
+    REGISTER_SUBTEST("%fwrite",testHDF5FileTypeWrite)
+    REGISTER_SUBTEST("File Compression",testCompress)
+    REGISTER_SUBTEST("%isCompressed",testIsCompressed)
+    REGISTER_SUBTEST("%getChunkSize",testGetChunkSize)
   ELSE
     WRITE(*,*) '-----------------------------------------------------'// &
         '--------------------'
@@ -1665,5 +1667,81 @@ PROGRAM testHDF5
     ENDSUBROUTINE testHDF5_wo
 !
 !-------------------------------------------------------------------------------
+    SUBROUTINE testIsCompressed()
+      TYPE(HDF5FileType) :: h5
 
+      COMPONENT_TEST('Uncompressed')
+      CALL h5%init('tmpIsCompressed.h5','NEW',.FALSE.)
+      CALL h5%fopen()
+      CALL h5%mkdir('groupR')
+      CALL h5%fwrite('groupR->memD1',refD1)
+      CALL h5%fwrite('groupR->memD2',refD2)
+      CALL h5%fwrite('groupR->memD3',refD3)
+      CALL h5%fwrite('groupR->memD4',refD4)
+
+      ASSERT(.NOT.h5%isCompressed(),'file query')
+      ASSERT(.NOT.h5%isCompressed('groupR->memD2'),'groupR->memD2')
+      ASSERT(.NOT.h5%isCompressed('groupR->memS2'),'groupR->memS2')
+
+      CALL h5%clear(.TRUE.)
+
+      COMPONENT_TEST('Compressed')
+      CALL h5%init('tmpIsCompressed.h5','NEW',.TRUE.)
+      CALL h5%fopen()
+      CALL h5%mkdir('groupR')
+      CALL h5%fwrite('groupR->memD1',refD1)
+      CALL h5%fwrite('groupR->memD2',refD2)
+      CALL h5%fwrite('groupR->memD3',refD3)
+      CALL h5%fwrite('groupR->memD4',refD4)
+
+      ASSERT(h5%isCompressed(),'file query')
+      ASSERT(h5%isCompressed('groupR->memD2'),'groupR->memD2')
+      ASSERT(.NOT.h5%isCompressed('groupR->memS2'),'groupR->memS2')
+
+      CALL h5%clear(.TRUE.)
+    ENDSUBROUTINE testIsCompressed
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testGetChunkSize()
+      TYPE(HDF5FileType) :: h5
+      INTEGER(SLK),ALLOCATABLE :: cdims(:)
+
+
+      COMPONENT_TEST('Non-zero chunks')
+      CALL h5%init('tmpGetChunkSize.h5','NEW',.TRUE.)
+      CALL h5%fopen()
+      CALL h5%mkdir('groupR')
+      CALL h5%fwrite('groupR->memD1',refD1)
+      CALL h5%fwrite('groupR->memD2',refD2)
+      CALL h5%fwrite('groupR->memD3',refD3)
+      CALL h5%fwrite('groupR->memD4',refD4)
+
+      CALL h5%getChunkSize('groupR->memD1',cdims)
+      ASSERT(cdims(1) == 10,'memD1')
+      CALL h5%getChunkSize('groupR->memD2',cdims)
+      ASSERT(ALL(cdims == (/4,5/)),'memD2')
+      CALL  h5%getChunkSize('groupR->memS2',cdims)
+      ASSERT(.NOT.ALLOCATED(cdims),'memS2')
+
+      CALL h5%clear(.TRUE.)
+
+      COMPONENT_TEST('No chunking')
+      CALL h5%init('tmpGetChunkSize.h5','NEW',.FALSE.)
+      CALL h5%fopen()
+      CALL h5%mkdir('groupR')
+      CALL h5%fwrite('groupR->memD1',refD1)
+      CALL h5%fwrite('groupR->memD2',refD2)
+      CALL h5%fwrite('groupR->memD3',refD3)
+      CALL h5%fwrite('groupR->memD4',refD4)
+
+      CALL h5%getChunkSize('groupR->memD1',cdims)
+      ASSERT(.NOT.ALLOCATED(cdims),'memD1')
+      CALL h5%getChunkSize('groupR->memD2',cdims)
+      ASSERT(.NOT.ALLOCATED(cdims),'memD2')
+      CALL  h5%getChunkSize('groupR->memS2',cdims)
+      ASSERT(.NOT.ALLOCATED(cdims),'memS2')
+
+      CALL h5%clear(.TRUE.)
+    ENDSUBROUTINE testGetChunkSize
+!
 ENDPROGRAM testHDF5
