@@ -471,10 +471,10 @@ MODULE FileType_HDF5
       GENERIC :: freadp => read_dp4
       !> @copybrief FileType_HDF5::write_attribute_st0
       !> @copyoc FileType_HDF5_write_attribute_st0
-      PROCEDURE,PASS,PRIVATE :: write_attribute_st0 
+      PROCEDURE,PASS,PRIVATE :: write_attribute_st0
       !> @copybrief FileType_HDF5::write_attribute_i0
       !> @copyoc FileType_HDF5_write_attribute_i0
-      PROCEDURE,PASS,PRIVATE :: write_attribute_i0 
+      PROCEDURE,PASS,PRIVATE :: write_attribute_i0
       !> @copybrief FileType_HDF5::write_attribute_d0
       !> @copyoc FileType_HDF5_write_attribute_d0
       PROCEDURE,PASS,PRIVATE :: write_attribute_d0
@@ -483,10 +483,10 @@ MODULE FileType_HDF5
         write_attribute_d0
       !> @copybrief FileType_HDF5::read_str_attribure_help
       !> @copyoc FileType_HDF5_read_str_attribure_help
-      PROCEDURE,PASS,PRIVATE :: read_attribute_st0 
+      PROCEDURE,PASS,PRIVATE :: read_attribute_st0
       !> @copybrief FileType_HDF5::read_attribute_i0
       !> @copyoc FileType_HDF5_read_attribute_i0
-      PROCEDURE,PASS,PRIVATE :: read_attribute_i0 
+      PROCEDURE,PASS,PRIVATE :: read_attribute_i0
       !> @copybrief FileType_HDF5::read_attribute_d0
       !> @copyoc FileType_HDF5_read_attribute_d0
       PROCEDURE,PASS,PRIVATE :: read_attribute_d0
@@ -6387,7 +6387,7 @@ MODULE FileType_HDF5
                 ENDDO
               ENDDO
             ENDDO
-            isbool=.TRUE. 
+            isbool=.TRUE.
             DO k=1,SIZE(st3,DIM=3)
               DO j=1,SIZE(st3,DIM=2)
                 DO i=1,SIZE(st3,DIM=1)
@@ -6775,7 +6775,7 @@ MODULE FileType_HDF5
        attr_val=TRIM(attr_val)
        valss=attr_val
        attr_len=INT(LEN(attr_val),SDK)
-       
+
        !Prepare the File and object for the attribute
        CALL open_object(this,obj_name,obj_id)
 
@@ -6800,11 +6800,11 @@ MODULE FileType_HDF5
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes an attribute name and integer  value to a known dataset
-!> 
+!>
 !> @param obj_name the relative path to the dataset
 !> @param attr_name the desired name of the attribute
 !> @param attr_value the desired value of the attrbute
-!>  
+!>
     SUBROUTINE write_attribute_i0(this,obj_name,attr_name,attr_val)
        CHARACTER(LEN=*),PARAMETER :: myName='write_attribute_i0_HDF5FileType'
        CLASS(HDF5FileType),INTENT(INOUT) :: this
@@ -6838,11 +6838,11 @@ MODULE FileType_HDF5
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes an attribute name and real value to a known dataset
-!> 
+!>
 !> @param obj_name the relative path to the dataset
 !> @param attr_name the desired name of the attribute
 !> @param attr_value the desired value of the attrbute
-!>  
+!>
    SUBROUTINE write_attribute_d0(this,obj_name,attr_name,attr_val)
        CHARACTER(LEN=*),PARAMETER :: myName='write_attribute_d0_HDF5FileType'
        CLASS(HDF5FileType),INTENT(INOUT) :: this
@@ -6859,7 +6859,7 @@ MODULE FileType_HDF5
 
        !Prepare the File and object for the attribute
        CALL open_object(this,obj_name,obj_id)
-        
+
        !Create the data space for memory type and size
        CALL h5screate_simple_f(num_dims,dims,dspace_id,error)
 
@@ -6876,11 +6876,11 @@ MODULE FileType_HDF5
 !
 !-------------------------------------------------------------------------------
 !> @brief Set-up to read  a string value attribute from a known dataset
-!> 
+!>
 !> @param obj_name the relative path to the dataset
 !> @param attr_name the desired name of the attribute
 !> @param attr_value the desired value of the attrbute
-!>  
+!>
     SUBROUTINE read_attribute_st0(this,obj_name,attr_name,attr_val)
        CHARACTER(LEN=*),PARAMETER :: myName='read_attribute_st0_helper_HDF5FileType'
        CLASS(HDF5FileType),INTENT(INOUT) :: this
@@ -6905,17 +6905,17 @@ MODULE FileType_HDF5
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a string value attribute from a known dataset
-!> 
+!>
 !> @param obj_name the relative path to the dataset
 !> @param attr_name the desired name of the attribute
 !> @param attr_value the desired value of the attrbute
-!>  
+!>
 #ifdef FUTILITY_HAVE_HDF5
     SUBROUTINE read_attribute_st0_helper(attr_id,length_max,attr_val)
        CHARACTER(LEN=*),PARAMETER :: myName='read_attribute_st0_helper_HDF5FileType'
        TYPE(StringType),INTENT(INOUT)::attr_val
        INTEGER(SDK),INTENT(IN) :: length_max
-        
+
        INTEGER(HID_T),INTENT(IN) :: attr_id
        INTEGER(HID_T)::atype_id
        INTEGER(HSIZE_T),DIMENSION(1) :: dims
@@ -6930,17 +6930,17 @@ MODULE FileType_HDF5
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a integer value attribute from a known dataset
-!> 
+!>
 !> @param obj_name the relative path to the dataset
 !> @param attr_name the desired name of the attribute
 !> @param attr_value the desired value of the attrbute
-!>  
+!>
     SUBROUTINE read_attribute_i0(this,obj_name,attr_name,attr_val)
        CHARACTER(LEN=*),PARAMETER :: myName='read_attribute_i0_HDF5FileType'
        CLASS(HDF5FileType),INTENT(INOUT) :: this
        CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
        INTEGER(SNK),INTENT(INOUT) :: attr_val
-        
+
 #ifdef FUTILITY_HAVE_HDF5
        INTEGER(HID_T) :: attr_id, obj_id
        INTEGER(HSIZE_T),DIMENSION(1) :: dims
@@ -6951,7 +6951,7 @@ MODULE FileType_HDF5
        CALL open_attribute(this,obj_id,attr_name,attr_id)
 
        CALL h5aread_f(attr_id,H5T_NATIVE_INTEGER,attr_val,dims,error)
-       IF(error /= 0) THEN 
+       IF(error /= 0) THEN
          CALL this%e%raiseError(modName//'::'//myName// &
           ' - Failed to read attribute.')
          RETURN
@@ -6963,17 +6963,17 @@ MODULE FileType_HDF5
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a double value attribute from a known dataset
-!> 
+!>
 !> @param obj_name the relative path to the dataset
 !> @param attr_name the desired name of the attribute
 !> @param attr_value the desired value of the attrbute
-!>  
+!>
     SUBROUTINE read_attribute_d0(this,obj_name,attr_name,attr_val)
        CHARACTER(LEN=*),PARAMETER :: myName='read_attribute_d0_HDF5FileType'
        CLASS(HDF5FileType),INTENT(INOUT) :: this
        CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
        REAL(SDK),INTENT(INOUT) :: attr_val
-        
+
 #ifdef FUTILITY_HAVE_HDF5
        INTEGER(HID_T) :: attr_id, obj_id
        INTEGER(HSIZE_T),DIMENSION(1) :: dims
@@ -6984,7 +6984,7 @@ MODULE FileType_HDF5
        CALL open_attribute(this,obj_id,attr_name,attr_id)
 
        CALL h5aread_f(attr_id,H5T_NATIVE_DOUBLE,attr_val,dims,error)
-       IF(error /= 0) THEN 
+       IF(error /= 0) THEN
          CALL this%e%raiseError(modName//'::'//myName// &
           ' - Failed to read attribute.')
          RETURN
@@ -6996,27 +6996,27 @@ MODULE FileType_HDF5
     END SUBROUTINE read_attribute_d0
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets up all attribute operations by checking links and opening object` 
-!> 
+!> @brief Sets up all attribute operations by checking links and opening object`
+!>
 !> @param obj_name the relative path to the dataset
-!> @param obj_id the HDF5 system id for the working dataset 
-!>  
+!> @param obj_id the HDF5 system id for the working dataset
+!>
 #ifdef FUTILITY_HAVE_HDF5
     SUBROUTINE open_object(this,obj_name,obj_id)
        CHARACTER(LEN=*),PARAMETER :: myName='open_object_HDF5FileType'
        CLASS(HDF5FileType),INTENT(INOUT) :: this
        CHARACTER(LEN=*),INTENT(IN) :: obj_name
-        
+
        INTEGER(HID_T),INTENT(OUT) :: obj_id
        CHARACTER(LEN=LEN(obj_name)+1) :: path
        LOGICAL(SBK) :: dset_exists
 
-       !Convert filepath separator from "->" into HDF5 standard "/" 
+       !Convert filepath separator from "->" into HDF5 standard "/"
        path=convertPath(obj_name)
 
        !Check for expected links between object, and File
        CALL h5lexists_f(this%file_id,path,dset_exists,error)
-       IF(.NOT. dset_exists) THEN 
+       IF(.NOT. dset_exists) THEN
          CALL this%e%raiseError(modName//'::'//myName// &
           ' - Incorrect path to object.')
          RETURN
@@ -7024,7 +7024,7 @@ MODULE FileType_HDF5
 
        !Open the object
        CALL h5Oopen_f(this%file_id,path,obj_id,error)
-       IF(error /= 0) THEN 
+       IF(error /= 0) THEN
          CALL this%e%raiseError(modName//'::'//myName// &
           ' - Failed to open object.')
          RETURN
@@ -7032,11 +7032,11 @@ MODULE FileType_HDF5
     END SUBROUTINE open_object
 !
 !-------------------------------------------------------------------------------
-!> @brief closes all attribute operations by closing attribute 
-!> 
-!> @param attr_id the HDF5 system id for the working attribute 
+!> @brief closes all attribute operations by closing attribute
+!>
+!> @param attr_id the HDF5 system id for the working attribute
 !> @param obj_id the HDF5 system id for the working object
-!>  
+!>
     SUBROUTINE close_attribute(this,attr_id)
        CHARACTER(LEN=*),PARAMETER :: myName='close_attribute_rHDF5FileType'
        CLASS(HDF5FileType),INTENT(INOUT) :: this
@@ -7052,10 +7052,10 @@ MODULE FileType_HDF5
 !
 !-------------------------------------------------------------------------------
 !> @brief closes all group, dataset, datatype objects
-!> 
-!> @param attr_id the HDF5 system id for the working attribute 
+!>
+!> @param attr_id the HDF5 system id for the working attribute
 !> @param obj_id the HDF5 system id for the working object
-!>  
+!>
     SUBROUTINE close_object(this,obj_id)
       CHARACTER(LEN=*),PARAMETER :: myName='close_object_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: this
@@ -7072,16 +7072,16 @@ MODULE FileType_HDF5
 !-------------------------------------------------------------------------------
 !> @brief sets up the attribute wrting general operation by checking existance
 !>          and opening the attribute
-!> 
-!> @param attr_id the HDF5 system id for the working attribute 
+!>
+!> @param attr_id the HDF5 system id for the working attribute
 !> @param attr_name the desired name of the attribute
 !> @param obj_id the HDF5 system id for the working object
-!>  
+!>
     SUBROUTINE open_attribute(this,obj_id,attr_name,attr_id)
        CHARACTER(LEN=*),PARAMETER :: myName='open_attribute_rHDF5FileType'
        CLASS(HDF5FileType),INTENT(INOUT) :: this
        CHARACTER(LEN=*),INTENT(IN) :: attr_name
-        
+
        INTEGER(HID_T),INTENT(IN) :: obj_id
        INTEGER(HID_T),INTENT(OUT) :: attr_id
        LOGICAL(SBK):: attr_exists
@@ -7096,7 +7096,7 @@ MODULE FileType_HDF5
 
        !Open the Attribute
        CALL h5aopen_f(obj_id,attr_name,attr_id,error)
-       IF(error /= 0) THEN 
+       IF(error /= 0) THEN
          CALL this%e%raiseError(modName//'::'//myName// &
           ' - Failed to open attribute.')
          RETURN
