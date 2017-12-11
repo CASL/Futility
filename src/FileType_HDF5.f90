@@ -686,7 +686,7 @@ MODULE FileType_HDF5
       IF(file%isinit) THEN
         CALL h5pcreate_f(H5P_FILE_ACCESS_F,plist_id,error)
         CALL h5pset_fclose_degree_f(plist_id,H5F_CLOSE_SEMI_F,error)
-        
+
         IF (error /= 0) CALL file%e%raiseError(modName//'::'//myName// &
           ' - Unable to create property list for open operation.')
 
@@ -6538,7 +6538,7 @@ MODULE FileType_HDF5
             .NOT.(rank == 1 .AND. gdims(1) == 1)) THEN
 
             !Compute optimal chunk size and specify in property list.
-            CALL compute_chunk_size(gdims,cdims)
+            CALL compute_chunk_size(mem,gdims,cdims)
             CALL h5pset_chunk_f(plist_id,rank,cdims,error)
 
             !Do not presently support user defined compression levels, just level 5
@@ -6737,27 +6737,50 @@ MODULE FileType_HDF5
 !> @param gdims the global dimensions of the data set
 !> @param cdims the chunk dimensions to use
 !>
-!> Presently we take the lazy approach and just use gdims.
-!> A more optimal approach would be to get chunks with an aspect ratio near 1
-!> for all dimensions and then size this appropriately so the chunk size works
-!> well in the I/O system's and HDF5 library's buffer and cache sizes.
+!> Choosing the chunk size is EXTREMELY important to managing the memory
+!> overhead of the HDF5 library when using compression. A detailed discussion
+!> can be found on the HDF5 website:
 !>
-    SUBROUTINE compute_chunk_size(gdims,cdims)
+!> https://support.hdfgroup.org/HDF5/doc/Advanced/Chunking/index.html
+!>
+!> Here we choose a chunk size that is the smaller of 1 MB and the maximum size
+!> of the data set to be chunked to limit excessive memory overhead.
+!>
+!> This way of choosing the chunk size ONLY considers the memory overhead. It's
+!> still possible this could result in an increased execution time (via
+!> addtional I/O operations). In the future it may be worth revisiting to
+!> to optimize chunk sizes for both.
+!>
+    SUBROUTINE compute_chunk_size(mem,gdims,cdims)
+      INTEGER(HID_T),INTENT(IN) :: mem
       INTEGER(HSIZE_T),INTENT(IN) :: gdims(:)
       INTEGER(HSIZE_T),INTENT(OUT) :: cdims(:)
 
-      !Lazy
-      cdims=gdims
+      INTEGER(SIK) :: i
+      INTEGER(HSIZE_T) :: bsize,mb
+
+      IF(mem == H5T_NATIVE_DOUBLE) THEN
+        bsize=8
+      ELSEIF(mem == H5T_NATIVE_REAL .OR. mem == H5T_NATIVE_INTEGER) THEN
+        bsize=4
+      ELSEIF(mem == H5T_NATIVE_CHARACTER) THEN
+        bsize=CHARACTER_STORAGE_SIZE
+      ENDIF
+
+      mb=1048576/bsize !1MB in terms of the number of elements
+      DO i=1,SIZE(cdims)
+        cdims(i)=MIN(gdims(i),mb)
+      ENDDO
     ENDSUBROUTINE compute_chunk_size
 #endif
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes an attribute name and string value to a known dataset
-!> 
+!>
 !> @param obj_name the relative path to the dataset
 !> @param attr_name the desired name of the attribute
 !> @param attr_value the desired value of the attrbute
-!>  
+!>
     SUBROUTINE write_attribute_st0(this,obj_name,attr_name,attr_val)
        CHARACTER(LEN=*),PARAMETER :: myName='write_attribute_st0_HDF5FileType'
        CLASS(HDF5FileType),INTENT(INOUT) :: this
