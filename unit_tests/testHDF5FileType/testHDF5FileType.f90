@@ -1387,6 +1387,8 @@ PROGRAM testHDF5
       CALL t%toc()
       WRITE(*,*) "Time to write 128 MB with 4 MB chunks="//t%getTimeHHMMSS()
       CALL TAUSTUB_CHECK_MEMORY()
+      ASSERT(h5%pathExists('large->array'),'largeArray')
+
       CALL h5%clear(.TRUE.)
 
     ENDSUBROUTINE testCompress
@@ -1704,7 +1706,6 @@ PROGRAM testHDF5
 
       ASSERT(.NOT.h5%isCompressed(),'file query')
       ASSERT(.NOT.h5%isCompressed('groupR->memD2'),'groupR->memD2')
-      ASSERT(.NOT.h5%isCompressed('groupR->memS2'),'groupR->memS2')
 
       CALL h5%clear(.TRUE.)
 
@@ -1719,7 +1720,6 @@ PROGRAM testHDF5
 
       ASSERT(h5%isCompressed(),'file query')
       ASSERT(h5%isCompressed('groupR->memD2'),'groupR->memD2')
-      ASSERT(.NOT.h5%isCompressed('groupR->memS2'),'groupR->memS2')
 
       CALL h5%clear(.TRUE.)
     ENDSUBROUTINE testIsCompressed
@@ -1728,7 +1728,6 @@ PROGRAM testHDF5
     SUBROUTINE testGetChunkSize()
       TYPE(HDF5FileType) :: h5
       INTEGER(SLK),ALLOCATABLE :: cdims(:)
-
 
       COMPONENT_TEST('Non-zero chunks')
       CALL h5%init('tmpGetChunkSize.h5','NEW',.TRUE.)

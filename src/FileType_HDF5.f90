@@ -1164,9 +1164,17 @@ MODULE FileType_HDF5
 !-------------------------------------------------------------------------------
 !> @brief   Returns whether an HDF5 File or data set has compression
 !> @param   thisHDF5File the HDF5FileType object to interrogate
-!> @param   path (optional) the path to a dataset in the file
+!> @param   path (optional) the path to a dataset in the file, which must exist
 !> @returns bool the logical result of whether the specified object has
 !>          compression.
+!>
+!> If the path is present, then whether or not the dataset is compressed is
+!> returned.
+!>
+!> If the path is ommitted then the value of the hasCompression attribute is
+!> returned.
+!>
+!> If a non-existent path is passed, a DBC error is thrown.
 !>
     FUNCTION isCompressed_HDF5FileType(thisHDF5File,path) RESULT(bool)
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
@@ -1187,27 +1195,26 @@ MODULE FileType_HDF5
       REQUIRE(thisHDF5File%isOpen())
 
       IF(PRESENT(path)) THEN
-        IF(pathexists_HDF5FileType(thisHDF5File,path)) THEN
-          path2=convertPath(path)
-          nelmts=1
+        REQUIRE(pathexists_HDF5FileType(thisHDF5File,path))
+        path2=convertPath(path)
+        nelmts=1
 
-          !Get the data set ID
-          CALL h5dopen_f(thisHDF5File%file_id,TRIM(path2),dset_id,error)
+        !Get the data set ID
+        CALL h5dopen_f(thisHDF5File%file_id,TRIM(path2),dset_id,error)
 
-          !Get the data set creation property list
-          CALL h5dget_create_plist_f(dset_id,dcpl,error)
+        !Get the data set creation property list
+        CALL h5dget_create_plist_f(dset_id,dcpl,error)
 
-          !Get the number of filters on the data set, and loop over
-          !them to find a compression filter
-          CALL h5pget_nfilters_f(dcpl,nfilters,error)
-          DO i=0,nfilters-1
-            CALL h5pget_filter_f(dcpl,i,flags,nelmts,cd_values, &
-              namelen,filter_name,filter_id,error)
-            bool=ANY(filter_id == (/H5Z_FILTER_DEFLATE_F, &
-              H5Z_FILTER_SZIP_F,H5Z_FILTER_NBIT_F,H5Z_FILTER_NBIT_F/))
-            IF(bool) EXIT
-          ENDDO
-        ENDIF
+        !Get the number of filters on the data set, and loop over
+        !them to find a compression filter
+        CALL h5pget_nfilters_f(dcpl,nfilters,error)
+        DO i=0,nfilters-1
+          CALL h5pget_filter_f(dcpl,i,flags,nelmts,cd_values, &
+            namelen,filter_name,filter_id,error)
+          bool=ANY(filter_id == (/H5Z_FILTER_DEFLATE_F, &
+            H5Z_FILTER_SZIP_F,H5Z_FILTER_NBIT_F,H5Z_FILTER_NBIT_F/))
+          IF(bool) EXIT
+        ENDDO
       ELSE
         bool=thisHDF5File%hasCompression
       ENDIF
@@ -1220,7 +1227,7 @@ MODULE FileType_HDF5
 !> @brief   Returns the chunk size of a dataset
 !> @param   thisHDF5File the HDF5FileType object to interrogate
 !> @param   path the path to a dataset in the file
-!> @param   cdims allocatabel array containing chunk sizes for each dimension
+!> @param   cdims allocatable array containing chunk sizes for each dimension
 !>          of dataset.
 !>
 !> If a dataset does not have chunking or does not exist, then cdims is
@@ -1229,14 +1236,12 @@ MODULE FileType_HDF5
     SUBROUTINE getChunkSize_HDF5FileType(thisHDF5File,path,cdims)
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: path
-      INTEGER(HSIZE_T),ALLOCATABLE,INTENT(INOUT) :: cdims(:)
+      INTEGER(HSIZE_T),ALLOCATABLE,INTENT(OUT) :: cdims(:)
 
 #ifdef FUTILITY_HAVE_HDF5
       INTEGER(SIK) :: error,ndims,layout
       INTEGER(HID_T) :: dset_id,dspace_id,dcpl
       TYPE(StringType) :: path2
-
-      IF(ALLOCATED(cdims)) DEALLOCATE(cdims)
 
       ! Make sure the object is initialized, and opened
       REQUIRE(thisHDF5File%isinit)
@@ -1259,8 +1264,6 @@ MODULE FileType_HDF5
           CALL h5pget_chunk_f(dcpl,SIZE(cdims),cdims,error)
         ENDIF
       ENDIF
-#else
-      IF(ALLOCATED(cdims)) DEALLOCATE(cdims)
 #endif
     ENDSUBROUTINE getChunkSize_HDF5FileType
 !
@@ -6722,10 +6725,9 @@ MODULE FileType_HDF5
                 TRIM(thisHDF5File%fullname)//'" "'// &
                 TRIM(thisHDF5File%fullname)//'.uncompressed"')
             ENDIF
-          ELSE
-            CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-              '- Failed to read data from dataset"'//TRIM(path)//'".')
           ENDIF
+          CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+            '- Failed to read data from dataset"'//TRIM(path)//'".')
         ENDIF
         ! Close the dataset
         CALL h5dclose_f(dset_id,error)
@@ -6775,20 +6777,14 @@ MODULE FileType_HDF5
       INTEGER(HSIZE_T),INTENT(IN) :: gdims(:)
       INTEGER(HSIZE_T),INTENT(OUT) :: cdims(:)
 
-      INTEGER(SIK) :: i
-      INTEGER(HSIZE_T) :: bsize,mb
+      INTEGER(SIK) :: i,error
+      INTEGER(SIZE_T) :: mb,bsize
 
-      IF(mem == H5T_NATIVE_DOUBLE) THEN
-        bsize=8
-      ELSEIF(mem == H5T_NATIVE_REAL .OR. mem == H5T_NATIVE_INTEGER) THEN
-        bsize=4
-      ELSEIF(mem == H5T_NATIVE_CHARACTER) THEN
-        bsize=CHARACTER_STORAGE_SIZE
-      ENDIF
-
+      CALL h5tget_size_f(mem,bsize,error)
+      REQUIRE(bsize > 0)
       mb=1048576/bsize !1MB in terms of the number of elements
       DO i=1,SIZE(cdims)
-        cdims(i)=MIN(gdims(i),mb)
+        cdims(i)=MIN(gdims(i),INT(mb,HSIZE_T))
       ENDDO
     ENDSUBROUTINE compute_chunk_size
 #endif
