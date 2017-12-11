@@ -10,11 +10,13 @@ PROGRAM testHDF5
 #include "UnitTest.h"
   USE ISO_FORTRAN_ENV
   USE ISO_C_BINDING
+  USE TAU_Stubs
   USE UnitTest
   USE IntrType
   USE Strings
   USE ExceptionHandler
   USE ParameterLists
+  USE Times
   USE ParallelEnv
   USE FileType_HDF5
 
@@ -1108,6 +1110,8 @@ PROGRAM testHDF5
 !-------------------------------------------------------------------------------
     SUBROUTINE testCompress()
       TYPE(HDF5FileType) :: h5
+      INTEGER(SIK),PARAMETER :: largeN=16777216 !128MB
+      REAL(SDK),ALLOCATABLE :: largeArray(:)
       REAL(SDK),ALLOCATABLE :: testD1(:),testD2(:,:),testD3(:,:,:),testD4(:,:,:,:)
       REAL(SSK),ALLOCATABLE :: testS1(:),testS2(:,:),testS3(:,:,:),testS4(:,:,:,:)
       LOGICAL(SBK),ALLOCATABLE :: testB1(:),testB2(:,:),testB3(:,:,:)
@@ -1123,6 +1127,7 @@ PROGRAM testHDF5
       TYPE(StringType) :: testST0
       INTEGER(SIK) :: i,j,k
       LOGICAL(SBK) :: checkwrite
+      TYPE(TimerType) :: t
 
       COMPONENT_TEST('%fwrite with gdims')
       ! Create a RW access file. Existing file overwritten
@@ -1364,6 +1369,24 @@ PROGRAM testHDF5
       FINFO() i
 
       !Clear variables
+      CALL h5%clear(.TRUE.)
+
+
+      COMPONENT_TEST('Large Array')
+      CALL h5%init('largeData.h5','NEW',.TRUE.)
+      CALL h5%fopen()
+      CALL h5%mkdir('large')
+      CALL TAUSTUB_CHECK_MEMORY()
+      ALLOCATE(largeArray(largeN))
+      DO i=1,largeN
+        largeArray(i)=REAL(i,SDK)*0.0001_SDK
+      ENDDO
+      CALL TAUSTUB_CHECK_MEMORY()
+      CALL t%tic()
+      CALL h5%fwrite('large->array',largeArray)
+      CALL t%toc()
+      WRITE(*,*) "Time to write 128 MB with 4 MB chunks="//t%getTimeHHMMSS()
+      CALL TAUSTUB_CHECK_MEMORY()
       CALL h5%clear(.TRUE.)
 
     ENDSUBROUTINE testCompress
