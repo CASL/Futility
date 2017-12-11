@@ -3890,7 +3890,7 @@ MODULE FileType_HDF5
       mem=H5T_NATIVE_DOUBLE
       IF(error >= 0) &
         CALL h5dread_f(dset_id,mem,vals,dims,error)
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_d0
 !
@@ -3933,7 +3933,7 @@ MODULE FileType_HDF5
         mem=H5T_NATIVE_DOUBLE
         CALL h5dread_f(dset_id,mem,vals,dims,error)
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_d1
 !
@@ -3976,7 +3976,7 @@ MODULE FileType_HDF5
         mem=H5T_NATIVE_DOUBLE
         CALL h5dread_f(dset_id,mem,vals,dims,error)
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_d2
 !
@@ -4019,7 +4019,7 @@ MODULE FileType_HDF5
         mem=H5T_NATIVE_DOUBLE
         CALL h5dread_f(dset_id,mem,vals,dims,error)
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_d3
 !
@@ -4062,7 +4062,7 @@ MODULE FileType_HDF5
         mem=H5T_NATIVE_DOUBLE
         CALL h5dread_f(dset_id,mem,vals,dims,error)
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_d4
 !
@@ -4105,7 +4105,7 @@ MODULE FileType_HDF5
         mem=H5T_NATIVE_DOUBLE
         CALL h5dread_f(dset_id,mem,vals,dims,error)
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_d5
 !
@@ -4148,7 +4148,7 @@ MODULE FileType_HDF5
         mem=H5T_NATIVE_DOUBLE
         CALL h5dread_f(dset_id,mem,vals,dims,error)
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_d6
 !
@@ -4191,7 +4191,7 @@ MODULE FileType_HDF5
         mem=H5T_NATIVE_DOUBLE
         CALL h5dread_f(dset_id,mem,vals,dims,error)
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_d7
 !
@@ -4234,7 +4234,7 @@ MODULE FileType_HDF5
         mem=H5T_NATIVE_DOUBLE
         CALL h5dread_f(dset_id,mem,vals,dims,error)
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_dp4
 !
@@ -4266,7 +4266,7 @@ MODULE FileType_HDF5
       CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
       IF(error >= 0) &
         CALL h5dread_f(dset_id,mem,vals,dims,error)
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_s0
 !
@@ -4309,7 +4309,7 @@ MODULE FileType_HDF5
         mem=H5T_NATIVE_REAL
         CALL h5dread_f(dset_id,mem,vals,dims,error)
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_s1
 !
@@ -4352,7 +4352,7 @@ MODULE FileType_HDF5
         mem=H5T_NATIVE_REAL
         CALL h5dread_f(dset_id,mem,vals,dims,error)
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_s2
 !
@@ -4395,7 +4395,7 @@ MODULE FileType_HDF5
         mem=H5T_NATIVE_REAL
         CALL h5dread_f(dset_id,mem,vals,dims,error)
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_s3
 !
@@ -4438,7 +4438,7 @@ MODULE FileType_HDF5
         mem=H5T_NATIVE_REAL
         CALL h5dread_f(dset_id,mem,vals,dims,error)
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_s4
 !
@@ -4481,7 +4481,7 @@ MODULE FileType_HDF5
         mem=H5T_NATIVE_REAL
         CALL h5dread_f(dset_id,mem,vals,dims,error)
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_s5
 !
@@ -4524,7 +4524,7 @@ MODULE FileType_HDF5
         mem=H5T_NATIVE_REAL
         CALL h5dread_f(dset_id,mem,vals,dims,error)
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_s6
 !
@@ -4567,7 +4567,7 @@ MODULE FileType_HDF5
         mem=H5T_NATIVE_REAL
         CALL h5dread_f(dset_id,mem,vals,dims,error)
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_s7
 !
@@ -4600,7 +4600,7 @@ MODULE FileType_HDF5
       IF(error >= 0) THEN
         CALL h5dread_f(dset_id,mem,vals,dims,error)
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_n0
 !
@@ -4644,7 +4644,7 @@ MODULE FileType_HDF5
         mem=H5T_NATIVE_INTEGER
         CALL h5dread_f(dset_id,mem,vals,dims,error)
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_n1
 !
@@ -4687,7 +4687,7 @@ MODULE FileType_HDF5
         mem=H5T_NATIVE_INTEGER
         CALL h5dread_f(dset_id,mem,vals,dims,error)
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_n2
 !
@@ -4730,7 +4730,7 @@ MODULE FileType_HDF5
         mem=H5T_NATIVE_INTEGER
         CALL h5dread_f(dset_id,mem,vals,dims,error)
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_n3
 !
@@ -4773,7 +4773,7 @@ MODULE FileType_HDF5
         mem=H5T_NATIVE_INTEGER
         CALL h5dread_f(dset_id,mem,vals,dims,error)
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_n4
 !
@@ -4816,7 +4816,7 @@ MODULE FileType_HDF5
         mem=H5T_NATIVE_INTEGER
         CALL h5dread_f(dset_id,mem,vals,dims,error)
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_n5
 !
@@ -4859,7 +4859,7 @@ MODULE FileType_HDF5
         mem=H5T_NATIVE_INTEGER
         CALL h5dread_f(dset_id,mem,vals,dims,error)
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_n6
 !
@@ -4902,7 +4902,7 @@ MODULE FileType_HDF5
         mem=H5T_NATIVE_INTEGER
         CALL h5dread_f(dset_id,mem,vals,dims,error)
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_n7
 !
@@ -4941,7 +4941,7 @@ MODULE FileType_HDF5
         CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
           ' - Converting from double to long integer!')
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_l0
 !
@@ -4991,7 +4991,7 @@ MODULE FileType_HDF5
         CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
           ' - Converting from double to long integer!')
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_l1
 !
@@ -5041,7 +5041,7 @@ MODULE FileType_HDF5
         CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
           ' - Converting from double to long integer!')
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_l2
 !
@@ -5091,7 +5091,7 @@ MODULE FileType_HDF5
         CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
           ' - Converting from double to long integer!')
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_l3
 !
@@ -5141,7 +5141,7 @@ MODULE FileType_HDF5
         CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
           ' - Converting from double to long integer!')
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_l4
 !
@@ -5191,7 +5191,7 @@ MODULE FileType_HDF5
         CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
           ' - Converting from double to long integer!')
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_l5
 !
@@ -5241,7 +5241,7 @@ MODULE FileType_HDF5
         CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
           ' - Converting from double to long integer!')
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_l6
 !
@@ -5291,7 +5291,7 @@ MODULE FileType_HDF5
         CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
           ' - Converting from double to long integer!')
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_l7
 !
@@ -5332,7 +5332,7 @@ MODULE FileType_HDF5
           vals=.TRUE.
         ENDIF
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_b0
 !
@@ -5386,7 +5386,7 @@ MODULE FileType_HDF5
 
         DEALLOCATE(valsc)
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_b1
 !
@@ -5440,7 +5440,7 @@ MODULE FileType_HDF5
 
         DEALLOCATE(valsc)
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_b2
 !
@@ -5495,7 +5495,7 @@ MODULE FileType_HDF5
 
         DEALLOCATE(valsc)
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_b3
 !
@@ -5582,7 +5582,7 @@ MODULE FileType_HDF5
         ENDIF
         CALL strrep(vals,C_NULL_CHAR,'')
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 
 #endif
     ENDSUBROUTINE read_st0
@@ -5622,7 +5622,7 @@ MODULE FileType_HDF5
           vals=vals//valsc(i)
         ENDDO
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
       IF(ALLOCATED(valsc)) DEALLOCATE(valsc)
 #endif
     ENDSUBROUTINE read_ca0
@@ -5721,7 +5721,7 @@ MODULE FileType_HDF5
           CALL strrep(vals(i),C_NULL_CHAR,'')
         ENDDO
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
       IF(ALLOCATED(valsc)) DEALLOCATE(valsc)
 #endif
     ENDSUBROUTINE read_st1
@@ -5775,7 +5775,7 @@ MODULE FileType_HDF5
           ENDDO
         ENDDO
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
       IF(ALLOCATED(valsc)) DEALLOCATE(valsc)
 #endif
     ENDSUBROUTINE read_ca1
@@ -5878,7 +5878,7 @@ MODULE FileType_HDF5
           ENDDO
         ENDDO
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
       IF(ALLOCATED(valsc)) DEALLOCATE(valsc)
 #endif
     ENDSUBROUTINE read_st2
@@ -5934,7 +5934,7 @@ MODULE FileType_HDF5
           ENDDO
         ENDDO
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
       IF(ALLOCATED(valsc)) DEALLOCATE(valsc)
 #endif
     ENDSUBROUTINE read_ca2
@@ -6042,7 +6042,7 @@ MODULE FileType_HDF5
           ENDDO
         ENDDO
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_st3
 !
@@ -6099,7 +6099,7 @@ MODULE FileType_HDF5
           ENDDO
         ENDDO
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_ca3
 !
@@ -6144,7 +6144,7 @@ MODULE FileType_HDF5
           vals(i:i)=valsc(i)
         ENDDO
       ENDIF
-      CALL postRead(thisHDF5File,dset_id,dspace_id,error)
+      CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
     ENDSUBROUTINE read_c1
 !
@@ -6689,12 +6689,15 @@ MODULE FileType_HDF5
 !-------------------------------------------------------------------------------
 !> @brief
 !>
-    SUBROUTINE postRead(thisHDF5File,dset_id,dspace_id,error)
+    SUBROUTINE postRead(thisHDF5File,path,dset_id,dspace_id,error)
       CHARACTER(LEN=*),PARAMETER :: myName='postRead'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
+      CHARACTER(LEN=*),INTENT(IN) :: path
       INTEGER(HID_T),INTENT(INOUT) :: dset_id
       INTEGER(HID_T),INTENT(INOUT) :: dspace_id
       INTEGER(SIK),INTENT(INOUT) :: error
+
+      INTEGER(HSIZE_T),ALLOCATABLE :: cdims(:)
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
@@ -6706,16 +6709,32 @@ MODULE FileType_HDF5
         CALL thisHDF5File%e%raiseError(modName// &
           '::'//myName//' - File is not Readable!')
       ELSE
-        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Failed to read data from dataset.')
+        IF(error /= 0) THEN
+          !See if failed read was due to OOM on decompress
+          IF(isCompressed_HDF5FileType(thisHDF5File,path)) THEN
+            CALL getChunkSize_HDF5FileType(thisHDF5File,path,cdims)
+            IF(MAXVAL(cdims) > 16777216_HSIZE_T) THEN !This is 64/128MB
+              CALL thisHDF5File%e%raiseWarning( &      !depending on dataset type.
+                modName//'::'//myName//' - Potentially high memory usage'// &
+                'when reading decompressed dataset "'//TRIM(path)//'".'// &
+                CHAR(10)//CHAR(10)//'Try decompressing file before rerunning:'// &
+                CHAR(10)//'$ h5repack -f NONE "'// &
+                TRIM(thisHDF5File%fullname)//'" "'// &
+                TRIM(thisHDF5File%fullname)//'.uncompressed"')
+            ENDIF
+          ELSE
+            CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+              '- Failed to read data from dataset"'//TRIM(path)//'".')
+          ENDIF
+        ENDIF
         ! Close the dataset
         CALL h5dclose_f(dset_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Failed to close dataset.')
+          ' - Failed to close dataset "'//TRIM(path)//'".')
         ! Close the dataspace
         CALL h5sclose_f(dspace_id,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Failed to close dataspace.')
+          ' - Failed to close dataspace for "'//TRIM(path)//'".')
       ENDIF
     ENDSUBROUTINE postRead
 !
