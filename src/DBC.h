@@ -10,7 +10,6 @@
 #ifdef FUTILITY_DBC
 #define REQUIRE(test)  IF(.NOT. (test)) CALL DBC_FAIL("test",__FILE__,__LINE__)
 #define ENSURE(test)   IF(.NOT. (test)) CALL DBC_FAIL("test",__FILE__,__LINE__)
-  USE DBC
 #else
 #define REQUIRE(test)  ! DBC REQUIRE - test
 #define ENSURE(test)   ! DBC ENSURE  - test
