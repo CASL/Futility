@@ -1236,11 +1236,12 @@ MODULE FileType_HDF5
     SUBROUTINE getChunkSize_HDF5FileType(thisHDF5File,path,cdims)
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: path
-      INTEGER(HSIZE_T),ALLOCATABLE,INTENT(OUT) :: cdims(:)
+      INTEGER(SLK),ALLOCATABLE,INTENT(OUT) :: cdims(:)
 
 #ifdef FUTILITY_HAVE_HDF5
       INTEGER(SIK) :: error,ndims,layout
       INTEGER(HID_T) :: dset_id,dspace_id,dcpl
+      INTEGER(HSIZE_T),ALLOCATABLE :: cdimsH5(:)
       TYPE(StringType) :: path2
 
       ! Make sure the object is initialized, and opened
@@ -1261,7 +1262,9 @@ MODULE FileType_HDF5
         CALL h5pget_layout_f(dcpl,layout,error)
         IF(layout == H5D_CHUNKED_F) THEN
           ALLOCATE(cdims(ndims)); cdims=-1
-          CALL h5pget_chunk_f(dcpl,SIZE(cdims),cdims,error)
+          ALLOCATE(cdimsH5(ndims)); cdimsH5=-1
+          CALL h5pget_chunk_f(dcpl,ndims,cdimsH5,error)
+          cdims=cdimsH5
         ENDIF
       ENDIF
 #endif
