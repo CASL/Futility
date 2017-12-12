@@ -8,6 +8,7 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testDBC
 #include "DBC.h"
+  USE DBC
   USE IntrType
   IMPLICIT NONE
   CHARACTER(LEN=*),PARAMETER :: modName="testDBC"
