@@ -63,7 +63,6 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE FileType_HDF5
 #include "DBC.h"
-  USE DBC
   USE ISO_FORTRAN_ENV
   USE ISO_C_BINDING
 #ifdef FUTILITY_HAVE_HDF5
