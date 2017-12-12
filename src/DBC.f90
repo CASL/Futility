@@ -41,7 +41,6 @@ MODULE DBC
 #endif
 
   PRIVATE
-
 !
 ! List of Public items
   PUBLIC :: DBC_FAIL
@@ -54,24 +53,28 @@ MODULE DBC
 !>
 !> Self-explanatory.
 !>
-SUBROUTINE DBC_FAIL(test_char,mod_name,line)
-  CHARACTER(LEN=*),INTENT(IN) :: test_char
-  CHARACTER(LEN=*),INTENT(IN) :: mod_name
-  INTEGER,INTENT(IN) :: line
-  !> Variables for MPI tests
-  INTEGER :: rank=0,nproc=1
+  SUBROUTINE DBC_FAIL(test_char,mod_name,line)
+    CHARACTER(LEN=*),INTENT(IN) :: test_char
+    CHARACTER(LEN=*),INTENT(IN) :: mod_name
+    INTEGER,INTENT(IN) :: line
+    !> Variables for MPI tests
+    INTEGER :: rank,nproc
 #ifdef HAVE_MPI
-  INTEGER :: mpierr
-  CALL MPI_Comm_rank(MPI_COMM_WORLD,rank,mpierr)
-  CALL MPI_Comm_size(MPI_COMM_WORLD,nproc,mpierr)
+    INTEGER :: mpierr
+    CALL MPI_Comm_rank(MPI_COMM_WORLD,rank,mpierr)
+    CALL MPI_Comm_size(MPI_COMM_WORLD,nproc,mpierr)
+#else
+    rank=0
+    nproc=1
 #endif
 
-  WRITE(ERROR_UNIT,'(a,i5,a,i5,a,i5)') "DBC Failure: " // test_char // " in " // mod_name // &
-        " on line",line,":  process",rank+1," of",nproc
+    WRITE(ERROR_UNIT,'(a,i5,a,i5,a,i5)') "DBC Failure: "//test_char//" in "// &
+      mod_name//" on line",line,":  process",rank+1," of",nproc
+
 #ifndef __INTEL_COMPILER
-  CALL backtrace()
+    CALL backtrace()
 #endif
-  STOP 2
-ENDSUBROUTINE DBC_FAIL
+    STOP 2
+  ENDSUBROUTINE DBC_FAIL
 !
 ENDMODULE DBC
