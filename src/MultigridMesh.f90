@@ -51,9 +51,11 @@ MODULE MultigridMesh
   IMPLICIT NONE
   PRIVATE
 
-  PUBLIC :: MultigridMeshElementType
+  !PUBLIC :: MultigridMeshElementType
   PUBLIC :: MultigridMeshType
   PUBLIC :: MultigridMeshStructureType
+  PUBLIC :: InterpWeightsLevelType
+  PUBLIC :: InterpWeightsStructureType
 
   TYPE :: MultigridMeshElementType
     !> Index of the point on the finest grid that this point eventually injects
@@ -70,9 +72,6 @@ MODULE MultigridMesh
     !> For MPACT, ordering should be WSENBT on finest mesh and WESNBT on
     !>  all other meshes, but, in general, ordering is arbitrary
     INTEGER(SIK),ALLOCATABLE :: childIndices(:)
-    !> Weights of each child point, 2nd index has same range as childIndices,
-    !>  1st index has range 1:num_eqns
-    REAL(SRK),ALLOCATABLE :: childWeights(:,:)
 
     CONTAINS
       !> @copybrief MultigridMesh::clear_MultigridMeshElement
@@ -83,11 +82,6 @@ MODULE MultigridMesh
   TYPE :: MultigridMeshType
     !> Which level the mesh corresponds to (1 = coarsest)
     INTEGER(SIK) :: iLevel=-1_SIK
-    !> Number of equations (# of components per spatial point)
-    !>   Right now, there is no support for simultaneous collapse in both space
-    !>   and the number of eqns in this module.  Collapse of eqns must be done
-    !>   separately.
-    INTEGER(SIK) :: num_eqns=1_SIK
     !> Whether or not it is the finest level:
     LOGICAL(SBK) :: isFinestLevel=.FALSE.
     !> Whether or not it is the coarsest level:
@@ -133,9 +127,7 @@ MODULE MultigridMesh
   TYPE :: MultigridMeshStructureType
     !> Number of multigrid levels, including the coarsest and finest
     INTEGER(SIK) :: nLevels=-1_SIK
-    !> Data for each multigrid level.  NOTE: Typically 1:nLevels-1.
-    !>  It is generally not necessary to define a MultigridMesh for the
-    !>  coarsest level.  1 = coarsest level, nLevels = finest level.
+    !> Data for each multigrid level. 1 = coarsest level, nLevels = finest level
     TYPE(MultigridMeshType),ALLOCATABLE :: meshes(:)
     !> Whether or not the mesh structure has been initialized:
     LOGICAL(SBK) :: isInit
@@ -148,6 +140,53 @@ MODULE MultigridMesh
       !> @copydetails MultigridMesh::init_MultigridMeshStructure
       PROCEDURE,PASS :: init => init_MultigridMeshStructure
   ENDTYPE MultigridMeshStructureType
+
+  TYPE :: InterpWeightsPointType
+    !> Array of weights, size (num_eqns,nChildren)
+    REAL(SRK),ALLOCATABLE :: wts(:,:)
+  ENDTYPE InterpWeightsPointType
+
+  TYPE :: InterpWeightsLevelType
+    !> Pointer to MultigridMeshType for which these weights are used
+    TYPE(MultigridMeshType),POINTER :: meshes => NULL()
+    !> Pointer to array of InterpWeightsPointType
+    !>  Bounds are meshes(iLevel)%istt:istp
+    TYPE(InterpWeightsPointType),ALLOCATABLE :: wts_point(:)
+    !> Number of equations (# of components per spatial point)
+    !>   Right now, there is no support for simultaneous collapse in both space
+    !>   and the number of eqns in this module.  Collapse of eqns must be done
+    !>   separately.
+    INTEGER(SIK) :: num_eqns=1_SIK
+
+    CONTAINS
+      !> @copybrief MultigridMesh::clear_InterpWeightsLevel
+      !> @copydetails MultigridMesh::clear_InterpWeightsLevel
+      PROCEDURE,PASS :: clear => clear_InterpWeightsLevel
+      !> @copybrief MultigridMesh::init_InterpWeightsLevel
+      !> @copydetails MultigridMesh::init_InterpWeightsLevel
+      PROCEDURE,PASS :: init => init_InterpWeightsLevel
+
+  ENDTYPE InterpWeightsLevelType
+
+  TYPE :: InterpWeightsStructureType
+    !> Pointer to MultigridMeshStructureType for which these weights are used
+    TYPE(MultigridMeshStructureType),POINTER :: myMeshes => NULL()
+    !> Pointer to array of InterpWeightsLevelType, 2:myMMeshes%nLevels
+    !>   wts_level(i) has weights for interpolation from level i-1 to level i
+    !>   1 = coarsest, nLevels = finest level
+    TYPE(InterpWeightsLevelType),ALLOCATABLE :: wts_level(:)
+    !> Whether or not the interp weights structure has been initialized:
+    LOGICAL(SBK) :: isInit
+
+    CONTAINS
+      !> @copybrief MultigridMesh::clear_InterpWeightsStructure
+      !> @copydetails MultigridMesh::clear_InterpWeightsStructure
+      PROCEDURE,PASS :: clear => clear_InterpWeightsStructure
+      !> @copybrief MultigridMesh::init_InterpWeightsStructure
+      !> @copydetails MultigridMesh::init_InterpWeightsStructure
+      PROCEDURE,PASS :: init => init_InterpWeightsStructure
+
+  ENDTYPE InterpWeightsStructureType
 
   !> Exception Handler for use in MatrixTypes
   TYPE(ExceptionHandlerType),SAVE :: eMultigridMesh
@@ -180,8 +219,6 @@ MODULE MultigridMesh
       ALLOCATE(myMeshes%meshes(nLevels))
       DO iLevel=1,nLevels
         myMeshes%meshes(iLevel)%iLevel=iLevel
-        myMeshes%meshes(iLevel)%num_eqns=1_SIK
-        IF(PRESENT(num_eqns)) myMeshes%meshes(iLevel)%num_eqns=num_eqns
       ENDDO
       myMeshes%meshes(nLevels)%isFinestLevel=.TRUE.
       myMeshes%meshes(1)%isCoarsestLevel=.TRUE.
@@ -247,9 +284,132 @@ MODULE MultigridMesh
 
       IF(ALLOCATED(myMeshElement%childIndices)) &
               DEALLOCATE(myMeshElement%childIndices)
-      IF(ALLOCATED(myMeshElement%childWeights)) &
-              DEALLOCATE(myMeshElement%childWeights)
 
     ENDSUBROUTINE clear_MultigridMeshElement
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes the InterpWeightsStructure type
+!>
+!> @param myWtStructure the interp weight structure instance
+!> @param myMeshes pointer to initialized MultigridMeshStructureType
+!> @param num_eqns number of equations (# of unknowns per spatial point)
+!>
+    SUBROUTINE init_InterpWeightsStructure(myWtStructure,myMeshes,num_eqns)
+      CHARACTER(LEN=*),PARAMETER :: myName='init_InterpWeightsStructure'
+      CLASS(InterpWeightsStructureType),INTENT(INOUT) :: myWtStructure
+      TYPE(MultigridMeshStructureType),POINTER,INTENT(IN) :: myMeshes
+      INTEGER(SIK),INTENT(IN) :: num_eqns
+
+      INTEGER(SIK) :: iLevel
+
+      IF(.NOT. myMeshes%isInit) &
+        CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
+          "input MultigridMeshStructure must be initialized!")
+
+      myWtStructure%myMeshes => myMeshes
+
+      ALLOCATE(myWtStructure%wts_level(2:myMeshes%nLevels))
+      DO iLevel=2,myMeshes%nLevels
+        CALL myWtStructure%wts_level(iLevel)%init( &
+               myMeshes%meshes(iLevel),num_eqns)
+      ENDDO
+
+      myWtStructure%isInit=.TRUE.
+
+    ENDSUBROUTINE init_InterpWeightsStructure
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears the InterpWeightsStructure type
+!>
+!> @param myWtStructure the interp weight structure instance
+!>
+    SUBROUTINE clear_InterpWeightsStructure(myWtStructure)
+      CHARACTER(LEN=*),PARAMETER :: myName='clear_InterpWeightsStructure'
+      CLASS(InterpWeightsStructureType),INTENT(INOUT) :: myWtStructure
+
+      INTEGER(SIK) :: iLevel
+
+      IF(ASSOCIATED(myWtStructure%myMeshes) .AND. &
+          myWtStructure%myMeshes%isInit) THEN
+        IF(ALLOCATED(myWtStructure%wts_level)) THEN
+          DO iLevel=2,myWtStructure%myMeshes%nLevels
+            CALL myWtStructure%wts_level(iLevel)%clear()
+          ENDDO
+          DEALLOCATE(myWtStructure%wts_level)
+        ENDIF
+        NULLIFY(myWtStructure%myMeshes)
+      ELSE IF(ALLOCATED(myWtStructure%wts_level)) THEN
+        DO iLevel=LBOUND(myWtStructure%wts_level,1), &
+                  UBOUND(myWtStructure%wts_level,1)
+          NULLIFY(myWtStructure%wts_level(iLevel)%meshes)
+          CALL myWtStructure%wts_level(iLevel)%clear()
+        ENDDO
+        DEALLOCATE(myWtStructure%wts_level)
+      ENDIF
+
+      myWtStructure%isInit=.FALSE.
+
+    ENDSUBROUTINE clear_InterpWeightsStructure
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes the InterpWeightsLevel type
+!>
+!> @param myWts the interp weight level instance
+!> @param meshes pointer to MultigridMeshType corresponding to this level
+!> @param num_eqns number of equations (# of unknowns per spatial point)
+!>
+    SUBROUTINE init_InterpWeightsLevel(myWts,meshes,num_eqns)
+      CHARACTER(LEN=*),PARAMETER :: myName='init_InterpWeightsLevel'
+      CLASS(InterpWeightsLevelType),INTENT(INOUT) :: myWts
+      TYPE(MultigridMeshType),POINTER,INTENT(IN) :: meshes
+      INTEGER(SIK),INTENT(IN) :: num_eqns
+
+      INTEGER(SIK) :: i
+
+      myWts%meshes => meshes
+      myWts%num_eqns=num_eqns
+
+      !TODO turn on option for flat weights to save on memory cost
+      ALLOCATE(myWts%wts_point(meshes%istt:meshes%istp))
+      DO i=meshes%istt,meshes%istp
+        IF(meshes%interpDegrees(i) > 0) THEN
+          ALLOCATE(myWts%wts_point(i)%wts(num_eqns,meshes%interpDegrees(i)*2))
+          myWts%wts_point(i)%wts=1.0_SRK/(2*meshes%interpDegrees(i))
+        ENDIF
+      ENDDO
+
+    ENDSUBROUTINE init_InterpWeightsLevel
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears the InterpWeightsLevel type
+!>
+!> @param myWts the interp weight level instance
+!>
+    SUBROUTINE clear_InterpWeightsLevel(myWts)
+      CHARACTER(LEN=*),PARAMETER :: myName='clear_InterpWeightsLevel'
+      CLASS(InterpWeightsLevelType),INTENT(INOUT) :: myWts
+
+      INTEGER(SIK) :: i
+
+      IF(ASSOCIATED(myWts%meshes)) THEN
+        IF(ALLOCATED(myWts%wts_point)) THEN
+          DO i=myWts%meshes%istt,myWts%meshes%istp
+            IF(myWts%meshes%interpDegrees(i) > 0) THEN
+              DEALLOCATE(myWts%wts_point(i)%wts)
+            ENDIF
+          ENDDO
+          DEALLOCATE(myWts%wts_point)
+        ENDIF
+        NULLIFY(myWts%meshes)
+      ELSE IF(ALLOCATED(myWts%wts_point)) THEN
+        DO i=LBOUND(myWts%wts_point,1),UBOUND(myWts%wts_point,1)
+          IF(ALLOCATED(myWts%wts_point(i)%wts)) THEN
+            DEALLOCATE(myWts%wts_point(i)%wts)
+          ENDIF
+        ENDDO
+        DEALLOCATE(myWts%wts_point)
+      ENDIF
+
+    ENDSUBROUTINE clear_InterpWeightsLevel
 
 ENDMODULE MultigridMesh
