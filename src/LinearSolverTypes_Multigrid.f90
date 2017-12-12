@@ -83,7 +83,8 @@ MODULE LinearSolverTypes_Multigrid
     LOGICAL(SBK) :: isMultigridSetup=.FALSE.
     !> Size of each grid. level_info(:,level) = (/num_eqns,npts/)
     INTEGER(SIK),ALLOCATABLE :: level_info(:,:)
-    !> Size of each grid locally. level_info(:,level) = (/num_eqns_local,npts_local/)
+    !> Size of each grid locally.
+    !>    level_info(:,level) = (/num_eqns_local,npts_local/)
     INTEGER(SIK),ALLOCATABLE :: level_info_local(:,:)
 #ifdef FUTILITY_HAVE_PETSC
     !> Array of PETSc interpolation matrices
@@ -154,7 +155,8 @@ MODULE LinearSolverTypes_Multigrid
         "For now, LinearSolverType_Multigrid requires PETSc enabled.")
 #endif
       !Check to set up required and optional param lists.
-      IF(.NOT.LinearSolverType_Paramsflag) CALL LinearSolverType_Declare_ValidParams()
+      IF(.NOT.LinearSolverType_Paramsflag) &
+        CALL LinearSolverType_Declare_ValidParams()
 
       !Validate against the reqParams and OptParams
       validParams=Params
@@ -278,14 +280,15 @@ MODULE LinearSolverTypes_Multigrid
           CALL Params%get('LinearSolverType->Multigrid->nz_local',nz)
           CALL Params%get('LinearSolverType->Multigrid->num_eqns',num_eqns)
 
-          !Number of levels required to reduce down to ~5*num_eqns unknowns per processor:
+          !Number of levels required to reduce down to ~5*num_eqns
+          !  unknowns per processor:
           solver%nLevels=FLOOR(log(MAX(nx-1,ny-1,nz-1)/5.0_SRK)/log(2.0_SRK))+1
           solver%nLevels=MIN(solver%nLevels,MAX_MG_LEVELS)
           solver%nLevels=MAX(1,solver%nLevels)
           IF(solver%nLevels < 2) &
               CALL eLinearSolverType%raiseDebug(modName//"::"//myName//" - "// &
-                     'The grid is too small to coarsen, using multigrid with '// &
-                     ' only 1 level!')
+                'The grid is too small to coarsen, using multigrid with '// &
+                ' only 1 level!')
           ALLOCATE(solver%level_info_local(2,solver%nLevels))
           solver%level_info_local(:,solver%nLevels)=(/num_eqns,nx*ny*nz/)
           DO iLevel=solver%nLevels-1,1,-1
@@ -457,13 +460,14 @@ MODULE LinearSolverTypes_Multigrid
       ENDDO !iLevel
 #else
       CALL eLinearSolverType%raiseError('Incorrect call to '// &
-        modName//'::'//myName//' - This subroutine does not have a non-PETSc'// &
-        'implementation yet.')
+        modName//'::'//myName//' - This subroutine does not have a '// &
+        'non-PETSc implementation yet.')
 #endif
     ENDSUBROUTINE fillInterpMats_LinearSolverType_Multigrid
 !
 !-------------------------------------------------------------------------------
-!> @brief Setup the PCMG environment in PETSc, finalize the interpolation operators
+!> @brief Setup the PCMG environment in PETSc, finalize the interpolation
+!>        operators
 !>
 !> @param solver The linear solver to act on
 !> @param Params the parameter list
@@ -526,7 +530,8 @@ MODULE LinearSolverTypes_Multigrid
 
         !Set the interpolation operator:
         CALL solver%interpMats_PETSc(iLevel)%assemble()
-        CALL PCMGSetInterpolation(solver%pc,iLevel,solver%interpMats_PETSc(iLevel)%a,iperr)
+        CALL PCMGSetInterpolation(solver%pc,iLevel, &
+                                  solver%interpMats_PETSc(iLevel)%a,iperr)
       ENDDO
 
       IF(Params%has('LinearSolverType->Multigrid->num_smooth')) THEN
@@ -634,12 +639,13 @@ MODULE LinearSolverTypes_Multigrid
         CALL PCMGGetSmoother(solver%pc,i,ksp_temp,iperr)
 
         IF(smoother == CBJ) THEN
-          IF(isSmootherListInit) THEN
-            CALL smootherManager_setKSP(i+1,ksp_temp)
+          IF(smootherListCollection(solver%smootherListID) &
+              %isSmootherListInit) THEN
+            CALL smootherManager_setKSP(solver%smootherListID,i+1,ksp_temp)
           ELSE
             CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
-              "Smoother list must be initialized before any smoothers can be"// &
-              " set to CBJ!")
+              "Smoother list must be initialized before any smoothers can "// &
+              "be set to CBJ!")
           ENDIF
         ELSEIF(smoother == SOR) THEN
           CALL KSPSetType(ksp_temp,KSPRICHARDSON,iperr)
@@ -669,7 +675,8 @@ MODULE LinearSolverTypes_Multigrid
           CALL KSPGetPC(ksp_temp,pc_temp,iperr)
           CALL PCSetType(pc_temp,PCLU,iperr)
           IF(solver%MPIparallelEnv%nproc > 1) &
-            CALL PCFactorSetMatSolverPackage(pc_temp,MATSOLVERSUPERLU_DIST,iperr)
+            CALL PCFactorSetMatSolverPackage(pc_temp,MATSOLVERSUPERLU_DIST, &
+                                             iperr)
         ELSEIF(smoother == BJACOBI) THEN
           CALL KSPSetType(ksp_temp,KSPRICHARDSON,iperr)
           CALL KSPGetPC(ksp_temp,pc_temp,iperr)
@@ -776,7 +783,9 @@ MODULE LinearSolverTypes_Multigrid
       !i>1:
       DO i=2,counter
         IF(tmpindices(i) < 1) CYCLE
-        ind=MINLOC(indices(1:nindices),DIM=1,MASK=(indices(1:nindices)==tmpindices(i)))
+        !TODO ZZZZ i should explain what this line does with a comment...
+        ind=MINLOC(indices(1:nindices),DIM=1, &
+                   MASK=(indices(1:nindices)==tmpindices(i)))
         IF(ind == 0) THEN
           nindices=nindices+1
           indices(nindices)=tmpindices(i)
