@@ -242,7 +242,7 @@ MODULE MultigridMesh
 !> @param myMeshElement the mesh element
 !>
     SUBROUTINE clear_MultigridMeshElement(myMeshElement)
-      CHARACTER(LEN=*),PARAMETER :: myName='clear_MultigridMesh'
+      CHARACTER(LEN=*),PARAMETER :: myName='clear_MultigridMeshElement'
       CLASS(MultigridMeshElementType),INTENT(INOUT) :: myMeshElement
 
       IF(ALLOCATED(myMeshElement%childIndices)) &

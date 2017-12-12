@@ -166,7 +166,7 @@ MODULE SmootherTypes
       !> @copybrief SmootherTypes::clear_ColorManagerType
       !> @copydetails SmootherTypes::clear_ColorManagerType
       PROCEDURE,PASS :: clear => clear_ColorManagerType
-  ENDTYPE
+  ENDTYPE ColorManagerType
 
   !Colored block Jacobi smoother:
   TYPE,EXTENDS(SmootherType_PETSc) :: SmootherType_PETSc_CBJ
@@ -308,7 +308,7 @@ MODULE SmootherTypes
   !>  This is needed so smootherList can have different smoother types
   TYPE :: SmootherInstanceType
     CLASS(SmootherType_Base),ALLOCATABLE :: smoother
-  ENDTYPE
+  ENDTYPE SmootherInstanceType
   !> This is needed to have a ctxList of pointers to PetscInt arrays
   TYPE :: ctxInstanceType
 #ifdef FUTILITY_HAVE_PETSC
@@ -606,16 +606,21 @@ MODULE SmootherTypes
         CALL params_out%add('SmootherType->istt',istt_list(ismoother))
         CALL params_out%add('SmootherType->istp',istp_list(ismoother))
         CALL params_out%add('SmootherType->blk_size',blk_size_list(ismoother))
-        CALL params_out%add('SmootherType->smootherMethod',smootherMethod_list(ismoother))
-        CALL params_out%add('SmootherType->blockMethod',blockMethod_list(ismoother))
-        CALL params_out%add('SmootherType->num_colors',num_colors_list(ismoother))
-        CALL params_out%add('SmootherType->MPI_Comm_ID',MPI_Comm_ID_list(ismoother))
+        CALL params_out%add('SmootherType->smootherMethod', &
+                            smootherMethod_list(ismoother))
+        CALL params_out%add('SmootherType->blockMethod', &
+                            blockMethod_list(ismoother))
+        CALL params_out%add('SmootherType->num_colors', &
+                            num_colors_list(ismoother))
+        CALL params_out%add('SmootherType->MPI_Comm_ID', &
+                            MPI_Comm_ID_list(ismoother))
         SELECTCASE(smootherMethod_list(ismoother))
           CASE(CBJ)
             ALLOCATE(SmootherType_PETSc_CBJ :: smootherList(ismoother)%smoother)
           CASE DEFAULT
             CALL eSmootherType%raiseDebug(modName//"::"//myName//" - "// &
-                "Unknown smoother method, not allocating smoother for this level!")
+                "Unknown smoother method, not allocating smoother for this"// &
+                " level!")
         ENDSELECT
         IF(ALLOCATED(smootherList(ismoother)%smoother)) &
           CALL smootherList(ismoother)%smoother%init(params_out)
@@ -683,7 +688,8 @@ MODULE SmootherTypes
         smootherMethod_list(1)=GMRES
         smootherMethod_list(2:num_smoothers)=CBJ
       ENDIF
-      CALL params_out%add('SmootherType->smootherMethod_list',smootherMethod_list)
+      CALL params_out%add('SmootherType->smootherMethod_list', &
+                          smootherMethod_list)
       DEALLOCATE(istt_list)
       DEALLOCATE(istp_list)
       DEALLOCATE(blk_size_list)
@@ -883,7 +889,8 @@ MODULE SmootherTypes
     ENDSUBROUTINE smootherManager_requestAllBlocksUpdate
 !
 !-------------------------------------------------------------------------------
-!> @brief PETSc Setup PC function for PCSHELL for the colored block Jacobi scheme
+!> @brief PETSc PCSetup function for PCSHELL for the colored block Jacobi
+!>        scheme
 !>
 !> @param smoother Smoother object which owns the SHELL
 !> @param pc PETSc PC context
@@ -938,13 +945,17 @@ MODULE SmootherTypes
             CALL params%add('LinearSolverType->solverMethod',LU)
             !This part is serial, so we don't need an MPI communicator
             CALL params%add('LinearSolverType->MPI_Comm_ID',-1_SIK)
-            CALL params%add('LinearSolverType->timerName','LU solver for smoother blocks')
+            CALL params%add('LinearSolverType->timerName', &
+                            'LU solver for smoother blocks')
             CALL params%add('LinearSolverType->numberOMP',1_SIK)
             CALL params%add('LinearSolverType->matType',DENSESQUARE)
-            CALL params%add('LinearSolverType->A->MatrixType->n',smoother%blk_size)
+            CALL params%add('LinearSolverType->A->MatrixType->n', &
+                            smoother%blk_size)
             CALL params%add('LinearSolverType->A->MatrixType->isSym',.FALSE.)
-            CALL params%add('LinearSolverType->x->VectorType->n',smoother%blk_size)
-            CALL params%add('LinearSolverType->b->VectorType->n',smoother%blk_size)
+            CALL params%add('LinearSolverType->x->VectorType->n', &
+                            smoother%blk_size)
+            CALL params%add('LinearSolverType->b->VectorType->n', &
+                            smoother%blk_size)
             !Get the block matrices:
             CALL PCGetOperators(pc,Amat,Pmat,iperr)
             CALL MatGetType(Pmat,globalmattype,iperr)
@@ -1016,7 +1027,8 @@ MODULE SmootherTypes
 #endif
 !
 !-------------------------------------------------------------------------------
-!> @brief PETSc Apply PC function for PCSHELL for the colored block Jacobi scheme
+!> @brief PETSc PCApply function for PCSHELL for the colored block Jacobi
+!>        scheme
 !>
 !> @param smoother Smoother object which owns the SHELL
 !> @param pc PETSc PC context
