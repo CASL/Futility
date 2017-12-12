@@ -81,6 +81,8 @@ MODULE LinearSolverTypes_Multigrid
     INTEGER(SIK) :: nLevels=1_SIK
     !> Whether or not the restriciton, interpolation, and smoothing is ready:
     LOGICAL(SBK) :: isMultigridSetup=.FALSE.
+    !> List ID of corresponding list of smoothers in the smoother manager:
+    INTEGER(SIK) :: smootherListID=-1_SIK
     !> Size of each grid. level_info(:,level) = (/num_eqns,npts/)
     INTEGER(SIK),ALLOCATABLE :: level_info(:,:)
     !> Size of each grid locally.
@@ -189,6 +191,13 @@ MODULE LinearSolverTypes_Multigrid
       !pull size from source vector
       CALL validParams%get('LinearSolverType->b->VectorType->n',n)
       CALL validParams%get('LinearSolverType->b->VectorType->nlocal',nlocal)
+
+      IF(validParams%has('LinearSolverType->Multigrid->smootherListID')) THEN
+        CALL validParams%get('LinearSolverType->Multigrid->smootherListID', &
+                             solver%smootherListID)
+      ELSE
+        solver%smootherListID=1_SIK
+      ENDIF
 
       CALL validParams%clear()
 
@@ -415,15 +424,20 @@ MODULE LinearSolverTypes_Multigrid
 !> @param preallocated Whether the interpolation matrices are already allocated
 !>          This is false by default
 !>
-    SUBROUTINE fillInterpMats_LinearSolverType_Multigrid(solver,myMMeshes,preallocated)
+    SUBROUTINE fillInterpMats_LinearSolverType_Multigrid(solver,myMMeshes, &
+                 myWtStructure,preallocated)
       CHARACTER(LEN=*),PARAMETER :: myName='fillInterpMats_LinearSolverType_Multigrid'
       CLASS(LinearSolverType_Multigrid),INTENT(INOUT) :: solver
-      TYPE(MultigridMeshStructureType),INTENT(IN) :: myMMeshes
+      TYPE(MultigridMeshStructureType),POINTER,INTENT(IN) :: myMMeshes
+      TYPE(InterpWeightsStructureType),POINTER,INTENT(IN) :: myWtStructure
       LOGICAL(SBK),OPTIONAL :: preallocated
 
       !Need to increase size of indices to 48 if 3-D is allowed:
       INTEGER(SIK) :: iLevel,ip,i,row,col,ieqn,indices(8),nindices
+      INTEGER(SIK) :: num_eqns
       REAL(SRK),ALLOCATABLE :: wts(:,:)
+
+      INTEGER(SIK),ALLOCATABLE :: dnnz(:)
 
 #ifdef FUTILITY_HAVE_PETSC
       IF(solver%TPLType /= PETSC) &
@@ -436,27 +450,42 @@ MODULE LinearSolverTypes_Multigrid
           modName//'::'//myName//' - Mismatch in grid and solver nLevels.')
 
       DO iLevel=solver%nLevels,2,-1
-        !Allocate the interpolation matrix:
-        IF(.NOT.PRESENT(preallocated) .OR. .NOT.preallocated) THEN
-          CALL solver%preAllocPETScInterpMat(iLevel-1, &
-                  2**myMMeshes%meshes(iLevel)%interpDegrees)
+        num_eqns=myWtStructure%wts_level(iLevel)%num_eqns
+
+        ASSOCIATE(mmesh => myMMeshes%meshes(iLevel))
+          !Allocate the interpolation matrix:
           !Note that if there is interpolation across processors, this does not
           !  work
-        ENDIF
-        ALLOCATE(wts(myMMeshes%meshes(iLevel)%num_eqns,8))
-        !Create the interpolation operator:
-        DO ip=myMMeshes%meshes(iLevel)%istt,myMMeshes%meshes(iLevel)%istp
-          CALL getFinalWtsAndIndices(myMMeshes%meshes(iLevel), &
-            myMMeshes%meshes(iLevel)%num_eqns,ip,indices,wts,nindices)
-          DO ieqn=1,myMMeshes%meshes(iLevel)%num_eqns
-            row=(ip-1)*myMMeshes%meshes(iLevel)%num_eqns+ieqn
-            DO i=1,nindices
-              col=(indices(i)-1)*myMMeshes%meshes(iLevel)%num_eqns+ieqn
-              CALL solver%interpMats_PETSc(iLevel-1)%set(row,col,wts(ieqn,i))
+          IF(.NOT.PRESENT(preallocated) .OR. .NOT.preallocated) THEN
+            IF(num_eqns == 1) THEN
+              CALL solver%preAllocPETScInterpMat(iLevel-1, &
+                      2**myMMeshes%meshes(iLevel)%interpDegrees)
+            ELSE
+              ALLOCATE(dnnz((mmesh%istt-1)*num_eqns+1:mmesh%istp*num_eqns))
+              DO ip=mmesh%istt,mmesh%istp
+                dnnz((ip-1)*num_eqns+1:ip*num_eqns)=2**mmesh%interpDegrees(ip)
+              ENDDO
+              CALL solver%preAllocPETScInterpMat(iLevel-1,dnnz)
+              DEALLOCATE(dnnz)
+            ENDIF
+          ENDIF
+
+          ALLOCATE(wts(num_eqns,8))
+          !Create the interpolation operator:
+          DO ip=mmesh%istt,mmesh%istp
+            CALL getFinalWtsAndIndices(mmesh,myWtStructure%wts_level(iLevel), &
+                                       ip,indices,wts,nindices)
+            DO ieqn=1,num_eqns
+              row=(ip-1)*num_eqns+ieqn
+              DO i=1,nindices
+                col=(indices(i)-1)*num_eqns+ieqn
+                CALL solver%interpMats_PETSc(iLevel-1)%set(row,col,wts(ieqn,i))
+              ENDDO
             ENDDO
           ENDDO
-        ENDDO
-        DEALLOCATE(wts)
+          DEALLOCATE(wts)
+        END ASSOCIATE
+
       ENDDO !iLevel
 #else
       CALL eLinearSolverType%raiseError('Incorrect call to '// &
@@ -758,21 +787,23 @@ MODULE LinearSolverTypes_Multigrid
 !> @param indices Indices to be returned
 !> @param wts Weights to be returned
 !>
-    SUBROUTINE getFinalWtsAndIndices(myMesh,num_eqns,ip,indices,wts,nindices)
-      CLASS(MultigridMeshType),INTENT(IN) :: myMesh
-      INTEGER(SIK),INTENT(IN) :: num_eqns,ip
+    SUBROUTINE getFinalWtsAndIndices(myMesh,myWts, &
+                                     ip,indices,wts,nindices)
+      TYPE(MultigridMeshType),INTENT(IN) :: myMesh
+      TYPE(InterpWeightsLevelType),INTENT(IN) :: myWts
+      INTEGER(SIK),INTENT(IN) :: ip
       INTEGER(SIK),INTENT(INOUT) :: indices(:)
       REAL(SRK),INTENT(INOUT) :: wts(:,:)
       INTEGER(SIK),INTENT(OUT) :: nindices
 
       INTEGER(SIK) :: i,ind
-      REAL(SRK) :: wt2(num_eqns),tmpwts(num_eqns,8)
+      REAL(SRK) :: wt2(myWts%num_eqns),tmpwts(myWts%num_eqns,8)
       INTEGER(SIK) :: tmpindices(8),counter
 
       counter=1
       wt2=1.0_SRK
-      CALL collectWtsAndIndices(myMesh,num_eqns,ip,tmpindices,tmpwts, &
-                                 myMesh%interpDegrees(ip),counter,wt2)
+      CALL collectWtsAndIndices(myMesh,myWts,ip,tmpindices,tmpwts, &
+                                myMesh%interpDegrees(ip),counter,wt2)
       counter=counter-1
 
       indices=0_SIK
@@ -809,15 +840,16 @@ MODULE LinearSolverTypes_Multigrid
 !> @param counter current index on the indices and wts arrays
 !> @param parentwt weight from parent, to be multiplied with new weights
 !>
-    RECURSIVE SUBROUTINE collectWtsAndIndices(myMesh,num_eqns,ip, &
-                           indices,wts,interpdegree,counter,parentwt)
+    RECURSIVE SUBROUTINE collectWtsAndIndices(myMesh,myWts,ip,indices,wts, &
+                                              interpdegree,counter,parentwt)
       CLASS(MultigridMeshType),INTENT(IN) :: myMesh
-      INTEGER(SIK),INTENT(IN) :: num_eqns,ip,interpdegree
+      TYPE(InterpWeightsLevelType),INTENT(IN) :: myWts
+      INTEGER(SIK),INTENT(IN) :: ip,interpdegree
       INTEGER(SIK),INTENT(INOUT) :: indices(:),counter
       REAL(SRK),INTENT(IN) :: parentwt(:)
       REAL(SRK),INTENT(INOUT) :: wts(:,:)
 
-      REAL(SRK) :: parentwt2(num_eqns)
+      REAL(SRK) :: parentwt2(myWts%num_eqns)
       INTEGER(SIK) :: ipn,ichild
 
       IF(interpdegree == 0) THEN
@@ -828,8 +860,9 @@ MODULE LinearSolverTypes_Multigrid
         DO ichild=1,2*interpdegree
           ipn=myMesh%mmData(ip)%childIndices(ichild)
           IF(ipn < 1) CYCLE
-          parentwt2=myMesh%mmData(ip)%childWeights(:,ichild)*parentwt
-          CALL collectWtsAndIndices(myMesh,num_eqns,ipn,indices,wts, &
+          !parentwt2=parentwt/(2*interpdegree)
+          parentwt2=myWts%wts_point(ip)%wts(:,ichild)*parentwt
+          CALL collectWtsAndIndices(myMesh,myWts,ipn,indices,wts, &
                  myMesh%interpDegrees(ipn),counter,parentwt2)
         ENDDO
       ENDIF

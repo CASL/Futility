@@ -239,7 +239,8 @@ CONTAINS
 #ifdef FUTILITY_HAVE_PETSC
     SUBROUTINE testFillInterpMats()
       TYPE(LinearSolverType_Multigrid) :: thisLS
-      TYPE(MultigridMeshStructureType) :: myMMeshes
+      TYPE(MultigridMeshStructureType),POINTER :: myMMeshes => NULL()
+      TYPE(InterpWeightsStructureType),POINTER :: myWtStructure => NULL()
 
       INTEGER(SIK) :: iLevel,ix,ncol,nx
       INTEGER(SIK),ALLOCATABLE :: cols(:),tmpint(:)
@@ -253,6 +254,7 @@ CONTAINS
 
       CALL init_MultigridLS(thisLS)
 
+      ALLOCATE(myMMeshes)
       CALL myMMeshes%init(thisLS%nLevels)
       DO iLevel=thisLS%nLevels,1,-1
         nx=thisLS%level_info(2,iLevel)
@@ -265,19 +267,18 @@ CONTAINS
           IF(MOD(ix,2) == 1) THEN
             myMMeshes%meshes(iLevel)%interpDegrees(ix)=0
             ALLOCATE(myMMeshes%meshes(iLevel)%mmData(ix)%childIndices(1))
-            ALLOCATE(myMMeshes%meshes(iLevel)%mmData(ix)%childWeights(1,1))
             myMMeshes%meshes(iLevel)%mmData(ix)%childIndices(1)=(ix+1)/2
-            myMMeshes%meshes(iLevel)%mmData(ix)%childWeights=1.0_SRK
           ELSE
             myMMeshes%meshes(iLevel)%interpDegrees(ix)=1
             ALLOCATE(myMMeshes%meshes(iLevel)%mmData(ix)%childIndices(2))
-            ALLOCATE(myMMeshes%meshes(iLevel)%mmData(ix)%childWeights(1,2))
             myMMeshes%meshes(iLevel)%mmData(ix)%childIndices(1)=ix+1
             myMMeshes%meshes(iLevel)%mmData(ix)%childIndices(2)=ix-1
-            myMMeshes%meshes(iLevel)%mmData(ix)%childWeights=0.5_SRK
           ENDIF
         ENDDO
       ENDDO
+      ALLOCATE(myWtStructure)
+      CALL myWtStructure%init(myMMeshes,1)
+      CALL thisLS%fillInterpMats(myMMeshes,myWtStructure)
       ALLOCATE(tmpint(thisLS%nLevels))
       tmpint=mpiTestEnv%comm
       CALL smootherParams%add('SmootherType->MPI_Comm_ID_list',tmpint)
@@ -332,9 +333,9 @@ CONTAINS
         ENDIF
 
       ENDDO
-      DEALLOCATE(vals,cols)
-
+      CALL myWtStructure%clear()
       CALL myMMeshes%clear()
+      DEALLOCATE(vals,cols,myWtStructure,myMMeshes)
 
     ENDSUBROUTINE testFillInterpMats
 #endif
