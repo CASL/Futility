@@ -263,6 +263,12 @@ MODULE Strings
     !> @copybrief Strings::assign_Long_Integer_to_StringType
     !> @copydetails Strings::assign_Long_Integer_to_StringType
     MODULE PROCEDURE assign_Long_Integer_to_StringType
+    !> @copybrief Strings::assign_Single_Real_to_StringType
+    !> @copydetails Strings::assign_Single_Real_to_StringType
+    MODULE PROCEDURE assign_Single_Real_to_StringType
+    !> @copybrief Strings::assign_Double_Real_to_StringType
+    !> @copydetails Strings::assign_Double_Real_to_StringType
+    MODULE PROCEDURE assign_Double_Real_to_StringType
   ENDINTERFACE
 
   !> @brief Overloads the Fortran intrinsic operator for concatenating
@@ -1066,6 +1072,38 @@ MODULE Strings
       WRITE(l,'(i20)') i
       thisStr=TRIM(ADJUSTL(l))
     ENDSUBROUTINE assign_Long_Integer_to_StringType
+!
+!-------------------------------------------------------------------------------
+!> @brief Assigns a single real to a StringType.
+!> @param thisStr the string object
+!> @param r single real
+!>
+!> The intent is that this will overload the assignment operator so a single
+!> (32-bit) real can be assigned to a StringType.
+!>
+    ELEMENTAL SUBROUTINE assign_Single_Real_to_StringType(thisStr,r)
+      TYPE(StringType),INTENT(INOUT) :: thisStr
+      REAL(SSK),INTENT(IN) :: r
+      CHARACTER(LEN=15) :: l
+      WRITE(l,'(es15.5)') r
+      thisStr=TRIM(ADJUSTL(l))
+    ENDSUBROUTINE assign_Single_Real_to_StringType
+!
+!-------------------------------------------------------------------------------
+!> @brief Assigns a double real to a StringType.
+!> @param thisStr the string object
+!> @param r double real
+!>
+!> The intent is that this will overload the assignment operator so a double
+!> (64-bit) real can be assigned to a StringType.
+!>
+    ELEMENTAL SUBROUTINE assign_Double_Real_to_StringType(thisStr,r)
+      TYPE(StringType),INTENT(INOUT) :: thisStr
+      REAL(SDK),INTENT(IN) :: r
+      CHARACTER(LEN=22) :: l
+      WRITE(l,'(es22.15)') r
+      thisStr=TRIM(ADJUSTL(l))
+    ENDSUBROUTINE assign_Double_Real_to_StringType
 !
 !-------------------------------------------------------------------------------
 !> @brief Concatenates an intrinsic character type variable with a
