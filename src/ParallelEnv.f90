@@ -25,6 +25,8 @@
 !>  - initialization/clear routines for ParallelEnvType
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE ParallelEnv
+#include "DBC.h"
+  USE DBC
   USE IntrType
   USE ExceptionHandler
   USE BLAS
@@ -207,21 +209,18 @@ MODULE ParallelEnv
       !> @copybrief ParallelEnv::allReduceI_MPI_Env_type
       !> @copydetails  ParallelEnv::allReduceI_MPI_Env_type
       PROCEDURE,PASS :: allReduceI => allReduceI_MPI_Env_type
-      !GENERIC :: allReduce => allReduceI_MPI_Env_type,allReduceI_MPI_Env_type
       !> @copybrief ParallelEnv::allReduceMaxR_MPI_Env_type
       !> @copydetails  ParallelEnv::allReduceMaxR_MPI_Env_type
       PROCEDURE,PASS :: allReduceMax => allReduceMaxR_MPI_Env_type
       !> @copybrief ParallelEnv::allReduceMaxI_MPI_Env_type
       !> @copydetails  ParallelEnv::allReduceMaxI_MPI_Env_type
       PROCEDURE,PASS :: allReduceMaxI => allReduceMaxI_MPI_Env_type
-      !GENERIC :: allReduceMax => allReduceMaxR_MPI_Env_type,allReduceMaxI_MPI_Env_type
       !> @copybrief ParallelEnv::allReduceMinR_MPI_Env_type
       !> @copydetails  ParallelEnv::allReduceMinR_MPI_Env_type
       PROCEDURE,PASS :: allReduceMin => allReduceMinR_MPI_Env_type
       !> @copybrief ParallelEnv::allReduceMinI_MPI_Env_type
       !> @copydetails  ParallelEnv::allReduceMinI_MPI_Env_type
       PROCEDURE,PASS :: allReduceMinI => allReduceMinI_MPI_Env_type
-      !GENERIC :: allReduceMin => allReduceMinR_MPI_Env_type,allReduceMinI_MPI_Env_type
       !> @copybrief ParallelEnv::reduceMaxLoc_MPI_Env_type
       !> @copydetails  ParallelEnv::reduceMaxLoc_MPI_Env_type
       PROCEDURE,PASS :: reduceMaxLoc => reduceMaxLocR_MPI_Env_type
@@ -485,78 +484,77 @@ MODULE ParallelEnv
       LOGICAL(SBK),ALLOCATABLE :: allpetsc2(:)
 #endif
 
-      IF(.NOT.myPE%initstat) THEN
-        icomm=PE_COMM_NULL
-        IF(PRESENT(PEparam)) icomm=PEparam
+      REQUIRE(.NOT.myPE%initstat)
+      icomm=PE_COMM_NULL
+      IF(PRESENT(PEparam)) icomm=PEparam
 
 #ifdef HAVE_MPI
-        !Initialize MPI if it has not been initialized
-        CALL MPI_Initialized(isinit,mpierr)
-        IF(mpierr /= MPI_SUCCESS) CALL eParEnv%raiseError(modName//'::'// &
-          myName//' - call to MPI_Initialized returned an error!')
+      !Initialize MPI if it has not been initialized
+      CALL MPI_Initialized(isinit,mpierr)
+      IF(mpierr /= MPI_SUCCESS) CALL eParEnv%raiseError(modName//'::'// &
+        myName//' - call to MPI_Initialized returned an error!')
 
-        IF(isinit == 0) THEN
-          CALL MPI_Init(mpierr)
-          IF(mpierr /= MPI_SUCCESS) CALL eParEnv%raiseError(modName//'::'// &
-            myName//' - call to MPI_Init returned an error!')
-        ENDIF
+      IF(isinit == 0) THEN
+        CALL MPI_Init(mpierr)
+        IF(mpierr /= MPI_SUCCESS) CALL eParEnv%raiseError(modName//'::'// &
+          myName//' - call to MPI_Init returned an error!')
+      ENDIF
 #endif
 
-        !Set the communicator
-        !Default is comm world
-        IF(icomm == PE_COMM_NULL) icomm=PE_COMM_DEFAULT
+      !Set the communicator
+      !Default is comm world
+      IF(icomm == PE_COMM_NULL) icomm=PE_COMM_DEFAULT
 #ifdef HAVE_MPI
-        !Create a duplicate of the passed communicator
-        CALL MPI_Comm_dup(icomm,myPE%comm,mpierr)
+      !Create a duplicate of the passed communicator
+      CALL MPI_Comm_dup(icomm,myPE%comm,mpierr)
 #else
-        !Increment communicator to simulate duplication
-        MAX_PE_COMM_ID=MAX_PE_COMM_ID+1
-        myPE%comm=MAX_PE_COMM_ID+1
+      !Increment communicator to simulate duplication
+      MAX_PE_COMM_ID=MAX_PE_COMM_ID+1
+      myPE%comm=MAX_PE_COMM_ID+1
 #endif
 
-        !Get Information about the communicator
+      !Get Information about the communicator
 #ifdef HAVE_MPI
-        CALL MPI_Comm_size(myPE%comm,myPE%nproc,mpierr)
-        IF(mpierr /= MPI_SUCCESS) CALL eParEnv%raiseError(modName//'::'// &
-          myName//' - call to MPI_Comm_size returned an error!')
-        CALL MPI_Comm_rank(myPE%comm,myPE%rank,mpierr)
-        IF(mpierr /= MPI_SUCCESS) CALL eParEnv%raiseError(modName//'::'// &
-          myName//' - call to MPI_Comm_rank returned an error!')
+      CALL MPI_Comm_size(myPE%comm,myPE%nproc,mpierr)
+      IF(mpierr /= MPI_SUCCESS) CALL eParEnv%raiseError(modName//'::'// &
+        myName//' - call to MPI_Comm_size returned an error!')
+      CALL MPI_Comm_rank(myPE%comm,myPE%rank,mpierr)
+      IF(mpierr /= MPI_SUCCESS) CALL eParEnv%raiseError(modName//'::'// &
+        myName//' - call to MPI_Comm_rank returned an error!')
 #else
-        myPE%nproc=1
-        myPE%rank=0
+      myPE%nproc=1
+      myPE%rank=0
 #endif
-        IF(myPE%rank == 0) myPE%master=.TRUE.
+      IF(myPE%rank == 0) myPE%master=.TRUE.
 
 #ifdef FUTILITY_HAVE_PETSC
-        !check if PETSC has been initialized as well
-        CALL PetscInitialized(petsc_isinit,ierr)
+      !check if PETSC has been initialized as well
+      CALL PetscInitialized(petsc_isinit,ierr)
 
-        !Insure that PETSc is or is not initialized on all the processes
-        !in this communicator
-        IF(myPE%nproc > 1) THEN
-          ALLOCATE(allpetsc2(0:myPE%nproc-1))
-          allpetsc2=.FALSE.
-          allpetsc2(myPE%rank)=petsc_isinit
-          CALL MPI_Gather(petsc_isinit,1,MPI_LOGICAL, &
-                          allpetsc2(myPE%rank),1,MPI_LOGICAL,0,myPE%comm,mpierr)
-          IF((ANY(allpetsc2) .AND. .NOT.ALL(allpetsc2)) .AND. myPE%master) THEN
-            CALL eParEnv%raiseFatalError(modName//'::'//myName// &
-              ' - Something is wrong with your application. '// &
-                'PetscInitialized should return either .TRUE. or '// &
-                  '.FALSE. for all processes in the communicator.')
-          ENDIF
-          DEALLOCATE(allpetsc2)
+      !Insure that PETSc is or is not initialized on all the processes
+      !in this communicator
+      IF(myPE%nproc > 1) THEN
+        ALLOCATE(allpetsc2(0:myPE%nproc-1))
+        allpetsc2=.FALSE.
+        allpetsc2(myPE%rank)=petsc_isinit
+        CALL MPI_Gather(petsc_isinit,1,MPI_LOGICAL, &
+                        allpetsc2(myPE%rank),1,MPI_LOGICAL,0,myPE%comm,mpierr)
+        IF((ANY(allpetsc2) .AND. .NOT.ALL(allpetsc2)) .AND. myPE%master) THEN
+          CALL eParEnv%raiseFatalError(modName//'::'//myName// &
+            ' - Something is wrong with your application. '// &
+              'PetscInitialized should return either .TRUE. or '// &
+                '.FALSE. for all processes in the communicator.')
         ENDIF
-        !Call PETSc Initialize
-#ifdef FUTILITY_HAVE_SLEPC
-        IF(.NOT.petsc_isinit) CALL SlepcInitialize(PETSC_NULL_CHARACTER,ierr)
-#else
-        IF(.NOT.petsc_isinit) CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
-#endif
-#endif
-        myPE%initstat=.TRUE.
+        DEALLOCATE(allpetsc2)
       ENDIF
+      !Call PETSc Initialize
+#ifdef FUTILITY_HAVE_SLEPC
+      IF(.NOT.petsc_isinit) CALL SlepcInitialize(PETSC_NULL_CHARACTER,ierr)
+#else
+      IF(.NOT.petsc_isinit) CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
+#endif
+#endif
+      myPE%initstat=.TRUE.
     ENDSUBROUTINE init_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
@@ -604,22 +602,15 @@ MODULE ParallelEnv
       INTEGER(SIK) :: rank
       rank=0
       IF(PRESENT(root)) rank=root
-      IF(0 <= rank .AND. rank <= myPE%nproc-1) THEN
-        IF(rank == myPE%rank) THEN
-          IF(SIZE(recvbuf) < myPE%nproc) &
-            CALL eParEnv%raiseError(modName//'::'//myName// &
-              ' - size of receive buffer is not large enough!')
-        ENDIF
+      REQUIRE(0 <= rank)
+      REQUIRE(rank < myPE%nproc)
+      REQUIRE(SIZE(recvbuf) == myPE%nproc)
 #ifdef HAVE_MPI
-        CALL MPI_Gather(sendbuf,1,MPI_INTEGER,recvbuf,1,MPI_INTEGER, &
-          rank,myPE%comm,mpierr)
+      CALL MPI_Gather(sendbuf,1,MPI_INTEGER,recvbuf,1,MPI_INTEGER, &
+        rank,myPE%comm,mpierr)
 #else
-        recvbuf(1)=sendbuf
+      recvbuf(1)=sendbuf
 #endif
-      ELSE
-        CALL eParEnv%raiseError(modName//'::'//myName// &
-          ' - Invalid rank!')
-      ENDIF
     ENDSUBROUTINE gather_SIK0_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
@@ -633,22 +624,15 @@ MODULE ParallelEnv
       INTEGER(SIK) :: rank
       rank=0
       IF(PRESENT(root)) rank=root
-      IF(0 <= rank .AND. rank <= myPE%nproc-1) THEN
-        IF(rank == myPE%rank) THEN
-          IF(SIZE(recvbuf) < myPE%nproc) &
-            CALL eParEnv%raiseError(modName//'::'//myName// &
-              ' - size of receive buffer is not large enough!')
-        ENDIF
+      REQUIRE(0 <= rank)
+      REQUIRE(rank < myPE%nproc)
+      REQUIRE(SIZE(recvbuf) == myPE%nproc)
 #ifdef HAVE_MPI
-        CALL MPI_Gather(sendbuf,1,MPI_INTEGER8,recvbuf,1,MPI_INTEGER8, &
-          rank,myPE%comm,mpierr)
+      CALL MPI_Gather(sendbuf,1,MPI_INTEGER8,recvbuf,1,MPI_INTEGER8, &
+        rank,myPE%comm,mpierr)
 #else
-        recvbuf(1)=sendbuf
+      recvbuf(1)=sendbuf
 #endif
-      ELSE
-        CALL eParEnv%raiseError(modName//'::'//myName// &
-          ' - Invalid rank!')
-      ENDIF
     ENDSUBROUTINE gather_SLK0_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
@@ -665,27 +649,20 @@ MODULE ParallelEnv
 #endif
       rank=0
       IF(PRESENT(root)) rank=root
+      REQUIRE(0 <= rank)
+      REQUIRE(rank < myPE%nproc)
       count=SIZE(sendbuf)
-      IF(0 <= rank .AND. rank <= myPE%nproc-1) THEN
-        IF(rank == myPE%rank) THEN
-          IF(SIZE(recvbuf) < myPE%nproc*count) &
-            CALL eParEnv%raiseError(modName//'::'//myName// &
-              ' - size of receive buffer is not large enough!')
-        ENDIF
+      REQUIRE(SIZE(recvbuf) == myPE%nproc*count)
 #ifdef HAVE_MPI
-        CALL MPI_Gather(sendbuf,count,MPI_INTEGER8,recvbuf,count, &
-          MPI_INTEGER8,rank,myPE%comm,mpierr)
+      CALL MPI_Gather(sendbuf,count,MPI_INTEGER8,recvbuf,count, &
+        MPI_INTEGER8,rank,myPE%comm,mpierr)
 #else
-        DO n=1,count
-          i=MOD(n-1,SIZE(recvbuf,DIM=1))+1
-          j=(n-1)/SIZE(recvbuf,DIM=1)+1
-          recvbuf(i,j)=sendbuf(n)
-        ENDDO
+      DO n=1,count
+        i=MOD(n-1,SIZE(recvbuf,DIM=1))+1
+        j=(n-1)/SIZE(recvbuf,DIM=1)+1
+        recvbuf(i,j)=sendbuf(n)
+      ENDDO
 #endif
-      ELSE
-        CALL eParEnv%raiseError(modName//'::'//myName// &
-          ' - Invalid rank!')
-      ENDIF
     ENDSUBROUTINE gather_SLK1_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
@@ -699,22 +676,15 @@ MODULE ParallelEnv
       INTEGER(SIK) :: rank
       rank=0
       IF(PRESENT(root)) rank=root
-      IF(0 <= rank .AND. rank <= myPE%nproc-1) THEN
-        IF(rank == myPE%rank) THEN
-          IF(SIZE(sendbuf) < myPE%nproc) &
-            CALL eParEnv%raiseError(modName//'::'//myName// &
-              ' - size of send buffer is not large enough!')
-        ENDIF
+      REQUIRE(0 <= rank)
+      REQUIRE(rank < myPE%nproc)
+      REQUIRE(SIZE(sendbuf) == myPE%nproc)
 #ifdef HAVE_MPI
-        CALL MPI_Scatter(sendbuf,1,MPI_INTEGER8,recvbuf,1,MPI_INTEGER8, &
-          rank,myPE%comm,mpierr)
+      CALL MPI_Scatter(sendbuf,1,MPI_INTEGER8,recvbuf,1,MPI_INTEGER8, &
+        rank,myPE%comm,mpierr)
 #else
-        recvbuf=sendbuf(1)
+      recvbuf=sendbuf(1)
 #endif
-      ELSE
-        CALL eParEnv%raiseError(modName//'::'//myName// &
-          ' - Invalid rank!')
-      ENDIF
     ENDSUBROUTINE scatter_SLK0_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
@@ -731,27 +701,20 @@ MODULE ParallelEnv
 #endif
       rank=0
       IF(PRESENT(root)) rank=root
+      REQUIRE(0 <= rank)
+      REQUIRE(rank < myPE%nproc)
       count=SIZE(recvbuf)
-      IF(0 <= rank .AND. rank <= myPE%nproc-1) THEN
-        IF(rank == myPE%rank) THEN
-          IF(SIZE(sendbuf) < myPE%nproc*count) &
-            CALL eParEnv%raiseError(modName//'::'//myName// &
-              ' - size of send buffer is not large enough!')
-        ENDIF
+      REQUIRE(SIZE(sendbuf) == myPE%nproc*count)
 #ifdef HAVE_MPI
-        CALL MPI_Scatter(sendbuf,count,MPI_INTEGER8,recvbuf,count, &
-          MPI_INTEGER8,rank,myPE%comm,mpierr)
+      CALL MPI_Scatter(sendbuf,count,MPI_INTEGER8,recvbuf,count, &
+        MPI_INTEGER8,rank,myPE%comm,mpierr)
 #else
-        DO n=1,count
-          i=MOD(n-1,SIZE(sendbuf,DIM=1))+1
-          j=(n-1)/SIZE(sendbuf,DIM=1)+1
-          recvbuf(n)=sendbuf(i,j)
-        ENDDO
+      DO n=1,count
+        i=MOD(n-1,SIZE(sendbuf,DIM=1))+1
+        j=(n-1)/SIZE(sendbuf,DIM=1)+1
+        recvbuf(n)=sendbuf(i,j)
+      ENDDO
 #endif
-      ELSE
-        CALL eParEnv%raiseError(modName//'::'//myName// &
-          ' - Invalid rank!')
-      ENDIF
     ENDSUBROUTINE scatter_SLK1_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
@@ -764,14 +727,11 @@ MODULE ParallelEnv
       INTEGER(SIK) :: rank
       rank=0
       IF(PRESENT(root)) rank=root
-      IF(0 <= rank .AND. rank <= myPE%nproc-1) THEN
+      REQUIRE(rank >= 0)
+      REQUIRE(rank < myPE%nproc)
 #ifdef HAVE_MPI
-        CALL MPI_Bcast(buf,1,MPI_INTEGER4,rank,myPE%comm,mpierr)
+      CALL MPI_Bcast(buf,1,MPI_INTEGER4,rank,myPE%comm,mpierr)
 #endif
-      ELSE
-        CALL eParEnv%raiseError(modName//'::'//myName// &
-          ' - Invalid rank!')
-      ENDIF
     ENDSUBROUTINE bcast_SNK0_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
@@ -784,14 +744,11 @@ MODULE ParallelEnv
       INTEGER(SIK) :: rank
       rank=0
       IF(PRESENT(root)) rank=root
-      IF(0 <= rank .AND. rank <= myPE%nproc-1) THEN
+      REQUIRE(rank >= 0)
+      REQUIRE(rank < myPE%nproc)
 #ifdef HAVE_MPI
-        CALL MPI_Bcast(buf,SIZE(buf),MPI_INTEGER4,rank,myPE%comm,mpierr)
+      CALL MPI_Bcast(buf,SIZE(buf),MPI_INTEGER4,rank,myPE%comm,mpierr)
 #endif
-      ELSE
-        CALL eParEnv%raiseError(modName//'::'//myName// &
-          ' - Invalid rank!')
-      ENDIF
     ENDSUBROUTINE bcast_SNK1_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
@@ -804,14 +761,11 @@ MODULE ParallelEnv
       INTEGER(SIK) :: rank
       rank=0
       IF(PRESENT(root)) rank=root
-      IF(0 <= rank .AND. rank <= myPE%nproc-1) THEN
+      REQUIRE(rank >= 0)
+      REQUIRE(rank < myPE%nproc)
 #ifdef HAVE_MPI
-        CALL MPI_Bcast(buf,1,MPI_INTEGER8,rank,myPE%comm,mpierr)
+      CALL MPI_Bcast(buf,1,MPI_INTEGER8,rank,myPE%comm,mpierr)
 #endif
-      ELSE
-        CALL eParEnv%raiseError(modName//'::'//myName// &
-          ' - Invalid rank!')
-      ENDIF
     ENDSUBROUTINE bcast_SLK0_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
@@ -824,14 +778,11 @@ MODULE ParallelEnv
       INTEGER(SIK) :: rank
       rank=0
       IF(PRESENT(root)) rank=root
-      IF(0 <= rank .AND. rank <= myPE%nproc-1) THEN
+      REQUIRE(rank >= 0)
+      REQUIRE(rank < myPE%nproc)
 #ifdef HAVE_MPI
-        CALL MPI_Bcast(buf,SIZE(buf),MPI_INTEGER8,rank,myPE%comm,mpierr)
+      CALL MPI_Bcast(buf,SIZE(buf),MPI_INTEGER8,rank,myPE%comm,mpierr)
 #endif
-      ELSE
-        CALL eParEnv%raiseError(modName//'::'//myName// &
-          ' - Invalid rank!')
-      ENDIF
     ENDSUBROUTINE bcast_SLK1_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
@@ -844,14 +795,11 @@ MODULE ParallelEnv
       INTEGER(SIK) :: rank
       rank=0
       IF(PRESENT(root)) rank=root
-      IF(0 <= rank .AND. rank <= myPE%nproc-1) THEN
+      REQUIRE(rank >= 0)
+      REQUIRE(rank < myPE%nproc)
 #ifdef HAVE_MPI
-        CALL MPI_Bcast(buf,SIZE(buf),MPI_REAL4,rank,myPE%comm,mpierr)
+      CALL MPI_Bcast(buf,SIZE(buf),MPI_REAL4,rank,myPE%comm,mpierr)
 #endif
-      ELSE
-        CALL eParEnv%raiseError(modName//'::'//myName// &
-          ' - Invalid rank!')
-      ENDIF
     ENDSUBROUTINE bcast_SSK1_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
@@ -864,14 +812,11 @@ MODULE ParallelEnv
       INTEGER(SIK) :: rank
       rank=0
       IF(PRESENT(root)) rank=root
-      IF(0 <= rank .AND. rank <= myPE%nproc-1) THEN
+      REQUIRE(rank >= 0)
+      REQUIRE(rank < myPE%nproc)
 #ifdef HAVE_MPI
-        CALL MPI_Bcast(buf,SIZE(buf),MPI_REAL4,rank,myPE%comm,mpierr)
+      CALL MPI_Bcast(buf,SIZE(buf),MPI_REAL4,rank,myPE%comm,mpierr)
 #endif
-      ELSE
-        CALL eParEnv%raiseError(modName//'::'//myName// &
-          ' - Invalid rank!')
-      ENDIF
     ENDSUBROUTINE bcast_SSK2_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
@@ -884,14 +829,11 @@ MODULE ParallelEnv
       INTEGER(SIK) :: rank
       rank=0
       IF(PRESENT(root)) rank=root
-      IF(0 <= rank .AND. rank <= myPE%nproc-1) THEN
+      REQUIRE(rank >= 0)
+      REQUIRE(rank < myPE%nproc)
 #ifdef HAVE_MPI
-        CALL MPI_Bcast(buf,SIZE(buf),MPI_REAL8,rank,myPE%comm,mpierr)
+      CALL MPI_Bcast(buf,SIZE(buf),MPI_REAL8,rank,myPE%comm,mpierr)
 #endif
-      ELSE
-        CALL eParEnv%raiseError(modName//'::'//myName// &
-          ' - Invalid rank!')
-      ENDIF
     ENDSUBROUTINE bcast_SDK1_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
@@ -904,14 +846,11 @@ MODULE ParallelEnv
       INTEGER(SIK) :: rank
       rank=0
       IF(PRESENT(root)) rank=root
-      IF(0 <= rank .AND. rank <= myPE%nproc-1) THEN
+      REQUIRE(rank >= 0)
+      REQUIRE(rank < myPE%nproc)
 #ifdef HAVE_MPI
-        CALL MPI_Bcast(buf,SIZE(buf),MPI_REAL8,rank,myPE%comm,mpierr)
+      CALL MPI_Bcast(buf,SIZE(buf),MPI_REAL8,rank,myPE%comm,mpierr)
 #endif
-      ELSE
-        CALL eParEnv%raiseError(modName//'::'//myName// &
-          ' - Invalid rank!')
-      ENDIF
     ENDSUBROUTINE bcast_SDK2_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
@@ -924,14 +863,11 @@ MODULE ParallelEnv
       INTEGER(SIK) :: rank
       rank=0
       IF(PRESENT(root)) rank=root
-      IF(0 <= rank .AND. rank <= myPE%nproc-1) THEN
+      REQUIRE(rank >= 0)
+      REQUIRE(rank < myPE%nproc)
 #ifdef HAVE_MPI
-        CALL MPI_Bcast(buf,SIZE(buf),MPI_REAL4,rank,myPE%comm,mpierr)
+      CALL MPI_Bcast(buf,SIZE(buf),MPI_REAL4,rank,myPE%comm,mpierr)
 #endif
-      ELSE
-        CALL eParEnv%raiseError(modName//'::'//myName// &
-          ' - Invalid rank!')
-      ENDIF
     ENDSUBROUTINE bcast_SSK3_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
@@ -944,14 +880,11 @@ MODULE ParallelEnv
       INTEGER(SIK) :: rank
       rank=0
       IF(PRESENT(root)) rank=root
-      IF(0 <= rank .AND. rank <= myPE%nproc-1) THEN
+      REQUIRE(rank >= 0)
+      REQUIRE(rank < myPE%nproc)
 #ifdef HAVE_MPI
-        CALL MPI_Bcast(buf,SIZE(buf),MPI_REAL8,rank,myPE%comm,mpierr)
+      CALL MPI_Bcast(buf,SIZE(buf),MPI_REAL8,rank,myPE%comm,mpierr)
 #endif
-      ELSE
-        CALL eParEnv%raiseError(modName//'::'//myName// &
-          ' - Invalid rank!')
-      ENDIF
     ENDSUBROUTINE bcast_SDK3_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
@@ -964,14 +897,11 @@ MODULE ParallelEnv
       INTEGER(SIK) :: rank
       rank=0
       IF(PRESENT(root)) rank=root
-      IF(0 <= rank .AND. rank <= myPE%nproc-1) THEN
+      REQUIRE(rank >= 0)
+      REQUIRE(rank < myPE%nproc)
 #ifdef HAVE_MPI
-        CALL MPI_Bcast(buf,SIZE(buf),MPI_REAL4,rank,myPE%comm,mpierr)
+      CALL MPI_Bcast(buf,SIZE(buf),MPI_REAL4,rank,myPE%comm,mpierr)
 #endif
-      ELSE
-        CALL eParEnv%raiseError(modName//'::'//myName// &
-          ' - Invalid rank!')
-      ENDIF
     ENDSUBROUTINE bcast_SSK4_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
@@ -984,14 +914,11 @@ MODULE ParallelEnv
       INTEGER(SIK) :: rank
       rank=0
       IF(PRESENT(root)) rank=root
-      IF(0 <= rank .AND. rank <= myPE%nproc-1) THEN
+      REQUIRE(rank >= 0)
+      REQUIRE(rank < myPE%nproc)
 #ifdef HAVE_MPI
-        CALL MPI_Bcast(buf,SIZE(buf),MPI_REAL8,rank,myPE%comm,mpierr)
+      CALL MPI_Bcast(buf,SIZE(buf),MPI_REAL8,rank,myPE%comm,mpierr)
 #endif
-      ELSE
-        CALL eParEnv%raiseError(modName//'::'//myName// &
-          ' - Invalid rank!')
-      ENDIF
     ENDSUBROUTINE bcast_SDK4_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
@@ -1011,25 +938,23 @@ MODULE ParallelEnv
 #ifdef HAVE_MPI
 !      REAL(SRK) :: rbuf(n)
       REAL(SRK),ALLOCATABLE :: rbuf(:)
-      IF(myPE%initstat) THEN
-        ALLOCATE(rbuf(n))
+      REQUIRE(myPE%initstat)
+      ALLOCATE(rbuf(n))
 #ifdef DBL
-
-        CALL MPI_Allreduce(x,rbuf,n,MPI_DOUBLE_PRECISION,MPI_SUM, &
-          myPE%comm,mpierr)
+      CALL MPI_Allreduce(x,rbuf,n,MPI_DOUBLE_PRECISION,MPI_SUM, &
+        myPE%comm,mpierr)
 #else
-        CALL MPI_Allreduce(x,rbuf,n,MPI_SINGLE_PRECISION,MPI_SUM, &
-          myPE%comm,mpierr)
+      CALL MPI_Allreduce(x,rbuf,n,MPI_SINGLE_PRECISION,MPI_SUM, &
+        myPE%comm,mpierr)
 #endif
-        IF(mpierr /= MPI_SUCCESS) THEN
-          CALL eParEnv%raiseError(modName//'::'// &
-            myName//' - call to MPI_Allreduce returned an error!')
-        ELSE
-          !Copy the result to the output argument
-          CALL BLAS_copy(n,rbuf,1,x,1)
-        ENDIF
-        DEALLOCATE(rbuf)
+      IF(mpierr /= MPI_SUCCESS) THEN
+        CALL eParEnv%raiseError(modName//'::'// &
+          myName//' - call to MPI_Allreduce returned an error!')
+      ELSE
+        !Copy the result to the output argument
+        CALL BLAS_copy(n,rbuf,1,x,1)
       ENDIF
+      DEALLOCATE(rbuf)
 #endif
     ENDSUBROUTINE allReduceR_MPI_Env_type
 !
@@ -1049,21 +974,20 @@ MODULE ParallelEnv
       REAL(SRK),INTENT(INOUT) :: x(*)
 #ifdef HAVE_MPI
       REAL(SRK) :: rbuf(n)
-      IF(myPE%initstat) THEN
+      REQUIRE(myPE%initstat)
 #ifdef DBL
-        CALL MPI_Allreduce(x,rbuf,n,MPI_DOUBLE_PRECISION,MPI_MAX, &
-          myPE%comm,mpierr)
+      CALL MPI_Allreduce(x,rbuf,n,MPI_DOUBLE_PRECISION,MPI_MAX, &
+        myPE%comm,mpierr)
 #else
-        CALL MPI_Allreduce(x,rbuf,n,MPI_SINGLE_PRECISION,MPI_MAX, &
-          myPE%comm,mpierr)
+      CALL MPI_Allreduce(x,rbuf,n,MPI_SINGLE_PRECISION,MPI_MAX, &
+        myPE%comm,mpierr)
 #endif
-        IF(mpierr /= MPI_SUCCESS) THEN
-          CALL eParEnv%raiseError(modName//'::'// &
-            myName//' - call to MPI_AllreduceMax returned an error!')
-        ELSE
-          !Copy the result to the output argument
-          CALL BLAS_copy(n,rbuf,1,x,1)
-        ENDIF
+      IF(mpierr /= MPI_SUCCESS) THEN
+        CALL eParEnv%raiseError(modName//'::'// &
+          myName//' - call to MPI_AllreduceMax returned an error!')
+      ELSE
+        !Copy the result to the output argument
+        CALL BLAS_copy(n,rbuf,1,x,1)
       ENDIF
 #endif
     ENDSUBROUTINE allReduceMaxR_MPI_Env_type
@@ -1084,21 +1008,20 @@ MODULE ParallelEnv
       REAL(SRK),INTENT(INOUT) :: x(*)
 #ifdef HAVE_MPI
       REAL(SRK) :: rbuf(n)
-      IF(myPE%initstat) THEN
+      REQUIRE(myPE%initstat)
 #ifdef DBL
-        CALL MPI_Allreduce(x,rbuf,n,MPI_DOUBLE_PRECISION,MPI_MIN, &
-          myPE%comm,mpierr)
+      CALL MPI_Allreduce(x,rbuf,n,MPI_DOUBLE_PRECISION,MPI_MIN, &
+        myPE%comm,mpierr)
 #else
-        CALL MPI_Allreduce(x,rbuf,n,MPI_SINGLE_PRECISION,MPI_MIN, &
-          myPE%comm,mpierr)
+      CALL MPI_Allreduce(x,rbuf,n,MPI_SINGLE_PRECISION,MPI_MIN, &
+        myPE%comm,mpierr)
 #endif
-        IF(mpierr /= MPI_SUCCESS) THEN
-          CALL eParEnv%raiseError(modName//'::'// &
-            myName//' - call to MPI_AllreduceMin returned an error!')
-        ELSE
-          !Copy the result to the output argument
-          CALL BLAS_copy(n,rbuf,1,x,1)
-        ENDIF
+      IF(mpierr /= MPI_SUCCESS) THEN
+        CALL eParEnv%raiseError(modName//'::'// &
+          myName//' - call to MPI_AllreduceMin returned an error!')
+      ELSE
+        !Copy the result to the output argument
+        CALL BLAS_copy(n,rbuf,1,x,1)
       ENDIF
 #endif
     ENDSUBROUTINE allReduceMinR_MPI_Env_type
@@ -1125,25 +1048,26 @@ MODULE ParallelEnv
       REAL(SRK) :: sbuf(2,n)
       REAL(SRK) :: rbuf(2,n)
       INTEGER(SIK) :: rank
-      IF(myPE%initstat) THEN
-        sbuf(1,:)=x(1:n)
-        sbuf(2,:)=i(1:n)
-        rank=0
-        IF(PRESENT(root)) rank=root
+      REQUIRE(myPE%initstat)
+      IF(PRESENT(root)) rank=root
+      REQUIRE(rank >= 0)
+      REQUIRE(rank < myPE%nproc)
+      sbuf(1,:)=x(1:n)
+      sbuf(2,:)=i(1:n)
+      rank=0
 #ifdef DBL
-        CALL MPI_Allreduce(sbuf,rbuf,n,MPI_2DOUBLE_PRECISION,MPI_MAXLOC, &
-          myPE%comm,mpierr)
+      CALL MPI_Allreduce(sbuf,rbuf,n,MPI_2DOUBLE_PRECISION,MPI_MAXLOC, &
+        myPE%comm,mpierr)
 #else
-        CALL MPI_Allreduce(sbuf,rbuf,n,MPI_2REAL,MPI_MAXLOC,myPE%comm,mpierr)
+      CALL MPI_Allreduce(sbuf,rbuf,n,MPI_2REAL,MPI_MAXLOC,myPE%comm,mpierr)
 #endif
-        IF(mpierr /= MPI_SUCCESS) THEN
-          CALL eParEnv%raiseError(modName//'::'// &
-            myName//' - call to MPI_AllreduceMax returned an error!')
-        ELSE
-          !Copy the result to the output argument
-          x(1:n)=rbuf(1,:)
-          i(1:n)=INT(rbuf(2,:),SLK)
-        ENDIF
+      IF(mpierr /= MPI_SUCCESS) THEN
+        CALL eParEnv%raiseError(modName//'::'// &
+          myName//' - call to MPI_AllreduceMax returned an error!')
+      ELSE
+        !Copy the result to the output argument
+        x(1:n)=rbuf(1,:)
+        i(1:n)=INT(rbuf(2,:),SLK)
       ENDIF
 #endif
     ENDSUBROUTINE reduceMaxLocR_MPI_Env_type
@@ -1170,25 +1094,26 @@ MODULE ParallelEnv
       REAL(SRK) :: sbuf(2,n)
       REAL(SRK) :: rbuf(2,n)
       INTEGER(SIK) :: rank
-      IF(myPE%initstat) THEN
-        sbuf(1,:)=x(1:n)
-        sbuf(2,:)=i(1:n)
-        rank=0
-        IF(PRESENT(root)) rank=root
+      REQUIRE(myPE%initstat)
+      IF(PRESENT(root)) rank=root
+      REQUIRE(rank >= 0)
+      REQUIRE(rank < myPE%nproc)
+      sbuf(1,:)=x(1:n)
+      sbuf(2,:)=i(1:n)
+      rank=0
 #ifdef DBL
-        CALL MPI_Allreduce(sbuf,rbuf,n,MPI_2DOUBLE_PRECISION,MPI_MINLOC, &
-          myPE%comm,mpierr)
+      CALL MPI_Allreduce(sbuf,rbuf,n,MPI_2DOUBLE_PRECISION,MPI_MINLOC, &
+        myPE%comm,mpierr)
 #else
-        CALL MPI_Allreduce(sbuf,rbuf,n,MPI_2REAL,MPI_MINLOC,myPE%comm,mpierr)
+      CALL MPI_Allreduce(sbuf,rbuf,n,MPI_2REAL,MPI_MINLOC,myPE%comm,mpierr)
 #endif
-        IF(mpierr /= MPI_SUCCESS) THEN
-          CALL eParEnv%raiseError(modName//'::'// &
-            myName//' - call to MPI_AllreduceMin returned an error!')
-        ELSE
-          !Copy the result to the output argument
-          x(1:n)=rbuf(1,:)
-          i(1:n)=INT(rbuf(2,:),SLK)
-        ENDIF
+      IF(mpierr /= MPI_SUCCESS) THEN
+        CALL eParEnv%raiseError(modName//'::'// &
+          myName//' - call to MPI_AllreduceMin returned an error!')
+      ELSE
+        !Copy the result to the output argument
+        x(1:n)=rbuf(1,:)
+        i(1:n)=INT(rbuf(2,:),SLK)
       ENDIF
 #endif
     ENDSUBROUTINE reduceMinLocR_MPI_Env_type
@@ -1209,17 +1134,16 @@ MODULE ParallelEnv
       INTEGER(SIK),INTENT(INOUT) :: x(*)
 #ifdef HAVE_MPI
       INTEGER(SIK) :: rbuf(n)
-      IF(myPE%initstat) THEN
-        CALL MPI_Allreduce(x,rbuf,n,MPI_INTEGER,MPI_SUM, &
-          myPE%comm,mpierr)
-        IF(mpierr /= MPI_SUCCESS) THEN
-          CALL eParEnv%raiseError(modName//'::'// &
-            myName//' - call to MPI_Allreduce returned an error!')
-        ELSE
-          !Copy the result to the output argument
-          !CALL BLAS_copy(n,rbuf,1,x,1)
-          x(1:n)=rbuf ! No BLAS_copy for integers
-        ENDIF
+      REQUIRE(myPE%initstat)
+      CALL MPI_Allreduce(x,rbuf,n,MPI_INTEGER,MPI_SUM, &
+        myPE%comm,mpierr)
+      IF(mpierr /= MPI_SUCCESS) THEN
+        CALL eParEnv%raiseError(modName//'::'// &
+          myName//' - call to MPI_Allreduce returned an error!')
+      ELSE
+        !Copy the result to the output argument
+        !CALL BLAS_copy(n,rbuf,1,x,1)
+        x(1:n)=rbuf ! No BLAS_copy for integers
       ENDIF
 #endif
     ENDSUBROUTINE allReduceI_MPI_Env_type
@@ -1240,17 +1164,16 @@ MODULE ParallelEnv
       INTEGER(SIK),INTENT(INOUT) :: x(*)
 #ifdef HAVE_MPI
       INTEGER(SIK) :: rbuf(n)
-      IF(myPE%initstat) THEN
-        CALL MPI_Allreduce(x,rbuf,n,MPI_INTEGER,MPI_MAX, &
-          myPE%comm,mpierr)
-        IF(mpierr /= MPI_SUCCESS) THEN
-          CALL eParEnv%raiseError(modName//'::'// &
-            myName//' - call to MPI_AllreduceMax returned an error!')
-        ELSE
-          !Copy the result to the output argument
-          !CALL BLAS_copy(n,rbuf,1,x,1)
-          x(1:n)=rbuf ! No BLAS_copy for integers
-        ENDIF
+      REQUIRE(myPE%initstat)
+      CALL MPI_Allreduce(x,rbuf,n,MPI_INTEGER,MPI_MAX, &
+        myPE%comm,mpierr)
+      IF(mpierr /= MPI_SUCCESS) THEN
+        CALL eParEnv%raiseError(modName//'::'// &
+          myName//' - call to MPI_AllreduceMax returned an error!')
+      ELSE
+        !Copy the result to the output argument
+        !CALL BLAS_copy(n,rbuf,1,x,1)
+        x(1:n)=rbuf ! No BLAS_copy for integers
       ENDIF
 #endif
     ENDSUBROUTINE allReduceMaxI_MPI_Env_type
@@ -1271,17 +1194,16 @@ MODULE ParallelEnv
       INTEGER(SIK),INTENT(INOUT) :: x(*)
 #ifdef HAVE_MPI
       INTEGER(SIK) :: rbuf(n)
-      IF(myPE%initstat) THEN
-        CALL MPI_Allreduce(x,rbuf,n,MPI_INTEGER,MPI_MIN, &
-          myPE%comm,mpierr)
-        IF(mpierr /= MPI_SUCCESS) THEN
-          CALL eParEnv%raiseError(modName//'::'// &
-            myName//' - call to MPI_AllreduceMin returned an error!')
-        ELSE
-          !Copy the result to the output argument
-          !CALL BLAS_copy(n,rbuf,1,x,1)
-          x(1:n)=rbuf ! No BLAS_copy for integers
-        ENDIF
+      REQUIRE(myPE%initstat)
+      CALL MPI_Allreduce(x,rbuf,n,MPI_INTEGER,MPI_MIN, &
+        myPE%comm,mpierr)
+      IF(mpierr /= MPI_SUCCESS) THEN
+        CALL eParEnv%raiseError(modName//'::'// &
+          myName//' - call to MPI_AllreduceMin returned an error!')
+      ELSE
+        !Copy the result to the output argument
+        !CALL BLAS_copy(n,rbuf,1,x,1)
+        x(1:n)=rbuf ! No BLAS_copy for integers
       ENDIF
 #endif
     ENDSUBROUTINE allReduceMinI_MPI_Env_type
@@ -1298,15 +1220,14 @@ MODULE ParallelEnv
       LOGICAL(SBK),INTENT(INOUT) :: lstat
 #ifdef HAVE_MPI
       LOGICAL(SBK) :: lrbuf
-      IF(myPE%initstat) THEN
-        CALL MPI_Allreduce(lstat,lrbuf,1,MPI_LOGICAL,MPI_LAND, &
-          myPE%comm,mpierr)
-        IF(mpierr /= MPI_SUCCESS) THEN
-          CALL eParEnv%raiseError(modName//'::'// &
-            myName//' - call to MPI_Allreduce returned an error!')
-        ELSE
-          lstat=lrbuf
-        ENDIF
+      REQUIRE(myPE%initstat)
+      CALL MPI_Allreduce(lstat,lrbuf,1,MPI_LOGICAL,MPI_LAND, &
+        myPE%comm,mpierr)
+      IF(mpierr /= MPI_SUCCESS) THEN
+        CALL eParEnv%raiseError(modName//'::'// &
+          myName//' - call to MPI_Allreduce returned an error!')
+      ELSE
+        lstat=lrbuf
       ENDIF
 #endif
     ENDSUBROUTINE trueForAll_MPI_Env_type
@@ -1323,15 +1244,14 @@ MODULE ParallelEnv
       LOGICAL(SBK),INTENT(INOUT) :: lstat
 #ifdef HAVE_MPI
       LOGICAL(SBK) :: lrbuf
-      IF(myPE%initstat) THEN
-        CALL MPI_Allreduce(lstat,lrbuf,1,MPI_LOGICAL,MPI_LOR, &
-          myPE%comm,mpierr)
-        IF(mpierr /= MPI_SUCCESS) THEN
-          CALL eParEnv%raiseError(modName//'::'// &
-            myName//' - call to MPI_Allreduce returned an error!')
-        ELSE
-          lstat=lrbuf
-        ENDIF
+      REQUIRE(myPE%initstat)
+      CALL MPI_Allreduce(lstat,lrbuf,1,MPI_LOGICAL,MPI_LOR, &
+        myPE%comm,mpierr)
+      IF(mpierr /= MPI_SUCCESS) THEN
+        CALL eParEnv%raiseError(modName//'::'// &
+          myName//' - call to MPI_Allreduce returned an error!')
+      ELSE
+        lstat=lrbuf
       ENDIF
 #endif
     ENDSUBROUTINE trueForAny_MPI_Env_type
