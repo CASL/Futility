@@ -97,7 +97,6 @@ MODULE MemProf
 
       INTEGER(C_LONG_LONG) :: tmpL1, tmpL2
       CHARACTER(LEN=16) :: filename
-      CHARACTER(LEN=45)  :: tmpchar
 
       IF(ASSOCIATED(myLog)) THEN
         thisMP%pe=>pe
