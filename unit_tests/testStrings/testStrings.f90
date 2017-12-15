@@ -18,6 +18,8 @@ PROGRAM testStrings
   INTEGER(SIK) :: i
   INTEGER(SNK) :: testSNK,testSNKarray(2)
   INTEGER(SLK) :: testSLK,testSLKarray(2)
+  REAL(SSK) :: testSSK,testSSKarray(2)
+  REAL(SDK) :: testSDK,testSDKarray(2)
   CHARACTER(LEN=10) :: char10
   CHARACTER(LEN=20) :: char20
   TYPE(StringType) :: testString,testString2,testStringArray(10),testarray(2)
@@ -110,6 +112,50 @@ PROGRAM testStrings
   testarray=testSLKarray
   ASSERT(CHAR(testarray(1)) == '0','testString=testSLK : array(1)')
   ASSERT(CHAR(testarray(2)) == '5','testString=testSLK : array(2)')
+!
+!Test assigning a single real to string
+  COMPONENT_TEST('Assignment 32-bit Real to String')
+  testSSK=1.01_SSK
+  testString=testSSK
+  ASSERT(CHAR(testString) == '1.01000E+00','testString=testSSK : 1')
+  testSSK=-testSSK
+  testString=SQRT(testSSK)
+  ASSERT(CHAR(testString) == 'NaN','testString=testSSK : NaN')
+  testString=-HUGE(testSSK)
+  ASSERT(CHAR(testString) == '-3.40282E+38','testString=testSSK : lowest')
+  testString=HUGE(testSSK)
+  ASSERT(CHAR(testString) == '3.40282E+38','testString=testSSK : highest')
+  testString=-TINY(testSSK)
+  ASSERT(CHAR(testString) == '-1.17549E-38','testString=testSSK : smallest negative')
+  testString=TINY(testSSK)
+  ASSERT(CHAR(testString) == '1.17549E-38','testString=testSSK : smallest positive')
+  testSSKarray=(/-2.0_SSK,50.0_SSK/)
+  testarray=testSSKarray
+  ASSERT(CHAR(testarray(1)) == '-2.00000E+00','testString=testSSK : array(1)')
+  ASSERT(CHAR(testarray(2)) == '5.00000E+01','testString=testSSK : array(2)')
+!
+!Test assigning a double real to string
+  COMPONENT_TEST('Assignment 64-bit Real to String')
+  testSDK=1.01_SDK
+  testString=testSDK
+  ASSERT(CHAR(testString) == '1.010000000000000E+00','testString=testSDK : 1.01')
+  testSDK=-testSDK
+  testString=SQRT(testSDK)
+  ASSERT(CHAR(testString) == 'NaN','testString=testSDK : NaN')
+  !Since HUGE produces a triple digit exponent, it seems the 'E' disappears when
+  !writing.
+  testString=-HUGE(testSDK)
+  ASSERT(CHAR(testString) == '-1.797693134862316+308','testString=testSDK : lowest')
+  testString=HUGE(testSDK)
+  ASSERT(CHAR(testString) == '1.797693134862316+308','testString=testSDK : highest')
+  testString=-TINY(testSDK)
+  ASSERT(CHAR(testString) == '-2.225073858507201-308','testString=testSDK : smallest negative')
+  testString=TINY(testSDK)
+  ASSERT(CHAR(testString) == '2.225073858507201-308','testString=testSDK : smallest positive')
+  testSDKarray=(/-2.0_SDK,50.0_SDK/)
+  testarray=testSDKarray
+  ASSERT(CHAR(testarray(1)) == '-2.000000000000000E+00','testString=testSDK : array(1)')
+  ASSERT(CHAR(testarray(2)) == '5.000000000000000E+01','testString=testSDK : array(2)')
 !
 !Test assigning a char to a 1-D string array
   COMPONENT_TEST('Assignment char to 1-D String Array')
