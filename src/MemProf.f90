@@ -50,6 +50,8 @@ MODULE MemProf
     TYPE(FortranFileType) :: verbose_output
     !> logical to enable and disabled edits
     LOGICAL(SBK) :: mem_edit=.TRUE.
+    !> Logical to print banner explaining what data is available
+    LOGICAL(SBK) :: print_banner=.TRUE.
     !> log file
     TYPE(LogFileType),POINTER :: mylog => NULL()
     !> Parallel Environment for the problem
@@ -95,6 +97,7 @@ MODULE MemProf
 
       INTEGER(C_LONG_LONG) :: tmpL1, tmpL2
       CHARACTER(LEN=16) :: filename
+      CHARACTER(LEN=45)  :: tmpchar
 
       IF(ASSOCIATED(myLog)) THEN
         thisMP%pe=>pe
@@ -105,15 +108,18 @@ MODULE MemProf
         thisMP%mem_current=thisMP%mem_old
         thisMP%isInit=.TRUE.
       ENDIF
+      thisMP%print_banner=.TRUE.
       IF(PRESENT(params)) THEN
         IF(params%has('threshold')) CALL params%get('threshold',thisMP%mem_threshold)
         IF(params%has('verbose')) CALL params%get('verbose',thisMP%verbose)
       ENDIF
       thisMP%verbose=.TRUE.
       IF(thisMP%verbose) THEN
-         WRITE(filename,'("memprof.",I0.4,".dat")') pe%world%rank
-         CALL thisMP%verbose_output%initialize(FILE=filename,STATUS='UNKNOWN')
-         CALL thisMP%verbose_output%fopen()
+        WRITE(filename,'("memprof.",I0.4,".dat")') pe%world%rank
+        CALL thisMP%verbose_output%initialize(FILE=filename,STATUS='UNKNOWN')
+        CALL thisMP%verbose_output%fopen()
+        WRITE(thisMP%verbose_output%getUnitNo(),'(46x,"Used [GB] Change [MB]")')
+        FLUSH(thisMP%verbose_output%getUnitNo())
       ENDIF
     ENDSUBROUTINE init_MemProf
 !
@@ -146,32 +152,41 @@ MODULE MemProf
       CHARACTER(LEN=45)  :: tmpchar
       CHARACTER(LEN=128) :: amesg
       INTEGER(C_LONG_LONG) :: tmpL1, tmpL2
+      INTEGER(SLK) :: loc(1)
       REAL(SRK) :: mem(1), dmem(1), maxmem(1)
 
       IF(thisMP%mem_edit) THEN
+        IF(thisMP%print_banner) THEN
+          IF(thisMP%pe%world%master) THEN
+            WRITE(amesg, '(47x,"Avg [GB]  Max [GB]  Max Change [MB] (rank)")')
+            CALL thisMP%myLog%message(TRIM(amesg),.FALSE.,.TRUE.)
+          ENDIF
+          thisMP%print_banner=.FALSE.
+        ENDIF
         CALL thisMP%pe%world%barrier()
         CALL getProcMemInfo(tmpL1,tmpL2)
         thisMP%mem_current=REAL(tmpL1,SRK)/(1024.0_SRK*1024.0_SRK)
+        loc(1)=thisMP%pe%world%rank
 
         mem=thisMP%mem_current
         maxmem=mem
-        dmem=thisMP%mem_current-thisMP%mem_old
+        dmem=(thisMP%mem_current-thisMP%mem_old)*1024.0_SRK
         IF(thisMP%verbose) THEN
           WRITE(tmpchar,'(a)') 'Memory Use at '//TRIM(name)//':'
-          WRITE(thisMP%verbose_output%getUnitNo(),'(a,3(f10.3))') &
+          WRITE(thisMP%verbose_output%getUnitNo(),'(a,2(f10.3))') &
             ADJUSTL(tmpchar), mem, dmem
           FLUSH(thisMP%verbose_output%getUnitNo())
         ENDIF
 
         CALL thisMP%pe%world%allReduceMax(1,maxmem)
-        CALL thisMP%pe%world%allReduceMax(1,dmem)
+        CALL thisMP%pe%world%ReduceMaxLoc(1,dmem,loc)
         CALL thisMP%pe%world%allReduce(1,mem)
         mem=mem/REAL(thisMP%pe%world%nproc,SRK)
 
         IF(dmem(1)>=thisMP%mem_threshold .AND. ASSOCIATED(thisMP%myLog) .AND. &
             thisMP%pe%world%master) THEN
           WRITE(tmpchar,'(a)') 'Memory Use at '//TRIM(name)//':'
-          WRITE(amesg,'(a,3(f10.3))') ADJUSTL(tmpchar), mem, maxmem, dmem
+          WRITE(amesg,'(a,3(f10.3),"  (",I4,")")') ADJUSTL(tmpchar), mem, maxmem, dmem, loc
           CALL thisMP%myLog%message(TRIM(amesg),.FALSE.,.TRUE.)
         ENDIF
 
