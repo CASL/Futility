@@ -21,6 +21,7 @@ MODULE MemProf
   USE ISO_C_BINDING
   USE IntrType
   USE Strings
+  USE FileType_Fortran
   USE FileType_Log
   USE ExceptionHandler
   USE ParameterLists
@@ -43,6 +44,10 @@ MODULE MemProf
     REAL(SRK) :: mem_old=0.0_SRK
     !> Memory threshold
     REAL(SRK) :: mem_threshold=0.0_SRK
+    !> logical to enable and disabled verbose edits
+    LOGICAL(SBK) :: verbose=.FALSE.
+    !> Verbose file to output to
+    TYPE(FortranFileType) :: verbose_output
     !> logical to enable and disabled edits
     LOGICAL(SBK) :: mem_edit=.TRUE.
     !> log file
@@ -89,6 +94,7 @@ MODULE MemProf
       TYPE(ParamType),INTENT(IN),OPTIONAL :: params
 
       INTEGER(C_LONG_LONG) :: tmpL1, tmpL2
+      CHARACTER(LEN=16) :: filename
 
       IF(ASSOCIATED(myLog)) THEN
         thisMP%pe=>pe
@@ -101,6 +107,13 @@ MODULE MemProf
       ENDIF
       IF(PRESENT(params)) THEN
         IF(params%has('threshold')) CALL params%get('threshold',thisMP%mem_threshold)
+        IF(params%has('verbose')) CALL params%get('verbose',thisMP%verbose)
+      ENDIF
+      thisMP%verbose=.TRUE.
+      IF(thisMP%verbose) THEN
+         WRITE(filename,'("memprof.",I0.4,".dat")') pe%world%rank
+         CALL thisMP%verbose_output%initialize(FILE=filename,STATUS='UNKNOWN')
+         CALL thisMP%verbose_output%fopen()
       ENDIF
     ENDSUBROUTINE init_MemProf
 !
@@ -115,6 +128,11 @@ MODULE MemProf
       thisMP%mem_old=0.0_SRK
       thisMP%pe=>NULL()
       thisMP%myLog=>NULL()
+      IF(thisMP%verbose) THEN
+        CALL thisMP%verbose_output%fclose()
+        CALL thisMP%verbose_output%clear()
+      ENDIF
+      thisMP%verbose=.FALSE.
     ENDSUBROUTINE clear_MemProf
 !
 !-------------------------------------------------------------------------------
@@ -138,6 +156,13 @@ MODULE MemProf
         mem=thisMP%mem_current
         maxmem=mem
         dmem=thisMP%mem_current-thisMP%mem_old
+        IF(thisMP%verbose) THEN
+          WRITE(tmpchar,'(a)') 'Memory Use at '//TRIM(name)//':'
+          WRITE(thisMP%verbose_output%getUnitNo(),'(a,3(f10.3))') &
+            ADJUSTL(tmpchar), mem, dmem
+          FLUSH(thisMP%verbose_output%getUnitNo())
+        ENDIF
+
         CALL thisMP%pe%world%allReduceMax(1,maxmem)
         CALL thisMP%pe%world%allReduceMax(1,dmem)
         CALL thisMP%pe%world%allReduce(1,mem)
