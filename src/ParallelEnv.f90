@@ -1049,12 +1049,12 @@ MODULE ParallelEnv
       REAL(SRK) :: rbuf(2,n)
       INTEGER(SIK) :: rank
       REQUIRE(myPE%initstat)
+      rank=0
       IF(PRESENT(root)) rank=root
       REQUIRE(rank >= 0)
       REQUIRE(rank < myPE%nproc)
       sbuf(1,:)=x(1:n)
       sbuf(2,:)=i(1:n)
-      rank=0
 #ifdef DBL
       CALL MPI_Allreduce(sbuf,rbuf,n,MPI_2DOUBLE_PRECISION,MPI_MAXLOC, &
         myPE%comm,mpierr)
@@ -1095,12 +1095,12 @@ MODULE ParallelEnv
       REAL(SRK) :: rbuf(2,n)
       INTEGER(SIK) :: rank
       REQUIRE(myPE%initstat)
+      rank=0
       IF(PRESENT(root)) rank=root
       REQUIRE(rank >= 0)
       REQUIRE(rank < myPE%nproc)
       sbuf(1,:)=x(1:n)
       sbuf(2,:)=i(1:n)
-      rank=0
 #ifdef DBL
       CALL MPI_Allreduce(sbuf,rbuf,n,MPI_2DOUBLE_PRECISION,MPI_MINLOC, &
         myPE%comm,mpierr)
