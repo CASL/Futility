@@ -1434,7 +1434,6 @@ MODULE ParallelEnv
               'virtual topology, mpierr='//TRIM(smpierr)//'!')
         ENDIF
 #else
-        CALL myPE%world%init(commWorld)
         ALLOCATE(myPE%space); myPE%space=myPE%world
         ALLOCATE(myPE%angle); myPE%angle=myPE%world
         ALLOCATE(myPE%energy); myPE%energy=myPE%world
