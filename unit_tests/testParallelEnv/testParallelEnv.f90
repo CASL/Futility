@@ -261,6 +261,7 @@ PROGRAM testParallelEnv
       ENDDO
 
       COMPONENT_TEST('%trueForAll')
+      CALL testMPI%clear()
       CALL testMPI%init()
       bool=.TRUE.
       CALL testMPI%trueForAll(bool)
@@ -279,6 +280,7 @@ PROGRAM testParallelEnv
       ENDIF
 
       COMPONENT_TEST('%trueForAny')
+      CALL testMPI%clear()
       CALL testMPI%init()
       bool=.TRUE.
       CALL testMPI%trueForAny(bool)
