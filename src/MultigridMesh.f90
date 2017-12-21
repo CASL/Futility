@@ -130,7 +130,7 @@ MODULE MultigridMesh
     !> Data for each multigrid level. 1 = coarsest level, nLevels = finest level
     TYPE(MultigridMeshType),ALLOCATABLE :: meshes(:)
     !> Whether or not the mesh structure has been initialized:
-    LOGICAL(SBK) :: isInit
+    LOGICAL(SBK) :: isInit=.FALSE.
 
     CONTAINS
       !> @copybrief MultigridMesh::clear_MultigridMeshStructure
@@ -370,13 +370,13 @@ MODULE MultigridMesh
       myWts%num_eqns=num_eqns
 
       !TODO turn on option for flat weights to save on memory cost
-      ALLOCATE(myWts%wts_point(meshes%istt:meshes%istp))
-      DO i=meshes%istt,meshes%istp
-        IF(meshes%interpDegrees(i) > 0) THEN
-          ALLOCATE(myWts%wts_point(i)%wts(num_eqns,meshes%interpDegrees(i)*2))
-          myWts%wts_point(i)%wts=1.0_SRK/(2*meshes%interpDegrees(i))
-        ENDIF
-      ENDDO
+      !ALLOCATE(myWts%wts_point(meshes%istt:meshes%istp))
+      !DO i=meshes%istt,meshes%istp
+      !  IF(meshes%interpDegrees(i) > 0) THEN
+      !    ALLOCATE(myWts%wts_point(i)%wts(num_eqns,meshes%interpDegrees(i)*2))
+      !    myWts%wts_point(i)%wts=1.0_SRK/(2*meshes%interpDegrees(i))
+      !  ENDIF
+      !ENDDO
 
     ENDSUBROUTINE init_InterpWeightsLevel
 !
@@ -394,18 +394,18 @@ MODULE MultigridMesh
       IF(ASSOCIATED(myWts%meshes)) THEN
         IF(ALLOCATED(myWts%wts_point)) THEN
           DO i=myWts%meshes%istt,myWts%meshes%istp
-            IF(myWts%meshes%interpDegrees(i) > 0) THEN
-              DEALLOCATE(myWts%wts_point(i)%wts)
-            ENDIF
+            !IF(myWts%meshes%interpDegrees(i) > 0) THEN
+            !  DEALLOCATE(myWts%wts_point(i)%wts)
+            !ENDIF
           ENDDO
           DEALLOCATE(myWts%wts_point)
         ENDIF
         NULLIFY(myWts%meshes)
       ELSE IF(ALLOCATED(myWts%wts_point)) THEN
         DO i=LBOUND(myWts%wts_point,1),UBOUND(myWts%wts_point,1)
-          IF(ALLOCATED(myWts%wts_point(i)%wts)) THEN
-            DEALLOCATE(myWts%wts_point(i)%wts)
-          ENDIF
+          !IF(ALLOCATED(myWts%wts_point(i)%wts)) THEN
+          !  DEALLOCATE(myWts%wts_point(i)%wts)
+          !ENDIF
         ENDDO
         DEALLOCATE(myWts%wts_point)
       ENDIF
