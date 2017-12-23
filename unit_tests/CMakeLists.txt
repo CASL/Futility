@@ -31,6 +31,7 @@ SET(UNIT_TEST_NAMES
     testGeom_Poly
     testGeom
     testSorting
+    testMeshTransfer
     testSearch
     testBinaryTrees
     testExceptionHandler
