@@ -112,7 +112,7 @@ MODULE MemProf
         IF(params%has('threshold')) CALL params%get('threshold',thisMP%mem_threshold)
         IF(params%has('verbose')) CALL params%get('verbose',thisMP%verbose)
       ENDIF
-      thisMP%verbose=.TRUE.
+
       IF(thisMP%verbose) THEN
         WRITE(filename,'("memprof.",I0.4,".dat")') pe%world%rank
         CALL thisMP%verbose_output%initialize(FILE=filename,STATUS='UNKNOWN')
