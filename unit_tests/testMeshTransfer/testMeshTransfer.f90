@@ -11,6 +11,7 @@ PROGRAM testMeshTransfer
   USE UnitTest
   USE IntrType
   USE Strings
+  USE ParameterLists
   USE MeshTransfer
 
   IMPLICIT NONE
@@ -22,12 +23,290 @@ PROGRAM testMeshTransfer
   REGISTER_SUBTEST('Test LP Integral',TestLPIntegral)
   REGISTER_SUBTEST('Test ZP PointVal',TestZPPointVal)
   REGISTER_SUBTEST('Test ZP Integral',TestZPIntegral)
+  REGISTER_SUBTEST('Test 1DBase MeshTransfer',Test1DBase)
+  REGISTER_SUBTEST('Test 1DCart MeshTransfer',Test1DCart)
+  REGISTER_SUBTEST('Test 1DCyl MeshTransfer',Test1DCyl)
 
   FINALIZE_TEST()
 !
 !
 !===============================================================================
   CONTAINS
+!
+!-------------------------------------------------------------------------------
+!> Using 1DCart but testing only functions on the 1Dbase class.
+    SUBROUTINE Test1DBase()
+      TYPE(MeshTransfer_1DCart) :: testMT
+      TYPE(ParamType) :: testPL
+      INTEGER(SIK) :: i
+      REAL(SRK) :: mesh(6), tmpin(5),mesh_out(11)
+      REAL(SRK),ALLOCATABLE :: tmpout(:)
+
+      DO i=0,5
+        mesh(i+1)=SQRT(REAL(i,SRK)/5.0_SRK)
+      ENDDO
+      DO i=0,10
+        mesh_out(i+1)=SQRT(REAL(i,SRK)/10.0_SRK)
+      ENDDO
+
+      CALL testPL%add('MeshTransfer->map_in','VOLUME')
+      CALL testPL%add('MeshTransfer->map_out','POINT')
+      CALL testPL%add('MeshTransfer->volumemesh_in',mesh)
+      CALL testPL%add('MeshTransfer->pointmesh_out',mesh_out)
+      CALL testPL%add('MeshTransfer->poly_transfer',4)
+
+      COMPONENT_TEST('%init_base')
+      CALL testMT%init_base(testPL)
+
+      ASSERT_EQ(testMT%MapType_in,3,'map_in')
+      ASSERT_EQ(testMT%MapType_out,2,'map_out')
+      ASSERT_EQ(testMT%nmesh_in,5,'nmesh_in')
+      ASSERT_EQ(testMT%nmesh_out,11,'nmesh_out')
+      ASSERT_EQ(testMT%poly_transfer,4,'poly_transfer')
+      ASSERT(ALL(testMT%mesh_in .APPROXEQ. mesh),'mesh_in')
+      ASSERT(ALL(testMT%mesh_out .APPROXEQ. mesh_out),'mesh_out')
+
+      COMPONENT_TEST('%clear')
+      testMT%isInit=.TRUE.
+      ALLOCATE(testMT%transferMatrix(3,4))
+      testMT%transferLS%isInit=.TRUE.
+      CALL testMT%clear()
+
+      ASSERT_EQ(testMT%MapType_in,0,'map_in')
+      ASSERT_EQ(testMT%MapType_out,0,'map_out')
+      ASSERT_EQ(testMT%nmesh_in,0,'nmesh_in')
+      ASSERT_EQ(testMT%nmesh_out,0,'nmesh_out')
+      ASSERT_EQ(testMT%poly_transfer,-1,'poly_transfer')
+      ASSERT(.NOT. ALLOCATED(testMT%mesh_in),'mesh_in')
+      ASSERT(.NOT. ALLOCATED(testMT%mesh_out),'mesh_out')
+      ASSERT(.NOT. ALLOCATED(testMT%transferMatrix),'transferMatrix')
+      ASSERT(.NOT. testMT%transferLS%isInit,'transferLS init')
+
+      COMPONENT_TEST('%init_base other settings')
+      CALL testPL%clear()
+      CALL testPL%add('MeshTransfer->map_in','VOLUME')
+      CALL testPL%add('MeshTransfer->map_out','CONTINUOUS')
+      CALL testPL%add('MeshTransfer->volumemesh_in',mesh)
+      CALL testPL%add('MeshTransfer->moments_out',3)
+
+      CALL testMT%init_base(testPL)
+
+      ASSERT_EQ(testMT%MapType_in,3,'map_in')
+      ASSERT_EQ(testMT%MapType_out,1,'map_out')
+      ASSERT_EQ(testMT%nmesh_in,5,'nmesh_in')
+      ASSERT_EQ(testMT%nmesh_out,3,'nmesh_out')
+      ASSERT_EQ(testMT%poly_transfer,-1,'poly_transfer')
+      ASSERT(ALL(testMT%mesh_in .APPROXEQ. mesh),'mesh_in')
+      ASSERT(.NOT. ALLOCATED(testMT%mesh_out),'mesh_out')
+      CALL testMT%clear()
+
+      CALL testPL%clear()
+      CALL testPL%add('MeshTransfer->map_in','CONTINUOUS')
+      CALL testPL%add('MeshTransfer->map_out','VOLUME')
+      CALL testPL%add('MeshTransfer->moments_in',4)
+      CALL testPL%add('MeshTransfer->volumemesh_out',mesh_out)
+
+      CALL testMT%init_base(testPL)
+
+      ASSERT_EQ(testMT%MapType_in,1,'map_in')
+      ASSERT_EQ(testMT%MapType_out,3,'map_out')
+      ASSERT_EQ(testMT%nmesh_in,4,'nmesh_in')
+      ASSERT_EQ(testMT%nmesh_out,10,'nmesh_out')
+      ASSERT_EQ(testMT%poly_transfer,-1,'poly_transfer')
+      ASSERT(.NOT. ALLOCATED(testMT%mesh_in),'mesh_in')
+      ASSERT(ALL(testMT%mesh_out .APPROXEQ. mesh_out),'mesh_out')
+      CALL testMT%clear()
+
+      COMPONENT_TEST('%transfer')
+      CALL testPL%clear()
+      CALL testPL%add('MeshTransfer->map_in','VOLUME')
+      CALL testPL%add('MeshTransfer->map_out','POINT')
+      CALL testPL%add('MeshTransfer->volumemesh_in',mesh)
+      CALL testPL%add('MeshTransfer->pointmesh_out',mesh_out)
+      CALL testPL%add('MeshTransfer->poly_transfer',4)
+
+      CALL testMT%init_base(testPL)
+
+      CALL testPL%clear()
+      CALL testPL%add('LinearSolverType->TPLType',NATIVE)
+      CALL testPL%add('LinearSolverType->solverMethod',LU)
+      CALL testPL%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
+      CALL testPL%add('LinearSolverType->numberOMP',1_SNK)
+      CALL testPL%add('LinearSolverType->timerName','testTimer')
+      CALL testPL%add('LinearSolverType->matType',DENSESQUARE)
+      CALL testPL%add('LinearSolverType->A->MatrixType->isSym',.FALSE.)
+      CALL testPL%add('LinearSolverType->A->MatrixType->n',5)
+      CALL testPL%add('LinearSolverType->x->VectorType->n',5)
+      CALL testPL%add('LinearSolverType->b->VectorType->n',5)
+      CALL testMT%transferLS%init(testPL)
+      CALL testPL%clear()
+
+      SELECTTYPE(A => testMT%transferLS%A); TYPE IS(DenseSquareMatrixType)
+        CALL A%set(1,1,2.0_SRK)
+        CALL A%set(2,2,3.0_SRK)
+        CALL A%set(3,3,4.0_SRK)
+        CALL A%set(4,4,ONE/5.0_SRK)
+        CALL A%set(5,5,ONE)
+      ENDSELECT
+
+      tmpin(:)=(/0.8_SRK, 0.9_SRK, 1.0_SRK, 1.1_SRK, 1.2_SRK /)
+      CALL testMT%transfer(tmpin,tmpout)
+
+      ASSERT_EQ(SIZE(tmpout),11,'SIZE(tmpout)')
+      ASSERT_APPROXEQ(tmpout(1),0.40_SRK,'tmpout(1)')
+      ASSERT_APPROXEQ(tmpout(2),0.30_SRK,'tmpout(2)')
+      ASSERT_APPROXEQ(tmpout(3),0.25_SRK,'tmpout(3)')
+      ASSERT_APPROXEQ(tmpout(4),5.50_SRK,'tmpout(4)')
+      ASSERT_APPROXEQ(tmpout(5),1.20_SRK,'tmpout(5)')
+      ASSERT(ALL(tmpout(6:11)==ZERO),'tmpout(6:11)')
+
+      DEALLOCATE(tmpout)
+
+      ALLOCATE(testMT%transferMatrix(11,4))
+      testMT%transferMatrix(:,:)=ZERO
+      testMT%transferMatrix(1,1)=1.5_SRK
+      testMT%transferMatrix(1,2)=2.0_SRK
+      testMT%transferMatrix(2,3)=ONE
+      testMT%transferMatrix(3,4)=ONE
+      testMT%transferMatrix(4,1)=ONE
+      testMT%transferMatrix(5,2)=ONE
+      testMT%transferMatrix(6,3)=ONE
+      testMT%transferMatrix(7,4)=ONE
+      testMT%transferMatrix(8,3)=ONE
+      testMT%transferMatrix(9,2)=ONE
+      testMT%transferMatrix(10,1)=ONE
+
+      CALL testMT%transfer(tmpin,tmpout)
+
+      ASSERT_EQ(SIZE(tmpout),11,'SIZE(tmpout)')
+      ASSERT_APPROXEQ(tmpout(1),1.20_SRK,'tmpout(1)')
+      ASSERT_APPROXEQ(tmpout(2),0.25_SRK,'tmpout(2)')
+      ASSERT_APPROXEQ(tmpout(3),5.50_SRK,'tmpout(3)')
+      ASSERT_APPROXEQ(tmpout(4),0.40_SRK,'tmpout(4)')
+      ASSERT_APPROXEQ(tmpout(5),0.30_SRK,'tmpout(5)')
+      ASSERT_APPROXEQ(tmpout(6),0.25_SRK,'tmpout(6)')
+      ASSERT_APPROXEQ(tmpout(7),5.50_SRK,'tmpout(7)')
+      ASSERT_APPROXEQ(tmpout(8),0.25_SRK,'tmpout(8)')
+      ASSERT_APPROXEQ(tmpout(9),0.30_SRK,'tmpout(9)')
+      ASSERT_APPROXEQ(tmpout(10),0.40_SRK,'tmpout(10)')
+      ASSERT_APPROXEQ(tmpout(11),0.00_SRK,'tmpout(11)')
+
+      CALL testMT%transferLS%clear()
+      DEALLOCATE(testMT%transferMatrix)
+      ALLOCATE(testMT%transferMatrix(11,5))
+      testMT%transferMatrix(:,:)=ZERO
+      testMT%transferMatrix(1,1)=1.5_SRK
+      testMT%transferMatrix(1,2)=2.0_SRK
+      testMT%transferMatrix(1,5)=3.0_SRK
+      testMT%transferMatrix(2,3)=ONE
+      testMT%transferMatrix(3,4)=ONE
+      testMT%transferMatrix(4,5)=ONE
+      testMT%transferMatrix(5,4)=ONE
+      testMT%transferMatrix(6,3)=ONE
+      testMT%transferMatrix(7,2)=ONE
+      testMT%transferMatrix(8,1)=ONE
+      testMT%transferMatrix(9,2)=ONE
+      testMT%transferMatrix(10,3)=ONE
+
+      CALL testMT%transfer(tmpin,tmpout)
+
+      ASSERT_EQ(SIZE(tmpout),11,'SIZE(tmpout)')
+      ASSERT_APPROXEQ(tmpout(1),6.6_SRK,'tmpout(1)')
+      ASSERT_APPROXEQ(tmpout(2),1.0_SRK,'tmpout(2)')
+      ASSERT_APPROXEQ(tmpout(3),1.1_SRK,'tmpout(3)')
+      ASSERT_APPROXEQ(tmpout(4),1.2_SRK,'tmpout(4)')
+      ASSERT_APPROXEQ(tmpout(5),1.1_SRK,'tmpout(5)')
+      ASSERT_APPROXEQ(tmpout(6),1.0_SRK,'tmpout(6)')
+      ASSERT_APPROXEQ(tmpout(7),0.9_SRK,'tmpout(7)')
+      ASSERT_APPROXEQ(tmpout(8),0.8_SRK,'tmpout(8)')
+      ASSERT_APPROXEQ(tmpout(9),0.9_SRK,'tmpout(9)')
+      ASSERT_APPROXEQ(tmpout(10),1.0_SRK,'tmpout(10)')
+      ASSERT_APPROXEQ(tmpout(11),0.0_SRK,'tmpout(11)')
+
+      CALL testMT%clear()
+
+    ENDSUBROUTINE Test1DBase
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE Test1DCart()
+      TYPE(MeshTransfer_1DCart) :: testMT
+      TYPE(ParamType) :: testPL
+      INTEGER(SIK) :: i
+      REAL(SRK) :: mesh(6), tmpin(6),mesh_out(21)
+      REAL(SRK),ALLOCATABLE :: tmpout(:)
+
+      mesh=(/0.0_SRK,1.0_SRK,3.0_SRK,4.0_SRK,6.5_SRK,10.0_SRK/)
+      DO i=0,20
+        mesh_out(i+1)=REAL(i,SRK)/2.0_SRK
+      ENDDO
+
+      CALL testPL%add('MeshTransfer->map_in','POINT')
+      CALL testPL%add('MeshTransfer->map_out','POINT')
+      CALL testPL%add('MeshTransfer->pointmesh_in',mesh)
+      CALL testPL%add('MeshTransfer->pointmesh_out',mesh_out)
+      CALL testPL%add('MeshTransfer->poly_transfer',4)
+
+      CALL testMT%init(testPL)
+      tmpin(1)=0.85_SRK
+      tmpin(2)=0.90_SRK
+      tmpin(3)=0.95_SRK
+      tmpin(4)=1.05_SRK
+      tmpin(5)=1.30_SRK
+      tmpin(6)=1.10_SRK
+
+      CALL testMT%transfer(tmpin,tmpout)
+
+      !ALLOCATE(tmpout(3))
+      !tmpout(1)=1.01666666666666666666666666667_SRK
+      !tmpout(2)=0.3375000_SRK
+      !tmpout(3)=0.000_SRK
+
+      DO i=1,SIZE(tmpout)
+        WRITE(*,*) tmpout(i)
+      ENDDO
+
+    ENDSUBROUTINE Test1DCart
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE Test1DCyl()
+      TYPE(MeshTransfer_1DCyl) :: testMT
+      TYPE(ParamType) :: testPL
+      INTEGER(SIK) :: i
+      REAL(SRK) :: mesh(6), tmpin(5),mesh_out(21)
+      REAL(SRK),ALLOCATABLE :: tmpout(:)
+
+      DO i=0,5
+        mesh(i+1)=SQRT(REAL(i,SRK)/5.0_SRK)
+      ENDDO
+      DO i=0,20
+        mesh_out(i+1)=SQRT(REAL(i,SRK)/20.0_SRK)
+      ENDDO
+
+      CALL testPL%add('MeshTransfer->map_in','VOLUME')
+      CALL testPL%add('MeshTransfer->map_out','VOLUME')
+      CALL testPL%add('MeshTransfer->volumemesh_in',mesh)
+      CALL testPL%add('MeshTransfer->volumemesh_out',mesh_out)
+      CALL testPL%add('MeshTransfer->poly_transfer',4)
+
+      CALL testMT%init(testPL)
+      tmpin(1)=0.85_SRK
+      tmpin(2)=0.9_SRK
+      tmpin(3)=0.95_SRK
+      tmpin(4)=1.05_SRK
+      tmpin(5)=1.3_SRK
+
+      CALL testMT%transfer(tmpin,tmpout)
+
+      !ALLOCATE(tmpout(3))
+      !tmpout(1)=1.01666666666666666666666666667_SRK
+      !tmpout(2)=0.3375000_SRK
+      !tmpout(3)=0.000_SRK
+
+      DO i=1,SIZE(tmpout)
+      !  WRITE(*,*) tmpout(i)
+      ENDDO
+
+    ENDSUBROUTINE Test1DCyl
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE TestLPPointVal()
