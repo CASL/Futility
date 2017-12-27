@@ -491,7 +491,6 @@ MODULE MeshTransfer
             TM(i,j+1)=HALF
           ENDIF
         ENDIF
-        WRITE(*,*) TM(i,:)
       ENDDO
       ! TODO: search to find which V that P falls into
       !  look at ArrayUtils, findIndex

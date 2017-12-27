@@ -24,6 +24,7 @@ PROGRAM testMeshTransfer
   REGISTER_SUBTEST('Test ZP PointVal',TestZPPointVal)
   REGISTER_SUBTEST('Test ZP Integral',TestZPIntegral)
   REGISTER_SUBTEST('Test 1DBase MeshTransfer',Test1DBase)
+  REGISTER_SUBTEST('Test 1D setup',Test1Dsetup)
   REGISTER_SUBTEST('Test 1DCart MeshTransfer',Test1DCart)
   REGISTER_SUBTEST('Test 1DCyl MeshTransfer',Test1DCyl)
 
@@ -226,6 +227,192 @@ PROGRAM testMeshTransfer
       CALL testMT%clear()
 
     ENDSUBROUTINE Test1DBase
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE Test1Dsetup()
+      INTEGER(SIK) :: i,j
+      REAL(SRK),ALLOCATABLE :: mesh_in(:),mesh_out(:),sol(:)
+      REAL(SRK),ALLOCATABLE :: TM(:,:)
+      TYPE(LinearSolverType_Direct) :: TLS
+
+      COMPONENT_TEST('setupP2P')
+      ALLOCATE(mesh_in(4),mesh_out(6),sol(24))
+      mesh_in=(/0.0_SRK, 1.5_SRK, 2.0_SRK, 5.0_SRK/)
+      mesh_out=(/0.3_SRK, 1.55_SRK, 2.0_SRK, 3.0_SRK,-1.0_SRK,6.0_SRK/)
+      sol=(/0.8_SRK,0.2_SRK,ZERO,ZERO,         &
+            ZERO,0.9_SRK,0.1_SRK,ZERO,         &
+            ZERO,ZERO,ONE,ZERO,                &
+            ZERO,ZERO,TWO/3.0_SRK,ONE/3.0_SRK, &
+            ONE,ZERO,ZERO,ZERO,                &
+            ZERO,ZERO,ZERO,ONE/)
+      CALL testsetupP2P(TM,mesh_in,mesh_out)
+      ASSERT(ALLOCATED(TM),'TM allocated')
+      DO i=1,6
+        DO j=1,4
+          ASSERT_APPROXEQ(TM(i,j),sol((i-1)*4+j),'TM values')
+          FINFO() i,j
+        ENDDO
+      ENDDO
+      DEALLOCATE(mesh_in,mesh_out,sol,TM)
+
+      COMPONENT_TEST('setupV2P')
+      ALLOCATE(mesh_in(4),mesh_out(6),sol(18))
+      mesh_in=(/0.0_SRK, 1.5_SRK, 2.0_SRK, 5.0_SRK/)
+      mesh_out=(/0.0_SRK, 1.55_SRK, 2.0_SRK, 5.0_SRK,-1.0_SRK,6.0_SRK/)
+      sol=(/ ONE,ZERO,ZERO, &
+            ZERO, ONE,ZERO, &
+            ZERO,HALF,HALF, &
+            ZERO,ZERO, ONE, &
+             ONE,ZERO,ZERO, &
+            ZERO,ZERO, ONE /)
+      CALL testsetupV2P(TM,mesh_in,mesh_out)
+      ASSERT(ALLOCATED(TM),'TM allocated')
+      DO i=1,6
+        DO j=1,3
+          ASSERT_APPROXEQ(TM(i,j),sol((i-1)*3+j),'TM values')
+          FINFO() i,j
+        ENDDO
+      ENDDO
+      DEALLOCATE(mesh_in,mesh_out,sol,TM)
+
+      COMPONENT_TEST('setupC2C')
+      ALLOCATE(sol(12))
+      sol=(/ ONE,ZERO,ZERO, &
+            ZERO, ONE,ZERO, &
+            ZERO,ZERO, ONE, &
+            ZERO,ZERO,ZERO /)
+      CALL testsetupC2C(TM,3,4)
+      ASSERT(ALLOCATED(TM),'TM allocated')
+      DO i=1,4
+        WRITE(*,*) TM(i,:)
+        DO j=1,3
+          ASSERT_APPROXEQ(TM(i,j),sol((i-1)*3+j),'TM values extra moments')
+          FINFO() i,j
+        ENDDO
+      ENDDO
+      DEALLOCATE(TM)
+      sol=(/ ONE,ZERO,ZERO,ZERO, &
+            ZERO, ONE,ZERO,ZERO, &
+            ZERO,ZERO, ONE,ZERO /)
+      CALL testsetupC2C(TM,4,3)
+      ASSERT(ALLOCATED(TM),'TM allocated')
+      DO i=1,3
+        WRITE(*,*) TM(i,:)
+        DO j=1,4
+          ASSERT_APPROXEQ(TM(i,j),sol((i-1)*4+j),'TM values less moments')
+          FINFO() i,j
+        ENDDO
+      ENDDO
+      DEALLOCATE(TM)
+
+      COMPONENT_TEST('setupP2V_cart')
+      ALLOCATE(mesh_in(4),mesh_out(4))
+      mesh_in=(/0.0_SRK, 1.5_SRK, 2.0_SRK, 5.0_SRK/)
+      mesh_out=(/0.3_SRK, 1.55_SRK, 2.0_SRK, 3.0_SRK/)
+      CALL testsetupP2V_cart(TM,mesh_in,mesh_out)
+      ASSERT(ALLOCATED(TM),'TM allocated')
+      ASSERT(.FALSE.,'Not Implemented')
+      ! More asserts when the routine is written
+      DEALLOCATE(mesh_in,mesh_out,TM)
+
+      COMPONENT_TEST('setupP2C_cart')
+      ALLOCATE(mesh_in(4))
+      mesh_in=(/0.0_SRK, 1.5_SRK, 2.0_SRK, 5.0_SRK/)
+      CALL testsetupP2C_cart(TLS,mesh_in,0.0_SRK,6.0_SRK)
+      ASSERT(TLS%isInit,'TLS initialized')
+      ! TODO asserts
+      DEALLOCATE(mesh_in)
+      CALL TLS%clear()
+
+      COMPONENT_TEST('setupV2V_cart')
+      ALLOCATE(mesh_in(4),mesh_out(4))
+      mesh_in=(/0.0_SRK, 1.5_SRK, 2.0_SRK, 5.0_SRK/)
+      mesh_out=(/0.3_SRK, 1.55_SRK, 2.0_SRK, 3.0_SRK/)
+      CALL testsetupV2V_cart(TM,mesh_in,mesh_out)
+      ASSERT(ALLOCATED(TM),'TM allocated')
+      ASSERT(.FALSE.,'Not Implemented')
+      ! More asserts when the routine is written
+      DEALLOCATE(mesh_in,mesh_out,TM)
+
+      COMPONENT_TEST('setupV2C_cart')
+      ALLOCATE(mesh_in(4))
+      mesh_in=(/0.0_SRK, 1.5_SRK, 2.0_SRK, 5.0_SRK/)
+      CALL testsetupV2C_cart(TLS,mesh_in,0.0_SRK,5.0_SRK)
+      ASSERT(TLS%isInit,'TLS initialized')
+      ! TODO asserts
+      DEALLOCATE(mesh_in)
+      CALL TLS%clear()
+
+      COMPONENT_TEST('setupC2P_cart')
+      ALLOCATE(mesh_out(4))
+      mesh_out=(/0.3_SRK, 1.55_SRK, 2.0_SRK, 3.0_SRK/)
+      CALL testsetupC2P_cart(TM,3,mesh_out,0.0_SRK,5.0_SRK)
+      ASSERT(ALLOCATED(TM),'TM allocated')
+      ! TODO asserts
+      DEALLOCATE(mesh_out,TM)
+
+      COMPONENT_TEST('setupC2V_cart')
+      ALLOCATE(mesh_out(4))
+      mesh_out=(/0.3_SRK, 1.55_SRK, 2.0_SRK, 3.0_SRK/)
+      CALL testsetupC2V_cart(TM,3,mesh_out,0.0_SRK,5.0_SRK)
+      ASSERT(ALLOCATED(TM),'TM allocated')
+      ! TODO asserts
+      DEALLOCATE(mesh_out,TM)
+
+      COMPONENT_TEST('setupP2V_cyl')
+      ALLOCATE(mesh_in(4),mesh_out(4))
+      mesh_in=(/0.0_SRK, 1.5_SRK, 2.0_SRK, 5.0_SRK/)
+      mesh_out=(/0.3_SRK, 1.55_SRK, 2.0_SRK, 3.0_SRK/)
+      CALL testsetupP2V_cyl(TM,mesh_in,mesh_out)
+      ASSERT(ALLOCATED(TM),'TM allocated')
+      ASSERT(.FALSE.,'Not Implemented')
+      ! More asserts when the routine is written
+      DEALLOCATE(mesh_in,mesh_out,TM)
+
+      COMPONENT_TEST('setupP2C_cyl')
+      ALLOCATE(mesh_in(4))
+      mesh_in=(/0.0_SRK, 1.5_SRK, 2.0_SRK, 5.0_SRK/)
+      CALL testsetupP2C_cyl(TLS,mesh_in,6.0_SRK)
+      ASSERT(TLS%isInit,'TLS initialized')
+      ! TODO asserts
+      DEALLOCATE(mesh_in)
+      CALL TLS%clear()
+
+      COMPONENT_TEST('setupV2V_cyl')
+      ALLOCATE(mesh_in(4),mesh_out(4))
+      mesh_in=(/0.0_SRK, 1.5_SRK, 2.0_SRK, 5.0_SRK/)
+      mesh_out=(/0.3_SRK, 1.55_SRK, 2.0_SRK, 3.0_SRK/)
+      CALL testsetupV2V_cyl(TM,mesh_in,mesh_out)
+      ASSERT(ALLOCATED(TM),'TM allocated')
+      ASSERT(.FALSE.,'Not Implemented')
+      ! More asserts when the routine is written
+      DEALLOCATE(mesh_in,mesh_out,TM)
+
+      COMPONENT_TEST('setupV2C_cyl')
+      ALLOCATE(mesh_in(4))
+      mesh_in=(/0.0_SRK, 1.5_SRK, 2.0_SRK, 5.0_SRK/)
+      CALL testsetupV2C_cyl(TLS,mesh_in,6.0_SRK)
+      ASSERT(TLS%isInit,'TLS initialized')
+      ! TODO asserts
+      DEALLOCATE(mesh_in)
+      CALL TLS%clear()
+
+      COMPONENT_TEST('setupC2P_cyl')
+      ALLOCATE(mesh_out(4))
+      mesh_out=(/0.3_SRK, 1.55_SRK, 2.0_SRK, 3.0_SRK/)
+      CALL testsetupC2P_cyl(TM,3,mesh_out,6.0_SRK)
+      ASSERT(ALLOCATED(TM),'TM allocated')
+      ! TODO asserts
+      DEALLOCATE(mesh_out,TM)
+
+      COMPONENT_TEST('setupC2V_cyl')
+      ALLOCATE(mesh_out(4))
+      mesh_out=(/0.3_SRK, 1.55_SRK, 2.0_SRK, 3.0_SRK/)
+      CALL testsetupC2V_cyl(TM,4,mesh_out,6.0_SRK)
+      ASSERT(ALLOCATED(TM),'TM allocated')
+      ! TODO asserts
+      DEALLOCATE(mesh_out,TM)
+    ENDSUBROUTINE Test1Dsetup
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE Test1DCart()
