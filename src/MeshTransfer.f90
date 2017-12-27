@@ -24,6 +24,7 @@ MODULE MeshTransfer
   USE ParameterLists
   USE ParallelEnv
   USE BLAS
+  USE ArrayUtils
   USE VectorTypes
   USE MatrixTypes
   USE LinearSolverTypes
@@ -37,6 +38,22 @@ MODULE MeshTransfer
   PUBLIC :: MeshTransfer_1Dbase
   PUBLIC :: MeshTransfer_1DCart
   PUBLIC :: MeshTransfer_1DCyl
+! Test Interfaces
+  PUBLIC :: testsetupP2P
+  PUBLIC :: testsetupV2P
+  PUBLIC :: testsetupC2C
+  PUBLIC :: testsetupP2V_cart
+  PUBLIC :: testsetupP2C_cart
+  PUBLIC :: testsetupV2V_cart
+  PUBLIC :: testsetupV2C_cart
+  PUBLIC :: testsetupC2P_cart
+  PUBLIC :: testsetupC2V_cart
+  PUBLIC :: testsetupP2V_cyl
+  PUBLIC :: testsetupP2C_cyl
+  PUBLIC :: testsetupV2V_cyl
+  PUBLIC :: testsetupV2C_cyl
+  PUBLIC :: testsetupC2P_cyl
+  PUBLIC :: testsetupC2V_cyl
 
   INTEGER(SIK),PARAMETER :: MapType_CONTINUOUS=1
   INTEGER(SIK),PARAMETER :: MapType_POINT=2
@@ -416,14 +433,28 @@ MODULE MeshTransfer
       REAL(SRK),INTENT(IN) :: mesh_in(:)
       REAL(SRK),INTENT(IN) :: mesh_out(:)
 
+      INTEGER(SIK) :: i,j
+      REAL(SRK) :: dx
       REQUIRE(SIZE(mesh_in)>0)
       REQUIRE(SIZE(mesh_out)>0)
 
       IF(ALLOCATED(TM)) DEALLOCATE(TM)
       ALLOCATE(TM(SIZE(mesh_out),SIZE(mesh_in)))
+      TM(:,:)=ZERO
 
-      ! TODO: linearly interpolate between in points to get out points (might be somewhere else)
-      !  look at ArrayUtils, findIndex
+      DO i=1,SIZE(mesh_out)
+        j=findIndex(mesh_in,mesh_out(i),.FALSE.,incl=1)
+        IF(j>0) THEN
+          dx=mesh_in(j+1)-mesh_in(j)
+          TM(i,j)=(mesh_in(j+1)-mesh_out(i))/dx
+          TM(i,j+1)=(mesh_out(i)-mesh_in(j))/dx
+        ELSEIF(j==-1) THEN
+          TM(i,1)=ONE
+        ELSEIF(j==-2) THEN
+          TM(i,SIZE(mesh_in))=ONE
+        ENDIF
+      ENDDO
+
       ENSURE(ALLOCATED(TM))
     ENDSUBROUTINE setupP2P
 !
@@ -433,12 +464,35 @@ MODULE MeshTransfer
       REAL(SRK),INTENT(IN) :: mesh_in(:)
       REAL(SRK),INTENT(IN) :: mesh_out(:)
 
+      INTEGER(SIK) :: i,j
       REQUIRE(SIZE(mesh_in)>0)
       REQUIRE(SIZE(mesh_out)>0)
 
       IF(ALLOCATED(TM)) DEALLOCATE(TM)
       ALLOCATE(TM(SIZE(mesh_out),SIZE(mesh_in)-1))
+      TM(:,:)=ZERO
 
+      DO i=1,SIZE(mesh_out)
+        j=findIndex(mesh_in,mesh_out(i),.FALSE.)
+        IF(j>0) THEN
+          TM(i,j)=ONE
+        ELSEIF(j==-1) THEN
+          TM(i,1)=ONE
+        ELSEIF(j==-2) THEN
+          TM(i,SIZE(mesh_in)-1)=ONE
+        ELSEIF(j==-3) THEN
+          j=findIndex(mesh_in,mesh_out(i),.FALSE.,incl=1)
+          IF(j==-1) THEN
+            TM(i,1)=ONE
+          ELSEIF(j==SIZE(mesh_in)-1) THEN
+            TM(i,j)=ONE
+          ELSE
+            TM(i,j)=HALF
+            TM(i,j+1)=HALF
+          ENDIF
+        ENDIF
+        WRITE(*,*) TM(i,:)
+      ENDDO
       ! TODO: search to find which V that P falls into
       !  look at ArrayUtils, findIndex
       ENSURE(ALLOCATED(TM))
@@ -457,7 +511,6 @@ MODULE MeshTransfer
 
       IF(ALLOCATED(TM)) DEALLOCATE(TM)
       ALLOCATE(TM(nmesh_out,nmesh_in))
-
       TM(:,:)=ZERO
 
       DO i=1,MIN(nmesh_in,nmesh_out)
@@ -481,6 +534,7 @@ MODULE MeshTransfer
 
       IF(ALLOCATED(TM)) DEALLOCATE(TM)
       ALLOCATE(TM(SIZE(mesh_out)-1,SIZE(mesh_in)))
+      TM(:,:)=ZERO
 
       ! TODO: Linear interpolate between P then integrate for V
       !  look at ArrayUtils, findIndex
@@ -546,6 +600,7 @@ MODULE MeshTransfer
 
       IF(ALLOCATED(TM)) DEALLOCATE(TM)
       ALLOCATE(TM(SIZE(mesh_out)-1,SIZE(mesh_in)-1))
+      TM(:,:)=ZERO
 
       ! TODO: Find union mesh, then construct the fractions (sum of each row should be 1)
       !  look at ArrayUtils, getUnion
@@ -622,6 +677,7 @@ MODULE MeshTransfer
       ALLOCATE(x(nin))
       IF(ALLOCATED(TM)) DEALLOCATE(TM)
       ALLOCATE(TM(nout,nin))
+      TM(:,:)=ZERO
 
       DO i=1,nout
         DO j=1,nin
@@ -657,6 +713,7 @@ MODULE MeshTransfer
       ALLOCATE(x(nin))
       IF(ALLOCATED(TM)) DEALLOCATE(TM)
       ALLOCATE(TM(nout,nin))
+      TM(:,:)=ZERO
 
       DO i=1,nout
         DO j=1,nin
@@ -683,6 +740,7 @@ MODULE MeshTransfer
 
       IF(ALLOCATED(TM)) DEALLOCATE(TM)
       ALLOCATE(TM(SIZE(mesh_out)-1,SIZE(mesh_in)))
+      TM(:,:)=ZERO
 
       ! TODO: Linear interpolate between P then integrate for
       !  look at ArrayUtils, findIndex
@@ -744,6 +802,7 @@ MODULE MeshTransfer
 
       IF(ALLOCATED(TM)) DEALLOCATE(TM)
       ALLOCATE(TM(SIZE(mesh_out)-1,SIZE(mesh_in)-1))
+      TM(:,:)=ZERO
 
       ! TODO: Find union mesh, then construct the fractions (sum of each row should be 1)
       !  look at ArrayUtils, getUnion
@@ -812,6 +871,7 @@ MODULE MeshTransfer
       ALLOCATE(x(nin))
       IF(ALLOCATED(TM)) DEALLOCATE(TM)
       ALLOCATE(TM(nout,nin))
+      TM(:,:)=ZERO
 
       DO i=1,nout
         DO j=1,nin
@@ -843,6 +903,7 @@ MODULE MeshTransfer
       ALLOCATE(x(nin))
       IF(ALLOCATED(TM)) DEALLOCATE(TM)
       ALLOCATE(TM(nout,nin))
+      TM(:,:)=ZERO
 
       DO i=1,nout
         DO j=1,nin
@@ -1012,5 +1073,136 @@ MODULE MeshTransfer
 
       y=LPIntegral(coef,TWO*(a/w)*(a/w)-ONE,TWO*(b/w)*(b/w)-ONE)
     ENDFUNCTION ZPIntegral
+!
+!-------------------------------------------------------------------------------
+!  Test Interfaces
+!-------------------------------------------------------------------------------
+    SUBROUTINE testsetupP2P(TM,mesh_in,mesh_out)
+      REAL(SRK),ALLOCATABLE,INTENT(INOUT) :: TM(:,:)
+      REAL(SRK),INTENT(IN) :: mesh_in(:)
+      REAL(SRK),INTENT(IN) :: mesh_out(:)
+
+      CALL setupP2P(TM,mesh_in,mesh_out)
+    ENDSUBROUTINE testsetupP2P
+!
+    SUBROUTINE testsetupV2P(TM,mesh_in,mesh_out)
+      REAL(SRK),ALLOCATABLE,INTENT(INOUT) :: TM(:,:)
+      REAL(SRK),INTENT(IN) :: mesh_in(:)
+      REAL(SRK),INTENT(IN) :: mesh_out(:)
+
+      CALL setupV2P(TM,mesh_in,mesh_out)
+    ENDSUBROUTINE testsetupV2P
+!
+    SUBROUTINE testsetupC2C(TM,nmesh_in,nmesh_out)
+      REAL(SRK),ALLOCATABLE,INTENT(INOUT) :: TM(:,:)
+      INTEGER(SIK),INTENT(IN) :: nmesh_in
+      INTEGER(SIK),INTENT(IN) :: nmesh_out
+
+      CALL setupC2C(TM,nmesh_in,nmesh_out)
+    ENDSUBROUTINE testsetupC2C
+!
+    SUBROUTINE testsetupP2V_cart(TM,mesh_in,mesh_out)
+      REAL(SRK),ALLOCATABLE,INTENT(INOUT) :: TM(:,:)
+      REAL(SRK),INTENT(IN) :: mesh_in(:)
+      REAL(SRK),INTENT(IN) :: mesh_out(:)
+
+      CALL setupP2V_cart(TM,mesh_in,mesh_out)
+    ENDSUBROUTINE testsetupP2V_cart
+!
+    SUBROUTINE testsetupP2C_cart(TLS,mesh_in,minX,maxX)
+      TYPE(LinearSolverType_Direct),INTENT(INOUT) :: TLS
+      REAL(SRK),INTENT(IN) :: mesh_in(:)
+      REAL(SRK),INTENT(IN) :: minX
+      REAL(SRK),INTENT(IN) :: maxX
+
+      CALL setupP2C_cart(TLS,mesh_in,minX,maxX)
+    ENDSUBROUTINE testsetupP2C_cart
+!
+    SUBROUTINE testsetupV2V_cart(TM,mesh_in,mesh_out)
+      REAL(SRK),ALLOCATABLE,INTENT(INOUT) :: TM(:,:)
+      REAL(SRK),INTENT(IN) :: mesh_in(:)
+      REAL(SRK),INTENT(IN) :: mesh_out(:)
+
+      CALL setupV2V_cart(TM,mesh_in,mesh_out)
+    ENDSUBROUTINE testsetupV2V_cart
+!
+    SUBROUTINE testsetupV2C_cart(TLS,mesh_in,minX,maxX)
+      TYPE(LinearSolverType_Direct),INTENT(INOUT) :: TLS
+      REAL(SRK),INTENT(IN) :: mesh_in(:)
+      REAL(SRK),INTENT(IN) :: minX
+      REAL(SRK),INTENT(IN) :: maxX
+
+      CALL setupV2C_cart(TLS,mesh_in,minX,maxX)
+    ENDSUBROUTINE testsetupV2C_cart
+!
+    SUBROUTINE testsetupC2P_cart(TM,nmesh_in,mesh_out,minX,maxX)
+      REAL(SRK),ALLOCATABLE,INTENT(INOUT) :: TM(:,:)
+      INTEGER(SIK),INTENT(IN) :: nmesh_in
+      REAL(SRK),INTENT(IN) :: mesh_out(:)
+      REAL(SRK),INTENT(IN) :: minX
+      REAL(SRK),INTENT(IN) :: maxX
+
+      CALL setupC2P_cart(TM,nmesh_in,mesh_out,minX,maxX)
+    ENDSUBROUTINE testsetupC2P_cart
+!
+    SUBROUTINE testsetupC2V_cart(TM,nmesh_in,mesh_out,minX,maxX)
+      REAL(SRK),ALLOCATABLE,INTENT(INOUT) :: TM(:,:)
+      INTEGER(SIK),INTENT(IN) :: nmesh_in
+      REAL(SRK),INTENT(IN) :: mesh_out(:)
+      REAL(SRK),INTENT(IN) :: minX
+      REAL(SRK),INTENT(IN) :: maxX
+
+      CALL setupC2V_cart(TM,nmesh_in,mesh_out,minX,maxX)
+    ENDSUBROUTINE testsetupC2V_cart
+!
+    SUBROUTINE testsetupP2V_cyl(TM,mesh_in,mesh_out)
+      REAL(SRK),ALLOCATABLE,INTENT(INOUT) :: TM(:,:)
+      REAL(SRK),INTENT(IN) :: mesh_in(:)
+      REAL(SRK),INTENT(IN) :: mesh_out(:)
+
+      CALL setupP2V_cyl(TM,mesh_in,mesh_out)
+    ENDSUBROUTINE testsetupP2V_cyl
+!
+    SUBROUTINE testsetupP2C_cyl(TLS,mesh_in,maxR)
+      TYPE(LinearSolverType_Direct),INTENT(INOUT) :: TLS
+      REAL(SRK),INTENT(IN) :: mesh_in(:)
+      REAL(SRK),INTENT(IN) :: maxR
+
+      CALL setupP2C_cyl(TLS,mesh_in,maxR)
+    ENDSUBROUTINE testsetupP2C_cyl
+!
+    SUBROUTINE testsetupV2V_cyl(TM,mesh_in,mesh_out)
+      REAL(SRK),ALLOCATABLE,INTENT(INOUT) :: TM(:,:)
+      REAL(SRK),INTENT(IN) :: mesh_in(:)
+      REAL(SRK),INTENT(IN) :: mesh_out(:)
+
+      CALL setupV2V_cyl(TM,mesh_in,mesh_out)
+    ENDSUBROUTINE testsetupV2V_cyl
+!
+    SUBROUTINE testsetupV2C_cyl(TLS,mesh_in,maxR)
+      TYPE(LinearSolverType_Direct),INTENT(INOUT) :: TLS
+      REAL(SRK),INTENT(IN) :: mesh_in(:)
+      REAL(SRK),INTENT(IN) :: maxR
+
+      CALL setupV2C_cyl(TLS,mesh_in,maxR)
+    ENDSUBROUTINE testsetupV2C_cyl
+!
+    SUBROUTINE testsetupC2P_cyl(TM,nmesh_in,mesh_out,maxR)
+      REAL(SRK),ALLOCATABLE,INTENT(INOUT) :: TM(:,:)
+      INTEGER(SIK),INTENT(IN) :: nmesh_in
+      REAL(SRK),INTENT(IN) :: mesh_out(:)
+      REAL(SRK),INTENT(IN) :: maxR
+
+      CALL setupC2P_cyl(TM,nmesh_in,mesh_out,maxR)
+    ENDSUBROUTINE testsetupC2P_cyl
+!
+    SUBROUTINE testsetupC2V_cyl(TM,nmesh_in,mesh_out,maxR)
+      REAL(SRK),ALLOCATABLE,INTENT(INOUT) :: TM(:,:)
+      INTEGER(SIK),INTENT(IN) :: nmesh_in
+      REAL(SRK),INTENT(IN) :: mesh_out(:)
+      REAL(SRK),INTENT(IN) :: maxR
+
+      CALL setupC2V_cyl(TM,nmesh_in,mesh_out,maxR)
+    ENDSUBROUTINE testsetupC2V_cyl
 !
 ENDMODULE MeshTransfer
