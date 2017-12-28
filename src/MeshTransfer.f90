@@ -593,6 +593,9 @@ MODULE MeshTransfer
       REAL(SRK),INTENT(IN) :: mesh_in(:)
       REAL(SRK),INTENT(IN) :: mesh_out(:)
 
+      INTEGER(SIK) :: iin,iout,iun
+      REAL(SRK) :: dx,vsum
+      REAL(SRK),ALLOCATABLE :: union(:)
       ! Volume requires at least 2 mesh points
       REQUIRE(SIZE(mesh_in)>1)
       REQUIRE(SIZE(mesh_out)>1)
@@ -601,8 +604,38 @@ MODULE MeshTransfer
       ALLOCATE(TM(SIZE(mesh_out)-1,SIZE(mesh_in)-1))
       TM(:,:)=ZERO
 
-      ! TODO: Find union mesh, then construct the fractions (sum of each row should be 1)
-      !  look at ArrayUtils, getUnion
+      CALL getUnion(mesh_in,mesh_out,union)
+
+      iout=0
+      iin=0
+      IF(mesh_in(1) .APPROXEQ. union(1)) iin=1
+      IF(mesh_out(1) .APPROXEQ. union(1)) iout=1
+
+      vsum=ZERO
+      DO iun=2,SIZE(union)
+        dx=union(iun)-union(iun-1)
+        IF(iout>0) THEN
+          IF(iin == 0) THEN
+            TM(iout,1)=TM(iout,1)+dx
+          ELSEIF(iin == SIZE(mesh_in)) THEN
+            TM(iout,SIZE(mesh_in)-1)=TM(iout,SIZE(mesh_in)-1)+dx
+          ELSE
+            TM(iout,iin)=TM(iout,iin)+dx
+          ENDIF
+          vsum=vsum+dx
+        ENDIF
+        IF(iin < SIZE(mesh_in)) THEN
+          IF(union(iun) .APPROXEQ. mesh_in(iin+1)) iin=iin+1
+        ENDIF
+        IF(union(iun) .APPROXEQ. mesh_out(iout+1)) THEN
+          IF(iout>0 .AND. vsum>ZERO) TM(iout,:)=TM(iout,:)/vsum
+          IF(iout>0) WRITE(*,*) TM(iout,:)
+          vsum=ZERO
+          iout=iout+1
+          IF(iout>=SIZE(mesh_out)) EXIT
+        ENDIF
+      ENDDO
+
       ENSURE(ALLOCATED(TM))
     ENDSUBROUTINE setupV2V_cart
 !
@@ -795,6 +828,9 @@ MODULE MeshTransfer
       REAL(SRK),INTENT(IN) :: mesh_in(:)
       REAL(SRK),INTENT(IN) :: mesh_out(:)
 
+      INTEGER(SIK) :: iin,iout,iun
+      REAL(SRK) :: dx,vsum
+      REAL(SRK),ALLOCATABLE :: union(:)
       ! Volume requires at least 2 mesh points
       REQUIRE(SIZE(mesh_in)>1)
       REQUIRE(SIZE(mesh_out)>1)
@@ -803,8 +839,38 @@ MODULE MeshTransfer
       ALLOCATE(TM(SIZE(mesh_out)-1,SIZE(mesh_in)-1))
       TM(:,:)=ZERO
 
-      ! TODO: Find union mesh, then construct the fractions (sum of each row should be 1)
-      !  look at ArrayUtils, getUnion
+      CALL getUnion(mesh_in,mesh_out,union)
+
+      iout=0
+      iin=0
+      IF(mesh_in(1) .APPROXEQ. union(1)) iin=1
+      IF(mesh_out(1) .APPROXEQ. union(1)) iout=1
+
+      vsum=ZERO
+      DO iun=2,SIZE(union)
+        dx=union(iun)*union(iun)-union(iun-1)*union(iun-1)
+        IF(iout>0) THEN
+          IF(iin == 0) THEN
+            TM(iout,1)=TM(iout,1)+dx
+          ELSEIF(iin == SIZE(mesh_in)) THEN
+            TM(iout,SIZE(mesh_in)-1)=TM(iout,SIZE(mesh_in)-1)+dx
+          ELSE
+            TM(iout,iin)=TM(iout,iin)+dx
+          ENDIF
+          vsum=vsum+dx
+        ENDIF
+        IF(iin < SIZE(mesh_in)) THEN
+          IF(union(iun) .APPROXEQ. mesh_in(iin+1)) iin=iin+1
+        ENDIF
+        IF(union(iun) .APPROXEQ. mesh_out(iout+1)) THEN
+          IF(iout>0 .AND. vsum>ZERO) TM(iout,:)=TM(iout,:)/vsum
+          IF(iout>0) WRITE(*,*) TM(iout,:)
+          vsum=ZERO
+          iout=iout+1
+          IF(iout>=SIZE(mesh_out)) EXIT
+        ENDIF
+      ENDDO
+
       ENSURE(ALLOCATED(TM))
     ENDSUBROUTINE setupV2V_cyl
 !

@@ -284,7 +284,6 @@ PROGRAM testMeshTransfer
       CALL testsetupC2C(TM,3,4)
       ASSERT(ALLOCATED(TM),'TM allocated')
       DO i=1,4
-        WRITE(*,*) TM(i,:)
         DO j=1,3
           ASSERT_APPROXEQ(TM(i,j),sol((i-1)*3+j),'TM values extra moments')
           FINFO() i,j
@@ -297,13 +296,12 @@ PROGRAM testMeshTransfer
       CALL testsetupC2C(TM,4,3)
       ASSERT(ALLOCATED(TM),'TM allocated')
       DO i=1,3
-        WRITE(*,*) TM(i,:)
         DO j=1,4
           ASSERT_APPROXEQ(TM(i,j),sol((i-1)*4+j),'TM values less moments')
           FINFO() i,j
         ENDDO
       ENDDO
-      DEALLOCATE(TM)
+      DEALLOCATE(sol,TM)
 
       COMPONENT_TEST('setupP2V_cart')
       ALLOCATE(mesh_in(4),mesh_out(4))
@@ -325,14 +323,41 @@ PROGRAM testMeshTransfer
       CALL TLS%clear()
 
       COMPONENT_TEST('setupV2V_cart')
-      ALLOCATE(mesh_in(4),mesh_out(4))
-      mesh_in=(/0.0_SRK, 1.5_SRK, 2.0_SRK, 5.0_SRK/)
-      mesh_out=(/0.3_SRK, 1.55_SRK, 2.0_SRK, 3.0_SRK/)
+      ALLOCATE(mesh_in(5),mesh_out(6),sol(20))
+      mesh_in=(/0.0_SRK, 1.5_SRK, 2.0_SRK, 3.5_SRK,5.0_SRK/)
+      mesh_out=(/0.25_SRK, 0.6_SRK, 1.6_SRK, 1.75_SRK, 2.0_SRK, 4.0_SRK/)
+      sol=(/ ONE,ZERO,ZERO,ZERO,   &
+        0.9_SRK,0.1_SRK,ZERO,ZERO, &
+            ZERO, ONE,ZERO,ZERO,   &
+            ZERO, ONE,ZERO,ZERO,   &
+            ZERO,ZERO,0.75_SRK,0.25_SRK/)
       CALL testsetupV2V_cart(TM,mesh_in,mesh_out)
       ASSERT(ALLOCATED(TM),'TM allocated')
-      ASSERT(.FALSE.,'Not Implemented')
-      ! More asserts when the routine is written
-      DEALLOCATE(mesh_in,mesh_out,TM)
+      DO i=1,5
+        DO j=1,4
+          ASSERT_APPROXEQ(TM(i,j),sol((i-1)*4+j),'TM values less moments')
+          FINFO() i,j
+        ENDDO
+      ENDDO
+      DEALLOCATE(mesh_in,mesh_out,sol,TM)
+
+      ALLOCATE(mesh_in(5),mesh_out(6),sol(20))
+      mesh_in=(/0.0_SRK, 1.5_SRK, 2.0_SRK, 3.5_SRK,5.0_SRK/)
+      mesh_out=(/-1.0_SRK, 0.6_SRK, 1.6_SRK, 1.75_SRK, 2.0_SRK, 6.0_SRK/)
+      sol=(/ ONE,ZERO,ZERO,ZERO,   &
+        0.9_SRK,0.1_SRK,ZERO,ZERO, &
+            ZERO, ONE,ZERO,ZERO,   &
+            ZERO, ONE,ZERO,ZERO,   &
+            ZERO,ZERO,0.375_SRK,0.625_SRK/)
+      CALL testsetupV2V_cart(TM,mesh_in,mesh_out)
+      ASSERT(ALLOCATED(TM),'TM allocated')
+      DO i=1,5
+        DO j=1,4
+          ASSERT_APPROXEQ(TM(i,j),sol((i-1)*4+j),'TM values less moments')
+          FINFO() i,j
+        ENDDO
+      ENDDO
+      DEALLOCATE(mesh_in,mesh_out,sol,TM)
 
       COMPONENT_TEST('setupV2C_cart')
       ALLOCATE(mesh_in(4))
@@ -379,14 +404,44 @@ PROGRAM testMeshTransfer
       CALL TLS%clear()
 
       COMPONENT_TEST('setupV2V_cyl')
-      ALLOCATE(mesh_in(4),mesh_out(4))
-      mesh_in=(/0.0_SRK, 1.5_SRK, 2.0_SRK, 5.0_SRK/)
-      mesh_out=(/0.3_SRK, 1.55_SRK, 2.0_SRK, 3.0_SRK/)
+      ALLOCATE(mesh_in(5),mesh_out(6),sol(20))
+      mesh_in=(/0.0_SRK, 1.5_SRK, 2.0_SRK, 3.5_SRK,5.0_SRK/)
+      mesh_out=(/0.25_SRK, 0.6_SRK, 1.6_SRK, 1.75_SRK, 2.0_SRK, 4.0_SRK/)
+      sol=(/ ONE,ZERO,ZERO,ZERO,   &
+        (1.5_SRK**2-0.6_SRK**2)/(1.6_SRK**2-0.6_SRK**2), &
+              (1.6_SRK**2-1.5_SRK**2)/(1.6_SRK**2-0.6_SRK**2),ZERO,ZERO, &
+            ZERO, ONE,ZERO,ZERO,   &
+            ZERO, ONE,ZERO,ZERO,   &
+            ZERO,ZERO,0.6875_SRK,0.3125_SRK/)
       CALL testsetupV2V_cyl(TM,mesh_in,mesh_out)
       ASSERT(ALLOCATED(TM),'TM allocated')
-      ASSERT(.FALSE.,'Not Implemented')
-      ! More asserts when the routine is written
-      DEALLOCATE(mesh_in,mesh_out,TM)
+      DO i=1,5
+        DO j=1,4
+          ASSERT_APPROXEQ(TM(i,j),sol((i-1)*4+j),'TM values less moments')
+          FINFO() i,j
+        ENDDO
+      ENDDO
+      DEALLOCATE(mesh_in,mesh_out,sol,TM)
+
+      ALLOCATE(mesh_in(5),mesh_out(6),sol(20))
+      mesh_in=(/1.0_SRK, 1.5_SRK, 2.0_SRK, 3.5_SRK,5.0_SRK/)
+      mesh_out=(/0.0_SRK, 0.6_SRK, 1.6_SRK, 1.75_SRK, 2.0_SRK, 6.0_SRK/)
+      sol=(/ ONE,ZERO,ZERO,ZERO,   &
+        (1.5_SRK**2-0.6_SRK**2)/(1.6_SRK**2-0.6_SRK**2), &
+              (1.6_SRK**2-1.5_SRK**2)/(1.6_SRK**2-0.6_SRK**2),ZERO,ZERO, &
+            ZERO, ONE,ZERO,ZERO,   &
+            ZERO, ONE,ZERO,ZERO,   &
+            ZERO,ZERO,(3.5_SRK**2-2.0_SRK**2)/(6.0_SRK**2-2.0_SRK**2), &
+                      (6.0_SRK**2-3.5_SRK**2)/(6.0_SRK**2-2.0_SRK**2)/)
+      CALL testsetupV2V_cyl(TM,mesh_in,mesh_out)
+      ASSERT(ALLOCATED(TM),'TM allocated')
+      DO i=1,5
+        DO j=1,4
+          ASSERT_APPROXEQ(TM(i,j),sol((i-1)*4+j),'TM values less moments')
+          FINFO() i,j
+        ENDDO
+      ENDDO
+      DEALLOCATE(mesh_in,mesh_out,sol,TM)
 
       COMPONENT_TEST('setupV2C_cyl')
       ALLOCATE(mesh_in(4))
