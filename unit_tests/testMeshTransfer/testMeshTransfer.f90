@@ -304,14 +304,25 @@ PROGRAM testMeshTransfer
       DEALLOCATE(sol,TM)
 
       COMPONENT_TEST('setupP2V_cart')
-      ALLOCATE(mesh_in(4),mesh_out(4))
-      mesh_in=(/0.0_SRK, 1.5_SRK, 2.0_SRK, 5.0_SRK/)
-      mesh_out=(/0.3_SRK, 1.55_SRK, 2.0_SRK, 3.0_SRK/)
+      ALLOCATE(mesh_in(4),mesh_out(7),sol(24))
+      mesh_in=(/0.0_SRK, 1.0_SRK, 2.5_SRK, 4.5_SRK/)
+      mesh_out=(/-0.5_SRK, 0.5_SRK, 0.6_SRK, 1.6_SRK, 2.5_SRK, 3.0_SRK, 6.0_SRK/)
+      sol=(/ 0.875_SRK, 0.125_SRK,      ZERO,      ZERO, &
+              0.45_SRK,  0.55_SRK,      ZERO,      ZERO, &
+              0.08_SRK,   0.8_SRK,  0.12_SRK,      ZERO, &
+                  ZERO,   0.3_SRK,   0.7_SRK,      ZERO, &
+                  ZERO,      ZERO, 0.875_SRK, 0.125_SRK, &
+                  ZERO,      ZERO,0.1875_SRK,0.8125_SRK /)
       CALL testsetupP2V_cart(TM,mesh_in,mesh_out)
       ASSERT(ALLOCATED(TM),'TM allocated')
-      ASSERT(.FALSE.,'Not Implemented')
+      DO i=1,6
+        DO j=1,4
+          ASSERT_APPROXEQ(TM(i,j),sol((i-1)*4+j),'TM values extra moments')
+          FINFO() i,j
+        ENDDO
+      ENDDO
       ! More asserts when the routine is written
-      DEALLOCATE(mesh_in,mesh_out,TM)
+      DEALLOCATE(mesh_in,mesh_out,sol,TM)
 
       COMPONENT_TEST('setupP2C_cart')
       ALLOCATE(mesh_in(4))
@@ -385,14 +396,21 @@ PROGRAM testMeshTransfer
       DEALLOCATE(mesh_out,TM)
 
       COMPONENT_TEST('setupP2V_cyl')
-      ALLOCATE(mesh_in(4),mesh_out(4))
-      mesh_in=(/0.0_SRK, 1.5_SRK, 2.0_SRK, 5.0_SRK/)
-      mesh_out=(/0.3_SRK, 1.55_SRK, 2.0_SRK, 3.0_SRK/)
+      ALLOCATE(mesh_in(2),mesh_out(4),sol(6))
+      mesh_in=(/0.0_SRK, 2.0_SRK/)
+      mesh_out=(/0.5_SRK, 1.0_SRK, 1.5_SRK, 2.0_SRK/)
+      sol=(/ 11.0_SRK/18.0_SRK, 7.0_SRK/18.0_SRK, &
+             11.0_SRK/30.0_SRK,19.0_SRK/30.0_SRK, &
+              5.0_SRK/42.0_SRK,37.0_SRK/42.0_SRK /)
       CALL testsetupP2V_cyl(TM,mesh_in,mesh_out)
       ASSERT(ALLOCATED(TM),'TM allocated')
-      ASSERT(.FALSE.,'Not Implemented')
-      ! More asserts when the routine is written
-      DEALLOCATE(mesh_in,mesh_out,TM)
+      DO i=1,3
+        DO j=1,2
+          ASSERT_APPROXEQ(TM(i,j),sol((i-1)*2+j),'TM values less moments')
+          FINFO() i,j
+        ENDDO
+      ENDDO
+      DEALLOCATE(mesh_in,mesh_out,sol,TM)
 
       COMPONENT_TEST('setupP2C_cyl')
       ALLOCATE(mesh_in(4))

@@ -527,16 +527,54 @@ MODULE MeshTransfer
       REAL(SRK),INTENT(IN) :: mesh_in(:)
       REAL(SRK),INTENT(IN) :: mesh_out(:)
 
-      REQUIRE(SIZE(mesh_in)>0)
+      INTEGER(SIK) :: iin,iout,iun
+      REAL(SRK) :: dx,vsum
+      REAL(SRK),ALLOCATABLE :: union(:)
       ! Volume requires at least 2 mesh points
+      REQUIRE(SIZE(mesh_in)>1)
       REQUIRE(SIZE(mesh_out)>1)
 
       IF(ALLOCATED(TM)) DEALLOCATE(TM)
       ALLOCATE(TM(SIZE(mesh_out)-1,SIZE(mesh_in)))
       TM(:,:)=ZERO
 
-      ! TODO: Linear interpolate between P then integrate for V
-      !  look at ArrayUtils, findIndex
+      CALL getUnion(mesh_in,mesh_out,union)
+
+      iout=0
+      iin=0
+      IF(mesh_in(1) .APPROXEQ. union(1)) iin=1
+      IF(mesh_out(1) .APPROXEQ. union(1)) iout=1
+
+      vsum=ZERO
+      DO iun=2,SIZE(union)
+        dx=(union(iun)-union(iun-1))
+        IF(iout>0) THEN
+          IF(iin == 0) THEN
+            TM(iout,1)=TM(iout,1)+dx
+          ELSEIF(iin == SIZE(mesh_in)) THEN
+            TM(iout,SIZE(mesh_in))=TM(iout,SIZE(mesh_in))+dx
+          ELSE
+            TM(iout,iin)=TM(iout,iin)+ &
+                HALF*dx*(TWO*mesh_in(iin+1)-union(iun)-union(iun-1))/ &
+                                (mesh_in(iin+1)-mesh_in(iin))
+            TM(iout,iin+1)=TM(iout,iin+1)+ &
+                HALF*dx*(union(iun)+union(iun-1)-TWO*mesh_in(iin))/   &
+                                (mesh_in(iin+1)-mesh_in(iin))
+          ENDIF
+          vsum=vsum+dx
+        ENDIF
+        IF(iin < SIZE(mesh_in)) THEN
+          IF(union(iun) .APPROXEQ. mesh_in(iin+1)) iin=iin+1
+        ENDIF
+        IF(union(iun) .APPROXEQ. mesh_out(iout+1)) THEN
+          IF(iout>0 .AND. vsum>ZERO) TM(iout,:)=TM(iout,:)/vsum
+          IF(iout>0) WRITE(*,*) TM(iout,:)
+          vsum=ZERO
+          iout=iout+1
+          IF(iout>=SIZE(mesh_out)) EXIT
+        ENDIF
+      ENDDO
+
       ENSURE(ALLOCATED(TM))
     ENDSUBROUTINE setupP2V_cart
 !
@@ -766,16 +804,57 @@ MODULE MeshTransfer
       REAL(SRK),INTENT(IN) :: mesh_in(:)
       REAL(SRK),INTENT(IN) :: mesh_out(:)
 
-      REQUIRE(SIZE(mesh_in)>0)
+      INTEGER(SIK) :: iin,iout,iun
+      REAL(SRK) :: dx,vsum,a,b,x1,x2
+      REAL(SRK),ALLOCATABLE :: union(:)
       ! Volume requires at least 2 mesh points
+      REQUIRE(SIZE(mesh_in)>1)
       REQUIRE(SIZE(mesh_out)>1)
+      REQUIRE(ALL(mesh_in >= ZERO))
+      REQUIRE(ALL(mesh_out >= ZERO))
 
       IF(ALLOCATED(TM)) DEALLOCATE(TM)
       ALLOCATE(TM(SIZE(mesh_out)-1,SIZE(mesh_in)))
       TM(:,:)=ZERO
 
-      ! TODO: Linear interpolate between P then integrate for
-      !  look at ArrayUtils, findIndex
+      CALL getUnion(mesh_in,mesh_out,union)
+
+      iout=0
+      iin=0
+      IF(mesh_in(1) .APPROXEQ. union(1)) iin=1
+      IF(mesh_out(1) .APPROXEQ. union(1)) iout=1
+
+      vsum=ZERO
+      DO iun=2,SIZE(union)
+        dx=union(iun)*union(iun)-union(iun-1)*union(iun-1)
+        IF(iout>0) THEN
+          IF(iin == 0) THEN
+            TM(iout,1)=TM(iout,1)+dx
+          ELSEIF(iin == SIZE(mesh_in)) THEN
+            TM(iout,SIZE(mesh_in))=TM(iout,SIZE(mesh_in))+dx
+          ELSE
+            a=union(iun-1)
+            b=union(iun)
+            x1=mesh_in(iin)
+            x2=mesh_in(iin+1)
+            TM(iout,iin)=TM(iout,iin)+ &
+                (TWO*a**3-3.0_SRK*a**2*x2-b**2*(TWO*b-3.0_SRK*x2))/(3.0_SRK*(x2-x1))
+            TM(iout,iin+1)=TM(iout,iin+1)+ &
+                (b**2*(TWO*b-3.0_SRK*x1)+3.0_SRK*a**2*x1-TWO*a**3)/(3.0_SRK*(x2-x1))
+          ENDIF
+          vsum=vsum+dx
+        ENDIF
+        IF(iin < SIZE(mesh_in)) THEN
+          IF(union(iun) .APPROXEQ. mesh_in(iin+1)) iin=iin+1
+        ENDIF
+        IF(union(iun) .APPROXEQ. mesh_out(iout+1)) THEN
+          IF(iout>0 .AND. vsum>ZERO) TM(iout,:)=TM(iout,:)/vsum
+          IF(iout>0) WRITE(*,*) TM(iout,:)
+          vsum=ZERO
+          iout=iout+1
+          IF(iout>=SIZE(mesh_out)) EXIT
+        ENDIF
+      ENDDO
       ENSURE(ALLOCATED(TM))
     ENDSUBROUTINE setupP2V_cyl
 !
@@ -791,6 +870,7 @@ MODULE MeshTransfer
 
       REQUIRE(.NOT. TLS%isInit)
       REQUIRE(SIZE(mesh_in)>0)
+      REQUIRE(ALL(mesh_in >= ZERO))
 
       nin=SIZE(mesh_in)
 
@@ -834,6 +914,8 @@ MODULE MeshTransfer
       ! Volume requires at least 2 mesh points
       REQUIRE(SIZE(mesh_in)>1)
       REQUIRE(SIZE(mesh_out)>1)
+      REQUIRE(ALL(mesh_in >= ZERO))
+      REQUIRE(ALL(mesh_out >= ZERO))
 
       IF(ALLOCATED(TM)) DEALLOCATE(TM)
       ALLOCATE(TM(SIZE(mesh_out)-1,SIZE(mesh_in)-1))
@@ -887,6 +969,7 @@ MODULE MeshTransfer
       REQUIRE(.NOT. TLS%isInit)
       ! Volume mesh requires at least 2 mesh points
       REQUIRE(SIZE(mesh_in)>1)
+      REQUIRE(ALL(mesh_in >= ZERO))
 
       nin=SIZE(mesh_in)-1
 
@@ -930,6 +1013,7 @@ MODULE MeshTransfer
 
       REQUIRE(nmesh_in>0)
       REQUIRE(SIZE(mesh_out)>0)
+      REQUIRE(ALL(mesh_out >= ZERO))
 
       nin=nmesh_in
       nout=SIZE(mesh_out)
@@ -962,6 +1046,7 @@ MODULE MeshTransfer
       REQUIRE(nmesh_in>0)
       ! Volume mesh requires at least 2 points
       REQUIRE(SIZE(mesh_out)>1)
+      REQUIRE(ALL(mesh_out >= ZERO))
 
       nin=nmesh_in
       nout=SIZE(mesh_out)-1
