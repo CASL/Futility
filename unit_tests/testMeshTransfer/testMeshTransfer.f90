@@ -231,6 +231,7 @@ PROGRAM testMeshTransfer
 !-------------------------------------------------------------------------------
     SUBROUTINE Test1Dsetup()
       INTEGER(SIK) :: i,j
+      REAL(SRK) :: x
       REAL(SRK),ALLOCATABLE :: mesh_in(:),mesh_out(:),sol(:)
       REAL(SRK),ALLOCATABLE :: TM(:,:)
       TYPE(LinearSolverType_Direct) :: TLS
@@ -329,7 +330,18 @@ PROGRAM testMeshTransfer
       mesh_in=(/0.0_SRK, 1.5_SRK, 2.0_SRK, 5.0_SRK/)
       CALL testsetupP2C_cart(TLS,mesh_in,0.0_SRK,6.0_SRK)
       ASSERT(TLS%isInit,'TLS initialized')
-      ! TODO asserts
+      CALL TLS%A%get(1,1,x)
+      ASSERT_APPROXEQ(x,LPPointVal((/ ONE,ZERO/),   ZERO,6.0_SRK,3.0_SRK),'TLS values')
+      CALL TLS%A%get(1,2,x)
+      ASSERT_APPROXEQ(x,LPPointVal((/ZERO, ONE/),   ZERO,6.0_SRK,3.0_SRK),'TLS values')
+      CALL TLS%A%get(3,1,x)
+      ASSERT_APPROXEQ(x,LPPointVal((/ ONE,ZERO/),    TWO,6.0_SRK,3.0_SRK),'TLS values')
+      CALL TLS%A%get(3,2,x)
+      ASSERT_APPROXEQ(x,LPPointVal((/ZERO, ONE/),    TWO,6.0_SRK,3.0_SRK),'TLS values')
+      CALL TLS%A%get(4,1,x)
+      ASSERT_APPROXEQ(x,LPPointVal((/ ONE,ZERO/),5.0_SRK,6.0_SRK,3.0_SRK),'TLS values')
+      CALL TLS%A%get(4,2,x)
+      ASSERT_APPROXEQ(x,LPPointVal((/ZERO, ONE/),5.0_SRK,6.0_SRK,3.0_SRK),'TLS values')
       DEALLOCATE(mesh_in)
       CALL TLS%clear()
 
@@ -375,7 +387,18 @@ PROGRAM testMeshTransfer
       mesh_in=(/0.0_SRK, 1.5_SRK, 2.0_SRK, 5.0_SRK/)
       CALL testsetupV2C_cart(TLS,mesh_in,0.0_SRK,5.0_SRK)
       ASSERT(TLS%isInit,'TLS initialized')
-      ! TODO asserts
+      CALL TLS%A%get(1,1,x)
+      ASSERT_APPROXEQ(x,LPIntegral((/ ONE,ZERO/),   ZERO,1.5_SRK,5.0_SRK,2.5_SRK),'TLS values')
+      CALL TLS%A%get(1,2,x)
+      ASSERT_APPROXEQ(x,LPIntegral((/ZERO, ONE/),   ZERO,1.5_SRK,5.0_SRK,2.5_SRK),'TLS values')
+      CALL TLS%A%get(2,1,x)
+      ASSERT_APPROXEQ(x,LPIntegral((/ ONE,ZERO/),1.5_SRK,    TWO,5.0_SRK,2.5_SRK),'TLS values')
+      CALL TLS%A%get(2,2,x)
+      ASSERT_APPROXEQ(x,LPIntegral((/ZERO, ONE/),1.5_SRK,    TWO,5.0_SRK,2.5_SRK),'TLS values')
+      CALL TLS%A%get(3,1,x)
+      ASSERT_APPROXEQ(x,LPIntegral((/ ONE,ZERO/),    TWO,5.0_SRK,5.0_SRK,2.5_SRK),'TLS values')
+      CALL TLS%A%get(3,2,x)
+      ASSERT_APPROXEQ(x,LPIntegral((/ZERO, ONE/),    TWO,5.0_SRK,5.0_SRK,2.5_SRK),'TLS values')
       DEALLOCATE(mesh_in)
       CALL TLS%clear()
 
@@ -384,7 +407,12 @@ PROGRAM testMeshTransfer
       mesh_out=(/0.3_SRK, 1.55_SRK, 2.0_SRK, 3.0_SRK/)
       CALL testsetupC2P_cart(TM,3,mesh_out,0.0_SRK,5.0_SRK)
       ASSERT(ALLOCATED(TM),'TM allocated')
-      ! TODO asserts
+      ASSERT_APPROXEQ(TM(1,1),LPPointVal((/ ONE,ZERO/),0.3_SRK,5.0_SRK,2.5_SRK),'TM Values')
+      ASSERT_APPROXEQ(TM(1,2),LPPointVal((/ZERO, ONE/),0.3_SRK,5.0_SRK,2.5_SRK),'TM Values')
+      ASSERT_APPROXEQ(TM(3,1),LPPointVal((/ ONE,ZERO/),2.0_SRK,5.0_SRK,2.5_SRK),'TM Values')
+      ASSERT_APPROXEQ(TM(3,2),LPPointVal((/ZERO, ONE/),2.0_SRK,5.0_SRK,2.5_SRK),'TM Values')
+      ASSERT_APPROXEQ(TM(4,1),LPPointVal((/ ONE,ZERO/),3.0_SRK,5.0_SRK,2.5_SRK),'TM Values')
+      ASSERT_APPROXEQ(TM(4,2),LPPointVal((/ZERO, ONE/),3.0_SRK,5.0_SRK,2.5_SRK),'TM Values')
       DEALLOCATE(mesh_out,TM)
 
       COMPONENT_TEST('setupC2V_cart')
@@ -392,7 +420,12 @@ PROGRAM testMeshTransfer
       mesh_out=(/0.3_SRK, 1.55_SRK, 2.0_SRK, 3.0_SRK/)
       CALL testsetupC2V_cart(TM,3,mesh_out,0.0_SRK,5.0_SRK)
       ASSERT(ALLOCATED(TM),'TM allocated')
-      ! TODO asserts
+      ASSERT_APPROXEQ(TM(1,1),LPIntegral((/ ONE,ZERO/), 0.3_SRK,1.55_SRK,5.0_SRK,2.5_SRK),'TM Values')
+      ASSERT_APPROXEQ(TM(1,2),LPIntegral((/ZERO, ONE/), 0.3_SRK,1.55_SRK,5.0_SRK,2.5_SRK),'TM Values')
+      ASSERT_APPROXEQ(TM(2,1),LPIntegral((/ ONE,ZERO/),1.55_SRK, 2.0_SRK,5.0_SRK,2.5_SRK),'TM Values')
+      ASSERT_APPROXEQ(TM(2,2),LPIntegral((/ZERO, ONE/),1.55_SRK, 2.0_SRK,5.0_SRK,2.5_SRK),'TM Values')
+      ASSERT_APPROXEQ(TM(3,1),LPIntegral((/ ONE,ZERO/), 2.0_SRK, 3.0_SRK,5.0_SRK,2.5_SRK),'TM Values')
+      ASSERT_APPROXEQ(TM(3,2),LPIntegral((/ZERO, ONE/), 2.0_SRK, 3.0_SRK,5.0_SRK,2.5_SRK),'TM Values')
       DEALLOCATE(mesh_out,TM)
 
       COMPONENT_TEST('setupP2V_cyl')
@@ -417,7 +450,18 @@ PROGRAM testMeshTransfer
       mesh_in=(/0.0_SRK, 1.5_SRK, 2.0_SRK, 5.0_SRK/)
       CALL testsetupP2C_cyl(TLS,mesh_in,6.0_SRK)
       ASSERT(TLS%isInit,'TLS initialized')
-      ! TODO asserts
+      CALL TLS%A%get(1,1,x)
+      ASSERT_APPROXEQ(x,ZPPointVal((/ ONE,ZERO/),   ZERO,6.0_SRK),'TLS values')
+      CALL TLS%A%get(1,2,x)
+      ASSERT_APPROXEQ(x,ZPPointVal((/ZERO, ONE/),   ZERO,6.0_SRK),'TLS values')
+      CALL TLS%A%get(3,1,x)
+      ASSERT_APPROXEQ(x,ZPPointVal((/ ONE,ZERO/),    TWO,6.0_SRK),'TLS values')
+      CALL TLS%A%get(3,2,x)
+      ASSERT_APPROXEQ(x,ZPPointVal((/ZERO, ONE/),    TWO,6.0_SRK),'TLS values')
+      CALL TLS%A%get(4,1,x)
+      ASSERT_APPROXEQ(x,ZPPointVal((/ ONE,ZERO/),5.0_SRK,6.0_SRK),'TLS values')
+      CALL TLS%A%get(4,2,x)
+      ASSERT_APPROXEQ(x,ZPPointVal((/ZERO, ONE/),5.0_SRK,6.0_SRK),'TLS values')
       DEALLOCATE(mesh_in)
       CALL TLS%clear()
 
@@ -466,7 +510,18 @@ PROGRAM testMeshTransfer
       mesh_in=(/0.0_SRK, 1.5_SRK, 2.0_SRK, 5.0_SRK/)
       CALL testsetupV2C_cyl(TLS,mesh_in,6.0_SRK)
       ASSERT(TLS%isInit,'TLS initialized')
-      ! TODO asserts
+      CALL TLS%A%get(1,1,x)
+      ASSERT_APPROXEQ(x,ZPIntegral((/ ONE,ZERO/),   ZERO,1.5_SRK,6.0_SRK),'TLS values')
+      CALL TLS%A%get(1,2,x)
+      ASSERT_APPROXEQ(x,ZPIntegral((/ZERO, ONE/),   ZERO,1.5_SRK,6.0_SRK),'TLS values')
+      CALL TLS%A%get(2,1,x)
+      ASSERT_APPROXEQ(x,ZPIntegral((/ ONE,ZERO/),1.5_SRK,    TWO,6.0_SRK),'TLS values')
+      CALL TLS%A%get(2,2,x)
+      ASSERT_APPROXEQ(x,ZPIntegral((/ZERO, ONE/),1.5_SRK,    TWO,6.0_SRK),'TLS values')
+      CALL TLS%A%get(3,1,x)
+      ASSERT_APPROXEQ(x,ZPIntegral((/ ONE,ZERO/),    TWO,5.0_SRK,6.0_SRK),'TLS values')
+      CALL TLS%A%get(3,2,x)
+      ASSERT_APPROXEQ(x,ZPIntegral((/ZERO, ONE/),    TWO,5.0_SRK,6.0_SRK),'TLS values')
       DEALLOCATE(mesh_in)
       CALL TLS%clear()
 
@@ -475,7 +530,12 @@ PROGRAM testMeshTransfer
       mesh_out=(/0.3_SRK, 1.55_SRK, 2.0_SRK, 3.0_SRK/)
       CALL testsetupC2P_cyl(TM,3,mesh_out,6.0_SRK)
       ASSERT(ALLOCATED(TM),'TM allocated')
-      ! TODO asserts
+      ASSERT_APPROXEQ(TM(1,1),ZPPointVal((/ ONE,ZERO/),0.3_SRK,6.0_SRK),'TM Values')
+      ASSERT_APPROXEQ(TM(1,2),ZPPointVal((/ZERO, ONE/),0.3_SRK,6.0_SRK),'TM Values')
+      ASSERT_APPROXEQ(TM(3,1),ZPPointVal((/ ONE,ZERO/),2.0_SRK,6.0_SRK),'TM Values')
+      ASSERT_APPROXEQ(TM(3,2),ZPPointVal((/ZERO, ONE/),2.0_SRK,6.0_SRK),'TM Values')
+      ASSERT_APPROXEQ(TM(4,1),ZPPointVal((/ ONE,ZERO/),3.0_SRK,6.0_SRK),'TM Values')
+      ASSERT_APPROXEQ(TM(4,2),ZPPointVal((/ZERO, ONE/),3.0_SRK,6.0_SRK),'TM Values')
       DEALLOCATE(mesh_out,TM)
 
       COMPONENT_TEST('setupC2V_cyl')
@@ -483,7 +543,12 @@ PROGRAM testMeshTransfer
       mesh_out=(/0.3_SRK, 1.55_SRK, 2.0_SRK, 3.0_SRK/)
       CALL testsetupC2V_cyl(TM,4,mesh_out,6.0_SRK)
       ASSERT(ALLOCATED(TM),'TM allocated')
-      ! TODO asserts
+      ASSERT_APPROXEQ(TM(1,1),ZPIntegral((/ ONE,ZERO/), 0.3_SRK,1.55_SRK,6.0_SRK),'TM Values')
+      ASSERT_APPROXEQ(TM(1,2),ZPIntegral((/ZERO, ONE/), 0.3_SRK,1.55_SRK,6.0_SRK),'TM Values')
+      ASSERT_APPROXEQ(TM(2,1),ZPIntegral((/ ONE,ZERO/),1.55_SRK, 2.0_SRK,6.0_SRK),'TM Values')
+      ASSERT_APPROXEQ(TM(2,2),ZPIntegral((/ZERO, ONE/),1.55_SRK, 2.0_SRK,6.0_SRK),'TM Values')
+      ASSERT_APPROXEQ(TM(3,1),ZPIntegral((/ ONE,ZERO/), 2.0_SRK, 3.0_SRK,6.0_SRK),'TM Values')
+      ASSERT_APPROXEQ(TM(3,2),ZPIntegral((/ZERO, ONE/), 2.0_SRK, 3.0_SRK,6.0_SRK),'TM Values')
       DEALLOCATE(mesh_out,TM)
     ENDSUBROUTINE Test1Dsetup
 !
@@ -492,39 +557,140 @@ PROGRAM testMeshTransfer
       TYPE(MeshTransfer_1DCart) :: testMT
       TYPE(ParamType) :: testPL
       INTEGER(SIK) :: i
-      REAL(SRK) :: mesh(6), tmpin(6),mesh_out(21)
-      REAL(SRK),ALLOCATABLE :: tmpout(:)
+      REAL(SRK) :: mesh(6),mesh_out(6)
 
       mesh=(/0.0_SRK,1.0_SRK,3.0_SRK,4.0_SRK,6.5_SRK,10.0_SRK/)
-      DO i=0,20
+      DO i=0,5
         mesh_out(i+1)=REAL(i,SRK)/2.0_SRK
       ENDDO
 
+      COMPONENT_TEST('Cartesian P2P')
       CALL testPL%add('MeshTransfer->map_in','POINT')
       CALL testPL%add('MeshTransfer->map_out','POINT')
       CALL testPL%add('MeshTransfer->pointmesh_in',mesh)
       CALL testPL%add('MeshTransfer->pointmesh_out',mesh_out)
-      CALL testPL%add('MeshTransfer->poly_transfer',4)
-
       CALL testMT%init(testPL)
-      tmpin(1)=0.85_SRK
-      tmpin(2)=0.90_SRK
-      tmpin(3)=0.95_SRK
-      tmpin(4)=1.05_SRK
-      tmpin(5)=1.30_SRK
-      tmpin(6)=1.10_SRK
+      ASSERT(ALLOCATED(testMT%TransferMatrix),'Transfer Matrix')
+      ASSERT(.NOT. testMT%transferLS%isInit,'Transfer Linear System')
+      CALL testMT%clear()
 
-      CALL testMT%transfer(tmpin,tmpout)
+      COMPONENT_TEST('Cartesian P2P Poly Transfer')
+      CALL testPL%add('MeshTransfer->poly_transfer',4)
+      CALL testMT%init(testPL)
+      ASSERT(ALLOCATED(testMT%TransferMatrix),'Transfer Matrix')
+      ASSERT(testMT%transferLS%isInit,'Transfer Linear System')
+      CALL testMT%clear()
+      CALL testPL%clear()
 
-      !ALLOCATE(tmpout(3))
-      !tmpout(1)=1.01666666666666666666666666667_SRK
-      !tmpout(2)=0.3375000_SRK
-      !tmpout(3)=0.000_SRK
+      COMPONENT_TEST('Cartesian P2V')
+      CALL testPL%add('MeshTransfer->map_in','POINT')
+      CALL testPL%add('MeshTransfer->map_out','VOLUME')
+      CALL testPL%add('MeshTransfer->pointmesh_in',mesh)
+      CALL testPL%add('MeshTransfer->volumemesh_out',mesh_out)
+      CALL testMT%init(testPL)
+      ASSERT(ALLOCATED(testMT%TransferMatrix),'Transfer Matrix')
+      ASSERT(.NOT. testMT%transferLS%isInit,'Transfer Linear System')
+      CALL testMT%clear()
 
-      DO i=1,SIZE(tmpout)
-        WRITE(*,*) tmpout(i)
-      ENDDO
+      COMPONENT_TEST('Cartesian P2V Poly Transfer')
+      CALL testPL%add('MeshTransfer->poly_transfer',4)
+      CALL testMT%init(testPL)
+      ASSERT(ALLOCATED(testMT%TransferMatrix),'Transfer Matrix')
+      ASSERT(testMT%transferLS%isInit,'Transfer Linear System')
+      CALL testMT%clear()
+      CALL testPL%clear()
 
+      COMPONENT_TEST('Cartesian V2P')
+      CALL testPL%add('MeshTransfer->map_in','VOLUME')
+      CALL testPL%add('MeshTransfer->map_out','POINT')
+      CALL testPL%add('MeshTransfer->volumemesh_in',mesh)
+      CALL testPL%add('MeshTransfer->pointmesh_out',mesh_out)
+      CALL testMT%init(testPL)
+      ASSERT(ALLOCATED(testMT%TransferMatrix),'Transfer Matrix')
+      ASSERT(.NOT. testMT%transferLS%isInit,'Transfer Linear System')
+      CALL testMT%clear()
+
+      COMPONENT_TEST('Cartesian V2P Poly Transfer')
+      CALL testPL%add('MeshTransfer->poly_transfer',4)
+      CALL testMT%init(testPL)
+      ASSERT(ALLOCATED(testMT%TransferMatrix),'Transfer Matrix')
+      ASSERT(testMT%transferLS%isInit,'Transfer Linear System')
+      CALL testMT%clear()
+      CALL testPL%clear()
+
+      COMPONENT_TEST('Cartesian V2V')
+      CALL testPL%add('MeshTransfer->map_in','VOLUME')
+      CALL testPL%add('MeshTransfer->map_out','VOLUME')
+      CALL testPL%add('MeshTransfer->volumemesh_in',mesh)
+      CALL testPL%add('MeshTransfer->volumemesh_out',mesh_out)
+      CALL testMT%init(testPL)
+      ASSERT(ALLOCATED(testMT%TransferMatrix),'Transfer Matrix')
+      ASSERT(.NOT. testMT%transferLS%isInit,'Transfer Linear System')
+      CALL testMT%clear()
+
+      COMPONENT_TEST('Cartesian V2V Poly Transfer')
+      CALL testPL%add('MeshTransfer->poly_transfer',4)
+      CALL testMT%init(testPL)
+      ASSERT(ALLOCATED(testMT%TransferMatrix),'Transfer Matrix')
+      ASSERT(testMT%transferLS%isInit,'Transfer Linear System')
+      CALL testMT%clear()
+      CALL testPL%clear()
+
+      COMPONENT_TEST('Cartesian P2C')
+      CALL testPL%add('MeshTransfer->map_in','POINT')
+      CALL testPL%add('MeshTransfer->map_out','CONTINUOUS')
+      CALL testPL%add('MeshTransfer->pointmesh_in',mesh)
+      CALL testPL%add('MeshTransfer->moments_out',3)
+      CALL testMT%init(testPL)
+      ASSERT(.NOT. ALLOCATED(testMT%TransferMatrix),'Transfer Matrix')
+      ASSERT(testMT%transferLS%isInit,'Transfer Linear System')
+      CALL testMT%clear()
+      CALL testPL%clear()
+
+      COMPONENT_TEST('Cartesian V2C')
+      CALL testPL%add('MeshTransfer->map_in','VOLUME')
+      CALL testPL%add('MeshTransfer->map_out','CONTINUOUS')
+      CALL testPL%add('MeshTransfer->volumemesh_in',mesh)
+      CALL testPL%add('MeshTransfer->moments_out',3)
+      CALL testMT%init(testPL)
+      ASSERT(.NOT. ALLOCATED(testMT%TransferMatrix),'Transfer Matrix')
+      ASSERT(testMT%transferLS%isInit,'Transfer Linear System')
+      CALL testMT%clear()
+      CALL testPL%clear()
+
+      COMPONENT_TEST('Cartesian C2P')
+      CALL testPL%add('MeshTransfer->map_in','CONTINUOUS')
+      CALL testPL%add('MeshTransfer->map_out','POINT')
+      CALL testPL%add('MeshTransfer->moments_in',3)
+      CALL testPL%add('MeshTransfer->pointmesh_out',mesh)
+      CALL testMT%init(testPL)
+      ASSERT(ALLOCATED(testMT%TransferMatrix),'Transfer Matrix')
+      ASSERT(.NOT. testMT%transferLS%isInit,'Transfer Linear System')
+      CALL testMT%clear()
+      CALL testPL%clear()
+
+      COMPONENT_TEST('Cartesian C2V')
+      CALL testPL%add('MeshTransfer->map_in','CONTINUOUS')
+      CALL testPL%add('MeshTransfer->map_out','VOLUME')
+      CALL testPL%add('MeshTransfer->moments_in',3)
+      CALL testPL%add('MeshTransfer->volumemesh_out',mesh)
+      CALL testPL%add('MeshTransfer->maxRange',12.0_SRK)
+      CALL testMT%init(testPL)
+      ASSERT(ALLOCATED(testMT%TransferMatrix),'Transfer Matrix')
+      ASSERT(.NOT. testMT%transferLS%isInit,'Transfer Linear System')
+      CALL testMT%clear()
+      CALL testPL%clear()
+
+      COMPONENT_TEST('Cartesian C2C')
+      CALL testPL%add('MeshTransfer->map_in','CONTINUOUS')
+      CALL testPL%add('MeshTransfer->map_out','CONTINUOUS')
+      CALL testPL%add('MeshTransfer->moments_in',3)
+      CALL testPL%add('MeshTransfer->moments_out',2)
+      CALL testMT%init(testPL)
+      ASSERT(ALLOCATED(testMT%TransferMatrix),'Transfer Matrix')
+      ASSERT(.NOT. testMT%transferLS%isInit,'Transfer Linear System')
+      CALL testMT%clear()
+      CALL testPL%clear()
     ENDSUBROUTINE Test1DCart
 !
 !-------------------------------------------------------------------------------
@@ -532,39 +698,141 @@ PROGRAM testMeshTransfer
       TYPE(MeshTransfer_1DCyl) :: testMT
       TYPE(ParamType) :: testPL
       INTEGER(SIK) :: i
-      REAL(SRK) :: mesh(6), tmpin(5),mesh_out(21)
-      REAL(SRK),ALLOCATABLE :: tmpout(:)
+      REAL(SRK) :: mesh(6),mesh_out(6)
 
+      mesh=(/0.0_SRK,1.0_SRK,3.0_SRK,4.0_SRK,6.5_SRK,10.0_SRK/)
       DO i=0,5
-        mesh(i+1)=SQRT(REAL(i,SRK)/5.0_SRK)
-      ENDDO
-      DO i=0,20
-        mesh_out(i+1)=SQRT(REAL(i,SRK)/20.0_SRK)
+        mesh_out(i+1)=REAL(i,SRK)/2.0_SRK
       ENDDO
 
+      COMPONENT_TEST('Cylindrical P2P')
+      CALL testPL%add('MeshTransfer->map_in','POINT')
+      CALL testPL%add('MeshTransfer->map_out','POINT')
+      CALL testPL%add('MeshTransfer->pointmesh_in',mesh)
+      CALL testPL%add('MeshTransfer->pointmesh_out',mesh_out)
+      CALL testMT%init(testPL)
+      ASSERT(ALLOCATED(testMT%TransferMatrix),'Transfer Matrix')
+      ASSERT(.NOT. testMT%transferLS%isInit,'Transfer Linear System')
+      CALL testMT%clear()
+
+      COMPONENT_TEST('Cylindrical P2P Poly Transfer')
+      CALL testPL%add('MeshTransfer->poly_transfer',4)
+      CALL testMT%init(testPL)
+      ASSERT(ALLOCATED(testMT%TransferMatrix),'Transfer Matrix')
+      ASSERT(testMT%transferLS%isInit,'Transfer Linear System')
+      CALL testMT%clear()
+      CALL testPL%clear()
+
+      COMPONENT_TEST('Cylindrical P2V')
+      CALL testPL%add('MeshTransfer->map_in','POINT')
+      CALL testPL%add('MeshTransfer->map_out','VOLUME')
+      CALL testPL%add('MeshTransfer->pointmesh_in',mesh)
+      CALL testPL%add('MeshTransfer->volumemesh_out',mesh_out)
+      CALL testMT%init(testPL)
+      ASSERT(ALLOCATED(testMT%TransferMatrix),'Transfer Matrix')
+      ASSERT(.NOT. testMT%transferLS%isInit,'Transfer Linear System')
+      CALL testMT%clear()
+
+      COMPONENT_TEST('Cylindrical P2V Poly Transfer')
+      CALL testPL%add('MeshTransfer->poly_transfer',4)
+      CALL testMT%init(testPL)
+      ASSERT(ALLOCATED(testMT%TransferMatrix),'Transfer Matrix')
+      ASSERT(testMT%transferLS%isInit,'Transfer Linear System')
+      CALL testMT%clear()
+      CALL testPL%clear()
+
+      COMPONENT_TEST('Cylindrical V2P')
+      CALL testPL%add('MeshTransfer->map_in','VOLUME')
+      CALL testPL%add('MeshTransfer->map_out','POINT')
+      CALL testPL%add('MeshTransfer->volumemesh_in',mesh)
+      CALL testPL%add('MeshTransfer->pointmesh_out',mesh_out)
+      CALL testMT%init(testPL)
+      ASSERT(ALLOCATED(testMT%TransferMatrix),'Transfer Matrix')
+      ASSERT(.NOT. testMT%transferLS%isInit,'Transfer Linear System')
+      CALL testMT%clear()
+
+      COMPONENT_TEST('Cylindrical V2P Poly Transfer')
+      CALL testPL%add('MeshTransfer->poly_transfer',4)
+      CALL testMT%init(testPL)
+      ASSERT(ALLOCATED(testMT%TransferMatrix),'Transfer Matrix')
+      ASSERT(testMT%transferLS%isInit,'Transfer Linear System')
+      CALL testMT%clear()
+      CALL testPL%clear()
+
+      COMPONENT_TEST('Cylindrical V2V')
       CALL testPL%add('MeshTransfer->map_in','VOLUME')
       CALL testPL%add('MeshTransfer->map_out','VOLUME')
       CALL testPL%add('MeshTransfer->volumemesh_in',mesh)
       CALL testPL%add('MeshTransfer->volumemesh_out',mesh_out)
-      CALL testPL%add('MeshTransfer->poly_transfer',4)
-
       CALL testMT%init(testPL)
-      tmpin(1)=0.85_SRK
-      tmpin(2)=0.9_SRK
-      tmpin(3)=0.95_SRK
-      tmpin(4)=1.05_SRK
-      tmpin(5)=1.3_SRK
+      ASSERT(ALLOCATED(testMT%TransferMatrix),'Transfer Matrix')
+      ASSERT(.NOT. testMT%transferLS%isInit,'Transfer Linear System')
+      CALL testMT%clear()
 
-      CALL testMT%transfer(tmpin,tmpout)
+      COMPONENT_TEST('Cylindrical V2V Poly Transfer')
+      CALL testPL%add('MeshTransfer->poly_transfer',4)
+      CALL testMT%init(testPL)
+      ASSERT(ALLOCATED(testMT%TransferMatrix),'Transfer Matrix')
+      ASSERT(testMT%transferLS%isInit,'Transfer Linear System')
+      CALL testMT%clear()
+      CALL testPL%clear()
 
-      !ALLOCATE(tmpout(3))
-      !tmpout(1)=1.01666666666666666666666666667_SRK
-      !tmpout(2)=0.3375000_SRK
-      !tmpout(3)=0.000_SRK
+      COMPONENT_TEST('Cylindrical P2C')
+      CALL testPL%add('MeshTransfer->map_in','POINT')
+      CALL testPL%add('MeshTransfer->map_out','CONTINUOUS')
+      CALL testPL%add('MeshTransfer->pointmesh_in',mesh)
+      CALL testPL%add('MeshTransfer->moments_out',3)
+      CALL testMT%init(testPL)
+      ASSERT(.NOT. ALLOCATED(testMT%TransferMatrix),'Transfer Matrix')
+      ASSERT(testMT%transferLS%isInit,'Transfer Linear System')
+      CALL testMT%clear()
+      CALL testPL%clear()
 
-      DO i=1,SIZE(tmpout)
-      !  WRITE(*,*) tmpout(i)
-      ENDDO
+      COMPONENT_TEST('Cylindrical V2C')
+      CALL testPL%add('MeshTransfer->map_in','VOLUME')
+      CALL testPL%add('MeshTransfer->map_out','CONTINUOUS')
+      CALL testPL%add('MeshTransfer->volumemesh_in',mesh)
+      CALL testPL%add('MeshTransfer->moments_out',3)
+      CALL testMT%init(testPL)
+      ASSERT(.NOT. ALLOCATED(testMT%TransferMatrix),'Transfer Matrix')
+      ASSERT(testMT%transferLS%isInit,'Transfer Linear System')
+      CALL testMT%clear()
+      CALL testPL%clear()
+
+      COMPONENT_TEST('Cylindrical C2P')
+      CALL testPL%add('MeshTransfer->map_in','CONTINUOUS')
+      CALL testPL%add('MeshTransfer->map_out','POINT')
+      CALL testPL%add('MeshTransfer->moments_in',3)
+      CALL testPL%add('MeshTransfer->pointmesh_out',mesh)
+      CALL testMT%init(testPL)
+      ASSERT(ALLOCATED(testMT%TransferMatrix),'Transfer Matrix')
+      ASSERT(.NOT. testMT%transferLS%isInit,'Transfer Linear System')
+      CALL testMT%clear()
+      CALL testPL%clear()
+
+      COMPONENT_TEST('Cylindrical C2V')
+      CALL testPL%add('MeshTransfer->map_in','CONTINUOUS')
+      CALL testPL%add('MeshTransfer->map_out','VOLUME')
+      CALL testPL%add('MeshTransfer->moments_in',3)
+      CALL testPL%add('MeshTransfer->volumemesh_out',mesh)
+      CALL testPL%add('MeshTransfer->minRange',-2.0_SRK)
+      CALL testPL%add('MeshTransfer->maxRange',12.0_SRK)
+      CALL testMT%init(testPL)
+      ASSERT(ALLOCATED(testMT%TransferMatrix),'Transfer Matrix')
+      ASSERT(.NOT. testMT%transferLS%isInit,'Transfer Linear System')
+      CALL testMT%clear()
+      CALL testPL%clear()
+
+      COMPONENT_TEST('Cylindrical C2C')
+      CALL testPL%add('MeshTransfer->map_in','CONTINUOUS')
+      CALL testPL%add('MeshTransfer->map_out','CONTINUOUS')
+      CALL testPL%add('MeshTransfer->moments_in',3)
+      CALL testPL%add('MeshTransfer->moments_out',2)
+      CALL testMT%init(testPL)
+      ASSERT(ALLOCATED(testMT%TransferMatrix),'Transfer Matrix')
+      ASSERT(.NOT. testMT%transferLS%isInit,'Transfer Linear System')
+      CALL testMT%clear()
+      CALL testPL%clear()
 
     ENDSUBROUTINE Test1DCyl
 !

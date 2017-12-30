@@ -319,8 +319,13 @@ MODULE MeshTransfer
 
       REAL(SRK) :: minX, maxX
       CALL this%init_base(pList)
-      minX=MINVAL(this%mesh_in)
-      maxX=MAXVAL(this%mesh_in)
+      IF(ALLOCATED(this%mesh_in)) THEN
+        minX=MINVAL(this%mesh_in)
+        maxX=MAXVAL(this%mesh_in)
+      ELSE
+        minX=-1.0_SRK
+        maxX=1.0_SRK
+      ENDIF
       IF(pList%has('minRange')) CALL pList%get('minRange',minX)
       IF(pList%has('maxRange')) CALL pList%get('maxRange',maxX)
 
@@ -381,7 +386,11 @@ MODULE MeshTransfer
 
       CALL this%init_base(pList)
 
-      maxR=MAXVAL(this%mesh_in)
+      IF(ALLOCATED(this%mesh_in)) THEN
+        maxR=MAXVAL(this%mesh_in)
+      ELSE
+        maxR=1.0_SRK
+      ENDIF
       IF(pList%has('maxRange')) CALL pList%get('maxRange',maxR)
 
       IF(this%MapType_in == MapType_POINT .AND. this%MapType_out == MapType_POINT) THEN
@@ -492,8 +501,7 @@ MODULE MeshTransfer
           ENDIF
         ENDIF
       ENDDO
-      ! TODO: search to find which V that P falls into
-      !  look at ArrayUtils, findIndex
+
       ENSURE(ALLOCATED(TM))
     ENDSUBROUTINE setupV2P
 !
@@ -568,7 +576,6 @@ MODULE MeshTransfer
         ENDIF
         IF(union(iun) .APPROXEQ. mesh_out(iout+1)) THEN
           IF(iout>0 .AND. vsum>ZERO) TM(iout,:)=TM(iout,:)/vsum
-          IF(iout>0) WRITE(*,*) TM(iout,:)
           vsum=ZERO
           iout=iout+1
           IF(iout>=SIZE(mesh_out)) EXIT
@@ -667,7 +674,6 @@ MODULE MeshTransfer
         ENDIF
         IF(union(iun) .APPROXEQ. mesh_out(iout+1)) THEN
           IF(iout>0 .AND. vsum>ZERO) TM(iout,:)=TM(iout,:)/vsum
-          IF(iout>0) WRITE(*,*) TM(iout,:)
           vsum=ZERO
           iout=iout+1
           IF(iout>=SIZE(mesh_out)) EXIT
@@ -849,7 +855,6 @@ MODULE MeshTransfer
         ENDIF
         IF(union(iun) .APPROXEQ. mesh_out(iout+1)) THEN
           IF(iout>0 .AND. vsum>ZERO) TM(iout,:)=TM(iout,:)/vsum
-          IF(iout>0) WRITE(*,*) TM(iout,:)
           vsum=ZERO
           iout=iout+1
           IF(iout>=SIZE(mesh_out)) EXIT
@@ -946,7 +951,6 @@ MODULE MeshTransfer
         ENDIF
         IF(union(iun) .APPROXEQ. mesh_out(iout+1)) THEN
           IF(iout>0 .AND. vsum>ZERO) TM(iout,:)=TM(iout,:)/vsum
-          IF(iout>0) WRITE(*,*) TM(iout,:)
           vsum=ZERO
           iout=iout+1
           IF(iout>=SIZE(mesh_out)) EXIT
