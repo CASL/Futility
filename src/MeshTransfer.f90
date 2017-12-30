@@ -6,7 +6,54 @@
 ! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
 ! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!> @brief A Fortran 2003 module implementing some basic sorting algorithms.
+!> @brief A Fortran 2003 module implementing mesh transfer methods.
+!>
+!>  This package defines a base mesh transfer algorithm and a cartesian and
+!>  cylindrical transfer in 1D.  There are multiple options available for mesh
+!>  transfer including: point-to-point, point-to-volume, point-to-continuous,
+!>  volume-to-point, volume-to-volume, volume-to-continuous, continuous-to-point
+!>  continuous-to-volume, and continuous-to-continuous.
+!>
+!>  The point-to-point transfer can be done using linear interpolation on the
+!>  incoming mesh or through a projection to an user-defined order polynomial.
+!>  For the linear interpolation method, data points outside the input data range
+!>  will return the boundary value.
+!>
+!>  The point-to-volume transfer can be done by integrating the linear function
+!>  between the points or by integrating an user-defined order polynomial.
+!>
+!>  The point-to-continuous transfer projects the points to a defined order
+!>  polynomial.
+!>
+!>  The volume-to-point transfer returns the values for the volume in which the
+!>  points fall into or can use a user-defined order polynomial which minimizes
+!>  the error that preserves the volume average quantities.
+!>
+!>  The volume-to-volume transfer returns the integral values for flat
+!>  volume-averaged input data or a user-defined order polynomial fit which
+!>  minimizes the error in the volume average input data.
+!>
+!>  The volume-to-continuous transfer returns the defined polynomial fit which
+!>  minimizes the error in the volume average input data.
+!>
+!>  The continuous-to-point transfer returns point values on the continuous
+!>  input polynomial.
+!>
+!>  The continuous-to-volume transfer returns volume average values from the
+!>  continuous input polynomial.
+!>
+!>  The continuous-to-continuous will return updated coefficients based on the
+!>  outgoing moments requested.
+!>
+!>  In all cases, the user specifies the input mesh or moments and output mesh
+!>  or moments and to use the native implementations or a polynomial projection
+!>  transfer during initialization.  A mesh transfer matrix or linear system
+!>  will be used to transfer input data onto the output mesh.  The call to
+!>  transfer will transform the input data onto the output mesh using the transfer
+!>  matrix and/or linear system which was defined during init.  As long as the
+!>  incoming and outgoing mesh/moments are the same, transfer can be called
+!>  an arbitrary number of times very efficiently.  If the mesh is different,
+!>  a new transfer object will be needed.
 !>
 !> @par Module Dependencies
 !>  - @ref IntrType "IntrType": @copybrief IntrType
@@ -155,10 +202,23 @@ MODULE MeshTransfer
   CONTAINS
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief  initialization for the base class
 !> @param this  The mesh transfer object
+!> @param pList The parameter list which defines the input
 !>
-!> This routine
+!> This routine processes the parameter list and sets data into the base class.
+!> Required and optional parameters include:
+!>   - Required:
+!>     * map_in - type of incoming map (POINT,VOLUME,CONTINUOUS)
+!>     * map_out - type of outgoing map (POINT,VOLUME,CONTINUOUS)
+!>     * moment_in - number of polynomial coefficients (only for map_in=CONTINUOUS)
+!>     * pointmesh_in - 1D array of point locations (only for map_in=POINT)
+!>     * volumemesh_in - 1D array of edges of volumes (only for map_in=VOLUME)
+!>     * moment_out - number of polynomial coefficients (only for map_out=CONTINUOUS)
+!>     * pointmesh_out - 1D array of point locations (only for map_out=POINT)
+!>     * volumemesh_out - 1D array of edges of volumes (only for map_out=VOLUME)
+!>   - Optional:
+!>     * poly_transfer - if present, defines the order of polynomial transfer that is used
 !>
     SUBROUTINE init_1Dbase(this,pList)
       CLASS(MeshTransfer_1Dbase),INTENT(INOUT) :: this
@@ -232,10 +292,10 @@ MODULE MeshTransfer
     ENDSUBROUTINE init_1Dbase
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief clears the mesh transfer type
 !> @param this  The mesh transfer object
 !>
-!> This routine
+!> This routine restores the object to its initial state
 !>
     SUBROUTINE clear_1Dbase(this)
       CLASS(MeshTransfer_1Dbase),INTENT(INOUT) :: this
@@ -254,10 +314,16 @@ MODULE MeshTransfer
     ENDSUBROUTINE clear_1Dbase
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param this  The mesh transfer object
+!> @brief Transforms the input data to the output mesh
+!> @param this     The mesh transfer object
+!> @param data_in  The 1D array contining data on the incoming mesh
+!> @param data_out The transformed output data as a 1D array
 !>
-!> This routine
+!> This routine applies the linear system if present, then applies the the
+!> transfer matrix if present.  data_out will first be deallocated and reallocated
+!> to the correct size.  The 1D arrays contain the point values for a POINT
+!> transfer, a volume average values for a VOLUME transfer, and the coefficients
+!> of the polynomial fit if the transfer is CONTINUOUS.
 !>
     SUBROUTINE transfer_1Dbase(this,data_in,data_out)
       CLASS(MeshTransfer_1Dbase),INTENT(INOUT) :: this
@@ -308,10 +374,18 @@ MODULE MeshTransfer
     ENDSUBROUTINE transfer_1Dbase
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief  initialization for the 1D cartesian transfer class
 !> @param this  The mesh transfer object
+!> @param pList The parameter list which defines the input
 !>
-!> This routine
+!> This routine processes the parameter list and then sets up the linear system
+!> transfer and transfer matrix by calling the appropriate setup methods.
+!> Required and optional parameters include:
+!>   - Required:
+!>     * Only what is required in init_base
+!>   - Optional:
+!>     * minRange - The minimum extent of a transfer polynomial
+!>     * maxRange - The maximum extent of a transfer polynomial
 !>
     SUBROUTINE init_1DCart(this,pList)
       CLASS(MeshTransfer_1DCart),INTENT(INOUT) :: this
@@ -373,10 +447,17 @@ MODULE MeshTransfer
     ENDSUBROUTINE init_1DCart
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief  initialization for the 1D cylindrical transfer class
 !> @param this  The mesh transfer object
+!> @param pList The parameter list which defines the input
 !>
-!> This routine
+!> This routine processes the parameter list and then sets up the linear system
+!> transfer and transfer matrix by calling the appropriate setup methods.
+!> Required and optional parameters include:
+!>   - Required:
+!>     * Only what is required in init_base
+!>   - Optional:
+!>     * maxRange - The maximum extent of a transfer polynomial
 !>
     SUBROUTINE init_1DCyl(this,pList)
       CLASS(MeshTransfer_1DCyl),INTENT(INOUT) :: this
@@ -437,6 +518,15 @@ MODULE MeshTransfer
     ENDSUBROUTINE init_1DCyl
 !
 !-------------------------------------------------------------------------------
+!  General interfaces for Cartesian and Cylindrical
+!-------------------------------------------------------------------------------
+!> @brief  setup point to point transfer (not type bound)
+!> @param TM       The 2D array transfer matrix
+!> @param mesh_in  The incoming point mesh
+!> @param mesh_out The outcoming point mesh
+!>
+!> This routine allocates the transfer matrix for point to point
+!>
     SUBROUTINE setupP2P(TM,mesh_in,mesh_out)
       REAL(SRK),ALLOCATABLE,INTENT(INOUT) :: TM(:,:)
       REAL(SRK),INTENT(IN) :: mesh_in(:)
@@ -468,6 +558,13 @@ MODULE MeshTransfer
     ENDSUBROUTINE setupP2P
 !
 !-------------------------------------------------------------------------------
+!> @brief  setup volume to point transfer (not type bound)
+!> @param TM       The 2D array transfer matrix
+!> @param mesh_in  The incoming volume mesh
+!> @param mesh_out The outcoming point mesh
+!>
+!> This routine allocates the transfer matrix for volume to point
+!>
     SUBROUTINE setupV2P(TM,mesh_in,mesh_out)
       REAL(SRK),ALLOCATABLE,INTENT(INOUT) :: TM(:,:)
       REAL(SRK),INTENT(IN) :: mesh_in(:)
@@ -506,6 +603,13 @@ MODULE MeshTransfer
     ENDSUBROUTINE setupV2P
 !
 !-------------------------------------------------------------------------------
+!> @brief  setup continuous to continuous transfer (not type bound)
+!> @param TM        The 2D array transfer matrix
+!> @param nmesh_in  The incoming number of moments
+!> @param nmesh_out The outcoming number of moments
+!>
+!> This routine allocates the transfer matrix for continuous to continuous
+!>
     SUBROUTINE setupC2C(TM,nmesh_in,nmesh_out)
       REAL(SRK),ALLOCATABLE,INTENT(INOUT) :: TM(:,:)
       INTEGER(SIK),INTENT(IN) :: nmesh_in
@@ -530,6 +634,13 @@ MODULE MeshTransfer
 !-------------------------------------------------------------------------------
 !  Cartesian interfaces
 !-------------------------------------------------------------------------------
+!> @brief  setup point to volume transfer for cartesian mesh (not type bound)
+!> @param TM       The 2D array transfer matrix
+!> @param mesh_in  The incoming point mesh
+!> @param mesh_out The outcoming volume mesh
+!>
+!> This routine allocates the transfer matrix for point to volume
+!>
     SUBROUTINE setupP2V_cart(TM,mesh_in,mesh_out)
       REAL(SRK),ALLOCATABLE,INTENT(INOUT) :: TM(:,:)
       REAL(SRK),INTENT(IN) :: mesh_in(:)
@@ -586,6 +697,17 @@ MODULE MeshTransfer
     ENDSUBROUTINE setupP2V_cart
 !
 !-------------------------------------------------------------------------------
+!> @brief  setup point to continuous transfer for cartesian mesh (not type bound)
+!> @param TLS     The direct linear solver object to be set up
+!> @param mesh_in The incoming point mesh
+!> @param minX    The minimum x value for polynomial renormalization
+!> @param maxX    The maximum x value for polynomial renormalization
+!>
+!> This routine initializes a direct linear solver using LU decomposition.  This
+!> routine sets up the linear system to solve the full number of moments.  The
+!> transfer routine will drop moments that aren't needed.  This is inconsequential
+!> because the polynomials are orthogonal.
+!>
     SUBROUTINE setupP2C_cart(TLS,mesh_in,minX,maxX)
       TYPE(LinearSolverType_Direct),INTENT(INOUT) :: TLS
       REAL(SRK),INTENT(IN) :: mesh_in(:)
@@ -633,6 +755,13 @@ MODULE MeshTransfer
     ENDSUBROUTINE setupP2C_cart
 !
 !-------------------------------------------------------------------------------
+!> @brief  setup volume to volume transfer for cartesian mesh (not type bound)
+!> @param TM       The 2D array transfer matrix
+!> @param mesh_in  The incoming volume mesh
+!> @param mesh_out The outcoming volume mesh
+!>
+!> This routine allocates the transfer matrix for volume to volume
+!>
     SUBROUTINE setupV2V_cart(TM,mesh_in,mesh_out)
       REAL(SRK),ALLOCATABLE,INTENT(INOUT) :: TM(:,:)
       REAL(SRK),INTENT(IN) :: mesh_in(:)
@@ -684,6 +813,17 @@ MODULE MeshTransfer
     ENDSUBROUTINE setupV2V_cart
 !
 !-------------------------------------------------------------------------------
+!> @brief  setup volume to continuous transfer for cartesian mesh (not type bound)
+!> @param TLS     The direct linear solver object to be set up
+!> @param mesh_in The incoming volume mesh
+!> @param minX    The minimum x value for polynomial renormalization
+!> @param maxX    The maximum x value for polynomial renormalization
+!>
+!> This routine initializes a direct linear solver using LU decomposition.  This
+!> routine sets up the linear system to solve the full number of moments.  The
+!> transfer routine will drop moments that aren't needed.  This is inconsequential
+!> because the polynomials are orthogonal.
+!>
     SUBROUTINE setupV2C_cart(TLS,mesh_in,minX,maxX)
       TYPE(LinearSolverType_Direct),INTENT(INOUT) :: TLS
       REAL(SRK),INTENT(IN) :: mesh_in(:)
@@ -732,6 +872,15 @@ MODULE MeshTransfer
     ENDSUBROUTINE setupV2C_cart
 !
 !-------------------------------------------------------------------------------
+!> @brief  setup continuous to point transfer for cartesian mesh (not type bound)
+!> @param TM       The 2D array transfer matrix
+!> @param nmesh_in The incoming moments
+!> @param mesh_out The outcoming point mesh
+!> @param minX     The minimum x value for polynomial renormalization
+!> @param maxX     The maximum x value for polynomial renormalization
+!>
+!> This routine allocates the transfer matrix for continuous to point
+!>
     SUBROUTINE setupC2P_cart(TM,nmesh_in,mesh_out,minX,maxX)
       REAL(SRK),ALLOCATABLE,INTENT(INOUT) :: TM(:,:)
       INTEGER(SIK),INTENT(IN) :: nmesh_in
@@ -767,6 +916,15 @@ MODULE MeshTransfer
     ENDSUBROUTINE setupC2P_cart
 !
 !-------------------------------------------------------------------------------
+!> @brief  setup continuous to volume transfer for cartesian mesh (not type bound)
+!> @param TM       The 2D array transfer matrix
+!> @param nmesh_in The incoming moments
+!> @param mesh_out The outcoming volume mesh
+!> @param minX     The minimum x value for polynomial renormalization
+!> @param maxX     The maximum x value for polynomial renormalization
+!>
+!> This routine allocates the transfer matrix for continuous to volume
+!>
     SUBROUTINE setupC2V_cart(TM,nmesh_in,mesh_out,minX,maxX)
       REAL(SRK),ALLOCATABLE,INTENT(INOUT) :: TM(:,:)
       INTEGER(SIK),INTENT(IN) :: nmesh_in
@@ -805,6 +963,13 @@ MODULE MeshTransfer
 !-------------------------------------------------------------------------------
 ! Cylindrical Interfaces
 !-------------------------------------------------------------------------------
+!> @brief  setup point to volume transfer for cylindrical mesh (not type bound)
+!> @param TM       The 2D array transfer matrix
+!> @param mesh_in  The incoming point mesh
+!> @param mesh_out The outcoming volume mesh
+!>
+!> This routine allocates the transfer matrix for point to volume
+!>
     SUBROUTINE setupP2V_cyl(TM,mesh_in,mesh_out)
       REAL(SRK),ALLOCATABLE,INTENT(INOUT) :: TM(:,:)
       REAL(SRK),INTENT(IN) :: mesh_in(:)
@@ -864,6 +1029,16 @@ MODULE MeshTransfer
     ENDSUBROUTINE setupP2V_cyl
 !
 !-------------------------------------------------------------------------------
+!> @brief  setup point to continuous transfer for cylindrical mesh (not type bound)
+!> @param TLS     The direct linear solver object to be set up
+!> @param mesh_in The incoming point mesh
+!> @param maxR    The maximum radius for polynomial renormalization
+!>
+!> This routine initializes a direct linear solver using LU decomposition.  This
+!> routine sets up the linear system to solve the full number of moments.  The
+!> transfer routine will drop moments that aren't needed.  This is inconsequential
+!> because the polynomials are orthogonal.
+!>
     SUBROUTINE setupP2C_cyl(TLS,mesh_in,maxR)
       TYPE(LinearSolverType_Direct),INTENT(INOUT) :: TLS
       REAL(SRK),INTENT(IN) :: mesh_in(:)
@@ -908,6 +1083,13 @@ MODULE MeshTransfer
     ENDSUBROUTINE setupP2C_cyl
 !
 !-------------------------------------------------------------------------------
+!> @brief  setup volume to volume transfer for cylindrical mesh (not type bound)
+!> @param TM       The 2D array transfer matrix
+!> @param mesh_in  The incoming volume mesh
+!> @param mesh_out The outcoming volume mesh
+!>
+!> This routine allocates the transfer matrix for volume to volume
+!>
     SUBROUTINE setupV2V_cyl(TM,mesh_in,mesh_out)
       REAL(SRK),ALLOCATABLE,INTENT(INOUT) :: TM(:,:)
       REAL(SRK),INTENT(IN) :: mesh_in(:)
@@ -961,6 +1143,16 @@ MODULE MeshTransfer
     ENDSUBROUTINE setupV2V_cyl
 !
 !-------------------------------------------------------------------------------
+!> @brief  setup point to continuous transfer for cylindrical mesh (not type bound)
+!> @param TLS     The direct linear solver object to be set up
+!> @param mesh_in The incoming point mesh
+!> @param maxR    The maximum radius for polynomial renormalization
+!>
+!> This routine initializes a direct linear solver using LU decomposition.  This
+!> routine sets up the linear system to solve the full number of moments.  The
+!> transfer routine will drop moments that aren't needed.  This is inconsequential
+!> because the polynomials are orthogonal.
+!>
     SUBROUTINE setupV2C_cyl(TLS,mesh_in,maxR)
       TYPE(LinearSolverType_Direct),INTENT(INOUT) :: TLS
       REAL(SRK),INTENT(IN) :: mesh_in(:)
@@ -1006,6 +1198,14 @@ MODULE MeshTransfer
     ENDSUBROUTINE setupV2C_cyl
 !
 !-------------------------------------------------------------------------------
+!> @brief  setup continuous to point transfer for cylindrical mesh (not type bound)
+!> @param TM       The 2D array transfer matrix
+!> @param nmesh_in The incoming moments
+!> @param mesh_out The outcoming point mesh
+!> @param maxR     The maximum radius for polynomial renormalization
+!>
+!> This routine allocates the transfer matrix for continuous to point
+!>
     SUBROUTINE setupC2P_cyl(TM,nmesh_in,mesh_out,maxR)
       REAL(SRK),ALLOCATABLE,INTENT(INOUT) :: TM(:,:)
       INTEGER(SIK),INTENT(IN) :: nmesh_in
@@ -1038,6 +1238,14 @@ MODULE MeshTransfer
     ENDSUBROUTINE setupC2P_cyl
 !
 !-------------------------------------------------------------------------------
+!> @brief  setup continuous to volume transfer for cylindrical mesh (not type bound)
+!> @param TM       The 2D array transfer matrix
+!> @param nmesh_in The incoming moments
+!> @param mesh_out The outcoming volume mesh
+!> @param maxR     The maximum radius for polynomial renormalization
+!>
+!> This routine allocates the transfer matrix for continuous to volume
+!>
     SUBROUTINE setupC2V_cyl(TM,nmesh_in,mesh_out,maxR)
       REAL(SRK),ALLOCATABLE,INTENT(INOUT) :: TM(:,:)
       INTEGER(SIK),INTENT(IN) :: nmesh_in
