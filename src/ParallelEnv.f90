@@ -585,7 +585,7 @@ MODULE ParallelEnv
 !-------------------------------------------------------------------------------
 !> @brief Wrapper routine calls MPI_Barrier
     SUBROUTINE barrier_MPI_Env_type(myPE)
-      CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
 #ifdef HAVE_MPI
       IF(myPE%initstat) CALL MPI_Barrier(myPE%comm,mpierr)
 #endif
@@ -595,7 +595,7 @@ MODULE ParallelEnv
 !> @brief Wrapper routine calls MPI_Gather
     SUBROUTINE gather_SIK0_MPI_Env_type(myPE,sendbuf,recvbuf,root)
       CHARACTER(LEN=*),PARAMETER :: myName='gather_SIK0_MPI_Env_type'
-      CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
       INTEGER(SIK),INTENT(IN) :: sendbuf
       INTEGER(SIK),INTENT(INOUT) :: recvbuf(:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: root
@@ -617,7 +617,7 @@ MODULE ParallelEnv
 !> @brief Wrapper routine calls MPI_Gather
     SUBROUTINE gather_SLK0_MPI_Env_type(myPE,sendbuf,recvbuf,root)
       CHARACTER(LEN=*),PARAMETER :: myName='gather_SLK0_MPI_Env_type'
-      CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
       INTEGER(SLK),INTENT(IN) :: sendbuf
       INTEGER(SLK),INTENT(INOUT) :: recvbuf(:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: root
@@ -639,7 +639,7 @@ MODULE ParallelEnv
 !> @brief Wrapper routine calls MPI_Gather
     SUBROUTINE gather_SLK1_MPI_Env_type(myPE,sendbuf,recvbuf,root)
       CHARACTER(LEN=*),PARAMETER :: myName='gather_SLK1_MPI_Env_type'
-      CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
       INTEGER(SLK),INTENT(IN) :: sendbuf(:)
       INTEGER(SLK),INTENT(INOUT) :: recvbuf(:,:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: root
@@ -669,7 +669,7 @@ MODULE ParallelEnv
 !> @brief Wrapper routine calls MPI_Scatter
     SUBROUTINE scatter_SLK0_MPI_Env_type(myPE,sendbuf,recvbuf,root)
       CHARACTER(LEN=*),PARAMETER :: myName='scatter_SLK0_MPI_Env_type'
-      CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
       INTEGER(SLK),INTENT(IN) :: sendbuf(:)
       INTEGER(SLK),INTENT(INOUT) :: recvbuf
       INTEGER(SIK),INTENT(IN),OPTIONAL :: root
@@ -691,7 +691,7 @@ MODULE ParallelEnv
 !> @brief Wrapper routine calls MPI_Scatter
     SUBROUTINE scatter_SLK1_MPI_Env_type(myPE,sendbuf,recvbuf,root)
       CHARACTER(LEN=*),PARAMETER :: myName='scatter_SLK1_MPI_Env_type'
-      CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
       INTEGER(SLK),INTENT(IN) :: sendbuf(:,:)
       INTEGER(SLK),INTENT(INOUT) :: recvbuf(:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: root
@@ -721,7 +721,7 @@ MODULE ParallelEnv
 !> @brief
     SUBROUTINE bcast_SNK0_MPI_Env_type(myPE,buf,root)
       CHARACTER(LEN=*),PARAMETER :: myName='bcast_SNK0_MPI_Env_type'
-      CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
       INTEGER(SNK),INTENT(IN) :: buf
       INTEGER(SIK),INTENT(IN),OPTIONAL :: root
       INTEGER(SIK) :: rank
@@ -738,7 +738,7 @@ MODULE ParallelEnv
 !> @brief
     SUBROUTINE bcast_SNK1_MPI_Env_type(myPE,buf,root)
       CHARACTER(LEN=*),PARAMETER :: myName='bcast_SNK1_MPI_Env_type'
-      CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
       INTEGER(SNK),INTENT(IN) :: buf(:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: root
       INTEGER(SIK) :: rank
@@ -755,7 +755,7 @@ MODULE ParallelEnv
 !> @brief
     SUBROUTINE bcast_SLK0_MPI_Env_type(myPE,buf,root)
       CHARACTER(LEN=*),PARAMETER :: myName='bcast_SLK0_MPI_Env_type'
-      CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
       INTEGER(SLK),INTENT(IN) :: buf
       INTEGER(SIK),INTENT(IN),OPTIONAL :: root
       INTEGER(SIK) :: rank
@@ -772,7 +772,7 @@ MODULE ParallelEnv
 !> @brief
     SUBROUTINE bcast_SLK1_MPI_Env_type(myPE,buf,root)
       CHARACTER(LEN=*),PARAMETER :: myName='bcast_SLK1_MPI_Env_type'
-      CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
       INTEGER(SLK),INTENT(IN) :: buf(:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: root
       INTEGER(SIK) :: rank
@@ -789,7 +789,7 @@ MODULE ParallelEnv
 !> @brief
     SUBROUTINE bcast_SSK1_MPI_Env_type(myPE,buf,root)
       CHARACTER(LEN=*),PARAMETER :: myName='bcast_SSK1_MPI_Env_type'
-      CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
       REAL(SSK),INTENT(IN) :: buf(:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: root
       INTEGER(SIK) :: rank
@@ -806,7 +806,7 @@ MODULE ParallelEnv
 !> @brief
     SUBROUTINE bcast_SSK2_MPI_Env_type(myPE,buf,root)
       CHARACTER(LEN=*),PARAMETER :: myName='bcast_SSK2_MPI_Env_type'
-      CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
       REAL(SSK),INTENT(IN) :: buf(:,:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: root
       INTEGER(SIK) :: rank
@@ -823,7 +823,7 @@ MODULE ParallelEnv
 !> @brief
     SUBROUTINE bcast_SDK1_MPI_Env_type(myPE,buf,root)
       CHARACTER(LEN=*),PARAMETER :: myName='bcast_SDK1_MPI_Env_type'
-      CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
       REAL(SDK),INTENT(IN) :: buf(:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: root
       INTEGER(SIK) :: rank
@@ -840,7 +840,7 @@ MODULE ParallelEnv
 !> @brief
     SUBROUTINE bcast_SDK2_MPI_Env_type(myPE,buf,root)
       CHARACTER(LEN=*),PARAMETER :: myName='bcast_SDK2_MPI_Env_type'
-      CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
       REAL(SDK),INTENT(IN) :: buf(:,:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: root
       INTEGER(SIK) :: rank
@@ -857,7 +857,7 @@ MODULE ParallelEnv
 !> @brief
     SUBROUTINE bcast_SSK3_MPI_Env_type(myPE,buf,root)
       CHARACTER(LEN=*),PARAMETER :: myName='bcast_SSK3_MPI_Env_type'
-      CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
       REAL(SSK),INTENT(IN) :: buf(:,:,:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: root
       INTEGER(SIK) :: rank
@@ -874,7 +874,7 @@ MODULE ParallelEnv
 !> @brief
     SUBROUTINE bcast_SDK3_MPI_Env_type(myPE,buf,root)
       CHARACTER(LEN=*),PARAMETER :: myName='bcast_SDK3_MPI_Env_type'
-      CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
       REAL(SDK),INTENT(IN) :: buf(:,:,:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: root
       INTEGER(SIK) :: rank
@@ -891,7 +891,7 @@ MODULE ParallelEnv
 !> @brief
     SUBROUTINE bcast_SSK4_MPI_Env_type(myPE,buf,root)
       CHARACTER(LEN=*),PARAMETER :: myName='bcast_SSK4_MPI_Env_type'
-      CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
       REAL(SSK),INTENT(IN) :: buf(:,:,:,:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: root
       INTEGER(SIK) :: rank
@@ -908,7 +908,7 @@ MODULE ParallelEnv
 !> @brief
     SUBROUTINE bcast_SDK4_MPI_Env_type(myPE,buf,root)
       CHARACTER(LEN=*),PARAMETER :: myName='bcast_SDK4_MPI_Env_type'
-      CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
       REAL(SDK),INTENT(IN) :: buf(:,:,:,:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: root
       INTEGER(SIK) :: rank
@@ -1216,7 +1216,7 @@ MODULE ParallelEnv
 !>
     SUBROUTINE trueForAll_MPI_Env_type(myPE,lstat)
       CHARACTER(LEN=*),PARAMETER :: myName='trueForAll_MPI_Env_type'
-      CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
       LOGICAL(SBK),INTENT(INOUT) :: lstat
 #ifdef HAVE_MPI
       LOGICAL(SBK) :: lrbuf
@@ -1240,7 +1240,7 @@ MODULE ParallelEnv
 !>
     SUBROUTINE trueForAny_MPI_Env_type(myPE,lstat)
       CHARACTER(LEN=*),PARAMETER :: myName='trueForAny_MPI_Env_type'
-      CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
       LOGICAL(SBK),INTENT(INOUT) :: lstat
 #ifdef HAVE_MPI
       LOGICAL(SBK) :: lrbuf
