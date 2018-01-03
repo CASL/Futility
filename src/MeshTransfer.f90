@@ -212,6 +212,9 @@ MODULE MeshTransfer
       PROCEDURE,PASS :: init => init_1DCyl
   ENDTYPE MeshTransfer_1DCyl
 
+  !> Name of module
+  CHARACTER(LEN=*),PARAMETER :: modName='MESTTRANSFER'
+
   !> Exception Handler for use in MeshTransfer
   TYPE(ExceptionHandlerType),SAVE :: eMeshTransfer
 
@@ -239,6 +242,7 @@ MODULE MeshTransfer
 !>     * poly_transfer - if present, defines the order of polynomial transfer that is used
 !>
     SUBROUTINE init_1Dbase(this,pList)
+      CHARACTER(LEN=*),PARAMETER :: myName="init_1Dbase"
       CLASS(MeshTransfer_1Dbase),INTENT(INOUT) :: this
       CLASS(ParamType),INTENT(IN) :: pList
 
