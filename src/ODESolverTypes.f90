@@ -472,6 +472,7 @@ MODULE ODESolverTypes
         CALL tmpPL%add('LinearSolverType->x->VectorType->n',n)
         CALL tmpPL%add('LinearSolverType->b->VectorType->n',n)
         CALL solver%myLS%init(tmpPL)
+        CALL tmpPL%clear()
 
         solver%TPLType=ODE_NATIVE
         solver%f=>f
