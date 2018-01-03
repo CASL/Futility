@@ -30,6 +30,7 @@ PROGRAM testGeom_Box
   CALL eParams%setStopOnError(.FALSE.)
 
   REGISTER_SUBTEST('Test OB Box',TestOBBox)
+  REGISTER_SUBTEST('Test AB Box',testABBox)
 
   FINALIZE_TEST()
 !
@@ -386,5 +387,128 @@ PROGRAM testGeom_Box
                    .OR. .NOT.(ANY(points3(2)%coord .APPROXEQ. (/0._SRK,4._SRK/))))
       ASSERT(bool, 'box%intersectLine(...)')
     ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testABBox()
+      TYPE(PointType) :: point
+      TYPE(ABBoxType) :: box
+
+      ALLOCATE(point%coord(3))
+
+      COMPONENT_TEST('Init')
+      CALL box%set(0.0_SRK,1.0_SRK,0.0_SRK,3.0_SRK)
+      ASSERT_APPROXEQ(box%xMin,0.0_SRK,'%xMin')
+      ASSERT_APPROXEQ(box%xMax,1.0_SRK,'%xMax')
+      ASSERT_APPROXEQ(box%yMin,0.0_SRK,'%yMin')
+      ASSERT_APPROXEQ(box%yMax,3.0_SRK,'%yMax')
+      ASSERT_APPROXEQ(box%zMin,0.0_SRK,'%zMin')
+      ASSERT_APPROXEQ(box%zMax,0.0_SRK,'%zMax')
+      ASSERT(box%isSet,'%isSet')
+      ASSERT(box%isOrigin,'%isOrigin')
+      ASSERT(.NOT.box%is3D,'%is3D')
+
+      CALL box%clear()
+      CALL box%set(1.0_SRK,2.0_SRK,3.0_SRK,4.0_SRK,5.0_SRK,6.0_SRK)
+      ASSERT_APPROXEQ(box%xMin,1.0_SRK,'%xMin')
+      ASSERT_APPROXEQ(box%xMax,2.0_SRK,'%xMax')
+      ASSERT_APPROXEQ(box%yMin,3.0_SRK,'%yMin')
+      ASSERT_APPROXEQ(box%yMax,4.0_SRK,'%yMax')
+      ASSERT_APPROXEQ(box%zMin,5.0_SRK,'%zMin')
+      ASSERT_APPROXEQ(box%zMax,6.0_SRK,'%zMax')
+      ASSERT(box%isSet,'%isSet')
+      ASSERT(.NOT.box%isOrigin,'%isOrigin')
+      ASSERT(box%is3D,'%is3D')
+      CALL box%clear()
+
+      COMPONENT_TEST('Clear')
+      box%xMin=1.0_SRK
+      box%xMax=1.0_SRK
+      box%yMin=1.0_SRK
+      box%yMax=1.0_SRK
+      box%zMin=1.0_SRK
+      box%zMax=1.0_SRK
+      box%isSet=.TRUE.
+      box%isOrigin=.TRUE.
+      box%is3D=.TRUE.
+      CALL box%clear()
+      ASSERT_APPROXEQ(box%xMin,0.0_SRK,'%xMin')
+      ASSERT_APPROXEQ(box%xMax,0.0_SRK,'%xMax')
+      ASSERT_APPROXEQ(box%yMin,0.0_SRK,'%yMin')
+      ASSERT_APPROXEQ(box%yMax,0.0_SRK,'%yMax')
+      ASSERT_APPROXEQ(box%zMin,0.0_SRK,'%zMin')
+      ASSERT_APPROXEQ(box%zMax,0.0_SRK,'%zMax')
+      ASSERT(.NOT.box%isSet,'%isSet')
+      ASSERT(.NOT.box%isOrigin,'%isOrigin')
+      ASSERT(.NOT.box%is3D,'%is3D')
+
+      COMPONENT_TEST('Inside 2D/2D')
+      CALL box%set(1.0_SRK,2.0_SRK,1.0_SRK,2.0_SRK)
+      point%dim=2
+      point%coord(1:2)=(/1.5_SRK,1.5_SRK/)
+      ASSERT(box%inside(point),'%inside(...)')
+      CALL box%clear()
+
+      CALL box%set(1.0_SRK,2.0_SRK,1.0_SRK,2.0_SRK)
+      point%dim=2
+      point%coord(1:2)=(/2.5_SRK,1.5_SRK/)
+      ASSERT(.NOT.box%inside(point),'%inside(...)')
+      CALL box%clear()
+
+      CALL box%set(1.0_SRK,2.0_SRK,1.0_SRK,2.0_SRK)
+      point%dim=2
+      point%coord(1:2)=(/0.5_SRK,1.5_SRK/)
+      ASSERT(.NOT.box%inside(point),'%inside(...)')
+      CALL box%clear()
+
+      CALL box%set(1.0_SRK,2.0_SRK,1.0_SRK,2.0_SRK)
+      point%dim=2
+      point%coord(1:2)=(/1.5_SRK,2.5_SRK/)
+      ASSERT(.NOT.box%inside(point),'%inside(...)')
+      CALL box%clear()
+
+      CALL box%set(1.0_SRK,2.0_SRK,1.0_SRK,2.0_SRK)
+      point%dim=2
+      point%coord(1:2)=(/1.5_SRK,0.5_SRK/)
+      ASSERT(.NOT.box%inside(point),'%inside(...)')
+      CALL box%clear()
+
+      COMPONENT_TEST('Inside 3D/2D')
+      CALL box%set(1.0_SRK,2.0_SRK,1.0_SRK,2.0_SRK)
+      point%dim=3
+      point%coord(:)=(/1.5_SRK,1.5_SRK,10.0_SRK/)
+      ASSERT(box%inside(point),'%inside(...)')
+      CALL box%clear()
+
+      COMPONENT_TEST('Inside 3D/3D')
+      CALL box%set(1.0_SRK,2.0_SRK,1.0_SRK,2.0_SRK,1.0_SRK,2.0_SRK)
+      point%dim=3
+      point%coord(:)=(/1.5_SRK,1.5_SRK,1.5_SRK/)
+      ASSERT(box%inside(point),'%inside(...)')
+      CALL box%clear()
+
+      CALL box%set(1.0_SRK,2.0_SRK,1.0_SRK,2.0_SRK,1.0_SRK,2.0_SRK)
+      point%dim=3
+      point%coord(:)=(/1.5_SRK,1.5_SRK,2.5_SRK/)
+      ASSERT(.NOT.box%inside(point),'%inside(...)')
+      CALL box%clear()
+
+      CALL box%set(1.0_SRK,2.0_SRK,1.0_SRK,2.0_SRK,1.0_SRK,2.0_SRK)
+      point%dim=3
+      point%coord(:)=(/1.5_SRK,1.5_SRK,0.5_SRK/)
+      ASSERT(.NOT.box%inside(point),'%inside(...)')
+      CALL box%clear()
+
+      COMPONENT_TEST('Inside 2D/3D')
+      CALL box%set(1.0_SRK,2.0_SRK,1.0_SRK,2.0_SRK,1.0_SRK,2.0_SRK)
+      point%dim=2
+      point%coord(:)=(/1.5_SRK,1.5_SRK,0.0_SRK/)
+      ASSERT(box%inside(point),'%inside(...)')
+      FINFO() 'point:',point%dim,point%coord
+      FINFO() 'box:',box%xMin,box%xMax,box%yMin,box%yMax
+      CALL box%clear()
+
+      CALL point%clear()
+
+    ENDSUBROUTINE testABBox
 
 ENDPROGRAM testGeom_Box
