@@ -12,7 +12,9 @@
 !>  cylindrical transfer in 1D.  There are multiple options available for mesh
 !>  transfer including: point-to-point, point-to-volume, point-to-continuous,
 !>  volume-to-point, volume-to-volume, volume-to-continuous, continuous-to-point
-!>  continuous-to-volume, and continuous-to-continuous.
+!>  continuous-to-volume, and continuous-to-continuous.  All routines implemented
+!>  here only handle mesh transfers in serial.  The base class does not prevent
+!>  an extension for parallel maps if someone wishes to do so in the future.
 !>
 !>  The point-to-point transfer can be done using linear interpolation on the
 !>  incoming mesh or through a projection to an user-defined order polynomial.
@@ -56,7 +58,16 @@
 !>  a new transfer object will be needed.
 !>
 !> @par Module Dependencies
-!>  - @ref IntrType "IntrType": @copybrief IntrType
+!>  - @ref IntrType             "IntrType":             @copybrief IntrType
+!>  - @ref Constants_Conversion "Constants_Conversion": @copybrief Constants_Conversion
+!>  - @ref Strings              "Strings":              @copybrief Strings
+!>  - @ref ParameterLists       "ParameterLists":       @copybrief ParameterLists
+!>  - @ref ParallelEnv          "ParallelEnv":          @copybrief ParallelEnv
+!>  - @ref BLAS                 "BLAS":                 @copybrief BLAS
+!>  - @ref ArrayUtils           "ArrayUtils":           @copybrief ArrayUtils
+!>  - @ref VectorTypes          "VectorTypes":          @copybrief VectorTypes
+!>  - @ref MatrixTypes          "MatrixTypes":          @copybrief MatrixTypes
+!>  - @ref LinearSolverTypes    "LinearSolverTypes":    @copybrief LinearSolverTypes
 !>
 !> @author Ben Collins
 !>    @date 12/22/2017
@@ -77,6 +88,7 @@ MODULE MeshTransfer
   USE LinearSolverTypes
   IMPLICIT NONE
 
+  PUBLIC :: eMeshTransfer
   PUBLIC :: LPPointVal
   PUBLIC :: LPIntegral
   PUBLIC :: ZPPointVal
@@ -156,15 +168,15 @@ MODULE MeshTransfer
     INTEGER(SIK) :: nmesh_in=0
     !> The number of outcoming mesh elements (or moments for continuous)
     INTEGER(SIK) :: nmesh_out=0
-    !>
+    !> Integer indicating the order of polynomial transfer (-1 means no polynomial transfer)
     INTEGER(SIK) :: poly_transfer=-1
-    !>
+    !> The incoming mesh, different meetings depending on the MapType_in
     REAL(SRK),ALLOCATABLE :: mesh_in(:)
-    !>
+    !> The outgoing mesh, different meetings depending on the MapType_out
     REAL(SRK),ALLOCATABLE :: mesh_out(:)
-    !>
+    !> The matrix to transfer the data from incoming to outgoing:  outgoing = transferMatrix * incoming
     REAL(SRK),ALLOCATABLE :: transferMatrix(:,:)
-    !>
+    !> The linear system to transfer the data from incoming to outgoing: transferLS%A * outgoing = incoming
     TYPE(LinearSolverType_Direct) :: transferLS
 !
 !List of type-bound procedures
@@ -197,6 +209,10 @@ MODULE MeshTransfer
       !> @copydetails MeshTransfer::init_1DCyl
       PROCEDURE,PASS :: init => init_1DCyl
   ENDTYPE MeshTransfer_1DCyl
+
+  !> Exception Handler for use in MeshTransfer
+  TYPE(ExceptionHandlerType),SAVE :: eMeshTransfer
+
 !
 !===============================================================================
   CONTAINS
@@ -239,8 +255,8 @@ MODULE MeshTransfer
         CASE('VOLUME')
           this%MapType_in=MapType_VOLUME
         CASE DEFAULT
-          WRITE(*,*) "invalid incomming map type"
-          STOP -3
+          CALL eMeshTransfer%raiseError(modName//"::"//myName//" - "// &
+                "invalid incoming map type")
       ENDSELECT
       IF(this%MapType_in == MapType_CONTINUOUS) THEN
         CALL pList%get('moments_in',this%nmesh_in)
@@ -261,8 +277,8 @@ MODULE MeshTransfer
         CASE('VOLUME')
           this%MapType_out=MapType_VOLUME
         CASE DEFAULT
-          WRITE(*,*) "invalid outgoing map type"
-          STOP -3
+          CALL eMeshTransfer%raiseError(modName//"::"//myName//" - "// &
+                "invalid outgoing map type")
       ENDSELECT
       IF(this%MapType_out == MapType_CONTINUOUS) THEN
         CALL pList%get('moments_out',this%nmesh_out)
@@ -371,6 +387,7 @@ MODULE MeshTransfer
         data_out(:)=tmp(:)
       ENDIF
 
+      DEALLOCATE(tmp)
     ENDSUBROUTINE transfer_1Dbase
 !
 !-------------------------------------------------------------------------------
@@ -547,9 +564,9 @@ MODULE MeshTransfer
           dx=mesh_in(j+1)-mesh_in(j)
           TM(i,j)=(mesh_in(j+1)-mesh_out(i))/dx
           TM(i,j+1)=(mesh_out(i)-mesh_in(j))/dx
-        ELSEIF(j==-1) THEN
+        ELSEIF(j == -1) THEN
           TM(i,1)=ONE
-        ELSEIF(j==-2) THEN
+        ELSEIF(j == -2) THEN
           TM(i,SIZE(mesh_in))=ONE
         ENDIF
       ENDDO
@@ -582,15 +599,15 @@ MODULE MeshTransfer
         j=findIndex(mesh_in,mesh_out(i),.FALSE.)
         IF(j>0) THEN
           TM(i,j)=ONE
-        ELSEIF(j==-1) THEN
+        ELSEIF(j == -1) THEN
           TM(i,1)=ONE
-        ELSEIF(j==-2) THEN
+        ELSEIF(j == -2) THEN
           TM(i,SIZE(mesh_in)-1)=ONE
-        ELSEIF(j==-3) THEN
+        ELSEIF(j == -3) THEN
           j=findIndex(mesh_in,mesh_out(i),.FALSE.,incl=1)
-          IF(j==-1) THEN
+          IF(j == -1) THEN
             TM(i,1)=ONE
-          ELSEIF(j==SIZE(mesh_in)-1) THEN
+          ELSEIF(j == SIZE(mesh_in)-1) THEN
             TM(i,j)=ONE
           ELSE
             TM(i,j)=HALF
@@ -693,6 +710,8 @@ MODULE MeshTransfer
         ENDIF
       ENDDO
 
+      DEALLOCATE(union)
+
       ENSURE(ALLOCATED(TM))
     ENDSUBROUTINE setupP2V_cart
 !
@@ -751,6 +770,8 @@ MODULE MeshTransfer
         ENDDO
       ENDSELECT
 
+      DEALLOCATE(x)
+
       ENSURE(TLS%isInit)
     ENDSUBROUTINE setupP2C_cart
 !
@@ -808,6 +829,8 @@ MODULE MeshTransfer
           IF(iout>=SIZE(mesh_out)) EXIT
         ENDIF
       ENDDO
+
+      DEALLOCATE(union)
 
       ENSURE(ALLOCATED(TM))
     ENDSUBROUTINE setupV2V_cart
@@ -868,6 +891,8 @@ MODULE MeshTransfer
         ENDDO
       ENDSELECT
 
+      DEALLOCATE(x)
+
       ENSURE(TLS%isInit)
     ENDSUBROUTINE setupV2C_cart
 !
@@ -911,6 +936,8 @@ MODULE MeshTransfer
           TM(i,j)=LPPointVal(x,mesh_out(i),h,cent)
         ENDDO
       ENDDO
+
+      DEALLOCATE(x)
 
       ENSURE(ALLOCATED(TM))
     ENDSUBROUTINE setupC2P_cart
@@ -956,6 +983,8 @@ MODULE MeshTransfer
           TM(i,j)=LPIntegral(x,mesh_out(i),mesh_out(i+1),h,cent)
         ENDDO
       ENDDO
+
+      DEALLOCATE(x)
 
       ENSURE(ALLOCATED(TM))
     ENDSUBROUTINE setupC2V_cart
@@ -1025,6 +1054,9 @@ MODULE MeshTransfer
           IF(iout>=SIZE(mesh_out)) EXIT
         ENDIF
       ENDDO
+
+      DEALLOCATE(union)
+
       ENSURE(ALLOCATED(TM))
     ENDSUBROUTINE setupP2V_cyl
 !
@@ -1078,6 +1110,8 @@ MODULE MeshTransfer
           ENDDO
         ENDDO
       ENDSELECT
+
+      DEALLOCATE(x)
 
       ENSURE(TLS%isInit)
     ENDSUBROUTINE setupP2C_cyl
@@ -1139,6 +1173,8 @@ MODULE MeshTransfer
         ENDIF
       ENDDO
 
+      DEALLOCATE(union)
+
       ENSURE(ALLOCATED(TM))
     ENDSUBROUTINE setupV2V_cyl
 !
@@ -1194,6 +1230,8 @@ MODULE MeshTransfer
         ENDDO
       ENDSELECT
 
+      DEALLOCATE(x)
+
       ENSURE(TLS%isInit)
     ENDSUBROUTINE setupV2C_cyl
 !
@@ -1233,6 +1271,8 @@ MODULE MeshTransfer
           TM(i,j)=ZPPointVal(x,mesh_out(i),maxR)
         ENDDO
       ENDDO
+
+      DEALLOCATE(X)
 
       ENSURE(ALLOCATED(TM))
     ENDSUBROUTINE setupC2P_cyl
@@ -1275,6 +1315,8 @@ MODULE MeshTransfer
         ENDDO
       ENDDO
 
+      DEALLOCATE(x)
+
       ENSURE(ALLOCATED(TM))
     ENDSUBROUTINE setupC2V_cyl
 !
@@ -1289,7 +1331,7 @@ MODULE MeshTransfer
 !> specific point for NEM and SANM nodal methods.
 !>
     FUNCTION LPPointVal(coef,globX,h,nodeX) RESULT(y)
-      REAL(SRK),DIMENSION(:),INTENT(IN) :: coef
+      REAL(SRK),INTENT(IN) :: coef(:)
       REAL(SRK),INTENT(IN) :: globX
       REAL(SRK),INTENT(IN),OPTIONAL :: h
       REAL(SRK),INTENT(IN),OPTIONAL :: nodeX
@@ -1334,7 +1376,7 @@ MODULE MeshTransfer
 !> specific range a to b for NEM and SANM nodal methods.
 !>
     FUNCTION LPIntegral(coef,a,b,h,nodeX) RESULT(y)
-      REAL(SRK),DIMENSION(:),INTENT(IN) :: coef
+      REAL(SRK),INTENT(IN) :: coef(:)
       REAL(SRK),INTENT(IN) :: a
       REAL(SRK),INTENT(IN) :: b
       REAL(SRK),INTENT(IN),OPTIONAL :: h
@@ -1395,7 +1437,7 @@ MODULE MeshTransfer
 !> specific point.
 !>
     FUNCTION ZPPointVal(coef,r,h) RESULT(y)
-      REAL(SRK),DIMENSION(:),INTENT(IN) :: coef
+      REAL(SRK),INTENT(IN) :: coef(:)
       REAL(SRK),INTENT(IN) :: r
       REAL(SRK),INTENT(IN),OPTIONAL :: h
       REAL(SRK) :: y
@@ -1420,7 +1462,7 @@ MODULE MeshTransfer
 !> specific point.
 !>
     FUNCTION ZPIntegral(coef,a,b,h) RESULT(y)
-      REAL(SRK),DIMENSION(:),INTENT(IN) :: coef
+      REAL(SRK),INTENT(IN) :: coef(:)
       REAL(SRK),INTENT(IN) :: a
       REAL(SRK),INTENT(IN) :: b
       REAL(SRK),INTENT(IN),OPTIONAL :: h
