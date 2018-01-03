@@ -576,16 +576,14 @@ MODULE Geom_Box
       LOGICAL(SBK) :: inside
 
       inside=.FALSE.
-      IF(p%dim == 2 .OR. (p%dim == 3 .AND. .NOT.thisABB%is3D)) THEN
+      IF(p%dim > 1) THEN
         inside=((p%coord(1) > thisABB%xMin-fuzz) .AND. &
           (p%coord(1) < thisABB%xMax+fuzz) .AND. &
           (p%coord(2) > thisABB%yMin-fuzz) .AND. &
           (p%coord(2) < thisABB%yMax+fuzz))
-      ELSEIF(p%dim == 3 .AND. thisABB%is3D) THEN
-        inside=((p%coord(1) > thisABB%xMax-fuzz) .AND. &
-          (p%coord(1) < thisABB%xMax+fuzz) .AND. &
-          (p%coord(2) > thisABB%yMin-fuzz) .AND. &
-          (p%coord(2) < thisABB%yMax+fuzz) .AND. &
+      ENDIF
+      IF(p%dim == 3 .AND. thisABB%is3D) THEN
+        inside=(inside .AND. &
           (p%coord(3) > thisABB%zMin-fuzz) .AND. &
           (p%coord(3) < thisABB%zMax+fuzz))
       ENDIF
