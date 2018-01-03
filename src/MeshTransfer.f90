@@ -62,6 +62,7 @@
 !>  - @ref Constants_Conversion "Constants_Conversion": @copybrief Constants_Conversion
 !>  - @ref Strings              "Strings":              @copybrief Strings
 !>  - @ref ParameterLists       "ParameterLists":       @copybrief ParameterLists
+!>  - @ref ExceptionHandler     "ExceptionHandler":     @copybrief ExceptionHandler
 !>  - @ref ParallelEnv          "ParallelEnv":          @copybrief ParallelEnv
 !>  - @ref BLAS                 "BLAS":                 @copybrief BLAS
 !>  - @ref ArrayUtils           "ArrayUtils":           @copybrief ArrayUtils
@@ -80,6 +81,7 @@ MODULE MeshTransfer
   USE Constants_Conversion
   USE Strings
   USE ParameterLists
+  USE ExceptionHandler
   USE ParallelEnv
   USE BLAS
   USE ArrayUtils
