@@ -142,7 +142,7 @@ MODULE MeshTransfer
       CLASS(ParamType),INTENT(IN) :: pList
     ENDSUBROUTINE mt_init_absintfc
   ENDINTERFACE
-
+mo
   !> Defines the interface for procedures for clearing
   ABSTRACT INTERFACE
     SUBROUTINE mt_clear_absintfc(this)
@@ -213,7 +213,7 @@ MODULE MeshTransfer
   ENDTYPE MeshTransfer_1DCyl
 
   !> Name of module
-  CHARACTER(LEN=*),PARAMETER :: modName='MESTTRANSFER'
+  CHARACTER(LEN=*),PARAMETER :: modName='MESHTRANSFER'
 
   !> Exception Handler for use in MeshTransfer
   TYPE(ExceptionHandlerType),SAVE :: eMeshTransfer
