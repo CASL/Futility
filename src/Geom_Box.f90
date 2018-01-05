@@ -83,8 +83,14 @@ MODULE Geom_Box
     REAL(SRK) :: yMin=0.0_SRK
     !> Maximum y extent of the box
     REAL(SRK) :: yMax=0.0_SRK
+    !> Minimum z extent of the box
+    REAL(SRK) :: zMin=0.0_SRK
+    !> Maximum z extent of the box
+    REAL(SRK) :: zMax=0.0_SRK
     !> Is the origin of our coordinate system inside of the box
     LOGICAL(SBK) :: isOrigin=.FALSE.
+    !> Is the box 3D?
+    LOGICAL(SBK) :: is3D=.FALSE.
     !> If the box has been assigned values
     LOGICAL(SBK) :: isSet=.FALSE.
 !
@@ -518,16 +524,26 @@ MODULE Geom_Box
 !> @param yMax the maximum y-extent of the box
 !>
 !> This routine sets the attributes of a ABBoxType object.
-    ELEMENTAL SUBROUTINE set_ABBoxType(thisABB,xMin,xMax,yMin,yMax)
+    ELEMENTAL SUBROUTINE set_ABBoxType(thisABB,xMin,xMax,yMin,yMax,zMin,zMax)
       CLASS(ABBoxType),INTENT(INOUT) :: thisABB
       REAL(SRK),INTENT(IN) :: xMin,xMax,yMin,yMax
+      REAL(SRK),INTENT(IN),OPTIONAL :: zMin,zMax
+
       thisABB%xMin=xMin
       thisABB%xMax=xMax
       thisABB%yMin=yMin
       thisABB%yMax=yMax
+      IF(PRESENT(zMin) .AND. PRESENT(zMax)) THEN
+        thisABB%zMin=zMin
+        thisABB%zMax=zMax
+        thisABB%is3D=.TRUE.
+      ELSE
+        thisABB%is3D=.FALSE.
+      ENDIF
       thisABB%isSet=.TRUE.
       thisABB%isOrigin=((xMin <= 0.0_SRK) .AND. (xMax >= 0.0_SRK) .AND. &
         (yMin <= 0.0_SRK) .AND. (yMax >= 0.0_SRK))
+
     ENDSUBROUTINE set_ABBoxType
 !
 !-------------------------------------------------------------------------------
@@ -540,6 +556,9 @@ MODULE Geom_Box
       thisABB%xMax=0.0_SRK
       thisABB%yMin=0.0_SRK
       thisABB%yMax=0.0_SRK
+      thisABB%zMin=0.0_SRK
+      thisABB%zMax=0.0_SRK
+      thisABB%is3D=.FALSE.
       thisABB%isSet=.FALSE.
       thisABB%isOrigin=.FALSE.
     ENDSUBROUTINE clear_ABBoxType
@@ -555,11 +574,20 @@ MODULE Geom_Box
       TYPE(PointType),INTENT(IN) :: p
       REAL(SRK),PARAMETER :: fuzz=1e-6_SRK
       LOGICAL(SBK) :: inside
+
       inside=.FALSE.
-      IF(p%dim > 1) inside=((p%coord(1) > thisABB%xMin-fuzz) .AND. &
-        (p%coord(1) < thisABB%xMax+fuzz) .AND. &
-        (p%coord(2) > thisABB%yMin-fuzz) .AND. &
-        (p%coord(2) < thisABB%yMax+fuzz))
+      IF(p%dim > 1) THEN
+        inside=((p%coord(1) > thisABB%xMin-fuzz) .AND. &
+          (p%coord(1) < thisABB%xMax+fuzz) .AND. &
+          (p%coord(2) > thisABB%yMin-fuzz) .AND. &
+          (p%coord(2) < thisABB%yMax+fuzz))
+      ENDIF
+      IF(p%dim == 3 .AND. thisABB%is3D) THEN
+        inside=(inside .AND. &
+          (p%coord(3) > thisABB%zMin-fuzz) .AND. &
+          (p%coord(3) < thisABB%zMax+fuzz))
+      ENDIF
+
     ENDFUNCTION inside_ABBoxType
 !
 ENDMODULE Geom_Box
