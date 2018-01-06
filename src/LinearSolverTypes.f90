@@ -161,11 +161,9 @@ MODULE LinearSolverTypes
       PROCEDURE(linearsolver_sub_absintfc),DEFERRED,PASS :: clear
       !> Deferred routine for solving the linear system
       PROCEDURE(linearsolver_sub_absintfc),DEFERRED,PASS :: solve
-      !> Routine for updating status of M and isDecomposed when A has changed
-      PROCEDURE,PASS :: updatedA
-      !> @copybrief LinearSolverTypes::PETSc_setOperators
-      !> @copydetails LinearSolverTypes::PETSc_setOperators
-      PROCEDURE,PASS :: setOperators => PETSc_setOperators
+      !> @copybrief LinearSolverTypes::PETSc_updatedA
+      !> @copydetails LinearSolverTypes::PETSc_updatedA
+      PROCEDURE,PASS :: updatedA => PETSc_updatedA
   ENDTYPE LinearSolverType_Base
 
   !> Explicitly defines the interface for the clear and solve routines
@@ -492,7 +490,7 @@ MODULE LinearSolverTypes
                 CALL KSPCreate(solver%MPIparallelEnv%comm,solver%ksp,iperr)
                 CALL KSPSetType(solver%ksp,KSPPREONLY,iperr)
                 CALL KSPSetFromOptions(solver%ksp,iperr)
-                CALL solver%setOperators()
+                CALL solver%updatedA()
 
                 !PC calls
                 CALL KSPGetPC(solver%ksp,pc,ierr)
@@ -566,7 +564,7 @@ MODULE LinearSolverTypes
                     CALL KSPSetType(solver%ksp,KSPGMRES,iperr)
                 ENDSELECT
 
-                CALL solver%setOperators()
+                CALL solver%updatedA()
 
                 !Always use a nonzero initial guess:
                 CALL KSPSetInitialGuessNonzero(solver%ksp,PETSC_TRUE,iperr)
@@ -688,13 +686,10 @@ MODULE LinearSolverTypes
     ENDSUBROUTINE setup_PreCond_LinearSolverType_Iterative
 !
 !-------------------------------------------------------------------------------
-!> @brief Initializes preconditioner for Iteartive Linear Solver Type
+!> @brief Wraps KSPSetOperators for when a new matrix is defined (as in reinitMat)
 !> @param solver The linear solver to act on
-!> @param PreCondType The preconditioner method
 !>
-!> This routine sets up the precondtioner of type PreCondType
-!>
-    SUBROUTINE PETSc_setOperators(solver)
+    SUBROUTINE PETSc_updatedA(solver)
       CLASS(LinearSolverType_Base),INTENT(INOUT) :: solver
 #ifdef FUTILITY_HAVE_PETSC
       PetscErrorCode  :: iperr
@@ -711,7 +706,7 @@ MODULE LinearSolverTypes
       ENDSELECT
 #endif
 
-    ENDSUBROUTINE PETSc_setOperators
+    ENDSUBROUTINE PETSc_updatedA
 !
 !-------------------------------------------------------------------------------
 !> @brief Clears the Direct Linear Solver Type
