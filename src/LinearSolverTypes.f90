@@ -161,9 +161,9 @@ MODULE LinearSolverTypes
       PROCEDURE(linearsolver_sub_absintfc),DEFERRED,PASS :: clear
       !> Deferred routine for solving the linear system
       PROCEDURE(linearsolver_sub_absintfc),DEFERRED,PASS :: solve
-      !> @copybrief LinearSolverTypes::PETSc_updatedA
-      !> @copydetails LinearSolverTypes::PETSc_updatedA
-      PROCEDURE,PASS :: updatedA => PETSc_updatedA
+      !> Routine for updating status of M and isDecomposed when A has changed
+      !> and associates A with KSP if necessary
+      PROCEDURE,PASS :: updatedA
   ENDTYPE LinearSolverType_Base
 
   !> Explicitly defines the interface for the clear and solve routines
@@ -690,7 +690,7 @@ MODULE LinearSolverTypes
 !>        matrix is not decomposed and needs to be refactored (for LU)
 !> @param solver The linear solver to act on
 !>
-    SUBROUTINE PETSc_updatedA(solver)
+    SUBROUTINE updatedA(solver)
       CLASS(LinearSolverType_Base),INTENT(INOUT) :: solver
 #ifdef FUTILITY_HAVE_PETSC
       PetscErrorCode  :: iperr
@@ -708,7 +708,7 @@ MODULE LinearSolverTypes
 #endif
       solver%isDecomposed=.FALSE.
 
-    ENDSUBROUTINE PETSc_updatedA
+    ENDSUBROUTINE updatedA
 !
 !-------------------------------------------------------------------------------
 !> @brief Clears the Direct Linear Solver Type
