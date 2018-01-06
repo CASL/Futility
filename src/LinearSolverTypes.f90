@@ -163,6 +163,9 @@ MODULE LinearSolverTypes
       PROCEDURE(linearsolver_sub_absintfc),DEFERRED,PASS :: solve
       !> Routine for updating status of M and isDecomposed when A has changed
       PROCEDURE,PASS :: updatedA
+      !> @copybrief LinearSolverTypes::PETSc_setOperators
+      !> @copydetails LinearSolverTypes::PETSc_setOperators
+      PROCEDURE,PASS :: setOperators => PETSc_setOperators
   ENDTYPE LinearSolverType_Base
 
   !> Explicitly defines the interface for the clear and solve routines
@@ -240,8 +243,8 @@ MODULE LinearSolverTypes
       !> @copybrief LinearSolverTypes::setX0_LinearSolverType_Iterative
       !> @copydetails LinearSolverTypes::setX0_LinearSolverType_Iterative
       PROCEDURE,PASS :: setX0 => setX0_LinearSolverType_Iterative
-      !> @copybrief LinearSolverTypes::init_PreCond_LinearSolverType_Iterative
-      !> @copydetails LinearSolverTypes::init_PreCond_LinearSolverType_Iterative
+      !> @copybrief LinearSolverTypes::setup_PreCond_LinearSolverType_Iterative
+      !> @copydetails LinearSolverTypes::setup_PreCond_LinearSolverType_Iterative
       PROCEDURE,PASS :: setupPC => setup_PreCond_LinearSolverType_Iterative
   ENDTYPE LinearSolverType_Iterative
 
@@ -489,14 +492,7 @@ MODULE LinearSolverTypes
                 CALL KSPCreate(solver%MPIparallelEnv%comm,solver%ksp,iperr)
                 CALL KSPSetType(solver%ksp,KSPPREONLY,iperr)
                 CALL KSPSetFromOptions(solver%ksp,iperr)
-                SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
-#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=5))
-                  CALL KSPSetOperators(solver%ksp,A%a,A%a,iperr)
-#else
-                  CALL KSPSetOperators(solver%ksp,A%a,A%a, &
-                    DIFFERENT_NONZERO_PATTERN,iperr)
-#endif
-                ENDSELECT
+                CALL solver%setOperators()
 
                 !PC calls
                 CALL KSPGetPC(solver%ksp,pc,ierr)
@@ -570,14 +566,7 @@ MODULE LinearSolverTypes
                     CALL KSPSetType(solver%ksp,KSPGMRES,iperr)
                 ENDSELECT
 
-                SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
-#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=5))
-                  CALL KSPSetOperators(solver%ksp,A%a,A%a,iperr)
-#else
-                  CALL KSPSetOperators(solver%ksp,A%a,A%a, &
-                    DIFFERENT_NONZERO_PATTERN,iperr)
-#endif
-                ENDSELECT
+                CALL solver%setOperators()
 
                 !Always use a nonzero initial guess:
                 CALL KSPSetInitialGuessNonzero(solver%ksp,PETSC_TRUE,iperr)
@@ -697,6 +686,32 @@ MODULE LinearSolverTypes
           ' - LinearSolverType is not initialized. Preconditioner cannot be set up.')
       ENDIF
     ENDSUBROUTINE setup_PreCond_LinearSolverType_Iterative
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes preconditioner for Iteartive Linear Solver Type
+!> @param solver The linear solver to act on
+!> @param PreCondType The preconditioner method
+!>
+!> This routine sets up the precondtioner of type PreCondType
+!>
+    SUBROUTINE PETSc_setOperators(solver)
+      CLASS(LinearSolverType_Base),INTENT(INOUT) :: solver
+#ifdef FUTILITY_HAVE_PETSC
+      PetscErrorCode  :: iperr
+#endif
+
+#ifdef FUTILITY_HAVE_PETSC
+      SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=5))
+        CALL KSPSetOperators(solver%ksp,A%a,A%a,iperr)
+#else
+        CALL KSPSetOperators(solver%ksp,A%a,A%a, &
+          DIFFERENT_NONZERO_PATTERN,iperr)
+#endif
+      ENDSELECT
+#endif
+
+    ENDSUBROUTINE PETSc_setOperators
 !
 !-------------------------------------------------------------------------------
 !> @brief Clears the Direct Linear Solver Type
@@ -1020,16 +1035,6 @@ MODULE LinearSolverTypes
                   IF(.NOT.(X%isAssembled)) CALL X%assemble()
                 ENDSELECT
 
-!                SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
-!#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=5))
-!                  CALL KSPSetOperators(solver%ksp,A%a,A%a,ierr)
-!#else
-!                  CALL KSPSetOperators(solver%ksp,A%a,A%a, &
-!                    DIFFERENT_NONZERO_PATTERN,ierr)
-!#endif
-!                ENDSELECT
-!                CALL KSPSetFromOptions(solver%ksp,ierr)
-
                 ! solve
                 SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
                   SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
@@ -1073,16 +1078,6 @@ MODULE LinearSolverTypes
                 SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
                   IF(.NOT.(X%isAssembled)) CALL X%assemble()
                 ENDSELECT
-
-!                SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
-!#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=5))
-!                  CALL KSPSetOperators(solver%ksp,A%a,A%a,ierr)
-!#else
-!                  CALL KSPSetOperators(solver%ksp,A%a,A%a, &
-!                    DIFFERENT_NONZERO_PATTERN,ierr)
-!#endif
-!                ENDSELECT
-!                CALL KSPSetFromOptions(solver%ksp,ierr)
 
                 ! solve
                 SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
@@ -1134,16 +1129,6 @@ MODULE LinearSolverTypes
                 SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
                   IF(.NOT.(X%isAssembled)) CALL X%assemble()
                 ENDSELECT
-
-!                SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
-!#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=5))
-!                  CALL KSPSetOperators(solver%ksp,A%a,A%a,ierr)
-!#else
-!                  CALL KSPSetOperators(solver%ksp,A%a,A%a, &
-!                    DIFFERENT_NONZERO_PATTERN,ierr)
-!#endif
-!                ENDSELECT
-!                CALL KSPSetFromOptions(solver%ksp,ierr)
 
                 ! solve
                 SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
