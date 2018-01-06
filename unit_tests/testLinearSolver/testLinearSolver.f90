@@ -64,6 +64,7 @@ PROGRAM testLinearSolver
   REGISTER_SUBTEST('TESTING NORMS PROCEDURE',testNorms)
   REGISTER_SUBTEST('testClear',testClear)
   REGISTER_SUBTEST('testInit',testInit)
+  REGISTER_SUBTEST('TestUpdatedA',testUpdatedA)
   REGISTER_SUBTEST('testDirectSolve',testDirectSolve)
   REGISTER_SUBTEST('testQRSolve',testQRSolve)
   REGISTER_SUBTEST('testIterativeOthers',testIterativeOthers)
@@ -432,6 +433,87 @@ CONTAINS
       DEALLOCATE(thisLS)
 
     ENDSUBROUTINE testInit
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testUpdatedA()
+      CLASS(LinearSolverType_Base),ALLOCATABLE :: thisLS
+      LOGICAL(SBK) :: bool
+
+    !test Direct
+      ALLOCATE(LinearSolverType_Direct :: thisLS)
+
+      ! initialize matrix M
+      ALLOCATE(DenseSquareMatrixType :: thisLS%M)
+      CALL pList%clear()
+      CALL pList%add('MatrixType->n',10_SNK)
+      CALL pList%add('MatrixType->isSym',.TRUE.)
+      CALL thisLS%M%init(pList)
+      thisLS%isDecomposed=.TRUE.
+
+      ! initialize linear system
+      CALL pList%clear()
+      CALL pList%add('LinearSolverType->matType',SPARSE)
+      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->solverMethod',LU)
+      CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
+      CALL pList%add('LinearSolverType->numberOMP',1_SNK)
+      CALL pList%add('LinearSolverType->timerName','testTimer')
+      CALL pList%add('LinearSolverType->A->MatrixType->n',1_SNK)
+      CALL pList%add('LinearSolverType->A->MatrixType->nnz',1_SNK)
+      CALL pList%add('LinearSolverType->x->VectorType->n',1_SNK)
+      CALL pList%add('LinearSolverType->b->VectorType->n',1_SNK)
+      CALL pList%validate(pList,optListLS)
+      CALL thisLS%init(pList)
+
+      SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Direct)
+        ALLOCATE(thisLS%IPIV(10))
+      ENDSELECT
+      CALL thisLS%updatedA()
+      !Check
+      SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Direct)
+        bool = .NOT.thisLS%isDecomposed
+        ASSERT(bool, 'Direct%updatedA()')
+      ENDSELECT
+      CALL thisLS%clear()
+      DEALLOCATE(thisLS)
+
+    !test Iterative
+      ALLOCATE(LinearSolverType_Iterative :: thisLS)
+
+      ! initialize matrix M
+      ALLOCATE(DenseSquareMatrixType :: thisLS%M)
+      CALL pList%clear()
+      CALL pList%add('MatrixType->n',10_SNK)
+      CALL pList%add('MatrixType->isSym',.TRUE.)
+      CALL thisLS%M%init(pList)
+      thisLS%isDecomposed=.TRUE.
+
+      ! initialize linear system
+      CALL pList%clear()
+      CALL pList%add('LinearSolverType->matType',SPARSE)
+      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
+      CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
+      CALL pList%add('LinearSolverType->numberOMP',1_SNK)
+      CALL pList%add('LinearSolverType->timerName','testTimer')
+      CALL pList%add('LinearSolverType->A->MatrixType->n',1_SNK)
+      CALL pList%add('LinearSolverType->A->MatrixType->nnz',1_SNK)
+      CALL pList%add('LinearSolverType->x->VectorType->n',1_SNK)
+      CALL pList%add('LinearSolverType->b->VectorType->n',1_SNK)
+      CALL pList%validate(pList,optListLS)
+      CALL thisLS%init(pList)
+
+      CALL thisLS%updatedA()
+
+      !Check
+      SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
+        bool = .NOT.thisLS%isDecomposed
+        ASSERT(bool, 'Iterative%updatedA()')
+      ENDSELECT
+      CALL thisLS%clear()
+      DEALLOCATE(thisLS)
+
+    ENDSUBROUTINE testUpdatedA
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testDirectSolve()

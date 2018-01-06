@@ -705,6 +705,7 @@ MODULE LinearSolverTypes
 #endif
       ENDSELECT
 #endif
+      solver%isDecomposed=.FALSE.
 
     ENDSUBROUTINE PETSc_updatedA
 !
@@ -810,18 +811,6 @@ MODULE LinearSolverTypes
       solver%residual=0._SRK
       IF(LinearSolverType_Paramsflag) CALL LinearSolverType_Clear_ValidParams()
     ENDSUBROUTINE clear_LinearSolverType_Iterative
-!
-!-------------------------------------------------------------------------------
-!> @brief Tells the LinearSystem that A has been updated outside of solver
-!> @param solver The linear solver to act on
-!>
-!> This routine tells the LinearSystem that A has been updated outside of solver
-!>
-    SUBROUTINE updatedA(solver)
-      CLASS(LinearSolverType_Base),INTENT(INOUT) :: solver
-      solver%isDecomposed=.FALSE.
-
-    ENDSUBROUTINE updatedA
 !
 !-------------------------------------------------------------------------------
 !> @brief Solves the Linear System
