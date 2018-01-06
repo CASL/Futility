@@ -686,7 +686,8 @@ MODULE LinearSolverTypes
     ENDSUBROUTINE setup_PreCond_LinearSolverType_Iterative
 !
 !-------------------------------------------------------------------------------
-!> @brief Wraps KSPSetOperators for when a new matrix is defined (as in reinitMat)
+!> @brief associates matrix with KSP (if PETSc), otherwise indicates that the
+!>        matrix is not decomposed and needs to be refactored (for LU)
 !> @param solver The linear solver to act on
 !>
     SUBROUTINE PETSc_updatedA(solver)
