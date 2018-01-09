@@ -63,7 +63,7 @@ MODULE LinearSolverTypes_Multigrid
 ! List of public members
   PUBLIC :: LinearSolverType_Multigrid
 
-  INTEGER(SIK),PARAMETER,PUBLIC :: MAX_MG_LEVELS=8_SIK
+  INTEGER(SIK),PARAMETER,PUBLIC :: MAX_MG_LEVELS=8
 
   !!Public enumerations from LSTypes
   PUBLIC :: PETSC
@@ -78,11 +78,11 @@ MODULE LinearSolverTypes_Multigrid
   !> @brief The extended type for the Iterative Linear Solver
   TYPE,EXTENDS(LinearSolverType_Iterative) :: LinearSolverType_Multigrid
     !> Number of grids:
-    INTEGER(SIK) :: nLevels=1_SIK
+    INTEGER(SIK) :: nLevels=1
     !> Whether or not the restriciton, interpolation, and smoothing is ready:
     LOGICAL(SBK) :: isMultigridSetup=.FALSE.
     !> List ID of corresponding list of smoothers in the smoother manager:
-    INTEGER(SIK) :: smootherListID=-1_SIK
+    INTEGER(SIK) :: smootherListID=-1
     !> Size of each grid. level_info(:,level) = (/num_eqns,npts/)
     INTEGER(SIK),ALLOCATABLE :: level_info(:,:)
     !> Size of each grid locally.
@@ -196,7 +196,7 @@ MODULE LinearSolverTypes_Multigrid
         CALL validParams%get('LinearSolverType->Multigrid->smootherListID', &
                              solver%smootherListID)
       ELSE
-        solver%smootherListID=1_SIK
+        solver%smootherListID=1
       ENDIF
 
       CALL validParams%clear()
@@ -358,7 +358,7 @@ MODULE LinearSolverTypes_Multigrid
       IF(PRESENT(onnz_in)) THEN
         onnz=onnz_in
       ELSE
-        onnz=0_SIK
+        onnz=0
       ENDIF
 
 #ifdef FUTILITY_HAVE_PETSC
@@ -774,7 +774,7 @@ MODULE LinearSolverTypes_Multigrid
       solver%isMultigridSetup=.FALSE.
       IF(ALLOCATED(solver%level_info)) DEALLOCATE(solver%level_info)
       IF(ALLOCATED(solver%level_info_local)) DEALLOCATE(solver%level_info_local)
-      solver%nLevels=1_SIK
+      solver%nLevels=1
 
       CALL solver%LinearSolverType_Iterative%clear()
 
@@ -808,7 +808,7 @@ MODULE LinearSolverTypes_Multigrid
                                 myMesh%interpDegrees(ip),counter,wt2)
       counter=counter-1
 
-      indices=0_SIK
+      indices=0
       nindices=1
       !i=1:
       indices(1)=tmpindices(1)
