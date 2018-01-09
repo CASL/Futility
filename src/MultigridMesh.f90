@@ -301,6 +301,7 @@ MODULE MultigridMesh
       INTEGER(SIK),INTENT(IN) :: num_eqns
 
       INTEGER(SIK) :: iLevel
+      TYPE(MultigridMeshType),POINTER :: tmp_mesh_ptr => NULL()
 
       IF(.NOT. myMeshes%isInit) &
         CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
@@ -310,9 +311,11 @@ MODULE MultigridMesh
 
       ALLOCATE(myWtStructure%wts_level(2:myMeshes%nLevels))
       DO iLevel=2,myMeshes%nLevels
-        CALL myWtStructure%wts_level(iLevel)%init( &
-               myMeshes%meshes(iLevel),num_eqns)
+        tmp_mesh_ptr => myMeshes%meshes(iLevel)
+        CALL myWtStructure%wts_level(iLevel)%init(tmp_mesh_ptr,num_eqns)
+               !myMeshes%meshes(iLevel),num_eqns)
       ENDDO
+      NULLIFY(tmp_mesh_ptr)
 
       myWtStructure%isInit=.TRUE.
 
